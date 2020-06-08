@@ -261,21 +261,27 @@ __pycache__/
 *.pyc
 
 # Other files
+
+# Compiled Binaries & Script Files
 /bin_ext
 /bin_th_dnh
 
+# libogg & libvorbis
 /source/ext/ogg/
 /source/ext/vorbis/
 /library/ogg_static.lib
 /library/vorbis_static.lib
 /library/vorbisfile_static.lib
 
+# zlib
 /source/ext/zlib/
 /library/zlibstatic.lib
 /library/zlibdynamic.lib
 
+# Steam API & Code (Will be developed on after 1.10a release)
 /source/ext/steam_api/
 /library/steam_api.lib
-
-# Until after 1.10a
 /source/Steam/
+
+# !!Sensitive Information!!
+source/GcLib/gstd/ArchiveEncryption.hpp
