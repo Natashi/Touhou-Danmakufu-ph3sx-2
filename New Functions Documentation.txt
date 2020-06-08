@@ -1,0 +1,1322 @@
+ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
+
+sincos
+	Arguments:
+		1) angle
+	Description:
+		[sin(angle), cos(angle)]
+
+rsin
+	Arguments:
+		1) angle
+	Description:
+		sin() for radians input.
+
+rcos
+	Arguments:
+		1) angle (radians)
+	Description:
+		cos() for radians input.
+
+rtan
+	Arguments:
+		1) angle (radians)
+	Description:
+		tan() for radians input.
+
+rsincos
+	Arguments:
+		1) angle (radians)
+	Description:
+		sincos() for radians input.
+
+rasin
+	Arguments:
+		1) value
+	Description:
+		asin() for radians output.
+
+racos
+	Arguments:
+		1) value
+	Description:
+		acos() for radians output.
+
+ratan
+	Arguments:
+		1) y
+		2) x
+	Description:
+		atan() for radians output.
+
+ratan2
+	Arguments:
+		1) value
+	Description:
+		atan2() for radians output.
+
+exp
+	Arguments:
+		1) value
+	Description:
+		Returns e (Euler's number) raised to the power of the given value.
+
+prand
+	Arguments:
+		1) min
+		2) max
+	Description:
+		Exactly like rand(), but the seed of which doesn't get saved to replays, and has no effect on the calculation of rand().
+
+sqrt
+	Arguments:
+		1) value
+	Description:
+		Returns the square root of the given value. Much faster than pow(value, 0.5).
+
+ToDegrees
+	Arguments:
+		1) angle
+	Description:
+		Converts the given angle to degrees.
+
+ToRadians
+	Arguments:
+		1) angle
+	Description:
+		Converts the given angle to radians.
+
+NormalizeAngle
+	Arguments:
+		1) angle (degrees)
+	Description:
+		Normalizes the given angle. (Range = [0, 360])
+
+NormalizeAngleR
+	Arguments:
+		1) angle (radians)
+	Description:
+		Normalizes the given angle. (Range = [0, 2pi])
+
+-------------------------------------------------------------------------------------------------------------------
+For the functions in this section, refer to these Desmos graph plot.
+"Basic" interpolations 	-> https://www.desmos.com/calculator/m8dnz348cq
+Bezier interpolations	-> https://www.desmos.com/calculator/q1uptzx8ti
+
+Interpolate_Linear
+	Arguments:
+		1) a
+		2) b
+		3) x
+	Description:
+		Returns the result of interpolation between a and b, using x as the interpolation value.
+		Interpolation method is linear.
+			Direct formula is (a + (b - a) * (x))
+			Represented by the red graph.
+
+Interpolate_Smooth
+	Arguments:
+		1) a
+		2) b
+		3) x
+	Description:
+		Returns the result of interpolation between a and b, using x as the interpolation value.
+		Interpolation method is first-order smoothstep curve.
+			Direct formula is (a + (b - a) * (x^2 * (3 - 2 * x)))
+			Represented by the blue graph.
+
+Interpolate_Smoother
+	Arguments:
+		1) a
+		2) b
+		3) x
+	Description:
+		Returns the result of interpolation between a and b, using x as the interpolation value.
+		Interpolation method is second-order smoothstep curve.
+			Direct formula is (a + (b - a) * (x^3 * (x * (x * 6 - 15) + 10)))
+			Represented by the green graph.
+
+Interpolate_Accelerate
+	Arguments:
+		1) a
+		2) b
+		3) x
+	Description:
+		Returns the result of interpolation between a and b, using x as the interpolation value.
+		Interpolation method is parabolic.
+			Direct formula is (a + (b - a) * (x^2))
+			Represented by the purple graph.
+
+Interpolate_Decelerate
+	Arguments:
+		1) a
+		2) b
+		3) x
+	Description:
+		Returns the result of interpolation between a and b, using x as the interpolation value.
+		Interpolation method is inverse parabolic.
+			Direct formula is (a + (b - a) * (1 - (1 - x)^2))
+			Represented by the black graph.
+
+Interpolate_Modulate
+	Arguments:
+		1) a
+		2) b
+		3) c
+		4) x
+	Description:
+		Returns the result of interpolation between a and b, using x as the interpolation value.
+		Interpolation method is sine.
+			Direct formula is (a + (b - a) * (x + (rsin(2pi * x) / (2pi))))
+			Represented by the dotted red graph.
+
+Interpolate_Overshoot
+	Arguments:
+		1) a
+		2) b
+		3) c
+		4) x
+	Description:
+		Returns the result of interpolation between a and b, using x as the interpolation value.
+		Interpolation method is half sine.
+			Direct formula is (a + (b - a) * (x + (rsin(pi * x) / pi)))
+			Represented by the dotted blue graph.
+
+Interpolate_QuadraticBezier
+	Arguments:
+		1) a
+		2) b
+		3) c
+		4) x
+	Description:
+		Calculates a coordinate component of a quadratic Bezier curve.
+			Direct formula is ((a * (1 - x)^2) + (2 * c * x * (1 - x)) + (b * x^2))
+			Represented by the red graph.
+
+Interpolate_CubicBezier
+	Arguments:
+		1) a
+		2) b
+		3) c1
+		4) c2
+		5) x
+	Description:
+		Calculates a coordinate component of a cubic Bezier curve.
+			Direct formula is ((a * (1 - x)^3) + (3 * c1 * x * (1 - x)^2) + (3 * c2 * x^2 * (1 - x)) + (b * x^3))
+			Represented by the red graph.
+			
+-------------------------------------------------------------------------------------------------------------------
+
+wait
+	Arguments:
+		1) frame
+	Description:
+		Pauses the execution for the given amount of frames.
+		
+		Much faster than loop(n){yield;}
+
+typeof
+	Arguments:
+		1) (any) value
+	Description:
+		Returns the type of the given value.
+		Examples:
+			920			-> VAR_REAL
+			false		-> VAR_BOOL
+			"str"		-> VAR_STRING
+			[8, 0, 2]	-> VAR_ARRAY
+		
+ftypeof
+	Arguments:
+		1) (any) value
+	Description:
+		Returns the root type of the given value.
+		Examples:
+			920			-> VAR_REAL
+			false		-> VAR_BOOL
+			"str"		-> VAR_CHAR
+			[8, 0, 2]	-> VAR_REAL
+			["a", "b", "c"]	-> VAR_CHAR
+			
+bit_not
+	Arguments:
+		1) value
+	Description:
+		Rounds and clamps the value and performs a bitwise NOT operation.
+
+bit_and
+	Arguments:
+		1) value 1
+		2) value 2
+	Description:
+		Rounds and clamps the values and performs a bitwise AND operation.
+
+bit_or
+	Arguments:
+		1) value 1
+		2) value 2
+	Description:
+		Rounds and clamps the values and performs a bitwise OR operation.
+
+bit_xor
+	Arguments:
+		1) value 1
+		2) value 2
+	Description:
+		Rounds and clamps the values and performs a bitwise XOR operation.
+
+bit_left
+	Arguments:
+		1) value
+		2) shift factor
+	Description:
+		Rounds and clamps the value and performs a bitwise left shift operation.
+
+bit_right
+	Arguments:
+		1) value
+		2) shift factor
+	Description:
+		Rounds and clamps the value and performs a bitwise right shift operation.
+		
+as_real
+	Arguments:
+		1) value
+	Description:
+		Converts the specified value to a real value and returns the result.
+		
+as_bool
+	Arguments:
+		1) value
+	Description:
+		Converts the specified value to a boolean value and returns the result.
+		
+as_char
+	Arguments:
+		1) value
+	Description:
+		Converts the specified value to a char value and returns the result.
+
+__DEBUG_BREAK
+	Description:
+		Triggers a debug break. For developers.
+		
+-------------------------------------------------------------------------------------------------------------------
+
+RegexMatch
+	Arguments:
+		1) (string) source string
+		2) (string) pattern
+	Description:
+		Uses regular expression to match patterns in a given string.
+		Returns a string array of matches.
+		Example:
+			RegexMatch("Voyage 1969", "[0-9]+")
+				-> ["1969"]
+			RegexMatch("S231 A001 S101 S000", "S([0-9]{3})")
+				-> ["S231", "231"]
+
+RegexMatchRepeated
+	Arguments:
+		1) (string) source string
+		2) (string) pattern
+	Description:
+		Behaves like RegexMatch, but returns all matches in the string rather than only the first match.
+		Example:
+			RegexMatchRepeated("Voyage 1969", "[0-9]+")
+				-> [["1969"]]
+			RegexMatchRepeated("S231 A001 S101 S0040", "S([0-9]{3})")
+				-> [["S231", "231"], ["S101", "101"], ["S004", "004"]]
+		
+RegexReplace
+	Arguments:
+		1) (string) source string
+		2) (string) pattern
+		2) (string) replacing string
+	Description:
+		Uses regular expression to replace patterns in a given string.
+		Returns the pattern-replaced string.
+		Example:
+			RegexReplace("Voyage 1969", "[0-9]+", "1970")	-> "Voyage 1970"
+			RegexReplace("Example String", "(a|e|i)", "*")	-> "Ex*mpl* Str*ng"
+			RegexReplace("Red, Green, and Blue", "[A-Z]+[a-zA-Z]*", "\'$&\'")
+						-> "'Red', 'Green', and 'Blue'"
+
+-------------------------------------------------------------------------------------------------------------------
+A "matrix" here is a 16-member array representing a 4x4 matrix arranged row-by-row.
+	Ex: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] (The identity matrix)
+A "vector" here is a real value array of the specified size.
+	Ex: [3, 4, 5] 		-> VECTOR3
+		[5, 5, 0, 2]	-> VECTOR4
+
+MatrixIdentity
+	Description:
+		Contructs an identity matrix.
+
+MatrixInverse
+	Arguments:
+		1) matrix
+	Description:
+		Inverses the given matrix.
+
+MatrixAdd
+	Arguments:
+		1) matrix1
+		2) matrix2
+	Description:
+		Adds two matrices together.
+		Note: Directly using the "+" operator also works.
+
+MatrixSubtract
+	Arguments:
+		1) matrix1
+		2) matrix2
+	Description:
+		Subtracts two matrices.
+		Note: Directly using the "-" operator also works.
+		
+MatrixMultiply
+	Arguments:
+		1) matrix1
+		2) matrix2
+	Description:
+		Multiplies two matrices together.
+		
+MatrixDivide
+	Arguments:
+		1) matrix1
+		2) matrix2
+	Description:
+		Divides two matrices.
+
+MatrixTranspose
+	Arguments:
+		1) matrix
+	Description:
+		Transposes the given matrix.
+		
+MatrixDeterminant
+	Arguments:
+		1) matrix
+	Description:
+		Calculates the determinant of the given matrix.
+
+MatrixLookAtLH
+	Arguments:
+		1) (VECTOR3) eye vector
+		2) (VECTOR3) destination vector
+		3) (VECTOR3) orientation vector
+	Description:
+		Constructs a left-handed look-at matrix.
+
+MatrixLookAtRH
+	Arguments:
+		1) (VECTOR3) eye vector
+		2) (VECTOR3) destination vector
+		3) (VECTOR3) orientation vector
+	Description:
+		Constructs a right-handed look-at matrix.
+		
+-------------------------------------------------------------------------------------------------------------------
+
+DeleteWholeAreaCommonData
+	Arguments:
+		1) (string) name
+	Description:
+		Deletes the whole area common data, not just the key-value list.
+		To use the area common data again, it must be recreated with CreateCommonDataArea.
+		
+-------------------------------------------------------------------------------------------------------------------
+
+New math constants:
+	M_PI		= pi 				; 3.14159265358979323846
+	M_PI_2		= M_PI / 2			; 1.57079632679489661923
+	M_PI_4		= M_PI / 4			; 0.78539816339744830962
+	M_PI_X2		= M_PI * 2			; 6.28318530717958647693
+	M_PI_X4		= M_PI * 4			; 12.5663706143591729539
+	M_1_PI		= 1 / M_PI			; 0.31830988618379067154
+	M_2_PI		= 2 / M_PI			; 0.63661977236758134308
+	M_SQRTPI	= sqrt(M_PI)		; 1.772453850905516027298
+	M_1_SQRTPI	= 1 / sqrt(M_PI)	; 0.56418958354775628695
+	M_2_SQRTPI	= 2 / sqrt(M_PI)	; 1.128379167095512573896
+	M_SQRT2		= sqrt(2) 			; 1.4142135623730950488
+	M_SQRT2_2	= sqrt(2) / 2		; 0.7071067811865475244
+	M_SQRT2_X2	= sqrt(2) * 2		; 2.8284271247461900976
+	M_E			= e					; 2.71828182845904523536
+	M_LOG2E		= log2(e)			; 1.44269504088896340736
+	M_LOG10E	= log10(e)			; 0.43429448190325182765
+	M_LN2		= ln(2)				; 0.69314718055994530942
+	M_LN10		= ln(10)			; 2.30258509299404568402
+
+-------------------------------------------------------------------------------------------------------------------
+
+SetSoundDivisionVolumeRate
+	Arguments:
+		1) division
+		2) rate
+	Description:
+		Sets the volume rate of the given sound division.
+		The volume rates of all sound objects assigned to the division are multiplied by the division's rate.
+
+GetSoundDivisionVolumeRate
+	Arguments:
+		1) division
+	Description:
+		Returns the volume rate of the given sound division.
+
+LoadTextureEx
+	Arguments:
+		1) (string) path
+		2) (bool) use mipmap
+		3) (bool) use non-power-of-two
+	Description:
+		Returns a boolean value of whether loading was successful.
+	
+		Loads a texture with more options.
+		Mipmap option generates a mipmap chain, causes textures to look better when scaled down when used with mipmap filtering.
+		Non-power-of-two option prevents blurring when the source texture's dimensions are not powers of two. (Due to DirectX's nature, may cause rendering to be slightly slower.)
+
+LoadTextureInLoadThreadEx
+	Arguments:
+		1) (string) path
+		2) (bool) use mipmap
+		3) (bool) use non-power-of-two
+	Description:
+		Returns a boolean value of whether initial loading was successful.
+	
+		LoadTextureEx in the load thread.
+
+CreateRenderTargetEx
+	Arguments:
+		1) (string) name
+		2) width
+		3) height
+	Description:
+		Returns a boolean value of whether creation was successful.
+		
+		Creates a render target with the specified name, width, and height.
+		Fails if either value is not a positive integer.
+		
+ClearRenderTargetA1
+	Arguments:
+		1) (string) name
+	Description:
+		Returns a boolean value of whether the operation was successful.
+		
+		Clears the render target.
+	
+ClearRenderTargetA2
+	Arguments:
+		1) (string) name
+		2) clear color red
+		3) clear color green
+		4) clear color blue
+		5) clear color alpha
+	Description:
+		Returns a boolean value of whether the operation was successful.
+		
+		Clears the render target, and fills it with the specified color and alpha.
+
+ClearRenderTargetA3
+	Arguments:
+		1) (string) name
+		2) clear color red
+		3) clear color green
+		4) clear color blue
+		5) clear color alpha
+		6) rectangle left
+		7) rectangle top
+		8) rectangle right
+		9) rectangle bottom
+	Description:
+		Returns a boolean value of whether the operation was successful.
+		
+		Clears the render target in the specified rectangular area, and fills that area with the specified color and alpha.
+
+SaveRenderedTextureA3
+	Arguments:
+		1) (string) name
+		2) (string) path
+		3) rectangle left
+		4) rectangle top
+		5) rectangle right
+		6) rectangle bottom
+		7) (struct) format
+	Description:
+		SaveRenderedTextureA2, with the added ability of image format specification.
+		Available formats are:
+			IFF_BMP: Bitmap file. 										(.bmp) (default)
+			IFF_JPG: Joint Photographic Experts Group graphics file. 	(.jpeg)
+			IFF_TGA: TARGA bitmap file. 								(.tga)
+			IFF_PNG: Portable Network Graphics file. 					(.png)
+			IFF_DDS: DirectDraw Surface file. 							(.dds)
+			IFF_PPM: Portable PixelMap graphics file. 					(.ppm)
+
+SetCameraMode
+	Arguments:
+		1) (struct) mode
+	Description:
+		Switches the 3D camera between available modes.
+		Modes:
+			CAMERA_NORMAL
+				- The normal 3D camera mode, positioned with elevation and azimuth angles.
+			CAMERA_LOOKAT
+				- The new 3D camera mode for maths enthusiasts, with the ability to directly specify camera position and view target position. (See below)
+
+SetCameraPosEye
+	Arguments:
+		1) x
+		2) y
+		3) z
+	Description:
+		Used with CAMERA_LOOKAT mode. 
+		Sets the camera's "eye" position.
+
+SetCameraPosLookAt
+	Arguments:
+		1) x
+		2) y
+		3) z
+	Description:
+		Used with CAMERA_LOOKAT mode. 
+		Sets the camera's "look-at" position.
+
+GetCameraViewProjectionMatrix
+	Description:
+		Returns the 3D camera's internal view-projection matrix. Intended to be used with custom 3D vertex shaders.
+		Says Natashi as he stares at TriFocuser.
+
+-------------------------------------------------------------------------------------------------------------------
+
+Obj_GetValueR
+	Arguments:
+		1) object ID
+		2) key
+	Description:
+		Obj_GetValue with direct real value key.
+
+Obj_GetValueDR
+	Arguments:
+		1) object ID
+		2) key
+		3) default
+	Description:
+		Obj_GetValueD with direct real value key.
+
+Obj_SetValueR
+	Arguments:
+		1) object ID
+		2) key
+		3) value
+	Description:
+		Obj_SetValue with direct real value key.
+
+Obj_DeleteValueR
+	Arguments:
+		1) object ID
+		2) key
+	Description:
+		Obj_DeleteValue with direct real value key.
+
+Obj_IsValueExistsR
+	Arguments:
+		1) object ID
+		2) key
+	Description:
+		Obj_IsValueExists with direct real value key.
+
+ObjRender_GetAlpha
+	Arguments:
+		1) object ID
+	Description:
+		Returns the object's alpha value.
+
+ObjRender_SetTextureFilterMin
+	Arguments:
+		1) object ID
+		2) (struct) mode
+	Description:
+		Sets the minification filtering mode for the render object.
+		Filtering modes:
+			FILTER_NONE
+			FILTER_POINT
+			FILTER_LINEAR (default)
+			FILTER_ANISOTROPIC
+
+ObjRender_SetTextureFilterMag
+	Arguments:
+		1) object ID
+		2) (struct) mode
+	Description:
+		Sets the magnification filtering mode for the render object.
+
+ObjRender_SetTextureFilterMip
+	Arguments:
+		1) object ID
+		2) (struct) mode
+	Description:
+		Sets the mipmap filtering mode for the render object.
+
+ObjRender_SetVertexShaderRenderingMode
+	Arguments:
+		1) object ID
+		2) (bool) use vertex shader mode
+	Description:
+		Sets whether the render object will be rendered with support for vertex shaders.
+		Rendering will not be performed without an attached shader object when this is set to true.
+		
+ObjPrim_SetVertexIndex
+	Arguments:
+		1) object ID
+		2) (real array) indices
+	Description:
+		Sets the vertex indices to the primitive object. 
+		Required for particle list objects.
+			Example:
+				ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+				ObjPrim_SetVertexCount(obj, 4);
+				ObjPrim_SetVertexPosition(obj, 0, 0, 0);
+				ObjPrim_SetVertexPosition(obj, 1, 32, 0);
+				ObjPrim_SetVertexPosition(obj, 2, 0, 32);
+				ObjPrim_SetVertexPosition(obj, 3, 32, 32);
+				ObjPrim_SetVertexIndex(obj, [0, 1, 2, 1, 2, 3]);
+
+ObjSpriteList2D_SetAutoClearVertexCount
+	Arguments:
+		1) object ID
+		2) (bool) clear
+	Description:
+		Sets whether the 2D sprite list object will clear its vertices upon rendering.
+		Intended for use in particle rendering.
+		
+ObjParticleList_Create
+	Arguments:
+		1) (struct) type
+	Description:
+		Creates a new particle list object and returns its ID.
+		Available types are:
+			OBJ_PARTICLE_LIST_2D
+			OBJ_PARTICLE_LIST_3D
+		Vertex shader rendering is always on, and rendering will fail if an improper custom shader is used.
+		Not using a custom shader will result in the default shader being used.
+
+ObjParticleList_SetPosition
+	Arguments:
+		1) object ID
+		2) X position
+		3) Y position
+		4) Z position
+	Description:
+		Sets the instance position data.
+
+ObjParticleList_SetScale
+	Arguments:
+		1) object ID
+		2) X scale
+		3) Y scale
+		4) Z scale
+	Description:
+		Sets the instance scale data.
+
+ObjParticleList_SetAngleX
+	Arguments:
+		1) object ID
+		2) X angle
+	Description:
+		Sets the instance X angle data.
+
+ObjParticleList_SetAngleY
+	Arguments:
+		1) object ID
+		2) Y angle
+	Description:
+		Sets the instance Y angle data.
+
+ObjParticleList_SetAngleZ
+	Arguments:
+		1) object ID
+		2) Z angle
+	Description:
+		Sets the instance Z angle data.
+
+ObjParticleList_SetAngleXYZ
+	Arguments:
+		1) object ID
+		2) X angle
+		3) Y angle
+		3) Z angle
+	Description:
+		Sets the instance XYZ angle data.
+
+ObjParticleList_SetColor
+	Arguments:
+		1) object ID
+		2) color red
+		3) color green
+		4) color blue
+	Description:
+		Sets the instance RGB color data.
+
+ObjParticleList_SetAlpha
+	Arguments:
+		1) object ID
+		2) alpha
+	Description:
+		Sets the instance alpha data.
+
+ObjParticleList_SetExtraData
+	Arguments:
+		1) object ID
+		2) data 1
+		2) data 2
+		2) data 3
+	Description:
+		Sets instance extra data.
+		These can be freely utilized by the scripters in case custom shader is used.
+
+ObjParticleList_AddInstance
+	Arguments:
+		1) object ID
+	Description:
+		Submits the current data to the next instance.
+
+ObjParticleList_ClearInstance
+	Arguments:
+		1) object ID
+	Description:
+		Clears all previously submitted instance data of the current frame.
+
+ObjText_SetFontWeight
+	Arguments:
+		1) object ID
+		2) weight
+	Description:
+		Sets the font weight for the following text object.
+		Weight ranges from 0 to 1000, with 0 being the lightest and 1000 being the thickest. -1 for the default weight.
+		Some fonts may not support some weight values.
+
+ObjText_SetFontCharacterSet
+	Arguments:
+		1) object ID
+		2) (struct) charset
+	Description:
+		Sets the charset for the following text object. 
+		Causes font to render correctly in languages with non-latin-like writing system.
+		Charsets:
+			CHARSET_ANSI		(default)
+			CHARSET_SHIFTJIS	(default for Japanese text)
+			CHARSET_HANGUL
+			CHARSET_ARABIC		
+			CHARSET_HEBREW
+			CHARSET_THAI		//I can finally write Thai text without Danmakufu vomiting จุดพลุสิจ๊ะ รออะไร
+
+ObjSound_Seek
+	Arguments:
+		1) object ID
+		2) time
+	Description:
+		Seeks to the specified point in the audio.
+
+ObjSound_SeekSampleCount
+	Arguments:
+		1) object ID
+		2) time
+	Description:
+		Seeks to the specified sample in the audio.
+
+ObjSound_GetWavePosition
+	Arguments:
+		1) object ID
+	Description:
+		Returns the current reading position of the sound object. Not entirely precise.
+
+ObjSound_GetWavePositionSampleCount
+	Arguments:
+		1) object ID
+	Description:
+		Returns the current reading position of the sound object in samples. Not entirely precise.
+
+ObjSound_GetTotalLength
+	Arguments:
+		1) object ID
+	Description:
+		Returns the total length of the audio.
+
+ObjSound_GetTotalLengthSampleCount
+	Arguments:
+		1) object ID
+	Description:
+		Returns the total length of the audio in samples.
+
+ObjFileB_WriteBoolean
+	Arguments:
+		1) object ID
+		2) (bool) value
+	Description:
+		Writes boolean value to the binary file object at the current write pointer.
+
+ObjFileB_WriteByte
+	Arguments:
+		1) object ID
+		2) value
+	Description:
+		Writes byte value to the binary file object at the current write pointer.
+
+ObjFileB_WriteShort
+	Arguments:
+		1) object ID
+		2) value
+	Description:
+		Writes short value to the binary file object at the current write pointer.
+
+ObjFileB_WriteInteger
+	Arguments:
+		1) object ID
+		2) value
+	Description:
+		Writes integer value to the binary file object at the current write pointer.
+
+ObjFileB_WriteLong
+	Arguments:
+		1) object ID
+		2) value
+	Description:
+		Writes long integer value to the binary file object at the current write pointer.
+
+ObjFileB_WriteFloat
+	Arguments:
+		1) object ID
+		2) value
+	Description:
+		Writes float value to the binary file object at the current write pointer.
+
+ObjFileB_WriteDouble
+	Arguments:
+		1) object ID
+		2) value
+	Description:
+		Writes double value to the binary file object at the current write pointer.
+
+-------------------------------------------------------------------------------------------------------------------
+
+Additional constant:
+	BLEND_ALPHA_INV
+		Used in ObjRender_SetBlendType, triggers a new blending mode.
+
+-------------------------------------------------------------------------------------------------------------------
+
+GetPlayerAutoItemCollectLine
+	Description:
+		Returns the position of the player's item autocollection line.
+
+SetPlayerItemScope
+	Arguments:
+		1) value
+	Description:
+		Sets the player's item collection scope radius.
+		Effect equivalent to CollectItemsInCircle.
+
+GetPlayerItemScope
+	Description:
+		Gets the player's item collection scope radius.
+		
+SetPlayerInvincibleGraze
+	Arguments:
+		1) (bool) enable
+	Description:
+		Sets whether the player can graze during invincbility period.
+		True by default. All hail ZUN's engine.
+		
+SetPlayerIntersectionEraseShot
+	Arguments:
+		1) (bool) enable
+	Description:
+		Sets whether shots colliding with the player would get automatically deleted.
+		True by default. All hail ZUN's engine. Again. LOUDER!
+
+SetPlayerStateEndEnable
+	Arguments:
+		1) (bool) enable
+	Description:
+		Sets whether STATE_END is permitted to activate.
+		If set to false, player life will continue below 0 upon each death without limit.
+		False by default if the main script is a package script.
+
+SetPlayerShootdownEventEnable
+	Arguments:
+		1) (bool) enable
+	Description:
+		Sets whether EV_PLAYER_SHOOTDOWN will be notified upon the player's death.
+
+SetPlayerRebirthPosition
+	Arguments:
+		1) x
+		2) y
+	Description:
+		Sets the respawn point of the player.
+		Use REBIRTH_DEFAULT in either position to cause that position to use the default value.
+
+ObjMove_GetSpeedX
+	Arguments:
+		1) object ID
+	Description:
+		Gets the move object's X speed.
+		Also works for objects using the "angle" move mode.
+
+ObjMove_GetSpeedY
+	Arguments:
+		1) object ID
+	Description:
+		Gets the move object's Y speed.
+		Also works for objects using the "angle" move mode.
+
+ObjMove_SetSpeedX
+	Arguments:
+		1) object ID
+		2) speed
+	Description:
+		Sets the move object's X speed.
+		Also works for objects using the "angle" move mode.
+
+ObjMove_SetSpeedY
+	Arguments:
+		1) object ID
+		2) speed
+	Description:
+		Sets the move object's Y speed.
+		Also works for objects using the "angle" move mode.
+
+ObjEnemy_GetIntersectionCircleListToShot
+	Arguments:
+		1) object ID
+	Description:
+		Returns an array of arrays of the enemy object's intersection circle to player shot.
+		e.g. [[x1, y1, radius1], [x2, y2, radius2], ...]
+
+ObjEnemy_GetIntersectionCircleListToPlayer
+	Arguments:
+		1) object ID
+	Description:
+		Returns an array of arrays of the enemy object's intersection circle to player hitbox.
+		e.g. [[x1, y1, radius1], [x2, y2, radius2], ...]
+
+ObjEnemy_SetEnableIntersectionPositionFetching
+	Arguments:
+		1) object ID
+		2) (bool) enable
+	Description:
+		If set to false, the following functions will not include the specified enemy object's hitboxes.
+			GetEnemyIntersectionPosition
+			GetEnemyIntersectionPositionByIdA1
+			GetEnemyIntersectionPositionByIdA2
+			GetAllEnemyIntersectionPosition
+
+ObjEnemyBossScene_EndSpell
+	Arguments:
+		1) boss scene object ID
+	Description:
+		Marks the current single as being not-a-spell.
+
+ObjShot_GetIntersectionEnable
+	Arguments:
+		1) object ID
+	Description:
+		Returns whether ObjShot_SetIntersectionEnable was set on the shot object.
+
+ObjShot_SetIntersectionScaleX
+	Arguments:
+		1) object ID
+		2) scale
+	Description:
+		Sets the shot object's X hitbox scale.
+		For normal shots, the true scale is the half-point between the X and Y scales.
+
+ObjShot_SetIntersectionScaleY
+	Arguments:
+		1) object ID
+		2) scale
+	Description:
+		Sets the shot object's Y hitbox scale.
+		For normal shots, the true scale is the half-point between the X and Y scales.
+
+ObjShot_SetIntersectionScaleXY
+	Arguments:
+		1) object ID
+		2) X scale
+		3) Y scale
+	Description:
+		Sets the shot object's X and Y hitbox scales.
+		For normal shots, the true scale is the half-point between the X and Y scales.
+		
+		Note: Sorry folks, no ellipse hitboxes for you.
+
+ObjStLaser_SetPermitExpand
+	Arguments:
+		1) object ID
+		2) (bool) enable
+	Description:
+		Sets whether the straight laser will expand after the delay period.
+		Intended for use in delay lines.
+
+ObjStLaser_GetPermitExpand
+	Arguments:
+		1) object ID
+	Description:
+		Returns whether the straight laser is permitted to expand after the delay period.
+
+GetShotDataInfoA1
+	Description:
+		Addition.
+		INFO_IS_FIXED_ANGLE - Returns whether the given shot graphic ID has had fixed_angle enabled.
+
+CreatePlayerShotA1
+	Description:
+		Change.
+		No longer returns a null value if SetForbidPlayerShot was set to true.
+
+-------------------------------------------------------------------------------------------------------------------
+
+ObjPatternShot_Create
+	Description:
+		Creates a pattern shot object and returns its object ID.
+		
+		Can be used for firing a large amount of bullets with only a few function calls, like in ZUN's ECL scripts.
+
+ObjPatternShot_Fire
+	Arguments:
+		1) object ID
+	Description:
+		Fires the shot pattern defined by the given shot pattern object.
+
+ObjPatternShot_FireReturn
+	Arguments:
+		1) object ID
+	Description:
+		Fires the shot pattern defined by the given shot pattern object and returns the IDs of the created shots in an array.
+
+ObjPatternShot_SetParentObject
+	Arguments:
+		1) object ID
+		2) parent object ID
+	Description:
+		Sets the parent object of the given shot pattern object.
+
+ObjPatternShot_SetPatternType
+	Arguments:
+		1) object ID
+		2) (struct) type
+	Description:
+		Sets the firing pattern of the given shot pattern object.
+		
+		Available pattern types:
+			PATTERN_TYPE_FAN
+			PATTERN_TYPE_FAN_AIMED
+			PATTERN_TYPE_RING
+			PATTERN_TYPE_RING_AIMED
+			PATTERN_TYPE_ARROW
+			PATTERN_TYPE_ARROW_AIMED
+			PATTERN_TYPE_POLYGON
+			PATTERN_TYPE_POLYGON_AIMED
+			PATTERN_TYPE_ELLIPSE
+			PATTERN_TYPE_ELLIPSE_AIMED
+			PATTERN_TYPE_SCATTER_ANGLE
+			PATTERN_TYPE_SCATTER_SPEED
+			PATTERN_TYPE_SCATTER
+
+ObjPatternShot_SetShotType
+	Arguments:
+		1) object ID
+		2) (struct) type
+	Description:
+		Sets the shot type of the given shot pattern object.
+		
+		Supported types:
+			OBJ_SHOT
+			OBJ_LOOSE_LASER
+			OBJ_CURVE_LASER
+			
+ObjPatternShot_SetInitialBlendMode
+	Arguments:
+		1) object ID
+		2) (struct) blend type
+	Description:
+		Sets the initial blend type of the shots.
+		See ObjRender_SetBlendType for the list of blend types.
+
+ObjPatternShot_SetShotCount
+	Arguments:
+		1) object ID
+		2) way
+		3) stack
+	Description:
+		Sets the shot way and shot stack of the given shot pattern object.
+
+ObjPatternShot_SetSpeed
+	Arguments:
+		1) object ID
+		2) base speed
+		3) speed argument
+	Description:
+		Sets the shot speed and argument of the given shot pattern object.
+
+ObjPatternShot_SetAngle
+	Arguments:
+		1) object ID
+		2) base angle
+		3) angle argument
+	Description:
+		Sets the shot angle and argument of the given shot pattern object.
+
+ObjPatternShot_SetBasePoint
+	Arguments:
+		1) object ID
+		2) X position
+		3) Y position
+	Description:
+		Sets the base firing position of the given shot pattern object.
+		Defaults to the parent object's position if not used.
+		
+		Use PATTERN_BASEPOINT_RESET in either arguments to reset it to the parent object's position.
+
+ObjPatternShot_SetBasePointOffset
+	Arguments:
+		1) object ID
+		2) X offset
+		3) Y offset
+	Description:
+		Sets the firing position offset of the given shot pattern object from its base point.
+
+ObjPatternShot_SetBasePointOffsetCircle
+	Arguments:
+		1) object ID
+		2) angle
+		3) radius
+	Description:
+		Sets the firing position offset in a circular manner of the given shot pattern object from its base point.
+		
+		Equivalent to ObjPatternShot_SetBasePointOffset(obj, radius * cos(angle), radius * sin(angle));
+
+ObjPatternShot_SetShootRadius
+	Arguments:
+		1) object ID
+		2) radius
+	Description:
+		Causes the shots to be fired a certain radius away from their base points.
+
+ObjPatternShot_SetDelay
+	Arguments:
+		1) object ID
+		2) delay
+	Description:
+		Sets the shot delay of the given shot pattern object.
+
+ObjPatternShot_SetGraphic
+	Arguments:
+		1) object ID
+		2) graphic
+	Description:
+		Sets the shot image ID of the given shot pattern object.
+
+ObjPatternShot_SetLaserParameter
+	Arguments:
+		1) object ID
+		2) width
+		3) length
+	Description:
+		Sets the length and width of the given shot pattern object.
+		Has no effect if the pattern is firing normal shots.
+
+ObjPatternShot_CopySettings
+	Arguments:
+		1) destination object ID
+		2) source object ID
+	Description:
+		Copies the settings of a shot pattern object to another.
+		
+ObjPatternShot_AddTransform
+	Arguments:
+		1) object ID
+		2) (struct) transform type
+		3) int argument 1	(Designated "S0")
+		4) int argument 2	(Designated "S1")
+		5) int argument 3	(Designated "S2")
+		6) float argument 1	(Designated "f0")
+		7) float argument 2	(Designated "f1")
+		8) float argument 3	(Designated "f2")
+	Description:
+		Adds a transformation to the shot pattern object.
+		Available transformations are:
+			TRANSFORM_WAIT
+				- Delays the next transformation for S0 frames.
+			TRANSFORM_ADD_SPEED_ANGLE
+				- In S1 frames, sets acceleration to f0 and angular velocity to f1 to the bullet for S0 frames.
+			TRANSFORM_ANGULAR_MOVE
+				- For S0 frames, sets movement angular velocity to f0 and graphic angular velocity to f1.
+			TRANSFORM_N_DECEL_CHANGE
+				- For S1 times, decelerates/accelerates the bullet to a complete halt in S0 frames. (Think of Aunn's first spell.)
+					Movement will then change depending on S2.
+						- 0: Changes the movement angle to f1.
+						- 1: Increments the movement angle by f1.
+						- 2: Aims to the player with an added randomness factor of -f1 to f1.
+						- 3: Aims to the player with an increment of f1.
+						- 4: Angle becomes random.
+						- 5, other: No angle change.
+					All modes sets the speed to f0.
+					Will also delay the next transformation by (S0 * S1) frames.
+			TRANSFORM_GRAPHIC_CHANGE
+				- Changes the shot graphic to S0.
+			TRANSFORM_BLEND_CHANGE
+				- Changes the shot blend type to S0.
+			TRANSFORM_TO_SPEED_ANGLE
+				- Changes the shot's speed and angle to f0 and f1 in S0 frames.
+					Setting f1 to TO_PLAYER_CHANGE will cause the target angle to be the angle to the player object.
+					Setting f0 or f1 to NO_CHANGE will cause the speed/angle to not change.
+			TRANSFORM_ADDPATTERNA1
+				- ObjMove_AddPatternA1(obj, S0, f0, f1);
+			TRANSFORM_ADDPATTERNA2
+				- Should be combined with TRANSFORM_ADDPATTERNA1, as the speed and angle parameters will not be set by this transform.
+				- ObjMove_AddPatternA4(obj, S0, x, x, f0, f1, f2, S2, S1);
+					
+ObjPatternShot_SetTransform
+	Arguments:
+		1) object ID
+		2) transform index
+		3) (struct) transform type
+		4) int argument 1
+		5) int argument 2
+		6) int argument 3
+		7) float argument 1
+		8) float argument 2
+		9) float argument 3
+	Description:
+		Sets transformation to the specified transform index.
+
+-------------------------------------------------------------------------------------------------------------------
+
+SaveSnapShotA3
+	Arguments:
+		1) (string) path
+		2) rectangle left
+		3) rectangle top
+		4) rectangle right
+		5) rectangle bottom
+		6) (struct) format
+	Description:
+		Renders the whole screen to a texture and saves the specified rectangular area of the texture to a file with the given name.
+		Refer to SaveRenderedTextureA3 for the list of file formats.
+
+PauseScript
+	Arguments:
+		1) script ID
+		2) (bool) pause
+	Description:
+		Pauses or unpauses the specified script. Not guaranteed to work perfectly.
+		Causes an error is the script ID is the ID of the script from which the function was called,
+			aka; "a script cannot pause itself".
+			
+NotfiyEventOwn
+	Arguments:
+		1) event ID
+		2) event argument
+	Description:
+		NotifyEvent's the script in which it was called.

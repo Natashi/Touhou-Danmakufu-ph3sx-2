@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="source">
+      <UniqueIdentifier>{dccc814a-1ff9-4718-8d5e-b68ba78bebbb}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="source\GcLib">
+      <UniqueIdentifier>{63411f7a-2e33-4086-932b-ec0b00668d4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\GcLib\gstd">
+      <UniqueIdentifier>{b1bf247d-0fdf-4f49-99c0-8947f0bf841f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\GcLib\directx">
+      <UniqueIdentifier>{6c4c0adb-8310-4472-abbb-3f83d6acac74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Common">
+      <UniqueIdentifier>{7bade9b8-f61d-4004-91c4-7ead5262ac93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{5729d24a-873a-4c5e-978c-e72543cec9d5}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\GcLib\gstd\Application.cpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\File.cpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\GstdUtility.cpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\Logger.cpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\Thread.cpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\Window.cpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DirectGraphics.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DirectInput.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\Common\DnhCommon.cpp">
+      <Filter>source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.cpp">
+      <Filter>source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhConfig\Common.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhConfig\GcLibImpl.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhConfig\MainWindow.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhConfig\WinMain.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\pch.cpp">
+      <Filter>source\GcLib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\GcLib\gstd\Application.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\File.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\GstdLib.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\GstdUtility.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\Logger.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\SmartPointer.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\Thread.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\Window.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DirectGraphics.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DirectInput.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxConstant.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxLib.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\GcLib.hpp">
+      <Filter>source\GcLib</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhCommon.hpp">
+      <Filter>source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConstant.hpp">
+      <Filter>source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.hpp">
+      <Filter>source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhConfig\Common.hpp">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhConfig\Constant.hpp">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhConfig\GcLibImpl.hpp">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhConfig\MainWindow.hpp">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\pch.h">
+      <Filter>source\GcLib</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="source\TouhouDanmakufu\DnhConfig\DnhConfig.rc">
+      <Filter>source</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

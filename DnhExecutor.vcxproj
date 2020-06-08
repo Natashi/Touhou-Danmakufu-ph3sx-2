@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Template|Win32">
+      <Configuration>Template</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName />
+    <SccLocalPath />
+    <ProjectGuid>{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <EnableASAN>false</EnableASAN>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\bin_th_dnh\</OutDir>
+    <IntDir>DnhExecutor\Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\DirectX9c\Include;.\source\ext</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;.\DirectX9c\Lib;.\library</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>.\bin_th_dnh\</OutDir>
+    <IntDir>DnhExecutor/Debug/</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\DirectX9c\Include;.\source\ext</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;.\DirectX9c\Lib;.\library</LibraryPath>
+    <TargetName>th_dnh_d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\DirectX9c\Include;.\source\ext</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;.\DirectX9c\Lib;.\library</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PreprocessorDefinitions>DNH_PROJ_EXECUTOR;WIN32;NDEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>DnhExecutor\Release\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>DnhExecutor\Release\DnhExecutor.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>DnhExecutor\Release\</ObjectFileName>
+      <ProgramDataBaseFileName>DnhExecutor\Release\th_dnh.pdb</ProgramDataBaseFileName>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <OpenMPSupport>true</OpenMPSupport>
+      <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\bin_th_dnh\DnhExecutor.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0411</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\bin_th_dnh\DnhExecutor.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libc.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <OutputFile>bin_th_dnh/th_dnh_ph3sx.exe</OutputFile>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalOptions>/NODEFAULTLIB:"libcmt.lib" %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <Optimization>Disabled</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level2</WarningLevel>
+      <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PreprocessorDefinitions>DNH_PROJ_EXECUTOR;WIN32;_DEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>DnhExecutor/Debug/</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>DnhExecutor\Debug\DnhExecutor.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>DnhExecutor/Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>DnhExecutor\Debug\th_dnh.pdb</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <OpenMPSupport>true</OpenMPSupport>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
+      <SDLCheck>false</SDLCheck>
+      <SupportJustMyCode>true</SupportJustMyCode>
+      <ConformanceMode>false</ConformanceMode>
+      <StringPooling>true</StringPooling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\bin_th_dnh\DnhExecutor.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0411</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\bin_th_dnh\DnhExecutor.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libc.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <OutputFile>bin_th_dnh/th_dnh_d.exe</OutputFile>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalOptions>/NODEFAULTLIB:libcmt.lib  /NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+    <Link>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>DnhExecutor\Template\DnhExecutor.pch</PrecompiledHeaderOutputFile>
+      <PreprocessorDefinitions>DNH_PROJ_EXECUTOR;</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="source\GcLib\directx\DirectGraphics.cpp" />
+    <ClCompile Include="source\GcLib\directx\DirectInput.cpp" />
+    <ClCompile Include="source\GcLib\directx\DirectSound.cpp" />
+    <ClCompile Include="source\GcLib\directx\DxScript.cpp" />
+    <ClCompile Include="source\GcLib\directx\DxText.cpp" />
+    <ClCompile Include="source\GcLib\directx\DxUtility.cpp" />
+    <ClCompile Include="source\GcLib\directx\DxWindow.cpp" />
+    <ClCompile Include="source\GcLib\directx\ElfreinaMesh.cpp" />
+    <ClCompile Include="source\GcLib\directx\MetasequoiaMesh.cpp" />
+    <ClCompile Include="source\GcLib\directx\RenderObject.cpp" />
+    <ClCompile Include="source\GcLib\directx\ScriptManager.cpp" />
+    <ClCompile Include="source\GcLib\directx\Shader.cpp" />
+    <ClCompile Include="source\GcLib\directx\Texture.cpp" />
+    <ClCompile Include="source\GcLib\directx\TransitionEffect.cpp" />
+    <ClCompile Include="source\GcLib\directx\VertexBuffer.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Application.cpp" />
+    <ClCompile Include="source\GcLib\gstd\ArchiveFile.cpp" />
+    <ClCompile Include="source\GcLib\gstd\File.cpp" />
+    <ClCompile Include="source\GcLib\gstd\FpsController.cpp" />
+    <ClCompile Include="source\GcLib\gstd\GstdUtility.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Logger.cpp" />
+    <ClCompile Include="source\GcLib\gstd\RandProvider.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Script.cpp" />
+    <ClCompile Include="source\GcLib\gstd\ScriptClient.cpp" />
+    <ClCompile Include="source\GcLib\gstd\ScriptLexer.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Task.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Thread.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Value.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Window.cpp" />
+    <ClCompile Include="source\GcLib\pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">DnhExecutor/Release/DnhExecutor.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">DnhExecutor/Debug/DnhExecutor.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\Common\DnhCommon.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\DnhReplay.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\DnhScript.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgCommon.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgControlScript.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgEnemy.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgIntersection.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgItem.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgPackageController.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgPackageScript.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgPlayer.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgShot.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgStageController.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgStageScript.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgSystem.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgUserExtendScene.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\Common.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\GcLibImpl.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\ScriptSelectScene.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\StgScene.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\System.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\TitleScene.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\WinMain.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\GcLib\directx\DirectGraphics.hpp" />
+    <ClInclude Include="source\GcLib\directx\DirectInput.hpp" />
+    <ClInclude Include="source\GcLib\directx\DirectSound.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxConstant.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxLib.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxScript.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxText.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxUtility.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxWindow.hpp" />
+    <ClInclude Include="source\GcLib\directx\ElfreinaMesh.hpp" />
+    <ClInclude Include="source\GcLib\directx\HLSL.hpp" />
+    <ClInclude Include="source\GcLib\directx\MetasequoiaMesh.hpp" />
+    <ClInclude Include="source\GcLib\directx\RenderObject.hpp" />
+    <ClInclude Include="source\GcLib\directx\ScriptManager.hpp" />
+    <ClInclude Include="source\GcLib\directx\Shader.hpp" />
+    <ClInclude Include="source\GcLib\directx\Texture.hpp" />
+    <ClInclude Include="source\GcLib\directx\TransitionEffect.hpp" />
+    <ClInclude Include="source\GcLib\directx\Vertex.hpp" />
+    <ClInclude Include="source\GcLib\directx\VertexBuffer.hpp" />
+    <ClInclude Include="source\GcLib\GcLib.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Application.hpp" />
+    <ClInclude Include="source\GcLib\gstd\ArchiveEncryption.hpp" />
+    <ClInclude Include="source\GcLib\gstd\ArchiveFile.hpp" />
+    <ClInclude Include="source\GcLib\gstd\File.hpp" />
+    <ClInclude Include="source\GcLib\gstd\FpsController.hpp" />
+    <ClInclude Include="source\GcLib\gstd\GstdLib.hpp" />
+    <ClInclude Include="source\GcLib\gstd\GstdUtility.hpp" />
+    <ClInclude Include="source\GcLib\gstd\ScriptLexer.hpp" />
+    <ClInclude Include="source\GcLib\gstd\LightweightVector.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Logger.hpp" />
+    <ClInclude Include="source\GcLib\gstd\RandProvider.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Script.hpp" />
+    <ClInclude Include="source\GcLib\gstd\ScriptClient.hpp" />
+    <ClInclude Include="source\GcLib\gstd\SmartPointer.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Task.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Thread.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Value.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Window.hpp" />
+    <ClInclude Include="source\GcLib\pch.h" />
+    <ClInclude Include="source\Steam\Achievement.hpp" />
+    <ClInclude Include="source\Steam\SteamBase.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhCommon.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConstant.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhReplay.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhScript.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgCommon.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgControlScript.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgEnemy.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgIntersection.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgItem.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgPackageController.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgPackageScript.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgPlayer.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgShot.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgStageController.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgStageScript.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgSystem.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgUserExtendScene.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\Common.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\Constant.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\GcLibImpl.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\ScriptSelectScene.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\StgScene.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\System.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\TitleScene.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="source\TouhouDanmakufu\DnhExecutor\DnhExecuter.rc">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">source\TouhouDanmakufu\DnhExecutor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">source\TouhouDanmakufu\DnhExecutor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="source\TouhouDanmakufu\DnhExecutor\th_dnh.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="gstd.natvis" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

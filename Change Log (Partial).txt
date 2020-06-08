@@ -1,0 +1,50 @@
+1.00a:
+	- Multidimensional array assignments are now possible.
+	- Arithmetic operations on array(s) are possible. (Left-right order is important)
+		- [1, 2, 3] + 5 		= [6, 7, 8]
+		- [5, 5, 1] * 2 		= [10, 10, 2]
+		- [2, 3, 4] - [7, 0, 2] = [-5, 3, 1]
+		- [10, 10, 10] / [5, 2] = [2, 5, 10]
+		- [2, 3] % [4, 2, 1, 6] = [2, 1]
+		- 4 + [2, 3, 6, 2]		= 8
+	- Added support for multiple-pass shaders.
+	- Shot and item objects no longer respond to changes in X and Y angles.
+	- Bullet limit of 8192 for performance reasons.
+	- Multiple hitbox support for shot objects has been removed.
+	- Vertex shader support.
+	- Much smaller replay files.
+	- Added an option to specify the skip mode speed in th_dnh.def.
+
+1.01a:
+	- Fixed some random and function-related crashes.
+	- RenderToTextureXX alpha fix ported+modified from th_dnh_woo.
+	- Fixed a bug involving events.
+	- Event arguments will no longer be overwritten when notifying nested events inside @Event.
+	- Added transform functions for ObjPatternShot, for former and current ECL modders.
+	- Added an option to use true fullscreen mode in the config.
+	- "Operation-assign" operators (+=, -=, ++, etc.) now work on indexed arrays.
+		- Given: a = [1, 2, 3]
+			- a[0]++		= [2, 2, 3]
+			- a[2] *= 3		= [1, 2, 9]
+			- a += [5, 6]	= [6, 8, 3]
+		- Given: b = [[1, 2], [3, 4], [5, 6]]
+			- b[0] += 3 	= [[4, 5], [3, 4], [5, 6]]
+			- b[2][0]-- 	= [[1, 2], [3, 4], [4, 6]]
+	- Array indexing/slicing operations now automatically truncate indices.
+	- Array slicing operation can now reverse an array.
+		- Given: a = [10, 12, 14, 16, 18, 20]
+			- a[0..3]		= [10, 12, 14]
+			- a[3..0]		= [14, 12, 10]
+			- a[1..0]		= [10]
+			- a[6..2]		= [20, 18, 16, 14]
+			- a[2..2]		= []
+	- NO_CHANGE can now be used in the ObjMove_AddPatternBX functions.
+	- Line-line intersection is now properly implemented.
+	- IsIntersected_Line_Circle can now be used in package-level scripts.
+	- Added a particle renderer object.
+	- Added support for vertex indexing, and fixed an issue where vertex-indexed meshes would not render correctly.
+	- Fixed underflowing and overflowing issues with ObjRender_SetColor/SetAlpha.
+	- ObjFileT now properly reads from and writes to UTF-8 text files.
+	- ObjFile_OpenNW now allows both reading and writing, unless the file was stored in a .dat archive, in which case all write functions will fail.
+	- Following the above change, Shift-JIS is no longer supported in favour of proper Unicode (UTF-8) handling.
+	- Better support for Metasequoia mesh, and removed support for Elfreina mesh. Support for Blender .obj meshes is planned.

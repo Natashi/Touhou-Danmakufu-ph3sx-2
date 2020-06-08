@@ -1,0 +1,12 @@
+Missing libraries:
+	[zlib 1.2.11] 		-> https://www.zlib.net/
+		zlibstatic.lib or zlibdynamic.lib (with zlib.dll)
+			- Release configuration
+	[libogg 1.3.4]		-> https://xiph.org/
+		ogg_static.lib
+			- Release configuration
+	[libvorbis 1.3.6]	-> https://xiph.org/
+		vorbis_static.lib
+			- Release configuration
+		vorbisfile_static.lib
+			- Release configuration

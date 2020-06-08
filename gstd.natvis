@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="gstd::script_vector&lt;*&gt;">
+    <Intrinsic Name="size" Expression="length" />
+    <Intrinsic Name="capacity" Expression="capacity" />
+    <DisplayString>{{ size={size()}, capacity={capacity} }}</DisplayString>
+    <Expand>
+      <Item Name="[capacity]" ExcludeView="simple">capacity</Item>
+      <ArrayItems>
+        <Size>capacity</Size>
+        <ValuePointer>at</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  
+  <!--
+  Somehow doesn't work
+  
+  <Type Name="gstd::value::body">
+    <Intrinsic Name="_type" Expression="(int)(type->get_kind())"/>
+    <Intrinsic Name="_element" Expression="(int)(type->get_element()->get_kind())"/>
+    <DisplayString Condition="(this == nullptr)">empty</DisplayString>
+    <DisplayString Condition="(this != nullptr)" Optional="true">{{ ref_count={use_count()} }}</DisplayString>
+    <Expand>
+      <Item Condition="_type == 0" Name="[real]" Optional="true" ExcludeView="simple">{{ value={this->real_value} }}</Item>
+      <Item Condition="_type == 1" Name="[char]" Optional="true" ExcludeView="simple">{{ value={this->char_value} }}</Item>
+      <Item Condition="_type == 2" Name="[bool]" Optional="true" ExcludeView="simple">{{ value={this->boolean_value} }}</Item>
+      <Item Condition="_type == 3" Name="[array]" Optional="true" ExcludeView="simple">{{ size={this->array_value.size()} }}</Item>
+      <ArrayItems Condition="_type == 3 &amp;&amp; _element != 1" Optional="true" ExcludeView="simple">
+        <Size>this->array_value.size()</Size>
+        <ValuePointer>this->array_value.data()</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  -->
+  
+</AutoVisualizer>

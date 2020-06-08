@@ -1,0 +1,200 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include <windows.h>
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// “ú–{Œê resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
+#ifdef _WIN32
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+#pragma code_page(932)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU_MAIN MENU DISCARDABLE 
+BEGIN
+    POPUP "File(&F)"
+    BEGIN
+        MENUITEM "Exit(&E)\tALT+F4",            ID_MENUITEM_MAIN_EXIT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG_MAIN DIALOG DISCARDABLE  0, 0, 229, 249
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Config th_dnh_ph3sx"
+MENU IDR_MENU_MAIN
+FONT 9, "‚l‚r ‚oƒSƒVƒbƒN"
+BEGIN
+    PUSHBUTTON      "OK",IDOK,116,230,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,172,230,50,14
+    PUSHBUTTON      "Start Game",ID_BUTTON_EXECUTE,60,230,50,14
+	CONTROL         "Tab1",IDC_TAB_MAIN,"SysTabControl32",0x0,7,0,215,223
+END
+
+IDD_PANEL_DEVICE DIALOG DISCARDABLE  0, 0, 155, 96
+STYLE WS_CHILD
+FONT 9, "‚l‚r ‚oƒSƒVƒbƒN"
+BEGIN
+    GROUPBOX        "Window Style",IDC_STATIC,6,3,120,24
+    CONTROL         "Full Screen",IDC_RADIO_FULLSCREEN,"Button",
+                    BS_AUTORADIOBUTTON | WS_GROUP,11,13,49,10
+    CONTROL         "Windowed",IDC_RADIO_WINDOW,"Button",BS_AUTORADIOBUTTON,70,
+                    13,38,10
+					
+    GROUPBOX        "Window Size",IDC_STATIC,6,32,92,29
+    COMBOBOX        IDC_COMBO_WINDOWSIZE,13,43,71,30,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+					
+	GROUPBOX        "Anti-Aliasing",IDC_STATIC,102,32,92,29
+    COMBOBOX        IDC_COMBO_MULTISAMPLE,109,43,71,30,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+					
+    GROUPBOX        "Screen Refresh Rate",IDC_STATIC,6,65,188,24
+    CONTROL         "1/1 (Recommended)",IDC_RADIO_FPS_1,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,11,75,70,10
+    CONTROL         "1/2",IDC_RADIO_FPS_2,"Button",BS_AUTORADIOBUTTON,90,75,
+                    26,10
+    CONTROL         "1/3",IDC_RADIO_FPS_3,"Button",BS_AUTORADIOBUTTON,119,75,
+                    26,10
+    CONTROL         "Variable",IDC_RADIO_FPS_AUTO,"Button",BS_AUTORADIOBUTTON,149,75,
+					42,10
+					
+	GROUPBOX        "Color Mode",IDC_STATIC,6,93,120,24
+	CONTROL         "32 bit (Default)",IDC_RADIO_COLOR_32,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,11,103,70,10
+	CONTROL         "16 bit",IDC_RADIO_COLOR_16,"Button",BS_AUTORADIOBUTTON,78,103,36,10
+	
+	GROUPBOX        "Graphics",IDC_STATIC,6,122,188,74
+	CONTROL         "Fullscreen Vertical Sync (Recommended)",IDC_VSYNC,"Button",BS_AUTOCHECKBOX,
+					11,133,180,10
+	CONTROL         "Start in Reference Rasterizer Mode (Forbidden)",IDC_REFERENCERASTERIZER,"Button",BS_AUTOCHECKBOX,
+					11,147,180,10
+	CONTROL         "Pseudo-Fullscreen Mode (Recommended for Debugging)",IDC_PSEUDOFULLSCREEN,"Button",BS_AUTOCHECKBOX,
+					11,161,180,10
+END
+
+IDD_PANEL_KEY DIALOG DISCARDABLE  0, 0, 208, 171
+STYLE WS_CHILD
+FONT 9, "‚l‚r ‚oƒSƒVƒbƒN"
+BEGIN
+    CONTROL         "List1",IDC_LIST_KEY,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | 
+                    WS_BORDER | WS_TABSTOP,7,36,194,164
+    COMBOBOX        IDC_COMBO_PADINDEX,13,14,182,15,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Pad Device",IDC_STATIC,7,3,194,29
+END
+
+IDD_PANEL_OPTION DIALOG DISCARDABLE  0, 0, 209, 167
+STYLE WS_CHILD
+FONT 9, "‚l‚r ‚oƒSƒVƒbƒN"
+BEGIN
+	GROUPBOX        "Game Executable Path",IDC_STATIC,7,3,194,29
+	EDITTEXT        IDC_TEXT_EXE_PATH,13,14,149,14,ES_LEFT | ES_AUTOHSCROLL
+	PUSHBUTTON      "Browse",IDC_BUTTON_EXE_PATH_BROWSE,166,14,29,13
+    CONTROL         "List1",IDC_LIST_OPTION,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | 
+                    WS_BORDER | WS_TABSTOP,7,36,194,164
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_DIALOG_MAIN, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 222
+        BOTTOMMARGIN, 204
+    END
+
+    IDD_PANEL_DEVICE, DIALOG
+    BEGIN
+        RIGHTMARGIN, 168
+        BOTTOMMARGIN, 92
+    END
+
+    IDD_PANEL_KEY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 221
+        BOTTOMMARGIN, 168
+    END
+
+    IDD_PANEL_OPTION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 222
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 160
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // “ú–{Œê resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

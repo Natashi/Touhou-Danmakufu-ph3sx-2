@@ -1,0 +1,141 @@
+- New Keywords
+	- switch
+		Equivalent to "alternative".
+	- default
+		Equivalent to "others".
+	- continue
+		Usage similar to "break", but only skips the current iteration of the loop.
+	- for
+		Used to declare a for loop.
+	- each
+		Used in conjunction with "for" to create a for each loop.
+	- const
+		Used to declare a constant.
+			
+- New Features
+	- Constant Variables
+		Variables whose value cannot be changed
+		Any attempt to do so will throw a compile-time error.
+		
+		Examples:
+			const a = 50;
+			let b = a + 80;			//OK
+			ascent (i in 0..a) {}	//OK
+			a = 100;				//ERROR
+			a *= 4;					//ERROR
+			
+			for (const a = 0; a < 10; a++) {}	//ERROR
+			for (const a = 0; a < 10; b++) {}	//OK
+			
+	- Function Overloading
+		Functions and tasks can be re-declared with different amount of parameters.
+		
+		Example:
+			function DoStuff() {
+				return 0;
+			}
+			function DoStuff(arg0) {
+				return 100;
+			}
+			function DoStuff(arg0, arg1, arg2, arg3) {
+				return arg0 + arg1 + arg2 + arg3;
+			}
+			
+			DoStuff();				//Returns 0
+			DoStuff("foo");			//Returns 100
+			DoStuff(1, 2, 3, 4)		//Returns 10
+			
+	- Loop Continues
+		Skips the current iteration of the loop it was used in.
+		
+		Example:
+			ascent (i in 0..10) {
+				if (i % 2 == 1) { continue; }
+				WriteLog(i)
+			}
+			//Output: 0 2 4 6 8
+			
+	- For Loops
+		Read "Statements and Flow Controls" or something similar on a decent C/C++ tutorial.
+		
+		Examples:
+			for (let a = 0; a < 6; a++) {}
+			
+			let b = 0;
+			for (b = 6; b >= -10; b--) {}
+			
+			for (let c = []; length(c) < 10; c = c ~ [rand(-10, 10)]) {}
+			
+	- For Each Loops
+		Iterates through an array.
+		Note: You can use either "in" or a colon, it doesn't matter.
+		
+		Examples:
+			let sum = 0;
+			for each (iDigit in [0, 1, 2, 3, 4, 5]) {
+				sum += iDigit;
+			}
+
+			let objArray = [obj1, obj2, obj3, obj4];
+			for each (let iObj : objArray) {
+				Obj_Delete(iObj);
+			}
+
+			for each (iChar in "ph3sx") {
+				WriteLog(iChar);
+			}
+
+			let numArray = [0, 1, 2, 3];
+			for each (iNum in numArray) {
+				numArray = numArray ~ [rand(0, 10)];
+				WriteLog(iNum);
+			}
+			//The code above will produce 0, 1, 2, and finally 3, regardless of modifications to numArray during looping.
+			
+	- Local Blocks
+		What had been:
+			local {
+				//code....
+			}
+		Can now be reduced to simply:
+			{
+				//code....
+			}
+			
+		In short: "local" can be omitted.
+
+- Optimizations
+	- Loops and blocks without code will now be optimized away during script compiling.
+		Examples:
+			while (true) {}
+			
+			for (let i = 0; i < 10; i++) {}
+			
+			ascent (i in 0..100000000000) {}
+
+			{
+			}
+			
+			loop (1000) {
+			}
+
+			for each (i in "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") {}
+			
+	- Loops containing a single yield will be automatically transformed into a wait.
+		Examples:
+			loop (60) { yield; }		//-> wait(60);
+			
+			let a = 100;
+			loop (a * 2 + 60 - 20) {	//-> wait(a * 2 + 60 - 20);
+				yield;
+			}
+
+- Behaviour Changes
+	- "break;" will no longer cause catastrophes when used outside loops.
+
+
+
+
+
+
+
