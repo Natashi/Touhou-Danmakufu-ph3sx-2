@@ -40,29 +40,75 @@ wchar_t script_scanner::index_from_current_char(int index) {
 	wchar_t res = L'\0';
 	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
 		const char* pos = current + index * 2;
-		if (pos >= endPoint)return L'\0';
-		res = (wchar_t&)current[index * 2];
+		if (pos >= endPoint) return L'\0';
+		res = *(wchar_t*)pos;
 		if (encoding == Encoding::UTF16BE)
 			res = (res >> 8) | (res << 8);
 	}
 	else {
 		const char* pos = current + index;
-		if (pos >= endPoint)return L'\0';
-		res = current[index];
+		if (pos >= endPoint) return L'\0';
+		res = (wchar_t)*pos;
 	}
 
 	return res;
 }
 wchar_t script_scanner::next_char() {
-	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
-		current += 2;
+	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) current += 2;
+	else ++current;
+	return current_char();
+}
+
+//Will not consume the last character
+wchar_t script_scanner::parse_escape_char() {
+	wchar_t lead = next_char();
+	/*
+	if (encoding == Encoding::UTF8 && (lead >= 0xc0u)) {	//UTF-8
+		lead = parse_utf8_char();
 	}
-	else {
-		++current;
+	*/
+	switch (lead) {
+	case L'\"': return L'\"';
+	case L'\'': return L'\'';
+	case L'\\': return L'\\';
+	case L'f': return L'\f';
+	case L'n': return L'\n';
+	case L'r': return L'\r';
+	case L't': return L'\t';
+	case L'v': return L'\v';
+	case L'0': return L'\0';
+	case L'x':
+	{
+		std::string str;
+		wchar_t next = 0;
+		while (std::isxdigit(next = index_from_current_char(1))) {
+			str += next;
+			next_char();
+		}
+		if (str.size() == 0) return L'x';
+		else return (wchar_t)strtol(str.c_str(), nullptr, 16);
+	}
+	}
+	return lead;
+}
+wchar_t script_scanner::parse_utf8_char() {
+	char ch = current_char();
+	std::string str;
+
+	size_t countBytes = 0;
+	while ((ch & 0x80u) == 0x80u) {
+		++countBytes;
+		ch <<= 1;
 	}
 
-	wchar_t res = current_char();
-	return res;
+	ch = current_char();
+	for (;;) {
+		str += ch;
+		if (--countBytes) ch = next_char();
+		else break;
+	}
+
+	return StringUtility::ConvertMultiToWide(str)[0];
 }
 
 void script_scanner::skip() {
@@ -288,94 +334,45 @@ void script_scanner::advance() {
 		}
 		break;
 
-	case L'\'':
 	case L'\"':
+	case L'\'':
 	{
-		wchar_t q = current_char();
-		next = (q == L'\"') ? token_kind::tk_string : token_kind::tk_char;
-		ch = next_char();
-		wchar_t pre = (wchar_t)next;
+		wchar_t enclosing = ch;
+		next = ch == L'\"' ? token_kind::tk_string : token_kind::tk_char;
+
 		if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
 			std::wstring s;
 			while (true) {
-				if (ch == q && pre != L'\\')break;
-
-				if (ch == L'\\') {
-					if (pre == L'\\')s += ch;
-				}
-				else {
-					s += ch;
-				}
-
-				pre = ch;
 				ch = next_char();
 				if (ch == L'\n') ++line;	//For multiple-lined strings
+
+				if (ch == L'\\') ch = parse_escape_char();
+				else if (ch == enclosing) break;
+				s += ch;
 			}
-			ch = next_char();
+			next_char();
 			string_value = s;
 		}
 		else {
 			std::string s;
 			while (true) {
-				if (ch == q && pre != L'\\')break;
-
-				if (ch == L'\\') {
-					if (pre == L'\\')s += *current;
-				}
-				else {
-					s += *current;
-				}
-
-				pre = ch;
 				ch = next_char();
 				if (ch == L'\n') ++line;	//For multiple-lined strings
+
+				if (ch == L'\\') ch = parse_escape_char();
+				else if (ch == enclosing) break;
+				s += (char)ch;
 			}
-			ch = next_char();
+			next_char();
 			string_value = StringUtility::ConvertMultiToWide(s);
 		}
 
-		if (q == L'\'') {
-			if (string_value.size() == 1)
-				char_value = string_value[0];
-			else
-				throw parser_error("A value of type char may only be one character long.");
+		if (next == token_kind::tk_char) {
+			if (string_value.size() > 1) throw parser_error("A value of type char may only be one character long.");
+			char_value = string_value[0];
 		}
+		break;
 	}
-	break;
-	case L'\\':
-	{
-		ch = next_char();
-		next = token_kind::tk_char;
-		wchar_t c = ch;
-		ch = next_char();
-		switch (c) {
-		case L'0':
-			char_value = L'\0';
-			break;
-		case L'n':
-			char_value = L'\n';
-			break;
-		case L'r':
-			char_value = L'\r';
-			break;
-		case L't':
-			char_value = L'\t';
-			break;
-		case L'x':
-			char_value = 0;
-			while (std::isxdigit(ch)) {
-				char_value = char_value * 16 + (ch >= L'a') ? ch - L'a' + 10 : (ch >= L'A') ?
-					ch - L'A' + 10 : ch - L'0';
-				ch = next_char();
-			}
-			break;
-		default:
-		{
-			throw parser_error("Invalid character.\r\n");
-		}
-		}
-	}
-	break;
 	default:
 		if (std::iswdigit(ch)) {
 			next = token_kind::tk_real;
@@ -402,16 +399,16 @@ void script_scanner::advance() {
 
 			std::smatch base_match;
 			if (std::regex_match(str_num, base_match, std::regex("0x([0-9a-fA-F]+)"))) {
-				real_value = (double)std::strtol(base_match[1].str().c_str(), nullptr, 16);
 				if (has_decimal_part) goto throw_err_no_decimal;
+				real_value = (double)std::strtol(base_match[1].str().c_str(), nullptr, 16);
 			}
 			else if (std::regex_match(str_num, base_match, std::regex("0o([0-7]+)"))) {
-				real_value = (double)std::strtol(base_match[1].str().c_str(), nullptr, 8);
 				if (has_decimal_part) goto throw_err_no_decimal;
+				real_value = (double)std::strtol(base_match[1].str().c_str(), nullptr, 8);
 			}
 			else if (std::regex_match(str_num, base_match, std::regex("0b([0-1]+)"))) {
-				real_value = (double)std::strtol(base_match[1].str().c_str(), nullptr, 2);
 				if (has_decimal_part) goto throw_err_no_decimal;
+				real_value = (double)std::strtol(base_match[1].str().c_str(), nullptr, 2);
 			}
 			else if (std::regex_match(str_num, base_match, std::regex("[0-9]+(\.[0-9]+)?"))) {
 				real_value = std::strtod(base_match[0].str().c_str(), nullptr);

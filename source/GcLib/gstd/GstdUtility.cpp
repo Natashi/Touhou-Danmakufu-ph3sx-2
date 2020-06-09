@@ -533,6 +533,8 @@ wchar_t Scanner::_NextChar() {
 		*/
 
 		_RaiseError(L"_NextChar:すでに文字列終端です");
+		//bufStr_ = nullptr;
+		//return L'\0';
 	}
 
 	if (typeEncoding_ == Encoding::UTF16LE || typeEncoding_ == Encoding::UTF16BE) {
@@ -628,13 +630,11 @@ Token& Scanner::Next() {
 
 	case L'\"':
 	{
-		ch = _NextChar();//1つ進めて
 		//while( ch != '"' )ch = _NextChar();//次のダブルクオーテーションまで進める
-		wchar_t pre = ch;
 		while (true) {
-			if (ch == L'"' && pre != L'\\')break;
-			pre = ch;
-			ch = _NextChar();//次のダブルクオーテーションまで進める
+			ch = _NextChar();
+			if (ch == L'\\') ch = _NextChar();
+			else if (ch == L'\"') break;
 		}
 		if (ch == L'\"')
 			_NextChar();//ダブルクオーテーションだったら1つ進める

@@ -41,9 +41,12 @@ namespace gstd {
 
 		static std::unordered_map<std::string, token_kind> token_map;
 
-		inline wchar_t current_char();
-		inline wchar_t index_from_current_char(int index);
+		wchar_t current_char();
+		wchar_t index_from_current_char(int index);
 		inline wchar_t next_char();
+
+		wchar_t parse_escape_char();
+		wchar_t parse_utf8_char();
 	public:
 		token_kind next;
 		std::string word;
