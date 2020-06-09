@@ -215,16 +215,20 @@ void StgPlayerObject::_Move() {
 	if (bKeyUp && !bKeyDown) sy -= speed;
 	if (!bKeyUp && bKeyDown) sy += speed;
 
+	SetSpeed(speed);
 	if (sx != 0 && sy != 0) {
 		constexpr double diagFactor = 1.0 / gstd::GM_SQRT2;
 		sx *= diagFactor;
 		sy *= diagFactor;
-		if (sx > 0) SetDirectionAngle(sy > 0 ? D3DXToRadian(45) : D3DXToRadian(225));
-		else SetDirectionAngle(0);
+		if (sx > 0) SetDirectionAngle(sy > 0 ? Math::DegreeToRadian(45) : Math::DegreeToRadian(315));
+		else SetDirectionAngle(sy > 0 ? Math::DegreeToRadian(135) : Math::DegreeToRadian(225));
 	}
 	else if (sx != 0 || sy != 0) {
-		if (sx != 0) SetDirectionAngle(sx > 0 ? D3DXToRadian(0) : D3DXToRadian(180));
-		else if (sy != 0) SetDirectionAngle(sy > 0 ? D3DXToRadian(90) : D3DXToRadian(270));
+		if (sx != 0) SetDirectionAngle(sx > 0 ? Math::DegreeToRadian(0) : Math::DegreeToRadian(180));
+		else if (sy != 0) SetDirectionAngle(sy > 0 ? Math::DegreeToRadian(90) : Math::DegreeToRadian(270));
+	}
+	else {
+		SetSpeed(0);
 	}
 
 	double px = posX_ + sx;
