@@ -850,9 +850,7 @@ void StgShotObject::_DeleteInLife() {
 		float posX = GetPositionX();
 		float posY = GetPositionY();
 		if (scriptManager != nullptr && scriptPlayer != nullptr) {
-			std::vector<float> listPos;
-			listPos.push_back(posX);
-			listPos.push_back(posY);
+			std::vector<float> listPos = { posX, posY };
 
 			std::vector<value> listScriptValue;
 			listScriptValue.push_back(scriptPlayer->CreateRealValue(idObject_));
@@ -907,9 +905,7 @@ void StgShotObject::_SendDeleteEvent(int bit) {
 	float posX = GetPositionX();
 	float posY = GetPositionY();
 
-	std::vector<float> listPos;
-	listPos.push_back(posX);
-	listPos.push_back(posY);
+	std::vector<float> listPos = { posX, posY };
 
 	int typeEvent = 0;
 	switch (bit) {
@@ -1289,6 +1285,8 @@ StgNormalShotObject::~StgNormalShotObject() {
 
 }
 void StgNormalShotObject::Work() {
+	if (!bEnableMovement_) return;
+
 	_ProcessTransformAct();
 
 	_Move();
@@ -1299,15 +1297,13 @@ void StgNormalShotObject::Work() {
 	delay_ = std::max(--delay_, 0);
 	++frameWork_;
 
-	angle_.z += angularVelocity_;
-
 	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
-
+	
 	{
-		StgShotData* shotData = _GetShotData();
+		angle_.z += angularVelocity_;
 
 		double angleZ = angle_.z;
-		if (shotData) {
+		if (StgShotData* shotData = _GetShotData()) {
 			if (!shotData->IsFixedAngle()) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
 		}
 
@@ -1539,9 +1535,7 @@ void StgNormalShotObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	float posX = GetPositionX();
 	float posY = GetPositionY();
 	if (scriptItem) {
-		std::vector<float> listPos;
-		listPos.push_back(posX);
-		listPos.push_back(posY);
+		std::vector<float> listPos = { posX, posY };
 
 		std::vector<gstd::value> listScriptValue;
 		listScriptValue.push_back(scriptItem->CreateRealValue(idObject_));
@@ -1675,6 +1669,8 @@ void StgLooseLaserObject::Work() {
 		posYE_ = posY_;
 	}
 
+	if (!bEnableMovement_) return;
+
 	_ProcessTransformAct();
 
 	_Move();
@@ -1700,7 +1696,7 @@ void StgLooseLaserObject::_Move() {
 	DxScriptRenderObject::SetX(posX_);
 	DxScriptRenderObject::SetY(posY_);
 
-	if (delay_ <= 0 && bEnableMovement_) {
+	if (delay_ <= 0) {
 		float dx = posXE_ - posX_;
 		float dy = posYE_ - posY_;
 
@@ -1710,7 +1706,6 @@ void StgLooseLaserObject::_Move() {
 			posYE_ += speed * s_;
 		}
 	}
-
 	if (lastAngle_ != GetDirectionAngle()) {
 		lastAngle_ = GetDirectionAngle();
 		c_ = cosf(lastAngle_);
@@ -1944,6 +1939,8 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 	s_ = 0;
 }
 void StgStraightLaserObject::Work() {
+	if (!bEnableMovement_) return;
+
 	_ProcessTransformAct();
 
 	_Move();
@@ -1954,7 +1951,6 @@ void StgStraightLaserObject::Work() {
 	delay_ = std::max(--delay_, 0);
 	if (delay_ <= 0 && bLaserExpand_)
 		scaleX_ = std::min(1.0, scaleX_ + 0.1);
-
 	++frameWork_;
 
 	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
@@ -2228,6 +2224,8 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 	itemDistance_ = 6.0;
 }
 void StgCurveLaserObject::Work() {
+	if (!bEnableMovement_) return;
+
 	_ProcessTransformAct();
 
 	_Move();
@@ -2246,19 +2244,19 @@ void StgCurveLaserObject::Work() {
 	_DeleteInAutoDeleteFrame();
 	//	_AddIntersectionRelativeTarget();
 	--frameGrazeInvalid_;
-
-	if (lastAngle_ != GetDirectionAngle()) {
-		lastAngle_ = GetDirectionAngle();
-		c_ = cosf(lastAngle_);
-		s_ = sinf(lastAngle_);
-	}
 }
 void StgCurveLaserObject::_Move() {
 	StgMoveObject::_Move();
 	DxScriptRenderObject::SetX(posX_);
 	DxScriptRenderObject::SetY(posY_);
 
-	if (bEnableMovement_) {
+	{
+		if (lastAngle_ != GetDirectionAngle()) {
+			lastAngle_ = GetDirectionAngle();
+			c_ = cosf(lastAngle_);
+			s_ = sinf(lastAngle_);
+		}
+
 		LaserNode pos;
 		pos.pos.SetX(posX_);
 		pos.pos.SetY(posY_);

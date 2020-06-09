@@ -333,6 +333,7 @@ public:
 	//STG共通関数：弾オブジェクト操作
 	static gstd::value Func_ObjShot_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_Regist(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetOwnerType);
 	static gstd::value Func_ObjShot_SetAutoDelete(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetDeleteFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_FadeDelete(gstd::script_machine* machine, int argc, const gstd::value* argv);

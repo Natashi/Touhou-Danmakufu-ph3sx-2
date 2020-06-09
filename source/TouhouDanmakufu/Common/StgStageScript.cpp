@@ -406,6 +406,7 @@ function const stgFunction[] =
 	//STG共通関数：弾オブジェクト操作
 	{ "ObjShot_Create", StgStageScript::Func_ObjShot_Create, 1 },
 	{ "ObjShot_Regist", StgStageScript::Func_ObjShot_Regist, 1 },
+	{ "ObjShot_SetOwnerType", StgStageScript::Func_ObjShot_SetOwnerType, 2 },
 	{ "ObjShot_SetAutoDelete", StgStageScript::Func_ObjShot_SetAutoDelete, 2 },
 	{ "ObjShot_FadeDelete", StgStageScript::Func_ObjShot_FadeDelete, 1 },
 	{ "ObjShot_SetDeleteFrame", StgStageScript::Func_ObjShot_SetDeleteFrame, 2 },
@@ -501,6 +502,9 @@ function const stgFunction[] =
 	{ "TYPE_IMMEDIATE", constant<StgStageScript::TYPE_IMMEDIATE>::func, 0 },
 	{ "TYPE_FADE", constant<StgStageScript::TYPE_FADE>::func, 0 },
 	{ "TYPE_ITEM", constant<StgStageScript::TYPE_ITEM>::func, 0 },
+
+	{ "OWNER_PLAYER", constant<StgShotObject::OWNER_PLAYER>::func, 0 },
+	{ "OWNER_ENEMY", constant<StgShotObject::OWNER_ENEMY>::func, 0 },
 
 	{ "PATTERN_FAN", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_FAN>::func, 0 },
 	{ "PATTERN_FAN_AIMED", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_FAN_AIMED>::func, 0 },
@@ -3255,32 +3259,30 @@ gstd::value StgStageScript::Func_ObjShot_Create(gstd::script_machine* machine, i
 	script->CheckRunInMainThread();
 	StgStageController* stageController = script->stageController_;
 
-	int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
-		StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
+	int id = DxScript::ID_INVALID;
+	if (stageController->GetShotManager()->GetShotCountAll() < StgShotManager::SHOT_MAX) {
+		TypeObject type = (TypeObject)((int)argv[0].as_real());
+		shared_ptr<StgShotObject> obj;
+		if (type == TypeObject::OBJ_SHOT) {
+			obj = shared_ptr<StgShotObject>(new StgNormalShotObject(stageController));
+		}
+		else if (type == TypeObject::OBJ_LOOSE_LASER) {
+			obj = shared_ptr<StgShotObject>(new StgLooseLaserObject(stageController));
+		}
+		else if (type == TypeObject::OBJ_STRAIGHT_LASER) {
+			obj = shared_ptr<StgShotObject>(new StgStraightLaserObject(stageController));
+		}
+		else if (type == TypeObject::OBJ_CURVE_LASER) {
+			obj = shared_ptr<StgShotObject>(new StgCurveLaserObject(stageController));
+		}
 
-	if (stageController->GetShotManager()->GetShotCountAll() >= StgShotManager::SHOT_MAX && 
-		typeOwner != StgShotObject::OWNER_PLAYER)
-		return value(machine->get_engine()->get_real_type(), (double)StgControlScript::ID_INVALID);
-
-	TypeObject type = (TypeObject)((int)argv[0].as_real());
-	shared_ptr<StgShotObject> obj;
-	if (type == TypeObject::OBJ_SHOT) {
-		obj = shared_ptr<StgShotObject>(new StgNormalShotObject(stageController));
-	}
-	else if (type == TypeObject::OBJ_LOOSE_LASER) {
-		obj = shared_ptr<StgShotObject>(new StgLooseLaserObject(stageController));
-	}
-	else if (type == TypeObject::OBJ_STRAIGHT_LASER) {
-		obj = shared_ptr<StgShotObject>(new StgStraightLaserObject(stageController));
-	}
-	else if (type == TypeObject::OBJ_CURVE_LASER) {
-		obj = shared_ptr<StgShotObject>(new StgCurveLaserObject(stageController));
-	}
-
-	int id = ID_INVALID;
-	if (obj) {
-		obj->SetOwnerType(typeOwner);
-		id = script->AddObject(obj, false);
+		id = ID_INVALID;
+		if (obj) {
+			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
+				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
+			obj->SetOwnerType(typeOwner);
+			id = script->AddObject(obj, false);
+		}
 	}
 	return value(machine->get_engine()->get_real_type(), (double)id);
 }
@@ -3307,6 +3309,16 @@ gstd::value StgStageScript::Func_ObjShot_Regist(gstd::script_machine* machine, i
 	return value();
 }
 
+gstd::value StgStageScript::Func_ObjShot_SetOwnerType(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		int typeOwner = argv[1].as_real();
+		obj->SetOwnerType(typeOwner);
+	}
+	return value();
+}
 gstd::value StgStageScript::Func_ObjShot_SetAutoDelete(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = (int)argv[0].as_real();
