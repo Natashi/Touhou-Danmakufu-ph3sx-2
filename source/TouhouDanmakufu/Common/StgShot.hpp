@@ -677,16 +677,6 @@ inline void StgShotObject::_SetVertexPosition(VERTEX_TLX& vertex, float x, float
 	vertex.position.w = w;
 }
 inline void StgShotObject::_SetVertexUV(VERTEX_TLX& vertex, float u, float v) {
-	/*
-	StgShotData* shotData = _GetShotData();
-	if (shotData == nullptr)return;
-
-	shared_ptr<Texture> texture = shotData->GetTexture();
-	int width = texture->GetWidth();
-	int height = texture->GetHeight();
-	vertex.texcoord.x = u / width;
-	vertex.texcoord.y = v / height;
-	*/
 	vertex.texcoord.x = u;
 	vertex.texcoord.y = v;
 }

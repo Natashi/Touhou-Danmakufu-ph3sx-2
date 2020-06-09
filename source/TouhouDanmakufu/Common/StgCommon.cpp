@@ -13,12 +13,13 @@ StgMoveObject::StgMoveObject(StgStageController* stageController) {
 	stageController_ = stageController;
 
 	pattern_ = nullptr;
+	bEnableMovement_ = true;
 }
 StgMoveObject::~StgMoveObject() {
 	pattern_ = nullptr;
 }
 void StgMoveObject::_Move() {
-	if (pattern_ == nullptr) return;
+	if (pattern_ == nullptr || !bEnableMovement_) return;
 
 	if (mapPattern_.size() > 0) {
 		auto itr = mapPattern_.begin();

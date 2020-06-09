@@ -27,6 +27,8 @@ protected:
 	double posY_;
 	shared_ptr<StgMovePattern> pattern_;
 
+	bool bEnableMovement_;
+
 	int framePattern_;
 	std::map<int, std::list<shared_ptr<StgMovePattern>>> mapPattern_;
 	virtual void _Move();
@@ -34,6 +36,9 @@ protected:
 public:
 	StgMoveObject(StgStageController* stageController);
 	virtual ~StgMoveObject();
+
+	void SetEnableMovement(bool b) { bEnableMovement_ = b; }
+	bool IsEnableMovement() { return bEnableMovement_; }
 
 	double GetPositionX() { return posX_; }
 	void SetPositionX(double pos) { posX_ = pos; }
@@ -68,7 +73,7 @@ public:
 		TYPE_LINE,
 
 		NO_CHANGE = -0x1000000,
-		TO_PLAYER_CHANGE = 0x1000000,
+		TOPLAYER_CHANGE = 0x1000000,
 		SET_ZERO = -1,
 	};
 protected:

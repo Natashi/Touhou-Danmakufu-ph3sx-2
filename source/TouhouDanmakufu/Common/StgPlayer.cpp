@@ -185,7 +185,7 @@ void StgPlayerObject::Work() {
 	hitObjectID_ = DxScript::ID_INVALID;
 }
 void StgPlayerObject::Move() {
-	if (state_ == STATE_NORMAL) {
+	if (state_ == STATE_NORMAL && bEnableMovement_) {
 		//�ʏ펞
 		if (hitObjectID_ == DxScript::ID_INVALID) {
 			_Move();

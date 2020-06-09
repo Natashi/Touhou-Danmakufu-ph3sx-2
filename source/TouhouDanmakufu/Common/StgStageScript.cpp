@@ -377,6 +377,7 @@ function const stgFunction[] =
 	{ "ObjMove_SetSpeedX", StgStageScript::Func_ObjMove_SetSpeedX, 2 },
 	{ "ObjMove_GetSpeedY", StgStageScript::Func_ObjMove_GetSpeedY, 1 },
 	{ "ObjMove_SetSpeedY", StgStageScript::Func_ObjMove_SetSpeedY, 2 },
+	{ "ObjMove_SetProcessMovement", StgStageScript::Func_ObjMove_SetProcessMovement, 2 },
 
 	//STG共通関数：敵オブジェクト操作
 	{ "ObjEnemy_Create", StgStageScript::Func_ObjEnemy_Create, 1 },
@@ -617,7 +618,7 @@ function const stgFunction[] =
 	{ "TARGET_ENEMY", constant<StgStageScript::TARGET_ENEMY>::func, 0 },
 	{ "TARGET_PLAYER", constant<StgStageScript::TARGET_PLAYER>::func, 0 },
 
-	{ "TO_PLAYER_CHANGE", constant<StgMovePattern::TO_PLAYER_CHANGE>::func, 0 },
+	{ "TOPLAYER_CHANGE", constant<StgMovePattern::TOPLAYER_CHANGE>::func, 0 },
 	{ "NO_CHANGE", constant<StgMovePattern::NO_CHANGE>::func, 0 },
 };
 StgStageScript::StgStageScript(StgStageController* stageController) : StgControlScript(stageController->GetSystemController()) {
@@ -2751,6 +2752,14 @@ gstd::value StgStageScript::Func_ObjMove_GetSpeedY(gstd::script_machine* machine
 	}
 
 	return value(machine->get_engine()->get_real_type(), speed);
+}
+gstd::value StgStageScript::Func_ObjMove_SetProcessMovement(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
+	if (obj)
+		obj->SetEnableMovement(argv[1].as_boolean());
+	return value();
 }
 
 //STG共通関数：敵オブジェクト操作

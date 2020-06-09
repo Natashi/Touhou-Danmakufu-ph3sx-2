@@ -88,7 +88,7 @@ public:
 	size_t GetTextureCount() { return listTexture_.size(); }
 	shared_ptr<Texture> GetTexture(size_t index) { return listTexture_[index]; }
 	StgItemRenderer* GetRenderer(size_t index, size_t typeRender) { return listRenderer_[typeRender][index]; }
-	std::vector<StgItemRenderer*>* GetRendererList(size_t typeRender) { return &listRenderer_[typeRender]; }
+	std::vector<StgItemRenderer*>& GetRendererList(size_t typeRender) { return listRenderer_[typeRender]; }
 
 	StgItemData* GetData(int id) { return (id >= 0 && id < listData_.size()) ? listData_[id] : nullptr; }
 
@@ -105,7 +105,9 @@ public:
 	};
 private:
 	StgItemDataList* listItemData_;
+
 	int indexTexture_;
+	D3DXVECTOR2 textureSize_;
 
 	int typeItem_;
 	int typeRender_;
@@ -120,6 +122,7 @@ public:
 	virtual ~StgItemData();
 
 	int GetTextureIndex() { return indexTexture_; }
+	D3DXVECTOR2& GetTextureSize() { return textureSize_; }
 	int GetItemType() { return typeItem_; }
 	int GetRenderType() { return typeRender_; }
 	AnimationData* GetData(int frame);
@@ -136,6 +139,8 @@ public:
 //StgItemRenderer
 **********************************************************/
 class StgItemRenderer : public RenderObjectTLX {
+	friend class StgItemManager;
+
 	size_t countRenderVertex_;
 	size_t countMaxVertex_;
 public:
@@ -288,6 +293,22 @@ public:
 
 	void SetImageID(int id);
 };
+#pragma region StgItemObject_User_impl
+inline void StgItemObject_User::_SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z, float w) {
+	constexpr float bias = -0.5f;
+	vertex.position.x = x + bias;
+	vertex.position.y = y + bias;
+	vertex.position.z = z;
+	vertex.position.w = w;
+}
+inline void StgItemObject_User::_SetVertexUV(VERTEX_TLX& vertex, float u, float v) {
+	vertex.texcoord.x = u;
+	vertex.texcoord.y = v;
+}
+inline void StgItemObject_User::_SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color) {
+	vertex.diffuse_color = color;
+}
+#pragma endregion StgItemObject_User_impl
 
 /**********************************************************
 //StgMovePattern_Item

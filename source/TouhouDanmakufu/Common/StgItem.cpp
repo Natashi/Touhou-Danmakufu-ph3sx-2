@@ -164,12 +164,9 @@ void StgItemManager::Render(int targetPriority) {
 
 	D3DXMATRIX& matCamera = camera2D->GetMatrix();
 
-	std::list<shared_ptr<StgItemObject>>::iterator itr = listObj_.begin();
-	for (; itr != listObj_.end(); ++itr) {
+	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
 		shared_ptr<StgItemObject> obj = *itr;
-		if (obj->IsDeleted())continue;
-		if (obj->GetRenderPriorityI() != targetPriority)continue;
-
+		if (obj->IsDeleted() || obj->GetRenderPriorityI() != targetPriority) continue;
 		obj->RenderOnItemManager();
 	}
 
@@ -207,14 +204,18 @@ void StgItemManager::Render(int targetPriority) {
 		effectLayer_->Begin(&cPass, 0);
 		if (cPass >= 1) {
 			for (size_t iBlend = 0; iBlend < countBlendType; iBlend++) {
+				bool hasPolygon = false;
+				std::vector<StgItemRenderer*>& listRenderer = listItemData_->GetRendererList(blendMode[iBlend] - 1);
+
+				for (auto itr = listRenderer.begin(); itr != listRenderer.end() && !hasPolygon; ++itr)
+					hasPolygon = (*itr)->countRenderVertex_ >= 3U;
+				if (!hasPolygon) continue;
+
 				graphics->SetBlendMode(blendMode[iBlend]);
 
-				std::vector<StgItemRenderer*>* listRenderer =
-					listItemData_->GetRendererList(blendMode[iBlend] - 1);
-
 				effectLayer_->BeginPass(0);
-				for (size_t iRender = 0; iRender < listRenderer->size(); iRender++)
-					(*listRenderer)[iRender]->Render(this);
+				for (auto itrRender = listRenderer.begin(); itrRender != listRenderer.end(); ++itrRender)
+					(*itrRender)->Render(this);
 				effectLayer_->EndPass();
 			}
 		}
@@ -232,8 +233,7 @@ void StgItemManager::GetValidRenderPriorityList(std::vector<PriListBool>& list) 
 	list.resize(objectManager->GetRenderBucketCapacity());
 	ZeroMemory(&list[0], objectManager->GetRenderBucketCapacity() * sizeof(PriListBool));
 
-	std::list<shared_ptr<StgItemObject>>::iterator itr = listObj_.begin();
-	for (; itr != listObj_.end(); ++itr) {
+	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
 		shared_ptr<StgItemObject> obj = *itr;
 		if (obj->IsDeleted()) continue;
 		int pri = obj->GetRenderPriorityI();
@@ -371,7 +371,14 @@ bool StgItemDataList::AddItemDataList(std::wstring path, bool bReload) {
 		for (size_t iData = 0; iData < listData.size(); iData++) {
 			StgItemData* data = listData[iData];
 			if (data == nullptr)continue;
+
 			data->indexTexture_ = textureIndex;
+			{
+				auto texture = listTexture_[data->indexTexture_];
+				data->textureSize_.x = texture->GetWidth();
+				data->textureSize_.y = texture->GetHeight();
+			}
+
 			listData_[iData] = data;
 		}
 
@@ -656,7 +663,7 @@ StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObjec
 }
 void StgItemObject::Work() {
 	bool bDefaultMovePattern = std::dynamic_pointer_cast<StgMovePattern_Item>(GetPattern()) != nullptr;
-	if (!bDefaultMovePattern && IsMoveToPlayer()) {
+	if (!bDefaultMovePattern && IsMoveToPlayer() && bEnableMovement_) {
 		float speed = 8;
 		shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
 		float angle = atan2f(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());
@@ -686,7 +693,6 @@ void StgItemObject::RenderOnItemManager() {
 		case ITEM_POINT:
 			scale = 1.0f;
 			break;
-
 		case ITEM_1UP_S:
 		case ITEM_SPELL_S:
 		case ITEM_POWER_S:
@@ -1020,26 +1026,6 @@ StgItemData* StgItemObject_User::_GetItemData() {
 
 	return res;
 }
-void StgItemObject_User::_SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z, float w) {
-	constexpr float bias = -0.5f;
-	vertex.position.x = x + bias;
-	vertex.position.y = y + bias;
-	vertex.position.z = z;
-	vertex.position.w = w;
-}
-void StgItemObject_User::_SetVertexUV(VERTEX_TLX& vertex, float u, float v) {
-	StgItemData* itemData = _GetItemData();
-	if (itemData == nullptr) return;
-
-	shared_ptr<Texture> texture = itemData->GetTexture();
-	float width = texture->GetWidth();
-	float height = texture->GetHeight();
-	vertex.texcoord.x = u / width;
-	vertex.texcoord.y = v / height;
-}
-void StgItemObject_User::_SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color) {
-	vertex.diffuse_color = color;
-}
 void StgItemObject_User::Work() {
 	StgItemObject::Work();
 	++frameWork_;
@@ -1119,7 +1105,8 @@ void StgItemObject_User::RenderOnItemManager() {
 	for (size_t iVert = 0; iVert < 4; iVert++) {
 		VERTEX_TLX vt;
 
-		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
+		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / itemData->GetTextureSize().x, 
+			ptrSrc[iVert | 0b1] / itemData->GetTextureSize().y);
 		_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1]);
 		_SetVertexColorARGB(vt, color);
 

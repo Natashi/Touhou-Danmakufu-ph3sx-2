@@ -107,8 +107,7 @@ void StgShotManager::Render(int targetPriority) {
 		//Always renders enemy shots above player shots, completely obliterates TAƒ°'s wet dream.
 		for (size_t iBlend = 0; iBlend < countBlendType; ++iBlend) {
 			bool hasPolygon = false;
-			std::vector<StgShotRenderer*>& listPlayer =
-				listPlayerShotData_->GetRendererList(blendMode[iBlend] - 1);
+			std::vector<StgShotRenderer*>& listPlayer = listPlayerShotData_->GetRendererList(blendMode[iBlend] - 1);
 
 			//In an attempt to minimize D3D calls.
 			for (auto itr = listPlayer.begin(); itr != listPlayer.end() && !hasPolygon; ++itr)
@@ -129,8 +128,7 @@ void StgShotManager::Render(int targetPriority) {
 		}
 		for (size_t iBlend = 0; iBlend < countBlendType; ++iBlend) {
 			bool hasPolygon = false;
-			std::vector<StgShotRenderer*>& listEnemy =
-				listEnemyShotData_->GetRendererList(blendMode[iBlend] - 1);
+			std::vector<StgShotRenderer*>& listEnemy = listEnemyShotData_->GetRendererList(blendMode[iBlend] - 1);
 
 			for (auto itr = listEnemy.begin(); itr != listEnemy.end() && !hasPolygon; ++itr)
 				hasPolygon = (*itr)->countRenderIndex_ >= 3U;
@@ -1150,7 +1148,7 @@ void StgShotObject::_ProcessTransformAct() {
 			double nowAngle = GetDirectionAngle();
 			double targetAngle = transform.param_d[1];
 
-			if (targetAngle == StgMovePattern::TO_PLAYER_CHANGE) {
+			if (targetAngle == StgMovePattern::TOPLAYER_CHANGE) {
 				StgPlayerObject* objPlayer = stageController_->GetPlayerObjectPtr();
 				if (objPlayer)
 					targetAngle = atan2(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());
@@ -1702,21 +1700,21 @@ void StgLooseLaserObject::_Move() {
 	DxScriptRenderObject::SetX(posX_);
 	DxScriptRenderObject::SetY(posY_);
 
-	if (delay_ > 0)return;
+	if (delay_ <= 0 && bEnableMovement_) {
+		float dx = posXE_ - posX_;
+		float dy = posYE_ - posY_;
 
-	float dx = posXE_ - posX_;
-	float dy = posYE_ - posY_;
-
-	if ((dx * dx + dy * dy) > (length_ * length_)) {
-		float speed = GetSpeed();
-		posXE_ += speed * c_;
-		posYE_ += speed * s_;
+		if ((dx * dx + dy * dy) > (length_ * length_)) {
+			float speed = GetSpeed();
+			posXE_ += speed * c_;
+			posYE_ += speed * s_;
+		}
 	}
 
 	if (lastAngle_ != GetDirectionAngle()) {
 		lastAngle_ = GetDirectionAngle();
-		c_ = cos(lastAngle_);
-		s_ = sin(lastAngle_);
+		c_ = cosf(lastAngle_);
+		s_ = sinf(lastAngle_);
 	}
 }
 void StgLooseLaserObject::_DeleteInAutoClip() {
@@ -2251,8 +2249,8 @@ void StgCurveLaserObject::Work() {
 
 	if (lastAngle_ != GetDirectionAngle()) {
 		lastAngle_ = GetDirectionAngle();
-		c_ = cos(lastAngle_);
-		s_ = sin(lastAngle_);
+		c_ = cosf(lastAngle_);
+		s_ = sinf(lastAngle_);
 	}
 }
 void StgCurveLaserObject::_Move() {
@@ -2260,22 +2258,24 @@ void StgCurveLaserObject::_Move() {
 	DxScriptRenderObject::SetX(posX_);
 	DxScriptRenderObject::SetY(posY_);
 
-	LaserNode pos;
-	pos.pos.SetX(posX_);
-	pos.pos.SetY(posY_);
-	{
-		float wRender = widthRender_ / 2.0f;
+	if (bEnableMovement_) {
+		LaserNode pos;
+		pos.pos.SetX(posX_);
+		pos.pos.SetY(posY_);
+		{
+			float wRender = widthRender_ / 2.0f;
 
-		float nx = -wRender * s_;
-		float ny = wRender * c_;
+			float nx = -wRender * s_;
+			float ny = wRender * c_;
 
-		pos.vertOff[0] = { nx, ny };
-		pos.vertOff[1] = { -nx, -ny };
+			pos.vertOff[0] = { nx, ny };
+			pos.vertOff[1] = { -nx, -ny };
+		}
+
+		listPosition_.push_front(pos);
+		if (listPosition_.size() > length_)
+			listPosition_.pop_back();
 	}
-
-	listPosition_.push_front(pos);
-	if (listPosition_.size() > length_)
-		listPosition_.pop_back();
 }
 void StgCurveLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
