@@ -2117,7 +2117,7 @@ void ParticleRenderer3D::Render() {
 
 		bufferManager->GetInstancingVertexBuffer()->Expand(countInstance_);
 
-		IDirect3DVertexBuffer9* vertexBuffer = bufferManager->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_TLX);
+		IDirect3DVertexBuffer9* vertexBuffer = bufferManager->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_LX);
 		IDirect3DVertexBuffer9* instanceBuffer = bufferManager->GetInstancingVertexBuffer()->GetBuffer();
 		IDirect3DIndexBuffer9* indexBuffer = bufferManager->GetIndexBuffer();
 
@@ -2125,7 +2125,7 @@ void ParticleRenderer3D::Render() {
 			void* tmp;
 
 			vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, vertex_.data(), countVertex * sizeof(VERTEX_TLX));
+			memcpy(tmp, vertex_.data(), countVertex * sizeof(VERTEX_LX));
 			vertexBuffer->Unlock();
 			
 			indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
