@@ -2173,16 +2173,14 @@ gstd::value DxScript::Func_MatrixDeterminant(gstd::script_machine* machine, int 
 gstd::value DxScript::Func_MatrixLookatLH(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	const value& arg0 = argv[0];
-	const value& arg1 = argv[1];
-	const value& arg2 = argv[2];
-	IsVector(machine, arg0, 3);
-	IsVector(machine, arg1, 3);
-	IsVector(machine, arg2, 3);
-
-	D3DXVECTOR3 eye = *(D3DXVECTOR3*)&arg0.index_as_array(0);
-	D3DXVECTOR3 dest = *(D3DXVECTOR3*)&arg1.index_as_array(0);
-	D3DXVECTOR3 up = *(D3DXVECTOR3*)&arg2.index_as_array(0);
+	auto BuildVector = [&](const value& val) -> D3DXVECTOR3 {
+		IsVector(machine, val, 3);
+		return D3DXVECTOR3((FLOAT)val.index_as_array(0).as_real(), 
+			(FLOAT)val.index_as_array(1).as_real(), (FLOAT)val.index_as_array(2).as_real());
+	};
+	D3DXVECTOR3 eye = BuildVector(argv[0]);
+	D3DXVECTOR3 dest = BuildVector(argv[1]);
+	D3DXVECTOR3 up = BuildVector(argv[2]);
 
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtLH(&mat, &eye, &dest, &up);
@@ -2195,16 +2193,14 @@ gstd::value DxScript::Func_MatrixLookatLH(gstd::script_machine* machine, int arg
 gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	const value& arg0 = argv[0];
-	const value& arg1 = argv[1];
-	const value& arg2 = argv[2];
-	IsVector(machine, arg0, 3);
-	IsVector(machine, arg1, 3);
-	IsVector(machine, arg2, 3);
-
-	D3DXVECTOR3 eye = *(D3DXVECTOR3*)&arg0.index_as_array(0);
-	D3DXVECTOR3 dest = *(D3DXVECTOR3*)&arg1.index_as_array(0);
-	D3DXVECTOR3 up = *(D3DXVECTOR3*)&arg2.index_as_array(0);
+	auto BuildVector = [&](const value& val) -> D3DXVECTOR3 {
+		IsVector(machine, val, 3);
+		return D3DXVECTOR3((FLOAT)val.index_as_array(0).as_real(),
+			(FLOAT)val.index_as_array(1).as_real(), (FLOAT)val.index_as_array(2).as_real());
+	};
+	D3DXVECTOR3 eye = BuildVector(argv[0]);
+	D3DXVECTOR3 dest = BuildVector(argv[1]);
+	D3DXVECTOR3 up = BuildVector(argv[2]);
 
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtRH(&mat, &eye, &dest, &up);
@@ -2227,7 +2223,7 @@ gstd::value DxScript::Func_InstallFont(gstd::script_machine* machine, int argc, 
 	try {
 		res = renderer->AddFontFromFile(path);
 	}
-	catch (gstd::wexception e) {
+	catch (gstd::wexception& e) {
 		Logger::WriteTop(e.what());
 	}
 
