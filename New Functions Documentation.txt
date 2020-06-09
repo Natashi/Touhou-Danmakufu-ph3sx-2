@@ -985,6 +985,13 @@ ObjMove_SetSpeedY
 	Description:
 		Sets the move object's Y speed.
 		Also works for objects using the "angle" move mode.
+		
+ObjMove_SetProcessMovement
+	Arguments:
+		1) object ID
+		2) (bool) set
+	Description:
+		Sets whether the object will be allowed to execute movement-related routines.
 
 ObjEnemy_GetIntersectionCircleListToShot
 	Arguments:
@@ -1063,6 +1070,17 @@ ObjStLaser_GetPermitExpand
 		1) object ID
 	Description:
 		Returns whether the straight laser is permitted to expand after the delay period.
+		
+ObjShot_SetOwnerType
+	Arguments:
+		1) object ID
+		2) (struct) type
+	Description:
+		Sets the shot object's owner type.
+		Available types are:
+			OWNER_PLAYER
+			OWNER_ENEMY
+		Shots created inside a player script are set to OWNER_PLAYER by default, OWNER_ENEMY otherwise.
 
 GetShotDataInfoA1
 	Description:
@@ -1107,7 +1125,6 @@ ObjPatternShot_SetPatternType
 		2) (struct) type
 	Description:
 		Sets the firing pattern of the given shot pattern object.
-		
 		Available pattern types:
 			PATTERN_TYPE_FAN
 			PATTERN_TYPE_FAN_AIMED
@@ -1129,7 +1146,6 @@ ObjPatternShot_SetShotType
 		2) (struct) type
 	Description:
 		Sets the shot type of the given shot pattern object.
-		
 		Supported types:
 			OBJ_SHOT
 			OBJ_LOOSE_LASER
@@ -1269,7 +1285,7 @@ ObjPatternShot_AddTransform
 				- Changes the shot blend type to S0.
 			TRANSFORM_TO_SPEED_ANGLE
 				- Changes the shot's speed and angle to f0 and f1 in S0 frames.
-					Setting f1 to TO_PLAYER_CHANGE will cause the target angle to be the angle to the player object.
+					Setting f1 to TOPLAYER_CHANGE will cause the target angle to be the angle to the player object.
 					Setting f0 or f1 to NO_CHANGE will cause the speed/angle to not change.
 			TRANSFORM_ADDPATTERNA1
 				- ObjMove_AddPatternA1(obj, S0, f0, f1);

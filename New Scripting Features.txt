@@ -131,8 +131,13 @@
 			}
 
 - Behaviour Changes
-	- "break;" will no longer cause catastrophes when used outside loops.
-
+	- "break;" will no longer cause catastrophes when used outside loops, as its scope of operation no longer extend beyond a task/function.
+	- Backslash escapes (\\) can now be used in char/string values.
+	- A hexadecimal char literal (\x[hex]) can now be used in char/string values.
+		Example:
+			"\x74"			-> "t"
+			'\x3042'		-> 'あ'
+			"\x042\x5f"		-> "B_"
 
 
 
