@@ -629,20 +629,13 @@ gstd::value StgControlScript::Func_SaveSnapShotA1(gstd::script_machine* machine,
 
 	std::wstring path = argv[0].as_string();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
-
-	graphics->SetRenderTarget(texture);
-	graphics->BeginScene(false, true);
-	systemController->RenderScriptObject(0, 100);
-	graphics->EndScene();
-	graphics->SetRenderTarget(nullptr);
 
 	//フォルダ生成
 	std::wstring dir = PathProperty::GetFileDirectory(path);
 	File::CreateDirectory(dir);
 
 	//保存
-	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
+	IDirect3DSurface9* pSurface = graphics->GetBaseSurface();
 	RECT rect = { 0, 0, graphics->GetScreenWidth(), graphics->GetScreenHeight() };
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
 		pSurface, nullptr, &rect);
@@ -661,20 +654,13 @@ gstd::value StgControlScript::Func_SaveSnapShotA2(gstd::script_machine* machine,
 	int rcBottom = (int)argv[4].as_real();
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
-
-	graphics->SetRenderTarget(texture);
-	graphics->BeginScene(false, true);
-	systemController->RenderScriptObject(0, 100);
-	graphics->EndScene(false);
-	graphics->SetRenderTarget(nullptr);
 
 	//フォルダ生成
 	std::wstring dir = PathProperty::GetFileDirectory(path);
 	File::CreateDirectory(dir);
 
 	//保存
-	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
+	IDirect3DSurface9* pSurface = graphics->GetBaseSurface();
 	RECT rect = { rcLeft, rcTop, rcRight, rcBottom };
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
 		pSurface, nullptr, &rect);
@@ -698,20 +684,13 @@ gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine,
 		imgFormat = D3DXIFF_PPM;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
-
-	graphics->SetRenderTarget(texture);
-	graphics->BeginScene(false, true);
-	systemController->RenderScriptObject(0, 100);
-	graphics->EndScene(false);
-	graphics->SetRenderTarget(nullptr);
 
 	//フォルダ生成
 	std::wstring dir = PathProperty::GetFileDirectory(path);
 	File::CreateDirectory(dir);
 
 	//保存
-	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
+	IDirect3DSurface9* pSurface = graphics->GetBaseSurface();
 	RECT rect = { rcLeft, rcTop, rcRight, rcBottom };
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), (D3DXIMAGE_FILEFORMAT)imgFormat,
 		pSurface, nullptr, &rect);
