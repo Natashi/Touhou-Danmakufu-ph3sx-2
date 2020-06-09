@@ -164,7 +164,6 @@ namespace gstd {
 			command_kind command;
 			int line;	//ソースコード上の行
 			value data;	//pc_push_valueでpushするデータ
-
 #ifdef _DEBUG
 			std::string var_name;	//For assign/push_variable
 #endif
@@ -180,12 +179,6 @@ namespace gstd {
 				};
 				struct {	//loop_back
 					size_t ip;
-				};
-				struct {	//call_and_assign
-					block* sub;
-					size_t arguments;
-					size_t variable;
-					int level;
 				};
 			};
 
