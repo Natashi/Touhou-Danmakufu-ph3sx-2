@@ -687,14 +687,16 @@ namespace directx {
 	protected:
 		std::shared_ptr<DxScriptObjectManager> objManager_;
 
-		//リソース
+		//Resource management
 		std::map<std::wstring, shared_ptr<Texture>> mapTexture_;
-		std::map<std::wstring, gstd::ref_count_ptr<SoundPlayer>> mapSoundPlayer_;
 		std::map<std::wstring, shared_ptr<DxMesh>> mapMesh_;
+		std::map<std::wstring, shared_ptr<Shader>> mapShader_;
+		std::map<std::wstring, gstd::ref_count_ptr<SoundPlayer>> mapSoundPlayer_;
 
 		void _ClearResource();
 		shared_ptr<Texture> _GetTexture(std::wstring name);
-
+		shared_ptr<Shader> _GetShader(std::wstring name);
+		shared_ptr<DxMesh> _GetMesh(std::wstring name);
 	public:
 		DxScript();
 		virtual ~DxScript();
@@ -711,8 +713,6 @@ namespace directx {
 		void ClearObject() { objManager_->ClearObject(); }
 		virtual void WorkObject() { objManager_->WorkObject(); }
 		virtual void RenderObject() { objManager_->RenderObject(); }
-
-		void AddMeshResource(std::wstring name, shared_ptr<DxMesh> mesh) { mapMesh_[name] = mesh; }
 
 		static gstd::value Func_MatrixIdentity(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_MatrixInverse(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -769,12 +769,16 @@ namespace directx {
 		static gstd::value Func_SaveRenderedTextureA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SaveRenderedTextureA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SaveRenderedTextureA3(gstd::script_machine* machine, int argc, const gstd::value* argv);
+
+		static gstd::value Func_LoadShader(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetShader(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetShaderI(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ResetShader(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ResetShaderI(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_IsPixelShaderSupported(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetEnableAntiAliasing(gstd::script_machine* machine, int argc, const gstd::value* argv);
+
+		static gstd::value Func_LoadMesh(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
 		//Dx関数：カメラ3D
 		static gstd::value Func_SetCameraFocusX(gstd::script_machine* machine, int argc, const gstd::value* argv);

@@ -1491,10 +1491,14 @@ function const dxFunction[] =
 	{ "SaveRenderedTextureA3", DxScript::Func_SaveRenderedTextureA3, 7 },
 	{ "IsPixelShaderSupported", DxScript::Func_IsPixelShaderSupported, 2 },
 	//{ "SetAntiAliasing", DxScript::Func_SetEnableAntiAliasing, 1 },
+
+	{ "LoadShader", DxScript::Func_LoadShader, 1 },
 	{ "SetShader", DxScript::Func_SetShader, 3 },
 	{ "SetShaderI", DxScript::Func_SetShaderI, 3 },
 	{ "ResetShader", DxScript::Func_ResetShader, 2 },
 	{ "ResetShaderI", DxScript::Func_ResetShaderI, 2 },
+
+	{ "LoadMesh", DxScript::Func_LoadMesh, 1 },
 
 	//Dxä÷êîÅFÉJÉÅÉâ3D
 	{ "SetCameraFocusX", DxScript::Func_SetCameraFocusX, 1 },
@@ -2001,6 +2005,7 @@ DxScript::~DxScript() {
 }
 void DxScript::_ClearResource() {
 	mapTexture_.clear();
+	mapShader_.clear();
 	mapMesh_.clear();
 
 	std::map<std::wstring, gstd::ref_count_ptr<SoundPlayer>>::iterator itrSound;
@@ -2017,9 +2022,19 @@ int DxScript::AddObject(shared_ptr<DxScriptObjectBase> obj, bool bActivate) {
 shared_ptr<Texture> DxScript::_GetTexture(std::wstring name) {
 	shared_ptr<Texture> res;
 	auto itr = mapTexture_.find(name);
-	if (itr != mapTexture_.end()) {
-		res = itr->second;
-	}
+	if (itr != mapTexture_.end()) res = itr->second;
+	return res;
+}
+shared_ptr<Shader> DxScript::_GetShader(std::wstring name) {
+	shared_ptr<Shader> res;
+	auto itr = mapShader_.find(name);
+	if (itr != mapShader_.end()) res = itr->second;
+	return res;
+}
+shared_ptr<DxMesh> DxScript::_GetMesh(std::wstring name) {
+	shared_ptr<DxMesh> res;
+	auto itr = mapMesh_.find(name);
+	if (itr != mapMesh_.end()) res = itr->second;
 	return res;
 }
 
@@ -2413,7 +2428,7 @@ value DxScript::Func_LoadTexture(script_machine* machine, int argc, const value*
 
 	if (script->mapTexture_.find(path) == script->mapTexture_.end()) {
 		shared_ptr<Texture> texture(new Texture());
-		bool res = texture->CreateFromFile(path, false, false);
+		res = texture->CreateFromFile(path, false, false);
 		if (res) {
 			Lock lock(script->criticalSection_);
 			script->mapTexture_[path] = texture;
@@ -2429,7 +2444,7 @@ value DxScript::Func_LoadTextureInLoadThread(script_machine* machine, int argc, 
 
 	if (script->mapTexture_.find(path) == script->mapTexture_.end()) {
 		shared_ptr<Texture> texture(new Texture());
-		bool res = texture->CreateFromFileInLoadThread(path, false, false);
+		res = texture->CreateFromFileInLoadThread(path, false, false);
 		if (res) {
 			Lock lock(script->criticalSection_);
 			script->mapTexture_[path] = texture;
@@ -2447,7 +2462,7 @@ value DxScript::Func_LoadTextureEx(script_machine* machine, int argc, const valu
 
 	if (script->mapTexture_.find(path) == script->mapTexture_.end()) {
 		shared_ptr<Texture> texture(new Texture());
-		bool res = texture->CreateFromFile(path, useMipMap, useNonPowerOfTwo);
+		res = texture->CreateFromFile(path, useMipMap, useNonPowerOfTwo);
 		if (res) {
 			Lock lock(script->criticalSection_);
 			script->mapTexture_[path] = texture;
@@ -2465,7 +2480,7 @@ value DxScript::Func_LoadTextureInLoadThreadEx(script_machine* machine, int argc
 
 	if (script->mapTexture_.find(path) == script->mapTexture_.end()) {
 		shared_ptr<Texture> texture(new Texture());
-		bool res = texture->CreateFromFileInLoadThread(path, useMipMap, useNonPowerOfTwo);
+		res = texture->CreateFromFileInLoadThread(path, useMipMap, useNonPowerOfTwo);
 		if (res) {
 			Lock lock(script->criticalSection_);
 			script->mapTexture_[path] = texture;
@@ -2787,6 +2802,39 @@ gstd::value DxScript::Func_SetEnableAntiAliasing(gstd::script_machine* machine, 
 	return value(machine->get_engine()->get_boolean_type(), res);
 }
 
+value DxScript::Func_LoadMesh(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	bool res = true;
+	std::wstring path = argv[0].as_string();
+	path = PathProperty::GetUnique(path);
+
+	if (script->mapMesh_.find(path) == script->mapMesh_.end()) {
+		shared_ptr<DxMesh> mesh;
+		res = mesh->CreateFromFile(path);
+		if (res) {
+			Lock lock(script->criticalSection_);
+			script->mapMesh_[path] = mesh;
+		}
+	}
+	return value(machine->get_engine()->get_boolean_type(), res);
+}
+
+value DxScript::Func_LoadShader(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	bool res = true;
+	std::wstring path = argv[0].as_string();
+	path = PathProperty::GetUnique(path);
+
+	if (script->mapShader_.find(path) == script->mapShader_.end()) {
+		ShaderManager* manager = ShaderManager::GetBase();
+		shared_ptr<Shader> shader = manager->CreateFromFile(path);
+		if (res = shader != nullptr) {
+			Lock lock(script->criticalSection_);
+			script->mapShader_[path] = shader;
+		}
+	}
+	return value(machine->get_engine()->get_boolean_type(), res);
+}
 gstd::value DxScript::Func_SetShader(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
@@ -3824,14 +3872,18 @@ gstd::value DxScript::Func_ObjShader_SetShaderF(gstd::script_machine* machine, i
 	if (obj) {
 		std::wstring path = argv[1].as_string();
 		path = PathProperty::GetUnique(path);
-		{
-			ShaderManager* manager = ShaderManager::GetBase();
 
+		auto itr = script->mapShader_.find(path);
+		if (itr != script->mapShader_.end()) {
+			obj->SetShader(itr->second);
+			res = true;
+		}
+		else {
+			ShaderManager* manager = ShaderManager::GetBase();
 			shared_ptr<Shader> shader = manager->CreateFromFile(path);
 			obj->SetShader(shader);
 
 			res = shader != nullptr;
-
 			if (!res) {
 				std::wstring error = manager->GetLastError();
 				script->RaiseError(error);
@@ -4530,28 +4582,33 @@ value DxScript::Func_ObjMesh_Load(script_machine* machine, int argc, const value
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	bool res = false;
+
 	DxScriptMeshObject* obj = dynamic_cast<DxScriptMeshObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		shared_ptr<DxMesh> mesh;
 		std::wstring path = argv[1].as_string();
 		path = PathProperty::GetUnique(path);
-		std::wstring ext = PathProperty::GetFileExtension(path);
 
-		
-		if (ext == L".mqo") {
-			mesh = std::make_shared<MetasequoiaMesh>();
-			res = mesh->CreateFromFile(path);
+		auto itr = script->mapMesh_.find(path);
+		if (itr != script->mapMesh_.end()) {
+			mesh = itr->second;
+			res = true;
 		}
-		/*
-		else if (ext == L".elem") {
-			mesh = std::make_shared<ElfreinaMesh>();
-			res = mesh->CreateFromFile(path);
+		else {
+			std::wstring ext = PathProperty::GetFileExtension(path);
+			if (ext == L".mqo") {
+				mesh = std::make_shared<MetasequoiaMesh>();
+				res = mesh->CreateFromFile(path);
+			}
+			/*
+			else if (ext == L".elem") {
+				mesh = std::make_shared<ElfreinaMesh>();
+				res = mesh->CreateFromFile(path);
+			}
+			*/
 		}
-		*/
-		if (res) {
-			obj->mesh_ = mesh;
-			//script->AddMeshResource(path, mesh);
-		}
+
+		if (res) obj->mesh_ = mesh;
 	}
 	return value(machine->get_engine()->get_boolean_type(), res);
 }
