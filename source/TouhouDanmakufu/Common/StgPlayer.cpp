@@ -63,7 +63,8 @@ void StgPlayerObject::Work() {
 	//当たり判定クリア
 	ClearIntersected();
 
-	if (state_ == STATE_NORMAL) {
+	switch (state_) {
+	case STATE_NORMAL:
 		//通常時
 		if (hitObjectID_ != DxScript::ID_INVALID) {
 			if (frameInvincibility_ <= 0) {
@@ -81,7 +82,7 @@ void StgPlayerObject::Work() {
 				std::vector<value> listValPos;
 				std::vector<double> listShotPos;
 				std::vector<double> listShotID;
-				
+
 				size_t grazedShotCount = listGrazedShot_.size();
 				listShotPos.resize(2);
 				listShotID.resize(grazedShotCount);
@@ -93,7 +94,7 @@ void StgPlayerObject::Work() {
 
 						if (objShot) {
 							listShotID[i] = (double)objShot->GetObjectID();
-							
+
 							listShotPos[0] = objShot->GetPositionX();
 							listShotPos[1] = objShot->GetPositionY();
 							listValPos.push_back(script_->CreateRealArrayValue(listShotPos));
@@ -122,8 +123,8 @@ void StgPlayerObject::Work() {
 
 			_AddIntersection();
 		}
-	}
-	if (state_ == STATE_HIT) {
+		break;
+	case STATE_HIT:
 		//くらいボム待機
 		if (input->GetVirtualKeyState(EDirectInput::KEY_BOMB) == KEY_PUSH)
 			CallSpell();
@@ -146,7 +147,7 @@ void StgPlayerObject::Work() {
 
 				if (enableShootdownEvent_)
 					scriptManager->RequestEventAll(StgStagePlayerScript::EV_PLAYER_SHOOTDOWN);
-				
+
 				if (infoPlayer_->life_ >= 0 || !enableStateEnd_) {
 					bVisible_ = false;
 					state_ = STATE_DOWN;
@@ -165,8 +166,8 @@ void StgPlayerObject::Work() {
 				}
 			}
 		}
-	}
-	if (state_ == STATE_DOWN) {
+		break;
+	case STATE_DOWN:
 		//ダウン
 		frameState_--;
 		if (frameState_ <= 0) {
@@ -175,9 +176,10 @@ void StgPlayerObject::Work() {
 			state_ = STATE_NORMAL;
 			scriptManager->RequestEventAll(StgStageScript::EV_PLAYER_REBIRTH);
 		}
-	}
-	if (state_ == STATE_END) {
+		break;
+	case STATE_END:
 		bVisible_ = false;
+		break;
 	}
 
 	--frameInvincibility_;
@@ -193,8 +195,6 @@ void StgPlayerObject::Move() {
 	}
 }
 void StgPlayerObject::_Move() {
-	double sx = 0;
-	double sy = 0;
 	EDirectInput* input = EDirectInput::GetInstance();
 	int keyLeft = input->GetVirtualKeyState(EDirectInput::KEY_LEFT);
 	int keyRight = input->GetVirtualKeyState(EDirectInput::KEY_RIGHT);
@@ -202,23 +202,29 @@ void StgPlayerObject::_Move() {
 	int keyDown = input->GetVirtualKeyState(EDirectInput::KEY_DOWN);
 	int keySlow = input->GetVirtualKeyState(EDirectInput::KEY_SLOWMOVE);
 
-	double speed = speedFast_;
-	if (keySlow == KEY_PUSH || keySlow == KEY_HOLD) speed = speedSlow_;
+	double sx = 0;
+	double sy = 0;
+	double speed = keySlow == KEY_PUSH || keySlow == KEY_HOLD ? speedSlow_ : speedFast_;
 
 	bool bKeyLeft = keyLeft == KEY_PUSH || keyLeft == KEY_HOLD;
 	bool bKeyRight = keyRight == KEY_PUSH || keyRight == KEY_HOLD;
 	bool bKeyUp = keyUp == KEY_PUSH || keyUp == KEY_HOLD;
 	bool bKeyDown = keyDown == KEY_PUSH || keyDown == KEY_HOLD;
-
 	if (bKeyLeft && !bKeyRight) sx -= speed;
 	if (!bKeyLeft && bKeyRight) sx += speed;
 	if (bKeyUp && !bKeyDown) sy -= speed;
 	if (!bKeyUp && bKeyDown) sy += speed;
 
-	constexpr double diagFactor = 1.0 / gstd::GM_SQRT2;
 	if (sx != 0 && sy != 0) {
+		constexpr double diagFactor = 1.0 / gstd::GM_SQRT2;
 		sx *= diagFactor;
 		sy *= diagFactor;
+		if (sx > 0) SetDirectionAngle(sy > 0 ? D3DXToRadian(45) : D3DXToRadian(225));
+		else SetDirectionAngle(0);
+	}
+	else if (sx != 0 || sy != 0) {
+		if (sx != 0) SetDirectionAngle(sx > 0 ? D3DXToRadian(0) : D3DXToRadian(180));
+		else if (sy != 0) SetDirectionAngle(sy > 0 ? D3DXToRadian(90) : D3DXToRadian(270));
 	}
 
 	double px = posX_ + sx;
@@ -241,8 +247,8 @@ void StgPlayerObject::_AddIntersection() {
 }
 bool StgPlayerObject::_IsValidSpell() {
 	bool res = true;
-	res &= (state_ == STATE_NORMAL || (state_ == STATE_HIT && frameState_ > 0));
-	res &= (objSpell_ == nullptr || objSpell_->IsDeleted());
+	res &= state_ == STATE_NORMAL || (state_ == STATE_HIT && frameState_ > 0);	//Normal or deathbombing -> yes
+	res &= (objSpell_ == nullptr) || (objSpell_->IsDeleted());		//A spell is already active -> no
 	return res;
 }
 void StgPlayerObject::CallSpell() {
@@ -256,24 +262,21 @@ void StgPlayerObject::CallSpell() {
 	gstd::value vUse = script_->RequestEvent(StgStagePlayerScript::EV_REQUEST_SPELL);
 	if (!script_->IsBooleanValue(vUse))
 		throw gstd::wexception(L"@Event(EV_REQUEST_SPELL) must return a boolean value.");
-	bool bUse = vUse.as_boolean();
-	if (!bUse) {
+	if (!vUse.as_boolean()) {
 		objectManager->DeleteObject(objSpell_);
 		objSpell_ = nullptr;
 		return;
 	}
 
+	//Restore state from deathbombing to normal
 	if (state_ == STATE_HIT) {
 		state_ = STATE_NORMAL;
-		infoPlayer_->frameRebirth_ -= frameRebirthDiff_;
-		infoPlayer_->frameRebirth_ = std::max(infoPlayer_->frameRebirth_, 0);
+		infoPlayer_->frameRebirth_ = std::max(infoPlayer_->frameRebirth_ - frameRebirthDiff_, 0);
 	}
 
 	StgEnemyManager* enemyManager = stageController_->GetEnemyManager();
 	shared_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
-	if (objBossScene != nullptr) {
-		objBossScene->AddPlayerSpellCount();
-	}
+	if (objBossScene) objBossScene->AddPlayerSpellCount();
 
 	auto scriptManager = stageController_->GetScriptManager();
 	scriptManager->RequestEventAll(StgStageScript::EV_PLAYER_SPELL);
