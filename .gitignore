@@ -284,4 +284,4 @@ __pycache__/
 /source/Steam/
 
 # !!Sensitive Information!!
-source/GcLib/gstd/ArchiveEncryption.hpp
+/source/GcLib/gstd/ArchiveEncryption.hpp
