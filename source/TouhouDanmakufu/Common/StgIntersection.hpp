@@ -312,7 +312,7 @@ protected:
 	std::vector<StgIntersectionTarget::ptr> listRelativeTarget_;
 	std::vector<DxCircle> listOrgCircle_;
 	std::vector<DxWidthLine> listOrgLine_;
-	std::vector<int> listIntersectedID_;
+	std::vector<weak_ptr<StgIntersectionObject>> listIntersectedID_;
 public:
 	StgIntersectionObject() { bIntersected_ = false; intersectedCount_ = 0; }
 	virtual ~StgIntersectionObject() {}
@@ -321,9 +321,9 @@ public:
 	bool IsIntersected() { return bIntersected_; }
 	void SetIntersected() { bIntersected_ = true; intersectedCount_++; }
 	size_t GetIntersectedCount() { return intersectedCount_; }
-	void ClearIntersectedIdList() { if (listIntersectedID_.size() > 0)listIntersectedID_.clear(); }
-	void AddIntersectedId(int id) { listIntersectedID_.push_back(id); }
-	std::vector<int>& GetIntersectedIdList() { return listIntersectedID_; }
+	void ClearIntersectedIdList() { listIntersectedID_.clear(); }
+	void AddIntersectedId(weak_ptr<StgIntersectionObject> obj) { listIntersectedID_.push_back(obj); }
+	std::vector<weak_ptr<StgIntersectionObject>>& GetIntersectedIdList() { return listIntersectedID_; }
 
 	void ClearIntersectionRelativeTarget();
 	void AddIntersectionRelativeTarget(StgIntersectionTarget::ptr target);

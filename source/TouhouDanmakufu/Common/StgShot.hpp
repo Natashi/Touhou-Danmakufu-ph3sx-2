@@ -55,7 +55,7 @@ public:
 	void Render(int targetPriority);
 	void RegistIntersectionTarget();
 
-	void AddShot(shared_ptr<StgShotObject> obj) { listObj_.push_back(obj); }
+	void AddShot(shared_ptr<StgShotObject> obj);
 
 	StgShotDataList* GetPlayerShotDataList() { return listPlayerShotData_; }
 	StgShotDataList* GetEnemyShotDataList() { return listEnemyShotData_; }
@@ -236,6 +236,8 @@ public:
 protected:
 	StgStageController* stageController_;
 
+	weak_ptr<StgShotObject> pOwnReference_;
+
 	int frameWork_;
 	int idShotData_;
 	int typeOwner_;
@@ -260,6 +262,7 @@ protected:
 	int frameAutoDelete_;
 	ref_count_ptr<ReserveShotList>::unsync listReserveShot_;
 
+	shared_ptr<StgIntersectionTarget> pShotIntersectionTarget_;
 	bool bUserIntersectionMode_;//ユーザ定義あたり判定モード
 	bool bIntersectionEnable_;
 	bool bChangeItemEnable_;
@@ -306,7 +309,8 @@ public:
 		listTransformationShotAct_ = listTransform;
 	}
 
-	shared_ptr<StgShotObject> GetOwnObject();
+	void SetOwnObjectReference();
+
 	int GetShotDataID() { return idShotData_; }
 	virtual void SetShotDataID(int id) { idShotData_ = id; }
 	int GetOwnerType() { return typeOwner_; }

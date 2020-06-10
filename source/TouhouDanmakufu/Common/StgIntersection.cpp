@@ -67,12 +67,12 @@ void StgIntersectionManager::Work() {
 				if (ptrA) {
 					ptrA->Intersect(targetA, targetB);
 					ptrA->SetIntersected();
-					if (ptrB) ptrA->AddIntersectedId(ptrB->GetDxScriptObjectID());
+					if (ptrB) ptrA->AddIntersectedId(ptrB);
 				}
 				if (ptrB) {
 					ptrB->Intersect(targetB, targetA);
 					ptrB->SetIntersected();
-					if (ptrA) ptrB->AddIntersectedId(ptrA->GetDxScriptObjectID());
+					if (ptrA) ptrB->AddIntersectedId(ptrA);
 				}
 
 				//omp_unset_lock(&lock_);

@@ -378,6 +378,7 @@ function const stgFunction[] =
 	{ "ObjMove_GetSpeedY", StgStageScript::Func_ObjMove_GetSpeedY, 1 },
 	{ "ObjMove_SetSpeedY", StgStageScript::Func_ObjMove_SetSpeedY, 2 },
 	{ "ObjMove_SetProcessMovement", StgStageScript::Func_ObjMove_SetProcessMovement, 2 },
+	{ "ObjMove_GetProcessMovement", StgStageScript::Func_ObjMove_GetProcessMovement, 1 },
 
 	//STG共通関数：敵オブジェクト操作
 	{ "ObjEnemy_Create", StgStageScript::Func_ObjEnemy_Create, 1 },
@@ -2765,6 +2766,13 @@ gstd::value StgStageScript::Func_ObjMove_SetProcessMovement(gstd::script_machine
 		obj->SetEnableMovement(argv[1].as_boolean());
 	return value();
 }
+gstd::value StgStageScript::Func_ObjMove_GetProcessMovement(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
+	bool res = obj != nullptr ? obj->IsEnableMovement() : true;
+	return value(machine->get_engine()->get_boolean_type(), res);
+}
 
 //STG共通関数：敵オブジェクト操作
 gstd::value StgStageScript::Func_ObjEnemy_Create(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -3093,7 +3101,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_GetInfo(gstd::script_machine*
 		case INFO_CURRENT_LIFE_MAX:
 			return value(machine->get_engine()->get_real_type(), (double)0);
 		case INFO_ACTIVE_STEP_LIFE_RATE_LIST:
-			return script->CreateRealArrayValue(std::vector<double>());
+			return script->CreateRealArrayValue(std::vector<float>());
 
 		}
 		return value();
@@ -4287,30 +4295,29 @@ gstd::value StgStageScript::Func_ObjCol_IsIntersected(gstd::script_machine* mach
 gstd::value StgStageScript::Func_ObjCol_GetListOfIntersectedEnemyID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	std::vector<double> listLD;
+	std::vector<double> listObjectID;
 	StgIntersectionObject* obj = dynamic_cast<StgIntersectionObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		std::vector<int>& list = obj->GetIntersectedIdList();
-		std::vector<double> listLD;
-		for (size_t iList = 0; iList < list.size(); ++iList) {
-			int idObject = list[iList];
-			shared_ptr<StgEnemyObject> objEnemy = std::dynamic_pointer_cast<StgEnemyObject>(script->GetObject(idObject));
-			if (objEnemy != nullptr)
-				listLD.push_back(idObject);
+		for (auto wPtr : obj->GetIntersectedIdList()) {
+			if (auto ptr = wPtr.lock()) {
+				if (shared_ptr<StgEnemyObject> objEnemy = std::dynamic_pointer_cast<StgEnemyObject>(ptr))
+					listObjectID.push_back(objEnemy->GetDxScriptObjectID());
+			}
 		}
 	}
-	return script->CreateRealArrayValue(listLD);
+	return script->CreateRealArrayValue(listObjectID);
 }
 gstd::value StgStageScript::Func_ObjCol_GetIntersectedCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	double res = 0;
+	size_t res = 0;
 	shared_ptr<StgIntersectionObject> obj = std::dynamic_pointer_cast<StgIntersectionObject>(script->GetObject(id));
 	if (obj) {
-		std::vector<int>& list = obj->GetIntersectedIdList();
-		res = list.size();
+		for (auto wPtr : obj->GetIntersectedIdList()) {
+			if (!wPtr.expired()) ++res;
+		}
 	}
-	return value(machine->get_engine()->get_real_type(), res);
+	return value(machine->get_engine()->get_real_type(), (double)res);
 }
 
 /**********************************************************

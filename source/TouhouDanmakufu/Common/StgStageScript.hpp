@@ -305,6 +305,7 @@ public:
 	static gstd::value Func_ObjMove_SetSpeedY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetSpeedY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetProcessMovement);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_GetProcessMovement);
 
 	//STG共通関数：敵オブジェクト操作
 	static gstd::value Func_ObjEnemy_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
