@@ -55,10 +55,8 @@ std::wstring StringUtility::ConvertMultiToWide(const std::string& str, int code)
 	size_t sizeWide = MultiByteToWideChar(code, 0, str.c_str(), -1, nullptr, 0);
 	if (sizeWide == 0) return L"";
 
-	//UNICODE‚É•ÏŠ·‚µ‚Ü‚·
 	std::wstring wstr;
 	wstr.resize(sizeWide - 1);
-
 	MultiByteToWideChar(code, 0, str.c_str(), str.size(), &wstr[0], sizeWide - 1);
 
 	return wstr;
@@ -71,7 +69,6 @@ std::string StringUtility::ConvertWideToMulti(const std::wstring& wstr, int code
 
 	std::string str;
 	str.resize(sizeMulti - 1);
-
 	WideCharToMultiByte(code, 0, wstr.c_str(), wstr.size(), &str[0], sizeMulti - 1, nullptr, nullptr);
 
 	return str;
@@ -87,6 +84,28 @@ std::string StringUtility::ConvertWideToMulti(std::vector<char>& buf, int code) 
 
 	std::wstring wstr = std::wstring((wchar_t*)buf.data(), (wchar_t*)(buf.data() + buf.size()));
 	return ConvertWideToMulti(wstr, code);
+}
+size_t StringUtility::ConvertMultiToWide(char* mbstr, size_t mbcount, std::vector<char>& wres, int code) {
+	if (mbcount == 0) return 0;
+
+	size_t sizeWide = MultiByteToWideChar(code, 0, mbstr, mbcount, nullptr, 0);
+	if (sizeWide == 0) return 0;
+
+	wres.resize(sizeWide * 2U);
+	MultiByteToWideChar(code, 0, mbstr, mbcount, (wchar_t*)&wres[0], sizeWide);
+
+	return sizeWide;
+}
+size_t StringUtility::ConvertWideToMulti(wchar_t* wstr, size_t wcount, std::vector<char>& mbres, int code) {
+	if (wcount == 0) return 0;
+
+	size_t sizeMulti = WideCharToMultiByte(code, 0, wstr, wcount, nullptr, 0, nullptr, nullptr);
+	if (sizeMulti == 0) return 0;
+
+	mbres.resize(sizeMulti);
+	WideCharToMultiByte(code, 0, wstr, wcount, &mbres[0], sizeMulti, nullptr, nullptr);
+
+	return sizeMulti;
 }
 
 //----------------------------------------------------------------

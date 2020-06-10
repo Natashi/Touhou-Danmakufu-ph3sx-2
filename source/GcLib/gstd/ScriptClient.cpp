@@ -315,12 +315,12 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 
 	//std::vector<Token> mapTokens;
 
-	int encoding = Encoding::UTF8;
+	int mainEncoding = Encoding::UTF8;
 	bool bEnd = false;
 	while (true) {
 		if (bEnd)break;
 		Scanner scanner(res);
-		encoding = scanner.GetEncoding();
+		mainEncoding = scanner.GetEncoding();
 		size_t resSize = res.size();
 
 		bEnd = true;
@@ -333,7 +333,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 			}
 			else if (tok.GetType() == Token::TK_SHARP) {
 				size_t ptrPosBeforeInclude = scanner.GetCurrentPointer() - 1;
-				if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE)
+				if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE)
 					ptrPosBeforeInclude--;
 				std::vector<char>::iterator posBeforeInclude = res.begin() + ptrPosBeforeInclude;
 
@@ -351,8 +351,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 						source = res;
 						engine_->SetSource(source);
 
-						std::wstring error;
-						error += L"New line is not found after #include. (Did you accidentally put a semicolon?)\r\n";
+						std::wstring error = L"Newline is not found after #include. (Did you accidentally put a semicolon?)\r\n";
 						_RaiseError(line, error);
 					}
 					scanner.SetCurrentPointer(posBeforeNewLine);
@@ -402,91 +401,80 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 
 				//ファイルを読み込み最後に改行を付加
 				size_t targetBomSize = 0;
-				int targetEncoding = Encoding::UTF8;
+				int includeEncoding = Encoding::UTF8;
 				if (reader->GetFileSize() >= 2) {
 					char data[2];
 					reader->Read(&data[0], 2);
 					if (Encoding::IsUtf16Le(&data[0], 2)) {
-						targetEncoding = Encoding::UTF16LE;
+						includeEncoding = Encoding::UTF16LE;
 						targetBomSize = 2;
 					}
 					else if (Encoding::IsUtf16Be(&data[0], 2)) {
-						targetEncoding = Encoding::UTF16BE;
+						includeEncoding = Encoding::UTF16BE;
 						targetBomSize = 2;
 					}
 					//ファイルポインタを最初に戻す
 					reader->SetFilePointerBegin();
 				}
 
-				if (targetEncoding == Encoding::UTF16LE || targetEncoding == Encoding::UTF16BE) {
+				if (includeEncoding == Encoding::UTF16LE || includeEncoding == Encoding::UTF16BE) {
 					//Including UTF-16
 
 					reader->Seek(targetBomSize);
-					placement.resize(reader->GetFileSize() - targetBomSize + sizeof(wchar_t)); //- BOM size + padding
-					size_t readSize = reader->GetFileSize() - targetBomSize;
-					reader->Read(&placement[0], readSize);
-					memcpy(&placement[readSize], L" ", sizeof(wchar_t));
+					placement.resize(reader->GetFileSize() - targetBomSize); //- BOM size
+					reader->Read(&placement[0], placement.size());
 
 					//Convert the including file to UTF-8
-					if (encoding == Encoding::UTF8) {
-						targetEncoding = encoding;
-
-						if (targetEncoding == Encoding::UTF16BE) {
+					if (mainEncoding == Encoding::UTF8) {
+						if (includeEncoding == Encoding::UTF16BE) {
 							for (auto itr = placement.begin(); itr != placement.end(); itr += 2) {
 								wchar_t* wch = (wchar_t*)&*itr;
 								*wch = (*wch >> 8) | (*wch << 8);
 							}
 						}
 
-						std::string resStr;
-						try {
-							resStr = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes((wchar_t*)placement.data(),
-								(wchar_t*)(placement.data() + placement.size()));
-						}
-						catch (std::exception& e) {
+						std::vector<char> mbres;
+						size_t countMbRes = StringUtility::ConvertWideToMulti((wchar_t*)placement.data(),
+							placement.size() / 2U, mbres, CP_UTF8);
+						if (countMbRes == 0) {
 							std::wstring error = StringUtility::Format(L"Error reading include file. "
-								"(%s -> UTF-8) [%s]\r\n(std: %s)\r\n",
-								targetEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE",
-								wPath.c_str(), StringUtility::ConvertMultiToWide(e.what()).c_str());
+								"(%s -> UTF-8) [%s]\r\n",
+								includeEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
 							_RaiseError(scanner.GetCurrentLine(), error);
 						}
-						placement = std::vector<char>(resStr.begin(), resStr.end());
+
+						includeEncoding = mainEncoding;
+						placement = mbres;
 					}
 				}
 				else {
 					//Including UTF-8
 
-					placement.resize(reader->GetFileSize() + 1);
+					placement.resize(reader->GetFileSize());
 					reader->Read(&placement[0], reader->GetFileSize());
-					memcpy(&placement[reader->GetFileSize()], " ", 1);
 
 					//Convert the include file to the main script's encoding
-					if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
+					if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE) {
 						size_t placementSize = placement.size();
 
-						std::wstring wResStr;
-						try {
-							wResStr = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(placement.data(),
-								placement.data() + placementSize);
-						}
-						catch (std::exception& e) {
+						std::vector<char> wplacement;
+						size_t countWRes = StringUtility::ConvertMultiToWide(placement.data(), 
+							placementSize, wplacement, CP_UTF8);
+						if (countWRes == 0) {
 							std::wstring error = StringUtility::Format(L"Error reading include file. "
-								"(UTF-8 -> %s) [%s]\r\n(std: %s)\r\n",
-								encoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE",
-								wPath.c_str(), StringUtility::ConvertMultiToWide(e.what()).c_str());
+								"(UTF-8 -> %s) [%s]\r\n",
+								mainEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
 							_RaiseError(scanner.GetCurrentLine(), error);
 						}
 
-						placement.clear();
-						placement.resize(wResStr.size() * 2U);
+						placement = wplacement;
 
-						size_t iPlacement = 0U;
-						for (auto wItr = wResStr.begin(); wItr != wResStr.end(); ++wItr, iPlacement += 2U) {
-							char ch1 = (*wItr) & 0x00ff;
-							char ch2 = ((*wItr) >> 8) & 0x00ff;
-							if (encoding == Encoding::UTF16BE) std::swap(ch1, ch2);
-							placement[iPlacement] = ch1;
-							placement[iPlacement + 1] = ch2;
+						//Swap bytes for UTF-16 BE
+						if (mainEncoding == Encoding::UTF16BE) {
+							for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
+								*wItr = *(wItr + 1);
+								*(wItr + 1) = *wItr;
+							}
 						}
 					}
 				}
@@ -520,7 +508,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 					if (false) {
 						std::string strNewLine = "\r\n";
 						std::wstring strNewLineW = L"\r\n";
-						if (encoding == Encoding::UTF16LE) {
+						if (mainEncoding == Encoding::UTF16LE) {
 							file.Write(&strNewLineW[0], strNewLine.size() * sizeof(wchar_t));
 							file.Write(&strNewLineW[0], strNewLine.size() * sizeof(wchar_t));
 						}
@@ -533,7 +521,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 						std::list<ScriptFileLineMap::Entry>::iterator itr = listEntry.begin();
 
 						for (; itr != listEntry.end(); itr++) {
-							if (encoding == Encoding::UTF16LE) {
+							if (mainEncoding == Encoding::UTF16LE) {
 								ScriptFileLineMap::Entry entry = (*itr);
 								std::wstring strPath = entry.path_ + L"\r\n";
 								std::wstring strLineStart = StringUtility::Format(L"  lineStart   :%4d\r\n", entry.lineStart_);
@@ -675,7 +663,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 	*/
 
 	res.push_back(0);
-	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
+	if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE) {
 		res.push_back(0);
 	}
 

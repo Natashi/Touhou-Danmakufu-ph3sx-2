@@ -86,6 +86,8 @@ namespace gstd {
 		static std::string ConvertWideToMulti(const std::wstring& wstr, int code = CP_UTF8);
 		static std::wstring ConvertMultiToWide(std::vector<char>& buf, int code = CP_UTF8);
 		static std::string ConvertWideToMulti(std::vector<char>& buf, int code = CP_UTF8);
+		static size_t ConvertMultiToWide(char* mbstr, size_t mbcount, std::vector<char>& wres, int code);
+		static size_t ConvertWideToMulti(wchar_t* mbstr, size_t wcount, std::vector<char>& mbres, int code);
 
 		//----------------------------------------------------------------
 		static std::vector<std::string> Split(std::string str, std::string delim);
@@ -189,13 +191,15 @@ namespace gstd {
 
 		static inline double NormalizeAngleDeg(double angle) { 
 			angle = fmod(angle, 360.0);
-			if (angle < 0.0) angle += 360.0;
-			return angle; 
+			return angle < 0.0 ? angle + 360.0 : angle;
 		}
 		static inline double NormalizeAngleRad(double angle) {
 			angle = fmod(angle, GM_PI_X2);
-			if (angle < 0.0) angle += GM_PI_X2;
-			return angle;
+			return angle < 0.0 ? angle + GM_PI_X2 : angle;
+		}
+		static inline double AngleDifferenceRad(double angle1, double angle2) {
+			double dist = NormalizeAngleRad(angle2 - angle1);
+			return dist > GM_PI ? dist - GM_PI_X2 : dist;
 		}
 
 		static void InitializeFPU() {
