@@ -51,11 +51,11 @@ namespace directx {
 
 		static D3DCOLOR& SetColorHSV(D3DCOLOR& color, int hue, int saturation, int value);
 
-		static void ClampColor(int& color) {
+		static inline void ClampColor(int& color) {
 			if (color > 0xff) color = 0xff;
 			else if (color < 0x00) color = 0x00;
 		}
-		static int ClampColorRet(int color) {
+		static inline int ClampColorRet(int color) {
 			if (color > 0xff) color = 0xff;
 			else if (color < 0x00) color = 0x00;
 			return color;

@@ -57,9 +57,10 @@ D3DCOLOR& ColorAccess::SetColorHSV(D3DCOLOR& color, int hue, int saturation, int
 	case 5: red = value;	green = p;		blue = q; break;
 	}
 
-	SetColorR(color, red);
-	SetColorG(color, green);
-	SetColorB(color, blue);
+	ClampColor(red);
+	ClampColor(green);
+	ClampColor(blue);
+	color = D3DCOLOR_RGBA(red, green, blue, color >> 24);
 	return color;
 }
 

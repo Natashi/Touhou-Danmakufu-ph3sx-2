@@ -263,6 +263,7 @@ namespace directx {
 		void SetVertexColorARGB(size_t index, int a, int r, int g, int b);
 		void SetVertexAlpha(size_t index, int alpha);
 		void SetVertexColorRGB(size_t index, int r, int g, int b);
+		D3DCOLOR GetVertexColor(size_t index);
 		void SetColorRGB(D3DCOLOR color);
 		void SetAlpha(int alpha);
 
@@ -270,76 +271,6 @@ namespace directx {
 		bool IsPermitCamera() { return bPermitCamera_; }
 		void SetPermitCamera(bool bPermit) { bPermitCamera_ = bPermit; }
 	};
-#pragma region RenderObjectTLX_impl
-	inline void RenderObjectTLX::SetVertexCount(size_t count) {
-		RenderObject::SetVertexCount(count);
-		SetColorRGB(D3DCOLOR_ARGB(255, 255, 255, 255));
-		SetAlpha(255);
-	}
-	inline VERTEX_TLX* RenderObjectTLX::GetVertex(size_t index) {
-		size_t pos = index * strideVertexStreamZero_;
-		if (pos >= vertex_.size()) return nullptr;
-		return (VERTEX_TLX*)&vertex_[pos];
-	}
-	inline void RenderObjectTLX::SetVertex(size_t index, VERTEX_TLX& vertex) {
-		size_t pos = index * strideVertexStreamZero_;
-		if (pos >= vertex_.size()) return;
-		memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
-	}
-	inline void RenderObjectTLX::SetVertexPosition(size_t index, float x, float y, float z, float w) {
-		VERTEX_TLX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-
-		constexpr float bias = -0.5f;
-		vertex->position.x = x + bias;
-		vertex->position.y = y + bias;
-		vertex->position.z = z;
-		vertex->position.w = w;
-	}
-	inline void RenderObjectTLX::SetVertexUV(size_t index, float u, float v) {
-		VERTEX_TLX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->texcoord.x = u;
-		vertex->texcoord.y = v;
-	}
-	inline void RenderObjectTLX::SetVertexColor(size_t index, D3DCOLOR color) {
-		VERTEX_TLX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->diffuse_color = color;
-	}
-	inline void RenderObjectTLX::SetVertexColorARGB(size_t index, int a, int r, int g, int b) {
-		VERTEX_TLX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->diffuse_color = D3DCOLOR_ARGB(a, r, g, b);
-	}
-	inline void RenderObjectTLX::SetVertexAlpha(size_t index, int alpha) {
-		VERTEX_TLX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->diffuse_color = (vertex->diffuse_color & 0x00ffffff) | ((byte)alpha << 24);
-	}
-	inline void RenderObjectTLX::SetVertexColorRGB(size_t index, int r, int g, int b) {
-		VERTEX_TLX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		D3DCOLOR dc = D3DCOLOR_ARGB(0, r, g, b);
-		vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | dc;
-	}
-	inline void RenderObjectTLX::SetColorRGB(D3DCOLOR color) {
-		D3DCOLOR dc = color & 0x00ffffff;
-		for (size_t iVert = 0; iVert < vertex_.size(); ++iVert) {
-			VERTEX_TLX* vertex = GetVertex(iVert);
-			if (vertex == nullptr)return;
-			vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | dc;
-		}
-	}
-	inline void RenderObjectTLX::SetAlpha(int alpha) {
-		D3DCOLOR dc = (byte)alpha << 24;
-		for (size_t iVert = 0; iVert < vertex_.size(); ++iVert) {
-			VERTEX_TLX* vertex = GetVertex(iVert);
-			if (vertex == nullptr)return;
-			vertex->diffuse_color = (vertex->diffuse_color & 0x00ffffff) | dc;
-		}
-	}
-#pragma endregion RenderObjectTLX_impl
 
 	/**********************************************************
 	//RenderObjectLX
@@ -363,78 +294,10 @@ namespace directx {
 		void SetVertexColorARGB(size_t index, int a, int r, int g, int b);
 		void SetVertexAlpha(size_t index, int alpha);
 		void SetVertexColorRGB(size_t index, int r, int g, int b);
+		D3DCOLOR GetVertexColor(size_t index);
 		void SetColorRGB(D3DCOLOR color);
 		void SetAlpha(int alpha);
 	};
-#pragma region RenderObjectLX_impl
-	inline void RenderObjectLX::SetVertexCount(size_t count) {
-		RenderObject::SetVertexCount(count);
-		SetColorRGB(D3DCOLOR_ARGB(255, 255, 255, 255));
-		SetAlpha(255);
-	}
-	inline VERTEX_LX* RenderObjectLX::GetVertex(size_t index) {
-		size_t pos = index * strideVertexStreamZero_;
-		if (pos >= vertex_.size())return nullptr;
-		return (VERTEX_LX*)&vertex_[pos];
-	}
-	inline void RenderObjectLX::SetVertex(size_t index, VERTEX_LX& vertex) {
-		size_t pos = index * strideVertexStreamZero_;
-		if (pos >= vertex_.size())return;
-		memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
-	}
-	inline void RenderObjectLX::SetVertexPosition(size_t index, float x, float y, float z) {
-		VERTEX_LX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-
-		constexpr float bias = -0.5f;
-		vertex->position.x = x + bias;
-		vertex->position.y = y + bias;
-		vertex->position.z = z;
-	}
-	inline void RenderObjectLX::SetVertexUV(size_t index, float u, float v) {
-		VERTEX_LX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->texcoord.x = u;
-		vertex->texcoord.y = v;
-	}
-	inline void RenderObjectLX::SetVertexColor(size_t index, D3DCOLOR color) {
-		VERTEX_LX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->diffuse_color = color;
-	}
-	inline void RenderObjectLX::SetVertexColorARGB(size_t index, int a, int r, int g, int b) {
-		VERTEX_LX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->diffuse_color = D3DCOLOR_ARGB(a, r, g, b);
-	}
-	inline void RenderObjectLX::SetVertexAlpha(size_t index, int alpha) {
-		VERTEX_LX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->diffuse_color = (vertex->diffuse_color & 0x00ffffff) | ((byte)alpha << 24);
-	}
-	inline void RenderObjectLX::SetVertexColorRGB(size_t index, int r, int g, int b) {
-		VERTEX_LX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		D3DCOLOR dc = D3DCOLOR_ARGB(0, r, g, b);
-		vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | dc;
-	}
-	inline void RenderObjectLX::SetColorRGB(D3DCOLOR color) {
-		D3DCOLOR dc = color & 0x00ffffff;
-		for (size_t iVert = 0; iVert < vertex_.size(); ++iVert) {
-			VERTEX_LX* vertex = GetVertex(iVert);
-			if (vertex == nullptr)return;
-			vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | dc;
-		}
-	}
-	inline void RenderObjectLX::SetAlpha(int alpha) {
-		D3DCOLOR dc = (byte)alpha << 24;
-		for (size_t iVert = 0; iVert < vertex_.size(); ++iVert) {
-			VERTEX_LX* vertex = GetVertex(iVert);
-			if (vertex == nullptr)return;
-			vertex->diffuse_color = (vertex->diffuse_color & 0x00ffffff) | dc;
-		}
-	}
-#pragma endregion RenderObjectLX_impl
 
 	/**********************************************************
 	//RenderObjectNX
@@ -460,40 +323,6 @@ namespace directx {
 		void SetVertexNormal(size_t index, float x, float y, float z);
 		void SetColor(D3DCOLOR color) { color_ = color; }
 	};
-#pragma region RenderObjectNX_impl
-	inline VERTEX_NX* RenderObjectNX::GetVertex(size_t index) {
-		size_t pos = index * strideVertexStreamZero_;
-		if (pos >= vertex_.size())return nullptr;
-		return (VERTEX_NX*)&vertex_[pos];
-	}
-	inline void RenderObjectNX::SetVertex(size_t index, VERTEX_NX& vertex) {
-		size_t pos = index * strideVertexStreamZero_;
-		if (pos >= vertex_.size())return;
-		memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
-	}
-	inline void RenderObjectNX::SetVertexPosition(size_t index, float x, float y, float z) {
-		VERTEX_NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-
-		constexpr float bias = -0.5f;
-		vertex->position.x = x + bias;
-		vertex->position.y = y + bias;
-		vertex->position.z = z;
-	}
-	inline void RenderObjectNX::SetVertexUV(size_t index, float u, float v) {
-		VERTEX_NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->texcoord.x = u;
-		vertex->texcoord.y = v;
-	}
-	inline void RenderObjectNX::SetVertexNormal(size_t index, float x, float y, float z) {
-		VERTEX_NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->normal.x = x;
-		vertex->normal.y = y;
-		vertex->normal.z = z;
-	}
-#pragma endregion RenderObjectNX_impl
 
 	/**********************************************************
 	//RenderObjectBNX
@@ -559,46 +388,6 @@ namespace directx {
 		void SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate);
 		void SetVertexNormal(size_t index, float x, float y, float z);
 	};
-#pragma region RenderObjectB2X_impl
-	inline VERTEX_B2NX* RenderObjectB2NX::GetVertex(size_t index) {
-		size_t pos = index * strideVertexStreamZero_;
-		if (pos >= vertex_.size())return nullptr;
-		return (VERTEX_B2NX*)&vertex_[pos];
-	}
-	inline void RenderObjectB2NX::SetVertex(size_t index, VERTEX_B2NX& vertex) {
-		size_t pos = index * strideVertexStreamZero_;
-		if (pos >= vertex_.size())return;
-		memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
-	}
-	inline void RenderObjectB2NX::SetVertexPosition(size_t index, float x, float y, float z) {
-		VERTEX_B2NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-
-		constexpr float bias = -0.5f;
-		vertex->position.x = x + bias;
-		vertex->position.y = y + bias;
-		vertex->position.z = z;
-	}
-	inline void RenderObjectB2NX::SetVertexUV(size_t index, float u, float v) {
-		VERTEX_B2NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->texcoord.x = u;
-		vertex->texcoord.y = v;
-	}
-	inline void RenderObjectB2NX::SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate) {
-		VERTEX_B2NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		gstd::BitAccess::SetByte(vertex->blendIndex, pos * 8, indexBlend);
-		if (pos == 0)vertex->blendRate = rate;
-	}
-	inline void RenderObjectB2NX::SetVertexNormal(size_t index, float x, float y, float z) {
-		VERTEX_B2NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->normal.x = x;
-		vertex->normal.y = y;
-		vertex->normal.z = z;
-	}
-#pragma endregion RenderObjectB2X_impl
 
 	class RenderObjectB2NXBlock : public RenderObjectBNXBlock {
 	public:
@@ -630,46 +419,6 @@ namespace directx {
 		void SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate);
 		void SetVertexNormal(size_t index, float x, float y, float z);
 	};
-#pragma region RenderObjectB4X_impl
-	inline VERTEX_B4NX* RenderObjectB4NX::GetVertex(size_t index) {
-		size_t pos = index * strideVertexStreamZero_;
-		if (pos >= vertex_.size())return nullptr;
-		return (VERTEX_B4NX*)&vertex_[pos];
-	}
-	inline void RenderObjectB4NX::SetVertex(size_t index, VERTEX_B4NX& vertex) {
-		size_t pos = index * strideVertexStreamZero_;
-		if (pos >= vertex_.size())return;
-		memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
-	}
-	inline void RenderObjectB4NX::SetVertexPosition(size_t index, float x, float y, float z) {
-		VERTEX_B4NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-
-		constexpr float bias = -0.5f;
-		vertex->position.x = x + bias;
-		vertex->position.y = y + bias;
-		vertex->position.z = z;
-	}
-	inline void RenderObjectB4NX::SetVertexUV(size_t index, float u, float v) {
-		VERTEX_B4NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->texcoord.x = u;
-		vertex->texcoord.y = v;
-	}
-	inline void RenderObjectB4NX::SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate) {
-		VERTEX_B4NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		gstd::BitAccess::SetByte(vertex->blendIndex, pos * 8, indexBlend);
-		if (pos <= 2)vertex->blendRate[pos] = rate;
-	}
-	inline void RenderObjectB4NX::SetVertexNormal(size_t index, float x, float y, float z) {
-		VERTEX_B4NX* vertex = GetVertex(index);
-		if (vertex == nullptr)return;
-		vertex->normal.x = x;
-		vertex->normal.y = y;
-		vertex->normal.z = z;
-	}
-#pragma endregion RenderObjectB4X_impl
 
 	class RenderObjectB4NXBlock : public RenderObjectBNXBlock {
 	public:
@@ -710,7 +459,11 @@ namespace directx {
 		void _AddVertex(VERTEX_TLX& vertex);
 	public:
 		SpriteList2D();
-		virtual size_t GetVertexCount();
+
+		virtual size_t GetVertexCount() {
+			return std::min((size_t)countRenderVertex_, vertex_.size() / strideVertexStreamZero_);
+		}
+
 		virtual void Render();
 		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
 		void ClearVertexCount() { countRenderVertex_ = 0; bCloseVertexList_ = false; }
@@ -725,19 +478,6 @@ namespace directx {
 
 		void SetAutoClearVertex(bool clear) { autoClearVertexList_ = clear; }
 	};
-#pragma region SpriteList2D_impl
-	inline size_t SpriteList2D::GetVertexCount() {
-		size_t res = std::min((size_t)countRenderVertex_, vertex_.size() / strideVertexStreamZero_);
-		return res;
-	}
-	inline void SpriteList2D::CloseVertex() {
-		bCloseVertexList_ = true;
-
-		position_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-		angle_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-		scale_ = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
-	}
-#pragma endregion SpriteList2D_impl
 
 	/**********************************************************
 	//Sprite3D

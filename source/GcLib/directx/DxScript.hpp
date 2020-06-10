@@ -212,6 +212,7 @@ namespace directx {
 		virtual void SetVertexUV(size_t index, float u, float v) = 0;
 		virtual void SetVertexAlpha(size_t index, int alpha) = 0;
 		virtual void SetVertexColor(size_t index, int r, int g, int b) = 0;
+		virtual D3DCOLOR GetVertexColor(size_t index) = 0;
 		virtual D3DXVECTOR3 GetVertexPosition(size_t index) = 0;
 
 		virtual shared_ptr<Shader> GetShader() { return objRender_->GetShader(); }
@@ -243,6 +244,7 @@ namespace directx {
 		virtual void SetVertexUV(size_t index, float u, float v);
 		virtual void SetVertexAlpha(size_t index, int alpha);
 		virtual void SetVertexColor(size_t index, int r, int g, int b);
+		virtual D3DCOLOR GetVertexColor(size_t index);
 		void SetPermitCamera(bool bPermit);
 		virtual D3DXVECTOR3 GetVertexPosition(size_t index);
 	};
@@ -287,6 +289,7 @@ namespace directx {
 		virtual void SetVertexUV(size_t index, float u, float v);
 		virtual void SetVertexAlpha(size_t index, int alpha);
 		virtual void SetVertexColor(size_t index, int r, int g, int b);
+		virtual D3DCOLOR GetVertexColor(size_t index);
 		virtual D3DXVECTOR3 GetVertexPosition(size_t index);
 	};
 	/**********************************************************
@@ -316,6 +319,7 @@ namespace directx {
 		virtual void SetVertexUV(size_t index, float u, float v) {};
 		virtual void SetVertexAlpha(size_t index, int alpha) {};
 		virtual void SetVertexColor(size_t index, int r, int g, int b) {};
+		virtual D3DCOLOR GetVertexColor(size_t index) { return 0xffffffff; };
 		virtual D3DXVECTOR3 GetVertexPosition(size_t index) { return D3DXVECTOR3(0, 0, 0); }
 	};
 
@@ -921,9 +925,12 @@ namespace directx {
 		static gstd::value Func_ObjPrimitive_SetVertexUV(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjPrimitive_SetVertexUVT(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjPrimitive_SetVertexColor(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_SetVertexColorHSV);
 		static gstd::value Func_ObjPrimitive_SetVertexAlpha(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_GetVertexColor);
+		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_GetVertexAlpha);
 		static gstd::value Func_ObjPrimitive_GetVertexPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_ObjPrimitive_SetVertexIndex(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_SetVertexIndex);
 
 		//Dx関数：オブジェクト操作(Sprite2D)
 		static gstd::value Func_ObjSprite2D_SetSourceRect(gstd::script_machine* machine, int argc, const gstd::value* argv);

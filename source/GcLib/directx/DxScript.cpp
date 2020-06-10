@@ -186,6 +186,10 @@ void DxScriptPrimitiveObject2D::SetVertexColor(size_t index, int r, int g, int b
 	ColorAccess::ClampColor(b);
 	obj->SetVertexColorRGB(index, r, g, b);
 }
+D3DCOLOR DxScriptPrimitiveObject2D::GetVertexColor(size_t index) {
+	RenderObjectTLX* obj = GetObjectPointer();
+	return obj->GetVertexColor(index);
+}
 void DxScriptPrimitiveObject2D::SetPermitCamera(bool bPermit) {
 	RenderObjectTLX* obj = GetObjectPointer();
 	obj->SetPermitCamera(bPermit);
@@ -366,6 +370,10 @@ void DxScriptPrimitiveObject3D::SetVertexColor(size_t index, int r, int g, int b
 	ColorAccess::ClampColor(g);
 	ColorAccess::ClampColor(b);
 	obj->SetVertexColorRGB(index, r, g, b);
+}
+D3DCOLOR DxScriptPrimitiveObject3D::GetVertexColor(size_t index) {
+	RenderObjectLX* obj = GetObjectPointer();
+	return obj->GetVertexColor(index);
 }
 D3DXVECTOR3 DxScriptPrimitiveObject3D::GetVertexPosition(size_t index) {
 	D3DXVECTOR3 res(0, 0, 0);
@@ -1639,7 +1647,10 @@ function const dxFunction[] =
 	{ "ObjPrim_SetVertexUV", DxScript::Func_ObjPrimitive_SetVertexUV, 4 },
 	{ "ObjPrim_SetVertexUVT", DxScript::Func_ObjPrimitive_SetVertexUVT, 4 },
 	{ "ObjPrim_SetVertexColor", DxScript::Func_ObjPrimitive_SetVertexColor, 5 },
+	{ "ObjPrim_SetVertexColorHSV", DxScript::Func_ObjPrimitive_SetVertexColorHSV, 5 },
 	{ "ObjPrim_SetVertexAlpha", DxScript::Func_ObjPrimitive_SetVertexAlpha, 3 },
+	{ "ObjPrim_GetVertexColor", DxScript::Func_ObjPrimitive_GetVertexColor, 2 },
+	{ "ObjPrim_GetVertexAlpha", DxScript::Func_ObjPrimitive_GetVertexAlpha, 2 },
 	{ "ObjPrim_GetVertexPosition", DxScript::Func_ObjPrimitive_GetVertexPosition, 2 },
 	{ "ObjPrim_SetVertexIndex", DxScript::Func_ObjPrimitive_SetVertexIndex, 2 },
 
@@ -3596,28 +3607,25 @@ value DxScript::Func_ObjRender_SetColorHSV(script_machine* machine, int argc, co
 		int val = (int)argv[3].as_real();
 
 		D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255);
-		color = ColorAccess::SetColorHSV(color, hue, sat, val);
+		ColorAccess::SetColorHSV(color, hue, sat, val);
 
-		int red = ColorAccess::GetColorR(color);
-		int green = ColorAccess::GetColorG(color);
-		int blue = ColorAccess::GetColorB(color);
-
-		obj->SetColor(red, green, blue);
+		obj->SetColor((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
 	}
 	return value();
 }
 value DxScript::Func_ObjRender_GetColor(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	std::vector<float> vecColor;
+	D3DCOLOR color = 0xffffffff;
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		D3DCOLOR color = obj->color_;
-		vecColor.push_back(ColorAccess::GetColorR(color));
-		vecColor.push_back(ColorAccess::GetColorG(color));
-		vecColor.push_back(ColorAccess::GetColorB(color));
-	}
-	return script->CreateRealArrayValue(vecColor);
+	if (obj) color = obj->color_;
+
+	std::vector<float> listRGB = {
+		(float)((color >> 16) & 0xff),
+		(float)((color >> 8) & 0xff),
+		(float)(color & 0xff)
+	};
+	return script->CreateRealArrayValue(listRGB);
 }
 value DxScript::Func_ObjRender_SetAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -4201,6 +4209,17 @@ value DxScript::Func_ObjPrimitive_SetVertexColor(script_machine* machine, int ar
 		obj->SetVertexColor((int)argv[1].as_real(), (int)argv[2].as_real(), (int)argv[3].as_real(), (int)argv[4].as_real());
 	return value();
 }
+value DxScript::Func_ObjPrimitive_SetVertexColorHSV(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		D3DCOLOR cHSV;
+		ColorAccess::SetColorHSV(cHSV, (int)argv[2].as_real(), (int)argv[3].as_real(), (int)argv[4].as_real());
+		obj->SetVertexColor((int)argv[1].as_real(), (cHSV >> 16) & 0xff, (cHSV >> 8) & 0xff, cHSV & 0xff);
+	}
+	return value();
+}
 value DxScript::Func_ObjPrimitive_SetVertexAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
@@ -4208,6 +4227,33 @@ value DxScript::Func_ObjPrimitive_SetVertexAlpha(script_machine* machine, int ar
 	if (obj)
 		obj->SetVertexAlpha((int)argv[1].as_real(), (int)argv[2].as_real());
 	return value();
+}
+value DxScript::Func_ObjPrimitive_GetVertexColor(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	int index = (int)argv[1].as_real();
+
+	D3DCOLOR color = 0xffffffff;
+	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
+	if (obj) color = obj->GetVertexColor(index);
+
+	std::vector<float> listRGB = {
+		(float)((color >> 16) & 0xff),
+		(float)((color >> 8) & 0xff),
+		(float)(color & 0xff)
+	};
+	return script->CreateRealArrayValue(listRGB);
+}
+value DxScript::Func_ObjPrimitive_GetVertexAlpha(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	int index = (int)argv[1].as_real();
+
+	D3DCOLOR color = 0xffffffff;
+	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
+	if (obj) color = obj->GetVertexColor(index);
+
+	return script->CreateRealValue((color >> 24) & 0xff);
 }
 value DxScript::Func_ObjPrimitive_GetVertexPosition(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -4219,14 +4265,8 @@ value DxScript::Func_ObjPrimitive_GetVertexPosition(script_machine* machine, int
 	if (obj)
 		pos = obj->GetVertexPosition(index);
 
-	std::vector<float> listPos;
-	listPos.resize(3);
-	listPos[0] = pos.x;
-	listPos[1] = pos.y;
-	listPos[2] = pos.z;
-
-	gstd::value res = script->CreateRealArrayValue(listPos);
-	return res;
+	std::vector<float> listPos = { pos.x, pos.y, pos.z };
+	return script->CreateRealArrayValue(listPos);
 }
 value DxScript::Func_ObjPrimitive_SetVertexIndex(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
