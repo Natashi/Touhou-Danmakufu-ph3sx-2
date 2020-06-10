@@ -55,6 +55,8 @@ public:
 	void RenderScriptObject();
 	void RenderScriptObject(int priMin, int priMax);
 
+	bool CheckMeshAndClearZBuffer(DxScriptObjectBase* obj);
+
 	static StgSystemController* GetBase() { return base_; }
 
 	ref_count_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }

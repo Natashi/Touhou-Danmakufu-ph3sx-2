@@ -421,30 +421,21 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 				if (effect != nullptr) effect->BeginPass(iPass);
 
 				if (bValidStage) {
-					if (listShotValidPriority_[iPri]) {
+					if (listShotValidPriority_[iPri])
 						stageController_->GetShotManager()->Render(iPri);
-					}
-					if (listItemValidPriority_[iPri]) {
+					if (listItemValidPriority_[iPri])
 						stageController_->GetItemManager()->Render(iPri);
-					}
 				}
 
 				if (pRenderListStage != nullptr && iPri < (*pRenderListStage).size()) {
-					std::list<shared_ptr<DxScriptObjectBase>>::iterator itr;
 					std::list<shared_ptr<DxScriptObjectBase>>& renderList = (*pRenderListStage)[iPri];
-
-					for (itr = renderList.begin(); itr != renderList.end(); itr++) {
-						if (!bClearZBufferFor2DCoordinate) {
-							DxScriptObjectBase* obj = (*itr).get();
-							if (obj->GetObjectType() == TypeObject::OBJ_MESH) {
-								shared_ptr<DxMesh>& mesh = dynamic_cast<DxScriptMeshObject*>(obj)->GetMesh();
-								if (mesh != nullptr && mesh->IsCoordinate2D()) {
-									graphics->GetDevice()->Clear(0, nullptr, D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0, 0);
-									bClearZBufferFor2DCoordinate = true;
-								}
+					for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
+						if (DxScriptObjectBase* obj = (*itr).get()) {
+							if (!bClearZBufferFor2DCoordinate) {
+								if (CheckMeshAndClearZBuffer(obj)) bClearZBufferFor2DCoordinate = true;
 							}
+							obj->Render();
 						}
-						(*itr)->Render();
 					}
 					//renderList.clear();
 				}
@@ -472,21 +463,14 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 				if (effect != nullptr) effect->BeginPass(iPass);
 
 				if (pRenderListPackage != nullptr && iPri < (*pRenderListPackage).size()) {
-					std::list<shared_ptr<DxScriptObjectBase>>::iterator itr;
 					std::list<shared_ptr<DxScriptObjectBase>>& renderList = (*pRenderListPackage)[iPri];
-
-					for (itr = renderList.begin(); itr != renderList.end(); itr++) {
-						if (!bClearZBufferFor2DCoordinate) {
-							DxScriptObjectBase* obj = (*itr).get();
-							if (obj->GetObjectType() == TypeObject::OBJ_MESH) {
-								shared_ptr<DxMesh>& mesh = dynamic_cast<DxScriptMeshObject*>(obj)->GetMesh();
-								if (mesh != nullptr && mesh->IsCoordinate2D()) {
-									graphics->GetDevice()->Clear(0, nullptr, D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0, 0);
-									bClearZBufferFor2DCoordinate = true;
-								}
+					for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
+						if (DxScriptObjectBase* obj = (*itr).get()) {
+							if (!bClearZBufferFor2DCoordinate) {
+								if (CheckMeshAndClearZBuffer(obj)) bClearZBufferFor2DCoordinate = true;
 							}
+							obj->Render();
 						}
-						(*itr)->Render();
 					}
 					//renderList.clear();
 				}
@@ -527,6 +511,19 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	if (objectManagerPackage != nullptr)
 		objectManagerPackage->ClearRenderObject();
 }
+bool StgSystemController::CheckMeshAndClearZBuffer(DxScriptObjectBase* obj) {
+	if (obj && obj->GetObjectType() == TypeObject::OBJ_MESH) {
+		if (DxScriptMeshObject* objMesh = dynamic_cast<DxScriptMeshObject*>(obj)) {
+			if (objMesh->GetMesh() && objMesh->GetMesh()->IsCoordinate2D()) {
+				DirectGraphics::GetBase()->GetDevice()->Clear(0, nullptr,
+					D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0, 0);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 void StgSystemController::_ControlScene() {
 	if (infoSystem_->IsPackageMode()) {
 		packageController_->Work();
