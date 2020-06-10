@@ -625,6 +625,11 @@ Obj_IsValueExistsR
 	Description:
 		Obj_IsValueExists with direct real value key.
 
+ObjRender_GetColor
+	Arguments:
+		1) object ID
+	Description:
+		Returns an [r, g, b] array of the object's color.
 ObjRender_GetAlpha
 	Arguments:
 		1) object ID
@@ -664,7 +669,17 @@ ObjRender_SetVertexShaderRenderingMode
 	Description:
 		Sets whether the render object will be rendered with support for vertex shaders.
 		Rendering will not be performed without an attached shader object when this is set to true.
-		
+
+ObjPrim_SetVertexColorHSV
+	Arguments:
+		1) object ID
+		2) vertex index
+		3) color hue
+		4) color saturation
+		5) color value
+	Description:
+		Sets the HSV color to the specified vertex index of the primitive object.
+
 ObjPrim_SetVertexIndex
 	Arguments:
 		1) object ID
@@ -680,6 +695,20 @@ ObjPrim_SetVertexIndex
 				ObjPrim_SetVertexPosition(obj, 2, 0, 32);
 				ObjPrim_SetVertexPosition(obj, 3, 32, 32);
 				ObjPrim_SetVertexIndex(obj, [0, 1, 2, 1, 2, 3]);
+				
+ObjPrim_GetVertexColor
+	Arguments:
+		1) object ID
+		2) vertex index
+	Description:
+		Returns the color of the specified vertex index as an [r, g, b] array.
+		
+ObjPrim_GetVertexAlpha
+	Arguments:
+		1) object ID
+		2) vertex index
+	Description:
+		Returns the alpha value of the specified vertex index.
 
 ObjSpriteList2D_SetAutoClearVertexCount
 	Arguments:
