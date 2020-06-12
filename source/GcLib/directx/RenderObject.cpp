@@ -2195,7 +2195,7 @@ ParticleRendererBase::ParticleRendererBase() {
 	countInstancePrev_ = 0U;
 	instColor_ = 0xffffffff;
 	instPosition_ = D3DXVECTOR3(0, 0, 0);
-	instScale_ = D3DXVECTOR3(0, 0, 0);
+	instScale_ = D3DXVECTOR3(1, 1, 1);
 	instAngle_ = D3DXVECTOR3(0, 0, 0);
 	instUserData_ = D3DXVECTOR3(0, 0, 0);
 	instanceData_.resize(8U);
