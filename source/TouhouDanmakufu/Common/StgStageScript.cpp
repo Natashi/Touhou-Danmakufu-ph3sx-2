@@ -2618,9 +2618,9 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB2(gstd::script_machine* mach
 
 		CMD_ADD(speedX, StgMovePattern_XY::SET_S_X);
 		CMD_ADD(speedY, StgMovePattern_XY::SET_S_Y);
-		CMD_ADD(accelX, StgMovePattern_XY::SET_A_Y);
+		CMD_ADD(accelX, StgMovePattern_XY::SET_A_X);
 		CMD_ADD(accelY, StgMovePattern_XY::SET_A_Y);
-		CMD_ADD(maxSpeedX, StgMovePattern_XY::SET_M_Y);
+		CMD_ADD(maxSpeedX, StgMovePattern_XY::SET_M_X);
 		CMD_ADD(maxSpeedY, StgMovePattern_XY::SET_M_Y);
 
 		obj->AddPattern(frame, pattern);
@@ -2645,9 +2645,9 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB3(gstd::script_machine* mach
 
 		CMD_ADD(speedX, StgMovePattern_XY::SET_S_X);
 		CMD_ADD(speedY, StgMovePattern_XY::SET_S_Y);
-		CMD_ADD(accelX, StgMovePattern_XY::SET_A_Y);
+		CMD_ADD(accelX, StgMovePattern_XY::SET_A_X);
 		CMD_ADD(accelY, StgMovePattern_XY::SET_A_Y);
-		CMD_ADD(maxSpeedX, StgMovePattern_XY::SET_M_Y);
+		CMD_ADD(maxSpeedX, StgMovePattern_XY::SET_M_X);
 		CMD_ADD(maxSpeedY, StgMovePattern_XY::SET_M_Y);
 
 		pattern->SetShotDataID(idShot);
