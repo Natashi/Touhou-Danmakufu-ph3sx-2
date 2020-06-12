@@ -520,16 +520,6 @@ value script_debugBreak(script_machine* machine, int argc, value const* argv) {
 	return value();
 }
 
-value conv_as_real(script_machine* machine, int argc, value const* argv) {
-	return value(machine->get_engine()->get_real_type(), argv->as_real());
-}
-value conv_as_bool(script_machine* machine, int argc, value const* argv) {
-	return value(machine->get_engine()->get_boolean_type(), argv->as_boolean());
-}
-value conv_as_char(script_machine* machine, int argc, value const* argv) {
-	return value(machine->get_engine()->get_char_type(), argv->as_char());
-}
-
 function const operations[] = {
 	//{ "true", true_, 0 },
 	//{ "false", false_, 0 },
@@ -565,9 +555,6 @@ function const operations[] = {
 	{ "bit_xor", bitwiseXor, 2 },
 	{ "bit_left", bitwiseLeft, 2 },
 	{ "bit_right", bitwiseRight, 2 },
-	{ "as_real", conv_as_real, 1 },
-	{ "as_bool", conv_as_bool, 1 },
-	{ "as_char", conv_as_char, 1 },
 	{ "__DEBUG_BREAK", script_debugBreak, 0 },
 };
 
@@ -977,27 +964,29 @@ void parser::parse_parentheses(script_engine::block* block, script_scanner* lex)
 }
 
 void parser::parse_clause(script_engine::block* block, script_scanner* lex) {
-	if (lex->next == token_kind::tk_real) {
-		block->codes.push_back(code(lex->line, command_kind::pc_push_value, 
+	switch (lex->next) {
+	case token_kind::tk_real:
+		block->codes.push_back(code(lex->line, command_kind::pc_push_value,
 			value(engine->get_real_type(), lex->real_value)));
 		lex->advance();
-	}
-	else if (lex->next == token_kind::tk_char) {
-		block->codes.push_back(code(lex->line, command_kind::pc_push_value, 
+		return;
+	case token_kind::tk_char:
+		block->codes.push_back(code(lex->line, command_kind::pc_push_value,
 			value(engine->get_char_type(), lex->char_value)));
 		lex->advance();
-	}
-	else if (lex->next == token_kind::tk_TRUE) {
+		return;
+	case token_kind::tk_TRUE:
 		block->codes.push_back(code(lex->line, command_kind::pc_push_value,
 			value(engine->get_boolean_type(), true)));
 		lex->advance();
-	}
-	else if (lex->next == token_kind::tk_FALSE) {
+		return;
+	case token_kind::tk_FALSE:
 		block->codes.push_back(code(lex->line, command_kind::pc_push_value,
 			value(engine->get_boolean_type(), false)));
 		lex->advance();
-	}
-	else if (lex->next == token_kind::tk_string) {
+		return;
+	case token_kind::tk_string:
+	{
 		std::wstring str = lex->string_value;
 		lex->advance();
 		while (lex->next == token_kind::tk_string || lex->next == token_kind::tk_char) {
@@ -1005,10 +994,12 @@ void parser::parse_clause(script_engine::block* block, script_scanner* lex) {
 			lex->advance();
 		}
 
-		block->codes.push_back(code(lex->line, command_kind::pc_push_value, 
+		block->codes.push_back(code(lex->line, command_kind::pc_push_value,
 			value(engine->get_string_type(), str)));
+		return;
 	}
-	else if (lex->next == token_kind::tk_word) {
+	case token_kind::tk_word:
+	{
 		std::string name = lex->word;
 		lex->advance();
 		int argc = parse_arguments(block, lex);
@@ -1030,11 +1021,26 @@ void parser::parse_clause(script_engine::block* block, script_scanner* lex) {
 			block->codes.push_back(code(lex->line, command_kind::pc_call_and_push_result, s->sub, argc));
 		}
 		else {
-			//変数
+			//Variable
 			block->codes.push_back(code(lex->line, command_kind::pc_push_variable, s->level, s->variable, name));
 		}
+
+		return;
 	}
-	else if (lex->next == token_kind::tk_open_bra) {
+	case token_kind::tk_CAST_REAL:
+	case token_kind::tk_CAST_CHAR:
+	case token_kind::tk_CAST_BOOL:
+	{
+		command_kind c = lex->next == token_kind::tk_CAST_REAL ? command_kind::pc_inline_cast_real :
+			(lex->next == token_kind::tk_CAST_CHAR ? command_kind::pc_inline_cast_char : 
+				command_kind::pc_inline_cast_bool);
+		lex->advance();
+		parse_parentheses(block, lex);
+		block->codes.push_back(code(lex->line, c));
+		return;
+	}
+	case token_kind::tk_open_bra:
+	{
 		lex->advance();
 
 		size_t count_member = 0U;
@@ -1054,18 +1060,20 @@ void parser::parse_clause(script_engine::block* block, script_scanner* lex) {
 
 		parser_assert(lex->next == token_kind::tk_close_bra, "\"]\" is required.\r\n");
 		lex->advance();
+
+		return;
 	}
-	else if (lex->next == token_kind::tk_open_abs) {
+	case token_kind::tk_open_abs:
 		lex->advance();
-		parse_expression(block, lex);	
+		parse_expression(block, lex);
 		block->codes.push_back(code(lex->line, command_kind::pc_inline_abs));
 		parser_assert(lex->next == token_kind::tk_close_abs, "\"|)\" is required.\r\n");
 		lex->advance();
-	}
-	else if (lex->next == token_kind::tk_open_par) {
+		return;
+	case token_kind::tk_open_par:
 		parse_parentheses(block, lex);
-	}
-	else {
+		return;
+	default:
 		parser_assert(false, "Invalid expression.\r\n");
 	}
 }
@@ -1098,21 +1106,22 @@ void parser::parse_suffix(script_engine::block* block, script_scanner* lex) {
 }
 
 void parser::parse_prefix(script_engine::block* block, script_scanner* lex) {
-	if (lex->next == token_kind::tk_plus) {
+	switch (lex->next) {
+	case token_kind::tk_plus:
 		lex->advance();
 		parse_prefix(block, lex);	//再帰
-	}
-	else if (lex->next == token_kind::tk_minus) {
+		return;
+	case token_kind::tk_minus:
 		lex->advance();
 		parse_prefix(block, lex);	//再帰
 		block->codes.push_back(code(lex->line, command_kind::pc_inline_neg));
-	}
-	else if (lex->next == token_kind::tk_exclamation) {
+		return;
+	case token_kind::tk_exclamation:
 		lex->advance();
 		parse_prefix(block, lex);	//再帰
 		block->codes.push_back(code(lex->line, command_kind::pc_inline_not));
-	}
-	else {
+		return;
+	default:
 		parse_suffix(block, lex);
 	}
 }
@@ -1145,7 +1154,6 @@ void parser::parse_comparison(script_engine::block* block, script_scanner* lex) 
 	case token_kind::tk_assign:
 		parser_assert(false, "Did you intend to write \"==\"?\r\n");
 		break;
-
 	case token_kind::tk_e:
 	case token_kind::tk_g:
 	case token_kind::tk_ge:
@@ -1256,7 +1264,9 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 	for (; ; ) {
 		bool need_semicolon = true;
 
-		if (lex->next == token_kind::tk_word) {
+		switch (lex->next) {
+		case token_kind::tk_word:
+		{
 			std::string name = lex->word;
 
 			scope_t* resScope = nullptr;
@@ -1279,7 +1289,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 				while (lex->next == token_kind::tk_open_bra) {
 					lex->advance();
 					parse_expression(block, lex);
-					
+
 					parser_assert(lex->next == token_kind::tk_close_bra, "\"]\" is required.\r\n");
 					lex->advance();
 
@@ -1318,9 +1328,8 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 					parser_assert(false, "\"=\" is required.\r\n");
 					break;
 				}
-				
-				break;
 
+				break;
 			case token_kind::tk_add_assign:
 			case token_kind::tk_subtract_assign:
 			case token_kind::tk_multiply_assign:
@@ -1363,9 +1372,12 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 				break;
 			}
 			}
+
+			break;
 		}
-		else if (lex->next == token_kind::tk_const || lex->next == token_kind::tk_let || 
-			lex->next == token_kind::tk_def_real) 
+		case token_kind::tk_const:
+		case token_kind::tk_let:
+		case token_kind::tk_def_real:
 		{
 			lex->advance();
 			parser_assert(lex->next == token_kind::tk_word, "Variable name is required.\r\n");
@@ -1380,14 +1392,18 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 				parse_expression(block, lex);
 				block->codes.push_back(code(lex->line, command_kind::pc_assign, s->level, s->variable, name));
 			}
+
+			break;
 		}
 		//"local" can be omitted to make C-style blocks
-		else if (lex->next == token_kind::tk_LOCAL || lex->next == token_kind::tk_open_cur) {
+		case token_kind::tk_LOCAL:
+		case token_kind::tk_open_cur:
 			if (lex->next == token_kind::tk_LOCAL) lex->advance();
 			parse_inline_block(nullptr, block, lex, block_kind::bk_normal, false);
 			need_semicolon = false;
-		}
-		else if (lex->next == token_kind::tk_LOOP) {
+			break;
+		case token_kind::tk_LOOP:
+		{
 			lex->advance();
 			size_t ip_begin = block->codes.size();
 
@@ -1434,8 +1450,10 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			}
 
 			need_semicolon = false;
+			break;
 		}
-		else if (lex->next == token_kind::tk_TIMES) {
+		case token_kind::tk_TIMES:
+		{
 			lex->advance();
 			size_t ip_begin = block->codes.size();
 
@@ -1471,8 +1489,10 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			}
 
 			need_semicolon = false;
+			break;
 		}
-		else if (lex->next == token_kind::tk_WHILE) {
+		case token_kind::tk_WHILE:
+		{
 			lex->advance();
 			size_t ip = block->codes.size();
 
@@ -1493,8 +1513,10 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			}
 
 			need_semicolon = false;
+			break;
 		}
-		else if (lex->next == token_kind::tk_FOR) {
+		case token_kind::tk_FOR:
+		{
 			lex->advance();
 
 			size_t ip_for_begin = block->codes.size();
@@ -1513,7 +1535,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 				std::string feIdentifier = lex->word;
 
 				lex->advance();
-				parser_assert(lex->next == token_kind::tk_IN || lex->next == token_kind::tk_colon, 
+				parser_assert(lex->next == token_kind::tk_IN || lex->next == token_kind::tk_colon,
 					"\"in\" or a colon is required.\r\n");
 				lex->advance();
 
@@ -1530,7 +1552,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 					value(engine->get_real_type(), 0.0)));
 
 				size_t ip = block->codes.size();
-				
+
 				block->codes.push_back(code(lex->line, command_kind::pc_for_each_and_push_first));
 
 				script_engine::block* b = engine->new_block(block->level + 1, block_kind::bk_loop);
@@ -1645,8 +1667,11 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			}
 
 			need_semicolon = false;
+			break;
 		}
-		else if (lex->next == token_kind::tk_ASCENT || lex->next == token_kind::tk_DESCENT) {
+		case token_kind::tk_ASCENT:
+		case token_kind::tk_DESCENT:
+		{
 			bool isAscent = lex->next == token_kind::tk_ASCENT;
 			lex->advance();
 
@@ -1746,9 +1771,12 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 				}
 			}
 			frame.pop_back();
+
 			need_semicolon = false;
+			break;
 		}
-		else if (lex->next == token_kind::tk_IF) {
+		case token_kind::tk_IF:
+		{
 			std::map<size_t, size_t> mapLabelCode;
 
 			size_t ip_begin = block->codes.size();
@@ -1759,7 +1787,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 				hasNextCase = false;
 				parser_assert(indexLabel < 0xffffff, "Too many conditional cases.");
 				lex->advance();
-				
+
 				//Jump to next case if false
 				parse_parentheses(block, lex);
 				block->codes.push_back(code(lex->line, command_kind::pc_jump_if_not, indexLabel));
@@ -1787,16 +1815,18 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			//Replace labels with actual code offset
 			for (; ip_begin < ip_end; ++ip_begin) {
 				code* c = &block->codes[ip_begin];
-				if (c->command == command_kind::pc_jump_if || c->command == command_kind::pc_jump_if_not 
-					|| c->command == command_kind::pc_loop_back) 
-				{
+				if (c->command == command_kind::pc_jump_if || c->command == command_kind::pc_jump_if_not
+					|| c->command == command_kind::pc_loop_back) {
 					auto itrMap = mapLabelCode.find(c->ip);
 					c->ip = (itrMap != mapLabelCode.end()) ? itrMap->second : ip_end;
 				}
 			}
+
 			need_semicolon = false;
+			break;
 		}
-		else if (lex->next == token_kind::tk_ALTERNATIVE) {
+		case token_kind::tk_ALTERNATIVE:
+		{
 			std::map<size_t, size_t> mapLabelCode;
 
 			lex->advance();
@@ -1853,18 +1883,22 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 					c->ip = (itrMap != mapLabelCode.end()) ? itrMap->second : ip_end;
 				}
 			}
+
 			need_semicolon = false;
+			break;
 		}
-		else if (lex->next == token_kind::tk_BREAK) {
+		case token_kind::tk_BREAK:
+		case token_kind::tk_CONTINUE:
+		{
+			command_kind c = lex->next == token_kind::tk_BREAK ?
+				command_kind::pc_break_loop : command_kind::pc_loop_continue;
 			lex->advance();
-			block->codes.push_back(code(lex->line, command_kind::pc_break_loop));
+			block->codes.push_back(code(lex->line, c));
+			break;
 		}
-		else if (lex->next == token_kind::tk_CONTINUE) {
+		case token_kind::tk_RETURN:
 			lex->advance();
-			block->codes.push_back(code(lex->line, command_kind::pc_loop_continue));
-		}
-		else if (lex->next == token_kind::tk_RETURN) {
-			lex->advance();
+
 			switch (lex->next) {
 			case token_kind::tk_end:
 			case token_kind::tk_invalid:
@@ -1872,26 +1906,31 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			case token_kind::tk_close_cur:
 				break;
 			default:
+			{
 				parse_expression(block, lex);
 				symbol* s = search_result();
 				parser_assert(s, "Only functions may return values.\r\n");
 
-				block->codes.push_back(code(lex->line, command_kind::pc_assign, s->level, s->variable, 
+				block->codes.push_back(code(lex->line, command_kind::pc_assign, s->level, s->variable,
 					"[function_result]"));
 			}
+			}
 			block->codes.push_back(code(lex->line, command_kind::pc_break_routine));
-		}
-		else if (lex->next == token_kind::tk_YIELD) {
+
+			break;
+		case token_kind::tk_YIELD:
+		case token_kind::tk_WAIT:
+		{
+			command_kind c = lex->next == token_kind::tk_YIELD ? command_kind::pc_yield : command_kind::pc_wait;
 			lex->advance();
-			block->codes.push_back(code(lex->line, command_kind::pc_yield));
+			if (c == command_kind::pc_wait) parse_parentheses(block, lex);
+			block->codes.push_back(code(lex->line, c));
+			break;
 		}
-		else if (lex->next == token_kind::tk_WAIT) {
-			lex->advance();
-			parse_parentheses(block, lex);
-			block->codes.push_back(code(lex->line, command_kind::pc_wait));
-		}
-		else if (lex->next == token_kind::tk_at || lex->next == token_kind::tk_SUB || 
-			lex->next == token_kind::tk_FUNCTION || lex->next == token_kind::tk_TASK) 
+		case token_kind::tk_at:
+		case token_kind::tk_SUB:
+		case token_kind::tk_FUNCTION:
+		case token_kind::tk_TASK:
 		{
 			token_kind token = lex->next;
 
@@ -1933,9 +1972,8 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			if (s->sub->kind != block_kind::bk_sub) {
 				if (lex->next == token_kind::tk_open_par) {
 					lex->advance();
-					while (lex->next == token_kind::tk_word || lex->next == token_kind::tk_let || 
-						lex->next == token_kind::tk_def_real)
-					{
+					while (lex->next == token_kind::tk_word || lex->next == token_kind::tk_let ||
+						lex->next == token_kind::tk_def_real) {
 						if (lex->next == token_kind::tk_let || lex->next == token_kind::tk_def_real) {
 							lex->advance();
 							parser_assert(lex->next == token_kind::tk_word, "Parameter name is required.\r\n");
@@ -1962,7 +2000,10 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			s = search_in(pScope, funcName, args.size());
 
 			parse_block(s->sub, lex, &args, s->sub->kind == block_kind::bk_function, false);
+
 			need_semicolon = false;
+			break;
+		}
 		}
 
 		//セミコロンが無いと継続しない
@@ -2847,7 +2888,27 @@ void script_machine::run_code() {
 				current->stack.push_back(res);
 				break;
 			}
-
+			case command_kind::pc_inline_cast_real:
+			case command_kind::pc_inline_cast_char:
+			case command_kind::pc_inline_cast_bool:
+			{
+				value* var = &(current->stack.back());
+				switch (c->command) {
+				case command_kind::pc_inline_cast_real:
+					var->set(engine->get_real_type(), var->as_real());
+					break;
+				case command_kind::pc_inline_cast_char:
+				{
+					value tmp = value(engine->get_char_type(), var->as_char());
+					var->overwrite(tmp);
+					break;
+				}
+				case command_kind::pc_inline_cast_bool:
+					var->set(engine->get_boolean_type(), var->as_boolean());
+					break;
+				}
+				break;
+			}
 			default:
 				assert(false);
 			}

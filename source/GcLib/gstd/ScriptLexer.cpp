@@ -483,6 +483,9 @@ std::unordered_map<std::string, token_kind> script_scanner::token_map = {
 	{ "return", token_kind::tk_RETURN },
 	{ "yield", token_kind::tk_YIELD },
 	{ "wait", token_kind::tk_WAIT },
+	{ "as_real", token_kind::tk_CAST_REAL },
+	{ "as_char", token_kind::tk_CAST_CHAR },
+	{ "as_bool", token_kind::tk_CAST_BOOL },
 	{ "true", token_kind::tk_TRUE },
 	{ "false", token_kind::tk_FALSE },
 };

@@ -31,6 +31,7 @@ namespace gstd {
 		tk_LOCAL, tk_FUNCTION, tk_SUB, tk_TASK,
 		tk_CONTINUE, tk_BREAK, tk_RETURN,
 		tk_YIELD, tk_WAIT,
+		tk_CAST_REAL, tk_CAST_CHAR, tk_CAST_BOOL,
 		tk_TRUE, tk_FALSE,
 	};
 
