@@ -2081,7 +2081,6 @@ void StgStraightLaserObject::RenderOnShotManager() {
 		if (renderer == nullptr) return;
 
 		RECT* rcSrc;
-		RECT rcDest;
 		D3DCOLOR color;
 
 		StgShotData::AnimationData* anime = shotData->GetData(frameWork_);
@@ -2100,12 +2099,12 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 		if (widthRender_ > 0) {
 			float _rWidth = abs(widthRender_ / 2) * scaleX_;
-			_rWidth = std::max(_rWidth, 0.5f);
-			SetRect(&rcDest, -_rWidth, length_, _rWidth, 0);
+			_rWidth = std::max(_rWidth, 0.4f);
+			D3DXVECTOR4 rcDest(-_rWidth, length_, _rWidth, 0);
 
 			VERTEX_TLX verts[4];
 			LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
-			LONG* ptrDst = reinterpret_cast<LONG*>(&rcDest);
+			FLOAT* ptrDst = reinterpret_cast<FLOAT*>(&rcDest);
 			for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 				VERTEX_TLX vt;
 
