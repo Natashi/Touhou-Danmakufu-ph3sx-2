@@ -971,7 +971,8 @@ namespace directx {
 		//DxScriptParticleListObject
 		DNH_FUNCAPI_DECL_(Func_ObjParticleList_Create);
 		DNH_FUNCAPI_DECL_(Func_ObjParticleList_SetPosition);
-		DNH_FUNCAPI_DECL_(Func_ObjParticleList_SetScale);
+		template<size_t ID> DNH_FUNCAPI_DECL_(Func_ObjParticleList_SetScaleSingle);
+		DNH_FUNCAPI_DECL_(Func_ObjParticleList_SetScaleXYZ);
 		template<size_t ID> DNH_FUNCAPI_DECL_(Func_ObjParticleList_SetAngleSingle);
 		DNH_FUNCAPI_DECL_(Func_ObjParticleList_SetAngle);
 		DNH_FUNCAPI_DECL_(Func_ObjParticleList_SetColor);

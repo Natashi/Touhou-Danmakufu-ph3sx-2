@@ -1684,7 +1684,10 @@ function const dxFunction[] =
 	//DxScriptParticleListObject
 	{ "ObjParticleList_Create", DxScript::Func_ObjParticleList_Create, 1 },
 	{ "ObjParticleList_SetPosition", DxScript::Func_ObjParticleList_SetPosition, 4 },
-	{ "ObjParticleList_SetScale", DxScript::Func_ObjParticleList_SetScale, 4 },
+	{ "ObjParticleList_SetScaleX", DxScript::Func_ObjParticleList_SetScaleSingle<0>, 2 },
+	{ "ObjParticleList_SetScaleY", DxScript::Func_ObjParticleList_SetScaleSingle<1>, 2 },
+	{ "ObjParticleList_SetScaleZ", DxScript::Func_ObjParticleList_SetScaleSingle<2>, 2 },
+	{ "ObjParticleList_SetScale", DxScript::Func_ObjParticleList_SetScaleXYZ, 4 },
 	{ "ObjParticleList_SetAngleX", DxScript::Func_ObjParticleList_SetAngleSingle<0>, 2 },
 	{ "ObjParticleList_SetAngleY", DxScript::Func_ObjParticleList_SetAngleSingle<1>, 2 },
 	{ "ObjParticleList_SetAngleZ", DxScript::Func_ObjParticleList_SetAngleSingle<2>, 2 },
@@ -4512,7 +4515,19 @@ value DxScript::Func_ObjParticleList_SetPosition(script_machine* machine, int ar
 	}
 	return value();
 }
-value DxScript::Func_ObjParticleList_SetScale(script_machine* machine, int argc, const value* argv) {
+template<size_t ID>
+value DxScript::Func_ObjParticleList_SetScaleSingle(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+
+	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		if (objParticle) objParticle->SetInstanceScaleSingle(ID, argv[1].as_real());
+	}
+	return value();
+}
+value DxScript::Func_ObjParticleList_SetScaleXYZ(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 

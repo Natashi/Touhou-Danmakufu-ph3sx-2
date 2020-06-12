@@ -555,6 +555,7 @@ namespace directx {
 		void SetInstancePosition(float x, float y, float z) { SetInstancePosition(D3DXVECTOR3(x, y, z)); }
 		void SetInstancePosition(D3DXVECTOR3 pos) { instPosition_ = pos; }
 
+		void SetInstanceScaleSingle(size_t index, float sc);
 		void SetInstanceScale(float x, float y, float z) { SetInstanceScale(D3DXVECTOR3(x, y, z)); }
 		void SetInstanceScale(D3DXVECTOR3 scale) { instScale_ = scale; }
 

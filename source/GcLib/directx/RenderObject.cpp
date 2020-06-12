@@ -2231,6 +2231,10 @@ void ParticleRendererBase::SetInstanceAlpha(int alpha) {
 	ColorAccess::ClampColor(alpha);
 	SetInstanceColor((instColor_ & 0x00ffffff) | ((byte)alpha << 24));
 }
+void ParticleRendererBase::SetInstanceScaleSingle(size_t index, float sc) {
+	float* pVec = (float*)&instScale_;
+	pVec[index] = sc;
+}
 void ParticleRendererBase::SetInstanceAngleSingle(size_t index, float ang) {
 	float* pVec = (float*)&instAngle_;
 	pVec[index] = D3DXToRadian(ang);
