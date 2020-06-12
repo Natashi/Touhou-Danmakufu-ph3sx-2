@@ -2464,8 +2464,9 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtWeight(gstd::script_machine* m
 	return value();
 }
 
-#define CMD_ADD(v, c) if (v != StgMovePattern::NO_CHANGE) \
-							pattern->AddCommand(std::make_pair(c, v));
+#define CMD_ADD(v, c) if (v != StgMovePattern::NO_CHANGE) pattern->AddCommand(std::make_pair(c, v));
+#define CMD_ADD_ANG(v, c) if (v != StgMovePattern::NO_CHANGE) \
+							pattern->AddCommand(std::make_pair(c, Math::DegreeToRadian(v)));
 gstd::value StgStageScript::Func_ObjMove_AddPatternA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = (int)argv[0].as_real();
@@ -2479,7 +2480,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA1(gstd::script_machine* mach
 		pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ZERO, 0));
 
 		CMD_ADD(speed, StgMovePattern_Angle::SET_SPEED);
-		CMD_ADD(Math::DegreeToRadian(angle), StgMovePattern_Angle::SET_ANGLE);
+		CMD_ADD_ANG(angle, StgMovePattern_Angle::SET_ANGLE);
 
 		obj->AddPattern(frame, pattern);
 	}
@@ -2500,9 +2501,9 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA2(gstd::script_machine* mach
 		std::shared_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(obj));
 
 		CMD_ADD(speed, StgMovePattern_Angle::SET_SPEED);
-		CMD_ADD(Math::DegreeToRadian(angle), StgMovePattern_Angle::SET_ANGLE);
+		CMD_ADD_ANG(angle, StgMovePattern_Angle::SET_ANGLE);
 		CMD_ADD(accele, StgMovePattern_Angle::SET_ACCEL);
-		CMD_ADD(Math::DegreeToRadian(angV), StgMovePattern_Angle::SET_AGVEL);
+		CMD_ADD_ANG(angV, StgMovePattern_Angle::SET_AGVEL);
 		CMD_ADD(maxSpeed, StgMovePattern_Angle::SET_SPMAX);
 
 		obj->AddPattern(frame, pattern);
@@ -2525,9 +2526,9 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA3(gstd::script_machine* mach
 		std::shared_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(obj));
 
 		CMD_ADD(speed, StgMovePattern_Angle::SET_SPEED);
-		CMD_ADD(Math::DegreeToRadian(angle), StgMovePattern_Angle::SET_ANGLE);
+		CMD_ADD_ANG(angle, StgMovePattern_Angle::SET_ANGLE);
 		CMD_ADD(accele, StgMovePattern_Angle::SET_ACCEL);
-		CMD_ADD(Math::DegreeToRadian(angV), StgMovePattern_Angle::SET_AGVEL);
+		CMD_ADD_ANG(angV, StgMovePattern_Angle::SET_AGVEL);
 		CMD_ADD(maxSpeed, StgMovePattern_Angle::SET_SPMAX);
 
 		pattern->SetShotDataID(idShot);
@@ -2552,9 +2553,9 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA4(gstd::script_machine* mach
 		std::shared_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(obj));
 
 		CMD_ADD(speed, StgMovePattern_Angle::SET_SPEED);
-		CMD_ADD(Math::DegreeToRadian(angle), StgMovePattern_Angle::SET_ANGLE);
+		CMD_ADD_ANG(angle, StgMovePattern_Angle::SET_ANGLE);
 		CMD_ADD(accele, StgMovePattern_Angle::SET_ACCEL);
-		CMD_ADD(Math::DegreeToRadian(angV), StgMovePattern_Angle::SET_AGVEL);
+		CMD_ADD_ANG(angV, StgMovePattern_Angle::SET_AGVEL);
 		CMD_ADD(maxSpeed, StgMovePattern_Angle::SET_SPMAX);
 
 		pattern->SetShotDataID(idShot);
@@ -2637,6 +2638,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB3(gstd::script_machine* mach
 	return value();
 }
 #undef CMD_ADD
+#undef CMD_ADD_ANG
 
 gstd::value StgStageScript::Func_ObjMove_GetX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
