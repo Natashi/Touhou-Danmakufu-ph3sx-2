@@ -1165,7 +1165,7 @@ void StgMovePattern_Item::Move() {
 	else if (typeMove_ == MOVE_TOPOSITION_A) {
 		double dx = posTo_.x - px;
 		double dy = posTo_.y - py;
-		speed_ = sqrt(dx * dx + dy * dy) / 16.0;
+		speed_ = hypot(dx, dy) / 16.0;
 
 		double angle = atan2(dy, dx);
 		angDirection_ = angle;

@@ -181,7 +181,7 @@ public:
 	StgMovePattern_XY(StgMoveObject* target);
 	virtual void Move();
 
-	virtual inline double GetSpeed() { return sqrt(c_ * c_ + s_ * s_); }
+	virtual inline double GetSpeed() { return hypot(c_, s_); }
 	virtual inline double GetDirectionAngle() { return atan2(s_, c_); }
 
 	virtual double GetSpeedX() { return c_; }

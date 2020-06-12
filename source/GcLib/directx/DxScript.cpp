@@ -1383,8 +1383,7 @@ void DxScriptObjectManager::RenderList::Add(shared_ptr<DxScriptObjectBase>& ptr)
 }
 void DxScriptObjectManager::RenderList::Clear() {
 	size = 0U;
-	for (auto itr = list.begin(); itr != list.end(); ++itr)
-		*itr = nullptr;
+	std::fill(list.begin(), list.end(), nullptr);
 }
 void DxScriptObjectManager::PrepareRenderObject() {
 	std::list<shared_ptr<DxScriptObjectBase>>::iterator itr;
@@ -3180,11 +3179,8 @@ gstd::value DxScript::Func_GetObjectDistance(gstd::script_machine* machine, int 
 	if (obj1) {
 		DxScriptRenderObject* obj2 = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id2));
 		if (obj2) {
-			int tx = obj1->GetPosition().x - obj2->GetPosition().x;
-			int ty = obj1->GetPosition().y - obj2->GetPosition().y;
-			int tz = obj1->GetPosition().z - obj2->GetPosition().z;
-
-			res = sqrt(tx * tx + ty * ty + tz * tz);
+			D3DXVECTOR3 diff = obj1->GetPosition() - obj2->GetPosition();
+			res = D3DXVec3Length(&diff);
 		}
 	}
 	return value(machine->get_engine()->get_real_type(), res);

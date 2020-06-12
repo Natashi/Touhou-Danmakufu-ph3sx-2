@@ -400,7 +400,7 @@ void StgMovePattern_Line::SetAtSpeed(double tx, double ty, double speed) {
 	toY_ = ty;
 	double nx = tx - target_->GetPositionX();
 	double ny = ty - target_->GetPositionY();
-	dist_ = sqrt(nx * nx + ny * ny);
+	dist_ = hypot(nx, ny);
 	speed_ = speed;
 	angDirection_ = atan2(ny, nx);
 	frameStop_ = dist_ / speed;
@@ -414,7 +414,7 @@ void StgMovePattern_Line::SetAtFrame(double tx, double ty, double frame) {
 	toY_ = ty;
 	double nx = tx - target_->GetPositionX();
 	double ny = ty - target_->GetPositionY();
-	dist_ = sqrt(nx * nx + ny * ny);
+	dist_ = hypot(nx, ny);
 	speed_ = dist_ / frame;
 	angDirection_ = atan2(ny, nx);
 	frameStop_ = frame;
@@ -430,7 +430,7 @@ void StgMovePattern_Line::SetAtWait(double tx, double ty, double weight, double 
 	maxSpeed_ = maxSpeed;
 	double nx = tx - target_->GetPositionX();
 	double ny = ty - target_->GetPositionY();
-	dist_ = sqrt(nx * nx + ny * ny);
+	dist_ = hypot(nx, ny);
 	speed_ = maxSpeed_;
 	angDirection_ = atan2(ny, nx);
 

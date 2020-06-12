@@ -130,7 +130,7 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	double px = circle.GetX() - line.GetX1();
 	double py = circle.GetY() - line.GetY1();
 
-	double u = 1.0 / sqrt(ux1 * ux1 + uy1 * uy1);
+	double u = 1.0 / hypot(ux1, uy1);
 
 	double ux2 = ux1 * u;
 	double uy2 = uy1 * u;
