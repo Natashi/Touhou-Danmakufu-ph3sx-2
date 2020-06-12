@@ -264,8 +264,8 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	StgStageScriptObjectManager* objectManagerStage = nullptr;
 	DxScriptObjectManager* objectManagerPackage = nullptr;
 
-	std::vector<std::list<shared_ptr<DxScriptObjectBase>>>* pRenderListStage = nullptr;
-	std::vector<std::list<shared_ptr<DxScriptObjectBase>>>* pRenderListPackage = nullptr;
+	std::vector<DxScriptObjectManager::RenderList>* pRenderListStage = nullptr;
+	std::vector<DxScriptObjectManager::RenderList>* pRenderListPackage = nullptr;
 
 	int scene = infoSystem_->GetScene();
 	bool bPause = false;
@@ -408,17 +408,18 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 		}
 
 		if (objectManagerStage != nullptr && !bPause) {
-			shared_ptr<Shader> shader = objectManagerStage->GetShader(iPri);
 			ID3DXEffect* effect = nullptr;
 			UINT cPass = 1;
-			if (shader != nullptr) {
+			if (shared_ptr<Shader> shader = objectManagerStage->GetShader(iPri)) {
 				effect = shader->GetEffect();
 				shader->LoadParameter();
 				effect->Begin(&cPass, 0);
 			}
 
+			DxScriptObjectManager::RenderList& renderList = pRenderListStage->at(iPri);
+
 			for (UINT iPass = 0; iPass < cPass; ++iPass) {
-				if (effect != nullptr) effect->BeginPass(iPass);
+				if (effect) effect->BeginPass(iPass);
 
 				if (bValidStage) {
 					if (listShotValidPriority_[iPri])
@@ -426,61 +427,55 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 					if (listItemValidPriority_[iPri])
 						stageController_->GetItemManager()->Render(iPri);
 				}
-
-				if (pRenderListStage != nullptr && iPri < (*pRenderListStage).size()) {
-					std::list<shared_ptr<DxScriptObjectBase>>& renderList = (*pRenderListStage)[iPri];
+				if (pRenderListStage != nullptr && iPri < pRenderListStage->size()) {
 					for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
 						if (DxScriptObjectBase* obj = (*itr).get()) {
-							if (!bClearZBufferFor2DCoordinate) {
-								if (CheckMeshAndClearZBuffer(obj)) bClearZBufferFor2DCoordinate = true;
-							}
+							if (!bClearZBufferFor2DCoordinate)
+								bClearZBufferFor2DCoordinate = CheckMeshAndClearZBuffer(obj);
 							obj->Render();
 						}
 					}
 					//renderList.clear();
 				}
 
-				if (effect != nullptr) effect->EndPass();
+				if (effect) effect->EndPass();
 			}
+			renderList.Clear();
 
-			(*pRenderListStage)[iPri].clear();
-
-			if (effect != nullptr) effect->End();
+			if (effect) effect->End();
 		}
 
 		//パッケージ
-		if (objectManagerPackage != nullptr) {
-			shared_ptr<Shader> shader = objectManagerPackage->GetShader(iPri);
+		if (objectManagerPackage) {
 			ID3DXEffect* effect = nullptr;
 			UINT cPass = 1;
-			if (shader != nullptr) {
+			if (shared_ptr<Shader> shader = objectManagerPackage->GetShader(iPri)) {
 				effect = shader->GetEffect();
 				shader->LoadParameter();
 				effect->Begin(&cPass, 0);
 			}
 
-			for (UINT iPass = 0; iPass < cPass; ++iPass) {
-				if (effect != nullptr) effect->BeginPass(iPass);
+			DxScriptObjectManager::RenderList& renderList = pRenderListPackage->at(iPri);
 
-				if (pRenderListPackage != nullptr && iPri < (*pRenderListPackage).size()) {
-					std::list<shared_ptr<DxScriptObjectBase>>& renderList = (*pRenderListPackage)[iPri];
+			for (UINT iPass = 0; iPass < cPass; ++iPass) {
+				if (effect) effect->BeginPass(iPass);
+
+				if (pRenderListPackage != nullptr && iPri < pRenderListPackage->size()) {
 					for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
 						if (DxScriptObjectBase* obj = (*itr).get()) {
-							if (!bClearZBufferFor2DCoordinate) {
-								if (CheckMeshAndClearZBuffer(obj)) bClearZBufferFor2DCoordinate = true;
-							}
+							if (!bClearZBufferFor2DCoordinate)
+								bClearZBufferFor2DCoordinate = CheckMeshAndClearZBuffer(obj);
 							obj->Render();
 						}
 					}
 					//renderList.clear();
 				}
 
-				if (effect != nullptr) effect->EndPass();
+				if (effect) effect->EndPass();
 			}
+			renderList.Clear();
 
-			(*pRenderListPackage)[iPri].clear();
-
-			if (effect != nullptr) effect->End();
+			if (effect) effect->End();
 		}
 
 		if (iPri == priCamera) {
@@ -512,13 +507,12 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 		objectManagerPackage->ClearRenderObject();
 }
 bool StgSystemController::CheckMeshAndClearZBuffer(DxScriptObjectBase* obj) {
-	if (obj && obj->GetObjectType() == TypeObject::OBJ_MESH) {
-		if (DxScriptMeshObject* objMesh = dynamic_cast<DxScriptMeshObject*>(obj)) {
-			if (objMesh->GetMesh() && objMesh->GetMesh()->IsCoordinate2D()) {
-				DirectGraphics::GetBase()->GetDevice()->Clear(0, nullptr,
-					D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0, 0);
-				return true;
-			}
+	if (obj == nullptr) return false;
+	if (DxScriptMeshObject* objMesh = dynamic_cast<DxScriptMeshObject*>(obj)) {
+		if (objMesh->GetMesh() && objMesh->GetMesh()->IsCoordinate2D()) {
+			DirectGraphics::GetBase()->GetDevice()->Clear(0, nullptr,
+				D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0, 0);
+			return true;
 		}
 	}
 	return false;
