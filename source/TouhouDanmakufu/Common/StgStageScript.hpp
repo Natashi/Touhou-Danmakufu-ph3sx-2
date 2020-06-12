@@ -210,13 +210,13 @@ public:
 	static gstd::value Func_IsPermitPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_IsPlayerLastSpellWait(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_IsPlayerSpellActive(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_SetPlayerItemScope(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_GetPlayerItemScope(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_SetPlayerInvincibleGraze(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_SetPlayerIntersectionEraseShot(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_SetPlayerStateEndEnable(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_SetPlayerShootdownEventEnable(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_SetPlayerRebirthPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_SetPlayerItemScope);
+	DNH_FUNCAPI_DECL_(Func_GetPlayerItemScope);
+	DNH_FUNCAPI_DECL_(Func_SetPlayerInvincibleGraze);
+	DNH_FUNCAPI_DECL_(Func_SetPlayerIntersectionEraseShot);
+	DNH_FUNCAPI_DECL_(Func_SetPlayerStateEndEnable);
+	DNH_FUNCAPI_DECL_(Func_SetPlayerShootdownEventEnable);
+	DNH_FUNCAPI_DECL_(Func_SetPlayerRebirthPosition);
 
 
 	//STGã§í ä÷êîÅFìG
@@ -300,10 +300,11 @@ public:
 	static gstd::value Func_ObjMove_GetY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetAngle(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjMove_SetSpeedX(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjMove_GetSpeedX(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjMove_SetSpeedY(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjMove_GetSpeedY(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_SetSpeedX);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_GetSpeedX);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_SetSpeedY);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_GetSpeedY);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_SetSpeedXY);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetProcessMovement);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetProcessMovement);
 

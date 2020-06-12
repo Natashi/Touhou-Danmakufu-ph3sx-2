@@ -109,6 +109,20 @@ void StgMoveObject::SetDirectionAngle(double angle) {
 	StgMovePattern_Angle* pattern = dynamic_cast<StgMovePattern_Angle*>(pattern_.get());
 	pattern->SetDirectionAngle(angle);
 }
+void StgMoveObject::SetSpeedX(double speedX) {
+	if (pattern_ == nullptr || pattern_->GetType() != StgMovePattern::TYPE_XY) {
+		pattern_ = std::shared_ptr<StgMovePattern_XY>(new StgMovePattern_XY(this));
+	}
+	StgMovePattern_XY* pattern = dynamic_cast<StgMovePattern_XY*>(pattern_.get());
+	pattern->SetSpeedX(speedX);
+}
+void StgMoveObject::SetSpeedY(double speedY) {
+	if (pattern_ == nullptr || pattern_->GetType() != StgMovePattern::TYPE_XY) {
+		pattern_ = std::shared_ptr<StgMovePattern_XY>(new StgMovePattern_XY(this));
+	}
+	StgMovePattern_XY* pattern = dynamic_cast<StgMovePattern_XY*>(pattern_.get());
+	pattern->SetSpeedY(speedY);
+}
 
 /**********************************************************
 //StgMovePattern
