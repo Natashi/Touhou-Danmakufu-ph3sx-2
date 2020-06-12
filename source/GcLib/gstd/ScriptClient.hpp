@@ -99,7 +99,6 @@ namespace gstd {
 		virtual std::vector<char> _Include(std::vector<char>& source);
 		virtual bool _CreateEngine();
 		std::wstring _ExtendPath(std::wstring path);
-
 	public:
 		ScriptClientBase();
 		virtual ~ScriptClientBase();
@@ -166,44 +165,44 @@ namespace gstd {
 		static value Func_Cos(script_machine* machine, int argc, const value* argv);
 		static value Func_Sin(script_machine* machine, int argc, const value* argv);
 		static value Func_Tan(script_machine* machine, int argc, const value* argv);
-		static value Func_SinCos(script_machine* machine, int argc, const value* argv);
-		static value Func_RCos(script_machine* machine, int argc, const value* argv);
-		static value Func_RSin(script_machine* machine, int argc, const value* argv);
-		static value Func_RTan(script_machine* machine, int argc, const value* argv);
-		static value Func_RSinCos(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_SinCos);
+		DNH_FUNCAPI_DECL_(Func_RCos);
+		DNH_FUNCAPI_DECL_(Func_RSin);
+		DNH_FUNCAPI_DECL_(Func_RTan);
+		DNH_FUNCAPI_DECL_(Func_RSinCos);
 
 		static value Func_Acos(script_machine* machine, int argc, const value* argv);
 		static value Func_Asin(script_machine* machine, int argc, const value* argv);
 		static value Func_Atan(script_machine* machine, int argc, const value* argv);
 		static value Func_Atan2(script_machine* machine, int argc, const value* argv);
-		static value Func_RAcos(script_machine* machine, int argc, const value* argv);
-		static value Func_RAsin(script_machine* machine, int argc, const value* argv);
-		static value Func_RAtan(script_machine* machine, int argc, const value* argv);
-		static value Func_RAtan2(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_RAcos);
+		DNH_FUNCAPI_DECL_(Func_RAsin);
+		DNH_FUNCAPI_DECL_(Func_RAtan);
+		DNH_FUNCAPI_DECL_(Func_RAtan2);
 
-		static value Func_Exp(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_Exp);
 
 		static value Func_Rand(script_machine* machine, int argc, const value* argv);
-		static value Func_RandEff(script_machine* machine, int argc, const value* argv);
-		static value Func_Sqrt(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_RandEff);
+		DNH_FUNCAPI_DECL_(Func_Sqrt);
 
-		static value Func_ToDegrees(script_machine* machine, int argc, const value* argv);
-		static value Func_ToRadians(script_machine* machine, int argc, const value* argv);
-		static value Func_NormalizeAngle(script_machine* machine, int argc, const value* argv);
-		static value Func_RNormalizeAngle(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_ToDegrees);
+		DNH_FUNCAPI_DECL_(Func_ToRadians);
+		DNH_FUNCAPI_DECL_(Func_NormalizeAngle);
+		DNH_FUNCAPI_DECL_(Func_RNormalizeAngle);
 
-		static value Func_Interpolate_Linear(script_machine* machine, int argc, const value* argv);
-		static value Func_Interpolate_Smooth(script_machine* machine, int argc, const value* argv);
-		static value Func_Interpolate_Smoother(script_machine* machine, int argc, const value* argv);
-		static value Func_Interpolate_Accelerate(script_machine* machine, int argc, const value* argv);
-		static value Func_Interpolate_Decelerate(script_machine* machine, int argc, const value* argv);
-		static value Func_Interpolate_Modulate(script_machine* machine, int argc, const value* argv);
-		static value Func_Interpolate_Overshoot(script_machine* machine, int argc, const value* argv);
-		static value Func_Interpolate_QuadraticBezier(script_machine* machine, int argc, const value* argv);
-		static value Func_Interpolate_CubicBezier(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_Linear);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_Smooth);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_Smoother);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_Accelerate);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_Decelerate);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_Modulate);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_Overshoot);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_QuadraticBezier);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_CubicBezier);
 
-		static value Func_TypeOf(script_machine* machine, int argc, const value* argv);
-		static value Func_FTypeOf(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_TypeOf);
+		DNH_FUNCAPI_DECL_(Func_FTypeOf);
 
 		//共通関数：文字列操作
 		static value Func_ToString(script_machine* machine, int argc, const value* argv);
@@ -216,9 +215,9 @@ namespace gstd {
 		static value Func_TrimString(script_machine* machine, int argc, const value* argv);
 		static value Func_SplitString(script_machine* machine, int argc, const value* argv);
 
-		static value Func_RegexMatch(script_machine* machine, int argc, const value* argv);
-		static value Func_RegexMatchRepeated(script_machine* machine, int argc, const value* argv);
-		static value Func_RegexReplace(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_RegexMatch);
+		DNH_FUNCAPI_DECL_(Func_RegexMatchRepeated);
+		DNH_FUNCAPI_DECL_(Func_RegexReplace);
 
 		//共通関数：パス関連
 		static value Func_GetModuleDirectory(script_machine* machine, int argc, const value* argv);
@@ -244,7 +243,7 @@ namespace gstd {
 		static value Func_GetAreaCommonData(script_machine* machine, int argc, const value* argv);
 		static value Func_ClearAreaCommonData(script_machine* machine, int argc, const value* argv);
 		static value Func_DeleteAreaCommonData(script_machine* machine, int argc, const value* argv);
-		static value Func_DeleteWholeAreaCommonData(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_DeleteWholeAreaCommonData);
 		static value Func_CreateCommonDataArea(script_machine* machine, int argc, const value* argv);
 		static value Func_CopyCommonDataArea(script_machine* machine, int argc, const value* argv);
 		static value Func_IsCommonDataAreaExists(script_machine* machine, int argc, const value* argv);

@@ -132,7 +132,7 @@ public:
 	static gstd::value Func_RenderToTextureB1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SaveSnapShotA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SaveSnapShotA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_SaveSnapShotA3(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_SaveSnapShotA3);
 
 	//STGêßå‰ã§í ä÷êîÅFé©ã@ä÷òA
 	static gstd::value Func_GetPlayerID(gstd::script_machine* machine, int argc, const gstd::value* argv);

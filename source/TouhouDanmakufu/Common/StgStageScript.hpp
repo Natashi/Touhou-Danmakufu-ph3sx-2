@@ -180,7 +180,7 @@ public:
 
 	//STG共通関数：自機
 	static gstd::value Func_GetPlayerObjectID(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_GetPlayerScriptID(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_GetPlayerScriptID);
 	static gstd::value Func_SetPlayerSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetPlayerClip(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetPlayerLife(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -191,7 +191,7 @@ public:
 	static gstd::value Func_SetPlayerRebirthFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetPlayerRebirthLossFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetPlayerAutoItemCollectLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_GetPlayerAutoItemCollectLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_GetPlayerAutoItemCollectLine);
 	static gstd::value Func_SetForbidPlayerShot(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetForbidPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerX(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -330,7 +330,7 @@ public:
 	static gstd::value Func_ObjEnemyBossScene_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemyBossScene_SetSpellTimer(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemyBossScene_StartSpell(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjEnemyBossScene_EndSpell(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_ObjEnemyBossScene_EndSpell);
 
 	//STG共通関数：弾オブジェクト操作
 	static gstd::value Func_ObjShot_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -346,7 +346,7 @@ public:
 	static gstd::value Func_ObjShot_SetDamage(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetPenetration(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetEraseShot(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjShot_SetDeleteLife(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDeleteLife);
 	static gstd::value Func_ObjShot_SetSpellFactor(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_ToItem(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_AddShotA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -379,8 +379,8 @@ public:
 	static gstd::value Func_ObjStLaser_SetAngle(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjStLaser_GetAngle(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjStLaser_SetSource(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjStLaser_SetPermitExpand(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjStLaser_GetPermitExpand(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_ObjStLaser_SetPermitExpand);
+	DNH_FUNCAPI_DECL_(Func_ObjStLaser_GetPermitExpand);
 	static gstd::value Func_ObjCrLaser_SetTipDecrement(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_Create);

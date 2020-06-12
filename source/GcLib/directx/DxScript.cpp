@@ -1201,7 +1201,7 @@ bool DxScriptObjectManager::SetMaxObject(size_t size) {
 	return true;
 }
 void DxScriptObjectManager::SetRenderBucketCapacity(size_t capacity) {
-	objRender_.resize(capacity);
+	listObjRender_.resize(capacity);
 	listShader_.resize(capacity);
 }
 void DxScriptObjectManager::_ArrangeActiveObjectList() {
@@ -1321,16 +1321,6 @@ void DxScriptObjectManager::DeleteObjectByScriptID(int64_t idScript) {
 		DeleteObject(obj_[iObj]);
 	}
 }
-void DxScriptObjectManager::AddRenderObject(shared_ptr<DxScriptObjectBase> obj) {
-	if (!obj->IsVisible())return;
-
-	size_t renderSize = objRender_.size();
-
-	int tPri = obj->priRender_;
-	if (tPri < 0) tPri = 0;
-	else if (tPri > renderSize - 1) tPri = renderSize - 1;
-	objRender_[tPri].push_back(obj);
-}
 void DxScriptObjectManager::WorkObject() {
 	//_ArrangeActiveObjectList();
 	std::list<shared_ptr<DxScriptObjectBase>>::iterator itr;
@@ -1362,47 +1352,60 @@ void DxScriptObjectManager::RenderObject() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	graphics->SetVertexFog(bFogEnable_, fogColor_, fogStart_, fogEnd_);
 
-	for (size_t iPri = 0; iPri < objRender_.size(); ++iPri) {
-		shared_ptr<Shader> shader = listShader_[iPri];
+	for (size_t iPri = 0; iPri < listObjRender_.size(); ++iPri) {
 		ID3DXEffect* effect = nullptr;
 		UINT cPass = 1;
-		if (shader != nullptr) {
+		if (shared_ptr<Shader> shader = listShader_[iPri]) {
 			effect = shader->GetEffect();
 			shader->LoadParameter();
 			effect->Begin(&cPass, 0);
 		}
 
-		std::list<shared_ptr<DxScriptObjectBase>>::iterator itr;
+		RenderList& renderList = listObjRender_[iPri];
 
 		for (UINT iPass = 0; iPass < cPass; ++iPass) {
-			if (effect != nullptr) effect->BeginPass(iPass);
-
-			for (itr = objRender_[iPri].begin(); itr != objRender_[iPri].end(); ++itr) {
-				(*itr)->Render();
+			if (effect) effect->BeginPass(iPass);
+			for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
+				if (DxScriptObjectBase* obj = (*itr).get())
+					obj->Render();
 			}
-
-			if (effect != nullptr) effect->EndPass();
+			if (effect) effect->EndPass();
 		}
+		renderList.Clear();
 
-		objRender_[iPri].clear();
-
-		if (effect != nullptr) effect->End();
+		if (effect) effect->End();
 	}
+}
 
+void DxScriptObjectManager::RenderList::Add(shared_ptr<DxScriptObjectBase>& ptr) {
+	if (size >= list.size()) list.push_back(ptr);
+	else list[size++] = ptr;
+}
+void DxScriptObjectManager::RenderList::Clear() {
+	size = 0U;
+	for (auto itr = list.begin(); itr != list.end(); ++itr)
+		*itr = nullptr;
 }
 void DxScriptObjectManager::PrepareRenderObject() {
 	std::list<shared_ptr<DxScriptObjectBase>>::iterator itr;
 	for (itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
 		shared_ptr<DxScriptObjectBase> obj = (*itr);
-		if (obj == nullptr || obj->IsDeleted())continue;
-		if (!obj->IsVisible())continue;
+		if (obj == nullptr || obj->IsDeleted()) continue;
+		if (!obj->IsVisible()) continue;
 		AddRenderObject(obj);
 	}
 }
+void DxScriptObjectManager::AddRenderObject(shared_ptr<DxScriptObjectBase> obj) {
+	size_t renderSize = listObjRender_.size();
+
+	int tPri = obj->priRender_;
+	if (tPri < 0) tPri = 0;
+	else if (tPri > renderSize - 1) tPri = renderSize - 1;
+	listObjRender_[tPri].Add(obj);
+}
 void DxScriptObjectManager::ClearRenderObject() {
-//#pragma omp parallel for
-	for (size_t iPri = 0; iPri < objRender_.size(); ++iPri) {
-		objRender_[iPri].clear();
+	for (size_t iPri = 0; iPri < listObjRender_.size(); ++iPri) {
+		listObjRender_[iPri].Clear();
 	}
 }
 void DxScriptObjectManager::SetShader(shared_ptr<Shader> shader, int min, int max) {
