@@ -3194,29 +3194,25 @@ gstd::value DxScript::Func_GetObject2dPosition(gstd::script_machine* machine, in
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	D3DXVECTOR3 pos = obj->GetPosition();
 
-	D3DXVECTOR2 point = camera->TransformCoordinateTo2D(pos);
-	std::vector<float> listRes;
-	listRes.push_back(point.x);
-	listRes.push_back(point.y);
+	D3DXVECTOR2 point = camera->TransformCoordinateTo2D(obj->GetPosition());
+	std::vector<float> listRes = { point.x, point.y };
 
 	return script->CreateRealArrayValue(listRes);
 }
 gstd::value DxScript::Func_Get2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	double px = argv[0].as_real();
-	double py = argv[1].as_real();
-	double pz = argv[2].as_real();
 
+	float px = argv[0].as_real();
+	float py = argv[1].as_real();
+	float pz = argv[2].as_real();
 	D3DXVECTOR3 pos(px, py, pz);
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+
 	D3DXVECTOR2 point = camera->TransformCoordinateTo2D(pos);
-	std::vector<float> listRes;
-	listRes.push_back(point.x);
-	listRes.push_back(point.y);
+	std::vector<float> listRes = { point.x, point.y };
 
 	return script->CreateRealArrayValue(listRes);
 }

@@ -1902,77 +1902,95 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		shotManager->GetPlayerShotDataList() : shotManager->GetEnemyShotDataList();
 
 	StgShotData* shotData = nullptr;
-	if (dataList)
-		shotData = dataList->GetData(idShot);
-
-	if (shotData == nullptr)
-		script->RaiseError(ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_OUTOFRANGE_INDEX));
+	if (dataList) shotData = dataList->GetData(idShot);
 
 	gstd::value res;
-	switch (type) {
-	case INFO_RECT:
-	{
-		RECT rect = shotData->GetData(0)->rcSrc_;
-		std::vector<double> list;
-		list.push_back(rect.left);
-		list.push_back(rect.top);
-		list.push_back(rect.right);
-		list.push_back(rect.bottom);
-		res = script->CreateRealArrayValue(list);
-		break;
-	}
 
-	case INFO_DELAY_COLOR:
-	{
-		D3DCOLOR color = shotData->GetDelayColor();
-		int colorR = ColorAccess::GetColorR(color);
-		int colorG = ColorAccess::GetColorG(color);
-		int colorB = ColorAccess::GetColorB(color);
-
-		std::vector<double> list;
-		list.push_back(colorR);
-		list.push_back(colorG);
-		list.push_back(colorB);
-		res = script->CreateRealArrayValue(list);
-		break;
-	}
-
-	case INFO_BLEND:
-	{
-		int blendType = shotData->GetRenderType();
-		res = value(machine->get_engine()->get_real_type(), (double)blendType);
-		break;
-	}
-
-	case INFO_COLLISION:
-	{
-		double radius = 0;
-		DxCircle* listCircle = shotData->GetIntersectionCircleList();
-		if (listCircle->GetR() > 0) {
-			radius = listCircle->GetR();
+	if (shotData == nullptr) {
+		script->RaiseError(ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_OUTOFRANGE_INDEX));
+		/*
+		switch (type) {
+		case INFO_RECT:
+		{
+			std::vector<float> list = { 0, 0, 0, 0 };
+			res = script->CreateRealArrayValue(list);
+			break;
 		}
-		res = value(machine->get_engine()->get_real_type(), (double)radius);
-		break;
+		case INFO_DELAY_COLOR:
+		{
+			std::vector<float> list = { 0xff, 0xff, 0xff };
+			res = script->CreateRealArrayValue(list);
+			break;
+		}
+		case INFO_BLEND:
+			res = value(machine->get_engine()->get_real_type(), (double)DirectGraphics::MODE_BLEND_NONE);
+			break;
+		case INFO_COLLISION:
+			res = value(machine->get_engine()->get_real_type(), 0.0);
+			break;
+		case INFO_COLLISION_LIST:
+		{
+			std::vector<gstd::value> listValue;
+			std::vector<float> list = { 0, 0, 0 };
+			listValue.push_back(script->CreateRealArrayValue(list));
+			res = script->CreateValueArrayValue(listValue);
+			break;
+		}
+		case INFO_IS_FIXED_ANGLE:
+			res = value(machine->get_engine()->get_boolean_type(), true);
+			break;
+		}
+		*/
 	}
-
-	case INFO_COLLISION_LIST:
-	{
-		DxCircle* listCircle = shotData->GetIntersectionCircleList();
-		std::vector<gstd::value> listValue;
-		std::vector<double> list;
-		list.push_back(listCircle->GetR());
-		list.push_back(listCircle->GetX());
-		list.push_back(listCircle->GetY());
-		res = script->CreateValueArrayValue(listValue);
-		break;
-	}
-
-	case INFO_IS_FIXED_ANGLE:
-	{
-		bool bFixed = shotData->IsFixedAngle();
-		res = value(machine->get_engine()->get_boolean_type(), bFixed);
-		break;
-	}
+	else {
+		switch (type) {
+		case INFO_RECT:
+		{
+			RECT rect = shotData->GetData(0)->rcSrc_;
+			std::vector<double> list;
+			list.push_back(rect.left);
+			list.push_back(rect.top);
+			list.push_back(rect.right);
+			list.push_back(rect.bottom);
+			res = script->CreateRealArrayValue(list);
+			break;
+		}
+		case INFO_DELAY_COLOR:
+		{
+			D3DCOLOR color = shotData->GetDelayColor();
+			std::vector<float> list;
+			list.push_back((color >> 16) & 0xff);
+			list.push_back((color >> 8) & 0xff);
+			list.push_back(color & 0xff);
+			res = script->CreateRealArrayValue(list);
+			break;
+		}
+		case INFO_BLEND:
+			res = value(machine->get_engine()->get_real_type(), (double)shotData->GetRenderType());
+			break;
+		case INFO_COLLISION:
+		{
+			double radius = 0;
+			DxCircle* listCircle = shotData->GetIntersectionCircleList();
+			if (listCircle->GetR() > 0) {
+				radius = listCircle->GetR();
+			}
+			res = value(machine->get_engine()->get_real_type(), radius);
+			break;
+		}
+		case INFO_COLLISION_LIST:
+		{
+			DxCircle* listCircle = shotData->GetIntersectionCircleList();
+			std::vector<gstd::value> listValue;
+			std::vector<double> list = { listCircle->GetR(), listCircle->GetX(), listCircle->GetY() };
+			listValue.push_back(script->CreateRealArrayValue(list));
+			res = script->CreateValueArrayValue(listValue);
+			break;
+		}
+		case INFO_IS_FIXED_ANGLE:
+			res = value(machine->get_engine()->get_boolean_type(), shotData->IsFixedAngle());
+			break;
+		}
 	}
 
 	return res;
