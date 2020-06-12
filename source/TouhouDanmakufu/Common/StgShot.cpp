@@ -1296,13 +1296,11 @@ void StgNormalShotObject::Work() {
 	if (!bEnableMovement_) return;
 
 	_ProcessTransformAct();
-
 	_Move();
-	if (delay_ == 0) {
-		_AddReservedShotWork();
-	}
 
-	delay_ = std::max(--delay_, 0);
+	if (delay_ > 0) --delay_;
+	else _AddReservedShotWork();
+
 	++frameWork_;
 
 	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
@@ -1682,13 +1680,11 @@ void StgLooseLaserObject::Work() {
 	if (!bEnableMovement_) return;
 
 	_ProcessTransformAct();
-
 	_Move();
-	if (delay_ == 0) {
-		_AddReservedShotWork();
-	}
 
-	delay_ = std::max(--delay_, 0);
+	if (delay_ > 0) --delay_;
+	else _AddReservedShotWork();
+
 	++frameWork_;
 
 	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
@@ -1941,7 +1937,7 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 	angLaser_ = 0;
 	frameFadeDelete_ = -1;
 	bUseSouce_ = true;
-	scaleX_ = 0.05;
+	scaleX_ = 0.05f;
 
 	bLaserExpand_ = true;
 
@@ -1954,15 +1950,15 @@ void StgStraightLaserObject::Work() {
 	if (!bEnableMovement_) return;
 
 	_ProcessTransformAct();
-
 	_Move();
-	if (delay_ == 0) {
+
+	if (delay_ > 0) --delay_;
+	else {
 		_AddReservedShotWork();
+		if (bLaserExpand_)
+			scaleX_ = std::min(1.0f, scaleX_ + 0.1f);
 	}
 
-	delay_ = std::max(--delay_, 0);
-	if (delay_ <= 0 && bLaserExpand_)
-		scaleX_ = std::min(1.0, scaleX_ + 0.1);
 	++frameWork_;
 
 	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
@@ -2102,30 +2098,34 @@ void StgStraightLaserObject::RenderOnShotManager() {
 			color = (color & 0x00ffffff) | (alpha << 24);
 		}
 
-		SetRect(&rcDest, -widthRender_ / 2, length_, widthRender_ / 2, 0);
+		if (widthRender_ > 0) {
+			float _rWidth = abs(widthRender_ / 2) * scaleX_;
+			_rWidth = std::max(_rWidth, 0.5f);
+			SetRect(&rcDest, -_rWidth, length_, _rWidth, 0);
 
-		VERTEX_TLX verts[4];
-		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
-		LONG* ptrDst = reinterpret_cast<LONG*>(&rcDest);
-		for (size_t iVert = 0U; iVert < 4U; ++iVert) {
-			VERTEX_TLX vt;
+			VERTEX_TLX verts[4];
+			LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
+			LONG* ptrDst = reinterpret_cast<LONG*>(&rcDest);
+			for (size_t iVert = 0U; iVert < 4U; ++iVert) {
+				VERTEX_TLX vt;
 
-			_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / textureWidth, ptrSrc[iVert | 0b1] / textureHeight);
-			_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1]);
-			_SetVertexColorARGB(vt, color);
+				_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / textureWidth, ptrSrc[iVert | 0b1] / textureHeight);
+				_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1]);
+				_SetVertexColorARGB(vt, color);
 
-			float px = vt.position.x * scaleX_ * scale_.x;
-			float py = vt.position.y * scale_.y;
+				float px = vt.position.x * scale_.x;
+				float py = vt.position.y * scale_.y;
 
-			vt.position.x = (px * s_ + py * c_) + sposx;
-			vt.position.y = (-px * c_ + py * s_) + sposy;
-			vt.position.z = position_.z;
+				vt.position.x = (px * s_ + py * c_) + sposx;
+				vt.position.y = (-px * c_ + py * s_) + sposy;
+				vt.position.z = position_.z;
 
-			//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
-			verts[iVert] = vt;
+				//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
+				verts[iVert] = vt;
+			}
+
+			renderer->AddSquareVertex(verts);
 		}
-
-		renderer->AddSquareVertex(verts);
 	}
 
 	if (bUseSouce_ && frameFadeDelete_ < 0) {	//Delay cloud
@@ -2243,13 +2243,11 @@ void StgCurveLaserObject::Work() {
 	if (!bEnableMovement_) return;
 
 	_ProcessTransformAct();
-
 	_Move();
-	if (delay_ == 0) {
-		_AddReservedShotWork();
-	}
 
-	delay_ = std::max(--delay_, 0);
+	if (delay_ > 0) --delay_;
+	else _AddReservedShotWork();
+
 	++frameWork_;
 
 	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
