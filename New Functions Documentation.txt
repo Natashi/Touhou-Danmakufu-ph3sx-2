@@ -585,6 +585,32 @@ GetCameraViewProjectionMatrix
 	Description:
 		Returns the 3D camera's internal view-projection matrix. Intended to be used with custom 3D vertex shaders.
 		Says Natashi as he stares at TriFocuser.
+		
+-------------------------------------------------------------------------------------------------------------------
+
+LoadShader
+	Arguments:
+		1) (string) path
+	Description:
+		Loads a shader file, and returns a boolean value of whether loading was successful.
+		
+RemoveShader
+	Arguments:
+		1) (string) path
+	Description:
+		Removes a shader data that was previously loaded with LoadShader.
+		
+LoadMesh
+	Arguments:
+		1) (string) path
+	Description:
+		Loads a mesh data file, and returns a boolean value of whether loading was successful.
+		
+RemoveMesh
+	Arguments:
+		1) (string) path
+	Description:
+		Removes a mesh data that was previously loaded with LoadMesh.
 
 -------------------------------------------------------------------------------------------------------------------
 
@@ -737,6 +763,27 @@ ObjParticleList_SetPosition
 		4) Z position
 	Description:
 		Sets the instance position data.
+		
+ObjParticleList_SetScaleX
+	Arguments:
+		1) object ID
+		2) X scale
+	Description:
+		Sets the instance X scale data.
+
+ObjParticleList_SetScaleY
+	Arguments:
+		1) object ID
+		2) Y scale
+	Description:
+		Sets the instance Y scale data.
+
+ObjParticleList_SetScaleZ
+	Arguments:
+		1) object ID
+		2) Z scale
+	Description:
+		Sets the instance Z scale data.
 
 ObjParticleList_SetScale
 	Arguments:
@@ -1052,6 +1099,17 @@ ObjEnemyBossScene_EndSpell
 		1) boss scene object ID
 	Description:
 		Marks the current single as being not-a-spell.
+		
+ObjShot_SetOwnerType
+	Arguments:
+		1) object ID
+		2) (struct) type
+	Description:
+		Sets the shot object's owner type.
+		Available types are:
+			OWNER_PLAYER
+			OWNER_ENEMY
+		Shots created inside a player script are set to OWNER_PLAYER by default, OWNER_ENEMY otherwise.
 
 ObjShot_GetIntersectionEnable
 	Arguments:
@@ -1085,6 +1143,14 @@ ObjShot_SetIntersectionScaleXY
 		For normal shots, the true scale is the half-point between the X and Y scales.
 		
 		Note: Sorry folks, no ellipse hitboxes for you.
+		
+ObjShot_SetPositionRounding
+	Arguments:
+		1) object ID
+		2) (bool) set
+	Description:
+		If set to true, will cause the shot object to only render in non-floating point coordinates.
+		See: Official Touhou games.
 
 ObjStLaser_SetPermitExpand
 	Arguments:
@@ -1099,21 +1165,11 @@ ObjStLaser_GetPermitExpand
 		1) object ID
 	Description:
 		Returns whether the straight laser is permitted to expand after the delay period.
-		
-ObjShot_SetOwnerType
-	Arguments:
-		1) object ID
-		2) (struct) type
-	Description:
-		Sets the shot object's owner type.
-		Available types are:
-			OWNER_PLAYER
-			OWNER_ENEMY
-		Shots created inside a player script are set to OWNER_PLAYER by default, OWNER_ENEMY otherwise.
 
 GetShotDataInfoA1
 	Description:
-		Addition.
+		Addition + Change.
+		No longer throws an error if the given shot graphic ID is invalid.
 		INFO_IS_FIXED_ANGLE - Returns whether the given shot graphic ID has had fixed_angle enabled.
 
 CreatePlayerShotA1
@@ -1155,19 +1211,27 @@ ObjPatternShot_SetPatternType
 	Description:
 		Sets the firing pattern of the given shot pattern object.
 		Available pattern types:
-			PATTERN_TYPE_FAN
-			PATTERN_TYPE_FAN_AIMED
-			PATTERN_TYPE_RING
-			PATTERN_TYPE_RING_AIMED
-			PATTERN_TYPE_ARROW
-			PATTERN_TYPE_ARROW_AIMED
-			PATTERN_TYPE_POLYGON
-			PATTERN_TYPE_POLYGON_AIMED
-			PATTERN_TYPE_ELLIPSE
-			PATTERN_TYPE_ELLIPSE_AIMED
-			PATTERN_TYPE_SCATTER_ANGLE
-			PATTERN_TYPE_SCATTER_SPEED
-			PATTERN_TYPE_SCATTER
+			PATTERN_FAN
+			PATTERN_FAN_AIMED
+			PATTERN_RING
+			PATTERN_RING_AIMED
+			PATTERN_ARROW
+			PATTERN_ARROW_AIMED
+			PATTERN_POLYGON
+			PATTERN_POLYGON_AIMED
+				- [way]:	Number of polygon vertices.
+				- [stack]:	Number of shots per sides.
+				- [angle argument]:	Edge skip, should normally be 1. Other values result in polygrams.
+				- [speed argument]:	No effect.
+			PATTERN_ELLIPSE
+			PATTERN_ELLIPSE_AIMED
+				- [stack]:	No effect.
+				- [angle argument]:	Angle of the ellipse. (Not of the shots)
+				- [base speed]:		Max speed at the ends of the primary axes.
+				- [speed argument]:	Max speed at the ends of the secondary axes.
+			PATTERN_SCATTER_ANGLE
+			PATTERN_SCATTER_SPEED
+			PATTERN_SCATTER
 
 ObjPatternShot_SetShotType
 	Arguments:
