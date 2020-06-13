@@ -1907,8 +1907,8 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 	gstd::value res;
 
 	if (shotData == nullptr) {
-		script->RaiseError(ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_OUTOFRANGE_INDEX));
-		/*
+		//script->RaiseError(ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_OUTOFRANGE_INDEX));
+		
 		switch (type) {
 		case INFO_RECT:
 		{
@@ -1940,28 +1940,24 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			res = value(machine->get_engine()->get_boolean_type(), true);
 			break;
 		}
-		*/
 	}
 	else {
 		switch (type) {
 		case INFO_RECT:
 		{
 			RECT rect = shotData->GetData(0)->rcSrc_;
-			std::vector<double> list;
-			list.push_back(rect.left);
-			list.push_back(rect.top);
-			list.push_back(rect.right);
-			list.push_back(rect.bottom);
+			std::vector<float> list = { (float)rect.left, (float)rect.top, (float)rect.right, (float)rect.bottom };
 			res = script->CreateRealArrayValue(list);
 			break;
 		}
 		case INFO_DELAY_COLOR:
 		{
 			D3DCOLOR color = shotData->GetDelayColor();
-			std::vector<float> list;
-			list.push_back((color >> 16) & 0xff);
-			list.push_back((color >> 8) & 0xff);
-			list.push_back(color & 0xff);
+			std::vector<float> list = {
+				(float)((color >> 16) & 0xff),
+				(float)((color >> 8) & 0xff),
+				(float)(color & 0xff)
+			};
 			res = script->CreateRealArrayValue(list);
 			break;
 		}
@@ -1982,7 +1978,7 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		{
 			DxCircle* listCircle = shotData->GetIntersectionCircleList();
 			std::vector<gstd::value> listValue;
-			std::vector<double> list = { listCircle->GetR(), listCircle->GetX(), listCircle->GetY() };
+			std::vector<float> list = { (float)listCircle->GetR(), (float)listCircle->GetX(), (float)listCircle->GetY() };
 			listValue.push_back(script->CreateRealArrayValue(list));
 			res = script->CreateValueArrayValue(listValue);
 			break;
