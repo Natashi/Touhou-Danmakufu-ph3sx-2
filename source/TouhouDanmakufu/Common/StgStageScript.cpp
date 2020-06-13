@@ -2343,18 +2343,21 @@ gstd::value StgStageScript::Func_ObjMove_SetSpeed(gstd::script_machine* machine,
 		StgMovePattern* pattern = obj->GetPattern().get();
 		if (pattern) {
 			if (auto patternXY = dynamic_cast<StgMovePattern_XY*>(pattern)) {
-				double newSpeedMul = speed / patternXY->GetSpeed();
-				patternXY->SetSpeedX(patternXY->GetSpeedX() * newSpeedMul);
-				patternXY->SetSpeedY(patternXY->GetSpeedY() * newSpeedMul);
-			}
-			else {
-				obj->SetSpeed(speed);
+				double oldSpeed = patternXY->GetSpeed();
+				if (oldSpeed != 0) {
+					double newSpeedMul = speed / oldSpeed;
+					patternXY->SetSpeedX(patternXY->GetSpeedX() * newSpeedMul);
+					patternXY->SetSpeedY(patternXY->GetSpeedY() * newSpeedMul);
+					goto set_exit;
+				}
+				else {
+					obj->SetPattern(std::shared_ptr<StgMovePattern_Angle>(new StgMovePattern_Angle(obj)));
+				}
 			}
 		}
-		else {
-			obj->SetSpeed(speed);
-		}
+		obj->SetSpeed(speed);
 	}
+set_exit:
 	return value();
 }
 gstd::value StgStageScript::Func_ObjMove_SetAngle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -2369,17 +2372,19 @@ gstd::value StgStageScript::Func_ObjMove_SetAngle(gstd::script_machine* machine,
 		if (pattern) {
 			if (auto patternXY = dynamic_cast<StgMovePattern_XY*>(pattern)) {
 				double speed = patternXY->GetSpeed();
-				patternXY->SetSpeedX(cos(angle) * speed);
-				patternXY->SetSpeedY(sin(angle) * speed);
-			}
-			else {
-				obj->SetDirectionAngle(angle);
+				if (speed != 0) {
+					patternXY->SetSpeedX(cos(angle) * speed);
+					patternXY->SetSpeedY(sin(angle) * speed);
+					goto set_exit;
+				}
+				else {
+					obj->SetPattern(std::shared_ptr<StgMovePattern_Angle>(new StgMovePattern_Angle(obj)));
+				}
 			}
 		}
-		else {
-			obj->SetDirectionAngle(angle);
-		}
+		obj->SetDirectionAngle(angle);
 	}
+set_exit:
 	return value();
 }
 gstd::value StgStageScript::Func_ObjMove_SetAcceleration(gstd::script_machine* machine, int argc, const gstd::value* argv) {
