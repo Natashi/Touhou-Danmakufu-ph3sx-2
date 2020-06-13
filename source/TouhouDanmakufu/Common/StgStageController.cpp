@@ -369,6 +369,8 @@ void StgStageController::Work() {
 			//リプレイキー更新
 			keyReplayManager_->Update();
 
+			objectManagerMain_->CleanupObject();
+
 			//スクリプト処理で、自機、敵、弾の動作が行われる。
 			scriptManager_->Work(StgStageScript::TYPE_SYSTEM);
 			scriptManager_->Work(StgStageScript::TYPE_STAGE);
@@ -439,7 +441,7 @@ void StgStageController::RenderToTransitionTexture() {
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 
 	graphics->SetRenderTarget(texture);
-	graphics->BeginScene(false, true);
+	graphics->BeginScene(true);
 
 	//objectManager->RenderObject();
 	systemController_->RenderScriptObject();

@@ -135,32 +135,11 @@ bool EApplication::_Loop() {
 	//bool bSaveRT = input->GetKeyState(DIK_P) == KEY_HOLD;
 
 	{
-		taskManager->CallWorkFunction();
-
+		taskManager->CallFunctionWork();
 		if (!fpsController->IsSkip()) {
-			/*
-			static int countRT = 0;
-			if (bSaveRT) {
-				std::wstring path = PathProperty::GetModuleDirectory() + StringUtility::FormatToWide("tempRT\\temp_%04d.png", countRT);
-				RECT rect = { 0, 0, 640, 480 };
-				IDirect3DSurface9* pBackSurface = graphics->GetBaseSurface();
-				D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_PNG, pBackSurface, nullptr, &rect);
-			}
-			*/
-
 			graphics->BeginScene();
-			taskManager->CallRenderFunction();
+			taskManager->CallFunctionRender();
 			graphics->EndScene();
-
-			/*
-			if (bSaveRT) {
-				std::wstring path = PathProperty::GetModuleDirectory() + StringUtility::FormatToWide("tempRT\\temp_%04d_1.png", countRT);
-				RECT rect = { 0, 0, 640, 480 };
-				IDirect3DSurface9* pBackSurface = graphics->GetBaseSurface();
-				D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_PNG, pBackSurface, nullptr, &rect);
-				countRT++;
-			}
-			*/
 		}
 
 		fpsController->Wait();

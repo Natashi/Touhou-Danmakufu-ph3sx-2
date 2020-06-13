@@ -1705,7 +1705,6 @@ void Sprite2D::SetDestinationCenter() {
 **********************************************************/
 SpriteList2D::SpriteList2D() {
 	countRenderVertex_ = 0;
-	countRenderVertexPrev_ = 0;
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 	bCloseVertexList_ = false;
 	autoClearVertexList_ = false;
@@ -1714,18 +1713,14 @@ void SpriteList2D::Render() {
 	SpriteList2D::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
 void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-
-	if (autoClearVertexList_) {
-		if (!graphics->IsMainRenderLoop()) countRenderVertex_ = countRenderVertexPrev_;
-		countRenderVertexPrev_ = countRenderVertex_;
-	}
-
 	if (countRenderVertex_ == 0U) return;
+
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	IDirect3DDevice9* device = graphics->GetDevice();
 
 	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
-	IDirect3DDevice9* device = graphics->GetDevice();
+	
 	shared_ptr<Texture>& texture = texture_[0];
 	if (texture != nullptr)
 		device->SetTexture(0, texture->GetD3DTexture());
@@ -1854,9 +1849,11 @@ void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& ang
 			if (effect != nullptr) effect->End();
 		}
 		*/
-
-		if (autoClearVertexList_ && (countVertex >= 6)) ClearVertexCount();
 	}
+}
+void SpriteList2D::CleanUp() {
+	if (autoClearVertexList_ && (GetVertexCount() >= 6)) 
+		ClearVertexCount();
 }
 void SpriteList2D::_AddVertex(VERTEX_TLX& vertex) {
 	size_t count = vertex_.size() / strideVertexStreamZero_;
@@ -2192,7 +2189,6 @@ void TrajectoryObject3D::AddPoint(D3DXMATRIX mat) {
 **********************************************************/
 ParticleRendererBase::ParticleRendererBase() {
 	countInstance_ = 0U;
-	countInstancePrev_ = 0U;
 	instColor_ = 0xffffffff;
 	instPosition_ = D3DXVECTOR3(0, 0, 0);
 	instScale_ = D3DXVECTOR3(1, 1, 1);
@@ -2244,16 +2240,12 @@ ParticleRenderer2D::ParticleRenderer2D() {
 	
 }
 void ParticleRenderer2D::Render() {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-
-	if (!graphics->IsMainRenderLoop()) countInstance_ = countInstancePrev_;
-	countInstancePrev_ = countInstance_;
-
 	if (countInstance_ == 0U) return;
 
 	size_t countIndex = std::min(vertexIndices_.size(), 65536U);
 	if (countIndex == 0U) return;
 
+	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
 
 	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
@@ -2344,22 +2336,17 @@ void ParticleRenderer2D::Render() {
 		device->SetStreamSourceFreq(0, 0);
 		device->SetStreamSourceFreq(1, 0);
 	}
-
-	countInstance_ = 0U;
 }
 ParticleRenderer3D::ParticleRenderer3D() {
 
 }
 void ParticleRenderer3D::Render() {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	if (!graphics->IsMainRenderLoop()) countInstance_ = countInstancePrev_;
-	else countInstancePrev_ = countInstance_;
-
 	if (countInstance_ == 0U) return;
 
 	size_t countIndex = std::min(vertexIndices_.size(), 65536U);
 	if (countIndex == 0U) return;
 
+	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
 
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
@@ -2458,8 +2445,6 @@ void ParticleRenderer3D::Render() {
 		device->SetStreamSourceFreq(0, 0);
 		device->SetStreamSourceFreq(1, 0);
 	}
-
-	countInstance_ = 0U;
 }
 
 /**********************************************************

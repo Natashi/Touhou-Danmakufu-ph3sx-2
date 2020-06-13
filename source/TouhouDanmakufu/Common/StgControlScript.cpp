@@ -581,7 +581,7 @@ gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machi
 	}
 
 	graphics->SetRenderTarget(texture);
-	graphics->BeginScene(false, bClear);
+	graphics->BeginScene(bClear);
 
 	systemController->RenderScriptObject(priMin, priMax);
 
@@ -612,7 +612,7 @@ gstd::value StgControlScript::Func_RenderToTextureB1(gstd::script_machine* machi
 	}
 
 	graphics->SetRenderTarget(texture);
-	graphics->BeginScene(false, bClear);
+	graphics->BeginScene(bClear);
 
 	obj->Render();
 
@@ -1047,7 +1047,7 @@ void ScriptInfoPanel::_TerminateScriptAll() {
 	std::list<shared_ptr<TaskBase>> listTask = taskManager->GetTaskList();
 	std::list<shared_ptr<TaskBase>>::iterator itr = listTask.begin();
 	for (; itr != listTask.end(); ++itr) {
-		StgSystemController* systemController = (StgSystemController*)((*itr).get());
+		StgSystemController* systemController = (StgSystemController*)(itr->get());
 		if (systemController) systemController->TerminateScriptAll();
 	}
 }

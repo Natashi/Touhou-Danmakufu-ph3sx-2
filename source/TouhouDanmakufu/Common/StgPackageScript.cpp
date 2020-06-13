@@ -14,6 +14,7 @@ StgPackageScriptManager::StgPackageScriptManager(StgSystemController* controller
 StgPackageScriptManager::~StgPackageScriptManager() {}
 void StgPackageScriptManager::Work() {
 	if (!IsError()) {
+		objectManager_->CleanupObject();
 		StgControlScriptManager::Work();
 		objectManager_->WorkObject();
 	}

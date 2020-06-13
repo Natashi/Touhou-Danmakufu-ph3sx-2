@@ -45,7 +45,6 @@ DirectGraphics::DirectGraphics() {
 
 	bufferManager_ = nullptr;
 
-	bMainRender_ = true;
 	previousBlendMode_ = -999;
 	D3DXMatrixIdentity(&matViewPort_);
 #endif
@@ -352,10 +351,8 @@ void DirectGraphics::RemoveDirectGraphicsListener(DirectGraphicsListener* listen
 		break;
 	}
 }
-void DirectGraphics::BeginScene(bool bMainRenderLoop, bool bClear) {
+void DirectGraphics::BeginScene(bool bClear) {
 	if (bClear) ClearRenderTarget();
-	bMainRender_ = bMainRenderLoop;
-
 	pDevice_->BeginScene();
 
 	if (camera_->thisViewChanged_ || camera_->thisProjectionChanged_) {

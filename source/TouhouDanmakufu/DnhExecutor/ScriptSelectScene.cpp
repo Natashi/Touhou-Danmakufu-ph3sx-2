@@ -127,9 +127,9 @@ void ScriptSelectScene::Work() {
 
 				shared_ptr<PlayTypeSelectScene> task(new PlayTypeSelectScene(info));
 				taskManager->AddTask(task);
-				taskManager->AddWorkFunction(TTaskFunction<PlayTypeSelectScene>::Create(task, 
+				taskManager->AddFunctionWork(TTaskFunction<PlayTypeSelectScene>::Create(task, 
 					&PlayTypeSelectScene::Work), PlayTypeSelectScene::TASK_PRI_WORK);
-				taskManager->AddRenderFunction(TTaskFunction<PlayTypeSelectScene>::Create(task, 
+				taskManager->AddFunctionRender(TTaskFunction<PlayTypeSelectScene>::Create(task, 
 					&PlayTypeSelectScene::Render), PlayTypeSelectScene::TASK_PRI_RENDER);
 
 				return;
@@ -651,15 +651,15 @@ void PlayTypeSelectScene::Work() {
 				transitionManager->DoFadeOut();
 
 				ETaskManager* taskManager = ETaskManager::GetInstance();
-				taskManager->SetRenderFunctionEnable(false, typeid(ScriptSelectScene));
-				taskManager->SetWorkFunctionEnable(false, typeid(PlayTypeSelectScene));
-				taskManager->SetRenderFunctionEnable(false, typeid(PlayTypeSelectScene));
+				taskManager->SetFunctionEnableRender(false, typeid(ScriptSelectScene));
+				taskManager->SetFunctionEnableWork(false, typeid(PlayTypeSelectScene));
+				taskManager->SetFunctionEnableRender(false, typeid(PlayTypeSelectScene));
 
 				shared_ptr<PlayerSelectScene> task(new PlayerSelectScene(info_));
 				taskManager->AddTask(task);
-				taskManager->AddWorkFunction(TTaskFunction<PlayerSelectScene>::Create(task, 
+				taskManager->AddFunctionWork(TTaskFunction<PlayerSelectScene>::Create(task, 
 					&PlayerSelectScene::Work), PlayerSelectScene::TASK_PRI_WORK);
-				taskManager->AddRenderFunction(TTaskFunction<PlayerSelectScene>::Create(task, 
+				taskManager->AddFunctionRender(TTaskFunction<PlayerSelectScene>::Create(task, 
 					&PlayerSelectScene::Render), PlayerSelectScene::TASK_PRI_RENDER);
 			}
 			else {
@@ -802,9 +802,9 @@ void PlayerSelectScene::Work() {
 	}
 	else if (input->GetVirtualKeyState(EDirectInput::KEY_CANCEL) == KEY_PUSH) {
 		ETaskManager* taskManager = ETaskManager::GetInstance();
-		taskManager->SetRenderFunctionEnable(true, typeid(ScriptSelectScene));
-		taskManager->SetWorkFunctionEnable(true, typeid(PlayTypeSelectScene));
-		taskManager->SetRenderFunctionEnable(true, typeid(PlayTypeSelectScene));
+		taskManager->SetFunctionEnableRender(true, typeid(ScriptSelectScene));
+		taskManager->SetFunctionEnableWork(true, typeid(PlayTypeSelectScene));
+		taskManager->SetFunctionEnableRender(true, typeid(PlayTypeSelectScene));
 
 		taskManager->RemoveTask(typeid(PlayerSelectScene));
 

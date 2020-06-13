@@ -168,37 +168,33 @@ namespace gstd {
 	**********************************************************/
 	class WorkRenderTaskManager : public TaskManager {
 		enum {
-			DIV_FUNC_WORK,//ìÆçÏ
-			DIV_FUNC_RENDER,//ï`âÊ
+			DIV_FUNC_WORK,		//ìÆçÏ
+			DIV_FUNC_RENDER,	//ï`âÊ
 		};
 	public:
 		WorkRenderTaskManager();
 		~WorkRenderTaskManager();
 		virtual void InitializeFunctionDivision(int maxPriWork, int maxPriRender);
 
+#define DECLARE_FUNC_SET(div) \
+		void CallFunction##div(); \
+		void AddFunction##div(shared_ptr<TaskFunction> func, int pri, int idFunc = TASK_FREE_ID); \
+		void RemoveFunction##div(TaskBase* task, int idFunc); \
+		void SetFunctionEnable##div(bool bEnable); \
+		void SetFunctionEnable##div(bool bEnable, int idTask); \
+		void SetFunctionEnable##div(bool bEnable, int idTask, int idFunc); \
+		void SetFunctionEnable##div(bool bEnable, TaskBase* task); \
+		void SetFunctionEnable##div(bool bEnable, TaskBase* task, int idFunc); \
+		void SetFunctionEnable##div(bool bEnable, const std::type_info& info);
+
 		//ìÆçÏã@î\
-		void CallWorkFunction();
-		void AddWorkFunction(shared_ptr<TaskFunction> func, int pri, int idFunc = TASK_FREE_ID);
-		void RemoveWorkFunction(TaskBase* task, int idFunc);
-		void SetWorkFunctionEnable(bool bEnable);
-		void SetWorkFunctionEnable(bool bEnable, int idTask);
-		void SetWorkFunctionEnable(bool bEnable, int idTask, int idFunc);
-		void SetWorkFunctionEnable(bool bEnable, TaskBase* task);
-		void SetWorkFunctionEnable(bool bEnable, TaskBase* task, int idFunc);
-		void SetWorkFunctionEnable(bool bEnable, const std::type_info& info);
+		DECLARE_FUNC_SET(Work)
 
 		//ï`âÊã@î\
-		void CallRenderFunction();
-		void AddRenderFunction(shared_ptr<TaskFunction> func, int pri, int idFunc = TASK_FREE_ID);
-		void RemoveRenderFunction(TaskBase* task, int idFunc);
-		void SetRenderFunctionEnable(bool bEnable);
-		void SetRenderFunctionEnable(bool bEnable, int idTask);
-		void SetRenderFunctionEnable(bool bEnable, int idTask, int idFunc);
-		void SetRenderFunctionEnable(bool bEnable, TaskBase* task);
-		void SetRenderFunctionEnable(bool bEnable, TaskBase* task, int idFunc);
-		void SetRenderFunctionEnable(bool bEnable, const std::type_info& info);
-	};
+		DECLARE_FUNC_SET(Render)
 
+#undef DECLARE_FUNC
+	};
 }
 
 #endif

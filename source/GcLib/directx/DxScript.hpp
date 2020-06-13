@@ -71,6 +71,7 @@ namespace directx {
 		virtual void Initialize() {}
 		virtual void Work() {}
 		virtual void Render() = 0;
+		virtual void CleanUp() {}
 		virtual void SetRenderState() = 0;
 
 		int GetObjectID() { return idObject_; }
@@ -265,6 +266,9 @@ namespace directx {
 	class DxScriptSpriteListObject2D : public DxScriptPrimitiveObject2D {
 	public:
 		DxScriptSpriteListObject2D();
+
+		virtual void CleanUp();
+
 		virtual void SetColor(int r, int g, int b);
 		virtual void SetAlpha(int alpha);
 		void AddVertex();
@@ -333,6 +337,8 @@ namespace directx {
 		virtual void Render();
 		virtual void SetRenderState();
 
+		virtual void CleanUp();
+
 		virtual void SetAngleX(float x) { angle_.x = x; }
 		virtual void SetAngleY(float y) { angle_.y = y; }
 		virtual void SetAngleZ(float z) { angle_.z = z; }
@@ -348,6 +354,8 @@ namespace directx {
 
 		virtual void Render();
 		virtual void SetRenderState();
+
+		virtual void CleanUp();
 
 		virtual void SetAngleX(float x) { angle_.x = x; }
 		virtual void SetAngleY(float y) { angle_.y = y; }
@@ -665,6 +673,7 @@ namespace directx {
 		void AddRenderObject(shared_ptr<DxScriptObjectBase> obj);//要フレームごとに登録
 		void WorkObject();
 		void RenderObject();
+		void CleanupObject();
 
 		void PrepareRenderObject();
 		void ClearRenderObject();
@@ -786,6 +795,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_SaveRenderedTextureA3);
 
 		DNH_FUNCAPI_DECL_(Func_LoadShader);
+		DNH_FUNCAPI_DECL_(Func_RemoveShader);
 		static gstd::value Func_SetShader(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetShaderI(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ResetShader(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -794,6 +804,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_SetEnableAntiAliasing);
 
 		DNH_FUNCAPI_DECL_(Func_LoadMesh);
+		DNH_FUNCAPI_DECL_(Func_RemoveMesh);
 
 		//Dx関数：カメラ3D
 		static gstd::value Func_SetCameraFocusX(gstd::script_machine* machine, int argc, const gstd::value* argv);

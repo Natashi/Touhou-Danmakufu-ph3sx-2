@@ -239,6 +239,9 @@ DxScriptSpriteListObject2D::DxScriptSpriteListObject2D() {
 	typeObject_ = TypeObject::OBJ_SPRITE_LIST_2D;
 	objRender_ = std::make_shared<SpriteList2D>();
 }
+void DxScriptSpriteListObject2D::CleanUp() {
+	GetSpritePointer()->CleanUp();
+}
 void DxScriptSpriteListObject2D::SetColor(int r, int g, int b) {
 	D3DCOLOR color = GetSpritePointer()->GetColor();
 
@@ -492,6 +495,9 @@ void DxScriptParticleListObject2D::SetRenderState() {
 	obj->SetFilteringMag(filterMag_);
 	obj->SetFilteringMip(filterMip_);
 }
+void DxScriptParticleListObject2D::CleanUp() {
+	GetParticlePointer()->ClearInstance();
+}
 /**********************************************************
 //DxScriptParticleListObject3D
 **********************************************************/
@@ -525,6 +531,9 @@ void DxScriptParticleListObject3D::SetRenderState() {
 	obj->SetFilteringMin(filterMin_);
 	obj->SetFilteringMag(filterMag_);
 	obj->SetFilteringMip(filterMip_);
+}
+void DxScriptParticleListObject3D::CleanUp() {
+	GetParticlePointer()->ClearInstance();
 }
 
 /**********************************************************
@@ -1322,10 +1331,8 @@ void DxScriptObjectManager::DeleteObjectByScriptID(int64_t idScript) {
 	}
 }
 void DxScriptObjectManager::WorkObject() {
-	//_ArrangeActiveObjectList();
 	std::list<shared_ptr<DxScriptObjectBase>>::iterator itr;
-
-	for (itr = listActiveObject_.begin(); itr != listActiveObject_.end();) {
+	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end();) {
 		shared_ptr<DxScriptObjectBase> obj = *itr;
 		if (obj == nullptr || obj->IsDeleted()) {
 			itr = listActiveObject_.erase(itr);
@@ -1374,6 +1381,13 @@ void DxScriptObjectManager::RenderObject() {
 		renderList.Clear();
 
 		if (effect) effect->End();
+	}
+}
+void DxScriptObjectManager::CleanupObject() {
+	//No need to check for object validity here, only nullptr check is enough
+	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
+		if (shared_ptr<DxScriptObjectBase> obj = *itr)
+			obj->CleanUp();
 	}
 }
 
@@ -1503,12 +1517,14 @@ function const dxFunction[] =
 	//{ "SetAntiAliasing", DxScript::Func_SetEnableAntiAliasing, 1 },
 
 	{ "LoadShader", DxScript::Func_LoadShader, 1 },
+	{ "RemoveShader", DxScript::Func_RemoveShader, 1 },
 	{ "SetShader", DxScript::Func_SetShader, 3 },
 	{ "SetShaderI", DxScript::Func_SetShaderI, 3 },
 	{ "ResetShader", DxScript::Func_ResetShader, 2 },
 	{ "ResetShaderI", DxScript::Func_ResetShaderI, 2 },
 
 	{ "LoadMesh", DxScript::Func_LoadMesh, 1 },
+	{ "RemoveMesh", DxScript::Func_RemoveMesh, 1 },
 
 	//DxŠÖ”FƒJƒƒ‰3D
 	{ "SetCameraFocusX", DxScript::Func_SetCameraFocusX, 1 },
@@ -2834,6 +2850,16 @@ value DxScript::Func_LoadMesh(script_machine* machine, int argc, const value* ar
 	}
 	return value(machine->get_engine()->get_boolean_type(), res);
 }
+value DxScript::Func_RemoveMesh(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	std::wstring path = argv[0].as_string();
+	path = PathProperty::GetUnique(path);
+	{
+		Lock lock(script->criticalSection_);
+		script->mapMesh_.erase(path);
+	}
+	return value();
+}
 
 value DxScript::Func_LoadShader(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2850,6 +2876,16 @@ value DxScript::Func_LoadShader(script_machine* machine, int argc, const value* 
 		}
 	}
 	return value(machine->get_engine()->get_boolean_type(), res);
+}
+value DxScript::Func_RemoveShader(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	std::wstring path = argv[0].as_string();
+	path = PathProperty::GetUnique(path);
+	{
+		Lock lock(script->criticalSection_);
+		script->mapShader_.erase(path);
+	}
+	return value();
 }
 gstd::value DxScript::Func_SetShader(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
