@@ -48,10 +48,13 @@ protected:
 public:
 	StgSystemController();
 	~StgSystemController();
+
 	void Initialize(ref_count_ptr<StgSystemInformation> infoSystem);
 	void Start(ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay);
+
 	void Work();
 	void Render();
+
 	void RenderScriptObject();
 	void RenderScriptObject(int priMin, int priMax);
 

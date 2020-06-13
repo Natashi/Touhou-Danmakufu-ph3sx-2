@@ -81,7 +81,7 @@ void StgSystemController::Work() {
 		ELogger* logger = ELogger::GetInstance();
 		logger->UpdateCommonDataInfoPanel(commonDataManager_);
 	}
-	catch (gstd::wexception e) {
+	catch (gstd::wexception& e) {
 		Logger::WriteTop(e.what());
 		infoSystem_->SetError(e.what());
 	}
@@ -155,7 +155,7 @@ void StgSystemController::Work() {
 	}
 }
 void StgSystemController::Render() {
-	if (infoSystem_->IsError())return;
+	if (infoSystem_->IsError()) return;
 
 	try {
 		int scene = infoSystem_->GetScene();
@@ -180,7 +180,7 @@ void StgSystemController::Render() {
 		}
 		}
 	}
-	catch (gstd::wexception e) {
+	catch (gstd::wexception& e) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 		camera2D->SetEnable(false);
