@@ -282,6 +282,3 @@ __pycache__/
 /source/ext/steam_api/
 /library/steam_api.lib
 /source/Steam/
-
-# !!Sensitive Information!!
-/source/GcLib/gstd/ArchiveEncryption.hpp
