@@ -80,8 +80,8 @@ void StgPlayerObject::Work() {
 		else {
 			if (listGrazedShot_.size() > 0) {
 				std::vector<value> listValPos;
-				std::vector<double> listShotPos;
-				std::vector<double> listShotID;
+				std::vector<float> listShotPos;
+				std::vector<float> listShotID;
 
 				size_t grazedShotCount = listGrazedShot_.size();
 				listShotPos.resize(2);
@@ -91,9 +91,8 @@ void StgPlayerObject::Work() {
 				for (auto iObj = listGrazedShot_.begin(); iObj != listGrazedShot_.end(); ++iObj) {
 					if (auto ptrObj = iObj->lock()) {
 						shared_ptr<StgShotObject> objShot = std::dynamic_pointer_cast<StgShotObject>(ptrObj);
-
-						if (objShot) {
-							listShotID[i] = (double)objShot->GetObjectID();
+						if (objShot && !objShot->IsDeleted()) {
+							listShotID[i] = objShot->GetObjectID();
 
 							listShotPos[0] = objShot->GetPositionX();
 							listShotPos[1] = objShot->GetPositionY();
@@ -251,13 +250,13 @@ void StgPlayerObject::_AddIntersection() {
 }
 bool StgPlayerObject::_IsValidSpell() {
 	bool res = true;
-	res &= state_ == STATE_NORMAL || (state_ == STATE_HIT && frameState_ > 0);	//Normal or deathbombing -> yes
+	res &= (state_ == STATE_NORMAL) || (state_ == STATE_HIT && frameState_ > 0);	//Normal or deathbombing -> yes
 	res &= (objSpell_ == nullptr) || (objSpell_->IsDeleted());		//A spell is already active -> no
 	return res;
 }
 void StgPlayerObject::CallSpell() {
-	if (!_IsValidSpell())return;
-	if (!IsPermitSpell())return;
+	if (!_IsValidSpell()) return;
+	if (!IsPermitSpell()) return;
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	objSpell_ = shared_ptr<StgPlayerSpellManageObject>(new StgPlayerSpellManageObject());
