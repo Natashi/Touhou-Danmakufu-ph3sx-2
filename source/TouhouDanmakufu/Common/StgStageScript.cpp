@@ -1034,27 +1034,24 @@ gstd::value StgStageScript::Func_GetPlayerState(gstd::script_machine* machine, i
 gstd::value StgStageScript::Func_GetPlayerSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
-	std::vector<double> listValue = { 0, 0 };
+	double listValue[2] = { 0, 0 };
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
 	if (obj) {
-		listValue.push_back(obj->GetFastSpeed());
-		listValue.push_back(obj->GetSlowSpeed());
+		listValue[0] = obj->GetFastSpeed();
+		listValue[1] = obj->GetSlowSpeed();
 	}
-	return script->CreateRealArrayValue(listValue);
+	return script->CreateRealArrayValue(listValue, 2U);
 }
 gstd::value StgStageScript::Func_GetPlayerClip(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
-	std::vector<float> listValue = { 0, 0, 0, 0 };
+	LONG listValue[4] = { 0, 0, 0, 0 };
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
 	if (obj) {
 		RECT* clip = obj->GetClip();
-		listValue[0] = clip->left;
-		listValue[1] = clip->top;
-		listValue[2] = clip->right;
-		listValue[3] = clip->bottom;
+		memcpy(listValue, clip, sizeof(LONG) * 4U);
 	}
-	return script->CreateRealArrayValue(listValue);
+	return script->CreateRealArrayValue(listValue, 4);
 }
 gstd::value StgStageScript::Func_GetPlayerLife(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -1162,21 +1159,20 @@ gstd::value StgStageScript::Func_GetEnemyBossObjectID(gstd::script_machine* mach
 	StgEnemyManager* enemyManager = stageController->GetEnemyManager();
 	shared_ptr<StgEnemyBossSceneObject> scene = enemyManager->GetBossSceneObject();
 
-	std::vector<double> listLD;
+	std::vector<int> listID;
 	if (scene) {
 		shared_ptr<StgEnemyBossSceneData> data = scene->GetActiveData();
 		if (data) {
-			std::vector<shared_ptr<StgEnemyBossObject>> listEnemy = data->GetEnemyObjectList();
-			for (size_t iEnemy = 0; iEnemy < listEnemy.size(); ++iEnemy) {
-				shared_ptr<StgEnemyBossObject> obj = listEnemy[iEnemy];
-				if (obj->IsDeleted())continue;
-				int id = obj->GetObjectID();
-				listLD.push_back(id);
+			std::vector<shared_ptr<StgEnemyBossObject>>& listEnemy = data->GetEnemyObjectList();
+			for (auto itr = listEnemy.begin(); itr != listEnemy.end(); ++itr) {
+				shared_ptr<StgEnemyBossObject>& obj = *itr;
+				if (obj->IsDeleted()) continue;
+				listID.push_back(obj->GetObjectID());
 			}
 		}
 	}
 
-	return script->CreateRealArrayValue(listLD);
+	return script->CreateRealArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetAllEnemyID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -1185,34 +1181,28 @@ gstd::value StgStageScript::Func_GetAllEnemyID(gstd::script_machine* machine, in
 
 	std::list<shared_ptr<StgEnemyObject>>& listEnemy = enemyManager->GetEnemyList();
 
-	std::vector<double> listLD;
-	std::list<shared_ptr<StgEnemyObject>>::iterator itr = listEnemy.begin();
-	for (; itr != listEnemy.end(); ++itr) {
+	std::vector<int> listID;
+	for (auto itr = listEnemy.begin(); itr != listEnemy.end(); ++itr) {
 		shared_ptr<StgEnemyObject> obj = (*itr);
-		if (obj->IsDeleted())continue;
-		int id = obj->GetObjectID();
-		listLD.push_back(id);
+		if (obj->IsDeleted()) continue;
+		listID.push_back(obj->GetObjectID());
 	}
 
-	return script->CreateRealArrayValue(listLD);
+	return script->CreateRealArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetIntersectionRegistedEnemyID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 	StgIntersectionManager* interSectionManager = stageController->GetIntersectionManager();
 
-	std::vector<double> listLD;
+	std::vector<int> listID;
 	std::vector<StgIntersectionTargetPoint>* listPoint = interSectionManager->GetAllEnemyTargetPoint();
-	for (size_t iPoint = 0; iPoint < listPoint->size(); ++iPoint) {
-		StgIntersectionTargetPoint& target = (*listPoint)[iPoint];
-
-		if (auto ptrObj = target.GetObjectRef().lock()) {
-			int id = ptrObj->GetObjectID();
-			listLD.push_back(id);
-		}
+	for (auto itr = listPoint->begin(); itr != listPoint->end(); ++itr) {
+		if (auto ptrObj = itr->GetObjectRef().lock())
+			listID.push_back(ptrObj->GetObjectID());
 	}
 
-	return script->CreateRealArrayValue(listLD);
+	return script->CreateRealArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetAllEnemyIntersectionPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -1221,18 +1211,13 @@ gstd::value StgStageScript::Func_GetAllEnemyIntersectionPosition(gstd::script_ma
 
 	std::vector<gstd::value> listV;
 	std::vector<StgIntersectionTargetPoint>* listPoint = interSectionManager->GetAllEnemyTargetPoint();
-	for (size_t iPoint = 0; iPoint < listPoint->size(); ++iPoint) {
-		StgIntersectionTargetPoint& target = (*listPoint)[iPoint];
-
-		if (auto ptrObj = target.GetObjectRef().lock()) {
+	for (auto itr = listPoint->begin(); itr != listPoint->end(); ++itr) {
+		if (auto ptrObj = itr->GetObjectRef().lock()) {
 			if (!ptrObj->GetEnableGetIntersectionPosition()) continue;
 
-			POINT pos = target.GetPoint();
-			std::vector<double> listLD;
-			listLD.push_back(pos.x);
-			listLD.push_back(pos.y);
-
-			gstd::value v = script->CreateRealArrayValue(listLD);
+			POINT& pos = itr->GetPoint();
+			LONG listPos[2] = { pos.x, pos.y };
+			gstd::value v = script->CreateRealArrayValue(listPos, 2U);
 			listV.push_back(v);
 		}
 	}
@@ -1247,20 +1232,17 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPosition(gstd::script_machi
 	int cenY = (int)argv[1].as_real();
 	int countRes = (int)argv[2].as_real();
 
-	std::vector<gstd::value> listV;
-	std::vector<StgIntersectionTargetPoint>* listPoint = intersectionManager->GetAllEnemyTargetPoint();
 	std::map<int64_t, POINT> mapPos;
+	std::vector<gstd::value> listV;
 
-	for (size_t iPoint = 0; iPoint < listPoint->size(); ++iPoint) {
-		StgIntersectionTargetPoint& target = (*listPoint)[iPoint];
-
-		if (auto ptrObj = target.GetObjectRef().lock()) {
+	std::vector<StgIntersectionTargetPoint>* listPoint = intersectionManager->GetAllEnemyTargetPoint();
+	for (auto itr = listPoint->begin(); itr != listPoint->end(); ++itr) {
+		if (auto ptrObj = itr->GetObjectRef().lock()) {
 			if (!ptrObj->GetEnableGetIntersectionPosition()) continue;
 
-			POINT pos = target.GetPoint();
-
-			double dx = pos.x - cenX;
-			double dy = pos.y - cenY;
+			POINT& pos = itr->GetPoint();
+			LONG dx = pos.x - cenX;
+			LONG dy = pos.y - cenY;
 
 			int64_t dist = dx * dx + dy * dy;
 			mapPos[dist] = pos;
@@ -1268,11 +1250,9 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPosition(gstd::script_machi
 	}
 
 	for (auto itr = mapPos.begin(); (itr != mapPos.end()) && (countRes > 0); ++itr) {
-		POINT pos = (itr->second);
-		std::vector<double> listPosRes;
-		listPosRes.push_back(pos.x);
-		listPosRes.push_back(pos.y);
-		gstd::value v = script->CreateRealArrayValue(listPosRes);
+		POINT& pos = itr->second;
+		LONG listPosRes[2] = { pos.x, pos.y };
+		gstd::value v = script->CreateRealArrayValue(listPosRes, 2U);
 		listV.push_back(v);
 		--countRes;
 	}
@@ -1292,20 +1272,19 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA1(gstd::script
 		std::map<int64_t, POINT> mapPos;
 		int enemyX = obj->GetPositionX();
 		int enemyY = obj->GetPositionY();
+
 		StgStageController* stageController = script->stageController_;
 		StgIntersectionManager* interSectionManager = stageController->GetIntersectionManager();
-		std::vector<StgIntersectionTargetPoint>* listPoint = interSectionManager->GetAllEnemyTargetPoint();
-		for (size_t iPoint = 0; iPoint < listPoint->size(); ++iPoint) {
-			StgIntersectionTargetPoint& target = (*listPoint)[iPoint];
 
-			if (auto ptrObj = target.GetObjectRef().lock()) {
+		std::vector<StgIntersectionTargetPoint>* listPoint = interSectionManager->GetAllEnemyTargetPoint();
+		for (auto itr = listPoint->begin(); itr != listPoint->end(); ++itr) {
+			if (auto ptrObj = itr->GetObjectRef().lock()) {
 				if (!ptrObj->GetEnableGetIntersectionPosition()) continue;
 				if (ptrObj->GetObjectID() != id) continue;
 
-				POINT pos = target.GetPoint();
-
-				double dx = pos.x - enemyX;
-				double dy = pos.y - enemyY;
+				POINT& pos = itr->GetPoint();
+				LONG dx = pos.x - enemyX;
+				LONG dy = pos.y - enemyY;
 
 				int64_t dist = dx * dx + dy * dy;
 				mapPos[dist] = pos;
@@ -1314,11 +1293,9 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA1(gstd::script
 
 		std::map<int64_t, POINT>::iterator itr = mapPos.begin();
 		for (; itr != mapPos.end(); ++itr) {
-			POINT pos = (itr->second);
-			std::vector<double> listLD;
-			listLD.push_back(pos.x);
-			listLD.push_back(pos.y);
-			gstd::value v = script->CreateRealArrayValue(listLD);
+			POINT& pos = itr->second;
+			LONG listPos[2] = { pos.x, pos.y };
+			gstd::value v = script->CreateRealArrayValue(listPos, 2U);
 			listV.push_back(v);
 		}
 	}
@@ -1339,20 +1316,19 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA2(gstd::script
 		std::map<int64_t, POINT> mapPos;
 		int tX = (int)argv[1].as_real();
 		int tY = (int)argv[2].as_real();
+
 		StgStageController* stageController = script->stageController_;
 		StgIntersectionManager* interSectionManager = stageController->GetIntersectionManager();
-		std::vector<StgIntersectionTargetPoint>* listPoint = interSectionManager->GetAllEnemyTargetPoint();
-		for (size_t iPoint = 0; iPoint < listPoint->size(); iPoint++) {
-			StgIntersectionTargetPoint& target = (*listPoint)[iPoint];
 
-			if (auto ptrObj = target.GetObjectRef().lock()) {
+		std::vector<StgIntersectionTargetPoint>* listPoint = interSectionManager->GetAllEnemyTargetPoint();
+		for (auto itr = listPoint->begin(); itr != listPoint->end(); ++itr) {
+			if (auto ptrObj = itr->GetObjectRef().lock()) {
 				if (!ptrObj->GetEnableGetIntersectionPosition()) continue;
 				if (ptrObj->GetObjectID() != id) continue;
 
-				POINT pos = target.GetPoint();
-
-				double dx = pos.x - tX;
-				double dy = pos.y - tY;
+				POINT& pos = itr->GetPoint();
+				LONG dx = pos.x - tX;
+				LONG dy = pos.y - tY;
 
 				int64_t dist = dx * dx + dy * dy;
 				mapPos[dist] = pos;
@@ -1361,11 +1337,9 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA2(gstd::script
 
 		std::map<int64_t, POINT>::iterator itr = mapPos.begin();
 		for (; itr != mapPos.end(); ++itr) {
-			POINT pos = (itr->second);
-			std::vector<double> listLD;
-			listLD.push_back(pos.x);
-			listLD.push_back(pos.y);
-			gstd::value v = script->CreateRealArrayValue(listLD);
+			POINT& pos = itr->second;
+			LONG listPos[2] = { pos.x, pos.y };
+			gstd::value v = script->CreateRealArrayValue(listPos, 2U);
 			listV.push_back(v);
 		}
 	}
@@ -1828,11 +1802,8 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA1(gstd::script_machine* machi
 	int typeOwner = script->GetScriptType() == TYPE_PLAYER ? StgShotObject::OWNER_ENEMY : StgShotObject::OWNER_PLAYER;
 
 	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, radius);
-	std::vector<double> listRes;
-	for (size_t iID = 0; iID < listID.size(); ++iID)
-		listRes.push_back(listID[iID]);
 
-	return script->CreateRealArrayValue(listRes);
+	return script->CreateRealArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetShotIdInCircleA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -1852,11 +1823,8 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA2(gstd::script_machine* machi
 	}
 
 	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, radius);
-	std::vector<double> listRes;
-	for (size_t iID = 0; iID < listID.size(); ++iID)
-		listRes.push_back(listID[iID]);
 
-	return script->CreateRealArrayValue(listRes);
+	return script->CreateRealArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetShotCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -1912,14 +1880,14 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		switch (type) {
 		case INFO_RECT:
 		{
-			std::vector<float> list = { 0, 0, 0, 0 };
-			res = script->CreateRealArrayValue(list);
+			LONG list[4] = { 0, 0, 0, 0 };
+			res = script->CreateRealArrayValue(list, 4U);
 			break;
 		}
 		case INFO_DELAY_COLOR:
 		{
-			std::vector<float> list = { 0xff, 0xff, 0xff };
-			res = script->CreateRealArrayValue(list);
+			byte list[3] = { 0xff, 0xff, 0xff };
+			res = script->CreateRealArrayValue(list, 3U);
 			break;
 		}
 		case INFO_BLEND:
@@ -1931,8 +1899,8 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		case INFO_COLLISION_LIST:
 		{
 			std::vector<gstd::value> listValue;
-			std::vector<float> list = { 0, 0, 0 };
-			listValue.push_back(script->CreateRealArrayValue(list));
+			int list[3] = { 0, 0, 0 };
+			listValue.push_back(script->CreateRealArrayValue(list, 3U));
 			res = script->CreateValueArrayValue(listValue);
 			break;
 		}
@@ -1946,19 +1914,18 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		case INFO_RECT:
 		{
 			RECT rect = shotData->GetData(0)->rcSrc_;
-			std::vector<float> list = { (float)rect.left, (float)rect.top, (float)rect.right, (float)rect.bottom };
-			res = script->CreateRealArrayValue(list);
+			res = script->CreateRealArrayValue(reinterpret_cast<LONG*>(&rect), 4U);
 			break;
 		}
 		case INFO_DELAY_COLOR:
 		{
 			D3DCOLOR color = shotData->GetDelayColor();
-			std::vector<float> list = {
-				(float)((color >> 16) & 0xff),
-				(float)((color >> 8) & 0xff),
-				(float)(color & 0xff)
+			byte list[3] = {
+				(color >> 16) & 0xff,
+				(color >> 8) & 0xff,
+				color & 0xff
 			};
-			res = script->CreateRealArrayValue(list);
+			res = script->CreateRealArrayValue(list, 3U);
 			break;
 		}
 		case INFO_BLEND:
@@ -1978,8 +1945,8 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		{
 			DxCircle* listCircle = shotData->GetIntersectionCircleList();
 			std::vector<gstd::value> listValue;
-			std::vector<float> list = { (float)listCircle->GetR(), (float)listCircle->GetX(), (float)listCircle->GetY() };
-			listValue.push_back(script->CreateRealArrayValue(list));
+			double list[3] = { listCircle->GetR(), listCircle->GetX(), listCircle->GetY() };
+			listValue.push_back(script->CreateRealArrayValue(list, 3U));
 			res = script->CreateValueArrayValue(listValue);
 			break;
 		}
@@ -2999,7 +2966,7 @@ DNH_FUNCAPI_(StgStageScript::Func_ObjEnemy_GetIntersectionCircleToShot) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
 	std::vector<gstd::value> listRes;
-	std::vector<double> listValue; listValue.resize(3);
+	float listValue[3];
 
 	int id = (int)argv[0].as_real();
 	shared_ptr<StgEnemyObject> obj = std::dynamic_pointer_cast<StgEnemyObject>(script->GetObject(id));
@@ -3012,7 +2979,7 @@ DNH_FUNCAPI_(StgStageScript::Func_ObjEnemy_GetIntersectionCircleToShot) {
 				listValue[0] = circle.GetX();
 				listValue[1] = circle.GetY();
 				listValue[2] = circle.GetR();
-				listRes.push_back(script->CreateRealArrayValue(listValue));
+				listRes.push_back(script->CreateRealArrayValue(listValue, 3U));
 			}
 		}
 	}
@@ -3023,7 +2990,7 @@ DNH_FUNCAPI_(StgStageScript::Func_ObjEnemy_GetIntersectionCircleToPlayer) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
 	std::vector<gstd::value> listRes;
-	std::vector<double> listValue; listValue.resize(3);
+	float listValue[3];
 
 	int id = (int)argv[0].as_real();
 	shared_ptr<StgEnemyObject> obj = std::dynamic_pointer_cast<StgEnemyObject>(script->GetObject(id));
@@ -3036,7 +3003,7 @@ DNH_FUNCAPI_(StgStageScript::Func_ObjEnemy_GetIntersectionCircleToPlayer) {
 				listValue[0] = circle.GetX();
 				listValue[1] = circle.GetY();
 				listValue[2] = circle.GetR();
-				listRes.push_back(script->CreateRealArrayValue(listValue));
+				listRes.push_back(script->CreateRealArrayValue(listValue, 3U));
 			}
 		}
 	}
@@ -3140,7 +3107,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_GetInfo(gstd::script_machine*
 		case INFO_CURRENT_LIFE_MAX:
 			return value(machine->get_engine()->get_real_type(), (double)0);
 		case INFO_ACTIVE_STEP_LIFE_RATE_LIST:
-			return script->CreateRealArrayValue(std::vector<float>());
+			return script->CreateRealArrayValue((int*)nullptr, 0);
 
 		}
 		return value();
@@ -3210,11 +3177,8 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_GetInfo(gstd::script_machine*
 		return script->CreateRealValue(obj->GetActiveStepTotalLife());
 	case INFO_ACTIVE_STEP_LIFE_RATE_LIST:
 	{
-		std::vector<double> listLD;
 		std::vector<double> listD = obj->GetActiveStepLifeRateList();
-		for (size_t iLife = 0; iLife < listD.size(); iLife++)
-			listLD.push_back(listD[iLife]);
-		return script->CreateRealArrayValue(listLD);
+		return script->CreateRealArrayValue(listD);
 	}
 	case INFO_IS_LAST_STEP:
 	{
@@ -3927,7 +3891,7 @@ gstd::value StgStageScript::Func_ObjPatternShot_FireReturn(gstd::script_machine*
 	int id = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
 
-	std::vector<double> res;
+	std::vector<int> res;
 	if (obj) 
 		obj->FireSet(machine->data, stageController, &res);
 
@@ -4334,12 +4298,13 @@ gstd::value StgStageScript::Func_ObjCol_IsIntersected(gstd::script_machine* mach
 gstd::value StgStageScript::Func_ObjCol_GetListOfIntersectedEnemyID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	std::vector<double> listObjectID;
+	std::vector<int> listObjectID;
 	StgIntersectionObject* obj = dynamic_cast<StgIntersectionObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		for (auto wPtr : obj->GetIntersectedIdList()) {
+		std::vector<weak_ptr<StgIntersectionObject>>& listIntersection = obj->GetIntersectedIdList();
+		for (auto& wPtr : listIntersection) {
 			if (auto ptr = wPtr.lock()) {
-				if (shared_ptr<StgEnemyObject> objEnemy = std::dynamic_pointer_cast<StgEnemyObject>(ptr))
+				if (StgEnemyObject* objEnemy = dynamic_cast<StgEnemyObject*>(ptr.get()))
 					listObjectID.push_back(objEnemy->GetDxScriptObjectID());
 			}
 		}

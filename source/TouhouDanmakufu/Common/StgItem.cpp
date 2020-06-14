@@ -815,29 +815,21 @@ void StgItemObject::_CreateScoreItem() {
 		itemManager->AddItem(obj);
 	}
 }
-void StgItemObject::_NotifyEventToPlayerScript(std::vector<float>& listValue) {
+void StgItemObject::_NotifyEventToPlayerScript(gstd::value* listValue, size_t count) {
 	//自機スクリプトへ通知
 	shared_ptr<StgPlayerObject> player = stageController_->GetPlayerObject();
 	StgStagePlayerScript* scriptPlayer = player->GetPlayerScript();
-	std::vector<gstd::value> listScriptValue;
-	for (size_t iVal = 0; iVal < listValue.size(); iVal++) {
-		listScriptValue.push_back(scriptPlayer->CreateRealValue(listValue[iVal]));
-	}
 
-	scriptPlayer->RequestEvent(StgStageItemScript::EV_GET_ITEM, listScriptValue);
+	scriptPlayer->RequestEvent(StgStageItemScript::EV_GET_ITEM, listValue, count);
 }
-void StgItemObject::_NotifyEventToItemScript(std::vector<float>& listValue) {
+void StgItemObject::_NotifyEventToItemScript(gstd::value* listValue, size_t count) {
 	//アイテムスクリプトへ通知
 	auto stageScriptManager = stageController_->GetScriptManager();
 	int64_t idItemScript = stageScriptManager->GetItemScriptID();
 	if (idItemScript != StgControlScriptManager::ID_INVALID) {
 		shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetScript(idItemScript);
 		if (scriptItem) {
-			std::vector<gstd::value> listScriptValue;
-			for (size_t iVal = 0; iVal < listValue.size(); iVal++) {
-				listScriptValue.push_back(scriptItem->CreateRealValue(listValue[iVal]));
-			}
-			scriptItem->RequestEvent(StgStageItemScript::EV_GET_ITEM, listScriptValue);
+			scriptItem->RequestEvent(StgStageItemScript::EV_GET_ITEM, listValue, count);
 		}
 	}
 }
@@ -876,11 +868,12 @@ StgItemObject_1UP::StgItemObject_1UP(StgStageController* stageController) : StgI
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
 void StgItemObject_1UP::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
-	std::vector<float> listValue;
-	listValue.push_back(typeItem_);
-	listValue.push_back(idObject_);
-	_NotifyEventToPlayerScript(listValue);
-	_NotifyEventToItemScript(listValue);
+	gstd::value listValue[2] = { 
+		DxScript::CreateRealValue(typeItem_), 
+		DxScript::CreateRealValue(idObject_)
+	};
+	_NotifyEventToPlayerScript(listValue, 2);
+	_NotifyEventToItemScript(listValue, 2);
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	objectManager->DeleteObject(this);
@@ -893,11 +886,12 @@ StgItemObject_Bomb::StgItemObject_Bomb(StgStageController* stageController) : St
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
 void StgItemObject_Bomb::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
-	std::vector<float> listValue;
-	listValue.push_back(typeItem_);
-	listValue.push_back(idObject_);
-	_NotifyEventToPlayerScript(listValue);
-	_NotifyEventToItemScript(listValue);
+	gstd::value listValue[2] = {
+		DxScript::CreateRealValue(typeItem_),
+		DxScript::CreateRealValue(idObject_)
+	};
+	_NotifyEventToPlayerScript(listValue, 2);
+	_NotifyEventToItemScript(listValue, 2);
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	objectManager->DeleteObject(this);
@@ -915,11 +909,12 @@ void StgItemObject_Power::Intersect(StgIntersectionTarget::ptr ownTarget, StgInt
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
 
-	std::vector<float> listValue;
-	listValue.push_back(typeItem_);
-	listValue.push_back(idObject_);
-	_NotifyEventToPlayerScript(listValue);
-	_NotifyEventToItemScript(listValue);
+	gstd::value listValue[2] = {
+		DxScript::CreateRealValue(typeItem_),
+		DxScript::CreateRealValue(idObject_)
+	};
+	_NotifyEventToPlayerScript(listValue, 2);
+	_NotifyEventToItemScript(listValue, 2);
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	objectManager->DeleteObject(this);
@@ -936,11 +931,12 @@ void StgItemObject_Point::Intersect(StgIntersectionTarget::ptr ownTarget, StgInt
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
 
-	std::vector<float> listValue;
-	listValue.push_back(typeItem_);
-	listValue.push_back(idObject_);
-	_NotifyEventToPlayerScript(listValue);
-	_NotifyEventToItemScript(listValue);
+	gstd::value listValue[2] = {
+		DxScript::CreateRealValue(typeItem_),
+		DxScript::CreateRealValue(idObject_)
+	};
+	_NotifyEventToPlayerScript(listValue, 2);
+	_NotifyEventToItemScript(listValue, 2);
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	objectManager->DeleteObject(this);
@@ -1127,10 +1123,12 @@ void StgItemObject_User::Intersect(StgIntersectionTarget::ptr ownTarget, StgInte
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
 
-	std::vector<float> listValue;
-	listValue.push_back(typeItem_);
-	listValue.push_back(idObject_);
-	_NotifyEventToItemScript(listValue);
+	gstd::value listValue[2] = {
+		DxScript::CreateRealValue(typeItem_),
+		DxScript::CreateRealValue(idObject_)
+	};
+	//_NotifyEventToPlayerScript(listValue, 2);
+	_NotifyEventToItemScript(listValue, 2);
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	objectManager->DeleteObject(this);

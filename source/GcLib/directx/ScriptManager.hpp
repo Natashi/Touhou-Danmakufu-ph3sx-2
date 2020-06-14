@@ -62,7 +62,7 @@ namespace directx {
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
 		virtual shared_ptr<ManagedScript> Create(int type) = 0;
-		virtual void RequestEventAll(int type, std::vector<gstd::value>& listValue = std::vector<gstd::value>());
+		virtual void RequestEventAll(int type, const gstd::value* listValue = nullptr, size_t countArgument = 0);
 		gstd::value GetScriptResult(int64_t idScript);
 		void AddRelativeScriptManager(std::weak_ptr<ScriptManager> manager) { listRelativeManager_.push_back(manager); }
 		static void AddRelativeScriptManagerMutual(std::weak_ptr<ScriptManager> manager1, 
@@ -96,9 +96,12 @@ namespace directx {
 		bool bPaused_;
 
 		int typeEvent_;
-		std::vector<gstd::value> listValueEvent_;
+		gstd::value* listValueEvent_;
+		size_t listValueEventSize_;
 	public:
 		ManagedScript();
+		~ManagedScript();
+
 		virtual void SetScriptManager(ScriptManager* manager);
 		virtual void SetScriptParameter(shared_ptr<ManagedScriptParameter> param) { scriptParam_ = param; }
 		shared_ptr<ManagedScriptParameter> GetScriptParameter() { return scriptParam_; }
@@ -111,8 +114,8 @@ namespace directx {
 		void SetAutoDeleteObject(bool bEneble) { bAutoDeleteObject_ = bEneble; }
 		bool IsPaused() { return bPaused_; }
 
-		gstd::value RequestEvent(int type, std::vector<gstd::value>& listValue = std::vector<gstd::value>());
-
+		gstd::value RequestEvent(int type);
+		gstd::value RequestEvent(int type, const gstd::value* listValue, size_t countArgument);
 
 		//制御共通関数：共通データ
 		static gstd::value Func_SaveCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv);

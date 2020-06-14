@@ -277,14 +277,14 @@ void ScriptManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadE
 		SetError(e.what());
 	}
 }
-void ScriptManager::RequestEventAll(int type, std::vector<gstd::value>& listValue) {
+void ScriptManager::RequestEventAll(int type, const gstd::value* listValue, size_t countArgument) {
 	{
 		std::list<shared_ptr<ManagedScript>>::iterator itrScript = listScriptRun_.begin();
 		for (; itrScript != listScriptRun_.end(); itrScript++) {
 			shared_ptr<ManagedScript> script = (*itrScript);
 			if (script->IsEndScript())continue;
 
-			script->RequestEvent(type, listValue);
+			script->RequestEvent(type, listValue, countArgument);
 		}
 	}
 
@@ -297,7 +297,7 @@ void ScriptManager::RequestEventAll(int type, std::vector<gstd::value>& listValu
 					shared_ptr<ManagedScript> script = (*itrScript);
 					if (script->IsEndScript()) continue;
 
-					script->RequestEvent(type, listValue);
+					script->RequestEvent(type, listValue, countArgument);
 				}
 				itrManager++;
 			}
@@ -367,33 +367,48 @@ ManagedScript::ManagedScript() {
 	bPaused_ = false;
 
 	typeEvent_ = -1;
+	listValueEvent_ = nullptr;
+	listValueEventSize_ = 0;
+}
+ManagedScript::~ManagedScript() {
+	//listValueEvent_ shouldn't be delete'd, that's the job of whatever was calling RequestEvent,
+	//	doing so will cause a crash if there was a script error in Run().
+
+	//ptr_delete_scalar(listValueEvent_);
+	listValueEventSize_ = 0;
 }
 void ManagedScript::SetScriptManager(ScriptManager* manager) {
 	scriptManager_ = manager;
 	mainThreadID_ = scriptManager_->GetMainThreadID();
 	idScript_ = scriptManager_->IssueScriptID();
 }
-gstd::value ManagedScript::RequestEvent(int type, std::vector<gstd::value>& listValue) {
+gstd::value ManagedScript::RequestEvent(int type) {
+	return RequestEvent(type, nullptr, 0);
+}
+gstd::value ManagedScript::RequestEvent(int type, const gstd::value* listValue, size_t countArgument) {
 	gstd::value res;
 	std::map<std::string, script_engine::block*>::iterator itrEvent;
 	if (!IsEventExists("Event", itrEvent)) {
 		return res;
 	}
 
-	//Run() will overwrite these if it invokes another RequestEvent
+	//Run() may overwrite these if it invokes another RequestEvent
 	int tEventType = typeEvent_;
-	std::vector<gstd::value> tArgs = listValueEvent_;
+	gstd::value* tArgv = listValueEvent_;
+	size_t tArgc = listValueEventSize_;
 	gstd::value tValue = valueRes_;
 
 	typeEvent_ = type;
-	listValueEvent_ = listValue;
+	listValueEvent_ = const_cast<value*>(listValue);
+	listValueEventSize_ = countArgument;
 	valueRes_ = gstd::value();
 
 	Run(itrEvent);
 	res = GetResultValue();
 
 	typeEvent_ = tEventType;
-	listValueEvent_ = tArgs;
+	listValueEvent_ = tArgv;
+	listValueEventSize_ = tArgc;
 	valueRes_ = tValue;
 
 	return res;
@@ -464,8 +479,10 @@ gstd::value ManagedScript::Func_GetEventType(script_machine* machine, int argc, 
 gstd::value ManagedScript::Func_GetEventArgument(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
 	int index = (int)argv[0].as_real();
-	if (index < 0 || index >= script->listValueEvent_.size())
-		throw gstd::wexception("Invalid event argument index.");
+	if (index < 0 || index >= script->listValueEventSize_) {
+		script->RaiseError(StringUtility::Format("Invalid event argument index: %d. [max=%d]",
+			index, script->listValueEventSize_));
+	}
 	return script->listValueEvent_[index];
 }
 gstd::value ManagedScript::Func_SetScriptArgument(script_machine* machine, int argc, const value* argv) {
@@ -505,9 +522,9 @@ gstd::value ManagedScript::Func_NotifyEvent(script_machine* machine, int argc, c
 	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript);
 	if (target) {
 		int type = (int)argv[1].as_real();
-		std::vector<gstd::value> listArg;
-		listArg.push_back(argv[2]);
-		res = target->RequestEvent(type, listArg);
+		//std::vector<gstd::value> listArg;
+		//listArg.push_back(argv[2]);
+		res = target->RequestEvent(type, &argv[2], 1U);
 	}
 	return res;
 }
@@ -516,11 +533,11 @@ gstd::value ManagedScript::Func_NotifyEventOwn(script_machine* machine, int argc
 	script->CheckRunInMainThread();
 
 	int type = (int)argv[0].as_real();
-	std::vector<gstd::value> listArg;
-	listArg.push_back(argv[1]);
+	//std::vector<gstd::value> listArg;
+	//listArg.push_back(argv[1]);
 
-	gstd::value res = script->RequestEvent(type, listArg);
-	return res;
+	//return script->RequestEvent(type, listArg);
+	return script->RequestEvent(type, &argv[1], 1U);
 }
 gstd::value ManagedScript::Func_NotifyEventAll(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
@@ -529,9 +546,7 @@ gstd::value ManagedScript::Func_NotifyEventAll(script_machine* machine, int argc
 	auto scriptManager = script->scriptManager_;
 
 	int type = (int)argv[0].as_real();
-	std::vector<gstd::value> listArg;
-	listArg.push_back(argv[1]);
-	scriptManager->RequestEventAll(type, listArg);
+	scriptManager->RequestEventAll(type, &argv[1], 1U);
 
 	return value();
 }
@@ -544,7 +559,7 @@ gstd::value ManagedScript::Func_PauseScript(script_machine* machine, int argc, c
 	int64_t idScript = (int64_t)argv[0].as_real();
 	bool state = argv[1].as_boolean();
 	if (idScript == script->GetScriptID())
-		throw gstd::wexception("A script is not allowed to pause itself.");
+		script->RaiseError("A script is not allowed to pause itself.");
 
 	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript);
 	if (target) target->bPaused_ = state;

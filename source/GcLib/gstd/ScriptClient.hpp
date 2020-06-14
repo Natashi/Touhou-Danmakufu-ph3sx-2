@@ -131,14 +131,16 @@ namespace gstd {
 		void SetArgumentValue(value v, int index = 0);
 		value GetResultValue() { return valueRes_; }
 
-		value CreateRealValue(double r);
-		value CreateBooleanValue(bool b);
-		value CreateStringValue(std::string s);
-		value CreateStringValue(std::wstring s);
-		value CreateRealArrayValue(std::vector<float>& list);
-		value CreateRealArrayValue(std::vector<double>& list);
-		value CreateStringArrayValue(std::vector<std::string>& list);
-		value CreateStringArrayValue(std::vector<std::wstring>& list);
+		static value CreateRealValue(double r);
+		static value CreateBooleanValue(bool b);
+		static value CreateStringValue(std::string s);
+		static value CreateStringValue(std::wstring s);
+		template<typename T> static value CreateRealArrayValue(std::vector<T>& list) {
+			return CreateRealArrayValue(list.data(), list.size());
+		}
+		template<typename T> static value CreateRealArrayValue(T* ptrList, size_t count);
+		static value CreateStringArrayValue(std::vector<std::string>& list);
+		static value CreateStringArrayValue(std::vector<std::wstring>& list);
 		value CreateValueArrayValue(std::vector<value>& list);
 		bool IsRealValue(value& v);
 		bool IsBooleanValue(value& v);
@@ -250,6 +252,29 @@ namespace gstd {
 		static value Func_GetCommonDataAreaKeyList(script_machine* machine, int argc, const value* argv);
 		static value Func_GetCommonDataValueKeyList(script_machine* machine, int argc, const value* argv);
 	};
+#pragma region ScriptClientBase_impl
+	template<typename T>
+	value ScriptClientBase::CreateRealArrayValue(T* ptrList, size_t count) {
+		script_type_manager* typeManager = script_type_manager::get_instance();
+
+		if (ptrList && count > 0) {
+			type_data* type_real = typeManager->get_real_type();
+			type_data* type_arr = typeManager->get_real_array_type();
+
+			std::vector<value> res_arr;
+			res_arr.resize(count);
+			for (size_t iVal = 0U; iVal < count; ++iVal) {
+				res_arr[iVal] = value(type_real, (double)(ptrList[iVal]));
+			}
+
+			value res;
+			res.set(type_arr, res_arr);
+			return res;
+		}
+
+		return value(typeManager->get_string_type(), std::wstring());
+	}
+#pragma endregion ScriptClientBase_impl
 
 	/**********************************************************
 	//ScriptFileLineMap

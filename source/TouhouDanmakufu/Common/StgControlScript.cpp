@@ -817,12 +817,7 @@ gstd::value StgControlScript::Func_GetValidReplayIndices(gstd::script_machine* m
 	ref_count_ptr<ReplayInformationManager> replayInfoManager = infoControlScript->GetReplayInformationManager();
 
 	std::vector<int> listValidIndices = replayInfoManager->GetIndexList();
-	std::vector<double> list;
-	for (int iList = 0; iList < listValidIndices.size(); iList++)
-		list.push_back(listValidIndices[iList]);
-
-	gstd::value res = script->CreateRealArrayValue(list);
-	return res;
+	return script->CreateRealArrayValue(listValidIndices);
 }
 gstd::value StgControlScript::Func_IsValidReplayIndex(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
@@ -872,24 +867,17 @@ gstd::value StgControlScript::Func_GetReplayInfo(gstd::script_machine* machine, 
 	case REPLAY_STAGE_INDEX_LIST:
 	{
 		std::vector<int> listStageI = replayInfo->GetStageIndexList();
-		std::vector<double> listStageD;
-		for (size_t iStage = 0; iStage < listStageI.size(); iStage++) {
-			double stage = (double)listStageI[iStage];
-			listStageD.push_back(stage);
-		}
-		res = script->CreateRealArrayValue(listStageD);
+		res = script->CreateRealArrayValue(listStageI);
 		break;
 	}
 	case REPLAY_STAGE_START_SCORE_LIST:
 	{
 		std::vector<int> listStage = replayInfo->GetStageIndexList();
-		std::vector<double> listScoreD;
-		for (size_t iStage = 0; iStage < listStage.size(); iStage++) {
+		std::vector<int64_t> listScoreD;
+		for (size_t iStage = 0; iStage < listStage.size(); ++iStage) {
 			int stage = listStage[iStage];
 			ref_count_ptr<ReplayInformation::StageData> data = replayInfo->GetStageData(stage);
-
-			double score = (double)data->GetStartScore();
-			listScoreD.push_back(score);
+			listScoreD.push_back(data->GetStartScore());
 		}
 		res = script->CreateRealArrayValue(listScoreD);
 		break;
@@ -897,13 +885,11 @@ gstd::value StgControlScript::Func_GetReplayInfo(gstd::script_machine* machine, 
 	case REPLAY_STAGE_LAST_SCORE_LIST:
 	{
 		std::vector<int> listStage = replayInfo->GetStageIndexList();
-		std::vector<double> listScoreD;
-		for (size_t iStage = 0; iStage < listStage.size(); iStage++) {
+		std::vector<int64_t> listScoreD;
+		for (size_t iStage = 0; iStage < listStage.size(); ++iStage) {
 			int stage = listStage[iStage];
 			ref_count_ptr<ReplayInformation::StageData> data = replayInfo->GetStageData(stage);
-
-			double score = (double)data->GetLastScore();
-			listScoreD.push_back(score);
+			listScoreD.push_back(data->GetLastScore());
 		}
 		res = script->CreateRealArrayValue(listScoreD);
 		break;

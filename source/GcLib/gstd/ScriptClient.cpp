@@ -804,46 +804,6 @@ value ScriptClientBase::CreateStringValue(std::wstring s) {
 	value res(script_type_manager::get_instance()->get_string_type(), s);
 	return res;
 }
-value ScriptClientBase::CreateRealArrayValue(std::vector<float>& list) {
-	script_type_manager* typeManager = script_type_manager::get_instance();
-
-	if (list.size() > 0) {
-		type_data* type_real = typeManager->get_real_type();
-		type_data* type_arr = typeManager->get_real_array_type();
-
-		std::vector<value> res_arr;
-		res_arr.resize(list.size());
-		for (size_t iVal = 0U; iVal < list.size(); ++iVal) {
-			res_arr[iVal] = value(type_real, (double)list[iVal]);
-		}
-
-		value res;
-		res.set(type_arr, res_arr);
-		return res;
-	}
-
-	return value(typeManager->get_string_type(), std::wstring());
-}
-value ScriptClientBase::CreateRealArrayValue(std::vector<double>& list) {
-	script_type_manager* typeManager = script_type_manager::get_instance();
-
-	if (list.size() > 0) {
-		type_data* type_real = typeManager->get_real_type();
-		type_data* type_arr = typeManager->get_real_array_type();
-
-		std::vector<value> res_arr;
-		res_arr.resize(list.size());
-		for (size_t iVal = 0U; iVal < list.size(); ++iVal) {
-			res_arr[iVal] = value(type_real, list[iVal]);
-		}
-
-		value res;
-		res.set(type_arr, res_arr);
-		return res;
-	}
-
-	return value(typeManager->get_string_type(), std::wstring());
-}
 value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
 
@@ -1000,17 +960,9 @@ value ScriptClientBase::Func_Tan(script_machine* machine, int argc, const value*
 }
 value ScriptClientBase::Func_SinCos(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-
 	double ang = Math::DegreeToRadian(argv[0].as_real());
-	double s = sin(ang);
-	double c = cos(ang);
-
-	std::vector<double> csArray;
-	csArray.resize(2);
-	csArray[0] = s;
-	csArray[1] = c;
-
-	return script->CreateRealArrayValue(csArray);
+	double csArray[2] = { sin(ang), cos(ang) };
+	return script->CreateRealArrayValue(csArray, 2U);
 }
 
 value ScriptClientBase::Func_RCos(script_machine* machine, int argc, const value* argv) {
@@ -1024,17 +976,9 @@ value ScriptClientBase::Func_RTan(script_machine* machine, int argc, const value
 }
 value ScriptClientBase::Func_RSinCos(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-
 	double ang = argv[0].as_real();
-	double s = sin(ang);
-	double c = cos(ang);
-
-	std::vector<double> csArray;
-	csArray.resize(2);
-	csArray[0] = s;
-	csArray[1] = c;
-
-	return script->CreateRealArrayValue(csArray);
+	double csArray[2] = { sin(ang), cos(ang) };
+	return script->CreateRealArrayValue(csArray, 2U);
 }
 
 value ScriptClientBase::Func_Acos(script_machine* machine, int argc, const value* argv) {

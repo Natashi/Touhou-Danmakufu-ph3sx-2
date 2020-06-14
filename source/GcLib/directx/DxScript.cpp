@@ -2076,10 +2076,7 @@ gstd::value DxScript::Func_MatrixIdentity(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
 
-	std::vector<float> matVec;
-	matVec.resize(16);
-	memcpy(&matVec[0], &mat, sizeof(float) * 16);
-	return script->CreateRealArrayValue(matVec);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
 }
 gstd::value DxScript::Func_MatrixInverse(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2094,10 +2091,7 @@ gstd::value DxScript::Func_MatrixInverse(gstd::script_machine* machine, int argc
 	}
 	D3DXMatrixInverse(&mat, nullptr, &mat);
 
-	std::vector<float> matVec;
-	matVec.resize(16);
-	memcpy(&matVec[0], &mat, sizeof(float) * 16);
-	return script->CreateRealArrayValue(matVec);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
 }
 gstd::value DxScript::Func_MatrixAdd(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2115,10 +2109,7 @@ gstd::value DxScript::Func_MatrixAdd(gstd::script_machine* machine, int argc, co
 		ptrMat[i] = v0.as_real() + v1.as_real();
 	}
 
-	std::vector<float> matVec;
-	matVec.resize(16);
-	memcpy(&matVec[0], &mat, sizeof(float) * 16);
-	return script->CreateRealArrayValue(matVec);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
 }
 gstd::value DxScript::Func_MatrixSubtract(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2136,10 +2127,7 @@ gstd::value DxScript::Func_MatrixSubtract(gstd::script_machine* machine, int arg
 		ptrMat[i] = v0.as_real() - v1.as_real();
 	}
 
-	std::vector<float> matVec;
-	matVec.resize(16);
-	memcpy(&matVec[0], &mat, sizeof(float) * 16);
-	return script->CreateRealArrayValue(matVec);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
 }
 gstd::value DxScript::Func_MatrixMultiply(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2157,10 +2145,7 @@ gstd::value DxScript::Func_MatrixMultiply(gstd::script_machine* machine, int arg
 		ptrMat[i] = v0.as_real() * v1.as_real();
 	}
 
-	std::vector<float> matVec;
-	matVec.resize(16);
-	memcpy(&matVec[0], &mat, sizeof(float) * 16);
-	return script->CreateRealArrayValue(matVec);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
 }
 gstd::value DxScript::Func_MatrixDivide(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2178,10 +2163,7 @@ gstd::value DxScript::Func_MatrixDivide(gstd::script_machine* machine, int argc,
 		ptrMat[i] = v0.as_real() / v1.as_real();
 	}
 
-	std::vector<float> matVec;
-	matVec.resize(16);
-	memcpy(&matVec[0], &mat, sizeof(float) * 16);
-	return script->CreateRealArrayValue(matVec);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
 }
 gstd::value DxScript::Func_MatrixTranspose(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2196,10 +2178,7 @@ gstd::value DxScript::Func_MatrixTranspose(gstd::script_machine* machine, int ar
 	}
 	D3DXMatrixTranspose(&mat, &mat);
 
-	std::vector<float> matVec;
-	matVec.resize(16);
-	memcpy(&matVec[0], &mat, sizeof(float) * 16);
-	return script->CreateRealArrayValue(matVec);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
 }
 gstd::value DxScript::Func_MatrixDeterminant(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2232,10 +2211,7 @@ gstd::value DxScript::Func_MatrixLookatLH(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtLH(&mat, &eye, &dest, &up);
 	
-	std::vector<float> matVec;
-	matVec.resize(16);
-	memcpy(&matVec[0], &mat, sizeof(float) * 16);
-	return script->CreateRealArrayValue(matVec);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
 }
 gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2252,10 +2228,7 @@ gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtRH(&mat, &eye, &dest, &up);
 
-	std::vector<float> matVec;
-	matVec.resize(16);
-	memcpy(&matVec[0], &mat, sizeof(float) * 16);
-	return script->CreateRealArrayValue(matVec);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
 }
 
 //DxŠÖ”FƒVƒXƒeƒ€ŒnŒn
@@ -3111,13 +3084,9 @@ value DxScript::Func_GetCameraViewProjectionMatrix(script_machine* machine, int 
 	DxScript* script = (DxScript*)machine->data;
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
-	D3DXMATRIX matViewProj = graphics->GetCamera()->GetViewProjectionMatrix();
+	D3DXMATRIX* matViewProj = &graphics->GetCamera()->GetViewProjectionMatrix();
 
-	std::vector<float> mat;
-	mat.resize(16);
-	memcpy(&mat[0], &matViewProj, sizeof(float) * 16);
-
-	return script->CreateRealArrayValue(mat);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(matViewProj), 16U);
 }
 value DxScript::Func_SetCameraPerspectiveClip(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -3235,9 +3204,9 @@ gstd::value DxScript::Func_GetObject2dPosition(gstd::script_machine* machine, in
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
 
 	D3DXVECTOR2 point = camera->TransformCoordinateTo2D(obj->GetPosition());
-	std::vector<float> listRes = { point.x, point.y };
+	float listRes[2] = { point.x, point.y };
 
-	return script->CreateRealArrayValue(listRes);
+	return script->CreateRealArrayValue(listRes, 2U);
 }
 gstd::value DxScript::Func_Get2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -3251,9 +3220,9 @@ gstd::value DxScript::Func_Get2dPosition(gstd::script_machine* machine, int argc
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
 
 	D3DXVECTOR2 point = camera->TransformCoordinateTo2D(pos);
-	std::vector<float> listRes = { point.x, point.y };
+	float listRes[2] = { point.x, point.y };
 
-	return script->CreateRealArrayValue(listRes);
+	return script->CreateRealArrayValue(listRes, 2U);
 }
 
 gstd::value DxScript::Func_IsIntersected_Circle_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -3654,12 +3623,12 @@ value DxScript::Func_ObjRender_GetColor(script_machine* machine, int argc, const
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) color = obj->color_;
 
-	std::vector<float> listRGB = {
-		(float)((color >> 16) & 0xff),
-		(float)((color >> 8) & 0xff),
-		(float)(color & 0xff)
+	byte listRGB[3] = {
+		(color >> 16) & 0xff,
+		(color >> 8) & 0xff,
+		color & 0xff
 	};
-	return script->CreateRealArrayValue(listRGB);
+	return script->CreateRealArrayValue(listRGB, 3U);
 }
 value DxScript::Func_ObjRender_SetAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -4299,8 +4268,8 @@ value DxScript::Func_ObjPrimitive_GetVertexPosition(script_machine* machine, int
 	if (obj)
 		pos = obj->GetVertexPosition(index);
 
-	std::vector<float> listPos = { pos.x, pos.y, pos.z };
-	return script->CreateRealArrayValue(listPos);
+	float listPos[3] = { pos.x, pos.y, pos.z };
+	return script->CreateRealArrayValue(listPos, 3U);
 }
 value DxScript::Func_ObjPrimitive_SetVertexIndex(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -5004,14 +4973,12 @@ value DxScript::Func_ObjText_GetTextLengthCU(script_machine* machine, int argc, 
 value DxScript::Func_ObjText_GetTextLengthCUL(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	std::vector<float> listCountD;
+	std::vector<int> listCountD;
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		std::vector<int> listCount = obj->GetTextCountCU();
-		for (int iLine = 0; iLine < listCount.size(); ++iLine) {
-			int count = listCount[iLine];
-			listCountD.push_back(count);
-		}
+		for (int iLine = 0; iLine < listCount.size(); ++iLine)
+			listCountD.push_back(listCount[iLine]);
 	}
 	return script->CreateRealArrayValue(listCountD);
 }
