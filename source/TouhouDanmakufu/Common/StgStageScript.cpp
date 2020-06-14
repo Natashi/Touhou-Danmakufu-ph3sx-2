@@ -439,6 +439,8 @@ function const stgFunction[] =
 	{ "ObjShot_SetIntersectionScaleY", StgStageScript::Func_ObjShot_SetIntersectionScaleY, 2 },
 	{ "ObjShot_SetIntersectionScaleXY", StgStageScript::Func_ObjShot_SetIntersectionScaleXY, 3 },
 	{ "ObjShot_SetPositionRounding", StgStageScript::Func_ObjShot_SetPositionRounding, 2 },
+	{ "ObjShot_SetDelayMotionEnable", StgStageScript::Func_ObjShot_SetDelayMotionEnable, 2 },
+	{ "ObjShot_SetDelayGraphic", StgStageScript::Func_ObjShot_SetDelayGraphic, 2 },
 
 	{ "ObjLaser_SetLength", StgStageScript::Func_ObjLaser_SetLength, 2 },
 	{ "ObjLaser_SetRenderWidth", StgStageScript::Func_ObjLaser_SetRenderWidth, 2 },
@@ -471,6 +473,7 @@ function const stgFunction[] =
 	{ "ObjPatternShot_SetBasePointOffsetCircle", StgStageScript::Func_ObjPatternShot_SetBasePointOffsetCircle, 3 },
 	{ "ObjPatternShot_SetShootRadius", StgStageScript::Func_ObjPatternShot_SetShootRadius, 2 },
 	{ "ObjPatternShot_SetDelay", StgStageScript::Func_ObjPatternShot_SetDelay, 2 },
+	//{ "ObjPatternShot_SetDelayMotion", StgStageScript::Func_ObjPatternShot_SetDelayMotion, 2 },
 	{ "ObjPatternShot_SetGraphic", StgStageScript::Func_ObjPatternShot_SetGraphic, 2 },
 	{ "ObjPatternShot_SetLaserParameter", StgStageScript::Func_ObjPatternShot_SetLaserParameter, 3 },
 	{ "ObjPatternShot_CopySettings", StgStageScript::Func_ObjPatternShot_CopySettings, 2 },
@@ -3706,6 +3709,25 @@ gstd::value StgStageScript::Func_ObjShot_SetPositionRounding(gstd::script_machin
 		obj->SetPositionRounding(argv[1].as_boolean());
 	return value();
 }
+gstd::value StgStageScript::Func_ObjShot_SetDelayMotionEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+	int id = (int)argv[0].as_real();
+	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
+	if (obj)
+		obj->SetEnableDelayMotion(argv[1].as_boolean());
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_SetDelayGraphic(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		int gr = (int)argv[1].as_real();
+		obj->SetShotDataDelayID(gr);
+	}
+	return value();
+}
 
 
 gstd::value StgStageScript::Func_ObjLaser_SetLength(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -4044,6 +4066,18 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetDelay(gstd::script_machine* m
 	}
 	return value();
 }
+/*
+gstd::value StgStageScript::Func_ObjPatternShot_SetDelayMotion(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	int id = (int)argv[0].as_real();
+	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
+	if (obj)
+		obj->SetDelayMotion(argv[1].as_boolean());
+	return value();
+}
+*/
 gstd::value StgStageScript::Func_ObjPatternShot_SetGraphic(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;

@@ -366,6 +366,8 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetIntersectionScaleY);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetIntersectionScaleXY);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetPositionRounding);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayMotionEnable);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayGraphic);
 
 	static gstd::value Func_ObjLaser_SetLength(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_SetRenderWidth(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -398,6 +400,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetBasePointOffsetCircle);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetShootRadius);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetDelay);
+	//DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetDelayMotion);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetGraphic);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetLaserParameter);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_CopySettings);

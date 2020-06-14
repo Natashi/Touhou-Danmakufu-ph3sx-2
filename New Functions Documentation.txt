@@ -207,6 +207,31 @@ Interpolate_CubicBezier
 			
 -------------------------------------------------------------------------------------------------------------------
 
+IsIntersected_Circle_Circle
+	Description:
+		Now usable in package-level scripts.
+
+IsIntersected_Line_Circle
+	Description:
+		Now usable in package-level scripts.
+		
+IsIntersected_Line_Line
+	Arguments:
+		1) line 1 - start x
+		2) line 1 - start y
+		3) line 1 - end x
+		4) line 1 - end y
+		5) line 1 - width
+		6) line 2 - start x
+		7) line 2 - start y
+		8) line 2 - end x
+		9) line 2 - end y
+		10) line 2 - width
+	Description:
+		Returns true if the given line segments intersect.
+
+-------------------------------------------------------------------------------------------------------------------
+
 wait
 	Arguments:
 		1) frame
@@ -981,6 +1006,23 @@ Additional constant:
 
 -------------------------------------------------------------------------------------------------------------------
 
+IsIntersected_Obj_Obj
+	Arguments:
+		1) object 1
+		2) object 2
+	Description:
+		Change.
+		Returns true if any of object 1's hitboxes intersects with any of object 2's hitboxes.
+		
+IsIntersected_Obj_Obj_All
+	Arguments:
+		1) object 1
+		2) object 2
+	Description:
+		Returns true if all of object 1's hitboxes intersects with all of object 2's hitboxes.
+
+-------------------------------------------------------------------------------------------------------------------
+
 GetPlayerAutoItemCollectLine
 	Description:
 		Returns the position of the player's item autocollection line.
@@ -1031,6 +1073,18 @@ SetPlayerRebirthPosition
 	Description:
 		Sets the respawn point of the player.
 		Use REBIRTH_DEFAULT in either position to cause that position to use the default value.
+		
+-------------------------------------------------------------------------------------------------------------------
+
+ObjMove_SetSpeed
+	Description:
+		Addition.
+		Will also work on B-pattern objects.
+		
+ObjMove_SetAngle
+	Description:
+		Addition.
+		Will also work on B-pattern objects.
 
 ObjMove_GetSpeedX
 	Arguments:
@@ -1062,12 +1116,27 @@ ObjMove_SetSpeedY
 		Sets the move object's Y speed.
 		Also works for objects using the "angle" move mode.
 		
+ObjMove_SetSpeedXY
+	Arguments:
+		1) object ID
+		2) x speed
+		2) y speed
+	Description:
+		Sets the move object's X and Y speeds.
+		Also works for objects using the "angle" move mode.
+		
 ObjMove_SetProcessMovement
 	Arguments:
 		1) object ID
 		2) (bool) set
 	Description:
 		Sets whether the object will be allowed to execute movement-related routines.
+		
+ObjMove_GetProcessMovement
+	Arguments:
+		1) object ID
+	Description:
+		Returns true if the object is allowed to execute movement-related routines.
 
 ObjEnemy_GetIntersectionCircleListToShot
 	Arguments:
@@ -1151,6 +1220,23 @@ ObjShot_SetPositionRounding
 	Description:
 		If set to true, will cause the shot object to only render in non-floating point coordinates.
 		See: Official Touhou games.
+		
+ObjShot_SetDelayMotionEnable
+	Arguments:
+		1) object ID
+		2) (bool) set
+	Description:
+		If set to true, will enable the shot object to move in its delay period.
+		Only works on regular shots.
+		Default is false.
+		
+ObjShot_SetDelayGraphic
+	Arguments:
+		1) object ID
+		2) image ID
+	Description:
+		Sets the image ID of the shot object's delay cloud.
+		A negative value will reset the delay cloud graphic to default.
 
 ObjStLaser_SetPermitExpand
 	Arguments:
