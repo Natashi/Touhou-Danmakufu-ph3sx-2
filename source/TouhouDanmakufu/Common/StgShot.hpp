@@ -240,6 +240,7 @@ protected:
 
 	int frameWork_;
 	int idShotData_;
+	int idShotDelay_;
 	int typeOwner_;
 
 	float c_;
@@ -253,8 +254,8 @@ protected:
 	int frameGrazeInvalid_;
 	int frameFadeDelete_;
 
-	float damage_;
-	float life_;
+	double damage_;
+	double life_;
 
 	bool bAutoDelete_;
 	bool bEraseShot_;
@@ -267,6 +268,7 @@ protected:
 	bool bIntersectionEnable_;
 	bool bChangeItemEnable_;
 
+	bool bEnableMotionDelay_;
 	bool bRoundingPosition_;
 
 	StgShotData* _GetShotData();
@@ -313,6 +315,8 @@ public:
 
 	int GetShotDataID() { return idShotData_; }
 	virtual void SetShotDataID(int id) { idShotData_ = id; }
+	int GetShotDataDelayID() { return idShotDelay_; }
+	void SetShotDataDelayID(int id) { idShotDelay_ = id; }
 	int GetOwnerType() { return typeOwner_; }
 	void SetOwnerType(int type) { typeOwner_ = type; }
 
@@ -321,10 +325,10 @@ public:
 	void SetDelay(int delay) { delay_ = delay; }
 	int GetSourceBlendType() { return typeSourceBlend_; }
 	void SetSourceBlendType(int type) { typeSourceBlend_ = type; }
-	float GetLife() { return life_; }
-	void SetLife(float life) { life_ = life; }
-	float GetDamage() { return damage_; }
-	void SetDamage(float damage) { damage_ = damage; }
+	double GetLife() { return life_; }
+	void SetLife(double life) { life_ = life; }
+	double GetDamage() { return damage_; }
+	void SetDamage(double damage) { damage_ = damage; }
 	virtual void SetFadeDelete() { if (frameFadeDelete_ < 0)frameFadeDelete_ = FRAME_FADEDELETE; }
 	bool IsAutoDelete() { return bAutoDelete_; }
 	void SetAutoDelete(bool b) { bAutoDelete_ = b; }
@@ -338,6 +342,7 @@ public:
 	bool IsIntersectionEnable() { return bIntersectionEnable_; }
 	void SetItemChangeEnable(bool b) { bChangeItemEnable_ = b; }
 
+	void SetEnableDelayMotion(bool b) { bEnableMotionDelay_ = b; }
 	void SetPositionRounding(bool b) { bRoundingPosition_ = b; }
 
 	void SetHitboxScale(D3DXVECTOR2& sc) { hitboxScale_ = sc; }
@@ -606,7 +611,7 @@ public:
 
 	void SetParent(shared_ptr<StgMoveObject> obj) { parent_ = obj; }
 
-	void FireSet(void* scriptData, StgStageController* controller, std::vector<double>* idVector);
+	void FireSet(void* scriptData, StgStageController* controller, std::vector<int>* idVector);
 
 	void SetGraphic(int id) { idShotData_ = id; }
 	void SetTypeOwner(int type) { typeOwner_ = type; }

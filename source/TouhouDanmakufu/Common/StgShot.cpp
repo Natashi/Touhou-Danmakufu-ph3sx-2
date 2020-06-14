@@ -788,6 +788,7 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	posX_ = 0;
 	posY_ = 0;
 	idShotData_ = 0;
+	idShotDelay_ = -1;
 	typeBlend_ = DirectGraphics::MODE_BLEND_NONE;
 	typeSourceBlend_ = DirectGraphics::MODE_BLEND_NONE;
 
@@ -810,6 +811,7 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	bIntersectionEnable_ = true;
 	bChangeItemEnable_ = true;
 
+	bEnableMotionDelay_ = false;
 	bRoundingPosition_ = false;
 
 	hitboxScale_ = D3DXVECTOR2(1.0f, 1.0f);
@@ -830,7 +832,7 @@ void StgShotObject::SetOwnObjectReference() {
 void StgShotObject::Work() {
 }
 void StgShotObject::_Move() {
-	if (delay_ == 0)
+	if (delay_ == 0 || bEnableMotionDelay_)
 		StgMoveObject::_Move();
 	SetX(posX_);
 	SetY(posY_);
@@ -857,13 +859,13 @@ void StgShotObject::_DeleteInLife() {
 		float posX = GetPositionX();
 		float posY = GetPositionY();
 		if (scriptManager != nullptr && scriptPlayer != nullptr) {
-			std::vector<float> listPos = { posX, posY };
+			float listPos[2] = { posX, posY };
 
-			std::vector<value> listScriptValue;
-			listScriptValue.push_back(scriptPlayer->CreateRealValue(idObject_));
-			listScriptValue.push_back(scriptPlayer->CreateRealArrayValue(listPos));
-			listScriptValue.push_back(scriptPlayer->CreateRealValue(GetShotDataID()));
-			scriptPlayer->RequestEvent(StgStagePlayerScript::EV_DELETE_SHOT_PLAYER, listScriptValue);
+			value listScriptValue[3];
+			listScriptValue[0] = scriptPlayer->CreateRealValue(idObject_);
+			listScriptValue[1] = scriptPlayer->CreateRealArrayValue(listPos, 2U);
+			listScriptValue[2] = scriptPlayer->CreateRealValue(GetShotDataID());
+			scriptPlayer->RequestEvent(StgStagePlayerScript::EV_DELETE_SHOT_PLAYER, listScriptValue, 3);
 		}
 	}
 
@@ -909,10 +911,7 @@ void StgShotObject::_SendDeleteEvent(int bit) {
 	bool bSendEnable = shotManager->IsDeleteEventEnable(bit);
 	if (!bSendEnable) return;
 
-	float posX = GetPositionX();
-	float posY = GetPositionY();
-
-	std::vector<float> listPos = { posX, posY };
+	double listPos[2] = { GetPositionX(), GetPositionY() };
 
 	int typeEvent = 0;
 	switch (bit) {
@@ -927,12 +926,12 @@ void StgShotObject::_SendDeleteEvent(int bit) {
 		break;
 	}
 
-	std::vector<gstd::value> listScriptValue;
-	listScriptValue.push_back(scriptShot->CreateRealValue(idObject_));
-	listScriptValue.push_back(scriptShot->CreateRealArrayValue(listPos));
-	listScriptValue.push_back(scriptShot->CreateBooleanValue(false));
-	listScriptValue.push_back(scriptShot->CreateRealValue(GetShotDataID()));
-	scriptShot->RequestEvent(typeEvent, listScriptValue);
+	gstd::value listScriptValue[4];
+	listScriptValue[0] = scriptShot->CreateRealValue(idObject_);
+	listScriptValue[1] = scriptShot->CreateRealArrayValue(listPos, 2U);
+	listScriptValue[2] = scriptShot->CreateBooleanValue(false);
+	listScriptValue[3] = scriptShot->CreateRealValue(GetShotDataID());
+	scriptShot->RequestEvent(typeEvent, listScriptValue, 4);
 }
 void StgShotObject::_AddReservedShotWork() {
 	if (IsDeleted() || listReserveShot_ == nullptr) return;
@@ -1419,6 +1418,16 @@ void StgNormalShotObject::RenderOnShotManager() {
 
 	RECT* rcSrc;
 	RECT* rcDest;
+	if (delay_ <= 0 || idShotDelay_ >= 0) {
+		StgShotData::AnimationData* anime = shotData->GetData(frameWork_);
+		rcSrc = anime->GetSource();
+		rcDest = anime->GetDest();
+	}
+	else {
+		rcSrc = shotData->GetDelayRect();
+		rcDest = shotData->GetDelayDest();
+	}
+
 	D3DCOLOR color;
 
 	if (delay_ > 0) {
@@ -1427,24 +1436,16 @@ void StgNormalShotObject::RenderOnShotManager() {
 		scaleX = expa;
 		scaleY = expa;
 
-		rcSrc = shotData->GetDelayRect();
-		rcDest = shotData->GetDelayDest();
-
 		color = shotData->GetDelayColor();
 	}
 	else {
 		scaleX = scale_.x;
 		scaleY = scale_.y;
 
-		StgShotData::AnimationData* anime = shotData->GetData(frameWork_);
-		rcSrc = anime->GetSource();
-		rcDest = anime->GetDest();
-
 		color = color_;
 
 		float alphaRate = shotData->GetAlpha() / 255.0f;
 		if (frameFadeDelete_ >= 0) alphaRate *= (float)frameFadeDelete_ / FRAME_FADEDELETE;
-
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * alphaRate);
 			color = (color & 0x00ffffff) | (alpha << 24);
@@ -1529,7 +1530,7 @@ void StgNormalShotObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgInt
 	}
 
 	if (life_ != LIFE_SPELL_REGIST)
-		life_ = std::max(life_ - damage, 0.0f);
+		life_ = std::max(life_ - damage, 0.0);
 }
 void StgNormalShotObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
@@ -1541,14 +1542,14 @@ void StgNormalShotObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	float posX = GetPositionX();
 	float posY = GetPositionY();
 	if (scriptItem) {
-		std::vector<float> listPos = { posX, posY };
+		float listPos[2] = { posX, posY };
 
-		std::vector<gstd::value> listScriptValue;
-		listScriptValue.push_back(scriptItem->CreateRealValue(idObject_));
-		listScriptValue.push_back(scriptItem->CreateRealArrayValue(listPos));
-		listScriptValue.push_back(scriptItem->CreateBooleanValue(flgPlayerCollision));
-		listScriptValue.push_back(scriptItem->CreateRealValue(GetShotDataID()));
-		scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue);
+		gstd::value listScriptValue[4];
+		listScriptValue[0] = scriptItem->CreateRealValue(idObject_);
+		listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
+		listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
+		listScriptValue[3] = scriptItem->CreateRealValue(GetShotDataID());
+		scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 	}
 
 	if (itemManager->IsDefaultBonusItemEnable() && !flgPlayerCollision) {
@@ -1658,7 +1659,7 @@ void StgLaserObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersec
 	}
 	}
 	if (life_ != LIFE_SPELL_REGIST)
-		life_ = std::max(life_ - damage, 0.0f);
+		life_ = std::max(life_ - damage, 0.0);
 }
 
 
@@ -1808,20 +1809,25 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 	RECT* rcSrc;
 	RECT rcDest;
+	if (delay_ <= 0 || idShotDelay_ >= 0) {
+		StgShotData::AnimationData* anime = shotData->GetData(frameWork_);
+		rcSrc = anime->GetSource();
+		rcDest = *anime->GetDest();
+	}
+	else {
+		rcSrc = shotData->GetDelayRect();
+		//rcDest = *shotData->GetDelayDest();
+	}
 
 	D3DCOLOR color;
 
 	if (delay_ > 0) {
 		float expa = std::min(0.5f + delay_ / 30.0f * 2.0f, 3.5f);
-
 		scaleX = expa;
 		scaleY = expa;
 
 		renderC = c_;
 		renderS = s_;
-
-		rcSrc = shotData->GetDelayRect();
-		rcDest = *shotData->GetDelayDest();
 
 		color = shotData->GetDelayColor();
 
@@ -1841,14 +1847,10 @@ void StgLooseLaserObject::RenderOnShotManager() {
 		renderC = dx / radius;
 		renderS = dy / radius;
 
-		StgShotData::AnimationData* anime = shotData->GetData(frameWork_);
-		rcSrc = anime->GetSource();
-
 		color = color_;
 
 		float alphaRate = shotData->GetAlpha() / 255.0f;
 		if (frameFadeDelete_ >= 0) alphaRate *= (float)frameFadeDelete_ / FRAME_FADEDELETE;
-
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * alphaRate);
 			color = (color & 0x00ffffff) | (alpha << 24);
@@ -1894,10 +1896,8 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	float dy = posYE_ - posY_;
 	float length = sqrtf(dx * dx + dy * dy);
 
-	std::vector<float> listPos;
-	listPos.resize(2);
-	std::vector<gstd::value> listScriptValue;
-	listScriptValue.resize(4);
+	float listPos[2];
+	gstd::value listScriptValue[4];
 
 	for (float itemPos = 0; itemPos < length; itemPos += itemDistance_) {
 		float posX = ex - itemPos * c_;
@@ -1908,10 +1908,10 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 			listPos[1] = posY;
 
 			listScriptValue[0] = scriptItem->CreateRealValue(idObject_);
-			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos);
+			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
 			listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
 			listScriptValue[3] = scriptItem->CreateRealValue(GetShotDataID());
-			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue);
+			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 
 		if (itemManager->IsDefaultBonusItemEnable() && delay_ == 0 && !flgPlayerCollision) {
@@ -2067,6 +2067,10 @@ void StgStraightLaserObject::RenderOnShotManager() {
 	FLOAT sposx = position_.x;
 	FLOAT sposy = position_.y;
 
+	RECT* rcSrc;
+	D3DCOLOR color;
+	StgShotData::AnimationData* anime = shotData->GetData(frameWork_);
+
 	int objBlendType = GetBlendType();
 	int shotBlendType = objBlendType;
 	{
@@ -2080,18 +2084,12 @@ void StgStraightLaserObject::RenderOnShotManager() {
 		}
 		if (renderer == nullptr) return;
 
-		RECT* rcSrc;
-		D3DCOLOR color;
-
-		StgShotData::AnimationData* anime = shotData->GetData(frameWork_);
 		rcSrc = anime->GetSource();
 		//rcDest = anime->rcDst_;
-
 		color = color_;
 
 		float alphaRate = shotData->GetAlpha() / 255.0f;
 		if (frameFadeDelete_ >= 0) alphaRate *= (float)frameFadeDelete_ / FRAME_FADEDELETE;
-
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * alphaRate);
 			color = (color & 0x00ffffff) | (alpha << 24);
@@ -2140,15 +2138,18 @@ void StgStraightLaserObject::RenderOnShotManager() {
 		}
 		if (renderer == nullptr) return;
 
-		RECT* rcSrc;
-		RECT rcDest;
-		D3DCOLOR color;
+		if (idShotDelay_ >= 0) {
+			rcSrc = anime->GetSource();
+		}
+		else {
+			rcSrc = shotData->GetDelayRect();
+		}
 
 		rcSrc = shotData->GetDelayRect();
 		color = shotData->GetDelayColor();
 
 		int sourceWidth = widthRender_ * 2 / 3;
-		SetRect(&rcDest, -sourceWidth, -sourceWidth, sourceWidth, sourceWidth);
+		D3DXVECTOR4 rcDest(-sourceWidth, -sourceWidth, sourceWidth, sourceWidth);
 
 		if (bRoundingPosition_) {
 			sposx = roundf(sposx);
@@ -2157,7 +2158,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 		VERTEX_TLX verts[4];
 		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
-		LONG* ptrDst = reinterpret_cast<LONG*>(&rcDest);
+		FLOAT* ptrDst = reinterpret_cast<FLOAT*>(&rcDest);
 		for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 			VERTEX_TLX vt;
 
@@ -2189,10 +2190,8 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 	float ex = posX_;
 	float ey = posY_;
 
-	std::vector<float> listPos;
-	listPos.resize(2);
-	std::vector<gstd::value> listScriptValue;
-	listScriptValue.resize(4);
+	float listPos[2];
+	gstd::value listScriptValue[4];
 
 	for (float itemPos = 0; itemPos < (float)length_; itemPos += itemDistance_) {
 		float posX = ex + itemPos * c_;
@@ -2203,10 +2202,10 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 			listPos[1] = posY;
 
 			listScriptValue[0] = scriptItem->CreateRealValue(idObject_);
-			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos);
+			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
 			listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
 			listScriptValue[3] = scriptItem->CreateRealValue(GetShotDataID());
-			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue);
+			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 
 		if (itemManager->IsDefaultBonusItemEnable() && delay_ == 0 && !flgPlayerCollision) {
@@ -2371,6 +2370,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 	float textureWidth = shotData ? shotData->GetTextureSize().x : 1.0f;
 	float textureHeight = shotData ? shotData->GetTextureSize().y : 1.0f;
 
+	StgShotData::AnimationData* anime = shotData->GetData(frameWork_);
+
 	if (delay_ > 0) {
 		int objDelayBlendType = GetSourceBlendType();
 		if (objDelayBlendType == DirectGraphics::MODE_BLEND_NONE) {
@@ -2384,6 +2385,14 @@ void StgCurveLaserObject::RenderOnShotManager() {
 
 		RECT* rcSrc = shotData->GetDelayRect();
 		RECT* rcDest = shotData->GetDelayDest();
+		if (idShotDelay_ >= 0) {
+			rcSrc = anime->GetSource();
+			rcDest = anime->GetDest();
+		}
+		else {
+			rcSrc = shotData->GetDelayRect();
+			rcDest = shotData->GetDelayDest();
+		}
 
 		float expa = std::min(0.5f + delay_ / 30.0f * 2.0f, 3.5f);
 
@@ -2442,7 +2451,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		float baseAlpha = (color_ >> 24) & 0xff;
 		float tipAlpha = baseAlpha * (1.0f - tipDecrement_);
 
-		RECT* rcSrcOrg = shotData->GetData(frameWork_)->GetSource();
+		RECT* rcSrcOrg = anime->GetSource();
 		float rcInc = ((rcSrcOrg->bottom - rcSrcOrg->top) / (float)countRect) / textureHeight;
 		float rectV = (rcSrcOrg->top) / textureHeight;
 
@@ -2488,11 +2497,8 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 
 	//assert(scriptItem != nullptr);
 
-	std::vector<float> listPos;
-	std::vector<gstd::value> listScriptValue;
+	gstd::value listScriptValue[4];
 	if (scriptItem) {
-		listPos.resize(2);
-		listScriptValue.resize(4);
 		listScriptValue[0] = scriptItem->CreateRealValue(idObject_);
 		listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
 		listScriptValue[3] = scriptItem->CreateRealValue(GetShotDataID());
@@ -2502,10 +2508,9 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 
 	auto RequestItem = [&](float ix, float iy) {
 		if (scriptItem) {
-			listPos[0] = ix;
-			listPos[1] = iy;
-			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos);
-			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue);
+			float listPos[2] = { ix, iy };
+			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
+			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 		if (itemManager->IsDefaultBonusItemEnable() && delay_ == 0 && !flgPlayerCollision) {
 			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
@@ -2610,7 +2615,7 @@ void StgPatternShotObjectGenerator::SetTransformation(size_t off, StgPatternShot
 	listTransformation_[off] = entry;
 }
 
-void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController* controller, std::vector<double>* idVector) {
+void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController* controller, std::vector<int>* idVector) {
 	if (idVector) idVector->clear();
 
 	StgStageScript* script = (StgStageScript*)scriptData;
