@@ -17,7 +17,7 @@ SystemController::SystemController() {
 	ETaskManager* taskManager = ETaskManager::GetInstance();
 	shared_ptr<SystemResidentTask> task(new SystemResidentTask());
 	taskManager->AddTask(task);
-	taskManager->AddFunctionRender(TTaskFunction<SystemResidentTask>::Create(task, 
+	taskManager->AddRenderFunction(TTaskFunction<SystemResidentTask>::Create(task,
 		&SystemResidentTask::RenderFps), SystemResidentTask::TASK_PRI_RENDER_FPS);
 }
 SystemController::~SystemController() {
@@ -72,9 +72,9 @@ void SceneManager::TransTitleScene() {
 	ETaskManager* taskManager = ETaskManager::GetInstance();
 	shared_ptr<TitleScene> task(new TitleScene());
 	taskManager->AddTask(task);
-	taskManager->AddFunctionWork(TTaskFunction<TitleScene>::Create(task, 
+	taskManager->AddWorkFunction(TTaskFunction<TitleScene>::Create(task,
 		&TitleScene::Work), TitleScene::TASK_PRI_WORK);
-	taskManager->AddFunctionRender(TTaskFunction<TitleScene>::Create(task, 
+	taskManager->AddRenderFunction(TTaskFunction<TitleScene>::Create(task,
 		&TitleScene::Render), TitleScene::TASK_PRI_RENDER);
 }
 void SceneManager::TransScriptSelectScene(int type) {
@@ -88,9 +88,9 @@ void SceneManager::TransScriptSelectScene(int type) {
 	ETaskManager* taskManager = ETaskManager::GetInstance();
 	shared_ptr<ScriptSelectScene> task(new ScriptSelectScene());
 	taskManager->AddTask(task);
-	taskManager->AddFunctionWork(TTaskFunction<ScriptSelectScene>::Create(task, 
+	taskManager->AddWorkFunction(TTaskFunction<ScriptSelectScene>::Create(task,
 		&ScriptSelectScene::Work), ScriptSelectScene::TASK_PRI_WORK);
-	taskManager->AddFunctionRender(TTaskFunction<ScriptSelectScene>::Create(task, 
+	taskManager->AddRenderFunction(TTaskFunction<ScriptSelectScene>::Create(task,
 		&ScriptSelectScene::Render), ScriptSelectScene::TASK_PRI_RENDER);
 
 	ref_count_ptr<ScriptSelectModel> model = nullptr;
@@ -156,9 +156,9 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 
 		//STGƒ^ƒXƒN“o˜^
 		taskManager->AddTask(task);
-		taskManager->AddFunctionWork(TTaskFunction<StgSystemController>::Create(task, 
+		taskManager->AddWorkFunction(TTaskFunction<StgSystemController>::Create(task,
 			&StgSystemController::Work), StgSystemController::TASK_PRI_WORK);
-		taskManager->AddFunctionRender(TTaskFunction<StgSystemController>::Create(task, 
+		taskManager->AddRenderFunction(TTaskFunction<StgSystemController>::Create(task,
 			&StgSystemController::Render), StgSystemController::TASK_PRI_RENDER);
 	}
 	catch (gstd::wexception& e) {
@@ -240,9 +240,9 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 
 		//STGƒ^ƒXƒN“o˜^
 		taskManager->AddTask(task);
-		taskManager->AddFunctionWork(TTaskFunction<StgSystemController>::Create(task, 
+		taskManager->AddWorkFunction(TTaskFunction<StgSystemController>::Create(task, 
 			&StgSystemController::Work), StgSystemController::TASK_PRI_WORK);
-		taskManager->AddFunctionRender(TTaskFunction<StgSystemController>::Create(task, 
+		taskManager->AddRenderFunction(TTaskFunction<StgSystemController>::Create(task, 
 			&StgSystemController::Render), StgSystemController::TASK_PRI_RENDER);
 	}
 	catch (gstd::wexception& e) {
@@ -273,7 +273,7 @@ void TransitionManager::_CreateCurrentSceneTexture() {
 	graphics->SetRenderTarget(texture);
 	//graphics->ClearRenderTarget();
 	graphics->BeginScene(true);
-	taskManager->CallFunctionRender();
+	taskManager->CallRenderFunction();
 	graphics->EndScene(false);
 	graphics->SetRenderTarget(nullptr);
 }
@@ -284,9 +284,9 @@ void TransitionManager::_AddTask(ref_count_ptr<TransitionEffect> effect) {
 	shared_ptr<SystemTransitionEffectTask> task(new SystemTransitionEffectTask());
 	task->SetTransition(effect);
 	taskManager->AddTask(task);
-	taskManager->AddFunctionWork(TTaskFunction<SystemTransitionEffectTask>::Create(task, 
+	taskManager->AddWorkFunction(TTaskFunction<SystemTransitionEffectTask>::Create(task, 
 		&SystemTransitionEffectTask::Work), TASK_PRI);
-	taskManager->AddFunctionRender(TTaskFunction<SystemTransitionEffectTask>::Create(task, 
+	taskManager->AddRenderFunction(TTaskFunction<SystemTransitionEffectTask>::Create(task, 
 		&SystemTransitionEffectTask::Render), TASK_PRI);
 }
 void TransitionManager::DoFadeOut() {

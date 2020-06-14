@@ -176,24 +176,27 @@ namespace gstd {
 		~WorkRenderTaskManager();
 		virtual void InitializeFunctionDivision(int maxPriWork, int maxPriRender);
 
-#define DECLARE_FUNC_SET(div) \
-		void CallFunction##div(); \
-		void AddFunction##div(shared_ptr<TaskFunction> func, int pri, int idFunc = TASK_FREE_ID); \
-		void RemoveFunction##div(TaskBase* task, int idFunc); \
-		void SetFunctionEnable##div(bool bEnable); \
-		void SetFunctionEnable##div(bool bEnable, int idTask); \
-		void SetFunctionEnable##div(bool bEnable, int idTask, int idFunc); \
-		void SetFunctionEnable##div(bool bEnable, TaskBase* task); \
-		void SetFunctionEnable##div(bool bEnable, TaskBase* task, int idFunc); \
-		void SetFunctionEnable##div(bool bEnable, const std::type_info& info);
-
 		//動作機能
-		DECLARE_FUNC_SET(Work)
+		void CallWorkFunction();
+		void AddWorkFunction(shared_ptr<TaskFunction> func, int pri, int idFunc = TASK_FREE_ID);
+		void RemoveWorkFunction(TaskBase* task, int idFunc);
+		void SetWorkFunctionEnable(bool bEnable);
+		void SetWorkFunctionEnable(bool bEnable, int idTask);
+		void SetWorkFunctionEnable(bool bEnable, int idTask, int idFunc);
+		void SetWorkFunctionEnable(bool bEnable, TaskBase* task);
+		void SetWorkFunctionEnable(bool bEnable, TaskBase* task, int idFunc);
+		void SetWorkFunctionEnable(bool bEnable, const std::type_info& info);
 
 		//描画機能
-		DECLARE_FUNC_SET(Render)
-
-#undef DECLARE_FUNC
+		void CallRenderFunction();
+		void AddRenderFunction(shared_ptr<TaskFunction> func, int pri, int idFunc = TASK_FREE_ID);
+		void RemoveRenderFunction(TaskBase* task, int idFunc);
+		void SetRenderFunctionEnable(bool bEnable);
+		void SetRenderFunctionEnable(bool bEnable, int idTask);
+		void SetRenderFunctionEnable(bool bEnable, int idTask, int idFunc);
+		void SetRenderFunctionEnable(bool bEnable, TaskBase* task);
+		void SetRenderFunctionEnable(bool bEnable, TaskBase* task, int idFunc);
+		void SetRenderFunctionEnable(bool bEnable, const std::type_info& info);
 	};
 }
 

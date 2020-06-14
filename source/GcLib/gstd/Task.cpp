@@ -99,7 +99,7 @@ shared_ptr<TaskBase> TaskManager::GetTask(int idTask) {
 shared_ptr<TaskBase> TaskManager::GetTask(const std::type_info& info) {
 	for (auto itr = listTask_.begin(); itr != listTask_.end(); ++itr) {
 		if ((*itr) == nullptr) continue;
-		const std::type_info& tInfo = typeid(*itr->get());
+		const std::type_info& tInfo = typeid(*(itr->get()));
 		if (info != tInfo) continue;
 		return (*itr);
 	}
@@ -135,7 +135,7 @@ void TaskManager::RemoveTaskGroup(int idGroup) {
 void TaskManager::RemoveTask(const std::type_info& info) {
 	for (auto itr = listTask_.begin(); itr != listTask_.end(); ++itr) {
 		if ((*itr) == nullptr) continue;
-		const std::type_info& tInfo = typeid(itr->get());
+		const std::type_info& tInfo = typeid(*(itr->get()));
 		if (info != tInfo) continue;
 		this->RemoveFunction(itr->get());
 		(*itr) = nullptr;
@@ -144,7 +144,7 @@ void TaskManager::RemoveTask(const std::type_info& info) {
 void TaskManager::RemoveTaskWithoutTypeInfo(std::set<const std::type_info*> listInfo) {
 	for (auto itr = listTask_.begin(); itr != listTask_.end(); ++itr) {
 		if ((*itr) == nullptr) continue;
-		const std::type_info& tInfo = typeid(*itr->get());
+		const std::type_info& tInfo = typeid(*(itr->get()));
 		if (listInfo.find(&tInfo) != listInfo.end()) continue;
 		this->RemoveFunction(itr->get());
 		(*itr) = nullptr;
@@ -214,7 +214,7 @@ void TaskManager::RemoveFunction(const std::type_info& info) {
 			std::list<shared_ptr<TaskFunction>>& listFunc = *itrPri;
 			for (auto itrFunc = listFunc.begin(); itrFunc != listFunc.end(); ++itrFunc) {
 				if (*itrFunc == nullptr) continue;
-				const std::type_info& tInfo = typeid(*(*itrFunc)->task_);
+				const std::type_info& tInfo = typeid(*((*itrFunc)->task_));
 				if (info != tInfo) continue;
 				(*itrFunc) = nullptr;
 			}
@@ -289,7 +289,7 @@ void TaskManager::SetFunctionEnable(bool bEnable, const std::type_info& info, in
 		std::list<shared_ptr<TaskFunction>>& listFunc = *itrPri;
 		for (auto itrFunc = listFunc.begin(); itrFunc != listFunc.end(); ++itrFunc) {
 			if (*itrFunc == nullptr) continue;
-			const std::type_info& tInfo = typeid(*(*itrFunc)->task_);
+			const std::type_info& tInfo = typeid(*((*itrFunc)->task_));
 			if (info != tInfo) continue;
 			(*itrFunc)->bEnable_ = bEnable;
 		}
@@ -482,41 +482,59 @@ void WorkRenderTaskManager::InitializeFunctionDivision(int maxPriWork, int maxPr
 	this->TaskManager::InitializeFunctionDivision(DIV_FUNC_RENDER, maxPriRender);
 }
 
-#define DEFINE_FUNC_SET(div, divEnum) \
-void WorkRenderTaskManager::CallFunction##div() { \
-	CallFunction(divEnum); \
-} \
-void WorkRenderTaskManager::RemoveFunction##div(TaskBase* task, int idFunc) { \
-	RemoveFunction(task, divEnum, idFunc); \
-} \
-void WorkRenderTaskManager::SetFunctionEnable##div(bool bEnable) { \
-	SetFunctionEnable(bEnable, divEnum); \
-} \
-void WorkRenderTaskManager::SetFunctionEnable##div(bool bEnable, int idTask) { \
-	SetFunctionEnable(bEnable, idTask, divEnum); \
-} \
-void WorkRenderTaskManager::SetFunctionEnable##div(bool bEnable, int idTask, int idFunc) { \
-	SetFunctionEnable(bEnable, idTask, divEnum, idFunc); \
-} \
-void WorkRenderTaskManager::SetFunctionEnable##div(bool bEnable, TaskBase* task) { \
-	SetFunctionEnable(bEnable, task, divEnum); \
-} \
-void WorkRenderTaskManager::SetFunctionEnable##div(bool bEnable, TaskBase* task, int idFunc) { \
-	SetFunctionEnable(bEnable, task, divEnum, idFunc); \
-} \
-void WorkRenderTaskManager::SetFunctionEnable##div(bool bEnable, const std::type_info& info) { \
-	SetFunctionEnable(bEnable, info, divEnum); \
-} \
-
-DEFINE_FUNC_SET(Work, DIV_FUNC_WORK)
-void WorkRenderTaskManager::AddFunctionWork(shared_ptr<TaskFunction> func, int pri, int idFunc) {
+void WorkRenderTaskManager::CallWorkFunction() {
+	CallFunction(DIV_FUNC_WORK);
+}
+void WorkRenderTaskManager::AddWorkFunction(shared_ptr<TaskFunction> func, int pri, int idFunc) {
 	func->SetDelay(1);
 	AddFunction(DIV_FUNC_WORK, func, pri, idFunc);
 }
-
-DEFINE_FUNC_SET(Render, DIV_FUNC_RENDER)
-void WorkRenderTaskManager::AddFunctionRender(shared_ptr<TaskFunction> func, int pri, int idFunc) {
-	AddFunction(DIV_FUNC_RENDER, func, pri, idFunc);
+void WorkRenderTaskManager::RemoveWorkFunction(TaskBase* task, int idFunc) {
+	RemoveFunction(task, DIV_FUNC_WORK, idFunc);
+}
+void WorkRenderTaskManager::SetWorkFunctionEnable(bool bEnable) {
+	SetFunctionEnable(bEnable, DIV_FUNC_WORK);
+}
+void WorkRenderTaskManager::SetWorkFunctionEnable(bool bEnable, int idTask) {
+	SetFunctionEnable(bEnable, idTask, DIV_FUNC_WORK);
+}
+void WorkRenderTaskManager::SetWorkFunctionEnable(bool bEnable, int idTask, int idFunc) {
+	SetFunctionEnable(bEnable, idTask, DIV_FUNC_WORK, idFunc);
+}
+void WorkRenderTaskManager::SetWorkFunctionEnable(bool bEnable, TaskBase* task) {
+	SetFunctionEnable(bEnable, task, DIV_FUNC_WORK);
+}
+void WorkRenderTaskManager::SetWorkFunctionEnable(bool bEnable, TaskBase* task, int idFunc) {
+	SetFunctionEnable(bEnable, task, DIV_FUNC_WORK, idFunc);
+}
+void WorkRenderTaskManager::SetWorkFunctionEnable(bool bEnable, const std::type_info& info) {
+	SetFunctionEnable(bEnable, info, DIV_FUNC_WORK);
 }
 
-#undef DEFINE_FUNC_SET
+void WorkRenderTaskManager::CallRenderFunction() {
+	CallFunction(DIV_FUNC_RENDER);
+}
+void WorkRenderTaskManager::AddRenderFunction(shared_ptr<TaskFunction> func, int pri, int idFunc) {
+	AddFunction(DIV_FUNC_RENDER, func, pri, idFunc);
+}
+void WorkRenderTaskManager::RemoveRenderFunction(TaskBase* task, int idFunc) {
+	RemoveFunction(task, DIV_FUNC_RENDER, idFunc);
+}
+void WorkRenderTaskManager::SetRenderFunctionEnable(bool bEnable) {
+	SetFunctionEnable(bEnable, DIV_FUNC_RENDER);
+}
+void WorkRenderTaskManager::SetRenderFunctionEnable(bool bEnable, int idTask) {
+	SetFunctionEnable(bEnable, idTask, DIV_FUNC_RENDER);
+}
+void WorkRenderTaskManager::SetRenderFunctionEnable(bool bEnable, int idTask, int idFunc) {
+	SetFunctionEnable(bEnable, idTask, DIV_FUNC_RENDER, idFunc);
+}
+void WorkRenderTaskManager::SetRenderFunctionEnable(bool bEnable, TaskBase* task) {
+	SetFunctionEnable(bEnable, task, DIV_FUNC_RENDER);
+}
+void WorkRenderTaskManager::SetRenderFunctionEnable(bool bEnable, TaskBase* task, int idFunc) {
+	SetFunctionEnable(bEnable, task, DIV_FUNC_RENDER, idFunc);
+}
+void WorkRenderTaskManager::SetRenderFunctionEnable(bool bEnable, const std::type_info& info) {
+	SetFunctionEnable(bEnable, info, DIV_FUNC_RENDER);
+}

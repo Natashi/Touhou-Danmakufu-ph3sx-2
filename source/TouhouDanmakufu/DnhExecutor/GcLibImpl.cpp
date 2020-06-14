@@ -135,10 +135,10 @@ bool EApplication::_Loop() {
 	//bool bSaveRT = input->GetKeyState(DIK_P) == KEY_HOLD;
 
 	{
-		taskManager->CallFunctionWork();
+		taskManager->CallWorkFunction();
 		if (!fpsController->IsSkip()) {
 			graphics->BeginScene();
-			taskManager->CallFunctionRender();
+			taskManager->CallRenderFunction();
 			graphics->EndScene();
 		}
 
