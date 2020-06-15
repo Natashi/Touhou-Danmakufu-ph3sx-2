@@ -271,7 +271,8 @@ protected:
 	bool bEnableMotionDelay_;
 	bool bRoundingPosition_;
 
-	StgShotData* _GetShotData();
+	StgShotData* _GetShotData() { return _GetShotData(idShotData_); }
+	StgShotData* _GetShotData(int id);
 	void _SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z = 1.0f, float w = 1.0f);
 	void _SetVertexUV(VERTEX_TLX& vertex, float u, float v);
 	void _SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color);
@@ -482,9 +483,12 @@ public:
 class StgStraightLaserObject : public StgLaserObject {
 protected:
 	double angLaser_;
-	bool bUseSouce_;
-	float scaleX_;
 
+	bool bUseSouce_;
+	bool bUseEnd_;
+	int idImageEnd_;
+
+	float scaleX_;
 	bool bLaserExpand_;
 
 	virtual void _DeleteInAutoClip();
@@ -502,8 +506,11 @@ public:
 
 	double GetLaserAngle() { return angLaser_; }
 	void SetLaserAngle(double angle) { angLaser_ = angle; }
-	void SetFadeDelete() { if (frameFadeDelete_ < 0)frameFadeDelete_ = FRAME_FADEDELETE_LASER; }
+	void SetFadeDelete() { if (frameFadeDelete_ < 0) frameFadeDelete_ = FRAME_FADEDELETE_LASER; }
+
 	void SetSourceEnable(bool bEnable) { bUseSouce_ = bEnable; }
+	void SetEndEnable(bool bEnable) { bUseEnd_ = bEnable; }
+	void SetEndGraphic(int gr) { idImageEnd_ = gr; }
 
 	void SetLaserExpand(bool b) { bLaserExpand_ = b; }
 	bool GetLaserExpand() { return bLaserExpand_; }
@@ -588,6 +595,7 @@ private:
 	float angleArgument_;
 
 	int delay_;
+	//bool delayMove_;
 
 	int laserWidth_;
 	int laserLength_;
@@ -644,6 +652,7 @@ public:
 	}
 
 	void SetDelay(int delay) { delay_ = delay; }
+	//void SetDelayMotion(bool b) { delayMove_ = b; }
 	void SetLaserArgument(int width, int length) {
 		laserWidth_ = width;
 		laserLength_ = length;

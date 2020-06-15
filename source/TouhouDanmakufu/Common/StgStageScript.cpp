@@ -454,6 +454,8 @@ function const stgFunction[] =
 	{ "ObjStLaser_SetAngle", StgStageScript::Func_ObjStLaser_SetAngle, 2 },
 	{ "ObjStLaser_GetAngle", StgStageScript::Func_ObjStLaser_GetAngle, 1 },
 	{ "ObjStLaser_SetSource", StgStageScript::Func_ObjStLaser_SetSource, 2 },
+	{ "ObjStLaser_SetEnd", StgStageScript::Func_ObjStLaser_SetEnd, 2 },
+	{ "ObjStLaser_SetEndGraphic", StgStageScript::Func_ObjStLaser_SetEndGraphic, 2 },
 	{ "ObjStLaser_SetPermitExpand", StgStageScript::Func_ObjStLaser_SetPermitExpand, 2 },
 	{ "ObjStLaser_GetPermitExpand", StgStageScript::Func_ObjStLaser_GetPermitExpand, 1 },
 	{ "ObjCrLaser_SetTipDecrement", StgStageScript::Func_ObjCrLaser_SetTipDecrement, 2 },
@@ -3845,10 +3847,24 @@ gstd::value StgStageScript::Func_ObjStLaser_SetSource(gstd::script_machine* mach
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	StgStraightLaserObject* obj = dynamic_cast<StgStraightLaserObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		bool bEnable = argv[1].as_boolean();
-		obj->SetSourceEnable(bEnable);
-	}
+	if (obj)
+		obj->SetSourceEnable(argv[1].as_boolean());
+	return value();
+}
+gstd::value StgStageScript::Func_ObjStLaser_SetEnd(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgStraightLaserObject* obj = dynamic_cast<StgStraightLaserObject*>(script->GetObjectPointer(id));
+	if (obj)
+		obj->SetEndEnable(argv[1].as_boolean());
+	return value();
+}
+gstd::value StgStageScript::Func_ObjStLaser_SetEndGraphic(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgStraightLaserObject* obj = dynamic_cast<StgStraightLaserObject*>(script->GetObjectPointer(id));
+	if (obj)
+		obj->SetEndGraphic((int)argv[1].as_real());
 	return value();
 }
 gstd::value StgStageScript::Func_ObjCrLaser_SetTipDecrement(gstd::script_machine* machine, int argc, const gstd::value* argv) {
