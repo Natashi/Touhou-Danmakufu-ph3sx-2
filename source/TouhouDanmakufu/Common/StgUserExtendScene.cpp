@@ -73,6 +73,7 @@ StgUserExtendSceneScriptManager::StgUserExtendSceneScriptManager(StgSystemContro
 StgUserExtendSceneScriptManager::~StgUserExtendSceneScriptManager() {}
 void StgUserExtendSceneScriptManager::Work() {
 	if (!IsError()) {
+		objectManager_->CleanupObject();
 		StgControlScriptManager::Work();
 		objectManager_->WorkObject();
 	}
