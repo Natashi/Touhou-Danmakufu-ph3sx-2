@@ -2596,7 +2596,7 @@ gstd::value DxScript::Func_SetRenderTarget(gstd::script_machine* machine, int ar
 		script->RaiseError("Target texture must be a render target.");
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->SetRenderTarget(texture);
+	graphics->SetRenderTarget(texture, false);
 	if (argv[1].as_boolean()) graphics->ClearRenderTarget();
 
 	return value();
@@ -2605,7 +2605,7 @@ gstd::value DxScript::Func_ResetRenderTarget(gstd::script_machine* machine, int 
 	DxScript* script = (DxScript*)machine->data;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->SetRenderTarget(nullptr);
+	graphics->SetRenderTarget(nullptr, false);
 
 	return value();
 }
@@ -2624,9 +2624,9 @@ gstd::value DxScript::Func_ClearRenderTargetA1(gstd::script_machine* machine, in
 	shared_ptr<Texture> current = graphics->GetRenderTarget();
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	graphics->SetRenderTarget(texture);
+	graphics->SetRenderTarget(texture, false);
 	device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-	graphics->SetRenderTarget(current);
+	graphics->SetRenderTarget(current, false);
 
 	return value(machine->get_engine()->get_boolean_type(), true);
 }
@@ -2650,9 +2650,9 @@ gstd::value DxScript::Func_ClearRenderTargetA2(gstd::script_machine* machine, in
 	byte ca = (byte)argv[4].as_real();
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	graphics->SetRenderTarget(texture);
+	graphics->SetRenderTarget(texture, false);
 	device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(ca, cr, cg, cb), 1.0f, 0);
-	graphics->SetRenderTarget(current);
+	graphics->SetRenderTarget(current, false);
 
 	return value(machine->get_engine()->get_boolean_type(), true);
 }
@@ -2682,9 +2682,9 @@ gstd::value DxScript::Func_ClearRenderTargetA3(gstd::script_machine* machine, in
 	D3DRECT rc = { rl, rt, rr, rb };
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	graphics->SetRenderTarget(texture);
+	graphics->SetRenderTarget(texture, false);
 	device->Clear(1, &rc, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(ca, cr, cg, cb), 1.0f, 0);
-	graphics->SetRenderTarget(current);
+	graphics->SetRenderTarget(current, false);
 
 	return value(machine->get_engine()->get_boolean_type(), true);
 }

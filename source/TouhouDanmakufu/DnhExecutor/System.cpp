@@ -268,14 +268,14 @@ void TransitionManager::_CreateCurrentSceneTexture() {
 	DirectGraphics* graphics = EDirectGraphics::GetInstance();
 	WorkRenderTaskManager* taskManager = ETaskManager::GetInstance();
 	TextureManager* textureManager = ETextureManager::GetInstance();
-	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
+	shared_ptr<Texture> texture = textureManager->GetTexture(const_cast<std::wstring&>(TextureManager::TARGET_TRANSITION));
 
 	graphics->SetRenderTarget(texture);
 	//graphics->ClearRenderTarget();
 	graphics->BeginScene(true);
 	taskManager->CallRenderFunction();
 	graphics->EndScene(false);
-	graphics->SetRenderTarget(nullptr);
+	graphics->SetRenderTarget(nullptr, false);
 }
 void TransitionManager::_AddTask(ref_count_ptr<TransitionEffect> effect) {
 	WorkRenderTaskManager* taskManager = ETaskManager::GetInstance();
@@ -291,7 +291,7 @@ void TransitionManager::_AddTask(ref_count_ptr<TransitionEffect> effect) {
 }
 void TransitionManager::DoFadeOut() {
 	TextureManager* textureManager = ETextureManager::GetInstance();
-	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
+	shared_ptr<Texture> texture = textureManager->GetTexture(const_cast<std::wstring&>(TextureManager::TARGET_TRANSITION));
 	_CreateCurrentSceneTexture();
 
 	ref_count_ptr<TransitionEffect_FadeOut> effect = new TransitionEffect_FadeOut();

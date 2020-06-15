@@ -574,19 +574,22 @@ gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machi
 	shared_ptr<Texture> texture = script->_GetTexture(name);
 	if (texture == nullptr) {
 		texture = textureManager->GetTexture(name);
-		if (textureManager->IsDataExists(name)) {
-			texture = std::make_shared<Texture>();
-			texture->CreateRenderTarget(name);
+		if (texture == nullptr) {
+			bool bExist = false;
+			auto itrData = textureManager->IsDataExistsItr(name, &bExist);
+			if (bExist) texture->CreateFromData(itrData->second);
 		}
 	}
 
-	graphics->SetRenderTarget(texture);
-	graphics->BeginScene(bClear);
+	if (texture) {
+		graphics->SetRenderTarget(texture);
+		graphics->BeginScene(bClear);
 
-	systemController->RenderScriptObject(priMin, priMax);
+		systemController->RenderScriptObject(priMin, priMax);
 
-	graphics->EndScene(false);
-	graphics->SetRenderTarget(nullptr);
+		graphics->EndScene(false);
+		graphics->SetRenderTarget(nullptr, false);
+	}
 
 	return value();
 }
@@ -605,19 +608,22 @@ gstd::value StgControlScript::Func_RenderToTextureB1(gstd::script_machine* machi
 	shared_ptr<Texture> texture = script->_GetTexture(name);
 	if (texture == nullptr) {
 		texture = textureManager->GetTexture(name);
-		if (textureManager->IsDataExists(name)) {
-			texture = std::make_shared<Texture>();
-			texture->CreateRenderTarget(name);
+		if (texture == nullptr) {
+			bool bExist = false;
+			auto itrData = textureManager->IsDataExistsItr(name, &bExist);
+			if (bExist) texture->CreateFromData(itrData->second);
 		}
 	}
 
-	graphics->SetRenderTarget(texture);
-	graphics->BeginScene(bClear);
+	if (texture) {
+		graphics->SetRenderTarget(texture);
+		graphics->BeginScene(bClear);
 
-	obj->Render();
+		obj->Render();
 
-	graphics->EndScene(false);
-	graphics->SetRenderTarget(nullptr);
+		graphics->EndScene(false);
+		graphics->SetRenderTarget(nullptr, false);
+	}
 
 	return value();
 }

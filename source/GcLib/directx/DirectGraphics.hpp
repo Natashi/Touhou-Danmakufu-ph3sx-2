@@ -147,7 +147,7 @@ namespace directx {
 		void EndScene(bool bPresent = true);	//描画終了
 		void ClearRenderTarget();
 		void ClearRenderTarget(RECT* rect);
-		void SetRenderTarget(shared_ptr<Texture> texture);
+		void SetRenderTarget(shared_ptr<Texture> texture, bool bResetState = true);
 		shared_ptr<Texture> GetRenderTarget() { return textureTarget_; }
 
 		//レンダリングステートラッパ

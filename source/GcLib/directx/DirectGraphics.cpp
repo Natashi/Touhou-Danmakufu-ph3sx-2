@@ -401,7 +401,7 @@ void DirectGraphics::ClearRenderTarget(RECT* rect) {
 	pDevice_->Clear(1, (D3DRECT*)rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 
 		textureTarget_ != nullptr ? D3DCOLOR_ARGB(0, 0, 0, 0) : D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
 }
-void DirectGraphics::SetRenderTarget(shared_ptr<Texture> texture) {
+void DirectGraphics::SetRenderTarget(shared_ptr<Texture> texture, bool bResetState) {
 	textureTarget_ = texture;
 	if (texture == nullptr) {
 		pDevice_->SetRenderTarget(0, pBackSurf_);
@@ -411,7 +411,7 @@ void DirectGraphics::SetRenderTarget(shared_ptr<Texture> texture) {
 		pDevice_->SetRenderTarget(0, texture->GetD3DSurface());
 		pDevice_->SetDepthStencilSurface(texture->GetD3DZBuffer());
 	}
-	_InitializeDeviceState();
+	if (bResetState) _InitializeDeviceState();
 }
 void DirectGraphics::SetLightingEnable(bool bEnable) {
 	pDevice_->SetRenderState(D3DRS_LIGHTING, bEnable);
