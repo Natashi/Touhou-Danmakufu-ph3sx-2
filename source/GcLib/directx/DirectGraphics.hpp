@@ -105,6 +105,7 @@ namespace directx {
 
 		std::map<D3DMULTISAMPLE_TYPE, std::pair<bool, DWORD*>> mapSupportMultisamples_;
 
+		bool bMainRender_;
 		int previousBlendMode_;
 
 #if defined(DNH_PROJ_EXECUTOR)
@@ -143,7 +144,7 @@ namespace directx {
 		IDirect3DSurface9* GetBaseSurface() { return pBackSurf_; }
 
 #if defined(DNH_PROJ_EXECUTOR)
-		void BeginScene(bool bClear = true);	//ï`âÊäJén
+		void BeginScene(bool bMainRender = true, bool bClear = true);	//ï`âÊäJén
 		void EndScene(bool bPresent = true);	//ï`âÊèIóπ
 		void ClearRenderTarget();
 		void ClearRenderTarget(RECT* rect);
@@ -168,6 +169,7 @@ namespace directx {
 		void SetTextureFilter(DWORD mode, int stage = 0);
 		DWORD GetTextureFilter(int stage = 0);
 
+		bool IsMainRenderLoop() { return bMainRender_; }
 		VertexFogState* GetFogState() { return &stateFog_; }
 
 		void SetDirectionalLight(D3DVECTOR& dir);

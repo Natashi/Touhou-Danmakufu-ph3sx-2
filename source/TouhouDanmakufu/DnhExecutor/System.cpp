@@ -272,7 +272,7 @@ void TransitionManager::_CreateCurrentSceneTexture() {
 
 	graphics->SetRenderTarget(texture);
 	//graphics->ClearRenderTarget();
-	graphics->BeginScene(true);
+	graphics->BeginScene(false, true);
 	taskManager->CallRenderFunction();
 	graphics->EndScene(false);
 	graphics->SetRenderTarget(nullptr, false);

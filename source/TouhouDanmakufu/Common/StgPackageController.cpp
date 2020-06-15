@@ -43,7 +43,7 @@ void StgPackageController::RenderToTransitionTexture() {
 	shared_ptr<Texture> texture = textureManager->GetTexture(const_cast<std::wstring&>(TextureManager::TARGET_TRANSITION));
 
 	graphics->SetRenderTarget(texture);
-	graphics->BeginScene(true);
+	graphics->BeginScene(false, true);
 
 	scriptManager_->Render();
 

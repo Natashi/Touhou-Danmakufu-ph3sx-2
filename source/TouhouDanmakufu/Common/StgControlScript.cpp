@@ -583,7 +583,7 @@ gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machi
 
 	if (texture) {
 		graphics->SetRenderTarget(texture);
-		graphics->BeginScene(bClear);
+		graphics->BeginScene(false, bClear);
 
 		systemController->RenderScriptObject(priMin, priMax);
 
@@ -617,7 +617,7 @@ gstd::value StgControlScript::Func_RenderToTextureB1(gstd::script_machine* machi
 
 	if (texture) {
 		graphics->SetRenderTarget(texture);
-		graphics->BeginScene(bClear);
+		graphics->BeginScene(false, bClear);
 
 		obj->Render();
 
