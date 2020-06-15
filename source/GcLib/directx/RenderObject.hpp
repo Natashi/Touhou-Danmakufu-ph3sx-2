@@ -450,6 +450,7 @@ namespace directx {
 	**********************************************************/
 	class SpriteList2D : public RenderObjectTLX {
 		size_t countRenderVertex_;
+		size_t countRenderVertexPrev_;
 		RECT_D rcSrc_;
 		RECT_D rcDest_;
 		D3DCOLOR color_;
@@ -572,6 +573,7 @@ namespace directx {
 		void SetInstanceUserData(D3DXVECTOR3 data) { instUserData_ = data; }
 	protected:
 		size_t countInstance_;
+		size_t countInstancePrev_;
 		std::vector<VERTEX_INSTANCE> instanceData_;
 		
 		D3DCOLOR instColor_;

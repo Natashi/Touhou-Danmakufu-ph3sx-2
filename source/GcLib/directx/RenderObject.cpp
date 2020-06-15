@@ -1705,6 +1705,7 @@ void Sprite2D::SetDestinationCenter() {
 **********************************************************/
 SpriteList2D::SpriteList2D() {
 	countRenderVertex_ = 0;
+	countRenderVertexPrev_ = 0;
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 	bCloseVertexList_ = false;
 	autoClearVertexList_ = false;
@@ -1713,11 +1714,13 @@ void SpriteList2D::Render() {
 	SpriteList2D::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
 void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+
+	if (!graphics->IsMainRenderLoop()) countRenderVertex_ = countRenderVertexPrev_;
+	countRenderVertexPrev_ = countRenderVertex_;
 	if (countRenderVertex_ == 0U) return;
 
-	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
-
 	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	
@@ -2189,6 +2192,7 @@ void TrajectoryObject3D::AddPoint(D3DXMATRIX mat) {
 **********************************************************/
 ParticleRendererBase::ParticleRendererBase() {
 	countInstance_ = 0U;
+	countInstancePrev_ = 0U;
 	instColor_ = 0xffffffff;
 	instPosition_ = D3DXVECTOR3(0, 0, 0);
 	instScale_ = D3DXVECTOR3(1, 1, 1);
@@ -2199,9 +2203,9 @@ ParticleRendererBase::ParticleRendererBase() {
 ParticleRendererBase::~ParticleRendererBase() {
 }
 void ParticleRendererBase::AddInstance() {
-	if (countInstance_ == 16384U) return;
+	if (countInstance_ == 32768U) return;
 	if (instanceData_.size() == countInstance_) {
-		size_t newSize = std::min(countInstance_ * 2U, 16384U);
+		size_t newSize = std::min(countInstance_ * 2U, 32768U);
 		instanceData_.resize(newSize);
 	}
 	VERTEX_INSTANCE instance;
@@ -2213,6 +2217,7 @@ void ParticleRendererBase::AddInstance() {
 }
 void ParticleRendererBase::ClearInstance() {
 	countInstance_ = 0U;
+	//countInstancePrev_ = 0U;
 }
 void ParticleRendererBase::SetInstanceColorRGB(int r, int g, int b) {
 	ColorAccess::ClampColor(r);
@@ -2240,15 +2245,19 @@ ParticleRenderer2D::ParticleRenderer2D() {
 	
 }
 void ParticleRenderer2D::Render() {
-	if (countInstance_ == 0U) return;
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+
+	size_t countRenderInstance = countInstance_;
+
+	if (!graphics->IsMainRenderLoop()) countRenderInstance = countInstancePrev_;
+	if (countRenderInstance == 0U) return;
 
 	size_t countIndex = std::min(vertexIndices_.size(), 65536U);
 	if (countIndex == 0U) return;
-
-	DirectGraphics* graphics = DirectGraphics::GetBase();
+	
 	IDirect3DDevice9* device = graphics->GetDevice();
-
 	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
+
 	bool bCamera = camera->IsEnable() && bPermitCamera_;
 
 	shared_ptr<Texture>& texture = texture_[0];
@@ -2268,7 +2277,7 @@ void ParticleRenderer2D::Render() {
 		VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 		RenderShaderManager* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
-		bufferManager->GetInstancingVertexBuffer()->Expand(countInstance_);
+		bufferManager->GetInstancingVertexBuffer()->Expand(countRenderInstance);
 
 		IDirect3DVertexBuffer9* vertexBuffer = bufferManager->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_TLX);
 		IDirect3DVertexBuffer9* instanceBuffer = bufferManager->GetInstancingVertexBuffer()->GetBuffer();
@@ -2286,14 +2295,14 @@ void ParticleRenderer2D::Render() {
 			indexBuffer->Unlock();
 
 			instanceBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, instanceData_.data(), countInstance_ * sizeof(VERTEX_INSTANCE));
+			memcpy(tmp, instanceData_.data(), countRenderInstance * sizeof(VERTEX_INSTANCE));
 			instanceBuffer->Unlock();
 		}
 
 		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationInstancedTLX());
 
 		device->SetStreamSource(0, vertexBuffer, 0, sizeof(VERTEX_TLX));
-		device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | countInstance_);
+		device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | countRenderInstance);
 		device->SetStreamSource(1, instanceBuffer, 0, sizeof(VERTEX_INSTANCE));
 		device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA | 1U);
 
@@ -2336,17 +2345,23 @@ void ParticleRenderer2D::Render() {
 		device->SetStreamSourceFreq(0, 0);
 		device->SetStreamSourceFreq(1, 0);
 	}
+
+	countInstancePrev_ = countInstance_;
 }
 ParticleRenderer3D::ParticleRenderer3D() {
 
 }
 void ParticleRenderer3D::Render() {
-	if (countInstance_ == 0U) return;
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+
+	size_t countRenderInstance = countInstance_;
+
+	if (!graphics->IsMainRenderLoop()) countRenderInstance = countInstancePrev_;
+	if (countRenderInstance == 0U) return;
 
 	size_t countIndex = std::min(vertexIndices_.size(), 65536U);
 	if (countIndex == 0U) return;
 
-	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
 
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
@@ -2369,7 +2384,7 @@ void ParticleRenderer3D::Render() {
 		VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 		RenderShaderManager* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
-		bufferManager->GetInstancingVertexBuffer()->Expand(countInstance_);
+		bufferManager->GetInstancingVertexBuffer()->Expand(countRenderInstance);
 
 		IDirect3DVertexBuffer9* vertexBuffer = bufferManager->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_LX);
 		IDirect3DVertexBuffer9* instanceBuffer = bufferManager->GetInstancingVertexBuffer()->GetBuffer();
@@ -2387,12 +2402,12 @@ void ParticleRenderer3D::Render() {
 			indexBuffer->Unlock();		
 
 			instanceBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, instanceData_.data(), countInstance_ * sizeof(VERTEX_INSTANCE));
+			memcpy(tmp, instanceData_.data(), countRenderInstance * sizeof(VERTEX_INSTANCE));
 			instanceBuffer->Unlock();
 		}
 
 		device->SetStreamSource(0, vertexBuffer, 0, sizeof(VERTEX_LX));
-		device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | countInstance_);
+		device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | countRenderInstance);
 		device->SetStreamSource(1, instanceBuffer, 0, sizeof(VERTEX_INSTANCE));
 		device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA | 1U);
 
@@ -2445,6 +2460,8 @@ void ParticleRenderer3D::Render() {
 		device->SetStreamSourceFreq(0, 0);
 		device->SetStreamSourceFreq(1, 0);
 	}
+
+	countInstancePrev_ = countInstance_;
 }
 
 /**********************************************************
