@@ -184,6 +184,8 @@ namespace gstd {
 	constexpr double GM_LOG10E = 0.434294481903251827651;	//log10(e)
 	constexpr double GM_LN2 = 0.693147180559945309417;		//ln(2)
 	constexpr double GM_LN10 = 2.30258509299404568402;		//ln(10)
+	constexpr double GM_PHI = 1.618033988749894848205;		//Golden ratio
+	constexpr double GM_1_PHI = 1.0 / GM_PHI;				//The other golden ratio
 	class Math {
 	public:
 		static inline constexpr double DegreeToRadian(double angle) { return angle * GM_PI / 180.0; }

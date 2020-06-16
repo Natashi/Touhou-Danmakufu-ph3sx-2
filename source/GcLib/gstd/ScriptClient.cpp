@@ -173,6 +173,8 @@ function const commonFunction[] =
 	{ "M_LOG10E", pconstant<&GM_LOG10E>::func, 0 },
 	{ "M_LN2", pconstant<&GM_LN2>::func, 0 },
 	{ "M_LN10", pconstant<&GM_LN10>::func, 0 },
+	{ "M_PHI", pconstant<&GM_PHI>::func, 0 },
+	{ "M_1_PHI", pconstant<&GM_1_PHI>::func, 0 },
 };
 
 ScriptClientBase::ScriptClientBase() {
@@ -788,20 +790,20 @@ void ScriptClientBase::SetArgumentValue(value v, int index) {
 	listValueArg_[index] = v;
 }
 value ScriptClientBase::CreateRealValue(double r) {
-	value res(script_type_manager::get_instance()->get_real_type(), r);
+	value res(script_type_manager::get_real_type(), r);
 	return res;
 }
 value ScriptClientBase::CreateBooleanValue(bool b) {
-	value res(script_type_manager::get_instance()->get_boolean_type(), b);
+	value res(script_type_manager::get_boolean_type(), b);
 	return res;
 }
 value ScriptClientBase::CreateStringValue(std::string s) {
 	std::wstring wstr = StringUtility::ConvertMultiToWide(s);
-	value res(script_type_manager::get_instance()->get_string_type(), wstr);
+	value res(script_type_manager::get_string_type(), wstr);
 	return res;
 }
 value ScriptClientBase::CreateStringValue(std::wstring s) {
-	value res(script_type_manager::get_instance()->get_string_type(), s);
+	value res(script_type_manager::get_string_type(), s);
 	return res;
 }
 value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
@@ -868,26 +870,25 @@ bool ScriptClientBase::IsRealValue(value& v) {
 	if (bError_)return false;
 	if (!v.has_data())return false;
 
-	return v.get_type() == script_type_manager::get_instance()->get_real_type();
+	return v.get_type() == script_type_manager::get_real_type();
 }
 bool ScriptClientBase::IsBooleanValue(value& v) {
 	if (bError_)return false;
 	if (!v.has_data())return false;
 
-	return v.get_type() == script_type_manager::get_instance()->get_boolean_type();
+	return v.get_type() == script_type_manager::get_boolean_type();
 }
 bool ScriptClientBase::IsStringValue(value& v) {
 	if (bError_)return false;
 	if (!v.has_data())return false;
 
-	return v.get_type() == script_type_manager::get_instance()->get_string_type();
+	return v.get_type() == script_type_manager::get_string_type();
 }
 bool ScriptClientBase::IsRealArrayValue(value& v) {
 	if (bError_)return false;
 	if (!v.has_data())return false;
 
-	script_type_manager* typeManager = script_type_manager::get_instance();
-	return v.get_type() == typeManager->get_real_array_type();
+	return v.get_type() == script_type_manager::get_real_array_type();
 }
 void ScriptClientBase::CheckRunInMainThread() {
 	if (mainThreadID_ < 0)return;
