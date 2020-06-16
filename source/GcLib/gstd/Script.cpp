@@ -88,7 +88,7 @@ value _script_add(int argc, value const* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_add);
 	else
-		return value(script_type_manager::get_instance()->get_real_type(), argv[0].as_real() + argv[1].as_real());
+		return value(script_type_manager::get_real_type(), argv[0].as_real() + argv[1].as_real());
 }
 SCRIPT_DECLARE_OP(add);
 
@@ -96,7 +96,7 @@ value _script_subtract(int argc, value const* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_subtract);
 	else
-		return value(script_type_manager::get_instance()->get_real_type(), argv[0].as_real() - argv[1].as_real());
+		return value(script_type_manager::get_real_type(), argv[0].as_real() - argv[1].as_real());
 }
 SCRIPT_DECLARE_OP(subtract);
 
@@ -104,7 +104,7 @@ value _script_multiply(int argc, value const* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_multiply);
 	else
-		return value(script_type_manager::get_instance()->get_real_type(), argv[0].as_real() * argv[1].as_real());
+		return value(script_type_manager::get_real_type(), argv[0].as_real() * argv[1].as_real());
 }
 SCRIPT_DECLARE_OP(multiply);
 
@@ -112,7 +112,7 @@ value _script_divide(int argc, value const* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_divide);
 	else
-		return value(script_type_manager::get_instance()->get_real_type(), argv[0].as_real() / argv[1].as_real());
+		return value(script_type_manager::get_real_type(), argv[0].as_real() / argv[1].as_real());
 }
 SCRIPT_DECLARE_OP(divide);
 
@@ -120,14 +120,14 @@ value _script_remainder_(int argc, value const* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_remainder_);
 	else
-		return value(script_type_manager::get_instance()->get_real_type(), fmodl2(argv[0].as_real(), argv[1].as_real()));
+		return value(script_type_manager::get_real_type(), fmodl2(argv[0].as_real(), argv[1].as_real()));
 }
 SCRIPT_DECLARE_OP(remainder_);
 
 value modc(script_machine* machine, int argc, value const* argv) {
 	double x = argv[0].as_real();
 	double y = argv[1].as_real();
-	return value(script_type_manager::get_instance()->get_real_type(), fmod(x, y));
+	return value(script_type_manager::get_real_type(), fmod(x, y));
 }
 
 value _script_negative(int argc, value const* argv) {
@@ -142,7 +142,7 @@ value _script_negative(int argc, value const* argv) {
 		return result;
 	}
 	else
-		return value(script_type_manager::get_instance()->get_real_type(), -argv->as_real());
+		return value(script_type_manager::get_real_type(), -argv->as_real());
 }
 SCRIPT_DECLARE_OP(negative);
 
@@ -150,7 +150,7 @@ value _script_power(int argc, value const* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_power);
 	else
-		return value(script_type_manager::get_instance()->get_real_type(), std::pow(argv[0].as_real(), argv[1].as_real()));
+		return value(script_type_manager::get_real_type(), std::pow(argv[0].as_real(), argv[1].as_real()));
 }
 SCRIPT_DECLARE_OP(power);
 
@@ -207,7 +207,7 @@ value _script_compare(int argc, value const* argv) {
 		default:
 			assert(false);
 		}
-		return value(script_type_manager::get_instance()->get_real_type(), (double)r);
+		return value(script_type_manager::get_real_type(), (double)r);
 	}
 	else {
 		throw std::wstring(L"Values of different types are being compared.\r\n");
@@ -285,13 +285,13 @@ value successor(script_machine* machine, int argc, value const* argv) {
 }
 
 value _script_not_(int argc, value const* argv) {
-	return value(script_type_manager::get_instance()->get_boolean_type(), !argv->as_boolean());
+	return value(script_type_manager::get_boolean_type(), !argv->as_boolean());
 }
 SCRIPT_DECLARE_OP(not_);
 
 value length(script_machine* machine, int argc, value const* argv) {
 	assert(argc == 1);
-	return value(script_type_manager::get_instance()->get_real_type(), (double)argv->length_as_array());
+	return value(script_type_manager::get_real_type(), (double)argv->length_as_array());
 }
 
 bool _index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, double index) {
@@ -454,19 +454,19 @@ value round(script_machine* machine, int argc, value const* argv) {
 value truncate(script_machine* machine, int argc, value const* argv) {
 	double r = argv->as_real();
 	r = (r > 0) ? std::floor(r) : std::ceil(r);
-	return value(machine->get_engine()->get_real_type(), r);
+	return value(script_type_manager::get_real_type(), r);
 }
 
 value ceil(script_machine* machine, int argc, value const* argv) {
-	return value(machine->get_engine()->get_real_type(), std::ceil(argv->as_real()));
+	return value(script_type_manager::get_real_type(), std::ceil(argv->as_real()));
 }
 
 value floor(script_machine* machine, int argc, value const* argv) {
-	return value(machine->get_engine()->get_real_type(), std::floor(argv->as_real()));
+	return value(script_type_manager::get_real_type(), std::floor(argv->as_real()));
 }
 
 value _script_absolute(int argc, value const* argv) {
-	return value(script_type_manager::get_instance()->get_real_type(), std::fabs(argv->as_real()));
+	return value(script_type_manager::get_real_type(), std::fabs(argv->as_real()));
 }
 SCRIPT_DECLARE_OP(absolute);
 
@@ -487,32 +487,32 @@ int64_t bitDoubleToInt(double val) {
 }
 value bitwiseNot(script_machine* machine, int argc, value const* argv) {
 	int64_t val = bitDoubleToInt(argv[0].as_real());
-	return value(machine->get_engine()->get_real_type(), (double)(~val));
+	return value(script_type_manager::get_real_type(), (double)(~val));
 }
 value bitwiseAnd(script_machine* machine, int argc, value const* argv) {
 	int64_t val1 = bitDoubleToInt(argv[0].as_real());
 	int64_t val2 = bitDoubleToInt(argv[1].as_real());
-	return value(machine->get_engine()->get_real_type(), (double)(val1 & val2));
+	return value(script_type_manager::get_real_type(), (double)(val1 & val2));
 }
 value bitwiseOr(script_machine* machine, int argc, value const* argv) {
 	int64_t val1 = bitDoubleToInt(argv[0].as_real());
 	int64_t val2 = bitDoubleToInt(argv[1].as_real());
-	return value(machine->get_engine()->get_real_type(), (double)(val1 | val2));
+	return value(script_type_manager::get_real_type(), (double)(val1 | val2));
 }
 value bitwiseXor(script_machine* machine, int argc, value const* argv) {
 	int64_t val1 = bitDoubleToInt(argv[0].as_real());
 	int64_t val2 = bitDoubleToInt(argv[1].as_real());
-	return value(machine->get_engine()->get_real_type(), (double)(val1 ^ val2));
+	return value(script_type_manager::get_real_type(), (double)(val1 ^ val2));
 }
 value bitwiseLeft(script_machine* machine, int argc, value const* argv) {
 	int64_t val1 = bitDoubleToInt(argv[0].as_real());
 	size_t val2 = argv[1].as_real();
-	return value(machine->get_engine()->get_real_type(), (double)(val1 << val2));
+	return value(script_type_manager::get_real_type(), (double)(val1 << val2));
 }
 value bitwiseRight(script_machine* machine, int argc, value const* argv) {
 	int64_t val1 = bitDoubleToInt(argv[0].as_real());
 	size_t val2 = argv[1].as_real();
-	return value(machine->get_engine()->get_real_type(), (double)(val1 >> val2));
+	return value(script_type_manager::get_real_type(), (double)(val1 >> val2));
 }
 
 value script_debugBreak(script_machine* machine, int argc, value const* argv) {
@@ -2161,23 +2161,28 @@ script_type_manager::script_type_manager() {
 	if (base_ != nullptr) return;
 	base_ = this;
 
-	real_type = types.insert(type_data(type_data::type_kind::tk_real)).first;
-	char_type = types.insert(type_data(type_data::type_kind::tk_char)).first;
-	boolean_type = types.insert(type_data(type_data::type_kind::tk_boolean)).first;
-	string_type = types.insert(type_data(type_data::type_kind::tk_array, const_cast<type_data*>(&*char_type))).first;
-	real_array_type = types.insert(type_data(type_data::type_kind::tk_array, 
-		const_cast<type_data*>(&*real_type))).first;			//Real array	
-	types.insert(type_data(type_data::type_kind::tk_array, 
-		const_cast<type_data*>(&*boolean_type)));				//Bool array
+	real_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_real)).first);
+	char_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_char)).first);
+	boolean_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_boolean)).first);
+	string_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_array,
+		char_type)).first);		//Char array (string)
+	real_array_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_array,
+		real_type)).first);		//Real array	
+
+	//Bool array
+	types.insert(type_data(type_data::type_kind::tk_array, boolean_type));
+	//String array (Might not really be all that necessary to initialize it here)
+	types.insert(type_data(type_data::type_kind::tk_array, string_type));
 }
 
 type_data* script_type_manager::get_array_type(type_data* element) {
 	type_data target = type_data(type_data::type_kind::tk_array, element);
 	auto itr = types.find(target);
 	if (itr == types.end()) {
+		//No types found, insert and return the new type
 		itr = types.insert(target).first;
 	}
-	return const_cast<type_data*>(&*itr);
+	return deref_itr(itr);
 }
 
 /* script_engine */

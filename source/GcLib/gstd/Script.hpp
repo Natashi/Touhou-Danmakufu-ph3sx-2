@@ -43,7 +43,7 @@ namespace gstd {
 	struct function {
 		char const* name;
 		callback func;
-		unsigned arguments;
+		size_t arguments;
 	};
 
 	class script_type_manager {
@@ -51,33 +51,27 @@ namespace gstd {
 	public:
 		script_type_manager();
 
-		type_data* get_real_type() {
-			return const_cast<type_data*>(&*real_type);
-		}
-		type_data* get_char_type() {
-			return const_cast<type_data*>(&*char_type);
-		}
-		type_data* get_boolean_type() {
-			return const_cast<type_data*>(&*boolean_type);
-		}
-		type_data* get_string_type() {
-			return const_cast<type_data*>(&*string_type);
-		}
-		type_data* get_real_array_type() {
-			return const_cast<type_data*>(&*real_array_type);
-		}
+		static type_data* get_real_type() { return base_->real_type; }
+		static type_data* get_char_type() { return base_->char_type; }
+		static type_data* get_boolean_type() { return base_->boolean_type; }
+		static type_data* get_string_type() { return base_->string_type; }
+		static type_data* get_real_array_type() { return base_->real_array_type; }
 		type_data* get_array_type(type_data* element);
 
 		static script_type_manager* get_instance() { return base_; }
 	private:
-		script_type_manager(script_type_manager const&);
+		script_type_manager(const script_type_manager&);
 
 		std::set<type_data> types;
-		std::set<type_data>::iterator real_type;
-		std::set<type_data>::iterator char_type;
-		std::set<type_data>::iterator boolean_type;
-		std::set<type_data>::iterator string_type;
-		std::set<type_data>::iterator real_array_type;
+		type_data* real_type;
+		type_data* char_type;
+		type_data* boolean_type;
+		type_data* string_type;
+		type_data* real_array_type;
+
+		inline static type_data* deref_itr(std::set<type_data>::iterator& itr) {
+			return const_cast<type_data*>(&*itr);
+		}
 	};
 
 	class script_engine {
@@ -344,7 +338,7 @@ namespace gstd {
 	class constant {
 	public:
 		static value func(script_machine* machine, int argc, value const* argv) {
-			return value(script_type_manager::get_instance()->get_real_type(), (double)num);
+			return value(script_type_manager::get_real_type(), (double)num);
 		}
 	};
 
@@ -352,7 +346,7 @@ namespace gstd {
 	class pconstant {
 	public:
 		static value func(script_machine* machine, int argc, value const* argv) {
-			return value(script_type_manager::get_instance()->get_real_type(), *pVal);
+			return value(script_type_manager::get_real_type(), *pVal);
 		}
 	};
 }
