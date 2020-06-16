@@ -34,7 +34,7 @@ namespace gstd {
 		value(type_data* t, wchar_t v);
 		value(type_data* t, bool v);
 		value(type_data* t, std::wstring v);
-		value(value const& source) {
+		value(const value& source) {
 			data = source.data;
 		}
 
@@ -42,7 +42,7 @@ namespace gstd {
 			release();
 		}
 
-		value& operator=(value const& source) {
+		value& operator=(const value& source) {
 			data = source.data;
 			return *this;
 		}
@@ -53,8 +53,8 @@ namespace gstd {
 		void set(type_data* t, bool v);
 		void set(type_data* t, std::vector<value>& v);
 
-		void append(type_data* t, value const& x);
-		void concatenate(value const& x);
+		void append(type_data* t, const value& x);
+		void concatenate(const value& x);
 
 		double as_real() const;
 		wchar_t as_char() const;

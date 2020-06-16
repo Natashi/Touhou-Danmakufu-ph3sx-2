@@ -40,8 +40,8 @@ value::value(type_data* t, bool v) {
 value::value(type_data* t, std::wstring v) {
 	data = std::shared_ptr<body>(new body);
 	data->type = t;
-	for (size_t i = 0; i < v.size(); ++i)
-		data->array_value.push_back(value(t->get_element(), v[i]));
+	for (wchar_t ch : v)
+		data->array_value.push_back(value(t->get_element(), ch));
 }
 void value::set(type_data* t, double v) {
 	unique();
@@ -59,12 +59,12 @@ void value::set(type_data* t, std::vector<value>& v) {
 	data->array_value = v;
 }
 
-void value::append(type_data* t, value const& x) {
+void value::append(type_data* t, const value& x) {
 	unique();
 	data->type = t;
 	data->array_value.push_back(x);
 }
-void value::concatenate(value const& x) {
+void value::concatenate(const value& x) {
 	unique();
 
 	if (length_as_array() == 0) data->type = x.data->type;
@@ -149,16 +149,16 @@ std::wstring value::as_string() const {
 		type_data* elem = data->type->get_element();
 		if (elem != nullptr && elem->get_kind() == type_data::type_kind::tk_char) {
 			std::wstring result = L"";
-			for (size_t i = 0; i < data->array_value.size(); ++i)
-				result += data->array_value[i].as_char();
+			for (auto itr = data->array_value.begin(); itr != data->array_value.end(); ++itr)
+				result += itr->as_char();
 			return result;
 		}
 		else {
 			std::wstring result = L"[";
-			for (size_t i = 0; i < data->array_value.size(); ++i) {
-				result += data->array_value[i].as_string();
-				if (i != data->array_value.size() - 1)
-					result += L",";
+			auto itrLast = std::prev(data->array_value.end());
+			for (auto itr = data->array_value.begin(); itr != data->array_value.end(); ++itr) {
+				result += itr->as_string();
+				if (itr != itrLast) result += L",";
 			}
 			result += L"]";
 			return result;
@@ -170,13 +170,13 @@ std::wstring value::as_string() const {
 	}
 }
 
-void value::overwrite(value const& source) {
+void value::overwrite(const value& source) {
 	if (data == nullptr) return;
 	if (std::addressof(data) == std::addressof(source.data)) return;
 
 	*data = *source.data;
 }
-value value::new_from(value const& source) {
+value value::new_from(const value& source) {
 	value res = source;
 	res.unique();
 	return res;
