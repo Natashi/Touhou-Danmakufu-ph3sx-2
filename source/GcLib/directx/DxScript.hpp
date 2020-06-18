@@ -98,7 +98,7 @@ namespace directx {
 		}
 		static inline const size_t GetKeyHashReal(double key) {
 			int64_t hashDbl = (int64_t&)key;
-			return (size_t)((hashDbl >> 32) ^ (hashDbl & UINT32_MAX));
+			return (size_t)(hashDbl >> 32) + (size_t)(hashDbl & UINT32_MAX);
 		}
 
 		bool IsObjectValueExists(std::wstring key);

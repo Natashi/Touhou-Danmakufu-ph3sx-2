@@ -174,19 +174,20 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* ma
 	std::string sArea = StringUtility::ConvertWideToMulti(area);
 	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
 
+	bool res = false;
+
 	shared_ptr<ScriptCommonData> commonData = commonDataManager->GetData(sArea);
-	if (commonData == nullptr)
-		return value(machine->get_engine()->get_boolean_type(), false);
+	if (commonData) {
+		std::wstring pathMain = infoSystem->GetMainScriptInformation()->GetScriptPath();
+		std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
+		std::wstring dirSave = PathProperty::GetFileDirectory(pathSave);
 
-	std::wstring pathMain = infoSystem->GetMainScriptInformation()->GetScriptPath();
-	std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
-	std::wstring dirSave = PathProperty::GetFileDirectory(pathSave);
+		File::CreateDirectory(dirSave);
 
-	File::CreateDirectory(dirSave);
-
-	RecordBuffer record;
-	commonData->WriteRecord(record);
-	bool res = record.WriteToFile(pathSave);
+		RecordBuffer record;
+		commonData->WriteRecord(record);
+		res = record.WriteToFile(pathSave);
+	}
 
 	return value(machine->get_engine()->get_boolean_type(), res);
 }
@@ -198,18 +199,20 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* ma
 	std::string sArea = StringUtility::ConvertWideToMulti(area);
 	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
 
+	bool res = false;
+
 	std::wstring pathMain = infoSystem->GetMainScriptInformation()->GetScriptPath();
 	std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
+
 	RecordBuffer record;
-	bool res = record.ReadFromFile(pathSave);
-	if (!res)
-		return value(machine->get_engine()->get_boolean_type(), false);
+	res = record.ReadFromFile(pathSave);
+	if (res) {
+		shared_ptr<ScriptCommonData> commonData(new ScriptCommonData());
+		commonData->ReadRecord(record);
+		commonDataManager->SetData(sArea, commonData);
+	}
 
-	shared_ptr<ScriptCommonData> commonData(new ScriptCommonData());
-	commonData->ReadRecord(record);
-	commonDataManager->SetData(sArea, commonData);
-
-	return value(machine->get_engine()->get_boolean_type(), true);
+	return value(machine->get_engine()->get_boolean_type(), res);
 }
 
 gstd::value StgControlScript::Func_SaveCommonDataAreaA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -219,18 +222,19 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA2(gstd::script_machine* ma
 	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
 	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
 
+	bool res = false;
+
 	shared_ptr<ScriptCommonData> commonData = commonDataManager->GetData(area);
-	if (commonData == nullptr)
-		return value(machine->get_engine()->get_boolean_type(), false);
+	if (commonData) {
+		std::wstring pathSave = argv[1].as_string();
+		std::wstring dirSave = PathProperty::GetFileDirectory(pathSave);
 
-	std::wstring pathSave = argv[1].as_string();
-	std::wstring dirSave = PathProperty::GetFileDirectory(pathSave);
+		File::CreateDirectory(dirSave);
 
-	File::CreateDirectory(dirSave);
-
-	RecordBuffer record;
-	commonData->WriteRecord(record);
-	bool res = record.WriteToFile(pathSave);
+		RecordBuffer record;
+		commonData->WriteRecord(record);
+		res = record.WriteToFile(pathSave);
+	}
 
 	return value(machine->get_engine()->get_boolean_type(), res);
 }
@@ -241,17 +245,18 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA2(gstd::script_machine* ma
 	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
 	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
 
+	bool res = false;
+
 	std::wstring pathSave = argv[1].as_string();
 	RecordBuffer record;
-	bool res = record.ReadFromFile(pathSave);
-	if (!res)
-		return value(machine->get_engine()->get_boolean_type(), false);
+	res = record.ReadFromFile(pathSave);
+	if (res) {
+		shared_ptr<ScriptCommonData> commonData(new ScriptCommonData());
+		commonData->ReadRecord(record);
+		commonDataManager->SetData(area, commonData);
+	}
 
-	shared_ptr<ScriptCommonData> commonData(new ScriptCommonData());
-	commonData->ReadRecord(record);
-	commonDataManager->SetData(area, commonData);
-
-	return value(machine->get_engine()->get_boolean_type(), true);
+	return value(machine->get_engine()->get_boolean_type(), res);
 }
 
 //STG制御共通関数：キー系
@@ -275,7 +280,7 @@ gstd::value StgControlScript::Func_AddReplayTargetVirtualKey(gstd::script_machin
 
 	int id = (int)argv[0].as_real();
 	infoSystem->AddReplayTargetKey(id);
-	if (stageController != nullptr) {
+	if (stageController) {
 		ref_count_ptr<KeyReplayManager> keyReplayManager = stageController->GetKeyReplayManager();
 		keyReplayManager->AddTarget(id);
 	}
@@ -293,169 +298,186 @@ gstd::value StgControlScript::Func_SetSkipModeKey(gstd::script_machine* machine,
 //STG制御共通関数：システム関連
 gstd::value StgControlScript::Func_GetScore(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)
-		return value(machine->get_engine()->get_real_type(), 0.0);
 
-	double res = stageController->GetStageInformation()->GetScore();
-	return value(machine->get_engine()->get_real_type(), res);
+	int64_t res = 0;
+
+	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	if (stageController)
+		res = stageController->GetStageInformation()->GetScore();
+
+	return script->CreateRealValue(res);
 }
 gstd::value StgControlScript::Func_AddScore(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)return value();
-
-	int64_t inc = (int64_t)argv[0].as_real();
-	stageController->GetStageInformation()->AddScore(inc);
+	if (stageController) {
+		int64_t inc = (int64_t)argv[0].as_real();
+		stageController->GetStageInformation()->AddScore(inc);
+	}
 	return value();
 }
 gstd::value StgControlScript::Func_GetGraze(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)
-		return value(machine->get_engine()->get_real_type(), 0.0);
 
-	double res = stageController->GetStageInformation()->GetGraze();
-	return value(machine->get_engine()->get_real_type(), res);
+	int64_t res = 0;
+
+	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	if (stageController)
+		res = stageController->GetStageInformation()->GetGraze();
+
+	return script->CreateRealValue(res);
 }
 gstd::value StgControlScript::Func_AddGraze(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)return value();
-
-	int64_t inc = (int64_t)argv[0].as_real();
-	stageController->GetStageInformation()->AddGraze(inc);
+	if (stageController) {
+		int64_t inc = (int64_t)argv[0].as_real();
+		stageController->GetStageInformation()->AddGraze(inc);
+	}
 	return value();
 }
 gstd::value StgControlScript::Func_GetPoint(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)
-		return value(machine->get_engine()->get_real_type(), 0.0);
 
-	double res = stageController->GetStageInformation()->GetPoint();
-	return value(machine->get_engine()->get_real_type(), res);
+	int64_t res = 0;
+
+	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	if (stageController)
+		res = stageController->GetStageInformation()->GetPoint();
+
+	return script->CreateRealValue(res);
 }
 gstd::value StgControlScript::Func_AddPoint(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)return value();
-
-	int64_t inc = (int64_t)argv[0].as_real();
-	stageController->GetStageInformation()->AddPoint(inc);
+	if (stageController) {
+		int64_t inc = (int64_t)argv[0].as_real();
+		stageController->GetStageInformation()->AddPoint(inc);
+	}
 	return value();
 }
 gstd::value StgControlScript::Func_IsReplay(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)
-		return value(machine->get_engine()->get_boolean_type(), false);
 
-	bool res = stageController->GetStageInformation()->IsReplay();
-	return value(machine->get_engine()->get_boolean_type(), res);
+	bool res = false;
+
+	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	if (stageController)
+		res = stageController->GetStageInformation()->IsReplay();
+
+	return script->CreateBooleanValue(res);
 }
 gstd::value StgControlScript::Func_AddArchiveFile(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	FileManager* fileManager = FileManager::GetBase();
-
 	std::wstring path = argv[0].as_string();
-	bool res = fileManager->AddArchiveFile(path);
-	return value(machine->get_engine()->get_boolean_type(), res);
+	return StgControlScript::CreateBooleanValue(fileManager->AddArchiveFile(path));
 }
 gstd::value StgControlScript::Func_GetCurrentFps(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	EFpsController* fpsController = EFpsController::GetInstance();
-	float res = fpsController->GetCurrentWorkFps();
-	return value(machine->get_engine()->get_real_type(), res);
+	return StgControlScript::CreateRealValue(fpsController->GetCurrentWorkFps());
 }
 gstd::value StgControlScript::Func_GetStageTime(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
+
+	int res = 0;
+
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)
-		return value(machine->get_engine()->get_real_type(), 0.0);
+	if (stageController) {
+		ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
+		int time = timeGetTime();
 
-	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
-	int time = timeGetTime();
+		int timeStart = infoStage->GetStageStartTime();
+		res = (timeStart > 0) ? time - timeStart : 0;
+	}
 
-	int timeStart = infoStage->GetStageStartTime();
-	double res = (timeStart > 0) ? time - timeStart : 0.0;
-	return value(machine->get_engine()->get_real_type(), res);
+	return script->CreateRealValue(res);
 }
 gstd::value StgControlScript::Func_GetStageTimeF(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)
-		return value(machine->get_engine()->get_real_type(), 0.0);
 
-	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
-	double res = infoStage->GetCurrentFrame();
-	return value(machine->get_engine()->get_real_type(), res);
+	int res = 0;
+
+	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	if (stageController) {
+		ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
+		res = infoStage->GetCurrentFrame();
+	}
+
+	return script->CreateRealValue(res);
 }
 gstd::value StgControlScript::Func_GetPackageTime(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
+
+	int res = 0;
+
 	StgPackageController* packageController = script->systemController_->GetPackageController();
-	if (packageController == nullptr)
-		return value(machine->get_engine()->get_real_type(), 0.0);
+	if (packageController) {
+		ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
+		int time = timeGetTime();
 
-	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
-	int time = timeGetTime();
+		int timeStart = infoPackage->GetPackageStartTime();
+		res = (timeStart > 0) ? time - timeStart : 0;
+	}
 
-	int timeStart = infoPackage->GetPackageStartTime();
-	double res = (timeStart > 0) ? time - timeStart : 0;
-	return value(machine->get_engine()->get_real_type(), res);
+	return script->CreateRealValue(res);
 }
 
 gstd::value StgControlScript::Func_GetStgFrameLeft(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
 
-	double res = 0;
-	if (stageController != nullptr)
+	LONG res = 0;
+	if (stageController)
 		res = stageController->GetStageInformation()->GetStgFrameRect()->left;
-	return value(machine->get_engine()->get_real_type(), res);
+
+	return script->CreateRealValue(res);
 }
 gstd::value StgControlScript::Func_GetStgFrameTop(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
 
-	double res = 0;
-	if (stageController != nullptr)
+	LONG res = 0;
+	if (stageController)
 		res = stageController->GetStageInformation()->GetStgFrameRect()->top;
-	return value(machine->get_engine()->get_real_type(), res);
+
+	return script->CreateRealValue(res);
 }
 gstd::value StgControlScript::Func_GetStgFrameWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
 
-	double res = 0;
-	if (stageController != nullptr) {
+	LONG res = 0;
+	if (stageController) {
 		RECT* rect = stageController->GetStageInformation()->GetStgFrameRect();
 		res = rect->right - rect->left;
 	}
-	return value(machine->get_engine()->get_real_type(), res);
+
+	return script->CreateRealValue(res);
 }
 gstd::value StgControlScript::Func_GetStgFrameHeight(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
 
-	double res = 0;
-	if (stageController != nullptr) {
+	LONG res = 0;
+	if (stageController) {
 		RECT* rect = stageController->GetStageInformation()->GetStgFrameRect();
 		res = rect->bottom - rect->top;
 	}
-	return value(machine->get_engine()->get_real_type(), res);
+
+	return script->CreateRealValue(res);
 }
 gstd::value StgControlScript::Func_GetMainPackageScriptPath(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	StgPackageController* packageController = script->systemController_->GetPackageController();
 
 	std::wstring path = L"";
-	if (packageController != nullptr) {
+	if (packageController) {
 		ref_count_ptr<ScriptInformation> infoScript =
 			packageController->GetPackageInformation()->GetMainScriptInformation();
 		path = infoScript->GetScriptPath();
 	}
 
-	std::wstring res = path;
-	return value(machine->get_engine()->get_string_type(), res);
+	return value(machine->get_engine()->get_string_type(), path);
 }
 gstd::value StgControlScript::Func_GetScriptPathList(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
@@ -466,8 +488,8 @@ gstd::value StgControlScript::Func_GetScriptPathList(gstd::script_machine* machi
 
 	int typeScript = (int)argv[1].as_real();
 	std::vector<std::wstring> listFile = File::GetFilePathList(dir);
-	for (int iFile = 0; iFile < listFile.size(); iFile++) {
-		std::wstring path = listFile[iFile];
+	for (auto itr = listFile.begin(); itr != listFile.end(); ++itr) {
+		std::wstring path = *itr;
 
 		//明らかに関係なさそうな拡張子は除外
 		std::wstring ext = PathProperty::GetFileExtension(path);
@@ -482,8 +504,7 @@ gstd::value StgControlScript::Func_GetScriptPathList(gstd::script_machine* machi
 		listRes.push_back(path);
 	}
 
-	gstd::value res = script->CreateStringArrayValue(listRes);
-	return res;
+	return script->CreateStringArrayValue(listRes);
 }
 gstd::value StgControlScript::Func_GetScriptInfoA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
@@ -558,12 +579,11 @@ gstd::value StgControlScript::Func_GetReservedRenderTargetName(gstd::script_mach
 	ETextureManager* textureManager = ETextureManager::GetInstance();
 	std::wstring name = textureManager->GetReservedRenderTargetName(index);
 
-	return value(machine->get_engine()->get_string_type(), name);
+	return script->CreateStringValue(name);
 }
 gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	ETextureManager* textureManager = ETextureManager::GetInstance();
-	StgSystemController* systemController = script->systemController_;
 
 	std::wstring name = argv[0].as_string();
 	int priMin = (int)argv[1].as_real();
@@ -577,7 +597,11 @@ gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machi
 		if (texture == nullptr) {
 			bool bExist = false;
 			auto itrData = textureManager->IsDataExistsItr(name, &bExist);
-			if (bExist) texture->CreateFromData(itrData->second);
+			if (bExist) {
+				texture = std::make_shared<Texture>();
+				texture->CreateFromData(itrData->second);
+				textureManager->Add(name, texture);
+			}
 		}
 	}
 
@@ -585,7 +609,7 @@ gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machi
 		graphics->SetRenderTarget(texture);
 		graphics->BeginScene(false, bClear);
 
-		systemController->RenderScriptObject(priMin, priMax);
+		script->systemController_->RenderScriptObject(priMin, priMax);
 
 		graphics->EndScene(false);
 		graphics->SetRenderTarget(nullptr, false);
@@ -602,27 +626,31 @@ gstd::value StgControlScript::Func_RenderToTextureB1(gstd::script_machine* machi
 	bool bClear = argv[2].as_boolean();
 
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr)return value();
-
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	shared_ptr<Texture> texture = script->_GetTexture(name);
-	if (texture == nullptr) {
-		texture = textureManager->GetTexture(name);
+	if (obj) {
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+		shared_ptr<Texture> texture = script->_GetTexture(name);
 		if (texture == nullptr) {
-			bool bExist = false;
-			auto itrData = textureManager->IsDataExistsItr(name, &bExist);
-			if (bExist) texture->CreateFromData(itrData->second);
+			texture = textureManager->GetTexture(name);
+			if (texture == nullptr) {
+				bool bExist = false;
+				auto itrData = textureManager->IsDataExistsItr(name, &bExist);
+				if (bExist) {
+					texture = std::make_shared<Texture>();
+					texture->CreateFromData(itrData->second);
+					textureManager->Add(name, texture);
+				}
+			}
 		}
-	}
 
-	if (texture) {
-		graphics->SetRenderTarget(texture);
-		graphics->BeginScene(false, bClear);
+		if (texture) {
+			graphics->SetRenderTarget(texture);
+			graphics->BeginScene(false, bClear);
 
-		obj->Render();
+			obj->Render();
 
-		graphics->EndScene(false);
-		graphics->SetRenderTarget(nullptr, false);
+			graphics->EndScene(false);
+			graphics->SetRenderTarget(nullptr, false);
+		}
 	}
 
 	return value();
@@ -706,21 +734,25 @@ gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine,
 //STG制御共通関数：自機関連
 gstd::value StgControlScript::Func_GetPlayerID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)
-		return value(machine->get_engine()->get_string_type(), std::wstring());
 
-	std::wstring id = stageController->GetStageInformation()->GetPlayerScriptInformation()->GetID();
-	return value(machine->get_engine()->get_string_type(), id);
+	std::wstring id = L"";
+
+	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	if (stageController)
+		id = stageController->GetStageInformation()->GetPlayerScriptInformation()->GetID();
+
+	return script->CreateStringValue(id);
 }
 gstd::value StgControlScript::Func_GetPlayerReplayName(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController == nullptr)
-		return value(machine->get_engine()->get_string_type(), std::wstring());
 
-	std::wstring replayName = stageController->GetStageInformation()->GetPlayerScriptInformation()->GetReplayName();
-	return value(machine->get_engine()->get_string_type(), replayName);
+	std::wstring replayName = L"";
+
+	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	if (stageController)
+		replayName = stageController->GetStageInformation()->GetPlayerScriptInformation()->GetReplayName();
+
+	return script->CreateStringValue(replayName);
 }
 
 
@@ -759,22 +791,23 @@ gstd::value StgControlScript::Func_GetLoadFreePlayerScriptList(gstd::script_mach
 	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
 
 	infoControlScript->LoadFreePlayerList();
-	std::vector<ref_count_ptr<ScriptInformation> > listFreePlayer = infoControlScript->GetFreePlayerList();
-	int res = listFreePlayer.size();
-	return value(machine->get_engine()->get_real_type(), (double)res);
+	std::vector<ref_count_ptr<ScriptInformation>>& listFreePlayer = infoControlScript->GetFreePlayerList();
+
+	return script->CreateRealValue(listFreePlayer.size());
 }
 gstd::value StgControlScript::Func_GetFreePlayerScriptCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
-	std::vector<ref_count_ptr<ScriptInformation> > listFreePlayer = infoControlScript->GetFreePlayerList();
 
-	int res = listFreePlayer.size();
-	return value(machine->get_engine()->get_real_type(), (double)res);
+	std::vector<ref_count_ptr<ScriptInformation>>& listFreePlayer = infoControlScript->GetFreePlayerList();
+
+	return script->CreateRealValue(listFreePlayer.size());
 }
 gstd::value StgControlScript::Func_GetFreePlayerScriptInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
-	std::vector<ref_count_ptr<ScriptInformation> > listFreePlayer = infoControlScript->GetFreePlayerList();
+
+	std::vector<ref_count_ptr<ScriptInformation>>& listFreePlayer = infoControlScript->GetFreePlayerList();
 
 	int index = (int)argv[0].as_real();
 	int type = (int)argv[1].as_real();
@@ -815,7 +848,8 @@ gstd::value StgControlScript::Func_LoadReplayList(gstd::script_machine* machine,
 
 	std::wstring pathMainScript = infoSystem->GetMainScriptInformation()->GetScriptPath();
 	infoControlScript->LoadReplayInformation(pathMainScript);
-	return gstd::value();
+
+	return value();
 }
 gstd::value StgControlScript::Func_GetValidReplayIndices(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
@@ -831,8 +865,7 @@ gstd::value StgControlScript::Func_IsValidReplayIndex(gstd::script_machine* mach
 	ref_count_ptr<ReplayInformationManager> replayInfoManager = infoControlScript->GetReplayInformationManager();
 
 	int index = (int)argv[0].as_real();
-	bool res = replayInfoManager->GetInformation(index) != nullptr;
-	return value(machine->get_engine()->get_boolean_type(), res);
+	return script->CreateBooleanValue(replayInfoManager->GetInformation(index) != nullptr);
 }
 gstd::value StgControlScript::Func_GetReplayInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
@@ -878,11 +911,9 @@ gstd::value StgControlScript::Func_GetReplayInfo(gstd::script_machine* machine, 
 	}
 	case REPLAY_STAGE_START_SCORE_LIST:
 	{
-		std::vector<int> listStage = replayInfo->GetStageIndexList();
 		std::vector<int64_t> listScoreD;
-		for (size_t iStage = 0; iStage < listStage.size(); ++iStage) {
-			int stage = listStage[iStage];
-			ref_count_ptr<ReplayInformation::StageData> data = replayInfo->GetStageData(stage);
+		for (int iStage : replayInfo->GetStageIndexList()) {
+			ref_count_ptr<ReplayInformation::StageData> data = replayInfo->GetStageData(iStage);
 			listScoreD.push_back(data->GetStartScore());
 		}
 		res = script->CreateRealArrayValue(listScoreD);
@@ -890,11 +921,9 @@ gstd::value StgControlScript::Func_GetReplayInfo(gstd::script_machine* machine, 
 	}
 	case REPLAY_STAGE_LAST_SCORE_LIST:
 	{
-		std::vector<int> listStage = replayInfo->GetStageIndexList();
 		std::vector<int64_t> listScoreD;
-		for (size_t iStage = 0; iStage < listStage.size(); ++iStage) {
-			int stage = listStage[iStage];
-			ref_count_ptr<ReplayInformation::StageData> data = replayInfo->GetStageData(stage);
+		for (int iStage : replayInfo->GetStageIndexList()) {
+			ref_count_ptr<ReplayInformation::StageData> data = replayInfo->GetStageData(iStage);
 			listScoreD.push_back(data->GetLastScore());
 		}
 		res = script->CreateRealArrayValue(listScoreD);
@@ -923,6 +952,7 @@ gstd::value StgControlScript::Func_SetReplayInfo(gstd::script_machine* machine, 
 		replayInfo->SetComment(argv[1].as_string());
 		break;
 	}
+
 	return value();
 }
 gstd::value StgControlScript::Func_GetReplayUserData(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -941,8 +971,7 @@ gstd::value StgControlScript::Func_GetReplayUserData(gstd::script_machine* machi
 	if (replayInfo == nullptr)
 		script->RaiseError(ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_OUTOFRANGE_INDEX));
 
-	gstd::value res = replayInfo->GetUserData(key);
-	return res;
+	return replayInfo->GetUserData(key);
 }
 gstd::value StgControlScript::Func_SetReplayUserData(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
@@ -956,6 +985,7 @@ gstd::value StgControlScript::Func_SetReplayUserData(gstd::script_machine* machi
 	std::string key = StringUtility::ConvertWideToMulti(argv[0].as_string());
 	gstd::value val = argv[1];
 	replayInfo->SetUserData(key, val);
+
 	return value();
 }
 gstd::value StgControlScript::Func_IsReplayUserDataExists(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -974,8 +1004,7 @@ gstd::value StgControlScript::Func_IsReplayUserDataExists(gstd::script_machine* 
 	if (replayInfo == nullptr)
 		script->RaiseError(ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_OUTOFRANGE_INDEX));
 
-	bool res = replayInfo->IsUserDataExists(key);
-	return value(machine->get_engine()->get_boolean_type(), res);
+	return script->CreateBooleanValue(replayInfo->IsUserDataExists(key));
 }
 
 gstd::value StgControlScript::Func_SaveReplay(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -994,9 +1023,8 @@ gstd::value StgControlScript::Func_SaveReplay(gstd::script_machine* machine, int
 	std::wstring userName = argv[1].as_string();
 	replayInfoActive->SetUserName(userName);
 
-	replayInfoActive->SaveToFile(infoMain->GetScriptPath(), index);
-	bool res = true;
-	return value(machine->get_engine()->get_boolean_type(), res);
+	bool res = replayInfoActive->SaveToFile(infoMain->GetScriptPath(), index);
+	return script->CreateBooleanValue(res);
 }
 
 
