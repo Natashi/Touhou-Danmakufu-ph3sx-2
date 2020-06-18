@@ -233,6 +233,33 @@ public:
 	};
 	class ReserveShotList;
 	class ReserveShotListData;
+
+	struct DelayParameter {
+		enum {
+			DELAY_DEFAULT,
+			DELAY_LERP,
+		};
+
+		int time;
+		int id;
+		int blend;
+		D3DXVECTOR3 param;	//[min, max, rate]
+
+		uint8_t type;		//0 = default danmakufu, 1 = ZUN-like
+		float (*lerpFunc)(float a, float b, float x);	//Scale interpolation
+
+		DelayParameter() : time(0), id(-1), blend(DirectGraphics::MODE_BLEND_NONE), type(0) {
+			param = D3DXVECTOR3(0.5f, 2.0f, 15.0f);
+			lerpFunc = Math::Lerp::Linear<float, float>;
+		}
+		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(DirectGraphics::MODE_BLEND_NONE), type(0) {
+			param = D3DXVECTOR3(sMin, sMax, rate);
+			lerpFunc = Math::Lerp::Linear<float, float>;
+		}
+		DelayParameter& operator=(const DelayParameter& source) = default;
+
+		float GetScale();
+	};
 protected:
 	StgStageController* stageController_;
 
@@ -240,17 +267,15 @@ protected:
 
 	int frameWork_;
 	int idShotData_;
-	int idShotDelay_;
 	int typeOwner_;
 
-	float c_;
-	float s_;
+	D3DXVECTOR2 move_;
 	double lastAngle_;
 
 	D3DXVECTOR2 hitboxScale_;
 
-	int delay_;
-	int typeSourceBlend_;
+	DelayParameter delay_;
+
 	int frameGrazeInvalid_;
 	int frameFadeDelete_;
 
@@ -316,16 +341,20 @@ public:
 
 	int GetShotDataID() { return idShotData_; }
 	virtual void SetShotDataID(int id) { idShotData_ = id; }
-	int GetShotDataDelayID() { return idShotDelay_; }
-	void SetShotDataDelayID(int id) { idShotDelay_ = id; }
 	int GetOwnerType() { return typeOwner_; }
 	void SetOwnerType(int type) { typeOwner_ = type; }
 
 	bool IsValidGraze() { return frameGrazeInvalid_ <= 0; }
-	int GetDelay() { return delay_; }
-	void SetDelay(int delay) { delay_ = delay; }
-	int GetSourceBlendType() { return typeSourceBlend_; }
-	void SetSourceBlendType(int type) { typeSourceBlend_ = type; }
+
+	int GetDelay() { return delay_.time; }
+	void SetDelay(int delay) { delay_.time = delay; }
+	int GetShotDataDelayID() { return delay_.id; }
+	void SetShotDataDelayID(int id) { delay_.id = id; }
+	int GetSourceBlendType() { return delay_.blend; }
+	void SetSourceBlendType(int type) { delay_.blend = type; }
+	DelayParameter* GetDelayParameter() { return &delay_; }
+	void SetDelayParameter(DelayParameter param) { delay_ = param; }
+
 	double GetLife() { return life_; }
 	void SetLife(double life) { life_ = life; }
 	double GetDamage() { return damage_; }

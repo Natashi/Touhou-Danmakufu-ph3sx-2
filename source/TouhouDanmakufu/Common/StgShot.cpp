@@ -788,9 +788,7 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	posX_ = 0;
 	posY_ = 0;
 	idShotData_ = 0;
-	idShotDelay_ = -1;
 	typeBlend_ = DirectGraphics::MODE_BLEND_NONE;
-	typeSourceBlend_ = DirectGraphics::MODE_BLEND_NONE;
 
 	damage_ = 1;
 	life_ = LIFE_SPELL_UNREGIST;
@@ -799,7 +797,6 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	bSpellFactor_ = false;
 
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
-	delay_ = 0;
 	frameGrazeInvalid_ = 0;
 	frameFadeDelete_ = -1;
 	frameAutoDelete_ = INT_MAX;
@@ -832,7 +829,7 @@ void StgShotObject::SetOwnObjectReference() {
 void StgShotObject::Work() {
 }
 void StgShotObject::_Move() {
-	if (delay_ == 0 || bEnableMotionDelay_)
+	if (delay_.time == 0 || bEnableMotionDelay_)
 		StgMoveObject::_Move();
 	SetX(posX_);
 	SetY(posY_);
@@ -890,7 +887,7 @@ void StgShotObject::_DeleteInFadeDelete() {
 	}
 }
 void StgShotObject::_DeleteInAutoDeleteFrame() {
-	if (IsDeleted() || delay_ > 0) return;
+	if (IsDeleted() || delay_.time > 0) return;
 
 	if (frameAutoDelete_ <= 0) {
 		_SendDeleteEvent(StgShotManager::BIT_EV_DELETE_IMMEDIATE);
@@ -1022,7 +1019,7 @@ void StgShotObject::DeleteImmediate() {
 void StgShotObject::_ProcessTransformAct() {
 	if (listTransformationShotAct_.size() == 0) return;
 
-	if (timerTransform_ == 0) timerTransform_ = delay_;
+	if (timerTransform_ == 0) timerTransform_ = delay_.time;
 	while (timerTransform_ == frameWork_ && listTransformationShotAct_.size() > 0) {
 		StgPatternShotTransform& transform = listTransformationShotAct_.front();
 
@@ -1275,6 +1272,16 @@ void StgShotObject::ReserveShotList::Clear(StgStageController* stageController) 
 	}
 }
 
+float StgShotObject::DelayParameter::GetScale() {
+	switch (type) {
+	case DELAY_LERP:
+		return lerpFunc(param.x, param.y, time / param.z);
+	case DELAY_DEFAULT:
+	default:
+		return std::min(param.x + time / param.z, param.y);
+	}
+}
+
 /**********************************************************
 //StgNormalShotObject
 **********************************************************/
@@ -1282,8 +1289,7 @@ StgNormalShotObject::StgNormalShotObject(StgStageController* stageController) : 
 	typeObject_ = TypeObject::OBJ_SHOT;
 	angularVelocity_ = 0;
 
-	c_ = 1;
-	s_ = 0;
+	move_ = D3DXVECTOR2(1, 0);
 	lastAngle_ = 0;
 
 	pShotIntersectionTarget_ = std::make_shared<StgIntersectionTarget_Circle>();
@@ -1297,7 +1303,7 @@ void StgNormalShotObject::Work() {
 	_ProcessTransformAct();
 	_Move();
 
-	if (delay_ > 0) --delay_;
+	if (delay_.time > 0) --(delay_.time);
 	else _AddReservedShotWork();
 
 	++frameWork_;
@@ -1313,8 +1319,7 @@ void StgNormalShotObject::Work() {
 		}
 
 		if (angleZ != lastAngle_) {
-			c_ = cosf(angleZ);
-			s_ = sinf(angleZ);
+			move_ = D3DXVECTOR2(cosf(angleZ), sinf(angleZ));
 			lastAngle_ = angleZ;
 		}
 	}
@@ -1326,7 +1331,7 @@ void StgNormalShotObject::Work() {
 }
 
 void StgNormalShotObject::_AddIntersectionRelativeTarget() {
-	if (IsDeleted() || delay_ > 0 || frameFadeDelete_ >= 0) return;
+	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return;
 	ClearIntersected();
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
@@ -1340,7 +1345,7 @@ void StgNormalShotObject::_AddIntersectionRelativeTarget() {
 std::vector<StgIntersectionTarget::ptr> StgNormalShotObject::GetIntersectionTargetList() {
 	std::vector<StgIntersectionTarget::ptr> res;
 
-	if (IsDeleted() || delay_ > 0 || frameFadeDelete_ >= 0) return res;
+	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
 
 	if (pOwnReference_.expired()) return res;
@@ -1355,8 +1360,8 @@ std::vector<StgIntersectionTarget::ptr> StgNormalShotObject::GetIntersectionTarg
 		dynamic_cast<StgIntersectionTarget_Circle*>(pShotIntersectionTarget_.get())) 
 	{
 		if (circle.GetX() != 0 || circle.GetY() != 0) {
-			float px = (float)circle.GetX() * c_ - (-(float)circle.GetY()) * s_;
-			float py = (float)circle.GetX() * s_ + (-(float)circle.GetY()) * c_;
+			float px = (float)circle.GetX() * move_.x - (-(float)circle.GetY()) * move_.y;
+			float py = (float)circle.GetX() * move_.y + (-(float)circle.GetY()) * move_.x;
 			circle.SetX(px + posX_);
 			circle.SetY(py + posY_);
 		}
@@ -1381,13 +1386,13 @@ void StgNormalShotObject::RenderOnShotManager() {
 	if (!IsVisible()) return;
 
 	StgShotData* shotData = _GetShotData();
-	StgShotData* delayData = idShotDelay_ >= 0 ? _GetShotData(idShotDelay_) : shotData;
+	StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
 	if (shotData == nullptr || delayData == nullptr) return;
 
 	StgShotRenderer* renderer = nullptr;
 
 	int shotBlendType = DirectGraphics::MODE_BLEND_ALPHA;
-	if (delay_ > 0) {
+	if (delay_.time > 0) {
 		int objDelayBlendType = GetSourceBlendType();
 		if (objDelayBlendType == DirectGraphics::MODE_BLEND_NONE) {
 			renderer = delayData->GetRenderer(shotData->GetDelayRenderType());
@@ -1418,12 +1423,12 @@ void StgNormalShotObject::RenderOnShotManager() {
 	RECT* rcDest;
 	D3DCOLOR color;
 
-	if (delay_ > 0) {
-		float expa = std::min(0.5f + delay_ / 30.0f * 2.0f, 2.0f);
+	if (delay_.time > 0) {
+		float expa = delay_.GetScale();
 		scaleX = expa;
 		scaleY = expa;
 
-		if (idShotDelay_ >= 0) {
+		if (delay_.id >= 0) {
 			textureSize = &delayData->GetTextureSize();
 
 			StgShotData::AnimationData* anime = delayData->GetData(frameWork_);
@@ -1476,8 +1481,8 @@ void StgNormalShotObject::RenderOnShotManager() {
 
 		float px = vt.position.x * scaleX;
 		float py = vt.position.y * scaleY;
-		vt.position.x = (px * c_ - py * s_) + sposx;
-		vt.position.y = (px * s_ + py * c_) + sposy;
+		vt.position.x = (px * move_.x - py * move_.y) + sposx;
+		vt.position.y = (px * move_.y + py * move_.x) + sposy;
 		vt.position.z = position_.z;
 
 		//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
@@ -1604,12 +1609,13 @@ StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObj
 	frameGrazeInvalidStart_ = 20;
 	itemDistance_ = 24;
 
-	c_ = 1;
-	s_ = 0;
+	delay_ = DelayParameter(0.5, 3.5, 15.0f);
+
+	move_ = D3DXVECTOR2(1, 0);
 	lastAngle_ = 0;
 }
 void StgLaserObject::_AddIntersectionRelativeTarget() {
-	if (delay_ > 0 || frameFadeDelete_ >= 0) return;
+	if (delay_.time > 0 || frameFadeDelete_ >= 0) return;
 	ClearIntersected();
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
@@ -1686,7 +1692,7 @@ void StgLooseLaserObject::Work() {
 	_ProcessTransformAct();
 	_Move();
 
-	if (delay_ > 0) --delay_;
+	if (delay_.time > 0) --(delay_.time);
 	else _AddReservedShotWork();
 
 	++frameWork_;
@@ -1701,25 +1707,24 @@ void StgLooseLaserObject::Work() {
 	--frameGrazeInvalid_;
 }
 void StgLooseLaserObject::_Move() {
-	if (delay_ == 0)
+	if (delay_.time == 0)
 		StgMoveObject::_Move();
 	DxScriptRenderObject::SetX(posX_);
 	DxScriptRenderObject::SetY(posY_);
 
-	if (delay_ <= 0) {
+	if (delay_.time <= 0) {
 		float dx = posXE_ - posX_;
 		float dy = posYE_ - posY_;
 
 		if ((dx * dx + dy * dy) > (length_ * length_)) {
 			float speed = GetSpeed();
-			posXE_ += speed * c_;
-			posYE_ += speed * s_;
+			posXE_ += speed * move_.x;
+			posYE_ += speed * move_.y;
 		}
 	}
 	if (lastAngle_ != GetDirectionAngle()) {
 		lastAngle_ = GetDirectionAngle();
-		c_ = cosf(lastAngle_);
-		s_ = sinf(lastAngle_);
+		move_ = D3DXVECTOR2(cosf(lastAngle_), sinf(lastAngle_));
 	}
 }
 void StgLooseLaserObject::_DeleteInAutoClip() {
@@ -1736,7 +1741,7 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 std::vector<StgIntersectionTarget::ptr> StgLooseLaserObject::GetIntersectionTargetList() {
 	std::vector<StgIntersectionTarget::ptr> res;
 
-	if (IsDeleted() || delay_ > 0 || frameFadeDelete_ >= 0) return res;
+	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
 
 	if (pOwnReference_.expired()) return res;
@@ -1772,11 +1777,11 @@ void StgLooseLaserObject::RenderOnShotManager() {
 	if (!IsVisible()) return;
 
 	StgShotData* shotData = _GetShotData();
-	StgShotData* delayData = idShotDelay_ >= 0 ? _GetShotData(idShotDelay_) : shotData;
+	StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
 	if (shotData == nullptr || delayData == nullptr) return;
 
 	StgShotRenderer* renderer = nullptr;
-	if (delay_ > 0) {
+	if (delay_.time > 0) {
 		//遅延時間
 		int objDelayBlendType = GetSourceBlendType();
 		if (objDelayBlendType == DirectGraphics::MODE_BLEND_NONE) {
@@ -1802,8 +1807,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 	float scaleX = 1.0f;
 	float scaleY = 1.0f;
-	float renderC = 1.0f;
-	float renderS = 0.0f;
+	D3DXVECTOR2 renderF = D3DXVECTOR2(1, 0);
 
 	FLOAT sposx = position_.x;
 	FLOAT sposy = position_.y;
@@ -1812,15 +1816,14 @@ void StgLooseLaserObject::RenderOnShotManager() {
 	RECT rcDest;
 	D3DCOLOR color;
 
-	if (delay_ > 0) {
-		float expa = std::min(0.5f + delay_ / 30.0f * 2.0f, 3.5f);
+	if (delay_.time > 0) {
+		float expa = delay_.GetScale();
 		scaleX = expa;
 		scaleY = expa;
 
-		renderC = c_;
-		renderS = s_;
+		renderF = move_;
 
-		if (idShotDelay_ >= 0) {
+		if (delay_.id >= 0) {
 			textureSize = &delayData->GetTextureSize();
 
 			StgShotData::AnimationData* anime = delayData->GetData(frameWork_);
@@ -1847,8 +1850,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 		float dy = posYE_ - posY_;
 		float radius = sqrtf(dx * dx + dy * dy);
 
-		renderC = dx / radius;
-		renderS = dy / radius;
+		renderF = D3DXVECTOR2(dx, dy) / radius;
 
 		StgShotData::AnimationData* anime = shotData->GetData(frameWork_);
 		rcSrc = anime->GetSource();
@@ -1878,8 +1880,8 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 		float px = vt.position.x * scaleX;
 		float py = vt.position.y * scaleY;
-		vt.position.x = (px * renderC - py * renderS) + sposx;
-		vt.position.y = (px * renderS + py * renderC) + sposy;
+		vt.position.x = (px * renderF.x - py * renderF.y) + sposx;
+		vt.position.y = (px * renderF.y + py * renderF.x) + sposy;
 		vt.position.z = position_.z;
 
 		//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
@@ -1906,8 +1908,8 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	gstd::value listScriptValue[4];
 
 	for (float itemPos = 0; itemPos < length; itemPos += itemDistance_) {
-		float posX = ex - itemPos * c_;
-		float posY = ey - itemPos * s_;
+		float posX = ex - itemPos * move_.x;
+		float posY = ey - itemPos * move_.y;
 
 		if (scriptItem) {
 			listPos[0] = posX;
@@ -1920,7 +1922,7 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 
-		if (itemManager->IsDefaultBonusItemEnable() && delay_ == 0 && !flgPlayerCollision) {
+		if (itemManager->IsDefaultBonusItemEnable() && delay_.time == 0 && !flgPlayerCollision) {
 			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 				shared_ptr<StgItemObject> obj = shared_ptr<StgItemObject>(new StgItemObject_Bonus(stageController_));
 				int id = stageController_->GetMainObjectManager()->AddObject(obj);
@@ -1951,8 +1953,7 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 	scaleX_ = 0.05f;
 	bLaserExpand_ = true;
 
-	c_ = 1;
-	s_ = 0;
+	move_ = D3DXVECTOR2(1, 0);
 
 	pShotIntersectionTarget_ = std::make_shared<StgIntersectionTarget_Line>();
 }
@@ -1962,7 +1963,7 @@ void StgStraightLaserObject::Work() {
 	_ProcessTransformAct();
 	_Move();
 
-	if (delay_ > 0) --delay_;
+	if (delay_.time > 0) --(delay_.time);
 	else {
 		_AddReservedShotWork();
 		if (bLaserExpand_)
@@ -1981,8 +1982,7 @@ void StgStraightLaserObject::Work() {
 
 	if (lastAngle_ != angLaser_) {
 		lastAngle_ = angLaser_;
-		c_ = cos(angLaser_);
-		s_ = sin(angLaser_);
+		move_ = D3DXVECTOR2(cosf(angLaser_), sinf(angLaser_));
 	}
 }
 
@@ -1991,8 +1991,8 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 	StgShotManager* shotManager = stageController_->GetShotManager();
 	RECT rect = shotManager->GetShotAutoDeleteClipRect();
 
-	int posXE = posX_ + (int)(length_ * c_);
-	int posYE = posY_ + (int)(length_ * s_);
+	int posXE = posX_ + (int)(length_ * move_.x);
+	int posYE = posY_ + (int)(length_ * move_.y);
 
 	if ((posX_ < rect.left && posXE < rect.left) || (posX_ > rect.right&& posXE > rect.right) ||
 		(posY_ < rect.top && posYE < rect.top) || (posY_ > rect.bottom&& posYE > rect.bottom)) {
@@ -2001,7 +2001,7 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 	}
 }
 void StgStraightLaserObject::_DeleteInAutoDeleteFrame() {
-	if (IsDeleted() || delay_ > 0) return;
+	if (IsDeleted() || delay_.time > 0) return;
 
 	if (frameAutoDelete_ <= 0)
 		SetFadeDelete();
@@ -2010,7 +2010,7 @@ void StgStraightLaserObject::_DeleteInAutoDeleteFrame() {
 std::vector<StgIntersectionTarget::ptr> StgStraightLaserObject::GetIntersectionTargetList() {
 	std::vector<StgIntersectionTarget::ptr> res;
 
-	if (IsDeleted() || delay_ > 0 || frameFadeDelete_ >= 0) return res;
+	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
 
 	if (pOwnReference_.expired()) return res;
@@ -2019,8 +2019,8 @@ std::vector<StgIntersectionTarget::ptr> StgStraightLaserObject::GetIntersectionT
 	if (shotData == nullptr) return res;
 	if (scaleX_ < 1.0 && typeOwner_ != OWNER_PLAYER) return res;
 
-	float _posXE = posX_ + (length_ * c_) * hitboxScale_.y;
-	float _posYE = posY_ + (length_ * s_) * hitboxScale_.y;
+	float _posXE = posX_ + (length_ * move_.x) * hitboxScale_.y;
+	float _posYE = posY_ + (length_ * move_.y) * hitboxScale_.y;
 	float posXS = posX_ + (_posXE - posX_) * invalidLengthStart_;
 	float posYS = posY_ + (_posYE - posY_) * invalidLengthStart_;
 	float posXE = _posXE + (posX_ - _posXE) * invalidLengthEnd_;
@@ -2122,8 +2122,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				float px = vt.position.x * scale_.x;
 				float py = vt.position.y * scale_.y;
 
-				vt.position.x = (px * s_ + py * c_) + sposx;
-				vt.position.y = (-px * c_ + py * s_) + sposy;
+				vt.position.x = (px * move_.y + py * move_.x) + sposx;
+				vt.position.y = (-px * move_.x + py * move_.y) + sposy;
 				vt.position.z = position_.z;
 
 				//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
@@ -2165,8 +2165,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 					float px = vt.position.x;
 					float py = vt.position.y;
-					vt.position.x = (px * s_ + py * c_) + delayPos.x;
-					vt.position.y = (-px * c_ + py * s_) + delayPos.y;
+					vt.position.x = (px * move_.y + py * move_.x) + delayPos.x;
+					vt.position.y = (-px * move_.x + py * move_.y) + delayPos.y;
 					vt.position.z = position_.z;
 
 					//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
@@ -2186,8 +2186,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				StgShotData* delayData = nullptr;
 				RECT* delayRect = nullptr;
 
-				if (idShotDelay_ >= 0) {
-					delayData = _GetShotData(idShotDelay_);
+				if (delay_.id >= 0) {
+					delayData = _GetShotData(delay_.id);
 					if (delayData == nullptr) return;
 					StgShotData::AnimationData* anime = delayData->GetData(frameWork_);
 					delayRect = anime->GetSource();
@@ -2239,8 +2239,8 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 	gstd::value listScriptValue[4];
 
 	for (float itemPos = 0; itemPos < (float)length_; itemPos += itemDistance_) {
-		float posX = ex + itemPos * c_;
-		float posY = ey + itemPos * s_;
+		float posX = ex + itemPos * move_.x;
+		float posY = ey + itemPos * move_.y;
 
 		if (scriptItem) {
 			listPos[0] = posX;
@@ -2253,7 +2253,7 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 
-		if (itemManager->IsDefaultBonusItemEnable() && delay_ == 0 && !flgPlayerCollision) {
+		if (itemManager->IsDefaultBonusItemEnable() && delay_.time == 0 && !flgPlayerCollision) {
 			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 				shared_ptr<StgItemObject> obj = shared_ptr<StgItemObject>(new StgItemObject_Bonus(stageController_));
 				int id = stageController_->GetMainObjectManager()->AddObject(obj);
@@ -2288,7 +2288,7 @@ void StgCurveLaserObject::Work() {
 	_ProcessTransformAct();
 	_Move();
 
-	if (delay_ > 0) --delay_;
+	if (delay_.time > 0) --(delay_.time);
 	else _AddReservedShotWork();
 
 	++frameWork_;
@@ -2310,8 +2310,7 @@ void StgCurveLaserObject::_Move() {
 	{
 		if (lastAngle_ != GetDirectionAngle()) {
 			lastAngle_ = GetDirectionAngle();
-			c_ = cosf(lastAngle_);
-			s_ = sinf(lastAngle_);
+			move_ = D3DXVECTOR2(cosf(lastAngle_), sinf(lastAngle_));
 		}
 
 		LaserNode pos;
@@ -2320,8 +2319,8 @@ void StgCurveLaserObject::_Move() {
 		{
 			float wRender = widthRender_ / 2.0f;
 
-			float nx = -wRender * s_;
-			float ny = wRender * c_;
+			float nx = -wRender * move_.y;
+			float ny = wRender * move_.x;
 
 			pos.vertOff[0] = { nx, ny };
 			pos.vertOff[1] = { -nx, -ny };
@@ -2356,7 +2355,7 @@ void StgCurveLaserObject::_DeleteInAutoClip() {
 std::vector<StgIntersectionTarget::ptr> StgCurveLaserObject::GetIntersectionTargetList() {
 	std::vector<StgIntersectionTarget::ptr> res;
 
-	if (IsDeleted() || delay_ > 0 || frameFadeDelete_ >= 0) return res;
+	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
 
 	if (pOwnReference_.expired()) return res;
@@ -2407,13 +2406,13 @@ void StgCurveLaserObject::RenderOnShotManager() {
 	if (!IsVisible()) return;
 
 	StgShotData* shotData = _GetShotData();
-	StgShotData* delayData = idShotDelay_ >= 0 ? _GetShotData(idShotDelay_) : shotData;
+	StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
 	if (shotData == nullptr) return;
 
 	int shotBlendType = DirectGraphics::MODE_BLEND_ADD_ARGB;
 	StgShotRenderer* renderer = nullptr;
 
-	if (delayData != nullptr && delay_ > 0) {
+	if (delayData != nullptr && delay_.time > 0) {
 		int objDelayBlendType = GetSourceBlendType();
 		if (objDelayBlendType == DirectGraphics::MODE_BLEND_NONE) {
 			renderer = shotData->GetRenderer(DirectGraphics::MODE_BLEND_ADD_ARGB);
@@ -2428,7 +2427,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		RECT* rcDest;
 		D3DXVECTOR2* delaySize = &delayData->GetTextureSize();
 
-		if (idShotDelay_ >= 0) {
+		if (delay_.id >= 0) {
 			StgShotData::AnimationData* anime = delayData->GetData(frameWork_);
 			rcSrc = anime->GetSource();
 			rcDest = anime->GetDest();
@@ -2438,7 +2437,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 			rcDest = shotData->GetDelayDest();
 		}
 
-		float expa = std::min(0.5f + delay_ / 30.0f * 2.0f, 3.5f);
+		float expa = delay_.GetScale();
 
 		FLOAT sX = listPosition_.back().pos.GetX();
 		FLOAT sY = listPosition_.back().pos.GetY();
@@ -2461,8 +2460,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 
 			float px = vt.position.x * expa;
 			float py = vt.position.y * expa;
-			vt.position.x = (px * c_ - py * s_) + sX;
-			vt.position.y = (px * s_ + py * c_) + sY;
+			vt.position.x = (px * move_.x - py * move_.y) + sX;
+			vt.position.y = (px * move_.y + py * move_.x) + sY;
 			vt.position.z = position_.z;
 
 			//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
@@ -2559,7 +2558,7 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
 			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
-		if (itemManager->IsDefaultBonusItemEnable() && delay_ == 0 && !flgPlayerCollision) {
+		if (itemManager->IsDefaultBonusItemEnable() && delay_.time == 0 && !flgPlayerCollision) {
 			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 				shared_ptr<StgItemObject> obj = shared_ptr<StgItemObject>(new StgItemObject_Bonus(stageController_));
 				if (stageController_->GetMainObjectManager()->AddObject(obj) != DxScript::ID_INVALID) {
