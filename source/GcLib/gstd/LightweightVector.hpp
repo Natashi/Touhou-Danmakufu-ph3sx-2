@@ -123,9 +123,9 @@ namespace gstd {
 			fill_with_empty(at, 0x4);
 		}
 		else {
-			if (capacity < 0x800000) capacity = capacity << 1;
-			else if (capacity == 0x800000) capacity = 0x8fffff;
-			else throw gstd::wexception("Cannot expand script vector any further. (max = 9437183)");
+			if (capacity < 0x400000) capacity = capacity << 1;
+			else if (capacity == 0x400000) capacity = 0x4fffff;
+			else throw gstd::wexception("Cannot expand script vector any further. (max = 5242879)");
 
 			T* n = new T[capacity];
 			for (size_t i = 0; i < length; ++i) {
