@@ -790,21 +790,17 @@ void ScriptClientBase::SetArgumentValue(value v, int index) {
 	listValueArg_[index] = v;
 }
 value ScriptClientBase::CreateRealValue(double r) {
-	value res(script_type_manager::get_real_type(), r);
-	return res;
+	return value(script_type_manager::get_real_type(), r);
 }
 value ScriptClientBase::CreateBooleanValue(bool b) {
-	value res(script_type_manager::get_boolean_type(), b);
-	return res;
+	return value(script_type_manager::get_boolean_type(), b);
 }
-value ScriptClientBase::CreateStringValue(std::string s) {
+value ScriptClientBase::CreateStringValue(std::string& s) {
 	std::wstring wstr = StringUtility::ConvertMultiToWide(s);
-	value res(script_type_manager::get_string_type(), wstr);
-	return res;
+	return value(script_type_manager::get_string_type(), wstr);
 }
-value ScriptClientBase::CreateStringValue(std::wstring s) {
-	value res(script_type_manager::get_string_type(), s);
-	return res;
+value ScriptClientBase::CreateStringValue(std::wstring& s) {
+	return value(script_type_manager::get_string_type(), s);
 }
 value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();

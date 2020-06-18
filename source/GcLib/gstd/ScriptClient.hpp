@@ -133,9 +133,9 @@ namespace gstd {
 
 		static value CreateRealValue(double r);
 		static value CreateBooleanValue(bool b);
-		static value CreateStringValue(std::string s);
-		static value CreateStringValue(std::wstring s);
-		template<typename T> static value CreateRealArrayValue(std::vector<T>& list) {
+		static value CreateStringValue(std::string& s);
+		static value CreateStringValue(std::wstring& s);
+		template<typename T> static inline value CreateRealArrayValue(std::vector<T>& list) {
 			return CreateRealArrayValue(list.data(), list.size());
 		}
 		template<typename T> static value CreateRealArrayValue(T* ptrList, size_t count);
