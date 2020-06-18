@@ -57,6 +57,7 @@ function const commonFunction[] =
 	//ã§í ä÷êîÅFêîäwån
 	{ "min", ScriptClientBase::Func_Min, 2 },
 	{ "max", ScriptClientBase::Func_Max, 2 },
+	{ "clamp", ScriptClientBase::Func_Clamp, 3 },
 	{ "log", ScriptClientBase::Func_Log, 1 },
 	{ "log10", ScriptClientBase::Func_Log10, 1 },
 	{ "cos", ScriptClientBase::Func_Cos, 1 },
@@ -153,6 +154,12 @@ function const commonFunction[] =
 	{ "VAR_BOOL", constant<(int)type_data::type_kind::tk_boolean>::func, 0 },
 	{ "VAR_ARRAY", constant<(int)type_data::type_kind::tk_array>::func, 0 },
 	{ "VAR_STRING", constant<(int)type_data::type_kind::tk_array + 1>::func, 0 },
+
+	{ "LERP_LINEAR", constant<Math::Lerp::LINEAR>::func, 0 },
+	{ "LERP_SMOOTH", constant<Math::Lerp::SMOOTH>::func, 0 },
+	{ "LERP_SMOOTHER", constant<Math::Lerp::SMOOTHER>::func, 0 },
+	{ "LERP_ACCELERATE", constant<Math::Lerp::ACCELERATE>::func, 0 },
+	{ "LERP_DECELERATE", constant<Math::Lerp::DECELERATE>::func, 0 },
 
 	{ "pi", pconstant<&GM_PI>::func, 0 },		//For compatibility reasons.
 	{ "M_PI", pconstant<&GM_PI>::func, 0 },
@@ -930,30 +937,36 @@ value ScriptClientBase::Func_SetScriptResult(script_machine* machine, int argc, 
 value ScriptClientBase::Func_Min(script_machine* machine, int argc, const value* argv) {
 	double v1 = argv[0].as_real();
 	double v2 = argv[1].as_real();
-	double res = v1 <= v2 ? v1 : v2;
-	return value(machine->get_engine()->get_real_type(), res);
+	return value(machine->get_engine()->get_real_type(), std::min(v1, v2));
 }
 value ScriptClientBase::Func_Max(script_machine* machine, int argc, const value* argv) {
 	double v1 = argv[0].as_real();
 	double v2 = argv[1].as_real();
-	double res = v1 >= v2 ? v1 : v2;
+	return value(machine->get_engine()->get_real_type(), std::max(v1, v2));
+}
+value ScriptClientBase::Func_Clamp(script_machine* machine, int argc, const value* argv) {
+	double v = argv[0].as_real();
+	double bound_lower = argv[1].as_real();
+	double bound_upper = argv[2].as_real();
+	//if (bound_lower > bound_upper) std::swap(bound_lower, bound_upper);
+	double res = std::min(std::max(v, bound_lower), bound_upper);
 	return value(machine->get_engine()->get_real_type(), res);
 }
 value ScriptClientBase::Func_Log(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)log(argv[0].as_real()));
+	return value(machine->get_engine()->get_real_type(), log(argv[0].as_real()));
 }
 value ScriptClientBase::Func_Log10(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)log10(argv[0].as_real()));
+	return value(machine->get_engine()->get_real_type(), log10(argv[0].as_real()));
 }
 
 value ScriptClientBase::Func_Cos(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)cos(Math::DegreeToRadian(argv[0].as_real())));
+	return value(machine->get_engine()->get_real_type(), cos(Math::DegreeToRadian(argv[0].as_real())));
 }
 value ScriptClientBase::Func_Sin(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)sin(Math::DegreeToRadian(argv[0].as_real())));
+	return value(machine->get_engine()->get_real_type(), sin(Math::DegreeToRadian(argv[0].as_real())));
 }
 value ScriptClientBase::Func_Tan(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)tan(Math::DegreeToRadian(argv[0].as_real())));
+	return value(machine->get_engine()->get_real_type(), tan(Math::DegreeToRadian(argv[0].as_real())));
 }
 value ScriptClientBase::Func_SinCos(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
@@ -963,13 +976,13 @@ value ScriptClientBase::Func_SinCos(script_machine* machine, int argc, const val
 }
 
 value ScriptClientBase::Func_RCos(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)cos(argv[0].as_real()));
+	return value(machine->get_engine()->get_real_type(), cos(argv[0].as_real()));
 }
 value ScriptClientBase::Func_RSin(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)sin(argv[0].as_real()));
+	return value(machine->get_engine()->get_real_type(), sin(argv[0].as_real()));
 }
 value ScriptClientBase::Func_RTan(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)tan(argv[0].as_real()));
+	return value(machine->get_engine()->get_real_type(), tan(argv[0].as_real()));
 }
 value ScriptClientBase::Func_RSinCos(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
@@ -979,16 +992,16 @@ value ScriptClientBase::Func_RSinCos(script_machine* machine, int argc, const va
 }
 
 value ScriptClientBase::Func_Acos(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)Math::RadianToDegree(acos(argv[0].as_real())));
+	return value(machine->get_engine()->get_real_type(), Math::RadianToDegree(acos(argv[0].as_real())));
 }
 value ScriptClientBase::Func_Asin(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)Math::RadianToDegree(asin(argv[0].as_real())));
+	return value(machine->get_engine()->get_real_type(), Math::RadianToDegree(asin(argv[0].as_real())));
 }
 value ScriptClientBase::Func_Atan(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)Math::RadianToDegree(atan(argv[0].as_real())));
+	return value(machine->get_engine()->get_real_type(), Math::RadianToDegree(atan(argv[0].as_real())));
 }
 value ScriptClientBase::Func_Atan2(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), (double)Math::RadianToDegree(atan2(argv[0].as_real(), argv[1].as_real())));
+	return value(machine->get_engine()->get_real_type(), Math::RadianToDegree(atan2(argv[0].as_real(), argv[1].as_real())));
 }
 value ScriptClientBase::Func_RAcos(script_machine* machine, int argc, const value* argv) {
 	return value(machine->get_engine()->get_real_type(), acos(argv[0].as_real()));

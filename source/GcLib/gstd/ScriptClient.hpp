@@ -161,6 +161,7 @@ namespace gstd {
 		//ã§í ä÷êîÅFêîäwån
 		static value Func_Min(script_machine* machine, int argc, const value* argv);
 		static value Func_Max(script_machine* machine, int argc, const value* argv);
+		static value Func_Clamp(script_machine* machine, int argc, const value* argv);
 		static value Func_Log(script_machine* machine, int argc, const value* argv);
 		static value Func_Log10(script_machine* machine, int argc, const value* argv);
 

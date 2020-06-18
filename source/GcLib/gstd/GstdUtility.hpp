@@ -215,6 +215,14 @@ namespace gstd {
 
 		class Lerp {
 		public:
+			enum : uint8_t {
+				LINEAR,
+				SMOOTH,
+				SMOOTHER,
+				ACCELERATE,
+				DECELERATE,
+			};
+		public:
 			template<typename T, typename L>
 			static inline T Linear(T a, T b, L x) {
 				return a + (b - a) * x;
