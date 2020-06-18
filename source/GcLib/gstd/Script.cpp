@@ -633,6 +633,12 @@ private:
 			throw parser_error(error);
 	}
 
+	inline static bool IsDeclToken(token_kind& tk) {
+		return tk == token_kind::tk_decl_auto || tk == token_kind::tk_decl_real;
+		// || tk == token_kind::tk_decl_char || tk == token_kind::tk_decl_bool
+		// || tk == token_kind::tk_decl_string;
+	}
+
 	typedef script_engine::code code;
 };
 
@@ -841,11 +847,9 @@ int parser::scan_current_scope(int level, std::vector<std::string> const* args, 
 							parser_assert(false, "A parameter list in not allowed here.\r\n");
 						}
 						else {
-							while (lex2.next == token_kind::tk_word || lex2.next == token_kind::tk_let ||
-								lex2.next == token_kind::tk_def_real) 
-							{
+							while (lex2.next == token_kind::tk_word || IsDeclToken(lex2.next)) {
 								++countArgs;
-								if (lex2.next == token_kind::tk_let || lex2.next == token_kind::tk_def_real) lex2.advance();
+								if (IsDeclToken(lex2.next)) lex2.advance();
 								if (lex2.next == token_kind::tk_word) lex2.advance();
 								if (lex2.next != token_kind::tk_comma)
 									break;
@@ -899,8 +903,11 @@ int parser::scan_current_scope(int level, std::vector<std::string> const* args, 
 			break;
 			case token_kind::tk_const:
 				is_const = true;
-			case token_kind::tk_def_real:
-			case token_kind::tk_let:
+			case token_kind::tk_decl_real:
+			//case token_kind::tk_decl_char:
+			//case token_kind::tk_decl_bool:
+			//case token_kind::tk_decl_string:
+			case token_kind::tk_decl_auto:
 			{
 				lex2.advance();
 				if (cur == 0) {
@@ -1410,8 +1417,11 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			break;
 		}
 		case token_kind::tk_const:
-		case token_kind::tk_let:
-		case token_kind::tk_def_real:
+		case token_kind::tk_decl_real:
+		//case token_kind::tk_decl_char:
+		//case token_kind::tk_decl_bool:
+		//case token_kind::tk_decl_string:
+		case token_kind::tk_decl_auto:
 		{
 			lex->advance();
 			parser_assert(lex->next == token_kind::tk_word, "Variable name is required.\r\n");
@@ -1560,7 +1570,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 				parser_assert(lex->next == token_kind::tk_open_par, "\"(\" is required.\r\n");
 
 				lex->advance();
-				if (lex->next == token_kind::tk_let) lex->advance();
+				if (lex->next == token_kind::tk_decl_auto) lex->advance();
 				else if (lex->next == token_kind::tk_const)
 					parser_assert(false, "The counter variable cannot be const.\r\n");
 
@@ -1614,7 +1624,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 				bool isNewVarConst = false;
 				std::string newVarName = "";
 				script_scanner lex_s1(*lex);
-				if (lex->next == token_kind::tk_let || lex->next == token_kind::tk_def_real || lex->next == token_kind::tk_const) {
+				if (IsDeclToken(lex->next) || lex->next == token_kind::tk_const) {
 					isNewVar = true;
 					isNewVarConst = lex->next == token_kind::tk_const;
 					lex->advance();
@@ -1712,7 +1722,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			parser_assert(lex->next == token_kind::tk_open_par, "\"(\" is required.\r\n");
 			lex->advance();
 
-			if (lex->next == token_kind::tk_let || lex->next == token_kind::tk_def_real) lex->advance();
+			if (IsDeclToken(lex->next)) lex->advance();
 			else if (lex->next == token_kind::tk_const)
 				parser_assert(false, "The counter variable cannot be const.\r\n");
 
@@ -2006,9 +2016,8 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			if (s->sub->kind != block_kind::bk_sub) {
 				if (lex->next == token_kind::tk_open_par) {
 					lex->advance();
-					while (lex->next == token_kind::tk_word || lex->next == token_kind::tk_let ||
-						lex->next == token_kind::tk_def_real) {
-						if (lex->next == token_kind::tk_let || lex->next == token_kind::tk_def_real) {
+					while (lex->next == token_kind::tk_word || IsDeclToken(lex->next)) {
+						if (IsDeclToken(lex->next)) {
 							lex->advance();
 							parser_assert(lex->next == token_kind::tk_word, "Parameter name is required.\r\n");
 						}
@@ -2023,7 +2032,6 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 				}
 			}
 			else {
-				//ŒÝŠ·«‚Ì‚½‚ß‹ó‚ÌŠ‡ŒÊ‚¾‚¯‹–‚·
 				if (lex->next == token_kind::tk_open_par) {
 					lex->advance();
 					parser_assert(lex->next == token_kind::tk_close_par, "Only an empty parameter list is allowed here.\r\n");
@@ -2090,7 +2098,7 @@ void parser::parse_block(script_engine::block* block, script_scanner* lex, std::
 		for (size_t i = 0; i < args->size(); ++i) {
 			const std::string& name = (*args)[i];
 			if (single_line) {	//As scan_current_scope won't be called.
-				symbol s = { block->level, nullptr, 0, false, true };
+				symbol s = { block->level, nullptr, (int)i, false, true };
 				ptrBackFrame->singular_insert(name, s);
 			}
 

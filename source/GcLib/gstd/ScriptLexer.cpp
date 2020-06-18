@@ -456,13 +456,13 @@ throw_err_no_decimal:
 }
 
 std::unordered_map<std::string, token_kind> script_scanner::token_map = {
-	{ "let", token_kind::tk_let },
-	{ "var", token_kind::tk_let },
+	{ "let", token_kind::tk_decl_auto },
+	{ "var", token_kind::tk_decl_auto },
 	{ "const", token_kind::tk_const },
-	{ "real", token_kind::tk_def_real },
-	//{ "char", token_kind::tk_def_char },
-	//{ "string", token_kind::tk_def_string },
-	//{ "bool", token_kind::tk_def_bool },
+	{ "real", token_kind::tk_decl_real },
+	//{ "char", token_kind::tk_decl_char },
+	//{ "string", token_kind::tk_decl_string },
+	//{ "bool", token_kind::tk_decl_bool },
 	{ "alternative", token_kind::tk_ALTERNATIVE },
 	//{ "switch", token_kind::tk_ALTERNATIVE },
 	{ "case", token_kind::tk_CASE },

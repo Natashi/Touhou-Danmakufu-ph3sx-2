@@ -25,8 +25,8 @@ namespace gstd {
 		tk_inc, tk_dec, tk_range,
 		tk_add_assign, tk_subtract_assign, tk_multiply_assign, tk_divide_assign, tk_remainder_assign, tk_power_assign,
 
-		tk_let, tk_const,
-		tk_def_real, tk_def_char, tk_def_string, tk_def_bool,
+		tk_decl_auto, tk_const,
+		tk_decl_real, tk_decl_char, tk_decl_string, tk_decl_bool,
 		tk_ALTERNATIVE, tk_CASE, tk_OTHERS,
 		tk_IF, tk_ELSE, tk_LOOP, tk_TIMES, tk_WHILE, tk_FOR, tk_EACH, tk_ASCENT, tk_DESCENT, tk_IN,
 		tk_LOCAL, tk_FUNCTION, tk_SUB, tk_TASK,
