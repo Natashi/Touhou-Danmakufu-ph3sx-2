@@ -1237,6 +1237,45 @@ ObjShot_SetDelayGraphic
 	Description:
 		Sets the image ID of the shot object's delay cloud.
 		A negative value will reset the delay cloud graphic to default.
+		
+ObjShot_SetDelayParameter
+	Arguments:
+		1) object ID
+		2) parameter 1 (Designated "P0")
+		3) parameter 2 (Designated "P1")
+		4) parameter 3 (Designated "P2")
+	Description:
+		Sets the properties of the shot object's delay cloud.
+		
+		DELAY_DEFAULT:
+			scale = min(P0 + delay / P2, P1)
+		DELAY_LERP:
+			scale = lerpFunction(P0, P1, delay / P2)
+		
+ObjShot_SetDelayMode
+	Arguments:
+		1) object ID
+		2) (struct) delay mode
+		3) (struct) interpolation mode
+	Description:
+		Sets the properties of the shot object's delay cloud.
+		
+		Available delay modes:
+			DELAY_DEFAULT:
+				Default Danmakufu delay.
+			DELAY_LERP:
+				ZUN-like delay.
+		Available delay interpolation modes:
+			LERP_LINEAR:
+				Linear interpolation.
+			LERP_SMOOTH:
+				Smooth interpolation.
+			LERP_SMOOTHER:
+				Smoother interpolation.
+			LERP_ACCELERATE:
+				Accelerating interpolation.
+			LERP_DECELERATE:
+				Decelerating interpolation.
 
 ObjStLaser_SetPermitExpand
 	Arguments:

@@ -103,6 +103,13 @@
 			}
 			
 		In short: "local" can be omitted.
+		
+	- Ternary Statements
+		Read "Statements and Flow Controls" or something similar on a decent C/C++ tutorial.
+	
+		let variable = expression1 ? expression2 : expression3;
+		
+		**The ternary statement has the lowest operator precedence.
 
 - Optimizations
 	- Loops and blocks without code will now be optimized away during script compiling.
@@ -131,16 +138,21 @@
 			}
 
 - Behaviour Changes
-	- "break;" will no longer cause catastrophes when used outside loops, as its scope of operation no longer extend beyond a task/function.
+	- "break;" will no longer cause catastrophes when used outside loops, as its scope of operation no longer extends beyond a task/function.
 	- Backslash escapes (\\) can now be used in char/string values.
 	- A hexadecimal char literal (\x[hex]) can now be used in char/string values.
 		Example:
 			"\x74"			-> "t"
 			'\x3042'		-> 'あ'
 			"\x042\x5f"		-> "B_"
-
-
-
+	- One-lined statements.
+		Example:
+			ascent (i in 0..10) WriteLog(i);
+			
+			if (true) a += 10;
+			else a -= 4;
+			
+		Can be used everywhere except function/task/sub declarations, @ blocks, and local{} blocks.
 
 
 

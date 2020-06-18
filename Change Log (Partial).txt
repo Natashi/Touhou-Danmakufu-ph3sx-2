@@ -23,6 +23,7 @@
 	- Fixed a bug involving events.
 	- Event arguments will no longer be overwritten when notifying nested events inside @Event.
 	- Added transform functions for ObjPatternShot, for former and current ECL modders.
+	- Added functionality to customize delay clouds.
 	- Added an option to use true fullscreen mode in the config.
 	- "Operation-assign" operators (+=, -=, ++, etc.) now work on indexed arrays.
 		- Given: a = [1, 2, 3]
@@ -40,6 +41,7 @@
 			- a[1..0]		= [10]
 			- a[6..2]		= [20, 18, 16, 14]
 			- a[2..2]		= []
+	- Added ternary statements.
 	- NO_CHANGE can now be used in the ObjMove_AddPatternBX functions.
 	- ObjMove_SetAngle and ObjMove_SetSpeed can now be used on B-pattern objects.
 	- Line-line intersection is now properly implemented.
@@ -50,7 +52,7 @@
 	- ObjFileT now properly reads from and writes to UTF-8 text files.
 	- ObjFile_OpenNW now allows both reading and writing, unless the file was stored in a .dat archive, in which case all write functions will fail.
 	- Following the above two changes, Shift-JIS is no longer supported in favour of proper Unicode (UTF-8) handling.
-	- Better support for Metasequoia mesh, and removed support for Elfreina mesh. Support for Blender .obj meshes is planned.
+	- Better support for Metasequoia mesh, and temporarily(?) removed support for Elfreina mesh. Support for Blender .obj meshes is planned.
 	- The player object will now set its own movement speed and angle according to user key input.
 	- Minimum custom window size is reduced to 320*240.
 	- GetShotDataInfoA1 no longer throws an error upon receiving an invalid graphic ID, and will instead returns default values.
