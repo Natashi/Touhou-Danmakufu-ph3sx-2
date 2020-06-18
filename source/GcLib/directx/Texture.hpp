@@ -62,11 +62,11 @@ namespace directx {
 		void Release();
 
 		std::wstring GetName();
-		bool CreateFromData(std::wstring& name);
+		bool CreateFromData(const std::wstring& name);
 		bool CreateFromData(shared_ptr<TextureData> data);
-		bool CreateFromFile(std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
-		bool CreateRenderTarget(std::wstring& name, size_t width = 0U, size_t height = 0U);
-		bool CreateFromFileInLoadThread(std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo = false);
+		bool CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
+		bool CreateRenderTarget(const std::wstring& name, size_t width = 0U, size_t height = 0U);
+		bool CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo = false);
 
 		void SetTexture(IDirect3DTexture9 *pTexture);
 		IDirect3DTexture9* GetD3DTexture();
@@ -100,10 +100,10 @@ namespace directx {
 		std::list<std::pair<std::map<std::wstring, shared_ptr<TextureData>>::iterator, IDirect3DSurface9*>> listRefreshSurface_;
 		gstd::ref_count_ptr<TextureInfoPanel> panelInfo_;
 
-		void _ReleaseTextureData(std::wstring& name);
+		void _ReleaseTextureData(const std::wstring& name);
 		void _ReleaseTextureData(std::map<std::wstring, shared_ptr<TextureData>>::iterator itr);
-		bool _CreateFromFile(std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
-		bool _CreateRenderTarget(std::wstring& name, size_t width = 0U, size_t height = 0U);
+		bool _CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
+		bool _CreateRenderTarget(const std::wstring& name, size_t width = 0U, size_t height = 0U);
 	public:
 		TextureManager();
 		virtual ~TextureManager();
@@ -112,20 +112,20 @@ namespace directx {
 		gstd::CriticalSection& GetLock() { return lock_; }
 
 		virtual void Clear();
-		virtual void Add(std::wstring& name, shared_ptr<Texture> texture);//テクスチャの参照を保持します
-		virtual void Release(std::wstring& name);//保持している参照を解放します
+		virtual void Add(const std::wstring& name, shared_ptr<Texture> texture);//テクスチャの参照を保持します
+		virtual void Release(const std::wstring& name);//保持している参照を解放します
 		virtual void Release(std::map<std::wstring, shared_ptr<Texture>>::iterator itr);
-		virtual bool IsDataExists(std::wstring& name);
-		virtual std::map<std::wstring, shared_ptr<TextureData>>::iterator IsDataExistsItr(std::wstring& name, bool* res = nullptr);
+		virtual bool IsDataExists(const std::wstring& name);
+		virtual std::map<std::wstring, shared_ptr<TextureData>>::iterator IsDataExistsItr(const std::wstring& name, bool* res = nullptr);
 
 		virtual void ReleaseDxResource();
 		virtual void RestoreDxResource();
 
-		shared_ptr<TextureData> GetTextureData(std::wstring& name);
-		shared_ptr<Texture> CreateFromFile(std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);//テクスチャを読み込みます。TextureDataは保持しますが、Textureは保持しません。
-		shared_ptr<Texture> CreateRenderTarget(std::wstring& name, size_t width = 0U, size_t height = 0U);
-		shared_ptr<Texture> GetTexture(std::wstring& name);//作成済みのテクスチャを取得します
-		shared_ptr<Texture> CreateFromFileInLoadThread(std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo = false);
+		shared_ptr<TextureData> GetTextureData(const std::wstring& name);
+		shared_ptr<Texture> CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);//テクスチャを読み込みます。TextureDataは保持しますが、Textureは保持しません。
+		shared_ptr<Texture> CreateRenderTarget(const std::wstring& name, size_t width = 0U, size_t height = 0U);
+		shared_ptr<Texture> GetTexture(const std::wstring& name);//作成済みのテクスチャを取得します
+		shared_ptr<Texture> CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo = false);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
 		void SetInfoPanel(gstd::ref_count_ptr<TextureInfoPanel> panel) { panelInfo_ = panel; }
