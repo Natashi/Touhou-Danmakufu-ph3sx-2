@@ -283,6 +283,7 @@ namespace directx {
 		~RenderObjectLX();
 		virtual void Render();
 		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
+		virtual void Render(D3DXMATRIX& matTransform);
 		virtual void SetVertexCount(size_t count);
 
 		//í∏ì_ê›íË

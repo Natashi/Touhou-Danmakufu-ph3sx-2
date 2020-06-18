@@ -183,9 +183,6 @@ size_t RenderObject::_GetPrimitiveCount() {
 }
 size_t RenderObject::_GetPrimitiveCount(size_t count) {
 	size_t res = 0;
-	if (vertexIndices_.size() > 0)
-		count = vertexIndices_.size();
-
 	switch (typePrimitive_) {
 	case D3DPT_POINTLIST://ポイントリスト
 		res = count;
@@ -639,7 +636,8 @@ void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
 	{
 		bool bUseIndex = vertexIndices_.size() > 0;
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
-		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? vertexIndices_.size() : countVertex), 65563U);
+		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
+		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
 
 		vertCopy_ = vertex_;
 		if (!bVertexShaderMode_) {
@@ -656,14 +654,14 @@ void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
 		IDirect3DVertexBuffer9* vertexBuffer = vbManager->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_TLX);
 		IDirect3DIndexBuffer9* indexBuffer = vbManager->GetIndexBuffer();
 
-		if (flgUseVertexBufferMode_) {
+		if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
 			void* tmp;
 			vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
 			memcpy(tmp, vertCopy_.data(), countVertex * sizeof(VERTEX_TLX));
 			vertexBuffer->Unlock();
 			if (bUseIndex) {
 				indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-				memcpy(tmp, &vertexIndices_[0], vertexIndices_.size() * sizeof(uint16_t));
+				memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
 				indexBuffer->Unlock();
 
 				device->SetIndices(indexBuffer);
@@ -696,7 +694,7 @@ void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
 			for (UINT iPass = 0; iPass < countPass; ++iPass) {
 				if (effect != nullptr) effect->BeginPass(iPass);
 
-				if (flgUseVertexBufferMode_) {
+				if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
 					if (bUseIndex) device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
 					else device->DrawPrimitive(typePrimitive_, 0, countPrim);
 				}
@@ -933,6 +931,15 @@ void RenderObjectLX::Render() {
 	RenderObjectLX::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
 void RenderObjectLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+	D3DXMATRIX matWorld;
+	if (!disableMatrixTransform_) {
+		matWorld = RenderObject::CreateWorldMatrix(position_, scale_,
+			angX, angY, angZ, &matRelative_, false);
+	}
+
+	RenderObjectLX::Render(matWorld);
+}
+void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
 	shared_ptr<Texture>& texture = texture_[0];
@@ -945,9 +952,7 @@ void RenderObjectLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& a
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
 	device->SetSamplerState(0, D3DSAMP_MIPFILTER, filterMip_);
 
-	D3DXMATRIX matWorld = RenderObject::CreateWorldMatrix(position_, scale_, 
-		angX, angY, angZ, &matRelative_, false);
-	device->SetTransform(D3DTS_WORLD, &matWorld);
+	device->SetTransform(D3DTS_WORLD, &matTransform);
 
 	device->SetFVF(VERTEX_LX::fvf);
 
@@ -957,16 +962,17 @@ void RenderObjectLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& a
 
 		bool bUseIndex = vertexIndices_.size() > 0;
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
-		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? vertexIndices_.size() : countVertex), 65563U);
+		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
+		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
 
-		if (flgUseVertexBufferMode_) {
+		if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
 			void* tmp;
 			vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
 			memcpy(tmp, vertex_.data(), countVertex * sizeof(VERTEX_TLX));
 			vertexBuffer->Unlock();
 			if (bUseIndex) {
 				indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-				memcpy(tmp, &vertexIndices_[0], vertexIndices_.size() * sizeof(uint16_t));
+				memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
 				indexBuffer->Unlock();
 
 				device->SetIndices(indexBuffer);
@@ -988,7 +994,11 @@ void RenderObjectLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& a
 
 				D3DXHANDLE handle = nullptr;
 				if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
-					effect->SetMatrix(handle, &matWorld);
+					effect->SetMatrix(handle, &matTransform);
+				if (handle = effect->GetParameterBySemantic(nullptr, "VIEW"))
+					effect->SetMatrix(handle, &camera->GetViewMatrix());
+				if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION"))
+					effect->SetMatrix(handle, &camera->GetProjectionMatrix());
 				if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
 					effect->SetMatrix(handle, &camera->GetViewProjectionMatrix());
 			}
@@ -998,7 +1008,7 @@ void RenderObjectLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& a
 		for (UINT iPass = 0; iPass < countPass; ++iPass) {
 			if (effect != nullptr) effect->BeginPass(iPass);
 
-			if (flgUseVertexBufferMode_) {
+			if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
 				if (bUseIndex) device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
 				else device->DrawPrimitive(typePrimitive_, 0, countPrim);
 			}
@@ -1130,13 +1140,14 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 
 		bool bUseIndex = vertexIndices_.size() > 0;
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
-		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? vertexIndices_.size() : countVertex), 65563U);
+		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
+		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
 
 		{
 			void* tmp;
 			if (bUseIndex) {
 				indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-				memcpy(tmp, &vertexIndices_[0], vertexIndices_.size() * sizeof(uint16_t));
+				memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
 				indexBuffer->Unlock();
 
 				device->SetIndices(indexBuffer);
@@ -1738,7 +1749,8 @@ void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& ang
 	{
 		bool bUseIndex = vertexIndices_.size() > 0;
 		size_t countVertex = std::min(GetVertexCount(countRenderVertex), 65536U);
-		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? vertexIndices_.size() : countVertex), 65563U);
+		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
+		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
 
 		D3DXMATRIX matWorld;
 		if (bCloseVertexList_)
@@ -1770,7 +1782,7 @@ void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& ang
 				vertexBuffer->Unlock();
 				if (bUseIndex) {
 					indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-					memcpy(tmp, &vertexIndices_[0], vertexIndices_.size() * sizeof(uint16_t));
+					memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
 					indexBuffer->Unlock();
 
 					device->SetIndices(indexBuffer);
@@ -1944,64 +1956,13 @@ void Sprite3D::Render() {
 	Sprite3D::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
 void Sprite3D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	IDirect3DDevice9* device = graphics->GetDevice();
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture != nullptr)
-		device->SetTexture(0, texture->GetD3DTexture());
-	else
-		device->SetTexture(0, nullptr);
-
-	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
-	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
-	device->SetSamplerState(0, D3DSAMP_MIPFILTER, filterMip_);
-
-	D3DXMATRIX matWorld = RenderObject::CreateWorldMatrixSprite3D(position_, scale_,
-		angX, angY, angZ, &matRelative_, bBillboard_);
-	device->SetTransform(D3DTS_WORLD, &matWorld);
-
-	device->SetFVF(VERTEX_LX::fvf);
-
-	{
-		UINT countPass = 1;
-		ID3DXEffect* effect = nullptr;
-		if (shader_ != nullptr) {
-			effect = shader_->GetEffect();
-			shader_->LoadParameter();
-
-			if (bVertexShaderMode_) {
-				RenderShaderManager* shaderLib = ShaderManager::GetBase()->GetRenderLib();
-				auto camera = DirectGraphics::GetBase()->GetCamera();
-
-				device->SetVertexDeclaration(shaderLib->GetVertexDeclarationLX());
-
-				D3DXHANDLE handle = nullptr;
-				if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
-					effect->SetMatrix(handle, &matWorld);
-				if (handle = effect->GetParameterBySemantic(nullptr, "VIEW"))
-					effect->SetMatrix(handle, &camera->GetViewMatrix());
-				if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION")) {
-					effect->SetMatrix(handle, &graphics->GetViewPortMatrix());
-				}
-			}
-
-			effect->Begin(&countPass, 0);
-		}
-		for (UINT iPass = 0; iPass < countPass; ++iPass) {
-			if (effect != nullptr) effect->BeginPass(iPass);
-
-			if (vertexIndices_.size() == 0) {
-				device->DrawPrimitiveUP(typePrimitive_, _GetPrimitiveCount(), vertex_.data(), strideVertexStreamZero_);
-			}
-			else {
-				device->DrawIndexedPrimitiveUP(typePrimitive_, 0, GetVertexCount(), _GetPrimitiveCount(),
-					&vertexIndices_[0], D3DFMT_INDEX16, vertex_.data(), strideVertexStreamZero_);
-			}
-
-			if (effect != nullptr) effect->EndPass();
-		}
-		if (effect != nullptr) effect->End();
+	D3DXMATRIX matWorld;
+	if (!disableMatrixTransform_) {
+		matWorld = RenderObject::CreateWorldMatrixSprite3D(position_, scale_,
+			angX, angY, angZ, &matRelative_, bBillboard_);
 	}
+
+	RenderObjectLX::Render(matWorld);
 }
 void Sprite3D::SetSourceDestRect(RECT_D &rcSrc) {
 	double width = rcSrc.right - rcSrc.left;
