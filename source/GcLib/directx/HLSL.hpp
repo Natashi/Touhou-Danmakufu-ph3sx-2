@@ -139,7 +139,7 @@ namespace directx {
 	static const std::string NAME_DEFAULT_RENDER2D = "__NAME_DEFAULT_RENDER2D__";
 	static const std::string HLSL_DEFAULT_RENDER2D =
 		"sampler samp0_ : register(s0);"
-		"row_major float4x4 g_mWorld : WORLD : register(c0);"
+		"float4x4 g_mWorld : WORLD : register(c0);"
 
 		"struct VS_INPUT {"
 			"float4 position : POSITION;"
@@ -199,7 +199,7 @@ namespace directx {
 	static const std::string NAME_DEFAULT_HWINSTANCE2D = "__NAME_DEFAULT_HW_INST_2D__";
 	static const std::string HLSL_DEFAULT_HWINSTANCE2D =
 		"sampler samp0_ : register(s0);"
-		"row_major float4x4 g_mWorldViewProj : WORLDVIEWPROJ : register(c0);"
+		"float4x4 g_mWorldViewProj : WORLDVIEWPROJ : register(c0);"
 
 		"struct VS_INPUT {"
 			"float4 position : POSITION;"
@@ -215,9 +215,6 @@ namespace directx {
 			"float4 position : POSITION;"
 			"float4 diffuse : COLOR0;"
 			"float2 texCoord : TEXCOORD0;"
-		"};"
-		"struct PS_OUTPUT {"
-			"float4 color : COLOR0;"
 		"};"
 
 		"VS_OUTPUT mainVS(VS_INPUT inVs) {"
@@ -260,21 +257,13 @@ namespace directx {
 			"return outVs;"
 		"}"
 
-		"PS_OUTPUT mainPS(VS_OUTPUT inPs) {"
-			"PS_OUTPUT outPs;"
-
-			"outPs.color = tex2D(samp0_, inPs.texCoord) * inPs.diffuse;"
-
-			"return outPs;"
+		"float4 mainPS(VS_OUTPUT inPs) : COLOR0 {"
+			"return (tex2D(samp0_, inPs.texCoord) * inPs.diffuse);"
 		"}"
-		"PS_OUTPUT mainPS_inv(VS_OUTPUT inPs) {"
-			"PS_OUTPUT outPs;"
-
+		"float4 mainPS_inv(VS_OUTPUT inPs) : COLOR0 {"
 			"float4 color = tex2D(samp0_, inPs.texCoord);"
 			"color.rgb = 1.0f - color.rgb;"
-			"outPs.color = color * inPs.diffuse;"
-
-			"return outPs;"
+			"return (color * inPs.diffuse);"
 		"}"
 
 		"technique Render {"
@@ -293,8 +282,12 @@ namespace directx {
 	static const std::string NAME_DEFAULT_HWINSTANCE3D = "__NAME_DEFAULT_HW_INST_3D__";
 	static const std::string HLSL_DEFAULT_HWINSTANCE3D =
 		"sampler samp0_ : register(s0);"
-		"row_major float4x4 g_mWorld : VIEW : register(c0);"
-		"row_major float4x4 g_mViewProj : VIEWPROJECTION : register(c4);"
+		"float4x4 g_mCamera : WORLD : register(c0);"
+		"float4x4 g_mView : VIEW : register(c4);"
+		"float4x4 g_mProjection : PROJECTION : register(c8);"
+		"bool g_bUseFog : FOGENABLE : register(b0) = false;"
+		"float4 g_vFogColor : FOGCOLOR : register(c12) = float4(0.0f, 0.0f, 0.0f, 0.0f);"
+		"float2 g_vFogDist : FOGDIST : register(c13) = float2(0.0f, 256.0f);"
 
 		"struct VS_INPUT {"
 			"float3 position : POSITION;"
@@ -310,9 +303,7 @@ namespace directx {
 			"float4 position : POSITION;"
 			"float4 diffuse : COLOR0;"
 			"float2 texCoord : TEXCOORD0;"
-		"};"
-		"struct PS_OUTPUT {"
-			"float4 color : COLOR0;"
+			"float fogBlend : FOG;"
 		"};"
 
 		"VS_OUTPUT mainVS(VS_INPUT inVs) {"
@@ -350,40 +341,44 @@ namespace directx {
 			"outVs.texCoord = inVs.texCoord;"
 
 			"outVs.position = mul(float4(inVs.position, 1.0f), instanceMat);"
-			"outVs.position = mul(outVs.position, g_mWorld);"
+			//"outVs.position.w = outVs.position.z;"
+			"outVs.position = mul(outVs.position, g_mCamera);"
 			"outVs.position.xyz += inVs.i_xyzpos_xsc.xyz;"
-			"outVs.position = mul(outVs.position, g_mViewProj);"
+			"outVs.position = mul(outVs.position, g_mView);"
 
-			"outVs.position.z = 1.0f;"
+			"if (g_bUseFog) outVs.fogBlend = "
+				"saturate((g_vFogDist.y - outVs.position.z) / (g_vFogDist.y - g_vFogDist.x));"
+			
+			"outVs.position = mul(outVs.position, g_mProjection);"
 
 			"return outVs;"
 		"}"
 
-		"PS_OUTPUT mainPS(VS_OUTPUT inPs) {"
-			"PS_OUTPUT outPs;"
-
-			"outPs.color = tex2D(samp0_, inPs.texCoord) * inPs.diffuse;"
-
-			"return outPs;"
+		"float4 ComputeFog(float4 src, float blendFactor) {"
+			"return lerp(src, g_vFogColor, blendFactor);"
 		"}"
-		"PS_OUTPUT mainPS_inv(VS_OUTPUT inPs) {"
-			"PS_OUTPUT outPs;"
-
+		"float4 mainPS(VS_OUTPUT inPs) : COLOR0 {"
+			"float4 color = tex2D(samp0_, inPs.texCoord);"
+			"if (g_bUseFog) ComputeFog(color, inPs.fogBlend);"
+			"return (color * inPs.diffuse);"
+		"}"
+		"float4 mainPS_inv(VS_OUTPUT inPs) : COLOR0 {"
 			"float4 color = tex2D(samp0_, inPs.texCoord);"
 			"color.rgb = 1.0f - color.rgb;"
-			"outPs.color = color * inPs.diffuse;"
-
-			"return outPs;"
+			"if (g_bUseFog) ComputeFog(color, inPs.fogBlend);"
+			"return (color * inPs.diffuse);"
 		"}"
 
 		"technique Render {"
 			"pass P0 {"
+				//"FOGENABLE = FALSE;"
 				"VertexShader = compile vs_2_0 mainVS();"
 				"PixelShader = compile ps_2_0 mainPS();"
 			"}"
 		"}"
 		"technique RenderInv {"
 			"pass P0 {"
+				//"FOGENABLE = FALSE;"
 				"VertexShader = compile vs_2_0 mainVS();"
 				"PixelShader = compile ps_2_0 mainPS_inv();"
 			"}"

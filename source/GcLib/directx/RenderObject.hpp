@@ -460,8 +460,9 @@ namespace directx {
 	public:
 		SpriteList2D();
 
-		virtual size_t GetVertexCount() {
-			return std::min((size_t)countRenderVertex_, vertex_.size() / strideVertexStreamZero_);
+		virtual size_t GetVertexCount() { return GetVertexCount(countRenderVertex_); }
+		virtual size_t GetVertexCount(size_t count) {
+			return std::min(count, vertex_.size() / strideVertexStreamZero_);
 		}
 
 		virtual void Render();
@@ -594,9 +595,13 @@ namespace directx {
 	//ParticleRenderer3D
 	**********************************************************/
 	class ParticleRenderer3D : public ParticleRendererBase, public Sprite3D {
+	private:
+		bool bUseFog_;
 	public:
 		ParticleRenderer3D();
 		virtual void Render();
+
+		void SetFog(bool bFog) { bUseFog_ = bFog; }
 	};
 
 	/**********************************************************

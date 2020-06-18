@@ -989,11 +989,8 @@ void RenderObjectLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& a
 				D3DXHANDLE handle = nullptr;
 				if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
 					effect->SetMatrix(handle, &matWorld);
-				if (handle = effect->GetParameterBySemantic(nullptr, "VIEW"))
-					effect->SetMatrix(handle, &camera->GetViewMatrix());
-				if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION")) {
-					effect->SetMatrix(handle, &graphics->GetViewPortMatrix());
-				}
+				if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
+					effect->SetMatrix(handle, &camera->GetViewProjectionMatrix());
 			}
 
 			effect->Begin(&countPass, 0);
@@ -1139,7 +1136,7 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 			void* tmp;
 			if (bUseIndex) {
 				indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-				memcpy(tmp, &vertexIndices_[0], countVertex * sizeof(uint16_t));
+				memcpy(tmp, &vertexIndices_[0], vertexIndices_.size() * sizeof(uint16_t));
 				indexBuffer->Unlock();
 
 				device->SetIndices(indexBuffer);
@@ -1167,10 +1164,10 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 				if (handle = effect->GetParameterBySemantic(nullptr, "VIEW")) {
 					D3DXMATRIX matView;
 					device->GetTransform(D3DTS_VIEW, &matView);
-					effect->SetMatrix(handle, &matView);
+					effect->SetMatrix(handle, &camera->GetViewMatrix());
 				}
 				if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION")) {
-					effect->SetMatrix(handle, &DirectGraphics::GetBase()->GetViewPortMatrix());
+					effect->SetMatrix(handle, &camera->GetProjectionMatrix());
 				}
 			}
 
@@ -1716,9 +1713,10 @@ void SpriteList2D::Render() {
 void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
-	if (!graphics->IsMainRenderLoop()) countRenderVertex_ = countRenderVertexPrev_;
-	countRenderVertexPrev_ = countRenderVertex_;
-	if (countRenderVertex_ == 0U) return;
+	size_t countRenderVertex = countRenderVertex_;
+
+	if (!graphics->IsMainRenderLoop()) countRenderVertex = countRenderVertexPrev_;
+	if (countRenderVertex == 0U) return;
 
 	IDirect3DDevice9* device = graphics->GetDevice();
 	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
@@ -1739,7 +1737,7 @@ void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& ang
 	bool bCamera = camera->IsEnable() && bPermitCamera_;
 	{
 		bool bUseIndex = vertexIndices_.size() > 0;
-		size_t countVertex = std::min(GetVertexCount(), 65536U);
+		size_t countVertex = std::min(GetVertexCount(countRenderVertex), 65536U);
 		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? vertexIndices_.size() : countVertex), 65563U);
 
 		D3DXMATRIX matWorld;
@@ -1772,7 +1770,7 @@ void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& ang
 				vertexBuffer->Unlock();
 				if (bUseIndex) {
 					indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-					memcpy(tmp, &vertexIndices_[0], countVertex * sizeof(uint16_t));
+					memcpy(tmp, &vertexIndices_[0], vertexIndices_.size() * sizeof(uint16_t));
 					indexBuffer->Unlock();
 
 					device->SetIndices(indexBuffer);
@@ -1823,38 +1821,10 @@ void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& ang
 			device->SetIndices(nullptr);
 			device->SetVertexDeclaration(nullptr);
 		}
-
-		/*
-		else {
-			UINT countPass = 1;
-			ID3DXEffect* effect = nullptr;
-			if (shader_ != nullptr) {
-				effect = shader_->GetEffect();
-				shader_->LoadParameter();
-				effect->Begin(&countPass, 0);
-			}
-			for (UINT iPass = 0; iPass < countPass; ++iPass) {
-				if (effect != nullptr) effect->BeginPass(iPass);
-
-				int oldSamplerState = 0;
-				if (vertexIndices_.size() == 0) {
-					device->DrawPrimitiveUP(typePrimitive_, _GetPrimitiveCount(), vertCopy_.GetPointer(), strideVertexStreamZero_);
-				}
-				else {
-					device->DrawIndexedPrimitiveUP(typePrimitive_, 0,
-						GetVertexCount(), _GetPrimitiveCount(),
-						&vertexIndices_[0], D3DFMT_INDEX16,
-						vertCopy_.GetPointer(), strideVertexStreamZero_);
-				}
-
-				if (effect != nullptr) effect->EndPass();
-			}
-			if (effect != nullptr) effect->End();
-		}
-		*/
 	}
 }
 void SpriteList2D::CleanUp() {
+	countRenderVertexPrev_ = countRenderVertex_;
 	if (autoClearVertexList_ && (GetVertexCount() >= 6)) 
 		ClearVertexCount();
 }
@@ -2216,6 +2186,7 @@ void ParticleRendererBase::AddInstance() {
 	instanceData_[countInstance_++] = instance;
 }
 void ParticleRendererBase::ClearInstance() {
+	countInstancePrev_ = countInstance_;
 	countInstance_ = 0U;
 	//countInstancePrev_ = 0U;
 }
@@ -2289,7 +2260,7 @@ void ParticleRenderer2D::Render() {
 			vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
 			memcpy(tmp, vertex_.data(), countVertex * sizeof(VERTEX_TLX));
 			vertexBuffer->Unlock();
-			
+
 			indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
 			memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
 			indexBuffer->Unlock();
@@ -2345,11 +2316,9 @@ void ParticleRenderer2D::Render() {
 		device->SetStreamSourceFreq(0, 0);
 		device->SetStreamSourceFreq(1, 0);
 	}
-
-	countInstancePrev_ = countInstance_;
 }
 ParticleRenderer3D::ParticleRenderer3D() {
-
+	bUseFog_ = false;
 }
 void ParticleRenderer3D::Render() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -2432,19 +2401,27 @@ void ParticleRenderer3D::Render() {
 			if (effect == nullptr) return;
 
 			{
+				VertexFogState* fogParam = graphics->GetFogState();
+
 				D3DXHANDLE handle = nullptr;
 				if (handle = effect->GetParameterBySemantic(nullptr, "WORLD")) {
-					if (bBillboard_) {
-						D3DXMATRIX mat;
-						D3DXMatrixMultiply(&mat, &camera2D->GetMatrix(), &camera->GetViewTransposedMatrix());
-						effect->SetMatrix(handle, &mat);
-					}
-					else effect->SetMatrix(handle, &camera2D->GetMatrix());
+					if (bBillboard_)
+						effect->SetMatrix(handle, &camera->GetViewTransposedMatrix());
+					else effect->SetMatrix(handle, &camera->GetIdentity());
 				}
-				if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
-					D3DXMATRIX mat;
-					D3DXMatrixMultiply(&mat, &camera->GetViewMatrix(), &graphics->GetViewPortMatrix());
-					effect->SetMatrix(handle, &mat);
+				if (handle = effect->GetParameterBySemantic(nullptr, "VIEW"))
+					effect->SetMatrix(handle, &camera->GetViewMatrix());
+				if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION"))
+					effect->SetMatrix(handle, &camera->GetProjectionMatrix());
+				if (handle = effect->GetParameterBySemantic(nullptr, "FOGENABLE"))
+					effect->SetBool(handle, bUseFog_);
+				if (bUseFog_) {
+					if (effect->GetParameterBySemantic(nullptr, "FOGCOLOR")) {
+						D3DXVECTOR4 fogColor(fogParam->color.x, fogParam->color.y, fogParam->color.z, 1.0f);
+						effect->SetVector(handle, &fogColor);
+					}
+					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
+						effect->SetFloatArray(handle, (FLOAT*)&fogParam->fogDist, 2);
 				}
 			}
 
@@ -2460,8 +2437,6 @@ void ParticleRenderer3D::Render() {
 		device->SetStreamSourceFreq(0, 0);
 		device->SetStreamSourceFreq(1, 0);
 	}
-
-	countInstancePrev_ = countInstance_;
 }
 
 /**********************************************************
