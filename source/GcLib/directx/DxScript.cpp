@@ -819,7 +819,7 @@ bool DxFileObject::OpenRW(std::wstring path) {
 	path = PathProperty::ReplaceYenToSlash(path);
 
 	std::wstring dir = PathProperty::GetFileDirectory(path);
-	bool bDir = File::CreateDirectory(dir);
+	bool bDir = File::CreateFileDirectory(dir);
 	if (!bDir) return false;
 
 	std::wstring dirModule = PathProperty::GetModuleDirectory();
@@ -2704,7 +2704,7 @@ gstd::value DxScript::Func_SaveRenderedTextureA1(gstd::script_machine* machine, 
 	if (texture) {
 		//フォルダ生成
 		std::wstring dir = PathProperty::GetFileDirectory(path);
-		File::CreateDirectory(dir);
+		File::CreateFileDirectory(dir);
 
 		//保存
 		IDirect3DSurface9* pSurface = texture->GetD3DSurface();
@@ -2736,7 +2736,7 @@ gstd::value DxScript::Func_SaveRenderedTextureA2(gstd::script_machine* machine, 
 	if (texture) {
 		//フォルダ生成
 		std::wstring dir = PathProperty::GetFileDirectory(path);
-		File::CreateDirectory(dir);
+		File::CreateFileDirectory(dir);
 
 		//保存
 		IDirect3DSurface9* pSurface = texture->GetD3DSurface();
@@ -2774,7 +2774,7 @@ gstd::value DxScript::Func_SaveRenderedTextureA3(gstd::script_machine* machine, 
 	if (texture) {
 		//フォルダ生成
 		std::wstring dir = PathProperty::GetFileDirectory(path);
-		File::CreateDirectory(dir);
+		File::CreateFileDirectory(dir);
 
 		//保存
 		IDirect3DSurface9* pSurface = texture->GetD3DSurface();

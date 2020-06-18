@@ -503,7 +503,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 					}
 					std::wstring pathTest = PathProperty::GetModuleDirectory() + StringUtility::Format(L"temp\\script_%s%03d.txt", PathProperty::GetFileName(pathSource).c_str(), countTest);
 					File file(pathTest);
-					File::CreateDirectory(pathTest);
+					File::CreateFileDirectory(pathTest);
 					file.Open(File::WRITEONLY);
 					file.Write(&res[0], res.size());
 
@@ -570,7 +570,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 			pathTest = PathProperty::ReplaceYenToSlash(pathTest);
 
 			File file(pathTest);
-			File::CreateDirectory(pathTest);
+			File::CreateFileDirectory(pathTest);
 			file.Open(File::WRITEONLY);
 			file.Write(res.data(), res.size());
 			file.Close();
@@ -585,7 +585,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 		pathTest = PathProperty::ReplaceYenToSlash(pathTest);
 
 		File file(pathTest);
-		File::CreateDirectory(pathTest);
+		File::CreateFileDirectory(pathTest);
 		file.Open(File::WRITEONLY);
 		file.Write(tmpCh, sizeBuf);
 		file.Close();

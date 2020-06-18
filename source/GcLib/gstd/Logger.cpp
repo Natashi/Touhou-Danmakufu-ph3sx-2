@@ -83,7 +83,7 @@ bool FileLogger::SetPath(std::wstring path) {
 	path_ = path;
 	File file(path);
 	if (file.IsExists() == false) {
-		File::CreateDirectory(path);
+		File::CreateFileDirectory(path);
 		_CreateFile(file);
 	}
 

@@ -409,7 +409,7 @@ ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr e
 			std::wstring pathTest = PathProperty::GetModuleDirectory() +
 				StringUtility::Format(L"temp\\arch_buf_%d_%s", entry->sizeFull, nameTmp.c_str());
 			File file(pathTest);
-			File::CreateDirectory(pathTest);
+			File::CreateFileDirectory(pathTest);
 			file.Open(File::WRITEONLY);
 			file.Write(res->GetPointer(), entry->sizeFull);
 			file.Close();

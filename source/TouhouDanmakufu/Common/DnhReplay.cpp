@@ -50,7 +50,7 @@ bool ReplayInformation::SaveToFile(std::wstring scriptPath, int index) {
 	std::wstring path = dir + scriptName + StringUtility::Format(L"_replay%02d.dat", index);
 
 	//ƒtƒHƒ‹ƒ_ì¬
-	File::CreateDirectory(dir);
+	File::CreateFileDirectory(dir);
 
 	RecordBuffer rec;
 	rec.SetRecordAsInteger("version", DNH_VERSION_NUM);

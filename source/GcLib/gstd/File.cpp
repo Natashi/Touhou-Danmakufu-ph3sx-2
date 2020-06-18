@@ -158,7 +158,7 @@ File::File(std::wstring path) {
 File::~File() {
 	Close();
 }
-bool File::CreateDirectory(std::wstring& path) {
+bool File::CreateFileDirectory(std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 	stdfs::path dir = stdfs::path(path).parent_path();
 	if (stdfs::exists(dir)) return true;

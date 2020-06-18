@@ -149,7 +149,7 @@ namespace gstd {
 		File(std::wstring path);
 		virtual ~File();
 
-		static bool CreateDirectory(std::wstring& path);
+		static bool CreateFileDirectory(std::wstring& path);
 		static bool IsExists(std::wstring& path);
 		static bool IsDirectory(std::wstring& path);
 

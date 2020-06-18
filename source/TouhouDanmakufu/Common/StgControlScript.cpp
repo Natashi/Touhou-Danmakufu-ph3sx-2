@@ -182,7 +182,7 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* ma
 		std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
 		std::wstring dirSave = PathProperty::GetFileDirectory(pathSave);
 
-		File::CreateDirectory(dirSave);
+		File::CreateFileDirectory(dirSave);
 
 		RecordBuffer record;
 		commonData->WriteRecord(record);
@@ -229,7 +229,7 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA2(gstd::script_machine* ma
 		std::wstring pathSave = argv[1].as_string();
 		std::wstring dirSave = PathProperty::GetFileDirectory(pathSave);
 
-		File::CreateDirectory(dirSave);
+		File::CreateFileDirectory(dirSave);
 
 		RecordBuffer record;
 		commonData->WriteRecord(record);
@@ -674,7 +674,7 @@ gstd::value StgControlScript::Func_SaveSnapShotA1(gstd::script_machine* machine,
 
 	//フォルダ生成
 	std::wstring dir = PathProperty::GetFileDirectory(path);
-	File::CreateDirectory(dir);
+	File::CreateFileDirectory(dir);
 
 	//保存
 	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
@@ -706,7 +706,7 @@ gstd::value StgControlScript::Func_SaveSnapShotA2(gstd::script_machine* machine,
 
 	//フォルダ生成
 	std::wstring dir = PathProperty::GetFileDirectory(path);
-	File::CreateDirectory(dir);
+	File::CreateFileDirectory(dir);
 
 	//保存
 	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
@@ -743,7 +743,7 @@ gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine,
 
 	//フォルダ生成
 	std::wstring dir = PathProperty::GetFileDirectory(path);
-	File::CreateDirectory(dir);
+	File::CreateFileDirectory(dir);
 
 	//保存
 	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
