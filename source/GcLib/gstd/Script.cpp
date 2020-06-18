@@ -601,7 +601,9 @@ public:
 	void parse_sum(script_engine::block* block, script_scanner* script_scanner);
 	void parse_comparison(script_engine::block* block, script_scanner* script_scanner);
 	void parse_logic(script_engine::block* block, script_scanner* script_scanner);
+	void parse_ternary(script_engine::block* block, script_scanner* script_scanner);
 	void parse_expression(script_engine::block* block, script_scanner* script_scanner);
+
 	int parse_arguments(script_engine::block* block, script_scanner* script_scanner);
 	void parse_statements(script_engine::block* block, script_scanner* script_scanner, 
 		token_kind statement_terminator = token_kind::tk_semicolon, bool single_parse = false);
@@ -1200,9 +1202,41 @@ void parser::parse_logic(script_engine::block* block, script_scanner* lex) {
 	}
 }
 
+void parser::parse_ternary(script_engine::block* block, script_scanner* lex) {
+	parse_logic(block, lex);
+	if (lex->next == token_kind::tk_query) {
+		lex->advance();
+
+		size_t ip_jump_1 = block->codes.size();
+		block->codes.push_back(code(lex->line, command_kind::pc_jump_if_not_diff, 0));	//Jump to expression 2
+
+		//Parse expression 1
+		parse_expression(block, lex);
+		size_t ip_jump_2 = block->codes.size();
+		block->codes.push_back(code(lex->line, command_kind::pc_jump_diff, 0));		//Jump to exit
+
+		parser_assert(lex->next == token_kind::tk_colon, "Incomplete ternary statement; a colon(:) is required.");
+		lex->advance();
+
+		//Parse expression 2
+		parse_expression(block, lex);
+
+		size_t ip_exit = block->codes.size();
+		block->codes[ip_jump_1].ip = ip_jump_2 - ip_jump_1 + 1;
+		block->codes[ip_jump_2].ip = ip_exit - ip_jump_2;
+		/*
+		//For nested ternaries
+		for (auto itr = std::next(block->codes.begin(), code_jump_1); itr != block->codes.end(); ++itr) {
+			if (itr->command == command_kind::pc_loop_back)
+				itr->ip = ip_exit + jumpOffFromParent;
+		}
+		*/
+	}
+}
+
 void parser::parse_expression(script_engine::block* block, script_scanner* lex) {
 	script_engine::block tmp(0, block_kind::bk_normal);
-	parse_logic(&tmp, lex);
+	parse_ternary(&tmp, lex);
 
 	try {
 		optimize_expression(block, &tmp);
@@ -2078,7 +2112,6 @@ void parser::optimize_expression(script_engine::block* blockDst, script_engine::
 	using command_kind = script_engine::command_kind;
 
 	for (auto iSrcCode = blockSrc->codes.begin(); iSrcCode != blockSrc->codes.end(); ++iSrcCode) {
-		code* ptrCode = &(*iSrcCode);
 		switch (iSrcCode->command) {
 		case command_kind::pc_inline_neg:
 		case command_kind::pc_inline_not:
@@ -2100,7 +2133,7 @@ void parser::optimize_expression(script_engine::block* blockDst, script_engine::
 					break;
 				}
 				blockDst->codes.pop_back();
-				blockDst->codes.push_back(code(ptrCode->line, command_kind::pc_push_value, res));
+				blockDst->codes.push_back(code(iSrcCode->line, command_kind::pc_push_value, res));
 			}
 			else {
 				blockDst->codes.push_back(*iSrcCode);
@@ -2140,7 +2173,7 @@ void parser::optimize_expression(script_engine::block* blockDst, script_engine::
 				}
 				blockDst->codes.pop_back();
 				blockDst->codes.pop_back();
-				blockDst->codes.push_back(code(ptrCode->line, command_kind::pc_push_value, res));
+				blockDst->codes.push_back(code(iSrcCode->line, command_kind::pc_push_value, res));
 			}
 			else {
 				blockDst->codes.push_back(*iSrcCode);
@@ -2560,6 +2593,20 @@ void script_machine::run_code() {
 				stack.pop_back();
 				break;
 			}
+			case command_kind::pc_jump_diff:
+				current->ip += c->level - 1;
+				break;
+			case command_kind::pc_jump_if_diff:
+			case command_kind::pc_jump_if_not_diff:
+			{
+				stack_t& stack = current->stack;
+				value* top = &stack.back();
+				if ((c->command == command_kind::pc_jump_if_diff && top->as_boolean())
+					|| (c->command == command_kind::pc_jump_if_not_diff && !top->as_boolean()))
+					current->ip += c->level - 1;
+				stack.pop_back();
+				break;
+			}
 
 			case command_kind::pc_compare_e:
 			case command_kind::pc_compare_g:
@@ -2690,7 +2737,7 @@ void script_machine::run_code() {
 			case command_kind::pc_construct_array:
 			{
 				if (c->ip == 0U) {
-					current->stack.push_back(value(engine->get_string_type(), std::wstring()));
+					current->stack.push_back(value(engine->get_string_type(), 0.0));
 					break;
 				}
 
@@ -2739,13 +2786,15 @@ void script_machine::run_code() {
 					value* var = find_variable_symbol(current.get(), c);
 					if (var == nullptr) break;
 
-					value res = (c->command == command_kind::pc_inline_inc) ? successor(this, 1, var) : predecessor(this, 1, var);
+					value res = (c->command == command_kind::pc_inline_inc) ? 
+						successor(this, 1, var) : predecessor(this, 1, var);
 					*var = res;
 				}
 				else {
 					value* var = &(current->stack.back());
 
-					value res = (c->command == command_kind::pc_inline_inc) ? successor(this, 1, var) : predecessor(this, 1, var);
+					value res = (c->command == command_kind::pc_inline_inc) ? 
+						successor(this, 1, var) : predecessor(this, 1, var);
 					if (!res.has_data()) break;
 					var->overwrite(res);
 					current->stack.pop_back();

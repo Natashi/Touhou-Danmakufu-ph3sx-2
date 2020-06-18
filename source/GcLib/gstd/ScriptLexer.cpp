@@ -211,6 +211,10 @@ void script_scanner::advance() {
 		next = token_kind::tk_semicolon;
 		ch = next_char();
 		break;
+	case L'?':
+		next = token_kind::tk_query;
+		ch = next_char();
+		break;
 	case L'~':
 		next = token_kind::tk_tilde;
 		ch = next_char();

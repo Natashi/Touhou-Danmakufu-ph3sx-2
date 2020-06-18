@@ -18,9 +18,10 @@ namespace gstd {
 		tk_end, tk_invalid,
 		tk_word, tk_real, tk_char, tk_string,
 		tk_open_par, tk_close_par, tk_open_bra, tk_close_bra, tk_open_cur, tk_close_cur,
-		tk_open_abs, tk_close_abs, tk_comma, tk_semicolon, tk_colon, tk_tilde, tk_assign, tk_plus, tk_minus,
-		tk_asterisk, tk_slash, tk_percent, tk_caret, tk_e, tk_g, tk_ge, tk_l, tk_le, tk_ne, tk_exclamation, tk_ampersand,
-		tk_logic_and, tk_logic_or, tk_vertical, tk_at,
+		tk_open_abs, tk_close_abs, tk_comma, tk_semicolon, tk_colon, tk_query, tk_tilde, tk_assign,
+		tk_plus, tk_minus, tk_asterisk, tk_slash, tk_percent, tk_caret, tk_exclamation, tk_ampersand,
+		tk_e, tk_g, tk_ge, tk_l, tk_le, tk_ne, tk_logic_and, tk_logic_or, 
+		tk_vertical, tk_at,
 		tk_inc, tk_dec, tk_range,
 		tk_add_assign, tk_subtract_assign, tk_multiply_assign, tk_divide_assign, tk_remainder_assign, tk_power_assign,
 
