@@ -279,7 +279,7 @@ void StgShotManager::SetDeleteEventEnableByType(int type, bool bEnable) {
 **********************************************************/
 StgShotDataList::StgShotDataList() {
 	listRenderer_.resize(RENDER_TYPE_COUNT);
-	defaultDelayColor_ = D3DCOLOR_ARGB(255, 128, 128, 128);
+	defaultDelayColor_ = 0xffffffff;	//Solid white
 }
 StgShotDataList::~StgShotDataList() {
 	for (std::vector<StgShotRenderer*>& renderList : listRenderer_) {
@@ -1272,13 +1272,13 @@ void StgShotObject::ReserveShotList::Clear(StgStageController* stageController) 
 	}
 }
 
-float StgShotObject::DelayParameter::GetScale() {
+float StgShotObject::DelayParameter::_CalculateValue(D3DXVECTOR3* param, lerp_func func) {
 	switch (type) {
 	case DELAY_LERP:
-		return lerpFunc(param.x, param.y, time / param.z);
+		return func(param->x, param->y, time / param->z);
 	case DELAY_DEFAULT:
 	default:
-		return std::min(param.x + time / param.z, param.y);
+		return std::min(param->x + time / param->z, param->y);
 	}
 }
 
@@ -1441,6 +1441,10 @@ void StgNormalShotObject::RenderOnShotManager() {
 		}
 
 		color = shotData->GetDelayColor();
+		{
+			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
+			color = (color & 0x00ffffff) | (alpha << 24);
+		}
 	}
 	else {
 		scaleX = scale_.x;
@@ -1836,6 +1840,10 @@ void StgLooseLaserObject::RenderOnShotManager() {
 		}
 
 		color = shotData->GetDelayColor();
+		{
+			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
+			color = (color & 0x00ffffff) | (alpha << 24);
+		}
 
 		if (bRoundingPosition_) {
 			sposx = roundf(sposx);
@@ -2447,6 +2455,10 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		}
 
 		D3DCOLOR color = shotData->GetDelayColor();
+		{
+			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
+			color = (color & 0x00ffffff) | (alpha << 24);
+		}
 
 		VERTEX_TLX verts[4];
 		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);

@@ -235,6 +235,7 @@ public:
 	class ReserveShotListData;
 
 	struct DelayParameter {
+		typedef float (*lerp_func)(float, float, float);
 		enum {
 			DELAY_DEFAULT,
 			DELAY_LERP,
@@ -243,22 +244,30 @@ public:
 		int time;
 		int id;
 		int blend;
-		D3DXVECTOR3 param;	//[min, max, rate]
+		D3DXVECTOR3 scale;	//[end, start, factor]
+		D3DXVECTOR3 alpha;	//[end, start, factor]
 
 		uint8_t type;		//0 = default danmakufu, 1 = ZUN-like
-		float (*lerpFunc)(float a, float b, float x);	//Scale interpolation
+		lerp_func scaleLerpFunc;	//Scale interpolation
+		lerp_func alphaLerpFunc;	//Alpha interpolation
 
 		DelayParameter() : time(0), id(-1), blend(DirectGraphics::MODE_BLEND_NONE), type(0) {
-			param = D3DXVECTOR3(0.5f, 2.0f, 15.0f);
-			lerpFunc = Math::Lerp::Linear<float, float>;
+			scale = D3DXVECTOR3(0.5f, 2.0f, 15.0f);
+			alpha = D3DXVECTOR3(1.0f, 1.0f, 15.0f);
+			scaleLerpFunc = Math::Lerp::Linear<float, float>;
+			alphaLerpFunc = Math::Lerp::Linear<float, float>;
 		}
 		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(DirectGraphics::MODE_BLEND_NONE), type(0) {
-			param = D3DXVECTOR3(sMin, sMax, rate);
-			lerpFunc = Math::Lerp::Linear<float, float>;
+			scale = D3DXVECTOR3(sMin, sMax, rate);
+			alpha = D3DXVECTOR3(1.0f, 1.0f, 15.0f);
+			scaleLerpFunc = Math::Lerp::Linear<float, float>;
+			alphaLerpFunc = Math::Lerp::Linear<float, float>;
 		}
 		DelayParameter& operator=(const DelayParameter& source) = default;
 
-		float GetScale();
+		inline float GetScale() { return _CalculateValue(&scale, scaleLerpFunc); }
+		inline float GetAlpha() { return _CalculateValue(&alpha, alphaLerpFunc); }
+		float _CalculateValue(D3DXVECTOR3* param, lerp_func func);
 	};
 protected:
 	StgStageController* stageController_;

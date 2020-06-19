@@ -441,8 +441,9 @@ function const stgFunction[] =
 	{ "ObjShot_SetPositionRounding", StgStageScript::Func_ObjShot_SetPositionRounding, 2 },
 	{ "ObjShot_SetDelayMotionEnable", StgStageScript::Func_ObjShot_SetDelayMotionEnable, 2 },
 	{ "ObjShot_SetDelayGraphic", StgStageScript::Func_ObjShot_SetDelayGraphic, 2 },
-	{ "ObjShot_SetDelayParameter", StgStageScript::Func_ObjShot_SetDelayParameter, 4 },
-	{ "ObjShot_SetDelayMode", StgStageScript::Func_ObjShot_SetDelayMode, 3 },
+	{ "ObjShot_SetDelayScaleParameter", StgStageScript::Func_ObjShot_SetDelayScaleParameter, 4 },
+	{ "ObjShot_SetDelayAlphaParameter", StgStageScript::Func_ObjShot_SetDelayAlphaParameter, 4 },
+	{ "ObjShot_SetDelayMode", StgStageScript::Func_ObjShot_SetDelayMode, 4 },
 
 	{ "ObjLaser_SetLength", StgStageScript::Func_ObjLaser_SetLength, 2 },
 	{ "ObjLaser_SetRenderWidth", StgStageScript::Func_ObjLaser_SetRenderWidth, 2 },
@@ -3728,13 +3729,23 @@ gstd::value StgStageScript::Func_ObjShot_SetDelayGraphic(gstd::script_machine* m
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_ObjShot_SetDelayParameter(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_ObjShot_SetDelayScaleParameter(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		StgShotObject::DelayParameter* delay = obj->GetDelayParameter();
-		delay->param = D3DXVECTOR3(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+		delay->scale = D3DXVECTOR3(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_SetDelayAlphaParameter(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		StgShotObject::DelayParameter* delay = obj->GetDelayParameter();
+		delay->alpha = D3DXVECTOR3(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
 	}
 	return value();
 }
@@ -3746,24 +3757,29 @@ gstd::value StgStageScript::Func_ObjShot_SetDelayMode(gstd::script_machine* mach
 		StgShotObject::DelayParameter* delay = obj->GetDelayParameter();
 		delay->type = argv[1].as_real();
 
-		switch ((uint8_t)argv[2].as_real()) {
-		case Math::Lerp::SMOOTH:
-			delay->lerpFunc = Math::Lerp::Smooth<float, float>;
-			break;
-		case Math::Lerp::SMOOTHER:
-			delay->lerpFunc = Math::Lerp::Smoother<float, float>;
-			break;
-		case Math::Lerp::ACCELERATE:
-			//Not a mistake
-			delay->lerpFunc = Math::Lerp::Decelerate<float, float>;
-			break;
-		case Math::Lerp::DECELERATE:
-			delay->lerpFunc = Math::Lerp::Accelerate<float, float>;
-			break;
-		case Math::Lerp::LINEAR:
-		default:
-			delay->lerpFunc = Math::Lerp::Linear<float, float>;
-		}
+		auto SetFunc = [](uint8_t typeLerp, StgShotObject::DelayParameter::lerp_func& target) {
+			switch (typeLerp) {
+			case Math::Lerp::SMOOTH:
+				target = Math::Lerp::Smooth<float, float>;
+				break;
+			case Math::Lerp::SMOOTHER:
+				target = Math::Lerp::Smoother<float, float>;
+				break;
+			case Math::Lerp::ACCELERATE:
+				//Not a mistake
+				target = Math::Lerp::Decelerate<float, float>;
+				break;
+			case Math::Lerp::DECELERATE:
+				target = Math::Lerp::Accelerate<float, float>;
+				break;
+			case Math::Lerp::LINEAR:
+			default:
+				target = Math::Lerp::Linear<float, float>;
+			}
+		};
+		
+		SetFunc(argv[2].as_real(), delay->scaleLerpFunc);
+		SetFunc(argv[3].as_real(), delay->alphaLerpFunc);
 	}
 	return value();
 }

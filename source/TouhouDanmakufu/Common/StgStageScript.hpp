@@ -368,7 +368,8 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetPositionRounding);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayMotionEnable);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayGraphic);
-	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayParameter);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayScaleParameter);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayAlphaParameter);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayMode);
 
 	static gstd::value Func_ObjLaser_SetLength(gstd::script_machine* machine, int argc, const gstd::value* argv);
