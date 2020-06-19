@@ -810,7 +810,7 @@ bool SoundStreamingPlayer::Play(PlayStyle& style) {
 		_SetSoundInfo();
 
 		bRequestStop_ = false;
-		if (!(bPause_ && style.IsRestart())) {
+		if (!bPause_ || !style.IsRestart()) {
 			this->Seek(style.GetStartTime());
 			pDirectSoundBuffer_->SetCurrentPosition(0);
 		}
@@ -970,7 +970,7 @@ bool SoundPlayerWave::Play(PlayStyle& style) {
 		if (style.IsLoopEnable())
 			dwFlags = DSBPLAY_LOOPING;
 
-		if (!(bPause_ && style.IsRestart())) {
+		if (!bPause_ || !style.IsRestart()) {
 			this->Seek(style.GetStartTime());
 		}
 		style.SetStartTime(0);

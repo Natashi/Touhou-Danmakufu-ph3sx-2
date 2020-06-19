@@ -236,7 +236,7 @@ namespace directx {
 		void SetAutoDelete(bool bAuto = true) { bAutoDelete_ = bAuto; }
 		double GetFadeVolumeRate();
 		void Delete() { bDelete_ = true; }
-		WAVEFORMATEX GetWaveFormat() { return formatWave_; }
+		WAVEFORMATEX* GetWaveFormat() { return &formatWave_; }
 
 		DWORD GetCurrentPosition();
 		DWORD GetTotalAudioSize() { return audioSizeTotal_; }

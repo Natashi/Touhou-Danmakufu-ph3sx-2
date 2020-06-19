@@ -1224,12 +1224,13 @@ int DxScriptObjectManager::AddObject(shared_ptr<DxScriptObjectBase> obj, bool bA
 	auto ExpandContainerCapacity = [&]() -> bool {
 		size_t oldSize = obj_.size();
 		bool res = SetMaxObject(oldSize * 2U);
-		Logger::WriteTop(StringUtility::Format("DxScriptObjectManager: Object pool expansion. [%d->%d]",
+		if (res) Logger::WriteTop(StringUtility::Format("DxScriptObjectManager: Object pool expansion. [%d->%d]",
 			oldSize, obj_.size()));
 		return res;
 	};
 
 	{
+		/*
 		do {
 			if (listUnusedIndex_.size() == 0U) {
 				if (!ExpandContainerCapacity()) break;
@@ -1237,6 +1238,12 @@ int DxScriptObjectManager::AddObject(shared_ptr<DxScriptObjectBase> obj, bool bA
 			res = listUnusedIndex_.front();
 			listUnusedIndex_.pop_front();
 		} while (obj_[res] != nullptr);
+		*/
+		if (listUnusedIndex_.size() == 0U) {
+			if (!ExpandContainerCapacity()) return res;
+		}
+		res = listUnusedIndex_.front();
+		listUnusedIndex_.pop_front();
 
 		if (res != DxScript::ID_INVALID) {
 			obj_[res] = obj;
@@ -5123,9 +5130,9 @@ gstd::value DxScript::Func_ObjSound_SetLoopSampleCount(gstd::script_machine* mac
 			double startSample = argv[1].as_real();
 			double endSample = argv[2].as_real();
 
-			WAVEFORMATEX fmt = obj->GetPlayer()->GetWaveFormat();
-			double startTime = startSample / (double)fmt.nSamplesPerSec;
-			double endTime = endSample / (double)fmt.nSamplesPerSec;;
+			WAVEFORMATEX* fmt = player->GetWaveFormat();
+			double startTime = startSample / (double)fmt->nSamplesPerSec;
+			double endTime = endSample / (double)fmt->nSamplesPerSec;;
 			SoundPlayer::PlayStyle& style = obj->GetStyle();
 			style.SetLoopStartTime(startTime);
 			style.SetLoopEndTime(endTime);
@@ -5141,12 +5148,12 @@ gstd::value DxScript::Func_ObjSound_Seek(gstd::script_machine* machine, int argc
 		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			double seekTime = argv[1].as_real();
-			if (obj->GetPlayer()->IsPlaying()) {
+			//if (player->IsPlaying()) {
 				player->Seek(seekTime);
 				player->ResetStreamForSeek();
-			}
-			else
-				obj->GetStyle().SetStartTime(seekTime);
+			//}
+			//else
+			//	obj->GetStyle().SetStartTime(seekTime);
 		}
 	}
 	return value();
@@ -5160,13 +5167,13 @@ gstd::value DxScript::Func_ObjSound_SeekSampleCount(gstd::script_machine* machin
 		if (player) {
 			double seekSample = argv[1].as_real();
 
-			WAVEFORMATEX fmt = obj->GetPlayer()->GetWaveFormat();
-			if (obj->GetPlayer()->IsPlaying()) {
+			WAVEFORMATEX* fmt = player->GetWaveFormat();
+			//if (player->IsPlaying()) {
 				player->Seek((int64_t)seekSample);
 				player->ResetStreamForSeek();
-			}
-			else
-				obj->GetStyle().SetStartTime(seekSample / (double)fmt.nSamplesPerSec);
+			//}
+			//else
+			//	obj->GetStyle().SetStartTime(seekSample / (double)fmt->nSamplesPerSec);
 		}
 	}
 	return value();
@@ -5229,7 +5236,7 @@ gstd::value DxScript::Func_ObjSound_GetWavePosition(gstd::script_machine* machin
 		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			DWORD pos = player->GetCurrentPosition();
-			posSec = (double)pos / player->GetWaveFormat().nAvgBytesPerSec;
+			posSec = (double)pos / player->GetWaveFormat()->nAvgBytesPerSec;
 		}
 	}
 	return script->CreateRealValue(posSec);
@@ -5243,7 +5250,7 @@ gstd::value DxScript::Func_ObjSound_GetWavePositionSampleCount(gstd::script_mach
 		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			DWORD pos = player->GetCurrentPosition();
-			posSamp = pos / player->GetWaveFormat().nBlockAlign;
+			posSamp = pos / player->GetWaveFormat()->nBlockAlign;
 		}
 	}
 	return script->CreateRealValue(posSamp);
@@ -5257,7 +5264,7 @@ gstd::value DxScript::Func_ObjSound_GetTotalLength(gstd::script_machine* machine
 		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			DWORD pos = player->GetTotalAudioSize();
-			posSec = (double)pos / player->GetWaveFormat().nAvgBytesPerSec;
+			posSec = (double)pos / player->GetWaveFormat()->nAvgBytesPerSec;
 		}
 	}
 	return script->CreateRealValue(posSec);
@@ -5271,7 +5278,7 @@ gstd::value DxScript::Func_ObjSound_GetTotalLengthSampleCount(gstd::script_machi
 		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			DWORD pos = player->GetTotalAudioSize();
-			posSamp = pos / player->GetWaveFormat().nBlockAlign;
+			posSamp = pos / player->GetWaveFormat()->nBlockAlign;
 		}
 	}
 	return script->CreateRealValue(posSamp);
