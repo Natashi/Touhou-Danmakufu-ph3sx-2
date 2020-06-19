@@ -1835,12 +1835,14 @@ void ScriptCommonData::WriteRecord(gstd::RecordBuffer& record) {
 		std::string key = itrValue->first;
 		gstd::value comVal = itrValue->second;
 
-		gstd::ByteBuffer buffer;
-		_WriteRecord(buffer, comVal);
-		std::string keyValSize = StringUtility::Format("%s_size", key.c_str());
-		int valSize = buffer.GetSize();
-		record.SetRecordAsInteger(keyValSize, valSize);
-		record.SetRecord(key, buffer.GetPointer(), valSize);
+		if (comVal.has_data()) {
+			gstd::ByteBuffer buffer;
+			_WriteRecord(buffer, comVal);
+			std::string keyValSize = StringUtility::Format("%s_size", key.c_str());
+			int valSize = buffer.GetSize();
+			record.SetRecordAsInteger(keyValSize, valSize);
+			record.SetRecord(key, buffer.GetPointer(), valSize);
+		}
 	}
 }
 void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, gstd::value& comValue) {
