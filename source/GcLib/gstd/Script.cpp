@@ -314,21 +314,7 @@ value index(script_machine* machine, int argc, value const* argv) {
 	if (!_index_check(machine, argv->get_type(), argv->length_as_array(), index))
 		return value();
 
-	const value& result = argv->index_as_array(index);
-	//result.unique();
-	return const_cast<value&>(result);
-}
-
-value index_writable(script_machine* machine, int argc, value const* argv) {
-	assert(argc == 2);
-
-	double index = argv[1].as_real();
-	if (!_index_check(machine, argv->get_type(), argv->length_as_array(), index))
-		return value();
-
-	const value& result = argv->index_as_array(index);
-	result.unique();
-	return const_cast<value&>(result);
+	return argv->index_as_array(index);
 }
 
 value slice(script_machine* machine, int argc, value const* argv) {
@@ -542,7 +528,6 @@ function const operations[] = {
 	{ "modc", modc, 2 },
 	{ "power", power, 2 },
 	{ "index_", index, 2 },
-	{ "index!", index_writable, 2 },
 	{ "slice", slice, 3 },
 	{ "erase", erase, 2 },
 	{ "append", append, 2 },
@@ -1326,7 +1311,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			case token_kind::tk_open_bra:
 				assert_const(s, name);
 
-				block->codes.push_back(code(lex->line, command_kind::pc_push_variable_writable, s->level, s->variable, name));
+				block->codes.push_back(code(lex->line, command_kind::pc_push_variable, s->level, s->variable, name));
 				while (lex->next == token_kind::tk_open_bra) {
 					lex->advance();
 					parse_expression(block, lex);
@@ -1334,7 +1319,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 					parser_assert(lex->next == token_kind::tk_close_bra, "\"]\" is required.\r\n");
 					lex->advance();
 
-					write_operation(block, lex, "index!", 2);
+					write_operation(block, lex, "index_", 2);
 				}
 
 				switch (lex->next) {
@@ -2775,12 +2760,9 @@ void script_machine::run_code() {
 				current->stack.push_back(c->data);
 				break;
 			case command_kind::pc_push_variable:
-			case command_kind::pc_push_variable_writable:
 			{
 				value* var = find_variable_symbol(current.get(), c);
 				if (var == nullptr) break;
-				if (c->command == command_kind::pc_push_variable_writable)
-					var->unique();
 				current->stack.push_back(*var);
 				break;
 			}
@@ -2962,7 +2944,7 @@ void script_machine::run_code() {
 				case command_kind::pc_inline_cast_char:
 				{
 					value tmp = value(engine->get_char_type(), var->as_char());
-					var->overwrite(tmp);
+					*var = tmp;
 					break;
 				}
 				case command_kind::pc_inline_cast_bool:

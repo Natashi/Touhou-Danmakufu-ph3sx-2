@@ -140,7 +140,7 @@ namespace gstd {
 			pc_compare_and_loop_ascent, pc_compare_and_loop_descent,
 			pc_loop_count, pc_loop_if, pc_loop_continue, pc_continue_marker, pc_loop_back /*also serves as pc_jump*/,
 			pc_construct_array,
-			pc_pop, pc_push_value, pc_push_variable, pc_push_variable_writable, pc_swap, pc_yield, pc_wait,
+			pc_pop, pc_push_value, pc_push_variable, pc_swap, pc_yield, pc_wait,
 
 			//Inline operations
 			pc_inline_inc, pc_inline_dec,

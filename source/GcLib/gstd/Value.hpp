@@ -7,7 +7,10 @@ namespace gstd {
 	class type_data {
 	public:
 		enum class type_kind : uint8_t {
-			tk_real, tk_char, tk_boolean, tk_array
+			tk_real		= 0x1,
+			tk_char		= 0x2,
+			tk_boolean	= 0x4,	
+			tk_array	= 0x8,
 		};
 
 		type_data(type_kind k, type_data* t = nullptr) : kind(k), element(t) {}
@@ -69,7 +72,7 @@ namespace gstd {
 		std::vector<value>::iterator array_get_begin() { return data->array_value.begin(); }
 		std::vector<value>::iterator array_get_end() { return data->array_value.end(); }
 
-		void overwrite(const value& source);	//ŠëŒ¯IŠO‚©‚çŒÄ‚Ô‚È
+		void overwrite(const value& source);	//Overwrite the pointer's value
 		static value new_from(const value& source);
 
 		void unique() const;

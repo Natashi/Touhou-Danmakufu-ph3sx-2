@@ -74,6 +74,29 @@ void value::concatenate(const value& x) {
 	}
 }
 
+void value::overwrite(const value& source) {
+	if (data == nullptr) return;
+	if (std::addressof(data) == std::addressof(source.data)) return;
+
+	*data = *source.data;
+}
+value value::new_from(const value& source) {
+	value res = source;
+	res.unique();
+	return res;
+}
+
+void value::unique() const {
+	if (data == nullptr) {
+		data = std::shared_ptr<body>(new body);
+		data->type = nullptr;
+	}
+	else if (!data.unique()) {
+		body* newData = new body(*data);
+		data = std::shared_ptr<body>(newData);
+	}
+}
+
 double value::as_real() const {
 	if (data == nullptr)
 		return 0.0;
@@ -167,28 +190,5 @@ std::wstring value::as_string() const {
 	default:
 		assert(false);
 		return L"(INTERNAL-ERROR)";
-	}
-}
-
-void value::overwrite(const value& source) {
-	if (data == nullptr) return;
-	if (std::addressof(data) == std::addressof(source.data)) return;
-
-	*data = *source.data;
-}
-value value::new_from(const value& source) {
-	value res = source;
-	res.unique();
-	return res;
-}
-
-void value::unique() const {
-	if (data == nullptr) {
-		data = std::shared_ptr<body>(new body);
-		data->type = nullptr;
-	}
-	else if (!data.unique()) {
-		body* newData = new body(*data);
-		data = std::shared_ptr<body>(newData);
 	}
 }
