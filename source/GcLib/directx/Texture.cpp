@@ -95,9 +95,8 @@ bool Texture::CreateFromData(const std::wstring& name) {
 bool Texture::CreateFromData(shared_ptr<TextureData> data) {
 	bool res = false;
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
-#endif
+
 		if (data_) Release();
 
 		if (data)
@@ -111,9 +110,8 @@ bool Texture::CreateFromFile(const std::wstring& path, bool genMipmap, bool flgN
 
 	bool res = false;
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
-#endif
+
 		if (data_) Release();
 
 		TextureManager* manager = TextureManager::GetBase();
@@ -127,9 +125,8 @@ bool Texture::CreateFromFile(const std::wstring& path, bool genMipmap, bool flgN
 bool Texture::CreateRenderTarget(const std::wstring& name, size_t width, size_t height) {
 	bool res = false;
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
-#endif
+
 		if (data_) Release();
 
 		TextureManager* manager = TextureManager::GetBase();
@@ -144,9 +141,8 @@ bool Texture::CreateFromFileInLoadThread(const std::wstring& path, bool genMipma
 
 	bool res = false;
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
-#endif
+
 		if (data_) Release();
 
 		TextureManager* manager = TextureManager::GetBase();
