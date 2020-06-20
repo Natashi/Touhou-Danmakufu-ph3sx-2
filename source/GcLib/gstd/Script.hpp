@@ -151,6 +151,7 @@ namespace gstd {
 			pc_inline_cmp_e, pc_inline_cmp_g, pc_inline_cmp_ge, pc_inline_cmp_l, pc_inline_cmp_le, pc_inline_cmp_ne,
 			pc_inline_logic_and, pc_inline_logic_or,
 			pc_inline_cast_real, pc_inline_cast_char, pc_inline_cast_bool,
+			pc_inline_index_array,
 		};
 
 		struct block;

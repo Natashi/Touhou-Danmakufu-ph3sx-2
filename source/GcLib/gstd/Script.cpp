@@ -307,12 +307,13 @@ bool _index_check(script_machine* machine, type_data* arg0_type, size_t arg0_siz
 	}
 	return true;
 }
-value index(script_machine* machine, int argc, value const* argv) {
+
+const value& index(script_machine* machine, int argc, value const* argv) {
 	assert(argc == 2);
 
 	double index = argv[1].as_real();
 	if (!_index_check(machine, argv->get_type(), argv->length_as_array(), index))
-		return value();
+		return value::val_empty;
 
 	return argv->index_as_array(index);
 }
@@ -527,7 +528,8 @@ function const operations[] = {
 	{ "remainder", remainder_, 2 },
 	{ "modc", modc, 2 },
 	{ "power", power, 2 },
-	{ "index_", index, 2 },
+	//{ "index_", index<false>, 2 },
+	//{ "index_w", index<true>, 2 },
 	{ "slice", slice, 3 },
 	{ "erase", erase, 2 },
 	{ "append", append, 2 },
@@ -1076,7 +1078,7 @@ void parser::parse_suffix(script_engine::block* block, script_scanner* lex) {
 	parse_clause(block, lex);
 	if (lex->next == token_kind::tk_caret) {
 		lex->advance();
-		parse_suffix(block, lex); //Ä‹A
+		parse_suffix(block, lex);
 		block->codes.push_back(code(lex->line, command_kind::pc_inline_pow));
 	}
 	else {
@@ -1090,7 +1092,7 @@ void parser::parse_suffix(script_engine::block* block, script_scanner* lex) {
 				write_operation(block, lex, "slice", 3);
 			}
 			else {
-				write_operation(block, lex, "index_", 2);
+				block->codes.push_back(code(lex->line, command_kind::pc_inline_index_array, (size_t)false));
 			}
 
 			parser_assert(lex->next == token_kind::tk_close_bra, "\"]\" is required.\r\n");
@@ -1319,7 +1321,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 					parser_assert(lex->next == token_kind::tk_close_bra, "\"]\" is required.\r\n");
 					lex->advance();
 
-					write_operation(block, lex, "index_", 2);
+					block->codes.push_back(code(lex->line, command_kind::pc_inline_index_array, (size_t)true));
 				}
 
 				switch (lex->next) {
@@ -2951,6 +2953,15 @@ void script_machine::run_code() {
 					var->set(engine->get_boolean_type(), var->as_boolean());
 					break;
 				}
+				break;
+			}
+			case command_kind::pc_inline_index_array:
+			{
+				value* var = &(current->stack.back()) - 1;
+				const value& res = index(this, 2, var);
+				if (c->ip) res.unique();
+				current->stack.pop_back(2U);
+				current->stack.push_back(res);
 				break;
 			}
 			default:
