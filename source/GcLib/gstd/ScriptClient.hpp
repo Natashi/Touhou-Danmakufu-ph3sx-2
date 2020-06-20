@@ -142,10 +142,10 @@ namespace gstd {
 		static value CreateStringArrayValue(std::vector<std::string>& list);
 		static value CreateStringArrayValue(std::vector<std::wstring>& list);
 		value CreateValueArrayValue(std::vector<value>& list);
-		bool IsRealValue(value& v);
-		bool IsBooleanValue(value& v);
-		bool IsStringValue(value& v);
-		bool IsRealArrayValue(value& v);
+		static bool IsRealValue(value& v);
+		static bool IsBooleanValue(value& v);
+		static bool IsStringValue(value& v);
+		static bool IsRealArrayValue(value& v);
 
 		static void IsMatrix(script_machine*& machine, const value& v);
 		static void IsVector(script_machine*& machine, const value& v, size_t count);

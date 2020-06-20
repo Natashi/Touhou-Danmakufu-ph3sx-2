@@ -870,27 +870,19 @@ value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 	return value(typeManager->get_string_type(), std::wstring());
 }
 bool ScriptClientBase::IsRealValue(value& v) {
-	if (bError_)return false;
-	if (!v.has_data())return false;
-
+	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_real_type();
 }
 bool ScriptClientBase::IsBooleanValue(value& v) {
-	if (bError_)return false;
-	if (!v.has_data())return false;
-
+	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_boolean_type();
 }
 bool ScriptClientBase::IsStringValue(value& v) {
-	if (bError_)return false;
-	if (!v.has_data())return false;
-
+	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_string_type();
 }
 bool ScriptClientBase::IsRealArrayValue(value& v) {
-	if (bError_)return false;
-	if (!v.has_data())return false;
-
+	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_real_array_type();
 }
 void ScriptClientBase::CheckRunInMainThread() {
