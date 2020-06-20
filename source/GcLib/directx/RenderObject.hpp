@@ -155,7 +155,7 @@ namespace directx {
 		D3DXVECTOR3 position_;//ˆÚ“®æÀ•W
 		D3DXVECTOR3 angle_;//‰ñ“]Šp“x
 		D3DXVECTOR3 scale_;//Šg‘å—¦
-		D3DXMATRIX matRelative_;//ŠÖŒWs—ñ
+		shared_ptr<D3DXMATRIX> matRelative_;//ŠÖŒWs—ñ
 		bool bCoordinate2D_;//2DÀ•Ww’è
 		shared_ptr<Shader> shader_;
 
@@ -179,7 +179,7 @@ namespace directx {
 		size_t _GetPrimitiveCount();
 		size_t _GetPrimitiveCount(size_t count);
 
-		void SetRalativeMatrix(D3DXMATRIX mat) { matRelative_ = mat; }
+		void SetRalativeMatrix(shared_ptr<D3DXMATRIX>& mat) { matRelative_ = mat; }
 
 		static D3DXMATRIX CreateWorldMatrix(D3DXVECTOR3& position, D3DXVECTOR3& scale, 
 			D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ,

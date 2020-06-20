@@ -161,7 +161,6 @@ RenderObject::RenderObject() {
 	angle_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	scale_ = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 	posWeightCenter_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	D3DXMatrixIdentity(&matRelative_);
 
 	bCoordinate2D_ = false;
 
@@ -355,8 +354,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(D3DXVECTOR3& position, D3DXVECTOR3& s
 		ref_count_ptr<DxCamera> camera = graphics->GetCamera();
 		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 		if (camera2D->IsEnable()) {
-			D3DXMATRIX matCamera = camera2D->GetMatrix();
-			mat = mat * matCamera;
+			D3DXMatrixMultiply(&mat, &mat, &camera2D->GetMatrix());
 		}
 
 		D3DXMATRIX matTrans;
@@ -418,8 +416,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(D3DXVECTOR3& position, D3DXVE
 	}
 	if (bBillboard) {
 		DirectGraphics* graph = DirectGraphics::GetBase();
-		D3DXMATRIX& matViewTs = graph->GetCamera()->GetViewTransposedMatrix();
-		mat = mat * matViewTs;
+		D3DXMatrixMultiply(&mat, &mat, &graph->GetCamera()->GetViewTransposedMatrix());
 	}
 	if (position.x != 0.0f || position.y != 0.0f || position.z != 0.0f) {
 		D3DXMATRIX matTrans;
@@ -934,7 +931,7 @@ void RenderObjectLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& a
 	D3DXMATRIX matWorld;
 	if (!disableMatrixTransform_) {
 		matWorld = RenderObject::CreateWorldMatrix(position_, scale_,
-			angX, angY, angZ, &matRelative_, false);
+			angX, angY, angZ, matRelative_.get(), false);
 	}
 
 	RenderObjectLX::Render(matWorld);
@@ -1122,7 +1119,8 @@ void RenderObjectNX::Render() {
 	RenderObjectNX::Render(nullptr);
 }
 void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
-	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	IDirect3DDevice9* device = graphics->GetDevice();
 	shared_ptr<Texture>& texture = texture_[0];
 
 	if (texture != nullptr)
@@ -1163,23 +1161,19 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 
 			if (bVertexShaderMode_) {
 				RenderShaderManager* shaderLib = ShaderManager::GetBase()->GetRenderLib();
-				auto camera = DirectGraphics::GetBase()->GetCamera();
+				auto camera = graphics->GetCamera();
 
 				device->SetVertexDeclaration(shaderLib->GetVertexDeclarationNX());
 
 				D3DXHANDLE handle = nullptr;
-				if (handle = effect->GetParameterBySemantic(nullptr, "WORLD")) {
-					effect->SetMatrix(handle, matTransform ? matTransform :
-						&DirectGraphics::GetBase()->GetCamera()->GetIdentity());
-				}
-				if (handle = effect->GetParameterBySemantic(nullptr, "VIEW")) {
-					D3DXMATRIX matView;
-					device->GetTransform(D3DTS_VIEW, &matView);
+				if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
+					effect->SetMatrix(handle, matTransform ? matTransform : &graphics->GetCamera()->GetIdentity());
+				if (handle = effect->GetParameterBySemantic(nullptr, "VIEW"))
 					effect->SetMatrix(handle, &camera->GetViewMatrix());
-				}
-				if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION")) {
+				if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION"))
 					effect->SetMatrix(handle, &camera->GetProjectionMatrix());
-				}
+				if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
+					effect->SetMatrix(handle, &camera->GetViewProjectionMatrix());
 			}
 
 			effect->Begin(&countPass, 0);
@@ -1254,7 +1248,7 @@ RenderObjectBNX::~RenderObjectBNX() {
 	ptr_release(pIndexBuffer_);
 }
 void RenderObjectBNX::InitializeVertexBuffer() {
-	int countVertex = GetVertexCount();
+	size_t countVertex = GetVertexCount();
 	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
 	device->CreateVertexBuffer(countVertex * sizeof(VERTEX_BNX), 0, 0, D3DPOOL_MANAGED, &pVertexBuffer_, nullptr);
 
@@ -1300,7 +1294,7 @@ void RenderObjectBNX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 
 	if (false) {
 		D3DXMATRIX matWorld = RenderObject::CreateWorldMatrix(position_, scale_,
-			angX, angY, angZ, &matRelative_, bCoordinate2D_);
+			angX, angY, angZ, matRelative_.get(), bCoordinate2D_);
 		device->SetTransform(D3DTS_WORLD, &matWorld);
 
 		int sizeMatrix = matrix_->GetSize();
@@ -1337,7 +1331,7 @@ void RenderObjectBNX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 			shader->SetMatrix(shader->GetParameterBySemantic(nullptr, "VIEWPROJECTION"), &camera->GetViewProjectionMatrix());
 
 			D3DXMATRIX matWorld = RenderObject::CreateWorldMatrix(position_, scale_,
-				angX, angY, angZ, &matRelative_, bCoordinate2D_);
+				angX, angY, angZ, matRelative_.get(), bCoordinate2D_);
 
 			D3DLIGHT9 light;
 			device->GetLight(0, &light);
@@ -1453,7 +1447,7 @@ void RenderObjectB2NX::CalculateWeightCenter() {
 	double xTotal = 0;
 	double yTotal = 0;
 	double zTotal = 0;
-	int countVert = GetVertexCount();
+	size_t countVert = GetVertexCount();
 	for (size_t iVert = 0; iVert < countVert; ++iVert) {
 		VERTEX_B2NX* vertex = GetVertex(iVert);
 		xTotal += vertex->position.x;
@@ -1959,7 +1953,7 @@ void Sprite3D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
 	D3DXMATRIX matWorld;
 	if (!disableMatrixTransform_) {
 		matWorld = RenderObject::CreateWorldMatrixSprite3D(position_, scale_,
-			angX, angY, angZ, &matRelative_, bBillboard_);
+			angX, angY, angZ, matRelative_.get(), bBillboard_);
 	}
 
 	RenderObjectLX::Render(matWorld);

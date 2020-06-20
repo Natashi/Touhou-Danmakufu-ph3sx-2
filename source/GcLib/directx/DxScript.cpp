@@ -311,7 +311,8 @@ void DxScriptPrimitiveObject3D::SetRenderState() {
 				int frameAnime = objMesh->GetAnimeFrame();
 				std::wstring nameAnime = objMesh->GetAnimeName();
 				shared_ptr<DxMesh> mesh = objMesh->GetMesh();
-				D3DXMATRIX mat = mesh->GetAnimationMatrix(nameAnime, frameAnime, nameRelativeBone_);
+				shared_ptr<D3DXMATRIX> mat = std::make_shared<D3DXMATRIX>();
+				*mat = mesh->GetAnimationMatrix(nameAnime, frameAnime, nameRelativeBone_);
 				objRender_->SetRalativeMatrix(mat);
 			}
 		}
