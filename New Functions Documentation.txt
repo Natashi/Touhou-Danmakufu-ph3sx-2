@@ -1238,25 +1238,41 @@ ObjShot_SetDelayGraphic
 		Sets the image ID of the shot object's delay cloud.
 		A negative value will reset the delay cloud graphic to default.
 		
-ObjShot_SetDelayParameter
+ObjShot_SetDelayScaleParameter
 	Arguments:
 		1) object ID
-		2) parameter 1 (Designated "P0")
-		3) parameter 2 (Designated "P1")
-		4) parameter 3 (Designated "P2")
+		2) parameter 1 (Designated "S0")
+		3) parameter 2 (Designated "S1")
+		4) parameter 3 (Designated "S2")
 	Description:
-		Sets the properties of the shot object's delay cloud.
+		Sets the properties of the shot object's delay cloud's scale.
 		
 		DELAY_DEFAULT:
-			scale = min(P0 + delay / P2, P1)
+			scale = min(S0 + delay / S2, S1)
 		DELAY_LERP:
-			scale = lerpFunction(P0, P1, delay / P2)
+			scale = lerpFunction(S0, S1, delay / S2)
+
+ObjShot_SetDelayAlphaParameter
+	Arguments:
+		1) object ID
+		2) parameter 1 (Designated "A0")
+		3) parameter 2 (Designated "A1")
+		4) parameter 3 (Designated "A2")
+	Description:
+		Sets the properties of the shot object's delay cloud's alpha.
+		Alpha value range is 0 to 1.
+		
+		DELAY_DEFAULT:
+			alpha = min(A0 + delay / A2, A1)
+		DELAY_LERP:
+			alpha = lerpFunction(A0, A1, delay / A2)
 		
 ObjShot_SetDelayMode
 	Arguments:
 		1) object ID
 		2) (struct) delay mode
-		3) (struct) interpolation mode
+		3) (struct) scale interpolation mode
+		4) (struct) alpha interpolation mode
 	Description:
 		Sets the properties of the shot object's delay cloud.
 		
