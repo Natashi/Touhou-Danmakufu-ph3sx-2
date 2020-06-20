@@ -14,7 +14,6 @@ protected:
 	StgSystemController* systemController_;
 	std::shared_ptr<StgUserExtendSceneScriptManager> scriptManager_;
 
-	void _InitializeTransitionTexture();
 	void _InitializeScript(std::wstring path, int type);
 	void _CallScriptMainLoop();
 	void _CallScriptFinalize();
@@ -51,7 +50,6 @@ public:
 
 	void CallScriptFinalizeAll();
 	gstd::value GetResultValue();
-	bool IsRealValue(gstd::value val);
 };
 
 /**********************************************************

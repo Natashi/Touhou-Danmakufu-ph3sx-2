@@ -14,13 +14,6 @@ StgUserExtendScene::StgUserExtendScene(StgSystemController* controller) {
 }
 StgUserExtendScene::~StgUserExtendScene() {
 }
-void StgUserExtendScene::_InitializeTransitionTexture() {
-	//画面キャプチャ
-	shared_ptr<StgStageController> stageController = systemController_->GetStageController();
-	if (stageController) {
-		stageController->RenderToTransitionTexture();
-	}
-}
 void StgUserExtendScene::_InitializeScript(std::wstring path, int type) {
 	if (scriptManager_ == nullptr)return;
 	auto idScript = scriptManager_->LoadScript(path, type);
@@ -129,13 +122,6 @@ gstd::value StgUserExtendSceneScriptManager::GetResultValue() {
 	}
 	return res;
 }
-bool StgUserExtendSceneScriptManager::IsRealValue(gstd::value val) {
-	if (listScriptRun_.size() == 0)return false;
-	shared_ptr<ManagedScript> script = *listScriptRun_.begin();
-
-	bool res = script->IsRealValue(val);
-	return res;
-}
 
 /**********************************************************
 //StgUserExtendSceneScript
@@ -162,7 +148,7 @@ void StgPauseScene::Work() {
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
 	ref_count_ptr<StgStageInformation> infoStage = systemController_->GetStageController()->GetStageInformation();
 	gstd::value resValue = scriptManager_->GetResultValue();
-	if (scriptManager_->IsRealValue(resValue)) {
+	if (ManagedScript::IsRealValue(resValue)) {
 		int result = (int)resValue.as_real();
 		if (result == StgControlScript::RESULT_CANCEL) {
 		}
@@ -188,8 +174,6 @@ void StgPauseScene::Work() {
 void StgPauseScene::Start() {
 	//停止イベント呼び出し
 	shared_ptr<StgStageController> stageController = systemController_->GetStageController();
-	auto stageScriptManager = stageController->GetScriptManager();
-	stageScriptManager->RequestEventAll(StgStageScript::EV_PAUSE_ENTER);
 
 	//停止処理初期化
 	scriptManager_ = nullptr;
@@ -197,11 +181,14 @@ void StgPauseScene::Start() {
 	_AddRelativeManager();
 	ref_count_ptr<StgSystemInformation> sysInfo = systemController_->GetSystemInformation();
 
-	_InitializeTransitionTexture();
+	stageController->RenderToTransitionTexture();
 
 	//スクリプト初期化
 	std::wstring path = sysInfo->GetPauseScriptPath();
 	_InitializeScript(path, StgUserExtendSceneScript::TYPE_PAUSE_SCENE);
+
+	auto stageScriptManager = stageController->GetScriptManager();
+	stageScriptManager->RequestEventAll(StgStageScript::EV_PAUSE_ENTER);
 
 	if (stageController)
 		stageController->GetStageInformation()->SetPause(true);
@@ -253,7 +240,7 @@ void StgEndScene::Work() {
 
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
 	gstd::value resValue = scriptManager_->GetResultValue();
-	if (scriptManager_->IsRealValue(resValue)) {
+	if (ManagedScript::IsRealValue(resValue)) {
 		int result = (int)resValue.as_real();
 		if (result == StgControlScript::RESULT_SAVE_REPLAY) {
 			//info->SetStgEnd();
@@ -278,7 +265,7 @@ void StgEndScene::Start() {
 
 	ref_count_ptr<StgSystemInformation> info = systemController_->GetSystemInformation();
 
-	_InitializeTransitionTexture();
+	systemController_->GetStageController()->RenderToTransitionTexture();
 
 	//スクリプト初期化
 	std::wstring path = info->GetEndSceneScriptPath();
@@ -322,7 +309,7 @@ void StgReplaySaveScene::Work() {
 
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
 	gstd::value resValue = scriptManager_->GetResultValue();
-	if (scriptManager_->IsRealValue(resValue)) {
+	if (ManagedScript::IsRealValue(resValue)) {
 		int result = (int)resValue.as_real();
 		if (result == StgControlScript::RESULT_END) {
 			infoSystem->SetStgEnd();
