@@ -96,13 +96,6 @@ EFpsController::EFpsController() {
 }
 #endif
 
-/**********************************************************
-//EFileManager
-**********************************************************/
-void EFileManager::ResetArchiveFile() {
-	mapArchiveFile_.clear();
-}
-
 #if defined(DNH_PROJ_EXECUTOR)
 /**********************************************************
 //ETaskManager

@@ -106,7 +106,7 @@ namespace gstd {
 		static bool Deflate(TIN& bufIn, TOUT& bufOut, size_t count, size_t* res) {
 			bool ret = true;
 
-			const size_t CHUNK = 65536U;
+			constexpr size_t CHUNK = 65536U;
 			char* in = new char[CHUNK];
 			char* out = new char[CHUNK];
 
@@ -170,7 +170,7 @@ namespace gstd {
 		static bool Inflate(TIN& bufIn, TOUT& bufOut, size_t count, size_t* res) {
 			bool ret = true;
 
-			const size_t CHUNK = 65536U;
+			constexpr size_t CHUNK = 65536U;
 			char* in = new char[CHUNK];
 			char* out = new char[CHUNK];
 

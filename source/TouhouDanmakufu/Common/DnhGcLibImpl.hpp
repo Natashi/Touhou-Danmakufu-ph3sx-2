@@ -74,8 +74,7 @@ public:
 //EFileManager
 **********************************************************/
 class EFileManager : public Singleton<EFileManager>, public FileManager {
-public:
-	void ResetArchiveFile();
+
 };
 
 #if defined(DNH_PROJ_EXECUTOR)

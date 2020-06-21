@@ -370,7 +370,8 @@ gstd::value StgControlScript::Func_IsReplay(gstd::script_machine* machine, int a
 gstd::value StgControlScript::Func_AddArchiveFile(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	FileManager* fileManager = FileManager::GetBase();
 	std::wstring path = argv[0].as_string();
-	return StgControlScript::CreateBooleanValue(fileManager->AddArchiveFile(path));
+	bool res = fileManager->AddArchiveFile(path);
+	return StgControlScript::CreateBooleanValue(res);
 }
 gstd::value StgControlScript::Func_GetCurrentFps(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	EFpsController* fpsController = EFpsController::GetInstance();

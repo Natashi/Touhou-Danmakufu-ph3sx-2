@@ -26,7 +26,7 @@ SystemController::~SystemController() {
 }
 void SystemController::Reset() {
 	EFileManager* fileManager = EFileManager::GetInstance();
-	fileManager->ResetArchiveFile();
+	fileManager->ClearArchiveFileCache();
 
 	DnhConfiguration* config = DnhConfiguration::CreateInstance();
 	std::wstring pathPackageScript = config->GetPackageScriptPath();
@@ -167,6 +167,8 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 		SystemController* system = SystemController::GetInstance();
 		system->ShowErrorDialog(e.what());
 		system->GetSceneManager()->TransScriptSelectScene_Last();
+
+		//EFileManager::GetInstance()->ClearArchiveFileCache();
 	}
 }
 
@@ -210,6 +212,8 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 		SystemController* system = SystemController::GetInstance();
 		system->ShowErrorDialog(e.what());
 		system->GetSceneManager()->TransScriptSelectScene_Last();
+
+		//EFileManager::GetInstance()->ClearArchiveFileCache();
 	}
 
 }
@@ -256,6 +260,8 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 		else {
 			EApplication::GetInstance()->End();
 		}
+
+		//EFileManager::GetInstance()->ClearArchiveFileCache();
 	}
 }
 

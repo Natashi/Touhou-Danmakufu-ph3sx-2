@@ -1,6 +1,8 @@
 #include "source/GcLib/pch.h"
 #include "ArchiveFile.hpp"
 
+#include "Logger.hpp"
+
 using namespace gstd;
 
 /**********************************************************
@@ -58,14 +60,13 @@ FileArchiver::~FileArchiver() {
 bool FileArchiver::CreateArchiveFile(std::wstring path) {
 	bool res = true;
 
-	DeleteFile(path.c_str());
-
 	uint8_t headerKeyBase = 0;
 	uint8_t headerKeyStep = 0;
 	ArchiveEncryption::GetKeyHashHeader(ArchiveEncryption::ARCHIVE_ENCRYPTION_KEY, headerKeyBase, headerKeyStep);
 
-	std::wstring pathTmp = StringUtility::Format(L"%s_tmp", path.c_str());
+	DeleteFile(path.c_str());
 
+	std::wstring pathTmp = StringUtility::Format(L"%s_tmp", path.c_str());
 	std::ofstream fileArchive;
 	fileArchive.open(pathTmp, std::ios::binary);
 
@@ -109,22 +110,24 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 		entry->keyBase = localKeyBase;
 		entry->keyStep = localKeyStep;
 
-		//Small files actually get bigger upon compression.
-		if (entry->sizeFull < 0x100) entry->compressionType = ArchiveFileEntry::CT_NONE;
+		if (entry->sizeFull > 0) {
+			//Small files actually get bigger upon compression.
+			if (entry->sizeFull < 0x100) entry->compressionType = ArchiveFileEntry::CT_NONE;
 
-		switch (entry->compressionType) {
-		case ArchiveFileEntry::CT_NONE:
-		{
-			fileArchive << file.rdbuf();
-			break;
-		}
-		case ArchiveFileEntry::CT_ZLIB:
-		{
-			size_t countByte = 0U;
-			Compressor::Deflate(file, fileArchive, entry->sizeFull, &countByte);
-			entry->sizeStored = countByte;
-			break;
-		}
+			switch (entry->compressionType) {
+			case ArchiveFileEntry::CT_NONE:
+			{
+				fileArchive << file.rdbuf();
+				break;
+			}
+			case ArchiveFileEntry::CT_ZLIB:
+			{
+				size_t countByte = 0U;
+				Compressor::Deflate(file, fileArchive, entry->sizeFull, &countByte);
+				entry->sizeStored = countByte;
+				break;
+			}
+			}
 		}
 
 		file.close();
@@ -155,9 +158,10 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 			totalSize += sz + sizeof(uint32_t);
 		}
 
-		size_t countByte = 0U;
+		size_t countByte = totalSize;
 		buf.seekg(0, std::ios::beg);
-		Compressor::Deflate(buf, fileArchive, totalSize, &countByte);
+		if (!Compressor::Deflate(buf, fileArchive, totalSize, &countByte))
+			throw gstd::wexception("Failed to compress archive header.");
 		//fileArchive << buf.rdbuf();
 
 		header.headerSize = countByte;
@@ -185,7 +189,7 @@ bool FileArchiver::EncryptArchive(std::wstring path, ArchiveFileHeader* header, 
 	std::ofstream dest;
 	dest.open(path, std::ios::binary | std::ios::trunc);
 
-	constexpr size_t CHUNK = 8192U;
+	constexpr size_t CHUNK = 16384U;
 	char buf[CHUNK];
 
 	size_t read = 0U;
@@ -308,8 +312,8 @@ bool ArchiveFile::Open() {
 
 		file_.clear();
 
-		for (size_t iEntry = 0U; iEntry < header.entryCount; iEntry++) {
-			ArchiveFileEntry::ptr entry = std::shared_ptr<ArchiveFileEntry>(new ArchiveFileEntry);
+		for (size_t iEntry = 0U; iEntry < header.entryCount; ++iEntry) {
+			ArchiveFileEntry::ptr entry = std::make_shared<ArchiveFileEntry>();
 
 			uint32_t sizeEntry = 0U; 
 			bufInfo.read((char*)&sizeEntry, sizeof(uint32_t));
@@ -399,6 +403,10 @@ ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr e
 			std::stringstream stream;
 			Compressor::Inflate(streamTmp, stream, entry->sizeStored, &sizeVerif);
 			res->Copy(stream);
+
+			if (sizeVerif != entry->sizeFull)
+				Logger::WriteTop(StringUtility::Format(L"(Warning)CreateEntryBuffer: Archive entry not properly read. "
+					"[expected %d bytes, got %d bytes -> %s]", entry->name.c_str()));
 
 			break;
 		}

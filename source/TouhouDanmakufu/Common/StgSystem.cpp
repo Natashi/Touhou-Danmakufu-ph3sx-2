@@ -124,7 +124,7 @@ void StgSystemController::Work() {
 
 	if (infoSystem_->IsError() || infoSystem_->IsStgEnd()) {
 		EFileManager* fileManager = EFileManager::GetInstance();
-		fileManager->ResetArchiveFile();
+		fileManager->ClearArchiveFileCache();
 
 		//I—¹
 		bool bRetry = false;

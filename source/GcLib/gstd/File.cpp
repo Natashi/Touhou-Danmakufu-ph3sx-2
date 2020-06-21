@@ -395,27 +395,25 @@ void FileManager::EndLoadThread() {
 
 #if defined(DNH_PROJ_EXECUTOR)
 bool FileManager::AddArchiveFile(std::wstring path) {
-	if (mapArchiveFile_.find(path) != mapArchiveFile_.end())return true;
+	if (mapArchiveFile_.find(path) != mapArchiveFile_.end())
+		return true;
 
 	ref_count_ptr<ArchiveFile> file = new ArchiveFile(path);
-	if (!file->Open())return false;
+	if (!file->Open()) return false;
 
-	std::set<std::wstring> listKeyIn = file->GetKeyList();
 	std::set<std::wstring> listKeyCurrent;
-	std::map<std::wstring, ref_count_ptr<ArchiveFile>>::iterator itrFile;
-	for (itrFile = mapArchiveFile_.begin(); itrFile != mapArchiveFile_.end(); itrFile++) {
+	for (auto itrFile = mapArchiveFile_.begin(); itrFile != mapArchiveFile_.end(); ++itrFile) {
 		ref_count_ptr<ArchiveFile> tFile = itrFile->second;
 		std::set<std::wstring> tList = tFile->GetKeyList();
-		std::set<std::wstring>::iterator itrList = tList.begin();
-		for (; itrList != tList.end(); itrList++) {
+		for (auto itrList = tList.begin(); itrList != tList.end(); ++itrList) {
 			listKeyCurrent.insert(*itrList);
 		}
 	}
 
-	std::set<std::wstring>::iterator itrKey = listKeyIn.begin();
-	for (; itrKey != listKeyIn.end(); itrKey++) {
-		std::wstring key = *itrKey;
-		if (listKeyCurrent.find(key) == listKeyCurrent.end())continue;
+	std::set<std::wstring> listKeyIn = file->GetKeyList();
+	for (auto itrKey = listKeyIn.begin(); itrKey != listKeyIn.end(); ++itrKey) {
+		const std::wstring& key = *itrKey;
+		if (listKeyCurrent.find(key) == listKeyCurrent.end()) continue;
 
 		std::wstring log = StringUtility::Format(L"archive file entry already exists[%s]", key.c_str());
 		Logger::WriteTop(log);
@@ -429,6 +427,10 @@ bool FileManager::RemoveArchiveFile(std::wstring path) {
 	mapArchiveFile_.erase(path);
 	return true;
 }
+bool FileManager::ClearArchiveFileCache() {
+	mapArchiveFile_.clear();
+	return true;
+}
 #endif
 
 ref_count_ptr<FileReader> FileManager::GetFileReader(std::wstring path) {
@@ -440,34 +442,33 @@ ref_count_ptr<FileReader> FileManager::GetFileReader(std::wstring path) {
 	if (fileRaw->IsExists()) {
 		res = new ManagedFileReader(fileRaw, nullptr);
 	}
-	else {
 #if defined(DNH_PROJ_EXECUTOR)
+	else {
 		//Cannot find a physical file, search in the archive entries.
 
 		std::vector<ArchiveFileEntry::ptr> listEntry;
 
-		std::map<int, std::wstring> mapArchivePath;
-		std::wstring key = PathProperty::GetFileName(path);
-		std::map<std::wstring, ref_count_ptr<ArchiveFile>>::iterator itr;
-		for (itr = mapArchiveFile_.begin(); itr != mapArchiveFile_.end(); itr++) {
-			std::wstring pathArchive = itr->first;
-			ref_count_ptr<ArchiveFile> fileArchive = itr->second;
-			if (!fileArchive->IsExists(key))continue;
+		std::unordered_map<int, std::wstring> mapArchivePath;
 
-			//ref_count_ptr<File> file = new File(pathArchive);
+		std::wstring key = PathProperty::GetFileName(path);
+		for (auto itr = mapArchiveFile_.begin(); itr != mapArchiveFile_.end(); ++itr) {
+			const std::wstring& pathArchive = itr->first;
+			ref_count_ptr<ArchiveFile> fileArchive = itr->second;
+			if (!fileArchive->IsExists(key)) continue;
+
 			std::vector<ArchiveFileEntry::ptr> list = fileArchive->GetEntryList(key);
 			listEntry.insert(listEntry.end(), list.begin(), list.end());
-			for (int iEntry = 0; iEntry < list.size(); iEntry++) {
-				ArchiveFileEntry::ptr entry = list[iEntry];
-				int addr = (int)entry.get();
+			for (auto itrEntry = list.begin(); itrEntry != list.end(); ++itrEntry) {
+				int addr = (int)(itrEntry->get());
 				mapArchivePath[addr] = pathArchive;
 			}
 		}
 
-		if (listEntry.size() == 1) {
+		if (listEntry.size() == 1) {	//No duplicate paths
 			ArchiveFileEntry::ptr entry = listEntry[0];
+
 			int addr = (int)entry.get();
-			std::wstring pathArchive = mapArchivePath[addr];
+			const std::wstring& pathArchive = mapArchivePath[addr];
 			ref_count_ptr<File> file = new File(pathArchive);
 			res = new ManagedFileReader(file, entry);
 		}
@@ -476,10 +477,11 @@ ref_count_ptr<FileReader> FileManager::GetFileReader(std::wstring path) {
 			module = PathProperty::GetUnique(module);
 
 			std::wstring target = StringUtility::ReplaceAll(path, module, L"");
-			for (int iEntry = 0; iEntry < listEntry.size(); iEntry++) {
-				ArchiveFileEntry::ptr entry = listEntry[iEntry];
-				std::wstring dir = entry->directory;
-				if (target.find(dir) == std::wstring::npos)continue;
+			for (auto itrEntry = listEntry.begin(); itrEntry != listEntry.end(); ++itrEntry) {
+				ArchiveFileEntry::ptr entry = *itrEntry;
+
+				const std::wstring& dir = entry->directory;
+				if (target.find(dir) == std::wstring::npos) continue;
 
 				int addr = (int)entry.get();
 				std::wstring pathArchive = mapArchivePath[addr];
@@ -488,16 +490,15 @@ ref_count_ptr<FileReader> FileManager::GetFileReader(std::wstring path) {
 				break;
 			}
 		}
-#else
-		res = nullptr;
-#endif
 	}
-	if (res != nullptr)res->_SetOriginalPath(orgPath);
+#endif
+
+	if (res) res->_SetOriginalPath(orgPath);
 	return res;
 }
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
-ref_count_ptr<ByteBuffer> FileManager::_GetByteBuffer(ArchiveFileEntry::ptr entry) {
+ref_count_ptr<ByteBuffer> FileManager::_GetByteBuffer(shared_ptr<ArchiveFileEntry> entry) {
 	ref_count_ptr<ByteBuffer> res = nullptr;
 	try {
 		Lock lock(lock_);
@@ -517,7 +518,7 @@ ref_count_ptr<ByteBuffer> FileManager::_GetByteBuffer(ArchiveFileEntry::ptr entr
 
 	return res;
 }
-void FileManager::_ReleaseByteBuffer(ArchiveFileEntry::ptr entry) {
+void FileManager::_ReleaseByteBuffer(shared_ptr<ArchiveFileEntry> entry) {
 	{
 		Lock lock(lock_);
 
@@ -582,8 +583,8 @@ void FileManager::LoadThread::_Run() {
 			//Logger::WriteTop(StringUtility::Format("ロード開始：%s", event->GetPath().c_str()));
 			{
 				Lock lock(lockListener_);
-				std::list<FileManager::LoadThreadListener*>::iterator itr;
-				for (itr = listListener_.begin(); itr != listListener_.end(); itr++) {
+
+				for (auto itr = listListener_.begin(); itr != listListener_.end(); itr++) {
 					FileManager::LoadThreadListener* listener = (*itr);
 					if (event->GetListener() == listener)
 						listener->CallFromLoadThread(event);

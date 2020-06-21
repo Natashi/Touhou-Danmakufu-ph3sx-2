@@ -41,17 +41,14 @@
     <ClCompile Include="source\GcLib\gstd\Logger.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
-    <ClCompile Include="source\GcLib\gstd\Task.cpp">
-      <Filter>source\GcLib\gstd</Filter>
-    </ClCompile>
-    <ClCompile Include="source\GcLib\gstd\Thread.cpp">
-      <Filter>source\GcLib\gstd</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\gstd\Window.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
     <ClCompile Include="source\GcLib\pch.cpp">
       <Filter>source\GcLib</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\Thread.cpp">
+      <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -85,12 +82,6 @@
     <ClInclude Include="source\GcLib\gstd\SmartPointer.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
-    <ClInclude Include="source\GcLib\gstd\Task.hpp">
-      <Filter>source\GcLib\gstd</Filter>
-    </ClInclude>
-    <ClInclude Include="source\GcLib\gstd\Thread.hpp">
-      <Filter>source\GcLib\gstd</Filter>
-    </ClInclude>
     <ClInclude Include="source\GcLib\gstd\Window.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
@@ -99,6 +90,9 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\pch.h">
       <Filter>source\GcLib</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\Thread.hpp">
+      <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

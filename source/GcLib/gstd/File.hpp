@@ -220,8 +220,8 @@ namespace gstd {
 		std::map<std::wstring, ref_count_ptr<ByteBuffer>> mapByteBuffer_;
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
-		ref_count_ptr<ByteBuffer> _GetByteBuffer(std::shared_ptr<ArchiveFileEntry> entry);
-		void _ReleaseByteBuffer(std::shared_ptr<ArchiveFileEntry> entry);
+		ref_count_ptr<ByteBuffer> _GetByteBuffer(shared_ptr<ArchiveFileEntry> entry);
+		void _ReleaseByteBuffer(shared_ptr<ArchiveFileEntry> entry);
 #endif
 	public:
 		static FileManager* GetBase() { return thisBase_; }
@@ -233,6 +233,7 @@ namespace gstd {
 #if defined(DNH_PROJ_EXECUTOR)
 		bool AddArchiveFile(std::wstring path);
 		bool RemoveArchiveFile(std::wstring path);
+		bool ClearArchiveFileCache();
 #endif
 
 		ref_count_ptr<FileReader> GetFileReader(std::wstring path);
