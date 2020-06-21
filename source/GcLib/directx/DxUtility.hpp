@@ -68,51 +68,50 @@ namespace directx {
 	**********************************************************/
 	class DxPoint {
 	public:
-		DxPoint() { x_ = 0; y_ = 0; }
-		DxPoint(double x, double y) { x_ = x; y_ = y; }
+		DxPoint() { pos_ = D3DXVECTOR2(0, 0); }
+		DxPoint(float x, float y) { pos_ = D3DXVECTOR2(x, y); }
 		virtual ~DxPoint() {}
-		double GetX() { return x_; }
-		void SetX(double x) { x_ = x; }
-		double GetY() { return y_; }
-		void SetY(double y) { y_ = y; }
+		float GetX() { return pos_.x; }
+		void SetX(float x) { pos_.x = x; }
+		float GetY() { return pos_.y; }
+		void SetY(float y) { pos_.y = y; }
 	private:
-		double x_;
-		double y_;
+		D3DXVECTOR2 pos_;
 	};
 
 	class DxCircle {
 	public:
 		DxCircle() { cen_ = DxPoint(); r_ = 0; }
-		DxCircle(double x, double y, double r) { cen_ = DxPoint(x, y); r_ = r; }
+		DxCircle(float x, float y, float r) { cen_ = DxPoint(x, y); r_ = r; }
 		virtual ~DxCircle() {}
-		double GetX() { return cen_.GetX(); }
-		void SetX(double x) { cen_.SetX(x); }
-		double GetY() { return cen_.GetY(); }
-		void SetY(double y) { cen_.SetY(y); }
-		double GetR() { return r_; }
-		void SetR(double r) { r_ = r; }
+		float GetX() { return cen_.GetX(); }
+		void SetX(float x) { cen_.SetX(x); }
+		float GetY() { return cen_.GetY(); }
+		void SetY(float y) { cen_.SetY(y); }
+		float GetR() { return r_; }
+		void SetR(float r) { r_ = r; }
 	private:
 		DxPoint cen_;
-		double r_;
+		float r_;
 	};
 
 	class DxWidthLine {
 		//ïùÇÃÇ†ÇÈê¸ï™
 	public:
 		DxWidthLine() { p1_ = DxPoint(); p2_ = DxPoint(); width_ = 0; }
-		DxWidthLine(double x1, double y1, double x2, double y2, double width) { 
+		DxWidthLine(float x1, float y1, float x2, float y2, float width) {
 			p1_ = DxPoint(x1, y1); p2_ = DxPoint(x2, y2); width_ = width;
 		}
 		virtual ~DxWidthLine() {}
-		double GetX1() { return p1_.GetX(); }
-		double GetY1() { return p1_.GetY(); }
-		double GetX2() { return p2_.GetX(); }
-		double GetY2() { return p2_.GetY(); }
-		double GetWidth() { return width_; }
+		float GetX1() { return p1_.GetX(); }
+		float GetY1() { return p1_.GetY(); }
+		float GetX2() { return p2_.GetX(); }
+		float GetY2() { return p2_.GetY(); }
+		float GetWidth() { return width_; }
 	private:
 		DxPoint p1_;
 		DxPoint p2_;
-		double width_;
+		float width_;
 	};
 
 	class DxLine3D {

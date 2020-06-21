@@ -1942,7 +1942,7 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			break;
 		case INFO_COLLISION:
 		{
-			double radius = 0;
+			float radius = 0;
 			DxCircle* listCircle = shotData->GetIntersectionCircleList();
 			if (listCircle->GetR() > 0) {
 				radius = listCircle->GetR();
@@ -1954,7 +1954,7 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		{
 			DxCircle* listCircle = shotData->GetIntersectionCircleList();
 			std::vector<gstd::value> listValue;
-			double list[3] = { listCircle->GetR(), listCircle->GetX(), listCircle->GetY() };
+			float list[3] = { listCircle->GetR(), listCircle->GetX(), listCircle->GetY() };
 			listValue.push_back(script->CreateRealArrayValue(list, 3U));
 			res = script->CreateValueArrayValue(listValue);
 			break;
@@ -2960,7 +2960,7 @@ gstd::value StgStageScript::Func_ObjEnemy_SetIntersectionCircleToPlayer(gstd::sc
 		DxCircle circle(px, py, radius);
 
 		shared_ptr<StgIntersectionTarget_Circle> target(new StgIntersectionTarget_Circle);
-		if (target != nullptr) {
+		if (target) {
 			target->SetTargetType(StgIntersectionTarget::TYPE_ENEMY);
 			target->SetObject(obj);
 			target->SetCircle(circle);
@@ -3503,14 +3503,13 @@ gstd::value StgStageScript::Func_ObjShot_SetIntersectionCircleA1(gstd::script_ma
 		int py = (int)obj->GetPositionY();
 		int radius = (int)argv[1].as_real();
 		DxCircle circle(px, py, radius);
-		weak_ptr<StgShotObject> wObj = obj;
 
 		//“–‚½‚è”»’è
 		shared_ptr<StgIntersectionTarget_Circle> target(new StgIntersectionTarget_Circle);
 		if (target) {
 			target->SetTargetType(typeTarget);
 			target->SetCircle(circle);
-			target->SetObject(wObj);
+			target->SetObject(obj);
 
 			intersectionManager->AddTarget(target);
 		}
@@ -3534,14 +3533,13 @@ gstd::value StgStageScript::Func_ObjShot_SetIntersectionCircleA2(gstd::script_ma
 		int py = (int)argv[2].as_real();
 		int radius = (int)argv[3].as_real();
 		DxCircle circle(px, py, radius);
-		weak_ptr<StgShotObject> wObj = obj;
 
 		//“–‚½‚è”»’è
 		shared_ptr<StgIntersectionTarget_Circle> target(new StgIntersectionTarget_Circle);
 		if (target) {
 			target->SetTargetType(typeTarget);
 			target->SetCircle(circle);
-			target->SetObject(wObj);
+			target->SetObject(obj);
 
 			intersectionManager->AddTarget(target);
 		}

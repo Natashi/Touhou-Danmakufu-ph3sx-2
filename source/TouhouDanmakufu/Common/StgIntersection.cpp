@@ -496,11 +496,11 @@ void StgIntersectionObject::UpdateIntersectionRelativeTarget(int posX, int posY,
 		if (shape == StgIntersectionTarget::SHAPE_CIRCLE) {
 			StgIntersectionTarget_Circle::ptr tTarget = std::dynamic_pointer_cast<StgIntersectionTarget_Circle>(target);
 			if (tTarget) {
-				DxCircle org = listOrgCircle_[iCircle];
-				int px = org.GetX() + posX;
-				int py = org.GetY() + posY;
+				DxCircle& org = listOrgCircle_[iCircle];
+				int px = (int)org.GetX() + posX;
+				int py = (int)org.GetY() + posY;
 
-				DxCircle circle = tTarget->GetCircle();
+				DxCircle& circle = tTarget->GetCircle();
 				circle.SetX(px);
 				circle.SetY(py);
 				tTarget->SetCircle(circle);

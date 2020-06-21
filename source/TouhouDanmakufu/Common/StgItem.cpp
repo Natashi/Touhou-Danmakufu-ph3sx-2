@@ -102,7 +102,7 @@ void StgItemManager::Work() {
 						}
 
 						for (auto itr = listCircleToPlayer_.begin(); itr != listCircleToPlayer_.end(); ++itr) {
-							DxCircle circle = *itr;
+							DxCircle& circle = *itr;
 
 							float cdx = ix - circle.GetX();
 							float cdy = iy - circle.GetY();

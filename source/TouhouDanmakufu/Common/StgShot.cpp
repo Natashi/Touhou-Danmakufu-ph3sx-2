@@ -1360,8 +1360,8 @@ std::vector<StgIntersectionTarget::ptr> StgNormalShotObject::GetIntersectionTarg
 		dynamic_cast<StgIntersectionTarget_Circle*>(pShotIntersectionTarget_.get())) 
 	{
 		if (circle.GetX() != 0 || circle.GetY() != 0) {
-			float px = (float)circle.GetX() * move_.x - (-(float)circle.GetY()) * move_.y;
-			float py = (float)circle.GetX() * move_.y + (-(float)circle.GetY()) * move_.x;
+			float px = circle.GetX() * move_.x + circle.GetY() * move_.y;
+			float py = circle.GetX() * move_.y - circle.GetY() * move_.x;
 			circle.SetX(px + posX_);
 			circle.SetY(py + posY_);
 		}
