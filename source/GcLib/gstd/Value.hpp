@@ -7,10 +7,7 @@ namespace gstd {
 	class type_data {
 	public:
 		enum class type_kind : uint8_t {
-			tk_real		= 0x1,
-			tk_char		= 0x2,
-			tk_boolean	= 0x4,	
-			tk_array	= 0x8,
+			tk_real, tk_char, tk_boolean, tk_array
 		};
 
 		type_data(type_kind k, type_data* t = nullptr) : kind(k), element(t) {}
