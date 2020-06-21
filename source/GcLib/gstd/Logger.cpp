@@ -297,7 +297,7 @@ void WindowLogger::_Run() {
 void WindowLogger::_Write(SYSTEMTIME& systemTime, std::wstring str) {
 	if (hWnd_ == nullptr) return;
 
-	wchar_t timeStr[256];
+	wchar_t timeStr[128];
 	swprintf(timeStr, 
 		//L"%.4d/%.2d/%.2d " 
 		L"%.2d:%.2d:%.2d.%.3d ",
@@ -476,11 +476,9 @@ void WindowLogger::LogPanel::AddText(std::wstring text) {
 	HWND hEdit = wndEdit_.GetWindowHandle();
 	int pos = GetWindowTextLength(hEdit);
 	if (pos + wndEdit_.GetTextLength() >= wndEdit_.GetMaxTextLength()) {
-		//Å‘å•¶š”‚ğ’´‚¦‚½‚ç50%íœ
-		std::wstring text = wndEdit_.GetText();
-		text = text.erase(0, text.size() / 2);
-		text += L"\n";
-		wndEdit_.SetText(text);
+		std::wstring textNew = wndEdit_.GetText();
+		textNew = textNew.substr(textNew.size() / 2) + L"\r\n";
+		wndEdit_.SetText(textNew);
 
 		pos = GetWindowTextLength(hEdit);
 	}
