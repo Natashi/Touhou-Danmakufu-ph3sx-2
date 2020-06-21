@@ -523,7 +523,7 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 		Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. [%s]", path.c_str()));
 	}
 	catch (gstd::wexception& e) {
-		std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture. [%s]\n\t%s", path.c_str(), e.what());
+		std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture; %s\t[%s]", e.what(), path.c_str());
 		Logger::WriteTop(str);
 		return false;
 	}
@@ -702,7 +702,8 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 						data->infoImage_ = info;
 					}
 					catch (gstd::wexception& e) {
-						std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture. [%s]\n\t%s", path.c_str(), e.what());
+						std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture; %s\t[%s]", 
+							e.what(), path.c_str());
 						Logger::WriteTop(str);
 						data->bLoad_ = true;//ì«Ç›çûÇ›äÆóπàµÇ¢
 						bLoadTarget = false;
@@ -774,7 +775,8 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. (Load Thread) [%s]", path.c_str()));
 		}
 		catch (gstd::wexception& e) {
-			std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture. (Load Thread) [%s]\n\t%s", path.c_str(), e.what());
+			std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture (Load Thread); %s\t[%s]",
+				e.what(), path.c_str());
 			Logger::WriteTop(str);
 		}
 		data->bLoad_ = true;
