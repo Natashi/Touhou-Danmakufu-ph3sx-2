@@ -691,7 +691,7 @@ void StgShotRenderer::Render(StgShotManager* manager) {
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
-	IDirect3DTexture9* pTexture = texture_[0] ? texture_[0]->GetD3DTexture() : nullptr;
+	IDirect3DTexture9* pTexture = texture_ ? texture_->GetD3DTexture() : nullptr;
 	device->SetTexture(0, pTexture);
 	//device->SetTexture(1, pTexture);
 

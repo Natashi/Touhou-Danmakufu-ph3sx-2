@@ -130,6 +130,24 @@ namespace directx {
 		D3DXMATRIX& GetMatrix(size_t index) { return matrix_[index]; }
 	};
 
+	class DirectionalLightingState {
+	public:
+		DirectionalLightingState();
+		~DirectionalLightingState();
+
+		void SetDirection(D3DXVECTOR3& dir) { light_.Direction = dir; }
+		void SetColorDiffuse(D3DCOLORVALUE& col) { light_.Diffuse = col; }
+		void SetColorSpecular(D3DCOLORVALUE& col) { light_.Specular = col; }
+		void SetColorAmbient(D3DCOLORVALUE& col) { light_.Ambient = col; }
+
+		void SetEnable(bool b) { bEnable_ = b; }
+
+		void Apply();
+	private:
+		bool bEnable_;
+		D3DLIGHT9 light_;
+	};
+
 	/**********************************************************
 	//RenderObject
 	//レンダリングオブジェクト
@@ -139,42 +157,38 @@ namespace directx {
 	**********************************************************/
 	class RenderObject {
 	protected:
-		D3DPRIMITIVETYPE typePrimitive_;//
-		size_t strideVertexStreamZero_;//1頂点のサイズ
-
-		std::vector<byte> vertex_;//頂点
-		std::vector<uint16_t> vertexIndices_;
-		std::vector<shared_ptr<Texture>> texture_;//テクスチャ
-		D3DXVECTOR3 posWeightCenter_;//重心
-
+		D3DPRIMITIVETYPE typePrimitive_;
 		D3DTEXTUREFILTERTYPE filterMin_;
 		D3DTEXTUREFILTERTYPE filterMag_;
 		D3DTEXTUREFILTERTYPE filterMip_;
 		D3DCULL modeCulling_;
 
-		D3DXVECTOR3 position_;//移動先座標
-		D3DXVECTOR3 angle_;//回転角度
-		D3DXVECTOR3 scale_;//拡大率
-		shared_ptr<D3DXMATRIX> matRelative_;//関係行列
-		bool bCoordinate2D_;//2D座標指定
+		DirectionalLightingState lightParameter_;
+
+		size_t strideVertexStreamZero_;			//byte size per vertex data
+		std::vector<byte> vertex_;				//vertex data
+		std::vector<uint16_t> vertexIndices_;	//Index data
+		shared_ptr<Texture> texture_;
+		D3DXVECTOR3 posWeightCenter_;
+
+		D3DXVECTOR3 position_;
+		D3DXVECTOR3 angle_;
+		D3DXVECTOR3 scale_;
+
+		shared_ptr<D3DXMATRIX> matRelative_;
 		shared_ptr<Shader> shader_;
 
+		bool bCoordinate2D_;
 		bool disableMatrixTransform_;
 		bool bVertexShaderMode_;
 		bool flgUseVertexBufferMode_;
-
-		void _SetTextureStageCount(size_t count) { 
-			texture_.resize(count); 
-			for (size_t i = 0; i < count; i++)
-				texture_[i] = nullptr; 
-		}
 	public:
 		RenderObject();
 		virtual ~RenderObject();
 		virtual void Render() = 0;
 		virtual void CalculateWeightCenter() {}
 		D3DXVECTOR3 GetWeightCenter() { return posWeightCenter_; }
-		shared_ptr<Texture> GetTexture(int pos = 0) { return texture_[pos]; }
+		shared_ptr<Texture> GetTexture() { return texture_; }
 
 		size_t _GetPrimitiveCount();
 		size_t _GetPrimitiveCount(size_t count);
@@ -196,7 +210,6 @@ namespace directx {
 			D3DXVECTOR2& objectPosition, D3DXVECTOR2& biasPosition, D3DXMATRIX* matCamera);
 		static void SetCoordinate2dDeviceMatrix();
 
-		//頂点設定
 		void SetPrimitiveType(D3DPRIMITIVETYPE type) { typePrimitive_ = type; }
 		D3DPRIMITIVETYPE GetPrimitiveType() { return typePrimitive_; }
 		virtual void SetVertexCount(size_t count) {
@@ -207,7 +220,6 @@ namespace directx {
 		virtual size_t GetVertexCount() { return vertex_.size() / strideVertexStreamZero_; }
 		void SetVertexIndices(std::vector<uint16_t>& indices) { vertexIndices_ = indices; }
 
-		//描画用設定
 		void SetPosition(D3DXVECTOR3& pos) { position_ = pos; }
 		void SetPosition(float x, float y, float z) { position_.x = x; position_.y = y; position_.z = z; }
 		void SetX(float x) { position_.x = x; }
@@ -217,8 +229,12 @@ namespace directx {
 		void SetAngleXYZ(float angx = 0.0f, float angy = 0.0f, float angz = 0.0f) { angle_.x = angx; angle_.y = angy; angle_.z = angz; }
 		void SetScale(D3DXVECTOR3& scale) { scale_ = scale; }
 		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f) { scale_.x = sx; scale_.y = sy; scale_.z = sz; }
-		void SetTexture(Texture* texture, int stage = 0);//テクスチャ設定
-		void SetTexture(shared_ptr<Texture> texture, int stage = 0);//テクスチャ設定
+		void SetTexture(Texture* texture) { 
+			if (texture)
+				texture_ = std::make_shared<Texture>(texture);
+			else texture_ = nullptr;
+		}
+		void SetTexture(shared_ptr<Texture> texture) { texture_ = texture; }
 
 		bool IsCoordinate2D() { return bCoordinate2D_; }
 		void SetCoordinate2D(bool b) { bCoordinate2D_ = b; }
@@ -232,6 +248,8 @@ namespace directx {
 		D3DTEXTUREFILTERTYPE GetFilteringMin() { return filterMin_; }
 		D3DTEXTUREFILTERTYPE GetFilteringMag() { return filterMag_; }
 		D3DTEXTUREFILTERTYPE GetFilteringMip() { return filterMip_; }
+
+		DirectionalLightingState* GetLighting() { return &lightParameter_; }
 
 		shared_ptr<Shader> GetShader() { return shader_; }
 		void SetShader(shared_ptr<Shader> shader) { shader_ = shader; }
@@ -631,17 +649,20 @@ namespace directx {
 	public:
 		friend DxMeshManager;
 	protected:
-		D3DXVECTOR3 position_;//移動先座標
-		D3DXVECTOR3 angle_;//回転角度
-		D3DXVECTOR3 scale_;//拡大率
-		D3DCOLOR color_;
-		bool bCoordinate2D_;//2D座標指定
-		shared_ptr<Shader> shader_;
-
 		D3DTEXTUREFILTERTYPE filterMin_;
 		D3DTEXTUREFILTERTYPE filterMag_;
 		D3DTEXTUREFILTERTYPE filterMip_;
 		bool bVertexShaderMode_;
+		bool bCoordinate2D_;
+
+		DirectionalLightingState lightParameter_;
+
+		D3DXVECTOR3 position_;
+		D3DXVECTOR3 angle_;
+		D3DXVECTOR3 scale_;
+		D3DCOLOR color_;
+		
+		shared_ptr<Shader> shader_;
 
 		shared_ptr<DxMeshData> data_;
 		shared_ptr<DxMeshData> _GetFromManager(std::wstring name);
@@ -685,11 +706,17 @@ namespace directx {
 		void SetFilteringMip(D3DTEXTUREFILTERTYPE filter) { filterMip_ = filter; }
 		void SetVertexShaderRendering(bool b) { bVertexShaderMode_ = b; }
 
+		DirectionalLightingState* GetLighting() { return &lightParameter_; }
+
 		bool IsCoordinate2D() { return bCoordinate2D_; }
 		void SetCoordinate2D(bool b) { bCoordinate2D_ = b; }
 
 		gstd::ref_count_ptr<RenderBlocks> CreateRenderBlocks() { return NULL; }
-		virtual D3DXMATRIX GetAnimationMatrix(std::wstring nameAnime, double time, std::wstring nameBone) { D3DXMATRIX mat; D3DXMatrixIdentity(&mat); return mat; }
+		virtual D3DXMATRIX GetAnimationMatrix(std::wstring nameAnime, double time, std::wstring nameBone) { 
+			D3DXMATRIX mat; 
+			D3DXMatrixIdentity(&mat); 
+			return mat; 
+		}
 		shared_ptr<Shader> GetShader() { return shader_; }
 		void SetShader(shared_ptr<Shader> shader) { shader_ = shader; }
 	};

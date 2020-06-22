@@ -325,7 +325,7 @@ void DxScriptPrimitiveObject3D::SetRenderState() {
 	obj->SetPosition(position_);
 	obj->SetAngle(angle_);
 	obj->SetScale(scale_);
-	graphics->SetLightingEnable(false);
+	obj->GetLighting()->Apply();
 	graphics->SetZWriteEnable(bZWrite_);
 	graphics->SetZBufferEnable(bZTest_);
 	if (bEnvFogEnable)
@@ -519,6 +519,7 @@ void DxScriptParticleListObject3D::SetRenderState() {
 	obj->SetPosition(position_);
 	obj->SetAngle(angle_);
 	obj->SetScale(scale_);
+	//obj->GetLighting()->Apply();
 	graphics->SetLightingEnable(false);
 	graphics->SetZWriteEnable(bZWrite_);
 	graphics->SetZBufferEnable(bZTest_);
@@ -577,7 +578,7 @@ void DxScriptMeshObject::SetRenderState() {
 	mesh_->SetColor(color_);
 	mesh_->SetCoordinate2D(bCoordinate2D_);
 
-	graphics->SetLightingEnable(true);
+	mesh_->GetLighting()->Apply();
 	graphics->SetZWriteEnable(bZWrite_);
 	graphics->SetZBufferEnable(bZTest_);
 	if (bEnvFogEnable)
@@ -870,7 +871,8 @@ bool DxTextFileObject::OpenR(gstd::ref_count_ptr<gstd::FileReader> reader) {
 
 	std::vector<char> text;
 	text.resize(size);
-	reader->Read(&text[0], size);
+	reader_->SetFilePointerBegin();
+	reader_->Read(&text[0], size);
 
 	return _ParseLines(text);
 }
@@ -884,6 +886,7 @@ bool DxTextFileObject::OpenRW(std::wstring path) {
 
 	std::vector<char> text;
 	text.resize(size);
+	file_->SetFilePointerBegin();
 	file_->Read(&text[0], size);
 
 	return _ParseLines(text);
@@ -1644,6 +1647,11 @@ function const dxFunction[] =
 	{ "ObjRender_SetTextureFilterMag", DxScript::Func_ObjRender_SetTextureFilterMag, 2 },
 	{ "ObjRender_SetTextureFilterMip", DxScript::Func_ObjRender_SetTextureFilterMip, 2 },
 	{ "ObjRender_SetVertexShaderRenderingMode", DxScript::Func_ObjRender_SetVertexShaderRenderingMode, 2 },
+	{ "ObjRender_SetLightingEnable", DxScript::Func_ObjRender_SetLightingEnable, 2 },
+	{ "ObjRender_SetLightingDiffuseColor", DxScript::Func_ObjRender_SetLightingDiffuseColor, 4 },
+	{ "ObjRender_SetLightingSpecularColor", DxScript::Func_ObjRender_SetLightingSpecularColor, 4 },
+	{ "ObjRender_SetLightingAmbientColor", DxScript::Func_ObjRender_SetLightingAmbientColor, 4 },
+	{ "ObjRender_SetLightingDirection", DxScript::Func_ObjRender_SetLightingDirection, 4 },
 
 	//Dx関数：オブジェクト操作(ShaderObject)
 	{ "ObjShader_Create", DxScript::Func_ObjShader_Create, 0 },
@@ -3863,6 +3871,87 @@ value DxScript::Func_ObjRender_SetVertexShaderRenderingMode(gstd::script_machine
 
 	return value();
 }
+value DxScript::Func_ObjRender_SetLightingEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+
+	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		if (auto objLight = obj->GetLightPointer())
+			objLight->SetEnable(argv[1].as_boolean());
+	}
+
+	return value();
+}
+value DxScript::Func_ObjRender_SetLightingDiffuseColor(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+
+	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		if (auto objLight = obj->GetLightPointer()) {
+			D3DCOLORVALUE color = {
+				(float)argv[1].as_real() / 255.0f,
+				(float)argv[2].as_real() / 255.0f,
+				(float)argv[3].as_real() / 255.0f,
+				0.0f,
+			};
+			objLight->SetColorDiffuse(color);
+		}
+	}
+
+	return value();
+}
+value DxScript::Func_ObjRender_SetLightingSpecularColor(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+
+	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		if (auto objLight = obj->GetLightPointer()) {
+			D3DCOLORVALUE color = {
+				(float)argv[1].as_real() / 255.0f,
+				(float)argv[2].as_real() / 255.0f,
+				(float)argv[3].as_real() / 255.0f,
+				0.0f,
+			};
+			objLight->SetColorSpecular(color);
+		}
+	}
+
+	return value();
+}
+value DxScript::Func_ObjRender_SetLightingAmbientColor(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+
+	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		if (auto objLight = obj->GetLightPointer()) {
+			D3DCOLORVALUE color = {
+				(float)argv[1].as_real() / 255.0f,
+				(float)argv[2].as_real() / 255.0f,
+				(float)argv[3].as_real() / 255.0f,
+				0.0f,
+			};
+			objLight->SetColorAmbient(color);
+		}
+	}
+
+	return value();
+}
+value DxScript::Func_ObjRender_SetLightingDirection(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+
+	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		if (auto objLight = obj->GetLightPointer())
+			objLight->SetDirection(D3DXVECTOR3(argv[1].as_real(), argv[2].as_real(), argv[3].as_real()));
+	}
+
+	return value();
+}
 
 //Dx関数：オブジェクト操作(ShaderObject)
 gstd::value DxScript::Func_ObjShader_Create(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -5318,10 +5407,8 @@ gstd::value DxScript::Func_ObjFile_Open(gstd::script_machine* machine, int argc,
 
 		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader && reader->Open()) {
-			ManagedFileReader* ptrManaged = dynamic_cast<ManagedFileReader*>(reader.GetPointer());
-			obj->isArchived_ = ptrManaged->IsArchived();
-
-			res = obj->OpenR(path);
+			obj->isArchived_ = reader->IsArchived();
+			res = obj->OpenR(reader);
 		}
 	}
 	return script->CreateBooleanValue(res);
@@ -5337,13 +5424,14 @@ gstd::value DxScript::Func_ObjFile_OpenNW(gstd::script_machine* machine, int arg
 
 		obj->isArchived_ = false;
 
-		//Cannot write to an archived file, fall back to read-only permission
+		//Try finding a managed file object
 		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader && reader->Open()) {
+			//Cannot write to an archived file, fall back to read-only permission
 			ManagedFileReader* ptrManaged = dynamic_cast<ManagedFileReader*>(reader.GetPointer());
 			if (ptrManaged->IsArchived()) {
 				obj->isArchived_ = true;
-				res = obj->OpenR(path);
+				res = obj->OpenR(reader);
 			}
 			else res = obj->OpenRW(path);
 		}
@@ -5390,7 +5478,7 @@ gstd::value DxScript::Func_ObjFileT_GetLineText(gstd::script_machine* machine, i
 
 	int line = (int)argv[1].as_real();
 	std::wstring res = obj->GetLineAsWString(line);
-	return value(machine->get_engine()->get_string_type(), obj->GetLineAsWString(line));
+	return script->CreateStringValue(res);
 }
 gstd::value DxScript::Func_ObjFileT_SetLineText(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -5633,7 +5721,7 @@ gstd::value DxScript::Func_ObjFileB_ReadString(gstd::script_machine* machine, in
 		}
 	}
 
-	return value(machine->get_engine()->get_string_type(), res);
+	return script->CreateStringValue(res);
 }
 
 gstd::value DxScript::Func_ObjFileB_WriteBoolean(gstd::script_machine* machine, int argc, const gstd::value* argv) {

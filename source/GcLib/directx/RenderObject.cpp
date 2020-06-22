@@ -153,6 +153,29 @@ void RenderStateFunction::SetTextureFilter(DWORD mode, int stage) {
 }
 
 /**********************************************************
+//DirectionalLightingState
+**********************************************************/
+DirectionalLightingState::DirectionalLightingState() {
+	bEnable_ = false;
+
+	ZeroMemory(&light_, sizeof(D3DLIGHT9));
+	light_.Type = D3DLIGHT_DIRECTIONAL;
+	light_.Diffuse = { 0.5f, 0.5f, 0.5f, 0.0f };
+	light_.Specular = { 0.0f, 0.0f, 0.0f, 0.0f };
+	light_.Ambient = { 0.5f, 0.5f, 0.5f, 0.0f };
+	light_.Direction = D3DXVECTOR3(-1, -1, -1);
+}
+DirectionalLightingState::~DirectionalLightingState() {
+
+}
+void DirectionalLightingState::Apply() {
+	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
+	device->SetRenderState(D3DRS_LIGHTING, bEnable_);
+	device->LightEnable(0, bEnable_);
+	if (bEnable_) device->SetLight(0, &light_);
+}
+
+/**********************************************************
 //RenderObject
 **********************************************************/
 RenderObject::RenderObject() {
@@ -567,29 +590,12 @@ void RenderObject::SetCoordinate2dDeviceMatrix() {
 
 	device->SetTransform(D3DTS_VIEW, &viewMat);
 }
-void RenderObject::SetTexture(Texture* texture, int stage) {
-	if (texture == nullptr)
-		texture_[stage] = nullptr;
-	else {
-		if (stage >= texture_.size())return;
-		texture_[stage] = std::make_shared<Texture>(texture);
-	}
-}
-void RenderObject::SetTexture(shared_ptr<Texture> texture, int stage) {
-	if (texture == nullptr)
-		texture_[stage] = nullptr;
-	else {
-		if (stage >= texture_.size())return;
-		texture_[stage] = texture;
-	}
-}
 
 /**********************************************************
 //RenderObjectTLX
 //座標3D変換済み、ライティング済み、テクスチャ有り
 **********************************************************/
 RenderObjectTLX::RenderObjectTLX() {
-	_SetTextureStageCount(1);
 	strideVertexStreamZero_ = sizeof(VERTEX_TLX);
 	bPermitCamera_ = true;
 }
@@ -618,11 +624,7 @@ void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture != nullptr)
-		device->SetTexture(0, texture->GetD3DTexture());
-	else
-		device->SetTexture(0, nullptr);
+	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
 	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
@@ -792,7 +794,6 @@ void RenderObjectTLX::SetAlpha(int alpha) {
 //ライティング済み、テクスチャ有り
 **********************************************************/
 RenderObjectLX::RenderObjectLX() {
-	_SetTextureStageCount(1);
 	strideVertexStreamZero_ = sizeof(VERTEX_LX);
 }
 RenderObjectLX::~RenderObjectLX() {
@@ -801,11 +802,7 @@ RenderObjectLX::~RenderObjectLX() {
 void RenderObjectLX::Render() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture != nullptr)
-		device->SetTexture(0, texture->GetD3DTexture());
-	else
-		device->SetTexture(0, nullptr);
+	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
 	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
@@ -939,11 +936,8 @@ void RenderObjectLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& a
 void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture != nullptr)
-		device->SetTexture(0, texture->GetD3DTexture());
-	else
-		device->SetTexture(0, nullptr);
+
+	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
 	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
@@ -1103,7 +1097,6 @@ void RenderObjectLX::SetAlpha(int alpha) {
 //RenderObjectNX
 **********************************************************/
 RenderObjectNX::RenderObjectNX() {
-	_SetTextureStageCount(1);
 	strideVertexStreamZero_ = sizeof(VERTEX_NX);
 
 	color_ = 0xffffffff;
@@ -1121,11 +1114,8 @@ void RenderObjectNX::Render() {
 void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
-	shared_ptr<Texture>& texture = texture_[0];
 
-	if (texture != nullptr)
-		device->SetTexture(0, texture->GetD3DTexture());
-	else device->SetTexture(0, nullptr);
+	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
 	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
@@ -1232,7 +1222,6 @@ void RenderObjectNX::SetVertexNormal(size_t index, float x, float y, float z) {
 //RenderObjectBNX
 **********************************************************/
 RenderObjectBNX::RenderObjectBNX() {
-	_SetTextureStageCount(1);
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 
 	materialBNX_.Diffuse.a = 1.0f; materialBNX_.Diffuse.r = 1.0f; materialBNX_.Diffuse.g = 1.0f; materialBNX_.Diffuse.b = 1.0f;
@@ -1273,10 +1262,8 @@ void RenderObjectBNX::Render() {
 }
 void RenderObjectBNX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
 	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture != nullptr)
-		device->SetTexture(0, texture->GetD3DTexture());
-	else device->SetTexture(0, nullptr);
+
+	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
 	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
@@ -1636,9 +1623,7 @@ void Sprite2D::Copy(Sprite2D* src) {
 	vertex_ = src->vertex_;
 	vertexIndices_ = src->vertexIndices_;
 
-	for (size_t iTex = 0; iTex < texture_.size(); ++iTex) {
-		texture_[iTex] = src->texture_[iTex];
-	}
+	texture_ = src->texture_;
 
 	posWeightCenter_ = src->posWeightCenter_;
 
@@ -1648,10 +1633,9 @@ void Sprite2D::Copy(Sprite2D* src) {
 	matRelative_ = src->matRelative_;
 }
 void Sprite2D::SetSourceRect(RECT_D& rcSrc) {
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture == nullptr)return;
-	float width = texture->GetWidth();
-	float height = texture->GetHeight();
+	if (texture_ == nullptr) return;
+	float width = texture_->GetWidth();
+	float height = texture_->GetHeight();
 
 	//テクスチャUV
 	SetVertexUV(0, (float)rcSrc.left / width, (float)rcSrc.top / height);
@@ -1687,10 +1671,9 @@ RECT_D Sprite2D::GetDestinationRect() {
 	return rect;
 }
 void Sprite2D::SetDestinationCenter() {
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture == nullptr || GetVertexCount() < 4)return;
-	float width = texture->GetWidth();
-	float height = texture->GetHeight();
+	if (texture_ == nullptr || GetVertexCount() < 4)return;
+	float width = texture_->GetWidth();
+	float height = texture_->GetHeight();
 
 	VERTEX_TLX* vertLT = GetVertex(0); //左上
 	VERTEX_TLX* vertRB = GetVertex(3); //右下
@@ -1727,11 +1710,7 @@ void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& ang
 	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture != nullptr)
-		device->SetTexture(0, texture->GetD3DTexture());
-	else
-		device->SetTexture(0, nullptr);
+	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
 	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
@@ -1851,11 +1830,9 @@ void SpriteList2D::AddVertex(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 	if (bCloseVertexList_ || countRenderVertex_ > 65536 / 6)
 		return;
 
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture == nullptr)return;
-
-	int width = texture->GetWidth();
-	int height = texture->GetHeight();
+	if (texture_ == nullptr) return;
+	int width = texture_->GetWidth();
+	int height = texture_->GetHeight();
 
 	D3DXMATRIX matWorld = RenderObject::CreateWorldMatrix2D(position_, scale_,
 		angX, angY, angZ, nullptr);
@@ -1912,10 +1889,9 @@ void SpriteList2D::AddVertex(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 	_AddVertex(verts[3]);
 }
 void SpriteList2D::SetDestinationCenter() {
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture == nullptr)return;
-	int width = texture->GetWidth();
-	int height = texture->GetHeight();
+	if (texture_ == nullptr) return;
+	int width = texture_->GetWidth();
+	int height = texture_->GetHeight();
 
 	VERTEX_TLX* vertLT = GetVertex(0); //左上
 	VERTEX_TLX* vertRB = GetVertex(3); //右下
@@ -1972,10 +1948,9 @@ void Sprite3D::SetSourceDestRect(RECT_D &rcSrc) {
 	SetDestinationRect(rcDest);
 }
 void Sprite3D::SetSourceRect(RECT_D& rcSrc) {
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture == nullptr)return;
-	float width = texture->GetWidth();
-	float height = texture->GetHeight();
+	if (texture_ == nullptr) return;
+	int width = texture_->GetWidth();
+	int height = texture_->GetHeight();
 
 	//テクスチャUV
 	SetVertexUV(0, (float)rcSrc.left / width, (float)rcSrc.top / height);
@@ -2038,10 +2013,7 @@ void TrajectoryObject3D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR
 	SetVertexCount(size);
 
 	int width = 1;
-	shared_ptr<Texture> texture = texture_[0];
-	if (texture != nullptr) {
-		width = texture->GetWidth();
-	}
+	if (texture_) width = texture_->GetWidth();
 
 	float dWidth = 1.0 / width / listData_.size();
 	size_t iData = 0;
@@ -2186,11 +2158,7 @@ void ParticleRenderer2D::Render() {
 
 	bool bCamera = camera->IsEnable() && bPermitCamera_;
 
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture != nullptr)
-		device->SetTexture(0, texture->GetD3DTexture());
-	else
-		device->SetTexture(0, nullptr);
+	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
 	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
@@ -2291,11 +2259,7 @@ void ParticleRenderer3D::Render() {
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 
-	shared_ptr<Texture>& texture = texture_[0];
-	if (texture != nullptr)
-		device->SetTexture(0, texture->GetD3DTexture());
-	else
-		device->SetTexture(0, nullptr);
+	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
 	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
@@ -2409,6 +2373,8 @@ DxMesh::DxMesh() {
 	scale_ = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 	bCoordinate2D_ = false;
+
+	lightParameter_.SetEnable(true);
 }
 DxMesh::~DxMesh() {
 	Release();

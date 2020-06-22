@@ -146,6 +146,8 @@ namespace directx {
 		virtual void SetColor(int r, int g, int b) = 0;
 		virtual void SetAlpha(int alpha) = 0;
 
+		virtual DirectionalLightingState* GetLightPointer() { return nullptr; }
+
 		D3DXVECTOR3 GetPosition() { return position_; }
 		D3DXVECTOR3 GetAngle() { return angle_; }
 		D3DXVECTOR3 GetScale() { return scale_; }
@@ -197,6 +199,7 @@ namespace directx {
 	public:
 		DxScriptPrimitiveObject();
 
+		virtual DirectionalLightingState* GetLightPointer() { return objRender_->GetLighting(); }
 		RenderObject* GetObjectPointer() { return (RenderObject*)objRender_.get(); }
 
 		void SetPrimitiveType(D3DPRIMITIVETYPE type) { objRender_->SetPrimitiveType(type); }
@@ -382,6 +385,9 @@ namespace directx {
 	public:
 		DxScriptMeshObject();
 		virtual void Render();
+
+		virtual DirectionalLightingState* GetLightPointer() { return mesh_->GetLighting(); }
+
 		virtual void SetRenderState();
 		virtual void SetColor(int r, int g, int b);
 		virtual void SetAlpha(int alpha);
@@ -922,6 +928,11 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetTextureFilterMag);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetTextureFilterMip);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetVertexShaderRenderingMode);
+		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingEnable);
+		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingDiffuseColor);
+		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingSpecularColor);
+		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingAmbientColor);
+		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingDirection);
 
 		//Dx関数：オブジェクト操作(ShaderObject)
 		static gstd::value Func_ObjShader_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);

@@ -605,7 +605,7 @@ void StgItemRenderer::Render(StgItemManager* manager) {
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
-	IDirect3DTexture9* pTexture = texture_[0] ? texture_[0]->GetD3DTexture() : nullptr;
+	IDirect3DTexture9* pTexture = texture_ ? texture_->GetD3DTexture() : nullptr;
 	device->SetTexture(0, pTexture);
 
 	VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
