@@ -48,6 +48,7 @@
 	- IsIntersected_Line_Circle can now be used in package-level scripts.
 	- Added a particle renderer object (ObjParticleList) and two new relevant sample scripts.
 	- Added support for vertex indexing.
+	- Added support for basic directional lighting.
 	- Fixed underflowing and overflowing issues with ObjRender_SetColor/SetAlpha.
 	- ObjFileT now properly reads from and writes to UTF-8 text files.
 	- ObjFile_OpenNW now allows both reading and writing, unless the file was stored in a .dat archive, in which case all write functions will fail.

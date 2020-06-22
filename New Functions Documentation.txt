@@ -720,6 +720,60 @@ ObjRender_SetVertexShaderRenderingMode
 	Description:
 		Sets whether the render object will be rendered with support for vertex shaders.
 		Rendering will not be performed without an attached shader object when this is set to true.
+		
+ObjRender_SetLightingEnable
+	Arguments:
+		1) object ID
+		2) (bool) lighting
+	Description:
+		Enables or disables the 3D directional lighting for the render object.
+		
+		Excluding mesh objects, the default value is false.
+		
+ObjRender_SetLightingDiffuseColor
+	Arguments:
+		1) object ID
+		2) r
+		3) g
+		4) b
+	Description:
+		Sets the diffuse color of the lighting.
+		
+		The default color value is (128, 128, 128).
+		
+ObjRender_SetLightingSpecularColor
+	Arguments:
+		1) object ID
+		2) r
+		3) g
+		4) b
+	Description:
+		Sets the specular color of the lighting.
+		
+		The default color value is (0, 0, 0).
+		
+ObjRender_SetLightingAmbientColor
+	Arguments:
+		1) object ID
+		2) r
+		3) g
+		4) b
+	Description:
+		Sets the ambient color of the lighting.
+		
+		The default color value is (128, 128, 128).
+		
+ObjRender_SetLightingDirection
+	Arguments:
+		1) object ID
+		2) r
+		3) g
+		4) b
+	Description:
+		Sets the direction vector of the lighting.
+		Vector does not need to be normalized, but should have a non-zero length.
+		
+		The default direction vector is (-1, -1, -1).
 
 ObjPrim_SetVertexColorHSV
 	Arguments:
