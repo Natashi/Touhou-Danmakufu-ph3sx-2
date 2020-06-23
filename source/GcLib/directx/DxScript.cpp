@@ -1647,7 +1647,7 @@ function const dxFunction[] =
 	{ "ObjRender_SetTextureFilterMag", DxScript::Func_ObjRender_SetTextureFilterMag, 2 },
 	{ "ObjRender_SetTextureFilterMip", DxScript::Func_ObjRender_SetTextureFilterMip, 2 },
 	{ "ObjRender_SetVertexShaderRenderingMode", DxScript::Func_ObjRender_SetVertexShaderRenderingMode, 2 },
-	{ "ObjRender_SetLightingEnable", DxScript::Func_ObjRender_SetLightingEnable, 2 },
+	{ "ObjRender_SetLightingEnable", DxScript::Func_ObjRender_SetLightingEnable, 3 },
 	{ "ObjRender_SetLightingDiffuseColor", DxScript::Func_ObjRender_SetLightingDiffuseColor, 4 },
 	{ "ObjRender_SetLightingSpecularColor", DxScript::Func_ObjRender_SetLightingSpecularColor, 4 },
 	{ "ObjRender_SetLightingAmbientColor", DxScript::Func_ObjRender_SetLightingAmbientColor, 4 },
@@ -3877,8 +3877,10 @@ value DxScript::Func_ObjRender_SetLightingEnable(gstd::script_machine* machine, 
 
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		if (auto objLight = obj->GetLightPointer())
-			objLight->SetEnable(argv[1].as_boolean());
+		if (auto objLight = obj->GetLightPointer()) {
+			objLight->SetLightEnable(argv[1].as_boolean());
+			objLight->SetSpecularEnable(argv[2].as_boolean());
+		}
 	}
 
 	return value();

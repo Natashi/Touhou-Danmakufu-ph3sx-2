@@ -156,7 +156,8 @@ void RenderStateFunction::SetTextureFilter(DWORD mode, int stage) {
 //DirectionalLightingState
 **********************************************************/
 DirectionalLightingState::DirectionalLightingState() {
-	bEnable_ = false;
+	bLightEnable_ = false;
+	bSpecularEnable_ = false;
 
 	ZeroMemory(&light_, sizeof(D3DLIGHT9));
 	light_.Type = D3DLIGHT_DIRECTIONAL;
@@ -170,9 +171,10 @@ DirectionalLightingState::~DirectionalLightingState() {
 }
 void DirectionalLightingState::Apply() {
 	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
-	device->SetRenderState(D3DRS_LIGHTING, bEnable_);
-	device->LightEnable(0, bEnable_);
-	if (bEnable_) device->SetLight(0, &light_);
+	device->SetRenderState(D3DRS_LIGHTING, bLightEnable_);
+	device->SetRenderState(D3DRS_SPECULARENABLE, bLightEnable_ ? bSpecularEnable_ : false);
+	device->LightEnable(0, bLightEnable_);
+	if (bLightEnable_) device->SetLight(0, &light_);
 }
 
 /**********************************************************
@@ -2374,7 +2376,7 @@ DxMesh::DxMesh() {
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 	bCoordinate2D_ = false;
 
-	lightParameter_.SetEnable(true);
+	lightParameter_.SetLightEnable(true);
 }
 DxMesh::~DxMesh() {
 	Release();

@@ -140,11 +140,13 @@ namespace directx {
 		void SetColorSpecular(D3DCOLORVALUE& col) { light_.Specular = col; }
 		void SetColorAmbient(D3DCOLORVALUE& col) { light_.Ambient = col; }
 
-		void SetEnable(bool b) { bEnable_ = b; }
+		void SetLightEnable(bool b) { bLightEnable_ = b; }
+		void SetSpecularEnable(bool b) { bSpecularEnable_ = b; }
 
 		void Apply();
 	private:
-		bool bEnable_;
+		bool bLightEnable_;
+		bool bSpecularEnable_;
 		D3DLIGHT9 light_;
 	};
 

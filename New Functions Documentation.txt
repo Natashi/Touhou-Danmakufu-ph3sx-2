@@ -724,11 +724,13 @@ ObjRender_SetVertexShaderRenderingMode
 ObjRender_SetLightingEnable
 	Arguments:
 		1) object ID
-		2) (bool) lighting
+		2) (bool) lighting enable
+		2) (bool) specular lighting enable
 	Description:
-		Enables or disables the 3D directional lighting for the render object.
+		Enables or disables the 3D directional lighting and specular lighting for the render object.
 		
-		Excluding mesh objects, the default value is false.
+		The default values are false and false.
+		For mesh objects, the default values are true and false.
 		
 ObjRender_SetLightingDiffuseColor
 	Arguments:
@@ -750,7 +752,7 @@ ObjRender_SetLightingSpecularColor
 	Description:
 		Sets the specular color of the lighting.
 		
-		The default color value is (0, 0, 0).
+		The default color value is (128, 128, 128).
 		
 ObjRender_SetLightingAmbientColor
 	Arguments:
@@ -766,9 +768,9 @@ ObjRender_SetLightingAmbientColor
 ObjRender_SetLightingDirection
 	Arguments:
 		1) object ID
-		2) r
-		3) g
-		4) b
+		2) x component
+		3) y component
+		4) z component
 	Description:
 		Sets the direction vector of the lighting.
 		Vector does not need to be normalized, but should have a non-zero length.
