@@ -127,82 +127,94 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 	//<material index, face list>
 	std::map<int, std::list<MetasequoiaMeshData::Object::Face*>> mapFace;
 
-	while (true) {
-		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+	{
+		int type_color = 0;
 
-		if (tok.GetElement() == L"visible") {
-			obj.bVisible_ = scanner.Next().GetInteger() == 15;
-		}
-		else if (tok.GetElement() == L"color") {
-			obj.color_.x = scanner.Next().GetReal();
-			obj.color_.y = scanner.Next().GetReal();
-			obj.color_.z = scanner.Next().GetReal();
-		}
-		else if (tok.GetElement() == L"vertex") {
-			size_t count = scanner.Next().GetInteger();
-			obj.vertices_.resize(count);
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
-			for (size_t iVert = 0; iVert < count; iVert++) {
-				obj.vertices_[iVert].x = scanner.Next().GetReal();
-				obj.vertices_[iVert].y = scanner.Next().GetReal();
-				obj.vertices_[iVert].z = -scanner.Next().GetReal();
+		while (true) {
+			gstd::Token& tok = scanner.Next();
+			if (tok.GetType() == Token::TK_CLOSEC)break;
+
+			if (tok.GetElement() == L"visible") {
+				obj.bVisible_ = scanner.Next().GetInteger() == 15;
+			}
+			else if (tok.GetElement() == L"color") {
+				obj.color_.x = scanner.Next().GetReal();
+				obj.color_.y = scanner.Next().GetReal();
+				obj.color_.z = scanner.Next().GetReal();
+			}
+			else if (tok.GetElement() == L"color_type") {
+				type_color = scanner.Next().GetReal();
+			}
+			else if (tok.GetElement() == L"vertex") {
+				size_t count = scanner.Next().GetInteger();
+				obj.vertices_.resize(count);
+				scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+				for (size_t iVert = 0; iVert < count; ++iVert) {
+					obj.vertices_[iVert].x = scanner.Next().GetReal();
+					obj.vertices_[iVert].y = scanner.Next().GetReal();
+					obj.vertices_[iVert].z = -scanner.Next().GetReal();
+					scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+				}
+				scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
 				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
 			}
-			scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
-		}
-		else if (tok.GetElement() == L"face") {
-			size_t countFace = scanner.Next().GetInteger();
-			obj.faces_.resize(countFace);
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			else if (tok.GetElement() == L"face") {
+				size_t countFace = scanner.Next().GetInteger();
+				obj.faces_.resize(countFace);
+				scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
 
-			for (size_t iFace = 0; iFace < countFace; iFace++) {
-				size_t countVert = scanner.Next().GetInteger();
-				obj.faces_[iFace].vertices_.resize(countVert);
-				MetasequoiaMeshData::Object::Face* face = &obj.faces_[iFace];
+				for (size_t iFace = 0; iFace < countFace; ++iFace) {
+					size_t countVert = scanner.Next().GetInteger();
+					obj.faces_[iFace].vertices_.resize(countVert);
+					MetasequoiaMeshData::Object::Face* face = &obj.faces_[iFace];
 
-				while (true) {
-					gstd::Token& tok = scanner.Next();
-					if (tok.GetType() == Token::TK_NEWLINE)break;
-					if (tok.GetElement() == L"V") {
-						scanner.CheckType(scanner.Next(), Token::TK_OPENP);
-						for (size_t iVert = 0; iVert < countVert; iVert++)
-							face->vertices_[iVert].indexVertex_ = scanner.Next().GetInteger();
-						scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
-					}
-					else if (tok.GetElement() == L"M") {
-						scanner.CheckType(scanner.Next(), Token::TK_OPENP);
-						face->indexMaterial_ = scanner.Next().GetInteger();
-						scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
-					}
-					else if (tok.GetElement() == L"UV") {
-						scanner.CheckType(scanner.Next(), Token::TK_OPENP);
-						for (size_t iVert = 0; iVert < countVert; iVert++) {
-							face->vertices_[iVert].tcoord_.x = scanner.Next().GetReal();
-							face->vertices_[iVert].tcoord_.y = scanner.Next().GetReal();
+					while (true) {
+						gstd::Token& tok = scanner.Next();
+						if (tok.GetType() == Token::TK_NEWLINE)break;
+						if (tok.GetElement() == L"V") {
+							scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+							for (size_t iVert = 0; iVert < countVert; ++iVert)
+								face->vertices_[iVert].indexVertex_ = scanner.Next().GetInteger();
+							scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
 						}
-						scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+						else if (tok.GetElement() == L"M") {
+							scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+							face->indexMaterial_ = scanner.Next().GetInteger();
+							scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+						}
+						else if (tok.GetElement() == L"UV") {
+							scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+							for (size_t iVert = 0; iVert < countVert; ++iVert) {
+								face->vertices_[iVert].tcoord_.x = scanner.Next().GetReal();
+								face->vertices_[iVert].tcoord_.y = scanner.Next().GetReal();
+							}
+							scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+						}
 					}
+
+					mapFace[face->indexMaterial_].push_back(face);
 				}
 
-				mapFace[face->indexMaterial_].push_back(face);
+				scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
+				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
 			}
-
-			scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
-		}
-		else if (tok.GetType() == Token::TK_ID) {
-			while (scanner.GetToken().GetType() != Token::TK_OPENC &&
-				scanner.GetToken().GetType() != Token::TK_NEWLINE) {
-				scanner.Next();
-			}
-			if (scanner.GetToken().GetType() == Token::TK_OPENC) {
-				while (scanner.GetToken().GetType() != Token::TK_CLOSEC)
+			else if (tok.GetType() == Token::TK_ID) {
+				while (scanner.GetToken().GetType() != Token::TK_OPENC &&
+					scanner.GetToken().GetType() != Token::TK_NEWLINE) {
 					scanner.Next();
+				}
+				if (scanner.GetToken().GetType() == Token::TK_OPENC) {
+					while (scanner.GetToken().GetType() != Token::TK_CLOSEC)
+						scanner.Next();
+				}
 			}
+		}
+
+		//Post-processing
+		{
+			if (type_color != 1) obj.color_ = D3DXVECTOR3(1, 1, 1);
 		}
 	}
 

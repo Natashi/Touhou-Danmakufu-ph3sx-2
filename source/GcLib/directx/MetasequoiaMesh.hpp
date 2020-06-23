@@ -62,11 +62,13 @@ namespace directx {
 			std::vector<Vertex> vertices_;//面の頂点
 			Face() { indexMaterial_ = -1; }
 		};
+
 		bool bVisible_;
 		D3DXVECTOR3 color_;
-		std::wstring name_;//オブジェクト名
-		std::vector<D3DXVECTOR3> vertices_;//頂点たち
-		std::vector<Face> faces_;//面たち
+
+		std::wstring name_;	//オブジェクト名
+		std::vector<D3DXVECTOR3> vertices_;	//頂点たち
+		std::vector<Face> faces_;	//面たち
 	public:
 		Object() : bVisible_(false), color_(1, 1, 1) {}
 		virtual ~Object() {}
@@ -76,8 +78,9 @@ namespace directx {
 		friend MetasequoiaMeshData;
 	protected:
 		static Material* nullMaterial_;
-		D3DXVECTOR3 objectColor_;
+
 		Material* material_;
+		D3DXVECTOR3 objectColor_;
 	public:
 		RenderObject() : material_(nullptr), objectColor_(1, 1, 1) {};
 		virtual ~RenderObject() {};
