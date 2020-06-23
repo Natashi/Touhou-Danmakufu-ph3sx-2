@@ -607,7 +607,7 @@ gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machi
 	}
 
 	if (texture) {
-		graphics->SetRenderTarget(texture);
+		graphics->SetRenderTarget(texture, false);
 		graphics->BeginScene(false, bClear);
 
 		script->systemController_->RenderScriptObject(priMin, priMax);
@@ -644,7 +644,7 @@ gstd::value StgControlScript::Func_RenderToTextureB1(gstd::script_machine* machi
 		}
 
 		if (texture) {
-			graphics->SetRenderTarget(texture);
+			graphics->SetRenderTarget(texture, false);
 			graphics->BeginScene(false, bClear);
 
 			obj->Render();
@@ -667,11 +667,11 @@ gstd::value StgControlScript::Func_SaveSnapShotA1(gstd::script_machine* machine,
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 
-	graphics->SetRenderTarget(texture);
+	graphics->SetRenderTarget(texture, false);
 	graphics->BeginScene(false, true);
 	systemController->RenderScriptObject(0, 100);
 	graphics->EndScene(false);
-	graphics->SetRenderTarget(nullptr);
+	graphics->SetRenderTarget(nullptr, false);
 
 	//フォルダ生成
 	std::wstring dir = PathProperty::GetFileDirectory(path);
@@ -699,11 +699,11 @@ gstd::value StgControlScript::Func_SaveSnapShotA2(gstd::script_machine* machine,
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 
-	graphics->SetRenderTarget(texture);
+	graphics->SetRenderTarget(texture, false);
 	graphics->BeginScene(false, true);
 	systemController->RenderScriptObject(0, 100);
 	graphics->EndScene(false);
-	graphics->SetRenderTarget(nullptr);
+	graphics->SetRenderTarget(nullptr, false);
 
 	//フォルダ生成
 	std::wstring dir = PathProperty::GetFileDirectory(path);
@@ -736,11 +736,11 @@ gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine,
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 
-	graphics->SetRenderTarget(texture);
+	graphics->SetRenderTarget(texture, false);
 	graphics->BeginScene(false, true);
 	systemController->RenderScriptObject(0, 100);
 	graphics->EndScene(false);
-	graphics->SetRenderTarget(nullptr);
+	graphics->SetRenderTarget(nullptr, false);
 
 	//フォルダ生成
 	std::wstring dir = PathProperty::GetFileDirectory(path);

@@ -440,7 +440,7 @@ void StgStageController::RenderToTransitionTexture() {
 	TextureManager* textureManager = ETextureManager::GetInstance();
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 
-	graphics->SetRenderTarget(texture);
+	graphics->SetRenderTarget(texture, false);
 	graphics->BeginScene(false, true);
 
 	//objectManager->RenderObject();

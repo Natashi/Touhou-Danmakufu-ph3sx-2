@@ -233,7 +233,7 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 #if defined(DNH_PROJ_EXECUTOR)
 	if (camera2D_ != nullptr)
 		camera2D_->Reset();
-	_InitializeDeviceState();
+	_InitializeDeviceState(true);
 
 	BeginScene();
 	EndScene();
@@ -262,7 +262,7 @@ void DirectGraphics::_RestoreDxResource() {
 		(*itr)->RestoreDxResource();
 	}
 
-	_InitializeDeviceState();
+	_InitializeDeviceState(true);
 }
 void DirectGraphics::_Restore() {
 	Logger::WriteTop("DirectGraphics::_Restore");
@@ -290,24 +290,27 @@ void DirectGraphics::_Restore() {
 
 	Logger::WriteTop("DirectGraphics::_Restore finished.");
 }
-void DirectGraphics::_InitializeDeviceState() {
-	D3DXMATRIX viewMat;
-	D3DXMATRIX persMat;
-	if (camera_ != nullptr) {
-		camera_->SetWorldViewMatrix();
-		camera_->SetProjectionMatrix();
-		camera_->UpdateDeviceViewProjectionMatrix();
-	}
-	else {
-		D3DVECTOR viewFrom = D3DXVECTOR3(100, 300, -500);
-		D3DXMatrixLookAtLH(&viewMat, (D3DXVECTOR3*)&viewFrom, &D3DXVECTOR3(0, 0, 0), &D3DXVECTOR3(0, 1, 0));
+void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
+	if (bResetCamera) {
+		if (camera_) {
+			camera_->SetWorldViewMatrix();
+			camera_->SetProjectionMatrix();
+			camera_->UpdateDeviceViewProjectionMatrix();
+		}
+		else {
+			D3DXMATRIX viewMat;
+			D3DXMATRIX persMat;
 
-		D3DXMatrixPerspectiveFovLH(&persMat, D3DXToRadian(45.0),
-			config_.GetScreenWidth() / (float)config_.GetScreenHeight(), 10.0f, 2000.0f);
+			D3DVECTOR viewFrom = D3DXVECTOR3(100, 300, -500);
+			D3DXMatrixLookAtLH(&viewMat, (D3DXVECTOR3*)&viewFrom, &D3DXVECTOR3(0, 0, 0), &D3DXVECTOR3(0, 1, 0));
 
-		viewMat = viewMat * persMat;
+			D3DXMatrixPerspectiveFovLH(&persMat, D3DXToRadian(45.0),
+				config_.GetScreenWidth() / (float)config_.GetScreenHeight(), 10.0f, 2000.0f);
 
-		pDevice_->SetTransform(D3DTS_VIEW, &viewMat);
+			viewMat = viewMat * persMat;
+
+			pDevice_->SetTransform(D3DTS_VIEW, &viewMat);
+		}
 	}
 
 	SetCullingMode(D3DCULL_NONE);
@@ -374,7 +377,7 @@ void DirectGraphics::EndScene(bool bPresent) {
 		HRESULT hr = pDevice_->Present(nullptr, nullptr, nullptr, nullptr);
 		if (FAILED(hr)) {
 			_Restore();
-			_InitializeDeviceState();
+			_InitializeDeviceState(true);
 		}
 	}
 }
@@ -403,7 +406,7 @@ void DirectGraphics::ClearRenderTarget(RECT* rect) {
 	pDevice_->Clear(1, (D3DRECT*)rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 
 		textureTarget_ != nullptr ? D3DCOLOR_ARGB(0, 0, 0, 0) : D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
 }
-void DirectGraphics::SetRenderTarget(shared_ptr<Texture> texture, bool bResetState) {
+void DirectGraphics::SetRenderTarget(shared_ptr<Texture> texture, bool bResetCameraState) {
 	textureTarget_ = texture;
 	if (texture == nullptr) {
 		pDevice_->SetRenderTarget(0, pBackSurf_);
@@ -413,7 +416,7 @@ void DirectGraphics::SetRenderTarget(shared_ptr<Texture> texture, bool bResetSta
 		pDevice_->SetRenderTarget(0, texture->GetD3DSurface());
 		pDevice_->SetDepthStencilSurface(texture->GetD3DZBuffer());
 	}
-	if (bResetState) _InitializeDeviceState();
+	_InitializeDeviceState(bResetCameraState);
 }
 void DirectGraphics::SetLightingEnable(bool bEnable) {
 	pDevice_->SetRenderState(D3DRS_LIGHTING, bEnable);

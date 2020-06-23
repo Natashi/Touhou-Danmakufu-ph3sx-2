@@ -40,9 +40,9 @@ void StgPackageController::Render() {
 void StgPackageController::RenderToTransitionTexture() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	TextureManager* textureManager = ETextureManager::GetInstance();
-	shared_ptr<Texture> texture = textureManager->GetTexture(const_cast<std::wstring&>(TextureManager::TARGET_TRANSITION));
+	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 
-	graphics->SetRenderTarget(texture);
+	graphics->SetRenderTarget(texture, false);
 	graphics->BeginScene(false, true);
 
 	scriptManager_->Render();
