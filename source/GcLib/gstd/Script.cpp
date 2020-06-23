@@ -255,7 +255,6 @@ value successor(script_machine* machine, int argc, value const* argv) {
 	switch (argv->get_type()->get_kind()) {
 	case type_data::type_kind::tk_real:
 		return value(argv->get_type(), argv->as_real() + 1);
-
 	case type_data::type_kind::tk_char:
 	{
 		wchar_t c = argv->as_char();
@@ -2403,9 +2402,40 @@ void script_machine::run_code() {
 				yield();
 				current = *current_thread_index;
 				break;
+
 			case command_kind::pc_var_alloc:
 				current->variables.resize(c->ip);
 				break;
+
+			case command_kind::pc_loop_back:
+				current->ip = c->ip;
+				break;
+			case command_kind::pc_jump_if:
+			case command_kind::pc_jump_if_not:
+			{
+				stack_t& stack = current->stack;
+				value* top = &stack.back();
+				if ((c->command == command_kind::pc_jump_if && top->as_boolean())
+					|| (c->command == command_kind::pc_jump_if_not && !top->as_boolean()))
+					current->ip = c->ip;
+				stack.pop_back();
+				break;
+			}
+			case command_kind::pc_jump_diff:
+				current->ip += c->level - 1;
+				break;
+			case command_kind::pc_jump_if_diff:
+			case command_kind::pc_jump_if_not_diff:
+			{
+				stack_t& stack = current->stack;
+				value* top = &stack.back();
+				if ((c->command == command_kind::pc_jump_if_diff && top->as_boolean())
+					|| (c->command == command_kind::pc_jump_if_not_diff && !top->as_boolean()))
+					current->ip += c->level - 1;
+				stack.pop_back();
+				break;
+			}
+
 			case command_kind::pc_assign:
 			{
 				stack_t& stack = current->stack;
@@ -2432,6 +2462,7 @@ void script_machine::run_code() {
 						}
 
 						*dest = *src;
+						dest->unique();
 						stack.pop_back();
 
 						break;
@@ -2571,35 +2602,6 @@ void script_machine::run_code() {
 					current = e;
 				}
 
-				break;
-			}
-
-			case command_kind::pc_loop_back:
-				current->ip = c->ip;
-				break;
-			case command_kind::pc_jump_if:
-			case command_kind::pc_jump_if_not:
-			{
-				stack_t& stack = current->stack;
-				value* top = &stack.back();
-				if ((c->command == command_kind::pc_jump_if && top->as_boolean())
-					|| (c->command == command_kind::pc_jump_if_not && !top->as_boolean()))
-					current->ip = c->ip;
-				stack.pop_back();
-				break;
-			}
-			case command_kind::pc_jump_diff:
-				current->ip += c->level - 1;
-				break;
-			case command_kind::pc_jump_if_diff:
-			case command_kind::pc_jump_if_not_diff:
-			{
-				stack_t& stack = current->stack;
-				value* top = &stack.back();
-				if ((c->command == command_kind::pc_jump_if_diff && top->as_boolean())
-					|| (c->command == command_kind::pc_jump_if_not_diff && !top->as_boolean()))
-					current->ip += c->level - 1;
-				stack.pop_back();
 				break;
 			}
 
@@ -2762,9 +2764,12 @@ void script_machine::run_code() {
 				current->stack.push_back(c->data);
 				break;
 			case command_kind::pc_push_variable:
+			//case command_kind::pc_push_variable_unique:
 			{
 				value* var = find_variable_symbol(current.get(), c);
 				if (var == nullptr) break;
+				//if (c->command == command_kind::pc_push_variable_unique)
+				//	var->unique();
 				current->stack.push_back(*var);
 				break;
 			}
@@ -2945,8 +2950,7 @@ void script_machine::run_code() {
 					break;
 				case command_kind::pc_inline_cast_char:
 				{
-					value tmp = value(engine->get_char_type(), var->as_char());
-					*var = tmp;
+					var->set(engine->get_char_type(), var->as_char());
 					break;
 				}
 				case command_kind::pc_inline_cast_bool:

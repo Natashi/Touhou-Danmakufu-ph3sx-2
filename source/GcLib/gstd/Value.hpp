@@ -7,13 +7,11 @@ namespace gstd {
 	class type_data {
 	public:
 		enum class type_kind : uint8_t {
-			tk_real, tk_char, tk_boolean, tk_array
+			/*tk_int,*/ tk_real, tk_char, tk_boolean, tk_array,
 		};
 
 		type_data(type_kind k, type_data* t = nullptr) : kind(k), element(t) {}
 		type_data(type_data const& source) : kind(source.kind), element(source.element) {}
-
-		//デストラクタはデフォルトに任せる
 
 		type_kind get_kind() { return kind; }
 		type_data* get_element() { return element; }
@@ -30,6 +28,7 @@ namespace gstd {
 		static value val_empty;
 	public:
 		value() : data(nullptr) {}
+		//value(type_data* t, int64_t v);
 		value(type_data* t, double v);
 		value(type_data* t, wchar_t v);
 		value(type_data* t, bool v);
@@ -49,13 +48,16 @@ namespace gstd {
 
 		bool has_data() const { return data != nullptr; }
 
+		//void set(type_data* t, int64_t v);
 		void set(type_data* t, double v);
+		void set(type_data* t, wchar_t v);
 		void set(type_data* t, bool v);
 		void set(type_data* t, std::vector<value>& v);
 
 		void append(type_data* t, const value& x);
 		void concatenate(const value& x);
 
+		//int64_t as_int() const;
 		double as_real() const;
 		wchar_t as_char() const;
 		bool as_boolean() const;
@@ -85,6 +87,7 @@ namespace gstd {
 				double real_value = 0.0;
 				wchar_t char_value;
 				bool boolean_value;
+				//int64_t int_value;
 			};
 		};
 
