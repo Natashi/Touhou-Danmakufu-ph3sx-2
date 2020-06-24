@@ -1110,10 +1110,10 @@ LRESULT ScriptInfoPanel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, L
 
 void ScriptInfoPanel::_TerminateScriptAll() {
 	ETaskManager* taskManager = ETaskManager::GetInstance();
-	std::list<shared_ptr<TaskBase>> listTask = taskManager->GetTaskList();
-	std::list<shared_ptr<TaskBase>>::iterator itr = listTask.begin();
-	for (; itr != listTask.end(); ++itr) {
-		StgSystemController* systemController = (StgSystemController*)(itr->get());
-		if (systemController) systemController->TerminateScriptAll();
+	std::list<shared_ptr<TaskBase>>& listTask = taskManager->GetTaskList();
+	for (auto itr = listTask.begin(); itr != listTask.end(); ++itr) {
+		StgSystemController* systemController = dynamic_cast<StgSystemController*>(itr->get());
+		if (systemController)
+			systemController->TerminateScriptAll();
 	}
 }

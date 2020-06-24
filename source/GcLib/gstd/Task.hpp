@@ -109,7 +109,7 @@ namespace gstd {
 		void RemoveTaskGroup(int idGroup);//タスクをグループで削除
 		void RemoveTask(const std::type_info& info);//クラス型で削除
 		void RemoveTaskWithoutTypeInfo(std::set<const std::type_info*> listInfo);//クラス型以外のタスクを削除
-		std::list<shared_ptr<TaskBase>> GetTaskList() { return listTask_; }
+		std::list<shared_ptr<TaskBase>>& GetTaskList() { return listTask_; }
 
 		void InitializeFunctionDivision(int divFunc, int maxPri);
 		void CallFunction(int divFunc);//タスク機能実行
