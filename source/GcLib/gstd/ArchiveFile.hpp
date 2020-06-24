@@ -104,134 +104,27 @@ namespace gstd {
 	//Compressor
 	**********************************************************/
 	class Compressor {
+		using in_stream_t = std::basic_istream<char, std::char_traits<char>>;
+		using out_stream_t = std::basic_ostream<char, std::char_traits<char>>;
 	public:
-		template<typename TIN, typename TOUT>
-		static bool Deflate(TIN& bufIn, TOUT& bufOut, size_t count, size_t* res) {
-			bool ret = true;
+		static bool Deflate(const size_t chunk, 
+			std::function<size_t(char*, size_t, int*)>&& ReadFunction,
+			std::function<void(char*, size_t)>&& WriteFunction,
+			std::function<void(size_t)>&& AdvanceFunction,
+			std::function<bool()>&& CheckFunction,
+			size_t* res);
+		static bool DeflateStream(in_stream_t& bufIn, out_stream_t& bufOut, size_t count, size_t* res);
+		static bool DeflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t count, size_t* res);
 
-			constexpr size_t CHUNK = 65536U;
-			char* in = new char[CHUNK];
-			char* out = new char[CHUNK];
-
-			int returnState = 0;
-			size_t countBytes = 0U;
-
-			z_stream stream;
-			stream.zalloc = Z_NULL;
-			stream.zfree = Z_NULL;
-			stream.opaque = Z_NULL;
-			returnState = deflateInit(&stream, Z_DEFAULT_COMPRESSION);
-			if (returnState != Z_OK) return false;
-
-			try {
-				int flushType = Z_NO_FLUSH;
-
-				do {
-					bufIn.read(in, CHUNK);
-					size_t read = bufIn.gcount();
-					if (read > count) {
-						flushType = Z_FINISH;
-						read = count;
-					}
-					else if (read < CHUNK) {
-						flushType = Z_FINISH;
-					}
-
-					if (read > 0) {
-						stream.next_in = (Bytef*)in;
-						stream.avail_in = bufIn.gcount();
-
-						do {
-							stream.next_out = (Bytef*)out;
-							stream.avail_out = CHUNK;
-
-							returnState = deflate(&stream, flushType);
-
-							size_t availWrite = CHUNK - stream.avail_out;
-							countBytes += availWrite;
-							if (returnState != Z_STREAM_ERROR)
-								bufOut.write(out, availWrite);
-							else throw returnState;
-						} while (stream.avail_out == 0);
-					}
-					count -= read;
-				} while (count > 0U && flushType != Z_FINISH);
-			}
-			catch (int&) {
-				ret = false;
-			}
-
-			delete[] in;
-			delete[] out;
-
-			deflateEnd(&stream);
-			if (res) *res = countBytes;
-			return ret;
-		}
-
-		template<typename TIN, typename TOUT>
-		static bool Inflate(TIN& bufIn, TOUT& bufOut, size_t count, size_t* res) {
-			bool ret = true;
-
-			constexpr size_t CHUNK = 65536U;
-			char* in = new char[CHUNK];
-			char* out = new char[CHUNK];
-
-			int returnState = 0;
-			size_t countBytes = 0U;
-
-			z_stream stream;
-			stream.zalloc = Z_NULL;
-			stream.zfree = Z_NULL;
-			stream.opaque = Z_NULL;
-			stream.avail_in = 0;
-			stream.next_in = Z_NULL;
-			returnState = inflateInit(&stream);
-			if (returnState != Z_OK) return false;
-
-			try {
-				size_t read = 0U;
-
-				do {
-					bufIn.read(in, CHUNK);
-					read = bufIn.gcount();
-					if (read > count) read = count;
-
-					if (read > 0U) {
-						stream.avail_in = read;
-						stream.next_in = (Bytef*)in;
-
-						do {
-							stream.next_out = (Bytef*)out;
-							stream.avail_out = CHUNK;
-
-							returnState = inflate(&stream, Z_NO_FLUSH);
-							switch (returnState) {
-							case Z_NEED_DICT:
-							case Z_DATA_ERROR:
-							case Z_MEM_ERROR:
-							case Z_STREAM_ERROR:
-								throw returnState;
-							}
-
-							size_t availWrite = CHUNK - stream.avail_out;
-							countBytes += availWrite;
-							bufOut.write(out, availWrite);
-						} while (stream.avail_out == 0);
-					}
-					count -= read;
-				} while (count > 0U && read > 0U);
-			}
-			catch (int&) {
-				ret = false;
-			}
-
-			delete[] in;
-			delete[] out;
-
-			inflateEnd(&stream);
-			if (res) *res = countBytes;
-			return ret;
-		}
+		static bool Inflate(const size_t chunk,
+			std::function<size_t(char*, size_t)>&& ReadFunction,
+			std::function<void(char*, size_t)>&& WriteFunction,
+			std::function<void(size_t)>&& AdvanceFunction,
+			std::function<bool()>&& CheckFunction,
+			size_t* res);
+		static bool InflateStream(in_stream_t& bufIn, out_stream_t& bufOut, size_t count, size_t* res);
+		static bool InflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t count, size_t* res);
+		static bool InflateStream(in_stream_t& bufIn, ByteBuffer& bufOut, size_t count, size_t* res);
+		static bool InflateStream(ByteBuffer& bufIn, ByteBuffer& bufOut, size_t count, size_t* res);
 	};
 }

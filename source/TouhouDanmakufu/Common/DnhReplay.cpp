@@ -84,37 +84,22 @@ bool ReplayInformation::SaveToFile(std::wstring scriptPath, int index) {
 		rec.SetRecordAsRecordBuffer(key, recStage);
 	}
 
-	std::wstring tmpReplay = path + L".tmp";
-	rec.WriteToFile(tmpReplay, "");
 	{
-		std::ifstream replaySource;
-		replaySource.open(path + L".tmp", std::ios::binary);
+		ByteBuffer replayBase;
+		rec.Write(replayBase);
 
-		if (replaySource.is_open()) {
-			std::ofstream replayFile;
-			replayFile.open(path, std::ios::binary | std::ios::trunc);
-
-			if (replayFile.is_open()) {
-				replaySource.seekg(0, std::ios::end);
-				size_t size = replaySource.tellg();
-				replaySource.seekg(0, std::ios::beg);
-
-				replayFile.write(REC_HEADER.c_str(), 0x6);
-				Compressor::Deflate(replaySource, replayFile, size, nullptr);
-			}
-			else {
-				Logger::WriteTop("ReplayInformation::SaveToFile: Failed to create replay file.");
-			}
-
-			replayFile.close();
+		std::ofstream replayFile;
+		replayFile.open(path, std::ios::binary | std::ios::trunc);
+		if (replayFile.is_open()) {
+			replayFile.write(REC_HEADER.c_str(), 0x6);
+			Compressor::DeflateStream(replayBase, replayFile, replayBase.GetSize(), nullptr);
 		}
 		else {
-			Logger::WriteTop("ReplayInformation::SaveToFile: Failed to open temporary file for reading.");
+			Logger::WriteTop("ReplayInformation::SaveToFile: Failed to create replay file.");
 		}
 
-		replaySource.close();
+		replayFile.close();
 	}
-	DeleteFile(tmpReplay.c_str());
 
 	return true;
 }
@@ -145,13 +130,10 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 		if (memcmp(header, REC_HEADER.c_str(), 0x6) != 0) return nullptr;
 
 		size_t sizeFull = 0U;
-		std::stringstream fileDecomp;
-		if (!Compressor::Inflate(file, fileDecomp, size - 6U, &sizeFull)) return nullptr;
+		ByteBuffer bufDecomp;
+		if (!Compressor::InflateStream(file, bufDecomp, size - 6U, &sizeFull)) return nullptr;
 
-		ByteBuffer tmpBuffer;
-		tmpBuffer.Copy(fileDecomp);
-
-		rec.Read(tmpBuffer);
+		rec.Read(bufDecomp);
 
 		file.close();
 	}

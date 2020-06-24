@@ -123,7 +123,7 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 			case ArchiveFileEntry::CT_ZLIB:
 			{
 				size_t countByte = 0U;
-				Compressor::Deflate(file, fileArchive, entry->sizeFull, &countByte);
+				Compressor::DeflateStream(file, fileArchive, entry->sizeFull, &countByte);
 				entry->sizeStored = countByte;
 				break;
 			}
@@ -160,7 +160,7 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 
 		size_t countByte = totalSize;
 		buf.seekg(0, std::ios::beg);
-		if (!Compressor::Deflate(buf, fileArchive, totalSize, &countByte))
+		if (!Compressor::DeflateStream(buf, fileArchive, totalSize, &countByte))
 			throw gstd::wexception("Failed to compress archive header.");
 		//fileArchive << buf.rdbuf();
 
@@ -314,16 +314,12 @@ bool ArchiveFile::Open() {
 		std::stringstream bufInfo;
 		file_.seekg(header.headerOffset, std::ios::beg);
 		{
-			char* tmpBufInfo = new char[header.headerSize];
-			file_.read(tmpBufInfo, header.headerSize);
+			ByteBuffer tmpBufInfo;
+			tmpBufInfo.SetSize(header.headerSize);
+			file_.read(tmpBufInfo.GetPointer(), header.headerSize);
 
-			ArchiveEncryption::ShiftBlock((byte*)tmpBufInfo, header.headerSize, keyBase_, keyStep_);
-
-			std::stringstream sTmpBufInfo;
-			sTmpBufInfo.write(tmpBufInfo, header.headerSize);
-			Compressor::Inflate(sTmpBufInfo, bufInfo, header.headerSize, &headerSizeTrue);
-
-			delete[] tmpBufInfo;
+			ArchiveEncryption::ShiftBlock((byte*)tmpBufInfo.GetPointer(), header.headerSize, keyBase_, keyStep_);
+			Compressor::InflateStream(tmpBufInfo, bufInfo, header.headerSize, &headerSizeTrue);
 		}
 
 		bufInfo.clear();
@@ -424,27 +420,24 @@ ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr e
 			res = new ByteBuffer();
 			//res->SetSize(entry->sizeFull);
 
-			char* tmp = new char[entry->sizeStored];
-			file->read(tmp, entry->sizeStored);
+			ByteBuffer rawBuf;
+			rawBuf.SetSize(entry->sizeStored);
+			file->read(rawBuf.GetPointer(), entry->sizeStored);
 
 			byte keyBase = entry->keyBase;
-			ArchiveEncryption::ShiftBlock((byte*)tmp, entry->sizeStored,
+			ArchiveEncryption::ShiftBlock((byte*)rawBuf.GetPointer(), entry->sizeStored,
 				keyBase, entry->keyStep);
 
-			std::stringstream streamTmp;
-			streamTmp.write(tmp, entry->sizeStored);
-			delete[] tmp;
+			{
+				size_t sizeVerif = 0U;
 
-			size_t sizeVerif = 0U;
+				if (entry->sizeStored > 0)
+					Compressor::InflateStream(rawBuf, *res, entry->sizeStored, &sizeVerif);
 
-			std::stringstream stream;
-			if (entry->sizeStored > 0)
-				Compressor::Inflate(streamTmp, stream, entry->sizeStored, &sizeVerif);
-			res->Copy(stream);
-
-			if (sizeVerif != entry->sizeFull)
-				Logger::WriteTop(StringUtility::Format(L"(Warning)CreateEntryBuffer: Archive entry not properly read. "
-					"[expected %d bytes, got %d bytes -> %s]", entry->name.c_str()));
+				if (sizeVerif != entry->sizeFull)
+					Logger::WriteTop(StringUtility::Format(L"(Warning)CreateEntryBuffer: Archive entry not properly read. "
+						"[expected %d bytes, got %d bytes -> %s]", entry->name.c_str()));
+			}
 
 			break;
 		}
@@ -488,3 +481,225 @@ ref_count_ptr<ByteBuffer> ArchiveFile::GetBuffer(std::string name)
 	return res;
 }
 */
+
+bool Compressor::Deflate(const size_t chunk,
+	std::function<size_t(char*, size_t, int*)>&& ReadFunction,
+	std::function<void(char*, size_t)>&& WriteFunction,
+	std::function<void(size_t)>&& AdvanceFunction,
+	std::function<bool()>&& CheckFunction,
+	size_t* res) 
+{
+	bool ret = true;
+
+	char* in = new char[chunk];
+	char* out = new char[chunk];
+
+	int returnState = 0;
+	size_t countBytes = 0U;
+
+	z_stream stream;
+	stream.zalloc = Z_NULL;
+	stream.zfree = Z_NULL;
+	stream.opaque = Z_NULL;
+	returnState = deflateInit(&stream, Z_DEFAULT_COMPRESSION);
+	if (returnState != Z_OK) return false;
+
+	try {
+		int flushType = Z_NO_FLUSH;
+
+		do {
+			size_t read = ReadFunction(in, chunk, &flushType);
+
+			if (read > 0) {
+				stream.next_in = (Bytef*)in;
+				stream.avail_in = read;
+
+				do {
+					stream.next_out = (Bytef*)out;
+					stream.avail_out = chunk;
+
+					returnState = deflate(&stream, flushType);
+
+					size_t availWrite = chunk - stream.avail_out;
+					countBytes += availWrite;
+					if (returnState != Z_STREAM_ERROR)
+						WriteFunction(out, availWrite);
+					else throw returnState;
+				} while (stream.avail_out == 0);
+			}
+
+			AdvanceFunction(read);
+		} while (CheckFunction() && flushType != Z_FINISH);
+	}
+	catch (int&) {
+		ret = false;
+	}
+
+	delete[] in;
+	delete[] out;
+
+	deflateEnd(&stream);
+	if (res) *res = countBytes;
+	return ret;
+}
+bool Compressor::Inflate(const size_t chunk,
+	std::function<size_t(char*, size_t)>&& ReadFunction,
+	std::function<void(char*, size_t)>&& WriteFunction,
+	std::function<void(size_t)>&& AdvanceFunction,
+	std::function<bool()>&& CheckFunction,
+	size_t* res) 
+{
+	bool ret = true;
+
+	char* in = new char[chunk];
+	char* out = new char[chunk];
+
+	int returnState = 0;
+	size_t countBytes = 0U;
+
+	z_stream stream;
+	stream.zalloc = Z_NULL;
+	stream.zfree = Z_NULL;
+	stream.opaque = Z_NULL;
+	stream.avail_in = 0;
+	stream.next_in = Z_NULL;
+	returnState = inflateInit(&stream);
+	if (returnState != Z_OK) return false;
+
+	try {
+		size_t read = 0U;
+
+		do {
+			size_t read = ReadFunction(in, chunk);
+
+			if (read > 0U) {
+				stream.next_in = (Bytef*)in;
+				stream.avail_in = read;
+
+				do {
+					stream.next_out = (Bytef*)out;
+					stream.avail_out = chunk;
+
+					returnState = inflate(&stream, Z_NO_FLUSH);
+					switch (returnState) {
+					case Z_NEED_DICT:
+					case Z_DATA_ERROR:
+					case Z_MEM_ERROR:
+					case Z_STREAM_ERROR:
+						throw returnState;
+					}
+
+					size_t availWrite = chunk - stream.avail_out;
+					countBytes += availWrite;
+					WriteFunction(out, availWrite);
+				} while (stream.avail_out == 0);
+			}
+
+			AdvanceFunction(read);
+		} while (CheckFunction() && read > 0U);
+	}
+	catch (int&) {
+		ret = false;
+	}
+
+	delete[] in;
+	delete[] out;
+
+	inflateEnd(&stream);
+	if (res) *res = countBytes;
+	return ret;
+}
+
+#define DEF_COMP_ADVANCE_CHECK_FUNCS \
+	auto _AdvanceFunc = [&](size_t advancing) { \
+		count -= advancing; \
+	}; \
+	auto _StreamEndCheckFunc = [&]() -> bool { \
+		return count > 0U; \
+	};
+bool Compressor::DeflateStream(in_stream_t& bufIn, out_stream_t& bufOut, size_t count, size_t* res) {
+	auto _ReadFunc = [&](char* _bIn, size_t reading, int* _flushType) -> size_t {
+		bufIn.read(_bIn, reading);
+		size_t read = bufIn.gcount();
+		if (read > count) {
+			*_flushType = Z_FINISH;
+			read = count;
+		}
+		else if (read < reading) {
+			*_flushType = Z_FINISH;
+		}
+		return read;
+	};
+	auto _WriteFunc = [&](char* _bOut, size_t writing) {
+		bufOut.write(_bOut, writing);
+	};
+	DEF_COMP_ADVANCE_CHECK_FUNCS
+	return Deflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+}
+bool Compressor::DeflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t count, size_t* res) {
+	size_t readPos = 0;
+	auto _ReadFunc = [&](char* _bIn, size_t reading, int* _flushType) -> size_t {
+		size_t read = std::min(reading, bufIn.GetSize() - count);
+		memcpy(_bIn, bufIn.GetPointer(readPos), read);
+		readPos += read;
+		return read;
+	};
+	auto _WriteFunc = [&](char* _bOut, size_t writing) {
+		bufOut.write(_bOut, writing);
+	};
+	DEF_COMP_ADVANCE_CHECK_FUNCS
+	return Deflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+}
+bool Compressor::InflateStream(in_stream_t& bufIn, out_stream_t& bufOut, size_t count, size_t* res) {
+	auto _ReadFunc = [&](char* _bIn, size_t reading) -> size_t {
+		bufIn.read(_bIn, reading);
+		size_t read = bufIn.gcount();
+		return read > count ? count : read;
+	};
+	auto _WriteFunc = [&](char* _bOut, size_t writing) {
+		bufOut.write(_bOut, writing);
+	};
+	DEF_COMP_ADVANCE_CHECK_FUNCS
+	return Inflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+}
+bool Compressor::InflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t count, size_t* res) {
+	size_t readPos = 0;
+	auto _ReadFunc = [&](char* _bIn, size_t reading) -> size_t {
+		size_t read = std::min(reading, bufIn.GetSize() - count);
+		memcpy(_bIn, bufIn.GetPointer(readPos), read);
+		readPos += read;
+		return read;
+	};
+	auto _WriteFunc = [&](char* _bOut, size_t writing) {
+		bufOut.write(_bOut, writing);
+	};
+	DEF_COMP_ADVANCE_CHECK_FUNCS
+	return Inflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+}
+bool Compressor::InflateStream(in_stream_t& bufIn, ByteBuffer& bufOut, size_t count, size_t* res) {
+	size_t readPos = 0;
+	auto _ReadFunc = [&](char* _bIn, size_t reading) -> size_t {
+		bufIn.read(_bIn, reading);
+		size_t read = bufIn.gcount();
+		return read > count ? count : read;
+	};
+	auto _WriteFunc = [&](char* _bOut, size_t writing) {
+		bufOut.Write(_bOut, writing);
+	};
+	DEF_COMP_ADVANCE_CHECK_FUNCS
+		return Inflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+}
+bool Compressor::InflateStream(ByteBuffer& bufIn, ByteBuffer& bufOut, size_t count, size_t* res) {
+	size_t readPos = 0;
+	auto _ReadFunc = [&](char* _bIn, size_t reading) -> size_t {
+		size_t read = std::min(reading, bufIn.GetSize() - count);
+		memcpy(_bIn, bufIn.GetPointer(readPos), read);
+		readPos += read;
+		return read;
+	};
+	auto _WriteFunc = [&](char* _bOut, size_t writing) {
+		bufOut.Write(_bOut, writing);
+	};
+	DEF_COMP_ADVANCE_CHECK_FUNCS
+	return Inflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+}
