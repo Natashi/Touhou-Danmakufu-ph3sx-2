@@ -415,7 +415,8 @@ bool FileManager::AddArchiveFile(std::wstring path) {
 		const std::wstring& key = *itrKey;
 		if (listKeyCurrent.find(key) == listKeyCurrent.end()) continue;
 
-		std::wstring log = StringUtility::Format(L"archive file entry already exists[%s]", key.c_str());
+		std::string log = StringUtility::Format("archive file entry already exists [%s]", 
+			StringUtility::ConvertWideToMulti(key).c_str());
 		Logger::WriteTop(log);
 		throw wexception(log.c_str());
 	}

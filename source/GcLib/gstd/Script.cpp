@@ -519,6 +519,7 @@ function const operations[] = {
 	{ "truncate", truncate, 1 },
 	{ "ceil", ceil, 1 },
 	{ "floor", floor, 1 },
+	//{ "abs", absolute, 1 },
 	{ "absolute", absolute, 1 },
 	{ "add", add, 2 },
 	{ "subtract", subtract, 2 },

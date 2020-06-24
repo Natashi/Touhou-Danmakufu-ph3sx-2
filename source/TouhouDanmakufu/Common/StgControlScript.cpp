@@ -73,6 +73,8 @@ const function stgControlFunction[] =
 	{ "GetScriptPathList", StgControlScript::Func_GetScriptPathList, 2 },
 	{ "GetScriptInfoA1", StgControlScript::Func_GetScriptInfoA1, 2 },
 
+	{ "IsEngineFastMode", StgControlScript::Func_IsEngineFastMode, 0 },
+
 	//STG共通関数：描画関連
 	{ "ClearInvalidRenderPriority", StgControlScript::Func_ClearInvalidRenderPriority, 0 },
 	{ "SetInvalidRenderPriorityA1", StgControlScript::Func_SetInvalidRenderPriorityA1, 2 },
@@ -573,6 +575,10 @@ gstd::value StgControlScript::Func_GetScriptInfoA1(gstd::script_machine* machine
 	}
 
 	return res;
+}
+
+gstd::value StgControlScript::Func_IsEngineFastMode(script_machine* machine, int argc, const value* argv) {
+	return StgControlScript::CreateBooleanValue(EFpsController::GetInstance()->IsFastMode());
 }
 
 //STG共通関数：描画関連

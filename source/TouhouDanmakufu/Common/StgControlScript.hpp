@@ -109,7 +109,7 @@ public:
 	static gstd::value Func_AddPoint(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_IsReplay(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_AddArchiveFile(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_GetArchiveFilePathList(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_GetArchiveFilePathList);
 	static gstd::value Func_GetCurrentFps(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetStageTime(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetStageTimeF(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -124,6 +124,7 @@ public:
 	static gstd::value Func_GetScriptPathList(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetScriptInfoA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
+	DNH_FUNCAPI_DECL_(Func_IsEngineFastMode);
 
 	//STGêßå‰ã§í ä÷êîÅFï`âÊä÷òA
 	static gstd::value Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv);

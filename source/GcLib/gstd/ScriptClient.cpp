@@ -76,10 +76,14 @@ function const commonFunction[] =
 	{ "rasin", ScriptClientBase::Func_RAsin, 1 },
 	{ "ratan", ScriptClientBase::Func_RAtan, 1 },
 	{ "ratan2", ScriptClientBase::Func_RAtan2, 2 },
+
 	{ "exp", ScriptClientBase::Func_Exp, 1 },
+	{ "sqrt", ScriptClientBase::Func_Sqrt, 1 },
+	{ "nroot", ScriptClientBase::Func_NRoot, 2 },
+	{ "hypot", ScriptClientBase::Func_Hypot, 2 },
+
 	{ "rand", ScriptClientBase::Func_Rand, 2 },
 	{ "prand", ScriptClientBase::Func_RandEff, 2 },
-	{ "sqrt", ScriptClientBase::Func_Sqrt, 1 },
 
 	{ "ToDegrees", ScriptClientBase::Func_ToDegrees, 1 },
 	{ "ToRadians", ScriptClientBase::Func_ToRadians, 1 },
@@ -104,6 +108,7 @@ function const commonFunction[] =
 	{ "IntToString", ScriptClientBase::Func_ItoA, 1 },
 	{ "itoa", ScriptClientBase::Func_ItoA, 1 },
 	{ "rtoa", ScriptClientBase::Func_RtoA, 1 },
+	{ "rtoa_ex", ScriptClientBase::Func_RtoA_Ex, 2 },
 	{ "rtos", ScriptClientBase::Func_RtoS, 2 },
 	{ "vtos", ScriptClientBase::Func_VtoS, 2 },
 	{ "atoi", ScriptClientBase::Func_AtoI, 1 },
@@ -116,12 +121,19 @@ function const commonFunction[] =
 	{ "RegexReplace", ScriptClientBase::Func_RegexReplace, 3 },
 
 	//共通関数：パス関連
-	{ "GetModuleDirectory", ScriptClientBase::Func_GetModuleDirectory, 0 },
 	{ "GetParentScriptDirectory", ScriptClientBase::Func_GetParentScriptDirectory, 0 },
 	{ "GetCurrentScriptDirectory", ScriptClientBase::Func_GetCurrentScriptDirectory, 0 },
-	{ "GetFileDirectory", ScriptClientBase::Func_GetFileDirectory, 1 },
 	{ "GetFilePathList", ScriptClientBase::Func_GetFilePathList, 1 },
 	{ "GetDirectoryList", ScriptClientBase::Func_GetDirectoryList, 1 },
+
+	//Path utility
+	{ "GetModuleDirectory", ScriptClientBase::Func_GetModuleDirectory, 0 },
+	{ "GetFileDirectory", ScriptClientBase::Func_GetFileDirectory, 1 },
+	{ "GetFileDirectoryFromModule", ScriptClientBase::Func_GetFileDirectoryFromModule, 1 },
+	{ "GetFileTopDirectory", ScriptClientBase::Func_GetFileTopDirectory, 1 },
+	{ "GetFileName", ScriptClientBase::Func_GetFileName, 1 },
+	{ "GetFileNameWithoutExtension", ScriptClientBase::Func_GetFileNameWithoutExtension, 1 },
+	{ "GetFileExtension", ScriptClientBase::Func_GetFileExtension, 1 },
 
 	//共通関数：時刻関連
 	{ "GetCurrentDateTimeS", ScriptClientBase::Func_GetCurrentDateTimeS, 0 },
@@ -802,11 +814,11 @@ value ScriptClientBase::CreateRealValue(double r) {
 value ScriptClientBase::CreateBooleanValue(bool b) {
 	return value(script_type_manager::get_boolean_type(), b);
 }
-value ScriptClientBase::CreateStringValue(std::string& s) {
+value ScriptClientBase::CreateStringValue(const std::string& s) {
 	std::wstring wstr = StringUtility::ConvertMultiToWide(s);
 	return value(script_type_manager::get_string_type(), wstr);
 }
-value ScriptClientBase::CreateStringValue(std::wstring& s) {
+value ScriptClientBase::CreateStringValue(const std::wstring& s) {
 	return value(script_type_manager::get_string_type(), s);
 }
 value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
@@ -916,8 +928,8 @@ value ScriptClientBase::Func_GetScriptArgument(script_machine* machine, int argc
 }
 value ScriptClientBase::Func_GetScriptArgumentCount(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = (ScriptClientBase*)machine->data;
-	int res = script->listValueArg_.size();
-	return value(machine->get_engine()->get_real_type(), (double)res);
+	size_t res = script->listValueArg_.size();
+	return script->CreateRealValue(res);
 }
 value ScriptClientBase::Func_SetScriptResult(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = (ScriptClientBase*)machine->data;
@@ -929,12 +941,12 @@ value ScriptClientBase::Func_SetScriptResult(script_machine* machine, int argc, 
 value ScriptClientBase::Func_Min(script_machine* machine, int argc, const value* argv) {
 	double v1 = argv[0].as_real();
 	double v2 = argv[1].as_real();
-	return value(machine->get_engine()->get_real_type(), std::min(v1, v2));
+	return CreateRealValue(std::min(v1, v2));
 }
 value ScriptClientBase::Func_Max(script_machine* machine, int argc, const value* argv) {
 	double v1 = argv[0].as_real();
 	double v2 = argv[1].as_real();
-	return value(machine->get_engine()->get_real_type(), std::max(v1, v2));
+	return CreateRealValue(std::max(v1, v2));
 }
 value ScriptClientBase::Func_Clamp(script_machine* machine, int argc, const value* argv) {
 	double v = argv[0].as_real();
@@ -942,23 +954,23 @@ value ScriptClientBase::Func_Clamp(script_machine* machine, int argc, const valu
 	double bound_upper = argv[2].as_real();
 	//if (bound_lower > bound_upper) std::swap(bound_lower, bound_upper);
 	double res = std::min(std::max(v, bound_lower), bound_upper);
-	return value(machine->get_engine()->get_real_type(), res);
+	return CreateRealValue(res);
 }
 value ScriptClientBase::Func_Log(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), log(argv[0].as_real()));
+	return CreateRealValue(log(argv[0].as_real()));
 }
 value ScriptClientBase::Func_Log10(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), log10(argv[0].as_real()));
+	return CreateRealValue(log10(argv[0].as_real()));
 }
 
 value ScriptClientBase::Func_Cos(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), cos(Math::DegreeToRadian(argv[0].as_real())));
+	return CreateRealValue(cos(Math::DegreeToRadian(argv[0].as_real())));
 }
 value ScriptClientBase::Func_Sin(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), sin(Math::DegreeToRadian(argv[0].as_real())));
+	return CreateRealValue(sin(Math::DegreeToRadian(argv[0].as_real())));
 }
 value ScriptClientBase::Func_Tan(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), tan(Math::DegreeToRadian(argv[0].as_real())));
+	return CreateRealValue(tan(Math::DegreeToRadian(argv[0].as_real())));
 }
 value ScriptClientBase::Func_SinCos(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
@@ -968,13 +980,13 @@ value ScriptClientBase::Func_SinCos(script_machine* machine, int argc, const val
 }
 
 value ScriptClientBase::Func_RCos(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), cos(argv[0].as_real()));
+	return CreateRealValue(cos(argv[0].as_real()));
 }
 value ScriptClientBase::Func_RSin(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), sin(argv[0].as_real()));
+	return CreateRealValue(sin(argv[0].as_real()));
 }
 value ScriptClientBase::Func_RTan(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), tan(argv[0].as_real()));
+	return CreateRealValue(tan(argv[0].as_real()));
 }
 value ScriptClientBase::Func_RSinCos(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
@@ -984,32 +996,44 @@ value ScriptClientBase::Func_RSinCos(script_machine* machine, int argc, const va
 }
 
 value ScriptClientBase::Func_Acos(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), Math::RadianToDegree(acos(argv[0].as_real())));
+	return CreateRealValue(Math::RadianToDegree(acos(argv[0].as_real())));
 }
 value ScriptClientBase::Func_Asin(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), Math::RadianToDegree(asin(argv[0].as_real())));
+	return CreateRealValue(Math::RadianToDegree(asin(argv[0].as_real())));
 }
 value ScriptClientBase::Func_Atan(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), Math::RadianToDegree(atan(argv[0].as_real())));
+	return CreateRealValue(Math::RadianToDegree(atan(argv[0].as_real())));
 }
 value ScriptClientBase::Func_Atan2(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), Math::RadianToDegree(atan2(argv[0].as_real(), argv[1].as_real())));
+	return CreateRealValue(Math::RadianToDegree(atan2(argv[0].as_real(), argv[1].as_real())));
 }
 value ScriptClientBase::Func_RAcos(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), acos(argv[0].as_real()));
+	return CreateRealValue(acos(argv[0].as_real()));
 }
 value ScriptClientBase::Func_RAsin(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), asin(argv[0].as_real()));
+	return CreateRealValue(asin(argv[0].as_real()));
 }
 value ScriptClientBase::Func_RAtan(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), atan(argv[0].as_real()));
+	return CreateRealValue(atan(argv[0].as_real()));
 }
 value ScriptClientBase::Func_RAtan2(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), atan2(argv[0].as_real(), argv[1].as_real()));
+	return CreateRealValue(atan2(argv[0].as_real(), argv[1].as_real()));
 }
 
 value ScriptClientBase::Func_Exp(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), exp(argv[0].as_real()));
+	return CreateRealValue(exp(argv[0].as_real()));
+}
+value ScriptClientBase::Func_Sqrt(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(sqrt(argv[0].as_real()));
+}
+value ScriptClientBase::Func_NRoot(script_machine* machine, int argc, const value* argv) {
+	double val = 1.0;
+	double _p = argv[1].as_real();
+	if (_p != 0.0) val = pow(argv[0].as_real(), 1.0 / _p);
+	return CreateRealValue(val);
+}
+value ScriptClientBase::Func_Hypot(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(hypot(argv[0].as_real(), argv[1].as_real()));
 }
 
 value ScriptClientBase::Func_Rand(script_machine* machine, int argc, const value* argv) {
@@ -1019,17 +1043,14 @@ value ScriptClientBase::Func_Rand(script_machine* machine, int argc, const value
 	double min = argv[0].as_real();
 	double max = argv[1].as_real();
 	double res = script->mt_->GetReal(min, max);
-	return value(machine->get_engine()->get_real_type(), res);
+	return script->CreateRealValue(res);
 }
 value ScriptClientBase::Func_RandEff(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	double min = argv[0].as_real();
 	double max = argv[1].as_real();
 	double res = script->mtEffect_->GetReal(min, max);
-	return value(machine->get_engine()->get_real_type(), res);
-}
-value ScriptClientBase::Func_Sqrt(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), sqrt(argv[0].as_real()));
+	return script->CreateRealValue(res);
 }
 
 void ScriptClientBase::IsMatrix(script_machine*& machine, const value& v) {
@@ -1061,31 +1082,31 @@ value ScriptClientBase::Func_Interpolate_Linear(script_machine* machine, int arg
 	double a = argv[0].as_real();
 	double b = argv[1].as_real();
 	double x = argv[2].as_real();
-	return value(machine->get_engine()->get_real_type(), Math::Lerp::Linear(a, b, x));
+	return CreateRealValue(Math::Lerp::Linear(a, b, x));
 }
 value ScriptClientBase::Func_Interpolate_Smooth(script_machine* machine, int argc, const value* argv) {
 	double a = argv[0].as_real();
 	double b = argv[1].as_real();
 	double x = argv[2].as_real();
-	return value(machine->get_engine()->get_real_type(), Math::Lerp::Smooth(a, b, x));
+	return CreateRealValue(Math::Lerp::Smooth(a, b, x));
 }
 value ScriptClientBase::Func_Interpolate_Smoother(script_machine* machine, int argc, const value* argv) {
 	double a = argv[0].as_real();
 	double b = argv[1].as_real();
 	double x = argv[2].as_real();
-	return value(machine->get_engine()->get_real_type(), Math::Lerp::Smoother(a, b, x));
+	return CreateRealValue(Math::Lerp::Smoother(a, b, x));
 }
 value ScriptClientBase::Func_Interpolate_Accelerate(script_machine* machine, int argc, const value* argv) {
 	double a = argv[0].as_real();
 	double b = argv[1].as_real();
 	double x = argv[2].as_real();
-	return value(machine->get_engine()->get_real_type(), Math::Lerp::Accelerate(a, b, x));
+	return CreateRealValue(Math::Lerp::Accelerate(a, b, x));
 }
 value ScriptClientBase::Func_Interpolate_Decelerate(script_machine* machine, int argc, const value* argv) {
 	double a = argv[0].as_real();
 	double b = argv[1].as_real();
 	double x = argv[2].as_real();
-	return value(machine->get_engine()->get_real_type(), Math::Lerp::Decelerate(a, b, x));
+	return CreateRealValue(Math::Lerp::Decelerate(a, b, x));
 }
 value ScriptClientBase::Func_Interpolate_Modulate(script_machine* machine, int argc, const value* argv) {
 	double a = argv[0].as_real();
@@ -1096,7 +1117,7 @@ value ScriptClientBase::Func_Interpolate_Modulate(script_machine* machine, int a
 	double y = sin(GM_PI_X2 * x) * GM_1_PI * 0.5;
 	double res = a + (x + y * c) * (b - a);
 
-	return value(machine->get_engine()->get_real_type(), res);
+	return CreateRealValue(res);
 }
 value ScriptClientBase::Func_Interpolate_Overshoot(script_machine* machine, int argc, const value* argv) {
 	double a = argv[0].as_real();
@@ -1107,7 +1128,7 @@ value ScriptClientBase::Func_Interpolate_Overshoot(script_machine* machine, int 
 	double y = sin(GM_PI * x) * GM_1_PI;
 	double res = a + (x + y * c) * (b - a);
 
-	return value(machine->get_engine()->get_real_type(), res);
+	return CreateRealValue(res);
 }
 value ScriptClientBase::Func_Interpolate_QuadraticBezier(script_machine* machine, int argc, const value* argv) {
 	double a = argv[0].as_real();
@@ -1118,7 +1139,7 @@ value ScriptClientBase::Func_Interpolate_QuadraticBezier(script_machine* machine
 	double y = 1.0 - x;
 	double res = (a * y * y) + x * (b * x + c * 2.0 * y);
 
-	return value(machine->get_engine()->get_real_type(), res);
+	return CreateRealValue(res);
 }
 value ScriptClientBase::Func_Interpolate_CubicBezier(script_machine* machine, int argc, const value* argv) {
 	double a = argv[0].as_real();
@@ -1131,7 +1152,7 @@ value ScriptClientBase::Func_Interpolate_CubicBezier(script_machine* machine, in
 	double z = y * y;
 	double res = (a * y * z) + x * ((b * x * x) + (c1 * c1 * c2 * 3.0 * z));
 
-	return value(machine->get_engine()->get_real_type(), res);
+	return CreateRealValue(res);
 }
 
 value ScriptClientBase::Func_TypeOf(script_machine* machine, int argc, const value* argv) {
@@ -1139,30 +1160,33 @@ value ScriptClientBase::Func_TypeOf(script_machine* machine, int argc, const val
 
 	if (type->get_kind() == type_data::type_kind::tk_array) {
 		if (type->get_element()->get_kind() == type_data::type_kind::tk_char)
-			return value(machine->get_engine()->get_real_type(), (double)((int)type_data::type_kind::tk_array + 1));	//String
+			return CreateRealValue((int)type_data::type_kind::tk_array + 1);	//String
 	}
-	return value(machine->get_engine()->get_real_type(), (double)(type->get_kind()));
+	return CreateRealValue((int)type->get_kind());
 }
 value ScriptClientBase::Func_FTypeOf(script_machine* machine, int argc, const value* argv) {
-	type_data* typeBase = argv->get_type();
-	type_data* type = typeBase;
+	type_data* type = argv->get_type();
 	while (type->get_kind() == type_data::type_kind::tk_array)
 		type = type->get_element();
 
-	return value(machine->get_engine()->get_real_type(), (double)(type->get_kind()));
+	return CreateRealValue((int)(type->get_kind()));
 }
 
 //組み込み関数：文字列操作
 value ScriptClientBase::Func_ToString(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_string_type(), argv->as_string());
+	return CreateStringValue(argv->as_string());
 }
 value ScriptClientBase::Func_ItoA(script_machine* machine, int argc, const value* argv) {
 	std::wstring res = StringUtility::Format(L"%d", (int)argv->as_real());
-	return value(machine->get_engine()->get_string_type(), res);
+	return CreateStringValue(res);
 }
 value ScriptClientBase::Func_RtoA(script_machine* machine, int argc, const value* argv) {
 	std::wstring res = StringUtility::Format(L"%f", argv->as_real());
-	return value(machine->get_engine()->get_string_type(), res);
+	return CreateStringValue(res);
+}
+value ScriptClientBase::Func_RtoA_Ex(script_machine* machine, int argc, const value* argv) {
+	std::wstring res = StringUtility::Format(argv[0].as_string().c_str(), argv[1].as_real());
+	return CreateStringValue(res);
 }
 value ScriptClientBase::Func_RtoS(script_machine* machine, int argc, const value* argv) {
 	std::string res = "";
@@ -1212,7 +1236,7 @@ value ScriptClientBase::Func_RtoS(script_machine* machine, int argc, const value
 		res = "error format";
 	}
 
-	return value(machine->get_engine()->get_string_type(), StringUtility::ConvertMultiToWide(res));
+	return CreateStringValue(StringUtility::ConvertMultiToWide(res));
 }
 value ScriptClientBase::Func_VtoS(script_machine* machine, int argc, const value* argv) {
 	std::string res = "";
@@ -1250,22 +1274,22 @@ value ScriptClientBase::Func_VtoS(script_machine* machine, int argc, const value
 		res = "error format";
 	}
 
-	return value(machine->get_engine()->get_string_type(), StringUtility::ConvertMultiToWide(res));
+	return CreateStringValue(StringUtility::ConvertMultiToWide(res));
 }
 value ScriptClientBase::Func_AtoI(script_machine* machine, int argc, const value* argv) {
 	std::wstring str = argv->as_string();
 	int num = StringUtility::ToInteger(str);
-	return value(machine->get_engine()->get_real_type(), (double)num);
+	return CreateRealValue(num);
 }
 value ScriptClientBase::Func_AtoR(script_machine* machine, int argc, const value* argv) {
 	std::wstring str = argv->as_string();
 	double num = StringUtility::ToDouble(str);
-	return value(machine->get_engine()->get_real_type(), (double)num);
+	return CreateRealValue(num);
 }
 value ScriptClientBase::Func_TrimString(script_machine* machine, int argc, const value* argv) {
 	std::wstring str = argv->as_string();
 	std::wstring res = StringUtility::Trim(str);
-	return value(machine->get_engine()->get_string_type(), res);
+	return CreateStringValue(res);
 }
 value ScriptClientBase::Func_SplitString(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
@@ -1325,61 +1349,75 @@ value ScriptClientBase::Func_RegexReplace(script_machine* machine, int argc, con
 }
 
 value ScriptClientBase::Func_ToDegrees(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), Math::RadianToDegree(argv->as_real()));
+	return CreateRealValue(Math::RadianToDegree(argv->as_real()));
 }
 value ScriptClientBase::Func_ToRadians(script_machine* machine, int argc, const value* argv) {
-	return value(machine->get_engine()->get_real_type(), Math::DegreeToRadian(argv->as_real()));
+	return CreateRealValue(Math::DegreeToRadian(argv->as_real()));
 }
 value ScriptClientBase::Func_NormalizeAngle(script_machine* machine, int argc, const value* argv) {
 	double ang = argv->as_real();
-	return value(machine->get_engine()->get_real_type(), Math::NormalizeAngleDeg(ang));
+	return CreateRealValue(Math::NormalizeAngleDeg(ang));
 }
 value ScriptClientBase::Func_RNormalizeAngle(script_machine* machine, int argc, const value* argv) {
 	double ang = argv->as_real();
-	return value(machine->get_engine()->get_real_type(), Math::NormalizeAngleRad(ang));
+	return CreateRealValue(Math::NormalizeAngleRad(ang));
 }
 
 //共通関数：パス関連
-value ScriptClientBase::Func_GetModuleDirectory(script_machine* machine, int argc, const value* argv) {
-	std::wstring res = PathProperty::GetModuleDirectory();
-	return value(machine->get_engine()->get_string_type(), res);
-}
 value ScriptClientBase::Func_GetParentScriptDirectory(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	std::wstring path = script->GetEngine()->GetPath();
 	std::wstring res = PathProperty::GetFileDirectory(path);
-	return value(machine->get_engine()->get_string_type(), res);
+	return script->CreateStringValue(res);
 }
 value ScriptClientBase::Func_GetCurrentScriptDirectory(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	int line = machine->get_current_line();
 	std::wstring path = script->GetEngine()->GetScriptFileLineMap()->GetPath(line);
 	std::wstring res = PathProperty::GetFileDirectory(path);
-	return value(machine->get_engine()->get_string_type(), res);
-}
-value ScriptClientBase::Func_GetFileDirectory(script_machine* machine, int argc, const value* argv) {
-	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-	std::wstring path = argv->as_string();
-	//path = StringUtility::ReplaceAll(path, "/", "\\");
-	std::wstring res = PathProperty::GetFileDirectory(path);
-
-	return value(machine->get_engine()->get_string_type(), res);
+	return script->CreateStringValue(res);
 }
 value ScriptClientBase::Func_GetFilePathList(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-	std::wstring path = argv->as_string();
-	std::wstring dir = PathProperty::GetFileDirectory(path);
+	std::wstring dir = PathProperty::GetFileDirectory(argv->as_string());
 	std::vector<std::wstring> listDir = File::GetFilePathList(dir);
-	gstd::value res = script->CreateStringArrayValue(listDir);
-	return res;
+	return script->CreateStringArrayValue(listDir);
 }
 value ScriptClientBase::Func_GetDirectoryList(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-	std::wstring path = argv->as_string();
-	std::wstring dir = PathProperty::GetFileDirectory(path);
+	std::wstring dir = PathProperty::GetFileDirectory(argv->as_string());
 	std::vector<std::wstring> listDir = File::GetDirectoryPathList(dir);
-	gstd::value res = script->CreateStringArrayValue(listDir);
-	return res;
+	return script->CreateStringArrayValue(listDir);
+}
+
+//Path utility
+value ScriptClientBase::Func_GetModuleDirectory(script_machine* machine, int argc, const value* argv) {
+	std::wstring res = PathProperty::GetModuleDirectory();
+	return ScriptClientBase::CreateStringValue(res);
+}
+value ScriptClientBase::Func_GetFileDirectory(script_machine* machine, int argc, const value* argv) {
+	std::wstring res = PathProperty::GetFileDirectory(argv->as_string());
+	return ScriptClientBase::CreateStringValue(res);
+}
+value ScriptClientBase::Func_GetFileDirectoryFromModule(script_machine* machine, int argc, const value* argv) {
+	std::wstring res = PathProperty::GetDirectoryWithoutModuleDirectory(argv->as_string());
+	return ScriptClientBase::CreateStringValue(res);
+}
+value ScriptClientBase::Func_GetFileTopDirectory(script_machine* machine, int argc, const value* argv) {
+	std::wstring res = PathProperty::GetDirectoryName(argv->as_string());
+	return ScriptClientBase::CreateStringValue(res);
+}
+value ScriptClientBase::Func_GetFileName(script_machine* machine, int argc, const value* argv) {
+	std::wstring res = PathProperty::GetFileName(argv->as_string());
+	return ScriptClientBase::CreateStringValue(res);
+}
+value ScriptClientBase::Func_GetFileNameWithoutExtension(script_machine* machine, int argc, const value* argv) {
+	std::wstring res = PathProperty::GetFileNameWithoutExtension(argv->as_string());
+	return ScriptClientBase::CreateStringValue(res);
+}
+value ScriptClientBase::Func_GetFileExtension(script_machine* machine, int argc, const value* argv) {
+	std::wstring res = PathProperty::GetFileExtension(argv->as_string());
+	return ScriptClientBase::CreateStringValue(res);
 }
 
 //共通関数：時刻関連
@@ -1392,8 +1430,8 @@ value ScriptClientBase::Func_GetCurrentDateTimeS(script_machine* machine, int ar
 		date.wYear, date.wMonth, date.wDay,
 		date.wHour, date.wMinute, date.wSecond
 		);
-	std::wstring res = strDateTime;
-	return value(machine->get_engine()->get_string_type(), res);
+
+	return ScriptClientBase::CreateStringValue(strDateTime);
 }
 
 //共通関数：デバッグ関連
@@ -1556,7 +1594,7 @@ value ScriptClientBase::Func_IsCommonDataAreaExists(script_machine* machine, int
 	std::string area = StringUtility::ConvertWideToMulti(argv->as_string());
 	bool res = commonDataManager->IsExists(area).first;
 
-	return value(machine->get_engine()->get_boolean_type(), res);
+	return script->CreateBooleanValue(res);
 }
 value ScriptClientBase::Func_GetCommonDataAreaKeyList(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);

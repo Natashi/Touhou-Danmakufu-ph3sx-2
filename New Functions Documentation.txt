@@ -55,24 +55,38 @@ ratan2
 	Description:
 		atan2() for radians output.
 
-exp
-	Arguments:
-		1) value
-	Description:
-		Returns e (Euler's number) raised to the power of the given value.
-
 prand
 	Arguments:
 		1) min
 		2) max
 	Description:
 		Exactly like rand(), but the seed of which doesn't get saved to replays, and has no effect on the calculation of rand().
+		
+exp
+	Arguments:
+		1) value
+	Description:
+		Returns e (Euler's number) raised to the power of the given value.
 
 sqrt
 	Arguments:
 		1) value
 	Description:
 		Returns the square root of the given value. Much faster than pow(value, 0.5).
+		
+nroot
+	Arguments:
+		1) value
+		2) root
+	Description:
+		Returns the nth root of the given value. Equivalent to pow(value, 1 / root).
+		
+hypot
+	Arguments:
+		1) a
+		2) b
+	Description:
+		Returns the hypotenuse of the triangle formed by the two given values.
 
 ToDegrees
 	Arguments:
@@ -306,19 +320,19 @@ bit_right
 		
 as_real
 	Arguments:
-		1) value
+		1) (any) value
 	Description:
 		Converts the specified value to a real value and returns the result.
 		
 as_bool
 	Arguments:
-		1) value
+		1) (any) value
 	Description:
 		Converts the specified value to a boolean value and returns the result.
 		
 as_char
 	Arguments:
-		1) value
+		1) (any) value
 	Description:
 		Converts the specified value to a char value and returns the result.
 
@@ -366,6 +380,64 @@ RegexReplace
 			RegexReplace("Example String", "(a|e|i)", "*")	-> "Ex*mpl* Str*ng"
 			RegexReplace("Red, Green, and Blue", "[A-Z]+[a-zA-Z]*", "\'$&\'")
 						-> "'Red', 'Green', and 'Blue'"
+						
+rtoa_ex
+	Arguments:
+		1) (string) format
+		2) (any) value
+	Description:
+		Behaves similar to printf.
+		Returns the formatted string.
+
+-------------------------------------------------------------------------------------------------------------------
+
+GetArchiveFilePathList
+	Arguments:
+		1) (string) archive path
+		2) (bool) print full path
+	Description:
+		Returns an array of all filepaths stored inside the specified archive.
+		The archive must have already been loaded with AddArchiveFile, otherwise an empty array will be returned.
+		
+GetFileDirectoryFromModule
+	Arguments:
+		1) (string) path
+	Description:
+		Returns the directory of the given file path, without the directory of the engine.
+		The given path does not need to actually exist.
+		
+GetFileTopDirectory
+	Arguments:
+		1) (string) path
+	Description:
+		Returns the topmost directory of the given file path.
+		The given path does not need to actually exist.
+
+GetFileName
+	Arguments:
+		1) (string) path
+	Description:
+		Returns the file name of the given file path.
+		The given path does not need to actually exist.
+
+GetFileNameWithoutExtension
+	Arguments:
+		1) (string) path
+	Description:
+		Returns the file name of the given file path, without its extension.
+		The given path does not need to actually exist.
+
+GetFileExtension
+	Arguments:
+		1) (string) path
+	Description:
+		Returns the file extension of the given file path.
+		The given path does not need to actually exist.
+		
+IsEngineFastMode
+	Description:
+		Returns whether the engine is in the "fast mode" state.
+		(Note: Normally triggered with the LCtrl key.)
 
 -------------------------------------------------------------------------------------------------------------------
 A "matrix" here is a 16-member array representing a 4x4 matrix arranged row-by-row.
@@ -732,6 +804,8 @@ ObjRender_SetLightingEnable
 		The default values are false and false.
 		For mesh objects, the default values are true and false.
 		
+		If it is not necessary, I recommend you not use specular lighting, as it's quite computationally expensive.
+		
 ObjRender_SetLightingDiffuseColor
 	Arguments:
 		1) object ID
@@ -752,7 +826,7 @@ ObjRender_SetLightingSpecularColor
 	Description:
 		Sets the specular color of the lighting.
 		
-		The default color value is (128, 128, 128).
+		The default color value is (0, 0, 0).
 		
 ObjRender_SetLightingAmbientColor
 	Arguments:

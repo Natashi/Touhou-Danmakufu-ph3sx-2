@@ -133,8 +133,8 @@ namespace gstd {
 
 		static value CreateRealValue(double r);
 		static value CreateBooleanValue(bool b);
-		static value CreateStringValue(std::string& s);
-		static value CreateStringValue(std::wstring& s);
+		static value CreateStringValue(const std::string& s);
+		static value CreateStringValue(const std::wstring& s);
 		template<typename T> static inline value CreateRealArrayValue(std::vector<T>& list) {
 			return CreateRealArrayValue(list.data(), list.size());
 		}
@@ -184,10 +184,12 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_RAtan2);
 
 		DNH_FUNCAPI_DECL_(Func_Exp);
+		DNH_FUNCAPI_DECL_(Func_Sqrt);
+		DNH_FUNCAPI_DECL_(Func_NRoot);
+		DNH_FUNCAPI_DECL_(Func_Hypot);
 
 		static value Func_Rand(script_machine* machine, int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(Func_RandEff);
-		DNH_FUNCAPI_DECL_(Func_Sqrt);
 
 		DNH_FUNCAPI_DECL_(Func_ToDegrees);
 		DNH_FUNCAPI_DECL_(Func_ToRadians);
@@ -211,6 +213,7 @@ namespace gstd {
 		static value Func_ToString(script_machine* machine, int argc, const value* argv);
 		static value Func_ItoA(script_machine* machine, int argc, const value* argv);
 		static value Func_RtoA(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_RtoA_Ex);
 		static value Func_RtoS(script_machine* machine, int argc, const value* argv);
 		static value Func_VtoS(script_machine* machine, int argc, const value* argv);
 		static value Func_AtoI(script_machine* machine, int argc, const value* argv);
@@ -223,12 +226,19 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_RegexReplace);
 
 		//共通関数：パス関連
-		static value Func_GetModuleDirectory(script_machine* machine, int argc, const value* argv);
 		static value Func_GetParentScriptDirectory(script_machine* machine, int argc, const value* argv);
 		static value Func_GetCurrentScriptDirectory(script_machine* machine, int argc, const value* argv);
-		static value Func_GetFileDirectory(script_machine* machine, int argc, const value* argv);
 		static value Func_GetFilePathList(script_machine* machine, int argc, const value* argv);
 		static value Func_GetDirectoryList(script_machine* machine, int argc, const value* argv);
+
+		//Path utility
+		DNH_FUNCAPI_DECL_(Func_GetModuleDirectory);
+		DNH_FUNCAPI_DECL_(Func_GetFileDirectory);
+		DNH_FUNCAPI_DECL_(Func_GetFileDirectoryFromModule);
+		DNH_FUNCAPI_DECL_(Func_GetFileTopDirectory);
+		DNH_FUNCAPI_DECL_(Func_GetFileName);
+		DNH_FUNCAPI_DECL_(Func_GetFileNameWithoutExtension);
+		DNH_FUNCAPI_DECL_(Func_GetFileExtension);
 
 		//共通関数：時刻関連
 		static value Func_GetCurrentDateTimeS(script_machine* machine, int argc, const value* argv);
