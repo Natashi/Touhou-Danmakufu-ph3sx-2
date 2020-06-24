@@ -51,6 +51,7 @@ namespace gstd {
 	public:
 		script_type_manager();
 
+		static type_data* get_int_type() { return base_->int_type; }
 		static type_data* get_real_type() { return base_->real_type; }
 		static type_data* get_char_type() { return base_->char_type; }
 		static type_data* get_boolean_type() { return base_->boolean_type; }
@@ -63,6 +64,7 @@ namespace gstd {
 		script_type_manager(const script_type_manager&);
 
 		std::set<type_data> types;
+		type_data* int_type;
 		type_data* real_type;
 		type_data* char_type;
 		type_data* boolean_type;

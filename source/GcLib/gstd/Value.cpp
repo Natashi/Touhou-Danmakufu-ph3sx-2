@@ -22,13 +22,11 @@ bool type_data::operator<(const type_data& other) const {
 }
 
 value value::val_empty = value();
-/*
 value::value(type_data* t, int64_t v) {
 	data = std::shared_ptr<body>(new body);
 	data->type = t;
 	data->int_value = v;
 }
-*/
 value::value(type_data* t, double v) {
 	data = std::shared_ptr<body>(new body);
 	data->type = t;
@@ -51,13 +49,11 @@ value::value(type_data* t, std::wstring v) {
 		data->array_value.push_back(value(t->get_element(), ch));
 }
 
-/*
 void value::set(type_data* t, int64_t v) {
 	unique();
 	data->type = t;
 	data->int_value = v;
 }
-*/
 void value::set(type_data* t, double v) {
 	unique();
 	data->type = t;
@@ -117,7 +113,6 @@ void value::unique() const {
 	}
 }
 
-/*
 int64_t value::as_int() const {
 	if (data == nullptr)
 		return 0i64;
@@ -146,7 +141,6 @@ int64_t value::as_int() const {
 		return 0i64;
 	}
 }
-*/
 double value::as_real() const {
 	if (data == nullptr)
 		return 0.0;
@@ -168,8 +162,8 @@ double value::as_real() const {
 		}
 		else
 			return length_as_array();
-	//case type_data::type_kind::tk_int:
-	//	return (double)data->int_value;
+	case type_data::type_kind::tk_int:
+		return (double)data->int_value;
 	default:
 		assert(false);
 		return 0.0;
@@ -187,8 +181,8 @@ wchar_t value::as_char() const {
 		return (data->boolean_value) ? L'1' : L'0';
 	case type_data::type_kind::tk_array:
 		return L'\0';
-	//case type_data::type_kind::tk_int:
-	//	return (wchar_t)data->int_value;
+	case type_data::type_kind::tk_int:
+		return (wchar_t)data->int_value;
 	default:
 		assert(false);
 		return L'\0';
@@ -205,9 +199,9 @@ bool value::as_boolean() const {
 	case type_data::type_kind::tk_boolean:
 		return data->boolean_value;
 	case type_data::type_kind::tk_array:
-		return data->array_value.size() != 0;
-	//case type_data::type_kind::tk_int:
-	//	return data->int_value != 0i64;
+		return data->array_value.size() != 0U;
+	case type_data::type_kind::tk_int:
+		return data->int_value != 0i64;
 	default:
 		assert(false);
 		return false;
@@ -243,8 +237,8 @@ std::wstring value::as_string() const {
 			return result;
 		}
 	}
-	//case type_data::type_kind::tk_int:
-	//	return std::to_wstring(data->int_value);
+	case type_data::type_kind::tk_int:
+		return std::to_wstring(data->int_value);
 	default:
 		assert(false);
 		return L"(INTERNAL-ERROR)";

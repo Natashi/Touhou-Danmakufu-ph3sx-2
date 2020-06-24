@@ -207,7 +207,7 @@ value _script_compare(int argc, value const* argv) {
 		default:
 			assert(false);
 		}
-		return value(script_type_manager::get_real_type(), (double)r);
+		return value(script_type_manager::get_int_type(), (int64_t)r);
 	}
 	else {
 		throw std::wstring(L"Values of different types are being compared.\r\n");
@@ -2188,6 +2188,7 @@ script_type_manager::script_type_manager() {
 	if (base_ != nullptr) return;
 	base_ = this;
 
+	int_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_int)).first);
 	real_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_real)).first);
 	char_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_char)).first);
 	boolean_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_boolean)).first);
@@ -2614,7 +2615,7 @@ void script_machine::run_code() {
 			{
 				stack_t& stack = current->stack;
 				value& t = stack.back();
-				double r = t.as_real();
+				int r = t.as_int();
 				bool b = false;
 				switch (c->command) {
 				case command_kind::pc_compare_e:
@@ -2667,7 +2668,7 @@ void script_machine::run_code() {
 				value cmp_res = compare(this, 2, cmp_arg);
 
 				bool is_skip = c->command == command_kind::pc_compare_and_loop_ascent ?
-					(cmp_res.as_real() >= 0) : (cmp_res.as_real() <= 0);
+					(cmp_res.as_int() >= 0) : (cmp_res.as_int() <= 0);
 				if (is_skip) {
 					do
 						++(current->ip);
@@ -2904,7 +2905,7 @@ void script_machine::run_code() {
 			{
 				value* args = (value*)(&current->stack.back() - 1);
 				value cmp_res = compare(this, 2, args);
-				double cmp_r = cmp_res.as_real();
+				int cmp_r = cmp_res.as_int();
 
 #define DEF_CASE(cmd, expr) case cmd: cmp_res.set(engine->get_boolean_type(), expr); break;
 				switch (c->command) {

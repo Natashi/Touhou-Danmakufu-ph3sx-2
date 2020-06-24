@@ -7,7 +7,12 @@ namespace gstd {
 	class type_data {
 	public:
 		enum class type_kind : uint8_t {
-			/*tk_int,*/ tk_real, tk_char, tk_boolean, tk_array,
+			tk_null = 0x00,
+			tk_int = 0x01,
+			tk_real = 0x02,
+			tk_char = 0x04,
+			tk_boolean = 0x08,
+			tk_array = 0x10,
 		};
 
 		type_data(type_kind k, type_data* t = nullptr) : kind(k), element(t) {}
@@ -19,8 +24,8 @@ namespace gstd {
 		bool operator==(const type_data& other);
 		bool operator<(const type_data& other) const;
 	private:
-		type_kind kind;
-		type_data* element;
+		type_kind kind = type_kind::tk_null;
+		type_data* element = nullptr;
 	};
 
 	class value {
@@ -28,7 +33,7 @@ namespace gstd {
 		static value val_empty;
 	public:
 		value() : data(nullptr) {}
-		//value(type_data* t, int64_t v);
+		value(type_data* t, int64_t v);
 		value(type_data* t, double v);
 		value(type_data* t, wchar_t v);
 		value(type_data* t, bool v);
@@ -48,7 +53,7 @@ namespace gstd {
 
 		bool has_data() const { return data != nullptr; }
 
-		//void set(type_data* t, int64_t v);
+		void set(type_data* t, int64_t v);
 		void set(type_data* t, double v);
 		void set(type_data* t, wchar_t v);
 		void set(type_data* t, bool v);
@@ -57,7 +62,7 @@ namespace gstd {
 		void append(type_data* t, const value& x);
 		void concatenate(const value& x);
 
-		//int64_t as_int() const;
+		int64_t as_int() const;
 		double as_real() const;
 		wchar_t as_char() const;
 		bool as_boolean() const;
@@ -87,7 +92,7 @@ namespace gstd {
 				double real_value = 0.0;
 				wchar_t char_value;
 				bool boolean_value;
-				//int64_t int_value;
+				int64_t int_value;
 			};
 		};
 
