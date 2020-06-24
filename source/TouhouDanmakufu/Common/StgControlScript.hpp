@@ -109,6 +109,7 @@ public:
 	static gstd::value Func_AddPoint(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_IsReplay(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_AddArchiveFile(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_GetArchiveFilePathList(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetCurrentFps(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetStageTime(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetStageTimeF(gstd::script_machine* machine, int argc, const gstd::value* argv);

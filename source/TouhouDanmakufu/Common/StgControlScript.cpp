@@ -58,6 +58,7 @@ const function stgControlFunction[] =
 	{ "AddPoint", StgControlScript::Func_AddPoint, 1 },
 	{ "IsReplay", StgControlScript::Func_IsReplay, 0 },
 	{ "AddArchiveFile", StgControlScript::Func_AddArchiveFile, 1 },
+	{ "GetArchiveFilePathList", StgControlScript::Func_GetArchiveFilePathList, 2 },
 	{ "GetCurrentFps", StgControlScript::Func_GetCurrentFps, 0 },
 	{ "GetStageTime", StgControlScript::Func_GetStageTime, 0 },
 	{ "GetStageTimeF", StgControlScript::Func_GetStageTimeF, 0 },
@@ -372,6 +373,28 @@ gstd::value StgControlScript::Func_AddArchiveFile(gstd::script_machine* machine,
 	std::wstring path = argv[0].as_string();
 	bool res = fileManager->AddArchiveFile(path);
 	return StgControlScript::CreateBooleanValue(res);
+}
+gstd::value StgControlScript::Func_GetArchiveFilePathList(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	FileManager* fileManager = FileManager::GetBase();
+
+	std::vector<std::wstring> pathList;
+	std::wstring name = argv[0].as_string();
+	bool bExtendPath = argv[1].as_boolean();
+
+	ref_count_ptr<ArchiveFile> archive = fileManager->GetArchiveFile(name);
+	if (archive) {
+		std::wstring archiveBaseDir = PathProperty::GetFileDirectory(archive->GetPath());
+
+		auto mapFileArchive = archive->GetEntryMap();
+		for (auto itr = mapFileArchive.begin(); itr != mapFileArchive.end(); ++itr) {
+			shared_ptr<ArchiveFileEntry> entry = itr->second;
+			std::wstring path = entry->directory + entry->name;
+			if (bExtendPath) path = archiveBaseDir + path;
+			pathList.push_back(PathProperty::ReplaceYenToSlash(path));
+		}
+	}
+
+	return StgControlScript::CreateStringArrayValue(pathList);
 }
 gstd::value StgControlScript::Func_GetCurrentFps(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	EFpsController* fpsController = EFpsController::GetInstance();

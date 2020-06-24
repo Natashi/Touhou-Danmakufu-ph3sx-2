@@ -85,7 +85,7 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 	std::streampos sDataBegin = fileArchive.tellp();
 
 	//Write the files and record their information.
-	for (auto itr = listEntry_.begin(); itr != listEntry_.end(); itr++) {
+	for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr) {
 		ArchiveFileEntry::ptr entry = *itr;
 
 		std::ifstream file;
@@ -112,7 +112,7 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 
 		if (entry->sizeFull > 0) {
 			//Small files actually get bigger upon compression.
-			if (entry->sizeFull < 0x100) entry->compressionType = ArchiveFileEntry::CT_NONE;
+			if (entry->sizeFull < 0x80) entry->compressionType = ArchiveFileEntry::CT_NONE;
 
 			switch (entry->compressionType) {
 			case ArchiveFileEntry::CT_NONE:
@@ -144,7 +144,7 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 		std::stringstream buf;
 		size_t totalSize = 0U;
 
-		for (auto itr = listEntry_.begin(); itr != listEntry_.end(); itr++) {
+		for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr) {
 			ArchiveFileEntry::ptr entry = *itr;
 
 			std::wstring name = entry->name;
@@ -175,8 +175,32 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 
 	fileArchive.close();
 
-	res = EncryptArchive(path, &header, headerKeyBase, headerKeyStep);
+	/*
+	if (true) {
+		std::ofstream fileTestOutput(StringUtility::Format(L"%s_head.txt", path.c_str()), std::ios::trunc);
 
+		fileTestOutput << StringUtility::Format("File count:     %d\n", header.entryCount);
+		fileTestOutput << StringUtility::Format("Header offset:  %d\n", header.headerOffset);
+		fileTestOutput << StringUtility::Format("Header size:    %d\n\n", header.headerSize);
+
+		size_t i = 0;
+		for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr, ++i) {
+			ArchiveFileEntry::ptr entry = *itr;
+			std::string pathCom = StringUtility::ConvertWideToMulti(entry->directory + entry->name);
+			fileTestOutput << StringUtility::Format("%d: [%s] [%s]\n", i, 
+				StringUtility::ConvertWideToMulti(entry->directory).c_str(),
+				StringUtility::ConvertWideToMulti(PathProperty::GetFileName(entry->name)).c_str());
+			fileTestOutput << StringUtility::Format("\tCompression:  %d\n", entry->compressionType);
+			fileTestOutput << StringUtility::Format("\tFull size:    %d\n", entry->sizeFull);
+			fileTestOutput << StringUtility::Format("\tStored size:  %d\n", entry->sizeStored);
+			fileTestOutput << StringUtility::Format("\tOffset:       %d\n", entry->offsetPos);
+		}
+
+		fileTestOutput.close();
+	}
+	*/
+
+	res = EncryptArchive(path, &header, headerKeyBase, headerKeyStep);
 	return res;
 }
 
@@ -207,8 +231,8 @@ bool FileArchiver::EncryptArchive(std::wstring path, ArchiveFileHeader* header, 
 			size_t count = entry->sizeStored;
 
 			byte localBase = entry->keyBase;
-			byte localStep = entry->keyStep;
 
+			src.clear();
 			src.seekg(entry->offsetPos, std::ios::beg);
 			dest.seekp(entry->offsetPos, std::ios::beg);
 
@@ -217,7 +241,7 @@ bool FileArchiver::EncryptArchive(std::wstring path, ArchiveFileHeader* header, 
 				read = src.gcount();
 				if (read > count) read = count;
 
-				ArchiveEncryption::ShiftBlock((byte*)buf, read, localBase, localStep);
+				ArchiveEncryption::ShiftBlock((byte*)buf, read, localBase, entry->keyStep);
 
 				dest.write(buf, read);
 				count -= read;
@@ -267,6 +291,12 @@ bool ArchiveFile::Open() {
 	if (!file_.is_open()) return false;
 	if (mapEntry_.size() != 0) return true;
 
+	/*
+	std::wstring fileTestPath = StringUtility::Format(L"temp/%s_head_out.txt", PathProperty::GetFileName(basePath_));
+	File::CreateFileDirectory(fileTestPath);
+	std::ofstream fileTestOutput(fileTestPath, std::ios::trunc);
+	*/
+
 	bool res = true;
 	try {
 		ArchiveEncryption::GetKeyHashHeader(ArchiveEncryption::ARCHIVE_ENCRYPTION_KEY, keyBase_, keyStep_);
@@ -301,12 +331,9 @@ bool ArchiveFile::Open() {
 
 		/*
 		{
-			std::wstring pathTest = PathProperty::GetModuleDirectory() + L"tmp\\hdrDeCmp.dat";
-			File file(pathTest);
-			file.CreateDirectory();
-			file.Create();
-			file.Write((char*)bufInfo.rdbuf()->str().c_str(), headerSizeTrue);
-			file.Close();
+			fileTestOutput << StringUtility::Format("File count:     %d\n", header.entryCount);
+			fileTestOutput << StringUtility::Format("Header offset:  %d\n", header.headerOffset);
+			fileTestOutput << StringUtility::Format("Header size:    %d\n\n", header.headerSize);
 		}
 		*/
 
@@ -319,10 +346,20 @@ bool ArchiveFile::Open() {
 			bufInfo.read((char*)&sizeEntry, sizeof(uint32_t));
 
 			entry->_ReadEntryRecord(bufInfo);
-			entry->archiveParent = basePath_;
+			entry->archiveParent = this;
 
-			//std::string key = entry->GetDirectory() + entry->GetName();
-			//mapEntry_[key] = entry;
+			/*
+			{
+				fileTestOutput << StringUtility::Format("%d: [%s] [%s]\n", iEntry,
+					StringUtility::ConvertWideToMulti(entry->directory).c_str(),
+					StringUtility::ConvertWideToMulti(entry->name).c_str());
+				fileTestOutput << StringUtility::Format("\tCompression:  %d\n", entry->compressionType);
+				fileTestOutput << StringUtility::Format("\tFull size:    %d\n", entry->sizeFull);
+				fileTestOutput << StringUtility::Format("\tStored size:  %d\n", entry->sizeStored);
+				fileTestOutput << StringUtility::Format("\tOffset:       %d\n", entry->offsetPos);
+			}
+			*/
+
 			mapEntry_.insert(std::pair<std::wstring, ArchiveFileEntry::ptr>(entry->name, entry));
 		}
 
@@ -331,7 +368,8 @@ bool ArchiveFile::Open() {
 	catch (...) {
 		res = false;
 	}
-	file_.close();
+
+	//fileTestOutput.close();
 	return res;
 }
 void ArchiveFile::Close() {
@@ -364,16 +402,15 @@ bool ArchiveFile::IsExists(std::wstring name) {
 ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr entry) {
 	ref_count_ptr<ByteBuffer> res;
 
-	std::ifstream file;
-	file.open(entry->archiveParent, std::ios::binary);
-	if (file.is_open()) {
+	std::ifstream* file = &entry->archiveParent->GetFile();
+	if (file->is_open()) {
 		switch (entry->compressionType) {
 		case ArchiveFileEntry::CT_NONE:
 		{
-			file.seekg(entry->offsetPos, std::ios::beg);
+			file->seekg(entry->offsetPos, std::ios::beg);
 			res = new ByteBuffer();
 			res->SetSize(entry->sizeFull);
-			file.read(res->GetPointer(), entry->sizeFull);
+			file->read(res->GetPointer(), entry->sizeFull);
 
 			byte keyBase = entry->keyBase;
 			ArchiveEncryption::ShiftBlock((byte*)res->GetPointer(), entry->sizeFull,
@@ -383,25 +420,26 @@ ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr e
 		}
 		case ArchiveFileEntry::CT_ZLIB:
 		{
-			file.seekg(entry->offsetPos, std::ios::beg);
+			file->seekg(entry->offsetPos, std::ios::beg);
 			res = new ByteBuffer();
 			//res->SetSize(entry->sizeFull);
 
 			char* tmp = new char[entry->sizeStored];
-			file.read(tmp, entry->sizeStored);
+			file->read(tmp, entry->sizeStored);
 
 			byte keyBase = entry->keyBase;
 			ArchiveEncryption::ShiftBlock((byte*)tmp, entry->sizeStored,
 				keyBase, entry->keyStep);
 
-			size_t sizeVerif = 0U;
-
 			std::stringstream streamTmp;
 			streamTmp.write(tmp, entry->sizeStored);
 			delete[] tmp;
 
+			size_t sizeVerif = 0U;
+
 			std::stringstream stream;
-			Compressor::Inflate(streamTmp, stream, entry->sizeStored, &sizeVerif);
+			if (entry->sizeStored > 0)
+				Compressor::Inflate(streamTmp, stream, entry->sizeStored, &sizeVerif);
 			res->Copy(stream);
 
 			if (sizeVerif != entry->sizeFull)
@@ -411,11 +449,11 @@ ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr e
 			break;
 		}
 		}
+		file->clear();
 
 		if (false) {
 			std::wstring nameTmp = entry->name;
-			std::wstring pathTest = PathProperty::GetModuleDirectory() +
-				StringUtility::Format(L"temp\\arch_buf_%d_%s", entry->sizeFull, nameTmp.c_str());
+			std::wstring pathTest = StringUtility::Format(L"temp/arch_buf_%d_%s", entry->sizeFull, nameTmp.c_str());
 			File file(pathTest);
 			File::CreateFileDirectory(pathTest);
 			file.Open(File::WRITEONLY);
@@ -423,6 +461,11 @@ ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr e
 			file.Close();
 		}
 	}
+	else {
+		Logger::WriteTop(StringUtility::Format(L"(Error)CreateEntryBuffer: Archive file already unloaded. "
+			"[%s in %s]", entry->name.c_str(), entry->archiveParent->GetPath().c_str()));
+	}
+
 	return res;
 }
 /*

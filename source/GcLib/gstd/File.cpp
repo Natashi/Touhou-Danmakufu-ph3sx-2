@@ -427,6 +427,13 @@ bool FileManager::RemoveArchiveFile(std::wstring path) {
 	mapArchiveFile_.erase(path);
 	return true;
 }
+ref_count_ptr<ArchiveFile> FileManager::GetArchiveFile(std::wstring& name) {
+	ref_count_ptr<ArchiveFile> res = nullptr;
+	auto itrFind = mapArchiveFile_.find(name);
+	if (itrFind != mapArchiveFile_.end())
+		res = itrFind->second;
+	return res;
+}
 bool FileManager::ClearArchiveFileCache() {
 	mapArchiveFile_.clear();
 	return true;

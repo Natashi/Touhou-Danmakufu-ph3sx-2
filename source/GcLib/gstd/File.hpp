@@ -233,6 +233,7 @@ namespace gstd {
 #if defined(DNH_PROJ_EXECUTOR)
 		bool AddArchiveFile(std::wstring path);
 		bool RemoveArchiveFile(std::wstring path);
+		ref_count_ptr<ArchiveFile> GetArchiveFile(std::wstring& name);
 		bool ClearArchiveFileCache();
 #endif
 

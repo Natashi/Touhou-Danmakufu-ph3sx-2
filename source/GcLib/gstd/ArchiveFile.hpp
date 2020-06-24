@@ -45,7 +45,7 @@ namespace gstd {
 		byte keyBase;
 		byte keyStep;
 
-		std::wstring archiveParent;
+		ArchiveFile* archiveParent;
 
 		const size_t GetRecordSize() {
 			return static_cast<size_t>(directory.size() * sizeof(wchar_t) + name.size() * sizeof(wchar_t) +
@@ -89,8 +89,11 @@ namespace gstd {
 		bool Open();
 		void Close();
 
+		std::ifstream& GetFile() { return file_; }
+		std::wstring& GetPath() { return basePath_; }
+
 		std::set<std::wstring> GetKeyList();
-		std::multimap<std::wstring, ArchiveFileEntry::ptr> GetEntryMap() { return mapEntry_; }
+		std::multimap<std::wstring, ArchiveFileEntry::ptr>& GetEntryMap() { return mapEntry_; }
 		std::vector<ArchiveFileEntry::ptr> GetEntryList(std::wstring name);
 		bool IsExists(std::wstring name);
 		static ref_count_ptr<ByteBuffer> CreateEntryBuffer(ArchiveFileEntry::ptr entry);
