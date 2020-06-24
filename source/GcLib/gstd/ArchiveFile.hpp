@@ -106,6 +106,9 @@ namespace gstd {
 	class Compressor {
 		using in_stream_t = std::basic_istream<char, std::char_traits<char>>;
 		using out_stream_t = std::basic_ostream<char, std::char_traits<char>>;
+		enum : size_t {
+			BASIC_CHUNK = 65536U,
+		};
 	public:
 		static bool Deflate(const size_t chunk, 
 			std::function<size_t(char*, size_t, int*)>&& ReadFunction,

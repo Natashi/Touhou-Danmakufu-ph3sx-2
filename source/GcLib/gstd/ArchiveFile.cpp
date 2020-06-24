@@ -570,7 +570,7 @@ bool Compressor::Inflate(const size_t chunk,
 		size_t read = 0U;
 
 		do {
-			size_t read = ReadFunction(in, chunk);
+			read = ReadFunction(in, chunk);
 
 			if (read > 0U) {
 				stream.next_in = (Bytef*)in;
@@ -634,12 +634,12 @@ bool Compressor::DeflateStream(in_stream_t& bufIn, out_stream_t& bufOut, size_t 
 		bufOut.write(_bOut, writing);
 	};
 	DEF_COMP_ADVANCE_CHECK_FUNCS
-	return Deflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+	return Deflate(BASIC_CHUNK, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
 }
 bool Compressor::DeflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t count, size_t* res) {
 	size_t readPos = 0;
 	auto _ReadFunc = [&](char* _bIn, size_t reading, int* _flushType) -> size_t {
-		size_t read = std::min(reading, bufIn.GetSize() - count);
+		size_t read = std::min(reading, count);
 		memcpy(_bIn, bufIn.GetPointer(readPos), read);
 		readPos += read;
 		return read;
@@ -648,7 +648,7 @@ bool Compressor::DeflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t c
 		bufOut.write(_bOut, writing);
 	};
 	DEF_COMP_ADVANCE_CHECK_FUNCS
-	return Deflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+	return Deflate(BASIC_CHUNK, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
 }
 bool Compressor::InflateStream(in_stream_t& bufIn, out_stream_t& bufOut, size_t count, size_t* res) {
 	auto _ReadFunc = [&](char* _bIn, size_t reading) -> size_t {
@@ -660,12 +660,12 @@ bool Compressor::InflateStream(in_stream_t& bufIn, out_stream_t& bufOut, size_t 
 		bufOut.write(_bOut, writing);
 	};
 	DEF_COMP_ADVANCE_CHECK_FUNCS
-	return Inflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+	return Inflate(BASIC_CHUNK, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
 }
 bool Compressor::InflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t count, size_t* res) {
 	size_t readPos = 0;
 	auto _ReadFunc = [&](char* _bIn, size_t reading) -> size_t {
-		size_t read = std::min(reading, bufIn.GetSize() - count);
+		size_t read = std::min(reading, count);
 		memcpy(_bIn, bufIn.GetPointer(readPos), read);
 		readPos += read;
 		return read;
@@ -674,7 +674,7 @@ bool Compressor::InflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t c
 		bufOut.write(_bOut, writing);
 	};
 	DEF_COMP_ADVANCE_CHECK_FUNCS
-	return Inflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+	return Inflate(BASIC_CHUNK, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
 }
 bool Compressor::InflateStream(in_stream_t& bufIn, ByteBuffer& bufOut, size_t count, size_t* res) {
 	size_t readPos = 0;
@@ -687,12 +687,12 @@ bool Compressor::InflateStream(in_stream_t& bufIn, ByteBuffer& bufOut, size_t co
 		bufOut.Write(_bOut, writing);
 	};
 	DEF_COMP_ADVANCE_CHECK_FUNCS
-		return Inflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+		return Inflate(BASIC_CHUNK, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
 }
 bool Compressor::InflateStream(ByteBuffer& bufIn, ByteBuffer& bufOut, size_t count, size_t* res) {
 	size_t readPos = 0;
 	auto _ReadFunc = [&](char* _bIn, size_t reading) -> size_t {
-		size_t read = std::min(reading, bufIn.GetSize() - count);
+		size_t read = std::min(reading, count);
 		memcpy(_bIn, bufIn.GetPointer(readPos), read);
 		readPos += read;
 		return read;
@@ -701,5 +701,5 @@ bool Compressor::InflateStream(ByteBuffer& bufIn, ByteBuffer& bufOut, size_t cou
 		bufOut.Write(_bOut, writing);
 	};
 	DEF_COMP_ADVANCE_CHECK_FUNCS
-	return Inflate(65536U, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
+	return Inflate(BASIC_CHUNK, _ReadFunc, _WriteFunc, _AdvanceFunc, _StreamEndCheckFunc, res);
 }
