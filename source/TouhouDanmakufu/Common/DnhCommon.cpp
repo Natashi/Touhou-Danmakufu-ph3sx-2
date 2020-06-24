@@ -215,11 +215,19 @@ std::vector<ref_count_ptr<ScriptInformation> > ScriptInformation::CreatePlayerSc
 std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInformationList(std::wstring path, bool bNeedHeader) {
 	std::vector<ref_count_ptr<ScriptInformation>> res;
 	File file(path);
-	if (!file.Open())return res;
+	if (!file.Open()) return res;
 	if (file.GetSize() < ArchiveFileHeader::MAGIC_LENGTH) return res;
 
 	char header[ArchiveFileHeader::MAGIC_LENGTH];
 	file.Read(&header, ArchiveFileHeader::MAGIC_LENGTH);
+	{
+		byte keyBase;
+		byte keyStep;
+		ArchiveEncryption::GetKeyHashHeader(ArchiveEncryption::ARCHIVE_ENCRYPTION_KEY, keyBase, keyStep);
+		ArchiveEncryption::ShiftBlock((byte*)header, ArchiveFileHeader::MAGIC_LENGTH, keyBase, keyStep);
+	}
+
+	//Reading a .dat
 	if (memcmp(header, ArchiveEncryption::HEADER_ARCHIVEFILE, ArchiveFileHeader::MAGIC_LENGTH) == 0) {
 		file.Close();
 
@@ -228,7 +236,6 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 
 		std::multimap<std::wstring, ArchiveFileEntry::ptr> mapEntry = archive.GetEntryMap();
 		for (auto itr = mapEntry.begin(); itr != mapEntry.end(); itr++) {
-			//–¾‚ç‚©‚ÉŠÖŒW‚È‚³‚»‚¤‚ÈŠg’£Žq‚ÍœŠO
 			ArchiveFileEntry::ptr entry = itr->second;
 			std::wstring dir = PathProperty::GetFileDirectory(path);
 			std::wstring tPath = dir + entry->directory + entry->name;

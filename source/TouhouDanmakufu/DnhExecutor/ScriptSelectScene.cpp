@@ -527,15 +527,15 @@ void ScriptSelectFileModel::_SearchScript(std::wstring dir) {
 	FindClose(hFind);
 }
 void ScriptSelectFileModel::_CreateMenuItem(std::wstring path) {
-	std::vector<ref_count_ptr<ScriptInformation> >listInfo =
+	std::vector<ref_count_ptr<ScriptInformation>> listInfo =
 		ScriptInformation::CreateScriptInformationList(path, true);
-	for (int iInfo = 0; iInfo < listInfo.size(); iInfo++) {
+	for (size_t iInfo = 0; iInfo < listInfo.size(); iInfo++) {
 		ref_count_ptr<ScriptInformation> info = listInfo[iInfo];
 		if (!_IsValidScriptInformation(info))continue;
 
 		int typeItem = _ConvertTypeInfoToItem(info->GetType());
-		ref_count_ptr<ScriptSelectSceneMenuItem> item = new ScriptSelectSceneMenuItem(
-			typeItem, info->GetScriptPath(), info);
+		ref_count_ptr<ScriptSelectSceneMenuItem> item = 
+			new ScriptSelectSceneMenuItem(typeItem, info->GetScriptPath(), info);
 		listItem_.push_back(item);
 	}
 
