@@ -125,16 +125,21 @@ void StringUtility::Split(std::string str, std::string delim, std::vector<std::s
 }
 
 std::string StringUtility::Format(const char* str, ...) {
-	std::string res;
-	char buf[256];
 	va_list	vl;
 	va_start(vl, str);
-	if (_vsnprintf(buf, sizeof(buf), str, vl) < 0) {	//バッファを超えていた場合、動的に確保する
+	std::string res = StringUtility::Format(str, vl);
+	va_end(vl);
+	return res;
+}
+std::string StringUtility::Format(const char* str, va_list va) {
+	std::string res;
+	char buf[256];
+	if (_vsnprintf(buf, sizeof(buf), str, va) < 0) {	//バッファを超えていた場合、動的に確保する
 		size_t size = sizeof(buf);
 		while (true) {
 			size *= 2;
 			char* nBuf = new char[size];
-			if (_vsnprintf(nBuf, size, str, vl) >= 0) {
+			if (_vsnprintf(nBuf, size, str, va) >= 0) {
 				res = nBuf;
 				delete[] nBuf;
 				break;
@@ -145,7 +150,6 @@ std::string StringUtility::Format(const char* str, ...) {
 	else {
 		res = buf;
 	}
-	va_end(vl);
 	return res;
 }
 
@@ -265,16 +269,21 @@ void StringUtility::Split(std::wstring str, std::wstring delim, std::vector<std:
 	res.push_back(str.substr(itrBegin));
 }
 std::wstring StringUtility::Format(const wchar_t* str, ...) {
-	std::wstring res;
-	wchar_t buf[256];
 	va_list	vl;
 	va_start(vl, str);
-	if (_vsnwprintf(buf, sizeof(buf) / 2U - 1U, str, vl) < 0) {	//バッファを超えていた場合、動的に確保する
+	std::wstring res = StringUtility::Format(str, vl);
+	va_end(vl);
+	return res;
+}
+std::wstring StringUtility::Format(const wchar_t* str, va_list va) {
+	std::wstring res;
+	wchar_t buf[256];
+	if (_vsnwprintf(buf, sizeof(buf) / 2U - 1U, str, va) < 0) {	//バッファを超えていた場合、動的に確保する
 		size_t size = sizeof(buf);
 		while (true) {
 			size *= 2U;
 			wchar_t* nBuf = new wchar_t[size];
-			if (_vsnwprintf(nBuf, size / 2U - 1U, str, vl) >= 0) {
+			if (_vsnwprintf(nBuf, size / 2U - 1U, str, va) >= 0) {
 				res = nBuf;
 				delete[] nBuf;
 				break;
@@ -285,7 +294,6 @@ std::wstring StringUtility::Format(const wchar_t* str, ...) {
 	else {
 		res = buf;
 	}
-	va_end(vl);
 	return res;
 }
 std::wstring StringUtility::FormatToWide(const char* str, ...) {

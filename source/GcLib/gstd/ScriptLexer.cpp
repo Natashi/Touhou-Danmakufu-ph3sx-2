@@ -332,10 +332,14 @@ void script_scanner::advance() {
 		if (ch == L'.') {
 			next = token_kind::tk_range;
 			ch = next_char();
+			/*
+			if (ch == L'.') {
+				next = token_kind::tk_args_variadic;
+				ch = next_char();
+			}
+			*/
 		}
-		else {
-			throw parser_error("Invalid period(.) placement.\r\n");
-		}
+		else throw parser_error("Invalid period(.) placement.\r\n");
 		break;
 
 	case L'\"':

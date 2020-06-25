@@ -93,6 +93,7 @@ namespace gstd {
 		static std::vector<std::string> Split(std::string str, std::string delim);
 		static void Split(std::string str, std::string delim, std::vector<std::string>& res);
 		static std::string Format(const char* str, ...);
+		static std::string Format(const char* str, va_list va);
 
 		static size_t CountCharacter(std::string& str, char c);
 		static size_t CountCharacter(std::vector<char>& str, char c);
@@ -109,6 +110,7 @@ namespace gstd {
 		static std::vector<std::wstring> Split(std::wstring str, std::wstring delim);
 		static void Split(std::wstring str, std::wstring delim, std::vector<std::wstring>& res);
 		static std::wstring Format(const wchar_t* str, ...);
+		static std::wstring Format(const wchar_t* str, va_list va);
 		static std::wstring FormatToWide(const char* str, ...);
 
 		static size_t CountCharacter(std::wstring& str, wchar_t c);

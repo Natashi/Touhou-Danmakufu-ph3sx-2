@@ -43,7 +43,7 @@ namespace gstd {
 	struct function {
 		char const* name;
 		callback func;
-		size_t arguments;
+		int arguments;
 	};
 
 	class script_type_manager {

@@ -817,13 +817,12 @@ int parser::scan_current_scope(int level, std::vector<std::string> const* args, 
 				token_kind type = lex2.next;
 				lex2.advance();
 				if (cur == 0) {
-					size_t countArgs = 0;
-
 					block_kind kind = (type == token_kind::tk_SUB || type == token_kind::tk_at) ?
 						block_kind::bk_sub : (type == token_kind::tk_FUNCTION) ?
 						block_kind::bk_function : block_kind::bk_microthread;
 
 					std::string name = lex2.word;
+					int countArgs = 0;
 
 					lex2.advance();
 					if (lex2.next == token_kind::tk_open_par) {
@@ -836,18 +835,28 @@ int parser::scan_current_scope(int level, std::vector<std::string> const* args, 
 						else {
 							while (lex2.next == token_kind::tk_word || IsDeclToken(lex2.next)) {
 								++countArgs;
+
 								if (IsDeclToken(lex2.next)) lex2.advance();
+
 								if (lex2.next == token_kind::tk_word) lex2.advance();
+								/*
+								else if (lex2.next == token_kind::tk_args_variadic) {
+									countArgs = -countArgs;
+									lex2.advance();
+									break;
+								}
+								*/
 								if (lex2.next != token_kind::tk_comma)
 									break;
+
 								lex2.advance();
 							}
 						}
 					}
 
 					{
-						symbol* dup = search_in(current_frame, name, countArgs);
-						if (dup != nullptr) {	//Woohoo for detailed error messages.
+						if (symbol* dup = search_in(current_frame, name, countArgs)) {
+							//Woohoo for detailed error messages.
 							std::string typeSub;
 							switch (dup->sub->kind) {
 							case block_kind::bk_function:
@@ -867,8 +876,9 @@ int parser::scan_current_scope(int level, std::vector<std::string> const* args, 
 							std::string error = "A ";
 							error += typeSub;
 							error += " of the same name was already defined in the current scope.\r\n";
-							if (dup->can_overload)
-								error += "**You may overload functions and tasks by giving them different argument counts.\r\n";
+							if (dup->can_overload && countArgs >= 0)
+								error += "**You may overload functions and tasks by giving them "
+										 "different argument counts.\r\n";
 							else
 								error += StringUtility::Format("**\'%s\' cannot be overloaded.\r\n", name.c_str());
 							throw parser_error(error);
@@ -1003,6 +1013,12 @@ void parser::parse_clause(script_engine::block* block, script_scanner* lex) {
 		symbol* s = search(name, argc);
 
 		if (s == nullptr) {
+			/*
+			if (s = search(name)) {
+				int req_argc = s->sub->arguments;
+				if (req_argc < 0 && argc >= (-req_argc - 1)) goto continue_as_variadic;
+			}
+			*/
 			std::string error;
 			if (search(name))
 				error = StringUtility::Format("No matching overload for %s with %d arguments was found.\r\n",
@@ -1012,6 +1028,7 @@ void parser::parse_clause(script_engine::block* block, script_scanner* lex) {
 			throw parser_error(error);
 		}
 
+//continue_as_variadic:
 		if (s->sub) {
 			parser_assert(s->sub->kind == block_kind::bk_function, "Tasks and subs cannot return values.\r\n");
 			block->codes.push_back(code(lex->line, command_kind::pc_call_and_push_result, s->sub, argc));
@@ -1240,6 +1257,9 @@ void parser::parse_expression(script_engine::block* block, script_scanner* lex) 
 	}
 }
 
+//Format for variadic arguments (To-be-completed until after 1.10a):
+// argc = -(n + 1)
+// where n = fixed(required) arguments
 int parser::parse_arguments(script_engine::block* block, script_scanner* lex) {
 	int result = 0;
 	if (lex->next == token_kind::tk_open_par) {
@@ -2008,6 +2028,7 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 							lex->advance();
 							parser_assert(lex->next == token_kind::tk_word, "Parameter name is required.\r\n");
 						}
+						//TODO: Give scripters access to defining functions with variadic argument counts. (After 1.10a)
 						args.push_back(lex->word);
 						lex->advance();
 						if (lex->next != token_kind::tk_comma)

@@ -108,6 +108,7 @@ function const commonFunction[] =
 	{ "IntToString", ScriptClientBase::Func_ItoA, 1 },
 	{ "itoa", ScriptClientBase::Func_ItoA, 1 },
 	{ "rtoa", ScriptClientBase::Func_RtoA, 1 },
+	//{ "rtoa_ex", ScriptClientBase::Func_RtoA_Ex, -2 },
 	{ "rtoa_ex", ScriptClientBase::Func_RtoA_Ex, 2 },
 	{ "rtos", ScriptClientBase::Func_RtoS, 2 },
 	{ "vtos", ScriptClientBase::Func_VtoS, 2 },
@@ -1185,7 +1186,20 @@ value ScriptClientBase::Func_RtoA(script_machine* machine, int argc, const value
 	return CreateStringValue(res);
 }
 value ScriptClientBase::Func_RtoA_Ex(script_machine* machine, int argc, const value* argv) {
-	std::wstring res = StringUtility::Format(argv[0].as_string().c_str(), argv[1].as_real());
+	/*
+	std::wstring res = argv[0].as_string();
+	if (argc > 1) {
+		std::vector<double> f_va_list;
+		for (int i = 1; i < argc; ++i) {
+			f_va_list.push_back(argv[i].as_real());
+		}
+		double* f_data = f_va_list.data();
+
+		res = StringUtility::Format(res.c_str(), reinterpret_cast<va_list>(f_data));
+	}
+	*/
+	std::wstring format = argv[0].as_string();
+	std::wstring res = StringUtility::Format(format.c_str(), argv[1].as_real());
 	return CreateStringValue(res);
 }
 value ScriptClientBase::Func_RtoS(script_machine* machine, int argc, const value* argv) {

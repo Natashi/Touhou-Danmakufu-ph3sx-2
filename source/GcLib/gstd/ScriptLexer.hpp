@@ -22,7 +22,7 @@ namespace gstd {
 		tk_plus, tk_minus, tk_asterisk, tk_slash, tk_percent, tk_caret, tk_exclamation, tk_ampersand,
 		tk_e, tk_g, tk_ge, tk_l, tk_le, tk_ne, tk_logic_and, tk_logic_or, 
 		tk_vertical, tk_at,
-		tk_inc, tk_dec, tk_range,
+		tk_inc, tk_dec, tk_range, tk_args_variadic,
 		tk_add_assign, tk_subtract_assign, tk_multiply_assign, tk_divide_assign, tk_remainder_assign, tk_power_assign,
 
 		tk_decl_auto, tk_const,
