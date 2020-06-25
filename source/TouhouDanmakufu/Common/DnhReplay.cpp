@@ -87,6 +87,7 @@ bool ReplayInformation::SaveToFile(std::wstring scriptPath, int index) {
 	{
 		ByteBuffer replayBase;
 		rec.Write(replayBase);
+		replayBase.Seek(0);
 
 		std::ofstream replayFile;
 		replayFile.open(path, std::ios::binary | std::ios::trunc);
@@ -133,6 +134,7 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 		ByteBuffer bufDecomp;
 		if (!Compressor::InflateStream(file, bufDecomp, size - 6U, &sizeFull)) return nullptr;
 
+		bufDecomp.Seek(0);
 		rec.Read(bufDecomp);
 
 		file.close();

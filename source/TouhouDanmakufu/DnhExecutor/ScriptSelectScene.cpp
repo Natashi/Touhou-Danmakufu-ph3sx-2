@@ -790,7 +790,7 @@ void PlayerSelectScene::Work() {
 	if (!_IsWaitedKeyFree())return;
 
 	EDirectInput* input = EDirectInput::GetInstance();
-	if (input->GetVirtualKeyState(EDirectInput::KEY_OK) == KEY_PUSH) {
+	if (input->GetVirtualKeyState(EDirectInput::KEY_OK) == KEY_PUSH && listPlayer_.size() > 0) {
 		int index = GetSelectedItemIndex();
 		ref_count_ptr<ScriptInformation> infoPlayer = listPlayer_[index];
 		SystemController::GetInstance()->GetSystemInformation()->SetLastSelectedPlayerIndex(index, listPlayer_);

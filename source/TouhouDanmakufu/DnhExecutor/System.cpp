@@ -180,7 +180,7 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 		//©‹@‚ğŒŸõ
 		ref_count_ptr<ScriptInformation> infoPlayer;
 		std::vector<ref_count_ptr<ScriptInformation> > listPlayer;
-		std::vector<std::wstring> listPlayerPath = infoMain->GetPlayerList();
+		std::vector<std::wstring>& listPlayerPath = infoMain->GetPlayerList();
 		if (listPlayerPath.size() == 0) {
 			listPlayer =
 				SystemController::GetInstance()->GetSystemInformation()->GetFreePlayerScriptInformationList();

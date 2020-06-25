@@ -55,19 +55,19 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(std:
 			else if (tok.GetType() == Token::TK_SHARP) {
 				tok = scanner.Next();
 				std::wstring element = tok.GetElement();
-				bool bShiftJisDanmakufu = false;
+
+				bool bANSIDanmakufu = false;
 				if (encoding == Encoding::UTF8) {
 					int start = tok.GetStartPointer();
 					int end = tok.GetEndPointer();
 
 					{
-						std::wstring wThDmf = L"ìåï˚íeñãïó";
-						std::string unicodeThDmf = StringUtility::ConvertWideToMulti(wThDmf);
-						bShiftJisDanmakufu = scanner.CompareMemory(start, end, unicodeThDmf.data());
+						std::string multiThDmf = StringUtility::ConvertWideToMulti(L"ìåï˚íeñãïó", CP_ACP);
+						bANSIDanmakufu = scanner.CompareMemory(start, end, multiThDmf.data());
 					}
 				}
 
-				if (element == L"ìåï˚íeñãïó" || element == L"TouhouDanmakufu" || bShiftJisDanmakufu) {
+				if (bANSIDanmakufu || element == L"ìåï˚íeñãïó" || element == L"TouhouDanmakufu") {
 					bScript = true;
 					if (scanner.Next().GetType() != Token::TK_OPENB)continue;
 					tok = scanner.Next();
@@ -185,11 +185,11 @@ std::vector<std::wstring> ScriptInformation::_GetStringList(Scanner& scanner) {
 	}
 	return res;
 }
-std::vector<ref_count_ptr<ScriptInformation> > ScriptInformation::CreatePlayerScriptInformationList() {
-	std::vector<ref_count_ptr<ScriptInformation> > res;
-	std::vector<std::wstring> listPlayerPath = GetPlayerList();
+std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScriptInformationList() {
+	std::vector<ref_count_ptr<ScriptInformation>> res;
+	std::vector<std::wstring>& listPlayerPath = GetPlayerList();
 	std::wstring dirInfo = PathProperty::GetFileDirectory(GetScriptPath());
-	for (int iPath = 0; iPath < listPlayerPath.size(); iPath++) {
+	for (size_t iPath = 0; iPath < listPlayerPath.size(); ++iPath) {
 		std::wstring pathPlayer = listPlayerPath[iPath];
 		std::wstring path = EPathProperty::ExtendRelativeToFull(dirInfo, pathPlayer);
 
@@ -232,16 +232,16 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 		file.Close();
 
 		ArchiveFile archive(path);
-		if (!archive.Open())return res;
+		if (!archive.Open()) return res;
 
-		std::multimap<std::wstring, ArchiveFileEntry::ptr> mapEntry = archive.GetEntryMap();
+		std::multimap<std::wstring, ArchiveFileEntry::ptr>& mapEntry = archive.GetEntryMap();
 		for (auto itr = mapEntry.begin(); itr != mapEntry.end(); itr++) {
 			ArchiveFileEntry::ptr entry = itr->second;
-			std::wstring dir = PathProperty::GetFileDirectory(path);
-			std::wstring tPath = dir + entry->directory + entry->name;
 
 			std::wstring ext = PathProperty::GetFileExtension(entry->name);
-			if (ScriptInformation::IsExcludeExtention(ext))continue;
+			if (ScriptInformation::IsExcludeExtention(ext)) continue;
+
+			std::wstring tPath = PathProperty::GetFileDirectory(path) + entry->directory + entry->name;
 
 			ref_count_ptr<gstd::ByteBuffer> buffer = ArchiveFile::CreateEntryBuffer(entry);
 			std::string source = "";
@@ -254,10 +254,8 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 		}
 	}
 	else {
-
-		//ñæÇÁÇ©Ç…ä÷åWÇ»Ç≥ÇªÇ§Ç»ägí£éqÇÕèúäO
 		std::wstring ext = PathProperty::GetFileExtension(path);
-		if (ScriptInformation::IsExcludeExtention(ext))return res;
+		if (ScriptInformation::IsExcludeExtention(ext)) return res;
 
 		file.SetFilePointerBegin();
 		std::string source = "";
@@ -267,6 +265,8 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 
 		ref_count_ptr<ScriptInformation> info = CreateScriptInformation(path, L"", source, bNeedHeader);
 		if (info) res.push_back(info);
+
+		file.Close();
 	}
 
 	return res;

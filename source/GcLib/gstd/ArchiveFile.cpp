@@ -439,6 +439,7 @@ ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr e
 						"[expected %d bytes, got %d bytes -> %s]", entry->name.c_str()));
 			}
 
+			res->Seek(0);
 			break;
 		}
 		}

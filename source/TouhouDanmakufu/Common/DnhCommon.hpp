@@ -63,7 +63,7 @@ public:
 	void SetBackgroundPath(std::wstring path) { pathBackground_ = path; }
 	std::wstring GetBgmPath() { return pathBGM_; }
 	void SetBgmPath(std::wstring path) { pathBGM_ = path; }
-	std::vector<std::wstring> GetPlayerList() { return listPlayer_; }
+	std::vector<std::wstring>& GetPlayerList() { return listPlayer_; }
 	void SetPlayerList(std::vector<std::wstring> list) { listPlayer_ = list; }
 
 	std::wstring GetReplayName() { return replayName_; }
