@@ -101,6 +101,7 @@ void StgShotManager::Render(int targetPriority) {
 	device->SetStreamSource(0, bufferManager->GetGrowableVertexBuffer()->GetBuffer(), 0, sizeof(VERTEX_TLX));
 	device->SetIndices(bufferManager->GetGrowableIndexBuffer()->GetBuffer());
 
+	//Should I regroup these as texture->blend? I'll consider it later, I guess
 	{
 		UINT cPass = 1U;
 
@@ -109,7 +110,7 @@ void StgShotManager::Render(int targetPriority) {
 			bool hasPolygon = false;
 			std::vector<StgShotRenderer*>& listPlayer = listPlayerShotData_->GetRendererList(blendMode[iBlend] - 1);
 
-			//In an attempt to minimize D3D calls.
+			//In an attempt to minimize D3D calls in SetBlendMode.
 			for (auto itr = listPlayer.begin(); itr != listPlayer.end() && !hasPolygon; ++itr)
 				hasPolygon = (*itr)->countRenderIndex_ >= 3U;
 			if (!hasPolygon) continue;
@@ -834,7 +835,6 @@ void StgShotObject::_Move() {
 	SetX(posX_);
 	SetY(posY_);
 
-	//弾画像置き換え処理
 	if (pattern_) {
 		int idShot = pattern_->GetShotDataID();
 		if (idShot != StgMovePattern::NO_CHANGE) {
@@ -1748,7 +1748,7 @@ std::vector<StgIntersectionTarget::ptr> StgLooseLaserObject::GetIntersectionTarg
 	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
 
-	if (pOwnReference_.expired()) return res;
+	if (pOwnReference_.expired() || widthIntersection_ == 0) return res;
 
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr) return res;
@@ -2021,7 +2021,7 @@ std::vector<StgIntersectionTarget::ptr> StgStraightLaserObject::GetIntersectionT
 	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
 
-	if (pOwnReference_.expired()) return res;
+	if (pOwnReference_.expired() || widthIntersection_ == 0) return res;
 
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr) return res;
@@ -2366,7 +2366,7 @@ std::vector<StgIntersectionTarget::ptr> StgCurveLaserObject::GetIntersectionTarg
 	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
 
-	if (pOwnReference_.expired()) return res;
+	if (pOwnReference_.expired() || widthIntersection_ == 0) return res;
 
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr) return res;
@@ -2380,7 +2380,7 @@ std::vector<StgIntersectionTarget::ptr> StgCurveLaserObject::GetIntersectionTarg
 	float iLengthE = 0.5f + (1.0f - invalidLengthStart_) * 0.5f;
 	int posInvalidS = (int)(countPos * iLengthS);
 	int posInvalidE = (int)(countPos * iLengthE);
-	double iWidth = widthIntersection_ * hitboxScale_.x;
+	float iWidth = widthIntersection_ * hitboxScale_.x;
 
 	for (size_t iPos = 0; iPos < countPos - 1; ++iPos) {
 		if ((int)iPos < posInvalidS || (int)iPos > posInvalidE) {
@@ -2390,10 +2390,10 @@ std::vector<StgIntersectionTarget::ptr> StgCurveLaserObject::GetIntersectionTarg
 
 		std::list<LaserNode>::iterator itrNext = std::next(itr);
 
-		double posXS = (*itr).pos.GetX();
-		double posYS = (*itr).pos.GetY();
-		double posXE = (*itrNext).pos.GetX();
-		double posYE = (*itrNext).pos.GetY();
+		float posXS = (*itr).pos.GetX();
+		float posYS = (*itr).pos.GetY();
+		float posXE = (*itrNext).pos.GetX();
+		float posYE = (*itrNext).pos.GetY();
 		++itr;
 
 		DxWidthLine line(posXS, posYS, posXE, posYE, iWidth);
