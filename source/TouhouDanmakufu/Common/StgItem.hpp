@@ -110,7 +110,7 @@ private:
 	D3DXVECTOR2 textureSize_;
 
 	int typeItem_;
-	int typeRender_;
+	BlendMode typeRender_;
 	RECT rcOutSrc_;
 	RECT rcOutDest_;
 	int alpha_;
@@ -124,7 +124,7 @@ public:
 	int GetTextureIndex() { return indexTexture_; }
 	D3DXVECTOR2& GetTextureSize() { return textureSize_; }
 	int GetItemType() { return typeItem_; }
-	int GetRenderType() { return typeRender_; }
+	BlendMode GetRenderType() { return typeRender_; }
 	AnimationData* GetData(int frame);
 	RECT* GetOutSrc() { return &rcOutSrc_; }
 	RECT* GetOutDest() { return &rcOutDest_; }
@@ -132,7 +132,7 @@ public:
 
 	shared_ptr<Texture> GetTexture() { return listItemData_->GetTexture(indexTexture_); }
 	StgItemRenderer* GetRenderer() { return GetRenderer(typeRender_); }
-	StgItemRenderer* GetRenderer(int type);
+	StgItemRenderer* GetRenderer(BlendMode type);
 };
 
 /**********************************************************

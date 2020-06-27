@@ -152,7 +152,7 @@ public:
 		FPS_AUTO,
 	};
 public:
-	int modeScreen_;	//DirectGraphics::SCREENMODE_FULLSCREEN,SCREENMODE_WINDOW
+	ScreenMode modeScreen_;	//DirectGraphics::SCREENMODE_FULLSCREEN,SCREENMODE_WINDOW
 	int modeColor_;		//DirectGraphics::COLOR_MODE_32BIT,COLOR_MODE_16BIT
 	int sizeWindow_;
 	int fpsType_;
@@ -187,8 +187,8 @@ public:
 	bool LoadConfigFile();
 	bool SaveConfigFile();
 
-	int GetScreenMode() { return modeScreen_; }
-	void SetScreenMode(int mode) { modeScreen_ = mode; }
+	ScreenMode GetScreenMode() { return modeScreen_; }
+	void SetScreenMode(ScreenMode mode) { modeScreen_ = mode; }
 	int GetWindowSize() { return sizeWindow_; }
 	void SetWindowSize(int size) { sizeWindow_ = size; }
 	int GetFpsType() { return fpsType_; }

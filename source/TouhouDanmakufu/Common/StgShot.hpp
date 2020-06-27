@@ -126,8 +126,8 @@ private:
 	int indexTexture_;
 	D3DXVECTOR2 textureSize_;
 
-	int typeRender_;
-	int typeDelayRender_;
+	BlendMode typeRender_;
+	BlendMode typeDelayRender_;
 
 	RECT rcDelay_;
 	RECT rcDstDelay_;
@@ -148,8 +148,8 @@ public:
 
 	int GetTextureIndex() { return indexTexture_; }
 	D3DXVECTOR2& GetTextureSize() { return textureSize_; }
-	int GetRenderType() { return typeRender_; }
-	int GetDelayRenderType() { return typeDelayRender_; }
+	BlendMode GetRenderType() { return typeRender_; }
+	BlendMode GetDelayRenderType() { return typeDelayRender_; }
 	AnimationData* GetData(int frame);
 	RECT* GetDelayRect() { return &rcDelay_; }
 	RECT* GetDelayDest() { return &rcDstDelay_; }
@@ -164,7 +164,7 @@ public:
 
 	shared_ptr<Texture> GetTexture() { return listShotData_->GetTexture(indexTexture_); }
 	StgShotRenderer* GetRenderer() { return GetRenderer(typeRender_); }
-	StgShotRenderer* GetRenderer(int type);
+	StgShotRenderer* GetRenderer(BlendMode type);
 };
 
 /**********************************************************
@@ -243,7 +243,7 @@ public:
 
 		int time;
 		int id;
-		int blend;
+		BlendMode blend;
 		D3DXVECTOR3 scale;	//[end, start, factor]
 		D3DXVECTOR3 alpha;	//[end, start, factor]
 
@@ -251,13 +251,13 @@ public:
 		lerp_func scaleLerpFunc;	//Scale interpolation
 		lerp_func alphaLerpFunc;	//Alpha interpolation
 
-		DelayParameter() : time(0), id(-1), blend(DirectGraphics::MODE_BLEND_NONE), type(0) {
+		DelayParameter() : time(0), id(-1), blend(MODE_BLEND_NONE), type(0) {
 			scale = D3DXVECTOR3(0.5f, 2.0f, 15.0f);
 			alpha = D3DXVECTOR3(1.0f, 1.0f, 15.0f);
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
 			alphaLerpFunc = Math::Lerp::Linear<float, float>;
 		}
-		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(DirectGraphics::MODE_BLEND_NONE), type(0) {
+		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(MODE_BLEND_NONE), type(0) {
 			scale = D3DXVECTOR3(sMin, sMax, rate);
 			alpha = D3DXVECTOR3(1.0f, 1.0f, 15.0f);
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
@@ -359,8 +359,8 @@ public:
 	void SetDelay(int delay) { delay_.time = delay; }
 	int GetShotDataDelayID() { return delay_.id; }
 	void SetShotDataDelayID(int id) { delay_.id = id; }
-	int GetSourceBlendType() { return delay_.blend; }
-	void SetSourceBlendType(int type) { delay_.blend = type; }
+	BlendMode GetSourceBlendType() { return delay_.blend; }
+	void SetSourceBlendType(BlendMode type) { delay_.blend = type; }
 	DelayParameter* GetDelayParameter() { return &delay_; }
 	void SetDelayParameter(DelayParameter param) { delay_ = param; }
 
@@ -611,7 +611,7 @@ private:
 	int typeOwner_;
 	TypeObject typeShot_;
 	int typePattern_;
-	int iniBlendType_;
+	BlendMode iniBlendType_;
 
 	size_t shotWay_;
 	size_t shotStack_;
@@ -663,7 +663,7 @@ public:
 	void SetTypeOwner(int type) { typeOwner_ = type; }
 	void SetTypePattern(int type) { typePattern_ = type; }
 	void SetTypeShot(TypeObject type) { typeShot_ = type; }
-	void SetBlendType(int type) { iniBlendType_ = type; }
+	void SetBlendType(BlendMode type) { iniBlendType_ = type; }
 
 	void SetWayStack(size_t way, size_t stack) {
 		shotWay_ = way;

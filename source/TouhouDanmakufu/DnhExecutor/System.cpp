@@ -377,7 +377,7 @@ void SystemResidentTask::RenderFps() {
 	if (taskManager->GetTask(typeid(PStgSystemController)) != nullptr)return;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ALPHA);
+	graphics->SetBlendMode(MODE_BLEND_ALPHA);
 	graphics->SetZBufferEnable(false);
 	graphics->SetZWriteEnable(false);
 	graphics->SetFogEnable(false);

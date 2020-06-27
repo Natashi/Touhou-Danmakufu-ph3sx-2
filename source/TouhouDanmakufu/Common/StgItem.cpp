@@ -151,7 +151,7 @@ void StgItemManager::Render(int targetPriority) {
 	graphics->SetZWriteEnable(false);
 	graphics->SetCullingMode(D3DCULL_NONE);
 	graphics->SetLightingEnable(false);
-	graphics->SetTextureFilter(DirectGraphics::MODE_TEXTURE_FILTER_LINEAR, 0);
+	graphics->SetTextureFilter(D3DTEXF_LINEAR, D3DTEXF_LINEAR, D3DTEXF_NONE);
 
 	//ƒtƒHƒO‚ð‰ðœ‚·‚é
 	DWORD bEnableFog = FALSE;
@@ -181,17 +181,17 @@ void StgItemManager::Render(int targetPriority) {
 	device->SetFVF(VERTEX_TLX::fvf);
 
 	int countBlendType = StgItemDataList::RENDER_TYPE_COUNT;
-	int blendMode[] = { 
-		DirectGraphics::MODE_BLEND_ADD_ARGB, 
-		DirectGraphics::MODE_BLEND_ADD_RGB, 
-		DirectGraphics::MODE_BLEND_ALPHA 
+	BlendMode blendMode[] = { 
+		MODE_BLEND_ADD_ARGB, 
+		MODE_BLEND_ADD_RGB, 
+		MODE_BLEND_ALPHA 
 	};
 
 	{
-		graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ADD_ARGB);
+		graphics->SetBlendMode(MODE_BLEND_ADD_ARGB);
 		listSpriteDigit_->Render();
 		listSpriteDigit_->ClearVertexCount();
-		graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ALPHA);
+		graphics->SetBlendMode(MODE_BLEND_ALPHA);
 		listSpriteItem_->Render();
 		listSpriteItem_->ClearVertexCount();
 
@@ -467,9 +467,9 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
 				std::wstring render = scanner.Next().GetElement();
 				if (render == L"ADD" || render == L"ADD_RGB")
-					data->typeRender_ = DirectGraphics::MODE_BLEND_ADD_RGB;
+					data->typeRender_ = MODE_BLEND_ADD_RGB;
 				else if (render == L"ADD_ARGB")
-					data->typeRender_ = DirectGraphics::MODE_BLEND_ADD_ARGB;
+					data->typeRender_ = MODE_BLEND_ADD_ARGB;
 			}
 			else if (element == L"alpha") {
 				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
@@ -560,7 +560,7 @@ std::vector<std::wstring> StgItemDataList::_GetArgumentList(Scanner& scanner) {
 //StgItemData
 StgItemData::StgItemData(StgItemDataList* listItemData) {
 	listItemData_ = listItemData;
-	typeRender_ = DirectGraphics::MODE_BLEND_ALPHA;
+	typeRender_ = MODE_BLEND_ALPHA;
 	SetRect(&rcOutSrc_, 0, 0, 0, 0);
 	SetRect(&rcOutDest_, 0, 0, 0, 0);
 	alpha_ = 255;
@@ -583,8 +583,8 @@ StgItemData::AnimationData* StgItemData::GetData(int frame) {
 	}
 	return &listAnime_[0];
 }
-StgItemRenderer* StgItemData::GetRenderer(int type) {
-	if (type < DirectGraphics::MODE_BLEND_ALPHA || type > DirectGraphics::MODE_BLEND_ADD_ARGB)
+StgItemRenderer* StgItemData::GetRenderer(BlendMode type) {
+	if (type < MODE_BLEND_ALPHA || type > MODE_BLEND_ADD_ARGB)
 		return listItemData_->GetRenderer(indexTexture_, 0);
 	return listItemData_->GetRenderer(indexTexture_, type - 1);
 }
@@ -1034,8 +1034,8 @@ void StgItemObject_User::RenderOnItemManager() {
 
 	StgItemRenderer* renderer = nullptr;
 
-	int objBlendType = GetBlendType();
-	if (objBlendType == DirectGraphics::MODE_BLEND_NONE) {
+	BlendMode objBlendType = GetBlendType();
+	if (objBlendType == MODE_BLEND_NONE) {
 		objBlendType = itemData->GetRenderType();
 	}
 	
@@ -1073,7 +1073,7 @@ void StgItemObject_User::RenderOnItemManager() {
 			posy = (rcSrc->bottom - rcSrc->top) / 2;
 		}
 
-		bool bBlendAddRGB = (objBlendType == DirectGraphics::MODE_BLEND_ADD_RGB);
+		bool bBlendAddRGB = (objBlendType == MODE_BLEND_ADD_RGB);
 
 		color = color_;
 		float alphaRate = itemData->GetAlpha() / 255.0f;

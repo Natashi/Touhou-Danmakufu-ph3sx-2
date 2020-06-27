@@ -16,6 +16,7 @@ namespace directx {
 	class RenderBlock;
 	class RenderObject;
 
+	
 	/**********************************************************
 	//RenderBlock
 	**********************************************************/
@@ -157,13 +158,12 @@ namespace directx {
 	//RenderManagerÇ…ìoò^ÇµÇƒï`âÊÇµÇƒÇ‡ÇÁÇ§
 	//(íºê⁄ï`âÊÇ‡â¬î\)
 	**********************************************************/
+	class DxScriptRenderObject;
 	class RenderObject {
 	protected:
+		DxScriptRenderObject* dxObjParent_;
+
 		D3DPRIMITIVETYPE typePrimitive_;
-		D3DTEXTUREFILTERTYPE filterMin_;
-		D3DTEXTUREFILTERTYPE filterMag_;
-		D3DTEXTUREFILTERTYPE filterMip_;
-		D3DCULL modeCulling_;
 
 		DirectionalLightingState lightParameter_;
 
@@ -176,7 +176,6 @@ namespace directx {
 		D3DXVECTOR3 position_;
 		D3DXVECTOR3 angle_;
 		D3DXVECTOR3 scale_;
-
 		shared_ptr<D3DXMATRIX> matRelative_;
 		shared_ptr<Shader> shader_;
 
@@ -212,6 +211,8 @@ namespace directx {
 			D3DXVECTOR2& objectPosition, D3DXVECTOR2& biasPosition, D3DXMATRIX* matCamera);
 		static void SetCoordinate2dDeviceMatrix();
 
+		void SetDxObjectReference(DxScriptRenderObject* obj) { dxObjParent_ = obj; }
+
 		void SetPrimitiveType(D3DPRIMITIVETYPE type) { typePrimitive_ = type; }
 		D3DPRIMITIVETYPE GetPrimitiveType() { return typePrimitive_; }
 		virtual void SetVertexCount(size_t count) {
@@ -243,13 +244,6 @@ namespace directx {
 
 		void SetDisableMatrixTransformation(bool b) { disableMatrixTransform_ = b; }
 		void SetVertexShaderRendering(bool b) { bVertexShaderMode_ = b; }
-
-		void SetFilteringMin(D3DTEXTUREFILTERTYPE filter) { filterMin_ = filter; }
-		void SetFilteringMag(D3DTEXTUREFILTERTYPE filter) { filterMag_ = filter; }
-		void SetFilteringMip(D3DTEXTUREFILTERTYPE filter) { filterMip_ = filter; }
-		D3DTEXTUREFILTERTYPE GetFilteringMin() { return filterMin_; }
-		D3DTEXTUREFILTERTYPE GetFilteringMag() { return filterMag_; }
-		D3DTEXTUREFILTERTYPE GetFilteringMip() { return filterMip_; }
 
 		DirectionalLightingState* GetLighting() { return &lightParameter_; }
 
@@ -416,7 +410,7 @@ namespace directx {
 		virtual ~RenderObjectB2NXBlock();
 		virtual void Render();
 	};
-
+	
 	/**********************************************************
 	//RenderObjectB4NX
 	//í∏ì_ÉuÉåÉìÉh4
@@ -616,13 +610,9 @@ namespace directx {
 	//ParticleRenderer3D
 	**********************************************************/
 	class ParticleRenderer3D : public ParticleRendererBase, public Sprite3D {
-	private:
-		bool bUseFog_;
 	public:
 		ParticleRenderer3D();
 		virtual void Render();
-
-		void SetFog(bool bFog) { bUseFog_ = bFog; }
 	};
 
 	/**********************************************************
@@ -651,9 +641,8 @@ namespace directx {
 	public:
 		friend DxMeshManager;
 	protected:
-		D3DTEXTUREFILTERTYPE filterMin_;
-		D3DTEXTUREFILTERTYPE filterMag_;
-		D3DTEXTUREFILTERTYPE filterMip_;
+		DxScriptRenderObject* dxObjParent_;
+
 		bool bVertexShaderMode_;
 		bool bCoordinate2D_;
 
@@ -694,7 +683,7 @@ namespace directx {
 		void SetAngleXYZ(float angx = 0.0f, float angy = 0.0f, float angz = 0.0f) { angle_.x = angx; angle_.y = angy; angle_.z = angz; }
 		void SetScale(D3DXVECTOR3 scale) { scale_ = scale; }
 		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f) { scale_.x = sx; scale_.y = sy; scale_.z = sz; }
-
+		
 		void SetColor(D3DCOLOR color) { color_ = color; }
 		inline void SetColorRGB(D3DCOLOR color) {
 			color_ = (color_ & 0xff000000) | (color & 0x00ffffff);
@@ -703,9 +692,6 @@ namespace directx {
 			color_ = (color_ & 0x00ffffff) | ((byte)alpha << 24);
 		}
 
-		void SetFilteringMin(D3DTEXTUREFILTERTYPE filter) { filterMin_ = filter; }
-		void SetFilteringMag(D3DTEXTUREFILTERTYPE filter) { filterMag_ = filter; }
-		void SetFilteringMip(D3DTEXTUREFILTERTYPE filter) { filterMip_ = filter; }
 		void SetVertexShaderRendering(bool b) { bVertexShaderMode_ = b; }
 
 		DirectionalLightingState* GetLighting() { return &lightParameter_; }
@@ -713,7 +699,9 @@ namespace directx {
 		bool IsCoordinate2D() { return bCoordinate2D_; }
 		void SetCoordinate2D(bool b) { bCoordinate2D_ = b; }
 
-		gstd::ref_count_ptr<RenderBlocks> CreateRenderBlocks() { return NULL; }
+		void SetDxObjectReference(DxScriptRenderObject* obj) { dxObjParent_ = obj; }
+
+		//gstd::ref_count_ptr<RenderBlocks> CreateRenderBlocks() { return nullptr; }
 		virtual D3DXMATRIX GetAnimationMatrix(std::wstring nameAnime, double time, std::wstring nameBone) { 
 			D3DXMATRIX mat; 
 			D3DXMatrixIdentity(&mat); 

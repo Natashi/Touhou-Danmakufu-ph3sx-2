@@ -87,7 +87,7 @@ namespace directx {
 	**********************************************************/
 	class ShaderParameter {
 	public:
-		enum {
+		typedef enum : uint8_t {
 			TYPE_UNKNOWN,
 			TYPE_MATRIX,
 			TYPE_MATRIX_ARRAY,
@@ -95,16 +95,16 @@ namespace directx {
 			TYPE_FLOAT,
 			TYPE_FLOAT_ARRAY,
 			TYPE_TEXTURE,
-		};
+		} TypeParameter;
 	private:
-		int type_;
+		TypeParameter type_;
 		std::vector<byte> value_;
 		shared_ptr<Texture> texture_;
 	public:
 		ShaderParameter();
 		virtual ~ShaderParameter();
 
-		int GetType() { return type_; }
+		TypeParameter GetType() { return type_; }
 		void SetMatrix(D3DXMATRIX& matrix);
 		inline D3DXMATRIX* GetMatrix();
 		void SetMatrixArray(std::vector<D3DXMATRIX>& matrix);

@@ -28,7 +28,7 @@ void TransitionEffect_FadeOut::Render() {
 	if (sprite_ == NULL)return;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ALPHA);
+	graphics->SetBlendMode(MODE_BLEND_ALPHA);
 	graphics->SetZBufferEnable(false);
 	graphics->SetZWriteEnable(false);
 	sprite_->Render();

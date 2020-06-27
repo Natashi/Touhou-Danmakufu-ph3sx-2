@@ -51,7 +51,7 @@ void StgShotManager::Render(int targetPriority) {
 	graphics->SetZWriteEnable(false);
 	graphics->SetCullingMode(D3DCULL_NONE);
 	graphics->SetLightingEnable(false);
-	graphics->SetTextureFilter(DirectGraphics::MODE_TEXTURE_FILTER_LINEAR, 0);
+	graphics->SetTextureFilter(D3DTEXF_LINEAR, D3DTEXF_LINEAR, D3DTEXF_NONE);
 
 	//graphics->SetTextureFilter(DirectGraphics::MODE_TEXTURE_FILTER_POINT);
 	//			MODE_TEXTURE_FILTER_POINT,//•âŠÔ‚È‚µ
@@ -80,16 +80,16 @@ void StgShotManager::Render(int targetPriority) {
 
 	//•`‰æ
 	size_t countBlendType = StgShotDataList::RENDER_TYPE_COUNT;
-	int blendMode[] =
+	BlendMode blendMode[] =
 	{
-		DirectGraphics::MODE_BLEND_ADD_ARGB,
-		DirectGraphics::MODE_BLEND_ADD_RGB,
-		DirectGraphics::MODE_BLEND_SHADOW,
-		DirectGraphics::MODE_BLEND_MULTIPLY,
-		DirectGraphics::MODE_BLEND_SUBTRACT,
-		DirectGraphics::MODE_BLEND_INV_DESTRGB,
-		DirectGraphics::MODE_BLEND_ALPHA,
-		DirectGraphics::MODE_BLEND_ALPHA_INV,
+		MODE_BLEND_ADD_ARGB,
+		MODE_BLEND_ADD_RGB,
+		MODE_BLEND_SHADOW,
+		MODE_BLEND_MULTIPLY,
+		MODE_BLEND_SUBTRACT,
+		MODE_BLEND_INV_DESTRGB,
+		MODE_BLEND_ALPHA,
+		MODE_BLEND_ALPHA_INV,
 	};
 
 	RenderShaderManager* shaderManager = ShaderManager::GetBase()->GetRenderLib();
@@ -116,7 +116,7 @@ void StgShotManager::Render(int targetPriority) {
 			if (!hasPolygon) continue;
 
 			graphics->SetBlendMode(blendMode[iBlend]);
-			effectLayer_->SetTechnique(blendMode[iBlend] == DirectGraphics::MODE_BLEND_ALPHA_INV ? "RenderInv" : "Render");
+			effectLayer_->SetTechnique(blendMode[iBlend] == MODE_BLEND_ALPHA_INV ? "RenderInv" : "Render");
 
 			effectLayer_->Begin(&cPass, 0);
 			if (cPass >= 1) {
@@ -136,7 +136,7 @@ void StgShotManager::Render(int targetPriority) {
 			if (!hasPolygon) continue;
 
 			graphics->SetBlendMode(blendMode[iBlend]);
-			effectLayer_->SetTechnique(blendMode[iBlend] == DirectGraphics::MODE_BLEND_ALPHA_INV ? "RenderInv" : "Render");
+			effectLayer_->SetTechnique(blendMode[iBlend] == MODE_BLEND_ALPHA_INV ? "RenderInv" : "Render");
 
 			effectLayer_->Begin(&cPass, 0);
 			if (cPass >= 1) {
@@ -504,18 +504,18 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 			else if (element == L"render" || element == L"delay_render") {
 				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
 				std::wstring strRender = scanner.Next().GetElement();
-				int typeRender = DirectGraphics::MODE_BLEND_ALPHA;
+				BlendMode typeRender = MODE_BLEND_ALPHA;
 
 				if (strRender == L"ADD" || strRender == L"ADD_RGB")
-					typeRender = DirectGraphics::MODE_BLEND_ADD_RGB;
+					typeRender = MODE_BLEND_ADD_RGB;
 				else if (strRender == L"ADD_ARGB")
-					typeRender = DirectGraphics::MODE_BLEND_ADD_ARGB;
+					typeRender = MODE_BLEND_ADD_ARGB;
 				else if (strRender == L"MULTIPLY")
-					typeRender = DirectGraphics::MODE_BLEND_MULTIPLY;
+					typeRender = MODE_BLEND_MULTIPLY;
 				else if (strRender == L"SUBTRACT")
-					typeRender = DirectGraphics::MODE_BLEND_SUBTRACT;
+					typeRender = MODE_BLEND_SUBTRACT;
 				else if (strRender == L"INV_DESTRGB")
-					typeRender = DirectGraphics::MODE_BLEND_INV_DESTRGB;
+					typeRender = MODE_BLEND_INV_DESTRGB;
 
 				if (element.size() == 6 /*element == L"render"*/)data->typeRender_ = typeRender;
 				else if (element.size() == 12 /*element == L"delay_render"*/)data->typeDelayRender_ = typeRender;
@@ -638,8 +638,8 @@ std::vector<std::wstring> StgShotDataList::_GetArgumentList(Scanner& scanner) {
 StgShotData::StgShotData(StgShotDataList* listShotData) {
 	listShotData_ = listShotData;
 	textureSize_ = D3DXVECTOR2(0, 0);
-	typeRender_ = DirectGraphics::MODE_BLEND_ALPHA;
-	typeDelayRender_ = DirectGraphics::MODE_BLEND_ADD_ARGB;
+	typeRender_ = MODE_BLEND_ALPHA;
+	typeDelayRender_ = MODE_BLEND_ADD_ARGB;
 	colorDelay_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 	SetRect(&rcDelay_, -1, -1, -1, -1);
 	alpha_ = 255;
@@ -649,8 +649,8 @@ StgShotData::StgShotData(StgShotDataList* listShotData) {
 	bFixedAngle_ = false;
 }
 StgShotData::~StgShotData() {}
-StgShotRenderer* StgShotData::GetRenderer(int blendType) {
-	if (blendType < DirectGraphics::MODE_BLEND_ALPHA || blendType > DirectGraphics::MODE_BLEND_ALPHA_INV)
+StgShotRenderer* StgShotData::GetRenderer(BlendMode blendType) {
+	if (blendType < MODE_BLEND_ALPHA || blendType > MODE_BLEND_ALPHA_INV)
 		return listShotData_->GetRenderer(indexTexture_, 0);
 	return listShotData_->GetRenderer(indexTexture_, blendType - 1);
 }
@@ -789,7 +789,7 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	posX_ = 0;
 	posY_ = 0;
 	idShotData_ = 0;
-	typeBlend_ = DirectGraphics::MODE_BLEND_NONE;
+	SetBlendType(MODE_BLEND_NONE);
 
 	damage_ = 1;
 	life_ = LIFE_SPELL_UNREGIST;
@@ -1137,7 +1137,7 @@ void StgShotObject::_ProcessTransformAct() {
 		}
 		case StgPatternShotTransform::TRANSFORM_BLEND_CHANGE:
 		{
-			typeBlend_ = transform.param_s[0];
+			SetBlendType((BlendMode)transform.param_s[0]);
 			break;
 		}
 		case StgPatternShotTransform::TRANSFORM_TO_SPEED_ANGLE:
@@ -1391,10 +1391,10 @@ void StgNormalShotObject::RenderOnShotManager() {
 
 	StgShotRenderer* renderer = nullptr;
 
-	int shotBlendType = DirectGraphics::MODE_BLEND_ALPHA;
+	BlendMode shotBlendType = MODE_BLEND_ALPHA;
 	if (delay_.time > 0) {
-		int objDelayBlendType = GetSourceBlendType();
-		if (objDelayBlendType == DirectGraphics::MODE_BLEND_NONE) {
+		BlendMode objDelayBlendType = GetSourceBlendType();
+		if (objDelayBlendType == MODE_BLEND_NONE) {
 			renderer = delayData->GetRenderer(shotData->GetDelayRenderType());
 		}
 		else {
@@ -1402,8 +1402,8 @@ void StgNormalShotObject::RenderOnShotManager() {
 		}
 	}
 	else {
-		int objBlendType = GetBlendType();
-		if (objBlendType == DirectGraphics::MODE_BLEND_NONE) {
+		BlendMode objBlendType = GetBlendType();
+		if (objBlendType == MODE_BLEND_NONE) {
 			renderer = shotData->GetRenderer();
 			shotBlendType = shotData->GetRenderType();
 		}
@@ -1787,18 +1787,18 @@ void StgLooseLaserObject::RenderOnShotManager() {
 	StgShotRenderer* renderer = nullptr;
 	if (delay_.time > 0) {
 		//’x‰„ŽžŠÔ
-		int objDelayBlendType = GetSourceBlendType();
-		if (objDelayBlendType == DirectGraphics::MODE_BLEND_NONE) {
-			renderer = delayData->GetRenderer(DirectGraphics::MODE_BLEND_ADD_ARGB);
+		BlendMode objDelayBlendType = GetSourceBlendType();
+		if (objDelayBlendType == MODE_BLEND_NONE) {
+			renderer = delayData->GetRenderer(MODE_BLEND_ADD_ARGB);
 		}
 		else {
 			renderer = delayData->GetRenderer(objDelayBlendType);
 		}
 	}
 	else {
-		int objBlendType = GetBlendType();
-		if (objBlendType == DirectGraphics::MODE_BLEND_NONE) {
-			renderer = shotData->GetRenderer(DirectGraphics::MODE_BLEND_ADD_ARGB);
+		BlendMode objBlendType = GetBlendType();
+		if (objBlendType == MODE_BLEND_NONE) {
+			renderer = shotData->GetRenderer(MODE_BLEND_ADD_ARGB);
 		}
 		else {
 			renderer = shotData->GetRenderer(objBlendType);
@@ -2087,13 +2087,13 @@ void StgStraightLaserObject::RenderOnShotManager() {
 	RECT* rcSrc;
 	D3DCOLOR color;
 
-	int objBlendType = GetBlendType();
-	int shotBlendType = objBlendType;
+	BlendMode objBlendType = GetBlendType();
+	BlendMode shotBlendType = objBlendType;
 	{
 		StgShotRenderer* renderer = nullptr;
-		if (objBlendType == DirectGraphics::MODE_BLEND_NONE) {
-			renderer = shotData->GetRenderer(DirectGraphics::MODE_BLEND_ADD_ARGB);
-			shotBlendType = DirectGraphics::MODE_BLEND_ADD_ARGB;
+		if (objBlendType == MODE_BLEND_NONE) {
+			renderer = shotData->GetRenderer(MODE_BLEND_ADD_ARGB);
+			shotBlendType = MODE_BLEND_ADD_ARGB;
 		}
 		else {
 			renderer = shotData->GetRenderer(objBlendType);
@@ -2143,7 +2143,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 	}
 
 	{
-		int objSourceBlendType = GetSourceBlendType();
+		BlendMode objSourceBlendType = GetSourceBlendType();
 
 		if ((bUseSouce_ || bUseEnd_) && (frameFadeDelete_ < 0)) {	//Delay cloud(s)
 			color = shotData->GetDelayColor();
@@ -2154,7 +2154,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 			auto _AddDelay = [&](StgShotData* delayShotData, RECT* delayRect, D3DXVECTOR2& delayPos) {
 				StgShotRenderer* renderer = nullptr;
 
-				if (objSourceBlendType == DirectGraphics::MODE_BLEND_NONE)
+				if (objSourceBlendType == MODE_BLEND_NONE)
 					renderer = delayShotData->GetRenderer(shotBlendType);
 				else
 					renderer = delayShotData->GetRenderer(objSourceBlendType);
@@ -2417,14 +2417,14 @@ void StgCurveLaserObject::RenderOnShotManager() {
 	StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
 	if (shotData == nullptr) return;
 
-	int shotBlendType = DirectGraphics::MODE_BLEND_ADD_ARGB;
+	BlendMode shotBlendType = MODE_BLEND_ADD_ARGB;
 	StgShotRenderer* renderer = nullptr;
 
 	if (delayData != nullptr && delay_.time > 0) {
-		int objDelayBlendType = GetSourceBlendType();
-		if (objDelayBlendType == DirectGraphics::MODE_BLEND_NONE) {
-			renderer = shotData->GetRenderer(DirectGraphics::MODE_BLEND_ADD_ARGB);
-			shotBlendType = DirectGraphics::MODE_BLEND_ADD_ARGB;
+		BlendMode objDelayBlendType = GetSourceBlendType();
+		if (objDelayBlendType == MODE_BLEND_NONE) {
+			renderer = shotData->GetRenderer(MODE_BLEND_ADD_ARGB);
+			shotBlendType = MODE_BLEND_ADD_ARGB;
 		}
 		else {
 			renderer = shotData->GetRenderer(objDelayBlendType);
@@ -2483,11 +2483,11 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		renderer->AddSquareVertex(verts);
 	}
 	if (listPosition_.size() > 1U) {
-		int objBlendType = GetBlendType();
-		int shotBlendType = objBlendType;
-		if (objBlendType == DirectGraphics::MODE_BLEND_NONE) {
-			renderer = shotData->GetRenderer(DirectGraphics::MODE_BLEND_ADD_ARGB);
-			shotBlendType = DirectGraphics::MODE_BLEND_ADD_ARGB;
+		BlendMode objBlendType = GetBlendType();
+		BlendMode shotBlendType = objBlendType;
+		if (objBlendType == MODE_BLEND_NONE) {
+			renderer = shotData->GetRenderer(MODE_BLEND_ADD_ARGB);
+			shotBlendType = MODE_BLEND_ADD_ARGB;
 		}
 		else {
 			renderer = shotData->GetRenderer(objBlendType);
@@ -2614,7 +2614,7 @@ StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
 	typeOwner_ = StgShotObject::OWNER_ENEMY;
 	typePattern_ = PATTERN_TYPE_FAN;
 	typeShot_ = TypeObject::OBJ_SHOT;
-	iniBlendType_ = DirectGraphics::MODE_BLEND_NONE;
+	iniBlendType_ = MODE_BLEND_NONE;
 
 	shotWay_ = 1U;
 	shotStack_ = 1U;

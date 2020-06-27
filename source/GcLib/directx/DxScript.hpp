@@ -116,12 +116,12 @@ namespace directx {
 		bool bZWrite_;
 		bool bZTest_;
 		bool bFogEnable_;
-		int modeCulling_;
+		D3DCULL modeCulling_;
 
-		D3DXVECTOR3 position_;//à⁄ìÆêÊç¿ïW
-		D3DXVECTOR3 angle_;//âÒì]äpìx
-		D3DXVECTOR3 scale_;//ägëÂó¶
-		int typeBlend_;
+		D3DXVECTOR3 position_;
+		D3DXVECTOR3 angle_;
+		D3DXVECTOR3 scale_;
+		BlendMode typeBlend_;
 
 		D3DCOLOR color_;
 
@@ -148,9 +148,9 @@ namespace directx {
 
 		virtual DirectionalLightingState* GetLightPointer() { return nullptr; }
 
-		D3DXVECTOR3 GetPosition() { return position_; }
-		D3DXVECTOR3 GetAngle() { return angle_; }
-		D3DXVECTOR3 GetScale() { return scale_; }
+		D3DXVECTOR3& GetPosition() { return position_; }
+		D3DXVECTOR3& GetAngle() { return angle_; }
+		D3DXVECTOR3& GetScale() { return scale_; }
 		void SetPosition(D3DXVECTOR3 pos) { position_ = pos; }
 		void SetAngle(D3DXVECTOR3 angle) { angle_ = angle; }
 		void SetScale(D3DXVECTOR3 scale) { scale_ = scale; }
@@ -160,8 +160,8 @@ namespace directx {
 		void SetFilteringMip(D3DTEXTUREFILTERTYPE filter) { filterMip_ = filter; }
 		void SetVertexShaderRendering(bool b) { bVertexShaderMode_ = b; }
 
-		void SetBlendType(int type) { typeBlend_ = type; }
-		int GetBlendType() { return typeBlend_; }
+		void SetBlendType(BlendMode type) { typeBlend_ = type; }
+		BlendMode GetBlendType() { return typeBlend_; }
 		void SetRelativeObject(int id, std::wstring bone) { idRelative_ = id; nameRelativeBone_ = bone; }
 
 		virtual shared_ptr<Shader> GetShader() { return nullptr; }
@@ -377,7 +377,6 @@ namespace directx {
 		int time_;
 		std::wstring anime_;
 		bool bCoordinate2D_;
-		void _UpdateMeshState();
 
 		D3DXVECTOR2 angX_;
 		D3DXVECTOR2 angY_;
@@ -396,9 +395,9 @@ namespace directx {
 		int GetAnimeFrame() { return time_; }
 		std::wstring GetAnimeName() { return anime_; }
 
-		virtual void SetX(float x) { position_.x = x; _UpdateMeshState(); }
-		virtual void SetY(float y) { position_.y = y; _UpdateMeshState(); }
-		virtual void SetZ(float z) { position_.z = z; _UpdateMeshState(); }
+		virtual void SetX(float x) { position_.x = x; }
+		virtual void SetY(float y) { position_.y = y; }
+		virtual void SetZ(float z) { position_.z = z; }
 
 		virtual void SetAngleX(float x);
 		virtual void SetAngleY(float y);
@@ -409,9 +408,9 @@ namespace directx {
 			DxScriptMeshObject::SetAngleZ(angle.z);
 		}
 
-		virtual void SetScaleX(float x) { scale_.x = x; _UpdateMeshState(); }
-		virtual void SetScaleY(float y) { scale_.y = y; _UpdateMeshState(); }
-		virtual void SetScaleZ(float z) { scale_.z = z; _UpdateMeshState(); }
+		virtual void SetScaleX(float x) { scale_.x = x; }
+		virtual void SetScaleY(float y) { scale_.y = y; }
+		virtual void SetScaleZ(float z) { scale_.z = z; }
 		virtual void SetShader(shared_ptr<Shader> shader);
 	};
 

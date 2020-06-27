@@ -539,9 +539,6 @@ void MetasequoiaMesh::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 			size_t i = 0;
 			for (auto render : data->renderList_) {
 				render->SetVertexShaderRendering(bVertexShaderMode_);
-				render->SetFilteringMin(filterMin_);
-				render->SetFilteringMag(filterMag_);
-				render->SetFilteringMip(filterMip_);
 
 				render->SetShader(shader_);
 				render->SetColor(color_);

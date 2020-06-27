@@ -8,6 +8,8 @@
 #include "MetasequoiaMesh.hpp"
 #include "ElfreinaMesh.hpp"
 
+#include "DxScript.hpp"
+
 #include "HLSL.hpp"
 
 using namespace gstd;
@@ -191,12 +193,6 @@ RenderObject::RenderObject() {
 
 	bVertexShaderMode_ = false;
 	flgUseVertexBufferMode_ = true;
-
-	filterMin_ = D3DTEXF_LINEAR;
-	filterMag_ = D3DTEXF_LINEAR;
-	filterMip_ = D3DTEXF_NONE;
-
-	modeCulling_ = D3DCULL_NONE;
 
 	disableMatrixTransform_ = false;
 }
@@ -628,10 +624,6 @@ void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
 	IDirect3DDevice9* device = graphics->GetDevice();
 	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
-	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
-	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
-	device->SetSamplerState(0, D3DSAMP_MIPFILTER, filterMip_);
-
 	device->SetFVF(VERTEX_TLX::fvf);
 
 	{
@@ -640,8 +632,8 @@ void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
 		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
 		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
 
-		vertCopy_ = vertex_;
 		if (!bVertexShaderMode_) {
+			vertCopy_ = vertex_;
 			for (size_t iVert = 0; iVert < countVertex; ++iVert) {
 				size_t pos = iVert * strideVertexStreamZero_;
 				VERTEX_TLX* vertex = (VERTEX_TLX*)&vertCopy_[pos];
@@ -658,7 +650,8 @@ void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
 		if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
 			void* tmp;
 			vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, vertCopy_.data(), countVertex * sizeof(VERTEX_TLX));
+			memcpy(tmp, bVertexShaderMode_ ? vertex_.data() : vertCopy_.data(),
+				countVertex * sizeof(VERTEX_TLX));
 			vertexBuffer->Unlock();
 			if (bUseIndex) {
 				indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
@@ -941,12 +934,7 @@ void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
 
 	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
-	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
-	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
-	device->SetSamplerState(0, D3DSAMP_MIPFILTER, filterMip_);
-
 	device->SetTransform(D3DTS_WORLD, &matTransform);
-
 	device->SetFVF(VERTEX_LX::fvf);
 
 	{
@@ -977,12 +965,14 @@ void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
 		ID3DXEffect* effect = nullptr;
 		if (shader_ != nullptr) {
 			effect = shader_->GetEffect();
-			shader_->LoadParameter();
 
 			if (bVertexShaderMode_) {
+				VertexFogState* fogParam = graphics->GetFogState();
 				RenderShaderManager* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 				auto camera = DirectGraphics::GetBase()->GetCamera();
 
+				bool bFog = graphics->IsFogEnable();
+				graphics->SetFogEnable(false);
 				device->SetVertexDeclaration(shaderLib->GetVertexDeclarationLX());
 
 				D3DXHANDLE handle = nullptr;
@@ -994,8 +984,17 @@ void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
 					effect->SetMatrix(handle, &camera->GetProjectionMatrix());
 				if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
 					effect->SetMatrix(handle, &camera->GetViewProjectionMatrix());
+				if (handle = effect->GetParameterBySemantic(nullptr, "FOGENABLE"))
+					effect->SetBool(handle, bFog);
+				if (bFog) {
+					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
+						effect->SetVector(handle, &fogParam->color);
+					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
+						effect->SetFloatArray(handle, (FLOAT*)&fogParam->fogDist, 2);
+				}
 			}
 
+			shader_->LoadParameter();
 			effect->Begin(&countPass, 0);
 		}
 		for (UINT iPass = 0; iPass < countPass; ++iPass) {
@@ -1119,10 +1118,6 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 
 	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
-	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
-	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
-	device->SetSamplerState(0, D3DSAMP_MIPFILTER, filterMip_);
-
 	device->SetFVF(VERTEX_NX::fvf);
 
 	{
@@ -1149,12 +1144,14 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 		ID3DXEffect* effect = nullptr;
 		if (shader_ != nullptr) {
 			effect = shader_->GetEffect();
-			shader_->LoadParameter();
 
 			if (bVertexShaderMode_) {
+				VertexFogState* fogParam = graphics->GetFogState();
 				RenderShaderManager* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 				auto camera = graphics->GetCamera();
 
+				bool bFog = graphics->IsFogEnable();
+				graphics->SetFogEnable(false);
 				device->SetVertexDeclaration(shaderLib->GetVertexDeclarationNX());
 
 				D3DXHANDLE handle = nullptr;
@@ -1166,8 +1163,17 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 					effect->SetMatrix(handle, &camera->GetProjectionMatrix());
 				if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
 					effect->SetMatrix(handle, &camera->GetViewProjectionMatrix());
+				if (handle = effect->GetParameterBySemantic(nullptr, "FOGENABLE"))
+					effect->SetBool(handle, bFog);
+				if (bFog) {
+					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
+						effect->SetVector(handle, &fogParam->color);
+					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
+						effect->SetFloatArray(handle, (FLOAT*)&fogParam->fogDist, 2);
+				}
 			}
 
+			shader_->LoadParameter();
 			effect->Begin(&countPass, 0);
 		}
 		for (UINT iPass = 0; iPass < countPass; ++iPass) {
@@ -1266,10 +1272,6 @@ void RenderObjectBNX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
 
 	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
-
-	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
-	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
-	device->SetSamplerState(0, D3DSAMP_MIPFILTER, filterMip_);
 
 	ref_count_ptr<DxCamera> camera = DirectGraphics::GetBase()->GetCamera();
 
@@ -1619,6 +1621,8 @@ Sprite2D::~Sprite2D() {
 
 }
 void Sprite2D::Copy(Sprite2D* src) {
+	dxObjParent_ = src->dxObjParent_;
+	
 	typePrimitive_ = src->typePrimitive_;
 	strideVertexStreamZero_ = src->strideVertexStreamZero_;
 
@@ -1629,9 +1633,6 @@ void Sprite2D::Copy(Sprite2D* src) {
 
 	posWeightCenter_ = src->posWeightCenter_;
 
-	position_ = src->position_;
-	angle_ = src->angle_;
-	scale_ = src->scale_;
 	matRelative_ = src->matRelative_;
 }
 void Sprite2D::SetSourceRect(RECT_D& rcSrc) {
@@ -1713,10 +1714,6 @@ void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& ang
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	
 	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
-
-	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
-	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
-	device->SetSamplerState(0, D3DSAMP_MIPFILTER, filterMip_);
 
 	device->SetFVF(VERTEX_TLX::fvf);
 
@@ -1906,10 +1903,6 @@ void SpriteList2D::SetDestinationCenter() {
 }
 void SpriteList2D::CloseVertex() {
 	bCloseVertexList_ = true;
-
-	position_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	angle_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	scale_ = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 }
 
 /**********************************************************
@@ -2162,10 +2155,6 @@ void ParticleRenderer2D::Render() {
 
 	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
 
-	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
-	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
-	device->SetSamplerState(0, D3DSAMP_MIPFILTER, filterMip_);
-
 	{
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
 		size_t countPrim = _GetPrimitiveCount(countIndex);
@@ -2214,7 +2203,7 @@ void ParticleRenderer2D::Render() {
 			}
 			else {
 				effect = shaderManager->GetInstancing2DShader();
-				effect->SetTechnique(graphics->GetBlendMode() == DirectGraphics::MODE_BLEND_ALPHA_INV ?
+				effect->SetTechnique(dxObjParent_->GetBlendType() == MODE_BLEND_ALPHA_INV ?
 					"RenderInv" : "Render");
 			}
 
@@ -2243,7 +2232,6 @@ void ParticleRenderer2D::Render() {
 	}
 }
 ParticleRenderer3D::ParticleRenderer3D() {
-	bUseFog_ = false;
 }
 void ParticleRenderer3D::Render() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -2262,10 +2250,6 @@ void ParticleRenderer3D::Render() {
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 
 	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
-
-	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
-	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
-	device->SetSamplerState(0, D3DSAMP_MIPFILTER, filterMip_);
 
 	{
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
@@ -2315,7 +2299,7 @@ void ParticleRenderer3D::Render() {
 			}
 			else {
 				effect = shaderManager->GetInstancing3DShader();
-				effect->SetTechnique(graphics->GetBlendMode() == DirectGraphics::MODE_BLEND_ALPHA_INV ?
+				effect->SetTechnique(dxObjParent_->GetBlendType() == MODE_BLEND_ALPHA_INV ?
 					"RenderInv" : "Render");
 			}
 
@@ -2323,6 +2307,9 @@ void ParticleRenderer3D::Render() {
 
 			{
 				VertexFogState* fogParam = graphics->GetFogState();
+
+				bool bFog = graphics->IsFogEnable();
+				graphics->SetFogEnable(false);
 
 				D3DXHANDLE handle = nullptr;
 				if (handle = effect->GetParameterBySemantic(nullptr, "WORLD")) {
@@ -2334,13 +2321,13 @@ void ParticleRenderer3D::Render() {
 					effect->SetMatrix(handle, &camera->GetViewMatrix());
 				if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION"))
 					effect->SetMatrix(handle, &camera->GetProjectionMatrix());
+				if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
+					effect->SetMatrix(handle, &camera->GetViewProjectionMatrix());
 				if (handle = effect->GetParameterBySemantic(nullptr, "FOGENABLE"))
-					effect->SetBool(handle, bUseFog_);
-				if (bUseFog_) {
-					if (effect->GetParameterBySemantic(nullptr, "FOGCOLOR")) {
-						D3DXVECTOR4 fogColor(fogParam->color.x, fogParam->color.y, fogParam->color.z, 1.0f);
-						effect->SetVector(handle, &fogColor);
-					}
+					effect->SetBool(handle, bFog);
+				if (bFog) {
+					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
+						effect->SetVector(handle, &fogParam->color);
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
 						effect->SetFloatArray(handle, (FLOAT*)&fogParam->fogDist, 2);
 				}
@@ -2370,9 +2357,6 @@ DxMeshData::DxMeshData() {
 DxMeshData::~DxMeshData() {}
 
 DxMesh::DxMesh() {
-	position_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	angle_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	scale_ = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 	bCoordinate2D_ = false;
 
@@ -2521,14 +2505,16 @@ shared_ptr<DxMesh> DxMeshManager::CreateFromFileInLoadThread(std::wstring path, 
 			res = itrMesh->second;
 		}
 		else {
-			if (type == MESH_ELFREINA) res = std::make_shared<ElfreinaMesh>();
-			else if (type == MESH_METASEQUOIA) res = std::make_shared<MetasequoiaMesh>();
+			//if (type == MESH_ELFREINA) res = std::make_shared<ElfreinaMesh>();
+			//else if (type == MESH_METASEQUOIA) res = std::make_shared<MetasequoiaMesh>();
+			res = std::make_shared<MetasequoiaMesh>();
 
 			auto itrData = mapMeshData_.find(path);
 			if (itrData == mapMeshData_.end()) {
 				shared_ptr<DxMeshData> data = nullptr;
-				if (type == MESH_ELFREINA) data = std::make_shared<ElfreinaMeshData>();
-				else if (type == MESH_METASEQUOIA) data = std::make_shared<MetasequoiaMeshData>();
+				//if (type == MESH_ELFREINA) data = std::make_shared<ElfreinaMeshData>();
+				//else if (type == MESH_METASEQUOIA) data = std::make_shared<MetasequoiaMeshData>();
+				data = std::make_shared<MetasequoiaMeshData>();
 
 				itrData = mapMeshData_.insert(std::pair<std::wstring, shared_ptr<DxMeshData>>(path, data)).first;
 

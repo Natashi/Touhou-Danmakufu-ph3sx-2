@@ -412,7 +412,7 @@ bool ErrorDialog::ShowModal(std::wstring msg) {
 //DnhConfiguration
 **********************************************************/
 DnhConfiguration::DnhConfiguration() {
-	modeScreen_ = DirectGraphics::SCREENMODE_WINDOW;
+	modeScreen_ = ScreenMode::SCREENMODE_WINDOW;
 	modeColor_ = DirectGraphicsConfig::COLOR_MODE_32BIT;
 	sizeWindow_ = WINDOW_SIZE_640x480;
 	fpsType_ = FPS_NORMAL;
@@ -499,7 +499,7 @@ bool DnhConfiguration::LoadConfigFile() {
 		if (version != DNH_VERSION_NUM) return false;
 	}
 
-	record.GetRecord<int>("modeScreen", modeScreen_);
+	record.GetRecord<ScreenMode>("modeScreen", modeScreen_);
 	record.GetRecord<int>("sizeWindow", sizeWindow_);
 	record.GetRecord<int>("fpsType", fpsType_);
 
@@ -548,7 +548,7 @@ bool DnhConfiguration::SaveConfigFile() {
 	RecordBuffer record;
 	record.SetRecordAsInteger("version", DNH_VERSION_NUM);
 
-	record.SetRecordAsInteger("modeScreen", modeScreen_);
+	record.SetRecord<ScreenMode>("modeScreen", modeScreen_);
 	record.SetRecordAsInteger("sizeWindow", sizeWindow_);
 	record.SetRecordAsInteger("fpsType", fpsType_);
 

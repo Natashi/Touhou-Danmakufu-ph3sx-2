@@ -1900,7 +1900,7 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			break;
 		}
 		case INFO_BLEND:
-			res = script->CreateRealValue(DirectGraphics::MODE_BLEND_NONE);
+			res = script->CreateRealValue(MODE_BLEND_NONE);
 			break;
 		case INFO_COLLISION:
 			res = script->CreateRealValue(0);
@@ -3404,7 +3404,7 @@ gstd::value StgStageScript::Func_ObjShot_SetSourceBlendType(gstd::script_machine
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		int typeBlend = (int)argv[1].as_real();
-		obj->SetSourceBlendType(typeBlend);
+		obj->SetSourceBlendType((BlendMode)typeBlend);
 	}
 	return value();
 }
@@ -4028,7 +4028,7 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetInitialBlendMode(gstd::script
 	int id = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetBlendType((int)argv[1].as_real());
+		obj->SetBlendType((BlendMode)argv[1].as_real());
 	return value();
 }
 gstd::value StgStageScript::Func_ObjPatternShot_SetShotCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {

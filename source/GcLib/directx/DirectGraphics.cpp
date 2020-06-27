@@ -40,13 +40,13 @@ DirectGraphics::DirectGraphics() {
 	camera2D_ = new DxCamera2D();
 	
 	stateFog_.bEnable = true;
-	stateFog_.color = D3DXVECTOR3(0, 0, 0);
-	stateFog_.bEnable = D3DXVECTOR2(0, 1);
+	stateFog_.color = D3DXVECTOR4(0, 0, 0, 0);
+	stateFog_.fogDist = D3DXVECTOR2(0, 1);
 
 	bufferManager_ = nullptr;
 
 	bMainRender_ = true;
-	previousBlendMode_ = -999;
+	previousBlendMode_ = (BlendMode)-999;
 	D3DXMatrixIdentity(&matViewPort_);
 #endif
 }
@@ -334,8 +334,8 @@ void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
 	SetZBufferEnable(false);
 	SetZWriteEnable(false);
 
-	//Filter
-	SetTextureFilter(MODE_TEXTURE_FILTER_LINEAR);
+	//Filtering
+	SetTextureFilter(D3DTEXF_LINEAR, D3DTEXF_LINEAR, D3DTEXF_NONE);
 
 	//ViewPort
 	ResetViewPort();
@@ -443,9 +443,9 @@ void DirectGraphics::SetAlphaTest(bool bEnable, DWORD ref, D3DCMPFUNC func) {
 		pDevice_->SetRenderState(D3DRS_ALPHAREF, ref);
 	}
 }
-void DirectGraphics::SetBlendMode(DWORD mode, int stage) {
+void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 	if (mode == previousBlendMode_) return;
-	if (previousBlendMode_ = -999) {
+	if (previousBlendMode_ = (BlendMode)-999) {
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLOROP, D3DTOP_MODULATE);
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
 		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
@@ -545,40 +545,37 @@ void DirectGraphics::SetVertexFog(bool bEnable, D3DCOLOR color, float start, flo
 	stateFog_.color.x = ((color >> 16) & 0xff) / 255.0f;
 	stateFog_.color.y = ((color >> 8) & 0xff) / 255.0f;
 	stateFog_.color.z = (color & 0xff) / 255.0f;
+	stateFog_.color.w = ((color >> 24) & 0xff) / 255.0f;
 	stateFog_.fogDist.x = start;
 	stateFog_.fogDist.y = end;
 }
 void DirectGraphics::SetPixelFog(bool bEnable, D3DCOLOR color, float start, float end) {}
-void DirectGraphics::SetTextureFilter(DWORD mode, int stage) {
-	switch (mode) {
-	case MODE_TEXTURE_FILTER_NONE:
-		pDevice_->SetSamplerState(stage, D3DSAMP_MINFILTER, D3DTEXF_NONE);
-		pDevice_->SetSamplerState(stage, D3DSAMP_MAGFILTER, D3DTEXF_NONE);
-		break;
-	case MODE_TEXTURE_FILTER_POINT:
-		pDevice_->SetSamplerState(stage, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-		pDevice_->SetSamplerState(stage, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-		break;
-	case MODE_TEXTURE_FILTER_LINEAR:
-		pDevice_->SetSamplerState(stage, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-		pDevice_->SetSamplerState(stage, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-		break;
-	}
+void DirectGraphics::SetTextureFilter(D3DTEXTUREFILTERTYPE fMin, D3DTEXTUREFILTERTYPE fMag,
+	D3DTEXTUREFILTERTYPE fMip, int stage)
+{
+	if (fMin >= D3DTEXF_NONE) pDevice_->SetSamplerState(stage, D3DSAMP_MINFILTER, fMin);
+	if (fMag >= D3DTEXF_NONE) pDevice_->SetSamplerState(stage, D3DSAMP_MAGFILTER, fMag);
+	if (fMip >= D3DTEXF_NONE) pDevice_->SetSamplerState(stage, D3DSAMP_MIPFILTER, fMip);
 }
-DWORD DirectGraphics::GetTextureFilter(int stage) {
-	int res = MODE_TEXTURE_FILTER_NONE;
-	DWORD mode;
-	pDevice_->GetSamplerState(stage, D3DSAMP_MINFILTER, &mode);
-	switch (mode) {
-	case D3DTEXF_NONE:
-		res = MODE_TEXTURE_FILTER_NONE; 
-		break;
-	case D3DTEXF_POINT:
-		res = MODE_TEXTURE_FILTER_POINT; 
-		break;
-	case D3DTEXF_LINEAR:
-		res = MODE_TEXTURE_FILTER_LINEAR; 
-		break;
+DWORD DirectGraphics::GetTextureFilter(D3DTEXTUREFILTERTYPE* fMin, D3DTEXTUREFILTERTYPE* fMag,
+	D3DTEXTUREFILTERTYPE* fMip, int stage)
+{
+	DWORD res = 0;
+	DWORD tmp;
+	if (fMin) {
+		pDevice_->GetSamplerState(stage, D3DSAMP_MINFILTER, &tmp);
+		*fMin = (D3DTEXTUREFILTERTYPE)tmp;
+		++res;
+	}
+	if (fMag) {
+		pDevice_->GetSamplerState(stage, D3DSAMP_MAGFILTER, &tmp);
+		*fMag = (D3DTEXTUREFILTERTYPE)tmp;
+		++res;
+	}
+	if (fMip) {
+		pDevice_->GetSamplerState(stage, D3DSAMP_MIPFILTER, &tmp);
+		*fMip = (D3DTEXTUREFILTERTYPE)tmp;
+		++res;
 	}
 	return res;
 }
@@ -1029,7 +1026,7 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 			modeScreen_ = SCREENMODE_FULLSCREEN;
 		}
 
-		previousBlendMode_ = -999;
+		previousBlendMode_ = (BlendMode)-999;
 		if (FAILED(hrReset)) {
 			std::wstring err = StringUtility::Format(L"IDirect3DDevice9::Reset: \n%s\n  %s",
 				DXGetErrorString(hrReset), DXGetErrorDescription(hrReset));

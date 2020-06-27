@@ -11,7 +11,7 @@
 namespace directx {
 	struct VertexFogState {
 		bool bEnable;
-		D3DXVECTOR3 color;
+		D3DXVECTOR4 color;
 		D3DXVECTOR2 fogDist;
 	};
 
@@ -66,28 +66,24 @@ namespace directx {
 		void SetMultiSampleType(D3DMULTISAMPLE_TYPE type) { typeSamples_ = type; }
 	};
 
+	typedef enum {
+		SCREENMODE_FULLSCREEN,
+		SCREENMODE_WINDOW,
+	} ScreenMode;
+	typedef enum {
+		MODE_BLEND_NONE,		//No blending
+		MODE_BLEND_ALPHA,		//Alpha blending
+		MODE_BLEND_ADD_RGB,		//Add blending, alpha ignored
+		MODE_BLEND_ADD_ARGB,	//Add blending
+		MODE_BLEND_MULTIPLY,	//Multiply blending
+		MODE_BLEND_SUBTRACT,	//Reverse-subtract blending
+		MODE_BLEND_SHADOW,		//Invert-multiply blending
+		MODE_BLEND_INV_DESTRGB,	//Difference blending in Ph*tosh*p
+		MODE_BLEND_ALPHA_INV,	//Alpha blending, but the source color is inverted
+	} BlendMode;
+
 	class DirectGraphics {
 		static DirectGraphics* thisBase_;
-	public:
-		enum {
-			SCREENMODE_FULLSCREEN,
-			SCREENMODE_WINDOW,
-		};
-		enum {
-			MODE_BLEND_NONE,//なし
-			MODE_BLEND_ALPHA,//αで半透明合成
-			MODE_BLEND_ADD_RGB,//RGBで加算合成
-			MODE_BLEND_ADD_ARGB,//αで加算合成
-			MODE_BLEND_MULTIPLY,//乗算合成
-			MODE_BLEND_SUBTRACT,//減算合成
-			MODE_BLEND_SHADOW,//影描画用
-			MODE_BLEND_INV_DESTRGB,//描画先色反転合成
-			MODE_BLEND_ALPHA_INV,
-
-			MODE_TEXTURE_FILTER_NONE,//フィルタなし
-			MODE_TEXTURE_FILTER_POINT,//補間なし
-			MODE_TEXTURE_FILTER_LINEAR,//線形補間
-		};
 	protected:
 		IDirect3D9* pDirect3D_;
 		IDirect3DDevice9* pDevice_;
@@ -100,13 +96,13 @@ namespace directx {
 		HWND hAttachedWindow_;
 		DWORD wndStyleFull_;
 		DWORD wndStyleWin_;
-		int modeScreen_;
+		ScreenMode modeScreen_;
 		std::list<DirectGraphicsListener*> listListener_;
 
 		std::map<D3DMULTISAMPLE_TYPE, std::pair<bool, DWORD*>> mapSupportMultisamples_;
 
 		bool bMainRender_;
-		int previousBlendMode_;
+		BlendMode previousBlendMode_;
 
 #if defined(DNH_PROJ_EXECUTOR)
 		gstd::ref_count_ptr<DxCamera> camera_;
@@ -134,7 +130,7 @@ namespace directx {
 		virtual bool Initialize(HWND hWnd, DirectGraphicsConfig& config);
 		void AddDirectGraphicsListener(DirectGraphicsListener* listener);
 		void RemoveDirectGraphicsListener(DirectGraphicsListener* listener);
-		int GetScreenMode() { return modeScreen_; }
+		ScreenMode GetScreenMode() { return modeScreen_; }
 		D3DPRESENT_PARAMETERS GetFullScreenPresentParameter() { return d3dppFull_; }
 		D3DPRESENT_PARAMETERS GetWindowPresentParameter() { return d3dppWin_; }
 
@@ -159,15 +155,18 @@ namespace directx {
 		void SetZBufferEnable(bool bEnable);//Zバッファ参照
 		void SetZWriteEnable(bool bEnable);//Zバッファ書き込み
 		void SetAlphaTest(bool bEnable, DWORD ref = 0, D3DCMPFUNC func = D3DCMP_GREATER);
-		void SetBlendMode(DWORD mode, int stage = 0);
-		DWORD GetBlendMode() { return previousBlendMode_; }
+		void SetBlendMode(BlendMode mode, int stage = 0);
+		BlendMode GetBlendMode() { return previousBlendMode_; }
 		void SetFillMode(DWORD mode);
 		void SetFogEnable(bool bEnable);
 		bool IsFogEnable();
 		void SetVertexFog(bool bEnable, D3DCOLOR color, float start, float end);
 		void SetPixelFog(bool bEnable, D3DCOLOR color, float start, float end);
-		void SetTextureFilter(DWORD mode, int stage = 0);
-		DWORD GetTextureFilter(int stage = 0);
+
+		void SetTextureFilter(D3DTEXTUREFILTERTYPE fMin, D3DTEXTUREFILTERTYPE fMag, 
+			D3DTEXTUREFILTERTYPE fMip, int stage = 0);
+		DWORD GetTextureFilter(D3DTEXTUREFILTERTYPE* fMin, D3DTEXTUREFILTERTYPE* fMag, 
+			D3DTEXTUREFILTERTYPE* fMip, int stage = 0);
 
 		bool IsMainRenderLoop() { return bMainRender_; }
 		VertexFogState* GetFogState() { return &stateFog_; }

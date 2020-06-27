@@ -177,7 +177,7 @@ void ScriptSelectScene::Work() {
 }
 void ScriptSelectScene::Render() {
 	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
-	graphics->SetRenderStateFor2D(DirectGraphics::MODE_BLEND_ALPHA);
+	graphics->SetRenderStateFor2D(MODE_BLEND_ALPHA);
 
 	spriteBack_->Render();
 
@@ -241,7 +241,7 @@ void ScriptSelectScene::Render() {
 			obj->Render();
 
 			if (iItem == cursorY_) {
-				graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ADD_RGB);
+				graphics->SetBlendMode(MODE_BLEND_ADD_RGB);
 				int cycle = 60;
 				int alpha = frameSelect_ % cycle;
 				if (alpha < cycle / 2)alpha = 255 * (float)((float)(cycle / 2 - alpha) / (float)(cycle / 2));
@@ -249,7 +249,7 @@ void ScriptSelectScene::Render() {
 				obj->SetVertexColor(D3DCOLOR_ARGB(255, alpha, alpha, alpha));
 				obj->Render();
 				obj->SetVertexColor(D3DCOLOR_ARGB(255, 255, 255, 255));
-				graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ALPHA);
+				graphics->SetBlendMode(MODE_BLEND_ALPHA);
 			}
 		}
 
@@ -716,13 +716,13 @@ void PlayTypeSelectMenuItem::Render() {
 
 	if (menu_->GetSelectedMenuItem() == this) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ADD_RGB);
+		graphics->SetBlendMode(MODE_BLEND_ADD_RGB);
 
 		int alpha = _GetSelectedItemAlpha();
 		objText_->SetVertexColor(D3DCOLOR_ARGB(255, alpha, alpha, alpha));
 		objText_->Render();
 		objText_->SetVertexColor(D3DCOLOR_ARGB(255, 255, 255, 255));
-		graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ALPHA);
+		graphics->SetBlendMode(MODE_BLEND_ALPHA);
 	}
 }
 
@@ -816,7 +816,7 @@ void PlayerSelectScene::Work() {
 }
 void PlayerSelectScene::Render() {
 	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
-	graphics->SetRenderStateFor2D(DirectGraphics::MODE_BLEND_ALPHA);
+	graphics->SetRenderStateFor2D(MODE_BLEND_ALPHA);
 
 	spriteBack_->Render();
 
@@ -941,14 +941,14 @@ void PlayerSelectScene::Render() {
 				dxText.Render();
 
 				if (GetSelectedItemIndex() == index) {
-					graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ADD_RGB);
+					graphics->SetBlendMode(MODE_BLEND_ADD_RGB);
 					int cycle = 60;
 					int alpha = frameSelect_ % cycle;
 					if (alpha < cycle / 2)alpha = 255 * (float)((float)(cycle / 2 - alpha) / (float)(cycle / 2));
 					else alpha = 255 * (float)((float)(alpha - cycle / 2) / (float)(cycle / 2));
 					dxText.SetVertexColor(D3DCOLOR_ARGB(255, alpha, alpha, alpha));
 					dxText.Render();
-					graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ALPHA);
+					graphics->SetBlendMode(MODE_BLEND_ALPHA);
 				}
 			}
 		}

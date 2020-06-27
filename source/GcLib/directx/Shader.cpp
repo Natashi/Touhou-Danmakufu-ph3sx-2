@@ -390,6 +390,7 @@ std::vector<FLOAT> ShaderParameter::GetFloatArray() {
 }
 void ShaderParameter::SetTexture(shared_ptr<Texture> texture) {
 	type_ = TYPE_TEXTURE;
+
 	texture_ = texture;
 }
 shared_ptr<Texture> ShaderParameter::GetTexture() {
@@ -487,11 +488,9 @@ bool Shader::LoadParameter() {
 		}
 		case ShaderParameter::TYPE_MATRIX_ARRAY:
 		{
-			//std::vector<D3DXMATRIX> matrixArray = param->GetMatrixArray();
-			//hr = effect->SetMatrixArray(name.c_str(), &matrixArray[0], matrixArray.size());
 			std::vector<byte>* raw = param->GetRaw();
 			hr = effect->SetMatrixArray(name.c_str(), 
-				(D3DXMATRIX*)raw->data(), raw->size()/ sizeof(D3DXMATRIX));
+				(D3DXMATRIX*)raw->data(), raw->size() / sizeof(D3DXMATRIX));
 			break;
 		}
 		case ShaderParameter::TYPE_VECTOR:
@@ -507,8 +506,6 @@ bool Shader::LoadParameter() {
 		}
 		case ShaderParameter::TYPE_FLOAT_ARRAY:
 		{
-			//std::vector<float> value = param->GetFloatArray();
-			//hr = effect->SetFloatArray(name.c_str(), &value[0], value.size());
 			std::vector<byte>* raw = param->GetRaw();
 			hr = effect->SetFloatArray(name.c_str(),
 				(FLOAT*)raw->data(), raw->size() / sizeof(FLOAT));

@@ -85,7 +85,7 @@ void TitleScene::Work() {
 }
 void TitleScene::Render() {
 	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
-	graphics->SetRenderStateFor2D(DirectGraphics::MODE_BLEND_ALPHA);
+	graphics->SetRenderStateFor2D(MODE_BLEND_ALPHA);
 
 	spriteBack_->Render();
 
@@ -118,12 +118,12 @@ void TitleSceneMenuItem::Render() {
 
 	if (menu_->GetSelectedMenuItem() == this) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ADD_RGB);
+		graphics->SetBlendMode(MODE_BLEND_ADD_RGB);
 
 		int alpha = _GetSelectedItemAlpha();
 		objText_->SetVertexColor(D3DCOLOR_ARGB(255, alpha, alpha, alpha));
 		objText_->Render();
 		objText_->SetVertexColor(D3DCOLOR_ARGB(255, 255, 255, 255));
-		graphics->SetBlendMode(DirectGraphics::MODE_BLEND_ALPHA);
+		graphics->SetBlendMode(MODE_BLEND_ALPHA);
 	}
 }

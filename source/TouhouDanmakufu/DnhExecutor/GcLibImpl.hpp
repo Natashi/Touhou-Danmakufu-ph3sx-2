@@ -36,7 +36,7 @@ protected:
 public:
 	~EDirectGraphics();
 	virtual bool Initialize();
-	void SetRenderStateFor2D(int blend);
+	void SetRenderStateFor2D(BlendMode type);
 };
 
 #endif

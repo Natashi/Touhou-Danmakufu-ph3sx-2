@@ -210,7 +210,7 @@ bool EDirectGraphics::Initialize() {
 	DnhConfiguration* dnhConfig = DnhConfiguration::GetInstance();
 	int screenWidth = dnhConfig->GetScreenWidth();
 	int screenHeight = dnhConfig->GetScreenHeight();
-	int screenMode = dnhConfig->GetScreenMode();
+	ScreenMode screenMode = dnhConfig->GetScreenMode();
 	int windowSize = dnhConfig->GetWindowSize();
 
 	bool bUserSize = screenWidth != 640 || screenHeight != 480;
@@ -228,7 +228,7 @@ bool EDirectGraphics::Initialize() {
 	}
 
 
-	bool bShowWindow = screenMode == DirectGraphics::SCREENMODE_FULLSCREEN ||
+	bool bShowWindow = screenMode == ScreenMode::SCREENMODE_FULLSCREEN ||
 		windowSize == DnhConfiguration::WINDOW_SIZE_640x480;
 
 	DirectGraphicsConfig dxConfig;
@@ -248,7 +248,7 @@ bool EDirectGraphics::Initialize() {
 	bool bFullScreenEnable = screenWidth <= monitorWidth && screenHeight <= monitorHeight;
 
 	//コンフィグ反映
-	if (screenMode == DirectGraphics::SCREENMODE_FULLSCREEN && bFullScreenEnable) {
+	if (screenMode == ScreenMode::SCREENMODE_FULLSCREEN && bFullScreenEnable) {
 		ChangeScreenMode();
 	}
 	else {
@@ -286,9 +286,9 @@ bool EDirectGraphics::Initialize() {
 
 	return res;
 }
-void EDirectGraphics::SetRenderStateFor2D(int blend) {
+void EDirectGraphics::SetRenderStateFor2D(BlendMode type) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->SetBlendMode(blend);
+	graphics->SetBlendMode(type);
 	graphics->SetZBufferEnable(false);
 	graphics->SetZWriteEnable(false);
 }
