@@ -180,7 +180,7 @@ void StgPlayerObject::Work() {
 void StgPlayerObject::Move() {
 	if (state_ == STATE_NORMAL && bEnableMovement_) {
 		//�ʏ펞
-		if (hitObjectID_ == DxScript::ID_INVALID) {
+		if (hitObjectID_ == DxScript::ID_INVALID || frameInvincibility_ > 0) {
 			_Move();
 		}
 	}
