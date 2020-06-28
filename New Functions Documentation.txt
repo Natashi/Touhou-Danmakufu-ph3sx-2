@@ -791,7 +791,9 @@ ObjRender_SetVertexShaderRenderingMode
 		2) (bool) use vertex shader mode
 	Description:
 		Sets whether the render object will be rendered with support for vertex shaders.
+		
 		Rendering will not be performed without an attached shader object when this is set to true.
+		When using vertex shader rendering mode with 3D objects, it is highly recommended that ObjRender_SetFogEnable is set to false.
 		
 ObjRender_SetLightingEnable
 	Arguments:

@@ -19,7 +19,7 @@
 1.10a:
 	- Fixed some random and function-related crashes.
 	- RenderToTextureXX alpha fix ported+modified from th_dnh_woo.
-	- Alpha blending now exists in all blend modes except BLEND_NONE and BLEND_ADD_RGB.
+	- Alpha channel blending now exists in all blend modes except BLEND_NONE and BLEND_ADD_RGB.
 	- Fixed a bug involving events.
 	- Event arguments will no longer be overwritten when notifying nested events inside @Event.
 	- Added transform functions for ObjPatternShot, for former and current ECL modders.
@@ -49,6 +49,7 @@
 	- Added a particle renderer object (ObjParticleList) and two new relevant sample scripts.
 	- Added support for vertex indexing.
 	- Added support for basic directional lighting.
+	- Improved vertex shader support.
 	- Fixed underflowing and overflowing issues with ObjRender_SetColor/SetAlpha.
 	- ObjFileT now properly reads from and writes to UTF-8 text files.
 	- ObjFile_OpenNW now allows both reading and writing, unless the file was stored in a .dat archive, in which case all write functions will fail.
