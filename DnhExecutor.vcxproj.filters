@@ -74,9 +74,6 @@
     <ClCompile Include="source\GcLib\directx\DxWindow.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
-    <ClCompile Include="source\GcLib\directx\ElfreinaMesh.cpp">
-      <Filter>source\GcLib\directx</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\directx\MetasequoiaMesh.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
@@ -191,6 +188,12 @@
     <ClCompile Include="source\GcLib\gstd\ScriptLexer.cpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DxScriptFunc.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\directx\ElfreinaMesh.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">
@@ -248,9 +251,6 @@
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\DxWindow.hpp">
-      <Filter>source\GcLib\directx</Filter>
-    </ClInclude>
-    <ClInclude Include="source\GcLib\directx\ElfreinaMesh.hpp">
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\HLSL.hpp">
@@ -390,6 +390,9 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\ArchiveFile.hpp">
       <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\ElfreinaMesh.hpp">
+      <Filter>source\GcLib\directx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
