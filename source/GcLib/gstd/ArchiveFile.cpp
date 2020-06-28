@@ -641,6 +641,13 @@ bool Compressor::DeflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t c
 	size_t readPos = 0;
 	auto _ReadFunc = [&](char* _bIn, size_t reading, int* _flushType) -> size_t {
 		size_t read = std::min(reading, count);
+		if (read > count) {
+			*_flushType = Z_FINISH;
+			read = count;
+		}
+		else if (read < reading) {
+			*_flushType = Z_FINISH;
+		}
 		memcpy(_bIn, bufIn.GetPointer(readPos), read);
 		readPos += read;
 		return read;
