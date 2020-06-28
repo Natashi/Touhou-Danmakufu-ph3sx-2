@@ -87,11 +87,11 @@ namespace directx {
 		bool bWindowVisible_;
 		RECT rectWindow_;//ウィンドウ相対座標
 		DxWindow* windowParent_;//親ウィンドウ
-		std::list<gstd::ref_count_ptr<DxWindow> > listWindowChild_;//子ウィンドウ
+		std::list<gstd::ref_count_ptr<DxWindow>> listWindowChild_;//子ウィンドウ
 
 		D3DCOLOR color_;
 		gstd::ref_count_ptr<Sprite2D> spriteFrame_;
-		int typeRenderFrame_;
+		BlendMode typeRenderFrame_;
 
 		void _WorkChild();
 		void _RenderChild();
@@ -175,13 +175,13 @@ namespace directx {
 	protected:
 		int index_;
 		gstd::ref_count_ptr<DxText> text_;
-		std::vector<gstd::ref_count_ptr<DxButton> > listButton_;
+		std::vector<gstd::ref_count_ptr<DxButton>> listButton_;
 
 	public:
 		DxMessageBox();
 		virtual void DispatchedEvent(gstd::ref_count_ptr<DxWindowEvent> event);
 		void SetText(gstd::ref_count_ptr<DxText> text);
-		void SetButton(std::vector<gstd::ref_count_ptr<DxButton> > listButton);
+		void SetButton(std::vector<gstd::ref_count_ptr<DxButton>> listButton);
 		int GetSelectedIndex() { return index_; }
 		void UpdateWindowRect();
 	};
