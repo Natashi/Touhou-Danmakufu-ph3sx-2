@@ -5,18 +5,18 @@
 #include "DxConstant.hpp"
 
 namespace directx {
-	enum {
+	typedef enum {
 		DI_MOUSE_LEFT = 0,
 		DI_MOUSE_RIGHT = 1,
 		DI_MOUSE_MIDDLE = 2,
-	};
+	} DIMouseButton;
 
-	enum {
+	typedef enum : uint8_t {
 		KEY_FREE = 0,	 // キーが押されていない状態
 		KEY_PUSH = 1,	 // キーを押した瞬間
 		KEY_PULL = 2,	 // キーが離された瞬間
 		KEY_HOLD = 3,	 // キーが押されている状態
-	};
+	} DIKeyState;
 
 	/**********************************************************
 	//DirectInput
@@ -42,9 +42,9 @@ namespace directx {
 		std::vector<DIJOYSTATE> statePad_;
 		std::vector<int> padRes_;//パッドの遊び
 
-		int bufKey_[MAX_KEY];//現フレームのキーの状態
-		int bufMouse_[MAX_MOUSE_BUTTON];//現フレームのマウスの状態
-		std::vector<std::vector<int> > bufPad_;//現フレームのパッドの状態			
+		DIKeyState bufKey_[MAX_KEY];//現フレームのキーの状態
+		DIKeyState bufMouse_[MAX_MOUSE_BUTTON];//現フレームのマウスの状態
+		std::vector<std::vector<DIKeyState>> bufPad_;//現フレームのパッドの状態			
 
 		bool _InitializeKeyBoard();
 		bool _InitializeMouse();
@@ -56,12 +56,11 @@ namespace directx {
 		bool _IdleJoypad();
 		bool _IdleMouse();
 
-		int _GetKey(UINT code, int state);//キー状態の取得
-		int _GetMouseButton(int button, int state);//マウスのボタンの状態を取得
-		int _GetPadDirection(int index, UINT code, int state);//ジョイスティック方向キーの状態取得
-		int _GetPadButton(int index, int buttonNo, int state);//ジョイスティックのボタンの状態を取得
-		int _GetStateSub(bool flag, int state);
-
+		DIKeyState _GetKey(UINT code, DIKeyState state);//キー状態の取得
+		DIKeyState _GetMouseButton(int16_t button, DIKeyState state);//マウスのボタンの状態を取得
+		DIKeyState _GetPadDirection(int16_t index, UINT code, DIKeyState state);//ジョイスティック方向キーの状態取得
+		DIKeyState _GetPadButton(int16_t index, int16_t buttonNo, DIKeyState state);//ジョイスティックのボタンの状態を取得
+		DIKeyState _GetStateSub(bool flag, DIKeyState state);
 	public:
 		DirectInput();
 		virtual ~DirectInput();
@@ -70,13 +69,13 @@ namespace directx {
 		virtual bool Initialize(HWND hWnd);
 
 		virtual void Update();//キーをセットする
-		int GetKeyState(int key);
-		int GetMouseState(int button);
-		int GetPadState(int padNo, int button);
+		DIKeyState GetKeyState(int16_t key);
+		DIKeyState GetMouseState(int16_t button);
+		DIKeyState GetPadState(int16_t padNo, int16_t button);
 
-		int GetMouseMoveX() { return stateMouse_.lX; }//マウスの移動量を取得X
-		int GetMouseMoveY() { return stateMouse_.lY; }//マウスの移動量を取得Y
-		int GetMouseMoveZ() { return stateMouse_.lZ; }//マウスの移動量を取得Z
+		LONG GetMouseMoveX() { return stateMouse_.lX; }//マウスの移動量を取得X
+		LONG GetMouseMoveY() { return stateMouse_.lY; }//マウスの移動量を取得Y
+		LONG GetMouseMoveZ() { return stateMouse_.lZ; }//マウスの移動量を取得Z
 		POINT GetMousePosition();
 
 		void ResetInputState();
@@ -84,8 +83,8 @@ namespace directx {
 		void ResetKeyState();
 		void ResetPadState();
 
-		int GetPadDeviceCount() { return bufPad_.size(); }
-		DIDEVICEINSTANCE GetPadDeviceInformation(int padIndex);
+		size_t GetPadDeviceCount() { return bufPad_.size(); }
+		DIDEVICEINSTANCE GetPadDeviceInformation(int16_t padIndex);
 	};
 
 	/**********************************************************
@@ -95,44 +94,41 @@ namespace directx {
 	class VirtualKey {
 		friend VirtualKeyManager;
 	private:
-		int keyboard_;//キーボードのキー
-		int padIndex_;//ジョイパッドの番号
-		int padButton_;//ジョイパッドのボタン
-		int state_;//現在の状態
-
+		int16_t keyboard_;//キーボードのキー
+		int16_t padIndex_;//ジョイパッドの番号
+		int16_t padButton_;//ジョイパッドのボタン
+		DIKeyState state_;//現在の状態
 	public:
-		VirtualKey(int keyboard, int padIndex, int padButton);
+		VirtualKey(int16_t keyboard, int16_t padIndex, int16_t padButton);
 		virtual ~VirtualKey();
-		int GetKeyState() { return state_; }
-		void SetKeyState(int state) { state_ = state; }
+		DIKeyState GetKeyState() { return state_; }
+		void SetKeyState(DIKeyState state) { state_ = state; }
 
-		int GetKeyCode() { return keyboard_; }
-		void SetKeyCode(int code) { keyboard_ = code; }
-		int GetPadIndex() { return padIndex_; }
-		void SetPadIndex(int index) { padIndex_ = index; }
-		int GetPadButton() { return padButton_; }
-		void SetPadButton(int button) { padButton_ = button; }
-
+		int16_t GetKeyCode() { return keyboard_; }
+		void SetKeyCode(int16_t code) { keyboard_ = code; }
+		int16_t GetPadIndex() { return padIndex_; }
+		void SetPadIndex(int16_t index) { padIndex_ = index; }
+		int16_t GetPadButton() { return padButton_; }
+		void SetPadButton(int16_t button) { padButton_ = button; }
 	};
 
 	class VirtualKeyManager : public DirectInput {
 	protected:
-		std::map<int, gstd::ref_count_ptr<VirtualKey> > mapKey_;
+		std::map<int16_t, gstd::ref_count_ptr<VirtualKey>> mapKey_;
 
-		int _GetVirtualKeyState(int id);
-
+		DIKeyState _GetVirtualKeyState(int16_t id);
 	public:
 		VirtualKeyManager();
 		~VirtualKeyManager();
 		virtual void Update();//キーをセットする
 		void ClearKeyState();
 
-		void AddKeyMap(int id, gstd::ref_count_ptr<VirtualKey> key) { mapKey_[id] = key; }
-		void DeleteKeyMap(int id) { mapKey_.erase(id); };
+		void AddKeyMap(int16_t id, gstd::ref_count_ptr<VirtualKey> key) { mapKey_[id] = key; }
+		void DeleteKeyMap(int16_t id) { mapKey_.erase(id); };
 		void ClearKeyMap() { mapKey_.clear(); };
-		int GetVirtualKeyState(int id);
-		gstd::ref_count_ptr<VirtualKey> GetVirtualKey(int id);
-		bool IsTargetKeyCode(int key);
+		DIKeyState GetVirtualKeyState(int16_t id);
+		gstd::ref_count_ptr<VirtualKey> GetVirtualKey(int16_t id);
+		bool IsTargetKeyCode(int16_t key);
 	};
 
 	/**********************************************************
@@ -145,24 +141,25 @@ namespace directx {
 			STATE_REPLAY,
 		};
 	protected:
+#pragma pack(push, 2)
 		struct ReplayData {
-			int id_;
-			int frame_;
-			int state_;
+			int16_t id_;
+			uint32_t frame_;
+			DIKeyState state_;
 		};
+#pragma pack(pop)
 
 		int state_;
-		int frame_;
-		std::map<int, int> mapLastKeyState_;
-		std::list<int> listTarget_;
+		uint32_t frame_;
+		std::list<std::pair<int16_t, DIKeyState>> listTarget_;
 		std::list<ReplayData> listReplayData_;
 		VirtualKeyManager* input_;
 	public:
 		KeyReplayManager(VirtualKeyManager* input);
 		virtual ~KeyReplayManager();
 		void SetManageState(int state) { state_ = state; }
-		void AddTarget(int key);
-		bool IsTargetKeyCode(int key);
+		void AddTarget(int16_t key);
+		bool IsTargetKeyCode(int16_t key);
 
 		void Update();
 		void ReadRecord(gstd::RecordBuffer& record);

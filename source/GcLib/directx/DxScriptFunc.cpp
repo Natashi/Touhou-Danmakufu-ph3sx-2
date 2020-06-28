@@ -947,16 +947,16 @@ gstd::value DxScript::Func_GetMouseY(gstd::script_machine* machine, int argc, co
 }
 gstd::value DxScript::Func_GetMouseMoveZ(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectInput* input = DirectInput::GetBase();
-	int res = input->GetMouseMoveZ();
+	LONG res = input->GetMouseMoveZ();
 	return DxScript::CreateRealValue(res);
 }
 gstd::value DxScript::Func_GetMouseState(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectInput* input = DirectInput::GetBase();
-	int res = input->GetMouseState(argv[0].as_real());
+	DIKeyState res = input->GetMouseState(argv[0].as_real());
 	return DxScript::CreateRealValue(res);
 }
 gstd::value DxScript::Func_GetVirtualKeyState(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	int res = KEY_FREE;
+	DIKeyState res = KEY_FREE;
 	VirtualKeyManager* input = dynamic_cast<VirtualKeyManager*>(DirectInput::GetBase());
 	if (input) {
 		int id = (int)(argv[0].as_real());
@@ -968,11 +968,10 @@ gstd::value DxScript::Func_SetVirtualKeyState(gstd::script_machine* machine, int
 	VirtualKeyManager* input = dynamic_cast<VirtualKeyManager*>(DirectInput::GetBase());
 	if (input) {
 		int id = (int)(argv[0].as_real());
-		int state = (int)(argv[1].as_real());
+		DIKeyState state = (DIKeyState)(argv[1].as_real());
 		ref_count_ptr<VirtualKey> vkey = input->GetVirtualKey(id);
-		if (vkey) {
+		if (vkey)
 			vkey->SetKeyState(state);
-		}
 	}
 	return value();
 }
