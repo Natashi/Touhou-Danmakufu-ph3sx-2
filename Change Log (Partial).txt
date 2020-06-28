@@ -22,7 +22,8 @@
 	- Alpha channel blending now exists in all blend modes except BLEND_NONE and BLEND_ADD_RGB.
 	- Fixed a bug involving events.
 	- Event arguments will no longer be overwritten when notifying nested events inside @Event.
-	- Added transform functions for ObjPatternShot, for former and current ECL modders.
+	- Added transform functions for ObjPatternShot and relevant sample scripts, for former and current ECL modders.
+		- Please note that they may not be able to fully emulate ECL's behaviours.
 	- Added functionality to customize delay clouds.
 	- Added an option to use true fullscreen mode in the config.
 	- "Operation-assign" operators (+=, -=, ++, etc.) now work on indexed arrays.
@@ -32,7 +33,7 @@
 			- a += [5, 6]	= [6, 8, 3]
 		- Given: b = [[1, 2], [3, 4], [5, 6]]
 			- b[0] += 3 	= [[4, 5], [3, 4], [5, 6]]
-			- b[2][0]-- 	= [[1, 2], [3, 4], [4, 6]]
+			- b[2]-- 		= [[1, 2], [3, 4], [4, 5]]
 	- Array indexing/slicing operations now automatically truncate indices.
 	- Array slicing operation can now reverse an array.
 		- Given: a = [10, 12, 14, 16, 18, 20]
@@ -49,13 +50,13 @@
 	- Added a particle renderer object (ObjParticleList) and two new relevant sample scripts.
 	- Added support for vertex indexing.
 	- Added support for basic directional lighting.
-	- Improved vertex shader support.
+	- Improved vertex shader support, and added sample scripts for demonstration.
 	- Fixed underflowing and overflowing issues with ObjRender_SetColor/SetAlpha.
 	- ObjFileT now properly reads from and writes to UTF-8 text files.
 	- ObjFile_OpenNW now allows both reading and writing, unless the file was stored in a .dat archive, in which case all write functions will fail.
 	- Following the above two changes, Shift-JIS is no longer supported in favour of proper Unicode (UTF-8) handling.
-	- Better support for Metasequoia mesh, and temporarily(?) removed support for Elfreina mesh. Support for Blender .obj meshes is planned.
+	- Better Metasequoia mesh support, and temporarily(?) suspended Elfreina mesh support. Blender .obj mesh support is planned.
 	- The player object will now set its own movement speed and angle according to user key input.
 	- Minimum custom window size is reduced to 320*240.
-	- GetShotDataInfoA1 no longer throws an error upon receiving an invalid graphic ID, and will instead returns default values.
+	- GetShotDataInfoA1 no longer throws an error upon receiving an invalid graphic ID, and will instead return default values.
 	- Various optimizations.

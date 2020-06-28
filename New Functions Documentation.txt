@@ -544,6 +544,8 @@ New math constants:
 	M_LOG10E	= log10(e)			; 0.43429448190325182765
 	M_LN2		= ln(2)				; 0.69314718055994530942
 	M_LN10		= ln(10)			; 2.30258509299404568402
+	M_PHI		= (1 + sqrt(5)) / 2 ; 1.61803398874989484821
+	M_1_PHI		= 1 / M_PHI 		; 0.6180339887498948482
 
 -------------------------------------------------------------------------------------------------------------------
 
@@ -680,8 +682,7 @@ SetCameraPosLookAt
 
 GetCameraViewProjectionMatrix
 	Description:
-		Returns the 3D camera's internal view-projection matrix. Intended to be used with custom 3D vertex shaders.
-		Says Natashi as he stares at TriFocuser.
+		Returns the 3D camera's view-projection matrix.
 		
 -------------------------------------------------------------------------------------------------------------------
 
@@ -793,7 +794,7 @@ ObjRender_SetVertexShaderRenderingMode
 		Sets whether the render object will be rendered with support for vertex shaders.
 		
 		Rendering will not be performed without an attached shader object when this is set to true.
-		When using vertex shader rendering mode with 3D objects, it is highly recommended that ObjRender_SetFogEnable is set to false.
+		When using vertex shader rendering mode with 3D objects, fog must be manually computed with the shader.
 		
 ObjRender_SetLightingEnable
 	Arguments:
