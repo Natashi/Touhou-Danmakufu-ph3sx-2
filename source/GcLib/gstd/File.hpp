@@ -370,8 +370,8 @@ namespace gstd {
 		ByteBuffer buffer_;
 
 		size_t _GetEntryRecordSize();
-		void _WriteEntryRecord(Writer &writer);
-		void _ReadEntryRecord(Reader &reader);
+		void _WriteEntryRecord(Writer& writer);
+		void _ReadEntryRecord(Reader& reader);
 	public:
 		RecordEntry();
 		virtual ~RecordEntry();
@@ -408,17 +408,17 @@ namespace gstd {
 		size_t GetEntrySize(std::string key);
 
 		//エントリ取得(文字列キー)
-		bool GetRecord(std::string& key, LPVOID buf, DWORD size);
-		template <typename T> bool GetRecord(std::string key, T& data) {
+		bool GetRecord(const std::string& key, LPVOID buf, DWORD size);
+		template <typename T> bool GetRecord(const std::string& key, T& data) {
 			return GetRecord(key, &data, sizeof(T));
 		}
-		bool GetRecordAsBoolean(std::string key, bool def = false);
-		int GetRecordAsInteger(std::string key, int def = 0);
-		float GetRecordAsFloat(std::string key, float def = 0.0f);
-		double GetRecordAsDouble(std::string key, double def = 0.0);
-		std::string GetRecordAsStringA(std::string key);
-		std::wstring GetRecordAsStringW(std::string key);
-		bool GetRecordAsRecordBuffer(std::string key, RecordBuffer& record);
+		bool GetRecordAsBoolean(const std::string& key, bool def = false);
+		int GetRecordAsInteger(const std::string& key, int def = 0);
+		float GetRecordAsFloat(const std::string& key, float def = 0.0f);
+		double GetRecordAsDouble(const std::string& key, double def = 0.0);
+		std::string GetRecordAsStringA(const std::string& key);
+		std::wstring GetRecordAsStringW(const std::string& key);
+		bool GetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record);
 
 		//エントリ取得(数値キー)
 		bool GetRecord(int key, LPVOID buf, DWORD size) { return GetRecord(StringUtility::Format("%d", key), buf, size); }
@@ -433,21 +433,21 @@ namespace gstd {
 
 
 		//エントリ設定(文字列キー)
-		void SetRecord(std::string& key, LPVOID buf, DWORD size) { SetRecord(RecordEntry::TYPE_UNKNOWN, key, buf, size); }
-		template <typename T> void SetRecord(std::string key, T& data) {
+		void SetRecord(const std::string& key, LPVOID buf, DWORD size) { SetRecord(RecordEntry::TYPE_UNKNOWN, key, buf, size); }
+		template <typename T> void SetRecord(const std::string& key, T& data) {
 			SetRecord(RecordEntry::TYPE_UNKNOWN, key, &data, sizeof(T));
 		}
-		void SetRecord(int type, std::string& key, LPVOID buf, DWORD size);
-		template <typename T> void SetRecord(int type, std::string& key, T& data) {
+		void SetRecord(int type, const std::string& key, LPVOID buf, DWORD size);
+		template <typename T> void SetRecord(int type, const std::string& key, T& data) {
 			SetRecord(type, key, &data, sizeof(T));
 		}
-		void SetRecordAsBoolean(std::string key, bool data) { SetRecord(RecordEntry::TYPE_BOOLEAN, key, data); }
-		void SetRecordAsInteger(std::string key, int data) { SetRecord(RecordEntry::TYPE_INTEGER, key, data); }
-		void SetRecordAsFloat(std::string key, float data) { SetRecord(RecordEntry::TYPE_FLOAT, key, data); }
-		void SetRecordAsDouble(std::string key, double data) { SetRecord(RecordEntry::TYPE_DOUBLE, key, data); }
-		void SetRecordAsStringA(std::string key, std::string data) { SetRecord(RecordEntry::TYPE_STRING_A, key, &data[0], data.size()); }
-		void SetRecordAsStringW(std::string key, std::wstring data) { SetRecord(RecordEntry::TYPE_STRING_W, key, &data[0], data.size() * sizeof(wchar_t)); }
-		void SetRecordAsRecordBuffer(std::string key, RecordBuffer& record);
+		void SetRecordAsBoolean(const std::string& key, bool data) { SetRecord(RecordEntry::TYPE_BOOLEAN, key, data); }
+		void SetRecordAsInteger(const std::string& key, int data) { SetRecord(RecordEntry::TYPE_INTEGER, key, data); }
+		void SetRecordAsFloat(const std::string& key, float data) { SetRecord(RecordEntry::TYPE_FLOAT, key, data); }
+		void SetRecordAsDouble(const std::string& key, double data) { SetRecord(RecordEntry::TYPE_DOUBLE, key, data); }
+		void SetRecordAsStringA(const std::string& key, std::string data) { SetRecord(RecordEntry::TYPE_STRING_A, key, &data[0], data.size()); }
+		void SetRecordAsStringW(const std::string& key, std::wstring data) { SetRecord(RecordEntry::TYPE_STRING_W, key, &data[0], data.size() * sizeof(wchar_t)); }
+		void SetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record);
 
 		//エントリ設定(数値キー)
 		void SetRecord(int key, LPVOID buf, DWORD size) { SetRecord(StringUtility::Format("%d", key), buf, size); }
@@ -460,7 +460,7 @@ namespace gstd {
 		void SetRecordAsStringW(int key, std::wstring data) { SetRecordAsStringW(StringUtility::Format("%d", key), data); }
 		void SetRecordAsRecordBuffer(int key, RecordBuffer& record) { SetRecordAsRecordBuffer(StringUtility::Format("%d", key), record); }
 
-		//Recoedable
+		//Recordable
 		virtual void Read(RecordBuffer& record);
 		virtual void Write(RecordBuffer& record);
 	};

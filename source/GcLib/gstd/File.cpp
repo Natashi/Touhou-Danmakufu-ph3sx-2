@@ -937,7 +937,7 @@ size_t RecordBuffer::GetEntrySize(std::string key) {
 	ByteBuffer& buffer = itr->second->GetBufferRef();
 	return buffer.GetSize();
 }
-bool RecordBuffer::GetRecord(std::string& key, LPVOID buf, DWORD size) {
+bool RecordBuffer::GetRecord(const std::string& key, LPVOID buf, DWORD size) {
 	auto itr = mapEntry_.find(key);
 	if (itr == mapEntry_.end()) return false;
 	ByteBuffer& buffer = itr->second->GetBufferRef();
@@ -945,27 +945,27 @@ bool RecordBuffer::GetRecord(std::string& key, LPVOID buf, DWORD size) {
 	buffer.Read(buf, size);
 	return true;
 }
-bool RecordBuffer::GetRecordAsBoolean(std::string key, bool def) {
+bool RecordBuffer::GetRecordAsBoolean(const std::string& key, bool def) {
 	bool res = def;
 	GetRecord(key, res);
 	return res;
 }
-int RecordBuffer::GetRecordAsInteger(std::string key, int def) {
+int RecordBuffer::GetRecordAsInteger(const std::string& key, int def) {
 	int res = def;
 	GetRecord(key, res);
 	return res;
 }
-float RecordBuffer::GetRecordAsFloat(std::string key, float def) {
+float RecordBuffer::GetRecordAsFloat(const std::string& key, float def) {
 	float res = def;
 	GetRecord(key, res);
 	return res;
 }
-double RecordBuffer::GetRecordAsDouble(std::string key, double def) {
+double RecordBuffer::GetRecordAsDouble(const std::string& key, double def) {
 	double res = def;
 	GetRecord(key, res);
 	return res;
 }
-std::string RecordBuffer::GetRecordAsStringA(std::string key) {
+std::string RecordBuffer::GetRecordAsStringA(const std::string& key) {
 	auto itr = mapEntry_.find(key);
 	if (itr == mapEntry_.end()) return "";
 
@@ -987,7 +987,7 @@ std::string RecordBuffer::GetRecordAsStringA(std::string key) {
 
 	return res;
 }
-std::wstring RecordBuffer::GetRecordAsStringW(std::string key) {
+std::wstring RecordBuffer::GetRecordAsStringW(const std::string& key) {
 	auto itr = mapEntry_.find(key);
 	if (itr == mapEntry_.end()) return L"";
 
@@ -1010,7 +1010,7 @@ std::wstring RecordBuffer::GetRecordAsStringW(std::string key) {
 
 	return res;
 }
-bool RecordBuffer::GetRecordAsRecordBuffer(std::string key, RecordBuffer& record) {
+bool RecordBuffer::GetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record) {
 	auto itr = mapEntry_.find(key);
 	if (itr == mapEntry_.end()) return false;
 	ByteBuffer& buffer = itr->second->GetBufferRef();
@@ -1018,7 +1018,7 @@ bool RecordBuffer::GetRecordAsRecordBuffer(std::string key, RecordBuffer& record
 	record.Read(buffer);
 	return true;
 }
-void RecordBuffer::SetRecord(int type, std::string& key, LPVOID buf, DWORD size) {
+void RecordBuffer::SetRecord(int type, const std::string& key, LPVOID buf, DWORD size) {
 	ref_count_ptr<RecordEntry> entry = new RecordEntry();
 	entry->SetType((char)type);
 	entry->SetKey(key);
@@ -1027,7 +1027,7 @@ void RecordBuffer::SetRecord(int type, std::string& key, LPVOID buf, DWORD size)
 	buffer.Write(buf, size);
 	mapEntry_[key] = entry;
 }
-void RecordBuffer::SetRecordAsRecordBuffer(std::string key, RecordBuffer& record) {
+void RecordBuffer::SetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record) {
 	ref_count_ptr<RecordEntry> entry = new RecordEntry();
 	entry->SetType((char)RecordEntry::TYPE_RECORD);
 	entry->SetKey(key);
