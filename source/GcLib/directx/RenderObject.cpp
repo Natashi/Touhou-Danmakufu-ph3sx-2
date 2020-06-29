@@ -988,7 +988,7 @@ void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
 					effect->SetBool(handle, bFog);
 				if (bFog) {
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
-						effect->SetVector(handle, &fogParam->color);
+						effect->SetFloatArray(handle, (FLOAT*)&fogParam->color, 4);
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
 						effect->SetFloatArray(handle, (FLOAT*)&fogParam->fogDist, 2);
 				}
@@ -1167,7 +1167,7 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 					effect->SetBool(handle, bFog);
 				if (bFog) {
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
-						effect->SetVector(handle, &fogParam->color);
+						effect->SetFloatArray(handle, (FLOAT*)&fogParam->color, 4);
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
 						effect->SetFloatArray(handle, (FLOAT*)&fogParam->fogDist, 2);
 				}
@@ -2203,8 +2203,8 @@ void ParticleRenderer2D::Render() {
 			}
 			else {
 				effect = shaderManager->GetInstancing2DShader();
-				effect->SetTechnique(dxObjParent_->GetBlendType() == MODE_BLEND_ALPHA_INV ?
-					"RenderInv" : "Render");
+				effect->SetTechnique(texture_ ? (dxObjParent_->GetBlendType() == MODE_BLEND_ALPHA_INV ?
+					"RenderInv" : "Render") : "RenderNoTexture");
 			}
 
 			if (effect == nullptr) return;
@@ -2299,8 +2299,8 @@ void ParticleRenderer3D::Render() {
 			}
 			else {
 				effect = shaderManager->GetInstancing3DShader();
-				effect->SetTechnique(dxObjParent_->GetBlendType() == MODE_BLEND_ALPHA_INV ?
-					"RenderInv" : "Render");
+				effect->SetTechnique(texture_ ? (dxObjParent_->GetBlendType() == MODE_BLEND_ALPHA_INV ?
+					"RenderInv" : "Render") : "RenderNoTexture");
 			}
 
 			if (effect == nullptr) return;
@@ -2327,7 +2327,7 @@ void ParticleRenderer3D::Render() {
 					effect->SetBool(handle, bFog);
 				if (bFog) {
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
-						effect->SetVector(handle, &fogParam->color);
+						effect->SetFloatArray(handle, (FLOAT*)&fogParam->color, 4);
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
 						effect->SetFloatArray(handle, (FLOAT*)&fogParam->fogDist, 2);
 				}
