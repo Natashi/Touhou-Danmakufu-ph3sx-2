@@ -371,12 +371,14 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayScaleParameter);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayAlphaParameter);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayMode);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetGrazeInvalidFrame);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetGrazeFrame);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_IsValidGraze);
 
 	static gstd::value Func_ObjLaser_SetLength(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_SetRenderWidth(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_SetIntersectionWidth(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_SetInvalidLength(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjLaser_SetGrazeInvalidFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_SetItemDistance(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_GetLength(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_GetRenderWidth(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -386,6 +388,7 @@ public:
 	static gstd::value Func_ObjStLaser_SetSource(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjStLaser_SetEnd(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjStLaser_SetEndGraphic(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjStLaser_SetDelayScale(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_ObjStLaser_SetPermitExpand);
 	DNH_FUNCAPI_DECL_(Func_ObjStLaser_GetPermitExpand);
 	static gstd::value Func_ObjCrLaser_SetTipDecrement(gstd::script_machine* machine, int argc, const gstd::value* argv);

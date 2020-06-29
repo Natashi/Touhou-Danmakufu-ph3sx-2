@@ -444,12 +444,14 @@ function const stgFunction[] =
 	{ "ObjShot_SetDelayScaleParameter", StgStageScript::Func_ObjShot_SetDelayScaleParameter, 4 },
 	{ "ObjShot_SetDelayAlphaParameter", StgStageScript::Func_ObjShot_SetDelayAlphaParameter, 4 },
 	{ "ObjShot_SetDelayMode", StgStageScript::Func_ObjShot_SetDelayMode, 4 },
+	{ "ObjShot_SetGrazeInvalidFrame", StgStageScript::Func_ObjShot_SetGrazeInvalidFrame, 2 },
+	{ "ObjShot_SetGrazeFrame", StgStageScript::Func_ObjShot_SetGrazeFrame, 2 },
+	{ "ObjShot_IsValidGraze", StgStageScript::Func_ObjShot_IsValidGraze, 1 },
 
 	{ "ObjLaser_SetLength", StgStageScript::Func_ObjLaser_SetLength, 2 },
 	{ "ObjLaser_SetRenderWidth", StgStageScript::Func_ObjLaser_SetRenderWidth, 2 },
 	{ "ObjLaser_SetIntersectionWidth", StgStageScript::Func_ObjLaser_SetIntersectionWidth, 2 },
 	{ "ObjLaser_SetInvalidLength", StgStageScript::Func_ObjLaser_SetInvalidLength, 3 },
-	{ "ObjLaser_SetGrazeInvalidFrame", StgStageScript::Func_ObjLaser_SetGrazeInvalidFrame, 2 },
 	{ "ObjLaser_SetItemDistance", StgStageScript::Func_ObjLaser_SetItemDistance, 2 },
 	{ "ObjLaser_GetLength", StgStageScript::Func_ObjLaser_GetLength, 1 },
 	{ "ObjLaser_GetRenderWidth", StgStageScript::Func_ObjLaser_GetRenderWidth, 1 },
@@ -459,6 +461,7 @@ function const stgFunction[] =
 	{ "ObjStLaser_SetSource", StgStageScript::Func_ObjStLaser_SetSource, 2 },
 	{ "ObjStLaser_SetEnd", StgStageScript::Func_ObjStLaser_SetEnd, 2 },
 	{ "ObjStLaser_SetEndGraphic", StgStageScript::Func_ObjStLaser_SetEndGraphic, 2 },
+	{ "ObjStLaser_SetDelayScale", StgStageScript::Func_ObjStLaser_SetDelayScale, 3 },
 	{ "ObjStLaser_SetPermitExpand", StgStageScript::Func_ObjStLaser_SetPermitExpand, 2 },
 	{ "ObjStLaser_GetPermitExpand", StgStageScript::Func_ObjStLaser_GetPermitExpand, 1 },
 	{ "ObjCrLaser_SetTipDecrement", StgStageScript::Func_ObjCrLaser_SetTipDecrement, 2 },
@@ -3781,6 +3784,34 @@ gstd::value StgStageScript::Func_ObjShot_SetDelayMode(gstd::script_machine* mach
 	}
 	return value();
 }
+gstd::value StgStageScript::Func_ObjShot_SetGrazeInvalidFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	if (StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id))) {
+		int frame = (int)argv[1].as_real();
+		obj->SetGrazeInvalidFrame(frame);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_SetGrazeFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	if (StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id))) {
+		int frame = (int)argv[1].as_real();
+		obj->SetGrazeFrame(frame);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_IsValidGraze(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+
+	bool res = false;
+	if (StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id)))
+		res = obj->IsValidGraze();
+
+	return script->CreateBooleanValue(res);
+}
 
 
 gstd::value StgStageScript::Func_ObjLaser_SetLength(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -3825,16 +3856,6 @@ gstd::value StgStageScript::Func_ObjLaser_SetInvalidLength(gstd::script_machine*
 		end = std::max(std::min(end, 1.0f), 0.0f);
 
 		obj->SetInvalidLength(start, end);
-	}
-	return value();
-}
-gstd::value StgStageScript::Func_ObjLaser_SetGrazeInvalidFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	int id = (int)argv[0].as_real();
-	StgLaserObject* obj = dynamic_cast<StgLaserObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		int frame = (int)argv[1].as_real();
-		obj->SetGrazeInvalidFrame(frame);
 	}
 	return value();
 }
@@ -3916,6 +3937,16 @@ gstd::value StgStageScript::Func_ObjStLaser_SetEndGraphic(gstd::script_machine* 
 	StgStraightLaserObject* obj = dynamic_cast<StgStraightLaserObject*>(script->GetObjectPointer(id));
 	if (obj)
 		obj->SetEndGraphic((int)argv[1].as_real());
+	return value();
+}
+gstd::value StgStageScript::Func_ObjStLaser_SetDelayScale(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgStraightLaserObject* obj = dynamic_cast<StgStraightLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		D3DXVECTOR2 scale = D3DXVECTOR2(argv[1].as_real(), argv[2].as_real());
+		obj->SetSourceEndScale(scale);
+	}
 	return value();
 }
 gstd::value StgStageScript::Func_ObjCrLaser_SetTipDecrement(gstd::script_machine* machine, int argc, const gstd::value* argv) {

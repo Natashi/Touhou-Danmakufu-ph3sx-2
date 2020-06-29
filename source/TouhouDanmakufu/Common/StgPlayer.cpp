@@ -286,8 +286,7 @@ void StgPlayerObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgInterse
 		switch (otherType) {
 		case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 		{
-			StgShotObject* objShot = (StgShotObject*)ptrObj.get();
-			if (objShot) {
+			if (StgShotObject* objShot = dynamic_cast<StgShotObject*>(ptrObj.get())) {
 				if (!own->IsGraze()) {
 					hitObjectID_ = objShot->GetObjectID();
 
@@ -306,8 +305,7 @@ void StgPlayerObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgInterse
 		{
 			//“G
 			if (!own->IsGraze()) {
-				shared_ptr<StgEnemyObject> objEnemy = std::dynamic_pointer_cast<StgEnemyObject>(ptrObj);
-				if (objEnemy)
+				if (StgEnemyObject* objEnemy = dynamic_cast<StgEnemyObject*>(ptrObj.get()))
 					hitObjectID_ = objEnemy->GetObjectID();
 			}
 		}

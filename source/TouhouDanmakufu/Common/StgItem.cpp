@@ -1127,7 +1127,7 @@ void StgItemObject_User::Intersect(StgIntersectionTarget::ptr ownTarget, StgInte
 		DxScript::CreateRealValue(typeItem_),
 		DxScript::CreateRealValue(idObject_)
 	};
-	//_NotifyEventToPlayerScript(listValue, 2);
+	_NotifyEventToPlayerScript(listValue, 2);
 	_NotifyEventToItemScript(listValue, 2);
 
 	auto objectManager = stageController_->GetMainObjectManager();

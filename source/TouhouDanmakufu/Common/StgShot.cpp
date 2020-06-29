@@ -798,7 +798,10 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	bSpellFactor_ = false;
 
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
+
 	frameGrazeInvalid_ = 0;
+	frameGrazeInvalidStart_ = INT_MAX;
+
 	frameFadeDelete_ = -1;
 	frameAutoDelete_ = INT_MAX;
 
@@ -896,6 +899,15 @@ void StgShotObject::_DeleteInAutoDeleteFrame() {
 		return;
 	}
 	frameAutoDelete_ = std::max(0, frameAutoDelete_ - 1);
+}
+void StgShotObject::_CommonWorkTask() {
+	++frameWork_;
+	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
+	_DeleteInLife();
+	_DeleteInAutoClip();
+	_DeleteInAutoDeleteFrame();
+	_DeleteInFadeDelete();
+	--frameGrazeInvalid_;
 }
 void StgShotObject::_SendDeleteEvent(int bit) {
 	if (typeOwner_ != OWNER_ENEMY) return;
@@ -1306,10 +1318,6 @@ void StgNormalShotObject::Work() {
 	if (delay_.time > 0) --(delay_.time);
 	else _AddReservedShotWork();
 
-	++frameWork_;
-
-	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
-	
 	{
 		angle_.z += angularVelocity_;
 
@@ -1324,10 +1332,7 @@ void StgNormalShotObject::Work() {
 		}
 	}
 
-	_DeleteInAutoClip();
-	_DeleteInLife();
-	_DeleteInFadeDelete();
-	_DeleteInAutoDeleteFrame();
+	_CommonWorkTask();
 }
 
 void StgNormalShotObject::_AddIntersectionRelativeTarget() {
@@ -1505,14 +1510,14 @@ void StgNormalShotObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgInt
 	case StgIntersectionTarget::TYPE_PLAYER:
 	{
 		//自機
-		frameGrazeInvalid_ = INT_MAX;
+		if (frameGrazeInvalid_ <= 0)
+			frameGrazeInvalid_ = frameGrazeInvalidStart_ > 0 ? frameGrazeInvalidStart_ : INT_MAX;
 		break;
 	}
 	case StgIntersectionTarget::TYPE_PLAYER_SHOT:
 	{
 		if (ptrObj) {
-			StgShotObject* shot = (StgShotObject*)ptrObj.get();
-			if (shot) {
+			if (StgShotObject* shot = dynamic_cast<StgShotObject*>(ptrObj.get())) {
 				bool bEraseShot = shot->IsEraseShot();
 				if (bEraseShot && life_ != LIFE_SPELL_REGIST)
 					ConvertToItem(false);
@@ -1524,8 +1529,7 @@ void StgNormalShotObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgInt
 	{
 		//自機スペル
 		if (ptrObj) {
-			StgPlayerSpellObject* spell = (StgPlayerSpellObject*)ptrObj.get();
-			if (spell) {
+			if (StgPlayerSpellObject* spell = dynamic_cast<StgPlayerSpellObject*>(ptrObj.get())) {
 				bool bEraseShot = spell->IsEraseShot();
 				if (bEraseShot && life_ != LIFE_SPELL_REGIST)
 					ConvertToItem(false);
@@ -1536,7 +1540,8 @@ void StgNormalShotObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgInt
 	case StgIntersectionTarget::TYPE_ENEMY:
 	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 	{
-		damage = 1;
+		if (dynamic_cast<StgLaserObject*>(this) == nullptr)
+			damage = 1;
 		break;
 	}
 	}
@@ -1627,54 +1632,6 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 	for (auto iTarget : listTarget)
 		intersectionManager->AddTarget(iTarget);
 }
-void StgLaserObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
-	shared_ptr<StgIntersectionObject> ptrObj = otherTarget->GetObject().lock();
-
-	float damage = 0;
-	int otherType = otherTarget->GetTargetType();
-	switch (otherType) {
-	case StgIntersectionTarget::TYPE_PLAYER:
-	{
-		//自機
-		if (frameGrazeInvalid_ <= 0) {
-			frameGrazeInvalid_ = frameGrazeInvalidStart_ > 0 ? frameGrazeInvalidStart_ : INT_MAX;
-		}
-		break;
-	}
-	case StgIntersectionTarget::TYPE_PLAYER_SHOT:
-	{
-		//自機弾弾
-		if (ptrObj) {
-			StgShotObject* shot = (StgShotObject*)ptrObj.get();
-			if (shot) {
-				bool bEraseShot = shot->IsEraseShot();
-				if (bEraseShot && life_ != LIFE_SPELL_REGIST) {
-					damage = shot->GetDamage();
-					ConvertToItem(false);
-				}
-			}
-		}
-
-		break;
-	}
-	case StgIntersectionTarget::TYPE_PLAYER_SPELL:
-	{
-		//自機スペル
-		StgPlayerSpellObject* spell = (StgPlayerSpellObject*)ptrObj.get();
-		if (spell) {
-			bool bEraseShot = spell->IsEraseShot();
-			if (bEraseShot && life_ != LIFE_SPELL_REGIST) {
-				damage = spell->GetDamage();
-				ConvertToItem(false);
-			}
-		}
-		break;
-	}
-	}
-	if (life_ != LIFE_SPELL_REGIST)
-		life_ = std::max(life_ - damage, 0.0);
-}
-
 
 /**********************************************************
 //StgLooseLaserObject(射出型レーザー)
@@ -1699,16 +1656,8 @@ void StgLooseLaserObject::Work() {
 	if (delay_.time > 0) --(delay_.time);
 	else _AddReservedShotWork();
 
-	++frameWork_;
-
-	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
-
-	_DeleteInAutoClip();
-	_DeleteInLife();
-	_DeleteInFadeDelete();
-	_DeleteInAutoDeleteFrame();
+	_CommonWorkTask();
 	//	_AddIntersectionRelativeTarget();
-	--frameGrazeInvalid_;
 }
 void StgLooseLaserObject::_Move() {
 	if (delay_.time == 0)
@@ -1958,6 +1907,8 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 	bUseEnd_ = false;
 	idImageEnd_ = -1;
 
+	delaySize_ = D3DXVECTOR2(1, 1);
+
 	scaleX_ = 0.05f;
 	bLaserExpand_ = true;
 
@@ -1978,15 +1929,7 @@ void StgStraightLaserObject::Work() {
 			scaleX_ = std::min(1.0f, scaleX_ + 0.1f);
 	}
 
-	++frameWork_;
-
-	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
-
-	_DeleteInAutoClip();
-	_DeleteInLife();
-	_DeleteInFadeDelete();
-	_DeleteInAutoDeleteFrame();
-	--frameGrazeInvalid_;
+	_CommonWorkTask();
 
 	if (lastAngle_ != angLaser_) {
 		lastAngle_ = angLaser_;
@@ -2151,7 +2094,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 			int sourceWidth = widthRender_ * 2 / 3;
 			D3DXVECTOR4 rcDest(-sourceWidth, -sourceWidth, sourceWidth, sourceWidth);
 
-			auto _AddDelay = [&](StgShotData* delayShotData, RECT* delayRect, D3DXVECTOR2& delayPos) {
+			auto _AddDelay = [&](StgShotData* delayShotData, RECT* delayRect, D3DXVECTOR2& delayPos, float delaySize) {
 				StgShotRenderer* renderer = nullptr;
 
 				if (objSourceBlendType == MODE_BLEND_NONE)
@@ -2171,8 +2114,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 					_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1]);
 					_SetVertexColorARGB(vt, color);
 
-					float px = vt.position.x;
-					float py = vt.position.y;
+					float px = vt.position.x * delaySize;
+					float py = vt.position.y * delaySize;
 					vt.position.x = (px * move_.y + py * move_.x) + delayPos.x;
 					vt.position.y = (-px * move_.x + py * move_.y) + delayPos.y;
 					vt.position.z = position_.z;
@@ -2205,7 +2148,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 					delayRect = shotData->GetDelayRect();
 				}
 
-				_AddDelay(delayData, delayRect, delayPos);
+				_AddDelay(delayData, delayRect, delayPos, delaySize_.x);
 			}
 			if (bUseEnd_) {
 				D3DXVECTOR2 delayPos = D3DXVECTOR2(sposx + length_ * cosf(angLaser_), sposy + length_ * sinf(angLaser_));
@@ -2228,7 +2171,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 					delayRect = shotData->GetDelayRect();
 				}
 
-				_AddDelay(delayData, delayRect, delayPos);
+				_AddDelay(delayData, delayRect, delayPos, delaySize_.y);
 			}
 		}
 	}
@@ -2299,16 +2242,8 @@ void StgCurveLaserObject::Work() {
 	if (delay_.time > 0) --(delay_.time);
 	else _AddReservedShotWork();
 
-	++frameWork_;
-
-	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
-
-	_DeleteInAutoClip();
-	_DeleteInLife();
-	_DeleteInFadeDelete();
-	_DeleteInAutoDeleteFrame();
+	_CommonWorkTask();
 	//	_AddIntersectionRelativeTarget();
-	--frameGrazeInvalid_;
 }
 void StgCurveLaserObject::_Move() {
 	StgMoveObject::_Move();

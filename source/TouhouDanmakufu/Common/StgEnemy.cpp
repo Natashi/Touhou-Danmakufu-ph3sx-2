@@ -95,15 +95,13 @@ void StgEnemyObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersec
 	double damage = 0;
 	if (auto ptrObj = otherTarget->GetObject().lock()) {
 		if (otherTarget->GetTargetType() == StgIntersectionTarget::TYPE_PLAYER_SHOT) {
-			StgShotObject* shot = (StgShotObject*)ptrObj.get();
-			if (shot) {
+			if (StgShotObject* shot = dynamic_cast<StgShotObject*>(ptrObj.get())) {
 				damage = shot->GetDamage() * (shot->IsSpellFactor() ? rateDamageSpell_ : rateDamageShot_) / 100.0;
 				++intersectedPlayerShotCount_;
 			}
 		}
 		else if (otherTarget->GetTargetType() == StgIntersectionTarget::TYPE_PLAYER_SPELL) {
-			StgPlayerSpellObject* spell = (StgPlayerSpellObject*)ptrObj.get();
-			if (spell) 
+			if (StgPlayerSpellObject* spell = dynamic_cast<StgPlayerSpellObject*>(ptrObj.get()))
 				damage = spell->GetDamage() * rateDamageSpell_ / 100;
 		}
 	}

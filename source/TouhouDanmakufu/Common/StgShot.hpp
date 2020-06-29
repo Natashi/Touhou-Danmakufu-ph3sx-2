@@ -286,6 +286,7 @@ protected:
 	DelayParameter delay_;
 
 	int frameGrazeInvalid_;
+	int frameGrazeInvalidStart_;
 	int frameFadeDelete_;
 
 	double damage_;
@@ -295,6 +296,7 @@ protected:
 	bool bEraseShot_;
 	bool bSpellFactor_;
 	int frameAutoDelete_;
+	
 	ref_count_ptr<ReserveShotList>::unsync listReserveShot_;
 
 	shared_ptr<StgIntersectionTarget> pShotIntersectionTarget_;
@@ -307,16 +309,22 @@ protected:
 
 	StgShotData* _GetShotData() { return _GetShotData(idShotData_); }
 	StgShotData* _GetShotData(int id);
+
 	void _SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z = 1.0f, float w = 1.0f);
 	void _SetVertexUV(VERTEX_TLX& vertex, float u, float v);
 	void _SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color);
+
 	virtual void _DeleteInLife();
 	virtual void _DeleteInAutoClip();
 	virtual void _DeleteInFadeDelete();
 	virtual void _DeleteInAutoDeleteFrame();
+	void _CommonWorkTask();
+
 	virtual void _Move();
+
 	void _AddReservedShotWork();
 	virtual void _AddReservedShot(shared_ptr<StgShotObject> obj, ReserveShotListData* data);
+
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision) {}
 	virtual void _SendDeleteEvent(int bit);
 
@@ -353,6 +361,9 @@ public:
 	int GetOwnerType() { return typeOwner_; }
 	void SetOwnerType(int type) { typeOwner_ = type; }
 
+	void SetGrazeInvalidFrame(int frame) { frameGrazeInvalidStart_ = frame; }
+	int GetGrazeInvalidFrame() { return frameGrazeInvalidStart_; }
+	void SetGrazeFrame(int frame) { frameGrazeInvalid_ = frame; }
 	bool IsValidGraze() { return frameGrazeInvalid_ <= 0; }
 
 	int GetDelay() { return delay_.time; }
@@ -467,7 +478,6 @@ protected:
 	int widthIntersection_;
 	float invalidLengthStart_;
 	float invalidLengthEnd_;
-	int frameGrazeInvalidStart_;
 	float itemDistance_;
 	void _AddIntersectionRelativeTarget();
 public:
@@ -475,7 +485,6 @@ public:
 	virtual void ClearShotObject() {
 		ClearIntersectionRelativeTarget();
 	}
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
 
 	int GetLength() { return length_; }
 	void SetLength(int length) { length_ = length; }
@@ -487,7 +496,6 @@ public:
 	int GetIntersectionWidth() { return widthIntersection_; }
 	void SetIntersectionWidth(int width) { widthIntersection_ = width; }
 	void SetInvalidLength(float start, float end) { invalidLengthStart_ = start; invalidLengthEnd_ = end; }
-	void SetGrazeInvalidFrame(int frame) { frameGrazeInvalidStart_ = frame; }
 	void SetItemDistance(float dist) { itemDistance_ = std::max(dist, 0.1f); }
 };
 
@@ -526,6 +534,8 @@ protected:
 	bool bUseEnd_;
 	int idImageEnd_;
 
+	D3DXVECTOR2 delaySize_;
+
 	float scaleX_;
 	bool bLaserExpand_;
 
@@ -549,6 +559,8 @@ public:
 	void SetSourceEnable(bool bEnable) { bUseSouce_ = bEnable; }
 	void SetEndEnable(bool bEnable) { bUseEnd_ = bEnable; }
 	void SetEndGraphic(int gr) { idImageEnd_ = gr; }
+
+	void SetSourceEndScale(D3DXVECTOR2& s) { delaySize_ = s; }
 
 	void SetLaserExpand(bool b) { bLaserExpand_ = b; }
 	bool GetLaserExpand() { return bLaserExpand_; }
