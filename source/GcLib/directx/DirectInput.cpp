@@ -500,50 +500,54 @@ KeyReplayManager::KeyReplayManager(VirtualKeyManager* input) {
 }
 KeyReplayManager::~KeyReplayManager() {}
 void KeyReplayManager::AddTarget(int16_t key) {
-	listTarget_.push_back(std::make_pair(key, KEY_FREE));
+	mapKeyTarget_[key] = KEY_FREE;
 }
 void KeyReplayManager::Update() {
 	if (state_ == STATE_RECORD) {
-		for (auto itrTarget = listTarget_.begin(); itrTarget != listTarget_.end(); ++itrTarget) {
-			int16_t idKey = itrTarget->first;
+		for (auto itrTarget = mapKeyTarget_.begin(); itrTarget != mapKeyTarget_.end(); ++itrTarget) {
+			int16_t idKey = itrTarget->second;
 			DIKeyState keyState = input_->GetVirtualKeyState(idKey);
 			
-			if (frame_ == 0 || itrTarget->second != keyState) {
+			DIKeyState& lastKeyState = itrTarget->second;
+			if (frame_ == 0 || lastKeyState != keyState) {
 				ReplayData data;
 				data.id_ = idKey;
 				data.frame_ = frame_;
 				data.state_ = keyState;
 				listReplayData_.push_back(data);
+
+				lastKeyState = keyState;
 			}
-			itrTarget->second = keyState;
 		}
 	}
 	else if (state_ == STATE_REPLAY) {
-		for (auto itrTarget = listTarget_.begin(); itrTarget != listTarget_.end(); ++itrTarget) {
+		if (frame_ == 0) replayDataIterator_ = listReplayData_.begin();
+		for (auto itrTarget = mapKeyTarget_.begin(); itrTarget != mapKeyTarget_.end(); ++itrTarget) {
 			int16_t idKey = itrTarget->first;
-			
-			for (auto itrData = listReplayData_.begin(); itrData != listReplayData_.end();) {
-				ReplayData data = *itrData;
+			DIKeyState& stateKey = itrTarget->second;
+
+			for (auto itrData = replayDataIterator_; itrData != listReplayData_.end(); ++itrData) {
+				ReplayData& data = *itrData;
 				if (data.frame_ > frame_) break;
 
 				if (idKey == data.id_ && data.frame_ == frame_) {
-					itrTarget->second = data.state_;
-					itrData = listReplayData_.erase(itrData);
-				}
-				else {
-					++itrData;
+					stateKey = data.state_;
+					++replayDataIterator_;
 				}
 			}
 
 			gstd::ref_count_ptr<VirtualKey> key = input_->GetVirtualKey(idKey);
-			key->SetKeyState(itrTarget->second);
+			key->SetKeyState(stateKey);
 		}
+
+		if (frame_ % 600 == 0)
+			listReplayData_.erase(listReplayData_.begin(), replayDataIterator_);
 	}
 	++frame_;
 }
 bool KeyReplayManager::IsTargetKeyCode(int16_t key) {
 	bool res = false;
-	for (auto itrTarget = listTarget_.begin(); itrTarget != listTarget_.end(); ++itrTarget) {
+	for (auto itrTarget = mapKeyTarget_.begin(); itrTarget != mapKeyTarget_.end(); ++itrTarget) {
 		gstd::ref_count_ptr<VirtualKey> vKey = input_->GetVirtualKey(itrTarget->first);
 		if (key == vKey->GetKeyCode()) {
 			res = true;
@@ -553,22 +557,23 @@ bool KeyReplayManager::IsTargetKeyCode(int16_t key) {
 	return res;
 }
 void KeyReplayManager::ReadRecord(gstd::RecordBuffer& record) {
-	int countReplayData = record.GetRecordAsInteger("count");
+	size_t countReplayData = 0U;
+	record.GetRecord<size_t>("count", countReplayData);
 
 	ByteBuffer buffer;
 	buffer.SetSize(sizeof(ReplayData) * countReplayData);
 	std::string key = "data";
 	record.GetRecord(key, buffer.GetPointer(), buffer.GetSize());
 
-	for (int iRec = 0; iRec < countReplayData; ++iRec) {
+	for (size_t iRec = 0; iRec < countReplayData; ++iRec) {
 		ReplayData data;
 		buffer.Read(&data, sizeof(ReplayData));
 		listReplayData_.push_back(data);
 	}
 }
 void KeyReplayManager::WriteRecord(gstd::RecordBuffer& record) {
-	int countReplayData = listReplayData_.size();
-	record.SetRecordAsInteger("count", countReplayData);
+	size_t countReplayData = listReplayData_.size();
+	record.SetRecord<uint32_t>(RecordEntry::TYPE_INTEGER, "count", countReplayData);
 
 	ByteBuffer buffer;
 	for (auto itrData = listReplayData_.begin(); itrData != listReplayData_.end(); ++itrData) {

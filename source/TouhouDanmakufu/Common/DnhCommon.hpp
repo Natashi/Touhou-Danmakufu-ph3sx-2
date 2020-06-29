@@ -163,8 +163,8 @@ public:
 	bool bPseudoFullscreen_;
 	D3DMULTISAMPLE_TYPE multiSamples_;
 
-	int padIndex_;
-	std::map<int, ref_count_ptr<VirtualKey>> mapKey_;
+	int16_t padIndex_;
+	std::map<int16_t, ref_count_ptr<VirtualKey>> mapKey_;
 
 	std::wstring pathExeLaunch_;
 
@@ -207,9 +207,9 @@ public:
 	std::wstring GetExePath() { return pathExeLaunch_; }
 	void SetExePath(std::wstring str) { pathExeLaunch_ = str; }
 
-	int GetPadIndex() { return padIndex_; }
-	void SetPadIndex(int index) { padIndex_ = index; }
-	ref_count_ptr<VirtualKey> GetVirtualKey(int id);
+	int16_t GetPadIndex() { return padIndex_; }
+	void SetPadIndex(int16_t index) { padIndex_ = index; }
+	ref_count_ptr<VirtualKey> GetVirtualKey(int16_t id);
 
 	bool IsLogWindow() { return bLogWindow_; }
 	void SetLogWindow(bool b) { bLogWindow_ = b; }

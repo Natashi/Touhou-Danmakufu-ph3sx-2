@@ -151,7 +151,10 @@ namespace directx {
 
 		int state_;
 		uint32_t frame_;
-		std::list<std::pair<int16_t, DIKeyState>> listTarget_;
+
+		std::list<ReplayData>::iterator replayDataIterator_;
+		std::unordered_map<int16_t, DIKeyState> mapKeyTarget_;
+
 		std::list<ReplayData> listReplayData_;
 		VirtualKeyManager* input_;
 	public:

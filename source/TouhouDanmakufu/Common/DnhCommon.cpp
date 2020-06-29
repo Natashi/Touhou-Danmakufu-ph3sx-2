@@ -527,10 +527,10 @@ bool DnhConfiguration::LoadConfigFile() {
 	size_t mapKeyCount = bufKey.ReadValue<size_t>();
 	if (mapKeyCount == mapKey_.size()) {
 		for (size_t iKey = 0; iKey < mapKeyCount; iKey++) {
-			int id = bufKey.ReadInteger();
-			int keyCode = bufKey.ReadInteger();
-			int padIndex = bufKey.ReadInteger();
-			int padButton = bufKey.ReadInteger();
+			int16_t id = bufKey.ReadShort();
+			int16_t keyCode = bufKey.ReadShort();
+			int16_t padIndex = bufKey.ReadShort();
+			int16_t padButton = bufKey.ReadShort();
 
 			mapKey_[id] = new VirtualKey(keyCode, padIndex, padButton);
 		}
@@ -563,15 +563,14 @@ bool DnhConfiguration::SaveConfigFile() {
 	record.SetRecordAsInteger("padIndex", padIndex_);
 	ByteBuffer bufKey;
 	bufKey.WriteValue(mapKey_.size());
-	std::map<int, ref_count_ptr<VirtualKey>>::iterator itrKey = mapKey_.begin();
-	for (; itrKey != mapKey_.end(); itrKey++) {
-		int id = itrKey->first;
+	for (auto itrKey = mapKey_.begin(); itrKey != mapKey_.end(); itrKey++) {
+		int16_t id = itrKey->first;
 		ref_count_ptr<VirtualKey> vk = itrKey->second;
 
-		bufKey.WriteInteger(id);
-		bufKey.WriteInteger(vk->GetKeyCode());
-		bufKey.WriteInteger(padIndex_);
-		bufKey.WriteInteger(vk->GetPadButton());
+		bufKey.WriteShort(id);
+		bufKey.WriteShort(vk->GetKeyCode());
+		bufKey.WriteShort(padIndex_);
+		bufKey.WriteShort(vk->GetPadButton());
 	}
 	record.SetRecordAsInteger("mapKey_size", bufKey.GetSize());
 	{
@@ -586,7 +585,7 @@ bool DnhConfiguration::SaveConfigFile() {
 	record.WriteToFile(path);
 	return true;
 }
-ref_count_ptr<VirtualKey> DnhConfiguration::GetVirtualKey(int id) {
+ref_count_ptr<VirtualKey> DnhConfiguration::GetVirtualKey(int16_t id) {
 	auto itr = mapKey_.find(id);
 	if (itr == mapKey_.end()) return nullptr;
 	return itr->second;
