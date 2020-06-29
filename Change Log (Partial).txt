@@ -19,6 +19,7 @@
 1.10a:
 	- Fixed some random and function-related crashes.
 	- RenderToTextureXX alpha fix ported+modified from th_dnh_woo.
+	- Replaced ObjLaser_SetGrazeInvalidFrame with ObjShot_SetGrazeInvalidFrame.
 	- Alpha channel blending now exists in all blend modes except BLEND_NONE and BLEND_ADD_RGB.
 	- Fixed a bug involving events.
 	- Event arguments will no longer be overwritten when notifying nested events inside @Event.
@@ -57,6 +58,7 @@
 	- Following the above two changes, Shift-JIS is no longer supported in favour of proper Unicode (UTF-8) handling.
 	- Better Metasequoia mesh support, and temporarily(?) suspended Elfreina mesh support. Blender .obj mesh support is planned.
 	- The player object will now set its own movement speed and angle according to user key input.
+	- Collecting user-defined items now notify EV_GET_ITEM to the player script.
 	- Minimum custom window size is reduced to 320*240.
 	- GetShotDataInfoA1 no longer throws an error upon receiving an invalid graphic ID, and will instead return default values.
 	- Various optimizations.

@@ -1425,6 +1425,56 @@ ObjShot_SetDelayMode
 				Accelerating interpolation.
 			LERP_DECELERATE:
 				Decelerating interpolation.
+				
+ObjShot_SetGrazeInvalidFrame
+	Arguments:
+		1) object ID
+		2) frame
+	Description:
+		Sets the shot object's graze invalid frame.
+		For lasers, the default value is 20.
+		For normal shots, the default value is 2147483647.
+		
+ObjShot_SetGrazeFrame
+	Arguments:
+		1) object ID
+		2) frame
+	Description:
+		Sets the shot object's graze frame.
+		
+		Internally, this value is reset to the graze invalid frame every time a graze is performed.
+		This value decreases by 1 every frame, and the shot object is eligible for a graze if it is equal to or less than 0.
+		
+ObjShot_IsValidGraze
+	Arguments:
+		1) object ID
+	Description:
+		Returns whether the shot object is currently able to be grazed.
+		
+ObjStLaser_SetEnd
+	Arguments:
+		1) object ID
+		2) (bool) set
+	Description:
+		Sets whether a delay cloud will be shown at the end of the straight laser object.
+		
+ObjStLaser_SetEndGraphic
+	Arguments:
+		1) object ID
+		2) graphic ID
+	Description:
+		Sets the shot image ID of the straight laser object "end" delay cloud.
+		
+		See: ObjShot_SetDelayGraphic
+
+ObjStLaser_SetDelayScale
+	Arguments:
+		1) object ID
+		2) source scale multiplier
+		3) end scale multiplier
+	Description:
+		Sets the scale multipliers of the straight laser object's delay clouds.
+		The default values are (1, 1).
 
 ObjStLaser_SetPermitExpand
 	Arguments:
