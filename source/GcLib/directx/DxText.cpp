@@ -356,7 +356,8 @@ wchar_t DxTextScanner::_NextChar() {
 		std::wstring source;
 		source.resize(buffer_.size());
 		memcpy(&source[0], &buffer_[0], source.size() * sizeof(wchar_t));
-		std::wstring log = StringUtility::Format(L"_NextChar(Text):すでに文字列終端です -> %s", source.c_str());
+		std::wstring log = StringUtility::Format(L"_NextChar(Text): Unexpected end-of-file while parsing string. -> %s", 
+			source.c_str());
 		_RaiseError(log);
 	}
 
@@ -470,7 +471,7 @@ DxTextToken& DxTextScanner::Next() {
 		std::wstring source;
 		source.resize(buffer_.size());
 		memcpy(&source[0], &buffer_[0], source.size() * sizeof(wchar_t));
-		std::wstring log = StringUtility::Format(L"Next(Text):すでに終端です -> %s", source.c_str());
+		std::wstring log = StringUtility::Format(L"Next(Text): Unexpected end-of-file -> %s", source.c_str());
 		_RaiseError(log);
 	}
 
@@ -537,7 +538,7 @@ DxTextToken& DxTextScanner::Next() {
 			}
 
 			if (ch == L'"') _NextChar();//ダブルクオーテーションだったら1つ進める
-			else _RaiseError(L"Next(Text):すでに文字列終端です");
+			else _RaiseError(L"Next(Text): Unexpected end-of-file while parsing string.");
 			type = DxTextToken::TK_STRING;
 			break;
 		}
