@@ -434,7 +434,7 @@ void VirtualKeyManager::Update() {
 
 	for (auto itr = mapKey_.begin(); itr != mapKey_.end(); ++itr) {
 		int16_t id = itr->first;
-		gstd::ref_count_ptr<VirtualKey> key = itr->second;
+		ref_count_ptr<VirtualKey> key = itr->second;
 
 		DIKeyState state = _GetVirtualKeyState(id);
 		key->SetKeyState(state);
@@ -444,7 +444,7 @@ void VirtualKeyManager::ClearKeyState() {
 	DirectInput::ResetInputState();
 	
 	for (auto itr = mapKey_.begin(); itr != mapKey_.end(); ++itr) {
-		gstd::ref_count_ptr<VirtualKey> key = itr->second;
+		ref_count_ptr<VirtualKey> key = itr->second;
 		key->SetKeyState(KEY_FREE);
 	}
 }
@@ -452,7 +452,7 @@ DIKeyState VirtualKeyManager::_GetVirtualKeyState(int16_t id) {
 	auto itrFind = mapKey_.find(id);
 	if (itrFind == mapKey_.end()) return KEY_FREE;
 
-	gstd::ref_count_ptr<VirtualKey> key = itrFind->second;
+	ref_count_ptr<VirtualKey> key = itrFind->second;
 
 	DIKeyState res = KEY_FREE;
 	if (key->keyboard_ >= 0 && key->keyboard_ < MAX_KEY)
@@ -473,7 +473,7 @@ DIKeyState VirtualKeyManager::GetVirtualKeyState(int16_t id) {
 	return key ? key->GetKeyState() : KEY_FREE;
 }
 
-gstd::ref_count_ptr<VirtualKey> VirtualKeyManager::GetVirtualKey(int16_t id) {
+ref_count_ptr<VirtualKey> VirtualKeyManager::GetVirtualKey(int16_t id) {
 	auto itrFind = mapKey_.find(id);
 	if (itrFind == mapKey_.end()) return nullptr;
 	return itrFind->second;
@@ -481,7 +481,7 @@ gstd::ref_count_ptr<VirtualKey> VirtualKeyManager::GetVirtualKey(int16_t id) {
 bool VirtualKeyManager::IsTargetKeyCode(int16_t key) {
 	bool res = false;
 	for (auto itr = mapKey_.begin(); itr != mapKey_.end(); ++itr) {
-		gstd::ref_count_ptr<VirtualKey> vKey = itr->second;
+		ref_count_ptr<VirtualKey> vKey = itr->second;
 		if (key == vKey->GetKeyCode()) {
 			res = true;
 			break;
@@ -535,7 +535,7 @@ void KeyReplayManager::Update() {
 				}
 			}
 
-			gstd::ref_count_ptr<VirtualKey> key = input_->GetVirtualKey(idKey);
+			ref_count_ptr<VirtualKey> key = input_->GetVirtualKey(idKey);
 			key->SetKeyState(stateKey);
 		}
 
@@ -547,7 +547,7 @@ void KeyReplayManager::Update() {
 bool KeyReplayManager::IsTargetKeyCode(int16_t key) {
 	bool res = false;
 	for (auto itrTarget = mapKeyTarget_.begin(); itrTarget != mapKeyTarget_.end(); ++itrTarget) {
-		gstd::ref_count_ptr<VirtualKey> vKey = input_->GetVirtualKey(itrTarget->first);
+		ref_count_ptr<VirtualKey> vKey = input_->GetVirtualKey(itrTarget->first);
 		if (key == vKey->GetKeyCode()) {
 			res = true;
 			break;
@@ -555,7 +555,7 @@ bool KeyReplayManager::IsTargetKeyCode(int16_t key) {
 	}
 	return res;
 }
-void KeyReplayManager::ReadRecord(gstd::RecordBuffer& record) {
+void KeyReplayManager::ReadRecord(RecordBuffer& record) {
 	size_t countReplayData = 0U;
 	record.GetRecord<size_t>("count", countReplayData);
 
@@ -570,7 +570,7 @@ void KeyReplayManager::ReadRecord(gstd::RecordBuffer& record) {
 		listReplayData_.push_back(data);
 	}
 }
-void KeyReplayManager::WriteRecord(gstd::RecordBuffer& record) {
+void KeyReplayManager::WriteRecord(RecordBuffer& record) {
 	size_t countReplayData = listReplayData_.size();
 	record.SetRecord<uint32_t>(RecordEntry::TYPE_INTEGER, "count", countReplayData);
 

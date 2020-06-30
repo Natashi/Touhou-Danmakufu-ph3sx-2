@@ -29,7 +29,7 @@ int MenuTask::_GetCursorKeyState() {
 	int res = CURSOR_NONE;
 	int vkeys[] = { EDirectInput::KEY_LEFT, EDirectInput::KEY_RIGHT, EDirectInput::KEY_UP, EDirectInput::KEY_DOWN };
 	for (int iKey = 0; iKey < CURSOR_COUNT && res == CURSOR_NONE; iKey++) {
-		int state = input->GetVirtualKeyState(vkeys[iKey]);
+		DIKeyState state = input->GetVirtualKeyState(vkeys[iKey]);
 		if (state == KEY_PUSH) {
 			cursorFrame_[iKey] = 0;
 			res = iKey;

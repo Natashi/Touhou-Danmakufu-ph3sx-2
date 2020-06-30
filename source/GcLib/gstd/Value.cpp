@@ -23,27 +23,27 @@ bool type_data::operator<(const type_data& other) const {
 
 value value::val_empty = value();
 value::value(type_data* t, int64_t v) {
-	data = std::shared_ptr<body>(new body);
+	data = std::make_shared<body>();
 	data->type = t;
 	data->int_value = v;
 }
 value::value(type_data* t, double v) {
-	data = std::shared_ptr<body>(new body);
+	data = std::make_shared<body>();
 	data->type = t;
 	data->real_value = v;
 }
 value::value(type_data* t, wchar_t v) {
-	data = std::shared_ptr<body>(new body);
+	data = std::make_shared<body>();
 	data->type = t;
 	data->char_value = v;
 }
 value::value(type_data* t, bool v) {
-	data = std::shared_ptr<body>(new body);
+	data = std::make_shared<body>();
 	data->type = t;
 	data->boolean_value = v;
 }
 value::value(type_data* t, std::wstring v) {
-	data = std::shared_ptr<body>(new body);
+	data = std::make_shared<body>();
 	data->type = t;
 	for (wchar_t ch : v)
 		data->array_value.push_back(value(t->get_element(), ch));
@@ -104,12 +104,11 @@ value value::new_from(const value& source) {
 
 void value::unique() const {
 	if (data == nullptr) {
-		data = std::shared_ptr<body>(new body);
+		data = std::make_shared<body>();
 		data->type = nullptr;
 	}
 	else if (!data.unique()) {
-		body* newData = new body(*data);
-		data = std::shared_ptr<body>(newData);
+		data = std::make_shared<body>(*data);
 	}
 }
 
