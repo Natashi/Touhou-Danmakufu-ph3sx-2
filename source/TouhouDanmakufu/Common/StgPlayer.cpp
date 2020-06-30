@@ -11,22 +11,24 @@ StgPlayerObject::StgPlayerObject(StgStageController* stageController) : StgMoveO
 	typeObject_ = TypeObject::OBJ_PLAYER;
 
 	infoPlayer_ = new StgPlayerInformation();
-	RECT* rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
-	int stgWidth = rcStgFrame->right - rcStgFrame->left;
-	int stgHeight = rcStgFrame->bottom - rcStgFrame->top;
 
 	SetRenderPriorityI(30);
 	speedFast_ = 4;
 	speedSlow_ = 1.6;
-	SetRect(&rcClip_, 0, 0, stgWidth, stgHeight);
+	{
+		RECT* rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
+		LONG stgWidth = rcStgFrame->right - rcStgFrame->left;
+		LONG stgHeight = rcStgFrame->bottom - rcStgFrame->top;
+		SetRect(&rcClip_, 0, 0, stgWidth, stgHeight);
+	}
 
 	state_ = STATE_NORMAL;
 	frameStateDown_ = 120;
 	frameRebirthMax_ = 15;
 	infoPlayer_->frameRebirth_ = frameRebirthMax_;
-	frameRebirthDiff_ = 3;
+	frameRebirthDiff_ = 0;
 
-	infoPlayer_->life_ = 3;
+	infoPlayer_->life_ = 2;
 	infoPlayer_->countBomb_ = 3;
 	infoPlayer_->power_ = 1.0;
 
@@ -100,7 +102,7 @@ void StgPlayerObject::Work() {
 				gstd::value listScriptValue[3];
 				listScriptValue[0] = script_->CreateRealValue(iValidGraze);
 				listScriptValue[1] = script_->CreateRealArrayValue(listShotID);
-				listScriptValue[2]  = script_->CreateValueArrayValue(listValPos);
+				listScriptValue[2] = script_->CreateValueArrayValue(listValPos);
 				script_->RequestEvent(StgStagePlayerScript::EV_GRAZE, listScriptValue, 3);
 
 				auto stageScriptManager = stageController_->GetScriptManager();
@@ -120,41 +122,40 @@ void StgPlayerObject::Work() {
 		if (input->GetVirtualKeyState(EDirectInput::KEY_BOMB) == KEY_PUSH)
 			CallSpell();
 
-		if (state_ == STATE_HIT) {
 			//くらいボム有効フレーム減少
-			frameState_--;
-			if (frameState_ < 0) {
-				//自機ダウン
-				bool bEnemyLastSpell = false;
+		frameState_--;
+		if (frameState_ < 0) {
+			//自機ダウン
+			bool bEnemyLastSpell = false;
 
-				shared_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
-				if (objBossScene) {
-					objBossScene->AddPlayerShootDownCount();
-					if (objBossScene->GetActiveData()->IsLastSpell())
-						bEnemyLastSpell = true;
-				}
-				if (!bEnemyLastSpell)
-					infoPlayer_->life_--;
+			shared_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
+			if (objBossScene) {
+				objBossScene->AddPlayerShootDownCount();
+				if (objBossScene->GetActiveData()->IsLastSpell())
+					bEnemyLastSpell = true;
+			}
+			if (!bEnemyLastSpell)
+				infoPlayer_->life_--;
 
-				if (enableShootdownEvent_)
-					scriptManager->RequestEventAll(StgStagePlayerScript::EV_PLAYER_SHOOTDOWN);
+			infoPlayer_->frameRebirth_ = frameRebirthMax_;
+			if (enableShootdownEvent_)
+				scriptManager->RequestEventAll(StgStagePlayerScript::EV_PLAYER_SHOOTDOWN);
 
-				if (infoPlayer_->life_ >= 0 || !enableStateEnd_) {
-					bVisible_ = false;
-					state_ = STATE_DOWN;
-					frameState_ = frameStateDown_;
-				}
-				else {
-					state_ = STATE_END;
-				}
+			if (infoPlayer_->life_ >= 0 || !enableStateEnd_) {
+				bVisible_ = false;
+				state_ = STATE_DOWN;
+				frameState_ = frameStateDown_;
+			}
+			else {
+				state_ = STATE_END;
+			}
 
-				//Also prevents STATE_END and STATE_DOWN
-				if (!enableShootdownEvent_) {
-					frameState_ = 0;
-					bVisible_ = true;
-					_InitializeRebirth();
-					state_ = STATE_NORMAL;
-				}
+			//Also prevents STATE_END and STATE_DOWN
+			if (!enableShootdownEvent_) {
+				frameState_ = 0;
+				bVisible_ = true;
+				_InitializeRebirth();
+				state_ = STATE_NORMAL;
 			}
 		}
 		break;
@@ -187,11 +188,11 @@ void StgPlayerObject::Move() {
 }
 void StgPlayerObject::_Move() {
 	EDirectInput* input = EDirectInput::GetInstance();
-	int keyLeft = input->GetVirtualKeyState(EDirectInput::KEY_LEFT);
-	int keyRight = input->GetVirtualKeyState(EDirectInput::KEY_RIGHT);
-	int keyUp = input->GetVirtualKeyState(EDirectInput::KEY_UP);
-	int keyDown = input->GetVirtualKeyState(EDirectInput::KEY_DOWN);
-	int keySlow = input->GetVirtualKeyState(EDirectInput::KEY_SLOWMOVE);
+	DIKeyState keyLeft = input->GetVirtualKeyState(EDirectInput::KEY_LEFT);
+	DIKeyState keyRight = input->GetVirtualKeyState(EDirectInput::KEY_RIGHT);
+	DIKeyState keyUp = input->GetVirtualKeyState(EDirectInput::KEY_UP);
+	DIKeyState keyDown = input->GetVirtualKeyState(EDirectInput::KEY_DOWN);
+	DIKeyState keySlow = input->GetVirtualKeyState(EDirectInput::KEY_SLOWMOVE);
 
 	double sx = 0;
 	double sy = 0;
