@@ -505,19 +505,18 @@ void KeyReplayManager::AddTarget(int16_t key) {
 void KeyReplayManager::Update() {
 	if (state_ == STATE_RECORD) {
 		for (auto itrTarget = mapKeyTarget_.begin(); itrTarget != mapKeyTarget_.end(); ++itrTarget) {
-			int16_t idKey = itrTarget->second;
+			int16_t idKey = itrTarget->first;
 			DIKeyState keyState = input_->GetVirtualKeyState(idKey);
 			
-			DIKeyState& lastKeyState = itrTarget->second;
-			if (frame_ == 0 || lastKeyState != keyState) {
+			if (frame_ == 0 || itrTarget->second != keyState) {
 				ReplayData data;
 				data.id_ = idKey;
 				data.frame_ = frame_;
 				data.state_ = keyState;
 				listReplayData_.push_back(data);
-
-				lastKeyState = keyState;
 			}
+
+			itrTarget->second = keyState;
 		}
 	}
 	else if (state_ == STATE_REPLAY) {
