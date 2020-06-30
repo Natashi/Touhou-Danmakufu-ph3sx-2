@@ -800,7 +800,7 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 
 	frameGrazeInvalid_ = 0;
-	frameGrazeInvalidStart_ = INT_MAX;
+	frameGrazeInvalidStart_ = -1;
 
 	frameFadeDelete_ = -1;
 	frameAutoDelete_ = INT_MAX;
@@ -988,7 +988,52 @@ void StgShotObject::_AddReservedShot(shared_ptr<StgShotObject> obj, StgShotObjec
 }
 
 void StgShotObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
+	shared_ptr<StgIntersectionObject> ptrObj = otherTarget->GetObject().lock();
 
+	float damage = 0;
+	int otherType = otherTarget->GetTargetType();
+	switch (otherType) {
+	case StgIntersectionTarget::TYPE_PLAYER:
+	{
+		//自機
+		if (frameGrazeInvalid_ <= 0)
+			frameGrazeInvalid_ = frameGrazeInvalidStart_ > 0 ? frameGrazeInvalidStart_ : INT_MAX;
+		break;
+	}
+	case StgIntersectionTarget::TYPE_PLAYER_SHOT:
+	{
+		if (ptrObj) {
+			if (StgShotObject* shot = dynamic_cast<StgShotObject*>(ptrObj.get())) {
+				bool bEraseShot = shot->IsEraseShot();
+				if (bEraseShot && life_ != LIFE_SPELL_REGIST)
+					ConvertToItem(false);
+			}
+		}
+		break;
+	}
+	case StgIntersectionTarget::TYPE_PLAYER_SPELL:
+	{
+		//自機スペル
+		if (ptrObj) {
+			if (StgPlayerSpellObject* spell = dynamic_cast<StgPlayerSpellObject*>(ptrObj.get())) {
+				bool bEraseShot = spell->IsEraseShot();
+				if (bEraseShot && life_ != LIFE_SPELL_REGIST)
+					ConvertToItem(false);
+			}
+		}
+		break;
+	}
+	case StgIntersectionTarget::TYPE_ENEMY:
+	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
+	{
+		if (dynamic_cast<StgLaserObject*>(this) == nullptr)
+			damage = 1;
+		break;
+	}
+	}
+
+	if (life_ != LIFE_SPELL_REGIST)
+		life_ = std::max(life_ - damage, 0.0);
 }
 StgShotData* StgShotObject::_GetShotData(int id) {
 	StgShotData* res = nullptr;
@@ -1501,54 +1546,6 @@ void StgNormalShotObject::RenderOnShotManager() {
 	renderer->AddSquareVertex(verts);
 }
 
-void StgNormalShotObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
-	shared_ptr<StgIntersectionObject> ptrObj = otherTarget->GetObject().lock();
-
-	float damage = 0;
-	int otherType = otherTarget->GetTargetType();
-	switch (otherType) {
-	case StgIntersectionTarget::TYPE_PLAYER:
-	{
-		//自機
-		if (frameGrazeInvalid_ <= 0)
-			frameGrazeInvalid_ = frameGrazeInvalidStart_ > 0 ? frameGrazeInvalidStart_ : INT_MAX;
-		break;
-	}
-	case StgIntersectionTarget::TYPE_PLAYER_SHOT:
-	{
-		if (ptrObj) {
-			if (StgShotObject* shot = dynamic_cast<StgShotObject*>(ptrObj.get())) {
-				bool bEraseShot = shot->IsEraseShot();
-				if (bEraseShot && life_ != LIFE_SPELL_REGIST)
-					ConvertToItem(false);
-			}
-		}
-		break;
-	}
-	case StgIntersectionTarget::TYPE_PLAYER_SPELL:
-	{
-		//自機スペル
-		if (ptrObj) {
-			if (StgPlayerSpellObject* spell = dynamic_cast<StgPlayerSpellObject*>(ptrObj.get())) {
-				bool bEraseShot = spell->IsEraseShot();
-				if (bEraseShot && life_ != LIFE_SPELL_REGIST)
-					ConvertToItem(false);
-			}
-		}
-		break;
-	}
-	case StgIntersectionTarget::TYPE_ENEMY:
-	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
-	{
-		if (dynamic_cast<StgLaserObject*>(this) == nullptr)
-			damage = 1;
-		break;
-	}
-	}
-
-	if (life_ != LIFE_SPELL_REGIST)
-		life_ = std::max(life_ - damage, 0.0);
-}
 void StgNormalShotObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	auto stageScriptManager = stageController_->GetScriptManager();

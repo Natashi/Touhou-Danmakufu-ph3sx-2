@@ -458,7 +458,6 @@ public:
 	virtual void ClearShotObject() {
 		ClearIntersectionRelativeTarget();
 	}
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
 
 	virtual void RegistIntersectionTarget() {
 		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
