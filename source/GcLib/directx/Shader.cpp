@@ -472,8 +472,7 @@ bool Shader::LoadParameter() {
 	ID3DXEffect* effect = GetEffect();
 	if (effect == nullptr) return false;
 
-	HRESULT hr = effect->SetTechnique(technique_.c_str());
-	if (FAILED(hr))return false;
+	HRESULT hr = S_OK;
 
 	for (auto itrParam = mapParam_.begin(); itrParam != mapParam_.end(); ++itrParam) {
 		std::string name = itrParam->first;
@@ -501,7 +500,8 @@ bool Shader::LoadParameter() {
 		}
 		case ShaderParameter::TYPE_FLOAT:
 		{
-			hr = effect->SetFloat(name.c_str(), *param->GetFloat());
+			FLOAT* flt = param->GetFloat();
+			hr = effect->SetFloat(name.c_str(), *flt);
 			break;
 		}
 		case ShaderParameter::TYPE_FLOAT_ARRAY:
@@ -520,6 +520,10 @@ bool Shader::LoadParameter() {
 		}
 		//if(FAILED(hr))return false;
 	}
+
+	hr = effect->SetTechnique(technique_.c_str());
+	if (FAILED(hr)) return false;
+
 	return true;
 }
 shared_ptr<ShaderParameter> Shader::_GetParameter(std::string name, bool bCreate) {

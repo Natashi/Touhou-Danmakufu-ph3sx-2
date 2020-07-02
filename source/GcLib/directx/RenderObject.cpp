@@ -988,9 +988,9 @@ void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
 					effect->SetBool(handle, bFog);
 				if (bFog) {
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
-						effect->SetFloatArray(handle, (FLOAT*)&fogParam->color, 4);
+						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->color)), 3);
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
-						effect->SetFloatArray(handle, (FLOAT*)&fogParam->fogDist, 2);
+						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->fogDist)), 2);
 				}
 			}
 
@@ -1167,9 +1167,9 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 					effect->SetBool(handle, bFog);
 				if (bFog) {
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
-						effect->SetFloatArray(handle, (FLOAT*)&fogParam->color, 4);
+						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->color)), 3);
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
-						effect->SetFloatArray(handle, (FLOAT*)&fogParam->fogDist, 2);
+						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->fogDist)), 2);
 				}
 			}
 
@@ -2327,9 +2327,9 @@ void ParticleRenderer3D::Render() {
 					effect->SetBool(handle, bFog);
 				if (bFog) {
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
-						effect->SetFloatArray(handle, (FLOAT*)&fogParam->color, 4);
+						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->color)), 3);
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
-						effect->SetFloatArray(handle, (FLOAT*)&fogParam->fogDist, 2);
+						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->fogDist)), 2);
 				}
 			}
 
