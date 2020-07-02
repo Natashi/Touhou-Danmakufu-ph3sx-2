@@ -24,24 +24,28 @@ DxFont::~DxFont() {
 }
 
 /**********************************************************
-//DxChar
+//DxCharGlyph
 **********************************************************/
-DxChar::DxChar() {
+DxCharGlyph::DxCharGlyph() {
 
 }
-DxChar::~DxChar() {}
+DxCharGlyph::~DxCharGlyph() {}
 
-bool DxChar::Create(int code, Font& winFont, DxFont& dxFont) {
+bool DxCharGlyph::Create(int code, Font& winFont, DxFont* dxFont) {
 	code_ = code;
 	font_ = dxFont;
 
-	int typeBorder = font_.GetBorderType();
-	D3DCOLOR colorTop = font_.GetTopColor();
-	D3DCOLOR colorBottom = font_.GetBottomColor();
-	D3DCOLOR colorBorder = font_.GetBorderColor();
-	int widthBorder = typeBorder != DxFont::BORDER_NONE ? font_.GetBorderWidth() : 0;
+	short colorTop[4];
+	short colorBottom[4];
+	short colorBorder[4];
+	ColorAccess::ToByteArray(font_->GetTopColor(), colorTop);
+	ColorAccess::ToByteArray(font_->GetBottomColor(), colorBottom);
+	ColorAccess::ToByteArray(font_->GetBorderColor(), colorBorder);
 
-	HDC hDC = ::GetDC(NULL);
+	int typeBorder = font_->GetBorderType();
+	int widthBorder = typeBorder != DxFont::BORDER_NONE ? font_->GetBorderWidth() : 0;
+
+	HDC hDC = ::GetDC(nullptr);
 	HFONT oldFont = (HFONT)SelectObject(hDC, winFont.GetHandle());
 
 	// フォントビットマップ取得
@@ -49,104 +53,104 @@ bool DxChar::Create(int code, Font& winFont, DxFont& dxFont) {
 	::GetTextMetrics(hDC, &tm);
 	GLYPHMETRICS gm;
 	CONST MAT2 mat = { { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 1 } };
-	int uFormat = GGO_GRAY2_BITMAP;//typeBorder == DxFont::BORDER_FULL ? GGO_BITMAP : GGO_GRAY2_BITMAP;
+	UINT uFormat = GGO_GRAY2_BITMAP;	//typeBorder == DxFont::BORDER_FULL ? GGO_BITMAP : GGO_GRAY2_BITMAP;
 
-	if (dxFont.GetLogFont().lfHeight <= 12)
+	if (dxFont->GetLogFont().lfHeight <= 12)
 		uFormat = GGO_BITMAP;
-	DWORD size = ::GetGlyphOutline(hDC, code, uFormat, &gm, 0, NULL, &mat);
+	DWORD size = ::GetGlyphOutline(hDC, code, uFormat, &gm, 0, nullptr, &mat);
 
 	BYTE* ptr = new BYTE[size];
 	::GetGlyphOutline(hDC, code, uFormat, &gm, size, ptr, &mat);
 
 	// デバイスコンテキストとフォントハンドルの解放
 	::SelectObject(hDC, oldFont);
-	::ReleaseDC(NULL, hDC);
+	::ReleaseDC(nullptr, hDC);
 
 	//テクスチャ作成
-	int tex_x = gm.gmCellIncX + widthBorder * 2;
-	int tex_y = tm.tmHeight + widthBorder * 2;
-	int widthTexture = 1;
-	int heightTexture = 1;
-	while (widthTexture < tex_x) {
+	size_.x = gm.gmCellIncX + widthBorder * 2;
+	size_.y = tm.tmHeight + widthBorder * 2;
+	UINT widthTexture = 1;
+	UINT heightTexture = 1;
+	while (widthTexture < size_.x) {
 		widthTexture = widthTexture << 1;
 	}
-	while (heightTexture < tex_y) {
+	while (heightTexture < size_.y) {
 		heightTexture = heightTexture << 1;
 	}
 
 	IDirect3DTexture9* pTexture = nullptr;
 	HRESULT hr = DirectGraphics::GetBase()->GetDevice()->CreateTexture(
 		widthTexture, heightTexture,
-		1, D3DPOOL_DEFAULT, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, NULL);
+		1, D3DPOOL_DEFAULT, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
 	if (FAILED(hr))return false;
 
 	D3DLOCKED_RECT lock;
-	if (FAILED(pTexture->LockRect(0, &lock, NULL, D3DLOCK_DISCARD))) {
+	if (FAILED(pTexture->LockRect(0, &lock, nullptr, D3DLOCK_DISCARD))) {
 		return false;
 	}
-	int iOfs_x = gm.gmptGlyphOrigin.x;
-	int iOfs_y = tm.tmAscent - gm.gmptGlyphOrigin.y;
-	int iBmp_w = uFormat != GGO_BITMAP ? gm.gmBlackBoxX + (4 - (gm.gmBlackBoxX % 4)) % 4 : gm.gmBlackBoxX;
-	int iBmp_h = gm.gmBlackBoxY;
-	int level = 5;//GGO_GRAY4_BITMAP;
+
+	LONG glyphOriginX = gm.gmptGlyphOrigin.x;
+	LONG glyphOriginY = tm.tmAscent - gm.gmptGlyphOrigin.y;
+	UINT iBmp_w = uFormat != GGO_BITMAP ? gm.gmBlackBoxX + (4 - (gm.gmBlackBoxX % 4)) % 4 : gm.gmBlackBoxX;
+	UINT iBmp_h = gm.gmBlackBoxY;
+	LONG level = 5;//GGO_GRAY4_BITMAP;
 	FillMemory(lock.pBits, lock.Pitch * tm.tmHeight, 0);
 
-	double gapColor = 1.0 / (double)iBmp_h;
-	double gapColorR = (double)(ColorAccess::GetColorR(colorTop) - ColorAccess::GetColorR(colorBottom)) * gapColor;
-	double gapColorG = (double)(ColorAccess::GetColorG(colorTop) - ColorAccess::GetColorG(colorBottom)) * gapColor;
-	double gapColorB = (double)(ColorAccess::GetColorB(colorTop) - ColorAccess::GetColorB(colorBottom)) * gapColor;
+	float iBmp_h_inv = 1.0 / (float)iBmp_h;
 
-	int xMax = iBmp_w + iOfs_x + widthBorder * 2;
-	int yMax = iBmp_h + iOfs_y + widthBorder * 2;
+	sizeMax_.x = std::min((LONG)(iBmp_w + glyphOriginX + widthBorder * 2), (LONG)widthTexture);
+	sizeMax_.y = std::min((LONG)(iBmp_h + glyphOriginY + widthBorder * 2), (LONG)heightTexture);
 
 	if (size > 0) {
 #pragma omp for
-		for (int iy = 0; iy < yMax; iy++) {
-			int yBmp = iy - iOfs_y - widthBorder;
-			int colorR = ColorAccess::GetColorR(colorTop) - gapColorR * yBmp;
-			int colorG = ColorAccess::GetColorG(colorTop) - gapColorG * yBmp;
-			int colorB = ColorAccess::GetColorB(colorTop) - gapColorB * yBmp;
+		for (LONG iy = 0; iy < sizeMax_.y; ++iy) {
+			LONG yBmp = iy - glyphOriginY - widthBorder;
+			
+			float iRateY = yBmp * iBmp_h_inv;
+			short colorR = Math::Lerp::Linear(colorTop[1], colorBottom[1], iRateY);
+			short colorG = Math::Lerp::Linear(colorTop[2], colorBottom[2], iRateY);
+			short colorB = Math::Lerp::Linear(colorTop[3], colorBottom[3], iRateY);
 
-			for (int ix = 0; ix < xMax; ix++) {
-				int xBmp = ix - iOfs_x - widthBorder;
+			for (LONG ix = 0; ix < sizeMax_.x; ++ix) {
+				LONG xBmp = ix - glyphOriginX - widthBorder;
 
-				DWORD alpha = 255;
+				short alpha = 255;
 				if (uFormat != GGO_BITMAP) {
-					int posBmp = xBmp + iBmp_w * yBmp;
+					LONG posBmp = xBmp + iBmp_w * yBmp;
 					alpha = xBmp >= 0 && xBmp < iBmp_w && yBmp >= 0 && yBmp < iBmp_h ?
 						(255 * ptr[posBmp]) / (level - 1) : 0;
 				}
 				else {
 					if (xBmp >= 0 && xBmp < iBmp_w && yBmp >= 0 && yBmp < iBmp_h) {
-						int lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
-						int posBmp = xBmp / 8 + lineByte * yBmp;
+						UINT lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
+						LONG posBmp = xBmp / 8 + lineByte * yBmp;
 						alpha = BitAccess::GetBit(ptr[posBmp], 7 - xBmp % 8) ? 255 : 0;
 					}
 					else alpha = 0;
 				}
 
-				DWORD color = 0;
+				D3DCOLOR color = 0x00000000;
 				if (typeBorder != DxFont::BORDER_NONE && alpha != 255) {
 					if (alpha == 0) {
-						int count = 0;
-						int antiDist = 0;
-						int bx = typeBorder == DxFont::BORDER_FULL ? xBmp + widthBorder + antiDist : xBmp + 1;
-						int by = typeBorder == DxFont::BORDER_FULL ? yBmp + widthBorder + antiDist : yBmp + 1;
-						int minAlphaEnableDist = 255 * 255;
-						for (int ax = xBmp - widthBorder - antiDist; ax <= bx; ax++) {
-							for (int ay = yBmp - widthBorder - antiDist; ay <= by; ay++) {
-								int dist = abs(ax - xBmp) + abs(ay - yBmp);
+						size_t count = 0;
+						LONG antiDist = 0;
+						LONG bx = typeBorder == DxFont::BORDER_FULL ? xBmp + widthBorder + antiDist : xBmp + 1;
+						LONG by = typeBorder == DxFont::BORDER_FULL ? yBmp + widthBorder + antiDist : yBmp + 1;
+						LONG minAlphaEnableDist = 255 * 255;
+						for (LONG ax = xBmp - widthBorder - antiDist; ax <= bx; ++ax) {
+							for (LONG ay = yBmp - widthBorder - antiDist; ay <= by; ++ay) {
+								LONG dist = abs(ax - xBmp) + abs(ay - yBmp);
 								if (dist > widthBorder + antiDist || dist == 0)continue;
 
-								DWORD tAlpha = 255;
+								LONG tAlpha = 255;
 								if (uFormat != GGO_BITMAP) {
 									tAlpha = ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h ?
 										(255 * ptr[ax + iBmp_w * ay]) / (level - 1) : 0;
 								}
 								else {
 									if (ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h) {
-										int lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
-										int tPos = ax / 8 + lineByte * ay;
+										UINT lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
+										LONG tPos = ax / 8 + lineByte * ay;
 										tAlpha = BitAccess::GetBit(ptr[tPos], 7 - ax % 8) ? 255 : 0;
 									}
 									else tAlpha = 0;
@@ -160,10 +164,8 @@ bool DxChar::Create(int code, Font& winFont, DxFont& dxFont) {
 								if (typeBorder == DxFont::BORDER_SHADOW && (ax >= xBmp || ay >= yBmp))
 									tCount /= 2;
 								count += tCount;
-
 							}
 						}
-						color = colorBorder;
 
 						int destAlpha = 0;
 						if (minAlphaEnableDist < widthBorder)
@@ -172,52 +174,55 @@ bool DxChar::Create(int code, Font& winFont, DxFont& dxFont) {
 							destAlpha = count;
 						else destAlpha = 0;
 						//color = ColorAccess::SetColorA(color, ColorAccess::GetColorA(colorBorder)*count/255);
-						color = ColorAccess::SetColorA(color, ColorAccess::GetColorA(colorBorder) * destAlpha / 255);
+						byte c_a = ColorAccess::ClampColorRet(colorBorder[0] * destAlpha / 255);
+						color = D3DCOLOR_ARGB(c_a, colorBorder[1], colorBorder[2], colorBorder[3]);
 					}
 					else {
-						int oAlpha = alpha + 64;
-						if (alpha > 255)alpha = 255;
+						short oAlpha = alpha + 64;
+						if (alpha > 255) alpha = 255;
 
-						int count = 0;
-						int cDist = 1;
-						int bx = typeBorder == DxFont::BORDER_FULL ? xBmp + cDist : xBmp + 1;
-						int by = typeBorder == DxFont::BORDER_FULL ? yBmp + cDist : yBmp + 1;
-						for (int ax = xBmp - cDist; ax <= bx; ax++) {
-							for (int ay = yBmp - cDist; ay <= by; ay++) {
-								DWORD tAlpha = 255;
+						size_t count = 0;
+						LONG cDist = 1;
+						LONG bx = typeBorder == DxFont::BORDER_FULL ? xBmp + cDist : xBmp + 1;
+						LONG by = typeBorder == DxFont::BORDER_FULL ? yBmp + cDist : yBmp + 1;
+						for (LONG ax = xBmp - cDist; ax <= bx; ++ax) {
+							for (LONG ay = yBmp - cDist; ay <= by; ++ay) {
+								LONG tAlpha = 255;
 								if (uFormat != GGO_BITMAP) {
 									tAlpha = tAlpha = ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h ?
 										(255 * ptr[ax + iBmp_w * ay]) / (level - 1) : 0;
 								}
 								else {
 									if (ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h) {
-										int lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
-										int tPos = ax / 8 + lineByte * ay;
+										UINT lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
+										LONG tPos = ax / 8 + lineByte * ay;
 										tAlpha = BitAccess::GetBit(ptr[tPos], 7 - ax % 8) ? 255 : 0;
 									}
 									else tAlpha = 0;
 								}
 
-								if (tAlpha > 0)count++;
+								if (tAlpha > 0) ++count;
 							}
 						}
-						if (count >= 2)oAlpha = alpha;
+						if (count >= 2) oAlpha = alpha;
 
-						int bAlpha = 255 - oAlpha;
-						color = ColorAccess::SetColorA(color, 255);
-						color = ColorAccess::SetColorR(color, colorR * oAlpha / 255 + ColorAccess::GetColorR(colorBorder) * bAlpha / 255);
-						color = ColorAccess::SetColorG(color, colorG * oAlpha / 255 + ColorAccess::GetColorG(colorBorder) * bAlpha / 255);
-						color = ColorAccess::SetColorB(color, colorB * oAlpha / 255 + ColorAccess::GetColorB(colorBorder) * bAlpha / 255);
+						{
+							LONG bAlpha = 255 - oAlpha;
+							int c_r = colorR * oAlpha / 255 + colorBorder[1] * bAlpha / 255;
+							int c_g = colorG * oAlpha / 255 + colorBorder[2] * bAlpha / 255;
+							int c_b = colorB * oAlpha / 255 + colorBorder[3] * bAlpha / 255;
+							ColorAccess::ClampColor(c_r);
+							ColorAccess::ClampColor(c_g);
+							ColorAccess::ClampColor(c_b);
+							color = D3DCOLOR_XRGB(c_r, c_g, c_b);
+						}
 					}
 				}
 				else {
-					if (typeBorder != DxFont::BORDER_NONE && alpha > 0)alpha = 255;
-					color = 0x00ffffff | (alpha << 24);
-					color = ColorAccess::SetColorR(color, colorR);
-					color = ColorAccess::SetColorG(color, colorG);
-					color = ColorAccess::SetColorB(color, colorB);
+					if (typeBorder != DxFont::BORDER_NONE && alpha > 0) alpha = 255;
+					color = (D3DCOLOR_XRGB(colorR, colorG, colorB) & 0x00ffffff) | (alpha << 24);
 				}
-				memcpy((BYTE*)lock.pBits + lock.Pitch * iy + 4 * ix, &color, sizeof(DWORD));
+				memcpy((BYTE*)lock.pBits + lock.Pitch * iy + 4 * ix, &color, sizeof(D3DCOLOR));
 			}
 		}
 	}
@@ -228,9 +233,6 @@ bool DxChar::Create(int code, Font& winFont, DxFont& dxFont) {
 	texture_ = std::make_shared<Texture>();
 	texture_->SetTexture(pTexture);
 
-	width_ = gm.gmCellIncX + widthBorder * 2;
-	height_ = tm.tmHeight + widthBorder * 2;
-
 	return true;
 }
 
@@ -238,7 +240,6 @@ bool DxChar::Create(int code, Font& winFont, DxFont& dxFont) {
 //DxCharCache
 **********************************************************/
 DxCharCache::DxCharCache() {
-	sizeMax_ = 512;
 	countPri_ = 0;
 }
 DxCharCache::~DxCharCache() {
@@ -265,8 +266,8 @@ void DxCharCache::Clear() {
 	mapKeyPri_.clear();
 	mapCache_.clear();
 }
-shared_ptr<DxChar> DxCharCache::GetChar(DxCharCacheKey& key) {
-	shared_ptr<DxChar> res;
+shared_ptr<DxCharGlyph> DxCharCache::GetChar(DxCharCacheKey& key) {
+	shared_ptr<DxCharGlyph> res;
 
 	auto itr = mapCache_.find(key);
 	if (itr != mapCache_.end()) {
@@ -291,12 +292,12 @@ shared_ptr<DxChar> DxCharCache::GetChar(DxCharCacheKey& key) {
 	return res;
 }
 
-void DxCharCache::AddChar(DxCharCacheKey& key, shared_ptr<DxChar> value) {
-	bool bExist = mapCache_.find(key) != mapCache_.end();
-	if (bExist) return;
+void DxCharCache::AddChar(DxCharCacheKey& key, shared_ptr<DxCharGlyph> value) {
+	//bool bExist = mapCache_.find(key) != mapCache_.end();
+	//if (bExist) return;
 	mapCache_[key] = value;
 
-	if (mapCache_.size() >= sizeMax_) {
+	if (mapCache_.size() >= MAX) {
 		mapCache_.clear();
 		/*
 				//優先度の低いキャッシュを削除
@@ -315,8 +316,8 @@ void DxCharCache::AddChar(DxCharCacheKey& key, shared_ptr<DxChar> value) {
 /**********************************************************
 //DxTextScanner
 **********************************************************/
-const int DxTextScanner::TOKEN_TAG_START = DxTextToken::TK_OPENB;
-const int DxTextScanner::TOKEN_TAG_END = DxTextToken::TK_CLOSEB;
+const DxTextToken::Type DxTextScanner::TOKEN_TAG_START = DxTextToken::TK_OPENB;
+const DxTextToken::Type DxTextScanner::TOKEN_TAG_END = DxTextToken::TK_CLOSEB;
 const std::wstring DxTextScanner::TAG_START = L"[";
 const std::wstring DxTextScanner::TAG_END = L"]";
 const std::wstring DxTextScanner::TAG_NEW_LINE = L"r";
@@ -356,7 +357,7 @@ wchar_t DxTextScanner::_NextChar() {
 		std::wstring source;
 		source.resize(buffer_.size());
 		memcpy(&source[0], &buffer_[0], source.size() * sizeof(wchar_t));
-		std::wstring log = StringUtility::Format(L"_NextChar(Text): Unexpected end-of-file while parsing string. -> %s", 
+		std::wstring log = StringUtility::Format(L"_NextChar(Text): Unexpected end-of-file while parsing text. -> %s", 
 			source.c_str());
 		_RaiseError(log);
 	}
@@ -370,7 +371,7 @@ wchar_t DxTextScanner::_NextChar() {
 void DxTextScanner::_SkipComment() {
 	while (true) {
 		std::vector<wchar_t>::iterator posStart = pointer_;
-		_SkipSpace();
+		if (bTagScan_) _SkipSpace();
 
 		wchar_t ch = *pointer_;
 
@@ -380,7 +381,7 @@ void DxTextScanner::_SkipComment() {
 			if (ch == L'/') {// "//"
 				while (true) {
 					ch = _NextChar();
-					if (ch == L'\r' || ch == L'\n')break;
+					if (ch == L'\r' || ch == L'\n') break;
 				}
 			}
 			else if (ch == L'*') {// "/*"-"*/"
@@ -388,8 +389,7 @@ void DxTextScanner::_SkipComment() {
 					ch = _NextChar();
 					if (ch == L'*') {
 						ch = _NextChar();
-						if (ch == L'/')
-							break;
+						if (ch == L'/') break;
 					}
 				}
 				ch = _NextChar();
@@ -401,21 +401,21 @@ void DxTextScanner::_SkipComment() {
 		}
 
 		//スキップも空白飛ばしも無い場合、終了
-		if (posStart == pointer_)break;
+		if (posStart == pointer_) break;
 	}
 }
 void DxTextScanner::_SkipSpace() {
 	wchar_t ch = *pointer_;
 	while (true) {
-		if (ch != L' ' && ch != L'\t')break;
+		if (ch != L' ' && ch != L'\t') break;
 		ch = _NextChar();
 	}
 }
 void DxTextScanner::_RaiseError(std::wstring str) {
-	throw gstd::wexception(str.c_str());
+	throw gstd::wexception(str);
 }
 bool DxTextScanner::_IsTextStartSign() {
-	if (bTagScan_)return false;
+	if (bTagScan_) return false;
 
 	bool res = false;
 	wchar_t ch = *pointer_;
@@ -447,16 +447,12 @@ bool DxTextScanner::_IsTextScan() {
 	}
 	else if (ch == L'/') {
 		ch = *(pointer_ + 1);
-		if (ch == L'/' || ch == L'*')res = false;
-	}
-	else if (false && ch == L'\\') {
-		ch = _NextChar();//次のタグまで進める
-		res = true;
+		if (ch == L'/' || ch == L'*') res = false;
 	}
 	else {
 		bool bGreater = ch == CHAR_TAG_END;
-		if (bGreater) {
-			_RaiseError(L"テキスト中にタグ終了文字が存在しました");
+		if (ch == CHAR_TAG_END) {
+			_RaiseError(L"DxTextScanner: Unexpected tag end token (]) in text.");
 		}
 		bool bNotLess = ch != CHAR_TAG_START;
 		res = bNotLess;
@@ -495,11 +491,6 @@ DxTextToken& DxTextScanner::Next() {
 		}
 
 		ch = *pointer_;
-		if (ch == CHAR_TAG_START) {
-		}
-		else if (!HasNext()) {
-		}
-		//		else _RaiseError("Next:すでに文字列終端です");
 
 		type = DxTextToken::TK_TEXT;
 		std::wstring text = std::wstring(posStart, pointer_);
@@ -527,29 +518,33 @@ DxTextToken& DxTextScanner::Next() {
 		case L'<': _NextChar(); type = DxTextToken::TK_LESS; break;
 		case L'>': _NextChar(); type = DxTextToken::TK_GREATER; break;
 
-		case L'"':
+		case L'\"':
 		{
-			ch = _NextChar();//1つ進めて
-			wchar_t pre = ch;
+			ch = _NextChar();	//1つ進めて
+			
 			while (true) {
-				if (ch == L'"' && pre != L'\\')break;
-				pre = ch;
-				ch = _NextChar();//次のダブルクオーテーションまで進める
+				ch = _NextChar();
+				if (ch == L'\\') ch = _NextChar();
+				else if (ch == L'\"') break;
 			}
 
-			if (ch == L'"') _NextChar();//ダブルクオーテーションだったら1つ進める
-			else _RaiseError(L"Next(Text): Unexpected end-of-file while parsing string.");
+			if (ch == L'\"')	//ダブルクオーテーションだったら1つ進める
+				_NextChar();
+			else 
+				_RaiseError(L"Next(Text): Unexpected end-of-file while parsing string.");
 			type = DxTextToken::TK_STRING;
 			break;
 		}
 
-		case L'\r':case L'\n'://改行
+		case L'\r':
+		case L'\n'://改行
 			//改行がいつまでも続くようなのも1つの改行として扱う
 			while (ch == L'\r' || ch == L'\n') ch = _NextChar();
 			type = DxTextToken::TK_NEWLINE;
 			break;
 
-		case L'+':case L'-':
+		case L'+':
+		case L'-':
 		{
 			if (ch == L'+') {
 				ch = _NextChar(); type = DxTextToken::TK_PLUS;
@@ -559,7 +554,7 @@ DxTextToken& DxTextScanner::Next() {
 				ch = _NextChar(); type = DxTextToken::TK_MINUS;
 			}
 
-			if (!iswdigit(ch))break;//次が数字でないなら抜ける
+			if (!iswdigit(ch)) break;//次が数字でないなら抜ける
 		}
 
 
@@ -597,8 +592,8 @@ DxTextToken& DxTextScanner::Next() {
 			break;
 		}
 		}
-		if (type == DxTextScanner::TOKEN_TAG_START)bTagScan_ = true;
-		else if (type == DxTextScanner::TOKEN_TAG_END)bTagScan_ = false;
+		if (type == DxTextScanner::TOKEN_TAG_START) bTagScan_ = true;
+		else if (type == DxTextScanner::TOKEN_TAG_END) bTagScan_ = false;
 
 		if (type == DxTextToken::TK_STRING) {
 			//\を除去
@@ -637,8 +632,8 @@ int DxTextScanner::SearchCurrentLine() {
 	wchar_t* pbuf = &(*buffer_.begin());
 	wchar_t* ebuf = &(*pointer_);
 	while (true) {
-		if (pbuf >= ebuf)break;
-		else if (*pbuf == L'\n')line++;
+		if (pbuf >= ebuf) break;
+		else if (*pbuf == L'\n') line++;
 
 		pbuf++;
 	}
@@ -651,8 +646,8 @@ void DxTextScanner::SetCurrentPointer(std::vector<wchar_t>::iterator pos) {
 	pointer_ = pos;
 }
 int DxTextScanner::GetCurrentPosition() {
-	if (buffer_.size() == 0)return 0;
-	wchar_t* pos = (wchar_t*) & *pointer_;
+	if (buffer_.size() == 0) return 0;
+	wchar_t* pos = (wchar_t*)&*pointer_;
 	return pos - &buffer_[0];
 }
 
@@ -732,22 +727,22 @@ void DxTextRenderObject::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR
 		RECT rect;
 		ZeroMemory(&rect, sizeof(RECT));
 
-		std::list<DxTextRenderObject::ObjectData>::iterator itr = listData_.begin();
-		for (; itr != listData_.end(); itr++) {
-			ObjectData obj = *itr;
+		for (auto itr = listData_.begin(); itr != listData_.end(); ++itr) {
+			ObjectData& obj = *itr;
 			RECT_D rcDest = obj.sprite->GetDestinationRect();
 			rect.left = std::min(rect.left, (LONG)rcDest.left);
 			rect.top = std::min(rect.top, (LONG)rcDest.top);
 			rect.right = std::max(rect.right, (LONG)rcDest.right);
 			rect.bottom = std::max(rect.bottom, (LONG)rcDest.bottom);
 		}
+
 		center.x = (rect.right + rect.left) / 2;
 		center.y = (rect.bottom + rect.top) / 2;
 	}
 
 	auto itr = listData_.begin();
-	for (; itr != listData_.end(); itr++) {
-		ObjectData obj = *itr;
+	for (; itr != listData_.end(); ++itr) {
+		ObjectData& obj = *itr;
 
 		D3DXVECTOR2 bias = D3DXVECTOR2(obj.bias.x, obj.bias.y);
 		shared_ptr<Sprite2D> sprite = obj.sprite;
@@ -773,15 +768,14 @@ void DxTextRenderObject::AddRenderObject(shared_ptr<Sprite2D> obj) {
 	listData_.push_back(data);
 }
 void DxTextRenderObject::AddRenderObject(shared_ptr<DxTextRenderObject> obj, POINT bias) {
-	std::list<ObjectData>::iterator itr = obj->listData_.begin();
-	for (; itr != obj->listData_.end(); itr++) {
-		(*itr).bias = bias;
+	for (auto itr = obj->listData_.begin(); itr != obj->listData_.end(); ++itr) {
+		itr->bias = bias;
 		listData_.push_back(*itr);
 	}
 }
 
 //DxTextRenderer
-DxTextRenderer* DxTextRenderer::thisBase_ = NULL;
+DxTextRenderer* DxTextRenderer::thisBase_ = nullptr;
 DxTextRenderer::DxTextRenderer() {
 	colorVertex_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 }
@@ -789,7 +783,7 @@ DxTextRenderer::~DxTextRenderer() {
 
 }
 bool DxTextRenderer::Initialize() {
-	if (thisBase_ != NULL)return false;
+	if (thisBase_) return false;
 
 	winFont_.CreateFont(Font::GOTHIC, 20, true);
 
@@ -822,7 +816,7 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(std::wstring text, DxText
 	wchar_t* pText = const_cast<wchar_t*>(text.data());
 	wchar_t* eText = const_cast<wchar_t*>(text.data() + text.size());
 	while (true) {
-		if (*pText == L'\0' || pText >= eText)break;
+		if (*pText == L'\0' || pText >= eText) break;
 
 		//文字コード
 		int charCount = 1;
@@ -857,7 +851,7 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(std::wstring text, DxText
 			continue;
 		}
 		if (totalHeight + size.cy > heightMax) {
-			textLine = NULL;
+			textLine = nullptr;
 			break;
 		}
 		textLine->width_ += lw;
@@ -880,13 +874,24 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 	shared_ptr<Font> fontTemp;
 
-	HDC hDC = ::GetDC(NULL);
+	HDC hDC = ::GetDC(nullptr);
 	HFONT oldFont = (HFONT)SelectObject(hDC, winFont_.GetHandle());
 
 	bool bEnd = false;
 	int totalWidth = 0;
 	int totalHeight = 0;
 	int widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0;
+
+	const D3DCOLOR orgColorTop = dxFont.GetTopColor();
+	const D3DCOLOR orgColorBottom = dxFont.GetBottomColor();
+	const D3DCOLOR orgColorBorder = dxFont.GetBorderColor();
+	const bool orgItalic = dxFont.GetLogFont().lfItalic;
+	//const bool orgUnderline = dxFont.GetLogFont().lfUnderline;
+	D3DCOLOR tagColorBottom = orgColorBottom;
+	D3DCOLOR tagColorTop = orgColorTop;
+	D3DCOLOR tagColorBorder = orgColorBorder;
+	bool tagItalic = orgItalic;
+	//bool tagUnderline = orgUnderline;
 
 	shared_ptr<DxTextLine> textLine(new DxTextLine());
 	textLine->width_ = margin.left;
@@ -905,17 +910,17 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 			}
 
 			DxTextToken& tok = scan.Next();
-			int typeToken = tok.GetType();
+			DxTextToken::Type typeToken = tok.GetType();
 			if (typeToken == DxTextToken::TK_TEXT) {
 				std::wstring text = tok.GetElement();
 				text = _ReplaceRenderText(text);
-				if (text.size() == 0 || text == L"")continue;
+				if (text.size() == 0 || text == L"") continue;
 
 				textLine = _GetTextInfoSub(text, dxText, res, textLine, hDC, totalWidth, totalHeight);
-				if (textLine == NULL)bEnd = true;
+				if (textLine == nullptr) bEnd = true;
 			}
 			else if (typeToken == DxTextScanner::TOKEN_TAG_START) {
-				int indexTag = textLine->code_.size();
+				size_t indexTag = textLine->code_.size();
 				tok = scan.Next();
 				std::wstring element = tok.GetElement();
 				if (element == DxTextScanner::TAG_NEW_LINE) {
@@ -925,7 +930,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						textLine = _GetTextInfoSub(L" ", dxText, res, textLine, hDC, totalWidth, totalHeight);
 					}
 
-					if (textLine != NULL) {
+					if (textLine) {
 						totalWidth = std::max(totalWidth, textLine->width_);
 						totalHeight += textLine->height_ + linePitch;
 						res->AddTextLine(textLine);
@@ -941,7 +946,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 					while (true) {
 						tok = scan.Next();
-						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END)break;
+						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END) break;
 						std::wstring str = tok.GetElement();
 						if (str == L"rb") {
 							scan.CheckType(scan.Next(), DxTextToken::TK_EQUAL);
@@ -971,7 +976,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					std::wstring sRuby = tag->GetRuby();
 					int rubyCount = StringUtility::CountAsciiSizeCharacter(sRuby);
 					if (rubyCount > 0) {
-						int rubyPitch = std::max(sizeText.cx / rubyCount - rubyWidth, 0L);
+						int rubyPitch = std::max(sizeText.cx / rubyCount - rubyWidth, (LONG)(-rubyWidth * 0.2));
 						int rubyMarginLeft = rubyPitch / 2;
 						tag->SetLeftMargin(rubyMarginLeft);
 
@@ -998,46 +1003,111 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						else {
 							textLineRuby->tag_.push_back(tag);
 						}
-
-
 					}
-
 				}
 				else if (element == DxTextScanner::TAG_FONT) {
 					DxTextTag_Font* tag = new DxTextTag_Font();
 					DxFont font = dxText->GetFont();
-					LOGFONT logFont = font.GetLogFont();
+					LOGFONT& logFont = font.GetLogFont();
 					tag->SetTagIndex(indexTag);
 
 					bool bClear = false;
 					while (true) {
 						tok = scan.Next();
-						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END)break;
+						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END) break;
+						//else if (tok.GetType() == DxTextToken::TK_COMMA) break;
 						std::wstring str = tok.GetElement();
-						if (str == L"clear") {
+						if (str == L"reset") {
 							bClear = true;
 						}
-						else if (str == L"size") {
+						else {
 							scan.CheckType(scan.Next(), DxTextToken::TK_EQUAL);
-							int size = scan.Next().GetInteger();
-							logFont.lfHeight = size;
+							DxTextToken& arg = scan.Next();
+							if (str == L"size") {
+								logFont.lfHeight = arg.GetInteger();
+							}
+							else if (str == L"ox") {
+								tag->GetOffset().x = arg.GetInteger();
+							}
+							else if (str == L"oy") {
+								tag->GetOffset().y = arg.GetInteger();
+							}
+							else if (str == L"it") {
+								tagItalic = arg.GetBoolean();
+							}
+							else if (str == L"wg") {
+								logFont.lfWeight = arg.GetInteger();
+							}
+							/*
+							else if (str == L"un") {
+								tagUnderline = arg.GetBoolean();
+							}
+							*/
+							else if (str.size() == 2) {
+								std::wsmatch base_match;
+								if (std::regex_search(str, base_match, std::wregex(L"[bto][rgb]"))) {
+									D3DCOLOR mask = 0xffffffff;
+									byte shifting = 0;
+									D3DCOLOR* colorDst = nullptr;
+
+									switch (str[0]) {
+									case L'b':	//[b]ottom color
+										colorDst = &tagColorBottom;
+										break;
+									case L't':	//[t]op color
+										colorDst = &tagColorTop;
+										break;
+									case L'o':	//b[o]rder color
+										colorDst = &tagColorBorder;
+										break;
+									}
+									switch (str[1]) {
+									case L'r':	//red
+										mask = 0xff00ffff;
+										shifting = 16;
+										break;
+									case L'g':	//green
+										mask = 0xffff00ff;
+										shifting = 8;
+										break;
+									case L'b':	//blue
+										mask = 0xffffff00;
+										shifting = 0;
+										break;
+									}
+
+									byte c = ColorAccess::ClampColorRet(arg.GetInteger());
+									*colorDst = (*colorDst & mask) | (c << shifting);
+								}
+							}
 						}
 					}
 
 					if (bClear) {
 						widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0;
-						fontTemp = NULL;
+						fontTemp = nullptr;
 						oldFont = (HFONT)SelectObject(hDC, winFont_.GetHandle());
+
+						tagColorBottom = orgColorBottom;
+						tagColorTop = orgColorTop;
+						tagColorBorder = orgColorBorder;
+						tagItalic = orgItalic;
+						//tagUnderline = orgUnderline;
 					}
 					else {
 						widthBorder = font.GetBorderType() != DxFont::BORDER_NONE ? font.GetBorderWidth() : 0;
 						fontTemp = std::make_shared<Font>();
 						fontTemp->CreateFontIndirect(logFont);
-						font.SetLogFont(logFont);
 						oldFont = (HFONT)SelectObject(hDC, fontTemp->GetHandle());
 					}
-					tag->SetFont(font);
 
+					font.SetBottomColor(tagColorBottom);
+					font.SetTopColor(tagColorTop);
+					font.SetBorderColor(tagColorBorder);
+					logFont.lfItalic = tagItalic;
+					//logFont.lfUnderline = tagUnderline;
+
+					tag->SetFont(font);
 					textLine->tag_.push_back(shared_ptr<DxTextTag_Font>(tag));
 				}
 				else {
@@ -1050,10 +1120,10 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						text += tok.GetElement();
 					}
 					text = _ReplaceRenderText(text);
-					if (text.size() == 0 || text == L"")continue;
+					if (text.size() == 0 || text == L"") continue;
 
 					textLine = _GetTextInfoSub(text, dxText, res, textLine, hDC, totalWidth, totalHeight);
-					if (textLine == NULL)bEnd = true;
+					if (textLine == nullptr) bEnd = true;
 				}
 			}
 		}
@@ -1070,7 +1140,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	res->totalWidth_ = totalWidth + widthBorder;
 	res->totalHeight_ = totalHeight + widthBorder;
 	::SelectObject(hDC, oldFont);
-	::ReleaseDC(NULL, hDC);
+	::ReleaseDC(nullptr, hDC);
 
 	return shared_ptr<DxTextInfo>(res);
 }
@@ -1085,16 +1155,18 @@ std::wstring DxTextRenderer::_ReplaceRenderText(std::wstring& text) {
 	return text;
 }
 
-void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, POINT pos, DxFont& dxFont, 
+void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, POINT pos, DxFont* dxFont, 
 	shared_ptr<DxTextLine> textLine)
 {
-	SetFont(dxFont.GetLogFont());
+	SetFont(dxFont->GetLogFont());
 	DxCharCacheKey keyFont;
-	keyFont.font_ = dxFont;
+	keyFont.font_ = *dxFont;
 	int textHeight = textLine->GetHeight();
 
 	int xRender = pos.x;
 	int yRender = pos.y;
+	int xOffset = 0;
+	int yOffset = 0;
 
 	int countTag = textLine->GetTagCount();
 	int indexTag = 0;
@@ -1103,13 +1175,15 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 		for (; indexTag < countTag;) {
 			shared_ptr<DxTextTag> tag = textLine->GetTag(indexTag);
 			int tagNo = tag->GetTagIndex();
-			if (tagNo != iCode)break;
+			if (tagNo != iCode) break;
 			int type = tag->GetTagType();
 			if (type == DxTextTag::TYPE_FONT) {
 				DxTextTag_Font* font = (DxTextTag_Font*)tag.get();
-				dxFont = font->GetFont();
-				keyFont.font_ = dxFont;
-				winFont_.CreateFontIndirect(dxFont.GetLogFont());
+				*dxFont = font->GetFont();
+				keyFont.font_ = *dxFont;
+				xOffset = font->GetOffset().x;
+				yOffset = font->GetOffset().y;
+				winFont_.CreateFontIndirect(dxFont->GetLogFont());
 				indexTag++;
 			}
 			else if (type == DxTextTag::TYPE_RUBY) {
@@ -1127,7 +1201,7 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 
 				objRender->AddRenderObject(textRuby->CreateRenderObject(), bias);
 
-				SetFont(dxFont.GetLogFont());
+				SetFont(dxFont->GetLogFont());
 
 				indexTag++;
 			}
@@ -1139,12 +1213,12 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 
 		//キャッシュに存在するか確認
 		keyFont.code_ = code;
-		keyFont.font_ = dxFont;
+		keyFont.font_ = *dxFont;
 
-		shared_ptr<DxChar> dxChar = cache_.GetChar(keyFont);
+		shared_ptr<DxCharGlyph> dxChar = cache_.GetChar(keyFont);
 		if (dxChar == nullptr) {
 			//キャッシュにない場合、作成して追加
-			dxChar = std::make_shared<DxChar>();
+			dxChar = std::make_shared<DxCharGlyph>();
 			dxChar->Create(code, winFont_, dxFont);
 			cache_.AddChar(keyFont, dxChar);
 		}
@@ -1159,15 +1233,17 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 
 		//		int objWidth = texture->GetWidth();//dxChar->GetWidth();
 		//		int objHeight = texture->GetHeight();//dxChar->GetHeight();
-		int objWidth = dxChar->GetWidth();
-		int objHeight = dxChar->GetHeight();
-		RECT_D rcDest = { (double)xRender, (double)yRender, (double)(objWidth + xRender), (double)(objHeight + yRender) };
-		RECT_D rcSrc = { 0., 0., (double)objWidth, (double)objHeight };
+		POINT* ptrCharSize = &dxChar->GetMaxSize();
+		LONG charWidth = ptrCharSize->x;
+		LONG charHeight = ptrCharSize->y;
+		RECT_D rcDest = { (double)(xRender + xOffset), (double)(yRender + yOffset),
+			(double)(charWidth + xRender + xOffset), (double)(charHeight + yRender + yOffset) };
+		RECT_D rcSrc = { 0.0, 0.0, (double)charWidth, (double)charHeight };
 		spriteText->SetVertex(rcSrc, rcDest, colorVertex_);
 		objRender->AddRenderObject(shared_ptr<Sprite2D>(spriteText));
 
 		//次の文字
-		xRender += dxChar->GetWidth() - dxFont.GetBorderWidth() + textLine->GetSidePitch();
+		xRender += dxChar->GetSize().x - dxFont->GetBorderWidth() + textLine->GetSidePitch();
 	}
 }
 
@@ -1218,6 +1294,7 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 			shared_ptr<DxTextLine> textLine = textInfo->GetTextLine(iLine);
 			pos.x = 0;//dxText->GetPosition().x;
 			if (iLine == 0) pos.x += margin.left;
+
 			switch (alignmentHorizontal) {
 			case ALIGNMENT_LEFT:
 				if (iLine >= 1 && bAutoIndent)
@@ -1238,9 +1315,9 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 			}
 
 			heightTotal += textLine->height_ + linePitch;
-			if (heightTotal > heightMax)break;
+			if (heightTotal > heightMax) break;
 
-			_CreateRenderObject(objRender, pos, dxFont, textLine);
+			_CreateRenderObject(objRender, pos, &dxFont, textLine);
 
 			pos.y += textLine->height_ + linePitch;
 		}
@@ -1265,8 +1342,10 @@ void DxTextRenderer::Render(DxText* dxText, shared_ptr<DxTextInfo> textInfo) {
 }
 bool DxTextRenderer::AddFontFromFile(std::wstring path) {
 	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-	if (reader == NULL)throw gstd::wexception(StringUtility::Format(L"フォントファイルが見つかりません(%s)", path.c_str()).c_str());
-	if (!reader->Open())throw gstd::wexception(StringUtility::Format(L"フォントファイルを開けません(%s)", path.c_str()).c_str());
+	if (reader == nullptr) 
+		throw gstd::wexception(StringUtility::Format(L"AddFontFromFile: File not found. [%s]", path.c_str()));
+	if (!reader->Open()) 
+		throw gstd::wexception(StringUtility::Format(L"AddFontFromFile: Cannot open file for reading. [%s]", path.c_str()));
 
 	size_t size = reader->GetFileSize();
 	ByteBuffer buf;
@@ -1274,9 +1353,9 @@ bool DxTextRenderer::AddFontFromFile(std::wstring path) {
 	reader->Read(buf.GetPointer(), size);
 
 	DWORD  count = 0;
-	HANDLE handle = ::AddFontMemResourceEx(buf.GetPointer(), size, NULL, &count);
+	HANDLE handle = ::AddFontMemResourceEx(buf.GetPointer(), size, nullptr, &count);
 
-	Logger::WriteTop(L"Font loaded: " + path);
+	Logger::WriteTop(StringUtility::Format(L"AddFontFromFile: Font loaded. [%s]", path.c_str()));
 	return handle != 0;
 }
 

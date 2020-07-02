@@ -16,31 +16,35 @@ namespace directx {
 			BIT_GREEN = 8,
 			BIT_BLUE = 0,
 		};
-		static int GetColorA(D3DCOLOR& color) {
-			return gstd::BitAccess::GetByte(color, BIT_ALPHA);
+		static inline byte GetColorA(D3DCOLOR& color) {
+			//return gstd::BitAccess::GetByte(color, BIT_ALPHA);
+			return (color >> 24) & 0xff;
 		}
-		static int GetColorR(D3DCOLOR color) {
-			return gstd::BitAccess::GetByte(color, BIT_RED);
+		static inline byte GetColorR(D3DCOLOR& color) {
+			//return gstd::BitAccess::GetByte(color, BIT_RED);
+			return (color >> 16) & 0xff;
 		}
-		static int GetColorG(D3DCOLOR& color) {
-			return gstd::BitAccess::GetByte(color, BIT_GREEN);
+		static inline byte GetColorG(D3DCOLOR& color) {
+			//return gstd::BitAccess::GetByte(color, BIT_GREEN);
+			return (color >> 8) & 0xff;
 		}
-		static int GetColorB(D3DCOLOR& color) {
-			return gstd::BitAccess::GetByte(color, BIT_BLUE);
+		static inline byte GetColorB(D3DCOLOR& color) {
+			//return gstd::BitAccess::GetByte(color, BIT_BLUE);
+			return color & 0xff;
 		}
-		static D3DCOLOR& SetColorA(D3DCOLOR& color, int alpha) {
+		static inline D3DCOLOR& SetColorA(D3DCOLOR& color, int alpha) {
 			ClampColor(alpha);
 			return gstd::BitAccess::SetByte(color, BIT_ALPHA, (byte)alpha);
 		}		
-		static D3DCOLOR& SetColorR(D3DCOLOR& color, int red) {
+		static inline D3DCOLOR& SetColorR(D3DCOLOR& color, int red) {
 			ClampColor(red);
 			return gstd::BitAccess::SetByte(color, BIT_RED, (byte)red);
 		}
-		static D3DCOLOR& SetColorG(D3DCOLOR& color, int green) {
+		static inline D3DCOLOR& SetColorG(D3DCOLOR& color, int green) {
 			ClampColor(green);
 			return gstd::BitAccess::SetByte(color, BIT_GREEN, (byte)green);
 		}
-		static D3DCOLOR& SetColorB(D3DCOLOR& color, int blue) {
+		static inline D3DCOLOR& SetColorB(D3DCOLOR& color, int blue) {
 			ClampColor(blue);
 			return gstd::BitAccess::SetByte(color, BIT_BLUE, (byte)blue);
 		}
@@ -59,6 +63,14 @@ namespace directx {
 			if (color > 0xff) color = 0xff;
 			else if (color < 0x00) color = 0x00;
 			return color;
+		}
+		//ARGB representation
+		template<typename T>
+		static void ToByteArray(D3DCOLOR color, T* arr) {
+			arr[0] = GetColorA(color);
+			arr[1] = GetColorR(color);
+			arr[2] = GetColorG(color);
+			arr[3] = GetColorB(color);
 		}
 	};
 

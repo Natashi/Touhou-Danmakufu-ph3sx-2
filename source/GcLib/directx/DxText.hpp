@@ -8,7 +8,7 @@
 #include "RenderObject.hpp"
 
 namespace directx {
-	class DxChar;
+	class DxCharGlyph;
 	class DxCharCache;
 	class DxCharCacheKey;
 	class DxTextRenderer;
@@ -21,7 +21,7 @@ namespace directx {
 		friend DxCharCache;
 		friend DxCharCacheKey;
 	public:
-		enum {
+		enum : uint8_t {
 			BORDER_NONE,
 			BORDER_FULL,
 			BORDER_SHADOW,
@@ -37,7 +37,7 @@ namespace directx {
 		DxFont();
 		virtual ~DxFont();
 		void SetLogFont(LOGFONT& font) { info_ = font; }
-		LOGFONT GetLogFont() { return info_; }
+		LOGFONT& GetLogFont() { return info_; }
 		void SetTopColor(D3DCOLOR color) { colorTop_ = color; }
 		D3DCOLOR GetTopColor() { return colorTop_; }
 		void SetBottomColor(D3DCOLOR color) { colorBottom_ = color; }
@@ -51,24 +51,24 @@ namespace directx {
 	};
 
 	/**********************************************************
-	//DxChar
+	//DxCharGlyph
 	//文字1文字のテクスチャ
 	**********************************************************/
-	class DxChar {
+	class DxCharGlyph {
 		shared_ptr<Texture> texture_;
 		int code_;
-		DxFont font_;
+		DxFont* font_;
 
-		int width_;
-		int height_;
+		POINT size_;
+		POINT sizeMax_;
 	public:
-		DxChar();
-		virtual ~DxChar();
-		bool Create(int code, gstd::Font& winFont, DxFont& dxFont);
+		DxCharGlyph();
+		virtual ~DxCharGlyph();
+		bool Create(int code, gstd::Font& winFont, DxFont* dxFont);
 		shared_ptr<Texture> GetTexture() { return texture_; }
-		int GetWidth() { return width_; }
-		int GetHeight() { return height_; }
-		LOGFONT GetInfo() { return font_.GetLogFont(); }
+		POINT& GetSize() { return size_; }
+		POINT& GetMaxSize() { return sizeMax_; }
+		LOGFONT& GetInfo() { return font_->GetLogFont(); }
 	};
 
 
@@ -96,33 +96,36 @@ namespace directx {
 			return res;
 		}
 		bool operator<(const DxCharCacheKey& key)const {
-			if (code_ != key.code_)return code_ < key.code_;
-			if (font_.colorTop_ != key.font_.colorTop_)return font_.colorTop_ < key.font_.colorTop_;
-			if (font_.colorBottom_ != key.font_.colorBottom_)return font_.colorBottom_ < key.font_.colorBottom_;
-			//				if(font_.typeBorder_ != key.font_.typeBorder_)return (font_.typeBorder_ != key.font_.typeBorder_ );
-			if (font_.widthBorder_ != key.font_.widthBorder_)return font_.widthBorder_ < key.font_.widthBorder_;
-			if (font_.colorBorder_ != key.font_.colorBorder_)return font_.colorBorder_ < key.font_.colorBorder_;
+			if (code_ != key.code_) return code_ < key.code_;
+			if (font_.colorTop_ != key.font_.colorTop_) return font_.colorTop_ < key.font_.colorTop_;
+			if (font_.colorBottom_ != key.font_.colorBottom_) return font_.colorBottom_ < key.font_.colorBottom_;
+			//if(font_.typeBorder_ != key.font_.typeBorder_)return (font_.typeBorder_ != key.font_.typeBorder_ );
+			if (font_.widthBorder_ != key.font_.widthBorder_) return font_.widthBorder_ < key.font_.widthBorder_;
+			if (font_.colorBorder_ != key.font_.colorBorder_) return font_.colorBorder_ < key.font_.colorBorder_;
 			return (memcmp(&key.font_.info_, &font_.info_, sizeof(LOGFONT)) < 0);
 		}
 	};
 	class DxCharCache {
 		friend DxTextRenderer;
+	public:
+		enum : size_t {
+			MAX = 1024U,
+		};
 	private:
-		int sizeMax_;
 		int countPri_;
-		std::map<DxCharCacheKey, shared_ptr<DxChar>> mapCache_;
-		std::map<int, DxCharCacheKey > mapPriKey_;
-		std::map<DxCharCacheKey, int > mapKeyPri_;
+		std::map<DxCharCacheKey, shared_ptr<DxCharGlyph>> mapCache_;
+		std::map<int, DxCharCacheKey> mapPriKey_;
+		std::map<DxCharCacheKey, int> mapKeyPri_;
 
 		void _arrange();
 	public:
 		DxCharCache();
 		~DxCharCache();
 		void Clear();
-		int GetCacheCount() { return mapCache_.size(); }
+		size_t GetCacheCount() { return mapCache_.size(); }
 
-		shared_ptr<DxChar> GetChar(DxCharCacheKey& key);
-		void AddChar(DxCharCacheKey& key, shared_ptr<DxChar> value);
+		shared_ptr<DxCharGlyph> GetChar(DxCharCacheKey& key);
+		void AddChar(DxCharCacheKey& key, shared_ptr<DxCharGlyph> value);
 	};
 
 	/**********************************************************
@@ -132,7 +135,7 @@ namespace directx {
 	class DxTextToken {
 		friend DxTextScanner;
 	public:
-		enum Type {
+		enum Type : uint8_t {
 			TK_UNKNOWN, TK_EOF, TK_NEWLINE,
 			TK_ID,
 			TK_INT, TK_REAL, TK_STRING,
@@ -167,8 +170,8 @@ namespace directx {
 
 	class DxTextScanner {
 	public:
-		const static int TOKEN_TAG_START;
-		const static int TOKEN_TAG_END;
+		const static DxTextToken::Type TOKEN_TAG_START;
+		const static DxTextToken::Type TOKEN_TAG_END;
 		const static std::wstring TAG_START;
 		const static std::wstring TAG_END;
 		const static std::wstring TAG_NEW_LINE;
@@ -215,21 +218,20 @@ namespace directx {
 	class DxTextLine;
 	class DxTextInfo;
 	class DxTextRenderer;
-	class DxTextTag;
 	class DxTextTag {
 	public:
-		enum {
+		typedef enum : uint8_t {
 			TYPE_UNKNOWN,
 			TYPE_RUBY,
 			TYPE_FONT
-		};
+		} TagType;
 	protected:
-		int typeTag_;
+		TagType typeTag_;
 		int indexTag_;
 	public:
 		DxTextTag() { indexTag_ = 0; typeTag_ = TYPE_UNKNOWN; }
 		virtual ~DxTextTag() {};
-		int GetTagType() { return typeTag_; }
+		TagType GetTagType() { return typeTag_; }
 		int GetTagIndex() { return indexTag_; }
 		void SetTagIndex(int index) { indexTag_ = index; }
 	};
@@ -253,10 +255,14 @@ namespace directx {
 	};
 	class DxTextTag_Font : public DxTextTag {
 		DxFont font_;
+		D3DXVECTOR2 offset_;
 	public:
-		DxTextTag_Font() { typeTag_ = TYPE_FONT; }
-		void SetFont(DxFont font) { font_ = font; }
+		DxTextTag_Font() { typeTag_ = TYPE_FONT; offset_ = D3DXVECTOR2(0, 0); }
+		void SetFont(DxFont& font) { font_ = font; }
 		DxFont& GetFont() { return font_; }
+
+		void SetOffset(D3DXVECTOR2& off) { offset_ = off; }
+		D3DXVECTOR2& GetOffset() { return offset_; }
 	};
 	class DxTextLine {
 		friend DxTextRenderer;
@@ -364,7 +370,7 @@ namespace directx {
 		SIZE _GetTextSize(HDC hDC, wchar_t* pText);
 		shared_ptr<DxTextLine> _GetTextInfoSub(std::wstring text, DxText* dxText, DxTextInfo* textInfo, 
 			shared_ptr<DxTextLine> textLine, HDC& hDC, int& totalWidth, int& totalHeight);
-		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, POINT pos, DxFont& dxFont, 
+		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, POINT pos, DxFont* dxFont, 
 			shared_ptr<DxTextLine> textLine);
 		std::wstring _ReplaceRenderText(std::wstring& text);
 	public:
@@ -432,20 +438,20 @@ namespace directx {
 		shared_ptr<DxTextRenderObject> CreateRenderObject(shared_ptr<DxTextInfo> textInfo);
 
 		DxFont& GetFont() { return dxFont_; }
-		void SetFont(DxFont font) { dxFont_ = font; }
-		void SetFont(LOGFONT logFont) { dxFont_.SetLogFont(logFont); }
+		void SetFont(DxFont& font) { dxFont_ = font; }
+		void SetFont(LOGFONT& logFont) { dxFont_.SetLogFont(logFont); }
 
 		void SetFontType(const wchar_t* type);
 		int GetFontSize() { return dxFont_.GetLogFont().lfHeight; }
-		void SetFontSize(int size) { LOGFONT info = dxFont_.GetLogFont(); info.lfHeight = size; SetFont(info); }
+		void SetFontSize(int size) { dxFont_.GetLogFont().lfHeight = size;; }
 		int GetFontWeight() { return dxFont_.GetLogFont().lfWeight; }
-		void SetFontWeight(int weight) { LOGFONT info = dxFont_.GetLogFont(); info.lfWeight = weight; SetFont(info); }
+		void SetFontWeight(int weight) { dxFont_.GetLogFont().lfWeight = weight;; }
 		bool GetFontItalic() { return dxFont_.GetLogFont().lfItalic; }
-		void SetFontItalic(bool bItalic) { LOGFONT info = dxFont_.GetLogFont(); info.lfItalic = bItalic; SetFont(info); }
+		void SetFontItalic(bool bItalic) { dxFont_.GetLogFont().lfItalic = bItalic; }
 		bool GetFontUnderLine() { return dxFont_.GetLogFont().lfUnderline; }
-		void SetFontUnderLine(bool bLine) { LOGFONT info = dxFont_.GetLogFont(); info.lfUnderline = bLine; SetFont(info); }
+		void SetFontUnderLine(bool bLine) { dxFont_.GetLogFont().lfUnderline = bLine; }
 
-		void SetFontCharset(BYTE set) { LOGFONT info = dxFont_.GetLogFont(); info.lfCharSet = set; }
+		void SetFontCharset(BYTE set) { dxFont_.GetLogFont().lfCharSet = set; }
 
 		void SetFontColorTop(D3DCOLOR color) { dxFont_.SetTopColor(color); }
 		void SetFontColorBottom(D3DCOLOR color) { dxFont_.SetBottomColor(color); }
