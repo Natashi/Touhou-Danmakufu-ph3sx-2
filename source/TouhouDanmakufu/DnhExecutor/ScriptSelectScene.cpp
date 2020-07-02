@@ -12,8 +12,8 @@ ScriptSelectScene::ScriptSelectScene() {
 	textureBack->CreateFromFile(PathProperty::GetUnique(pathBack), false, true);
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	int screenWidth = graphics->GetScreenWidth();
-	int screenHeight = graphics->GetScreenHeight();
+	LONG screenWidth = graphics->GetScreenWidth();
+	LONG screenHeight = graphics->GetScreenHeight();
 	RECT_D srcBack = { 0., 0., 640., 480. };
 	RECT_D destBack = { 0., 0., (double)screenWidth, (double)screenHeight };
 	spriteBack_ = std::make_shared<Sprite2D>();
@@ -42,6 +42,7 @@ void ScriptSelectScene::_ChangePage() {
 	dxText.SetFontBorderWidth(2);
 	dxText.SetFontSize(16);
 	dxText.SetFontWeight(FW_BOLD);
+	dxText.SetSyntacticAnalysis(false);
 
 	int top = (pageCurrent_ - 1) * (pageMaxY_ + 1);
 	for (int iItem = 0; iItem <= pageMaxY_; iItem++) {
@@ -53,7 +54,7 @@ void ScriptSelectScene::_ChangePage() {
 				dxText.SetFontColorBottom(D3DCOLOR_ARGB(255, 255, 64, 64));
 				dxText.SetFontBorderColor(D3DCOLOR_ARGB(255, 128, 32, 32));
 				std::wstring path = pItem->GetPath();
-				std::wstring text = L"[DIR.] ";
+				std::wstring text = L"[DIR.]";
 				text += PathProperty::GetDirectoryName(path);
 				dxText.SetText(text);
 			}
@@ -204,6 +205,7 @@ void ScriptSelectScene::Render() {
 	dxTextDescription.SetFontWeight(FW_BOLD);
 	dxTextDescription.SetText(strDescription);
 	dxTextDescription.SetPosition(32, 8);
+	//dxTextDescription.SetSyntacticAnalysis(false);
 	dxTextDescription.Render();
 
 	//ディレクトリ名
@@ -226,6 +228,7 @@ void ScriptSelectScene::Render() {
 		dxTextDir.SetText(strDescription);
 		dxTextDir.SetPosition(40, 32);
 		dxTextDir.SetText(textDir);
+		dxTextDir.SetSyntacticAnalysis(false);
 		dxTextDir.Render();
 	}
 
@@ -264,6 +267,7 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.SetFontBorderWidth(0);
 			dxTextInfo.SetFontSize(16);
 			dxTextInfo.SetFontWeight(FW_BOLD);
+			//dxTextInfo.SetSyntacticAnalysis(false);
 
 			//イメージ
 			shared_ptr<Texture> texture = spriteImage_->GetTexture();
@@ -355,6 +359,7 @@ void ScriptSelectScene::Render() {
 		dxTextNowLoad.SetText(strDescription);
 		dxTextNowLoad.SetPosition(24, 452);
 		dxTextNowLoad.SetText(text);
+		dxTextNowLoad.SetSyntacticAnalysis(false);
 		dxTextNowLoad.Render();
 	}
 }
@@ -704,6 +709,7 @@ PlayTypeSelectMenuItem::PlayTypeSelectMenuItem(std::wstring text, int x, int y) 
 	dxText.SetFontSize(14);
 	dxText.SetFontWeight(FW_BOLD);
 	dxText.SetText(text);
+	dxText.SetSyntacticAnalysis(false);
 	objText_ = dxText.CreateRenderObject();
 }
 PlayTypeSelectMenuItem::~PlayTypeSelectMenuItem() {}
@@ -840,6 +846,7 @@ void PlayerSelectScene::Render() {
 		dxTextInfo.SetFontBorderColor(D3DCOLOR_ARGB(255, 255, 255, 255));
 		dxTextInfo.SetFontBorderType(directx::DxFont::BORDER_NONE);
 		dxTextInfo.SetFontWeight(FW_BOLD);
+		//dxTextInfo.SetSyntacticAnalysis(false);
 
 		//イメージ
 		shared_ptr<Texture> texture = spriteImage_->GetTexture();
@@ -915,6 +922,7 @@ void PlayerSelectScene::Render() {
 	dxTextDescription.SetFontWeight(FW_BOLD);
 	dxTextDescription.SetText(strDescription);
 	dxTextDescription.SetPosition(32, 8);
+	dxTextDescription.SetSyntacticAnalysis(false);
 	dxTextDescription.Render();
 
 	{
@@ -938,6 +946,7 @@ void PlayerSelectScene::Render() {
 				dxText.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));
 				dxText.SetFontBorderColor(D3DCOLOR_ARGB(255, 32, 32, 128));
 				dxText.SetText(info->GetTitle());
+				//dxText.SetSyntacticAnalysis(false);
 				dxText.Render();
 
 				if (GetSelectedItemIndex() == index) {
@@ -952,7 +961,6 @@ void PlayerSelectScene::Render() {
 				}
 			}
 		}
-
 	}
 }
 

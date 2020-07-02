@@ -470,8 +470,8 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 	//‚Ü‚¾ì¬‚³‚ê‚Ä‚¢‚È‚¢‚È‚çAì¬
 	try {
 		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-		if (reader == nullptr)throw gstd::wexception("File not found.");
-		if (!reader->Open())throw gstd::wexception("Cannot open file for reading.");
+		if (reader == nullptr) throw gstd::wexception("File not found.");
+		if (!reader->Open()) throw gstd::wexception("Cannot open file for reading.");
 
 		size_t size = reader->GetFileSize();
 		ByteBuffer buf;

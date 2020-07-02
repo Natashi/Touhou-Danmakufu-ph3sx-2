@@ -30,8 +30,8 @@ namespace directx {
 	protected:
 		bool bShowWindow_;
 		bool bShowCursor_;
-		int widthScreen_;
-		int heightScreen_;
+		POINT sizeScreen_;
+		POINT sizeScreenWindowed_;
 		bool bWindowed_;
 		bool bUseRef_;
 		int colorMode_;
@@ -42,14 +42,17 @@ namespace directx {
 	public:
 		DirectGraphicsConfig();
 		virtual ~DirectGraphicsConfig();
+
 		bool IsShowWindow() { return bShowWindow_; }
 		void SetShowWindow(bool b) { bShowWindow_ = b; }
 		bool IsShowCursor() { return bShowCursor_; }
 		void SetShowCursor(bool b) { bShowCursor_ = b; }
-		int GetScreenWidth() { return widthScreen_; }
-		void SetScreenWidth(int width) { widthScreen_ = width; }
-		int GetScreenHeight() { return heightScreen_; }
-		void SetScreenHeight(int height) { heightScreen_ = height; }
+
+		POINT& GetScreenSize() { return sizeScreen_; }
+		void SetScreenSize(const POINT& size) { sizeScreen_ = size; }
+		POINT& GetScreenWindowedSize() { return sizeScreenWindowed_; }
+		void SetScreenWindowedSize(const POINT& size) { sizeScreenWindowed_ = size; }
+
 		bool IsWindowed() { return bWindowed_; }
 		void SetWindowd(bool bWindowed) { bWindowed_ = bWindowed; }
 		bool IsReferenceEnable() { return bUseRef_; }
@@ -186,8 +189,8 @@ namespace directx {
 		void ResetViewPort();
 		D3DXMATRIX& GetViewPortMatrix() { return matViewPort_; }
 
-		int GetScreenWidth();
-		int GetScreenHeight();
+		LONG GetScreenWidth();
+		LONG GetScreenHeight();
 		double GetScreenWidthRatio();
 		double GetScreenHeightRatio();
 		POINT GetMousePosition();

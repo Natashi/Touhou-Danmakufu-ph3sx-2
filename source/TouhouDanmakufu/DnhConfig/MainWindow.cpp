@@ -189,10 +189,14 @@ bool DevicePanel::Initialize(HWND hParent) {
 	Attach(hWnd_);
 
 	comboWindowSize_.Attach(::GetDlgItem(hWnd_, IDC_COMBO_WINDOWSIZE));
-	comboWindowSize_.AddString(L"640x480");
-	comboWindowSize_.AddString(L"800x600");
-	comboWindowSize_.AddString(L"960x720");
-	comboWindowSize_.AddString(L"1280x960");
+	{
+		DnhConfiguration* config = DnhConfiguration::GetInstance();
+		std::vector<POINT>& listSize = config->GetWindowSizeList();
+		for (POINT& p : listSize) {
+			std::wstring str = StringUtility::Format(L"%dx%d", p.x, p.y);
+			comboWindowSize_.AddString(str);
+		}
+	}
 	SetWindowPos(comboWindowSize_.GetWindowHandle(), NULL, 0, 0,
 		comboWindowSize_.GetClientWidth(), 200, SWP_NOMOVE);
 

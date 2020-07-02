@@ -144,11 +144,11 @@ namespace gstd {
 			return GetLastErrorMessage(GetLastError());
 		}
 		static std::wstring GetErrorMessage(int type);
-		static std::wstring GetFileNotFoundErrorMessage(std::wstring path);
-		static std::wstring GetParseErrorMessage(int line, std::wstring what) {
+		static std::wstring GetFileNotFoundErrorMessage(const std::wstring& path);
+		static std::wstring GetParseErrorMessage(int line, const std::wstring& what) {
 			return GetParseErrorMessage(L"", line, what);
 		}
-		static std::wstring GetParseErrorMessage(std::wstring path, int line, std::wstring what);
+		static std::wstring GetParseErrorMessage(const std::wstring& path, int line, const std::wstring& what);
 	};
 
 	//================================================================
@@ -260,39 +260,6 @@ namespace gstd {
 	public:
 		static void Reverse(LPVOID buf, DWORD size);
 
-	};
-
-	//================================================================
-	//Sort
-	class SortUtility {
-	public:
-		template <class BidirectionalIterator, class Predicate>
-		static void CombSort(BidirectionalIterator first,
-			BidirectionalIterator last,
-			Predicate pr) {
-			int gap = static_cast<int>(std::distance(first, last));
-			if (gap < 1)return;
-
-			BidirectionalIterator first2 = last;
-			bool swapped = false;
-			do {
-				int newgap = (gap * 10 + 3) / 13;
-				if (newgap < 1) newgap = 1;
-				if (newgap == 9 || newgap == 10) newgap = 11;
-				std::advance(first2, newgap - gap);
-				gap = newgap;
-				swapped = false;
-				for (BidirectionalIterator target1 = first, target2 = first2;
-					target2 != last;
-					++target1, ++target2) 
-				{
-					if (pr(*target2, *target1)) {
-						std::iter_swap(target1, target2);
-						swapped = true;
-					}
-				}
-			} while ((gap > 1) || swapped);
-		}
 	};
 
 	//================================================================
@@ -497,9 +464,7 @@ namespace gstd {
 		}
 		template <typename T> static T& SetByte(T& value, size_t bit, byte c) {
 			T mask = (T)0xff << bit;
-			T write = (T)c << bit;
-			value &= ~mask;
-			value |= write;
+			value = (value & (~mask)) | ((T)c << bit);
 			return value;
 		}
 	};
@@ -556,7 +521,7 @@ namespace gstd {
 		}
 	};
 
-#if defined(DNH_PROJ_EXECUTOR)
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 	//================================================================
 	//Scanner
 	class Scanner;
@@ -656,7 +621,9 @@ namespace gstd {
 
 		bool CompareMemory(int start, int end, const char* data);
 	};
+#endif
 
+#if defined(DNH_PROJ_EXECUTOR)
 	//================================================================
 	//TextParser
 	class TextParser {

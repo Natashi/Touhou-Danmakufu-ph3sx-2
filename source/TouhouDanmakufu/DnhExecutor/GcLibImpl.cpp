@@ -25,6 +25,7 @@ bool EApplication::_Initialize() {
 	EFpsController* fpsController = EFpsController::CreateInstance();
 	fpsController->SetFastModeRate((size_t)config->GetSkipModeSpeedRate() * 60U);
 
+	/*
 #if defined(GAME_VERSION_TCL)
 	std::wstring appName = L"“Œ•û•ó“V‹ž@` Treasure Castle Labyrinth ";
 #elif defined(GAME_VERSION_SP)
@@ -32,6 +33,8 @@ bool EApplication::_Initialize() {
 #else
 	std::wstring appName = L"“Œ•û’e–‹•— ph3sx ";
 #endif
+	*/
+	std::wstring appName = L"“Œ•û’e–‹•— ph3sx ";
 	appName += DNH_VERSION;
 
 	std::wstring configWindowTitle = config->GetWindowTitle();
@@ -152,21 +155,21 @@ bool EApplication::_Loop() {
 			fpsController->GetCurrentRenderFps());
 		logger->SetInfo(0, L"Fps", fps);
 
-		int widthConfig = graphics->GetConfigData().GetScreenWidth();
-		int heightConfig = graphics->GetConfigData().GetScreenHeight();
-		int widthScreen = widthConfig * graphics->GetScreenWidthRatio();
-		int heightScreen = heightConfig * graphics->GetScreenHeightRatio();
-		std::wstring screen = StringUtility::Format(L"Width: %d/%d, Height: %d/%d",
-			widthScreen, widthConfig,
-			heightScreen, heightConfig);
-		logger->SetInfo(1, L"Screen", screen);
+		POINT& screenSize = graphics->GetConfigData().GetScreenSize();
+		POINT& screenSizeWindowed = graphics->GetConfigData().GetScreenWindowedSize();
+		//int widthScreen = widthConfig * graphics->GetScreenWidthRatio();
+		//int heightScreen = heightConfig * graphics->GetScreenHeightRatio();
+		std::wstring screenInf = StringUtility::Format(L"Width: %d/%d, Height: %d/%d",
+			screenSizeWindowed.x, screenSize.x,
+			screenSizeWindowed.y, screenSize.y);
+		logger->SetInfo(1, L"Screen", screenInf);
 
 		logger->SetInfo(2, L"Font cache",
 			StringUtility::Format(L"%d", EDxTextRenderer::GetInstance()->GetCacheCount()));
 	}
 
 	//‚‘¬“®ì
-	int fastModeKey = fpsController->GetFastModeKey();
+	int16_t fastModeKey = fpsController->GetFastModeKey();
 	if (input->GetKeyState(fastModeKey) == KEY_HOLD)
 		fpsController->SetFastMode(true);
 	else if (input->GetKeyState(fastModeKey) == KEY_PULL || input->GetKeyState(fastModeKey) == KEY_FREE)
@@ -208,33 +211,20 @@ EDirectGraphics::EDirectGraphics() {
 EDirectGraphics::~EDirectGraphics() {}
 bool EDirectGraphics::Initialize() {
 	DnhConfiguration* dnhConfig = DnhConfiguration::GetInstance();
-	int screenWidth = dnhConfig->GetScreenWidth();
-	int screenHeight = dnhConfig->GetScreenHeight();
+	LONG screenWidth = dnhConfig->GetScreenWidth();		//From th_dnh.def
+	LONG screenHeight = dnhConfig->GetScreenHeight();	//From th_dnh.def
 	ScreenMode screenMode = dnhConfig->GetScreenMode();
-	int windowSize = dnhConfig->GetWindowSize();
 
-	bool bUserSize = screenWidth != 640 || screenHeight != 480;
-	if (!bUserSize) {
-		if (windowSize == DnhConfiguration::WINDOW_SIZE_640x480 && screenWidth > 640)
-			windowSize = DnhConfiguration::WINDOW_SIZE_800x600;
-		if (windowSize == DnhConfiguration::WINDOW_SIZE_800x600 && screenWidth > 800)
-			windowSize = DnhConfiguration::WINDOW_SIZE_960x720;
-		if (windowSize == DnhConfiguration::WINDOW_SIZE_960x720 && screenWidth > 960)
-			windowSize = DnhConfiguration::WINDOW_SIZE_1280x960;
-		if (windowSize == DnhConfiguration::WINDOW_SIZE_1280x960 && screenWidth > 1280)
-			windowSize = DnhConfiguration::WINDOW_SIZE_1600x1200;
-		if (windowSize == DnhConfiguration::WINDOW_SIZE_1600x1200 && screenWidth > 1600)
-			windowSize = DnhConfiguration::WINDOW_SIZE_1920x1200;
-	}
+	std::vector<POINT>& windowSizeList = dnhConfig->GetWindowSizeList();
+	int windowSizeIndex = dnhConfig->GetWindowSize();
 
-
-	bool bShowWindow = screenMode == ScreenMode::SCREENMODE_FULLSCREEN ||
-		windowSize == DnhConfiguration::WINDOW_SIZE_640x480;
+	LONG windowedWidth = std::max(windowSizeList[windowSizeIndex].x, screenWidth);
+	LONG windowedHeight = std::max(windowSizeList[windowSizeIndex].y, screenHeight);
 
 	DirectGraphicsConfig dxConfig;
-	dxConfig.SetScreenWidth(screenWidth);
-	dxConfig.SetScreenHeight(screenHeight);
-	dxConfig.SetShowWindow(bShowWindow);
+	dxConfig.SetScreenSize({ screenWidth, screenHeight });
+	dxConfig.SetScreenWindowedSize({ windowedWidth, windowedHeight });
+	dxConfig.SetShowWindow(true);
 	dxConfig.SetShowCursor(dnhConfig->IsMouseVisible());
 	dxConfig.SetColorMode(dnhConfig->GetColorMode());
 	dxConfig.SetVSyncEnable(dnhConfig->IsEnableVSync());
@@ -252,35 +242,11 @@ bool EDirectGraphics::Initialize() {
 		ChangeScreenMode();
 	}
 	else {
-		if (windowSize != DnhConfiguration::WINDOW_SIZE_640x480 || bUserSize) {
-			int width = screenWidth;
-			int height = screenHeight;
-			if (!bUserSize) {
-				switch (windowSize) {
-				case DnhConfiguration::WINDOW_SIZE_800x600:
-					width = 800; height = 600;
-					break;
-				case DnhConfiguration::WINDOW_SIZE_960x720:
-					width = 960; height = 720;
-					break;
-				case DnhConfiguration::WINDOW_SIZE_1280x960:
-					width = 1280; height = 960;
-					break;
-				case DnhConfiguration::WINDOW_SIZE_1600x1200:
-					width = 1600; height = 1200;
-					break;
-				case DnhConfiguration::WINDOW_SIZE_1920x1200:
-					width = 1920; height = 1200;
-					break;
-				}
-			}
+		RECT wr = { 0, 0, windowedWidth, windowedHeight };
+		AdjustWindowRect(&wr, wndStyleWin_, FALSE);
 
-			RECT wr = { 0, 0, width, height };
-			AdjustWindowRect(&wr, wndStyleWin_, FALSE);
-
-			SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
-			MoveWindowCenter();
-		}
+		SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
+		MoveWindowCenter();
 	}
 	SetWindowVisible(true);
 

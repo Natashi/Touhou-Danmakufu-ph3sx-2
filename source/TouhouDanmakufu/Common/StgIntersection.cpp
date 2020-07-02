@@ -10,8 +10,8 @@
 **********************************************************/
 StgIntersectionManager::StgIntersectionManager() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	int screenWidth = graphics->GetScreenWidth();
-	int screenHeight = graphics->GetScreenWidth();
+	LONG screenWidth = graphics->GetScreenWidth();
+	LONG screenHeight = graphics->GetScreenWidth();
 
 	omp_init_lock(&lock_);
 

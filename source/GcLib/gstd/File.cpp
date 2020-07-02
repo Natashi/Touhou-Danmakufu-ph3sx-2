@@ -873,8 +873,7 @@ bool RecordBuffer::IsExists(std::string key) {
 }
 std::vector<std::string> RecordBuffer::GetKeyList() {
 	std::vector<std::string> res;
-	std::map<std::string, ref_count_ptr<RecordEntry> >::iterator itr;
-	for (itr = mapEntry_.begin(); itr != mapEntry_.end(); itr++) {
+	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); itr++) {
 		std::string key = itr->first;
 		res.push_back(key);
 	}
@@ -885,8 +884,7 @@ void RecordBuffer::Write(Writer& writer) {
 	int countEntry = mapEntry_.size();
 	writer.WriteInteger(countEntry);
 
-	std::map<std::string, ref_count_ptr<RecordEntry> >::iterator itr;
-	for (itr = mapEntry_.begin(); itr != mapEntry_.end(); itr++) {
+	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); itr++) {
 		ref_count_ptr<RecordEntry> entry = itr->second;
 		entry->_WriteEntryRecord(writer);
 	}
@@ -1039,7 +1037,7 @@ void RecordBuffer::SetRecordAsRecordBuffer(const std::string& key, RecordBuffer&
 void RecordBuffer::Read(RecordBuffer& record) {}
 void RecordBuffer::Write(RecordBuffer& record) {}
 
-#if defined(DNH_PROJ_EXECUTOR)
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 /**********************************************************
 //PropertyFile
 **********************************************************/
@@ -1145,7 +1143,9 @@ double PropertyFile::GetReal(std::wstring key, double def) {
 	std::wstring strValue = mapEntry_[key];
 	return StringUtility::ToDouble(strValue);
 }
+#endif
 
+#if defined(DNH_PROJ_EXECUTOR)
 /**********************************************************
 //SystemValueManager
 **********************************************************/

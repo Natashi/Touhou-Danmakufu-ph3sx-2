@@ -41,8 +41,8 @@ void TransitionEffect_FadeOut::Initialize(int frame, shared_ptr<Texture> texture
 	diffAlpha_ = 255.0 / frame;
 	alpha_ = 255.0;
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	int width = graphics->GetScreenWidth();
-	int height = graphics->GetScreenHeight();
+	LONG width = graphics->GetScreenWidth();
+	LONG height = graphics->GetScreenHeight();
 	RECT_D rect = { 0., 0., (double)width, (double)height };
 
 	sprite_ = new Sprite2D();

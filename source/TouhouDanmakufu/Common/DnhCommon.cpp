@@ -414,9 +414,11 @@ bool ErrorDialog::ShowModal(std::wstring msg) {
 DnhConfiguration::DnhConfiguration() {
 	modeScreen_ = ScreenMode::SCREENMODE_WINDOW;
 	modeColor_ = DirectGraphicsConfig::COLOR_MODE_32BIT;
-	sizeWindow_ = WINDOW_SIZE_640x480;
 	fpsType_ = FPS_NORMAL;
 	fastModeSpeed_ = 20;
+
+	windowSizeList_ = { { 640, 480 }, { 800, 600 }, { 960, 720 }, { 1280, 960 } };
+	sizeWindow_ = 0;
 
 	bVSync_ = true;
 	referenceRasterizer_ = false;
@@ -451,17 +453,13 @@ DnhConfiguration::DnhConfiguration() {
 	screenHeight_ = 480;
 
 	LoadConfigFile();
-#if defined(DNH_PROJ_EXECUTOR)
-	_LoadDefintionFile();
-#endif
+	_LoadDefinitionFile();
 }
 DnhConfiguration::~DnhConfiguration() {}
 
-#if defined(DNH_PROJ_EXECUTOR)
-bool DnhConfiguration::_LoadDefintionFile() {
-	std::wstring path = PathProperty::GetModuleDirectory() + L"th_dnh.def";
+bool DnhConfiguration::_LoadDefinitionFile() {
 	PropertyFile prop;
-	if (!prop.Load(path))return false;
+	if (!prop.Load(PathProperty::GetModuleDirectory() + L"th_dnh.def")) return false;
 
 	pathPackageScript_ = prop.GetString(L"package.script.main", L"");
 	if (pathPackageScript_.size() > 0) {
@@ -483,15 +481,41 @@ bool DnhConfiguration::_LoadDefintionFile() {
 	fastModeSpeed_ = std::max(fastModeSpeed_, 1);
 	fastModeSpeed_ = std::min(fastModeSpeed_, 50);
 
+	{
+		if (prop.HasProperty(L"config.window.size.list")) {
+			std::wstring strList = prop.GetString(L"config.window.size.list", L"");
+			if (strList.size() >= 3) {	//Minimum format: "0x0"
+				std::wregex reg(L"(([0-9]+)x([0-9]+))(,|(\s*)|\0)");
+				auto itrBegin = std::wsregex_iterator(strList.begin(), strList.end(), reg);
+				auto itrEnd = std::wsregex_iterator();
+
+				if (itrBegin != itrEnd) {
+					windowSizeList_.clear();
+
+					for (auto itr = itrBegin; itr != itrEnd; ++itr) {
+						const std::wsmatch& match = *itr;
+
+						POINT size;
+						size.x = wcstol(match[1].str().c_str(), nullptr, 10);
+						size.y = wcstol(match[2].str().c_str(), nullptr, 10);
+						if (size.x < 320) size.x = 320;
+						if (size.y < 240) size.y = 240;
+
+						windowSizeList_.push_back(size);
+					}
+				}
+			}
+		}
+	}
+
 	return true;
 }
-#endif
 
 bool DnhConfiguration::LoadConfigFile() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"config.dat";
 	RecordBuffer record;
 	bool res = record.ReadFromFile(path);
-	if (!res)return false;
+	if (!res) return false;
 
 	{
 		size_t version;
@@ -501,8 +525,8 @@ bool DnhConfiguration::LoadConfigFile() {
 
 	record.GetRecord<ScreenMode>("modeScreen", modeScreen_);
 	record.GetRecord<int>("sizeWindow", sizeWindow_);
-	record.GetRecord<int>("fpsType", fpsType_);
 
+	record.GetRecord<int>("fpsType", fpsType_);
 	record.GetRecord<int>("modeColor", modeColor_);
 	record.GetRecord<bool>("bVSync", bVSync_);
 	record.GetRecord<bool>("bDeviceREF", referenceRasterizer_);
@@ -516,23 +540,22 @@ bool DnhConfiguration::LoadConfigFile() {
 	if (record.IsExists("padIndex"))
 		padIndex_ = record.GetRecordAsInteger("padIndex");
 
-	ByteBuffer bufKey;
-	int bufKeySize = record.GetRecordAsInteger("mapKey_size");
-	bufKey.SetSize(bufKeySize);
 	{
-		std::string key = "mapKey";
-		record.GetRecord(key, bufKey.GetPointer(), bufKey.GetSize());
-	}
+		ByteBuffer bufKey;
+		int bufKeySize = record.GetRecordAsInteger("mapKey_size");
+		bufKey.SetSize(bufKeySize);
+		record.GetRecord("mapKey", bufKey.GetPointer(), bufKey.GetSize());
 
-	size_t mapKeyCount = bufKey.ReadValue<size_t>();
-	if (mapKeyCount == mapKey_.size()) {
-		for (size_t iKey = 0; iKey < mapKeyCount; iKey++) {
-			int16_t id = bufKey.ReadShort();
-			int16_t keyCode = bufKey.ReadShort();
-			int16_t padIndex = bufKey.ReadShort();
-			int16_t padButton = bufKey.ReadShort();
+		size_t mapKeyCount = bufKey.ReadValue<size_t>();
+		if (mapKeyCount == mapKey_.size()) {
+			for (size_t iKey = 0; iKey < mapKeyCount; iKey++) {
+				int16_t id = bufKey.ReadShort();
+				int16_t keyCode = bufKey.ReadShort();
+				int16_t padIndex = bufKey.ReadShort();
+				int16_t padButton = bufKey.ReadShort();
 
-			mapKey_[id] = new VirtualKey(keyCode, padIndex, padButton);
+				mapKey_[id] = new VirtualKey(keyCode, padIndex, padButton);
+			}
 		}
 	}
 
@@ -550,8 +573,8 @@ bool DnhConfiguration::SaveConfigFile() {
 
 	record.SetRecord<ScreenMode>("modeScreen", modeScreen_);
 	record.SetRecordAsInteger("sizeWindow", sizeWindow_);
+	
 	record.SetRecordAsInteger("fpsType", fpsType_);
-
 	record.SetRecordAsInteger("modeColor", modeColor_);
 	record.SetRecordAsBoolean("bVSync", bVSync_);
 	record.SetRecordAsBoolean("bDeviceREF", referenceRasterizer_);
@@ -561,21 +584,21 @@ bool DnhConfiguration::SaveConfigFile() {
 	record.SetRecordAsStringW("pathLaunch", pathExeLaunch_);
 
 	record.SetRecordAsInteger("padIndex", padIndex_);
-	ByteBuffer bufKey;
-	bufKey.WriteValue(mapKey_.size());
-	for (auto itrKey = mapKey_.begin(); itrKey != mapKey_.end(); itrKey++) {
-		int16_t id = itrKey->first;
-		ref_count_ptr<VirtualKey> vk = itrKey->second;
 
-		bufKey.WriteShort(id);
-		bufKey.WriteShort(vk->GetKeyCode());
-		bufKey.WriteShort(padIndex_);
-		bufKey.WriteShort(vk->GetPadButton());
-	}
-	record.SetRecordAsInteger("mapKey_size", bufKey.GetSize());
 	{
-		std::string key = "mapKey";
-		record.SetRecord(key, bufKey.GetPointer(), bufKey.GetSize());
+		ByteBuffer bufKey;
+		bufKey.WriteValue(mapKey_.size());
+		for (auto itrKey = mapKey_.begin(); itrKey != mapKey_.end(); itrKey++) {
+			int16_t id = itrKey->first;
+			ref_count_ptr<VirtualKey> vk = itrKey->second;
+
+			bufKey.WriteShort(id);
+			bufKey.WriteShort(vk->GetKeyCode());
+			bufKey.WriteShort(padIndex_);
+			bufKey.WriteShort(vk->GetPadButton());
+		}
+		record.SetRecordAsInteger("mapKey_size", bufKey.GetSize());
+		record.SetRecord("mapKey", bufKey.GetPointer(), bufKey.GetSize());
 	}
 
 	record.SetRecordAsBoolean("bLogWindow", bLogWindow_);

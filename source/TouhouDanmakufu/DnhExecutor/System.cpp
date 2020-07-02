@@ -356,8 +356,8 @@ void SystemInformation::UpdateFreePlayerScriptInformationList() {
 **********************************************************/
 SystemResidentTask::SystemResidentTask() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	int screenWidth = graphics->GetScreenWidth();
-	int screenHeight = graphics->GetScreenHeight();
+	LONG screenWidth = graphics->GetScreenWidth();
+	LONG screenHeight = graphics->GetScreenHeight();
 
 	textFps_.SetFontColorTop(D3DCOLOR_ARGB(255, 160, 160, 255));
 	textFps_.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));

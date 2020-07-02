@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHCOMMON__
-#define __TOUHOUDANMAKUFU_DNHCOMMON__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -131,21 +130,13 @@ public:
 	static void ShowErrorDialog(std::wstring msg) { ErrorDialog dialog(hWndParentStatic_); dialog.ShowModal(msg); }
 };
 
-
-
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 /**********************************************************
 //DnhConfiguration
 **********************************************************/
 class DnhConfiguration : public Singleton<DnhConfiguration> {
 public:
 	enum {
-		WINDOW_SIZE_640x480 = 0,
-		WINDOW_SIZE_800x600,
-		WINDOW_SIZE_960x720,
-		WINDOW_SIZE_1280x960,
-		WINDOW_SIZE_1600x1200,
-		WINDOW_SIZE_1920x1200,
-
 		FPS_NORMAL = 0,	// 1/1
 		FPS_1_2,		// 1/2
 		FPS_1_3,		// 1/3
@@ -154,8 +145,11 @@ public:
 public:
 	ScreenMode modeScreen_;	//DirectGraphics::SCREENMODE_FULLSCREEN,SCREENMODE_WINDOW
 	int modeColor_;		//DirectGraphics::COLOR_MODE_32BIT,COLOR_MODE_16BIT
-	int sizeWindow_;
+	
 	int fpsType_;
+
+	std::vector<POINT> windowSizeList_;
+	int sizeWindow_;
 	int fastModeSpeed_;
 
 	bool bVSync_;
@@ -177,10 +171,7 @@ public:
 	int screenWidth_;
 	int screenHeight_;
 
-#if defined(DNH_PROJ_EXECUTOR)
-	bool _LoadDefintionFile();
-#endif
-
+	bool _LoadDefinitionFile();
 public:
 	DnhConfiguration();
 	virtual ~DnhConfiguration();
@@ -189,6 +180,7 @@ public:
 
 	ScreenMode GetScreenMode() { return modeScreen_; }
 	void SetScreenMode(ScreenMode mode) { modeScreen_ = mode; }
+	std::vector<POINT>& GetWindowSizeList() { return windowSizeList_; }
 	int GetWindowSize() { return sizeWindow_; }
 	void SetWindowSize(int size) { sizeWindow_ = size; }
 	int GetFpsType() { return fpsType_; }
@@ -223,5 +215,4 @@ public:
 	int GetScreenWidth() { return screenWidth_; }
 	int GetScreenHeight() { return screenHeight_; }
 };
-
 #endif

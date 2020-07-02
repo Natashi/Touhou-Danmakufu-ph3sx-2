@@ -43,7 +43,7 @@ public:
 **********************************************************/
 class EFpsController : public Singleton<EFpsController> {
 private:
-	int fastModeKey_;
+	int16_t fastModeKey_;
 	ref_count_ptr<FpsController> controller_;
 public:
 	EFpsController();
@@ -65,8 +65,8 @@ public:
 	void AddFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) { controller_->AddFpsControlObject(obj); }
 	void RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) { controller_->RemoveFpsControlObject(obj); }
 
-	int GetFastModeKey() { return fastModeKey_; }
-	void SetFastModeKey(int key) { fastModeKey_ = key; }
+	int16_t GetFastModeKey() { return fastModeKey_; }
+	void SetFastModeKey(int16_t key) { fastModeKey_ = key; }
 };
 #endif
 

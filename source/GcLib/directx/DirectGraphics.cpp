@@ -11,8 +11,8 @@ using namespace directx;
 **********************************************************/
 DirectGraphicsConfig::DirectGraphicsConfig() {
 	bShowWindow_ = true;
-	widthScreen_ = 800;
-	heightScreen_ = 600;
+	sizeScreen_ = { 640, 480 };
+	sizeScreenWindowed_ = { 640, 480 };
 	bWindowed_ = true;
 	bUseRef_ = false;
 	colorMode_ = COLOR_MODE_32BIT;
@@ -86,8 +86,8 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 	//FullScreenMode‚ÌÝ’è
 	ZeroMemory(&d3dppFull_, sizeof(D3DPRESENT_PARAMETERS));
 	d3dppFull_.hDeviceWindow = hWnd;
-	d3dppFull_.BackBufferWidth = config.GetScreenWidth();
-	d3dppFull_.BackBufferHeight = config.GetScreenHeight();
+	d3dppFull_.BackBufferWidth = config.GetScreenSize().x;
+	d3dppFull_.BackBufferHeight = config.GetScreenSize().y;
 	d3dppFull_.Windowed = FALSE;
 	d3dppFull_.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	d3dppFull_.BackBufferFormat = config.GetColorMode() == DirectGraphicsConfig::COLOR_MODE_16BIT ? 
@@ -103,8 +103,8 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 	D3DDISPLAYMODE dmode;
 	HRESULT hrAdapt = pDirect3D_->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &dmode);
 	ZeroMemory(&d3dppWin_, sizeof(D3DPRESENT_PARAMETERS));
-	d3dppWin_.BackBufferWidth = config.GetScreenWidth();
-	d3dppWin_.BackBufferHeight = config.GetScreenHeight();
+	d3dppWin_.BackBufferWidth = config.GetScreenSize().x;
+	d3dppWin_.BackBufferHeight = config.GetScreenSize().y;
 	d3dppWin_.Windowed = TRUE;
 	d3dppWin_.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	d3dppWin_.BackBufferFormat = D3DFMT_UNKNOWN;
@@ -305,7 +305,7 @@ void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
 			D3DXMatrixLookAtLH(&viewMat, (D3DXVECTOR3*)&viewFrom, &D3DXVECTOR3(0, 0, 0), &D3DXVECTOR3(0, 1, 0));
 
 			D3DXMatrixPerspectiveFovLH(&persMat, D3DXToRadian(45.0),
-				config_.GetScreenWidth() / (float)config_.GetScreenHeight(), 10.0f, 2000.0f);
+				config_.GetScreenSize().x / (float)config_.GetScreenSize().y, 10.0f, 2000.0f);
 
 			viewMat = viewMat * persMat;
 
@@ -653,17 +653,17 @@ void DirectGraphics::SetViewPort(int x, int y, int width, int height) {
 void DirectGraphics::ResetViewPort() {
 	SetViewPort(0, 0, GetScreenWidth(), GetScreenHeight());
 }
-int DirectGraphics::GetScreenWidth() {
-	return config_.GetScreenWidth();
+LONG DirectGraphics::GetScreenWidth() {
+	return config_.GetScreenSize().x;
 }
-int DirectGraphics::GetScreenHeight() {
-	return config_.GetScreenHeight();
+LONG DirectGraphics::GetScreenHeight() {
+	return config_.GetScreenSize().y;
 }
 double DirectGraphics::GetScreenWidthRatio() {
 	RECT rect;
 	::GetWindowRect(hAttachedWindow_, &rect);
 	double widthWindow = (double)rect.right - (double)rect.left;
-	double widthView = config_.GetScreenWidth();
+	double widthView = config_.GetScreenSize().x;
 
 	/*
 	DWORD style = ::GetWindowLong(hAttachedWindow_, GWL_STYLE);
@@ -678,7 +678,7 @@ double DirectGraphics::GetScreenHeightRatio() {
 	RECT rect;
 	::GetWindowRect(hAttachedWindow_, &rect);
 	double heightWindow = (double)rect.bottom - (double)rect.top;
-	double heightView = config_.GetScreenHeight();
+	double heightView = config_.GetScreenSize().y;
 
 	/*
 	DWORD style = ::GetWindowLong(hAttachedWindow_, GWL_STYLE);
@@ -708,7 +708,7 @@ POINT DirectGraphics::GetMousePosition() {
 }
 
 void DirectGraphics::SaveBackSurfaceToFile(std::wstring path) {
-	RECT rect = { 0, 0, config_.GetScreenWidth(), config_.GetScreenHeight() };
+	RECT rect = { 0, 0, config_.GetScreenSize().x, config_.GetScreenSize().y };
 	LPDIRECT3DSURFACE9 pBackSurface = nullptr;
 	pDevice_->GetRenderTarget(0, &pBackSurface);
 	D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
@@ -766,7 +766,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		wcex.hIconSm = nullptr;
 		::RegisterClassEx(&wcex);
 
-		RECT wr = { 0, 0, config.GetScreenWidth(), config.GetScreenHeight() };
+		RECT wr = { 0, 0, config.GetScreenSize().x, config.GetScreenSize().y };
 		AdjustWindowRect(&wr, wndStyleWin_, FALSE);
 
 		hWnd_ = ::CreateWindow(wcex.lpszClassName,
@@ -791,8 +791,8 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		wcex.lpszClassName = nameClass.c_str();
 		::RegisterClassEx(&wcex);
 
-		int screenWidth = config_.GetScreenWidth(); //+ ::GetSystemMetrics(SM_CXEDGE) + 10;
-		int screenHeight = config_.GetScreenHeight(); //+ ::GetSystemMetrics(SM_CYEDGE) + 10;
+		LONG screenWidth = config.GetScreenSize().x; //+ ::GetSystemMetrics(SM_CXEDGE) + 10;
+		LONG screenHeight = config.GetScreenSize().y; //+ ::GetSystemMetrics(SM_CYEDGE) + 10;
 
 		HWND hWnd = ::CreateWindow(wcex.lpszClassName,
 			L"",
@@ -818,10 +818,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		::SetWindowLong(hWnd_, GWL_STYLE, wndStyleWin_);
 		::ShowWindow(hWnd_, SW_SHOW);
 
-		int screenWidth = config_.GetScreenWidth();
-		int screenHeight = config_.GetScreenHeight();
-
-		RECT wr = { 0, 0, screenWidth, screenHeight };
+		RECT wr = { 0, 0, config_.GetScreenSize().x, config_.GetScreenSize().y };
 		AdjustWindowRect(&wr, wndStyleWin_, FALSE);
 
 		SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
@@ -871,8 +868,8 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 			int width = rect.right;
 			int height = rect.bottom;
 
-			int screenWidth = config_.GetScreenWidth();
-			int screenHeight = config_.GetScreenHeight();
+			LONG screenWidth = config_.GetScreenSize().x;
+			LONG screenHeight = config_.GetScreenSize().y;
 
 			double ratioWH = (double)screenWidth / (double)screenHeight;
 			if (width > rect.right)width = rect.right;
@@ -895,8 +892,8 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 		int wWidth = ::GetSystemMetrics(SM_CXFULLSCREEN);
 		int wHeight = ::GetSystemMetrics(SM_CYFULLSCREEN);
 
-		int screenWidth = config_.GetScreenWidth();
-		int screenHeight = config_.GetScreenHeight();
+		LONG screenWidth = config_.GetScreenSize().x;
+		LONG screenHeight = config_.GetScreenSize().y;
 
 		RECT wr = { 0, 0, screenWidth, screenHeight };
 		AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW - WS_SIZEBOX, FALSE);
@@ -942,10 +939,11 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 }
 
 void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
+	//True fullscreen mode
 	if (!config_.IsPseudoFullScreen()) {
 		if (modeScreen_ == SCREENMODE_WINDOW) {
-			int screenWidth = config_.GetScreenWidth(); //+ ::GetSystemMetrics(SM_CXEDGE) + 10;
-			int screenHeight = config_.GetScreenHeight(); //+ ::GetSystemMetrics(SM_CYEDGE) + 10;
+			LONG screenWidth = config_.GetScreenSize().x;
+			LONG screenHeight = config_.GetScreenSize().y;
 			int wWidth = ::GetSystemMetrics(SM_CXFULLSCREEN);
 			int wHeight = ::GetSystemMetrics(SM_CYFULLSCREEN);
 			bool bFullScreenEnable = screenWidth <= wWidth && screenHeight <= wHeight;
@@ -969,8 +967,8 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 			::SetWindowLong(hAttachedWindow_, GWL_STYLE, wndStyleWin_);
 			::ShowWindow(hAttachedWindow_, SW_SHOW);
 
-			int screenWidth = config_.GetScreenWidth();
-			int screenHeight = config_.GetScreenHeight();
+			LONG screenWidth = config_.GetScreenWindowedSize().x;
+			LONG screenHeight = config_.GetScreenWindowedSize().y;
 
 			RECT wr = { 0, 0, screenWidth, screenHeight };
 			AdjustWindowRect(&wr, wndStyleWin_, FALSE);
@@ -1041,8 +1039,8 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleWin_);
 			::ShowWindow(hWnd_, SW_SHOW);
 
-			int screenWidth = config_.GetScreenWidth();
-			int screenHeight = config_.GetScreenHeight();
+			LONG screenWidth = config_.GetScreenWindowedSize().x;
+			LONG screenHeight = config_.GetScreenWindowedSize().y;
 
 			RECT wr = { 0, 0, screenWidth, screenHeight };
 			AdjustWindowRect(&wr, wndStyleWin_, FALSE);
@@ -1198,8 +1196,8 @@ void DxCamera::UpdateDeviceViewProjectionMatrix() {
 D3DXVECTOR2 DxCamera::TransformCoordinateTo2D(D3DXVECTOR3 pos) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
-	int width = graphics->GetConfigData().GetScreenWidth();
-	int height = graphics->GetConfigData().GetScreenHeight();
+	LONG width = graphics->GetScreenWidth();
+	LONG height = graphics->GetScreenHeight();
 
 	D3DXVECTOR4 vect;
 	D3DXVec3Transform(&vect, &pos, &matViewProjection_);
@@ -1231,8 +1229,8 @@ DxCamera2D::DxCamera2D() {
 DxCamera2D::~DxCamera2D() {}
 void DxCamera2D::Reset() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	int width = graphics->GetScreenWidth();
-	int height = graphics->GetScreenHeight();
+	LONG width = graphics->GetScreenWidth();
+	LONG height = graphics->GetScreenHeight();
 	if (posReset_ == nullptr) {
 		pos_.x = width / 2;
 		pos_.y = height / 2;
@@ -1255,8 +1253,8 @@ D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(D3DXVECTOR2 focus, double ratio) {
 }
 D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(D3DXVECTOR2 focus, double ratioX, double ratioY) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	int width = graphics->GetScreenWidth();
-	int height = graphics->GetScreenHeight();
+	LONG width = graphics->GetScreenWidth();
+	LONG height = graphics->GetScreenHeight();
 	RECT rcClip;
 	ZeroMemory(&rcClip, sizeof(RECT));
 	rcClip.right = width;

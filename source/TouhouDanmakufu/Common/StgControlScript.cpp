@@ -291,10 +291,8 @@ gstd::value StgControlScript::Func_AddReplayTargetVirtualKey(gstd::script_machin
 	return value();
 }
 gstd::value StgControlScript::Func_SetSkipModeKey(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	int id = (int)argv[0].as_real();
 	EFpsController* fpsController = EFpsController::GetInstance();
-	fpsController->SetFastModeKey(id);
-
+	fpsController->SetFastModeKey((int16_t)argv[0].as_real());
 	return value();
 }
 

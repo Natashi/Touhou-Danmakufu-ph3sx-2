@@ -434,12 +434,12 @@ std::wstring ErrorUtility::GetErrorMessage(int type) {
 		res = L"Invalid index";
 	return res;
 }
-std::wstring ErrorUtility::GetFileNotFoundErrorMessage(std::wstring path) {
+std::wstring ErrorUtility::GetFileNotFoundErrorMessage(const std::wstring& path) {
 	std::wstring res = GetErrorMessage(ERROR_FILE_NOTFOUND);
 	res += StringUtility::Format(L" path[%s]", path.c_str());
 	return res;
 }
-std::wstring ErrorUtility::GetParseErrorMessage(std::wstring path, int line, std::wstring what) {
+std::wstring ErrorUtility::GetParseErrorMessage(const std::wstring& path, int line, const std::wstring& what) {
 	std::wstring res = GetErrorMessage(ERROR_PARSE);
 	res += StringUtility::Format(L" path[%s] line[%d] msg[%s]", path.c_str(), line, what.c_str());
 	return res;
@@ -463,7 +463,7 @@ void ByteOrder::Reverse(LPVOID buf, DWORD size) {
 	}
 }
 
-#if defined(DNH_PROJ_EXECUTOR)
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 //================================================================
 //Scanner
 Scanner::Scanner(char* str, int size) {
@@ -931,7 +931,9 @@ std::string Token::GetIdentifierA() {
 	std::string res = StringUtility::ConvertWideToMulti(wstr);
 	return res;
 }
+#endif
 
+#if defined(DNH_PROJ_EXECUTOR)
 //================================================================
 //TextParser
 TextParser::TextParser() {

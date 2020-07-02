@@ -388,7 +388,7 @@ namespace gstd {
 	**********************************************************/
 	class RecordBuffer : public Recordable {
 	private:
-		std::map<std::string, ref_count_ptr<RecordEntry>> mapEntry_;
+		std::unordered_map<std::string, ref_count_ptr<RecordEntry>> mapEntry_;
 	public:
 		RecordBuffer();
 		virtual ~RecordBuffer();
@@ -465,7 +465,7 @@ namespace gstd {
 		virtual void Write(RecordBuffer& record);
 	};
 
-#if defined(DNH_PROJ_EXECUTOR)
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 	/**********************************************************
 	//PropertyFile
 	**********************************************************/
@@ -486,7 +486,9 @@ namespace gstd {
 		double GetReal(std::wstring key) { return GetReal(key, 0.0); }
 		double GetReal(std::wstring key, double def);
 	};
+#endif
 
+#if defined(DNH_PROJ_EXECUTOR)
 	/**********************************************************
 	//SystemValueManager
 	**********************************************************/
