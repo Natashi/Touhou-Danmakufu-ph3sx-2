@@ -55,13 +55,14 @@ namespace directx {
 
 		static D3DCOLOR& SetColorHSV(D3DCOLOR& color, int hue, int saturation, int value);
 
-		static inline void ClampColor(int& color) {
-			if (color > 0xff) color = 0xff;
-			else if (color < 0x00) color = 0x00;
+		template<typename T>
+		static inline void ClampColor(T& color) {
+			if (color > (T)0xff) color = (T)0xff;
+			else if (color < (T)0x00) color = (T)0x00;
 		}
-		static inline int ClampColorRet(int color) {
-			if (color > 0xff) color = 0xff;
-			else if (color < 0x00) color = 0x00;
+		template<typename T>
+		static inline T ClampColorRet(T color) {
+			ClampColor(color);
 			return color;
 		}
 		//ARGB representation

@@ -192,7 +192,7 @@ void DxScriptPrimitiveObject2D::SetPermitCamera(bool bPermit) {
 }
 D3DXVECTOR3 DxScriptPrimitiveObject2D::GetVertexPosition(size_t index) {
 	D3DXVECTOR3 res(0, 0, 0);
-	if (!IsValidVertexIndex(index))return res;
+	if (!IsValidVertexIndex(index)) return res;
 	RenderObjectTLX* obj = GetObjectPointer();
 	VERTEX_TLX* vert = obj->GetVertex(index);
 
@@ -593,7 +593,7 @@ void DxScriptMeshObject::SetAlpha(int alpha) {
 	color_ = (color_ & 0x00ffffff) | ((byte)alpha << 24);
 }
 void DxScriptMeshObject::SetShader(shared_ptr<Shader> shader) {
-	if (mesh_ == nullptr)return;
+	if (mesh_ == nullptr) return;
 	mesh_->SetShader(shader);
 }
 void DxScriptMeshObject::SetAngleX(float x) {
@@ -671,6 +671,7 @@ void DxScriptTextObject::_UpdateRenderer() {
 	bChange_ = false;
 }
 void DxScriptTextObject::SetCharset(BYTE set) {
+	/*
 	switch (set) {
 	case ANSI_CHARSET:
 	case HANGUL_CHARSET:
@@ -683,6 +684,7 @@ void DxScriptTextObject::SetCharset(BYTE set) {
 		set = ANSI_CHARSET;
 		break;
 	}
+	*/
 	text_.SetFontCharset(set); 
 	bChange_ = true;
 }
@@ -763,18 +765,16 @@ DxSoundObject::DxSoundObject() {
 	typeObject_ = TypeObject::OBJ_SOUND;
 }
 DxSoundObject::~DxSoundObject() {
-	if (player_ == nullptr)return;
+	if (player_ == nullptr) return;
 	player_->Delete();
 }
 bool DxSoundObject::Load(std::wstring path) {
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
 	player_ = manager->GetPlayer(path);
-	if (player_ == nullptr)return false;
-
-	return true;
+	return player_ != nullptr;
 }
 void DxSoundObject::Play() {
-	if (player_ != nullptr)
+	if (player_)
 		player_->Play(style_);
 }
 
@@ -804,8 +804,12 @@ bool DxFileObject::OpenRW(std::wstring path) {
 	bool bDir = File::CreateFileDirectory(dir);
 	if (!bDir) return false;
 
+	//Security; to prevent scripts from being able to access external files
 	std::wstring dirModule = PathProperty::GetModuleDirectory();
-	if (dir.find(dirModule) == std::wstring::npos)return false;
+	if (dir.find(dirModule) == std::wstring::npos) {
+		Logger::WriteTop(StringUtility::Format("DxFileObject: OpenNW cannot open external files. [%s]", path.c_str()));
+		return false;
+	}
 
 	file_ = new File(path);
 	bool res = file_->Open(File::WRITE);
@@ -813,7 +817,7 @@ bool DxFileObject::OpenRW(std::wstring path) {
 	return res;
 }
 void DxFileObject::Close() {
-	if (file_ == nullptr)return;
+	if (file_ == nullptr) return;
 	file_->Close();
 }
 
@@ -847,7 +851,7 @@ bool DxTextFileObject::OpenR(gstd::ref_count_ptr<gstd::FileReader> reader) {
 	reader_ = reader;
 
 	size_t size = reader->GetFileSize();
-	if (size == 0)return true;
+	if (size == 0) return true;
 
 	std::vector<char> text;
 	text.resize(size);
@@ -969,7 +973,7 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 }
 bool DxTextFileObject::Store() {
 	if (isArchived_) return false;
-	if (file_ == nullptr)return false;
+	if (file_ == nullptr) return false;
 
 	file_->SeekWrite(0, std::ios::beg);
 
@@ -1112,7 +1116,7 @@ DxBinaryFileObject::DxBinaryFileObject() {
 DxBinaryFileObject::~DxBinaryFileObject() {}
 bool DxBinaryFileObject::OpenR(std::wstring path) {
 	bool res = DxFileObject::OpenR(path);
-	if (!res)return false;
+	if (!res) return false;
 
 	size_t size = file_->GetSize();
 	buffer_ = new gstd::ByteBuffer();
@@ -1194,8 +1198,7 @@ void DxScriptObjectManager::SetRenderBucketCapacity(size_t capacity) {
 	listShader_.resize(capacity);
 }
 void DxScriptObjectManager::_ArrangeActiveObjectList() {
-	std::list<shared_ptr<DxScriptObjectBase>>::iterator itr;
-	for (itr = listActiveObject_.begin(); itr != listActiveObject_.end();) {
+	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end();) {
 		shared_ptr<DxScriptObjectBase> obj = (*itr);
 		if (obj == nullptr || obj->IsDeleted() || !obj->IsActive())
 			itr = listActiveObject_.erase(itr);
@@ -1267,7 +1270,7 @@ std::vector<int> DxScriptObjectManager::GetValidObjectIdentifier() {
 	return res;
 }
 DxScriptObjectBase* DxScriptObjectManager::GetObjectPointer(int id) {
-	if (id < 0 || id >= obj_.size())return nullptr;
+	if (id < 0 || id >= obj_.size()) return nullptr;
 	return obj_[id].get();
 }
 void DxScriptObjectManager::DeleteObject(int id) {
@@ -1304,7 +1307,7 @@ void DxScriptObjectManager::ClearObject() {
 	}
 }
 shared_ptr<Shader> DxScriptObjectManager::GetShader(int index) {
-	if (index < 0 || index >= listShader_.size())return nullptr;
+	if (index < 0 || index >= listShader_.size()) return nullptr;
 	shared_ptr<Shader> shader = listShader_[index];
 	return shader;
 }
@@ -1318,7 +1321,6 @@ void DxScriptObjectManager::DeleteObjectByScriptID(int64_t idScript) {
 	}
 }
 void DxScriptObjectManager::WorkObject() {
-	std::list<shared_ptr<DxScriptObjectBase>>::iterator itr;
 	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end();) {
 		shared_ptr<DxScriptObjectBase> obj = *itr;
 		if (obj == nullptr || obj->IsDeleted()) {
@@ -1329,10 +1331,9 @@ void DxScriptObjectManager::WorkObject() {
 		++itr;
 	}
 
-//âπê∫çƒê∂
+	//âπê∫çƒê∂
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
-	auto itrSound = mapReservedSound_.begin();
-	for (; itrSound != mapReservedSound_.end(); ++itrSound) {
+	for (auto itrSound = mapReservedSound_.begin(); itrSound != mapReservedSound_.end(); ++itrSound) {
 		gstd::ref_count_ptr<SoundInfo> info = itrSound->second;
 		gstd::ref_count_ptr<SoundPlayer> player = info->player_;
 		SoundPlayer::PlayStyle style = info->style_;
@@ -1360,7 +1361,7 @@ void DxScriptObjectManager::RenderObject() {
 		for (UINT iPass = 0; iPass < cPass; ++iPass) {
 			if (effect) effect->BeginPass(iPass);
 			for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
-				if (DxScriptObjectBase* obj = (*itr).get())
+				if (DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(itr->get()))
 					obj->Render();
 			}
 			if (effect) effect->EndPass();
@@ -1387,8 +1388,7 @@ void DxScriptObjectManager::RenderList::Clear() {
 	std::fill(list.begin(), list.end(), nullptr);
 }
 void DxScriptObjectManager::PrepareRenderObject() {
-	std::list<shared_ptr<DxScriptObjectBase>>::iterator itr;
-	for (itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
+	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
 		shared_ptr<DxScriptObjectBase> obj = (*itr);
 		if (obj == nullptr || obj->IsDeleted()) continue;
 		if (!obj->IsVisible()) continue;

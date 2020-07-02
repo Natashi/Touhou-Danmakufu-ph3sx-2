@@ -68,7 +68,7 @@ D3DCOLOR& ColorAccess::SetColorHSV(D3DCOLOR& color, int hue, int saturation, int
 //DxMath
 **********************************************************/
 bool DxMath::IsIntersected(D3DXVECTOR2& pos, std::vector<D3DXVECTOR2>& list) {
-	if (list.size() <= 2)return false;
+	if (list.size() <= 2) return false;
 
 	bool res = true;
 	for (size_t iPos = 0; iPos < list.size(); ++iPos) {

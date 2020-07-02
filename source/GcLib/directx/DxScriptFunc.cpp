@@ -434,12 +434,24 @@ function const dxFunction[] =
 	{ "BORDER_FULL", constant<DxFont::BORDER_FULL>::func, 0 },
 	{ "BORDER_SHADOW", constant<DxFont::BORDER_SHADOW>::func, 0 },
 
+	/*
 	{ "CHARSET_ANSI", constant<ANSI_CHARSET>::func, 0 },
+	{ "CHARSET_DEFAULT", constant<DEFAULT_CHARSET>::func, 0 },
 	{ "CHARSET_SHIFTJIS", constant<SHIFTJIS_CHARSET>::func, 0 },
 	{ "CHARSET_HANGUL", constant<HANGUL_CHARSET>::func, 0 },
-	{ "CHARSET_ARABIC", constant<ARABIC_CHARSET>::func, 0 },
-	{ "CHARSET_HEBREW", constant<HEBREW_CHARSET>::func, 0 },
-	{ "CHARSET_THAI", constant<THAI_CHARSET>::func, 0 },
+	{ "CHARSET_JOHAB", constant<JOHAB_CHARSET>::func, 0 },
+	{ "CHARSET_GB2312", constant<GB2312_CHARSET>::func, 0 },
+	{ "CHARSET_CHINESEBIG5", constant<CHINESEBIG5_CHARSET>::func, 0 },
+	{ "CHARSET_GREEK", constant<GREEK_CHARSET>::func, 0 },
+	{ "CHARSET_TURKISH", constant<TURKISH_CHARSET>::func, 0 },
+	{ "CHARSET_VIETNAMESE", constant<VIETNAMESE_CHARSET>::func, 0 },
+	{ "CHARSET_", constant<HEBREW_CHARSET>::func, 0 },
+	{ "CHARSET_", constant<ARABIC_CHARSET>::func, 0 },
+	{ "CHARSET_", constant<BALTIC_CHARSET>::func, 0 },
+	{ "CHARSET_", constant<RUSSIAN_CHARSET>::func, 0 },
+	{ "CHARSET_", constant<THAI_CHARSET>::func, 0 },
+	{ "CHARSET_", constant<EASTEUROPE_CHARSET>::func, 0 },
+	*/
 
 	{ "SOUND_BGM", constant<SoundDivision::DIVISION_BGM>::func, 0 },
 	{ "SOUND_SE", constant<SoundDivision::DIVISION_SE>::func, 0 },
@@ -1104,9 +1116,9 @@ gstd::value DxScript::Func_SetFogParam(gstd::script_machine* machine, int argc, 
 	DxScript* script = (DxScript*)machine->data;
 	double start = argv[0].as_real();
 	double end = argv[1].as_real();
-	int r = (int)argv[2].as_real();
-	int g = (int)argv[3].as_real();
-	int b = (int)argv[4].as_real();
+	byte r = ColorAccess::ClampColorRet(argv[2].as_real());
+	byte g = ColorAccess::ClampColorRet(argv[3].as_real());
+	byte b = ColorAccess::ClampColorRet(argv[4].as_real());
 	D3DCOLOR color = D3DCOLOR_ARGB(255, r, g, b);
 	script->GetObjectManager()->SetFogParam(true, color, start, end);
 	return value();
@@ -1207,10 +1219,10 @@ gstd::value DxScript::Func_ClearRenderTargetA2(gstd::script_machine* machine, in
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	shared_ptr<Texture> current = graphics->GetRenderTarget();
 
-	byte cr = (byte)argv[1].as_real();
-	byte cg = (byte)argv[2].as_real();
-	byte cb = (byte)argv[3].as_real();
-	byte ca = (byte)argv[4].as_real();
+	byte ca = ColorAccess::ClampColorRet(argv[1].as_real());
+	byte cr = ColorAccess::ClampColorRet(argv[2].as_real());
+	byte cg = ColorAccess::ClampColorRet(argv[3].as_real());
+	byte cb = ColorAccess::ClampColorRet(argv[4].as_real());
 
 	IDirect3DDevice9* device = graphics->GetDevice();
 	graphics->SetRenderTarget(texture, false);
@@ -1847,7 +1859,7 @@ value DxScript::Func_Obj_SetVisible(script_machine* machine, int argc, const val
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj == nullptr)return value();
+	if (obj == nullptr) return value();
 	obj->bVisible_ = argv[1].as_boolean();
 	return value();
 }
@@ -2171,7 +2183,7 @@ value DxScript::Func_ObjRender_SetColorHSV(script_machine* machine, int argc, co
 		int sat = (int)argv[2].as_real();
 		int val = (int)argv[3].as_real();
 
-		D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255);
+		D3DCOLOR color = 0xffffffff;
 		ColorAccess::SetColorHSV(color, hue, sat, val);
 
 		obj->SetColor((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
@@ -2693,7 +2705,7 @@ gstd::value DxScript::Func_ObjShader_SetFloatArray(gstd::script_machine* machine
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
 			const gstd::value& array = argv[2];
 			type_data::type_kind kind = array.get_type()->get_kind();
-			if (kind != type_data::type_kind::tk_array)return value();
+			if (kind != type_data::type_kind::tk_array) return value();
 
 			size_t dataLength = array.length_as_array();
 			std::vector<FLOAT> listFloat;
@@ -2862,7 +2874,7 @@ value DxScript::Func_ObjPrimitive_SetVertexColorHSV(script_machine* machine, int
 	int id = (int)argv[0].as_real();
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		D3DCOLOR cHSV;
+		D3DCOLOR cHSV = 0xffffffff;
 		ColorAccess::SetColorHSV(cHSV, (int)argv[2].as_real(), (int)argv[3].as_real(), (int)argv[4].as_real());
 		obj->SetVertexColor((int)argv[1].as_real(), (cHSV >> 16) & 0xff, (cHSV >> 8) & 0xff, cHSV & 0xff);
 	}
@@ -3436,9 +3448,9 @@ value DxScript::Func_ObjText_SetFontColorTop(script_machine* machine, int argc, 
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int r = (int)argv[1].as_real();
-		int g = (int)argv[2].as_real();
-		int b = (int)argv[3].as_real();
+		byte r = ColorAccess::ClampColorRet(argv[1].as_real());
+		byte g = ColorAccess::ClampColorRet(argv[2].as_real());
+		byte b = ColorAccess::ClampColorRet(argv[3].as_real());
 		obj->SetFontColorTop(r, g, b);
 	}
 	return value();
@@ -3448,9 +3460,9 @@ value DxScript::Func_ObjText_SetFontColorBottom(script_machine* machine, int arg
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int r = (int)argv[1].as_real();
-		int g = (int)argv[2].as_real();
-		int b = (int)argv[3].as_real();
+		byte r = ColorAccess::ClampColorRet(argv[1].as_real());
+		byte g = ColorAccess::ClampColorRet(argv[2].as_real());
+		byte b = ColorAccess::ClampColorRet(argv[3].as_real());
 		obj->SetFontColorBottom(r, g, b);
 	}
 	return value();
@@ -3480,9 +3492,9 @@ value DxScript::Func_ObjText_SetFontBorderColor(script_machine* machine, int arg
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int r = (int)argv[1].as_real();
-		int g = (int)argv[2].as_real();
-		int b = (int)argv[3].as_real();
+		byte r = ColorAccess::ClampColorRet(argv[1].as_real());
+		byte g = ColorAccess::ClampColorRet(argv[2].as_real());
+		byte b = ColorAccess::ClampColorRet(argv[3].as_real());
 		obj->SetFontBorderColor(r, g, b);
 	}
 	return value();
@@ -3493,8 +3505,7 @@ value DxScript::Func_ObjText_SetFontCharacterSet(script_machine* machine, int ar
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		int cSet = (int)(argv[1].as_real() + 0.01);
-		if (cSet < 0) cSet = 0;
-		else if (cSet > 0xff) cSet = 0xff;
+		ColorAccess::ClampColor(cSet);	//Also clamps to [0-255], so it works too
 		obj->SetCharset((BYTE)cSet);
 	}
 	return value();
@@ -3544,10 +3555,10 @@ value DxScript::Func_ObjText_SetVertexColor(script_machine* machine, int argc, c
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int a = (int)argv[1].as_real();
-		int r = (int)argv[2].as_real();
-		int g = (int)argv[3].as_real();
-		int b = (int)argv[4].as_real();
+		byte a = ColorAccess::ClampColorRet(argv[1].as_real());
+		byte r = ColorAccess::ClampColorRet(argv[2].as_real());
+		byte g = ColorAccess::ClampColorRet(argv[3].as_real());
+		byte b = ColorAccess::ClampColorRet(argv[4].as_real());
 		obj->SetVertexColor(D3DCOLOR_ARGB(a, r, g, b));
 	}
 	return value();
@@ -3567,10 +3578,8 @@ gstd::value DxScript::Func_ObjText_SetAutoTransCenter(gstd::script_machine* mach
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		bool bAutoCenter = argv[1].as_boolean();
-		obj->bAutoCenter_ = bAutoCenter;
-	}
+	if (obj)
+		obj->bAutoCenter_ = argv[1].as_boolean();
 	return value();
 }
 gstd::value DxScript::Func_ObjText_SetHorizontalAlignment(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -3587,10 +3596,8 @@ gstd::value DxScript::Func_ObjText_SetSyntacticAnalysis(gstd::script_machine* ma
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		bool bEnable = argv[1].as_boolean();
-		obj->SetSyntacticAnalysis(bEnable);
-	}
+	if (obj)
+		obj->SetSyntacticAnalysis(argv[1].as_boolean());
 	return value();
 }
 value DxScript::Func_ObjText_GetTextLength(script_machine* machine, int argc, const value* argv) {
@@ -4054,7 +4061,7 @@ gstd::value DxScript::Func_ObjFileT_SplitLineText(gstd::script_machine* machine,
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxTextFileObject* obj = dynamic_cast<DxTextFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr)return value(machine->get_engine()->get_string_type(), std::wstring());
+	if (obj == nullptr) return value(machine->get_engine()->get_string_type(), std::wstring());
 
 	int pos = (int)argv[1].as_real();
 	std::wstring delim = argv[2].as_string();
@@ -4143,7 +4150,7 @@ gstd::value DxScript::Func_ObjFileB_ReadByte(gstd::script_machine* machine, int 
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr)return script->CreateRealValue(0);
+	if (obj == nullptr) return script->CreateRealValue(0);
 	if (!obj->IsReadableSize(1))
 		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
