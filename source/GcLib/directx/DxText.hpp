@@ -56,18 +56,20 @@ namespace directx {
 	**********************************************************/
 	class DxCharGlyph {
 		shared_ptr<Texture> texture_;
-		int code_;
+		UINT code_;
 		DxFont* font_;
 
+		GLYPHMETRICS glpMet_;
 		POINT size_;
 		POINT sizeMax_;
 	public:
 		DxCharGlyph();
 		virtual ~DxCharGlyph();
-		bool Create(int code, gstd::Font& winFont, DxFont* dxFont);
+		bool Create(UINT code, gstd::Font& winFont, DxFont* dxFont);
 		shared_ptr<Texture> GetTexture() { return texture_; }
 		POINT& GetSize() { return size_; }
 		POINT& GetMaxSize() { return sizeMax_; }
+		GLYPHMETRICS* GetGM() { return &glpMet_; }
 		LOGFONT& GetInfo() { return font_->GetLogFont(); }
 	};
 
@@ -83,7 +85,7 @@ namespace directx {
 		int code_;
 		DxFont font_;
 	public:
-		bool operator ==(const DxCharCacheKey& key)const {
+		bool operator ==(const DxCharCacheKey& key) const {
 			bool res = true;
 			res &= (code_ == key.code_);
 			res &= (font_.colorTop_ == key.font_.colorTop_);
@@ -91,15 +93,15 @@ namespace directx {
 			res &= (font_.typeBorder_ == key.font_.typeBorder_);
 			res &= (font_.widthBorder_ == key.font_.widthBorder_);
 			res &= (font_.colorBorder_ == key.font_.colorBorder_);
-			if (!res)return res;
+			if (!res) return res;
 			res &= (memcmp(&key.font_.info_, &font_.info_, sizeof(LOGFONT)) == 0);
 			return res;
 		}
-		bool operator<(const DxCharCacheKey& key)const {
+		bool operator<(const DxCharCacheKey& key) const {
 			if (code_ != key.code_) return code_ < key.code_;
 			if (font_.colorTop_ != key.font_.colorTop_) return font_.colorTop_ < key.font_.colorTop_;
 			if (font_.colorBottom_ != key.font_.colorBottom_) return font_.colorBottom_ < key.font_.colorBottom_;
-			//if(font_.typeBorder_ != key.font_.typeBorder_)return (font_.typeBorder_ != key.font_.typeBorder_ );
+			if(font_.typeBorder_ != key.font_.typeBorder_) return (font_.typeBorder_ != key.font_.typeBorder_ );
 			if (font_.widthBorder_ != key.font_.widthBorder_) return font_.widthBorder_ < key.font_.widthBorder_;
 			if (font_.colorBorder_ != key.font_.colorBorder_) return font_.colorBorder_ < key.font_.colorBorder_;
 			return (memcmp(&key.font_.info_, &font_.info_, sizeof(LOGFONT)) < 0);
@@ -270,7 +272,7 @@ namespace directx {
 		int width_;
 		int height_;
 		int sidePitch_;
-		std::vector<int> code_;
+		std::vector<UINT> code_;
 		std::vector<shared_ptr<DxTextTag>> tag_;
 	public:
 		DxTextLine() { width_ = 0; height_ = 0; sidePitch_ = 0; }
@@ -279,10 +281,10 @@ namespace directx {
 		int GetHeight() { return height_; }
 		int GetSidePitch() { return sidePitch_; }
 		void SetSidePitch(int pitch) { sidePitch_ = pitch; }
-		std::vector<int>& GetTextCodes() { return code_; }
-		int GetTextCodeCount() { return code_.size(); }
-		int GetTagCount() { return tag_.size(); }
-		shared_ptr<DxTextTag> GetTag(int index) { return tag_[index]; }
+		std::vector<UINT>& GetTextCodes() { return code_; }
+		size_t GetTextCodeCount() { return code_.size(); }
+		size_t GetTagCount() { return tag_.size(); }
+		shared_ptr<DxTextTag> GetTag(size_t index) { return tag_[index]; }
 	};
 	class DxTextInfo {
 		friend DxTextRenderer;
@@ -492,31 +494,6 @@ namespace directx {
 		shared_ptr<Shader> GetShader() { return shader_; }
 		void SetShader(shared_ptr<Shader> shader) { shader_ = shader; }
 	};
-
-	/**********************************************************
-	//DxTextStepper
-	**********************************************************/
-	class DxTextStepper {
-	protected:
-		int posNext_;
-		std::wstring text_;
-		std::wstring source_;
-		int framePerSec_;
-		int countNextPerFrame_;
-		double countFrame_;
-		void _Next();
-	public:
-		DxTextStepper();
-		virtual ~DxTextStepper();
-		void Clear();
-
-		std::wstring GetText() { return text_; }
-		void Next();
-		void NextSkip();
-		bool HasNext();
-		void SetSource(std::wstring text);
-	};
-
 }
 
 #endif

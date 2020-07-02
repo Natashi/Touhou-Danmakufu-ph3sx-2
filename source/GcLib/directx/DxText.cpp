@@ -31,7 +31,7 @@ DxCharGlyph::DxCharGlyph() {
 }
 DxCharGlyph::~DxCharGlyph() {}
 
-bool DxCharGlyph::Create(int code, Font& winFont, DxFont* dxFont) {
+bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 	code_ = code;
 	font_ = dxFont;
 
@@ -51,61 +51,68 @@ bool DxCharGlyph::Create(int code, Font& winFont, DxFont* dxFont) {
 	// フォントビットマップ取得
 	TEXTMETRIC tm;
 	::GetTextMetrics(hDC, &tm);
-	GLYPHMETRICS gm;
-	CONST MAT2 mat = { { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 1 } };
-	UINT uFormat = GGO_GRAY2_BITMAP;	//typeBorder == DxFont::BORDER_FULL ? GGO_BITMAP : GGO_GRAY2_BITMAP;
 
+	UINT uFormat = GGO_GRAY2_BITMAP;	//typeBorder == DxFont::BORDER_FULL ? GGO_BITMAP : GGO_GRAY2_BITMAP;
 	if (dxFont->GetLogFont().lfHeight <= 12)
 		uFormat = GGO_BITMAP;
-	DWORD size = ::GetGlyphOutline(hDC, code, uFormat, &gm, 0, nullptr, &mat);
+
+	const MAT2 mat = { { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 1 } };
+	DWORD size = ::GetGlyphOutline(hDC, code, uFormat, &glpMet_, 0, nullptr, &mat);
+
+	UINT iBmp_w = uFormat != GGO_BITMAP ? glpMet_.gmBlackBoxX + (4 - (glpMet_.gmBlackBoxX % 4)) % 4 : glpMet_.gmBlackBoxX;
+	UINT iBmp_h = glpMet_.gmBlackBoxY;
+	LONG level = 5;		//GGO_GRAY4_BITMAP;
+
+	size_.x = glpMet_.gmCellIncX + widthBorder * 2;
+	size_.y = tm.tmHeight + widthBorder * 2;
+
+	float iBmp_h_inv = 1 / (float)iBmp_h;
+	LONG glyphOriginX = glpMet_.gmptGlyphOrigin.x;
+	LONG glyphOriginY = tm.tmAscent - glpMet_.gmptGlyphOrigin.y;
+	sizeMax_.x = iBmp_w + widthBorder * 2 + glyphOriginX + (tm.tmItalic ? tm.tmOverhang : 0);
+	sizeMax_.y = iBmp_h + widthBorder * 2 + glyphOriginY;
+
+	UINT widthTexture = 1;
+	UINT heightTexture = 1;
+	while (widthTexture < sizeMax_.x) {
+		widthTexture = widthTexture << 1;
+		if (widthTexture >= 0x4000u) return false;
+	}
+	while (heightTexture < sizeMax_.y) {
+		heightTexture = heightTexture << 1;
+		if (heightTexture >= 0x4000u) return false;
+	}
+
+	//if (sizeMax_.x > widthTexture) sizeMax_.x = widthTexture;
+	//if (sizeMax_.y > heightTexture) sizeMax_.y = heightTexture;
+
+	IDirect3DTexture9* pTexture = nullptr;
+	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
+	HRESULT hr = device->CreateTexture(widthTexture, heightTexture, 1, 
+		D3DPOOL_DEFAULT, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
+	if (FAILED(hr)) return false;
+
+	//RECT lockingRect = { 0, 0, sizeMax_.x, sizeMax_.y };
+	D3DLOCKED_RECT lock;
+	if (FAILED(pTexture->LockRect(0, &lock, nullptr, D3DLOCK_DISCARD))) {
+		ptr_release(pTexture);
+		return false;
+	}
 
 	BYTE* ptr = new BYTE[size];
-	::GetGlyphOutline(hDC, code, uFormat, &gm, size, ptr, &mat);
+	::GetGlyphOutline(hDC, code, uFormat, &glpMet_, size, ptr, &mat);
 
 	// デバイスコンテキストとフォントハンドルの解放
 	::SelectObject(hDC, oldFont);
 	::ReleaseDC(nullptr, hDC);
 
-	//テクスチャ作成
-	size_.x = gm.gmCellIncX + widthBorder * 2;
-	size_.y = tm.tmHeight + widthBorder * 2;
-	UINT widthTexture = 1;
-	UINT heightTexture = 1;
-	while (widthTexture < size_.x) {
-		widthTexture = widthTexture << 1;
-	}
-	while (heightTexture < size_.y) {
-		heightTexture = heightTexture << 1;
-	}
-
-	IDirect3DTexture9* pTexture = nullptr;
-	HRESULT hr = DirectGraphics::GetBase()->GetDevice()->CreateTexture(
-		widthTexture, heightTexture,
-		1, D3DPOOL_DEFAULT, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
-	if (FAILED(hr))return false;
-
-	D3DLOCKED_RECT lock;
-	if (FAILED(pTexture->LockRect(0, &lock, nullptr, D3DLOCK_DISCARD))) {
-		return false;
-	}
-
-	LONG glyphOriginX = gm.gmptGlyphOrigin.x;
-	LONG glyphOriginY = tm.tmAscent - gm.gmptGlyphOrigin.y;
-	UINT iBmp_w = uFormat != GGO_BITMAP ? gm.gmBlackBoxX + (4 - (gm.gmBlackBoxX % 4)) % 4 : gm.gmBlackBoxX;
-	UINT iBmp_h = gm.gmBlackBoxY;
-	LONG level = 5;//GGO_GRAY4_BITMAP;
-	FillMemory(lock.pBits, lock.Pitch * tm.tmHeight, 0);
-
-	float iBmp_h_inv = 1.0 / (float)iBmp_h;
-
-	sizeMax_.x = std::min((LONG)(iBmp_w + glyphOriginX + widthBorder * 2), (LONG)widthTexture);
-	sizeMax_.y = std::min((LONG)(iBmp_h + glyphOriginY + widthBorder * 2), (LONG)heightTexture);
+	FillMemory(lock.pBits, lock.Pitch * sizeMax_.y, 0);
 
 	if (size > 0) {
 #pragma omp for
 		for (LONG iy = 0; iy < sizeMax_.y; ++iy) {
 			LONG yBmp = iy - glyphOriginY - widthBorder;
-			
+
 			float iRateY = yBmp * iBmp_h_inv;
 			short colorR = Math::Lerp::Linear(colorTop[1], colorBottom[1], iRateY);
 			short colorG = Math::Lerp::Linear(colorTop[2], colorBottom[2], iRateY);
@@ -124,13 +131,15 @@ bool DxCharGlyph::Create(int code, Font& winFont, DxFont* dxFont) {
 					if (xBmp >= 0 && xBmp < iBmp_w && yBmp >= 0 && yBmp < iBmp_h) {
 						UINT lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
 						LONG posBmp = xBmp / 8 + lineByte * yBmp;
-						alpha = BitAccess::GetBit(ptr[posBmp], 7 - xBmp % 8) ? 255 : 0;
+						alpha = ((ptr[posBmp] >> (7 - xBmp % 8)) & 0b1) ? 255 : 0;
 					}
 					else alpha = 0;
 				}
 
 				D3DCOLOR color = 0x00000000;
+
 				if (typeBorder != DxFont::BORDER_NONE && alpha != 255) {
+					//Generate borders
 					if (alpha == 0) {
 						size_t count = 0;
 						LONG antiDist = 0;
@@ -140,7 +149,7 @@ bool DxCharGlyph::Create(int code, Font& winFont, DxFont* dxFont) {
 						for (LONG ax = xBmp - widthBorder - antiDist; ax <= bx; ++ax) {
 							for (LONG ay = yBmp - widthBorder - antiDist; ay <= by; ++ay) {
 								LONG dist = abs(ax - xBmp) + abs(ay - yBmp);
-								if (dist > widthBorder + antiDist || dist == 0)continue;
+								if (dist > widthBorder + antiDist || dist == 0) continue;
 
 								LONG tAlpha = 255;
 								if (uFormat != GGO_BITMAP) {
@@ -151,7 +160,7 @@ bool DxCharGlyph::Create(int code, Font& winFont, DxFont* dxFont) {
 									if (ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h) {
 										UINT lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
 										LONG tPos = ax / 8 + lineByte * ay;
-										tAlpha = BitAccess::GetBit(ptr[tPos], 7 - ax % 8) ? 255 : 0;
+										tAlpha = ((ptr[tPos] >> (7 - ax % 8)) & 0b1) ? 255 : 0;
 									}
 									else tAlpha = 0;
 								}
@@ -196,7 +205,7 @@ bool DxCharGlyph::Create(int code, Font& winFont, DxFont* dxFont) {
 									if (ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h) {
 										UINT lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
 										LONG tPos = ax / 8 + lineByte * ay;
-										tAlpha = BitAccess::GetBit(ptr[tPos], 7 - ax % 8) ? 255 : 0;
+										tAlpha = ((ptr[tPos] >> (7 - ax % 8)) & 0b1) ? 255 : 0;
 									}
 									else tAlpha = 0;
 								}
@@ -208,9 +217,9 @@ bool DxCharGlyph::Create(int code, Font& winFont, DxFont* dxFont) {
 
 						{
 							LONG bAlpha = 255 - oAlpha;
-							int c_r = colorR * oAlpha / 255 + colorBorder[1] * bAlpha / 255;
-							int c_g = colorG * oAlpha / 255 + colorBorder[2] * bAlpha / 255;
-							int c_b = colorB * oAlpha / 255 + colorBorder[3] * bAlpha / 255;
+							short c_r = colorR * oAlpha / 255 + colorBorder[1] * bAlpha / 255;
+							short c_g = colorG * oAlpha / 255 + colorBorder[2] * bAlpha / 255;
+							short c_b = colorB * oAlpha / 255 + colorBorder[3] * bAlpha / 255;
 							ColorAccess::ClampColor(c_r);
 							ColorAccess::ClampColor(c_g);
 							ColorAccess::ClampColor(c_b);
@@ -222,6 +231,7 @@ bool DxCharGlyph::Create(int code, Font& winFont, DxFont* dxFont) {
 					if (typeBorder != DxFont::BORDER_NONE && alpha > 0) alpha = 255;
 					color = (D3DCOLOR_XRGB(colorR, colorG, colorB) & 0x00ffffff) | (alpha << 24);
 				}
+
 				memcpy((BYTE*)lock.pBits + lock.Pitch * iy + 4 * ix, &color, sizeof(D3DCOLOR));
 			}
 		}
@@ -316,8 +326,8 @@ void DxCharCache::AddChar(DxCharCacheKey& key, shared_ptr<DxCharGlyph> value) {
 /**********************************************************
 //DxTextScanner
 **********************************************************/
-const DxTextToken::Type DxTextScanner::TOKEN_TAG_START = DxTextToken::TK_OPENB;
-const DxTextToken::Type DxTextScanner::TOKEN_TAG_END = DxTextToken::TK_CLOSEB;
+const DxTextToken::Type DxTextScanner::TOKEN_TAG_START = DxTextToken::Type::TK_OPENB;
+const DxTextToken::Type DxTextScanner::TOKEN_TAG_END = DxTextToken::Type::TK_CLOSEB;
 const std::wstring DxTextScanner::TAG_START = L"[";
 const std::wstring DxTextScanner::TAG_END = L"]";
 const std::wstring DxTextScanner::TAG_NEW_LINE = L"r";
@@ -475,11 +485,11 @@ DxTextToken& DxTextScanner::Next() {
 
 	wchar_t ch = *pointer_;
 	if (ch == L'\0') {
-		token_ = DxTextToken(DxTextToken::TK_EOF, L"\0");
+		token_ = DxTextToken(DxTextToken::Type::TK_EOF, L"\0");
 		return token_;
 	}
 
-	DxTextToken::Type type = DxTextToken::TK_UNKNOWN;
+	DxTextToken::Type type = DxTextToken::Type::TK_UNKNOWN;
 	std::vector<wchar_t>::iterator posStart = pointer_;//先頭を保存
 
 	if (_IsTextStartSign()) {
@@ -492,31 +502,31 @@ DxTextToken& DxTextScanner::Next() {
 
 		ch = *pointer_;
 
-		type = DxTextToken::TK_TEXT;
+		type = DxTextToken::Type::TK_TEXT;
 		std::wstring text = std::wstring(posStart, pointer_);
 		text = StringUtility::ReplaceAll(text, L"\\", L"");
 		token_ = DxTextToken(type, text);
 	}
 	else {
 		switch (ch) {
-		case L'\0': type = DxTextToken::TK_EOF; break;//終端
-		case L',': _NextChar(); type = DxTextToken::TK_COMMA;  break;
-		case L'=': _NextChar(); type = DxTextToken::TK_EQUAL;  break;
-		case L'(': _NextChar(); type = DxTextToken::TK_OPENP; break;
-		case L')': _NextChar(); type = DxTextToken::TK_CLOSEP; break;
-		case L'[': _NextChar(); type = DxTextToken::TK_OPENB; break;
-		case L']': _NextChar(); type = DxTextToken::TK_CLOSEB; break;
-		case L'{': _NextChar(); type = DxTextToken::TK_OPENC; break;
-		case L'}': _NextChar(); type = DxTextToken::TK_CLOSEC; break;
-		case L'*': _NextChar(); type = DxTextToken::TK_ASTERISK; break;
-		case L'/': _NextChar(); type = DxTextToken::TK_SLASH; break;
-		case L':': _NextChar(); type = DxTextToken::TK_COLON; break;
-		case L';': _NextChar(); type = DxTextToken::TK_SEMICOLON; break;
-		case L'~': _NextChar(); type = DxTextToken::TK_TILDE; break;
-		case L'!': _NextChar(); type = DxTextToken::TK_EXCLAMATION; break;
-		case L'#': _NextChar(); type = DxTextToken::TK_SHARP; break;
-		case L'<': _NextChar(); type = DxTextToken::TK_LESS; break;
-		case L'>': _NextChar(); type = DxTextToken::TK_GREATER; break;
+		case L'\0': type = DxTextToken::Type::TK_EOF; break;//終端
+		case L',': _NextChar(); type = DxTextToken::Type::TK_COMMA;  break;
+		case L'=': _NextChar(); type = DxTextToken::Type::TK_EQUAL;  break;
+		case L'(': _NextChar(); type = DxTextToken::Type::TK_OPENP; break;
+		case L')': _NextChar(); type = DxTextToken::Type::TK_CLOSEP; break;
+		case L'[': _NextChar(); type = DxTextToken::Type::TK_OPENB; break;
+		case L']': _NextChar(); type = DxTextToken::Type::TK_CLOSEB; break;
+		case L'{': _NextChar(); type = DxTextToken::Type::TK_OPENC; break;
+		case L'}': _NextChar(); type = DxTextToken::Type::TK_CLOSEC; break;
+		case L'*': _NextChar(); type = DxTextToken::Type::TK_ASTERISK; break;
+		case L'/': _NextChar(); type = DxTextToken::Type::TK_SLASH; break;
+		case L':': _NextChar(); type = DxTextToken::Type::TK_COLON; break;
+		case L';': _NextChar(); type = DxTextToken::Type::TK_SEMICOLON; break;
+		case L'~': _NextChar(); type = DxTextToken::Type::TK_TILDE; break;
+		case L'!': _NextChar(); type = DxTextToken::Type::TK_EXCLAMATION; break;
+		case L'#': _NextChar(); type = DxTextToken::Type::TK_SHARP; break;
+		case L'<': _NextChar(); type = DxTextToken::Type::TK_LESS; break;
+		case L'>': _NextChar(); type = DxTextToken::Type::TK_GREATER; break;
 
 		case L'\"':
 		{
@@ -532,7 +542,7 @@ DxTextToken& DxTextScanner::Next() {
 				_NextChar();
 			else 
 				_RaiseError(L"Next(Text): Unexpected end-of-file while parsing string.");
-			type = DxTextToken::TK_STRING;
+			type = DxTextToken::Type::TK_STRING;
 			break;
 		}
 
@@ -540,18 +550,18 @@ DxTextToken& DxTextScanner::Next() {
 		case L'\n'://改行
 			//改行がいつまでも続くようなのも1つの改行として扱う
 			while (ch == L'\r' || ch == L'\n') ch = _NextChar();
-			type = DxTextToken::TK_NEWLINE;
+			type = DxTextToken::Type::TK_NEWLINE;
 			break;
 
 		case L'+':
 		case L'-':
 		{
 			if (ch == L'+') {
-				ch = _NextChar(); type = DxTextToken::TK_PLUS;
+				ch = _NextChar(); type = DxTextToken::Type::TK_PLUS;
 
 			}
 			else if (ch == L'-') {
-				ch = _NextChar(); type = DxTextToken::TK_MINUS;
+				ch = _NextChar(); type = DxTextToken::Type::TK_MINUS;
 			}
 
 			if (!iswdigit(ch)) break;//次が数字でないなら抜ける
@@ -563,12 +573,12 @@ DxTextToken& DxTextScanner::Next() {
 			if (iswdigit(ch)) {
 				//整数か実数
 				while (iswdigit(ch))ch = _NextChar();//数字だけの間ポインタを進める
-				type = DxTextToken::TK_INT;
+				type = DxTextToken::Type::TK_INT;
 				if (ch == L'.') {
 					//実数か整数かを調べる。小数点があったら実数
 					ch = _NextChar();
 					while (iswdigit(ch))ch = _NextChar();//数字だけの間ポインタを進める
-					type = DxTextToken::TK_REAL;
+					type = DxTextToken::Type::TK_REAL;
 				}
 
 				if (ch == L'E' || ch == L'e') {
@@ -576,18 +586,18 @@ DxTextToken& DxTextScanner::Next() {
 					std::vector<wchar_t>::iterator pos = pointer_;
 					ch = _NextChar();
 					while (iswdigit(ch) || ch == L'-')ch = _NextChar();//数字だけの間ポインタを進める
-					type = DxTextToken::TK_REAL;
+					type = DxTextToken::Type::TK_REAL;
 				}
 
 			}
 			else if (iswalpha(ch) || ch == L'_') {
 				//たぶん識別子
 				while (iswalpha(ch) || iswdigit(ch) || ch == L'_')ch = _NextChar();//たぶん識別子な間ポインタを進める
-				type = DxTextToken::TK_ID;
+				type = DxTextToken::Type::TK_ID;
 			}
 			else {
 				_NextChar();
-				type = DxTextToken::TK_UNKNOWN;
+				type = DxTextToken::Type::TK_UNKNOWN;
 			}
 			break;
 		}
@@ -595,7 +605,7 @@ DxTextToken& DxTextScanner::Next() {
 		if (type == DxTextScanner::TOKEN_TAG_START) bTagScan_ = true;
 		else if (type == DxTextScanner::TOKEN_TAG_END) bTagScan_ = false;
 
-		if (type == DxTextToken::TK_STRING) {
+		if (type == DxTextToken::Type::TK_STRING) {
 			//\を除去
 			std::wstring tmpStr(posStart, pointer_);
 			std::wstring str = StringUtility::ReplaceAll(tmpStr, L"\\\"", L"\"");
@@ -610,7 +620,7 @@ DxTextToken& DxTextScanner::Next() {
 	return token_;
 }
 bool DxTextScanner::HasNext() {
-	return pointer_ != buffer_.end() && *pointer_ != L'\0' && token_.GetType() != DxTextToken::TK_EOF;
+	return pointer_ != buffer_.end() && *pointer_ != L'\0' && token_.GetType() != DxTextToken::Type::TK_EOF;
 }
 void DxTextScanner::CheckType(DxTextToken& tok, int type) {
 	if (tok.type_ != type) {
@@ -619,7 +629,7 @@ void DxTextScanner::CheckType(DxTextToken& tok, int type) {
 	}
 }
 void DxTextScanner::CheckIdentifer(DxTextToken& tok, std::wstring id) {
-	if (tok.type_ != DxTextToken::TK_ID || tok.GetIdentifier() != id) {
+	if (tok.type_ != DxTextToken::Type::TK_ID || tok.GetIdentifier() != id) {
 		std::wstring str = StringUtility::Format(L"CheckID error[%s]:", tok.element_.c_str());
 		_RaiseError(str);
 	}
@@ -911,7 +921,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 			DxTextToken& tok = scan.Next();
 			DxTextToken::Type typeToken = tok.GetType();
-			if (typeToken == DxTextToken::TK_TEXT) {
+			if (typeToken == DxTextToken::Type::TK_TEXT) {
 				std::wstring text = tok.GetElement();
 				text = _ReplaceRenderText(text);
 				if (text.size() == 0 || text == L"") continue;
@@ -949,17 +959,17 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END) break;
 						std::wstring str = tok.GetElement();
 						if (str == L"rb") {
-							scan.CheckType(scan.Next(), DxTextToken::TK_EQUAL);
+							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
 							std::wstring text = scan.Next().GetString();
 							tag->SetText(text);
 						}
 						else if (str == L"rt") {
-							scan.CheckType(scan.Next(), DxTextToken::TK_EQUAL);
+							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
 							std::wstring text = scan.Next().GetString();
 							tag->SetRuby(text);
 						}
 						else if (str == L"wg") {
-							scan.CheckType(scan.Next(), DxTextToken::TK_EQUAL);
+							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
 							weightRuby = scan.Next().GetInteger();
 						}
 					}
@@ -1015,13 +1025,13 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					while (true) {
 						tok = scan.Next();
 						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END) break;
-						//else if (tok.GetType() == DxTextToken::TK_COMMA) break;
+						//else if (tok.GetType() == DxTextToken::Type::TK_COMMA) break;
 						std::wstring str = tok.GetElement();
 						if (str == L"reset") {
 							bClear = true;
 						}
 						else {
-							scan.CheckType(scan.Next(), DxTextToken::TK_EQUAL);
+							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
 							DxTextToken& arg = scan.Next();
 							if (str == L"size") {
 								logFont.lfHeight = arg.GetInteger();
@@ -1209,7 +1219,7 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 		}
 
 		//文字コード
-		int code = textLine->code_[iCode];
+		UINT code = textLine->code_[iCode];
 
 		//キャッシュに存在するか確認
 		keyFont.code_ = code;
@@ -1352,7 +1362,7 @@ bool DxTextRenderer::AddFontFromFile(std::wstring path) {
 	buf.SetSize(size);
 	reader->Read(buf.GetPointer(), size);
 
-	DWORD  count = 0;
+	DWORD count = 0;
 	HANDLE handle = ::AddFontMemResourceEx(buf.GetPointer(), size, nullptr, &count);
 
 	Logger::WriteTop(StringUtility::Format(L"AddFontFromFile: Font loaded. [%s]", path.c_str()));
@@ -1413,17 +1423,13 @@ void DxText::Copy(const DxText& src) {
 	text_ = src.text_;
 }
 void DxText::SetFontType(const wchar_t* type) {
-	LOGFONT info = dxFont_.GetLogFont();
+	LOGFONT& info = dxFont_.GetLogFont();
 	lstrcpy(info.lfFaceName, type);
-	info.lfCharSet = DEFAULT_CHARSET;
 
-	for (int i = 0; i < (int)wcslen(type); i++) {
-		if (!(IsCharAlphaNumeric(type[i]) || type[i] == L' ' || type[i] == L'-')) {
-			info.lfCharSet = SHIFTJIS_CHARSET;
-			break;
-		}
+	if (std::regex_match(type, std::wregex(L"[^a-zA-Z0-9\s-]"))) {
+		info.lfCharSet = SHIFTJIS_CHARSET;
 	}
-	SetFont(info);
+	else info.lfCharSet = DEFAULT_CHARSET;
 }
 void DxText::Render() {
 	DxTextRenderer* renderer = DxTextRenderer::GetBase();
@@ -1465,60 +1471,4 @@ shared_ptr<DxTextRenderObject> DxText::CreateRenderObject(shared_ptr<DxTextInfo>
 		renderer->SetVertexColor(colorVertex_);
 		return renderer->CreateRenderObject(this, textInfo);
 	}
-}
-
-/**********************************************************
-//DxTextStepper
-**********************************************************/
-DxTextStepper::DxTextStepper() {
-	posNext_ = 0;
-	framePerSec_ = 60;
-	countNextPerFrame_ = 60;
-	countFrame_ = 0;
-	Clear();
-}
-DxTextStepper::~DxTextStepper() {}
-void DxTextStepper::Clear() {
-	posNext_ = 0;
-	text_ = L"";
-	source_ = L"";
-}
-void DxTextStepper::_Next() {
-	if (!HasNext())return;
-
-	if (source_[posNext_] == DxTextScanner::TAG_START[0]) {
-		text_ += source_[posNext_];
-		posNext_++;
-		while (true) {
-			bool bBreak = (source_[posNext_] == DxTextScanner::TAG_END[0]);
-			text_ += source_[posNext_];
-			posNext_++;
-			if (bBreak)break;
-		}
-	}
-	else {
-		text_ += source_[posNext_];
-		posNext_++;
-	}
-}
-void DxTextStepper::Next() {
-	double ratioFrame = (double)countNextPerFrame_ / (double)framePerSec_;
-	int lastCountFrame = (int)countFrame_;
-	countFrame_ += ratioFrame;
-	while (true) {
-		if (countFrame_ < 1.0)break;
-		countFrame_ -= 1.0;
-		_Next();
-	}
-}
-void DxTextStepper::NextSkip() {
-	while (HasNext())_Next();
-}
-bool DxTextStepper::HasNext() {
-	return posNext_ < source_.size();
-}
-void DxTextStepper::SetSource(std::wstring text) {
-	posNext_ = 0;
-	source_ = text;
-	//	text_ = "";
 }
