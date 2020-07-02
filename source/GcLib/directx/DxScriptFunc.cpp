@@ -978,12 +978,12 @@ gstd::value DxScript::Func_SetVirtualKeyState(gstd::script_machine* machine, int
 //DxŠÖ”F•`‰æŒn
 gstd::value DxScript::Func_GetScreenWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	int res = graphics->GetScreenWidth();
+	LONG res = graphics->GetScreenWidth();
 	return DxScript::CreateRealValue(res);
 }
 gstd::value DxScript::Func_GetScreenHeight(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	int res = graphics->GetScreenHeight();
+	LONG res = graphics->GetScreenHeight();
 	return DxScript::CreateRealValue(res);
 }
 value DxScript::Func_LoadTexture(script_machine* machine, int argc, const value* argv) {
@@ -2338,9 +2338,9 @@ value DxScript::Func_ObjRender_SetRalativeObject(script_machine* machine, int ar
 	if (obj) {
 		int idRelative = (int)argv[1].as_real();
 		std::wstring nameBone = argv[2].as_string();
-		DxScriptObjectBase* objRelative = dynamic_cast<DxScriptObjectBase*>(script->GetObjectPointer(idRelative));
+		auto objRelative = std::dynamic_pointer_cast<DxScriptRenderObject>(script->GetObject(idRelative));
 		if (objRelative)
-			obj->SetRelativeObject(idRelative, nameBone);
+			obj->SetRelativeObject(objRelative, nameBone);
 	}
 	return value();
 }

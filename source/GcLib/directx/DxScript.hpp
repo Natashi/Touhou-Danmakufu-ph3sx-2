@@ -130,7 +130,7 @@ namespace directx {
 		D3DTEXTUREFILTERTYPE filterMip_;
 		bool bVertexShaderMode_;
 
-		int idRelative_;
+		weak_ptr<DxScriptRenderObject> objRelative_;
 		std::wstring nameRelativeBone_;
 	public:
 		DxScriptRenderObject();
@@ -162,7 +162,10 @@ namespace directx {
 
 		void SetBlendType(BlendMode type) { typeBlend_ = type; }
 		BlendMode GetBlendType() { return typeBlend_; }
-		void SetRelativeObject(int id, std::wstring bone) { idRelative_ = id; nameRelativeBone_ = bone; }
+		void SetRelativeObject(weak_ptr<DxScriptRenderObject> id, std::wstring bone) {
+			objRelative_ = id; 
+			nameRelativeBone_ = bone; 
+		}
 
 		virtual shared_ptr<Shader> GetShader() { return nullptr; }
 		virtual void SetShader(shared_ptr<Shader> shader) {}
@@ -200,7 +203,7 @@ namespace directx {
 		DxScriptPrimitiveObject();
 
 		virtual DirectionalLightingState* GetLightPointer() { return objRender_->GetLighting(); }
-		RenderObject* GetObjectPointer() { return (RenderObject*)objRender_.get(); }
+		RenderObject* GetObjectPointer() { return objRender_.get(); }
 
 		void SetPrimitiveType(D3DPRIMITIVETYPE type) { objRender_->SetPrimitiveType(type); }
 		D3DPRIMITIVETYPE GetPrimitiveType() { return objRender_->GetPrimitiveType(); }
@@ -240,7 +243,7 @@ namespace directx {
 		DxScriptPrimitiveObject2D();
 		virtual void Render();
 		virtual void SetRenderState();
-		RenderObjectTLX* GetObjectPointer() { return (RenderObjectTLX*)objRender_.get(); }
+		RenderObjectTLX* GetObjectPointer() { return dynamic_cast<RenderObjectTLX*>(objRender_.get()); }
 		virtual bool IsValidVertexIndex(size_t index);
 		virtual void SetColor(int r, int g, int b);
 		virtual void SetAlpha(int alpha);
@@ -260,7 +263,7 @@ namespace directx {
 	public:
 		DxScriptSpriteObject2D();
 		void Copy(DxScriptSpriteObject2D* src);
-		Sprite2D* GetSpritePointer() { return (Sprite2D*)objRender_.get(); }
+		Sprite2D* GetSpritePointer() { return dynamic_cast<Sprite2D*>(objRender_.get()); }
 	};
 
 	/**********************************************************
@@ -288,7 +291,7 @@ namespace directx {
 		DxScriptPrimitiveObject3D();
 		virtual void Render();
 		virtual void SetRenderState();
-		RenderObjectLX* GetObjectPointer() { return (RenderObjectLX*)objRender_.get(); }
+		RenderObjectLX* GetObjectPointer() { return dynamic_cast<RenderObjectLX*>(objRender_.get()); }
 		virtual bool IsValidVertexIndex(size_t index);
 		virtual void SetColor(int r, int g, int b);
 		virtual void SetAlpha(int alpha);
@@ -305,7 +308,7 @@ namespace directx {
 	class DxScriptSpriteObject3D : public DxScriptPrimitiveObject3D {
 	public:
 		DxScriptSpriteObject3D();
-		Sprite3D* GetSpritePointer() { return (Sprite3D*)objRender_.get(); }
+		Sprite3D* GetSpritePointer() { return dynamic_cast<Sprite3D*>(objRender_.get()); }
 	};
 
 	/**********************************************************
@@ -317,7 +320,7 @@ namespace directx {
 		virtual void Work();
 		virtual void Render();
 		virtual void SetRenderState();
-		TrajectoryObject3D* GetObjectPointer() { return (TrajectoryObject3D*)objRender_.get(); }
+		TrajectoryObject3D* GetObjectPointer() { return dynamic_cast<TrajectoryObject3D*>(objRender_.get()); }
 
 		virtual bool IsValidVertexIndex(size_t index) { return false; }
 		virtual void SetColor(int r, int g, int b);

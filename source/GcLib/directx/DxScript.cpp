@@ -79,8 +79,6 @@ DxScriptShaderObject::DxScriptShaderObject() {
 //DxScriptPrimitiveObject
 **********************************************************/
 DxScriptPrimitiveObject::DxScriptPrimitiveObject() {
-	idRelative_ = -1;
-
 	angX_ = D3DXVECTOR2(1, 0);
 	angY_ = D3DXVECTOR2(1, 0);
 	angZ_ = D3DXVECTOR2(1, 0);
@@ -119,19 +117,19 @@ DxScriptPrimitiveObject2D::DxScriptPrimitiveObject2D() {
 	bZTest_ = false;
 }
 void DxScriptPrimitiveObject2D::Render() {
-	RenderObjectTLX* obj = GetObjectPointer();
+	if (RenderObjectTLX* obj = GetObjectPointer()) {
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+		DWORD bEnableFog = FALSE;
+		graphics->GetDevice()->GetRenderState(D3DRS_FOGENABLE, &bEnableFog);
+		if (bEnableFog)
+			graphics->SetFogEnable(false);
 
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	DWORD bEnableFog = FALSE;
-	graphics->GetDevice()->GetRenderState(D3DRS_FOGENABLE, &bEnableFog);
-	if (bEnableFog)
-		graphics->SetFogEnable(false);
+		SetRenderState();
+		obj->Render(angX_, angY_, angZ_);
 
-	SetRenderState();
-	obj->Render(angX_, angY_, angZ_);
-
-	if (bEnableFog)
-		graphics->SetFogEnable(true);
+		if (bEnableFog)
+			graphics->SetFogEnable(true);
+	}
 }
 void DxScriptPrimitiveObject2D::SetRenderState() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -291,39 +289,38 @@ DxScriptPrimitiveObject3D::DxScriptPrimitiveObject3D() {
 	bFogEnable_ = true;
 }
 void DxScriptPrimitiveObject3D::Render() {
-	RenderObjectLX* obj = GetObjectPointer();
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	bool bEnvFogEnable = graphics->IsFogEnable();
-	SetRenderState();
-	//obj->Render();
-	obj->Render(angX_, angY_, angZ_);
+	if (RenderObjectLX* obj = GetObjectPointer()) {
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+		bool bEnvFogEnable = graphics->IsFogEnable();
+		SetRenderState();
+		//obj->Render();
+		obj->Render(angX_, angY_, angZ_);
 
-	if (bEnvFogEnable)
-		graphics->SetFogEnable(true);
+		if (bEnvFogEnable)
+			graphics->SetFogEnable(true);
+	}
 }
 void DxScriptPrimitiveObject3D::SetRenderState() {
-	if (idRelative_ >= 0) {
-		shared_ptr<DxScriptObjectBase> objRelative = manager_->GetObject(idRelative_);
-		if (objRelative != nullptr) {
+	if (shared_ptr<DxScriptRenderObject> objRelative = objRelative_.lock()) {
+		if (DxScriptMeshObject* objMesh = dynamic_cast<DxScriptMeshObject*>(objRelative.get())) {
 			objRelative->SetRenderState();
-			DxScriptMeshObject* objMesh = dynamic_cast<DxScriptMeshObject*>(objRelative.get());
-			if (objMesh != nullptr) {
-				int frameAnime = objMesh->GetAnimeFrame();
-				std::wstring nameAnime = objMesh->GetAnimeName();
-				shared_ptr<DxMesh> mesh = objMesh->GetMesh();
-				shared_ptr<D3DXMATRIX> mat = std::make_shared<D3DXMATRIX>();
-				*mat = mesh->GetAnimationMatrix(nameAnime, frameAnime, nameRelativeBone_);
-				objRender_->SetRalativeMatrix(mat);
-			}
+
+			int frameAnime = objMesh->GetAnimeFrame();
+			std::wstring nameAnime = objMesh->GetAnimeName();
+			shared_ptr<DxMesh> mesh = objMesh->GetMesh();
+			shared_ptr<D3DXMATRIX> mat = std::make_shared<D3DXMATRIX>();
+			*mat = mesh->GetAnimationMatrix(nameAnime, frameAnime, nameRelativeBone_);
+			objRender_->SetRalativeMatrix(mat);
 		}
 	}
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
+	RenderObjectLX* obj = GetObjectPointer();
+
 	bool bEnvFogEnable = graphics->IsFogEnable();
 	if (bEnvFogEnable)
 		graphics->SetFogEnable(bFogEnable_);
 
-	RenderObjectLX* obj = GetObjectPointer();
 	obj->SetPosition(position_);
 	obj->SetAngle(angle_);
 	obj->SetScale(scale_);
@@ -366,7 +363,7 @@ void DxScriptPrimitiveObject3D::SetVertexAlpha(size_t index, int alpha) {
 	obj->SetVertexAlpha(index, alpha);
 }
 void DxScriptPrimitiveObject3D::SetVertexColor(size_t index, int r, int g, int b) {
-	if (!IsValidVertexIndex(index))return;
+	if (!IsValidVertexIndex(index)) return;
 	RenderObjectLX* obj = GetObjectPointer();
 	ColorAccess::ClampColor(r);
 	ColorAccess::ClampColor(g);
@@ -379,7 +376,7 @@ D3DCOLOR DxScriptPrimitiveObject3D::GetVertexColor(size_t index) {
 }
 D3DXVECTOR3 DxScriptPrimitiveObject3D::GetVertexPosition(size_t index) {
 	D3DXVECTOR3 res(0, 0, 0);
-	if (!IsValidVertexIndex(index))return res;
+	if (!IsValidVertexIndex(index)) return res;
 	RenderObjectLX* obj = GetObjectPointer();
 	VERTEX_LX* vert = obj->GetVertex(index);
 
@@ -406,12 +403,10 @@ DxScriptTrajectoryObject3D::DxScriptTrajectoryObject3D() {
 	color_ = 0xffffffff;
 }
 void DxScriptTrajectoryObject3D::Work() {
-	if (idRelative_ >= 0) {
-		shared_ptr<DxScriptObjectBase> objRelative = manager_->GetObject(idRelative_);
-		if (objRelative != nullptr) {
-			objRelative->SetRenderState();
-			DxScriptMeshObject* objMesh = dynamic_cast<DxScriptMeshObject*>(objRelative.get());
-			if (objMesh != nullptr) {
+	if (TrajectoryObject3D* obj = GetObjectPointer()) {
+		if (shared_ptr<DxScriptRenderObject> objRelative = objRelative_.lock()) {
+			if (DxScriptMeshObject* objMesh = dynamic_cast<DxScriptMeshObject*>(objRelative.get())) {
+				objRelative->SetRenderState();
 				int frameAnime = objMesh->GetAnimeFrame();
 				std::wstring nameAnime = objMesh->GetAnimeName();
 				shared_ptr<DxMesh> mesh = objMesh->GetMesh();
@@ -421,16 +416,16 @@ void DxScriptTrajectoryObject3D::Work() {
 				objRender->AddPoint(matAnime);
 			}
 		}
-	}
 
-	TrajectoryObject3D* obj = GetObjectPointer();
-	obj->Work();
+		obj->Work();
+	}
 }
 void DxScriptTrajectoryObject3D::Render() {
-	TrajectoryObject3D* obj = GetObjectPointer();
-	SetRenderState();
-	//obj->Render();
-	obj->Render(angX_, angY_, angZ_);
+	if (TrajectoryObject3D* obj = GetObjectPointer()) {
+		SetRenderState();
+		//obj->Render();
+		obj->Render(angX_, angY_, angZ_);
+	}
 }
 void DxScriptTrajectoryObject3D::SetRenderState() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -556,7 +551,7 @@ DxScriptMeshObject::DxScriptMeshObject() {
 }
 
 void DxScriptMeshObject::Render() {
-	if (mesh_ == nullptr)return;
+	if (mesh_ == nullptr) return;
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	bool bEnvFogEnable = graphics->IsFogEnable();
 
