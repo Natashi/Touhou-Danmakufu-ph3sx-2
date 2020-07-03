@@ -547,6 +547,8 @@ function const operations[] = {
 
 /* parser */
 
+//Natashi's TODO: Implement a parse tree
+
 class gstd::parser {
 public:
 	using command_kind = script_engine::command_kind;
@@ -618,6 +620,9 @@ private:
 	inline static void parser_assert(bool expr, std::string error) {
 		if (!expr) 
 			throw parser_error(error);
+	}
+	inline static bool test_variadic(int require, int argc) {
+		return (require <= -2) && (argc >= -require);
 	}
 
 	inline static bool IsDeclToken(token_kind& tk) {
@@ -764,7 +769,8 @@ parser::symbol* parser::search_result() {
 }
 
 int parser::scan_current_scope(int level, std::vector<std::string> const* args, bool adding_result, int initVar) {
-	//æ“Ç‚İ‚µ‚Ä¯•Êq‚ğ“o˜^‚·‚é
+	//Scans and defines scope variables and functions/tasks/subs
+
 	script_scanner lex2(*_lex);
 
 	int var = initVar;
@@ -839,6 +845,7 @@ int parser::scan_current_scope(int level, std::vector<std::string> const* args, 
 								if (IsDeclToken(lex2.next)) lex2.advance();
 
 								if (lex2.next == token_kind::tk_word) lex2.advance();
+								//TODO: Make it available to the scripters
 								/*
 								else if (lex2.next == token_kind::tk_args_variadic) {
 									countArgs = -countArgs;
@@ -1013,12 +1020,11 @@ void parser::parse_clause(script_engine::block* block, script_scanner* lex) {
 		symbol* s = search(name, argc);
 
 		if (s == nullptr) {
-			/*
 			if (s = search(name)) {
-				int req_argc = s->sub->arguments;
-				if (req_argc < 0 && argc >= (-req_argc - 1)) goto continue_as_variadic;
+				if (test_variadic(s->sub->arguments, argc))
+					goto continue_as_variadic;
 			}
-			*/
+			
 			std::string error;
 			if (search(name))
 				error = StringUtility::Format("No matching overload for %s with %d arguments was found.\r\n",
@@ -1028,7 +1034,7 @@ void parser::parse_clause(script_engine::block* block, script_scanner* lex) {
 			throw parser_error(error);
 		}
 
-//continue_as_variadic:
+continue_as_variadic:
 		if (s->sub) {
 			parser_assert(s->sub->kind == block_kind::bk_function, "Tasks and subs cannot return values.\r\n");
 			block->codes.push_back(code(lex->line, command_kind::pc_call_and_push_result, s->sub, argc));
@@ -1040,13 +1046,26 @@ void parser::parse_clause(script_engine::block* block, script_scanner* lex) {
 
 		return;
 	}
-	case token_kind::tk_CAST_REAL:
-	case token_kind::tk_CAST_CHAR:
-	case token_kind::tk_CAST_BOOL:
+	case token_kind::tk_cast_int:
+	case token_kind::tk_cast_real:
+	case token_kind::tk_cast_char:
+	case token_kind::tk_cast_bool:
 	{
-		command_kind c = lex->next == token_kind::tk_CAST_REAL ? command_kind::pc_inline_cast_real :
-			(lex->next == token_kind::tk_CAST_CHAR ? command_kind::pc_inline_cast_char : 
-				command_kind::pc_inline_cast_bool);
+		command_kind c;
+		switch (lex->next) {
+		case token_kind::tk_cast_int:
+			c = command_kind::pc_inline_cast_int;
+			break;
+		case token_kind::tk_cast_real:
+			c = command_kind::pc_inline_cast_real;
+			break;
+		case token_kind::tk_cast_char:
+			c = command_kind::pc_inline_cast_char;
+			break;
+		case token_kind::tk_cast_bool:
+			c = command_kind::pc_inline_cast_bool;
+			break;
+		}
 		lex->advance();
 		parse_parentheses(block, lex);
 		block->codes.push_back(code(lex->line, c));
@@ -1235,13 +1254,6 @@ void parser::parse_ternary(script_engine::block* block, script_scanner* lex) {
 		size_t ip_exit = block->codes.size();
 		block->codes[ip_jump_1].ip = ip_jump_2 - ip_jump_1 + 1;
 		block->codes[ip_jump_2].ip = ip_exit - ip_jump_2;
-		/*
-		//For nested ternaries
-		for (auto itr = std::next(block->codes.begin(), code_jump_1); itr != block->codes.end(); ++itr) {
-			if (itr->command == command_kind::pc_loop_back)
-				itr->ip = ip_exit + jumpOffFromParent;
-		}
-		*/
 	}
 }
 
@@ -1411,9 +1423,11 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 
 				int argc = parse_arguments(block, lex);
 
-				s = search_in(resScope, name, argc);
-				parser_assert(s, StringUtility::Format("No matching overload for %s with %d arguments was found.\r\n",
-					name.c_str(), argc));
+				if (!test_variadic(s->sub->arguments, argc)) {
+					s = search_in(resScope, name, argc);
+					parser_assert(s, StringUtility::Format("No matching overload for %s with %d arguments was found.\r\n",
+						name.c_str(), argc));
+				}
 
 				block->codes.push_back(code(lex->line, command_kind::pc_call, s->sub, argc));
 
@@ -2962,12 +2976,16 @@ void script_machine::run_code() {
 				current->stack.push_back(res);
 				break;
 			}
+			case command_kind::pc_inline_cast_int:
 			case command_kind::pc_inline_cast_real:
 			case command_kind::pc_inline_cast_char:
 			case command_kind::pc_inline_cast_bool:
 			{
 				value* var = &(current->stack.back());
 				switch (c->command) {
+				case command_kind::pc_inline_cast_int:
+					var->set(script_type_manager::get_int_type(), var->as_int());
+					break;
 				case command_kind::pc_inline_cast_real:
 					var->set(engine->get_real_type(), var->as_real());
 					break;

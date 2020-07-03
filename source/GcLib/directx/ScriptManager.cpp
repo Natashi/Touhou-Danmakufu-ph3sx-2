@@ -342,14 +342,14 @@ const function commonFunction[] =
 	{ "GetOwnScriptID", ManagedScript::Func_GetOwnScriptID, 0 },
 	{ "GetEventType", ManagedScript::Func_GetEventType, 0 },
 	{ "GetEventArgument", ManagedScript::Func_GetEventArgument, 1 },
+	{ "GetEventArgumentCount", ManagedScript::Func_GetEventArgumentCount, 0 },
 	{ "SetScriptArgument", ManagedScript::Func_SetScriptArgument, 3 },
 	{ "GetScriptResult", ManagedScript::Func_GetScriptResult, 1 },
 	{ "SetAutoDeleteObject", ManagedScript::Func_SetAutoDeleteObject, 1 },
-	{ "NotifyEvent", ManagedScript::Func_NotifyEvent, 3 },
-	{ "NotifyEventOwn", ManagedScript::Func_NotifyEventOwn, 2 },
-	{ "NotifyEventAll", ManagedScript::Func_NotifyEventAll, 2 },
+	{ "NotifyEvent", ManagedScript::Func_NotifyEvent, -3 },
+	{ "NotifyEventOwn", ManagedScript::Func_NotifyEventOwn, -2 },
+	{ "NotifyEventAll", ManagedScript::Func_NotifyEventAll, -2 },
 	{ "PauseScript", ManagedScript::Func_PauseScript, 2 },
-
 };
 ManagedScript::ManagedScript() {
 	scriptManager_ = nullptr;
@@ -440,7 +440,7 @@ gstd::value ManagedScript::Func_StartScript(gstd::script_machine* machine, int a
 	ManagedScript* script = (ManagedScript*)machine->data;
 	auto scriptManager = script->scriptManager_;
 
-	int64_t idScript = (int64_t)argv[0].as_real();
+	int64_t idScript = argv[0].as_int();
 	scriptManager->StartScript(idScript);
 	return value();
 }
@@ -448,7 +448,7 @@ gstd::value ManagedScript::Func_CloseScript(gstd::script_machine* machine, int a
 	ManagedScript* script = (ManagedScript*)machine->data;
 	auto scriptManager = script->scriptManager_;
 
-	int64_t idScript = (int64_t)argv[0].as_real();
+	int64_t idScript = argv[0].as_int();
 	scriptManager->CloseScript(idScript);
 	return value();
 }
@@ -456,7 +456,7 @@ gstd::value ManagedScript::Func_IsCloseScript(gstd::script_machine* machine, int
 	ManagedScript* script = (ManagedScript*)machine->data;
 	auto scriptManager = script->scriptManager_;
 
-	int64_t idScript = (int64_t)argv[0].as_real();
+	int64_t idScript = argv[0].as_int();
 	bool res = scriptManager->IsCloseScript(idScript);
 
 	return script->CreateBooleanValue(res);
@@ -474,21 +474,25 @@ gstd::value ManagedScript::Func_GetEventType(script_machine* machine, int argc, 
 }
 gstd::value ManagedScript::Func_GetEventArgument(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
-	int index = (int)argv[0].as_real();
+	int index = argv[0].as_int();
 	if (index < 0 || index >= script->listValueEventSize_) {
 		script->RaiseError(StringUtility::Format("Invalid event argument index: %d. [max=%d]",
 			index, script->listValueEventSize_));
 	}
 	return script->listValueEvent_[index];
 }
+gstd::value ManagedScript::Func_GetEventArgumentCount(script_machine* machine, int argc, const value* argv) {
+	ManagedScript* script = (ManagedScript*)machine->data;
+	return script->CreateRealValue(script->listValueEventSize_);
+}
 gstd::value ManagedScript::Func_SetScriptArgument(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
 	auto scriptManager = script->scriptManager_;
 
-	int64_t idScript = (int64_t)argv[0].as_real();
+	int64_t idScript = argv[0].as_int();
 	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, true);
 	if (target) {
-		int index = (int)argv[1].as_real();
+		int index = argv[1].as_int();
 		target->SetArgumentValue(argv[2], index);
 	}
 	return value();
@@ -497,7 +501,7 @@ gstd::value ManagedScript::Func_GetScriptResult(script_machine* machine, int arg
 	ManagedScript* script = (ManagedScript*)machine->data;
 	auto scriptManager = script->scriptManager_;
 
-	int64_t idScript = (int64_t)argv[0].as_real();
+	int64_t idScript = argv[0].as_int();
 	gstd::value res = scriptManager->GetScriptResult(idScript);
 	return res;
 }
@@ -514,35 +518,32 @@ gstd::value ManagedScript::Func_NotifyEvent(script_machine* machine, int argc, c
 	auto scriptManager = script->scriptManager_;
 
 	gstd::value res;
-	int64_t idScript = (int64_t)argv[0].as_real();
+
+	int64_t idScript = argv[0].as_int();
 	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, true);
 	if (target) {
-		int type = (int)argv[1].as_real();
-		//std::vector<gstd::value> listArg;
-		//listArg.push_back(argv[2]);
-		res = target->RequestEvent(type, &argv[2], 1U);
+		//(script id, event type, ...)
+		int type = argv[1].as_int();
+		res = target->RequestEvent(type, (const value*)(argv + 2), argc - 2);
 	}
+
 	return res;
 }
 gstd::value ManagedScript::Func_NotifyEventOwn(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
 	script->CheckRunInMainThread();
 
-	int type = (int)argv[0].as_real();
-	//std::vector<gstd::value> listArg;
-	//listArg.push_back(argv[1]);
-
-	//return script->RequestEvent(type, listArg);
-	return script->RequestEvent(type, &argv[1], 1U);
+	//(event type, ...)
+	int type = argv[0].as_int();
+	return script->RequestEvent(type, (const value*)(argv + 1), argc - 1);
 }
 gstd::value ManagedScript::Func_NotifyEventAll(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
 	script->CheckRunInMainThread();
 
-	auto scriptManager = script->scriptManager_;
-
-	int type = (int)argv[0].as_real();
-	scriptManager->RequestEventAll(type, &argv[1], 1U);
+	//(event type, ...)
+	int type = argv[0].as_int();
+	script->scriptManager_->RequestEventAll(type, (const value*)(argv + 1), argc - 1);
 
 	return value();
 }
@@ -552,7 +553,7 @@ gstd::value ManagedScript::Func_PauseScript(script_machine* machine, int argc, c
 
 	auto scriptManager = script->scriptManager_;
 
-	int64_t idScript = (int64_t)argv[0].as_real();
+	int64_t idScript = argv[0].as_int();
 	bool state = argv[1].as_boolean();
 	if (idScript == script->GetScriptID())
 		script->RaiseError("A script is not allowed to pause itself.");

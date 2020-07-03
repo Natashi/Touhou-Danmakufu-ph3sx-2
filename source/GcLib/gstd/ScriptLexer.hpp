@@ -27,12 +27,12 @@ namespace gstd {
 
 		tk_decl_auto, tk_const,
 		tk_decl_real, tk_decl_char, tk_decl_string, tk_decl_bool,
+		tk_cast_int, tk_cast_real, tk_cast_char, tk_cast_bool,
 		tk_ALTERNATIVE, tk_CASE, tk_OTHERS,
 		tk_IF, tk_ELSE, tk_LOOP, tk_TIMES, tk_WHILE, tk_FOR, tk_EACH, tk_ASCENT, tk_DESCENT, tk_IN,
 		tk_LOCAL, tk_FUNCTION, tk_SUB, tk_TASK,
 		tk_CONTINUE, tk_BREAK, tk_RETURN,
 		tk_YIELD, tk_WAIT,
-		tk_CAST_REAL, tk_CAST_CHAR, tk_CAST_BOOL,
 		tk_TRUE, tk_FALSE,
 	};
 

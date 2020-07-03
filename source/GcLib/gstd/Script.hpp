@@ -78,8 +78,8 @@ namespace gstd {
 
 	class script_engine {
 	public:
-		script_engine(std::string const& source, int funcc, function const* funcv);
-		script_engine(std::vector<char> const& source, int funcc, function const* funcv);
+		script_engine(const std::string& source, int funcc, function const* funcv);
+		script_engine(const std::vector<char>& source, int funcc, function const* funcv);
 		virtual ~script_engine();
 
 		void* data;	//クライアント用空間
@@ -122,8 +122,8 @@ namespace gstd {
 #endif
 
 		//コピー、代入演算子の自動生成を無効に
-		script_engine(script_engine const& source);
-		script_engine& operator=(script_engine const& source);
+		script_engine(const script_engine& source);
+		script_engine& operator=(const script_engine& source);
 
 		//エラー
 		bool error;
@@ -152,7 +152,7 @@ namespace gstd {
 			pc_inline_app, pc_inline_cat,
 			pc_inline_cmp_e, pc_inline_cmp_g, pc_inline_cmp_ge, pc_inline_cmp_l, pc_inline_cmp_le, pc_inline_cmp_ne,
 			pc_inline_logic_and, pc_inline_logic_or,
-			pc_inline_cast_real, pc_inline_cast_char, pc_inline_cast_bool,
+			pc_inline_cast_int, pc_inline_cast_real, pc_inline_cast_char, pc_inline_cast_bool,
 			pc_inline_index_array,
 		};
 
