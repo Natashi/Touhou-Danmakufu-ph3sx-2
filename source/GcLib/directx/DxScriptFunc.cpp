@@ -159,6 +159,7 @@ function const dxFunction[] =
 	{ "Obj_SetValueR", DxScript::Func_Obj_SetValueR, 3 },
 	{ "Obj_DeleteValueR", DxScript::Func_Obj_DeleteValueR, 2 },
 	{ "Obj_IsValueExistsR", DxScript::Func_Obj_IsValueExistsR, 2 },
+	{ "Obj_CopyValueTable", DxScript::Func_Obj_CopyValueTable, 3 },
 	{ "Obj_GetType", DxScript::Func_Obj_GetType, 1 },
 
 	//Dx関数：オブジェクト操作(RenderObject)
@@ -194,7 +195,7 @@ function const dxFunction[] =
 	{ "ObjRender_SetZTest", DxScript::Func_ObjRender_SetZTest, 2 },
 	{ "ObjRender_SetFogEnable", DxScript::Func_ObjRender_SetFogEnable, 2 },
 	{ "ObjRender_SetCullingMode", DxScript::Func_ObjRender_SetCullingMode, 2 },
-	{ "ObjRender_SetRelativeObject", DxScript::Func_ObjRender_SetRalativeObject, 3 },
+	{ "ObjRender_SetRelativeObject", DxScript::Func_ObjRender_SetRelativeObject, 3 },
 	{ "ObjRender_SetPermitCamera", DxScript::Func_ObjRender_SetPermitCamera, 2 },
 	{ "ObjRender_SetTextureFilterMin", DxScript::Func_ObjRender_SetTextureFilterMin, 2 },
 	{ "ObjRender_SetTextureFilterMag", DxScript::Func_ObjRender_SetTextureFilterMag, 2 },
@@ -916,7 +917,7 @@ value DxScript::Func_SetSoundDivisionVolumeRate(script_machine* machine, int arg
 	DxScript* script = (DxScript*)machine->data;
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
 
-	int idDivision = (int)argv[0].as_real();
+	int idDivision = argv[0].as_int();
 	auto division = manager->GetSoundDivision(idDivision);
 
 	if (division) {
@@ -930,7 +931,7 @@ value DxScript::Func_GetSoundDivisionVolumeRate(script_machine* machine, int arg
 	DxScript* script = (DxScript*)machine->data;
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
 
-	int idDivision = (int)argv[0].as_real();
+	int idDivision = argv[0].as_int();
 	auto division = manager->GetSoundDivision(idDivision);
 
 	double res = 0;
@@ -943,7 +944,7 @@ value DxScript::Func_GetSoundDivisionVolumeRate(script_machine* machine, int arg
 //Dx関数：キー系
 gstd::value DxScript::Func_GetKeyState(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectInput* input = DirectInput::GetBase();
-	int key = (int)argv[0].as_real();
+	int16_t key = (int16_t)argv[0].as_real();
 	int state = input->GetKeyState(key);
 	return DxScript::CreateRealValue(state);
 }
@@ -1245,10 +1246,10 @@ gstd::value DxScript::Func_ClearRenderTargetA3(gstd::script_machine* machine, in
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	shared_ptr<Texture> current = graphics->GetRenderTarget();
 
-	byte cr = (byte)argv[1].as_real();
-	byte cg = (byte)argv[2].as_real();
-	byte cb = (byte)argv[3].as_real();
-	byte ca = (byte)argv[4].as_real();
+	byte cr = argv[1].as_int();
+	byte cg = argv[2].as_int();
+	byte cb = argv[3].as_int();
+	byte ca = argv[4].as_int();
 
 	LONG rl = (LONG)argv[5].as_real();
 	LONG rt = (LONG)argv[6].as_real();
@@ -1301,10 +1302,10 @@ gstd::value DxScript::Func_SaveRenderedTextureA2(gstd::script_machine* machine, 
 	std::wstring path = argv[1].as_string();
 	path = PathProperty::GetUnique(path);
 
-	int rcLeft = (int)argv[2].as_real();
-	int rcTop = (int)argv[3].as_real();
-	int rcRight = (int)argv[4].as_real();
-	int rcBottom = (int)argv[5].as_real();
+	LONG rcLeft = argv[2].as_int();
+	LONG rcTop = argv[3].as_int();
+	LONG rcRight = argv[4].as_int();
+	LONG rcBottom = argv[5].as_int();
 
 	TextureManager* textureManager = TextureManager::GetBase();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -1333,11 +1334,11 @@ gstd::value DxScript::Func_SaveRenderedTextureA3(gstd::script_machine* machine, 
 	std::wstring path = argv[1].as_string();
 	path = PathProperty::GetUnique(path);
 
-	int rcLeft = (int)argv[2].as_real();
-	int rcTop = (int)argv[3].as_real();
-	int rcRight = (int)argv[4].as_real();
-	int rcBottom = (int)argv[5].as_real();
-	int imgFormat = (int)argv[6].as_real();
+	LONG rcLeft = argv[2].as_int();
+	LONG rcTop = argv[3].as_int();
+	LONG rcRight = argv[4].as_int();
+	LONG rcBottom = argv[5].as_int();
+	BYTE imgFormat = argv[6].as_int();
 
 	if (imgFormat < 0)
 		imgFormat = 0;
@@ -1365,8 +1366,8 @@ gstd::value DxScript::Func_SaveRenderedTextureA3(gstd::script_machine* machine, 
 	return value();
 }
 gstd::value DxScript::Func_IsPixelShaderSupported(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	int major = (int)(argv[0].as_real() + 0.5);
-	int minor = (int)(argv[1].as_real() + 0.5);
+	int major = argv[0].as_int();
+	int minor = argv[1].as_int();
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	bool res = graphics->IsPixelShaderSupported(major, minor);
@@ -1459,8 +1460,8 @@ gstd::value DxScript::Func_SetShaderI(gstd::script_machine* machine, int argc, c
 	if (obj) {
 		shared_ptr<Shader> shader = obj->GetShader();
 
-		int min = Math::Trunc(argv[1].as_real());
-		int max = Math::Trunc(argv[2].as_real());
+		int min = argv[1].as_int();
+		int max = argv[2].as_int();
 
 		auto objectManager = script->GetObjectManager();
 		objectManager->SetShader(shader, min, max);
@@ -1471,8 +1472,8 @@ gstd::value DxScript::Func_ResetShader(gstd::script_machine* machine, int argc, 
 	DxScript* script = (DxScript*)machine->data;
 	shared_ptr<Shader> shader = nullptr;
 
-	double min = (double)argv[0].as_real();
-	double max = (double)argv[1].as_real();
+	double min = argv[0].as_int();
+	double max = argv[1].as_int();
 	auto objectManager = script->GetObjectManager();
 	int size = objectManager->GetRenderBucketCapacity();
 
@@ -1484,8 +1485,8 @@ gstd::value DxScript::Func_ResetShaderI(gstd::script_machine* machine, int argc,
 	DxScript* script = (DxScript*)machine->data;
 	shared_ptr<Shader> shader = nullptr;
 
-	int min = Math::Trunc(argv[1].as_real());
-	int max = Math::Trunc(argv[2].as_real());
+	int min = argv[0].as_int();
+	int max = argv[1].as_int();
 
 	auto objectManager = script->GetObjectManager();
 	objectManager->SetShader(shader, min, max);
@@ -1495,104 +1496,88 @@ gstd::value DxScript::Func_ResetShaderI(gstd::script_machine* machine, int argc,
 
 //Dx関数：カメラ3D
 value DxScript::Func_SetCameraFocusX(script_machine* machine, int argc, const value* argv) {
-	double x = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetFocusX(x);
+	camera->SetFocusX(argv[0].as_real());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusY(script_machine* machine, int argc, const value* argv) {
-	double y = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetFocusY(y);
+	camera->SetFocusY(argv[0].as_real());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusZ(script_machine* machine, int argc, const value* argv) {
-	double z = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetFocusZ(z);
+	camera->SetFocusZ(argv[0].as_real());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusXYZ(script_machine* machine, int argc, const value* argv) {
-	double x = argv[0].as_real();
-	double y = argv[1].as_real();
-	double z = argv[2].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetFocusX(x);
-	camera->SetFocusY(y);
-	camera->SetFocusZ(z);
+	camera->SetFocusX(argv[0].as_real());
+	camera->SetFocusY(argv[1].as_real());
+	camera->SetFocusZ(argv[2].as_real());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraRadius(script_machine* machine, int argc, const value* argv) {
-	double r = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetRadius(r);
+	camera->SetRadius(argv[0].as_real());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraAzimuthAngle(script_machine* machine, int argc, const value* argv) {
-	double angle = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetAzimuthAngle(Math::DegreeToRadian(angle));
+	camera->SetAzimuthAngle(Math::DegreeToRadian(argv[0].as_real()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraElevationAngle(script_machine* machine, int argc, const value* argv) {
-	double angle = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetElevationAngle(Math::DegreeToRadian(angle));
+	camera->SetElevationAngle(Math::DegreeToRadian(argv[0].as_real()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraYaw(script_machine* machine, int argc, const value* argv) {
-	double angle = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetYaw(Math::DegreeToRadian(angle));
+	camera->SetYaw(Math::DegreeToRadian(argv[0].as_real()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraPitch(script_machine* machine, int argc, const value* argv) {
-	double angle = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetPitch(Math::DegreeToRadian(angle));
+	camera->SetPitch(Math::DegreeToRadian(argv[0].as_real()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraRoll(script_machine* machine, int argc, const value* argv) {
-	double angle = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetRoll(Math::DegreeToRadian(angle));
+	camera->SetRoll(Math::DegreeToRadian(argv[0].as_real()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraMode(script_machine* machine, int argc, const value* argv) {
-	int mode = (int)(argv[0].as_real() + 0.01);
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetCameraMode(mode);
+	camera->SetCameraMode(argv[0].as_int());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraPosLookAt(script_machine* machine, int argc, const value* argv) {
-	double x = argv[0].as_real();
-	double y = argv[1].as_real();
-	double z = argv[2].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetCameraLookAtVector(D3DXVECTOR3(x, y, z));
+	camera->SetCameraLookAtVector(D3DXVECTOR3(argv[0].as_real(), argv[1].as_real(), argv[2].as_real()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
@@ -1666,54 +1651,41 @@ value DxScript::Func_GetCameraViewProjectionMatrix(script_machine* machine, int 
 }
 value DxScript::Func_SetCameraPerspectiveClip(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	double clipNear = argv[0].as_real();
-	double clipFar = argv[1].as_real();
-	int width = graphics->GetScreenWidth();
-	int height = graphics->GetScreenHeight();
-
 	auto camera = graphics->GetCamera();
-	//camera->SetProjectionMatrix(width, height, clipNear, clipFar);
-	camera->SetPerspectiveClip(clipNear, clipFar);
+	camera->SetPerspectiveClip(argv[0].as_real(), argv[1].as_real());
 	camera->thisProjectionChanged_ = true;
-
 	return value();
 }
 
 //Dx関数：カメラ2D
 gstd::value DxScript::Func_Set2DCameraFocusX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	double x = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetFocusX(x);
+	graphics->GetCamera2D()->SetFocusX(argv[0].as_real());
 	return gstd::value();
 }
 gstd::value DxScript::Func_Set2DCameraFocusY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	double y = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetFocusY(y);
+	graphics->GetCamera2D()->SetFocusY(argv[0].as_real());
 	return gstd::value();
 }
 gstd::value DxScript::Func_Set2DCameraAngleZ(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	double angle = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetAngleZ(Math::DegreeToRadian(angle));
+	graphics->GetCamera2D()->SetAngleZ(Math::DegreeToRadian(argv[0].as_real()));
 	return gstd::value();
 }
 gstd::value DxScript::Func_Set2DCameraRatio(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	double ratio = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetRatio(ratio);
+	graphics->GetCamera2D()->SetRatio(argv[0].as_real());
 	return gstd::value();
 }
 gstd::value DxScript::Func_Set2DCameraRatioX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	double ratio = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetRatioX(ratio);
+	graphics->GetCamera2D()->SetRatioX(argv[0].as_real());
 	return gstd::value();
 }
 gstd::value DxScript::Func_Set2DCameraRatioY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	double ratio = argv[0].as_real();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetRatioY(ratio);
+	graphics->GetCamera2D()->SetRatioY(argv[0].as_real());
 	return gstd::value();
 }
 gstd::value DxScript::Func_Reset2DCamera(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1755,8 +1727,8 @@ gstd::value DxScript::Func_Get2DCameraRatioY(gstd::script_machine* machine, int 
 //Dx関数：その他
 gstd::value DxScript::Func_GetObjectDistance(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id1 = (int)argv[0].as_real();
-	int id2 = (int)argv[1].as_real();
+	int id1 = argv[0].as_int();
+	int id2 = argv[1].as_int();
 
 	FLOAT res = -1.0f;
 	DxScriptRenderObject* obj1 = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id1));
@@ -1815,8 +1787,7 @@ gstd::value DxScript::Func_IsIntersected_Line_Circle(gstd::script_machine* machi
 		argv[2].as_real(),
 		argv[3].as_real(),
 		argv[4].as_real()
-		);
-
+	);
 	DxCircle circle(argv[5].as_real(), argv[6].as_real(), argv[7].as_real());
 
 	bool res = DxMath::IsIntersected(circle, line);
@@ -1829,14 +1800,14 @@ gstd::value DxScript::Func_IsIntersected_Line_Line(gstd::script_machine* machine
 		argv[2].as_real(),
 		argv[3].as_real(),
 		argv[4].as_real()
-		);
+	);
 	DxWidthLine line2(
 		argv[5].as_real(),
 		argv[6].as_real(),
 		argv[7].as_real(),
 		argv[8].as_real(),
 		argv[9].as_real()
-		);
+	);
 
 	bool res = DxMath::IsIntersected(line1, line2);
 	return DxScript::CreateBooleanValue(res);
@@ -1860,8 +1831,8 @@ value DxScript::Func_Obj_SetVisible(script_machine* machine, int argc, const val
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj == nullptr) return value();
-	obj->bVisible_ = argv[1].as_boolean();
+	if (obj)
+		obj->bVisible_ = argv[1].as_boolean();
 	return value();
 }
 value DxScript::Func_Obj_IsVisible(script_machine* machine, int argc, const value* argv) {
@@ -1892,7 +1863,7 @@ value DxScript::Func_Obj_SetRenderPriorityI(script_machine* machine, int argc, c
 	int id = (int)argv[0].as_real();
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		int pri = Math::Trunc(argv[1].as_real());
+		int pri = argv[1].as_int();
 		size_t maxPri = script->GetObjectManager()->GetRenderBucketCapacity() - 1U;
 
 		if (pri < 0) pri = 0;
@@ -2047,17 +2018,61 @@ gstd::value DxScript::Func_Obj_IsValueExistsR(gstd::script_machine* machine, int
 
 	return script->CreateBooleanValue(res);
 }
+gstd::value DxScript::Func_Obj_CopyValueTable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	size_t countValue = 0;
+
+	int idDst = argv[0].as_int();
+	DxScriptObjectBase* objDst = script->GetObjectPointer(idDst);
+	if (objDst) {
+		int idSrc = argv[1].as_int();
+		DxScriptObjectBase* objSrc = script->GetObjectPointer(idSrc);
+		if (objSrc) {
+			auto& valMap = objSrc->mapObjectValue_;
+			countValue = valMap.size();
+
+			int copyMode = argv[2].as_int();
+			//Mode 0 - Clear dest and copy
+			if (copyMode == 0) {
+				objDst->mapObjectValue_.clear();
+				for (auto itr = valMap.begin(); itr != valMap.end(); ++itr)
+					objDst->mapObjectValue_.insert(*itr);
+			}
+			//Mode 1 - Source takes priority (Always overwrite)
+			else if (copyMode == 1) {
+				for (auto itr = valMap.begin(); itr != valMap.end(); ++itr) {
+					auto itrDst = objSrc->mapObjectValue_.find(itr->first);
+					if (itrDst != objSrc->mapObjectValue_.end())
+						itrDst->second = itr->second;
+					else
+						objDst->mapObjectValue_.insert(*itr);
+				}
+			}
+			//Mode 2 - Dest takes priority (No overwrite)
+			else if (copyMode == 2) {
+				for (auto itr = valMap.begin(); itr != valMap.end(); ++itr) {
+					auto itrDst = objSrc->mapObjectValue_.find(itr->first);
+					if (itrDst == objSrc->mapObjectValue_.end())
+						objDst->mapObjectValue_.insert(*itr);
+				}
+			}
+		}
+	}
+
+	return script->CreateRealValue(countValue);
+}
 
 value DxScript::Func_Obj_GetType(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 
-	int res = (int)TypeObject::OBJ_INVALID;
+	TypeObject res = TypeObject::OBJ_INVALID;
 
 	DxScriptObjectBase* obj = dynamic_cast<DxScriptObjectBase*>(script->GetObjectPointer(id));
-	if (obj) res = (int)obj->GetObjectType();
+	if (obj) res = obj->GetObjectType();
 
-	return script->CreateRealValue(res);
+	return script->CreateRealValue((int8_t)res);
 }
 
 
@@ -2172,7 +2187,7 @@ value DxScript::Func_ObjRender_SetColor(script_machine* machine, int argc, const
 	int id = (int)argv[0].as_real();
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetColor((int)argv[1].as_real(), (int)argv[2].as_real(), (int)argv[3].as_real());
+		obj->SetColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
 	return value();
 }
 value DxScript::Func_ObjRender_SetColorHSV(script_machine* machine, int argc, const value* argv) {
@@ -2180,13 +2195,19 @@ value DxScript::Func_ObjRender_SetColorHSV(script_machine* machine, int argc, co
 	int id = (int)argv[0].as_real();
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int hue = (int)argv[1].as_real();
-		int sat = (int)argv[2].as_real();
-		int val = (int)argv[3].as_real();
-
 		D3DCOLOR color = 0xffffffff;
-		ColorAccess::SetColorHSV(color, hue, sat, val);
+		ColorAccess::SetColorHSV(color, argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
 
+		obj->SetColor((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+	}
+	return value();
+}
+value DxScript::Func_ObjRender_SetColorHex(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		D3DCOLOR color = argv[1].as_int();
 		obj->SetColor((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
 	}
 	return value();
@@ -2210,7 +2231,7 @@ value DxScript::Func_ObjRender_SetAlpha(script_machine* machine, int argc, const
 	int id = (int)argv[0].as_real();
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetAlpha((int)argv[1].as_real());
+		obj->SetAlpha(argv[1].as_int());
 	return value();
 }
 value DxScript::Func_ObjRender_GetAlpha(script_machine* machine, int argc, const value* argv) {
@@ -2344,12 +2365,12 @@ value DxScript::Func_ObjRender_SetCullingMode(script_machine* machine, int argc,
 		obj->modeCulling_ = (D3DCULL)argv[1].as_real();
 	return value();
 }
-value DxScript::Func_ObjRender_SetRalativeObject(script_machine* machine, int argc, const value* argv) {
+value DxScript::Func_ObjRender_SetRelativeObject(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int idRelative = (int)argv[1].as_real();
+		int idRelative = argv[1].as_int();
 		std::wstring nameBone = argv[2].as_string();
 		auto objRelative = std::dynamic_pointer_cast<DxScriptRenderObject>(script->GetObject(idRelative));
 		if (objRelative)
@@ -2386,7 +2407,7 @@ gstd::value DxScript::Func_ObjRender_GetBlendType(gstd::script_machine* machine,
 value DxScript::Func_ObjRender_SetTextureFilterMin(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int type = (int)(argv[1].as_real() + 0.01);
+	int type = argv[1].as_int();
 
 	type = std::max(type, (int)D3DTEXF_NONE);
 	type = std::min(type, (int)D3DTEXF_ANISOTROPIC);
@@ -2400,7 +2421,7 @@ value DxScript::Func_ObjRender_SetTextureFilterMin(gstd::script_machine* machine
 value DxScript::Func_ObjRender_SetTextureFilterMag(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int type = (int)(argv[1].as_real() + 0.01);
+	int type = argv[1].as_int();
 
 	type = std::max(type, (int)D3DTEXF_NONE);
 	type = std::min(type, (int)D3DTEXF_ANISOTROPIC);
@@ -2414,7 +2435,7 @@ value DxScript::Func_ObjRender_SetTextureFilterMag(gstd::script_machine* machine
 value DxScript::Func_ObjRender_SetTextureFilterMip(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int type = (int)(argv[1].as_real() + 0.01);
+	int type = argv[1].as_int();
 
 	type = std::max(type, (int)D3DTEXF_NONE);
 	type = std::min(type, (int)D3DTEXF_ANISOTROPIC);
@@ -2565,10 +2586,10 @@ gstd::value DxScript::Func_ObjShader_SetShaderO(gstd::script_machine* machine, i
 	DxScript* script = (DxScript*)machine->data;
 	bool res = false;
 
-	int id1 = (int)argv[0].as_real();
+	int id1 = argv[0].as_int();
 	DxScriptRenderObject* obj1 = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id1));
 	if (obj1) {
-		int id2 = (int)argv[1].as_real();
+		int id2 = argv[1].as_int();
 		DxScriptRenderObject* obj2 = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id2));
 		if (obj2) {
 			shared_ptr<Shader> shader = obj2->GetShader();
@@ -2748,7 +2769,7 @@ gstd::value DxScript::Func_ObjShader_SetTexture(gstd::script_machine* machine, i
 value DxScript::Func_ObjPrimitive_Create(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	script->CheckRunInMainThread();
-	TypeObject type = (TypeObject)((int)argv[0].as_real());
+	TypeObject type = (TypeObject)argv[0].as_int();
 
 	shared_ptr<DxScriptPrimitiveObject> obj;
 	if (type == TypeObject::OBJ_PRIMITIVE_2D) {
@@ -2783,7 +2804,7 @@ value DxScript::Func_ObjPrimitive_SetPrimitiveType(script_machine* machine, int 
 	int id = (int)argv[0].as_real();
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetPrimitiveType((D3DPRIMITIVETYPE)(int)argv[1].as_real());
+		obj->SetPrimitiveType((D3DPRIMITIVETYPE)argv[1].as_int());
 	return value();
 }
 value DxScript::Func_ObjPrimitive_GetPrimitiveType(script_machine* machine, int argc, const value* argv) {
@@ -2800,7 +2821,7 @@ value DxScript::Func_ObjPrimitive_SetVertexCount(script_machine* machine, int ar
 	int id = (int)argv[0].as_real();
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetVertexCount((int)argv[1].as_real());
+		obj->SetVertexCount(argv[1].as_int());
 	return value();
 }
 value DxScript::Func_ObjPrimitive_SetTexture(script_machine* machine, int argc, const value* argv) {
@@ -2837,7 +2858,7 @@ value DxScript::Func_ObjPrimitive_SetVertexPosition(script_machine* machine, int
 	int id = (int)argv[0].as_real();
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetVertexPosition((int)argv[1].as_real(), argv[2].as_real(), argv[3].as_real(), argv[4].as_real());
+		obj->SetVertexPosition(argv[1].as_int(), argv[2].as_real(), argv[3].as_real(), argv[4].as_real());
 	return value();
 }
 value DxScript::Func_ObjPrimitive_SetVertexUV(script_machine* machine, int argc, const value* argv) {
@@ -2845,7 +2866,7 @@ value DxScript::Func_ObjPrimitive_SetVertexUV(script_machine* machine, int argc,
 	int id = (int)argv[0].as_real();
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetVertexUV((int)argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+		obj->SetVertexUV(argv[1].as_int(), argv[2].as_real(), argv[3].as_real());
 	return value();
 }
 gstd::value DxScript::Func_ObjPrimitive_SetVertexUVT(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -2857,7 +2878,7 @@ gstd::value DxScript::Func_ObjPrimitive_SetVertexUVT(gstd::script_machine* machi
 		if (texture) {
 			int width = texture->GetWidth();
 			int height = texture->GetHeight();
-			obj->SetVertexUV((int)argv[1].as_real(), argv[2].as_real() / width, argv[3].as_real() / height);
+			obj->SetVertexUV(argv[1].as_int(), argv[2].as_real() / width, argv[3].as_real() / height);
 		}
 	}
 	return value();
@@ -2867,7 +2888,7 @@ value DxScript::Func_ObjPrimitive_SetVertexColor(script_machine* machine, int ar
 	int id = (int)argv[0].as_real();
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetVertexColor((int)argv[1].as_real(), (int)argv[2].as_real(), (int)argv[3].as_real(), (int)argv[4].as_real());
+		obj->SetVertexColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
 	return value();
 }
 value DxScript::Func_ObjPrimitive_SetVertexColorHSV(script_machine* machine, int argc, const value* argv) {
@@ -2876,8 +2897,8 @@ value DxScript::Func_ObjPrimitive_SetVertexColorHSV(script_machine* machine, int
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		D3DCOLOR cHSV = 0xffffffff;
-		ColorAccess::SetColorHSV(cHSV, (int)argv[2].as_real(), (int)argv[3].as_real(), (int)argv[4].as_real());
-		obj->SetVertexColor((int)argv[1].as_real(), (cHSV >> 16) & 0xff, (cHSV >> 8) & 0xff, cHSV & 0xff);
+		ColorAccess::SetColorHSV(cHSV, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
+		obj->SetVertexColor(argv[1].as_int(), (cHSV >> 16) & 0xff, (cHSV >> 8) & 0xff, cHSV & 0xff);
 	}
 	return value();
 }
@@ -2886,13 +2907,13 @@ value DxScript::Func_ObjPrimitive_SetVertexAlpha(script_machine* machine, int ar
 	int id = (int)argv[0].as_real();
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetVertexAlpha((int)argv[1].as_real(), (int)argv[2].as_real());
+		obj->SetVertexAlpha(argv[1].as_int(), argv[2].as_int());
 	return value();
 }
 value DxScript::Func_ObjPrimitive_GetVertexColor(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int index = (int)argv[1].as_real();
+	int index = argv[1].as_int();
 
 	D3DCOLOR color = 0xffffffff;
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
@@ -2908,7 +2929,7 @@ value DxScript::Func_ObjPrimitive_GetVertexColor(script_machine* machine, int ar
 value DxScript::Func_ObjPrimitive_GetVertexAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int index = (int)argv[1].as_real();
+	int index = argv[1].as_int();
 
 	D3DCOLOR color = 0xffffffff;
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
@@ -2919,7 +2940,7 @@ value DxScript::Func_ObjPrimitive_GetVertexAlpha(script_machine* machine, int ar
 value DxScript::Func_ObjPrimitive_GetVertexPosition(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int index = (int)argv[1].as_real();
+	int index = argv[1].as_int();
 
 	D3DXVECTOR3 pos = D3DXVECTOR3(0, 0, 0);
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
@@ -2935,15 +2956,13 @@ value DxScript::Func_ObjPrimitive_SetVertexIndex(script_machine* machine, int ar
 
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		::RenderObject* objRender = obj->GetObjectPointer();
-
 		value valArr = argv[1];
 		std::vector<uint16_t> vecIndex;
 		vecIndex.resize(valArr.length_as_array());
 		for (size_t i = 0; i < valArr.length_as_array(); ++i) {
 			vecIndex[i] = (uint16_t)valArr.index_as_array(i).as_real();
 		}
-		objRender->SetVertexIndices(vecIndex);
+		obj->GetObjectPointer()->SetVertexIndices(vecIndex);
 	}
 	return value();
 }
@@ -2954,13 +2973,13 @@ value DxScript::Func_ObjSprite2D_SetSourceRect(script_machine* machine, int argc
 	int id = (int)argv[0].as_real();
 	DxScriptSpriteObject2D* obj = dynamic_cast<DxScriptSpriteObject2D*>(script->GetObjectPointer(id));
 	if (obj) {
-		RECT_D rcDest = {
-			(double)argv[1].as_real(),
-			(double)argv[2].as_real(),
-			(double)argv[3].as_real(),
-			(double)argv[4].as_real()
+		RECT_D rcSrc = {
+			argv[1].as_real(),
+			argv[2].as_real(),
+			argv[3].as_real(),
+			argv[4].as_real()
 		};
-		obj->GetSpritePointer()->SetSourceRect(rcDest);
+		obj->GetSpritePointer()->SetSourceRect(rcSrc);
 	}
 	return value();
 }
@@ -2970,10 +2989,10 @@ value DxScript::Func_ObjSprite2D_SetDestRect(script_machine* machine, int argc, 
 	DxScriptSpriteObject2D* obj = dynamic_cast<DxScriptSpriteObject2D*>(script->GetObjectPointer(id));
 	if (obj) {
 		RECT_D rcDest = {
-			(double)argv[1].as_real(),
-			(double)argv[2].as_real(),
-			(double)argv[3].as_real(),
-			(double)argv[4].as_real()
+			argv[1].as_real(),
+			argv[2].as_real(),
+			argv[3].as_real(),
+			argv[4].as_real()
 		};
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
 	}
@@ -2994,13 +3013,13 @@ gstd::value DxScript::Func_ObjSpriteList2D_SetSourceRect(gstd::script_machine* m
 	int id = (int)argv[0].as_real();
 	DxScriptSpriteListObject2D* obj = dynamic_cast<DxScriptSpriteListObject2D*>(script->GetObjectPointer(id));
 	if (obj) {
-		RECT_D rcDest = {
-			(double)argv[1].as_real(),
-			(double)argv[2].as_real(),
-			(double)argv[3].as_real(),
-			(double)argv[4].as_real()
+		RECT_D rcSrc = {
+			argv[1].as_real(),
+			argv[2].as_real(),
+			argv[3].as_real(),
+			argv[4].as_real()
 		};
-		obj->GetSpritePointer()->SetSourceRect(rcDest);
+		obj->GetSpritePointer()->SetSourceRect(rcSrc);
 	}
 	return value();
 }
@@ -3010,10 +3029,10 @@ gstd::value DxScript::Func_ObjSpriteList2D_SetDestRect(gstd::script_machine* mac
 	DxScriptSpriteListObject2D* obj = dynamic_cast<DxScriptSpriteListObject2D*>(script->GetObjectPointer(id));
 	if (obj) {
 		RECT_D rcDest = {
-			(double)argv[1].as_real(),
-			(double)argv[2].as_real(),
-			(double)argv[3].as_real(),
-			(double)argv[4].as_real()
+			argv[1].as_real(),
+			argv[2].as_real(),
+			argv[3].as_real(),
+			argv[4].as_real()
 		};
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
 	}
@@ -3067,10 +3086,10 @@ value DxScript::Func_ObjSprite3D_SetSourceRect(script_machine* machine, int argc
 	DxScriptSpriteObject3D* obj = dynamic_cast<DxScriptSpriteObject3D*>(script->GetObjectPointer(id));
 	if (obj) {
 		RECT_D rcSrc = {
-			(double)argv[1].as_real(),
-			(double)argv[2].as_real(),
-			(double)argv[3].as_real(),
-			(double)argv[4].as_real()
+			argv[1].as_real(),
+			argv[2].as_real(),
+			argv[3].as_real(),
+			argv[4].as_real()
 		};
 		obj->GetSpritePointer()->SetSourceRect(rcSrc);
 	}
@@ -3082,10 +3101,10 @@ value DxScript::Func_ObjSprite3D_SetDestRect(script_machine* machine, int argc, 
 	DxScriptSpriteObject3D* obj = dynamic_cast<DxScriptSpriteObject3D*>(script->GetObjectPointer(id));
 	if (obj) {
 		RECT_D rcDest = {
-			(double)argv[1].as_real(),
-			(double)argv[2].as_real(),
-			(double)argv[3].as_real(),
-			(double)argv[4].as_real()
+			argv[1].as_real(),
+			argv[2].as_real(),
+			argv[3].as_real(),
+			argv[4].as_real()
 		};
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
 	}
@@ -3097,10 +3116,10 @@ value DxScript::Func_ObjSprite3D_SetSourceDestRect(script_machine* machine, int 
 	DxScriptSpriteObject3D* obj = dynamic_cast<DxScriptSpriteObject3D*>(script->GetObjectPointer(id));
 	if (obj) {
 		RECT_D rcSrc = {
-			(double)argv[1].as_real(),
-			(double)argv[2].as_real(),
-			(double)argv[3].as_real(),
-			(double)argv[4].as_real()
+			argv[1].as_real(),
+			argv[2].as_real(),
+			argv[3].as_real(),
+			argv[4].as_real()
 		};
 		obj->GetSpritePointer()->SetSourceDestRect(rcSrc);
 	}
@@ -3141,7 +3160,7 @@ value DxScript::Func_ObjTrajectory3D_SetComplementCount(script_machine* machine,
 	int id = (int)argv[0].as_real();
 	DxScriptTrajectoryObject3D* obj = dynamic_cast<DxScriptTrajectoryObject3D*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->GetObjectPointer()->SetComplementCount((int)argv[1].as_real());
+		obj->GetObjectPointer()->SetComplementCount(argv[1].as_int());
 	return value();
 }
 
@@ -3149,7 +3168,7 @@ value DxScript::Func_ObjTrajectory3D_SetComplementCount(script_machine* machine,
 value DxScript::Func_ObjParticleList_Create(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	script->CheckRunInMainThread();
-	TypeObject type = (TypeObject)((int)argv[0].as_real());
+	TypeObject type = (TypeObject)(argv[0].as_int());
 
 	shared_ptr<DxScriptPrimitiveObject> obj;
 	if (type == TypeObject::OBJ_PARTICLE_LIST_2D) {
@@ -3333,7 +3352,7 @@ value DxScript::Func_ObjMesh_SetColor(script_machine* machine, int argc, const v
 	int id = (int)argv[0].as_real();
 	DxScriptMeshObject* obj = dynamic_cast<DxScriptMeshObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetColor((int)argv[1].as_real(), (int)argv[2].as_real(), (int)argv[3].as_real());
+		obj->SetColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
 	return value();
 }
 value DxScript::Func_ObjMesh_SetAlpha(script_machine* machine, int argc, const value* argv) {
@@ -3341,7 +3360,7 @@ value DxScript::Func_ObjMesh_SetAlpha(script_machine* machine, int argc, const v
 	int id = (int)argv[0].as_real();
 	DxScriptMeshObject* obj = dynamic_cast<DxScriptMeshObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetAlpha((int)argv[1].as_real());
+		obj->SetAlpha(argv[1].as_int());
 	return value();
 }
 value DxScript::Func_ObjMesh_SetAnimation(script_machine* machine, int argc, const value* argv) {
@@ -3351,7 +3370,7 @@ value DxScript::Func_ObjMesh_SetAnimation(script_machine* machine, int argc, con
 	if (obj) {
 		std::wstring anime = argv[1].as_string();
 		obj->anime_ = anime;
-		obj->time_ = (int)argv[2].as_real();
+		obj->time_ = argv[2].as_int();
 
 		//	D3DXMATRIX mat = obj->mesh_->GetAnimationMatrix(anime, obj->time_, "悠久前部");
 		//	D3DXVECTOR3 pos;
@@ -3417,7 +3436,7 @@ value DxScript::Func_ObjText_SetFontSize(script_machine* machine, int argc, cons
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int size = (int)argv[1].as_real();
+		int size = argv[1].as_int();
 		obj->SetFontSize(size);
 	}
 	return value();
@@ -3449,9 +3468,9 @@ value DxScript::Func_ObjText_SetFontColorTop(script_machine* machine, int argc, 
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		byte r = ColorAccess::ClampColorRet(argv[1].as_real());
-		byte g = ColorAccess::ClampColorRet(argv[2].as_real());
-		byte b = ColorAccess::ClampColorRet(argv[3].as_real());
+		byte r = ColorAccess::ClampColorRet(argv[1].as_int());
+		byte g = ColorAccess::ClampColorRet(argv[2].as_int());
+		byte b = ColorAccess::ClampColorRet(argv[3].as_int());
 		obj->SetFontColorTop(r, g, b);
 	}
 	return value();
@@ -3461,9 +3480,9 @@ value DxScript::Func_ObjText_SetFontColorBottom(script_machine* machine, int arg
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		byte r = ColorAccess::ClampColorRet(argv[1].as_real());
-		byte g = ColorAccess::ClampColorRet(argv[2].as_real());
-		byte b = ColorAccess::ClampColorRet(argv[3].as_real());
+		byte r = ColorAccess::ClampColorRet(argv[1].as_int());
+		byte g = ColorAccess::ClampColorRet(argv[2].as_int());
+		byte b = ColorAccess::ClampColorRet(argv[3].as_int());
 		obj->SetFontColorBottom(r, g, b);
 	}
 	return value();
@@ -3473,7 +3492,7 @@ value DxScript::Func_ObjText_SetFontBorderWidth(script_machine* machine, int arg
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int width = (int)argv[1].as_real();
+		int width = argv[1].as_int();
 		obj->SetFontBorderWidth(width);
 	}
 	return value();
@@ -3483,7 +3502,7 @@ value DxScript::Func_ObjText_SetFontBorderType(script_machine* machine, int argc
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int type = (int)argv[1].as_real();
+		int type = argv[1].as_int();
 		obj->SetFontBorderType(type);
 	}
 	return value();
@@ -3493,9 +3512,9 @@ value DxScript::Func_ObjText_SetFontBorderColor(script_machine* machine, int arg
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		byte r = ColorAccess::ClampColorRet(argv[1].as_real());
-		byte g = ColorAccess::ClampColorRet(argv[2].as_real());
-		byte b = ColorAccess::ClampColorRet(argv[3].as_real());
+		byte r = ColorAccess::ClampColorRet(argv[1].as_int());
+		byte g = ColorAccess::ClampColorRet(argv[2].as_int());
+		byte b = ColorAccess::ClampColorRet(argv[3].as_int());
 		obj->SetFontBorderColor(r, g, b);
 	}
 	return value();
@@ -3505,7 +3524,7 @@ value DxScript::Func_ObjText_SetFontCharacterSet(script_machine* machine, int ar
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int cSet = (int)(argv[1].as_real() + 0.01);
+		int cSet = argv[1].as_int();
 		ColorAccess::ClampColor(cSet);	//Also clamps to [0-255], so it works too
 		obj->SetCharset((BYTE)cSet);
 	}
@@ -3516,7 +3535,7 @@ value DxScript::Func_ObjText_SetMaxWidth(script_machine* machine, int argc, cons
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int width = (int)argv[1].as_real();
+		int width = argv[1].as_int();
 		obj->SetMaxWidth(width);
 	}
 	return value();
@@ -3526,7 +3545,7 @@ value DxScript::Func_ObjText_SetMaxHeight(script_machine* machine, int argc, con
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int height = (int)argv[1].as_real();
+		int height = argv[1].as_int();
 		obj->SetMaxHeight(height);
 	}
 	return value();
@@ -3536,7 +3555,7 @@ value DxScript::Func_ObjText_SetLinePitch(script_machine* machine, int argc, con
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int pitch = (int)argv[1].as_real();
+		int pitch = argv[1].as_int();
 		obj->SetLinePitch(pitch);
 	}
 	return value();
@@ -3546,7 +3565,7 @@ value DxScript::Func_ObjText_SetSidePitch(script_machine* machine, int argc, con
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int pitch = (int)argv[1].as_real();
+		int pitch = argv[1].as_int();
 		obj->SetSidePitch(pitch);
 	}
 	return value();
@@ -3556,10 +3575,10 @@ value DxScript::Func_ObjText_SetVertexColor(script_machine* machine, int argc, c
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		byte a = ColorAccess::ClampColorRet(argv[1].as_real());
-		byte r = ColorAccess::ClampColorRet(argv[2].as_real());
-		byte g = ColorAccess::ClampColorRet(argv[3].as_real());
-		byte b = ColorAccess::ClampColorRet(argv[4].as_real());
+		byte a = ColorAccess::ClampColorRet(argv[1].as_int());
+		byte r = ColorAccess::ClampColorRet(argv[2].as_int());
+		byte g = ColorAccess::ClampColorRet(argv[3].as_int());
+		byte b = ColorAccess::ClampColorRet(argv[4].as_int());
 		obj->SetVertexColor(D3DCOLOR_ARGB(a, r, g, b));
 	}
 	return value();
@@ -3588,7 +3607,7 @@ gstd::value DxScript::Func_ObjText_SetHorizontalAlignment(gstd::script_machine* 
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int align = (int)argv[1].as_real();
+		int align = argv[1].as_int();
 		obj->SetHorizontalAlignment(align);
 	}
 	return value();
@@ -3853,7 +3872,7 @@ gstd::value DxScript::Func_ObjSound_SetSoundDivision(gstd::script_machine* machi
 	if (obj) {
 		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
-			int div = (int)argv[1].as_real();
+			int div = argv[1].as_int();
 			player->SetSoundDivision(div);
 		}
 	}
@@ -3942,7 +3961,7 @@ gstd::value DxScript::Func_ObjSound_GetTotalLengthSampleCount(gstd::script_machi
 gstd::value DxScript::Func_ObjFile_Create(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	//	script->CheckRunInMainThread();
-	TypeObject type = (TypeObject)((int)argv[0].as_real());
+	TypeObject type = (TypeObject)argv[0].as_int();
 
 	shared_ptr<DxFileObject> obj;
 	if (type == TypeObject::OBJ_FILE_TEXT) {
@@ -4040,7 +4059,7 @@ gstd::value DxScript::Func_ObjFileT_GetLineText(gstd::script_machine* machine, i
 	DxTextFileObject* obj = dynamic_cast<DxTextFileObject*>(script->GetObjectPointer(id));
 	if (obj == nullptr) return value(machine->get_engine()->get_string_type(), std::wstring());
 
-	int line = (int)argv[1].as_real();
+	int line = argv[1].as_int();
 	std::wstring res = obj->GetLineAsWString(line);
 	return script->CreateStringValue(res);
 }
@@ -4051,7 +4070,7 @@ gstd::value DxScript::Func_ObjFileT_SetLineText(gstd::script_machine* machine, i
 
 	//Cannot write to an archived file
 	if (obj && !obj->isArchived_) {
-		int line = (int)argv[1].as_real();
+		int line = argv[1].as_int();
 		std::wstring text = argv[2].as_string();
 		obj->SetLineAsWString(text, line);
 	}
@@ -4064,7 +4083,7 @@ gstd::value DxScript::Func_ObjFileT_SplitLineText(gstd::script_machine* machine,
 	DxTextFileObject* obj = dynamic_cast<DxTextFileObject*>(script->GetObjectPointer(id));
 	if (obj == nullptr) return value(machine->get_engine()->get_string_type(), std::wstring());
 
-	int pos = (int)argv[1].as_real();
+	int pos = argv[1].as_int();
 	std::wstring delim = argv[2].as_string();
 	std::wstring line = obj->GetLineAsWString(pos);
 	std::vector<std::wstring> list = StringUtility::Split(line, delim);
@@ -4098,7 +4117,7 @@ gstd::value DxScript::Func_ObjFileB_SetByteOrder(gstd::script_machine* machine, 
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int order = (int)argv[1].as_real();
+		int order = argv[1].as_int();
 		obj->SetByteOrder(order);
 	}
 	return gstd::value();
@@ -4129,7 +4148,7 @@ gstd::value DxScript::Func_ObjFileB_Seek(gstd::script_machine* machine, int argc
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int pos = (int)argv[1].as_real();
+		int pos = argv[1].as_int();
 		gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
 		buffer->Seek(pos);
 	}
@@ -4307,7 +4326,7 @@ gstd::value DxScript::Func_ObjFileB_WriteByte(gstd::script_machine* machine, int
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj && !obj->IsArchived()) {
-		byte data = (byte)argv[1].as_real();
+		byte data = argv[1].as_int();
 		res = obj->GetBuffer()->Write(&data, sizeof(byte));
 	}
 	return script->CreateRealValue(res);
@@ -4355,7 +4374,7 @@ gstd::value DxScript::Func_ObjFileB_WriteFloat(gstd::script_machine* machine, in
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj && !obj->IsArchived()) {
-		float data = (float)argv[1].as_real();
+		float data = argv[1].as_int();
 		res = obj->GetBuffer()->Write(&data, sizeof(float));
 	}
 	return script->CreateRealValue(res);

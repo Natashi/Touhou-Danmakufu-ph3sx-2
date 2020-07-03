@@ -16,7 +16,7 @@ namespace directx {
 	/**********************************************************
 	//DxScriptObjectBase
 	**********************************************************/
-	enum class TypeObject {
+	enum class TypeObject : int8_t {
 		OBJ_INVALID = -1,
 		OBJ_PRIMITIVE_2D,
 		OBJ_SPRITE_2D,
@@ -889,6 +889,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_Obj_SetValueR);
 		DNH_FUNCAPI_DECL_(Func_Obj_DeleteValueR);
 		DNH_FUNCAPI_DECL_(Func_Obj_IsValueExistsR);
+		DNH_FUNCAPI_DECL_(Func_Obj_CopyValueTable);
 		static gstd::value Func_Obj_GetType(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
 		//Dx関数：オブジェクト操作(RenderObject)
@@ -906,6 +907,7 @@ namespace directx {
 		static gstd::value Func_ObjRender_SetScaleXYZ(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_SetColor(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_SetColorHSV(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_ObjRender_SetColorHex(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_GetColor);
 		static gstd::value Func_ObjRender_SetAlpha(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_GetAlpha);
@@ -923,7 +925,7 @@ namespace directx {
 		static gstd::value Func_ObjRender_SetZTest(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_SetFogEnable(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_SetCullingMode(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_ObjRender_SetRalativeObject(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_ObjRender_SetRelativeObject(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_SetPermitCamera(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_GetBlendType(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetTextureFilterMin);
