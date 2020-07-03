@@ -1178,14 +1178,11 @@ void Font::CreateFont(const wchar_t* type, int size, bool bBold, bool bItalic, b
 	fontInfo.lfHeight = size;
 	fontInfo.lfItalic = bItalic;
 	fontInfo.lfUnderline = bLine;
-	fontInfo.lfCharSet = ANSI_CHARSET;
 
-	for (const wchar_t* pCh = type; *pCh; ++pCh) {
-		if (!(IsCharAlphaNumeric(*pCh) || *pCh == L' ' || *pCh == L'-')) {
-			fontInfo.lfCharSet = SHIFTJIS_CHARSET;
-			break;
-		}
+	if (std::regex_match(type, std::wregex(L"[^a-zA-Z0-9\s-]"))) {
+		fontInfo.lfCharSet = SHIFTJIS_CHARSET;
 	}
+	else fontInfo.lfCharSet = ANSI_CHARSET;
 
 	this->CreateFontIndirect(fontInfo);
 }
