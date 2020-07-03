@@ -47,7 +47,7 @@ namespace directx {
 	**********************************************************/
 	class DxWindowManager : public gstd::TaskBase {
 	protected:
-		std::list<gstd::ref_count_ptr<DxWindow> > listWindow_;//最前面がアクティブ
+		std::list<gstd::ref_count_ptr<DxWindow>> listWindow_;//最前面がアクティブ
 		gstd::ref_count_ptr<DxWindow> wndCapture_;
 		std::list<int> listLockID_;
 

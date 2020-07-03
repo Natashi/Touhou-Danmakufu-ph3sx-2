@@ -379,7 +379,7 @@ public:
 	void SetLife(double life) { life_ = life; }
 	double GetDamage() { return damage_; }
 	void SetDamage(double damage) { damage_ = damage; }
-	virtual void SetFadeDelete() { if (frameFadeDelete_ < 0)frameFadeDelete_ = FRAME_FADEDELETE; }
+	virtual void SetFadeDelete() { if (frameFadeDelete_ < 0) frameFadeDelete_ = FRAME_FADEDELETE; }
 	bool IsAutoDelete() { return bAutoDelete_; }
 	void SetAutoDelete(bool b) { bAutoDelete_ = b; }
 	void SetAutoDeleteFrame(int frame) { frameAutoDelete_ = frame; }
@@ -490,7 +490,7 @@ public:
 	int GetRenderWidth() { return widthRender_; }
 	void SetRenderWidth(int width) {
 		widthRender_ = width;
-		if (widthIntersection_ < 0)widthIntersection_ = width / 4;
+		if (widthIntersection_ < 0) widthIntersection_ = width / 4;
 	}
 	int GetIntersectionWidth() { return widthIntersection_; }
 	void SetIntersectionWidth(int width) { widthIntersection_ = width; }

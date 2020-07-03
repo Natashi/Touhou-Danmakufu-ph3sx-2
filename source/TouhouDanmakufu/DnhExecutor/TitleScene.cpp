@@ -44,7 +44,7 @@ TitleScene::TitleScene() {
 }
 void TitleScene::Work() {
 	MenuTask::Work();
-	if (!_IsWaitedKeyFree())return;
+	if (!_IsWaitedKeyFree()) return;
 
 	EDirectInput* input = EDirectInput::GetInstance();
 	if (input->GetVirtualKeyState(EDirectInput::KEY_OK) == KEY_PUSH) {

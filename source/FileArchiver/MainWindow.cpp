@@ -70,7 +70,7 @@ bool MainWindow::Initialize() {
 void MainWindow::_LoadEnvironment() {
 	std::wstring path = PathProperty::GetModuleDirectory() + PATH_ENVIRONMENT;
 	RecordBuffer record;
-	if (!record.ReadFromFile(path))return;
+	if (!record.ReadFromFile(path)) return;
 
 }
 void MainWindow::_SaveEnvironment() {
@@ -263,7 +263,7 @@ void MainWindow::_AddFile(std::wstring dirBase, std::wstring path) {
 			}
 
 			std::wstring tName = path + data.cFileName;
-			if (!_IsValidFilePath(dirBase, tName))return;
+			if (!_IsValidFilePath(dirBase, tName)) return;
 
 			std::wstring filename = PathProperty::GetFileName(tName);
 			std::wstring dir = _CreateRelativeDirectory(dirBase, path);
@@ -280,7 +280,7 @@ void MainWindow::_AddFile(std::wstring dirBase, std::wstring path) {
 		FindClose(hFind);
 	}
 	else {
-		if (!_IsValidFilePath(dirBase, path))return;
+		if (!_IsValidFilePath(dirBase, path)) return;
 
 		std::wstring filename = PathProperty::GetFileName(path);
 		std::wstring dir = _CreateRelativeDirectory(dirBase, path);
@@ -324,11 +324,11 @@ void MainWindow::_RemoveAllFile() {
 	buttonDecompile_.SetWindowEnable(false);
 }
 bool MainWindow::_IsValidFilePath(std::wstring dirBase, std::wstring path) {
-	if (path.size() == 0)return false;
+	if (path.size() == 0) return false;
 	bool res = true;
 
 	File file(path);
-	if (file.IsDirectory())return true;
+	if (file.IsDirectory()) return true;
 
 	std::wstring key = _CreateKey(dirBase, path);
 	res &= listFile_.find(key) == listFile_.end();

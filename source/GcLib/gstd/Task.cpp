@@ -49,7 +49,7 @@ void TaskManager::_ArrangeTask() {
 			std::list<shared_ptr<TaskFunction>>& listFunc = *itrPri;
 
 			for (auto itrFunc = listFunc.begin(); itrFunc != listFunc.end();) {
-				if (*itrFunc == nullptr)itrFunc = listFunc.erase(itrFunc);
+				if (*itrFunc == nullptr) itrFunc = listFunc.erase(itrFunc);
 				else {
 					int delay = (*itrFunc)->GetDelay();
 					delay = std::max(0, delay - 1);
@@ -61,7 +61,7 @@ void TaskManager::_ArrangeTask() {
 	}
 
 	//タスク情報パネル更新
-	if (panelInfo_ != nullptr)panelInfo_->Update(this);
+	if (panelInfo_) panelInfo_->Update(this);
 }
 void TaskManager::_CheckInvalidFunctionDivision(int divFunc) {
 	if (mapFunc_.find(divFunc) == mapFunc_.end())
@@ -350,9 +350,9 @@ void TaskInfoPanel::LocateParts() {
 	wndListView_.SetBounds(wx, ySplitter + heightSplitter, wWidth, wHeight - ySplitter - heightSplitter);
 }
 void TaskInfoPanel::Update(TaskManager* taskManager) {
-	if (!IsWindowVisible())return;
+	if (!IsWindowVisible()) return;
 	int time = timeGetTime();
-	if (abs(time - timeLastUpdate_) < timeUpdateInterval_)return;
+	if (abs(time - timeLastUpdate_) < timeUpdateInterval_) return;
 	timeLastUpdate_ = time;
 
 	ref_count_ptr<WTreeView::Item> itemRoot = wndTreeView_.GetRootItem();
@@ -362,7 +362,7 @@ void TaskInfoPanel::Update(TaskManager* taskManager) {
 
 	int addressManager = 0;
 	ref_count_ptr<WTreeView::Item> itemSelected = wndTreeView_.GetSelectedItem();
-	if (itemSelected != nullptr) {
+	if (itemSelected) {
 		addressManager = itemSelected->GetParam();
 	}
 	_UpdateListView((TaskManager*)addressManager);
@@ -372,20 +372,19 @@ void TaskInfoPanel::_UpdateTreeView(TaskManager* taskManager, ref_count_ptr<WTre
 	std::set<int> setAddress;
 	{
 		std::list<shared_ptr<TaskBase>> listTask = taskManager->GetTaskList();
-		std::list<shared_ptr<TaskBase>>::iterator itrTask;
-		for (itrTask = listTask.begin(); itrTask != listTask.end(); ++itrTask) {
-			if (*itrTask == nullptr)continue;
-			TaskManager* task = dynamic_cast<TaskManager*>((*itrTask).get());
-			if (task == nullptr)continue;
+		
+		for (auto itrTask = listTask.begin(); itrTask != listTask.end(); ++itrTask) {
+			if (*itrTask == nullptr) continue;
+			TaskManager* task = dynamic_cast<TaskManager*>(itrTask->get());
+			if (task == nullptr) continue;
 
 			int address = (int)task;
 			ref_count_ptr<WTreeView::Item> itemChild = nullptr;
 			std::list<ref_count_ptr<WTreeView::Item>> listChild = item->GetChildList();
-			std::list<ref_count_ptr<WTreeView::Item>>::iterator itrChild;
-			for (itrChild = listChild.begin(); itrChild != listChild.end(); ++itrChild) {
+			for (auto itrChild = listChild.begin(); itrChild != listChild.end(); ++itrChild) {
 				ref_count_ptr<WTreeView::Item> iItem = *itrChild;
 				LPARAM param = iItem->GetParam();
-				if (param != address)continue;
+				if (param != address) continue;
 				itemChild = iItem;
 			}
 
@@ -404,11 +403,10 @@ void TaskInfoPanel::_UpdateTreeView(TaskManager* taskManager, ref_count_ptr<WTre
 	//削除
 	{
 		std::list<ref_count_ptr<WTreeView::Item>> listChild = item->GetChildList();
-		std::list<ref_count_ptr<WTreeView::Item>>::iterator itrChild;
-		for (itrChild = listChild.begin(); itrChild != listChild.end(); ++itrChild) {
+		for (auto itrChild = listChild.begin(); itrChild != listChild.end(); ++itrChild) {
 			ref_count_ptr<WTreeView::Item> iItem = *itrChild;
 			LPARAM param = iItem->GetParam();
-			if (setAddress.find(param) == setAddress.end())iItem->Delete();
+			if (setAddress.find(param) == setAddress.end()) iItem->Delete();
 		}
 	}
 }
@@ -434,7 +432,7 @@ void TaskInfoPanel::_UpdateListView(TaskManager* taskManager) {
 			std::list<shared_ptr<TaskFunction>>& listFunc = *itrPri;
 
 			for (auto itrFunc = listFunc.begin(); itrFunc != listFunc.end(); ++itrFunc) {
-				if (*itrFunc == nullptr)continue;
+				if (*itrFunc == nullptr) continue;
 				std::string keyList;
 
 				TaskFunction* func = itrFunc->get();

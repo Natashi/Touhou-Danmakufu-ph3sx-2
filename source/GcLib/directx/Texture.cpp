@@ -183,7 +183,7 @@ IDirect3DTexture9* Texture::GetD3DTexture() {
 		int time = timeGetTime();
 		while (bWait) {
 			Lock lock(TextureManager::GetBase()->GetLock());
-			if (data_ != nullptr) {
+			if (data_) {
 				bWait = !data_->bLoad_;
 				if (!bWait)
 					res = _GetTextureData()->pTexture_;
@@ -304,7 +304,7 @@ TextureManager::~TextureManager() {
 	thisBase_ = nullptr;
 }
 bool TextureManager::Initialize() {
-	if (thisBase_ != nullptr)return false;
+	if (thisBase_) return false;
 
 	thisBase_ = this;
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -565,7 +565,7 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 		HRESULT hr;
 		hr = device->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
 			qualitySample ? qualitySample[1] : 0, FALSE, &data->lpRenderZ_, nullptr);
-		if (FAILED(hr))throw false;
+		if (FAILED(hr)) throw false;
 
 		D3DFORMAT fmt = graphics->GetConfigData().GetColorMode() == DirectGraphicsConfig::COLOR_MODE_32BIT ?
 			D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
@@ -574,16 +574,16 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 
 		if (FAILED(hr)) {
 			//テクスチャを正方形にする
-			if (width > height)height = width;
-			else if (height > width)width = height;
+			if (width > height) height = width;
+			else if (height > width) width = height;
 
 			hr = device->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
 				qualitySample ? qualitySample[1] : 0, FALSE, &data->lpRenderZ_, nullptr);
-			if (FAILED(hr))throw false;
+			if (FAILED(hr)) throw false;
 
 			hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT,
 				&data->pTexture_, nullptr);
-			if (FAILED(hr))throw false;
+			if (FAILED(hr)) throw false;
 		}
 		data->pTexture_->GetSurfaceLevel(0, &data->lpRenderSurface_);
 
@@ -673,8 +673,8 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 				if (bLoadImageInfo) {
 					try {
 						ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-						if (reader == nullptr)throw gstd::wexception("Texture released.");
-						if (!reader->Open())throw gstd::wexception("File not found.");
+						if (reader == nullptr) throw gstd::wexception("Texture released.");
+						if (!reader->Open()) throw gstd::wexception("File not found.");
 
 						size_t size = reader->GetFileSize();
 						ByteBuffer buf;
@@ -730,10 +730,10 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 		Lock lock(lock_);
 
 		shared_ptr<Texture> texture = std::dynamic_pointer_cast<Texture>(event->GetSource());
-		if (texture == nullptr)return;
+		if (texture == nullptr) return;
 
 		shared_ptr<TextureData> data = texture->data_;
-		if (data == nullptr || data->bLoad_)return;
+		if (data == nullptr || data->bLoad_) return;
 
 		int countRef = data.use_count();
 		//自身とTextureManager内の数だけになったら読み込まない。
@@ -744,8 +744,8 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 
 		try {
 			ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-			if (reader == nullptr)throw gstd::wexception("Texture released.");
-			if (!reader->Open())throw gstd::wexception("File not found.");
+			if (reader == nullptr) throw gstd::wexception("Texture released.");
+			if (!reader->Open()) throw gstd::wexception("File not found.");
 
 			size_t size = reader->GetFileSize();
 			ByteBuffer buf;
@@ -910,20 +910,19 @@ void TextureInfoPanel::LocateParts() {
 void TextureInfoPanel::_Run() {
 	while (GetStatus() == RUN) {
 		TextureManager* manager = TextureManager::GetBase();
-		if (manager != nullptr)
+		if (manager)
 			Update(manager);
 		Sleep(timeUpdateInterval_);
 	}
 }
 void TextureInfoPanel::Update(TextureManager* manager) {
-	if (!IsWindowVisible())return;
+	if (!IsWindowVisible()) return;
 	std::set<std::wstring> setKey;
-	std::map<std::wstring, shared_ptr<TextureData>>::iterator itrMap;
 	{
 		Lock lock(manager->GetLock());
 
 		std::map<std::wstring, shared_ptr<TextureData>>& mapData = manager->mapTextureData_;
-		for (itrMap = mapData.begin(); itrMap != mapData.end(); itrMap++) {
+		for (auto itrMap = mapData.begin(); itrMap != mapData.end(); itrMap++) {
 			std::wstring name = itrMap->first;
 			TextureData* data = (itrMap->second).get();
 

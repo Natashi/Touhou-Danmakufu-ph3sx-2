@@ -154,7 +154,7 @@ bool KeyCodeList::IsValidCode(int code) {
 	return res;
 }
 std::wstring KeyCodeList::GetCodeText(int code) {
-	if (!IsValidCode(code))return L"";
+	if (!IsValidCode(code)) return L"";
 
 	std::wstring res = mapText_[code];
 	return res;

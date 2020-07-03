@@ -79,15 +79,15 @@ void ScriptSelectScene::Work() {
 	{
 		ref_count_ptr<ScriptSelectFileModel> model = ref_count_ptr<ScriptSelectFileModel>::DownCast(model_);
 		if (model != nullptr && model->GetStatus() == Thread::RUN) {
-			if (model->GetWaitPath().size() > 0)return;
+			if (model->GetWaitPath().size() > 0) return;
 		}
 	}
-	if (!bActive_)return;
+	if (!bActive_) return;
 
 	int lastCursorY = cursorY_;
 
 	MenuTask::Work();
-	if (!_IsWaitedKeyFree())return;
+	if (!_IsWaitedKeyFree()) return;
 
 	EDirectInput* input = EDirectInput::GetInstance();
 	if (input->GetVirtualKeyState(EDirectInput::KEY_OK) == KEY_PUSH) {
@@ -173,7 +173,7 @@ void ScriptSelectScene::Work() {
 		}
 	}
 
-	if (lastCursorY != cursorY_)frameSelect_ = 0;
+	if (lastCursorY != cursorY_) frameSelect_ = 0;
 	else frameSelect_++;
 }
 void ScriptSelectScene::Render() {
@@ -237,7 +237,7 @@ void ScriptSelectScene::Render() {
 		Lock lock(cs_);
 		for (int iItem = 0; iItem <= pageMaxY_; iItem++) {
 			shared_ptr<DxTextRenderObject> obj = objMenuText_[iItem];
-			if (obj == nullptr)continue;
+			if (obj == nullptr) continue;
 			int alphaText = bActive_ ? 255 : 128;
 			obj->SetVertexColor(D3DCOLOR_ARGB(255, alphaText, alphaText, alphaText));
 			obj->SetPosition(32, 48 + iItem * 18);
@@ -247,7 +247,7 @@ void ScriptSelectScene::Render() {
 				graphics->SetBlendMode(MODE_BLEND_ADD_RGB);
 				int cycle = 60;
 				int alpha = frameSelect_ % cycle;
-				if (alpha < cycle / 2)alpha = 255 * (float)((float)(cycle / 2 - alpha) / (float)(cycle / 2));
+				if (alpha < cycle / 2) alpha = 255 * (float)((float)(cycle / 2 - alpha) / (float)(cycle / 2));
 				else alpha = 255 * (float)((float)(alpha - cycle / 2) / (float)(cycle / 2));
 				obj->SetVertexColor(D3DCOLOR_ARGB(255, alpha, alpha, alpha));
 				obj->Render();
@@ -375,7 +375,7 @@ int ScriptSelectScene::GetType() {
 void ScriptSelectScene::SetModel(ref_count_ptr<ScriptSelectModel> model) {
 	ClearModel();
 
-	if (model == nullptr)return;
+	if (model == nullptr) return;
 	model->scene_ = this;
 	model_ = model;
 
@@ -398,14 +398,13 @@ void ScriptSelectScene::ClearModel() {
 	model_ = nullptr;
 }
 
-void ScriptSelectScene::AddMenuItem(std::list<ref_count_ptr<ScriptSelectSceneMenuItem> >& listItem) {
-	if (listItem.size() == 0)return;
+void ScriptSelectScene::AddMenuItem(std::list<ref_count_ptr<ScriptSelectSceneMenuItem>>& listItem) {
+	if (listItem.size() == 0) return;
 
 	{
 		Lock lock(cs_);
 
-		std::list<ref_count_ptr<ScriptSelectSceneMenuItem> >::iterator itr = listItem.begin();
-		for (; itr != listItem.end(); itr++) {
+		for (auto itr = listItem.begin(); itr != listItem.end(); itr++) {
 			MenuTask::AddMenuItem((*itr));
 		}
 
@@ -433,10 +432,10 @@ void ScriptSelectScene::AddMenuItem(std::list<ref_count_ptr<ScriptSelectSceneMen
 
 			for (int iItem = 0; iItem < item_.size(); iItem++) {
 				ScriptSelectSceneMenuItem* itrItem = (ScriptSelectSceneMenuItem*)item_[iItem].GetPointer();
-				if (itrItem == nullptr)continue;
+				if (itrItem == nullptr) continue;
 
 				bool bEqualsPath = File::IsEqualsPath(path, itrItem->GetPath());;
-				if (!bEqualsPath)continue;
+				if (!bEqualsPath) continue;
 
 				pageCurrent_ = iItem / (pageMaxY_ + 1) + 1;
 				cursorY_ = iItem % (pageMaxY_ + 1);
@@ -492,7 +491,7 @@ void ScriptSelectFileModel::_SearchScript(std::wstring dir) {
 	std::wstring findDir = dir + L"*.*";
 	hFind = FindFirstFile(findDir.c_str(), &data);
 	do {
-		if (GetStatus() != RUN)return;
+		if (GetStatus() != RUN) return;
 
 		int time = ::timeGetTime();
 		if (abs(time - timeLastUpdate_) > 500) {
@@ -532,16 +531,12 @@ void ScriptSelectFileModel::_SearchScript(std::wstring dir) {
 	FindClose(hFind);
 }
 void ScriptSelectFileModel::_CreateMenuItem(std::wstring path) {
-	std::vector<ref_count_ptr<ScriptInformation>> listInfo =
-		ScriptInformation::CreateScriptInformationList(path, true);
-	for (size_t iInfo = 0; iInfo < listInfo.size(); iInfo++) {
-		ref_count_ptr<ScriptInformation> info = listInfo[iInfo];
-		if (!_IsValidScriptInformation(info))continue;
+	std::vector<ref_count_ptr<ScriptInformation>> listInfo = ScriptInformation::CreateScriptInformationList(path, true);
+	for (ref_count_ptr<ScriptInformation> info : listInfo) {
+		if (!_IsValidScriptInformation(info)) continue;
 
 		int typeItem = _ConvertTypeInfoToItem(info->GetType());
-		ref_count_ptr<ScriptSelectSceneMenuItem> item = 
-			new ScriptSelectSceneMenuItem(typeItem, info->GetScriptPath(), info);
-		listItem_.push_back(item);
+		listItem_.push_back(new ScriptSelectSceneMenuItem(typeItem, info->GetScriptPath(), info));
 	}
 
 }
@@ -638,7 +633,7 @@ PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) 
 }
 void PlayTypeSelectScene::Work() {
 	MenuTask::Work();
-	if (!_IsWaitedKeyFree())return;
+	if (!_IsWaitedKeyFree()) return;
 
 	EDirectInput* input = EDirectInput::GetInstance();
 	if (input->GetVirtualKeyState(EDirectInput::KEY_OK) == KEY_PUSH) {
@@ -774,7 +769,7 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 		AddMenuItem(new PlayerSelectMenuItem(listPlayer_[iMenu]));
 	}
 
-	std::vector<ref_count_ptr<ScriptInformation> > listLastPlayerSelect = systemInfo->GetLastPlayerSelectedList();
+	std::vector<ref_count_ptr<ScriptInformation>> listLastPlayerSelect = systemInfo->GetLastPlayerSelectedList();
 	bool bSameList = false;
 	if (listPlayer_.size() == listLastPlayerSelect.size()) {
 		bSameList = true;
@@ -793,7 +788,7 @@ void PlayerSelectScene::Work() {
 	int lastCursorY = cursorY_;
 
 	MenuTask::Work();
-	if (!_IsWaitedKeyFree())return;
+	if (!_IsWaitedKeyFree()) return;
 
 	EDirectInput* input = EDirectInput::GetInstance();
 	if (input->GetVirtualKeyState(EDirectInput::KEY_OK) == KEY_PUSH && listPlayer_.size() > 0) {
@@ -817,7 +812,7 @@ void PlayerSelectScene::Work() {
 		return;
 	}
 
-	if (lastCursorY != cursorY_)frameSelect_ = 0;
+	if (lastCursorY != cursorY_) frameSelect_ = 0;
 	else frameSelect_++;
 }
 void PlayerSelectScene::Render() {
@@ -953,7 +948,7 @@ void PlayerSelectScene::Render() {
 					graphics->SetBlendMode(MODE_BLEND_ADD_RGB);
 					int cycle = 60;
 					int alpha = frameSelect_ % cycle;
-					if (alpha < cycle / 2)alpha = 255 * (float)((float)(cycle / 2 - alpha) / (float)(cycle / 2));
+					if (alpha < cycle / 2) alpha = 255 * (float)((float)(cycle / 2 - alpha) / (float)(cycle / 2));
 					else alpha = 255 * (float)((float)(alpha - cycle / 2) / (float)(cycle / 2));
 					dxText.SetVertexColor(D3DCOLOR_ARGB(255, alpha, alpha, alpha));
 					dxText.Render();

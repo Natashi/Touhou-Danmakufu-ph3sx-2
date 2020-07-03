@@ -383,7 +383,7 @@ std::set<std::wstring> ArchiveFile::GetKeyList() {
 }
 std::vector<ArchiveFileEntry::ptr> ArchiveFile::GetEntryList(std::wstring name) {
 	std::vector<ArchiveFileEntry::ptr> res;
-	if (!IsExists(name))return res;
+	if (!IsExists(name)) return res;
 
 	for (auto itrPair = mapEntry_.equal_range(name); itrPair.first != itrPair.second; itrPair.first++) {
 		ArchiveFileEntry::ptr entry = (itrPair.first)->second;
@@ -465,9 +465,9 @@ ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr e
 /*
 ref_count_ptr<ByteBuffer> ArchiveFile::GetBuffer(std::string name)
 {
-	if(!IsExists(name))return NULL;
+	if(!IsExists(name)) return NULL;
 
-	if(!file_->Open())return NULL;
+	if(!file_->Open()) return NULL;
 
 	ref_count_ptr<ByteBuffer> res = new ByteBuffer();
 	ref_count_ptr<ArchiveFileEntry> entry = mapEntry_[name];

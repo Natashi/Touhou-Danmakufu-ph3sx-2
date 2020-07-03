@@ -528,7 +528,7 @@ namespace gstd {
 	class Token {
 		friend Scanner;
 	public:
-		enum Type {
+		enum class Type : uint8_t {
 			TK_UNKNOWN, TK_EOF, TK_NEWLINE,
 			TK_ID,
 			TK_INT, TK_REAL, TK_STRING,
@@ -549,7 +549,7 @@ namespace gstd {
 		int posStart_;
 		int posEnd_;
 	public:
-		Token() { type_ = TK_UNKNOWN; posStart_ = 0; posEnd_ = 0; }
+		Token() { type_ = Type::TK_UNKNOWN; posStart_ = 0; posEnd_ = 0; }
 		Token(Type type, std::wstring& element, int start, int end) { type_ = type; element_ = element; posStart_ = start; posEnd_ = end; }
 		virtual ~Token() {};
 
@@ -628,7 +628,7 @@ namespace gstd {
 	//TextParser
 	class TextParser {
 	public:
-		enum {
+		enum class Type : uint8_t {
 			TYPE_REAL,
 			TYPE_BOOLEAN,
 			TYPE_STRING,
@@ -637,7 +637,7 @@ namespace gstd {
 		class Result {
 			friend TextParser;
 		protected:
-			int type_;
+			Type type_;
 			int pos_;
 			std::wstring valueString_;
 			union {
@@ -646,40 +646,40 @@ namespace gstd {
 			};
 		public:
 			virtual ~Result() {};
-			int GetType() { return type_; }
+			Type GetType() { return type_; }
 			double GetReal() {
 				double res = valueReal_;
-				if (IsBoolean())res = valueBoolean_ ? 1.0 : 0.0;
-				if (IsString())res = StringUtility::ToDouble(valueString_);
+				if (IsBoolean()) res = valueBoolean_ ? 1.0 : 0.0;
+				if (IsString()) res = StringUtility::ToDouble(valueString_);
 				return res;
 			}
 			void SetReal(double value) {
-				type_ = TYPE_REAL;
+				type_ = Type::TYPE_REAL;
 				valueReal_ = value;
 			}
 			bool GetBoolean() {
 				bool res = valueBoolean_;
-				if (IsReal())res = (valueReal_ != 0.0 ? true : false);
-				if (IsString())res = (valueString_ == L"true" ? true : false);
+				if (IsReal()) res = (valueReal_ != 0.0 ? true : false);
+				if (IsString()) res = (valueString_ == L"true" ? true : false);
 				return res;
 			}
 			void SetBoolean(bool value) {
-				type_ = TYPE_BOOLEAN;
+				type_ = Type::TYPE_BOOLEAN;
 				valueBoolean_ = value;
 			}
 			std::wstring GetString() {
 				std::wstring res = valueString_;
-				if (IsReal())res = gstd::StringUtility::Format(L"%f", valueReal_);
-				if (IsBoolean())res = (valueBoolean_ ? L"true" : L"false");
+				if (IsReal()) res = gstd::StringUtility::Format(L"%f", valueReal_);
+				if (IsBoolean()) res = (valueBoolean_ ? L"true" : L"false");
 				return res;
 			}
 			void SetString(std::wstring value) {
-				type_ = TYPE_STRING;
+				type_ = Type::TYPE_STRING;
 				valueString_ = value;
 			}
-			bool IsReal() { return type_ == TYPE_REAL; }
-			bool IsBoolean() { return type_ == TYPE_BOOLEAN; }
-			bool IsString() { return type_ == TYPE_STRING; }
+			bool IsReal() { return type_ == Type::TYPE_REAL; }
+			bool IsBoolean() { return type_ == Type::TYPE_BOOLEAN; }
+			bool IsString() { return type_ == Type::TYPE_STRING; }
 		};
 
 	protected:

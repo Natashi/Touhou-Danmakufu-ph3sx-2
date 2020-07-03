@@ -12,39 +12,39 @@ std::list<int> WindowBase::listWndId_;
 CriticalSection WindowBase::lock_;
 
 WindowBase::WindowBase() {
-	hWnd_ = NULL;
-	oldWndProc_ = NULL;
+	hWnd_ = nullptr;
+	oldWndProc_ = nullptr;
 
 	//空いているWindowID取得
 	{
 		Lock lock(lock_);
+
 		listWndId_.sort();
+
 		int idFree = 0;
-		std::list<int>::iterator itr;
-		for (itr = listWndId_.begin(); itr != listWndId_.end(); itr++) {
-			if (*itr != idFree)break;
+		for (auto itr = listWndId_.begin(); itr != listWndId_.end(); ++itr) {
+			if (*itr != idFree) break;
 			idFree++;
 		}
+
 		idWindow_ = idFree;
 		listWndId_.push_back(idFree);
 	}
-
 }
 
 WindowBase::~WindowBase() {
 	this->Detach();
 
 	//WindowID解放
-	std::list<int>::iterator itr;
-	for (itr = listWndId_.begin(); itr != listWndId_.end(); itr++) {
-		if (*itr != idWindow_)continue;
+	for (auto itr = listWndId_.begin(); itr != listWndId_.end(); ++itr) {
+		if (*itr != idWindow_) continue;
 		listWndId_.erase(itr);
 		break;
 	}
 }
 
 bool WindowBase::Attach(HWND hWnd) {
-	if (!hWnd)return false;
+	if (!hWnd) return false;
 	hWnd_ = hWnd;
 	//ダイアログかウィンドウかを判定
 	int typeProc = ::GetWindowLong(hWnd, DWL_DLGPROC) != 0 ? DWL_DLGPROC : GWL_WNDPROC;
@@ -59,13 +59,13 @@ bool WindowBase::Attach(HWND hWnd) {
 }
 
 bool WindowBase::Detach() {
-	if (hWnd_ == NULL)return false;
+	if (hWnd_ == nullptr) return false;
 
 	//サブクラス化を解除
 	if (oldWndProc_) {
 		int typeProc = ::GetWindowLong(hWnd_, DWL_DLGPROC) != 0 ? DWL_DLGPROC : GWL_WNDPROC;
 		::SetWindowLong(hWnd_, typeProc, (DWORD)oldWndProc_);
-		oldWndProc_ = NULL;
+		oldWndProc_ = nullptr;
 	}
 	::RemoveProp(hWnd_, PROP_THIS);
 	return true;
@@ -76,17 +76,17 @@ LRESULT CALLBACK WindowBase::_StaticWindowProcedure(HWND hWnd, UINT uMsg, WPARAM
 	WindowBase* tWnd = (WindowBase*)::GetProp(hWnd, PROP_THIS);
 
 	//取得できなかったときの処理
-	if (tWnd == NULL) {
+	if (tWnd == nullptr) {
 		if ((uMsg == WM_CREATE) || (uMsg == WM_NCCREATE))
 			tWnd = (WindowBase*)((LPCREATESTRUCT)lParam)->lpCreateParams;
 		else if (uMsg == WM_INITDIALOG)
 			tWnd = (WindowBase*)lParam;
-		if (tWnd)tWnd->Attach(hWnd);
+		if (tWnd) tWnd->Attach(hWnd);
 	}
 
 	if (tWnd) {
 		LRESULT lResult = tWnd->_WindowProcedure(hWnd, uMsg, wParam, lParam);
-		if (uMsg == WM_DESTROY)tWnd->Detach();
+		if (uMsg == WM_DESTROY) tWnd->Detach();
 		return lResult;
 	}
 
@@ -120,7 +120,7 @@ HWND WindowBase::GetTopParentWindow(HWND hWnd) {
 	HWND res = hWnd;
 	while (true) {
 		HWND hParent = GetParent(hWnd);
-		if (hParent == NULL)break;
+		if (hParent == nullptr) break;
 		res = hParent;
 	}
 	return res;
@@ -144,7 +144,7 @@ void ModalDialog::_RunMessageLoop() {
 
 	MSG msg;
 	while (!bEndDialog_) {	//メッセージループ
-		::GetMessage(&msg, NULL, 0, 0);
+		::GetMessage(&msg, nullptr, 0, 0);
 		if (IsDialog() && hWnd_ && IsDialogMessage(hWnd_, &msg)) continue;
 
 		::TranslateMessage(&msg);
@@ -155,7 +155,6 @@ void ModalDialog::_RunMessageLoop() {
 	::SetWindowPos(hParent_, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 	::BringWindowToTop(hParent_);
 	::SetActiveWindow(hParent_);
-
 }
 void ModalDialog::_FinishMessageLoop() {
 	::SetWindowPos(hParent_, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
@@ -168,10 +167,10 @@ void WPanel::Create(HWND hWndParent) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 
 	hWnd_ = ::CreateWindowEx(
-		0, L"STATIC", NULL,
+		0, L"STATIC", nullptr,
 		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 	this->Attach(hWnd_);
 	this->SetWindowStyle(SS_NOTIFY);
 }
@@ -197,16 +196,17 @@ void WLabel::Create(HWND hWndParent) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 
 	hWnd_ = ::CreateWindowEx(
-		0, L"STATIC", NULL,
+		0, L"STATIC", nullptr,
 		WS_CHILD | WS_VISIBLE,
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 LRESULT WLabel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
-	case WM_CTLCOLORSTATIC:case WM_CTLCOLOR:
+	case WM_CTLCOLORSTATIC:
+	case WM_CTLCOLOR:
 	{
 		::SetTextColor((HDC)wParam, colorText_);
 		::SetBkColor((HDC)wParam, colorBack_);
@@ -217,19 +217,19 @@ LRESULT WLabel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
 void WLabel::SetText(std::wstring text) {
-	if (text == GetText())return;
+	if (text == GetText()) return;
 	::SetWindowText(hWnd_, text.c_str());
 }
 void WLabel::SetTextColor(int color) {
 	colorText_ = color;
-	::InvalidateRect(hWnd_, NULL, TRUE);
+	::InvalidateRect(hWnd_, nullptr, TRUE);
 }
 void WLabel::SetBackColor(int color) {
 	colorBack_ = color;
-	::InvalidateRect(hWnd_, NULL, TRUE);
+	::InvalidateRect(hWnd_, nullptr, TRUE);
 }
 std::wstring WLabel::GetText() {
-	if (GetTextLength() == 0)return L"";
+	if (GetTextLength() == 0) return L"";
 
 	std::wstring res;
 	int count = GetTextLength() + 1;
@@ -249,7 +249,7 @@ void WButton::Create(HWND hWndParent) {
 		L"BUTTON", L"",
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
@@ -257,10 +257,10 @@ void WButton::Create(HWND hWndParent, WButton::Style& style) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 
 	hWnd_ = ::CreateWindowEx(
-		style.GetStyleEx(), L"BUTTON", NULL,
+		style.GetStyleEx(), L"BUTTON", nullptr,
 		style.GetStyle(),
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
@@ -282,7 +282,7 @@ void WGroupBox::Create(HWND hWndParent) {
 		L"BUTTON", L"",
 		WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
@@ -299,20 +299,20 @@ void WEditBox::Create(HWND hWndParent, WEditBox::Style& style) {
 
 	//	DWORD style = 0;//ES_MULTILINE|ES_READONLY|ES_AUTOHSCROLL|ES_AUTOVSCROLL|WS_HSCROLL | WS_VSCROLL;
 	hWnd_ = ::CreateWindowEx(
-		style.GetStyleEx(), L"EDIT", NULL,
+		style.GetStyleEx(), L"EDIT", nullptr,
 		style.GetStyle(),
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 void WEditBox::SetText(std::wstring text) {
-	if (text == GetText())return;
+	if (text == GetText()) return;
 	::SetWindowText(hWnd_, text.c_str());
 }
 std::wstring WEditBox::GetText() {
-	if (GetTextLength() == 0)return L"";
+	if (GetTextLength() == 0) return L"";
 
 	std::wstring res;
 	int count = GetTextLength() + 1;
@@ -334,10 +334,10 @@ void WListBox::Create(HWND hWndParent, WListBox::Style& style) {
 
 	//	DWORD style = 0;//ES_MULTILINE|ES_READONLY|ES_AUTOHSCROLL|ES_AUTOVSCROLL|WS_HSCROLL | WS_VSCROLL;
 	hWnd_ = ::CreateWindowEx(
-		style.GetStyleEx(), L"LISTBOX", NULL,
+		style.GetStyleEx(), L"LISTBOX", nullptr,
 		style.GetStyle(),
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
@@ -380,10 +380,10 @@ void WComboBox::Create(HWND hWndParent, WComboBox::Style& style) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 
 	hWnd_ = ::CreateWindowEx(
-		style.GetStyleEx(), L"COMBOBOX", NULL,
+		style.GetStyleEx(), L"COMBOBOX", nullptr,
 		style.GetStyle(),
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
@@ -430,10 +430,10 @@ void WListView::Create(HWND hWndParent, Style& style) {
 	//WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS 
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 	hWnd_ = ::CreateWindowEx(
-		style.GetStyleEx(), WC_LISTVIEW, NULL,
+		style.GetStyleEx(), WC_LISTVIEW, nullptr,
 		style.GetStyle(),
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 
 	DWORD styleListViewEx = ListView_GetExtendedListViewStyle(hWnd_);
 	styleListViewEx |= style.GetListViewStyleEx();
@@ -471,7 +471,7 @@ void WListView::AddRow(std::wstring text) {
 }
 void WListView::SetText(int row, int column, std::wstring text) {
 	std::wstring pre = GetText(row, column);
-	if (pre == text)return;
+	if (pre == text) return;
 
 	int count = ListView_GetItemCount(hWnd_);
 	for (int iRow = count; iRow <= row; iRow++) {
@@ -508,7 +508,7 @@ bool WListView::IsExistsInColumn(std::wstring value, int column) {
 	int count = ListView_GetItemCount(hWnd_);
 	for (int iRow = 0; iRow <= count; iRow++) {
 		std::wstring str = GetText(iRow, column);
-		if (str == value)return true;
+		if (str == value) return true;
 	}
 	return false;
 }
@@ -559,7 +559,7 @@ void WTreeView::Create(HWND hWndParent, Style& style) {
 	hWnd_ = CreateWindowEx(style.GetStyleEx(), WC_TREEVIEW, L"",
 		style.GetStyle(),
 		0, 0, 0, 0,
-		hWndParent, (HMENU)GetWindowId(), hInst, NULL);
+		hWndParent, (HMENU)GetWindowId(), hInst, nullptr);
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
@@ -575,7 +575,7 @@ void WTreeView::CreateRootItem(ItemStyle& style) {
 }
 ref_count_ptr<WTreeView::Item> WTreeView::GetSelectedItem() {
 	HTREEITEM hTreeItem = TreeView_GetSelection(hWnd_);
-	if (hTreeItem == NULL)return NULL;
+	if (hTreeItem == nullptr) return nullptr;
 
 	ref_count_ptr<Item> res = new Item();
 	res->hTree_ = hWnd_;
@@ -584,7 +584,7 @@ ref_count_ptr<WTreeView::Item> WTreeView::GetSelectedItem() {
 }
 //Item
 WTreeView::Item::Item() {
-	hItem_ = NULL;
+	hItem_ = nullptr;
 }
 WTreeView::Item::~Item() {
 
@@ -602,7 +602,7 @@ void WTreeView::Item::Delete() {
 	TreeView_DeleteItem(hTree_, hItem_);
 }
 void WTreeView::Item::SetText(std::wstring text) {
-	if (GetText() == text)return;
+	if (GetText() == text) return;
 	TVITEM tvi;
 	tvi.mask = TVIF_TEXT;
 	tvi.hItem = hItem_;
@@ -634,11 +634,11 @@ LPARAM WTreeView::Item::GetParam() {
 	TreeView_GetItem(hTree_, &tvi);
 	return tvi.lParam;
 }
-std::list<ref_count_ptr<WTreeView::Item> > WTreeView::Item::GetChildList() {
-	std::list<ref_count_ptr<Item> > res;
+std::list<ref_count_ptr<WTreeView::Item>> WTreeView::Item::GetChildList() {
+	std::list<ref_count_ptr<Item>> res;
 	HTREEITEM hChild = TreeView_GetChild(hTree_, hItem_);
 	while (true) {
-		if (hChild == NULL)break;
+		if (hChild == nullptr) break;
 
 		ref_count_ptr<Item> item = new Item();
 		item->hTree_ = hTree_;
@@ -659,10 +659,10 @@ WTabControll::~WTabControll() {
 void WTabControll::Create(HWND hWndParent) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 	hWnd_ = ::CreateWindowEx(
-		0, WC_TABCONTROL, NULL,
+		0, WC_TABCONTROL, nullptr,
 		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 	::SetClassLong(hWnd_, GCL_STYLE, 0);
@@ -691,8 +691,8 @@ void WTabControll::AddTab(std::wstring text, ref_count_ptr<WPanel> panel) {
 }
 void WTabControll::ShowPage() {
 	int page = TabCtrl_GetCurSel(hWnd_);
-	if (page == -1)return;
-	for (int iPanel = 0; iPanel < vectPanel_.size(); iPanel++) {
+	if (page == -1) return;
+	for (int iPanel = 0; iPanel < vectPanel_.size(); ++iPanel) {
 		vectPanel_[iPanel]->SetWindowVisible(false);
 	}
 	vectPanel_[page]->SetWindowVisible(true);
@@ -708,7 +708,7 @@ void WTabControll::LocateParts() {
 	int wWidth = rect.right - rect.left;
 	int wHeight = rect.bottom - rect.top;
 
-	for (int iPanel = 0; iPanel < vectPanel_.size(); iPanel++) {
+	for (int iPanel = 0; iPanel < vectPanel_.size(); ++iPanel) {
 		vectPanel_[iPanel]->SetBounds(wx + 1, wy + 3, wWidth - 2, wHeight - 5);
 	}
 }
@@ -717,7 +717,7 @@ void WTabControll::LocateParts() {
 //WStatusBar
 **********************************************************/
 void WStatusBar::Create(HWND hWndParent) {
-	hWnd_ = CreateStatusWindow(WS_CHILD | WS_VISIBLE | CCS_BOTTOM | SBARS_SIZEGRIP, NULL, hWndParent, NULL);
+	hWnd_ = CreateStatusWindow(WS_CHILD | WS_VISIBLE | CCS_BOTTOM | SBARS_SIZEGRIP, nullptr, hWndParent, NULL);
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
@@ -745,10 +745,10 @@ void WSplitter::Create(HWND hWndParent, SplitType type) {
 	type_ = type;
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 	hWnd_ = ::CreateWindowEx(
-		0, L"STATIC", NULL,
+		0, L"STATIC", nullptr,
 		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, NULL);
+		hInst, nullptr);
 	this->Attach(hWnd_);
 	this->SetWindowStyle(SS_NOTIFY);
 }
@@ -769,13 +769,13 @@ LRESULT WSplitter::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			int height = rect.bottom - rect.top;
 			if (type_ == TYPE_VERTICAL) {
 				ratioX_ = (float)(pt.x) / (float)(rect.right - rect.left);
-				if (ratioX_ <= 0.05f)ratioX_ = 0.05f;
-				if (ratioX_ >= 0.95f)ratioX_ = 0.95f;
+				if (ratioX_ <= 0.05f) ratioX_ = 0.05f;
+				else if (ratioX_ >= 0.95f) ratioX_ = 0.95f;
 			}
 			else if (type_ == TYPE_HORIZONTAL) {
 				ratioY_ = (float)(pt.y) / (float)(rect.bottom - rect.top);
-				if (ratioY_ <= 0.05f)ratioY_ = 0.05f;
-				if (ratioY_ >= 0.95f)ratioY_ = 0.95f;
+				if (ratioY_ <= 0.05f) ratioY_ = 0.05f;
+				else if (ratioY_ >= 0.95f) ratioY_ = 0.95f;
 			}
 
 			SendMessage(hWndParent, WM_SIZE, 0,
@@ -792,12 +792,12 @@ LRESULT WSplitter::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		if (pt.x >= rect.left&&pt.x <= rect.right &&
 			pt.y > rect.top&&pt.y < rect.bottom) {
 			wchar_t* cursor = type_ == TYPE_VERTICAL ? IDC_SIZEWE : IDC_SIZENS;
-			SetCursor(LoadCursor(NULL, cursor));
+			SetCursor(LoadCursor(nullptr, cursor));
 			SetClassLong(hWnd, GCL_HCURSOR, 0);
 		}
 		else {
-			SetCursor(LoadCursor(NULL, IDC_ARROW));
-			SetClassLong(hWnd, GCL_HCURSOR, (LONG)LoadCursor(NULL, IDC_ARROW));
+			SetCursor(LoadCursor(nullptr, IDC_ARROW));
+			SetClassLong(hWnd, GCL_HCURSOR, (LONG)LoadCursor(nullptr, IDC_ARROW));
 		}
 		break;
 	}
@@ -822,7 +822,7 @@ LRESULT WSplitter::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	}
 	case WM_LBUTTONUP:
 	{
-		SetClassLong(hWnd, GCL_HCURSOR, (LONG)LoadCursor(NULL, IDC_ARROW));
+		SetClassLong(hWnd, GCL_HCURSOR, (LONG)LoadCursor(nullptr, IDC_ARROW));
 		bCapture_ = false;
 		ReleaseCapture();
 		break;

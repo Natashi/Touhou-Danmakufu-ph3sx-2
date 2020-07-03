@@ -15,8 +15,7 @@ ReplayInformation::~ReplayInformation() {}
 std::vector<int> ReplayInformation::GetStageIndexList() {
 	std::vector<int> res;
 
-	std::map<int, ref_count_ptr<StageData> >::iterator itr = mapStageData_.begin();
-	for (; itr != mapStageData_.end(); itr++) {
+	for (auto itr = mapStageData_.begin(); itr != mapStageData_.end(); itr++) {
 		int stage = itr->first;
 		res.push_back(stage);
 	}
@@ -195,8 +194,7 @@ double ReplayInformation::StageData::GetFramePerSecondAvarage() {
 }
 std::set<std::string> ReplayInformation::StageData::GetCommonDataAreaList() {
 	std::set<std::string> res;
-	std::map<std::string, ref_count_ptr<RecordBuffer> >::iterator itrCommonData;
-	for (itrCommonData = mapCommonData_.begin(); itrCommonData != mapCommonData_.end(); itrCommonData++) {
+	for (auto itrCommonData = mapCommonData_.begin(); itrCommonData != mapCommonData_.end(); itrCommonData++) {
 		std::string key = itrCommonData->first;
 		res.insert(key);
 	}
@@ -316,10 +314,10 @@ void ReplayInformationManager::UpdateInformationList(std::wstring pathScript) {
 		std::wstring path = *itr;
 		std::wstring fileName = PathProperty::GetFileName(path);
 
-		if (fileName.find(fileNameHead) == std::wstring::npos)continue;
+		if (fileName.find(fileNameHead) == std::wstring::npos) continue;
 
 		ref_count_ptr<ReplayInformation> info = ReplayInformation::CreateFromFile(pathScript, fileName);
-		if (info == nullptr)continue;
+		if (info == nullptr) continue;
 
 		std::wstring strKey = fileName.substr(fileNameHead.size());
 		strKey = PathProperty::GetFileNameWithoutExtension(strKey);
@@ -340,15 +338,13 @@ void ReplayInformationManager::UpdateInformationList(std::wstring pathScript) {
 }
 std::vector<int> ReplayInformationManager::GetIndexList() {
 	std::vector<int> res;
-	std::map<int, ref_count_ptr<ReplayInformation> >::iterator itr;
-	for (itr = mapInfo_.begin(); itr != mapInfo_.end(); ++itr) {
-		int key = itr->first;
-		res.push_back(key);
+	for (auto itr = mapInfo_.begin(); itr != mapInfo_.end(); ++itr) {
+		res.push_back(itr->first);
 	}
 	return res;
 }
 ref_count_ptr<ReplayInformation> ReplayInformationManager::GetInformation(int index) {
 	auto itr = mapInfo_.find(index);
-	if (itr == mapInfo_.end())return nullptr;
+	if (itr == mapInfo_.end()) return nullptr;
 	return itr->second;
 }

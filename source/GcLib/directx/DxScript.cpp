@@ -1224,7 +1224,7 @@ int DxScriptObjectManager::AddObject(shared_ptr<DxScriptObjectBase> obj, bool bA
 			}
 			res = listUnusedIndex_.front();
 			listUnusedIndex_.pop_front();
-		} while (obj_[res] != nullptr);
+		} while (obj_[res]);
 		*/
 		if (listUnusedIndex_.size() == 0U) {
 			if (!ExpandContainerCapacity()) return res;

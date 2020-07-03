@@ -179,7 +179,7 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 
 		//é©ã@Çåüçı
 		ref_count_ptr<ScriptInformation> infoPlayer;
-		std::vector<ref_count_ptr<ScriptInformation> > listPlayer;
+		std::vector<ref_count_ptr<ScriptInformation>> listPlayer;
 		std::vector<std::wstring>& listPlayerPath = infoMain->GetPlayerList();
 		if (listPlayerPath.size() == 0) {
 			listPlayer =
@@ -189,11 +189,11 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 			listPlayer = infoMain->CreatePlayerScriptInformationList();
 		}
 
-		for (size_t iPlayer = 0; iPlayer < listPlayer.size(); iPlayer++) {
-			ref_count_ptr<ScriptInformation> tInfo = listPlayer[iPlayer];
-			if (tInfo->GetID() != replayPlayerID)continue;
+		for (ref_count_ptr<ScriptInformation> tInfo : listPlayer) {
+			if (tInfo->GetID() != replayPlayerID) continue;
+
 			std::wstring tPlayerScriptFileName = PathProperty::GetFileName(tInfo->GetScriptPath());
-			if (tPlayerScriptFileName != replayPlayerScriptFileName)continue;
+			if (tPlayerScriptFileName != replayPlayerScriptFileName) continue;
 
 			infoPlayer = tInfo;
 			break;
@@ -335,8 +335,7 @@ SystemInformation::~SystemInformation() {
 }
 void SystemInformation::_SearchFreePlayerScript(std::wstring dir) {
 	listFreePlayer_ = ScriptInformation::FindPlayerScriptInformationList(dir);
-	for (size_t iPlayer = 0; iPlayer < listFreePlayer_.size(); iPlayer++) {
-		ref_count_ptr<ScriptInformation> info = listFreePlayer_[iPlayer];
+	for (ref_count_ptr<ScriptInformation> info : listFreePlayer_) {
 		std::wstring path = info->GetScriptPath();
 		std::wstring log = StringUtility::Format(L"Found free player script: [%s]", path.c_str());
 		ELogger::WriteTop(log);
@@ -373,8 +372,8 @@ SystemResidentTask::SystemResidentTask() {
 SystemResidentTask::~SystemResidentTask() {}
 void SystemResidentTask::RenderFps() {
 	WorkRenderTaskManager* taskManager = ETaskManager::GetInstance();
-	if (taskManager->GetTask(typeid(EStgSystemController)) != nullptr)return;
-	if (taskManager->GetTask(typeid(PStgSystemController)) != nullptr)return;
+	if (taskManager->GetTask(typeid(EStgSystemController)) != nullptr) return;
+	if (taskManager->GetTask(typeid(PStgSystemController)) != nullptr) return;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	graphics->SetBlendMode(MODE_BLEND_ALPHA);

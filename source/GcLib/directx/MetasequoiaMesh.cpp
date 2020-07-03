@@ -51,8 +51,8 @@ void MetasequoiaMeshData::_ReadMaterial(gstd::Scanner& scanner) {
 	for (size_t iMat = 0; iMat < countMaterial; iMat++) {
 		materialList_[iMat] = new Material();
 	}
-	scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-	scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+	scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+	scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 
 	size_t posMat = 0;
 	Material* mat = materialList_[posMat];
@@ -60,25 +60,25 @@ void MetasequoiaMeshData::_ReadMaterial(gstd::Scanner& scanner) {
 	ZeroMemory(&color, sizeof(D3DCOLORVALUE));
 	while (true) {
 		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+		if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 
-		if (tok.GetType() == Token::TK_NEWLINE) {
+		if (tok.GetType() == Token::Type::TK_NEWLINE) {
 			posMat++;
 			if (materialList_.size() <= posMat)
 				break;
 			mat = materialList_[posMat];
 			ZeroMemory(&color, sizeof(D3DCOLORVALUE));
 		}
-		else if (tok.GetType() == Token::TK_STRING) {
+		else if (tok.GetType() == Token::Type::TK_STRING) {
 			mat->name_ = tok.GetString();
 		}
 		else if (tok.GetElement() == L"col") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENP);
 			color.r = scanner.Next().GetReal();
 			color.g = scanner.Next().GetReal();
 			color.b = scanner.Next().GetReal();
 			color.a = scanner.Next().GetReal();
-			scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEP);
 		}
 		else if (tok.GetElement() == L"dif" ||
 			tok.GetElement() == L"amb" ||
@@ -91,7 +91,7 @@ void MetasequoiaMeshData::_ReadMaterial(gstd::Scanner& scanner) {
 			else if (tok.GetElement() == L"emi") value = &mat->mat_.Emissive;
 			else if (tok.GetElement() == L"spc") value = &mat->mat_.Specular;
 
-			scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENP);
 			float num = scanner.Next().GetReal();
 			if (value) {
 				value->a = color.a;
@@ -99,30 +99,30 @@ void MetasequoiaMeshData::_ReadMaterial(gstd::Scanner& scanner) {
 				value->g = color.g * num;
 				value->b = color.b * num;
 			}
-			scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEP);
 		}
 		else if (tok.GetElement() == L"power") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENP);
 			mat->mat_.Power = scanner.Next().GetReal();
-			scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEP);
 		}
 		else if (tok.GetElement() == L"tex") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENP);
 			tok = scanner.Next();
 
 			std::wstring wPathTexture = tok.GetString();
 			std::wstring path = PathProperty::GetFileDirectory(path_) + wPathTexture;
 			mat->texture_ = std::make_shared<Texture>();
 			mat->texture_->CreateFromFile(PathProperty::GetUnique(path), false, false);
-			scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEP);
 		}
 	}
 }
 void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 	Object obj;
 	obj.name_ = scanner.Next().GetString();
-	scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-	scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+	scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+	scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 
 	//<material index, face list>
 	std::map<int, std::list<MetasequoiaMeshData::Object::Face*>> mapFace;
@@ -132,7 +132,7 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 
 		while (true) {
 			gstd::Token& tok = scanner.Next();
-			if (tok.GetType() == Token::TK_CLOSEC)break;
+			if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 
 			if (tok.GetElement() == L"visible") {
 				obj.bVisible_ = scanner.Next().GetInteger() == 15;
@@ -148,22 +148,22 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 			else if (tok.GetElement() == L"vertex") {
 				size_t count = scanner.Next().GetInteger();
 				obj.vertices_.resize(count);
-				scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 				for (size_t iVert = 0; iVert < count; ++iVert) {
 					obj.vertices_[iVert].x = scanner.Next().GetReal();
 					obj.vertices_[iVert].y = scanner.Next().GetReal();
 					obj.vertices_[iVert].z = -scanner.Next().GetReal();
-					scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 				}
-				scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
-				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEC);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			}
 			else if (tok.GetElement() == L"face") {
 				size_t countFace = scanner.Next().GetInteger();
 				obj.faces_.resize(countFace);
-				scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 
 				for (size_t iFace = 0; iFace < countFace; ++iFace) {
 					size_t countVert = scanner.Next().GetInteger();
@@ -172,41 +172,41 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 
 					while (true) {
 						gstd::Token& tok = scanner.Next();
-						if (tok.GetType() == Token::TK_NEWLINE)break;
+						if (tok.GetType() == Token::Type::TK_NEWLINE) break;
 						if (tok.GetElement() == L"V") {
-							scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+							scanner.CheckType(scanner.Next(), Token::Type::TK_OPENP);
 							for (size_t iVert = 0; iVert < countVert; ++iVert)
 								face->vertices_[iVert].indexVertex_ = scanner.Next().GetInteger();
-							scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+							scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEP);
 						}
 						else if (tok.GetElement() == L"M") {
-							scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+							scanner.CheckType(scanner.Next(), Token::Type::TK_OPENP);
 							face->indexMaterial_ = scanner.Next().GetInteger();
-							scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+							scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEP);
 						}
 						else if (tok.GetElement() == L"UV") {
-							scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+							scanner.CheckType(scanner.Next(), Token::Type::TK_OPENP);
 							for (size_t iVert = 0; iVert < countVert; ++iVert) {
 								face->vertices_[iVert].tcoord_.x = scanner.Next().GetReal();
 								face->vertices_[iVert].tcoord_.y = scanner.Next().GetReal();
 							}
-							scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+							scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEP);
 						}
 					}
 
 					mapFace[face->indexMaterial_].push_back(face);
 				}
 
-				scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
-				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEC);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			}
-			else if (tok.GetType() == Token::TK_ID) {
-				while (scanner.GetToken().GetType() != Token::TK_OPENC &&
-					scanner.GetToken().GetType() != Token::TK_NEWLINE) {
+			else if (tok.GetType() == Token::Type::TK_ID) {
+				while (scanner.GetToken().GetType() != Token::Type::TK_OPENC &&
+					scanner.GetToken().GetType() != Token::Type::TK_NEWLINE) {
 					scanner.Next();
 				}
-				if (scanner.GetToken().GetType() == Token::TK_OPENC) {
-					while (scanner.GetToken().GetType() != Token::TK_CLOSEC)
+				if (scanner.GetToken().GetType() == Token::Type::TK_OPENC) {
+					while (scanner.GetToken().GetType() != Token::Type::TK_CLOSEC)
 						scanner.Next();
 				}
 			}
@@ -460,9 +460,9 @@ void MetasequoiaMeshData::RenderObject::Render(D3DXMATRIX* matTransform) {
 	SetTexture(material_ ? material_->texture_ : nullptr);
 
 	D3DCOLOR tColor = D3DCOLOR_ARGB(color_ >> 24, 
-		ColorAccess::ClampColorRet(((color_ >> 16) & 0xff) * objectColor_.x),
-		ColorAccess::ClampColorRet(((color_ >> 8) & 0xff) * objectColor_.y),
-		ColorAccess::ClampColorRet((color_ & 0xff) * objectColor_.z));
+		ColorAccess::ClampColorRet<int>(((color_ >> 16) & 0xff) * objectColor_.x),
+		ColorAccess::ClampColorRet<int>(((color_ >> 8) & 0xff) * objectColor_.y),
+		ColorAccess::ClampColorRet<int>((color_ & 0xff) * objectColor_.z));
 	D3DMATERIAL9 tMaterial = ColorAccess::SetColor(material_ ? material_->mat_ : nullMaterial_->mat_, tColor);
 	device->SetMaterial(&tMaterial);
 
@@ -480,7 +480,7 @@ bool MetasequoiaMesh::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader>
 
 		data_ = _GetFromManager(name);
 		if (data_ == nullptr) {
-			if (!reader->Open())throw gstd::wexception("MetasequoiaMesh: Cannot open file for reading.");
+			if (!reader->Open()) throw gstd::wexception("MetasequoiaMesh: Cannot open file for reading.");
 			data_ = std::make_shared<MetasequoiaMeshData>();
 			data_->SetName(name);
 			MetasequoiaMeshData* data = (MetasequoiaMeshData*)data_.get();
@@ -502,7 +502,7 @@ bool MetasequoiaMesh::CreateFromFileInLoadThread(std::wstring path) {
 	return DxMesh::CreateFromFileInLoadThread(path, MESH_METASEQUOIA);
 }
 std::wstring MetasequoiaMesh::GetPath() {
-	if (data_ == nullptr)return L"";
+	if (data_ == nullptr) return L"";
 	return ((MetasequoiaMeshData*)data_.get())->path_;
 }
 
@@ -510,7 +510,7 @@ void MetasequoiaMesh::Render() {
 	MetasequoiaMesh::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
 void MetasequoiaMesh::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
-	if (data_ == nullptr)return;
+	if (data_ == nullptr) return;
 
 	MetasequoiaMeshData* data = (MetasequoiaMeshData*)data_.get();
 

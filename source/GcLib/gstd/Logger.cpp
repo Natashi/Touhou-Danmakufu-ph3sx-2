@@ -17,8 +17,7 @@ Logger::~Logger() {
 }
 void Logger::_WriteChild(SYSTEMTIME& time, std::wstring str) {
 	_Write(time, str);
-	std::list<ref_count_ptr<Logger> >::iterator itr = listLogger_.begin();
-	for (; itr != listLogger_.end(); itr++) {
+	for (auto itr = listLogger_.begin(); itr != listLogger_.end(); itr++) {
 		(*itr)->_Write(time, str);
 	}
 }
@@ -56,7 +55,7 @@ FileLogger::~FileLogger() {
 
 }
 void FileLogger::Clear() {
-	if (!bEnable_)return;
+	if (!bEnable_) return;
 
 	File file1(path_);
 	file1.Delete();
@@ -78,7 +77,7 @@ bool FileLogger::Initialize(std::wstring path, bool bEnable) {
 	return this->SetPath(path);
 }
 bool FileLogger::SetPath(std::wstring path) {
-	if (!bEnable_)return false;
+	if (!bEnable_) return false;
 
 	path_ = path;
 	File file(path);
@@ -109,7 +108,7 @@ void FileLogger::_Write(SYSTEMTIME& time, std::wstring str) {
 			time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
 
 		File file(path_);
-		if (!file.Open(File::WRITEONLY))return;
+		if (!file.Open(File::WRITEONLY)) return;
 
 		std::wstring out = strTime;
 		out += str;
@@ -146,16 +145,16 @@ WindowLogger::~WindowLogger() {
 	wndLogPanel_ = nullptr;
 	wndStatus_ = nullptr;
 	wndTab_ = nullptr;
-	if (hWnd_ != nullptr)
+	if (hWnd_)
 		SendMessage(hWnd_, WM_ENDLOGGER, 0, 0);
-	if (threadWindow_ != nullptr) {
+	if (threadWindow_) {
 		threadWindow_->Stop();
 		threadWindow_->Join(2000);//”O‚Ì‚½‚ß‚Éƒ^ƒCƒ€ƒAƒEƒgÝ’è
 	}
 }
 bool WindowLogger::Initialize(bool bEnable) {
 	bEnable_ = bEnable;
-	//if (!bEnable)return true;
+	//if (!bEnable) return true;
 
 	loggerParentGlobal_ = this;
 
@@ -183,7 +182,7 @@ void WindowLogger::SaveState() {
 	RecordBuffer recordMain;
 	bool bRecordExists = recordMain.ReadFromFile(path);
 
-	if (wndTab_ != nullptr) {
+	if (wndTab_) {
 		int panelIndex = wndTab_->GetCurrentPage();
 		recordMain.SetRecordAsInteger("panelIndex", panelIndex);
 	}
@@ -196,13 +195,13 @@ void WindowLogger::SaveState() {
 		GetWindowRect(hWnd_, &rcWnd);
 	recordMain.SetRecord("windowRect", rcWnd);
 
-	if (wndTab_ != nullptr) {
+	if (wndTab_) {
 		RecordBuffer recordPanel;
 		int panelCount = wndTab_->GetPageCount();
 		for (int iPanel = 0; iPanel < panelCount; iPanel++) {
 			ref_count_ptr<WindowLogger::Panel> panel =
 				ref_count_ptr<WindowLogger::Panel>::DownCast(wndTab_->GetPanel(iPanel));
-			if (panel == nullptr)continue;
+			if (panel == nullptr) continue;
 
 			panel->_WriteRecord(recordPanel);
 		}
@@ -214,7 +213,7 @@ void WindowLogger::SaveState() {
 void WindowLogger::LoadState() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"LogWindow.dat";
 	RecordBuffer recordMain;
-	if (!recordMain.ReadFromFile(path))return;
+	if (!recordMain.ReadFromFile(path)) return;
 
 	int panelIndex = recordMain.GetRecordAsInteger("panelIndex");
 	if (panelIndex >= 0 && panelIndex < wndTab_->GetPageCount())
@@ -234,7 +233,7 @@ void WindowLogger::LoadState() {
 	for (int iPanel = 0; iPanel < panelCount; iPanel++) {
 		ref_count_ptr<WindowLogger::Panel> panel =
 			ref_count_ptr<WindowLogger::Panel>::DownCast(wndTab_->GetPanel(iPanel));
-		if (panel == nullptr)continue;
+		if (panel == nullptr) continue;
 
 		panel->_ReadRecord(recordPanel);
 	}
@@ -363,10 +362,10 @@ LRESULT WindowLogger::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	{
 		{
 			Lock lock(lock_);
-			std::list<AddPanelEvent>::iterator itr;
-			for (itr = listEventAddPanel_.begin(); itr != listEventAddPanel_.end(); itr++) {
-				AddPanelEvent event = *itr;
-				std::wstring name = event.name;
+			
+			for (auto itr = listEventAddPanel_.begin(); itr != listEventAddPanel_.end(); itr++) {
+				AddPanelEvent& event = *itr;
+				std::wstring& name = event.name;
 				ref_count_ptr<Panel> panel = event.panel;
 
 				HWND hTab = wndTab_->GetWindowHandle();
@@ -550,12 +549,12 @@ void WindowLogger::InfoCollectThread::_Run() {
 			GetProcessMemoryInfo(hProcess, &memoryCounter, sizeof(PROCESS_MEMORY_COUNTERS));
 			double pageFileUsage = memoryCounter.PagefileUsage / 1024. / 1024.;
 			std::string strMemory = StringUtility::Format("Memory [ %.2fMB ]", pageFileUsage);
-			if(this->GetStatus() == RUN)wndStatus_->SetText(STATUS_MEMORY, strMemory);
+			if (this->GetStatus() == RUN) wndStatus_->SetText(STATUS_MEMORY, strMemory);
 
 			double cpuPerformance=this->_GetCpuPerformance();
 			CpuInfo &ci=this->infoCpu_;
 			std::string strCpu = StringUtility::Format("%s %s [ %4.2fMHz (%3d %%) type:%d family:%d model:%d stepping:%d ]",ci.venderID,ci.cpuName.c_str(),ci.clock/1000/1000,(int)cpuPerformance,ci.type,ci.family,ci.model,ci.stepping);
-			if(this->GetStatus() == RUN)wndStatus_->SetText(STATUS_CPU, strCpu);
+			if (this->GetStatus() == RUN) wndStatus_->SetText(STATUS_CPU, strCpu);
 
 			::Sleep(500);
 		}
@@ -720,33 +719,36 @@ WindowLogger::InfoCollectThread::CpuInfo WindowLogger::InfoCollectThread::_GetCp
 		}
 
 		ci.cpuName = ci.name;
-		if (strcmp(ci.venderID, "AuthenticAMD") == 0)//AMD
-		{
-			//if(ci.family==5&&ci.model==8)ci.cpuName="K6-2";
-			//else if(ci.family==5&&ci.model==9)ci.cpuName="K6-‡V";
-			//else if(ci.family==6&&ci.model==1)ci.cpuName="Athlon";
-			//else if(ci.family==6&&ci.model==2)ci.cpuName="Athlon";
-			//else if(ci.family==6&&ci.model==3)ci.cpuName="Athlon";
-			//else if(ci.family==6&&ci.model==4)ci.cpuName="Athlon";
-			//else if(ci.family==6&&ci.model==6)ci.cpuName="AthlonXp";
+		//AMD
+		if (strcmp(ci.venderID, "AuthenticAMD") == 0) {
+			/*
+			if (ci.family == 5 && ci.model == 8) ci.cpuName = "K6-2";
+			else if (ci.family == 5 && ci.model == 9) ci.cpuName = "K6-‡V";
+			else if (ci.family == 6 && ci.model == 1) ci.cpuName = "Athlon";
+			else if (ci.family == 6 && ci.model == 2) ci.cpuName = "Athlon";
+			else if (ci.family == 6 && ci.model == 3) ci.cpuName = "Athlon";
+			else if (ci.family == 6 && ci.model == 4) ci.cpuName = "Athlon";
+			else if (ci.family == 6 && ci.model == 6) ci.cpuName = "AthlonXp";
+			*/
 		}
-		else if (strcmp(ci.venderID, "GenuineIntel") == 0)//Intel
-		{
-			//if(ci.family==5&&ci.model==1)ci.cpuName="Pentium 60 / 66";
-			//else if(ci.family==5&&ci.model==2)ci.cpuName="Pentium";
-			//else if(ci.family==5&&ci.model==3)ci.cpuName="Pentium OverDrive for 486";
-			//else if(ci.family==5&&ci.model==4)ci.cpuName="MMX Pentium";
-			//else if(ci.family==6&&ci.model==1)ci.cpuName="Pentium Pro";
-			//else if(ci.family==6&&ci.model==3)ci.cpuName="Pentium‡U";
-			//else if(ci.family==6&&ci.model==5)ci.cpuName="Pentium‡U/Pentium‡UXeon/Celeron";
-			//else if(ci.family==6&&ci.model==6)ci.cpuName="Celeron";
-			//else if(ci.family==6&&ci.model==7)ci.cpuName="Pentium‡V/Petium‡VXeon";
-			//else if(ci.family==6&&ci.model==8)ci.cpuName="Pentium‡V/Petium‡VXeon/Celeron";
-			//else if(ci.family==6&&ci.model==9)ci.cpuName="Petium‡VXeon";
-			//else if(ci.family==6&&ci.model==10)ci.cpuName="Pentium‡UOverDrive";
-			//else if(ci.family==15&&ci.model==0)ci.cpuName="Pentium4";
+		//Intel
+		else if (strcmp(ci.venderID, "GenuineIntel") == 0) {
+			/*
+			if (ci.family == 5 && ci.model == 1) ci.cpuName = "Pentium 60 / 66";
+			else if (ci.family == 5 && ci.model == 2) ci.cpuName = "Pentium";
+			else if (ci.family == 5 && ci.model == 3) ci.cpuName = "Pentium OverDrive for 486";
+			else if (ci.family == 5 && ci.model == 4) ci.cpuName = "MMX Pentium";
+			else if (ci.family == 6 && ci.model == 1) ci.cpuName = "Pentium Pro";
+			else if (ci.family == 6 && ci.model == 3) ci.cpuName = "Pentium‡U";
+			else if (ci.family == 6 && ci.model == 5) ci.cpuName = "Pentium‡U/Pentium‡UXeon/Celeron";
+			else if (ci.family == 6 && ci.model == 6) ci.cpuName = "Celeron";
+			else if (ci.family == 6 && ci.model == 7) ci.cpuName = "Pentium‡V/Petium‡VXeon";
+			else if (ci.family == 6 && ci.model == 8) ci.cpuName = "Pentium‡V/Petium‡VXeon/Celeron";
+			else if (ci.family == 6 && ci.model == 9) ci.cpuName = "Petium‡VXeon";
+			else if (ci.family == 6 && ci.model == 10) ci.cpuName = "Pentium‡UOverDrive";
+			else if (ci.family == 15 && ci.model == 0) ci.cpuName = "Pentium4";
+			*/
 		}
-
 	}
 	catch (...) {
 

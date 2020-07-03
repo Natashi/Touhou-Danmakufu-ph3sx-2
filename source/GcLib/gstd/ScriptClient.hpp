@@ -51,7 +51,7 @@ namespace gstd {
 	**********************************************************/
 	class ScriptEngineCache {
 	protected:
-		std::map<std::wstring, ref_count_ptr<ScriptEngineData> > cache_;
+		std::map<std::wstring, ref_count_ptr<ScriptEngineData>> cache_;
 	public:
 		ScriptEngineCache();
 		virtual ~ScriptEngineCache();

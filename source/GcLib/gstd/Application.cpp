@@ -11,28 +11,30 @@ using namespace gstd;
 /**********************************************************
 //Application
 **********************************************************/
-Application* Application::thisBase_ = NULL;
+Application* Application::thisBase_ = nullptr;
 Application::Application() {
 	::InitCommonControls();
 }
 Application::~Application() {
-	thisBase_ = NULL;
+	thisBase_ = nullptr;
 }
 bool Application::Initialize() {
-	if (thisBase_ != NULL)return false;
+	if (thisBase_) return false;
+
 	thisBase_ = this;
 	hAppInstance_ = ::GetModuleHandle(NULL);
 	bAppRun_ = true;
 	bAppActive_ = true;
 	//return _Initialize();
+
 	return true;
 }
 bool Application::Run() {
 	MSG msg;
 	while (true) {
-		if (bAppRun_ == false)break;
+		if (bAppRun_ == false) break;
 		if (::PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE)) {
-			if (!::GetMessage(&msg, NULL, 0, 0))break;
+			if (!::GetMessage(&msg, NULL, 0, 0)) break;
 			::TranslateMessage(&msg);
 			::DispatchMessage(&msg);
 		}
@@ -51,7 +53,6 @@ bool Application::Run() {
 				Logger::WriteTop("Runtime failure.");
 #endif
 				throw e;
-				break;
 			}
 			catch (gstd::wexception& e) {
 #if defined(DNH_PROJ_EXECUTOR)
@@ -59,7 +60,6 @@ bool Application::Run() {
 				Logger::WriteTop("Runtime failure.");
 #endif
 				throw e;
-				break;
 			}
 			//			catch(...)
 			//			{

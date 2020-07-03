@@ -268,7 +268,7 @@ void ScriptClientBase::_RaiseErrorFromMachine() {
 	_RaiseError(line, machine_->get_error_message());
 }
 std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
-	if (line == 0)return L"";
+	if (line == 0) return L"";
 	int encoding = engine_->GetEncoding();
 	std::vector<char>& source = engine_->GetSource();
 	char* pbuf = (char*)&source[0];
@@ -340,7 +340,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 	int mainEncoding = Encoding::UTF8;
 	bool bEnd = false;
 	while (true) {
-		if (bEnd)break;
+		if (bEnd) break;
 		Scanner scanner(res);
 		mainEncoding = scanner.GetEncoding();
 		size_t resSize = res.size();
@@ -349,18 +349,18 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
 			//mapTokens.push_back(tok);
-			if (tok.GetType() == Token::TK_EOF)//Eofの識別子が来たらファイルの調査終了
+			if (tok.GetType() == Token::Type::TK_EOF)//Eofの識別子が来たらファイルの調査終了
 			{
 				break;
 			}
-			else if (tok.GetType() == Token::TK_SHARP) {
+			else if (tok.GetType() == Token::Type::TK_SHARP) {
 				size_t ptrPosBeforeInclude = scanner.GetCurrentPointer() - 1;
 				if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE)
 					ptrPosBeforeInclude--;
 				std::vector<char>::iterator posBeforeInclude = res.begin() + ptrPosBeforeInclude;
 
 				tok = scanner.Next();
-				if (tok.GetElement() != L"include")continue;
+				if (tok.GetElement() != L"include") continue;
 
 				bEnd = false;
 				int posCurrent = scanner.GetCurrentPointer();
@@ -368,7 +368,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 				bool bNeedNewLine = false;
 				if (scanner.HasNext()) {
 					int posBeforeNewLine = scanner.GetCurrentPointer();
-					if (scanner.Next().GetType() != Token::TK_NEWLINE) {
+					if (scanner.Next().GetType() != Token::Type::TK_NEWLINE) {
 						int line = scanner.GetCurrentLine();
 						source = res;
 						engine_->SetSource(source);
@@ -711,7 +711,7 @@ bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 	ref_count_ptr<FileReader> reader;
 	reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path).c_str());
-	if (!reader->Open())throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path).c_str());
+	if (!reader->Open()) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path).c_str());
 
 	size_t size = reader->GetFileSize();
 	std::vector<char> source;
@@ -757,7 +757,7 @@ void ScriptClientBase::Compile() {
 }
 
 bool ScriptClientBase::Run() {
-	if (bError_)return false;
+	if (bError_) return false;
 	machine_->run();
 	if (machine_->get_error()) {
 		bError_ = true;
@@ -766,7 +766,7 @@ bool ScriptClientBase::Run() {
 	return true;
 }
 bool ScriptClientBase::Run(std::string target) {
-	if (bError_)return false;
+	if (bError_) return false;
 
 	std::map<std::string, script_engine::block*>::iterator itrEvent;
 	if (!machine_->has_event(target, itrEvent)) {
@@ -899,7 +899,7 @@ bool ScriptClientBase::IsRealArrayValue(value& v) {
 	return v.get_type() == script_type_manager::get_real_array_type();
 }
 void ScriptClientBase::CheckRunInMainThread() {
-	if (mainThreadID_ < 0)return;
+	if (mainThreadID_ < 0) return;
 	if (mainThreadID_ != GetCurrentThreadId()) {
 		std::wstring error;
 		error += L"This function can only be called in the main thread.\r\n";
@@ -1213,15 +1213,12 @@ value ScriptClientBase::Func_RtoS(script_machine* machine, int argc, const value
 		int countI0 = 0;
 		int countF = 0;
 
-		for (int iCh = 0; iCh < fmtV.size(); iCh++) {
-			char ch = fmtV[iCh];
-			if (IsDBCSLeadByte(ch))throw false;
-
-			if (ch == '#')countIS++;
-			else if (ch == '.' && bF)throw false;
-			else if (ch == '.')bF = true;
+		for (char ch : fmtV) {
+			if (ch == '#') countIS++;
+			else if (ch == '.' && bF) throw false;
+			else if (ch == '.') bF = true;
 			else if (ch == '0') {
-				if (bF)countF++;
+				if (bF) countF++;
 				else countI0++;
 			}
 		}
@@ -1262,16 +1259,21 @@ value ScriptClientBase::Func_VtoS(script_machine* machine, int argc, const value
 		int countF = 0;
 
 		int advance = 0;//0:-, 1:0, 2:num, 3:[d,s,f], 4:., 5:num
-		for (int iCh = 0; iCh < fmtV.size(); iCh++) {
-			char ch = fmtV[iCh];
-			if (IsDBCSLeadByte(ch))throw false;
-			if (advance == 0 && ch == '-')advance = 1;
-			else if ((advance == 0 || advance == 1 || advance == 2) && (ch >= '0' && ch <= '9'))advance = 2;
-			else if (advance == 2 && (ch == 'd' || ch == 's' || ch == 'f'))advance = 4;
-			else if (advance == 2 && ('.'))advance = 5;
-			else if (advance == 4 && ('.'))advance = 5;
-			else if (advance == 5 && (ch >= '0' && ch <= '9'))advance = 5;
-			else if (advance == 5 && (ch == 'd' || ch == 's' || ch == 'f'))advance = 6;
+		for (char ch : fmtV) {
+			if (advance == 0 && ch == '-')
+				advance = 1;
+			else if ((advance == 0 || advance == 1 || advance == 2) && (ch >= '0' && ch <= '9'))
+				advance = 2;
+			else if (advance == 2 && (ch == 'd' || ch == 's' || ch == 'f'))
+				advance = 4;
+			else if (advance == 2 && ('.'))
+				advance = 5;
+			else if (advance == 4 && ('.'))
+				advance = 5;
+			else if (advance == 5 && (ch >= '0' && ch <= '9'))
+				advance = 5;
+			else if (advance == 5 && (ch == 'd' || ch == 's' || ch == 'f'))
+				advance = 6;
 			else throw false;
 		}
 
@@ -1323,7 +1325,7 @@ value ScriptClientBase::Func_RegexMatch(script_machine* machine, int argc, const
 
 	std::wsmatch base_match;
 	if (std::regex_search(str, base_match, std::wregex(pattern))) {
-		for (std::wssub_match itr : base_match) {
+		for (const std::wssub_match& itr : base_match) {
 			res.push_back(itr.str());
 		}
 	}
@@ -1344,9 +1346,9 @@ value ScriptClientBase::Func_RegexMatchRepeated(script_machine* machine, int arg
 
 	valueArrayRes.resize(std::distance(itrBegin, itrEnd));
 	for (size_t i = 0; itrBegin != itrEnd; ++itrBegin, ++i) {
-		std::wsmatch match = *itrBegin;
+		const std::wsmatch& match = *itrBegin;
 		singleArray.clear();
-		for (std::wssub_match itrMatch : match) {
+		for (const std::wssub_match& itrMatch : match) {
 			singleArray.push_back(itrMatch.str());
 		}
 		valueArrayRes[i] = script->CreateStringArrayValue(singleArray);
@@ -1666,7 +1668,7 @@ void ScriptFileLineMap::AddEntry(std::wstring path, int lineAdd, int lineCount) 
 	std::list<Entry>::iterator itrInsert;
 	for (itrInsert = listEntry_.begin(); itrInsert != listEntry_.end(); itrInsert++) {
 		pEntryDivide = (Entry*)&*itrInsert;
-		if (lineAdd >= pEntryDivide->lineStart_ && lineAdd <= pEntryDivide->lineEnd_)break;
+		if (lineAdd >= pEntryDivide->lineStart_ && lineAdd <= pEntryDivide->lineEnd_) break;
 	}
 
 	Entry& entryDivide = *pEntryDivide;
@@ -1707,7 +1709,7 @@ ScriptFileLineMap::Entry ScriptFileLineMap::GetEntry(int line) {
 	std::list<Entry>::iterator itrInsert;
 	for (itrInsert = listEntry_.begin(); itrInsert != listEntry_.end(); itrInsert++) {
 		res = *itrInsert;
-		if (line >= res.lineStart_ && line <= res.lineEnd_)break;
+		if (line >= res.lineStart_ && line <= res.lineEnd_) break;
 	}
 	return res;
 }
@@ -1825,7 +1827,7 @@ void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
 	for (size_t iKey = 0; iKey < listKey.size(); iKey++) {
 		std::string key = listKey[iKey];
 		std::string keyValSize = StringUtility::Format("%s_size", key.c_str());
-		if (!record.IsExists(keyValSize))continue;//サイズ自身がキー登録されている
+		if (!record.IsExists(keyValSize)) continue;//サイズ自身がキー登録されている
 		int valSize = record.GetRecordAsInteger(keyValSize);
 
 		gstd::ByteBuffer buffer;
@@ -1968,7 +1970,7 @@ void ScriptCommonDataInfoPanel::LocateParts() {
 	wndListViewValue_.SetBounds(wx, ySplitter + heightSplitter, wWidth, wHeight - ySplitter - heightSplitter);
 }
 void ScriptCommonDataInfoPanel::Update(gstd::ref_count_ptr<ScriptCommonDataManager> commonDataManager) {
-	if (!IsWindowVisible())return;
+	if (!IsWindowVisible()) return;
 	{
 		Lock lock(lock_);
 		//if (commonDataManager_) commonDataManager_->Clear();

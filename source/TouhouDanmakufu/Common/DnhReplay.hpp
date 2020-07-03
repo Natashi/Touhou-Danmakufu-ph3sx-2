@@ -86,7 +86,7 @@ private:
 	uint32_t randSeed_;
 	std::vector<float> listFramePerSecond_;
 	ref_count_ptr<gstd::RecordBuffer> recordKey_;
-	std::map<std::string, ref_count_ptr<gstd::RecordBuffer> > mapCommonData_;
+	std::map<std::string, ref_count_ptr<gstd::RecordBuffer>> mapCommonData_;
 
 	//é©ã@èÓïÒ
 	std::wstring playerScriptID_;
@@ -155,7 +155,7 @@ class ReplayInformationManager {
 public:
 
 protected:
-	std::map<int, ref_count_ptr<ReplayInformation> > mapInfo_;
+	std::map<int, ref_count_ptr<ReplayInformation>> mapInfo_;
 public:
 	ReplayInformationManager();
 	virtual ~ReplayInformationManager();

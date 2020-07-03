@@ -159,7 +159,7 @@ bool MainWindow::Save() {
 	return true;
 }
 void MainWindow::UpdateKeyAssign() {
-	if (!panelKey_->IsWindowVisible())return;
+	if (!panelKey_->IsWindowVisible()) return;
 	panelKey_->UpdateKeyAssign();
 
 }
@@ -405,7 +405,7 @@ LRESULT KeyPanel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 void KeyPanel::_UpdateText(int row) {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 	ref_count_ptr<VirtualKey> vk = config->GetVirtualKey(row);
-	if (vk == NULL)return;
+	if (vk == NULL) return;
 
 	int keyCode = vk->GetKeyCode();
 	std::wstring strKey = listKeyCode_.GetCodeText(keyCode);
@@ -418,7 +418,7 @@ void KeyPanel::_UpdateText(int row) {
 }
 void KeyPanel::UpdateKeyAssign() {
 	int row = viewKey_->GetSelectedRow();
-	if (row < 0)return;
+	if (row < 0) return;
 
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 	ref_count_ptr<VirtualKey> vk = config->GetVirtualKey(row);
@@ -430,7 +430,7 @@ void KeyPanel::UpdateKeyAssign() {
 	for (int iCode = 0; iCode < listValidCode.size(); iCode++) {
 		int code = listValidCode[iCode];
 		int state = input->GetKeyState(code);
-		if (state != KEY_PUSH)continue;
+		if (state != KEY_PUSH) continue;
 
 		pushKeyCode = code;
 		bChange = true;
@@ -443,7 +443,7 @@ void KeyPanel::UpdateKeyAssign() {
 	int pushPadButton = -1;
 	for (int iButton = 0; iButton < DirectInput::MAX_PAD_BUTTON; iButton++) {
 		int state = input->GetPadState(pushPadIndex, iButton);
-		if (state != KEY_PUSH)continue;
+		if (state != KEY_PUSH) continue;
 
 		pushPadButton = iButton;
 		bChange = true;

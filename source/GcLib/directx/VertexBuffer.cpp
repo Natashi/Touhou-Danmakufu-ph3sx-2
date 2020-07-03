@@ -84,7 +84,7 @@ namespace directx {
 	}
 
 	bool VertexBufferManager::Initialize(DirectGraphics* graphics) {
-		if (thisBase_ != nullptr) return false;
+		if (thisBase_) return false;
 
 		graphics->AddDirectGraphicsListener(this);
 		

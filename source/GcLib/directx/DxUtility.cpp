@@ -291,7 +291,7 @@ D3DXVECTOR4 DxMath::RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, 
 	float vy = vec.y;
 	float vz = vec.z;
 	
-	if (angZ != nullptr) {
+	if (angZ) {
 		float cz = angZ->x;
 		float sz = angZ->y;
 
@@ -300,7 +300,7 @@ D3DXVECTOR4 DxMath::RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, 
 		vx = vec.x;
 		vy = vec.y;
 	}
-	if (angX != nullptr) {
+	if (angX) {
 		float cx = angX->x;
 		float sx = angX->y;
 
@@ -309,7 +309,7 @@ D3DXVECTOR4 DxMath::RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, 
 		vy = vec.y;
 		vz = vec.z;
 	}
-	if (angY != nullptr) {
+	if (angY) {
 		float cy = angY->x;
 		float sy = angY->y;
 

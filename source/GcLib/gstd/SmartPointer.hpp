@@ -93,7 +93,7 @@ namespace gstd {
 				if (InterlockedDecrement(info_.countRef_) == 0) {
 					ptr_delete_scalar(info_.pPtr_);
 				}
-				if (info_.countWeak_ != nullptr) {
+				if (info_.countWeak_) {
 					if (InterlockedDecrement(info_.countWeak_) == 0) {
 						ptr_delete(info_.countRef_);
 						ptr_delete(info_.countWeak_);
@@ -104,7 +104,7 @@ namespace gstd {
 				if (--(*info_.countRef_) == 0) {
 					ptr_delete_scalar(info_.pPtr_);
 				}
-				if (info_.countWeak_ != nullptr) {
+				if (info_.countWeak_) {
 					if (--(*info_.countWeak_) == 0) {
 						ptr_delete(info_.countRef_);
 						ptr_delete(info_.countWeak_);
@@ -214,29 +214,29 @@ namespace gstd {
 		bool operator==(const T* p) {
 			return info_.pPtr_ == p;
 		}
-		bool operator==(const ref_count_ptr<T, SYNC>& p)const {
+		bool operator==(const ref_count_ptr<T, SYNC>& p) const {
 			return info_.pPtr_ == p.info_.pPtr_;
 		}
 
 		template<class D>
-		bool operator==(ref_count_ptr<D, SYNC>& p)const {
+		bool operator==(ref_count_ptr<D, SYNC>& p) const {
 			return info_.pPtr_ == p.GetPointer();
 		}
 
 		explicit operator bool() {
-			return (info_.pPtr_ != nullptr) ? (info_.countRef_ > 0) : false;
+			return info_.pPtr_ ? (info_.countRef_ > 0) : false;
 		}
 
 		// !=比較演算子
 		bool operator!=(const T* p) {
 			return info_.pPtr_ != p;
 		}
-		bool operator!=(const ref_count_ptr<T, SYNC>& p)const {
+		bool operator!=(const ref_count_ptr<T, SYNC>& p) const {
 			return info_.pPtr_ != p.info_.pPtr_;
 		}
 
 		template<class D>
-		bool operator!=(ref_count_ptr<D, SYNC>& p)const {
+		bool operator!=(ref_count_ptr<D, SYNC>& p) const {
 			return info_.pPtr_ != p.info_.pPtr_;
 		}
 
@@ -265,7 +265,7 @@ namespace gstd {
 		inline long* _GetReferenceCountPointer() { return info_.countRef_; }	//この関数は外部からしようしないこと
 		inline long* _GetWeakCountPointer() { return info_.countWeak_; }		//この関数は外部からしようしないこと
 		inline int GetReferenceCount() { 
-			return (info_.countRef_ != nullptr ? (int)*info_.countRef_ : 0);
+			return info_.countRef_ ? (int)*info_.countRef_ : 0;
 			
 		}
 
@@ -279,7 +279,7 @@ namespace gstd {
 			if (src.GetPointer() == nullptr) return nullptr;
 			T* castPtr = dynamic_cast<T*>(src.GetPointer());
 
-			if (castPtr != nullptr) {
+			if (castPtr) {
 				// ダウンキャスト可能
 				res._Release();//現在の参照を破棄する必要がある
 				res.info_.countRef_ = src._GetReferenceCountPointer();
@@ -319,7 +319,7 @@ namespace gstd {
 		void _Release() {
 			if (info_.countRef_ == nullptr) return;
 
-			if (info_.countWeak_ != nullptr) {
+			if (info_.countWeak_) {
 				if (SYNC) {
 					if (InterlockedDecrement(info_.countWeak_) == 0) {
 						ptr_delete(info_.countRef_);
@@ -342,7 +342,7 @@ namespace gstd {
 			info_.countRef_ = nullptr;
 		}
 		ref_count_weak_ptr(T* src) {
-			if (src != nullptr)
+			if (src)
 				throw std::exception("ref_count_weak_ptrコンストラクタに非NULLを代入しようとしました");
 
 			info_.pPtr_ = src;
@@ -381,7 +381,7 @@ namespace gstd {
 
 		// =代入演算子
 		ref_count_weak_ptr<T, SYNC>& operator=(T *src) {
-			if (src != nullptr)
+			if (src)
 				throw std::exception("ref_count_weak_ptr =に非NULLを代入しようとしました");
 			info_.pPtr_ = nullptr;
 			info_.countRef_ = nullptr;
@@ -499,11 +499,11 @@ namespace gstd {
 		inline long* _GetReferenceCountPointer() { return info_.countRef_; }	//この関数は外部からしようしないこと
 		inline long* _GetWeakCountPointer() { return info_.countWeak_; }		//この関数は外部からしようしないこと
 		inline int GetReferenceCount() { 
-			return (info_.countRef_ != nullptr ? (int)*info_.countRef_ : 0); 
+			return info_.countRef_ ? (int)*info_.countRef_ : 0; 
 		}
 
 		inline bool IsExists() { 
-			return info_.countRef_ != nullptr ? (*info_.countRef_ > 0) : false; 
+			return info_.countRef_ ? (*info_.countRef_ > 0) : false; 
 		}
 
 		template<class T2>
@@ -512,8 +512,7 @@ namespace gstd {
 			// 自分の登録しているポインタに
 			// ダウンキャスト可能な場合はオブジェクトを返す
 			ref_count_weak_ptr<T, SYNC> res;
-			T* castPtr = dynamic_cast<T*>(src.GetPointer());
-			if (castPtr != nullptr) {
+			if (T* castPtr = dynamic_cast<T*>(src.GetPointer())) {
 				// ダウンキャスト可能
 				res._Release();//現在の参照を破棄する必要がある
 				res.info_.countRef_ = src._GetReferenceCountPointer();

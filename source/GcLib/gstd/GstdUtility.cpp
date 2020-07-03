@@ -230,7 +230,7 @@ std::string StringUtility::ReplaceAll(std::string& source, std::string pattern, 
 		pos_before = pos;
 
 		count++;
-		if (count >= replaceCount)break;
+		if (count >= replaceCount) break;
 	}
 	result.append(source, pos_before, source.size() - pos_before);
 	return result;
@@ -361,7 +361,7 @@ std::wstring StringUtility::ReplaceAll(std::wstring& source, std::wstring patter
 		pos_before = pos;
 
 		count++;
-		if (count >= replaceCount)break;
+		if (count >= replaceCount) break;
 	}
 	result.append(source, pos_before, source.size() - pos_before);
 	return result;
@@ -385,7 +385,7 @@ std::wstring StringUtility::Trim(const std::wstring& str) {
 	return res;
 }
 size_t StringUtility::CountAsciiSizeCharacter(std::wstring& str) {
-	if (str.size() == 0)return 0;
+	if (str.size() == 0) return 0;
 
 	size_t wcount = str.size();
 	WORD* listType = new WORD[wcount];
@@ -609,7 +609,7 @@ void Scanner::_SkipComment() {
 		}
 
 		//スキップも空白飛ばしも無い場合、終了
-		if (posStart == pointer_)break;
+		if (posStart == pointer_) break;
 	}
 }
 void Scanner::_SkipSpace() {
@@ -629,35 +629,35 @@ Token& Scanner::Next() {
 
 	wchar_t ch = _CurrentChar();
 
-	Token::Type type = Token::TK_UNKNOWN;
+	Token::Type type = Token::Type::TK_UNKNOWN;
 	int posStart = pointer_;//先頭を保存
 
 	switch (ch) {
-	case L'\0': type = Token::TK_EOF; break;//終端
-	case L',': _NextChar(); type = Token::TK_COMMA;  break;
-	case L'.': _NextChar(); type = Token::TK_PERIOD;  break;
-	case L'=': _NextChar(); type = Token::TK_EQUAL;  break;
-	case L'(': _NextChar(); type = Token::TK_OPENP; break;
-	case L')': _NextChar(); type = Token::TK_CLOSEP; break;
-	case L'[': _NextChar(); type = Token::TK_OPENB; break;
-	case L']': _NextChar(); type = Token::TK_CLOSEB; break;
-	case L'{': _NextChar(); type = Token::TK_OPENC; break;
-	case L'}': _NextChar(); type = Token::TK_CLOSEC; break;
-	case L'*': _NextChar(); type = Token::TK_ASTERISK; break;
-	case L'/': _NextChar(); type = Token::TK_SLASH; break;
-	case L':': _NextChar(); type = Token::TK_COLON; break;
-	case L';': _NextChar(); type = Token::TK_SEMICOLON; break;
-	case L'~': _NextChar(); type = Token::TK_TILDE; break;
-	case L'!': _NextChar(); type = Token::TK_EXCLAMATION; break;
-	case L'#': _NextChar(); type = Token::TK_SHARP; break;
-	case L'|': _NextChar(); type = Token::TK_PIPE; break;
-	case L'&': _NextChar(); type = Token::TK_AMPERSAND; break;
-	case L'<': _NextChar(); type = Token::TK_LESS; break;
-	case L'>': _NextChar(); type = Token::TK_GREATER; break;
+	case L'\0': type = Token::Type::TK_EOF; break;//終端
+	case L',': _NextChar(); type = Token::Type::TK_COMMA;  break;
+	case L'.': _NextChar(); type = Token::Type::TK_PERIOD;  break;
+	case L'=': _NextChar(); type = Token::Type::TK_EQUAL;  break;
+	case L'(': _NextChar(); type = Token::Type::TK_OPENP; break;
+	case L')': _NextChar(); type = Token::Type::TK_CLOSEP; break;
+	case L'[': _NextChar(); type = Token::Type::TK_OPENB; break;
+	case L']': _NextChar(); type = Token::Type::TK_CLOSEB; break;
+	case L'{': _NextChar(); type = Token::Type::TK_OPENC; break;
+	case L'}': _NextChar(); type = Token::Type::TK_CLOSEC; break;
+	case L'*': _NextChar(); type = Token::Type::TK_ASTERISK; break;
+	case L'/': _NextChar(); type = Token::Type::TK_SLASH; break;
+	case L':': _NextChar(); type = Token::Type::TK_COLON; break;
+	case L';': _NextChar(); type = Token::Type::TK_SEMICOLON; break;
+	case L'~': _NextChar(); type = Token::Type::TK_TILDE; break;
+	case L'!': _NextChar(); type = Token::Type::TK_EXCLAMATION; break;
+	case L'#': _NextChar(); type = Token::Type::TK_SHARP; break;
+	case L'|': _NextChar(); type = Token::Type::TK_PIPE; break;
+	case L'&': _NextChar(); type = Token::Type::TK_AMPERSAND; break;
+	case L'<': _NextChar(); type = Token::Type::TK_LESS; break;
+	case L'>': _NextChar(); type = Token::Type::TK_GREATER; break;
 
 	case L'\"':
 	{
-		//while( ch != '"' )ch = _NextChar();//次のダブルクオーテーションまで進める
+		//while( ch != '"' ) ch = _NextChar();//次のダブルクオーテーションまで進める
 		while (true) {
 			ch = _NextChar();
 			if (ch == L'\\') ch = _NextChar();
@@ -670,47 +670,47 @@ Token& Scanner::Next() {
 			std::wstring log = StringUtility::Format(L"Next:すでに文字列終端です(String字句解析) -> %s", error.c_str());
 			_RaiseError(log);
 		}
-		type = Token::TK_STRING;
+		type = Token::Type::TK_STRING;
 		break;
 	}
 
 	case L'\r':case L'\n'://改行
 		//改行がいつまでも続くようなのも1つの改行として扱う
 		while (ch == L'\r' || ch == L'\n') ch = _NextChar();
-		type = Token::TK_NEWLINE;
+		type = Token::Type::TK_NEWLINE;
 		break;
 
 	case L'+':case L'-':
 	{
 		if (ch == L'+') {
-			ch = _NextChar(); type = Token::TK_PLUS;
+			ch = _NextChar(); type = Token::Type::TK_PLUS;
 
 		}
 		else if (ch == L'-') {
-			ch = _NextChar(); type = Token::TK_MINUS;
+			ch = _NextChar(); type = Token::Type::TK_MINUS;
 		}
 
-		if (!bPermitSignNumber_ || !iswdigit(ch))break;//次が数字でないなら抜ける
+		if (!bPermitSignNumber_ || !iswdigit(ch)) break;//次が数字でないなら抜ける
 	}
 
 	default:
 	{
 		if (iswdigit(ch)) {
 			//整数か実数
-			while (iswdigit(ch))ch = _NextChar();//数字だけの間ポインタを進める
-			type = Token::TK_INT;
+			while (iswdigit(ch)) ch = _NextChar();//数字だけの間ポインタを進める
+			type = Token::Type::TK_INT;
 			if (ch == L'.') {
 				//実数か整数かを調べる。小数点があったら実数
 				ch = _NextChar();
-				while (iswdigit(ch))ch = _NextChar();//数字だけの間ポインタを進める
-				type = Token::TK_REAL;
+				while (iswdigit(ch)) ch = _NextChar();//数字だけの間ポインタを進める
+				type = Token::Type::TK_REAL;
 			}
 
 			if (ch == L'E' || ch == L'e') {
 				//1E-5みたいなケース
 				ch = _NextChar();
-				while (iswdigit(ch) || ch == L'-')ch = _NextChar();//数字だけの間ポインタを進める
-				type = Token::TK_REAL;
+				while (iswdigit(ch) || ch == L'-') ch = _NextChar();//数字だけの間ポインタを進める
+				type = Token::Type::TK_REAL;
 			}
 
 		}
@@ -718,11 +718,11 @@ Token& Scanner::Next() {
 			//たぶん識別子
 			while (iswalpha(ch) || iswdigit(ch) || ch == L'_')
 				ch = _NextChar();//たぶん識別子な間ポインタを進める
-			type = Token::TK_ID;
+			type = Token::Type::TK_ID;
 		}
 		else {
 			//ch = _NextChar();
-			type = Token::TK_UNKNOWN;
+			type = Token::Type::TK_UNKNOWN;
 			if (typeEncoding_ == Encoding::UTF8) {
 				size_t mb_count = 0;
 
@@ -735,7 +735,7 @@ Token& Scanner::Next() {
 					++mb_count;
 				}
 
-				if (mb_count > 0) type = Token::TK_ID;
+				if (mb_count > 0) type = Token::Type::TK_ID;
 				else ch = _NextChar();
 			}
 			else ch = _NextChar();
@@ -745,7 +745,7 @@ Token& Scanner::Next() {
 	}
 	}
 
-	if (type == Token::TK_STRING) {
+	if (type == Token::Type::TK_STRING) {
 		std::wstring wstr;
 		if (typeEncoding_ == Encoding::UTF16LE || typeEncoding_ == Encoding::UTF16BE) {
 			wchar_t* pPosStart = (wchar_t*)&buffer_[posStart];
@@ -799,8 +799,8 @@ bool Scanner::HasNext() {
 	//	bool res = true;
 	//	res &= pointer_ < buffer_.size();
 	//	res &= _CurrentChar() != L'\0';
-	//	res &= token_.GetType() != Token::TK_EOF;
-	return pointer_ < buffer_.size() && _CurrentChar() != L'\0' && token_.GetType() != Token::TK_EOF;
+	//	res &= token_.GetType() != Token::Type::TK_EOF;
+	return pointer_ < buffer_.size() && _CurrentChar() != L'\0' && token_.GetType() != Token::Type::TK_EOF;
 }
 void Scanner::CheckType(Token& tok, Token::Type type) {
 	if (tok.type_ != type) {
@@ -809,23 +809,23 @@ void Scanner::CheckType(Token& tok, Token::Type type) {
 	}
 }
 void Scanner::CheckIdentifer(Token& tok, std::wstring id) {
-	if (tok.type_ != Token::TK_ID || tok.GetIdentifier() != id) {
+	if (tok.type_ != Token::Type::TK_ID || tok.GetIdentifier() != id) {
 		std::wstring str = StringUtility::Format(L"CheckID error[%s]:", tok.element_.c_str());
 		_RaiseError(str);
 	}
 }
 int Scanner::GetCurrentLine() {
-	if (buffer_.size() == 0)return 0;
+	if (buffer_.size() == 0) return 0;
 
 	int line = 1;
 	char* pbuf = &buffer_[0];
 	char* ebuf = &buffer_[pointer_];
 	while (true) {
 		if (typeEncoding_ == Encoding::UTF16LE || typeEncoding_ == Encoding::UTF16BE) {
-			if (pbuf + 1 >= ebuf)break;
+			if (pbuf + 1 >= ebuf) break;
 			wchar_t wch = (wchar_t&)*pbuf;
 			if (typeEncoding_ == Encoding::UTF16BE) wch = (wch >> 8) | (wch << 8);
-			if (wch == L'\n')line++;
+			if (wch == L'\n') ++line;
 			pbuf += 2;
 		}
 		else {
@@ -859,7 +859,7 @@ std::wstring Scanner::GetString(int start, int end) {
 	return res;
 }
 bool Scanner::CompareMemory(int start, int end, const char* data) {
-	if (end >= buffer_.size())return false;
+	if (end >= buffer_.size()) return false;
 
 	int bufSize = end - start;
 	bool res = memcmp(&buffer_[start], data, bufSize) == 0;
@@ -882,33 +882,33 @@ const char* Token::Type_Str[] = {
 	"TK_LESS", "TK_GREATER",
 };
 std::wstring& Token::GetIdentifier() {
-	if (type_ != TK_ID) {
+	if (type_ != Type::TK_ID) {
 		throw gstd::wexception(L"Token::GetIdentifier:データのタイプが違います");
 	}
 	return element_;
 }
 std::wstring Token::GetString() {
-	if (type_ != TK_STRING) {
+	if (type_ != Type::TK_STRING) {
 		throw gstd::wexception(L"Token::GetString:データのタイプが違います");
 	}
 	return element_.substr(1, element_.size() - 2);
 }
 int Token::GetInteger() {
-	if (type_ != TK_INT) {
+	if (type_ != Type::TK_INT) {
 		throw gstd::wexception(L"Token::GetInterger:データのタイプが違います");
 	}
 	return StringUtility::ToInteger(element_);
 }
 double Token::GetReal() {
-	if (type_ != TK_REAL && type_ != TK_INT) {
+	if (type_ != Type::TK_REAL && type_ != Type::TK_INT) {
 		throw gstd::wexception(L"Token::GetReal:データのタイプが違います");
 	}
 	return StringUtility::ToDouble(element_);
 }
 bool Token::GetBoolean() {
 	bool res = false;
-	if (type_ == TK_REAL || type_ == TK_INT) {
-		res = GetReal() == 1;
+	if (type_ == Type::TK_REAL || type_ == Type::TK_INT) {
+		res = GetReal() != 0;
 	}
 	else {
 		res = element_ == L"true";
@@ -949,49 +949,49 @@ TextParser::Result TextParser::_ParseComparison(int pos) {
 		scan_->SetCurrentPointer(res.pos_);
 
 		Token& tok = scan_->Next();
-		int type = tok.GetType();
-		if (type == Token::TK_EXCLAMATION || type == Token::TK_EQUAL) {
+		Token::Type type = tok.GetType();
+		if (type == Token::Type::TK_EXCLAMATION || type == Token::Type::TK_EQUAL) {
 			//「==」「!=」
-			bool bNot = type == Token::TK_EXCLAMATION;
+			bool bNot = type == Token::Type::TK_EXCLAMATION;
 			tok = scan_->Next();
 			type = tok.GetType();
-			if (type != Token::TK_EQUAL)break;
+			if (type != Token::Type::TK_EQUAL) break;
 
 			Result tRes = _ParseSum(scan_->GetCurrentPointer());
 			res.pos_ = tRes.pos_;
-			if (res.type_ == TYPE_BOOLEAN && tRes.type_ == TYPE_BOOLEAN) {
+			if (res.type_ == Type::TYPE_BOOLEAN && tRes.type_ == Type::TYPE_BOOLEAN) {
 				res.valueBoolean_ = bNot ?
 					res.valueBoolean_ != tRes.valueBoolean_ : res.valueBoolean_ == tRes.valueBoolean_;
 			}
-			else if (res.type_ == TYPE_REAL && tRes.type_ == TYPE_REAL) {
+			else if (res.type_ == Type::TYPE_REAL && tRes.type_ == Type::TYPE_REAL) {
 				res.valueBoolean_ = bNot ?
 					res.valueReal_ != tRes.valueReal_ : res.valueReal_ == tRes.valueReal_;
 			}
 			else {
 				_RaiseError(L"比較できない型");
 			}
-			res.type_ = TYPE_BOOLEAN;
+			res.type_ = Type::TYPE_BOOLEAN;
 		}
-		else if (type == Token::TK_PIPE) {
+		else if (type == Token::Type::TK_PIPE) {
 			tok = scan_->Next();
 			type = tok.GetType();
-			if (type != Token::TK_PIPE)break;
+			if (type != Token::Type::TK_PIPE) break;
 			Result tRes = _ParseSum(scan_->GetCurrentPointer());
 			res.pos_ = tRes.pos_;
-			if (res.type_ == TYPE_BOOLEAN && tRes.type_ == TYPE_BOOLEAN) {
+			if (res.type_ == Type::TYPE_BOOLEAN && tRes.type_ == Type::TYPE_BOOLEAN) {
 				res.valueBoolean_ = res.valueBoolean_ || tRes.valueBoolean_;
 			}
 			else {
 				_RaiseError(L"真偽値以外での||");
 			}
 		}
-		else if (type == Token::TK_AMPERSAND) {
+		else if (type == Token::Type::TK_AMPERSAND) {
 			tok = scan_->Next();
 			type = tok.GetType();
-			if (type != Token::TK_AMPERSAND)break;
+			if (type != Token::Type::TK_AMPERSAND) break;
 			Result tRes = _ParseSum(scan_->GetCurrentPointer());
 			res.pos_ = tRes.pos_;
-			if (res.type_ == TYPE_BOOLEAN && tRes.type_ == TYPE_BOOLEAN) {
+			if (res.type_ == Type::TYPE_BOOLEAN && tRes.type_ == Type::TYPE_BOOLEAN) {
 				res.valueBoolean_ = res.valueBoolean_ && tRes.valueBoolean_;
 			}
 			else {
@@ -1009,24 +1009,22 @@ TextParser::Result TextParser::_ParseSum(int pos) {
 		scan_->SetCurrentPointer(res.pos_);
 
 		Token& tok = scan_->Next();
-		int type = tok.GetType();
-		if (type != Token::TK_PLUS && type != Token::TK_MINUS)
+		Token::Type type = tok.GetType();
+		if (type != Token::Type::TK_PLUS && type != Token::Type::TK_MINUS)
 			break;
 
 		Result tRes = _ParseProduct(scan_->GetCurrentPointer());
 		if (res.IsString() || tRes.IsString()) {
-			res.type_ = TYPE_STRING;
+			res.type_ = Type::TYPE_STRING;
 			res.valueString_ = res.GetString() + tRes.GetString();
 		}
 		else {
-			if (tRes.type_ == TYPE_BOOLEAN)_RaiseError(L"真偽値の加算減算");
+			if (tRes.type_ == Type::TYPE_BOOLEAN) _RaiseError(L"真偽値の加算減算");
 			res.pos_ = tRes.pos_;
-			if (type == Token::TK_PLUS) {
+			if (type == Token::Type::TK_PLUS)
 				res.valueReal_ += tRes.valueReal_;
-			}
-			else if (type == Token::TK_MINUS) {
+			else if (type == Token::Type::TK_MINUS)
 				res.valueReal_ -= tRes.valueReal_;
-			}
 		}
 
 	}
@@ -1038,20 +1036,18 @@ TextParser::Result TextParser::_ParseProduct(int pos) {
 	while (scan_->HasNext()) {
 		scan_->SetCurrentPointer(res.pos_);
 		Token& tok = scan_->Next();
-		int type = tok.GetType();
-		if (type != Token::TK_ASTERISK && type != Token::TK_SLASH)break;
+		Token::Type type = tok.GetType();
+		if (type != Token::Type::TK_ASTERISK && type != Token::Type::TK_SLASH) break;
 
 		Result tRes = _ParseTerm(scan_->GetCurrentPointer());
-		if (tRes.type_ == TYPE_BOOLEAN)_RaiseError(L"真偽値の乗算除算");
+		if (tRes.type_ == Type::TYPE_BOOLEAN) _RaiseError(L"真偽値の乗算除算");
 
 		res.type_ = tRes.type_;
 		res.pos_ = tRes.pos_;
-		if (type == Token::TK_ASTERISK) {
+		if (type == Token::Type::TK_ASTERISK)
 			res.valueReal_ *= tRes.valueReal_;
-		}
-		else if (type == Token::TK_SLASH) {
+		else if (type == Token::Type::TK_SLASH)
 			res.valueReal_ /= tRes.valueReal_;
-		}
 	}
 
 	return res;
@@ -1064,44 +1060,44 @@ TextParser::Result TextParser::_ParseTerm(int pos) {
 
 	bool bMinus = false;
 	bool bNot = false;
-	int type = tok.GetType();
-	if (type == Token::TK_PLUS ||
-		type == Token::TK_MINUS ||
-		type == Token::TK_EXCLAMATION) {
-		if (type == Token::TK_MINUS)bMinus = true;
-		if (type == Token::TK_EXCLAMATION)bNot = true;
+	Token::Type type = tok.GetType();
+	if (type == Token::Type::TK_PLUS ||
+		type == Token::Type::TK_MINUS ||
+		type == Token::Type::TK_EXCLAMATION) {
+		if (type == Token::Type::TK_MINUS) bMinus = true;
+		if (type == Token::Type::TK_EXCLAMATION) bNot = true;
 		tok = scan_->Next();
 	}
 
-	if (tok.GetType() == Token::TK_OPENP) {
+	if (tok.GetType() == Token::Type::TK_OPENP) {
 		res = _ParseComparison(scan_->GetCurrentPointer());
 		scan_->SetCurrentPointer(res.pos_);
 		tok = scan_->Next();
-		if (tok.GetType() != Token::TK_CLOSEP)_RaiseError(L")がありません");
+		if (tok.GetType() != Token::Type::TK_CLOSEP) _RaiseError(L")がありません");
 	}
 	else {
-		int type = tok.GetType();
-		if (type == Token::TK_INT || type == Token::TK_REAL) {
+		Token::Type type = tok.GetType();
+		if (type == Token::Type::TK_INT || type == Token::Type::TK_REAL) {
 			res.valueReal_ = tok.GetReal();
-			res.type_ = TYPE_REAL;
+			res.type_ = Type::TYPE_REAL;
 		}
-		else if (type == Token::TK_ID) {
+		else if (type == Token::Type::TK_ID) {
 			Result tRes = _ParseIdentifer(scan_->GetCurrentPointer());
 			res = tRes;
 		}
-		else if (type == Token::TK_STRING) {
+		else if (type == Token::Type::TK_STRING) {
 			res.valueString_ = tok.GetString();
-			res.type_ = TYPE_STRING;
+			res.type_ = Type::TYPE_STRING;
 		}
 		else _RaiseError(StringUtility::Format(L"不正なトークン:%s", tok.GetElement().c_str()));
 	}
 
 	if (bMinus) {
-		if (res.type_ != TYPE_REAL)_RaiseError(L"実数以外での負記号");
+		if (res.type_ != Type::TYPE_REAL) _RaiseError(L"実数以外での負記号");
 		res.valueReal_ = -res.valueReal_;
 	}
 	if (bNot) {
-		if (res.type_ != TYPE_BOOLEAN)_RaiseError(L"真偽値以外での否定");
+		if (res.type_ != Type::TYPE_BOOLEAN) _RaiseError(L"真偽値以外での否定");
 		res.valueBoolean_ = !res.valueBoolean_;
 	}
 
@@ -1116,11 +1112,11 @@ TextParser::Result TextParser::_ParseIdentifer(int pos) {
 	Token& tok = scan_->GetToken();
 	std::wstring id = tok.GetElement();
 	if (id == L"true") {
-		res.type_ = TYPE_BOOLEAN;
+		res.type_ = Type::TYPE_BOOLEAN;
 		res.valueBoolean_ = true;
 	}
 	else if (id == L"false") {
-		res.type_ = TYPE_BOOLEAN;
+		res.type_ = Type::TYPE_BOOLEAN;
 		res.valueBoolean_ = false;
 	}
 	else {
@@ -1141,14 +1137,14 @@ TextParser::Result TextParser::GetResult() {
 	if (scan_ == nullptr) _RaiseError(L"テキストが設定されていません");
 	scan_->SetPointerBegin();
 	Result res = _ParseComparison(scan_->GetCurrentPointer());
-	if (scan_->HasNext())_RaiseError(StringUtility::Format(L"不正なトークン:%s", scan_->GetToken().GetElement().c_str()));
+	if (scan_->HasNext()) _RaiseError(StringUtility::Format(L"不正なトークン:%s", scan_->GetToken().GetElement().c_str()));
 	return res;
 }
 double TextParser::GetReal() {
 	if (scan_ == nullptr) _RaiseError(L"テキストが設定されていません");
 	scan_->SetPointerBegin();
 	Result res = _ParseSum(scan_->GetCurrentPointer());
-	if (scan_->HasNext())_RaiseError(StringUtility::Format(L"不正なトークン:%s", scan_->GetToken().GetElement().c_str()));
+	if (scan_->HasNext()) _RaiseError(StringUtility::Format(L"不正なトークン:%s", scan_->GetToken().GetElement().c_str()));
 	return res.GetReal();
 }
 
@@ -1183,8 +1179,9 @@ void Font::CreateFont(const wchar_t* type, int size, bool bBold, bool bItalic, b
 	fontInfo.lfItalic = bItalic;
 	fontInfo.lfUnderline = bLine;
 	fontInfo.lfCharSet = ANSI_CHARSET;
-	for (int i = 0; i < (int)wcslen(type); i++) {
-		if (!(IsCharAlphaNumeric(type[i]) || type[i] == L' ' || type[i] == L'-')) {
+
+	for (const wchar_t* pCh = type; *pCh; ++pCh) {
+		if (!(IsCharAlphaNumeric(*pCh) || *pCh == L' ' || *pCh == L'-')) {
 			fontInfo.lfCharSet = SHIFTJIS_CHARSET;
 			break;
 		}

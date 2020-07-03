@@ -40,10 +40,9 @@ class StgPackageInformation {
 	bool bEndPackage_;
 	ref_count_ptr<StgStageStartData> nextStageStartData_;
 	ref_count_ptr<ReplayInformation> infoReplay_;
-	std::vector<ref_count_ptr<StgStageStartData> > listStageData_;
+	std::vector<ref_count_ptr<StgStageStartData>> listStageData_;
 	ref_count_ptr<ScriptInformation> infoMainScript_;
 	int timeStart_;
-
 public:
 	StgPackageInformation();
 	virtual ~StgPackageInformation();
@@ -55,7 +54,7 @@ public:
 	void FinishCurrentStage();
 	ref_count_ptr<StgStageStartData> GetNextStageData() { return nextStageStartData_; }
 	void SetNextStageData(ref_count_ptr<StgStageStartData> data) { nextStageStartData_ = data; }
-	std::vector<ref_count_ptr<StgStageStartData> >& GetStageDataList() { return listStageData_; }
+	std::vector<ref_count_ptr<StgStageStartData>>& GetStageDataList() { return listStageData_; }
 
 	ref_count_ptr<ReplayInformation> GetReplayInformation() { return infoReplay_; }
 	void SetReplayInformation(ref_count_ptr<ReplayInformation> info) { infoReplay_ = info; }

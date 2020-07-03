@@ -500,7 +500,7 @@ namespace gstd {
 		static SystemValueManager* thisBase_;
 
 	protected:
-		std::map<std::string, gstd::ref_count_ptr<RecordBuffer> > mapRecord_;
+		std::map<std::string, gstd::ref_count_ptr<RecordBuffer>> mapRecord_;
 
 	public:
 		SystemValueManager();

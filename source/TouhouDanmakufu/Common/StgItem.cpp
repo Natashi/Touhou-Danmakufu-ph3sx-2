@@ -303,11 +303,11 @@ StgItemDataList::~StgItemDataList() {
 	listData_.clear();
 }
 bool StgItemDataList::AddItemDataList(std::wstring path, bool bReload) {
-	if (!bReload && listReadPath_.find(path) != listReadPath_.end())return true;
+	if (!bReload && listReadPath_.find(path) != listReadPath_.end()) return true;
 
 	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
-	if (!reader->Open())throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
+	if (!reader->Open()) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
 	std::string source = reader->ReadAllString();
 
 	bool res = false;
@@ -319,17 +319,17 @@ bool StgItemDataList::AddItemDataList(std::wstring path, bool bReload) {
 		RECT rcDelay = { -1, -1, -1, -1 };
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
-			if (tok.GetType() == Token::TK_EOF)//Eofの識別子が来たらファイルの調査終了
+			if (tok.GetType() == Token::Type::TK_EOF)//Eofの識別子が来たらファイルの調査終了
 			{
 				break;
 			}
-			else if (tok.GetType() == Token::TK_ID) {
+			else if (tok.GetType() == Token::Type::TK_ID) {
 				std::wstring element = tok.GetElement();
 				if (element == L"ItemData") {
 					_ScanItem(listData, scanner);
 				}
 				else if (element == L"item_image") {
-					scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 					pathImage = scanner.Next().GetString();
 				}
 
@@ -340,13 +340,13 @@ bool StgItemDataList::AddItemDataList(std::wstring path, bool bReload) {
 		}
 
 		//テクスチャ読み込み
-		if (pathImage.size() == 0)throw gstd::wexception("Item texture must be set.");
+		if (pathImage.size() == 0) throw gstd::wexception("Item texture must be set.");
 		std::wstring dir = PathProperty::GetFileDirectory(path);
 		pathImage = StringUtility::Replace(pathImage, L"./", dir);
 
 		shared_ptr<Texture> texture(new Texture());
 		bool bTexture = texture->CreateFromFile(PathProperty::GetUnique(pathImage), false, false);
-		if (!bTexture)throw gstd::wexception("The specified item texture cannot be found.");
+		if (!bTexture) throw gstd::wexception("The specified item texture cannot be found.");
 
 		int textureIndex = -1;
 		for (int iTexture = 0; iTexture < listTexture_.size(); iTexture++) {
@@ -370,7 +370,7 @@ bool StgItemDataList::AddItemDataList(std::wstring path, bool bReload) {
 			listData_.resize(listData.size());
 		for (size_t iData = 0; iData < listData.size(); iData++) {
 			StgItemData* data = listData[iData];
-			if (data == nullptr)continue;
+			if (data == nullptr) continue;
 
 			data->indexTexture_ = textureIndex;
 			{
@@ -401,8 +401,8 @@ bool StgItemDataList::AddItemDataList(std::wstring path, bool bReload) {
 }
 void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& scanner) {
 	Token& tok = scanner.Next();
-	if (tok.GetType() == Token::TK_NEWLINE)tok = scanner.Next();
-	scanner.CheckType(tok, Token::TK_OPENC);
+	if (tok.GetType() == Token::Type::TK_NEWLINE) tok = scanner.Next();
+	scanner.CheckType(tok, Token::Type::TK_OPENC);
 
 	StgItemData* data = new StgItemData(this);
 	int id = -1;
@@ -410,18 +410,18 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 
 	while (true) {
 		tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC) {
+		if (tok.GetType() == Token::Type::TK_CLOSEC) {
 			break;
 		}
-		else if (tok.GetType() == Token::TK_ID) {
+		else if (tok.GetType() == Token::Type::TK_ID) {
 			std::wstring element = tok.GetElement();
 
 			if (element == L"id") {
-				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 				id = scanner.Next().GetInteger();
 			}
 			else if (element == L"type") {
-				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 				typeItem = scanner.Next().GetInteger();
 			}
 			else if (element == L"rect") {
@@ -464,7 +464,7 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 				data->rcOutDest_ = rcDest;
 			}
 			else if (element == L"render") {
-				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 				std::wstring render = scanner.Next().GetElement();
 				if (render == L"ADD" || render == L"ADD_RGB")
 					data->typeRender_ = MODE_BLEND_ADD_RGB;
@@ -472,7 +472,7 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 					data->typeRender_ = MODE_BLEND_ADD_ARGB;
 			}
 			else if (element == L"alpha") {
-				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 				data->alpha_ = scanner.Next().GetInteger();
 			}
 			else if (element == L"AnimationData") {
@@ -494,15 +494,15 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 }
 void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 	Token& tok = scanner.Next();
-	if (tok.GetType() == Token::TK_NEWLINE)tok = scanner.Next();
-	scanner.CheckType(tok, Token::TK_OPENC);
+	if (tok.GetType() == Token::Type::TK_NEWLINE) tok = scanner.Next();
+	scanner.CheckType(tok, Token::Type::TK_OPENC);
 
 	while (true) {
 		tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC) {
+		if (tok.GetType() == Token::Type::TK_CLOSEC) {
 			break;
 		}
-		else if (tok.GetType() == Token::TK_ID) {
+		else if (tok.GetType() == Token::Type::TK_ID) {
 			std::wstring element = tok.GetElement();
 
 			if (element == L"animation_data") {
@@ -520,8 +520,8 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 					int width = rcSrc.right - rcSrc.left;
 					int height = rcSrc.bottom - rcSrc.top;
 					RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-					if (width % 2 == 1)rcDest.right += 1;
-					if (height % 2 == 1)rcDest.bottom += 1;
+					if (width % 2 == 1) ++rcDest.right;
+					if (height % 2 == 1) ++rcDest.bottom;
 
 					anime.frame_ = frame;
 					anime.rcSrc_ = rcSrc;
@@ -536,16 +536,16 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 }
 std::vector<std::wstring> StgItemDataList::_GetArgumentList(Scanner& scanner) {
 	std::vector<std::wstring> res;
-	scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+	scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 
 	Token& tok = scanner.Next();
 
-	if (tok.GetType() == Token::TK_OPENP) {
+	if (tok.GetType() == Token::Type::TK_OPENP) {
 		while (true) {
 			tok = scanner.Next();
-			int type = tok.GetType();
-			if (type == Token::TK_CLOSEP)break;
-			else if (type != Token::TK_COMMA) {
+			Token::Type type = tok.GetType();
+			if (type == Token::Type::TK_CLOSEP) break;
+			else if (type != Token::Type::TK_COMMA) {
 				std::wstring str = tok.GetElement();
 				res.push_back(str);
 			}
@@ -775,7 +775,7 @@ void StgItemObject::RenderOnItemManager() {
 			int tnum = score % 10;
 			score /= 10;
 			listNum.push_back(tnum);
-			if (score == 0)break;
+			if (score == 0) break;
 		}
 		for (int iNum = listNum.size() - 1; iNum >= 0; iNum--) {
 			RECT_D rcSrc = { (double)(listNum[iNum] * 36), 0.,
@@ -797,7 +797,7 @@ void StgItemObject::_DeleteInAutoClip() {
 	rcClip.right = graphics->GetScreenWidth() + 64;
 	rcClip.bottom = graphics->GetScreenHeight() + 64;
 	bool bDelete = (posX_ < rcClip.left || posX_ > rcClip.right || posY_ > rcClip.bottom);
-	if (!bDelete)return;
+	if (!bDelete) return;
 
 	stageController_->GetMainObjectManager()->DeleteObject(this);
 }
@@ -1041,7 +1041,7 @@ void StgItemObject_User::RenderOnItemManager() {
 	
 	renderer = itemData->GetRenderer(objBlendType);
 
-	if (renderer == nullptr)return;
+	if (renderer == nullptr) return;
 
 	float scaleX = scale_.x;
 	float scaleY = scale_.y;

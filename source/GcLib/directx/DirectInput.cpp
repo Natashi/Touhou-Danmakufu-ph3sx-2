@@ -302,7 +302,7 @@ bool DirectInput::_IdleKeyboard() {
 	return true;
 }
 bool DirectInput::_IdleJoypad() {
-	if (pJoypad_.size() == 0)return false;
+	if (pJoypad_.size() == 0) return false;
 	for (int16_t iPad = 0; iPad < pJoypad_.size(); ++iPad) {
 		if (!pInput_ || !pJoypad_[iPad])
 			return false;

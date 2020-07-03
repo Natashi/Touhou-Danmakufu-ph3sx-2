@@ -517,12 +517,12 @@ gstd::value StgControlScript::Func_GetScriptPathList(gstd::script_machine* machi
 
 		//ñæÇÁÇ©Ç…ä÷åWÇ»Ç≥ÇªÇ§Ç»ägí£éqÇÕèúäO
 		std::wstring ext = PathProperty::GetFileExtension(path);
-		if (ScriptInformation::IsExcludeExtention(ext))continue;
+		if (ScriptInformation::IsExcludeExtention(ext)) continue;
 
 		path = PathProperty::GetUnique(path);
 		ref_count_ptr<ScriptInformation> infoScript = ScriptInformation::CreateScriptInformation(path, true);
-		if (infoScript == nullptr)continue;
-		if (typeScript != TYPE_SCRIPT_ALL && typeScript != infoScript->GetType())continue;
+		if (infoScript == nullptr) continue;
+		if (typeScript != TYPE_SCRIPT_ALL && typeScript != infoScript->GetType()) continue;
 
 		script->mapScriptInfo_[path] = infoScript;
 		listRes.push_back(path);
@@ -927,7 +927,7 @@ gstd::value StgControlScript::Func_GetReplayInfo(gstd::script_machine* machine, 
 	int type = (int)argv[1].as_real();
 
 	ref_count_ptr<ReplayInformation> replayInfo;
-	if (index == ReplayInformation::INDEX_ACTIVE)replayInfo = infoSystem->GetActiveReplayInformation();
+	if (index == ReplayInformation::INDEX_ACTIVE) replayInfo = infoSystem->GetActiveReplayInformation();
 	else replayInfo = replayInfoManager->GetInformation(index);
 
 	if (replayInfo == nullptr)
@@ -1015,7 +1015,7 @@ gstd::value StgControlScript::Func_GetReplayUserData(gstd::script_machine* machi
 	std::string key = StringUtility::ConvertWideToMulti(argv[1].as_string());
 
 	ref_count_ptr<ReplayInformation> replayInfo;
-	if (index == ReplayInformation::INDEX_ACTIVE)replayInfo = infoSystem->GetActiveReplayInformation();
+	if (index == ReplayInformation::INDEX_ACTIVE) replayInfo = infoSystem->GetActiveReplayInformation();
 	else replayInfo = replayInfoManager->GetInformation(index);
 
 	if (replayInfo == nullptr)
@@ -1048,7 +1048,7 @@ gstd::value StgControlScript::Func_IsReplayUserDataExists(gstd::script_machine* 
 	std::string key = StringUtility::ConvertWideToMulti(argv[1].as_string());
 
 	ref_count_ptr<ReplayInformation> replayInfo;
-	if (index == ReplayInformation::INDEX_ACTIVE)replayInfo = infoSystem->GetActiveReplayInformation();
+	if (index == ReplayInformation::INDEX_ACTIVE) replayInfo = infoSystem->GetActiveReplayInformation();
 	else replayInfo = replayInfoManager->GetInformation(index);
 
 	if (replayInfo == nullptr)

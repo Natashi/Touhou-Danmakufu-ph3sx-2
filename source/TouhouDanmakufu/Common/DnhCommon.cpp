@@ -48,11 +48,11 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(std:
 
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
-			if (tok.GetType() == Token::TK_EOF)//Eofの識別子が来たらファイルの調査終了
+			if (tok.GetType() == Token::Type::TK_EOF)//Eofの識別子が来たらファイルの調査終了
 			{
 				break;
 			}
-			else if (tok.GetType() == Token::TK_SHARP) {
+			else if (tok.GetType() == Token::Type::TK_SHARP) {
 				tok = scanner.Next();
 				std::wstring element = tok.GetElement();
 
@@ -69,17 +69,17 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(std:
 
 				if (bANSIDanmakufu || element == L"東方弾幕風" || element == L"TouhouDanmakufu") {
 					bScript = true;
-					if (scanner.Next().GetType() != Token::TK_OPENB)continue;
+					if (scanner.Next().GetType() != Token::Type::TK_OPENB) continue;
 					tok = scanner.Next();
 					std::wstring strType = tok.GetElement();
-					if (scanner.Next().GetType() != Token::TK_CLOSEB)throw gstd::wexception();
+					if (scanner.Next().GetType() != Token::Type::TK_CLOSEB) throw gstd::wexception();
 
-					if (strType == L"Single")type = TYPE_SINGLE;
-					else if (strType == L"Plural")type = TYPE_PLURAL;
-					else if (strType == L"Stage")type = TYPE_STAGE;
-					else if (strType == L"Package")type = TYPE_PACKAGE;
-					else if (strType == L"Player")type = TYPE_PLAYER;
-					else if (!bNeedHeader)throw gstd::wexception();
+					if (strType == L"Single") type = TYPE_SINGLE;
+					else if (strType == L"Plural") type = TYPE_PLURAL;
+					else if (strType == L"Stage") type = TYPE_STAGE;
+					else if (strType == L"Package") type = TYPE_PACKAGE;
+					else if (strType == L"Player") type = TYPE_PLAYER;
+					else if (!bNeedHeader) throw gstd::wexception();
 				}
 				else if (element == L"ID") {
 					idScript = _GetString(scanner);
@@ -163,22 +163,22 @@ bool ScriptInformation::IsExcludeExtention(std::wstring ext) {
 }
 std::wstring ScriptInformation::_GetString(Scanner& scanner) {
 	std::wstring res = DEFAULT;
-	scanner.CheckType(scanner.Next(), Token::TK_OPENB);
+	scanner.CheckType(scanner.Next(), Token::Type::TK_OPENB);
 	Token& tok = scanner.Next();
-	if (tok.GetType() == Token::TK_STRING) {
+	if (tok.GetType() == Token::Type::TK_STRING) {
 		res = tok.GetString();
 	}
-	scanner.CheckType(scanner.Next(), Token::TK_CLOSEB);
+	scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEB);
 	return res;
 }
 std::vector<std::wstring> ScriptInformation::_GetStringList(Scanner& scanner) {
 	std::vector<std::wstring> res;
-	scanner.CheckType(scanner.Next(), Token::TK_OPENB);
+	scanner.CheckType(scanner.Next(), Token::Type::TK_OPENB);
 	while (true) {
 		Token& tok = scanner.Next();
-		int type = tok.GetType();
-		if (type == Token::TK_CLOSEB)break;
-		else if (type == Token::TK_STRING) {
+		Token::Type type = tok.GetType();
+		if (type == Token::Type::TK_CLOSEB) break;
+		else if (type == Token::Type::TK_STRING) {
 			std::wstring wstr = tok.GetString();
 			res.push_back(wstr);
 		}

@@ -261,7 +261,7 @@ namespace gstd {
 		std::wstring GetText();
 		void SetParam(LPARAM param);
 		LPARAM GetParam();
-		std::list<ref_count_ptr<Item> > GetChildList();
+		std::list<ref_count_ptr<Item>> GetChildList();
 	};
 	class WTreeView::ItemStyle {
 		friend WTreeView;
@@ -277,7 +277,7 @@ namespace gstd {
 	//WTabControll
 	**********************************************************/
 	class WTabControll : public WindowBase {
-		std::vector<ref_count_ptr<WPanel> > vectPanel_;
+		std::vector<ref_count_ptr<WPanel>> vectPanel_;
 	protected:
 		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	public:

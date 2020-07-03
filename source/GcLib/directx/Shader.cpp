@@ -441,12 +441,11 @@ bool Shader::CreateFromFile(std::wstring path) {
 	bool res = false;
 	{
 		Lock lock(ShaderManager::GetBase()->GetLock());
-		if (data_ != nullptr)Release();
+		if (data_) Release();
 		ShaderManager* manager = ShaderManager::GetBase();
 		shared_ptr<Shader> shader = manager->CreateFromFile(path);
-		if (shader) {
+		if (shader)
 			data_ = shader->data_;
-		}
 		res = data_ != nullptr;
 	}
 
@@ -518,7 +517,7 @@ bool Shader::LoadParameter() {
 			break;
 		}
 		}
-		//if(FAILED(hr))return false;
+		//if(FAILED(hr)) return false;
 	}
 
 	hr = effect->SetTechnique(technique_.c_str());

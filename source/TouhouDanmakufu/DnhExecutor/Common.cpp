@@ -126,8 +126,7 @@ void MenuTask::Work() {
 		for (int iItem = 0; iItem < countCurrentPageItem; iItem++) {
 			int index = indexTop + iItem;
 			ref_count_ptr<MenuItem> item = item_[index];
-			if (item == NULL)continue;
-			item->Work();
+			if (item) item->Work();
 		}
 	}
 }
@@ -139,8 +138,7 @@ void MenuTask::Render() {
 		for (int iItem = 0; iItem < countCurrentPageItem; iItem++) {
 			int index = indexTop + iItem;
 			ref_count_ptr<MenuItem> item = item_[index];
-			if (item == NULL)continue;
-			item->Render();
+			if (item) item->Render();
 		}
 	}
 }
@@ -171,7 +169,7 @@ int MenuTask::GetSelectedItemIndex() {
 	return res;
 }
 ref_count_ptr<MenuItem> MenuTask::GetSelectedMenuItem() {
-	ref_count_ptr<MenuItem> res = NULL;
+	ref_count_ptr<MenuItem> res = nullptr;
 	{
 		Lock lock(cs_);
 		int index = GetSelectedItemIndex();
@@ -204,7 +202,7 @@ TextLightUpMenuItem::TextLightUpMenuItem() {
 	frameSelected_ = 0;
 }
 void TextLightUpMenuItem::_WorkSelectedItem() {
-	if (menu_->GetSelectedMenuItem() == this)frameSelected_++;
+	if (menu_->GetSelectedMenuItem() == this) frameSelected_++;
 	else frameSelected_ = 0;
 }
 int TextLightUpMenuItem::_GetSelectedItemAlpha() {
@@ -212,7 +210,7 @@ int TextLightUpMenuItem::_GetSelectedItemAlpha() {
 	if (menu_->GetSelectedMenuItem() == this) {
 		int cycle = 60;
 		int alpha = frameSelected_ % cycle;
-		if (alpha < cycle / 2)alpha = 255 * (float)((float)(cycle / 2 - alpha) / (float)(cycle / 2));
+		if (alpha < cycle / 2) alpha = 255 * (float)((float)(cycle / 2 - alpha) / (float)(cycle / 2));
 		else alpha = 255 * (float)((float)(alpha - cycle / 2) / (float)(cycle / 2));
 		res = alpha;
 	}

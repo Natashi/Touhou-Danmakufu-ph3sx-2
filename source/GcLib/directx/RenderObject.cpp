@@ -30,7 +30,7 @@ void RenderBlock::Render() {
 	obj->SetPosition(position_);
 	obj->SetAngle(angle_);
 	obj->SetScale(scale_);
-	if (func_ != nullptr)
+	if (func_)
 		func_->CallRenderStateFunction();
 	obj->Render();
 }
@@ -46,21 +46,19 @@ void RenderManager::Render() {
 	//ïsìßñæ
 	graph->SetZBufferEnable(true);
 	graph->SetZWriteEnable(true);
-	std::list<gstd::ref_count_ptr<RenderBlock> >::iterator itrOpaque;
-	for (itrOpaque = listBlockOpaque_.begin(); itrOpaque != listBlockOpaque_.end(); ++itrOpaque) {
+	for (auto itrOpaque = listBlockOpaque_.begin(); itrOpaque != listBlockOpaque_.end(); ++itrOpaque) {
 		(*itrOpaque)->Render();
 	}
 
 	//îºìßñæ
 	graph->SetZBufferEnable(true);
 	graph->SetZWriteEnable(false);
-	std::list<gstd::ref_count_ptr<RenderBlock> >::iterator itrTrans;
-	for (itrTrans = listBlockTranslucent_.begin(); itrTrans != listBlockTranslucent_.end(); ++itrTrans) {
+	for (auto itrTrans = listBlockTranslucent_.begin(); itrTrans != listBlockTranslucent_.end(); ++itrTrans) {
 		(*itrTrans)->CalculateZValue();
 	}
 	//SortUtility::CombSort(listBlockTranslucent_.begin(), listBlockTranslucent_.end(), ComparatorRenderBlockTranslucent());
 	listBlockTranslucent_.sort(ComparatorRenderBlockTranslucent());
-	for (itrTrans = listBlockTranslucent_.begin(); itrTrans != listBlockTranslucent_.end(); ++itrTrans) {
+	for (auto itrTrans = listBlockTranslucent_.begin(); itrTrans != listBlockTranslucent_.end(); ++itrTrans) {
 		(*itrTrans)->Render();
 	}
 
@@ -68,7 +66,7 @@ void RenderManager::Render() {
 	listBlockTranslucent_.clear();
 }
 void RenderManager::AddBlock(gstd::ref_count_ptr<RenderBlock> block) {
-	if (block == nullptr)return;
+	if (block == nullptr) return;
 	if (block->IsTranslucent()) {
 		listBlockTranslucent_.push_back(block);
 	}
@@ -77,10 +75,8 @@ void RenderManager::AddBlock(gstd::ref_count_ptr<RenderBlock> block) {
 	}
 }
 void RenderManager::AddBlock(gstd::ref_count_ptr<RenderBlocks> blocks) {
-	std::list<gstd::ref_count_ptr<RenderBlock> >& listBlock = blocks->GetList();
-	int size = listBlock.size();
-	std::list<gstd::ref_count_ptr<RenderBlock> >::iterator itr;
-	for (itr = listBlock.begin(); itr != listBlock.end(); ++itr) {
+	std::list<gstd::ref_count_ptr<RenderBlock>>& listBlock = blocks->GetList();
+	for (auto itr = listBlock.begin(); itr != listBlock.end(); ++itr) {
 		AddBlock(*itr);
 	}
 }
@@ -95,10 +91,9 @@ RenderStateFunction::~RenderStateFunction() {
 
 }
 void RenderStateFunction::CallRenderStateFunction() {
-	std::map<RenderStateFunction::FUNC_TYPE, gstd::ref_count_ptr<gstd::ByteBuffer> >::iterator itr;
-	for (itr = mapFuncRenderState_.begin(); itr != mapFuncRenderState_.end(); ++itr) {
-		RenderStateFunction::FUNC_TYPE type = (*itr).first;
-		gstd::ByteBuffer* args = (*itr).second.GetPointer();
+	for (auto itr = mapFuncRenderState_.begin(); itr != mapFuncRenderState_.end(); ++itr) {
+		RenderStateFunction::FUNC_TYPE type = itr->first;
+		gstd::ByteBuffer* args = itr->second.GetPointer();
 		args->Seek(0);
 		if (type == RenderStateFunction::FUNC_LIGHTING) {
 			bool bEnable = args->ReadBoolean();
@@ -110,35 +105,35 @@ void RenderStateFunction::CallRenderStateFunction() {
 }
 
 void RenderStateFunction::SetLightingEnable(bool bEnable) {
-	int sizeArgs = sizeof(bEnable);
+	size_t sizeArgs = sizeof(bEnable);
 	gstd::ByteBuffer* args = new gstd::ByteBuffer();
 	args->SetSize(sizeArgs);
 	args->WriteBoolean(bEnable);
 	mapFuncRenderState_[RenderStateFunction::FUNC_LIGHTING] = args;
 }
 void RenderStateFunction::SetCullingMode(DWORD mode) {
-	int sizeArgs = sizeof(mode);
+	size_t sizeArgs = sizeof(mode);
 	gstd::ByteBuffer* args = new gstd::ByteBuffer();
 	args->SetSize(sizeArgs);
 	args->WriteInteger(mode);
 	mapFuncRenderState_[RenderStateFunction::FUNC_CULLING] = args;
 }
 void RenderStateFunction::SetZBufferEnable(bool bEnable) {
-	int sizeArgs = sizeof(bEnable);
+	size_t sizeArgs = sizeof(bEnable);
 	gstd::ByteBuffer* args = new gstd::ByteBuffer();
 	args->SetSize(sizeArgs);
 	args->WriteBoolean(bEnable);
 	mapFuncRenderState_[RenderStateFunction::FUNC_ZBUFFER_ENABLE] = args;
 }
 void RenderStateFunction::SetZWriteEnable(bool bEnable) {
-	int sizeArgs = sizeof(bEnable);
+	size_t sizeArgs = sizeof(bEnable);
 	gstd::ByteBuffer* args = new gstd::ByteBuffer();
 	args->SetSize(sizeArgs);
 	args->WriteBoolean(bEnable);
 	mapFuncRenderState_[RenderStateFunction::FUNC_ZBUFFER_WRITE_ENABLE] = args;
 }
 void RenderStateFunction::SetBlendMode(DWORD mode, int stage) {
-	int sizeArgs = sizeof(mode) + sizeof(stage);
+	size_t sizeArgs = sizeof(mode) + sizeof(stage);
 	gstd::ByteBuffer* args = new gstd::ByteBuffer();
 	args->SetSize(sizeArgs);
 	args->WriteInteger(mode);
@@ -146,7 +141,7 @@ void RenderStateFunction::SetBlendMode(DWORD mode, int stage) {
 	mapFuncRenderState_[RenderStateFunction::FUNC_BLEND] = args;
 }
 void RenderStateFunction::SetTextureFilter(DWORD mode, int stage) {
-	int sizeArgs = sizeof(mode) + sizeof(stage);
+	size_t sizeArgs = sizeof(mode) + sizeof(stage);
 	gstd::ByteBuffer* args = new gstd::ByteBuffer();
 	args->SetSize(sizeArgs);
 	args->WriteInteger(mode);
@@ -274,7 +269,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(D3DXVECTOR3& position, D3DXVECTOR3& s
 			mat._43 = position.z;
 		}
 	}
-	if (matRelative != nullptr) mat = mat * (*matRelative);
+	if (matRelative) mat = mat * (*matRelative);
 
 	if (bCoordinate2D) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -361,7 +356,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(D3DXVECTOR3& position, D3DXVECTOR3& s
 
 		mat = mat * matSRT;
 	}
-	if (matRelative != nullptr) mat = mat * (*matRelative);
+	if (matRelative) mat = mat * (*matRelative);
 
 	if (bCoordinate2D) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -445,7 +440,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(D3DXVECTOR3& position, D3DXVE
 		mat = mat * matTrans;
 	}
 
-	if (matRelative != nullptr) {
+	if (matRelative) {
 		if (bBillboard) {
 			D3DXMATRIX matRelativeE;
 			D3DXVECTOR3 pos;
@@ -505,7 +500,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrix2D(D3DXVECTOR3& position, D3DXVECTOR3&
 			mat._43 = position.z;
 		}
 	}
-	if (matCamera != nullptr) mat = mat * (*matCamera);
+	if (matCamera) mat = mat * (*matCamera);
 
 	return mat;
 }
@@ -561,7 +556,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrixText2D(D3DXVECTOR2& centerPosition, D3
 		D3DXMatrixTranslation(&mat, centerPosition.x + biasPosition.x, centerPosition.y + biasPosition.y, 0.0f);
 		mat = matSRT * mat;
 	}
-	if (matCamera != nullptr) mat = mat * (*matCamera);
+	if (matCamera) mat = mat * (*matCamera);
 
 	return mat;
 }
@@ -686,7 +681,7 @@ void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
 				effect->Begin(&countPass, 0);
 			}
 			for (UINT iPass = 0; iPass < countPass; ++iPass) {
-				if (effect != nullptr) effect->BeginPass(iPass);
+				if (effect) effect->BeginPass(iPass);
 
 				if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
 					if (bUseIndex) device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
@@ -700,9 +695,9 @@ void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
 						device->DrawPrimitiveUP(typePrimitive_, countPrim, vertCopy_.data(), strideVertexStreamZero_);
 				}
 
-				if (effect != nullptr) effect->EndPass();
+				if (effect) effect->EndPass();
 			}
-			if (effect != nullptr) effect->End();
+			if (effect) effect->End();
 		}
 
 		device->SetIndices(nullptr);
@@ -727,7 +722,7 @@ void RenderObjectTLX::SetVertex(size_t index, VERTEX_TLX& vertex) {
 }
 void RenderObjectTLX::SetVertexPosition(size_t index, float x, float y, float z, float w) {
 	VERTEX_TLX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 
 	constexpr float bias = -0.5f;
 	vertex->position.x = x + bias;
@@ -737,28 +732,28 @@ void RenderObjectTLX::SetVertexPosition(size_t index, float x, float y, float z,
 }
 void RenderObjectTLX::SetVertexUV(size_t index, float u, float v) {
 	VERTEX_TLX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->texcoord.x = u;
 	vertex->texcoord.y = v;
 }
 void RenderObjectTLX::SetVertexColor(size_t index, D3DCOLOR color) {
 	VERTEX_TLX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->diffuse_color = color;
 }
 void RenderObjectTLX::SetVertexColorARGB(size_t index, int a, int r, int g, int b) {
 	VERTEX_TLX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->diffuse_color = D3DCOLOR_ARGB(a, r, g, b);
 }
 void RenderObjectTLX::SetVertexAlpha(size_t index, int alpha) {
 	VERTEX_TLX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->diffuse_color = (vertex->diffuse_color & 0x00ffffff) | ((byte)alpha << 24);
 }
 void RenderObjectTLX::SetVertexColorRGB(size_t index, int r, int g, int b) {
 	VERTEX_TLX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	D3DCOLOR dc = D3DCOLOR_ARGB(0, r, g, b);
 	vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | dc;
 }
@@ -771,7 +766,7 @@ void RenderObjectTLX::SetColorRGB(D3DCOLOR color) {
 	D3DCOLOR dc = color & 0x00ffffff;
 	for (size_t iVert = 0; iVert < vertex_.size(); ++iVert) {
 		VERTEX_TLX* vertex = GetVertex(iVert);
-		if (vertex == nullptr)return;
+		if (vertex == nullptr) return;
 		vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | dc;
 	}
 }
@@ -779,7 +774,7 @@ void RenderObjectTLX::SetAlpha(int alpha) {
 	D3DCOLOR dc = (byte)alpha << 24;
 	for (size_t iVert = 0; iVert < vertex_.size(); ++iVert) {
 		VERTEX_TLX* vertex = GetVertex(iVert);
-		if (vertex == nullptr)return;
+		if (vertex == nullptr) return;
 		vertex->diffuse_color = (vertex->diffuse_color & 0x00ffffff) | dc;
 	}
 }
@@ -998,7 +993,7 @@ void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
 			effect->Begin(&countPass, 0);
 		}
 		for (UINT iPass = 0; iPass < countPass; ++iPass) {
-			if (effect != nullptr) effect->BeginPass(iPass);
+			if (effect) effect->BeginPass(iPass);
 
 			if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
 				if (bUseIndex) device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
@@ -1012,9 +1007,9 @@ void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
 					device->DrawPrimitiveUP(typePrimitive_, countPrim, vertex_.data(), strideVertexStreamZero_);
 			}
 
-			if (effect != nullptr) effect->EndPass();
+			if (effect) effect->EndPass();
 		}
-		if (effect != nullptr) effect->End();
+		if (effect) effect->End();
 
 		device->SetIndices(nullptr);
 		device->SetVertexDeclaration(nullptr);
@@ -1028,17 +1023,17 @@ void RenderObjectLX::SetVertexCount(size_t count) {
 }
 VERTEX_LX* RenderObjectLX::GetVertex(size_t index) {
 	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size())return nullptr;
+	if (pos >= vertex_.size()) return nullptr;
 	return (VERTEX_LX*)&vertex_[pos];
 }
 void RenderObjectLX::SetVertex(size_t index, VERTEX_LX& vertex) {
 	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size())return;
+	if (pos >= vertex_.size()) return;
 	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
 }
 void RenderObjectLX::SetVertexPosition(size_t index, float x, float y, float z) {
 	VERTEX_LX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 
 	constexpr float bias = -0.5f;
 	vertex->position.x = x + bias;
@@ -1047,28 +1042,28 @@ void RenderObjectLX::SetVertexPosition(size_t index, float x, float y, float z) 
 }
 void RenderObjectLX::SetVertexUV(size_t index, float u, float v) {
 	VERTEX_LX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->texcoord.x = u;
 	vertex->texcoord.y = v;
 }
 void RenderObjectLX::SetVertexColor(size_t index, D3DCOLOR color) {
 	VERTEX_LX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->diffuse_color = color;
 }
 void RenderObjectLX::SetVertexColorARGB(size_t index, int a, int r, int g, int b) {
 	VERTEX_LX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->diffuse_color = D3DCOLOR_ARGB(a, r, g, b);
 }
 void RenderObjectLX::SetVertexAlpha(size_t index, int alpha) {
 	VERTEX_LX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->diffuse_color = (vertex->diffuse_color & 0x00ffffff) | ((byte)alpha << 24);
 }
 void RenderObjectLX::SetVertexColorRGB(size_t index, int r, int g, int b) {
 	VERTEX_LX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	D3DCOLOR dc = D3DCOLOR_ARGB(0, r, g, b);
 	vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | dc;
 }
@@ -1081,7 +1076,7 @@ void RenderObjectLX::SetColorRGB(D3DCOLOR color) {
 	D3DCOLOR dc = color & 0x00ffffff;
 	for (size_t iVert = 0; iVert < vertex_.size(); ++iVert) {
 		VERTEX_LX* vertex = GetVertex(iVert);
-		if (vertex == nullptr)return;
+		if (vertex == nullptr) return;
 		vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | dc;
 	}
 }
@@ -1089,7 +1084,7 @@ void RenderObjectLX::SetAlpha(int alpha) {
 	D3DCOLOR dc = (byte)alpha << 24;
 	for (size_t iVert = 0; iVert < vertex_.size(); ++iVert) {
 		VERTEX_LX* vertex = GetVertex(iVert);
-		if (vertex == nullptr)return;
+		if (vertex == nullptr) return;
 		vertex->diffuse_color = (vertex->diffuse_color & 0x00ffffff) | dc;
 	}
 }
@@ -1177,16 +1172,16 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 			effect->Begin(&countPass, 0);
 		}
 		for (UINT iPass = 0; iPass < countPass; ++iPass) {
-			if (effect != nullptr) effect->BeginPass(iPass);
+			if (effect) effect->BeginPass(iPass);
 			if (bUseIndex) {
 				device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
 			}
 			else {
 				device->DrawPrimitive(typePrimitive_, 0, countPrim);
 			}
-			if (effect != nullptr) effect->EndPass();
+			if (effect) effect->EndPass();
 		}
-		if (effect != nullptr) effect->End();
+		if (effect) effect->End();
 
 		device->SetIndices(nullptr);
 		device->SetVertexDeclaration(nullptr);
@@ -1195,17 +1190,17 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 
 VERTEX_NX* RenderObjectNX::GetVertex(size_t index) {
 	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size())return nullptr;
+	if (pos >= vertex_.size()) return nullptr;
 	return (VERTEX_NX*)&vertex_[pos];
 }
 void RenderObjectNX::SetVertex(size_t index, VERTEX_NX& vertex) {
 	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size())return;
+	if (pos >= vertex_.size()) return;
 	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
 }
 void RenderObjectNX::SetVertexPosition(size_t index, float x, float y, float z) {
 	VERTEX_NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 
 	constexpr float bias = -0.5f;
 	vertex->position.x = x + bias;
@@ -1214,13 +1209,13 @@ void RenderObjectNX::SetVertexPosition(size_t index, float x, float y, float z) 
 }
 void RenderObjectNX::SetVertexUV(size_t index, float u, float v) {
 	VERTEX_NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->texcoord.x = u;
 	vertex->texcoord.y = v;
 }
 void RenderObjectNX::SetVertexNormal(size_t index, float x, float y, float z) {
 	VERTEX_NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->normal.x = x;
 	vertex->normal.y = y;
 	vertex->normal.z = z;
@@ -1455,17 +1450,17 @@ void RenderObjectB2NX::CalculateWeightCenter() {
 
 VERTEX_B2NX* RenderObjectB2NX::GetVertex(size_t index) {
 	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size())return nullptr;
+	if (pos >= vertex_.size()) return nullptr;
 	return (VERTEX_B2NX*)&vertex_[pos];
 }
 void RenderObjectB2NX::SetVertex(size_t index, VERTEX_B2NX& vertex) {
 	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size())return;
+	if (pos >= vertex_.size()) return;
 	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
 }
 void RenderObjectB2NX::SetVertexPosition(size_t index, float x, float y, float z) {
 	VERTEX_B2NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 
 	constexpr float bias = -0.5f;
 	vertex->position.x = x + bias;
@@ -1474,19 +1469,19 @@ void RenderObjectB2NX::SetVertexPosition(size_t index, float x, float y, float z
 }
 void RenderObjectB2NX::SetVertexUV(size_t index, float u, float v) {
 	VERTEX_B2NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->texcoord.x = u;
 	vertex->texcoord.y = v;
 }
 void RenderObjectB2NX::SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate) {
 	VERTEX_B2NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	gstd::BitAccess::SetByte(vertex->blendIndex, pos * 8, indexBlend);
-	if (pos == 0)vertex->blendRate = rate;
+	if (pos == 0) vertex->blendRate = rate;
 }
 void RenderObjectB2NX::SetVertexNormal(size_t index, float x, float y, float z) {
 	VERTEX_B2NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->normal.x = x;
 	vertex->normal.y = y;
 	vertex->normal.z = z;
@@ -1561,17 +1556,17 @@ void RenderObjectB4NX::CalculateWeightCenter() {
 
 VERTEX_B4NX* RenderObjectB4NX::GetVertex(size_t index) {
 	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size())return nullptr;
+	if (pos >= vertex_.size()) return nullptr;
 	return (VERTEX_B4NX*)&vertex_[pos];
 }
 void RenderObjectB4NX::SetVertex(size_t index, VERTEX_B4NX& vertex) {
 	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size())return;
+	if (pos >= vertex_.size()) return;
 	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
 }
 void RenderObjectB4NX::SetVertexPosition(size_t index, float x, float y, float z) {
 	VERTEX_B4NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 
 	constexpr float bias = -0.5f;
 	vertex->position.x = x + bias;
@@ -1580,19 +1575,19 @@ void RenderObjectB4NX::SetVertexPosition(size_t index, float x, float y, float z
 }
 void RenderObjectB4NX::SetVertexUV(size_t index, float u, float v) {
 	VERTEX_B4NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->texcoord.x = u;
 	vertex->texcoord.y = v;
 }
 void RenderObjectB4NX::SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate) {
 	VERTEX_B4NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	gstd::BitAccess::SetByte(vertex->blendIndex, pos * 8, indexBlend);
-	if (pos <= 2)vertex->blendRate[pos] = rate;
+	if (pos <= 2) vertex->blendRate[pos] = rate;
 }
 void RenderObjectB4NX::SetVertexNormal(size_t index, float x, float y, float z) {
 	VERTEX_B4NX* vertex = GetVertex(index);
-	if (vertex == nullptr)return;
+	if (vertex == nullptr) return;
 	vertex->normal.x = x;
 	vertex->normal.y = y;
 	vertex->normal.z = z;
@@ -1674,7 +1669,7 @@ RECT_D Sprite2D::GetDestinationRect() {
 	return rect;
 }
 void Sprite2D::SetDestinationCenter() {
-	if (texture_ == nullptr || GetVertexCount() < 4)return;
+	if (texture_ == nullptr || GetVertexCount() < 4) return;
 	float width = texture_->GetWidth();
 	float height = texture_->GetHeight();
 
@@ -1791,16 +1786,16 @@ void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& ang
 				effect->Begin(&countPass, 0);
 			}
 			for (UINT iPass = 0; iPass < countPass; ++iPass) {
-				if (effect != nullptr) effect->BeginPass(iPass);
+				if (effect) effect->BeginPass(iPass);
 				if (bUseIndex) {
 					device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
 				}
 				else {
 					device->DrawPrimitive(typePrimitive_, 0, countPrim);
 				}
-				if (effect != nullptr) effect->EndPass();
+				if (effect) effect->EndPass();
 			}
-			if (effect != nullptr) effect->End();
+			if (effect) effect->End();
 
 			device->SetIndices(nullptr);
 			device->SetVertexDeclaration(nullptr);
@@ -1996,7 +1991,7 @@ void TrajectoryObject3D::Work() {
 	for (itr = listData_.begin(); itr != listData_.end();) {
 		Data& data = (*itr);
 		data.alpha -= diffAlpha_;
-		if (data.alpha < 0)itr = listData_.erase(itr);
+		if (data.alpha < 0) itr = listData_.erase(itr);
 		else ++itr;
 	}
 }
@@ -2375,7 +2370,7 @@ void DxMesh::Release() {
 	{
 		DxMeshManager* manager = DxMeshManager::GetBase();
 		Lock lock(manager->GetLock());
-		if (data_ != nullptr) {
+		if (data_) {
 			if (manager->IsDataExists(data_->GetName())) {
 				int countRef = data_.use_count();
 				//é©êgÇ∆DxMeshManagerì‡ÇÃêîÇæÇØÇ…Ç»Ç¡ÇΩÇÁçÌèú
@@ -2391,7 +2386,7 @@ bool DxMesh::CreateFromFile(std::wstring path) {
 	try {
 		//path = PathProperty::GetUnique(path);
 		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-		if (reader == nullptr)throw gstd::wexception("File not found.");
+		if (reader == nullptr) throw gstd::wexception("File not found.");
 		return CreateFromFileReader(reader);
 	}
 	catch (gstd::wexception& e) {
@@ -2404,12 +2399,11 @@ bool DxMesh::CreateFromFileInLoadThread(std::wstring path, int type) {
 	bool res = false;
 	{
 		Lock lock(DxMeshManager::GetBase()->GetLock());
-		if (data_ != nullptr)Release();
+		if (data_) Release();
 		DxMeshManager* manager = DxMeshManager::GetBase();
 		shared_ptr<DxMesh> mesh = manager->CreateFromFileInLoadThread(path, type);
-		if (mesh != nullptr) {
+		if (mesh)
 			data_ = mesh->data_;
-		}
 		res = data_ != nullptr;
 	}
 
@@ -2537,10 +2531,10 @@ void DxMeshManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> 
 	{
 		Lock lock(lock_);
 		shared_ptr<DxMesh> mesh = std::dynamic_pointer_cast<DxMesh>(event->GetSource());
-		if (mesh == nullptr)return;
+		if (mesh == nullptr) return;
 
 		shared_ptr<DxMeshData> data = mesh->data_;
-		if (data->bLoad_)return;
+		if (data->bLoad_) return;
 
 		bool res = false;
 		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
@@ -2595,13 +2589,13 @@ void DxMeshInfoPanel::LocateParts() {
 void DxMeshInfoPanel::_Run() {
 	while (GetStatus() == RUN) {
 		DxMeshManager* manager = DxMeshManager::GetBase();
-		if (manager != nullptr)
+		if (manager)
 			Update(manager);
 		Sleep(timeUpdateInterval_);
 	}
 }
 void DxMeshInfoPanel::Update(DxMeshManager* manager) {
-	if (!IsWindowVisible())return;
+	if (!IsWindowVisible()) return;
 	std::set<std::wstring> setKey;
 	std::map<std::wstring, shared_ptr<DxMeshData>>& mapData = manager->mapMeshData_;
 	std::map<std::wstring, shared_ptr<DxMeshData>>::iterator itrMap;

@@ -87,9 +87,9 @@ public:
 		ScriptSelectSceneMenuItem* rp = (ScriptSelectSceneMenuItem*)rsp.GetPointer();
 
 		if (lp->GetType() == ScriptSelectSceneMenuItem::TYPE_DIR &&
-			rp->GetType() != ScriptSelectSceneMenuItem::TYPE_DIR)return TRUE;
+			rp->GetType() != ScriptSelectSceneMenuItem::TYPE_DIR) return TRUE;
 		if (lp->GetType() != ScriptSelectSceneMenuItem::TYPE_DIR &&
-			rp->GetType() == ScriptSelectSceneMenuItem::TYPE_DIR)return FALSE;
+			rp->GetType() == ScriptSelectSceneMenuItem::TYPE_DIR) return FALSE;
 
 		std::wstring lPath = lp->GetPath();
 		std::wstring rPath = rp->GetPath();

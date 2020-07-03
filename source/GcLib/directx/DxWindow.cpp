@@ -109,7 +109,7 @@ gstd::ref_count_ptr<DxWindow> DxWindowManager::GetIntersectedWindow(POINT& pos, 
 	if (parent == nullptr) {
 		parent = *listWindow_.begin();
 	}
-	if (parent == nullptr)return nullptr;
+	if (parent == nullptr) return nullptr;
 
 	if (!parent->IsWindowEnable() || !parent->IsWindowVisible() || parent->IsWindowDelete())
 		return nullptr;
@@ -135,7 +135,7 @@ gstd::ref_count_ptr<DxWindow> DxWindowManager::GetIntersectedWindow(POINT& pos, 
 }
 void DxWindowManager::_DispatchMouseEvent() {
 	DirectInput* input = DirectInput::GetBase();
-	if (input == nullptr)return;
+	if (input == nullptr) return;
 
 	gstd::ref_count_ptr<DxWindowEvent> event = new DxWindowEvent();
 	gstd::ref_count_ptr<DxWindow> wndIntersect = GetIntersectedWindow();
@@ -319,8 +319,8 @@ void DxWindow::_WorkChild() {
 	if (bWindowDelete_) return;
 	for (auto itr = listWindowChild_.begin(); itr != listWindowChild_.end(); ++itr) {
 		ref_count_ptr<DxWindow>& win = *itr;
-		if (win == nullptr)continue;
-		if (win->IsWindowDelete())continue;
+		if (win == nullptr) continue;
+		if (win->IsWindowDelete()) continue;
 		win->Work();
 	}
 }
@@ -508,7 +508,7 @@ void DxMessageBox::DispatchedEvent(gstd::ref_count_ptr<DxWindowEvent> event) {
 void DxMessageBox::SetText(ref_count_ptr<DxText> text) {
 	text_ = text;
 }
-void DxMessageBox::SetButton(std::vector<gstd::ref_count_ptr<DxButton> > listButton) {
+void DxMessageBox::SetButton(std::vector<gstd::ref_count_ptr<DxButton>> listButton) {
 	listButton_ = listButton;
 }
 void DxMessageBox::UpdateWindowRect() {

@@ -22,9 +22,8 @@ StgShotManager::StgShotManager(StgStageController* stageController) {
 StgShotManager::~StgShotManager() {
 	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
 		shared_ptr<StgShotObject> obj = (*itr);
-		if (obj != nullptr) {
+		if (obj)
 			obj->ClearShotObject();
-		}
 	}
 
 	ptr_delete(listPlayerShotData_);
@@ -295,11 +294,11 @@ StgShotDataList::~StgShotDataList() {
 	listData_.clear();
 }
 bool StgShotDataList::AddShotDataList(std::wstring path, bool bReload) {
-	if (!bReload && listReadPath_.find(path) != listReadPath_.end())return true;
+	if (!bReload && listReadPath_.find(path) != listReadPath_.end()) return true;
 
 	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
-	if (!reader->Open())throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
+	if (!reader->Open()) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
 	std::string source = reader->ReadAllString();
 
 	bool res = false;
@@ -312,17 +311,17 @@ bool StgShotDataList::AddShotDataList(std::wstring path, bool bReload) {
 
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
-			if (tok.GetType() == Token::TK_EOF)//Eofの識別子が来たらファイルの調査終了
+			if (tok.GetType() == Token::Type::TK_EOF)//Eofの識別子が来たらファイルの調査終了
 			{
 				break;
 			}
-			else if (tok.GetType() == Token::TK_ID) {
+			else if (tok.GetType() == Token::Type::TK_ID) {
 				std::wstring element = tok.GetElement();
 				if (element == L"ShotData") {
 					_ScanShot(listData, scanner);
 				}
 				else if (element == L"shot_image") {
-					scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 					pathImage = scanner.Next().GetString();
 				}
 				else if (element == L"delay_color") {
@@ -362,7 +361,7 @@ bool StgShotDataList::AddShotDataList(std::wstring path, bool bReload) {
 
 		shared_ptr<Texture> texture(new Texture());
 		bool bTexture = texture->CreateFromFile(PathProperty::GetUnique(pathImage), false, false);
-		if (!bTexture)throw gstd::wexception("The specified shot texture cannot be found.");
+		if (!bTexture) throw gstd::wexception("The specified shot texture cannot be found.");
 
 		int textureIndex = -1;
 		for (int iTexture = 0; iTexture < listTexture_.size(); iTexture++) {
@@ -386,7 +385,7 @@ bool StgShotDataList::AddShotDataList(std::wstring path, bool bReload) {
 			listData_.resize(listData.size());
 		for (size_t iData = 0; iData < listData.size(); iData++) {
 			StgShotData* data = listData[iData];
-			if (data == nullptr)continue;
+			if (data == nullptr) continue;
 
 			data->indexTexture_ = textureIndex;
 			{
@@ -421,8 +420,8 @@ bool StgShotDataList::AddShotDataList(std::wstring path, bool bReload) {
 }
 void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& scanner) {
 	Token& tok = scanner.Next();
-	if (tok.GetType() == Token::TK_NEWLINE)tok = scanner.Next();
-	scanner.CheckType(tok, Token::TK_OPENC);
+	if (tok.GetType() == Token::Type::TK_NEWLINE) tok = scanner.Next();
+	scanner.CheckType(tok, Token::Type::TK_OPENC);
 
 	StgShotData* data = new StgShotData(this);
 	data->colorDelay_ = defaultDelayColor_;
@@ -430,14 +429,14 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 
 	while (true) {
 		tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC) {
+		if (tok.GetType() == Token::Type::TK_CLOSEC) {
 			break;
 		}
-		else if (tok.GetType() == Token::TK_ID) {
+		else if (tok.GetType() == Token::Type::TK_ID) {
 			std::wstring element = tok.GetElement();
 
 			if (element == L"id") {
-				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 				id = scanner.Next().GetInteger();
 			}
 			else if (element == L"rect") {
@@ -502,7 +501,7 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 				data->listCol_ = circle;
 			}
 			else if (element == L"render" || element == L"delay_render") {
-				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 				std::wstring strRender = scanner.Next().GetElement();
 				BlendMode typeRender = MODE_BLEND_ALPHA;
 
@@ -517,22 +516,24 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 				else if (strRender == L"INV_DESTRGB")
 					typeRender = MODE_BLEND_INV_DESTRGB;
 
-				if (element.size() == 6 /*element == L"render"*/)data->typeRender_ = typeRender;
-				else if (element.size() == 12 /*element == L"delay_render"*/)data->typeDelayRender_ = typeRender;
+				if (element.size() == 6 /*element == L"render"*/)
+					data->typeRender_ = typeRender;
+				else if (element.size() == 12 /*element == L"delay_render"*/)
+					data->typeDelayRender_ = typeRender;
 			}
 			else if (element == L"alpha") {
-				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 				data->alpha_ = scanner.Next().GetInteger();
 			}
 			else if (element == L"angular_velocity") {
-				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 				tok = scanner.Next();
 				if (tok.GetElement() == L"rand") {
-					scanner.CheckType(scanner.Next(), Token::TK_OPENP);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_OPENP);
 					data->angularVelocityMin_ = Math::DegreeToRadian(scanner.Next().GetReal());
-					scanner.CheckType(scanner.Next(), Token::TK_COMMA);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_COMMA);
 					data->angularVelocityMax_ = Math::DegreeToRadian(scanner.Next().GetReal());
-					scanner.CheckType(scanner.Next(), Token::TK_CLOSEP);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEP);
 				}
 				else {
 					data->angularVelocityMin_ = Math::DegreeToRadian(tok.GetReal());
@@ -540,7 +541,7 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 				}
 			}
 			else if (element == L"fixed_angle") {
-				scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 				tok = scanner.Next();
 				data->bFixedAngle_ = tok.GetElement() == L"true";
 			}
@@ -571,15 +572,15 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 }
 void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 	Token& tok = scanner.Next();
-	if (tok.GetType() == Token::TK_NEWLINE)tok = scanner.Next();
-	scanner.CheckType(tok, Token::TK_OPENC);
+	if (tok.GetType() == Token::Type::TK_NEWLINE) tok = scanner.Next();
+	scanner.CheckType(tok, Token::Type::TK_OPENC);
 
 	while (true) {
 		tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC) {
+		if (tok.GetType() == Token::Type::TK_CLOSEC) {
 			break;
 		}
-		else if (tok.GetType() == Token::TK_ID) {
+		else if (tok.GetType() == Token::Type::TK_ID) {
 			std::wstring element = tok.GetElement();
 
 			if (element == L"animation_data") {
@@ -613,16 +614,16 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 }
 std::vector<std::wstring> StgShotDataList::_GetArgumentList(Scanner& scanner) {
 	std::vector<std::wstring> res;
-	scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+	scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 
 	Token& tok = scanner.Next();
 
-	if (tok.GetType() == Token::TK_OPENP) {
+	if (tok.GetType() == Token::Type::TK_OPENP) {
 		while (true) {
 			tok = scanner.Next();
-			int type = tok.GetType();
-			if (type == Token::TK_CLOSEP)break;
-			else if (type != Token::TK_COMMA) {
+			Token::Type type = tok.GetType();
+			if (type == Token::Type::TK_CLOSEP) break;
+			else if (type != Token::Type::TK_COMMA) {
 				std::wstring str = tok.GetElement();
 				res.push_back(str);
 			}
@@ -946,7 +947,7 @@ void StgShotObject::_AddReservedShotWork() {
 	if (IsDeleted() || listReserveShot_ == nullptr) return;
 
 	ref_count_ptr<ReserveShotList::ListElement>::unsync listData = listReserveShot_->GetNextFrameData();
-	if (listData == nullptr)return;
+	if (listData == nullptr) return;
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	std::list<ReserveShotListData>* list = listData->GetDataList();
@@ -955,7 +956,7 @@ void StgShotObject::_AddReservedShotWork() {
 		StgShotObject::ReserveShotListData& data = (*itr);
 		int idShot = data.GetShotID();
 		shared_ptr<StgShotObject> obj = std::dynamic_pointer_cast<StgShotObject>(objectManager->GetObject(idShot));
-		if (obj == nullptr || obj->IsDeleted())continue;
+		if (obj == nullptr || obj->IsDeleted()) continue;
 
 		_AddReservedShot(obj, &data);
 	}

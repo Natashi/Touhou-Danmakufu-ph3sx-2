@@ -92,10 +92,8 @@ class SystemInformation {
 	int lastSelectScriptSceneType_;
 
 	int lastPlayerSelectIndex_;
-	std::vector<ref_count_ptr<ScriptInformation> > listLastPlayerSelect_;
-
-
-	std::vector<ref_count_ptr<ScriptInformation> > listFreePlayer_;
+	std::vector<ref_count_ptr<ScriptInformation>> listLastPlayerSelect_;
+	std::vector<ref_count_ptr<ScriptInformation>> listFreePlayer_;
 
 	void _SearchFreePlayerScript(std::wstring dir);
 
@@ -113,11 +111,11 @@ public:
 	void SetLastSelectScriptSceneType(int type) { lastSelectScriptSceneType_ = type; }
 
 	int GetLastSelectedPlayerIndex() { return lastPlayerSelectIndex_; }
-	std::vector<ref_count_ptr<ScriptInformation> >& GetLastPlayerSelectedList() { return listLastPlayerSelect_; }
+	std::vector<ref_count_ptr<ScriptInformation>>& GetLastPlayerSelectedList() { return listLastPlayerSelect_; }
 	void SetLastSelectedPlayerIndex(int index, std::vector<ref_count_ptr<ScriptInformation> >& list) { lastPlayerSelectIndex_ = index; listLastPlayerSelect_ = list; }
 
 	void UpdateFreePlayerScriptInformationList();
-	std::vector<ref_count_ptr<ScriptInformation> >& GetFreePlayerScriptInformationList() { return listFreePlayer_; }
+	std::vector<ref_count_ptr<ScriptInformation>>& GetFreePlayerScriptInformationList() { return listFreePlayer_; }
 };
 
 

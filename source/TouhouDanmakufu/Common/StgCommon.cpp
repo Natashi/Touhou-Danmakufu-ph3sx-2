@@ -98,7 +98,7 @@ void StgMoveObject::SetSpeed(double speed) {
 	pattern->SetSpeed(speed);
 }
 double StgMoveObject::GetDirectionAngle() {
-	if (pattern_ == nullptr)return 0;
+	if (pattern_ == nullptr) return 0;
 	double res = pattern_->GetDirectionAngle();
 	return res;
 }
@@ -138,7 +138,7 @@ StgMovePattern::StgMovePattern(StgMoveObject* target) {
 }
 shared_ptr<StgMoveObject> StgMovePattern::_GetMoveObject(int id) {
 	shared_ptr<DxScriptObjectBase> base = _GetStageController()->GetMainRenderObject(id);
-	if (base == nullptr || base->IsDeleted())return nullptr;
+	if (base == nullptr || base->IsDeleted()) return nullptr;
 
 	return std::dynamic_pointer_cast<StgMoveObject>(base);
 }

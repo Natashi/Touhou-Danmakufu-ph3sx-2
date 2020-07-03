@@ -51,7 +51,7 @@ namespace gstd {
 	public:
 		TTaskFunction(shared_ptr<T> task, Function func) { task_ = task; pFunc = func; }
 		virtual void Call() {
-			if (task_ != nullptr) ((T*)task_.get()->*pFunc)();
+			if (task_) ((T*)task_.get()->*pFunc)();
 		}
 
 		static shared_ptr<TaskFunction> Create(shared_ptr<TaskBase> task, Function func) {

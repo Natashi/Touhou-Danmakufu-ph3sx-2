@@ -205,8 +205,8 @@ public:
 
 private:
 	int current_;
-	std::map<int, gstd::ref_count_ptr<SlowData> > mapDataPlayer_;
-	std::map<int, gstd::ref_count_ptr<SlowData> > mapDataEnemy_;
+	std::map<int, gstd::ref_count_ptr<SlowData>> mapDataPlayer_;
+	std::map<int, gstd::ref_count_ptr<SlowData>> mapDataEnemy_;
 	std::map<int, bool> mapValid_;
 
 public:

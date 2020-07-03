@@ -51,13 +51,9 @@ shared_ptr<ManagedScript> StgStageScriptManager::Create(int type) {
 	case StgStageScript::TYPE_PLAYER:
 		res = std::make_shared<StgStagePlayerScript>(stageController_);
 		break;
-
 	}
-
-	if (res != nullptr) {
+	if (res)
 		res->SetScriptManager(stageController_->GetScriptManager());
-	}
-
 	return res;
 }
 
@@ -115,8 +111,8 @@ void StgStageScriptObjectManager::RenderObject(int priMin, int priMax) {
 		for(itr = listActiveObject_.begin() ; itr != listActiveObject_.end() ; itr++)
 		{
 			gstd::ref_count_ptr<DxScriptObjectBase>::unsync obj = (*itr);
-			if(obj == nullptr || obj->IsDeleted())continue;
-			if(!obj->IsVisible())continue;
+			if(obj == nullptr || obj->IsDeleted()) continue;
+			if(!obj->IsVisible()) continue;
 			AddRenderObject(obj);
 		}
 
@@ -154,7 +150,7 @@ void StgStageScriptObjectManager::RenderObject(int priMin, int priMax) {
 		bool bRunMaxStgFrame = false;
 		for(int iPri = priMin ; iPri <= priMax ; iPri++)
 		{
-			if(iPri >= objRender_.size())break;
+			if(iPri >= objRender_.size()) break;
 
 			if(iPri >= priMinStgFrame && !bRunMinStgFrame)
 			{
@@ -1028,19 +1024,19 @@ gstd::value StgStageScript::Func_SetPlayerRebirthPosition(gstd::script_machine* 
 gstd::value StgStageScript::Func_GetPlayerX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double res = obj != nullptr ? obj->GetX() : 0;
+	double res = obj ? obj->GetX() : 0;
 	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetPlayerY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double res = obj != nullptr ? obj->GetY() : 0;
+	double res = obj ? obj->GetY() : 0;
 	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetPlayerState(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	int res = obj != nullptr ? obj->GetState() : StgPlayerObject::STATE_END;
+	int res = obj ? obj->GetState() : StgPlayerObject::STATE_END;
 	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetPlayerSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1068,37 +1064,37 @@ gstd::value StgStageScript::Func_GetPlayerClip(gstd::script_machine* machine, in
 gstd::value StgStageScript::Func_GetPlayerLife(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double res = obj != nullptr ? obj->GetLife() : 0;
+	double res = obj ? obj->GetLife() : 0;
 	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double res = obj != nullptr ? obj->GetSpell() : 0;
+	double res = obj ? obj->GetSpell() : 0;
 	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetPlayerPower(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double res = obj != nullptr ? obj->GetPower() : 0;
+	double res = obj ? obj->GetPower() : 0;
 	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetPlayerInvincibilityFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	int res = obj != nullptr ? obj->GetInvincibilityFrame() : 0;
+	int res = obj ? obj->GetInvincibilityFrame() : 0;
 	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetPlayerDownStateFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	int res = obj != nullptr ? obj->GetDownStateFrame() : 0;
+	int res = obj ? obj->GetDownStateFrame() : 0;
 	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetPlayerRebirthFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	int res = obj != nullptr ? obj->GetRebirthFrame() : 0;
+	int res = obj ? obj->GetRebirthFrame() : 0;
 	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetAngleToPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1124,19 +1120,19 @@ gstd::value StgStageScript::Func_GetAngleToPlayer(gstd::script_machine* machine,
 gstd::value StgStageScript::Func_IsPermitPlayerShot(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	bool res = obj != nullptr ? obj->IsPermitShot() : false;
+	bool res = obj ? obj->IsPermitShot() : false;
 	return script->CreateBooleanValue(res);
 }
 gstd::value StgStageScript::Func_IsPermitPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	bool res = obj != nullptr ? obj->IsPermitSpell() : false;
+	bool res = obj ? obj->IsPermitSpell() : false;
 	return script->CreateBooleanValue(res);
 }
 gstd::value StgStageScript::Func_IsPlayerLastSpellWait(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	bool res = obj != nullptr ? obj->IsWaitLastSpell() : false;
+	bool res = obj ? obj->IsWaitLastSpell() : false;
 	return script->CreateBooleanValue(res);
 }
 gstd::value StgStageScript::Func_IsPlayerSpellActive(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1146,7 +1142,7 @@ gstd::value StgStageScript::Func_IsPlayerSpellActive(gstd::script_machine* machi
 	shared_ptr<StgPlayerObject> objPlayer = script->stageController_->GetPlayerObject();
 	if (objPlayer) {
 		shared_ptr<StgPlayerSpellManageObject> objSpell = objPlayer->GetSpellManageObject();
-		res = (objSpell != nullptr && !objSpell->IsDeleted());
+		res = objSpell != nullptr && !objSpell->IsDeleted();
 	}
 	return script->CreateBooleanValue(res);
 }
@@ -2244,10 +2240,10 @@ gstd::value StgStageScript::Func_IsIntersected_Obj_Obj(gstd::script_machine* mac
 	int id2 = (int)argv[1].as_real();
 
 	StgIntersectionObject* obj1 = dynamic_cast<StgIntersectionObject*>(script->GetObjectPointer(id1));
-	if (obj1 == nullptr)return script->CreateBooleanValue(false);
+	if (obj1 == nullptr) return script->CreateBooleanValue(false);
 
 	StgIntersectionObject* obj2 = dynamic_cast<StgIntersectionObject*>(script->GetObjectPointer(id2));
-	if (obj2 == nullptr)return script->CreateBooleanValue(false);
+	if (obj2 == nullptr) return script->CreateBooleanValue(false);
 
 	std::vector<StgIntersectionTarget::ptr> listTarget1 = obj1->GetIntersectionTargetList();
 	std::vector<StgIntersectionTarget::ptr> listTarget2 = obj2->GetIntersectionTargetList();
@@ -2788,7 +2784,7 @@ gstd::value StgStageScript::Func_ObjMove_GetProcessMovement(gstd::script_machine
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
-	bool res = obj != nullptr ? obj->IsEnableMovement() : true;
+	bool res = obj ? obj->IsEnableMovement() : true;
 	return script->CreateBooleanValue(res);
 }
 
@@ -3087,7 +3083,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_LoadInThread(gstd::script_mac
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	StgEnemyBossSceneObject* obj = dynamic_cast<StgEnemyBossSceneObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr)return value();
+	if (obj == nullptr) return value();
 
 	obj->LoadAllScriptInThread();
 	return value();
@@ -4745,7 +4741,7 @@ gstd::value StgStagePlayerScript::Func_ObjSpell_SetIntersectionLine(gstd::script
 		DxWidthLine line(px1, py1, px2, py2, width);
 
 		shared_ptr<StgIntersectionTarget_Line> target(new StgIntersectionTarget_Line);
-		if (target != nullptr) {
+		if (target) {
 			target->SetTargetType(StgIntersectionTarget::TYPE_PLAYER_SPELL);
 			target->SetObject(objSpell);
 			target->SetLine(line);

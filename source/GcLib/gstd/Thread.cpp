@@ -15,7 +15,7 @@ Thread::Thread() {
 Thread::~Thread() {
 	this->Stop();
 	this->Join();
-	if (hThread_ != NULL) {
+	if (hThread_) {
 		::CloseHandle(hThread_);
 		hThread_ = NULL;
 		idThread_ = 0;
@@ -39,10 +39,10 @@ void Thread::Start() {
 		this->Join();
 	}
 
-	hThread_ = (HANDLE)_beginthreadex(NULL, 0, _StaticRun, (void*)this, 0, &idThread_);
+	hThread_ = (HANDLE)_beginthreadex(nullptr, 0, _StaticRun, (void*)this, 0, &idThread_);
 }
 void Thread::Stop() {
-	if (status_ == RUN)status_ = REQUEST_STOP;
+	if (status_ == RUN) status_ = REQUEST_STOP;
 }
 bool Thread::IsStop() {
 	return hThread_ == NULL || status_ == STOP;
@@ -50,11 +50,11 @@ bool Thread::IsStop() {
 DWORD Thread::Join(int mills) {
 	DWORD res = WAIT_OBJECT_0;
 
-	if (hThread_ != NULL) {
+	if (hThread_) {
 		res = ::WaitForSingleObject(hThread_, mills);
 	}
 
-	if (hThread_ != NULL) {
+	if (hThread_) {
 		if (res != WAIT_TIMEOUT)
 			::CloseHandle(hThread_);//タイムアウトの場合クローズできない
 		hThread_ = NULL;
@@ -87,7 +87,7 @@ void CriticalSection::Enter() {
 void CriticalSection::Leave() {
 	if (::GetCurrentThreadId() == idThread_) {
 		countLock_--;
-		if (countLock_ != 0)return;
+		if (countLock_ != 0) return;
 		if (countLock_ < 0)
 			throw std::exception("CriticalSection: Thread is not locked.");
 	}
@@ -102,25 +102,20 @@ void CriticalSection::Leave() {
 //ThreadSignal
 ThreadSignal::ThreadSignal(bool bManualReset) {
 	BOOL bManual = bManualReset ? TRUE : FALSE;
-	hEvent_ = ::CreateEvent(NULL, bManual, FALSE, NULL);
+	hEvent_ = ::CreateEvent(nullptr, bManual, FALSE, nullptr);
 }
 ThreadSignal::~ThreadSignal() {
 	::CloseHandle(hEvent_);
 }
 DWORD ThreadSignal::Wait(int mills) {
 	DWORD res = WAIT_OBJECT_0;
-
-	if (hEvent_ != NULL) {
+	if (hEvent_)
 		res = ::WaitForSingleObject(hEvent_, mills);
-	}
-
 	return res;
 }
 void ThreadSignal::SetSignal(bool bOn) {
-	if (bOn) {
+	if (bOn)
 		::SetEvent(hEvent_);
-	}
-	else {
+	else
 		::ResetEvent(hEvent_);
-	}
 }

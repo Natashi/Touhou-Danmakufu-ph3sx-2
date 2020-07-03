@@ -377,7 +377,7 @@ size_t StgIntersectionSpace::_WriteIntersectionCheckList(StgIntersectionManager*
 
 		std::vector<StgIntersectionTarget*>& stack = listStack[iType1];
 		for (iType2 = 0; iType2 < typeCount; ++iType2) {
-			if (iType1 == iType2)continue;
+			if (iType1 == iType2) continue;
 			std::vector<StgIntersectionTarget*>& list2 = listCell[iType2];
 
 			// ② 衝突スタックとの衝突リスト作成

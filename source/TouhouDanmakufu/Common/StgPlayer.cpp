@@ -352,7 +352,7 @@ StgPlayerSpellObject::StgPlayerSpellObject(StgStageController* stageController) 
 	life_ = 256 * 256 * 256;
 }
 void StgPlayerSpellObject::Work() {
-	if (IsDeleted())return;
+	if (IsDeleted()) return;
 	if (life_ <= 0) {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);

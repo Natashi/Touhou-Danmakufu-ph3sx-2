@@ -19,13 +19,13 @@ TransitionEffect::~TransitionEffect() {
 //TransitionEffect_FadeOut
 **********************************************************/
 void TransitionEffect_FadeOut::Work() {
-	if (sprite_ == NULL)return;
+	if (sprite_ == nullptr) return;
 	alpha_ -= diffAlpha_;
 	alpha_ = std::max(alpha_, 0.0);
 	sprite_->SetAlpha((int)alpha_);
 }
 void TransitionEffect_FadeOut::Render() {
-	if (sprite_ == NULL)return;
+	if (sprite_ == nullptr) return;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	graphics->SetBlendMode(MODE_BLEND_ALPHA);
@@ -61,10 +61,10 @@ void TransitionEffectTask::SetTransition(gstd::ref_count_ptr<TransitionEffect> e
 	effect_ = effect;
 }
 void TransitionEffectTask::Work() {
-	if (effect_ != NULL) {
+	if (effect_)
 		effect_->Work();
-	}
 }
 void TransitionEffectTask::Render() {
-	if (effect_ != NULL)effect_->Render();
+	if (effect_)
+		effect_->Render();
 }

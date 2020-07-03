@@ -39,8 +39,7 @@ void FpsController::_Sleep(int msec) {
 	*/
 }
 void FpsController::RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) {
-	std::list<ref_count_weak_ptr<FpsControlObject>>::iterator itr = listFpsControlObject_.begin();;
-	for (; itr != listFpsControlObject_.end(); itr++) {
+	for (auto itr = listFpsControlObject_.begin(); itr != listFpsControlObject_.end(); itr++) {
 		ref_count_weak_ptr<FpsControlObject> tObj = (*itr);
 		if (obj.GetPointer() == tObj.GetPointer()) {
 			listFpsControlObject_.erase(itr);
@@ -50,8 +49,7 @@ void FpsController::RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> 
 }
 int FpsController::GetControlObjectFps() {
 	int res = fps_;
-	std::list<ref_count_weak_ptr<FpsControlObject>>::iterator itr = listFpsControlObject_.begin();;
-	for (; itr != listFpsControlObject_.end(); ) {
+	for (auto itr = listFpsControlObject_.begin(); itr != listFpsControlObject_.end(); ) {
 		ref_count_weak_ptr<FpsControlObject> obj = (*itr);
 		if (obj.IsExists()) {
 			int fps = obj->GetFps();
@@ -83,7 +81,7 @@ void StaticFpsController::Wait() {
 
 	double tFps = fps_;
 	tFps = std::min(tFps, (double)GetControlObjectFps());
-	if (bFastMode_)tFps = fastModeFpsRate_;
+	if (bFastMode_) tFps = fastModeFpsRate_;
 
 	int sTime = time - timePrevious_;//前フレームとの時間差
 
@@ -93,13 +91,13 @@ void StaticFpsController::Wait() {
 	timeError_ = 0;
 	if (frameAs1Sec < time1Sec) {
 		sleepTime = (time1Sec - frameAs1Sec) / tFps; //待機時間
-		if (sleepTime < 0)sleepTime = 0;
+		if (sleepTime < 0) sleepTime = 0;
 		if (bUseTimer_ || rateSkip_ != 0) {
 			_Sleep(sleepTime);//一定時間たつまで、sleep
 			timeError_ = (time1Sec - frameAs1Sec) % (int)tFps;
 		}
 
-		if (timeError_ < 0)timeError_ = 0;
+		if (timeError_ < 0) timeError_ = 0;
 	}
 
 	//1frameにかかった時間を保存
@@ -111,8 +109,7 @@ void StaticFpsController::Wait() {
 	if (time - timeCurrentFpsUpdate_ >= 500) {//一秒ごとに表示フレーム数を更新
 		if (listFps_.size() != 0) {
 			double tFpsCurrent = 0;
-			std::list<int>::iterator itr;
-			for (itr = listFps_.begin(); itr != listFps_.end(); itr++) {
+			for (auto itr = listFps_.begin(); itr != listFps_.end(); itr++) {
 				tFpsCurrent += (*itr);
 			}
 			fpsCurrent_ = (double)(1000.0) / ((double)tFpsCurrent / (double)listFps_.size());
@@ -125,14 +122,14 @@ void StaticFpsController::Wait() {
 	++countSkip_;
 
 	int rateSkip = rateSkip_;
-	if (bFastMode_)rateSkip = fastModeFpsRate_ / 60U;
+	if (bFastMode_) rateSkip = fastModeFpsRate_ / 60U;
 	countSkip_ %= (rateSkip + 1);
 	bCriticalFrame_ = false;
 }
 bool StaticFpsController::IsSkip() {
 	int rateSkip = rateSkip_;
-	if (bFastMode_)rateSkip = fastModeFpsRate_ / 60U;
-	if (rateSkip == 0 || bCriticalFrame_)return false;
+	if (bFastMode_) rateSkip = fastModeFpsRate_ / 60U;
+	if (rateSkip == 0 || bCriticalFrame_) return false;
 	if (countSkip_ % (rateSkip + 1) != 0)
 		return true;
 	return false;
@@ -162,7 +159,7 @@ void AutoSkipFpsController::Wait() {
 
 	double tFps = fps_;
 	tFps = std::min(tFps, (double)GetControlObjectFps());
-	if (bFastMode_)tFps = fastModeFpsRate_;
+	if (bFastMode_) tFps = fastModeFpsRate_;
 
 	int sTime = time - timePrevious_;//前フレームとの時間差
 	int frameAs1Sec = sTime * tFps;
@@ -171,7 +168,7 @@ void AutoSkipFpsController::Wait() {
 	timeError_ = 0;
 	if (frameAs1Sec < time1Sec || bCriticalFrame_) {
 		sleepTime = (time1Sec - frameAs1Sec) / tFps; //待機時間
-		if (sleepTime < 0 || countSkip_ - 1 >= 0)sleepTime = 0;
+		if (sleepTime < 0 || countSkip_ - 1 >= 0) sleepTime = 0;
 		if (bUseTimer_)
 			_Sleep(sleepTime);//一定時間たつまで、sleep
 
@@ -206,8 +203,7 @@ void AutoSkipFpsController::Wait() {
 	if (time - timeCurrentFpsUpdate_ >= 500) {//一秒ごとに表示フレーム数を更新
 		if (listFpsWork_.size() != 0) {
 			float tFpsCurrent = 0;
-			std::list<int>::iterator itr;
-			for (itr = listFpsWork_.begin(); itr != listFpsWork_.end(); itr++) {
+			for (auto itr = listFpsWork_.begin(); itr != listFpsWork_.end(); itr++) {
 				tFpsCurrent += (*itr);
 			}
 			fpsCurrentWork_ = (float)(1000.0f) / ((float)tFpsCurrent / (float)listFpsWork_.size());
@@ -217,8 +213,7 @@ void AutoSkipFpsController::Wait() {
 
 		if (listFpsRender_.size() != 0) {
 			float tFpsCurrent = 0;
-			std::list<int>::iterator itr;
-			for (itr = listFpsRender_.begin(); itr != listFpsRender_.end(); itr++) {
+			for (auto itr = listFpsRender_.begin(); itr != listFpsRender_.end(); itr++) {
 				tFpsCurrent += (*itr);
 			}
 			fpsCurrentRender_ = (float)(1000.0f) / ((float)tFpsCurrent / (float)listFpsRender_.size());

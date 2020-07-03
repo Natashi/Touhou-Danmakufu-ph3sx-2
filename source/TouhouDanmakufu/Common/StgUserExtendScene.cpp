@@ -15,20 +15,20 @@ StgUserExtendScene::StgUserExtendScene(StgSystemController* controller) {
 StgUserExtendScene::~StgUserExtendScene() {
 }
 void StgUserExtendScene::_InitializeScript(std::wstring path, int type) {
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 	auto idScript = scriptManager_->LoadScript(path, type);
 	scriptManager_->StartScript(idScript);
 }
 void StgUserExtendScene::_CallScriptMainLoop() {
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 	scriptManager_->Work();
 }
 void StgUserExtendScene::_CallScriptFinalize() {
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 	scriptManager_->CallScriptFinalizeAll();
 }
 void StgUserExtendScene::_AddRelativeManager() {
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 
 	shared_ptr<ScriptManager> scriptManager = std::dynamic_pointer_cast<ScriptManager>(scriptManager_);
 
@@ -49,7 +49,7 @@ void StgUserExtendScene::_AddRelativeManager() {
 
 void StgUserExtendScene::Work() {}
 void StgUserExtendScene::Render() {
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 	scriptManager_->Render();
 }
 
@@ -142,7 +142,7 @@ StgUserExtendSceneScript::~StgUserExtendSceneScript() {}
 StgPauseScene::StgPauseScene(StgSystemController* controller) : StgUserExtendScene(controller) {}
 StgPauseScene::~StgPauseScene() {}
 void StgPauseScene::Work() {
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 	_CallScriptMainLoop();
 
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
@@ -198,7 +198,7 @@ void StgPauseScene::Finish() {
 	if (stageController)
 		stageController->GetStageInformation()->SetPause(false);
 
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 	_CallScriptFinalize();
 	scriptManager_ = nullptr;
 
@@ -235,7 +235,7 @@ StgEndScene::StgEndScene(StgSystemController* controller) : StgUserExtendScene(c
 }
 StgEndScene::~StgEndScene() {}
 void StgEndScene::Work() {
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 	_CallScriptMainLoop();
 
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
@@ -274,7 +274,7 @@ void StgEndScene::Start() {
 void StgEndScene::Finish() {
 	ref_count_ptr<StgSystemInformation> info = systemController_->GetSystemInformation();
 
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 	_CallScriptFinalize();
 	scriptManager_ = nullptr;
 }
@@ -304,7 +304,7 @@ StgReplaySaveScene::StgReplaySaveScene(StgSystemController* controller) : StgUse
 }
 StgReplaySaveScene::~StgReplaySaveScene() {}
 void StgReplaySaveScene::Work() {
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 	_CallScriptMainLoop();
 
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
@@ -339,7 +339,7 @@ void StgReplaySaveScene::Start() {
 void StgReplaySaveScene::Finish() {
 	ref_count_ptr<StgSystemInformation> info = systemController_->GetSystemInformation();
 
-	if (scriptManager_ == nullptr)return;
+	if (scriptManager_ == nullptr) return;
 	_CallScriptFinalize();
 	scriptManager_ = nullptr;
 }

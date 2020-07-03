@@ -2207,7 +2207,7 @@ void parser::optimize_expression(script_engine::block* blockDst, script_engine::
 
 script_type_manager* script_type_manager::base_ = nullptr;
 script_type_manager::script_type_manager() {
-	if (base_ != nullptr) return;
+	if (base_) return;
 	base_ = this;
 
 	int_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_int)).first);
@@ -2321,7 +2321,7 @@ void script_machine::run() {
 }
 
 void script_machine::resume() {
-	if (bTerminate)return;
+	if (bTerminate) return;
 
 	assert(!error);
 	assert(stopped);
@@ -2337,7 +2337,7 @@ void script_machine::call(std::string event_name) {
 	call(engine->events.find(event_name));
 }
 void script_machine::call(std::map<std::string, script_engine::block*>::iterator event_itr) {
-	if (bTerminate)return;
+	if (bTerminate) return;
 
 	assert(!error);
 	assert(!stopped);

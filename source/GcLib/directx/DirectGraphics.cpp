@@ -72,11 +72,11 @@ bool DirectGraphics::Initialize(HWND hWnd) {
 	return this->Initialize(hWnd, config_);
 }
 bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
-	if (thisBase_ != nullptr)return false;
+	if (thisBase_) return false;
 
 	Logger::WriteTop("DirectGraphics: Initialize.");
 	pDirect3D_ = Direct3DCreate9(D3D_SDK_VERSION);
-	if (pDirect3D_ == nullptr)throw gstd::wexception("Direct3DCreate9 error.");
+	if (pDirect3D_ == nullptr) throw gstd::wexception("Direct3DCreate9 error.");
 
 	config_ = config;
 	wndStyleFull_ = WS_POPUP;
@@ -141,17 +141,17 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 			if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0)) {
 				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
 					D3DCREATE_HARDWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
-				if (!FAILED(hrDevice))Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_HARDWARE_VERTEXPROCESSING)");
+				if (!FAILED(hrDevice)) Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_HARDWARE_VERTEXPROCESSING)");
 				if (FAILED(hrDevice)) {
 					hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
 						D3DCREATE_SOFTWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
-					if (!FAILED(hrDevice))Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
+					if (!FAILED(hrDevice)) Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
 				}
 			}
 			else {
 				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
 					D3DCREATE_SOFTWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
-				if (!FAILED(hrDevice))Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
+				if (!FAILED(hrDevice)) Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
 			}
 
 			if (FAILED(hrDevice)) {
@@ -231,7 +231,7 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 	thisBase_ = this;
 
 #if defined(DNH_PROJ_EXECUTOR)
-	if (camera2D_ != nullptr)
+	if (camera2D_)
 		camera2D_->Reset();
 	_InitializeDeviceState(true);
 
@@ -248,8 +248,7 @@ void DirectGraphics::_ReleaseDxResource() {
 	ptr_release(pZBuffer_);
 	ptr_release(pBackSurf_);
 
-	std::list<DirectGraphicsListener*>::iterator itr;
-	for (itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
+	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
 		(*itr)->ReleaseDxResource();
 	}
 }
@@ -257,8 +256,7 @@ void DirectGraphics::_RestoreDxResource() {
 	pDevice_->GetRenderTarget(0, &pBackSurf_);
 	pDevice_->GetDepthStencilSurface(&pZBuffer_);
 
-	std::list<DirectGraphicsListener*>::iterator itr;
-	for (itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
+	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
 		(*itr)->RestoreDxResource();
 	}
 
@@ -343,14 +341,14 @@ void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
 void DirectGraphics::AddDirectGraphicsListener(DirectGraphicsListener* listener) {
 	std::list<DirectGraphicsListener*>::iterator itr;
 	for (itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		if ((*itr) == listener)return;
+		if ((*itr) == listener) return;
 	}
 	listListener_.push_back(listener);
 }
 void DirectGraphics::RemoveDirectGraphicsListener(DirectGraphicsListener* listener) {
 	std::list<DirectGraphicsListener*>::iterator itr;
 	for (itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		if ((*itr) != listener)continue;
+		if ((*itr) != listener) continue;
 		listListener_.erase(itr);
 		break;
 	}
@@ -872,7 +870,7 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 			LONG screenHeight = config_.GetScreenSize().y;
 
 			double ratioWH = (double)screenWidth / (double)screenHeight;
-			if (width > rect.right)width = rect.right;
+			if (width > rect.right) width = rect.right;
 			height = (double)width / ratioWH;
 
 			double ratioHW = (double)screenHeight / (double)screenWidth;
@@ -903,7 +901,7 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 
 		/*
 		double ratioWH = (double)screenWidth / (double)screenHeight;
-		if (width > wWidth)width = wWidth;
+		if (width > wWidth) width = wWidth;
 		height = (double)width / ratioWH;
 
 		double ratioHW = 1.0 / ratioWH;
@@ -1149,7 +1147,7 @@ D3DXMATRIX DxCamera::GetMatrixLookAtLH() {
 }
 void DxCamera::SetWorldViewMatrix() {
 	DirectGraphics* graph = DirectGraphics::GetBase();
-	if (graph == nullptr)return;
+	if (graph == nullptr) return;
 	IDirect3DDevice9* device = graph->GetDevice();
 
 	matView_ = GetMatrixLookAtLH();
@@ -1175,7 +1173,7 @@ void DxCamera::SetWorldViewMatrix() {
 }
 void DxCamera::SetProjectionMatrix() {
 	DirectGraphics* graph = DirectGraphics::GetBase();
-	if (graph == nullptr)return;
+	if (graph == nullptr) return;
 	IDirect3DDevice9* device = graph->GetDevice();
 
 	D3DXMatrixPerspectiveFovLH(&matProjection_, D3DXToRadian(45.0),
@@ -1186,7 +1184,7 @@ void DxCamera::SetProjectionMatrix() {
 }
 void DxCamera::UpdateDeviceViewProjectionMatrix() {
 	DirectGraphics* graph = DirectGraphics::GetBase();
-	if (graph == nullptr)return;
+	if (graph == nullptr) return;
 	IDirect3DDevice9* device = graph->GetDevice();
 
 	matViewProjection_ = matView_ * matProjection_;

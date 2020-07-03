@@ -50,7 +50,7 @@ namespace directx {
 
 	class RenderBlocks {
 	protected:
-		std::list<gstd::ref_count_ptr<RenderBlock> > listBlock_;
+		std::list<gstd::ref_count_ptr<RenderBlock>> listBlock_;
 	public:
 		RenderBlocks() {};
 		virtual ~RenderBlocks() {};
@@ -70,8 +70,8 @@ namespace directx {
 	class RenderManager {
 		class ComparatorRenderBlockTranslucent;
 	protected:
-		std::list<gstd::ref_count_ptr<RenderBlock> > listBlockOpaque_;
-		std::list<gstd::ref_count_ptr<RenderBlock> > listBlockTranslucent_;
+		std::list<gstd::ref_count_ptr<RenderBlock>> listBlockOpaque_;
+		std::list<gstd::ref_count_ptr<RenderBlock>> listBlockTranslucent_;
 	public:
 		RenderManager();
 		virtual ~RenderManager();
@@ -101,7 +101,7 @@ namespace directx {
 			FUNC_TEXTURE_FILTER,
 		};
 
-		std::map<FUNC_TYPE, gstd::ref_count_ptr<gstd::ByteBuffer> > mapFuncRenderState_;
+		std::map<FUNC_TYPE, gstd::ref_count_ptr<gstd::ByteBuffer>> mapFuncRenderState_;
 	public:
 		RenderStateFunction();
 		virtual ~RenderStateFunction();

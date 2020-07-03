@@ -1418,7 +1418,8 @@ value DxScript::Func_LoadShader(script_machine* machine, int argc, const value* 
 	if (script->mapShader_.find(path) == script->mapShader_.end()) {
 		ShaderManager* manager = ShaderManager::GetBase();
 		shared_ptr<Shader> shader = manager->CreateFromFile(path);
-		if (res = shader != nullptr) {
+		res = shader != nullptr;
+		if (res) {
 			Lock lock(script->criticalSection_);
 			script->mapShader_[path] = shader;
 		}
@@ -1773,7 +1774,7 @@ gstd::value DxScript::Func_GetObject2dPosition(gstd::script_machine* machine, in
 	int id = (int)argv[0].as_real();
 
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr)script->RaiseError("Invalid object; object might not have been initialized.");
+	if (obj == nullptr) script->RaiseError("Invalid object; object might not have been initialized.");
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();

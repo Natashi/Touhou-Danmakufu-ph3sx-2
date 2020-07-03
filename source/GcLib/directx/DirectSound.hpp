@@ -89,7 +89,7 @@ namespace directx {
 		void SetInfoPanel(gstd::ref_count_ptr<SoundInfoPanel> panel) { gstd::Lock lock(lock_); panelInfo_ = panel; }
 
 		bool AddSoundInfoFromFile(std::wstring path);
-		std::vector<gstd::ref_count_ptr<SoundInfo> > GetSoundInfoList();
+		std::vector<gstd::ref_count_ptr<SoundInfo>> GetSoundInfoList();
 		void SetFadeDeleteAll();
 	};
 
