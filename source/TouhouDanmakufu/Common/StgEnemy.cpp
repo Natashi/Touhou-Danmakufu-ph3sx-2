@@ -10,8 +10,7 @@ StgEnemyManager::StgEnemyManager(StgStageController* stageController) {
 	stageController_ = stageController;
 }
 StgEnemyManager::~StgEnemyManager() {
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); itr++) {
-		shared_ptr<StgEnemyObject> obj = (*itr);
+	for (shared_ptr<StgEnemyObject> obj : listObj_) {
 		if (obj)
 			obj->ClearEnemyObject();
 	}
@@ -28,8 +27,7 @@ void StgEnemyManager::Work() {
 
 }
 void StgEnemyManager::RegistIntersectionTarget() {
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); itr++) {
-		shared_ptr<StgEnemyObject> obj = (*itr);
+	for (shared_ptr<StgEnemyObject> obj : listObj_) {
 		if (!obj->IsDeleted()) {
 			obj->ClearIntersectedIdList();
 			obj->RegistIntersectionTarget();

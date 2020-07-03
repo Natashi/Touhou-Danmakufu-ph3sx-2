@@ -48,8 +48,7 @@ void StgItemManager::Work() {
 	pr *= pr;
 	int pAutoItemCollectY = objPlayer->GetAutoItemCollectY();
 
-	std::list<shared_ptr<StgItemObject>>::iterator itr = listObj_.begin();
-	for (; itr != listObj_.end();) {
+	for (auto itr = listObj_.begin(); itr != listObj_.end();) {
 		shared_ptr<StgItemObject> obj = *itr;
 
 		if (obj->IsDeleted()) {
@@ -164,8 +163,7 @@ void StgItemManager::Render(int targetPriority) {
 
 	D3DXMATRIX& matCamera = camera2D->GetMatrix();
 
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
-		shared_ptr<StgItemObject> obj = *itr;
+	for (shared_ptr<StgItemObject> obj : listObj_) {
 		if (obj->IsDeleted() || obj->GetRenderPriorityI() != targetPriority) continue;
 		obj->RenderOnItemManager();
 	}
@@ -180,7 +178,7 @@ void StgItemManager::Render(int targetPriority) {
 
 	device->SetFVF(VERTEX_TLX::fvf);
 
-	int countBlendType = StgItemDataList::RENDER_TYPE_COUNT;
+	size_t countBlendType = StgItemDataList::RENDER_TYPE_COUNT;
 	BlendMode blendMode[] = { 
 		MODE_BLEND_ADD_ARGB, 
 		MODE_BLEND_ADD_RGB, 
@@ -233,8 +231,7 @@ void StgItemManager::GetValidRenderPriorityList(std::vector<PriListBool>& list) 
 	list.resize(objectManager->GetRenderBucketCapacity());
 	ZeroMemory(&list[0], objectManager->GetRenderBucketCapacity() * sizeof(PriListBool));
 
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
-		shared_ptr<StgItemObject> obj = *itr;
+	for (shared_ptr<StgItemObject> obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		int pri = obj->GetRenderPriorityI();
 		list[pri] = true;
@@ -449,6 +446,7 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 			}
 			else if (element == L"out") {
 				std::vector<std::wstring> list = _GetArgumentList(scanner);
+
 				RECT rect;
 				rect.left = StringUtility::ToInteger(list[0]);
 				rect.top = StringUtility::ToInteger(list[1]);
@@ -456,8 +454,8 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 				rect.bottom = StringUtility::ToInteger(list[3]);
 				data->rcOutSrc_ = rect;
 
-				int width = rect.right - rect.left;
-				int height = rect.bottom - rect.top;
+				LONG width = rect.right - rect.left;
+				LONG height = rect.bottom - rect.top;
 				RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
 				if (width % 2 == 1) rcDest.right += 1;
 				if (height % 2 == 1) rcDest.bottom += 1;
@@ -517,8 +515,8 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 						StringUtility::ToInteger(list[4]),
 					};
 
-					int width = rcSrc.right - rcSrc.left;
-					int height = rcSrc.bottom - rcSrc.top;
+					LONG width = rcSrc.right - rcSrc.left;
+					LONG height = rcSrc.bottom - rcSrc.top;
 					RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
 					if (width % 2 == 1) ++rcDest.right;
 					if (height % 2 == 1) ++rcDest.bottom;
@@ -662,8 +660,8 @@ StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObjec
 	SetRenderPriorityI(priItemI);
 }
 void StgItemObject::Work() {
-	bool bDefaultMovePattern = std::dynamic_pointer_cast<StgMovePattern_Item>(GetPattern()) != nullptr;
-	if (!bDefaultMovePattern && IsMoveToPlayer() && bEnableMovement_) {
+	bool bNullMovePattern = dynamic_cast<StgMovePattern_Item*>(GetPattern().get()) == nullptr;
+	if (bNullMovePattern && IsMoveToPlayer() && bEnableMovement_) {
 		float speed = 8;
 		shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
 		float angle = atan2f(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());

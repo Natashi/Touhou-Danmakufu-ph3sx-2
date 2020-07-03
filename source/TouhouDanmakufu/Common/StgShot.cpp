@@ -20,8 +20,7 @@ StgShotManager::StgShotManager(StgStageController* stageController) {
 	handleEffectWorld_ = effectLayer_->GetParameterBySemantic(nullptr, "WORLD");
 }
 StgShotManager::~StgShotManager() {
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
-		shared_ptr<StgShotObject> obj = (*itr);
+	for (shared_ptr<StgShotObject> obj : listObj_) {
 		if (obj)
 			obj->ClearShotObject();
 	}
@@ -66,8 +65,7 @@ void StgShotManager::Render(int targetPriority) {
 
 	D3DXMATRIX& matCamera = camera2D->GetMatrix();
 
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
-		shared_ptr<StgShotObject> obj = (*itr);
+	for (shared_ptr<StgShotObject> obj : listObj_) {
 		if (obj->IsDeleted() || !obj->IsActive() || obj->GetRenderPriorityI() != targetPriority) continue;
 		obj->RenderOnShotManager();
 	}
@@ -156,8 +154,7 @@ void StgShotManager::Render(int targetPriority) {
 }
 
 void StgShotManager::RegistIntersectionTarget() {
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
-		StgShotObject* obj = itr->get();
+	for (shared_ptr<StgShotObject> obj : listObj_) {
 		if (!obj->IsDeleted() && obj->IsActive()) {
 			obj->ClearIntersectedIdList();
 			obj->RegistIntersectionTarget();
@@ -183,9 +180,7 @@ RECT StgShotManager::GetShotAutoDeleteClipRect() {
 void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, float cx, float cy, float radius) {
 	float rd = radius * radius;
 
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
-		StgShotObject* obj = itr->get();
-
+	for (shared_ptr<StgShotObject> obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 		if (typeDelete == DEL_TYPE_SHOT && (obj->GetLife() == StgShotObject::LIFE_SPELL_REGIST)) continue;
@@ -212,9 +207,7 @@ std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, float cx, floa
 	float rd = radius * radius;
 
 	std::vector<int> res;
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
-		StgShotObject* obj = itr->get();
-
+	for (shared_ptr<StgShotObject> obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 
@@ -230,8 +223,7 @@ std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, float cx, floa
 size_t StgShotManager::GetShotCount(int typeOwner) {
 	size_t res = 0;
 
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
-		StgShotObject* obj = itr->get();
+	for (shared_ptr<StgShotObject> obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 		++res;
@@ -245,8 +237,7 @@ void StgShotManager::GetValidRenderPriorityList(std::vector<PriListBool>& list) 
 	list.resize(objectManager->GetRenderBucketCapacity());
 	ZeroMemory(&list[0], objectManager->GetRenderBucketCapacity() * sizeof(PriListBool));
 
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); ++itr) {
-		StgShotObject* obj = itr->get();
+	for (shared_ptr<StgShotObject> obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		int pri = obj->GetRenderPriorityI();
 		list[pri] = true;
@@ -341,8 +332,8 @@ bool StgShotDataList::AddShotDataList(std::wstring path, bool bReload) {
 					rect.bottom = StringUtility::ToInteger(list[3]);
 					rcDelay = rect;
 
-					int width = rect.right - rect.left;
-					int height = rect.bottom - rect.top;
+					LONG width = rect.right - rect.left;
+					LONG height = rect.bottom - rect.top;
 					RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
 					if (width % 2 == 1) rcDest.right += 1;
 					if (height % 2 == 1) rcDest.bottom += 1;
@@ -451,8 +442,8 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 				rect.bottom = StringUtility::ToInteger(list[3]);
 				anime.rcSrc_ = rect;
 
-				int width = rect.right - rect.left;
-				int height = rect.bottom - rect.top;
+				LONG width = rect.right - rect.left;
+				LONG height = rect.bottom - rect.top;
 				RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
 				if (width % 2 == 1) rcDest.right += 1;
 				if (height % 2 == 1) rcDest.bottom += 1;
