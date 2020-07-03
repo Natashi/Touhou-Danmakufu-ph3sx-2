@@ -69,11 +69,11 @@ namespace directx {
 		void SetMultiSampleType(D3DMULTISAMPLE_TYPE type) { typeSamples_ = type; }
 	};
 
-	typedef enum {
+	typedef enum : uint8_t {
 		SCREENMODE_FULLSCREEN,
 		SCREENMODE_WINDOW,
 	} ScreenMode;
-	typedef enum {
+	typedef enum : uint8_t {
 		MODE_BLEND_NONE,		//No blending
 		MODE_BLEND_ALPHA,		//Alpha blending
 		MODE_BLEND_ADD_RGB,		//Add blending, alpha ignored
