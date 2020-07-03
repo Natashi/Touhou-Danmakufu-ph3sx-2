@@ -30,7 +30,6 @@ namespace directx {
 		int mainThreadID_;
 
 		int64_t _LoadScript(std::wstring path, shared_ptr<ManagedScript> script);
-
 	public:
 		ScriptManager();
 		virtual ~ScriptManager();
@@ -44,7 +43,7 @@ namespace directx {
 		int GetMainThreadID() { return mainThreadID_; }
 		int64_t IssueScriptID() { { gstd::Lock lock(lock_); idScript_++; return idScript_; } }
 
-		shared_ptr<ManagedScript> GetScript(int64_t id);
+		shared_ptr<ManagedScript> GetScript(int64_t id, bool bSearchRelative = false);
 		void StartScript(int64_t id);
 		void StartScript(shared_ptr<ManagedScript> id);
 		void CloseScript(int64_t id);
@@ -52,7 +51,7 @@ namespace directx {
 		void CloseScriptOnType(int type);
 		bool IsCloseScript(int64_t id);
 		int IsHasCloseScliptWork() { return bHasCloseScriptWork_; }
-		int GetAllScriptThreadCount();
+		size_t GetAllScriptThreadCount();
 		void TerminateScriptAll(std::wstring message);
 
 		int64_t LoadScript(std::wstring path, shared_ptr<ManagedScript> script);

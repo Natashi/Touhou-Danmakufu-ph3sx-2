@@ -26,9 +26,9 @@ void ScriptManager::Work() {
 }
 void ScriptManager::Work(int targetType) {
 	bHasCloseScriptWork_ = false;
-	std::list<shared_ptr<ManagedScript>>::iterator itr = listScriptRun_.begin();
-	for (; itr != listScriptRun_.end(); ) {
-		shared_ptr<ManagedScript> script = (*itr);
+	
+	for (auto itr = listScriptRun_.begin(); itr != listScriptRun_.end(); ) {
+		shared_ptr<ManagedScript> script = *itr;
 		int type = script->GetScriptType();
 		if (script->IsPaused() || (targetType != ManagedScript::TYPE_ALL && targetType != type)) {
 			itr++;
@@ -50,14 +50,12 @@ void ScriptManager::Work(int targetType) {
 
 			bHasCloseScriptWork_ |= script->IsEndScript();
 		}
-
 	}
-
 }
 void ScriptManager::Render() {
-	//ここではオブジェクトの描画を行わない。
+	//What?
 }
-shared_ptr<ManagedScript> ScriptManager::GetScript(int64_t id) {
+shared_ptr<ManagedScript> ScriptManager::GetScript(int64_t id, bool bSearchRelative) {
 	shared_ptr<ManagedScript> res = nullptr;
 	{
 		Lock lock(lock_);
@@ -67,11 +65,23 @@ shared_ptr<ManagedScript> ScriptManager::GetScript(int64_t id) {
 			res = itr->second;
 		}
 		else {
-			std::list<shared_ptr<ManagedScript>>::iterator itr = listScriptRun_.begin();
-			for (; itr != listScriptRun_.end(); itr++) {
-				if ((*itr)->GetScriptID() == id) {
-					res = (*itr);
+			for (auto pScriptRun : listScriptRun_) {
+				if (pScriptRun->GetScriptID() == id) {
+					res = pScriptRun;
 					break;
+				}
+			}
+
+			if (res == nullptr && bSearchRelative) {
+				for (auto pWeakManager : listRelativeManager_) {
+					if (auto pManager = pWeakManager.lock()) {
+						for (auto pScript : pManager->listScriptRun_) {
+							if (pScript->GetScriptID() == id) {
+								res = pScript;
+								break;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -135,20 +145,18 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> id) {
 	}
 }
 void ScriptManager::CloseScript(int64_t id) {
-	std::list<shared_ptr<ManagedScript>>::iterator itr = listScriptRun_.begin();
-	for (; itr != listScriptRun_.end(); itr++) {
-		shared_ptr<ManagedScript> script = (*itr);
-		if (script->GetScriptID() == id) {
-			script->SetEndScript();
+	for (auto pScript : listScriptRun_) {
+		if (pScript->GetScriptID() == id) {
+			pScript->SetEndScript();
 
-			mapClosedScriptResult_[id] = script->GetResultValue();
+			mapClosedScriptResult_[id] = pScript->GetResultValue();
 			if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT) {
 				int64_t targetID = mapClosedScriptResult_.begin()->first;
 				mapClosedScriptResult_.erase(targetID);
 			}
 
-			if (script->IsAutoDeleteObject())
-				script->GetObjectManager()->DeleteObjectByScriptID(id);
+			if (pScript->IsAutoDeleteObject())
+				pScript->GetObjectManager()->DeleteObjectByScriptID(id);
 
 			break;
 		}
@@ -167,21 +175,19 @@ void ScriptManager::CloseScript(shared_ptr<ManagedScript> id) {
 		id->GetObjectManager()->DeleteObjectByScriptID(id->GetScriptID());
 }
 void ScriptManager::CloseScriptOnType(int type) {
-	std::list<shared_ptr<ManagedScript>>::iterator itr = listScriptRun_.begin();
-	for (; itr != listScriptRun_.end(); itr++) {
-		shared_ptr<ManagedScript> script = (*itr);
-		if (script->GetScriptType() == type) {
-			script->SetEndScript();
+	for (auto pScript : listScriptRun_) {
+		if (pScript->GetScriptType() == type) {
+			pScript->SetEndScript();
 
-			int64_t id = script->GetScriptID();
-			mapClosedScriptResult_[id] = script->GetResultValue();
+			int64_t id = pScript->GetScriptID();
+			mapClosedScriptResult_[id] = pScript->GetResultValue();
 			if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT) {
 				int64_t targetID = mapClosedScriptResult_.begin()->first;
 				mapClosedScriptResult_.erase(targetID);
 			}
 
-			if (script->IsAutoDeleteObject())
-				script->GetObjectManager()->DeleteObjectByScriptID(id);
+			if (pScript->IsAutoDeleteObject())
+				pScript->GetObjectManager()->DeleteObjectByScriptID(id);
 		}
 	}
 }
@@ -190,13 +196,12 @@ bool ScriptManager::IsCloseScript(int64_t id) {
 	bool res = script == nullptr || script->IsEndScript();
 	return res;
 }
-int ScriptManager::GetAllScriptThreadCount() {
-	int res = 0;
+size_t ScriptManager::GetAllScriptThreadCount() {
+	size_t res = 0;
 	{
 		Lock lock(lock_);
-		std::list<shared_ptr<ManagedScript>>::iterator itr = listScriptRun_.begin();
-		for (; itr != listScriptRun_.end(); itr++) {
-			res += (*itr)->GetThreadCount();
+		for (auto pScript : listScriptRun_) {
+			res += pScript->GetThreadCount();
 		}
 	}
 	return res;
@@ -204,9 +209,8 @@ int ScriptManager::GetAllScriptThreadCount() {
 void ScriptManager::TerminateScriptAll(std::wstring message) {
 	{
 		Lock lock(lock_);
-		std::list<shared_ptr<ManagedScript>>::iterator itr = listScriptRun_.begin();
-		for (; itr != listScriptRun_.end(); itr++) {
-			(*itr)->Terminate(message);
+		for (auto pScript : listScriptRun_) {
+			pScript->Terminate(message);
 		}
 	}
 }
@@ -266,7 +270,7 @@ void ScriptManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadE
 	std::wstring path = event->GetPath();
 
 	shared_ptr<ManagedScript> script = std::dynamic_pointer_cast<ManagedScript>(event->GetSource());
-	if (script == nullptr || script->IsLoad())return;
+	if (script == nullptr || script->IsLoad()) return;
 
 	try {
 		_LoadScript(path, script);
@@ -279,31 +283,22 @@ void ScriptManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadE
 }
 void ScriptManager::RequestEventAll(int type, const gstd::value* listValue, size_t countArgument) {
 	{
-		std::list<shared_ptr<ManagedScript>>::iterator itrScript = listScriptRun_.begin();
-		for (; itrScript != listScriptRun_.end(); itrScript++) {
-			shared_ptr<ManagedScript> script = (*itrScript);
-			if (script->IsEndScript())continue;
-
-			script->RequestEvent(type, listValue, countArgument);
+		for (auto pScript : listScriptRun_) {
+			if (pScript->IsEndScript()) continue;
+			pScript->RequestEvent(type, listValue, countArgument);
 		}
 	}
 
-	if (listRelativeManager_.size() > 0) {
-		std::list<weak_ptr<ScriptManager>>::iterator itrManager = listRelativeManager_.begin();
-		for (; itrManager != listRelativeManager_.end(); ) {
-			if (auto manager = (*itrManager).lock()) {
-				std::list<shared_ptr<ManagedScript>>::iterator itrScript = manager->listScriptRun_.begin();
-				for (; itrScript != manager->listScriptRun_.end(); itrScript++) {
-					shared_ptr<ManagedScript> script = (*itrScript);
-					if (script->IsEndScript()) continue;
-
-					script->RequestEvent(type, listValue, countArgument);
-				}
-				itrManager++;
+	for (auto itrManager = listRelativeManager_.begin(); itrManager != listRelativeManager_.end(); ) {
+		if (auto manager = itrManager->lock()) {
+			for (auto pScript : manager->listScriptRun_) {
+				if (pScript->IsEndScript()) continue;
+				pScript->RequestEvent(type, listValue, countArgument);
 			}
-			else {
-				itrManager = listRelativeManager_.erase(itrManager);
-			}
+			itrManager++;
+		}
+		else {
+			itrManager = listRelativeManager_.erase(itrManager);
 		}
 	}
 }
@@ -464,7 +459,7 @@ gstd::value ManagedScript::Func_IsCloseScript(gstd::script_machine* machine, int
 	int64_t idScript = (int64_t)argv[0].as_real();
 	bool res = scriptManager->IsCloseScript(idScript);
 
-	return value(machine->get_engine()->get_boolean_type(), res);
+	return script->CreateBooleanValue(res);
 }
 
 gstd::value ManagedScript::Func_GetOwnScriptID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -491,7 +486,7 @@ gstd::value ManagedScript::Func_SetScriptArgument(script_machine* machine, int a
 	auto scriptManager = script->scriptManager_;
 
 	int64_t idScript = (int64_t)argv[0].as_real();
-	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript);
+	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, true);
 	if (target) {
 		int index = (int)argv[1].as_real();
 		target->SetArgumentValue(argv[2], index);
@@ -520,7 +515,7 @@ gstd::value ManagedScript::Func_NotifyEvent(script_machine* machine, int argc, c
 
 	gstd::value res;
 	int64_t idScript = (int64_t)argv[0].as_real();
-	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript);
+	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, true);
 	if (target) {
 		int type = (int)argv[1].as_real();
 		//std::vector<gstd::value> listArg;
@@ -562,7 +557,7 @@ gstd::value ManagedScript::Func_PauseScript(script_machine* machine, int argc, c
 	if (idScript == script->GetScriptID())
 		script->RaiseError("A script is not allowed to pause itself.");
 
-	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript);
+	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, true);
 	if (target) target->bPaused_ = state;
 
 	return value();

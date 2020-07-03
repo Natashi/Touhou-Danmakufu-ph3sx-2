@@ -10,17 +10,14 @@ StgEnemyManager::StgEnemyManager(StgStageController* stageController) {
 	stageController_ = stageController;
 }
 StgEnemyManager::~StgEnemyManager() {
-	std::list<shared_ptr<StgEnemyObject>>::iterator itr = listObj_.begin();
-	for (; itr != listObj_.end(); itr++) {
+	for (auto itr = listObj_.begin(); itr != listObj_.end(); itr++) {
 		shared_ptr<StgEnemyObject> obj = (*itr);
-		if (obj != nullptr) {
+		if (obj)
 			obj->ClearEnemyObject();
-		}
 	}
 }
 void StgEnemyManager::Work() {
-	std::list<shared_ptr<StgEnemyObject>>::iterator itr = listObj_.begin();
-	for (; itr != listObj_.end(); ) {
+	for (auto itr = listObj_.begin(); itr != listObj_.end(); ) {
 		shared_ptr<StgEnemyObject> obj = (*itr);
 		if (obj->IsDeleted()) {
 			obj->ClearEnemyObject();
@@ -31,8 +28,7 @@ void StgEnemyManager::Work() {
 
 }
 void StgEnemyManager::RegistIntersectionTarget() {
-	std::list<shared_ptr<StgEnemyObject>>::iterator itr = listObj_.begin();
-	for (; itr != listObj_.end(); itr++) {
+	for (auto itr = listObj_.begin(); itr != listObj_.end(); itr++) {
 		shared_ptr<StgEnemyObject> obj = (*itr);
 		if (!obj->IsDeleted()) {
 			obj->ClearIntersectedIdList();
@@ -140,22 +136,21 @@ StgEnemyBossSceneObject::StgEnemyBossSceneObject(StgStageController* stageContro
 	dataIndex_ = -1;
 }
 bool StgEnemyBossSceneObject::_NextStep() {
-	if (dataStep_ >= listData_.size())return false;
+	if (dataStep_ >= listData_.size()) return false;
 
 	auto scriptManager = stageController_->GetScriptManager();
 
 	//現ステップ終了通知
-	if (activeData_ != nullptr) {
+	if (activeData_)
 		scriptManager->RequestEventAll(StgStageScript::EV_END_BOSS_STEP);
-	}
 
 	dataIndex_++;
 	if (dataIndex_ >= listData_[dataStep_].size()) {
 		dataIndex_ = 0;
 		while (true) {
 			dataStep_++;
-			if (dataStep_ >= listData_.size())return false;
-			if (listData_[dataStep_].size() > 0)break;
+			if (dataStep_ >= listData_.size()) return false;
+			if (listData_[dataStep_].size() > 0) break;
 		}
 	}
 
@@ -166,10 +161,10 @@ bool StgEnemyBossSceneObject::_NextStep() {
 	activeData_ = listData_[dataStep_][dataIndex_];
 	std::vector<shared_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
 	std::vector<double>& listLife = activeData_->GetLifeList();
-	for (size_t iEnemy = 0; iEnemy < listEnemy.size(); iEnemy++) {
+	for (size_t iEnemy = 0; iEnemy < listEnemy.size(); ++iEnemy) {
 		shared_ptr<StgEnemyBossObject> obj = listEnemy[iEnemy];
 		obj->SetLife(listLife[iEnemy]);
-		if (oldActiveData != nullptr) {
+		if (oldActiveData) {
 			std::vector<shared_ptr<StgEnemyBossObject>> listOldEnemyObject = oldActiveData->GetEnemyObjectList();
 			if (iEnemy < listOldEnemyObject.size()) {
 				shared_ptr<StgEnemyBossObject> objOld = listOldEnemyObject[iEnemy];
@@ -181,8 +176,14 @@ bool StgEnemyBossSceneObject::_NextStep() {
 	}
 
 	//スクリプト開始
-	int64_t idScript = activeData_->GetScriptID();
-	scriptManager->StartScript(idScript);
+	weak_ptr<ManagedScript> pWeakScript = activeData_->GetScriptPointer();
+	if (auto pScript = pWeakScript.lock()) {
+		scriptManager->StartScript(pScript);
+	}
+	else {
+		throw gstd::wexception(StringUtility::Format(L"_NextStep: Script wasn't loaded or has been unloaded. [%d, %d]", 
+			dataStep_, dataIndex_));
+	}
 
 	//新ステップ開始通知
 	scriptManager->RequestEventAll(StgStageScript::EV_START_BOSS_STEP);
@@ -193,11 +194,8 @@ void StgEnemyBossSceneObject::Work() {
 	if (activeData_->IsReadyNext()) {
 		//次ステップ遷移可能
 		bool bEnemyExists = false;
-		std::vector<shared_ptr<StgEnemyBossObject>> listEnemy = activeData_->GetEnemyObjectList();
-		for (size_t iEnemy = 0; iEnemy < listEnemy.size(); iEnemy++) {
-			shared_ptr<StgEnemyBossObject> obj = listEnemy[iEnemy];
-			bEnemyExists |= (!obj->IsDeleted());
-		}
+		for (shared_ptr<StgEnemyBossObject> iEnemy : activeData_->GetEnemyObjectList())
+			bEnemyExists |= !iEnemy->IsDeleted();
 
 		if (!bEnemyExists) {
 			bool bNext = _NextStep();
@@ -232,11 +230,8 @@ void StgEnemyBossSceneObject::Work() {
 
 		if (bZeroTimer || bEndLastSpell) {
 			//タイマー0なら敵のライフを0にする
-			std::vector<shared_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
-			for (size_t iEnemy = 0; iEnemy < listEnemy.size(); iEnemy++) {
-				shared_ptr<StgEnemyBossObject> obj = listEnemy[iEnemy];
-				obj->SetLife(0);
-			}
+			for (shared_ptr<StgEnemyBossObject> iEnemy : activeData_->GetEnemyObjectList())
+				iEnemy->SetLife(0);
 
 			if (bZeroTimer) {
 				//タイムアウト通知
@@ -292,20 +287,20 @@ void StgEnemyBossSceneObject::Activate() {
 	auto scriptManager = stageController_->GetScriptManager();
 	StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
 
-	for (size_t iStep = 0; iStep < listData_.size(); iStep++) {
-		for (size_t iData = 0; iData < listData_[iStep].size(); iData++) {
-			shared_ptr<StgEnemyBossSceneData> data = listData_[iStep][iData];
-
-			int64_t idScript = data->GetScriptID();
-			shared_ptr<ManagedScript> script = scriptManager->GetScript(idScript);
+	for (std::vector<shared_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
+		size_t iData = 0;
+		for (shared_ptr<StgEnemyBossSceneData> pData : iStep) {
+			weak_ptr<ManagedScript> weakScript = pData->GetScriptPointer();
+			shared_ptr<ManagedScript> script = weakScript.lock();
 
 			if (script == nullptr)
-				throw gstd::wexception(StringUtility::Format(L"読み込まれていないスクリプト：%s", data->GetPath().c_str()).c_str());
+				throw gstd::wexception(StringUtility::Format(L"Script wasn't loaded: %s", pData->GetPath().c_str()));
 			if (!script->IsLoad()) {
-				int count = 0;
+				size_t count = 0;
 				while (!script->IsLoad()) {
 					if (count % 1000 == 999) {
-						std::wstring log = StringUtility::Format(L"Waiting for script load: [%d, %d] %s", iStep, iData, data->GetPath().c_str());
+						std::wstring log = StringUtility::Format(L"Waiting for script load: [%d, %d] %s", 
+							iStep, iData, pData->GetPath());
 						Logger::WriteTop(log);
 					}
 					Sleep(1);
@@ -313,7 +308,7 @@ void StgEnemyBossSceneObject::Activate() {
 				}
 			}
 
-			if (stageController_->GetSystemInformation()->IsError())continue;
+			if (stageController_->GetSystemInformation()->IsError()) continue;
 
 			//ライフ読み込み
 			std::vector<double> listLife;
@@ -323,38 +318,38 @@ void StgEnemyBossSceneObject::Activate() {
 				listLife.push_back(life);
 			}
 			else if (script->IsRealArrayValue(vLife)) {
-				size_t count = vLife.length_as_array();
-				for (size_t iLife = 0; iLife < count; iLife++) {
+				for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
 					double life = vLife.index_as_array(iLife).as_real();
 					listLife.push_back(life);
 				}
 			}
 
 			if (listLife.size() == 0)
-				throw gstd::wexception(StringUtility::Format(L"EV_REQUEST_LIFE must return a value. (%s)", data->GetPath().c_str()));
-			data->SetLifeList(listLife);
+				throw gstd::wexception(StringUtility::Format(L"EV_REQUEST_LIFE must return a value. (%s)", 
+					pData->GetPath().c_str()));
+			pData->SetLifeList(listLife);
 
 			//タイマー読み込み
 			gstd::value vTimer = script->RequestEvent(StgStageScript::EV_REQUEST_TIMER);
-			data->SetOriginalSpellTimer(vTimer.as_real() * STANDARD_FPS);
+			pData->SetOriginalSpellTimer(vTimer.as_real() * STANDARD_FPS);
 
 			//スペル
 			gstd::value vSpell = script->RequestEvent(StgStageScript::EV_REQUEST_IS_SPELL);
-			data->SetSpellCard(vSpell.as_boolean());
+			pData->SetSpellCard(vSpell.as_boolean());
 
 			{
 				//スコア、ラストスペル、耐久スペルを読み込む
 				gstd::value vScore = script->RequestEvent(StgStageScript::EV_REQUEST_SPELL_SCORE);
-				data->SetSpellScore(vScore.as_real());
+				pData->SetSpellScore(vScore.as_real());
 
 				gstd::value vLast = script->RequestEvent(StgStageScript::EV_REQUEST_IS_LAST_SPELL);
-				data->SetLastSpell(vLast.as_boolean());
+				pData->SetLastSpell(vLast.as_boolean());
 
 				gstd::value vDurable = script->RequestEvent(StgStageScript::EV_REQUEST_IS_DURABLE_SPELL);
-				data->SetDurable(vDurable.as_boolean());
+				pData->SetDurable(vDurable.as_boolean());
 
 				gstd::value vAllDown = script->RequestEvent(StgStageScript::EV_REQUEST_REQUIRE_ALL_DOWN);
-				data->SetRequireAllDown(vAllDown.as_boolean());
+				pData->SetRequireAllDown(vAllDown.as_boolean());
 			}
 
 			//敵オブジェクト作成
@@ -364,7 +359,9 @@ void StgEnemyBossSceneObject::Activate() {
 				int idEnemy = objectManager->AddObject(obj, false);
 				listEnemyObject.push_back(obj);
 			}
-			data->SetEnemyObjectList(listEnemyObject);
+			pData->SetEnemyObjectList(listEnemyObject);
+
+			++iData;
 		}
 	}
 
@@ -379,62 +376,53 @@ void StgEnemyBossSceneObject::AddData(int step, shared_ptr<StgEnemyBossSceneData
 }
 void StgEnemyBossSceneObject::LoadAllScriptInThread() {
 	auto scriptManager = stageController_->GetScriptManager();
-	for (size_t iStep = 0; iStep < listData_.size(); iStep++) {
-		for (size_t iData = 0; iData < listData_[iStep].size(); iData++) {
-			shared_ptr<StgEnemyBossSceneData> data = listData_[iStep][iData];
-			std::wstring path = data->GetPath();
-
-			auto script = scriptManager->LoadScriptInThread(path, StgStageScript::TYPE_SYSTEM);
-			data->SetScriptID(script->GetScriptID());
+	for (std::vector<shared_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
+		for (shared_ptr<StgEnemyBossSceneData> pData : iStep) {
+			auto script = scriptManager->LoadScriptInThread(pData->GetPath(), StgStageScript::TYPE_SYSTEM);
+			pData->SetScriptPointer(script);
 		}
 	}
 	bLoad_ = true;
 }
-int StgEnemyBossSceneObject::GetRemainStepCount() {
+size_t StgEnemyBossSceneObject::GetRemainStepCount() {
 	int res = listData_.size() - dataStep_ - 1;
 	res = std::max(res, 0);
 	return res;
 }
-int StgEnemyBossSceneObject::GetActiveStepLifeCount() {
-	if (dataStep_ >= listData_.size())return 0;
+size_t StgEnemyBossSceneObject::GetActiveStepLifeCount() {
+	if (dataStep_ >= listData_.size()) return 0;
 	return listData_[dataStep_].size();
 }
 double StgEnemyBossSceneObject::GetActiveStepTotalMaxLife() {
-	if (dataStep_ >= listData_.size())return 0;
+	if (dataStep_ >= listData_.size()) return 0;
 	double res = 0;
-	for (size_t iData = 0; iData < listData_[dataStep_].size(); iData++) {
-		shared_ptr<StgEnemyBossSceneData> data = listData_[dataStep_][iData];
-		std::vector<double>& listLife = data->GetLifeList();
-		for (size_t iLife = 0; iLife < listLife.size(); iLife++)
-			res = res + listLife[iLife];
+	for (shared_ptr<StgEnemyBossSceneData> pData : listData_[dataStep_]) {
+		for (double iLife : pData->GetLifeList())
+			res = res + iLife;
 	}
 	return res;
 }
 double StgEnemyBossSceneObject::GetActiveStepTotalLife() {
-	if (dataStep_ >= listData_.size())return 0;
+	if (dataStep_ >= listData_.size()) return 0;
 	double res = 0;
 	for (size_t iData = dataIndex_; iData < listData_[dataStep_].size(); iData++) {
 		res = res + GetActiveStepLife(iData);
 	}
 	return res;
 }
-double StgEnemyBossSceneObject::GetActiveStepLife(int index) {
-	if (dataStep_ >= listData_.size())return 0;
-	if (index < dataIndex_)return 0;
+double StgEnemyBossSceneObject::GetActiveStepLife(size_t index) {
+	if (dataStep_ >= listData_.size()) return 0;
+	if (index < dataIndex_) return 0;
 
 	double res = 0;
 	shared_ptr<StgEnemyBossSceneData> data = listData_[dataStep_][index];
 	if (index == dataIndex_) {
-		std::vector<shared_ptr<StgEnemyBossObject>>& listEnemyObject = data->GetEnemyObjectList();
-		for (size_t iEnemy = 0; iEnemy < listEnemyObject.size(); iEnemy++) {
-			shared_ptr<StgEnemyBossObject> obj = listEnemyObject[iEnemy];
-			res += obj->GetLife();
-		}
+		for (auto iEnemyObj : data->GetEnemyObjectList())
+			res += iEnemyObj->GetLife();
 	}
 	else {
-		std::vector<double>& listLife = data->GetLifeList();
-		for (size_t iLife = 0; iLife < listLife.size(); iLife++)
-			res += listLife[iLife];
+		for (double iLife : data->GetLifeList())
+			res += iLife;
 	}
 	return res;
 }
@@ -443,27 +431,27 @@ std::vector<double> StgEnemyBossSceneObject::GetActiveStepLifeRateList() {
 	res.resize(GetActiveStepLifeCount());
 
 	const double total = GetActiveStepTotalMaxLife();
+	double rate = 0;
 
-	for (size_t iData = 0; iData < res.size(); iData++) {
-		shared_ptr<StgEnemyBossSceneData> data = listData_[dataStep_][iData];
-
+	size_t iData = 0;
+	for (shared_ptr<StgEnemyBossSceneData> pSceneData : listData_[dataStep_]) {
 		double life = 0;
-		std::vector<double>& listLife = data->GetLifeList();
-		for (size_t iLife = 0; iLife < listLife.size(); iLife++) {
-			life += listLife[iLife];
-		}
+		
+		for (double iLife : pSceneData->GetLifeList())
+			life += iLife;
 
-		res[iData] = life / total;
+		rate += life / total;
+		res[iData++] = rate;
 	}
 
 	return res;
 }
 void StgEnemyBossSceneObject::AddPlayerShootDownCount() {
-	if (activeData_ == nullptr)return;
+	if (activeData_ == nullptr) return;
 	activeData_->AddPlayerShootDownCount();
 }
 void StgEnemyBossSceneObject::AddPlayerSpellCount() {
-	if (activeData_ == nullptr)return;
+	if (activeData_ == nullptr) return;
 	activeData_->AddPlayerSpellCount();
 }
 

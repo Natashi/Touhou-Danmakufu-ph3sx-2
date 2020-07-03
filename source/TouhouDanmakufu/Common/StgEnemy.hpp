@@ -115,11 +115,11 @@ public:
 	shared_ptr<StgEnemyBossSceneData> GetActiveData() { return activeData_; }
 	void LoadAllScriptInThread();
 
-	int GetRemainStepCount();
-	int GetActiveStepLifeCount();
+	size_t GetRemainStepCount();
+	size_t GetActiveStepLifeCount();
 	double GetActiveStepTotalMaxLife();
 	double GetActiveStepTotalLife();
-	double GetActiveStepLife(int index);
+	double GetActiveStepLife(size_t index);
 	std::vector<double> GetActiveStepLifeRateList();
 	int GetDataStep() { return dataStep_; }
 	int GetDataIndex() { return dataIndex_; }
@@ -131,7 +131,8 @@ public:
 class StgEnemyBossSceneData {
 private:
 	std::wstring path_;
-	int64_t isScript_;
+	weak_ptr<ManagedScript> ptrScript_;
+
 	std::vector<double> listLife_;
 	std::vector<shared_ptr<StgEnemyBossObject>> listEnemyObject_;
 	int countCreate_;//ボス生成数。listEnemyObject_を超えて生成しようとしたらエラー。
@@ -149,10 +150,10 @@ private:
 public:
 	StgEnemyBossSceneData();
 	virtual ~StgEnemyBossSceneData() {}
-	std::wstring GetPath() { return path_; }
+	std::wstring& GetPath() { return path_; }
 	void SetPath(std::wstring path) { path_ = path; }
-	int64_t GetScriptID() { return isScript_; }
-	void SetScriptID(int64_t id) { isScript_ = id; }
+	weak_ptr<ManagedScript> GetScriptPointer() { return ptrScript_; }
+	void SetScriptPointer(weak_ptr<ManagedScript> id) { ptrScript_ = id; }
 	std::vector<double>& GetLifeList() { return listLife_; }
 	void SetLifeList(std::vector<double>& list) { listLife_ = list; }
 	std::vector<shared_ptr<StgEnemyBossObject>>& GetEnemyObjectList() { return listEnemyObject_; }
