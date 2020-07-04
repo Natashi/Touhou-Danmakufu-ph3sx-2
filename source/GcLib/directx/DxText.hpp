@@ -82,7 +82,7 @@ namespace directx {
 		friend DxCharCache;
 		friend DxTextRenderer;
 	private:
-		int code_;
+		UINT code_;
 		DxFont font_;
 	public:
 		bool operator ==(const DxCharCacheKey& key) const {
@@ -101,7 +101,7 @@ namespace directx {
 			if (code_ != key.code_) return code_ < key.code_;
 			if (font_.colorTop_ != key.font_.colorTop_) return font_.colorTop_ < key.font_.colorTop_;
 			if (font_.colorBottom_ != key.font_.colorBottom_) return font_.colorBottom_ < key.font_.colorBottom_;
-			if(font_.typeBorder_ != key.font_.typeBorder_) return (font_.typeBorder_ != key.font_.typeBorder_ );
+			if (font_.typeBorder_ != key.font_.typeBorder_) return (font_.typeBorder_ < key.font_.typeBorder_ );
 			if (font_.widthBorder_ != key.font_.widthBorder_) return font_.widthBorder_ < key.font_.widthBorder_;
 			if (font_.colorBorder_ != key.font_.colorBorder_) return font_.colorBorder_ < key.font_.colorBorder_;
 			return (memcmp(&key.font_.info_, &font_.info_, sizeof(LOGFONT)) < 0);

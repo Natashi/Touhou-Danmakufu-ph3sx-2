@@ -260,9 +260,8 @@ void DxCharCache::_arrange() {
 	std::map<int, DxCharCacheKey> mapPriKeyLast = mapPriKey_;
 	mapPriKey_.clear();
 	mapKeyPri_.clear();
-	std::map<int, DxCharCacheKey>::iterator itr;
-	for (itr = mapPriKeyLast.begin(); itr != mapPriKeyLast.end(); itr++) {
-		DxCharCacheKey key = itr->second;
+	for (auto itr = mapPriKeyLast.begin(); itr != mapPriKeyLast.end(); itr++) {
+		DxCharCacheKey& key = itr->second;
 		int pri = countPri_;
 
 		mapPriKey_[pri] = key;
