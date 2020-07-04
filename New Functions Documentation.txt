@@ -748,12 +748,26 @@ Obj_IsValueExistsR
 		2) key
 	Description:
 		Obj_IsValueExists with direct real value key.
+		
+Obj_CopyValueTable
+	Arguments:
+		1) destination object ID
+		2) source object ID
+		3) mode
+	Description:
+		Copies the source's object value table to the destination's object value table.
+		
+		Available modes:
+			0 - Object value table is cleared before the copy.
+			1 - Value will be overwritten in case of key conflicts.
+			2 - Value will not be overwritten in case of key conflicts.
 
 ObjRender_GetColor
 	Arguments:
 		1) object ID
 	Description:
 		Returns an [r, g, b] array of the object's color.
+
 ObjRender_GetAlpha
 	Arguments:
 		1) object ID
@@ -1026,23 +1040,25 @@ ObjText_SetFontWeight
 		2) weight
 	Description:
 		Sets the font weight for the following text object.
+		
 		Weight ranges from 0 to 1000, with 0 being the lightest and 1000 being the thickest. -1 for the default weight.
-		Some fonts may not support some weight values.
+		Some fonts may not support all weight values.
+		
+		*ObjText_SetFontBold(a, b) is equivalent to ObjText_SetFontWeight(a, b ? 700 : 400).
 
 ObjText_SetFontCharacterSet
 	Arguments:
 		1) object ID
-		2) (struct) charset
+		2) charset
 	Description:
-		Sets the charset for the following text object. 
-		Causes font to render correctly in languages with non-latin-like writing system.
-		Charsets:
-			CHARSET_ANSI		(default)
-			CHARSET_SHIFTJIS	(default for Japanese text)
-			CHARSET_HANGUL
-			CHARSET_ARABIC		
-			CHARSET_HEBREW
-			CHARSET_THAI		//I can finally write Thai text without Danmakufu vomiting จุดพลุสิจ๊ะ รออะไร
+		Sets the charset for the following text object.
+		
+		List of available charset values:
+			https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-wmf/0d0b32ac-a836-4bd2-a112-b6000a1b4fc9
+		OEM_CHARSET should not be used.
+		
+		To ensure that font glyphs generate correctly, match the text object's charset with the font's charset.
+		*The font charset is reset to either ANSI_CHARSET or SHIFTJIS_CHARSET every time ObjText_SetFontType is used.
 
 ObjSound_Seek
 	Arguments:
@@ -1743,13 +1759,36 @@ PauseScript
 		1) script ID
 		2) (bool) pause
 	Description:
-		Pauses or unpauses the specified script. Not guaranteed to work perfectly.
+		Pauses or unpauses the specified script. Not guaranteed to work flawlessly.
 		Causes an error is the script ID is the ID of the script from which the function was called,
 			aka; "a script cannot pause itself".
 			
-NotfiyEventOwn
+NotifyEvent
 	Arguments:
-		1) event ID
-		2) event argument
+		1) script ID
+		2) event type
+		3+) (any) arguments...
+	Description:
+		Change.
+		
+		It is possible to pass as many event arguments as you want.
+		
+NotifyEventOwn
+	Arguments:
+		1) event type
+		2+) (any) arguments...
 	Description:
 		NotifyEvent's the script in which it was called.
+		
+		It is possible to pass as many event arguments as you want.
+		
+NotifyEventAll
+	Arguments:
+		1) event type
+		2+) (any) arguments...
+	Description:
+		Change.
+		NotifyEvent's all actively running scripts.
+		*Scripts paused with PauseScript would still get notified.
+		
+		It is possible to pass as many event arguments as you want.

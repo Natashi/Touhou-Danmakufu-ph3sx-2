@@ -21,7 +21,7 @@
 	- RenderToTextureXX alpha fix ported+modified from th_dnh_woo.
 	- Replaced ObjLaser_SetGrazeInvalidFrame with ObjShot_SetGrazeInvalidFrame.
 	- Alpha channel blending now exists in all blend modes except BLEND_NONE and BLEND_ADD_RGB.
-	- Fixed a bug involving events.
+	- Fixed a bug where NotifyEvent and SetScriptArgument could not reach package-level scripts when called from a stage-level scripts.
 	- Event arguments will no longer be overwritten when notifying nested events inside @Event.
 	- Added transform functions for ObjPatternShot and relevant sample scripts, for former and current ECL modders.
 		- Please note that they may not be able to fully emulate ECL's behaviours.
@@ -53,6 +53,7 @@
 	- Added support for basic directional lighting.
 	- Improved vertex shader support, and added sample scripts for demonstration.
 	- Fixed underflowing and overflowing issues with ObjRender_SetColor/SetAlpha.
+	- Added more options to the [font] text tag, and fixed a bug where ObjText_SetFontCharacterSet doesn't work.
 	- ObjFileT now properly reads from and writes to UTF-8 text files.
 	- ObjFile_OpenNW now allows both reading and writing, unless the file was stored in a .dat archive, in which case all write functions will fail.
 	- Following the above two changes, Shift-JIS is no longer supported in favour of proper Unicode (UTF-8) handling.
