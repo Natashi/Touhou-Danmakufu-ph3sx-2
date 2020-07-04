@@ -919,7 +919,7 @@ std::wstring ScriptClientBase::_ExtendPath(std::wstring path) {
 //共通関数：スクリプト引数結果
 value ScriptClientBase::Func_GetScriptArgument(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = (ScriptClientBase*)machine->data;
-	int index = (int)argv[0].as_real();
+	int index = argv[0].as_int();
 	if (index < 0 || index >= script->listValueArg_.size()) {
 		std::wstring error;
 		error += L"Invalid script argument index.\r\n";
@@ -1280,7 +1280,7 @@ value ScriptClientBase::Func_VtoS(script_machine* machine, int argc, const value
 		fmtV = std::string("%") + fmtV;
 		char* fmt = (char*)fmtV.c_str();
 		if (strstr(fmt, "d"))
-			res = StringUtility::Format(fmt, (int)argv[1].as_real());
+			res = StringUtility::Format(fmt, argv[1].as_int());
 		else if (strstr(fmt, "f"))
 			res = StringUtility::Format(fmt, argv[1].as_real());
 		else if (strstr(fmt, "s"))

@@ -205,14 +205,13 @@ gstd::value StgPackageScript::Func_SetStageIndex(gstd::script_machine* machine, 
 	ref_count_ptr<StgStageStartData> nextStageData = infoPackage->GetNextStageData();
 	ref_count_ptr<StgStageInformation> infoStage = nextStageData->GetStageInformation();
 
-	int stageIndex = (int)argv[0].as_real();
+	int stageIndex = argv[0].as_int();
 	std::vector<ref_count_ptr<StgStageStartData>> listStage = infoPackage->GetStageDataList();
 	for (size_t iStage = 0; iStage < listStage.size(); iStage++) {
 		ref_count_ptr<StgStageStartData> stageData = listStage[iStage];
 		if (stageIndex == stageData->GetStageInformation()->GetStageIndex())
 			script->RaiseError("Stage index already used.");
 	}
-
 
 	infoStage->SetStageIndex(stageIndex);
 
