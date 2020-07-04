@@ -81,6 +81,7 @@ namespace directx {
 
 		ptr_delete(vertexBufferGrowable_);
 		ptr_delete(indexBufferGrowable_);
+		ptr_delete(vertexBuffer_HWInstancing_);
 	}
 
 	bool VertexBufferManager::Initialize(DirectGraphics* graphics) {
