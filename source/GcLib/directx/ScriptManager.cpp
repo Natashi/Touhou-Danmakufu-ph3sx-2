@@ -284,7 +284,7 @@ void ScriptManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadE
 void ScriptManager::RequestEventAll(int type, const gstd::value* listValue, size_t countArgument) {
 	{
 		for (auto pScript : listScriptRun_) {
-			if (pScript->IsEndScript()) continue;
+			if (pScript->IsEndScript() /*|| pScript->IsPaused()*/) continue;
 			pScript->RequestEvent(type, listValue, countArgument);
 		}
 	}
@@ -292,7 +292,7 @@ void ScriptManager::RequestEventAll(int type, const gstd::value* listValue, size
 	for (auto itrManager = listRelativeManager_.begin(); itrManager != listRelativeManager_.end(); ) {
 		if (auto manager = itrManager->lock()) {
 			for (auto pScript : manager->listScriptRun_) {
-				if (pScript->IsEndScript()) continue;
+				if (pScript->IsEndScript() /*|| pScript->IsPaused()*/) continue;
 				pScript->RequestEvent(type, listValue, countArgument);
 			}
 			itrManager++;
@@ -367,7 +367,7 @@ ManagedScript::ManagedScript() {
 }
 ManagedScript::~ManagedScript() {
 	//listValueEvent_ shouldn't be delete'd, that's the job of whatever was calling RequestEvent,
-	//	doing so will cause a crash if there was a script error in Run().
+	//	doing so will cause a memory corruption + crash if there was a script error in Run().
 
 	//ptr_delete_scalar(listValueEvent_);
 	listValueEventSize_ = 0;
@@ -388,10 +388,10 @@ gstd::value ManagedScript::RequestEvent(int type, const gstd::value* listValue, 
 	}
 
 	//Run() may overwrite these if it invokes another RequestEvent
-	int tEventType = typeEvent_;
-	gstd::value* tArgv = listValueEvent_;
-	size_t tArgc = listValueEventSize_;
-	gstd::value tValue = valueRes_;
+	int prevEventType = typeEvent_;
+	gstd::value* prevArgv = listValueEvent_;
+	size_t prevArgc = listValueEventSize_;
+	gstd::value prevValue = valueRes_;
 
 	typeEvent_ = type;
 	listValueEvent_ = const_cast<value*>(listValue);
@@ -401,10 +401,11 @@ gstd::value ManagedScript::RequestEvent(int type, const gstd::value* listValue, 
 	Run(itrEvent);
 	res = GetResultValue();
 
-	typeEvent_ = tEventType;
-	listValueEvent_ = tArgv;
-	listValueEventSize_ = tArgc;
-	valueRes_ = tValue;
+	//Restore previous values
+	typeEvent_ = prevEventType;
+	listValueEvent_ = prevArgv;
+	listValueEventSize_ = prevArgc;
+	valueRes_ = prevValue;
 
 	return res;
 }
