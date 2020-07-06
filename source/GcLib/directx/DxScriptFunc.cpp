@@ -177,6 +177,7 @@ function const dxFunction[] =
 	{ "ObjRender_SetScaleXYZ", DxScript::Func_ObjRender_SetScaleXYZ, 4 },
 	{ "ObjRender_SetColor", DxScript::Func_ObjRender_SetColor, 4 },
 	{ "ObjRender_SetColorHSV", DxScript::Func_ObjRender_SetColorHSV, 4 },
+	{ "ObjRender_SetColorHex", DxScript::Func_ObjRender_SetColorHex, 2 },
 	{ "ObjRender_GetColor", DxScript::Func_ObjRender_GetColor, 1 },
 	{ "ObjRender_SetAlpha", DxScript::Func_ObjRender_SetAlpha, 2 },
 	{ "ObjRender_GetAlpha", DxScript::Func_ObjRender_GetAlpha, 1 },
@@ -1115,11 +1116,11 @@ gstd::value DxScript::Func_SetFogEnable(gstd::script_machine* machine, int argc,
 }
 gstd::value DxScript::Func_SetFogParam(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	double start = argv[0].as_real();
-	double end = argv[1].as_real();
-	byte r = ColorAccess::ClampColorRet(argv[2].as_real());
-	byte g = ColorAccess::ClampColorRet(argv[3].as_real());
-	byte b = ColorAccess::ClampColorRet(argv[4].as_real());
+	float start = argv[0].as_real();
+	float end = argv[1].as_real();
+	byte r = ColorAccess::ClampColorRet(argv[2].as_int());
+	byte g = ColorAccess::ClampColorRet(argv[3].as_int());
+	byte b = ColorAccess::ClampColorRet(argv[4].as_int());
 	D3DCOLOR color = D3DCOLOR_ARGB(255, r, g, b);
 	script->GetObjectManager()->SetFogParam(true, color, start, end);
 	return value();
@@ -1220,10 +1221,10 @@ gstd::value DxScript::Func_ClearRenderTargetA2(gstd::script_machine* machine, in
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	shared_ptr<Texture> current = graphics->GetRenderTarget();
 
-	byte ca = ColorAccess::ClampColorRet(argv[1].as_real());
-	byte cr = ColorAccess::ClampColorRet(argv[2].as_real());
-	byte cg = ColorAccess::ClampColorRet(argv[3].as_real());
-	byte cb = ColorAccess::ClampColorRet(argv[4].as_real());
+	byte ca = ColorAccess::ClampColorRet(argv[1].as_int());
+	byte cr = ColorAccess::ClampColorRet(argv[2].as_int());
+	byte cg = ColorAccess::ClampColorRet(argv[3].as_int());
+	byte cb = ColorAccess::ClampColorRet(argv[4].as_int());
 
 	IDirect3DDevice9* device = graphics->GetDevice();
 	graphics->SetRenderTarget(texture, false);
@@ -2198,7 +2199,9 @@ value DxScript::Func_ObjRender_SetColorHSV(script_machine* machine, int argc, co
 		D3DCOLOR color = 0xffffffff;
 		ColorAccess::SetColorHSV(color, argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
 
-		obj->SetColor((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+		byte listColor[4];
+		ColorAccess::ToByteArray(color, listColor);
+		obj->SetColor(listColor[1], listColor[2], listColor[3]);
 	}
 	return value();
 }
@@ -2207,8 +2210,9 @@ value DxScript::Func_ObjRender_SetColorHex(script_machine* machine, int argc, co
 	int id = (int)argv[0].as_real();
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		D3DCOLOR color = argv[1].as_int();
-		obj->SetColor((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+		byte listColor[4];
+		ColorAccess::ToByteArray((D3DCOLOR)argv[1].as_int(), listColor);
+		obj->SetColor(listColor[1], listColor[2], listColor[3]);
 	}
 	return value();
 }
@@ -2219,12 +2223,9 @@ value DxScript::Func_ObjRender_GetColor(script_machine* machine, int argc, const
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) color = obj->color_;
 
-	byte listRGB[3] = {
-		(color >> 16) & 0xff,
-		(color >> 8) & 0xff,
-		color & 0xff
-	};
-	return script->CreateRealArrayValue(listRGB, 3U);
+	byte listColor[4];
+	ColorAccess::ToByteArray(color, listColor);
+	return script->CreateRealArrayValue((byte*)(listColor + 1), 3U);
 }
 value DxScript::Func_ObjRender_SetAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;

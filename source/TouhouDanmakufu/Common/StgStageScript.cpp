@@ -1803,8 +1803,9 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		}
 		case INFO_DELAY_COLOR:
 		{
-			byte list[3] = { 0xff, 0xff, 0xff };
-			res = script->CreateRealArrayValue(list, 3U);
+			byte list[4];
+			ColorAccess::ToByteArray(0xffffffff, list);
+			res = script->CreateRealArrayValue((byte*)(list + 1), 3U);
 			break;
 		}
 		case INFO_BLEND:
@@ -1839,13 +1840,9 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		}
 		case INFO_DELAY_COLOR:
 		{
-			D3DCOLOR color = shotData->GetDelayColor();
-			byte list[3] = {
-				(color >> 16) & 0xff,
-				(color >> 8) & 0xff,
-				color & 0xff
-			};
-			res = script->CreateRealArrayValue(list, 3U);
+			byte list[4];
+			ColorAccess::ToByteArray(shotData->GetDelayColor(), list);
+			res = script->CreateRealArrayValue((byte*)(list + 1), 3U);
 			break;
 		}
 		case INFO_BLEND:
