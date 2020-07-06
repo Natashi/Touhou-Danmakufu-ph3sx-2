@@ -34,14 +34,14 @@ namespace gstd {
 	class script_engine;
 	class script_machine;
 
-	typedef value (*callback)(script_machine* machine, int argc, value const* argv);
+	typedef value (*callback)(script_machine* machine, int argc, const value* argv);
 
 	//Breaks IntelliSense for some reason
 #define DNH_FUNCAPI_DECL_(fn) static gstd::value fn (gstd::script_machine* machine, int argc, const gstd::value* argv)
 #define DNH_FUNCAPI_(fn) gstd::value fn (gstd::script_machine* machine, int argc, const gstd::value* argv)
 
 	struct function {
-		char const* name;
+		const char* name;
 		callback func;
 		int arguments;
 	};
@@ -61,7 +61,7 @@ namespace gstd {
 
 		static script_type_manager* get_instance() { return base_; }
 	private:
-		script_type_manager(const script_type_manager&);
+		script_type_manager(const script_type_manager& src);
 
 		std::set<type_data> types;
 		type_data* int_type;
@@ -78,8 +78,8 @@ namespace gstd {
 
 	class script_engine {
 	public:
-		script_engine(const std::string& source, int funcc, function const* funcv);
-		script_engine(const std::vector<char>& source, int funcc, function const* funcv);
+		script_engine(const std::string& source, int funcc, const function* funcv);
+		script_engine(const std::vector<char>& source, int funcc, const function* funcv);
 		virtual ~script_engine();
 
 		void* data;	//クライアント用空間
@@ -152,7 +152,7 @@ namespace gstd {
 			pc_inline_app, pc_inline_cat,
 			pc_inline_cmp_e, pc_inline_cmp_g, pc_inline_cmp_ge, pc_inline_cmp_l, pc_inline_cmp_le, pc_inline_cmp_ne,
 			pc_inline_logic_and, pc_inline_logic_or,
-			pc_inline_cast_int, pc_inline_cast_real, pc_inline_cast_char, pc_inline_cast_bool,
+			pc_inline_cast_var,
 			pc_inline_index_array,
 		};
 
@@ -275,8 +275,8 @@ namespace gstd {
 		int get_current_thread_addr() { return (int)current_thread_index._Ptr; }
 	private:
 		script_machine();
-		script_machine(script_machine const& source);
-		script_machine& operator=(script_machine const& source);
+		script_machine(const script_machine& source);
+		script_machine& operator=(const script_machine& source);
 
 		script_engine* engine;
 
@@ -340,7 +340,7 @@ namespace gstd {
 	template<int num>
 	class constant {
 	public:
-		static value func(script_machine* machine, int argc, value const* argv) {
+		static value func(script_machine* machine, int argc, const value* argv) {
 			return value(script_type_manager::get_real_type(), (double)num);
 		}
 	};
@@ -348,7 +348,7 @@ namespace gstd {
 	template<const double* pVal>
 	class pconstant {
 	public:
-		static value func(script_machine* machine, int argc, value const* argv) {
+		static value func(script_machine* machine, int argc, const value* argv) {
 			return value(script_type_manager::get_real_type(), *pVal);
 		}
 	};

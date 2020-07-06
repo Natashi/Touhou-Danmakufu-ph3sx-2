@@ -16,7 +16,7 @@ namespace gstd {
 		};
 
 		type_data(type_kind k, type_data* t = nullptr) : kind(k), element(t) {}
-		type_data(type_data const& source) : kind(source.kind), element(source.element) {}
+		type_data(const type_data& source) : kind(source.kind), element(source.element) {}
 
 		type_kind get_kind() { return kind; }
 		type_data* get_element() { return element; }

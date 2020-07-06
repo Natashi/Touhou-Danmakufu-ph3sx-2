@@ -408,15 +408,15 @@ void script_scanner::advance() {
 			std::smatch base_match;
 			if (std::regex_match(str_num, base_match, std::regex("0x([0-9a-fA-F]+)"))) {
 				if (has_decimal_part) goto throw_err_no_decimal;
-				real_value = (double)std::strtol(base_match[1].str().c_str(), nullptr, 16);
+				real_value = (double)std::strtoll(base_match[1].str().c_str(), nullptr, 16);
 			}
 			else if (std::regex_match(str_num, base_match, std::regex("0o([0-7]+)"))) {
 				if (has_decimal_part) goto throw_err_no_decimal;
-				real_value = (double)std::strtol(base_match[1].str().c_str(), nullptr, 8);
+				real_value = (double)std::strtoll(base_match[1].str().c_str(), nullptr, 8);
 			}
 			else if (std::regex_match(str_num, base_match, std::regex("0b([0-1]+)"))) {
 				if (has_decimal_part) goto throw_err_no_decimal;
-				real_value = (double)std::strtol(base_match[1].str().c_str(), nullptr, 2);
+				real_value = (double)std::strtoll(base_match[1].str().c_str(), nullptr, 2);
 			}
 			else if (std::regex_match(str_num, base_match, std::regex("[0-9]+(\.[0-9]+)?"))) {
 				real_value = std::strtod(base_match[0].str().c_str(), nullptr);

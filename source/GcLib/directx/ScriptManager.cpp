@@ -346,9 +346,9 @@ const function commonFunction[] =
 	{ "SetScriptArgument", ManagedScript::Func_SetScriptArgument, 3 },
 	{ "GetScriptResult", ManagedScript::Func_GetScriptResult, 1 },
 	{ "SetAutoDeleteObject", ManagedScript::Func_SetAutoDeleteObject, 1 },
-	{ "NotifyEvent", ManagedScript::Func_NotifyEvent, -3 },
-	{ "NotifyEventOwn", ManagedScript::Func_NotifyEventOwn, -2 },
-	{ "NotifyEventAll", ManagedScript::Func_NotifyEventAll, -2 },
+	{ "NotifyEvent", ManagedScript::Func_NotifyEvent, -4 },			//2 fixed + ... -> 3 minimum
+	{ "NotifyEventOwn", ManagedScript::Func_NotifyEventOwn, -3 },	//1 fixed + ... -> 2 minimum
+	{ "NotifyEventAll", ManagedScript::Func_NotifyEventAll, -3 },	//1 fixed + ... -> 2 minimum
 	{ "PauseScript", ManagedScript::Func_PauseScript, 2 },
 };
 ManagedScript::ManagedScript() {
@@ -508,9 +508,7 @@ gstd::value ManagedScript::Func_GetScriptResult(script_machine* machine, int arg
 }
 gstd::value ManagedScript::Func_SetAutoDeleteObject(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
-
-	bool bAutoDelete = argv[0].as_boolean();
-	script->SetAutoDeleteObject(bAutoDelete);
+	script->SetAutoDeleteObject(argv[0].as_boolean());
 	return value();
 }
 gstd::value ManagedScript::Func_NotifyEvent(script_machine* machine, int argc, const value* argv) {

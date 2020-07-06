@@ -43,7 +43,7 @@ double fmodl2(double i, double j) {
 /* operations */
 
 #define SCRIPT_DECLARE_OP(F) \
-value F(script_machine* machine, int argc, value const* argv) { \
+value F(script_machine* machine, int argc, const value* argv) { \
 	try { \
 		return _script_##F(argc, argv); \
 	} \
@@ -54,7 +54,7 @@ value F(script_machine* machine, int argc, value const* argv) { \
 	} \
 }
 
-value __script_perform_op_array(const value* v_left, const value* v_right, value (*func)(int, value const*)) {
+value __script_perform_op_array(const value* v_left, const value* v_right, value (*func)(int, const value*)) {
 	value result;
 	std::vector<value> resArr;
 
@@ -84,7 +84,7 @@ value __script_perform_op_array(const value* v_left, const value* v_right, value
 	return result;
 }
 
-value _script_add(int argc, value const* argv) {
+value _script_add(int argc, const value* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_add);
 	else
@@ -92,7 +92,7 @@ value _script_add(int argc, value const* argv) {
 }
 SCRIPT_DECLARE_OP(add);
 
-value _script_subtract(int argc, value const* argv) {
+value _script_subtract(int argc, const value* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_subtract);
 	else
@@ -100,7 +100,7 @@ value _script_subtract(int argc, value const* argv) {
 }
 SCRIPT_DECLARE_OP(subtract);
 
-value _script_multiply(int argc, value const* argv) {
+value _script_multiply(int argc, const value* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_multiply);
 	else
@@ -108,7 +108,7 @@ value _script_multiply(int argc, value const* argv) {
 }
 SCRIPT_DECLARE_OP(multiply);
 
-value _script_divide(int argc, value const* argv) {
+value _script_divide(int argc, const value* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_divide);
 	else
@@ -116,7 +116,7 @@ value _script_divide(int argc, value const* argv) {
 }
 SCRIPT_DECLARE_OP(divide);
 
-value _script_remainder_(int argc, value const* argv) {
+value _script_remainder_(int argc, const value* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_remainder_);
 	else
@@ -124,13 +124,13 @@ value _script_remainder_(int argc, value const* argv) {
 }
 SCRIPT_DECLARE_OP(remainder_);
 
-value modc(script_machine* machine, int argc, value const* argv) {
+value modc(script_machine* machine, int argc, const value* argv) {
 	double x = argv[0].as_real();
 	double y = argv[1].as_real();
 	return value(script_type_manager::get_real_type(), fmod(x, y));
 }
 
-value _script_negative(int argc, value const* argv) {
+value _script_negative(int argc, const value* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array) {
 		value result;
 		std::vector<value> resArr;
@@ -146,7 +146,7 @@ value _script_negative(int argc, value const* argv) {
 }
 SCRIPT_DECLARE_OP(negative);
 
-value _script_power(int argc, value const* argv) {
+value _script_power(int argc, const value* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
 		return __script_perform_op_array(&argv[0], &argv[1], _script_power);
 	else
@@ -154,7 +154,7 @@ value _script_power(int argc, value const* argv) {
 }
 SCRIPT_DECLARE_OP(power);
 
-value _script_compare(int argc, value const* argv) {
+value _script_compare(int argc, const value* argv) {
 	if (argv[0].get_type() == argv[1].get_type()) {
 		int r = 0;
 
@@ -215,7 +215,7 @@ value _script_compare(int argc, value const* argv) {
 }
 SCRIPT_DECLARE_OP(compare);
 
-value predecessor(script_machine* machine, int argc, value const* argv) {
+value predecessor(script_machine* machine, int argc, const value* argv) {
 	assert(argc == 1);
 	assert(argv->has_data());
 	switch (argv->get_type()->get_kind()) {
@@ -249,7 +249,7 @@ value predecessor(script_machine* machine, int argc, value const* argv) {
 	}
 }
 
-value successor(script_machine* machine, int argc, value const* argv) {
+value successor(script_machine* machine, int argc, const value* argv) {
 	assert(argc == 1);
 	assert(argv->has_data());
 	switch (argv->get_type()->get_kind()) {
@@ -283,12 +283,12 @@ value successor(script_machine* machine, int argc, value const* argv) {
 	}
 }
 
-value _script_not_(int argc, value const* argv) {
+value _script_not_(int argc, const value* argv) {
 	return value(script_type_manager::get_boolean_type(), !argv->as_boolean());
 }
 SCRIPT_DECLARE_OP(not_);
 
-value length(script_machine* machine, int argc, value const* argv) {
+value length(script_machine* machine, int argc, const value* argv) {
 	assert(argc == 1);
 	return value(script_type_manager::get_real_type(), (double)argv->length_as_array());
 }
@@ -307,7 +307,7 @@ bool _index_check(script_machine* machine, type_data* arg0_type, size_t arg0_siz
 	return true;
 }
 
-const value& index(script_machine* machine, int argc, value const* argv) {
+const value& index(script_machine* machine, int argc, const value* argv) {
 	assert(argc == 2);
 
 	double index = argv[1].as_real();
@@ -317,7 +317,7 @@ const value& index(script_machine* machine, int argc, value const* argv) {
 	return argv->index_as_array(index);
 }
 
-value slice(script_machine* machine, int argc, value const* argv) {
+value slice(script_machine* machine, int argc, const value* argv) {
 	assert(argc == 3);
 
 	if (argv->get_type()->get_kind() != type_data::type_kind::tk_array) {
@@ -355,7 +355,7 @@ value slice(script_machine* machine, int argc, value const* argv) {
 	return result;
 }
 
-value erase(script_machine* machine, int argc, value const* argv) {
+value erase(script_machine* machine, int argc, const value* argv) {
 	assert(argc == 2);
 
 	if (argv->get_type()->get_kind() != type_data::type_kind::tk_array) {
@@ -400,7 +400,7 @@ bool script_machine::append_check(size_t arg0_size, type_data* arg0_type, type_d
 	}
 	return true;
 }
-value append(script_machine* machine, int argc, value const* argv) {
+value append(script_machine* machine, int argc, const value* argv) {
 	assert(argc == 2);
 
 	machine->append_check(argv->length_as_array(), argv->get_type(), argv[1].get_type());
@@ -410,7 +410,7 @@ value append(script_machine* machine, int argc, value const* argv) {
 	return result;
 }
 
-value concatenate(script_machine* machine, int argc, value const* argv) {
+value concatenate(script_machine* machine, int argc, const value* argv) {
 	assert(argc == 2);
 
 	if (argv[0].get_type()->get_kind() != type_data::type_kind::tk_array 
@@ -432,31 +432,31 @@ value concatenate(script_machine* machine, int argc, value const* argv) {
 	return result;
 }
 
-value round(script_machine* machine, int argc, value const* argv) {
+value round(script_machine* machine, int argc, const value* argv) {
 	double r = std::floor(argv->as_real() + 0.5);
 	return value(machine->get_engine()->get_real_type(), r);
 }
 
-value truncate(script_machine* machine, int argc, value const* argv) {
+value truncate(script_machine* machine, int argc, const value* argv) {
 	double r = argv->as_real();
 	r = (r > 0) ? std::floor(r) : std::ceil(r);
 	return value(script_type_manager::get_real_type(), r);
 }
 
-value ceil(script_machine* machine, int argc, value const* argv) {
+value ceil(script_machine* machine, int argc, const value* argv) {
 	return value(script_type_manager::get_real_type(), std::ceil(argv->as_real()));
 }
 
-value floor(script_machine* machine, int argc, value const* argv) {
+value floor(script_machine* machine, int argc, const value* argv) {
 	return value(script_type_manager::get_real_type(), std::floor(argv->as_real()));
 }
 
-value _script_absolute(int argc, value const* argv) {
+value _script_absolute(int argc, const value* argv) {
 	return value(script_type_manager::get_real_type(), std::fabs(argv->as_real()));
 }
 SCRIPT_DECLARE_OP(absolute);
 
-value assert_(script_machine* machine, int argc, value const* argv) {
+value assert_(script_machine* machine, int argc, const value* argv) {
 	assert(argc == 2);
 	if (!argv[0].as_boolean()) {
 		machine->raise_error(argv[1].as_string());
@@ -471,42 +471,42 @@ int64_t bitDoubleToInt(double val) {
 		return INT64_MIN;
 	return static_cast<int64_t>(val);
 }
-value bitwiseNot(script_machine* machine, int argc, value const* argv) {
+value bitwiseNot(script_machine* machine, int argc, const value* argv) {
 	int64_t val = bitDoubleToInt(argv[0].as_real());
 	return value(script_type_manager::get_real_type(), (double)(~val));
 }
-value bitwiseAnd(script_machine* machine, int argc, value const* argv) {
+value bitwiseAnd(script_machine* machine, int argc, const value* argv) {
 	int64_t val1 = bitDoubleToInt(argv[0].as_real());
 	int64_t val2 = bitDoubleToInt(argv[1].as_real());
 	return value(script_type_manager::get_real_type(), (double)(val1 & val2));
 }
-value bitwiseOr(script_machine* machine, int argc, value const* argv) {
+value bitwiseOr(script_machine* machine, int argc, const value* argv) {
 	int64_t val1 = bitDoubleToInt(argv[0].as_real());
 	int64_t val2 = bitDoubleToInt(argv[1].as_real());
 	return value(script_type_manager::get_real_type(), (double)(val1 | val2));
 }
-value bitwiseXor(script_machine* machine, int argc, value const* argv) {
+value bitwiseXor(script_machine* machine, int argc, const value* argv) {
 	int64_t val1 = bitDoubleToInt(argv[0].as_real());
 	int64_t val2 = bitDoubleToInt(argv[1].as_real());
 	return value(script_type_manager::get_real_type(), (double)(val1 ^ val2));
 }
-value bitwiseLeft(script_machine* machine, int argc, value const* argv) {
+value bitwiseLeft(script_machine* machine, int argc, const value* argv) {
 	int64_t val1 = bitDoubleToInt(argv[0].as_real());
 	size_t val2 = argv[1].as_real();
 	return value(script_type_manager::get_real_type(), (double)(val1 << val2));
 }
-value bitwiseRight(script_machine* machine, int argc, value const* argv) {
+value bitwiseRight(script_machine* machine, int argc, const value* argv) {
 	int64_t val1 = bitDoubleToInt(argv[0].as_real());
 	size_t val2 = argv[1].as_real();
 	return value(script_type_manager::get_real_type(), (double)(val1 >> val2));
 }
 
-value script_debugBreak(script_machine* machine, int argc, value const* argv) {
+value script_debugBreak(script_machine* machine, int argc, const value* argv) {
 	DebugBreak();
 	return value();
 }
 
-function const operations[] = {
+const function operations[] = {
 	//{ "true", true_, 0 },
 	//{ "false", false_, 0 },
 	{ "length", length, 1 },
@@ -578,7 +578,7 @@ public:
 	int error_line;
 	std::map<std::string, script_engine::block*> events;
 
-	parser(script_engine* e, script_scanner* s, int funcc, function const* funcv);
+	parser(script_engine* e, script_scanner* s, int funcc, const function* funcv);
 
 	virtual ~parser() {}
 
@@ -594,21 +594,22 @@ public:
 	void parse_expression(script_engine::block* block, script_scanner* script_scanner);
 
 	int parse_arguments(script_engine::block* block, script_scanner* script_scanner);
+	bool parse_single_statement(script_engine::block* block, script_scanner* script_scanner);
 	void parse_statements(script_engine::block* block, script_scanner* script_scanner, 
-		token_kind statement_terminator = token_kind::tk_semicolon, bool single_parse = false);
+		token_kind statement_terminator = token_kind::tk_semicolon);
 	size_t parse_inline_block(script_engine::block** blockRes, script_engine::block* block, script_scanner* script_scanner, 
 		block_kind kind, bool allow_single = false);
-	void parse_block(script_engine::block* block, script_scanner* script_scanner, std::vector<std::string> const* args, 
+	void parse_block(script_engine::block* block, script_scanner* script_scanner, const std::vector<std::string>* args,
 		bool adding_result, bool allow_single = false);
 private:
-	void register_function(function const& func);
-	symbol* search(std::string const& name, scope_t** ptrScope = nullptr);
-	symbol* search(std::string const& name, int argc, scope_t** ptrScope = nullptr);
-	symbol* search_in(scope_t* scope, std::string const& name);
-	symbol* search_in(scope_t* scope, std::string const& name, int argc);
+	void register_function(const function& func);
+	symbol* search(const std::string& name, scope_t** ptrScope = nullptr);
+	symbol* search(const std::string& name, int argc, scope_t** ptrScope = nullptr);
+	symbol* search_in(scope_t* scope, const std::string& name);
+	symbol* search_in(scope_t* scope, const std::string& name, int argc);
 	symbol* search_result();
-	int scan_current_scope(int level, std::vector<std::string> const* args, bool adding_result, int initVar = 0);
-	void write_operation(script_engine::block* block, script_scanner* lex, char const* name, int clauses);
+	int scan_current_scope(int level, const std::vector<std::string>* args, bool adding_result, int initVar = 0);
+	void write_operation(script_engine::block* block, script_scanner* lex, const char* name, int clauses);
 	void write_operation(script_engine::block* block, script_scanner* lex, const symbol* s, int clauses);
 
 	void optimize_expression(script_engine::block* blockDst, script_engine::block* blockSrc);
@@ -622,7 +623,7 @@ private:
 			throw parser_error(error);
 	}
 	inline static bool test_variadic(int require, int argc) {
-		return (require <= -2) && (argc >= -require);
+		return (require <= -1) && (argc >= (-require - 1));
 	}
 
 	inline static bool IsDeclToken(token_kind& tk) {
@@ -659,7 +660,7 @@ void parser::scope_t::singular_insert(std::string name, symbol& s, int argc) {
 	this->insert(std::make_pair(name, s));
 }
 
-parser::parser(script_engine* e, script_scanner* s, int funcc, function const* funcv) : engine(e), _lex(s), frame(), error(false) {
+parser::parser(script_engine* e, script_scanner* s, int funcc, const function* funcv) : engine(e), _lex(s), frame(), error(false) {
 	frame.push_back(scope_t(block_kind::bk_normal));
 
 	for (size_t i = 0; i < sizeof(operations) / sizeof(function); ++i)
@@ -684,7 +685,7 @@ parser::parser(script_engine* e, script_scanner* s, int funcc, function const* f
 	}
 }
 
-inline void parser::register_function(function const& func) {
+inline void parser::register_function(const function& func) {
 	symbol s;
 	s.level = 0;
 	s.sub = engine->new_block(0, block_kind::bk_function);
@@ -697,7 +698,7 @@ inline void parser::register_function(function const& func) {
 	frame[0].singular_insert(func.name, s, func.arguments);
 }
 
-parser::symbol* parser::search(std::string const& name, scope_t** ptrScope) {
+parser::symbol* parser::search(const std::string& name, scope_t** ptrScope) {
 	for (auto itr = frame.rbegin(); itr != frame.rend(); ++itr) {
 		scope_t* scope = &*itr;
 		if (ptrScope) *ptrScope = scope;
@@ -709,7 +710,7 @@ parser::symbol* parser::search(std::string const& name, scope_t** ptrScope) {
 	}
 	return nullptr;
 }
-parser::symbol* parser::search(std::string const& name, int argc, scope_t** ptrScope) {
+parser::symbol* parser::search(const std::string& name, int argc, scope_t** ptrScope) {
 	for (auto itr = frame.rbegin(); itr != frame.rend(); ++itr) {
 		scope_t* scope = &*itr;
 		if (ptrScope) *ptrScope = scope;
@@ -732,13 +733,13 @@ parser::symbol* parser::search(std::string const& name, int argc, scope_t** ptrS
 	}
 	return nullptr;
 }
-parser::symbol* parser::search_in(scope_t* scope, std::string const& name) {
+parser::symbol* parser::search_in(scope_t* scope, const std::string& name) {
 	auto itrSymbol = scope->find(name);
 	if (itrSymbol != scope->end())
 		return &(itrSymbol->second);
 	return nullptr;
 }
-parser::symbol* parser::search_in(scope_t* scope, std::string const& name, int argc) {
+parser::symbol* parser::search_in(scope_t* scope, const std::string& name, int argc) {
 	if (scope->find(name) == scope->end()) return nullptr;
 
 	auto itrSymbol = scope->equal_range(name);
@@ -768,7 +769,7 @@ parser::symbol* parser::search_result() {
 	return nullptr;
 }
 
-int parser::scan_current_scope(int level, std::vector<std::string> const* args, bool adding_result, int initVar) {
+int parser::scan_current_scope(int level, const std::vector<std::string>* args, bool adding_result, int initVar) {
 	//Scans and defines scope variables and functions/tasks/subs
 
 	script_scanner lex2(*_lex);
@@ -945,7 +946,7 @@ int parser::scan_current_scope(int level, std::vector<std::string> const* args, 
 	return (var - initVar);
 }
 
-void parser::write_operation(script_engine::block* block, script_scanner* lex, char const* name, int clauses) {
+void parser::write_operation(script_engine::block* block, script_scanner* lex, const char* name, int clauses) {
 	symbol* s = search(name);
 	assert(s != nullptr);
 	{
@@ -1051,24 +1052,24 @@ continue_as_variadic:
 	case token_kind::tk_cast_char:
 	case token_kind::tk_cast_bool:
 	{
-		command_kind c;
+		type_data::type_kind target = type_data::type_kind::tk_null;
 		switch (lex->next) {
 		case token_kind::tk_cast_int:
-			c = command_kind::pc_inline_cast_int;
+			target = type_data::type_kind::tk_int;
 			break;
 		case token_kind::tk_cast_real:
-			c = command_kind::pc_inline_cast_real;
+			target = type_data::type_kind::tk_real;
 			break;
 		case token_kind::tk_cast_char:
-			c = command_kind::pc_inline_cast_char;
+			target = type_data::type_kind::tk_char;
 			break;
 		case token_kind::tk_cast_bool:
-			c = command_kind::pc_inline_cast_bool;
+			target = type_data::type_kind::tk_boolean;
 			break;
 		}
 		lex->advance();
 		parse_parentheses(block, lex);
-		block->codes.push_back(code(lex->line, c));
+		block->codes.push_back(code(lex->line, command_kind::pc_inline_cast_var, (size_t)target));
 		return;
 	}
 	case token_kind::tk_open_bra:
@@ -1290,9 +1291,7 @@ int parser::parse_arguments(script_engine::block* block, script_scanner* lex) {
 	return result;
 }
 
-void parser::parse_statements(script_engine::block* block, script_scanner* lex, 
-	token_kind statement_terminator, bool single_parse) 
-{
+bool parser::parse_single_statement(script_engine::block* block, script_scanner* lex) {
 	auto assert_const = [](symbol* s, std::string& name) {
 		if (!s->can_modify) {
 			std::string error = StringUtility::Format("\"%s\": ", name.c_str());
@@ -1321,75 +1320,55 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 		return command_kind::pc_inline_add_asi;
 	};
 
-	for (; ; ) {
-		bool need_semicolon = true;
+	bool need_semicolon = true;
 
+	switch (lex->next) {
+	case token_kind::tk_word:
+	{
+		std::string name = lex->word;
+
+		scope_t* resScope = nullptr;
+		symbol* s = search(name, &resScope);
+		parser_assert(s, StringUtility::Format("%s is not defined.\r\n", name.c_str()));
+
+		lex->advance();
 		switch (lex->next) {
-		case token_kind::tk_word:
-		{
-			std::string name = lex->word;
-
-			scope_t* resScope = nullptr;
-			symbol* s = search(name, &resScope);
-			parser_assert(s, StringUtility::Format("%s is not defined.\r\n", name.c_str()));
+		case token_kind::tk_assign:
+			assert_const(s, name);
 
 			lex->advance();
-			switch (lex->next) {
-			case token_kind::tk_assign:
-				assert_const(s, name);
+			parse_expression(block, lex);
+			block->codes.push_back(code(lex->line, command_kind::pc_assign, s->level, s->variable, name));
+			break;
+		case token_kind::tk_open_bra:
+			assert_const(s, name);
 
+			block->codes.push_back(code(lex->line, command_kind::pc_push_variable, s->level, s->variable, name));
+			while (lex->next == token_kind::tk_open_bra) {
 				lex->advance();
 				parse_expression(block, lex);
-				block->codes.push_back(code(lex->line, command_kind::pc_assign, s->level, s->variable, name));
+
+				parser_assert(lex->next == token_kind::tk_close_bra, "\"]\" is required.\r\n");
+				lex->advance();
+
+				block->codes.push_back(code(lex->line, command_kind::pc_inline_index_array, (size_t)true));
+			}
+
+			switch (lex->next) {
+			case token_kind::tk_assign:
+				lex->advance();
+				parse_expression(block, lex);
+				block->codes.push_back(code(lex->line, command_kind::pc_assign_writable, 0, 0, name));
 				break;
-			case token_kind::tk_open_bra:
-				assert_const(s, name);
-
-				block->codes.push_back(code(lex->line, command_kind::pc_push_variable, s->level, s->variable, name));
-				while (lex->next == token_kind::tk_open_bra) {
-					lex->advance();
-					parse_expression(block, lex);
-
-					parser_assert(lex->next == token_kind::tk_close_bra, "\"]\" is required.\r\n");
-					lex->advance();
-
-					block->codes.push_back(code(lex->line, command_kind::pc_inline_index_array, (size_t)true));
-				}
-
-				switch (lex->next) {
-				case token_kind::tk_assign:
-					lex->advance();
-					parse_expression(block, lex);
-					block->codes.push_back(code(lex->line, command_kind::pc_assign_writable, 0, 0, name));
-					break;
-				case token_kind::tk_inc:
-				case token_kind::tk_dec:
-				{
-					command_kind f = (lex->next == token_kind::tk_inc) ? command_kind::pc_inline_inc :
-						command_kind::pc_inline_dec;
-					lex->advance();
-					block->codes.push_back(code(lex->line, f, -1, 0, name));
-					break;
-				}
-				case token_kind::tk_add_assign:
-				case token_kind::tk_subtract_assign:
-				case token_kind::tk_multiply_assign:
-				case token_kind::tk_divide_assign:
-				case token_kind::tk_remainder_assign:
-				case token_kind::tk_power_assign:
-				{
-					command_kind f = get_op_assign_command(lex->next);
-					lex->advance();
-					parse_expression(block, lex);
-					block->codes.push_back(code(lex->line, f, -1, 0, name));
-					break;
-				}
-				default:
-					parser_assert(false, "\"=\" is required.\r\n");
-					break;
-				}
-
+			case token_kind::tk_inc:
+			case token_kind::tk_dec:
+			{
+				command_kind f = (lex->next == token_kind::tk_inc) ? command_kind::pc_inline_inc :
+					command_kind::pc_inline_dec;
+				lex->advance();
+				block->codes.push_back(code(lex->line, f, -1, 0, name));
 				break;
+			}
 			case token_kind::tk_add_assign:
 			case token_kind::tk_subtract_assign:
 			case token_kind::tk_multiply_assign:
@@ -1397,135 +1376,103 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 			case token_kind::tk_remainder_assign:
 			case token_kind::tk_power_assign:
 			{
-				assert_const(s, name);
-
 				command_kind f = get_op_assign_command(lex->next);
 				lex->advance();
 				parse_expression(block, lex);
-				block->codes.push_back(code(lex->line, f, s->level, s->variable, name));
-
-				break;
-			}
-			case token_kind::tk_inc:
-			case token_kind::tk_dec:
-			{
-				assert_const(s, name);
-
-				command_kind f = (lex->next == token_kind::tk_inc) ? command_kind::pc_inline_inc : command_kind::pc_inline_dec;
-				lex->advance();
-				block->codes.push_back(code(lex->line, f, s->level, s->variable, name));
-
+				block->codes.push_back(code(lex->line, f, -1, 0, name));
 				break;
 			}
 			default:
-			{
-				parser_assert(s->sub, "A variable cannot be called as if it was a function, a task, or a sub.\r\n");
-
-				int argc = parse_arguments(block, lex);
-
-				if (!test_variadic(s->sub->arguments, argc)) {
-					s = search_in(resScope, name, argc);
-					parser_assert(s, StringUtility::Format("No matching overload for %s with %d arguments was found.\r\n",
-						name.c_str(), argc));
-				}
-
-				block->codes.push_back(code(lex->line, command_kind::pc_call, s->sub, argc));
-
+				parser_assert(false, "\"=\" is required.\r\n");
 				break;
 			}
-			}
+
+			break;
+		case token_kind::tk_add_assign:
+		case token_kind::tk_subtract_assign:
+		case token_kind::tk_multiply_assign:
+		case token_kind::tk_divide_assign:
+		case token_kind::tk_remainder_assign:
+		case token_kind::tk_power_assign:
+		{
+			assert_const(s, name);
+
+			command_kind f = get_op_assign_command(lex->next);
+			lex->advance();
+			parse_expression(block, lex);
+			block->codes.push_back(code(lex->line, f, s->level, s->variable, name));
 
 			break;
 		}
-		case token_kind::tk_const:
-		case token_kind::tk_decl_real:
-		//case token_kind::tk_decl_char:
-		//case token_kind::tk_decl_bool:
-		//case token_kind::tk_decl_string:
-		case token_kind::tk_decl_auto:
+		case token_kind::tk_inc:
+		case token_kind::tk_dec:
 		{
+			assert_const(s, name);
+
+			command_kind f = (lex->next == token_kind::tk_inc) ? command_kind::pc_inline_inc : command_kind::pc_inline_dec;
 			lex->advance();
-			parser_assert(lex->next == token_kind::tk_word, "Variable name is required.\r\n");
-
-			std::string name = lex->word;
-
-			lex->advance();
-			if (lex->next == token_kind::tk_assign) {
-				symbol* s = search(name);
-
-				lex->advance();
-				parse_expression(block, lex);
-				block->codes.push_back(code(lex->line, command_kind::pc_assign, s->level, s->variable, name));
-			}
+			block->codes.push_back(code(lex->line, f, s->level, s->variable, name));
 
 			break;
 		}
-		//"local" can be omitted to make C-style blocks
-		case token_kind::tk_LOCAL:
-		case token_kind::tk_open_cur:
-			if (lex->next == token_kind::tk_LOCAL) lex->advance();
-			parse_inline_block(nullptr, block, lex, block_kind::bk_normal, false);
-			need_semicolon = false;
-			break;
-		case token_kind::tk_LOOP:
+		default:
 		{
-			lex->advance();
-			size_t ip_begin = block->codes.size();
+			parser_assert(s->sub, "A variable cannot be called as if it was a function, a task, or a sub.\r\n");
 
-			if (lex->next == token_kind::tk_open_par) {
-				parse_parentheses(block, lex);
-				size_t ip = block->codes.size();
-				{
-					script_engine::block tmp(block->level, block_kind::bk_normal);
+			int argc = parse_arguments(block, lex);
 
-					tmp.codes.push_back(code(lex->line, command_kind::pc_loop_count));
-
-					script_engine::block* childBlock = nullptr;
-					size_t childSize = parse_inline_block(&childBlock, &tmp, lex, block_kind::bk_loop, true);
-
-					tmp.codes.push_back(code(lex->line, command_kind::pc_continue_marker));
-					tmp.codes.push_back(code(lex->line, command_kind::pc_loop_back, ip));
-					tmp.codes.push_back(code(lex->line, command_kind::pc_pop, 1));
-
-					//Try to optimize looped yield to a wait
-					if (childSize == 1U && childBlock->codes[0].command == command_kind::pc_yield) {
-						engine->blocks.pop_back();
-						block->codes.push_back(code(lex->line, command_kind::pc_wait));
-					}
-					else if (childSize == 0U) {
-						//Empty loop, discard everything
-						while (block->codes.size() > ip_begin)
-							block->codes.pop_back();
-					}
-					else {
-						block->codes.insert(block->codes.end(), tmp.codes.begin(), tmp.codes.end());
-					}
-				}
-			}
-			else {
-				size_t ip = block->codes.size();
-				size_t blockSize = parse_inline_block(nullptr, block, lex, block_kind::bk_loop, true);
-				block->codes.push_back(code(lex->line, command_kind::pc_continue_marker));
-				block->codes.push_back(code(lex->line, command_kind::pc_loop_back, ip));
-
-				if (blockSize == 0U) {
-					while (block->codes.size() > ip_begin)
-						block->codes.pop_back();
-				}
+			if (!test_variadic(s->sub->arguments, argc)) {
+				s = search_in(resScope, name, argc);
+				parser_assert(s, StringUtility::Format("No matching overload for %s with %d arguments was found.\r\n",
+					name.c_str(), argc));
 			}
 
-			need_semicolon = false;
+			block->codes.push_back(code(lex->line, command_kind::pc_call, s->sub, argc));
+
 			break;
 		}
-		case token_kind::tk_TIMES:
-		{
-			lex->advance();
-			size_t ip_begin = block->codes.size();
+		}
 
+		break;
+	}
+	case token_kind::tk_const:
+	case token_kind::tk_decl_real:
+	//case token_kind::tk_decl_char:
+	//case token_kind::tk_decl_bool:
+	//case token_kind::tk_decl_string:
+	case token_kind::tk_decl_auto:
+	{
+		lex->advance();
+		parser_assert(lex->next == token_kind::tk_word, "Variable name is required.\r\n");
+
+		std::string name = lex->word;
+
+		lex->advance();
+		if (lex->next == token_kind::tk_assign) {
+			symbol* s = search(name);
+
+			lex->advance();
+			parse_expression(block, lex);
+			block->codes.push_back(code(lex->line, command_kind::pc_assign, s->level, s->variable, name));
+		}
+
+		break;
+	}
+	//"local" can be omitted to make C-style blocks
+	case token_kind::tk_LOCAL:
+	case token_kind::tk_open_cur:
+		if (lex->next == token_kind::tk_LOCAL) lex->advance();
+		parse_inline_block(nullptr, block, lex, block_kind::bk_normal, false);
+		need_semicolon = false;
+		break;
+	case token_kind::tk_LOOP:
+	{
+		lex->advance();
+		size_t ip_begin = block->codes.size();
+
+		if (lex->next == token_kind::tk_open_par) {
 			parse_parentheses(block, lex);
 			size_t ip = block->codes.size();
-			if (lex->next == token_kind::tk_LOOP)
-				lex->advance();
 			{
 				script_engine::block tmp(block->level, block_kind::bk_normal);
 
@@ -1552,532 +1499,586 @@ void parser::parse_statements(script_engine::block* block, script_scanner* lex,
 					block->codes.insert(block->codes.end(), tmp.codes.begin(), tmp.codes.end());
 				}
 			}
-
-			need_semicolon = false;
-			break;
 		}
-		case token_kind::tk_WHILE:
-		{
-			lex->advance();
+		else {
 			size_t ip = block->codes.size();
-
-			parse_parentheses(block, lex);
-			if (lex->next == token_kind::tk_LOOP)
-				lex->advance();
-
-			block->codes.push_back(code(lex->line, command_kind::pc_loop_if));
-
-			size_t newBlockSize = parse_inline_block(nullptr, block, lex, block_kind::bk_loop, true);
-
+			size_t blockSize = parse_inline_block(nullptr, block, lex, block_kind::bk_loop, true);
 			block->codes.push_back(code(lex->line, command_kind::pc_continue_marker));
 			block->codes.push_back(code(lex->line, command_kind::pc_loop_back, ip));
 
-			if (newBlockSize == 0U) {
-				while (block->codes.size() > ip)
+			if (blockSize == 0U) {
+				while (block->codes.size() > ip_begin)
 					block->codes.pop_back();
 			}
-
-			need_semicolon = false;
-			break;
 		}
-		case token_kind::tk_FOR:
-		{
+
+		need_semicolon = false;
+		break;
+	}
+	case token_kind::tk_TIMES:
+	{
+		lex->advance();
+		size_t ip_begin = block->codes.size();
+
+		parse_parentheses(block, lex);
+		size_t ip = block->codes.size();
+		if (lex->next == token_kind::tk_LOOP)
 			lex->advance();
+		{
+			script_engine::block tmp(block->level, block_kind::bk_normal);
 
-			size_t ip_for_begin = block->codes.size();
+			tmp.codes.push_back(code(lex->line, command_kind::pc_loop_count));
 
-			if (lex->next == token_kind::tk_EACH) {				//Foreach loop
-				lex->advance();
-				parser_assert(lex->next == token_kind::tk_open_par, "\"(\" is required.\r\n");
+			script_engine::block* childBlock = nullptr;
+			size_t childSize = parse_inline_block(&childBlock, &tmp, lex, block_kind::bk_loop, true);
 
-				lex->advance();
-				if (lex->next == token_kind::tk_decl_auto) lex->advance();
-				else if (lex->next == token_kind::tk_const)
-					parser_assert(false, "The counter variable cannot be const.\r\n");
+			tmp.codes.push_back(code(lex->line, command_kind::pc_continue_marker));
+			tmp.codes.push_back(code(lex->line, command_kind::pc_loop_back, ip));
+			tmp.codes.push_back(code(lex->line, command_kind::pc_pop, 1));
 
-				parser_assert(lex->next == token_kind::tk_word, "Variable name is required.\r\n");
-
-				std::string feIdentifier = lex->word;
-
-				lex->advance();
-				parser_assert(lex->next == token_kind::tk_IN || lex->next == token_kind::tk_colon,
-					"\"in\" or a colon is required.\r\n");
-				lex->advance();
-
-				//The array
-				parse_expression(block, lex);
-
-				parser_assert(lex->next == token_kind::tk_close_par, "\")\" is required.\r\n");
-				lex->advance();
-
-				if (lex->next == token_kind::tk_LOOP) lex->advance();
-
-				//The counter
-				block->codes.push_back(code(lex->line, command_kind::pc_push_value,
-					value(engine->get_real_type(), 0.0)));
-
-				size_t ip = block->codes.size();
-
-				block->codes.push_back(code(lex->line, command_kind::pc_for_each_and_push_first));
-
-				script_engine::block* b = engine->new_block(block->level + 1, block_kind::bk_loop);
-				std::vector<std::string> counter;
-				counter.push_back(feIdentifier);
-				parse_block(b, lex, &counter, false, true);
-
-				//block->codes.push_back(code(lex->line, command_kind::pc_dup_n, 1));
-				block->codes.push_back(code(lex->line, command_kind::pc_call, b, 1));
-				block->codes.push_back(code(lex->line, command_kind::pc_loop_back, ip));
-
-				//Pop twice for the array and the counter
-				block->codes.push_back(code(lex->line, command_kind::pc_pop, 2));
-
-				if (b->codes.size() == 1U) {	//1 for pc_assign
-					engine->blocks.pop_back();
-					while (block->codes.size() > ip_for_begin)
-						block->codes.pop_back();
-				}
+			//Try to optimize looped yield to a wait
+			if (childSize == 1U && childBlock->codes[0].command == command_kind::pc_yield) {
+				engine->blocks.pop_back();
+				block->codes.push_back(code(lex->line, command_kind::pc_wait));
 			}
-			else if (lex->next == token_kind::tk_open_par) {	//Regular for loop
-				lex->advance();
-
-				bool isNewVar = false;
-				bool isNewVarConst = false;
-				std::string newVarName = "";
-				script_scanner lex_s1(*lex);
-				if (IsDeclToken(lex->next) || lex->next == token_kind::tk_const) {
-					isNewVar = true;
-					isNewVarConst = lex->next == token_kind::tk_const;
-					lex->advance();
-					parser_assert(lex->next == token_kind::tk_word, "Variable name is required.\r\n");
-					newVarName = lex->word;
-				}
-
-				while (lex->next != token_kind::tk_semicolon) lex->advance();
-				lex->advance();
-
-				bool hasExpr = true;
-				if (lex->next == token_kind::tk_semicolon) hasExpr = false;
-
-				script_scanner lex_s2(*lex);
-
-				while (lex->next != token_kind::tk_semicolon) lex->advance();
-				lex->advance();
-
-				script_scanner lex_s3(*lex);
-
-				while (lex->next != token_kind::tk_semicolon && lex->next != token_kind::tk_close_par) lex->advance();
-				lex->advance();
-				if (lex->next == token_kind::tk_close_par) lex->advance();
-
-				script_engine::block* forBlock = engine->new_block(block->level + 1, block_kind::bk_normal);
-				block->codes.push_back(code(lex->line, command_kind::pc_call, forBlock, 0));
-
-				size_t codeBlockSize = 0;
-
-				//For block
-				frame.push_back(scope_t(forBlock->kind));
-				{
-					if (isNewVar) {
-						symbol s;
-						s.level = forBlock->level;
-						s.sub = nullptr;
-						s.variable = 0;
-						s.can_overload = false;
-						s.can_modify = !isNewVarConst;
-						frame.back().singular_insert(newVarName, s);
-					}
-
-					forBlock->codes.push_back(code(lex->line, command_kind::pc_var_alloc, 1));
-					parse_statements(forBlock, &lex_s1, token_kind::tk_semicolon, true);
-
-					//hahaha what
-					script_engine::block tmpEvalBlock(block->level + 1, block_kind::bk_normal);
-					parse_statements(&tmpEvalBlock, &lex_s3, token_kind::tk_comma, true);
-					while (lex_s3.next == token_kind::tk_comma) {
-						lex_s3.advance();
-						parse_statements(&tmpEvalBlock, &lex_s3, token_kind::tk_comma, true);
-					}
-					lex->copy_state(lex_s3);
-					lex->advance();
-
-					size_t ip_begin = forBlock->codes.size();
-
-					//Code block
-					if (hasExpr) {
-						parse_expression(forBlock, &lex_s2);
-						forBlock->codes.push_back(code(lex_s2.line, command_kind::pc_loop_if));
-					}
-
-					//Parse the code contained inside the for loop
-					codeBlockSize = parse_inline_block(nullptr, forBlock, lex, block_kind::bk_loop, true);
-
-					forBlock->codes.push_back(code(lex_s2.line, command_kind::pc_continue_marker));
-					{
-						for (auto itr = tmpEvalBlock.codes.begin(); itr != tmpEvalBlock.codes.end(); ++itr)
-							forBlock->codes.push_back(*itr);
-					}
-					forBlock->codes.push_back(code(lex_s2.line, command_kind::pc_loop_back, ip_begin));
-				}
-				frame.pop_back();
-
-				if (codeBlockSize == 0U) {
-					engine->blocks.pop_back();	//forBlock
-					while (block->codes.size() > ip_for_begin)
-						block->codes.pop_back();
-				}
+			else if (childSize == 0U) {
+				//Empty loop, discard everything
+				while (block->codes.size() > ip_begin)
+					block->codes.pop_back();
 			}
 			else {
-				parser_assert(false, "\"(\" is required.\r\n");
+				block->codes.insert(block->codes.end(), tmp.codes.begin(), tmp.codes.end());
 			}
-
-			need_semicolon = false;
-			break;
 		}
-		case token_kind::tk_ASCENT:
-		case token_kind::tk_DESCENT:
-		{
-			bool isAscent = lex->next == token_kind::tk_ASCENT;
+
+		need_semicolon = false;
+		break;
+	}
+	case token_kind::tk_WHILE:
+	{
+		lex->advance();
+		size_t ip = block->codes.size();
+
+		parse_parentheses(block, lex);
+		if (lex->next == token_kind::tk_LOOP)
 			lex->advance();
 
+		block->codes.push_back(code(lex->line, command_kind::pc_loop_if));
+
+		size_t newBlockSize = parse_inline_block(nullptr, block, lex, block_kind::bk_loop, true);
+
+		block->codes.push_back(code(lex->line, command_kind::pc_continue_marker));
+		block->codes.push_back(code(lex->line, command_kind::pc_loop_back, ip));
+
+		if (newBlockSize == 0U) {
+			while (block->codes.size() > ip)
+				block->codes.pop_back();
+		}
+
+		need_semicolon = false;
+		break;
+	}
+	case token_kind::tk_FOR:
+	{
+		lex->advance();
+
+		size_t ip_for_begin = block->codes.size();
+
+		if (lex->next == token_kind::tk_EACH) {				//Foreach loop
+			lex->advance();
 			parser_assert(lex->next == token_kind::tk_open_par, "\"(\" is required.\r\n");
-			lex->advance();
 
-			if (IsDeclToken(lex->next)) lex->advance();
+			lex->advance();
+			if (lex->next == token_kind::tk_decl_auto) lex->advance();
 			else if (lex->next == token_kind::tk_const)
 				parser_assert(false, "The counter variable cannot be const.\r\n");
 
 			parser_assert(lex->next == token_kind::tk_word, "Variable name is required.\r\n");
 
-			std::string counterName = lex->word;
+			std::string feIdentifier = lex->word;
 
 			lex->advance();
-
-			parser_assert(lex->next == token_kind::tk_IN, "\"in\" is required.\r\n");
+			parser_assert(lex->next == token_kind::tk_IN || lex->next == token_kind::tk_colon,
+				"\"in\" or a colon is required.\r\n");
 			lex->advance();
 
-			size_t ip_ascdsc_begin = block->codes.size();
+			//The array
+			parse_expression(block, lex);
 
-			script_engine::block* containerBlock = engine->new_block(block->level + 1, block_kind::bk_normal);
-			block->codes.push_back(code(lex->line, command_kind::pc_call, containerBlock, 0));
+			parser_assert(lex->next == token_kind::tk_close_par, "\")\" is required.\r\n");
+			lex->advance();
 
-			frame.push_back(scope_t(containerBlock->kind));
+			if (lex->next == token_kind::tk_LOOP) lex->advance();
+
+			//The counter
+			block->codes.push_back(code(lex->line, command_kind::pc_push_value,
+				value(engine->get_real_type(), 0.0)));
+
+			size_t ip = block->codes.size();
+
+			block->codes.push_back(code(lex->line, command_kind::pc_for_each_and_push_first));
+
+			script_engine::block* b = engine->new_block(block->level + 1, block_kind::bk_loop);
+			std::vector<std::string> counter;
+			counter.push_back(feIdentifier);
+			parse_block(b, lex, &counter, false, true);
+
+			//block->codes.push_back(code(lex->line, command_kind::pc_dup_n, 1));
+			block->codes.push_back(code(lex->line, command_kind::pc_call, b, 1));
+			block->codes.push_back(code(lex->line, command_kind::pc_loop_back, ip));
+
+			//Pop twice for the array and the counter
+			block->codes.push_back(code(lex->line, command_kind::pc_pop, 2));
+
+			if (b->codes.size() == 1U) {	//1 for pc_assign
+				engine->blocks.pop_back();
+				while (block->codes.size() > ip_for_begin)
+					block->codes.pop_back();
+			}
+		}
+		else if (lex->next == token_kind::tk_open_par) {	//Regular for loop
+			lex->advance();
+
+			bool isNewVar = false;
+			bool isNewVarConst = false;
+			std::string newVarName = "";
+			script_scanner lex_s1(*lex);
+			if (IsDeclToken(lex->next) || lex->next == token_kind::tk_const) {
+				isNewVar = true;
+				isNewVarConst = lex->next == token_kind::tk_const;
+				lex->advance();
+				parser_assert(lex->next == token_kind::tk_word, "Variable name is required.\r\n");
+				newVarName = lex->word;
+			}
+
+			while (lex->next != token_kind::tk_semicolon) lex->advance();
+			lex->advance();
+
+			bool hasExpr = true;
+			if (lex->next == token_kind::tk_semicolon) hasExpr = false;
+
+			script_scanner lex_s2(*lex);
+
+			while (lex->next != token_kind::tk_semicolon) lex->advance();
+			lex->advance();
+
+			script_scanner lex_s3(*lex);
+
+			while (lex->next != token_kind::tk_semicolon && lex->next != token_kind::tk_close_par) lex->advance();
+			lex->advance();
+			if (lex->next == token_kind::tk_close_par) lex->advance();
+
+			script_engine::block* forBlock = engine->new_block(block->level + 1, block_kind::bk_normal);
+			block->codes.push_back(code(lex->line, command_kind::pc_call, forBlock, 0));
+
+			size_t codeBlockSize = 0;
+
+			//For block
+			frame.push_back(scope_t(forBlock->kind));
 			{
-				auto InsertSymbol = [&](size_t var, std::string name, bool isInternal) {
+				if (isNewVar) {
 					symbol s;
-					s.level = containerBlock->level;
+					s.level = forBlock->level;
 					s.sub = nullptr;
-					s.variable = var;
+					s.variable = 0;
 					s.can_overload = false;
-					s.can_modify = !isInternal;
-					frame.back().singular_insert(name, s);
-				};
+					s.can_modify = !isNewVarConst;
+					frame.back().singular_insert(newVarName, s);
+				}
 
-				InsertSymbol(0, "!0", true);	//An internal value, inaccessible to scripters (value copied to s_2 in each loop)
-				InsertSymbol(1, "!1", true);	//An internal value, inaccessible to scripters
-				InsertSymbol(2, counterName, false);	//The actual counter
+				forBlock->codes.push_back(code(lex->line, command_kind::pc_var_alloc, 1));
+				parse_single_statement(forBlock, &lex_s1);
 
-				containerBlock->codes.push_back(code(lex->line, command_kind::pc_var_alloc, 3));
-
-				parse_expression(containerBlock, lex);	//First value, to s_0 if ascent
-				containerBlock->codes.push_back(code(lex->line, command_kind::pc_assign,
-					containerBlock->level, (int)(!isAscent), "!0"));
-
-				parser_assert(lex->next == token_kind::tk_range, "\"..\" is required.\r\n");
+				//hahaha what
+				script_engine::block tmpEvalBlock(block->level + 1, block_kind::bk_normal);
+				parse_single_statement(&tmpEvalBlock, &lex_s3);
+				while (lex_s3.next == token_kind::tk_comma) {
+					lex_s3.advance();
+					parse_single_statement(&tmpEvalBlock, &lex_s3);
+				}
+				lex->copy_state(lex_s3);
 				lex->advance();
 
-				parse_expression(containerBlock, lex);	//Second value, to s_0 if descent
-				containerBlock->codes.push_back(code(lex->line, command_kind::pc_assign,
-					containerBlock->level, (int)(isAscent), "!1"));
+				size_t ip_begin = forBlock->codes.size();
 
-				parser_assert(lex->next == token_kind::tk_close_par, "\")\" is required.\r\n");
-				lex->advance();
-
-				if (lex->next == token_kind::tk_LOOP) {
-					lex->advance();
+				//Code block
+				if (hasExpr) {
+					parse_expression(forBlock, &lex_s2);
+					forBlock->codes.push_back(code(lex_s2.line, command_kind::pc_loop_if));
 				}
 
-				size_t ip = containerBlock->codes.size();
+				//Parse the code contained inside the for loop
+				codeBlockSize = parse_inline_block(nullptr, forBlock, lex, block_kind::bk_loop, true);
 
-				containerBlock->codes.push_back(code(lex->line, command_kind::pc_push_variable,
-					containerBlock->level, 0, "!0"));
-				containerBlock->codes.push_back(code(lex->line, command_kind::pc_push_variable,
-					containerBlock->level, 1, "!1"));
-				containerBlock->codes.push_back(code(lex->line, isAscent ? command_kind::pc_compare_and_loop_ascent :
-					command_kind::pc_compare_and_loop_descent));
-
-				if (!isAscent) {
-					containerBlock->codes.push_back(code(lex->line, command_kind::pc_inline_dec,
-						containerBlock->level, 0, "!0"));
+				forBlock->codes.push_back(code(lex_s2.line, command_kind::pc_continue_marker));
+				{
+					for (auto itr = tmpEvalBlock.codes.begin(); itr != tmpEvalBlock.codes.end(); ++itr)
+						forBlock->codes.push_back(*itr);
 				}
-
-				//Copy s_0 to s_2
-				containerBlock->codes.push_back(code(lex->line, command_kind::pc_push_variable,
-					containerBlock->level, 0, "!0"));
-				containerBlock->codes.push_back(code(lex->line, command_kind::pc_assign,
-					containerBlock->level, 2, counterName));
-
-				//Parse the code contained inside the loop
-				size_t codeBlockSize = parse_inline_block(nullptr, containerBlock, lex, block_kind::bk_loop, true);
-
-				containerBlock->codes.push_back(code(lex->line, command_kind::pc_continue_marker));
-
-				if (isAscent) {
-					containerBlock->codes.push_back(code(lex->line, command_kind::pc_inline_inc,
-						containerBlock->level, 0, "!0"));
-				}
-
-				containerBlock->codes.push_back(code(lex->line, command_kind::pc_loop_back, ip));
-
-				if (codeBlockSize == 0U) {
-					engine->blocks.pop_back();	//containerBlock
-					while (block->codes.size() > ip_ascdsc_begin)
-						block->codes.pop_back();
-				}
+				forBlock->codes.push_back(code(lex_s2.line, command_kind::pc_loop_back, ip_begin));
 			}
 			frame.pop_back();
 
-			need_semicolon = false;
-			break;
+			if (codeBlockSize == 0U) {
+				engine->blocks.pop_back();	//forBlock
+				while (block->codes.size() > ip_for_begin)
+					block->codes.pop_back();
+			}
 		}
-		case token_kind::tk_IF:
+		else {
+			parser_assert(false, "\"(\" is required.\r\n");
+		}
+
+		need_semicolon = false;
+		break;
+	}
+	case token_kind::tk_ASCENT:
+	case token_kind::tk_DESCENT:
+	{
+		bool isAscent = lex->next == token_kind::tk_ASCENT;
+		lex->advance();
+
+		parser_assert(lex->next == token_kind::tk_open_par, "\"(\" is required.\r\n");
+		lex->advance();
+
+		if (IsDeclToken(lex->next)) lex->advance();
+		else if (lex->next == token_kind::tk_const)
+			parser_assert(false, "The counter variable cannot be const.\r\n");
+
+		parser_assert(lex->next == token_kind::tk_word, "Variable name is required.\r\n");
+
+		std::string counterName = lex->word;
+
+		lex->advance();
+
+		parser_assert(lex->next == token_kind::tk_IN, "\"in\" is required.\r\n");
+		lex->advance();
+
+		size_t ip_ascdsc_begin = block->codes.size();
+
+		script_engine::block* containerBlock = engine->new_block(block->level + 1, block_kind::bk_normal);
+		block->codes.push_back(code(lex->line, command_kind::pc_call, containerBlock, 0));
+
+		frame.push_back(scope_t(containerBlock->kind));
 		{
-			std::map<size_t, size_t> mapLabelCode;
+			auto InsertSymbol = [&](size_t var, std::string name, bool isInternal) {
+				symbol s;
+				s.level = containerBlock->level;
+				s.sub = nullptr;
+				s.variable = var;
+				s.can_overload = false;
+				s.can_modify = !isInternal;
+				frame.back().singular_insert(name, s);
+			};
 
-			size_t ip_begin = block->codes.size();
+			InsertSymbol(0, "!0", true);	//An internal value, inaccessible to scripters (value copied to s_2 in each loop)
+			InsertSymbol(1, "!1", true);	//An internal value, inaccessible to scripters
+			InsertSymbol(2, counterName, false);	//The actual counter
 
-			size_t indexLabel = 0;
-			bool hasNextCase = false;
-			do {
-				hasNextCase = false;
-				parser_assert(indexLabel < 0xffffff, "Too many conditional cases.");
+			containerBlock->codes.push_back(code(lex->line, command_kind::pc_var_alloc, 3));
+
+			parse_expression(containerBlock, lex);	//First value, to s_0 if ascent
+			containerBlock->codes.push_back(code(lex->line, command_kind::pc_assign,
+				containerBlock->level, (int)(!isAscent), "!0"));
+
+			parser_assert(lex->next == token_kind::tk_range, "\"..\" is required.\r\n");
+			lex->advance();
+
+			parse_expression(containerBlock, lex);	//Second value, to s_0 if descent
+			containerBlock->codes.push_back(code(lex->line, command_kind::pc_assign,
+				containerBlock->level, (int)(isAscent), "!1"));
+
+			parser_assert(lex->next == token_kind::tk_close_par, "\")\" is required.\r\n");
+			lex->advance();
+
+			if (lex->next == token_kind::tk_LOOP) {
 				lex->advance();
-
-				//Jump to next case if false
-				parse_parentheses(block, lex);
-				block->codes.push_back(code(lex->line, command_kind::pc_jump_if_not, indexLabel));
-				parse_inline_block(nullptr, block, lex, block_kind::bk_normal, true);
-
-				if (lex->next == token_kind::tk_ELSE) {
-					lex->advance();
-
-					//Jump to exit
-					block->codes.push_back(code(lex->line, command_kind::pc_loop_back, UINT_MAX));
-
-					mapLabelCode.insert(std::make_pair(indexLabel, block->codes.size()));
-					if (lex->next != token_kind::tk_IF) {
-						parse_inline_block(nullptr, block, lex, block_kind::bk_normal, true);
-						hasNextCase = false;
-					}
-					else if (lex->next == token_kind::tk_IF) hasNextCase = true;
-				}
-				++indexLabel;
-			} while (hasNextCase);
-
-			size_t ip_end = block->codes.size();
-			mapLabelCode.insert(std::make_pair(UINT_MAX, ip_end));
-
-			//Replace labels with actual code offset
-			for (; ip_begin < ip_end; ++ip_begin) {
-				code* c = &block->codes[ip_begin];
-				if (c->command == command_kind::pc_jump_if || c->command == command_kind::pc_jump_if_not
-					|| c->command == command_kind::pc_loop_back) {
-					auto itrMap = mapLabelCode.find(c->ip);
-					c->ip = (itrMap != mapLabelCode.end()) ? itrMap->second : ip_end;
-				}
 			}
 
-			need_semicolon = false;
-			break;
+			size_t ip = containerBlock->codes.size();
+
+			containerBlock->codes.push_back(code(lex->line, command_kind::pc_push_variable,
+				containerBlock->level, 0, "!0"));
+			containerBlock->codes.push_back(code(lex->line, command_kind::pc_push_variable,
+				containerBlock->level, 1, "!1"));
+			containerBlock->codes.push_back(code(lex->line, isAscent ? command_kind::pc_compare_and_loop_ascent :
+				command_kind::pc_compare_and_loop_descent));
+
+			if (!isAscent) {
+				containerBlock->codes.push_back(code(lex->line, command_kind::pc_inline_dec,
+					containerBlock->level, 0, "!0"));
+			}
+
+			//Copy s_0 to s_2
+			containerBlock->codes.push_back(code(lex->line, command_kind::pc_push_variable,
+				containerBlock->level, 0, "!0"));
+			containerBlock->codes.push_back(code(lex->line, command_kind::pc_assign,
+				containerBlock->level, 2, counterName));
+
+			//Parse the code contained inside the loop
+			size_t codeBlockSize = parse_inline_block(nullptr, containerBlock, lex, block_kind::bk_loop, true);
+
+			containerBlock->codes.push_back(code(lex->line, command_kind::pc_continue_marker));
+
+			if (isAscent) {
+				containerBlock->codes.push_back(code(lex->line, command_kind::pc_inline_inc,
+					containerBlock->level, 0, "!0"));
+			}
+
+			containerBlock->codes.push_back(code(lex->line, command_kind::pc_loop_back, ip));
+
+			if (codeBlockSize == 0U) {
+				engine->blocks.pop_back();	//containerBlock
+				while (block->codes.size() > ip_ascdsc_begin)
+					block->codes.pop_back();
+			}
 		}
-		case token_kind::tk_ALTERNATIVE:
-		{
-			std::map<size_t, size_t> mapLabelCode;
+		frame.pop_back();
 
+		need_semicolon = false;
+		break;
+	}
+	case token_kind::tk_IF:
+	{
+		std::map<size_t, size_t> mapLabelCode;
+
+		size_t ip_begin = block->codes.size();
+
+		size_t indexLabel = 0;
+		bool hasNextCase = false;
+		do {
+			hasNextCase = false;
+			parser_assert(indexLabel < 0xffffff, "Too many conditional cases.");
 			lex->advance();
+
+			//Jump to next case if false
 			parse_parentheses(block, lex);
+			block->codes.push_back(code(lex->line, command_kind::pc_jump_if_not, indexLabel));
+			parse_inline_block(nullptr, block, lex, block_kind::bk_normal, true);
 
-			size_t ip_begin = block->codes.size();
-
-			size_t indexLabel = 0;
-			while (lex->next == token_kind::tk_CASE) {
-				//Too many, man. Too many.
-				parser_assert(indexLabel < 0x1000000, "Too many conditional cases.");
-
+			if (lex->next == token_kind::tk_ELSE) {
 				lex->advance();
-				parser_assert(lex->next == token_kind::tk_open_par, "\"(\" is required.\r\n");
-
-				do {
-					lex->advance();
-					block->codes.push_back(code(lex->line, command_kind::pc_dup_n, 1));
-					parse_expression(block, lex);
-					block->codes.push_back(code(lex->line, command_kind::pc_inline_cmp_e));
-					block->codes.push_back(code(lex->line, command_kind::pc_jump_if, indexLabel));
-				} while (lex->next == token_kind::tk_comma);
-
-				parser_assert(lex->next == token_kind::tk_close_par, "\")\" is required.\r\n");
-				lex->advance();
-
-				//Skip to next case
-				block->codes.push_back(code(lex->line, command_kind::pc_loop_back, indexLabel + 1));
-
-				mapLabelCode.insert(std::make_pair(indexLabel, block->codes.size()));
-				parse_inline_block(nullptr, block, lex, block_kind::bk_normal, true);
 
 				//Jump to exit
 				block->codes.push_back(code(lex->line, command_kind::pc_loop_back, UINT_MAX));
 
-				mapLabelCode.insert(std::make_pair(indexLabel + 1, block->codes.size()));
-				indexLabel += 2;
+				mapLabelCode.insert(std::make_pair(indexLabel, block->codes.size()));
+				if (lex->next != token_kind::tk_IF) {
+					parse_inline_block(nullptr, block, lex, block_kind::bk_normal, true);
+					hasNextCase = false;
+				}
+				else if (lex->next == token_kind::tk_IF) hasNextCase = true;
 			}
-			if (lex->next == token_kind::tk_OTHERS) {
+			++indexLabel;
+		} while (hasNextCase);
+
+		size_t ip_end = block->codes.size();
+		mapLabelCode.insert(std::make_pair(UINT_MAX, ip_end));
+
+		//Replace labels with actual code offset
+		for (; ip_begin < ip_end; ++ip_begin) {
+			code* c = &block->codes[ip_begin];
+			if (c->command == command_kind::pc_jump_if || c->command == command_kind::pc_jump_if_not
+				|| c->command == command_kind::pc_loop_back) {
+				auto itrMap = mapLabelCode.find(c->ip);
+				c->ip = (itrMap != mapLabelCode.end()) ? itrMap->second : ip_end;
+			}
+		}
+
+		need_semicolon = false;
+		break;
+	}
+	case token_kind::tk_ALTERNATIVE:
+	{
+		std::map<size_t, size_t> mapLabelCode;
+
+		lex->advance();
+		parse_parentheses(block, lex);
+
+		size_t ip_begin = block->codes.size();
+
+		size_t indexLabel = 0;
+		while (lex->next == token_kind::tk_CASE) {
+			//Too many, man. Too many.
+			parser_assert(indexLabel < 0x1000000, "Too many conditional cases.");
+
+			lex->advance();
+			parser_assert(lex->next == token_kind::tk_open_par, "\"(\" is required.\r\n");
+
+			do {
 				lex->advance();
-				parse_inline_block(nullptr, block, lex, block_kind::bk_normal, true);
-			}
-			block->codes.push_back(code(lex->line, command_kind::pc_pop, 1));
-
-			size_t ip_end = block->codes.size();
-			mapLabelCode.insert(std::make_pair(UINT_MAX, ip_end));
-
-			//Replace labels with actual code offset
-			for (; ip_begin < ip_end; ++ip_begin) {
-				code* c = &block->codes[ip_begin];
-				if (c->command == command_kind::pc_jump_if || c->command == command_kind::pc_jump_if_not
-					|| c->command == command_kind::pc_loop_back) {
-					auto itrMap = mapLabelCode.find(c->ip);
-					c->ip = (itrMap != mapLabelCode.end()) ? itrMap->second : ip_end;
-				}
-			}
-
-			need_semicolon = false;
-			break;
-		}
-		case token_kind::tk_BREAK:
-		case token_kind::tk_CONTINUE:
-		{
-			command_kind c = lex->next == token_kind::tk_BREAK ?
-				command_kind::pc_break_loop : command_kind::pc_loop_continue;
-			lex->advance();
-			block->codes.push_back(code(lex->line, c));
-			break;
-		}
-		case token_kind::tk_RETURN:
-			lex->advance();
-
-			switch (lex->next) {
-			case token_kind::tk_end:
-			case token_kind::tk_invalid:
-			case token_kind::tk_semicolon:
-			case token_kind::tk_close_cur:
-				break;
-			default:
-			{
+				block->codes.push_back(code(lex->line, command_kind::pc_dup_n, 1));
 				parse_expression(block, lex);
-				symbol* s = search_result();
-				parser_assert(s, "Only functions may return values.\r\n");
+				block->codes.push_back(code(lex->line, command_kind::pc_inline_cmp_e));
+				block->codes.push_back(code(lex->line, command_kind::pc_jump_if, indexLabel));
+			} while (lex->next == token_kind::tk_comma);
 
-				block->codes.push_back(code(lex->line, command_kind::pc_assign, s->level, s->variable,
-					"[function_result]"));
-			}
-			}
-			block->codes.push_back(code(lex->line, command_kind::pc_break_routine));
-
-			break;
-		case token_kind::tk_YIELD:
-		case token_kind::tk_WAIT:
-		{
-			command_kind c = lex->next == token_kind::tk_YIELD ? command_kind::pc_yield : command_kind::pc_wait;
+			parser_assert(lex->next == token_kind::tk_close_par, "\")\" is required.\r\n");
 			lex->advance();
-			if (c == command_kind::pc_wait) parse_parentheses(block, lex);
-			block->codes.push_back(code(lex->line, c));
-			break;
+
+			//Skip to next case
+			block->codes.push_back(code(lex->line, command_kind::pc_loop_back, indexLabel + 1));
+
+			mapLabelCode.insert(std::make_pair(indexLabel, block->codes.size()));
+			parse_inline_block(nullptr, block, lex, block_kind::bk_normal, true);
+
+			//Jump to exit
+			block->codes.push_back(code(lex->line, command_kind::pc_loop_back, UINT_MAX));
+
+			mapLabelCode.insert(std::make_pair(indexLabel + 1, block->codes.size()));
+			indexLabel += 2;
 		}
-		case token_kind::tk_at:
-		case token_kind::tk_SUB:
-		case token_kind::tk_FUNCTION:
-		case token_kind::tk_TASK:
+		if (lex->next == token_kind::tk_OTHERS) {
+			lex->advance();
+			parse_inline_block(nullptr, block, lex, block_kind::bk_normal, true);
+		}
+		block->codes.push_back(code(lex->line, command_kind::pc_pop, 1));
+
+		size_t ip_end = block->codes.size();
+		mapLabelCode.insert(std::make_pair(UINT_MAX, ip_end));
+
+		//Replace labels with actual code offset
+		for (; ip_begin < ip_end; ++ip_begin) {
+			code* c = &block->codes[ip_begin];
+			if (c->command == command_kind::pc_jump_if || c->command == command_kind::pc_jump_if_not
+				|| c->command == command_kind::pc_loop_back) {
+				auto itrMap = mapLabelCode.find(c->ip);
+				c->ip = (itrMap != mapLabelCode.end()) ? itrMap->second : ip_end;
+			}
+		}
+
+		need_semicolon = false;
+		break;
+	}
+	case token_kind::tk_BREAK:
+	case token_kind::tk_CONTINUE:
+	{
+		command_kind c = lex->next == token_kind::tk_BREAK ?
+			command_kind::pc_break_loop : command_kind::pc_loop_continue;
+		lex->advance();
+		block->codes.push_back(code(lex->line, c));
+		break;
+	}
+	case token_kind::tk_RETURN:
+		lex->advance();
+
+		switch (lex->next) {
+		case token_kind::tk_end:
+		case token_kind::tk_invalid:
+		case token_kind::tk_semicolon:
+		case token_kind::tk_close_cur:
+			break;
+		default:
 		{
-			token_kind token = lex->next;
+			parse_expression(block, lex);
+			symbol* s = search_result();
+			parser_assert(s, "Only functions may return values.\r\n");
 
-			lex->advance();
-			if (lex->next != token_kind::tk_word) {
-				std::string error = "This token cannot be used to declare a";
-				switch (token) {
-				case token_kind::tk_at:
-					error += "n event(\'@\') block";
-					break;
-				case token_kind::tk_SUB:
-					error += " sub";
-					break;
-				case token_kind::tk_FUNCTION:
-					error += " function";
-					break;
-				case token_kind::tk_TASK:
-					error += " task";
-					break;
-				}
-				error += ".\r\n";
-				throw parser_error(error);
+			block->codes.push_back(code(lex->line, command_kind::pc_assign, s->level, s->variable,
+				"[function_result]"));
+		}
+		}
+		block->codes.push_back(code(lex->line, command_kind::pc_break_routine));
+
+		break;
+	case token_kind::tk_YIELD:
+	case token_kind::tk_WAIT:
+	{
+		command_kind c = lex->next == token_kind::tk_YIELD ? command_kind::pc_yield : command_kind::pc_wait;
+		lex->advance();
+		if (c == command_kind::pc_wait) parse_parentheses(block, lex);
+		block->codes.push_back(code(lex->line, c));
+		break;
+	}
+	case token_kind::tk_at:
+	case token_kind::tk_SUB:
+	case token_kind::tk_FUNCTION:
+	case token_kind::tk_TASK:
+	{
+		token_kind token = lex->next;
+
+		lex->advance();
+		if (lex->next != token_kind::tk_word) {
+			std::string error = "This token cannot be used to declare a";
+			switch (token) {
+			case token_kind::tk_at:
+				error += "n event(\'@\') block";
+				break;
+			case token_kind::tk_SUB:
+				error += " sub";
+				break;
+			case token_kind::tk_FUNCTION:
+				error += " function";
+				break;
+			case token_kind::tk_TASK:
+				error += " task";
+				break;
 			}
+			error += ".\r\n";
+			throw parser_error(error);
+		}
 
-			std::string funcName = lex->word;
-			scope_t* pScope = nullptr;
+		std::string funcName = lex->word;
+		scope_t* pScope = nullptr;
 
-			symbol* s = search(funcName, &pScope);
+		symbol* s = search(funcName, &pScope);
 
-			if (token == token_kind::tk_at) {
-				parser_assert(s->sub->level <= 1, "An event(\'@\') block cannot exist here.\r\n");
+		if (token == token_kind::tk_at) {
+			parser_assert(s->sub->level <= 1, "An event(\'@\') block cannot exist here.\r\n");
 
-				events[funcName] = s->sub;
-			}
+			events[funcName] = s->sub;
+		}
 
-			lex->advance();
+		lex->advance();
 
-			std::vector<std::string> args;
-			if (s->sub->kind != block_kind::bk_sub) {
-				if (lex->next == token_kind::tk_open_par) {
-					lex->advance();
-					while (lex->next == token_kind::tk_word || IsDeclToken(lex->next)) {
-						if (IsDeclToken(lex->next)) {
-							lex->advance();
-							parser_assert(lex->next == token_kind::tk_word, "Parameter name is required.\r\n");
-						}
-						//TODO: Give scripters access to defining functions with variadic argument counts. (After 1.10a)
-						args.push_back(lex->word);
+		std::vector<std::string> args;
+		if (s->sub->kind != block_kind::bk_sub) {
+			if (lex->next == token_kind::tk_open_par) {
+				lex->advance();
+				while (lex->next == token_kind::tk_word || IsDeclToken(lex->next)) {
+					if (IsDeclToken(lex->next)) {
 						lex->advance();
-						if (lex->next != token_kind::tk_comma)
-							break;
-						lex->advance();
+						parser_assert(lex->next == token_kind::tk_word, "Parameter name is required.\r\n");
 					}
-					parser_assert(lex->next == token_kind::tk_close_par, "\")\" is required.\r\n");
+					//TODO: Give scripters access to defining functions with variadic argument counts. (After 1.10a)
+					args.push_back(lex->word);
+					lex->advance();
+					if (lex->next != token_kind::tk_comma)
+						break;
 					lex->advance();
 				}
+				parser_assert(lex->next == token_kind::tk_close_par, "\")\" is required.\r\n");
+				lex->advance();
 			}
-			else {
-				if (lex->next == token_kind::tk_open_par) {
-					lex->advance();
-					parser_assert(lex->next == token_kind::tk_close_par, "Only an empty parameter list is allowed here.\r\n");
-					lex->advance();
-				}
+		}
+		else {
+			if (lex->next == token_kind::tk_open_par) {
+				lex->advance();
+				parser_assert(lex->next == token_kind::tk_close_par, "Only an empty parameter list is allowed here.\r\n");
+				lex->advance();
 			}
-
-			s = search_in(pScope, funcName, args.size());
-
-			parse_block(s->sub, lex, &args, s->sub->kind == block_kind::bk_function, false);
-
-			need_semicolon = false;
-			break;
 		}
-		}
+
+		s = search_in(pScope, funcName, args.size());
+
+		parse_block(s->sub, lex, &args, s->sub->kind == block_kind::bk_function, false);
+
+		need_semicolon = false;
+		break;
+	}
+	}
+
+	return need_semicolon;
+}
+void parser::parse_statements(script_engine::block* block, script_scanner* lex, token_kind statement_terminator) {
+	for (; ; ) {
+		bool need_semicolon = parse_single_statement(block, lex);
 
 		//ƒZƒ~ƒRƒƒ“‚ª–³‚¢‚ÆŒp‘±‚µ‚È‚¢
 		if (need_semicolon && lex->next != statement_terminator)
 			break;
 
-		if (lex->next == statement_terminator)
-			lex->advance();
-
-		if (single_parse) break;
+		if (lex->next == statement_terminator) lex->advance();
 	}
 }
 
@@ -2118,7 +2119,7 @@ void parser::parse_block(script_engine::block* block, script_scanner* lex, std::
 		scope_t* ptrBackFrame = &frame.back();
 
 		for (size_t i = 0; i < args->size(); ++i) {
-			const std::string& name = (*args)[i];
+			const std::string& name = args->at(i);
 			if (single_line) {	//As scan_current_scope won't be called.
 				symbol s = { block->level, nullptr, (int)i, false, true };
 				ptrBackFrame->singular_insert(name, s);
@@ -2128,7 +2129,12 @@ void parser::parse_block(script_engine::block* block, script_scanner* lex, std::
 			block->codes.push_back(code(lex->line, command_kind::pc_assign, s->level, s->variable, name));
 		}
 	}
-	parse_statements(block, lex, token_kind::tk_semicolon, single_line);
+	if (single_line) {
+		parse_single_statement(block, lex);
+		lex->advance();
+	}
+	else
+		parse_statements(block, lex, token_kind::tk_semicolon);
 
 	frame.pop_back();
 
@@ -2251,7 +2257,7 @@ type_data* script_type_manager::get_array_type(type_data* element) {
 
 /* script_engine */
 
-script_engine::script_engine(std::string const& source, int funcc, function const* funcv) {
+script_engine::script_engine(const std::string& source, int funcc, const function* funcv) {
 	main_block = new_block(0, block_kind::bk_normal);
 
 	const char* end = &source[0] + source.size();
@@ -2265,7 +2271,7 @@ script_engine::script_engine(std::string const& source, int funcc, function cons
 	error_line = p.error_line;
 }
 
-script_engine::script_engine(std::vector<char> const& source, int funcc, function const* funcv) {
+script_engine::script_engine(const std::vector<char>& source, int funcc, const function* funcv) {
 	main_block = new_block(0, block_kind::bk_normal);
 
 	if (false) {
@@ -2965,37 +2971,30 @@ void script_machine::run_code() {
 				value* var1 = var2 - 1;
 
 				value res;
-				if (c->command == command_kind::pc_inline_logic_and) {
+				if (c->command == command_kind::pc_inline_logic_and)
 					res.set(engine->get_boolean_type(), var1->as_boolean() && var2->as_boolean());
-				}
-				else {
+				else
 					res.set(engine->get_boolean_type(), var1->as_boolean() || var2->as_boolean());
-				}
 
 				current->stack.pop_back(2U);
 				current->stack.push_back(res);
 				break;
 			}
-			case command_kind::pc_inline_cast_int:
-			case command_kind::pc_inline_cast_real:
-			case command_kind::pc_inline_cast_char:
-			case command_kind::pc_inline_cast_bool:
+			case command_kind::pc_inline_cast_var:
 			{
 				value* var = &(current->stack.back());
-				switch (c->command) {
-				case command_kind::pc_inline_cast_int:
+				switch ((type_data::type_kind)c->ip) {
+				case type_data::type_kind::tk_int:
 					var->set(script_type_manager::get_int_type(), var->as_int());
 					break;
-				case command_kind::pc_inline_cast_real:
-					var->set(engine->get_real_type(), var->as_real());
+				case type_data::type_kind::tk_real:
+					var->set(script_type_manager::get_real_type(), var->as_real());
 					break;
-				case command_kind::pc_inline_cast_char:
-				{
-					var->set(engine->get_char_type(), var->as_char());
+				case type_data::type_kind::tk_char:
+					var->set(script_type_manager::get_char_type(), var->as_char());
 					break;
-				}
-				case command_kind::pc_inline_cast_bool:
-					var->set(engine->get_boolean_type(), var->as_boolean());
+				case type_data::type_kind::tk_boolean:
+					var->set(script_type_manager::get_boolean_type(), var->as_boolean());
 					break;
 				}
 				break;
