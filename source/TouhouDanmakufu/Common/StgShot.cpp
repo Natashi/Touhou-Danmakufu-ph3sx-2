@@ -927,11 +927,11 @@ void StgShotObject::_SendDeleteEvent(int bit) {
 		break;
 	}
 
-	gstd::value listScriptValue[4];
-	listScriptValue[0] = scriptShot->CreateRealValue(idObject_);
-	listScriptValue[1] = scriptShot->CreateRealArrayValue(listPos, 2U);
-	listScriptValue[2] = scriptShot->CreateBooleanValue(false);
-	listScriptValue[3] = scriptShot->CreateRealValue(GetShotDataID());
+	value listScriptValue[4];
+	listScriptValue[0] = ManagedScript::CreateRealValue(idObject_);
+	listScriptValue[1] = ManagedScript::CreateRealArrayValue(listPos, 2U);
+	listScriptValue[2] = ManagedScript::CreateBooleanValue(false);
+	listScriptValue[3] = ManagedScript::CreateRealValue(GetShotDataID());
 	scriptShot->RequestEvent(typeEvent, listScriptValue, 4);
 }
 void StgShotObject::_AddReservedShotWork() {
@@ -1483,6 +1483,7 @@ void StgNormalShotObject::RenderOnShotManager() {
 		}
 
 		color = shotData->GetDelayColor();
+		if (delay_.colorMix) ColorAccess::SetColor(color, color_);
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
 			color = (color & 0x00ffffff) | (alpha << 24);
@@ -1778,6 +1779,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 		}
 
 		color = shotData->GetDelayColor();
+		if (delay_.colorMix) ColorAccess::SetColor(color, color_);
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
 			color = (color & 0x00ffffff) | (alpha << 24);
@@ -2079,6 +2081,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 		if ((bUseSouce_ || bUseEnd_) && (frameFadeDelete_ < 0)) {	//Delay cloud(s)
 			color = shotData->GetDelayColor();
+			if (delay_.colorMix) ColorAccess::SetColor(color, color_);
 
 			int sourceWidth = widthRender_ * 2 / 3;
 			D3DXVECTOR4 rcDest(-sourceWidth, -sourceWidth, sourceWidth, sourceWidth);

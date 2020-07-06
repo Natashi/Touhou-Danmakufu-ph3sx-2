@@ -263,20 +263,20 @@ function const stgFunction[] =
 	{ "SetPlayerRebirthFrame", StgStageScript::Func_SetPlayerRebirthFrame, 1 },
 	{ "SetPlayerRebirthLossFrame", StgStageScript::Func_SetPlayerRebirthLossFrame, 1 },
 	{ "SetPlayerAutoItemCollectLine", StgStageScript::Func_SetPlayerAutoItemCollectLine, 1 },
-	{ "GetPlayerAutoItemCollectLine", StgStageScript::Func_GetPlayerAutoItemCollectLine, 0 },
-	{ "SetForbidPlayerShot", StgStageScript::Func_SetForbidPlayerShot, 1 },
-	{ "SetForbidPlayerSpell", StgStageScript::Func_SetForbidPlayerSpell, 1 },
-	{ "GetPlayerX", StgStageScript::Func_GetPlayerX, 0 },
-	{ "GetPlayerY", StgStageScript::Func_GetPlayerY, 0 },
-	{ "GetPlayerState", StgStageScript::Func_GetPlayerState, 0 },
+	{ "GetPlayerAutoItemCollectLine", StgStageScript::Func_GetPlayerInfoAsInt<&StgPlayerObject::GetAutoItemCollectY, -1>, 0 },
+	{ "SetForbidPlayerShot", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetForbidShot>, 1 },
+	{ "SetForbidPlayerSpell", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetForbidSpell>, 1 },
+	{ "GetPlayerX", StgStageScript::Func_GetPlayerInfoAsDbl<&StgPlayerObject::GetX, 0>, 0 },
+	{ "GetPlayerY", StgStageScript::Func_GetPlayerInfoAsDbl<&StgPlayerObject::GetY, 0>, 0 },
+	{ "GetPlayerState", StgStageScript::Func_GetPlayerInfoAsInt<&StgPlayerObject::GetState, StgPlayerObject::STATE_END>, 0 },
 	{ "GetPlayerSpeed", StgStageScript::Func_GetPlayerSpeed, 0 },
 	{ "GetPlayerClip", StgStageScript::Func_GetPlayerClip, 0 },
-	{ "GetPlayerLife", StgStageScript::Func_GetPlayerLife, 0 },
-	{ "GetPlayerSpell", StgStageScript::Func_GetPlayerSpell, 0 },
-	{ "GetPlayerPower", StgStageScript::Func_GetPlayerPower, 0 },
-	{ "GetPlayerInvincibilityFrame", StgStageScript::Func_GetPlayerInvincibilityFrame, 0 },
-	{ "GetPlayerDownStateFrame", StgStageScript::Func_GetPlayerDownStateFrame, 0 },
-	{ "GetPlayerRebirthFrame", StgStageScript::Func_GetPlayerRebirthFrame, 0 },
+	{ "GetPlayerLife", StgStageScript::Func_GetPlayerInfoAsDbl<&StgPlayerObject::GetLife, 0>, 0 },
+	{ "GetPlayerSpell", StgStageScript::Func_GetPlayerInfoAsDbl<&StgPlayerObject::GetSpell, 0>, 0 },
+	{ "GetPlayerPower", StgStageScript::Func_GetPlayerInfoAsDbl<&StgPlayerObject::GetPower, 0>, 0 },
+	{ "GetPlayerInvincibilityFrame", StgStageScript::Func_GetPlayerInfoAsInt<&StgPlayerObject::GetInvincibilityFrame, 0>, 0 },
+	{ "GetPlayerDownStateFrame", StgStageScript::Func_GetPlayerInfoAsInt<&StgPlayerObject::GetDownStateFrame, 0>, 0 },
+	{ "GetPlayerRebirthFrame", StgStageScript::Func_GetPlayerInfoAsInt<&StgPlayerObject::GetRebirthFrame, 0>, 0 },
 	{ "GetAngleToPlayer", StgStageScript::Func_GetAngleToPlayer, 1 },
 	{ "IsPermitPlayerShot", StgStageScript::Func_IsPermitPlayerShot, 0 },
 	{ "IsPermitPlayerSpell", StgStageScript::Func_IsPermitPlayerSpell, 0 },
@@ -284,11 +284,11 @@ function const stgFunction[] =
 	{ "IsPlayerSpellActive", StgStageScript::Func_IsPlayerSpellActive, 0 },
 	{ "GetPlayerScriptID", StgStageScript::Func_GetPlayerScriptID, 0 },
 	{ "SetPlayerItemScope", StgStageScript::Func_SetPlayerItemScope, 1 },
-	{ "GetPlayerItemScope", StgStageScript::Func_GetPlayerItemScope, 0 },
-	{ "SetPlayerInvincibleGraze", StgStageScript::Func_SetPlayerInvincibleGraze, 1 },
-	{ "SetPlayerIntersectionEraseShot", StgStageScript::Func_SetPlayerIntersectionEraseShot, 1 },
-	{ "SetPlayerStateEndEnable", StgStageScript::Func_SetPlayerStateEndEnable, 1 },
-	{ "SetPlayerShootdownEventEnable", StgStageScript::Func_SetPlayerShootdownEventEnable, 1 },
+	{ "GetPlayerItemScope", StgStageScript::Func_GetPlayerInfoAsDbl<&StgPlayerObject::GetItemIntersectionRadius, -1>, 0 },
+	{ "SetPlayerInvincibleGraze", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetEnableInvincibleGraze>, 1 },
+	{ "SetPlayerIntersectionEraseShot", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetDeleteShotOnHit>, 1 },
+	{ "SetPlayerStateEndEnable", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetEnableStateEnd>, 1 },
+	{ "SetPlayerShootdownEventEnable", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetEnableShootdownEvent>, 1 },
 	{ "SetPlayerRebirthPosition", StgStageScript::Func_SetPlayerRebirthPosition, 2 },
 
 	//STGã§í ä÷êîÅFìG
@@ -440,6 +440,7 @@ function const stgFunction[] =
 	{ "ObjShot_SetDelayScaleParameter", StgStageScript::Func_ObjShot_SetDelayScaleParameter, 4 },
 	{ "ObjShot_SetDelayAlphaParameter", StgStageScript::Func_ObjShot_SetDelayAlphaParameter, 4 },
 	{ "ObjShot_SetDelayMode", StgStageScript::Func_ObjShot_SetDelayMode, 4 },
+	{ "ObjShot_SetDelayColoring", StgStageScript::Func_ObjShot_SetDelayColoring, 2 },
 	{ "ObjShot_SetGrazeInvalidFrame", StgStageScript::Func_ObjShot_SetGrazeInvalidFrame, 2 },
 	{ "ObjShot_SetGrazeFrame", StgStageScript::Func_ObjShot_SetGrazeFrame, 2 },
 	{ "ObjShot_IsValidGraze", StgStageScript::Func_ObjShot_IsValidGraze, 1 },
@@ -598,6 +599,7 @@ function const stgFunction[] =
 
 	{ "INFO_ITEM_SCORE", constant<StgStageScript::INFO_ITEM_SCORE>::func, 0 },
 
+	{ "INFO_EXISTS", constant<StgStageScript::INFO_EXISTS>::func, 0 },
 	{ "INFO_RECT", constant<StgStageScript::INFO_RECT>::func, 0 },
 	{ "INFO_DELAY_COLOR", constant<StgStageScript::INFO_DELAY_COLOR>::func, 0 },
 	{ "INFO_BLEND", constant<StgStageScript::INFO_BLEND>::func, 0 },
@@ -945,32 +947,6 @@ gstd::value StgStageScript::Func_SetPlayerAutoItemCollectLine(gstd::script_machi
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_GetPlayerAutoItemCollectLine(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	int res = -1;
-	if (obj)
-		res = obj->GetAutoItemCollectY();
-	return script->CreateRealValue(res);
-}
-gstd::value StgStageScript::Func_SetForbidPlayerShot(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	if (obj) {
-		bool bForbid = argv[0].as_boolean();
-		obj->SetForbidShot(bForbid);
-	}
-	return value();
-}
-gstd::value StgStageScript::Func_SetForbidPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	if (obj) {
-		bool bForbid = argv[0].as_boolean();
-		obj->SetForbidSpell(bForbid);
-	}
-	return value();
-}
 gstd::value StgStageScript::Func_SetPlayerItemScope(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
@@ -980,37 +956,27 @@ gstd::value StgStageScript::Func_SetPlayerItemScope(gstd::script_machine* machin
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_GetPlayerItemScope(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+template<void (StgPlayerObject::*Func)(bool)>
+gstd::value StgStageScript::Func_SetPlayerInfoAsBool(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double rad = 0;
-	if (obj)
-		rad = obj->GetItemIntersectionRadius();
-	return script->CreateRealValue(rad);
-}
-gstd::value StgStageScript::Func_SetPlayerInvincibleGraze(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	if (obj) obj->SetEnableInvincibleGraze(argv[0].as_boolean());
+	if (obj) 
+		(obj.get()->*Func)(argv[0].as_boolean());
 	return value();
 }
-gstd::value StgStageScript::Func_SetPlayerIntersectionEraseShot(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+template<double (StgPlayerObject::*Func)(void), int DEF>
+gstd::value StgStageScript::Func_GetPlayerInfoAsDbl(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	if (obj) obj->SetDeleteShotOnHit(argv[0].as_boolean());
-	return value();
+	double res = obj ? (obj.get()->*Func)() : (double)DEF;
+	return script->CreateRealValue(res);
 }
-gstd::value StgStageScript::Func_SetPlayerStateEndEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+template<int (StgPlayerObject::*Func)(void), int DEF>
+gstd::value StgStageScript::Func_GetPlayerInfoAsInt(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	if (obj) obj->SetEnableStateEnd(argv[0].as_boolean());
-	return value();
-}
-gstd::value StgStageScript::Func_SetPlayerShootdownEventEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	if (obj) obj->SetEnableShootdownEvent(argv[0].as_boolean());
-	return value();
+	int res = obj ? (obj.get()->*Func)() : DEF;
+	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_SetPlayerRebirthPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -1021,24 +987,6 @@ gstd::value StgStageScript::Func_SetPlayerRebirthPosition(gstd::script_machine* 
 		obj->SetRebirthPosition(x, y);
 	}
 	return value();
-}
-gstd::value StgStageScript::Func_GetPlayerX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double res = obj ? obj->GetX() : 0;
-	return script->CreateRealValue(res);
-}
-gstd::value StgStageScript::Func_GetPlayerY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double res = obj ? obj->GetY() : 0;
-	return script->CreateRealValue(res);
-}
-gstd::value StgStageScript::Func_GetPlayerState(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	int res = obj ? obj->GetState() : StgPlayerObject::STATE_END;
-	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetPlayerSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -1061,42 +1009,6 @@ gstd::value StgStageScript::Func_GetPlayerClip(gstd::script_machine* machine, in
 		memcpy(listValue, clip, sizeof(LONG) * 4U);
 	}
 	return script->CreateRealArrayValue(listValue, 4);
-}
-gstd::value StgStageScript::Func_GetPlayerLife(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double res = obj ? obj->GetLife() : 0;
-	return script->CreateRealValue(res);
-}
-gstd::value StgStageScript::Func_GetPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double res = obj ? obj->GetSpell() : 0;
-	return script->CreateRealValue(res);
-}
-gstd::value StgStageScript::Func_GetPlayerPower(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	double res = obj ? obj->GetPower() : 0;
-	return script->CreateRealValue(res);
-}
-gstd::value StgStageScript::Func_GetPlayerInvincibilityFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	int res = obj ? obj->GetInvincibilityFrame() : 0;
-	return script->CreateRealValue(res);
-}
-gstd::value StgStageScript::Func_GetPlayerDownStateFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	int res = obj ? obj->GetDownStateFrame() : 0;
-	return script->CreateRealValue(res);
-}
-gstd::value StgStageScript::Func_GetPlayerRebirthFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
-	int res = obj ? obj->GetRebirthFrame() : 0;
-	return script->CreateRealValue(res);
 }
 gstd::value StgStageScript::Func_GetAngleToPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -1880,6 +1792,9 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		//script->RaiseError(ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_OUTOFRANGE_INDEX));
 		
 		switch (type) {
+		case INFO_EXISTS:
+			res = script->CreateBooleanValue(false);
+			break;
 		case INFO_RECT:
 		{
 			LONG list[4] = { 0, 0, 0, 0 };
@@ -1913,10 +1828,13 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 	}
 	else {
 		switch (type) {
+		case INFO_EXISTS:
+			res = script->CreateBooleanValue(true);
+			break;
 		case INFO_RECT:
 		{
-			RECT* rect = &(shotData->GetData(0)->rcSrc_);
-			res = script->CreateRealArrayValue(reinterpret_cast<LONG*>(&rect), 4U);
+			RECT* rect = shotData->GetData(0)->GetSource();
+			res = script->CreateRealArrayValue(reinterpret_cast<LONG*>(rect), 4U);
 			break;
 		}
 		case INFO_DELAY_COLOR:
@@ -1993,10 +1911,11 @@ gstd::value StgStageScript::Func_CreateItemA1(gstd::script_machine* machine, int
 	int id = script->AddObject(obj);
 	if (id != ID_INVALID) {
 		itemManager->AddItem(obj);
-		int posX = (int)argv[1].as_real();
-		int posY = (int)argv[2].as_real();
-		int score = (int)argv[3].as_real();
-		POINT to = { posX, posY - 128 };
+		double posX = argv[1].as_real();
+		double posY = argv[2].as_real();
+		int64_t score = argv[3].as_int();
+		D3DXVECTOR2 to = D3DXVECTOR2(posX, posY - 128);
+
 		obj->SetPositionX(posX);
 		obj->SetPositionY(posY);
 		obj->SetScore(score);
@@ -2018,10 +1937,11 @@ gstd::value StgStageScript::Func_CreateItemA2(gstd::script_machine* machine, int
 	int id = script->AddObject(obj);
 	if (id != ID_INVALID) {
 		itemManager->AddItem(obj);
-		int posX = (int)argv[1].as_real();
-		int posY = (int)argv[2].as_real();
-		int score = (int)argv[5].as_real();
-		POINT to = { (LONG)(int)argv[3].as_real(), (LONG)(int)argv[4].as_real() };
+		double posX = argv[1].as_real();
+		double posY = argv[2].as_real();
+		D3DXVECTOR2 to = D3DXVECTOR2(argv[3].as_real(), argv[4].as_real());
+		int64_t score = argv[5].as_int();
+
 		obj->SetPositionX(posX);
 		obj->SetPositionY(posY);
 		obj->SetScore(score);
@@ -2043,11 +1963,11 @@ gstd::value StgStageScript::Func_CreateItemU1(gstd::script_machine* machine, int
 	int id = script->AddObject(obj);
 	if (id != ID_INVALID) {
 		itemManager->AddItem(obj);
-		int itemID = (int)argv[0].as_real();
-		int posX = (int)argv[1].as_real();
-		int posY = (int)argv[2].as_real();
-		int score = (int)argv[3].as_real();
-		POINT to = { posX, posY - 128 };
+		int itemID = argv[0].as_int();
+		double posX = argv[1].as_real();
+		double posY = argv[2].as_real();
+		int64_t score = argv[3].as_int();
+		D3DXVECTOR2 to = D3DXVECTOR2(posX, posY - 128);
 
 		obj->SetPositionX(posX);
 		obj->SetPositionY(posY);
@@ -2072,11 +1992,12 @@ gstd::value StgStageScript::Func_CreateItemU2(gstd::script_machine* machine, int
 	int id = script->AddObject(obj);
 	if (id != ID_INVALID) {
 		itemManager->AddItem(obj);
-		int itemID = (int)argv[0].as_real();
-		int posX = (int)argv[1].as_real();
-		int posY = (int)argv[2].as_real();
-		int score = (int)argv[5].as_real();
-		POINT to = { (LONG)(int)argv[3].as_real(), (LONG)(int)argv[4].as_real() };
+		int itemID = argv[0].as_int();
+		double posX = argv[1].as_real();
+		double posY = argv[2].as_real();
+		D3DXVECTOR2 to = D3DXVECTOR2(argv[3].as_real(), argv[4].as_real());
+		int64_t score = argv[5].as_int();
+
 		obj->SetPositionX(posX);
 		obj->SetPositionY(posY);
 		obj->SetScore(score);
@@ -2094,9 +2015,9 @@ gstd::value StgStageScript::Func_CreateItemScore(gstd::script_machine* machine, 
 	if (stageController->GetItemManager()->GetItemCount() >= StgItemManager::ITEM_MAX)
 		return script->CreateRealValue(StgControlScript::ID_INVALID);
 
-	double score = argv[0].as_real();
-	int posX = (int)argv[1].as_real();
-	int posY = (int)argv[2].as_real();
+	int64_t score = argv[0].as_int();
+	double posX = argv[1].as_real();
+	double posY = argv[2].as_real();
 
 	shared_ptr<StgItemObject_Score> obj(new StgItemObject_Score(stageController));
 	int id = script->AddObject(obj);
@@ -3765,8 +3686,18 @@ gstd::value StgStageScript::Func_ObjShot_SetDelayMode(gstd::script_machine* mach
 			}
 		};
 		
-		SetFunc(argv[2].as_real(), delay->scaleLerpFunc);
-		SetFunc(argv[3].as_real(), delay->alphaLerpFunc);
+		SetFunc(argv[2].as_int(), delay->scaleLerpFunc);
+		SetFunc(argv[3].as_int(), delay->alphaLerpFunc);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_SetDelayColoring(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		StgShotObject::DelayParameter* delay = obj->GetDelayParameter();
+		delay->colorMix = argv[1].as_boolean();
 	}
 	return value();
 }
@@ -3835,8 +3766,8 @@ gstd::value StgStageScript::Func_ObjLaser_SetInvalidLength(gstd::script_machine*
 	int id = (int)argv[0].as_real();
 	StgLaserObject* obj = dynamic_cast<StgLaserObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		float start = (int)argv[1].as_real();
-		float end = (int)argv[2].as_real();
+		float start = argv[1].as_real();
+		float end = argv[2].as_real();
 		obj->SetInvalidLength(start, end);
 	}
 	return value();
@@ -4462,8 +4393,8 @@ function const stgItemFunction[] =
 {
 	//íËêî
 	{ "EV_GET_ITEM", constant<StgStageItemScript::EV_GET_ITEM>::func, 0 },
-	{ "EV_DELETE_SHOT_TO_ITEM", constant<StgStageItemScript::EV_DELETE_SHOT_TO_ITEM>::func, 0 },
 	{ "EV_DELETE_SHOT_IMMEDIATE", constant<StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE>::func, 0 },
+	{ "EV_DELETE_SHOT_TO_ITEM", constant<StgStageItemScript::EV_DELETE_SHOT_TO_ITEM>::func, 0 },
 	{ "EV_DELETE_SHOT_FADE", constant<StgStageItemScript::EV_DELETE_SHOT_FADE>::func, 0 },
 
 	{ "EV_GRAZE", constant<StgStagePlayerScript::EV_GRAZE>::func, 0 },

@@ -27,6 +27,15 @@ D3DMATERIAL9 ColorAccess::SetColor(D3DMATERIAL9 mat, D3DCOLOR color) {
 	mat.Emissive.r *= r; mat.Emissive.g *= g; mat.Emissive.b *= b; mat.Emissive.a *= a;
 	return mat;
 }
+D3DCOLOR& ColorAccess::SetColor(D3DCOLOR& src, const D3DCOLOR& mul) {
+	D3DXVECTOR4 mulFac = ToVec4(mul);
+	byte na = GetColorA(src) * mulFac.x;
+	byte nr = GetColorR(src) * mulFac.y;
+	byte ng = GetColorG(src) * mulFac.z;
+	byte nb = GetColorB(src) * mulFac.w;
+	src = D3DCOLOR_ARGB(na, nr, ng, nb);
+	return src;
+}
 D3DCOLOR& ColorAccess::ApplyAlpha(D3DCOLOR& color, float alpha) {
 	byte a = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * alpha);
 	byte r = ColorAccess::ClampColorRet(((color >> 16) & 0xff) * alpha);

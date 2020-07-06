@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_ITEM__
-#define __TOUHOUDANMAKUFU_DNHSTG_ITEM__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -218,7 +217,7 @@ public:
 	virtual void SetY(float y) { posY_ = y; DxScriptRenderObject::SetY(y); }
 	virtual void SetColor(int r, int g, int b);
 	virtual void SetAlpha(int alpha);
-	void SetToPosition(POINT pos);
+	void SetToPosition(D3DXVECTOR2& pos);
 
 	int64_t GetScore() { return score_; }
 	void SetScore(int64_t score) { score_ = score; }
@@ -293,22 +292,6 @@ public:
 
 	void SetImageID(int id);
 };
-#pragma region StgItemObject_User_impl
-inline void StgItemObject_User::_SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z, float w) {
-	constexpr float bias = -0.5f;
-	vertex.position.x = x + bias;
-	vertex.position.y = y + bias;
-	vertex.position.z = z;
-	vertex.position.w = w;
-}
-inline void StgItemObject_User::_SetVertexUV(VERTEX_TLX& vertex, float u, float v) {
-	vertex.texcoord.x = u;
-	vertex.texcoord.y = v;
-}
-inline void StgItemObject_User::_SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color) {
-	vertex.diffuse_color = color;
-}
-#pragma endregion StgItemObject_User_impl
 
 /**********************************************************
 //StgMovePattern_Item
@@ -329,19 +312,15 @@ protected:
 	double speed_;
 	double angDirection_;
 
-	POINT posTo_;
+	D3DXVECTOR2 posTo_;
 public:
 	StgMovePattern_Item(StgMoveObject* target);
 	virtual void Move();
 	int GetType() { return TYPE_OTHER; }
 	virtual double GetSpeed() { return speed_; }
 	virtual double GetDirectionAngle() { return angDirection_; }
-	void SetToPosition(POINT pos) { posTo_ = pos; }
+	void SetToPosition(D3DXVECTOR2& pos) { posTo_ = pos; }
 
 	int GetItemMoveType() { return typeMove_; }
 	void SetItemMoveType(int type) { typeMove_ = type; }
 };
-
-
-#endif
-

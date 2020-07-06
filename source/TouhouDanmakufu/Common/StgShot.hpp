@@ -246,18 +246,19 @@ public:
 		BlendMode blend;
 		D3DXVECTOR3 scale;	//[end, start, factor]
 		D3DXVECTOR3 alpha;	//[end, start, factor]
+		bool colorMix;
 
 		uint8_t type;		//0 = default danmakufu, 1 = ZUN-like
 		lerp_func scaleLerpFunc;	//Scale interpolation
 		lerp_func alphaLerpFunc;	//Alpha interpolation
 
-		DelayParameter() : time(0), id(-1), blend(MODE_BLEND_NONE), type(0) {
+		DelayParameter() : time(0), id(-1), blend(MODE_BLEND_NONE), type(0), colorMix(false) {
 			scale = D3DXVECTOR3(0.5f, 2.0f, 15.0f);
 			alpha = D3DXVECTOR3(1.0f, 1.0f, 15.0f);
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
 			alphaLerpFunc = Math::Lerp::Linear<float, float>;
 		}
-		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(MODE_BLEND_NONE), type(0) {
+		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(MODE_BLEND_NONE), type(0), colorMix(false) {
 			scale = D3DXVECTOR3(sMin, sMax, rate);
 			alpha = D3DXVECTOR3(1.0f, 1.0f, 15.0f);
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
@@ -373,7 +374,7 @@ public:
 	BlendMode GetSourceBlendType() { return delay_.blend; }
 	void SetSourceBlendType(BlendMode type) { delay_.blend = type; }
 	DelayParameter* GetDelayParameter() { return &delay_; }
-	void SetDelayParameter(DelayParameter param) { delay_ = param; }
+	void SetDelayParameter(DelayParameter& param) { delay_ = param; }
 
 	double GetLife() { return life_; }
 	void SetLife(double life) { life_ = life; }

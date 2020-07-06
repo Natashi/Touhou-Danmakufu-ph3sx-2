@@ -111,6 +111,7 @@ public:
 		INFO_ITEM_SCORE,
 		INFO_ITEM_MOVE_TYPE,
 
+		INFO_EXISTS,
 		INFO_RECT,
 		INFO_DELAY_COLOR,
 		INFO_BLEND,
@@ -191,31 +192,43 @@ public:
 	static gstd::value Func_SetPlayerRebirthFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetPlayerRebirthLossFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetPlayerAutoItemCollectLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	template<void (StgPlayerObject::* Func)(bool)>
+	DNH_FUNCAPI_DECL_(Func_SetPlayerInfoAsBool);
+	template<double (StgPlayerObject::* Func)(void), int DEF>
+	DNH_FUNCAPI_DECL_(Func_GetPlayerInfoAsDbl);
+	template<int (StgPlayerObject::* Func)(void), int DEF>
+	DNH_FUNCAPI_DECL_(Func_GetPlayerInfoAsInt);
+	/*
 	DNH_FUNCAPI_DECL_(Func_GetPlayerAutoItemCollectLine);
 	static gstd::value Func_SetForbidPlayerShot(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetForbidPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerState(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	*/
 	static gstd::value Func_GetPlayerSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerClip(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	/*
 	static gstd::value Func_GetPlayerLife(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerPower(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerInvincibilityFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerDownStateFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerRebirthFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	*/
 	static gstd::value Func_GetAngleToPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_IsPermitPlayerShot(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_IsPermitPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_IsPlayerLastSpellWait(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_IsPlayerSpellActive(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_SetPlayerItemScope);
+	/*
 	DNH_FUNCAPI_DECL_(Func_GetPlayerItemScope);
 	DNH_FUNCAPI_DECL_(Func_SetPlayerInvincibleGraze);
 	DNH_FUNCAPI_DECL_(Func_SetPlayerIntersectionEraseShot);
 	DNH_FUNCAPI_DECL_(Func_SetPlayerStateEndEnable);
 	DNH_FUNCAPI_DECL_(Func_SetPlayerShootdownEventEnable);
+	*/
 	DNH_FUNCAPI_DECL_(Func_SetPlayerRebirthPosition);
 
 
@@ -371,6 +384,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayScaleParameter);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayAlphaParameter);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayMode);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayColoring);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetGrazeInvalidFrame);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetGrazeFrame);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_IsValidGraze);

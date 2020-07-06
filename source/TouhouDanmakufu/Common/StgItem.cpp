@@ -842,7 +842,7 @@ void StgItemObject::SetColor(int r, int g, int b) {
 	D3DCOLOR dc = D3DCOLOR_ARGB(0, r, g, b);
 	color_ = (color_ & 0xff000000) | (dc & 0x00ffffff);
 }
-void StgItemObject::SetToPosition(POINT pos) {
+void StgItemObject::SetToPosition(D3DXVECTOR2& pos) {
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
 	move->SetToPosition(pos);
 }
@@ -857,7 +857,6 @@ void StgItemObject::SetMoveType(int type) {
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
 	if (move) move->SetItemMoveType(type);
 }
-
 
 //StgItemObject_1UP
 StgItemObject_1UP::StgItemObject_1UP(StgStageController* stageController) : StgItemObject(stageController) {
@@ -1020,6 +1019,20 @@ StgItemData* StgItemObject_User::_GetItemData() {
 
 	return res;
 }
+void StgItemObject_User::_SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z, float w) {
+	constexpr float bias = -0.5f;
+	vertex.position.x = x + bias;
+	vertex.position.y = y + bias;
+	vertex.position.z = z;
+	vertex.position.w = w;
+}
+void StgItemObject_User::_SetVertexUV(VERTEX_TLX& vertex, float u, float v) {
+	vertex.texcoord.x = u;
+	vertex.texcoord.y = v;
+}
+void StgItemObject_User::_SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color) {
+	vertex.diffuse_color = color;
+}
 void StgItemObject_User::Work() {
 	StgItemObject::Work();
 	++frameWork_;
@@ -1141,7 +1154,7 @@ StgMovePattern_Item::StgMovePattern_Item(StgMoveObject* target) : StgMovePattern
 	typeMove_ = MOVE_DOWN;
 	speed_ = 0;
 	angDirection_ = Math::DegreeToRadian(270);
-	ZeroMemory(&posTo_, sizeof(POINT));
+	posTo_ = D3DXVECTOR2(0, 0);
 }
 void StgMovePattern_Item::Move() {
 	StgItemObject* itemObject = (StgItemObject*)target_;

@@ -16,19 +16,19 @@ namespace directx {
 			BIT_GREEN = 8,
 			BIT_BLUE = 0,
 		};
-		static inline byte GetColorA(D3DCOLOR& color) {
+		static inline byte GetColorA(const D3DCOLOR& color) {
 			//return gstd::BitAccess::GetByte(color, BIT_ALPHA);
 			return (color >> 24) & 0xff;
 		}
-		static inline byte GetColorR(D3DCOLOR& color) {
+		static inline byte GetColorR(const D3DCOLOR& color) {
 			//return gstd::BitAccess::GetByte(color, BIT_RED);
 			return (color >> 16) & 0xff;
 		}
-		static inline byte GetColorG(D3DCOLOR& color) {
+		static inline byte GetColorG(const D3DCOLOR& color) {
 			//return gstd::BitAccess::GetByte(color, BIT_GREEN);
 			return (color >> 8) & 0xff;
 		}
-		static inline byte GetColorB(D3DCOLOR& color) {
+		static inline byte GetColorB(const D3DCOLOR& color) {
 			//return gstd::BitAccess::GetByte(color, BIT_BLUE);
 			return color & 0xff;
 		}
@@ -51,6 +51,7 @@ namespace directx {
 
 		static D3DCOLORVALUE SetColor(D3DCOLORVALUE value, D3DCOLOR color);
 		static D3DMATERIAL9 SetColor(D3DMATERIAL9 mat, D3DCOLOR color);
+		static D3DCOLOR& SetColor(D3DCOLOR& src, const D3DCOLOR& mul);
 		static D3DCOLOR& ApplyAlpha(D3DCOLOR& color, float alpha);
 
 		static D3DCOLOR& SetColorHSV(D3DCOLOR& color, int hue, int saturation, int value);
@@ -72,6 +73,10 @@ namespace directx {
 			arr[1] = GetColorR(color);
 			arr[2] = GetColorG(color);
 			arr[3] = GetColorB(color);
+		}
+		static D3DXVECTOR4 ToVec4(const D3DCOLOR& color) {
+			return D3DXVECTOR4(GetColorA(color) / 255.0f, GetColorR(color) / 255.0f, 
+				GetColorG(color) / 255.0f, GetColorB(color) / 255.0f);
 		}
 	};
 
