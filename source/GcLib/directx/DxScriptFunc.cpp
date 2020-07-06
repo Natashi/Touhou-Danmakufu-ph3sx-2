@@ -4327,7 +4327,7 @@ gstd::value DxScript::Func_ObjFileB_WriteByte(gstd::script_machine* machine, int
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj && !obj->IsArchived()) {
-		byte data = argv[1].as_int();
+		byte data = (byte)argv[1].as_int();
 		res = obj->GetBuffer()->Write(&data, sizeof(byte));
 	}
 	return script->CreateRealValue(res);
@@ -4339,7 +4339,7 @@ gstd::value DxScript::Func_ObjFileB_WriteShort(gstd::script_machine* machine, in
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj && !obj->IsArchived()) {
-		int16_t data = (int16_t)argv[1].as_real();
+		int16_t data = (int16_t)argv[1].as_int();
 		res = obj->GetBuffer()->Write(&data, sizeof(int16_t));
 	}
 	return script->CreateRealValue(res);
@@ -4351,7 +4351,7 @@ gstd::value DxScript::Func_ObjFileB_WriteInteger(gstd::script_machine* machine, 
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj && !obj->IsArchived()) {
-		int32_t data = (int32_t)argv[1].as_real();
+		int32_t data = (int32_t)argv[1].as_int();
 		res = obj->GetBuffer()->Write(&data, sizeof(int32_t));
 	}
 	return script->CreateRealValue(res);
@@ -4363,7 +4363,7 @@ gstd::value DxScript::Func_ObjFileB_WriteLong(gstd::script_machine* machine, int
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj && !obj->IsArchived()) {
-		int64_t data = (int64_t)argv[1].as_real();
+		int64_t data = (int64_t)argv[1].as_int();
 		res = obj->GetBuffer()->Write(&data, sizeof(int64_t));
 	}
 	return script->CreateRealValue(res);
@@ -4375,7 +4375,7 @@ gstd::value DxScript::Func_ObjFileB_WriteFloat(gstd::script_machine* machine, in
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj && !obj->IsArchived()) {
-		float data = argv[1].as_int();
+		float data = argv[1].as_real();
 		res = obj->GetBuffer()->Write(&data, sizeof(float));
 	}
 	return script->CreateRealValue(res);
