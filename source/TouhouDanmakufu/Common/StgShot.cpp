@@ -690,35 +690,23 @@ void StgShotRenderer::Render(StgShotManager* manager) {
 
 	VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 
-	GrowableVertexBuffer* vBuffer = bufferManager->GetGrowableVertexBuffer();
-	GrowableIndexBuffer* iBuffer = bufferManager->GetGrowableIndexBuffer();
-	IDirect3DVertexBuffer9* pVBuffer = vBuffer->GetBuffer();
-	IDirect3DIndexBuffer9* pIBuffer = iBuffer->GetBuffer();
-	if (countMaxVertex_ > vBuffer->GetSize()) {
-		vBuffer->Expand(countMaxVertex_);
-		pVBuffer = vBuffer->GetBuffer();
-		device->SetStreamSource(0, pVBuffer, 0, sizeof(VERTEX_TLX));
-	}
-	if (countMaxIndex_ > iBuffer->GetSize()) {
-		iBuffer->Expand(countMaxIndex_);
-		pIBuffer = iBuffer->GetBuffer();
-		device->SetIndices(pIBuffer);
+	GrowableVertexBuffer* vertexBuffer = bufferManager->GetGrowableVertexBuffer();
+	GrowableIndexBuffer* indexBuffer = bufferManager->GetGrowableIndexBuffer();
+	vertexBuffer->Expand(countMaxVertex_);
+	indexBuffer->Expand(countMaxIndex_);
+
+	{
+		BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
+
+		lockParam.SetSource(vertex_, countRenderVertex_, sizeof(VERTEX_TLX));
+		vertexBuffer->UpdateBuffer(&lockParam);
+
+		lockParam.SetSource(vecIndex_, countRenderIndex_, sizeof(uint32_t));
+		indexBuffer->UpdateBuffer(&lockParam);
 	}
 
-	countRenderVertex_ = std::min(countRenderVertex_, vBuffer->GetSize());
-	countRenderIndex_ = std::min(countRenderIndex_, iBuffer->GetSize());
-	{
-		void* tmp;
-		pVBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-		memcpy(tmp, vertex_.data(), countRenderVertex_ * sizeof(VERTEX_TLX));
-		pVBuffer->Unlock();
-	}
-	{
-		void* tmp;
-		pIBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-		memcpy(tmp, vecIndex_.data(), countRenderIndex_ * sizeof(uint32_t));
-		pIBuffer->Unlock();
-	}
+	device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
+	device->SetIndices(indexBuffer->GetBuffer());
 
 	device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, countRenderVertex_, 0, countRenderIndex_ / 3U);
 

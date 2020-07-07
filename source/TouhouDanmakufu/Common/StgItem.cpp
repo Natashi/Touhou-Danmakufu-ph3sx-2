@@ -608,22 +608,17 @@ void StgItemRenderer::Render(StgItemManager* manager) {
 
 	VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 
-	GrowableVertexBuffer* vBuffer = bufferManager->GetGrowableVertexBuffer();
-	IDirect3DVertexBuffer9* pVBuffer = vBuffer->GetBuffer();
-	if (countMaxVertex_ > vBuffer->GetSize()) {
-		vBuffer->Expand(countMaxVertex_);
+	GrowableVertexBuffer* vertexBuffer = bufferManager->GetGrowableVertexBuffer();
+	vertexBuffer->Expand(countMaxVertex_);
 
-		pVBuffer = vBuffer->GetBuffer();
-		device->SetStreamSource(0, pVBuffer, 0, sizeof(VERTEX_TLX));
-	}
-
-	countRenderVertex_ = std::min(countRenderVertex_, vBuffer->GetSize());
 	{
-		void* tmp;
-		pVBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-		memcpy(tmp, vertex_.data(), countRenderVertex_ * sizeof(VERTEX_TLX));
-		pVBuffer->Unlock();
+		BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
+
+		lockParam.SetSource(vertex_, countRenderVertex_, sizeof(VERTEX_TLX));
+		vertexBuffer->UpdateBuffer(&lockParam);
 	}
+
+	device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
 
 	device->DrawPrimitive(D3DPT_TRIANGLELIST, 0, countRenderVertex_ / 3U);
 

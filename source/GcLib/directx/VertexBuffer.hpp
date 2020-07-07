@@ -7,48 +7,138 @@
 #include "Vertex.hpp"
 
 namespace directx {
+	struct BufferLockParameter {
+		UINT lockOffset = 0U;
+		DWORD lockFlag = 0U;
+		void* data = nullptr;
+		size_t dataCount = 0U;
+		size_t dataStride = 1U;
+
+		BufferLockParameter() {
+			lockOffset = 0U;
+			lockFlag = 0U;
+			data = nullptr;
+			dataCount = 0U;
+			dataStride = 1U;
+		};
+		BufferLockParameter(DWORD _lockFlag) {
+			lockOffset = 0U;
+			lockFlag = _lockFlag;
+			data = nullptr;
+			dataCount = 0U;
+			dataStride = 1U;
+		};
+		BufferLockParameter(void* _data, size_t _count, size_t _stride, DWORD _lockFlag) {
+			lockOffset = 0U;
+			lockFlag = _lockFlag;
+			data = 0U;
+			dataCount = _count;
+			dataStride = _stride;
+		};
+
+		template<typename T>
+		void SetSource(T& vecSrc, size_t countMax, size_t _stride) {
+			data = vecSrc.data();
+			dataCount = std::min(countMax, vecSrc.size());
+			dataStride = _stride;
+		}
+	};
+
+	class VertexBufferManager;
+
 	template<typename T>
-	class GrowableBufferBase {
+	class BufferBase {
 	public:
-		GrowableBufferBase();
-		GrowableBufferBase(IDirect3DDevice9* device);
-		virtual ~GrowableBufferBase();
+		BufferBase();
+		BufferBase(IDirect3DDevice9* device);
+		virtual ~BufferBase();
 
-		virtual void Setup(size_t iniSize, size_t stride) = 0;
-		virtual void Create() = 0;
-		virtual inline void Release() { ptr_release(buffer_); }
+		inline void Release() { ptr_release(buffer_); }
 
-		virtual void Expand(size_t newSize) = 0;
+		HRESULT UpdateBuffer(BufferLockParameter* pLock);
+
+		virtual HRESULT Create() = 0;
 
 		T* GetBuffer() { return buffer_; }
 		size_t GetSize() { return size_; }
+		size_t GetSizeInBytes() { return sizeInBytes_; }
 	protected:
 		IDirect3DDevice9* pDevice_;
 		T* buffer_;
 		size_t size_;
 		size_t stride_;
+		size_t sizeInBytes_;
+	};
+	template<typename T>
+	HRESULT BufferBase<T>::UpdateBuffer(BufferLockParameter* pLock) {
+		HRESULT hr = S_OK;
+
+		if (pLock == nullptr || buffer_ == nullptr) return E_POINTER;
+		else if (pLock->lockOffset >= size_) return E_INVALIDARG;
+		else if ((pLock->dataCount * pLock->dataStride) == 0U) return S_OK;
+
+		size_t usableCount = size_ - pLock->lockOffset;
+		size_t lockCopySize = std::min(pLock->dataCount, usableCount) * pLock->dataStride;
+
+		void* tmp;
+		hr = buffer_->Lock(pLock->lockOffset * pLock->dataStride, lockCopySize, &tmp, pLock->lockFlag);
+		if (SUCCEEDED(hr)) {
+			memcpy_s(tmp, sizeInBytes_, pLock->data, lockCopySize);
+			buffer_->Unlock();
+		}
+
+		return hr;
+	}
+
+	class FixedVertexBuffer : public BufferBase<IDirect3DVertexBuffer9> {
+	public:
+		FixedVertexBuffer(IDirect3DDevice9* device);
+		virtual ~FixedVertexBuffer();
+
+		virtual void Setup(size_t iniSize, size_t stride, DWORD fvf);
+		virtual HRESULT Create();
+	private:
+		DWORD fvf_;
+	};
+	class FixedIndexBuffer : public BufferBase<IDirect3DIndexBuffer9> {
+	public:
+		FixedIndexBuffer(IDirect3DDevice9* device);
+		virtual ~FixedIndexBuffer();
+
+		virtual void Setup(size_t iniSize, size_t stride, D3DFORMAT format);
+		virtual HRESULT Create();
+	private:
+		D3DFORMAT format_;
 	};
 
-	class GrowableVertexBuffer : public GrowableBufferBase<IDirect3DVertexBuffer9> {
+	template<typename T>
+	class GrowableBuffer : public BufferBase<T> {
+	public:
+		GrowableBuffer(IDirect3DDevice9* device);
+		virtual ~GrowableBuffer();
+
+		virtual HRESULT Create() = 0;
+		virtual void Expand(size_t newSize) = 0;
+	};
+
+	class GrowableVertexBuffer : public GrowableBuffer<IDirect3DVertexBuffer9> {
 	public:
 		GrowableVertexBuffer(IDirect3DDevice9* device);
 		virtual ~GrowableVertexBuffer();
 
-		virtual void Setup(size_t iniSize, size_t stride) {};
 		virtual void Setup(size_t iniSize, size_t stride, DWORD fvf);
-		virtual void Create();
+		virtual HRESULT Create();
 		virtual void Expand(size_t newSize);
 	private:
 		DWORD fvf_;
 	};
-	class GrowableIndexBuffer : public GrowableBufferBase<IDirect3DIndexBuffer9> {
+	class GrowableIndexBuffer : public GrowableBuffer<IDirect3DIndexBuffer9> {
 	public:
 		GrowableIndexBuffer(IDirect3DDevice9* device);
 		virtual ~GrowableIndexBuffer();
 
-		virtual void Setup(size_t iniSize, size_t stride) {}
 		virtual void Setup(size_t iniSize, size_t stride, D3DFORMAT format);
-		virtual void Create();
+		virtual HRESULT Create();
 		virtual void Expand(size_t newSize);
 	private:
 		D3DFORMAT format_;
@@ -59,18 +149,13 @@ namespace directx {
 		static VertexBufferManager* thisBase_;
 	public:
 		enum : size_t {
-			BUFFER_VERTEX_TLX,
-			BUFFER_VERTEX_LX,
-			BUFFER_VERTEX_NX,
-
-			BYTE_MAX_TLX = 65536 * sizeof(VERTEX_TLX),
-			BYTE_MAX_LX = 65536 * sizeof(VERTEX_LX),
-			BYTE_MAX_NX = 65536 * sizeof(VERTEX_NX),
-			BYTE_MAX_INDEX = 65536 * sizeof(uint16_t),
+			MAX_STRIDE_STATIC = 65536U,
 		};
 
 		VertexBufferManager();
 		~VertexBufferManager();
+
+		static VertexBufferManager* GetBase() { return thisBase_; }
 
 		virtual void ReleaseDxResource();
 		virtual void RestoreDxResource();
@@ -78,18 +163,25 @@ namespace directx {
 		virtual bool Initialize(DirectGraphics* graphics);
 		virtual void Release();
 
-		IDirect3DVertexBuffer9* GetVertexBuffer(size_t index) { return vertexBuffers_[index]; }
-		IDirect3DIndexBuffer9* GetIndexBuffer() { return indexBuffer_; }
+		FixedVertexBuffer* GetVertexBufferTLX() { return vertexBuffers_[0]; }
+		FixedVertexBuffer* GetVertexBufferLX() { return vertexBuffers_[1]; }
+		FixedVertexBuffer* GetVertexBufferNX() { return vertexBuffers_[2]; }
+		FixedIndexBuffer* GetIndexBuffer() { return indexBuffer_; }
 
 		GrowableVertexBuffer* GetGrowableVertexBuffer() { return vertexBufferGrowable_; }
 		GrowableIndexBuffer* GetGrowableIndexBuffer() { return indexBufferGrowable_; }
 
 		GrowableVertexBuffer* GetInstancingVertexBuffer() { return vertexBuffer_HWInstancing_; }
 
-		static VertexBufferManager* GetBase() { return thisBase_; }
+		static void AssertBuffer(HRESULT hr, const std::wstring& bufferID);
 	private:
-		std::vector<IDirect3DVertexBuffer9*> vertexBuffers_;
-		IDirect3DIndexBuffer9* indexBuffer_;
+		/*
+		 * 0 -> TLX
+		 * 1 -> LX
+		 * 2 -> NX
+		 */
+		std::vector<FixedVertexBuffer*> vertexBuffers_;
+		FixedIndexBuffer* indexBuffer_;
 
 		GrowableVertexBuffer* vertexBufferGrowable_;
 		GrowableIndexBuffer* indexBufferGrowable_;

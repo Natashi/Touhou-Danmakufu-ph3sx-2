@@ -638,25 +638,23 @@ void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
 		}
 
 		VertexBufferManager* vbManager = VertexBufferManager::GetBase();
-
-		IDirect3DVertexBuffer9* vertexBuffer = vbManager->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_TLX);
-		IDirect3DIndexBuffer9* indexBuffer = vbManager->GetIndexBuffer();
+		FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
+		FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
 
 		if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
-			void* tmp;
-			vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, bVertexShaderMode_ ? vertex_.data() : vertCopy_.data(),
-				countVertex * sizeof(VERTEX_TLX));
-			vertexBuffer->Unlock();
-			if (bUseIndex) {
-				indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-				memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
-				indexBuffer->Unlock();
+			BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
 
-				device->SetIndices(indexBuffer);
+			lockParam.SetSource(bVertexShaderMode_ ? vertex_ : vertCopy_, countVertex, sizeof(VERTEX_TLX));
+			vertexBuffer->UpdateBuffer(&lockParam);
+			
+			if (bUseIndex) {
+				lockParam.SetSource(vertexIndices_, countIndex, sizeof(uint16_t));
+				indexBuffer->UpdateBuffer(&lockParam);
 			}
-			device->SetStreamSource(0, vertexBuffer, 0, sizeof(VERTEX_TLX));
 		}
+
+		device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
+		device->SetIndices(indexBuffer->GetBuffer());
 
 		{
 			UINT countPass = 1;
@@ -933,28 +931,29 @@ void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
 	device->SetFVF(VERTEX_LX::fvf);
 
 	{
-		IDirect3DVertexBuffer9* vertexBuffer = VertexBufferManager::GetBase()->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_LX);
-		IDirect3DIndexBuffer9* indexBuffer = VertexBufferManager::GetBase()->GetIndexBuffer();
-
 		bool bUseIndex = vertexIndices_.size() > 0;
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
 		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
 		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
 
-		if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
-			void* tmp;
-			vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, vertex_.data(), countVertex * sizeof(VERTEX_TLX));
-			vertexBuffer->Unlock();
-			if (bUseIndex) {
-				indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-				memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
-				indexBuffer->Unlock();
+		VertexBufferManager* vbManager = VertexBufferManager::GetBase();
+		FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferLX();
+		FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
 
-				device->SetIndices(indexBuffer);
+		if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
+			BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
+
+			lockParam.SetSource(vertex_, countVertex, sizeof(VERTEX_LX));
+			vertexBuffer->UpdateBuffer(&lockParam);
+
+			if (bUseIndex) {
+				lockParam.SetSource(vertexIndices_, countIndex, sizeof(uint16_t));
+				indexBuffer->UpdateBuffer(&lockParam);
 			}
-			device->SetStreamSource(0, vertexBuffer, 0, sizeof(VERTEX_LX));
 		}
+
+		device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_LX));
+		device->SetIndices(indexBuffer->GetBuffer());
 
 		UINT countPass = 1;
 		ID3DXEffect* effect = nullptr;
@@ -1116,24 +1115,25 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 	device->SetFVF(VERTEX_NX::fvf);
 
 	{
-		IDirect3DIndexBuffer9* indexBuffer = VertexBufferManager::GetBase()->GetIndexBuffer();
-
 		bool bUseIndex = vertexIndices_.size() > 0;
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
 		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
 		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
 
-		{
-			void* tmp;
-			if (bUseIndex) {
-				indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-				memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
-				indexBuffer->Unlock();
+		VertexBufferManager* vbManager = VertexBufferManager::GetBase();
+		FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
 
-				device->SetIndices(indexBuffer);
+		{
+			if (bUseIndex) {
+				BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
+
+				lockParam.SetSource(vertexIndices_, countIndex, sizeof(uint16_t));
+				indexBuffer->UpdateBuffer(&lockParam);
 			}
-			device->SetStreamSource(0, pVertexBuffer_, 0, sizeof(VERTEX_NX));
 		}
+
+		device->SetStreamSource(0, pVertexBuffer_, 0, sizeof(VERTEX_NX));
+		device->SetIndices(indexBuffer->GetBuffer());
 
 		UINT countPass = 1;
 		ID3DXEffect* effect = nullptr;
@@ -1739,24 +1739,24 @@ void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& ang
 		}
 
 		{
-			IDirect3DVertexBuffer9* vertexBuffer = VertexBufferManager::GetBase()->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_TLX);
-			IDirect3DIndexBuffer9* indexBuffer = VertexBufferManager::GetBase()->GetIndexBuffer();
+			VertexBufferManager* vbManager = VertexBufferManager::GetBase();
+			FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
+			FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
 
 			{
-				void* tmp;
-				vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-				memcpy(tmp, vertCopy_.data(), countVertex * sizeof(VERTEX_TLX));
-				vertexBuffer->Unlock();
-				if (bUseIndex) {
-					indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-					memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
-					indexBuffer->Unlock();
+				BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
 
-					device->SetIndices(indexBuffer);
+				lockParam.SetSource(vertCopy_, countVertex, sizeof(VERTEX_TLX));
+				vertexBuffer->UpdateBuffer(&lockParam);
+				
+				if (bUseIndex) {
+					lockParam.SetSource(vertexIndices_, countIndex, sizeof(uint16_t));
+					indexBuffer->UpdateBuffer(&lockParam);
 				}
 			}
 
-			device->SetStreamSource(0, vertexBuffer, 0, sizeof(VERTEX_TLX));
+			device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
+			device->SetIndices(indexBuffer->GetBuffer());
 
 			UINT countPass = 1;
 			ID3DXEffect* effect = nullptr;
@@ -2157,36 +2157,33 @@ void ParticleRenderer2D::Render() {
 		VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 		RenderShaderManager* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
-		bufferManager->GetInstancingVertexBuffer()->Expand(countRenderInstance);
+		FixedVertexBuffer* vertexBuffer = bufferManager->GetVertexBufferTLX();
+		GrowableVertexBuffer* instanceBuffer = bufferManager->GetInstancingVertexBuffer();
+		FixedIndexBuffer* indexBuffer = bufferManager->GetIndexBuffer();
 
-		IDirect3DVertexBuffer9* vertexBuffer = bufferManager->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_TLX);
-		IDirect3DVertexBuffer9* instanceBuffer = bufferManager->GetInstancingVertexBuffer()->GetBuffer();
-		IDirect3DIndexBuffer9* indexBuffer = bufferManager->GetIndexBuffer();
+		instanceBuffer->Expand(countRenderInstance);
 
 		{
-			void* tmp;
+			BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
 
-			vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, vertex_.data(), countVertex * sizeof(VERTEX_TLX));
-			vertexBuffer->Unlock();
+			lockParam.SetSource(vertex_, countVertex, sizeof(VERTEX_TLX));
+			vertexBuffer->UpdateBuffer(&lockParam);
 
-			indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
-			indexBuffer->Unlock();
+			lockParam.SetSource(instanceData_, countRenderInstance, sizeof(VERTEX_INSTANCE));
+			instanceBuffer->UpdateBuffer(&lockParam);
 
-			instanceBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, instanceData_.data(), countRenderInstance * sizeof(VERTEX_INSTANCE));
-			instanceBuffer->Unlock();
+			lockParam.SetSource(vertexIndices_, countIndex, sizeof(uint16_t));
+			indexBuffer->UpdateBuffer(&lockParam);
 		}
 
 		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationInstancedTLX());
 
-		device->SetStreamSource(0, vertexBuffer, 0, sizeof(VERTEX_TLX));
+		device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
 		device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | countRenderInstance);
-		device->SetStreamSource(1, instanceBuffer, 0, sizeof(VERTEX_INSTANCE));
+		device->SetStreamSource(1, instanceBuffer->GetBuffer(), 0, sizeof(VERTEX_INSTANCE));
 		device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA | 1U);
 
-		device->SetIndices(indexBuffer);
+		device->SetIndices(indexBuffer->GetBuffer());
 
 		{
 			UINT countPass = 1;
@@ -2253,34 +2250,31 @@ void ParticleRenderer3D::Render() {
 		VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 		RenderShaderManager* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
-		bufferManager->GetInstancingVertexBuffer()->Expand(countRenderInstance);
+		FixedVertexBuffer* vertexBuffer = bufferManager->GetVertexBufferLX();
+		GrowableVertexBuffer* instanceBuffer = bufferManager->GetInstancingVertexBuffer();
+		FixedIndexBuffer* indexBuffer = bufferManager->GetIndexBuffer();
 
-		IDirect3DVertexBuffer9* vertexBuffer = bufferManager->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_LX);
-		IDirect3DVertexBuffer9* instanceBuffer = bufferManager->GetInstancingVertexBuffer()->GetBuffer();
-		IDirect3DIndexBuffer9* indexBuffer = bufferManager->GetIndexBuffer();
+		instanceBuffer->Expand(countRenderInstance);
 
 		{
-			void* tmp;
+			BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
 
-			vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, vertex_.data(), countVertex * sizeof(VERTEX_LX));
-			vertexBuffer->Unlock();
-			
-			indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, &vertexIndices_[0], countIndex * sizeof(uint16_t));
-			indexBuffer->Unlock();		
+			lockParam.SetSource(vertex_, countVertex, sizeof(VERTEX_LX));
+			vertexBuffer->UpdateBuffer(&lockParam);
 
-			instanceBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, instanceData_.data(), countRenderInstance * sizeof(VERTEX_INSTANCE));
-			instanceBuffer->Unlock();
+			lockParam.SetSource(instanceData_, countRenderInstance, sizeof(VERTEX_INSTANCE));
+			instanceBuffer->UpdateBuffer(&lockParam);
+
+			lockParam.SetSource(vertexIndices_, countIndex, sizeof(uint16_t));
+			indexBuffer->UpdateBuffer(&lockParam);
 		}
 
-		device->SetStreamSource(0, vertexBuffer, 0, sizeof(VERTEX_LX));
+		device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_LX));
 		device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | countRenderInstance);
-		device->SetStreamSource(1, instanceBuffer, 0, sizeof(VERTEX_INSTANCE));
+		device->SetStreamSource(1, instanceBuffer->GetBuffer(), 0, sizeof(VERTEX_INSTANCE));
 		device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA | 1U);
 
-		device->SetIndices(indexBuffer);
+		device->SetIndices(indexBuffer->GetBuffer());
 
 		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationInstancedLX());
 
