@@ -952,6 +952,8 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					tag->SetTagIndex(indexTag);
 
 					int weightRuby = FW_BOLD;
+					int leftOff = 0;
+					int pitchOff = 0;
 
 					while (true) {
 						tok = scan.Next();
@@ -971,23 +973,34 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
 							weightRuby = scan.Next().GetInteger();
 						}
+						else if (str == L"ox") {
+							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
+							leftOff = scan.Next().GetInteger();
+						}
+						else if (str == L"op") {
+							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
+							pitchOff = scan.Next().GetInteger();
+						}
 					}
 
-					int linePos = res->GetLineCount();
-					int codeCount = textLine->GetTextCodes().size();
-					std::wstring text = tag->GetText();
+					size_t linePos = res->GetLineCount();
+					size_t codeCount = textLine->GetTextCodes().size();
+					std::wstring& text = tag->GetText();
 					shared_ptr<DxTextLine> textLineRuby = textLine;
 					textLine = _GetTextInfoSub(text, dxText, res, textLine, hDC, totalWidth, totalHeight);
 
-					SIZE sizeText;
-					::GetTextExtentPoint32(hDC, &text[0], text.size(), &sizeText);
-					int rubyWidth = dxText->GetFontSize() / 2;
-					std::wstring sRuby = tag->GetRuby();
-					int rubyCount = StringUtility::CountAsciiSizeCharacter(sRuby);
+					SIZE sizeTextBase;
+					::GetTextExtentPoint32(hDC, &text[0], text.size(), &sizeTextBase);
+
+					int rubyFontWidth = dxText->GetFontSize() / 2;
+					std::wstring& sRuby = tag->GetRuby();
+					size_t rubyCount = StringUtility::CountAsciiSizeCharacter(sRuby);
 					if (rubyCount > 0) {
-						int rubyPitch = std::max(sizeText.cx / rubyCount - rubyWidth, (LONG)(-rubyWidth * 0.2));
-						int rubyMarginLeft = rubyPitch / 2;
-						tag->SetLeftMargin(rubyMarginLeft);
+						LONG rubySpace = std::max(sizeTextBase.cx - rubyFontWidth / 2, 0L);
+						LONG rubyGap = rubySpace / std::max((LONG)rubyCount - 1, 1L);
+						int rubyPitch = std::max(rubyGap, 0L) + pitchOff;
+
+						tag->SetLeftMargin(leftOff);
 
 						shared_ptr<DxText> dxTextRuby(new DxText());
 						dxTextRuby->SetText(tag->GetRuby());
@@ -995,15 +1008,15 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						dxTextRuby->SetPosition(dxText->GetPosition());
 						dxTextRuby->SetMaxWidth(dxText->GetMaxWidth());
 						dxTextRuby->SetSidePitch(rubyPitch);
-						dxTextRuby->SetLinePitch(linePitch + dxText->GetFontSize() - rubyWidth);
+						dxTextRuby->SetLinePitch(linePitch + dxText->GetFontSize() - rubyFontWidth);
 						dxTextRuby->SetFontWeight(weightRuby);
 						dxTextRuby->SetFontItalic(false);
 						dxTextRuby->SetFontUnderLine(false);
-						dxTextRuby->SetFontSize(rubyWidth);
+						dxTextRuby->SetFontSize(rubyFontWidth);
 						dxTextRuby->SetFontBorderWidth(dxFont.GetBorderWidth() / 2);
 						tag->SetRenderText(dxTextRuby);
 
-						int currentCodeCount = textLineRuby->GetTextCodes().size();
+						size_t currentCodeCount = textLineRuby->GetTextCodes().size();
 						if (codeCount == currentCodeCount) {
 							//タグが完全に次の行に回る場合
 							tag->SetTagIndex(0);

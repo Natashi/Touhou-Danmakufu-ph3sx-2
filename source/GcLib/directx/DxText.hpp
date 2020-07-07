@@ -307,7 +307,7 @@ namespace directx {
 		bool IsAutoIndent() { return bAutoIndent_; }
 		void SetAutoIndent(bool bEnable) { bAutoIndent_ = bEnable; }
 
-		int GetLineCount() { return textLine_.size(); }
+		size_t GetLineCount() { return textLine_.size(); }
 		void AddTextLine(shared_ptr<DxTextLine> text) { textLine_.push_back(text), lineValidEnd_++; }
 		shared_ptr<DxTextLine> GetTextLine(int pos) { return textLine_[pos]; }
 
