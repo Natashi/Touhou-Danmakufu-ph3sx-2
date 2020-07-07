@@ -761,6 +761,15 @@ Obj_CopyValueTable
 			0 - Object value table is cleared before the copy.
 			1 - Value will be overwritten in case of key conflicts.
 			2 - Value will not be overwritten in case of key conflicts.
+			
+ObjRender_SetColorHex
+	Arguments:
+		1) object ID
+		2) color
+	Description:
+		Sets the object's RGB color as hex value.
+		Example:
+			ObjRender_SetColorHex(obj, 0xFF7B32) == ObjRender_SetColor(obj, 255, 123, 50)
 
 ObjRender_GetColor
 	Arguments:
@@ -1510,6 +1519,7 @@ GetShotDataInfoA1
 	Description:
 		Addition + Change.
 		No longer throws an error if the given shot graphic ID is invalid.
+		INFO_EXISTS			- Returns whether the given shot graphic ID exists.
 		INFO_IS_FIXED_ANGLE - Returns whether the given shot graphic ID has had fixed_angle enabled.
 
 CreatePlayerShotA1
