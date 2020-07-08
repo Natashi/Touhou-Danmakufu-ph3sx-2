@@ -440,19 +440,21 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 			IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
 			IDirect3DVertexBuffer9*& vertexBuf = render->pVertexBuffer_;
 
+			size_t vertexBufSize = std::min(countVert, 65536U) * sizeof(VERTEX_NX);
+
 			void* pVoid;
 			VERTEX_NX* pVertData = render->GetVertex(0);
 
-			device->CreateVertexBuffer(countVert * sizeof(VERTEX_NX), 0, VERTEX_NX::fvf, D3DPOOL_MANAGED,
-				&vertexBuf, nullptr);
+			device->CreateVertexBuffer(vertexBufSize, 0, VERTEX_NX::fvf, D3DPOOL_MANAGED, &vertexBuf, nullptr);
 
-			vertexBuf->Lock(0, std::min(countVert, 65536U) * sizeof(VERTEX_NX), &pVoid, D3DUSAGE_WRITEONLY | D3DLOCK_DISCARD);
-			memcpy(pVoid, pVertData, std::min(countVert, 65536U) * sizeof(VERTEX_NX));
+			vertexBuf->Lock(0, vertexBufSize, &pVoid, D3DLOCK_DISCARD);
+			memcpy(pVoid, pVertData, vertexBufSize);
 			vertexBuf->Unlock();
 		}
 	}
 }
 
+//This causes a memory leak but who cares, it's only once and will get deleted once the game closes anyway
 MetasequoiaMeshData::Material* MetasequoiaMeshData::RenderObject::nullMaterial_ = new Material();
 void MetasequoiaMeshData::RenderObject::Render(D3DXMATRIX* matTransform) {
 	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
