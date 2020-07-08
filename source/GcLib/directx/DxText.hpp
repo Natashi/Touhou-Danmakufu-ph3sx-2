@@ -416,8 +416,8 @@ namespace directx {
 		POINT pos_;
 		int widthMax_;
 		int heightMax_;
-		int sidePitch_;
-		int linePitch_;
+		float sidePitch_;
+		float linePitch_;
 		RECT margin_;
 		int alignmentHorizontal_;
 		int alignmentVertical_;
@@ -463,17 +463,17 @@ namespace directx {
 
 		POINT GetPosition() { return pos_; }
 		void SetPosition(int x, int y) { pos_.x = x; pos_.y = y; }
-		void SetPosition(POINT pos) { pos_ = pos; }
+		void SetPosition(POINT& pos) { pos_ = pos; }
 		int GetMaxWidth() { return widthMax_; }
 		void SetMaxWidth(int width) { widthMax_ = width; }
 		int GetMaxHeight() { return heightMax_; }
 		void SetMaxHeight(int height) { heightMax_ = height; }
-		int GetSidePitch() { return sidePitch_; }
-		void SetSidePitch(int pitch) { sidePitch_ = pitch; }
-		int GetLinePitch() { return linePitch_; }
-		void SetLinePitch(int pitch) { linePitch_ = pitch; }
+		float GetSidePitch() { return sidePitch_; }
+		void SetSidePitch(float pitch) { sidePitch_ = pitch; }
+		float GetLinePitch() { return linePitch_; }
+		void SetLinePitch(float pitch) { linePitch_ = pitch; }
 		RECT GetMargin() { return margin_; }
-		void SetMargin(RECT margin) { margin_ = margin; }
+		void SetMargin(RECT& margin) { margin_ = margin; }
 		int GetHorizontalAlignment() { return alignmentHorizontal_; }
 		void SetHorizontalAlignment(int value) { alignmentHorizontal_ = value; }
 		int GetVerticalAlignment() { return alignmentVertical_; }
@@ -487,7 +487,7 @@ namespace directx {
 		void SetSyntacticAnalysis(bool bEnable) { bSyntacticAnalysis_ = bEnable; }
 
 		std::wstring& GetText() { return text_; }
-		void SetText(std::wstring text) { text_ = text; }
+		void SetText(const std::wstring& text) { text_ = text; }
 		void SetTextHash(size_t hash) { textHash_ = hash; }
 		size_t GetTextHash() { return textHash_; }
 

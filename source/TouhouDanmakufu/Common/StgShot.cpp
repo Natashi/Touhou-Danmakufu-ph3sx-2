@@ -1590,7 +1590,7 @@ StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObj
 	life_ = LIFE_SPELL_REGIST;
 	length_ = 0;
 	widthRender_ = 0;
-	widthIntersection_ = 0;
+	widthIntersection_ = -1;
 	invalidLengthStart_ = 0.1f;
 	invalidLengthEnd_ = 0.1f;
 	frameGrazeInvalidStart_ = 20;
@@ -2269,6 +2269,7 @@ void StgCurveLaserObject::_DeleteInAutoClip() {
 
 	std::list<LaserNode>::iterator itrFind = std::find_if(listPosition_.begin(), listPosition_.end(), 
 		PredicateNodeInRect);
+
 	//Can't find any node within the bounding rect
 	if (itrFind == listPosition_.end()) {
 		auto objectManager = stageController_->GetMainObjectManager();
@@ -2289,39 +2290,37 @@ std::vector<StgIntersectionTarget::ptr> StgCurveLaserObject::GetIntersectionTarg
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 
 	size_t countPos = listPosition_.size();
-	std::list<LaserNode>::iterator itr = listPosition_.begin();
+	size_t countIntersection = countPos > 0U ? countPos - 1U : 0U;
 
-	float iLengthS = invalidLengthStart_ * 0.5f;
-	float iLengthE = 0.5f + (1.0f - invalidLengthStart_) * 0.5f;
-	int posInvalidS = (int)(countPos * iLengthS);
-	int posInvalidE = (int)(countPos * iLengthE);
-	float iWidth = widthIntersection_ * hitboxScale_.x;
+	if (countIntersection > 0U) {
+		float iLengthS = invalidLengthStart_ * 0.5f;
+		float iLengthE = 0.5f + (1.0f - invalidLengthEnd_) * 0.5f;
+		int posInvalidS = (int)(countPos * iLengthS);
+		int posInvalidE = (int)(countPos * iLengthE);
+		float iWidth = widthIntersection_ * hitboxScale_.x;
 
-	for (size_t iPos = 0; iPos < countPos - 1; ++iPos) {
-		if ((int)iPos < posInvalidS || (int)iPos > posInvalidE) {
-			++itr;
-			continue;
-		}
+		std::list<LaserNode>::iterator itr = listPosition_.begin();
+		for (size_t iPos = 0; iPos < countIntersection; ++iPos, ++itr) {
+			if ((int)iPos < posInvalidS || (int)iPos > posInvalidE)
+				continue;
 
-		std::list<LaserNode>::iterator itrNext = std::next(itr);
+			std::list<LaserNode>::iterator itrNext = std::next(itr);
+			DxPoint& nodeS = itr->pos;
+			DxPoint& nodeE = itrNext->pos;
 
-		float posXS = (*itr).pos.GetX();
-		float posYS = (*itr).pos.GetY();
-		float posXE = (*itrNext).pos.GetX();
-		float posYE = (*itrNext).pos.GetY();
-		++itr;
+			DxWidthLine line(nodeS.GetX(), nodeS.GetY(), nodeE.GetX(), nodeE.GetY(), iWidth);
+			shared_ptr<StgIntersectionTarget_Line> target(new StgIntersectionTarget_Line);
+			if (target) {
+				target->SetTargetType(typeOwner_ == OWNER_PLAYER ?
+					StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
+				target->SetObject(pOwnReference_);
+				target->SetLine(line);
 
-		DxWidthLine line(posXS, posYS, posXE, posYE, iWidth);
-		shared_ptr<StgIntersectionTarget_Line> target(new StgIntersectionTarget_Line);
-		if (target) {
-			target->SetTargetType(typeOwner_ == OWNER_PLAYER ? 
-				StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
-			target->SetObject(pOwnReference_);
-			target->SetLine(line);
-
-			res.push_back(target);
+				res.push_back(target);
+			}
 		}
 	}
+
 	return res;
 }
 

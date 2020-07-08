@@ -1473,8 +1473,8 @@ gstd::value DxScript::Func_ResetShader(gstd::script_machine* machine, int argc, 
 	DxScript* script = (DxScript*)machine->data;
 	shared_ptr<Shader> shader = nullptr;
 
-	double min = argv[0].as_int();
-	double max = argv[1].as_int();
+	double min = argv[0].as_real();
+	double max = argv[1].as_real();
 	auto objectManager = script->GetObjectManager();
 	int size = objectManager->GetRenderBucketCapacity();
 
@@ -1747,7 +1747,7 @@ gstd::value DxScript::Func_GetObject2dPosition(gstd::script_machine* machine, in
 	int id = (int)argv[0].as_real();
 
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) script->RaiseError("Invalid object; object might not have been initialized.");
+	if (obj == nullptr) script->RaiseError("Invalid object; object might have been deleted.");
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
@@ -3556,7 +3556,7 @@ value DxScript::Func_ObjText_SetLinePitch(script_machine* machine, int argc, con
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int pitch = argv[1].as_int();
+		float pitch = argv[1].as_real();
 		obj->SetLinePitch(pitch);
 	}
 	return value();
@@ -3566,7 +3566,7 @@ value DxScript::Func_ObjText_SetSidePitch(script_machine* machine, int argc, con
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int pitch = argv[1].as_int();
+		float pitch = argv[1].as_real();
 		obj->SetSidePitch(pitch);
 	}
 	return value();

@@ -192,11 +192,11 @@ public:
 	static gstd::value Func_SetPlayerRebirthFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetPlayerRebirthLossFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetPlayerAutoItemCollectLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	template<void (StgPlayerObject::* Func)(bool)>
+	template<void (StgPlayerObject::*Func)(bool)>
 	DNH_FUNCAPI_DECL_(Func_SetPlayerInfoAsBool);
-	template<double (StgPlayerObject::* Func)(void), int DEF>
+	template<double (StgPlayerObject::*Func)(void), int DEF>
 	DNH_FUNCAPI_DECL_(Func_GetPlayerInfoAsDbl);
-	template<int (StgPlayerObject::* Func)(void), int DEF>
+	template<int (StgPlayerObject::*Func)(void), int DEF>
 	DNH_FUNCAPI_DECL_(Func_GetPlayerInfoAsInt);
 	/*
 	DNH_FUNCAPI_DECL_(Func_GetPlayerAutoItemCollectLine);

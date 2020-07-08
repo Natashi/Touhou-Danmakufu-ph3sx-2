@@ -813,8 +813,8 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(std::wstring text, DxText
 	shared_ptr<DxTextLine> textLine, HDC& hDC, int& totalWidth, int& totalHeight) 
 {
 	DxFont& dxFont = dxText->GetFont();
-	int sidePitch = dxText->GetSidePitch();
-	int linePitch = dxText->GetLinePitch();
+	float sidePitch = dxText->GetSidePitch();
+	float linePitch = dxText->GetLinePitch();
 	int widthMax = dxText->GetMaxWidth();
 	int heightMax = dxText->GetMaxHeight();
 	int widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0;
@@ -1190,14 +1190,15 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 	int xOffset = 0;
 	int yOffset = 0;
 
-	int countTag = textLine->GetTagCount();
-	int indexTag = 0;
-	int countCode = textLine->code_.size();
-	for (int iCode = 0; iCode < countCode; iCode++) {
+	size_t countTag = textLine->GetTagCount();
+	size_t indexTag = 0;
+	size_t countCode = textLine->code_.size();
+	for (size_t iCode = 0; iCode < countCode; ++iCode) {
 		for (; indexTag < countTag;) {
 			shared_ptr<DxTextTag> tag = textLine->GetTag(indexTag);
-			int tagNo = tag->GetTagIndex();
+			size_t tagNo = tag->GetTagIndex();
 			if (tagNo != iCode) break;
+
 			int type = tag->GetTagType();
 			if (type == DxTextTag::TYPE_FONT) {
 				DxTextTag_Font* font = (DxTextTag_Font*)tag.get();

@@ -466,18 +466,18 @@ namespace directx {
 			text_.SetFontUnderLine(bLine); bChange_ = true; 
 		}
 
-		void SetFontColorTop(int r, int g, int b) { text_.SetFontColorTop(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
-		void SetFontColorBottom(int r, int g, int b) { text_.SetFontColorBottom(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
+		void SetFontColorTop(byte r, byte g, byte b) { text_.SetFontColorTop(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
+		void SetFontColorBottom(byte r, byte g, byte b) { text_.SetFontColorBottom(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
 		void SetFontBorderWidth(int width) { text_.SetFontBorderWidth(width); bChange_ = true; }
 		void SetFontBorderType(int type) { text_.SetFontBorderType(type); bChange_ = true; }
-		void SetFontBorderColor(int r, int g, int b) { text_.SetFontBorderColor(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
+		void SetFontBorderColor(byte r, byte g, byte b) { text_.SetFontBorderColor(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
 
 		void SetCharset(BYTE set);
 
 		void SetMaxWidth(int width) { text_.SetMaxWidth(width); bChange_ = true; }
 		void SetMaxHeight(int height) { text_.SetMaxHeight(height); bChange_ = true; }
-		void SetLinePitch(int pitch) { text_.SetLinePitch(pitch); bChange_ = true; }
-		void SetSidePitch(int pitch) { text_.SetSidePitch(pitch); bChange_ = true; }
+		void SetLinePitch(float pitch) { text_.SetLinePitch(pitch); bChange_ = true; }
+		void SetSidePitch(float pitch) { text_.SetSidePitch(pitch); bChange_ = true; }
 		void SetHorizontalAlignment(int value) { text_.SetHorizontalAlignment(value); bChange_ = true; }
 		void SetVerticalAlignment(int value) { text_.SetVerticalAlignment(value); bChange_ = true; }
 		void SetPermitCamera(bool bPermit) { text_.SetPermitCamera(bPermit); }
