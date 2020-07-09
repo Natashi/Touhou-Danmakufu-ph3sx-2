@@ -264,6 +264,12 @@ void StgShotManager::SetDeleteEventEnableByType(int type, bool bEnable) {
 		listDeleteEventEnable_.reset(bit);
 	}
 }
+bool StgShotManager::LoadPlayerShotData(const std::wstring& path, bool bReload) {
+	return listPlayerShotData_->AddShotDataList(path, bReload);
+}
+bool StgShotManager::LoadEnemyShotData(const std::wstring& path, bool bReload) {
+	return listEnemyShotData_->AddShotDataList(path, bReload);
+}
 
 /**********************************************************
 //StgShotDataList
@@ -1023,6 +1029,32 @@ StgShotData* StgShotObject::_GetShotData(int id) {
 
 	if (dataList) res = dataList->GetData(id);
 	return res;
+}
+
+void StgShotObject::_SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z, float w) {
+	constexpr float bias = -0.5f;
+	vertex.position.x = x + bias;
+	vertex.position.y = y + bias;
+	vertex.position.z = z;
+	vertex.position.w = w;
+}
+void StgShotObject::_SetVertexUV(VERTEX_TLX& vertex, float u, float v) {
+	vertex.texcoord.x = u;
+	vertex.texcoord.y = v;
+}
+void StgShotObject::_SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color) {
+	vertex.diffuse_color = color;
+}
+void StgShotObject::SetAlpha(int alpha) {
+	ColorAccess::ClampColor(alpha);
+	color_ = (color_ & 0x00ffffff) | ((byte)alpha << 24);
+}
+void StgShotObject::SetColor(int r, int g, int b) {
+	ColorAccess::ClampColor(r);
+	ColorAccess::ClampColor(g);
+	ColorAccess::ClampColor(b);
+	D3DCOLOR dc = D3DCOLOR_ARGB(0, r, g, b);
+	color_ = (color_ & 0xff000000) | (dc & 0x00ffffff);
 }
 
 void StgShotObject::AddShot(int frame, int idShot, float radius, double angle) {
