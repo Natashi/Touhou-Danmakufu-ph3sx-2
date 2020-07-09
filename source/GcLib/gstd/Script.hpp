@@ -243,7 +243,7 @@ namespace gstd {
 		void* data;	//クライアント用空間
 
 		void run();
-		void call(std::string event_name);
+		void call(const std::string& event_name);
 		void call(std::map<std::string, script_engine::block*>::iterator event_itr);
 		void resume();
 		void stop() {
@@ -270,7 +270,7 @@ namespace gstd {
 
 		script_engine* get_engine() { return engine; }
 
-		bool has_event(std::string event_name, std::map<std::string, script_engine::block*>::iterator& res);
+		bool has_event(const std::string& event_name, std::map<std::string, script_engine::block*>::iterator& res);
 		int get_current_line();
 		int get_current_thread_addr() { return (int)current_thread_index._Ptr; }
 	private:
@@ -328,7 +328,7 @@ namespace gstd {
 
 		size_t get_thread_count() { return threads.size(); }
 	};
-	inline bool script_machine::has_event(std::string event_name, std::map<std::string, script_engine::block*>::iterator& res) {
+	inline bool script_machine::has_event(const std::string& event_name, std::map<std::string, script_engine::block*>::iterator& res) {
 		res = engine->events.find(event_name);
 		return res != engine->events.end();
 	}

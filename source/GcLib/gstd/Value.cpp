@@ -42,7 +42,7 @@ value::value(type_data* t, bool v) {
 	data->type = t;
 	data->boolean_value = v;
 }
-value::value(type_data* t, std::wstring v) {
+value::value(type_data* t, const std::wstring& v) {
 	data = std::make_shared<body>();
 	data->type = t;
 	for (wchar_t ch : v)

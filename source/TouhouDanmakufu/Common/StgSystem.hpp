@@ -108,8 +108,7 @@ private:
 
 	int invalidPriMin_;
 	int invalidPriMax_;
-	std::set<int> listReplayTargetKey_;
-
+	std::set<int16_t> listReplayTargetKey_;
 public:
 	StgSystemInformation();
 	virtual ~StgSystemInformation();
@@ -123,15 +122,15 @@ public:
 	bool IsRetry() { return bRetry_; }
 	void SetRetry() { bRetry_ = true; }
 	bool IsError() { return listError_.size() > 0; }
-	void SetError(std::wstring error) { listError_.push_back(error); }
+	void SetError(const std::wstring& error) { listError_.push_back(error); }
 	std::wstring GetErrorMessage();
 
-	std::wstring GetPauseScriptPath() { return pathPauseScript_; }
-	void SetPauseScriptPath(std::wstring path) { pathPauseScript_ = path; }
-	std::wstring GetEndSceneScriptPath() { return pathEndSceneScript_; }
-	void SetEndSceneScriptPath(std::wstring path) { pathEndSceneScript_ = path; }
-	std::wstring GetReplaySaveSceneScriptPath() { return pathReplaySaveSceneScript_; }
-	void SetReplaySaveSceneScriptPath(std::wstring path) { pathReplaySaveSceneScript_ = path; }
+	std::wstring& GetPauseScriptPath() { return pathPauseScript_; }
+	void SetPauseScriptPath(const std::wstring& path) { pathPauseScript_ = path; }
+	std::wstring& GetEndSceneScriptPath() { return pathEndSceneScript_; }
+	void SetEndSceneScriptPath(const std::wstring& path) { pathEndSceneScript_ = path; }
+	std::wstring& GetReplaySaveSceneScriptPath() { return pathReplaySaveSceneScript_; }
+	void SetReplaySaveSceneScriptPath(const std::wstring& path) { pathReplaySaveSceneScript_ = path; }
 
 	ref_count_ptr<ScriptInformation> GetMainScriptInformation() { return infoMain_; }
 	void SetMainScriptInformation(ref_count_ptr<ScriptInformation> info) { infoMain_ = info; }
@@ -143,8 +142,8 @@ public:
 	int GetInvaridRenderPriorityMin() { return invalidPriMin_; }
 	int GetInvaridRenderPriorityMax() { return invalidPriMax_; }
 
-	void AddReplayTargetKey(int id) { listReplayTargetKey_.insert(id); }
-	std::set<int> GetReplayTargetKeyList() { return listReplayTargetKey_; }
+	void AddReplayTargetKey(int16_t id) { listReplayTargetKey_.insert(id); }
+	std::set<int16_t>& GetReplayTargetKeyList() { return listReplayTargetKey_; }
 
 };
 

@@ -106,7 +106,7 @@ namespace gstd {
 	public:
 		WLabel();
 		void Create(HWND hWndParent);
-		void SetText(std::wstring text);
+		void SetText(const std::wstring& text);
 		void SetTextColor(int color);
 		void SetBackColor(int color);
 
@@ -123,7 +123,7 @@ namespace gstd {
 	public:
 		void Create(HWND hWndParent);
 		void Create(HWND hWndParent, WButton::Style& style);
-		void SetText(std::wstring text);
+		void SetText(const std::wstring& text);
 		bool IsChecked();
 	};
 	class WButton::Style : public WindowBase::Style {};
@@ -134,7 +134,7 @@ namespace gstd {
 	class WGroupBox : public WindowBase {
 	public:
 		void Create(HWND hWndParent);
-		void SetText(std::wstring text);
+		void SetText(const std::wstring& text);
 	};
 
 	/**********************************************************
@@ -145,7 +145,7 @@ namespace gstd {
 		class Style;
 	public:
 		void Create(HWND hWndParent, WEditBox::Style& style);
-		void SetText(std::wstring text);
+		void SetText(const std::wstring& text);
 		std::wstring GetText();
 		int GetTextLength();
 		int GetMaxTextLength() { return ::SendMessage(hWnd_, EM_GETLIMITTEXT, 0, 0); }
@@ -167,8 +167,8 @@ namespace gstd {
 		int GetCount();
 		void SetSelectedIndex(int index);
 		int GetSelectedIndex();
-		void AddString(std::wstring str);
-		void InsertString(int index, std::wstring str);
+		void AddString(const std::wstring& str);
+		void InsertString(int index, const std::wstring& str);
 		void DeleteString(int index);
 		std::wstring GetText(int index);
 	};
@@ -191,8 +191,8 @@ namespace gstd {
 		void SetSelectedIndex(int index);
 		int GetSelectedIndex();
 		std::wstring GetSelectedText();
-		void AddString(std::wstring str);
-		void InsertString(int index, std::wstring str);
+		void AddString(const std::wstring& str);
+		void InsertString(int index, const std::wstring& str);
 	};
 	class WComboBox::Style : public WindowBase::Style {};
 
@@ -205,16 +205,16 @@ namespace gstd {
 	public:
 		void Create(HWND hWndParent, Style& style);
 		void Clear();
-		void AddColumn(int cx, int sub, DWORD fmt, std::wstring text);
-		void AddColumn(int cx, int sub, std::wstring text) { AddColumn(cx, sub, LVCFMT_LEFT, text); }
-		void SetColumnText(int cx, std::wstring text);
-		void AddRow(std::wstring text);
-		void SetText(int row, int column, std::wstring text);
+		void AddColumn(int cx, int sub, DWORD fmt, const std::wstring& text);
+		void AddColumn(int cx, int sub, const std::wstring& text) { AddColumn(cx, sub, LVCFMT_LEFT, text); }
+		void SetColumnText(int cx, const std::wstring& text);
+		void AddRow(const std::wstring& text);
+		void SetText(int row, int column, const std::wstring& text);
 		void DeleteRow(int row);
 		int GetRowCount();
 		std::wstring GetText(int row, int column);
-		bool IsExistsInColumn(std::wstring value, int column);
-		int GetIndexInColumn(std::wstring value, int column);
+		bool IsExistsInColumn(const std::wstring& value, int column);
+		int GetIndexInColumn(const std::wstring& value, int column);
 		void SetSelectedRow(int index);
 		int GetSelectedRow();
 		void ClearSelection();
@@ -257,7 +257,7 @@ namespace gstd {
 		virtual ~Item();
 		ref_count_ptr<Item> CreateChild(WTreeView::ItemStyle& style);
 		void Delete();
-		void SetText(std::wstring text);
+		void SetText(const std::wstring& text);
 		std::wstring GetText();
 		void SetParam(LPARAM param);
 		LPARAM GetParam();
@@ -283,8 +283,8 @@ namespace gstd {
 	public:
 		~WTabControll();
 		void Create(HWND hWndParent);
-		void AddTab(std::wstring text);
-		void AddTab(std::wstring text, ref_count_ptr<WPanel> panel);
+		void AddTab(const std::wstring& text);
+		void AddTab(const std::wstring& text, ref_count_ptr<WPanel> panel);
 		void ShowPage();
 		int GetCurrentPage() { return TabCtrl_GetCurSel(hWnd_); }
 		void SetCurrentPage(int page) { TabCtrl_SetCurSel(hWnd_, page); ShowPage(); }
@@ -299,8 +299,8 @@ namespace gstd {
 	class WStatusBar : public WindowBase {
 	public:
 		void Create(HWND hWndParent);
-		void SetPartsSize(std::vector<int> parts);
-		void SetText(int pos, std::wstring text);
+		void SetPartsSize(std::vector<int>& parts);
+		void SetText(int pos, const std::wstring& text);
 		void SetBounds(WPARAM wParam, LPARAM lParam);
 	};
 

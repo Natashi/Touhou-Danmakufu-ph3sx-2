@@ -34,16 +34,16 @@ double DxScriptObjectBase::GetRenderPriority() {
 	return (double)priRender_ / (manager_->GetRenderBucketCapacity() - 1U);
 }
 
-bool DxScriptObjectBase::IsObjectValueExists(std::wstring key) { 
+bool DxScriptObjectBase::IsObjectValueExists(const std::wstring& key) {
 	return IsObjectValueExists(GetKeyHash(key));
 }
-gstd::value DxScriptObjectBase::GetObjectValue(std::wstring key) { 
+gstd::value DxScriptObjectBase::GetObjectValue(const std::wstring& key) {
 	return GetObjectValue(GetKeyHash(key));
 }
-void DxScriptObjectBase::SetObjectValue(std::wstring key, gstd::value val) { 
+void DxScriptObjectBase::SetObjectValue(const std::wstring& key, gstd::value val) {
 	SetObjectValue(GetKeyHash(key), val);
 }
-void DxScriptObjectBase::DeleteObjectValue(std::wstring key) { 
+void DxScriptObjectBase::DeleteObjectValue(const std::wstring& key) {
 	DeleteObjectValue(GetKeyHash(key));
 }
 
@@ -306,7 +306,7 @@ void DxScriptPrimitiveObject3D::SetRenderState() {
 			objRelative->SetRenderState();
 
 			int frameAnime = objMesh->GetAnimeFrame();
-			std::wstring nameAnime = objMesh->GetAnimeName();
+			const std::wstring& nameAnime = objMesh->GetAnimeName();
 			shared_ptr<DxMesh> mesh = objMesh->GetMesh();
 			shared_ptr<D3DXMATRIX> mat = std::make_shared<D3DXMATRIX>();
 			*mat = mesh->GetAnimationMatrix(nameAnime, frameAnime, nameRelativeBone_);
@@ -408,7 +408,7 @@ void DxScriptTrajectoryObject3D::Work() {
 			if (DxScriptMeshObject* objMesh = dynamic_cast<DxScriptMeshObject*>(objRelative.get())) {
 				objRelative->SetRenderState();
 				int frameAnime = objMesh->GetAnimeFrame();
-				std::wstring nameAnime = objMesh->GetAnimeName();
+				const std::wstring& nameAnime = objMesh->GetAnimeName();
 				shared_ptr<DxMesh> mesh = objMesh->GetMesh();
 				D3DXMATRIX matAnime = mesh->GetAnimationMatrix(nameAnime, frameAnime, nameRelativeBone_);
 
@@ -688,7 +688,7 @@ void DxScriptTextObject::SetCharset(BYTE set) {
 	text_.SetFontCharset(set); 
 	bChange_ = true;
 }
-void DxScriptTextObject::SetText(std::wstring text) {
+void DxScriptTextObject::SetText(const std::wstring& text) {
 	size_t newHash = std::hash<std::wstring>{}(text);
 	if (newHash == text_.GetTextHash()) return;
 
@@ -768,7 +768,7 @@ DxSoundObject::~DxSoundObject() {
 	if (player_ == nullptr) return;
 	player_->Delete();
 }
-bool DxSoundObject::Load(std::wstring path) {
+bool DxSoundObject::Load(const std::wstring& path) {
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
 	player_ = manager->GetPlayer(path);
 	return player_ != nullptr;
@@ -785,7 +785,7 @@ DxFileObject::DxFileObject() {
 	isArchived_ = false;
 }
 DxFileObject::~DxFileObject() {}
-bool DxFileObject::OpenR(std::wstring path) {
+bool DxFileObject::OpenR(const std::wstring& path) {
 	file_ = new File(path);
 	bool res = file_->Open();
 	if (!res) file_ = nullptr;
@@ -805,7 +805,7 @@ bool DxFileObject::OpenRW(std::wstring path) {
 	if (!bDir) return false;
 
 	//Security; to prevent scripts from being able to access external files
-	std::wstring dirModule = PathProperty::GetModuleDirectory();
+	const std::wstring& dirModule = PathProperty::GetModuleDirectory();
 	if (dir.find(dirModule) == std::wstring::npos) {
 		Logger::WriteTop(StringUtility::Format("DxFileObject: OpenNW cannot open external files. [%s]", path.c_str()));
 		return false;
@@ -832,7 +832,7 @@ DxTextFileObject::DxTextFileObject() {
 	bytePerChar_ = 2U;
 }
 DxTextFileObject::~DxTextFileObject() {}
-bool DxTextFileObject::OpenR(std::wstring path) {
+bool DxTextFileObject::OpenR(const std::wstring& path) {
 	listLine_.clear();
 	bool res = DxFileObject::OpenR(path);
 	if (!res) return false;
@@ -1047,7 +1047,7 @@ std::wstring DxTextFileObject::GetLineAsWString(size_t line) {
 	}
 	return res;
 }
-void DxTextFileObject::SetLineAsString(std::string& text, size_t line) {
+void DxTextFileObject::SetLineAsString(const std::string& text, size_t line) {
 	line--; //Line number begins at 1
 	if (line >= listLine_.size()) return;
 
@@ -1065,7 +1065,7 @@ void DxTextFileObject::SetLineAsString(std::string& text, size_t line) {
 	}
 	listLine_[line] = newLine;
 }
-void DxTextFileObject::SetLineAsWString(std::wstring& text, size_t line) {
+void DxTextFileObject::SetLineAsWString(const std::wstring& text, size_t line) {
 	line--; //Line number begins at 1
 	if (line >= listLine_.size()) return;
 
@@ -1083,22 +1083,22 @@ void DxTextFileObject::SetLineAsWString(std::wstring& text, size_t line) {
 	}
 	listLine_[line] = newLine;
 }
-void DxTextFileObject::_AddLine(char* pChar, size_t count) {
+void DxTextFileObject::_AddLine(const char* pChar, size_t count) {
 	if (isArchived_) return;
 	std::vector<char> newLine;
 	newLine.resize(count);
 	memcpy(&newLine[0], pChar, count);
 	listLine_.push_back(newLine);
 }
-void DxTextFileObject::AddLine(std::string line) {
+void DxTextFileObject::AddLine(const std::string& line) {
 	if (bytePerChar_ == 1) _AddLine(&line[0], line.size() * sizeof(char));
 	else if (bytePerChar_ == 2) {
 		std::wstring str = StringUtility::ConvertMultiToWide(line);
 		_AddLine((char*)&str[0], str.size() * sizeof(wchar_t));
 	}
 }
-void DxTextFileObject::AddLine(std::wstring line) {
-	if (bytePerChar_ == 2) _AddLine((char*)&line[0], line.size() * sizeof(wchar_t));
+void DxTextFileObject::AddLine(const std::wstring& line) {
+	if (bytePerChar_ == 2) _AddLine((const char*)&line[0], line.size() * sizeof(wchar_t));
 	else if (bytePerChar_ == 1) {
 		std::string str = StringUtility::ConvertWideToMulti(line);
 		_AddLine(&str[0], str.size() * sizeof(char));
@@ -1114,7 +1114,7 @@ DxBinaryFileObject::DxBinaryFileObject() {
 	codePage_ = CP_ACP;
 }
 DxBinaryFileObject::~DxBinaryFileObject() {}
-bool DxBinaryFileObject::OpenR(std::wstring path) {
+bool DxBinaryFileObject::OpenR(const std::wstring& path) {
 	bool res = DxFileObject::OpenR(path);
 	if (!res) return false;
 
@@ -1426,11 +1426,11 @@ void DxScriptObjectManager::ReserveSound(gstd::ref_count_ptr<SoundPlayer> player
 	info->player_ = player;
 	info->style_ = style;
 
-	std::wstring path = player->GetPath();
+	const std::wstring& path = player->GetPath();
 	mapReservedSound_[path] = info;
 }
 void DxScriptObjectManager::DeleteReservedSound(gstd::ref_count_ptr<SoundPlayer> player) {
-	std::wstring path = player->GetPath();
+	const std::wstring& path = player->GetPath();
 	mapReservedSound_.erase(path);
 }
 void DxScriptObjectManager::SetFogParam(bool bEnable, D3DCOLOR fogColor, float start, float end) {

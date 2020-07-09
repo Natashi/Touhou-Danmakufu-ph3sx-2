@@ -10,17 +10,17 @@
 **********************************************************/
 class EPathProperty : public Singleton<EPathProperty>, public PathProperty {
 public:
-	static std::wstring GetSystemResourceDirectory();
-	static std::wstring GetSystemImageDirectory();
-	static std::wstring GetSystemBgmDirectory();
-	static std::wstring GetSystemSeDirectory();
+	static const std::wstring& GetSystemResourceDirectory();
+	static const std::wstring& GetSystemImageDirectory();
+	static const std::wstring& GetSystemBgmDirectory();
+	static const std::wstring& GetSystemSeDirectory();
 
-	static std::wstring GetStgScriptRootDirectory();
-	static std::wstring GetStgDefaultScriptDirectory();
-	static std::wstring GetPlayerScriptRootDirectory();
+	static const std::wstring& GetStgScriptRootDirectory();
+	static const std::wstring& GetStgDefaultScriptDirectory();
+	static const std::wstring& GetPlayerScriptRootDirectory();
 
-	static std::wstring GetReplaySaveDirectory(std::wstring scriptPath);
-	static std::wstring GetCommonDataPath(std::wstring scriptPath, std::wstring area);
+	static std::wstring GetReplaySaveDirectory(const std::wstring& scriptPath);
+	static std::wstring GetCommonDataPath(const std::wstring& scriptPath, const std::wstring& area);
 };
 
 #if defined(DNH_PROJ_EXECUTOR)

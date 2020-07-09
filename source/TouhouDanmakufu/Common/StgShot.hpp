@@ -60,8 +60,8 @@ public:
 	StgShotDataList* GetPlayerShotDataList() { return listPlayerShotData_; }
 	StgShotDataList* GetEnemyShotDataList() { return listEnemyShotData_; }
 
-	bool LoadPlayerShotData(std::wstring path, bool bReload = false);
-	bool LoadEnemyShotData(std::wstring path, bool bReload = false);
+	bool LoadPlayerShotData(const std::wstring& path, bool bReload = false);
+	bool LoadEnemyShotData(const std::wstring& path, bool bReload = false);
 
 	RECT GetShotAutoDeleteClipRect();
 
@@ -106,7 +106,7 @@ public:
 
 	StgShotData* GetData(int id) { return (id >= 0 && id < listData_.size()) ? listData_[id] : NULL; }
 
-	bool AddShotDataList(std::wstring path, bool bReload);
+	bool AddShotDataList(const std::wstring& path, bool bReload);
 };
 
 class StgShotData {
@@ -729,10 +729,10 @@ struct StgPatternShotTransform {
 /**********************************************************
 //Inline function implementations
 **********************************************************/
-inline bool StgShotManager::LoadPlayerShotData(std::wstring path, bool bReload) {
+inline bool StgShotManager::LoadPlayerShotData(const std::wstring& path, bool bReload) {
 	return listPlayerShotData_->AddShotDataList(path, bReload);
 }
-inline bool StgShotManager::LoadEnemyShotData(std::wstring path, bool bReload) {
+inline bool StgShotManager::LoadEnemyShotData(const std::wstring& path, bool bReload) {
 	return listEnemyShotData_->AddShotDataList(path, bReload);
 }
 

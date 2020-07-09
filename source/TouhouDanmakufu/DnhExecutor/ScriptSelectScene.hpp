@@ -70,11 +70,11 @@ private:
 	ref_count_ptr<ScriptInformation> info_;
 	ScriptSelectScene* _GetScriptSelectScene() { return (ScriptSelectScene*)menu_; }
 public:
-	ScriptSelectSceneMenuItem(int type, std::wstring path, ref_count_ptr<ScriptInformation> info);
+	ScriptSelectSceneMenuItem(int type, const std::wstring& path, ref_count_ptr<ScriptInformation> info);
 	~ScriptSelectSceneMenuItem();
 
 	int GetType() { return type_; }
-	std::wstring GetPath() { return path_; }
+	std::wstring& GetPath() { return path_; }
 	ref_count_ptr<ScriptInformation> GetScriptInformation() { return info_; }
 };
 
@@ -91,8 +91,8 @@ public:
 		if (lp->GetType() != ScriptSelectSceneMenuItem::TYPE_DIR &&
 			rp->GetType() == ScriptSelectSceneMenuItem::TYPE_DIR) return FALSE;
 
-		std::wstring lPath = lp->GetPath();
-		std::wstring rPath = rp->GetPath();
+		std::wstring& lPath = lp->GetPath();
+		std::wstring& rPath = rp->GetPath();
 		BOOL res = CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
 			lPath.c_str(), -1, rPath.c_str(), -1);
 		return res == CSTR_LESS_THAN ? TRUE : FALSE;
@@ -135,20 +135,20 @@ protected:
 
 	std::list<ref_count_ptr<ScriptSelectSceneMenuItem>> listItem_;
 	virtual void _Run();
-	virtual void _SearchScript(std::wstring dir);
-	void _CreateMenuItem(std::wstring path);
+	virtual void _SearchScript(const std::wstring& dir);
+	void _CreateMenuItem(const std::wstring& path);
 	bool _IsValidScriptInformation(ref_count_ptr<ScriptInformation> info);
 	int _ConvertTypeInfoToItem(int typeInfo);
 public:
-	ScriptSelectFileModel(int type, std::wstring dir);
+	ScriptSelectFileModel(int type, const std::wstring& dir);
 	virtual ~ScriptSelectFileModel();
 	virtual void CreateMenuItem();
 
 	int GetType() { return type_; }
-	std::wstring GetDirectory() { return dir_; }
+	std::wstring& GetDirectory() { return dir_; }
 
-	std::wstring GetWaitPath() { return pathWait_; }
-	void SetWaitPath(std::wstring path) { pathWait_ = path; }
+	std::wstring& GetWaitPath() { return pathWait_; }
+	void SetWaitPath(const std::wstring& path) { pathWait_ = path; }
 };
 
 /**********************************************************
@@ -175,7 +175,7 @@ class PlayTypeSelectMenuItem : public TextLightUpMenuItem {
 
 	PlayTypeSelectScene* _GetTitleScene() { return (PlayTypeSelectScene*)menu_; }
 public:
-	PlayTypeSelectMenuItem(std::wstring text, int x, int y);
+	PlayTypeSelectMenuItem(const std::wstring& text, int x, int y);
 	virtual ~PlayTypeSelectMenuItem();
 	void Work();
 	void Render();

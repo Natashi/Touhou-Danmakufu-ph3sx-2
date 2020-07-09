@@ -216,7 +216,7 @@ LRESULT WLabel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	}
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
-void WLabel::SetText(std::wstring text) {
+void WLabel::SetText(const std::wstring& text) {
 	if (text == GetText()) return;
 	::SetWindowText(hWnd_, text.c_str());
 }
@@ -265,7 +265,7 @@ void WButton::Create(HWND hWndParent, WButton::Style& style) {
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
-void WButton::SetText(std::wstring text) {
+void WButton::SetText(const std::wstring& text) {
 	::SetWindowText(hWnd_, text.c_str());
 }
 bool WButton::IsChecked() {
@@ -287,7 +287,7 @@ void WGroupBox::Create(HWND hWndParent) {
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 
-void WGroupBox::SetText(std::wstring text) {
+void WGroupBox::SetText(const std::wstring& text) {
 	::SetWindowText(hWnd_, text.c_str());
 }
 
@@ -307,7 +307,7 @@ void WEditBox::Create(HWND hWndParent, WEditBox::Style& style) {
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
-void WEditBox::SetText(std::wstring text) {
+void WEditBox::SetText(const std::wstring& text) {
 	if (text == GetText()) return;
 	::SetWindowText(hWnd_, text.c_str());
 }
@@ -356,10 +356,10 @@ int WListBox::GetSelectedIndex() {
 	int res = (int)SendMessage(hWnd_, LB_GETCURSEL, 0, 0);
 	return res;
 }
-void WListBox::AddString(std::wstring str) {
+void WListBox::AddString(const std::wstring& str) {
 	SendMessage(hWnd_, LB_ADDSTRING, 0, (LPARAM)str.c_str());
 }
-void WListBox::InsertString(int index, std::wstring str) {
+void WListBox::InsertString(int index, const std::wstring& str) {
 	SendMessage(hWnd_, LB_INSERTSTRING, index, (LPARAM)str.c_str());
 }
 void WListBox::DeleteString(int index) {
@@ -413,13 +413,12 @@ std::wstring WComboBox::GetSelectedText() {
 	int index = GetSelectedIndex();
 	wchar_t buf[256];
 	::SendMessage(hWnd_, CB_GETLBTEXT, index, (LPARAM)buf);
-	std::wstring res = buf;
-	return res;
+	return std::wstring(buf);
 }
-void WComboBox::AddString(std::wstring str) {
+void WComboBox::AddString(const std::wstring& str) {
 	::SendMessage(hWnd_, CB_ADDSTRING, 0, (LPARAM)str.c_str());
 }
-void WComboBox::InsertString(int index, std::wstring str) {
+void WComboBox::InsertString(int index, const std::wstring& str) {
 	SendMessage(hWnd_, CB_INSERTSTRING, index, (LPARAM)str.c_str());
 }
 /**********************************************************
@@ -445,7 +444,7 @@ void WListView::Create(HWND hWndParent, Style& style) {
 void WListView::Clear() {
 	ListView_DeleteAllItems(hWnd_);
 }
-void WListView::AddColumn(int cx, int sub, DWORD fmt, std::wstring text) {
+void WListView::AddColumn(int cx, int sub, DWORD fmt, const std::wstring& text) {
 	LV_COLUMN lvcol;
 	lvcol.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvcol.fmt = fmt;
@@ -454,13 +453,13 @@ void WListView::AddColumn(int cx, int sub, DWORD fmt, std::wstring text) {
 	lvcol.iSubItem = sub;
 	ListView_InsertColumn(hWnd_, sub, &lvcol);
 }
-void WListView::SetColumnText(int cx, std::wstring text) {
+void WListView::SetColumnText(int cx, const std::wstring& text) {
 	LV_COLUMN lvcol;
 	ListView_GetColumn(hWnd_, cx, &lvcol);
 	lvcol.pszText = (wchar_t*)text.c_str();
 	ListView_SetColumn(hWnd_, cx, &lvcol);
 }
-void WListView::AddRow(std::wstring text) {
+void WListView::AddRow(const std::wstring& text) {
 	LVITEM item;
 	item.mask = LVIF_TEXT | LVIF_PARAM;
 	item.iItem = 0;
@@ -469,7 +468,7 @@ void WListView::AddRow(std::wstring text) {
 	item.lParam = ListView_GetItemCount(hWnd_);
 	ListView_InsertItem(hWnd_, &item);
 }
-void WListView::SetText(int row, int column, std::wstring text) {
+void WListView::SetText(int row, int column, const std::wstring& text) {
 	std::wstring pre = GetText(row, column);
 	if (pre == text) return;
 
@@ -504,7 +503,7 @@ std::wstring WListView::GetText(int row, int column) {
 	res = buf;
 	return res;
 }
-bool WListView::IsExistsInColumn(std::wstring value, int column) {
+bool WListView::IsExistsInColumn(const std::wstring& value, int column) {
 	int count = ListView_GetItemCount(hWnd_);
 	for (int iRow = 0; iRow <= count; iRow++) {
 		std::wstring str = GetText(iRow, column);
@@ -512,7 +511,7 @@ bool WListView::IsExistsInColumn(std::wstring value, int column) {
 	}
 	return false;
 }
-int WListView::GetIndexInColumn(std::wstring value, int column) {
+int WListView::GetIndexInColumn(const std::wstring& value, int column) {
 	int res = -1;
 	if (column == 0) {
 		LVFINDINFO info;
@@ -601,7 +600,7 @@ ref_count_ptr<WTreeView::Item> WTreeView::Item::CreateChild(WTreeView::ItemStyle
 void WTreeView::Item::Delete() {
 	TreeView_DeleteItem(hTree_, hItem_);
 }
-void WTreeView::Item::SetText(std::wstring text) {
+void WTreeView::Item::SetText(const std::wstring& text) {
 	if (GetText() == text) return;
 	TVITEM tvi;
 	tvi.mask = TVIF_TEXT;
@@ -677,11 +676,11 @@ LRESULT WTabControll::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	}
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
-void WTabControll::AddTab(std::wstring text) {
+void WTabControll::AddTab(const std::wstring& text) {
 	ref_count_ptr<WPanel> panel = new WPanel();
 	this->AddTab(text, panel);
 }
-void WTabControll::AddTab(std::wstring text, ref_count_ptr<WPanel> panel) {
+void WTabControll::AddTab(const std::wstring& text, ref_count_ptr<WPanel> panel) {
 	TC_ITEM item;
 	item.mask = TCIF_TEXT;
 	item.pszText = const_cast<wchar_t*>(text.c_str());
@@ -721,10 +720,10 @@ void WStatusBar::Create(HWND hWndParent) {
 	this->Attach(hWnd_);
 	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
-void WStatusBar::SetPartsSize(std::vector<int> parts) {
+void WStatusBar::SetPartsSize(std::vector<int>& parts) {
 	::SendMessage(hWnd_, SB_SETPARTS, (WPARAM)parts.size(), (LPARAM)(LPINT)&parts[0]);
 }
-void WStatusBar::SetText(int pos, std::wstring text) {
+void WStatusBar::SetText(int pos, const std::wstring& text) {
 	::SendMessage(hWnd_, SB_SETTEXT, 0 | pos, (WPARAM)(wchar_t*)text.c_str());
 }
 void WStatusBar::SetBounds(WPARAM wParam, LPARAM lParam) {

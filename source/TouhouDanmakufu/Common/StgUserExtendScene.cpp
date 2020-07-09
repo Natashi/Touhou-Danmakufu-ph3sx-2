@@ -14,7 +14,7 @@ StgUserExtendScene::StgUserExtendScene(StgSystemController* controller) {
 }
 StgUserExtendScene::~StgUserExtendScene() {
 }
-void StgUserExtendScene::_InitializeScript(std::wstring path, int type) {
+void StgUserExtendScene::_InitializeScript(const std::wstring& path, int type) {
 	if (scriptManager_ == nullptr) return;
 	auto idScript = scriptManager_->LoadScript(path, type);
 	scriptManager_->StartScript(idScript);
@@ -184,7 +184,7 @@ void StgPauseScene::Start() {
 	stageController->RenderToTransitionTexture();
 
 	//スクリプト初期化
-	std::wstring path = sysInfo->GetPauseScriptPath();
+	const std::wstring& path = sysInfo->GetPauseScriptPath();
 	_InitializeScript(path, StgUserExtendSceneScript::TYPE_PAUSE_SCENE);
 
 	auto stageScriptManager = stageController->GetScriptManager();
@@ -268,7 +268,7 @@ void StgEndScene::Start() {
 	systemController_->GetStageController()->RenderToTransitionTexture();
 
 	//スクリプト初期化
-	std::wstring path = info->GetEndSceneScriptPath();
+	const std::wstring& path = info->GetEndSceneScriptPath();
 	_InitializeScript(path, StgUserExtendSceneScript::TYPE_END_SCENE);
 }
 void StgEndScene::Finish() {
@@ -333,7 +333,7 @@ void StgReplaySaveScene::Start() {
 	//_InitializeTransitionTexture();
 
 	//スクリプト初期化
-	std::wstring path = info->GetReplaySaveSceneScriptPath();
+	const std::wstring& path = info->GetReplaySaveSceneScriptPath();
 	_InitializeScript(path, StgUserExtendSceneScript::TYPE_REPLAY_SCENE);
 }
 void StgReplaySaveScene::Finish() {

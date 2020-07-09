@@ -151,7 +151,7 @@ public:
 	StgEnemyBossSceneData();
 	virtual ~StgEnemyBossSceneData() {}
 	std::wstring& GetPath() { return path_; }
-	void SetPath(std::wstring path) { path_ = path; }
+	void SetPath(const std::wstring& path) { path_ = path; }
 	weak_ptr<ManagedScript> GetScriptPointer() { return ptrScript_; }
 	void SetScriptPointer(weak_ptr<ManagedScript> id) { ptrScript_ = id; }
 	std::vector<double>& GetLifeList() { return listLife_; }

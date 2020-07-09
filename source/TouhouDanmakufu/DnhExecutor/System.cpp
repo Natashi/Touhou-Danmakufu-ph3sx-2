@@ -29,7 +29,7 @@ void SystemController::Reset() {
 	fileManager->ClearArchiveFileCache();
 
 	DnhConfiguration* config = DnhConfiguration::CreateInstance();
-	std::wstring pathPackageScript = config->GetPackageScriptPath();
+	const std::wstring& pathPackageScript = config->GetPackageScriptPath();
 	if (pathPackageScript.size() == 0) {
 		infoSystem_->UpdateFreePlayerScriptInformationList();
 		sceneManager_->TransTitleScene();
@@ -50,7 +50,7 @@ void SystemController::ClearTaskWithoutSystem() {
 	ETaskManager* taskManager = ETaskManager::GetInstance();
 	taskManager->RemoveTaskWithoutTypeInfo(listInfo);
 }
-void SystemController::ShowErrorDialog(std::wstring msg) {
+void SystemController::ShowErrorDialog(const std::wstring& msg) {
 	HWND hParent = EDirectGraphics::GetInstance()->GetAttachedWindowHandle();
 	ErrorDialog dialog(hParent);
 	dialog.ShowModal(msg);
@@ -106,7 +106,7 @@ void SceneManager::TransScriptSelectScene(int type) {
 			dir = systemInfo->GetLastScriptSearchDirectory();
 		}
 		ScriptSelectFileModel* fileModel = new ScriptSelectFileModel(type, dir);
-		std::wstring pathWait = systemInfo->GetLastSelectedScriptPath();
+		const std::wstring& pathWait = systemInfo->GetLastSelectedScriptPath();
 		fileModel->SetWaitPath(pathWait);
 		model = fileModel;
 	}
@@ -174,8 +174,8 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 
 void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_count_ptr<ReplayInformation> infoReplay) {
 	try {
-		std::wstring replayPlayerID = infoReplay->GetPlayerScriptID();
-		std::wstring replayPlayerScriptFileName = infoReplay->GetPlayerScriptFileName();
+		const std::wstring& replayPlayerID = infoReplay->GetPlayerScriptID();
+		const std::wstring& replayPlayerScriptFileName = infoReplay->GetPlayerScriptFileName();
 
 		//自機を検索
 		ref_count_ptr<ScriptInformation> infoPlayer;
@@ -333,17 +333,17 @@ SystemInformation::SystemInformation() {
 SystemInformation::~SystemInformation() {
 
 }
-void SystemInformation::_SearchFreePlayerScript(std::wstring dir) {
+void SystemInformation::_SearchFreePlayerScript(const std::wstring& dir) {
 	listFreePlayer_ = ScriptInformation::FindPlayerScriptInformationList(dir);
 	for (ref_count_ptr<ScriptInformation> info : listFreePlayer_) {
-		std::wstring path = info->GetScriptPath();
+		const std::wstring& path = info->GetScriptPath();
 		std::wstring log = StringUtility::Format(L"Found free player script: [%s]", path.c_str());
 		ELogger::WriteTop(log);
 	}
 }
 void SystemInformation::UpdateFreePlayerScriptInformationList() {
 	listFreePlayer_.clear();
-	std::wstring dir = EPathProperty::GetPlayerScriptRootDirectory();
+	const std::wstring& dir = EPathProperty::GetPlayerScriptRootDirectory();
 	_SearchFreePlayerScript(dir);
 
 	//ソート

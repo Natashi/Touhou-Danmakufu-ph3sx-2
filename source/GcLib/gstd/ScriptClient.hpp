@@ -18,7 +18,7 @@ namespace gstd {
 	class ScriptException : public gstd::wexception {
 	public:
 		ScriptException() : gstd::wexception(L"") {};
-		ScriptException(std::wstring str) : gstd::wexception(str.c_str()) {}
+		ScriptException(const std::wstring& str) : gstd::wexception(str.c_str()) {}
 	};
 
 	/**********************************************************
@@ -35,8 +35,8 @@ namespace gstd {
 		ScriptEngineData();
 		virtual ~ScriptEngineData();
 
-		void SetPath(std::wstring path) { path_ = path; }
-		std::wstring GetPath() { return path_; }
+		void SetPath(const std::wstring& path) { path_ = path; }
+		std::wstring& GetPath() { return path_; }
 		void SetSource(std::vector<char>& source);
 		std::vector<char>& GetSource() { return source_; }
 		int GetEncoding() { return encoding_; }
@@ -57,9 +57,9 @@ namespace gstd {
 		virtual ~ScriptEngineCache();
 		void Clear();
 
-		void AddCache(std::wstring name, ref_count_ptr<ScriptEngineData> data);
-		ref_count_ptr<ScriptEngineData> GetCache(std::wstring name);
-		bool IsExists(std::wstring name);
+		void AddCache(const std::wstring& name, ref_count_ptr<ScriptEngineData> data);
+		ref_count_ptr<ScriptEngineData> GetCache(const std::wstring& name);
+		bool IsExists(const std::wstring& name);
 	};
 
 	/**********************************************************
@@ -94,7 +94,7 @@ namespace gstd {
 		void _AddFunction(const function* f, size_t count);
 		void _RaiseErrorFromEngine();
 		void _RaiseErrorFromMachine();
-		void _RaiseError(int line, std::wstring message);
+		void _RaiseError(int line, const std::wstring& message);
 		std::wstring _GetErrorLineSource(int line);
 		virtual std::vector<char> _Include(std::vector<char>& source);
 		virtual bool _CreateEngine();
@@ -106,24 +106,24 @@ namespace gstd {
 		gstd::ref_count_ptr<ScriptEngineData> GetEngine() { return engine_; }
 		virtual bool SetSourceFromFile(std::wstring path);
 		virtual void SetSource(std::vector<char>& source);
-		virtual void SetSource(std::string source);
+		virtual void SetSource(const std::string& source);
 
 		script_type_manager* GetDefaultScriptTypeManager() { return pTypeManager_; }
 
-		std::wstring GetPath() { return engine_->GetPath(); }
-		void SetPath(std::wstring path) { engine_->SetPath(path); }
+		std::wstring& GetPath() { return engine_->GetPath(); }
+		void SetPath(const std::wstring& path) { engine_->SetPath(path); }
 
 		virtual void Compile();
 		virtual bool Run();
-		virtual bool Run(std::string target);
+		virtual bool Run(const std::string& target);
 		virtual bool Run(std::map<std::string, script_engine::block*>::iterator target);
-		bool IsEventExists(std::string name, std::map<std::string, script_engine::block*>::iterator& res);
-		void RaiseError(std::wstring error) { _RaiseError(machine_->get_error_line(), error); }
-		void RaiseError(std::string error) { 
+		bool IsEventExists(const std::string& name, std::map<std::string, script_engine::block*>::iterator& res);
+		void RaiseError(const std::wstring& error) { _RaiseError(machine_->get_error_line(), error); }
+		void RaiseError(const std::string& error) {
 			_RaiseError(machine_->get_error_line(), 
 				StringUtility::ConvertMultiToWide(error));
 		}
-		void Terminate(std::wstring error) { machine_->terminate(error); }
+		void Terminate(const std::wstring& error) { machine_->terminate(error); }
 		int64_t GetScriptID() { return idScript_; }
 		size_t GetThreadCount();
 
@@ -304,10 +304,10 @@ namespace gstd {
 	public:
 		ScriptFileLineMap();
 		virtual ~ScriptFileLineMap();
-		void AddEntry(std::wstring path, int lineAdd, int lineCount);
-		Entry GetEntry(int line);
-		std::wstring GetPath(int line);
-		std::list<Entry> GetEntryList() { return listEntry_; }
+		void AddEntry(const std::wstring& path, int lineAdd, int lineCount);
+		Entry* GetEntry(int line);
+		std::wstring& GetPath(int line);
+		std::list<Entry>& GetEntryList() { return listEntry_; }
 	};
 
 	/**********************************************************
@@ -326,11 +326,11 @@ namespace gstd {
 		void Clear();
 		std::pair<bool, std::map<std::string, gstd::value>::iterator> IsExists(std::string name);
 
-		gstd::value GetValue(std::string name);
+		gstd::value GetValue(const std::string& name);
 		gstd::value GetValue(std::map<std::string, gstd::value>::iterator itr);
-		void SetValue(std::string name, gstd::value v);
+		void SetValue(const std::string& name, gstd::value v);
 		void SetValue(std::map<std::string, gstd::value>::iterator itr, gstd::value v);
-		void DeleteValue(std::string name);
+		void DeleteValue(const std::string& name);
 		void Copy(shared_ptr<ScriptCommonData>& dataSrc);
 
 		std::map<std::string, gstd::value>::iterator MapBegin() { return mapValue_.begin(); }
@@ -357,17 +357,17 @@ namespace gstd {
 		virtual ~ScriptCommonDataManager();
 
 		void Clear();
-		void Erase(std::string name);
+		void Erase(const std::string& name);
 
-		std::string GetDefaultAreaName() { return nameAreaDefault_; }
+		const std::string& GetDefaultAreaName() { return nameAreaDefault_; }
 		CommonDataMap::iterator GetDefaultAreaIterator() { return defaultAreaIterator_; }
 
-		std::pair<bool, CommonDataMap::iterator> IsExists(std::string name);
-		CommonDataMap::iterator CreateArea(std::string name);
-		void CopyArea(std::string nameDest, std::string nameSrc);
-		shared_ptr<ScriptCommonData> GetData(std::string name);
+		std::pair<bool, CommonDataMap::iterator> IsExists(const std::string& name);
+		CommonDataMap::iterator CreateArea(const std::string& name);
+		void CopyArea(const std::string& nameDest, const std::string& nameSrc);
+		shared_ptr<ScriptCommonData> GetData(const std::string& name);
 		shared_ptr<ScriptCommonData> GetData(CommonDataMap::iterator itr);
-		void SetData(std::string name, shared_ptr<ScriptCommonData> commonData);
+		void SetData(const std::string& name, shared_ptr<ScriptCommonData> commonData);
 		void SetData(CommonDataMap::iterator itr, shared_ptr<ScriptCommonData> commonData);
 
 		CommonDataMap::iterator MapBegin() { return mapData_.begin(); }

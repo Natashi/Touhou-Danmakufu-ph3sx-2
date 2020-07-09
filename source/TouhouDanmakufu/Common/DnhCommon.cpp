@@ -9,7 +9,7 @@
 **********************************************************/
 const std::wstring ScriptInformation::DEFAULT = L"DEFAULT";
 
-ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(std::wstring pathScript, bool bNeedHeader) {
+ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(const std::wstring& pathScript, bool bNeedHeader) {
 	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(pathScript);
 	if (reader == nullptr || !reader->Open()) {
 		Logger::WriteTop(ErrorUtility::GetFileNotFoundErrorMessage(pathScript));
@@ -24,7 +24,9 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(std:
 	ref_count_ptr<ScriptInformation> res = CreateScriptInformation(pathScript, L"", source, bNeedHeader);
 	return res;
 }
-ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(std::wstring pathScript, std::wstring pathArchive, std::string source, bool bNeedHeader) {
+ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(const std::wstring& pathScript, 
+	const std::wstring& pathArchive, const std::string& source, bool bNeedHeader) 
+{
 	ref_count_ptr<ScriptInformation> res = nullptr;
 
 	Scanner scanner(source);
@@ -152,7 +154,7 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(std:
 
 	return res;
 }
-bool ScriptInformation::IsExcludeExtention(std::wstring ext) {
+bool ScriptInformation::IsExcludeExtention(const std::wstring& ext) {
 	bool res = false;
 	if (ext == L".dat" || ext == L".mid" || ext == L".wav" || ext == L".mp3" || ext == L".ogg" ||
 		ext == L".bmp" || ext == L".png" || ext == L".jpg" || ext == L".jpeg" ||
@@ -187,10 +189,8 @@ std::vector<std::wstring> ScriptInformation::_GetStringList(Scanner& scanner) {
 }
 std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScriptInformationList() {
 	std::vector<ref_count_ptr<ScriptInformation>> res;
-	std::vector<std::wstring>& listPlayerPath = GetPlayerList();
 	std::wstring dirInfo = PathProperty::GetFileDirectory(GetScriptPath());
-	for (size_t iPath = 0; iPath < listPlayerPath.size(); ++iPath) {
-		std::wstring pathPlayer = listPlayerPath[iPath];
+	for (const std::wstring& pathPlayer : GetPlayerList()) {
 		std::wstring path = EPathProperty::ExtendRelativeToFull(dirInfo, pathPlayer);
 
 		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
@@ -212,7 +212,9 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScr
 	}
 	return res;
 }
-std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInformationList(std::wstring path, bool bNeedHeader) {
+std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInformationList(const std::wstring& path, 
+	bool bNeedHeader) 
+{
 	std::vector<ref_count_ptr<ScriptInformation>> res;
 	File file(path);
 	if (!file.Open()) return res;
@@ -271,7 +273,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 
 	return res;
 }
-std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::FindPlayerScriptInformationList(std::wstring dir) {
+std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::FindPlayerScriptInformationList(const std::wstring& dir) {
 	std::vector<ref_count_ptr<ScriptInformation>> res;
 	WIN32_FIND_DATA data;
 	HANDLE hFind;
@@ -282,11 +284,10 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::FindPlayerScrip
 		if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 			(name != L".." && name != L".")) {
 			//ディレクトリ
-			std::wstring tDir = dir + name;
-			tDir += L"\\";
+			std::wstring tDir = dir + name + L"/";
 
 			std::vector<ref_count_ptr<ScriptInformation>> list = FindPlayerScriptInformationList(tDir);
-			for (std::vector<ref_count_ptr<ScriptInformation>>::iterator itr = list.begin(); itr != list.end(); itr++) {
+			for (auto itr = list.begin(); itr != list.end(); itr++) {
 				res.push_back(*itr);
 			}
 			continue;
@@ -485,7 +486,7 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 		if (prop.HasProperty(L"config.window.size.list")) {
 			std::wstring strList = prop.GetString(L"config.window.size.list", L"");
 			if (strList.size() >= 3) {	//Minimum format: "0x0"
-				std::wregex reg(L"(([0-9]+)x([0-9]+))(,|(\s*)|\0)");
+				std::wregex reg(L"([0-9]+)x([0-9]+)");
 				auto itrBegin = std::wsregex_iterator(strList.begin(), strList.end(), reg);
 				auto itrEnd = std::wsregex_iterator();
 

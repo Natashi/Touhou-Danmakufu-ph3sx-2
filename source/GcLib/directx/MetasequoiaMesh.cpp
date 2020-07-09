@@ -478,7 +478,7 @@ bool MetasequoiaMesh::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader>
 		Lock lock(DxMeshManager::GetBase()->GetLock());
 		if (data_) Release();
 
-		std::wstring name = reader->GetOriginalPath();
+		const std::wstring& name = reader->GetOriginalPath();
 
 		data_ = _GetFromManager(name);
 		if (data_ == nullptr) {
@@ -500,7 +500,7 @@ bool MetasequoiaMesh::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader>
 	}
 	return res;
 }
-bool MetasequoiaMesh::CreateFromFileInLoadThread(std::wstring path) {
+bool MetasequoiaMesh::CreateFromFileInLoadThread(const std::wstring& path) {
 	return DxMesh::CreateFromFileInLoadThread(path, MESH_METASEQUOIA);
 }
 std::wstring MetasequoiaMesh::GetPath() {

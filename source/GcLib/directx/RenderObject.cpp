@@ -2354,10 +2354,10 @@ DxMesh::DxMesh() {
 DxMesh::~DxMesh() {
 	Release();
 }
-shared_ptr<DxMeshData> DxMesh::_GetFromManager(std::wstring name) {
+shared_ptr<DxMeshData> DxMesh::_GetFromManager(const std::wstring& name) {
 	return DxMeshManager::GetBase()->_GetMeshData(name);
 }
-void DxMesh::_AddManager(std::wstring name, shared_ptr<DxMeshData> data) {
+void DxMesh::_AddManager(const std::wstring& name, shared_ptr<DxMeshData> data) {
 	DxMeshManager::GetBase()->_AddMeshData(name, data);
 }
 void DxMesh::Release() {
@@ -2376,7 +2376,7 @@ void DxMesh::Release() {
 		}
 	}
 }
-bool DxMesh::CreateFromFile(std::wstring path) {
+bool DxMesh::CreateFromFile(const std::wstring& path) {
 	try {
 		//path = PathProperty::GetUnique(path);
 		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
@@ -2389,7 +2389,7 @@ bool DxMesh::CreateFromFile(std::wstring path) {
 	}
 	return false;
 }
-bool DxMesh::CreateFromFileInLoadThread(std::wstring path, int type) {
+bool DxMesh::CreateFromFileInLoadThread(const std::wstring& path, int type) {
 	bool res = false;
 	{
 		Lock lock(DxMeshManager::GetBase()->GetLock());
@@ -2429,7 +2429,7 @@ void DxMeshManager::Clear() {
 	}
 }
 
-void DxMeshManager::_AddMeshData(std::wstring name, shared_ptr<DxMeshData> data) {
+void DxMeshManager::_AddMeshData(const std::wstring& name, shared_ptr<DxMeshData> data) {
 	{
 		Lock lock(lock_);
 		if (!IsDataExists(name)) {
@@ -2437,7 +2437,7 @@ void DxMeshManager::_AddMeshData(std::wstring name, shared_ptr<DxMeshData> data)
 		}
 	}
 }
-shared_ptr<DxMeshData> DxMeshManager::_GetMeshData(std::wstring name) {
+shared_ptr<DxMeshData> DxMeshManager::_GetMeshData(const std::wstring& name) {
 	shared_ptr<DxMeshData> res = nullptr;
 	{
 		Lock lock(lock_);
@@ -2449,7 +2449,7 @@ shared_ptr<DxMeshData> DxMeshManager::_GetMeshData(std::wstring name) {
 	}
 	return res;
 }
-void DxMeshManager::_ReleaseMeshData(std::wstring name) {
+void DxMeshManager::_ReleaseMeshData(const std::wstring& name) {
 	{
 		Lock lock(lock_);
 
@@ -2460,7 +2460,7 @@ void DxMeshManager::_ReleaseMeshData(std::wstring name) {
 		}
 	}
 }
-void DxMeshManager::Add(std::wstring name, shared_ptr<DxMesh> mesh) {
+void DxMeshManager::Add(const std::wstring& name, shared_ptr<DxMesh> mesh) {
 	{
 		Lock lock(lock_);
 		bool bExist = mapMesh_.find(name) != mapMesh_.end();
@@ -2469,13 +2469,13 @@ void DxMeshManager::Add(std::wstring name, shared_ptr<DxMesh> mesh) {
 		}
 	}
 }
-void DxMeshManager::Release(std::wstring name) {
+void DxMeshManager::Release(const std::wstring& name) {
 	{
 		Lock lock(lock_);
 		mapMesh_.erase(name);
 	}
 }
-bool DxMeshManager::IsDataExists(std::wstring name) {
+bool DxMeshManager::IsDataExists(const std::wstring& name) {
 	bool res = false;
 	{
 		Lock lock(lock_);
@@ -2483,7 +2483,7 @@ bool DxMeshManager::IsDataExists(std::wstring name) {
 	}
 	return res;
 }
-shared_ptr<DxMesh> DxMeshManager::CreateFromFileInLoadThread(std::wstring path, int type) {
+shared_ptr<DxMesh> DxMeshManager::CreateFromFileInLoadThread(const std::wstring& path, int type) {
 	shared_ptr<DxMesh> res;
 	{
 		Lock lock(lock_);
@@ -2521,7 +2521,7 @@ shared_ptr<DxMesh> DxMeshManager::CreateFromFileInLoadThread(std::wstring path, 
 	return res;
 }
 void DxMeshManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> event) {
-	std::wstring path = event->GetPath();
+	const std::wstring& path = event->GetPath();
 	{
 		Lock lock(lock_);
 		shared_ptr<DxMesh> mesh = std::dynamic_pointer_cast<DxMesh>(event->GetSource());

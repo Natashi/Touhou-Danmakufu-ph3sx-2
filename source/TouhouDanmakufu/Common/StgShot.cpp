@@ -284,7 +284,7 @@ StgShotDataList::~StgShotDataList() {
 		ptr_delete(shotData);
 	listData_.clear();
 }
-bool StgShotDataList::AddShotDataList(std::wstring path, bool bReload) {
+bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 	if (!bReload && listReadPath_.find(path) != listReadPath_.end()) return true;
 
 	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);

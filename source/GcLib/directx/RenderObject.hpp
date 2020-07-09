@@ -633,7 +633,7 @@ namespace directx {
 	public:
 		DxMeshData();
 		virtual ~DxMeshData();
-		void SetName(std::wstring name) { name_ = name; }
+		void SetName(const std::wstring& name) { name_ = name; }
 		std::wstring& GetName() { return name_; }
 		virtual bool CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader) = 0;
 	};
@@ -656,32 +656,32 @@ namespace directx {
 		shared_ptr<Shader> shader_;
 
 		shared_ptr<DxMeshData> data_;
-		shared_ptr<DxMeshData> _GetFromManager(std::wstring name);
-		void _AddManager(std::wstring name, shared_ptr<DxMeshData> data);
+		shared_ptr<DxMeshData> _GetFromManager(const std::wstring& name);
+		void _AddManager(const std::wstring& name, shared_ptr<DxMeshData> data);
 	public:
 		DxMesh();
 		virtual ~DxMesh();
 		virtual void Release();
-		bool CreateFromFile(std::wstring path);
+		bool CreateFromFile(const std::wstring& path);
 		virtual bool CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader) = 0;
-		virtual bool CreateFromFileInLoadThread(std::wstring path, int type);
-		virtual bool CreateFromFileInLoadThread(std::wstring path) = 0;
+		virtual bool CreateFromFileInLoadThread(const std::wstring& path, int type);
+		virtual bool CreateFromFileInLoadThread(const std::wstring& path) = 0;
 		virtual std::wstring GetPath() = 0;
 
 		virtual void Render() = 0;
 		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) = 0;
-		virtual inline void Render(std::wstring nameAnime, int time) { Render(); }
-		virtual inline void Render(std::wstring nameAnime, int time,
+		virtual inline void Render(const std::wstring& nameAnime, int time) { Render(); }
+		virtual inline void Render(const std::wstring& nameAnime, int time,
 			D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) { Render(angX, angY, angZ); }
 
-		void SetPosition(D3DXVECTOR3 pos) { position_ = pos; }
+		void SetPosition(D3DXVECTOR3& pos) { position_ = pos; }
 		void SetPosition(float x, float y, float z) { position_.x = x; position_.y = y; position_.z = z; }
 		void SetX(float x) { position_.x = x; }
 		void SetY(float y) { position_.y = y; }
 		void SetZ(float z) { position_.z = z; }
-		void SetAngle(D3DXVECTOR3 angle) { angle_ = angle; }
+		void SetAngle(D3DXVECTOR3& angle) { angle_ = angle; }
 		void SetAngleXYZ(float angx = 0.0f, float angy = 0.0f, float angz = 0.0f) { angle_.x = angx; angle_.y = angy; angle_.z = angz; }
-		void SetScale(D3DXVECTOR3 scale) { scale_ = scale; }
+		void SetScale(D3DXVECTOR3& scale) { scale_ = scale; }
 		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f) { scale_.x = sx; scale_.y = sy; scale_.z = sz; }
 		
 		void SetColor(D3DCOLOR color) { color_ = color; }
@@ -702,7 +702,7 @@ namespace directx {
 		void SetDxObjectReference(DxScriptRenderObject* obj) { dxObjParent_ = obj; }
 
 		//gstd::ref_count_ptr<RenderBlocks> CreateRenderBlocks() { return nullptr; }
-		virtual D3DXMATRIX GetAnimationMatrix(std::wstring nameAnime, double time, std::wstring nameBone) { 
+		virtual D3DXMATRIX GetAnimationMatrix(const std::wstring& nameAnime, double time, const std::wstring& nameBone) {
 			D3DXMATRIX mat; 
 			D3DXMatrixIdentity(&mat); 
 			return mat; 
@@ -726,9 +726,9 @@ namespace directx {
 		std::map<std::wstring, shared_ptr<DxMeshData>> mapMeshData_;
 		gstd::ref_count_ptr<DxMeshInfoPanel> panelInfo_;
 
-		void _AddMeshData(std::wstring name, shared_ptr<DxMeshData> data);
-		shared_ptr<DxMeshData> _GetMeshData(std::wstring name);
-		void _ReleaseMeshData(std::wstring name);
+		void _AddMeshData(const std::wstring& name, shared_ptr<DxMeshData> data);
+		shared_ptr<DxMeshData> _GetMeshData(const std::wstring& name);
+		void _ReleaseMeshData(const std::wstring& name);
 	public:
 		DxMeshManager();
 		virtual ~DxMeshManager();
@@ -737,11 +737,11 @@ namespace directx {
 		gstd::CriticalSection& GetLock() { return lock_; }
 
 		virtual void Clear();
-		virtual void Add(std::wstring name, shared_ptr<DxMesh> mesh);//参照を保持します
-		virtual void Release(std::wstring name);//保持している参照を解放します
-		virtual bool IsDataExists(std::wstring name);
+		virtual void Add(const std::wstring& name, shared_ptr<DxMesh> mesh);//参照を保持します
+		virtual void Release(const std::wstring& name);//保持している参照を解放します
+		virtual bool IsDataExists(const std::wstring& name);
 
-		shared_ptr<DxMesh> CreateFromFileInLoadThread(std::wstring path, int type);
+		shared_ptr<DxMesh> CreateFromFileInLoadThread(const std::wstring& path, int type);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
 		void SetInfoPanel(gstd::ref_count_ptr<DxMeshInfoPanel> panel) { panelInfo_ = panel; }

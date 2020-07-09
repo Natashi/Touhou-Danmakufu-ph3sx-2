@@ -14,7 +14,7 @@ protected:
 	StgSystemController* systemController_;
 	std::shared_ptr<StgUserExtendSceneScriptManager> scriptManager_;
 
-	void _InitializeScript(std::wstring path, int type);
+	void _InitializeScript(const std::wstring& path, int type);
 	void _CallScriptMainLoop();
 	void _CallScriptFinalize();
 	void _AddRelativeManager();

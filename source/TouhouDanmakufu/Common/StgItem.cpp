@@ -238,7 +238,7 @@ void StgItemManager::GetValidRenderPriorityList(std::vector<PriListBool>& list) 
 	}
 }
 
-bool StgItemManager::LoadItemData(std::wstring path, bool bReload) {
+bool StgItemManager::LoadItemData(const std::wstring& path, bool bReload) {
 	return listItemData_->AddItemDataList(path, bReload);
 }
 shared_ptr<StgItemObject> StgItemManager::CreateItem(int type) {
@@ -299,7 +299,7 @@ StgItemDataList::~StgItemDataList() {
 		ptr_delete(itemData);
 	listData_.clear();
 }
-bool StgItemDataList::AddItemDataList(std::wstring path, bool bReload) {
+bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 	if (!bReload && listReadPath_.find(path) != listReadPath_.end()) return true;
 
 	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);

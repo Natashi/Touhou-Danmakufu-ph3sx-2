@@ -344,7 +344,7 @@ DxTextScanner::DxTextScanner(wchar_t* str, int charCount) {
 	buf.push_back(L'\0');
 	this->DxTextScanner::DxTextScanner(buf);
 }
-DxTextScanner::DxTextScanner(std::wstring str) {
+DxTextScanner::DxTextScanner(const std::wstring& str) {
 	std::vector<wchar_t> buf;
 	buf.resize(str.size() + 1);
 	memcpy(&buf[0], str.c_str(), (str.size() + 1) * sizeof(wchar_t));
@@ -420,7 +420,7 @@ void DxTextScanner::_SkipSpace() {
 		ch = _NextChar();
 	}
 }
-void DxTextScanner::_RaiseError(std::wstring str) {
+void DxTextScanner::_RaiseError(const std::wstring& str) {
 	throw gstd::wexception(str);
 }
 bool DxTextScanner::_IsTextStartSign() {
@@ -627,7 +627,7 @@ void DxTextScanner::CheckType(DxTextToken& tok, int type) {
 		_RaiseError(str);
 	}
 }
-void DxTextScanner::CheckIdentifer(DxTextToken& tok, std::wstring id) {
+void DxTextScanner::CheckIdentifer(DxTextToken& tok, const std::wstring& id) {
 	if (tok.type_ != DxTextToken::Type::TK_ID || tok.GetIdentifier() != id) {
 		std::wstring str = StringUtility::Format(L"CheckID error[%s]:", tok.element_.c_str());
 		_RaiseError(str);
@@ -776,7 +776,7 @@ void DxTextRenderObject::AddRenderObject(shared_ptr<Sprite2D> obj) {
 	data.sprite = obj;
 	listData_.push_back(data);
 }
-void DxTextRenderObject::AddRenderObject(shared_ptr<DxTextRenderObject> obj, POINT bias) {
+void DxTextRenderObject::AddRenderObject(shared_ptr<DxTextRenderObject> obj, POINT& bias) {
 	for (auto itr = obj->listData_.begin(); itr != obj->listData_.end(); ++itr) {
 		itr->bias = bias;
 		listData_.push_back(*itr);
@@ -809,7 +809,7 @@ SIZE DxTextRenderer::_GetTextSize(HDC hDC, wchar_t* pText) {
 	::GetTextExtentPoint32(hDC, pText, charCount, &size);
 	return size;
 }
-shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(std::wstring text, DxText* dxText, DxTextInfo* textInfo, 
+shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text, DxText* dxText, DxTextInfo* textInfo,
 	shared_ptr<DxTextLine> textLine, HDC& hDC, int& totalWidth, int& totalHeight) 
 {
 	DxFont& dxFont = dxText->GetFont();
@@ -874,12 +874,12 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(std::wstring text, DxText
 shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	SetFont(dxText->dxFont_.GetLogFont());
 	DxTextInfo* res = new DxTextInfo();
-	std::wstring& text = dxText->GetText();
+	const std::wstring& text = dxText->GetText();
 	DxFont& dxFont = dxText->GetFont();
 	int linePitch = dxText->GetLinePitch();
 	int widthMax = dxText->GetMaxWidth();
 	int heightMax = dxText->GetMaxHeight();
-	RECT margin = dxText->GetMargin();
+	RECT& margin = dxText->GetMargin();
 
 	shared_ptr<Font> fontTemp;
 
@@ -931,7 +931,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 			else if (typeToken == DxTextScanner::TOKEN_TAG_START) {
 				size_t indexTag = textLine->code_.size();
 				tok = scan.Next();
-				std::wstring element = tok.GetElement();
+				const std::wstring& element = tok.GetElement();
 				if (element == DxTextScanner::TAG_NEW_LINE) {
 					//‰üs
 					if (textLine->height_ == 0) {
@@ -958,7 +958,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					while (true) {
 						tok = scan.Next();
 						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END) break;
-						std::wstring str = tok.GetElement();
+						const std::wstring& str = tok.GetElement();
 						if (str == L"rb") {
 							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
 							std::wstring text = scan.Next().GetString();
@@ -985,7 +985,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 					size_t linePos = res->GetLineCount();
 					size_t codeCount = textLine->GetTextCodes().size();
-					std::wstring& text = tag->GetText();
+					const std::wstring& text = tag->GetText();
 					shared_ptr<DxTextLine> textLineRuby = textLine;
 					textLine = _GetTextInfoSub(text, dxText, res, textLine, hDC, totalWidth, totalHeight);
 
@@ -993,7 +993,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					::GetTextExtentPoint32(hDC, &text[0], text.size(), &sizeTextBase);
 
 					int rubyFontWidth = dxText->GetFontSize() / 2;
-					std::wstring& sRuby = tag->GetRuby();
+					const std::wstring& sRuby = tag->GetRuby();
 					size_t rubyCount = StringUtility::CountAsciiSizeCharacter(sRuby);
 					if (rubyCount > 0) {
 						LONG rubySpace = std::max(sizeTextBase.cx - rubyFontWidth / 2, 0L);
@@ -1038,7 +1038,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						tok = scan.Next();
 						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END) break;
 						//else if (tok.GetType() == DxTextToken::Type::TK_COMMA) break;
-						std::wstring str = tok.GetElement();
+						const std::wstring& str = tok.GetElement();
 						if (str == L"reset") {
 							bClear = true;
 						}
@@ -1151,7 +1151,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 		}
 	}
 	else {
-		std::wstring& text = dxText->GetText();
+		std::wstring text = dxText->GetText();
 		text = _ReplaceRenderText(text);
 		if (text.size() > 0) {
 			textLine = _GetTextInfoSub(text, dxText, res, textLine, hDC, totalWidth, totalHeight);
@@ -1166,7 +1166,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 	return shared_ptr<DxTextInfo>(res);
 }
-std::wstring DxTextRenderer::_ReplaceRenderText(std::wstring& text) {
+std::wstring DxTextRenderer::_ReplaceRenderText(std::wstring text) {
 	text = StringUtility::ReplaceAll(text, L"\r", L"");
 	text = StringUtility::ReplaceAll(text, L"\n", L"");
 	text = StringUtility::ReplaceAll(text, L"\t", L"");
@@ -1177,7 +1177,7 @@ std::wstring DxTextRenderer::_ReplaceRenderText(std::wstring& text) {
 	return text;
 }
 
-void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, POINT pos, DxFont* dxFont, 
+void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, POINT& pos, DxFont* dxFont, 
 	shared_ptr<DxTextLine> textLine)
 {
 	SetFont(dxFont->GetLogFont());
@@ -1284,7 +1284,7 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 		int linePitch = dxText->GetLinePitch();
 		int widthMax = dxText->GetMaxWidth();
 		int heightMax = dxText->GetMaxHeight();
-		RECT margin = dxText->GetMargin();
+		RECT& margin = dxText->GetMargin();
 		int alignmentHorizontal = dxText->GetHorizontalAlignment();
 		int alignmentVertical = dxText->GetVerticalAlignment();
 		POINT pos;
@@ -1310,7 +1310,7 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 		pos.y += margin.top;
 
 		int heightTotal = 0;
-		int countLine = textInfo->textLine_.size();
+		size_t countLine = textInfo->textLine_.size();
 		int lineStart = textInfo->GetValidStartLine() - 1;
 		int lineEnd = textInfo->GetValidEndLine() - 1;
 		for (int iLine = lineStart; iLine <= lineEnd; iLine++) {
@@ -1363,7 +1363,7 @@ void DxTextRenderer::Render(DxText* dxText, shared_ptr<DxTextInfo> textInfo) {
 		objRender->Render();
 	}
 }
-bool DxTextRenderer::AddFontFromFile(std::wstring path) {
+bool DxTextRenderer::AddFontFromFile(const std::wstring& path) {
 	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr) 
 		throw gstd::wexception(StringUtility::Format(L"AddFontFromFile: File not found. [%s]", path.c_str()));
@@ -1439,7 +1439,7 @@ void DxText::SetFontType(const wchar_t* type) {
 	LOGFONT& info = dxFont_.GetLogFont();
 	lstrcpy(info.lfFaceName, type);
 
-	if (std::regex_match(type, std::wregex(L"[^a-zA-Z0-9\s-]"))) {
+	if (std::regex_match(type, std::wregex(L"[^a-zA-Z0-9\s_]"))) {
 		info.lfCharSet = SHIFTJIS_CHARSET;
 	}
 	else info.lfCharSet = DEFAULT_CHARSET;

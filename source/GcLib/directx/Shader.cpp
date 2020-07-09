@@ -53,7 +53,7 @@ void ShaderManager::Clear() {
 		mapShaderData_.clear();
 	}
 }
-void ShaderManager::_ReleaseShaderData(std::wstring name) {
+void ShaderManager::_ReleaseShaderData(const std::wstring& name) {
 	{
 		Lock lock(lock_);
 		auto itr = mapShaderData_.find(name);
@@ -68,14 +68,14 @@ void ShaderManager::_ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderD
 	{
 		Lock lock(lock_);
 		if (itr != mapShaderData_.end()) {
-			std::wstring& name = itr->second->name_;
+			const std::wstring& name = itr->second->name_;
 			itr->second->bLoad_ = true;		//ì«Ç›çûÇ›äÆóπàµÇ¢
 			mapShaderData_.erase(itr);
 			Logger::WriteTop(StringUtility::Format(L"ShaderManagerÅFShader released. [%s]", name.c_str()));
 		}
 	}
 }
-bool ShaderManager::_CreateFromFile(std::wstring path, shared_ptr<ShaderData>& dest) {
+bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderData>& dest) {
 	lastError_ = L"";
 	auto itr = mapShaderData_.find(path);
 	if (itr != mapShaderData_.end()) {
@@ -141,7 +141,7 @@ bool ShaderManager::_CreateFromFile(std::wstring path, shared_ptr<ShaderData>& d
 
 	return res;
 }
-bool ShaderManager::_CreateFromText(std::string& source, shared_ptr<ShaderData>& dest) {
+bool ShaderManager::_CreateFromText(const std::string& source, shared_ptr<ShaderData>& dest) {
 	lastError_ = L"";
 	std::wstring id = _GetTextSourceID(source);
 	auto itr = mapShaderData_.find(id);
@@ -189,7 +189,7 @@ bool ShaderManager::_CreateFromText(std::string& source, shared_ptr<ShaderData>&
 
 	return res;
 }
-std::wstring ShaderManager::_GetTextSourceID(std::string& source) {
+std::wstring ShaderManager::_GetTextSourceID(const std::string& source) {
 	std::wstring res = StringUtility::ConvertMultiToWide(source);
 	res = StringUtility::Slice(res, 64);
 	return res;
@@ -220,7 +220,7 @@ void ShaderManager::RestoreDxResource() {
 	}
 }
 
-bool ShaderManager::IsDataExists(std::wstring name) {
+bool ShaderManager::IsDataExists(const std::wstring& name) {
 	bool res = false;
 	{
 		Lock lock(lock_);
@@ -236,7 +236,7 @@ std::map<std::wstring, shared_ptr<ShaderData>>::iterator ShaderManager::IsDataEx
 	}
 	return res;
 }
-shared_ptr<ShaderData> ShaderManager::GetShaderData(std::wstring name) {
+shared_ptr<ShaderData> ShaderManager::GetShaderData(const std::wstring& name) {
 	shared_ptr<ShaderData> res;
 	{
 		Lock lock(lock_);
@@ -247,7 +247,7 @@ shared_ptr<ShaderData> ShaderManager::GetShaderData(std::wstring name) {
 	}
 	return res;
 }
-shared_ptr<Shader> ShaderManager::CreateFromFile(std::wstring path) {
+shared_ptr<Shader> ShaderManager::CreateFromFile(const std::wstring& path) {
 	//path = PathProperty::GetUnique(path);
 	shared_ptr<Shader> res = nullptr;
 	{
@@ -268,7 +268,7 @@ shared_ptr<Shader> ShaderManager::CreateFromFile(std::wstring path) {
 	}
 	return res;
 }
-shared_ptr<Shader> ShaderManager::CreateFromText(std::string source) {
+shared_ptr<Shader> ShaderManager::CreateFromText(const std::string& source) {
 	shared_ptr<Shader> res = nullptr;
 	{
 		Lock lock(lock_);
@@ -290,25 +290,25 @@ shared_ptr<Shader> ShaderManager::CreateFromText(std::string source) {
 	}
 	return res;
 }
-shared_ptr<Shader> ShaderManager::CreateFromFileInLoadThread(std::wstring path) {
+shared_ptr<Shader> ShaderManager::CreateFromFileInLoadThread(const std::wstring& path) {
 	return false;
 }
 void ShaderManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event) {
 }
 
-void ShaderManager::AddShader(std::wstring name, shared_ptr<Shader> shader) {
+void ShaderManager::AddShader(const std::wstring& name, shared_ptr<Shader> shader) {
 	{
 		Lock lock(lock_);
 		mapShader_[name] = shader;
 	}
 }
-void ShaderManager::DeleteShader(std::wstring name) {
+void ShaderManager::DeleteShader(const std::wstring& name) {
 	{
 		Lock lock(lock_);
 		mapShader_.erase(name);
 	}
 }
-shared_ptr<Shader> ShaderManager::GetShader(std::wstring name) {
+shared_ptr<Shader> ShaderManager::GetShader(const std::wstring& name) {
 	shared_ptr<Shader> res = nullptr;
 	{
 		Lock lock(lock_);
@@ -316,14 +316,6 @@ shared_ptr<Shader> ShaderManager::GetShader(std::wstring name) {
 		if (itr != mapShader_.end()) {
 			res = itr->second;
 		}
-	}
-	return res;
-}
-std::wstring ShaderManager::GetLastError() {
-	std::wstring res;
-	{
-		Lock lock(lock_);
-		res = lastError_;
 	}
 	return res;
 }
@@ -435,7 +427,7 @@ ID3DXEffect* Shader::GetEffect() {
 	if (data_) res = data_->effect_;
 	return res;
 }
-bool Shader::CreateFromFile(std::wstring path) {
+bool Shader::CreateFromFile(const std::wstring& path) {
 	//path = PathProperty::GetUnique(path);
 
 	bool res = false;
@@ -451,7 +443,7 @@ bool Shader::CreateFromFile(std::wstring path) {
 
 	return res;
 }
-bool Shader::CreateFromText(std::string& source) {
+bool Shader::CreateFromText(const std::string& source) {
 	bool res = false;
 	{
 		Lock lock(ShaderManager::GetBase()->GetLock());
@@ -525,7 +517,7 @@ bool Shader::LoadParameter() {
 
 	return true;
 }
-shared_ptr<ShaderParameter> Shader::_GetParameter(std::string name, bool bCreate) {
+shared_ptr<ShaderParameter> Shader::_GetParameter(const std::string& name, bool bCreate) {
 	auto itr = mapParam_.find(name);
 	bool bFind = itr != mapParam_.end();
 	if (!bFind && !bCreate) return nullptr;
@@ -540,36 +532,36 @@ shared_ptr<ShaderParameter> Shader::_GetParameter(std::string name, bool bCreate
 	}
 }
 
-bool Shader::SetTechnique(std::string name) {
+bool Shader::SetTechnique(const std::string& name) {
 	technique_ = name;
 	return true;
 }
-bool Shader::SetMatrix(std::string name, D3DXMATRIX& matrix) {
+bool Shader::SetMatrix(const std::string& name, D3DXMATRIX& matrix) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
 	param->SetMatrix(matrix);
 	return true;
 }
-bool Shader::SetMatrixArray(std::string name, std::vector<D3DXMATRIX>& matrix) {
+bool Shader::SetMatrixArray(const std::string& name, std::vector<D3DXMATRIX>& matrix) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
 	param->SetMatrixArray(matrix);
 	return true;
 }
-bool Shader::SetVector(std::string name, D3DXVECTOR4& vector) {
+bool Shader::SetVector(const std::string& name, D3DXVECTOR4& vector) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
 	param->SetVector(vector);
 	return true;
 }
-bool Shader::SetFloat(std::string name, FLOAT value) {
+bool Shader::SetFloat(const std::string& name, FLOAT value) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
 	param->SetFloat(value);
 	return true;
 }
-bool Shader::SetFloatArray(std::string name, std::vector<FLOAT>& values) {
+bool Shader::SetFloatArray(const std::string& name, std::vector<FLOAT>& values) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
 	param->SetFloatArray(values);
 	return true;
 }
-bool Shader::SetTexture(std::string name, shared_ptr<Texture> texture) {
+bool Shader::SetTexture(const std::string& name, shared_ptr<Texture> texture) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
 	param->SetTexture(texture);
 	return true;

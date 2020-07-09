@@ -19,19 +19,19 @@ namespace gstd {
 		static Logger* top_;
 		gstd::CriticalSection lock_;
 		std::list<ref_count_ptr<Logger>> listLogger_;//子のロガ
-		virtual void _WriteChild(SYSTEMTIME& time, std::wstring str);
-		virtual void _Write(SYSTEMTIME& time, std::wstring str) = 0;
+		virtual void _WriteChild(SYSTEMTIME& time, const std::wstring& str);
+		virtual void _Write(SYSTEMTIME& time, const std::wstring& str) = 0;
 	public:
 		Logger();
 		virtual ~Logger();
 		virtual bool Initialize() { return true; }
 		void AddLogger(ref_count_ptr<Logger> logger) { listLogger_.push_back(logger); }
-		virtual void Write(std::string str);
-		virtual void Write(std::wstring str);
+		virtual void Write(const std::string& str);
+		virtual void Write(const std::wstring& str);
 
 		static void SetTop(Logger* logger) { top_ = logger; }
-		static void WriteTop(std::string str) { if (top_) top_->Write(str); }
-		static void WriteTop(std::wstring str) { if (top_) top_->Write(str); }//トップのロガに出力します
+		static void WriteTop(const std::string& str) { if (top_) top_->Write(str); }
+		static void WriteTop(const std::wstring& str) { if (top_) top_->Write(str); }//トップのロガに出力します
 	};
 
 	/**********************************************************
@@ -43,7 +43,7 @@ namespace gstd {
 		std::wstring path_;
 		std::wstring path2_;
 		int sizeMax_;
-		virtual void _Write(SYSTEMTIME& systemTime, std::wstring str);
+		virtual void _Write(SYSTEMTIME& systemTime, const std::wstring& str);
 		void _CreateFile(File& file);
 	public:
 		FileLogger();
@@ -51,7 +51,7 @@ namespace gstd {
 		void Clear();
 		bool Initialize(bool bEnable = true);
 		bool Initialize(std::wstring path, bool bEnable = true);
-		bool SetPath(std::wstring path);
+		bool SetPath(const std::wstring& path);
 		void SetMaxFileSize(int size) { sizeMax_ = size; }
 	};
 
@@ -107,7 +107,7 @@ namespace gstd {
 
 		void _Run();
 		void _CreateWindow();
-		virtual void _Write(SYSTEMTIME& systemTime, std::wstring str);
+		virtual void _Write(SYSTEMTIME& systemTime, const std::wstring& str);
 		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	public:
 		WindowLogger();
@@ -115,8 +115,8 @@ namespace gstd {
 		bool Initialize(bool bEnable = true);
 		void SaveState();
 		void LoadState();
-		void SetInfo(int row, std::wstring textInfo, std::wstring textData);
-		bool AddPanel(ref_count_ptr<Panel> panel, std::wstring name);
+		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
+		bool AddPanel(ref_count_ptr<Panel> panel, const std::wstring& name);
 
 		int GetState() { return windowState_; }
 
@@ -148,7 +148,7 @@ namespace gstd {
 		LogPanel();
 		~LogPanel();
 		virtual void LocateParts();
-		void AddText(std::wstring text);
+		void AddText(const std::wstring& text);
 		void ClearText();
 	};
 
@@ -164,7 +164,7 @@ namespace gstd {
 		InfoPanel();
 		~InfoPanel();
 		virtual void LocateParts();
-		void SetInfo(int row, std::wstring textInfo, std::wstring textData);
+		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
 	};
 
 	class WindowLogger::InfoCollectThread : public Thread {

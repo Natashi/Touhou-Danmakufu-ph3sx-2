@@ -12,8 +12,8 @@ namespace gstd {
 	public:
 		static void DumpMemoryLeaksOnExit() {
 #ifdef _DEBUG
-	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	//_CrtDumpMemoryLeaks();
+			_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+			_CrtDumpMemoryLeaks();
 #endif
 		}
 	};
@@ -90,40 +90,40 @@ namespace gstd {
 		static size_t ConvertWideToMulti(wchar_t* mbstr, size_t wcount, std::vector<char>& mbres, int code);
 
 		//----------------------------------------------------------------
-		static std::vector<std::string> Split(std::string str, std::string delim);
-		static void Split(std::string str, std::string delim, std::vector<std::string>& res);
+		static std::vector<std::string> Split(const std::string& str, const std::string& delim);
+		static void Split(const std::string& str, const std::string& delim, std::vector<std::string>& res);
 		static std::string Format(const char* str, ...);
 		static std::string Format(const char* str, va_list va);
 
-		static size_t CountCharacter(std::string& str, char c);
+		static size_t CountCharacter(const std::string& str, char c);
 		static size_t CountCharacter(std::vector<char>& str, char c);
 		static int ToInteger(const std::string& s);
 		static double ToDouble(const std::string& s);
-		static std::string Replace(std::string& source, std::string pattern, std::string placement);
-		static std::string ReplaceAll(std::string& source, std::string pattern, std::string placement, 
+		static std::string Replace(const std::string& source, const std::string& pattern, const std::string& placement);
+		static std::string ReplaceAll(const std::string& source, const std::string& pattern, const std::string& placement,
 			size_t replaceCount = UINT_MAX, size_t start = 0, size_t end = 0);
 		static std::string Slice(const std::string& s, size_t length);
 		static std::string Trim(const std::string& str);
 
 		//----------------------------------------------------------------
 		//std::wstring.sizeは文字数を返す。バイト数ではない。
-		static std::vector<std::wstring> Split(std::wstring str, std::wstring delim);
-		static void Split(std::wstring str, std::wstring delim, std::vector<std::wstring>& res);
+		static std::vector<std::wstring> Split(const std::wstring& str, const std::wstring& delim);
+		static void Split(const std::wstring& str, const std::wstring& delim, std::vector<std::wstring>& res);
 		static std::wstring Format(const wchar_t* str, ...);
 		static std::wstring Format(const wchar_t* str, va_list va);
 		static std::wstring FormatToWide(const char* str, ...);
 
-		static size_t CountCharacter(std::wstring& str, wchar_t c);
+		static size_t CountCharacter(const std::wstring& str, wchar_t c);
 		static int ToInteger(const std::wstring& s);
 		static double ToDouble(const std::wstring& s);
-		static std::wstring Replace(std::wstring& source, std::wstring pattern, std::wstring placement);
-		static std::wstring ReplaceAll(std::wstring& source, std::wstring pattern, std::wstring placement, 
+		static std::wstring Replace(const std::wstring& source, const std::wstring& pattern, const std::wstring& placement);
+		static std::wstring ReplaceAll(const std::wstring& source, const std::wstring& pattern, const std::wstring& placement,
 			size_t replaceCount = UINT_MAX, size_t start = 0, size_t end = 0);
 		static std::wstring Slice(const std::wstring& s, size_t length);
 		static std::wstring Trim(const std::wstring& str);
 
-		static size_t CountAsciiSizeCharacter(std::wstring& str);
-		static size_t GetByteSize(std::wstring& str) {
+		static size_t CountAsciiSizeCharacter(const std::wstring& str);
+		static size_t GetByteSize(const std::wstring& str) {
 			return str.size() * sizeof(wchar_t);
 		}
 	};
@@ -158,11 +158,11 @@ namespace gstd {
 		std::wstring message_;
 	public:
 		wexception() {}
-		wexception(std::wstring msg) { message_ = msg; }
-		wexception(std::string msg) {
+		wexception(const std::wstring& msg) { message_ = msg; }
+		wexception(const std::string& msg) {
 			message_ = StringUtility::ConvertMultiToWide(msg);
 		}
-		std::wstring GetMessage() { return message_; }
+		std::wstring& GetMessage() { return message_; }
 		const wchar_t* what() { return message_.c_str(); }
 	};
 
@@ -266,7 +266,7 @@ namespace gstd {
 	//PathProperty
 	class PathProperty {
 	public:
-		static std::wstring GetFileDirectory(std::wstring path) {
+		static std::wstring GetFileDirectory(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 			path_t p(path);
 			p = p.parent_path();
@@ -279,7 +279,7 @@ namespace gstd {
 #endif
 		}
 
-		static std::wstring GetDirectoryName(std::wstring path) {
+		static std::wstring GetDirectoryName(const std::wstring& path) {
 			//Returns the name of the topmost directory.
 #ifdef __L_STD_FILESYSTEM
 			std::wstring dirChain = ReplaceYenToSlash(path_t(path).parent_path());
@@ -293,7 +293,7 @@ namespace gstd {
 #endif
 		}
 
-		static std::wstring GetFileName(std::wstring path) {
+		static std::wstring GetFileName(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 			path_t p(path);
 			return p.filename();
@@ -305,7 +305,7 @@ namespace gstd {
 #endif
 		}
 
-		static std::wstring GetDriveName(std::wstring path) {
+		static std::wstring GetDriveName(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 			path_t p(path);
 			return (p.root_name() / p.root_directory());
@@ -316,7 +316,7 @@ namespace gstd {
 #endif
 		}
 
-		static std::wstring GetFileNameWithoutExtension(std::wstring path) {
+		static std::wstring GetFileNameWithoutExtension(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 			path_t p(path);
 			return p.stem();
@@ -327,7 +327,7 @@ namespace gstd {
 #endif
 		}
 
-		static std::wstring GetFileExtension(std::wstring path) {
+		static std::wstring GetFileExtension(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 			path_t p(path);
 			return p.extension();
@@ -338,19 +338,28 @@ namespace gstd {
 #endif
 		}
 		//Returns the path of the executable.
-		static std::wstring GetModuleName() {
-			wchar_t modulePath[_MAX_PATH];
-			ZeroMemory(modulePath, sizeof(modulePath));
-			GetModuleFileName(NULL, modulePath, _MAX_PATH - 1);
-			return GetFileNameWithoutExtension(std::wstring(modulePath));
+		static const std::wstring& GetModuleName() {
+			static std::wstring moduleName;
+			if (moduleName.size() == 0) {
+				wchar_t modulePath[_MAX_PATH];
+				ZeroMemory(modulePath, sizeof(modulePath));
+				GetModuleFileName(NULL, modulePath, _MAX_PATH - 1);
+				moduleName = GetFileNameWithoutExtension(std::wstring(modulePath));
+			}
+			return moduleName;
 		}
 		//Returns the directory of the executable.
-		static std::wstring GetModuleDirectory() {
+		static const std::wstring& GetModuleDirectory() {
 #ifdef __L_STD_FILESYSTEM
-			wchar_t modulePath[_MAX_PATH];
-			ZeroMemory(modulePath, sizeof(modulePath));
-			GetModuleFileName(NULL, modulePath, _MAX_PATH - 1);
-			return ReplaceYenToSlash(stdfs::path(modulePath).parent_path()) + L"/";
+			static std::wstring moduleDir;
+			if (moduleDir.size() == 0) {
+				wchar_t modulePath[_MAX_PATH];
+				ZeroMemory(modulePath, sizeof(modulePath));
+				GetModuleFileName(NULL, modulePath, _MAX_PATH - 1);
+				moduleDir = ReplaceYenToSlash(stdfs::path(modulePath).parent_path());
+				moduleDir = GetUnique(moduleDir) + L"/";
+			}
+			return moduleDir;
 #else
 			wchar_t modulePath[_MAX_PATH];
 			ZeroMemory(modulePath, sizeof(modulePath));
@@ -359,24 +368,24 @@ namespace gstd {
 #endif
 		}
 		//Returns the directory of the path relative to the executable's directory.
-		static std::wstring GetDirectoryWithoutModuleDirectory(std::wstring path) {	
+		static std::wstring GetDirectoryWithoutModuleDirectory(const std::wstring& path) {
 			std::wstring res = GetFileDirectory(path);
-			std::wstring dirModule = GetModuleDirectory();
+			const std::wstring& dirModule = GetModuleDirectory();
 			if (res.find(dirModule) != std::wstring::npos) {
 				res = res.substr(dirModule.size());
 			}
 			return res;
 		}
 		//Returns the the path relative to the executable's directory.
-		static std::wstring GetPathWithoutModuleDirectory(std::wstring path) {
-			std::wstring dirModule = GetModuleDirectory();
+		static std::wstring GetPathWithoutModuleDirectory(const std::wstring& path) {
+			const std::wstring& dirModule = GetModuleDirectory();
 			std::wstring res = Canonicalize(path);
 			if (res.find(dirModule) != std::wstring::npos) {
 				res = res.substr(dirModule.size());
 			}
 			return res;
 		}
-		static std::wstring GetRelativeDirectory(std::wstring from, std::wstring to) {
+		static std::wstring GetRelativeDirectory(const std::wstring& from, const std::wstring& to) {
 #ifdef __L_STD_FILESYSTEM
 			std::error_code err;
 			path_t p = stdfs::relative(from, to, err);
@@ -395,7 +404,7 @@ namespace gstd {
 #endif
 			return res;
 		}
-		static std::wstring ExtendRelativeToFull(std::wstring dir, std::wstring path) {
+		static std::wstring ExtendRelativeToFull(const std::wstring& dir, std::wstring path) {
 			path = ReplaceYenToSlash(path);
 			if (path.size() >= 2) {
 				if (memcmp(&path[0], L"./", sizeof(wchar_t) * 2U) == 0) {
@@ -412,11 +421,10 @@ namespace gstd {
 			return path;
 		}
 		//Replaces all the '\\' characters with '/'.
-		static std::wstring ReplaceYenToSlash(std::wstring path) {
-			std::wstring res = StringUtility::ReplaceAll(path, L"\\", L"/");
-			return res;
+		static std::wstring ReplaceYenToSlash(const std::wstring& path) {
+			return StringUtility::ReplaceAll(path, L"\\", L"/");
 		}
-		static std::wstring Canonicalize(std::wstring srcPath) {
+		static std::wstring Canonicalize(const std::wstring& srcPath) {
 #ifdef __L_STD_FILESYSTEM
 			path_t p(srcPath);
 			std::wstring res = stdfs::weakly_canonical(p);
@@ -428,7 +436,7 @@ namespace gstd {
 			return res;
 		}
 		//Replaces all the '/' characters with '\\' (at the very least).
-		static std::wstring MakePreferred(std::wstring srcPath) {
+		static std::wstring MakePreferred(const std::wstring& srcPath) {
 #ifdef __L_STD_FILESYSTEM
 			path_t p(srcPath);
 			std::wstring res = p.make_preferred();
@@ -437,9 +445,8 @@ namespace gstd {
 #endif
 			return res;
 		}
-		static std::wstring GetUnique(std::wstring srcPath) {
-			path_t p(srcPath);
-			p = stdfs::weakly_canonical(p);
+		static std::wstring GetUnique(const std::wstring& srcPath) {
+			std::wstring p = Canonicalize(srcPath);
 			return ReplaceYenToSlash(p);
 		}
 	};

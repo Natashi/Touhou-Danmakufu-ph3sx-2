@@ -705,7 +705,7 @@ POINT DirectGraphics::GetMousePosition() {
 	return res;
 }
 
-void DirectGraphics::SaveBackSurfaceToFile(std::wstring path) {
+void DirectGraphics::SaveBackSurfaceToFile(const std::wstring& path) {
 	RECT rect = { 0, 0, config_.GetScreenSize().x, config_.GetScreenSize().y };
 	LPDIRECT3DSURFACE9 pBackSurface = nullptr;
 	pDevice_->GetRenderTarget(0, &pBackSurface);

@@ -30,7 +30,7 @@ public:
 	TransitionManager* GetTransitionManager() { return transitionManager_.GetPointer(); }
 	SystemInformation* GetSystemInformation() { return infoSystem_.GetPointer(); }
 
-	void ShowErrorDialog(std::wstring msg);
+	void ShowErrorDialog(const std::wstring& msg);
 };
 
 
@@ -95,7 +95,7 @@ class SystemInformation {
 	std::vector<ref_count_ptr<ScriptInformation>> listLastPlayerSelect_;
 	std::vector<ref_count_ptr<ScriptInformation>> listFreePlayer_;
 
-	void _SearchFreePlayerScript(std::wstring dir);
+	void _SearchFreePlayerScript(const std::wstring& dir);
 
 public:
 	SystemInformation();
@@ -103,10 +103,10 @@ public:
 
 	int GetLastTitleSelectedIndex() { return lastTitleSelectedIndex_; }
 	void SetLastTitleSelectedIndex(int index) { lastTitleSelectedIndex_ = index; }
-	std::wstring GetLastScriptSearchDirectory() { return dirLastScriptSearch_; }
-	void SetLastScriptSearchDirectory(std::wstring dir) { dirLastScriptSearch_ = dir; }
-	std::wstring GetLastSelectedScriptPath() { return pathLastSelectedScript_; }
-	void SetLastSelectedScriptPath(std::wstring path) { pathLastSelectedScript_ = path; }
+	std::wstring& GetLastScriptSearchDirectory() { return dirLastScriptSearch_; }
+	void SetLastScriptSearchDirectory(const std::wstring& dir) { dirLastScriptSearch_ = dir; }
+	std::wstring& GetLastSelectedScriptPath() { return pathLastSelectedScript_; }
+	void SetLastSelectedScriptPath(const std::wstring& path) { pathLastSelectedScript_ = path; }
 	int GetLastSelectScriptSceneType() { return lastSelectScriptSceneType_; }
 	void SetLastSelectScriptSceneType(int type) { lastSelectScriptSceneType_ = type; }
 

@@ -93,7 +93,7 @@ namespace directx {
 		void DeleteObjectValue(size_t hash) { mapObjectValue_.erase(hash); }
 
 		template<typename T>
-		static inline const size_t GetKeyHash(T& hash) {
+		static inline const size_t GetKeyHash(const T& hash) {
 			return std::hash<T>{}(hash);
 		}
 		static inline const size_t GetKeyHashReal(double key) {
@@ -101,10 +101,10 @@ namespace directx {
 			return (size_t)(hashDbl >> 32) + (size_t)(hashDbl & UINT32_MAX);
 		}
 
-		bool IsObjectValueExists(std::wstring key);
-		gstd::value GetObjectValue(std::wstring key);
-		void SetObjectValue(std::wstring key, gstd::value val);
-		void DeleteObjectValue(std::wstring key);
+		bool IsObjectValueExists(const std::wstring& key);
+		gstd::value GetObjectValue(const std::wstring& key);
+		void SetObjectValue(const std::wstring& key, gstd::value val);
+		void DeleteObjectValue(const std::wstring& key);
 	};
 
 	/**********************************************************
@@ -162,7 +162,7 @@ namespace directx {
 
 		void SetBlendType(BlendMode type) { typeBlend_ = type; }
 		BlendMode GetBlendType() { return typeBlend_; }
-		void SetRelativeObject(weak_ptr<DxScriptRenderObject> id, std::wstring bone) {
+		void SetRelativeObject(weak_ptr<DxScriptRenderObject> id, const std::wstring& bone) {
 			objRelative_ = id; 
 			nameRelativeBone_ = bone; 
 		}
@@ -396,7 +396,7 @@ namespace directx {
 		void SetMesh(shared_ptr<DxMesh> mesh) { mesh_ = mesh; }
 		shared_ptr<DxMesh> GetMesh() { return mesh_; }
 		int GetAnimeFrame() { return time_; }
-		std::wstring GetAnimeName() { return anime_; }
+		std::wstring& GetAnimeName() { return anime_; }
 
 		virtual void SetX(float x) { position_.x = x; }
 		virtual void SetY(float y) { position_.y = y; }
@@ -442,13 +442,13 @@ namespace directx {
 		virtual void Render();
 		virtual void SetRenderState();
 
-		void SetText(std::wstring text);
-		std::wstring GetText() { return text_.GetText(); }
+		void SetText(const std::wstring& text);
+		std::wstring& GetText() { return text_.GetText(); }
 		std::vector<int> GetTextCountCU();
 		int GetTotalWidth();
 		int GetTotalHeight();
 
-		void SetFontType(std::wstring type) { text_.SetFontType(type.c_str()); bChange_ = true; }
+		void SetFontType(const std::wstring& type) { text_.SetFontType(type.c_str()); bChange_ = true; }
 		void SetFontSize(int size) { 
 			if (size == text_.GetFontSize()) return;
 			text_.SetFontSize(size); bChange_ = true; 
@@ -512,7 +512,7 @@ namespace directx {
 		virtual void Render() {}
 		virtual void SetRenderState() {}
 
-		bool Load(std::wstring path);
+		bool Load(const std::wstring& path);
 		void Play();
 
 		gstd::ref_count_ptr<SoundPlayer> GetPlayer() { return player_; }
@@ -536,7 +536,7 @@ namespace directx {
 		virtual void Render() {}
 		virtual void SetRenderState() {}
 
-		virtual bool OpenR(std::wstring path);
+		virtual bool OpenR(const std::wstring& path);
 		virtual bool OpenR(gstd::ref_count_ptr<gstd::FileReader> reader);
 		virtual bool OpenRW(std::wstring path);
 		virtual bool Store() = 0;
@@ -557,22 +557,22 @@ namespace directx {
 		size_t bytePerChar_;
 
 		bool _ParseLines(std::vector<char>& src);
-		void _AddLine(char* pChar, size_t count);
+		void _AddLine(const char* pChar, size_t count);
 	public:
 		DxTextFileObject();
 		virtual ~DxTextFileObject();
-		virtual bool OpenR(std::wstring path);
+		virtual bool OpenR(const std::wstring& path);
 		virtual bool OpenR(gstd::ref_count_ptr<gstd::FileReader> reader);
 		virtual bool OpenRW(std::wstring path);
 		virtual bool Store();
 		size_t GetLineCount() { return listLine_.size(); }
 		std::string GetLineAsString(size_t line);
 		std::wstring GetLineAsWString(size_t line);
-		void SetLineAsString(std::string& text, size_t line);
-		void SetLineAsWString(std::wstring& text, size_t line);
+		void SetLineAsString(const std::string& text, size_t line);
+		void SetLineAsWString(const std::wstring& text, size_t line);
 
-		void AddLine(std::string line);
-		void AddLine(std::wstring line);
+		void AddLine(const std::string& line);
+		void AddLine(const std::wstring& line);
 		void ClearLine() { 
 			if (isArchived_) return;
 			listLine_.clear(); 
@@ -591,7 +591,7 @@ namespace directx {
 	public:
 		DxBinaryFileObject();
 		virtual ~DxBinaryFileObject();
-		virtual bool OpenR(std::wstring path);
+		virtual bool OpenR(const std::wstring& path);
 		virtual bool OpenR(gstd::ref_count_ptr<gstd::FileReader> reader);
 		virtual bool OpenRW(std::wstring path);
 		virtual bool Store();
@@ -726,9 +726,9 @@ namespace directx {
 		std::map<std::wstring, gstd::ref_count_ptr<SoundPlayer>> mapSoundPlayer_;
 
 		void _ClearResource();
-		shared_ptr<Texture> _GetTexture(std::wstring name);
-		shared_ptr<Shader> _GetShader(std::wstring name);
-		shared_ptr<DxMesh> _GetMesh(std::wstring name);
+		shared_ptr<Texture> _GetTexture(const std::wstring& name);
+		shared_ptr<Shader> _GetShader(const std::wstring& name);
+		shared_ptr<DxMesh> _GetMesh(const std::wstring& name);
 	public:
 		DxScript();
 		virtual ~DxScript();

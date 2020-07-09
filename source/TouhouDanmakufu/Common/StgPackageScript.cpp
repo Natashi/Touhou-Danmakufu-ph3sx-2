@@ -170,7 +170,7 @@ gstd::value StgPackageScript::Func_StartStageScene(gstd::script_machine* machine
 	std::vector<ref_count_ptr<ScriptInformation>> listPlayer;
 	std::vector<std::wstring>& listPlayerPath = infoMain->GetPlayerList();
 	if (listPlayerPath.size() == 0) {
-		std::wstring dir = EPathProperty::GetPlayerScriptRootDirectory();
+		const std::wstring& dir = EPathProperty::GetPlayerScriptRootDirectory();
 		listPlayer = ScriptInformation::FindPlayerScriptInformationList(dir);
 	}
 	else {

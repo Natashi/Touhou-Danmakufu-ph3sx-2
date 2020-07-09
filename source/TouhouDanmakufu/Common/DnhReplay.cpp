@@ -32,18 +32,18 @@ std::wstring ReplayInformation::GetDateAsString() {
 
 	return res;
 }
-void ReplayInformation::SetUserData(std::string key, gstd::value val) {
+void ReplayInformation::SetUserData(const std::string& key, gstd::value val) {
 	userData_->SetValue(key, val);
 }
-gstd::value ReplayInformation::GetUserData(std::string key) {
+gstd::value ReplayInformation::GetUserData(const std::string& key) {
 	gstd::value res = userData_->GetValue(key);
 	return res;
 }
-bool ReplayInformation::IsUserDataExists(std::string key) {
+bool ReplayInformation::IsUserDataExists(const std::string& key) {
 	return userData_->IsExists(key).first;
 }
 
-bool ReplayInformation::SaveToFile(std::wstring scriptPath, int index) {
+bool ReplayInformation::SaveToFile(const std::wstring& scriptPath, int index) {
 	std::wstring dir = EPathProperty::GetReplaySaveDirectory(scriptPath);
 	std::wstring scriptName = PathProperty::GetFileNameWithoutExtension(scriptPath);
 	std::wstring path = dir + scriptName + StringUtility::Format(L"_replay%02d.dat", index);
@@ -195,12 +195,12 @@ double ReplayInformation::StageData::GetFramePerSecondAvarage() {
 std::set<std::string> ReplayInformation::StageData::GetCommonDataAreaList() {
 	std::set<std::string> res;
 	for (auto itrCommonData = mapCommonData_.begin(); itrCommonData != mapCommonData_.end(); itrCommonData++) {
-		std::string key = itrCommonData->first;
+		const std::string& key = itrCommonData->first;
 		res.insert(key);
 	}
 	return res;
 }
-shared_ptr<ScriptCommonData> ReplayInformation::StageData::GetCommonData(std::string area) {
+shared_ptr<ScriptCommonData> ReplayInformation::StageData::GetCommonData(const std::string& area) {
 	shared_ptr<ScriptCommonData> res(new ScriptCommonData());
 	auto itr = mapCommonData_.find(area);
 	if (itr != mapCommonData_.end()) {
@@ -208,7 +208,7 @@ shared_ptr<ScriptCommonData> ReplayInformation::StageData::GetCommonData(std::st
 	}
 	return res;
 }
-void ReplayInformation::StageData::SetCommonData(std::string area, shared_ptr<ScriptCommonData> commonData) {
+void ReplayInformation::StageData::SetCommonData(const std::string& area, shared_ptr<ScriptCommonData> commonData) {
 	ref_count_ptr<RecordBuffer> record = new RecordBuffer();
 	if (commonData)
 		commonData->WriteRecord(*record);
@@ -239,7 +239,7 @@ void ReplayInformation::StageData::ReadRecord(gstd::RecordBuffer& record) {
 	record.GetRecordAsRecordBuffer("mapCommonData", recComMap);
 	std::vector<std::string> listKeyCommonData = recComMap.GetKeyList();
 	for (size_t iCommonData = 0; iCommonData < listKeyCommonData.size(); iCommonData++) {
-		std::string key = listKeyCommonData[iCommonData];
+		const std::string& key = listKeyCommonData[iCommonData];
 		ref_count_ptr<RecordBuffer> recComData = new RecordBuffer();
 		recComMap.GetRecordAsRecordBuffer(key, *recComData);
 		mapCommonData_[key] = recComData;
@@ -277,7 +277,7 @@ void ReplayInformation::StageData::WriteRecord(gstd::RecordBuffer& record) {
 	gstd::RecordBuffer recComMap;
 	std::map<std::string, ref_count_ptr<RecordBuffer>>::iterator itrCommonData;
 	for (itrCommonData = mapCommonData_.begin(); itrCommonData != mapCommonData_.end(); itrCommonData++) {
-		std::string key = itrCommonData->first;
+		const std::string& key = itrCommonData->first;
 		ref_count_ptr<RecordBuffer> recComData = itrCommonData->second;
 		recComMap.SetRecordAsRecordBuffer(key, *recComData);
 	}
@@ -311,7 +311,7 @@ void ReplayInformationManager::UpdateInformationList(std::wstring pathScript) {
 	int indexFree = ReplayInformation::INDEX_USER;
 	std::vector<std::wstring>::iterator itr;
 	for (itr = listPath.begin(); itr != listPath.end(); itr++) {
-		std::wstring path = *itr;
+		const std::wstring& path = *itr;
 		std::wstring fileName = PathProperty::GetFileName(path);
 
 		if (fileName.find(fileNameHead) == std::wstring::npos) continue;

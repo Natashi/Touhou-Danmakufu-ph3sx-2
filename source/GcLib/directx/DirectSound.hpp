@@ -69,7 +69,7 @@ namespace directx {
 		std::map<std::wstring, gstd::ref_count_ptr<SoundInfo>> mapInfo_;
 		gstd::ref_count_ptr<SoundInfoPanel> panelInfo_;
 
-		gstd::ref_count_ptr<SoundPlayer> _GetPlayer(std::wstring path);
+		gstd::ref_count_ptr<SoundPlayer> _GetPlayer(const std::wstring& path);
 		gstd::ref_count_ptr<SoundPlayer> _CreatePlayer(std::wstring path);
 	public:
 		DirectSoundManager();
@@ -81,14 +81,14 @@ namespace directx {
 		IDirectSound8* GetDirectSound() { return pDirectSound_; }
 		gstd::CriticalSection& GetLock() { return lock_; }
 
-		gstd::ref_count_ptr<SoundPlayer> GetPlayer(std::wstring path, bool bCreateAlways = false);
+		gstd::ref_count_ptr<SoundPlayer> GetPlayer(const std::wstring& path, bool bCreateAlways = false);
 		SoundDivision* CreateSoundDivision(int index);
 		SoundDivision* GetSoundDivision(int index);
-		gstd::ref_count_ptr<SoundInfo> GetSoundInfo(std::wstring path);
+		gstd::ref_count_ptr<SoundInfo> GetSoundInfo(const std::wstring& path);
 
 		void SetInfoPanel(gstd::ref_count_ptr<SoundInfoPanel> panel) { gstd::Lock lock(lock_); panelInfo_ = panel; }
 
-		bool AddSoundInfoFromFile(std::wstring path);
+		bool AddSoundInfoFromFile(const std::wstring& path);
 		std::vector<gstd::ref_count_ptr<SoundInfo>> GetSoundInfoList();
 		void SetFadeDeleteAll();
 	};
@@ -168,8 +168,8 @@ namespace directx {
 	public:
 		SoundInfo() { timeLoopStart_ = 0; timeLoopEnd_ = 0; }
 		virtual ~SoundInfo() {};
-		std::wstring GetName() { return name_; }
-		std::wstring GetTitle() { return title_; }
+		std::wstring& GetName() { return name_; }
+		std::wstring& GetTitle() { return title_; }
 		double GetLoopStartTime() { return timeLoopStart_; }
 		double GetLoopEndTime() { return timeLoopEnd_; }
 	};
@@ -215,7 +215,7 @@ namespace directx {
 	public:
 		SoundPlayer();
 		virtual ~SoundPlayer();
-		std::wstring GetPath() { return path_; }
+		std::wstring& GetPath() { return path_; }
 		gstd::CriticalSection& GetLock() { return lock_; }
 		virtual void Restore() { pDirectSoundBuffer_->Restore(); }
 		void SetSoundDivision(SoundDivision* div);

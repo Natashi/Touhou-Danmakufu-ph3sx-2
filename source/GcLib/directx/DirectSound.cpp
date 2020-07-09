@@ -106,7 +106,7 @@ void DirectSoundManager::Clear() {
 	}
 	catch (...) {}
 }
-gstd::ref_count_ptr<SoundPlayer> DirectSoundManager::GetPlayer(std::wstring path, bool bCreateAlways) {
+gstd::ref_count_ptr<SoundPlayer> DirectSoundManager::GetPlayer(const std::wstring& path, bool bCreateAlways) {
 	gstd::ref_count_ptr<SoundPlayer> res;
 	try {
 		Lock lock(lock_);
@@ -124,7 +124,7 @@ gstd::ref_count_ptr<SoundPlayer> DirectSoundManager::GetPlayer(std::wstring path
 
 	return res;
 }
-gstd::ref_count_ptr<SoundPlayer> DirectSoundManager::_GetPlayer(std::wstring path) {
+gstd::ref_count_ptr<SoundPlayer> DirectSoundManager::_GetPlayer(const std::wstring& path) {
 	if (mapPlayer_.find(path) == mapPlayer_.end()) return nullptr;
 
 	gstd::ref_count_ptr<SoundPlayer> res = nullptr;
@@ -133,7 +133,7 @@ gstd::ref_count_ptr<SoundPlayer> DirectSoundManager::_GetPlayer(std::wstring pat
 		std::list<gstd::ref_count_ptr<SoundPlayer>>& listPlayer = itrNameMap->second;
 		
 		for (auto itrPlayer = listPlayer.begin(); itrPlayer != listPlayer.end(); itrPlayer++) {
-			SoundPlayer* player = (*itrPlayer).GetPointer();
+			SoundPlayer* player = itrPlayer->GetPointer();
 			if (player == nullptr) continue;
 			if (player->bDelete_) continue;
 			if (player->GetPath() != path) continue;
@@ -240,13 +240,13 @@ SoundDivision* DirectSoundManager::GetSoundDivision(int index) {
 	if (itrDiv == mapDivision_.end()) return nullptr;
 	return itrDiv->second;
 }
-gstd::ref_count_ptr<SoundInfo> DirectSoundManager::GetSoundInfo(std::wstring path) {
+gstd::ref_count_ptr<SoundInfo> DirectSoundManager::GetSoundInfo(const std::wstring& path) {
 	std::wstring name = PathProperty::GetFileName(path);
 	auto itrInfo = mapInfo_.find(name);
 	if (itrInfo == mapInfo_.end()) return nullptr;
 	return itrInfo->second;
 }
-bool DirectSoundManager::AddSoundInfoFromFile(std::wstring path) {
+bool DirectSoundManager::AddSoundInfoFromFile(const std::wstring& path) {
 	bool res = false;
 	FileManager* fileManager = FileManager::GetBase();
 	ref_count_ptr<FileReader> reader = fileManager->GetFileReader(path);
@@ -341,8 +341,9 @@ void DirectSoundManager::SetFadeDeleteAll() {
 		Lock lock(lock_);
 		for (auto itrNameMap = mapPlayer_.begin(); itrNameMap != mapPlayer_.end(); itrNameMap++) {
 			std::list<gstd::ref_count_ptr<SoundPlayer>>& listPlayer = itrNameMap->second;
+
 			for (auto itrPlayer = listPlayer.begin(); itrPlayer != listPlayer.end(); itrPlayer++) {
-				SoundPlayer* player = (*itrPlayer).GetPointer();
+				SoundPlayer* player = itrPlayer->GetPointer();
 				if (player == nullptr) continue;
 				player->SetFadeDelete(SoundPlayer::FADE_DEFAULT);
 			}
@@ -388,7 +389,7 @@ void DirectSoundManager::SoundManageThread::_Arrange() {
 		std::list<gstd::ref_count_ptr<SoundPlayer>>& listPlayer = itrNameMap->second;
 
 		for (auto itrPlayer = listPlayer.begin(); itrPlayer != listPlayer.end(); ) {
-			SoundPlayer* player = (*itrPlayer).GetPointer();
+			SoundPlayer* player = itrPlayer->GetPointer();
 			bool bDelete = false;
 			if (player) {
 				bDelete |= player->bDelete_;
@@ -423,7 +424,7 @@ void DirectSoundManager::SoundManageThread::_Fade() {
 		std::list<gstd::ref_count_ptr<SoundPlayer>>& listPlayer = itrNameMap->second;
 		
 		for (auto itrPlayer = listPlayer.begin(); itrPlayer != listPlayer.end(); itrPlayer++) {
-			SoundPlayer* player = (*itrPlayer).GetPointer();
+			SoundPlayer* player = itrPlayer->GetPointer();
 			if (player == nullptr) continue;
 			double rateFade = player->GetFadeVolumeRate();
 			if (rateFade == 0) continue;
@@ -493,7 +494,7 @@ void SoundInfoPanel::Update(DirectSoundManager* soundManager) {
 			std::list<gstd::ref_count_ptr<SoundPlayer>>& listPlayer = itrNameMap->second;
 			
 			for (auto itrPlayer = listPlayer.begin(); itrPlayer != listPlayer.end(); itrPlayer++) {
-				SoundPlayer* player = (*itrPlayer).GetPointer();
+				SoundPlayer* player = itrPlayer->GetPointer();
 				if (player == nullptr) continue;
 
 				int address = (int)player;
@@ -510,7 +511,7 @@ void SoundInfoPanel::Update(DirectSoundManager* soundManager) {
 	for (auto itrInfo = listInfo.begin(); itrInfo != listInfo.end(); itrInfo++) {
 		Info& info = *itrInfo;
 		int address = info.address;
-		std::wstring path = info.path;
+		const std::wstring& path = info.path;
 		int countRef = info.countRef;
 		std::wstring key = StringUtility::Format(L"%08x", address);
 		int index = wndListView_.GetIndexInColumn(key, ROW_ADDRESS);

@@ -53,9 +53,9 @@ void ScriptSelectScene::_ChangePage() {
 				dxText.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 				dxText.SetFontColorBottom(D3DCOLOR_ARGB(255, 255, 64, 64));
 				dxText.SetFontBorderColor(D3DCOLOR_ARGB(255, 128, 32, 32));
-				std::wstring path = pItem->GetPath();
+				
 				std::wstring text = L"[DIR.]";
-				text += PathProperty::GetDirectoryName(path);
+				text += PathProperty::GetDirectoryName(pItem->GetPath());
 				dxText.SetText(text);
 			}
 			else {
@@ -100,7 +100,7 @@ void ScriptSelectScene::Work() {
 				ref_count_ptr<ScriptSelectModel> model = nullptr;
 				int index = GetSelectedItemIndex();
 				ScriptSelectSceneMenuItem* pItem = (ScriptSelectSceneMenuItem*)item_[index].GetPointer();
-				std::wstring dir = pItem->GetPath();
+				const std::wstring& dir = pItem->GetPath();
 
 				//ページリセット
 				cursorX_ = 0;
@@ -121,7 +121,7 @@ void ScriptSelectScene::Work() {
 				ScriptSelectSceneMenuItem* pItem = (ScriptSelectSceneMenuItem*)item_[index].GetPointer();
 				ref_count_ptr<ScriptInformation> info = pItem->GetScriptInformation();
 
-				std::wstring pathLastSelected = info->GetScriptPath();
+				const std::wstring& pathLastSelected = info->GetScriptPath();
 				SystemController::GetInstance()->GetSystemInformation()->SetLastSelectedScriptPath(pathLastSelected);
 
 				ETaskManager* taskManager = ETaskManager::GetInstance();
@@ -142,12 +142,12 @@ void ScriptSelectScene::Work() {
 
 		if (GetType() == TYPE_DIR) {
 			ref_count_ptr<ScriptSelectFileModel> fileModel = ref_count_ptr<ScriptSelectFileModel>::DownCast(model_);
-			std::wstring dir = fileModel->GetDirectory();
-			std::wstring root = EPathProperty::GetStgScriptRootDirectory();
+			const std::wstring& dir = fileModel->GetDirectory();
+			const std::wstring& root = EPathProperty::GetStgScriptRootDirectory();
 			if (!File::IsEqualsPath(dir, root)) {
 				//キャンセル
 				bTitle = false;
-				std::wstring dirOld = SystemController::GetInstance()->GetSystemInformation()->GetLastScriptSearchDirectory();
+				const std::wstring& dirOld = SystemController::GetInstance()->GetSystemInformation()->GetLastScriptSearchDirectory();
 				std::wstring::size_type pos = dirOld.find_last_of(L"/", dirOld.size() - 2);
 				std::wstring dir = dirOld.substr(0, pos) + L"/";
 				ref_count_ptr<ScriptSelectFileModel> model = new ScriptSelectFileModel(TYPE_DIR, dir);
@@ -273,7 +273,7 @@ void ScriptSelectScene::Render() {
 			shared_ptr<Texture> texture = spriteImage_->GetTexture();
 			std::wstring pathImage1 = L"";
 			if (texture) pathImage1 = texture->GetName();
-			std::wstring pathImage2 = info->GetImagePath();
+			const std::wstring& pathImage2 = info->GetImagePath();
 			if (pathImage1 != pathImage2) {
 				texture = std::make_shared<Texture>();
 				File file(pathImage2);
@@ -331,7 +331,7 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.Render();
 
 			//テキスト
-			std::wstring text = info->GetText();
+			const std::wstring& text = info->GetText();
 			dxTextInfo.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 			dxTextInfo.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));
 			dxTextInfo.SetFontSize(18);
@@ -340,9 +340,7 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.SetPosition(24, 288);
 			dxTextInfo.SetMaxWidth(texture == nullptr ? 620 : 320);
 			dxTextInfo.Render();
-
 		}
-
 	}
 
 	if (!model_->IsCreated()) {
@@ -452,7 +450,7 @@ void ScriptSelectScene::AddMenuItem(std::list<ref_count_ptr<ScriptSelectSceneMen
 }
 
 //ScriptSelectSceneMenuItem
-ScriptSelectSceneMenuItem::ScriptSelectSceneMenuItem(int type, std::wstring path, ref_count_ptr<ScriptInformation> info) {
+ScriptSelectSceneMenuItem::ScriptSelectSceneMenuItem(int type, const std::wstring& path, ref_count_ptr<ScriptInformation> info) {
 	type_ = type;
 	path_ = PathProperty::ReplaceYenToSlash(path);
 	info_ = info;
@@ -469,7 +467,7 @@ ScriptSelectModel::~ScriptSelectModel() {}
 
 
 //ScriptSelectFileModel
-ScriptSelectFileModel::ScriptSelectFileModel(int type, std::wstring dir) {
+ScriptSelectFileModel::ScriptSelectFileModel(int type, const std::wstring& dir) {
 	type_ = type;
 	dir_ = dir;
 }
@@ -485,7 +483,7 @@ void ScriptSelectFileModel::_Run() {
 	}
 	bCreated_ = true;
 }
-void ScriptSelectFileModel::_SearchScript(std::wstring dir) {
+void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
 	WIN32_FIND_DATA data;
 	HANDLE hFind;
 	std::wstring findDir = dir + L"*.*";
@@ -530,7 +528,7 @@ void ScriptSelectFileModel::_SearchScript(std::wstring dir) {
 	} while (FindNextFile(hFind, &data));
 	FindClose(hFind);
 }
-void ScriptSelectFileModel::_CreateMenuItem(std::wstring path) {
+void ScriptSelectFileModel::_CreateMenuItem(const std::wstring& path) {
 	std::vector<ref_count_ptr<ScriptInformation>> listInfo = ScriptInformation::CreateScriptInformationList(path, true);
 	for (ref_count_ptr<ScriptInformation> info : listInfo) {
 		if (!_IsValidScriptInformation(info)) continue;
@@ -608,7 +606,7 @@ PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) 
 	//リプレイ
 	if (info->GetType() != ScriptInformation::TYPE_PACKAGE) {
 		int itemCount = 1;
-		std::wstring pathScript = info->GetScriptPath();
+		const std::wstring& pathScript = info->GetScriptPath();
 		replayInfoManager_ = new ReplayInformationManager();
 		replayInfoManager_->UpdateInformationList(pathScript);
 		std::vector<int> listReplayIndex = replayInfoManager_->GetIndexList();
@@ -691,7 +689,7 @@ void PlayTypeSelectScene::Render() {
 }
 
 //PlayTypeSelectMenuItem
-PlayTypeSelectMenuItem::PlayTypeSelectMenuItem(std::wstring text, int x, int y) {
+PlayTypeSelectMenuItem::PlayTypeSelectMenuItem(const std::wstring& text, int x, int y) {
 	pos_.x = x;
 	pos_.y = y;
 
@@ -756,7 +754,7 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 	SystemInformation* systemInfo = SystemController::GetInstance()->GetSystemInformation();
 
 	//自機一覧を作成
-	std::vector<std::wstring> listPlayerPath = info_->GetPlayerList();
+	std::vector<std::wstring>& listPlayerPath = info_->GetPlayerList();
 	if (listPlayerPath.size() == 0) {
 		listPlayer_ = systemInfo->GetFreePlayerScriptInformationList();
 	}
@@ -847,7 +845,7 @@ void PlayerSelectScene::Render() {
 		shared_ptr<Texture> texture = spriteImage_->GetTexture();
 		std::wstring pathImage1 = L"";
 		if (texture) pathImage1 = texture->GetName();
-		std::wstring pathImage2 = infoSelected->GetImagePath();
+		const std::wstring& pathImage2 = infoSelected->GetImagePath();
 		if (pathImage1 != pathImage2) {
 			texture = std::make_shared<Texture>();
 			File file(pathImage2);
@@ -857,7 +855,6 @@ void PlayerSelectScene::Render() {
 			}
 			else
 				spriteImage_->SetTexture(nullptr);
-
 		}
 
 		texture = spriteImage_->GetTexture();
@@ -901,7 +898,6 @@ void PlayerSelectScene::Render() {
 		dxTextInfo.SetText(infoSelected->GetText());
 		dxTextInfo.SetPosition(320, 240);
 		dxTextInfo.Render();
-
 	}
 
 	std::wstring strDescription = StringUtility::Format(

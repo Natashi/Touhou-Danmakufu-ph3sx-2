@@ -150,7 +150,7 @@ File::File() {
 	perms_ = 0;
 	bOpen_ = false;
 }
-File::File(std::wstring path) {
+File::File(const std::wstring& path) {
 	path_ = path;
 	perms_ = 0;
 	bOpen_ = false;
@@ -158,7 +158,7 @@ File::File(std::wstring path) {
 File::~File() {
 	Close();
 }
-bool File::CreateFileDirectory(std::wstring& path) {
+bool File::CreateFileDirectory(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 	stdfs::path dir = stdfs::path(path).parent_path();
 	if (stdfs::exists(dir)) return true;
@@ -186,7 +186,7 @@ bool File::CreateFileDirectory(std::wstring& path) {
 #endif
 	return true;
 }
-bool File::IsExists(std::wstring& path) {
+bool File::IsExists(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 	path_t _p = path;
 	bool res = stdfs::exists(_p) && (stdfs::status(_p).type() != stdfs::file_type::directory);
@@ -195,7 +195,7 @@ bool File::IsExists(std::wstring& path) {
 #endif
 	return res;
 }
-bool File::IsDirectory(std::wstring& path) {
+bool File::IsDirectory(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 	path_t _p = path;
 	bool res = stdfs::exists(_p) && stdfs::is_directory(_p);
@@ -277,7 +277,7 @@ DWORD File::Write(LPVOID buf, DWORD size) {
 	hFile_.clear();
 	return size;
 }
-bool File::IsEqualsPath(std::wstring path1, std::wstring path2) {
+bool File::IsEqualsPath(const std::wstring& path1, const std::wstring& path2) {
 #ifdef __L_STD_FILESYSTEM
 	bool res = (path_t(path1) == path_t(path2));
 #else
@@ -287,7 +287,7 @@ bool File::IsEqualsPath(std::wstring path1, std::wstring path2) {
 #endif
 	return res;
 }
-std::vector<std::wstring> File::GetFilePathList(std::wstring dir) {
+std::vector<std::wstring> File::GetFilePathList(const std::wstring& dir) {
 	std::vector<std::wstring> res;
 
 #ifdef __L_STD_FILESYSTEM
@@ -327,7 +327,7 @@ std::vector<std::wstring> File::GetFilePathList(std::wstring dir) {
 
 	return res;
 }
-std::vector<std::wstring> File::GetDirectoryPathList(std::wstring dir) {
+std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir) {
 	std::vector<std::wstring> res;
 
 #ifdef __L_STD_FILESYSTEM
@@ -394,7 +394,7 @@ void FileManager::EndLoadThread() {
 }
 
 #if defined(DNH_PROJ_EXECUTOR)
-bool FileManager::AddArchiveFile(std::wstring path) {
+bool FileManager::AddArchiveFile(const std::wstring& path) {
 	if (mapArchiveFile_.find(path) != mapArchiveFile_.end())
 		return true;
 
@@ -424,11 +424,11 @@ bool FileManager::AddArchiveFile(std::wstring path) {
 	mapArchiveFile_[path] = file;
 	return true;
 }
-bool FileManager::RemoveArchiveFile(std::wstring path) {
+bool FileManager::RemoveArchiveFile(const std::wstring& path) {
 	mapArchiveFile_.erase(path);
 	return true;
 }
-ref_count_ptr<ArchiveFile> FileManager::GetArchiveFile(std::wstring& name) {
+ref_count_ptr<ArchiveFile> FileManager::GetArchiveFile(const std::wstring& name) {
 	ref_count_ptr<ArchiveFile> res = nullptr;
 	auto itrFind = mapArchiveFile_.find(name);
 	if (itrFind != mapArchiveFile_.end())
@@ -441,12 +441,11 @@ bool FileManager::ClearArchiveFileCache() {
 }
 #endif
 
-ref_count_ptr<FileReader> FileManager::GetFileReader(std::wstring path) {
-	std::wstring orgPath = path;
-	path = PathProperty::GetUnique(path);
+ref_count_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
+	std::wstring pathAsUnique = PathProperty::GetUnique(path);
 
 	ref_count_ptr<FileReader> res = nullptr;
-	ref_count_ptr<File> fileRaw = new File(path);
+	ref_count_ptr<File> fileRaw = new File(pathAsUnique);
 	if (fileRaw->IsExists()) {
 		res = new ManagedFileReader(fileRaw, nullptr);
 	}
@@ -458,7 +457,7 @@ ref_count_ptr<FileReader> FileManager::GetFileReader(std::wstring path) {
 
 		std::unordered_map<int, std::wstring> mapArchivePath;
 
-		std::wstring key = PathProperty::GetFileName(path);
+		std::wstring key = PathProperty::GetFileName(pathAsUnique);
 		for (auto itr = mapArchiveFile_.begin(); itr != mapArchiveFile_.end(); ++itr) {
 			const std::wstring& pathArchive = itr->first;
 			ref_count_ptr<ArchiveFile> fileArchive = itr->second;
@@ -481,10 +480,9 @@ ref_count_ptr<FileReader> FileManager::GetFileReader(std::wstring path) {
 			res = new ManagedFileReader(file, entry);
 		}
 		else {
-			std::wstring module = PathProperty::GetModuleDirectory();
-			module = PathProperty::GetUnique(module);
+			const std::wstring& module = PathProperty::GetModuleDirectory();
 
-			std::wstring target = StringUtility::ReplaceAll(path, module, L"");
+			std::wstring target = StringUtility::ReplaceAll(pathAsUnique, module, L"");
 			for (auto itrEntry = listEntry.begin(); itrEntry != listEntry.end(); ++itrEntry) {
 				ArchiveFileEntry::ptr entry = *itrEntry;
 
@@ -501,7 +499,7 @@ ref_count_ptr<FileReader> FileManager::GetFileReader(std::wstring path) {
 	}
 #endif
 
-	if (res) res->_SetOriginalPath(orgPath);
+	if (res) res->_SetOriginalPath(path);
 	return res;
 }
 
@@ -858,7 +856,7 @@ RecordBuffer::~RecordBuffer() {
 void RecordBuffer::Clear() {
 	mapEntry_.clear();
 }
-ref_count_ptr<RecordEntry> RecordBuffer::GetEntry(std::string key) {
+ref_count_ptr<RecordEntry> RecordBuffer::GetEntry(const std::string& key) {
 	ref_count_ptr<RecordEntry> res;
 
 	auto itr = mapEntry_.find(key);
@@ -866,15 +864,13 @@ ref_count_ptr<RecordEntry> RecordBuffer::GetEntry(std::string key) {
 
 	return res;
 }
-bool RecordBuffer::IsExists(std::string key) {
+bool RecordBuffer::IsExists(const std::string& key) {
 	return mapEntry_.find(key) != mapEntry_.end();
 }
 std::vector<std::string> RecordBuffer::GetKeyList() {
 	std::vector<std::string> res;
-	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); ++itr) {
-		std::string key = itr->first;
-		res.push_back(key);
-	}
+	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); ++itr)
+		res.push_back(itr->first);
 	return res;
 }
 
@@ -899,7 +895,7 @@ void RecordBuffer::Read(Reader& reader) {
 		mapEntry_[key] = entry;
 	}
 }
-bool RecordBuffer::WriteToFile(std::wstring path, std::string header) {
+bool RecordBuffer::WriteToFile(const std::wstring& path, std::string header) {
 	File file(path);
 	if (!file.Open(File::AccessType::WRITEONLY)) return false;
 
@@ -909,7 +905,7 @@ bool RecordBuffer::WriteToFile(std::wstring path, std::string header) {
 
 	return true;
 }
-bool RecordBuffer::ReadFromFile(std::wstring path, std::string header) {
+bool RecordBuffer::ReadFromFile(const std::wstring& path, std::string header) {
 	File file(path);
 	if (!file.Open()) return false;
 
@@ -923,12 +919,12 @@ bool RecordBuffer::ReadFromFile(std::wstring path, std::string header) {
 
 	return true;
 }
-int RecordBuffer::GetEntryType(std::string key) {
+int RecordBuffer::GetEntryType(const std::string& key) {
 	auto itr = mapEntry_.find(key);
 	if (itr == mapEntry_.end()) return RecordEntry::TYPE_NOENTRY;
 	return itr->second->GetType();
 }
-size_t RecordBuffer::GetEntrySize(std::string key) {
+size_t RecordBuffer::GetEntrySize(const std::string& key) {
 	auto itr = mapEntry_.find(key);
 	if (itr == mapEntry_.end()) return 0;
 	ByteBuffer& buffer = itr->second->GetBufferRef();
@@ -1042,7 +1038,7 @@ void RecordBuffer::Write(RecordBuffer& record) {}
 **********************************************************/
 PropertyFile::PropertyFile() {}
 PropertyFile::~PropertyFile() {}
-bool PropertyFile::Load(std::wstring path) {
+bool PropertyFile::Load(const std::wstring& path) {
 	mapEntry_.clear();
 
 	std::vector<char> text;
@@ -1125,21 +1121,21 @@ bool PropertyFile::Load(std::wstring path) {
 
 	return res;
 }
-bool PropertyFile::HasProperty(std::wstring key) {
+bool PropertyFile::HasProperty(const std::wstring& key) {
 	return mapEntry_.find(key) != mapEntry_.end();
 }
-std::wstring PropertyFile::GetString(std::wstring key, std::wstring def) {
+std::wstring PropertyFile::GetString(const std::wstring& key, const std::wstring& def) {
 	if (!HasProperty(key)) return def;
 	return mapEntry_[key];
 }
-int PropertyFile::GetInteger(std::wstring key, int def) {
+int PropertyFile::GetInteger(const std::wstring& key, int def) {
 	if (!HasProperty(key)) return def;
-	std::wstring strValue = mapEntry_[key];
+	const std::wstring& strValue = mapEntry_[key];
 	return StringUtility::ToInteger(strValue);
 }
-double PropertyFile::GetReal(std::wstring key, double def) {
+double PropertyFile::GetReal(const std::wstring& key, double def) {
 	if (!HasProperty(key)) return def;
-	std::wstring strValue = mapEntry_[key];
+	const std::wstring& strValue = mapEntry_[key];
 	return StringUtility::ToDouble(strValue);
 }
 #endif

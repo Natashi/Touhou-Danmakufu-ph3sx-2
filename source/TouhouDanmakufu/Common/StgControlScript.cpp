@@ -21,7 +21,7 @@ StgControlScriptInformation::StgControlScriptInformation() {
 }
 StgControlScriptInformation::~StgControlScriptInformation() {}
 void StgControlScriptInformation::LoadFreePlayerList() {
-	std::wstring dir = EPathProperty::GetPlayerScriptRootDirectory();
+	const std::wstring& dir = EPathProperty::GetPlayerScriptRootDirectory();
 	listFreePlayer_ = ScriptInformation::FindPlayerScriptInformationList(dir);
 
 	//É\Å[Ég
@@ -181,7 +181,7 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* ma
 
 	shared_ptr<ScriptCommonData> commonData = commonDataManager->GetData(sArea);
 	if (commonData) {
-		std::wstring pathMain = infoSystem->GetMainScriptInformation()->GetScriptPath();
+		const std::wstring& pathMain = infoSystem->GetMainScriptInformation()->GetScriptPath();
 		std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
 		std::wstring dirSave = PathProperty::GetFileDirectory(pathSave);
 
@@ -204,7 +204,7 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* ma
 
 	bool res = false;
 
-	std::wstring pathMain = infoSystem->GetMainScriptInformation()->GetScriptPath();
+	const std::wstring& pathMain = infoSystem->GetMainScriptInformation()->GetScriptPath();
 	std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
 
 	RecordBuffer record;
@@ -896,7 +896,7 @@ gstd::value StgControlScript::Func_LoadReplayList(gstd::script_machine* machine,
 	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
 	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
 
-	std::wstring pathMainScript = infoSystem->GetMainScriptInformation()->GetScriptPath();
+	std::wstring& pathMainScript = infoSystem->GetMainScriptInformation()->GetScriptPath();
 	infoControlScript->LoadReplayInformation(pathMainScript);
 
 	return value();

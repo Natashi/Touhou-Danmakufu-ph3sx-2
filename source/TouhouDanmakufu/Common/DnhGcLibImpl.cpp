@@ -6,41 +6,41 @@
 /**********************************************************
 //EPathProperty
 **********************************************************/
-std::wstring EPathProperty::GetSystemResourceDirectory() {
-	std::wstring path = GetModuleDirectory() + L"resource/";
+const std::wstring& EPathProperty::GetSystemResourceDirectory() {
+	static std::wstring path = GetModuleDirectory() + L"resource/";
 	return path;
 }
-std::wstring EPathProperty::GetSystemImageDirectory() {
-	std::wstring path = GetSystemResourceDirectory() + L"img/";
+const std::wstring& EPathProperty::GetSystemImageDirectory() {
+	static std::wstring path = GetSystemResourceDirectory() + L"img/";
 	return path;
 }
-std::wstring EPathProperty::GetSystemBgmDirectory() {
-	std::wstring path = GetSystemResourceDirectory() + L"bgm/";
+const std::wstring& EPathProperty::GetSystemBgmDirectory() {
+	static std::wstring path = GetSystemResourceDirectory() + L"bgm/";
 	return path;
 }
-std::wstring EPathProperty::GetSystemSeDirectory() {
-	std::wstring path = GetSystemResourceDirectory() + L"se/";
+const std::wstring& EPathProperty::GetSystemSeDirectory() {
+	static std::wstring path = GetSystemResourceDirectory() + L"se/";
 	return path;
 }
 
-std::wstring EPathProperty::GetStgScriptRootDirectory() {
-	std::wstring path = GetModuleDirectory() + L"script/";
+const std::wstring& EPathProperty::GetStgScriptRootDirectory() {
+	static std::wstring path = GetModuleDirectory() + L"script/";
 	return path;
 }
-std::wstring EPathProperty::GetStgDefaultScriptDirectory() {
-	std::wstring path = GetStgScriptRootDirectory() + L"default_system/";
+const std::wstring& EPathProperty::GetStgDefaultScriptDirectory() {
+	static std::wstring path = GetStgScriptRootDirectory() + L"default_system/";
 	return path;
 }
-std::wstring EPathProperty::GetPlayerScriptRootDirectory() {
-	std::wstring path = GetModuleDirectory() + L"script/player/";
+const std::wstring& EPathProperty::GetPlayerScriptRootDirectory() {
+	static std::wstring path = GetModuleDirectory() + L"script/player/";
 	return path;
 }
-std::wstring EPathProperty::GetReplaySaveDirectory(std::wstring scriptPath) {
+std::wstring EPathProperty::GetReplaySaveDirectory(const std::wstring& scriptPath) {
 	std::wstring scriptName = PathProperty::GetFileNameWithoutExtension(scriptPath);
 	std::wstring dir = PathProperty::GetFileDirectory(scriptPath) + L"replay/";
 	return dir;
 }
-std::wstring EPathProperty::GetCommonDataPath(std::wstring scriptPath, std::wstring area) {
+std::wstring EPathProperty::GetCommonDataPath(const std::wstring& scriptPath, const std::wstring& area) {
 	std::wstring dirSave = PathProperty::GetFileDirectory(scriptPath) + L"data/";
 	std::wstring nameMain = PathProperty::GetFileNameWithoutExtension(scriptPath);
 	std::wstring path = dirSave + nameMain + StringUtility::Format(L"_common_%s.dat", area.c_str());

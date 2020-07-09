@@ -70,7 +70,7 @@ namespace gstd {
 		friend FileManager;
 	protected:
 		std::wstring pathOriginal_;
-		void _SetOriginalPath(std::wstring path) { pathOriginal_ = path; }
+		void _SetOriginalPath(const std::wstring& path) { pathOriginal_ = path; }
 
 	public:
 		virtual bool Open() = 0;
@@ -83,7 +83,7 @@ namespace gstd {
 		virtual bool IsArchived() { return false; }
 		virtual bool IsCompressed() { return false; }
 
-		std::wstring GetOriginalPath() { return pathOriginal_; }
+		std::wstring& GetOriginalPath() { return pathOriginal_; }
 		std::string ReadAllString() {
 			SetFilePointerBegin();
 			return ReadString(GetFileSize());
@@ -146,12 +146,12 @@ namespace gstd {
 		bool bOpen_;
 	public:
 		File();
-		File(std::wstring path);
+		File(const std::wstring& path);
 		virtual ~File();
 
-		static bool CreateFileDirectory(std::wstring& path);
-		static bool IsExists(std::wstring& path);
-		static bool IsDirectory(std::wstring& path);
+		static bool CreateFileDirectory(const std::wstring& path);
+		static bool IsExists(const std::wstring& path);
+		static bool IsDirectory(const std::wstring& path);
 
 		void Delete();
 		bool IsExists();
@@ -185,9 +185,9 @@ namespace gstd {
 
 		bool Fail() { return bOpen_ ? hFile_.fail() : false; }
 
-		static bool IsEqualsPath(std::wstring path1, std::wstring path2);
-		static std::vector<std::wstring> GetFilePathList(std::wstring dir);
-		static std::vector<std::wstring> GetDirectoryPathList(std::wstring dir);
+		static bool IsEqualsPath(const std::wstring& path1, const std::wstring& path2);
+		static std::vector<std::wstring> GetFilePathList(const std::wstring& dir);
+		static std::vector<std::wstring> GetDirectoryPathList(const std::wstring& dir);
 	};
 
 
@@ -231,13 +231,13 @@ namespace gstd {
 		void EndLoadThread();
 
 #if defined(DNH_PROJ_EXECUTOR)
-		bool AddArchiveFile(std::wstring path);
-		bool RemoveArchiveFile(std::wstring path);
-		ref_count_ptr<ArchiveFile> GetArchiveFile(std::wstring& name);
+		bool AddArchiveFile(const std::wstring& path);
+		bool RemoveArchiveFile(const std::wstring& path);
+		ref_count_ptr<ArchiveFile> GetArchiveFile(const std::wstring& name);
 		bool ClearArchiveFileCache();
 #endif
 
-		ref_count_ptr<FileReader> GetFileReader(std::wstring path);
+		ref_count_ptr<FileReader> GetFileReader(const std::wstring& path);
 
 		void AddLoadThreadEvent(shared_ptr<LoadThreadEvent> event);
 		void AddLoadThreadListener(FileManager::LoadThreadListener* listener);
@@ -282,7 +282,9 @@ namespace gstd {
 		std::wstring path_;
 		shared_ptr<FileManager::LoadObject> source_;
 	public:
-		LoadThreadEvent(FileManager::LoadThreadListener* listener, std::wstring path, shared_ptr<FileManager::LoadObject> source) {
+		LoadThreadEvent(FileManager::LoadThreadListener* listener, const std::wstring& path, 
+			shared_ptr<FileManager::LoadObject> source) 
+		{
 			listener_ = listener;
 			path_ = path;
 			source_ = source;
@@ -290,7 +292,7 @@ namespace gstd {
 		virtual ~LoadThreadEvent() {}
 
 		FileManager::LoadThreadListener* GetListener() { return listener_; }
-		std::wstring GetPath() { return path_; }
+		std::wstring& GetPath() { return path_; }
 		shared_ptr<FileManager::LoadObject> GetSource() { return source_; }
 	};
 
@@ -377,7 +379,7 @@ namespace gstd {
 		virtual ~RecordEntry();
 		char GetType() { return type_; }
 
-		void SetKey(std::string key) { key_ = key; }
+		void SetKey(const std::string& key) { key_ = key; }
 		void SetType(char type) { type_ = type; }
 		std::string& GetKey() { return key_; }
 		ByteBuffer& GetBufferRef() { return buffer_; }
@@ -394,18 +396,18 @@ namespace gstd {
 		virtual ~RecordBuffer();
 		void Clear();//保持データクリア
 		size_t GetEntryCount() { return mapEntry_.size(); }
-		bool IsExists(std::string key);
+		bool IsExists(const std::string& key);
 		std::vector<std::string> GetKeyList();
-		ref_count_ptr<RecordEntry> GetEntry(std::string key);
+		ref_count_ptr<RecordEntry> GetEntry(const std::string& key);
 
 		void Write(Writer& writer);
 		void Read(Reader& reader);
-		bool WriteToFile(std::wstring path, std::string header = HEADER_RECORDFILE);
-		bool ReadFromFile(std::wstring path, std::string header = HEADER_RECORDFILE);
+		bool WriteToFile(const std::wstring& path, std::string header = HEADER_RECORDFILE);
+		bool ReadFromFile(const std::wstring& path, std::string header = HEADER_RECORDFILE);
 
 		//エントリ
-		int GetEntryType(std::string key);
-		size_t GetEntrySize(std::string key);
+		int GetEntryType(const std::string& key);
+		size_t GetEntrySize(const std::string& key);
 
 		//エントリ取得(文字列キー)
 		bool GetRecord(const std::string& key, LPVOID buf, DWORD size);
@@ -445,8 +447,12 @@ namespace gstd {
 		void SetRecordAsInteger(const std::string& key, int data) { SetRecord(RecordEntry::TYPE_INTEGER, key, data); }
 		void SetRecordAsFloat(const std::string& key, float data) { SetRecord(RecordEntry::TYPE_FLOAT, key, data); }
 		void SetRecordAsDouble(const std::string& key, double data) { SetRecord(RecordEntry::TYPE_DOUBLE, key, data); }
-		void SetRecordAsStringA(const std::string& key, std::string data) { SetRecord(RecordEntry::TYPE_STRING_A, key, &data[0], data.size()); }
-		void SetRecordAsStringW(const std::string& key, std::wstring data) { SetRecord(RecordEntry::TYPE_STRING_W, key, &data[0], data.size() * sizeof(wchar_t)); }
+		void SetRecordAsStringA(const std::string& key, const std::string& data) { 
+			SetRecord(RecordEntry::TYPE_STRING_A, key, const_cast<char*>(&data[0]), data.size()); 
+		}
+		void SetRecordAsStringW(const std::string& key, const std::wstring& data) { 
+			SetRecord(RecordEntry::TYPE_STRING_W, key, const_cast<wchar_t*>(&data[0]), data.size() * sizeof(wchar_t));
+		}
 		void SetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record);
 
 		//エントリ設定(数値キー)
@@ -456,8 +462,8 @@ namespace gstd {
 		void SetRecordAsInteger(int key, int data) { SetRecordAsInteger(StringUtility::Format("%d", key), data); }
 		void SetRecordAsFloat(int key, float data) { SetRecordAsFloat(StringUtility::Format("%d", key), data); }
 		void SetRecordAsDouble(int key, double data) { SetRecordAsDouble(StringUtility::Format("%d", key), data); }
-		void SetRecordAsStringA(int key, std::string data) { SetRecordAsStringA(StringUtility::Format("%d", key), data); }
-		void SetRecordAsStringW(int key, std::wstring data) { SetRecordAsStringW(StringUtility::Format("%d", key), data); }
+		void SetRecordAsStringA(int key, const std::string& data) { SetRecordAsStringA(StringUtility::Format("%d", key), data); }
+		void SetRecordAsStringW(int key, const std::wstring& data) { SetRecordAsStringW(StringUtility::Format("%d", key), data); }
 		void SetRecordAsRecordBuffer(int key, RecordBuffer& record) { SetRecordAsRecordBuffer(StringUtility::Format("%d", key), record); }
 
 		//Recordable
@@ -476,15 +482,15 @@ namespace gstd {
 		PropertyFile();
 		virtual ~PropertyFile();
 
-		bool Load(std::wstring path);
+		bool Load(const std::wstring& path);
 
-		bool HasProperty(std::wstring key);
-		std::wstring GetString(std::wstring key) { return GetString(key, L""); }
-		std::wstring GetString(std::wstring key, std::wstring def);
-		int GetInteger(std::wstring key) { return GetInteger(key, 0); }
-		int GetInteger(std::wstring key, int def);
-		double GetReal(std::wstring key) { return GetReal(key, 0.0); }
-		double GetReal(std::wstring key, double def);
+		bool HasProperty(const std::wstring& key);
+		std::wstring GetString(const std::wstring& key) { return GetString(key, L""); }
+		std::wstring GetString(const std::wstring& key, const std::wstring& def);
+		int GetInteger(const std::wstring& key) { return GetInteger(key, 0); }
+		int GetInteger(const std::wstring& key, int def);
+		double GetReal(const std::wstring& key) { return GetReal(key, 0.0); }
+		double GetReal(const std::wstring& key, double def);
 	};
 #endif
 

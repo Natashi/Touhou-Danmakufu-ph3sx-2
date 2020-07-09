@@ -190,7 +190,7 @@ IDirect3DTexture9* Texture::GetD3DTexture() {
 
 				if (bWait && abs((int)(timeGetTime() - time)) > 10000) {
 					//àÍíËéûä‘ÇΩÇ¡ÇƒÇ‡ÇæÇﬂÇæÇ¡ÇΩÇÁÉçÉbÉNÅH
-					std::wstring& path = data_->GetName();
+					const std::wstring& path = data_->GetName();
 					Logger::WriteTop(
 						StringUtility::Format(L"Texture is possibly locked: %s", path.c_str()));
 					data_->bLoad_ = true;
@@ -348,7 +348,7 @@ void TextureManager::_ReleaseTextureData(std::map<std::wstring, shared_ptr<Textu
 #endif
 
 		if (itr != mapTextureData_.end()) {
-			std::wstring& name = itr->second->name_;
+			const std::wstring& name = itr->second->name_;
 			itr->second->bLoad_ = true;		//ì«Ç›çûÇ›äÆóπàµÇ¢
 			mapTextureData_.erase(itr);
 			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", name.c_str()));
@@ -725,7 +725,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> event) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
-	std::wstring path = event->GetPath();
+	const std::wstring& path = event->GetPath();
 	{
 		Lock lock(lock_);
 
@@ -923,7 +923,7 @@ void TextureInfoPanel::Update(TextureManager* manager) {
 
 		std::map<std::wstring, shared_ptr<TextureData>>& mapData = manager->mapTextureData_;
 		for (auto itrMap = mapData.begin(); itrMap != mapData.end(); itrMap++) {
-			std::wstring name = itrMap->first;
+			const std::wstring& name = itrMap->first;
 			TextureData* data = (itrMap->second).get();
 
 			std::wstring key = StringUtility::Format(L"%08x", (int)data);

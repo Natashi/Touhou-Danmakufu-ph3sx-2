@@ -37,7 +37,7 @@ bool EApplication::_Initialize() {
 	std::wstring appName = L"“Œ•û’e–‹•— ph3sx ";
 	appName += DNH_VERSION;
 
-	std::wstring configWindowTitle = config->GetWindowTitle();
+	const std::wstring& configWindowTitle = config->GetWindowTitle();
 	if (configWindowTitle.size() > 0)
 		appName = configWindowTitle;
 

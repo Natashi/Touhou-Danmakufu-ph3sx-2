@@ -206,7 +206,7 @@ size_t ScriptManager::GetAllScriptThreadCount() {
 	}
 	return res;
 }
-void ScriptManager::TerminateScriptAll(std::wstring message) {
+void ScriptManager::TerminateScriptAll(const std::wstring& message) {
 	{
 		Lock lock(lock_);
 		for (auto pScript : listScriptRun_) {
@@ -214,7 +214,7 @@ void ScriptManager::TerminateScriptAll(std::wstring message) {
 		}
 	}
 }
-int64_t ScriptManager::_LoadScript(std::wstring path, shared_ptr<ManagedScript> script) {
+int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script) {
 	int64_t res = 0;
 
 	res = script->GetScriptID();
@@ -234,7 +234,7 @@ int64_t ScriptManager::_LoadScript(std::wstring path, shared_ptr<ManagedScript> 
 
 	return res;
 }
-int64_t ScriptManager::LoadScript(std::wstring path, shared_ptr<ManagedScript> script) {
+int64_t ScriptManager::LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script) {
 	int64_t res = 0;
 	{
 		Lock lock(lock_);
@@ -243,12 +243,12 @@ int64_t ScriptManager::LoadScript(std::wstring path, shared_ptr<ManagedScript> s
 	}
 	return res;
 }
-shared_ptr<ManagedScript> ScriptManager::LoadScript(std::wstring path, int type) {
+shared_ptr<ManagedScript> ScriptManager::LoadScript(const std::wstring& path, int type) {
 	shared_ptr<ManagedScript> script = Create(type);
 	this->LoadScript(path, script);
 	return script;
 }
-int64_t ScriptManager::LoadScriptInThread(std::wstring path, shared_ptr<ManagedScript> script) {
+int64_t ScriptManager::LoadScriptInThread(const std::wstring& path, shared_ptr<ManagedScript> script) {
 	int64_t res = 0;
 	{
 		Lock lock(lock_);
@@ -261,7 +261,7 @@ int64_t ScriptManager::LoadScriptInThread(std::wstring path, shared_ptr<ManagedS
 	}
 	return res;
 }
-shared_ptr<ManagedScript> ScriptManager::LoadScriptInThread(std::wstring path, int type) {
+shared_ptr<ManagedScript> ScriptManager::LoadScriptInThread(const std::wstring& path, int type) {
 	shared_ptr<ManagedScript> script = Create(type);
 	LoadScriptInThread(path, script);
 	return script;

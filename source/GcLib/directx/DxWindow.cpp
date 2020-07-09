@@ -411,7 +411,7 @@ void DxLabel::Render() {
 	if (text_) text_->Render();
 	_RenderChild();
 }
-void DxLabel::SetText(std::wstring str) {
+void DxLabel::SetText(const std::wstring& str) {
 	if (text_ == nullptr) {
 		RECT rect = GetAbsoluteWindowRect();
 		int width = rect.right - rect.left;

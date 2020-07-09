@@ -68,10 +68,9 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	keyReplayManager_->AddTarget(EDirectInput::KEY_USER2);
 	keyReplayManager_->AddTarget(EDirectInput::KEY_OK);
 	keyReplayManager_->AddTarget(EDirectInput::KEY_CANCEL);
-	std::set<int> listReplayTargetKey = infoSystem_->GetReplayTargetKeyList();
-	std::set<int>::iterator itrKey = listReplayTargetKey.begin();
-	for (; itrKey != listReplayTargetKey.end(); itrKey++) {
-		int id = *itrKey;
+	std::set<int16_t> listReplayTargetKey = infoSystem_->GetReplayTargetKeyList();
+	for (auto itrKey = listReplayTargetKey.begin(); itrKey != listReplayTargetKey.end(); itrKey++) {
+		int16_t id = *itrKey;
 		keyReplayManager_->AddTarget(id);
 	}
 
@@ -104,8 +103,8 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		//ステージ情報
 		ref_count_ptr<ScriptInformation> infoParent = systemController_->GetSystemInformation()->GetMainScriptInformation();
 		ref_count_ptr<ScriptInformation> infoMain = infoStage_->GetMainScriptInformation();
-		std::wstring pathParentScript = infoParent->GetScriptPath();
-		std::wstring pathMainScript = infoMain->GetScriptPath();
+		const std::wstring& pathParentScript = infoParent->GetScriptPath();
+		const std::wstring& pathMainScript = infoMain->GetScriptPath();
 		std::wstring filenameMainScript = PathProperty::GetFileName(pathMainScript);
 		std::wstring pathMainScriptRelative = PathProperty::GetRelativeDirectory(pathParentScript, pathMainScript);
 
@@ -167,21 +166,23 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	ELogger::WriteTop(StringUtility::Format(L"Main script: [%s]", infoMain->GetScriptPath().c_str()));
 
 	//システムスクリプト
-	std::wstring pathSystemScript = infoMain->GetSystemPath();
-	if (pathSystemScript == ScriptInformation::DEFAULT)
-		pathSystemScript = EPathProperty::GetStgDefaultScriptDirectory() + L"Default_System.txt";
-	if (pathSystemScript.size() > 0) {
-		pathSystemScript = EPathProperty::ExtendRelativeToFull(dirInfo, pathSystemScript);
-		ELogger::WriteTop(StringUtility::Format(L"System script: [%s]", pathSystemScript.c_str()));
+	{
+		std::wstring pathSystemScript = infoMain->GetSystemPath();
+		if (pathSystemScript == ScriptInformation::DEFAULT)
+			pathSystemScript = EPathProperty::GetStgDefaultScriptDirectory() + L"Default_System.txt";
+		if (pathSystemScript.size() > 0) {
+			pathSystemScript = EPathProperty::ExtendRelativeToFull(dirInfo, pathSystemScript);
+			ELogger::WriteTop(StringUtility::Format(L"System script: [%s]", pathSystemScript.c_str()));
 
-		auto script = scriptManager_->LoadScript(pathSystemScript, StgStageScript::TYPE_SYSTEM);
-		scriptManager_->StartScript(script);
+			auto script = scriptManager_->LoadScript(pathSystemScript, StgStageScript::TYPE_SYSTEM);
+			scriptManager_->StartScript(script);
+		}
 	}
 
 	//自機スクリプト
 	shared_ptr<StgPlayerObject> objPlayer = nullptr;
 	ref_count_ptr<ScriptInformation> infoPlayer = infoStage_->GetPlayerScriptInformation();
-	std::wstring pathPlayerScript = infoPlayer->GetScriptPath();
+	const std::wstring& pathPlayerScript = infoPlayer->GetScriptPath();
 
 	if (pathPlayerScript.size() > 0) {
 		ELogger::WriteTop(StringUtility::Format(L"Player script: [%s]", pathPlayerScript.c_str()));
@@ -220,7 +221,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		scriptManager_->StartScript(script);
 	}
 	else {
-		std::wstring pathMainScript = infoMain->GetScriptPath();
+		const std::wstring& pathMainScript = infoMain->GetScriptPath();
 		if (pathMainScript.size() > 0) {
 			auto script = scriptManager_->LoadScript(pathMainScript, StgStageScript::TYPE_STAGE);
 			_SetupReplayTargetCommonDataArea(script->GetScriptID());
@@ -229,29 +230,33 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	}
 
 	//背景スクリプト
-	std::wstring pathBack = infoMain->GetBackgroundPath();
-	if (pathBack == ScriptInformation::DEFAULT)
-		pathBack = L"";
-	if (pathBack.size() > 0) {
-		pathBack = EPathProperty::ExtendRelativeToFull(dirInfo, pathBack);
-		ELogger::WriteTop(StringUtility::Format(L"Background script: [%s]", pathBack.c_str()));
-		auto script = scriptManager_->LoadScript(pathBack, StgStageScript::TYPE_STAGE);
-		scriptManager_->StartScript(script);
+	{
+		std::wstring pathBack = infoMain->GetBackgroundPath();
+		if (pathBack == ScriptInformation::DEFAULT)
+			pathBack = L"";
+		if (pathBack.size() > 0) {
+			pathBack = EPathProperty::ExtendRelativeToFull(dirInfo, pathBack);
+			ELogger::WriteTop(StringUtility::Format(L"Background script: [%s]", pathBack.c_str()));
+			auto script = scriptManager_->LoadScript(pathBack, StgStageScript::TYPE_STAGE);
+			scriptManager_->StartScript(script);
+		}
 	}
 
 	//音声再生
-	std::wstring pathBGM = infoMain->GetBgmPath();
-	if (pathBGM == ScriptInformation::DEFAULT)
-		pathBGM = L"";
-	if (pathBGM.size() > 0) {
-		pathBGM = EPathProperty::ExtendRelativeToFull(dirInfo, pathBGM);
-		ELogger::WriteTop(StringUtility::Format(L"BGM: [%s]", pathBGM.c_str()));
-		ref_count_ptr<SoundPlayer> player = DirectSoundManager::GetBase()->GetPlayer(pathBGM);
-		if (player) {
-			player->SetSoundDivision(SoundDivision::DIVISION_BGM);
-			SoundPlayer::PlayStyle style;
-			style.SetLoopEnable(true);
-			player->Play(style);
+	{
+		std::wstring pathBGM = infoMain->GetBgmPath();
+		if (pathBGM == ScriptInformation::DEFAULT)
+			pathBGM = L"";
+		if (pathBGM.size() > 0) {
+			pathBGM = EPathProperty::ExtendRelativeToFull(dirInfo, pathBGM);
+			ELogger::WriteTop(StringUtility::Format(L"BGM: [%s]", pathBGM.c_str()));
+			ref_count_ptr<SoundPlayer> player = DirectSoundManager::GetBase()->GetPlayer(pathBGM);
+			if (player) {
+				player->SetSoundDivision(SoundDivision::DIVISION_BGM);
+				SoundPlayer::PlayStyle style;
+				style.SetLoopEnable(true);
+				player->Play(style);
+			}
 		}
 	}
 
@@ -265,7 +270,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 			replayStageData->SetPlayerPower(objPlayer->GetPower());
 			replayStageData->SetPlayerRebirthFrame(objPlayer->GetRebirthFrame());
 		}
-		std::wstring pathPlayerScript = infoPlayer->GetScriptPath();
+		const std::wstring& pathPlayerScript = infoPlayer->GetScriptPath();
 		std::wstring filenamePlayerScript = PathProperty::GetFileName(pathPlayerScript);
 		replayStageData->SetPlayerScriptFileName(filenamePlayerScript);
 		replayStageData->SetPlayerScriptID(infoPlayer->GetID());
@@ -273,8 +278,6 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	}
 
 	infoStage_->SetStageStartTime(timeGetTime());
-
-
 }
 void StgStageController::CloseScene() {
 	ref_count_weak_ptr<PseudoSlowInformation> wPtr = infoSlow_;

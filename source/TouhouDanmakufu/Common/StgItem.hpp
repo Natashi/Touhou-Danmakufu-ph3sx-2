@@ -50,7 +50,7 @@ public:
 	void GetValidRenderPriorityList(std::vector<PriListBool>& list);
 
 	StgItemDataList* GetItemDataList() { return listItemData_; }
-	bool LoadItemData(std::wstring path, bool bReload = false);
+	bool LoadItemData(const std::wstring& path, bool bReload = false);
 
 	shared_ptr<StgItemObject> CreateItem(int type);
 
@@ -91,7 +91,7 @@ public:
 
 	StgItemData* GetData(int id) { return (id >= 0 && id < listData_.size()) ? listData_[id] : nullptr; }
 
-	bool AddItemDataList(std::wstring path, bool bReload);
+	bool AddItemDataList(const std::wstring& path, bool bReload);
 };
 
 class StgItemData {

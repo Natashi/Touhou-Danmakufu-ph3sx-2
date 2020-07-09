@@ -29,7 +29,7 @@ namespace directx {
 
 		int mainThreadID_;
 
-		int64_t _LoadScript(std::wstring path, shared_ptr<ManagedScript> script);
+		int64_t _LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script);
 	public:
 		ScriptManager();
 		virtual ~ScriptManager();
@@ -37,7 +37,7 @@ namespace directx {
 		virtual void Work(int targetType);
 		virtual void Render();
 
-		virtual void SetError(std::wstring error) { error_ = error; }
+		virtual void SetError(const std::wstring& error) { error_ = error; }
 		virtual bool IsError() { return error_ != L""; }
 
 		int GetMainThreadID() { return mainThreadID_; }
@@ -52,12 +52,12 @@ namespace directx {
 		bool IsCloseScript(int64_t id);
 		int IsHasCloseScliptWork() { return bHasCloseScriptWork_; }
 		size_t GetAllScriptThreadCount();
-		void TerminateScriptAll(std::wstring message);
+		void TerminateScriptAll(const std::wstring& message);
 
-		int64_t LoadScript(std::wstring path, shared_ptr<ManagedScript> script);
-		shared_ptr<ManagedScript> LoadScript(std::wstring path, int type);
-		int64_t LoadScriptInThread(std::wstring path, shared_ptr<ManagedScript> script);
-		shared_ptr<ManagedScript> LoadScriptInThread(std::wstring path, int type);
+		int64_t LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script);
+		shared_ptr<ManagedScript> LoadScript(const std::wstring& path, int type);
+		int64_t LoadScriptInThread(const std::wstring& path, shared_ptr<ManagedScript> script);
+		shared_ptr<ManagedScript> LoadScriptInThread(const std::wstring& path, int type);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
 		virtual shared_ptr<ManagedScript> Create(int type) = 0;

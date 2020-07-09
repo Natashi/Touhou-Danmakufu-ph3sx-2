@@ -15,14 +15,14 @@ Logger::~Logger() {
 	listLogger_.clear();
 	if (top_ == this) top_ = nullptr;
 }
-void Logger::_WriteChild(SYSTEMTIME& time, std::wstring str) {
+void Logger::_WriteChild(SYSTEMTIME& time, const std::wstring& str) {
 	_Write(time, str);
 	for (auto itr = listLogger_.begin(); itr != listLogger_.end(); itr++) {
 		(*itr)->_Write(time, str);
 	}
 }
 
-void Logger::Write(std::string str) {
+void Logger::Write(const std::string& str) {
 	if (WindowLogger::GetParent()) {
 		if (WindowLogger::GetParent()->GetState() != WindowLogger::STATE_RUNNING)
 			return;
@@ -32,7 +32,7 @@ void Logger::Write(std::string str) {
 	GetLocalTime(&systemTime);
 	this->_WriteChild(systemTime, StringUtility::ConvertMultiToWide(str));
 }
-void Logger::Write(std::wstring str) {
+void Logger::Write(const std::wstring& str) {
 	if (WindowLogger::GetParent()) {
 		if (WindowLogger::GetParent()->GetState() != WindowLogger::STATE_RUNNING)
 			return;
@@ -76,7 +76,7 @@ bool FileLogger::Initialize(std::wstring path, bool bEnable) {
 	}
 	return this->SetPath(path);
 }
-bool FileLogger::SetPath(std::wstring path) {
+bool FileLogger::SetPath(const std::wstring& path) {
 	if (!bEnable_) return false;
 
 	path_ = path;
@@ -96,7 +96,7 @@ void FileLogger::_CreateFile(File& file) {
 	file.WriteCharacter((unsigned char)0xFF);
 	file.WriteCharacter((unsigned char)0xFE);
 }
-void FileLogger::_Write(SYSTEMTIME& time, std::wstring str) {
+void FileLogger::_Write(SYSTEMTIME& time, const std::wstring& str) {
 	if (!bEnable_) return;
 
 	{
@@ -293,7 +293,7 @@ void WindowLogger::_Run() {
 		DispatchMessage(&msg);
 	}
 }
-void WindowLogger::_Write(SYSTEMTIME& systemTime, std::wstring str) {
+void WindowLogger::_Write(SYSTEMTIME& systemTime, const std::wstring& str) {
 	if (hWnd_ == nullptr) return;
 
 	wchar_t timeStr[128];
@@ -365,7 +365,7 @@ LRESULT WindowLogger::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 			
 			for (auto itr = listEventAddPanel_.begin(); itr != listEventAddPanel_.end(); itr++) {
 				AddPanelEvent& event = *itr;
-				std::wstring& name = event.name;
+				const std::wstring& name = event.name;
 				ref_count_ptr<Panel> panel = event.panel;
 
 				HWND hTab = wndTab_->GetWindowHandle();
@@ -391,14 +391,14 @@ LRESULT WindowLogger::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 }
 
 
-void WindowLogger::SetInfo(int row, std::wstring textInfo, std::wstring textData) {
+void WindowLogger::SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData) {
 	if (hWnd_ == nullptr) return;
 	if (!IsWindowVisible()) return;
 
 	wndInfoPanel_->SetInfo(row, textInfo, textData);
 }
 
-bool WindowLogger::AddPanel(ref_count_ptr<Panel> panel, std::wstring name) {
+bool WindowLogger::AddPanel(ref_count_ptr<Panel> panel, const std::wstring& name) {
 	if (hWnd_ == nullptr) return false;
 
 	AddPanelEvent event;
@@ -471,7 +471,7 @@ void WindowLogger::LogPanel::LocateParts() {
 	int wHeight = GetClientHeight();
 	wndEdit_.SetBounds(wx, wy, wWidth, wHeight);
 }
-void WindowLogger::LogPanel::AddText(std::wstring text) {
+void WindowLogger::LogPanel::AddText(const std::wstring& text) {
 	HWND hEdit = wndEdit_.GetWindowHandle();
 	int pos = GetWindowTextLength(hEdit);
 	if (pos + wndEdit_.GetTextLength() >= wndEdit_.GetMaxTextLength()) {
@@ -517,7 +517,7 @@ void WindowLogger::InfoPanel::LocateParts() {
 	int wHeight = GetClientHeight();
 	wndListView_.SetBounds(wx, wy, wWidth, wHeight);
 }
-void WindowLogger::InfoPanel::SetInfo(int row, std::wstring textInfo, std::wstring textData) {
+void WindowLogger::InfoPanel::SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData) {
 	wndListView_.SetText(row, ROW_INFO, textInfo);
 	wndListView_.SetText(row, ROW_DATA, textData);
 }

@@ -21,7 +21,7 @@ void StgPackageController::Initialize() {
 	infoPackage_->SetMainScriptInformation(infoScript);
 
 	//メインスクリプト
-	std::wstring pathMainScript = infoScript->GetScriptPath();
+	std::wstring& pathMainScript = infoScript->GetScriptPath();
 	ELogger::WriteTop(StringUtility::Format(L"Package script: [%s]", pathMainScript.c_str()));
 	auto idScript = scriptManager_->LoadScript(pathMainScript, StgPackageScript::TYPE_PACKAGE_MAIN);
 	scriptManager_->StartScript(idScript);
@@ -80,5 +80,4 @@ void StgPackageInformation::FinishCurrentStage() {
 
 	ref_count_ptr<StgPlayerInformation> infoPlayer = currentStageInfo->GetPlayerObjectInformation();
 	nextStageStartData_->SetPrevPlayerInformation(infoPlayer);
-
 }

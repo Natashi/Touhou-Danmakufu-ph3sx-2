@@ -37,7 +37,7 @@ namespace gstd {
 		value(type_data* t, double v);
 		value(type_data* t, wchar_t v);
 		value(type_data* t, bool v);
-		value(type_data* t, std::wstring v);
+		value(type_data* t, const std::wstring& v);
 		value(const value& source) {
 			data = source.data;
 		}

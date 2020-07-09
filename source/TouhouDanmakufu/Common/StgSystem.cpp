@@ -47,13 +47,13 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 
 	//アーカイブ
 	EFileManager* fileManager = EFileManager::GetInstance();
-	std::wstring archiveMain = infoMain->GetArchivePath();
+	const std::wstring& archiveMain = infoMain->GetArchivePath();
 	if (archiveMain.size() > 0) {
 		fileManager->AddArchiveFile(archiveMain);
 	}
 
 	if (infoPlayer) {
-		std::wstring archivePlayer = infoPlayer->GetArchivePath();
+		const std::wstring& archivePlayer = infoPlayer->GetArchivePath();
 		if (archivePlayer.size() > 0) {
 			fileManager->AddArchiveFile(archivePlayer);
 		}
@@ -656,12 +656,12 @@ ref_count_ptr<ReplayInformation> StgSystemController::CreateReplayInformation() 
 	//メインスクリプト関連
 	ref_count_ptr<StgStageInformation> infoLastStage = stageController_->GetStageInformation();
 	ref_count_ptr<ScriptInformation> infoMain = infoSystem_->GetMainScriptInformation();
-	std::wstring pathMainScript = infoMain->GetScriptPath();
+	const std::wstring& pathMainScript = infoMain->GetScriptPath();
 	std::wstring nameMainScript = PathProperty::GetFileName(pathMainScript);
 
 	//自機関連
 	ref_count_ptr<ScriptInformation> infoPlayer = infoLastStage->GetPlayerScriptInformation();
-	std::wstring pathPlayerScript = infoPlayer->GetScriptPath();
+	const std::wstring& pathPlayerScript = infoPlayer->GetScriptPath();
 	std::wstring filenamePlayerScript = PathProperty::GetFileName(pathPlayerScript);
 	res->SetPlayerScriptFileName(filenamePlayerScript);
 	res->SetPlayerScriptID(infoPlayer->GetID());
@@ -755,7 +755,7 @@ StgSystemInformation::~StgSystemInformation() {}
 std::wstring StgSystemInformation::GetErrorMessage() {
 	std::wstring res = L"";
 	for (auto itr = listError_.begin(); itr != listError_.end(); itr++) {
-		std::wstring& str = (*itr);
+		const std::wstring& str = *itr;
 		if (str == L"Retry") continue;
 		res += str + L"\r\n" + L"\r\n";
 	}

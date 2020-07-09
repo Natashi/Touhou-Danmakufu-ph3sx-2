@@ -140,7 +140,7 @@ namespace directx {
 		DxLabel();
 		virtual void Work();
 		virtual void Render();
-		void SetText(std::wstring str);
+		void SetText(const std::wstring& str);
 		void SetText(gstd::ref_count_ptr<DxText> text, bool bArrange = false);
 	};
 

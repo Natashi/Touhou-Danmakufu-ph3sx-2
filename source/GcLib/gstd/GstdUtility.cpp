@@ -109,12 +109,12 @@ size_t StringUtility::ConvertWideToMulti(wchar_t* wstr, size_t wcount, std::vect
 }
 
 //----------------------------------------------------------------
-std::vector<std::string> StringUtility::Split(std::string str, std::string delim) {
+std::vector<std::string> StringUtility::Split(const std::string& str, const std::string& delim) {
 	std::vector<std::string> res;
 	Split(str, delim, res);
 	return res;
 }
-void StringUtility::Split(std::string str, std::string delim, std::vector<std::string>& res) {
+void StringUtility::Split(const std::string& str, const std::string& delim, std::vector<std::string>& res) {
 	size_t itrBegin = 0;
 	size_t itrFind = 0;
 	while ((itrFind = str.find_first_of(delim, itrBegin)) != std::string::npos) {
@@ -153,10 +153,10 @@ std::string StringUtility::Format(const char* str, va_list va) {
 	return res;
 }
 
-size_t StringUtility::CountCharacter(std::string& str, char c) {
+size_t StringUtility::CountCharacter(const std::string& str, char c) {
 	size_t count = 0;
-	char* pbuf = &str[0];
-	char* ebuf = &str[str.size() - 1];
+	const char* pbuf = &str[0];
+	const char* ebuf = &str.back();
 	while (pbuf <= ebuf) {
 		if (*pbuf == c)
 			count++;
@@ -204,11 +204,10 @@ int StringUtility::ToInteger(const std::string& s) {
 double StringUtility::ToDouble(const std::string& s) {
 	return atof(s.c_str());
 }
-std::string StringUtility::Replace(std::string& source, std::string pattern, std::string placement) {
-	std::string res = ReplaceAll(source, pattern, placement, 1);
-	return res;
+std::string StringUtility::Replace(const std::string& source, const std::string& pattern, const std::string& placement) {
+	return ReplaceAll(source, pattern, placement, 1);
 }
-std::string StringUtility::ReplaceAll(std::string& source, std::string pattern, std::string placement, 
+std::string StringUtility::ReplaceAll(const std::string& source, const std::string& pattern, const std::string& placement,
 	size_t replaceCount, size_t start, size_t end)
 {
 	std::string result;
@@ -254,15 +253,15 @@ std::string StringUtility::Trim(const std::string& str) {
 	return res;
 }
 //----------------------------------------------------------------
-std::vector<std::wstring> StringUtility::Split(std::wstring str, std::wstring delim) {
+std::vector<std::wstring> StringUtility::Split(const std::wstring& str, const std::wstring& delim) {
 	std::vector<std::wstring> res;
 	Split(str, delim, res);
 	return res;
 }
-void StringUtility::Split(std::wstring str, std::wstring delim, std::vector<std::wstring>& res) {
+void StringUtility::Split(const std::wstring& str, const std::wstring& delim, std::vector<std::wstring>& res) {
 	size_t itrBegin = 0;
 	size_t itrFind = 0;
-	while ((itrFind = str.find_first_of(delim, itrBegin)) != std::string::npos) {
+	while ((itrFind = str.find_first_of(delim, itrBegin)) != std::wstring::npos) {
 		res.push_back(str.substr(itrBegin, itrFind - itrBegin));
 		itrBegin = itrFind + 1;
 	}
@@ -322,10 +321,10 @@ std::wstring StringUtility::FormatToWide(const char* str, ...) {
 	return StringUtility::ConvertMultiToWide(res);
 }
 
-size_t StringUtility::CountCharacter(std::wstring& str, wchar_t c) {
+size_t StringUtility::CountCharacter(const std::wstring& str, wchar_t c) {
 	size_t count = 0;
-	wchar_t* pbuf = &str[0];
-	wchar_t* ebuf = &str[str.size() - 1];
+	const wchar_t* pbuf = &str[0];
+	const wchar_t* ebuf = &str.back();
 	while (pbuf <= ebuf) {
 		if (*pbuf == c)
 			count++;
@@ -336,15 +335,14 @@ int StringUtility::ToInteger(const std::wstring& s) {
 	return _wtoi(s.c_str());
 }
 double StringUtility::ToDouble(const std::wstring& s) {
-	wchar_t *stopscan;
+	wchar_t* stopscan;
 	return wcstod(s.c_str(), &stopscan);
 	//return _wtof(s.c_str());
 }
-std::wstring StringUtility::Replace(std::wstring& source, std::wstring pattern, std::wstring placement) {
-	std::wstring res = ReplaceAll(source, pattern, placement, 1);
-	return res;
+std::wstring StringUtility::Replace(const std::wstring& source, const std::wstring& pattern, const std::wstring& placement) {
+	return ReplaceAll(source, pattern, placement, 1);
 }
-std::wstring StringUtility::ReplaceAll(std::wstring& source, std::wstring pattern, std::wstring placement, 
+std::wstring StringUtility::ReplaceAll(const std::wstring& source, const std::wstring& pattern, const std::wstring& placement,
 	size_t replaceCount, size_t start, size_t end)
 {
 	std::wstring result;
@@ -384,7 +382,7 @@ std::wstring StringUtility::Trim(const std::wstring& str) {
 
 	return res;
 }
-size_t StringUtility::CountAsciiSizeCharacter(std::wstring& str) {
+size_t StringUtility::CountAsciiSizeCharacter(const std::wstring& str) {
 	if (str.size() == 0) return 0;
 
 	size_t wcount = str.size();
@@ -1179,7 +1177,7 @@ void Font::CreateFont(const wchar_t* type, int size, bool bBold, bool bItalic, b
 	fontInfo.lfItalic = bItalic;
 	fontInfo.lfUnderline = bLine;
 
-	if (std::regex_match(type, std::wregex(L"[^a-zA-Z0-9\s-]"))) {
+	if (std::regex_match(type, std::wregex(L"[^a-zA-Z0-9\s_]"))) {
 		fontInfo.lfCharSet = SHIFTJIS_CHARSET;
 	}
 	else fontInfo.lfCharSet = ANSI_CHARSET;

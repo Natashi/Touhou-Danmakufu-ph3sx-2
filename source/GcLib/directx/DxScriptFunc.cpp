@@ -629,19 +629,19 @@ int DxScript::AddObject(shared_ptr<DxScriptObjectBase> obj, bool bActivate) {
 	obj->idScript_ = idScript_;
 	return objManager_->AddObject(obj, bActivate);
 }
-shared_ptr<Texture> DxScript::_GetTexture(std::wstring name) {
+shared_ptr<Texture> DxScript::_GetTexture(const std::wstring& name) {
 	shared_ptr<Texture> res;
 	auto itr = mapTexture_.find(name);
 	if (itr != mapTexture_.end()) res = itr->second;
 	return res;
 }
-shared_ptr<Shader> DxScript::_GetShader(std::wstring name) {
+shared_ptr<Shader> DxScript::_GetShader(const std::wstring& name) {
 	shared_ptr<Shader> res;
 	auto itr = mapShader_.find(name);
 	if (itr != mapShader_.end()) res = itr->second;
 	return res;
 }
-shared_ptr<DxMesh> DxScript::_GetMesh(std::wstring name) {
+shared_ptr<DxMesh> DxScript::_GetMesh(const std::wstring& name) {
 	shared_ptr<DxMesh> res;
 	auto itr = mapMesh_.find(name);
 	if (itr != mapMesh_.end()) res = itr->second;
@@ -1266,7 +1266,7 @@ gstd::value DxScript::Func_ClearRenderTargetA3(gstd::script_machine* machine, in
 	return script->CreateBooleanValue(true);
 }
 gstd::value DxScript::Func_GetTransitionRenderTargetName(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	std::wstring res = TextureManager::TARGET_TRANSITION;
+	const std::wstring& res = TextureManager::TARGET_TRANSITION;
 	return DxScript::CreateStringValue(res);
 }
 gstd::value DxScript::Func_SaveRenderedTextureA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -2576,7 +2576,7 @@ gstd::value DxScript::Func_ObjShader_SetShaderF(gstd::script_machine* machine, i
 
 			res = shader != nullptr;
 			if (!res) {
-				std::wstring error = manager->GetLastError();
+				const std::wstring& error = manager->GetLastError();
 				script->RaiseError(error);
 			}
 		}
@@ -3627,7 +3627,7 @@ value DxScript::Func_ObjText_GetTextLength(script_machine* machine, int argc, co
 	size_t res = 0;
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		std::wstring text = obj->GetText();
+		const std::wstring& text = obj->GetText();
 		res = StringUtility::CountAsciiSizeCharacter(text);
 	}
 	return script->CreateRealValue(res);

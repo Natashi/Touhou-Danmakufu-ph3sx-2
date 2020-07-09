@@ -363,10 +363,10 @@ bool KeyPanel::Initialize(HWND hParent) {
 	mapViewText[EDirectInput::KEY_USER1] = L"User 1";
 	mapViewText[EDirectInput::KEY_USER2] = L"User 2";
 	mapViewText[EDirectInput::KEY_PAUSE] = L"Pause";
-	for (int iView = 0; iView < mapViewText.size(); iView++) {
-		std::wstring text = mapViewText[iView];
-		viewKey_->SetText(iView, COL_ACTION, text);
-		_UpdateText(iView);
+	for (auto itr = mapViewText.begin(); itr != mapViewText.end(); ++itr) {
+		const std::wstring& text = itr->second;
+		viewKey_->SetText(itr->first, COL_ACTION, text);
+		_UpdateText(itr->first);
 	}
 
 	return true;
@@ -547,7 +547,7 @@ LRESULT OptionPanel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				std::wstring fileNameStr = filename;
 				stdfs::path fileNameP = fileNameStr;
 				std::wstring dir = PathProperty::ReplaceYenToSlash(fileNameP.parent_path()) + L"/";
-				std::wstring moduleDir = PathProperty::GetModuleDirectory();
+				const std::wstring& moduleDir = PathProperty::GetModuleDirectory();
 				if (dir == moduleDir) fileNameStr = fileNameP.filename();
 
 				exePath_->SetText(fileNameStr);

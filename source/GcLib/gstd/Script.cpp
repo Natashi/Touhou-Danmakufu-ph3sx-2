@@ -567,7 +567,7 @@ public:
 
 		scope_t(block_kind the_kind) : kind(the_kind) {}
 
-		void singular_insert(std::string name, symbol& s, int argc = 0);
+		void singular_insert(const std::string& name, symbol& s, int argc = 0);
 	};
 
 	std::vector<scope_t> frame;
@@ -614,11 +614,11 @@ private:
 
 	void optimize_expression(script_engine::block* blockDst, script_engine::block* blockSrc);
 
-	inline static void parser_assert(bool expr, std::wstring error) {
+	inline static void parser_assert(bool expr, const std::wstring& error) {
 		if (!expr) 
 			throw parser_error(error);
 	}
-	inline static void parser_assert(bool expr, std::string error) {
+	inline static void parser_assert(bool expr, const std::string& error) {
 		if (!expr) 
 			throw parser_error(error);
 	}
@@ -635,7 +635,7 @@ private:
 	typedef script_engine::code code;
 };
 
-void parser::scope_t::singular_insert(std::string name, symbol& s, int argc) {
+void parser::scope_t::singular_insert(const std::string& name, symbol& s, int argc) {
 	bool exists = this->find(name) != this->end();
 	auto itr = this->equal_range(name);
 
@@ -1292,7 +1292,7 @@ int parser::parse_arguments(script_engine::block* block, script_scanner* lex) {
 }
 
 bool parser::parse_single_statement(script_engine::block* block, script_scanner* lex) {
-	auto assert_const = [](symbol* s, std::string& name) {
+	auto assert_const = [](symbol* s, const std::string& name) {
 		if (!s->can_modify) {
 			std::string error = StringUtility::Format("\"%s\": ", name.c_str());
 			if (s->sub)
@@ -1761,7 +1761,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 
 		frame.push_back(scope_t(containerBlock->kind));
 		{
-			auto InsertSymbol = [&](size_t var, std::string name, bool isInternal) {
+			auto InsertSymbol = [&](size_t var, const std::string& name, bool isInternal) {
 				symbol s;
 				s.level = containerBlock->level;
 				s.sub = nullptr;
@@ -2353,7 +2353,7 @@ void script_machine::resume() {
 	run_code();
 }
 
-void script_machine::call(std::string event_name) {
+void script_machine::call(const std::string& event_name) {
 	call(engine->events.find(event_name));
 }
 void script_machine::call(std::map<std::string, script_engine::block*>::iterator event_itr) {

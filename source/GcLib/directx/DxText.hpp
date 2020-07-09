@@ -157,7 +157,7 @@ namespace directx {
 		std::wstring element_;
 	public:
 		DxTextToken() { type_ = TK_UNKNOWN; }
-		DxTextToken(Type type, std::wstring element) { type_ = type; element_ = element; }
+		DxTextToken(Type type, const std::wstring& element) { type_ = type; element_ = element; }
 
 		virtual ~DxTextToken() {}
 		Type GetType() { return type_; }
@@ -189,12 +189,12 @@ namespace directx {
 		wchar_t _NextChar();//ポインタを進めて次の文字を調べる
 		virtual void _SkipComment();//コメントをとばす
 		virtual void _SkipSpace();//空白をとばす
-		virtual void _RaiseError(std::wstring str);//例外を投げます
+		virtual void _RaiseError(const std::wstring& str);//例外を投げます
 		bool _IsTextStartSign();
 		bool _IsTextScan();
 	public:
 		DxTextScanner(wchar_t* str, int charCount);
-		DxTextScanner(std::wstring str);
+		DxTextScanner(const std::wstring& str);
 		DxTextScanner(std::vector<wchar_t>& buf);
 		virtual ~DxTextScanner();
 
@@ -202,7 +202,7 @@ namespace directx {
 		DxTextToken& Next();
 		bool HasNext();
 		void CheckType(DxTextToken& tok, int type);
-		void CheckIdentifer(DxTextToken& tok, std::wstring id);
+		void CheckIdentifer(DxTextToken& tok, const std::wstring& id);
 		int GetCurrentLine();
 		int SearchCurrentLine();
 
@@ -248,9 +248,9 @@ namespace directx {
 		void SetLeftMargin(int left) { leftMargin_ = left; }
 
 		std::wstring& GetText() { return text_; }
-		void SetText(std::wstring text) { text_ = text; }
+		void SetText(const std::wstring& text) { text_ = text; }
 		std::wstring& GetRuby() { return ruby_; }
-		void SetRuby(std::wstring ruby) { ruby_ = ruby; }
+		void SetRuby(const std::wstring& ruby) { ruby_ = ruby; }
 
 		shared_ptr<DxText> GetRenderText() { return dxText_; }
 		void SetRenderText(shared_ptr<DxText> text) { dxText_ = text; }
@@ -335,10 +335,10 @@ namespace directx {
 		void Render();
 		void Render(D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ);
 		void AddRenderObject(shared_ptr<Sprite2D> obj);
-		void AddRenderObject(shared_ptr<DxTextRenderObject> obj, POINT bias);
+		void AddRenderObject(shared_ptr<DxTextRenderObject> obj, POINT& bias);
 
-		POINT GetPosition() { return position_; }
-		void SetPosition(POINT pos) { position_.x = pos.x; position_.y = pos.y; }
+		POINT& GetPosition() { return position_; }
+		void SetPosition(POINT& pos) { position_.x = pos.x; position_.y = pos.y; }
 		void SetPosition(int x, int y) { position_.x = x; position_.y = y; }
 		void SetVertexColor(D3DCOLOR color) { color_ = color; }
 
@@ -370,11 +370,11 @@ namespace directx {
 		gstd::CriticalSection lock_;
 
 		SIZE _GetTextSize(HDC hDC, wchar_t* pText);
-		shared_ptr<DxTextLine> _GetTextInfoSub(std::wstring text, DxText* dxText, DxTextInfo* textInfo, 
+		shared_ptr<DxTextLine> _GetTextInfoSub(const std::wstring& text, DxText* dxText, DxTextInfo* textInfo,
 			shared_ptr<DxTextLine> textLine, HDC& hDC, int& totalWidth, int& totalHeight);
-		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, POINT pos, DxFont* dxFont, 
+		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, POINT& pos, DxFont* dxFont, 
 			shared_ptr<DxTextLine> textLine);
-		std::wstring _ReplaceRenderText(std::wstring& text);
+		std::wstring _ReplaceRenderText(std::wstring text);
 	public:
 		DxTextRenderer();
 		virtual ~DxTextRenderer();
@@ -392,9 +392,9 @@ namespace directx {
 		void Render(DxText* dxText);
 		void Render(DxText* dxText, shared_ptr<DxTextInfo> textInfo);
 
-		int GetCacheCount() { return cache_.GetCacheCount(); }
+		size_t GetCacheCount() { return cache_.GetCacheCount(); }
 
-		bool AddFontFromFile(std::wstring path);
+		bool AddFontFromFile(const std::wstring& path);
 	};
 
 	/**********************************************************
@@ -461,7 +461,7 @@ namespace directx {
 		void SetFontBorderType(int type) { dxFont_.SetBorderType(type); }
 		void SetFontBorderColor(D3DCOLOR color) { dxFont_.SetBorderColor(color); }
 
-		POINT GetPosition() { return pos_; }
+		POINT& GetPosition() { return pos_; }
 		void SetPosition(int x, int y) { pos_.x = x; pos_.y = y; }
 		void SetPosition(POINT& pos) { pos_ = pos; }
 		int GetMaxWidth() { return widthMax_; }
@@ -472,7 +472,7 @@ namespace directx {
 		void SetSidePitch(float pitch) { sidePitch_ = pitch; }
 		float GetLinePitch() { return linePitch_; }
 		void SetLinePitch(float pitch) { linePitch_ = pitch; }
-		RECT GetMargin() { return margin_; }
+		RECT& GetMargin() { return margin_; }
 		void SetMargin(RECT& margin) { margin_ = margin; }
 		int GetHorizontalAlignment() { return alignmentHorizontal_; }
 		void SetHorizontalAlignment(int value) { alignmentHorizontal_ = value; }

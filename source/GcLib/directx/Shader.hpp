@@ -29,7 +29,7 @@ namespace directx {
 	public:
 		ShaderData();
 		virtual ~ShaderData();
-		std::wstring GetName() { return name_; }
+		std::wstring& GetName() { return name_; }
 	};
 
 	/**********************************************************
@@ -49,11 +49,11 @@ namespace directx {
 
 		RenderShaderManager* renderManager_;
 
-		void _ReleaseShaderData(std::wstring name);
+		void _ReleaseShaderData(const std::wstring& name);
 		void _ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderData>>::iterator itr);
-		bool _CreateFromFile(std::wstring path, shared_ptr<ShaderData>& dest);
-		bool _CreateFromText(std::string& source, shared_ptr<ShaderData>& dest);
-		static std::wstring _GetTextSourceID(std::string& source);
+		bool _CreateFromFile(const std::wstring& path, shared_ptr<ShaderData>& dest);
+		bool _CreateFromText(const std::string& source, shared_ptr<ShaderData>& dest);
+		static std::wstring _GetTextSourceID(const std::string& source);
 	public:
 		ShaderManager();
 		virtual ~ShaderManager();
@@ -67,19 +67,19 @@ namespace directx {
 		virtual void ReleaseDxResource();
 		virtual void RestoreDxResource();
 
-		virtual bool IsDataExists(std::wstring name);
+		virtual bool IsDataExists(const std::wstring& name);
 		virtual std::map<std::wstring, shared_ptr<ShaderData>>::iterator IsDataExistsItr(std::wstring& name);
-		shared_ptr<ShaderData> GetShaderData(std::wstring name);
-		shared_ptr<Shader> CreateFromFile(std::wstring path);
-		shared_ptr<Shader> CreateFromText(std::string source);
-		shared_ptr<Shader> CreateFromFileInLoadThread(std::wstring path);
+		shared_ptr<ShaderData> GetShaderData(const std::wstring& name);
+		shared_ptr<Shader> CreateFromFile(const std::wstring& path);
+		shared_ptr<Shader> CreateFromText(const std::string& source);
+		shared_ptr<Shader> CreateFromFileInLoadThread(const std::wstring& path);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
-		void AddShader(std::wstring name, shared_ptr<Shader> shader);
-		void DeleteShader(std::wstring name);
-		shared_ptr<Shader> GetShader(std::wstring name);
+		void AddShader(const std::wstring& name, shared_ptr<Shader> shader);
+		void DeleteShader(const std::wstring& name);
+		shared_ptr<Shader> GetShader(const std::wstring& name);
 
-		std::wstring GetLastError();
+		std::wstring& GetLastError() { return lastError_; }
 	};
 
 	/**********************************************************
@@ -137,7 +137,7 @@ namespace directx {
 		std::map<std::string, shared_ptr<ShaderParameter>> mapParam_;
 
 		ShaderData* _GetShaderData() { return data_.get(); }
-		shared_ptr<ShaderParameter> _GetParameter(std::string name, bool bCreate);
+		shared_ptr<ShaderParameter> _GetParameter(const std::string& name, bool bCreate);
 	public:
 		Shader();
 		Shader(Shader* shader);
@@ -148,17 +148,17 @@ namespace directx {
 
 		ID3DXEffect* GetEffect();
 
-		bool CreateFromFile(std::wstring path);
-		bool CreateFromText(std::string& source);
+		bool CreateFromFile(const std::wstring& path);
+		bool CreateFromText(const std::string& source);
 		bool IsLoad() { return data_ != nullptr && data_->bLoad_; }
 
-		bool SetTechnique(std::string name);
-		bool SetMatrix(std::string name, D3DXMATRIX& matrix);
-		bool SetMatrixArray(std::string name, std::vector<D3DXMATRIX>& matrix);
-		bool SetVector(std::string name, D3DXVECTOR4& vector);
-		bool SetFloat(std::string name, FLOAT value);
-		bool SetFloatArray(std::string name, std::vector<FLOAT>& values);
-		bool SetTexture(std::string name, shared_ptr<Texture> texture);
+		bool SetTechnique(const std::string& name);
+		bool SetMatrix(const std::string& name, D3DXMATRIX& matrix);
+		bool SetMatrixArray(const std::string& name, std::vector<D3DXMATRIX>& matrix);
+		bool SetVector(const std::string& name, D3DXVECTOR4& vector);
+		bool SetFloat(const std::string& name, FLOAT value);
+		bool SetFloatArray(const std::string& name, std::vector<FLOAT>& values);
+		bool SetTexture(const std::string& name, shared_ptr<Texture> texture);
 	};
 }
 
