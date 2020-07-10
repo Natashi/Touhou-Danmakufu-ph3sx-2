@@ -2236,12 +2236,12 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 **********************************************************/
 StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
 	typeObject_ = TypeObject::OBJ_CURVE_LASER;
-	tipDecrement_ = 0.0;
+	tipDecrement_ = 0.0f;
 
-	invalidLengthStart_ = 0.0f;
-	invalidLengthEnd_ = 0.0f;
+	invalidLengthStart_ = 0.1f;
+	invalidLengthEnd_ = 0.1f;
 
-	itemDistance_ = 6.0;
+	itemDistance_ = 6.0f;
 
 	pShotIntersectionTarget_ = nullptr;
 }
@@ -2268,23 +2268,44 @@ void StgCurveLaserObject::_Move() {
 			move_ = D3DXVECTOR2(cosf(lastAngle_), sinf(lastAngle_));
 		}
 
-		LaserNode pos;
-		pos.pos.SetX(posX_);
-		pos.pos.SetY(posY_);
-		{
-			float wRender = widthRender_ / 2.0f;
-
-			float nx = -wRender * move_.y;
-			float ny = wRender * move_.x;
-
-			pos.vertOff[0] = { nx, ny };
-			pos.vertOff[1] = { -nx, -ny };
-		}
-
-		listPosition_.push_front(pos);
-		if (listPosition_.size() > length_)
-			listPosition_.pop_back();
+		D3DXVECTOR2 newNodePos(posX_, posY_);
+		D3DXVECTOR2 newNodeVertF(-move_.y, move_.x);	//90 degrees rotation
+		PushNode(CreateNode(newNodePos, newNodeVertF));
 	}
+}
+StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac) {
+	LaserNode node;
+	node.pos = pos;
+	{
+		float wRender = widthRender_ / 2.0f;
+
+		float nx = wRender * rFac.x;
+		float ny = wRender * rFac.y;
+		node.vertOff[0] = { nx, ny };
+		node.vertOff[1] = { -nx, -ny };
+	}
+	return node;
+}
+std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::SetNode(size_t indexNode, LaserNode& node) {
+	//I wish there was a better way to do this.
+	size_t listSizeMax = listPosition_.size();
+	if (indexNode >= listSizeMax) return listPosition_.end();
+	if (indexNode < listSizeMax / 2U) {
+		auto itr = std::next(listPosition_.begin(), indexNode);
+		*itr = node;
+		return itr;
+	}
+	else {
+		auto itr = std::next(listPosition_.rbegin(), listSizeMax - indexNode - 1);
+		*itr = node;
+		return itr.base();
+	}
+}
+std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::PushNode(LaserNode& node) {
+	listPosition_.push_front(node);
+	if (listPosition_.size() > length_)
+		listPosition_.pop_back();
+	return listPosition_.begin();
 }
 void StgCurveLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
@@ -2293,9 +2314,9 @@ void StgCurveLaserObject::_DeleteInAutoClip() {
 
 	//Checks if the node is within the bounding rect
 	auto PredicateNodeInRect = [&](LaserNode& node) {
-		DxPoint* pos = &node.pos;
-		bool bInX = pos->GetX() >= rect.left && pos->GetX() <= rect.right;
-		bool bInY = pos->GetY() >= rect.top && pos->GetY() <= rect.bottom;
+		D3DXVECTOR2* pos = &node.pos;
+		bool bInX = pos->x >= rect.left && pos->x <= rect.right;
+		bool bInY = pos->y >= rect.top && pos->y <= rect.bottom;
 		return bInX && bInY;
 	};
 
@@ -2337,10 +2358,10 @@ std::vector<StgIntersectionTarget::ptr> StgCurveLaserObject::GetIntersectionTarg
 				continue;
 
 			std::list<LaserNode>::iterator itrNext = std::next(itr);
-			DxPoint& nodeS = itr->pos;
-			DxPoint& nodeE = itrNext->pos;
+			D3DXVECTOR2* nodeS = &itr->pos;
+			D3DXVECTOR2* nodeE = &itrNext->pos;
 
-			DxWidthLine line(nodeS.GetX(), nodeS.GetY(), nodeE.GetX(), nodeE.GetY(), iWidth);
+			DxWidthLine line(nodeS->x, nodeS->y, nodeE->x, nodeE->y, iWidth);
 			shared_ptr<StgIntersectionTarget_Line> target(new StgIntersectionTarget_Line);
 			if (target) {
 				target->SetTargetType(typeOwner_ == OWNER_PLAYER ?
@@ -2393,14 +2414,15 @@ void StgCurveLaserObject::RenderOnShotManager() {
 
 		float expa = delay_.GetScale();
 
-		FLOAT sX = listPosition_.back().pos.GetX();
-		FLOAT sY = listPosition_.back().pos.GetY();
+		FLOAT sX = listPosition_.back().pos.x;
+		FLOAT sY = listPosition_.back().pos.y;
 		if (bRoundingPosition_) {
 			sX = roundf(sX);
 			sY = roundf(sY);
 		}
 
 		D3DCOLOR color = shotData->GetDelayColor();
+		if (delay_.colorMix) ColorAccess::SetColor(color, color_);
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
 			color = (color & 0x00ffffff) | (alpha << 24);
@@ -2461,9 +2483,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 
 		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrcOrg);
 
-		std::list<LaserNode>::iterator itr = listPosition_.begin();
 		size_t iPos = 0U;
-		for (std::list<LaserNode>::iterator itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
+		for (auto itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
 			float nodeAlpha = baseAlpha;
 			if (iPos > halfPos)
 				nodeAlpha = Math::Lerp::Linear(baseAlpha, tipAlpha, (iPos - halfPos + 1) / (float)halfPos);
@@ -2482,8 +2503,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				VERTEX_TLX vt;
 
 				_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / textureSize->x, rectV);
-				_SetVertexPosition(vt, itr->pos.GetX() + itr->vertOff[iVert].GetX(),
-					itr->pos.GetY() + itr->vertOff[iVert].GetY(), position_.z);
+				_SetVertexPosition(vt, itr->pos.x + itr->vertOff[iVert].x,
+					itr->pos.y + itr->vertOff[iVert].y, position_.z);
 				_SetVertexColorARGB(vt, thisColor);
 
 				verts[iVert] = vt;
@@ -2534,16 +2555,16 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 		std::list<LaserNode>::iterator itrNext = std::next(itr);
 		if (itrNext == listPosition_.end()) break;
 
-		DxPoint& pos = (*itr).pos;
-		DxPoint& posNext = (*itrNext).pos;
-		float nodeDist = hypotf(posNext.GetX() - pos.GetX(), posNext.GetY() - pos.GetY());
+		D3DXVECTOR2* pos = &itr->pos;
+		D3DXVECTOR2* posNext = &itrNext->pos;
+		float nodeDist = hypotf(posNext->x - pos->x, posNext->y - pos->y);
 		lengthAcc += nodeDist;
 
 		float createDist = 0U;
 		while (lengthAcc >= itemDistance_) {
 			float lerpMul = (itemDistance_ >= nodeDist) ? 0.0 : (createDist / nodeDist);
-			RequestItem(Math::Lerp::Linear(pos.GetX(), posNext.GetX(), lerpMul), 
-				Math::Lerp::Linear(pos.GetY(), posNext.GetY(), lerpMul));
+			RequestItem(Math::Lerp::Linear(pos->x, posNext->x, lerpMul),
+				Math::Lerp::Linear(pos->y, posNext->y, lerpMul));
 			createDist += itemDistance_;
 			lengthAcc -= itemDistance_;
 		}
@@ -2552,7 +2573,7 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 
 
 /**********************************************************
-//StgPatternShotObjectGenerator (ECL-style bullets firing) [Under construction]
+//StgPatternShotObjectGenerator (ECL-style bullets firing)
 **********************************************************/
 StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
 	parent_ = nullptr;

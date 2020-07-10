@@ -461,7 +461,8 @@ function const stgFunction[] =
 	{ "ObjStLaser_SetDelayScale", StgStageScript::Func_ObjStLaser_SetDelayScale, 3 },
 	{ "ObjStLaser_SetPermitExpand", StgStageScript::Func_ObjStLaser_SetPermitExpand, 2 },
 	{ "ObjStLaser_GetPermitExpand", StgStageScript::Func_ObjStLaser_GetPermitExpand, 1 },
-	{ "ObjCrLaser_SetTipDecrement", StgStageScript::Func_ObjCrLaser_SetTipDecrement, 2 },
+	{ "ObjCrLaser_SetNode", StgStageScript::Func_ObjCrLaser_SetNode, 5 },
+	{ "ObjCrLaser_AddNode", StgStageScript::Func_ObjCrLaser_AddNode, 4 },
 
 	{ "ObjPatternShot_Create", StgStageScript::Func_ObjPatternShot_Create, 0 },
 	{ "ObjPatternShot_Fire", StgStageScript::Func_ObjPatternShot_Fire, 1 },
@@ -3859,18 +3860,6 @@ gstd::value StgStageScript::Func_ObjStLaser_SetDelayScale(gstd::script_machine* 
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_ObjCrLaser_SetTipDecrement(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	int id = (int)argv[0].as_real();
-	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		float dec = argv[1].as_real();
-		dec = std::min(dec, 1.0f);
-		dec = std::max(dec, 0.0f);
-		obj->SetTipDecrement(dec);
-	}
-	return value();
-}
 gstd::value StgStageScript::Func_ObjStLaser_SetPermitExpand(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = (int)argv[0].as_real();
@@ -3889,6 +3878,57 @@ gstd::value StgStageScript::Func_ObjStLaser_GetPermitExpand(gstd::script_machine
 	if (obj)
 		res = obj->GetLaserExpand();
 	return script->CreateBooleanValue(res);
+}
+gstd::value StgStageScript::Func_ObjCrLaser_SetTipDecrement(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		float dec = argv[1].as_real();
+		dec = std::min(dec, 1.0f);
+		dec = std::max(dec, 0.0f);
+		obj->SetTipDecrement(dec);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjCrLaser_SetNode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		int index = argv[1].as_int();
+		if (index >= 0) {
+			float x = argv[2].as_real();
+			float y = argv[3].as_real();
+			float angle = Math::DegreeToRadian(argv[4].as_real() + 90.0);
+
+			D3DXVECTOR2 cs = D3DXVECTOR2(cosf(angle), sinf(angle));
+			float nx = cs.x + cs.y;
+			float ny = cs.x - cs.y;
+
+			StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(x, y), D3DXVECTOR2(nx, ny));
+			obj->SetNode(index, node);
+		}
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjCrLaser_AddNode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		float x = argv[1].as_real();
+		float y = argv[2].as_real();
+		float angle = Math::DegreeToRadian(argv[3].as_real() + 90.0);
+
+		D3DXVECTOR2 cs = D3DXVECTOR2(cosf(angle), sinf(angle));
+		float nx = cs.x + cs.y;
+		float ny = cs.x - cs.y;
+
+		StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(x, y), D3DXVECTOR2(nx, ny));
+		obj->PushNode(node);
+	}
+	return value();
 }
 
 gstd::value StgStageScript::Func_ObjPatternShot_Create(gstd::script_machine* machine, int argc, const gstd::value* argv) {

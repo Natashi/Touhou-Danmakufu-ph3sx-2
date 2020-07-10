@@ -570,12 +570,12 @@ public:
 //StgCurveLaserObject(ã»Ç™ÇÈå^ÉåÅ[ÉUÅ[)
 **********************************************************/
 class StgCurveLaserObject : public StgLaserObject {
-protected:
+public:
 	struct LaserNode {
-		DxPoint pos;
-		DxPoint vertOff[2];
+		D3DXVECTOR2 pos;
+		D3DXVECTOR2 vertOff[2];
 	};
-
+protected:
 	std::list<LaserNode> listPosition_;
 	float tipDecrement_;
 
@@ -591,6 +591,10 @@ public:
 	}
 	virtual std::vector<StgIntersectionTarget::ptr> GetIntersectionTargetList();
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
+
+	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac);
+	std::list<LaserNode>::iterator SetNode(size_t indexNode, LaserNode& node);
+	std::list<LaserNode>::iterator PushNode(LaserNode& node);
 };
 
 

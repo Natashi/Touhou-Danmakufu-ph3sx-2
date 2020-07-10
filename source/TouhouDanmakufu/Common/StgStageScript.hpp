@@ -406,6 +406,8 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjStLaser_SetPermitExpand);
 	DNH_FUNCAPI_DECL_(Func_ObjStLaser_GetPermitExpand);
 	static gstd::value Func_ObjCrLaser_SetTipDecrement(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetNode);
+	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_AddNode);
 
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_Create);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_Fire);
