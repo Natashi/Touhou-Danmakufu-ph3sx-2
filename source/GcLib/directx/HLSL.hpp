@@ -435,7 +435,7 @@ namespace directx {
 		 * 1 -> 2D Render
 		 * 2 -> 2D Hardware Instancing
 		 * 3 -> 3D Hardware Instancing
-		*/
+		 */
 		std::vector<ID3DXEffect*> listEffect_;
 
 		/*
@@ -445,7 +445,7 @@ namespace directx {
 		 * 3 -> BNX
 		 * 4 -> Instanced TLX
 		 * 5 -> Instanced LX
-		*/
+		 */
 		std::vector<IDirect3DVertexDeclaration9*> listDeclaration_/*of Independence*/;
 
 		D3DXMATRIX arrayMatrix[MAX_MATRIX];
