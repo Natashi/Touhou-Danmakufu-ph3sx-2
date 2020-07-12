@@ -252,7 +252,7 @@ void ScriptClientBase::_RaiseError(int line, const std::wstring& message) {
 
 	std::wstring fileName = PathProperty::GetFileName(entry->path_);
 
-	std::wstring str = StringUtility::Format(L"%s\r\n%s \r\n%s line(s)=%d\r\n\r\n«\r\n%s\r\n```",
+	std::wstring str = StringUtility::Format(L"%s\r\n%s" "\r\n[%s] " "line-> %d\r\n\r\n«\r\n%s\r\n```",
 		message.c_str(),
 		entry->path_.c_str(),
 		fileName.c_str(),
