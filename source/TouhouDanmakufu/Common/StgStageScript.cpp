@@ -461,6 +461,7 @@ function const stgFunction[] =
 	{ "ObjStLaser_SetDelayScale", StgStageScript::Func_ObjStLaser_SetDelayScale, 3 },
 	{ "ObjStLaser_SetPermitExpand", StgStageScript::Func_ObjStLaser_SetPermitExpand, 2 },
 	{ "ObjStLaser_GetPermitExpand", StgStageScript::Func_ObjStLaser_GetPermitExpand, 1 },
+	{ "ObjCrLaser_SetTipDecrement", StgStageScript::Func_ObjCrLaser_SetTipDecrement, 2 },
 	{ "ObjCrLaser_SetNode", StgStageScript::Func_ObjCrLaser_SetNode, 5 },
 	{ "ObjCrLaser_AddNode", StgStageScript::Func_ObjCrLaser_AddNode, 4 },
 
@@ -734,13 +735,13 @@ gstd::value StgStageScript::Func_SetStgFrame(gstd::script_machine* machine, int 
 	StgStageController* stageController = script->stageController_;
 
 	RECT rect;
-	rect.left = (int)argv[0].as_real();
-	rect.top = (int)argv[1].as_real();
-	rect.right = (int)argv[2].as_real();
-	rect.bottom = (int)argv[3].as_real();
+	rect.left = (LONG)argv[0].as_int();
+	rect.top = (LONG)argv[1].as_int();
+	rect.right = (LONG)argv[2].as_int();
+	rect.bottom = (LONG)argv[3].as_int();
 
-	int min = (int)argv[4].as_real();
-	int max = (int)argv[5].as_real();
+	int min = argv[4].as_int();
+	int max = argv[5].as_int();
 
 	ref_count_ptr<StgStageInformation> stageInfo = stageController->GetStageInformation();
 	stageInfo->SetStgFrameRect(rect);
@@ -754,7 +755,7 @@ gstd::value StgStageScript::Func_SetItemRenderPriorityI(gstd::script_machine* ma
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 	ref_count_ptr<StgStageInformation> info = stageController->GetStageInformation();
-	int pri = (int)argv[0].as_real();
+	int pri = argv[0].as_int();
 	//pri = min(pri, info->GetStgFrameMaxPriority());
 	//pri = max(pri, info->GetStgFrameMinPriority());
 	info->SetItemObjectPriority(pri);
@@ -764,7 +765,7 @@ gstd::value StgStageScript::Func_SetShotRenderPriorityI(gstd::script_machine* ma
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 	ref_count_ptr<StgStageInformation> info = stageController->GetStageInformation();
-	int pri = (int)argv[0].as_real();
+	int pri = argv[0].as_int();
 	//pri = min(pri, info->GetStgFrameMaxPriority());
 	//pri = max(pri, info->GetStgFrameMinPriority());
 	info->SetShotObjectPriority(pri);
@@ -867,10 +868,10 @@ gstd::value StgStageScript::Func_SetPlayerClip(gstd::script_machine* machine, in
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
 	if (obj) {
 		RECT rect;
-		rect.left = (LONG)(int)argv[0].as_real();
-		rect.top = (LONG)(int)argv[1].as_real();
-		rect.right = (LONG)(int)argv[2].as_real();
-		rect.bottom = (LONG)(int)argv[3].as_real();
+		rect.left = (LONG)argv[0].as_int();
+		rect.top = (LONG)argv[1].as_int();
+		rect.right = (LONG)argv[2].as_int();
+		rect.bottom = (LONG)argv[3].as_int();
 		obj->SetClip(rect);
 	}
 	return value();
@@ -906,7 +907,7 @@ gstd::value StgStageScript::Func_SetPlayerInvincibilityFrame(gstd::script_machin
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
 	if (obj) {
-		int invi = (int)argv[0].as_real();
+		int invi = argv[0].as_int();
 		obj->SetInvincibilityFrame(invi);
 	}
 	return value();
@@ -915,7 +916,7 @@ gstd::value StgStageScript::Func_SetPlayerDownStateFrame(gstd::script_machine* m
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
 	if (obj) {
-		int frame = (int)argv[0].as_real();
+		int frame = argv[0].as_int();
 		obj->SetDownStateFrame(frame);
 	}
 	return value();
@@ -924,7 +925,7 @@ gstd::value StgStageScript::Func_SetPlayerRebirthFrame(gstd::script_machine* mac
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
 	if (obj) {
-		int frame = (int)argv[0].as_real();
+		int frame = argv[0].as_int();
 		obj->SetRebirthFrame(frame);
 		obj->SetRebirthFrameMax(frame);
 	}
@@ -934,7 +935,7 @@ gstd::value StgStageScript::Func_SetPlayerRebirthLossFrame(gstd::script_machine*
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
 	if (obj) {
-		int frame = (int)argv[0].as_real();
+		int frame = argv[0].as_int();
 		obj->SetRebirthLossFrame(frame);
 	}
 	return value();
@@ -943,7 +944,7 @@ gstd::value StgStageScript::Func_SetPlayerAutoItemCollectLine(gstd::script_machi
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
 	if (obj) {
-		int posY = (int)argv[0].as_real();
+		int posY = argv[0].as_int();
 		obj->SetAutoItemCollectY(posY);
 	}
 	return value();
@@ -1145,9 +1146,9 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPosition(gstd::script_machi
 	StgStageController* stageController = script->stageController_;
 	StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
 
-	int cenX = (int)argv[0].as_real();
-	int cenY = (int)argv[1].as_real();
-	int countRes = (int)argv[2].as_real();
+	int cenX = argv[0].as_int();
+	int cenY = argv[1].as_int();
+	int countRes = argv[2].as_int();
 
 	std::map<int64_t, POINT> mapPos;
 	std::vector<gstd::value> listV;
@@ -1230,8 +1231,8 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA2(gstd::script
 	std::vector<gstd::value> listV;
 	if (obj) {
 		std::map<int64_t, POINT> mapPos;
-		int tX = (int)argv[1].as_real();
-		int tY = (int)argv[2].as_real();
+		int tX = argv[1].as_int();
+		int tY = argv[2].as_int();
 
 		StgStageController* stageController = script->stageController_;
 		StgIntersectionManager* interSectionManager = stageController->GetIntersectionManager();
@@ -1292,8 +1293,8 @@ gstd::value StgStageScript::Func_DeleteShotAll(gstd::script_machine* machine, in
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 
-	int typeDel = (int)argv[0].as_real();
-	int typeTo = (int)argv[1].as_real();
+	int typeDel = argv[0].as_int();
+	int typeTo = argv[1].as_int();
 
 	switch (typeDel) {
 	case TYPE_ALL:typeDel = StgShotManager::DEL_TYPE_ALL; break;
@@ -1315,11 +1316,11 @@ gstd::value StgStageScript::Func_DeleteShotInCircle(gstd::script_machine* machin
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 
-	int typeDel = (int)argv[0].as_real();
-	int typeTo = (int)argv[1].as_real();
-	int posX = (int)argv[2].as_real();
-	int posY = (int)argv[3].as_real();
-	double radius = argv[4].as_real();
+	int typeDel = argv[0].as_int();
+	int typeTo = argv[1].as_int();
+	float posX = argv[2].as_real();
+	float posY = argv[3].as_real();
+	float radius = argv[4].as_real();
 
 	switch (typeDel) {
 	case TYPE_ALL:typeDel = StgShotManager::DEL_TYPE_ALL; break;
@@ -1351,8 +1352,8 @@ gstd::value StgStageScript::Func_CreateShotA1(gstd::script_machine* machine, int
 			double posY = argv[1].as_real();
 			double speed = argv[2].as_real();
 			double angle = argv[3].as_real();
-			int idShot = (int)argv[4].as_real();
-			int delay = (int)argv[5].as_real();
+			int idShot = argv[4].as_int();
+			int delay = argv[5].as_int();
 			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1383,8 +1384,8 @@ gstd::value StgStageScript::Func_CreateShotA2(gstd::script_machine* machine, int
 			double angle = argv[3].as_real();
 			double accele = argv[4].as_real();
 			double maxSpeed = argv[5].as_real();
-			int idShot = (int)argv[6].as_real();
-			int delay = (int)argv[7].as_real();
+			int idShot = argv[6].as_int();
+			int delay = argv[7].as_int();
 			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1422,8 +1423,8 @@ gstd::value StgStageScript::Func_CreateShotOA1(gstd::script_machine* machine, in
 				stageController->GetShotManager()->AddShot(obj);
 				double speed = argv[1].as_real();
 				double angle = argv[2].as_real();
-				int idShot = (int)argv[3].as_real();
-				int delay = (int)argv[4].as_real();
+				int idShot = argv[3].as_int();
+				int delay = argv[4].as_int();
 				int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 					StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1453,8 +1454,8 @@ gstd::value StgStageScript::Func_CreateShotB1(gstd::script_machine* machine, int
 			double posY = argv[1].as_real();
 			double speedX = argv[2].as_real();
 			double speedY = argv[3].as_real();
-			int idShot = (int)argv[4].as_real();
-			int delay = (int)argv[5].as_real();
+			int idShot = argv[4].as_int();
+			int delay = argv[5].as_int();
 			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1490,8 +1491,8 @@ gstd::value StgStageScript::Func_CreateShotB2(gstd::script_machine* machine, int
 			double accelY = argv[5].as_real();
 			double maxSpeedX = argv[6].as_real();
 			double maxSpeedY = argv[7].as_real();
-			int idShot = (int)argv[8].as_real();
-			int delay = (int)argv[9].as_real();
+			int idShot = argv[8].as_int();
+			int delay = argv[9].as_int();
 			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1531,8 +1532,8 @@ gstd::value StgStageScript::Func_CreateShotOB1(gstd::script_machine* machine, in
 				stageController->GetShotManager()->AddShot(obj);
 				double speedX = argv[1].as_real();
 				double speedY = argv[2].as_real();
-				int idShot = (int)argv[3].as_real();
-				int delay = (int)argv[4].as_real();
+				int idShot = argv[3].as_int();
+				int delay = argv[4].as_int();
 				int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 					StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1568,8 +1569,8 @@ gstd::value StgStageScript::Func_CreateLooseLaserA1(gstd::script_machine* machin
 			double angle = argv[3].as_real();
 			int length = argv[4].as_real();
 			int width = argv[5].as_real();
-			int idShot = (int)argv[6].as_real();
-			int delay = (int)argv[7].as_real();
+			int idShot = argv[6].as_int();
+			int delay = argv[7].as_int();
 			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1600,11 +1601,11 @@ gstd::value StgStageScript::Func_CreateStraightLaserA1(gstd::script_machine* mac
 			double posX = argv[0].as_real();
 			double posY = argv[1].as_real();
 			double angle = argv[2].as_real();
-			int length = argv[3].as_real();
-			int width = argv[4].as_real();
-			int deleteFrame = (int)argv[5].as_real();
-			int idShot = (int)argv[6].as_real();
-			int delay = (int)argv[7].as_real();
+			int length = argv[3].as_int();
+			int width = argv[4].as_int();
+			int deleteFrame = argv[5].as_int();
+			int idShot = argv[6].as_int();
+			int delay = argv[7].as_int();
 			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1635,10 +1636,10 @@ gstd::value StgStageScript::Func_CreateCurveLaserA1(gstd::script_machine* machin
 			double posY = argv[1].as_real();
 			double speed = argv[2].as_real();
 			double angle = argv[3].as_real();
-			int length = argv[4].as_real();
-			int width = argv[5].as_real();
-			int idShot = (int)argv[6].as_real();
-			int delay = (int)argv[7].as_real();
+			int length = argv[4].as_int();
+			int width = argv[5].as_int();
+			int idShot = argv[6].as_int();
+			int delay = argv[7].as_int();
 			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1728,7 +1729,7 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA2(gstd::script_machine* machi
 	float px = argv[0].as_real();
 	float py = argv[1].as_real();
 	float radius = argv[2].as_real();
-	int target = (int)argv[3].as_real();
+	int target = argv[3].as_int();
 
 	int typeOwner = StgShotObject::OWNER_NULL;
 	switch (target) {
@@ -1746,7 +1747,7 @@ gstd::value StgStageScript::Func_GetShotCount(gstd::script_machine* machine, int
 	StgStageController* stageController = script->stageController_;
 	StgShotManager* shotManager = stageController->GetShotManager();
 
-	int target = (int)argv[0].as_real();
+	int target = argv[0].as_int();
 	int typeOwner = StgShotObject::OWNER_NULL;
 	switch (target) {
 	case TARGET_ALL:typeOwner = StgShotObject::OWNER_NULL; break;
@@ -1763,10 +1764,10 @@ gstd::value StgStageScript::Func_SetShotAutoDeleteClip(gstd::script_machine* mac
 	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 
 	RECT rect;
-	rect.left = -(int)argv[0].as_real();
-	rect.top = -(int)argv[1].as_real();
-	rect.right = (int)argv[2].as_real();
-	rect.bottom = (int)argv[3].as_real();
+	rect.left = -(LONG)argv[0].as_int();
+	rect.top = -(LONG)argv[1].as_int();
+	rect.right = (LONG)argv[2].as_int();
+	rect.bottom = (LONG)argv[3].as_int();
 	infoStage->SetShotAutoDeleteClip(rect);
 
 	return value();
@@ -1776,9 +1777,9 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 	StgStageController* stageController = script->stageController_;
 	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 
-	int idShot = (int)argv[0].as_real();
-	int target = (int)argv[1].as_real();
-	int type = (int)argv[2].as_real();
+	int idShot = argv[0].as_int();
+	int target = argv[1].as_int();
+	int type = argv[2].as_int();
 
 	StgShotManager* shotManager = stageController->GetShotManager();
 	StgShotDataList* dataList = (target == TARGET_PLAYER) ?
@@ -1903,7 +1904,7 @@ gstd::value StgStageScript::Func_CreateItemA1(gstd::script_machine* machine, int
 	if (stageController->GetItemManager()->GetItemCount() >= StgItemManager::ITEM_MAX)
 		return script->CreateRealValue(StgControlScript::ID_INVALID);
 
-	int type = (int)argv[0].as_real();
+	int type = argv[0].as_int();
 	shared_ptr<StgItemObject> obj = itemManager->CreateItem(type);
 
 	int id = script->AddObject(obj);
@@ -1929,7 +1930,7 @@ gstd::value StgStageScript::Func_CreateItemA2(gstd::script_machine* machine, int
 	if (stageController->GetItemManager()->GetItemCount() >= StgItemManager::ITEM_MAX)
 		return script->CreateRealValue(StgControlScript::ID_INVALID);
 
-	int type = (int)argv[0].as_real();
+	int type = argv[0].as_int();
 	shared_ptr<StgItemObject> obj = itemManager->CreateItem(type);
 
 	int id = script->AddObject(obj);
@@ -2041,7 +2042,7 @@ gstd::value StgStageScript::Func_CollectItemsByType(gstd::script_machine* machin
 	StgStageController* stageController = script->stageController_;
 	StgItemManager* itemManager = stageController->GetItemManager();
 
-	int type = (int)argv[0].as_real();
+	int type = argv[0].as_int();
 	itemManager->CollectItemsByType(type);
 	return value();
 }
@@ -2119,8 +2120,8 @@ gstd::value StgStageScript::Func_StartSlow(gstd::script_machine* machine, int ar
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 
-	int target = (int)argv[0].as_real();
-	int fps = (int)argv[1].as_real();
+	int target = argv[0].as_int();
+	int fps = argv[1].as_int();
 
 	int slowTarget = PseudoSlowInformation::TARGET_ALL;
 	int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
@@ -2135,7 +2136,7 @@ gstd::value StgStageScript::Func_StopSlow(gstd::script_machine* machine, int arg
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 
-	int target = (int)argv[0].as_real();
+	int target = argv[0].as_int();
 
 	int slowTarget = PseudoSlowInformation::TARGET_ALL;
 	int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
@@ -2346,7 +2347,7 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtFrame(gstd::script_machine* ma
 	if (obj) {
 		double tx = argv[1].as_real();
 		double ty = argv[2].as_real();
-		int frame = (int)argv[3].as_real();
+		int frame = argv[3].as_int();
 
 		std::shared_ptr<StgMovePattern_Line> pattern(new StgMovePattern_Line(obj));
 		pattern->SetAtFrame(tx, ty, frame);
@@ -2379,7 +2380,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA1(gstd::script_machine* mach
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int frame = (int)argv[1].as_real();
+		int frame = argv[1].as_int();
 		double speed = argv[2].as_real();
 		double angle = argv[3].as_real();
 
@@ -2398,7 +2399,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA2(gstd::script_machine* mach
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int frame = (int)argv[1].as_real();
+		int frame = argv[1].as_int();
 		double speed = argv[2].as_real();
 		double angle = argv[3].as_real();
 		double accele = argv[4].as_real();
@@ -2422,13 +2423,13 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA3(gstd::script_machine* mach
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int frame = (int)argv[1].as_real();
+		int frame = argv[1].as_int();
 		double speed = argv[2].as_real();
 		double angle = argv[3].as_real();
 		double accele = argv[4].as_real();
 		double angV = argv[5].as_real();
 		double maxSpeed = argv[6].as_real();
-		int idShot = (int)argv[7].as_real();
+		int idShot = argv[7].as_int();
 
 		std::shared_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(obj));
 
@@ -2448,14 +2449,14 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA4(gstd::script_machine* mach
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int frame = (int)argv[1].as_real();
+		int frame = argv[1].as_int();
 		double speed = argv[2].as_real();
 		double angle = argv[3].as_real();
 		double accele = argv[4].as_real();
 		double angV = argv[5].as_real();
 		double maxSpeed = argv[6].as_real();
-		int idRelative = (int)argv[7].as_real();
-		int idShot = (int)argv[8].as_real();
+		int idRelative = argv[7].as_int();
+		int idShot = argv[8].as_int();
 
 		std::shared_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(obj));
 
@@ -2476,7 +2477,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB1(gstd::script_machine* mach
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int frame = (int)argv[1].as_real();
+		int frame = argv[1].as_int();
 		double speedX = argv[2].as_real();
 		double speedY = argv[3].as_real();
 
@@ -2495,7 +2496,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB2(gstd::script_machine* mach
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int frame = (int)argv[1].as_real();
+		int frame = argv[1].as_int();
 		double speedX = argv[2].as_real();
 		double speedY = argv[3].as_real();
 		double accelX = argv[4].as_real();
@@ -2521,14 +2522,14 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB3(gstd::script_machine* mach
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int frame = (int)argv[1].as_real();
+		int frame = argv[1].as_int();
 		double speedX = argv[2].as_real();
 		double speedY = argv[3].as_real();
 		double accelX = argv[4].as_real();
 		double accelY = argv[5].as_real();
 		double maxSpeedX = argv[6].as_real();
 		double maxSpeedY = argv[7].as_real();
-		int idShot = (int)argv[8].as_real();
+		int idShot = argv[8].as_int();
 
 		std::shared_ptr<StgMovePattern_XY> pattern(new StgMovePattern_XY(obj));
 
@@ -2707,7 +2708,7 @@ gstd::value StgStageScript::Func_ObjEnemy_Create(gstd::script_machine* machine, 
 	StgStageController* stageController = script->stageController_;
 	StgEnemyManager* enemyManager = stageController->GetEnemyManager();
 
-	TypeObject type = (TypeObject)((int)argv[0].as_real());
+	TypeObject type = (TypeObject)argv[0].as_int();
 	shared_ptr<DxScriptObjectBase> obj;
 	if (type == TypeObject::OBJ_ENEMY) {
 		obj = shared_ptr<DxScriptObjectBase>(new StgEnemyObject(stageController));
@@ -2749,7 +2750,7 @@ gstd::value StgStageScript::Func_ObjEnemy_Regist(gstd::script_machine* machine, 
 gstd::value StgStageScript::Func_ObjEnemy_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int type = (int)argv[1].as_real();
+	int type = argv[1].as_int();
 
 	StgEnemyObject* obj = dynamic_cast<StgEnemyObject*>(script->GetObjectPointer(id));
 	if (obj == nullptr) {
@@ -2815,9 +2816,9 @@ gstd::value StgStageScript::Func_ObjEnemy_AddIntersectionCircleA(gstd::script_ma
 	int id = (int)argv[0].as_real();
 	shared_ptr<StgEnemyObject> obj = std::dynamic_pointer_cast<StgEnemyObject>(script->GetObject(id));
 	if (obj) {
-		int px = (int)argv[1].as_real();
-		int py = (int)argv[2].as_real();
-		double radius = argv[3].as_real();
+		float px = argv[1].as_real();
+		float py = argv[2].as_real();
+		float radius = argv[3].as_real();
 
 		DxCircle circle(px, py, radius);
 
@@ -2839,9 +2840,9 @@ gstd::value StgStageScript::Func_ObjEnemy_SetIntersectionCircleToShot(gstd::scri
 	int id = (int)argv[0].as_real();
 	shared_ptr<StgEnemyObject> obj = std::dynamic_pointer_cast<StgEnemyObject>(script->GetObject(id));
 	if (obj) {
-		int px = (int)argv[1].as_real();
-		int py = (int)argv[2].as_real();
-		double radius = argv[3].as_real();
+		float px = argv[1].as_real();
+		float py = argv[2].as_real();
+		float radius = argv[3].as_real();
 
 		DxCircle circle(px, py, radius);
 
@@ -2865,9 +2866,9 @@ gstd::value StgStageScript::Func_ObjEnemy_SetIntersectionCircleToPlayer(gstd::sc
 	int id = (int)argv[0].as_real();
 	shared_ptr<StgEnemyObject> obj = std::dynamic_pointer_cast<StgEnemyObject>(script->GetObject(id));
 	if (obj) {
-		int px = (int)argv[1].as_real();
-		int py = (int)argv[2].as_real();
-		double radius = argv[3].as_real();
+		float px = argv[1].as_real();
+		float py = argv[2].as_real();
+		float radius = argv[3].as_real();
 
 		DxCircle circle(px, py, radius);
 
@@ -2982,7 +2983,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_Add(gstd::script_machine* mac
 	int id = (int)argv[0].as_real();
 	StgEnemyBossSceneObject* obj = dynamic_cast<StgEnemyBossSceneObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int step = (int)argv[1].as_real();
+		int step = argv[1].as_int();
 		std::wstring path = argv[2].as_string();
 		path = PathProperty::GetUnique(path);
 
@@ -2996,15 +2997,14 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_LoadInThread(gstd::script_mac
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	StgEnemyBossSceneObject* obj = dynamic_cast<StgEnemyBossSceneObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return value();
-
-	obj->LoadAllScriptInThread();
+	if (obj)
+		obj->LoadAllScriptInThread();
 	return value();
 }
 gstd::value StgStageScript::Func_ObjEnemyBossScene_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int type = (int)argv[1].as_real();
+	int type = argv[1].as_int();
 
 	StgEnemyBossSceneObject* obj = dynamic_cast<StgEnemyBossSceneObject*>(script->GetObjectPointer(id));
 	if (obj == nullptr) {
@@ -3144,7 +3144,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_SetSpellTimer(gstd::script_ma
 	if (obj) {
 		shared_ptr<StgEnemyBossSceneData> sceneData = obj->GetActiveData();
 		if (sceneData) {
-			int timer = (int)argv[1].as_real();
+			int timer = argv[1].as_int();
 			sceneData->SetSpellTimer(timer);
 		}
 	}
@@ -3185,7 +3185,7 @@ gstd::value StgStageScript::Func_ObjShot_Create(gstd::script_machine* machine, i
 
 	int id = DxScript::ID_INVALID;
 	if (stageController->GetShotManager()->GetShotCountAll() < StgShotManager::SHOT_MAX) {
-		TypeObject type = (TypeObject)((int)argv[0].as_real());
+		TypeObject type = (TypeObject)argv[0].as_int();
 		shared_ptr<StgShotObject> obj;
 		if (type == TypeObject::OBJ_SHOT) {
 			obj = shared_ptr<StgShotObject>(new StgNormalShotObject(stageController));
@@ -3266,7 +3266,7 @@ gstd::value StgStageScript::Func_ObjShot_SetDeleteFrame(gstd::script_machine* ma
 	int id = (int)argv[0].as_real();
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int frame = (int)argv[1].as_real();
+		int frame = argv[1].as_int();
 		obj->SetAutoDeleteFrame(frame);
 	}
 	return value();
@@ -3276,7 +3276,7 @@ gstd::value StgStageScript::Func_ObjShot_SetDelay(gstd::script_machine* machine,
 	int id = (int)argv[0].as_real();
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int delay = (int)argv[1].as_real();
+		int delay = argv[1].as_int();
 		obj->SetDelay(delay);
 	}
 	return value();
@@ -3302,7 +3302,7 @@ gstd::value StgStageScript::Func_ObjShot_SetGraphic(gstd::script_machine* machin
 	int id = (int)argv[0].as_real();
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int gr = (int)argv[1].as_real();
+		int gr = argv[1].as_int();
 		obj->SetShotDataID(gr);
 	}
 	return value();
@@ -3312,7 +3312,7 @@ gstd::value StgStageScript::Func_ObjShot_SetSourceBlendType(gstd::script_machine
 	int id = (int)argv[0].as_real();
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int typeBlend = (int)argv[1].as_real();
+		int typeBlend = argv[1].as_int();
 		obj->SetSourceBlendType((BlendMode)typeBlend);
 	}
 	return value();
@@ -3376,8 +3376,8 @@ gstd::value StgStageScript::Func_ObjShot_AddShotA1(gstd::script_machine* machine
 	int id = (int)argv[0].as_real();
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int idShot = (int)argv[1].as_real();
-		int frame = (int)argv[2].as_real();
+		int idShot = argv[1].as_int();
+		int frame = argv[2].as_int();
 		obj->AddShot(frame, idShot, 0, 0);
 	}
 	return value();
@@ -3387,8 +3387,8 @@ gstd::value StgStageScript::Func_ObjShot_AddShotA2(gstd::script_machine* machine
 	int id = (int)argv[0].as_real();
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int idShot = (int)argv[1].as_real();
-		int frame = (int)argv[2].as_real();
+		int idShot = argv[1].as_int();
+		int frame = argv[2].as_int();
 		float radius = argv[3].as_real();
 		double angle = argv[4].as_real();
 		obj->AddShot(frame, idShot, radius, Math::DegreeToRadian(angle));
@@ -3408,8 +3408,9 @@ gstd::value StgStageScript::Func_ObjShot_SetIntersectionCircleA1(gstd::script_ma
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT;
 
 		StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
-		int px = (int)obj->GetPositionX();
-		int py = (int)obj->GetPositionY();
+
+		float px = obj->GetPositionX();
+		float py = obj->GetPositionY();
 		float radius = argv[1].as_real();
 		DxCircle circle(px, py, radius);
 
@@ -3438,8 +3439,9 @@ gstd::value StgStageScript::Func_ObjShot_SetIntersectionCircleA2(gstd::script_ma
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT;
 
 		StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
-		int px = (int)argv[1].as_real();
-		int py = (int)argv[2].as_real();
+
+		float px = argv[1].as_real();
+		float py = argv[2].as_real();
 		float radius = argv[3].as_real();
 		DxCircle circle(px, py, radius);
 
@@ -3630,7 +3632,7 @@ gstd::value StgStageScript::Func_ObjShot_SetDelayGraphic(gstd::script_machine* m
 	int id = (int)argv[0].as_real();
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int gr = (int)argv[1].as_real();
+		int gr = argv[1].as_int();
 		obj->SetShotDataDelayID(gr);
 	}
 	return value();
@@ -3703,7 +3705,7 @@ gstd::value StgStageScript::Func_ObjShot_SetGrazeInvalidFrame(gstd::script_machi
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	if (StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id))) {
-		int frame = (int)argv[1].as_real();
+		int frame = argv[1].as_int();
 		obj->SetGrazeInvalidFrame(frame);
 	}
 	return value();
@@ -3712,7 +3714,7 @@ gstd::value StgStageScript::Func_ObjShot_SetGrazeFrame(gstd::script_machine* mac
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	if (StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id))) {
-		int frame = (int)argv[1].as_real();
+		int frame = argv[1].as_int();
 		obj->SetGrazeFrame(frame);
 	}
 	return value();
@@ -3734,7 +3736,7 @@ gstd::value StgStageScript::Func_ObjLaser_SetLength(gstd::script_machine* machin
 	int id = (int)argv[0].as_real();
 	StgLaserObject* obj = dynamic_cast<StgLaserObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int length = (int)argv[1].as_real();
+		int length = argv[1].as_int();
 		obj->SetLength(length);
 	}
 	return value();
@@ -3744,7 +3746,7 @@ gstd::value StgStageScript::Func_ObjLaser_SetRenderWidth(gstd::script_machine* m
 	int id = (int)argv[0].as_real();
 	StgLaserObject* obj = dynamic_cast<StgLaserObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int width = (int)argv[1].as_real();
+		int width = argv[1].as_int();
 		obj->SetRenderWidth(width);
 	}
 	return value();
@@ -3754,7 +3756,7 @@ gstd::value StgStageScript::Func_ObjLaser_SetIntersectionWidth(gstd::script_mach
 	int id = (int)argv[0].as_real();
 	StgLaserObject* obj = dynamic_cast<StgLaserObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int width = (int)argv[1].as_real() / 2;
+		int width = argv[1].as_int() / 2;
 		obj->SetIntersectionWidth(width);
 	}
 	return value();
@@ -3847,7 +3849,7 @@ gstd::value StgStageScript::Func_ObjStLaser_SetEndGraphic(gstd::script_machine* 
 	int id = (int)argv[0].as_real();
 	StgStraightLaserObject* obj = dynamic_cast<StgStraightLaserObject*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetEndGraphic((int)argv[1].as_real());
+		obj->SetEndGraphic(argv[1].as_int());
 	return value();
 }
 gstd::value StgStageScript::Func_ObjStLaser_SetDelayScale(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -3974,7 +3976,7 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetParentObject(gstd::script_mac
 	int id = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
 	if (obj) {
-		int idParent = (int)argv[1].as_real();
+		int idParent = argv[1].as_int();
 		shared_ptr<StgMoveObject> objParent = std::dynamic_pointer_cast<StgMoveObject>(script->GetObject(idParent));
 		if (objParent) obj->SetParent(objParent);
 	}
@@ -3987,7 +3989,7 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetPatternType(gstd::script_mach
 	int id = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetTypePattern((int)argv[1].as_real());
+		obj->SetTypePattern(argv[1].as_int());
 	return value();
 }
 gstd::value StgStageScript::Func_ObjPatternShot_SetShotType(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -4019,8 +4021,8 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetShotCount(gstd::script_machin
 	int id = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
 	if (obj) {
-		int way = (int)argv[1].as_real();
-		int stack = (int)argv[2].as_real();
+		int way = argv[1].as_int();
+		int stack = argv[2].as_int();
 		obj->SetWayStack((size_t)std::max(0, way), (size_t)std::max(0, stack));
 	}
 	return value();
@@ -4109,7 +4111,7 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetDelay(gstd::script_machine* m
 	int id = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
 	if (obj) {
-		int delay = (int)argv[1].as_real();
+		int delay = argv[1].as_int();
 		obj->SetDelay(delay);
 	}
 	return value();
@@ -4133,7 +4135,7 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetGraphic(gstd::script_machine*
 	int id = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
 	if (obj) {
-		int graphic = (int)argv[1].as_real();
+		int graphic = argv[1].as_int();
 		obj->SetGraphic(graphic);
 	}
 	return value();
@@ -4145,8 +4147,8 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetLaserParameter(gstd::script_m
 	int id = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
 	if (obj) {
-		int width = (int)argv[1].as_real();
-		int length = (int)argv[2].as_real();
+		int width = argv[1].as_int();
+		int length = argv[2].as_int();
 		obj->SetLaserArgument(width, length);
 	}
 	return value();
@@ -4172,13 +4174,13 @@ gstd::value StgStageScript::Func_ObjPatternShot_AddTransform(gstd::script_machin
 	int idDst = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(idDst));
 	if (obj) {
-		int typeAct = (int)argv[1].as_real();
+		int typeAct = argv[1].as_int();
 
 		StgPatternShotTransform transform;
 		transform.act = (uint8_t)typeAct;
-		transform.param_s[0] = (int)argv[2].as_real();
-		transform.param_s[1] = (int)argv[3].as_real();
-		transform.param_s[2] = (int)argv[4].as_real();
+		transform.param_s[0] = argv[2].as_int();
+		transform.param_s[1] = argv[3].as_int();
+		transform.param_s[2] = argv[4].as_int();
 		transform.param_d[0] = argv[5].as_real();
 		transform.param_d[1] = argv[6].as_real();
 		transform.param_d[2] = argv[7].as_real();
@@ -4193,14 +4195,14 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetTransform(gstd::script_machin
 	int idDst = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(idDst));
 	if (obj) {
-		int slot = (int)argv[1].as_real();
-		int typeAct = (int)argv[2].as_real();
+		int slot = argv[1].as_int();
+		int typeAct = argv[2].as_int();
 
 		StgPatternShotTransform transform;
 		transform.act = (uint8_t)typeAct;
-		transform.param_s[0] = (int)argv[3].as_real();
-		transform.param_s[1] = (int)argv[4].as_real();
-		transform.param_s[2] = (int)argv[5].as_real();
+		transform.param_s[0] = argv[3].as_int();
+		transform.param_s[1] = argv[4].as_int();
+		transform.param_s[2] = argv[5].as_int();
 		transform.param_d[0] = argv[6].as_real();
 		transform.param_d[1] = argv[7].as_real();
 		transform.param_d[2] = argv[8].as_real();
@@ -4215,7 +4217,7 @@ gstd::value StgStageScript::Func_ObjItem_Create(gstd::script_machine* machine, i
 	script->CheckRunInMainThread();
 	StgStageController* stageController = script->stageController_;
 
-	int type = (int)argv[0].as_real();
+	int type = argv[0].as_int();
 	shared_ptr<StgItemObject> obj;
 	if (type == StgItemObject::ITEM_USER) {
 		obj = shared_ptr<StgItemObject>(new StgItemObject_User(stageController));
@@ -4249,7 +4251,7 @@ gstd::value StgStageScript::Func_ObjItem_SetItemID(gstd::script_machine* machine
 	int id = (int)argv[0].as_real();
 	StgItemObject_User* obj = dynamic_cast<StgItemObject_User*>(script->GetObjectPointer(id));
 	if (obj) {
-		int id = (int)argv[1].as_real();
+		int id = argv[1].as_int();
 		obj->SetImageID(id);
 	}
 	return value();
@@ -4259,7 +4261,7 @@ gstd::value StgStageScript::Func_ObjItem_SetRenderScoreEnable(gstd::script_machi
 	int id = (int)argv[0].as_real();
 	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		bool bEnable = (bool)argv[1].as_boolean();
+		bool bEnable = argv[1].as_boolean();
 		obj->SetChangeItemScore(bEnable);
 	}
 	return value();
@@ -4269,7 +4271,7 @@ gstd::value StgStageScript::Func_ObjItem_SetAutoCollectEnable(gstd::script_machi
 	int id = (int)argv[0].as_real();
 	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		bool bEnable = (bool)argv[1].as_boolean();
+		bool bEnable = argv[1].as_boolean();
 		obj->SetPermitMoveToPlayer(bEnable);
 	}
 	return value();
@@ -4279,7 +4281,7 @@ gstd::value StgStageScript::Func_ObjItem_SetDefinedMovePatternA1(gstd::script_ma
 	int id = (int)argv[0].as_real();
 	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int type = (int)argv[1].as_real();
+		int type = argv[1].as_int();
 		std::shared_ptr<StgMovePattern_Item> move(new StgMovePattern_Item(obj));
 		move->SetItemMoveType(type);
 		obj->SetPattern(move);
@@ -4290,7 +4292,7 @@ gstd::value StgStageScript::Func_ObjItem_SetDefinedMovePatternA1(gstd::script_ma
 gstd::value StgStageScript::Func_ObjItem_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int type = (int)argv[1].as_real();
+	int type = argv[1].as_int();
 
 	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
 	if (obj == nullptr) {
@@ -4319,8 +4321,8 @@ gstd::value StgStageScript::Func_ObjPlayer_AddIntersectionCircleA1(gstd::script_
 	int id = (int)argv[0].as_real();
 	shared_ptr<StgPlayerObject> obj = std::dynamic_pointer_cast<StgPlayerObject>(script->GetObject(id));
 	if (obj) {
-		int px = (int)argv[1].as_real();
-		int py = (int)argv[2].as_real();
+		float px = argv[1].as_real();
+		float py = argv[2].as_real();
 		float rHit = argv[3].as_real();
 		float rGraze = argv[4].as_real();
 
@@ -4344,8 +4346,8 @@ gstd::value StgStageScript::Func_ObjPlayer_AddIntersectionCircleA2(gstd::script_
 	int id = (int)argv[0].as_real();
 	shared_ptr<StgPlayerObject> obj = std::dynamic_pointer_cast<StgPlayerObject>(script->GetObject(id));
 	if (obj) {
-		int px = (int)argv[1].as_real();
-		int py = (int)argv[2].as_real();
+		float px = argv[1].as_real();
+		float py = argv[2].as_real();
 		float rGraze = argv[3].as_real();
 
 		DxCircle circle(px, py, 0);
@@ -4462,7 +4464,7 @@ StgStageShotScript::~StgStageShotScript() {}
 
 gstd::value StgStageShotScript::Func_SetShotDeleteEventEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageShotScript* script = (StgStageShotScript*)machine->data;
-	int type = (int)argv[0].as_real();
+	int type = argv[0].as_int();
 	bool bEnable = argv[1].as_boolean();
 
 	StgStageController* stageController = script->stageController_;
@@ -4525,9 +4527,9 @@ gstd::value StgStagePlayerScript::Func_CreatePlayerShotA1(gstd::script_machine* 
 				double posY = argv[1].as_real();
 				double speed = argv[2].as_real();
 				double angle = argv[3].as_real();
-				double damage = (int)argv[4].as_real();
-				double life = (int)argv[5].as_real();
-				int idShot = (int)argv[6].as_real();
+				double damage = argv[4].as_real();
+				double life = argv[5].as_real();
+				int idShot = argv[6].as_int();
 
 				obj->SetOwnerType(StgShotObject::OWNER_PLAYER);
 				obj->SetX(posX);
@@ -4661,9 +4663,9 @@ gstd::value StgStagePlayerScript::Func_ObjSpell_SetIntersectionCircle(gstd::scri
 		std::dynamic_pointer_cast<StgPlayerSpellObject>(stageController->GetMainRenderObject(id));
 	if (objSpell) {
 		StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
-		int px = (int)argv[1].as_real();
-		int py = (int)argv[2].as_real();
-		int radius = (int)argv[3].as_real();
+		float px = argv[1].as_real();
+		float py = argv[2].as_real();
+		float radius = argv[3].as_real();
 		DxCircle circle(px, py, radius);
 
 		shared_ptr<StgIntersectionTarget_Circle> target(new StgIntersectionTarget_Circle);
@@ -4687,11 +4689,11 @@ gstd::value StgStagePlayerScript::Func_ObjSpell_SetIntersectionLine(gstd::script
 		std::dynamic_pointer_cast<StgPlayerSpellObject>(stageController->GetMainRenderObject(id));
 	if (objSpell) {
 		StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
-		int px1 = (int)argv[1].as_real();
-		int py1 = (int)argv[2].as_real();
-		int px2 = (int)argv[3].as_real();
-		int py2 = (int)argv[4].as_real();
-		int width = (int)argv[5].as_real();
+		float px1 = argv[1].as_real();
+		float py1 = argv[2].as_real();
+		float px2 = argv[3].as_real();
+		float py2 = argv[4].as_real();
+		float width = argv[5].as_real();
 		DxWidthLine line(px1, py1, px2, py2, width);
 
 		shared_ptr<StgIntersectionTarget_Line> target(new StgIntersectionTarget_Line);

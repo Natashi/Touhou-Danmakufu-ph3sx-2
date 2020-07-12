@@ -311,7 +311,7 @@ void StgEnemyBossSceneObject::Activate() {
 			//ƒ‰ƒCƒt“Ç‚İ‚İ
 			std::vector<double> listLife;
 			gstd::value vLife = script->RequestEvent(StgStageScript::EV_REQUEST_LIFE);
-			if (script->IsRealValue(vLife)) {
+			if (script->IsRealValue(vLife) || script->IsIntValue(vLife)) {
 				double life = vLife.as_real();
 				listLife.push_back(life);
 			}
