@@ -1924,15 +1924,17 @@ void Sprite3D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
 
 	RenderObjectLX::Render(matWorld);
 }
-void Sprite3D::SetSourceDestRect(RECT_D &rcSrc) {
-	double width = rcSrc.right - rcSrc.left;
-	double height = rcSrc.bottom - rcSrc.top;
+void Sprite3D::SetSourceDestRect(RECT_D& rcSrc) {
+	RECT_D rcSrcCopy = rcSrc;
+	rcSrcCopy.left = (LONG)rcSrc.left;
+	rcSrcCopy.top = (LONG)rcSrc.top;
+	rcSrcCopy.right = (LONG)(rcSrc.right - 1);
+	rcSrcCopy.bottom = (LONG)(rcSrc.bottom - 1);
 
 	RECT_D rcDest;
+	double width = rcSrc.right - rcSrc.left;
+	double height = rcSrc.bottom - rcSrc.top;
 	SetRectD(&rcDest, -width / 2.0, -height / 2.0, width / 2.0, height / 2.0);
-
-	rcSrc.right--;
-	rcSrc.bottom--;
 
 	SetSourceRect(rcSrc);
 	SetDestinationRect(rcDest);

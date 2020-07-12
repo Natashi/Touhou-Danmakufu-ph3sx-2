@@ -451,10 +451,10 @@ namespace directx {
 		Sprite2D();
 		~Sprite2D();
 		void Copy(Sprite2D* src);
-		void SetSourceRect(RECT_D &rcSrc);
-		void SetDestinationRect(RECT_D &rcDest);
+		void SetSourceRect(RECT_D& rcSrc);
+		void SetDestinationRect(RECT_D& rcDest);
 		void SetDestinationCenter();
-		void SetVertex(RECT_D &rcSrc, RECT_D &rcDest, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
+		void SetVertex(RECT_D& rcSrc, RECT_D& rcDest, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
 
 		RECT_D GetDestinationRect();
 	};
@@ -488,8 +488,8 @@ namespace directx {
 
 		void AddVertex();
 		void AddVertex(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
-		void SetSourceRect(RECT_D &rcSrc) { rcSrc_ = rcSrc; }
-		void SetDestinationRect(RECT_D &rcDest) { rcDest_ = rcDest; }
+		void SetSourceRect(RECT_D& rcSrc) { rcSrc_ = rcSrc; }
+		void SetDestinationRect(RECT_D& rcDest) { rcDest_ = rcDest; }
 		void SetDestinationCenter();
 		D3DCOLOR GetColor() { return color_; }
 		void SetColor(D3DCOLOR color) { color_ = color; }
@@ -513,10 +513,10 @@ namespace directx {
 		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
 
 		void SetSourceRect(RECT_D &rcSrc);
-		void SetDestinationRect(RECT_D &rcDest);
-		void SetVertex(RECT_D &rcSrc, RECT_D &rcDest, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
-		void SetSourceDestRect(RECT_D &rcSrc);
-		void SetVertex(RECT_D &rcSrc, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
+		void SetDestinationRect(RECT_D& rcDest);
+		void SetVertex(RECT_D& rcSrc, RECT_D& rcDest, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
+		void SetSourceDestRect(RECT_D& rcSrc);
+		void SetVertex(RECT_D& rcSrc, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
 		void SetBillboardEnable(bool bEnable) { bBillboard_ = bEnable; }
 	};
 
