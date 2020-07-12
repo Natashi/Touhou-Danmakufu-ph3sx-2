@@ -56,6 +56,7 @@ namespace gstd {
 		static type_data* get_char_type() { return base_->char_type; }
 		static type_data* get_boolean_type() { return base_->boolean_type; }
 		static type_data* get_string_type() { return base_->string_type; }
+		//static type_data* get_int_array_type() { return base_->int_array_type; }
 		static type_data* get_real_array_type() { return base_->real_array_type; }
 		type_data* get_array_type(type_data* element);
 
@@ -64,11 +65,14 @@ namespace gstd {
 		script_type_manager(const script_type_manager& src);
 
 		std::set<type_data> types;
+
+		//Common types for quick access without std::set traversal
 		type_data* int_type;
 		type_data* real_type;
 		type_data* char_type;
 		type_data* boolean_type;
 		type_data* string_type;
+		//type_data* int_array_type;
 		type_data* real_array_type;
 
 		inline static type_data* deref_itr(std::set<type_data>::iterator& itr) {

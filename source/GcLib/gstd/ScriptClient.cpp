@@ -812,18 +812,9 @@ void ScriptClientBase::SetArgumentValue(value v, int index) {
 	}
 	listValueArg_[index] = v;
 }
-value ScriptClientBase::CreateRealValue(double r) {
-	return value(script_type_manager::get_real_type(), r);
-}
-value ScriptClientBase::CreateBooleanValue(bool b) {
-	return value(script_type_manager::get_boolean_type(), b);
-}
 value ScriptClientBase::CreateStringValue(const std::string& s) {
 	std::wstring wstr = StringUtility::ConvertMultiToWide(s);
-	return value(script_type_manager::get_string_type(), wstr);
-}
-value ScriptClientBase::CreateStringValue(const std::wstring& s) {
-	return value(script_type_manager::get_string_type(), s);
+	return CreateStringValue(wstr);
 }
 value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
@@ -843,7 +834,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
 		return res;
 	}
 
-	return value(typeManager->get_string_type(), std::wstring());
+	return value(typeManager->get_string_type(), 0.0);
 }
 value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
@@ -863,7 +854,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) 
 		return res;
 	}
 
-	return value(typeManager->get_string_type(), std::wstring());
+	return value(typeManager->get_string_type(), 0.0);
 }
 value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
@@ -883,7 +874,7 @@ value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 		return res;
 	}
 
-	return value(typeManager->get_string_type(), std::wstring());
+	return value(typeManager->get_string_type(), 0.0);
 }
 bool ScriptClientBase::IsRealValue(value& v) {
 	if (!v.has_data()) return false;

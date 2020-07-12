@@ -123,14 +123,27 @@ namespace gstd {
 		void SetArgumentValue(value v, int index = 0);
 		value GetResultValue() { return valueRes_; }
 
-		static value CreateRealValue(double r);
-		static value CreateBooleanValue(bool b);
+		static inline value CreateRealValue(double r) {
+			return value(script_type_manager::get_real_type(), r);
+		}
+		static inline value CreateIntValue(int64_t r) {
+			return value(script_type_manager::get_int_type(), r);
+		}
+		static inline value CreateBooleanValue(bool b) {
+			return value(script_type_manager::get_boolean_type(), b);
+		}
+		static inline value CreateStringValue(const std::wstring& s) {
+			return value(script_type_manager::get_string_type(), s);
+		}
 		static value CreateStringValue(const std::string& s);
-		static value CreateStringValue(const std::wstring& s);
 		template<typename T> static inline value CreateRealArrayValue(std::vector<T>& list) {
 			return CreateRealArrayValue(list.data(), list.size());
 		}
 		template<typename T> static value CreateRealArrayValue(T* ptrList, size_t count);
+		template<typename T> static inline value CreateIntArrayValue(std::vector<T>& list) {
+			return CreateRealArrayValue(list.data(), list.size());
+		}
+		template<typename T> static value CreateIntArrayValue(T* ptrList, size_t count);
 		static value CreateStringArrayValue(std::vector<std::string>& list);
 		static value CreateStringArrayValue(std::vector<std::wstring>& list);
 		value CreateValueArrayValue(std::vector<value>& list);
@@ -260,11 +273,9 @@ namespace gstd {
 #pragma region ScriptClientBase_impl
 	template<typename T>
 	value ScriptClientBase::CreateRealArrayValue(T* ptrList, size_t count) {
-		script_type_manager* typeManager = script_type_manager::get_instance();
-
 		if (ptrList && count > 0) {
-			type_data* type_real = typeManager->get_real_type();
-			type_data* type_arr = typeManager->get_real_array_type();
+			type_data* type_real = script_type_manager::get_real_type();
+			type_data* type_arr = script_type_manager::get_real_array_type();
 
 			std::vector<value> res_arr;
 			res_arr.resize(count);
@@ -276,8 +287,25 @@ namespace gstd {
 			res.set(type_arr, res_arr);
 			return res;
 		}
+		return value(script_type_manager::get_string_type(), 0.0);
+	}
+	template<typename T>
+	value ScriptClientBase::CreateIntArrayValue(T* ptrList, size_t count) {
+		if (ptrList && count > 0) {
+			type_data* type_int = script_type_manager::get_int_type();
+			type_data* type_arr = script_type_manager::get_int_array_type();
 
-		return value(typeManager->get_string_type(), std::wstring());
+			std::vector<value> res_arr;
+			res_arr.resize(count);
+			for (size_t iVal = 0U; iVal < count; ++iVal) {
+				res_arr[iVal] = value(type_real, (int64_t)(ptrList[iVal]));
+			}
+
+			value res;
+			res.set(type_arr, res_arr);
+			return res;
+		}
+		return value(script_type_manager::get_string_type(), 0.0);
 	}
 #pragma endregion ScriptClientBase_impl
 
