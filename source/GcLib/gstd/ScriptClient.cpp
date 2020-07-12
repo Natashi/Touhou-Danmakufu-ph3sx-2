@@ -258,7 +258,7 @@ void ScriptClientBase::_RaiseError(int line, const std::wstring& message) {
 		fileName.c_str(),
 		lineOriginal,
 		errorPos.c_str());
-	throw ScriptException(str);
+	throw wexception(str);
 }
 void ScriptClientBase::_RaiseErrorFromEngine() {
 	int line = engine_->GetEngine()->get_error_line();
@@ -770,7 +770,7 @@ bool ScriptClientBase::Run(const std::string& target) {
 
 	std::map<std::string, script_engine::block*>::iterator itrEvent;
 	if (!machine_->has_event(target, itrEvent)) {
-		_RaiseError(0, StringUtility::FormatToWide("The requested coroutine is not found. [%s]", target.c_str()));
+		_RaiseError(0, StringUtility::FormatToWide("The requested event does not exist. [%s]", target.c_str()));
 	}
 
 	Run();
@@ -795,8 +795,11 @@ bool ScriptClientBase::Run(std::map<std::string, script_engine::block*>::iterato
 	return true;
 }
 bool ScriptClientBase::IsEventExists(const std::string& name, std::map<std::string, script_engine::block*>::iterator& res) {
-	if (bError_)
+	if (bError_) {
+		if (machine_ && machine_->get_error()) _RaiseErrorFromMachine();
+		else if (engine_->GetEngine()->get_error()) _RaiseErrorFromEngine();
 		return false;
+	}
 	return machine_->has_event(name, res);
 }
 size_t ScriptClientBase::GetThreadCount() {
@@ -886,6 +889,10 @@ bool ScriptClientBase::IsRealValue(value& v) {
 	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_real_type();
 }
+bool ScriptClientBase::IsIntValue(value& v) {
+	if (!v.has_data()) return false;
+	return v.get_type() == script_type_manager::get_int_type();
+}
 bool ScriptClientBase::IsBooleanValue(value& v) {
 	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_boolean_type();
@@ -893,6 +900,10 @@ bool ScriptClientBase::IsBooleanValue(value& v) {
 bool ScriptClientBase::IsStringValue(value& v) {
 	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_string_type();
+}
+bool ScriptClientBase::IsArrayValue(value& v, type_data* element) {
+	if (!v.has_data()) return false;
+	return v.get_type() == script_type_manager::get_instance()->get_array_type(element);
 }
 bool ScriptClientBase::IsRealArrayValue(value& v) {
 	if (!v.has_data()) return false;

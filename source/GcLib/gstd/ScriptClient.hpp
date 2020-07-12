@@ -12,14 +12,6 @@
 namespace gstd {
 	class ScriptFileLineMap;
 	class ScriptCommonDataManager;
-	/**********************************************************
-	//ScriptException
-	**********************************************************/
-	class ScriptException : public gstd::wexception {
-	public:
-		ScriptException() : gstd::wexception(L"") {};
-		ScriptException(const std::wstring& str) : gstd::wexception(str.c_str()) {}
-	};
 
 	/**********************************************************
 	//ScriptEngineData
@@ -143,8 +135,10 @@ namespace gstd {
 		static value CreateStringArrayValue(std::vector<std::wstring>& list);
 		value CreateValueArrayValue(std::vector<value>& list);
 		static bool IsRealValue(value& v);
+		static bool IsIntValue(value& v);
 		static bool IsBooleanValue(value& v);
 		static bool IsStringValue(value& v);
+		static bool IsArrayValue(value& v, type_data* element);
 		static bool IsRealArrayValue(value& v);
 
 		static void IsMatrix(script_machine*& machine, const value& v);

@@ -116,12 +116,14 @@ int64_t value::as_int() const {
 	if (data == nullptr)
 		return 0i64;
 	switch (data->type->get_kind()) {
+	case type_data::type_kind::tk_int:
+		return data->int_value;
 	case type_data::type_kind::tk_real:
-		return (int64_t)(data->real_value + 0.1);
+		return (int64_t)(data->real_value + 0.01);
 	case type_data::type_kind::tk_char:
 		return (int64_t)data->char_value;
 	case type_data::type_kind::tk_boolean:
-		return (data->boolean_value) ? 1i64 : 0i64;
+		return data->boolean_value ? 1i64 : 0i64;
 	case type_data::type_kind::tk_array:
 		if (data->type->get_element()->get_kind() == type_data::type_kind::tk_char) {
 			try {
@@ -133,17 +135,16 @@ int64_t value::as_int() const {
 		}
 		else
 			return length_as_array();
-	case type_data::type_kind::tk_int:
-		return data->int_value;
-	default:
-		assert(false);
-		return 0i64;
 	}
+	assert(false);
+	return 0i64;
 }
 double value::as_real() const {
 	if (data == nullptr)
 		return 0.0;
 	switch (data->type->get_kind()) {
+	case type_data::type_kind::tk_int:
+		return (double)data->int_value;
 	case type_data::type_kind::tk_real:
 		return data->real_value;
 	case type_data::type_kind::tk_char:
@@ -161,17 +162,16 @@ double value::as_real() const {
 		}
 		else
 			return length_as_array();
-	case type_data::type_kind::tk_int:
-		return (double)data->int_value;
-	default:
-		assert(false);
-		return 0.0;
 	}
+	assert(false);
+	return 0.0;
 }
 wchar_t value::as_char() const {
 	if (data == nullptr)
 		return L'\0';
 	switch (data->type->get_kind()) {
+	case type_data::type_kind::tk_int:
+		return (wchar_t)data->int_value;
 	case type_data::type_kind::tk_real:
 		return (wchar_t)data->real_value;
 	case type_data::type_kind::tk_char:
@@ -180,17 +180,16 @@ wchar_t value::as_char() const {
 		return (data->boolean_value) ? L'1' : L'0';
 	case type_data::type_kind::tk_array:
 		return L'\0';
-	case type_data::type_kind::tk_int:
-		return (wchar_t)data->int_value;
-	default:
-		assert(false);
-		return L'\0';
 	}
+	assert(false);
+	return L'\0';
 }
 bool value::as_boolean() const {
 	if (data == nullptr)
 		return false;
 	switch (data->type->get_kind()) {
+	case type_data::type_kind::tk_int:
+		return data->int_value != 0;
 	case type_data::type_kind::tk_real:
 		return data->real_value != 0.0;
 	case type_data::type_kind::tk_char:
@@ -199,17 +198,16 @@ bool value::as_boolean() const {
 		return data->boolean_value;
 	case type_data::type_kind::tk_array:
 		return data->array_value.size() != 0U;
-	case type_data::type_kind::tk_int:
-		return data->int_value != 0i64;
-	default:
-		assert(false);
-		return false;
 	}
+	assert(false);
+	return false;
 }
 std::wstring value::as_string() const {
 	if (data == nullptr)
-		return L"(VOID)";
+		return L"(NULL)";
 	switch (data->type->get_kind()) {
+	case type_data::type_kind::tk_int:
+		return std::to_wstring(data->int_value);
 	case type_data::type_kind::tk_real:
 		return std::to_wstring(data->real_value);
 	case type_data::type_kind::tk_char:
@@ -227,7 +225,7 @@ std::wstring value::as_string() const {
 		}
 		else {
 			std::wstring result = L"[";
-			auto itrLast = std::prev(data->array_value.end());
+			auto itrLast = data->array_value.rbegin().base();
 			for (auto itr = data->array_value.begin(); itr != data->array_value.end(); ++itr) {
 				result += itr->as_string();
 				if (itr != itrLast) result += L",";
@@ -236,10 +234,7 @@ std::wstring value::as_string() const {
 			return result;
 		}
 	}
-	case type_data::type_kind::tk_int:
-		return std::to_wstring(data->int_value);
-	default:
-		assert(false);
-		return L"(INTERNAL-ERROR)";
 	}
+	assert(false);
+	return L"(INVALID-TYPE)";
 }

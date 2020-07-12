@@ -164,25 +164,22 @@ value _script_compare(int argc, const value* argv) {
 			double a = argv[0].as_real();
 			double b = argv[1].as_real();
 			r = (a == b) ? 0 : (a < b) ? -1 : 1;
+			break;
 		}
-		break;
-
 		case type_data::type_kind::tk_char:
 		{
 			wchar_t a = argv[0].as_char();
 			wchar_t b = argv[1].as_char();
 			r = (a == b) ? 0 : (a < b) ? -1 : 1;
+			break;
 		}
-		break;
-
 		case type_data::type_kind::tk_boolean:
 		{
 			bool a = argv[0].as_boolean();
 			bool b = argv[1].as_boolean();
 			r = (a == b) ? 0 : (a < b) ? -1 : 1;
+			break;
 		}
-		break;
-
 		case type_data::type_kind::tk_array:
 		{
 			for (size_t i = 0; i < argv[0].length_as_array(); ++i) {
@@ -201,9 +198,8 @@ value _script_compare(int argc, const value* argv) {
 			if (r == 0 && argv[0].length_as_array() < argv[1].length_as_array()) {
 				r = -1;	//"12" < "123"
 			}
+			break;
 		}
-		break;
-
 		default:
 			assert(false);
 		}
