@@ -217,7 +217,8 @@ std::wstring value::as_string() const {
 	case type_data::type_kind::tk_array:
 	{
 		type_data* elem = data->type->get_element();
-		if (elem != nullptr && elem->get_kind() == type_data::type_kind::tk_char) {
+		if (elem == nullptr) break;
+		if (elem->get_kind() == type_data::type_kind::tk_char) {
 			std::wstring result = L"";
 			for (auto itr = data->array_value.begin(); itr != data->array_value.end(); ++itr)
 				result += itr->as_char();
@@ -225,10 +226,11 @@ std::wstring value::as_string() const {
 		}
 		else {
 			std::wstring result = L"[";
-			auto itrLast = data->array_value.rbegin().base();
-			for (auto itr = data->array_value.begin(); itr != data->array_value.end(); ++itr) {
+			auto itr = data->array_value.begin();
+			while (true) {
 				result += itr->as_string();
-				if (itr != itrLast) result += L",";
+				if ((++itr) == data->array_value.end()) break;
+				result += L",";
 			}
 			result += L"]";
 			return result;

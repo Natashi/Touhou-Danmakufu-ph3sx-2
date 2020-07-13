@@ -1316,7 +1316,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 		return command_kind::pc_inline_add_asi;
 	};
 
-	bool need_semicolon = true;
+	bool need_terminator = true;
 
 	switch (lex->next) {
 	case token_kind::tk_word:
@@ -1459,7 +1459,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 	case token_kind::tk_open_cur:
 		if (lex->next == token_kind::tk_LOCAL) lex->advance();
 		parse_inline_block(nullptr, block, lex, block_kind::bk_normal, false);
-		need_semicolon = false;
+		need_terminator = false;
 		break;
 	case token_kind::tk_LOOP:
 	{
@@ -1472,6 +1472,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 			{
 				script_engine::block tmp(block->level, block_kind::bk_normal);
 
+				tmp.codes.push_back(code(lex->line, command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
 				tmp.codes.push_back(code(lex->line, command_kind::pc_loop_count));
 
 				script_engine::block* childBlock = nullptr;
@@ -1508,7 +1509,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 			}
 		}
 
-		need_semicolon = false;
+		need_terminator = false;
 		break;
 	}
 	case token_kind::tk_TIMES:
@@ -1523,6 +1524,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 		{
 			script_engine::block tmp(block->level, block_kind::bk_normal);
 
+			tmp.codes.push_back(code(lex->line, command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
 			tmp.codes.push_back(code(lex->line, command_kind::pc_loop_count));
 
 			script_engine::block* childBlock = nullptr;
@@ -1547,7 +1549,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 			}
 		}
 
-		need_semicolon = false;
+		need_terminator = false;
 		break;
 	}
 	case token_kind::tk_WHILE:
@@ -1571,7 +1573,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 				block->codes.pop_back();
 		}
 
-		need_semicolon = false;
+		need_terminator = false;
 		break;
 	}
 	case token_kind::tk_FOR:
@@ -1608,7 +1610,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 
 			//The counter
 			block->codes.push_back(code(lex->line, command_kind::pc_push_value,
-				value(engine->get_real_type(), 0.0)));
+				value(script_type_manager::get_int_type(), 0i64)));
 
 			size_t ip = block->codes.size();
 
@@ -1638,6 +1640,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 			bool isNewVar = false;
 			bool isNewVarConst = false;
 			std::string newVarName = "";
+
 			script_scanner lex_s1(*lex);
 			if (IsDeclToken(lex->next) || lex->next == token_kind::tk_const) {
 				isNewVar = true;
@@ -1725,7 +1728,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 			parser_assert(false, "\"(\" is required.\r\n");
 		}
 
-		need_semicolon = false;
+		need_terminator = false;
 		break;
 	}
 	case token_kind::tk_ASCENT:
@@ -1831,7 +1834,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 		}
 		frame.pop_back();
 
-		need_semicolon = false;
+		need_terminator = false;
 		break;
 	}
 	case token_kind::tk_IF:
@@ -1881,7 +1884,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 			}
 		}
 
-		need_semicolon = false;
+		need_terminator = false;
 		break;
 	}
 	case token_kind::tk_ALTERNATIVE:
@@ -1943,7 +1946,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 			}
 		}
 
-		need_semicolon = false;
+		need_terminator = false;
 		break;
 	}
 	case token_kind::tk_BREAK:
@@ -1956,6 +1959,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 		break;
 	}
 	case token_kind::tk_RETURN:
+	{
 		lex->advance();
 
 		switch (lex->next) {
@@ -1977,6 +1981,7 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 		block->codes.push_back(code(lex->line, command_kind::pc_break_routine));
 
 		break;
+	}
 	case token_kind::tk_YIELD:
 	case token_kind::tk_WAIT:
 	{
@@ -2059,22 +2064,22 @@ bool parser::parse_single_statement(script_engine::block* block, script_scanner*
 
 		parse_block(s->sub, lex, &args, s->sub->kind == block_kind::bk_function, false);
 
-		need_semicolon = false;
+		need_terminator = false;
 		break;
 	}
 	}
 
-	return need_semicolon;
+	return need_terminator;
 }
 void parser::parse_statements(script_engine::block* block, script_scanner* lex, token_kind statement_terminator) {
 	for (; ; ) {
-		bool need_semicolon = parse_single_statement(block, lex);
-
-		//ƒZƒ~ƒRƒƒ“‚ª–³‚¢‚ÆŒp‘±‚µ‚È‚¢
-		if (need_semicolon && lex->next != statement_terminator)
-			break;
+		bool need_terminator = parse_single_statement(block, lex);
 
 		if (lex->next == statement_terminator) lex->advance();
+		else if (need_terminator) {
+			//parser_assert(false, "Expected a semicolon (;).");
+			break;
+		}
 	}
 }
 
@@ -2126,11 +2131,15 @@ void parser::parse_block(script_engine::block* block, script_scanner* lex, std::
 		}
 	}
 	if (single_line) {
-		parse_single_statement(block, lex);
-		lex->advance();
+		bool need_terminator = parse_single_statement(block, lex);
+
+		if (lex->next == token_kind::tk_semicolon) lex->advance();
+		else if (need_terminator)
+			parser_assert(false, "Expected a semicolon (;).");
 	}
-	else
+	else {
 		parse_statements(block, lex, token_kind::tk_semicolon);
+	}
 
 	frame.pop_back();
 
@@ -2434,7 +2443,7 @@ void script_machine::run_code() {
 			{
 				stack_t& stack = current->stack;
 				value* t = &(stack.back());
-				current->waitCount = (int)(t->as_real() + 0.01) - 1;
+				current->waitCount = (int)t->as_int() - 1;
 				stack.pop_back();
 				if (current->waitCount < 0) break;
 			}
@@ -2722,10 +2731,9 @@ void script_machine::run_code() {
 			{
 				stack_t& stack = current->stack;
 				value* i = &stack.back();
-				assert(i->get_type()->get_kind() == type_kind::tk_real);
-				float r = i->as_real();
+				int64_t r = i->as_int();
 				if (r > 0)
-					i->set(engine->get_real_type(), r - 1);
+					i->set(script_type_manager::get_int_type(), r - 1);
 				else {
 					do
 						++(current->ip);
@@ -2756,7 +2764,7 @@ void script_machine::run_code() {
 				value* src_array = &stack.back() - 1;
 				value* i = &stack.back();
 
-				std::vector<value>::iterator itrCur = src_array->array_get_begin() + (ptrdiff_t)(i->as_real());
+				std::vector<value>::iterator itrCur = src_array->array_get_begin() + i->as_int();
 				std::vector<value>::iterator itrEnd = src_array->array_get_end();
 
 				if (src_array->get_type()->get_kind() != type_kind::tk_array || itrCur >= itrEnd) {
@@ -2766,7 +2774,7 @@ void script_machine::run_code() {
 				}
 				else {
 					current->stack.push_back(value::new_from(*itrCur));
-					i->set(i->get_type(), i->as_real() + 1);
+					i->set(i->get_type(), i->as_int() + 1);
 				}
 
 				break;
