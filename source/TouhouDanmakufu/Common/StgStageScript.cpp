@@ -253,6 +253,7 @@ function const stgFunction[] =
 
 	//STG共通関数：自機
 	{ "GetPlayerObjectID", StgStageScript::Func_GetPlayerObjectID, 0 },
+	{ "GetPlayerScriptID", StgStageScript::Func_GetPlayerScriptID, 0 },
 	{ "SetPlayerSpeed", StgStageScript::Func_SetPlayerSpeed, 2 },
 	{ "SetPlayerClip", StgStageScript::Func_SetPlayerClip, 4 },
 	{ "SetPlayerLife", StgStageScript::Func_SetPlayerLife, 1 },
@@ -282,7 +283,6 @@ function const stgFunction[] =
 	{ "IsPermitPlayerSpell", StgStageScript::Func_IsPermitPlayerSpell, 0 },
 	{ "IsPlayerLastSpellWait", StgStageScript::Func_IsPlayerLastSpellWait, 0 },
 	{ "IsPlayerSpellActive", StgStageScript::Func_IsPlayerSpellActive, 0 },
-	{ "GetPlayerScriptID", StgStageScript::Func_GetPlayerScriptID, 0 },
 	{ "SetPlayerItemScope", StgStageScript::Func_SetPlayerItemScope, 1 },
 	{ "GetPlayerItemScope", StgStageScript::Func_GetPlayerInfoAsDbl<&StgPlayerObject::GetItemIntersectionRadius, -1>, 0 },
 	{ "SetPlayerInvincibleGraze", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetEnableInvincibleGraze>, 1 },
@@ -415,7 +415,6 @@ function const stgFunction[] =
 	{ "ObjShot_SetDamage", StgStageScript::Func_ObjShot_SetDamage, 2 },
 	{ "ObjShot_SetPenetration", StgStageScript::Func_ObjShot_SetPenetration, 2 },
 	{ "ObjShot_SetEraseShot", StgStageScript::Func_ObjShot_SetEraseShot, 2 },
-	{ "ObjShot_SetDeleteLife", StgStageScript::Func_ObjShot_SetDeleteLife, 1 },
 	{ "ObjShot_SetSpellFactor", StgStageScript::Func_ObjShot_SetSpellFactor, 2 },
 	{ "ObjShot_ToItem", StgStageScript::Func_ObjShot_ToItem, 1 },
 	{ "ObjShot_AddShotA1", StgStageScript::Func_ObjShot_AddShotA1, 3 },
@@ -2884,7 +2883,7 @@ gstd::value StgStageScript::Func_ObjEnemy_SetIntersectionCircleToPlayer(gstd::sc
 	}
 	return value();
 }
-DNH_FUNCAPI_(StgStageScript::Func_ObjEnemy_GetIntersectionCircleToShot) {
+gstd::value StgStageScript::Func_ObjEnemy_GetIntersectionCircleToShot(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
 	std::vector<gstd::value> listRes;
@@ -2908,7 +2907,7 @@ DNH_FUNCAPI_(StgStageScript::Func_ObjEnemy_GetIntersectionCircleToShot) {
 
 	return script->CreateValueArrayValue(listRes);
 }
-DNH_FUNCAPI_(StgStageScript::Func_ObjEnemy_GetIntersectionCircleToPlayer) {
+gstd::value StgStageScript::Func_ObjEnemy_GetIntersectionCircleToPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
 	std::vector<gstd::value> listRes;
@@ -2932,7 +2931,7 @@ DNH_FUNCAPI_(StgStageScript::Func_ObjEnemy_GetIntersectionCircleToPlayer) {
 
 	return script->CreateValueArrayValue(listRes);
 }
-DNH_FUNCAPI_(StgStageScript::Func_ObjEnemy_SetEnableIntersectionPositionFetching) {
+gstd::value StgStageScript::Func_ObjEnemy_SetEnableIntersectionPositionFetching(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
 	int id = (int)argv[0].as_real();
@@ -3345,13 +3344,6 @@ gstd::value StgStageScript::Func_ObjShot_SetEraseShot(gstd::script_machine* mach
 		bool bErase = argv[1].as_boolean();
 		obj->SetEraseShot(bErase);
 	}
-	return value();
-}
-gstd::value StgStageScript::Func_ObjShot_SetDeleteLife(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	int id = (int)argv[0].as_real();
-	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
-	if (obj) obj->SetLife(0);
 	return value();
 }
 gstd::value StgStageScript::Func_ObjShot_SetSpellFactor(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -4486,6 +4478,8 @@ function const stgPlayerFunction[] =
 	{ "ReloadPlayerShotData", StgStagePlayerScript::Func_ReloadPlayerShotData, 1 },
 	{ "GetSpellManageObject", StgStagePlayerScript::Func_GetSpellManageObject, 0 },
 
+	{ "KillPlayer", StgStagePlayerScript::Func_KillPlayer, 0 },
+
 	//自機専用関数：スペルオブジェクト操作
 	{ "ObjSpell_Create", StgStagePlayerScript::Func_ObjSpell_Create, 0 },
 	{ "ObjSpell_Regist", StgStagePlayerScript::Func_ObjSpell_Regist, 1 },
@@ -4585,6 +4579,16 @@ gstd::value StgStagePlayerScript::Func_GetSpellManageObject(gstd::script_machine
 			id = objManage->GetObjectID();
 	}
 	return script->CreateRealValue(id);
+}
+
+gstd::value StgStagePlayerScript::Func_KillPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStagePlayerScript* script = (StgStagePlayerScript*)machine->data;
+	shared_ptr<StgPlayerObject> objPlayer = script->stageController_->GetPlayerObject();
+	if (objPlayer) {
+		if (objPlayer->GetState() == StgPlayerObject::STATE_NORMAL)
+			objPlayer->KillSelf(true);
+	}
+	return value();
 }
 
 //自機専用関数：スペルオブジェクト操作

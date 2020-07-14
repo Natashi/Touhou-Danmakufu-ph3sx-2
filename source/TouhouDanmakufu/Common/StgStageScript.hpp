@@ -359,7 +359,6 @@ public:
 	static gstd::value Func_ObjShot_SetDamage(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetPenetration(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetEraseShot(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDeleteLife);
 	static gstd::value Func_ObjShot_SetSpellFactor(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_ToItem(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_AddShotA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -520,6 +519,8 @@ public:
 	static gstd::value Func_LoadPlayerShotData(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ReloadPlayerShotData(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetSpellManageObject(gstd::script_machine* machine, int argc, const gstd::value* argv);
+
+	DNH_FUNCAPI_DECL_(Func_KillPlayer);
 
 	//自機専用関数：スペルオブジェクト操作
 	static gstd::value Func_ObjSpell_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);

@@ -94,6 +94,7 @@ public:
 	void Move();
 	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
 	void CallSpell();
+	void KillSelf(bool bCalledFromScript);
 
 	virtual void SetX(double x) { posX_ = x; DxScriptRenderObject::SetX(x); }
 	virtual void SetY(double y) { posY_ = y; DxScriptRenderObject::SetY(y); }

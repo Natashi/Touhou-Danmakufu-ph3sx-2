@@ -69,13 +69,7 @@ void StgPlayerObject::Work() {
 	case STATE_NORMAL:
 		//通常時
 		if (hitObjectID_ != DxScript::ID_INVALID) {
-			if (frameInvincibility_ <= 0) {
-				state_ = STATE_HIT;
-				frameState_ = infoPlayer_->frameRebirth_;
-
-				gstd::value valueHitObjectID = script_->CreateRealValue(hitObjectID_);
-				script_->RequestEvent(StgStagePlayerScript::EV_HIT, &valueHitObjectID, 1);
-			}
+			KillSelf(false);
 		}
 		else {
 			if (listGrazedShot_.size() > 0) {
@@ -118,14 +112,14 @@ void StgPlayerObject::Work() {
 		}
 		break;
 	case STATE_HIT:
-		//くらいボム待機
+		//Check deathbomb
 		if (input->GetVirtualKeyState(EDirectInput::KEY_BOMB) == KEY_PUSH)
 			CallSpell();
 
-			//くらいボム有効フレーム減少
 		frameState_--;
 		if (frameState_ < 0) {
-			//自機ダウン
+			//Player is killed
+
 			bool bEnemyLastSpell = false;
 
 			shared_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
@@ -137,6 +131,7 @@ void StgPlayerObject::Work() {
 			if (!bEnemyLastSpell)
 				infoPlayer_->life_--;
 
+			//Reset deathbomb frame
 			infoPlayer_->frameRebirth_ = frameRebirthMax_;
 			if (enableShootdownEvent_)
 				scriptManager->RequestEventAll(StgStagePlayerScript::EV_PLAYER_SHOOTDOWN);
@@ -226,7 +221,7 @@ void StgPlayerObject::_Move() {
 	double px = posX_ + sx;
 	double py = posY_ + sy;
 
-	//はみ出たときの処理
+	//Clip player position
 	px = std::max(px, (double)rcClip_.left);
 	px = std::min(px, (double)rcClip_.right);
 	py = std::max(py, (double)rcClip_.top);
@@ -276,6 +271,15 @@ void StgPlayerObject::CallSpell() {
 
 	auto scriptManager = stageController_->GetScriptManager();
 	scriptManager->RequestEventAll(StgStageScript::EV_PLAYER_SPELL);
+}
+void StgPlayerObject::KillSelf(bool bCalledFromScript) {
+	if (frameInvincibility_ <= 0) {
+		state_ = STATE_HIT;
+		frameState_ = infoPlayer_->frameRebirth_;
+
+		gstd::value valueHitObjectID = script_->CreateRealValue(bCalledFromScript ? DxScript::ID_INVALID : hitObjectID_);
+		script_->RequestEvent(StgStagePlayerScript::EV_HIT, &valueHitObjectID, 1);
+	}
 }
 
 void StgPlayerObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
