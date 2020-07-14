@@ -382,10 +382,8 @@ void DirectSoundManager::SoundManageThread::_Run() {
 void DirectSoundManager::SoundManageThread::_Arrange() {
 	DirectSoundManager* manager = _GetOuter();
 
-	std::set<std::wstring> setRemoveKey;
-	std::map<std::wstring, std::list<gstd::ref_count_ptr<SoundPlayer>>>& mapPlayer = manager->mapPlayer_;
-	
-	for (auto itrNameMap = mapPlayer.begin(); itrNameMap != mapPlayer.end(); itrNameMap++) {
+	auto& mapPlayer = manager->mapPlayer_;
+	for (auto itrNameMap = mapPlayer.begin(); itrNameMap != mapPlayer.end();) {
 		std::list<gstd::ref_count_ptr<SoundPlayer>>& listPlayer = itrNameMap->second;
 
 		for (auto itrPlayer = listPlayer.begin(); itrPlayer != listPlayer.end(); ) {
@@ -406,12 +404,9 @@ void DirectSoundManager::SoundManageThread::_Arrange() {
 		}
 
 		if (listPlayer.size() == 0)
-			setRemoveKey.insert(itrNameMap->first);
-	}
-
-	for (auto itrRemove = setRemoveKey.begin(); itrRemove != setRemoveKey.end(); itrRemove++) {
-		const std::wstring& key = *itrRemove;
-		mapPlayer.erase(key);
+			itrNameMap = mapPlayer.erase(itrNameMap);
+		else
+			++itrNameMap;
 	}
 }
 void DirectSoundManager::SoundManageThread::_Fade() {
