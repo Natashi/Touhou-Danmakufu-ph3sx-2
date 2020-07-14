@@ -1694,8 +1694,8 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 	StgShotManager* shotManager = stageController_->GetShotManager();
 	RECT rect = shotManager->GetShotAutoDeleteClipRect();
-	if ((posX_ < rect.left && posXE_ < rect.left) || (posX_ > rect.right&& posXE_ > rect.right) ||
-		(posY_ < rect.top && posYE_ < rect.top) || (posY_ > rect.bottom&& posYE_ > rect.bottom)) {
+	if ((posX_ < rect.left && posXE_ < rect.left) || (posX_ > rect.right && posXE_ > rect.right) ||
+		(posY_ < rect.top && posYE_ < rect.top) || (posY_ > rect.bottom && posYE_ > rect.bottom)) {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
@@ -1712,16 +1712,13 @@ std::vector<StgIntersectionTarget::ptr> StgLooseLaserObject::GetIntersectionTarg
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr) return res;
 
-	float dx = posXE_ - posX_;
-	float dy = posYE_ - posY_;
-
-	int posXS = posX_ + dx * invalidLengthStart_;
-	int posYS = posY_ + dy * invalidLengthStart_;
-	int posXE = posXE_ - dx * invalidLengthEnd_;
-	int posYE = posYE_ - dy * invalidLengthEnd_;
+	float lineXS = Math::Lerp::Linear((float)posX_, posXE_, invalidLengthStart_ * 0.5f);
+	float lineYS = Math::Lerp::Linear((float)posY_, posYE_, invalidLengthStart_ * 0.5f);
+	float lineXE = Math::Lerp::Linear(posXE_, (float)posX_, invalidLengthEnd_ * 0.5f);
+	float lineYE = Math::Lerp::Linear(posYE_, (float)posY_, invalidLengthEnd_ * 0.5f);
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
-	DxWidthLine line(posXS, posYS, posXE, posYE, widthIntersection_ * hitboxScale_.x);
+	DxWidthLine line(lineXS, lineYS, lineXE, lineYE, widthIntersection_ * hitboxScale_.x);
 
 	if (StgIntersectionTarget_Line* target =
 		dynamic_cast<StgIntersectionTarget_Line*>(pShotIntersectionTarget_.get()))
@@ -1981,15 +1978,15 @@ std::vector<StgIntersectionTarget::ptr> StgStraightLaserObject::GetIntersectionT
 	if (shotData == nullptr) return res;
 	if (scaleX_ < 1.0 && typeOwner_ != OWNER_PLAYER) return res;
 
-	float _posXE = posX_ + (length_ * move_.x) * hitboxScale_.y;
-	float _posYE = posY_ + (length_ * move_.y) * hitboxScale_.y;
-	float posXS = posX_ + (_posXE - posX_) * invalidLengthStart_;
-	float posYS = posY_ + (_posYE - posY_) * invalidLengthStart_;
-	float posXE = _posXE + (posX_ - _posXE) * invalidLengthEnd_;
-	float posYE = _posYE + (posY_ - _posYE) * invalidLengthEnd_;
+	float _posXE = posX_ + (length_ * move_.x);
+	float _posYE = posY_ + (length_ * move_.y);
+	float lineXS = Math::Lerp::Linear((float)posX_, _posXE, invalidLengthStart_ * 0.5f);
+	float lineYS = Math::Lerp::Linear((float)posY_, _posYE, invalidLengthStart_ * 0.5f);
+	float lineXE = Math::Lerp::Linear(_posXE, (float)posX_, invalidLengthEnd_ * 0.5f);
+	float lineYE = Math::Lerp::Linear(_posYE, (float)posY_, invalidLengthEnd_ * 0.5f);
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
-	DxWidthLine line(posXS, posYS, posXE, posYE, widthIntersection_ * hitboxScale_.x);
+	DxWidthLine line(lineXS, lineYS, lineXE, lineYE, widthIntersection_ * hitboxScale_.x);
 
 	if (StgIntersectionTarget_Line* target =
 		dynamic_cast<StgIntersectionTarget_Line*>(pShotIntersectionTarget_.get())) 
@@ -2195,19 +2192,16 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 
 	//assert(scriptItem != nullptr);
 
-	float ex = posX_;
-	float ey = posY_;
-
 	float listPos[2];
 	gstd::value listScriptValue[4];
 
 	for (float itemPos = 0; itemPos < (float)length_; itemPos += itemDistance_) {
-		float posX = ex + itemPos * move_.x;
-		float posY = ey + itemPos * move_.y;
+		float itemX = posX_ + itemPos * move_.x;
+		float itemY = posY_ + itemPos * move_.y;
 
 		if (scriptItem) {
-			listPos[0] = posX;
-			listPos[1] = posY;
+			listPos[0] = itemX;
+			listPos[1] = itemY;
 
 			listScriptValue[0] = scriptItem->CreateRealValue(idObject_);
 			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
@@ -2223,8 +2217,8 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 				if (id != DxScript::ID_INVALID) {
 					//弾の座標にアイテムを作成する
 					itemManager->AddItem(obj);
-					obj->SetPositionX(posX);
-					obj->SetPositionY(posY);
+					obj->SetPositionX(itemX);
+					obj->SetPositionY(itemY);
 				}
 			}
 		}
@@ -2238,8 +2232,8 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 	typeObject_ = TypeObject::OBJ_CURVE_LASER;
 	tipDecrement_ = 0.0f;
 
-	invalidLengthStart_ = 0.1f;
-	invalidLengthEnd_ = 0.1f;
+	invalidLengthStart_ = 0.02f;
+	invalidLengthEnd_ = 0.02f;
 
 	itemDistance_ = 6.0f;
 
