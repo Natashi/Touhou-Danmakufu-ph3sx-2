@@ -129,14 +129,14 @@ namespace directx {
 		static gstd::value Func_GetOwnScriptID(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetEventType(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetEventArgument(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_GetEventArgumentCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_GetEventArgumentCount);
 		static gstd::value Func_SetScriptArgument(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetScriptResult(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetAutoDeleteObject(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_NotifyEvent(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_NotifyEventOwn(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_NotifyEventOwn);
 		static gstd::value Func_NotifyEventAll(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_PauseScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_PauseScript);
 	};
 
 
