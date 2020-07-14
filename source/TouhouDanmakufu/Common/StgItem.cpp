@@ -1044,7 +1044,6 @@ void StgItemObject_User::RenderOnItemManager() {
 	if (objBlendType == MODE_BLEND_NONE) {
 		objBlendType = itemData->GetRenderType();
 	}
-	
 	renderer = itemData->GetRenderer(objBlendType);
 
 	if (renderer == nullptr) return;

@@ -296,15 +296,17 @@ std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 		}
 	}
 
-	const int countMax = 256;
-	int count = 0;
+	const size_t countMax = 256;
+	size_t count = 0;
+
 	sbuf = pbuf;
 	while (pbuf < ebuf && count < countMax) {
 		pbuf++;
 		count++;
 	}
 
-	int size = std::max(count - 1, 0);
+	size_t size = count > 0U ? count - 1U : 0U;
+
 	std::wstring res;
 	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
 		wchar_t* wbufS = (wchar_t*)sbuf;
@@ -417,8 +419,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 					source = res;
 					engine_->SetSource(source);
 
-					std::wstring error;
-					error += StringUtility::Format(L"Include file is not found. [%s]\r\n", wPath.c_str());
+					std::wstring error = StringUtility::Format(L"Include file is not found. [%s]\r\n", wPath.c_str());
 					_RaiseError(line, error);
 				}
 
@@ -451,8 +452,8 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 					if (mainEncoding == Encoding::UTF8) {
 						if (includeEncoding == Encoding::UTF16BE) {
 							for (auto itr = placement.begin(); itr != placement.end(); itr += 2) {
-								wchar_t* wch = (wchar_t*)&*itr;
-								*wch = (*wch >> 8) | (*wch << 8);
+								wchar_t& wch = (wchar_t&)*itr;
+								wch = (wch >> 8) | (wch << 8);
 							}
 						}
 
@@ -495,8 +496,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 						//Swap bytes for UTF-16 BE
 						if (mainEncoding == Encoding::UTF16BE) {
 							for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
-								*wItr = *(wItr + 1);
-								*(wItr + 1) = *wItr;
+								std::swap(*wItr, *(wItr + 1));
 							}
 						}
 					}
