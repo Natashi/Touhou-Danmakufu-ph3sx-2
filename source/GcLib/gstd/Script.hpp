@@ -138,6 +138,7 @@ namespace gstd {
 		enum class command_kind : uint8_t {
 			pc_var_alloc, pc_assign, pc_assign_writable, pc_break_loop, pc_break_routine, 
 			pc_call, pc_call_and_push_result,
+			//TODO: Implement a parser state-like system so the jump_diff's can be discarded
 			pc_jump_if, pc_jump_if_not, pc_jump_diff, pc_jump_if_diff, pc_jump_if_not_diff,
 			pc_compare_e, pc_compare_g, pc_compare_ge, pc_compare_l,
 			pc_compare_le, pc_compare_ne, 

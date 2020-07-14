@@ -1218,14 +1218,25 @@ void parser::parse_comparison(script_engine::block* block, script_scanner* lex) 
 	}
 }
 
+//TODO: Change logic operator precedence to match C's
 void parser::parse_logic(script_engine::block* block, script_scanner* lex) {
 	parse_comparison(block, lex);
 	while (lex->next == token_kind::tk_logic_and || lex->next == token_kind::tk_logic_or) {
-		script_engine::command_kind cmd = (lex->next == token_kind::tk_logic_and) ?
+		command_kind cmdLogic = (lex->next == token_kind::tk_logic_and) ?
 			command_kind::pc_inline_logic_and : command_kind::pc_inline_logic_or;
+		command_kind cmdJump = (lex->next == token_kind::tk_logic_and) ?
+			command_kind::pc_jump_if_not_diff : command_kind::pc_jump_if_diff;
 		lex->advance();
+
+		size_t ip_jump = block->codes.size();
+		block->codes.push_back(code(lex->line, cmdJump, 0));	//Jump without popping value
+
 		parse_comparison(block, lex);
-		block->codes.push_back(code(lex->line, cmd));
+
+		block->codes.push_back(code(lex->line, cmdLogic));
+
+		size_t ip_exit = block->codes.size();
+		block->codes[ip_jump].ip = ip_exit - ip_jump;
 	}
 }
 
@@ -1235,12 +1246,12 @@ void parser::parse_ternary(script_engine::block* block, script_scanner* lex) {
 		lex->advance();
 
 		size_t ip_jump_1 = block->codes.size();
-		block->codes.push_back(code(lex->line, command_kind::pc_jump_if_not_diff, 0));	//Jump to expression 2
+		block->codes.push_back(code(lex->line, command_kind::pc_jump_if_not_diff, 1));	//Jump to expression 2
 
 		//Parse expression 1
 		parse_expression(block, lex);
 		size_t ip_jump_2 = block->codes.size();
-		block->codes.push_back(code(lex->line, command_kind::pc_jump_diff, 0));		//Jump to exit
+		block->codes.push_back(code(lex->line, command_kind::pc_jump_diff, 1));		//Jump to exit
 
 		parser_assert(lex->next == token_kind::tk_colon, "Incomplete ternary statement; a colon(:) is required.");
 		lex->advance();
@@ -2478,11 +2489,12 @@ void script_machine::run_code() {
 			case command_kind::pc_jump_if_not_diff:
 			{
 				stack_t& stack = current->stack;
-				value* top = &stack.back();
-				if ((c->command == command_kind::pc_jump_if_diff && top->as_boolean())
-					|| (c->command == command_kind::pc_jump_if_not_diff && !top->as_boolean()))
+				bool bCmp = stack.back().as_boolean();
+				if ((c->command == command_kind::pc_jump_if_diff && bCmp)
+					|| (c->command == command_kind::pc_jump_if_not_diff && !bCmp))
 					current->ip += c->level - 1;
-				stack.pop_back();
+				if (c->variable)
+					stack.pop_back();
 				break;
 			}
 
