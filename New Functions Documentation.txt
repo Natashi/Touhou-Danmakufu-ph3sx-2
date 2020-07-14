@@ -1616,6 +1616,12 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	--------------------------------> Laser Object Functions <--------------------------------
 	
+	ObjLaser_SetInvalidLength
+		Description:
+			Change.
+			
+			Both invalid lengths now scale from 0 to 1 rather than 0 to 100.
+	
 	ObjStLaser_SetEnd
 		Arguments:
 			1) object ID
