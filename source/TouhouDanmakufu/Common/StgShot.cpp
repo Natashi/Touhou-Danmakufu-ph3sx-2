@@ -347,7 +347,6 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 				}
 				if (scanner.HasNext())
 					tok = scanner.Next();
-
 			}
 		}
 
@@ -355,9 +354,10 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 		if (pathImage.size() == 0) throw gstd::wexception("Shot texture must be set.");
 		std::wstring dir = PathProperty::GetFileDirectory(path);
 		pathImage = StringUtility::Replace(pathImage, L"./", dir);
+		pathImage = PathProperty::GetUnique(pathImage);
 
 		shared_ptr<Texture> texture(new Texture());
-		bool bTexture = texture->CreateFromFile(PathProperty::GetUnique(pathImage), false, false);
+		bool bTexture = texture->CreateFromFile(pathImage, false, false);
 		if (!bTexture) throw gstd::wexception("The specified shot texture cannot be found.");
 
 		int textureIndex = -1;
@@ -2081,8 +2081,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				float px = vt.position.x * scale_.x;
 				float py = vt.position.y * scale_.y;
 
-				vt.position.x = (px * move_.y + py * move_.x) + sposx;
-				vt.position.y = (-px * move_.x + py * move_.y) + sposy;
+				vt.position.x = (py * move_.x + px * move_.y) + sposx;
+				vt.position.y = (py * move_.y - px * move_.x) + sposy;
 				vt.position.z = position_.z;
 
 				//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
@@ -2125,8 +2125,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 					float px = vt.position.x * delaySize;
 					float py = vt.position.y * delaySize;
-					vt.position.x = (px * move_.y + py * move_.x) + delayPos.x;
-					vt.position.y = (-px * move_.x + py * move_.y) + delayPos.y;
+					vt.position.x = (py * move_.x + px * move_.y) + delayPos.x;
+					vt.position.y = (py * move_.y - px * move_.x) + delayPos.y;
 					vt.position.z = position_.z;
 
 					//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);

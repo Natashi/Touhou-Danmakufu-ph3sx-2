@@ -601,6 +601,7 @@ function const stgFunction[] =
 	{ "INFO_ITEM_SCORE", constant<StgStageScript::INFO_ITEM_SCORE>::func, 0 },
 
 	{ "INFO_EXISTS", constant<StgStageScript::INFO_EXISTS>::func, 0 },
+	{ "INFO_PATH", constant<StgStageScript::INFO_PATH>::func, 0 },
 	{ "INFO_RECT", constant<StgStageScript::INFO_RECT>::func, 0 },
 	{ "INFO_DELAY_COLOR", constant<StgStageScript::INFO_DELAY_COLOR>::func, 0 },
 	{ "INFO_BLEND", constant<StgStageScript::INFO_BLEND>::func, 0 },
@@ -1796,6 +1797,9 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		case INFO_EXISTS:
 			res = script->CreateBooleanValue(false);
 			break;
+		case INFO_PATH:
+			res = script->CreateStringValue(L"");
+			break;
 		case INFO_RECT:
 		{
 			LONG list[4] = { 0, 0, 0, 0 };
@@ -1832,6 +1836,9 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		switch (type) {
 		case INFO_EXISTS:
 			res = script->CreateBooleanValue(true);
+			break;
+		case INFO_PATH:
+			res = script->CreateStringValue(shotData->GetTexture()->GetName());
 			break;
 		case INFO_RECT:
 		{
@@ -3991,7 +3998,7 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetShotType(gstd::script_machine
 	int id = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
 	if (obj) {
-		TypeObject type = (TypeObject)argv[1].as_real();
+		TypeObject type = (TypeObject)argv[1].as_int();
 		obj->SetTypeShot(type);
 	}
 	return value();
@@ -4003,7 +4010,7 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetInitialBlendMode(gstd::script
 	int id = (int)argv[0].as_real();
 	StgPatternShotObjectGenerator* obj = dynamic_cast<StgPatternShotObjectGenerator*>(script->GetObjectPointer(id));
 	if (obj)
-		obj->SetBlendType((BlendMode)argv[1].as_real());
+		obj->SetBlendType((BlendMode)argv[1].as_int());
 	return value();
 }
 gstd::value StgStageScript::Func_ObjPatternShot_SetShotCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
