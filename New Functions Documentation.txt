@@ -22,10 +22,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the type of the given value.
 			Examples:
-				920			-> VAR_REAL
-				false		-> VAR_BOOL
-				"str"		-> VAR_STRING
-				[8, 0, 2]	-> VAR_ARRAY
+				920         -> VAR_REAL
+				false       -> VAR_BOOL
+				"str"       -> VAR_STRING
+				[8, 0, 2]   -> VAR_ARRAY
 			
 	ftypeof
 		Arguments:
@@ -33,11 +33,11 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the root type of the given value.
 			Examples:
-				920			-> VAR_REAL
-				false		-> VAR_BOOL
-				"str"		-> VAR_CHAR
-				[8, 0, 2]	-> VAR_REAL
-				["a", "b", "c"]	-> VAR_CHAR
+				920         -> VAR_REAL
+				false       -> VAR_BOOL
+				"str"       -> VAR_CHAR
+				[8, 0, 2]   -> VAR_REAL
+				[[["a"]]]   -> VAR_CHAR
 				
 	--------------------------------> Type Casting <--------------------------------
 	
@@ -402,12 +402,12 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	--------------------------------> String <--------------------------------
 	
 	rtoa_ex
-	Arguments:
-		1) (string) format
-		2) (any) value
-	Description:
-		Behaves similar to printf.
-		Returns the formatted string.
+		Arguments:
+			1) (string) format
+			2) (any) value
+		Description:
+			Behaves similar to printf.
+			Returns the formatted string.
 		
 	--------------------------------> File Path <--------------------------------
 	
@@ -630,7 +630,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the volume rate of the given sound division.
 			
-	--------------------------------> Loading <--------------------------------
+	--------------------------------> Resource Loading <--------------------------------
 	
 	LoadTextureEx
 		Arguments:
@@ -872,7 +872,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Description:
 				Sets the object's RGB color as hex value.
 				Example:
-					ObjRender_SetColorHex(obj, 0xFF7B32) == ObjRender_SetColor(obj, 255, 123, 50)
+					ObjRender_SetColorHex(obj, 0xFF7B32) -> ObjRender_SetColor(obj, 255, 123, 50)
 		
 		ObjRender_GetColor
 			Arguments:
@@ -1143,7 +1143,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) data 3
 		Description:
 			Sets instance extra data.
-			These can be freely utilized by the scripters in case custom shader is used.
+			These can be freely utilized by the scripters in case a custom shader is used.
 
 	ObjParticleList_AddInstance
 		Arguments:
@@ -1326,6 +1326,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (bool) enable
 		Description:
 			Sets whether EV_PLAYER_SHOOTDOWN will be notified upon the player's death.
+			Setting it to false would also disable STATE_DOWN and STATE_END from ever occuring.
 
 	SetPlayerRebirthPosition
 		Arguments:
@@ -1343,7 +1344,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			No longer throws an error if the given shot graphic ID is invalid.
 			
-			INFO_EXISTS			- Returns whether the given shot graphic ID exists.
+			INFO_EXISTS         - Returns whether the given shot graphic ID exists.
+			INFO_PATH           - Returns the image path of the given shot graphic ID.
 			INFO_IS_FIXED_ANGLE - Returns whether the given shot graphic ID has had fixed_angle enabled.
 	
 	--------------------------------> Intersection Functions <--------------------------------
@@ -1419,6 +1421,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) (bool) set
 		Description:
 			Sets whether the object will be allowed to execute movement-related routines.
+			
+			*ObjMove_SetX/Y/Position would still alter the object's position.
 			
 	ObjMove_GetProcessMovement
 		Arguments:
@@ -1724,16 +1728,16 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				PATTERN_ARROW_AIMED
 				PATTERN_POLYGON
 				PATTERN_POLYGON_AIMED
-					- [way]:	Number of polygon vertices.
-					- [stack]:	Number of shots per sides.
-					- [angle argument]:	Edge skip, should normally be 1. Other values result in polygrams.
+					- [way]:    Number of polygon vertices.
+					- [stack]:  Number of shots per sides.
+					- [angle argument]:	Edge skip, should normally be 1. Other values may result in polygrams.
 					- [speed argument]:	No effect.
 				PATTERN_ELLIPSE
 				PATTERN_ELLIPSE_AIMED
-					- [stack]:	No effect.
+					- [stack]:  No effect.
 					- [angle argument]:	Angle of the ellipse. (Not of the shots)
-					- [base speed]:		Max speed at the ends of the primary axes.
-					- [speed argument]:	Max speed at the ends of the secondary axes.
+					- [base speed]:     Max speed at the ends of the primary axis.
+					- [speed argument]:	Max speed at the ends of the secondary axis.
 				PATTERN_SCATTER_ANGLE
 				PATTERN_SCATTER_SPEED
 				PATTERN_SCATTER
@@ -1867,7 +1871,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				TRANSFORM_ANGULAR_MOVE
 					- For S0 frames, sets movement angular velocity to f0 and graphic angular velocity to f1.
 				TRANSFORM_N_DECEL_CHANGE
-					- For S1 times, decelerates/accelerates the bullet to a complete halt in S0 frames. (Think of Aunn's first spell.)
+					- For S1 times, decelerates/accelerates the bullet to a complete halt in S0 frames. (See: Aunn's first spell)
 						Movement will then change depending on S2.
 							- 0: Changes the movement angle to f1.
 							- 1: Increments the movement angle by f1.
