@@ -4037,7 +4037,7 @@ gstd::value DxScript::Func_ObjFileT_GetLineText(gstd::script_machine* machine, i
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxTextFileObject* obj = dynamic_cast<DxTextFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return value(machine->get_engine()->get_string_type(), std::wstring());
+	if (obj == nullptr) script->CreateStringValue(std::wstring());
 
 	int line = argv[1].as_int();
 	std::wstring res = obj->GetLineAsWString(line);
@@ -4061,7 +4061,7 @@ gstd::value DxScript::Func_ObjFileT_SplitLineText(gstd::script_machine* machine,
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxTextFileObject* obj = dynamic_cast<DxTextFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return value(machine->get_engine()->get_string_type(), std::wstring());
+	if (obj == nullptr) return script->CreateStringValue(std::wstring());
 
 	int pos = argv[1].as_int();
 	std::wstring delim = argv[2].as_string();
@@ -4248,7 +4248,7 @@ gstd::value DxScript::Func_ObjFileB_ReadString(gstd::script_machine* machine, in
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return value(machine->get_engine()->get_string_type(), std::wstring());
+	if (obj == nullptr) return script->CreateStringValue(std::wstring());
 
 	size_t readSize = (size_t)argv[1].as_real();
 	if (!obj->IsReadableSize(readSize))

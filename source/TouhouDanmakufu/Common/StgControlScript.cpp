@@ -192,7 +192,7 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* ma
 		res = record.WriteToFile(pathSave);
 	}
 
-	return value(machine->get_engine()->get_boolean_type(), res);
+	return script->CreateBooleanValue(res);
 }
 gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
@@ -215,7 +215,7 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* ma
 		commonDataManager->SetData(sArea, commonData);
 	}
 
-	return value(machine->get_engine()->get_boolean_type(), res);
+	return script->CreateBooleanValue(res);
 }
 
 gstd::value StgControlScript::Func_SaveCommonDataAreaA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -239,7 +239,7 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA2(gstd::script_machine* ma
 		res = record.WriteToFile(pathSave);
 	}
 
-	return value(machine->get_engine()->get_boolean_type(), res);
+	return script->CreateBooleanValue(res);
 }
 gstd::value StgControlScript::Func_LoadCommonDataAreaA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
@@ -259,7 +259,7 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA2(gstd::script_machine* ma
 		commonDataManager->SetData(area, commonData);
 	}
 
-	return value(machine->get_engine()->get_boolean_type(), res);
+	return script->CreateBooleanValue(res);
 }
 
 //STG§Œä‹¤’ÊŠÖ”FƒL[Œn
@@ -501,7 +501,7 @@ gstd::value StgControlScript::Func_GetMainPackageScriptPath(gstd::script_machine
 		path = infoScript->GetScriptPath();
 	}
 
-	return value(machine->get_engine()->get_string_type(), path);
+	return script->CreateStringValue(path);
 }
 gstd::value StgControlScript::Func_GetScriptPathList(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;

@@ -302,7 +302,7 @@ gstd::value StgPackageScript::Func_GetStageSceneState(gstd::script_machine* mach
 	if (scene == StgSystemInformation::SCENE_PACKAGE_CONTROL)
 		res = STAGE_STATE_FINISHED;
 
-	return value(machine->get_engine()->get_real_type(), (float)res);
+	return script->CreateRealValue(res);
 }
 gstd::value StgPackageScript::Func_GetStageSceneResult(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgPackageScript* script = (StgPackageScript*)machine->data;
