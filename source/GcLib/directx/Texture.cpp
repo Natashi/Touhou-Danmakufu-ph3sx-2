@@ -379,7 +379,7 @@ void TextureManager::ReleaseDxResource() {
 					}
 					else {
 						std::wstring err = StringUtility::Format(L"TextureManager::ReleaseDxResource: "
-							"Failed to create temporary surface [%s]\t\r\n%s: %s",
+							"Failed to create temporary surface [%s]\r\n\t%s: %s",
 							itrMap->first.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
 						Logger::WriteTop(err);
 

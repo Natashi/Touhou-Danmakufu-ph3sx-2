@@ -124,7 +124,7 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 			char* cText = (char*)pErr->GetBufferPointer();
 			err = StringUtility::ConvertMultiToWide(cText);
 		}
-		std::wstring log = StringUtility::Format(L"ShaderManager: Shader load failed. [%s]\r\n%s", path.c_str(), err.c_str());
+		std::wstring log = StringUtility::Format(L"ShaderManager: Shader load failed. [%s]\r\n\t%s", path.c_str(), err.c_str());
 		Logger::WriteTop(log);
 		lastError_ = log;
 	}
@@ -171,7 +171,7 @@ bool ShaderManager::_CreateFromText(const std::string& source, shared_ptr<Shader
 		res = false;
 		char* err = nullptr;
 		if (pErr) err = (char*)pErr->GetBufferPointer();
-		std::string log = StringUtility::Format("ShaderManager: Shader load failed. [%s]\r\n%s", tStr.c_str(), err);
+		std::string log = StringUtility::Format("ShaderManager: Shader load failed. [%s]\r\n\t%s", tStr.c_str(), err);
 		Logger::WriteTop(log);
 		lastError_ = StringUtility::ConvertMultiToWide(log);
 	}
@@ -600,7 +600,7 @@ void RenderShaderManager::Initialize() {
 			hr = D3DXCreateEffect(device, ptrSrc->c_str(), ptrSrc->size(), nullptr, nullptr, 0, 
 				nullptr, &listEffect_[iEff], &error);
 			if (FAILED(hr)) {
-				std::string err = StringUtility::Format("RenderShaderManager: Shader load failed. (%s)\n[%s]",
+				std::string err = StringUtility::Format("RenderShaderManager: Shader load failed. [%s]\r\n\t%s",
 					listCreate[iEff].second->c_str(), reinterpret_cast<const char*>(error->GetBufferPointer()));
 				throw gstd::wexception(err);
 			}
