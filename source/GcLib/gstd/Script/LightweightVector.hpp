@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../pch.h"
-#include "GstdUtility.hpp"
+#include "../../pch.h"
+#include "../GstdUtility.hpp"
 
 namespace gstd {
 	template<typename T>

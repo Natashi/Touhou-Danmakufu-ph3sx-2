@@ -100,10 +100,8 @@ shared_ptr<ManagedScript> StgUserExtendSceneScriptManager::Create(int type) {
 	return res;
 }
 void StgUserExtendSceneScriptManager::CallScriptFinalizeAll() {
-	std::map<std::string, script_engine::block*>::iterator itrEvent;
-
-	std::list<shared_ptr<ManagedScript>>::iterator itr = listScriptRun_.begin();
-	for (; itr != listScriptRun_.end(); itr++) {
+	std::map<std::string, script_block*>::iterator itrEvent;
+	for (auto itr = listScriptRun_.begin(); itr != listScriptRun_.end(); itr++) {
 		shared_ptr<ManagedScript> script = (*itr);
 		if (script->IsEventExists("Finalize", itrEvent))
 			script->Run(itrEvent);
@@ -111,8 +109,7 @@ void StgUserExtendSceneScriptManager::CallScriptFinalizeAll() {
 }
 gstd::value StgUserExtendSceneScriptManager::GetResultValue() {
 	gstd::value res;
-	std::list<shared_ptr<ManagedScript>>::iterator itr = listScriptRun_.begin();
-	for (; itr != listScriptRun_.end(); itr++) {
+	for (auto itr = listScriptRun_.begin(); itr != listScriptRun_.end(); itr++) {
 		shared_ptr<ManagedScript> script = (*itr);
 		gstd::value v = script->GetResultValue();
 		if (v.has_data()) {

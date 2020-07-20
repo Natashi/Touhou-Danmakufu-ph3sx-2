@@ -3,7 +3,7 @@
 #include "../pch.h"
 
 #include "GstdUtility.hpp"
-#include "Script.hpp"
+#include "Script/Script.hpp"
 #include "RandProvider.hpp"
 #include "Thread.hpp"
 #include "File.hpp"
@@ -108,8 +108,8 @@ namespace gstd {
 		virtual void Compile();
 		virtual bool Run();
 		virtual bool Run(const std::string& target);
-		virtual bool Run(std::map<std::string, script_engine::block*>::iterator target);
-		bool IsEventExists(const std::string& name, std::map<std::string, script_engine::block*>::iterator& res);
+		virtual bool Run(std::map<std::string, script_block*>::iterator target);
+		bool IsEventExists(const std::string& name, std::map<std::string, script_block*>::iterator& res);
 		void RaiseError(const std::wstring& error) { _RaiseError(machine_->get_error_line(), error); }
 		void RaiseError(const std::string& error) {
 			_RaiseError(machine_->get_error_line(), 

@@ -36,14 +36,14 @@ void ScriptManager::Work(int targetType) {
 		}
 
 		if (script->IsEndScript()) {
-			std::map<std::string, script_engine::block*>::iterator itrEvent;
+			std::map<std::string, script_block*>::iterator itrEvent;
 			if (script->IsEventExists("Finalize", itrEvent))
 				script->Run(itrEvent);
 			itr = listScriptRun_.erase(itr);
 			bHasCloseScriptWork_ |= true;
 		}
 		else {
-			std::map<std::string, script_engine::block*>::iterator itrEvent;
+			std::map<std::string, script_block*>::iterator itrEvent;
 			if (script->IsEventExists("MainLoop", itrEvent))
 				script->Run(itrEvent);
 			itr++;
@@ -116,7 +116,7 @@ void ScriptManager::StartScript(int64_t id) {
 	}
 
 	if (script != nullptr && !IsError()) {
-		std::map<std::string, script_engine::block*>::iterator itrEvent;
+		std::map<std::string, script_block*>::iterator itrEvent;
 		if (script->IsEventExists("Initialize", itrEvent))
 			script->Run(itrEvent);
 	}
@@ -139,7 +139,7 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> id) {
 	}
 
 	if (id != nullptr && !IsError()) {
-		std::map<std::string, script_engine::block*>::iterator itrEvent;
+		std::map<std::string, script_block*>::iterator itrEvent;
 		if (id->IsEventExists("Initialize", itrEvent))
 			id->Run(itrEvent);
 	}
@@ -222,7 +222,7 @@ int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedS
 	script->SetSourceFromFile(path);
 	script->Compile();
 
-	std::map<std::string, script_engine::block*>::iterator itrEvent;
+	std::map<std::string, script_block*>::iterator itrEvent;
 	if (script->IsEventExists("Loading", itrEvent))
 		script->Run(itrEvent);
 
@@ -382,7 +382,7 @@ gstd::value ManagedScript::RequestEvent(int type) {
 }
 gstd::value ManagedScript::RequestEvent(int type, const gstd::value* listValue, size_t countArgument) {
 	gstd::value res;
-	std::map<std::string, script_engine::block*>::iterator itrEvent;
+	std::map<std::string, script_block*>::iterator itrEvent;
 	if (!IsEventExists("Event", itrEvent)) {
 		return res;
 	}

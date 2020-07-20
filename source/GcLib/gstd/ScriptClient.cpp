@@ -768,7 +768,7 @@ bool ScriptClientBase::Run() {
 bool ScriptClientBase::Run(const std::string& target) {
 	if (bError_) return false;
 
-	std::map<std::string, script_engine::block*>::iterator itrEvent;
+	std::map<std::string, script_block*>::iterator itrEvent;
 	if (!machine_->has_event(target, itrEvent)) {
 		_RaiseError(0, StringUtility::FormatToWide("The requested event does not exist. [%s]", target.c_str()));
 	}
@@ -782,7 +782,7 @@ bool ScriptClientBase::Run(const std::string& target) {
 	}
 	return true;
 }
-bool ScriptClientBase::Run(std::map<std::string, script_engine::block*>::iterator target) {
+bool ScriptClientBase::Run(std::map<std::string, script_block*>::iterator target) {
 	if (bError_) return false;
 
 	Run();
@@ -794,7 +794,7 @@ bool ScriptClientBase::Run(std::map<std::string, script_engine::block*>::iterato
 	}
 	return true;
 }
-bool ScriptClientBase::IsEventExists(const std::string& name, std::map<std::string, script_engine::block*>::iterator& res) {
+bool ScriptClientBase::IsEventExists(const std::string& name, std::map<std::string, script_block*>::iterator& res) {
 	if (bError_) {
 		if (machine_ && machine_->get_error()) _RaiseErrorFromMachine();
 		else if (engine_->GetEngine()->get_error()) _RaiseErrorFromEngine();
@@ -865,7 +865,7 @@ value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 		std::vector<value> res_arr;
 		res_arr.resize(list.size());
 		for (size_t iVal = 0U; iVal < list.size(); ++iVal) {
-			machine_->append_check(iVal, type_array, list[iVal].get_type());
+			BaseFunction::_append_check(machine_, iVal, type_array, list[iVal].get_type());
 			res_arr[iVal] = list[iVal];
 		}
 
@@ -1057,7 +1057,7 @@ value ScriptClientBase::Func_RandEff(script_machine* machine, int argc, const va
 }
 
 void ScriptClientBase::IsMatrix(script_machine*& machine, const value& v) {
-	type_data* typeReal = machine->get_engine()->get_real_type();
+	type_data* typeReal = script_type_manager::get_real_type();
 
 	if ((v.get_type() != typeReal) || (v.get_type()->get_element() != typeReal)) {
 		std::wstring err = L"Invalid type, only matrices of real numbers may be used.";
@@ -1069,7 +1069,7 @@ void ScriptClientBase::IsMatrix(script_machine*& machine, const value& v) {
 	}
 }
 void ScriptClientBase::IsVector(script_machine*& machine, const value& v, size_t count) {
-	type_data* typeReal = machine->get_engine()->get_real_type();
+	type_data* typeReal = script_type_manager::get_real_type();
 
 	if ((v.get_type() != typeReal) || (v.get_type()->get_element() != typeReal)) {
 		std::wstring err = L"Invalid type, only vectors of real numbers may be used.";

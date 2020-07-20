@@ -204,6 +204,11 @@
     <ClCompile Include="source\GcLib\directx\Texture.cpp" />
     <ClCompile Include="source\GcLib\directx\TransitionEffect.cpp" />
     <ClCompile Include="source\GcLib\directx\VertexBuffer.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Script\Parser.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Script\Script.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Script\ScriptFunction.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Script\ScriptLexer.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Script\Value.cpp" />
     <ClCompile Include="source\GcLib\gstd\Application.cpp" />
     <ClCompile Include="source\GcLib\gstd\ArchiveFile.cpp" />
     <ClCompile Include="source\GcLib\gstd\File.cpp" />
@@ -211,12 +216,9 @@
     <ClCompile Include="source\GcLib\gstd\GstdUtility.cpp" />
     <ClCompile Include="source\GcLib\gstd\Logger.cpp" />
     <ClCompile Include="source\GcLib\gstd\RandProvider.cpp" />
-    <ClCompile Include="source\GcLib\gstd\Script.cpp" />
     <ClCompile Include="source\GcLib\gstd\ScriptClient.cpp" />
-    <ClCompile Include="source\GcLib\gstd\ScriptLexer.cpp" />
     <ClCompile Include="source\GcLib\gstd\Task.cpp" />
     <ClCompile Include="source\GcLib\gstd\Thread.cpp" />
-    <ClCompile Include="source\GcLib\gstd\Value.cpp" />
     <ClCompile Include="source\GcLib\gstd\Window.cpp" />
     <ClCompile Include="source\GcLib\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -274,6 +276,12 @@
     <ClInclude Include="source\GcLib\directx\Vertex.hpp" />
     <ClInclude Include="source\GcLib\directx\VertexBuffer.hpp" />
     <ClInclude Include="source\GcLib\GcLib.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Script\LightweightVector.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Script\Parser.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Script\ScriptFunction.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Script\ScriptLexer.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Script\Script.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Script\Value.hpp" />
     <ClInclude Include="source\GcLib\gstd\Application.hpp" />
     <ClInclude Include="source\GcLib\gstd\ArchiveEncryption.hpp" />
     <ClInclude Include="source\GcLib\gstd\ArchiveFile.hpp" />
@@ -281,16 +289,12 @@
     <ClInclude Include="source\GcLib\gstd\FpsController.hpp" />
     <ClInclude Include="source\GcLib\gstd\GstdLib.hpp" />
     <ClInclude Include="source\GcLib\gstd\GstdUtility.hpp" />
-    <ClInclude Include="source\GcLib\gstd\ScriptLexer.hpp" />
-    <ClInclude Include="source\GcLib\gstd\LightweightVector.hpp" />
     <ClInclude Include="source\GcLib\gstd\Logger.hpp" />
     <ClInclude Include="source\GcLib\gstd\RandProvider.hpp" />
-    <ClInclude Include="source\GcLib\gstd\Script.hpp" />
     <ClInclude Include="source\GcLib\gstd\ScriptClient.hpp" />
     <ClInclude Include="source\GcLib\gstd\SmartPointer.hpp" />
     <ClInclude Include="source\GcLib\gstd\Task.hpp" />
     <ClInclude Include="source\GcLib\gstd\Thread.hpp" />
-    <ClInclude Include="source\GcLib\gstd\Value.hpp" />
     <ClInclude Include="source\GcLib\gstd\Window.hpp" />
     <ClInclude Include="source\GcLib\pch.h" />
     <ClInclude Include="source\Steam\Achievement.hpp" />

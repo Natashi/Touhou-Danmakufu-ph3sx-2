@@ -27,6 +27,9 @@
     <Filter Include="source\Steam">
       <UniqueIdentifier>{a34dabe5-7a05-4b7b-a4a3-bb0790b325ae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\GcLib\directx\Mesh">
+      <UniqueIdentifier>{e73259af-d068-459b-8c48-0927a38e30fc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\GcLib\gstd\Application.cpp">
@@ -72,9 +75,6 @@
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
     <ClCompile Include="source\GcLib\directx\DxWindow.cpp">
-      <Filter>source\GcLib\directx</Filter>
-    </ClCompile>
-    <ClCompile Include="source\GcLib\directx\MetasequoiaMesh.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
     <ClCompile Include="source\GcLib\directx\RenderObject.cpp">
@@ -176,23 +176,32 @@
     <ClCompile Include="source\GcLib\pch.cpp">
       <Filter>source\GcLib</Filter>
     </ClCompile>
-    <ClCompile Include="source\GcLib\gstd\Script.cpp">
+    <ClCompile Include="source\GcLib\gstd\Script\Script.cpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClCompile>
-    <ClCompile Include="source\GcLib\gstd\ScriptClient.cpp">
-      <Filter>source\GcLib\gstd\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="source\GcLib\gstd\Value.cpp">
-      <Filter>source\GcLib\gstd\Script</Filter>
-    </ClCompile>
-    <ClCompile Include="source\GcLib\gstd\ScriptLexer.cpp">
+    <ClCompile Include="source\GcLib\gstd\Script\ScriptLexer.cpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClCompile>
     <ClCompile Include="source\GcLib\directx\DxScriptFunc.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\Script\Parser.cpp">
+      <Filter>source\GcLib\gstd\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\Script\ScriptFunction.cpp">
+      <Filter>source\GcLib\gstd\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\Script\Value.cpp">
+      <Filter>source\GcLib\gstd\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\ScriptClient.cpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
     <ClCompile Include="source\GcLib\directx\ElfreinaMesh.cpp">
-      <Filter>source\GcLib\directx</Filter>
+      <Filter>source\GcLib\directx\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\directx\MetasequoiaMesh.cpp">
+      <Filter>source\GcLib\directx\Mesh</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -254,9 +263,6 @@
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\HLSL.hpp">
-      <Filter>source\GcLib\directx</Filter>
-    </ClInclude>
-    <ClInclude Include="source\GcLib\directx\MetasequoiaMesh.hpp">
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\RenderObject.hpp">
@@ -364,19 +370,16 @@
     <ClInclude Include="source\GcLib\pch.h">
       <Filter>source\GcLib</Filter>
     </ClInclude>
-    <ClInclude Include="source\GcLib\gstd\Script.hpp">
+    <ClInclude Include="source\GcLib\gstd\Script\Script.hpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClInclude>
-    <ClInclude Include="source\GcLib\gstd\ScriptClient.hpp">
+    <ClInclude Include="source\GcLib\gstd\Script\Value.hpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClInclude>
-    <ClInclude Include="source\GcLib\gstd\Value.hpp">
+    <ClInclude Include="source\GcLib\gstd\Script\LightweightVector.hpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClInclude>
-    <ClInclude Include="source\GcLib\gstd\LightweightVector.hpp">
-      <Filter>source\GcLib\gstd\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="source\GcLib\gstd\ScriptLexer.hpp">
+    <ClInclude Include="source\GcLib\gstd\Script\ScriptLexer.hpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClInclude>
     <ClInclude Include="source\Steam\SteamBase.hpp">
@@ -391,8 +394,20 @@
     <ClInclude Include="source\GcLib\gstd\ArchiveFile.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\Script\Parser.hpp">
+      <Filter>source\GcLib\gstd\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\Script\ScriptFunction.hpp">
+      <Filter>source\GcLib\gstd\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\ScriptClient.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
     <ClInclude Include="source\GcLib\directx\ElfreinaMesh.hpp">
-      <Filter>source\GcLib\directx</Filter>
+      <Filter>source\GcLib\directx\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\MetasequoiaMesh.hpp">
+      <Filter>source\GcLib\directx\Mesh</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

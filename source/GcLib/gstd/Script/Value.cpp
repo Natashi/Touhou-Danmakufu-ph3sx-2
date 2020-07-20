@@ -1,7 +1,7 @@
 #include "source/GcLib/pch.h"
 
+#include "../GstdUtility.hpp"
 #include "Value.hpp"
-#include "GstdUtility.hpp"
 
 using namespace gstd;
 

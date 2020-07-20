@@ -1,16 +1,23 @@
 #pragma once
-#include "../pch.h"
 
-#include "GstdUtility.hpp"
+#include "../../pch.h"
+#include "../GstdUtility.hpp"
 
 namespace gstd {
 	/* parser_error */
 	class parser_error : public gstd::wexception {
 	public:
-		parser_error(std::wstring const& the_message) : gstd::wexception(the_message) {}
-		parser_error(std::string const& the_message) : gstd::wexception(the_message) {}
-	private:
+		parser_error(const std::wstring& msg) : wexception(msg) {};
+		parser_error(const std::string& msg) : wexception(msg) {};
+	};
+	class parser_error_mapped : public gstd::wexception {
+	public:
+		parser_error_mapped(int line, const std::wstring& msg) : wexception(msg), line_(line) {};
+		parser_error_mapped(int line, const std::string& msg) : wexception(msg), line_(line) {};
 
+		int GetLine() { return line_; }
+	private:
+		int line_;
 	};
 
 	/* lexical analyzer */
