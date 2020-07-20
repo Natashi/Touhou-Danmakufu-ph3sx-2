@@ -618,10 +618,8 @@ void DxScript::_ClearResource() {
 	mapShader_.clear();
 	mapMesh_.clear();
 
-	std::map<std::wstring, gstd::ref_count_ptr<SoundPlayer>>::iterator itrSound;
-	for (itrSound = mapSoundPlayer_.begin(); itrSound != mapSoundPlayer_.end(); ++itrSound) {
-		SoundPlayer* player = (itrSound->second).GetPointer();
-		player->Delete();
+	for (auto itrSound = mapSoundPlayer_.begin(); itrSound != mapSoundPlayer_.end(); ++itrSound) {
+		itrSound->second->Delete();
 	}
 	mapSoundPlayer_.clear();
 }
@@ -836,10 +834,10 @@ value DxScript::Func_LoadSound(script_machine* machine, int argc, const value* a
 	if (script->mapSoundPlayer_.find(path) != script->mapSoundPlayer_.end())
 		return script->CreateBooleanValue(true);
 
-	gstd::ref_count_ptr<SoundPlayer> player = manager->GetPlayer(path, true);
-	if (player) {
+	shared_ptr<SoundPlayer> player = manager->GetPlayer(path, true);
+	if (player)
 		script->mapSoundPlayer_[path] = player;
-	}
+	
 	return script->CreateBooleanValue(player != nullptr);
 }
 value DxScript::Func_RemoveSound(script_machine* machine, int argc, const value* argv) {
@@ -868,7 +866,8 @@ value DxScript::Func_PlayBGM(script_machine* machine, int argc, const value* arg
 		double loopStart = argv[1].as_real();
 		double loopEnd = argv[2].as_real();
 
-		gstd::ref_count_ptr<SoundPlayer> player = itr->second;
+		shared_ptr<SoundPlayer> player = itr->second;
+		player->SetAutoDelete(true);
 		player->SetSoundDivision(SoundDivision::DIVISION_BGM);
 
 		SoundPlayer::PlayStyle style;
@@ -889,7 +888,8 @@ gstd::value DxScript::Func_PlaySE(gstd::script_machine* machine, int argc, const
 
 	auto itr = script->mapSoundPlayer_.find(path);
 	if (itr != script->mapSoundPlayer_.end()) {
-		gstd::ref_count_ptr<SoundPlayer> player = itr->second;
+		shared_ptr<SoundPlayer> player = itr->second;
+		player->SetAutoDelete(true);
 		player->SetSoundDivision(SoundDivision::DIVISION_SE);
 
 		SoundPlayer::PlayStyle style;
@@ -908,7 +908,7 @@ value DxScript::Func_StopSound(script_machine* machine, int argc, const value* a
 
 	auto itr = script->mapSoundPlayer_.find(path);
 	if (itr != script->mapSoundPlayer_.end()) {
-		gstd::ref_count_ptr<SoundPlayer> player = itr->second;
+		shared_ptr<SoundPlayer> player = itr->second;
 		player->Stop();
 		script->GetObjectManager()->DeleteReservedSound(player);
 	}
@@ -3699,7 +3699,7 @@ gstd::value DxScript::Func_ObjSound_Play(gstd::script_machine* machine, int argc
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			//obj->Play();
 			script->GetObjectManager()->ReserveSound(player, obj->GetStyle());
@@ -3712,7 +3712,7 @@ gstd::value DxScript::Func_ObjSound_Stop(gstd::script_machine* machine, int argc
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			player->Stop();
 			script->GetObjectManager()->DeleteReservedSound(player);
@@ -3725,7 +3725,7 @@ gstd::value DxScript::Func_ObjSound_SetVolumeRate(gstd::script_machine* machine,
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player)
 			player->SetVolumeRate(argv[1].as_real());
 	}
@@ -3736,7 +3736,7 @@ gstd::value DxScript::Func_ObjSound_SetPanRate(gstd::script_machine* machine, in
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player)
 			player->SetPanRate(argv[1].as_real());
 	}
@@ -3747,7 +3747,7 @@ gstd::value DxScript::Func_ObjSound_SetFade(gstd::script_machine* machine, int a
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player)
 			player->SetFade(argv[1].as_real());
 	}
@@ -3758,7 +3758,7 @@ gstd::value DxScript::Func_ObjSound_SetLoopEnable(gstd::script_machine* machine,
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			SoundPlayer::PlayStyle& style = obj->GetStyle();
 			style.SetLoopEnable(argv[1].as_boolean());
@@ -3771,7 +3771,7 @@ gstd::value DxScript::Func_ObjSound_SetLoopTime(gstd::script_machine* machine, i
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			SoundPlayer::PlayStyle& style = obj->GetStyle();
 			style.SetLoopStartTime(argv[1].as_real());
@@ -3785,7 +3785,7 @@ gstd::value DxScript::Func_ObjSound_SetLoopSampleCount(gstd::script_machine* mac
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			WAVEFORMATEX* fmt = player->GetWaveFormat();
 			double startTime = argv[1].as_real() / (double)fmt->nSamplesPerSec;
@@ -3802,7 +3802,7 @@ gstd::value DxScript::Func_ObjSound_Seek(gstd::script_machine* machine, int argc
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			//if (player->IsPlaying()) {
 			player->Seek(argv[1].as_real());
@@ -3819,7 +3819,7 @@ gstd::value DxScript::Func_ObjSound_SeekSampleCount(gstd::script_machine* machin
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			WAVEFORMATEX* fmt = player->GetWaveFormat();
 			//if (player->IsPlaying()) {
@@ -3837,7 +3837,7 @@ gstd::value DxScript::Func_ObjSound_SetRestartEnable(gstd::script_machine* machi
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			SoundPlayer::PlayStyle& style = obj->GetStyle();
 			style.SetRestart(argv[1].as_boolean());
@@ -3850,7 +3850,7 @@ gstd::value DxScript::Func_ObjSound_SetSoundDivision(gstd::script_machine* machi
 	int id = (int)argv[0].as_real();
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player)
 			player->SetSoundDivision(argv[1].as_int());
 	}
@@ -3862,7 +3862,7 @@ gstd::value DxScript::Func_ObjSound_IsPlaying(gstd::script_machine* machine, int
 	bool bPlay = false;
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player)
 			bPlay = player->IsPlaying();
 	}
@@ -3874,7 +3874,7 @@ gstd::value DxScript::Func_ObjSound_GetVolumeRate(gstd::script_machine* machine,
 	double rate = 0;
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player)
 			rate = player->GetVolumeRate();
 	}
@@ -3886,7 +3886,7 @@ gstd::value DxScript::Func_ObjSound_GetWavePosition(gstd::script_machine* machin
 	double posSec = 0;
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			DWORD pos = player->GetCurrentPosition();
 			posSec = (double)pos / player->GetWaveFormat()->nAvgBytesPerSec;
@@ -3900,7 +3900,7 @@ gstd::value DxScript::Func_ObjSound_GetWavePositionSampleCount(gstd::script_mach
 	DWORD posSamp = 0;
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			DWORD pos = player->GetCurrentPosition();
 			posSamp = pos / player->GetWaveFormat()->nBlockAlign;
@@ -3914,7 +3914,7 @@ gstd::value DxScript::Func_ObjSound_GetTotalLength(gstd::script_machine* machine
 	double posSec = 0;
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			DWORD pos = player->GetTotalAudioSize();
 			posSec = (double)pos / player->GetWaveFormat()->nAvgBytesPerSec;
@@ -3928,7 +3928,7 @@ gstd::value DxScript::Func_ObjSound_GetTotalLengthSampleCount(gstd::script_machi
 	DWORD posSamp = 0;
 	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<SoundPlayer> player = obj->GetPlayer();
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			DWORD pos = player->GetTotalAudioSize();
 			posSamp = pos / player->GetWaveFormat()->nBlockAlign;

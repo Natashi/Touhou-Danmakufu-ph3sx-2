@@ -765,8 +765,8 @@ DxSoundObject::DxSoundObject() {
 	typeObject_ = TypeObject::OBJ_SOUND;
 }
 DxSoundObject::~DxSoundObject() {
-	if (player_ == nullptr) return;
-	player_->Delete();
+	if (player_ && player_.use_count() == 2)
+		player_->Delete();
 }
 bool DxSoundObject::Load(const std::wstring& path) {
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
@@ -1334,10 +1334,9 @@ void DxScriptObjectManager::WorkObject() {
 	//âπê∫çƒê∂
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 	for (auto itrSound = mapReservedSound_.begin(); itrSound != mapReservedSound_.end(); ++itrSound) {
-		gstd::ref_count_ptr<SoundInfo> info = itrSound->second;
-		gstd::ref_count_ptr<SoundPlayer> player = info->player_;
-		SoundPlayer::PlayStyle style = info->style_;
-		player->Play(style);
+		shared_ptr<SoundInfo> info = itrSound->second;
+		shared_ptr<SoundPlayer> player = info->player_;
+		player->Play(info->style_);
 	}
 	mapReservedSound_.clear();
 }
@@ -1421,15 +1420,15 @@ void DxScriptObjectManager::ResetShader(int min, int max) {
 	SetShader(nullptr, min, max);
 }
 
-void DxScriptObjectManager::ReserveSound(gstd::ref_count_ptr<SoundPlayer> player, SoundPlayer::PlayStyle& style) {
-	ref_count_ptr<SoundInfo> info = new SoundInfo();
+void DxScriptObjectManager::ReserveSound(shared_ptr<SoundPlayer> player, SoundPlayer::PlayStyle& style) {
+	shared_ptr<SoundInfo> info(new SoundInfo());
 	info->player_ = player;
 	info->style_ = style;
 
 	const std::wstring& path = player->GetPath();
 	mapReservedSound_[path] = info;
 }
-void DxScriptObjectManager::DeleteReservedSound(gstd::ref_count_ptr<SoundPlayer> player) {
+void DxScriptObjectManager::DeleteReservedSound(shared_ptr<SoundPlayer> player) {
 	const std::wstring& path = player->GetPath();
 	mapReservedSound_.erase(path);
 }

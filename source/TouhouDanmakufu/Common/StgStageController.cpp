@@ -250,8 +250,9 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		if (pathBGM.size() > 0) {
 			pathBGM = EPathProperty::ExtendRelativeToFull(dirInfo, pathBGM);
 			ELogger::WriteTop(StringUtility::Format(L"BGM: [%s]", pathBGM.c_str()));
-			ref_count_ptr<SoundPlayer> player = DirectSoundManager::GetBase()->GetPlayer(pathBGM);
+			shared_ptr<SoundPlayer> player = DirectSoundManager::GetBase()->GetPlayer(pathBGM);
 			if (player) {
+				player->SetAutoDelete(true);
 				player->SetSoundDivision(SoundDivision::DIVISION_BGM);
 				SoundPlayer::PlayStyle style;
 				style.SetLoopEnable(true);

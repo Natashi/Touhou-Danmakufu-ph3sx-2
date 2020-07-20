@@ -21,18 +21,6 @@ namespace directx {
 	class AcmMp3;
 	class AcmMp3Wave;
 
-
-	struct WAVEFILEHEADER {//WAVE構成フォーマット情報、"fmt "チャンクデータ
-		char cRIFF[4];
-		int	iSizeRIFF;
-		char cType[4];
-		char cFmt[4];
-		int	iSizeFmt;
-		WAVEFORMATEX WaveFmt;
-		char cData[4];
-		int	iSizeData;
-	};
-
 	/**********************************************************
 	//DirectSoundManager
 	**********************************************************/
@@ -64,13 +52,15 @@ namespace directx {
 		IDirectSoundBuffer8* pDirectSoundBuffer_;
 		gstd::CriticalSection lock_;
 		SoundManageThread* threadManage_;
-		std::map<std::wstring, std::list<gstd::ref_count_ptr<SoundPlayer>>> mapPlayer_;
+
+		std::map<std::wstring, std::list<shared_ptr<SoundPlayer>>> mapPlayer_;
 		std::map<int, SoundDivision*> mapDivision_;
-		std::map<std::wstring, gstd::ref_count_ptr<SoundInfo>> mapInfo_;
+		std::map<std::wstring, shared_ptr<SoundInfo>> mapInfo_;
+
 		gstd::ref_count_ptr<SoundInfoPanel> panelInfo_;
 
-		gstd::ref_count_ptr<SoundPlayer> _GetPlayer(const std::wstring& path);
-		gstd::ref_count_ptr<SoundPlayer> _CreatePlayer(std::wstring path);
+		shared_ptr<SoundPlayer> _GetPlayer(const std::wstring& path);
+		shared_ptr<SoundPlayer> _CreatePlayer(std::wstring path);
 	public:
 		DirectSoundManager();
 		virtual ~DirectSoundManager();
@@ -81,15 +71,18 @@ namespace directx {
 		IDirectSound8* GetDirectSound() { return pDirectSound_; }
 		gstd::CriticalSection& GetLock() { return lock_; }
 
-		gstd::ref_count_ptr<SoundPlayer> GetPlayer(const std::wstring& path, bool bCreateAlways = false);
+		shared_ptr<SoundPlayer> GetPlayer(const std::wstring& path, bool bCreateAlways = false);
 		SoundDivision* CreateSoundDivision(int index);
 		SoundDivision* GetSoundDivision(int index);
-		gstd::ref_count_ptr<SoundInfo> GetSoundInfo(const std::wstring& path);
+		shared_ptr<SoundInfo> GetSoundInfo(const std::wstring& path);
 
-		void SetInfoPanel(gstd::ref_count_ptr<SoundInfoPanel> panel) { gstd::Lock lock(lock_); panelInfo_ = panel; }
+		void SetInfoPanel(gstd::ref_count_ptr<SoundInfoPanel> panel) { 
+			gstd::Lock lock(lock_); 
+			panelInfo_ = panel; 
+		}
 
 		bool AddSoundInfoFromFile(const std::wstring& path);
-		std::vector<gstd::ref_count_ptr<SoundInfo>> GetSoundInfoList();
+		std::vector<shared_ptr<SoundInfo>> GetSoundInfoList();
 		void SetFadeDeleteAll();
 	};
 
@@ -185,6 +178,11 @@ namespace directx {
 		enum {
 			FADE_DEFAULT = 20,
 		};
+
+		static void PtrDelete(SoundPlayer* p) {
+			p->Stop();
+			delete p;
+		}
 	protected:
 		DirectSoundManager* manager_;
 		std::wstring path_;
@@ -211,7 +209,7 @@ namespace directx {
 
 		virtual bool _CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader) = 0;
 		virtual void _SetSoundInfo();
-		static int _GetValumeAsDirectSoundDecibel(float rate);
+		static LONG _GetVolumeAsDirectSoundDecibel(float rate);
 	public:
 		SoundPlayer();
 		virtual ~SoundPlayer();
@@ -271,7 +269,7 @@ namespace directx {
 	protected:
 		HANDLE hEvent_[3];
 		IDirectSoundNotify* pDirectSoundNotify_;//イベント
-		int sizeCopy_;
+		size_t sizeCopy_;
 		StreamingThread* thread_;
 		bool bStreaming_;
 		bool bRequestStop_;//ループ完了時のフラグ。すぐ停止すると最後のバッファが再生されないため。
@@ -321,8 +319,8 @@ namespace directx {
 	**********************************************************/
 	class SoundStreamingPlayerWave : public SoundStreamingPlayer {
 	protected:
-		int posWaveStart_;
-		int posWaveEnd_;
+		size_t posWaveStart_;
+		size_t posWaveEnd_;
 		virtual bool _CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader);
 		virtual size_t _CopyBuffer(LPVOID pMem, DWORD dwSize);
 	public:
@@ -346,7 +344,6 @@ namespace directx {
 		static int _SeekOgg(void* source, ogg_int64_t offset, int whence);
 		static int _CloseOgg(void* source);
 		static long _TellOgg(void* source);
-
 	public:
 		SoundStreamingPlayerOgg();
 		~SoundStreamingPlayerOgg();
@@ -363,15 +360,15 @@ namespace directx {
 		WAVEFORMATEX formatWave_;
 		HACMSTREAM hAcmStream_;
 		ACMSTREAMHEADER acmStreamHeader_;
-		int posMp3DataStart_;
-		int posMp3DataEnd_;
+		size_t posMp3DataStart_;
+		size_t posMp3DataEnd_;
 		DWORD waveDataSize_;
 		double timeCurrent_;
 		gstd::ref_count_ptr<gstd::ByteBuffer> bufDecode_;
 
 		virtual bool _CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader);
 		virtual size_t _CopyBuffer(LPVOID pMem, DWORD dwSize);
-		int _ReadAcmStream(char* pBuffer, int size);
+		size_t _ReadAcmStream(char* pBuffer, size_t size);
 	public:
 		SoundStreamingPlayerMp3();
 		~SoundStreamingPlayerMp3();

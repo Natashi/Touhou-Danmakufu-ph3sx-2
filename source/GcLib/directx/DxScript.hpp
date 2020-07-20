@@ -504,7 +504,7 @@ namespace directx {
 	class DxSoundObject : public DxScriptObjectBase {
 		friend DxScript;
 	protected:
-		gstd::ref_count_ptr<SoundPlayer> player_;
+		shared_ptr<SoundPlayer> player_;
 		SoundPlayer::PlayStyle style_;
 	public:
 		DxSoundObject();
@@ -515,7 +515,7 @@ namespace directx {
 		bool Load(const std::wstring& path);
 		void Play();
 
-		gstd::ref_count_ptr<SoundPlayer> GetPlayer() { return player_; }
+		shared_ptr<SoundPlayer> GetPlayer() { return player_; }
 		SoundPlayer::PlayStyle& GetStyle() { return style_; }
 	};
 
@@ -613,7 +613,7 @@ namespace directx {
 		friend DxScriptObjectBase;
 	public:
 		struct SoundInfo {
-			gstd::ref_count_ptr<SoundPlayer> player_;
+			shared_ptr<SoundPlayer> player_;
 			SoundPlayer::PlayStyle style_;
 			virtual ~SoundInfo() {}
 		};
@@ -637,7 +637,7 @@ namespace directx {
 		std::list<int> listUnusedIndex_;
 		std::vector<shared_ptr<DxScriptObjectBase>> obj_;		//オブジェクト
 		std::list<shared_ptr<DxScriptObjectBase>> listActiveObject_;
-		std::unordered_map<std::wstring, gstd::ref_count_ptr<SoundInfo>> mapReservedSound_;
+		std::unordered_map<std::wstring, shared_ptr<SoundInfo>> mapReservedSound_;
 
 		//フォグ
 		bool bFogEnable_;
@@ -692,8 +692,8 @@ namespace directx {
 		void ResetShader(int min, int max);
 		shared_ptr<Shader> GetShader(int index);
 
-		void ReserveSound(gstd::ref_count_ptr<SoundPlayer> player, SoundPlayer::PlayStyle& style);
-		void DeleteReservedSound(gstd::ref_count_ptr<SoundPlayer> player);
+		void ReserveSound(shared_ptr<SoundPlayer> player, SoundPlayer::PlayStyle& style);
+		void DeleteReservedSound(shared_ptr<SoundPlayer> player);
 		void SetFogParam(bool bEnable, D3DCOLOR fogColor, float start, float end);
 		int64_t GetTotalObjectCreateCount() { return totalObjectCreateCount_; }
 
@@ -723,7 +723,7 @@ namespace directx {
 		std::map<std::wstring, shared_ptr<Texture>> mapTexture_;
 		std::map<std::wstring, shared_ptr<DxMesh>> mapMesh_;
 		std::map<std::wstring, shared_ptr<Shader>> mapShader_;
-		std::map<std::wstring, gstd::ref_count_ptr<SoundPlayer>> mapSoundPlayer_;
+		std::map<std::wstring, shared_ptr<SoundPlayer>> mapSoundPlayer_;
 
 		void _ClearResource();
 		shared_ptr<Texture> _GetTexture(const std::wstring& name);
