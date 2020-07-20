@@ -144,8 +144,10 @@ gstd::ref_count_ptr<SoundPlayer> DirectSoundManager::_GetPlayer(const std::wstri
 	return res;
 }
 gstd::ref_count_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
-	gstd::ref_count_ptr<SoundPlayer> res;
 	FileManager* fileManager = FileManager::GetBase();
+
+	gstd::ref_count_ptr<SoundPlayer> res;
+
 	try {
 		path = PathProperty::GetUnique(path);
 		ref_count_ptr<FileReader> reader = fileManager->GetFileReader(path);
@@ -161,41 +163,43 @@ gstd::ref_count_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring 
 		header.SetSize(64);
 		reader->Read(header.GetPointer(), header.GetSize());
 
-		if (!memcmp(header.GetPointer(), "RIFF", 4)) {//WAVE
+		if (!memcmp(header.GetPointer(), "RIFF", 4)) {		//WAVE
 			format = SD_WAVE;
+
 			WAVEFORMATEX pcmwf;
-			ZeroMemory(&pcmwf, sizeof(PCMWAVEFORMAT));
 			memcpy(&pcmwf, header.GetPointer(20), sizeof(WAVEFORMATEX));
-			if (pcmwf.wFormatTag == 85) format = SD_AWAVE;//waveヘッダmp3
+
+			if (pcmwf.wFormatTag == 85) format = SD_AWAVE;	//Surprise! You thought it was .wav, but it was me, .MP3!!
 			else format = SD_WAVE;
 		}
-		else if (!memcmp(header.GetPointer(), "OggS", 4)) {//OggVorbis
+		else if (!memcmp(header.GetPointer(), "OggS", 4)) {	//Ogg Vorbis
 			format = SD_OGG;
 		}
-		else if (!memcmp(header.GetPointer(), "MThd", 4)) {//midi
+		else if (!memcmp(header.GetPointer(), "MThd", 4)) {	//midi
 			format = SD_MIDI;
 		}
-		else {//多分mp3
+		else {		//Death sentence
 			format = SD_MP3;
 		}
 
-		//プレイヤ作成
-		if (format == SD_WAVE) {//WAVE
+		//Create the sound player object
+		if (format == SD_WAVE) {		//WAVE
 			if (sizeFile < 1024 * 1024) {
-				//メモリ保持再生
+				//The file is small enough, just load the entire thing into memory
 				res = new SoundPlayerWave();
 			}
 			else {
-				//ストリーミング
+				//File too bigg uwu owo, pleasm be gentwe and take it easwy owo *blushes*
 				res = new SoundStreamingPlayerWave();
 			}
 		}
-		else if (format == SD_OGG) {//OggVorbis
+		else if (format == SD_OGG) {	//Ogg Vorbis
 			res = new SoundStreamingPlayerOgg();
 		}
-		else if (format == SD_MIDI) {//midi
+		else if (format == SD_MIDI) {	//midi
+			//lmao
 		}
-		else if (format == SD_MP3 || format == SD_AWAVE) {//mp3
+		else if (format == SD_MP3 || format == SD_AWAVE) {		//Fuck you
 			res = new SoundStreamingPlayerMp3();
 		}
 
@@ -220,7 +224,7 @@ gstd::ref_count_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring 
 			Logger::WriteTop(str);
 		}
 	}
-	catch (gstd::wexception &e) {
+	catch (gstd::wexception& e) {
 		std::wstring str = StringUtility::Format(L"DirectSound：Audio load failed [%s]\n\t%s", path.c_str(), e.what());
 		Logger::WriteTop(str);
 	}
@@ -884,58 +888,77 @@ bool SoundPlayerWave::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader
 	reader_->SetFilePointerBegin();
 
 	try {
-		//wave解析
-		char chunk[5] = "";
-		int sizeRiff = 0;
-		int sizeFormat = 0;
-		DWORD sizeWave = 0;
+		char chunk[4];
+		uint32_t sizeChunk = 0;
+		uint32_t sizeRiff = 0;
 
+		//First, check if we're actually reading a .wav
 		reader_->Read(&chunk, 4);
-		if (memcmp(chunk, "RIFF", 4) != 0) throw(false);
-		reader_->Read(&sizeRiff, sizeof(long));
+		if (memcmp(chunk, "RIFF", 4) != 0) throw false;
+		reader_->Read(&sizeRiff, sizeof(uint32_t));
 		reader_->Read(&chunk, 4);
-		if (memcmp(chunk, "WAVE", 4) != 0) throw(false);
-		reader_->Read(&chunk, 4);
-		if (memcmp(chunk, "fmt ", 4) != 0) throw(false);
-		reader_->Read(&sizeFormat, sizeof(long));
-		sizeFormat = sizeof(WAVEFORMATEX) - sizeof(WORD);
-		reader_->Read(&formatWave_, sizeFormat);
-		while (true) {
-			char ex = 0;
-			if (reader_->Read(&ex, sizeof(char)) == 0) throw(false);
-			for (int iChar = 0; iChar < 3; iChar++)
-				chunk[iChar] = chunk[iChar + 1];
-			chunk[3] = ex;
+		if (memcmp(chunk, "WAVE", 4) != 0) throw false;
 
-			//if(reader_->Read(&chunk, 4)==0) throw(false);
-			if (memcmp(chunk, "data", 4) == 0) break;
+		bool bReadValidFmtChunk = false;
+		uint32_t fmtChunkOffset = 0;
+		bool bFoundValidDataChunk = false;
+		uint32_t dataChunkOffset = 0;
+
+		//Scan chunks
+		while (reader_->Read(&chunk, 4)) {
+			reader_->Read(&sizeChunk, sizeof(uint32_t));
+
+			if (!bReadValidFmtChunk && memcmp(chunk, "fmt ", 4) == 0 && sizeChunk >= 0x10) {
+				bReadValidFmtChunk = true;
+				fmtChunkOffset = reader_->GetFilePointer() - sizeof(uint32_t);
+			}
+			else if (!bFoundValidDataChunk && memcmp(chunk, "data", 4) == 0) {
+				bFoundValidDataChunk = true;
+				dataChunkOffset = reader_->GetFilePointer() - sizeof(uint32_t);
+			}
+			
+			reader_->Seek(reader_->GetFilePointer() + sizeChunk);
+			if (bReadValidFmtChunk && bFoundValidDataChunk) break;
 		}
-		reader_->Read(&sizeWave, sizeof(int));
 
-		audioSizeTotal_ = sizeWave;
+		if (!bReadValidFmtChunk) throw gstd::wexception("wave format not found");
+		if (!bFoundValidDataChunk) throw gstd::wexception("wave data not found");
 
-		int posWaveStart = reader_->GetFilePointer();
-		int posWaveEnd = posWaveStart + sizeWave;
+		reader_->Seek(fmtChunkOffset);
+		reader_->Read(&sizeChunk, sizeof(uint32_t));
+		reader_->Read(&formatWave_, sizeChunk);
+
+		//Unrecognized format type
+		if (formatWave_.wFormatTag != WAVE_FORMAT_PCM) throw gstd::wexception("unsupported wave format");
+
+		reader_->Seek(dataChunkOffset);
+		reader_->Read(&sizeChunk, sizeof(uint32_t));
+
+		//sizeChunk is now the size of the wave data
+		audioSizeTotal_ = sizeChunk;
+
+		uint32_t posWaveStart = dataChunkOffset + sizeof(uint32_t);
+		uint32_t posWaveEnd = posWaveStart + sizeChunk;
 
 		//Bufferの作製
 		DSBUFFERDESC desc;
 		ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 		desc.dwSize = sizeof(DSBUFFERDESC);
 		desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCDEFER;
-		desc.dwBufferBytes = sizeWave;
+		desc.dwBufferBytes = sizeChunk;
 		desc.lpwfxFormat = &formatWave_;
 		HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc, (LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
-		if (FAILED(hrBuffer)) throw(false);
+		if (FAILED(hrBuffer)) throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
 
 		//Bufferへ書き込む
 		LPVOID pMem1, pMem2;
 		DWORD dwSize1, dwSize2;
-		HRESULT hrLock = pDirectSoundBuffer_->Lock(0, sizeWave, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
+		HRESULT hrLock = pDirectSoundBuffer_->Lock(0, sizeChunk, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
 		if (hrLock == DSERR_BUFFERLOST) {
 			hrLock = pDirectSoundBuffer_->Restore();
-			hrLock = pDirectSoundBuffer_->Lock(0, sizeWave, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
+			hrLock = pDirectSoundBuffer_->Lock(0, sizeChunk, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
 		}
-		if (FAILED(hrLock)) throw(false);
+		if (FAILED(hrLock)) throw gstd::wexception("IDirectSoundBuffer8::Lock failure");
 
 		reader_->Seek(posWaveStart);
 		reader_->Read(pMem1, dwSize1);
@@ -943,8 +966,11 @@ bool SoundPlayerWave::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader
 			reader_->Read(pMem2, dwSize2);
 		hrLock = pDirectSoundBuffer_->Unlock(pMem1, dwSize1, pMem2, dwSize2);
 	}
-	catch (...) {
+	catch (bool) {
 		return false;
+	}
+	catch (gstd::wexception& e) {
+		throw e;
 	}
 
 	return true;
@@ -1023,42 +1049,65 @@ bool SoundStreamingPlayerWave::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReade
 	reader_->SetFilePointerBegin();
 
 	try {
-		//wave解析
-		char chunk[5] = "";
-		int sizeRiff = 0;
-		int sizeFormat = 0;
-		int sizeWave = 0;
+		char chunk[4];
+		uint32_t sizeChunk = 0;
+		uint32_t sizeRiff = 0;
 
+		//First, check if we're actually reading a .wav
 		reader_->Read(&chunk, 4);
-		if (memcmp(chunk, "RIFF", 4) != 0) throw(false);
-		reader_->Read(&sizeRiff, sizeof(long));
+		if (memcmp(chunk, "RIFF", 4) != 0) throw false;
+		reader_->Read(&sizeRiff, sizeof(uint32_t));
 		reader_->Read(&chunk, 4);
-		if (memcmp(chunk, "WAVE", 4) != 0) throw(false);
-		reader_->Read(&chunk, 4);
-		if (memcmp(chunk, "fmt ", 4) != 0) throw(false);
-		reader_->Read(&sizeFormat, sizeof(long));
-		sizeFormat = sizeof(WAVEFORMATEX) - sizeof(WORD);
-		reader_->Read(&formatWave_, sizeFormat);
-		while (true) {
-			char ex = 0;
-			if (reader_->Read(&ex, sizeof(char)) == 0) throw(false);
-			for (int iChar = 0; iChar < 3; iChar++)
-				chunk[iChar] = chunk[iChar + 1];
-			chunk[3] = ex;
+		if (memcmp(chunk, "WAVE", 4) != 0) throw false;
 
-			//if(reader_->Read(&chunk, 4)==0) throw(false);
-			if (memcmp(chunk, "data", 4) == 0) break;
+		bool bReadValidFmtChunk = false;
+		uint32_t fmtChunkOffset = 0;
+		bool bFoundValidDataChunk = false;
+		uint32_t dataChunkOffset = 0;
+
+		//Scan chunks
+		while (reader_->Read(&chunk, 4)) {
+			reader_->Read(&sizeChunk, sizeof(uint32_t));
+
+			if (!bReadValidFmtChunk && memcmp(chunk, "fmt ", 4) == 0 && sizeChunk >= 0x10) {
+				bReadValidFmtChunk = true;
+				fmtChunkOffset = reader_->GetFilePointer() - sizeof(uint32_t);
+			}
+			else if (!bFoundValidDataChunk && memcmp(chunk, "data", 4) == 0) {
+				bFoundValidDataChunk = true;
+				dataChunkOffset = reader_->GetFilePointer() - sizeof(uint32_t);
+			}
+
+			reader_->Seek(reader_->GetFilePointer() + sizeChunk);
+			if (bReadValidFmtChunk && bFoundValidDataChunk) break;
 		}
-		reader_->Read(&sizeWave, sizeof(int));
 
-		audioSizeTotal_ = sizeWave;
+		if (!bReadValidFmtChunk) throw gstd::wexception("wave format not found");
+		if (!bFoundValidDataChunk) throw gstd::wexception("wave data not found");
 
-		posWaveStart_ = reader_->GetFilePointer();
-		posWaveEnd_ = posWaveStart_ + sizeWave;
+		reader_->Seek(fmtChunkOffset);
+		reader_->Read(&sizeChunk, sizeof(uint32_t));
+		reader_->Read(&formatWave_, sizeChunk);
+
+		//Unrecognized format type
+		if (formatWave_.wFormatTag != WAVE_FORMAT_PCM) throw gstd::wexception("unsupported wave format");
+
+		reader_->Seek(dataChunkOffset);
+		reader_->Read(&sizeChunk, sizeof(uint32_t));
+
+		//sizeChunk is now the size of the wave data
+		audioSizeTotal_ = sizeChunk;
+
+		uint32_t posWaveStart = dataChunkOffset + sizeof(uint32_t);
+		uint32_t posWaveEnd = posWaveStart + sizeChunk;
+
 		reader_->Seek(posWaveStart_);
 	}
-	catch (...) {
+	catch (bool) {
 		return false;
+	}
+	catch (gstd::wexception& e) {
+		throw e;
 	}
 
 	//Bufferの作製

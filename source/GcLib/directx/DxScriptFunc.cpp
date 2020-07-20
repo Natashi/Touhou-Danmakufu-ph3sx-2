@@ -4091,7 +4091,7 @@ gstd::value DxScript::Func_ObjFileT_ClearLine(gstd::script_machine* machine, int
 	return value();
 }
 
-//Dx関数：ファイル操作(DxBinalyFileObject)
+//Dx関数：ファイル操作(DxBinaryFileObject)
 gstd::value DxScript::Func_ObjFileB_SetByteOrder(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
