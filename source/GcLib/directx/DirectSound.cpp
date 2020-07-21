@@ -1518,14 +1518,13 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader
 
 	formatMp3_.wID = MPEGLAYER3_ID_MPEG;
 	formatMp3_.fdwFlags = padding ? MPEGLAYER3_FLAG_PADDING_ON : MPEGLAYER3_FLAG_PADDING_OFF;
-	formatMp3_.nBlockSize = mp3BlockSize;
+	formatMp3_.nBlockSize = (WORD)mp3BlockSize;
 	formatMp3_.nFramesPerBlock = 1;
 	formatMp3_.nCodecDelay = 1393;
 
 	formatWave_.wFormatTag = WAVE_FORMAT_PCM;
-	MMRESULT mmResSuggest = acmFormatSuggest(
-		nullptr, &formatMp3_.wfx, &formatWave_, sizeof(WAVEFORMATEX),
-		ACM_FORMATSUGGESTF_WFORMATTAG
+	MMRESULT mmResSuggest = acmFormatSuggest(nullptr, &formatMp3_.wfx, &formatWave_, 
+		sizeof(WAVEFORMATEX), ACM_FORMATSUGGESTF_WFORMATTAG
 	);
 	if (mmResSuggest != 0)
 		return false;
