@@ -3116,7 +3116,6 @@ value DxScript::Func_ObjSprite3D_SetSourceDestRect(script_machine* machine, int 
 			argv[3].as_real(),
 			argv[4].as_real()
 		};
-
 		obj->GetSpritePointer()->SetSourceDestRect(rcSrc);
 	}
 	return value();

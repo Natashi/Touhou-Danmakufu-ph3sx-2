@@ -1928,15 +1928,15 @@ void Sprite3D::SetSourceDestRect(RECT_D& rcSrc) {
 	RECT_D rcSrcCopy = rcSrc;
 	rcSrcCopy.left = (LONG)rcSrc.left;
 	rcSrcCopy.top = (LONG)rcSrc.top;
-	rcSrcCopy.right = (LONG)(rcSrc.right - 1);
-	rcSrcCopy.bottom = (LONG)(rcSrc.bottom - 1);
+	rcSrcCopy.right = (LONG)rcSrc.right - 1;
+	rcSrcCopy.bottom = (LONG)rcSrc.bottom - 1;
 
 	RECT_D rcDest;
 	double width = rcSrc.right - rcSrc.left;
 	double height = rcSrc.bottom - rcSrc.top;
 	SetRectD(&rcDest, -width / 2.0, -height / 2.0, width / 2.0, height / 2.0);
 
-	SetSourceRect(rcSrc);
+	SetSourceRect(rcSrcCopy);
 	SetDestinationRect(rcDest);
 }
 void Sprite3D::SetSourceRect(RECT_D& rcSrc) {
