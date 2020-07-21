@@ -66,12 +66,12 @@ bool DirectSoundManager::Initialize(HWND hWnd) {
 	}
 
 	WAVEFORMATEX pcmwf;
-	ZeroMemory(&pcmwf, sizeof(PCMWAVEFORMAT));
+	ZeroMemory(&pcmwf, sizeof(WAVEFORMATEX));
 	pcmwf.wFormatTag = WAVE_FORMAT_PCM;
 	pcmwf.nChannels = 2;
 	pcmwf.nSamplesPerSec = 44100;
 	pcmwf.nBlockAlign = 4;
-	pcmwf.nAvgBytesPerSec = pcmwf.nSamplesPerSec*pcmwf.nBlockAlign;
+	pcmwf.nAvgBytesPerSec = pcmwf.nSamplesPerSec * pcmwf.nBlockAlign;
 	pcmwf.wBitsPerSample = 16;
 	HRESULT hrFormat = pDirectSoundBuffer_->SetFormat(&pcmwf);
 	if (FAILED(hrFormat)) {
@@ -154,15 +154,14 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 		if (reader == nullptr) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path).c_str());
 		if (!reader->Open()) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path).c_str());
 
-		//フォーマット確認
 		size_t sizeFile = reader->GetFileSize();
-		FileFormat format = SD_UNKNOWN;
 		if (sizeFile <= 64) throw gstd::wexception();
 
 		ByteBuffer header;
 		header.SetSize(0x100);
 		reader->Read(header.GetPointer(), header.GetSize());
 
+		FileFormat format = SD_UNKNOWN;
 		if (!memcmp(header.GetPointer(), "RIFF", 4)) {		//WAVE
 			format = SD_WAVE;
 
@@ -172,7 +171,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 				if (memcmp(header.GetPointer(ptr), "fmt ", 4) == 0 && chkSize >= 0x10) {
 					WAVEFORMATEX* wavefmt = (WAVEFORMATEX*)header.GetPointer(ptr + sizeof(uint32_t) * 2);
 					if (wavefmt->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
-						format = SD_AWAVE;	//Surprise! You thought it was .wav, but it was me, .MP3!!
+						format = SD_AWAVE;	//Surprise! You thought it was .wav, BUT IT WAS ME, .MP3!!
 					break;
 				}
 				ptr += chkSize + sizeof(uint32_t);
@@ -204,7 +203,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 			res = std::shared_ptr<SoundStreamingPlayerOgg>(new SoundStreamingPlayerOgg(), SoundPlayer::PtrDelete);
 		}
 		else if (format == SD_MIDI) {	//midi
-			//lmao
+			//Commit suzaku
 		}
 		else if (format == SD_MP3 || format == SD_AWAVE) {		//Fuck you
 			res = std::shared_ptr<SoundStreamingPlayerMp3>(new SoundStreamingPlayerMp3(), SoundPlayer::PtrDelete);
@@ -214,7 +213,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 		bSuccess &= res != nullptr;
 
 		if (res) {
-			//ファイルを読み込みサウンドバッファを作成
+			//Prepare the file for reading and create a DirectSound buffer
 			bSuccess &= res->_CreateBuffer(reader);
 			res->Seek(0.0);
 		}
@@ -278,7 +277,7 @@ bool DirectSoundManager::AddSoundInfoFromFile(const std::wstring& path) {
 	try {
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
-			if (tok.GetType() == Token::Type::TK_EOF)//Eofの識別子が来たらファイルの調査終了
+			if (tok.GetType() == Token::Type::TK_EOF)
 			{
 				break;
 			}
@@ -383,12 +382,9 @@ void DirectSoundManager::SoundManageThread::_Run() {
 			_Arrange();
 		}
 
-		if (manager->panelInfo_ != nullptr &&
-			this->GetStatus() == RUN) {
-			//クリティカルセクションの中で更新すると
-			//メインスレッドとロックする可能性があります
+		if (manager->panelInfo_ != nullptr && this->GetStatus() == RUN)
 			manager->panelInfo_->Update(manager);
-		}
+		
 		timePrevious_ = timeCurrent_;
 		::Sleep(100);
 	}

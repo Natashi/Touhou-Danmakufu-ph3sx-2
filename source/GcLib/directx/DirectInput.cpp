@@ -132,7 +132,7 @@ bool DirectInput::_InitializeJoypad() {
 	statePad_.resize(count);
 	padRes_.resize(count);
 	for (int16_t iPad = 0; iPad < count; ++iPad)
-		padRes_[iPad] = 500;
+		padRes_[iPad] = 500L;
 
 	Logger::WriteTop("DirectInput: Joypad initialized.");
 
@@ -253,8 +253,8 @@ DIKeyState DirectInput::_GetMouseButton(int16_t button, DIKeyState state) {
 }
 DIKeyState DirectInput::_GetPadDirection(int16_t index, UINT code, DIKeyState state) {
 	if (index >= pJoypad_.size()) return KEY_FREE;
-	int response = padRes_[index];
 
+	LONG response = padRes_[index];
 	DIKeyState res = KEY_FREE;
 
 	switch (code) {

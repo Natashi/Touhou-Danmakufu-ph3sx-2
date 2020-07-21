@@ -40,7 +40,7 @@ namespace directx {
 		BYTE stateKey_[MAX_KEY];
 		DIMOUSESTATE stateMouse_;
 		std::vector<DIJOYSTATE> statePad_;
-		std::vector<int> padRes_;//パッドの遊び
+		std::vector<LONG> padRes_;//パッドの遊び
 
 		DIKeyState bufKey_[MAX_KEY];//現フレームのキーの状態
 		DIKeyState bufMouse_[MAX_MOUSE_BUTTON];//現フレームのマウスの状態
