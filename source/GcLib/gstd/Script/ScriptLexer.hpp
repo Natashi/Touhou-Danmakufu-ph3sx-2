@@ -45,8 +45,8 @@ namespace gstd {
 
 	class script_scanner {
 		int encoding;
-		char const* current;
-		char const* endPoint;
+		const char* current;
+		const char* endPoint;
 
 		static std::unordered_map<std::string, token_kind> token_map;
 
@@ -64,7 +64,7 @@ namespace gstd {
 		std::wstring string_value;
 		int line;
 
-		script_scanner(char const* source, char const* end) : current(source), line(1) {
+		script_scanner(const char* source, const char* end) : current(source), line(1) {
 			endPoint = end;
 			encoding = Encoding::UTF8;
 			if (Encoding::IsUtf16Le(source, 2)) {
@@ -78,7 +78,7 @@ namespace gstd {
 
 			advance();
 		}
-		script_scanner(script_scanner const& source) :
+		script_scanner(const script_scanner& source) :
 			encoding(source.encoding),
 			current(source.current), endPoint(source.endPoint),
 			next(source.next),
@@ -86,16 +86,16 @@ namespace gstd {
 			line(source.line) {
 		}
 
-		void copy_state(const script_scanner& src) {
-			encoding = src.encoding;
-			current = src.current;
-			endPoint = src.endPoint;
-			next = src.next;
-			word = src.word;
-			real_value = src.real_value;
-			char_value = src.char_value;
-			string_value = src.string_value;
-			line = src.line;
+		void copy_state(script_scanner* src) {
+			encoding = src->encoding;
+			current = src->current;
+			endPoint = src->endPoint;
+			next = src->next;
+			word = src->word;
+			real_value = src->real_value;
+			char_value = src->char_value;
+			string_value = src->string_value;
+			line = src->line;
 		}
 
 		void skip();

@@ -75,6 +75,9 @@ namespace gstd {
 #endif
 
 		union {
+			struct {	//pc_push_value
+				value data;
+			};
 			struct {	//assign/push_variable
 				int level;
 				size_t variable;
@@ -85,9 +88,6 @@ namespace gstd {
 			};
 			struct {	//loop_back
 				size_t ip;
-			};
-			struct {	//pc_push_value
-				value data;
 			};
 		};
 

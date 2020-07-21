@@ -1119,7 +1119,7 @@ continue_as_variadic:
 				bool isNewVarConst = false;
 				std::string newVarName = "";
 
-				script_scanner lex_s1(*state->lex);
+				script_scanner lex_s1(*state->lex);		//First statement (initialization)
 
 				if (IsDeclToken(state->next()) || state->next() == token_kind::tk_const) {
 					isNewVar = true;
@@ -1135,16 +1135,18 @@ continue_as_variadic:
 				bool hasExpr = true;
 				if (state->next() == token_kind::tk_semicolon) hasExpr = false;
 
-				script_scanner lex_s2(*state->lex);
+				script_scanner lex_s2(*state->lex);		//Second statement (evaluation)
 
 				while (state->next() != token_kind::tk_semicolon) state->advance();
 				state->advance();
 
-				script_scanner lex_s3(*state->lex);
+				script_scanner lex_s3(*state->lex);		//Third statement (update)
 
 				while (state->next() != token_kind::tk_semicolon && state->next() != token_kind::tk_close_par) state->advance();
 				state->advance();
 				if (state->next() == token_kind::tk_close_par) state->advance();
+
+				script_scanner lex_s4(*state->lex);		//Loop body
 
 				script_block* forBlock = engine->new_block(block->level + 1, block_kind::bk_normal);
 				state->AddCode(block, code(command_kind::pc_call, forBlock, 0));
@@ -1166,28 +1168,28 @@ continue_as_variadic:
 						frame.back().singular_insert(newVarName, s);
 					}
 
+					//Initialization statement
 					forBlockState.lex = &lex_s1;
 					forBlockState.AddCode(forBlock, code(command_kind::pc_var_alloc, 1));
 					parse_single_statement(forBlock, &forBlockState);
 
-					while (forBlockState.next() != token_kind::tk_open_par) {
-						forBlockState.advance();
-					}
-
 					size_t ip_begin = forBlock->codes.size();
 
-					//Code block
+					//Evaluation statement
 					if (hasExpr) {
 						forBlockState.lex = &lex_s2;
 						parse_expression(forBlock, &forBlockState);
 						forBlockState.AddCode(forBlock, code(command_kind::pc_loop_if));
 					}
 
-					//Parse the code contained inside the for loop
+					//Parse loop body
+					forBlockState.lex = &lex_s4;
 					codeBlockSize = parse_inline_block(nullptr, forBlock, &forBlockState, block_kind::bk_loop, true);
+					state->lex->copy_state(forBlockState.lex);
 
 					forBlockState.AddCode(forBlock, code(command_kind::pc_continue_marker));
 					{
+						//Update statement
 						forBlockState.lex = &lex_s3;
 						parse_single_statement(forBlock, &forBlockState);
 						while (lex_s3.next == token_kind::tk_comma) {
