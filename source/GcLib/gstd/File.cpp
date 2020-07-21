@@ -189,7 +189,7 @@ bool File::CreateFileDirectory(const std::wstring& path) {
 bool File::IsExists(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 	path_t _p = path;
-	bool res = stdfs::exists(_p) && (stdfs::status(_p).type() != stdfs::file_type::directory);
+	bool res = stdfs::exists(_p) && stdfs::is_regular_file(stdfs::status(_p));
 #else
 	bool res = PathFileExists(path.c_str()) == TRUE;
 #endif
@@ -198,7 +198,7 @@ bool File::IsExists(const std::wstring& path) {
 bool File::IsDirectory(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 	path_t _p = path;
-	bool res = stdfs::exists(_p) && stdfs::is_directory(_p);
+	bool res = stdfs::exists(_p) && stdfs::is_directory(stdfs::status(_p));
 #else
 	WIN32_FIND_DATA fData;
 	HANDLE hFile = ::FindFirstFile(path.c_str(), &fData);

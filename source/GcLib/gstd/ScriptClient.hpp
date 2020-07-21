@@ -246,6 +246,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_GetFileName);
 		DNH_FUNCAPI_DECL_(Func_GetFileNameWithoutExtension);
 		DNH_FUNCAPI_DECL_(Func_GetFileExtension);
+		DNH_FUNCAPI_DECL_(Func_IsFileExists);
+		DNH_FUNCAPI_DECL_(Func_IsDirectoryExists);
 
 		//ã§í ä÷êîÅFéûçèä÷òA
 		static value Func_GetCurrentDateTimeS(script_machine* machine, int argc, const value* argv);

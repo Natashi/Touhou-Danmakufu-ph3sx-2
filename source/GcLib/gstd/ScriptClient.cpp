@@ -135,6 +135,8 @@ function const commonFunction[] =
 	{ "GetFileName", ScriptClientBase::Func_GetFileName, 1 },
 	{ "GetFileNameWithoutExtension", ScriptClientBase::Func_GetFileNameWithoutExtension, 1 },
 	{ "GetFileExtension", ScriptClientBase::Func_GetFileExtension, 1 },
+	{ "IsFileExists", ScriptClientBase::Func_IsFileExists, 1 },
+	{ "IsDirectoryExists", ScriptClientBase::Func_IsDirectoryExists, 1 },
 
 	//共通関数：時刻関連
 	{ "GetCurrentDateTimeS", ScriptClientBase::Func_GetCurrentDateTimeS, 0 },
@@ -1436,6 +1438,14 @@ value ScriptClientBase::Func_GetFileNameWithoutExtension(script_machine* machine
 value ScriptClientBase::Func_GetFileExtension(script_machine* machine, int argc, const value* argv) {
 	std::wstring res = PathProperty::GetFileExtension(argv->as_string());
 	return ScriptClientBase::CreateStringValue(res);
+}
+value ScriptClientBase::Func_IsFileExists(script_machine* machine, int argc, const value* argv) {
+	std::wstring path = argv->as_string();
+	return ScriptClientBase::CreateBooleanValue(File::IsExists(path));
+}
+value ScriptClientBase::Func_IsDirectoryExists(script_machine* machine, int argc, const value* argv) {
+	std::wstring path = argv->as_string();
+	return ScriptClientBase::CreateBooleanValue(File::IsDirectory(path));
 }
 
 //共通関数：時刻関連
