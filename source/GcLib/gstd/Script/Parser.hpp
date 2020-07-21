@@ -158,9 +158,14 @@ namespace gstd {
 
 	class parser {
 	private:
+		//Have a blatant name plagiarisation from thecl. Good morning.
 		struct parser_state_t {
 			script_scanner* lex;
 			size_t ip;
+
+			parser_state_t() : lex(nullptr), ip(0) {}
+			parser_state_t(script_scanner* _lex) : lex(_lex), ip(0) {}
+			parser_state_t(script_scanner* _lex, size_t _ip) : lex(_lex), ip(_ip) {}
 
 			void AddCode(script_block* bk, code&& cd) {
 				cd.line = lex->line;
@@ -171,6 +176,7 @@ namespace gstd {
 				bk->codes.pop_back();
 				--ip;
 			}
+
 			token_kind next() const { return lex->next; }
 			void advance() const { return lex->advance(); }
 		};
@@ -237,7 +243,7 @@ namespace gstd {
 		void write_operation(script_block* block, parser_state_t* state, const symbol* s, int clauses);
 
 		void optimize_expression(script_block* block, parser_state_t* state);
-		void link_jump(script_block* block, parser_state_t* state);
+		void link_jump(script_block* block, parser_state_t* state, size_t ip_off);
 
 		inline static void parser_assert(bool expr, const std::wstring& error);
 		inline static void parser_assert(bool expr, const std::string& error);

@@ -89,9 +89,7 @@ namespace gstd {
 		try {
 			frame.push_back(scope_t(block_kind::bk_normal));	//Scope for user symbols
 
-			parser_state_t stateParser;
-			stateParser.lex = lexer_main;
-			stateParser.ip = 0;
+			parser_state_t stateParser(lexer_main);
 
 			int countVar = scan_current_scope(&stateParser, 1, nullptr, false);
 			if (countVar > 0)
@@ -720,13 +718,13 @@ continue_as_variadic:
 
 	void parser::parse_expression(script_block* block, parser_state_t* state) {
 		script_block tmp(0, block_kind::bk_normal);
-		parser_state_t tmpState = { nullptr, state->ip };
+		size_t ip = state->ip;
 
 		parse_ternary(&tmp, state);
 
 		try {
 			optimize_expression(&tmp, state);
-			link_jump(&tmp, &tmpState);
+			link_jump(&tmp, state, ip);
 
 			block->codes.insert(block->codes.end(), tmp.codes.begin(), tmp.codes.end());
 		}
@@ -940,7 +938,7 @@ continue_as_variadic:
 				size_t ip = state->ip;
 				{
 					script_block tmp(block->level, block_kind::bk_normal);
-					parser_state_t tmpState = { state->lex, state->ip };
+					parser_state_t tmpState(state->lex, state->ip);
 
 					tmpState.AddCode(&tmp, code(command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
 
@@ -993,7 +991,7 @@ continue_as_variadic:
 				state->advance();
 			{
 				script_block tmp(block->level, block_kind::bk_normal);
-				parser_state_t tmpState = { state->lex, state->ip };
+				parser_state_t tmpState(state->lex, state->ip);
 
 				tmpState.AddCode(&tmp, code(command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
 
@@ -1090,7 +1088,7 @@ continue_as_variadic:
 
 				script_block* b = engine->new_block(block->level + 1, block_kind::bk_loop);
 				{
-					parser_state_t newState = { state->lex, 0 };
+					parser_state_t newState(state->lex);
 
 					std::vector<std::string> counter;
 					counter.push_back(feIdentifier);
@@ -1100,6 +1098,8 @@ continue_as_variadic:
 
 				//state->AddCode(block, code(command_kind::pc_dup_n, 1));
 				state->AddCode(block, code(command_kind::pc_call, b, 1));
+
+				state->AddCode(block, code(command_kind::pc_continue_marker));
 				state->AddCode(block, code(command_kind::pc_jump, ip));
 				state->AddCode(block, code(command_kind::pc_loop_back));
 
@@ -1149,7 +1149,7 @@ continue_as_variadic:
 				script_block* forBlock = engine->new_block(block->level + 1, block_kind::bk_normal);
 				state->AddCode(block, code(command_kind::pc_call, forBlock, 0));
 
-				parser_state_t forBlockState = { state->lex, 0 };
+				parser_state_t forBlockState(state->lex);
 
 				size_t codeBlockSize = 0;
 
@@ -1240,7 +1240,7 @@ continue_as_variadic:
 			script_block* containerBlock = engine->new_block(block->level + 1, block_kind::bk_normal);
 			state->AddCode(block, code(command_kind::pc_call, containerBlock, 0));
 
-			parser_state_t containerState = { state->lex, 0 };
+			parser_state_t containerState(state->lex);
 
 			frame.push_back(scope_t(containerBlock->kind));
 			{
@@ -1550,7 +1550,7 @@ continue_as_variadic:
 			s = search_in(pScope, funcName, args.size());
 
 			{
-				parser_state_t newState = { state->lex, 0 };
+				parser_state_t newState(state->lex);
 				parse_block(s->sub, &newState, &args, s->sub->kind == block_kind::bk_function, false);
 			}
 
@@ -1579,7 +1579,7 @@ continue_as_variadic:
 		script_block* b = engine->new_block(block->level + 1, kind);
 		if (blockRes) *blockRes = b;
 
-		parser_state_t newState = { state->lex, 0 };
+		parser_state_t newState(state->lex);
 		parse_block(b, &newState, nullptr, false, allow_single);
 
 		if (b->codes.size() == 0U) {
@@ -1722,33 +1722,44 @@ continue_as_variadic:
 		block->codes = newCodes;
 	}
 	//Links jump commands with their matching jump targets
-	void parser::link_jump(script_block* block, parser_state_t* state) {
+	void parser::link_jump(script_block* block, parser_state_t* state, size_t ip_off) {
 		std::vector<code> newCodes;
+		std::map<size_t, size_t> mapLabelCode;
+
+		{
+			size_t ip = 0;
+			size_t removing = 0;
+			for (auto itr = block->codes.begin(); itr != block->codes.end(); ++itr, ++ip) {
+				switch (itr->command) {
+				case command_kind::pc_jump_target:
+					mapLabelCode.insert(std::make_pair(itr->ip, ip - removing));
+					++removing;
+					break;
+				}
+			}
+		}
 
 		for (auto itr = block->codes.begin(); itr != block->codes.end(); ++itr) {
 			code iCode = *itr;
 
 			switch (iCode.command) {
+			case command_kind::pc_jump_target:
+				--(state->ip);
+				break;
 			case command_kind::_pc_jump:
 			case command_kind::_pc_jump_if:
 			case command_kind::_pc_jump_if_not:
 			{
-				std::vector<code>::iterator pJumpEnd = itr;
-				int removing = 0;
-				while (pJumpEnd != block->codes.end()) {
-					++pJumpEnd;
-					if (pJumpEnd->command == command_kind::pc_jump_target && pJumpEnd->ip == iCode.ip)
-						break;
-				}
-
-				if (pJumpEnd != block->codes.end()) {
-					iCode = code(iCode.line, get_replacing_jump(iCode.command),
-						std::distance(block->codes.begin(), pJumpEnd) + state->ip);
+				auto itrFind = mapLabelCode.find(iCode.ip);
+				if (itrFind != mapLabelCode.end()) {
+					iCode = code(iCode.line, get_replacing_jump(iCode.command), itrFind->second + ip_off);
 				}
 			}
+			//Fallthrough
+			default:
+				newCodes.push_back(iCode);
+				break;
 			}
-
-			newCodes.push_back(iCode);
 		}
 
 		block->codes = newCodes;
