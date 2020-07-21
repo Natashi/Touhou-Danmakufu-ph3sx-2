@@ -4037,7 +4037,7 @@ gstd::value DxScript::Func_ObjFileT_GetLineText(gstd::script_machine* machine, i
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxTextFileObject* obj = dynamic_cast<DxTextFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) script->CreateStringValue(std::wstring());
+	if (obj == nullptr) return script->CreateStringValue(std::wstring());
 
 	int line = argv[1].as_int();
 	std::wstring res = obj->GetLineAsWString(line);
