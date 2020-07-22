@@ -1038,26 +1038,26 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						tok = scan.Next();
 						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END) break;
 						//else if (tok.GetType() == DxTextToken::Type::TK_COMMA) break;
-						const std::wstring& str = tok.GetElement();
-						if (str == L"reset") {
+						std::wstring command = tok.GetElement();
+						if (command == L"reset") {
 							bClear = true;
 						}
 						else {
 							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
 							DxTextToken& arg = scan.Next();
-							if (str == L"size") {
+							if (command == L"size") {
 								logFont.lfHeight = arg.GetInteger();
 							}
-							else if (str == L"ox") {
+							else if (command == L"ox") {
 								tag->GetOffset().x = arg.GetInteger();
 							}
-							else if (str == L"oy") {
+							else if (command == L"oy") {
 								tag->GetOffset().y = arg.GetInteger();
 							}
-							else if (str == L"it") {
+							else if (command == L"it") {
 								tagItalic = arg.GetBoolean();
 							}
-							else if (str == L"wg") {
+							else if (command == L"wg") {
 								logFont.lfWeight = arg.GetInteger();
 							}
 							/*
@@ -1065,14 +1065,14 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 								tagUnderline = arg.GetBoolean();
 							}
 							*/
-							else if (str.size() == 2) {
+							else if (command.size() == 2) {
 								std::wsmatch base_match;
-								if (std::regex_search(str, base_match, std::wregex(L"[bto][rgb]"))) {
+								if (std::regex_search(command, base_match, std::wregex(L"[bto][rgb]"))) {
 									D3DCOLOR mask = 0xffffffff;
 									byte shifting = 0;
 									D3DCOLOR* colorDst = nullptr;
 
-									switch (str[0]) {
+									switch (command[0]) {
 									case L'b':	//[b]ottom color
 										colorDst = &tagColorBottom;
 										break;
@@ -1083,7 +1083,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 										colorDst = &tagColorBorder;
 										break;
 									}
-									switch (str[1]) {
+									switch (command[1]) {
 									case L'r':	//red
 										mask = 0xff00ffff;
 										shifting = 16;
