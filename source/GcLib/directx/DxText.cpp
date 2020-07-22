@@ -951,6 +951,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					shared_ptr<DxTextTag_Ruby> tag(new DxTextTag_Ruby());
 					tag->SetTagIndex(indexTag);
 
+					int sizeOff = 0;
 					int weightRuby = FW_BOLD;
 					int leftOff = 0;
 					int pitchOff = 0;
@@ -968,6 +969,10 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
 							std::wstring text = scan.Next().GetString();
 							tag->SetRuby(text);
+						}
+						else if (str == L"sz") {
+							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
+							sizeOff = scan.Next().GetInteger();
 						}
 						else if (str == L"wg") {
 							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
@@ -992,13 +997,14 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					SIZE sizeTextBase;
 					::GetTextExtentPoint32(hDC, &text[0], text.size(), &sizeTextBase);
 
-					int rubyFontWidth = dxText->GetFontSize() / 2;
+					int rubyFontWidth = dxText->GetFontSize() / 2 + sizeOff;
+
 					const std::wstring& sRuby = tag->GetRuby();
 					size_t rubyCount = StringUtility::CountAsciiSizeCharacter(sRuby);
 					if (rubyCount > 0) {
 						LONG rubySpace = std::max(sizeTextBase.cx - rubyFontWidth / 2, 0L);
-						LONG rubyGap = rubySpace / std::max((LONG)rubyCount - 1, 1L);
-						int rubyPitch = std::max(rubyGap, 0L) + pitchOff;
+						LONG rubyGap = rubySpace / std::max((LONG)rubyCount, 1L) - rubyFontWidth / 2L;
+						int rubyPitch = std::min(std::max(rubyGap, 0L), (LONG)(rubyFontWidth * 1.2f));
 
 						tag->SetLeftMargin(leftOff);
 
@@ -1007,7 +1013,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						dxTextRuby->SetFont(dxFont);
 						dxTextRuby->SetPosition(dxText->GetPosition());
 						dxTextRuby->SetMaxWidth(dxText->GetMaxWidth());
-						dxTextRuby->SetSidePitch(rubyPitch);
+						dxTextRuby->SetSidePitch(rubyPitch + pitchOff);
 						dxTextRuby->SetLinePitch(linePitch + dxText->GetFontSize() - rubyFontWidth);
 						dxTextRuby->SetFontWeight(weightRuby);
 						dxTextRuby->SetFontItalic(false);

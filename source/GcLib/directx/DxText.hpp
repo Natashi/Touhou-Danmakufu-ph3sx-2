@@ -463,7 +463,7 @@ namespace directx {
 
 		POINT& GetPosition() { return pos_; }
 		void SetPosition(int x, int y) { pos_.x = x; pos_.y = y; }
-		void SetPosition(POINT& pos) { pos_ = pos; }
+		void SetPosition(const POINT& pos) { pos_ = pos; }
 		int GetMaxWidth() { return widthMax_; }
 		void SetMaxWidth(int width) { widthMax_ = width; }
 		int GetMaxHeight() { return heightMax_; }
