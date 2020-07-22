@@ -72,6 +72,7 @@ namespace directx {
 		gstd::CriticalSection& GetLock() { return lock_; }
 
 		shared_ptr<SoundPlayer> GetPlayer(const std::wstring& path, bool bCreateAlways = false);
+		shared_ptr<SoundPlayer> GetStreamingPlayer(const std::wstring& path);
 		SoundDivision* CreateSoundDivision(int index);
 		SoundDivision* GetSoundDivision(int index);
 		shared_ptr<SoundInfo> GetSoundInfo(const std::wstring& path);
@@ -186,6 +187,7 @@ namespace directx {
 	protected:
 		DirectSoundManager* manager_;
 		std::wstring path_;
+		size_t pathHash_;
 		gstd::CriticalSection lock_;
 		IDirectSoundBuffer8* pDirectSoundBuffer_;
 		gstd::ref_count_ptr<gstd::FileReader> reader_;
@@ -214,6 +216,7 @@ namespace directx {
 		SoundPlayer();
 		virtual ~SoundPlayer();
 		std::wstring& GetPath() { return path_; }
+		size_t GetPathHash() { return pathHash_; }
 		gstd::CriticalSection& GetLock() { return lock_; }
 		virtual void Restore() { pDirectSoundBuffer_->Restore(); }
 		void SetSoundDivision(SoundDivision* div);
@@ -287,6 +290,9 @@ namespace directx {
 		virtual bool Play(PlayStyle& style);
 		virtual bool Stop();
 		virtual bool IsPlaying();
+
+		void ReplaceReader();
+		size_t GetReaderRefCount() { return reader_ ? 0 : reader_.GetReferenceCount(); }
 	};
 	class SoundStreamingPlayer::StreamingThread : public gstd::Thread, public gstd::InnerClass<SoundStreamingPlayer> {
 	public:

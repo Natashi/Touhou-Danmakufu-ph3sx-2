@@ -124,8 +124,31 @@ shared_ptr<SoundPlayer> DirectSoundManager::GetPlayer(const std::wstring& path, 
 
 	return res;
 }
+shared_ptr<SoundPlayer> DirectSoundManager::GetStreamingPlayer(const std::wstring& path) {
+	shared_ptr<SoundPlayer> res;
+	try {
+		Lock lock(lock_);
+
+		res = _GetPlayer(path);
+		if (res == nullptr) {
+			res = _CreatePlayer(path);
+		}
+		else {
+			//If multiple streaming players are reading from the same FileReader, things will break
+			//Only allow maximum ref_count of 2 (in DirectSoundManager and the parent sound object)
+			SoundStreamingPlayer* playerStreaming = dynamic_cast<SoundStreamingPlayer*>(res.get());
+			if (playerStreaming != nullptr && res.use_count() > 2)
+				res = _CreatePlayer(path);
+		}
+	}
+	catch (...) {}
+
+	return res;
+}
 shared_ptr<SoundPlayer> DirectSoundManager::_GetPlayer(const std::wstring& path) {
 	if (mapPlayer_.find(path) == mapPlayer_.end()) return nullptr;
+
+	size_t pathHash = std::hash<std::wstring>{}(path);
 
 	shared_ptr<SoundPlayer> res = nullptr;
 
@@ -136,7 +159,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::_GetPlayer(const std::wstring& path)
 			SoundPlayer* player = itrPlayer->get();
 			if (player == nullptr) continue;
 			if (player->bDelete_) continue;
-			if (player->GetPath() != path) continue;
+			if (player->GetPathHash() != pathHash) continue;
 			res = *itrPlayer;
 			break;
 		}
@@ -161,9 +184,9 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 		header.SetSize(0x100);
 		reader->Read(header.GetPointer(), header.GetSize());
 
-		FileFormat format = SD_UNKNOWN;
+		FileFormat format = FileFormat::SD_UNKNOWN;
 		if (!memcmp(header.GetPointer(), "RIFF", 4)) {		//WAVE
-			format = SD_WAVE;
+			format = FileFormat::SD_WAVE;
 
 			size_t ptr = 0xC;
 			while (ptr <= 0x100) {
@@ -171,24 +194,25 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 				if (memcmp(header.GetPointer(ptr), "fmt ", 4) == 0 && chkSize >= 0x10) {
 					WAVEFORMATEX* wavefmt = (WAVEFORMATEX*)header.GetPointer(ptr + sizeof(uint32_t) * 2);
 					if (wavefmt->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
-						format = SD_AWAVE;	//Surprise! You thought it was .wav, BUT IT WAS ME, .MP3!!
+						format = FileFormat::SD_AWAVE;	//Surprise! You thought it was .wav, BUT IT WAS ME, .MP3!!
 					break;
 				}
 				ptr += chkSize + sizeof(uint32_t);
 			}
 		}
 		else if (!memcmp(header.GetPointer(), "OggS", 4)) {	//Ogg Vorbis
-			format = SD_OGG;
+			format = FileFormat::SD_OGG;
 		}
 		else if (!memcmp(header.GetPointer(), "MThd", 4)) {	//midi
-			format = SD_MIDI;
+			format = FileFormat::SD_MIDI;
 		}
 		else {		//Death sentence
-			format = SD_MP3;
+			format = FileFormat::SD_MP3;
 		}
 
 		//Create the sound player object
-		if (format == SD_WAVE) {		//WAVE
+		switch (format) {
+		case FileFormat::SD_WAVE:
 			if (sizeFile < 1024 * 1024) {
 				//The file is small enough (<1MB), just load the entire thing into memory
 				//Max: ~23.78sec at 44100hz
@@ -198,15 +222,17 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 				//File too bigg uwu owo, pleasm be gentwe and take it easwy owo *blushes*
 				res = std::shared_ptr<SoundStreamingPlayerWave>(new SoundStreamingPlayerWave(), SoundPlayer::PtrDelete);
 			}
-		}
-		else if (format == SD_OGG) {	//Ogg Vorbis
+			break;
+		case FileFormat::SD_OGG:
 			res = std::shared_ptr<SoundStreamingPlayerOgg>(new SoundStreamingPlayerOgg(), SoundPlayer::PtrDelete);
-		}
-		else if (format == SD_MIDI) {	//midi
+			break;
+		case FileFormat::SD_MIDI:
 			//Commit suzaku
-		}
-		else if (format == SD_MP3 || format == SD_AWAVE) {		//Fuck you
+			break;
+		case FileFormat::SD_MP3:
+		case FileFormat::SD_AWAVE:
 			res = std::shared_ptr<SoundStreamingPlayerMp3>(new SoundStreamingPlayerMp3(), SoundPlayer::PtrDelete);
+			break;
 		}
 
 		bool bSuccess = true;
@@ -221,6 +247,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 		if (bSuccess) {
 			res->manager_ = this;
 			res->path_ = path;
+			res->pathHash_ = std::hash<std::wstring>{}(path);
 			mapPlayer_[path].push_back(res);
 			std::wstring str = StringUtility::Format(L"DirectSound: Audio loaded [%s]", path.c_str());
 			Logger::WriteTop(str);
@@ -554,6 +581,8 @@ SoundPlayer::SoundPlayer() {
 	pDirectSoundBuffer_ = nullptr;
 	reader_ = nullptr;
 
+	pathHash_ = 0;
+
 	ZeroMemory(&formatWave_, sizeof(WAVEFORMATEX));
 	bLoop_ = false;
 	timeLoopStart_ = 0;
@@ -726,11 +755,13 @@ SoundStreamingPlayer::SoundStreamingPlayer() {
 	pDirectSoundNotify_ = nullptr;
 	ZeroMemory(hEvent_, sizeof(HANDLE) * 3);
 	thread_ = new StreamingThread(this);
+
 	bStreaming_ = true;
 	bRequestStop_ = false;
 }
 SoundStreamingPlayer::~SoundStreamingPlayer() {
 	this->Stop();
+
 	for (size_t iEvent = 0; iEvent < 3; ++iEvent)
 		::CloseHandle(hEvent_[iEvent]);
 	ptr_release(pDirectSoundNotify_);
@@ -738,6 +769,7 @@ SoundStreamingPlayer::~SoundStreamingPlayer() {
 }
 void SoundStreamingPlayer::_CreateSoundEvent(WAVEFORMATEX& formatWave) {
 	sizeCopy_ = formatWave.nAvgBytesPerSec;
+
 	HRESULT hrNotify = pDirectSoundBuffer_->QueryInterface(IID_IDirectSoundNotify, (LPVOID*)&pDirectSoundNotify_);
 	DSBPOSITIONNOTIFY pn[3];
 	for (size_t iEvent = 0; iEvent < 3; ++iEvent) {
@@ -797,6 +829,7 @@ bool SoundStreamingPlayer::Play(PlayStyle& style) {
 
 	{
 		Lock lock(lock_);
+
 		if (bFadeDelete_)
 			SetVolumeRate(100);
 		bFadeDelete_ = false;
@@ -835,6 +868,7 @@ bool SoundStreamingPlayer::Play(PlayStyle& style) {
 bool SoundStreamingPlayer::Stop() {
 	{
 		Lock lock(lock_);
+
 		if (IsPlaying())
 			bPause_ = true;
 
@@ -855,6 +889,7 @@ void SoundStreamingPlayer::ResetStreamForSeek() {
 bool SoundStreamingPlayer::IsPlaying() {
 	return thread_->GetStatus() == Thread::RUN;
 }
+
 //StreamingThread
 void SoundStreamingPlayer::StreamingThread::_Run() {
 	SoundStreamingPlayer* player = _GetOuter();
@@ -1178,7 +1213,9 @@ size_t SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		else
 			_RequestStop();
 	}
-	else reader_->Read(pMem, cSize);
+	else {
+		reader_->Read(pMem, cSize);
+	}
 
 	return resStreamPos;
 }
@@ -1349,6 +1386,7 @@ size_t SoundStreamingPlayerOgg::_ReadOgg(void* ptr, size_t size, size_t nmemb, v
 
 	size_t sizeCopy = size * nmemb;
 	sizeCopy = player->reader_->Read(ptr, sizeCopy);
+
 	return sizeCopy / size;
 }
 int SoundStreamingPlayerOgg::_SeekOgg(void* source, ogg_int64_t offset, int whence) {
