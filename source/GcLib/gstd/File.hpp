@@ -78,8 +78,8 @@ namespace gstd {
 		virtual size_t GetFileSize() = 0;
 		virtual BOOL SetFilePointerBegin() = 0;
 		virtual BOOL SetFilePointerEnd() = 0;
-		virtual BOOL Seek(LONG offset) = 0;
-		virtual LONG GetFilePointer() = 0;
+		virtual BOOL Seek(size_t offset) = 0;
+		virtual size_t GetFilePointer() = 0;
 		virtual bool IsArchived() { return false; }
 		virtual bool IsCompressed() { return false; }
 
@@ -324,8 +324,8 @@ namespace gstd {
 		virtual DWORD Read(LPVOID buf, DWORD size);
 		virtual BOOL SetFilePointerBegin();
 		virtual BOOL SetFilePointerEnd();
-		virtual BOOL Seek(LONG offset);
-		virtual LONG GetFilePointer();
+		virtual BOOL Seek(size_t offset);
+		virtual size_t GetFilePointer();
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 		virtual bool IsArchived();

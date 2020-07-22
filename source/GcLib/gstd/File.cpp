@@ -768,7 +768,7 @@ BOOL ManagedFileReader::SetFilePointerEnd() {
 #endif
 	return res;
 }
-BOOL ManagedFileReader::Seek(LONG offset) {
+BOOL ManagedFileReader::Seek(size_t offset) {
 	BOOL res = FALSE;
 	if (type_ == TYPE_NORMAL) {
 		file_->Seek(offset);
@@ -785,8 +785,8 @@ BOOL ManagedFileReader::Seek(LONG offset) {
 		offset_ = offset;
 	return res;
 }
-LONG ManagedFileReader::GetFilePointer() {
-	LONG res = 0;
+size_t ManagedFileReader::GetFilePointer() {
+	size_t res = 0;
 	if (type_ == TYPE_NORMAL) {
 		res = file_->GetFilePointerRead();
 	}
