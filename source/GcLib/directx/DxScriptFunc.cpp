@@ -142,7 +142,8 @@ function const dxFunction[] =
 	{ "IsIntersected_Line_Line", DxScript::Func_IsIntersected_Line_Line, 10 },
 
 	//Color
-	{ "ColorARGBtoHex", DxScript::Func_ColorARGBtoHex, 4 },
+	{ "ColorARGBToHex", DxScript::Func_ColorARGBToHex, 4 },
+	{ "ColorHexToARGB", DxScript::Func_ColorHexToARGB, 1 },
 	{ "ColorRGBtoHSV", DxScript::Func_ColorRGBtoHSV, 3 },
 	{ "ColorHSVtoRGB", DxScript::Func_ColorHSVtoRGB, 3 },
 
@@ -182,8 +183,8 @@ function const dxFunction[] =
 	{ "ObjRender_SetScaleZ", DxScript::Func_ObjRender_SetScaleZ, 2 },
 	{ "ObjRender_SetScaleXYZ", DxScript::Func_ObjRender_SetScaleXYZ, 4 },
 	{ "ObjRender_SetColor", DxScript::Func_ObjRender_SetColor, 4 },
+	{ "ObjRender_SetColor", DxScript::Func_ObjRender_SetColor, 2 },		//Overloaded
 	{ "ObjRender_SetColorHSV", DxScript::Func_ObjRender_SetColorHSV, 4 },
-	{ "ObjRender_SetColorHex", DxScript::Func_ObjRender_SetColorHex, 2 },
 	{ "ObjRender_GetColor", DxScript::Func_ObjRender_GetColor, 1 },
 	{ "ObjRender_SetAlpha", DxScript::Func_ObjRender_SetAlpha, 2 },
 	{ "ObjRender_GetAlpha", DxScript::Func_ObjRender_GetAlpha, 1 },
@@ -238,6 +239,7 @@ function const dxFunction[] =
 	{ "ObjPrim_SetVertexUV", DxScript::Func_ObjPrimitive_SetVertexUV, 4 },
 	{ "ObjPrim_SetVertexUVT", DxScript::Func_ObjPrimitive_SetVertexUVT, 4 },
 	{ "ObjPrim_SetVertexColor", DxScript::Func_ObjPrimitive_SetVertexColor, 5 },
+	{ "ObjPrim_SetVertexColor", DxScript::Func_ObjPrimitive_SetVertexColor, 3 },	//Overloaded
 	{ "ObjPrim_SetVertexColorHSV", DxScript::Func_ObjPrimitive_SetVertexColorHSV, 5 },
 	{ "ObjPrim_SetVertexAlpha", DxScript::Func_ObjPrimitive_SetVertexAlpha, 3 },
 	{ "ObjPrim_GetVertexColor", DxScript::Func_ObjPrimitive_GetVertexColor, 2 },
@@ -1820,12 +1822,17 @@ gstd::value DxScript::Func_IsIntersected_Line_Line(gstd::script_machine* machine
 }
 
 //Color
-gstd::value DxScript::Func_ColorARGBtoHex(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value DxScript::Func_ColorARGBToHex(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	byte ca = argv[0].as_int();
 	byte cr = argv[1].as_int();
 	byte cg = argv[2].as_int();
 	byte cb = argv[3].as_int();
 	return DxScript::CreateRealValue(D3DCOLOR_ARGB(ca, cr, cg, cb));
+}
+gstd::value DxScript::Func_ColorHexToARGB(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	D3DCOLOR color = (D3DCOLOR)argv[0].as_int();
+	D3DXVECTOR4 vecColor = ColorAccess::ToVec4(color);
+	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&vecColor), 4U);
 }
 gstd::value DxScript::Func_ColorRGBtoHSV(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	byte cr = argv[0].as_int();
@@ -2222,8 +2229,15 @@ value DxScript::Func_ObjRender_SetColor(script_machine* machine, int argc, const
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
-	if (obj)
-		obj->SetColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
+	if (obj) {
+		if (argc == 4) {
+			obj->SetColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
+		}
+		else {
+			D3DXVECTOR4 vecColor = ColorAccess::ToVec4((D3DCOLOR)argv[1].as_int());
+			obj->SetColor(vecColor.y, vecColor.z, vecColor.w);
+		}
+	}
 	return value();
 }
 value DxScript::Func_ObjRender_SetColorHSV(script_machine* machine, int argc, const value* argv) {
@@ -2234,20 +2248,8 @@ value DxScript::Func_ObjRender_SetColorHSV(script_machine* machine, int argc, co
 		D3DCOLOR color = 0xffffffff;
 		ColorAccess::HSVtoRGB(color, argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
 
-		byte listColor[4];
-		ColorAccess::ToByteArray(color, listColor);
-		obj->SetColor(listColor[1], listColor[2], listColor[3]);
-	}
-	return value();
-}
-value DxScript::Func_ObjRender_SetColorHex(script_machine* machine, int argc, const value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = (int)argv[0].as_real();
-	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		byte listColor[4];
-		ColorAccess::ToByteArray((D3DCOLOR)argv[1].as_int(), listColor);
-		obj->SetColor(listColor[1], listColor[2], listColor[3]);
+		D3DXVECTOR4 vecColor = ColorAccess::ToVec4(color);
+		obj->SetColor(vecColor.y, vecColor.z, vecColor.w);
 	}
 	return value();
 }
@@ -2276,7 +2278,7 @@ value DxScript::Func_ObjRender_GetAlpha(script_machine* machine, int argc, const
 	int id = (int)argv[0].as_real();
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj)
-		res = (obj->color_) >> 24 & 0xff;
+		res = ColorAccess::GetColorA(obj->color_);
 	return script->CreateRealValue(res);
 }
 value DxScript::Func_ObjRender_SetBlendType(script_machine* machine, int argc, const value* argv) {
@@ -2918,8 +2920,15 @@ value DxScript::Func_ObjPrimitive_SetVertexColor(script_machine* machine, int ar
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
-	if (obj)
-		obj->SetVertexColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
+	if (obj) {
+		if (argc == 5) {
+			obj->SetVertexColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
+		}
+		else {
+			D3DXVECTOR4 vecColor = ColorAccess::ToVec4((D3DCOLOR)argv[2].as_int());
+			obj->SetVertexColor(argv[1].as_int(), vecColor.y, vecColor.z, vecColor.w);
+		}
+	}
 	return value();
 }
 value DxScript::Func_ObjPrimitive_SetVertexColorHSV(script_machine* machine, int argc, const value* argv) {

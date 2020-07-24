@@ -872,7 +872,8 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Line);
 
 		//Color
-		DNH_FUNCAPI_DECL_(Func_ColorARGBtoHex);
+		DNH_FUNCAPI_DECL_(Func_ColorARGBToHex);
+		DNH_FUNCAPI_DECL_(Func_ColorHexToARGB);
 		DNH_FUNCAPI_DECL_(Func_ColorRGBtoHSV);
 		DNH_FUNCAPI_DECL_(Func_ColorHSVtoRGB);
 
@@ -911,9 +912,8 @@ namespace directx {
 		static gstd::value Func_ObjRender_SetScaleY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_SetScaleZ(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_SetScaleXYZ(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_ObjRender_SetColor(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_ObjRender_SetColor);
 		static gstd::value Func_ObjRender_SetColorHSV(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		DNH_FUNCAPI_DECL_(Func_ObjRender_SetColorHex);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_GetColor);
 		static gstd::value Func_ObjRender_SetAlpha(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_GetAlpha);
@@ -967,7 +967,7 @@ namespace directx {
 		static gstd::value Func_ObjPrimitive_SetVertexPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjPrimitive_SetVertexUV(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjPrimitive_SetVertexUVT(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_ObjPrimitive_SetVertexColor(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_SetVertexColor);
 		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_SetVertexColorHSV);
 		static gstd::value Func_ObjPrimitive_SetVertexAlpha(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_GetVertexColor);
