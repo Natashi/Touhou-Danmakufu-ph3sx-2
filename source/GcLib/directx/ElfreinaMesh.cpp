@@ -32,21 +32,21 @@ bool ElfreinaMeshData::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader
 		while (scanner.HasNext()) {
 			gstd::Token& tok = scanner.Next();
 			if (tok.GetElement() == L"MeshContainer") {
-				scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
 				_ReadMeshContainer(scanner);
 			}
 			else if (tok.GetElement() == L"HierarchyList") {
-				scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
 				_ReadHierarchyList(scanner);
 			}
 			else if (tok.GetElement() == L"AnimationList") {
-				scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
 				_ReadAnimationList(scanner);
 			}
 		}
 
 		//頂点バッファ作成
-		for (int iMesh = 0; iMesh < mesh_.size(); iMesh++) {
+		for (size_t iMesh = 0; iMesh < mesh_.size(); iMesh++) {
 			mesh_[iMesh]->InitializeVertexBuffer();
 		}
 
@@ -59,7 +59,7 @@ bool ElfreinaMeshData::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader
 
 	if (false) {
 		Logger::WriteTop(StringUtility::Format(L"ElfreinaMeshData読み込み成功[%s]", reader->GetOriginalPath().c_str()));
-		for (int iMesh = 0; iMesh < mesh_.size(); iMesh++) {
+		for (size_t iMesh = 0; iMesh < mesh_.size(); iMesh++) {
 			std::wstring name = mesh_[iMesh]->name_;
 			std::wstring log = L" Mesh ";
 			log += StringUtility::Format(L"name[%s] ", name.c_str());
@@ -67,9 +67,7 @@ bool ElfreinaMeshData::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader
 			Logger::WriteTop(log);
 
 			if (iMesh == 6) {
-				int countVert = mesh_[iMesh]->GetVertexCount();
-				int iVert = 0;
-				for (iVert = 0; iVert < countVert; iVert++) {
+				for (size_t iVert = 0; iVert < mesh_[iMesh]->GetVertexCount(); iVert++) {
 					VERTEX_B4NX* vert = mesh_[iMesh]->GetVertex(iVert);
 					//VERTEX_B2NX* vert = mesh_[iMesh]->GetVertex(iVert);
 					log = L"  vert ";
@@ -79,126 +77,122 @@ bool ElfreinaMeshData::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader
 					Logger::WriteTop(log);
 				}
 
-				int iFace = 0;
 				std::vector<uint16_t>& indexVert = mesh_[iMesh]->vertexIndices_;
-				int countFace = mesh_[iMesh]->vertexIndices_.size() / 3;
-				for (iFace = 0; iFace < countFace; iFace++) {
+				size_t countFace = mesh_[iMesh]->vertexIndices_.size() / 3;
+				for (size_t iFace = 0; iFace < countFace; iFace++) {
 					log = L"  vert ";
 					log += StringUtility::Format(L"index[%d,%d,%d] ",
 						indexVert[iFace * 3], indexVert[iFace * 3 + 1], indexVert[iFace * 3 + 2]);
 					Logger::WriteTop(log);
 				}
-
 			}
 		}
-		for (int iBone = 0; iBone < bone_.size(); iBone++) {
+		for (size_t iBone = 0; iBone < bone_.size(); iBone++) {
 			std::wstring log = L" Bone ";
 			std::wstring name = bone_[iBone]->name_;
 			log += StringUtility::Format(L"name[%s] ", name.c_str());
 			Logger::WriteTop(log);
 		}
 
-		std::map<std::wstring, gstd::ref_count_ptr<AnimationData> >::iterator itr;
-		for (itr = anime_.begin(); itr != anime_.end(); itr++) {
+		for (auto itr = anime_.begin(); itr != anime_.end(); itr++) {
 			std::wstring name = itr->first;
 			std::wstring log = L" Anime ";
 			log += StringUtility::Format(L"name[%s] ", name.c_str());
 			Logger::WriteTop(log);
-
 		}
 	}
 
 	return res;
 }
 void ElfreinaMeshData::_ReadMeshContainer(gstd::Scanner& scanner) {
-	int countReadMesh = 0;
+	size_t countReadMesh = 0;
 	while (scanner.HasNext()) {
 		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+		if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 
 		if (tok.GetElement() == L"Name") {
 		}
 		else if (tok.GetElement() == L"BoneCount") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			tok = scanner.Next();
-			int countBone = tok.GetInteger();
+			size_t countBone = tok.GetInteger();
 			bone_.resize(countBone);
-			for (int iBone = 0; iBone < countBone; iBone++) {
+			for (size_t iBone = 0; iBone < countBone; iBone++) {
 				bone_[iBone] = new Bone();
 			}
 		}
 		else if (tok.GetElement() == L"MeshCount") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			tok = scanner.Next();
-			int countObj = tok.GetInteger();
+			size_t countObj = tok.GetInteger();
 			mesh_.resize(countObj);
-			for (int iObj = 0; iObj < countObj; iObj++) {
+			for (size_t iObj = 0; iObj < countObj; iObj++) {
 				mesh_[iObj] = new Mesh();
 			}
 		}
 		else if (tok.GetElement() == L"VertexFormat") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
 			while (true) {
-				if (scanner.Next().GetType() == Token::TK_CLOSEC)break;
+				if (scanner.Next().GetType() == Token::Type::TK_CLOSEC) break;
 			}
 		}
 		else if (tok.GetElement() == L"BoneNames") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			int iBone = 0;
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			size_t iBone = 0;
 			while (true) {
 				tok = scanner.Next();
-				if (tok.GetType() == Token::TK_CLOSEC)break;
-				if (tok.GetType() != Token::TK_STRING)continue;
+				if (tok.GetType() == Token::Type::TK_CLOSEC) break;
+				if (tok.GetType() != Token::Type::TK_STRING) continue;
 				bone_[iBone]->name_ = tok.GetString();
 				iBone++;
 			}
 		}
 		else if (tok.GetElement() == L"OffsetMatrices") {
-			int iCount = 0;
+			size_t iCount = 0;
 			int iBone = -1;
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
 			while (true) {
 				tok = scanner.Next();
-				if (tok.GetType() == Token::TK_CLOSEC)break;
+				if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 
-				if (tok.GetType() == Token::TK_NEWLINE) {
+				if (tok.GetType() == Token::Type::TK_NEWLINE) {
 					if (iCount != 0 && iBone != -1 && iCount != 16)
 						throw gstd::wexception(L"ElfreinaMeshData:OffsetMatricesの数が不正です");
 					iCount = 0;
 					iBone++;
 				}
 
-				if (tok.GetType() != Token::TK_INT &&
-					tok.GetType() != Token::TK_REAL)continue;
+				if (tok.GetType() != Token::Type::TK_INT &&
+					tok.GetType() != Token::Type::TK_REAL) continue;
 
 				bone_[iBone]->matOffset_.m[iCount / 4][iCount % 4] = tok.GetReal();
 				iCount++;
 			}
 		}
 		else if (tok.GetElement() == L"Materials") {
-			int posMat = 0;
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+			size_t posMat = 0;
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
 			while (true) {
 				tok = scanner.Next();
-				if (tok.GetType() == Token::TK_CLOSEC)break;
+				if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 				if (tok.GetElement() == L"MaterialCount") {
-					scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 					tok = scanner.Next();
-					int countMaterial = tok.GetInteger();
+					size_t countMaterial = tok.GetInteger();
 					material_.resize(countMaterial);
-					for (int iMat = 0; iMat < countMaterial; iMat++) {
+					for (size_t iMat = 0; iMat < countMaterial; iMat++) {
 						material_[iMat] = new Material();
 					}
 				}
 				else if (tok.GetElement() == L"Material") {
-					scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
 					_ReadMaterials(scanner, *material_[posMat].GetPointer());
 					posMat++;
 				}
 			}
 		}
 		else if (tok.GetElement() == L"Mesh") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
 			_ReadMesh(scanner, *mesh_[countReadMesh].GetPointer());
 			countReadMesh++;
 		}
@@ -207,10 +201,10 @@ void ElfreinaMeshData::_ReadMeshContainer(gstd::Scanner& scanner) {
 void ElfreinaMeshData::_ReadMaterials(gstd::Scanner& scanner, Material& material) {
 	while (true) {
 		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+		if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 
 		if (tok.GetElement() == L"Name") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			tok = scanner.Next();
 			material.name_ = tok.GetString();
 		}
@@ -225,19 +219,19 @@ void ElfreinaMeshData::_ReadMaterials(gstd::Scanner& scanner, Material& material
 			else if (tok.GetElement() == L"Emissive")color = &mat.Emissive;
 			else if (tok.GetElement() == L"Specular")color = &mat.Specular;
 
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			color->a = scanner.Next().GetReal();
-			scanner.CheckType(scanner.Next(), Token::TK_COLON);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 			color->r = scanner.Next().GetReal();
-			scanner.CheckType(scanner.Next(), Token::TK_COLON);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 			color->g = scanner.Next().GetReal();
-			scanner.CheckType(scanner.Next(), Token::TK_COLON);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 			color->b = scanner.Next().GetReal();
 		}
 		else if (tok.GetElement() == L"SpecularSharpness") {
 		}
 		else if (tok.GetElement() == L"TextureFilename") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			tok = scanner.Next();
 
 			std::wstring wPathTexture = tok.GetString();
@@ -248,82 +242,82 @@ void ElfreinaMeshData::_ReadMaterials(gstd::Scanner& scanner, Material& material
 	}
 }
 void ElfreinaMeshData::_ReadMesh(gstd::Scanner& scanner, Mesh& mesh) {
-	std::vector<std::vector<Mesh::BoneWeightData> > vectWeight;
+	std::vector<std::vector<Mesh::BoneWeightData>> vectWeight;
 	while (true) {
 		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+		if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 
 		if (tok.GetElement() == L"Name") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			tok = scanner.Next();
 			mesh.name_ = tok.GetString();
 		}
 		else if (tok.GetElement() == L"VertexCount") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			tok = scanner.Next();
-			int countVertex = tok.GetInteger();
+			size_t countVertex = tok.GetInteger();
 			mesh.SetVertexCount(countVertex);
 			vectWeight.resize(countVertex);
 		}
 		else if (tok.GetElement() == L"FaceCount") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			tok = scanner.Next();
-			int countFace = tok.GetInteger();
+			size_t countFace = tok.GetInteger();
 			mesh.vertexIndices_.resize(countFace * 3);
 		}
 		else if (tok.GetElement() == L"Positions" || tok.GetElement() == L"Normals") {
 			bool bPosition = tok.GetElement() == L"Positions";
 			bool bNormal = tok.GetElement() == L"Normals";
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 
-			int countVertex = mesh.GetVertexCount();
-			for (int iVert = 0; iVert < countVertex; iVert++) {
+			size_t countVertex = mesh.GetVertexCount();
+			for (size_t iVert = 0; iVert < countVertex; iVert++) {
 				float x = scanner.Next().GetReal();
-				scanner.CheckType(scanner.Next(), Token::TK_COLON);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 				float y = scanner.Next().GetReal();
-				scanner.CheckType(scanner.Next(), Token::TK_COLON);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 				float z = scanner.Next().GetReal();
-				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 				if (bPosition)
 					mesh.SetVertexPosition(iVert, x, y, z);
 				else if (bNormal)
 					mesh.SetVertexNormal(iVert, x, y, z);
 			}
-			scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEC);
 		}
 		else if (tok.GetElement() == L"BlendList") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			while (true) {
 				gstd::Token& tok = scanner.Next();
-				if (tok.GetType() == Token::TK_CLOSEC)break;
+				if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 				if (tok.GetElement() == L"BlendPart") {
-					scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-					scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 
 					scanner.CheckIdentifer(scanner.Next(), L"BoneName");
-					scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 					std::wstring name = scanner.Next().GetString();
 
-					scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 					scanner.CheckIdentifer(scanner.Next(), L"TransformIndex");
-					scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
-					int indexBone = scanner.Next().GetInteger();
+					scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
+					size_t indexBone = scanner.Next().GetInteger();
 
-					scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 					scanner.CheckIdentifer(scanner.Next(), L"VertexBlend");
-					scanner.CheckType(scanner.Next(), Token::TK_OPENC);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
 					Bone* bone = bone_[indexBone].GetPointer();
 					bone->name_ = name;
 
 					while (true) {
 						tok = scanner.Next();
-						if (tok.GetType() == Token::TK_CLOSEC)break;
-						if (tok.GetType() != Token::TK_INT && tok.GetType() != Token::TK_REAL)continue;
+						if (tok.GetType() == Token::Type::TK_CLOSEC) break;
+						if (tok.GetType() != Token::Type::TK_INT && tok.GetType() != Token::Type::TK_REAL) continue;
 
-						int index = tok.GetInteger();
-						scanner.CheckType(scanner.Next(), Token::TK_COMMA);
+						size_t index = tok.GetInteger();
+						scanner.CheckType(scanner.Next(), Token::Type::TK_COMMA);
 						float weight = scanner.Next().GetReal();
 
 						Mesh::BoneWeightData data;
@@ -331,76 +325,76 @@ void ElfreinaMeshData::_ReadMesh(gstd::Scanner& scanner, Mesh& mesh) {
 						data.weight = weight;
 						vectWeight[index].push_back(data);
 					}
-					scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
-					scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEC);
 				}
 			}
 
 		}
 		else if (tok.GetElement() == L"TextureUV") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 
-			int countVertex = mesh.GetVertexCount();
-			for (int iVert = 0; iVert < countVertex; iVert++) {
+			size_t countVertex = mesh.GetVertexCount();
+			for (size_t iVert = 0; iVert < countVertex; iVert++) {
 				float u = scanner.Next().GetReal();
-				scanner.CheckType(scanner.Next(), Token::TK_COLON);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 				float v = scanner.Next().GetReal();
-				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 				mesh.SetVertexUV(iVert, u, v);
 			}
-			scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEC);
 		}
 		else if (tok.GetElement() == L"VertexIndices") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 
-			int countFace = mesh.vertexIndices_.size() / 3;
-			for (int iFace = 0; iFace < countFace; iFace++) {
-				int face = scanner.Next().GetInteger();
-				if (face != 3)throw gstd::wexception(L"3頂点で形成されていない面があります");
-				scanner.CheckType(scanner.Next(), Token::TK_COMMA);
+			size_t countFace = mesh.vertexIndices_.size() / 3;
+			for (size_t iFace = 0; iFace < countFace; iFace++) {
+				size_t face = scanner.Next().GetInteger();
+				if (face != 3) throw gstd::wexception(L"3頂点で形成されていない面があります");
+				scanner.CheckType(scanner.Next(), Token::Type::TK_COMMA);
 				mesh.vertexIndices_[iFace * 3] = scanner.Next().GetInteger();
-				scanner.CheckType(scanner.Next(), Token::TK_COLON);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 				mesh.vertexIndices_[iFace * 3 + 1] = scanner.Next().GetInteger();
-				scanner.CheckType(scanner.Next(), Token::TK_COLON);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 				mesh.vertexIndices_[iFace * 3 + 2] = scanner.Next().GetInteger();
-				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			}
-			scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEC);
 		}
 		else if (tok.GetElement() == L"Attributes") {
 			int attr = -1;
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
-			int countFace = mesh.vertexIndices_.size() / 3;
-			for (int iFace = 0; iFace < countFace; iFace++) {
-				int index = scanner.Next().GetInteger();
-				if (attr == -1)attr = index;
-				if (attr != index)throw gstd::wexception(L"1オブジェクトに複数マテリアルは非対応");
-				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
+			size_t countFace = mesh.vertexIndices_.size() / 3;
+			for (size_t iFace = 0; iFace < countFace; iFace++) {
+				size_t index = scanner.Next().GetInteger();
+				if (attr == -1) attr = index;
+				if (attr != index) throw gstd::wexception(L"1オブジェクトに複数マテリアルは非対応");
+				scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			}
 			mesh.material_ = material_[attr];
-			scanner.CheckType(scanner.Next(), Token::TK_CLOSEC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEC);
 		}
 	}
 
 	//ボーンウェイトデータ整理
-	int boneCount = bone_.size();
+	size_t boneCount = bone_.size();
 	std::vector<double> totalWeight;
 	totalWeight.resize(boneCount);
 	ZeroMemory(&totalWeight[0], sizeof(double) * bone_.size());
-	for (int iVert = 0; iVert < vectWeight.size(); iVert++) {
+	for (size_t iVert = 0; iVert < vectWeight.size(); iVert++) {
 		std::vector<Mesh::BoneWeightData>& datas = vectWeight[iVert];
 		if (false) {
 			//BLEND2
-			Mesh::BoneWeightData* data1 = NULL;
-			Mesh::BoneWeightData* data2 = NULL;
-			for (int iDatas = 0; iDatas < datas.size(); iDatas++) {
+			Mesh::BoneWeightData* data1 = nullptr;
+			Mesh::BoneWeightData* data2 = nullptr;
+			for (size_t iDatas = 0; iDatas < datas.size(); iDatas++) {
 				Mesh::BoneWeightData* data = &datas[iDatas];
 				totalWeight[data->index] += data->weight;
-				if (data1 == NULL)data1 = data;
-				else if (data2 == NULL) {
+				if (data1 == nullptr) data1 = data;
+				else if (data2 == nullptr) {
 					data2 = data;
 					if (data1->weight < data2->weight) {
 						Mesh::BoneWeightData* temp = data1;
@@ -420,22 +414,22 @@ void ElfreinaMeshData::_ReadMesh(gstd::Scanner& scanner, Mesh& mesh) {
 			}
 
 			//頂点データに設定
-			if (data1 != NULL && data2 != NULL) {
+			if (data1 != nullptr && data2 != nullptr) {
 				float sub = 1.0f - data1->weight - data2->weight;
 				data1->weight += sub / 2.0f;
 				data2->weight += sub / 2.0f;
-				if (data1->weight > 1.0f)data1->weight = 1.0f;
-				if (data2->weight > 1.0f)data2->weight = 1.0f;
+				if (data1->weight > 1.0f) data1->weight = 1.0f;
+				if (data2->weight > 1.0f) data2->weight = 1.0f;
 			}
 
-			if (data1 != NULL)mesh.SetVertexBlend(iVert, 0, data1->index, data1->weight);
-			if (data2 != NULL)mesh.SetVertexBlend(iVert, 1, data2->index, data2->weight);
+			if (data1) mesh.SetVertexBlend(iVert, 0, data1->index, data1->weight);
+			if (data2) mesh.SetVertexBlend(iVert, 1, data2->index, data2->weight);
 		}
 		else {
-			int dataCount = datas.size();
-			for (int iDatas = 0; iDatas < dataCount; iDatas++) {
+			size_t dataCount = datas.size();
+			for (size_t iDatas = 0; iDatas < dataCount; iDatas++) {
 				Mesh::BoneWeightData* data = &datas[iDatas];
-				if (data == NULL)continue;
+				if (data == nullptr) continue;
 				totalWeight[data->index] += data->weight;
 				mesh.SetVertexBlend(iVert, iDatas, data->index, data->weight);
 			}
@@ -445,53 +439,53 @@ void ElfreinaMeshData::_ReadMesh(gstd::Scanner& scanner, Mesh& mesh) {
 	//重心
 	double maxWeight = 0;
 	mesh.CalculateWeightCenter();
-	for (int iBone = 0; iBone < totalWeight.size(); iBone++) {
-		if (totalWeight[iBone] < maxWeight)continue;
+	for (size_t iBone = 0; iBone < totalWeight.size(); iBone++) {
+		if (totalWeight[iBone] < maxWeight) continue;
 		mesh.indexWeightForCalucZValue_ = iBone;
 		maxWeight = totalWeight[iBone];
 	}
 }
 
 void ElfreinaMeshData::_ReadHierarchyList(gstd::Scanner& scanner) {
-	for (int iBone = 0; iBone < bone_.size(); iBone++) {
+	for (size_t iBone = 0; iBone < bone_.size(); iBone++) {
 		std::wstring name = bone_[iBone]->name_;
 		mapBoneNameIndex_[name] = iBone;
 	}
 
 	while (true) {
 		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+		if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 		if (tok.GetElement() == L"Node") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			_ReadNode(scanner, Bone::NO_PARENT);
 		}
 	}
 }
 int ElfreinaMeshData::_ReadNode(gstd::Scanner& scanner, int parent) {
 	int indexBone = -1;
-	Bone* bone = NULL;
+	Bone* bone = nullptr;
 	while (true) {
 		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+		if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 		if (tok.GetElement() == L"NodeName") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			std::wstring name = scanner.Next().GetString();
 			indexBone = mapBoneNameIndex_[name];
 			bone = bone_[indexBone].GetPointer();
 			bone->indexParent_ = parent;
 		}
 		else if (tok.GetElement() == L"InitPostureMatrix") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
-			for (int iCount = 0; iCount < 16; iCount++) {
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
+			for (size_t iCount = 0; iCount < 16; iCount++) {
 				bone->matInitPosture_.m[iCount / 4][iCount % 4] = scanner.Next().GetReal();
-				if (iCount <= 14)scanner.CheckType(scanner.Next(), Token::TK_COLON);
+				if (iCount <= 14) scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 			}
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 		}
 		if (tok.GetElement() == L"Node") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			int indexChild = _ReadNode(scanner, indexBone);
 			bone->indexChild_.push_back(indexChild);
 		}
@@ -502,18 +496,17 @@ int ElfreinaMeshData::_ReadNode(gstd::Scanner& scanner, int parent) {
 void ElfreinaMeshData::_ReadAnimationList(gstd::Scanner& scanner) {
 	while (true) {
 		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+		if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 		if (tok.GetElement() == L"AnimationCount") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			scanner.Next().GetInteger();
 		}
 		else if (tok.GetElement() == L"AnimationData") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			gstd::ref_count_ptr<AnimationData> anime = _ReadAnimationData(scanner);
-			if (anime != NULL) {
+			if (anime)
 				anime_[anime->name_] = anime;
-			}
 		}
 	}
 }
@@ -523,45 +516,45 @@ gstd::ref_count_ptr<ElfreinaMeshData::AnimationData> ElfreinaMeshData::_ReadAnim
 	AnimationData* pAnime = anime.GetPointer();
 	while (true) {
 		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+		if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 		if (tok.GetElement() == L"AnimationName") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			pAnime->name_ = scanner.Next().GetString();
 		}
 		else if (tok.GetElement() == L"AnimationTime") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			pAnime->timeTotal_ = scanner.Next().GetInteger();
 		}
 		else if (tok.GetElement() == L"FrameParSecond") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			pAnime->framePerSecond_ = scanner.Next().GetInteger();
 		}
 		else if (tok.GetElement() == L"TransitionTime") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 		}
 		else if (tok.GetElement() == L"Priority") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 		}
 		else if (tok.GetElement() == L"Loop") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			std::wstring id = scanner.Next().GetElement();
 			pAnime->bLoop_ = id == L"True";
 		}
 		else if (tok.GetElement() == L"BoneAnimation") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			_ReadBoneAnimation(scanner, *pAnime);
 		}
 		else if (tok.GetElement() == L"UVAnimation") {
 			// TODO
-			int count = 1;
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			size_t count = 1;
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			while (true) {
 				tok = scanner.Next();
-				if (tok.GetType() == Token::TK_OPENC)count++;
-				else if (tok.GetType() == Token::TK_CLOSEC)count--;
-				if (count == 0)break;
+				if (tok.GetType() == Token::Type::TK_OPENC)count++;
+				else if (tok.GetType() == Token::Type::TK_CLOSEC)count--;
+				if (count == 0) break;
 			}
 		}
 	}
@@ -570,15 +563,15 @@ gstd::ref_count_ptr<ElfreinaMeshData::AnimationData> ElfreinaMeshData::_ReadAnim
 void ElfreinaMeshData::_ReadBoneAnimation(gstd::Scanner& scanner, AnimationData& anime) {
 	while (true) {
 		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+		if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 		if (tok.GetElement() == L"TimeKeys") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
-			while (scanner.Next().GetType() != Token::TK_CLOSEC) {}
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
+			while (scanner.Next().GetType() != Token::Type::TK_CLOSEC) {}
 		}
 		else if (tok.GetElement() == L"AnimationPart") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			_ReadBoneAnimationPart(scanner, anime);
 		}
 	}
@@ -588,19 +581,19 @@ void ElfreinaMeshData::_ReadBoneAnimationPart(gstd::Scanner& scanner, AnimationD
 	BoneAnimationPart* part = new BoneAnimationPart();
 	while (true) {
 		gstd::Token& tok = scanner.Next();
-		if (tok.GetType() == Token::TK_CLOSEC)break;
+		if (tok.GetType() == Token::Type::TK_CLOSEC) break;
 		if (tok.GetElement() == L"NodeName") {
-			scanner.CheckType(scanner.Next(), Token::TK_EQUAL);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 			std::wstring name = scanner.Next().GetString();
 			indexBone = mapBoneNameIndex_[name];
 		}
 		else if (tok.GetElement() == L"TimeKeys") {
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			while (true) {
 				gstd::Token& tok = scanner.Next();
-				if (tok.GetType() == Token::TK_CLOSEC)break;
-				if (tok.GetType() != Token::TK_INT && tok.GetType() != Token::TK_REAL)continue;
+				if (tok.GetType() == Token::Type::TK_CLOSEC) break;
+				if (tok.GetType() != Token::Type::TK_INT && tok.GetType() != Token::Type::TK_REAL) continue;
 				part->keyTime_.push_back(tok.GetReal());
 			}
 		}
@@ -610,32 +603,32 @@ void ElfreinaMeshData::_ReadBoneAnimationPart(gstd::Scanner& scanner, AnimationD
 			bool bTrans = tok.GetElement() == L"TransKeys";
 			bool bScale = tok.GetElement() == L"ScaleKeys";
 			bool bRotate = tok.GetElement() == L"RotateKeys";
-			scanner.CheckType(scanner.Next(), Token::TK_OPENC);
-			scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_OPENC);
+			scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			while (true) {
 				gstd::Token& tok = scanner.Next();
-				if (tok.GetType() == Token::TK_CLOSEC)break;
-				if (tok.GetType() != Token::TK_INT && tok.GetType() != Token::TK_REAL)continue;
+				if (tok.GetType() == Token::Type::TK_CLOSEC) break;
+				if (tok.GetType() != Token::Type::TK_INT && tok.GetType() != Token::Type::TK_REAL) continue;
 				float x = tok.GetReal();
-				scanner.CheckType(scanner.Next(), Token::TK_COLON);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 				float y = scanner.Next().GetReal();
-				scanner.CheckType(scanner.Next(), Token::TK_COLON);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 				float z = scanner.Next().GetReal();
 
 				if (bTrans || bScale) {
 					D3DXVECTOR3 vect(x, y, z);
-					if (bTrans)part->keyTrans_.push_back(vect);
-					else if (bScale)part->keyScale_.push_back(vect);
+					if (bTrans) part->keyTrans_.push_back(vect);
+					else if (bScale) part->keyScale_.push_back(vect);
 				}
 				else if (bRotate) {
-					scanner.CheckType(scanner.Next(), Token::TK_COLON);
+					scanner.CheckType(scanner.Next(), Token::Type::TK_COLON);
 					float w = scanner.Next().GetReal();
 
 					D3DXQUATERNION vect(x, y, z, w);
 					part->keyRotate_.push_back(vect);
 				}
 
-				scanner.CheckType(scanner.Next(), Token::TK_NEWLINE);
+				scanner.CheckType(scanner.Next(), Token::Type::TK_NEWLINE);
 			}
 		}
 	}
@@ -660,9 +653,9 @@ void ElfreinaMeshData::Mesh::Render() {
 /*
 	{
 		RenderObjectLX obj;
-		int count = GetVertexCount();
+		size_t count = GetVertexCount();
 		obj.SetVertexCount(count);
-		for(int iVert=0;iVert<count;iVert++)
+		for(size_t iVert=0;iVert<count;iVert++)
 		{
 			VERTEX_B2NX* b2 = GetVertex(iVert);
 			obj.SetVertexPosition(iVert, b2->position.x, b2->position.y, b2->position.z);
@@ -688,14 +681,14 @@ gstd::ref_count_ptr<RenderBlock> ElfreinaMeshData::Mesh::CreateRenderBlock() {
 
 //ElfreinaMeshData::AnimationData
 gstd::ref_count_ptr<Matrices> ElfreinaMeshData::AnimationData::CreateBoneAnimationMatrix(double time, ElfreinaMeshData* mesh) {
-	std::vector<gstd::ref_count_ptr<Bone> >& bones = mesh->GetBones();
+	std::vector<gstd::ref_count_ptr<Bone>>& bones = mesh->GetBones();
 
 	gstd::ref_count_ptr<Matrices> matrix = new Matrices();
 	matrix->SetSize(bones.size());
 
 	//最上位の親を探す
-	for (int iBone = 0; iBone < bones.size(); iBone++) {
-		if (bones[iBone]->GetParentIndex() != ElfreinaMeshData::Bone::NO_PARENT)continue;
+	for (size_t iBone = 0; iBone < bones.size(); iBone++) {
+		if (bones[iBone]->GetParentIndex() != ElfreinaMeshData::Bone::NO_PARENT) continue;
 
 		D3DXMATRIX& matInit = bones[iBone]->GetInitPostureMatrix();
 		D3DXMATRIX& matOffset = bones[iBone]->GetOffsetMatrix();
@@ -706,7 +699,7 @@ gstd::ref_count_ptr<Matrices> ElfreinaMeshData::AnimationData::CreateBoneAnimati
 
 		//子の行列を計算
 		std::vector<int>& indexChild = bones[iBone]->GetChildIndex();
-		for (int iChild = 0; iChild < indexChild.size(); iChild++) {
+		for (size_t iChild = 0; iChild < indexChild.size(); iChild++) {
 			int index = indexChild[iChild];
 			_CreateBoneAnimationMatrix(time, mesh, matrix, index, mat);
 		}
@@ -715,7 +708,7 @@ gstd::ref_count_ptr<Matrices> ElfreinaMeshData::AnimationData::CreateBoneAnimati
 	return matrix;
 }
 void ElfreinaMeshData::AnimationData::_CreateBoneAnimationMatrix(int time, ElfreinaMeshData* mesh, gstd::ref_count_ptr<Matrices> matrix, int indexOwn, D3DXMATRIX& matrixParentAnime) {
-	std::vector<gstd::ref_count_ptr<Bone> >& bones = mesh->GetBones();
+	std::vector<gstd::ref_count_ptr<Bone>>& bones = mesh->GetBones();
 
 	D3DXMATRIX& matInit = bones[indexOwn]->GetInitPostureMatrix();
 	D3DXMATRIX& matOffset = bones[indexOwn]->GetOffsetMatrix();
@@ -726,7 +719,7 @@ void ElfreinaMeshData::AnimationData::_CreateBoneAnimationMatrix(int time, Elfre
 
 	//子の行列を計算
 	std::vector<int>& indexChild = bones[indexOwn]->GetChildIndex();
-	for (int iChild = 0; iChild < indexChild.size(); iChild++) {
+	for (size_t iChild = 0; iChild < indexChild.size(); iChild++) {
 		int index = indexChild[iChild];
 		_CreateBoneAnimationMatrix(time, mesh, matrix, index, mat);
 	}
@@ -734,7 +727,7 @@ void ElfreinaMeshData::AnimationData::_CreateBoneAnimationMatrix(int time, Elfre
 D3DXMATRIX ElfreinaMeshData::AnimationData::_CalculateMatrix(double time, int index) {
 	D3DXMATRIX res;
 	BoneAnimationPart* part = animeBone_[index].GetPointer();
-	if (part == NULL) {
+	if (part == nullptr) {
 		D3DXMatrixIdentity(&res);
 		return res;
 	}
@@ -744,9 +737,9 @@ D3DXMATRIX ElfreinaMeshData::AnimationData::_CalculateMatrix(double time, int in
 	//アニメーションインデックスを検索
 	int keyNext = -1;
 	int keyPrevious = -1;
-	for (int iTime = 0; iTime < keyTime.size(); iTime++) {
+	for (size_t iTime = 0; iTime < keyTime.size(); iTime++) {
 		int tTime = timeTotal_ * keyTime[iTime];
-		if (tTime < time)continue;
+		if (tTime < time) continue;
 		keyPrevious = iTime - 1;
 		keyNext = iTime;
 		break;
@@ -755,8 +748,8 @@ D3DXMATRIX ElfreinaMeshData::AnimationData::_CalculateMatrix(double time, int in
 		keyNext = keyTime.size() - 1;
 		keyPrevious = keyNext - 1;
 	}
-	if (keyPrevious < 0)keyPrevious = 0;
-	if (keyNext < 0)keyNext = 0;
+	if (keyPrevious < 0) keyPrevious = 0;
+	if (keyNext < 0) keyNext = 0;
 
 	float timeDiffKey = (float)timeTotal_ * keyTime[keyNext] - (float)timeTotal_ * keyTime[keyPrevious];
 	float timeDiffAnime = (float)(time - timeTotal_ * keyTime[keyPrevious]);
@@ -824,13 +817,13 @@ bool ElfreinaMesh::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> re
 	bool res = false;
 	{
 		Lock lock(DxMeshManager::GetBase()->GetLock());
-		if (data_ != NULL)Release();
+		if (data_) Release();
 
 		std::wstring name = reader->GetOriginalPath();
 
 		data_ = _GetFromManager(name);
-		if (data_ == NULL) {
-			if (!reader->Open())throw gstd::wexception(L"ファイルが開けません");
+		if (data_ == nullptr) {
+			if (!reader->Open()) throw gstd::wexception(L"ファイルが開けません");
 			data_ = std::make_shared<ElfreinaMeshData>();
 			data_->SetName(name);
 			ElfreinaMeshData* data = (ElfreinaMeshData*)data_.get();
@@ -841,7 +834,7 @@ bool ElfreinaMesh::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> re
 
 			}
 			else {
-				data_ = NULL;
+				data_ = nullptr;
 			}
 		}
 		else {
@@ -854,14 +847,14 @@ bool ElfreinaMesh::CreateFromFileInLoadThread(std::wstring path) {
 	return DxMesh::CreateFromFileInLoadThread(path, MESH_ELFREINA);
 }
 std::wstring ElfreinaMesh::GetPath() {
-	if (data_ == NULL)return L"";
+	if (data_ == nullptr) return L"";
 	return ((ElfreinaMeshData*)data_.get())->path_;
 }
 void ElfreinaMesh::Render() {
-	if (data_ == NULL)return;
+	if (data_ == nullptr) return;
 
 	ElfreinaMeshData* data = (ElfreinaMeshData*)data_.get();
-	for (int iMesh = 0; iMesh < data->mesh_.size(); iMesh++) {
+	for (size_t iMesh = 0; iMesh < data->mesh_.size(); iMesh++) {
 		ElfreinaMeshData::Mesh* mesh = data->mesh_[iMesh].GetPointer();
 		mesh->SetPosition(position_);
 		mesh->SetAngle(angle_);
@@ -873,27 +866,27 @@ void ElfreinaMesh::Render() {
 	//mesh_[6]->Render();
 }
 void ElfreinaMesh::Render(std::wstring nameAnime, int time) {
-	if (data_ == NULL)return;
+	if (data_ == nullptr) return;
 
 	gstd::ref_count_ptr<Matrices> matrix = CreateAnimationMatrix(nameAnime, time);
-	if (matrix == NULL)return;
+	if (matrix == nullptr) return;
 
 	ElfreinaMeshData* data = (ElfreinaMeshData*)data_.get();
 	while (!data->bLoad_) {
 		::Sleep(1);
 	}
 
-	for (int iMesh = 0; iMesh < data->mesh_.size(); iMesh++) {
+	for (size_t iMesh = 0; iMesh < data->mesh_.size(); iMesh++) {
 		ElfreinaMeshData::Mesh* mesh = data->mesh_[iMesh].GetPointer();
 		mesh->SetMatrix(matrix);
 	}
 	Render();
 }
 gstd::ref_count_ptr<RenderBlocks> ElfreinaMesh::CreateRenderBlocks() {
-	if (data_ == NULL)return NULL;
+	if (data_ == nullptr) return nullptr;
 	gstd::ref_count_ptr<RenderBlocks> res = new RenderBlocks();
 	ElfreinaMeshData* data = (ElfreinaMeshData*)data_.get();
-	for (int iMesh = 0; iMesh < data->mesh_.size(); iMesh++) {
+	for (size_t iMesh = 0; iMesh < data->mesh_.size(); iMesh++) {
 		gstd::ref_count_ptr<ElfreinaMeshData::Mesh> mesh = data->mesh_[iMesh];
 		mesh->SetPosition(position_);
 		mesh->SetAngle(angle_);
@@ -907,12 +900,12 @@ gstd::ref_count_ptr<RenderBlocks> ElfreinaMesh::CreateRenderBlocks() {
 	return res;
 }
 gstd::ref_count_ptr<RenderBlocks> ElfreinaMesh::CreateRenderBlocks(std::wstring nameAnime, double time) {
-	if (data_ == NULL)return NULL;
+	if (data_ == nullptr) return nullptr;
 
 	gstd::ref_count_ptr<Matrices> matrix = CreateAnimationMatrix(nameAnime, time);
-	if (matrix == NULL)return NULL;
+	if (matrix == nullptr) return nullptr;
 	ElfreinaMeshData* data = (ElfreinaMeshData*)data_.get();
-	for (int iMesh = 0; iMesh < data->mesh_.size(); iMesh++) {
+	for (size_t iMesh = 0; iMesh < data->mesh_.size(); iMesh++) {
 		ElfreinaMeshData::Mesh* mesh = data->mesh_[iMesh].GetPointer();
 		mesh->SetMatrix(matrix);
 	}
@@ -930,18 +923,17 @@ double ElfreinaMesh::_CalcFrameToTime(double time, gstd::ref_count_ptr<ElfreinaM
 		time -= (int)timeTotal * tTime;
 	}
 	else {
-		if (time > timeTotal)time = timeTotal;
+		if (time > timeTotal) time = timeTotal;
 	}
 	return time;
 }
 gstd::ref_count_ptr<Matrices> ElfreinaMesh::CreateAnimationMatrix(std::wstring nameAnime, double time) {
-	if (data_ == NULL)return NULL;
+	if (data_ == nullptr) return nullptr;
 
 	ElfreinaMeshData* data = (ElfreinaMeshData*)data_.get();
 
 	auto itr = data->anime_.find(nameAnime);
-	bool bExist = data->anime_.find(nameAnime) != data->anime_.end();
-	if (itr == data->anime_.end()) return NULL;
+	if (itr == data->anime_.end()) return nullptr;
 	gstd::ref_count_ptr<ElfreinaMeshData::AnimationData> anime = itr->second;
 
 	//ループ有無で時間を計算する
@@ -966,7 +958,7 @@ D3DXMATRIX ElfreinaMesh::GetAnimationMatrix(std::wstring nameAnime, double time,
 			D3DXMATRIX matBone = matrix->GetMatrix(indexBone);
 
 			D3DXMATRIX matInv = data->bone_[indexBone]->matOffset_;
-			D3DXMatrixInverse(&matInv, NULL, &matInv);
+			D3DXMatrixInverse(&matInv, nullptr, &matInv);
 			//			D3DXVECTOR3 pos;
 			//			D3DXVec3TransformCoord(&pos, &D3DXVECTOR3(0,0,0), &matInv);
 			//			D3DXMatrixTranslation(&matInv,pos.x,pos.y,pos.z);

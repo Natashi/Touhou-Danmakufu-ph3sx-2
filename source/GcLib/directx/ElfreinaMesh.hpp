@@ -20,10 +20,10 @@ namespace directx {
 		class BoneAnimationPart;
 	protected:
 		std::wstring path_;
-		std::vector<gstd::ref_count_ptr<Mesh> > mesh_;
-		std::vector<gstd::ref_count_ptr<Bone> > bone_;
-		std::vector<gstd::ref_count_ptr<Material> > material_;
-		std::map<std::wstring, gstd::ref_count_ptr<AnimationData> > anime_;
+		std::vector<gstd::ref_count_ptr<Mesh>> mesh_;
+		std::vector<gstd::ref_count_ptr<Bone>> bone_;
+		std::vector<gstd::ref_count_ptr<Material>> material_;
+		std::map<std::wstring, gstd::ref_count_ptr<AnimationData>> anime_;
 
 		std::map<std::wstring, int> mapBoneNameIndex_;
 
@@ -42,7 +42,7 @@ namespace directx {
 		ElfreinaMeshData();
 		~ElfreinaMeshData();
 		bool CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader);
-		std::vector<gstd::ref_count_ptr<Bone> >& GetBones() { return bone_; }
+		std::vector<gstd::ref_count_ptr<Bone>>& GetBones() { return bone_; }
 	};
 
 	class ElfreinaMeshData::Bone {
@@ -107,7 +107,7 @@ namespace directx {
 		int timeTotal_;
 		int framePerSecond_;
 		bool bLoop_;
-		std::vector<gstd::ref_count_ptr<ElfreinaMeshData::BoneAnimationPart> > animeBone_;
+		std::vector<gstd::ref_count_ptr<ElfreinaMeshData::BoneAnimationPart>> animeBone_;
 
 		void _CreateBoneAnimationMatrix(int time, ElfreinaMeshData* mesh, gstd::ref_count_ptr<Matrices> matrix, int indexOwn, D3DXMATRIX& matrixParentAnime);
 		D3DXMATRIX _CalculateMatrix(double time, int index);
