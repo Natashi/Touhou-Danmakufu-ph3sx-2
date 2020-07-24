@@ -136,9 +136,15 @@ function const dxFunction[] =
 	{ "GetObject2dPosition", DxScript::Func_GetObject2dPosition, 1 },
 	{ "Get2dPosition", DxScript::Func_Get2dPosition, 3 },
 
+	//Intersection
 	{ "IsIntersected_Circle_Circle", DxScript::Func_IsIntersected_Circle_Circle, 6 },
 	{ "IsIntersected_Line_Circle", DxScript::Func_IsIntersected_Line_Circle, 8 },
 	{ "IsIntersected_Line_Line", DxScript::Func_IsIntersected_Line_Line, 10 },
+
+	//Color
+	{ "ColorARGBtoHex", DxScript::Func_ColorARGBtoHex, 4 },
+	{ "ColorRGBtoHSV", DxScript::Func_ColorRGBtoHSV, 3 },
+	{ "ColorHSVtoRGB", DxScript::Func_ColorHSVtoRGB, 3 },
 
 	//Dx関数：オブジェクト操作(共通)
 	{ "Obj_Delete", DxScript::Func_Obj_Delete, 1 },
@@ -1772,6 +1778,7 @@ gstd::value DxScript::Func_Get2dPosition(gstd::script_machine* machine, int argc
 	return script->CreateRealArrayValue(listRes, 2U);
 }
 
+//Intersection
 gstd::value DxScript::Func_IsIntersected_Circle_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxCircle circle1(argv[0].as_real(), argv[1].as_real(), argv[2].as_real());
 	DxCircle circle2(argv[3].as_real(), argv[4].as_real(), argv[5].as_real());
@@ -1810,6 +1817,36 @@ gstd::value DxScript::Func_IsIntersected_Line_Line(gstd::script_machine* machine
 
 	bool res = DxMath::IsIntersected(line1, line2);
 	return DxScript::CreateBooleanValue(res);
+}
+
+//Color
+gstd::value DxScript::Func_ColorARGBtoHex(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	byte ca = argv[0].as_int();
+	byte cr = argv[1].as_int();
+	byte cg = argv[2].as_int();
+	byte cb = argv[3].as_int();
+	return DxScript::CreateRealValue(D3DCOLOR_ARGB(ca, cr, cg, cb));
+}
+gstd::value DxScript::Func_ColorRGBtoHSV(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	byte cr = argv[0].as_int();
+	byte cg = argv[1].as_int();
+	byte cb = argv[2].as_int();
+
+	D3DXVECTOR3 hsv;
+	ColorAccess::RGBtoHSV(hsv, cr, cg, cb);
+
+	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&hsv), 3U);
+}
+gstd::value DxScript::Func_ColorHSVtoRGB(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	int ch = argv[0].as_int();
+	byte cs = argv[1].as_int();
+	byte cv = argv[2].as_int();
+	
+	D3DCOLOR rgb = 0xffffffff;
+	ColorAccess::HSVtoRGB(rgb, ch, cs, cv);
+
+	D3DXVECTOR4 rgbVec = ColorAccess::ToVec4(rgb);
+	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&rgbVec.y), 3U);
 }
 
 //Dx関数：オブジェクト操作(共通)
@@ -2195,7 +2232,7 @@ value DxScript::Func_ObjRender_SetColorHSV(script_machine* machine, int argc, co
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		D3DCOLOR color = 0xffffffff;
-		ColorAccess::SetColorHSV(color, argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
+		ColorAccess::HSVtoRGB(color, argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
 
 		byte listColor[4];
 		ColorAccess::ToByteArray(color, listColor);
@@ -2891,7 +2928,7 @@ value DxScript::Func_ObjPrimitive_SetVertexColorHSV(script_machine* machine, int
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		D3DCOLOR cHSV = 0xffffffff;
-		ColorAccess::SetColorHSV(cHSV, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
+		ColorAccess::HSVtoRGB(cHSV, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
 
 		byte listRGB[4];
 		ColorAccess::ToByteArray(cHSV, listRGB);

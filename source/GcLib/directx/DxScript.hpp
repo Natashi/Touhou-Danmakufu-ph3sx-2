@@ -866,9 +866,15 @@ namespace directx {
 		static gstd::value Func_GetObject2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Get2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
+		//Intersection
 		DNH_FUNCAPI_DECL_(Func_IsIntersected_Circle_Circle);
 		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Circle);
 		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Line);
+
+		//Color
+		DNH_FUNCAPI_DECL_(Func_ColorARGBtoHex);
+		DNH_FUNCAPI_DECL_(Func_ColorRGBtoHSV);
+		DNH_FUNCAPI_DECL_(Func_ColorHSVtoRGB);
 
 		//Dx関数：オブジェクト操作(共通)
 		static gstd::value Func_Obj_Delete(gstd::script_machine* machine, int argc, const gstd::value* argv);

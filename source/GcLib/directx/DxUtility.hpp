@@ -54,7 +54,8 @@ namespace directx {
 		static D3DCOLOR& SetColor(D3DCOLOR& src, const D3DCOLOR& mul);
 		static D3DCOLOR& ApplyAlpha(D3DCOLOR& color, float alpha);
 
-		static D3DCOLOR& SetColorHSV(D3DCOLOR& color, int hue, int saturation, int value);
+		static D3DXVECTOR3& RGBtoHSV(D3DXVECTOR3& color, int red, int green, int blue);
+		static D3DCOLOR& HSVtoRGB(D3DCOLOR& color, int hue, int saturation, int value);
 
 		template<typename T>
 		static inline void ClampColor(T& color) {
@@ -74,8 +75,12 @@ namespace directx {
 			arr[2] = GetColorG(color);
 			arr[3] = GetColorB(color);
 		}
+
 		static D3DXVECTOR4 ToVec4(const D3DCOLOR& color) {
-			return D3DXVECTOR4(GetColorA(color) / 255.0f, GetColorR(color) / 255.0f, 
+			return D3DXVECTOR4(GetColorA(color), GetColorR(color), GetColorG(color), GetColorB(color));
+		}
+		static D3DXVECTOR4 ToVec4Normalized(const D3DCOLOR& color) {
+			return D3DXVECTOR4(GetColorA(color) / 255.0f, GetColorR(color) / 255.0f,
 				GetColorG(color) / 255.0f, GetColorB(color) / 255.0f);
 		}
 	};

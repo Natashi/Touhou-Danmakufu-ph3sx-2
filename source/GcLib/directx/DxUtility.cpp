@@ -28,7 +28,7 @@ D3DMATERIAL9 ColorAccess::SetColor(D3DMATERIAL9 mat, D3DCOLOR color) {
 	return mat;
 }
 D3DCOLOR& ColorAccess::SetColor(D3DCOLOR& src, const D3DCOLOR& mul) {
-	D3DXVECTOR4 mulFac = ToVec4(mul);
+	D3DXVECTOR4 mulFac = ToVec4Normalized(mul);
 	byte na = GetColorA(src) * mulFac.x;
 	byte nr = GetColorR(src) * mulFac.y;
 	byte ng = GetColorG(src) * mulFac.z;
@@ -44,32 +44,75 @@ D3DCOLOR& ColorAccess::ApplyAlpha(D3DCOLOR& color, float alpha) {
 	color = D3DCOLOR_ARGB(a, r, g, b);
 	return color;
 }
-D3DCOLOR& ColorAccess::SetColorHSV(D3DCOLOR& color, int hue, int saturation, int value) {
-	int i = (int)floor(hue / 60.0f) % 6;
-	float f = (float)(hue / 60.0f) - (float)floor(hue / 60.0f);
 
-	float s = saturation / 255.0f;
+D3DXVECTOR3& ColorAccess::RGBtoHSV(D3DXVECTOR3& color, int red, int green, int blue) {
+	//[In]  RGB: (0 ~ 255, 0 ~ 255, 0 ~ 255)
+	//[Out] HSV: (0 ~ 360, 0 ~ 255, 0 ~ 255)
 
-	int p = (int)gstd::Math::Round(value * (1.0f - s));
-	int q = (int)gstd::Math::Round(value * (1.0f - s * f));
-	int t = (int)gstd::Math::Round(value * (1.0f - s * (1.0f - f)));
+	int cmax = std::max(std::max(red, green), blue);
+	int cmin = std::min(std::min(red, green), blue);
+	float delta = cmax - cmin;
 
-	int red = 0;
-	int green = 0;
-	int blue = 0;
-	switch (i) {
-	case 0: red = value;	green = t;		blue = p; break;
-	case 1: red = q;		green = value;	blue = p; break;
-	case 2: red = p;		green = value;	blue = t; break;
-	case 3: red = p;		green = q;		blue = value; break;
-	case 4: red = t;		green = p;		blue = value; break;
-	case 5: red = value;	green = p;		blue = q; break;
+	color.z = cmax;
+	if (delta < 0.00001f) {
+		color.x = 0;
+		color.y = 0;
+	}
+	else if (cmax == 0) {
+		color.x = NAN;
+		color.y = 0;
+	}
+	else {
+		color.y = (int)std::roundf(delta / cmax * 255.0f);
+
+		if (red >= cmax)
+			color.x = (green - blue) / delta;
+		else if (green >= cmax)
+			color.x = 2.0f + (blue - red) / delta;
+		else
+			color.x = 4.0f + (red - green) / delta;
+
+		color.x = (int)Math::NormalizeAngleDeg(color.x * 60.0f);
 	}
 
-	ClampColor(red);
-	ClampColor(green);
-	ClampColor(blue);
-	color = D3DCOLOR_RGBA(red, green, blue, color >> 24);
+	return color;
+}
+D3DCOLOR& ColorAccess::HSVtoRGB(D3DCOLOR& color, int hue, int saturation, int value) {
+	//Hue: 0 ~ 360
+	//Sat: 0 ~ 255
+	//Val: 0 ~ 255
+
+	int hh = hue % 360;
+	if (hh < 0) hh += 360;
+
+	int i = hh / 60;
+	float ff = (hh % 60) / 60.0f;
+	float s = saturation / 255.0f;
+
+	int p = value * (1.0f - s);
+	int q = value * (1.0f - s * ff);
+	int t = value * (1.0f - s * (1.0f - ff));
+
+	auto GenColor = [](int r, int g, int b) -> D3DCOLOR {
+		ClampColor(r);
+		ClampColor(g);
+		ClampColor(b);
+		return D3DCOLOR_XRGB(r, g, b);
+	};
+
+	D3DCOLOR rgb = 0xffffffff;
+	switch (i) {
+	case 0: rgb = GenColor(value, t, p); break;
+	case 1: rgb = GenColor(q, value, p); break;
+	case 2: rgb = GenColor(p, value, t); break;
+	case 3: rgb = GenColor(p, q, value); break;
+	case 4: rgb = GenColor(t, p, value); break;
+	case 5: 
+	default:
+			rgb = GenColor(value, p, q); break;
+	}
+
+	color = (rgb & 0x00ffffff) | (color & 0xff000000);
 	return color;
 }
 
