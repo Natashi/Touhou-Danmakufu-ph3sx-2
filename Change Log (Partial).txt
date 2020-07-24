@@ -21,8 +21,9 @@
 	- RenderToTextureXX alpha fix ported+modified from th_dnh_woo.
 	- Replaced ObjLaser_SetGrazeInvalidFrame with ObjShot_SetGrazeInvalidFrame.
 	- Alpha channel blending now exists in all blend modes except BLEND_NONE and BLEND_ADD_RGB.
-	- Fixed a bug where NotifyEvent and SetScriptArgument could not reach package-level scripts when called from a stage-level scripts.
+	- Fixed a bug where NotifyEvent and SetScriptArgument could not reach package-level scripts when called from a stage-level script.
 	- Event arguments will no longer be overwritten when notifying nested events inside @Event.
+	- Utilized variadic argument counts for NotifyEvent-series functions.
 	- Added transform functions for ObjPatternShot and relevant sample scripts, for former and current ECL modders.
 		- Please note that they may not be able to fully emulate ECL's behaviours.
 	- Added functionality to customize delay clouds.
@@ -54,6 +55,37 @@
 	- Improved vertex shader support, and added sample scripts for demonstration.
 	- Fixed underflowing and overflowing issues with ObjRender_SetColor/SetAlpha.
 	- Added more options to the [font] text tag, and fixed a bug where ObjText_SetFontCharacterSet doesn't work.
+		- Available tag options:
+			- reset
+				- Resets the text to its original settings.  (Present in vanilla ph3 as "clear")
+			- size
+				- Adjusts font size. (Present in vanilla ph3)
+			- ox/oy
+				- Adjusts position offset.
+			- it
+				- Toggles italic. (true/false or 1/0)
+			- wg
+				- Adjusts font weight.
+			- br/bg/bb
+				- Adjusts font bottom color.
+			- tr/tg/tb
+				- Adjusts font top color.
+			- or/og/ob
+				- Adjusts font border color.
+	- Added more options to the [ruby] text tag, and improved ruby spacing.
+		- Available tag options:
+			- rb
+				- Sets text. Unchanged from vanilla ph3.
+			- rt
+				- Sets ruby(furigana) text. Unchanged from vanilla ph3.
+			- sz
+				- Adjusts the ruby text's font size.
+			- wg
+				- Adjusts the ruby text's font weight.
+			- ox
+				- Adjusts the ruby text's left margin.
+			- op
+				- Adjusts the ruby text's side pitch.
 	- ObjFileT now properly reads from and writes to UTF-8 text files.
 	- ObjFile_OpenNW now allows both reading and writing, unless the file was stored in a .dat archive, in which case all write functions will fail.
 	- Following the above two changes, Shift-JIS is no longer supported in favour of proper Unicode (UTF-8) handling.
@@ -62,4 +94,7 @@
 	- Collecting user-defined items now notify EV_GET_ITEM to the player script.
 	- Minimum custom window size is reduced to 320*240.
 	- GetShotDataInfoA1 no longer throws an error upon receiving an invalid graphic ID, and will instead return default values.
+	- Fixed a bug where the right source rect set with ObjSprite3D_SetSourceDestRect is 1 greater than expected.
+	- Improved loading of .wav files.
+	- Attempted to fix a bug where multiple sound objects simultaneously playing the same sound file (>1MB .wav, .ogg, or .mp3) would display strange behaviours.
 	- Various optimizations.

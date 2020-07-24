@@ -14,7 +14,7 @@
 			
 - New Features
 	- Constant Variables
-		Variables whose value cannot be changed
+		Variables whose values cannot be changed.
 		Any attempt to do so will throw a compile-time error.
 		
 		Examples:
@@ -109,7 +109,7 @@
 	
 		let variable = expression1 ? expression2 : expression3;
 		
-		**The ternary statement has the lowest operator precedence.
+		**The ternary operator has the lowest operator precedence.
 
 - Optimizations
 	- Loops and blocks without code will now be optimized away during script compiling.
