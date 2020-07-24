@@ -93,6 +93,11 @@ namespace gstd {
 			error_message = message;
 			finished = true;
 		}
+		void raise_error(const std::string& message) {
+			error = true;
+			error_message = StringUtility::ConvertMultiToWide(message);
+			finished = true;
+		}
 		void terminate(const std::wstring& message) {
 			bTerminate = true;
 			raise_error(message);

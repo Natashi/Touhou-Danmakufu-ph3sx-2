@@ -127,7 +127,7 @@ namespace gstd {
 		static inline value CreateIntValue(int64_t r);
 		static inline value CreateBooleanValue(bool b);
 		static inline value CreateStringValue(const std::wstring& s);
-		static value CreateStringValue(const std::string& s);
+		static inline value CreateStringValue(const std::string& s);
 		template<typename T> static inline value CreateRealArrayValue(std::vector<T>& list);
 		template<typename T> static value CreateRealArrayValue(T* ptrList, size_t count);
 		template<typename T> static inline value CreateIntArrayValue(std::vector<T>& list);
@@ -142,8 +142,8 @@ namespace gstd {
 		static bool IsArrayValue(value& v, type_data* element);
 		static bool IsRealArrayValue(value& v);
 
-		static void IsMatrix(script_machine*& machine, value& v);
-		static void IsVector(script_machine*& machine, value& v, size_t count);
+		static void IsMatrix(script_machine*& machine, const value& v);
+		static void IsVector(script_machine*& machine, const value& v, size_t count);
 
 		void CheckRunInMainThread();
 		ScriptCommonDataManager* GetCommonDataManager() { return commonDataManager_.GetPointer(); }

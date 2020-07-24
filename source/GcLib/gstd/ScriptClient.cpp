@@ -899,25 +899,25 @@ bool ScriptClientBase::IsRealArrayValue(value& v) {
 	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_real_array_type();
 }
-void ScriptClientBase::IsMatrix(script_machine*& machine, value& v) {
+void ScriptClientBase::IsMatrix(script_machine*& machine, const value& v) {
 	type_data* typeMatrix = script_type_manager::get_real_array_type();
 	if (v.get_type() != typeMatrix) {
-		std::wstring err = L"Invalid type, only matrices of real numbers may be used.";
+		std::string err = "Invalid type, only matrices of real numbers may be used.";
 		machine->raise_error(err);
 	}
-	if (v.length_as_array() != 16) {
-		std::wstring err = L"This function only supports operations on 4x4 matrices.";
+	if (v.length_as_array() != 16U) {
+		std::string err = "This function only supports operations on 4x4 matrices.";
 		machine->raise_error(err);
 	}
 }
-void ScriptClientBase::IsVector(script_machine*& machine, value& v, size_t count) {
+void ScriptClientBase::IsVector(script_machine*& machine, const value& v, size_t count) {
 	type_data* typeVector = script_type_manager::get_real_array_type();
 	if (v.get_type() != typeVector) {
-		std::wstring err = L"Vector element must be real value.";
+		std::string err = "Vector element must be real value.";
 		machine->raise_error(err);
 	}
 	if (v.length_as_array() != count) {
-		std::wstring err = L"Incorrect vector size. (Expected " + std::to_wstring(count) + L")";
+		std::string err = StringUtility::Format("Incorrect vector size. (Expected %d )", count);
 		machine->raise_error(err);
 	}
 }
@@ -925,7 +925,7 @@ void ScriptClientBase::IsVector(script_machine*& machine, value& v, size_t count
 void ScriptClientBase::CheckRunInMainThread() {
 	if (mainThreadID_ < 0) return;
 	if (mainThreadID_ != GetCurrentThreadId()) {
-		std::wstring error = L"This function can only be called in the main thread.\r\n";
+		std::string error = "This function can only be called in the main thread.\r\n";
 		machine_->raise_error(error);
 	}
 }
@@ -944,7 +944,7 @@ value ScriptClientBase::Func_GetScriptArgument(script_machine* machine, int argc
 	ScriptClientBase* script = (ScriptClientBase*)machine->data;
 	int index = argv[0].as_int();
 	if (index < 0 || index >= script->listValueArg_.size()) {
-		std::wstring error = L"Invalid script argument index.\r\n";
+		std::string error = "Invalid script argument index.\r\n";
 		throw gstd::wexception(error);
 	}
 	return script->listValueArg_[index];

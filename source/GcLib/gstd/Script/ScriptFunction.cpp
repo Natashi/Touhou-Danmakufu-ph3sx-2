@@ -28,6 +28,11 @@ value BaseFunction::F(script_machine* machine, int argc, const value* argv) { \
 	try { \
 		return _script_##F(argc, argv); \
 	} \
+	catch (std::string& err) { \
+		if (machine) machine->raise_error(err); \
+		else throw err; \
+		return value(); \
+	} \
 	catch (std::wstring& err) { \
 		if (machine) machine->raise_error(err); \
 		else throw err; \
@@ -193,7 +198,7 @@ namespace gstd {
 			return value(script_type_manager::get_int_type(), (int64_t)r);
 		}
 		else {
-			throw std::wstring(L"Values of different types are being compared.\r\n");
+			throw std::string("Values of different types are being compared.\r\n");
 		}
 	}
 	SCRIPT_DECLARE_OP(compare);
@@ -236,7 +241,7 @@ namespace gstd {
 		}
 		default:
 		{
-			std::wstring error = L"This value type does not support the predecessor operation.\r\n";
+			std::string error = "This value type does not support the predecessor operation.\r\n";
 			machine->raise_error(error);
 			return value();
 		}
@@ -269,7 +274,7 @@ namespace gstd {
 		}
 		default:
 		{
-			std::wstring error = L"This value type does not support the successor operation.\r\n";
+			std::string error = "This value type does not support the successor operation.\r\n";
 			machine->raise_error(error);
 			return value();
 		}
@@ -283,12 +288,12 @@ namespace gstd {
 
 	bool BaseFunction::_index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, double index) {
 		if (arg0_type->get_kind() != type_data::type_kind::tk_array) {
-			std::wstring error = L"This value type does not support the array index operation.\r\n";
+			std::string error = "This value type does not support the array index operation.\r\n";
 			machine->raise_error(error);
 			return false;
 		}
 		if (index < 0 || index >= arg0_size) {
-			std::wstring error = L"Array index out of bounds.\r\n";
+			std::string error = "Array index out of bounds.\r\n";
 			machine->raise_error(error);
 			return false;
 		}
@@ -308,7 +313,7 @@ namespace gstd {
 		assert(argc == 3);
 
 		if (argv->get_type()->get_kind() != type_data::type_kind::tk_array) {
-			std::wstring error = L"This value type does not support the array slice operation.\r\n";
+			std::string error = "This value type does not support the array slice operation.\r\n";
 			machine->raise_error(error);
 			return value();
 		}
@@ -318,7 +323,7 @@ namespace gstd {
 
 		if ((index_2 > index_1 && (index_1 < 0 || index_2 > argv->length_as_array()))
 			|| (index_2 < index_1 && (index_2 < 0 || index_1 > argv->length_as_array()))) {
-			std::wstring error = L"Array index out of bounds.\r\n";
+			std::string error = "Array index out of bounds.\r\n";
 			machine->raise_error(error);
 			return value();
 		}
@@ -344,7 +349,7 @@ namespace gstd {
 		assert(argc == 2);
 
 		if (argv->get_type()->get_kind() != type_data::type_kind::tk_array) {
-			std::wstring error = L"This value type does not support the array erase operation.\r\n";
+			std::string error = "This value type does not support the array erase operation.\r\n";
 			machine->raise_error(error);
 			return value();
 		}
@@ -353,7 +358,7 @@ namespace gstd {
 		size_t length = argv->length_as_array();
 
 		if (index_1 >= length) {
-			std::wstring error = L"Array index out of bounds.\r\n";
+			std::string error = "Array index out of bounds.\r\n";
 			machine->raise_error(error);
 			return value();
 		}
@@ -376,11 +381,11 @@ namespace gstd {
 
 	bool BaseFunction::_append_check(script_machine* machine, size_t arg0_size, type_data* arg0_type, type_data* arg1_type) {
 		if (arg0_type->get_kind() != type_data::type_kind::tk_array) {
-			machine->raise_error(L"This value type does not support the array append operation.\r\n");
+			machine->raise_error("This value type does not support the array append operation.\r\n");
 			return false;
 		}
 		if (arg0_size > 0U && arg0_type->get_element() != arg1_type) {
-			machine->raise_error(L"Variable type mismatch.\r\n");
+			machine->raise_error("Variable type mismatch.\r\n");
 			return false;
 		}
 		return true;
@@ -399,13 +404,13 @@ namespace gstd {
 
 		if (argv[0].get_type()->get_kind() != type_data::type_kind::tk_array
 			|| argv[1].get_type()->get_kind() != type_data::type_kind::tk_array) {
-			std::wstring error = L"This value type does not support the array concatenate operation.\r\n";
+			std::string error = "This value type does not support the array concatenate operation.\r\n";
 			machine->raise_error(error);
 			return value();
 		}
 
 		if (argv[0].length_as_array() > 0 && argv[1].length_as_array() > 0 && argv[0].get_type() != argv[1].get_type()) {
-			std::wstring error = L"Variable type mismatch.\r\n";
+			std::string error = "Variable type mismatch.\r\n";
 			machine->raise_error(error);
 			return value();
 		}
@@ -436,10 +441,8 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(absolute);
 
 	value BaseFunction::assert_(script_machine* machine, int argc, const value* argv) {
-		assert(argc == 2);
-		if (!argv[0].as_boolean()) {
+		if (!argv[0].as_boolean())
 			machine->raise_error(argv[1].as_string());
-		}
 		return value();
 	}
 
