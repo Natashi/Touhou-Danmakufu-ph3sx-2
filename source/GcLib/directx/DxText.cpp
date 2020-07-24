@@ -1043,7 +1043,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					while (true) {
 						tok = scan.Next();
 						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END) break;
-						//else if (tok.GetType() == DxTextToken::Type::TK_COMMA) break;
+						//else if (tok.GetType() == DxTextToken::Type::TK_COMMA) continue;
 						std::wstring command = tok.GetElement();
 						if (command == L"reset") {
 							bClear = true;

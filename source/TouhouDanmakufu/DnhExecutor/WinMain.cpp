@@ -6,8 +6,6 @@
 WinMain
 **********************************************************/
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow) {
-	gstd::DebugUtility::DumpMemoryLeaksOnExit();
-
 	HWND handleWindow = nullptr;
 
 	try {
@@ -50,6 +48,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	EPathProperty::DeleteInstance();
 	ELogger::DeleteInstance();
 	DnhConfiguration::DeleteInstance();
+
+	gstd::DebugUtility::DumpMemoryLeaksOnExit();
 
 	return 0;
 }
