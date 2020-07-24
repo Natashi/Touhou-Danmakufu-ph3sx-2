@@ -55,7 +55,7 @@ namespace gstd {
 		if (exists) {
 			symbol* sPrev = &(itr.first->second);
 
-			if (!sPrev->can_overload) {
+			if (!sPrev->can_overload && sPrev->level > 0) {
 				std::string error = StringUtility::Format("Default functions cannot be overloaded. (%s)",
 					sPrev->sub->name.c_str());
 				parser_assert(false, error);
