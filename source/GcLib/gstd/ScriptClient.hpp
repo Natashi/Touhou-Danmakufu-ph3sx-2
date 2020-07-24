@@ -123,26 +123,14 @@ namespace gstd {
 		void SetArgumentValue(value v, int index = 0);
 		value GetResultValue() { return valueRes_; }
 
-		static inline value CreateRealValue(double r) {
-			return value(script_type_manager::get_real_type(), r);
-		}
-		static inline value CreateIntValue(int64_t r) {
-			return value(script_type_manager::get_int_type(), r);
-		}
-		static inline value CreateBooleanValue(bool b) {
-			return value(script_type_manager::get_boolean_type(), b);
-		}
-		static inline value CreateStringValue(const std::wstring& s) {
-			return value(script_type_manager::get_string_type(), s);
-		}
+		static inline value CreateRealValue(double r);
+		static inline value CreateIntValue(int64_t r);
+		static inline value CreateBooleanValue(bool b);
+		static inline value CreateStringValue(const std::wstring& s);
 		static value CreateStringValue(const std::string& s);
-		template<typename T> static inline value CreateRealArrayValue(std::vector<T>& list) {
-			return CreateRealArrayValue(list.data(), list.size());
-		}
+		template<typename T> static inline value CreateRealArrayValue(std::vector<T>& list);
 		template<typename T> static value CreateRealArrayValue(T* ptrList, size_t count);
-		template<typename T> static inline value CreateIntArrayValue(std::vector<T>& list) {
-			return CreateRealArrayValue(list.data(), list.size());
-		}
+		template<typename T> static inline value CreateIntArrayValue(std::vector<T>& list);
 		template<typename T> static value CreateIntArrayValue(T* ptrList, size_t count);
 		static value CreateStringArrayValue(std::vector<std::string>& list);
 		static value CreateStringArrayValue(std::vector<std::wstring>& list);
@@ -154,8 +142,8 @@ namespace gstd {
 		static bool IsArrayValue(value& v, type_data* element);
 		static bool IsRealArrayValue(value& v);
 
-		static void IsMatrix(script_machine*& machine, const value& v);
-		static void IsVector(script_machine*& machine, const value& v, size_t count);
+		static void IsMatrix(script_machine*& machine, value& v);
+		static void IsVector(script_machine*& machine, value& v, size_t count);
 
 		void CheckRunInMainThread();
 		ScriptCommonDataManager* GetCommonDataManager() { return commonDataManager_.GetPointer(); }
@@ -273,6 +261,27 @@ namespace gstd {
 		static value Func_GetCommonDataValueKeyList(script_machine* machine, int argc, const value* argv);
 	};
 #pragma region ScriptClientBase_impl
+	value ScriptClientBase::CreateRealValue(double r) {
+		return value(script_type_manager::get_real_type(), r);
+	}
+	value ScriptClientBase::CreateIntValue(int64_t r) {
+		return value(script_type_manager::get_int_type(), r);
+	}
+	value ScriptClientBase::CreateBooleanValue(bool b) {
+		return value(script_type_manager::get_boolean_type(), b);
+	}
+	value ScriptClientBase::CreateStringValue(const std::wstring& s) {
+		return value(script_type_manager::get_string_type(), s);
+	}
+	value ScriptClientBase::CreateStringValue(const std::string& s) {
+		return CreateStringValue(StringUtility::ConvertMultiToWide(s));
+	}
+	template<typename T> value ScriptClientBase::CreateRealArrayValue(std::vector<T>& list) {
+		return CreateRealArrayValue(list.data(), list.size());
+	}
+	template<typename T> value ScriptClientBase::CreateIntArrayValue(std::vector<T>& list) {
+		return CreateIntArrayValue(list.data(), list.size());
+	}
 	template<typename T>
 	value ScriptClientBase::CreateRealArrayValue(T* ptrList, size_t count) {
 		if (ptrList && count > 0) {
@@ -300,7 +309,7 @@ namespace gstd {
 			std::vector<value> res_arr;
 			res_arr.resize(count);
 			for (size_t iVal = 0U; iVal < count; ++iVal) {
-				res_arr[iVal] = value(type_real, (int64_t)(ptrList[iVal]));
+				res_arr[iVal] = value(type_int, (int64_t)(ptrList[iVal]));
 			}
 
 			value res;

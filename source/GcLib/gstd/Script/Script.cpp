@@ -19,8 +19,8 @@ script_type_manager::script_type_manager() {
 	boolean_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_boolean)).first);
 	string_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_array,
 		char_type)).first);		//Char array (string)
-	//int_array_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_array,
-	//	int_type)).first);		//Int array
+	int_array_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_array,
+		int_type)).first);		//Int array
 	real_array_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_array,
 		real_type)).first);		//Real array
 
