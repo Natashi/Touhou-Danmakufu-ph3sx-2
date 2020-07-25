@@ -680,10 +680,10 @@ namespace directx {
 		void DeleteObjectByScriptID(int64_t idScript);
 		void AddRenderObject(shared_ptr<DxScriptObjectBase> obj);//óvÉtÉåÅ[ÉÄÇ≤Ç∆Ç…ìoò^
 		void WorkObject();
-		void RenderObject();
+		virtual void RenderObject();
 		void CleanupObject();
 
-		void PrepareRenderObject();
+		virtual void PrepareRenderObject();
 		void ClearRenderObject();
 		std::vector<DxScriptObjectManager::RenderList>* GetRenderObjectListPointer() { return &listObjRender_; }
 

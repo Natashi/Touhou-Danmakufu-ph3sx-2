@@ -1322,7 +1322,7 @@ void DxScriptObjectManager::DeleteObjectByScriptID(int64_t idScript) {
 }
 void DxScriptObjectManager::WorkObject() {
 	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end();) {
-		shared_ptr<DxScriptObjectBase> obj = *itr;
+		DxScriptObjectBase* obj = itr->get();
 		if (obj == nullptr || obj->IsDeleted()) {
 			itr = listActiveObject_.erase(itr);
 			continue;
@@ -1373,7 +1373,7 @@ void DxScriptObjectManager::RenderObject() {
 void DxScriptObjectManager::CleanupObject() {
 	//No need to check for object validity here, only nullptr check is enough
 	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
-		if (shared_ptr<DxScriptObjectBase> obj = *itr)
+		if (DxScriptObjectBase* obj = itr->get())
 			obj->CleanUp();
 	}
 }
@@ -1388,10 +1388,10 @@ void DxScriptObjectManager::RenderList::Clear() {
 }
 void DxScriptObjectManager::PrepareRenderObject() {
 	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
-		shared_ptr<DxScriptObjectBase> obj = (*itr);
+		DxScriptObjectBase* obj = itr->get();
 		if (obj == nullptr || obj->IsDeleted()) continue;
 		if (!obj->IsVisible()) continue;
-		AddRenderObject(obj);
+		AddRenderObject(*itr);
 	}
 }
 void DxScriptObjectManager::AddRenderObject(shared_ptr<DxScriptObjectBase> obj) {

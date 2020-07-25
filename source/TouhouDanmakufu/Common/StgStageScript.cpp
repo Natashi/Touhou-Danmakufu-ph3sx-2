@@ -91,6 +91,16 @@ StgStageScriptObjectManager::~StgStageScriptObjectManager() {
 	*/
 	if (ptrObjPlayer_) ptrObjPlayer_->Clear();
 }
+void StgStageScriptObjectManager::PrepareRenderObject() {
+	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
+		DxScriptObjectBase* obj = itr->get();
+		if (obj == nullptr || obj->IsDeleted()) continue;
+		//Shots and items are already sorted in StgShotManager and StgItemManager
+		if (dynamic_cast<StgShotObject*>(obj) != nullptr || dynamic_cast<StgItemObject*>(obj) != nullptr) continue;
+		if (!obj->IsVisible()) continue;
+		AddRenderObject(*itr);
+	}
+}
 void StgStageScriptObjectManager::RenderObject() {
 	/*
 		if(invalidPriMin_ < 0 && invalidPriMax_ < 0)
@@ -3910,8 +3920,9 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodePointer(gstd::script_machine*
 	if (obj) {
 		int index = argv[1].as_int();
 		if (index >= 0) {
-			auto itr = obj->GetNode(index);
-			res = &*itr;
+			std::list<StgCurveLaserObject::LaserNode>::iterator itr;
+			bool bValidIndex = obj->GetNode(index, itr);
+			res = bValidIndex ? &*itr : nullptr;
 		}
 	}
 
