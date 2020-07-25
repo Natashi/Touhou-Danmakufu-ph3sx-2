@@ -146,6 +146,7 @@ function const dxFunction[] =
 	{ "ColorHexToARGB", DxScript::Func_ColorHexToARGB, 1 },
 	{ "ColorRGBtoHSV", DxScript::Func_ColorRGBtoHSV, 3 },
 	{ "ColorHSVtoRGB", DxScript::Func_ColorHSVtoRGB, 3 },
+	{ "ColorHSVtoHexRGB", DxScript::Func_ColorHSVtoHexRGB, 3 },
 
 	//Dx関数：オブジェクト操作(共通)
 	{ "Obj_Delete", DxScript::Func_Obj_Delete, 1 },
@@ -1854,6 +1855,16 @@ gstd::value DxScript::Func_ColorHSVtoRGB(gstd::script_machine* machine, int argc
 
 	D3DXVECTOR4 rgbVec = ColorAccess::ToVec4(rgb);
 	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&rgbVec.y), 3U);
+}
+gstd::value DxScript::Func_ColorHSVtoHexRGB(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	int ch = argv[0].as_int();
+	byte cs = argv[1].as_int();
+	byte cv = argv[2].as_int();
+
+	D3DCOLOR rgb = 0xffffffff;
+	ColorAccess::HSVtoRGB(rgb, ch, cs, cv);
+
+	return DxScript::CreateRealValue(rgb);
 }
 
 //Dx関数：オブジェクト操作(共通)

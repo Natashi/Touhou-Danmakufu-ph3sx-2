@@ -876,6 +876,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ColorHexToARGB);
 		DNH_FUNCAPI_DECL_(Func_ColorRGBtoHSV);
 		DNH_FUNCAPI_DECL_(Func_ColorHSVtoRGB);
+		DNH_FUNCAPI_DECL_(Func_ColorHSVtoHexRGB);
 
 		//Dx関数：オブジェクト操作(共通)
 		static gstd::value Func_Obj_Delete(gstd::script_machine* machine, int argc, const gstd::value* argv);
