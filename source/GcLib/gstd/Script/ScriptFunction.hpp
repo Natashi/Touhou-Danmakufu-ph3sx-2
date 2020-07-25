@@ -71,7 +71,6 @@ namespace gstd {
 		static value _script_absolute(int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(absolute);
 
-		static int64_t bitDoubleToInt(double val);
 		DNH_FUNCAPI_DECL_(bitwiseNot);
 		DNH_FUNCAPI_DECL_(bitwiseAnd);
 		DNH_FUNCAPI_DECL_(bitwiseOr);

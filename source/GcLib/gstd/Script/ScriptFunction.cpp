@@ -446,40 +446,33 @@ namespace gstd {
 		return value();
 	}
 
-	int64_t BaseFunction::bitDoubleToInt(double val) {
-		if (val > INT64_MAX)
-			return INT64_MAX;
-		if (val < INT64_MIN)
-			return INT64_MIN;
-		return static_cast<int64_t>(val);
-	}
 	value BaseFunction::bitwiseNot(script_machine* machine, int argc, const value* argv) {
-		int64_t val = bitDoubleToInt(argv[0].as_real());
+		int64_t val = argv[0].as_int();
 		return value(script_type_manager::get_real_type(), (double)(~val));
 	}
 	value BaseFunction::bitwiseAnd(script_machine* machine, int argc, const value* argv) {
-		int64_t val1 = bitDoubleToInt(argv[0].as_real());
-		int64_t val2 = bitDoubleToInt(argv[1].as_real());
+		int64_t val1 = argv[0].as_int();
+		int64_t val2 = argv[1].as_int();
 		return value(script_type_manager::get_real_type(), (double)(val1 & val2));
 	}
 	value BaseFunction::bitwiseOr(script_machine* machine, int argc, const value* argv) {
-		int64_t val1 = bitDoubleToInt(argv[0].as_real());
-		int64_t val2 = bitDoubleToInt(argv[1].as_real());
+		int64_t val1 = argv[0].as_int();
+		int64_t val2 = argv[1].as_int();
 		return value(script_type_manager::get_real_type(), (double)(val1 | val2));
 	}
 	value BaseFunction::bitwiseXor(script_machine* machine, int argc, const value* argv) {
-		int64_t val1 = bitDoubleToInt(argv[0].as_real());
-		int64_t val2 = bitDoubleToInt(argv[1].as_real());
+		int64_t val1 = argv[0].as_int();
+		int64_t val2 = argv[1].as_int();
 		return value(script_type_manager::get_real_type(), (double)(val1 ^ val2));
 	}
 	value BaseFunction::bitwiseLeft(script_machine* machine, int argc, const value* argv) {
-		int64_t val1 = bitDoubleToInt(argv[0].as_real());
-		size_t val2 = argv[1].as_real();
+		int64_t val1 = argv[0].as_int();
+		int64_t val2 = argv[1].as_int();
 		return value(script_type_manager::get_real_type(), (double)(val1 << val2));
 	}
 	value BaseFunction::bitwiseRight(script_machine* machine, int argc, const value* argv) {
-		int64_t val1 = bitDoubleToInt(argv[0].as_real());
-		size_t val2 = argv[1].as_real();
+		int64_t val1 = argv[0].as_int();
+		int64_t val2 = argv[1].as_int();
 		return value(script_type_manager::get_real_type(), (double)(val1 >> val2));
 	}
 

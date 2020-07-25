@@ -215,7 +215,9 @@ namespace gstd {
 		void parse_suffix(script_block* block, parser_state_t* state);
 		void parse_product(script_block* block, parser_state_t* state);
 		void parse_sum(script_block* block, parser_state_t* state);
+		void parse_bitwise_shift(script_block* block, parser_state_t* state);
 		void parse_comparison(script_block* block, parser_state_t* state);
+		void parse_bitwise(script_block* block, parser_state_t* state);
 		void parse_logic(script_block* block, parser_state_t* state);
 		void parse_ternary(script_block* block, parser_state_t* state);
 		void parse_expression(script_block* block, parser_state_t* state);

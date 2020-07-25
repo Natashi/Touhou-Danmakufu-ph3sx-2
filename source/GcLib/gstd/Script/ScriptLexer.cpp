@@ -2,26 +2,6 @@
 
 #include "ScriptLexer.hpp"
 
-#ifdef _MSC_VER
-namespace std {
-	using::wcstombs;
-	using::mbstowcs;
-	using::isalpha;
-	using::fmodl;
-	using::powl;
-	using::swprintf;
-	using::atof;
-	using::isdigit;
-	using::isxdigit;
-	using::floorl;
-	using::ceill;
-	using::fabsl;
-	using::iswdigit;
-	using::iswalpha;
-}
-
-#endif
-
 using namespace gstd;
 
 wchar_t script_scanner::current_char() {
@@ -250,6 +230,10 @@ void script_scanner::advance() {
 			next = token_kind::tk_power_assign;
 			ch = next_char();
 		}
+		else if (ch == L'^') {
+			next = token_kind::tk_bit_xor;
+			ch = next_char();
+		}
 		break;
 	case L'=':
 		next = token_kind::tk_assign;
@@ -266,12 +250,20 @@ void script_scanner::advance() {
 			next = token_kind::tk_ge;
 			ch = next_char();
 		}
+		else if (ch == L'>') {
+			next = token_kind::tk_bit_shf_right;
+			ch = next_char();
+		}
 		break;
 	case L'<':
 		next = token_kind::tk_l;
 		ch = next_char();
 		if (ch == L'=') {
 			next = token_kind::tk_le;
+			ch = next_char();
+		}
+		else if (ch == L'<') {
+			next = token_kind::tk_bit_shf_left;
 			ch = next_char();
 		}
 		break;
@@ -308,7 +300,7 @@ void script_scanner::advance() {
 		}
 		break;
 	case L'&':
-		next = token_kind::tk_ampersand;
+		next = token_kind::tk_bit_and;
 		ch = next_char();
 		if (ch == L'&') {
 			next = token_kind::tk_logic_and;
@@ -316,7 +308,7 @@ void script_scanner::advance() {
 		}
 		break;
 	case L'|':
-		next = token_kind::tk_vertical;
+		next = token_kind::tk_bit_or;
 		ch = next_char();
 		if (ch == L'|') {
 			next = token_kind::tk_logic_or;

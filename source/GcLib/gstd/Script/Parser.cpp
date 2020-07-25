@@ -587,17 +587,22 @@ continue_as_variadic:
 		switch (state->next()) {
 		case token_kind::tk_plus:
 			state->advance();
-			parse_prefix(block, state);	//Ä‹A
+			parse_prefix(block, state);
 			return;
 		case token_kind::tk_minus:
 			state->advance();
-			parse_prefix(block, state);	//Ä‹A
+			parse_prefix(block, state);
 			state->AddCode(block, code(command_kind::pc_inline_neg));
 			return;
-		case token_kind::tk_exclamation:
+		case token_kind::tk_exclamation:	//Logical NOT
 			state->advance();
-			parse_prefix(block, state);	//Ä‹A
+			parse_prefix(block, state);
 			state->AddCode(block, code(command_kind::pc_inline_not));
+			return;
+		case token_kind::tk_tilde:			//Bitwise NOT
+			state->advance();
+			parse_prefix(block, state);
+			write_operation(block, state, "bit_not", 1);
 			return;
 		default:
 			parse_suffix(block, state);
@@ -628,8 +633,18 @@ continue_as_variadic:
 		}
 	}
 
-	void parser::parse_comparison(script_block* block, parser_state_t* state) {
+	void parser::parse_bitwise_shift(script_block* block, parser_state_t* state) {
 		parse_sum(block, state);
+		while (state->next() == token_kind::tk_bit_shf_left || state->next() == token_kind::tk_bit_shf_right) {
+			const char* f = state->next() == token_kind::tk_bit_shf_left ? "bit_left" : "bit_right";
+			state->advance();
+			parse_sum(block, state);
+			write_operation(block, state, f, 2);
+		}
+	}
+
+	void parser::parse_comparison(script_block* block, parser_state_t* state) {
+		parse_bitwise_shift(block, state);
 		switch (state->next()) {
 		case token_kind::tk_assign:
 			parser_assert(state, false, "Did you intend to write \"==\"?\r\n");
@@ -642,7 +657,7 @@ continue_as_variadic:
 		case token_kind::tk_ne:
 			token_kind op = state->next();
 			state->advance();
-			parse_sum(block, state);
+			parse_bitwise_shift(block, state);
 
 			switch (op) {
 			case token_kind::tk_e:
@@ -669,9 +684,35 @@ continue_as_variadic:
 		}
 	}
 
+	void parser::parse_bitwise(script_block* block, parser_state_t* state) {
+		auto ParseAND = [&]() {
+			parse_comparison(block, state);
+			while (state->next() == token_kind::tk_bit_and) {
+				state->advance();
+				parse_comparison(block, state);
+				write_operation(block, state, "bit_and", 2);
+			}
+		};
+		auto ParseOR = [&]() {
+			ParseAND();
+			while (state->next() == token_kind::tk_bit_or) {
+				state->advance();
+				ParseAND();
+				write_operation(block, state, "bit_or", 2);
+			}
+		};
+
+		ParseOR();
+		while (state->next() == token_kind::tk_bit_xor) {
+			state->advance();
+			ParseOR();
+			write_operation(block, state, "bit_xor", 2);
+		}
+	}
+
 	//TODO: Change logic operator precedence to match C's
 	void parser::parse_logic(script_block* block, parser_state_t* state) {
-		parse_comparison(block, state);
+		parse_bitwise(block, state);
 
 		size_t iter = 0x80000000;
 		while (state->next() == token_kind::tk_logic_and || state->next() == token_kind::tk_logic_or) {
@@ -684,7 +725,7 @@ continue_as_variadic:
 			state->AddCode(block, code(command_kind::pc_dup_n, 1));
 			state->AddCode(block, code(cmdJump, iter));
 
-			parse_comparison(block, state);
+			parse_bitwise(block, state);
 
 			//state->AddCode(block, code(cmdLogic));
 			state->AddCode(block, code(command_kind::pc_jump_target, iter));
