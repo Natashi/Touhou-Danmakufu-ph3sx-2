@@ -775,6 +775,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 					- The new 3D camera mode for maths enthusiasts, with the ability to directly specify camera position and view target position.
 						Configured with SetCameraFocusX/Y/Z and SetCameraPosLookAt.
 
+	SetCameraPosEye
+		Arguments:
+			1) x
+			2) y
+			3) z
+		Description:
+			Literally just SetCameraFocusXYZ with a different name.
+
 	SetCameraPosLookAt
 		Arguments:
 			1) x
@@ -812,6 +820,55 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			10) line 2 - width
 		Description:
 			Returns true if the given line segments intersect.
+			
+	--------------------------------> Color Utility <--------------------------------
+	
+	ColorARGBToHex
+		Arguments:
+			1) alpha
+			2) red
+			3) green
+			4) blue
+		Description:
+			Returns an ARGB hexadecimal color value of the given colors.
+			
+			Examples:
+				ColorARGBtoHex(255, 255, 255, 255)	-> 0xFFFFFFFF
+				ColorARGBtoHex(67, 255, 0, 125)		-> 0x43FF007D
+				
+	ColorHexToARGB
+		Arguments:
+			1) hex color
+		Description:
+			Returns an ARGB color array of the given hexadecimal color (D3DCOLOR).
+			
+			Examples:
+				ColorHextoARGB(0xFFFFFFFF)	-> [255, 255, 255, 255]
+				ColorARGBtoHex(0x43FF007D)	-> [67, 255, 0, 125]
+	
+	ColorRGBtoHSV
+		Arguments:
+			1) red
+			2) green
+			3) blue
+		Description:
+			Returns the given RGB color as a HSV color array.
+			
+	ColorHSVtoRGB
+		Arguments:
+			1) hue
+			2) saturation
+			3) value
+		Description:
+			Returns the given HSV color as an RGB color array.
+			
+	ColorHSVtoHexRGB
+		Arguments:
+			1) hue
+			2) saturation
+			3) value
+		Description:
+			Returns the given HSV color as an XRGB hexadecimal color.
 	
 	--------------------------------> Base Object Functions <--------------------------------
 	
@@ -877,12 +934,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 		[---------------------------> Color & Alpha <---------------------------]
 	
-		ObjRender_SetColorHex
+		ObjRender_SetColor (Overload)
 			Arguments:
 				1) object ID
 				2) color
 			Description:
-				Sets the object's RGB color as hex value.
+				Overloaded with 2 arguments.
+				
+				Sets the object's RGB color as an XRGB hexadecimal color value.
+				
 				Example:
 					ObjRender_SetColorHex(obj, 0xFF7B32) -> ObjRender_SetColor(obj, 255, 123, 50)
 		
@@ -1000,6 +1060,16 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	--------------------------------> Primitive Object Functions <--------------------------------
 	
+	ObjPrim_SetVertexColor (Overload)
+		Arguments:
+			1) object ID
+			2) vertex index
+			3) color
+		Description:
+			Overloaded with 3 arguments.
+		
+			Sets the vertex color as an XRGB hexadecimal color value.
+	
 	ObjPrim_SetVertexColorHSV
 		Arguments:
 			1) object ID
@@ -1008,28 +1078,28 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			4) color saturation
 			5) color value
 		Description:
-			Sets the HSV color to the specified vertex index of the primitive object.
+			Sets the vertex color of the primitive object as a HSV color .
 			
 	ObjPrim_GetVertexColor
 		Arguments:
 			1) object ID
 			2) vertex index
 		Description:
-			Returns the color of the specified vertex index as an [r, g, b] array.
+			Returns the vertex color as an [r, g, b] array.
 			
 	ObjPrim_GetVertexAlpha
 		Arguments:
 			1) object ID
 			2) vertex index
 		Description:
-			Returns the alpha value of the specified vertex index.
+			Returns the vertex alpha value.
 			
 	ObjPrim_SetVertexIndex
 		Arguments:
 			1) object ID
 			2) (real array) indices
 		Description:
-			Sets the vertex indices to the primitive object. 
+			Sets vertex indices to the primitive object. 
 			Required for particle list objects.
 				Example:
 					ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
@@ -1630,7 +1700,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns whether the shot object is currently able to be grazed.
 	
-	--------------------------------> Laser Object Functions <--------------------------------
+	--------------------------------> Straight Laser Object Functions <--------------------------------
 	
 	ObjLaser_SetInvalidLength
 		Description:
@@ -1677,17 +1747,102 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns whether the straight laser is permitted to expand after the delay period.
 			
-	ObjCrLaser_SetNode
+	--------------------------------> Curvy Laser Object Functions <--------------------------------
+			
+	ObjCrLaser_GetNodePointer
 		Arguments:
 			1) object ID
 			2) node index
+		Description:
+			Returns the pointer value of the specified node index.
+			The pointer is used in other node-related functions.
+
+			As node traversal is relatively expensive, it is not recommended to repeatedly use this function.
+			
+			At each frame, the node at the laser's end is invalidated if the laser is able to move.
+			Using an invalid pointer may cause a memory corruption.
+			
+	ObjCrLaser_GetNodePointerList
+		Arguments:
+			1) object ID
+		Description:
+			Returns a list of node pointers of the curvy laser object.
+			The pointers are used in other node-related functions.
+
+			At each frame, the node at the laser's end is invalidated if the laser is able to move.
+			Using an invalid pointer may cause a memory corruption.
+			
+	ObjCrLaser_GetNodePosition
+		Arguments:
+			1) object ID
+			2) node pointer
+		Description:
+			Returns the [x, y] position array of the specified node.
+			
+			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			
+	ObjCrLaser_GetNodeAngle
+		Arguments:
+			1) object ID
+			2) node pointer
+		Description:
+			Returns the facing angle of the specified node.
+			
+			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			
+	ObjCrLaser_GetNodeColor
+		Arguments:
+			1) object ID
+			2) node pointer
+		Description:
+			Returns the [a, r, g, b] color array of the specified node.
+			
+			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			
+	ObjCrLaser_SetNode
+		Arguments:
+			1) object ID
+			2) node pointer
 			3) node X
 			4) node Y
 			5) node angle
+			6) node color
 		Description:
-			Sets the node position and angle of the specified node index.
+			Sets the position, angle, and color of the specified node.
 			
-			As node traversal is relatively expensive, it is not recommended to repeatedly use this function.
+			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			
+	ObjCrLaser_SetNodePosition
+		Arguments:
+			1) object ID
+			2) node pointer
+			3) node X
+			4) node Y
+		Description:
+			Sets the position of the specified node.
+			
+			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			
+	ObjCrLaser_SetNodeAngle
+		Arguments:
+			1) object ID
+			2) node pointer
+			3) node angle
+		Description:
+			Sets the angle of the specified node.
+			
+			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			
+	ObjCrLaser_SetNodeColor
+		Arguments:
+			1) object ID
+			2) node pointer
+			3) node color
+		Description:
+			Sets the color of the specified node.
+			The color may be constructed with ColorARGBtoHex.
+			
+			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
 			
 	ObjCrLaser_AddNode
 		Arguments:
@@ -1695,8 +1850,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) node X
 			3) node Y
 			4) node angle
+			5) color
 		Description:
-			Adds a laser node at the end of the curvy laser at the specified position and angle.
+			Adds a laser node at the end of the curvy laser with the specified position, angle, and color.
 	
 	--------------------------------> Shot Pattern Object Functions <--------------------------------
 	

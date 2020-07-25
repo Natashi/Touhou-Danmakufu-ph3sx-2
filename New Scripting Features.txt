@@ -110,6 +110,17 @@
 		let variable = expression1 ? expression2 : expression3;
 		
 		**The ternary operator has the lowest operator precedence.
+		
+	- Bitwise Operators
+		Operators are usable in addition to functions.
+	
+		-> Higher operator precedence
+			NOT	(~)
+			AND	(&)
+			OR	(|)
+			XOR	(^^)
+			Left Shift (<<), Right Shift (>>)
+		-> Lower operator precedence
 
 - Optimizations
 	- The engine will now try to perform basic optimizations on maths expressions.

@@ -97,4 +97,5 @@
 	- Fixed a bug where the right source rect set with ObjSprite3D_SetSourceDestRect is 1 greater than expected.
 	- Improved loading of .wav files.
 	- Attempted to fix a bug where multiple sound objects simultaneously playing the same sound file (>1MB .wav, .ogg, or .mp3) would display strange behaviours.
+	- Added bitwise operators.
 	- Various optimizations.
