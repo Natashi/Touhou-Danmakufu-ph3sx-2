@@ -2284,18 +2284,15 @@ StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2
 	node.color = col;
 	return node;
 }
-std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::GetNode(size_t indexNode) {
+bool StgCurveLaserObject::GetNode(size_t indexNode, std::list<LaserNode>::iterator& res) {
 	//I wish there was a better way to do this.
 	size_t listSizeMax = listPosition_.size();
-	if (indexNode >= listSizeMax) return listPosition_.end();
-	if (indexNode < listSizeMax / 2U) {
-		auto itr = std::next(listPosition_.begin(), indexNode);
-		return itr;
-	}
-	else {
-		auto itr = std::next(listPosition_.rbegin(), listSizeMax - indexNode);
-		return itr.base();
-	}
+	if (indexNode >= listSizeMax) res = listPosition_.end();
+	if (indexNode < listSizeMax / 2U)
+		res = std::next(listPosition_.begin(), indexNode);
+	else
+		res = std::next(listPosition_.rbegin(), listSizeMax - indexNode).base();
+	return res != listPosition_.end();
 }
 void StgCurveLaserObject::GetNodePointerList(std::vector<LaserNode*>* listRes) {
 	listRes->resize(listPosition_.size(), nullptr);

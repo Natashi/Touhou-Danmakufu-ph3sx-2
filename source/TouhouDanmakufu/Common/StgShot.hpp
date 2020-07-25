@@ -594,7 +594,7 @@ public:
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
 
 	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, D3DCOLOR col = 0xffffffff);
-	std::list<LaserNode>::iterator GetNode(size_t indexNode);
+	bool GetNode(size_t indexNode, std::list<LaserNode>::iterator& res);
 	void GetNodePointerList(std::vector<LaserNode*>* listRes);
 	std::list<LaserNode>::iterator PushNode(const LaserNode& node);
 };
