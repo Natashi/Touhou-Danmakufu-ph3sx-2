@@ -574,6 +574,7 @@ public:
 	struct LaserNode {
 		D3DXVECTOR2 pos;
 		D3DXVECTOR2 vertOff[2];
+		D3DCOLOR color;
 	};
 protected:
 	std::list<LaserNode> listPosition_;
@@ -592,14 +593,15 @@ public:
 	virtual std::vector<StgIntersectionTarget::ptr> GetIntersectionTargetList();
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
 
-	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac);
-	std::list<LaserNode>::iterator SetNode(size_t indexNode, LaserNode& node);
-	std::list<LaserNode>::iterator PushNode(LaserNode& node);
+	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, D3DCOLOR col = 0xffffffff);
+	std::list<LaserNode>::iterator GetNode(size_t indexNode);
+	void GetNodePointerList(std::vector<LaserNode*>* listRes);
+	std::list<LaserNode>::iterator PushNode(const LaserNode& node);
 };
 
 
 /**********************************************************
-//StgPatternShotObjectGenerator (ECL-style bullets firing) [Under construction]
+//StgPatternShotObjectGenerator (ECL-style bullets firing)
 **********************************************************/
 class StgPatternShotObjectGenerator : public DxScriptObjectBase {
 public:

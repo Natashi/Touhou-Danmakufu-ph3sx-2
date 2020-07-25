@@ -461,8 +461,16 @@ function const stgFunction[] =
 	{ "ObjStLaser_SetPermitExpand", StgStageScript::Func_ObjStLaser_SetPermitExpand, 2 },
 	{ "ObjStLaser_GetPermitExpand", StgStageScript::Func_ObjStLaser_GetPermitExpand, 1 },
 	{ "ObjCrLaser_SetTipDecrement", StgStageScript::Func_ObjCrLaser_SetTipDecrement, 2 },
-	{ "ObjCrLaser_SetNode", StgStageScript::Func_ObjCrLaser_SetNode, 5 },
-	{ "ObjCrLaser_AddNode", StgStageScript::Func_ObjCrLaser_AddNode, 4 },
+	{ "ObjCrLaser_GetNodePointer", StgStageScript::Func_ObjCrLaser_GetNodePointer, 2 },
+	{ "ObjCrLaser_GetNodePointerList", StgStageScript::Func_ObjCrLaser_GetNodePointerList, 1 },
+	{ "ObjCrLaser_GetNodePosition", StgStageScript::Func_ObjCrLaser_GetNodePosition, 2 },
+	{ "ObjCrLaser_GetNodeAngle", StgStageScript::Func_ObjCrLaser_GetNodeAngle, 2 },
+	{ "ObjCrLaser_GetNodeColor", StgStageScript::Func_ObjCrLaser_GetNodeColor, 2 },
+	{ "ObjCrLaser_SetNode", StgStageScript::Func_ObjCrLaser_SetNode, 6 },
+	{ "ObjCrLaser_SetNodePosition", StgStageScript::Func_ObjCrLaser_SetNodePosition, 4 },
+	{ "ObjCrLaser_SetNodeAngle", StgStageScript::Func_ObjCrLaser_SetNodeAngle, 3 },
+	{ "ObjCrLaser_SetNodeColor", StgStageScript::Func_ObjCrLaser_SetNodeColor, 3 },
+	{ "ObjCrLaser_AddNode", StgStageScript::Func_ObjCrLaser_AddNode, 5 },
 
 	{ "ObjPatternShot_Create", StgStageScript::Func_ObjPatternShot_Create, 0 },
 	{ "ObjPatternShot_Fire", StgStageScript::Func_ObjPatternShot_Fire, 1 },
@@ -3892,23 +3900,142 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetTipDecrement(gstd::script_machine
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_ObjCrLaser_SetNode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_ObjCrLaser_GetNodePointer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
+
+	StgCurveLaserObject::LaserNode* res = nullptr;
+
 	int id = (int)argv[0].as_real();
 	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		int index = argv[1].as_int();
 		if (index >= 0) {
+			auto itr = obj->GetNode(index);
+			res = &*itr;
+		}
+	}
+
+	return script->CreateIntValue((int64_t)res);
+}
+gstd::value StgStageScript::Func_ObjCrLaser_GetNodePointerList(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+
+	std::vector<StgCurveLaserObject::LaserNode*> res;
+
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		obj->GetNodePointerList(&res);
+	}
+
+	return script->CreateIntArrayValue(res);
+}
+gstd::value StgStageScript::Func_ObjCrLaser_GetNodePosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+
+	float res[2] = { 0, 0 };
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
+			res[0] = ptr->pos.x;
+			res[1] = ptr->pos.y;
+		}
+	}
+	return script->CreateRealArrayValue(res, 2U);
+}
+gstd::value StgStageScript::Func_ObjCrLaser_GetNodeAngle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+
+	double angle = 0.0;
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
+			D3DXVECTOR2& vec = ptr->vertOff[0];
+			angle = Math::RadianToDegree(atan2(vec.y, vec.x)) + 90.0;
+		}
+	}
+	return script->CreateRealValue(angle);
+}
+gstd::value StgStageScript::Func_ObjCrLaser_GetNodeColor(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+
+	D3DCOLOR color = 0xffffffff;
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
+			color = ptr->color;
+		}
+	}
+
+	byte colorArray[4];
+	ColorAccess::ToByteArray(color, colorArray);
+	return script->CreateRealArrayValue(colorArray, 4U);
+}
+gstd::value StgStageScript::Func_ObjCrLaser_SetNode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
 			float x = argv[2].as_real();
 			float y = argv[3].as_real();
-			float angle = Math::DegreeToRadian(argv[4].as_real() + 90.0);
+			float angle = Math::DegreeToRadian(argv[4].as_real());
+			D3DCOLOR color = argv[5].as_int();
 
-			D3DXVECTOR2 cs = D3DXVECTOR2(cosf(angle), sinf(angle));
-			float nx = cs.x + cs.y;
-			float ny = cs.x - cs.y;
+			D3DXVECTOR2 rMove = D3DXVECTOR2(-sinf(angle), cosf(angle));
 
-			StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(x, y), D3DXVECTOR2(nx, ny));
-			obj->SetNode(index, node);
+			StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(x, y), rMove, color);
+			*ptr = node;
+		}
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjCrLaser_SetNodePosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
+			float x = argv[2].as_real();
+			float y = argv[3].as_real();
+			ptr->pos = D3DXVECTOR2(x, y);
+		}
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjCrLaser_SetNodeAngle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
+			float angle = Math::DegreeToRadian(argv[2].as_real());
+			D3DXVECTOR2 rMove = D3DXVECTOR2(-sinf(angle), cosf(angle));
+
+			StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(0, 0), rMove);
+			memcpy(ptr->vertOff, node.vertOff, sizeof(D3DXVECTOR2) * 2U);
+		}
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjCrLaser_SetNodeColor(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
+			D3DCOLOR color = argv[2].as_int();
+			ptr->color = color;
 		}
 	}
 	return value();
@@ -3920,13 +4047,12 @@ gstd::value StgStageScript::Func_ObjCrLaser_AddNode(gstd::script_machine* machin
 	if (obj) {
 		float x = argv[1].as_real();
 		float y = argv[2].as_real();
-		float angle = Math::DegreeToRadian(argv[3].as_real() + 90.0);
+		float angle = Math::DegreeToRadian(argv[3].as_real());
+		D3DCOLOR color = argv[4].as_int();
 
-		D3DXVECTOR2 cs = D3DXVECTOR2(cosf(angle), sinf(angle));
-		float nx = cs.x + cs.y;
-		float ny = cs.x - cs.y;
+		D3DXVECTOR2 rMove = D3DXVECTOR2(-sinf(angle), cosf(angle));
 
-		StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(x, y), D3DXVECTOR2(nx, ny));
+		StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(x, y), rMove, color);
 		obj->PushNode(node);
 	}
 	return value();

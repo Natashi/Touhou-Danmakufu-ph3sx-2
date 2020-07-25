@@ -887,12 +887,14 @@ void StgShotObject::_DeleteInAutoDeleteFrame() {
 	frameAutoDelete_ = std::max(0, frameAutoDelete_ - 1);
 }
 void StgShotObject::_CommonWorkTask() {
-	++frameWork_;
-	if (frameFadeDelete_ >= 0) --frameFadeDelete_;
-	_DeleteInLife();
-	_DeleteInAutoClip();
-	_DeleteInAutoDeleteFrame();
-	_DeleteInFadeDelete();
+	if (bEnableMovement_) {
+		++frameWork_;
+		if (frameFadeDelete_ >= 0) --frameFadeDelete_;
+		_DeleteInLife();
+		_DeleteInAutoClip();
+		_DeleteInAutoDeleteFrame();
+		_DeleteInFadeDelete();
+	}
 	--frameGrazeInvalid_;
 }
 void StgShotObject::_SendDeleteEvent(int bit) {
@@ -1367,25 +1369,25 @@ StgNormalShotObject::~StgNormalShotObject() {
 
 }
 void StgNormalShotObject::Work() {
-	if (!bEnableMovement_) return;
+	if (bEnableMovement_) {
+		_ProcessTransformAct();
+		_Move();
 
-	_ProcessTransformAct();
-	_Move();
+		if (delay_.time > 0) --(delay_.time);
+		else _AddReservedShotWork();
 
-	if (delay_.time > 0) --(delay_.time);
-	else _AddReservedShotWork();
+		{
+			angle_.z += angularVelocity_;
 
-	{
-		angle_.z += angularVelocity_;
+			double angleZ = angle_.z;
+			if (StgShotData* shotData = _GetShotData()) {
+				if (!shotData->IsFixedAngle()) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
+			}
 
-		double angleZ = angle_.z;
-		if (StgShotData* shotData = _GetShotData()) {
-			if (!shotData->IsFixedAngle()) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
-		}
-
-		if (angleZ != lastAngle_) {
-			move_ = D3DXVECTOR2(cosf(angleZ), sinf(angleZ));
-			lastAngle_ = angleZ;
+			if (angleZ != lastAngle_) {
+				move_ = D3DXVECTOR2(cosf(angleZ), sinf(angleZ));
+				lastAngle_ = angleZ;
+			}
 		}
 	}
 
@@ -1658,13 +1660,13 @@ void StgLooseLaserObject::Work() {
 		posYE_ = posY_;
 	}
 
-	if (!bEnableMovement_) return;
+	if (bEnableMovement_) {
+		_ProcessTransformAct();
+		_Move();
 
-	_ProcessTransformAct();
-	_Move();
-
-	if (delay_.time > 0) --(delay_.time);
-	else _AddReservedShotWork();
+		if (delay_.time > 0) --(delay_.time);
+		else _AddReservedShotWork();
+	}
 
 	_CommonWorkTask();
 	//	_AddIntersectionRelativeTarget();
@@ -1925,24 +1927,24 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 	pShotIntersectionTarget_ = std::make_shared<StgIntersectionTarget_Line>();
 }
 void StgStraightLaserObject::Work() {
-	if (!bEnableMovement_) return;
+	if (bEnableMovement_) {
+		_ProcessTransformAct();
+		_Move();
 
-	_ProcessTransformAct();
-	_Move();
+		if (delay_.time > 0) --(delay_.time);
+		else {
+			_AddReservedShotWork();
+			if (bLaserExpand_)
+				scaleX_ = std::min(1.0f, scaleX_ + 0.1f);
+		}
 
-	if (delay_.time > 0) --(delay_.time);
-	else {
-		_AddReservedShotWork();
-		if (bLaserExpand_)
-			scaleX_ = std::min(1.0f, scaleX_ + 0.1f);
+		if (lastAngle_ != angLaser_) {
+			lastAngle_ = angLaser_;
+			move_ = D3DXVECTOR2(cosf(angLaser_), sinf(angLaser_));
+		}
 	}
 
 	_CommonWorkTask();
-
-	if (lastAngle_ != angLaser_) {
-		lastAngle_ = angLaser_;
-		move_ = D3DXVECTOR2(cosf(angLaser_), sinf(angLaser_));
-	}
 }
 
 void StgStraightLaserObject::_DeleteInAutoClip() {
@@ -2240,13 +2242,13 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 	pShotIntersectionTarget_ = nullptr;
 }
 void StgCurveLaserObject::Work() {
-	if (!bEnableMovement_) return;
+	if (bEnableMovement_) {
+		_ProcessTransformAct();
+		_Move();
 
-	_ProcessTransformAct();
-	_Move();
-
-	if (delay_.time > 0) --(delay_.time);
-	else _AddReservedShotWork();
+		if (delay_.time > 0) --(delay_.time);
+		else _AddReservedShotWork();
+	}
 
 	_CommonWorkTask();
 	//	_AddIntersectionRelativeTarget();
@@ -2267,7 +2269,8 @@ void StgCurveLaserObject::_Move() {
 		PushNode(CreateNode(newNodePos, newNodeVertF));
 	}
 }
-StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac) {
+
+StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, D3DCOLOR col) {
 	LaserNode node;
 	node.pos = pos;
 	{
@@ -2278,29 +2281,36 @@ StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2
 		node.vertOff[0] = { nx, ny };
 		node.vertOff[1] = { -nx, -ny };
 	}
+	node.color = col;
 	return node;
 }
-std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::SetNode(size_t indexNode, LaserNode& node) {
+std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::GetNode(size_t indexNode) {
 	//I wish there was a better way to do this.
 	size_t listSizeMax = listPosition_.size();
 	if (indexNode >= listSizeMax) return listPosition_.end();
 	if (indexNode < listSizeMax / 2U) {
 		auto itr = std::next(listPosition_.begin(), indexNode);
-		*itr = node;
 		return itr;
 	}
 	else {
-		auto itr = std::next(listPosition_.rbegin(), listSizeMax - indexNode - 1);
-		*itr = node;
+		auto itr = std::next(listPosition_.rbegin(), listSizeMax - indexNode);
 		return itr.base();
 	}
 }
-std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::PushNode(LaserNode& node) {
+void StgCurveLaserObject::GetNodePointerList(std::vector<LaserNode*>* listRes) {
+	listRes->resize(listPosition_.size(), nullptr);
+	size_t i = 0;
+	for (LaserNode& iNode : listPosition_) {
+		(*listRes)[i++] = &iNode;
+	}
+}
+std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::PushNode(const LaserNode& node) {
 	listPosition_.push_front(node);
 	if (listPosition_.size() > length_)
 		listPosition_.pop_back();
 	return listPosition_.begin();
 }
+
 void StgCurveLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 	StgShotManager* shotManager = stageController_->GetShotManager();
@@ -2491,6 +2501,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				byte alpha = ColorAccess::ClampColorRet(nodeAlpha * alphaRateShot);
 				thisColor = (thisColor & 0x00ffffff) | (alpha << 24);
 			}
+			if (itr->color != 0xffffffff) ColorAccess::SetColor(thisColor, itr->color);
 
 			VERTEX_TLX verts[2];
 			for (size_t iVert = 0U; iVert < 2U; ++iVert) {
