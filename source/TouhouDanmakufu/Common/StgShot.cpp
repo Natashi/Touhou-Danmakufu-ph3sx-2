@@ -1170,15 +1170,17 @@ void StgShotObject::_ProcessTransformAct() {
 						break;
 					case 2:
 					{
+						auto objPlayer = stageController_->GetPlayerObject();
+						if (objPlayer) pattern->SetRelativeObjectID(objPlayer);
 						shared_ptr<RandProvider> rand = stageController_->GetStageInformation()->GetRandProvider();
-						pattern->SetRelativeObjectID(stageController_->GetPlayerObject());
 						pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ANGLE, 
 							rand->GetReal(-angleArgument, angleArgument)));
 						break;
 					}
 					case 3:
 					{
-						pattern->SetRelativeObjectID(stageController_->GetPlayerObject());
+						auto objPlayer = stageController_->GetPlayerObject();
+						if (objPlayer) pattern->SetRelativeObjectID(objPlayer);
 						pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ANGLE, angleArgument));
 						break;
 					}

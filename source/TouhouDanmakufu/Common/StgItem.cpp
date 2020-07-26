@@ -42,6 +42,8 @@ StgItemManager::~StgItemManager() {
 }
 void StgItemManager::Work() {
 	shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
+	if (objPlayer == nullptr) return;
+
 	float px = objPlayer->GetX();
 	float py = objPlayer->GetY();
 	float pr = objPlayer->GetItemIntersectionRadius();
@@ -659,10 +661,12 @@ void StgItemObject::Work() {
 	if (bNullMovePattern && IsMoveToPlayer() && bEnableMovement_) {
 		float speed = 8;
 		shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
-		float angle = atan2f(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());
-		float angDirection = angle;
-		SetSpeed(speed);
-		SetDirectionAngle(angDirection);
+		if (objPlayer) {
+			float angle = atan2f(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());
+			float angDirection = angle;
+			SetSpeed(speed);
+			SetDirectionAngle(angDirection);
+		}
 	}
 	StgMoveObject::_Move();
 	SetX(posX_);
@@ -811,6 +815,8 @@ void StgItemObject::_CreateScoreItem() {
 void StgItemObject::_NotifyEventToPlayerScript(gstd::value* listValue, size_t count) {
 	//自機スクリプトへ通知
 	shared_ptr<StgPlayerObject> player = stageController_->GetPlayerObject();
+	if (player == nullptr) return;
+
 	StgStagePlayerScript* scriptPlayer = player->GetPlayerScript();
 
 	scriptPlayer->RequestEvent(StgStageItemScript::EV_GET_ITEM, listValue, count);
@@ -947,7 +953,7 @@ void StgItemObject_Bonus::Work() {
 	StgItemObject::Work();
 
 	shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
-	if (objPlayer->GetState() != StgPlayerObject::STATE_NORMAL) {
+	if (objPlayer != nullptr && objPlayer->GetState() != StgPlayerObject::STATE_NORMAL) {
 		_CreateScoreItem();
 		stageController_->GetStageInformation()->AddScore(score_);
 
@@ -1160,10 +1166,12 @@ void StgMovePattern_Item::Move() {
 		if (frame_ == 0) speed_ = 6;
 		speed_ += 0.075;
 		shared_ptr<StgPlayerObject> objPlayer = stageController->GetPlayerObject();
-		double angle = atan2(objPlayer->GetY() - py, objPlayer->GetX() - px);
-		angDirection_ = angle;
-		c_ = cos(angDirection_);
-		s_ = sin(angDirection_);
+		if (objPlayer) {
+			double angle = atan2(objPlayer->GetY() - py, objPlayer->GetX() - px);
+			angDirection_ = angle;
+			c_ = cos(angDirection_);
+			s_ = sin(angDirection_);
+		}
 	}
 	else if (typeMove_ == MOVE_TOPOSITION_A) {
 		double dx = posTo_.x - px;
