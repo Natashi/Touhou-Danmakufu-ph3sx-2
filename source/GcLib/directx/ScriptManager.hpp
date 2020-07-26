@@ -15,7 +15,6 @@ namespace directx {
 			MAX_CLOSED_SCRIPT_RESULT = 100,
 			ID_INVALID = -1,
 		};
-
 	protected:
 		gstd::CriticalSection lock_;
 		static int64_t idScript_;
@@ -25,7 +24,7 @@ namespace directx {
 		std::map<int64_t, shared_ptr<ManagedScript>> mapScriptLoad_;
 		std::list<shared_ptr<ManagedScript>> listScriptRun_;
 		std::map<int64_t, gstd::value> mapClosedScriptResult_;
-		std::list<std::weak_ptr<ScriptManager>> listRelativeManager_;
+		std::list<weak_ptr<ScriptManager>> listRelativeManager_;
 
 		int mainThreadID_;
 
@@ -42,6 +41,10 @@ namespace directx {
 
 		int GetMainThreadID() { return mainThreadID_; }
 		int64_t IssueScriptID() { { gstd::Lock lock(lock_); idScript_++; return idScript_; } }
+
+		std::map<int64_t, shared_ptr<ManagedScript>>& GetMapScriptLoad() { return mapScriptLoad_; }
+		std::list<shared_ptr<ManagedScript>>& GetRunningScriptList() { return listScriptRun_; }
+		std::list<weak_ptr<ScriptManager>>& GetRelativeManagerList() { return listRelativeManager_; }
 
 		shared_ptr<ManagedScript> GetScript(int64_t id, bool bSearchRelative = false);
 		void StartScript(int64_t id);
@@ -63,9 +66,8 @@ namespace directx {
 		virtual shared_ptr<ManagedScript> Create(int type) = 0;
 		virtual void RequestEventAll(int type, const gstd::value* listValue = nullptr, size_t countArgument = 0);
 		gstd::value GetScriptResult(int64_t idScript);
-		void AddRelativeScriptManager(std::weak_ptr<ScriptManager> manager) { listRelativeManager_.push_back(manager); }
-		static void AddRelativeScriptManagerMutual(std::weak_ptr<ScriptManager> manager1, 
-			std::weak_ptr<ScriptManager> manager2);
+		void AddRelativeScriptManager(weak_ptr<ScriptManager> manager) { listRelativeManager_.push_back(manager); }
+		static void AddRelativeScriptManagerMutual(weak_ptr<ScriptManager> manager1, weak_ptr<ScriptManager> manager2);
 	};
 
 
@@ -105,6 +107,8 @@ namespace directx {
 		virtual void SetScriptParameter(shared_ptr<ManagedScriptParameter> param) { scriptParam_ = param; }
 		shared_ptr<ManagedScriptParameter> GetScriptParameter() { return scriptParam_; }
 
+		ScriptManager* GetScriptManager() { return scriptManager_; }
+
 		int GetScriptType() { return typeScript_; }
 		bool IsLoad() { return bLoad_; }
 		bool IsEndScript() { return bEndScript_; }
@@ -138,8 +142,6 @@ namespace directx {
 		static gstd::value Func_NotifyEventAll(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_PauseScript);
 	};
-
-
 }
 
 #endif

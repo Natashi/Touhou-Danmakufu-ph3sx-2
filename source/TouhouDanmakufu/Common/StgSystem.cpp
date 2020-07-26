@@ -733,7 +733,24 @@ void StgSystemController::TerminateScriptAll() {
 		if (scriptManager)
 			scriptManager->TerminateScriptAll(error);
 	}
+}
+void StgSystemController::GetAllScriptList(std::list<weak_ptr<ScriptManager>>& listRes) {
+	listRes.clear();
 
+	if (packageController_)
+		listRes.push_back(packageController_->GetScriptManagerRef());
+	if (stageController_) {
+		listRes.push_back(stageController_->GetScriptManagerRef());
+
+		ref_count_ptr<StgPauseScene> pauseScene = stageController_->GetPauseManager();
+		if (pauseScene)
+			listRes.push_back(pauseScene->GetScriptManagerRef());
+	}
+
+	if (endScene_)
+		listRes.push_back(endScene_->GetScriptManagerRef());
+	if (replaySaveScene_)
+		listRes.push_back(replaySaveScene_->GetScriptManagerRef());
 }
 
 /**********************************************************
