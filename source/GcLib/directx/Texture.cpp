@@ -871,7 +871,7 @@ std::map<std::wstring, shared_ptr<TextureData>>::iterator TextureManager::IsData
 //TextureInfoPanel
 **********************************************************/
 TextureInfoPanel::TextureInfoPanel() {
-	timeUpdateInterval_ = 500;
+	timeUpdateInterval_ = 1000;
 }
 TextureInfoPanel::~TextureInfoPanel() {
 	Stop();

@@ -147,6 +147,7 @@ namespace directx {
 		};
 		int timeUpdateInterval_;
 		gstd::WListView wndListView_;
+
 		virtual bool _AddedLogger(HWND hTab);
 		void _Run();
 	public:
