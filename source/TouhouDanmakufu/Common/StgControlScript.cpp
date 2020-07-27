@@ -1082,7 +1082,7 @@ gstd::value StgControlScript::Func_SaveReplay(gstd::script_machine* machine, int
 //ScriptInfoPanel
 **********************************************************/
 ScriptInfoPanel::ScriptInfoPanel() {
-	timeUpdateInterval_ = 1000;
+	timeUpdateInterval_ = 500;
 }
 ScriptInfoPanel::~ScriptInfoPanel() {
 	Stop();
@@ -1114,8 +1114,9 @@ bool ScriptInfoPanel::_AddedLogger(HWND hTab) {
 	wndScript_.Create(hWnd_, styleListView);
 	wndScript_.AddColumn(64, 0, L"Address");
 	wndScript_.AddColumn(32, 1, L"ID");
-	wndScript_.AddColumn(192, 2, L"Name");
+	wndScript_.AddColumn(224, 2, L"Name");
 	wndScript_.AddColumn(64, 3, L"Status");
+	wndScript_.AddColumn(92, 4, L"Task Count");
 	
 
 	wndSplitter_.Create(hWnd_, WSplitter::TYPE_HORIZONTAL);
@@ -1150,10 +1151,10 @@ void ScriptInfoPanel::LocateParts() {
 	wndSplitter_.SetBounds(wx, yLowerSec, wWidth, hSplitter);
 
 	int yScriptList = yLowerSec + hSplitter;
-	int wScriptList = 64 + 32 + 192 + 64;
+	int wScriptList = 64 + 32 + 192 + 64 + 82 + 16;
 	int hScriptList = wHeight - yScriptList;
 
-	wndScript_.SetBounds(wx, yScriptList, wScriptList, hScriptList);
+	wndScript_.SetBounds(wx, yScriptList, wWidth, hScriptList);
 }
 
 void ScriptInfoPanel::_Run() {
@@ -1219,36 +1220,33 @@ void ScriptInfoPanel::Update(StgSystemController* systemController) {
 			int orgRowCount = wndScript_.GetRowCount();
 			int selectedIndex = wndManager_.GetSelectedRow();
 			if (selectedIndex >= 0 && selectedIndex < vecScriptManager.size()) {
+				auto AddScript = [&](shared_ptr<ManagedScript>& script, const std::wstring& status) {
+					listScript_.push_back(script);
+					wndScript_.SetText(iScript, 0, StringUtility::Format(L"%08x", (int)script.get()));
+					wndScript_.SetText(iScript, 1, StringUtility::Format(L"%d", script->GetScriptID()));
+					wndScript_.SetText(iScript, 2,
+						StringUtility::Format(L"%s", PathProperty::GetFileName(script->GetPath()).c_str()));
+					wndScript_.SetText(iScript, 3, status);
+					wndScript_.SetText(iScript, 4, StringUtility::Format(L"%u", script->GetThreadCount()));
+				};
+
 				ScriptManager* manager = vecScriptManager[selectedIndex];
 				{
 					std::map<int64_t, shared_ptr<ManagedScript>>& mapLoad = manager->GetMapScriptLoad();
-					for (auto itr = mapLoad.begin(); itr != mapLoad.end(); ++itr, ++iScript) {
-						shared_ptr<ManagedScript>& script = itr->second;
-						listScript_.push_back(script);
-						wndScript_.SetText(iScript, 0, StringUtility::Format(L"%08x", (int)script.get()));
-						wndScript_.SetText(iScript, 1, StringUtility::Format(L"%d", itr->first));
-						wndScript_.SetText(iScript, 2, 
-							StringUtility::Format(L"%s", PathProperty::GetFileName(script->GetPath()).c_str()));
-						wndScript_.SetText(iScript, 3, L"Loaded");
-					}
+					for (auto itr = mapLoad.begin(); itr != mapLoad.end(); ++itr, ++iScript)
+						AddScript(itr->second, L"Loaded");
 				}
 				{
 					std::list<shared_ptr<ManagedScript>>& listRun = manager->GetRunningScriptList();
 					for (auto itr = listRun.begin(); itr != listRun.end(); ++itr, ++iScript) {
 						shared_ptr<ManagedScript>& script = *itr;
-						listScript_.push_back(script);
-						wndScript_.SetText(iScript, 0, StringUtility::Format(L"%08x", (int)script.get()));
-						wndScript_.SetText(iScript, 1, StringUtility::Format(L"%d", script->GetScriptID()));
-						wndScript_.SetText(iScript, 2, 
-							StringUtility::Format(L"%s", PathProperty::GetFileName(script->GetPath()).c_str()));
-						wndScript_.SetText(iScript, 3, L"Running");
+						AddScript(script, script->IsPaused() ? L"Paused" : L"Running");
 					}
 				}
 			}
 
-			for (int i = iScript; i < orgRowCount; ++i) {
+			for (int i = iScript; i < orgRowCount; ++i)
 				wndScript_.DeleteRow(i);
-			}
 		}
 	}
 }
