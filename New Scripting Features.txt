@@ -126,8 +126,8 @@
 	- The engine will now try to perform basic optimizations on maths expressions.
 		Examples:
 			a = 5 + 5 - 1;			->	a = 9;
-			a = 5 * 7 / 7			->	a = 5;
-			a = func(b) + 5 % 10	->	a = func(b) + 5;
+			a = 5 * 8 / 7;			->	a = 5.714286;
+			a = func(b) + 5 % 10;	->	a = func(b) + 5;
 
 	- Loops and blocks without code will now be optimized away during script compiling.
 		Examples:
