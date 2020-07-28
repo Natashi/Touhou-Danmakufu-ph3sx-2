@@ -346,6 +346,7 @@ function const dxFunction[] =
 	{ "ObjSound_GetVolumeRate", DxScript::Func_ObjSound_GetVolumeRate, 1 },
 	{ "ObjSound_GetWavePosition", DxScript::Func_ObjSound_GetWavePosition, 1 },
 	{ "ObjSound_GetWavePositionSampleCount", DxScript::Func_ObjSound_GetWavePositionSampleCount, 1 },
+	//{ "ObjSound_DebugGetCopyPos", DxScript::Func_ObjSound_DebugGetCopyPos, 1 },
 	{ "ObjSound_GetTotalLength", DxScript::Func_ObjSound_GetTotalLength, 1 },
 	{ "ObjSound_GetTotalLengthSampleCount", DxScript::Func_ObjSound_GetTotalLengthSampleCount, 1 },
 
@@ -3964,6 +3965,23 @@ gstd::value DxScript::Func_ObjSound_GetWavePositionSampleCount(gstd::script_mach
 	}
 	return script->CreateRealValue(posSamp);
 }
+/*
+gstd::value DxScript::Func_ObjSound_DebugGetCopyPos(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
+		if (auto streaming = dynamic_cast<SoundStreamingPlayer*>(player.get())) {
+			size_t* ptr = streaming->DbgGetStreamCopyPos();
+			size_t bps = player->GetWaveFormat()->nBlockAlign;
+			std::vector<size_t> listSize = { ptr[0] / bps, ptr[1] / bps };
+			return script->CreateRealArrayValue(listSize);
+		}
+	}
+	return script->CreateRealArrayValue((int*)nullptr, 0U);
+}
+*/
 gstd::value DxScript::Func_ObjSound_GetTotalLength(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();

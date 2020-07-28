@@ -1070,6 +1070,7 @@ namespace directx {
 		static gstd::value Func_ObjSound_GetVolumeRate(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjSound_GetWavePosition);
 		DNH_FUNCAPI_DECL_(Func_ObjSound_GetWavePositionSampleCount);
+		//DNH_FUNCAPI_DECL_(Func_ObjSound_DebugGetCopyPos);
 		DNH_FUNCAPI_DECL_(Func_ObjSound_GetTotalLength);
 		DNH_FUNCAPI_DECL_(Func_ObjSound_GetTotalLengthSampleCount);
 

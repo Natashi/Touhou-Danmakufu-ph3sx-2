@@ -206,7 +206,6 @@ namespace directx {
 		double rateVolumeFadePerSec_;//フェード時の音量低下割合
 		
 		bool flgUpdateStreamOffset_;
-		size_t lastStreamCopyPos_;
 		size_t audioSizeTotal_;		//In bytes.
 
 		virtual bool _CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader) = 0;
@@ -239,7 +238,7 @@ namespace directx {
 		void Delete() { bDelete_ = true; }
 		WAVEFORMATEX* GetWaveFormat() { return &formatWave_; }
 
-		DWORD GetCurrentPosition();
+		virtual DWORD GetCurrentPosition();
 		DWORD GetTotalAudioSize() { return audioSizeTotal_; }
 	};
 	class SoundPlayer::PlayStyle {
@@ -277,6 +276,9 @@ namespace directx {
 		bool bStreaming_;
 		bool bRequestStop_;//ループ完了時のフラグ。すぐ停止すると最後のバッファが再生されないため。
 
+		size_t lastStreamCopyPos_[2];
+		DWORD bufferPositionAtCopy_[2];
+
 		void _CreateSoundEvent(WAVEFORMATEX& formatWave);
 		virtual void _CopyStream(int indexCopy);
 		virtual size_t _CopyBuffer(LPVOID pMem, DWORD dwSize) = 0;
@@ -291,7 +293,9 @@ namespace directx {
 		virtual bool Stop();
 		virtual bool IsPlaying();
 
-		void ReplaceReader();
+		virtual DWORD GetCurrentPosition();
+		size_t* DbgGetStreamCopyPos() { return lastStreamCopyPos_; }
+
 		size_t GetReaderRefCount() { return reader_ ? 0 : reader_.GetReferenceCount(); }
 	};
 	class SoundStreamingPlayer::StreamingThread : public gstd::Thread, public gstd::InnerClass<SoundStreamingPlayer> {

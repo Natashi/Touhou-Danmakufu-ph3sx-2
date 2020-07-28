@@ -595,8 +595,6 @@ SoundPlayer::SoundPlayer() {
 	rateVolumeFadePerSec_ = 0;
 	bPause_ = false;
 
-	flgUpdateStreamOffset_ = true;
-	lastStreamCopyPos_ = 0U;
 	audioSizeTotal_ = 0U;
 
 	division_ = nullptr;
@@ -726,14 +724,12 @@ LONG SoundPlayer::_GetVolumeAsDirectSoundDecibel(float rate) {
 	return result;
 }
 DWORD SoundPlayer::GetCurrentPosition() {
-	/*
 	DWORD res = 0;
 	if (pDirectSoundBuffer_) {
 		HRESULT hr = pDirectSoundBuffer_->GetCurrentPosition(&res, nullptr);
 		if (FAILED(hr)) res = 0;
 	}
-	*/
-	return lastStreamCopyPos_;
+	return res;
 }
 
 //PlayStyle
@@ -758,6 +754,9 @@ SoundStreamingPlayer::SoundStreamingPlayer() {
 
 	bStreaming_ = true;
 	bRequestStop_ = false;
+
+	ZeroMemory(lastStreamCopyPos_, sizeof(size_t) * 2);
+	ZeroMemory(bufferPositionAtCopy_, sizeof(DWORD) * 2);
 }
 SoundStreamingPlayer::~SoundStreamingPlayer() {
 	this->Stop();
@@ -792,6 +791,8 @@ void SoundStreamingPlayer::_CopyStream(int indexCopy) {
 		LPVOID pMem1, pMem2;
 		DWORD dwSize1, dwSize2;
 
+		pDirectSoundBuffer_->GetCurrentPosition(&bufferPositionAtCopy_[indexCopy], nullptr);
+
 		HRESULT hr = pDirectSoundBuffer_->Lock(sizeCopy_ * indexCopy, sizeCopy_, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
 		if (hr == DSERR_BUFFERLOST) {
 			hr = pDirectSoundBuffer_->Restore();
@@ -807,7 +808,7 @@ void SoundStreamingPlayer::_CopyStream(int indexCopy) {
 		if (!bStreaming_ || (IsPlaying() && !bRequestStop_)) {
 			if (dwSize1 > 0) {	//バッファ前半
 				size_t res = _CopyBuffer(pMem1, dwSize1);
-				lastStreamCopyPos_ = res;
+				lastStreamCopyPos_[indexCopy] = res;
 			}
 			if (dwSize2 > 0) {	//バッファ後半
 				_CopyBuffer(pMem2, dwSize2);
@@ -820,8 +821,6 @@ void SoundStreamingPlayer::_CopyStream(int indexCopy) {
 				memcpy(pMem2, 0, dwSize2);
 		}
 		pDirectSoundBuffer_->Unlock(pMem1, dwSize1, pMem2, dwSize2);
-
-		flgUpdateStreamOffset_ = true;
 	}
 }
 bool SoundStreamingPlayer::Play(PlayStyle& style) {
@@ -882,12 +881,26 @@ bool SoundStreamingPlayer::Stop() {
 void SoundStreamingPlayer::ResetStreamForSeek() {
 	pDirectSoundBuffer_->SetCurrentPosition(0);
 	_CopyStream(1);
-	size_t posCopy = lastStreamCopyPos_;
+	//size_t posCopy = lastStreamCopyPos_;
 	_CopyStream(0);
-	lastStreamCopyPos_ = posCopy;
+	//lastStreamCopyPos_ = posCopy;
 }
 bool SoundStreamingPlayer::IsPlaying() {
 	return thread_->GetStatus() == Thread::RUN;
+}
+DWORD SoundStreamingPlayer::GetCurrentPosition() {
+	DWORD currentReader = 0;
+	if (pDirectSoundBuffer_) {
+		HRESULT hr = pDirectSoundBuffer_->GetCurrentPosition(&currentReader, nullptr);
+		if (FAILED(hr)) currentReader = 0;
+	}
+	
+	size_t p0 = lastStreamCopyPos_[0];
+	size_t p1 = lastStreamCopyPos_[1];
+	if (p0 < p1)
+		return p0 + currentReader;
+	else
+		return p1 + currentReader - bufferPositionAtCopy_[0];
 }
 
 //StreamingThread
@@ -1274,8 +1287,8 @@ bool SoundStreamingPlayerOgg::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader
 	formatWave_.wBitsPerSample = 2 * 8;
 	formatWave_.cbSize = 0;
 
-	audioSizeTotal_ = ov_pcm_total(&fileOgg_, -1);
 	LONG sizeData = (LONG)ceil((double)vi->channels * (double)vi->rate * ov_time_total(&fileOgg_, -1) * 2.0);
+	audioSizeTotal_ = sizeData;
 
 	//Bufferの作製
 	DWORD sizeBuffer = std::min(2 * formatWave_.nAvgBytesPerSec, (DWORD)sizeData);
