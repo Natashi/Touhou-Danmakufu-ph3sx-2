@@ -5,7 +5,7 @@
 #include "DxConstant.hpp"
 
 namespace directx {
-	typedef enum {
+	typedef enum : uint8_t {
 		DI_MOUSE_LEFT = 0,
 		DI_MOUSE_RIGHT = 1,
 		DI_MOUSE_MIDDLE = 2,
