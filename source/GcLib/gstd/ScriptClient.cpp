@@ -15,10 +15,8 @@ ScriptEngineData::ScriptEngineData() {
 }
 ScriptEngineData::~ScriptEngineData() {}
 void ScriptEngineData::SetSource(std::vector<char>& source) {
-	encoding_ = Encoding::UTF8;
-	if (Encoding::IsUtf16Le(&source[0], source.size())) {
-		encoding_ = Encoding::UTF16LE;
-	}
+	encoding_ = Encoding::Detect(source.data(), source.size());
+	//if (encoding_ == Encoding::UTF8BOM) encoding_ = Encoding::UTF8;
 	source_ = source;
 }
 
@@ -272,7 +270,7 @@ void ScriptClientBase::_RaiseErrorFromMachine() {
 }
 std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 	if (line == 0) return L"";
-	int encoding = engine_->GetEncoding();
+	Encoding::Type encoding = engine_->GetEncoding();
 	std::vector<char>& source = engine_->GetSource();
 	char* pbuf = (char*)&source[0];
 	char* sbuf = pbuf;
@@ -316,8 +314,8 @@ std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 		res = std::wstring(wbufS, wbufE);
 		if (encoding == Encoding::UTF16BE) {
 			for (auto itr = res.begin(); itr != res.end(); ++itr) {
-				wchar_t wch = *itr;
-				*itr = (wch >> 8) | (wch << 8);
+				wchar_t& wch = *itr;
+				wch = (wch >> 8) | (wch << 8);
 			}
 		}
 	}
@@ -342,7 +340,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 
 	//std::vector<Token> mapTokens;
 
-	int mainEncoding = Encoding::UTF8;
+	Encoding::Type mainEncoding = Encoding::UTF8;
 	bool bEnd = false;
 	while (true) {
 		if (bEnd) break;
@@ -425,21 +423,16 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 					_RaiseError(line, error);
 				}
 
-				//ファイルを読み込み最後に改行を付加
+				//Detect target encoding
 				size_t targetBomSize = 0;
-				int includeEncoding = Encoding::UTF8;
+				Encoding::Type includeEncoding = Encoding::UTF8;
 				if (reader->GetFileSize() >= 2) {
-					char data[2];
-					reader->Read(&data[0], 2);
-					if (Encoding::IsUtf16Le(&data[0], 2)) {
-						includeEncoding = Encoding::UTF16LE;
-						targetBomSize = 2;
-					}
-					else if (Encoding::IsUtf16Be(&data[0], 2)) {
-						includeEncoding = Encoding::UTF16BE;
-						targetBomSize = 2;
-					}
-					//ファイルポインタを最初に戻す
+					byte data[3];
+					reader->Read(data, 3);
+
+					includeEncoding = Encoding::Detect(data, reader->GetFileSize());
+					targetBomSize = Encoding::GetBomSize(includeEncoding);
+
 					reader->SetFilePointerBegin();
 				}
 
@@ -450,55 +443,60 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 					placement.resize(reader->GetFileSize() - targetBomSize); //- BOM size
 					reader->Read(&placement[0], placement.size());
 
-					//Convert the including file to UTF-8
-					if (mainEncoding == Encoding::UTF8) {
-						if (includeEncoding == Encoding::UTF16BE) {
-							for (auto itr = placement.begin(); itr != placement.end(); itr += 2) {
-								wchar_t& wch = (wchar_t&)*itr;
-								wch = (wch >> 8) | (wch << 8);
+					if (placement.size() > 0U) {
+						//Convert the including file to UTF-8
+						if (mainEncoding == Encoding::UTF8 || mainEncoding == Encoding::UTF8BOM) {
+							if (includeEncoding == Encoding::UTF16BE) {
+								for (auto itr = placement.begin(); itr != placement.end(); itr += 2) {
+									wchar_t& wch = (wchar_t&)*itr;
+									wch = (wch >> 8) | (wch << 8);
+								}
 							}
-						}
 
-						std::vector<char> mbres;
-						size_t countMbRes = StringUtility::ConvertWideToMulti((wchar_t*)placement.data(),
-							placement.size() / 2U, mbres, CP_UTF8);
-						if (countMbRes == 0) {
-							std::wstring error = StringUtility::Format(L"Error reading include file. "
-								"(%s -> UTF-8) [%s]\r\n",
-								includeEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
-							_RaiseError(scanner.GetCurrentLine(), error);
-						}
+							std::vector<char> mbres;
+							size_t countMbRes = StringUtility::ConvertWideToMulti((wchar_t*)placement.data(),
+								placement.size() / 2U, mbres, CP_UTF8);
+							if (countMbRes == 0) {
+								std::wstring error = StringUtility::Format(L"Error reading include file. "
+									"(%s -> UTF-8) [%s]\r\n",
+									includeEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
+								_RaiseError(scanner.GetCurrentLine(), error);
+							}
 
-						includeEncoding = mainEncoding;
-						placement = mbres;
+							includeEncoding = mainEncoding;
+							placement = mbres;
+						}
 					}
 				}
 				else {
 					//Including UTF-8
 
-					placement.resize(reader->GetFileSize());
-					reader->Read(&placement[0], reader->GetFileSize());
+					reader->Seek(targetBomSize);
+					placement.resize(reader->GetFileSize() - targetBomSize);
+					reader->Read(&placement[0], placement.size());
 
-					//Convert the include file to the main script's encoding
-					if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE) {
-						size_t placementSize = placement.size();
+					if (placement.size() > 0U) {
+						//Convert the include file to UTF-16 if it's in UTF-8
+						if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE) {
+							size_t placementSize = placement.size();
 
-						std::vector<char> wplacement;
-						size_t countWRes = StringUtility::ConvertMultiToWide(placement.data(), 
-							placementSize, wplacement, CP_UTF8);
-						if (countWRes == 0) {
-							std::wstring error = StringUtility::Format(L"Error reading include file. "
-								"(UTF-8 -> %s) [%s]\r\n",
-								mainEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
-							_RaiseError(scanner.GetCurrentLine(), error);
-						}
+							std::vector<char> wplacement;
+							size_t countWRes = StringUtility::ConvertMultiToWide(placement.data(),
+								placementSize, wplacement, CP_UTF8);
+							if (countWRes == 0) {
+								std::wstring error = StringUtility::Format(L"Error reading include file. "
+									"(UTF-8 -> %s) [%s]\r\n",
+									mainEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
+								_RaiseError(scanner.GetCurrentLine(), error);
+							}
 
-						placement = wplacement;
+							placement = wplacement;
 
-						//Swap bytes for UTF-16 BE
-						if (mainEncoding == Encoding::UTF16BE) {
-							for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
-								std::swap(*wItr, *(wItr + 1));
+							//Swap bytes for UTF-16 BE
+							if (mainEncoding == Encoding::UTF16BE) {
+								for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
+									std::swap(*wItr, *(wItr + 1));
+								}
 							}
 						}
 					}
@@ -933,7 +931,7 @@ std::wstring ScriptClientBase::_ExtendPath(std::wstring path) {
 	int line = machine_->get_current_line();
 	const std::wstring& pathScript = GetEngine()->GetScriptFileLineMap()->GetPath(line);
 
-	path = StringUtility::ReplaceAll(path, L"\\", L"/");
+	path = StringUtility::ReplaceAll(path, L'\\', L'/');
 	path = StringUtility::ReplaceAll(path, L"./", pathScript);
 
 	return path;

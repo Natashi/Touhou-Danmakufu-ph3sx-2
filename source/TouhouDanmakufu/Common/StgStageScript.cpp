@@ -91,16 +91,19 @@ StgStageScriptObjectManager::~StgStageScriptObjectManager() {
 	*/
 	if (ptrObjPlayer_) ptrObjPlayer_->Clear();
 }
+/*
 void StgStageScriptObjectManager::PrepareRenderObject() {
 	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
 		DxScriptObjectBase* obj = itr->get();
 		if (obj == nullptr || obj->IsDeleted()) continue;
 		//Shots and items are already sorted in StgShotManager and StgItemManager
-		if (dynamic_cast<StgShotObject*>(obj) != nullptr || dynamic_cast<StgItemObject*>(obj) != nullptr) continue;
+		//if (dynamic_cast<StgShotObject*>(obj) != nullptr || dynamic_cast<StgItemObject*>(obj) != nullptr) continue;
+		if (!obj->HasNormalRendering()) continue;
 		if (!obj->IsVisible()) continue;
 		AddRenderObject(*itr);
 	}
 }
+*/
 void StgStageScriptObjectManager::RenderObject() {
 	/*
 		if(invalidPriMin_ < 0 && invalidPriMax_ < 0)
@@ -1104,7 +1107,7 @@ gstd::value StgStageScript::Func_GetEnemyBossObjectID(gstd::script_machine* mach
 	if (scene) {
 		shared_ptr<StgEnemyBossSceneData> data = scene->GetActiveData();
 		if (data) {
-			for (auto iEnemy : data->GetEnemyObjectList()) {
+			for (auto& iEnemy : data->GetEnemyObjectList()) {
 				if (iEnemy->IsDeleted()) continue;
 				listID.push_back(iEnemy->GetObjectID());
 			}
@@ -1119,7 +1122,7 @@ gstd::value StgStageScript::Func_GetAllEnemyID(gstd::script_machine* machine, in
 	StgEnemyManager* enemyManager = stageController->GetEnemyManager();
 
 	std::vector<int> listID;
-	for (auto iEnemy : enemyManager->GetEnemyList()) {
+	for (auto& iEnemy : enemyManager->GetEnemyList()) {
 		if (iEnemy->IsDeleted()) continue;
 		listID.push_back(iEnemy->GetObjectID());
 	}
@@ -2187,8 +2190,8 @@ gstd::value StgStageScript::Func_IsIntersected_Obj_Obj(gstd::script_machine* mac
 	std::vector<StgIntersectionTarget::ptr> listTarget2 = obj2->GetIntersectionTargetList();
 
 	bool res = false;
-	for (auto target1 : listTarget1) {
-		for (auto target2 : listTarget2) {
+	for (auto& target1 : listTarget1) {
+		for (auto& target2 : listTarget2) {
 			res = StgIntersectionManager::IsIntersected(target1, target2);
 			if (res && PARTIAL) goto chk_skip;
 		}
@@ -4537,7 +4540,7 @@ gstd::value StgStageScript::Func_ObjCol_GetIntersectedCount(gstd::script_machine
 	size_t res = 0;
 	shared_ptr<StgIntersectionObject> obj = std::dynamic_pointer_cast<StgIntersectionObject>(script->GetObject(id));
 	if (obj) {
-		for (auto wPtr : obj->GetIntersectedIdList()) {
+		for (auto& wPtr : obj->GetIntersectedIdList()) {
 			if (!wPtr.expired()) ++res;
 		}
 	}

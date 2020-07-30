@@ -12,38 +12,36 @@ std::wstring operator+(std::wstring l, const std::wstring& r) {
 
 //================================================================
 //Encoding
-const unsigned char Encoding::BOM_UTF16LE[] = { 0xFF, 0xFE };
-const unsigned char Encoding::BOM_UTF16BE[] = { 0xFE, 0xFF };
-const unsigned char Encoding::BOM_UTF8[] = { 0xEF, 0xBB, 0xBF };
-size_t Encoding::Detect(const void* data, size_t dataSize) {
-	if (dataSize < 2) return UTF8;
-	else {
-		if (memcmp(data, BOM_UTF16LE, 2) == 0) return UTF16LE;
-		else if (memcmp(data, BOM_UTF16BE, 2) == 0) return UTF16BE;
-		else if (dataSize > 2) {
-			if (memcmp(data, BOM_UTF8, 3) == 0) return UTF8BOM;
-		}
-		return UTF8;
+const byte Encoding::BOM_UTF16LE[] = { 0xFF, 0xFE };
+const byte Encoding::BOM_UTF16BE[] = { 0xFE, 0xFF };
+const byte Encoding::BOM_UTF8[] = { 0xEF, 0xBB, 0xBF };
+Encoding::Type Encoding::Detect(const void* data, size_t dataSize) {
+	if (dataSize < 2U) return Type::UTF8;
+	if (memcmp(data, BOM_UTF16LE, 2) == 0) return Type::UTF16LE;
+	else if (memcmp(data, BOM_UTF16BE, 2) == 0) return Type::UTF16BE;
+	else if (dataSize > 2U) {
+		if (memcmp(data, BOM_UTF8, 3) == 0) return Type::UTF8BOM;
 	}
-}
-bool Encoding::IsUtf16Le(const void* data, size_t dataSize) {
-	if (dataSize < 2) return false;
-	return memcmp(data, BOM_UTF16LE, 2) == 0;
-}
-bool Encoding::IsUtf16Be(const void* data, size_t dataSize) {
-	if (dataSize < 2) return false;
-	return memcmp(data, BOM_UTF16BE, 2) == 0;
+	return Type::UTF8;
 }
 size_t Encoding::GetBomSize(const void* data, size_t dataSize) {
-	if (dataSize < 2) return 0;
-
-	size_t res = 0;
+	if (dataSize < 2) return 0U;
 	if (memcmp(data, BOM_UTF16LE, 2) == 0 || memcmp(data, BOM_UTF16BE, 2) == 0)
-		res = 2;
-	else if (dataSize > 2) {
-		if (memcmp(data, BOM_UTF8, 3) == 0) return 3;
+		return 2U;
+	else if (dataSize > 2U) {
+		if (memcmp(data, BOM_UTF8, 3) == 0) return 3U;
 	}
-	return res;
+	return 0U;
+}
+size_t Encoding::GetBomSize(Type encoding) {
+	switch (encoding) {
+	case Type::UTF16LE:
+	case Type::UTF16BE:
+		return 2U;
+	case Type::UTF8BOM:
+		return 3U;
+	}
+	return 0U;
 }
 
 
@@ -167,15 +165,11 @@ size_t StringUtility::CountCharacter(const std::string& str, char c) {
 size_t StringUtility::CountCharacter(std::vector<char>& str, char c) {
 	if (str.size() == 0) return 0;
 
-	int encoding = Encoding::UTF8;
-	if (Encoding::IsUtf16Le(&str[0], str.size()))
-		encoding = Encoding::UTF16LE;
-	else if (Encoding::IsUtf16Be(&str[0], str.size()))
-		encoding = Encoding::UTF16LE;
+	Encoding::Type encoding = Encoding::Detect(str.data(), str.size());
 
 	size_t count = 0;
 	char* pbuf = &str[0];
-	char* ebuf = &str[str.size() - 1];
+	char* ebuf = &str.back();
 	while (pbuf <= ebuf) {
 		if (encoding == Encoding::UTF16LE) {
 			wchar_t ch = (wchar_t&)*pbuf;
@@ -232,6 +226,23 @@ std::string StringUtility::ReplaceAll(const std::string& source, const std::stri
 		if (count >= replaceCount) break;
 	}
 	result.append(source, pos_before, source.size() - pos_before);
+	return result;
+}
+std::string StringUtility::ReplaceAll(const std::string& source, char pattern, char placement) {
+	std::string result;
+	if (placement != '\0') {
+		result = source;
+		for (char& c : result) {
+			if (c == pattern)
+				c = placement;
+		}
+	}
+	else {
+		for (const char& c : source) {
+			if (c != pattern)
+				result.push_back(c);
+		}
+	}
 	return result;
 }
 std::string StringUtility::Slice(const std::string& s, size_t length) {
@@ -364,6 +375,23 @@ std::wstring StringUtility::ReplaceAll(const std::wstring& source, const std::ws
 	result.append(source, pos_before, source.size() - pos_before);
 	return result;
 }
+std::wstring StringUtility::ReplaceAll(const std::wstring& source, wchar_t pattern, wchar_t placement) {
+	std::wstring result;
+	if (placement != L'\0') {
+		result = source;
+		for (wchar_t& c : result) {
+			if (c == pattern)
+				c = placement;
+		}
+	}
+	else {
+		for (const wchar_t& c : source) {
+			if (c != pattern)
+				result.push_back(c);
+		}
+	}
+	return result;
+}
 std::wstring StringUtility::Slice(const std::wstring& s, size_t length) {
 	if (s.size() > 0)
 		length = std::min(s.size() - 1, length);
@@ -464,22 +492,22 @@ void ByteOrder::Reverse(LPVOID buf, DWORD size) {
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 //================================================================
 //Scanner
-Scanner::Scanner(char* str, int size) {
+Scanner::Scanner(char* str, size_t size) {
 	std::vector<char> buf;
 	buf.resize(size);
 	memcpy(&buf[0], str, size);
 	buf.push_back('\0');
 	this->Scanner::Scanner(buf);
 }
-Scanner::Scanner(std::string str) {
+Scanner::Scanner(const std::string& str) {
 	std::vector<char> buf;
 	buf.resize(str.size() + 1);
 	memcpy(&buf[0], str.c_str(), str.size() + 1);
 	this->Scanner::Scanner(buf);
 }
-Scanner::Scanner(std::wstring wstr) {
+Scanner::Scanner(const std::wstring& wstr) {
 	std::vector<char> buf;
-	int textSize = wstr.size() * sizeof(wchar_t);
+	size_t textSize = wstr.size() * sizeof(wchar_t);
 	buf.resize(textSize + 4);
 	memcpy(&buf[0], &Encoding::BOM_UTF16LE[0], 2);
 	memcpy(&buf[2], wstr.c_str(), textSize + 2);
@@ -493,18 +521,11 @@ Scanner::Scanner(std::vector<char>& buf) {
 
 	bufStr_ = nullptr;
 
-	typeEncoding_ = Encoding::UTF8;
-	if (Encoding::IsUtf16Le(&buf[0], buf.size())) {
-		typeEncoding_ = Encoding::UTF16LE;
-		textStartPointer_ = 2;
-	}
-	else if (Encoding::IsUtf16Be(&buf[0], buf.size())) {
-		typeEncoding_ = Encoding::UTF16BE;
-		textStartPointer_ = 2;
-	}
+	typeEncoding_ = Encoding::Detect(buf.data(), buf.size());
+	textStartPointer_ = Encoding::GetBomSize(typeEncoding_);
 
 	buffer_.push_back(0);
-	if (typeEncoding_ == Encoding::UTF16LE || typeEncoding_ == Encoding::UTF16BE) {
+	if (typeEncoding_ == Encoding::Type::UTF16LE || typeEncoding_ == Encoding::Type::UTF16BE) {
 		buffer_.push_back(0);
 	}
 
@@ -572,7 +593,7 @@ wchar_t Scanner::_NextChar() {
 	bufStr_ = &buffer_[pointer_];
 
 	wchar_t res = _CurrentChar();
-	if (typeEncoding_ == Encoding::UTF8) res = res & 0xff;
+	if (typeEncoding_ == Encoding::UTF8 || typeEncoding_ == Encoding::UTF8BOM) res = res & 0xff;
 	return res;
 }
 void Scanner::_SkipComment() {
@@ -620,18 +641,18 @@ void Scanner::_SkipSpace() {
 
 Token& Scanner::Next() {
 	if (!HasNext()) {
-		_RaiseError(L"Next:すでに終端です");
+		_RaiseError(L"Scanner::Next: Already reached EOF.");
 	}
 
-	_SkipComment();//コメントをとばします
+	_SkipComment();
 
 	wchar_t ch = _CurrentChar();
 
 	Token::Type type = Token::Type::TK_UNKNOWN;
-	int posStart = pointer_;//先頭を保存
+	int posStart = pointer_;	//Save the pointer at token begin
 
 	switch (ch) {
-	case L'\0': type = Token::Type::TK_EOF; break;//終端
+	case L'\0': type = Token::Type::TK_EOF; break;
 	case L',': _NextChar(); type = Token::Type::TK_COMMA;  break;
 	case L'.': _NextChar(); type = Token::Type::TK_PERIOD;  break;
 	case L'=': _NextChar(); type = Token::Type::TK_EQUAL;  break;
@@ -652,70 +673,64 @@ Token& Scanner::Next() {
 	case L'&': _NextChar(); type = Token::Type::TK_AMPERSAND; break;
 	case L'<': _NextChar(); type = Token::Type::TK_LESS; break;
 	case L'>': _NextChar(); type = Token::Type::TK_GREATER; break;
-
 	case L'\"':
 	{
-		//while( ch != '"' ) ch = _NextChar();//次のダブルクオーテーションまで進める
 		while (true) {
 			ch = _NextChar();
 			if (ch == L'\\') ch = _NextChar();
 			else if (ch == L'\"') break;
 		}
 		if (ch == L'\"')
-			_NextChar();//ダブルクオーテーションだったら1つ進める
+			_NextChar();	//Advance once after string end
 		else {
 			std::wstring error = GetString(posStart, pointer_);
-			std::wstring log = StringUtility::Format(L"Next:すでに文字列終端です(String字句解析) -> %s", error.c_str());
+			std::wstring log = StringUtility::Format(L"Scanner::Next: Unterminated string. -> %s", error.c_str());
 			_RaiseError(log);
 		}
 		type = Token::Type::TK_STRING;
 		break;
 	}
-
-	case L'\r':case L'\n'://改行
-		//改行がいつまでも続くようなのも1つの改行として扱う
+	case L'\r':
+	case L'\n':
 		while (ch == L'\r' || ch == L'\n') ch = _NextChar();
 		type = Token::Type::TK_NEWLINE;
 		break;
-
-	case L'+':case L'-':
+	case L'+':
+	case L'-':
 	{
 		if (ch == L'+') {
-			ch = _NextChar(); type = Token::Type::TK_PLUS;
-
+			ch = _NextChar();
+			type = Token::Type::TK_PLUS;
 		}
 		else if (ch == L'-') {
-			ch = _NextChar(); type = Token::Type::TK_MINUS;
+			ch = _NextChar();
+			type = Token::Type::TK_MINUS;
 		}
-
-		if (!bPermitSignNumber_ || !iswdigit(ch)) break;//次が数字でないなら抜ける
+		if (!bPermitSignNumber_ || !iswdigit(ch)) break;
 	}
-
 	default:
 	{
 		if (iswdigit(ch)) {
-			//整数か実数
-			while (iswdigit(ch)) ch = _NextChar();//数字だけの間ポインタを進める
+			while (iswdigit(ch)) ch = _NextChar();
 			type = Token::Type::TK_INT;
+
 			if (ch == L'.') {
-				//実数か整数かを調べる。小数点があったら実数
+				//Int -> Real
 				ch = _NextChar();
-				while (iswdigit(ch)) ch = _NextChar();//数字だけの間ポインタを進める
+				while (iswdigit(ch)) ch = _NextChar();
 				type = Token::Type::TK_REAL;
 			}
 
 			if (ch == L'E' || ch == L'e') {
-				//1E-5みたいなケース
+				//Exponent format
 				ch = _NextChar();
-				while (iswdigit(ch) || ch == L'-') ch = _NextChar();//数字だけの間ポインタを進める
+				while (iswdigit(ch) || ch == L'-') ch = _NextChar();
 				type = Token::Type::TK_REAL;
 			}
-
 		}
 		else if (iswalpha(ch) || ch == L'_') {
-			//たぶん識別子
 			while (iswalpha(ch) || iswdigit(ch) || ch == L'_')
-				ch = _NextChar();//たぶん識別子な間ポインタを進める
+				ch = _NextChar();
 			type = Token::Type::TK_ID;
 		}
 		else {
@@ -751,8 +766,8 @@ Token& Scanner::Next() {
 			wstr = std::wstring(pPosStart, pPosEnd);
 			if (typeEncoding_ == Encoding::UTF16BE) {
 				for (auto itr = wstr.begin(); itr != wstr.end(); ++itr) {
-					wchar_t wch = *itr;
-					*itr = (wch >> 8) | (wch << 8);
+					wchar_t& wch = *itr;
+					wch = (wch >> 8) | (wch << 8);
 				}
 			}
 			wstr = StringUtility::ReplaceAll(wstr, L"\\\"", L"\"");
@@ -775,8 +790,8 @@ Token& Scanner::Next() {
 			wstr = std::wstring(pPosStart, pPosEnd);
 			if (typeEncoding_ == Encoding::UTF16BE) {
 				for (auto itr = wstr.begin(); itr != wstr.end(); ++itr) {
-					wchar_t wch = *itr;
-					*itr = (wch >> 8) | (wch << 8);
+					wchar_t& wch = *itr;
+					wch = (wch >> 8) | (wch << 8);
 				}
 			}
 		}
@@ -806,7 +821,7 @@ void Scanner::CheckType(Token& tok, Token::Type type) {
 		_RaiseError(str);
 	}
 }
-void Scanner::CheckIdentifer(Token& tok, std::wstring id) {
+void Scanner::CheckIdentifer(Token& tok, const std::wstring& id) {
 	if (tok.type_ != Token::Type::TK_ID || tok.GetIdentifier() != id) {
 		std::wstring str = StringUtility::Format(L"CheckID error[%s]:", tok.element_.c_str());
 		_RaiseError(str);
@@ -822,7 +837,8 @@ int Scanner::GetCurrentLine() {
 		if (typeEncoding_ == Encoding::UTF16LE || typeEncoding_ == Encoding::UTF16BE) {
 			if (pbuf + 1 >= ebuf) break;
 			wchar_t wch = (wchar_t&)*pbuf;
-			if (typeEncoding_ == Encoding::UTF16BE) wch = (wch >> 8) | (wch << 8);
+			if (typeEncoding_ == Encoding::UTF16BE) 
+				wch = (wch >> 8) | (wch << 8);
 			if (wch == L'\n') ++line;
 			pbuf += 2;
 		}
@@ -843,8 +859,8 @@ std::wstring Scanner::GetString(int start, int end) {
 		res = std::wstring(pPosStart, pPosEnd);
 		if (typeEncoding_ == Encoding::UTF16BE) {
 			for (auto itr = res.begin(); itr != res.end(); ++itr) {
-				wchar_t wch = *itr;
-				*itr = (wch >> 8) | (wch << 8);
+				wchar_t& wch = *itr;
+				wch = (wch >> 8) | (wch << 8);
 			}
 		}
 	}
@@ -937,7 +953,7 @@ std::string Token::GetIdentifierA() {
 TextParser::TextParser() {
 
 }
-TextParser::TextParser(std::string source) {
+TextParser::TextParser(const std::string& source) {
 	SetSource(source);
 }
 TextParser::~TextParser() {}
@@ -1124,7 +1140,7 @@ TextParser::Result TextParser::_ParseIdentifer(int pos) {
 	return res;
 }
 
-void TextParser::SetSource(std::string source) {
+void TextParser::SetSource(const std::string& source) {
 	std::vector<char> buf;
 	buf.resize(source.size() + 1);
 	memcpy(&buf[0], source.c_str(), source.size() + 1);

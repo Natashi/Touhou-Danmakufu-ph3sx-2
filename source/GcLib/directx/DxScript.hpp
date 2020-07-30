@@ -10,12 +10,6 @@
 #include "DirectSound.hpp"
 
 namespace directx {
-	class DxScript;
-	class DxScriptObjectManager;
-	class DxScriptObjectBase;
-	/**********************************************************
-	//DxScriptObjectBase
-	**********************************************************/
 	enum class TypeObject : int8_t {
 		OBJ_INVALID = -1,
 		OBJ_PRIMITIVE_2D,
@@ -50,6 +44,14 @@ namespace directx {
 		OBJ_ITEM,
 		OBJ_SHOT_PATTERN,
 	};
+
+	class DxScript;
+	class DxScriptObjectManager;
+	class DxScriptObjectBase;
+
+	/**********************************************************
+	//DxScriptObjectBase
+	**********************************************************/
 	class DxScriptObjectBase {
 		friend DxScript;
 		friend DxScriptObjectManager;
@@ -73,6 +75,8 @@ namespace directx {
 		virtual void Render() = 0;
 		virtual void CleanUp() {}
 		virtual void SetRenderState() = 0;
+
+		virtual bool HasNormalRendering() { return false; }
 
 		int GetObjectID() { return idObject_; }
 		TypeObject GetObjectType() { return typeObject_; }
@@ -134,6 +138,9 @@ namespace directx {
 		std::wstring nameRelativeBone_;
 	public:
 		DxScriptRenderObject();
+
+		virtual bool HasNormalRendering() { return true; }
+
 		virtual void SetX(float x) { position_.x = x; }
 		virtual void SetY(float y) { position_.y = y; }
 		virtual void SetZ(float z) { position_.z = z; }
@@ -151,9 +158,9 @@ namespace directx {
 		D3DXVECTOR3& GetPosition() { return position_; }
 		D3DXVECTOR3& GetAngle() { return angle_; }
 		D3DXVECTOR3& GetScale() { return scale_; }
-		void SetPosition(D3DXVECTOR3 pos) { position_ = pos; }
-		void SetAngle(D3DXVECTOR3 angle) { angle_ = angle; }
-		void SetScale(D3DXVECTOR3 scale) { scale_ = scale; }
+		void SetPosition(const D3DXVECTOR3& pos) { position_ = pos; }
+		void SetAngle(const D3DXVECTOR3& angle) { angle_ = angle; }
+		void SetScale(const D3DXVECTOR3& scale) { scale_ = scale; }
 
 		void SetFilteringMin(D3DTEXTUREFILTERTYPE filter) { filterMin_ = filter; }
 		void SetFilteringMag(D3DTEXTUREFILTERTYPE filter) { filterMag_ = filter; }
@@ -228,7 +235,7 @@ namespace directx {
 		virtual void SetAngleX(float x);
 		virtual void SetAngleY(float y);
 		virtual void SetAngleZ(float z);
-		virtual void SetAngle(D3DXVECTOR3 angle) {
+		virtual void SetAngle(const D3DXVECTOR3& angle) {
 			SetAngleX(angle.x);
 			SetAngleY(angle.y);
 			SetAngleZ(angle.z);
@@ -405,7 +412,7 @@ namespace directx {
 		virtual void SetAngleX(float x);
 		virtual void SetAngleY(float y);
 		virtual void SetAngleZ(float z);
-		virtual void SetAngle(D3DXVECTOR3 angle) {
+		virtual void SetAngle(const D3DXVECTOR3& angle) {
 			DxScriptMeshObject::SetAngleX(angle.x);
 			DxScriptMeshObject::SetAngleY(angle.y);
 			DxScriptMeshObject::SetAngleZ(angle.z);
@@ -444,16 +451,16 @@ namespace directx {
 
 		void SetText(const std::wstring& text);
 		std::wstring& GetText() { return text_.GetText(); }
-		std::vector<int> GetTextCountCU();
-		int GetTotalWidth();
-		int GetTotalHeight();
+		std::vector<size_t> GetTextCountCU();
+		LONG GetTotalWidth();
+		LONG GetTotalHeight();
 
 		void SetFontType(const std::wstring& type) { text_.SetFontType(type.c_str()); bChange_ = true; }
-		void SetFontSize(int size) { 
+		void SetFontSize(LONG size) {
 			if (size == text_.GetFontSize()) return;
 			text_.SetFontSize(size); bChange_ = true; 
 		}
-		void SetFontWeight(int weight) { 
+		void SetFontWeight(LONG weight) {
 			if (weight == text_.GetFontWeight()) return;
 			text_.SetFontWeight(weight); bChange_ = true; 
 		}
@@ -468,18 +475,18 @@ namespace directx {
 
 		void SetFontColorTop(byte r, byte g, byte b) { text_.SetFontColorTop(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
 		void SetFontColorBottom(byte r, byte g, byte b) { text_.SetFontColorBottom(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
-		void SetFontBorderWidth(int width) { text_.SetFontBorderWidth(width); bChange_ = true; }
-		void SetFontBorderType(int type) { text_.SetFontBorderType(type); bChange_ = true; }
+		void SetFontBorderWidth(LONG width) { text_.SetFontBorderWidth(width); bChange_ = true; }
+		void SetFontBorderType(DxFont::TypeBorder type) { text_.SetFontBorderType(type); bChange_ = true; }
 		void SetFontBorderColor(byte r, byte g, byte b) { text_.SetFontBorderColor(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
 
 		void SetCharset(BYTE set);
 
-		void SetMaxWidth(int width) { text_.SetMaxWidth(width); bChange_ = true; }
-		void SetMaxHeight(int height) { text_.SetMaxHeight(height); bChange_ = true; }
+		void SetMaxWidth(LONG width) { text_.SetMaxWidth(width); bChange_ = true; }
+		void SetMaxHeight(LONG height) { text_.SetMaxHeight(height); bChange_ = true; }
 		void SetLinePitch(float pitch) { text_.SetLinePitch(pitch); bChange_ = true; }
 		void SetSidePitch(float pitch) { text_.SetSidePitch(pitch); bChange_ = true; }
-		void SetHorizontalAlignment(int value) { text_.SetHorizontalAlignment(value); bChange_ = true; }
-		void SetVerticalAlignment(int value) { text_.SetVerticalAlignment(value); bChange_ = true; }
+		void SetHorizontalAlignment(DxText::Alignment value) { text_.SetHorizontalAlignment(value); bChange_ = true; }
+		void SetVerticalAlignment(DxText::Alignment value) { text_.SetVerticalAlignment(value); bChange_ = true; }
 		void SetPermitCamera(bool bPermit) { text_.SetPermitCamera(bPermit); }
 		void SetSyntacticAnalysis(bool bEnable) { text_.SetSyntacticAnalysis(bEnable); }
 
@@ -491,7 +498,7 @@ namespace directx {
 		virtual void SetAngleX(float x);
 		virtual void SetAngleY(float y);
 		virtual void SetAngleZ(float z);
-		virtual void SetAngle(D3DXVECTOR3 angle) {
+		virtual void SetAngle(const D3DXVECTOR3& angle) {
 			SetAngleX(angle.x);
 			SetAngleY(angle.y);
 			SetAngleZ(angle.z);
@@ -551,9 +558,9 @@ namespace directx {
 	class DxTextFileObject : public DxFileObject {
 	protected:
 		std::vector<std::vector<char>> listLine_;
-		int encoding_;
+		gstd::Encoding::Type encoding_;
 		size_t bomSize_;
-		char bomHead_[2];
+		byte bomHead_[3];
 		size_t bytePerChar_;
 
 		bool _ParseLines(std::vector<char>& src);
@@ -563,7 +570,7 @@ namespace directx {
 		virtual ~DxTextFileObject();
 		virtual bool OpenR(const std::wstring& path);
 		virtual bool OpenR(gstd::ref_count_ptr<gstd::FileReader> reader);
-		virtual bool OpenRW(std::wstring path);
+		virtual bool OpenRW(const std::wstring& path);
 		virtual bool Store();
 		size_t GetLineCount() { return listLine_.size(); }
 		std::string GetLineAsString(size_t line);
@@ -587,13 +594,12 @@ namespace directx {
 		int byteOrder_;
 		unsigned int codePage_;
 		gstd::ref_count_ptr<gstd::ByteBuffer> buffer_;
-
 	public:
 		DxBinaryFileObject();
 		virtual ~DxBinaryFileObject();
 		virtual bool OpenR(const std::wstring& path);
 		virtual bool OpenR(gstd::ref_count_ptr<gstd::FileReader> reader);
-		virtual bool OpenRW(std::wstring path);
+		virtual bool OpenRW(const std::wstring& path);
 		virtual bool Store();
 
 		gstd::ref_count_ptr<gstd::ByteBuffer> GetBuffer() { return buffer_; }

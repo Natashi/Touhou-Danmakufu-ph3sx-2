@@ -511,7 +511,7 @@ std::wstring MetasequoiaMesh::GetPath() {
 void MetasequoiaMesh::Render() {
 	MetasequoiaMesh::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
-void MetasequoiaMesh::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+void MetasequoiaMesh::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	if (data_ == nullptr) return;
 
 	MetasequoiaMeshData* data = (MetasequoiaMeshData*)data_.get();

@@ -65,7 +65,7 @@ void StgShotManager::Render(int targetPriority) {
 
 	D3DXMATRIX& matCamera = camera2D->GetMatrix();
 
-	for (shared_ptr<StgShotObject> obj : listObj_) {
+	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted() || !obj->IsActive() || obj->GetRenderPriorityI() != targetPriority) continue;
 		obj->RenderOnShotManager();
 	}
@@ -154,7 +154,7 @@ void StgShotManager::Render(int targetPriority) {
 }
 
 void StgShotManager::RegistIntersectionTarget() {
-	for (shared_ptr<StgShotObject> obj : listObj_) {
+	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (!obj->IsDeleted() && obj->IsActive()) {
 			obj->ClearIntersectedIdList();
 			obj->RegistIntersectionTarget();
@@ -180,7 +180,7 @@ RECT StgShotManager::GetShotAutoDeleteClipRect() {
 void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, float cx, float cy, float radius) {
 	float rd = radius * radius;
 
-	for (shared_ptr<StgShotObject> obj : listObj_) {
+	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 		if (typeDelete == DEL_TYPE_SHOT && (obj->GetLife() == StgShotObject::LIFE_SPELL_REGIST)) continue;
@@ -207,7 +207,7 @@ std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, float cx, floa
 	float rd = radius * radius;
 
 	std::vector<int> res;
-	for (shared_ptr<StgShotObject> obj : listObj_) {
+	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 
@@ -223,7 +223,7 @@ std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, float cx, floa
 size_t StgShotManager::GetShotCount(int typeOwner) {
 	size_t res = 0;
 
-	for (shared_ptr<StgShotObject> obj : listObj_) {
+	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 		++res;
@@ -237,7 +237,7 @@ void StgShotManager::GetValidRenderPriorityList(std::vector<PriListBool>& list) 
 	list.resize(objectManager->GetRenderBucketCapacity());
 	ZeroMemory(&list[0], objectManager->GetRenderBucketCapacity() * sizeof(PriListBool));
 
-	for (shared_ptr<StgShotObject> obj : listObj_) {
+	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		int pri = obj->GetRenderPriorityI();
 		list[pri] = true;
@@ -280,13 +280,13 @@ StgShotDataList::StgShotDataList() {
 }
 StgShotDataList::~StgShotDataList() {
 	for (std::vector<StgShotRenderer*>& renderList : listRenderer_) {
-		for (StgShotRenderer* renderer : renderList)
+		for (StgShotRenderer*& renderer : renderList)
 			ptr_delete(renderer);
 		renderList.clear();
 	}
 	listRenderer_.clear();
 
-	for (StgShotData* shotData : listData_)
+	for (StgShotData*& shotData : listData_)
 		ptr_delete(shotData);
 	listData_.clear();
 }
@@ -451,8 +451,8 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 				LONG width = rect.right - rect.left;
 				LONG height = rect.bottom - rect.top;
 				RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-				if (width % 2 == 1) rcDest.right += 1;
-				if (height % 2 == 1) rcDest.bottom += 1;
+				if (width % 2 == 1) rcDest.right++;
+				if (height % 2 == 1) rcDest.bottom++;
 				anime.rcDst_ = rcDest;
 
 				data->listAnime_.resize(1);
@@ -476,11 +476,11 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 				rect.bottom = StringUtility::ToInteger(list[3]);
 				data->rcDelay_ = rect;
 
-				int width = rect.right - rect.left;
-				int height = rect.bottom - rect.top;
+				LONG width = rect.right - rect.left;
+				LONG height = rect.bottom - rect.top;
 				RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-				if (width % 2 == 1) rcDest.right += 1;
-				if (height % 2 == 1) rcDest.bottom += 1;
+				if (width % 2 == 1) rcDest.right++;
+				if (height % 2 == 1) rcDest.bottom++;
 				data->rcDstDelay_ = rcDest;
 			}
 			else if (element == L"collision") {
@@ -553,9 +553,9 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 			int r = 0;
 			if (data->listAnime_.size() > 0) {
 				RECT& rect = data->listAnime_[0].rcSrc_;
-				int rx = abs(rect.right - rect.left);
-				int ry = abs(rect.bottom - rect.top);
-				int r = std::min(rx, ry);
+				LONG rx = abs(rect.right - rect.left);
+				LONG ry = abs(rect.bottom - rect.top);
+				LONG r = std::min(rx, ry);
 				r = r / 3 - 3;
 			}
 			DxCircle circle(0, 0, std::max(r, 2));
@@ -595,11 +595,11 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 					anime.frame_ = frame;
 					anime.rcSrc_ = rcSrc;
 
-					int width = rcSrc.right - rcSrc.left;
-					int height = rcSrc.bottom - rcSrc.top;
+					LONG width = rcSrc.right - rcSrc.left;
+					LONG height = rcSrc.bottom - rcSrc.top;
 					RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-					if (width % 2 == 1) rcDest.right += 1;
-					if (height % 2 == 1) rcDest.bottom += 1;
+					if (width % 2 == 1) rcDest.right++;
+					if (height % 2 == 1) rcDest.bottom++;
 					anime.rcDst_ = rcDest;
 
 					shotData->listAnime_.push_back(anime);
@@ -660,9 +660,7 @@ StgShotData::AnimationData* StgShotData::GetData(int frame) {
 	frame = frame % totalAnimeFrame_;
 	int total = 0;
 
-	std::vector<AnimationData>::iterator itr = listAnime_.begin();
-	for (; itr != listAnime_.end(); ++itr) {
-		//AnimationData* anime = itr;
+	for (auto itr = listAnime_.begin(); itr != listAnime_.end(); ++itr) {
 		total += itr->frame_;
 		if (total >= frame)
 			return &(*itr);
@@ -1402,7 +1400,7 @@ void StgNormalShotObject::_AddIntersectionRelativeTarget() {
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 	std::vector<StgIntersectionTarget::ptr> listTarget = GetIntersectionTargetList();
-	for (auto iTarget : listTarget) {
+	for (auto& iTarget : listTarget) {
 		intersectionManager->AddTarget(iTarget);
 	}
 
@@ -1643,7 +1641,7 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 	std::vector<StgIntersectionTarget::ptr> listTarget = GetIntersectionTargetList();
-	for (auto iTarget : listTarget)
+	for (auto& iTarget : listTarget)
 		intersectionManager->AddTarget(iTarget);
 }
 

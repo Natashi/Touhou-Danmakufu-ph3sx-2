@@ -12,7 +12,7 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 	stageController_ = stageController;
 	listItemData_ = new StgItemDataList();
 
-	std::wstring dir = EPathProperty::GetSystemImageDirectory();
+	const std::wstring& dir = EPathProperty::GetSystemImageDirectory();
 
 	listSpriteItem_ = new SpriteList2D();
 	std::wstring pathItem = PathProperty::GetUnique(dir + L"System_Stg_Item.png");
@@ -72,7 +72,7 @@ void StgItemManager::Work() {
 				bool deleted = false;
 
 				float radius = dx * dx + dy * dy;
-				if (radius <= 16 * 16) {
+				if (radius <= (float)(16 * 16)) {
 					obj->Intersect(nullptr, nullptr);
 					deleted = true;
 				}
@@ -102,9 +102,7 @@ void StgItemManager::Work() {
 								bMoveToPlayer = true;
 						}
 
-						for (auto itr = listCircleToPlayer_.begin(); itr != listCircleToPlayer_.end(); ++itr) {
-							DxCircle& circle = *itr;
-
+						for (DxCircle& circle : listCircleToPlayer_) {
 							float cdx = ix - circle.GetX();
 							float cdy = iy - circle.GetY();
 							float rr = (float)circle.GetR() * (float)circle.GetR();
@@ -165,7 +163,7 @@ void StgItemManager::Render(int targetPriority) {
 
 	D3DXMATRIX& matCamera = camera2D->GetMatrix();
 
-	for (shared_ptr<StgItemObject> obj : listObj_) {
+	for (shared_ptr<StgItemObject>& obj : listObj_) {
 		if (obj->IsDeleted() || obj->GetRenderPriorityI() != targetPriority) continue;
 		obj->RenderOnItemManager();
 	}
@@ -233,7 +231,7 @@ void StgItemManager::GetValidRenderPriorityList(std::vector<PriListBool>& list) 
 	list.resize(objectManager->GetRenderBucketCapacity());
 	ZeroMemory(&list[0], objectManager->GetRenderBucketCapacity() * sizeof(PriListBool));
 
-	for (shared_ptr<StgItemObject> obj : listObj_) {
+	for (shared_ptr<StgItemObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		int pri = obj->GetRenderPriorityI();
 		list[pri] = true;
@@ -291,13 +289,13 @@ StgItemDataList::StgItemDataList() {
 }
 StgItemDataList::~StgItemDataList() {
 	for (std::vector<StgItemRenderer*>& renderList : listRenderer_) {
-		for (StgItemRenderer* renderer : renderList)
+		for (StgItemRenderer*& renderer : renderList)
 			ptr_delete(renderer);
 		renderList.clear();
 	}
 	listRenderer_.clear();
 
-	for (StgItemData* itemData : listData_)
+	for (StgItemData*& itemData : listData_)
 		ptr_delete(itemData);
 	listData_.clear();
 }
@@ -334,7 +332,6 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 
 				if (scanner.HasNext())
 					tok = scanner.Next();
-
 			}
 		}
 
@@ -435,11 +432,11 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 				rect.bottom = StringUtility::ToInteger(list[3]);
 				anime.rcSrc_ = rect;
 
-				int width = rect.right - rect.left;
-				int height = rect.bottom - rect.top;
+				LONG width = rect.right - rect.left;
+				LONG height = rect.bottom - rect.top;
 				RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-				if (width % 2 == 1) rcDest.right += 1;
-				if (height % 2 == 1) rcDest.bottom += 1;
+				if (width % 2 == 1) rcDest.right++;
+				if (height % 2 == 1) rcDest.bottom++;
 				anime.rcDest_ = rcDest;
 
 				data->listAnime_.resize(1);
@@ -459,8 +456,8 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 				LONG width = rect.right - rect.left;
 				LONG height = rect.bottom - rect.top;
 				RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-				if (width % 2 == 1) rcDest.right += 1;
-				if (height % 2 == 1) rcDest.bottom += 1;
+				if (width % 2 == 1) rcDest.right++;
+				if (height % 2 == 1) rcDest.bottom++;
 				data->rcOutDest_ = rcDest;
 			}
 			else if (element == L"render") {
@@ -520,8 +517,8 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 					LONG width = rcSrc.right - rcSrc.left;
 					LONG height = rcSrc.bottom - rcSrc.top;
 					RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-					if (width % 2 == 1) ++rcDest.right;
-					if (height % 2 == 1) ++rcDest.bottom;
+					if (width % 2 == 1) rcDest.right++;
+					if (height % 2 == 1) rcDest.bottom++;
 
 					anime.frame_ = frame;
 					anime.rcSrc_ = rcSrc;
@@ -574,9 +571,7 @@ StgItemData::AnimationData* StgItemData::GetData(int frame) {
 	frame = frame % totalAnimeFrame_;
 	int total = 0;
 
-	std::vector<AnimationData>::iterator itr = listAnime_.begin();
-	for (; itr != listAnime_.end(); itr++) {
-		//AnimationData* anime = itr;
+	for (auto itr = listAnime_.begin(); itr != listAnime_.end(); ++itr) {
 		total += itr->frame_;
 		if (total >= frame)
 			return &(*itr);

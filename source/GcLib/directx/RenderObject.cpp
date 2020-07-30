@@ -199,34 +199,31 @@ size_t RenderObject::_GetPrimitiveCount() {
 size_t RenderObject::_GetPrimitiveCount(size_t count) {
 	size_t res = 0;
 	switch (typePrimitive_) {
-	case D3DPT_POINTLIST://ポイントリスト
+	case D3DPT_POINTLIST:
 		res = count;
 		break;
-	case D3DPT_LINELIST://ラインリスト
-		res = count / 2;
+	case D3DPT_LINELIST:
+		res = count / 2U;
 		break;
-	case D3DPT_LINESTRIP://ラインストリップ
-		res = count - 1;
+	case D3DPT_LINESTRIP:
+		res = count > 0U ? count - 1U : 0U;
 		break;
-	case D3DPT_TRIANGLELIST://トライアングルリスト
-		res = count / 3;
+	case D3DPT_TRIANGLELIST:
+		res = count / 3U;
 		break;
-	case D3DPT_TRIANGLESTRIP://トライアングルストリップ
-		res = count - 2;
-		break;
-	case D3DPT_TRIANGLEFAN://トライアングルファン
-		res = count - 2;
+	case D3DPT_TRIANGLESTRIP:
+	case D3DPT_TRIANGLEFAN:
+		res = count > 1U ? count - 2U : 0U;
 		break;
 	}
-
 	return res;
 }
 
 
 //---------------------------------------------------------------------
 
-D3DXMATRIX RenderObject::CreateWorldMatrix(D3DXVECTOR3& position, D3DXVECTOR3& scale, 
-	D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ,
+D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
+	const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
 	D3DXMATRIX* matRelative, bool bCoordinate2D) 
 {
 	D3DXMATRIX mat;
@@ -308,8 +305,9 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(D3DXVECTOR3& position, D3DXVECTOR3& s
 
 	return mat;
 }
-D3DXMATRIX RenderObject::CreateWorldMatrix(D3DXVECTOR3& position, D3DXVECTOR3& scale, D3DXVECTOR3& angle,
-	D3DXMATRIX* matRelative, bool bCoordinate2D) {
+D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3DXVECTOR3& scale, 
+	const D3DXVECTOR3& angle, D3DXMATRIX* matRelative, bool bCoordinate2D) 
+{
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
 
@@ -395,8 +393,8 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(D3DXVECTOR3& position, D3DXVECTOR3& s
 	return mat;
 }
 
-D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(D3DXVECTOR3& position, D3DXVECTOR3& scale, 
-	D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ,
+D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
+	const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
 	D3DXMATRIX* matRelative, bool bBillboard) 
 {
 	D3DXMATRIX mat;
@@ -455,9 +453,8 @@ D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(D3DXVECTOR3& position, D3DXVE
 	return mat;
 }
 
-D3DXMATRIX RenderObject::CreateWorldMatrix2D(D3DXVECTOR3& position, D3DXVECTOR3& scale,
-	D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ,
-	D3DXMATRIX* matCamera) 
+D3DXMATRIX RenderObject::CreateWorldMatrix2D(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
+	const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ, D3DXMATRIX* matCamera) 
 {
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
@@ -504,9 +501,9 @@ D3DXMATRIX RenderObject::CreateWorldMatrix2D(D3DXVECTOR3& position, D3DXVECTOR3&
 
 	return mat;
 }
-D3DXMATRIX RenderObject::CreateWorldMatrixText2D(D3DXVECTOR2& centerPosition, D3DXVECTOR3& scale,
-	D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ,
-	D3DXVECTOR2& objectPosition, D3DXVECTOR2& biasPosition, D3DXMATRIX* matCamera)
+D3DXMATRIX RenderObject::CreateWorldMatrixText2D(const D3DXVECTOR2& centerPosition, const D3DXVECTOR3& scale,
+	const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
+	const D3DXVECTOR2& objectPosition, const D3DXVECTOR2& biasPosition, D3DXMATRIX* matCamera)
 {
 	D3DXMATRIX mat;
 	D3DXMatrixTranslation(&mat, -centerPosition.x, -centerPosition.y, 0.0f);
@@ -598,7 +595,7 @@ RenderObjectTLX::~RenderObjectTLX() {
 void RenderObjectTLX::Render() {
 	RenderObjectTLX::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
-void RenderObjectTLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+void RenderObjectTLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
 	bool bCamera = camera->IsEnable() && bPermitCamera_;
@@ -611,7 +608,7 @@ void RenderObjectTLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 
 	RenderObjectTLX::Render(matWorld);
 }
-void RenderObjectTLX::Render(D3DXMATRIX& matTransform) {
+void RenderObjectTLX::Render(const D3DXMATRIX& matTransform) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
@@ -713,7 +710,7 @@ VERTEX_TLX* RenderObjectTLX::GetVertex(size_t index) {
 	if (pos >= vertex_.size()) return nullptr;
 	return (VERTEX_TLX*)&vertex_[pos];
 }
-void RenderObjectTLX::SetVertex(size_t index, VERTEX_TLX& vertex) {
+void RenderObjectTLX::SetVertex(size_t index, const VERTEX_TLX& vertex) {
 	size_t pos = index * strideVertexStreamZero_;
 	if (pos >= vertex_.size()) return;
 	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
@@ -912,7 +909,7 @@ void RenderObjectLX::Render() {
 void RenderObjectLX::Render() {
 	RenderObjectLX::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
-void RenderObjectLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+void RenderObjectLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	D3DXMATRIX matWorld;
 	if (!disableMatrixTransform_) {
 		matWorld = RenderObject::CreateWorldMatrix(position_, scale_,
@@ -921,7 +918,7 @@ void RenderObjectLX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& a
 
 	RenderObjectLX::Render(matWorld);
 }
-void RenderObjectLX::Render(D3DXMATRIX& matTransform) {
+void RenderObjectLX::Render(const D3DXMATRIX& matTransform) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
 
@@ -1025,7 +1022,7 @@ VERTEX_LX* RenderObjectLX::GetVertex(size_t index) {
 	if (pos >= vertex_.size()) return nullptr;
 	return (VERTEX_LX*)&vertex_[pos];
 }
-void RenderObjectLX::SetVertex(size_t index, VERTEX_LX& vertex) {
+void RenderObjectLX::SetVertex(size_t index, const VERTEX_LX& vertex) {
 	size_t pos = index * strideVertexStreamZero_;
 	if (pos >= vertex_.size()) return;
 	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
@@ -1193,7 +1190,7 @@ VERTEX_NX* RenderObjectNX::GetVertex(size_t index) {
 	if (pos >= vertex_.size()) return nullptr;
 	return (VERTEX_NX*)&vertex_[pos];
 }
-void RenderObjectNX::SetVertex(size_t index, VERTEX_NX& vertex) {
+void RenderObjectNX::SetVertex(size_t index, const VERTEX_NX& vertex) {
 	size_t pos = index * strideVertexStreamZero_;
 	if (pos >= vertex_.size()) return;
 	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
@@ -1263,7 +1260,7 @@ void RenderObjectBNX::InitializeVertexBuffer() {
 void RenderObjectBNX::Render() {
 	RenderObjectBNX::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
-void RenderObjectBNX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+void RenderObjectBNX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
 
 	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
@@ -1283,8 +1280,8 @@ void RenderObjectBNX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 			angX, angY, angZ, matRelative_.get(), bCoordinate2D_);
 		device->SetTransform(D3DTS_WORLD, &matWorld);
 
-		int sizeMatrix = matrix_->GetSize();
-		for (int iMatrix = 0; iMatrix < sizeMatrix; ++iMatrix) {
+		size_t sizeMatrix = matrix_->GetSize();
+		for (size_t iMatrix = 0; iMatrix < sizeMatrix; ++iMatrix) {
 			D3DXMATRIX matrix = matrix_->GetMatrix(iMatrix) * matWorld;
 			device->SetTransform(D3DTS_WORLDMATRIX(iMatrix),
 				&matrix);
@@ -1350,9 +1347,9 @@ void RenderObjectBNX::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 			shader->SetFloat(shader->GetParameterByName(nullptr, "fogFar"), *(float*)&fogFar);
 
 			//座標変換
-			int sizeMatrix = matrix_->GetSize();
+			size_t sizeMatrix = matrix_->GetSize();
 			std::vector<D3DXMATRIX> listMatrix(sizeMatrix);
-			for (int iMatrix = 0; iMatrix < sizeMatrix; ++iMatrix) {
+			for (size_t iMatrix = 0; iMatrix < sizeMatrix; ++iMatrix) {
 				D3DXMATRIX matrix = matrix_->GetMatrix(iMatrix) * matWorld;
 				listMatrix[iMatrix] = matrix;
 			}
@@ -1453,7 +1450,7 @@ VERTEX_B2NX* RenderObjectB2NX::GetVertex(size_t index) {
 	if (pos >= vertex_.size()) return nullptr;
 	return (VERTEX_B2NX*)&vertex_[pos];
 }
-void RenderObjectB2NX::SetVertex(size_t index, VERTEX_B2NX& vertex) {
+void RenderObjectB2NX::SetVertex(size_t index, const VERTEX_B2NX& vertex) {
 	size_t pos = index * strideVertexStreamZero_;
 	if (pos >= vertex_.size()) return;
 	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
@@ -1525,7 +1522,7 @@ void RenderObjectB4NX::_CopyVertexBufferOnInitialize() {
 			}
 
 			float lastRate = 1.0f;
-			for (int iRate = 0; iRate < 3; ++iRate) {
+			for (size_t iRate = 0; iRate < 3; ++iRate) {
 				float rate = src->blendRate[iRate];
 				dest->blendRate[iRate] = rate;
 				lastRate -= rate;
@@ -1559,7 +1556,7 @@ VERTEX_B4NX* RenderObjectB4NX::GetVertex(size_t index) {
 	if (pos >= vertex_.size()) return nullptr;
 	return (VERTEX_B4NX*)&vertex_[pos];
 }
-void RenderObjectB4NX::SetVertex(size_t index, VERTEX_B4NX& vertex) {
+void RenderObjectB4NX::SetVertex(size_t index, const VERTEX_B4NX& vertex) {
 	size_t pos = index * strideVertexStreamZero_;
 	if (pos >= vertex_.size()) return;
 	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
@@ -1630,7 +1627,7 @@ void Sprite2D::Copy(Sprite2D* src) {
 
 	matRelative_ = src->matRelative_;
 }
-void Sprite2D::SetSourceRect(RECT_D& rcSrc) {
+void Sprite2D::SetSourceRect(const RECT_D& rcSrc) {
 	if (texture_ == nullptr) return;
 	float width = texture_->GetWidth();
 	float height = texture_->GetHeight();
@@ -1641,14 +1638,14 @@ void Sprite2D::SetSourceRect(RECT_D& rcSrc) {
 	SetVertexUV(2, (float)rcSrc.left / width, (float)rcSrc.bottom / height);
 	SetVertexUV(3, (float)rcSrc.right / width, (float)rcSrc.bottom / height);
 }
-void Sprite2D::SetDestinationRect(RECT_D& rcDest) {
+void Sprite2D::SetDestinationRect(const RECT_D& rcDest) {
 	//頂点位置
 	SetVertexPosition(0, rcDest.left, rcDest.top);
 	SetVertexPosition(1, rcDest.right, rcDest.top);
 	SetVertexPosition(2, rcDest.left, rcDest.bottom);
 	SetVertexPosition(3, rcDest.right, rcDest.bottom);
 }
-void Sprite2D::SetVertex(RECT_D& rcSrc, RECT_D& rcDest, D3DCOLOR color) {
+void Sprite2D::SetVertex(const RECT_D& rcSrc, const RECT_D& rcDest, D3DCOLOR color) {
 	SetSourceRect(rcSrc);
 	SetDestinationRect(rcDest);
 	SetColorRGB(color);
@@ -1669,16 +1666,16 @@ RECT_D Sprite2D::GetDestinationRect() {
 	return rect;
 }
 void Sprite2D::SetDestinationCenter() {
-	if (texture_ == nullptr || GetVertexCount() < 4) return;
+	if (texture_ == nullptr || GetVertexCount() < 4U) return;
 	float width = texture_->GetWidth();
 	float height = texture_->GetHeight();
 
 	VERTEX_TLX* vertLT = GetVertex(0); //左上
 	VERTEX_TLX* vertRB = GetVertex(3); //右下
 
-	float vWidth = vertRB->texcoord.x * width - vertLT->texcoord.x * width;
-	float vHeight = vertRB->texcoord.y * height - vertLT->texcoord.y * height;
-	RECT_D rcDest = { -vWidth / 2., -vHeight / 2., vWidth / 2., vHeight / 2. };
+	float vWidth = (vertRB->texcoord.x - vertLT->texcoord.x) * width / 2.0f;
+	float vHeight = (vertRB->texcoord.y - vertLT->texcoord.y) * height / 2.0f;
+	RECT_D rcDest = { -vWidth, -vHeight, vWidth, vHeight };
 
 	SetDestinationRect(rcDest);
 }
@@ -1696,7 +1693,7 @@ SpriteList2D::SpriteList2D() {
 void SpriteList2D::Render() {
 	SpriteList2D::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
-void SpriteList2D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
 	size_t countRenderVertex = countRenderVertex_;
@@ -1807,7 +1804,7 @@ void SpriteList2D::CleanUp() {
 	if (autoClearVertexList_ && (GetVertexCount() >= 6)) 
 		ClearVertexCount();
 }
-void SpriteList2D::_AddVertex(VERTEX_TLX& vertex) {
+void SpriteList2D::_AddVertex(const VERTEX_TLX& vertex) {
 	size_t count = vertex_.size() / strideVertexStreamZero_;
 	if (countRenderVertex_ >= count) {
 		//リサイズ
@@ -1820,7 +1817,7 @@ void SpriteList2D::_AddVertex(VERTEX_TLX& vertex) {
 void SpriteList2D::AddVertex() {
 	SpriteList2D::AddVertex(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
-void SpriteList2D::AddVertex(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	if (bCloseVertexList_ || countRenderVertex_ > 65536 / 6)
 		return;
 
@@ -1846,14 +1843,14 @@ void SpriteList2D::AddVertex(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 //#pragma omp for
 	for (size_t iVert = 0; iVert < 4; ++iVert) {
 		VERTEX_TLX vt;
-		vt.texcoord.x = ptrSrc[(iVert & 0b1) << 1] / width;
-		vt.texcoord.y = ptrSrc[iVert | 0b1] / height;
+		vt.texcoord.x = (float)ptrSrc[(iVert & 0b1) << 1] / width;
+		vt.texcoord.y = (float)ptrSrc[iVert | 0b1] / height;
 
 		D3DXVECTOR4 vPos;
 
 		constexpr float bias = -0.5f;
-		vPos.x = ptrDst[(iVert & 0b1) << 1] + bias;
-		vPos.y = ptrDst[iVert | 0b1] + bias;
+		vPos.x = (float)ptrDst[(iVert & 0b1) << 1] + bias;
+		vPos.y = (float)ptrDst[iVert | 0b1] + bias;
 		vPos.z = 1.0f;
 		vPos.w = 1.0f;
 		/*
@@ -1884,15 +1881,10 @@ void SpriteList2D::AddVertex(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& 
 }
 void SpriteList2D::SetDestinationCenter() {
 	if (texture_ == nullptr) return;
-	int width = texture_->GetWidth();
-	int height = texture_->GetHeight();
 
-	VERTEX_TLX* vertLT = GetVertex(0); //左上
-	VERTEX_TLX* vertRB = GetVertex(3); //右下
-
-	int vWidth = rcSrc_.right - rcSrc_.left;
-	int vHeight = rcSrc_.bottom - rcSrc_.top;
-	RECT_D rcDest = { -vWidth / 2., -vHeight / 2., vWidth / 2., vHeight / 2. };
+	double vWidth = (rcSrc_.right - rcSrc_.left) / 2.0;
+	double vHeight = (rcSrc_.bottom - rcSrc_.top) / 2.0;
+	RECT_D rcDest = { -vWidth, -vHeight, vWidth, vHeight };
 
 	SetDestinationRect(rcDest);
 }
@@ -1915,7 +1907,7 @@ Sprite3D::~Sprite3D() {}
 void Sprite3D::Render() {
 	Sprite3D::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
-void Sprite3D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+void Sprite3D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	D3DXMATRIX matWorld;
 	if (!disableMatrixTransform_) {
 		matWorld = RenderObject::CreateWorldMatrixSprite3D(position_, scale_,
@@ -1924,7 +1916,7 @@ void Sprite3D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
 
 	RenderObjectLX::Render(matWorld);
 }
-void Sprite3D::SetSourceDestRect(RECT_D& rcSrc) {
+void Sprite3D::SetSourceDestRect(const RECT_D& rcSrc) {
 	RECT_D rcSrcCopy = rcSrc;
 	rcSrcCopy.left = (LONG)rcSrc.left;
 	rcSrcCopy.top = (LONG)rcSrc.top;
@@ -1932,17 +1924,17 @@ void Sprite3D::SetSourceDestRect(RECT_D& rcSrc) {
 	rcSrcCopy.bottom = (LONG)rcSrc.bottom - 1;
 
 	RECT_D rcDest;
-	double width = rcSrc.right - rcSrc.left;
-	double height = rcSrc.bottom - rcSrc.top;
-	SetRectD(&rcDest, -width / 2.0, -height / 2.0, width / 2.0, height / 2.0);
+	double width = (rcSrc.right - rcSrc.left) / 2.0;
+	double height = (rcSrc.bottom - rcSrc.top) / 2.0;
+	SetRectD(&rcDest, -width, -height, width, height);
 
 	SetSourceRect(rcSrcCopy);
 	SetDestinationRect(rcDest);
 }
-void Sprite3D::SetSourceRect(RECT_D& rcSrc) {
+void Sprite3D::SetSourceRect(const RECT_D& rcSrc) {
 	if (texture_ == nullptr) return;
-	int width = texture_->GetWidth();
-	int height = texture_->GetHeight();
+	float width = texture_->GetWidth();
+	float height = texture_->GetHeight();
 
 	//テクスチャUV
 	SetVertexUV(0, (float)rcSrc.left / width, (float)rcSrc.top / height);
@@ -1950,14 +1942,14 @@ void Sprite3D::SetSourceRect(RECT_D& rcSrc) {
 	SetVertexUV(2, (float)rcSrc.right / width, (float)rcSrc.top / height);
 	SetVertexUV(3, (float)rcSrc.right / width, (float)rcSrc.bottom / height);
 }
-void Sprite3D::SetDestinationRect(RECT_D& rcDest) {
+void Sprite3D::SetDestinationRect(const RECT_D& rcDest) {
 	//頂点位置
 	SetVertexPosition(0, rcDest.left, rcDest.top, 0);
 	SetVertexPosition(1, rcDest.left, rcDest.bottom, 0);
 	SetVertexPosition(2, rcDest.right, rcDest.top, 0);
 	SetVertexPosition(3, rcDest.right, rcDest.bottom, 0);
 }
-void Sprite3D::SetVertex(RECT_D& rcSrc, RECT_D& rcDest, D3DCOLOR color) {
+void Sprite3D::SetVertex(const RECT_D& rcSrc, const RECT_D& rcDest, D3DCOLOR color) {
 	SetSourceRect(rcSrc);
 	SetDestinationRect(rcDest);
 
@@ -1965,7 +1957,7 @@ void Sprite3D::SetVertex(RECT_D& rcSrc, RECT_D& rcDest, D3DCOLOR color) {
 	SetColorRGB(color);
 	SetAlpha(ColorAccess::GetColorA(color));
 }
-void Sprite3D::SetVertex(RECT_D& rcSrc, D3DCOLOR color) {
+void Sprite3D::SetVertex(const RECT_D& rcSrc, D3DCOLOR color) {
 	SetSourceDestRect(rcSrc);
 
 	//頂点色
@@ -2000,7 +1992,7 @@ void TrajectoryObject3D::Work() {
 void TrajectoryObject3D::Render() {
 	TrajectoryObject3D::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
-void TrajectoryObject3D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+void TrajectoryObject3D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	size_t size = listData_.size() * 2;
 	SetVertexCount(size);
 
@@ -2030,7 +2022,7 @@ void TrajectoryObject3D::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR
 	}
 	RenderObjectLX::Render(angX, angY, angZ);
 }
-void TrajectoryObject3D::AddPoint(D3DXMATRIX mat) {
+void TrajectoryObject3D::AddPoint(const D3DXMATRIX& mat) {
 	Data data;
 	data.alpha = 255;
 	data.pos1 = dataInit_.pos1;

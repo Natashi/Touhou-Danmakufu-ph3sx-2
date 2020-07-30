@@ -697,13 +697,13 @@ void DxScriptTextObject::SetText(const std::wstring& text) {
 
 	bChange_ = true;
 }
-std::vector<int> DxScriptTextObject::GetTextCountCU() {
+std::vector<size_t> DxScriptTextObject::GetTextCountCU() {
 	_UpdateRenderer();
-	int lineCount = textInfo_->GetLineCount();
-	std::vector<int> listCount;
-	for (int iLine = 0; iLine < lineCount; ++iLine) {
+	size_t lineCount = textInfo_->GetLineCount();
+	std::vector<size_t> listCount;
+	for (size_t iLine = 0; iLine < lineCount; ++iLine) {
 		shared_ptr<DxTextLine> textLine = textInfo_->GetTextLine(iLine);
-		int count = textLine->GetTextCodeCount();
+		size_t count = textLine->GetTextCodeCount();
 		listCount.push_back(count);
 	}
 	return listCount;
@@ -722,15 +722,13 @@ void DxScriptTextObject::SetColor(int r, int g, int b) {
 	color_ = D3DCOLOR_ARGB(color >> 24, r, g, b);
 	SetVertexColor(color_);
 }
-int DxScriptTextObject::GetTotalWidth() {
+LONG DxScriptTextObject::GetTotalWidth() {
 	_UpdateRenderer();
-	int res = textInfo_->GetTotalWidth();
-	return res;
+	return textInfo_->GetTotalWidth();
 }
-int DxScriptTextObject::GetTotalHeight() {
+LONG DxScriptTextObject::GetTotalHeight() {
 	_UpdateRenderer();
-	int res = textInfo_->GetTotalHeight();
-	return res;
+	return textInfo_->GetTotalHeight();
 }
 void DxScriptTextObject::SetShader(shared_ptr<Shader> shader) {
 	text_.SetShader(shader);
@@ -860,7 +858,7 @@ bool DxTextFileObject::OpenR(gstd::ref_count_ptr<gstd::FileReader> reader) {
 
 	return _ParseLines(text);
 }
-bool DxTextFileObject::OpenRW(std::wstring path) {
+bool DxTextFileObject::OpenRW(const std::wstring& path) {
 	listLine_.clear();
 	bool res = DxFileObject::OpenRW(path);
 	if (!res) return false;
@@ -876,32 +874,34 @@ bool DxTextFileObject::OpenRW(std::wstring path) {
 	return _ParseLines(text);
 }
 bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
-	std::vector<char>::iterator lineBegin;
+	encoding_ = Encoding::Detect(src.data(), src.size());
+	bomSize_ = 0;
+	bytePerChar_ = 1;
 
-	if (memcmp(&src[0], Encoding::BOM_UTF16LE, 2) == 0) {
-		encoding_ = Encoding::UTF16LE;
-		bomSize_ = 2U;
-		bytePerChar_ = 2U;
+	switch (encoding_) {
+	case Encoding::UTF8BOM:
+		bomSize_ = 3;
+		memcpy(bomHead_, Encoding::BOM_UTF8, 3);
+		break;
+	case Encoding::UTF16LE:
+		bomSize_ = 2;
+		bytePerChar_ = 2;
 		memcpy(bomHead_, Encoding::BOM_UTF16LE, 2);
-	}
-	else if (memcmp(&src[0], Encoding::BOM_UTF16BE, 2) == 0) {
-		encoding_ = Encoding::UTF16BE;
-		bomSize_ = 2U;
-		bytePerChar_ = 2U;
+		break;
+	case Encoding::UTF16BE:
+		bomSize_ = 2;
+		bytePerChar_ = 2;
 		memcpy(bomHead_, Encoding::BOM_UTF16BE, 2);
+		break;
 	}
-	else {
-		encoding_ = Encoding::UTF8;
-		bomSize_ = 0U;
-		bytePerChar_ = 1U;
-		ZeroMemory(bomHead_, 2);
-	}
+
+	if (bomSize_ > src.size()) return true;
 
 	try {
 		if (bytePerChar_ == 1U) {
 			std::vector<char> tmp;
 
-			auto itr = src.begin();
+			auto itr = src.begin() + bomSize_;
 			for (; itr != src.end();) {
 				char* ch = &*itr;
 				if (*ch == '\r' || *ch == '\n') {
@@ -922,7 +922,6 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 		}
 		else if (bytePerChar_ == 2U) {
 			bool bLittleEndian = encoding_ == Encoding::UTF16LE;
-			lineBegin = src.begin() + 2;	//sizeof(BOM)
 
 			wchar_t CH_CR = L'\r';
 			wchar_t CH_LF = L'\n';
@@ -945,7 +944,7 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 
 			std::vector<char> tmp;
 
-			auto itr = src.begin() + 2;		//sizeof(BOM)
+			auto itr = src.begin() + bomSize_;
 			for (; itr != src.end();) {
 				wchar_t* wch = (wchar_t*)&*itr;
 				if (*wch == CH_CR || *wch == CH_LF) {
@@ -1134,7 +1133,7 @@ bool DxBinaryFileObject::OpenR(gstd::ref_count_ptr<gstd::FileReader> reader) {
 
 	return true;
 }
-bool DxBinaryFileObject::OpenRW(std::wstring path) {
+bool DxBinaryFileObject::OpenRW(const std::wstring& path) {
 	bool res = DxFileObject::OpenRW(path);
 	if (!res) return false;
 
@@ -1390,6 +1389,8 @@ void DxScriptObjectManager::PrepareRenderObject() {
 	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
 		DxScriptObjectBase* obj = itr->get();
 		if (obj == nullptr || obj->IsDeleted()) continue;
+		//Some render objects don't use normal rendering, thus sorting isn't required for them
+		if (!obj->HasNormalRendering()) continue;
 		if (!obj->IsVisible()) continue;
 		AddRenderObject(*itr);
 	}

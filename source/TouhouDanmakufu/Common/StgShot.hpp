@@ -337,6 +337,8 @@ public:
 	StgShotObject(StgStageController* stageController);
 	virtual ~StgShotObject();
 
+	virtual bool HasNormalRendering() { return false; }
+
 	virtual void Work();
 	virtual void Render() {}//一括で描画するためオブジェクト管理での描画はしない
 	virtual void Activate() {}

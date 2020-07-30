@@ -3489,7 +3489,7 @@ value DxScript::Func_ObjText_SetFontSize(script_machine* machine, int argc, cons
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int size = argv[1].as_int();
+		LONG size = argv[1].as_int();
 		obj->SetFontSize(size);
 	}
 	return value();
@@ -3509,7 +3509,7 @@ value DxScript::Func_ObjText_SetFontWeight(script_machine* machine, int argc, co
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int weight = argv[1].as_int();
+		LONG weight = argv[1].as_int();
 		if (weight < 0) weight = 0;
 		else if (weight > 1000) weight = 1000;
 		obj->SetFontWeight(weight);
@@ -3545,7 +3545,7 @@ value DxScript::Func_ObjText_SetFontBorderWidth(script_machine* machine, int arg
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int width = argv[1].as_int();
+		LONG width = argv[1].as_int();
 		obj->SetFontBorderWidth(width);
 	}
 	return value();
@@ -3556,7 +3556,7 @@ value DxScript::Func_ObjText_SetFontBorderType(script_machine* machine, int argc
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		int type = argv[1].as_int();
-		obj->SetFontBorderType(type);
+		obj->SetFontBorderType((DxFont::TypeBorder)type);
 	}
 	return value();
 }
@@ -3588,7 +3588,7 @@ value DxScript::Func_ObjText_SetMaxWidth(script_machine* machine, int argc, cons
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int width = argv[1].as_int();
+		LONG width = argv[1].as_int();
 		obj->SetMaxWidth(width);
 	}
 	return value();
@@ -3598,7 +3598,7 @@ value DxScript::Func_ObjText_SetMaxHeight(script_machine* machine, int argc, con
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int height = argv[1].as_int();
+		LONG height = argv[1].as_int();
 		obj->SetMaxHeight(height);
 	}
 	return value();
@@ -3661,7 +3661,7 @@ gstd::value DxScript::Func_ObjText_SetHorizontalAlignment(gstd::script_machine* 
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		int align = argv[1].as_int();
-		obj->SetHorizontalAlignment(align);
+		obj->SetHorizontalAlignment((DxText::Alignment)align);
 	}
 	return value();
 }
@@ -3687,10 +3687,10 @@ value DxScript::Func_ObjText_GetTextLength(script_machine* machine, int argc, co
 value DxScript::Func_ObjText_GetTextLengthCU(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int res = 0;
+	size_t res = 0;
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		std::vector<int> listCount = obj->GetTextCountCU();
+		std::vector<size_t> listCount = obj->GetTextCountCU();
 		for (size_t iLine = 0; iLine < listCount.size(); ++iLine) {
 			res += listCount[iLine];
 		}
@@ -3700,19 +3700,17 @@ value DxScript::Func_ObjText_GetTextLengthCU(script_machine* machine, int argc, 
 value DxScript::Func_ObjText_GetTextLengthCUL(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	std::vector<int> listCountD;
+	std::vector<size_t> listCount;
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		std::vector<int> listCount = obj->GetTextCountCU();
-		for (size_t iLine = 0; iLine < listCount.size(); ++iLine)
-			listCountD.push_back(listCount[iLine]);
+		listCount = obj->GetTextCountCU();
 	}
-	return script->CreateRealArrayValue(listCountD);
+	return script->CreateRealArrayValue(listCount);
 }
 value DxScript::Func_ObjText_GetTotalWidth(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int res = 0;
+	LONG res = 0;
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj)
 		res = obj->GetTotalWidth();
@@ -3721,7 +3719,7 @@ value DxScript::Func_ObjText_GetTotalWidth(script_machine* machine, int argc, co
 value DxScript::Func_ObjText_GetTotalHeight(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int res = 0;
+	LONG res = 0;
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj)
 		res = obj->GetTotalHeight();
@@ -4059,20 +4057,17 @@ gstd::value DxScript::Func_ObjFile_OpenNW(gstd::script_machine* machine, int arg
 		std::wstring path = argv[1].as_string();
 		path = PathProperty::GetUnique(path);
 
-		obj->isArchived_ = false;
-
-		//Try finding a managed file object
 		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader && reader->Open()) {
-			//Cannot write to an archived file, fall back to read-only permission
-			ManagedFileReader* ptrManaged = dynamic_cast<ManagedFileReader*>(reader.GetPointer());
-			if (ptrManaged->IsArchived()) {
-				obj->isArchived_ = true;
+			obj->isArchived_ = reader->IsArchived();
+			if (!obj->isArchived_) {
+				res = obj->OpenRW(path);
+			}
+			else {
+				//Cannot write to an archived file, fall back to read-only permission
 				res = obj->OpenR(reader);
 			}
-			else res = obj->OpenRW(path);
 		}
-		else res = obj->OpenRW(path);
 	}
 	return script->CreateBooleanValue(res);
 }
@@ -4101,7 +4096,7 @@ gstd::value DxScript::Func_ObjFile_GetSize(gstd::script_machine* machine, int ar
 gstd::value DxScript::Func_ObjFileT_GetLineCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
-	int res = 0;
+	size_t res = 0;
 	DxTextFileObject* obj = dynamic_cast<DxTextFileObject*>(script->GetObjectPointer(id));
 	if (obj)
 		res = obj->GetLineCount();

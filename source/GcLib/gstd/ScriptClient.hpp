@@ -19,7 +19,7 @@ namespace gstd {
 	class ScriptEngineData {
 	protected:
 		std::wstring path_;
-		int encoding_;
+		Encoding::Type encoding_;
 		std::vector<char> source_;
 		gstd::ref_count_ptr<script_engine> engine_;
 		gstd::ref_count_ptr<ScriptFileLineMap> mapLine_;
@@ -31,7 +31,7 @@ namespace gstd {
 		std::wstring& GetPath() { return path_; }
 		void SetSource(std::vector<char>& source);
 		std::vector<char>& GetSource() { return source_; }
-		int GetEncoding() { return encoding_; }
+		Encoding::Type GetEncoding() { return encoding_; }
 		void SetEngine(gstd::ref_count_ptr<script_engine> engine) { engine_ = engine; }
 		gstd::ref_count_ptr<script_engine> GetEngine() { return engine_; }
 		gstd::ref_count_ptr<ScriptFileLineMap> GetScriptFileLineMap() { return mapLine_; }

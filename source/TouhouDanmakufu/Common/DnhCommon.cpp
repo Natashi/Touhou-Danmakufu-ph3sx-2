@@ -30,7 +30,7 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 	ref_count_ptr<ScriptInformation> res = nullptr;
 
 	Scanner scanner(source);
-	int encoding = scanner.GetEncoding();
+	Encoding::Type encoding = scanner.GetEncoding();
 	try {
 		bool bScript = false;
 		int type = TYPE_SINGLE;
@@ -50,26 +50,33 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
-			if (tok.GetType() == Token::Type::TK_EOF)//Eof‚Ì¯•Êq‚ª—ˆ‚½‚çƒtƒ@ƒCƒ‹‚Ì’²¸I—¹
-			{
+			if (tok.GetType() == Token::Type::TK_EOF)
 				break;
-			}
 			else if (tok.GetType() == Token::Type::TK_SHARP) {
 				tok = scanner.Next();
 				std::wstring element = tok.GetElement();
 
-				bool bANSIDanmakufu = false;
-				if (encoding == Encoding::UTF8) {
+				bool bValidDanmakufuHeader = false;
+				if (element == L"TouhouDanmakufu" || element == L"“Œ•û’e–‹•—") {
+					bValidDanmakufuHeader = true;
+				}
+				else {
 					int start = tok.GetStartPointer();
 					int end = tok.GetEndPointer();
-
-					{
+					if (encoding == Encoding::UTF8 || encoding == Encoding::UTF8BOM) {
+						//First, try ANSI
 						std::string multiThDmf = StringUtility::ConvertWideToMulti(L"“Œ•û’e–‹•—", CP_ACP);
-						bANSIDanmakufu = scanner.CompareMemory(start, end, multiThDmf.data());
+						bValidDanmakufuHeader = scanner.CompareMemory(start, end, multiThDmf.data());
+
+						//Second, try UTF-8
+						if (!bValidDanmakufuHeader) {
+							multiThDmf = StringUtility::ConvertWideToMulti(L"“Œ•û’e–‹•—", CP_UTF8);
+							bValidDanmakufuHeader = scanner.CompareMemory(start, end, multiThDmf.data());
+						}
 					}
 				}
 
-				if (bANSIDanmakufu || element == L"“Œ•û’e–‹•—" || element == L"TouhouDanmakufu") {
+				if (bValidDanmakufuHeader) {
 					bScript = true;
 					if (scanner.Next().GetType() != Token::Type::TK_OPENB) continue;
 					tok = scanner.Next();

@@ -43,9 +43,9 @@ namespace directx {
 
 		void SetRenderObject(gstd::ref_count_ptr<RenderObject> obj) { obj_ = obj; }
 		gstd::ref_count_ptr<RenderObject> GetRenderObject() { return obj_; }
-		void SetPosition(D3DXVECTOR3& pos) { position_ = pos; }
-		void SetAngle(D3DXVECTOR3& angle) { angle_ = angle; }
-		void SetScale(D3DXVECTOR3& scale) { scale_ = scale; }
+		void SetPosition(const D3DXVECTOR3& pos) { position_ = pos; }
+		void SetAngle(const D3DXVECTOR3& angle) { angle_ = angle; }
+		void SetScale(const D3DXVECTOR3& scale) { scale_ = scale; }
 	};
 
 	class RenderBlocks {
@@ -55,7 +55,7 @@ namespace directx {
 		RenderBlocks() {};
 		virtual ~RenderBlocks() {};
 		void Add(gstd::ref_count_ptr<RenderBlock> block) { listBlock_.push_back(block); }
-		std::list<gstd::ref_count_ptr<RenderBlock> >& GetList() { return listBlock_; }
+		std::list<gstd::ref_count_ptr<RenderBlock>>& GetList() { return listBlock_; }
 
 	};
 
@@ -127,7 +127,7 @@ namespace directx {
 				D3DXMatrixIdentity(&matrix_[iMat]);
 		}
 		size_t GetSize() { return matrix_.size(); }
-		void SetMatrix(size_t index, D3DXMATRIX& mat) { matrix_[index] = mat; }
+		void SetMatrix(size_t index, const D3DXMATRIX& mat) { matrix_[index] = mat; }
 		D3DXMATRIX& GetMatrix(size_t index) { return matrix_[index]; }
 	};
 
@@ -136,10 +136,10 @@ namespace directx {
 		DirectionalLightingState();
 		~DirectionalLightingState();
 
-		void SetDirection(D3DXVECTOR3& dir) { light_.Direction = dir; }
-		void SetColorDiffuse(D3DCOLORVALUE& col) { light_.Diffuse = col; }
-		void SetColorSpecular(D3DCOLORVALUE& col) { light_.Specular = col; }
-		void SetColorAmbient(D3DCOLORVALUE& col) { light_.Ambient = col; }
+		void SetDirection(const D3DXVECTOR3& dir) { light_.Direction = dir; }
+		void SetColorDiffuse(const D3DCOLORVALUE& col) { light_.Diffuse = col; }
+		void SetColorSpecular(const D3DCOLORVALUE& col) { light_.Specular = col; }
+		void SetColorAmbient(const D3DCOLORVALUE& col) { light_.Ambient = col; }
 
 		void SetLightEnable(bool b) { bLightEnable_ = b; }
 		void SetSpecularEnable(bool b) { bSpecularEnable_ = b; }
@@ -196,19 +196,19 @@ namespace directx {
 
 		void SetRalativeMatrix(shared_ptr<D3DXMATRIX>& mat) { matRelative_ = mat; }
 
-		static D3DXMATRIX CreateWorldMatrix(D3DXVECTOR3& position, D3DXVECTOR3& scale, 
-			D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ,
+		static D3DXMATRIX CreateWorldMatrix(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
+			const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
 			D3DXMATRIX* matRelative, bool bCoordinate2D = false);
-		static D3DXMATRIX CreateWorldMatrix(D3DXVECTOR3& position, D3DXVECTOR3& scale, D3DXVECTOR3& angle,
+		static D3DXMATRIX CreateWorldMatrix(const D3DXVECTOR3& position, const D3DXVECTOR3& scale, const D3DXVECTOR3& angle,
 			D3DXMATRIX* matRelative, bool bCoordinate2D = false);
-		static D3DXMATRIX CreateWorldMatrixSprite3D(D3DXVECTOR3& position, D3DXVECTOR3& scale, 
-			D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ,
+		static D3DXMATRIX CreateWorldMatrixSprite3D(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
+			const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
 			D3DXMATRIX* matRelative, bool bBillboard = false);
-		static D3DXMATRIX CreateWorldMatrix2D(D3DXVECTOR3& position, D3DXVECTOR3& scale, 
-			D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ, D3DXMATRIX* matCamera);
-		static D3DXMATRIX CreateWorldMatrixText2D(D3DXVECTOR2& centerPosition, D3DXVECTOR3& scale,
-			D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ, 
-			D3DXVECTOR2& objectPosition, D3DXVECTOR2& biasPosition, D3DXMATRIX* matCamera);
+		static D3DXMATRIX CreateWorldMatrix2D(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
+			const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ, D3DXMATRIX* matCamera);
+		static D3DXMATRIX CreateWorldMatrixText2D(const D3DXVECTOR2& centerPosition, const D3DXVECTOR3& scale,
+			const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
+			const D3DXVECTOR2& objectPosition, const D3DXVECTOR2& biasPosition, D3DXMATRIX* matCamera);
 		static void SetCoordinate2dDeviceMatrix();
 
 		void SetDxObjectReference(DxScriptRenderObject* obj) { dxObjParent_ = obj; }
@@ -223,14 +223,14 @@ namespace directx {
 		virtual size_t GetVertexCount() { return vertex_.size() / strideVertexStreamZero_; }
 		void SetVertexIndices(std::vector<uint16_t>& indices) { vertexIndices_ = indices; }
 
-		void SetPosition(D3DXVECTOR3& pos) { position_ = pos; }
+		void SetPosition(const D3DXVECTOR3& pos) { position_ = pos; }
 		void SetPosition(float x, float y, float z) { position_.x = x; position_.y = y; position_.z = z; }
 		void SetX(float x) { position_.x = x; }
 		void SetY(float y) { position_.y = y; }
 		void SetZ(float z) { position_.z = z; }
-		void SetAngle(D3DXVECTOR3& angle) { angle_ = angle; }
+		void SetAngle(const D3DXVECTOR3& angle) { angle_ = angle; }
 		void SetAngleXYZ(float angx = 0.0f, float angy = 0.0f, float angz = 0.0f) { angle_.x = angx; angle_.y = angy; angle_.z = angz; }
-		void SetScale(D3DXVECTOR3& scale) { scale_ = scale; }
+		void SetScale(const D3DXVECTOR3& scale) { scale_ = scale; }
 		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f) { scale_.x = sx; scale_.y = sy; scale_.z = sz; }
 		void SetTexture(Texture* texture) { 
 			if (texture)
@@ -264,13 +264,13 @@ namespace directx {
 		RenderObjectTLX();
 		~RenderObjectTLX();
 		virtual void Render();
-		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
-		virtual void Render(D3DXMATRIX& matTransform);
+		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
+		virtual void Render(const D3DXMATRIX& matTransform);
 		virtual void SetVertexCount(size_t count);
 
 		//頂点設定
 		VERTEX_TLX* GetVertex(size_t index);
-		void SetVertex(size_t index, VERTEX_TLX& vertex);
+		void SetVertex(size_t index, const VERTEX_TLX& vertex);
 		void SetVertexPosition(size_t index, float x, float y, float z = 1.0f, float w = 1.0f);
 		void SetVertexUV(size_t index, float u, float v);
 		void SetVertexColor(size_t index, D3DCOLOR color);
@@ -296,13 +296,13 @@ namespace directx {
 		RenderObjectLX();
 		~RenderObjectLX();
 		virtual void Render();
-		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
-		virtual void Render(D3DXMATRIX& matTransform);
+		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
+		virtual void Render(const D3DXMATRIX& matTransform);
 		virtual void SetVertexCount(size_t count);
 
 		//頂点設定
 		VERTEX_LX* GetVertex(size_t index);
-		void SetVertex(size_t index, VERTEX_LX& vertex);
+		void SetVertex(size_t index, const VERTEX_LX& vertex);
 		void SetVertexPosition(size_t index, float x, float y, float z);
 		void SetVertexUV(size_t index, float u, float v);
 		void SetVertexColor(size_t index, D3DCOLOR color);
@@ -332,7 +332,7 @@ namespace directx {
 
 		//頂点設定
 		VERTEX_NX* GetVertex(size_t index);
-		void SetVertex(size_t index, VERTEX_NX& vertex);
+		void SetVertex(size_t index, const VERTEX_NX& vertex);
 		void SetVertexPosition(size_t index, float x, float y, float z);
 		void SetVertexUV(size_t index, float u, float v);
 		void SetVertexNormal(size_t index, float x, float y, float z);
@@ -362,7 +362,7 @@ namespace directx {
 
 		void InitializeVertexBuffer();
 		virtual void Render();
-		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
+		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
 
 		//描画用設定
 		void SetMatrix(gstd::ref_count_ptr<Matrices> matrix) { matrix_ = matrix; }
@@ -397,7 +397,7 @@ namespace directx {
 
 		//頂点設定
 		VERTEX_B2NX* GetVertex(size_t index);
-		void SetVertex(size_t index, VERTEX_B2NX& vertex);
+		void SetVertex(size_t index, const VERTEX_B2NX& vertex);
 		void SetVertexPosition(size_t index, float x, float y, float z);
 		void SetVertexUV(size_t index, float u, float v);
 		void SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate);
@@ -428,7 +428,7 @@ namespace directx {
 
 		//頂点設定
 		VERTEX_B4NX* GetVertex(size_t index);
-		void SetVertex(size_t index, VERTEX_B4NX& vertex);
+		void SetVertex(size_t index, const VERTEX_B4NX& vertex);
 		void SetVertexPosition(size_t index, float x, float y, float z);
 		void SetVertexUV(size_t index, float u, float v);
 		void SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate);
@@ -451,10 +451,10 @@ namespace directx {
 		Sprite2D();
 		~Sprite2D();
 		void Copy(Sprite2D* src);
-		void SetSourceRect(RECT_D& rcSrc);
-		void SetDestinationRect(RECT_D& rcDest);
+		void SetSourceRect(const RECT_D& rcSrc);
+		void SetDestinationRect(const RECT_D& rcDest);
 		void SetDestinationCenter();
-		void SetVertex(RECT_D& rcSrc, RECT_D& rcDest, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
+		void SetVertex(const RECT_D& rcSrc, const RECT_D& rcDest, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
 
 		RECT_D GetDestinationRect();
 	};
@@ -471,7 +471,7 @@ namespace directx {
 		D3DCOLOR color_;
 		bool bCloseVertexList_;
 		bool autoClearVertexList_;
-		void _AddVertex(VERTEX_TLX& vertex);
+		void _AddVertex(const VERTEX_TLX& vertex);
 	public:
 		SpriteList2D();
 
@@ -481,15 +481,15 @@ namespace directx {
 		}
 
 		virtual void Render();
-		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
+		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
 
 		void ClearVertexCount() { countRenderVertex_ = 0; bCloseVertexList_ = false; }
 		void CleanUp();
 
 		void AddVertex();
-		void AddVertex(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
-		void SetSourceRect(RECT_D& rcSrc) { rcSrc_ = rcSrc; }
-		void SetDestinationRect(RECT_D& rcDest) { rcDest_ = rcDest; }
+		void AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
+		void SetSourceRect(const RECT_D& rcSrc) { rcSrc_ = rcSrc; }
+		void SetDestinationRect(const RECT_D& rcDest) { rcDest_ = rcDest; }
 		void SetDestinationCenter();
 		D3DCOLOR GetColor() { return color_; }
 		void SetColor(D3DCOLOR color) { color_ = color; }
@@ -510,13 +510,13 @@ namespace directx {
 		~Sprite3D();
 
 		virtual void Render();
-		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
+		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
 
-		void SetSourceRect(RECT_D &rcSrc);
-		void SetDestinationRect(RECT_D& rcDest);
-		void SetVertex(RECT_D& rcSrc, RECT_D& rcDest, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
-		void SetSourceDestRect(RECT_D& rcSrc);
-		void SetVertex(RECT_D& rcSrc, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
+		void SetSourceRect(const RECT_D &rcSrc);
+		void SetDestinationRect(const RECT_D& rcDest);
+		void SetVertex(const RECT_D& rcSrc, const RECT_D& rcDest, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
+		void SetSourceDestRect(const RECT_D& rcSrc);
+		void SetVertex(const RECT_D& rcSrc, D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255));
 		void SetBillboardEnable(bool bEnable) { bBillboard_ = bEnable; }
 	};
 
@@ -544,12 +544,12 @@ namespace directx {
 		~TrajectoryObject3D();
 		virtual void Work();
 		virtual void Render();
-		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
-		void SetInitialLine(D3DXVECTOR3 pos1, D3DXVECTOR3 pos2) {
+		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
+		void SetInitialLine(const D3DXVECTOR3& pos1, const D3DXVECTOR3& pos2) {
 			dataInit_.pos1 = pos1;
 			dataInit_.pos2 = pos2;
 		}
-		void AddPoint(D3DXMATRIX mat);
+		void AddPoint(const D3DXMATRIX& mat);
 		void SetAlphaVariation(int diff) { diffAlpha_ = diff; }
 		void SetComplementCount(int count) { countComplement_ = count; }
 		void SetColor(D3DCOLOR color) { color_ = color; }
@@ -572,21 +572,21 @@ namespace directx {
 		void SetInstanceAlpha(int alpha);
 
 		void SetInstancePosition(float x, float y, float z) { SetInstancePosition(D3DXVECTOR3(x, y, z)); }
-		void SetInstancePosition(D3DXVECTOR3 pos) { instPosition_ = pos; }
+		void SetInstancePosition(const D3DXVECTOR3& pos) { instPosition_ = pos; }
 
 		void SetInstanceScaleSingle(size_t index, float sc);
 		void SetInstanceScale(float x, float y, float z) { SetInstanceScale(D3DXVECTOR3(x, y, z)); }
-		void SetInstanceScale(D3DXVECTOR3 scale) { instScale_ = scale; }
+		void SetInstanceScale(const D3DXVECTOR3& scale) { instScale_ = scale; }
 
 		void SetInstanceAngleSingle(size_t index, float ang);
 		void SetInstanceAngle(float x, float y, float z) { SetInstanceAngle(D3DXVECTOR3(x, y, z)); }
-		void SetInstanceAngle(D3DXVECTOR3 angle) {
+		void SetInstanceAngle(const D3DXVECTOR3& angle) {
 			SetInstanceAngleSingle(0, angle.x);
 			SetInstanceAngleSingle(1, angle.y);
 			SetInstanceAngleSingle(2, angle.z);
 		}
 
-		void SetInstanceUserData(D3DXVECTOR3 data) { instUserData_ = data; }
+		void SetInstanceUserData(const D3DXVECTOR3& data) { instUserData_ = data; }
 	protected:
 		size_t countInstance_;
 		size_t countInstancePrev_;
@@ -669,19 +669,19 @@ namespace directx {
 		virtual std::wstring GetPath() = 0;
 
 		virtual void Render() = 0;
-		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) = 0;
+		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) = 0;
 		virtual inline void Render(const std::wstring& nameAnime, int time) { Render(); }
 		virtual inline void Render(const std::wstring& nameAnime, int time,
-			D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) { Render(angX, angY, angZ); }
+			const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) { Render(angX, angY, angZ); }
 
-		void SetPosition(D3DXVECTOR3& pos) { position_ = pos; }
+		void SetPosition(const D3DXVECTOR3& pos) { position_ = pos; }
 		void SetPosition(float x, float y, float z) { position_.x = x; position_.y = y; position_.z = z; }
 		void SetX(float x) { position_.x = x; }
 		void SetY(float y) { position_.y = y; }
 		void SetZ(float z) { position_.z = z; }
-		void SetAngle(D3DXVECTOR3& angle) { angle_ = angle; }
+		void SetAngle(const D3DXVECTOR3& angle) { angle_ = angle; }
 		void SetAngleXYZ(float angx = 0.0f, float angy = 0.0f, float angz = 0.0f) { angle_.x = angx; angle_.y = angy; angle_.z = angz; }
-		void SetScale(D3DXVECTOR3& scale) { scale_ = scale; }
+		void SetScale(const D3DXVECTOR3& scale) { scale_ = scale; }
 		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f) { scale_.x = sx; scale_.y = sy; scale_.z = sz; }
 		
 		void SetColor(D3DCOLOR color) { color_ = color; }

@@ -205,6 +205,9 @@ protected:
 	void _NotifyEventToItemScript(gstd::value* listValue, size_t count);
 public:
 	StgItemObject(StgStageController* stageController);
+
+	virtual bool HasNormalRendering() { return false; }
+
 	virtual void Work();
 	virtual void Render() {}//一括で描画するためオブジェクト管理での描画はしない
 	virtual void RenderOnItemManager();

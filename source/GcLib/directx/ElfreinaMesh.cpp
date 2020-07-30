@@ -843,7 +843,7 @@ bool ElfreinaMesh::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> re
 	}
 	return res;
 }
-bool ElfreinaMesh::CreateFromFileInLoadThread(std::wstring path) {
+bool ElfreinaMesh::CreateFromFileInLoadThread(const std::wstring& path) {
 	return DxMesh::CreateFromFileInLoadThread(path, MESH_ELFREINA);
 }
 std::wstring ElfreinaMesh::GetPath() {
@@ -865,7 +865,7 @@ void ElfreinaMesh::Render() {
 	}
 	//mesh_[6]->Render();
 }
-void ElfreinaMesh::Render(std::wstring nameAnime, int time) {
+void ElfreinaMesh::Render(const std::wstring& nameAnime, int time) {
 	if (data_ == nullptr) return;
 
 	gstd::ref_count_ptr<Matrices> matrix = CreateAnimationMatrix(nameAnime, time);
@@ -899,7 +899,7 @@ gstd::ref_count_ptr<RenderBlocks> ElfreinaMesh::CreateRenderBlocks() {
 	}
 	return res;
 }
-gstd::ref_count_ptr<RenderBlocks> ElfreinaMesh::CreateRenderBlocks(std::wstring nameAnime, double time) {
+gstd::ref_count_ptr<RenderBlocks> ElfreinaMesh::CreateRenderBlocks(const std::wstring& nameAnime, double time) {
 	if (data_ == nullptr) return nullptr;
 
 	gstd::ref_count_ptr<Matrices> matrix = CreateAnimationMatrix(nameAnime, time);
@@ -927,7 +927,7 @@ double ElfreinaMesh::_CalcFrameToTime(double time, gstd::ref_count_ptr<ElfreinaM
 	}
 	return time;
 }
-gstd::ref_count_ptr<Matrices> ElfreinaMesh::CreateAnimationMatrix(std::wstring nameAnime, double time) {
+gstd::ref_count_ptr<Matrices> ElfreinaMesh::CreateAnimationMatrix(const std::wstring& nameAnime, double time) {
 	if (data_ == nullptr) return nullptr;
 
 	ElfreinaMeshData* data = (ElfreinaMeshData*)data_.get();
@@ -943,7 +943,7 @@ gstd::ref_count_ptr<Matrices> ElfreinaMesh::CreateAnimationMatrix(std::wstring n
 	return matrix;
 }
 
-D3DXMATRIX ElfreinaMesh::GetAnimationMatrix(std::wstring nameAnime, double time, std::wstring nameBone) {
+D3DXMATRIX ElfreinaMesh::GetAnimationMatrix(const std::wstring& nameAnime, double time, const std::wstring& nameBone) {
 	D3DXMATRIX res;
 	ElfreinaMeshData* data = (ElfreinaMeshData*)data_.get();
 	if (data->mapBoneNameIndex_.find(nameBone) != data->mapBoneNameIndex_.end()) {

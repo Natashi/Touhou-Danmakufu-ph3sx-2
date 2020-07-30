@@ -55,26 +55,21 @@ namespace gstd {
 		//babel
 		//http://d.hatena.ne.jp/A7M/20100801/1280629387
 	public:
-		enum {
+		typedef enum : int8_t {
 			UNKNOWN = -1,
 			UTF8 = 1,
 			UTF8BOM,
 			UTF16LE,
 			UTF16BE,
-		};
-
-		enum {
-			CP_SHIFT_JIS = 932,
-		};
+		} Type;
 	public:
-		static size_t Detect(const void* data, size_t dataSize);
-		static bool IsUtf16Le(const void* data, size_t dataSize);
-		static bool IsUtf16Be(const void* data, size_t dataSize);
+		static Type Detect(const void* data, size_t dataSize);
 		static size_t GetBomSize(const void* data, size_t dataSize);
+		static size_t GetBomSize(Type encoding);
 
-		static const unsigned char BOM_UTF16LE[];
-		static const unsigned char BOM_UTF16BE[];
-		static const unsigned char BOM_UTF8[];
+		static const byte BOM_UTF16LE[];
+		static const byte BOM_UTF16BE[];
+		static const byte BOM_UTF8[];
 	};
 
 
@@ -102,6 +97,7 @@ namespace gstd {
 		static std::string Replace(const std::string& source, const std::string& pattern, const std::string& placement);
 		static std::string ReplaceAll(const std::string& source, const std::string& pattern, const std::string& placement,
 			size_t replaceCount = UINT_MAX, size_t start = 0, size_t end = 0);
+		static std::string ReplaceAll(const std::string& source, char pattern, char placement);
 		static std::string Slice(const std::string& s, size_t length);
 		static std::string Trim(const std::string& str);
 
@@ -119,6 +115,7 @@ namespace gstd {
 		static std::wstring Replace(const std::wstring& source, const std::wstring& pattern, const std::wstring& placement);
 		static std::wstring ReplaceAll(const std::wstring& source, const std::wstring& pattern, const std::wstring& placement,
 			size_t replaceCount = UINT_MAX, size_t start = 0, size_t end = 0);
+		static std::wstring ReplaceAll(const std::wstring& source, wchar_t pattern, wchar_t placement);
 		static std::wstring Slice(const std::wstring& s, size_t length);
 		static std::wstring Trim(const std::wstring& str);
 
@@ -217,13 +214,13 @@ namespace gstd {
 
 		class Lerp {
 		public:
-			enum : uint8_t {
+			typedef enum : uint8_t {
 				LINEAR,
 				SMOOTH,
 				SMOOTHER,
 				ACCELERATE,
 				DECELERATE,
-			};
+			} Type;
 		public:
 			template<typename T, typename L>
 			static inline T Linear(T a, T b, L x) {
@@ -256,10 +253,8 @@ namespace gstd {
 			ENDIAN_LITTLE,
 			ENDIAN_BIG,
 		};
-
 	public:
 		static void Reverse(LPVOID buf, DWORD size);
-
 	};
 
 	//================================================================
@@ -422,7 +417,7 @@ namespace gstd {
 		}
 		//Replaces all the '\\' characters with '/'.
 		static std::wstring ReplaceYenToSlash(const std::wstring& path) {
-			return StringUtility::ReplaceAll(path, L"\\", L"/");
+			return StringUtility::ReplaceAll(path, L'\\', L'/');
 		}
 		static std::wstring Canonicalize(const std::wstring& srcPath) {
 #ifdef __L_STD_FILESYSTEM
@@ -578,13 +573,8 @@ namespace gstd {
 	};
 
 	class Scanner {
-	public:
-		enum {
-
-		};
-
 	protected:
-		int typeEncoding_;
+		Encoding::Type typeEncoding_;
 		int textStartPointer_;
 		std::vector<char> buffer_;
 		int pointer_;//今の位置
@@ -599,18 +589,18 @@ namespace gstd {
 
 		virtual void _SkipComment();//コメントをとばす
 		virtual void _SkipSpace();//空白をとばす
-		virtual void _RaiseError(std::wstring str) {	//例外を投げます
+		virtual void _RaiseError(const std::wstring& str) {	//例外を投げます
 			throw gstd::wexception(str);
 		}
 	public:
-		Scanner(char* str, int size);
-		Scanner(std::string str);
-		Scanner(std::wstring wstr);
+		Scanner(char* str, size_t size);
+		Scanner(const std::string& str);
+		Scanner(const std::wstring& wstr);
 		Scanner(std::vector<char>& buf);
 		virtual ~Scanner();
 
 		void SetPermitSignNumber(bool bEnable) { bPermitSignNumber_ = bEnable; }
-		int GetEncoding() { return typeEncoding_; }
+		Encoding::Type GetEncoding() { return typeEncoding_; }
 
 		Token& GetToken() {	//現在のトークンを取得
 			return token_;
@@ -618,7 +608,7 @@ namespace gstd {
 		Token& Next();
 		bool HasNext();
 		void CheckType(Token& tok, Token::Type type);
-		void CheckIdentifer(Token& tok, std::wstring id);
+		void CheckIdentifer(Token& tok, const std::wstring& id);
 		int GetCurrentLine();
 
 		int GetCurrentPointer() { return pointer_; }
@@ -680,7 +670,7 @@ namespace gstd {
 				if (IsBoolean()) res = (valueBoolean_ ? L"true" : L"false");
 				return res;
 			}
-			void SetString(std::wstring value) {
+			void SetString(const std::wstring& value) {
 				type_ = Type::TYPE_STRING;
 				valueString_ = value;
 			}
@@ -692,7 +682,7 @@ namespace gstd {
 	protected:
 		gstd::ref_count_ptr<Scanner> scan_;
 
-		void _RaiseError(std::wstring message) {
+		void _RaiseError(const std::wstring& message) {
 			throw gstd::wexception(message);
 		}
 		Result _ParseComparison(int pos);
@@ -702,10 +692,10 @@ namespace gstd {
 		virtual Result _ParseIdentifer(int pos);
 	public:
 		TextParser();
-		TextParser(std::string source);
+		TextParser(const std::string& source);
 		virtual ~TextParser();
 
-		void SetSource(std::string source);
+		void SetSource(const std::string& source);
 		Result GetResult();
 		double GetReal();
 	};

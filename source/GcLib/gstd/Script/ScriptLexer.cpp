@@ -4,6 +4,47 @@
 
 using namespace gstd;
 
+script_scanner::script_scanner(const char* source, const char* end) : current(source), line(1) {
+	encoding = Encoding::UTF8;
+	current = source;
+	endPoint = end;
+	line = 1;
+	
+	encoding = Encoding::Detect(source, (size_t)(end - source));
+	switch (encoding) {
+	case Encoding::UTF8BOM:
+		encoding = Encoding::UTF8;
+		current += 3;
+		break;
+	case Encoding::UTF16LE:
+	case Encoding::UTF16BE:
+		current += 2;
+		break;
+	}
+
+	advance();
+}
+script_scanner::script_scanner(const script_scanner& source) {
+	encoding = source.encoding;
+	current = source.current;
+	endPoint = source.endPoint;
+	next = source.next;
+	word = source.word;
+	line = source.line;
+}
+
+void script_scanner::copy_state(script_scanner* src) {
+	encoding = src->encoding;
+	current = src->current;
+	endPoint = src->endPoint;
+	next = src->next;
+	word = src->word;
+	real_value = src->real_value;
+	char_value = src->char_value;
+	string_value = src->string_value;
+	line = src->line;
+}
+
 wchar_t script_scanner::current_char() {
 	wchar_t res = L'\0';
 	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
@@ -439,7 +480,7 @@ throw_err_no_decimal:
 				word = std::string(pStart, pEnd);
 			}
 
-			std::unordered_map<std::string, token_kind>::iterator itr = token_map.find(word);
+			std::map<std::string, token_kind>::iterator itr = token_map.find(word);
 			if (itr != token_map.end())
 				next = itr->second;
 			else
@@ -451,7 +492,7 @@ throw_err_no_decimal:
 	}
 }
 
-std::unordered_map<std::string, token_kind> script_scanner::token_map = {
+std::map<std::string, token_kind> script_scanner::token_map = {
 	{ "let", token_kind::tk_decl_auto },
 	{ "var", token_kind::tk_decl_auto },
 	{ "const", token_kind::tk_const },

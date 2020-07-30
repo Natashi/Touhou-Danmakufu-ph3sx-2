@@ -65,7 +65,7 @@ shared_ptr<ManagedScript> ScriptManager::GetScript(int64_t id, bool bSearchRelat
 			res = itr->second;
 		}
 		else {
-			for (auto pScriptRun : listScriptRun_) {
+			for (auto& pScriptRun : listScriptRun_) {
 				if (pScriptRun->GetScriptID() == id) {
 					res = pScriptRun;
 					break;
@@ -73,9 +73,9 @@ shared_ptr<ManagedScript> ScriptManager::GetScript(int64_t id, bool bSearchRelat
 			}
 
 			if (res == nullptr && bSearchRelative) {
-				for (auto pWeakManager : listRelativeManager_) {
+				for (auto& pWeakManager : listRelativeManager_) {
 					if (auto pManager = pWeakManager.lock()) {
-						for (auto pScript : pManager->listScriptRun_) {
+						for (auto& pScript : pManager->listScriptRun_) {
 							if (pScript->GetScriptID() == id) {
 								res = pScript;
 								break;
@@ -145,7 +145,7 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> id) {
 	}
 }
 void ScriptManager::CloseScript(int64_t id) {
-	for (auto pScript : listScriptRun_) {
+	for (auto& pScript : listScriptRun_) {
 		if (pScript->GetScriptID() == id) {
 			pScript->SetEndScript();
 
@@ -175,7 +175,7 @@ void ScriptManager::CloseScript(shared_ptr<ManagedScript> id) {
 		id->GetObjectManager()->DeleteObjectByScriptID(id->GetScriptID());
 }
 void ScriptManager::CloseScriptOnType(int type) {
-	for (auto pScript : listScriptRun_) {
+	for (auto& pScript : listScriptRun_) {
 		if (pScript->GetScriptType() == type) {
 			pScript->SetEndScript();
 
@@ -200,7 +200,7 @@ size_t ScriptManager::GetAllScriptThreadCount() {
 	size_t res = 0;
 	{
 		Lock lock(lock_);
-		for (auto pScript : listScriptRun_) {
+		for (auto& pScript : listScriptRun_) {
 			res += pScript->GetThreadCount();
 		}
 	}
@@ -209,7 +209,7 @@ size_t ScriptManager::GetAllScriptThreadCount() {
 void ScriptManager::TerminateScriptAll(const std::wstring& message) {
 	{
 		Lock lock(lock_);
-		for (auto pScript : listScriptRun_) {
+		for (auto& pScript : listScriptRun_) {
 			pScript->Terminate(message);
 		}
 	}
@@ -283,7 +283,7 @@ void ScriptManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadE
 }
 void ScriptManager::RequestEventAll(int type, const gstd::value* listValue, size_t countArgument) {
 	{
-		for (auto pScript : listScriptRun_) {
+		for (auto& pScript : listScriptRun_) {
 			if (pScript->IsEndScript() /*|| pScript->IsPaused()*/) continue;
 			pScript->RequestEvent(type, listValue, countArgument);
 		}
@@ -291,7 +291,7 @@ void ScriptManager::RequestEventAll(int type, const gstd::value* listValue, size
 
 	for (auto itrManager = listRelativeManager_.begin(); itrManager != listRelativeManager_.end(); ) {
 		if (auto manager = itrManager->lock()) {
-			for (auto pScript : manager->listScriptRun_) {
+			for (auto& pScript : manager->listScriptRun_) {
 				if (pScript->IsEndScript() /*|| pScript->IsPaused()*/) continue;
 				pScript->RequestEvent(type, listValue, countArgument);
 			}

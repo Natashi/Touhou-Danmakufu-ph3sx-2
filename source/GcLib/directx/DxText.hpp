@@ -21,17 +21,17 @@ namespace directx {
 		friend DxCharCache;
 		friend DxCharCacheKey;
 	public:
-		enum : uint8_t {
+		typedef enum : uint8_t {
 			BORDER_NONE,
 			BORDER_FULL,
 			BORDER_SHADOW,
-		};
+		} TypeBorder;
 	protected:
 		LOGFONT info_;//フォント種別
 		D3DCOLOR colorTop_;
 		D3DCOLOR colorBottom_;
-		int typeBorder_;//縁取り
-		int widthBorder_;
+		TypeBorder typeBorder_;//縁取り
+		LONG widthBorder_;
 		D3DCOLOR colorBorder_;//縁取り色
 	public:
 		DxFont();
@@ -42,10 +42,10 @@ namespace directx {
 		D3DCOLOR GetTopColor() { return colorTop_; }
 		void SetBottomColor(D3DCOLOR color) { colorBottom_ = color; }
 		D3DCOLOR GetBottomColor() { return colorBottom_; }
-		void SetBorderType(int type) { typeBorder_ = type; }
-		int GetBorderType() { return typeBorder_; }
-		void SetBorderWidth(int width) { widthBorder_ = width; }
-		int GetBorderWidth() { return widthBorder_; }
+		void SetBorderType(TypeBorder type) { typeBorder_ = type; }
+		TypeBorder GetBorderType() { return typeBorder_; }
+		void SetBorderWidth(LONG width) { widthBorder_ = width; }
+		LONG GetBorderWidth() { return widthBorder_; }
 		void SetBorderColor(D3DCOLOR color) { colorBorder_ = color; }
 		D3DCOLOR GetBorderColor() { return colorBorder_; }
 	};
@@ -193,7 +193,7 @@ namespace directx {
 		bool _IsTextStartSign();
 		bool _IsTextScan();
 	public:
-		DxTextScanner(wchar_t* str, int charCount);
+		DxTextScanner(wchar_t* str, size_t charCount);
 		DxTextScanner(const std::wstring& str);
 		DxTextScanner(std::vector<wchar_t>& buf);
 		virtual ~DxTextScanner();
@@ -238,14 +238,14 @@ namespace directx {
 		void SetTagIndex(int index) { indexTag_ = index; }
 	};
 	class DxTextTag_Ruby : public DxTextTag {
-		int leftMargin_;
+		LONG leftMargin_;
 		std::wstring text_;
 		std::wstring ruby_;
 		shared_ptr<DxText> dxText_;
 	public:
 		DxTextTag_Ruby() { typeTag_ = TYPE_RUBY; leftMargin_ = 0; }
-		int GetLeftMargin() { return leftMargin_; }
-		void SetLeftMargin(int left) { leftMargin_ = left; }
+		LONG GetLeftMargin() { return leftMargin_; }
+		void SetLeftMargin(LONG left) { leftMargin_ = left; }
 
 		std::wstring& GetText() { return text_; }
 		void SetText(const std::wstring& text) { text_ = text; }
@@ -269,18 +269,18 @@ namespace directx {
 	class DxTextLine {
 		friend DxTextRenderer;
 	protected:
-		int width_;
-		int height_;
-		int sidePitch_;
+		LONG width_;
+		LONG height_;
+		LONG sidePitch_;
 		std::vector<UINT> code_;
 		std::vector<shared_ptr<DxTextTag>> tag_;
 	public:
 		DxTextLine() { width_ = 0; height_ = 0; sidePitch_ = 0; }
 		virtual ~DxTextLine() {};
-		int GetWidth() { return width_; }
-		int GetHeight() { return height_; }
-		int GetSidePitch() { return sidePitch_; }
-		void SetSidePitch(int pitch) { sidePitch_ = pitch; }
+		LONG GetWidth() { return width_; }
+		LONG GetHeight() { return height_; }
+		LONG GetSidePitch() { return sidePitch_; }
+		void SetSidePitch(LONG pitch) { sidePitch_ = pitch; }
 		std::vector<UINT>& GetTextCodes() { return code_; }
 		size_t GetTextCodeCount() { return code_.size(); }
 		size_t GetTagCount() { return tag_.size(); }
@@ -289,8 +289,8 @@ namespace directx {
 	class DxTextInfo {
 		friend DxTextRenderer;
 	protected:
-		int totalWidth_;
-		int totalHeight_;
+		LONG totalWidth_;
+		LONG totalHeight_;
 		int lineValidStart_;
 		int lineValidEnd_;
 		bool bAutoIndent_;
@@ -298,8 +298,8 @@ namespace directx {
 	public:
 		DxTextInfo() { totalWidth_ = 0; totalHeight_ = 0; lineValidStart_ = 1; lineValidEnd_ = 0; bAutoIndent_ = false; }
 		virtual ~DxTextInfo() {};
-		int GetTotalWidth() { return totalWidth_; }
-		int GetTotalHeight() { return totalHeight_; }
+		LONG GetTotalWidth() { return totalWidth_; }
+		LONG GetTotalHeight() { return totalHeight_; }
 		int GetValidStartLine() { return lineValidStart_; }
 		int GetValidEndLine() { return lineValidEnd_; }
 		void SetValidStartLine(int line) { lineValidStart_ = line; }
@@ -309,7 +309,7 @@ namespace directx {
 
 		size_t GetLineCount() { return textLine_.size(); }
 		void AddTextLine(shared_ptr<DxTextLine> text) { textLine_.push_back(text), lineValidEnd_++; }
-		shared_ptr<DxTextLine> GetTextLine(int pos) { return textLine_[pos]; }
+		shared_ptr<DxTextLine> GetTextLine(size_t pos) { return textLine_[pos]; }
 
 	};
 
@@ -333,18 +333,18 @@ namespace directx {
 		virtual ~DxTextRenderObject();
 
 		void Render();
-		void Render(D3DXVECTOR2& angleX, D3DXVECTOR2& angleY, D3DXVECTOR2& angleZ);
+		void Render(const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ);
 		void AddRenderObject(shared_ptr<Sprite2D> obj);
-		void AddRenderObject(shared_ptr<DxTextRenderObject> obj, POINT& bias);
+		void AddRenderObject(shared_ptr<DxTextRenderObject> obj, const POINT& bias);
 
 		POINT& GetPosition() { return position_; }
-		void SetPosition(POINT& pos) { position_.x = pos.x; position_.y = pos.y; }
-		void SetPosition(int x, int y) { position_.x = x; position_.y = y; }
+		void SetPosition(const POINT& pos) { position_.x = pos.x; position_.y = pos.y; }
+		void SetPosition(LONG x, LONG y) { position_.x = x; position_.y = y; }
 		void SetVertexColor(D3DCOLOR color) { color_ = color; }
 
-		void SetAngle(D3DXVECTOR3& angle) { angle_ = angle; }
-		void SetScale(D3DXVECTOR3& scale) { scale_ = scale; }
-		void SetTransCenter(D3DXVECTOR2& center) { center_ = center; }
+		void SetAngle(const D3DXVECTOR3& angle) { angle_ = angle; }
+		void SetScale(const D3DXVECTOR3& scale) { scale_ = scale; }
+		void SetTransCenter(const D3DXVECTOR2& center) { center_ = center; }
 		void SetAutoCenter(bool bAuto) { bAutoCenter_ = bAuto; }
 		void SetPermitCamera(bool bPermit) { bPermitCamera_ = bPermit; }
 
@@ -371,8 +371,8 @@ namespace directx {
 
 		SIZE _GetTextSize(HDC hDC, wchar_t* pText);
 		shared_ptr<DxTextLine> _GetTextInfoSub(const std::wstring& text, DxText* dxText, DxTextInfo* textInfo,
-			shared_ptr<DxTextLine> textLine, HDC& hDC, int& totalWidth, int& totalHeight);
-		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, POINT& pos, DxFont* dxFont, 
+			shared_ptr<DxTextLine> textLine, HDC& hDC, LONG& totalWidth, LONG& totalHeight);
+		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, const POINT& pos, DxFont* dxFont,
 			shared_ptr<DxTextLine> textLine);
 		std::wstring _ReplaceRenderText(std::wstring text);
 	public:
@@ -404,23 +404,23 @@ namespace directx {
 	class DxText {
 		friend DxTextRenderer;
 	public:
-		enum {
+		typedef enum : uint8_t {
 			ALIGNMENT_LEFT = DxTextRenderer::ALIGNMENT_LEFT,
 			ALIGNMENT_RIGHT = DxTextRenderer::ALIGNMENT_RIGHT,
 			ALIGNMENT_TOP = DxTextRenderer::ALIGNMENT_TOP,
 			ALIGNMENT_BOTTOM = DxTextRenderer::ALIGNMENT_BOTTOM,
 			ALIGNMENT_CENTER = DxTextRenderer::ALIGNMENT_CENTER,
-		};
+		} Alignment;
 	protected:
 		DxFont dxFont_;
 		POINT pos_;
-		int widthMax_;
-		int heightMax_;
+		LONG widthMax_;
+		LONG heightMax_;
 		float sidePitch_;
 		float linePitch_;
 		RECT margin_;
-		int alignmentHorizontal_;
-		int alignmentVertical_;
+		Alignment alignmentHorizontal_;
+		Alignment alignmentVertical_;
 		D3DCOLOR colorVertex_;
 		bool bPermitCamera_;
 		bool bSyntacticAnalysis_;
@@ -444,10 +444,10 @@ namespace directx {
 		void SetFont(LOGFONT& logFont) { dxFont_.SetLogFont(logFont); }
 
 		void SetFontType(const wchar_t* type);
-		int GetFontSize() { return dxFont_.GetLogFont().lfHeight; }
-		void SetFontSize(int size) { dxFont_.GetLogFont().lfHeight = size;; }
-		int GetFontWeight() { return dxFont_.GetLogFont().lfWeight; }
-		void SetFontWeight(int weight) { dxFont_.GetLogFont().lfWeight = weight;; }
+		LONG GetFontSize() { return dxFont_.GetLogFont().lfHeight; }
+		void SetFontSize(LONG size) { dxFont_.GetLogFont().lfHeight = size;; }
+		LONG GetFontWeight() { return dxFont_.GetLogFont().lfWeight; }
+		void SetFontWeight(LONG weight) { dxFont_.GetLogFont().lfWeight = weight; }
 		bool GetFontItalic() { return dxFont_.GetLogFont().lfItalic; }
 		void SetFontItalic(bool bItalic) { dxFont_.GetLogFont().lfItalic = bItalic; }
 		bool GetFontUnderLine() { return dxFont_.GetLogFont().lfUnderline; }
@@ -457,27 +457,27 @@ namespace directx {
 
 		void SetFontColorTop(D3DCOLOR color) { dxFont_.SetTopColor(color); }
 		void SetFontColorBottom(D3DCOLOR color) { dxFont_.SetBottomColor(color); }
-		void SetFontBorderWidth(int width) { dxFont_.SetBorderWidth(width); }
-		void SetFontBorderType(int type) { dxFont_.SetBorderType(type); }
+		void SetFontBorderWidth(LONG width) { dxFont_.SetBorderWidth(width); }
+		void SetFontBorderType(DxFont::TypeBorder type) { dxFont_.SetBorderType(type); }
 		void SetFontBorderColor(D3DCOLOR color) { dxFont_.SetBorderColor(color); }
 
 		POINT& GetPosition() { return pos_; }
-		void SetPosition(int x, int y) { pos_.x = x; pos_.y = y; }
+		void SetPosition(LONG x, LONG y) { pos_.x = x; pos_.y = y; }
 		void SetPosition(const POINT& pos) { pos_ = pos; }
-		int GetMaxWidth() { return widthMax_; }
-		void SetMaxWidth(int width) { widthMax_ = width; }
-		int GetMaxHeight() { return heightMax_; }
-		void SetMaxHeight(int height) { heightMax_ = height; }
+		LONG GetMaxWidth() { return widthMax_; }
+		void SetMaxWidth(LONG width) { widthMax_ = width; }
+		LONG GetMaxHeight() { return heightMax_; }
+		void SetMaxHeight(LONG height) { heightMax_ = height; }
 		float GetSidePitch() { return sidePitch_; }
 		void SetSidePitch(float pitch) { sidePitch_ = pitch; }
 		float GetLinePitch() { return linePitch_; }
 		void SetLinePitch(float pitch) { linePitch_ = pitch; }
 		RECT& GetMargin() { return margin_; }
 		void SetMargin(RECT& margin) { margin_ = margin; }
-		int GetHorizontalAlignment() { return alignmentHorizontal_; }
-		void SetHorizontalAlignment(int value) { alignmentHorizontal_ = value; }
-		int GetVerticalAlignment() { return alignmentVertical_; }
-		void SetVerticalAlignment(int value) { alignmentVertical_ = value; }
+		Alignment GetHorizontalAlignment() { return alignmentHorizontal_; }
+		void SetHorizontalAlignment(Alignment value) { alignmentHorizontal_ = value; }
+		Alignment GetVerticalAlignment() { return alignmentVertical_; }
+		void SetVerticalAlignment(Alignment value) { alignmentVertical_ = value; }
 
 		D3DCOLOR GetVertexColor() { return colorVertex_; }
 		void SetVertexColor(D3DCOLOR color) { colorVertex_ = color; }

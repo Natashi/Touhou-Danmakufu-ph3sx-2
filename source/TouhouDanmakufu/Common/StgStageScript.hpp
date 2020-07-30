@@ -59,7 +59,7 @@ public:
 	StgStageScriptObjectManager(StgStageController* stageController);
 	~StgStageScriptObjectManager();
 
-	virtual void PrepareRenderObject();
+	//virtual void PrepareRenderObject();
 
 	virtual void RenderObject();
 	virtual void RenderObject(int priMin, int priMax);

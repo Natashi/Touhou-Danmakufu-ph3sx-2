@@ -146,18 +146,19 @@ namespace directx {
 		ElfreinaMesh() {}
 		virtual ~ElfreinaMesh() {}
 		virtual bool CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader);
-		virtual bool CreateFromFileInLoadThread(std::wstring path);
+		virtual bool CreateFromFileInLoadThread(const std::wstring& path);
 		virtual std::wstring GetPath();
 		virtual void Render();
-		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {};
-		virtual void Render(std::wstring nameAnime, int time);
-		virtual void Render(std::wstring nameAnime, int time, D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {};
+		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {};
+		virtual void Render(const std::wstring& nameAnime, int time);
+		virtual void Render(const std::wstring& nameAnime, int time,
+			const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {};
 
 		gstd::ref_count_ptr<RenderBlocks> CreateRenderBlocks();
-		gstd::ref_count_ptr<RenderBlocks> CreateRenderBlocks(std::wstring nameAnime, double time);
+		gstd::ref_count_ptr<RenderBlocks> CreateRenderBlocks(const std::wstring& nameAnime, double time);
 
-		gstd::ref_count_ptr<Matrices> CreateAnimationMatrix(std::wstring nameAnime, double time);
-		virtual D3DXMATRIX GetAnimationMatrix(std::wstring nameAnime, double time, std::wstring nameBone);
+		gstd::ref_count_ptr<Matrices> CreateAnimationMatrix(const std::wstring& nameAnime, double time);
+		virtual D3DXMATRIX GetAnimationMatrix(const std::wstring& nameAnime, double time, const std::wstring& nameBone);
 	};
 }
 

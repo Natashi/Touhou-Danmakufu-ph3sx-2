@@ -42,8 +42,8 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 	ColorAccess::ToByteArray(font_->GetBottomColor(), colorBottom);
 	ColorAccess::ToByteArray(font_->GetBorderColor(), colorBorder);
 
-	int typeBorder = font_->GetBorderType();
-	int widthBorder = typeBorder != DxFont::BORDER_NONE ? font_->GetBorderWidth() : 0;
+	DxFont::TypeBorder typeBorder = font_->GetBorderType();
+	LONG widthBorder = typeBorder != DxFont::BORDER_NONE ? font_->GetBorderWidth() : 0L;
 
 	HDC hDC = ::GetDC(nullptr);
 	HFONT oldFont = (HFONT)SelectObject(hDC, winFont.GetHandle());
@@ -168,10 +168,9 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 								if (tAlpha > 0)
 									minAlphaEnableDist = std::min(minAlphaEnableDist, dist);
 
-								int tCount = tAlpha /= dist;
-								tCount *= 2;
+								LONG tCount = tAlpha / dist * 2L;
 								if (typeBorder == DxFont::BORDER_SHADOW && (ax >= xBmp || ay >= yBmp))
-									tCount /= 2;
+									tCount /= 2L;
 								count += tCount;
 							}
 						}
@@ -334,7 +333,7 @@ const std::wstring DxTextScanner::TAG_RUBY = L"ruby";
 const std::wstring DxTextScanner::TAG_FONT = L"font";
 const wchar_t CHAR_TAG_START = L'[';
 const wchar_t CHAR_TAG_END = L']';
-DxTextScanner::DxTextScanner(wchar_t* str, int charCount) {
+DxTextScanner::DxTextScanner(wchar_t* str, size_t charCount) {
 	std::vector<wchar_t> buf;
 	buf.resize(charCount);
 	if (buf.size() != 0) {
@@ -503,7 +502,7 @@ DxTextToken& DxTextScanner::Next() {
 
 		type = DxTextToken::Type::TK_TEXT;
 		std::wstring text = std::wstring(posStart, pointer_);
-		text = StringUtility::ReplaceAll(text, L"\\", L"");
+		text = StringUtility::ReplaceAll(text, L'\\', L'\0');
 		token_ = DxTextToken(type, text);
 	}
 	else {
@@ -725,7 +724,7 @@ void DxTextRenderObject::Render() {
 	D3DXVECTOR2 angZero(1, 0);
 	DxTextRenderObject::Render(angZero, angZero, angZero);
 }
-void DxTextRenderObject::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ) {
+void DxTextRenderObject::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	D3DXVECTOR2 position = D3DXVECTOR2(position_.x, position_.y);
 
 	auto camera = DirectGraphics::GetBase()->GetCamera2D();
@@ -745,12 +744,11 @@ void DxTextRenderObject::Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR
 			rect.bottom = std::max(rect.bottom, (LONG)rcDest.bottom);
 		}
 
-		center.x = (rect.right + rect.left) / 2;
-		center.y = (rect.bottom + rect.top) / 2;
+		center.x = (rect.right + rect.left) / 2L;
+		center.y = (rect.bottom + rect.top) / 2L;
 	}
 
-	auto itr = listData_.begin();
-	for (; itr != listData_.end(); ++itr) {
+	for (auto itr = listData_.begin(); itr != listData_.end(); ++itr) {
 		ObjectData& obj = *itr;
 
 		D3DXVECTOR2 bias = D3DXVECTOR2(obj.bias.x, obj.bias.y);
@@ -776,7 +774,7 @@ void DxTextRenderObject::AddRenderObject(shared_ptr<Sprite2D> obj) {
 	data.sprite = obj;
 	listData_.push_back(data);
 }
-void DxTextRenderObject::AddRenderObject(shared_ptr<DxTextRenderObject> obj, POINT& bias) {
+void DxTextRenderObject::AddRenderObject(shared_ptr<DxTextRenderObject> obj, const POINT& bias) {
 	for (auto itr = obj->listData_.begin(); itr != obj->listData_.end(); ++itr) {
 		itr->bias = bias;
 		listData_.push_back(*itr);
@@ -810,14 +808,14 @@ SIZE DxTextRenderer::_GetTextSize(HDC hDC, wchar_t* pText) {
 	return size;
 }
 shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text, DxText* dxText, DxTextInfo* textInfo,
-	shared_ptr<DxTextLine> textLine, HDC& hDC, int& totalWidth, int& totalHeight) 
+	shared_ptr<DxTextLine> textLine, HDC& hDC, LONG& totalWidth, LONG& totalHeight)
 {
 	DxFont& dxFont = dxText->GetFont();
 	float sidePitch = dxText->GetSidePitch();
 	float linePitch = dxText->GetLinePitch();
-	int widthMax = dxText->GetMaxWidth();
-	int heightMax = dxText->GetMaxHeight();
-	int widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0;
+	LONG widthMax = dxText->GetMaxWidth();
+	LONG heightMax = dxText->GetMaxHeight();
+	LONG widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0L;
 	textLine->SetSidePitch(sidePitch);
 
 	const std::wstring strFirstForbid = L"」、。";
@@ -829,7 +827,7 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text,
 
 		//文字コード
 		int charCount = 1;
-		int code = *pText;
+		UINT code = *pText;
 
 		//禁則処理
 		SIZE sizeNext;
@@ -848,8 +846,8 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text,
 
 		//文字サイズ計算
 		SIZE size = _GetTextSize(hDC, pText);
-		int lw = size.cx + widthBorder + sidePitch;
-		int lh = size.cy;
+		LONG lw = size.cx + widthBorder + sidePitch;
+		LONG lh = size.cy;
 		if (textLine->width_ + lw + sizeNext.cx >= widthMax) {
 			//改行
 			totalWidth = std::max(totalWidth, textLine->width_);
@@ -876,9 +874,9 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	DxTextInfo* res = new DxTextInfo();
 	const std::wstring& text = dxText->GetText();
 	DxFont& dxFont = dxText->GetFont();
-	int linePitch = dxText->GetLinePitch();
-	int widthMax = dxText->GetMaxWidth();
-	int heightMax = dxText->GetMaxHeight();
+	LONG linePitch = dxText->GetLinePitch();
+	LONG widthMax = dxText->GetMaxWidth();
+	LONG heightMax = dxText->GetMaxHeight();
 	RECT& margin = dxText->GetMargin();
 
 	shared_ptr<Font> fontTemp;
@@ -887,9 +885,9 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	HFONT oldFont = (HFONT)SelectObject(hDC, winFont_.GetHandle());
 
 	bool bEnd = false;
-	int totalWidth = 0;
-	int totalHeight = 0;
-	int widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0;
+	LONG totalWidth = 0;
+	LONG totalHeight = 0;
+	LONG widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0L;
 
 	const D3DCOLOR orgColorTop = dxFont.GetTopColor();
 	const D3DCOLOR orgColorBottom = dxFont.GetBottomColor();
@@ -951,10 +949,10 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					shared_ptr<DxTextTag_Ruby> tag(new DxTextTag_Ruby());
 					tag->SetTagIndex(indexTag);
 
-					int sizeOff = 0;
-					int weightRuby = FW_BOLD;
-					int leftOff = 0;
-					int pitchOff = 0;
+					LONG sizeOff = 0;
+					LONG weightRuby = FW_BOLD;
+					LONG leftOff = 0;
+					LONG pitchOff = 0;
 
 					while (true) {
 						tok = scan.Next();
@@ -997,14 +995,14 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					SIZE sizeTextBase;
 					::GetTextExtentPoint32(hDC, &text[0], text.size(), &sizeTextBase);
 
-					int rubyFontWidth = dxText->GetFontSize() / 2 + sizeOff;
+					LONG rubyFontWidth = dxText->GetFontSize() / 2L + sizeOff;
 
 					const std::wstring& sRuby = tag->GetRuby();
 					size_t rubyCount = StringUtility::CountAsciiSizeCharacter(sRuby);
 					if (rubyCount > 0) {
-						LONG rubySpace = std::max(sizeTextBase.cx - rubyFontWidth / 2, 0L);
+						LONG rubySpace = std::max(sizeTextBase.cx - rubyFontWidth / 2L, 0L);
 						LONG rubyGap = rubySpace / std::max((LONG)rubyCount, 1L) - rubyFontWidth / 2L;
-						int rubyPitch = std::min(std::max(rubyGap, 0L), (LONG)(rubyFontWidth * 1.2f));
+						LONG rubyPitch = std::min(std::max(rubyGap, 0L), (LONG)(rubyFontWidth * 1.2f));
 
 						tag->SetLeftMargin(leftOff);
 
@@ -1112,7 +1110,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					}
 
 					if (bClear) {
-						widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0;
+						widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0L;
 						fontTemp = nullptr;
 						oldFont = (HFONT)SelectObject(hDC, winFont_.GetHandle());
 
@@ -1123,7 +1121,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						//tagUnderline = orgUnderline;
 					}
 					else {
-						widthBorder = font.GetBorderType() != DxFont::BORDER_NONE ? font.GetBorderWidth() : 0;
+						widthBorder = font.GetBorderType() != DxFont::BORDER_NONE ? font.GetBorderWidth() : 0L;
 						fontTemp = std::make_shared<Font>();
 						fontTemp->CreateFontIndirect(logFont);
 						oldFont = (HFONT)SelectObject(hDC, fontTemp->GetHandle());
@@ -1173,9 +1171,9 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	return shared_ptr<DxTextInfo>(res);
 }
 std::wstring DxTextRenderer::_ReplaceRenderText(std::wstring text) {
-	text = StringUtility::ReplaceAll(text, L"\r", L"");
-	text = StringUtility::ReplaceAll(text, L"\n", L"");
-	text = StringUtility::ReplaceAll(text, L"\t", L"");
+	text = StringUtility::ReplaceAll(text, L'\r', L'\0');
+	text = StringUtility::ReplaceAll(text, L'\n', L'\0');
+	text = StringUtility::ReplaceAll(text, L'\t', L'\0');
 	text = StringUtility::ReplaceAll(text, L"&nbsp;", L" ");
 	text = StringUtility::ReplaceAll(text, L"&quot;", L"\"");
 	text = StringUtility::ReplaceAll(text, L"&osb;", L"[");
@@ -1183,18 +1181,18 @@ std::wstring DxTextRenderer::_ReplaceRenderText(std::wstring text) {
 	return text;
 }
 
-void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, POINT& pos, DxFont* dxFont, 
+void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, const POINT& pos, DxFont* dxFont,
 	shared_ptr<DxTextLine> textLine)
 {
 	SetFont(dxFont->GetLogFont());
 	DxCharCacheKey keyFont;
 	keyFont.font_ = *dxFont;
-	int textHeight = textLine->GetHeight();
+	LONG textHeight = textLine->GetHeight();
 
-	int xRender = pos.x;
-	int yRender = pos.y;
-	int xOffset = 0;
-	int yOffset = 0;
+	LONG xRender = pos.x;
+	LONG yRender = pos.y;
+	LONG xOffset = 0;
+	LONG yOffset = 0;
 
 	size_t countTag = textLine->GetTagCount();
 	size_t indexTag = 0;
@@ -1205,7 +1203,7 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 			size_t tagNo = tag->GetTagIndex();
 			if (tagNo != iCode) break;
 
-			int type = tag->GetTagType();
+			DxTextTag::TagType type = tag->GetTagType();
 			if (type == DxTextTag::TYPE_FONT) {
 				DxTextTag_Font* font = (DxTextTag_Font*)tag.get();
 				*dxFont = font->GetFont();
@@ -1255,7 +1253,7 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 		//描画
 		Sprite2D* spriteText = new Sprite2D();
 
-		int yGap = 0;
+		LONG yGap = 0L;
 		yRender = pos.y + yGap;
 		shared_ptr<Texture> texture = dxChar->GetTexture();
 		spriteText->SetTexture(texture);
@@ -1287,14 +1285,16 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 		objRender->SetShader(dxText->GetShader());
 
 		DxFont& dxFont = dxText->GetFont();
-		int linePitch = dxText->GetLinePitch();
-		int widthMax = dxText->GetMaxWidth();
-		int heightMax = dxText->GetMaxHeight();
+		LONG linePitch = dxText->GetLinePitch();
+		LONG widthMax = dxText->GetMaxWidth();
+		LONG heightMax = dxText->GetMaxHeight();
 		RECT& margin = dxText->GetMargin();
-		int alignmentHorizontal = dxText->GetHorizontalAlignment();
-		int alignmentVertical = dxText->GetVerticalAlignment();
+		DxText::Alignment alignmentHorizontal = dxText->GetHorizontalAlignment();
+		DxText::Alignment alignmentVertical = dxText->GetVerticalAlignment();
+
 		POINT pos;
 		ZeroMemory(&pos, sizeof(POINT));
+
 		bool bAutoIndent = textInfo->IsAutoIndent();
 
 		switch (alignmentVertical) {
@@ -1302,20 +1302,20 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 			break;
 		case ALIGNMENT_CENTER:
 		{
-			int  cy = pos.y + heightMax / 2;
-			pos.y = cy - textInfo->totalHeight_ / 2;
+			LONG cy = pos.y + heightMax / 2L;
+			pos.y = cy - textInfo->totalHeight_ / 2L;
 			break;
 		}
 		case ALIGNMENT_BOTTOM:
 		{
-			int by = pos.y + heightMax;
+			LONG by = pos.y + heightMax;
 			pos.y = by - textInfo->totalHeight_;
 			break;
 		}
 		}
 		pos.y += margin.top;
 
-		int heightTotal = 0;
+		LONG heightTotal = 0L;
 		size_t countLine = textInfo->textLine_.size();
 		int lineStart = textInfo->GetValidStartLine() - 1;
 		int lineEnd = textInfo->GetValidEndLine() - 1;
@@ -1331,13 +1331,13 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 				break;
 			case ALIGNMENT_CENTER:
 			{
-				int cx = pos.x + widthMax / 2;
-				pos.x = cx - textLine->width_ / 2;
+				LONG cx = pos.x + widthMax / 2L;
+				pos.x = cx - textLine->width_ / 2L;
 				break;
 			}
 			case ALIGNMENT_RIGHT:
 			{
-				int rx = pos.x + widthMax;
+				LONG rx = pos.x + widthMax;
 				pos.x = rx - textLine->width_;
 				break;
 			}

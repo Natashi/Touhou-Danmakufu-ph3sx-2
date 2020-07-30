@@ -97,7 +97,7 @@ namespace directx {
 		virtual bool CreateFromFileInLoadThread(const std::wstring& path);
 		virtual std::wstring GetPath();
 		virtual void Render();
-		virtual void Render(D3DXVECTOR2& angX, D3DXVECTOR2& angY, D3DXVECTOR2& angZ);
+		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
 	};
 }
 
