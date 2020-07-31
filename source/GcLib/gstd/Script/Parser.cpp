@@ -729,6 +729,7 @@ continue_as_variadic:
 
 			//state->AddCode(block, code(cmdLogic));
 			state->AddCode(block, code(command_kind::pc_jump_target, iter));
+			--(state->ip);
 
 			++iter;
 		}
@@ -739,21 +740,28 @@ continue_as_variadic:
 		if (state->next() == token_kind::tk_query) {
 			state->advance();
 
-			state->AddCode(block, code(command_kind::_pc_jump_if_not, 0xb4ab5cc9));	//Jump to expression 2
+			size_t hash = (size_t)block ^ ((size_t)state << 12) ^ 0xb4ab5cc9 + state->ip * 0xf6;
+			size_t hashJ1 = 0xd0000000 | (hash & 0x0fffffff);
+			size_t hashJ2 = 0xe0000000 | (hash & 0x0fffffff);
+
+			state->AddCode(block, code(command_kind::_pc_jump_if_not, hashJ1));	//Jump to expression 2
 
 			//Parse expression 1
-			parse_expression(block, state);
-			state->AddCode(block, code(command_kind::_pc_jump, 0xf88c0c27));		//Jump to exit
+			parse_ternary(block, state);
+			state->AddCode(block, code(command_kind::_pc_jump, hashJ2));		//Jump to exit
 
-			parser_assert(state, state->next() == token_kind::tk_colon, "Incomplete ternary statement; a colon(:) is required.");
+			parser_assert(state, state->next() == token_kind::tk_colon, 
+				"Incomplete ternary statement; a colon(:) is required.");
 			state->advance();
 
 			//Parse expression 2
-			state->AddCode(block, code(command_kind::pc_jump_target, 0xb4ab5cc9));
-			parse_expression(block, state);
+			state->AddCode(block, code(command_kind::pc_jump_target, hashJ1));
+			--(state->ip);
+			parse_ternary(block, state);
 
 			//Exit point
-			state->AddCode(block, code(command_kind::pc_jump_target, 0xf88c0c27));
+			state->AddCode(block, code(command_kind::pc_jump_target, hashJ2));
+			--(state->ip);
 		}
 	}
 
@@ -1406,7 +1414,8 @@ continue_as_variadic:
 			for (; ip_begin < ip_end; ++ip_begin) {
 				code* c = &block->codes[ip_begin];
 				if (c->command == command_kind::_pc_jump_if || c->command == command_kind::_pc_jump_if_not
-					|| c->command == command_kind::_pc_jump) {
+					|| c->command == command_kind::_pc_jump) 
+				{
 					auto itrMap = mapLabelCode.find(c->ip);
 					c->command = get_replacing_jump(c->command);
 					c->ip = (itrMap != mapLabelCode.end()) ? itrMap->second : ip_end;
@@ -1469,7 +1478,8 @@ continue_as_variadic:
 			for (; ip_begin < ip_end; ++ip_begin) {
 				code* c = &block->codes[ip_begin];
 				if (c->command == command_kind::_pc_jump_if || c->command == command_kind::_pc_jump_if_not
-					|| c->command == command_kind::_pc_jump) {
+					|| c->command == command_kind::_pc_jump)
+				{
 					auto itrMap = mapLabelCode.find(c->ip);
 					c->command = get_replacing_jump(c->command);
 					c->ip = (itrMap != mapLabelCode.end()) ? itrMap->second : ip_end;
@@ -1787,26 +1797,24 @@ continue_as_variadic:
 				}
 			}
 		}
+		if (mapLabelCode.size() == 0U) return;
 
 		for (auto itr = block->codes.begin(); itr != block->codes.end(); ++itr) {
-			code iCode = *itr;
-
-			switch (iCode.command) {
+			switch (itr->command) {
 			case command_kind::pc_jump_target:
-				--(state->ip);
+				//--(state->ip);
 				break;
 			case command_kind::_pc_jump:
 			case command_kind::_pc_jump_if:
 			case command_kind::_pc_jump_if_not:
 			{
-				auto itrFind = mapLabelCode.find(iCode.ip);
-				if (itrFind != mapLabelCode.end()) {
-					iCode = code(iCode.line, get_replacing_jump(iCode.command), itrFind->second + ip_off);
-				}
+				auto itrFind = mapLabelCode.find(itr->ip);
+				if (itrFind != mapLabelCode.end())
+					newCodes.push_back(code(itr->line, get_replacing_jump(itr->command), itrFind->second + ip_off));
+				break;
 			}
-			//Fallthrough
 			default:
-				newCodes.push_back(iCode);
+				newCodes.push_back(*itr);
 				break;
 			}
 		}
