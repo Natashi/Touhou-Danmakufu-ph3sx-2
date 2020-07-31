@@ -1048,6 +1048,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						}
 						else {
 							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
+							auto pointerBefore = scan.GetCurrentPointer();
 							DxTextToken& arg = scan.Next();
 							if (command == L"size") {
 								logFont.lfHeight = arg.GetInteger();
@@ -1104,6 +1105,48 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 									byte c = ColorAccess::ClampColorRet(arg.GetInteger());
 									*colorDst = (*colorDst & mask) | (c << shifting);
+								}
+								else if (std::regex_search(command, base_match, std::wregex(L"[bto]c"))) {
+									D3DCOLOR* colorDst = nullptr;
+
+									switch (command[0]) {
+									case L'b':	//[b]ottom color
+										colorDst = &tagColorBottom;
+										break;
+									case L't':	//[t]op color
+										colorDst = &tagColorTop;
+										break;
+									case L'o':	//b[o]rder color
+										colorDst = &tagColorBorder;
+										break;
+									}
+
+									scan.SetCurrentPointer(pointerBefore);
+									std::vector<std::wstring> list;
+									{
+										DxTextToken& tok = scan.Next();
+										if (tok.GetType() == DxTextToken::Type::TK_OPENP) {
+											while (true) {
+												tok = scan.Next();
+												DxTextToken::Type type = tok.GetType();
+												if (type == DxTextToken::Type::TK_CLOSEP) break;
+												else if (type != DxTextToken::Type::TK_COMMA) {
+													std::wstring& str = tok.GetElement();
+													list.push_back(str);
+												}
+											}
+										}
+										else {
+											list.push_back(tok.GetElement());
+										}
+									}
+
+									if (list.size() == 3) {
+										byte r = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[0]));
+										byte g = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[1]));
+										byte b = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[2]));
+										*colorDst = (*colorDst & 0xff000000) | (D3DCOLOR_XRGB(r, g, b) & 0x00ffffff);
+									}
 								}
 							}
 						}
