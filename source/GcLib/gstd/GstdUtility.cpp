@@ -578,7 +578,7 @@ wchar_t Scanner::_NextChar() {
 		}
 		*/
 
-		_RaiseError(L"_NextChar:‚·‚Å‚É•¶š—ñI’[‚Å‚·");
+		_RaiseError(L"Scanner::_NextChar: End-of-file already reached.");
 		//bufStr_ = nullptr;
 		//return L'\0';
 	}
@@ -641,7 +641,7 @@ void Scanner::_SkipSpace() {
 
 Token& Scanner::Next() {
 	if (!HasNext()) {
-		_RaiseError(L"Scanner::Next: Already reached EOF.");
+		_RaiseError(L"Scanner::Next: End-of-file already reached.");
 	}
 
 	_SkipComment();
