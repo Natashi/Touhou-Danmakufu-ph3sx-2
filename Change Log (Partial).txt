@@ -23,7 +23,7 @@
 	- Alpha channel blending now exists in all blend modes except BLEND_NONE and BLEND_ADD_RGB.
 	- Fixed a bug where NotifyEvent and SetScriptArgument could not reach package-level scripts when called from a stage-level script.
 	- Event arguments will no longer be overwritten when notifying nested events inside @Event.
-	- Utilized variadic argument counts for NotifyEvent-series functions.
+	- Utilized variadic argument counts for the functions in the NotifyEvent series.
 	- Added transform functions for ObjPatternShot and relevant sample scripts, for former and current ECL modders.
 		- Please note that they may not be able to fully emulate ECL's behaviours.
 	- Added functionality to customize delay clouds.
@@ -49,17 +49,18 @@
 	- ObjMove_SetAngle and ObjMove_SetSpeed can now be used on B-pattern objects.
 	- Line-line intersection is now properly implemented.
 	- IsIntersected_Line_Circle can now be used in package-level scripts.
-	- Added a particle renderer object (ObjParticleList) and two new relevant sample scripts.
+	- Added a particle renderer object (ObjParticleList) and new relevant sample scripts.
 	- Added support for vertex indexing.
 	- Added support for basic directional lighting.
 	- Improved vertex shader support, and added sample scripts for demonstration.
-	- Fixed underflowing and overflowing issues with ObjRender_SetColor/SetAlpha.
-	- Added more options to the [font] text tag, and fixed a bug where ObjText_SetFontCharacterSet doesn't work.
+	- Fixed underflowing and overflowing issues with SetColor/SetAlpha functions.
+	- Fixed a bug where ObjText_SetFontCharacterSet doesn't work at all.
+	- Added more options to the [font] text tag.
 		- Available tag options:
 			- reset
-				- Resets the text to its original settings.  (Present in vanilla ph3 as "clear")
+				- Resets the text to its original settings.  Present in vanilla ph3 as "clear".
 			- size
-				- Adjusts font size. (Present in vanilla ph3)
+				- Adjusts font size. Unchanged from vanilla ph3.
 			- ox/oy
 				- Adjusts position offset.
 			- it
@@ -72,7 +73,7 @@
 				- Adjusts font top color.
 			- or/og/ob
 				- Adjusts font border color.
-	- Added more options to the [ruby] text tag, and improved ruby spacing.
+	- Added more options to the [ruby] text tag.
 		- Available tag options:
 			- rb
 				- Sets text. Unchanged from vanilla ph3.
@@ -86,15 +87,16 @@
 				- Adjusts the ruby text's left margin.
 			- op
 				- Adjusts the ruby text's side pitch.
+	- Improved spacing of ruby text.
 	- ObjFileT now properly reads from and writes to UTF-8 text files.
 	- ObjFile_OpenNW now allows both reading and writing, unless the file was stored in a .dat archive, in which case all write functions will fail.
-	- Following the above two changes, Shift-JIS is no longer supported in favour of proper Unicode (UTF-8) handling.
+	- Following the above two changes, Shift-JIS is no longer supported in favour of proper Unicode (UTF-8 and UTF-8-BOM) handling.
 	- Better Metasequoia mesh support, and temporarily(?) suspended Elfreina mesh support. Blender .obj mesh support is planned.
 	- The player object will now set its own movement speed and angle according to user key input.
 	- Collecting user-defined items now notify EV_GET_ITEM to the player script.
 	- Minimum custom window size is reduced to 320*240.
 	- GetShotDataInfoA1 no longer throws an error upon receiving an invalid graphic ID, and will instead return default values.
-	- Fixed a bug where the right source rect set with ObjSprite3D_SetSourceDestRect is 1 greater than expected.
+	- Fixed a bug where the right and bottom source rect set with ObjSprite3D_SetSourceDestRect are 1 greater than expected.
 	- Improved loading of .wav files.
 	- Attempted to fix a bug where multiple sound objects simultaneously playing the same sound file (>1MB .wav, .ogg, or .mp3) would display strange behaviours.
 	- Improved the precision of ObjSound_GetWavePosition, and fixed an issue where ObjSound_GetTotalLength would work incorrectly with .ogg files.

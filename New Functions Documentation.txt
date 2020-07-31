@@ -1272,7 +1272,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjSound_Seek
 		Arguments:
 			1) object ID
-			2) time
+			2) sample
 		Description:
 			Seeks to the specified point in the audio.
 
@@ -1287,13 +1287,17 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID
 		Description:
-			Returns the current reading position of the sound object. Precision is only around one second.
+			Returns the current reading position of the sound object.
+			
+			May briefly return an incorrect value if ObjSound_Seek[SampleCount] was recently used.
 
 	ObjSound_GetWavePositionSampleCount
 		Arguments:
 			1) object ID
 		Description:
-			Returns the current reading position of the sound object in samples. Precision is only around one second.
+			Returns the current reading position of the sound object in samples.
+			
+			May briefly return an incorrect value if ObjSound_Seek[SampleCount] was recently used.
 
 	ObjSound_GetTotalLength
 		Arguments:
@@ -1306,6 +1310,16 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) object ID
 		Description:
 			Returns the total length of the audio in samples.
+			
+	ObjSound_SetFrequency
+		Arguments:
+			1) object ID
+			2) frequency
+		Description:
+			Sets the frequency of the audio in sample rate.
+			Can be used to increase or decrease play speed.
+			
+			An input of 0 will reset the value to the audio's original frequency.
 	
 	--------------------------------> Binary File Object Functions <--------------------------------
 	
