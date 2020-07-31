@@ -93,10 +93,10 @@ namespace gstd {
 
 			int countVar = scan_current_scope(&stateParser, 1, nullptr, false);
 			if (countVar > 0)
-				engine->main_block->codes.push_back(code(lexer_main->line, command_kind::pc_var_alloc, countVar));
-			parse_statements(engine->main_block, &stateParser);
+				stateParser.AddCode(engine->main_block, code(command_kind::pc_var_alloc, countVar));
+			parse_statements(engine->main_block, &stateParser, token_kind::tk_end);
 
-			parser_assert(lexer_main->next == token_kind::tk_end,
+			parser_assert(stateParser.next() == token_kind::tk_end,
 				"Unexpected end-of-file while parsing. (Did you forget a semicolon after a string?)\r\n");
 		}
 		catch (parser_error& e) {
@@ -1602,17 +1602,23 @@ continue_as_variadic:
 		}
 		}
 
+		/*
+		if (need_terminator && state->next() != statement_terminator)
+			parser_assert(state, false, "Expected a semicolon (;).");
+		state->advance();
+		*/
 		return need_terminator;
 	}
-	void parser::parse_statements(script_block* block, parser_state_t* state, token_kind statement_terminator) {
-		for (; ; ) {
+	void parser::parse_statements(script_block* block, parser_state_t* state, 
+		token_kind block_terminator, token_kind statement_terminator) 
+	{
+		for (; state->next() != block_terminator; ) {
 			bool need_terminator = parse_single_statement(block, state);
 
-			if (state->lex->next == statement_terminator) state->advance();
-			else if (need_terminator) {
-				//parser_assert(state, false, "Expected a semicolon (;).");
-				break;
-			}
+			if (need_terminator && state->next() != statement_terminator)
+				parser_assert(state, false, "Expected a semicolon (;).");
+			else if (state->next() == statement_terminator)
+				state->advance();
 		}
 	}
 
@@ -1635,7 +1641,8 @@ continue_as_variadic:
 	}
 
 	void parser::parse_block(script_block* block, parser_state_t* state, std::vector<std::string> const* args,
-		bool adding_result, bool allow_single) {
+		bool adding_result, bool allow_single) 
+	{
 		bool single_line = state->next() != token_kind::tk_open_cur && allow_single;
 		if (!single_line) {
 			parser_assert(state, state->next() == token_kind::tk_open_cur, "\"{\" is required.\r\n");
@@ -1665,13 +1672,12 @@ continue_as_variadic:
 		}
 		if (single_line) {
 			bool need_terminator = parse_single_statement(block, state);
-
-			if (state->next() == token_kind::tk_semicolon) state->advance();
-			else if (need_terminator)
+			if (need_terminator && state->next() != token_kind::tk_semicolon)
 				parser_assert(state, false, "Expected a semicolon (;).");
+			state->advance();
 		}
 		else {
-			parse_statements(block, state, token_kind::tk_semicolon);
+			parse_statements(block, state);
 		}
 
 		frame.pop_back();
