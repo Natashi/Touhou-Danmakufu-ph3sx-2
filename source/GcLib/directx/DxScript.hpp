@@ -1079,6 +1079,7 @@ namespace directx {
 		//DNH_FUNCAPI_DECL_(Func_ObjSound_DebugGetCopyPos);
 		DNH_FUNCAPI_DECL_(Func_ObjSound_GetTotalLength);
 		DNH_FUNCAPI_DECL_(Func_ObjSound_GetTotalLengthSampleCount);
+		DNH_FUNCAPI_DECL_(Func_ObjSound_SetFrequency);
 
 		//Dx関数：ファイル操作(DxFileObject)
 		static gstd::value Func_ObjFile_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);

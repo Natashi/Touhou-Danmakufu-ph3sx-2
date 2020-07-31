@@ -349,6 +349,7 @@ function const dxFunction[] =
 	//{ "ObjSound_DebugGetCopyPos", DxScript::Func_ObjSound_DebugGetCopyPos, 1 },
 	{ "ObjSound_GetTotalLength", DxScript::Func_ObjSound_GetTotalLength, 1 },
 	{ "ObjSound_GetTotalLengthSampleCount", DxScript::Func_ObjSound_GetTotalLengthSampleCount, 1 },
+	{ "ObjSound_SetFrequency", DxScript::Func_ObjSound_SetFrequency, 2 },
 
 	//Dx関数：ファイル操作(DxFileObject)
 	{ "ObjFile_Create", DxScript::Func_ObjFile_Create, 1 },
@@ -4007,6 +4008,17 @@ gstd::value DxScript::Func_ObjSound_GetTotalLengthSampleCount(gstd::script_machi
 		}
 	}
 	return script->CreateRealValue(posSamp);
+}
+gstd::value DxScript::Func_ObjSound_SetFrequency(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
+		if (player)
+			player->SetFrequency(argv[1].as_int());
+	}
+	return value();
 }
 
 //Dx関数：ファイル操作(DxFileObject)

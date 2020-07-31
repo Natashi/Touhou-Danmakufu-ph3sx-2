@@ -46,8 +46,9 @@ namespace directx {
 
 	private:
 		static DirectSoundManager* thisBase_;
-
 	protected:
+		DSCAPS dxSoundCaps_;
+
 		IDirectSound8* pDirectSound_;
 		IDirectSoundBuffer8* pDirectSoundBuffer_;
 		gstd::CriticalSection lock_;
@@ -64,9 +65,13 @@ namespace directx {
 	public:
 		DirectSoundManager();
 		virtual ~DirectSoundManager();
+
 		static DirectSoundManager* GetBase() { return thisBase_; }
+
 		virtual bool Initialize(HWND hWnd);
 		void Clear();
+
+		const DSCAPS* GetDeviceCaps() const { return &dxSoundCaps_; }
 
 		IDirectSound8* GetDirectSound() { return pDirectSound_; }
 		gstd::CriticalSection& GetLock() { return lock_; }
@@ -240,6 +245,8 @@ namespace directx {
 
 		virtual DWORD GetCurrentPosition();
 		DWORD GetTotalAudioSize() { return audioSizeTotal_; }
+
+		void SetFrequency(DWORD freq);
 	};
 	class SoundPlayer::PlayStyle {
 		bool bLoop_;

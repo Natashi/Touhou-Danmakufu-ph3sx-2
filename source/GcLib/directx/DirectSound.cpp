@@ -11,6 +11,7 @@ using namespace directx;
 DirectSoundManager* DirectSoundManager::thisBase_ = nullptr;
 
 DirectSoundManager::DirectSoundManager() {
+	ZeroMemory(&dxSoundCaps_, sizeof(DSCAPS));
 	pDirectSound_ = nullptr;
 	pDirectSoundBuffer_ = nullptr;
 	CreateSoundDivision(SoundDivision::DIVISION_BGM);
@@ -26,7 +27,7 @@ DirectSoundManager::~DirectSoundManager() {
 	delete threadManage_;
 
 	for (auto itr = mapDivision_.begin(); itr != mapDivision_.end(); ++itr)
-		delete itr->second;
+		ptr_delete(itr->second);
 
 	ptr_release(pDirectSoundBuffer_);
 	ptr_release(pDirectSound_);
@@ -40,46 +41,46 @@ bool DirectSoundManager::Initialize(HWND hWnd) {
 
 	Logger::WriteTop("DirectSound: Initializing.");
 
-	HRESULT hrSound = DirectSoundCreate8(nullptr, &pDirectSound_, nullptr);
-	if (FAILED(hrSound)) {
-		Logger::WriteTop("DirectSoundCreate8 failure.");
-		return false;  // DirectSound8の作成に失敗
+	auto WrapDX = [&](HRESULT hr, const std::wstring& routine) {
+		if (SUCCEEDED(hr)) return;
+		std::wstring err = StringUtility::Format(L"DirectSound: %s failure. [%s]\r\n  %s",
+			routine.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
+		Logger::WriteTop(err);
+		throw wexception(err);
+	};
+
+	WrapDX(DirectSoundCreate8(nullptr, &pDirectSound_, nullptr), L"DirectSoundCreate8");
+
+	WrapDX(pDirectSound_->SetCooperativeLevel(hWnd, DSSCL_PRIORITY), L"SetCooperativeLevel");
+
+	//Get device caps
+	dxSoundCaps_.dwSize = sizeof(DSCAPS);
+	WrapDX(pDirectSound_->GetCaps(&dxSoundCaps_), L"GetCaps");
+
+	//Create the primary buffer
+	{
+		DSBUFFERDESC desc;
+		ZeroMemory(&desc, sizeof(DSBUFFERDESC));
+		desc.dwSize = sizeof(DSBUFFERDESC);
+		desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_PRIMARYBUFFER;
+		desc.dwBufferBytes = 0;
+		desc.lpwfxFormat = nullptr;
+		WrapDX(pDirectSound_->CreateSoundBuffer(&desc, (LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr),
+			L"CreateSoundBuffer(primary)");
+
+		WAVEFORMATEX pcmwf;
+		ZeroMemory(&pcmwf, sizeof(WAVEFORMATEX));
+		pcmwf.wFormatTag = WAVE_FORMAT_PCM;
+		pcmwf.nChannels = 2;
+		pcmwf.nSamplesPerSec = 44100;
+		pcmwf.nBlockAlign = 4;
+		pcmwf.nAvgBytesPerSec = pcmwf.nSamplesPerSec * pcmwf.nBlockAlign;
+		pcmwf.wBitsPerSample = 16;
+		WrapDX(pDirectSoundBuffer_->SetFormat(&pcmwf), L"SetFormat");
 	}
 
-	HRESULT hrCoop = pDirectSound_->SetCooperativeLevel(hWnd, DSSCL_PRIORITY);
-	if (FAILED(hrCoop)) {
-		Logger::WriteTop("SetCooperativeLevel failure.");
-		return false;
-	}
-
-	//PrimaryBuffer初期化
-	DSBUFFERDESC desc;
-	ZeroMemory(&desc, sizeof(DSBUFFERDESC));
-	desc.dwSize = sizeof(DSBUFFERDESC);
-	desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_PRIMARYBUFFER;
-	desc.dwBufferBytes = 0;
-	desc.lpwfxFormat = nullptr;
-	HRESULT hrBuf = pDirectSound_->CreateSoundBuffer(&desc, (LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
-	if (FAILED(hrBuf)) {
-		Logger::WriteTop("CreateSoundBuffer failure.");
-		return false;
-	}
-
-	WAVEFORMATEX pcmwf;
-	ZeroMemory(&pcmwf, sizeof(WAVEFORMATEX));
-	pcmwf.wFormatTag = WAVE_FORMAT_PCM;
-	pcmwf.nChannels = 2;
-	pcmwf.nSamplesPerSec = 44100;
-	pcmwf.nBlockAlign = 4;
-	pcmwf.nAvgBytesPerSec = pcmwf.nSamplesPerSec * pcmwf.nBlockAlign;
-	pcmwf.wBitsPerSample = 16;
-	HRESULT hrFormat = pDirectSoundBuffer_->SetFormat(&pcmwf);
-	if (FAILED(hrFormat)) {
-		Logger::WriteTop("SetFormat failure.");
-		return false;
-	}
-
-	//管理スレッド開始
+	//Sound manager thread, this thread runs even when the window is unfocused,
+	//and manages stuff like fade, deletion, and the LogWindow's Sound panel.
 	threadManage_ = new SoundManageThread(this);
 	threadManage_->Start();
 
@@ -134,7 +135,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::GetStreamingPlayer(const std::wstrin
 			res = _CreatePlayer(path);
 		}
 		else {
-			//If multiple streaming players are reading from the same FileReader, things will break
+			//If multiple streaming players are reading from the same FileReader, things will break.
 			//Only allow maximum ref_count of 2 (in DirectSoundManager and the parent sound object)
 			SoundStreamingPlayer* playerStreaming = dynamic_cast<SoundStreamingPlayer*>(res.get());
 			if (playerStreaming != nullptr && res.use_count() > 2)
@@ -227,7 +228,11 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 			res = std::shared_ptr<SoundStreamingPlayerOgg>(new SoundStreamingPlayerOgg(), SoundPlayer::PtrDelete);
 			break;
 		case FileFormat::SD_MIDI:
+			//Commit seppuku
+			//Commit sudoku
 			//Commit suzaku
+			//Commit shiragiku
+			//Commit die
 			break;
 		case FileFormat::SD_MP3:
 		case FileFormat::SD_AWAVE:
@@ -235,9 +240,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 			break;
 		}
 
-		bool bSuccess = true;
-		bSuccess &= res != nullptr;
-
+		bool bSuccess = res != nullptr;
 		if (res) {
 			//Prepare the file for reading and create a DirectSound buffer
 			bSuccess &= res->_CreateBuffer(reader);
@@ -379,6 +382,7 @@ std::vector<shared_ptr<SoundInfo>> DirectSoundManager::GetSoundInfoList() {
 void DirectSoundManager::SetFadeDeleteAll() {
 	try {
 		Lock lock(lock_);
+
 		for (auto itrNameMap = mapPlayer_.begin(); itrNameMap != mapPlayer_.end(); itrNameMap++) {
 			std::list<shared_ptr<SoundPlayer>>& listPlayer = itrNameMap->second;
 
@@ -731,6 +735,20 @@ DWORD SoundPlayer::GetCurrentPosition() {
 	}
 	return res;
 }
+void SoundPlayer::SetFrequency(DWORD freq) {
+	if (manager_ == nullptr) return;
+	if (freq > 0) {
+		const DSCAPS* caps = manager_->GetDeviceCaps();
+		DWORD rateMin = caps->dwMinSecondarySampleRate;
+		DWORD rateMax = caps->dwMaxSecondarySampleRate;
+		//DWORD rateMin = DSBFREQUENCY_MIN;
+		//DWORD rateMax = DSBFREQUENCY_MAX;
+		freq = std::min(std::max(freq, rateMin), rateMax);
+	}
+	HRESULT hr = pDirectSoundBuffer_->SetFrequency(freq);
+	//std::wstring err = StringUtility::Format(L"%s: %s",
+	//	DXGetErrorString(hr), DXGetErrorDescription(hr));
+}
 
 //PlayStyle
 SoundPlayer::PlayStyle::PlayStyle() {
@@ -1003,8 +1021,8 @@ bool SoundPlayerWave::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader
 		DSBUFFERDESC desc;
 		ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 		desc.dwSize = sizeof(DSBUFFERDESC);
-		desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_GETCURRENTPOSITION2 
-			| DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCDEFER;
+		desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY 
+			| DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCDEFER;
 		desc.dwBufferBytes = sizeChunk;
 		desc.lpwfxFormat = &formatWave_;
 		HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc, 
@@ -1180,8 +1198,9 @@ bool SoundStreamingPlayerWave::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReade
 	DSBUFFERDESC desc;
 	ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 	desc.dwSize = sizeof(DSBUFFERDESC);
-	desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_GETCURRENTPOSITION2 
-		| DSBCAPS_GLOBALFOCUS | DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_LOCSOFTWARE;
+	desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
+		| DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2
+		| DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
 	desc.dwBufferBytes = 2 * formatWave_.nAvgBytesPerSec;
 	desc.lpwfxFormat = &formatWave_;
 	HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc, 
@@ -1296,8 +1315,9 @@ bool SoundStreamingPlayerOgg::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader
 	DSBUFFERDESC desc;
 	ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 	desc.dwSize = sizeof(DSBUFFERDESC);
-	desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_GETCURRENTPOSITION2 
-		| DSBCAPS_GLOBALFOCUS | DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_LOCSOFTWARE;
+	desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY 
+		| DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2
+		| DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
 	desc.dwBufferBytes = sizeBuffer;
 	desc.lpwfxFormat = &formatWave_;
 	HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc, 
@@ -1610,8 +1630,9 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader
 	DSBUFFERDESC desc;
 	ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 	desc.dwSize = sizeof(DSBUFFERDESC);
-	desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_GETCURRENTPOSITION2 
-		| DSBCAPS_GLOBALFOCUS | DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_LOCSOFTWARE;
+	desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
+		| DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2
+		| DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
 	desc.dwBufferBytes = sizeBuffer;
 	desc.lpwfxFormat = &formatWave_;
 	HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc, 
