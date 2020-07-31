@@ -17,9 +17,6 @@ bool EApplication::_Initialize() {
 	fileManager->Initialize();
 
 	HWND hWndMain = MainWindow::GetInstance()->GetWindowHandle();
-	WindowLogger::InsertOpenCommandInSystemMenu(hWndMain);
-//	::SetWindowText(hWndMain, "DnhViewer");
-//	::SetClassLong(hWndMain, GCL_HICON, (LONG)LoadIcon(GetApplicationHandle(), MAKEINTRESOURCE(IDI_ICON)));
 
 	EDirectInput* input = EDirectInput::CreateInstance();
 	input->Initialize(hWndMain);
@@ -49,7 +46,6 @@ bool EApplication::_Loop() {
 	return true;
 }
 bool EApplication::_Finalize() {
-	EFileManager::GetInstance()->EndLoadThread();
 	EDirectInput::DeleteInstance();
 	EFileManager::DeleteInstance();
 	return true;

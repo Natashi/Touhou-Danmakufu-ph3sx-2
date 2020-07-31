@@ -14,8 +14,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
 	DebugUtility::DumpMemoryLeaksOnExit();
 	try
 	{
-		ELogger::CreateInstance();
-
 		MainWindow* wndMain = MainWindow::CreateInstance();
 		wndMain->Initialize();
 		wndMain->SetWindowVisible(true);
@@ -41,7 +39,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
 
 	EApplication::DeleteInstance();
 	MainWindow::DeleteInstance();
-	ELogger::DeleteInstance();
 
 	return 0;
 }

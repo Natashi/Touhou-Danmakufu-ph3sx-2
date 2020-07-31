@@ -23,6 +23,7 @@ void Logger::_WriteChild(SYSTEMTIME& time, const std::wstring& str) {
 }
 
 void Logger::Write(const std::string& str) {
+#if defined(DNH_PROJ_EXECUTOR)
 	if (WindowLogger::GetParent()) {
 		if (WindowLogger::GetParent()->GetState() != WindowLogger::STATE_RUNNING)
 			return;
@@ -31,8 +32,10 @@ void Logger::Write(const std::string& str) {
 	SYSTEMTIME systemTime;
 	GetLocalTime(&systemTime);
 	this->_WriteChild(systemTime, StringUtility::ConvertMultiToWide(str));
+#endif
 }
 void Logger::Write(const std::wstring& str) {
+#if defined(DNH_PROJ_EXECUTOR)
 	if (WindowLogger::GetParent()) {
 		if (WindowLogger::GetParent()->GetState() != WindowLogger::STATE_RUNNING)
 			return;
@@ -41,9 +44,10 @@ void Logger::Write(const std::wstring& str) {
 	SYSTEMTIME systemTime;
 	GetLocalTime(&systemTime);
 	this->_WriteChild(systemTime, str);
+#endif
 }
 
-
+#if defined(DNH_PROJ_EXECUTOR)
 /**********************************************************
 //FileLogger
 **********************************************************/
@@ -771,3 +775,4 @@ double WindowLogger::InfoCollectThread::_GetCpuPerformance() {
 	PdhCloseQuery(hQuery);
 	return FmtValue.doubleValue;
 }
+#endif

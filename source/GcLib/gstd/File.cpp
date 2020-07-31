@@ -374,16 +374,25 @@ std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir) {
 FileManager* FileManager::thisBase_ = nullptr;
 FileManager::FileManager() {}
 FileManager::~FileManager() {
+#if defined(DNH_PROJ_EXECUTOR)
 	EndLoadThread();
+#endif
 }
 bool FileManager::Initialize() {
 	if (thisBase_) return false;
 	thisBase_ = this;
+
+#if defined(DNH_PROJ_EXECUTOR)
 	threadLoad_ = new LoadThread();
 	threadLoad_->Start();
+#endif
+
 	return true;
 }
+
+#if defined(DNH_PROJ_EXECUTOR)
 void FileManager::EndLoadThread() {
+
 	{
 		Lock lock(lock_);
 		if (threadLoad_ == nullptr) return;
@@ -393,7 +402,6 @@ void FileManager::EndLoadThread() {
 	}
 }
 
-#if defined(DNH_PROJ_EXECUTOR)
 bool FileManager::AddArchiveFile(const std::wstring& path) {
 	if (mapArchiveFile_.find(path) != mapArchiveFile_.end())
 		return true;
@@ -540,6 +548,7 @@ void FileManager::_ReleaseByteBuffer(shared_ptr<ArchiveFileEntry> entry) {
 }
 #endif
 
+#if defined(DNH_PROJ_EXECUTOR)
 void FileManager::AddLoadThreadEvent(shared_ptr<FileManager::LoadThreadEvent> event) {
 	{
 		Lock lock(lock_);
@@ -658,6 +667,7 @@ void FileManager::LoadThread::RemoveListener(FileManager::LoadThreadListener* li
 		}
 	}
 }
+#endif
 
 /**********************************************************
 //ManagedFileReader
@@ -844,6 +854,7 @@ void RecordEntry::_ReadEntryRecord(Reader &reader) {
 	reader.Read(buffer_.GetPointer(), buffer_.GetSize());
 }
 
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 /**********************************************************
 //RecordBuffer
 **********************************************************/
@@ -1032,7 +1043,6 @@ void RecordBuffer::SetRecordAsRecordBuffer(const std::string& key, RecordBuffer&
 void RecordBuffer::Read(RecordBuffer& record) {}
 void RecordBuffer::Write(RecordBuffer& record) {}
 
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 /**********************************************************
 //PropertyFile
 **********************************************************/

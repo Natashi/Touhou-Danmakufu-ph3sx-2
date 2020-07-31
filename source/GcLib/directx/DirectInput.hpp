@@ -1,5 +1,4 @@
-#ifndef __DIRECTX_DIRECTINPUT__
-#define __DIRECTX_DIRECTINPUT__
+#pragma once
 
 #include "../pch.h"
 #include "DxConstant.hpp"
@@ -30,9 +29,9 @@ namespace directx {
 			MAX_MOUSE_BUTTON = 4,
 			MAX_PAD_BUTTON = 16,
 		};
-
 	protected:
 		HWND hWnd_;
+
 		LPDIRECTINPUT8 pInput_;
 		LPDIRECTINPUTDEVICE8 pKeyboard_;
 		LPDIRECTINPUTDEVICE8 pMouse_;
@@ -68,11 +67,15 @@ namespace directx {
 
 		virtual bool Initialize(HWND hWnd);
 
+#if defined(DNH_PROJ_EXECUTOR)
 		virtual void Update();//キーをセットする
+#endif
+
 		DIKeyState GetKeyState(int16_t key);
 		DIKeyState GetMouseState(int16_t button);
 		DIKeyState GetPadState(int16_t padNo, int16_t button);
 
+#if defined(DNH_PROJ_EXECUTOR)
 		LONG GetMouseMoveX() { return stateMouse_.lX; }//マウスの移動量を取得X
 		LONG GetMouseMoveY() { return stateMouse_.lY; }//マウスの移動量を取得Y
 		LONG GetMouseMoveZ() { return stateMouse_.lZ; }//マウスの移動量を取得Z
@@ -82,6 +85,7 @@ namespace directx {
 		void ResetMouseState();
 		void ResetKeyState();
 		void ResetPadState();
+#endif
 
 		size_t GetPadDeviceCount() { return bufPad_.size(); }
 		DIDEVICEINSTANCE GetPadDeviceInformation(int16_t padIndex);
@@ -120,7 +124,7 @@ namespace directx {
 	public:
 		VirtualKeyManager();
 		~VirtualKeyManager();
-		virtual void Update();//キーをセットする
+		virtual void Update();
 		void ClearKeyState();
 
 		void AddKeyMap(int16_t id, gstd::ref_count_ptr<VirtualKey> key) { mapKey_[id] = key; }
@@ -131,6 +135,7 @@ namespace directx {
 		bool IsTargetKeyCode(int16_t key);
 	};
 
+#if defined(DNH_PROJ_EXECUTOR)
 	/**********************************************************
 	//KeyReplayManager
 	**********************************************************/
@@ -168,6 +173,7 @@ namespace directx {
 		void ReadRecord(gstd::RecordBuffer& record);
 		void WriteRecord(gstd::RecordBuffer& record);
 	};
+#endif
 }
 
 /* DirectInput キー識別コード表
@@ -295,5 +301,3 @@ DIK_APPS 0xDD Menu
 DIK_POWER 0xDE Power
 DIK_SLEEP 0xDF Sleep
 */
-
-#endif

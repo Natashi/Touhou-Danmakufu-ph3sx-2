@@ -1,7 +1,10 @@
 #include "source/GcLib/pch.h"
 
 #include "DirectGraphics.hpp"
+
+#if defined(DNH_PROJ_EXECUTOR)
 #include "Texture.hpp"
+#endif
 
 using namespace gstd;
 using namespace directx;
@@ -74,6 +77,7 @@ bool DirectGraphics::Initialize(HWND hWnd) {
 bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 	if (thisBase_) return false;
 
+#if defined(DNH_PROJ_EXECUTOR)
 	Logger::WriteTop("DirectGraphics: Initialize.");
 	pDirect3D_ = Direct3DCreate9(D3D_SDK_VERSION);
 	if (pDirect3D_ == nullptr) throw gstd::wexception("Direct3DCreate9 error.");
@@ -230,7 +234,6 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 	// Zバッファ取得
 	pDevice_->GetDepthStencilSurface(&pZBuffer_);
 
-#if defined(DNH_PROJ_EXECUTOR)
 	bufferManager_ = new VertexBufferManager();
 	bufferManager_->Initialize(this);
 #endif

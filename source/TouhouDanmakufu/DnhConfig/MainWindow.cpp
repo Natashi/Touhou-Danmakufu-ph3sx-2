@@ -374,9 +374,9 @@ bool KeyPanel::Initialize(HWND hParent) {
 bool KeyPanel::StartUp() {
 	int padDeviceTextWidth = comboPadIndex_.GetClientWidth();
 	EDirectInput* input = EDirectInput::GetInstance();
-	int padCount = input->GetPadDeviceCount();
-	for (int iPad = 0; iPad < padCount; iPad++) {
-		DIDEVICEINSTANCE info = input->GetPadDeviceInformation(iPad);
+	size_t padCount = input->GetPadDeviceCount();
+	for (size_t iPad = 0; iPad < padCount; iPad++) {
+		DIDEVICEINSTANCE info = input->GetPadDeviceInformation((int16_t)iPad);
 		std::wstring strPad = StringUtility::Format(L"%d : %s [%s]", iPad + 1, info.tszInstanceName, info.tszProductName);
 		comboPadIndex_.AddString(strPad);
 
@@ -392,7 +392,7 @@ bool KeyPanel::StartUp() {
 
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 	int padIndex = config->GetPadIndex();
-	padIndex = std::min(padIndex, padCount - 1);
+	padIndex = std::min(padIndex, (int)padCount - 1);
 	padIndex = std::max(padIndex, 0);
 	comboPadIndex_.SetSelectedIndex(padIndex);
 

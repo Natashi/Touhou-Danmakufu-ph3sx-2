@@ -60,6 +60,7 @@ bool DirectInput::Initialize(HWND hWnd) {
 	}
 
 	thisBase_ = this;
+
 	Logger::WriteTop("DirectInput: Initialized.");
 	return true;
 }
@@ -328,6 +329,7 @@ bool DirectInput::_IdleMouse() {
 	return true;
 }
 
+#if defined(DNH_PROJ_EXECUTOR)
 void DirectInput::Update() {
 	this->_IdleKeyboard();
 	this->_IdleJoypad();
@@ -349,6 +351,8 @@ void DirectInput::Update() {
 			bufPad_[iPad][iButton + 4] = _GetPadButton(iPad, iButton, bufPad_[iPad][iButton + 4]);
 	}
 }
+#endif
+
 DIKeyState DirectInput::GetKeyState(int16_t key) {
 	if (key < 0 || key >= MAX_KEY)
 		return KEY_FREE;
@@ -366,6 +370,7 @@ DIKeyState DirectInput::GetPadState(int16_t padNo, int16_t button) {
 	return res;
 }
 
+#if defined(DNH_PROJ_EXECUTOR)
 POINT DirectInput::GetMousePosition() {
 	POINT res = { 0, 0 };
 	GetCursorPos(&res);
@@ -399,6 +404,8 @@ void DirectInput::ResetPadState() {
 		}
 	}
 }
+#endif
+
 DIDEVICEINSTANCE DirectInput::GetPadDeviceInformation(int16_t padIndex) {
 	DIDEVICEINSTANCE state;
 	ZeroMemory(&state, sizeof(state));
@@ -407,11 +414,9 @@ DIDEVICEINSTANCE DirectInput::GetPadDeviceInformation(int16_t padIndex) {
 	return state;
 }
 
-
 /**********************************************************
-//VirtualKeyManager
-**********************************************************/
 //VirtualKey
+**********************************************************/
 VirtualKey::VirtualKey(int16_t keyboard, int16_t padIndex, int16_t padButton) {
 	keyboard_ = keyboard;
 	padIndex_ = padIndex;
@@ -420,8 +425,9 @@ VirtualKey::VirtualKey(int16_t keyboard, int16_t padIndex, int16_t padButton) {
 }
 VirtualKey::~VirtualKey() {}
 
-
+/**********************************************************
 //VirtualKeyManager
+**********************************************************/
 VirtualKeyManager::VirtualKeyManager() {
 
 }
@@ -430,7 +436,9 @@ VirtualKeyManager::~VirtualKeyManager() {
 }
 
 void VirtualKeyManager::Update() {
+#if defined(DNH_PROJ_EXECUTOR)
 	DirectInput::Update();
+#endif
 
 	for (auto itr = mapKey_.begin(); itr != mapKey_.end(); ++itr) {
 		int16_t id = itr->first;
@@ -441,7 +449,9 @@ void VirtualKeyManager::Update() {
 	}
 }
 void VirtualKeyManager::ClearKeyState() {
+#if defined(DNH_PROJ_EXECUTOR)
 	DirectInput::ResetInputState();
+#endif
 	
 	for (auto itr = mapKey_.begin(); itr != mapKey_.end(); ++itr) {
 		ref_count_ptr<VirtualKey> key = itr->second;
@@ -490,6 +500,7 @@ bool VirtualKeyManager::IsTargetKeyCode(int16_t key) {
 	return res;
 }
 
+#if defined(DNH_PROJ_EXECUTOR)
 /**********************************************************
 //KeyReplayManager
 **********************************************************/
@@ -586,3 +597,4 @@ void KeyReplayManager::WriteRecord(RecordBuffer& record) {
 	}
 }
 
+#endif

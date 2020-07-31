@@ -228,9 +228,10 @@ namespace gstd {
 		FileManager();
 		virtual ~FileManager();
 		virtual bool Initialize();
-		void EndLoadThread();
 
 #if defined(DNH_PROJ_EXECUTOR)
+		void EndLoadThread();
+
 		bool AddArchiveFile(const std::wstring& path);
 		bool RemoveArchiveFile(const std::wstring& path);
 		ref_count_ptr<ArchiveFile> GetArchiveFile(const std::wstring& name);
@@ -239,12 +240,15 @@ namespace gstd {
 
 		ref_count_ptr<FileReader> GetFileReader(const std::wstring& path);
 
+#if defined(DNH_PROJ_EXECUTOR)
 		void AddLoadThreadEvent(shared_ptr<LoadThreadEvent> event);
 		void AddLoadThreadListener(FileManager::LoadThreadListener* listener);
 		void RemoveLoadThreadListener(FileManager::LoadThreadListener* listener);
 		void WaitForThreadLoadComplete();
+#endif
 	};
 
+#if defined(DNH_PROJ_EXECUTOR)
 	class FileManager::LoadObject {
 	public:
 		virtual ~LoadObject() {};
@@ -295,6 +299,7 @@ namespace gstd {
 		std::wstring& GetPath() { return path_; }
 		shared_ptr<FileManager::LoadObject> GetSource() { return source_; }
 	};
+#endif
 
 	/**********************************************************
 	//ManagedFileReader
@@ -385,6 +390,7 @@ namespace gstd {
 		ByteBuffer& GetBufferRef() { return buffer_; }
 	};
 
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 	/**********************************************************
 	//RecordBuffer
 	**********************************************************/
@@ -471,7 +477,6 @@ namespace gstd {
 		virtual void Write(RecordBuffer& record);
 	};
 
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 	/**********************************************************
 	//PropertyFile
 	**********************************************************/

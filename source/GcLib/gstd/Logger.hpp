@@ -1,5 +1,4 @@
-#ifndef __GSTD_LOGGER__
-#define __GSTD_LOGGER__
+#pragma once
 
 #include "../pch.h"
 
@@ -9,7 +8,6 @@
 
 #include "Window.hpp"
 
-
 namespace gstd {
 	/**********************************************************
 	//Logger
@@ -18,7 +16,7 @@ namespace gstd {
 	protected:
 		static Logger* top_;
 		gstd::CriticalSection lock_;
-		std::list<ref_count_ptr<Logger>> listLogger_;//子のロガ
+		std::list<ref_count_ptr<Logger>> listLogger_;
 		virtual void _WriteChild(SYSTEMTIME& time, const std::wstring& str);
 		virtual void _Write(SYSTEMTIME& time, const std::wstring& str) = 0;
 	public:
@@ -31,9 +29,10 @@ namespace gstd {
 
 		static void SetTop(Logger* logger) { top_ = logger; }
 		static void WriteTop(const std::string& str) { if (top_) top_->Write(str); }
-		static void WriteTop(const std::wstring& str) { if (top_) top_->Write(str); }//トップのロガに出力します
+		static void WriteTop(const std::wstring& str) { if (top_) top_->Write(str); }
 	};
 
+#if defined(DNH_PROJ_EXECUTOR)
 	/**********************************************************
 	//FileLogger
 	**********************************************************/
@@ -192,7 +191,5 @@ namespace gstd {
 		InfoCollectThread(ref_count_ptr<WStatusBar> wndStatus);
 		~InfoCollectThread();
 	};
-}
-
-
 #endif
+}

@@ -19,15 +19,4 @@ public:
 	}
 };
 
-class ELogger : public Singleton<ELogger>, public FileLogger {
-	friend Singleton<ELogger>;
-private:
-	ELogger() {
-		Logger::SetTop(this);
-
-		Clear();
-		Initialize(true);
-	}
-};
-
 #endif

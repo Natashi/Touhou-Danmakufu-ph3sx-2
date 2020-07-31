@@ -67,17 +67,12 @@ bool MainWindow::Initialize() {
 
 	return true;
 }
+//???????? nani????
 void MainWindow::_LoadEnvironment() {
 	std::wstring path = PathProperty::GetModuleDirectory() + PATH_ENVIRONMENT;
-	RecordBuffer record;
-	if (!record.ReadFromFile(path)) return;
-
 }
 void MainWindow::_SaveEnvironment() {
 	std::wstring path = PathProperty::GetModuleDirectory() + PATH_ENVIRONMENT;
-	RecordBuffer record;
-
-	record.WriteToFile(path);
 }
 LRESULT MainWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
