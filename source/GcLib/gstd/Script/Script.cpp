@@ -543,8 +543,8 @@ void script_machine::run_code() {
 
 				stack_t& stack = current->stack;
 
-				value* src_array = &stack.back() - 1;
 				value* i = &stack.back();
+				value* src_array = i - 1;
 
 				std::vector<value>::iterator itrCur = src_array->array_get_begin() + i->as_int();
 				std::vector<value>::iterator itrEnd = src_array->array_get_end();
@@ -556,7 +556,7 @@ void script_machine::run_code() {
 				}
 				else {
 					current->stack.push_back(value::new_from(*itrCur));
-					i->set(i->get_type(), i->as_int() + 1);
+					i->set(script_type_manager::get_int_type(), i->as_int() + 1i64);
 				}
 
 				break;
