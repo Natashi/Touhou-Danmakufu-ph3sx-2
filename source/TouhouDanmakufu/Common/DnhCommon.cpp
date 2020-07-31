@@ -490,8 +490,8 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 	fastModeSpeed_ = std::min(fastModeSpeed_, 50);
 
 	{
-		if (prop.HasProperty(L"config.window.size.list")) {
-			std::wstring strList = prop.GetString(L"config.window.size.list", L"");
+		if (prop.HasProperty(L"window.size.list")) {
+			std::wstring strList = prop.GetString(L"window.size.list", L"");
 			if (strList.size() >= 3) {	//Minimum format: "0x0"
 				std::wregex reg(L"([0-9]+)x([0-9]+)");
 				auto itrBegin = std::wsregex_iterator(strList.begin(), strList.end(), reg);
