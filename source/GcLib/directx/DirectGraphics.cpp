@@ -141,17 +141,21 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 			if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0)) {
 				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
 					D3DCREATE_HARDWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
-				if (!FAILED(hrDevice)) Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_HARDWARE_VERTEXPROCESSING)");
-				if (FAILED(hrDevice)) {
+				if (SUCCEEDED(hrDevice)) {
+					Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_HARDWARE_VERTEXPROCESSING)");
+				}
+				else {
 					hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
 						D3DCREATE_SOFTWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
-					if (!FAILED(hrDevice)) Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
+					if (SUCCEEDED(hrDevice))
+						Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
 				}
 			}
 			else {
 				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
 					D3DCREATE_SOFTWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
-				if (!FAILED(hrDevice)) Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
+				if (SUCCEEDED(hrDevice))
+					Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
 			}
 
 			if (FAILED(hrDevice)) {
@@ -163,7 +167,10 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 		}
 
 		if (FAILED(hrDevice)) {
-			throw gstd::wexception("IDirect3DDevice9::CreateDevice failure.");
+			std::wstring err = StringUtility::Format(L"IDirect3DDevice9::CreateDevice failure. [%s]\r\n  %s",
+				DXGetErrorString(hrDevice), DXGetErrorDescription(hrDevice));
+			Logger::WriteTop(err);
+			throw wexception(err);
 		}
 	}
 
