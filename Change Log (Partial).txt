@@ -108,5 +108,6 @@
 	- Improved the precision of ObjSound_GetWavePosition, and fixed an issue where ObjSound_GetTotalLength would work incorrectly with .ogg files.
 	- Added bitwise operators.
 	- Greatly improved the LogWindow's Script panel.
-	- Added a field showing the available video memory in the LogWindow's Texture panel.
+	- Added a text showing the available video memory in the LogWindow's Texture panel.
+	- Added a text showing the used RAM and CPU in the LogWindow's Info panel.
 	- Various optimizations.
