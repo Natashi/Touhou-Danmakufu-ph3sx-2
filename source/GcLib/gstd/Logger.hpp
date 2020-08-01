@@ -161,8 +161,10 @@ namespace gstd {
 			ROW_DATA,
 		};
 
+		gstd::CriticalSection lock_;
+
 		WListView wndListView_;
-		ref_count_ptr<InfoCollector> infoCollector_;
+		InfoCollector* infoCollector_;
 	protected:
 		virtual void _Run();
 
@@ -196,6 +198,7 @@ namespace gstd {
 
 		CpuInfo infoCpu_;
 
+		HANDLE hProcess_;
 		HQUERY hQuery_;
 		HCOUNTER hCounter_;
 

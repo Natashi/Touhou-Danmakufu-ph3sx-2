@@ -1160,11 +1160,13 @@ void ScriptInfoPanel::LocateParts() {
 void ScriptInfoPanel::_Run() {
 	while (GetStatus() == RUN) {
 		ETaskManager* taskManager = ETaskManager::GetInstance();
-		std::list<shared_ptr<TaskBase>>& listTask = taskManager->GetTaskList();
-		for (auto itr = listTask.begin(); itr != listTask.end(); ++itr) {
-			StgSystemController* systemController = dynamic_cast<StgSystemController*>(itr->get());
-			if (systemController)
-				Update(systemController);
+		if (taskManager) {
+			std::list<shared_ptr<TaskBase>>& listTask = taskManager->GetTaskList();
+			for (auto itr = listTask.begin(); itr != listTask.end(); ++itr) {
+				StgSystemController* systemController = dynamic_cast<StgSystemController*>(itr->get());
+				if (systemController)
+					Update(systemController);
+			}
 		}
 		Sleep(timeUpdateInterval_);
 	}

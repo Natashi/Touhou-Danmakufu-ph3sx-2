@@ -510,16 +510,18 @@ namespace gstd {
 	public:
 		virtual ~Singleton() {};
 		static T* CreateInstance() {
-			if (_This() == nullptr) _This() = new T();
-			return _This();
+			T*& p = _This();
+			if (p == nullptr) p = new T();
+			return p;
 		}
 		static T* GetInstance() {
-			if (_This() == nullptr)
-				throw std::exception("Instance uninitialized.");
-			return _This();
+			T*& p = _This();
+			if (p == nullptr) throw gstd::wexception("Instance uninitialized.");
+			return p;
 		}
 		static void DeleteInstance() {
-			ptr_delete(_This());
+			T*& p = _This();
+			ptr_delete(p);
 		}
 	};
 
