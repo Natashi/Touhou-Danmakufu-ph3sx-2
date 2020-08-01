@@ -1282,34 +1282,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) time
 		Description:
 			Seeks to the specified sample in the audio.
-
-	ObjSound_GetWavePosition
-		Arguments:
-			1) object ID
-		Description:
-			Returns the current reading position of the sound object.
-			
-			May briefly return an incorrect value if ObjSound_Seek[SampleCount] was recently used.
-
-	ObjSound_GetWavePositionSampleCount
-		Arguments:
-			1) object ID
-		Description:
-			Returns the current reading position of the sound object in samples.
-			
-			May briefly return an incorrect value if ObjSound_Seek[SampleCount] was recently used.
-
-	ObjSound_GetTotalLength
-		Arguments:
-			1) object ID
-		Description:
-			Returns the total length of the audio.
-
-	ObjSound_GetTotalLengthSampleCount
-		Arguments:
-			1) object ID
-		Description:
-			Returns the total length of the audio in samples.
 			
 	ObjSound_SetFrequency
 		Arguments:
@@ -1320,6 +1292,41 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Can be used to increase or decrease play speed.
 			
 			An input of 0 will reset the value to the audio's original frequency.
+			
+	ObjSound_GetInfo
+		Arguments:
+			1) object ID
+			2) (struct) type
+		Description:
+			Returns the value of the requested information about the sound object.
+			
+			List of available information types:
+				INFO_FORMAT
+					- The format of the audio file.
+						- SOUND_UNKNOWN
+						- SOUND_WAVE
+						- SOUND_OGG
+						- SOUND_MP3
+						- SOUND_AWAVE
+						- SOUND_MIDI
+				INFO_CHANNEL
+					- The number of channels.
+				INFO_SAMPLE_RATE
+					- The sample rate of the audio in hertz.
+				INFO_AVG_BYTE_PER_SEC
+					- The average byte per one second of audio.
+				INFO_BLOCK_ALIGN
+					- The block align. (channel * bytePerSample)
+				INFO_BIT_PER_SAMPLE
+					- The bits per sample of the audio.
+				INFO_POSITION
+					- The current reading position of the audio in seconds.
+				INFO_POSITION_SAMPLE
+					- The current reading position of the audio in sample count.
+				INFO_LENGTH
+					- The total length of the audio in seconds.
+				INFO_LENGTH_SAMPLE
+					- The total length of the audio in sample count.
 	
 	--------------------------------> Binary File Object Functions <--------------------------------
 	
