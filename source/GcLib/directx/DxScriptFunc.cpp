@@ -344,12 +344,9 @@ function const dxFunction[] =
 	{ "ObjSound_SetSoundDivision", DxScript::Func_ObjSound_SetSoundDivision, 2 },
 	{ "ObjSound_IsPlaying", DxScript::Func_ObjSound_IsPlaying, 1 },
 	{ "ObjSound_GetVolumeRate", DxScript::Func_ObjSound_GetVolumeRate, 1 },
-	{ "ObjSound_GetWavePosition", DxScript::Func_ObjSound_GetWavePosition, 1 },
-	{ "ObjSound_GetWavePositionSampleCount", DxScript::Func_ObjSound_GetWavePositionSampleCount, 1 },
 	//{ "ObjSound_DebugGetCopyPos", DxScript::Func_ObjSound_DebugGetCopyPos, 1 },
-	{ "ObjSound_GetTotalLength", DxScript::Func_ObjSound_GetTotalLength, 1 },
-	{ "ObjSound_GetTotalLengthSampleCount", DxScript::Func_ObjSound_GetTotalLengthSampleCount, 1 },
 	{ "ObjSound_SetFrequency", DxScript::Func_ObjSound_SetFrequency, 2 },
+	{ "ObjSound_GetInfo", DxScript::Func_ObjSound_GetInfo, 2 },
 
 	//Dx関数：ファイル操作(DxFileObject)
 	{ "ObjFile_Create", DxScript::Func_ObjFile_Create, 1 },
@@ -469,6 +466,24 @@ function const dxFunction[] =
 	{ "SOUND_BGM", constant<SoundDivision::DIVISION_BGM>::func, 0 },
 	{ "SOUND_SE", constant<SoundDivision::DIVISION_SE>::func, 0 },
 	{ "SOUND_VOICE", constant<SoundDivision::DIVISION_VOICE>::func, 0 },
+
+	DNH_CONST_DECL("SOUND_UNKNOWN", DirectSoundManager::FileFormat::SD_UNKNOWN),
+	DNH_CONST_DECL("SOUND_WAVE", DirectSoundManager::FileFormat::SD_WAVE),
+	DNH_CONST_DECL("SOUND_OGG", DirectSoundManager::FileFormat::SD_OGG),
+	DNH_CONST_DECL("SOUND_MP3", DirectSoundManager::FileFormat::SD_MP3),
+	DNH_CONST_DECL("SOUND_AWAVE", DirectSoundManager::FileFormat::SD_AWAVE),
+	DNH_CONST_DECL("SOUND_MIDI", DirectSoundManager::FileFormat::SD_MIDI),
+
+	DNH_CONST_DECL("INFO_FORMAT", SoundPlayer::INFO_FORMAT),
+	DNH_CONST_DECL("INFO_CHANNEL", SoundPlayer::INFO_CHANNEL),
+	DNH_CONST_DECL("INFO_SAMPLE_RATE", SoundPlayer::INFO_SAMPLE_RATE),
+	DNH_CONST_DECL("INFO_AVG_BYTE_PER_SEC", SoundPlayer::INFO_AVG_BYTE_PER_SEC),
+	DNH_CONST_DECL("INFO_BLOCK_ALIGN", SoundPlayer::INFO_BLOCK_ALIGN),
+	DNH_CONST_DECL("INFO_BIT_PER_SAMPLE", SoundPlayer::INFO_BIT_PER_SAMPLE),
+	DNH_CONST_DECL("INFO_POSITION", SoundPlayer::INFO_POSITION),
+	DNH_CONST_DECL("INFO_POSITION_SAMPLE", SoundPlayer::INFO_POSITION_SAMPLE),
+	DNH_CONST_DECL("INFO_LENGTH", SoundPlayer::INFO_LENGTH),
+	DNH_CONST_DECL("INFO_LENGTH_SAMPLE", SoundPlayer::INFO_LENGTH_SAMPLE),
 
 	{ "ALIGNMENT_LEFT", constant<DxText::ALIGNMENT_LEFT>::func, 0 },
 	{ "ALIGNMENT_RIGHT", constant<DxText::ALIGNMENT_RIGHT>::func, 0 },
@@ -3936,34 +3951,6 @@ gstd::value DxScript::Func_ObjSound_GetVolumeRate(gstd::script_machine* machine,
 	}
 	return script->CreateRealValue(rate);
 }
-gstd::value DxScript::Func_ObjSound_GetWavePosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = (int)argv[0].as_real();
-	double posSec = 0;
-	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		shared_ptr<SoundPlayer> player = obj->GetPlayer();
-		if (player) {
-			DWORD pos = player->GetCurrentPosition();
-			posSec = (double)pos / player->GetWaveFormat()->nAvgBytesPerSec;
-		}
-	}
-	return script->CreateRealValue(posSec);
-}
-gstd::value DxScript::Func_ObjSound_GetWavePositionSampleCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = (int)argv[0].as_real();
-	DWORD posSamp = 0;
-	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		shared_ptr<SoundPlayer> player = obj->GetPlayer();
-		if (player) {
-			DWORD pos = player->GetCurrentPosition();
-			posSamp = pos / player->GetWaveFormat()->nBlockAlign;
-		}
-	}
-	return script->CreateRealValue(posSamp);
-}
 /*
 gstd::value DxScript::Func_ObjSound_DebugGetCopyPos(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -3981,34 +3968,6 @@ gstd::value DxScript::Func_ObjSound_DebugGetCopyPos(gstd::script_machine* machin
 	return script->CreateRealArrayValue((int*)nullptr, 0U);
 }
 */
-gstd::value DxScript::Func_ObjSound_GetTotalLength(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = (int)argv[0].as_real();
-	double posSec = 0;
-	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		shared_ptr<SoundPlayer> player = obj->GetPlayer();
-		if (player) {
-			DWORD pos = player->GetTotalAudioSize();
-			posSec = (double)pos / player->GetWaveFormat()->nAvgBytesPerSec;
-		}
-	}
-	return script->CreateRealValue(posSec);
-}
-gstd::value DxScript::Func_ObjSound_GetTotalLengthSampleCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = (int)argv[0].as_real();
-	DWORD posSamp = 0;
-	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		shared_ptr<SoundPlayer> player = obj->GetPlayer();
-		if (player) {
-			DWORD pos = player->GetTotalAudioSize();
-			posSamp = pos / player->GetWaveFormat()->nBlockAlign;
-		}
-	}
-	return script->CreateRealValue(posSamp);
-}
 gstd::value DxScript::Func_ObjSound_SetFrequency(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
@@ -4018,6 +3977,62 @@ gstd::value DxScript::Func_ObjSound_SetFrequency(gstd::script_machine* machine, 
 		if (player)
 			player->SetFrequency(argv[1].as_int());
 	}
+	return value();
+}
+gstd::value DxScript::Func_ObjSound_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	int type = argv[1].as_int();
+
+	value res;
+
+	int id = (int)argv[0].as_real();
+	DxSoundObject* obj = dynamic_cast<DxSoundObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		shared_ptr<SoundPlayer> player = obj->GetPlayer();
+		if (player) {
+			WAVEFORMATEX* waveFormat = player->GetWaveFormat();
+			switch (type) {
+			case SoundPlayer::INFO_FORMAT:
+				return script->CreateRealValue(player->GetFormat());
+			case SoundPlayer::INFO_CHANNEL:
+				return script->CreateRealValue(waveFormat->nChannels);
+			case SoundPlayer::INFO_SAMPLE_RATE:
+				return script->CreateRealValue(waveFormat->nSamplesPerSec);
+			case SoundPlayer::INFO_AVG_BYTE_PER_SEC:
+				return script->CreateRealValue(waveFormat->nAvgBytesPerSec);
+			case SoundPlayer::INFO_BLOCK_ALIGN:
+				return script->CreateRealValue(waveFormat->nBlockAlign);
+			case SoundPlayer::INFO_BIT_PER_SAMPLE:
+				return script->CreateRealValue(waveFormat->wBitsPerSample);
+			case SoundPlayer::INFO_POSITION:
+				return script->CreateRealValue(player->GetCurrentPosition() / (double)waveFormat->nAvgBytesPerSec);
+			case SoundPlayer::INFO_POSITION_SAMPLE:
+				return script->CreateRealValue(player->GetCurrentPosition() / waveFormat->nBlockAlign);
+			case SoundPlayer::INFO_LENGTH:
+				return script->CreateRealValue(player->GetTotalAudioSize() / (double)waveFormat->nAvgBytesPerSec);
+			case SoundPlayer::INFO_LENGTH_SAMPLE:
+				return script->CreateRealValue(player->GetTotalAudioSize() / waveFormat->nBlockAlign);
+			}
+			return value();
+		}
+	}
+
+	switch (type) {
+	case SoundPlayer::INFO_FORMAT:
+		return script->CreateRealValue(DirectSoundManager::FileFormat::SD_UNKNOWN);
+	case SoundPlayer::INFO_CHANNEL:
+	case SoundPlayer::INFO_SAMPLE_RATE:
+	case SoundPlayer::INFO_AVG_BYTE_PER_SEC:
+	case SoundPlayer::INFO_BLOCK_ALIGN:
+	case SoundPlayer::INFO_BIT_PER_SAMPLE:
+	case SoundPlayer::INFO_POSITION:
+	case SoundPlayer::INFO_POSITION_SAMPLE:
+	case SoundPlayer::INFO_LENGTH:
+	case SoundPlayer::INFO_LENGTH_SAMPLE:
+		return script->CreateRealValue(0);
+	}
+
 	return value();
 }
 

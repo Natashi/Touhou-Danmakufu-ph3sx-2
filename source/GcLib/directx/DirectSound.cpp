@@ -249,6 +249,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 
 		if (bSuccess) {
 			res->manager_ = this;
+			res->format_ = format;
 			res->path_ = path;
 			res->pathHash_ = std::hash<std::wstring>{}(path);
 			mapPlayer_[path].push_back(res);

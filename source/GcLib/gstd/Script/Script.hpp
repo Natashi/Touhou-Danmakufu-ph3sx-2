@@ -160,6 +160,7 @@ namespace gstd {
 		size_t get_thread_count() { return threads.size(); }
 	};
 
+#define DNH_CONST_DECL(word, val) { word, constant<val>::func, 0 }
 	template<int num>
 	class constant {
 	public:
@@ -167,7 +168,6 @@ namespace gstd {
 			return value(script_type_manager::get_real_type(), (double)num);
 		}
 	};
-
 	template<const double* pVal>
 	class pconstant {
 	public:

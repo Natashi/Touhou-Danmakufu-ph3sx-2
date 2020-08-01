@@ -29,21 +29,19 @@ namespace directx {
 		class SoundManageThread;
 		friend SoundManageThread;
 		friend SoundInfoPanel;
-
 	public:
 		enum {
 			SD_VOLUME_MIN = DSBVOLUME_MIN,
 			SD_VOLUME_MAX = DSBVOLUME_MAX,
 		};
-		enum FileFormat {
-			SD_MIDI,
-			SD_WAVE,
-			SD_MP3,
-			SD_OGG,
-			SD_AWAVE,//圧縮wave waveヘッダmp3
+		enum FileFormat : uint8_t {
 			SD_UNKNOWN,
+			SD_WAVE,
+			SD_OGG,
+			SD_MP3,
+			SD_AWAVE,	//Wave but mp3
+			SD_MIDI,
 		};
-
 	private:
 		static DirectSoundManager* thisBase_;
 	protected:
@@ -181,8 +179,21 @@ namespace directx {
 		friend DirectSoundManager::SoundManageThread;
 	public:
 		class PlayStyle;
+	public:
 		enum {
 			FADE_DEFAULT = 20,
+
+			INFO_FORMAT = 0,
+			INFO_CHANNEL,
+			INFO_SAMPLE_RATE,
+			INFO_AVG_BYTE_PER_SEC,
+			INFO_BLOCK_ALIGN,
+			INFO_BIT_PER_SAMPLE,
+
+			INFO_POSITION,
+			INFO_POSITION_SAMPLE,
+			INFO_LENGTH,
+			INFO_LENGTH_SAMPLE,
 		};
 
 		static void PtrDelete(SoundPlayer* p) {
@@ -197,6 +208,8 @@ namespace directx {
 		IDirectSoundBuffer8* pDirectSoundBuffer_;
 		gstd::ref_count_ptr<gstd::FileReader> reader_;
 		SoundDivision* division_;
+
+		DirectSoundManager::FileFormat format_;
 
 		WAVEFORMATEX formatWave_;
 		bool bLoop_;//ループ有無
@@ -219,6 +232,9 @@ namespace directx {
 	public:
 		SoundPlayer();
 		virtual ~SoundPlayer();
+
+		DirectSoundManager::FileFormat GetFormat() { return format_; }
+
 		std::wstring& GetPath() { return path_; }
 		size_t GetPathHash() { return pathHash_; }
 		gstd::CriticalSection& GetLock() { return lock_; }
