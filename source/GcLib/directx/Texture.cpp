@@ -917,6 +917,7 @@ void TextureInfoPanel::_Run() {
 }
 void TextureInfoPanel::Update(TextureManager* manager) {
 	if (!IsWindowVisible()) return;
+
 	std::set<std::wstring> setKey;
 	{
 		Lock lock(manager->GetLock());
@@ -951,5 +952,19 @@ void TextureInfoPanel::Update(TextureManager* manager) {
 		std::wstring key = wndListView_.GetText(iRow, ROW_ADDRESS);
 		if (setKey.find(key) != setKey.end())iRow++;
 		else wndListView_.DeleteRow(iRow);
+	}
+
+	{
+		Lock lock(manager->GetLock());
+
+		IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
+		UINT texMem = device->GetAvailableTextureMem() / (1024U * 1024U);
+
+		WindowLogger* logger = WindowLogger::GetParent();
+		if (logger) {
+			ref_count_ptr<WStatusBar> statusBar = logger->GetStatusBar();
+			statusBar->SetText(0, L"Available Video Memory");
+			statusBar->SetText(1, StringUtility::Format(L"%u MB", texMem));
+		}
 	}
 }

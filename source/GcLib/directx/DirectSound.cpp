@@ -568,6 +568,23 @@ void SoundInfoPanel::Update(DirectSoundManager* soundManager) {
 		if (setKey.find(key) != setKey.end())iRow++;
 		else wndListView_.DeleteRow(iRow);
 	}
+
+	/*
+	{
+		Lock lock(soundManager->GetLock());
+
+		IDirectSound8* directSound = soundManager->GetDirectSound();
+		directSound->GetCaps(const_cast<LPDSCAPS>(soundManager->GetDeviceCaps()));
+		UINT sndMem = soundManager->GetDeviceCaps()->dwFreeHwMemBytes / (1024U * 1024U);
+
+		WindowLogger* logger = WindowLogger::GetParent();
+		if (logger) {
+			ref_count_ptr<WStatusBar> statusBar = logger->GetStatusBar();
+			statusBar->SetText(0, L"Available Sound Memory");
+			statusBar->SetText(1, StringUtility::Format(L"%u MB", sndMem));
+		}
+	}
+	*/
 }
 /**********************************************************
 //SoundDivision

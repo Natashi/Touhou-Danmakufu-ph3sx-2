@@ -122,6 +122,9 @@ namespace gstd {
 		void ShowLogWindow();
 		static void InsertOpenCommandInSystemMenu(HWND hWnd);
 
+		ref_count_ptr<WStatusBar> GetStatusBar() { return wndStatus_; }
+		void ClearStatusBar();
+		
 		static WindowLogger* GetParent() { return loggerParentGlobal_; }
 	};
 	class WindowLogger::WindowThread : public gstd::Thread, public gstd::InnerClass<WindowLogger> {

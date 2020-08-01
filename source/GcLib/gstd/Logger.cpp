@@ -351,6 +351,7 @@ LRESULT WindowLogger::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	{
 		switch (((NMHDR*)lParam)->code) {
 		case TCN_SELCHANGE:
+			this->ClearStatusBar();
 			wndTab_->ShowPage();
 			return FALSE;
 		}
@@ -439,6 +440,10 @@ void WindowLogger::InsertOpenCommandInSystemMenu(HWND hWnd) {
 	mii.dwTypeData = L"Show LogWindow";
 
 	InsertMenuItem(hMenu, 0, 1, &mii);
+}
+void WindowLogger::ClearStatusBar() {
+	wndStatus_->SetText(0, L"");
+	wndStatus_->SetText(1, L"");
 }
 
 //WindowLogger::WindowThread
