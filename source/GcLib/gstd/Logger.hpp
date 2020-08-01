@@ -66,11 +66,9 @@ namespace gstd {
 		class Panel;
 		class LogPanel;
 		class InfoPanel;
-		class InfoCollectThread;
 		friend WindowThread;
 		friend LogPanel;
 		friend InfoPanel;
-		friend InfoCollectThread;
 		enum {
 			WM_ENDLOGGER = WM_APP + 1,
 			WM_ADDPANEL,
@@ -100,7 +98,6 @@ namespace gstd {
 		ref_count_ptr<WStatusBar> wndStatus_;
 		ref_count_ptr<LogPanel> wndLogPanel_;
 		ref_count_ptr<InfoPanel> wndInfoPanel_;
-		ref_count_ptr<InfoCollectThread> threadInfoCollect_;
 		gstd::CriticalSection lock_;
 		std::list<AddPanelEvent> listEventAddPanel_;
 
@@ -154,13 +151,21 @@ namespace gstd {
 		void ClearText();
 	};
 
-	class WindowLogger::InfoPanel : public WindowLogger::Panel {
+	class WindowLogger::InfoPanel : public WindowLogger::Panel, public Thread {
+	private:
+		class InfoCollector;
+		friend class InfoCollector;
+
 		enum {
 			ROW_INFO = 0,
 			ROW_DATA,
 		};
+
 		WListView wndListView_;
+		ref_count_ptr<InfoCollector> infoCollector_;
 	protected:
+		virtual void _Run();
+
 		virtual bool _AddedLogger(HWND hTab);
 	public:
 		InfoPanel();
@@ -169,7 +174,7 @@ namespace gstd {
 		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
 	};
 
-	class WindowLogger::InfoCollectThread : public Thread {
+	class WindowLogger::InfoPanel::InfoCollector {
 	protected:
 		//CPUèÓïÒç\ë¢ëÃ
 		struct CpuInfo {
@@ -185,14 +190,23 @@ namespace gstd {
 			bool bAMD3DNowEnabled;
 			bool bSIMDEnabled;
 		};
+
 		ref_count_ptr<WStatusBar> wndStatus_;
+		InfoPanel* wndInfo_;
+
 		CpuInfo infoCpu_;
-		virtual void _Run();
+
+		HQUERY hQuery_;
+		HCOUNTER hCounter_;
+
 		CpuInfo _GetCpuInformation();
 		double _GetCpuPerformance();
 	public:
-		InfoCollectThread(ref_count_ptr<WStatusBar> wndStatus);
-		~InfoCollectThread();
+		InfoCollector(ref_count_ptr<WStatusBar> wndStatus, InfoPanel* wndInfo);
+		~InfoCollector();
+
+		void Initialize();
+		void Update();
 	};
 #endif
 }

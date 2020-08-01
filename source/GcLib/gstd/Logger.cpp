@@ -144,7 +144,6 @@ WindowLogger::WindowLogger() {
 WindowLogger::~WindowLogger() {
 	windowState_ = STATE_CLOSED;
 
-	threadInfoCollect_ = nullptr;
 	wndInfoPanel_ = nullptr;
 	wndLogPanel_ = nullptr;
 	wndStatus_ = nullptr;
@@ -278,10 +277,6 @@ void WindowLogger::_CreateWindow() {
 	sizeStatus.push_back(180);
 	sizeStatus.push_back(sizeStatus[0] + 560);
 	wndStatus_->SetPartsSize(sizeStatus);
-
-	//情報取得スレッド
-	threadInfoCollect_ = new InfoCollectThread(wndStatus_);
-	threadInfoCollect_->Start();
 
 	//初期化完了
 	this->SetBounds(32, 32, 280, 480);
@@ -500,10 +495,12 @@ void WindowLogger::LogPanel::ClearText() {
 }
 //WindowLogger::InfoPanel
 WindowLogger::InfoPanel::InfoPanel() {
-
+	infoCollector_ = new InfoCollector(WindowLogger::GetParent()->GetStatusBar(), this);
+	Start();
 }
 WindowLogger::InfoPanel::~InfoPanel() {
-
+	Stop();
+	Join(1000);
 }
 bool WindowLogger::InfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
@@ -530,47 +527,88 @@ void WindowLogger::InfoPanel::SetInfo(int row, const std::wstring& textInfo, con
 	wndListView_.SetText(row, ROW_INFO, textInfo);
 	wndListView_.SetText(row, ROW_DATA, textData);
 }
+void WindowLogger::InfoPanel::_Run() {
+	infoCollector_->Initialize();
+
+	while (this->GetStatus() == RUN) {
+		infoCollector_->Update();
+		::Sleep(500);
+	}
+}
 
 //WindowLogger::InfoCollectThread
-WindowLogger::InfoCollectThread::InfoCollectThread(ref_count_ptr<WStatusBar> wndStatus) {
+WindowLogger::InfoPanel::InfoCollector::InfoCollector(ref_count_ptr<WStatusBar> wndStatus, InfoPanel* wndInfo) {
 	wndStatus_ = wndStatus;
+	wndInfo_ = wndInfo;
+	hQuery_ = INVALID_HANDLE_VALUE;
+	hCounter_ = INVALID_HANDLE_VALUE;
 }
-WindowLogger::InfoCollectThread::~InfoCollectThread() {
-	this->Stop();
-	this->Join();
-	wndStatus_ = nullptr;
+WindowLogger::InfoPanel::InfoCollector::~InfoCollector() {
+	if (hQuery_ != INVALID_HANDLE_VALUE)
+		PdhCloseQuery(&hQuery_);
 }
-void WindowLogger::InfoCollectThread::_Run() {
+void WindowLogger::InfoPanel::InfoCollector::Initialize() {
+	PdhOpenQuery(nullptr, 0, &hQuery_);
+	PdhAddCounter(hQuery_, L"\\Processor(_Total)\\% Processor Time", 0, &hCounter_);
+	PdhCollectQueryData(hQuery_);
+}
+/*
+void WindowLogger::InfoPanel::InfoCollector::_Run() {
 	//TODO 無効なステータスバーにメッセージを
 	//     送るとき、固まる可能性あり。
 	//infoCpu_ = this->_GetCpuInformation();
 
 	while (this->GetStatus() == RUN) {
+		Update();
 		::Sleep(500);
 	}
-	/*
-		PROCESS_MEMORY_COUNTERS memoryCounter;
-		ZeroMemory(&memoryCounter, sizeof(PROCESS_MEMORY_COUNTERS));
-		DWORD dwProcessID = GetCurrentProcessId();
-		HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE ,dwProcessID);
-		while(this->GetStatus() == RUN)
-		{
-			GetProcessMemoryInfo(hProcess, &memoryCounter, sizeof(PROCESS_MEMORY_COUNTERS));
-			double pageFileUsage = memoryCounter.PagefileUsage / 1024. / 1024.;
-			std::string strMemory = StringUtility::Format("Memory [ %.2fMB ]", pageFileUsage);
-			if (this->GetStatus() == RUN) wndStatus_->SetText(STATUS_MEMORY, strMemory);
+	
+	PROCESS_MEMORY_COUNTERS memoryCounter;
+	ZeroMemory(&memoryCounter, sizeof(PROCESS_MEMORY_COUNTERS));
+	DWORD dwProcessID = GetCurrentProcessId();
+	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE ,dwProcessID);
+	while(this->GetStatus() == RUN)
+	{
+		GetProcessMemoryInfo(hProcess, &memoryCounter, sizeof(PROCESS_MEMORY_COUNTERS));
+		double pageFileUsage = memoryCounter.PagefileUsage / 1024. / 1024.;
+		std::string strMemory = StringUtility::Format("Memory [ %.2fMB ]", pageFileUsage);
+		if (this->GetStatus() == RUN) wndStatus_->SetText(STATUS_MEMORY, strMemory);
 
-			double cpuPerformance=this->_GetCpuPerformance();
-			CpuInfo &ci=this->infoCpu_;
-			std::string strCpu = StringUtility::Format("%s %s [ %4.2fMHz (%3d %%) type:%d family:%d model:%d stepping:%d ]",ci.venderID,ci.cpuName.c_str(),ci.clock/1000/1000,(int)cpuPerformance,ci.type,ci.family,ci.model,ci.stepping);
-			if (this->GetStatus() == RUN) wndStatus_->SetText(STATUS_CPU, strCpu);
+		double cpuPerformance=this->_GetCpuPerformance();
+		CpuInfo &ci=this->infoCpu_;
+		std::string strCpu = StringUtility::Format("%s %s [ %4.2fMHz (%3d %%) type:%d family:%d model:%d stepping:%d ]",ci.venderID,ci.cpuName.c_str(),ci.clock/1000/1000,(int)cpuPerformance,ci.type,ci.family,ci.model,ci.stepping);
+		if (this->GetStatus() == RUN) wndStatus_->SetText(STATUS_CPU, strCpu);
 
-			::Sleep(500);
-		}
-		CloseHandle(hProcess);
-	*/
+		::Sleep(500);
+	}
+	CloseHandle(hProcess);
 }
-WindowLogger::InfoCollectThread::CpuInfo WindowLogger::InfoCollectThread::_GetCpuInformation() {
+*/
+void WindowLogger::InfoPanel::InfoCollector::Update() {
+	if (!wndInfo_->IsWindowVisible()) return;
+
+	//Get RAM info
+	PROCESS_MEMORY_COUNTERS_EX pcm;
+	GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pcm, sizeof(pcm));
+	SIZE_T ramUsageAsMB = pcm.PrivateUsage / (1024U * 1024U);
+
+	//Get CPU info
+	double cpuUsage = _GetCpuPerformance();
+
+	//Set text
+	wndStatus_->SetText(0, StringUtility::Format(L"Process RAM: %u MB", ramUsageAsMB));
+	wndStatus_->SetText(1, StringUtility::Format(L"Process CPU: %.2f%%", cpuUsage));
+}
+
+double WindowLogger::InfoPanel::InfoCollector::_GetCpuPerformance() {
+	PDH_FMT_COUNTERVALUE fmtValue;
+
+	PdhCollectQueryData(hQuery_);
+	PdhGetFormattedCounterValue(hCounter_, PDH_FMT_DOUBLE, nullptr, &fmtValue);
+
+	return fmtValue.doubleValue;
+}
+WindowLogger::InfoPanel::InfoCollector::CpuInfo WindowLogger::InfoPanel::InfoCollector::_GetCpuInformation() {
 	int cpuid_supported;
 	char VenderID[13];
 	char name[17];
@@ -765,19 +803,4 @@ WindowLogger::InfoCollectThread::CpuInfo WindowLogger::InfoCollectThread::_GetCp
 	return ci;
 }
 
-double WindowLogger::InfoCollectThread::_GetCpuPerformance() {
-	HQUERY hQuery;
-	HCOUNTER hCounter;
-	PDH_FMT_COUNTERVALUE FmtValue;
-
-	PdhOpenQuery(nullptr, 0, &hQuery);
-	PdhAddCounter(hQuery, L"\\Processor(_Total)\\% Processor Time", 0, &hCounter);
-	Sleep(500);
-	PdhCollectQueryData(hQuery);
-	Sleep(500);
-	PdhCollectQueryData(hQuery);
-	PdhGetFormattedCounterValue(hCounter, PDH_FMT_DOUBLE, nullptr, &FmtValue);
-	PdhCloseQuery(hQuery);
-	return FmtValue.doubleValue;
-}
 #endif
