@@ -77,6 +77,7 @@ class StgStageScript : public StgControlScript {
 	friend StgStageScriptManager;
 public:
 	enum {
+		//Script types
 		TYPE_SYSTEM,
 		TYPE_STAGE,
 		TYPE_PLAYER,
@@ -88,11 +89,13 @@ public:
 		TYPE_IMMEDIATE,
 		TYPE_FADE,
 
+		//ObjEnemy_GetInfo
 		INFO_LIFE,
 		INFO_DAMAGE_RATE_SHOT,
 		INFO_DAMAGE_RATE_SPELL,
 		INFO_SHOT_HIT_COUNT,
 
+		//ObjEnemyBossScene_GetInfo
 		INFO_TIMER,
 		INFO_TIMERF,
 		INFO_ORGTIMERF,
@@ -114,6 +117,7 @@ public:
 		INFO_ITEM_SCORE,
 		INFO_ITEM_MOVE_TYPE,
 
+		//GetShotDataInfoA1
 		INFO_EXISTS,
 		INFO_PATH,
 		INFO_RECT,
@@ -123,30 +127,34 @@ public:
 		INFO_COLLISION_LIST,
 		INFO_IS_FIXED_ANGLE,
 
-		//イベント
-		EV_REQUEST_LIFE = 1,//敵ライフ要求
-		EV_REQUEST_TIMER,//敵スペルタイマ要求
-		EV_REQUEST_IS_SPELL,//スペルカード宣言
-		EV_REQUEST_IS_LAST_SPELL,//ラストスペル
-		EV_REQUEST_IS_DURABLE_SPELL,//耐久スペル
-		EV_REQUEST_REQUIRE_ALL_DOWN,//耐久スペル
-		EV_REQUEST_SPELL_SCORE,//スペルカードスコア
-		EV_REQUEST_REPLAY_TARGET_COMMON_AREA,//リプレイ対象
+		//Boss request events
+		EV_REQUEST_LIFE = 1,
+		EV_REQUEST_TIMER,
+		EV_REQUEST_IS_SPELL,
+		EV_REQUEST_IS_LAST_SPELL,
+		EV_REQUEST_IS_DURABLE_SPELL,
+		EV_REQUEST_REQUIRE_ALL_DOWN,
+		EV_REQUEST_SPELL_SCORE,
+		EV_REQUEST_REPLAY_TARGET_COMMON_AREA,
 
-		EV_TIMEOUT,//スペルタイムアウト
-		EV_START_BOSS_SPELL,//ボススペルカード開始
-		EV_END_BOSS_SPELL,//ボススペルカード開始
-		EV_GAIN_SPELL,//スペルカード取得
-		EV_START_BOSS_STEP,//スペルカード開始
-		EV_END_BOSS_STEP,//スペルカード終了
+		//Boss notify events
+		EV_TIMEOUT,
+		EV_START_BOSS_SPELL,
+		EV_END_BOSS_SPELL,
+		EV_GAIN_SPELL,
+		EV_START_BOSS_STEP,
+		EV_END_BOSS_STEP,
 
-		EV_PLAYER_SHOOTDOWN,//自機ダウン
-		EV_PLAYER_SPELL,//自機スペル
-		EV_PLAYER_REBIRTH,//自機復帰
+		//Player notify events
+		EV_PLAYER_SHOOTDOWN,
+		EV_PLAYER_SPELL,
+		EV_PLAYER_REBIRTH,
 
-		EV_PAUSE_ENTER,//停止開始
-		EV_PAUSE_LEAVE,//停止解除
+		//Pause notify events
+		EV_PAUSE_ENTER,
+		EV_PAUSE_LEAVE,
 
+		//Shot+Item notify events
 		EV_DELETE_SHOT_IMMEDIATE,
 		EV_DELETE_SHOT_TO_ITEM,
 		EV_DELETE_SHOT_FADE,
