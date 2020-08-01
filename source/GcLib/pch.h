@@ -26,10 +26,9 @@
 
 //------------------------------------------------------------------------------
 
-
-//Win2000ˆÈ~
-#define _WIN32_WINNT 0x0500
-
+//Minimum OS -> Windows 7
+#define WINVER _WIN32_WINNT_WIN7
+#define _WIN32_WINNT _WIN32_WINNT_WIN7
 
 //------------------------------Windows Libraries-------------------------------
 
@@ -39,10 +38,6 @@
 #pragma comment (lib, "gdi32.lib")
 #pragma comment (lib, "shlwapi.lib")
 #pragma comment (lib, "psapi.lib")
-
-//------------------------------------------------------------------------------
-
-
 
 //----------------------------Warning Suppressions-------------------------------
 
@@ -62,51 +57,12 @@
 
 //------------------------------------------------------------------------------
 
-
 //define
 #ifndef STRICT
 #define STRICT 1
 #endif
 
-
 //------------------------------Header Includes---------------------------------
-
-//debug
-#ifdef _DEBUG
-#define _CRTDBG_MAP_ALLOC
-#endif
-#include <cstdlib>
-#include <crtdbg.h>
-
-#include <cwchar>
-#include <exception>
-
-#include <cmath>
-#include <cctype>
-#include <cwctype>
-#include <cstdio>
-#include <clocale>
-#include <locale>
-#include <string>
-
-#include <list>
-#include <vector>
-#include <set>
-#include <map>
-#include <unordered_map>
-#include <bitset>
-
-#include <memory>
-#include <algorithm>
-#include <iterator>
-#include <future>
-
-#include <fstream>
-#include <sstream>
-
-#include <cassert>
-
-#include <regex>
 
 //Windows
 #include <windows.h>
@@ -120,10 +76,6 @@
 
 #include <mlang.h>
 #include <psapi.h>
-
-//------------------------------------------------------------------------------
-
-
 
 //-----------------------------------DirectX------------------------------------
 
@@ -160,7 +112,47 @@
 
 //------------------------------------------------------------------------------
 
+//debug
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#endif
+#include <cstdlib>
+#include <crtdbg.h>
 
+#ifdef _DEBUG
+#define __L_DBG_NEW__  ::new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new __L_DBG_NEW__
+#endif
+
+#include <cwchar>
+#include <exception>
+
+#include <cmath>
+#include <cctype>
+#include <cwctype>
+#include <cstdio>
+#include <clocale>
+#include <locale>
+#include <string>
+
+#include <list>
+#include <vector>
+#include <set>
+#include <map>
+#include <unordered_map>
+#include <bitset>
+
+#include <memory>
+#include <algorithm>
+#include <iterator>
+#include <future>
+
+#include <fstream>
+#include <sstream>
+
+#include <cassert>
+
+#include <regex>
 
 //-------------------------------External stuffs--------------------------------
 
@@ -190,12 +182,6 @@
 
 
 //-----------------------------------Extras-------------------------------------
-
-//In the case crtdbg is used
-#ifdef _DEBUG
-#define __L_DBG_NEW__  ::new(_CLIENT_BLOCK, __FILE__, __LINE__)
-#define new __L_DBG_NEW__
-#endif
 
 //Use std::filesystem for file management
 #define __L_STD_FILESYSTEM
