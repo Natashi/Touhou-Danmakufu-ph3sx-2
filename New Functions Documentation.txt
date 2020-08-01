@@ -1313,6 +1313,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 					- The number of channels.
 				INFO_SAMPLE_RATE
 					- The sample rate of the audio in hertz.
+					- ObjSound_SetFrequency does not affect this value.
 				INFO_AVG_BYTE_PER_SEC
 					- The average byte per one second of audio.
 				INFO_BLOCK_ALIGN
