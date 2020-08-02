@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 
 #include "../pch.h"
 #include "DxConstant.hpp"
@@ -11,10 +11,10 @@ namespace directx {
 	} DIMouseButton;
 
 	typedef enum : uint8_t {
-		KEY_FREE = 0,	 // ÉLÅ[Ç™âüÇ≥ÇÍÇƒÇ¢Ç»Ç¢èÛë‘
-		KEY_PUSH = 1,	 // ÉLÅ[ÇâüÇµÇΩèuä‘
-		KEY_PULL = 2,	 // ÉLÅ[Ç™ó£Ç≥ÇÍÇΩèuä‘
-		KEY_HOLD = 3,	 // ÉLÅ[Ç™âüÇ≥ÇÍÇƒÇ¢ÇÈèÛë‘
+		KEY_FREE = 0,	 // „Ç≠„Éº„ÅåÊäº„Åï„Çå„Å¶„ÅÑ„Å™„ÅÑÁä∂ÊÖã
+		KEY_PUSH = 1,	 // „Ç≠„Éº„ÇíÊäº„Åó„ÅüÁû¨Èñì
+		KEY_PULL = 2,	 // „Ç≠„Éº„ÅåÈõ¢„Åï„Çå„ÅüÁû¨Èñì
+		KEY_HOLD = 3,	 // „Ç≠„Éº„ÅåÊäº„Åï„Çå„Å¶„ÅÑ„ÇãÁä∂ÊÖã
 	} DIKeyState;
 
 	/**********************************************************
@@ -35,15 +35,17 @@ namespace directx {
 		LPDIRECTINPUT8 pInput_;
 		LPDIRECTINPUTDEVICE8 pKeyboard_;
 		LPDIRECTINPUTDEVICE8 pMouse_;
-		std::vector<LPDIRECTINPUTDEVICE8> pJoypad_;	// ÉpÉbÉhÉfÉoÉCÉXÉIÉuÉWÉFÉNÉg
+		std::vector<LPDIRECTINPUTDEVICE8> pJoypad_;		//Vector for pad device objects
 		BYTE stateKey_[MAX_KEY];
 		DIMOUSESTATE stateMouse_;
 		std::vector<DIJOYSTATE> statePad_;
-		std::vector<LONG> padRes_;//ÉpÉbÉhÇÃóVÇ—
+		std::vector<LONG> padRes_;		//Minumum response for pad input
 
-		DIKeyState bufKey_[MAX_KEY];//åªÉtÉåÅ[ÉÄÇÃÉLÅ[ÇÃèÛë‘
-		DIKeyState bufMouse_[MAX_MOUSE_BUTTON];//åªÉtÉåÅ[ÉÄÇÃÉ}ÉEÉXÇÃèÛë‘
-		std::vector<std::vector<DIKeyState>> bufPad_;//åªÉtÉåÅ[ÉÄÇÃÉpÉbÉhÇÃèÛë‘			
+		DIKeyState bufKey_[MAX_KEY];				//Keyboard key states
+		DIKeyState bufMouse_[MAX_MOUSE_BUTTON];		//Mouse key states
+		std::vector<std::vector<DIKeyState>> bufPad_;	//Joypad key states
+
+		void _WrapDXErr(HRESULT hr, const std::string& routine, const std::string& msg, bool bThrow = false);
 
 		bool _InitializeKeyBoard();
 		bool _InitializeMouse();
@@ -55,10 +57,10 @@ namespace directx {
 		bool _IdleJoypad();
 		bool _IdleMouse();
 
-		DIKeyState _GetKey(UINT code, DIKeyState state);//ÉLÅ[èÛë‘ÇÃéÊìæ
-		DIKeyState _GetMouseButton(int16_t button, DIKeyState state);//É}ÉEÉXÇÃÉ{É^ÉìÇÃèÛë‘ÇéÊìæ
-		DIKeyState _GetPadDirection(int16_t index, UINT code, DIKeyState state);//ÉWÉáÉCÉXÉeÉBÉbÉNï˚å¸ÉLÅ[ÇÃèÛë‘éÊìæ
-		DIKeyState _GetPadButton(int16_t index, int16_t buttonNo, DIKeyState state);//ÉWÉáÉCÉXÉeÉBÉbÉNÇÃÉ{É^ÉìÇÃèÛë‘ÇéÊìæ
+		DIKeyState _GetKey(UINT code, DIKeyState state);
+		DIKeyState _GetMouseButton(int16_t button, DIKeyState state);
+		DIKeyState _GetPadDirection(int16_t index, UINT code, DIKeyState state);
+		DIKeyState _GetPadButton(int16_t index, int16_t buttonNo, DIKeyState state);
 		DIKeyState _GetStateSub(bool flag, DIKeyState state);
 	public:
 		DirectInput();
@@ -68,7 +70,7 @@ namespace directx {
 		virtual bool Initialize(HWND hWnd);
 
 #if defined(DNH_PROJ_EXECUTOR)
-		virtual void Update();//ÉLÅ[ÇÉZÉbÉgÇ∑ÇÈ
+		virtual void Update();
 #endif
 
 		DIKeyState GetKeyState(int16_t key);
@@ -76,9 +78,9 @@ namespace directx {
 		DIKeyState GetPadState(int16_t padNo, int16_t button);
 
 #if defined(DNH_PROJ_EXECUTOR)
-		LONG GetMouseMoveX() { return stateMouse_.lX; }//É}ÉEÉXÇÃà⁄ìÆó ÇéÊìæX
-		LONG GetMouseMoveY() { return stateMouse_.lY; }//É}ÉEÉXÇÃà⁄ìÆó ÇéÊìæY
-		LONG GetMouseMoveZ() { return stateMouse_.lZ; }//É}ÉEÉXÇÃà⁄ìÆó ÇéÊìæZ
+		LONG GetMouseMoveX() { return stateMouse_.lX; }
+		LONG GetMouseMoveY() { return stateMouse_.lY; }
+		LONG GetMouseMoveZ() { return stateMouse_.lZ; }
 		POINT GetMousePosition();
 
 		void ResetInputState();
@@ -98,10 +100,10 @@ namespace directx {
 	class VirtualKey {
 		friend VirtualKeyManager;
 	private:
-		int16_t keyboard_;//ÉLÅ[É{Å[ÉhÇÃÉLÅ[
-		int16_t padIndex_;//ÉWÉáÉCÉpÉbÉhÇÃî‘çÜ
-		int16_t padButton_;//ÉWÉáÉCÉpÉbÉhÇÃÉ{É^Éì
-		DIKeyState state_;//åªç›ÇÃèÛë‘
+		int16_t keyboard_;	//Keyboard key ID
+		int16_t padIndex_;	//Joypad object index
+		int16_t padButton_;	//Joypad key ID
+		DIKeyState state_;	//Key state
 	public:
 		VirtualKey(int16_t keyboard, int16_t padIndex, int16_t padButton);
 		virtual ~VirtualKey();
@@ -176,128 +178,129 @@ namespace directx {
 #endif
 }
 
-/* DirectInput ÉLÅ[éØï ÉRÅ[Éhï\
-DIK_ESCAPE 0x01 Esc
-DIK_1 0x02 1
-DIK_2 0x03 2
-DIK_3 0x04 3
-DIK_4 0x05 4
-DIK_5 0x06 5
-DIK_6 0x07 6
-DIK_7 0x08 7
-DIK_8 0x09 8
-DIK_9 0x0A 9
-DIK_0 0x0B 0
-DIK_MINUS 0x0C -
-DIK_EQUALS 0x0D =
-DIK_BACK 0x0E Back Space
-DIK_TAB 0x0F Tab
-DIK_Q 0x10 Q
-DIK_W 0x11 W
-DIK_E 0x12 E
-DIK_R 0x13 R
-DIK_T 0x14 T
-DIK_Y 0x15 Y
-DIK_U 0x16 U
-DIK_I 0x17 I
-DIK_O 0x18 O
-DIK_P 0x19 P
-DIK_LBRACKET 0x1A [
-DIK_RBRACKET 0x1B ]
-DIK_RETURN 0x1C Enter
-DIK_LCONTROL 0x1D Ctrl (Left)
-DIK_A 0x1E A
-DIK_S 0x1F S
-DIK_D 0x20 D
-DIK_F 0x21 F
-DIK_G 0x22 G
-DIK_H 0x23 H
-DIK_J 0x24 J
-DIK_K 0x25 K
-DIK_L 0x26 L
-DIK_SEMICOLON 0x27 ;
-DIK_APOSTROPHE 0x28 '
-DIK_GRAVE 0x29 `
-DIK_LSHIFT 0x2A Shift (Left)
-DIK_BACKSLASH 0x2B \
-DIK_Z 0x2C Z
-DIK_X 0x2D X
-DIK_C 0x2E C
-DIK_V 0x2F V
-DIK_B 0x30 B
-DIK_N 0x31 N
-DIK_M 0x32 M
-DIK_COMMA 0x33 ,
-DIK_PERIOD 0x34 .
-DIK_SLASH 0x35 /
-DIK_RSHIFT 0x36 Shift (Right)
-DIK_MULTIPLY 0x37 * (Numpad)
-DIK_LMENU 0x38 Alt (Left)
-DIK_SPACE 0x39 Space
-DIK_CAPITAL 0x3A Caps Lock
-DIK_F1 0x3B F1
-DIK_F2 0x3C F2
-DIK_F3 0x3D F3
-DIK_F4 0x3E F4
-DIK_F5 0x3F F5
-DIK_F6 0x40 F6
-DIK_F7 0x41 F7
-DIK_F8 0x42 F8
-DIK_F9 0x43 F9
-DIK_F10 0x44 F10
-DIK_NUMLOCK 0x45 Num Lock
-DIK_SCROLL 0x46 Scroll Lock
-DIK_NUMPAD7 0x47 7 (Numpad)
-DIK_NUMPAD8 0x48 8 (Numpad)
-DIK_NUMPAD9 0x49 9 (Numpad)
-DIK_SUBTRACT 0x4A - (Numpad)
-DIK_NUMPAD4 0x4B 4 (Numpad)
-DIK_NUMPAD5 0x4C 5 (Numpad)
-DIK_NUMPAD6 0x4D 6 (Numpad)
-DIK_ADD 0x4E + (Numpad)
-DIK_NUMPAD1 0x4F 1 (Numpad)
-DIK_NUMPAD2 0x50 2 (Numpad)
-DIK_NUMPAD3 0x51 3 (Numpad)
-DIK_NUMPAD0 0x52 0 (Numpad)
-DIK_DECIMAL 0x53 . (Numpad)
-DIK_F11 0x57 F11
-DIK_F12 0x58 F12
-DIK_F13 0x64 F13 NEC PC-98
-DIK_F14 0x65 F14 NEC PC-98
-DIK_F15 0x66 F15 NEC PC-98
-DIK_KANA 0x70 ÉJÉi ì˙ñ{åÍÉLÅ[É{Å[Éh
-DIK_CONVERT 0x79 ïœä∑ ì˙ñ{åÍÉLÅ[É{Å[Éh
-DIK_NOCONVERT 0x7B ñ≥ïœä∑ ì˙ñ{åÍÉLÅ[É{Å[Éh
-DIK_YEN 0x7D \ ì˙ñ{åÍÉLÅ[É{Å[Éh
-DIK_NUMPADEQUALS 0x8D = (Numpad) NEC PC-98
-DIK_CIRCUMFLEX 0x90 ïsñæ ì˙ñ{åÍÉLÅ[É{Å[Éh
-DIK_AT 0x91 @ NEC PC-98
-DIK_COLON 0x92 : NEC PC-98
-DIK_UNDERLINE 0x93 _ NEC PC-98
-DIK_KANJI 0x94 äøéö ì˙ñ{åÍÉLÅ[É{Å[Éh
-DIK_STOP 0x95 Stop NEC PC-98
-DIK_AX 0x96 (Japan AX)
-DIK_UNLABELED 0x97 (J3100)
-DIK_NUMPADENTER 0x9C Enter (Numpad)
-DIK_RCONTROL 0x9D Ctrl (Right)
-DIK_NUMPADCOMMA 0xB3 , (Numpad) NEC PC-98
-DIK_DIVIDE 0xB5 / (Numpad)
-DIK_SYSRQ 0xB7 Sys Rq
-DIK_RMENU 0xB8 Alt (Right)
-DIK_PAUSE 0xC5 Pause
-DIK_HOME 0xC7 Home
-DIK_UP 0xC8 Å™
-DIK_PRIOR 0xC9 Page Up
-DIK_LEFT 0xCB Å©
-DIK_RIGHT 0xCD Å®
-DIK_END 0xCF End
-DIK_DOWN 0xD0 Å´
-DIK_NEXT 0xD1 Page Down
-DIK_INSERT 0xD2 Insert
-DIK_DELETE 0xD3 Delete
-DIK_LWIN 0xDB Windows (Left)
-DIK_RWIN 0xDC Windows (Right)
-DIK_APPS 0xDD Menu
-DIK_POWER 0xDE Power
-DIK_SLEEP 0xDF Sleep
-*/
+//DirectInput Key Code Table
+/**************************************************************************
+	0x01 DIK_ESCAPE			Esc
+	0x02 DIK_1				1
+	0x03 DIK_2				2
+	0x04 DIK_3				3
+	0x05 DIK_4				4
+	0x06 DIK_5				5
+	0x07 DIK_6				6
+	0x08 DIK_7				7
+	0x09 DIK_8				8
+	0x0A DIK_9				9
+	0x0B DIK_0				0
+	0x0C DIK_MINUS			-
+	0x0D DIK_EQUALS			=
+	0x0E DIK_BACK			Backspace
+	0x0F DIK_TAB			Tab
+	0x10 DIK_Q				Q
+	0x11 DIK_W				W
+	0x12 DIK_E				E
+	0x13 DIK_R				R
+	0x14 DIK_T				T
+	0x15 DIK_Y				Y
+	0x16 DIK_U				U
+	0x17 DIK_I				I
+	0x18 DIK_O				O
+	0x19 DIK_P				P
+	0x1A DIK_LBRACKET		[
+	0x1B DIK_RBRACKET		]
+	0x1C DIK_RETURN			Enter
+	0x1D DIK_LCONTROL		Left Ctrl
+	0x1E DIK_A				A
+	0x1F DIK_S				S
+	0x20 DIK_D				D
+	0x21 DIK_F				F
+	0x22 DIK_G				G
+	0x23 DIK_H				H
+	0x24 DIK_J				J
+	0x25 DIK_K				K
+	0x26 DIK_L				L
+	0x27 DIK_SEMICOLON		;
+	0x28 DIK_APOSTROPHE		'
+	0x29 DIK_GRAVE			`
+	0x2A DIK_LSHIFT			Left Shift
+	0x2B DIK_BACKSLASH		\
+	0x2C DIK_Z				Z
+	0x2D DIK_X				X
+	0x2E DIK_C				C
+	0x2F DIK_V				V
+	0x30 DIK_B				B
+	0x31 DIK_N				N
+	0x32 DIK_M				M
+	0x33 DIK_COMMA			,
+	0x34 DIK_PERIOD			.
+	0x35 DIK_SLASH			/
+	0x36 DIK_RSHIFT			Right Shift
+	0x37 DIK_MULTIPLY		* (Numpad)
+	0x38 DIK_LMENU			Left Alt
+	0x39 DIK_SPACE			Space
+	0x3A DIK_CAPITAL		Caps Lock
+	0x3B DIK_F1				F1
+	0x3C DIK_F2				F2
+	0x3D DIK_F3				F3
+	0x3E DIK_F4				F4
+	0x3F DIK_F5				F5
+	0x40 DIK_F6				F6
+	0x41 DIK_F7				F7
+	0x42 DIK_F8				F8
+	0x43 DIK_F9				F9
+	0x44 DIK_F10			F10
+	0x45 DIK_NUMLOCK		Num Lock
+	0x46 DIK_SCROLL			Scroll Lock
+	0x47 DIK_NUMPAD7		7 (Numpad)
+	0x48 DIK_NUMPAD8		8 (Numpad)
+	0x49 DIK_NUMPAD9		9 (Numpad)
+	0x4A DIK_SUBTRACT		- (Numpad)
+	0x4B DIK_NUMPAD4		4 (Numpad)
+	0x4C DIK_NUMPAD5		5 (Numpad)
+	0x4D DIK_NUMPAD6		6 (Numpad)
+	0x4E DIK_ADD			+ (Numpad)
+	0x4F DIK_NUMPAD1		1 (Numpad)
+	0x50 DIK_NUMPAD2		2 (Numpad)
+	0x51 DIK_NUMPAD3		3 (Numpad)
+	0x52 DIK_NUMPAD0		0 (Numpad)
+	0x53 DIK_DECIMAL		. (Numpad)
+	0x57 DIK_F11			F11
+	0x58 DIK_F12			F12
+	0x64 DIK_F13			F13 (NEC PC-98)
+	0x65 DIK_F14			F14 (NEC PC-98)
+	0x66 DIK_F15			F15 (NEC PC-98)
+	0x70 DIK_KANA			Kana (Japanese Keyboard)
+	0x79 DIK_CONVERT		Convert (Japanese Keyboard)
+	0x7B DIK_NOCONVERT		No Convert (Japanese Keyboard)
+	0x7D DIK_YEN			¬• (Japanese Keyboard, \ for English Keyboard)
+	0x8D DIK_NUMPADEQUALS	= (Numpad, NEC PC-98)
+	0x90 DIK_CIRCUMFLEX		^ (Japanese Keyboard)
+	0x91 DIK_AT				@ (NEC PC-98)
+	0x92 DIK_COLON			: (NEC PC-98)
+	0x93 DIK_UNDERLINE		_ (NEC PC-98)
+	0x94 DIK_KANJI			Kanji (Japanese Keyboard)
+	0x95 DIK_STOP			Stop (NEC PC-98)
+	0x96 DIK_AX				(Japan AX)
+	0x97 DIK_UNLABELED		(J3100)
+	0x9C DIK_NUMPADENTER	Enter (Numpad)
+	0x9D DIK_RCONTROL		Right Ctrl
+	0xB3 DIK_NUMPADCOMMA	, (Numpad, NEC PC-98)
+	0xB5 DIK_DIVIDE			/ (Numpad)
+	0xB7 DIK_SYSRQ			Sys Rq
+	0xB8 DIK_RMENU			Right Alt
+	0xC5 DIK_PAUSE			Pause
+	0xC7 DIK_HOME			Home
+	0xC8 DIK_UP				‚Üë
+	0xC9 DIK_PRIOR			Page Up
+	0xCB DIK_LEFT			‚Üê
+	0xCD DIK_RIGHT			‚Üí
+	0xCF DIK_END			End
+	0xD0 DIK_DOWN			‚Üì
+	0xD1 DIK_NEXT			Page Down
+	0xD2 DIK_INSERT			Insert
+	0xD3 DIK_DELETE			Delete
+	0xDB DIK_LWIN			Left Windows
+	0xDC DIK_RWIN			Right Windows
+	0xDD DIK_APPS			Menu
+	0xDE DIK_POWER			Power
+	0xDF DIK_SLEEP			Sleep
+**************************************************************************/

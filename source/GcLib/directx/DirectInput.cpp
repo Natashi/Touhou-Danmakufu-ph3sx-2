@@ -44,11 +44,9 @@ bool DirectInput::Initialize(HWND hWnd) {
 	hWnd_ = hWnd;
 
 	HINSTANCE hInst = ::GetModuleHandle(nullptr);
-	HRESULT hrInput = DirectInput8Create(hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&pInput_, nullptr);
-	if (FAILED(hrInput)) {
-		Logger::WriteTop("DirectInput::DirectInput8Create failure.");
-		return false;  // DirectInput8‚Ìì¬‚ÉŽ¸”s
-	}
+
+	HRESULT hr = DirectInput8Create(hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&pInput_, nullptr);
+	_WrapDXErr(hr, "Initialize", "DirectInput8Create failure.", true);
 
 	_InitializeKeyBoard();
 	_InitializeMouse();
@@ -65,29 +63,30 @@ bool DirectInput::Initialize(HWND hWnd) {
 	return true;
 }
 
+void DirectInput::_WrapDXErr(HRESULT hr, const std::string& routine, const std::string& msg, bool bThrow) {
+	if (SUCCEEDED(hr)) return;
+	std::string err = StringUtility::Format("DirectInput::%s: %s. [%s]\r\n  %s",
+		routine.c_str(), msg.c_str(), DXGetErrorStringA(hr), DXGetErrorDescriptionA(hr));
+	Logger::WriteTop(err);
+	if (bThrow) throw wexception(err);
+}
+
 bool DirectInput::_InitializeKeyBoard() {
 	Logger::WriteTop("DirectInput: Initializing keyboard.");
 
-	HRESULT hrDevice = pInput_->CreateDevice(GUID_SysKeyboard, &pKeyboard_, nullptr);
-	if (FAILED(hrDevice)) {
-		Logger::WriteTop("DirectInput: Failed to create keyboard object.");
-		return false;
-	}
+	HRESULT hr = S_OK;
 
-	HRESULT hrFormat = pKeyboard_->SetDataFormat(&c_dfDIKeyboard);
-	if (FAILED(hrFormat)) {
-		Logger::WriteTop("DirectInput: Failed to set keyboard data format.");
-		return false;
-	}
+	hr = pInput_->CreateDevice(GUID_SysKeyboard, &pKeyboard_, nullptr);
+	_WrapDXErr(hr, "_InitializeKeyBoard", "Failed to create keyboard object.");
 
-	HRESULT hrCoop = pKeyboard_->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-	if (FAILED(hrCoop)) {
-		Logger::WriteTop("DirectInput: Failed to set keyboard cooperative level.");
-		return false;
-	}
+	hr = pKeyboard_->SetDataFormat(&c_dfDIKeyboard);
+	_WrapDXErr(hr, "_InitializeKeyBoard", "Failed to set keyboard data format.");
 
-	// “ü—Í§ŒäŠJŽn
-	pKeyboard_->Acquire();
+	hr = pKeyboard_->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+	_WrapDXErr(hr, "_InitializeKeyBoard", "Failed to set keyboard cooperative level.");
+
+	hr = pKeyboard_->Acquire();
+	_WrapDXErr(hr, "_InitializeKeyBoard", "Failed to acquire keyboard object.");
 
 	Logger::WriteTop("DirectInput: Keyboard initialized.");
 
@@ -96,39 +95,34 @@ bool DirectInput::_InitializeKeyBoard() {
 bool DirectInput::_InitializeMouse() {
 	Logger::WriteTop("DirectInput: Initializing mouse.");
 
-	HRESULT hrDevice = pInput_->CreateDevice(GUID_SysMouse, &pMouse_, nullptr);
-	if (FAILED(hrDevice)) {
-		Logger::WriteTop("DirectInput: Failed to create mouse object.");
-		return false;
-	}
+	HRESULT hr = S_OK;
 
-	HRESULT hrFormat = pMouse_->SetDataFormat(&c_dfDIMouse);
-	if (FAILED(hrFormat)) {
-		Logger::WriteTop("DirectInput: Failed to set mouse data format.");
-		return false;
-	}
+	hr = pInput_->CreateDevice(GUID_SysMouse, &pMouse_, nullptr);
+	_WrapDXErr(hr, "_InitializeMouse", "Failed to create mouse object.");
 
-	HRESULT hrCoop = pMouse_->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-	if (FAILED(hrCoop)) {
-		Logger::WriteTop("DirectInput: Failed to set mouse cooperative level.");
-		return false;
-	}
+	hr = pMouse_->SetDataFormat(&c_dfDIMouse);
+	_WrapDXErr(hr, "_InitializeMouse", "Failed to set mouse data format.");
 
-	// “ü—Í§ŒäŠJŽn
-	pMouse_->Acquire();
+	hr = pMouse_->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+	_WrapDXErr(hr, "_InitializeMouse", "Failed to set mouse cooperative level.");
+
+	hr = pMouse_->Acquire();
+	_WrapDXErr(hr, "_InitializeMouse", "Failed to acquire mouse object.");
 
 	Logger::WriteTop("DirectInput: Mouse initialized.");
 	return true;
 }
 bool DirectInput::_InitializeJoypad() {
 	Logger::WriteTop("DirectInput: Initializing joypad.");
-	pInput_->EnumDevices(DI8DEVCLASS_GAMECTRL, (LPDIENUMDEVICESCALLBACK)_GetJoypadStaticCallback, this, DIEDFL_ATTACHEDONLY);
+
+	HRESULT hr = S_OK;
+
+	hr = pInput_->EnumDevices(DI8DEVCLASS_GAMECTRL, (LPDIENUMDEVICESCALLBACK)_GetJoypadStaticCallback, this, DIEDFL_ATTACHEDONLY);
+	_WrapDXErr(hr, "_InitializeJoypad", "Failed to connect to a joypad.");
 
 	size_t count = pJoypad_.size();
-	if (count == 0) {
-		Logger::WriteTop("DirectInput: Cannot connect to a joypad.");
-		return false;	// ƒWƒ‡ƒCƒpƒbƒh‚ªŒ©•t‚©‚ç‚È‚¢
-	}
+	if (count == 0U)
+		Logger::WriteTop("DirectInput:_InitializeJoypad: Failed to connect to a joypad.");
 
 	statePad_.resize(count);
 	padRes_.resize(count);
@@ -136,7 +130,6 @@ bool DirectInput::_InitializeJoypad() {
 		padRes_[iPad] = 500L;
 
 	Logger::WriteTop("DirectInput: Joypad initialized.");
-
 	return true;
 }
 BOOL CALLBACK DirectInput::_GetJoypadStaticCallback(LPDIDEVICEINSTANCE lpddi, LPVOID pvRef) {
@@ -145,10 +138,14 @@ BOOL CALLBACK DirectInput::_GetJoypadStaticCallback(LPDIDEVICEINSTANCE lpddi, LP
 }
 BOOL DirectInput::_GetJoypadCallback(LPDIDEVICEINSTANCE lpddi) {
 	Logger::WriteTop("DirectInput: Connecting to a joypad.");
+
 	LPDIRECTINPUTDEVICE8 pJoypad = nullptr;
-	HRESULT hrDevice = pInput_->CreateDevice(lpddi->guidInstance, &pJoypad, nullptr);
-	if (FAILED(hrDevice)) {
-		Logger::WriteTop("DirectInput: Failed to create joypad object.");
+
+	HRESULT hr = S_OK;
+
+	hr = pInput_->CreateDevice(lpddi->guidInstance, &pJoypad, nullptr);
+	if (FAILED(hr)) {
+		Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to create joypad object.");
 		return DIENUM_CONTINUE;
 	}
 
@@ -163,83 +160,88 @@ BOOL DirectInput::_GetJoypadCallback(LPDIDEVICEINSTANCE lpddi) {
 		Logger::WriteTop(StringUtility::Format("Product name:%s", State.tszProductName));
 	}
 
-	HRESULT hrFormat = pJoypad->SetDataFormat(&c_dfDIJoystick);
-	if (FAILED(hrFormat)) {
+	hr = pJoypad->SetDataFormat(&c_dfDIJoystick);
+	if (FAILED(hr)) {
 		ptr_release(pJoypad);
-		Logger::WriteTop("DirectInput: Failed to set joypad data format.");
+		Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad data format.");
 		return DIENUM_CONTINUE;
 	}
 
-	HRESULT hrCoop = pJoypad->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-	if (FAILED(hrCoop)) {
+	hr = pJoypad->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+	if (FAILED(hr)) {
 		ptr_release(pJoypad);
-		Logger::WriteTop("DirectInput: Failed to set joypad cooperative level.");
+		Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad cooperative level.");
 		return DIENUM_CONTINUE;
 	}
 
-	// x‚Ì”ÍˆÍ‚ðÝ’è
-	DIPROPRANGE diprg;
-	diprg.diph.dwSize = sizeof(diprg);
-	diprg.diph.dwHeaderSize = sizeof(diprg.diph);
-	diprg.diph.dwObj = DIJOFS_X;
-	diprg.diph.dwHow = DIPH_BYOFFSET;
-	diprg.lMin = -1000;
-	diprg.lMax = +1000;
-	HRESULT hrRangeX = pJoypad->SetProperty(DIPROP_RANGE, &diprg.diph);
-	if (FAILED(hrRangeX)) {
-		ptr_release(pJoypad);
-		Logger::WriteTop("DirectInput: Failed to set joypad X range.");
+	{
+		DIPROPRANGE diprg;
+		diprg.diph.dwSize = sizeof(diprg);
+		diprg.diph.dwHeaderSize = sizeof(diprg.diph);
+		diprg.diph.dwObj = DIJOFS_X;
+		diprg.diph.dwHow = DIPH_BYOFFSET;
+		diprg.lMin = -1000;
+		diprg.lMax = +1000;
+		hr = pJoypad->SetProperty(DIPROP_RANGE, &diprg.diph);
+		if (FAILED(hr)) {
+			ptr_release(pJoypad);
+			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad X range.");
+			return DIENUM_CONTINUE;
+		}
+
+		diprg.diph.dwObj = DIJOFS_Y;
+		hr = pJoypad->SetProperty(DIPROP_RANGE, &diprg.diph);
+		if (FAILED(hr)) {
+			ptr_release(pJoypad);
+			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad Y range.");
+			return DIENUM_CONTINUE;
+		}
+
+		diprg.diph.dwObj = DIJOFS_Z;
+		hr = pJoypad->SetProperty(DIPROP_RANGE, &diprg.diph);
+		if (FAILED(hr)) {
+			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad Z range.");
+			//return DIENUM_CONTINUE;
+		}
+	}
+
+	{
+		DIPROPDWORD dipdw;
+		dipdw.diph.dwSize = sizeof(dipdw);
+		dipdw.diph.dwHeaderSize = sizeof(dipdw.diph);
+		dipdw.diph.dwObj = DIJOFS_X;
+		dipdw.diph.dwHow = DIPH_BYOFFSET;
+		dipdw.dwData = 2500;
+		hr = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
+		if (FAILED(hr)) {
+			ptr_release(pJoypad);
+			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad X deadzone.");
+			return DIENUM_CONTINUE;
+		}
+
+		// y‚Ì–³Œøƒ][ƒ“‚ðÝ’è
+		dipdw.diph.dwObj = DIJOFS_Y;
+		hr = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
+		if (FAILED(hr)) {
+			ptr_release(pJoypad);
+			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad Y deadzone.");
+			return DIENUM_CONTINUE;
+		}
+
+		// ‚y‚Ì–³Œøƒ][ƒ“‚ðÝ’è
+		dipdw.diph.dwObj = DIJOFS_Z;
+		hr = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
+		if (FAILED(hr)) {
+			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad Z deadzone.");
+			//return DIENUM_CONTINUE;
+		}
+	}
+
+	hr = pJoypad->Acquire();
+	if (FAILED(hr)) {
+		Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to acquire joypad object.");
 		return DIENUM_CONTINUE;
 	}
-
-	// y‚Ì”ÍˆÍ‚ðÝ’è
-	diprg.diph.dwObj = DIJOFS_Y;
-	HRESULT hrRangeY = pJoypad->SetProperty(DIPROP_RANGE, &diprg.diph);
-	if (FAILED(hrRangeY)) {
-		ptr_release(pJoypad);
-		Logger::WriteTop("DirectInput: Failed to set joypad Y range.");
-		return DIENUM_CONTINUE;
-	}
-
-	// z‚Ì”ÍˆÍ‚ðÝ’è
-	diprg.diph.dwObj = DIJOFS_Z;
-	HRESULT hrRangeZ = pJoypad->SetProperty(DIPROP_RANGE, &diprg.diph);
-	if (FAILED(hrRangeZ)) {
-		Logger::WriteTop("DirectInput: Failed to set joypad Z range.");
-	}
-
-	// x‚Ì–³Œøƒ][ƒ“‚ðÝ’è
-	DIPROPDWORD dipdw;
-	dipdw.diph.dwSize = sizeof(dipdw);
-	dipdw.diph.dwHeaderSize = sizeof(dipdw.diph);
-	dipdw.diph.dwObj = DIJOFS_X;
-	dipdw.diph.dwHow = DIPH_BYOFFSET;
-	dipdw.dwData = 2500;
-	HRESULT hrDeadX = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
-	if (FAILED(hrDeadX)) {
-		ptr_release(pJoypad);
-		Logger::WriteTop("DirectInput: Failed to set joypad X deadzone.");
-		return DIENUM_CONTINUE;
-	}
-
-	// y‚Ì–³Œøƒ][ƒ“‚ðÝ’è
-	dipdw.diph.dwObj = DIJOFS_Y;
-	HRESULT hrDeadY = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
-	if (FAILED(hrDeadY)) {
-		ptr_release(pJoypad);
-		Logger::WriteTop("DirectInput: Failed to set joypad Y deadzone.");
-		return DIENUM_CONTINUE;
-	}
-
-	// ‚y‚Ì–³Œøƒ][ƒ“‚ðÝ’è
-	dipdw.diph.dwObj = DIJOFS_Z;
-	HRESULT hrDeadZ = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
-	if (FAILED(hrDeadZ)) {
-		Logger::WriteTop("DirectInput: Failed to set joypad Z deadzone.");
-	}
-
-	// “ü—Í§ŒäŠJŽn
-	pJoypad->Acquire();
 
 	pJoypad_.push_back(pJoypad);
 
