@@ -2024,9 +2024,9 @@ void ScriptCommonDataInfoPanel::_UpdateValueView() {
 	shared_ptr<ScriptCommonData> selectedArea = commonDataManager_->GetData(vecMapItr_[indexArea]);
 	int iRow = 0;
 	for (auto itr = selectedArea->MapBegin(); itr != selectedArea->MapEnd(); ++itr, ++iRow) {
-		std::wstring key = StringUtility::ConvertMultiToWide(itr->first);
+		std::string key = StringUtility::Format("¨ %s", itr->first.c_str());
 		gstd::value val = selectedArea->GetValue(itr);
-		wndListViewValue_.SetText(iRow, COL_KEY, key);
+		wndListViewValue_.SetText(iRow, COL_KEY, StringUtility::ConvertMultiToWide(key));
 		wndListViewValue_.SetText(iRow, COL_VALUE, val.as_string());
 	}
 
