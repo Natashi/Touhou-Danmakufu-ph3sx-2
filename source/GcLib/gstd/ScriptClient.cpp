@@ -2006,7 +2006,7 @@ void ScriptCommonDataInfoPanel::_UpdateAreaView() {
 	int iRow = 0;
 	for (auto itr = commonDataManager_->MapBegin(); itr != commonDataManager_->MapEnd(); ++itr, ++iRow) {
 		std::wstring key = StringUtility::ConvertMultiToWide(itr->first);
-		wndListViewArea_.SetText(iRow, COL_KEY, key);
+		wndListViewArea_.SetText(iRow, COL_KEY, std::wstring(L"> ") + key);
 		vecMapItr_.push_back(itr);
 	}
 
@@ -2024,9 +2024,8 @@ void ScriptCommonDataInfoPanel::_UpdateValueView() {
 	shared_ptr<ScriptCommonData> selectedArea = commonDataManager_->GetData(vecMapItr_[indexArea]);
 	int iRow = 0;
 	for (auto itr = selectedArea->MapBegin(); itr != selectedArea->MapEnd(); ++itr, ++iRow) {
-		std::string key = StringUtility::Format("¨ %s", itr->first.c_str());
 		gstd::value val = selectedArea->GetValue(itr);
-		wndListViewValue_.SetText(iRow, COL_KEY, StringUtility::ConvertMultiToWide(key));
+		wndListViewValue_.SetText(iRow, COL_KEY, StringUtility::ConvertMultiToWide(itr->first));
 		wndListViewValue_.SetText(iRow, COL_VALUE, val.as_string());
 	}
 
