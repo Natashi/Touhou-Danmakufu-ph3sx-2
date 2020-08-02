@@ -532,7 +532,7 @@ void WindowLogger::InfoPanel::SetInfo(int row, const std::wstring& textInfo, con
 void WindowLogger::InfoPanel::_Run() {
 	while (this->GetStatus() == RUN) {
 		infoCollector_->Update();
-		::Sleep(500);
+		::Sleep(1000);
 	}
 }
 
