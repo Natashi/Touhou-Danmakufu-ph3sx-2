@@ -48,6 +48,7 @@ namespace directx {
 
 	template<typename T>
 	class BufferBase {
+		static_assert(std::is_base_of<IDirect3DResource9, T>::value, "T must be a Direct3D resource");
 	public:
 		BufferBase();
 		BufferBase(IDirect3DDevice9* device);
@@ -69,26 +70,6 @@ namespace directx {
 		size_t stride_;
 		size_t sizeInBytes_;
 	};
-	template<typename T>
-	HRESULT BufferBase<T>::UpdateBuffer(BufferLockParameter* pLock) {
-		HRESULT hr = S_OK;
-
-		if (pLock == nullptr || buffer_ == nullptr) return E_POINTER;
-		else if (pLock->lockOffset >= size_) return E_INVALIDARG;
-		else if ((pLock->dataCount * pLock->dataStride) == 0U) return S_OK;
-
-		size_t usableCount = size_ - pLock->lockOffset;
-		size_t lockCopySize = std::min(pLock->dataCount, usableCount) * pLock->dataStride;
-
-		void* tmp;
-		hr = buffer_->Lock(pLock->lockOffset * pLock->dataStride, lockCopySize, &tmp, pLock->lockFlag);
-		if (SUCCEEDED(hr)) {
-			memcpy_s(tmp, sizeInBytes_, pLock->data, lockCopySize);
-			buffer_->Unlock();
-		}
-
-		return hr;
-	}
 
 	class FixedVertexBuffer : public BufferBase<IDirect3DVertexBuffer9> {
 	public:

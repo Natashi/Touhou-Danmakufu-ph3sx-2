@@ -6,6 +6,9 @@
 using namespace gstd;
 
 namespace directx {
+	template class BufferBase<IDirect3DVertexBuffer9>;
+	template class BufferBase<IDirect3DIndexBuffer9>;
+
 	template<typename T>
 	BufferBase<T>::BufferBase() {
 		pDevice_ = nullptr;
@@ -25,6 +28,26 @@ namespace directx {
 	template<typename T>
 	BufferBase<T>::~BufferBase() {
 		Release();
+	}
+	template<typename T>
+	HRESULT BufferBase<T>::UpdateBuffer(BufferLockParameter* pLock) {
+		HRESULT hr = S_OK;
+
+		if (pLock == nullptr || buffer_ == nullptr) return E_POINTER;
+		else if (pLock->lockOffset >= size_) return E_INVALIDARG;
+		else if (pLock->dataCount == 0U || pLock->dataStride == 0U) return S_OK;
+
+		size_t usableCount = size_ - pLock->lockOffset;
+		size_t lockCopySize = std::min(pLock->dataCount, usableCount) * pLock->dataStride;
+
+		void* tmp;
+		hr = buffer_->Lock(pLock->lockOffset * pLock->dataStride, lockCopySize, &tmp, pLock->lockFlag);
+		if (SUCCEEDED(hr)) {
+			memcpy_s(tmp, sizeInBytes_, pLock->data, lockCopySize);
+			buffer_->Unlock();
+		}
+
+		return hr;
 	}
 
 	FixedVertexBuffer::FixedVertexBuffer(IDirect3DDevice9* device) : BufferBase(device) {
@@ -162,7 +185,7 @@ namespace directx {
 			}
 
 			indexBuffer_ = new FixedIndexBuffer(device);
-			indexBuffer_->Setup(65536U, sizeof(uint16_t), D3DFMT_INDEX16);
+			indexBuffer_->Setup(MAX_STRIDE_STATIC, sizeof(uint16_t), D3DFMT_INDEX16);
 		}
 		vertexBufferGrowable_ = new GrowableVertexBuffer(device);
 		vertexBufferGrowable_->Setup(8192U, sizeof(VERTEX_TLX), VERTEX_TLX::fvf);
