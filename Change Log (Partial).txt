@@ -110,4 +110,5 @@
 	- Greatly improved the LogWindow's Script panel.
 	- Added a text showing the available video memory in the LogWindow's Texture panel.
 	- Added a text showing the used RAM and CPU in the LogWindow's Info panel.
+	- Enforced semicolons before closing braces.
 	- Various optimizations.
