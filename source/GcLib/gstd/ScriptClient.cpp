@@ -140,7 +140,7 @@ function const commonFunction[] =
 	{ "GetCurrentDateTimeS", ScriptClientBase::Func_GetCurrentDateTimeS, 0 },
 
 	//共通関数：デバッグ関連
-	{ "WriteLog", ScriptClientBase::Func_WriteLog, 1 },
+	{ "WriteLog", ScriptClientBase::Func_WriteLog, -2 },		//0 fixed + ... -> 1 minimum
 	{ "RaiseError", ScriptClientBase::Func_RaiseError, 1 },
 
 	//共通関数：共通データ
@@ -1455,7 +1455,12 @@ value ScriptClientBase::Func_GetCurrentDateTimeS(script_machine* machine, int ar
 
 //共通関数：デバッグ関連
 value ScriptClientBase::Func_WriteLog(script_machine* machine, int argc, const value* argv) {
-	std::wstring msg = argv->as_string();
+	std::wstring msg = L"";
+	for (int i = 0; i < argc; ) {
+		msg += argv[i].as_string();
+		if ((++i) >= argc) break;
+		msg += L",";
+	}
 	Logger::WriteTop(msg);
 	return value();
 }
