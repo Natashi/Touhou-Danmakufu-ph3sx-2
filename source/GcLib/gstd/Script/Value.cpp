@@ -227,7 +227,7 @@ std::wstring value::as_string() const {
 		else {
 			std::wstring result = L"[";
 			auto itr = data->array_value.begin();
-			while (true) {
+			while (itr != data->array_value.end()) {
 				result += itr->as_string();
 				if ((++itr) == data->array_value.end()) break;
 				result += L",";
