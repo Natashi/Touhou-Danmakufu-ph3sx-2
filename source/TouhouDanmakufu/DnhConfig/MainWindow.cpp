@@ -407,11 +407,11 @@ void KeyPanel::_UpdateText(int row) {
 	ref_count_ptr<VirtualKey> vk = config->GetVirtualKey(row);
 	if (vk == NULL) return;
 
-	int keyCode = vk->GetKeyCode();
+	int16_t keyCode = vk->GetKeyCode();
 	std::wstring strKey = listKeyCode_.GetCodeText(keyCode);
 	viewKey_->SetText(row, COL_KEY_ASSIGN, strKey);
 
-	int padButton = vk->GetPadButton();
+	int16_t padButton = vk->GetPadButton();
 	std::wstring strPad = StringUtility::Format(L"PAD %02d", padButton);
 	viewKey_->SetText(row, COL_PAD_ASSIGN, strPad);
 
@@ -425,14 +425,13 @@ void KeyPanel::UpdateKeyAssign() {
 	EDirectInput* input = EDirectInput::GetInstance();
 
 	bool bChange = false;
-	int pushKeyCode = -1;
-	std::vector<int>& listValidCode = listKeyCode_.GetValidCodeList();
-	for (int iCode = 0; iCode < listValidCode.size(); iCode++) {
-		int code = listValidCode[iCode];
-		int state = input->GetKeyState(code);
+	int16_t pushKeyCode = -1;
+	const std::map<int16_t, std::wstring>& mapValidCode = listKeyCode_.GetCodeMap();
+	for (auto itrCode = mapValidCode.begin(); itrCode != mapValidCode.end(); ++itrCode) {
+		DIKeyState state = input->GetKeyState(itrCode->first);
 		if (state != KEY_PUSH) continue;
 
-		pushKeyCode = code;
+		pushKeyCode = itrCode->first;
 		bChange = true;
 		break;
 	}
@@ -440,9 +439,9 @@ void KeyPanel::UpdateKeyAssign() {
 		vk->SetKeyCode(pushKeyCode);
 
 	int pushPadIndex = comboPadIndex_.GetSelectedIndex();
-	int pushPadButton = -1;
-	for (int iButton = 0; iButton < DirectInput::MAX_PAD_BUTTON; iButton++) {
-		int state = input->GetPadState(pushPadIndex, iButton);
+	int16_t pushPadButton = -1;
+	for (int16_t iButton = 0; iButton < DirectInput::MAX_PAD_BUTTON; iButton++) {
+		DIKeyState state = input->GetPadState((int16_t)pushPadIndex, iButton);
 		if (state != KEY_PUSH) continue;
 
 		pushPadButton = iButton;

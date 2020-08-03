@@ -19,7 +19,7 @@ KeyCodeList::KeyCodeList() {
 	mapText_[DIK_0] = L"0";
 	mapText_[DIK_MINUS] = L"-";
 	mapText_[DIK_EQUALS] = L"=";
-	mapText_[DIK_BACK] = L"Back Space ";
+	mapText_[DIK_BACK] = L"Backspace ";
 	mapText_[DIK_TAB] = L"Tab";
 
 	mapText_[DIK_Q] = L"Q";
@@ -35,7 +35,7 @@ KeyCodeList::KeyCodeList() {
 	mapText_[DIK_LBRACKET] = L"[";
 	mapText_[DIK_RBRACKET] = L"]";
 	mapText_[DIK_RETURN] = L"Enter";
-	mapText_[DIK_LCONTROL] = L"Ctrl (Left)";
+	mapText_[DIK_LCONTROL] = L"LCtrl";
 
 	mapText_[DIK_A] = L"A";
 	mapText_[DIK_S] = L"S";
@@ -49,7 +49,7 @@ KeyCodeList::KeyCodeList() {
 	mapText_[DIK_SEMICOLON] = L";";
 	mapText_[DIK_APOSTROPHE] = L"'";
 	mapText_[DIK_GRAVE] = L"`";
-	mapText_[DIK_LSHIFT] = L"Shift (Left)";
+	mapText_[DIK_LSHIFT] = L"LShift";
 	mapText_[DIK_BACKSLASH] = L"\\";
 
 	mapText_[DIK_Z] = L"Z";
@@ -62,9 +62,9 @@ KeyCodeList::KeyCodeList() {
 	mapText_[DIK_COMMA] = L",";
 	mapText_[DIK_PERIOD] = L".";
 	mapText_[DIK_SLASH] = L"/";
-	mapText_[DIK_RSHIFT] = L"Shift (Right)";
+	mapText_[DIK_RSHIFT] = L"RShift";
 	mapText_[DIK_MULTIPLY] = L"* (Numpad)";
-	mapText_[DIK_LMENU] = L"Alt (Left)";
+	mapText_[DIK_LMENU] = L"LAlt";
 	mapText_[DIK_SPACE] = L"Space";
 	mapText_[DIK_CAPITAL] = L"Caps Lock";
 
@@ -98,31 +98,31 @@ KeyCodeList::KeyCodeList() {
 
 	mapText_[DIK_F11] = L"F11";
 	mapText_[DIK_F12] = L"F12";
-	mapText_[DIK_F13] = L"F13";//NEC PC-98
-	mapText_[DIK_F14] = L"F14";//NEC PC-98
-	mapText_[DIK_F15] = L"F15";//NEC PC-98
+	mapText_[DIK_F13] = L"F13";		//NEC PC-98
+	mapText_[DIK_F14] = L"F14";		//NEC PC-98
+	mapText_[DIK_F15] = L"F15";		//NEC PC-98
 
-	mapText_[DIK_KANA] = L"カナ";//日本語キーボード
-	mapText_[DIK_CONVERT] = L"変換";//日本語キーボード
-	mapText_[DIK_NOCONVERT] = L"無変換";//日本語キーボード
-	mapText_[DIK_YEN] = L"\\";//日本語キーボード
-	mapText_[DIK_NUMPADEQUALS] = L"(Numpad)";//NEC PC-98
-	mapText_[DIK_CIRCUMFLEX] = L"^";//日本語キーボード
+	mapText_[DIK_KANA] = L"Kana";				//Japanese Keyboard
+	mapText_[DIK_CONVERT] = L"Convert";			//Japanese Keyboard
+	mapText_[DIK_NOCONVERT] = L"No Convert";	//Japanese Keyboard
+	mapText_[DIK_YEN] = L"\\";					//Japanese Keyboard
+	mapText_[DIK_NUMPADEQUALS] = L"(Numpad)";	//NEC PC-98
+	mapText_[DIK_CIRCUMFLEX] = L"^";			//Japanese Keyboard
 
-	mapText_[DIK_AT] = L"@";//NEC PC-98
-	mapText_[DIK_COLON] = L":";//NEC PC-98
-	mapText_[DIK_UNDERLINE] = L"_";//NEC PC-98
-	mapText_[DIK_KANJI] = L"漢字";//日本語キーボード
-	mapText_[DIK_STOP] = L"Stop";//NEC PC-98
+	mapText_[DIK_AT] = L"@";			//NEC PC-98
+	mapText_[DIK_COLON] = L":";			//NEC PC-98
+	mapText_[DIK_UNDERLINE] = L"_";		//NEC PC-98
+	mapText_[DIK_KANJI] = L"Kanji";		//Japanese Keyboard
+	mapText_[DIK_STOP] = L"Stop";		//NEC PC-98
 	mapText_[DIK_AX] = L"(Japan AX)";
 	mapText_[DIK_UNLABELED] = L"(J3100)";
 
 	mapText_[DIK_NUMPADENTER] = L"Enter (Numpad)";
-	mapText_[DIK_RCONTROL] = L"Ctrl (Right)";
-	mapText_[DIK_NUMPADCOMMA] = L", (Numpad)";//NEC PC-98
+	mapText_[DIK_RCONTROL] = L"RCtrl";
+	mapText_[DIK_NUMPADCOMMA] = L", (Numpad)";		//NEC PC-98
 	mapText_[DIK_DIVIDE] = L"/ (Numpad)";
 	mapText_[DIK_SYSRQ] = L"Sys Rq";
-	mapText_[DIK_RMENU] = L"Alt (Right)";
+	mapText_[DIK_RMENU] = L"RAlt";
 	mapText_[DIK_PAUSE] = L"Pause";
 	mapText_[DIK_HOME] = L"Home";
 	mapText_[DIK_UP] = L"↑";
@@ -135,27 +135,20 @@ KeyCodeList::KeyCodeList() {
 
 	mapText_[DIK_INSERT] = L"Insert";
 	mapText_[DIK_DELETE] = L"Delete";
-	mapText_[DIK_LWIN] = L"Windows (Left)";
-	mapText_[DIK_RWIN] = L"Windows (Right)";
+	mapText_[DIK_LWIN] = L"LWindows";
+	mapText_[DIK_RWIN] = L"RWindows";
 	mapText_[DIK_APPS] = L"Menu";
 	mapText_[DIK_POWER] = L"Power";
 	mapText_[DIK_SLEEP] = L"Sleep";
-
-	std::map<int, std::wstring>::iterator itr = mapText_.begin();
-	for (; itr != mapText_.end(); itr++) {
-		int code = itr->first;
-		listValidCode_.push_back(code);
-	}
 }
 KeyCodeList::~KeyCodeList() {
 }
-bool KeyCodeList::IsValidCode(int code) {
+bool KeyCodeList::IsValidCode(int16_t code) {
 	bool res = mapText_.find(code) != mapText_.end();
 	return res;
 }
-std::wstring KeyCodeList::GetCodeText(int code) {
-	if (!IsValidCode(code)) return L"";
-
-	std::wstring res = mapText_[code];
-	return res;
+std::wstring KeyCodeList::GetCodeText(int16_t code) {
+	auto itr = mapText_.find(code);
+	if (itr == mapText_.end()) return L"";
+	return itr->second;
 }

@@ -10,12 +10,13 @@ WinMain
 int WINAPI wWinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPWSTR lpCmdLine,
-	int nCmdShow) {
+	int nCmdShow) 
+{
 	gstd::DebugUtility::DumpMemoryLeaksOnExit();
 
 	{
 		DnhConfiguration::CreateInstance();
-		EPathProperty::CreateInstance();
+
 		MainWindow* wndMain = MainWindow::CreateInstance();
 		wndMain->Initialize();
 
@@ -31,7 +32,6 @@ int WINAPI wWinMain(HINSTANCE hInstance,
 
 	EApplication::DeleteInstance();
 	MainWindow::DeleteInstance();
-	EPathProperty::DeleteInstance();
 	DnhConfiguration::DeleteInstance();
 
 	return 0;

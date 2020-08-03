@@ -9,13 +9,12 @@
 **********************************************************/
 class KeyCodeList {
 private:
-	std::map<int, std::wstring> mapText_;
-	std::vector<int> listValidCode_;
+	std::map<int16_t, std::wstring> mapText_;
 public:
 	KeyCodeList();
 	virtual ~KeyCodeList();
 
-	bool IsValidCode(int code);
-	std::wstring GetCodeText(int code);
-	std::vector<int>& GetValidCodeList() { return listValidCode_; }
+	bool IsValidCode(int16_t code);
+	std::wstring GetCodeText(int16_t code);
+	const std::map<int16_t, std::wstring>& GetCodeMap() { return mapText_; }
 };

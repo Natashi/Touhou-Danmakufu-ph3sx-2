@@ -70,7 +70,6 @@ protected:
 	KeyCodeList listKeyCode_;
 	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void _UpdateText(int row);
-
 public:
 	KeyPanel();
 	~KeyPanel();
