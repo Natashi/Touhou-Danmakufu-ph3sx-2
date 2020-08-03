@@ -493,6 +493,16 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				IFF_PNG: Portable Network Graphics file. 					(.png)
 				IFF_DDS: DirectDraw Surface file. 							(.dds)
 				IFF_PPM: Portable PixelMap graphics file. 					(.ppm)
+				
+	--------------------------------> Debugging <--------------------------------
+	
+	WriteLog
+		Arguments:
+			1+) (any) value...
+		Description:
+			Change.
+			
+			Writes the values of the given arguments to the LogWindow.
 			
 	--------------------------------> Common Data <--------------------------------
 	

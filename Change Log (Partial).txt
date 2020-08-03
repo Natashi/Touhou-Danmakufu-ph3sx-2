@@ -24,6 +24,7 @@
 	- Fixed a bug where NotifyEvent and SetScriptArgument could not reach package-level scripts when called from a stage-level script.
 	- Event arguments will no longer be overwritten when notifying nested events inside @Event.
 	- Utilized variadic argument counts for the functions in the NotifyEvent series.
+	- Utilized variadic argument counts for the WriteLog function.
 	- Added transform functions for ObjPatternShot and relevant sample scripts, for former and current ECL modders.
 		- Please note that they may not be able to fully emulate ECL's behaviours.
 	- Added functionality to customize delay clouds.

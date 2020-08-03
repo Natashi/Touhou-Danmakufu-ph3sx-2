@@ -171,5 +171,5 @@
 			
 		Can be used everywhere except function/task/sub declarations, @ blocks, and local{} blocks.
 
-
-
+- Others
+	- Some default functions now allow for variadic argument counts.
