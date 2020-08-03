@@ -68,16 +68,12 @@ namespace directx {
 		static DirectInput* GetBase() { return thisBase_; }
 
 		virtual bool Initialize(HWND hWnd);
-
-#if defined(DNH_PROJ_EXECUTOR)
 		virtual void Update();
-#endif
 
 		DIKeyState GetKeyState(int16_t key);
 		DIKeyState GetMouseState(int16_t button);
 		DIKeyState GetPadState(int16_t padNo, int16_t button);
 
-#if defined(DNH_PROJ_EXECUTOR)
 		LONG GetMouseMoveX() { return stateMouse_.lX; }
 		LONG GetMouseMoveY() { return stateMouse_.lY; }
 		LONG GetMouseMoveZ() { return stateMouse_.lZ; }
@@ -87,7 +83,6 @@ namespace directx {
 		void ResetMouseState();
 		void ResetKeyState();
 		void ResetPadState();
-#endif
 
 		size_t GetPadDeviceCount() { return bufPad_.size(); }
 		DIDEVICEINSTANCE GetPadDeviceInformation(int16_t padIndex);

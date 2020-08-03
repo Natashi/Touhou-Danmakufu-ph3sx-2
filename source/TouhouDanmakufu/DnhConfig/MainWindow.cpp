@@ -161,7 +161,6 @@ bool MainWindow::Save() {
 void MainWindow::UpdateKeyAssign() {
 	if (!panelKey_->IsWindowVisible()) return;
 	panelKey_->UpdateKeyAssign();
-
 }
 void MainWindow::ReadConfiguration() {
 	panelDevice_->ReadConfiguration();

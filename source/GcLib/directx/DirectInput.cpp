@@ -149,15 +149,14 @@ BOOL DirectInput::_GetJoypadCallback(LPDIDEVICEINSTANCE lpddi) {
 		return DIENUM_CONTINUE;
 	}
 
-	// î•ñ•\Ž¦
 	{
-		DIDEVICEINSTANCE State;
-		ZeroMemory(&State, sizeof(State));
-		State.dwSize = sizeof(State);
-		pJoypad->GetDeviceInfo(&State);
+		DIDEVICEINSTANCE deviceInst;
+		ZeroMemory(&deviceInst, sizeof(DIDEVICEINSTANCE));
+		deviceInst.dwSize = sizeof(DIDEVICEINSTANCE);
+		pJoypad->GetDeviceInfo(&deviceInst);
 
-		Logger::WriteTop(StringUtility::Format("Device name:%s", State.tszInstanceName));
-		Logger::WriteTop(StringUtility::Format("Product name:%s", State.tszProductName));
+		Logger::WriteTop(StringUtility::Format("Joypad: Device name=%s", deviceInst.tszInstanceName));
+		Logger::WriteTop(StringUtility::Format("Joypad: Product name=%s", deviceInst.tszProductName));
 	}
 
 	hr = pJoypad->SetDataFormat(&c_dfDIJoystick);
@@ -219,7 +218,6 @@ BOOL DirectInput::_GetJoypadCallback(LPDIDEVICEINSTANCE lpddi) {
 			return DIENUM_CONTINUE;
 		}
 
-		// y‚Ì–³Œøƒ][ƒ“‚ðÝ’è
 		dipdw.diph.dwObj = DIJOFS_Y;
 		hr = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
 		if (FAILED(hr)) {
@@ -228,7 +226,6 @@ BOOL DirectInput::_GetJoypadCallback(LPDIDEVICEINSTANCE lpddi) {
 			return DIENUM_CONTINUE;
 		}
 
-		// ‚y‚Ì–³Œøƒ][ƒ“‚ðÝ’è
 		dipdw.diph.dwObj = DIJOFS_Z;
 		hr = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
 		if (FAILED(hr)) {
@@ -331,7 +328,6 @@ bool DirectInput::_IdleMouse() {
 	return true;
 }
 
-#if defined(DNH_PROJ_EXECUTOR)
 void DirectInput::Update() {
 	this->_IdleKeyboard();
 	this->_IdleJoypad();
@@ -353,7 +349,6 @@ void DirectInput::Update() {
 			bufPad_[iPad][iButton + 4] = _GetPadButton(iPad, iButton, bufPad_[iPad][iButton + 4]);
 	}
 }
-#endif
 
 DIKeyState DirectInput::GetKeyState(int16_t key) {
 	if (key < 0 || key >= MAX_KEY)
@@ -379,6 +374,7 @@ POINT DirectInput::GetMousePosition() {
 	ScreenToClient(hWnd_, &res);
 	return res;
 }
+#endif
 
 void DirectInput::ResetInputState() {
 	ResetMouseState();
@@ -406,7 +402,6 @@ void DirectInput::ResetPadState() {
 		}
 	}
 }
-#endif
 
 DIDEVICEINSTANCE DirectInput::GetPadDeviceInformation(int16_t padIndex) {
 	DIDEVICEINSTANCE state;
@@ -438,10 +433,7 @@ VirtualKeyManager::~VirtualKeyManager() {
 }
 
 void VirtualKeyManager::Update() {
-#if defined(DNH_PROJ_EXECUTOR)
 	DirectInput::Update();
-#endif
-
 	for (auto itr = mapKey_.begin(); itr != mapKey_.end(); ++itr) {
 		int16_t id = itr->first;
 		ref_count_ptr<VirtualKey> key = itr->second;
@@ -451,10 +443,7 @@ void VirtualKeyManager::Update() {
 	}
 }
 void VirtualKeyManager::ClearKeyState() {
-#if defined(DNH_PROJ_EXECUTOR)
 	DirectInput::ResetInputState();
-#endif
-	
 	for (auto itr = mapKey_.begin(); itr != mapKey_.end(); ++itr) {
 		ref_count_ptr<VirtualKey> key = itr->second;
 		key->SetKeyState(KEY_FREE);
