@@ -119,7 +119,7 @@ int64_t value::as_int() const {
 	case type_data::type_kind::tk_int:
 		return data->int_value;
 	case type_data::type_kind::tk_real:
-		return (int64_t)(data->real_value + 0.01);
+		return (int64_t)(data->real_value + (data->real_value > 0.0 ? 0.01 : -0.01));
 	case type_data::type_kind::tk_char:
 		return (int64_t)data->char_value;
 	case type_data::type_kind::tk_boolean:
