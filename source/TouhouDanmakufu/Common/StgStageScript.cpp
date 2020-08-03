@@ -430,8 +430,6 @@ function const stgFunction[] =
 	{ "ObjShot_SetEraseShot", StgStageScript::Func_ObjShot_SetEraseShot, 2 },
 	{ "ObjShot_SetSpellFactor", StgStageScript::Func_ObjShot_SetSpellFactor, 2 },
 	{ "ObjShot_ToItem", StgStageScript::Func_ObjShot_ToItem, 1 },
-	{ "ObjShot_AddShotA1", StgStageScript::Func_ObjShot_AddShotA1, 3 },
-	{ "ObjShot_AddShotA2", StgStageScript::Func_ObjShot_AddShotA2, 5 },
 	{ "ObjShot_SetIntersectionCircleA1", StgStageScript::Func_ObjShot_SetIntersectionCircleA1, 2 },
 	{ "ObjShot_SetIntersectionCircleA2", StgStageScript::Func_ObjShot_SetIntersectionCircleA2, 4 },
 	{ "ObjShot_SetIntersectionLine", StgStageScript::Func_ObjShot_SetIntersectionLine, 6 },
@@ -3390,30 +3388,6 @@ gstd::value StgStageScript::Func_ObjShot_ToItem(gstd::script_machine* machine, i
 	int id = (int)argv[0].as_real();
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
 	if (obj) obj->ConvertToItem(false);
-	return value();
-}
-gstd::value StgStageScript::Func_ObjShot_AddShotA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	int id = (int)argv[0].as_real();
-	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		int idShot = argv[1].as_int();
-		int frame = argv[2].as_int();
-		obj->AddShot(frame, idShot, 0, 0);
-	}
-	return value();
-}
-gstd::value StgStageScript::Func_ObjShot_AddShotA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	int id = (int)argv[0].as_real();
-	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
-	if (obj) {
-		int idShot = argv[1].as_int();
-		int frame = argv[2].as_int();
-		float radius = argv[3].as_real();
-		double angle = argv[4].as_real();
-		obj->AddShot(frame, idShot, radius, Math::DegreeToRadian(angle));
-	}
 	return value();
 }
 gstd::value StgStageScript::Func_ObjShot_SetIntersectionCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {

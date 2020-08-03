@@ -231,8 +231,6 @@ public:
 		LIFE_SPELL_UNREGIST = 5,
 		LIFE_SPELL_REGIST = 256 * 256 * 256,
 	};
-	class ReserveShotList;
-	class ReserveShotListData;
 
 	struct DelayParameter {
 		typedef float (*lerp_func)(float, float, float);
@@ -298,8 +296,6 @@ protected:
 	bool bSpellFactor_;
 	int frameAutoDelete_;
 	
-	ref_count_ptr<ReserveShotList>::unsync listReserveShot_;
-
 	shared_ptr<StgIntersectionTarget> pShotIntersectionTarget_;
 	bool bUserIntersectionMode_;//ユーザ定義あたり判定モード
 	bool bIntersectionEnable_;
@@ -322,9 +318,6 @@ protected:
 	void _CommonWorkTask();
 
 	virtual void _Move();
-
-	void _AddReservedShotWork();
-	virtual void _AddReservedShot(shared_ptr<StgShotObject> obj, ReserveShotListData* data);
 
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision) {}
 	virtual void _SendDeleteEvent(int bit);
@@ -406,41 +399,6 @@ public:
 
 	virtual void DeleteImmediate();
 	virtual void ConvertToItem(bool flgPlayerCollision);
-	void AddShot(int frame, int idShot, float radius, double angle);
-};
-
-class StgShotObject::ReserveShotListData {
-	friend ReserveShotList;
-	int idShot_;//対象ID
-	float radius_;//出現位置距離
-	double angle_;//出現位置角度
-public:
-	ReserveShotListData() { idShot_ = DxScript::ID_INVALID; radius_ = 0; angle_ = 0; }
-	virtual ~ReserveShotListData() {}
-	int GetShotID() { return idShot_; }
-	float GetRadius() { return radius_; }
-	double GetAngle() { return angle_; }
-};
-
-class StgShotObject::ReserveShotList {
-public:
-	class ListElement {
-		std::list<ReserveShotListData> list_;
-	public:
-		ListElement() {}
-		virtual ~ListElement() {}
-		void Add(ReserveShotListData& data) { list_.push_back(data); }
-		std::list<ReserveShotListData>* GetDataList() { return &list_; }
-	};
-private:
-	int frame_;
-	std::unordered_map<int, ref_count_ptr<ListElement>::unsync> mapData_;
-public:
-	ReserveShotList() { frame_ = 0; }
-	virtual ~ReserveShotList() {}
-	ref_count_ptr<ListElement>::unsync GetNextFrameData();
-	void AddData(int frame, int idShot, float radius, double angle);
-	void Clear(StgStageController* stageController);
 };
 
 /**********************************************************
@@ -543,7 +501,6 @@ protected:
 
 	virtual void _DeleteInAutoClip();
 	virtual void _DeleteInAutoDeleteFrame();
-	virtual void _AddReservedShot(shared_ptr<StgShotObject> obj, ReserveShotListData* data);
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
 public:
 	StgStraightLaserObject(StgStageController* stageController);

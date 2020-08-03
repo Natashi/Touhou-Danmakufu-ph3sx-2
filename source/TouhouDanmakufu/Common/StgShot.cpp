@@ -808,7 +808,6 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	SetRenderPriorityI(priShotI);
 }
 StgShotObject::~StgShotObject() {
-	if (listReserveShot_) listReserveShot_->Clear(stageController_);
 }
 void StgShotObject::SetOwnObjectReference() {
 	auto ptr = std::dynamic_pointer_cast<StgShotObject>(stageController_->GetMainRenderObject(idObject_));
@@ -928,50 +927,6 @@ void StgShotObject::_SendDeleteEvent(int bit) {
 	listScriptValue[3] = ManagedScript::CreateRealValue(GetShotDataID());
 	scriptShot->RequestEvent(typeEvent, listScriptValue, 4);
 }
-void StgShotObject::_AddReservedShotWork() {
-	if (IsDeleted() || listReserveShot_ == nullptr) return;
-
-	ref_count_ptr<ReserveShotList::ListElement>::unsync listData = listReserveShot_->GetNextFrameData();
-	if (listData == nullptr) return;
-
-	auto objectManager = stageController_->GetMainObjectManager();
-	std::list<ReserveShotListData>* list = listData->GetDataList();
-	std::list<ReserveShotListData>::iterator itr = list->begin();
-	for (; itr != list->end(); itr++) {
-		StgShotObject::ReserveShotListData& data = (*itr);
-		int idShot = data.GetShotID();
-		shared_ptr<StgShotObject> obj = std::dynamic_pointer_cast<StgShotObject>(objectManager->GetObject(idShot));
-		if (obj == nullptr || obj->IsDeleted()) continue;
-
-		_AddReservedShot(obj, &data);
-	}
-}
-
-void StgShotObject::_AddReservedShot(shared_ptr<StgShotObject> obj, StgShotObject::ReserveShotListData* data) {
-	auto objectManager = stageController_->GetMainObjectManager();
-
-	float ox = GetPositionX();
-	float oy = GetPositionY();
-
-	float dRadius = data->GetRadius();
-	float sx = obj->GetPositionX();
-	float sy = obj->GetPositionY();
-	double angle = GetDirectionAngle() + data->GetAngle();
-
-	float tx = ox + sx + dRadius * cos(angle);
-	float ty = oy + sy + dRadius * sin(angle);
-	obj->SetX(tx);
-	obj->SetY(ty);
-
-	StgShotManager* shotManager = stageController_->GetShotManager();
-	if (shotManager->GetShotCountAll() < StgShotManager::SHOT_MAX) {
-		shotManager->AddShot(obj);
-		obj->Activate();
-		objectManager->ActivateObject(obj->GetObjectID(), true);
-	}
-	else
-		objectManager->DeleteObject(obj);
-}
 
 void StgShotObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
 	shared_ptr<StgIntersectionObject> ptrObj = otherTarget->GetObject().lock();
@@ -1057,14 +1012,6 @@ void StgShotObject::SetColor(int r, int g, int b) {
 	color_ = (color_ & 0xff000000) | (dc & 0x00ffffff);
 }
 
-void StgShotObject::AddShot(int frame, int idShot, float radius, double angle) {
-	auto objectManager = stageController_->GetMainObjectManager();
-	objectManager->ActivateObject(idShot, false);
-
-	if (listReserveShot_ == nullptr)
-		listReserveShot_ = new ReserveShotList();
-	listReserveShot_->AddData(frame, idShot, radius, angle);
-}
 void StgShotObject::ConvertToItem(bool flgPlayerCollision) {
 	if (IsDeleted()) return;
 
@@ -1293,56 +1240,7 @@ void StgShotObject::_ProcessTransformAct() {
 	}
 }
 
-//StgShotObject::ReserveShotList
-ref_count_ptr<StgShotObject::ReserveShotList::ListElement>::unsync StgShotObject::ReserveShotList::GetNextFrameData() {
-	ref_count_ptr<ListElement>::unsync res = nullptr;
-
-	auto itr = mapData_.find(frame_);
-	if (itr != mapData_.end()) {
-		res = itr->second;
-		mapData_.erase(itr);
-	}
-
-	++frame_;
-	return res;
-}
-void StgShotObject::ReserveShotList::AddData(int frame, int idShot, float radius, double angle) {
-	ref_count_ptr<ListElement>::unsync list;
-
-	auto itr = mapData_.find(frame);
-	if (itr == mapData_.end()) {
-		list = new ListElement();
-		mapData_[frame] = list;
-	}
-	else {
-		list = itr->second;
-	}
-
-	ReserveShotListData data;
-	data.idShot_ = idShot;
-	data.radius_ = radius;
-	data.angle_ = angle;
-	list->Add(data);
-}
-void StgShotObject::ReserveShotList::Clear(StgStageController* stageController) {
-	auto objectManager = stageController->GetMainObjectManager();
-	if (objectManager == nullptr) return;
-
-	auto itrMap = mapData_.begin();
-	for (; itrMap != mapData_.end(); ++itrMap) {
-		ref_count_ptr<ListElement>::unsync listElement = itrMap->second;
-		std::list<ReserveShotListData>* list = listElement->GetDataList();
-		std::list<ReserveShotListData>::iterator itr = list->begin();
-		for (; itr != list->end(); ++itr) {
-			StgShotObject::ReserveShotListData& data = (*itr);
-			int idShot = data.GetShotID();
-			shared_ptr<StgShotObject> objShot = std::dynamic_pointer_cast<StgShotObject>(objectManager->GetObject(idShot));
-			if (objShot) objShot->ClearShotObject();
-			objectManager->DeleteObject(objShot);
-		}
-	}
-}
-
+//StgShotObject::DelayParameter
 float StgShotObject::DelayParameter::_CalculateValue(D3DXVECTOR3* param, lerp_func func) {
 	switch (type) {
 	case DELAY_LERP:
@@ -1374,7 +1272,6 @@ void StgNormalShotObject::Work() {
 		_Move();
 
 		if (delay_.time > 0) --(delay_.time);
-		else _AddReservedShotWork();
 
 		{
 			angle_.z += angularVelocity_;
@@ -1665,7 +1562,6 @@ void StgLooseLaserObject::Work() {
 		_Move();
 
 		if (delay_.time > 0) --(delay_.time);
-		else _AddReservedShotWork();
 	}
 
 	_CommonWorkTask();
@@ -1933,7 +1829,6 @@ void StgStraightLaserObject::Work() {
 
 		if (delay_.time > 0) --(delay_.time);
 		else {
-			_AddReservedShotWork();
 			if (bLaserExpand_)
 				scaleX_ = std::min(1.0f, scaleX_ + 0.1f);
 		}
@@ -2001,30 +1896,6 @@ std::vector<StgIntersectionTarget::ptr> StgStraightLaserObject::GetIntersectionT
 		res.push_back(pShotIntersectionTarget_);
 	}
 	return res;
-}
-void StgStraightLaserObject::_AddReservedShot(shared_ptr<StgShotObject> obj, StgShotObject::ReserveShotListData* data) {
-	auto objectManager = stageController_->GetMainObjectManager();
-
-	double ownAngle = GetDirectionAngle();
-	float ox = GetPositionX();
-	float oy = GetPositionY();
-
-	float dRadius = data->GetRadius();
-	float sx = obj->GetPositionX();
-	float sy = obj->GetPositionY();
-	double objAngle = obj->GetDirectionAngle();
-	double angle = angLaser_ + data->GetAngle();
-
-	float tx = ox + sx + dRadius * cosf(angle);
-	float ty = oy + sy + dRadius * sinf(angle);
-	obj->SetPositionX(tx);
-	obj->SetPositionY(ty);
-	obj->SetDirectionAngle(angle + obj->GetDirectionAngle());
-
-	StgShotManager* shotManager = stageController_->GetShotManager();
-	shotManager->AddShot(obj);
-	obj->Activate();
-	objectManager->ActivateObject(obj->GetObjectID(), true);
 }
 void StgStraightLaserObject::RenderOnShotManager() {
 	if (!IsVisible()) return;
@@ -2247,7 +2118,6 @@ void StgCurveLaserObject::Work() {
 		_Move();
 
 		if (delay_.time > 0) --(delay_.time);
-		else _AddReservedShotWork();
 	}
 
 	_CommonWorkTask();

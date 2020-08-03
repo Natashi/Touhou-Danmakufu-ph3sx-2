@@ -373,8 +373,6 @@ public:
 	static gstd::value Func_ObjShot_SetEraseShot(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetSpellFactor(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_ToItem(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjShot_AddShotA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjShot_AddShotA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetIntersectionCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetIntersectionCircleA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetIntersectionLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
