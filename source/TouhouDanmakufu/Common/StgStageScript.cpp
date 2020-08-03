@@ -2494,7 +2494,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA4(gstd::script_machine* mach
 		CMD_ADD(maxSpeed, StgMovePattern_Angle::SET_SPMAX);
 
 		pattern->SetShotDataID(idShot);
-		pattern->SetRelativeObjectID(idRelative);
+		if (idRelative != StgMovePattern::NO_CHANGE)
+			pattern->SetRelativeObjectID(idRelative);
 		obj->AddPattern(frame, pattern);
 	}
 	return value();
