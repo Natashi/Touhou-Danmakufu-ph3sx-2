@@ -79,34 +79,41 @@
 
 //-----------------------------------DirectX------------------------------------
 
+#define D3D_OVERLOADS
+
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 
-//lib
-#pragma comment(lib, "msacm32.lib") //for acm
-#pragma comment(lib, "d3d9.lib")
-#pragma comment(lib, "d3dx9.lib")
+#define DIRECTINPUT_VERSION 0x0800
+
+#include <d3d9.h>
+#include <dinput.h>
+#include <DxErr.h>
+
 #pragma comment(lib, "dxguid.lib")
+#pragma comment(lib, "d3d9.lib")
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxerr.lib")
+
+#endif
+
+#if defined(DNH_PROJ_EXECUTOR)
+
+#define DIRECTSOUND_VERSION 0x0900
+
+//for acm
+#include <mmreg.h> 
+#include <msacm.h>
+
+#include <basetsd.h>
+#include <d3dx9.h>
+#include <dsound.h>
+#include <dmusici.h>
+
+#pragma comment(lib, "msacm32.lib") //for acm
+#pragma comment(lib, "d3dx9.lib")
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dsound.lib")
 #pragma comment(lib, "d3dxof.lib")
-#pragma comment(lib, "dxerr.lib")
-
-//define
-#define D3D_OVERLOADS
-#define DIRECTINPUT_VERSION 0x0800
-#define DIRECTSOUND_VERSION 0x0900
-
-//include
-#include <mmreg.h> //for acm
-#include <msacm.h> //for acm
-
-#include <basetsd.h>
-#include <d3d9.h>
-#include <d3dx9.h>
-#include <dinput.h>
-#include <dsound.h>
-#include <dmusici.h>
-#include <DxErr.h>
 
 #endif
 

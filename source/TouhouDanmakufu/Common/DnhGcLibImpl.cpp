@@ -3,6 +3,7 @@
 #include "DnhGcLibImpl.hpp"
 #include "DnhCommon.hpp"
 
+#if defined(DNH_PROJ_EXECUTOR)
 /**********************************************************
 //EPathProperty
 **********************************************************/
@@ -47,7 +48,6 @@ std::wstring EPathProperty::GetCommonDataPath(const std::wstring& scriptPath, co
 	return path;
 }
 
-#if defined(DNH_PROJ_EXECUTOR)
 /**********************************************************
 //ELogger
 **********************************************************/

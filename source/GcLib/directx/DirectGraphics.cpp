@@ -27,7 +27,7 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 DirectGraphicsConfig::~DirectGraphicsConfig() {
 }
 
-
+#if defined(DNH_PROJ_EXECUTOR)
 /**********************************************************
 //DirectGraphics
 **********************************************************/
@@ -38,7 +38,6 @@ DirectGraphics::DirectGraphics() {
 	pBackSurf_ = nullptr;
 	pZBuffer_ = nullptr;
 
-#if defined(DNH_PROJ_EXECUTOR)
 	camera_ = new DxCamera();
 	camera2D_ = new DxCamera2D();
 	
@@ -51,7 +50,6 @@ DirectGraphics::DirectGraphics() {
 	bMainRender_ = true;
 	previousBlendMode_ = (BlendMode)-999;
 	D3DXMatrixIdentity(&matViewPort_);
-#endif
 }
 DirectGraphics::~DirectGraphics() {
 	Logger::WriteTop("DirectGraphics: Finalizing.");
@@ -60,9 +58,7 @@ DirectGraphics::~DirectGraphics() {
 	ptr_release(pBackSurf_);
 	ptr_release(pDevice_);
 	ptr_release(pDirect3D_);
-#if defined(DNH_PROJ_EXECUTOR)
 	ptr_delete(bufferManager_);
-#endif
 
 	for (auto& itrSample : mapSupportMultisamples_) {
 		delete itrSample.second.second;
@@ -77,7 +73,6 @@ bool DirectGraphics::Initialize(HWND hWnd) {
 bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 	if (thisBase_) return false;
 
-#if defined(DNH_PROJ_EXECUTOR)
 	Logger::WriteTop("DirectGraphics: Initialize.");
 	pDirect3D_ = Direct3DCreate9(D3D_SDK_VERSION);
 	if (pDirect3D_ == nullptr) throw gstd::wexception("Direct3DCreate9 error.");
@@ -236,24 +231,20 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 
 	bufferManager_ = new VertexBufferManager();
 	bufferManager_->Initialize(this);
-#endif
 
 	thisBase_ = this;
 
-#if defined(DNH_PROJ_EXECUTOR)
 	if (camera2D_)
 		camera2D_->Reset();
 	_InitializeDeviceState(true);
 
 	BeginScene();
 	EndScene();
-#endif
 
 	Logger::WriteTop("DirectGraphics: Initialized.");
 	return true;
 }
 
-#if defined(DNH_PROJ_EXECUTOR)
 void DirectGraphics::_ReleaseDxResource() {
 	ptr_release(pZBuffer_);
 	ptr_release(pBackSurf_);
@@ -601,7 +592,6 @@ void DirectGraphics::SetDirectionalLight(D3DVECTOR& dir) {
 	pDevice_->SetLight(0, &light);
 	pDevice_->LightEnable(0, TRUE);
 }
-#endif
 void DirectGraphics::SetMultiSampleType(D3DMULTISAMPLE_TYPE type) {
 	if (IsSupportMultiSample(type)) {
 		d3dppWin_.MultiSampleType = type;
@@ -638,8 +628,6 @@ bool DirectGraphics::IsSupportMultiSample(D3DMULTISAMPLE_TYPE type) {
 	if (itr == mapSupportMultisamples_.end()) return false;
 	return itr->second.first;
 }
-
-#if defined(DNH_PROJ_EXECUTOR)
 void DirectGraphics::SetViewPort(int x, int y, int width, int height) {
 	D3DVIEWPORT9 viewPort;
 	ZeroMemory(&viewPort, sizeof(D3DVIEWPORT9));
@@ -729,9 +717,7 @@ bool DirectGraphics::IsPixelShaderSupported(int major, int minor) {
 	bool res = caps.PixelShaderVersion >= D3DPS_VERSION(major, minor);
 	return res;
 }
-#endif
 
-#if defined(DNH_PROJ_EXECUTOR)
 /**********************************************************
 //DirectGraphicsPrimaryWindow
 **********************************************************/
@@ -934,14 +920,12 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 		return FALSE;
 	}
 	*/
-#if defined(DNH_PROJ_EXECUTOR)
 	case WM_SYSCHAR:
 	{
 		if (wParam == VK_RETURN)
 			this->ChangeScreenMode();
 		return FALSE;
 	}
-#endif
 	}
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }

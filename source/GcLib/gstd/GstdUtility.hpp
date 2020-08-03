@@ -163,6 +163,7 @@ namespace gstd {
 		const wchar_t* what() { return message_.c_str(); }
 	};
 
+#if defined(DNH_PROJ_EXECUTOR)
 	//================================================================
 	//Math
 	constexpr double GM_PI = 3.14159265358979323846;
@@ -244,6 +245,7 @@ namespace gstd {
 			}
 		};
 	};
+#endif
 
 	//================================================================
 	//ByteOrder
@@ -446,6 +448,7 @@ namespace gstd {
 		}
 	};
 
+#if defined(DNH_PROJ_EXECUTOR)
 	//================================================================
 	//BitAccess
 	class BitAccess {
@@ -497,6 +500,7 @@ namespace gstd {
 	public:
 		InnerClass(T* outer = nullptr) { outer_ = outer; }
 	};
+#endif
 
 	//================================================================
 	//Singleton

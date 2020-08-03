@@ -449,6 +449,7 @@ bool FileManager::ClearArchiveFileCache() {
 }
 #endif
 
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 ref_count_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	std::wstring pathAsUnique = PathProperty::GetUnique(path);
 
@@ -511,7 +512,6 @@ ref_count_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	return res;
 }
 
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 ref_count_ptr<ByteBuffer> FileManager::_GetByteBuffer(shared_ptr<ArchiveFileEntry> entry) {
 	ref_count_ptr<ByteBuffer> res = nullptr;
 	try {
@@ -669,6 +669,7 @@ void FileManager::LoadThread::RemoveListener(FileManager::LoadThreadListener* li
 }
 #endif
 
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 /**********************************************************
 //ManagedFileReader
 **********************************************************/
@@ -676,7 +677,6 @@ ManagedFileReader::ManagedFileReader(ref_count_ptr<File> file, std::shared_ptr<A
 	offset_ = 0;
 	file_ = file;
 
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	entry_ = entry;
 
 	if (entry_ == nullptr) {
@@ -688,9 +688,6 @@ ManagedFileReader::ManagedFileReader(ref_count_ptr<File> file, std::shared_ptr<A
 	else if (entry_->compressionType != ArchiveFileEntry::CT_NONE && entry_ != nullptr) {
 		type_ = TYPE_ARCHIVED_COMPRESSED;
 	}
-#else
-	type_ = TYPE_NORMAL;
-#endif
 }
 ManagedFileReader::~ManagedFileReader() {
 	Close();
@@ -701,30 +698,24 @@ bool ManagedFileReader::Open() {
 	if (type_ == TYPE_NORMAL) {
 		res = file_->Open();
 	}
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		buffer_ = FileManager::GetBase()->_GetByteBuffer(entry_);
 		res = buffer_ != nullptr;
 	}
-#endif
 	return res;
 }
 void ManagedFileReader::Close() {
 	if (file_) file_->Close();
 	if (buffer_) {
 		buffer_ = nullptr;
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 		FileManager::GetBase()->_ReleaseByteBuffer(entry_);
-#endif
 	}
 }
 size_t ManagedFileReader::GetFileSize() {
 	size_t res = 0;
 	if (type_ == TYPE_NORMAL) res = file_->GetSize();
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	else if ((type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) && buffer_ != nullptr)
 		res = entry_->sizeFull;
-#endif
 	return res;
 }
 DWORD ManagedFileReader::Read(LPVOID buf, DWORD size) {
@@ -732,7 +723,6 @@ DWORD ManagedFileReader::Read(LPVOID buf, DWORD size) {
 	if (type_ == TYPE_NORMAL) {
 		res = file_->Read(buf, size);
 	}
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		size_t read = size;
 		if (buffer_->GetSize() < offset_ + size) {
@@ -741,7 +731,6 @@ DWORD ManagedFileReader::Read(LPVOID buf, DWORD size) {
 		memcpy(buf, &buffer_->GetPointer()[offset_], read);
 		res = read;
 	}
-#endif
 	offset_ += res;
 	return res;
 }
@@ -752,14 +741,12 @@ BOOL ManagedFileReader::SetFilePointerBegin() {
 		file_->SetFilePointerBegin();
 		res = !file_->Fail();
 	}
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
 			offset_ = 0;
 			res = TRUE;
 		}
 	}
-#endif
 	return res;
 }
 BOOL ManagedFileReader::SetFilePointerEnd() {
@@ -768,14 +755,12 @@ BOOL ManagedFileReader::SetFilePointerEnd() {
 		file_->SetFilePointerEnd();
 		res = !file_->Fail();
 	}
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
 			offset_ = buffer_->GetSize();
 			res = TRUE;
 		}
 	}
-#endif
 	return res;
 }
 BOOL ManagedFileReader::Seek(size_t offset) {
@@ -784,13 +769,11 @@ BOOL ManagedFileReader::Seek(size_t offset) {
 		file_->Seek(offset);
 		res = !file_->Fail();
 	}
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
 			res = TRUE;
 		}
 	}
-#endif
 	if (res == TRUE)
 		offset_ = offset;
 	return res;
@@ -800,16 +783,13 @@ size_t ManagedFileReader::GetFilePointer() {
 	if (type_ == TYPE_NORMAL) {
 		res = file_->GetFilePointerRead();
 	}
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
 			res = offset_;
 		}
 	}
-#endif
 	return res;
 }
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 bool ManagedFileReader::IsArchived() {
 	return type_ != TYPE_NORMAL;
 }
@@ -1052,14 +1032,14 @@ bool PropertyFile::Load(const std::wstring& path) {
 	mapEntry_.clear();
 
 	std::vector<char> text;
+
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	FileManager* fileManager = FileManager::GetBase();
 	if (fileManager) {
 		ref_count_ptr<FileReader> reader = fileManager->GetFileReader(path);
 
 		if (reader == nullptr || !reader->Open()) {
-#if defined(DNH_PROJ_EXECUTOR)
 			Logger::WriteTop(ErrorUtility::GetFileNotFoundErrorMessage(path));
-#endif
 			return false;
 		}
 
@@ -1069,6 +1049,7 @@ bool PropertyFile::Load(const std::wstring& path) {
 		text[size] = '\0';
 	}
 	else {
+#endif
 		File file(path);
 		if (!file.Open()) return false;
 
@@ -1076,7 +1057,9 @@ bool PropertyFile::Load(const std::wstring& path) {
 		text.resize(size + 1);
 		file.Read(&text[0], size);
 		text[size] = '\0';
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	}
+#endif
 
 	bool res = false;
 	gstd::Scanner scanner(text);

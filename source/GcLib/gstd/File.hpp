@@ -206,16 +206,20 @@ namespace gstd {
 	class ManagedFileReader;
 	class FileManager {
 	public:
+#if defined(DNH_PROJ_EXECUTOR)
 		class LoadObject;
 		class LoadThread;
 		class LoadThreadListener;
 		class LoadThreadEvent;
+#endif
 		friend ManagedFileReader;
 	private:
 		static FileManager* thisBase_;
 	protected:
 		gstd::CriticalSection lock_;
+#if defined(DNH_PROJ_EXECUTOR)
 		gstd::ref_count_ptr<LoadThread> threadLoad_;
+#endif
 		std::map<std::wstring, ref_count_ptr<ArchiveFile>> mapArchiveFile_;
 		std::map<std::wstring, ref_count_ptr<ByteBuffer>> mapByteBuffer_;
 
@@ -231,6 +235,10 @@ namespace gstd {
 
 #if defined(DNH_PROJ_EXECUTOR)
 		void EndLoadThread();
+		void AddLoadThreadEvent(shared_ptr<LoadThreadEvent> event);
+		void AddLoadThreadListener(FileManager::LoadThreadListener* listener);
+		void RemoveLoadThreadListener(FileManager::LoadThreadListener* listener);
+		void WaitForThreadLoadComplete();
 
 		bool AddArchiveFile(const std::wstring& path);
 		bool RemoveArchiveFile(const std::wstring& path);
@@ -238,13 +246,8 @@ namespace gstd {
 		bool ClearArchiveFileCache();
 #endif
 
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 		ref_count_ptr<FileReader> GetFileReader(const std::wstring& path);
-
-#if defined(DNH_PROJ_EXECUTOR)
-		void AddLoadThreadEvent(shared_ptr<LoadThreadEvent> event);
-		void AddLoadThreadListener(FileManager::LoadThreadListener* listener);
-		void RemoveLoadThreadListener(FileManager::LoadThreadListener* listener);
-		void WaitForThreadLoadComplete();
 #endif
 	};
 
@@ -301,6 +304,7 @@ namespace gstd {
 	};
 #endif
 
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	/**********************************************************
 	//ManagedFileReader
 	**********************************************************/
@@ -314,9 +318,8 @@ namespace gstd {
 
 		FILETYPE type_;
 		ref_count_ptr<File> file_;
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 		std::shared_ptr<ArchiveFileEntry> entry_;
-#endif
+
 		ref_count_ptr<ByteBuffer> buffer_;
 		size_t offset_;
 	public:
@@ -332,13 +335,12 @@ namespace gstd {
 		virtual BOOL Seek(size_t offset);
 		virtual size_t GetFilePointer();
 
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 		virtual bool IsArchived();
 		virtual bool IsCompressed();
-#endif
 
 		virtual ref_count_ptr<ByteBuffer> GetBuffer() { return buffer_; }
 	};
+#endif
 
 	/**********************************************************
 	//Recordable

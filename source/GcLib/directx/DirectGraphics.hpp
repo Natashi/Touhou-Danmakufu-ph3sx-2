@@ -1,5 +1,4 @@
-#ifndef __DIRECTX_DIRECTGRAPHICS__
-#define __DIRECTX_DIRECTGRAPHICS__
+#pragma once
 
 #include "../pch.h"
 #include "DxConstant.hpp"
@@ -9,6 +8,7 @@
 #endif
 
 namespace directx {
+#if defined(DNH_PROJ_EXECUTOR)
 	struct VertexFogState {
 		bool bEnable;
 		D3DXVECTOR4 color;
@@ -18,6 +18,8 @@ namespace directx {
 	class DxCamera;
 	class DxCamera2D;
 	class Texture;
+#endif
+
 	/**********************************************************
 	//DirectGraphicsConfig
 	**********************************************************/
@@ -85,6 +87,7 @@ namespace directx {
 		MODE_BLEND_ALPHA_INV,	//Alpha blending, but the source color is inverted
 	} BlendMode;
 
+#if defined(DNH_PROJ_EXECUTOR)
 	class DirectGraphics {
 		static DirectGraphics* thisBase_;
 	protected:
@@ -107,7 +110,6 @@ namespace directx {
 		bool bMainRender_;
 		BlendMode previousBlendMode_;
 
-#if defined(DNH_PROJ_EXECUTOR)
 		gstd::ref_count_ptr<DxCamera> camera_;
 		gstd::ref_count_ptr<DxCamera2D> camera2D_;
 		shared_ptr<Texture> textureTarget_;
@@ -120,7 +122,6 @@ namespace directx {
 		void _RestoreDxResource();
 		void _Restore();
 		void _InitializeDeviceState(bool bResetCamera);
-#endif
 	public:
 		DirectGraphics();
 		virtual ~DirectGraphics();
@@ -131,18 +132,20 @@ namespace directx {
 
 		virtual bool Initialize(HWND hWnd);
 		virtual bool Initialize(HWND hWnd, DirectGraphicsConfig& config);
+
+		
+
 		void AddDirectGraphicsListener(DirectGraphicsListener* listener);
 		void RemoveDirectGraphicsListener(DirectGraphicsListener* listener);
 		ScreenMode GetScreenMode() { return modeScreen_; }
 		D3DPRESENT_PARAMETERS GetFullScreenPresentParameter() { return d3dppFull_; }
 		D3DPRESENT_PARAMETERS GetWindowPresentParameter() { return d3dppWin_; }
 
-		IDirect3DDevice9* GetDevice() { return pDevice_; }
 		DirectGraphicsConfig& GetConfigData() { return config_; }
+		IDirect3DDevice9* GetDevice() { return pDevice_; }
 
 		IDirect3DSurface9* GetBaseSurface() { return pBackSurf_; }
 
-#if defined(DNH_PROJ_EXECUTOR)
 		void BeginScene(bool bMainRender = true, bool bClear = true);	//ï`âÊäJén
 		void EndScene(bool bPresent = true);	//ï`âÊèIóπ
 		void ClearRenderTarget();
@@ -175,7 +178,6 @@ namespace directx {
 		VertexFogState* GetFogState() { return &stateFog_; }
 
 		void SetDirectionalLight(D3DVECTOR& dir);
-#endif
 		void SetMultiSampleType(D3DMULTISAMPLE_TYPE type);
 		D3DMULTISAMPLE_TYPE GetMultiSampleType();
 		void SetMultiSampleQuality(DWORD* quality);
@@ -183,7 +185,6 @@ namespace directx {
 		HRESULT SetFullscreenAntiAliasing(bool bEnable);
 		bool IsSupportMultiSample(D3DMULTISAMPLE_TYPE type);
 
-#if defined(DNH_PROJ_EXECUTOR)
 		D3DXMATRIX matViewPort_;
 		void SetViewPort(int x, int y, int width, int height);
 		void ResetViewPort();
@@ -200,10 +201,8 @@ namespace directx {
 
 		void SaveBackSurfaceToFile(const std::wstring& path);
 		bool IsPixelShaderSupported(int major, int minor);
-#endif
 	};
 
-#if defined(DNH_PROJ_EXECUTOR)
 	/**********************************************************
 	//DirectGraphicsPrimaryWindow
 	**********************************************************/
@@ -379,5 +378,3 @@ namespace directx {
 	};
 #endif
 }
-
-#endif

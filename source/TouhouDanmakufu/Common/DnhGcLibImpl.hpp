@@ -5,6 +5,7 @@
 
 #include "DnhConstant.hpp"
 
+#if defined(DNH_PROJ_EXECUTOR)
 /**********************************************************
 //EPathProperty
 **********************************************************/
@@ -23,7 +24,6 @@ public:
 	static std::wstring GetCommonDataPath(const std::wstring& scriptPath, const std::wstring& area);
 };
 
-#if defined(DNH_PROJ_EXECUTOR)
 /**********************************************************
 //ELogger
 **********************************************************/
