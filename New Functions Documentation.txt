@@ -1488,7 +1488,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjMove_SetAngle
 		Description:
 			Addition.
-			Also works work on B-pattern objects.
+			Also works on B-pattern objects.
 
 	ObjMove_GetSpeedX
 		Arguments:
