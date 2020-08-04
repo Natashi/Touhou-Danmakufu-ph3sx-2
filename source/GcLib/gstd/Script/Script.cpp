@@ -263,6 +263,16 @@ void script_machine::run_code() {
 				stack.pop_back();
 				break;
 			}
+			case command_kind::pc_jump_if_nopop:
+			case command_kind::pc_jump_if_not_nopop:
+			{
+				stack_t& stack = current->stack;
+				value* top = &stack.back();
+				bool bJE = c->command == command_kind::pc_jump_if_nopop;
+				if ((bJE && top->as_boolean()) || (!bJE && !top->as_boolean()))
+					current->ip = c->ip;
+				break;
+			}
 
 			case command_kind::pc_assign:
 			{

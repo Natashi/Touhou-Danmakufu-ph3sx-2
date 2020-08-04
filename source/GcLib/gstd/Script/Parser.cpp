@@ -719,15 +719,14 @@ continue_as_variadic:
 			command_kind cmdLogic = (state->next() == token_kind::tk_logic_and) ?
 				command_kind::pc_inline_logic_and : command_kind::pc_inline_logic_or;
 			command_kind cmdJump = (state->next() == token_kind::tk_logic_and) ?
-				command_kind::_pc_jump_if_not : command_kind::_pc_jump_if;
+				command_kind::_pc_jump_if_not_nopop : command_kind::_pc_jump_if_nopop;
 			state->advance();
 
-			state->AddCode(block, code(command_kind::pc_dup_n, 1));
 			state->AddCode(block, code(cmdJump, iter));
 
 			parse_bitwise(block, state);
 
-			//state->AddCode(block, code(cmdLogic));
+			state->AddCode(block, code(cmdLogic));
 			state->AddCode(block, code(command_kind::pc_jump_target, iter));
 			--(state->ip);
 
@@ -1807,6 +1806,8 @@ continue_as_variadic:
 			case command_kind::_pc_jump:
 			case command_kind::_pc_jump_if:
 			case command_kind::_pc_jump_if_not:
+			case command_kind::_pc_jump_if_nopop:
+			case command_kind::_pc_jump_if_not_nopop:
 			{
 				auto itrFind = mapLabelCode.find(itr->ip);
 				if (itrFind != mapLabelCode.end())

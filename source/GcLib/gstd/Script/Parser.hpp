@@ -20,7 +20,9 @@ namespace gstd {
 
 		pc_jump_target,
 		pc_jump, pc_jump_if, pc_jump_if_not,
+		pc_jump_if_nopop, pc_jump_if_not_nopop,
 		_pc_jump, _pc_jump_if, _pc_jump_if_not,
+		_pc_jump_if_nopop, _pc_jump_if_not_nopop,
 
 		pc_compare_e, pc_compare_g, pc_compare_ge, pc_compare_l,
 		pc_compare_le, pc_compare_ne,
@@ -292,6 +294,10 @@ namespace gstd {
 			return command_kind::pc_jump_if;
 		case command_kind::_pc_jump_if_not:
 			return command_kind::pc_jump_if_not;
+		case command_kind::_pc_jump_if_nopop:
+			return command_kind::pc_jump_if_nopop;
+		case command_kind::_pc_jump_if_not_nopop:
+			return command_kind::pc_jump_if_not_nopop;
 		}
 		return command_kind::pc_jump_target;
 	}
