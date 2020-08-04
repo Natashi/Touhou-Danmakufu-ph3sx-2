@@ -810,27 +810,27 @@ RecordEntry::~RecordEntry() {
 size_t RecordEntry::_GetEntryRecordSize() {
 	size_t res = 0;
 	res += sizeof(char);
-	res += sizeof(int);
+	res += sizeof(uint32_t);
 	res += key_.size();
-	res += sizeof(int);
+	res += sizeof(uint32_t);
 	res += buffer_.GetSize();
 	return res;
 }
 void RecordEntry::_WriteEntryRecord(Writer &writer) {
 	writer.WriteCharacter(type_);
-	writer.WriteInteger(key_.size());
+	writer.WriteValue<uint32_t>(key_.size());
 	writer.Write(&key_[0], key_.size());
 
-	writer.WriteInteger(buffer_.GetSize());
+	writer.WriteValue<uint32_t>(buffer_.GetSize());
 	writer.Write(buffer_.GetPointer(), buffer_.GetSize());
 }
 void RecordEntry::_ReadEntryRecord(Reader &reader) {
 	type_ = reader.ReadCharacter();
-	key_.resize(reader.ReadInteger());
+	key_.resize(reader.ReadValue<uint32_t>());
 	reader.Read(&key_[0], key_.size());
 
 	buffer_.Clear();
-	buffer_.SetSize(reader.ReadInteger());
+	buffer_.SetSize(reader.ReadValue<uint32_t>());
 	reader.Read(buffer_.GetPointer(), buffer_.GetSize());
 }
 
@@ -866,8 +866,8 @@ std::vector<std::string> RecordBuffer::GetKeyList() {
 }
 
 void RecordBuffer::Write(Writer& writer) {
-	size_t countEntry = mapEntry_.size();
-	writer.Write<size_t>(countEntry);
+	uint32_t countEntry = mapEntry_.size();
+	writer.Write<uint32_t>(countEntry);
 
 	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); ++itr) {
 		ref_count_ptr<RecordEntry> entry = itr->second;
@@ -876,13 +876,13 @@ void RecordBuffer::Write(Writer& writer) {
 }
 void RecordBuffer::Read(Reader& reader) {
 	this->Clear();
-	size_t countEntry = 0;
-	reader.Read<size_t>(countEntry);
+	uint32_t countEntry = 0;
+	reader.Read<uint32_t>(countEntry);
 	for (size_t iEntry = 0; iEntry < countEntry; ++iEntry) {
 		ref_count_ptr<RecordEntry> entry = new RecordEntry();
 		entry->_ReadEntryRecord(reader);
 
-		std::string& key = entry->GetKey();
+		const std::string& key = entry->GetKey();
 		mapEntry_[key] = entry;
 	}
 }
