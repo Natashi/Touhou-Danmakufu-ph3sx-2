@@ -351,13 +351,13 @@ namespace gstd {
 		std::map<std::string, gstd::value> mapValue_;
 
 		gstd::value _ReadRecord(gstd::ByteBuffer& buffer);
-		void _WriteRecord(gstd::ByteBuffer& buffer, gstd::value& comValue);
+		void _WriteRecord(gstd::ByteBuffer& buffer, const gstd::value& comValue);
 	public:
 		ScriptCommonData();
 		virtual ~ScriptCommonData();
 
 		void Clear();
-		std::pair<bool, std::map<std::string, gstd::value>::iterator> IsExists(std::string name);
+		std::pair<bool, std::map<std::string, gstd::value>::iterator> IsExists(const std::string& name);
 
 		gstd::value GetValue(const std::string& name);
 		gstd::value GetValue(std::map<std::string, gstd::value>::iterator itr);

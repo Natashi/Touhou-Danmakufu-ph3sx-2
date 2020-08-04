@@ -1796,7 +1796,7 @@ ScriptCommonData::~ScriptCommonData() {}
 void ScriptCommonData::Clear() {
 	mapValue_.clear();
 }
-std::pair<bool, std::map<std::string, gstd::value>::iterator> ScriptCommonData::IsExists(std::string name) {
+std::pair<bool, std::map<std::string, gstd::value>::iterator> ScriptCommonData::IsExists(const std::string& name) {
 	auto itr = mapValue_.find(name);
 	return std::make_pair(itr != mapValue_.end(), itr);
 }
@@ -1831,101 +1831,111 @@ void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
 	mapValue_.clear();
 
 	std::vector<std::string> listKey = record.GetKeyList();
-	for (size_t iKey = 0; iKey < listKey.size(); iKey++) {
-		std::string& key = listKey[iKey];
-		std::string keyValSize = StringUtility::Format("%s_size", key.c_str());
-		if (!record.IsExists(keyValSize)) continue;//サイズ自身がキー登録されている
+	for (const std::string& key : listKey) {
+		ref_count_ptr<RecordEntry> entry = record.GetEntry(key);
+		gstd::ByteBuffer& buffer = entry->GetBufferRef();
 
-		size_t valSize = 0U;
-		record.GetRecord<size_t>(keyValSize, valSize);
+		uint32_t valSize = 0U;
+		buffer.Seek(0);
+		buffer.Read(&valSize, sizeof(uint32_t));
 
-		gstd::ByteBuffer buffer;
-		buffer.SetSize(valSize);
-		record.GetRecord(key, buffer.GetPointer(), valSize);
-		gstd::value comVal = _ReadRecord(buffer);
-		mapValue_[key] = comVal;
+		gstd::ByteBuffer bufferRes;
+		bufferRes.SetSize(valSize);
+		buffer.Read(bufferRes.GetPointer(), bufferRes.GetSize());
+
+		mapValue_[key] = _ReadRecord(bufferRes);
 	}
 }
 gstd::value ScriptCommonData::_ReadRecord(gstd::ByteBuffer& buffer) {
 	script_type_manager* scriptTypeManager = script_type_manager::get_instance();
-	gstd::value res;
 
-	type_data::type_kind kind;
-	//kind = (type_data::type_kind)buffer.ReadInteger();
+	uint8_t kind;
+	buffer.Read(&kind, sizeof(uint8_t));
+
+	switch ((type_data::type_kind)kind) {
+	case type_data::type_kind::tk_int:
 	{
-		uint8_t _kind;
-		buffer.Read(&_kind, sizeof(uint8_t));
-		kind = (type_data::type_kind)_kind;
+		int64_t data = buffer.ReadInteger64();
+		return value(scriptTypeManager->get_int_type(), data);
 	}
-
-	if (kind == type_data::type_kind::tk_real) {
+	case type_data::type_kind::tk_real:
+	{
 		double data = buffer.ReadDouble();
-		res = gstd::value(scriptTypeManager->get_real_type(), data);
+		return value(scriptTypeManager->get_real_type(), data);
 	}
-	else if (kind == type_data::type_kind::tk_char) {
-		wchar_t data;
-		buffer.Read(&data, sizeof(wchar_t));
-		res = gstd::value(scriptTypeManager->get_char_type(), data);
+	case type_data::type_kind::tk_char:
+	{
+		wchar_t data = buffer.ReadValue<wchar_t>();
+		return value(scriptTypeManager->get_char_type(), data);
 	}
-	else if (kind == type_data::type_kind::tk_boolean) {
+	case type_data::type_kind::tk_boolean:
+	{
 		bool data = buffer.ReadBoolean();
-		res = gstd::value(scriptTypeManager->get_boolean_type(), data);
+		return value(scriptTypeManager->get_boolean_type(), data);
 	}
-	else if (kind == type_data::type_kind::tk_array) {
-		size_t arrayLength = buffer.ReadInteger();
-		value v;
-		for (size_t iArray = 0; iArray < arrayLength; iArray++) {
-			value& arrayValue = _ReadRecord(buffer);
-			v.append(scriptTypeManager->get_array_type(arrayValue.get_type()),
-				arrayValue);
+	case type_data::type_kind::tk_array:
+	{
+		uint32_t arrayLength = buffer.ReadValue<uint32_t>();
+		if (arrayLength > 0U) {
+			std::vector<value> v;
+			v.resize(arrayLength);
+			for (uint32_t iArray = 0; iArray < arrayLength; iArray++) {
+				v[iArray] = _ReadRecord(buffer);
+			}
+			value res;
+			res.set(scriptTypeManager->get_array_type(v[0].get_type()), v);
+			return res;
 		}
-		res = v;
+		return value(scriptTypeManager->get_string_type(), 0i64);
+	}
 	}
 
-	return res;
+	return value();
 }
 void ScriptCommonData::WriteRecord(gstd::RecordBuffer& record) {
-	for (auto itrValue = mapValue_.begin(); itrValue != mapValue_.end(); itrValue++) {
+	for (auto itrValue = mapValue_.begin(); itrValue != mapValue_.end(); ++itrValue) {
 		const std::string& key = itrValue->first;
-		gstd::value comVal = itrValue->second;
-
+		const gstd::value& comVal = itrValue->second;
 		if (comVal.has_data()) {
 			gstd::ByteBuffer buffer;
+
+			buffer.WriteValue<uint32_t>(0U);
 			_WriteRecord(buffer, comVal);
-			std::string keyValSize = StringUtility::Format("%s_size", key.c_str());
-			size_t valSize = buffer.GetSize();
-			record.SetRecord<size_t>(keyValSize, valSize);
-			record.SetRecord(key, buffer.GetPointer(), valSize);
+
+			buffer.Seek(0U);
+			buffer.WriteValue<uint32_t>(buffer.GetSize() - sizeof(uint32_t));
+
+			record.SetRecord(key, buffer.GetPointer(), buffer.GetSize());
 		}
 	}
 }
-void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, gstd::value& comValue) {
+void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, const gstd::value& comValue) {
 	type_data::type_kind kind = comValue.get_type()->get_kind();
 
-	{
-		uint8_t _kind = (uint8_t)kind;
-		buffer.Write(&_kind, sizeof(uint8_t));
-	}
-	//buffer.WriteInteger((uint8_t)kind);
-
-	if (kind == type_data::type_kind::tk_real) {
+	buffer.WriteValue<uint8_t>((uint8_t)kind);
+	switch (kind) {
+	case type_data::type_kind::tk_int:
+		buffer.WriteInteger64(comValue.as_int());
+		break;
+	case type_data::type_kind::tk_real:
 		buffer.WriteDouble(comValue.as_real());
-	}
-	else if (kind == type_data::type_kind::tk_char) {
-		wchar_t wch = comValue.as_char();
-		buffer.Write(&wch, sizeof(wchar_t));
-	}
-	else if (kind == type_data::type_kind::tk_boolean) {
+		break;
+	case type_data::type_kind::tk_char:
+		buffer.WriteValue(comValue.as_char());
+		break;
+	case type_data::type_kind::tk_boolean:
 		buffer.WriteBoolean(comValue.as_boolean());
-	}
-	else if (kind == type_data::type_kind::tk_array) {
-		size_t arrayLength = comValue.length_as_array();
-		buffer.WriteInteger(arrayLength);
-
+		break;
+	case type_data::type_kind::tk_array:
+	{
+		uint32_t arrayLength = comValue.length_as_array();
+		buffer.WriteValue(arrayLength);
 		for (size_t iArray = 0; iArray < arrayLength; iArray++) {
 			const value& arrayValue = comValue.index_as_array(iArray);
-			_WriteRecord(buffer, const_cast<value&>(arrayValue));
+			_WriteRecord(buffer, arrayValue);
 		}
+		break;
+	}
 	}
 }
 
