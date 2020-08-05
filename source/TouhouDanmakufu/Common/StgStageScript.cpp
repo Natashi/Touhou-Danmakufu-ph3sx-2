@@ -352,6 +352,7 @@ function const stgFunction[] =
 	{ "SetDefaultBonusItemEnable", StgStageScript::Func_SetDefaultBonusItemEnable, 1 },
 	{ "LoadItemData", StgStageScript::Func_LoadItemData, 1 },
 	{ "ReloadItemData", StgStageScript::Func_ReloadItemData, 1 },
+	{ "SetItemIntersectionRadius", StgStageScript::Func_SetItemIntersectionRadius, 1 },
 
 	//STG‹¤’ÊŠÖ”F‚»‚Ì‘¼
 	{ "StartSlow", StgStageScript::Func_StartSlow, 2 },
@@ -2056,16 +2057,14 @@ gstd::value StgStageScript::Func_CreateItemScore(gstd::script_machine* machine, 
 }
 gstd::value StgStageScript::Func_CollectAllItems(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-	StgItemManager* itemManager = stageController->GetItemManager();
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
 	itemManager->CollectItemsAll();
 
 	return value();
 }
 gstd::value StgStageScript::Func_CollectItemsByType(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-	StgItemManager* itemManager = stageController->GetItemManager();
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
 
 	int type = argv[0].as_int();
 	itemManager->CollectItemsByType(type);
@@ -2073,8 +2072,7 @@ gstd::value StgStageScript::Func_CollectItemsByType(gstd::script_machine* machin
 }
 gstd::value StgStageScript::Func_CollectItemsInCircle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-	StgItemManager* itemManager = stageController->GetItemManager();
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
 
 	float cx = argv[0].as_real();
 	float cy = argv[1].as_real();
@@ -2085,16 +2083,14 @@ gstd::value StgStageScript::Func_CollectItemsInCircle(gstd::script_machine* mach
 }
 gstd::value StgStageScript::Func_CancelCollectItems(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-	StgItemManager* itemManager = stageController->GetItemManager();
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
 
 	itemManager->CancelCollectItems();
 	return value();
 }
 gstd::value StgStageScript::Func_StartItemScript(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-	auto scriptManager = stageController->GetScriptManager();
+	auto scriptManager = script->stageController_->GetScriptManager();
 
 	if (scriptManager->GetItemScriptID() != StgControlScriptManager::ID_INVALID)
 		script->RaiseError(L"An item script was already started.");
@@ -2110,8 +2106,7 @@ gstd::value StgStageScript::Func_StartItemScript(gstd::script_machine* machine, 
 }
 gstd::value StgStageScript::Func_SetDefaultBonusItemEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-	StgItemManager* itemManager = stageController->GetItemManager();
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
 
 	bool bEnable = argv[0].as_boolean();
 	itemManager->SetDefaultBonusItemEnable(bEnable);
@@ -2119,8 +2114,7 @@ gstd::value StgStageScript::Func_SetDefaultBonusItemEnable(gstd::script_machine*
 }
 gstd::value StgStageScript::Func_LoadItemData(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-	StgItemManager* itemManager = stageController->GetItemManager();
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
 
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
@@ -2130,14 +2124,22 @@ gstd::value StgStageScript::Func_LoadItemData(gstd::script_machine* machine, int
 }
 gstd::value StgStageScript::Func_ReloadItemData(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-	StgItemManager* itemManager = stageController->GetItemManager();
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
 
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
 
 	bool res = itemManager->LoadItemData(path, true);
 	return script->CreateBooleanValue(res);
+}
+gstd::value StgStageScript::Func_SetItemIntersectionRadius(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
+
+	int r = argv[0].as_int();
+	itemManager->SetItemIntersectionRadius(r);
+
+	return value();
 }
 
 //STG‹¤’ÊŠÖ”F‚»‚Ì‘¼

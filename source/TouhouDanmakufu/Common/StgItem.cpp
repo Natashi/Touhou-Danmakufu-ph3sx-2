@@ -29,6 +29,8 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 	bDefaultBonusItemEnable_ = true;
 	bAllItemToPlayer_ = false;
 
+	itemCollectRadius_ = 16 * 16;
+
 	{
 		RenderShaderManager* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
 		effectLayer_ = shaderManager_->GetRender2DShader();
@@ -46,12 +48,11 @@ void StgItemManager::Work() {
 
 	float px = objPlayer->GetX();
 	float py = objPlayer->GetY();
-	float pr = objPlayer->GetItemIntersectionRadius();
-	pr *= pr;
+	int pr = objPlayer->GetItemIntersectionRadius() * objPlayer->GetItemIntersectionRadius();
 	int pAutoItemCollectY = objPlayer->GetAutoItemCollectY();
 
 	for (auto itr = listObj_.begin(); itr != listObj_.end();) {
-		shared_ptr<StgItemObject> obj = *itr;
+		shared_ptr<StgItemObject>& obj = *itr;
 
 		if (obj->IsDeleted()) {
 			//obj->Clear();
@@ -71,8 +72,8 @@ void StgItemManager::Work() {
 
 				bool deleted = false;
 
-				float radius = dx * dx + dy * dy;
-				if (radius <= (float)(16 * 16)) {
+				int radius = dx * dx + dy * dy;
+				if (radius <= itemCollectRadius_) {
 					obj->Intersect(nullptr, nullptr);
 					deleted = true;
 				}
@@ -105,7 +106,7 @@ void StgItemManager::Work() {
 						for (DxCircle& circle : listCircleToPlayer_) {
 							float cdx = ix - circle.GetX();
 							float cdy = iy - circle.GetY();
-							float rr = (float)circle.GetR() * (float)circle.GetR();
+							float rr = circle.GetR() * circle.GetR();
 
 							if ((cdx * cdx + cdy * cdy) <= rr) {
 								bMoveToPlayer = true;

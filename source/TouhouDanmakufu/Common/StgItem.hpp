@@ -28,6 +28,8 @@ class StgItemManager {
 	bool bCancelToPlayer_;
 	bool bDefaultBonusItemEnable_;
 
+	int itemCollectRadius_;
+
 	ID3DXEffect* effectLayer_;
 	D3DXHANDLE handleEffectWorld_;
 public:
@@ -61,6 +63,8 @@ public:
 
 	bool IsDefaultBonusItemEnable() { return bDefaultBonusItemEnable_; }
 	void SetDefaultBonusItemEnable(bool bEnable) { bDefaultBonusItemEnable_ = bEnable; }
+
+	void SetItemIntersectionRadius(int r) { itemCollectRadius_ = r * r; }
 };
 
 /**********************************************************
