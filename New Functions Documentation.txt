@@ -1461,6 +1461,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			INFO_EXISTS         - Returns whether the given shot graphic ID exists.
 			INFO_PATH           - Returns the image path of the given shot graphic ID.
 			INFO_IS_FIXED_ANGLE - Returns whether the given shot graphic ID has had fixed_angle enabled.
+			
+	--------------------------------> Item Functions <--------------------------------
+	
+	SetItemIntersectionRadius
+		Arguments:
+			1) radius
+		Description:
+			Sets the radius around the player in which items are collected. (Not the item scope, which only "sucks" in the items.)
 	
 	--------------------------------> Intersection Functions <--------------------------------
 	
