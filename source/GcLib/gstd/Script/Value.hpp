@@ -68,6 +68,7 @@ namespace gstd {
 		bool as_boolean() const;
 		std::wstring as_string() const;
 
+		/*
 		size_t length_as_array() const {
 			return data ? data->array_value.size() : 0U;
 		}
@@ -85,6 +86,18 @@ namespace gstd {
 		}
 		std::vector<value>::iterator array_get_end() {
 			return data ? data->array_value.end() : std::vector<value>::iterator();
+		}
+		*/
+		size_t length_as_array() const { data->array_value.size(); }
+		const value& index_as_array(size_t i) const { return data->array_value[i]; }
+		value& index_as_array(size_t i) { return data->array_value[i]; }
+		type_data* get_type() const { return data->type; }
+
+		std::vector<value>::iterator array_get_begin() {
+			return data->array_value.begin();
+		}
+		std::vector<value>::iterator array_get_end() {
+			return data->array_value.end();
 		}
 
 		void overwrite(const value& source);	//Overwrite the pointer's value
