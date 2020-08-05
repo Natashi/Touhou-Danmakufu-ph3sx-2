@@ -88,7 +88,7 @@ namespace gstd {
 			return data ? data->array_value.end() : std::vector<value>::iterator();
 		}
 		*/
-		size_t length_as_array() const { data->array_value.size(); }
+		size_t length_as_array() const { return data->array_value.size(); }
 		const value& index_as_array(size_t i) const { return data->array_value[i]; }
 		value& index_as_array(size_t i) { return data->array_value[i]; }
 		type_data* get_type() const { return data->type; }
