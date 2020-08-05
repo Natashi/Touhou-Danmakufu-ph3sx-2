@@ -30,7 +30,7 @@ StgShotManager::~StgShotManager() {
 }
 void StgShotManager::Work() {
 	for (auto itr = listObj_.begin(); itr != listObj_.end(); ) {
-		shared_ptr<StgShotObject> obj = (*itr);
+		shared_ptr<StgShotObject>& obj = *itr;
 		if (obj->IsDeleted()) {
 			obj->ClearShotObject();
 			itr = listObj_.erase(itr);
@@ -166,15 +166,9 @@ void StgShotManager::AddShot(shared_ptr<StgShotObject> obj) {
 	listObj_.push_back(obj);
 }
 
-RECT StgShotManager::GetShotAutoDeleteClipRect() {
+RECT* StgShotManager::GetShotAutoDeleteClipRect() {
 	ref_count_ptr<StgStageInformation> stageInfo = stageController_->GetStageInformation();
-	RECT* rcStgFrame = stageInfo->GetStgFrameRect();
-	RECT* rcClip = stageInfo->GetShotAutoDeleteClip();
-
-	RECT res = { rcClip->left, rcClip->top,
-		rcClip->right + (rcStgFrame->right - rcStgFrame->left),
-		rcClip->bottom + (rcStgFrame->bottom - rcStgFrame->top) };
-	return res;
+	return stageInfo->GetShotAutoDeleteClip();
 }
 
 void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, float cx, float cy, float radius) {
@@ -858,8 +852,8 @@ void StgShotObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	RECT rect = shotManager->GetShotAutoDeleteClipRect();
-	if (posX_ < rect.left || posX_ > rect.right || posY_ < rect.top || posY_ > rect.bottom) {
+	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
+	if (posX_ < rect->left || posX_ > rect->right || posY_ < rect->top || posY_ > rect->bottom) {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
@@ -1591,9 +1585,10 @@ void StgLooseLaserObject::_Move() {
 void StgLooseLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	RECT rect = shotManager->GetShotAutoDeleteClipRect();
-	if ((posX_ < rect.left && posXE_ < rect.left) || (posX_ > rect.right && posXE_ > rect.right) ||
-		(posY_ < rect.top && posYE_ < rect.top) || (posY_ > rect.bottom && posYE_ > rect.bottom)) {
+	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
+	if ((posX_ < rect->left && posXE_ < rect->left) || (posX_ > rect->right && posXE_ > rect->right) ||
+		(posY_ < rect->top && posYE_ < rect->top) || (posY_ > rect->bottom && posYE_ > rect->bottom))
+	{
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
@@ -1845,13 +1840,14 @@ void StgStraightLaserObject::Work() {
 void StgStraightLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	RECT rect = shotManager->GetShotAutoDeleteClipRect();
+	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
 
 	int posXE = posX_ + (int)(length_ * move_.x);
 	int posYE = posY_ + (int)(length_ * move_.y);
 
-	if ((posX_ < rect.left && posXE < rect.left) || (posX_ > rect.right&& posXE > rect.right) ||
-		(posY_ < rect.top && posYE < rect.top) || (posY_ > rect.bottom&& posYE > rect.bottom)) {
+	if ((posX_ < rect->left && posXE < rect->left) || (posX_ > rect->right && posXE > rect->right) ||
+		(posY_ < rect->top && posYE < rect->top) || (posY_ > rect->bottom && posYE > rect->bottom))
+	{
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
@@ -2181,13 +2177,13 @@ std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::PushNod
 void StgCurveLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	RECT rect = shotManager->GetShotAutoDeleteClipRect();
+	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
 
 	//Checks if the node is within the bounding rect
 	auto PredicateNodeInRect = [&](LaserNode& node) {
 		D3DXVECTOR2* pos = &node.pos;
-		bool bInX = pos->x >= rect.left && pos->x <= rect.right;
-		bool bInY = pos->y >= rect.top && pos->y <= rect.bottom;
+		bool bInX = pos->x >= rect->left && pos->x <= rect->right;
+		bool bInY = pos->y >= rect->top && pos->y <= rect->bottom;
 		return bInX && bInY;
 	};
 

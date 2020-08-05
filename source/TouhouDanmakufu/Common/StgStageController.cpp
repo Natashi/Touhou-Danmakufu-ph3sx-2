@@ -486,12 +486,15 @@ StgStageInformation::StgStageInformation() {
 
 	SetRect(&rcStgFrame_, 32, 16, 32 + 384, 16 + 448);
 	SetStgFrameRect(rcStgFrame_);
+
 	priMinStgFrame_ = 20;
 	priMaxStgFrame_ = 80;
 	priShotObject_ = 50;
 	priItemObject_ = 60;
 	priCameraFocusPermit_ = 69;
-	SetRect(&rcShotAutoDeleteClip_, -64, -64, 64, 64);
+
+	SetRect(&rcShotAutoDeleteClipOffset_, -64, -64, 64, 64);
+	UpdateShotAutoDeleteClip();
 
 	rand_ = std::make_shared<RandProvider>();
 	rand_->Initialize(timeGetTime() ^ 0xf5682aeb);
@@ -503,12 +506,14 @@ StgStageInformation::StgStageInformation() {
 	timeStart_ = 0;
 }
 StgStageInformation::~StgStageInformation() {}
-void StgStageInformation::SetStgFrameRect(RECT rect, bool bUpdateFocusResetValue) {
+void StgStageInformation::SetStgFrameRect(const RECT& rect, bool bUpdateFocusResetValue) {
 	rcStgFrame_ = rect;
 
 	ref_count_ptr<D3DXVECTOR2> pos = new D3DXVECTOR2;
 	pos->x = (rect.right - rect.left) / 2.0f;
 	pos->y = (rect.bottom - rect.top) / 2.0f;
+
+	UpdateShotAutoDeleteClip();
 
 	if (bUpdateFocusResetValue) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -516,6 +521,12 @@ void StgStageInformation::SetStgFrameRect(RECT rect, bool bUpdateFocusResetValue
 		camera2D->SetResetFocus(pos);
 		camera2D->Reset();
 	}
+}
+void StgStageInformation::UpdateShotAutoDeleteClip() {
+	RECT* rcClip = &rcShotAutoDeleteClipOffset_;
+	SetRect(&rcShotAutoDeleteClip_, rcClip->left, rcClip->top, 
+		rcClip->right + (rcStgFrame_.right - rcStgFrame_.left),
+		rcClip->bottom + (rcStgFrame_.bottom - rcStgFrame_.top));
 }
 
 /**********************************************************

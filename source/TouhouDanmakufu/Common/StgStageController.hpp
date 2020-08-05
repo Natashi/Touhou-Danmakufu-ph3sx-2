@@ -99,6 +99,7 @@ private:
 	int priShotObject_;
 	int priItemObject_;
 	int priCameraFocusPermit_;
+	RECT rcShotAutoDeleteClipOffset_;
 	RECT rcShotAutoDeleteClip_;
 
 	//STGèÓïÒ
@@ -133,7 +134,7 @@ public:
 	void SetReplayData(ref_count_ptr<ReplayInformation::StageData> data) { replayStageData_ = data; }
 
 	RECT* GetStgFrameRect() { return &rcStgFrame_; }
-	void SetStgFrameRect(RECT rect, bool bUpdateFocusResetValue = true);
+	void SetStgFrameRect(const RECT& rect, bool bUpdateFocusResetValue = true);
 	int GetStgFrameMinPriority() { return priMinStgFrame_; }
 	void SetStgFrameMinPriority(int pri) { priMinStgFrame_ = pri; }
 	int GetStgFrameMaxPriority() { return priMaxStgFrame_; }
@@ -145,10 +146,15 @@ public:
 	int GetCameraFocusPermitPriority() { return priCameraFocusPermit_; }
 	void SetCameraFocusPermitPriority(int pri) { priCameraFocusPermit_ = pri; }
 	RECT* GetShotAutoDeleteClip() { return &rcShotAutoDeleteClip_; }
-	void SetShotAutoDeleteClip(RECT rect) { rcShotAutoDeleteClip_ = rect; }
+	void SetShotAutoDeleteClip(const RECT& rect) { 
+		rcShotAutoDeleteClipOffset_ = rect;
+		UpdateShotAutoDeleteClip();
+	}
+
+	void UpdateShotAutoDeleteClip();
 
 	shared_ptr<RandProvider> GetRandProvider() { return rand_; }
-	void SetRandProviderSeed(int seed) { rand_->Initialize(seed); }
+	//void SetRandProviderSeed(int seed) { rand_->Initialize(seed); }
 	int64_t GetScore() { return score_; }
 	void SetScore(int64_t score) { score_ = score; }
 	void AddScore(int64_t inc) { score_ += inc; }

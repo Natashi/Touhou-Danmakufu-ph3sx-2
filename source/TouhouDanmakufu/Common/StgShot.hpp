@@ -63,7 +63,7 @@ public:
 	bool LoadPlayerShotData(const std::wstring& path, bool bReload = false);
 	bool LoadEnemyShotData(const std::wstring& path, bool bReload = false);
 
-	RECT GetShotAutoDeleteClipRect();
+	RECT* GetShotAutoDeleteClipRect();
 
 	void DeleteInCircle(int typeDelete, int typeTo, int typeOnwer, float cx, float cy, float radius);
 	std::vector<int> GetShotIdInCircle(int typeOnwer, float cx, float cy, float radius);
