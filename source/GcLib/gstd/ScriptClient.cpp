@@ -1544,13 +1544,10 @@ value ScriptClientBase::Func_GetAreaCommonData(script_machine* machine, int argc
 	auto resFindArea = commonDataManager->IsExists(area);
 	if (resFindArea.first) {
 		shared_ptr<ScriptCommonData> data = commonDataManager->GetData(resFindArea.second);
-
 		auto resFindData = data->IsExists(key);
-		if (!resFindData.first) goto find_fail;
-
-		return data->GetValue(resFindData.second);
+		if (resFindData.first)
+			return data->GetValue(resFindData.second);
 	}
-find_fail:
 	return argv[2];
 }
 value ScriptClientBase::Func_ClearAreaCommonData(script_machine* machine, int argc, const value* argv) {

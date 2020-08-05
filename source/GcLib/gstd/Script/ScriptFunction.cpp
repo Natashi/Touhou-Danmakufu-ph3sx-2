@@ -149,7 +149,6 @@ namespace gstd {
 	value BaseFunction::_script_compare(int argc, const value* argv) {
 		if (argv[0].get_type() == argv[1].get_type()) {
 			int r = 0;
-
 			switch (argv[0].get_type()->get_kind()) {
 			case type_data::type_kind::tk_real:
 			{
