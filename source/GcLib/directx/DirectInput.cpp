@@ -435,18 +435,14 @@ VirtualKeyManager::~VirtualKeyManager() {
 void VirtualKeyManager::Update() {
 	DirectInput::Update();
 	for (auto itr = mapKey_.begin(); itr != mapKey_.end(); ++itr) {
-		int16_t id = itr->first;
-		ref_count_ptr<VirtualKey> key = itr->second;
-
-		DIKeyState state = _GetVirtualKeyState(id);
-		key->SetKeyState(state);
+		DIKeyState state = _GetVirtualKeyState(itr->first);
+		itr->second->SetKeyState(state);
 	}
 }
 void VirtualKeyManager::ClearKeyState() {
 	DirectInput::ResetInputState();
 	for (auto itr = mapKey_.begin(); itr != mapKey_.end(); ++itr) {
-		ref_count_ptr<VirtualKey> key = itr->second;
-		key->SetKeyState(KEY_FREE);
+		itr->second->SetKeyState(KEY_FREE);
 	}
 }
 DIKeyState VirtualKeyManager::_GetVirtualKeyState(int16_t id) {
