@@ -295,7 +295,7 @@ namespace gstd {
 
 							//If the level is 1(first user level), also search for duplications in level 0(default level)
 							if (dup == nullptr && level == 1)
-								dup = search_in(&frame.front(), name, countArgs);
+								dup = search_in(&frame[0], name, countArgs);
 
 							if (dup) {
 								//Woohoo for detailed error messages.
@@ -324,7 +324,7 @@ namespace gstd {
 									"different argument counts.\r\n";
 								else
 									error += StringUtility::Format("**\'%s\' cannot be overloaded.\r\n", name.c_str());
-								throw parser_error(error);
+								parser_assert(false, error);
 							}
 						}
 
@@ -356,12 +356,12 @@ namespace gstd {
 
 							//If the level is 1(first user level), also search for duplications in level 0(default level)
 							if (dup == nullptr && level == 1)
-								dup = search_in(&frame.front(), lex2.word);
+								dup = search_in(&frame[0], lex2.word);
 
 							if (dup) {
 								std::string error = StringUtility::Format("A variable of the same name "
 									"was already declared in the current scope.\r\n", lex2.word.c_str());
-								parser_assert(state, true, error);
+								parser_assert(false, error);
 							}
 						}
 
@@ -384,9 +384,9 @@ namespace gstd {
 				}
 			}
 		}
-		catch (...) {
-			state->lex->line = lex2.line;
-			throw;
+		catch (parser_error& e) {
+			//state->lex->line = lex2.line;
+			throw parser_error_mapped(lex2.line, e.GetMessageW());
 		}
 
 		return (var - initVar);
@@ -477,7 +477,7 @@ namespace gstd {
 						name.c_str(), argc);
 				else
 					error = StringUtility::Format("%s is not defined.\r\n", name.c_str());
-				throw parser_error(error);
+				parser_assert(state, false, error);
 			}
 
 continue_as_variadic:
@@ -803,14 +803,14 @@ continue_as_variadic:
 	}
 
 	bool parser::parse_single_statement(script_block* block, parser_state_t* state) {
-		auto assert_const = [](symbol* s, const std::string& name) {
+		auto assert_const = [](parser_state_t* _state, symbol* s, const std::string& name) {
 			if (!s->can_modify) {
 				std::string error = StringUtility::Format("\"%s\": ", name.c_str());
 				if (s->sub)
-					throw parser_error(error + "Functions, tasks, and subs are implicitly const\r\n"
+					parser_assert(_state, false, error + "Functions, tasks, and subs are implicitly const\r\n"
 						"and thus cannot be modified in this manner.\r\n");
 				else
-					throw parser_error(error + "const variables cannot be modified.\r\n");
+					parser_assert(_state, false, error + "const variables cannot be modified.\r\n");
 			}
 		};
 		auto get_op_assign_command = [](token_kind tk) {
@@ -845,14 +845,14 @@ continue_as_variadic:
 			state->advance();
 			switch (state->next()) {
 			case token_kind::tk_assign:
-				assert_const(s, name);
+				assert_const(state, s, name);
 
 				state->advance();
 				parse_expression(block, state);
 				state->AddCode(block, code(command_kind::pc_assign, s->level, s->variable, name));
 				break;
 			case token_kind::tk_open_bra:
-				assert_const(s, name);
+				assert_const(state, s, name);
 
 				state->AddCode(block, code(command_kind::pc_push_variable, s->level, s->variable, name));
 				while (state->next() == token_kind::tk_open_bra) {
@@ -906,7 +906,7 @@ continue_as_variadic:
 			case token_kind::tk_remainder_assign:
 			case token_kind::tk_power_assign:
 			{
-				assert_const(s, name);
+				assert_const(state, s, name);
 
 				command_kind f = get_op_assign_command(state->next());
 				state->advance();
@@ -918,7 +918,7 @@ continue_as_variadic:
 			case token_kind::tk_inc:
 			case token_kind::tk_dec:
 			{
-				assert_const(s, name);
+				assert_const(state, s, name);
 
 				command_kind f = (state->next() == token_kind::tk_inc) ? command_kind::pc_inline_inc : command_kind::pc_inline_dec;
 				state->advance();
@@ -1555,7 +1555,7 @@ continue_as_variadic:
 					break;
 				}
 				error += ".\r\n";
-				throw parser_error(error);
+				parser_assert(state, false, error);
 			}
 
 			std::string funcName = state->lex->word;
