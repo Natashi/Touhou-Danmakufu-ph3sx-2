@@ -118,3 +118,4 @@
 1.10b:
 	- Fixed bugs with logical and ternary statements.
 	- Improved data packing of common data files. (Files saved with 1.10a are now incompatible.)
+	- Bug fixes and optimizations.
