@@ -251,9 +251,9 @@ void StgPlayerObject::CallSpell() {
 	int idSpell = objectManager->AddObject(objSpell_);
 
 	gstd::value vUse = script_->RequestEvent(StgStagePlayerScript::EV_REQUEST_SPELL);
-	if (!script_->IsBooleanValue(vUse))
+	if (!StgStagePlayerScript::IsBooleanValue(vUse))
 		throw gstd::wexception(L"@Event(EV_REQUEST_SPELL) must return a boolean value.");
-	if (!vUse.as_boolean()) {
+	else if (!vUse.as_boolean()) {
 		objectManager->DeleteObject(objSpell_);
 		objSpell_ = nullptr;
 		return;
