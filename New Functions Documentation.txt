@@ -1715,6 +1715,13 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				LERP_DECELERATE:
 					Decelerating interpolation.
 					
+	ObjShot_SetDelayColoring
+		Arguments:
+			1) object ID
+			2) enable
+		Description:
+			When set to true, enables the object color to affect the shot's delay cloud.
+					
 	ObjShot_SetGrazeInvalidFrame
 		Arguments:
 			1) object ID
