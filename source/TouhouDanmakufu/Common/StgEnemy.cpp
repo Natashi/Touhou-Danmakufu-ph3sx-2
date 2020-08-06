@@ -327,25 +327,27 @@ void StgEnemyBossSceneObject::Activate() {
 
 			//タイマー読み込み
 			gstd::value vTimer = script->RequestEvent(StgStageScript::EV_REQUEST_TIMER);
-			pData->SetOriginalSpellTimer(vTimer.as_real() * STANDARD_FPS);
+			if (vTimer.has_data())
+				pData->SetOriginalSpellTimer(vTimer.as_real() * STANDARD_FPS);
 
 			//スペル
 			gstd::value vSpell = script->RequestEvent(StgStageScript::EV_REQUEST_IS_SPELL);
-			pData->SetSpellCard(vSpell.as_boolean());
+			if (vSpell.has_data())
+				pData->SetSpellCard(vSpell.as_boolean());
 
 			{
 				//スコア、ラストスペル、耐久スペルを読み込む
 				gstd::value vScore = script->RequestEvent(StgStageScript::EV_REQUEST_SPELL_SCORE);
-				pData->SetSpellScore(vScore.as_real());
+				if (vScore.has_data()) pData->SetSpellScore(vScore.as_real());
 
 				gstd::value vLast = script->RequestEvent(StgStageScript::EV_REQUEST_IS_LAST_SPELL);
-				pData->SetLastSpell(vLast.as_boolean());
+				if (vLast.has_data()) pData->SetLastSpell(vLast.as_boolean());
 
 				gstd::value vDurable = script->RequestEvent(StgStageScript::EV_REQUEST_IS_DURABLE_SPELL);
-				pData->SetDurable(vDurable.as_boolean());
+				if (vDurable.has_data()) pData->SetDurable(vDurable.as_boolean());
 
 				gstd::value vAllDown = script->RequestEvent(StgStageScript::EV_REQUEST_REQUIRE_ALL_DOWN);
-				pData->SetRequireAllDown(vAllDown.as_boolean());
+				if (vAllDown.has_data()) pData->SetRequireAllDown(vAllDown.as_boolean());
 			}
 
 			//敵オブジェクト作成
