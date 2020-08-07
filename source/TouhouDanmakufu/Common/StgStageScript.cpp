@@ -1681,7 +1681,7 @@ gstd::value StgStageScript::Func_SetShotIntersectionCircle(gstd::script_machine*
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 
-	int typeTarget = script->GetScriptType() == TYPE_PLAYER ?
+	StgIntersectionTarget::Type typeTarget = script->GetScriptType() == TYPE_PLAYER ?
 		StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT;
 
 	StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
@@ -1705,7 +1705,7 @@ gstd::value StgStageScript::Func_SetShotIntersectionLine(gstd::script_machine* m
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 
-	int typeTarget = script->GetScriptType() == TYPE_PLAYER ?
+	StgIntersectionTarget::Type typeTarget = script->GetScriptType() == TYPE_PLAYER ?
 		StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT;
 
 	StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
@@ -3401,7 +3401,7 @@ gstd::value StgStageScript::Func_ObjShot_SetIntersectionCircleA1(gstd::script_ma
 
 	if (obj && obj->GetDelay() <= 0) {
 		obj->SetUserIntersectionMode(true);
-		int typeTarget = obj->GetOwnerType() == StgShotObject::OWNER_PLAYER ?
+		StgIntersectionTarget::Type typeTarget = obj->GetOwnerType() == StgShotObject::OWNER_PLAYER ?
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT;
 
 		StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
@@ -3432,7 +3432,7 @@ gstd::value StgStageScript::Func_ObjShot_SetIntersectionCircleA2(gstd::script_ma
 
 	if (obj && obj->GetDelay() <= 0) {
 		obj->SetUserIntersectionMode(true);
-		int typeTarget = obj->GetOwnerType() == StgShotObject::OWNER_PLAYER ?
+		StgIntersectionTarget::Type typeTarget = obj->GetOwnerType() == StgShotObject::OWNER_PLAYER ?
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT;
 
 		StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
@@ -3463,7 +3463,7 @@ gstd::value StgStageScript::Func_ObjShot_SetIntersectionLine(gstd::script_machin
 
 	if (obj && obj->GetDelay() <= 0) {
 		obj->SetUserIntersectionMode(true);
-		int typeTarget = obj->GetOwnerType() == StgShotObject::OWNER_PLAYER ?
+		StgIntersectionTarget::Type typeTarget = obj->GetOwnerType() == StgShotObject::OWNER_PLAYER ?
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT;
 
 		StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
@@ -3884,8 +3884,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetTipDecrement(gstd::script_machine
 	StgCurveLaserObject* obj = dynamic_cast<StgCurveLaserObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		float dec = argv[1].as_real();
-		dec = std::min(dec, 1.0f);
-		dec = std::max(dec, 0.0f);
+		//dec = std::clamp(dec, 0.0f, 1.0f);
 		obj->SetTipDecrement(dec);
 	}
 	return value();

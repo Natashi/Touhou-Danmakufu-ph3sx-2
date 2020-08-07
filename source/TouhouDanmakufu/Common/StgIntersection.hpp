@@ -17,20 +17,21 @@ class StgIntersectionObject;
 class StgIntersectionTarget : public IStringInfo {
 	friend StgIntersectionManager;
 public:
-	enum {
+	typedef enum : uint8_t {
 		SHAPE_CIRCLE = 0,
 		SHAPE_LINE = 1,
-
+	} Shape;
+	typedef enum : uint8_t {
 		TYPE_PLAYER,
 		TYPE_PLAYER_SHOT,
 		TYPE_PLAYER_SPELL,
 		TYPE_ENEMY,
 		TYPE_ENEMY_SHOT,
-	};
+	} Type;
 protected:
 	//int mortonNo_;
-	int typeTarget_;
-	int shape_;
+	Type typeTarget_;
+	Shape shape_;
 	weak_ptr<StgIntersectionObject> obj_;
 
 	RECT intersectionSpace_;
@@ -43,9 +44,9 @@ public:
 	RECT& GetIntersectionSpaceRect() { return intersectionSpace_; }
 	virtual void SetIntersectionSpace() = 0;
 
-	int GetTargetType() { return typeTarget_; }
-	void SetTargetType(int type) { typeTarget_ = type; }
-	int GetShape() { return shape_; }
+	Type GetTargetType() { return typeTarget_; }
+	void SetTargetType(Type type) { typeTarget_ = type; }
+	Shape GetShape() { return shape_; }
 	weak_ptr<StgIntersectionObject> GetObject() { return obj_; }
 	void SetObject(weak_ptr<StgIntersectionObject> obj) {
 		if (!obj.expired()) obj_ = obj;
@@ -64,7 +65,7 @@ class StgIntersectionTarget_Circle : public StgIntersectionTarget {
 public:
 	using ptr = std::shared_ptr<StgIntersectionTarget_Circle>;
 
-	StgIntersectionTarget_Circle() { shape_ = SHAPE_CIRCLE; }
+	StgIntersectionTarget_Circle() { shape_ = Shape::SHAPE_CIRCLE; }
 	virtual ~StgIntersectionTarget_Circle() {}
 
 	virtual void SetIntersectionSpace() {
@@ -73,20 +74,15 @@ public:
 		LONG screenHeight = graphics->GetScreenWidth();
 
 		constexpr LONG margin = 16L;
-		double x = circle_.GetX();
-		double y = circle_.GetY();
-		double r = circle_.GetR();
+		LONG x = circle_.GetX();
+		LONG y = circle_.GetY();
+		LONG r = circle_.GetR();
 
-		intersectionSpace_ = { (int)(x - r), (int)(y - r), (int)(x + r), (int)(y + r) };
-		intersectionSpace_.left = std::max(intersectionSpace_.left, -margin);
-		intersectionSpace_.left = std::min(intersectionSpace_.left, screenWidth + margin);
-		intersectionSpace_.top = std::max(intersectionSpace_.top, -margin);
-		intersectionSpace_.top = std::min(intersectionSpace_.top, screenHeight + margin);
-
-		intersectionSpace_.right = std::max(intersectionSpace_.right, -margin);
-		intersectionSpace_.right = std::min(intersectionSpace_.right, screenWidth + margin);
-		intersectionSpace_.bottom = std::max(intersectionSpace_.bottom, -margin);
-		intersectionSpace_.bottom = std::min(intersectionSpace_.bottom, screenHeight + margin);
+		LONG x1 = std::clamp(x - r, -margin, screenWidth + margin);
+		LONG x2 = std::clamp(x + r, -margin, screenWidth + margin);
+		LONG y1 = std::clamp(y - r, -margin, screenHeight + margin);
+		LONG y2 = std::clamp(y + r, -margin, screenHeight + margin);
+		intersectionSpace_ = { x1, y1, x2, y2 };
 	}
 
 	DxCircle& GetCircle() { return circle_; }
@@ -102,26 +98,19 @@ class StgIntersectionTarget_Line : public StgIntersectionTarget {
 public:
 	using ptr = std::shared_ptr<StgIntersectionTarget_Line>;
 
-	StgIntersectionTarget_Line() { shape_ = SHAPE_LINE; }
+	StgIntersectionTarget_Line() { shape_ = Shape::SHAPE_LINE; }
 	virtual ~StgIntersectionTarget_Line() {}
 
 	virtual void SetIntersectionSpace() {
-		double x1 = line_.GetX1();
-		double y1 = line_.GetY1();
-		double x2 = line_.GetX2();
-		double y2 = line_.GetY2();
-		double width = line_.GetWidth();
-		if (x1 > x2) {
-			double tx = x1;
-			x1 = x2;
-			x2 = tx;
-		}
-		if (y1 > y2) {
-			double ty = y1;
-			y1 = y2;
-			y2 = ty;
-		}
-
+		float x1 = line_.GetX1();
+		float y1 = line_.GetY1();
+		float x2 = line_.GetX2();
+		float y2 = line_.GetY2();
+		float width = line_.GetWidth();
+		if (x1 > x2)
+			std::swap(x1, x2);
+		if (y1 > y2)
+			std::swap(y1, y2);
 		x1 -= width;
 		x2 += width;
 		y1 -= width;
@@ -129,22 +118,15 @@ public:
 
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 
-		constexpr double margin = 16.0;
-		double screenWidth = graphics->GetScreenWidth();
-		double screenHeight = graphics->GetScreenWidth();
+		constexpr LONG margin = 16L;
+		LONG screenWidth = graphics->GetScreenWidth();
+		LONG screenHeight = graphics->GetScreenWidth();
 
-		x1 = std::min(x1, screenWidth + margin);
-		x1 = std::max(x1, -margin);
-		x2 = std::min(x2, screenWidth + margin);
-		x2 = std::max(x2, -margin);
-
-		y1 = std::min(y1, screenHeight + margin);
-		y1 = std::max(y1, -margin);
-		y2 = std::min(y2, screenHeight + margin);
-		y2 = std::max(y2, -margin);
-
-		//RECT rect = {x1 - width, y1 - width, x2 + width, y2 + width};
-		intersectionSpace_ = { (int)x1, (int)y1, (int)x2, (int)y2 };
+		LONG _x1 = std::clamp((LONG)x1, -margin, screenWidth + margin);
+		LONG _x2 = std::clamp((LONG)x2, -margin, screenWidth + margin);
+		LONG _y1 = std::clamp((LONG)y1, -margin, screenHeight + margin);
+		LONG _y2 = std::clamp((LONG)y2, -margin, screenHeight + margin);
+		intersectionSpace_ = { _x1, _y1, _x2, _y2 };
 	}
 
 	DxWidthLine& GetLine() { return line_; }

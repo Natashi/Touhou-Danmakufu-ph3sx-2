@@ -478,16 +478,13 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 	windowTitle_ = prop.GetString(L"window.title", L"");
 
 	screenWidth_ = prop.GetInteger(L"screen.width", 640);
-	screenWidth_ = std::max(screenWidth_, 320);
-	screenWidth_ = std::min(screenWidth_, 1920);
+	screenWidth_ = std::clamp(screenWidth_, 320, 1920);
 
 	screenHeight_ = prop.GetInteger(L"screen.height", 480);
-	screenHeight_ = std::max(screenHeight_, 240);
-	screenHeight_ = std::min(screenHeight_, 1200);
+	screenHeight_ = std::clamp(screenHeight_, 240, 1200);
 
 	fastModeSpeed_ = prop.GetInteger(L"skip.rate", 20);
-	fastModeSpeed_ = std::max(fastModeSpeed_, 1);
-	fastModeSpeed_ = std::min(fastModeSpeed_, 50);
+	fastModeSpeed_ = std::clamp(fastModeSpeed_, 1, 50);
 
 	{
 		if (prop.HasProperty(L"window.size.list")) {

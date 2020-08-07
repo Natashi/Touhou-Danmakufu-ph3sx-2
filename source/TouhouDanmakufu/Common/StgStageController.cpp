@@ -578,8 +578,7 @@ void PseudoSlowInformation::Next() {
 	mapValid_[target] = bValid;
 }
 void PseudoSlowInformation::AddSlow(int fps, int owner, int target) {
-	fps = std::max(1, fps);
-	fps = std::min(STANDARD_FPS, fps);
+	fps = std::clamp(fps, 1, STANDARD_FPS);
 	ref_count_ptr<SlowData> data = new SlowData();
 	data->SetFps(fps);
 	switch (owner) {

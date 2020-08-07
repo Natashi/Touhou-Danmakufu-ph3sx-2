@@ -1002,7 +1002,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					if (rubyCount > 0) {
 						LONG rubySpace = std::max(sizeTextBase.cx - rubyFontWidth / 2L, 0L);
 						LONG rubyGap = rubySpace / std::max((LONG)rubyCount, 1L) - rubyFontWidth / 2L;
-						LONG rubyPitch = std::min(std::max(rubyGap, 0L), (LONG)(rubyFontWidth * 1.2f));
+						LONG rubyPitch = std::clamp(rubyGap, 0L, (LONG)(rubyFontWidth * 1.2f));
 
 						tag->SetLeftMargin(leftOff);
 

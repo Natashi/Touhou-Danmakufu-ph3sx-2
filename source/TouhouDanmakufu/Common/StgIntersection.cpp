@@ -99,7 +99,7 @@ void StgIntersectionManager::Work() {
 }
 void StgIntersectionManager::AddTarget(StgIntersectionTarget::ptr target) {
 	if (shared_ptr<StgIntersectionObject> obj = target->GetObject().lock()) {
-		int type = target->GetTargetType();
+		StgIntersectionTarget::Type type = target->GetTargetType();
 		switch (type) {
 		case StgIntersectionTarget::TYPE_PLAYER:
 		{
@@ -164,7 +164,7 @@ void StgIntersectionManager::AddEnemyTargetToShot(StgIntersectionTarget::ptr tar
 	//target->SetMortonNumber(-1);
 	//target->ClearObjectIntersectedIdList();
 
-	int type = target->GetTargetType();
+	StgIntersectionTarget::Type type = target->GetTargetType();
 	switch (type) {
 	case StgIntersectionTarget::TYPE_ENEMY:
 	{
@@ -192,7 +192,7 @@ void StgIntersectionManager::AddEnemyTargetToPlayer(StgIntersectionTarget::ptr t
 	//target->SetMortonNumber(-1);
 	//target->ClearObjectIntersectedIdList();
 
-	int type = target->GetTargetType();
+	StgIntersectionTarget::Type type = target->GetTargetType();
 	switch (type) {
 	case StgIntersectionTarget::TYPE_ENEMY:
 	{
@@ -204,8 +204,8 @@ void StgIntersectionManager::AddEnemyTargetToPlayer(StgIntersectionTarget::ptr t
 
 bool StgIntersectionManager::IsIntersected(StgIntersectionTarget::ptr& target1, StgIntersectionTarget::ptr& target2) {
 	bool res = false;
-	int shape1 = target1->GetShape();
-	int shape2 = target2->GetShape();
+	StgIntersectionTarget::Shape shape1 = target1->GetShape();
+	StgIntersectionTarget::Shape shape2 = target2->GetShape();
 	StgIntersectionTarget* p1 = target1.get();
 	StgIntersectionTarget* p2 = target2.get();
 	if (p1 == nullptr || p2 == nullptr) return false;
@@ -473,7 +473,7 @@ void StgIntersectionObject::ClearIntersectionRelativeTarget() {
 }
 void StgIntersectionObject::AddIntersectionRelativeTarget(StgIntersectionTarget::ptr target) {
 	listRelativeTarget_.push_back(target);
-	int shape = target->GetShape();
+	StgIntersectionTarget::Shape shape = target->GetShape();
 	if (shape == StgIntersectionTarget::SHAPE_CIRCLE) {
 		StgIntersectionTarget_Circle::ptr tTarget = std::dynamic_pointer_cast<StgIntersectionTarget_Circle>(target);
 		if (tTarget)
@@ -492,7 +492,7 @@ void StgIntersectionObject::UpdateIntersectionRelativeTarget(int posX, int posY,
 	for (auto itr = listRelativeTarget_.begin(); itr != listRelativeTarget_.end(); ++itr) {
 		StgIntersectionTarget::ptr target = *itr;
 
-		int shape = target->GetShape();
+		StgIntersectionTarget::Shape shape = target->GetShape();
 		if (shape == StgIntersectionTarget::SHAPE_CIRCLE) {
 			StgIntersectionTarget_Circle::ptr tTarget = std::dynamic_pointer_cast<StgIntersectionTarget_Circle>(target);
 			if (tTarget) {

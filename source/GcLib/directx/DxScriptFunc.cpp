@@ -1195,7 +1195,7 @@ gstd::value DxScript::Func_SetRenderTarget(gstd::script_machine* machine, int ar
 		texture = textureManager->GetTexture(name);
 		script->RaiseError("The specified render target does not exist.");
 	}
-	if (texture->GetType() != TextureData::TYPE_RENDER_TARGET)
+	if (texture->GetType() != TextureData::Type::TYPE_RENDER_TARGET)
 		script->RaiseError("Target texture must be a render target.");
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -2475,8 +2475,7 @@ value DxScript::Func_ObjRender_SetTextureFilterMin(gstd::script_machine* machine
 	int id = (int)argv[0].as_real();
 	int type = argv[1].as_int();
 
-	type = std::max(type, (int)D3DTEXF_NONE);
-	type = std::min(type, (int)D3DTEXF_ANISOTROPIC);
+	type = std::clamp(type, (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
 
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj)
@@ -2489,8 +2488,7 @@ value DxScript::Func_ObjRender_SetTextureFilterMag(gstd::script_machine* machine
 	int id = (int)argv[0].as_real();
 	int type = argv[1].as_int();
 
-	type = std::max(type, (int)D3DTEXF_NONE);
-	type = std::min(type, (int)D3DTEXF_ANISOTROPIC);
+	type = std::clamp(type, (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
 
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj)
@@ -2503,8 +2501,7 @@ value DxScript::Func_ObjRender_SetTextureFilterMip(gstd::script_machine* machine
 	int id = (int)argv[0].as_real();
 	int type = argv[1].as_int();
 
-	type = std::max(type, (int)D3DTEXF_NONE);
-	type = std::min(type, (int)D3DTEXF_ANISOTROPIC);
+	type = std::clamp(type, (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
 
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj)
@@ -2937,8 +2934,8 @@ gstd::value DxScript::Func_ObjPrimitive_SetVertexUVT(gstd::script_machine* machi
 	if (obj) {
 		shared_ptr<Texture> texture = obj->GetTexture();
 		if (texture) {
-			int width = texture->GetWidth();
-			int height = texture->GetHeight();
+			float width = texture->GetWidth();
+			float height = texture->GetHeight();
 			obj->SetVertexUV(argv[1].as_int(), (float)argv[2].as_real() / width, (float)argv[3].as_real() / height);
 		}
 	}

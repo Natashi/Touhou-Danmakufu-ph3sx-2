@@ -222,10 +222,8 @@ void StgPlayerObject::_Move() {
 	double py = posY_ + sy;
 
 	//Clip player position
-	px = std::max(px, (double)rcClip_.left);
-	px = std::min(px, (double)rcClip_.right);
-	py = std::max(py, (double)rcClip_.top);
-	py = std::min(py, (double)rcClip_.bottom);
+	px = std::clamp(px, (double)rcClip_.left, (double)rcClip_.right);
+	py = std::clamp(py, (double)rcClip_.top, (double)rcClip_.bottom);
 
 	SetX(px);
 	SetY(py);
@@ -287,7 +285,7 @@ void StgPlayerObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgInterse
 	if (own == nullptr) return;
 
 	if (auto ptrObj = otherTarget->GetObject().lock()) {
-		int otherType = otherTarget->GetTargetType();
+		StgIntersectionTarget::Type otherType = otherTarget->GetTargetType();
 		switch (otherType) {
 		case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 		{
@@ -364,7 +362,7 @@ void StgPlayerSpellObject::Work() {
 }
 void StgPlayerSpellObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
 	double damage = 0;
-	int otherType = otherTarget->GetTargetType();
+	StgIntersectionTarget::Type otherType = otherTarget->GetTargetType();
 	switch (otherType) {
 	case StgIntersectionTarget::TYPE_ENEMY:
 	case StgIntersectionTarget::TYPE_ENEMY_SHOT:

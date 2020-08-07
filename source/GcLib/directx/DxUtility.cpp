@@ -194,7 +194,7 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	float e = rx * rx + ry * ry;
 	float r = line.GetWidth() + circle.GetR();
 
-	return (e < (r * r));
+	return e < (r * r);
 }
 
 //I want to die

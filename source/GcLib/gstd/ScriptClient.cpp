@@ -974,7 +974,7 @@ value ScriptClientBase::Func_Clamp(script_machine* machine, int argc, const valu
 	double bound_lower = argv[1].as_real();
 	double bound_upper = argv[2].as_real();
 	//if (bound_lower > bound_upper) std::swap(bound_lower, bound_upper);
-	double res = std::min(std::max(v, bound_lower), bound_upper);
+	double res = std::clamp(v, bound_lower, bound_upper);
 	return CreateRealValue(res);
 }
 value ScriptClientBase::Func_Log(script_machine* machine, int argc, const value* argv) {

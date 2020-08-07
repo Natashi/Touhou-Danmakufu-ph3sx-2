@@ -761,7 +761,7 @@ void SoundPlayer::SetFrequency(DWORD freq) {
 		DWORD rateMax = caps->dwMaxSecondarySampleRate;
 		//DWORD rateMin = DSBFREQUENCY_MIN;
 		//DWORD rateMax = DSBFREQUENCY_MAX;
-		freq = std::min(std::max(freq, rateMin), rateMax);
+		freq = std::clamp(freq, rateMin, rateMax);
 	}
 	HRESULT hr = pDirectSoundBuffer_->SetFrequency(freq);
 	//std::wstring err = StringUtility::Format(L"%s: %s",

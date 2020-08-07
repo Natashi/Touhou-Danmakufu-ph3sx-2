@@ -1822,8 +1822,8 @@ void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 		return;
 
 	if (texture_ == nullptr) return;
-	int width = texture_->GetWidth();
-	int height = texture_->GetHeight();
+	float width = texture_->GetWidth();
+	float height = texture_->GetHeight();
 
 	D3DXMATRIX matWorld = RenderObject::CreateWorldMatrix2D(position_, scale_,
 		angX, angY, angZ, nullptr);
