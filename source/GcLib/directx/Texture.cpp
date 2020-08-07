@@ -22,7 +22,7 @@ TextureData::TextureData() {
 	resourceSize_ = 0U;
 
 	ZeroMemory(&infoImage_, sizeof(D3DXIMAGE_INFO));
-	type_ = TYPE_TEXTURE;
+	type_ = Type::TYPE_TEXTURE;
 }
 TextureData::~TextureData() {
 	ptr_release(pTexture_);
@@ -178,30 +178,24 @@ void Texture::SetTexture(IDirect3DTexture9 *pTexture) {
 
 IDirect3DTexture9* Texture::GetD3DTexture() {
 	IDirect3DTexture9* res = nullptr;
-	{
-		bool bWait = true;
-		int time = timeGetTime();
-		while (bWait) {
-			Lock lock(TextureManager::GetBase()->GetLock());
-			if (data_) {
-				bWait = !data_->bLoad_;
-				if (!bWait)
-					res = _GetTextureData()->pTexture_;
+	if (data_) {
+		Lock lock(TextureManager::GetBase()->GetLock());
 
-				if (bWait && abs((int)(timeGetTime() - time)) > 10000) {
-					//一定時間たってもだめだったらロック？
-					const std::wstring& path = data_->GetName();
-					Logger::WriteTop(
-						StringUtility::Format(L"Texture is possibly locked: %s", path.c_str()));
-					data_->bLoad_ = true;
-					break;
-				}
+		DWORD timeOrg = timeGetTime();
+		while (true) {
+			if (data_->bLoad_) {
+				res = data_->pTexture_;
+				break;
 			}
-			else break;
-
-			if (bWait)::Sleep(1);
+			else if (timeGetTime() - timeOrg > 5000) {		//5-second timer
+				const std::wstring& path = data_->GetName();
+				Logger::WriteTop(
+					StringUtility::Format(L"GetTexture timed out. (%s)", path.c_str()));
+				data_->bLoad_ = true;
+				break;
+			}
+			Sleep(20);
 		}
-
 	}
 	return res;
 }
@@ -211,7 +205,7 @@ IDirect3DSurface9* Texture::GetD3DSurface() {
 #ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
 #endif
-		if (data_) res = _GetTextureData()->lpRenderSurface_;
+		if (data_) res = data_->lpRenderSurface_;
 	}
 	return res;
 }
@@ -221,40 +215,40 @@ IDirect3DSurface9* Texture::GetD3DZBuffer() {
 #ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
 #endif
-		if (data_) res = _GetTextureData()->lpRenderZ_;
+		if (data_) res = data_->lpRenderZ_;
 	}
 	return res;
 }
-int Texture::GetWidth() {
-	int res = 0;
+UINT Texture::GetWidth() {
+	UINT res = 0U;
 	{
 #ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
 #endif
-		TextureData* data = _GetTextureData();
-		if (data) res = data->infoImage_.Width;
+		if (data_)
+			res = data_->infoImage_.Width;
 	}
 	return res;
 }
-int Texture::GetHeight() {
-	int res = 0;
+UINT Texture::GetHeight() {
+	UINT res = 0U;
 	{
 #ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
 #endif
-		TextureData* data = _GetTextureData();
-		if (data) res = data->infoImage_.Height;
+		if (data_)
+			res = data_->infoImage_.Height;
 	}
 	return res;
 }
-int Texture::GetType() {
-	int res = TextureData::TYPE_TEXTURE;
+TextureData::Type Texture::GetType() {
+	TextureData::Type res = TextureData::Type::TYPE_TEXTURE;
 	{
 #ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
 #endif
-		TextureData* data = _GetTextureData();
-		if (data) res = data->type_;
+		if (data_)
+			res = data_->type_;
 	}
 	return res;
 }
@@ -364,7 +358,7 @@ void TextureManager::ReleaseDxResource() {
 		for (itrMap = mapTextureData_.begin(); itrMap != mapTextureData_.end(); ++itrMap) {
 			TextureData* data = (itrMap->second).get();
 
-			if (data->type_ == TextureData::TYPE_RENDER_TARGET) {
+			if (data->type_ == TextureData::Type::TYPE_RENDER_TARGET) {
 				D3DXIMAGE_INFO* infoImage = data->GetImageInfo();
 
 				//Because IDirect3DDevice9::Reset requires me to delete all render targets, 
@@ -403,7 +397,7 @@ void TextureManager::RestoreDxResource() {
 		for (itrMap = mapTextureData_.begin(); itrMap != mapTextureData_.end(); ++itrMap) {
 			TextureData* data = (itrMap->second).get();
 
-			if (data->type_ == TextureData::TYPE_RENDER_TARGET) {
+			if (data->type_ == TextureData::Type::TYPE_RENDER_TARGET) {
 				UINT width = data->infoImage_.Width;
 				UINT height = data->infoImage_.Height;
 
@@ -590,7 +584,7 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 		mapTextureData_[name] = data;
 		data->manager_ = this;
 		data->name_ = name;
-		data->type_ = TextureData::TYPE_RENDER_TARGET;
+		data->type_ = TextureData::Type::TYPE_RENDER_TARGET;
 		data->infoImage_.Width = width;
 		data->infoImage_.Height = height;
 		data->infoImage_.Format = fmt;
@@ -735,7 +729,7 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 		shared_ptr<TextureData> data = texture->data_;
 		if (data == nullptr || data->bLoad_) return;
 
-		int countRef = data.use_count();
+		long countRef = data.use_count();
 		//自身とTextureManager内の数だけになったら読み込まない。
 		if (countRef <= 2) {
 			data->bLoad_ = true;//念のため読み込み完了扱い
@@ -752,9 +746,12 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 			buf.SetSize(size);
 			reader->Read(buf.GetPointer(), size);
 
+			/*
 			D3DCOLOR colorKey = D3DCOLOR_ARGB(255, 0, 0, 0);
 			if (path.find(L".bmp") == std::wstring::npos)//bmpのみカラーキー適応
 				colorKey = 0;
+			*/
+			D3DCOLOR colorKey = 0x00000000;
 
 			D3DFORMAT pixelFormat = graphics->GetConfigData().GetColorMode() == DirectGraphicsConfig::COLOR_MODE_32BIT ?
 				D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
@@ -786,9 +783,7 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 shared_ptr<TextureData> TextureManager::GetTextureData(const std::wstring& name) {
 	shared_ptr<TextureData> res = nullptr;
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(lock_);
-#endif
 
 		auto itr = mapTextureData_.find(name);
 		if (itr != mapTextureData_.end()) {
@@ -801,9 +796,7 @@ shared_ptr<TextureData> TextureManager::GetTextureData(const std::wstring& name)
 shared_ptr<Texture> TextureManager::GetTexture(const std::wstring& name) {
 	shared_ptr<Texture> res;
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(lock_);
-#endif
 
 		auto itr = mapTexture_.find(name);
 		if (itr != mapTexture_.end()) {

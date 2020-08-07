@@ -20,12 +20,12 @@ namespace directx {
 		friend TextureManager;
 		friend TextureInfoPanel;
 	public:
-		enum {
+		enum class Type : uint8_t {
 			TYPE_TEXTURE,
 			TYPE_RENDER_TARGET,
 		};
 	protected:
-		int type_;
+		Type type_;
 		TextureManager* manager_;
 		IDirect3DTexture9* pTexture_;
 		D3DXIMAGE_INFO infoImage_;
@@ -73,10 +73,10 @@ namespace directx {
 		IDirect3DSurface9* GetD3DSurface();
 		IDirect3DSurface9* GetD3DZBuffer();
 
-		int GetType();
+		TextureData::Type GetType();
 
-		int GetWidth();
-		int GetHeight();
+		UINT GetWidth();
+		UINT GetHeight();
 		bool IsLoad() { return data_ != nullptr && data_->bLoad_; }
 
 		static size_t GetFormatBPP(D3DFORMAT format);
