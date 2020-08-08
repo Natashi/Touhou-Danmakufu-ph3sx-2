@@ -1715,12 +1715,21 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				LERP_DECELERATE:
 					Decelerating interpolation.
 					
-	ObjShot_SetDelayColoring
+	ObjShot_SetDelayColor
 		Arguments:
 			1) object ID
-			2) enable
+			2) color
 		Description:
-			When set to true, enables the object color to affect the shot's delay cloud.
+			Sets the color of the shot object's delay cloud as an ARGB hexadecimal color value.
+			
+			Set to 0 to revert to using the shot data's delay color.
+					
+	ObjShot_SetDelayColoringEnable
+		Arguments:
+			1) object ID
+			2) (bool) enable
+		Description:
+			When set to true, enables the object color to affect the shot object's delay cloud.
 					
 	ObjShot_SetGrazeInvalidFrame
 		Arguments:
