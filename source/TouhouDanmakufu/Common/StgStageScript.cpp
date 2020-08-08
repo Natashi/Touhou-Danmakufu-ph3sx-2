@@ -451,7 +451,8 @@ function const stgFunction[] =
 	{ "ObjShot_SetDelayScaleParameter", StgStageScript::Func_ObjShot_SetDelayScaleParameter, 4 },
 	{ "ObjShot_SetDelayAlphaParameter", StgStageScript::Func_ObjShot_SetDelayAlphaParameter, 4 },
 	{ "ObjShot_SetDelayMode", StgStageScript::Func_ObjShot_SetDelayMode, 4 },
-	{ "ObjShot_SetDelayColoring", StgStageScript::Func_ObjShot_SetDelayColoring, 2 },
+	{ "ObjShot_SetDelayColor", StgStageScript::Func_ObjShot_SetDelayColor, 2 },
+	{ "ObjShot_SetDelayColoringEnable", StgStageScript::Func_ObjShot_SetDelayColoringEnable, 2 },
 	{ "ObjShot_SetGrazeInvalidFrame", StgStageScript::Func_ObjShot_SetGrazeInvalidFrame, 2 },
 	{ "ObjShot_SetGrazeFrame", StgStageScript::Func_ObjShot_SetGrazeFrame, 2 },
 	{ "ObjShot_IsValidGraze", StgStageScript::Func_ObjShot_IsValidGraze, 1 },
@@ -3688,7 +3689,17 @@ gstd::value StgStageScript::Func_ObjShot_SetDelayMode(gstd::script_machine* mach
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_ObjShot_SetDelayColoring(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_ObjShot_SetDelayColor(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		StgShotObject::DelayParameter* delay = obj->GetDelayParameter();
+		delay->colorRep = argv[1].as_int();
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_SetDelayColoringEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id));
