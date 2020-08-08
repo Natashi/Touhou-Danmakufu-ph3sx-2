@@ -59,7 +59,13 @@ namespace gstd {
 		wchar_t parse_escape_char();
 		wchar_t parse_utf8_char();
 	public:
+		enum {
+			MAX_TOKEN_LIST = 64,
+		};
+	public:
 		token_kind next;
+		std::list<token_kind> token_list;
+
 		std::string word;
 		double real_value;
 		wchar_t char_value;

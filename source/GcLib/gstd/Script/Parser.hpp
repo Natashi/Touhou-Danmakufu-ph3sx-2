@@ -225,9 +225,10 @@ namespace gstd {
 		void parse_expression(script_block* block, parser_state_t* state);
 
 		int parse_arguments(script_block* block, parser_state_t* state);
-		bool parse_single_statement(script_block* block, parser_state_t* state);
+		void parse_single_statement(script_block* block, parser_state_t* state, 
+			bool check_terminator, token_kind statement_terminator);
 		void parse_statements(script_block* block, parser_state_t* state,
-			token_kind block_terminator = token_kind::tk_close_cur, token_kind statement_terminator = token_kind::tk_semicolon);
+			token_kind block_terminator, token_kind statement_terminator);
 		size_t parse_inline_block(script_block** blockRes, script_block* block, parser_state_t* state,
 			block_kind kind, bool allow_single = false);
 		void parse_block(script_block* block, parser_state_t* state, const std::vector<std::string>* args,

@@ -29,6 +29,7 @@ script_scanner::script_scanner(const script_scanner& source) {
 	current = source.current;
 	endPoint = source.endPoint;
 	next = source.next;
+	token_list = source.token_list;
 	word = source.word;
 	line = source.line;
 }
@@ -38,6 +39,7 @@ void script_scanner::copy_state(script_scanner* src) {
 	current = src->current;
 	endPoint = src->endPoint;
 	next = src->next;
+	token_list = src->token_list;
 	word = src->word;
 	real_value = src->real_value;
 	char_value = src->char_value;
@@ -101,9 +103,9 @@ wchar_t script_scanner::parse_escape_char() {
 	case L'x':
 	{
 		std::string str;
-		wchar_t next = 0;
-		while (std::isxdigit(next = index_from_current_char(1))) {
-			str += next;
+		wchar_t nextCh = 0;
+		while (std::isxdigit(nextCh = index_from_current_char(1))) {
+			str += nextCh;
 			next_char();
 		}
 		if (str.size() == 0) return L'x';
@@ -133,14 +135,12 @@ wchar_t script_scanner::parse_utf8_char() {
 }
 
 void script_scanner::skip() {
-	//‹ó”’‚ð”ò‚Î‚·
 	wchar_t ch1 = current_char();
 	wchar_t ch2 = index_from_current_char(1);
 	while (ch1 == '\r' || ch1 == '\n' || ch1 == L'\t' || ch1 == L' '
-		|| ch1 == L'#' || (ch1 == L'/' && (ch2 == L'/' || ch2 == L'*'))) {
-		//ƒRƒƒ“ƒg‚ð”ò‚Î‚·
-		if (ch1 == L'#' ||
-			(ch1 == L'/' && (ch2 == L'/' || ch2 == L'*'))) {
+		|| ch1 == L'#' || (ch1 == L'/' && (ch2 == L'/' || ch2 == L'*'))) 
+	{
+		if (ch1 == L'#' || (ch1 == L'/' && (ch2 == L'/' || ch2 == L'*'))) {
 			if (ch1 == L'#' || ch2 == L'/') {
 				do {
 					ch1 = next_char();
@@ -163,8 +163,9 @@ void script_scanner::skip() {
 			++line;
 			ch1 = next_char();
 		}
-		else
+		else {
 			ch1 = next_char();
+		}
 		ch2 = index_from_current_char(1);
 	}
 }
@@ -490,6 +491,9 @@ throw_err_no_decimal:
 			next = token_kind::tk_invalid;
 		}
 	}
+
+	token_list.push_back(next);
+	if (token_list.size() > MAX_TOKEN_LIST) token_list.pop_front();
 }
 
 std::map<std::string, token_kind> script_scanner::token_map = {

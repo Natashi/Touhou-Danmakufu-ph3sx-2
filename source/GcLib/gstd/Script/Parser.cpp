@@ -94,7 +94,7 @@ namespace gstd {
 			int countVar = scan_current_scope(&stateParser, 1, nullptr, false);
 			if (countVar > 0)
 				stateParser.AddCode(engine->main_block, code(command_kind::pc_var_alloc, countVar));
-			parse_statements(engine->main_block, &stateParser, token_kind::tk_end);
+			parse_statements(engine->main_block, &stateParser, token_kind::tk_end, token_kind::tk_semicolon);
 
 			parser_assert(stateParser.next() == token_kind::tk_end,
 				"Unexpected end-of-file while parsing. (Did you forget a semicolon after a string?)\r\n");
@@ -802,7 +802,9 @@ continue_as_variadic:
 		return result;
 	}
 
-	bool parser::parse_single_statement(script_block* block, parser_state_t* state) {
+	void parser::parse_single_statement(script_block* block, parser_state_t* state, 
+		bool check_terminator, token_kind statement_terminator) 
+	{
 		auto assert_const = [](parser_state_t* _state, symbol* s, const std::string& name) {
 			if (!s->can_modify) {
 				std::string error = StringUtility::Format("\"%s\": ", name.c_str());
@@ -1219,7 +1221,7 @@ continue_as_variadic:
 					//Initialization statement
 					forBlockState.lex = &lex_s1;
 					forBlockState.AddCode(forBlock, code(command_kind::pc_var_alloc, 1));
-					parse_single_statement(forBlock, &forBlockState);
+					parse_single_statement(forBlock, &forBlockState, true, token_kind::tk_semicolon);
 
 					size_t ip_begin = forBlock->codes.size();
 
@@ -1227,6 +1229,7 @@ continue_as_variadic:
 					if (hasExpr) {
 						forBlockState.lex = &lex_s2;
 						parse_expression(forBlock, &forBlockState);
+						parser_assert(&forBlockState, lex_s2.next == token_kind::tk_semicolon, "Expected a semicolon (;).");
 						forBlockState.AddCode(forBlock, code(command_kind::pc_loop_if));
 					}
 
@@ -1239,10 +1242,10 @@ continue_as_variadic:
 					{
 						//Update statement
 						forBlockState.lex = &lex_s3;
-						parse_single_statement(forBlock, &forBlockState);
+						parse_single_statement(forBlock, &forBlockState, false, token_kind::tk_comma);
 						while (lex_s3.next == token_kind::tk_comma) {
 							lex_s3.advance();
-							parse_single_statement(forBlock, &forBlockState);
+							parse_single_statement(forBlock, &forBlockState, false, token_kind::tk_comma);
 						}
 					}
 					forBlockState.AddCode(forBlock, code(command_kind::pc_jump, ip_begin));
@@ -1611,23 +1614,18 @@ continue_as_variadic:
 		}
 		}
 
-		/*
-		if (need_terminator && state->next() != statement_terminator)
-			parser_assert(state, false, "Expected a semicolon (;).");
-		state->advance();
-		*/
-		return need_terminator;
+		if (check_terminator) {
+			if (need_terminator && state->next() != statement_terminator)
+				parser_assert(state, false, "Expected a semicolon (;).");
+			while (state->next() == statement_terminator)
+				state->advance();
+		}
 	}
 	void parser::parse_statements(script_block* block, parser_state_t* state, 
 		token_kind block_terminator, token_kind statement_terminator) 
 	{
 		for (; state->next() != block_terminator; ) {
-			bool need_terminator = parse_single_statement(block, state);
-
-			if (need_terminator && state->next() != statement_terminator)
-				parser_assert(state, false, "Expected a semicolon (;).");
-			else if (state->next() == statement_terminator)
-				state->advance();
+			parse_single_statement(block, state, true, statement_terminator);
 		}
 	}
 
@@ -1680,13 +1678,10 @@ continue_as_variadic:
 			}
 		}
 		if (single_line) {
-			bool need_terminator = parse_single_statement(block, state);
-			if (need_terminator && state->next() != token_kind::tk_semicolon)
-				parser_assert(state, false, "Expected a semicolon (;).");
-			state->advance();
+			parse_single_statement(block, state, true, token_kind::tk_semicolon);
 		}
 		else {
-			parse_statements(block, state);
+			parse_statements(block, state, token_kind::tk_close_cur, token_kind::tk_semicolon);
 		}
 
 		frame.pop_back();
