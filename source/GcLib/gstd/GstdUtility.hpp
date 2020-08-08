@@ -723,6 +723,8 @@ namespace gstd {
 		void Clear();
 		HFONT GetHandle() { return hFont_; }
 		LOGFONT GetInfo() { return info_; }
+
+		static BYTE DetectCharset(const wchar_t* type);
 	};
 #endif
 }

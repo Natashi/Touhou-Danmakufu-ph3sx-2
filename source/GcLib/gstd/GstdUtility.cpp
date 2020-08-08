@@ -1192,11 +1192,7 @@ void Font::CreateFont(const wchar_t* type, int size, bool bBold, bool bItalic, b
 	fontInfo.lfHeight = size;
 	fontInfo.lfItalic = bItalic;
 	fontInfo.lfUnderline = bLine;
-
-	if (std::regex_match(type, std::wregex(L"[^a-zA-Z0-9\s_]"))) {
-		fontInfo.lfCharSet = SHIFTJIS_CHARSET;
-	}
-	else fontInfo.lfCharSet = ANSI_CHARSET;
+	fontInfo.lfCharSet = DetectCharset(type);
 
 	this->CreateFontIndirect(fontInfo);
 }
@@ -1204,5 +1200,10 @@ void Font::CreateFontIndirect(LOGFONT& fontInfo) {
 	if (hFont_) this->Clear();
 	hFont_ = ::CreateFontIndirect(&fontInfo);
 	info_ = fontInfo;
+}
+BYTE Font::DetectCharset(const wchar_t* type) {
+	if (std::regex_search(type, std::wregex(L"[^a-zA-Z0-9\s_]")))
+		return SHIFTJIS_CHARSET;
+	else return ANSI_CHARSET;
 }
 #endif

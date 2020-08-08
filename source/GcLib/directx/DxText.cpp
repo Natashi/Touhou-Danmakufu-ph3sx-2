@@ -1488,10 +1488,7 @@ void DxText::SetFontType(const wchar_t* type) {
 	LOGFONT& info = dxFont_.GetLogFont();
 	lstrcpy(info.lfFaceName, type);
 
-	if (std::regex_match(type, std::wregex(L"[^a-zA-Z0-9\s_]"))) {
-		info.lfCharSet = SHIFTJIS_CHARSET;
-	}
-	else info.lfCharSet = DEFAULT_CHARSET;
+	info.lfCharSet = Font::DetectCharset(type);
 }
 void DxText::Render() {
 	DxTextRenderer* renderer = DxTextRenderer::GetBase();
