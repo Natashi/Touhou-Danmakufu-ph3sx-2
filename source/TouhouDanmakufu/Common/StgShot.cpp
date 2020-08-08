@@ -440,14 +440,9 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 				rect.top = StringUtility::ToInteger(list[1]);
 				rect.right = StringUtility::ToInteger(list[2]);
 				rect.bottom = StringUtility::ToInteger(list[3]);
-				anime.rcSrc_ = rect;
 
-				LONG width = rect.right - rect.left;
-				LONG height = rect.bottom - rect.top;
-				RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-				if (width % 2 == 1) rcDest.right++;
-				if (height % 2 == 1) rcDest.bottom++;
-				anime.rcDst_ = rcDest;
+				anime.rcSrc_ = rect;
+				anime.SetDestRect(&anime.rcDst_, &rect);
 
 				data->listAnime_.resize(1);
 				data->listAnime_[0] = anime;
@@ -468,25 +463,20 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 				rect.top = StringUtility::ToInteger(list[1]);
 				rect.right = StringUtility::ToInteger(list[2]);
 				rect.bottom = StringUtility::ToInteger(list[3]);
-				data->rcDelay_ = rect;
 
-				LONG width = rect.right - rect.left;
-				LONG height = rect.bottom - rect.top;
-				RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-				if (width % 2 == 1) rcDest.right++;
-				if (height % 2 == 1) rcDest.bottom++;
-				data->rcDstDelay_ = rcDest;
+				data->rcDelay_ = rect;
+				StgShotData::AnimationData::SetDestRect(&data->rcDstDelay_, &rect);
 			}
 			else if (element == L"collision") {
 				DxCircle circle;
 				std::vector<std::wstring> list = _GetArgumentList(scanner);
 				if (list.size() == 1) {
-					circle.SetR(StringUtility::ToInteger(list[0]));
+					circle.SetR(StringUtility::ToDouble(list[0]));
 				}
 				else if (list.size() == 3) {
-					circle.SetR(StringUtility::ToInteger(list[0]));
-					circle.SetX(StringUtility::ToInteger(list[1]));
-					circle.SetY(StringUtility::ToInteger(list[2]));
+					circle.SetR(StringUtility::ToDouble(list[0]));
+					circle.SetX(StringUtility::ToDouble(list[1]));
+					circle.SetY(StringUtility::ToDouble(list[2]));
 				}
 
 				data->listCol_ = circle;
@@ -537,6 +527,8 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 				data->bFixedAngle_ = tok.GetElement() == L"true";
 			}
 			else if (element == L"AnimationData") {
+				data->listAnime_.clear();
+				data->totalAnimeFrame_ = 0;
 				_ScanAnimation(data, scanner);
 			}
 		}
@@ -544,15 +536,14 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 
 	if (id >= 0) {
 		if (data->listCol_.GetR() <= 0) {
-			int r = 0;
+			float r = 0;
 			if (data->listAnime_.size() > 0) {
 				RECT& rect = data->listAnime_[0].rcSrc_;
 				LONG rx = abs(rect.right - rect.left);
 				LONG ry = abs(rect.bottom - rect.top);
-				LONG r = std::min(rx, ry);
-				r = r / 3 - 3;
+				r = std::min(rx, ry) / 3.0f - 3.0f;
 			}
-			DxCircle circle(0, 0, std::max(r, 2));
+			DxCircle circle(0, 0, std::max(r, 2.0f));
 			data->listCol_ = circle;
 		}
 		if (listData.size() <= id)
@@ -588,13 +579,7 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 
 					anime.frame_ = frame;
 					anime.rcSrc_ = rcSrc;
-
-					LONG width = rcSrc.right - rcSrc.left;
-					LONG height = rcSrc.bottom - rcSrc.top;
-					RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-					if (width % 2 == 1) rcDest.right++;
-					if (height % 2 == 1) rcDest.bottom++;
-					anime.rcDst_ = rcDest;
+					anime.SetDestRect(&anime.rcDst_, &rcSrc);
 
 					shotData->listAnime_.push_back(anime);
 					shotData->totalAnimeFrame_ += frame;
@@ -647,12 +632,12 @@ StgShotRenderer* StgShotData::GetRenderer(BlendMode blendType) {
 	return listShotData_->GetRenderer(indexTexture_, blendType - 1);
 }
 
-StgShotData::AnimationData* StgShotData::GetData(int frame) {
-	if (totalAnimeFrame_ == 1)
+StgShotData::AnimationData* StgShotData::GetData(size_t frame) {
+	if (totalAnimeFrame_ <= 1U)
 		return &listAnime_[0];
 
 	frame = frame % totalAnimeFrame_;
-	int total = 0;
+	size_t total = 0;
 
 	for (auto itr = listAnime_.begin(); itr != listAnime_.end(); ++itr) {
 		total += itr->frame_;
@@ -660,6 +645,13 @@ StgShotData::AnimationData* StgShotData::GetData(int frame) {
 			return &(*itr);
 	}
 	return &listAnime_[0];
+}
+void StgShotData::AnimationData::SetDestRect(RECT* dst, RECT* src) {
+	LONG width = (src->right - src->left) / 2L;
+	LONG height = (src->bottom - src->top) / 2L;
+	SetRect(dst, -width, -height, width, height);
+	if (width % 2L == 1L) ++(dst->right);
+	if (height % 2L == 1L) ++(dst->bottom);
 }
 
 /**********************************************************
@@ -926,7 +918,7 @@ void StgShotObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersect
 	shared_ptr<StgIntersectionObject> ptrObj = otherTarget->GetObject().lock();
 
 	float damage = 0;
-	int otherType = otherTarget->GetTargetType();
+	StgIntersectionTarget::Type otherType = otherTarget->GetTargetType();
 	switch (otherType) {
 	case StgIntersectionTarget::TYPE_PLAYER:
 	{
@@ -1395,7 +1387,7 @@ void StgNormalShotObject::RenderOnShotManager() {
 			rcDest = delayData->GetDelayDest();
 		}
 
-		color = shotData->GetDelayColor();
+		color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
 		if (delay_.colorMix) ColorAccess::SetColor(color, color_);
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
@@ -1688,7 +1680,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 			rcDest = *delayData->GetDelayDest();
 		}
 
-		color = shotData->GetDelayColor();
+		color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
 		if (delay_.colorMix) ColorAccess::SetColor(color, color_);
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
@@ -1966,7 +1958,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 		BlendMode objSourceBlendType = GetSourceBlendType();
 
 		if ((bUseSouce_ || bUseEnd_) && (frameFadeDelete_ < 0)) {	//Delay cloud(s)
-			color = shotData->GetDelayColor();
+			color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
 			if (delay_.colorMix) ColorAccess::SetColor(color, color_);
 
 			int sourceWidth = widthRender_ * 2 / 3;
@@ -2288,7 +2280,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 			sY = roundf(sY);
 		}
 
-		D3DCOLOR color = shotData->GetDelayColor();
+		D3DCOLOR color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
 		if (delay_.colorMix) ColorAccess::SetColor(color, color_);
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());

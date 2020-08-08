@@ -115,10 +115,12 @@ public:
 	struct AnimationData {
 		RECT rcSrc_;
 		RECT rcDst_;
-		int frame_;
+		size_t frame_;
 
 		RECT* GetSource() { return &rcSrc_; }
 		RECT* GetDest() { return &rcDst_; }
+
+		static void SetDestRect(RECT* dst, RECT* src);
 	};
 private:
 	StgShotDataList* listShotData_;
@@ -137,7 +139,7 @@ private:
 	DxCircle listCol_;
 
 	std::vector<AnimationData> listAnime_;
-	int totalAnimeFrame_;
+	size_t totalAnimeFrame_;
 
 	double angularVelocityMin_;
 	double angularVelocityMax_;
@@ -150,7 +152,7 @@ public:
 	D3DXVECTOR2& GetTextureSize() { return textureSize_; }
 	BlendMode GetRenderType() { return typeRender_; }
 	BlendMode GetDelayRenderType() { return typeDelayRender_; }
-	AnimationData* GetData(int frame);
+	AnimationData* GetData(size_t frame);
 	RECT* GetDelayRect() { return &rcDelay_; }
 	RECT* GetDelayDest() { return &rcDstDelay_; }
 	int GetAlpha() { return alpha_; }
@@ -160,7 +162,7 @@ public:
 	double GetAngularVelocityMax() { return angularVelocityMax_; }
 	bool IsFixedAngle() { return bFixedAngle_; }
 
-	int GetFrameCount() { return listAnime_.size(); }
+	size_t GetFrameCount() { return listAnime_.size(); }
 
 	shared_ptr<Texture> GetTexture() { return listShotData_->GetTexture(indexTexture_); }
 	StgShotRenderer* GetRenderer() { return GetRenderer(typeRender_); }
@@ -244,6 +246,7 @@ public:
 		BlendMode blend;
 		D3DXVECTOR3 scale;	//[end, start, factor]
 		D3DXVECTOR3 alpha;	//[end, start, factor]
+		D3DCOLOR colorRep;
 		bool colorMix;
 
 		uint8_t type;		//0 = default danmakufu, 1 = ZUN-like
@@ -297,7 +300,7 @@ protected:
 	int frameAutoDelete_;
 	
 	shared_ptr<StgIntersectionTarget> pShotIntersectionTarget_;
-	bool bUserIntersectionMode_;//ユーザ定義あたり判定モード
+	bool bUserIntersectionMode_;
 	bool bIntersectionEnable_;
 	bool bChangeItemEnable_;
 
