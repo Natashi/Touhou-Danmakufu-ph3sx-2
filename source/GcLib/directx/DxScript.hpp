@@ -636,7 +636,7 @@ namespace directx {
 		};
 
 		enum : size_t {
-			DEFAULT_CONTAINER_CAPACITY = 4096U,
+			DEFAULT_CONTAINER_CAPACITY = 16384U,
 		};
 	protected:
 		int64_t totalObjectCreateCount_;

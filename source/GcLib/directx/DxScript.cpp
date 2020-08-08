@@ -1216,20 +1216,14 @@ int DxScriptObjectManager::AddObject(shared_ptr<DxScriptObjectBase> obj, bool bA
 	};
 
 	{
-		/*
 		do {
 			if (listUnusedIndex_.size() == 0U) {
-				if (!ExpandContainerCapacity()) break;
+				ExpandContainerCapacity();
+				if (listUnusedIndex_.size() == 0U) break;
 			}
 			res = listUnusedIndex_.front();
 			listUnusedIndex_.pop_front();
 		} while (obj_[res]);
-		*/
-		if (listUnusedIndex_.size() == 0U) {
-			if (!ExpandContainerCapacity()) return res;
-		}
-		res = listUnusedIndex_.front();
-		listUnusedIndex_.pop_front();
 
 		if (res != DxScript::ID_INVALID) {
 			obj_[res] = obj;
@@ -1281,7 +1275,8 @@ void DxScriptObjectManager::DeleteObject(int id) {
 	ptr->bDeleted_ = true;
 	obj_[id] = nullptr;
 
-	listUnusedIndex_.push_back(id);
+	if (ptr->manager_)
+		ptr->manager_->listUnusedIndex_.push_back(id);
 }
 void DxScriptObjectManager::DeleteObject(shared_ptr<DxScriptObjectBase> obj) {
 	DxScriptObjectManager::DeleteObject(obj.get());
@@ -1292,7 +1287,8 @@ void DxScriptObjectManager::DeleteObject(DxScriptObjectBase* obj) {
 	obj->bDeleted_ = true;
 	obj_[obj->GetObjectID()] = nullptr;
 
-	listUnusedIndex_.push_back(obj->GetObjectID());
+	if (obj->manager_)
+		obj->manager_->listUnusedIndex_.push_back(obj->GetObjectID());
 }
 void DxScriptObjectManager::ClearObject() {
 	size_t size = obj_.size();
