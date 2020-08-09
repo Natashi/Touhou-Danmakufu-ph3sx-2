@@ -1201,9 +1201,65 @@ void Font::CreateFontIndirect(LOGFONT& fontInfo) {
 	hFont_ = ::CreateFontIndirect(&fontInfo);
 	info_ = fontInfo;
 }
+//#pragma warning (disable : 4129)	//Unrecognized escape character
 BYTE Font::DetectCharset(const wchar_t* type) {
-	if (std::regex_search(type, std::wregex(L"[^a-zA-Z0-9\s_]")))
+	if (std::regex_search(type, std::wregex(L"[^a-zA-Z0-9\s_\-]")))
 		return SHIFTJIS_CHARSET;
 	else return ANSI_CHARSET;
+	/*
+	for (; *type; ++type) {
+		wchar_t ch = *type;
+
+		auto InRange = [&](wchar_t low, wchar_t up) -> bool {
+			return (ch >= low && ch <= up);
+		};
+
+		if (InRange(0x0400, 0x04FF))		//Cyrillic
+			return RUSSIAN_CHARSET;
+		else if (InRange(0x0500, 0x052F))	//Cyrillic supplement
+			return RUSSIAN_CHARSET;
+		else if (InRange(0x2DE0, 0x2DFF) || InRange(0xA640, 0xA69F) || InRange(0x1C80, 0x1C88))	//Cyrillic extended
+			return RUSSIAN_CHARSET;
+
+		else if (InRange(0x0370, 0x03FF))	//Greek
+			return GREEK_CHARSET;
+		else if (InRange(0x1F00, 0x1FFE))	//Greek extended
+			return GREEK_CHARSET;
+
+		else if (InRange(0x0600, 0x06FF))	//Arabic
+			return ARABIC_CHARSET;
+		else if (InRange(0x0750, 0x077F))	//Arabic supplement
+			return ARABIC_CHARSET;
+		else if (InRange(0x08A0, 0x08FF))	//Arabic extended
+			return ARABIC_CHARSET;
+		else if (InRange(0xFB50, 0xFDFD) || InRange(0xFE70, 0xFEFC))	//Arabic presentation forms
+			return ARABIC_CHARSET;
+
+		else if (InRange(0x0591, 0x05F4))	//Hebrew
+			return HEBREW_CHARSET;
+		else if (InRange(0xFB1D, 0xFB4F))	//Hebrew presentation forms
+			return HEBREW_CHARSET;
+
+		else if (InRange(0x0E01, 0x0E5B))	//Thai
+			return THAI_CHARSET;
+
+		//CJK
+		else if (InRange(0x3040, 0x309F) || InRange(0x30A0, 0x30FF) || InRange(0x31F0, 0x31FF))
+			return SHIFTJIS_CHARSET;
+		else if (InRange(0x4E00, 0x9FFC) || InRange(0x3400, 0x4DBF)
+			|| InRange(0x2E80, 0x2FDF)) 
+		{
+			return SHIFTJIS_CHARSET;
+		}
+		else if (InRange(0x31C0, 0x31EF))
+			return GB2312_CHARSET;
+		else if (InRange(0x1100, 0x11FF) || InRange(0x3130, 0x318F)
+			|| InRange(0xA960, 0xA97F) || InRange(0xD7B0, 0xD7FF) || InRange(0xAC00, 0xD7AF))
+		{
+			return HANGUL_CHARSET;
+		}
+	}
+	return ANSI_CHARSET;
+	*/
 }
 #endif
