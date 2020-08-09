@@ -1218,8 +1218,7 @@ int DxScriptObjectManager::AddObject(shared_ptr<DxScriptObjectBase> obj, bool bA
 	{
 		do {
 			if (listUnusedIndex_.size() == 0U) {
-				ExpandContainerCapacity();
-				if (listUnusedIndex_.size() == 0U) break;
+				if (!ExpandContainerCapacity()) break;
 			}
 			res = listUnusedIndex_.front();
 			listUnusedIndex_.pop_front();
