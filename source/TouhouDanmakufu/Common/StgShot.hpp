@@ -258,12 +258,14 @@ public:
 			alpha = D3DXVECTOR3(1.0f, 1.0f, 15.0f);
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
 			alphaLerpFunc = Math::Lerp::Linear<float, float>;
+			colorRep = 0x00000000;
 		}
 		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(MODE_BLEND_NONE), type(0), colorMix(false) {
 			scale = D3DXVECTOR3(sMin, sMax, rate);
 			alpha = D3DXVECTOR3(1.0f, 1.0f, 15.0f);
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
 			alphaLerpFunc = Math::Lerp::Linear<float, float>;
+			colorRep = 0x00000000;
 		}
 		DelayParameter& operator=(const DelayParameter& source) = default;
 
