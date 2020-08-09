@@ -119,3 +119,10 @@
 	- Fixed bugs with logical and ternary statements.
 	- Improved data packing of common data files. (Files saved with 1.10a are now incompatible.)
 	- Bug fixes and optimizations.
+	
+1.10c:
+	- Fixed a bug in the UserShotData where rect can override animation_data.
+	- Added functionality to change the color of the delay cloud per-shot.
+	- Fixed a parser bug with nested single-lined statements.
+	- Fixed a rare bug where object IDs may get duplicated when objects are created in rapid succession.
+	- Utilized UPX Executable Packer to reduce file size.
