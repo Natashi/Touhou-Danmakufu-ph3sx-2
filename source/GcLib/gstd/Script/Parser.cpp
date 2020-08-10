@@ -7,6 +7,70 @@
 //Natashi's TODO: Implement a parse tree
 
 namespace gstd {
+	script_block::script_block(int the_level, block_kind the_kind) {
+		level = the_level;
+		arguments = 0;
+		func = nullptr;
+		kind = the_kind;
+	}
+
+#pragma push_macro("new")
+#undef new
+	code::code() {
+	}
+	code::code(int the_line, command_kind the_command) {
+		line = the_line;
+		command = the_command;
+	}
+	code::code(int the_line, command_kind the_command, int the_level, size_t the_variable, const std::string& the_name)
+		: code(the_line, the_command) {
+		level = the_level;
+		variable = the_variable;
+#ifdef _DEBUG
+		var_name = the_name;
+#endif
+	}
+	code::code(int the_line, command_kind the_command, script_block* the_sub, int the_arguments) : code(the_line, the_command) {
+		sub = the_sub;
+		arguments = the_arguments;
+	}
+	code::code(int the_line, command_kind the_command, size_t the_ip) : code(the_line, the_command) {
+		ip = the_ip;
+	}
+	code::code(int the_line, command_kind the_command, const value& the_data) : code(the_line, the_command) {
+		new (&data) value(the_data);
+	}
+	code::code(const code& src) {
+		*this = src;
+	}
+	code::~code() {
+		switch (command) {
+		case command_kind::pc_push_value:
+			data.~value();
+			break;
+		}
+	}
+
+	code& code::operator=(const code& src) {
+		if (this == std::addressof(src)) return *this;
+		this->~code();
+
+		switch (src.command) {
+		case command_kind::pc_push_value:
+			new (&data) value(src.data);
+			break;
+		default:
+			sub = src.sub;
+			arguments = src.arguments;
+			break;
+		}
+		command = src.command;
+		line = src.line;
+
+		return *this;
+	}
+#pragma pop_macro("new")
+
 	const function base_operations[] = {
 		//{ "true", true_, 0 },
 		//{ "false", false_, 0 },
@@ -92,8 +156,8 @@ namespace gstd {
 			parser_state_t stateParser(lexer_main);
 
 			int countVar = scan_current_scope(&stateParser, 1, nullptr, false);
-			if (countVar > 0)
-				stateParser.AddCode(engine->main_block, code(command_kind::pc_var_alloc, countVar));
+			stateParser.AddCode(engine->main_block, code(command_kind::pc_var_alloc, countVar));
+
 			parse_statements(engine->main_block, &stateParser, token_kind::tk_end, token_kind::tk_semicolon);
 
 			parser_assert(stateParser.next() == token_kind::tk_end,
@@ -1290,87 +1354,69 @@ continue_as_variadic:
 
 			size_t ip_ascdsc_begin = state->ip;
 
-			script_block* containerBlock = engine->new_block(block->level + 1, block_kind::bk_normal);
-			state->AddCode(block, code(command_kind::pc_call, containerBlock, 0));
+			//Parse the first expression
+			parse_expression(block, state);
 
-			parser_state_t containerState(state->lex);
+			parser_assert(state, state->next() == token_kind::tk_range, "\"..\" is required.\r\n");
+			state->advance();
 
-			frame.push_back(scope_t(containerBlock->kind));
-			{
-				auto InsertSymbol = [&](size_t var, const std::string& name, bool isInternal) {
-					symbol s;
-					s.level = containerBlock->level;
-					s.sub = nullptr;
-					s.variable = var;
-					s.can_overload = false;
-					s.can_modify = !isInternal;
-					frame.back().singular_insert(name, s);
-				};
+			//Parse the second expression
+			parse_expression(block, state);
 
-				InsertSymbol(0, "!0", true);	//An internal value, inaccessible to scripters (value copied to s_2 in each loop)
-				InsertSymbol(1, "!1", true);	//An internal value, inaccessible to scripters
-				InsertSymbol(2, counterName, false);	//The actual counter
+			parser_assert(state, state->next() == token_kind::tk_close_par, "\")\" is required.\r\n");
+			state->advance();
 
-				containerState.AddCode(containerBlock, code(command_kind::pc_var_alloc, 3));
+			if (state->next() == token_kind::tk_LOOP)
+				state->advance();
 
-				parse_expression(containerBlock, &containerState);	//First value, to s_0 if ascent
-				containerState.AddCode(containerBlock, code(command_kind::pc_assign,
-					containerBlock->level, (int)(!isAscent), "!0"));
+			state->AddCode(block, code(command_kind::pc_dup_n_unique, 2));	//s1 s2		-> s1 s2 s1
+			state->AddCode(block, code(command_kind::pc_dup_n_unique, 2));	//s1 s2 s1	-> s1 s2 s1 s2
 
-				parser_assert(&containerState, containerState.next() == token_kind::tk_range, "\"..\" is required.\r\n");
-				containerState.advance();
+			if (isAscent)
+				state->AddCode(block, code(command_kind::pc_swap));
 
-				parse_expression(containerBlock, &containerState);	//Second value, to s_0 if descent
-				containerState.AddCode(containerBlock, code(command_kind::pc_assign,
-					containerBlock->level, (int)(isAscent), "!1"));
+			size_t ip = state->ip;
+			
+			state->AddCode(block, code(isAscent ? command_kind::pc_compare_and_loop_ascent :
+				command_kind::pc_compare_and_loop_descent));
 
-				parser_assert(&containerState, containerState.next() == token_kind::tk_close_par, "\")\" is required.\r\n");
-				containerState.advance();
-
-				if (containerState.next() == token_kind::tk_LOOP) {
-					containerState.advance();
-				}
-
-				size_t ip = containerBlock->codes.size();
-
-				containerState.AddCode(containerBlock, code(command_kind::pc_push_variable,
-					containerBlock->level, 0, "!0"));
-				containerState.AddCode(containerBlock, code(command_kind::pc_push_variable,
-					containerBlock->level, 1, "!1"));
-				containerState.AddCode(containerBlock, code(isAscent ? command_kind::pc_compare_and_loop_ascent :
-					command_kind::pc_compare_and_loop_descent));
-
-				if (!isAscent) {
-					containerState.AddCode(containerBlock, code(command_kind::pc_inline_dec,
-						containerBlock->level, 0, "!0"));
-				}
-
-				//Copy s_0 to s_2
-				containerState.AddCode(containerBlock, code(command_kind::pc_push_variable,
-					containerBlock->level, 0, "!0"));
-				containerState.AddCode(containerBlock, code(command_kind::pc_assign,
-					containerBlock->level, 2, counterName));
-
-				//Parse the code contained inside the loop
-				size_t codeBlockSize = parse_inline_block(nullptr, containerBlock, &containerState, block_kind::bk_loop, true);
-
-				containerState.AddCode(containerBlock, code(command_kind::pc_continue_marker));
-
-				if (isAscent) {
-					containerState.AddCode(containerBlock, code(command_kind::pc_inline_inc,
-						containerBlock->level, 0, "!0"));
-				}
-
-				containerState.AddCode(containerBlock, code(command_kind::pc_jump, ip));
-				containerState.AddCode(containerBlock, code(command_kind::pc_loop_back));
-
-				if (codeBlockSize == 0U) {
-					engine->blocks.pop_back();	//containerBlock
-					while (state->ip > ip_ascdsc_begin)
-						state->PopCode(block);
-				}
+			if (!isAscent) {
+				state->AddCode(block, code(command_kind::pc_dup_n, 1));
+				state->AddCode(block, code(command_kind::pc_inline_dec, -1, 0, "!0"));
 			}
-			frame.pop_back();
+
+			state->AddCode(block, code(command_kind::pc_dup_n, 1));
+
+			script_block* b = engine->new_block(block->level + 1, block_kind::bk_loop);
+			{
+				parser_state_t newState(state->lex);
+
+				std::vector<std::string> counter;
+				counter.push_back(counterName);
+
+				parse_block(b, &newState, &counter, false, true);
+			}
+
+			state->AddCode(block, code(command_kind::pc_call, b, 1));
+
+			state->AddCode(block, code(command_kind::pc_continue_marker));
+
+			if (isAscent) {
+				state->AddCode(block, code(command_kind::pc_dup_n, 1));
+				state->AddCode(block, code(command_kind::pc_inline_inc, -1, 0, "!0"));
+			}
+
+			state->AddCode(block, code(command_kind::pc_jump, ip));
+			state->AddCode(block, code(command_kind::pc_loop_back));
+
+			//Pop twice for two statements * 2
+			state->AddCode(block, code(command_kind::pc_pop, 2 * 2));
+
+			if (b->codes.size() == 1U) {	//1 for pc_assign
+				engine->blocks.pop_back();
+				while (state->ip > ip_ascdsc_begin)
+					state->PopCode(block);
+			}
 
 			need_terminator = false;
 			break;
@@ -1660,8 +1706,7 @@ continue_as_variadic:
 
 		if (!single_line) {
 			int countVar = scan_current_scope(state, block->level, args, adding_result);
-			if (countVar > 0)
-				state->AddCode(block, code(command_kind::pc_var_alloc, countVar));
+			state->AddCode(block, code(command_kind::pc_var_alloc, countVar));
 		}
 		if (args) {
 			scope_t* ptrBackFrame = &frame.back();

@@ -6,16 +6,14 @@
 #include "ScriptLexer.hpp"
 #include "ScriptFunction.hpp"
 
-#pragma push_macro("new")
-#undef new
-
 #pragma warning (disable : 4786)	//STL Warningó}é~
 #pragma warning (disable : 4018)	//signed Ç∆ unsigned ÇÃêîílÇî‰är
 #pragma warning (disable : 4244)	//double' Ç©ÇÁ 'float' Ç…ïœä∑
 
 namespace gstd {
 	enum class command_kind : uint8_t {
-		pc_var_alloc, pc_assign, pc_assign_writable, pc_break_loop, pc_break_routine,
+		pc_var_alloc, 
+		pc_assign, pc_assign_writable, pc_break_loop, pc_break_routine,
 		pc_call, pc_call_and_push_result,
 
 		pc_jump_target,
@@ -27,7 +25,7 @@ namespace gstd {
 		pc_compare_e, pc_compare_g, pc_compare_ge, pc_compare_l,
 		pc_compare_le, pc_compare_ne,
 
-		pc_dup_n,
+		pc_dup_n, pc_dup_n_unique,
 
 		pc_for, pc_for_each_and_push_first,
 		pc_compare_and_loop_ascent, pc_compare_and_loop_descent,
@@ -62,12 +60,7 @@ namespace gstd {
 		std::vector<code> codes;
 		block_kind kind;
 
-		script_block(int the_level, block_kind the_kind) {
-			level = the_level;
-			arguments = 0;
-			func = nullptr;
-			kind = the_kind;
-		}
+		script_block(int the_level, block_kind the_kind);
 	};
 	struct code {
 		command_kind command = command_kind::pc_null;
@@ -93,30 +86,12 @@ namespace gstd {
 			};
 		};
 
-		code() {}
-		code(int the_line, command_kind the_command) {
-			line = the_line;
-			command = the_command;
-		}
-		code(int the_line, command_kind the_command, int the_level, size_t the_variable, const std::string& the_name) 
-			: code(the_line, the_command) 
-		{
-			level = the_level;
-			variable = the_variable;
-#ifdef _DEBUG
-			var_name = the_name;
-#endif
-		}
-		code(int the_line, command_kind the_command, script_block* the_sub, int the_arguments) : code(the_line, the_command) {
-			sub = the_sub;
-			arguments = the_arguments;
-		}
-		code(int the_line, command_kind the_command, size_t the_ip) : code(the_line, the_command) {
-			ip = the_ip;
-		}
-		code(int the_line, command_kind the_command, const value& the_data) : code(the_line, the_command) {
-			new (&data) value(the_data);
-		}
+		code();
+		code(int the_line, command_kind the_command);
+		code(int the_line, command_kind the_command, int the_level, size_t the_variable, const std::string& the_name);
+		code(int the_line, command_kind the_command, script_block* the_sub, int the_arguments);
+		code(int the_line, command_kind the_command, size_t the_ip);
+		code(int the_line, command_kind the_command, const value& the_data);
 
 		code(command_kind the_command) : code(0, the_command) {}
 		code(command_kind the_command, int the_level, size_t the_variable, const std::string& the_name)
@@ -126,36 +101,11 @@ namespace gstd {
 		code(command_kind the_command, size_t the_ip) : code(0, the_command, the_ip) {}
 		code(command_kind the_command, const value& the_data) : code(0, the_command, the_data) {}
 
-		code(const code& src) {
-			*this = src;
-		}
+		code(const code& src);
 
-		~code() {
-			switch (command) {
-			case command_kind::pc_push_value:
-				data.~value();
-				break;
-			}
-		}
+		~code();
 
-		code& operator=(const code& src) {
-			if (this == std::addressof(src)) return *this;
-			this->~code();
-			
-			switch (src.command) {
-			case command_kind::pc_push_value:
-				new (&data) value(src.data);
-				break;
-			default:
-				sub = src.sub;
-				arguments = src.arguments;
-				break;
-			}
-			command = src.command;
-			line = src.line;
-
-			return *this;
-		}
+		code& operator=(const code& src);
 	};
 
 	class parser {
@@ -303,5 +253,3 @@ namespace gstd {
 		return command_kind::pc_jump_target;
 	}
 }
-
-#pragma pop_macro("new")

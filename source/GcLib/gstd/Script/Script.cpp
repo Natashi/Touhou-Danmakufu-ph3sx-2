@@ -481,6 +481,7 @@ void script_machine::run_code() {
 				break;
 			}
 			case command_kind::pc_dup_n:
+			case command_kind::pc_dup_n_unique:
 			{
 				stack_t& stack = current->stack;
 				value* val = &stack.back() - c->ip + 1;
@@ -491,6 +492,8 @@ void script_machine::run_code() {
 					value valCopy = *val;
 					stack.push_back(valCopy);
 				}
+				if (c->command == command_kind::pc_dup_n_unique)
+					stack.back().unique();
 				break;
 			}
 			case command_kind::pc_swap:
@@ -508,15 +511,23 @@ void script_machine::run_code() {
 				value* cmp_arg = (value*)(&stack.back() - 1);
 				value cmp_res = BaseFunction::compare(this, 2, cmp_arg);
 
+				/*
+				{
+					std::wstring str = c->command == command_kind::pc_compare_and_loop_ascent ? L"Asc: " : L"Dsc: ";
+					str += cmp_arg->as_string() + L" " + (cmp_arg + 1)->as_string();
+					Logger::WriteTop(str);
+				}
+				*/
+
 				bool is_skip = c->command == command_kind::pc_compare_and_loop_ascent ?
-					(cmp_res.as_int() >= 0) : (cmp_res.as_int() <= 0);
+					(cmp_res.as_int() <= 0) : (cmp_res.as_int() >= 0);
 				if (is_skip) {
 					do
 						++(current->ip);
 					while (current->sub->codes[current->ip - 1].command != command_kind::pc_loop_back);
 				}
 
-				current->stack.pop_back(2U);
+				//current->stack.pop_back(2U);
 				break;
 			}
 			case command_kind::pc_loop_count:
