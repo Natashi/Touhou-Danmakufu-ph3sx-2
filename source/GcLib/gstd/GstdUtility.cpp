@@ -1201,7 +1201,7 @@ void Font::CreateFontIndirect(LOGFONT& fontInfo) {
 	hFont_ = ::CreateFontIndirect(&fontInfo);
 	info_ = fontInfo;
 }
-//#pragma warning (disable : 4129)	//Unrecognized escape character
+#pragma warning (disable : 4129)	//Unrecognized escape character
 BYTE Font::DetectCharset(const wchar_t* type) {
 	if (std::regex_search(type, std::wregex(L"[^a-zA-Z0-9\s_\-]")))
 		return SHIFTJIS_CHARSET;
