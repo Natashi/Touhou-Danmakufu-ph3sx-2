@@ -639,30 +639,28 @@ namespace directx {
 			DEFAULT_CONTAINER_CAPACITY = 16384U,
 		};
 	protected:
-		int64_t totalObjectCreateCount_;
+		size_t totalObjectCreateCount_;
+		size_t countActiveObject_;
 		std::list<int> listUnusedIndex_;
-		std::vector<shared_ptr<DxScriptObjectBase>> obj_;		//オブジェクト
-		std::list<shared_ptr<DxScriptObjectBase>> listActiveObject_;
+		std::vector<shared_ptr<DxScriptObjectBase>> obj_;
 		std::unordered_map<std::wstring, shared_ptr<SoundInfo>> mapReservedSound_;
 
-		//フォグ
 		bool bFogEnable_;
 		D3DCOLOR fogColor_;
 		float fogStart_;
 		float fogEnd_;
 
-		std::vector<RenderList> listObjRender_; //描画バケットソート
+		std::vector<RenderList> listObjRender_;
 		std::vector<shared_ptr<Shader>> listShader_;
 
 		void _SetObjectID(DxScriptObjectBase* obj, int index) { obj->idObject_ = index; obj->manager_ = this; }
-		void _ArrangeActiveObjectList();
 	public:
 		DxScriptObjectManager();
 		virtual ~DxScriptObjectManager();
 
 		size_t GetMaxObject() { return obj_.size(); }
 		bool SetMaxObject(size_t size);
-		size_t GetAliveObjectCount() { return listActiveObject_.size(); }
+		size_t GetAliveObjectCount() { return countActiveObject_; }
 		size_t GetRenderBucketCapacity() { return listObjRender_.size(); }
 		void SetRenderBucketCapacity(size_t capacity);
 
@@ -701,7 +699,7 @@ namespace directx {
 		void ReserveSound(shared_ptr<SoundPlayer> player, SoundPlayer::PlayStyle& style);
 		void DeleteReservedSound(shared_ptr<SoundPlayer> player);
 		void SetFogParam(bool bEnable, D3DCOLOR fogColor, float start, float end);
-		int64_t GetTotalObjectCreateCount() { return totalObjectCreateCount_; }
+		size_t GetTotalObjectCreateCount() { return totalObjectCreateCount_; }
 
 		bool IsFogEneble() { return bFogEnable_; }
 		D3DCOLOR GetFogColor() { return fogColor_; }

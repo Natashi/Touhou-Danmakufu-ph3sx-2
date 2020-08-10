@@ -1166,7 +1166,9 @@ bool DxBinaryFileObject::IsReadableSize(size_t size) {
 DxScriptObjectManager::DxScriptObjectManager() {
 	SetMaxObject(DEFAULT_CONTAINER_CAPACITY);
 	SetRenderBucketCapacity(101);
-	totalObjectCreateCount_ = 0;
+
+	totalObjectCreateCount_ = 0U;
+	countActiveObject_ = 0U;
 
 	bFogEnable_ = false;
 	fogColor_ = D3DCOLOR_ARGB(255, 255, 255, 255);
@@ -1196,14 +1198,6 @@ void DxScriptObjectManager::SetRenderBucketCapacity(size_t capacity) {
 	listObjRender_.resize(capacity);
 	listShader_.resize(capacity);
 }
-void DxScriptObjectManager::_ArrangeActiveObjectList() {
-	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end();) {
-		shared_ptr<DxScriptObjectBase> obj = (*itr);
-		if (obj == nullptr || obj->IsDeleted() || !obj->IsActive())
-			itr = listActiveObject_.erase(itr);
-		else ++itr;
-	}
-}
 int DxScriptObjectManager::AddObject(shared_ptr<DxScriptObjectBase> obj, bool bActivate) {
 	int res = DxScript::ID_INVALID;
 
@@ -1226,10 +1220,8 @@ int DxScriptObjectManager::AddObject(shared_ptr<DxScriptObjectBase> obj, bool bA
 
 		if (res != DxScript::ID_INVALID) {
 			obj_[res] = obj;
-			if (bActivate) {
-				obj->bActive_ = true;
-				listActiveObject_.push_back(obj);
-			}
+
+			obj->bActive_ = bActivate;
 			obj->idObject_ = res;
 			obj->manager_ = this;
 
@@ -1247,7 +1239,6 @@ void DxScriptObjectManager::ActivateObject(shared_ptr<DxScriptObjectBase> obj, b
 
 	if (bActivate && !obj->IsActive()) {
 		obj->bActive_ = true;
-		listActiveObject_.push_back(obj);
 	}
 	else if (!bActivate) {
 		obj->bActive_ = false;
@@ -1290,13 +1281,10 @@ void DxScriptObjectManager::DeleteObject(DxScriptObjectBase* obj) {
 		obj->manager_->listUnusedIndex_.push_back(obj->GetObjectID());
 }
 void DxScriptObjectManager::ClearObject() {
-	size_t size = obj_.size();
-	obj_.clear();
-	obj_.resize(size, nullptr);
-	listActiveObject_.clear();
+	std::fill(obj_.begin(), obj_.end(), nullptr);
 
 	listUnusedIndex_.clear();
-	for (size_t iObj = 0; iObj < size; ++iObj) {
+	for (size_t iObj = 0; iObj < obj_.size(); ++iObj) {
 		listUnusedIndex_.push_back(iObj);
 	}
 }
@@ -1315,14 +1303,12 @@ void DxScriptObjectManager::DeleteObjectByScriptID(int64_t idScript) {
 	}
 }
 void DxScriptObjectManager::WorkObject() {
-	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end();) {
+	countActiveObject_ = 0U;
+	for (auto itr = obj_.begin(); itr != obj_.end(); ++itr) {
 		DxScriptObjectBase* obj = itr->get();
-		if (obj == nullptr || obj->IsDeleted()) {
-			itr = listActiveObject_.erase(itr);
-			continue;
-		}
+		if (obj == nullptr || obj->IsDeleted()) continue;
 		obj->Work();
-		++itr;
+		++countActiveObject_;
 	}
 
 	//‰¹ºÄ¶
@@ -1365,9 +1351,9 @@ void DxScriptObjectManager::RenderObject() {
 	}
 }
 void DxScriptObjectManager::CleanupObject() {
-	//No need to check for object validity here, only nullptr check is enough
-	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
-		if (DxScriptObjectBase* obj = itr->get())
+	for (auto itr = obj_.begin(); itr != obj_.end(); ++itr) {
+		DxScriptObjectBase* obj = itr->get();
+		if (obj) 
 			obj->CleanUp();
 	}
 }
@@ -1381,7 +1367,7 @@ void DxScriptObjectManager::RenderList::Clear() {
 	std::fill(list.begin(), list.end(), nullptr);
 }
 void DxScriptObjectManager::PrepareRenderObject() {
-	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end(); ++itr) {
+	for (auto itr = obj_.begin(); itr != obj_.end(); ++itr) {
 		DxScriptObjectBase* obj = itr->get();
 		if (obj == nullptr || obj->IsDeleted()) continue;
 		//Some render objects don't use normal rendering, thus sorting isn't required for them
