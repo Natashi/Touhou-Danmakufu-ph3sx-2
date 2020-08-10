@@ -125,4 +125,5 @@
 	- Added functionality to change the color of the delay cloud per-shot.
 	- Fixed a parser bug with nested single-lined statements.
 	- Fixed a rare bug where object IDs may get duplicated when objects are created in rapid succession.
+	- Fixed a bug where the default charset for some fonts are incorrectly determined.
 	- Utilized UPX Executable Packer to reduce file size.
