@@ -1205,7 +1205,7 @@ void Font::CreateFontIndirect(LOGFONT& fontInfo) {
 BYTE Font::DetectCharset(const wchar_t* type) {
 	if (std::regex_search(type, std::wregex(L"[^a-zA-Z0-9\s_\-]")))
 		return SHIFTJIS_CHARSET;
-	else return ANSI_CHARSET;
+	else return DEFAULT_CHARSET;
 	/*
 	for (; *type; ++type) {
 		wchar_t ch = *type;
