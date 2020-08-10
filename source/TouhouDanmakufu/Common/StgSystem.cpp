@@ -581,9 +581,8 @@ void StgSystemController::_ControlScene() {
 
 	ELogger* logger = ELogger::GetInstance();
 	if (logger->IsWindowVisible()) {
-		//ƒƒOŠÖ˜A
-		int taskCount = 0;
-		int objectCount = 0;
+		size_t taskCount = 0;
+		size_t objectCount = 0;
 		if (packageController_) {
 			StgControlScriptManager* scriptManager = packageController_->GetScriptManager();
 			if (scriptManager)
@@ -605,8 +604,8 @@ void StgSystemController::_ControlScene() {
 					objectCount += objectManager->GetAliveObjectCount();
 			}
 		}
-		logger->SetInfo(4, L"Task count", StringUtility::Format(L"%d", taskCount));
-		logger->SetInfo(5, L"Object count", StringUtility::Format(L"%d", objectCount));
+		logger->SetInfo(4, L"Task count", StringUtility::Format(L"%u", taskCount));
+		logger->SetInfo(5, L"Object count", StringUtility::Format(L"%u", objectCount));
 	}
 }
 void StgSystemController::StartStgScene(ref_count_ptr<StgStageInformation> infoStage, ref_count_ptr<ReplayInformation::StageData> replayStageData) {
