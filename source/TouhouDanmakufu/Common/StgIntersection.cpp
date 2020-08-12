@@ -577,3 +577,46 @@ std::wstring StgIntersectionTarget::GetInfoAsString() {
 	return res;
 }
 
+void StgIntersectionTarget_Circle::SetIntersectionSpace() {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	constexpr LONG margin = 16L;
+	LONG screenWidth = graphics->GetScreenWidth() + margin;
+	LONG screenHeight = graphics->GetScreenWidth() + margin;
+
+	LONG x = circle_.GetX();
+	LONG y = circle_.GetY();
+	LONG r = circle_.GetR();
+
+	LONG x1 = std::clamp(x - r, -margin, screenWidth);
+	LONG x2 = std::clamp(x + r, -margin, screenWidth);
+	LONG y1 = std::clamp(y - r, -margin, screenHeight);
+	LONG y2 = std::clamp(y + r, -margin, screenHeight);
+	intersectionSpace_ = { x1, y1, x2, y2 };
+}
+void StgIntersectionTarget_Line::SetIntersectionSpace() {
+	float x1 = line_.GetX1();
+	float y1 = line_.GetY1();
+	float x2 = line_.GetX2();
+	float y2 = line_.GetY2();
+	float width = line_.GetWidth();
+	if (x1 > x2)
+		std::swap(x1, x2);
+	if (y1 > y2)
+		std::swap(y1, y2);
+	x1 -= width;
+	x2 += width;
+	y1 -= width;
+	y2 += width;
+
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+
+	constexpr LONG margin = 16L;
+	LONG screenWidth = graphics->GetScreenWidth() + margin;
+	LONG screenHeight = graphics->GetScreenWidth() + margin;
+
+	LONG _x1 = std::clamp((LONG)x1, -margin, screenWidth);
+	LONG _x2 = std::clamp((LONG)x2, -margin, screenWidth);
+	LONG _y1 = std::clamp((LONG)y1, -margin, screenHeight);
+	LONG _y2 = std::clamp((LONG)y2, -margin, screenHeight);
+	intersectionSpace_ = { _x1, _y1, _x2, _y2 };
+}

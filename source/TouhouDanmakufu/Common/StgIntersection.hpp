@@ -68,22 +68,7 @@ public:
 	StgIntersectionTarget_Circle() { shape_ = Shape::SHAPE_CIRCLE; }
 	virtual ~StgIntersectionTarget_Circle() {}
 
-	virtual void SetIntersectionSpace() {
-		DirectGraphics* graphics = DirectGraphics::GetBase();
-		LONG screenWidth = graphics->GetScreenWidth();
-		LONG screenHeight = graphics->GetScreenWidth();
-
-		constexpr LONG margin = 16L;
-		LONG x = circle_.GetX();
-		LONG y = circle_.GetY();
-		LONG r = circle_.GetR();
-
-		LONG x1 = std::clamp(x - r, -margin, screenWidth + margin);
-		LONG x2 = std::clamp(x + r, -margin, screenWidth + margin);
-		LONG y1 = std::clamp(y - r, -margin, screenHeight + margin);
-		LONG y2 = std::clamp(y + r, -margin, screenHeight + margin);
-		intersectionSpace_ = { x1, y1, x2, y2 };
-	}
+	virtual void SetIntersectionSpace();
 
 	DxCircle& GetCircle() { return circle_; }
 	void SetCircle(DxCircle& circle) { 
@@ -101,33 +86,7 @@ public:
 	StgIntersectionTarget_Line() { shape_ = Shape::SHAPE_LINE; }
 	virtual ~StgIntersectionTarget_Line() {}
 
-	virtual void SetIntersectionSpace() {
-		float x1 = line_.GetX1();
-		float y1 = line_.GetY1();
-		float x2 = line_.GetX2();
-		float y2 = line_.GetY2();
-		float width = line_.GetWidth();
-		if (x1 > x2)
-			std::swap(x1, x2);
-		if (y1 > y2)
-			std::swap(y1, y2);
-		x1 -= width;
-		x2 += width;
-		y1 -= width;
-		y2 += width;
-
-		DirectGraphics* graphics = DirectGraphics::GetBase();
-
-		constexpr LONG margin = 16L;
-		LONG screenWidth = graphics->GetScreenWidth();
-		LONG screenHeight = graphics->GetScreenWidth();
-
-		LONG _x1 = std::clamp((LONG)x1, -margin, screenWidth + margin);
-		LONG _x2 = std::clamp((LONG)x2, -margin, screenWidth + margin);
-		LONG _y1 = std::clamp((LONG)y1, -margin, screenHeight + margin);
-		LONG _y2 = std::clamp((LONG)y2, -margin, screenHeight + margin);
-		intersectionSpace_ = { _x1, _y1, _x2, _y2 };
-	}
+	virtual void SetIntersectionSpace();
 
 	DxWidthLine& GetLine() { return line_; }
 	void SetLine(DxWidthLine& line) { 
