@@ -467,6 +467,7 @@ public:
 	//STG共通関数：当たり判定オブジェクト操作
 	static gstd::value Func_ObjCol_IsIntersected(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjCol_GetListOfIntersectedEnemyID(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjCol_GetListOfIntersectedShotID(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjCol_GetIntersectedCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
 };
 

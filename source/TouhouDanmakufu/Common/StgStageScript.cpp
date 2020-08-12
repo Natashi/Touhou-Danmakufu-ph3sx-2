@@ -523,6 +523,7 @@ function const stgFunction[] =
 		//STG共通関数：当たり判定オブジェクト操作
 	{ "ObjCol_IsIntersected", StgStageScript::Func_ObjCol_IsIntersected, 1 },
 	{ "ObjCol_GetListOfIntersectedEnemyID", StgStageScript::Func_ObjCol_GetListOfIntersectedEnemyID, 1 },
+	{ "ObjCol_GetListOfIntersectedShotID", StgStageScript::Func_ObjCol_GetListOfIntersectedShotID, 1 },
 	{ "ObjCol_GetIntersectedCount", StgStageScript::Func_ObjCol_GetIntersectedCount, 1 },
 
 	//定数
@@ -4516,6 +4517,25 @@ gstd::value StgStageScript::Func_ObjCol_GetListOfIntersectedEnemyID(gstd::script
 			if (auto ptr = wPtr.lock()) {
 				if (StgEnemyObject* objEnemy = dynamic_cast<StgEnemyObject*>(ptr.get()))
 					listObjectID.push_back(objEnemy->GetDxScriptObjectID());
+			}
+		}
+	}
+	return script->CreateRealArrayValue(listObjectID);
+}
+gstd::value StgStageScript::Func_ObjCol_GetListOfIntersectedShotID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = (int)argv[0].as_real();
+	int type = argv[1].as_int();
+	std::vector<int> listObjectID;
+	StgIntersectionObject* obj = dynamic_cast<StgIntersectionObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		std::vector<weak_ptr<StgIntersectionObject>>& listIntersection = obj->GetIntersectedIdList();
+		for (auto& wPtr : listIntersection) {
+			if (auto ptr = wPtr.lock()) {
+				if (StgShotObject* objShot = dynamic_cast<StgShotObject*>(ptr.get())) {
+					if (objShot->GetOwnerType() == type)
+						listObjectID.push_back(objShot->GetDxScriptObjectID());
+				}
 			}
 		}
 	}
