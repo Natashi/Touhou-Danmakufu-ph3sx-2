@@ -48,9 +48,7 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 	HDC hDC = ::GetDC(nullptr);
 	HFONT oldFont = (HFONT)SelectObject(hDC, winFont.GetHandle());
 
-	// フォントビットマップ取得
-	TEXTMETRIC tm;
-	::GetTextMetrics(hDC, &tm);
+	const TEXTMETRIC& tm = winFont.GetMetrics();
 
 	UINT uFormat = GGO_GRAY2_BITMAP;	//typeBorder == DxFont::BORDER_FULL ? GGO_BITMAP : GGO_GRAY2_BITMAP;
 	if (dxFont->GetLogFont().lfHeight <= 12)
@@ -102,7 +100,7 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 	BYTE* ptr = new BYTE[size];
 	::GetGlyphOutline(hDC, code, uFormat, &glpMet_, size, ptr, &mat);
 
-	// デバイスコンテキストとフォントハンドルの解放
+	//Restore previous font handle and discard the device context
 	::SelectObject(hDC, oldFont);
 	::ReleaseDC(nullptr, hDC);
 

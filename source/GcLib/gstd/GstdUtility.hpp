@@ -715,14 +715,18 @@ namespace gstd {
 	protected:
 		HFONT hFont_;
 		LOGFONT info_;
+		TEXTMETRICW metrics_;
 	public:
 		Font();
 		virtual ~Font();
+
 		void CreateFont(const wchar_t* type, int size, bool bBold = false, bool bItalic = false, bool bLine = false);
 		void CreateFontIndirect(LOGFONT& fontInfo);
 		void Clear();
+
 		HFONT GetHandle() { return hFont_; }
-		LOGFONT GetInfo() { return info_; }
+		const LOGFONT& GetInfo() { return info_; }
+		const TEXTMETRICW& GetMetrics() { return metrics_; }
 
 		static BYTE DetectCharset(const wchar_t* type);
 	};

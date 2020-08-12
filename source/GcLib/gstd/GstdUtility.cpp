@@ -1171,6 +1171,8 @@ const wchar_t* Font::MINCHOH = L"MS Mincho";
 
 Font::Font() {
 	hFont_ = nullptr;
+	ZeroMemory(&info_, sizeof(info_));
+	ZeroMemory(&metrics_, sizeof(metrics_));
 }
 Font::~Font() {
 	this->Clear();
@@ -1200,66 +1202,58 @@ void Font::CreateFontIndirect(LOGFONT& fontInfo) {
 	if (hFont_) this->Clear();
 	hFont_ = ::CreateFontIndirect(&fontInfo);
 	info_ = fontInfo;
+
+	HDC hDC = ::GetDC(nullptr);
+	HFONT oldFont = (HFONT)SelectObject(hDC, hFont_);
+
+	::GetTextMetrics(hDC, &metrics_);
+
+	::SelectObject(hDC, oldFont);
+	::ReleaseDC(nullptr, hDC);
 }
 #pragma warning (disable : 4129)	//Unrecognized escape character
 BYTE Font::DetectCharset(const wchar_t* type) {
-	if (std::regex_search(type, std::wregex(L"[^a-zA-Z0-9\s_\-]")))
-		return SHIFTJIS_CHARSET;
-	else return DEFAULT_CHARSET;
-	/*
-	for (; *type; ++type) {
-		wchar_t ch = *type;
-
+	std::wcmatch match;
+	bool reg = std::regex_search(type, match, std::wregex(L"[^a-zA-Z0-9_ \-]"));
+	if (reg) {
+		/*
+		wchar_t ch = match[0].str()[0];
 		auto InRange = [&](wchar_t low, wchar_t up) -> bool {
 			return (ch >= low && ch <= up);
 		};
 
-		if (InRange(0x0400, 0x04FF))		//Cyrillic
+		//Check Japanese first
+		if (InRange(0x3040, 0x309F)			//Hiragana
+			|| InRange(0x30A0, 0x30FF)		//Katakana
+			|| InRange(0x3190, 0x319F))		//Kanbun
+			return SHIFTJIS_CHARSET;
+		else if (InRange(0x0400, 0x04FF)	//Cyrillic
+			|| InRange(0x0500, 0x052F)		//Cyrillic supplement
+			|| InRange(0x2DE0, 0x2DFF) || InRange(0xA640, 0xA69F) || InRange(0x1C80, 0x1C88))	//Cyrillic extended
 			return RUSSIAN_CHARSET;
-		else if (InRange(0x0500, 0x052F))	//Cyrillic supplement
-			return RUSSIAN_CHARSET;
-		else if (InRange(0x2DE0, 0x2DFF) || InRange(0xA640, 0xA69F) || InRange(0x1C80, 0x1C88))	//Cyrillic extended
-			return RUSSIAN_CHARSET;
-
-		else if (InRange(0x0370, 0x03FF))	//Greek
+		else if (InRange(0x0370, 0x03FF)	//Greek
+			|| InRange(0x1F00, 0x1FFE))		//Greek extended
 			return GREEK_CHARSET;
-		else if (InRange(0x1F00, 0x1FFE))	//Greek extended
-			return GREEK_CHARSET;
-
-		else if (InRange(0x0600, 0x06FF))	//Arabic
+		else if (InRange(0x0600, 0x06FF)	//Arabic
+			|| InRange(0x0750, 0x077F)		//Arabic supplement
+			|| InRange(0x08A0, 0x08FF)		//Arabic extended
+			|| InRange(0xFB50, 0xFDFD) || InRange(0xFE70, 0xFEFC))		//Arabic presentation forms
 			return ARABIC_CHARSET;
-		else if (InRange(0x0750, 0x077F))	//Arabic supplement
-			return ARABIC_CHARSET;
-		else if (InRange(0x08A0, 0x08FF))	//Arabic extended
-			return ARABIC_CHARSET;
-		else if (InRange(0xFB50, 0xFDFD) || InRange(0xFE70, 0xFEFC))	//Arabic presentation forms
-			return ARABIC_CHARSET;
-
-		else if (InRange(0x0591, 0x05F4))	//Hebrew
+		else if (InRange(0x0591, 0x05F4)	//Hebrew
+			|| InRange(0xFB1D, 0xFB4F))		//Hebrew presentation forms
 			return HEBREW_CHARSET;
-		else if (InRange(0xFB1D, 0xFB4F))	//Hebrew presentation forms
-			return HEBREW_CHARSET;
-
 		else if (InRange(0x0E01, 0x0E5B))	//Thai
 			return THAI_CHARSET;
-
-		//CJK
-		else if (InRange(0x3040, 0x309F) || InRange(0x30A0, 0x30FF) || InRange(0x31F0, 0x31FF))
-			return SHIFTJIS_CHARSET;
-		else if (InRange(0x4E00, 0x9FFC) || InRange(0x3400, 0x4DBF)
-			|| InRange(0x2E80, 0x2FDF)) 
-		{
-			return SHIFTJIS_CHARSET;
-		}
-		else if (InRange(0x31C0, 0x31EF))
-			return GB2312_CHARSET;
-		else if (InRange(0x1100, 0x11FF) || InRange(0x3130, 0x318F)
-			|| InRange(0xA960, 0xA97F) || InRange(0xD7B0, 0xD7FF) || InRange(0xAC00, 0xD7AF))
-		{
+		else if (InRange(0x1100, 0x11FF)	//Hangul Jamo
+			|| InRange(0xA960, 0xA97F) || InRange(0xD7B0, 0xD7FF)		//Hangul Jamo extended
+			|| InRange(0x3130, 0x318F)		//Hangul compatibility Jamo
+			|| InRange(0xAC00, 0xD7AF))		//Hangul syllables
 			return HANGUL_CHARSET;
-		}
+		*/
+
+		//Probably one of the eight million kanjis or chinese characters
+		return SHIFTJIS_CHARSET;
 	}
-	return ANSI_CHARSET;
-	*/
+	else return DEFAULT_CHARSET;
 }
 #endif
