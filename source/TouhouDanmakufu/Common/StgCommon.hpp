@@ -80,12 +80,11 @@ protected:
 	int typeMove_;
 	StgMoveObject* target_;
 
-	int frameWork_;//アクティブになるフレーム。
-	int idShotData_;//弾画像ID(弾オブジェクト専用)
+	int frameWork_;
+	int idShotData_;
 
 	double c_;
 	double s_;
-	double dist_;
 
 	std::list<std::pair<int8_t, double>> listCommand_;
 
@@ -210,23 +209,54 @@ protected:
 	};
 
 	int typeLine_;
+	int maxFrame_;
 	double speed_;
 	double angDirection_;
-	double weight_;
-	double maxSpeed_;
-	int frameStop_;
-	double toX_;
-	double toY_;
+	
+	D3DXVECTOR2 iniPos_;
+	D3DXVECTOR2 targetPos_;
 public:
 	StgMovePattern_Line(StgMoveObject* target);
+
 	virtual void Move();
+
 	virtual inline double GetSpeed() { return speed_; }
 	virtual inline double GetDirectionAngle() { return angDirection_; }
 
-	void SetAtSpeed(double tx, double ty, double speed);
-	void SetAtFrame(double tx, double ty, double frame);
-	void SetAtWait(double tx, double ty, double weight, double maxSpeed);
-
 	virtual double GetSpeedX() { return c_; }
 	virtual double GetSpeedY() { return s_; }
+};
+class StgMovePattern_Line_Speed : public StgMovePattern_Line {
+	friend class StgMoveObject;
+public:
+	StgMovePattern_Line_Speed(StgMoveObject* target);
+
+	void SetAtSpeed(float tx, float ty, double speed);
+};
+class StgMovePattern_Line_Frame : public StgMovePattern_Line {
+	friend class StgMoveObject;
+public:
+	typedef float (*lerp_func)(float, float, float);
+protected:
+	D3DXVECTOR2 lastPos_;
+	lerp_func moveLerpFunc;
+public:
+	StgMovePattern_Line_Frame(StgMoveObject* target);
+
+	virtual void Move();
+
+	void SetAtFrame(float tx, float ty, int frame, lerp_func lerpFunc);
+};
+class StgMovePattern_Line_Weight : public StgMovePattern_Line {
+	friend class StgMoveObject;
+protected:
+	double dist_;
+	double weight_;
+	double maxSpeed_;
+public:
+	StgMovePattern_Line_Weight(StgMoveObject* target);
+
+	virtual void Move();
+
+	void SetAtWeight(float tx, float ty, double weight, double maxSpeed);
 };

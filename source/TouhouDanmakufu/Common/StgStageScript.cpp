@@ -371,6 +371,7 @@ function const stgFunction[] =
 	{ "ObjMove_SetAngularVelocity", StgStageScript::Func_ObjMove_SetAngularVelocity, 2 },
 	{ "ObjMove_SetDestAtSpeed", StgStageScript::Func_ObjMove_SetDestAtSpeed, 4 },
 	{ "ObjMove_SetDestAtFrame", StgStageScript::Func_ObjMove_SetDestAtFrame, 4 },
+	{ "ObjMove_SetDestAtFrame", StgStageScript::Func_ObjMove_SetDestAtFrame, 5 },	//Overloaded
 	{ "ObjMove_SetDestAtWeight", StgStageScript::Func_ObjMove_SetDestAtWeight, 5 },
 	{ "ObjMove_AddPatternA1", StgStageScript::Func_ObjMove_AddPatternA1, 4 },
 	{ "ObjMove_AddPatternA2", StgStageScript::Func_ObjMove_AddPatternA2, 7 },
@@ -2359,11 +2360,11 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtSpeed(gstd::script_machine* ma
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		double tx = argv[1].as_real();
-		double ty = argv[2].as_real();
+		float tx = argv[1].as_real();
+		float ty = argv[2].as_real();
 		double speed = argv[3].as_real();
 
-		std::shared_ptr<StgMovePattern_Line> pattern(new StgMovePattern_Line(obj));
+		std::shared_ptr<StgMovePattern_Line_Speed> pattern(new StgMovePattern_Line_Speed(obj));
 		pattern->SetAtSpeed(tx, ty, speed);
 		obj->SetPattern(pattern);
 	}
@@ -2374,12 +2375,33 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtFrame(gstd::script_machine* ma
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		double tx = argv[1].as_real();
-		double ty = argv[2].as_real();
+		float tx = argv[1].as_real();
+		float ty = argv[2].as_real();
 		int frame = argv[3].as_int();
 
-		std::shared_ptr<StgMovePattern_Line> pattern(new StgMovePattern_Line(obj));
-		pattern->SetAtFrame(tx, ty, frame);
+		StgMovePattern_Line_Frame::lerp_func lerpMode = Math::Lerp::Linear<float, float>;
+		if (argc == 5) {
+			switch (argv[4].as_int()) {
+			case Math::Lerp::SMOOTH:
+				lerpMode = Math::Lerp::Smooth<float, float>;
+				break;
+			case Math::Lerp::SMOOTHER:
+				lerpMode = Math::Lerp::Smoother<float, float>;
+				break;
+			case Math::Lerp::ACCELERATE:
+				lerpMode = Math::Lerp::Accelerate<float, float>;
+				break;
+			case Math::Lerp::DECELERATE:
+				lerpMode = Math::Lerp::Decelerate<float, float>;
+				break;
+			case Math::Lerp::LINEAR:
+			default:
+				lerpMode = Math::Lerp::Linear<float, float>;
+			}
+		}
+
+		std::shared_ptr<StgMovePattern_Line_Frame> pattern(new StgMovePattern_Line_Frame(obj));
+		pattern->SetAtFrame(tx, ty, frame, lerpMode);
 		obj->SetPattern(pattern);
 	}
 	return value();
@@ -2389,13 +2411,13 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtWeight(gstd::script_machine* m
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		double tx = argv[1].as_real();
-		double ty = argv[2].as_real();
+		float tx = argv[1].as_real();
+		float ty = argv[2].as_real();
 		double weight = argv[3].as_real();
 		double maxSpeed = argv[4].as_real();
 
-		std::shared_ptr<StgMovePattern_Line> pattern(new StgMovePattern_Line(obj));
-		pattern->SetAtWait(tx, ty, weight, maxSpeed);
+		std::shared_ptr<StgMovePattern_Line_Weight> pattern(new StgMovePattern_Line_Weight(obj));
+		pattern->SetAtWeight(tx, ty, weight, maxSpeed);
 		obj->SetPattern(pattern);
 	}
 	return value();

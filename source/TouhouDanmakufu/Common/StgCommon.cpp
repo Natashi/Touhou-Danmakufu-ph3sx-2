@@ -167,13 +167,12 @@ void StgMovePattern_Angle::Move() {
 		SetDirectionAngle(angle + angularVelocity_);
 	}
 
-	double sx = speed_ * c_;
-	double sy = speed_ * s_;
-	double px = target_->GetPositionX() + sx;
-	double py = target_->GetPositionY() + sy;
-
-	target_->SetPositionX(px);
-	target_->SetPositionY(py);
+	__m128d v1 = { speed_, speed_ };
+	__m128d v2 = { c_, s_ };
+	__m128d v3 = { target_->GetPositionX(), target_->GetPositionY() };
+	v1 = _mm_fmadd_pd(v1, v2, v3);
+	target_->SetPositionX(reinterpret_cast<double*>(&v1)[0]);
+	target_->SetPositionY(reinterpret_cast<double*>(&v1)[1]);
 
 	++frameWork_;
 }
@@ -350,90 +349,141 @@ void StgMovePattern_XY::_Activate(StgMovePattern* _src) {
 
 //StgMovePattern_Line
 StgMovePattern_Line::StgMovePattern_Line(StgMoveObject* target) : StgMovePattern(target) {
-	typeMove_ = TYPE_NONE;
+	typeMove_ = TYPE_LINE;
+	typeLine_ = TYPE_NONE;
+	maxFrame_ = -1;
 	speed_ = 0;
 	angDirection_ = 0;
-	weight_ = 0;
-	maxSpeed_ = 0;
-	frameStop_ = 0;
-	c_ = 0;
-	s_ = 0;
+	iniPos_ = D3DXVECTOR2(0, 0);
+	targetPos_ = D3DXVECTOR2(0, 0);
 }
 void StgMovePattern_Line::Move() {
-	if (typeLine_ == TYPE_SPEED || typeLine_ == TYPE_FRAME) {
+	if (frameWork_ <= maxFrame_) {
 		double sx = speed_ * c_;
 		double sy = speed_ * s_;
-		double px = target_->GetPositionX() + sx;
-		double py = target_->GetPositionY() + sy;
+		double px = target_->GetPositionX() + speed_ * c_;
+		double py = target_->GetPositionY() + speed_ * s_;
 
-		target_->SetPositionX(px);
-		target_->SetPositionY(py);
-		frameStop_--;
-		if (frameStop_ <= 0) {
-			typeLine_ = TYPE_NONE;
-			speed_ = 0;
-		}
+		__m128d v1 = { speed_, speed_ };
+		__m128d v2 = { c_, s_ };
+		__m128d v3 = { target_->GetPositionX(), target_->GetPositionY() };
+		v1 = _mm_fmadd_pd(v1, v2, v3);
+		target_->SetPositionX(reinterpret_cast<double*>(&v1)[0]);
+		target_->SetPositionY(reinterpret_cast<double*>(&v1)[1]);
 	}
-	else if (typeLine_ == TYPE_WEIGHT) {
-		double nx = target_->GetPositionX();
-		double ny = target_->GetPositionY();
-		if (dist_ < 1) {
-			typeLine_ = TYPE_NONE;
-			speed_ = 0;
-		}
-		else {
-			speed_ = dist_ / weight_;
-			if (speed_ > maxSpeed_)
-				speed_ = maxSpeed_;
-			double px = target_->GetPositionX() + speed_ * c_;
-			double py = target_->GetPositionY() + speed_ * s_;
-			target_->SetPositionX(px);
-			target_->SetPositionY(py);
+	else {
+		speed_ = 0;
+	}
 
-			dist_ -= speed_;
-		}
-	}
+	++frameWork_;
 }
-void StgMovePattern_Line::SetAtSpeed(double tx, double ty, double speed) {
+
+StgMovePattern_Line_Speed::StgMovePattern_Line_Speed(StgMoveObject* target) : StgMovePattern_Line(target) {
 	typeLine_ = TYPE_SPEED;
-	toX_ = tx;
-	toY_ = ty;
-	double nx = tx - target_->GetPositionX();
-	double ny = ty - target_->GetPositionY();
-	dist_ = hypot(nx, ny);
+}
+void StgMovePattern_Line_Speed::SetAtSpeed(float tx, float ty, double speed) {
+	iniPos_ = D3DXVECTOR2(target_->GetPositionX(), target_->GetPositionY());
+	targetPos_ = D3DXVECTOR2(tx, ty);
+
+	float nx = tx - iniPos_.x;
+	float ny = ty - iniPos_.y;
+	float dist = hypotf(nx, ny);
+
 	speed_ = speed;
-	angDirection_ = atan2(ny, nx);
-	frameStop_ = dist_ / speed;
+	angDirection_ = atan2f(ny, nx);
+	maxFrame_ = std::roundf(dist / (float)speed);
 
-	c_ = cos(angDirection_);
-	s_ = sin(angDirection_);
+	c_ = nx / dist;
+	s_ = ny / dist;
 }
-void StgMovePattern_Line::SetAtFrame(double tx, double ty, double frame) {
+
+StgMovePattern_Line_Frame::StgMovePattern_Line_Frame(StgMoveObject* target) : StgMovePattern_Line(target) {
 	typeLine_ = TYPE_FRAME;
-	toX_ = tx;
-	toY_ = ty;
-	double nx = tx - target_->GetPositionX();
-	double ny = ty - target_->GetPositionY();
-	dist_ = hypot(nx, ny);
-	speed_ = dist_ / frame;
-	angDirection_ = atan2(ny, nx);
-	frameStop_ = frame;
-
-	c_ = cos(angDirection_);
-	s_ = sin(angDirection_);
+	moveLerpFunc = Math::Lerp::Linear<float, float>;
+	lastPos_ = D3DXVECTOR2(0, 0);
 }
-void StgMovePattern_Line::SetAtWait(double tx, double ty, double weight, double maxSpeed) {
+void StgMovePattern_Line_Frame::SetAtFrame(float tx, float ty, int frame, lerp_func lerpFunc) {
+	iniPos_ = D3DXVECTOR2(target_->GetPositionX(), target_->GetPositionY());
+	targetPos_ = D3DXVECTOR2(tx, ty);
+	lastPos_ = iniPos_;
+
+	moveLerpFunc = lerpFunc;
+
+	float nx = tx - iniPos_.x;
+	float ny = ty - iniPos_.y;
+	float dist = hypotf(nx, ny);
+
+	speed_ = dist / frame;
+	angDirection_ = atan2f(ny, nx);
+	maxFrame_ = frame;
+
+	c_ = nx / dist;
+	s_ = ny / dist;
+}
+void StgMovePattern_Line_Frame::Move() {
+	if (frameWork_ <= maxFrame_) {
+		float tmp_line = frameWork_ / (float)maxFrame_;
+
+		float nx = moveLerpFunc(iniPos_.x, targetPos_.x, tmp_line);
+		float ny = moveLerpFunc(iniPos_.y, targetPos_.y, tmp_line);
+		float dx = nx - lastPos_.x;
+		float dy = ny - lastPos_.y;
+		float dist = hypotf(dx, dy);
+
+		c_ = dx / dist;
+		s_ = dy / dist;
+		speed_ = dist;
+
+		target_->SetPositionX(nx);
+		target_->SetPositionY(ny);
+	}
+	else {
+		speed_ = 0;
+	}
+
+	++frameWork_;
+}
+
+StgMovePattern_Line_Weight::StgMovePattern_Line_Weight(StgMoveObject* target) : StgMovePattern_Line(target) {
 	typeLine_ = TYPE_WEIGHT;
-	toX_ = tx;
-	toY_ = ty;
+	dist_ = 0;
+	weight_ = 0;
+	maxSpeed_ = 0;
+}
+void StgMovePattern_Line_Weight::SetAtWeight(float tx, float ty, double weight, double maxSpeed) {
+	iniPos_ = D3DXVECTOR2(target_->GetPositionX(), target_->GetPositionY());
+	targetPos_ = D3DXVECTOR2(tx, ty);
+
 	weight_ = weight;
 	maxSpeed_ = maxSpeed;
-	double nx = tx - target_->GetPositionX();
-	double ny = ty - target_->GetPositionY();
-	dist_ = hypot(nx, ny);
-	speed_ = maxSpeed_;
-	angDirection_ = atan2(ny, nx);
 
-	c_ = cos(angDirection_);
-	s_ = sin(angDirection_);
+	float nx = tx - iniPos_.x;
+	float ny = ty - iniPos_.y;
+	dist_ = hypotf(nx, ny);
+	speed_ = maxSpeed_;
+	angDirection_ = atan2f(ny, nx);
+
+	c_ = nx / dist_;
+	s_ = ny / dist_;
+}
+void StgMovePattern_Line_Weight::Move() {
+	if (dist_ < 0.2) {
+		speed_ = 0;
+	}
+	else {
+		speed_ = dist_ / weight_;
+		if (speed_ > maxSpeed_)
+			speed_ = maxSpeed_;
+
+		__m128d v1 = { speed_, speed_ };
+		__m128d v2 = { c_, s_ };
+		__m128d v3 = { target_->GetPositionX(), target_->GetPositionY() };
+		v1 = _mm_fmadd_pd(v1, v2, v3);
+		target_->SetPositionX(reinterpret_cast<double*>(&v1)[0]);
+		target_->SetPositionY(reinterpret_cast<double*>(&v1)[1]);
+
+		dist_ -= speed_;
+	}
+
+	++frameWork_;
 }
