@@ -62,12 +62,11 @@ void StgPlayerObject::Work() {
 	auto scriptManager = stageController_->GetScriptManager();
 	StgEnemyManager* enemyManager = stageController_->GetEnemyManager();
 
-	//当たり判定クリア
+	//Refresh player intersection
 	ClearIntersected();
 
 	switch (state_) {
 	case STATE_NORMAL:
-		//通常時
 		if (hitObjectID_ != DxScript::ID_INVALID) {
 			KillSelf(false);
 		}
@@ -155,7 +154,6 @@ void StgPlayerObject::Work() {
 		}
 		break;
 	case STATE_DOWN:
-		//ダウン
 		frameState_--;
 		if (frameState_ <= 0) {
 			bVisible_ = true;
@@ -175,7 +173,6 @@ void StgPlayerObject::Work() {
 }
 void StgPlayerObject::Move() {
 	if (state_ == STATE_NORMAL && bEnableMovement_) {
-		//通常時
 		if (hitObjectID_ == DxScript::ID_INVALID || frameInvincibility_ > 0) {
 			_Move();
 		}
