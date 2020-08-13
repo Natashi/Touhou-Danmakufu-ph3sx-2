@@ -1206,7 +1206,10 @@ int DxScriptObjectManager::AddObject(shared_ptr<DxScriptObjectBase> obj, bool bA
 		if (res != DxScript::ID_INVALID) {
 			obj_[res] = obj;
 
-			obj->bActive_ = bActivate;
+			if (bActivate) {
+				obj->bActive_ = true;
+				listActiveObject_.push_back(obj);
+			}
 			obj->idObject_ = res;
 			obj->manager_ = this;
 
@@ -1224,6 +1227,7 @@ void DxScriptObjectManager::ActivateObject(shared_ptr<DxScriptObjectBase> obj, b
 
 	if (bActivate && !obj->IsActive()) {
 		obj->bActive_ = true;
+		listActiveObject_.push_back(obj);
 	}
 	else if (!bActivate) {
 		obj->bActive_ = false;
@@ -1267,6 +1271,7 @@ void DxScriptObjectManager::DeleteObject(DxScriptObjectBase* obj) {
 }
 void DxScriptObjectManager::ClearObject() {
 	std::fill(obj_.begin(), obj_.end(), nullptr);
+	listActiveObject_.clear();
 
 	listUnusedIndex_.clear();
 	for (size_t iObj = 0; iObj < obj_.size(); ++iObj) {
@@ -1288,12 +1293,14 @@ void DxScriptObjectManager::DeleteObjectByScriptID(int64_t idScript) {
 	}
 }
 void DxScriptObjectManager::WorkObject() {
-	countActiveObject_ = 0U;
-	for (auto itr = obj_.begin(); itr != obj_.end(); ++itr) {
+	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end();) {
 		DxScriptObjectBase* obj = itr->get();
-		if (obj == nullptr || obj->IsDeleted()) continue;
+		if (obj == nullptr || obj->IsDeleted()) {
+			itr = listActiveObject_.erase(itr);
+			continue;
+		}
 		obj->Work();
-		++countActiveObject_;
+		++itr;
 	}
 
 	//âπê∫çƒê∂
@@ -1325,8 +1332,7 @@ void DxScriptObjectManager::RenderObject() {
 		for (UINT iPass = 0; iPass < cPass; ++iPass) {
 			if (effect) effect->BeginPass(iPass);
 			for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
-				if (DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(itr->get()))
-					obj->Render();
+				(*itr)->Render();
 			}
 			if (effect) effect->EndPass();
 		}
@@ -1336,10 +1342,8 @@ void DxScriptObjectManager::RenderObject() {
 	}
 }
 void DxScriptObjectManager::CleanupObject() {
-	for (auto itr = obj_.begin(); itr != obj_.end(); ++itr) {
-		DxScriptObjectBase* obj = itr->get();
-		if (obj)
-			obj->CleanUp();
+	for (shared_ptr<DxScriptObjectBase>& obj : listActiveObject_) {
+		if (obj) obj->CleanUp();
 	}
 }
 
@@ -1352,13 +1356,12 @@ void DxScriptObjectManager::RenderList::Clear() {
 	std::fill(list.begin(), list.end(), nullptr);
 }
 void DxScriptObjectManager::PrepareRenderObject() {
-	for (auto itr = obj_.begin(); itr != obj_.end(); ++itr) {
-		DxScriptObjectBase* obj = itr->get();
+	for (shared_ptr<DxScriptObjectBase>& obj : listActiveObject_) {
 		if (obj == nullptr || obj->IsDeleted()) continue;
 		//Some render objects don't use normal rendering, thus sorting isn't required for them
 		if (!obj->HasNormalRendering()) continue;
 		if (!obj->IsVisible()) continue;
-		AddRenderObject(*itr);
+		AddRenderObject(obj);
 	}
 }
 void DxScriptObjectManager::AddRenderObject(shared_ptr<DxScriptObjectBase> obj) {

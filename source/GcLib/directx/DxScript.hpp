@@ -640,9 +640,9 @@ namespace directx {
 		};
 	protected:
 		size_t totalObjectCreateCount_;
-		size_t countActiveObject_;
 		std::list<int> listUnusedIndex_;
 		std::vector<shared_ptr<DxScriptObjectBase>> obj_;
+		std::list<shared_ptr<DxScriptObjectBase>> listActiveObject_;
 		std::unordered_map<std::wstring, shared_ptr<SoundInfo>> mapReservedSound_;
 
 		bool bFogEnable_;
@@ -660,7 +660,7 @@ namespace directx {
 
 		size_t GetMaxObject() { return obj_.size(); }
 		bool SetMaxObject(size_t size);
-		size_t GetAliveObjectCount() { return countActiveObject_; }
+		size_t GetAliveObjectCount() { return listActiveObject_.size(); }
 		size_t GetRenderBucketCapacity() { return listObjRender_.size(); }
 		void SetRenderBucketCapacity(size_t capacity);
 
