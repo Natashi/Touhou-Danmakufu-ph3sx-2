@@ -7,8 +7,6 @@
 
 //------------------------------------------------------------------------------
 
-
-
 //--------------------------------Force Unicode---------------------------------
 
 #ifdef _MBCS
@@ -203,6 +201,18 @@ using path_t = stdfs::path;
 
 //------------------------------------------------------------------------------
 
+//SIMD checks
+#if !defined(_XM_X64_) && !defined(_XM_X86_)
+#if defined(_M_AMD64) || defined(_AMD64_)
+#define _XM_X64_
+#elif defined(_M_IX86) || defined(_X86_)
+#define _XM_X86_
+#endif
+#endif
+
+#if (!defined(_XM_X86_) && !defined(_XM_X64_))
+#error ph3sx requires x86/x64 intrinsics
+#endif
 
 //Pointer utilities
 template<typename T> static constexpr inline void ptr_delete(T*& ptr) {

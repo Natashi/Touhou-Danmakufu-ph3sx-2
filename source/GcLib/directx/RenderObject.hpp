@@ -5,7 +5,6 @@
 
 #include "DxConstant.hpp"
 #include "DxUtility.hpp"
-#include "Vertex.hpp"
 #include "Texture.hpp"
 #include "Shader.hpp"
 
@@ -15,7 +14,6 @@ namespace directx {
 	class RenderStateFunction;
 	class RenderBlock;
 	class RenderObject;
-
 	
 	/**********************************************************
 	//RenderBlock
@@ -277,6 +275,7 @@ namespace directx {
 		void SetVertexColorARGB(size_t index, int a, int r, int g, int b);
 		void SetVertexAlpha(size_t index, int alpha);
 		void SetVertexColorRGB(size_t index, int r, int g, int b);
+		void SetVertexColorRGB(size_t index, D3DCOLOR rgb);
 		D3DCOLOR GetVertexColor(size_t index);
 		void SetColorRGB(D3DCOLOR color);
 		void SetAlpha(int alpha);
@@ -309,6 +308,7 @@ namespace directx {
 		void SetVertexColorARGB(size_t index, int a, int r, int g, int b);
 		void SetVertexAlpha(size_t index, int alpha);
 		void SetVertexColorRGB(size_t index, int r, int g, int b);
+		void SetVertexColorRGB(size_t index, D3DCOLOR rgb);
 		D3DCOLOR GetVertexColor(size_t index);
 		void SetColorRGB(D3DCOLOR color);
 		void SetAlpha(int alpha);

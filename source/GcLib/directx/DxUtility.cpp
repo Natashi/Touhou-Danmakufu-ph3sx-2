@@ -8,41 +8,74 @@ using namespace directx;
 /**********************************************************
 //ColorAccess
 **********************************************************/
-D3DCOLORVALUE ColorAccess::SetColor(D3DCOLORVALUE value, D3DCOLOR color) {
-	float a = (float)GetColorA(color) / 255.0f;
-	float r = (float)GetColorR(color) / 255.0f;
-	float g = (float)GetColorG(color) / 255.0f;
-	float b = (float)GetColorB(color) / 255.0f;
-	value.r *= r; value.g *= g; value.b *= b; value.a *= a;
+D3DCOLORVALUE ColorAccess::SetColor(D3DCOLORVALUE& value, D3DCOLOR color) {
+	D3DXVECTOR4 _col = ToVec4Normalized(color);		//argb
+	D3DXVECTOR4 colVec = D3DXVECTOR4(_col.y, _col.z, _col.w, _col.x);	//rgba
+	value = (D3DCOLORVALUE&)ColorAccess::SetColor(colVec, color);
 	return value;
 }
 D3DMATERIAL9 ColorAccess::SetColor(D3DMATERIAL9 mat, D3DCOLOR color) {
-	float a = (float)GetColorA(color) / 255.0f;
-	float r = (float)GetColorR(color) / 255.0f;
-	float g = (float)GetColorG(color) / 255.0f;
-	float b = (float)GetColorB(color) / 255.0f;
-	mat.Diffuse.r *= r; mat.Diffuse.g *= g; mat.Diffuse.b *= b; mat.Diffuse.a *= a;
-	mat.Specular.r *= r; mat.Specular.g *= g; mat.Specular.b *= b; mat.Specular.a *= a;
-	mat.Ambient.r *= r; mat.Ambient.g *= g; mat.Ambient.b *= b; mat.Ambient.a *= a;
-	mat.Emissive.r *= r; mat.Emissive.g *= g; mat.Emissive.b *= b; mat.Emissive.a *= a;
+	D3DXVECTOR4 _col = ToVec4Normalized(color);			//argb
+	__m128 col = { _col.y, _col.z, _col.w, _col.x };	//rgba
+	__m128 dst;
+
+	auto PerformMul = [&](D3DCOLORVALUE* src) {
+		memcpy(&dst, src, sizeof(D3DCOLORVALUE));	//rgba
+		dst = _mm_mul_ps(dst, col);
+		//D3DXVECTOR4 cRes = ColorAccess::ClampColorPacked((D3DXVECTOR4&)dst);
+		memcpy(src, &dst, sizeof(D3DCOLORVALUE));
+	};
+	PerformMul(&mat.Diffuse);
+	PerformMul(&mat.Specular);
+	PerformMul(&mat.Ambient);
+	PerformMul(&mat.Emissive);
+
 	return mat;
+}
+D3DXVECTOR4& ColorAccess::SetColor(D3DXVECTOR4& value, D3DCOLOR color) {
+	__m128 v1 = (__m128&)value;					//argb
+	D3DXVECTOR4 col = ToVec4Normalized(color);	//argb
+	v1 = _mm_mul_ps(v1, (__m128&)col);
+	value = ColorAccess::ClampColorPacked((D3DXVECTOR4&)v1);
+	return value;
 }
 D3DCOLOR& ColorAccess::SetColor(D3DCOLOR& src, const D3DCOLOR& mul) {
 	D3DXVECTOR4 mulFac = ToVec4Normalized(mul);
-	byte na = GetColorA(src) * mulFac.x;
-	byte nr = GetColorR(src) * mulFac.y;
-	byte ng = GetColorG(src) * mulFac.z;
-	byte nb = GetColorB(src) * mulFac.w;
-	src = D3DCOLOR_ARGB(na, nr, ng, nb);
+	__m128 vsrc = (__m128&)ToVec4(src);			//argb
+	__m128 res = _mm_mul_ps(vsrc, (__m128&)(mulFac));
+	__m128i argb = ColorAccess::ClampColorPackedM((D3DXVECTOR4&)res);
+	int* _i = reinterpret_cast<int*>(&argb);
+	src = D3DCOLOR_ARGB(_i[0], _i[1], _i[2], _i[3]);
 	return src;
 }
 D3DCOLOR& ColorAccess::ApplyAlpha(D3DCOLOR& color, float alpha) {
-	byte a = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * alpha);
-	byte r = ColorAccess::ClampColorRet(((color >> 16) & 0xff) * alpha);
-	byte g = ColorAccess::ClampColorRet(((color >> 8) & 0xff) * alpha);
-	byte b = ColorAccess::ClampColorRet((color & 0xff) * alpha);
-	color = D3DCOLOR_ARGB(a, r, g, b);
+	__m128 v1 = (__m128&)ToVec4(color);			//argb
+	__m128 v2 = { alpha, alpha, alpha, alpha };
+	v1 = _mm_mul_ps(v1, v2);
+	__m128i argb = ColorAccess::ClampColorPackedM((D3DXVECTOR4&)v1);
+	int* _i = reinterpret_cast<int*>(&argb);
+	color = D3DCOLOR_ARGB(_i[0], _i[1], _i[2], _i[3]);
 	return color;
+}
+
+D3DXVECTOR4 ColorAccess::ClampColorPacked(const D3DXVECTOR4& src) {
+	__m128i ci = _mm_setr_epi32((int)src[0], (int)src[1], (int)src[2], (int)src[3]);
+	return ColorAccess::ClampColorPacked(ci);
+}
+D3DXVECTOR4 ColorAccess::ClampColorPacked(const __m128i& src) {
+	__m128i ci = ColorAccess::ClampColorPackedM(src);
+	int* _i = reinterpret_cast<int*>(&ci);
+	return D3DXVECTOR4((float)_i[0], (float)_i[1], (float)_i[2], (float)_i[3]);
+}
+__m128i ColorAccess::ClampColorPackedM(const D3DXVECTOR4& src) {
+	__m128i ci = _mm_setr_epi32((int)src[0], (int)src[1], (int)src[2], (int)src[3]);
+	return ColorAccess::ClampColorPackedM(ci);
+}
+__m128i ColorAccess::ClampColorPackedM(const __m128i& src) {
+	__m128i cn = _mm_setr_epi32(0x00, 0x00, 0x00, 0x00);
+	__m128i cx = _mm_setr_epi32(0xff, 0xff, 0xff, 0xff);
+	cx = _mm_maskz_min_epi32(0xff, src, cx);
+	return _mm_maskz_max_epi32(0xff, cx, cn);
 }
 
 D3DXVECTOR3& ColorAccess::RGBtoHSV(D3DXVECTOR3& color, int red, int green, int blue) {
@@ -94,10 +127,10 @@ D3DCOLOR& ColorAccess::HSVtoRGB(D3DCOLOR& color, int hue, int saturation, int va
 	int t = value * (1.0f - s * (1.0f - ff));
 
 	auto GenColor = [](int r, int g, int b) -> D3DCOLOR {
-		ClampColor(r);
-		ClampColor(g);
-		ClampColor(b);
-		return D3DCOLOR_XRGB(r, g, b);
+		__m128i ci = _mm_setr_epi32(r, g, b, 0);
+		int* _i = reinterpret_cast<int*>(&ci);
+		ci = ColorAccess::ClampColorPackedM(ci);
+		return D3DCOLOR_XRGB(_i[0], _i[1], _i[2]);
 	};
 
 	D3DCOLOR rgb = 0xffffffff;
@@ -114,6 +147,23 @@ D3DCOLOR& ColorAccess::HSVtoRGB(D3DCOLOR& color, int hue, int saturation, int va
 
 	color = (rgb & 0x00ffffff) | (color & 0xff000000);
 	return color;
+}
+
+D3DXVECTOR4 ColorAccess::ToVec4(const D3DCOLOR& color) {
+	return D3DXVECTOR4(GetColorA(color), GetColorR(color), GetColorG(color), GetColorB(color));
+}
+D3DXVECTOR4 ColorAccess::ToVec4Normalized(const D3DCOLOR& color) {
+	D3DXVECTOR4 argb = ToVec4(color);
+	__m128 nor = { 255.0f, 255.0f, 255.0f, 255.0f };
+	nor = _mm_div_ps((__m128&)argb, nor);
+	return (D3DXVECTOR4&)nor;
+}
+D3DCOLOR ColorAccess::ToD3DCOLOR(const __m128i& color) {
+	const int* _i = reinterpret_cast<const int*>(&color);
+	return D3DCOLOR_ARGB(_i[0], _i[1], _i[2], _i[3]);
+}
+D3DCOLOR ColorAccess::ToD3DCOLOR(const D3DXVECTOR4& color) {
+	return D3DCOLOR_ARGB((byte)color.x, (byte)color.y, (byte)color.z, (byte)color.w);
 }
 
 /**********************************************************
@@ -137,50 +187,57 @@ bool DxMath::IsIntersected(DxCircle& circle1, DxCircle& circle2) {
 	float rx = circle1.GetX() - circle2.GetX();
 	float ry = circle1.GetY() - circle2.GetY();
 	float rr = circle1.GetR() + circle2.GetR();
-	return (rx * rx + ry * ry) <= (rr * rr);
+	__m128 v1 = { rx, ry, rr, 0 };
+	v1 = _mm_mul_ps(v1, v1);
+	float* _v1 = reinterpret_cast<float*>(&v1);
+	return (_v1[0] + _v1[1]) <= (_v1[2]);
+	//return (rx * rx + ry * ry) <= (rr * rr);
 }
 bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
-	//êÊí[Ç‡ÇµÇ≠ÇÕèIí[Ç™â~ì‡Ç…Ç†ÇÈÇ©Çí≤Ç◊ÇÈ
+	__m128 v1, v2;
+	float* _v1 = reinterpret_cast<float*>(&v1);
+	float* _v2 = reinterpret_cast<float*>(&v2);
+
 	{
-		float radius = circle.GetR() * circle.GetR();
+		v1 = { circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY() };
+		v2 = { line.GetX1(), line.GetY1(), line.GetX2(), line.GetY2() };
+		v1 = _mm_sub_ps(v1, v2);
+		v1 = _mm_mul_ps(v1, v1);
 
-		float clx1 = circle.GetX() - line.GetX1();
-		float cly1 = circle.GetY() - line.GetY1();
-		float clx2 = circle.GetX() - line.GetX2();
-		float cly2 = circle.GetY() - line.GetY2();
+		float dist1 = _v1[0] + _v1[1];
+		float dist2 = _v1[2] + _v1[3];
 
-		float dist1 = clx1 * clx1 + cly1 * cly1;
-		float dist2 = clx2 * clx2 + cly2 * cly2;
-
-		if ((radius >= dist1 * dist1) || (radius >= dist2 * dist2))
+		v2 = { circle.GetR(), dist1, dist2, 0 };
+		v2 = _mm_mul_ps(v2, v2);
+		if ((_v2[0] >= _v2[1]) || (_v2[0] >= _v2[2]))
 			return true;
 	}
-
-	//ê¸ï™ì‡Ç…â~Ç™Ç†ÇÈÇ©Çí≤Ç◊ÇÈ
 	{
-		float lx1 = line.GetX2() - line.GetX1();
-		float ly1 = line.GetY2() - line.GetY1();
-		float cx1 = circle.GetX() - line.GetX1();
-		float cy1 = circle.GetY() - line.GetY1();
-		float inner1 = lx1 * cx1 + ly1 * cy1;
+		v1 = { circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY() };
+		v2 = { line.GetX1(), line.GetY1(), line.GetX2(), line.GetY2() };
+		v1 = _mm_sub_ps(v1, v2);
 
-		float lx2 = line.GetX1() - line.GetX2();
-		float ly2 = line.GetY1() - line.GetY2();
-		float cx2 = circle.GetX() - line.GetX2();
-		float cy2 = circle.GetY() - line.GetY2();
-		float inner2 = lx2 * cx2 + ly2 * cy2;
+		float lx = line.GetX2() - line.GetX1();
+		float ly = line.GetY2() - line.GetY1();
+		v2 = { lx, ly, -lx, -ly };
+		v2 = _mm_mul_ps(v1, v2);
 
+		float inner1 = _v2[0] + _v2[1];
+		float inner2 = _v2[2] - _v2[3];
 		if (inner1 < 0 || inner2 < 0)
 			return false;
 	}
 
-	float ux1 = line.GetX2() - line.GetX1();
-	float uy1 = line.GetY2() - line.GetY1();
-	float px = circle.GetX() - line.GetX1();
-	float py = circle.GetY() - line.GetY1();
+	v1 = { line.GetX2(), line.GetY2(), circle.GetX(), circle.GetY() };
+	v2 = { line.GetX1(), line.GetY1(), line.GetX1(), line.GetY1() };
+	v1 = _mm_sub_ps(v1, v2);
+
+	float ux1 = _v1[0];
+	float uy1 = _v1[1];
+	float px = _v1[2];
+	float py = _v1[3];
 
 	float u = 1.0f / hypotf(ux1, uy1);
-
 	float ux2 = ux1 * u;
 	float uy2 = uy1 * u;
 
@@ -188,13 +245,10 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	float qx = d * ux2;
 	float qy = d * uy2;
 
-	float rx = px - qx;
-	float ry = py - qy;
+	v1 = { px - qx, py - qy, line.GetWidth() + circle.GetR(), 0 };
+	v1 = _mm_mul_ps(v1, v1);
 
-	float e = rx * rx + ry * ry;
-	float r = line.GetWidth() + circle.GetR();
-
-	return e < (r * r);
+	return (_v1[0] + _v1[1]) < _v1[2];
 }
 
 //I want to die
@@ -338,6 +392,78 @@ bool DxMath::IsIntersected(DxLine3D& line, std::vector<DxTriangle>& triangles, s
 	return res;
 }
 
+void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX, 
+	const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ)
+{
+	float cx = angleX.x;
+	float sx = angleX.y;
+	float cy = angleY.x;
+	float sy = angleY.y;
+	float cz = angleZ.x;
+	float sz = angleZ.y;
+
+	float sx_sy = sx * sy;
+	float sx_cy = sx * cy;
+	__m256 v1_0 = {
+		cy, sx_sy, cx, sy, sx_cy, 
+		cy, sx_sy, cx
+	};
+	__m128 v1_1 = { sy, sx_cy, cx, cx };
+	__m256 v2_0 = {
+		cz, sz, sz, cz, sz,
+		sz, cz, cz
+	};
+	__m128 v2_1 = { sz, cz, sy, cy };
+	v1_0 = _mm256_mul_ps(v1_0, v2_0);
+	v1_1 = _mm_mul_ps(v1_1, v2_1);
+	float* _p0 = reinterpret_cast<float*>(&v1_0);
+	float* _p1 = reinterpret_cast<float*>(&v1_1);
+
+	mat->_11 = _p0[0] - _p0[1];
+	mat->_12 = -_p0[2];
+	mat->_13 = _p0[3] + _p0[4];
+	mat->_21 = _p0[5] + _p0[6];
+	mat->_22 = _p0[7];
+	mat->_23 = _p1[0] - _p1[1];
+	mat->_31 = -_p1[2];
+	mat->_32 = sx;
+	mat->_33 = _p1[3];
+
+	/*
+	mat._11 = cy * cz - sx * sy * sz;
+	mat._12 = -cx * sz;
+	mat._13 = sy * cz + sx * cy * sz;
+	mat._21 = cy * sz + sx * sy * cz;
+	mat._22 = cx * cz;
+	mat._23 = sy * sz - sx * cy * cz;
+	mat._31 = -cx * sy;
+	mat._32 = sx;
+	mat._33 = cx * cy;
+	*/
+}
+void DxMath::MatrixApplyScaling(D3DXMATRIX* mat, const D3DXVECTOR3& scale) {
+	__m256 v1 = {
+		mat->_11, mat->_12, mat->_13,
+		mat->_21, mat->_22, mat->_23,
+		mat->_31, mat->_32
+	};
+	__m256 v2 = {
+		scale.x, scale.x, scale.x,
+		scale.y, scale.y, scale.y,
+		scale.z, scale.z
+	};
+	v1 = _mm256_mul_ps(v1, v2);
+	float* _p = reinterpret_cast<float*>(&v1);
+	mat->_11 = _p[0];
+	mat->_12 = _p[1];
+	mat->_13 = _p[2];
+	mat->_21 = _p[3];
+	mat->_22 = _p[4];
+	mat->_23 = _p[5];
+	mat->_31 = _p[6];
+	mat->_32 = _p[7];
+	mat->_33 = mat->_33 * scale.z;
+}
 D3DXVECTOR4 DxMath::RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, D3DXVECTOR2* angY, D3DXVECTOR2* angZ) {
 	float vx = vec.x;
 	float vy = vec.y;
@@ -370,4 +496,56 @@ D3DXVECTOR4 DxMath::RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, 
 	}
 
 	return vec;
+}
+void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVECTOR2* angle,
+	D3DXVECTOR2* position, D3DXVECTOR2* textureSize) 
+{
+	__m256 v1;
+	__m256 v2;
+	__m128 v3 = { scale->x, scale->y, scale->x, scale->y };
+	float* _p1 = reinterpret_cast<float*>(&v1);
+
+	//First, divide the UVs
+	v1 = {
+		vert[0].texcoord.x, vert[0].texcoord.y, vert[1].texcoord.x, vert[1].texcoord.y,
+		vert[2].texcoord.x, vert[2].texcoord.y, vert[3].texcoord.x, vert[3].texcoord.y
+	};
+	v2 = {
+		textureSize->x, textureSize->y, textureSize->x, textureSize->y,
+		textureSize->x, textureSize->y, textureSize->x, textureSize->y
+	};
+	v1 = _mm256_mul_ps(v1, v2);
+	memcpy(&(vert[0].texcoord), &_p1[0], sizeof(D3DXVECTOR2));
+	memcpy(&(vert[1].texcoord), &_p1[2], sizeof(D3DXVECTOR2));
+	memcpy(&(vert[2].texcoord), &_p1[4], sizeof(D3DXVECTOR2));
+	memcpy(&(vert[3].texcoord), &_p1[6], sizeof(D3DXVECTOR2));
+
+	//Then, rotate and scale (2 vertices at a time)
+	for (size_t i = 0; i < 4; i += 2) {
+		//Rotate
+		v1 = {
+			vert[i + 0].position.x, vert[i + 0].position.y, vert[i + 0].position.x, vert[i + 0].position.y,
+			vert[i + 1].position.x, vert[i + 1].position.y, vert[i + 1].position.x, vert[i + 1].position.y,
+		};
+		v2 = {
+			angle->x, angle->y, angle->y, angle->x,
+			angle->x, angle->y, angle->y, angle->x
+		};
+		v1 = _mm256_mul_ps(v1, v2);
+
+		//Scale
+		v2 = {
+			_p1[0] - _p1[1], _p1[2] + _p1[3],
+			_p1[4] - _p1[5], _p1[6] + _p1[7]
+		};
+		v1 = {
+			position->x, position->y, 
+			position->x, position->y,
+		};
+		v1 = (__m256&)_mm_fmadd_ps((__m128&)v2, v3, (__m128&)v1);
+
+		//Save
+		memcpy(&(vert[i + 0].position), &_p1[0], sizeof(D3DXVECTOR2));
+		memcpy(&(vert[i + 1].position), &_p1[2], sizeof(D3DXVECTOR2));
+	}
 }

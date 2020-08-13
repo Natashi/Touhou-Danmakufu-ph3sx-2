@@ -4,7 +4,6 @@
 #include "../pch.h"
 
 #include "DxConstant.hpp"
-#include "Vertex.hpp"
 
 namespace directx {
 	struct BufferLockParameter {

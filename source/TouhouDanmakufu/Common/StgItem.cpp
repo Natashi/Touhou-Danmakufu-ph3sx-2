@@ -833,11 +833,8 @@ void StgItemObject::SetAlpha(int alpha) {
 	color_ = (color_ & 0x00ffffff) | ((byte)alpha << 24);
 }
 void StgItemObject::SetColor(int r, int g, int b) {
-	ColorAccess::ClampColor(r);
-	ColorAccess::ClampColor(g);
-	ColorAccess::ClampColor(b);
-	D3DCOLOR dc = D3DCOLOR_ARGB(0, r, g, b);
-	color_ = (color_ & 0xff000000) | (dc & 0x00ffffff);
+	__m128i c = _mm_setr_epi32(color_ >> 24, r, g, b);
+	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 }
 void StgItemObject::SetToPosition(D3DXVECTOR2& pos) {
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
@@ -1096,15 +1093,9 @@ void StgItemObject_User::RenderOnItemManager() {
 	//if(bIntersected_)color = D3DCOLOR_ARGB(255, 255, 0, 0);//ê⁄êGÉeÉXÉg
 
 	VERTEX_TLX verts[4];
-	/*
-	int srcX[] = { rcSrc.left, rcSrc.right, rcSrc.left, rcSrc.right };
-	int srcY[] = { rcSrc.top, rcSrc.top, rcSrc.bottom, rcSrc.bottom };
-	int destX[] = { rcDest.left, rcDest.right, rcDest.left, rcDest.right };
-	int destY[] = { rcDest.top, rcDest.top, rcDest.bottom, rcDest.bottom };
-	*/
 	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
 	LONG* ptrDst = reinterpret_cast<LONG*>(rcDst);
-
+	/*
 	for (size_t iVert = 0; iVert < 4; iVert++) {
 		VERTEX_TLX vt;
 
@@ -1119,9 +1110,19 @@ void StgItemObject_User::RenderOnItemManager() {
 		vt.position.y = (px * s + py * c) + posy;
 		vt.position.z = position_.z;
 
-		//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
 		verts[iVert] = vt;
 	}
+	*/
+	for (size_t iVert = 0U; iVert < 4U; ++iVert) {
+		VERTEX_TLX vt;
+		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
+		_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1], position_.z);
+		_SetVertexColorARGB(vt, color);
+		verts[iVert] = vt;
+	}
+	D3DXVECTOR2 texSizeInv = D3DXVECTOR2(1.0f / itemData->GetTextureSize().x, 1.0f / itemData->GetTextureSize().y);
+	DxMath::TransformVertex2D(verts, &D3DXVECTOR2(scaleX, scaleY), &D3DXVECTOR2(c, s), 
+		&D3DXVECTOR2(position_.x, posy), &texSizeInv);
 
 	renderer->AddSquareVertex(verts);
 }

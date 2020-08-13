@@ -1,8 +1,9 @@
-#ifndef __DIRECTX_DXCONSTANT__
-#define __DIRECTX_DXCONSTANT__
+#pragma once
 
 #include "../pch.h"
 #include "../gstd/GstdLib.hpp"
+
+#include "Vertex.hpp"
 
 class DirectGraphicsListener {
 public:
@@ -10,5 +11,3 @@ public:
 	virtual void ReleaseDxResource() {}
 	virtual void RestoreDxResource() {}
 };
-
-#endif

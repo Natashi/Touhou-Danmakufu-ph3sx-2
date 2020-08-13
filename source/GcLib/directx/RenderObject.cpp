@@ -197,26 +197,20 @@ size_t RenderObject::_GetPrimitiveCount() {
 	return _GetPrimitiveCount(GetVertexCount());
 }
 size_t RenderObject::_GetPrimitiveCount(size_t count) {
-	size_t res = 0;
 	switch (typePrimitive_) {
 	case D3DPT_POINTLIST:
-		res = count;
-		break;
+		return count;
 	case D3DPT_LINELIST:
-		res = count / 2U;
-		break;
+		return count / 2U;
 	case D3DPT_LINESTRIP:
-		res = count > 0U ? count - 1U : 0U;
-		break;
+		return (count > 0U ? count - 1U : 0U);
 	case D3DPT_TRIANGLELIST:
-		res = count / 3U;
-		break;
+		return count / 3U;
 	case D3DPT_TRIANGLESTRIP:
 	case D3DPT_TRIANGLEFAN:
-		res = count > 1U ? count - 2U : 0U;
-		break;
+		return (count > 1U ? count - 2U : 0U);
 	}
-	return res;
+	return 0U;
 }
 
 
@@ -228,37 +222,14 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 {
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
-	{
-		float cx = angleX.x;
-		float sx = angleX.y;
-		float cy = angleY.x;
-		float sy = angleY.y;
-		float cz = angleZ.x;
-		float sz = angleZ.y;
-		mat._11 = cy * cz - sx * sy * sz;
-		mat._12 = -cx * sz;
-		mat._13 = sy * cz + sx * cy * sz;
-		mat._21 = cy * sz + sx * sy * cz;
-		mat._22 = cx * cz;
-		mat._23 = sy * sz - sx * cy * cz;
-		mat._31 = -cx * sy;
-		mat._32 = sx;
-		mat._33 = cx * cy;
-	}
+
+	DxMath::ConstructRotationMatrix(&mat, angleX, angleY, angleZ);
 
 	bool bScale = scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f;
 	bool bPos = position.x != 0.0f || position.y != 0.0f || position.z != 0.0f;
 	if (bScale || bPos) {
 		if (bScale) {
-			mat._11 *= scale.x;
-			mat._12 *= scale.x;
-			mat._13 *= scale.x;
-			mat._21 *= scale.y;
-			mat._22 *= scale.y;
-			mat._23 *= scale.y;
-			mat._31 *= scale.z;
-			mat._32 *= scale.z;
-			mat._33 *= scale.z;
+			DxMath::MatrixApplyScaling(&mat, scale);
 		}
 		if (bPos) {
 			mat._41 = position.x;
@@ -315,38 +286,12 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 		D3DXMATRIX matSRT;
 		D3DXMatrixIdentity(&matSRT);
 
-		bool bScale = scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f;
-		bool bPos = position.x != 0.0f || position.y != 0.0f || position.z != 0.0f;
+		D3DXMatrixRotationYawPitchRoll(&matSRT, angle.y, angle.x, angle.z);
 
-		{
-			float cx = cosf(-angle.x);
-			float sx = sinf(-angle.x);
-			float cy = cosf(-angle.y);
-			float sy = sinf(-angle.y);
-			float cz = cosf(-angle.z);
-			float sz = sinf(-angle.z);
-			matSRT._11 = cy * cz - sx * sy * sz;
-			matSRT._12 = -cx * sz;
-			matSRT._13 = sy * cz + sx * cy * sz;
-			matSRT._21 = cy * sz + sx * sy * cz;
-			matSRT._22 = cx * cz;
-			matSRT._23 = sy * sz - sx * cy * cz;
-			matSRT._31 = -cx * sy;
-			matSRT._32 = sx;
-			matSRT._33 = cx * cy;
+		if (scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f) {
+			DxMath::MatrixApplyScaling(&matSRT, scale);
 		}
-		if (bScale) {
-			matSRT._11 *= scale.x;
-			matSRT._12 *= scale.x;
-			matSRT._13 *= scale.x;
-			matSRT._21 *= scale.y;
-			matSRT._22 *= scale.y;
-			matSRT._23 *= scale.y;
-			matSRT._31 *= scale.z;
-			matSRT._32 *= scale.z;
-			matSRT._33 *= scale.z;
-		}
-		if (bPos) {
+		if (position.x != 0.0f || position.y != 0.0f || position.z != 0.0f) {
 			matSRT._41 = position.x;
 			matSRT._42 = position.y;
 			matSRT._43 = position.z;
@@ -399,34 +344,11 @@ D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(const D3DXVECTOR3& position, 
 {
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
-	{
-		float cx = angleX.x;
-		float sx = angleX.y;
-		float cy = angleY.x;
-		float sy = angleY.y;
-		float cz = angleZ.x;
-		float sz = angleZ.y;
-		mat._11 = cy * cz - sx * sy * sz;
-		mat._12 = -cx * sz;
-		mat._13 = sy * cz + sx * cy * sz;
-		mat._21 = cy * sz + sx * sy * cz;
-		mat._22 = cx * cz;
-		mat._23 = sy * sz - sx * cy * cz;
-		mat._31 = -cx * sy;
-		mat._32 = sx;
-		mat._33 = cx * cy;
-	}
+
+	DxMath::ConstructRotationMatrix(&mat, angleX, angleY, angleZ);
 
 	if (scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f) {
-		mat._11 *= scale.x;
-		mat._12 *= scale.x;
-		mat._13 *= scale.x;
-		mat._21 *= scale.y;
-		mat._22 *= scale.y;
-		mat._23 *= scale.y;
-		mat._31 *= scale.z;
-		mat._32 *= scale.z;
-		mat._33 *= scale.z;
+		DxMath::MatrixApplyScaling(&mat, scale);
 	}
 	if (bBillboard) {
 		DirectGraphics* graph = DirectGraphics::GetBase();
@@ -458,38 +380,15 @@ D3DXMATRIX RenderObject::CreateWorldMatrix2D(const D3DXVECTOR3& position, const 
 {
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
-	{
-		float cx = angleX.x;
-		float sx = angleX.y;
-		float cy = angleY.x;
-		float sy = angleY.y;
-		float cz = angleZ.x;
-		float sz = angleZ.y;
-		mat._11 = cy * cz - sx * sy * sz;
-		mat._12 = -cx * sz;
-		mat._13 = sy * cz + sx * cy * sz;
-		mat._21 = cy * sz + sx * sy * cz;
-		mat._22 = cx * cz;
-		mat._23 = sy * sz - sx * cy * cz;
-		mat._31 = -cx * sy;
-		mat._32 = sx;
-		mat._33 = cx * cy;
-	}
+
+	DxMath::ConstructRotationMatrix(&mat, angleX, angleY, angleZ);
 
 	bool bScale = scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f;
 	bool bPos = position.x != 0.0f || position.y != 0.0f || position.z != 0.0f;
 
 	if (bScale || bPos) {
 		if (bScale) {
-			mat._11 *= scale.x;
-			mat._12 *= scale.x;
-			mat._13 *= scale.x;
-			mat._21 *= scale.y;
-			mat._22 *= scale.y;
-			mat._23 *= scale.y;
-			mat._31 *= scale.z;
-			mat._32 *= scale.z;
-			mat._33 *= scale.z;
+			DxMath::MatrixApplyScaling(&mat, scale);
 		}
 		if (bPos) {
 			mat._41 = position.x;
@@ -512,38 +411,12 @@ D3DXMATRIX RenderObject::CreateWorldMatrixText2D(const D3DXVECTOR2& centerPositi
 		D3DXMATRIX matSRT;
 		D3DXMatrixIdentity(&matSRT);
 
-		bool bScale = scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f;
-		bool bPos = objectPosition.x != 0.0f || objectPosition.y != 0.0f;
+		DxMath::ConstructRotationMatrix(&matSRT, angleX, angleY, angleZ);
 
-		{
-			float cx = angleX.x;
-			float sx = angleX.y;
-			float cy = angleY.x;
-			float sy = angleY.y;
-			float cz = angleZ.x;
-			float sz = angleZ.y;
-			matSRT._11 = cy * cz - sx * sy * sz;
-			matSRT._12 = -cx * sz;
-			matSRT._13 = sy * cz + sx * cy * sz;
-			matSRT._21 = cy * sz + sx * sy * cz;
-			matSRT._22 = cx * cz;
-			matSRT._23 = sy * sz - sx * cy * cz;
-			matSRT._31 = -cx * sy;
-			matSRT._32 = sx;
-			matSRT._33 = cx * cy;
+		if (scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f) {
+			DxMath::MatrixApplyScaling(&matSRT, scale);
 		}
-		if (bScale) {
-			matSRT._11 *= scale.x;
-			matSRT._12 *= scale.x;
-			matSRT._13 *= scale.x;
-			matSRT._21 *= scale.y;
-			matSRT._22 *= scale.y;
-			matSRT._23 *= scale.y;
-			matSRT._31 *= scale.z;
-			matSRT._32 *= scale.z;
-			matSRT._33 *= scale.z;
-		}
-		if (bPos) {
+		if (objectPosition.x != 0.0f || objectPosition.y != 0.0f) {
 			matSRT._41 = objectPosition.x;
 			matSRT._42 = objectPosition.y;
 			matSRT._43 = 0.0f;
@@ -747,10 +620,12 @@ void RenderObjectTLX::SetVertexAlpha(size_t index, int alpha) {
 	vertex->diffuse_color = (vertex->diffuse_color & 0x00ffffff) | ((byte)alpha << 24);
 }
 void RenderObjectTLX::SetVertexColorRGB(size_t index, int r, int g, int b) {
+	this->SetVertexColorRGB(index, D3DCOLOR_ARGB(0, r, g, b));
+}
+void RenderObjectTLX::SetVertexColorRGB(size_t index, D3DCOLOR rgb) {
 	VERTEX_TLX* vertex = GetVertex(index);
 	if (vertex == nullptr) return;
-	D3DCOLOR dc = D3DCOLOR_ARGB(0, r, g, b);
-	vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | dc;
+	vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | (rgb & 0x00ffffff);
 }
 D3DCOLOR RenderObjectTLX::GetVertexColor(size_t index) {
 	VERTEX_TLX* vertex = GetVertex(index);
@@ -1058,10 +933,12 @@ void RenderObjectLX::SetVertexAlpha(size_t index, int alpha) {
 	vertex->diffuse_color = (vertex->diffuse_color & 0x00ffffff) | ((byte)alpha << 24);
 }
 void RenderObjectLX::SetVertexColorRGB(size_t index, int r, int g, int b) {
+	this->SetVertexColorRGB(index, D3DCOLOR_ARGB(0, r, g, b));
+}
+void RenderObjectLX::SetVertexColorRGB(size_t index, D3DCOLOR rgb) {
 	VERTEX_LX* vertex = GetVertex(index);
 	if (vertex == nullptr) return;
-	D3DCOLOR dc = D3DCOLOR_ARGB(0, r, g, b);
-	vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | dc;
+	vertex->diffuse_color = (vertex->diffuse_color & 0xff000000) | (rgb & 0x00ffffff);
 }
 D3DCOLOR RenderObjectLX::GetVertexColor(size_t index) {
 	VERTEX_LX* vertex = GetVertex(index);
@@ -2102,10 +1979,9 @@ void ParticleRendererBase::ClearInstance() {
 	//countInstancePrev_ = 0U;
 }
 void ParticleRendererBase::SetInstanceColorRGB(int r, int g, int b) {
-	ColorAccess::ClampColor(r);
-	ColorAccess::ClampColor(g);
-	ColorAccess::ClampColor(b);
-	SetInstanceColor(D3DCOLOR_ARGB(instColor_ >> 24, r, g, b));
+	__m128i c = _mm_setr_epi32(instColor_ >> 24, r, g, b);
+	D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
+	SetInstanceColor(color);
 }
 void ParticleRendererBase::SetInstanceColorRGB(D3DCOLOR color) {
 	SetInstanceColor((color & 0x00ffffff) | (instColor_ & 0xff000000));

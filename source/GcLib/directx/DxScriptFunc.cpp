@@ -1144,10 +1144,11 @@ gstd::value DxScript::Func_SetFogParam(gstd::script_machine* machine, int argc, 
 	DxScript* script = (DxScript*)machine->data;
 	float start = argv[0].as_real();
 	float end = argv[1].as_real();
-	byte r = ColorAccess::ClampColorRet(argv[2].as_int());
-	byte g = ColorAccess::ClampColorRet(argv[3].as_int());
-	byte b = ColorAccess::ClampColorRet(argv[4].as_int());
-	D3DCOLOR color = D3DCOLOR_ARGB(255, r, g, b);
+
+	__m128i c = _mm_setr_epi32(0, (int)argv[2].as_int(), 
+		(int)argv[3].as_int(), (int)argv[4].as_int());
+	D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
+
 	script->GetObjectManager()->SetFogParam(true, color, start, end);
 	return value();
 }
@@ -1247,14 +1248,13 @@ gstd::value DxScript::Func_ClearRenderTargetA2(gstd::script_machine* machine, in
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	shared_ptr<Texture> current = graphics->GetRenderTarget();
 
-	byte ca = ColorAccess::ClampColorRet(argv[1].as_int());
-	byte cr = ColorAccess::ClampColorRet(argv[2].as_int());
-	byte cg = ColorAccess::ClampColorRet(argv[3].as_int());
-	byte cb = ColorAccess::ClampColorRet(argv[4].as_int());
+	__m128i c = _mm_setr_epi32((int)argv[1].as_int(), (int)argv[2].as_int(),
+		(int)argv[3].as_int(), (int)argv[4].as_int());
+	D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 
 	IDirect3DDevice9* device = graphics->GetDevice();
 	graphics->SetRenderTarget(texture, false);
-	device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(ca, cr, cg, cb), 1.0f, 0);
+	device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, color, 1.0f, 0);
 	graphics->SetRenderTarget(current, false);
 
 	return script->CreateBooleanValue(true);
@@ -3641,11 +3641,10 @@ value DxScript::Func_ObjText_SetVertexColor(script_machine* machine, int argc, c
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		byte a = ColorAccess::ClampColorRet(argv[1].as_int());
-		byte r = ColorAccess::ClampColorRet(argv[2].as_int());
-		byte g = ColorAccess::ClampColorRet(argv[3].as_int());
-		byte b = ColorAccess::ClampColorRet(argv[4].as_int());
-		obj->SetVertexColor(D3DCOLOR_ARGB(a, r, g, b));
+		__m128i c = _mm_setr_epi32((int)argv[1].as_int(), (int)argv[2].as_int(),
+			(int)argv[3].as_int(), (int)argv[4].as_int());
+		D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
+		obj->SetVertexColor(color);
 	}
 	return value();
 }
