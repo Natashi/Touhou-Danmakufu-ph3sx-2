@@ -443,6 +443,10 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 			renderList.Clear();
 
 			if (effect) effect->End();
+
+			if (iPri == priMaxStgFrame - 1 /*&& graphics->IsMainRenderLoop()*/) {
+				stageController_->GetIntersectionManager()->RenderVisualizer();
+			}
 		}
 
 		//パッケージ

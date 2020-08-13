@@ -154,7 +154,6 @@ namespace directx {
 		D3DXVECTOR3& GetPosition(size_t index) { return vertex_[index]; }
 		D3DXVECTOR3& GetPosition1() { return vertex_[0]; }
 		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
-
 	};
 
 	class DxTriangle {
@@ -228,6 +227,8 @@ namespace directx {
 		static bool IsIntersected(DxCircle& circle, DxWidthLine& line);
 		static bool IsIntersected(DxWidthLine& line1, DxWidthLine& line2);
 		static bool IsIntersected(DxLine3D& line, std::vector<DxTriangle>& triangles, std::vector<D3DXVECTOR3>& out);
+
+		static size_t SplitWidthLine(DxWidthLine (&dest)[2], DxWidthLine* src);
 
 		static inline D3DXVECTOR4 VectMatMulti(D3DXVECTOR4 v, D3DXMATRIX& mat) {
 			D3DXVECTOR4 res;

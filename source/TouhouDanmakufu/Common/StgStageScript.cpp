@@ -263,6 +263,7 @@ function const stgFunction[] =
 	{ "GetCameraFocusPermitPriorityI", StgStageScript::Func_GetCameraFocusPermitPriorityI, 0 },
 	{ "CloseStgScene", StgStageScript::Func_CloseStgScene, 0 },
 	{ "GetReplayFps", StgStageScript::Func_GetReplayFps, 0 },
+	{ "SetIntersectionVisualization", StgStageScript::Func_SetIntersectionVisualization, 1 },
 
 	//STG共通関数：自機
 	{ "GetPlayerObjectID", StgStageScript::Func_GetPlayerObjectID, 0 },
@@ -860,6 +861,17 @@ gstd::value StgStageScript::Func_GetReplayFps(gstd::script_machine* machine, int
 	}
 
 	return script->CreateRealValue(fps);
+}
+gstd::value StgStageScript::Func_SetIntersectionVisualization(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+	
+	StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
+	if (intersectionManager) {
+		intersectionManager->SetRenderIntersection(argv[0].as_boolean());
+	}
+
+	return value();
 }
 
 //STG共通関数：自機

@@ -109,15 +109,30 @@ private:
 		SPACE_PLAYERSHOT_ENEMY,
 		SPACE_PLAYERSHOT_ENEMYSHOT,
 	};
+	
 	std::vector<StgIntersectionSpace*> listSpace_;
 	std::vector<StgIntersectionTargetPoint> listEnemyTargetPoint_;
 	std::vector<StgIntersectionTargetPoint> listEnemyTargetPointNext_;
+
+	shared_ptr<DxScriptParticleListObject2D> objIntersectionVisualizerCircle_;
+	shared_ptr<DxScriptPrimitiveObject2D> objIntersectionVisualizerLine_;
+	std::atomic<size_t> countCircleInstance_;
+	std::atomic<size_t> countLineVertex_;
+	bool bRenderIntersection_;
+
+	shared_ptr<Shader> shaderVisualizerCircle_;
+	shared_ptr<Shader> shaderVisualizerLine_;
 
 	omp_lock_t lock_;
 public:
 	StgIntersectionManager();
 	virtual ~StgIntersectionManager();
+
 	void Work();
+	void RenderVisualizer();
+
+	void SetRenderIntersection(bool b) { bRenderIntersection_ = b; }
+	bool IsRenderIntersection() { return bRenderIntersection_; }
 
 	void AddTarget(StgIntersectionTarget::ptr target);
 	void AddEnemyTargetToShot(StgIntersectionTarget::ptr target);
@@ -129,6 +144,8 @@ public:
 	static bool IsIntersected(StgIntersectionTarget::ptr& target1, StgIntersectionTarget::ptr& target2);
 
 	omp_lock_t* GetLock() { return &lock_; }
+
+	void AddVisualization(StgIntersectionTarget::ptr& target);
 };
 
 /**********************************************************
@@ -182,31 +199,15 @@ class StgIntersectionCheckList {
 	//std::vector<StgIntersectionTarget*> listTargetB_;
 	std::vector<std::pair<StgIntersectionTarget::ptr, StgIntersectionTarget::ptr>> listTargetPair_;
 public:
-	StgIntersectionCheckList() { count_ = 0; }
-	virtual ~StgIntersectionCheckList() {}
+	StgIntersectionCheckList();
+	virtual ~StgIntersectionCheckList();
 
 	void Clear() { count_ = 0; }
 	size_t GetCheckCount() { return count_; }
-	void Add(StgIntersectionTarget::ptr& targetA, StgIntersectionTarget::ptr& targetB) {
-		std::pair<StgIntersectionTarget::ptr, StgIntersectionTarget::ptr> pair = { targetA, targetB };
-		if (listTargetPair_.size() <= count_) {
-			listTargetPair_.push_back(pair);
-		}
-		else {
-			listTargetPair_[count_] = pair;
-		}
-		++count_;
-	}
-	StgIntersectionTarget::ptr GetTargetA(int index) {
-		std::pair<StgIntersectionTarget::ptr, StgIntersectionTarget::ptr> pair = listTargetPair_[index];
-		listTargetPair_[index].first = nullptr;
-		return pair.first; 
-	}
-	StgIntersectionTarget::ptr GetTargetB(int index) {
-		std::pair<StgIntersectionTarget::ptr, StgIntersectionTarget::ptr> pair = listTargetPair_[index];
-		listTargetPair_[index].second = nullptr;
-		return pair.second;
-	}
+
+	void AddTargetPair(StgIntersectionTarget::ptr& targetA, StgIntersectionTarget::ptr& targetB);
+	StgIntersectionTarget::ptr GetTargetA(size_t index);
+	StgIntersectionTarget::ptr GetTargetB(size_t index);
 };
 
 class StgIntersectionSpace {
@@ -224,8 +225,7 @@ protected:
 
 	StgIntersectionCheckList* listCheck_;
 
-	size_t _WriteIntersectionCheckList(StgIntersectionManager* manager, StgIntersectionCheckList*& listCheck);
-//		std::vector<std::vector<StgIntersectionTarget*>> &listStack);
+	size_t _WriteIntersectionCheckList(StgIntersectionManager* manager);
 public:
 	StgIntersectionSpace();
 	virtual ~StgIntersectionSpace();
@@ -233,17 +233,8 @@ public:
 	bool RegistTarget(int type, StgIntersectionTarget::ptr& target);
 	bool RegistTargetA(StgIntersectionTarget::ptr& target) { return RegistTarget(TYPE_A, target); }
 	bool RegistTargetB(StgIntersectionTarget::ptr& target) { return RegistTarget(TYPE_B, target); }
-	void ClearTarget() {
-		listCell_[0].clear();
-		listCell_[1].clear();
-	}
-	StgIntersectionCheckList* CreateIntersectionCheckList(StgIntersectionManager* manager, size_t& total) {
-		StgIntersectionCheckList* res = listCheck_;
-		res->Clear();
-
-		total += _WriteIntersectionCheckList(manager, res);
-		return res;
-	}
+	void ClearTarget();
+	StgIntersectionCheckList* CreateIntersectionCheckList(StgIntersectionManager* manager, size_t& total);
 };
 
 class StgIntersectionObject {

@@ -253,31 +253,10 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 
 //I want to die
 bool DxMath::IsIntersected(DxWidthLine& line1, DxWidthLine& line2) {
-	auto SplitLines = [](DxWidthLine* pSrcLine, DxWidthLine* pDstLine) -> size_t {
-		float dl = hypotf(pSrcLine->GetX2() - pSrcLine->GetX1(), pSrcLine->GetY2() - pSrcLine->GetY1());
-		if (dl == 0.0f) return 0U;
-
-		if (abs(pSrcLine->GetWidth()) <= 1.0) {
-			*pDstLine = *pSrcLine;
-			return 1U;
-		}
-
-		float sideScale = pSrcLine->GetWidth() / dl * 0.5f;
-		float nx = (pSrcLine->GetX1() - (pSrcLine->GetX1() + pSrcLine->GetX2()) / 2.0f) * sideScale;
-		float ny = (pSrcLine->GetY1() - (pSrcLine->GetY1() + pSrcLine->GetY2()) / 2.0f) * sideScale;
-
-		pDstLine[0] = DxWidthLine(pSrcLine->GetX1() + ny, pSrcLine->GetY1() - nx,
-			pSrcLine->GetX2() + ny, pSrcLine->GetY2() - nx, 1.0f);
-		pDstLine[1] = DxWidthLine(pSrcLine->GetX1() - ny, pSrcLine->GetY1() + nx,
-			pSrcLine->GetX2() - ny, pSrcLine->GetY2() + nx, 1.0f);
-
-		return 2U;
-	};
-
 	DxWidthLine linePairA[2];
 	DxWidthLine linePairB[2];
-	size_t countCheckA = SplitLines(&line1, linePairA);
-	size_t countCheckB = SplitLines(&line2, linePairB);
+	size_t countCheckA = DxMath::SplitWidthLine(linePairA, &line1);
+	size_t countCheckB = DxMath::SplitWidthLine(linePairB, &line2);
 
 	if (countCheckA == 0 || countCheckB == 0) 
 		//This ain't a bloody point-point intersection, NEXT!!!
@@ -391,6 +370,27 @@ bool DxMath::IsIntersected(DxLine3D& line, std::vector<DxTriangle>& triangles, s
 	bool res = out.size() > 0;
 	return res;
 }
+
+size_t DxMath::SplitWidthLine(DxWidthLine (&dest)[2], DxWidthLine* pSrcLine) {
+	float dl = hypotf(pSrcLine->GetX2() - pSrcLine->GetX1(), pSrcLine->GetY2() - pSrcLine->GetY1());
+	if (dl == 0.0f) return 0U;
+
+	if (abs(pSrcLine->GetWidth()) <= 1.0) {
+		dest[0] = *pSrcLine;
+		return 1U;
+	}
+
+	float sideScale = pSrcLine->GetWidth() / dl * 0.5f;
+	float nx = (pSrcLine->GetX1() - (pSrcLine->GetX1() + pSrcLine->GetX2()) / 2.0f) * sideScale;
+	float ny = (pSrcLine->GetY1() - (pSrcLine->GetY1() + pSrcLine->GetY2()) / 2.0f) * sideScale;
+
+	dest[0] = DxWidthLine(pSrcLine->GetX1() + ny, pSrcLine->GetY1() - nx,
+		pSrcLine->GetX2() + ny, pSrcLine->GetY2() - nx, 1.0f);
+	dest[1] = DxWidthLine(pSrcLine->GetX1() - ny, pSrcLine->GetY1() + nx,
+		pSrcLine->GetX2() - ny, pSrcLine->GetY2() + nx, 1.0f);
+
+	return 2U;
+};
 
 void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX, 
 	const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ)

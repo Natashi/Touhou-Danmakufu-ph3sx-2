@@ -4,6 +4,7 @@
 #include "StgShot.hpp"
 #include "StgPlayer.hpp"
 #include "StgEnemy.hpp"
+#include "StgSystem.hpp"
 
 /**********************************************************
 //StgIntersectionManager
@@ -22,6 +23,166 @@ StgIntersectionManager::StgIntersectionManager() {
 		space->Initialize(-100, -100, screenWidth + 100, screenHeight + 100);
 		listSpace_[iSpace] = space;
 	}
+
+	{
+		{
+			const std::string HLSL_VISUALIZER_CIRCLE =
+				"sampler samp0_ : register(s0);"
+				"float4x4 g_mWorldViewProj : WORLDVIEWPROJ : register(c0);"
+
+				"struct VS_INPUT {"
+					"float4 position : POSITION;"
+					"float4 diffuse : COLOR0;"
+					"float2 texCoord : TEXCOORD0;"
+			
+					"float4 i_color : COLOR1;"
+					"float4 i_xyzpos_xsc : TEXCOORD1;"
+					"float4 i_yzsc_xyang : TEXCOORD2;"
+					"float4 i_zang_usdat : TEXCOORD3;"
+				"};"
+				"struct VS_OUTPUT {"
+					"float4 position : POSITION;"
+					"float4 diffuse : COLOR0;"
+				"};"
+
+				"VS_OUTPUT mainVS(VS_INPUT inVs) {"
+					"VS_OUTPUT outVs;"
+			
+					"float t_scale = inVs.i_xyzpos_xsc.w;"
+
+					"float4x4 instanceMat = float4x4("
+						"float4(t_scale, 0, 0, 0),"
+						"float4(0, t_scale, 0, 0),"
+						"(float4)0,"
+						"float4(inVs.i_xyzpos_xsc.xyz, 1)"
+					");"
+
+					"outVs.diffuse = inVs.diffuse * inVs.i_color;"
+					"outVs.position = mul(inVs.position, instanceMat);"
+					"outVs.position = mul(outVs.position, g_mWorldViewProj);"
+					"outVs.position.z = 1.0f;"
+
+					"return outVs;"
+				"}"
+
+				"float4 mainPS(VS_OUTPUT inPs) : COLOR0 {"
+					"return inPs.diffuse;"
+				"}"
+
+				"technique Render {"
+					"pass P0 {"
+						"VertexShader = compile vs_2_0 mainVS();"
+						"PixelShader = compile ps_2_0 mainPS();"
+					"}"
+				"}";
+			const std::string HLSL_VISUALIZER_LINE =
+				"sampler samp0_ : register(s0);"
+				"float4x4 g_mWorld : WORLD : register(c0);"
+				"float4x4 g_ViewProj : VIEWPROJECTION : register(c4);"
+
+				"struct VS_INPUT {"
+					"float4 position : POSITION;"
+					"float4 diffuse : COLOR0;"
+					"float2 texCoord : TEXCOORD0;"
+				"};"
+				"struct VS_OUTPUT {"
+					"float4 position : POSITION;"
+					"float4 diffuse : COLOR0;"
+				"};"
+
+				"VS_OUTPUT mainVS(VS_INPUT inVs) {"
+					"VS_OUTPUT outVs;"
+
+					"outVs.diffuse = inVs.diffuse;"
+					"outVs.position = mul(inVs.position, g_mWorld);"
+					"outVs.position = mul(outVs.position, g_ViewProj);"
+					"outVs.position.z = 1.0f;"
+
+					"return outVs;"
+				"}"
+
+				"float4 mainPS(VS_OUTPUT inPs) : COLOR0 {"
+					"return inPs.diffuse;"
+				"}"
+
+				"technique Render {"
+					"pass P0 {"
+						"VertexShader = compile vs_2_0 mainVS();"
+						"PixelShader = compile ps_2_0 mainPS();"
+					"}"
+				"}";
+
+			ShaderManager* manager = ShaderManager::GetBase();
+			shaderVisualizerCircle_ = manager->CreateFromText(HLSL_VISUALIZER_CIRCLE);
+			shaderVisualizerLine_ = manager->CreateFromText(HLSL_VISUALIZER_LINE);
+		}
+
+		{
+			objIntersectionVisualizerCircle_ = std::make_shared<DxScriptParticleListObject2D>();
+			objIntersectionVisualizerLine_ = std::make_shared<DxScriptPrimitiveObject2D>();
+
+			countCircleInstance_ = 0U;
+			countLineVertex_ = 0U;
+			bRenderIntersection_ = false;
+
+			{
+				ParticleRenderer2D* objParticleCircle = objIntersectionVisualizerCircle_->GetParticlePointer();
+
+				objIntersectionVisualizerCircle_->SetPrimitiveType(D3DPT_TRIANGLESTRIP);
+				objIntersectionVisualizerCircle_->SetShader(shaderVisualizerCircle_);
+
+				uint16_t numEdge = 48ui16;
+				objIntersectionVisualizerCircle_->SetVertexCount(numEdge + 1U);
+				{
+					std::vector<uint16_t> index;
+					index.resize(numEdge * 2U);
+					for (uint16_t i = 0; i < numEdge; ++i) {
+						index[i * 2U + 0] = i;
+						index[i * 2U + 1] = 0;
+					}
+					index.push_back(1);
+					index.push_back(0);
+					objParticleCircle->SetVertexIndices(index);
+				}
+
+				VERTEX_TLX vert;
+				vert.position = D3DXVECTOR4(0, 0, 1, 1);
+				vert.texcoord = D3DXVECTOR2(0, 0);
+				vert.diffuse_color = 0x80ffffff;
+				objParticleCircle->RenderObjectTLX::SetVertex(0, vert);
+				for (size_t i = 0; i < numEdge; ++i) {
+					float angle = i / (float)numEdge * (float)GM_PI_X2;
+					vert.position = D3DXVECTOR4(cosf(angle), sinf(angle), 1, 1);
+					objParticleCircle->RenderObjectTLX::SetVertex(i + 1, vert);
+				}
+
+				/*
+				objIntersectionVisualizerCircle_->SetVertexCount(4U);
+				objParticleCircle->SetVertexIndices({ 0, 1, 2, 3 });
+
+				VERTEX_TLX vert;
+				vert.position = D3DXVECTOR4(-8, -8, 1, 1);
+				vert.texcoord = D3DXVECTOR2(0, 0);
+				vert.diffuse_color = 0xffffffff;
+				objParticleCircle->RenderObjectTLX::SetVertex(0, vert);
+				vert.position = D3DXVECTOR4(8, -8, 1, 1);
+				objParticleCircle->RenderObjectTLX::SetVertex(1, vert);
+				vert.position = D3DXVECTOR4(-8, 8, 1, 1);
+				objParticleCircle->RenderObjectTLX::SetVertex(2, vert);
+				vert.position = D3DXVECTOR4(8, 8, 1, 1);
+				objParticleCircle->RenderObjectTLX::SetVertex(3, vert);
+				*/
+			}
+
+			{
+				objIntersectionVisualizerLine_->SetPrimitiveType(D3DPT_TRIANGLELIST);
+				objIntersectionVisualizerLine_->SetVertexShaderRendering(true);
+				objIntersectionVisualizerLine_->SetVertexCount(65536U);		//10922 max renders
+
+				objIntersectionVisualizerLine_->SetShader(shaderVisualizerLine_);
+			}
+		}
+	}
 }
 StgIntersectionManager::~StgIntersectionManager() {
 	for (auto& itr : listSpace_) {
@@ -32,21 +193,28 @@ StgIntersectionManager::~StgIntersectionManager() {
 	omp_destroy_lock(&lock_);
 }
 void StgIntersectionManager::Work() {
+	objIntersectionVisualizerCircle_->CleanUp();
+	objIntersectionVisualizerLine_->CleanUp();
+	{
+		RenderObjectTLX* objParticleLine = objIntersectionVisualizerLine_->GetObjectPointer();
+		VERTEX_TLX* ptrVert = objParticleLine->GetVertex(0);
+		memset(ptrVert, 0x00, sizeof(VERTEX_TLX) * countLineVertex_);
+	}
+	countCircleInstance_ = 0U;
+	countLineVertex_ = 0U;
+
 	listEnemyTargetPoint_ = listEnemyTargetPointNext_;
 	listEnemyTargetPointNext_.clear();
 
 	size_t totalCheck = 0;
 	size_t totalTarget = 0;
-	std::vector<StgIntersectionSpace*>::iterator itr = listSpace_.begin();
-	for (; itr != listSpace_.end(); itr++) {
+	for (auto itr = listSpace_.begin(); itr != listSpace_.end(); itr++) {
 		StgIntersectionSpace* space = *itr;
 		StgIntersectionCheckList* listCheck = space->CreateIntersectionCheckList(this, totalTarget);
 
 		size_t countCheck = listCheck->GetCheckCount();
 
-//#pragma omp parallel for
 		for (size_t iCheck = 0; iCheck < countCheck; iCheck++) {
-			//Getは1回しか使用できません
 			StgIntersectionTarget::ptr targetA = listCheck->GetTargetA(iCheck);
 			StgIntersectionTarget::ptr targetB = listCheck->GetTargetB(iCheck);
 
@@ -55,27 +223,22 @@ void StgIntersectionManager::Work() {
 			bool bIntersected = IsIntersected(targetA, targetB);
 			if (!bIntersected) continue;
 
-			//Grazeの関係で、先に自機の当たり判定をする必要がある。
 			weak_ptr<StgIntersectionObject> objA = targetA->GetObject();
 			weak_ptr<StgIntersectionObject> objB = targetB->GetObject();
 			auto ptrA = objA.lock();
 			auto ptrB = objB.lock();
 
 			{
-				//omp_set_lock(&lock_);
-
 				if (ptrA) {
 					ptrA->Intersect(targetA, targetB);
 					ptrA->SetIntersected();
-					if (ptrB) ptrA->AddIntersectedId(ptrB);
+					if (ptrB) ptrA->AddIntersectedId(objB);
 				}
 				if (ptrB) {
 					ptrB->Intersect(targetB, targetA);
 					ptrB->SetIntersected();
-					if (ptrA) ptrB->AddIntersectedId(ptrA);
+					if (ptrA) ptrB->AddIntersectedId(objA);
 				}
-
-				//omp_unset_lock(&lock_);
 			}
 		}
 
@@ -96,6 +259,13 @@ void StgIntersectionManager::Work() {
 		logger->SetInfo(9, L"Intersection count",
 			StringUtility::Format(L"Total=%4d, Check=%4d", totalTarget, totalCheck));
 	}
+}
+void StgIntersectionManager::RenderVisualizer() {
+	if (!bRenderIntersection_) return;
+	if (countCircleInstance_ > 0U)
+		objIntersectionVisualizerCircle_->Render();
+	if (countLineVertex_ > 0U)
+		objIntersectionVisualizerLine_->Render();
 }
 void StgIntersectionManager::AddTarget(StgIntersectionTarget::ptr target) {
 	if (shared_ptr<StgIntersectionObject> obj = target->GetObject().lock()) {
@@ -237,6 +407,82 @@ bool StgIntersectionManager::IsIntersected(StgIntersectionTarget::ptr& target1, 
 	return res;
 }
 
+void StgIntersectionManager::AddVisualization(StgIntersectionTarget::ptr& target) {
+	//if (!bRenderIntersection_) return;
+
+	ParticleRenderer2D* objParticleCircle = objIntersectionVisualizerCircle_->GetParticlePointer();
+	RenderObjectTLX* objParticleLine = objIntersectionVisualizerLine_->GetObjectPointer();
+
+	D3DCOLOR color = 0xffffffff;
+	switch (target->GetTargetType()) {
+	case StgIntersectionTarget::TYPE_PLAYER:
+		color = D3DCOLOR_XRGB(16, 255, 16);
+		break;
+	case StgIntersectionTarget::TYPE_PLAYER_SHOT:
+		color = D3DCOLOR_XRGB(32, 32, 255);
+		break;
+	case StgIntersectionTarget::TYPE_PLAYER_SPELL:
+		color = D3DCOLOR_XRGB(24, 224, 255);
+		break;
+	case StgIntersectionTarget::TYPE_ENEMY:
+		color = D3DCOLOR_XRGB(255, 240, 16);
+		break;
+	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
+		color = D3DCOLOR_XRGB(255, 16, 16);
+		break;
+	}
+
+	switch (target->GetShape()) {
+	case StgIntersectionTarget::SHAPE_CIRCLE:
+	{
+		StgIntersectionTarget_Circle* pTarget = dynamic_cast<StgIntersectionTarget_Circle*>(target.get());
+		DxCircle& circle = pTarget->GetCircle();
+
+		objParticleCircle->SetInstancePosition(circle.GetX(), circle.GetY(), 0.0f);
+		objParticleCircle->SetInstanceScale(circle.GetR(), 1.0f, 1.0f);
+		objParticleCircle->SetInstanceColor(color);
+
+		objParticleCircle->AddInstance();
+		++countCircleInstance_;
+
+		break;
+	}
+	case StgIntersectionTarget::SHAPE_LINE:
+	{
+		if (countLineVertex_ >= (65536U / 6U) * 6U) break;
+
+		StgIntersectionTarget_Line* pTarget = dynamic_cast<StgIntersectionTarget_Line*>(target.get());
+		DxWidthLine& line = pTarget->GetLine();
+
+		DxWidthLine splitLines[2];
+		DxMath::SplitWidthLine(splitLines, &line);
+
+		D3DXVECTOR2 posList[4] = {
+			D3DXVECTOR2(splitLines[0].GetX1(), splitLines[0].GetY1()),
+			D3DXVECTOR2(splitLines[0].GetX2(), splitLines[0].GetY2()),
+			D3DXVECTOR2(splitLines[1].GetX1(), splitLines[1].GetY1()),
+			D3DXVECTOR2(splitLines[1].GetX2(), splitLines[1].GetY2())
+		};
+
+		VERTEX_TLX verts[4];
+		for (size_t i = 0; i < 4; ++i) {
+			verts[i].position = D3DXVECTOR4(posList[i].x, posList[i].y, 1, 1);
+			verts[i].texcoord = D3DXVECTOR2(0, 0);
+			verts[i].diffuse_color = 0x80000000 | (color & 0x00ffffff);
+		}
+		objParticleLine->SetVertex(countLineVertex_ + 0, verts[0]);
+		objParticleLine->SetVertex(countLineVertex_ + 1, verts[1]);
+		objParticleLine->SetVertex(countLineVertex_ + 2, verts[2]);
+		objParticleLine->SetVertex(countLineVertex_ + 3, verts[1]);
+		objParticleLine->SetVertex(countLineVertex_ + 4, verts[2]);
+		objParticleLine->SetVertex(countLineVertex_ + 5, verts[3]);
+		countLineVertex_ += 6U;
+		
+		break;
+	}
+	}
+}
+
 /*
 void StgIntersectionManager::_ResetPoolObject(StgIntersectionTarget::ptr& obj) {
 	//	ELogger::WriteTop(StringUtility::Format("_ResetPoolObject:start:%s)", obj->GetInfoAsString().c_str()));
@@ -276,6 +522,35 @@ void StgIntersectionManager::CheckDeletedObject(std::string funcName) {
 */
 
 /**********************************************************
+//StgIntersectionCheckList
+**********************************************************/
+StgIntersectionCheckList::StgIntersectionCheckList() { 
+	count_ = 0; 
+}
+StgIntersectionCheckList::~StgIntersectionCheckList() {
+}
+void StgIntersectionCheckList::AddTargetPair(StgIntersectionTarget::ptr& targetA, StgIntersectionTarget::ptr& targetB) {
+	auto pair = std::make_pair(targetA, targetB);
+	if (listTargetPair_.size() <= count_) {
+		listTargetPair_.push_back(pair);
+	}
+	else {
+		listTargetPair_[count_] = pair;
+	}
+	++count_;
+}
+StgIntersectionTarget::ptr StgIntersectionCheckList::GetTargetA(size_t index) {
+	shared_ptr<StgIntersectionTarget> target = listTargetPair_[index].first;
+	listTargetPair_[index].first = nullptr;
+	return target;
+}
+StgIntersectionTarget::ptr StgIntersectionCheckList::GetTargetB(size_t index) {
+	shared_ptr<StgIntersectionTarget> target = listTargetPair_[index].second;
+	listTargetPair_[index].second = nullptr;
+	return target;
+}
+
+/**********************************************************
 //StgIntersectionSpace
 **********************************************************/
 StgIntersectionSpace::StgIntersectionSpace() {
@@ -308,10 +583,17 @@ bool StgIntersectionSpace::RegistTarget(int type, StgIntersectionTarget::ptr& ta
 	listCell_[type].push_back(target);
 	return true;
 }
+void StgIntersectionSpace::ClearTarget() {
+	listCell_[0].clear();
+	listCell_[1].clear();
+}
 
-size_t StgIntersectionSpace::_WriteIntersectionCheckList(StgIntersectionManager* manager, StgIntersectionCheckList*& listCheck)
-//	std::vector<std::vector<StgIntersectionTarget*>> &listStack) 
-{
+StgIntersectionCheckList* StgIntersectionSpace::CreateIntersectionCheckList(StgIntersectionManager* manager, size_t& total) {
+	listCheck_->Clear();
+	total += _WriteIntersectionCheckList(manager);
+	return listCheck_;
+}
+size_t StgIntersectionSpace::_WriteIntersectionCheckList(StgIntersectionManager* manager) {
 	std::atomic<size_t> count{0};
 
 	std::vector<StgIntersectionTarget::ptr>& listTargetA = listCell_[0];
@@ -320,6 +602,19 @@ size_t StgIntersectionSpace::_WriteIntersectionCheckList(StgIntersectionManager*
 	auto itrB = listTargetB.begin();
 
 	omp_lock_t* ompLock = manager->GetLock();
+
+	if (manager->IsRenderIntersection()) {
+#pragma omp for
+		for (int i = 0; i < listTargetA.size(); ++i) {
+			StgIntersectionTarget::ptr& target = listTargetA[i];
+			manager->AddVisualization(target);
+		}
+#pragma omp for
+		for (int i = 0; i < listTargetB.size(); ++i) {
+			StgIntersectionTarget::ptr& target = listTargetB[i];
+			manager->AddVisualization(target);
+		}
+	}
 
 #pragma omp for
 	for (int iA = 0; iA < listTargetA.size(); ++iA) {
@@ -342,7 +637,7 @@ size_t StgIntersectionSpace::_WriteIntersectionCheckList(StgIntersectionManager*
 
 			{
 				omp_set_lock(ompLock);
-				listCheck->Add(targetA, targetB);
+				listCheck_->AddTargetPair(targetA, targetB);
 				omp_unset_lock(ompLock);
 			}
 		}
@@ -467,8 +762,6 @@ unsigned int  StgIntersectionSpace::_GetPointElem(float pos_x, float pos_y) {
 
 //StgIntersectionObject
 void StgIntersectionObject::ClearIntersectionRelativeTarget() {
-	for (auto itr = listRelativeTarget_.begin(); itr != listRelativeTarget_.end(); ++itr)
-		(*itr)->SetObject(weak_ptr<StgIntersectionObject>());
 	listRelativeTarget_.clear();
 }
 void StgIntersectionObject::AddIntersectionRelativeTarget(StgIntersectionTarget::ptr target) {
@@ -489,12 +782,10 @@ void StgIntersectionObject::UpdateIntersectionRelativeTarget(int posX, int posY,
 	size_t iCircle = 0;
 	size_t iLine = 0;
 
-	for (auto itr = listRelativeTarget_.begin(); itr != listRelativeTarget_.end(); ++itr) {
-		StgIntersectionTarget::ptr target = *itr;
-
+	for (auto& target : listRelativeTarget_) {
 		StgIntersectionTarget::Shape shape = target->GetShape();
 		if (shape == StgIntersectionTarget::SHAPE_CIRCLE) {
-			StgIntersectionTarget_Circle::ptr tTarget = std::dynamic_pointer_cast<StgIntersectionTarget_Circle>(target);
+			StgIntersectionTarget_Circle* tTarget = dynamic_cast<StgIntersectionTarget_Circle*>(target.get());
 			if (tTarget) {
 				DxCircle& org = listOrgCircle_[iCircle];
 				int px = (int)org.GetX() + posX;

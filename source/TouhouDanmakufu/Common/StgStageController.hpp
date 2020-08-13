@@ -46,9 +46,9 @@ public:
 	void RenderToTransitionTexture();
 
 	StgStageScriptObjectManager* GetMainObjectManager() { return objectManagerMain_.get(); }
-	std::shared_ptr<StgStageScriptObjectManager> GetMainObjectManagerRef() { return objectManagerMain_; }
+	shared_ptr<StgStageScriptObjectManager> GetMainObjectManagerRef() { return objectManagerMain_; }
 	StgStageScriptManager* GetScriptManager() { return scriptManager_.get(); }
-	std::shared_ptr<StgStageScriptManager> GetScriptManagerRef() { return scriptManager_; }
+	shared_ptr<StgStageScriptManager> GetScriptManagerRef() { return scriptManager_; }
 	StgEnemyManager* GetEnemyManager() { return enemyManager_; }
 	StgShotManager* GetShotManager() { return shotManager_; }
 	StgItemManager* GetItemManager() { return itemManager_; }

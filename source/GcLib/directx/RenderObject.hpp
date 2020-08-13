@@ -219,7 +219,7 @@ namespace directx {
 			ZeroMemory(vertex_.data(), vertex_.size());
 		}
 		virtual size_t GetVertexCount() { return vertex_.size() / strideVertexStreamZero_; }
-		void SetVertexIndices(std::vector<uint16_t>& indices) { vertexIndices_ = indices; }
+		void SetVertexIndices(const std::vector<uint16_t>& indices) { vertexIndices_ = indices; }
 
 		void SetPosition(const D3DXVECTOR3& pos) { position_ = pos; }
 		void SetPosition(float x, float y, float z) { position_.x = x; position_.y = y; position_.z = z; }
