@@ -2172,6 +2172,21 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 ---------------------------------------------->	[Player Script] <----------------------------------------------
 
+	-------------------------------->  Basic Stage Functions <--------------------------------
+	
+	SetIntersectionVisualization
+		Arguments:
+			1) (bool) enable
+		Description:
+			Enables active visualization of all intersection object hitboxes.
+			
+			Color codes:
+				Green   : Player hitbox+grazebox
+				Blue    : Player shot
+				Cyan    : Player spell
+				Yellow  : Enemy hitbox+killbox
+				Red     : Enemy shot
+
 	-------------------------------->  Normal Functions <--------------------------------
 	
 	KillPlayer
