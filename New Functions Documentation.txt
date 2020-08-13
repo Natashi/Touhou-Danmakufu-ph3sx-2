@@ -1497,6 +1497,30 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Addition.
 			Also works on B-pattern objects.
+			
+	ObjMove_SetDestAtFrame (Overload)
+		Arguments:
+			1) object ID
+			2) target x
+			3) target y
+			4) frame
+			5) (struct) interpolation mode
+		Description:
+			Overloaded with 5 arguments.
+		
+			Moves the object to the target position in the given frames using the specified interpolation mode.
+			
+			Available movement interpolation modes:
+				LERP_LINEAR:
+					Linear interpolation.
+				LERP_SMOOTH:
+					Smooth interpolation.
+				LERP_SMOOTHER:
+					Smoother interpolation.
+				LERP_ACCELERATE:
+					Accelerating interpolation.
+				LERP_DECELERATE:
+					Decelerating interpolation.
 
 	ObjMove_GetSpeedX
 		Arguments:
@@ -2133,6 +2157,19 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Sets transformation to the specified transform index.
 			
+	-------------------------------->  Collision Object Functions <--------------------------------
+	
+	ObjCol_GetListOfIntersectedShotID
+		Arguments:
+			1) object ID
+			2) shot owner type
+		Description:
+			Returns an array of all shot objects of the specified owner type currently intersecting with the object.
+			
+			Available owner types are:
+				OWNER_PLAYER
+				OWNER_ENEMY
+				
 ---------------------------------------------->	[Player Script] <----------------------------------------------
 
 	-------------------------------->  Normal Functions <--------------------------------
