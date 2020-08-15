@@ -15,7 +15,7 @@ StgShotManager::StgShotManager(StgStageController* stageController) {
 	listPlayerShotData_ = new StgShotDataList();
 	listEnemyShotData_ = new StgShotDataList();
 
-	RenderShaderManager* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
+	RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
 	effectLayer_ = shaderManager_->GetRender2DShader();
 	handleEffectWorld_ = effectLayer_->GetParameterBySemantic(nullptr, "WORLD");
 }
@@ -89,7 +89,7 @@ void StgShotManager::Render(int targetPriority) {
 		MODE_BLEND_ALPHA_INV,
 	};
 
-	RenderShaderManager* shaderManager = ShaderManager::GetBase()->GetRenderLib();
+	RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 	VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 
 	device->SetFVF(VERTEX_TLX::fvf);

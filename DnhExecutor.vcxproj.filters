@@ -203,6 +203,9 @@
     <ClCompile Include="source\GcLib\directx\MetasequoiaMesh.cpp">
       <Filter>source\GcLib\directx\Mesh</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\directx\HLSL.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">

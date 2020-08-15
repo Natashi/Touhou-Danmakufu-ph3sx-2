@@ -32,7 +32,7 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 	itemCollectRadius_ = 16 * 16;
 
 	{
-		RenderShaderManager* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
+		RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
 		effectLayer_ = shaderManager_->GetRender2DShader();
 		handleEffectWorld_ = effectLayer_->GetParameterBySemantic(nullptr, "WORLD");
 	}
@@ -174,7 +174,7 @@ void StgItemManager::Render(int targetPriority) {
 		effectLayer_->SetMatrix(handleEffectWorld_, &matProj);
 	}
 
-	RenderShaderManager* shaderManager = ShaderManager::GetBase()->GetRenderLib();
+	RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 	VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 
 	device->SetFVF(VERTEX_TLX::fvf);

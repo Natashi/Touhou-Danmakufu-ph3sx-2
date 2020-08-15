@@ -35,7 +35,7 @@ namespace directx {
 	/**********************************************************
 	//ShaderManager
 	**********************************************************/
-	class RenderShaderManager;
+	class RenderShaderLibrary;
 	class ShaderManager : public DirectGraphicsListener {
 		friend Shader;
 		friend ShaderData;
@@ -47,7 +47,7 @@ namespace directx {
 
 		std::wstring lastError_;
 
-		RenderShaderManager* renderManager_;
+		RenderShaderLibrary* renderManager_;
 
 		void _ReleaseShaderData(const std::wstring& name);
 		void _ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderData>>::iterator itr);
@@ -62,7 +62,7 @@ namespace directx {
 		gstd::CriticalSection& GetLock() { return lock_; }
 		void Clear();
 
-		RenderShaderManager* GetRenderLib() { return renderManager_; }
+		RenderShaderLibrary* GetRenderLib() { return renderManager_; }
 
 		virtual void ReleaseDxResource();
 		virtual void RestoreDxResource();

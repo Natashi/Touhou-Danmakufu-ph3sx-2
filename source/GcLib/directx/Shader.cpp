@@ -42,7 +42,7 @@ bool ShaderManager::Initialize() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	graphics->AddDirectGraphicsListener(this);
 
-	renderManager_ = new RenderShaderManager();
+	renderManager_ = new RenderShaderLibrary();
 
 	return res;
 }
@@ -565,78 +565,4 @@ bool Shader::SetTexture(const std::string& name, shared_ptr<Texture> texture) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
 	param->SetTexture(texture);
 	return true;
-}
-
-/**********************************************************
-//RenderShaderManager
-**********************************************************/
-RenderShaderManager::RenderShaderManager() {
-	listEffect_.resize(4, nullptr);
-	listDeclaration_.resize(6, nullptr);
-	Initialize();
-}
-RenderShaderManager::~RenderShaderManager() {
-	Release();
-}
-
-void RenderShaderManager::Initialize() {
-	ID3DXBuffer* error = nullptr;
-
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	IDirect3DDevice9* device = graphics->GetDevice();
-
-	HRESULT hr = S_OK;
-
-	{
-		std::pair<const std::string*, const std::string*> listCreate[6] = {
-			std::make_pair(&HLSL_DEFAULT_SKINNED_MESH, &NAME_DEFAULT_SKINNED_MESH),
-			std::make_pair(&HLSL_DEFAULT_RENDER2D, &NAME_DEFAULT_RENDER2D),
-			std::make_pair(&HLSL_DEFAULT_HWINSTANCE2D, &NAME_DEFAULT_HWINSTANCE2D),
-			std::make_pair(&HLSL_DEFAULT_HWINSTANCE3D, &NAME_DEFAULT_HWINSTANCE3D)
-		};
-		for (size_t iEff = 0U; iEff < 4U; ++iEff) {
-			const std::string* ptrSrc = listCreate[iEff].first;
-
-			hr = D3DXCreateEffect(device, ptrSrc->c_str(), ptrSrc->size(), nullptr, nullptr, 0, 
-				nullptr, &listEffect_[iEff], &error);
-			if (FAILED(hr)) {
-				std::string err = StringUtility::Format("RenderShaderManager: Shader load failed. [%s]\r\n\t%s",
-					listCreate[iEff].second->c_str(), reinterpret_cast<const char*>(error->GetBufferPointer()));
-				throw gstd::wexception(err);
-			}
-		}
-	}
-	listEffect_[1]->SetTechnique("Render");
-
-	{
-		std::pair<const D3DVERTEXELEMENT9*, std::string> listCreate[6] = {
-			std::make_pair(ELEMENTS_TLX, "ELEMENTS_TLX"),
-			std::make_pair(ELEMENTS_LX, "ELEMENTS_LX"),
-			std::make_pair(ELEMENTS_NX, "ELEMENTS_NX"),
-			std::make_pair(ELEMENTS_BNX, "ELEMENTS_BNX"),
-			std::make_pair(ELEMENTS_TLX_INSTANCED, "ELEMENTS_TLX_INSTANCED"),
-			std::make_pair(ELEMENTS_LX_INSTANCED, "ELEMENTS_LX_INSTANCED")
-		};
-		for (size_t iDecl = 0U; iDecl < 6U; ++iDecl) {
-			hr = device->CreateVertexDeclaration(listCreate[iDecl].first, &listDeclaration_[iDecl]);
-			if (FAILED(hr)) {
-				std::string err = StringUtility::Format("RenderShaderManager: CreateVertexDeclaration failed. (%s)",
-					listCreate[iDecl].second.c_str());
-				throw gstd::wexception(err);
-			}
-		}
-	}
-}
-void RenderShaderManager::Release() {
-	for (auto& iEffect : listEffect_) ptr_release(iEffect);
-	for (auto& iDecl : listDeclaration_) ptr_release(iDecl);
-}
-
-void RenderShaderManager::OnLostDevice() {
-	for (auto& iEffect : listEffect_) 
-		iEffect->OnLostDevice();
-}
-void RenderShaderManager::OnResetDevice() {
-	for (auto& iEffect : listEffect_) 
-		iEffect->OnResetDevice();
 }

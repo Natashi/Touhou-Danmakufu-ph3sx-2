@@ -533,7 +533,7 @@ void RenderObjectTLX::Render(const D3DXMATRIX& matTransform) {
 				effect = shader_->GetEffect();
 
 				if (bVertexShaderMode_) {
-					RenderShaderManager* shaderLib = ShaderManager::GetBase()->GetRenderLib();
+					RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 
 					device->SetVertexDeclaration(shaderLib->GetVertexDeclarationTLX());
 
@@ -668,7 +668,7 @@ void RenderObjectLX::Render() {
 	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
 
 	ShaderManager* manager = ShaderManager::GetBase();
-	RenderShaderManager* shaderManager = manager->GetRenderShaderManager();
+	RenderShaderLibrary* shaderManager = manager->GetRenderShaderManager();
 
 	D3DXMATRIX bkMatView;
 	D3DXMATRIX bkMatProj;
@@ -834,7 +834,7 @@ void RenderObjectLX::Render(const D3DXMATRIX& matTransform) {
 
 			if (bVertexShaderMode_) {
 				VertexFogState* fogParam = graphics->GetFogState();
-				RenderShaderManager* shaderLib = ShaderManager::GetBase()->GetRenderLib();
+				RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 				auto camera = DirectGraphics::GetBase()->GetCamera();
 
 				bool bFog = graphics->IsFogEnable();
@@ -1016,7 +1016,7 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 
 			if (bVertexShaderMode_) {
 				VertexFogState* fogParam = graphics->GetFogState();
-				RenderShaderManager* shaderLib = ShaderManager::GetBase()->GetRenderLib();
+				RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 				auto camera = graphics->GetCamera();
 
 				bool bFog = graphics->IsFogEnable();
@@ -1180,7 +1180,7 @@ void RenderObjectBNX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 		device->SetRenderState(D3DRS_VERTEXBLEND, D3DVBF_DISABLE);
 	}
 	else {
-		RenderShaderManager* shaderManager = ShaderManager::GetBase()->GetRenderLib();
+		RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
 		ID3DXEffect* shader = shaderManager->GetSkinnedMeshShader();
 
@@ -1639,7 +1639,7 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 				shader_->LoadParameter();
 
 				if (bVertexShaderMode_) {
-					RenderShaderManager* shaderLib = ShaderManager::GetBase()->GetRenderLib();
+					RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 
 					device->SetVertexDeclaration(shaderLib->GetVertexDeclarationTLX());
 
@@ -2025,7 +2025,7 @@ void ParticleRenderer2D::Render() {
 		size_t countPrim = _GetPrimitiveCount(countIndex);
 
 		VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
-		RenderShaderManager* shaderManager = ShaderManager::GetBase()->GetRenderLib();
+		RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
 		FixedVertexBuffer* vertexBuffer = bufferManager->GetVertexBufferTLX();
 		GrowableVertexBuffer* instanceBuffer = bufferManager->GetInstancingVertexBuffer();
@@ -2118,7 +2118,7 @@ void ParticleRenderer3D::Render() {
 		size_t countPrim = _GetPrimitiveCount(countIndex);
 
 		VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
-		RenderShaderManager* shaderManager = ShaderManager::GetBase()->GetRenderLib();
+		RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
 		FixedVertexBuffer* vertexBuffer = bufferManager->GetVertexBufferLX();
 		GrowableVertexBuffer* instanceBuffer = bufferManager->GetInstancingVertexBuffer();

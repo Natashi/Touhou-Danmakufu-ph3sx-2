@@ -199,6 +199,7 @@
     <ClCompile Include="source\GcLib\directx\DxUtility.cpp" />
     <ClCompile Include="source\GcLib\directx\DxWindow.cpp" />
     <ClCompile Include="source\GcLib\directx\ElfreinaMesh.cpp" />
+    <ClCompile Include="source\GcLib\directx\HLSL.cpp" />
     <ClCompile Include="source\GcLib\directx\MetasequoiaMesh.cpp" />
     <ClCompile Include="source\GcLib\directx\RenderObject.cpp" />
     <ClCompile Include="source\GcLib\directx\ScriptManager.cpp" />
