@@ -7,20 +7,20 @@
 namespace directx {
 	class ShaderSource {
 	public:
-		static const std::string NAME_DEFAULT_SKINNED_MESH;
-		static const std::string HLSL_DEFAULT_SKINNED_MESH;
+		static const std::string nameSkinnedMesh_;
+		static const std::string sourceSkinnedMesh_;
 
-		static const std::string NAME_DEFAULT_RENDER3D;
-		static const std::string HLSL_DEFAULT_RENDER3D;
+		static const std::string nameRender2D_;
+		static const std::string sourceRender2D_;
 
-		static const std::string NAME_DEFAULT_RENDER2D;
-		static const std::string HLSL_DEFAULT_RENDER2D;
+		static const std::string nameRender3D_;
+		static const std::string sourceRender3D_;
 
-		static const std::string NAME_DEFAULT_HWINSTANCE2D;
-		static const std::string HLSL_DEFAULT_HWINSTANCE2D;
+		static const std::string nameHwInstance2D_;
+		static const std::string sourceHwInstance2D_;
 
-		static const std::string NAME_DEFAULT_HWINSTANCE3D;
-		static const std::string HLSL_DEFAULT_HWINSTANCE3D;
+		static const std::string nameHwInstance3D_;
+		static const std::string sourceHwInstance3D_;
 	};
 	
 

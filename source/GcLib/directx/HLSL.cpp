@@ -4,8 +4,8 @@
 using namespace gstd;
 
 namespace directx {
-	const std::string ShaderSource::NAME_DEFAULT_SKINNED_MESH = "__NAME_DEFAULT_SKINNED_MESH__";
-	const std::string ShaderSource::HLSL_DEFAULT_SKINNED_MESH =
+	const std::string ShaderSource::nameSkinnedMesh_ = "_HLSL_INTERNAL_SKINNED_MESH";
+	const std::string ShaderSource::sourceSkinnedMesh_ =
 		"float4 lightDirection;"
 		"float4 materialAmbient : MATERIALAMBIENT;"
 		"float4 materialDiffuse : MATERIALDIFFUSE;"
@@ -72,8 +72,68 @@ namespace directx {
 			"}"
 		"}";
 
-	const std::string ShaderSource::NAME_DEFAULT_RENDER3D = "__NAME_DEFAULT_RENDER3D__";
-	const std::string ShaderSource::HLSL_DEFAULT_RENDER3D =
+	const std::string ShaderSource::nameRender2D_ = "_HLSL_INTERNAL_RENDER2D";
+	const std::string ShaderSource::sourceRender2D_ =
+		"sampler samp0_ : register(s0);"
+		"float4x4 g_mWorld : WORLD : register(c0);"
+
+		"struct VS_INPUT {"
+			"float4 position : POSITION;"
+			"float4 diffuse : COLOR0;"
+			"float2 texCoord : TEXCOORD0;"
+		"};"
+		"struct VS_OUTPUT {"
+			"float4 position : POSITION;"
+			"float4 diffuse : COLOR0;"
+			"float2 texCoord : TEXCOORD0;"
+		"};"
+		"struct PS_OUTPUT {"
+			"float4 color : COLOR0;"
+		"};"
+
+		"VS_OUTPUT mainVS(VS_INPUT inVs) {"
+			"VS_OUTPUT outVs;"
+
+			"outVs.diffuse = inVs.diffuse;"
+			"outVs.texCoord = inVs.texCoord;"
+			"outVs.position = mul(inVs.position, g_mWorld);"
+			"outVs.position.z = 1.0f;"
+
+			"return outVs;"
+		"}"
+
+		"PS_OUTPUT mainPS(VS_OUTPUT inPs) {"
+			"PS_OUTPUT outPs;"
+
+			"outPs.color = tex2D(samp0_, inPs.texCoord) * inPs.diffuse;"
+
+			"return outPs;"
+		"}"
+		"PS_OUTPUT mainPS_inv(VS_OUTPUT inPs) {"
+			"PS_OUTPUT outPs;"
+
+			"float4 color = tex2D(samp0_, inPs.texCoord);"
+			"color.rgb = 1.0f - color.rgb;"
+			"outPs.color = color * inPs.diffuse;"
+
+			"return outPs;"
+		"}"
+
+		"technique Render {"
+			"pass P0 {"
+				"VertexShader = compile vs_2_0 mainVS();"
+				"PixelShader = compile ps_2_0 mainPS();"
+			"}"
+		"}"
+		"technique RenderInv {"
+			"pass P0 {"
+				"VertexShader = compile vs_2_0 mainVS();"
+				"PixelShader = compile ps_2_0 mainPS_inv();"
+			"}"
+		"}";
+
+	const std::string ShaderSource::nameRender3D_ = "_HLSL_INTERNAL_RENDER3D";
+	const std::string ShaderSource::sourceRender3D_ =
 		"sampler samp0_ : register(s0);"
 		"static const int MAX_MATRICES = 30;"
 		"int countMatrixTransform;"
@@ -134,68 +194,8 @@ namespace directx {
 			"}"
 		"}";
 
-	const std::string ShaderSource::NAME_DEFAULT_RENDER2D = "__NAME_DEFAULT_RENDER2D__";
-	const std::string ShaderSource::HLSL_DEFAULT_RENDER2D =
-		"sampler samp0_ : register(s0);"
-		"float4x4 g_mWorld : WORLD : register(c0);"
-
-		"struct VS_INPUT {"
-			"float4 position : POSITION;"
-			"float4 diffuse : COLOR0;"
-			"float2 texCoord : TEXCOORD0;"
-		"};"
-		"struct VS_OUTPUT {"
-			"float4 position : POSITION;"
-			"float4 diffuse : COLOR0;"
-			"float2 texCoord : TEXCOORD0;"
-		"};"
-		"struct PS_OUTPUT {"
-			"float4 color : COLOR0;"
-		"};"
-
-		"VS_OUTPUT mainVS(VS_INPUT inVs) {"
-			"VS_OUTPUT outVs;"
-
-			"outVs.diffuse = inVs.diffuse;"
-			"outVs.texCoord = inVs.texCoord;"
-			"outVs.position = mul(inVs.position, g_mWorld);"
-			"outVs.position.z = 1.0f;"
-
-			"return outVs;"
-		"}"
-
-		"PS_OUTPUT mainPS(VS_OUTPUT inPs) {"
-			"PS_OUTPUT outPs;"
-
-			"outPs.color = tex2D(samp0_, inPs.texCoord) * inPs.diffuse;"
-
-			"return outPs;"
-		"}"
-		"PS_OUTPUT mainPS_inv(VS_OUTPUT inPs) {"
-			"PS_OUTPUT outPs;"
-
-			"float4 color = tex2D(samp0_, inPs.texCoord);"
-			"color.rgb = 1.0f - color.rgb;"
-			"outPs.color = color * inPs.diffuse;"
-
-			"return outPs;"
-		"}"
-
-		"technique Render {"
-			"pass P0 {"
-				"VertexShader = compile vs_2_0 mainVS();"
-				"PixelShader = compile ps_2_0 mainPS();"
-			"}"
-		"}"
-		"technique RenderInv {"
-			"pass P0 {"
-				"VertexShader = compile vs_2_0 mainVS();"
-				"PixelShader = compile ps_2_0 mainPS_inv();"
-			"}"
-		"}";
-
-	const std::string ShaderSource::NAME_DEFAULT_HWINSTANCE2D = "__NAME_DEFAULT_HW_INST_2D__";
-	const std::string ShaderSource::HLSL_DEFAULT_HWINSTANCE2D =
+	const std::string ShaderSource::nameHwInstance2D_ = "_HLSL_INTERNAL_HW_INST_2D";
+	const std::string ShaderSource::sourceHwInstance2D_ =
 		"sampler samp0_ : register(s0);"
 		"float4x4 g_mWorldViewProj : WORLDVIEWPROJ : register(c0);"
 
@@ -286,8 +286,8 @@ namespace directx {
 			"}"
 		"}";
 
-	const std::string ShaderSource::NAME_DEFAULT_HWINSTANCE3D = "__NAME_DEFAULT_HW_INST_3D__";
-	const std::string ShaderSource::HLSL_DEFAULT_HWINSTANCE3D =
+	const std::string ShaderSource::nameHwInstance3D_ = "_HLSL_INTERNAL_HW_INST_3D";
+	const std::string ShaderSource::sourceHwInstance3D_ =
 		"sampler samp0_ : register(s0);"
 		"float4x4 g_mCamera : WORLD : register(c0);"
 		"float4x4 g_mView : VIEW : register(c4);"
@@ -421,11 +421,12 @@ namespace directx {
 		HRESULT hr = S_OK;
 
 		{
+			//<source, name>
 			std::pair<const std::string*, const std::string*> listCreate[6] = {
-				std::make_pair(&ShaderSource::HLSL_DEFAULT_SKINNED_MESH, &ShaderSource::NAME_DEFAULT_SKINNED_MESH),
-				std::make_pair(&ShaderSource::HLSL_DEFAULT_RENDER2D, &ShaderSource::NAME_DEFAULT_RENDER2D),
-				std::make_pair(&ShaderSource::HLSL_DEFAULT_HWINSTANCE2D, &ShaderSource::NAME_DEFAULT_HWINSTANCE2D),
-				std::make_pair(&ShaderSource::HLSL_DEFAULT_HWINSTANCE3D, &ShaderSource::NAME_DEFAULT_HWINSTANCE3D)
+				std::make_pair(&ShaderSource::sourceSkinnedMesh_, &ShaderSource::nameSkinnedMesh_),
+				std::make_pair(&ShaderSource::sourceRender2D_, &ShaderSource::nameRender2D_),
+				std::make_pair(&ShaderSource::sourceHwInstance2D_, &ShaderSource::nameHwInstance2D_),
+				std::make_pair(&ShaderSource::sourceHwInstance3D_, &ShaderSource::nameHwInstance3D_)
 			};
 			for (size_t iEff = 0U; iEff < 4U; ++iEff) {
 				const std::string* ptrSrc = listCreate[iEff].first;
