@@ -19,9 +19,6 @@
 #define _UNICODE
 #endif
 
-//•W€ŠÖ”‘Î‰ž•\
-//http://www1.kokusaika.jp/advisory/org/ja/win32_unicode.html
-
 //------------------------------------------------------------------------------
 
 //Minimum OS -> Windows 7
@@ -107,7 +104,7 @@
 #include <dsound.h>
 #include <dmusici.h>
 
-#pragma comment(lib, "msacm32.lib") //for acm
+#pragma comment(lib, "msacm32.lib")
 #pragma comment(lib, "d3dx9.lib")
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dsound.lib")
