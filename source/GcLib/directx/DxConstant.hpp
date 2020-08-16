@@ -3,7 +3,9 @@
 #include "../pch.h"
 #include "../gstd/GstdLib.hpp"
 
+#if defined(DNH_PROJ_EXECUTOR)
 #include "Vertex.hpp"
+#endif
 
 class DirectGraphicsListener {
 public:
