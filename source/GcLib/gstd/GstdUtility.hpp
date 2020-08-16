@@ -1,5 +1,4 @@
-#ifndef __GSTD_UTILITIY__
-#define __GSTD_UTILITIY__
+#pragma once
 
 #include "../pch.h"
 
@@ -22,7 +21,7 @@ namespace gstd {
 	//SystemUtility
 	class SystemUtility {
 	public:
-
+		static void TestCpuSupportSIMD();
 	};
 
 	//================================================================
@@ -47,6 +46,25 @@ namespace gstd {
 		for (const auto& worker : workers)
 			worker.wait();
 	}
+
+	//================================================================
+	//Vectorize
+	class Vectorize {
+	public:
+		static __m128i Set128I_32(int a, int b, int c, int d);
+
+		static __m128 Add128S(const __m128& a, const __m128& b);
+		static __m128 Sub128S(const __m128& a, const __m128& b);
+		static __m128 Mul128S(const __m128& a, const __m128& b);
+		static __m128 Div128S(const __m128& a, const __m128& b);
+		static __m256 Mul256S(const __m256& a, const __m256& b);
+
+		static __m128d FMulAdd128D(const __m128d& a, const __m128d& b, const __m128d& c);
+
+		static __m128i MaxPackedI_32(const __m128i& a, const __m128i& b);
+		static __m128i MinPackedI_32(const __m128i& a, const __m128i& b);
+		static __m128i ClampPackedI_32(const __m128i& a, const __m128i& b, const __m128i& c);
+	};
 
 	//================================================================
 	//Encoding
@@ -202,6 +220,11 @@ namespace gstd {
 		static inline double AngleDifferenceRad(double angle1, double angle2) {
 			double dist = NormalizeAngleRad(angle2 - angle1);
 			return dist > GM_PI ? dist - GM_PI_X2 : dist;
+		}
+
+		template<typename T>
+		static inline T HypotSq(const T& x, const T& y) {
+			return (x * x + y * y);
 		}
 
 		static void InitializeFPU() {
@@ -732,5 +755,3 @@ namespace gstd {
 	};
 #endif
 }
-
-#endif

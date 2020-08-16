@@ -990,7 +990,7 @@ void StgShotObject::SetAlpha(int alpha) {
 	color_ = (color_ & 0x00ffffff) | ((byte)alpha << 24);
 }
 void StgShotObject::SetColor(int r, int g, int b) {
-	__m128i c = _mm_setr_epi32(color_ >> 24, r, g, b);
+	__m128i c = Vectorize::Set128I_32(color_ >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 }
 

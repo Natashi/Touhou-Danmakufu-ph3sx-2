@@ -371,28 +371,30 @@ void StgIntersectionManager::AddVisualization(StgIntersectionTarget::ptr& target
 		DxWidthLine& line = pTarget->GetLine();
 
 		DxWidthLine splitLines[2];
-		size_t countSplit = DxMath::SplitWidthLine(splitLines, &line);
+		size_t countSplit = DxMath::SplitWidthLine(splitLines, &line, 4.0f, true);
 
-		D3DXVECTOR2 posList[4] = {
-			D3DXVECTOR2(splitLines[0].GetX1(), splitLines[0].GetY1()),
-			D3DXVECTOR2(splitLines[0].GetX2(), splitLines[0].GetY2()),
-			D3DXVECTOR2(splitLines[1].GetX1(), splitLines[1].GetY1()),
-			D3DXVECTOR2(splitLines[1].GetX2(), splitLines[1].GetY2())
-		};
+		if (countSplit > 0U) {
+			D3DXVECTOR2 posList[4] = {
+				D3DXVECTOR2(splitLines[0].GetX1(), splitLines[0].GetY1()),
+				D3DXVECTOR2(splitLines[0].GetX2(), splitLines[0].GetY2()),
+				D3DXVECTOR2(splitLines[1].GetX1(), splitLines[1].GetY1()),
+				D3DXVECTOR2(splitLines[1].GetX2(), splitLines[1].GetY2())
+			};
 
-		VERTEX_TLX verts[4];
-		for (size_t i = 0; i < 4; ++i) {
-			verts[i].position = D3DXVECTOR4(posList[i].x, posList[i].y, 1, 1);
-			verts[i].texcoord = D3DXVECTOR2(0, 0);
-			verts[i].diffuse_color = 0x80000000 | (color & 0x00ffffff);
+			VERTEX_TLX verts[4];
+			for (size_t i = 0; i < 4; ++i) {
+				verts[i].position = D3DXVECTOR4(posList[i].x, posList[i].y, 1, 1);
+				verts[i].texcoord = D3DXVECTOR2(0, 0);
+				verts[i].diffuse_color = 0x80000000 | (color & 0x00ffffff);
+			}
+			objParticleLine->SetVertex(countLineVertex_ + 0, verts[0]);
+			objParticleLine->SetVertex(countLineVertex_ + 1, verts[1]);
+			objParticleLine->SetVertex(countLineVertex_ + 2, verts[2]);
+			objParticleLine->SetVertex(countLineVertex_ + 3, verts[1]);
+			objParticleLine->SetVertex(countLineVertex_ + 4, verts[2]);
+			objParticleLine->SetVertex(countLineVertex_ + 5, verts[3]);
+			countLineVertex_ += 6U;
 		}
-		objParticleLine->SetVertex(countLineVertex_ + 0, verts[0]);
-		objParticleLine->SetVertex(countLineVertex_ + 1, verts[1]);
-		objParticleLine->SetVertex(countLineVertex_ + 2, verts[2]);
-		objParticleLine->SetVertex(countLineVertex_ + 3, verts[1]);
-		objParticleLine->SetVertex(countLineVertex_ + 4, verts[2]);
-		objParticleLine->SetVertex(countLineVertex_ + 5, verts[3]);
-		countLineVertex_ += 6U;
 
 		break;
 	}

@@ -1145,8 +1145,7 @@ gstd::value DxScript::Func_SetFogParam(gstd::script_machine* machine, int argc, 
 	float start = argv[0].as_real();
 	float end = argv[1].as_real();
 
-	__m128i c = _mm_setr_epi32(0, (int)argv[2].as_int(), 
-		(int)argv[3].as_int(), (int)argv[4].as_int());
+	__m128i c = Vectorize::Set128I_32(0, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
 	D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 
 	script->GetObjectManager()->SetFogParam(true, color, start, end);
@@ -1248,8 +1247,8 @@ gstd::value DxScript::Func_ClearRenderTargetA2(gstd::script_machine* machine, in
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	shared_ptr<Texture> current = graphics->GetRenderTarget();
 
-	__m128i c = _mm_setr_epi32((int)argv[1].as_int(), (int)argv[2].as_int(),
-		(int)argv[3].as_int(), (int)argv[4].as_int());
+	__m128i c = Vectorize::Set128I_32(argv[1].as_int(), argv[2].as_int(), 
+		argv[3].as_int(), argv[4].as_int());
 	D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 
 	IDirect3DDevice9* device = graphics->GetDevice();
@@ -3641,8 +3640,8 @@ value DxScript::Func_ObjText_SetVertexColor(script_machine* machine, int argc, c
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		__m128i c = _mm_setr_epi32((int)argv[1].as_int(), (int)argv[2].as_int(),
-			(int)argv[3].as_int(), (int)argv[4].as_int());
+		__m128i c = Vectorize::Set128I_32(argv[1].as_int(), argv[2].as_int(),
+			argv[3].as_int(), argv[4].as_int());
 		D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 		obj->SetVertexColor(color);
 	}

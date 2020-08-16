@@ -1979,7 +1979,7 @@ void ParticleRendererBase::ClearInstance() {
 	//countInstancePrev_ = 0U;
 }
 void ParticleRendererBase::SetInstanceColorRGB(int r, int g, int b) {
-	__m128i c = _mm_setr_epi32(instColor_ >> 24, r, g, b);
+	__m128i c = Vectorize::Set128I_32(instColor_ >> 24, r, g, b);
 	D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 	SetInstanceColor(color);
 }

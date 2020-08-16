@@ -1,4 +1,4 @@
-#include "source/GcLib/pch.h"
+ï»¿#include "source/GcLib/pch.h"
 
 #include "GcLibImpl.hpp"
 
@@ -9,6 +9,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	HWND handleWindow = nullptr;
 
 	try {
+		gstd::SystemUtility::TestCpuSupportSIMD();
+
 		DnhConfiguration* config = DnhConfiguration::CreateInstance();
 		ELogger* logger = ELogger::CreateInstance();
 		logger->Initialize(config->IsLogFile(), config->IsLogWindow());
@@ -41,7 +43,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	}
 	//	catch(...)
 	//	{
-	//		Logger::WriteTop("•s–¾‚ÈƒGƒ‰[");
+	//		Logger::WriteTop("ä¸æ˜ãªã‚¨ãƒ©ãƒ¼");
 	//	}
 
 	EApplication::DeleteInstance();
