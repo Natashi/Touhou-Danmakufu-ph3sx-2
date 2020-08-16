@@ -25,14 +25,11 @@ StgStageController::~StgStageController() {
 	ptr_delete(intersectionManager_);
 }
 void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) {
-	//FPU初期化
 	Math::InitializeFPU();
 
-	//キー初期化
 	EDirectInput* input = EDirectInput::GetInstance();
 	input->ClearKeyState();
 
-	//3Dカメラ
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	camera3D->Reset();
@@ -41,7 +38,6 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	camera3D->SetPerspectiveClip(10, 2000);
 	camera3D->thisProjectionChanged_ = true;
 
-	//2Dカメラ
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 	camera2D->Reset();
 
@@ -53,7 +49,6 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	infoStage_ = infoStage;
 	infoStage_->SetReplay(replayStageData != nullptr);
 
-	//リプレイキー設定
 	int replayState = infoStage_->IsReplay() ? KeyReplayManager::STATE_REPLAY : KeyReplayManager::STATE_RECORD;
 	keyReplayManager_ = new KeyReplayManager(EDirectInput::GetInstance());
 	keyReplayManager_->SetManageState(replayState);
@@ -78,21 +73,17 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		replayStageData = new ReplayInformation::StageData();
 	infoStage_->SetReplayData(replayStageData);
 
-	//ステージ要素
 	infoSlow_ = new PseudoSlowInformation();
 	ref_count_weak_ptr<PseudoSlowInformation> wPtr = infoSlow_;
 	EFpsController::GetInstance()->AddFpsControlObject(wPtr);
 
-	//前ステージ情報反映
 	if (prevStageData) {
 		infoStage_->SetScore(prevStageData->GetScore());
 		infoStage_->SetGraze(prevStageData->GetGraze());
 		infoStage_->SetPoint(prevStageData->GetPoint());
 	}
 
-	//リプレイ関連(スクリプト初期化前)
 	if (!infoStage_->IsReplay()) {
-		//乱数
 		uint32_t randSeed = infoStage_->GetRandProvider()->GetSeed();
 		replayStageData->SetRandSeed(randSeed);
 
@@ -100,7 +91,6 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		if (logger->IsWindowVisible())
 			logger->SetInfo(11, L"Rand seed", StringUtility::Format(L"%08x", randSeed));
 
-		//ステージ情報
 		ref_count_ptr<ScriptInformation> infoParent = systemController_->GetSystemInformation()->GetMainScriptInformation();
 		ref_count_ptr<ScriptInformation> infoMain = infoStage_->GetMainScriptInformation();
 		const std::wstring& pathParentScript = infoParent->GetScriptPath();
@@ -115,8 +105,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		replayStageData->SetGraze(infoStage_->GetGraze());
 		replayStageData->SetPoint(infoStage_->GetPoint());
 	}
-	else {
-		//乱数
+	else {	//Replay
 		uint32_t randSeed = replayStageData->GetRandSeed();
 		infoStage_->GetRandProvider()->Initialize(randSeed);
 
@@ -124,15 +113,12 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		if (logger->IsWindowVisible())
 			logger->SetInfo(11, L"Rand seed", StringUtility::Format(L"%08x", randSeed));
 
-		//リプレイキー
 		keyReplayManager_->ReadRecord(*replayStageData->GetReplayKeyRecord());
 
-		//ステージ情報
 		infoStage_->SetScore(replayStageData->GetStartScore());
 		infoStage_->SetGraze(replayStageData->GetGraze());
 		infoStage_->SetPoint(replayStageData->GetPoint());
 
-		//自機設定
 		prevPlayerInfo = new StgPlayerInformation();
 		prevPlayerInfo->SetLife(replayStageData->GetPlayerLife());
 		prevPlayerInfo->SetSpell(replayStageData->GetPlayerBombCount());
@@ -149,7 +135,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	intersectionManager_ = new StgIntersectionManager();
 	pauseManager_ = new StgPauseScene(systemController_);
 
-	//パッケージスクリプトの場合は、ステージスクリプトと関連付ける
+	//It's a package script, link its manager with the stage's
 	StgPackageController* packageController = systemController_->GetPackageController();
 	if (packageController) {
 		shared_ptr<ScriptManager> packageScriptManager = std::dynamic_pointer_cast<ScriptManager>(packageController->GetScriptManagerRef());
@@ -159,13 +145,11 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 
 	auto objectManager = scriptManager_->GetObjectManager();
 
-	//メインスクリプト情報
 	ref_count_ptr<ScriptInformation> infoMain = infoStage_->GetMainScriptInformation();
 	std::wstring dirInfo = PathProperty::GetFileDirectory(infoMain->GetScriptPath());
 
 	ELogger::WriteTop(StringUtility::Format(L"Main script: [%s]", infoMain->GetScriptPath().c_str()));
 
-	//システムスクリプト
 	{
 		std::wstring pathSystemScript = infoMain->GetSystemPath();
 		if (pathSystemScript == ScriptInformation::DEFAULT)
@@ -179,7 +163,6 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		}
 	}
 
-	//自機スクリプト
 	shared_ptr<StgPlayerObject> objPlayer = nullptr;
 	ref_count_ptr<ScriptInformation> infoPlayer = infoStage_->GetPlayerScriptInformation();
 	const std::wstring& pathPlayerScript = infoPlayer->GetScriptPath();
@@ -202,14 +185,12 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		scriptManager_->SetPlayerScript(script);
 		scriptManager_->StartScript(script);
 
-		//前ステージ情報反映
 		if (prevPlayerInfo)
 			objPlayer->SetPlayerInforamtion(prevPlayerInfo);
 	}
 	if (objPlayer)
 		infoStage_->SetPlayerObjectInformation(objPlayer->GetPlayerInformation());
 
-	//メインスクリプト
 	if (infoMain->GetType() == ScriptInformation::TYPE_SINGLE) {
 		std::wstring pathMainScript = EPathProperty::GetSystemResourceDirectory() + L"script/System_SingleStage.txt";
 		auto script = scriptManager_->LoadScript(pathMainScript, StgStageScript::TYPE_STAGE);
@@ -229,7 +210,6 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		}
 	}
 
-	//背景スクリプト
 	{
 		std::wstring pathBack = infoMain->GetBackgroundPath();
 		if (pathBack == ScriptInformation::DEFAULT)
@@ -242,7 +222,6 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		}
 	}
 
-	//音声再生
 	{
 		std::wstring pathBGM = infoMain->GetBgmPath();
 		if (pathBGM == ScriptInformation::DEFAULT)
@@ -261,9 +240,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		}
 	}
 
-	//リプレイ関連(スクリプト初期化後)
 	if (!infoStage_->IsReplay()) {
-		//自機情報
 		shared_ptr<StgPlayerObject> objPlayer = GetPlayerObject();
 		if (objPlayer) {
 			replayStageData->SetPlayerLife(objPlayer->GetLife());
@@ -313,7 +290,7 @@ void StgStageController::_SetupReplayTargetCommonDataArea(int64_t idScript) {
 	ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage_->GetReplayData();
 	std::set<std::string> listArea;
 	
-	for (size_t iArray = 0; iArray < res.length_as_array(); iArray++) {
+	for (size_t iArray = 0; iArray < res.length_as_array(); ++iArray) {
 		const value& arrayValue = res.index_as_array(iArray);
 		std::string area = StringUtility::ConvertWideToMulti(arrayValue.as_string());
 		listArea.insert(area);
@@ -321,17 +298,15 @@ void StgStageController::_SetupReplayTargetCommonDataArea(int64_t idScript) {
 
 	gstd::ref_count_ptr<ScriptCommonDataManager> scriptCommonDataManager = systemController_->GetCommonDataManager();
 	if (!infoStage_->IsReplay()) {
-		std::set<std::string>::iterator itrArea = listArea.begin();
-		for (; itrArea != listArea.end(); itrArea++) {
-			std::string area = (*itrArea);
+		for (auto itrArea = listArea.begin(); itrArea != listArea.end(); ++itrArea) {
+			const std::string& area = (*itrArea);
 			shared_ptr<ScriptCommonData> commonData = scriptCommonDataManager->GetData(area);
 			replayStageData->SetCommonData(area, commonData);
 		}
 	}
 	else {
-		std::set<std::string>::iterator itrArea = listArea.begin();
-		for (; itrArea != listArea.end(); itrArea++) {
-			std::string area = (*itrArea);
+		for (auto itrArea = listArea.begin(); itrArea != listArea.end(); ++itrArea) {
+			const std::string& area = (*itrArea);
 			shared_ptr<ScriptCommonData> commonData = replayStageData->GetCommonData(area);
 			scriptCommonDataManager->SetData(area, commonData);
 		}
@@ -369,22 +344,24 @@ void StgStageController::Work() {
 	}
 	else {
 		if (!bCurrentPause) {
-			//リプレイキー更新
+			//Update replay keys
 			keyReplayManager_->Update();
 
+			//Clean up objects
 			objectManagerMain_->CleanupObject();
 
-			//スクリプト処理で、自機、敵、弾の動作が行われる。
+			//Process all non-player scripts
 			scriptManager_->Work(StgStageScript::TYPE_SYSTEM);
 			scriptManager_->Work(StgStageScript::TYPE_STAGE);
 			scriptManager_->Work(StgStageScript::TYPE_SHOT);
 			scriptManager_->Work(StgStageScript::TYPE_ITEM);
 
 			shared_ptr<StgPlayerObject> objPlayer = GetPlayerObject();
-			if (objPlayer) objPlayer->Move(); //自機だけ先に移動
+			if (objPlayer) objPlayer->Move();	//Move the player
+			//Process the player script
 			scriptManager_->Work(StgStageScript::TYPE_PLAYER);
 
-			//オブジェクト動作処理
+			//Skip all this if the stage has already ended
 			if (infoStage_->IsEnd()) return;
 			objectManagerMain_->WorkObject();
 
@@ -392,13 +369,16 @@ void StgStageController::Work() {
 			shotManager_->Work();
 			itemManager_->Work();
 
-			//当たり判定処理
+			//Process intersections
 			enemyManager_->RegistIntersectionTarget();
 			shotManager_->RegistIntersectionTarget();
 			intersectionManager_->Work();
 
+			//Process graze events
+			if (objPlayer) objPlayer->SendGrazeEvent();
+
 			if (!infoStage_->IsReplay()) {
-				//リプレイ用情報更新
+				//Add FPS data to the replay file
 				int stageFrame = infoStage_->GetCurrentFrame();
 				if (stageFrame % 60 == 0) {
 					ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage_->GetReplayData();
@@ -408,17 +388,14 @@ void StgStageController::Work() {
 			}
 
 			infoStage_->AdvanceFrame();
-
 		}
 		else {
-			//停止中
 			pauseManager_->Work();
 		}
 	}
 
 	ELogger* logger = ELogger::GetInstance();
 	if (logger->IsWindowVisible()) {
-		//ログ関連
 		logger->SetInfo(6, L"Shot count", StringUtility::Format(L"%d", shotManager_->GetShotCountAll()));
 		logger->SetInfo(7, L"Enemy count", StringUtility::Format(L"%d", enemyManager_->GetEnemyCount()));
 		logger->SetInfo(8, L"Item count", StringUtility::Format(L"%d", itemManager_->GetItemCount()));

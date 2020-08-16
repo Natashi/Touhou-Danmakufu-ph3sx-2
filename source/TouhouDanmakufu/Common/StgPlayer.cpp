@@ -71,38 +71,6 @@ void StgPlayerObject::Work() {
 			KillSelf(false);
 		}
 		else {
-			if (listGrazedShot_.size() > 0) {
-				std::vector<value> listValPos;
-				std::vector<int> listShotID;
-
-				size_t iValidGraze = 0;
-				for (auto iObj = listGrazedShot_.begin(); iObj != listGrazedShot_.end(); ++iObj) {
-					if (auto ptrObj = iObj->lock()) {
-						//No need to check for a nullptr, listGrazedShot_ only contains StgShotObject* anyway
-						StgShotObject* objShot = dynamic_cast<StgShotObject*>(ptrObj.get());
-						if (!objShot->IsDeleted()) {
-							double listShotPos[2] = { objShot->GetPositionX(), objShot->GetPositionY() };
-							listValPos.push_back(script_->CreateRealArrayValue(listShotPos, 2U));
-
-							listShotID.push_back(objShot->GetObjectID());
-
-							++iValidGraze;
-						}
-					}
-				}
-				listGrazedShot_.clear();
-
-				gstd::value listScriptValue[3];
-				listScriptValue[0] = script_->CreateRealValue(iValidGraze);
-				listScriptValue[1] = script_->CreateRealArrayValue(listShotID);
-				listScriptValue[2] = script_->CreateValueArrayValue(listValPos);
-				script_->RequestEvent(StgStagePlayerScript::EV_GRAZE, listScriptValue, 3);
-
-				auto stageScriptManager = stageController_->GetScriptManager();
-				shared_ptr<ManagedScript> itemScript = stageScriptManager->GetItemScript();
-				if (itemScript)
-					itemScript->RequestEvent(StgStagePlayerScript::EV_GRAZE, listScriptValue, 3);
-			}
 			//_Move();
 			if (input->GetVirtualKeyState(EDirectInput::KEY_BOMB) == KEY_PUSH)
 				CallSpell();
@@ -276,6 +244,42 @@ void StgPlayerObject::KillSelf(bool bCalledFromScript) {
 		script_->RequestEvent(StgStagePlayerScript::EV_HIT, &valueHitObjectID, 1);
 	}
 }
+void StgPlayerObject::SendGrazeEvent() {
+	if (listGrazedShot_.size() == 0U) return;
+
+	std::vector<value> listValPos;
+	std::vector<int> listShotID;
+
+	stageController_->GetStageInformation()->AddGraze(listGrazedShot_.size());
+
+	size_t iValidGraze = 0;
+	for (auto iObj = listGrazedShot_.begin(); iObj != listGrazedShot_.end(); ++iObj) {
+		if (auto ptrObj = iObj->lock()) {
+			//No need to check for a nullptr, listGrazedShot_ only contains StgShotObject* anyway
+			StgShotObject* objShot = dynamic_cast<StgShotObject*>(ptrObj.get());
+			if (!objShot->IsDeleted()) {
+				double listShotPos[2] = { objShot->GetPositionX(), objShot->GetPositionY() };
+				listValPos.push_back(script_->CreateRealArrayValue(listShotPos, 2U));
+
+				listShotID.push_back(objShot->GetObjectID());
+
+				++iValidGraze;
+			}
+		}
+	}
+	listGrazedShot_.clear();
+
+	value listScriptValue[3];
+	listScriptValue[0] = script_->CreateRealValue(iValidGraze);
+	listScriptValue[1] = script_->CreateRealArrayValue(listShotID);
+	listScriptValue[2] = script_->CreateValueArrayValue(listValPos);
+	script_->RequestEvent(StgStagePlayerScript::EV_GRAZE, listScriptValue, 3);
+
+	auto stageScriptManager = stageController_->GetScriptManager();
+	shared_ptr<ManagedScript> itemScript = stageScriptManager->GetItemScript();
+	if (itemScript)
+		itemScript->RequestEvent(StgStagePlayerScript::EV_GRAZE, listScriptValue, 3);
+}
 
 void StgPlayerObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
 	StgIntersectionTarget_Player::ptr own = std::dynamic_pointer_cast<StgIntersectionTarget_Player>(ownTarget);
@@ -296,7 +300,6 @@ void StgPlayerObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgInterse
 				}
 				else if (objShot->IsValidGraze() && (enableGrazeInvincible_ || frameInvincibility_ <= 0)) {
 					listGrazedShot_.push_back(otherTarget->GetObject());
-					stageController_->GetStageInformation()->AddGraze(1);
 				}
 			}
 		}

@@ -96,6 +96,8 @@ public:
 	void CallSpell();
 	void KillSelf(bool bCalledFromScript);
 
+	void SendGrazeEvent();
+
 	virtual void SetX(double x) { posX_ = x; DxScriptRenderObject::SetX(x); }
 	virtual void SetY(double y) { posY_ = y; DxScriptRenderObject::SetY(y); }
 
