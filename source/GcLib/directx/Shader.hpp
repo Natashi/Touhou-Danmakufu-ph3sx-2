@@ -53,6 +53,7 @@ namespace directx {
 		void _ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderData>>::iterator itr);
 		bool _CreateFromFile(const std::wstring& path, shared_ptr<ShaderData>& dest);
 		bool _CreateFromText(const std::string& source, shared_ptr<ShaderData>& dest);
+		bool _CreateUnmanagedFromEffect(ID3DXEffect* effect, shared_ptr<ShaderData>& dest);
 		static std::wstring _GetTextSourceID(const std::string& source);
 	public:
 		ShaderManager();
@@ -72,6 +73,7 @@ namespace directx {
 		shared_ptr<ShaderData> GetShaderData(const std::wstring& name);
 		shared_ptr<Shader> CreateFromFile(const std::wstring& path);
 		shared_ptr<Shader> CreateFromText(const std::string& source);
+		shared_ptr<Shader> CreateUnmanagedFromEffect(ID3DXEffect* effect);
 		shared_ptr<Shader> CreateFromFileInLoadThread(const std::wstring& path);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 

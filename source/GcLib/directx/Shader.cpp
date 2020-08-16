@@ -58,7 +58,7 @@ void ShaderManager::_ReleaseShaderData(const std::wstring& name) {
 		Lock lock(lock_);
 		auto itr = mapShaderData_.find(name);
 		if (itr != mapShaderData_.end()) {
-			itr->second->bLoad_ = true;		//ì«Ç›çûÇ›äÆóπàµÇ¢
+			itr->second->bLoad_ = false;
 			mapShaderData_.erase(itr);
 			Logger::WriteTop(StringUtility::Format(L"ShaderManagerÅFShader released. [%s]", name.c_str()));
 		}
@@ -69,7 +69,7 @@ void ShaderManager::_ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderD
 		Lock lock(lock_);
 		if (itr != mapShaderData_.end()) {
 			const std::wstring& name = itr->second->name_;
-			itr->second->bLoad_ = true;		//ì«Ç›çûÇ›äÆóπàµÇ¢
+			itr->second->bLoad_ = false;
 			mapShaderData_.erase(itr);
 			Logger::WriteTop(StringUtility::Format(L"ShaderManagerÅFShader released. [%s]", name.c_str()));
 		}
@@ -114,7 +114,7 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 		nullptr,
 		&data->effect_,
 		&pErr
-		);
+	);
 
 	bool res = true;
 	if (FAILED(hr)) {
@@ -135,6 +135,7 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 		mapShaderData_[path] = data;
 		data->manager_ = this;
 		data->name_ = path;
+		data->bLoad_ = true;
 
 		dest = data;
 	}
@@ -164,7 +165,7 @@ bool ShaderManager::_CreateFromText(const std::string& source, shared_ptr<Shader
 		nullptr,
 		&data->effect_,
 		&pErr
-		);
+	);
 
 	std::string tStr = StringUtility::Slice(source, 128);
 	if (FAILED(hr)) {
@@ -182,7 +183,37 @@ bool ShaderManager::_CreateFromText(const std::string& source, shared_ptr<Shader
 		mapShaderData_[id] = data;
 		data->manager_ = this;
 		data->name_ = id;
+		data->bLoad_ = true;
 		data->bText_ = true;
+
+		dest = data;
+	}
+
+	return res;
+}
+bool ShaderManager::_CreateUnmanagedFromEffect(ID3DXEffect* effect, shared_ptr<ShaderData>& dest) {
+	lastError_ = L"";
+
+	shared_ptr<ShaderData> data(new ShaderData());
+
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	HRESULT hr = effect->CloneEffect(graphics->GetDevice(), &data->effect_);
+
+	bool res = true;
+	if (FAILED(hr)) {
+		res = false;
+		std::string err = DXGetErrorStringA(hr);
+		std::string log = StringUtility::Format("ShaderManager: Shader clone failed. [%08x]\r\n\t%s", (int)effect, err.c_str());
+		Logger::WriteTop(log);
+		lastError_ = StringUtility::ConvertMultiToWide(log);
+	}
+	else {
+		std::string log = StringUtility::Format("ShaderManager: Shader cloned. [%08x]", (int)effect);
+		Logger::WriteTop(log);
+
+		data->manager_ = nullptr;
+		data->name_ = L"";
+		data->bLoad_ = true;
 
 		dest = data;
 	}
@@ -286,6 +317,19 @@ shared_ptr<Shader> ShaderManager::CreateFromText(const std::string& source) {
 
 				//mapShader_[id] = res;
 			}
+		}
+	}
+	return res;
+}
+shared_ptr<Shader> ShaderManager::CreateUnmanagedFromEffect(ID3DXEffect* effect) {
+	shared_ptr<Shader> res = nullptr;
+	{
+		Lock lock(lock_);
+
+		shared_ptr<ShaderData> data = nullptr;
+		if (_CreateUnmanagedFromEffect(effect, data)) {
+			res = std::make_shared<Shader>();
+			res->data_ = data;
 		}
 	}
 	return res;

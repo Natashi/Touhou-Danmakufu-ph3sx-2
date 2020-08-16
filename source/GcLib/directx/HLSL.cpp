@@ -1,3 +1,5 @@
+#include "source/GcLib/pch.h"
+
 #include "DirectGraphics.hpp"
 #include "HLSL.hpp"
 
@@ -400,11 +402,100 @@ namespace directx {
 			"}"
 		"}";
 
+	const std::string ShaderSource::nameIntersectVisual1_ = "_HLSL_INTERNAL_INTVISUAL_A";
+	const std::string ShaderSource::sourceIntersectVisual1_ = 
+		"sampler samp0_ : register(s0);"
+		"float4x4 g_mWorldViewProj : WORLDVIEWPROJ : register(c0);"
+
+		"struct VS_INPUT {"
+			"float4 position : POSITION;"
+			"float4 diffuse : COLOR0;"
+			"float2 texCoord : TEXCOORD0;"
+			
+			"float4 i_color : COLOR1;"
+			"float4 i_xyzpos_xsc : TEXCOORD1;"
+			"float4 i_yzsc_xyang : TEXCOORD2;"
+			"float4 i_zang_usdat : TEXCOORD3;"
+		"};"
+		"struct VS_OUTPUT {"
+			"float4 position : POSITION;"
+			"float4 diffuse : COLOR0;"
+		"};"
+
+		"VS_OUTPUT mainVS(VS_INPUT inVs) {"
+			"VS_OUTPUT outVs;"
+			
+			"float t_scale = inVs.i_xyzpos_xsc.w;"
+
+			"float4x4 instanceMat = float4x4("
+				"float4(t_scale, 0, 0, 0),"
+				"float4(0, t_scale, 0, 0),"
+				"(float4)0,"
+				"float4(inVs.i_xyzpos_xsc.xyz, 1)"
+			");"
+
+			"outVs.diffuse = inVs.diffuse * inVs.i_color;"
+			"outVs.position = mul(inVs.position, instanceMat);"
+			"outVs.position = mul(outVs.position, g_mWorldViewProj);"
+			"outVs.position.z = 1.0f;"
+
+			"return outVs;"
+		"}"
+
+		"float4 mainPS(VS_OUTPUT inPs) : COLOR0 {"
+			"return inPs.diffuse;"
+		"}"
+
+		"technique Render {"
+			"pass P0 {"
+				"VertexShader = compile vs_2_0 mainVS();"
+				"PixelShader = compile ps_2_0 mainPS();"
+			"}"
+		"}";
+
+	const std::string ShaderSource::nameIntersectVisual2_ = "_HLSL_INTERNAL_INTVISUAL_B";
+	const std::string ShaderSource::sourceIntersectVisual2_ = 
+		"sampler samp0_ : register(s0);"
+		"float4x4 g_mWorld : WORLD : register(c0);"
+		"float4x4 g_ViewProj : VIEWPROJECTION : register(c4);"
+
+		"struct VS_INPUT {"
+			"float4 position : POSITION;"
+			"float4 diffuse : COLOR0;"
+			"float2 texCoord : TEXCOORD0;"
+		"};"
+		"struct VS_OUTPUT {"
+			"float4 position : POSITION;"
+			"float4 diffuse : COLOR0;"
+		"};"
+
+		"VS_OUTPUT mainVS(VS_INPUT inVs) {"
+			"VS_OUTPUT outVs;"
+
+			"outVs.diffuse = inVs.diffuse;"
+			"outVs.position = mul(inVs.position, g_mWorld);"
+			"outVs.position = mul(outVs.position, g_ViewProj);"
+			"outVs.position.z = 1.0f;"
+
+			"return outVs;"
+		"}"
+
+		"float4 mainPS(VS_OUTPUT inPs) : COLOR0 {"
+			"return inPs.diffuse;"
+		"}"
+
+		"technique Render {"
+			"pass P0 {"
+				"VertexShader = compile vs_2_0 mainVS();"
+				"PixelShader = compile ps_2_0 mainPS();"
+			"}"
+		"}";
+
 	/**********************************************************
 	//RenderShaderLibrary
 	**********************************************************/
 	RenderShaderLibrary::RenderShaderLibrary() {
-		listEffect_.resize(4, nullptr);
+		listEffect_.resize(6, nullptr);
 		listDeclaration_.resize(6, nullptr);
 		Initialize();
 	}
@@ -422,13 +513,15 @@ namespace directx {
 
 		{
 			//<source, name>
-			std::pair<const std::string*, const std::string*> listCreate[6] = {
+			std::pair<const std::string*, const std::string*> listCreate[] = {
 				std::make_pair(&ShaderSource::sourceSkinnedMesh_, &ShaderSource::nameSkinnedMesh_),
 				std::make_pair(&ShaderSource::sourceRender2D_, &ShaderSource::nameRender2D_),
 				std::make_pair(&ShaderSource::sourceHwInstance2D_, &ShaderSource::nameHwInstance2D_),
-				std::make_pair(&ShaderSource::sourceHwInstance3D_, &ShaderSource::nameHwInstance3D_)
+				std::make_pair(&ShaderSource::sourceHwInstance3D_, &ShaderSource::nameHwInstance3D_),
+				std::make_pair(&ShaderSource::sourceIntersectVisual1_, &ShaderSource::nameIntersectVisual1_),
+				std::make_pair(&ShaderSource::sourceIntersectVisual2_, &ShaderSource::nameIntersectVisual2_)
 			};
-			for (size_t iEff = 0U; iEff < 4U; ++iEff) {
+			for (size_t iEff = 0U; iEff < sizeof(listCreate) / sizeof(*listCreate); ++iEff) {
 				const std::string* ptrSrc = listCreate[iEff].first;
 
 				hr = D3DXCreateEffect(device, ptrSrc->c_str(), ptrSrc->size(), nullptr, nullptr, 0,
@@ -443,7 +536,7 @@ namespace directx {
 		listEffect_[1]->SetTechnique("Render");
 
 		{
-			std::pair<const D3DVERTEXELEMENT9*, std::string> listCreate[6] = {
+			std::pair<const D3DVERTEXELEMENT9*, std::string> listCreate[] = {
 				std::make_pair(ELEMENTS_TLX, "ELEMENTS_TLX"),
 				std::make_pair(ELEMENTS_LX, "ELEMENTS_LX"),
 				std::make_pair(ELEMENTS_NX, "ELEMENTS_NX"),
@@ -451,7 +544,7 @@ namespace directx {
 				std::make_pair(ELEMENTS_TLX_INSTANCED, "ELEMENTS_TLX_INSTANCED"),
 				std::make_pair(ELEMENTS_LX_INSTANCED, "ELEMENTS_LX_INSTANCED")
 			};
-			for (size_t iDecl = 0U; iDecl < 6U; ++iDecl) {
+			for (size_t iDecl = 0U; iDecl < sizeof(listCreate) / sizeof(*listCreate); ++iDecl) {
 				hr = device->CreateVertexDeclaration(listCreate[iDecl].first, &listDeclaration_[iDecl]);
 				if (FAILED(hr)) {
 					std::string err = StringUtility::Format("RenderShaderLibrary: CreateVertexDeclaration failed. (%s)",

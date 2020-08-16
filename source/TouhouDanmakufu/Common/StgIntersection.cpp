@@ -26,95 +26,11 @@ StgIntersectionManager::StgIntersectionManager() {
 
 	{
 		{
-			const std::string HLSL_VISUALIZER_CIRCLE =
-				"sampler samp0_ : register(s0);"
-				"float4x4 g_mWorldViewProj : WORLDVIEWPROJ : register(c0);"
+			ShaderManager* shaderManager = ShaderManager::GetBase();
+			RenderShaderLibrary* shaderLib = shaderManager->GetRenderLib();
 
-				"struct VS_INPUT {"
-					"float4 position : POSITION;"
-					"float4 diffuse : COLOR0;"
-					"float2 texCoord : TEXCOORD0;"
-			
-					"float4 i_color : COLOR1;"
-					"float4 i_xyzpos_xsc : TEXCOORD1;"
-					"float4 i_yzsc_xyang : TEXCOORD2;"
-					"float4 i_zang_usdat : TEXCOORD3;"
-				"};"
-				"struct VS_OUTPUT {"
-					"float4 position : POSITION;"
-					"float4 diffuse : COLOR0;"
-				"};"
-
-				"VS_OUTPUT mainVS(VS_INPUT inVs) {"
-					"VS_OUTPUT outVs;"
-			
-					"float t_scale = inVs.i_xyzpos_xsc.w;"
-
-					"float4x4 instanceMat = float4x4("
-						"float4(t_scale, 0, 0, 0),"
-						"float4(0, t_scale, 0, 0),"
-						"(float4)0,"
-						"float4(inVs.i_xyzpos_xsc.xyz, 1)"
-					");"
-
-					"outVs.diffuse = inVs.diffuse * inVs.i_color;"
-					"outVs.position = mul(inVs.position, instanceMat);"
-					"outVs.position = mul(outVs.position, g_mWorldViewProj);"
-					"outVs.position.z = 1.0f;"
-
-					"return outVs;"
-				"}"
-
-				"float4 mainPS(VS_OUTPUT inPs) : COLOR0 {"
-					"return inPs.diffuse;"
-				"}"
-
-				"technique Render {"
-					"pass P0 {"
-						"VertexShader = compile vs_2_0 mainVS();"
-						"PixelShader = compile ps_2_0 mainPS();"
-					"}"
-				"}";
-			const std::string HLSL_VISUALIZER_LINE =
-				"sampler samp0_ : register(s0);"
-				"float4x4 g_mWorld : WORLD : register(c0);"
-				"float4x4 g_ViewProj : VIEWPROJECTION : register(c4);"
-
-				"struct VS_INPUT {"
-					"float4 position : POSITION;"
-					"float4 diffuse : COLOR0;"
-					"float2 texCoord : TEXCOORD0;"
-				"};"
-				"struct VS_OUTPUT {"
-					"float4 position : POSITION;"
-					"float4 diffuse : COLOR0;"
-				"};"
-
-				"VS_OUTPUT mainVS(VS_INPUT inVs) {"
-					"VS_OUTPUT outVs;"
-
-					"outVs.diffuse = inVs.diffuse;"
-					"outVs.position = mul(inVs.position, g_mWorld);"
-					"outVs.position = mul(outVs.position, g_ViewProj);"
-					"outVs.position.z = 1.0f;"
-
-					"return outVs;"
-				"}"
-
-				"float4 mainPS(VS_OUTPUT inPs) : COLOR0 {"
-					"return inPs.diffuse;"
-				"}"
-
-				"technique Render {"
-					"pass P0 {"
-						"VertexShader = compile vs_2_0 mainVS();"
-						"PixelShader = compile ps_2_0 mainPS();"
-					"}"
-				"}";
-
-			ShaderManager* manager = ShaderManager::GetBase();
-			shaderVisualizerCircle_ = manager->CreateFromText(HLSL_VISUALIZER_CIRCLE);
-			shaderVisualizerLine_ = manager->CreateFromText(HLSL_VISUALIZER_LINE);
+			shaderVisualizerCircle_ = shaderManager->CreateUnmanagedFromEffect(shaderLib->GetIntersectVisualShader1());
+			shaderVisualizerLine_ = shaderManager->CreateUnmanagedFromEffect(shaderLib->GetIntersectVisualShader2());
 		}
 
 		{
@@ -455,7 +371,7 @@ void StgIntersectionManager::AddVisualization(StgIntersectionTarget::ptr& target
 		DxWidthLine& line = pTarget->GetLine();
 
 		DxWidthLine splitLines[2];
-		DxMath::SplitWidthLine(splitLines, &line);
+		size_t countSplit = DxMath::SplitWidthLine(splitLines, &line);
 
 		D3DXVECTOR2 posList[4] = {
 			D3DXVECTOR2(splitLines[0].GetX1(), splitLines[0].GetY1()),
@@ -477,7 +393,7 @@ void StgIntersectionManager::AddVisualization(StgIntersectionTarget::ptr& target
 		objParticleLine->SetVertex(countLineVertex_ + 4, verts[2]);
 		objParticleLine->SetVertex(countLineVertex_ + 5, verts[3]);
 		countLineVertex_ += 6U;
-		
+
 		break;
 	}
 	}

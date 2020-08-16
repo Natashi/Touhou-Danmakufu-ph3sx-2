@@ -21,6 +21,12 @@ namespace directx {
 
 		static const std::string nameHwInstance3D_;
 		static const std::string sourceHwInstance3D_;
+
+		static const std::string nameIntersectVisual1_;
+		static const std::string sourceIntersectVisual1_;
+
+		static const std::string nameIntersectVisual2_;
+		static const std::string sourceIntersectVisual2_;
 	};
 	
 
@@ -43,6 +49,8 @@ namespace directx {
 		ID3DXEffect* GetRender2DShader() { return listEffect_[1]; }
 		ID3DXEffect* GetInstancing2DShader() { return listEffect_[2]; }
 		ID3DXEffect* GetInstancing3DShader() { return listEffect_[3]; }
+		ID3DXEffect* GetIntersectVisualShader1() { return listEffect_[4]; }
+		ID3DXEffect* GetIntersectVisualShader2() { return listEffect_[5]; }
 
 		IDirect3DVertexDeclaration9* GetVertexDeclarationTLX() { return listDeclaration_[0]; }
 		IDirect3DVertexDeclaration9* GetVertexDeclarationLX() { return listDeclaration_[1]; }
@@ -58,6 +66,8 @@ namespace directx {
 		 * 1 -> 2D Render
 		 * 2 -> 2D Hardware Instancing
 		 * 3 -> 3D Hardware Instancing
+		 * 4 -> Intersection visualizer (circle)
+		 * 5 -> Intersection visualizer (line)
 		 */
 		std::vector<ID3DXEffect*> listEffect_;
 
