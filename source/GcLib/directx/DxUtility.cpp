@@ -42,7 +42,7 @@ D3DXVECTOR4& ColorAccess::SetColor(D3DXVECTOR4& value, D3DCOLOR color) {
 D3DCOLOR& ColorAccess::SetColor(D3DCOLOR& src, const D3DCOLOR& mul) {
 	D3DXVECTOR4 mulFac = ToVec4Normalized(mul);
 	__m128 vsrc = (__m128&)ToVec4(src);			//argb
-	__m128 res = _mm_mul_ps(vsrc, (__m128&)(mulFac));
+	__m128 res = _mm_mul_ps(vsrc, (__m128&)mulFac);
 	__m128i argb = ColorAccess::ClampColorPackedM((D3DXVECTOR4&)res);
 	int* _i = reinterpret_cast<int*>(&argb);
 	src = D3DCOLOR_ARGB(_i[0], _i[1], _i[2], _i[3]);
@@ -59,7 +59,7 @@ D3DCOLOR& ColorAccess::ApplyAlpha(D3DCOLOR& color, float alpha) {
 }
 
 D3DXVECTOR4 ColorAccess::ClampColorPacked(const D3DXVECTOR4& src) {
-	__m128i ci = _mm_setr_epi32((int)src[0], (int)src[1], (int)src[2], (int)src[3]);
+	__m128i ci = Vectorize::Set128I_32(src[0], src[1], src[2], src[3]);
 	return ColorAccess::ClampColorPacked(ci);
 }
 D3DXVECTOR4 ColorAccess::ClampColorPacked(const __m128i& src) {
@@ -68,12 +68,12 @@ D3DXVECTOR4 ColorAccess::ClampColorPacked(const __m128i& src) {
 	return D3DXVECTOR4((float)_i[0], (float)_i[1], (float)_i[2], (float)_i[3]);
 }
 __m128i ColorAccess::ClampColorPackedM(const D3DXVECTOR4& src) {
-	__m128i ci = _mm_setr_epi32((int)src[0], (int)src[1], (int)src[2], (int)src[3]);
+	__m128i ci = Vectorize::Set128I_32(src[0], src[1], src[2], src[3]);
 	return ColorAccess::ClampColorPackedM(ci);
 }
 __m128i ColorAccess::ClampColorPackedM(const __m128i& src) {
-	__m128i cn = _mm_setr_epi32(0x00, 0x00, 0x00, 0x00);
-	__m128i cx = _mm_setr_epi32(0xff, 0xff, 0xff, 0xff);
+	__m128i cn = Vectorize::Set128I_32(0x00, 0x00, 0x00, 0x00);
+	__m128i cx = Vectorize::Set128I_32(0xff, 0xff, 0xff, 0xff);
 	cx = _mm_maskz_min_epi32(0xff, src, cx);
 	return _mm_maskz_max_epi32(0xff, cx, cn);
 }
@@ -127,7 +127,7 @@ D3DCOLOR& ColorAccess::HSVtoRGB(D3DCOLOR& color, int hue, int saturation, int va
 	int t = value * (1.0f - s * (1.0f - ff));
 
 	auto GenColor = [](int r, int g, int b) -> D3DCOLOR {
-		__m128i ci = _mm_setr_epi32(r, g, b, 0);
+		__m128i ci = Vectorize::Set128I_32(r, g, b, 0);
 		int* _i = reinterpret_cast<int*>(&ci);
 		ci = ColorAccess::ClampColorPackedM(ci);
 		return D3DCOLOR_XRGB(_i[0], _i[1], _i[2]);
@@ -191,64 +191,88 @@ bool DxMath::IsIntersected(DxCircle& circle1, DxCircle& circle2) {
 	v1 = _mm_mul_ps(v1, v1);
 	float* _v1 = reinterpret_cast<float*>(&v1);
 	return (_v1[0] + _v1[1]) <= (_v1[2]);
-	//return (rx * rx + ry * ry) <= (rr * rr);
 }
 bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
+	/*
+		A----B	(x1, y1)
+		|    |
+		|    |
+		|    |
+		D----C	(x2, y2)
+
+		<---->	width
+	*/
+
 	__m128 v1, v2;
 	float* _v1 = reinterpret_cast<float*>(&v1);
 	float* _v2 = reinterpret_cast<float*>(&v2);
 
-	{
-		v1 = { circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY() };
-		v2 = { line.GetX1(), line.GetY1(), line.GetX2(), line.GetY2() };
-		v1 = _mm_sub_ps(v1, v2);
-		v1 = _mm_mul_ps(v1, v1);
+	float cen_x = (line.GetX1() + line.GetX2()) / 2.0f;
+	float cen_y = (line.GetY1() + line.GetY2()) / 2.0f;
 
-		float dist1 = _v1[0] + _v1[1];
-		float dist2 = _v1[2] + _v1[3];
-
-		v2 = { circle.GetR(), dist1, dist2, 0 };
-		v2 = _mm_mul_ps(v2, v2);
-		if ((_v2[0] >= _v2[1]) || (_v2[0] >= _v2[2]))
-			return true;
-	}
-	{
-		v1 = { circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY() };
-		v2 = { line.GetX1(), line.GetY1(), line.GetX2(), line.GetY2() };
-		v1 = _mm_sub_ps(v1, v2);
-
-		float lx = line.GetX2() - line.GetX1();
-		float ly = line.GetY2() - line.GetY1();
-		v2 = { lx, ly, -lx, -ly };
-		v2 = _mm_mul_ps(v1, v2);
-
-		float inner1 = _v2[0] + _v2[1];
-		float inner2 = _v2[2] - _v2[3];
-		if (inner1 < 0 || inner2 < 0)
-			return false;
-	}
-
-	v1 = { line.GetX2(), line.GetY2(), circle.GetX(), circle.GetY() };
-	v2 = { line.GetX1(), line.GetY1(), line.GetX1(), line.GetY1() };
+	v1 = { line.GetX2(), line.GetY2(), cen_x, cen_y };
+	v2 = { line.GetX1(), line.GetY1(), circle.GetX(), circle.GetY() };
 	v1 = _mm_sub_ps(v1, v2);
 
-	float ux1 = _v1[0];
-	float uy1 = _v1[1];
-	float px = _v1[2];
-	float py = _v1[3];
+	float dx = _v1[0];
+	float dy = _v1[1];
+	float u_cx = _v1[2];
+	float u_cy = _v1[3];
 
-	float u = 1.0f / hypotf(ux1, uy1);
-	float ux2 = ux1 * u;
-	float uy2 = uy1 * u;
+	float line_hh = Math::HypotSq(dx, dy);
+	if (line_hh < FLT_EPSILON) {
+		float dist = Math::HypotSq(circle.GetX() - line.GetX1(), circle.GetY() - line.GetY1());
+		return dist <= (circle.GetR() * circle.GetR());
+	}
 
-	float d = px * ux2 + py * uy2;
-	float qx = d * ux2;
-	float qy = d * uy2;
+	float line_h = sqrtf(line_hh);
+	float rcos = dx / line_h;
+	float rsin = dy / line_h;
 
-	v1 = { px - qx, py - qy, line.GetWidth() + circle.GetR(), 0 };
-	v1 = _mm_mul_ps(v1, v1);
+	//Find vector cross products
+	v1 = { rcos, rsin, rsin, -rcos };
+	v2 = { u_cy, u_cx, u_cy, u_cx };
+	v1 = _mm_mul_ps(v1, v2);
+	float cross_x = abs(_v1[0] - _v1[1]) * 2.0f;
+	float cross_y = abs(_v1[2] - _v1[3]) * 2.0f;
 
-	return (_v1[0] + _v1[1]) < _v1[2];
+	bool intersect_w = cross_x <= line.GetWidth();
+	bool intersect_h = cross_y <= line_h;
+	if (intersect_w && intersect_h)
+		return true;
+	else if (intersect_w || intersect_h) {
+		float r2 = circle.GetR() * 2.0f;
+		if (intersect_w && (cross_y <= line_h + r2))
+			return true;
+		if (intersect_h && (cross_x <= line.GetWidth() + r2))
+			return true;
+		return false;
+	}
+
+	float l_uw = line.GetWidth() / line_h * 0.5f;
+	v1 = { dx, dy, circle.GetR(), 0 };
+	v2 = { l_uw, l_uw, circle.GetR(), 0 };
+	v1 = _mm_mul_ps(v1, v2);
+	float nx = _v1[0];
+	float ny = _v1[1];
+	float rr = _v1[2];
+
+	//Check A and B
+	v1 = { circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY() };
+	v2 = { line.GetX1() - ny, line.GetY1() + nx, line.GetX1() + ny, line.GetY1() - nx };
+	v2 = _mm_sub_ps(v1, v2);
+	v2 = _mm_mul_ps(v2, v2);
+	if (_v2[0] + _v2[1] <= rr || _v2[2] + _v2[3] <= rr)
+		return true;
+
+	//Check C and D
+	v2 = { line.GetX2() + ny, line.GetY2() - nx, line.GetX2() - ny, line.GetY2() + nx };
+	v2 = _mm_sub_ps(v1, v2);
+	v2 = _mm_mul_ps(v2, v2);
+	if (_v2[0] + _v2[1] <= rr || _v2[2] + _v2[3] <= rr)
+		return true;
+
+	return false;
 }
 
 //I want to die
@@ -371,16 +395,21 @@ bool DxMath::IsIntersected(DxLine3D& line, std::vector<DxTriangle>& triangles, s
 	return res;
 }
 
-size_t DxMath::SplitWidthLine(DxWidthLine (&dest)[2], DxWidthLine* pSrcLine) {
+size_t DxMath::SplitWidthLine(DxWidthLine(&dest)[2], DxWidthLine* pSrcLine, float mulWidth, bool bForceDouble) {
 	float dl = hypotf(pSrcLine->GetX2() - pSrcLine->GetX1(), pSrcLine->GetY2() - pSrcLine->GetY1());
 	if (dl == 0.0f) return 0U;
 
-	if (abs(pSrcLine->GetWidth()) <= 1.0) {
-		dest[0] = *pSrcLine;
-		return 1U;
+	float width = pSrcLine->GetWidth() * mulWidth;
+
+	if (abs(width) <= 1.0f) {
+		if (!bForceDouble) {
+			dest[0] = *pSrcLine;
+			return 1U;
+		}
+		else width = 1.0f;
 	}
 
-	float sideScale = pSrcLine->GetWidth() / dl * 0.5f;
+	float sideScale = width / dl * 0.5f;
 	float nx = (pSrcLine->GetX1() - (pSrcLine->GetX1() + pSrcLine->GetX2()) / 2.0f) * sideScale;
 	float ny = (pSrcLine->GetY1() - (pSrcLine->GetY1() + pSrcLine->GetY2()) / 2.0f) * sideScale;
 
@@ -401,7 +430,6 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	float sy = angleY.y;
 	float cz = angleZ.x;
 	float sz = angleZ.y;
-
 	float sx_sy = sx * sy;
 	float sx_cy = sx * cy;
 	__m256 v1_0 = {
@@ -428,18 +456,6 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	mat->_31 = -_p1[2];
 	mat->_32 = sx;
 	mat->_33 = _p1[3];
-
-	/*
-	mat._11 = cy * cz - sx * sy * sz;
-	mat._12 = -cx * sz;
-	mat._13 = sy * cz + sx * cy * sz;
-	mat._21 = cy * sz + sx * sy * cz;
-	mat._22 = cx * cz;
-	mat._23 = sy * sz - sx * cy * cz;
-	mat._31 = -cx * sy;
-	mat._32 = sx;
-	mat._33 = cx * cy;
-	*/
 }
 void DxMath::MatrixApplyScaling(D3DXMATRIX* mat, const D3DXVECTOR3& scale) {
 	__m256 v1 = {
