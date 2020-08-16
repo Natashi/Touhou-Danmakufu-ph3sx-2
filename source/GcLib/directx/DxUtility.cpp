@@ -467,7 +467,10 @@ bool DxMath::IsIntersected(DxLine3D& line, std::vector<DxTriangle>& triangles, s
 }
 
 size_t DxMath::SplitWidthLine(DxWidthLine(&dest)[2], DxWidthLine* pSrcLine, float mulWidth, bool bForceDouble) {
-	float dl = hypotf(pSrcLine->GetX2() - pSrcLine->GetX1(), pSrcLine->GetY2() - pSrcLine->GetY1());
+	float dx = pSrcLine->GetX2() - pSrcLine->GetX1();
+	float dy = pSrcLine->GetY2() - pSrcLine->GetY1();
+
+	float dl = hypotf(dx, dy);
 	if (dl == 0.0f) return 0U;
 
 	float width = pSrcLine->GetWidth() * mulWidth;
@@ -481,8 +484,8 @@ size_t DxMath::SplitWidthLine(DxWidthLine(&dest)[2], DxWidthLine* pSrcLine, floa
 	}
 
 	float sideScale = width / dl * 0.5f;
-	float nx = (pSrcLine->GetX1() - (pSrcLine->GetX1() + pSrcLine->GetX2()) / 2.0f) * sideScale;
-	float ny = (pSrcLine->GetY1() - (pSrcLine->GetY1() + pSrcLine->GetY2()) / 2.0f) * sideScale;
+	float nx = dx * sideScale;
+	float ny = dy * sideScale;
 
 	dest[0] = DxWidthLine(pSrcLine->GetX1() + ny, pSrcLine->GetY1() - nx,
 		pSrcLine->GetX2() + ny, pSrcLine->GetY2() - nx, 1.0f);

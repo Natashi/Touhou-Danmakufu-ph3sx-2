@@ -371,7 +371,7 @@ void StgIntersectionManager::AddVisualization(StgIntersectionTarget::ptr& target
 		DxWidthLine& line = pTarget->GetLine();
 
 		DxWidthLine splitLines[2];
-		size_t countSplit = DxMath::SplitWidthLine(splitLines, &line, 4.0f, true);
+		size_t countSplit = DxMath::SplitWidthLine(splitLines, &line, 1.0f, true);
 
 		if (countSplit > 0U) {
 			D3DXVECTOR2 posList[4] = {
