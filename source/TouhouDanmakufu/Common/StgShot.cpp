@@ -913,7 +913,7 @@ void StgShotObject::_SendDeleteEvent(int bit) {
 	scriptShot->RequestEvent(typeEvent, listScriptValue, 4);
 }
 
-void StgShotObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
+void StgShotObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	shared_ptr<StgIntersectionObject> ptrObj = otherTarget->GetObject().lock();
 
 	float damage = 0;
@@ -1278,15 +1278,15 @@ void StgNormalShotObject::_AddIntersectionRelativeTarget() {
 	ClearIntersected();
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
-	std::vector<StgIntersectionTarget::ptr> listTarget = GetIntersectionTargetList();
+	std::vector<shared_ptr<StgIntersectionTarget>> listTarget = GetIntersectionTargetList();
 	for (auto& iTarget : listTarget) {
 		intersectionManager->AddTarget(iTarget);
 	}
 
 	//RegistIntersectionRelativeTarget(intersectionManager);
 }
-std::vector<StgIntersectionTarget::ptr> StgNormalShotObject::GetIntersectionTargetList() {
-	std::vector<StgIntersectionTarget::ptr> res;
+std::vector<shared_ptr<StgIntersectionTarget>> StgNormalShotObject::GetIntersectionTargetList() {
+	std::vector<shared_ptr<StgIntersectionTarget>> res;
 
 	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
@@ -1529,7 +1529,7 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 	ClearIntersected();
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
-	std::vector<StgIntersectionTarget::ptr> listTarget = GetIntersectionTargetList();
+	std::vector<shared_ptr<StgIntersectionTarget>> listTarget = GetIntersectionTargetList();
 	for (auto& iTarget : listTarget)
 		intersectionManager->AddTarget(iTarget);
 }
@@ -1592,8 +1592,8 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 	}
 }
 
-std::vector<StgIntersectionTarget::ptr> StgLooseLaserObject::GetIntersectionTargetList() {
-	std::vector<StgIntersectionTarget::ptr> res;
+std::vector<shared_ptr<StgIntersectionTarget>> StgLooseLaserObject::GetIntersectionTargetList() {
+	std::vector<shared_ptr<StgIntersectionTarget>> res;
 
 	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
@@ -1748,7 +1748,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 	for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 		VERTEX_TLX vt;
 		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
-		_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1], position_.z);
+		_SetVertexPosition(vt, ptrDst[iVert | 0b1], ptrDst[(iVert & 0b1) << 1], position_.z);
 		_SetVertexColorARGB(vt, color);
 		verts[iVert] = vt;
 	}
@@ -1868,8 +1868,8 @@ void StgStraightLaserObject::_DeleteInAutoDeleteFrame() {
 		SetFadeDelete();
 	else --frameAutoDelete_;
 }
-std::vector<StgIntersectionTarget::ptr> StgStraightLaserObject::GetIntersectionTargetList() {
-	std::vector<StgIntersectionTarget::ptr> res;
+std::vector<shared_ptr<StgIntersectionTarget>> StgStraightLaserObject::GetIntersectionTargetList() {
+	std::vector<shared_ptr<StgIntersectionTarget>> res;
 
 	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
@@ -2204,8 +2204,8 @@ void StgCurveLaserObject::_DeleteInAutoClip() {
 		objectManager->DeleteObject(this);
 	}
 }
-std::vector<StgIntersectionTarget::ptr> StgCurveLaserObject::GetIntersectionTargetList() {
-	std::vector<StgIntersectionTarget::ptr> res;
+std::vector<shared_ptr<StgIntersectionTarget>> StgCurveLaserObject::GetIntersectionTargetList() {
+	std::vector<shared_ptr<StgIntersectionTarget>> res;
 
 	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
 	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
