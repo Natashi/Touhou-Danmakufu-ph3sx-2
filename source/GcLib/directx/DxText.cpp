@@ -843,7 +843,7 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text,
 
 		//文字サイズ計算
 		SIZE size = _GetTextSize(hDC, pText);
-		LONG lw = size.cx + widthBorder + sidePitch;
+		LONG lw = size.cx + widthBorder * 2L + sidePitch;
 		LONG lh = size.cy;
 		if (textLine->width_ + lw + sizeNext.cx >= widthMax) {
 			//改行
@@ -876,10 +876,11 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	LONG heightMax = dxText->GetMaxHeight();
 	RECT& margin = dxText->GetMargin();
 
+	DxFont dxFontOriginal = dxFont;
 	shared_ptr<Font> fontTemp;
 
 	HDC hDC = ::GetDC(nullptr);
-	HFONT oldFont = (HFONT)SelectObject(hDC, winFont_.GetHandle());
+	HFONT fontOriginal = winFont_.GetHandle();
 
 	bool bEnd = false;
 	LONG totalWidth = 0;
@@ -1151,8 +1152,10 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 					if (bClear) {
 						widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0L;
+
+						font = dxFontOriginal;
 						fontTemp = nullptr;
-						oldFont = (HFONT)SelectObject(hDC, winFont_.GetHandle());
+						::SelectObject(hDC, fontOriginal);
 
 						tagColorBottom = orgColorBottom;
 						tagColorTop = orgColorTop;
@@ -1164,7 +1167,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						widthBorder = font.GetBorderType() != DxFont::BORDER_NONE ? font.GetBorderWidth() : 0L;
 						fontTemp = std::make_shared<Font>();
 						fontTemp->CreateFontIndirect(logFont);
-						oldFont = (HFONT)SelectObject(hDC, fontTemp->GetHandle());
+						::SelectObject(hDC, fontTemp->GetHandle());
 					}
 
 					font.SetBottomColor(tagColorBottom);
@@ -1205,7 +1208,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 	res->totalWidth_ = totalWidth + widthBorder;
 	res->totalHeight_ = totalHeight + widthBorder;
-	::SelectObject(hDC, oldFont);
+	::SelectObject(hDC, fontOriginal);
 	::ReleaseDC(nullptr, hDC);
 
 	return shared_ptr<DxTextInfo>(res);

@@ -429,8 +429,14 @@ namespace directx {
 	**********************************************************/
 	class DxScriptTextObject : public DxScriptRenderObject {
 		friend DxScript;
+	private:
+		enum : byte {
+			CHANGE_INFO = 0x01,
+			CHANGE_RENDERER = 0x02,
+			CHANGE_ALL = CHANGE_INFO | CHANGE_RENDERER,
+		};
 	protected:
-		bool bChange_;
+		byte change_;
 		DxText text_;
 		shared_ptr<DxTextInfo> textInfo_;
 		shared_ptr<DxTextRenderObject> objRender_;
@@ -455,38 +461,51 @@ namespace directx {
 		LONG GetTotalWidth();
 		LONG GetTotalHeight();
 
-		void SetFontType(const std::wstring& type) { text_.SetFontType(type.c_str()); bChange_ = true; }
+		void SetFontType(const std::wstring& type) { 
+			text_.SetFontType(type.c_str()); 
+			change_ = CHANGE_ALL;
+		}
 		void SetFontSize(LONG size) {
 			if (size == text_.GetFontSize()) return;
-			text_.SetFontSize(size); bChange_ = true; 
+			text_.SetFontSize(size); change_ = CHANGE_ALL;
 		}
 		void SetFontWeight(LONG weight) {
 			if (weight == text_.GetFontWeight()) return;
-			text_.SetFontWeight(weight); bChange_ = true; 
+			text_.SetFontWeight(weight); change_ = CHANGE_ALL;
 		}
 		void SetFontItalic(bool bItalic) { 
 			if (bItalic == text_.GetFontItalic()) return;
-			text_.SetFontItalic(bItalic); bChange_ = true; 
+			text_.SetFontItalic(bItalic); change_ = CHANGE_ALL;
 		}
 		void SetFontUnderLine(bool bLine) { 
 			if (bLine == text_.GetFontUnderLine()) return;
-			text_.SetFontUnderLine(bLine); bChange_ = true; 
+			text_.SetFontUnderLine(bLine); change_ = CHANGE_ALL;
 		}
 
-		void SetFontColorTop(byte r, byte g, byte b) { text_.SetFontColorTop(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
-		void SetFontColorBottom(byte r, byte g, byte b) { text_.SetFontColorBottom(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
-		void SetFontBorderWidth(LONG width) { text_.SetFontBorderWidth(width); bChange_ = true; }
-		void SetFontBorderType(DxFont::TypeBorder type) { text_.SetFontBorderType(type); bChange_ = true; }
-		void SetFontBorderColor(byte r, byte g, byte b) { text_.SetFontBorderColor(D3DCOLOR_ARGB(255, r, g, b)); bChange_ = true; }
+		void SetFontColorTop(byte r, byte g, byte b) { 
+			text_.SetFontColorTop(D3DCOLOR_ARGB(255, r, g, b)); change_ = CHANGE_ALL;
+		}
+		void SetFontColorBottom(byte r, byte g, byte b) { 
+			text_.SetFontColorBottom(D3DCOLOR_ARGB(255, r, g, b)); change_ = CHANGE_ALL;
+		}
+		void SetFontBorderWidth(LONG width) { 
+			text_.SetFontBorderWidth(width); change_ = CHANGE_ALL;
+		}
+		void SetFontBorderType(DxFont::TypeBorder type) { 
+			text_.SetFontBorderType(type); change_ = CHANGE_ALL;
+		}
+		void SetFontBorderColor(byte r, byte g, byte b) { 
+			text_.SetFontBorderColor(D3DCOLOR_ARGB(255, r, g, b)); change_ = CHANGE_ALL;
+		}
 
 		void SetCharset(BYTE set);
 
-		void SetMaxWidth(LONG width) { text_.SetMaxWidth(width); bChange_ = true; }
-		void SetMaxHeight(LONG height) { text_.SetMaxHeight(height); bChange_ = true; }
-		void SetLinePitch(float pitch) { text_.SetLinePitch(pitch); bChange_ = true; }
-		void SetSidePitch(float pitch) { text_.SetSidePitch(pitch); bChange_ = true; }
-		void SetHorizontalAlignment(DxText::Alignment value) { text_.SetHorizontalAlignment(value); bChange_ = true; }
-		void SetVerticalAlignment(DxText::Alignment value) { text_.SetVerticalAlignment(value); bChange_ = true; }
+		void SetMaxWidth(LONG width) { text_.SetMaxWidth(width); change_ = CHANGE_ALL; }
+		void SetMaxHeight(LONG height) { text_.SetMaxHeight(height); change_ = CHANGE_ALL; }
+		void SetLinePitch(float pitch) { text_.SetLinePitch(pitch); change_ = CHANGE_ALL; }
+		void SetSidePitch(float pitch) { text_.SetSidePitch(pitch); change_ = CHANGE_ALL; }
+		void SetHorizontalAlignment(DxText::Alignment value) { text_.SetHorizontalAlignment(value); change_ = CHANGE_ALL; }
+		void SetVerticalAlignment(DxText::Alignment value) { text_.SetVerticalAlignment(value); change_ = CHANGE_ALL; }
 		void SetPermitCamera(bool bPermit) { text_.SetPermitCamera(bPermit); }
 		void SetSyntacticAnalysis(bool bEnable) { text_.SetSyntacticAnalysis(bEnable); }
 

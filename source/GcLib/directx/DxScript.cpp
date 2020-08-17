@@ -611,7 +611,7 @@ void DxScriptMeshObject::SetAngleZ(float z) {
 **********************************************************/
 DxScriptTextObject::DxScriptTextObject() {
 	typeObject_ = TypeObject::OBJ_TEXT;
-	bChange_ = true;
+	change_ = CHANGE_ALL;
 	bAutoCenter_ = true;
 	center_ = D3DXVECTOR2(0, 0);
 
@@ -637,7 +637,6 @@ void DxScriptTextObject::Render() {
 	objRender_->SetTransCenter(center_);
 	objRender_->SetAutoCenter(bAutoCenter_);
 	objRender_->Render(angX_, angY_, angZ_);
-	bChange_ = false;
 
 	if (bEnableFog)
 		graphics->SetFogEnable(true);
@@ -652,11 +651,11 @@ void DxScriptTextObject::SetRenderState() {
 	graphics->SetTextureFilter(filterMin_, filterMag_, D3DTEXF_NONE);
 }
 void DxScriptTextObject::_UpdateRenderer() {
-	if (bChange_) {
+	if (change_ & CHANGE_INFO)
 		textInfo_ = text_.GetTextInfo();
+	if (change_ & CHANGE_RENDERER)
 		objRender_ = text_.CreateRenderObject(textInfo_);
-	}
-	bChange_ = false;
+	change_ = 0;
 }
 void DxScriptTextObject::SetCharset(BYTE set) {
 	/*
@@ -674,7 +673,7 @@ void DxScriptTextObject::SetCharset(BYTE set) {
 	}
 	*/
 	text_.SetFontCharset(set); 
-	bChange_ = true;
+	change_ = CHANGE_ALL;
 }
 void DxScriptTextObject::SetText(const std::wstring& text) {
 	size_t newHash = std::hash<std::wstring>{}(text);
@@ -683,7 +682,7 @@ void DxScriptTextObject::SetText(const std::wstring& text) {
 	text_.SetTextHash(newHash);
 	text_.SetText(text); 
 
-	bChange_ = true;
+	change_ = CHANGE_ALL;
 }
 std::vector<size_t> DxScriptTextObject::GetTextCountCU() {
 	_UpdateRenderer();
@@ -709,16 +708,22 @@ void DxScriptTextObject::SetColor(int r, int g, int b) {
 	SetVertexColor(color_);
 }
 LONG DxScriptTextObject::GetTotalWidth() {
-	_UpdateRenderer();
+	if (change_ & CHANGE_INFO) {
+		textInfo_ = text_.GetTextInfo();
+		change_ &= (~CHANGE_INFO);
+	}
 	return textInfo_->GetTotalWidth();
 }
 LONG DxScriptTextObject::GetTotalHeight() {
-	_UpdateRenderer();
+	if (change_ & CHANGE_INFO) {
+		textInfo_ = text_.GetTextInfo();
+		change_ &= (~CHANGE_INFO);
+	}
 	return textInfo_->GetTotalHeight();
 }
 void DxScriptTextObject::SetShader(shared_ptr<Shader> shader) {
 	text_.SetShader(shader);
-	bChange_ = true;
+	change_ = CHANGE_ALL;
 }
 void DxScriptTextObject::SetAngleX(float x) {
 	x = gstd::Math::DegreeToRadian(x);
@@ -1268,6 +1273,8 @@ void DxScriptObjectManager::DeleteObject(DxScriptObjectBase* obj) {
 
 	if (obj->manager_)
 		obj->manager_->listUnusedIndex_.push_back(obj->GetObjectID());
+
+	obj->idObject_ = DxScript::ID_INVALID;
 }
 void DxScriptObjectManager::ClearObject() {
 	std::fill(obj_.begin(), obj_.end(), nullptr);
