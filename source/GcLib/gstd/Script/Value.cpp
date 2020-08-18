@@ -5,6 +5,24 @@
 
 using namespace gstd;
 
+std::string type_data::string_representation(type_data* data) {
+	if (data == nullptr) return "[null]";
+	switch (data->get_kind()) {
+	case type_kind::tk_null:
+		return "null";
+	case type_kind::tk_int:
+		return "int";
+	case type_kind::tk_real:
+		return "real";
+	case type_kind::tk_char:
+		return "char";
+	case type_kind::tk_boolean:
+		return "bool";
+	case type_kind::tk_array:
+		return string_representation(data->get_element()) + "-array";
+	}
+	return "invalid";
+}
 bool type_data::operator==(const type_data& other) {
 	if (this->kind != other.kind) return false;
 

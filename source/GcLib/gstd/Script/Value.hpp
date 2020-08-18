@@ -21,6 +21,8 @@ namespace gstd {
 		type_kind get_kind() { return kind; }
 		type_data* get_element() { return element; }
 
+		static std::string string_representation(type_data* data);
+
 		bool operator==(const type_data& other);
 		bool operator<(const type_data& other) const;
 	private:
@@ -91,7 +93,7 @@ namespace gstd {
 		size_t length_as_array() const { return data->array_value.size(); }
 		const value& index_as_array(size_t i) const { return data->array_value[i]; }
 		value& index_as_array(size_t i) { return data->array_value[i]; }
-		type_data* get_type() const { return data->type; }
+		type_data* get_type() const { return data ? data->type : nullptr; }
 
 		std::vector<value>::iterator array_get_begin() {
 			return data ? data->array_value.begin() : std::vector<value>::iterator();
