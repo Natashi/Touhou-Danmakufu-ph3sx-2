@@ -218,7 +218,7 @@ public:
 	virtual void SetRenderState() {}
 	virtual void Activate() {}
 
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) = 0;
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) = 0;
 
 	virtual void SetX(float x) { posX_ = x; DxScriptRenderObject::SetX(x); }
 	virtual void SetY(float y) { posY_ = y; DxScriptRenderObject::SetY(y); }
@@ -247,32 +247,32 @@ public:
 class StgItemObject_1UP : public StgItemObject {
 public:
 	StgItemObject_1UP(StgStageController* stageController);
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 };
 
 class StgItemObject_Bomb : public StgItemObject {
 public:
 	StgItemObject_Bomb(StgStageController* stageController);
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 };
 
 class StgItemObject_Power : public StgItemObject {
 public:
 	StgItemObject_Power(StgStageController* stageController);
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 };
 
 class StgItemObject_Point : public StgItemObject {
 public:
 	StgItemObject_Point(StgStageController* stageController);
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 };
 
 class StgItemObject_Bonus : public StgItemObject {
 public:
 	StgItemObject_Bonus(StgStageController* stageController);
 	virtual void Work();
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 };
 
 class StgItemObject_Score : public StgItemObject {
@@ -280,7 +280,7 @@ class StgItemObject_Score : public StgItemObject {
 public:
 	StgItemObject_Score(StgStageController* stageController);
 	virtual void Work();
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 };
 
 class StgItemObject_User : public StgItemObject {
@@ -295,7 +295,7 @@ public:
 	StgItemObject_User(StgStageController* stageController);
 	virtual void Work();
 	virtual void RenderOnItemManager();
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 
 	void SetImageID(int id);
 };

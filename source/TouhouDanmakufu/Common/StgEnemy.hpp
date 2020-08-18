@@ -54,7 +54,7 @@ public:
 
 	virtual void Work();
 	virtual void Activate();
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 	virtual void ClearEnemyObject() { ClearIntersectionRelativeTarget(); }
 	virtual void RegistIntersectionTarget();
 
@@ -73,8 +73,8 @@ public:
 	void SetEnableGetIntersectionPosition(bool flg) { bEnableGetIntersectionPositionFetch_ = flg; }
 	bool GetEnableGetIntersectionPosition() { return bEnableGetIntersectionPositionFetch_; }
 
-	void AddReferenceToShotIntersection(StgIntersectionTarget::ptr pointer);
-	void AddReferenceToPlayerIntersection(StgIntersectionTarget::ptr pointer);
+	void AddReferenceToShotIntersection(shared_ptr<StgIntersectionTarget> pointer);
+	void AddReferenceToPlayerIntersection(shared_ptr<StgIntersectionTarget> pointer);
 	std::vector<weak_ptr<StgIntersectionTarget>>* GetIntersectionListShot() { return &ptrIntersectionToShot_; }
 	std::vector<weak_ptr<StgIntersectionTarget>>* GetIntersectionListPlayer() { return &ptrIntersectionToPlayer_; }
 };

@@ -281,8 +281,8 @@ void StgPlayerObject::SendGrazeEvent() {
 		itemScript->RequestEvent(StgStagePlayerScript::EV_GRAZE, listScriptValue, 3);
 }
 
-void StgPlayerObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
-	StgIntersectionTarget_Player::ptr own = std::dynamic_pointer_cast<StgIntersectionTarget_Player>(ownTarget);
+void StgPlayerObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
+	shared_ptr<StgIntersectionTarget_Player> own = std::dynamic_pointer_cast<StgIntersectionTarget_Player>(ownTarget);
 	if (own == nullptr) return;
 
 	if (auto ptrObj = otherTarget->GetObject().lock()) {
@@ -360,7 +360,7 @@ void StgPlayerSpellObject::Work() {
 		objectManager->DeleteObject(this);
 	}
 }
-void StgPlayerSpellObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
+void StgPlayerSpellObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	double damage = 0;
 	StgIntersectionTarget::Type otherType = otherTarget->GetTargetType();
 	switch (otherType) {

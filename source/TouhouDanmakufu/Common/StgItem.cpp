@@ -858,7 +858,7 @@ StgItemObject_1UP::StgItemObject_1UP(StgStageController* stageController) : StgI
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
-void StgItemObject_1UP::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
+void StgItemObject_1UP::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	gstd::value listValue[2] = { 
 		DxScript::CreateRealValue(typeItem_), 
 		DxScript::CreateRealValue(idObject_)
@@ -876,7 +876,7 @@ StgItemObject_Bomb::StgItemObject_Bomb(StgStageController* stageController) : St
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
-void StgItemObject_Bomb::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
+void StgItemObject_Bomb::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	gstd::value listValue[2] = {
 		DxScript::CreateRealValue(typeItem_),
 		DxScript::CreateRealValue(idObject_)
@@ -895,7 +895,7 @@ StgItemObject_Power::StgItemObject_Power(StgStageController* stageController) : 
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 	score_ = 10;
 }
-void StgItemObject_Power::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
+void StgItemObject_Power::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	if (bChangeItemScore_)
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
@@ -917,7 +917,7 @@ StgItemObject_Point::StgItemObject_Point(StgStageController* stageController) : 
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
-void StgItemObject_Point::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
+void StgItemObject_Point::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	if (bChangeItemScore_)
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
@@ -954,7 +954,7 @@ void StgItemObject_Bonus::Work() {
 		objectManager->DeleteObject(this);
 	}
 }
-void StgItemObject_Bonus::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
+void StgItemObject_Bonus::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
 
@@ -983,7 +983,7 @@ void StgItemObject_Score::Work() {
 	}
 	++frameDelete_;
 }
-void StgItemObject_Score::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) { }
+void StgItemObject_Score::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) { }
 
 //StgItemObject_User
 StgItemObject_User::StgItemObject_User(StgStageController* stageController) : StgItemObject(stageController) {
@@ -1126,7 +1126,7 @@ void StgItemObject_User::RenderOnItemManager() {
 
 	renderer->AddSquareVertex(verts);
 }
-void StgItemObject_User::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
+void StgItemObject_User::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	if (bChangeItemScore_)
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);

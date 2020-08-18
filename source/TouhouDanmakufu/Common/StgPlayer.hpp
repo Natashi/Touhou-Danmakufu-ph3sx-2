@@ -92,7 +92,7 @@ public:
 
 	virtual void Work();
 	void Move();
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 	void CallSpell();
 	void KillSelf(bool bCalledFromScript);
 
@@ -155,8 +155,6 @@ public:
 class StgIntersectionTarget_Player : public StgIntersectionTarget_Circle {
 	bool bGraze_;
 public:
-	using ptr = std::shared_ptr<StgIntersectionTarget_Player>;
-
 	StgIntersectionTarget_Player(bool bGraze) { typeTarget_ = TYPE_PLAYER; bGraze_ = bGraze; }
 	bool IsGraze() { return bGraze_; }
 };
@@ -184,7 +182,7 @@ protected:
 public:
 	StgPlayerSpellObject(StgStageController* stageController);
 	virtual void Work();
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 
 	double GetDamage() { return damage_; }
 	void SetDamage(double damage) { damage_ = damage; }

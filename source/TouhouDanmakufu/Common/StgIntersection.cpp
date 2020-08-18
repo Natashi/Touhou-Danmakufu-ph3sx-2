@@ -131,8 +131,8 @@ void StgIntersectionManager::Work() {
 		size_t countCheck = listCheck->GetCheckCount();
 
 		for (size_t iCheck = 0; iCheck < countCheck; iCheck++) {
-			StgIntersectionTarget::ptr targetA = listCheck->GetTargetA(iCheck);
-			StgIntersectionTarget::ptr targetB = listCheck->GetTargetB(iCheck);
+			shared_ptr<StgIntersectionTarget> targetA = listCheck->GetTargetA(iCheck);
+			shared_ptr<StgIntersectionTarget> targetB = listCheck->GetTargetB(iCheck);
 
 			if (targetA == nullptr || targetB == nullptr) continue;
 
@@ -183,7 +183,7 @@ void StgIntersectionManager::RenderVisualizer() {
 	if (countLineVertex_ > 0U)
 		objIntersectionVisualizerLine_->Render();
 }
-void StgIntersectionManager::AddTarget(StgIntersectionTarget::ptr target) {
+void StgIntersectionManager::AddTarget(shared_ptr<StgIntersectionTarget> target) {
 	if (shared_ptr<StgIntersectionObject> obj = target->GetObject().lock()) {
 		StgIntersectionTarget::Type type = target->GetTargetType();
 		switch (type) {
@@ -223,7 +223,7 @@ void StgIntersectionManager::AddTarget(StgIntersectionTarget::ptr target) {
 			listSpace_[SPACE_PLAYER_ENEMY]->RegistTargetB(target);
 			listSpace_[SPACE_PLAYERSHOT_ENEMY]->RegistTargetB(target);
 
-			StgIntersectionTarget_Circle::ptr circle = std::dynamic_pointer_cast<StgIntersectionTarget_Circle>(target);
+			shared_ptr<StgIntersectionTarget_Circle> circle = std::dynamic_pointer_cast<StgIntersectionTarget_Circle>(target);
 			if (circle) {
 				shared_ptr<StgEnemyObject> objEnemy = std::dynamic_pointer_cast<StgEnemyObject>(obj);
 				if (objEnemy) {
@@ -246,7 +246,7 @@ void StgIntersectionManager::AddTarget(StgIntersectionTarget::ptr target) {
 		}
 	}
 }
-void StgIntersectionManager::AddEnemyTargetToShot(StgIntersectionTarget::ptr target) {
+void StgIntersectionManager::AddEnemyTargetToShot(shared_ptr<StgIntersectionTarget> target) {
 	//target->SetMortonNumber(-1);
 	//target->ClearObjectIntersectedIdList();
 
@@ -256,7 +256,7 @@ void StgIntersectionManager::AddEnemyTargetToShot(StgIntersectionTarget::ptr tar
 	{
 		listSpace_[SPACE_PLAYERSHOT_ENEMY]->RegistTargetB(target);
 
-		StgIntersectionTarget_Circle::ptr circle = std::dynamic_pointer_cast<StgIntersectionTarget_Circle>(target);
+		shared_ptr<StgIntersectionTarget_Circle> circle = std::dynamic_pointer_cast<StgIntersectionTarget_Circle>(target);
 		if (circle) {
 			if (shared_ptr<StgIntersectionObject> obj = target->GetObject().lock()) {
 				shared_ptr<StgEnemyObject> objEnemy = std::dynamic_pointer_cast<StgEnemyObject>(obj);
@@ -274,7 +274,7 @@ void StgIntersectionManager::AddEnemyTargetToShot(StgIntersectionTarget::ptr tar
 	}
 	}
 }
-void StgIntersectionManager::AddEnemyTargetToPlayer(StgIntersectionTarget::ptr target) {
+void StgIntersectionManager::AddEnemyTargetToPlayer(shared_ptr<StgIntersectionTarget> target) {
 	//target->SetMortonNumber(-1);
 	//target->ClearObjectIntersectedIdList();
 
@@ -288,7 +288,7 @@ void StgIntersectionManager::AddEnemyTargetToPlayer(StgIntersectionTarget::ptr t
 	}
 }
 
-bool StgIntersectionManager::IsIntersected(StgIntersectionTarget::ptr& target1, StgIntersectionTarget::ptr& target2) {
+bool StgIntersectionManager::IsIntersected(shared_ptr<StgIntersectionTarget>& target1, shared_ptr<StgIntersectionTarget>& target2) {
 	bool res = false;
 	StgIntersectionTarget::Shape shape1 = target1->GetShape();
 	StgIntersectionTarget::Shape shape2 = target2->GetShape();
@@ -323,7 +323,7 @@ bool StgIntersectionManager::IsIntersected(StgIntersectionTarget::ptr& target1, 
 	return res;
 }
 
-void StgIntersectionManager::AddVisualization(StgIntersectionTarget::ptr& target) {
+void StgIntersectionManager::AddVisualization(shared_ptr<StgIntersectionTarget>& target) {
 	//if (!bRenderIntersection_) return;
 
 	ParticleRenderer2D* objParticleCircle = objIntersectionVisualizerCircle_->GetParticlePointer();
@@ -332,8 +332,13 @@ void StgIntersectionManager::AddVisualization(StgIntersectionTarget::ptr& target
 	D3DCOLOR color = 0xffffffff;
 	switch (target->GetTargetType()) {
 	case StgIntersectionTarget::TYPE_PLAYER:
-		color = D3DCOLOR_XRGB(16, 255, 16);
+	{
+		if (dynamic_cast<StgIntersectionTarget_Player*>(target.get())->IsGraze())
+			color = D3DCOLOR_ARGB(192, 48, 212, 48);
+		else
+			color = D3DCOLOR_XRGB(0, 255, 0);
 		break;
+	}
 	case StgIntersectionTarget::TYPE_PLAYER_SHOT:
 		color = D3DCOLOR_XRGB(32, 32, 255);
 		break;
@@ -402,13 +407,13 @@ void StgIntersectionManager::AddVisualization(StgIntersectionTarget::ptr& target
 }
 
 /*
-void StgIntersectionManager::_ResetPoolObject(StgIntersectionTarget::ptr& obj) {
+void StgIntersectionManager::_ResetPoolObject(shared_ptr<StgIntersectionTarget>& obj) {
 	//	ELogger::WriteTop(StringUtility::Format("_ResetPoolObject:start:%s)", obj->GetInfoAsString().c_str()));
 	obj->obj_ = NULL;
 	//	ELogger::WriteTop("_ResetPoolObject:end");
 }
 ref_count_ptr<StgIntersectionTarget>::unsync StgIntersectionManager::_CreatePoolObject(int type) {
-	StgIntersectionTarget::ptr res = nullptr;
+	shared_ptr<StgIntersectionTarget> res = nullptr;
 	switch (type) {
 	case StgIntersectionTarget::SHAPE_CIRCLE:
 		res = new StgIntersectionTarget_Circle();
@@ -423,12 +428,12 @@ ref_count_ptr<StgIntersectionTarget>::unsync StgIntersectionManager::_CreatePool
 void StgIntersectionManager::CheckDeletedObject(std::string funcName) {
 	int countType = listUsedPool_.size();
 	for (int iType = 0; iType < countType; iType++) {
-		std::list<StgIntersectionTarget::ptr>* listUsed = &listUsedPool_[iType];
-		std::vector<StgIntersectionTarget::ptr>* listCache = &listCachePool_[iType];
+		std::list<shared_ptr<StgIntersectionTarget>>* listUsed = &listUsedPool_[iType];
+		std::vector<shared_ptr<StgIntersectionTarget>>* listCache = &listCachePool_[iType];
 
-		std::list<StgIntersectionTarget::ptr>::iterator itr = listUsed->begin();
+		std::list<shared_ptr<StgIntersectionTarget>>::iterator itr = listUsed->begin();
 		for (; itr != listUsed->end(); itr++) {
-			StgIntersectionTarget::ptr& target = (*itr);
+			shared_ptr<StgIntersectionTarget>& target = (*itr);
 			ref_count_weak_ptr<DxScriptObjectBase>::unsync dxObj =
 				ref_count_weak_ptr<DxScriptObjectBase>::unsync::DownCast(target->GetObject());
 			if (dxObj != NULL && dxObj->IsDeleted()) {
@@ -447,7 +452,7 @@ StgIntersectionCheckList::StgIntersectionCheckList() {
 }
 StgIntersectionCheckList::~StgIntersectionCheckList() {
 }
-void StgIntersectionCheckList::AddTargetPair(StgIntersectionTarget::ptr& targetA, StgIntersectionTarget::ptr& targetB) {
+void StgIntersectionCheckList::AddTargetPair(shared_ptr<StgIntersectionTarget>& targetA, shared_ptr<StgIntersectionTarget>& targetB) {
 	auto pair = std::make_pair(targetA, targetB);
 	if (listTargetPair_.size() <= count_) {
 		listTargetPair_.push_back(pair);
@@ -457,12 +462,12 @@ void StgIntersectionCheckList::AddTargetPair(StgIntersectionTarget::ptr& targetA
 	}
 	++count_;
 }
-StgIntersectionTarget::ptr StgIntersectionCheckList::GetTargetA(size_t index) {
+shared_ptr<StgIntersectionTarget> StgIntersectionCheckList::GetTargetA(size_t index) {
 	shared_ptr<StgIntersectionTarget> target = listTargetPair_[index].first;
 	listTargetPair_[index].first = nullptr;
 	return target;
 }
-StgIntersectionTarget::ptr StgIntersectionCheckList::GetTargetB(size_t index) {
+shared_ptr<StgIntersectionTarget> StgIntersectionCheckList::GetTargetB(size_t index) {
 	shared_ptr<StgIntersectionTarget> target = listTargetPair_[index].second;
 	listTargetPair_[index].second = nullptr;
 	return target;
@@ -492,7 +497,7 @@ bool StgIntersectionSpace::Initialize(int left, int top, int right, int bottom) 
 
 	return true;
 }
-bool StgIntersectionSpace::RegistTarget(int type, StgIntersectionTarget::ptr& target) {
+bool StgIntersectionSpace::RegistTarget(int type, shared_ptr<StgIntersectionTarget>& target) {
 	RECT& rect = target->GetIntersectionSpaceRect();
 	if (rect.right < spaceLeft_ || rect.bottom < spaceTop_ ||
 		rect.left >(spaceLeft_ + spaceWidth_) || rect.top >(spaceTop_ + spaceHeight_))
@@ -514,8 +519,8 @@ StgIntersectionCheckList* StgIntersectionSpace::CreateIntersectionCheckList(StgI
 size_t StgIntersectionSpace::_WriteIntersectionCheckList(StgIntersectionManager* manager) {
 	std::atomic<size_t> count{0};
 
-	std::vector<StgIntersectionTarget::ptr>& listTargetA = listCell_[0];
-	std::vector<StgIntersectionTarget::ptr>& listTargetB = listCell_[1];
+	std::vector<shared_ptr<StgIntersectionTarget>>& listTargetA = listCell_[0];
+	std::vector<shared_ptr<StgIntersectionTarget>>& listTargetB = listCell_[1];
 	auto itrA = listTargetA.begin();
 	auto itrB = listTargetB.begin();
 
@@ -524,22 +529,22 @@ size_t StgIntersectionSpace::_WriteIntersectionCheckList(StgIntersectionManager*
 	if (manager->IsRenderIntersection()) {
 #pragma omp for
 		for (int i = 0; i < listTargetA.size(); ++i) {
-			StgIntersectionTarget::ptr& target = listTargetA[i];
+			shared_ptr<StgIntersectionTarget>& target = listTargetA[i];
 			manager->AddVisualization(target);
 		}
 #pragma omp for
 		for (int i = 0; i < listTargetB.size(); ++i) {
-			StgIntersectionTarget::ptr& target = listTargetB[i];
+			shared_ptr<StgIntersectionTarget>& target = listTargetB[i];
 			manager->AddVisualization(target);
 		}
 	}
 
 #pragma omp for
 	for (int iA = 0; iA < listTargetA.size(); ++iA) {
-		StgIntersectionTarget::ptr targetA = listTargetA[iA];
+		shared_ptr<StgIntersectionTarget> targetA = listTargetA[iA];
 
 		for (size_t iB = 0; iB < listTargetB.size(); ++iB) {
-			StgIntersectionTarget::ptr targetB = listTargetB[iB];
+			shared_ptr<StgIntersectionTarget> targetB = listTargetB[iB];
 
 			RECT& rc1 = targetA->GetIntersectionSpaceRect();
 			RECT& rc2 = targetB->GetIntersectionSpaceRect();
@@ -682,16 +687,16 @@ unsigned int  StgIntersectionSpace::_GetPointElem(float pos_x, float pos_y) {
 void StgIntersectionObject::ClearIntersectionRelativeTarget() {
 	listRelativeTarget_.clear();
 }
-void StgIntersectionObject::AddIntersectionRelativeTarget(StgIntersectionTarget::ptr target) {
+void StgIntersectionObject::AddIntersectionRelativeTarget(shared_ptr<StgIntersectionTarget> target) {
 	listRelativeTarget_.push_back(target);
 	StgIntersectionTarget::Shape shape = target->GetShape();
 	if (shape == StgIntersectionTarget::SHAPE_CIRCLE) {
-		StgIntersectionTarget_Circle::ptr tTarget = std::dynamic_pointer_cast<StgIntersectionTarget_Circle>(target);
+		shared_ptr<StgIntersectionTarget_Circle> tTarget = std::dynamic_pointer_cast<StgIntersectionTarget_Circle>(target);
 		if (tTarget)
 			listOrgCircle_.push_back(tTarget->GetCircle());
 	}
 	else if (shape == StgIntersectionTarget::SHAPE_LINE) {
-		StgIntersectionTarget_Line::ptr tTarget = std::dynamic_pointer_cast<StgIntersectionTarget_Line>(target);
+		shared_ptr<StgIntersectionTarget_Line> tTarget = std::dynamic_pointer_cast<StgIntersectionTarget_Line>(target);
 		if (tTarget)
 			listOrgLine_.push_back(tTarget->GetLine());
 	}
@@ -717,7 +722,7 @@ void StgIntersectionObject::UpdateIntersectionRelativeTarget(int posX, int posY,
 			++iCircle;
 		}
 		else if (shape == StgIntersectionTarget::SHAPE_LINE) {
-			//StgIntersectionTarget_Line::ptr tTarget = StgIntersectionTarget_Line::ptr::DownCast(target);
+			//shared_ptr<StgIntersectionTarget_Line> tTarget = shared_ptr<StgIntersectionTarget_Line>::DownCast(target);
 			++iLine;
 		}
 	}
@@ -728,9 +733,8 @@ void StgIntersectionObject::RegistIntersectionRelativeTarget(StgIntersectionMana
 }
 int StgIntersectionObject::GetDxScriptObjectID() {
 	int res = DxScript::ID_INVALID;
-	StgEnemyObject* objEnemy = dynamic_cast<StgEnemyObject*>(this);
-	if (objEnemy)
-		res = objEnemy->GetObjectID();
+	DxScriptObjectBase* objBase = dynamic_cast<DxScriptObjectBase*>(this);
+	if (objBase) res = objBase->GetObjectID();
 	return res;
 }
 
@@ -803,19 +807,18 @@ void StgIntersectionTarget_Circle::SetIntersectionSpace() {
 	intersectionSpace_ = { x1, y1, x2, y2 };
 }
 void StgIntersectionTarget_Line::SetIntersectionSpace() {
-	float x1 = line_.GetX1();
-	float y1 = line_.GetY1();
-	float x2 = line_.GetX2();
-	float y2 = line_.GetY2();
+	float l = line_.GetX1();
+	float t = line_.GetY1();
+	float r = line_.GetX2();
+	float b = line_.GetY2();
 	float width = line_.GetWidth();
-	if (x1 > x2)
-		std::swap(x1, x2);
-	if (y1 > y2)
-		std::swap(y1, y2);
-	x1 -= width;
-	x2 += width;
-	y1 -= width;
-	y2 += width;
+
+	if (l > r) std::swap(l, r);
+	if (t > b) std::swap(t, b);
+	l -= width;
+	t -= width;
+	r += width;
+	b += width;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
@@ -823,9 +826,10 @@ void StgIntersectionTarget_Line::SetIntersectionSpace() {
 	LONG screenWidth = graphics->GetScreenWidth() + margin;
 	LONG screenHeight = graphics->GetScreenWidth() + margin;
 
-	LONG _x1 = std::clamp((LONG)x1, -margin, screenWidth);
-	LONG _x2 = std::clamp((LONG)x2, -margin, screenWidth);
-	LONG _y1 = std::clamp((LONG)y1, -margin, screenHeight);
-	LONG _y2 = std::clamp((LONG)y2, -margin, screenHeight);
-	intersectionSpace_ = { _x1, _y1, _x2, _y2 };
+	intersectionSpace_ = { 
+		std::clamp((LONG)l, -margin, screenWidth),
+		std::clamp((LONG)t, -margin, screenWidth),
+		std::clamp((LONG)r, -margin, screenHeight),
+		std::clamp((LONG)b, -margin, screenHeight)
+	};
 }

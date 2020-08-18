@@ -36,8 +36,6 @@ protected:
 
 	RECT intersectionSpace_;
 public:
-	using ptr = std::shared_ptr<StgIntersectionTarget>;
-
 	StgIntersectionTarget();
 	virtual ~StgIntersectionTarget() {}
 
@@ -63,8 +61,6 @@ class StgIntersectionTarget_Circle : public StgIntersectionTarget {
 	friend StgIntersectionManager;
 	DxCircle circle_;
 public:
-	using ptr = std::shared_ptr<StgIntersectionTarget_Circle>;
-
 	StgIntersectionTarget_Circle() { shape_ = Shape::SHAPE_CIRCLE; }
 	virtual ~StgIntersectionTarget_Circle() {}
 
@@ -81,8 +77,6 @@ class StgIntersectionTarget_Line : public StgIntersectionTarget {
 	friend StgIntersectionManager;
 	DxWidthLine line_;
 public:
-	using ptr = std::shared_ptr<StgIntersectionTarget_Line>;
-
 	StgIntersectionTarget_Line() { shape_ = Shape::SHAPE_LINE; }
 	virtual ~StgIntersectionTarget_Line() {}
 
@@ -134,18 +128,18 @@ public:
 	void SetRenderIntersection(bool b) { bRenderIntersection_ = b; }
 	bool IsRenderIntersection() { return bRenderIntersection_; }
 
-	void AddTarget(StgIntersectionTarget::ptr target);
-	void AddEnemyTargetToShot(StgIntersectionTarget::ptr target);
-	void AddEnemyTargetToPlayer(StgIntersectionTarget::ptr target);
+	void AddTarget(shared_ptr<StgIntersectionTarget> target);
+	void AddEnemyTargetToShot(shared_ptr<StgIntersectionTarget> target);
+	void AddEnemyTargetToPlayer(shared_ptr<StgIntersectionTarget> target);
 	std::vector<StgIntersectionTargetPoint>* GetAllEnemyTargetPoint() { return &listEnemyTargetPoint_; }
 
 	//void CheckDeletedObject(std::string funcName);
 
-	static bool IsIntersected(StgIntersectionTarget::ptr& target1, StgIntersectionTarget::ptr& target2);
+	static bool IsIntersected(shared_ptr<StgIntersectionTarget>& target1, shared_ptr<StgIntersectionTarget>& target2);
 
 	omp_lock_t* GetLock() { return &lock_; }
 
-	void AddVisualization(StgIntersectionTarget::ptr& target);
+	void AddVisualization(shared_ptr<StgIntersectionTarget>& target);
 };
 
 /**********************************************************
@@ -197,7 +191,7 @@ class StgIntersectionCheckList {
 	size_t count_;
 	//std::vector<StgIntersectionTarget*> listTargetA_;
 	//std::vector<StgIntersectionTarget*> listTargetB_;
-	std::vector<std::pair<StgIntersectionTarget::ptr, StgIntersectionTarget::ptr>> listTargetPair_;
+	std::vector<std::pair<shared_ptr<StgIntersectionTarget>, shared_ptr<StgIntersectionTarget>>> listTargetPair_;
 public:
 	StgIntersectionCheckList();
 	virtual ~StgIntersectionCheckList();
@@ -205,9 +199,9 @@ public:
 	void Clear() { count_ = 0; }
 	size_t GetCheckCount() { return count_; }
 
-	void AddTargetPair(StgIntersectionTarget::ptr& targetA, StgIntersectionTarget::ptr& targetB);
-	StgIntersectionTarget::ptr GetTargetA(size_t index);
-	StgIntersectionTarget::ptr GetTargetB(size_t index);
+	void AddTargetPair(shared_ptr<StgIntersectionTarget>& targetA, shared_ptr<StgIntersectionTarget>& targetB);
+	shared_ptr<StgIntersectionTarget> GetTargetA(size_t index);
+	shared_ptr<StgIntersectionTarget> GetTargetB(size_t index);
 };
 
 class StgIntersectionSpace {
@@ -216,7 +210,7 @@ class StgIntersectionSpace {
 		TYPE_B = 1,
 	};
 protected:
-	std::vector<std::vector<StgIntersectionTarget::ptr>> listCell_;
+	std::vector<std::vector<shared_ptr<StgIntersectionTarget>>> listCell_;
 
 	double spaceWidth_; // óÃàÊÇÃXé≤ïù
 	double spaceHeight_; // óÃàÊÇÃYé≤ïù
@@ -230,9 +224,9 @@ public:
 	StgIntersectionSpace();
 	virtual ~StgIntersectionSpace();
 	bool Initialize(int left, int top, int right, int bottom);
-	bool RegistTarget(int type, StgIntersectionTarget::ptr& target);
-	bool RegistTargetA(StgIntersectionTarget::ptr& target) { return RegistTarget(TYPE_A, target); }
-	bool RegistTargetB(StgIntersectionTarget::ptr& target) { return RegistTarget(TYPE_B, target); }
+	bool RegistTarget(int type, shared_ptr<StgIntersectionTarget>& target);
+	bool RegistTargetA(shared_ptr<StgIntersectionTarget>& target) { return RegistTarget(TYPE_A, target); }
+	bool RegistTargetB(shared_ptr<StgIntersectionTarget>& target) { return RegistTarget(TYPE_B, target); }
 	void ClearTarget();
 	StgIntersectionCheckList* CreateIntersectionCheckList(StgIntersectionManager* manager, size_t& total);
 };
@@ -241,33 +235,36 @@ class StgIntersectionObject {
 protected:
 	bool bIntersected_;//è’ìÀîªíË
 	size_t intersectedCount_;
-	std::vector<StgIntersectionTarget::ptr> listRelativeTarget_;
+	std::vector<shared_ptr<StgIntersectionTarget>> listRelativeTarget_;
 	std::vector<DxCircle> listOrgCircle_;
 	std::vector<DxWidthLine> listOrgLine_;
 	std::vector<weak_ptr<StgIntersectionObject>> listIntersectedID_;
 public:
 	StgIntersectionObject() { bIntersected_ = false; intersectedCount_ = 0; }
 	virtual ~StgIntersectionObject() {}
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) = 0;
+
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) = 0;
+
 	void ClearIntersected() { bIntersected_ = false; intersectedCount_ = 0; }
 	bool IsIntersected() { return bIntersected_; }
 	void SetIntersected() { bIntersected_ = true; intersectedCount_++; }
+
 	size_t GetIntersectedCount() { return intersectedCount_; }
 	void ClearIntersectedIdList() { listIntersectedID_.clear(); }
 	void AddIntersectedId(weak_ptr<StgIntersectionObject> obj) { listIntersectedID_.push_back(obj); }
 	std::vector<weak_ptr<StgIntersectionObject>>& GetIntersectedIdList() { return listIntersectedID_; }
 
 	void ClearIntersectionRelativeTarget();
-	void AddIntersectionRelativeTarget(StgIntersectionTarget::ptr target);
-	StgIntersectionTarget::ptr GetIntersectionRelativeTarget(size_t index) { return listRelativeTarget_[index]; }
+	void AddIntersectionRelativeTarget(shared_ptr<StgIntersectionTarget> target);
+	shared_ptr<StgIntersectionTarget> GetIntersectionRelativeTarget(size_t index) { return listRelativeTarget_[index]; }
 
 	void UpdateIntersectionRelativeTarget(int posX, int posY, double angle);
 	void RegistIntersectionRelativeTarget(StgIntersectionManager* manager);
 	size_t GetIntersectionRelativeTargetCount() { return listRelativeTarget_.size(); }
 	int GetDxScriptObjectID();
 
-	virtual std::vector<StgIntersectionTarget::ptr> GetIntersectionTargetList() { 
-		return std::vector<StgIntersectionTarget::ptr>();
+	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList() { 
+		return std::vector<shared_ptr<StgIntersectionTarget>>();
 	}
 };
 

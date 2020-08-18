@@ -341,7 +341,7 @@ public:
 	virtual void Render() {}//一括で描画するためオブジェクト管理での描画はしない
 	virtual void Activate() {}
 	virtual void RenderOnShotManager() {}
-	virtual void Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget);
+	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
 	virtual void ClearShotObject() { ClearIntersectionRelativeTarget(); }
 	virtual void RegistIntersectionTarget() = 0;
 
@@ -429,7 +429,7 @@ public:
 		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
 	}
 
-	virtual std::vector<StgIntersectionTarget::ptr> GetIntersectionTargetList();
+	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	virtual void SetShotDataID(int id);
 };
 
@@ -483,7 +483,7 @@ public:
 	virtual void RegistIntersectionTarget() {
 		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
 	}
-	virtual std::vector<StgIntersectionTarget::ptr> GetIntersectionTargetList();
+	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	virtual void SetX(float x) { StgShotObject::SetX(x); posXE_ = x; }
 	virtual void SetY(float y) { StgShotObject::SetY(y); posYE_ = y; }
 };
@@ -514,7 +514,7 @@ public:
 	virtual void RegistIntersectionTarget() {
 		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
 	}
-	virtual std::vector<StgIntersectionTarget::ptr> GetIntersectionTargetList();
+	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 
 	double GetLaserAngle() { return angLaser_; }
 	void SetLaserAngle(double angle) { angLaser_ = angle; }
@@ -554,7 +554,7 @@ public:
 	virtual void RegistIntersectionTarget() {
 		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
 	}
-	virtual std::vector<StgIntersectionTarget::ptr> GetIntersectionTargetList();
+	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
 
 	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, D3DCOLOR col = 0xffffffff);

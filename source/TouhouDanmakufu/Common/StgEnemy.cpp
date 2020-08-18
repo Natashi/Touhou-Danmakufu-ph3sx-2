@@ -85,7 +85,7 @@ void StgEnemyObject::_AddRelativeIntersection() {
 	RegistIntersectionRelativeTarget(intersectionManager);
 }
 void StgEnemyObject::Activate() {}
-void StgEnemyObject::Intersect(StgIntersectionTarget::ptr ownTarget, StgIntersectionTarget::ptr otherTarget) {
+void StgEnemyObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	double damage = 0;
 	if (auto ptrObj = otherTarget->GetObject().lock()) {
 		if (otherTarget->GetTargetType() == StgIntersectionTarget::TYPE_PLAYER_SHOT) {
@@ -107,10 +107,10 @@ void StgEnemyObject::RegistIntersectionTarget() {
 shared_ptr<StgEnemyObject> StgEnemyObject::GetOwnObject() {
 	return std::dynamic_pointer_cast<StgEnemyObject>(stageController_->GetMainRenderObject(idObject_));
 }
-void StgEnemyObject::AddReferenceToShotIntersection(StgIntersectionTarget::ptr pointer) {
+void StgEnemyObject::AddReferenceToShotIntersection(shared_ptr<StgIntersectionTarget> pointer) {
 	ptrIntersectionToShot_.push_back(pointer);
 }
-void StgEnemyObject::AddReferenceToPlayerIntersection(StgIntersectionTarget::ptr pointer) {
+void StgEnemyObject::AddReferenceToPlayerIntersection(shared_ptr<StgIntersectionTarget> pointer) {
 	ptrIntersectionToPlayer_.push_back(pointer);
 }
 
