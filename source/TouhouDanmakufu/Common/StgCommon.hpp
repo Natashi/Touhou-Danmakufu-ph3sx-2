@@ -237,15 +237,18 @@ class StgMovePattern_Line_Frame : public StgMovePattern_Line {
 	friend class StgMoveObject;
 public:
 	typedef float (*lerp_func)(float, float, float);
+	typedef float (*lerp_diff_func)(float);
 protected:
-	D3DXVECTOR2 lastPos_;
+	D3DXVECTOR2 positionDiff_;
+	double dist_;
 	lerp_func moveLerpFunc;
+	lerp_diff_func diffLerpFunc;
 public:
 	StgMovePattern_Line_Frame(StgMoveObject* target);
 
 	virtual void Move();
 
-	void SetAtFrame(float tx, float ty, int frame, lerp_func lerpFunc);
+	void SetAtFrame(float tx, float ty, int frame, lerp_func lerpFunc, lerp_diff_func diffFunc);
 };
 class StgMovePattern_Line_Weight : public StgMovePattern_Line {
 	friend class StgMoveObject;

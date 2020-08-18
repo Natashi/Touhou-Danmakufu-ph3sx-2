@@ -390,13 +390,13 @@ void StgMovePattern_Line_Speed::SetAtSpeed(float tx, float ty, double speed) {
 	iniPos_ = D3DXVECTOR2(target_->GetPositionX(), target_->GetPositionY());
 	targetPos_ = D3DXVECTOR2(tx, ty);
 
-	float nx = tx - iniPos_.x;
-	float ny = ty - iniPos_.y;
-	float dist = hypotf(nx, ny);
+	double nx = tx - iniPos_.x;
+	double ny = ty - iniPos_.y;
+	double dist = hypot(nx, ny);
 
 	speed_ = speed;
-	angDirection_ = atan2f(ny, nx);
-	maxFrame_ = std::roundf(dist / (float)speed);
+	angDirection_ = atan2(ny, nx);
+	maxFrame_ = std::floor(dist / speed + 0.001);
 
 	c_ = nx / dist;
 	s_ = ny / dist;
@@ -404,26 +404,27 @@ void StgMovePattern_Line_Speed::SetAtSpeed(float tx, float ty, double speed) {
 
 StgMovePattern_Line_Frame::StgMovePattern_Line_Frame(StgMoveObject* target) : StgMovePattern_Line(target) {
 	typeLine_ = TYPE_FRAME;
+	positionDiff_ = D3DXVECTOR2(0, 0);
+	dist_ = 0.0;
 	moveLerpFunc = Math::Lerp::Linear<float, float>;
-	lastPos_ = D3DXVECTOR2(0, 0);
+	diffLerpFunc = Math::Lerp::DifferentialLinear<float>;
 }
-void StgMovePattern_Line_Frame::SetAtFrame(float tx, float ty, int frame, lerp_func lerpFunc) {
+void StgMovePattern_Line_Frame::SetAtFrame(float tx, float ty, int frame, lerp_func lerpFunc, lerp_diff_func diffFunc) {
 	iniPos_ = D3DXVECTOR2(target_->GetPositionX(), target_->GetPositionY());
 	targetPos_ = D3DXVECTOR2(tx, ty);
-	lastPos_ = iniPos_;
 
 	moveLerpFunc = lerpFunc;
+	diffLerpFunc = diffFunc;
 
-	float nx = tx - iniPos_.x;
-	float ny = ty - iniPos_.y;
-	float dist = hypotf(nx, ny);
+	positionDiff_ = D3DXVECTOR2(tx - iniPos_.x, ty - iniPos_.y);
+	dist_ = hypot(positionDiff_.x, positionDiff_.y);
 
-	speed_ = dist / frame;
-	angDirection_ = atan2f(ny, nx);
+	speed_ = diffLerpFunc(0.0f) * dist_;
+	angDirection_ = atan2(positionDiff_.y, positionDiff_.x);
 	maxFrame_ = frame;
 
-	c_ = nx / dist;
-	s_ = ny / dist;
+	c_ = positionDiff_.x / dist_;
+	s_ = positionDiff_.y / dist_;
 }
 void StgMovePattern_Line_Frame::Move() {
 	if (frameWork_ <= maxFrame_) {
@@ -431,13 +432,8 @@ void StgMovePattern_Line_Frame::Move() {
 
 		float nx = moveLerpFunc(iniPos_.x, targetPos_.x, tmp_line);
 		float ny = moveLerpFunc(iniPos_.y, targetPos_.y, tmp_line);
-		float dx = nx - lastPos_.x;
-		float dy = ny - lastPos_.y;
-		float dist = hypotf(dx, dy);
 
-		c_ = dx / dist;
-		s_ = dy / dist;
-		speed_ = dist;
+		speed_ = diffLerpFunc(tmp_line) * dist_;
 
 		target_->SetPositionX(nx);
 		target_->SetPositionY(ny);

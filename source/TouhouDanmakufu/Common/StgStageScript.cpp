@@ -2201,8 +2201,8 @@ gstd::value StgStageScript::Func_IsIntersected_Obj_Obj(gstd::script_machine* mac
 	StgIntersectionObject* obj2 = dynamic_cast<StgIntersectionObject*>(script->GetObjectPointer(id2));
 	if (obj2 == nullptr) return script->CreateBooleanValue(false);
 
-	std::vector<StgIntersectionTarget::ptr> listTarget1 = obj1->GetIntersectionTargetList();
-	std::vector<StgIntersectionTarget::ptr> listTarget2 = obj2->GetIntersectionTargetList();
+	std::vector<shared_ptr<StgIntersectionTarget>> listTarget1 = obj1->GetIntersectionTargetList();
+	std::vector<shared_ptr<StgIntersectionTarget>> listTarget2 = obj2->GetIntersectionTargetList();
 
 	bool res = false;
 	for (auto& target1 : listTarget1) {
@@ -2392,28 +2392,35 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtFrame(gstd::script_machine* ma
 		int frame = argv[3].as_int();
 
 		StgMovePattern_Line_Frame::lerp_func lerpMode = Math::Lerp::Linear<float, float>;
+		StgMovePattern_Line_Frame::lerp_diff_func lerpModeDiff = Math::Lerp::DifferentialLinear<float>;
 		if (argc == 5) {
 			switch (argv[4].as_int()) {
 			case Math::Lerp::SMOOTH:
 				lerpMode = Math::Lerp::Smooth<float, float>;
+				lerpModeDiff = Math::Lerp::DifferentialSmooth<float>;
 				break;
 			case Math::Lerp::SMOOTHER:
 				lerpMode = Math::Lerp::Smoother<float, float>;
+				lerpModeDiff = Math::Lerp::DifferentialSmoother<float>;
 				break;
 			case Math::Lerp::ACCELERATE:
 				lerpMode = Math::Lerp::Accelerate<float, float>;
+				lerpModeDiff = Math::Lerp::DifferentialAccelerate<float>;
 				break;
 			case Math::Lerp::DECELERATE:
 				lerpMode = Math::Lerp::Decelerate<float, float>;
+				lerpModeDiff = Math::Lerp::DifferentialDecelerate<float>;
 				break;
 			case Math::Lerp::LINEAR:
 			default:
 				lerpMode = Math::Lerp::Linear<float, float>;
+				lerpModeDiff = Math::Lerp::DifferentialLinear<float>;
+				break;
 			}
 		}
 
 		std::shared_ptr<StgMovePattern_Line_Frame> pattern(new StgMovePattern_Line_Frame(obj));
-		pattern->SetAtFrame(tx, ty, frame, lerpMode);
+		pattern->SetAtFrame(tx, ty, frame, lerpMode, lerpModeDiff);
 		obj->SetPattern(pattern);
 	}
 	return value();
@@ -4580,11 +4587,8 @@ gstd::value StgStageScript::Func_ObjCol_GetIntersectedCount(gstd::script_machine
 	int id = (int)argv[0].as_real();
 	size_t res = 0;
 	shared_ptr<StgIntersectionObject> obj = std::dynamic_pointer_cast<StgIntersectionObject>(script->GetObject(id));
-	if (obj) {
-		for (auto& wPtr : obj->GetIntersectedIdList()) {
-			if (!wPtr.expired()) ++res;
-		}
-	}
+	if (obj)
+		res = obj->GetIntersectedIdList().size();
 	return script->CreateRealValue(res);
 }
 

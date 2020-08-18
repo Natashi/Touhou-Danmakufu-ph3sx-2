@@ -48,25 +48,6 @@ namespace gstd {
 	}
 
 	//================================================================
-	//Vectorize
-	class Vectorize {
-	public:
-		static __m128i Set128I_32(int a, int b, int c, int d);
-
-		static __m128 Add128S(const __m128& a, const __m128& b);
-		static __m128 Sub128S(const __m128& a, const __m128& b);
-		static __m128 Mul128S(const __m128& a, const __m128& b);
-		static __m128 Div128S(const __m128& a, const __m128& b);
-		static __m256 Mul256S(const __m256& a, const __m256& b);
-
-		static __m128d FMulAdd128D(const __m128d& a, const __m128d& b, const __m128d& c);
-
-		static __m128i MaxPackedI_32(const __m128i& a, const __m128i& b);
-		static __m128i MinPackedI_32(const __m128i& a, const __m128i& b);
-		static __m128i ClampPackedI_32(const __m128i& a, const __m128i& b, const __m128i& c);
-	};
-
-	//================================================================
 	//Encoding
 	class Encoding {
 		//http://msdn.microsoft.com/ja-jp/library/system.text.encoding(v=vs.110).aspx
@@ -266,9 +247,50 @@ namespace gstd {
 			static inline T Decelerate(T a, T b, L x) {
 				return a + ((L)1 - ((L)1 - x) * ((L)1 - x)) * (b - a);
 			}
+
+			//For finding lerp speeds
+			template<typename T>
+			static inline T DifferentialLinear(T x) {
+				return (T)1;
+			}
+			template<typename T>
+			static inline T DifferentialSmooth(T x) {
+				return (T)6 * x * ((T)1 - x);
+			}
+			template<typename T>
+			static inline T DifferentialSmoother(T x) {
+				return (T)30 * x * x * (x * x - (T)2 * x + (T)1);
+			}
+			template<typename T>
+			static inline T DifferentialAccelerate(T x) {
+				return (T)2 * x;
+			}
+			template<typename T>
+			static inline T DifferentialDecelerate(T x) {
+				return (T)2 * ((T)1 - x);
+			}
 		};
 	};
 #endif
+
+	//================================================================
+	//Vectorize
+	class Vectorize {
+	public:
+		static __m128i Set128I_32(int a, int b, int c, int d);
+
+		static __m128 Add128S(const __m128& a, const __m128& b);
+		static __m128 Sub128S(const __m128& a, const __m128& b);
+		static __m128 Mul128S(const __m128& a, const __m128& b);
+		static __m128 Div128S(const __m128& a, const __m128& b);
+		static __m256 Mul256S(const __m256& a, const __m256& b);
+
+		static __m128d FMulAdd128D(const __m128d& a, const __m128d& b, const __m128d& c);
+
+		static __m128i MaxPackedI_32(const __m128i& a, const __m128i& b);
+		static __m128i MinPackedI_32(const __m128i& a, const __m128i& b);
+		static __m128i ClampPackedI_32(const __m128i& a, const __m128i& b, const __m128i& c);
+	};
 
 	//================================================================
 	//ByteOrder
