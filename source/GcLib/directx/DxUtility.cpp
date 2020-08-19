@@ -56,7 +56,7 @@ D3DCOLOR& ColorAccess::SetColor(D3DCOLOR& src, const D3DCOLOR& mul) {
 	__m128 res = Vectorize::Mul128S(vsrc, (__m128&)mulFac);
 #endif
 	__m128i argb = ColorAccess::ClampColorPackedM((D3DXVECTOR4&)res);
-	int* _i = reinterpret_cast<int*>(&argb);
+	int* _i = argb.m128i_i32;
 	src = D3DCOLOR_ARGB(_i[0], _i[1], _i[2], _i[3]);
 	return src;
 }
@@ -69,7 +69,7 @@ D3DCOLOR& ColorAccess::ApplyAlpha(D3DCOLOR& color, float alpha) {
 	v1 = Vectorize::Mul128S(v1, v2);
 #endif
 	__m128i argb = ColorAccess::ClampColorPackedM((D3DXVECTOR4&)v1);
-	int* _i = reinterpret_cast<int*>(&argb);
+	int* _i = argb.m128i_i32;
 	color = D3DCOLOR_ARGB(_i[0], _i[1], _i[2], _i[3]);
 	return color;
 }
@@ -80,7 +80,7 @@ D3DXVECTOR4 ColorAccess::ClampColorPacked(const D3DXVECTOR4& src) {
 }
 D3DXVECTOR4 ColorAccess::ClampColorPacked(const __m128i& src) {
 	__m128i ci = ColorAccess::ClampColorPackedM(src);
-	int* _i = reinterpret_cast<int*>(&ci);
+	int* _i = ci.m128i_i32;
 	return D3DXVECTOR4((float)_i[0], (float)_i[1], (float)_i[2], (float)_i[3]);
 }
 __m128i ColorAccess::ClampColorPackedM(const D3DXVECTOR4& src) {
@@ -148,8 +148,8 @@ D3DCOLOR& ColorAccess::HSVtoRGB(D3DCOLOR& color, int hue, int saturation, int va
 
 	auto GenColor = [](int r, int g, int b) -> D3DCOLOR {
 		__m128i ci = Vectorize::Set128I_32(r, g, b, 0);
-		int* _i = reinterpret_cast<int*>(&ci);
 		ci = ColorAccess::ClampColorPackedM(ci);
+		int* _i = ci.m128i_i32;
 		return D3DCOLOR_XRGB(_i[0], _i[1], _i[2]);
 	};
 
@@ -183,7 +183,7 @@ D3DXVECTOR4 ColorAccess::ToVec4Normalized(const D3DCOLOR& color) {
 	return (D3DXVECTOR4&)nor;
 }
 D3DCOLOR ColorAccess::ToD3DCOLOR(const __m128i& color) {
-	const int* _i = reinterpret_cast<const int*>(&color);
+	const int* _i = color.m128i_i32;
 	return D3DCOLOR_ARGB(_i[0], _i[1], _i[2], _i[3]);
 }
 D3DCOLOR ColorAccess::ToD3DCOLOR(const D3DXVECTOR4& color) {
@@ -214,7 +214,7 @@ bool DxMath::IsIntersected(DxCircle& circle1, DxCircle& circle2) {
 #ifdef __L_MATH_VECTORIZE
 	__m128 v1 = { rx, ry, rr, 0 };
 	v1 = _mm_mul_ps(v1, v1);
-	float* _v1 = reinterpret_cast<float*>(&v1);
+	float* _v1 = v1.m128_f32;
 	return (_v1[0] + _v1[1]) <= (_v1[2]);
 #else
 	return (rx * rx + ry * ry) <= (rr * rr);
@@ -233,8 +233,8 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 
 #ifdef __L_MATH_VECTORIZE
 	__m128 v1, v2;
-	float* _v1 = reinterpret_cast<float*>(&v1);
-	float* _v2 = reinterpret_cast<float*>(&v2);
+	float* _v1 = v1.m128_f32;
+	float* _v2 = v2.m128_f32;
 
 	float cen_x = (line.GetX1() + line.GetX2()) / 2.0f;
 	float cen_y = (line.GetY1() + line.GetY2()) / 2.0f;
@@ -519,8 +519,8 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	__m128 v2_1 = { sz, cz, sy, cy };
 	v1_0 = _mm256_mul_ps(v1_0, v2_0);
 	v1_1 = _mm_mul_ps(v1_1, v2_1);
-	float* _p0 = reinterpret_cast<float*>(&v1_0);
-	float* _p1 = reinterpret_cast<float*>(&v1_1);
+	float* _p0 = v1_0.m256_f32;
+	float* _p1 = v1_1.m128_f32;
 
 	mat->_11 = _p0[0] - _p0[1];
 	mat->_12 = -_p0[2];
@@ -558,7 +558,7 @@ void DxMath::MatrixApplyScaling(D3DXMATRIX* mat, const D3DXVECTOR3& scale) {
 		scale.z, scale.z
 	};
 	v1 = _mm256_mul_ps(v1, v2);
-	float* _p = reinterpret_cast<float*>(&v1);
+	float* _p = v1.m256_f32;
 	mat->_11 = _p[0];
 	mat->_12 = _p[1];
 	mat->_13 = _p[2];
@@ -620,7 +620,7 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 	__m256 v1;
 	__m256 v2;
 	__m128 v3 = { scale->x, scale->y, scale->x, scale->y };
-	float* _p1 = reinterpret_cast<float*>(&v1);
+	float* _p1 = v1.m256_f32;
 
 	//First, divide the UVs
 	v1 = {
