@@ -183,15 +183,21 @@ void StgPlayerObject::_Move() {
 		SetSpeed(0);
 	}
 
+#ifdef __L_MATH_VECTORIZE
+	__m128d v_pos = { posX_, posY_ };
+	v_pos = _mm_add_pd(v_pos, _mm_setr_pd(sx, sy));
+	v_pos = _mm_max_pd(v_pos, _mm_setr_pd((double)rcClip_.left, (double)rcClip_.top));
+	v_pos = _mm_min_pd(v_pos, _mm_setr_pd((double)rcClip_.right, (double)rcClip_.bottom));
+	this->SetX(v_pos.m128d_f64[0]);
+	this->SetY(v_pos.m128d_f64[1]);
+#else
 	double px = posX_ + sx;
 	double py = posY_ + sy;
 
 	//Clip player position
-	px = std::clamp(px, (double)rcClip_.left, (double)rcClip_.right);
-	py = std::clamp(py, (double)rcClip_.top, (double)rcClip_.bottom);
-
-	SetX(px);
-	SetY(py);
+	SetX(std::clamp(px, (double)rcClip_.left, (double)rcClip_.right));
+	SetY(std::clamp(py, (double)rcClip_.top, (double)rcClip_.bottom));
+#endif
 }
 void StgPlayerObject::_AddIntersection() {
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
