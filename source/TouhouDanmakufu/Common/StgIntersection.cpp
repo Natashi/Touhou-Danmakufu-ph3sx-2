@@ -184,6 +184,7 @@ void StgIntersectionManager::RenderVisualizer() {
 		objIntersectionVisualizerLine_->Render();
 }
 void StgIntersectionManager::AddTarget(shared_ptr<StgIntersectionTarget> target) {
+	if (target == nullptr) return;
 	if (shared_ptr<StgIntersectionObject> obj = target->GetObject().lock()) {
 		StgIntersectionTarget::Type type = target->GetTargetType();
 		switch (type) {
@@ -541,10 +542,10 @@ size_t StgIntersectionSpace::_WriteIntersectionCheckList(StgIntersectionManager*
 
 #pragma omp for
 	for (int iA = 0; iA < listTargetA.size(); ++iA) {
-		shared_ptr<StgIntersectionTarget> targetA = listTargetA[iA];
+		shared_ptr<StgIntersectionTarget>& targetA = listTargetA[iA];
 
 		for (size_t iB = 0; iB < listTargetB.size(); ++iB) {
-			shared_ptr<StgIntersectionTarget> targetB = listTargetB[iB];
+			shared_ptr<StgIntersectionTarget>& targetB = listTargetB[iB];
 
 			RECT& rc1 = targetA->GetIntersectionSpaceRect();
 			RECT& rc2 = targetB->GetIntersectionSpaceRect();
