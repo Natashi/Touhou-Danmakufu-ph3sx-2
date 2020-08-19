@@ -1832,15 +1832,19 @@ void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
 		ref_count_ptr<RecordEntry> entry = record.GetEntry(key);
 		gstd::ByteBuffer& buffer = entry->GetBufferRef();
 
-		uint32_t valSize = 0U;
+		gstd::value storedVal;
+		uint32_t storedSize = 0U;
 		buffer.Seek(0);
-		buffer.Read(&valSize, sizeof(uint32_t));
+		buffer.Read(&storedSize, sizeof(uint32_t));
 
-		gstd::ByteBuffer bufferRes;
-		bufferRes.SetSize(valSize);
-		buffer.Read(bufferRes.GetPointer(), bufferRes.GetSize());
+		if (storedSize > 0U) {
+			gstd::ByteBuffer bufferRes;
+			bufferRes.SetSize(storedSize);
+			buffer.Read(bufferRes.GetPointer(), bufferRes.GetSize());
+			storedVal = _ReadRecord(bufferRes);
+		}
 
-		mapValue_[key] = _ReadRecord(bufferRes);
+		mapValue_[key] = storedVal;
 	}
 }
 gstd::value ScriptCommonData::_ReadRecord(gstd::ByteBuffer& buffer) {
@@ -1893,17 +1897,17 @@ void ScriptCommonData::WriteRecord(gstd::RecordBuffer& record) {
 	for (auto itrValue = mapValue_.begin(); itrValue != mapValue_.end(); ++itrValue) {
 		const std::string& key = itrValue->first;
 		const gstd::value& comVal = itrValue->second;
+		
+		gstd::ByteBuffer buffer;
+		buffer.WriteValue<uint32_t>(0U);
+
 		if (comVal.has_data()) {
-			gstd::ByteBuffer buffer;
-
-			buffer.WriteValue<uint32_t>(0U);
 			_WriteRecord(buffer, comVal);
-
 			buffer.Seek(0U);
 			buffer.WriteValue<uint32_t>(buffer.GetSize() - sizeof(uint32_t));
-
-			record.SetRecord(key, buffer.GetPointer(), buffer.GetSize());
 		}
+
+		record.SetRecord(key, buffer.GetPointer(), buffer.GetSize());
 	}
 }
 void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, const gstd::value& comValue) {
