@@ -168,15 +168,13 @@ void StgMovePattern_Angle::Move() {
 	}
 
 #ifdef __L_MATH_VECTORIZE
-	__m128d v1 = { speed_, speed_ };
-	__m128d v2 = { c_, s_ };
-	__m128d v3 = { target_->GetPositionX(), target_->GetPositionY() };
-	v1 = _mm_fmadd_pd(v1, v2, v3);
-	target_->SetPositionX(reinterpret_cast<double*>(&v1)[0]);
-	target_->SetPositionY(reinterpret_cast<double*>(&v1)[1]);
+	__m128d v_pos = { target_->GetPositionX(), target_->GetPositionY() };
+	v_pos = _mm_fmadd_pd(_mm_setr_pd(speed_, speed_), _mm_setr_pd(c_, s_), v_pos);
+	target_->SetPositionX(v_pos.m128d_f64[0]);
+	target_->SetPositionY(v_pos.m128d_f64[1]);
 #else
-	target_->SetPositionX(target_->GetPositionX() + speed_ * c_);
-	target_->SetPositionY(target_->GetPositionY() + speed_ * s_);
+	target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
+	target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
 #endif
 
 	++frameWork_;
@@ -204,7 +202,7 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 	}
 
 	for (auto& pairCmd : listCommand_) {
-		double arg = pairCmd.second;
+		double& arg = pairCmd.second;
 		switch (pairCmd.first) {
 		case SET_ZERO:
 			newAccel = 0;
@@ -293,11 +291,8 @@ void StgMovePattern_XY::Move() {
 			s_ = std::max(s_, maxSpeedY_);
 	}
 
-	double px = target_->GetPositionX() + c_;
-	double py = target_->GetPositionY() + s_;
-
-	target_->SetPositionX(px);
-	target_->SetPositionY(py);
+	target_->SetPositionX(target_->GetPositionX() + c_);
+	target_->SetPositionY(target_->GetPositionY() + s_);
 
 	++frameWork_;
 }
@@ -322,7 +317,7 @@ void StgMovePattern_XY::_Activate(StgMovePattern* _src) {
 	}
 
 	for (auto& pairCmd : listCommand_) {
-		double arg = pairCmd.second;
+		double& arg = pairCmd.second;
 		switch (pairCmd.first) {
 		case SET_ZERO:
 			accelerationX_ = 0;
@@ -363,17 +358,15 @@ StgMovePattern_Line::StgMovePattern_Line(StgMoveObject* target) : StgMovePattern
 	targetPos_ = D3DXVECTOR2(0, 0);
 }
 void StgMovePattern_Line::Move() {
-	if (frameWork_ <= maxFrame_) {
+	if (frameWork_ < maxFrame_) {
 #ifdef __L_MATH_VECTORIZE
-		__m128d v1 = { speed_, speed_ };
-		__m128d v2 = { c_, s_ };
-		__m128d v3 = { target_->GetPositionX(), target_->GetPositionY() };
-		v1 = _mm_fmadd_pd(v1, v2, v3);
-		target_->SetPositionX(reinterpret_cast<double*>(&v1)[0]);
-		target_->SetPositionY(reinterpret_cast<double*>(&v1)[1]);
+		__m128d v_pos = { target_->GetPositionX(), target_->GetPositionY() };
+		v_pos = _mm_fmadd_pd(_mm_setr_pd(speed_, speed_), _mm_setr_pd(c_, s_), v_pos);
+		target_->SetPositionX(v_pos.m128d_f64[0]);
+		target_->SetPositionY(v_pos.m128d_f64[1]);
 #else
-		target_->SetPositionX(target_->GetPositionX() + speed_ * c_);
-		target_->SetPositionY(target_->GetPositionY() + speed_ * s_);
+		target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
+		target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
 #endif
 	}
 	else {
@@ -394,9 +387,10 @@ void StgMovePattern_Line_Speed::SetAtSpeed(float tx, float ty, double speed) {
 	double ny = ty - iniPos_.y;
 	double dist = hypot(nx, ny);
 
-	speed_ = speed;
+	//speed_ = speed;
 	angDirection_ = atan2(ny, nx);
 	maxFrame_ = std::floor(dist / speed + 0.001);
+	speed_ = dist / maxFrame_;	//Speed correction to reach the destination in integer frames
 
 	c_ = nx / dist;
 	s_ = ny / dist;
@@ -427,8 +421,8 @@ void StgMovePattern_Line_Frame::SetAtFrame(float tx, float ty, int frame, lerp_f
 	s_ = positionDiff_.y / dist_;
 }
 void StgMovePattern_Line_Frame::Move() {
-	if (frameWork_ <= maxFrame_) {
-		float tmp_line = frameWork_ / (float)maxFrame_;
+	if (frameWork_ < maxFrame_) {
+		float tmp_line = (frameWork_ + 1) / (float)maxFrame_;
 
 		float nx = moveLerpFunc(iniPos_.x, targetPos_.x, tmp_line);
 		float ny = moveLerpFunc(iniPos_.y, targetPos_.y, tmp_line);
@@ -477,15 +471,13 @@ void StgMovePattern_Line_Weight::Move() {
 			speed_ = maxSpeed_;
 
 #ifdef __L_MATH_VECTORIZE
-		__m128d v1 = { speed_, speed_ };
-		__m128d v2 = { c_, s_ };
-		__m128d v3 = { target_->GetPositionX(), target_->GetPositionY() };
-		v1 = _mm_fmadd_pd(v1, v2, v3);
-		target_->SetPositionX(reinterpret_cast<double*>(&v1)[0]);
-		target_->SetPositionY(reinterpret_cast<double*>(&v1)[1]);
+		__m128d v_pos = { target_->GetPositionX(), target_->GetPositionY() };
+		v_pos = _mm_fmadd_pd(_mm_setr_pd(speed_, speed_), _mm_setr_pd(c_, s_), v_pos);
+		target_->SetPositionX(v_pos.m128d_f64[0]);
+		target_->SetPositionY(v_pos.m128d_f64[1]);
 #else
-		target_->SetPositionX(target_->GetPositionX() + speed_ * c_);
-		target_->SetPositionY(target_->GetPositionY() + speed_ * s_);
+		target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
+		target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
 #endif
 
 		dist_ -= speed_;
