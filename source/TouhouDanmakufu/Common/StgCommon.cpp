@@ -354,8 +354,8 @@ StgMovePattern_Line::StgMovePattern_Line(StgMoveObject* target) : StgMovePattern
 	maxFrame_ = -1;
 	speed_ = 0;
 	angDirection_ = 0;
-	iniPos_ = D3DXVECTOR2(0, 0);
-	targetPos_ = D3DXVECTOR2(0, 0);
+	memset(iniPos_, 0x00, sizeof(iniPos_));
+	memset(targetPos_, 0x00, sizeof(targetPos_));
 }
 void StgMovePattern_Line::Move() {
 	if (frameWork_ < maxFrame_) {
@@ -379,12 +379,14 @@ void StgMovePattern_Line::Move() {
 StgMovePattern_Line_Speed::StgMovePattern_Line_Speed(StgMoveObject* target) : StgMovePattern_Line(target) {
 	typeLine_ = TYPE_SPEED;
 }
-void StgMovePattern_Line_Speed::SetAtSpeed(float tx, float ty, double speed) {
-	iniPos_ = D3DXVECTOR2(target_->GetPositionX(), target_->GetPositionY());
-	targetPos_ = D3DXVECTOR2(tx, ty);
+void StgMovePattern_Line_Speed::SetAtSpeed(double tx, double ty, double speed) {
+	iniPos_[0] = target_->GetPositionX();
+	iniPos_[1] = target_->GetPositionY();
+	targetPos_[0] = tx;
+	targetPos_[1] = ty;
 
-	double nx = tx - iniPos_.x;
-	double ny = ty - iniPos_.y;
+	double nx = tx - iniPos_[0];
+	double ny = ty - iniPos_[1];
 	double dist = hypot(nx, ny);
 
 	//speed_ = speed;
@@ -398,37 +400,40 @@ void StgMovePattern_Line_Speed::SetAtSpeed(float tx, float ty, double speed) {
 
 StgMovePattern_Line_Frame::StgMovePattern_Line_Frame(StgMoveObject* target) : StgMovePattern_Line(target) {
 	typeLine_ = TYPE_FRAME;
-	positionDiff_ = D3DXVECTOR2(0, 0);
-	dist_ = 0.0;
-	moveLerpFunc = Math::Lerp::Linear<float, float>;
-	diffLerpFunc = Math::Lerp::DifferentialLinear<float>;
+	memset(positionDiff_, 0x00, sizeof(iniPos_));
+	speedRate_ = 0.0;
+	moveLerpFunc = Math::Lerp::Linear<double, double>;
+	diffLerpFunc = Math::Lerp::DifferentialLinear<double>;
 }
-void StgMovePattern_Line_Frame::SetAtFrame(float tx, float ty, int frame, lerp_func lerpFunc, lerp_diff_func diffFunc) {
-	iniPos_ = D3DXVECTOR2(target_->GetPositionX(), target_->GetPositionY());
-	targetPos_ = D3DXVECTOR2(tx, ty);
+void StgMovePattern_Line_Frame::SetAtFrame(double tx, double ty, int frame, lerp_func lerpFunc, lerp_diff_func diffFunc) {
+	iniPos_[0] = target_->GetPositionX();
+	iniPos_[1] = target_->GetPositionY();
+	targetPos_[0] = tx;
+	targetPos_[1] = ty;
 
 	moveLerpFunc = lerpFunc;
 	diffLerpFunc = diffFunc;
 
-	positionDiff_ = D3DXVECTOR2(tx - iniPos_.x, ty - iniPos_.y);
-	dist_ = hypot(positionDiff_.x, positionDiff_.y);
+	positionDiff_[0] = tx - iniPos_[0];
+	positionDiff_[1] = ty - iniPos_[1];
+	double dist = hypot(positionDiff_[0], positionDiff_[1]);
+	speedRate_ = dist / (double)frame;
 
-	speed_ = diffLerpFunc(0.0f) * dist_;
-	angDirection_ = atan2(positionDiff_.y, positionDiff_.x);
+	speed_ = diffLerpFunc(0.0) * speedRate_;
+	angDirection_ = atan2(positionDiff_[1], positionDiff_[0]);
 	maxFrame_ = frame;
 
-	c_ = positionDiff_.x / dist_;
-	s_ = positionDiff_.y / dist_;
+	c_ = positionDiff_[0] / dist;
+	s_ = positionDiff_[1] / dist;
 }
 void StgMovePattern_Line_Frame::Move() {
 	if (frameWork_ < maxFrame_) {
-		float tmp_line = (frameWork_ + 1) / (float)maxFrame_;
+		double tmp_line = (frameWork_ + 1) / (double)maxFrame_;
 
-		float nx = moveLerpFunc(iniPos_.x, targetPos_.x, tmp_line);
-		float ny = moveLerpFunc(iniPos_.y, targetPos_.y, tmp_line);
+		speed_ = diffLerpFunc(tmp_line) * speedRate_;
 
-		speed_ = diffLerpFunc(tmp_line) * dist_;
-
+		double nx = moveLerpFunc(iniPos_[0], targetPos_[0], tmp_line);
+		double ny = moveLerpFunc(iniPos_[1], targetPos_[1], tmp_line);
 		target_->SetPositionX(nx);
 		target_->SetPositionY(ny);
 	}
@@ -445,18 +450,20 @@ StgMovePattern_Line_Weight::StgMovePattern_Line_Weight(StgMoveObject* target) : 
 	weight_ = 0;
 	maxSpeed_ = 0;
 }
-void StgMovePattern_Line_Weight::SetAtWeight(float tx, float ty, double weight, double maxSpeed) {
-	iniPos_ = D3DXVECTOR2(target_->GetPositionX(), target_->GetPositionY());
-	targetPos_ = D3DXVECTOR2(tx, ty);
+void StgMovePattern_Line_Weight::SetAtWeight(double tx, double ty, double weight, double maxSpeed) {
+	iniPos_[0] = target_->GetPositionX();
+	iniPos_[1] = target_->GetPositionY();
+	targetPos_[0] = tx;
+	targetPos_[1] = ty;
 
 	weight_ = weight;
 	maxSpeed_ = maxSpeed;
 
-	float nx = tx - iniPos_.x;
-	float ny = ty - iniPos_.y;
-	dist_ = hypotf(nx, ny);
+	double nx = tx - iniPos_[0];
+	double ny = ty - iniPos_[1];
+	dist_ = hypot(nx, ny);
 	speed_ = maxSpeed_;
-	angDirection_ = atan2f(ny, nx);
+	angDirection_ = atan2(ny, nx);
 
 	c_ = nx / dist_;
 	s_ = ny / dist_;

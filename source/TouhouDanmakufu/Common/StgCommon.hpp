@@ -213,8 +213,8 @@ protected:
 	double speed_;
 	double angDirection_;
 	
-	D3DXVECTOR2 iniPos_;
-	D3DXVECTOR2 targetPos_;
+	double iniPos_[2];
+	double targetPos_[2];
 public:
 	StgMovePattern_Line(StgMoveObject* target);
 
@@ -231,16 +231,16 @@ class StgMovePattern_Line_Speed : public StgMovePattern_Line {
 public:
 	StgMovePattern_Line_Speed(StgMoveObject* target);
 
-	void SetAtSpeed(float tx, float ty, double speed);
+	void SetAtSpeed(double tx, double ty, double speed);
 };
 class StgMovePattern_Line_Frame : public StgMovePattern_Line {
 	friend class StgMoveObject;
 public:
-	typedef float (*lerp_func)(float, float, float);
-	typedef float (*lerp_diff_func)(float);
+	typedef double (*lerp_func)(double, double, double);
+	typedef double (*lerp_diff_func)(double);
 protected:
-	D3DXVECTOR2 positionDiff_;
-	double dist_;
+	double positionDiff_[2];
+	double speedRate_;
 	lerp_func moveLerpFunc;
 	lerp_diff_func diffLerpFunc;
 public:
@@ -248,7 +248,7 @@ public:
 
 	virtual void Move();
 
-	void SetAtFrame(float tx, float ty, int frame, lerp_func lerpFunc, lerp_diff_func diffFunc);
+	void SetAtFrame(double tx, double ty, int frame, lerp_func lerpFunc, lerp_diff_func diffFunc);
 };
 class StgMovePattern_Line_Weight : public StgMovePattern_Line {
 	friend class StgMoveObject;
@@ -261,5 +261,5 @@ public:
 
 	virtual void Move();
 
-	void SetAtWeight(float tx, float ty, double weight, double maxSpeed);
+	void SetAtWeight(double tx, double ty, double weight, double maxSpeed);
 };

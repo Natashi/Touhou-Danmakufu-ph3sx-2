@@ -2372,8 +2372,8 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtSpeed(gstd::script_machine* ma
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		float tx = argv[1].as_real();
-		float ty = argv[2].as_real();
+		double tx = argv[1].as_real();
+		double ty = argv[2].as_real();
 		double speed = argv[3].as_real();
 
 		std::shared_ptr<StgMovePattern_Line_Speed> pattern(new StgMovePattern_Line_Speed(obj));
@@ -2387,34 +2387,34 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtFrame(gstd::script_machine* ma
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		float tx = argv[1].as_real();
-		float ty = argv[2].as_real();
+		double tx = argv[1].as_real();
+		double ty = argv[2].as_real();
 		int frame = argv[3].as_int();
 
-		StgMovePattern_Line_Frame::lerp_func lerpMode = Math::Lerp::Linear<float, float>;
-		StgMovePattern_Line_Frame::lerp_diff_func lerpModeDiff = Math::Lerp::DifferentialLinear<float>;
+		StgMovePattern_Line_Frame::lerp_func lerpMode = Math::Lerp::Linear<double, double>;
+		StgMovePattern_Line_Frame::lerp_diff_func lerpModeDiff = Math::Lerp::DifferentialLinear<double>;
 		if (argc == 5) {
 			switch (argv[4].as_int()) {
 			case Math::Lerp::SMOOTH:
-				lerpMode = Math::Lerp::Smooth<float, float>;
-				lerpModeDiff = Math::Lerp::DifferentialSmooth<float>;
+				lerpMode = Math::Lerp::Smooth<double, double>;
+				lerpModeDiff = Math::Lerp::DifferentialSmooth<double>;
 				break;
 			case Math::Lerp::SMOOTHER:
-				lerpMode = Math::Lerp::Smoother<float, float>;
-				lerpModeDiff = Math::Lerp::DifferentialSmoother<float>;
+				lerpMode = Math::Lerp::Smoother<double, double>;
+				lerpModeDiff = Math::Lerp::DifferentialSmoother<double>;
 				break;
 			case Math::Lerp::ACCELERATE:
-				lerpMode = Math::Lerp::Accelerate<float, float>;
-				lerpModeDiff = Math::Lerp::DifferentialAccelerate<float>;
+				lerpMode = Math::Lerp::Accelerate<double, double>;
+				lerpModeDiff = Math::Lerp::DifferentialAccelerate<double>;
 				break;
 			case Math::Lerp::DECELERATE:
-				lerpMode = Math::Lerp::Decelerate<float, float>;
-				lerpModeDiff = Math::Lerp::DifferentialDecelerate<float>;
+				lerpMode = Math::Lerp::Decelerate<double, double>;
+				lerpModeDiff = Math::Lerp::DifferentialDecelerate<double>;
 				break;
 			case Math::Lerp::LINEAR:
 			default:
-				lerpMode = Math::Lerp::Linear<float, float>;
-				lerpModeDiff = Math::Lerp::DifferentialLinear<float>;
+				lerpMode = Math::Lerp::Linear<double, double>;
+				lerpModeDiff = Math::Lerp::DifferentialLinear<double>;
 				break;
 			}
 		}
@@ -2430,8 +2430,8 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtWeight(gstd::script_machine* m
 	int id = (int)argv[0].as_real();
 	StgMoveObject* obj = dynamic_cast<StgMoveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		float tx = argv[1].as_real();
-		float ty = argv[2].as_real();
+		double tx = argv[1].as_real();
+		double ty = argv[2].as_real();
 		double weight = argv[3].as_real();
 		double maxSpeed = argv[4].as_real();
 
