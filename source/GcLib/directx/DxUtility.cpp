@@ -212,7 +212,7 @@ bool DxMath::IsIntersected(DxCircle& circle1, DxCircle& circle2) {
 	float ry = circle1.GetY() - circle2.GetY();
 	float rr = circle1.GetR() + circle2.GetR();
 #ifdef __L_MATH_VECTORIZE
-	__m128 v1 = { rx, ry, rr, 0 };
+	__m128 v1 = _mm_setr_ps(rx, ry, rr, 0);
 	v1 = _mm_mul_ps(v1, v1);
 	float* _v1 = v1.m128_f32;
 	return (_v1[0] + _v1[1]) <= (_v1[2]);
@@ -239,9 +239,9 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	float cen_x = (line.GetX1() + line.GetX2()) / 2.0f;
 	float cen_y = (line.GetY1() + line.GetY2()) / 2.0f;
 
-	v1 = { line.GetX2(), line.GetY2(), cen_x, cen_y };
-	v2 = { line.GetX1(), line.GetY1(), circle.GetX(), circle.GetY() };
-	v1 = _mm_sub_ps(v1, v2);
+	v1 = _mm_sub_ps(
+		_mm_setr_ps(line.GetX2(), line.GetY2(), cen_x, cen_y), 
+		_mm_setr_ps(line.GetX1(), line.GetY1(), circle.GetX(), circle.GetY()));
 
 	float dx = _v1[0];
 	float dy = _v1[1];
@@ -259,9 +259,9 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	float rsin = dy / line_h;
 
 	//Find vector cross products
-	v1 = { rcos, rsin, rsin, -rcos };
-	v2 = { u_cy, u_cx, u_cy, u_cx };
-	v1 = _mm_mul_ps(v1, v2);
+	v1 = _mm_mul_ps(
+		_mm_setr_ps(rcos, rsin, rsin, -rcos),
+		_mm_setr_ps(u_cy, u_cx, u_cy, u_cx));
 	float cross_x = abs(_v1[0] - _v1[1]) * 2.0f;
 	float cross_y = abs(_v1[2] - _v1[3]) * 2.0f;
 
@@ -279,24 +279,24 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	}
 
 	float l_uw = line.GetWidth() / line_h * 0.5f;
-	v1 = { dx, dy, circle.GetR(), 0 };
-	v2 = { l_uw, l_uw, circle.GetR(), 0 };
-	v1 = _mm_mul_ps(v1, v2);
+	v1 = _mm_mul_ps(
+		_mm_setr_ps(dx, dy, circle.GetR(), 0),
+		_mm_setr_ps(l_uw, l_uw, circle.GetR(), 0));
 	float nx = _v1[0];
 	float ny = _v1[1];
 	float rr = _v1[2];
 
 	//Check A and B
-	v1 = { circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY() };
-	v2 = { line.GetX1() - ny, line.GetY1() + nx, line.GetX1() + ny, line.GetY1() - nx };
-	v2 = _mm_sub_ps(v1, v2);
+	v1 = _mm_setr_ps(circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY());
+	v2 = _mm_mul_ps(v1,
+		_mm_setr_ps(line.GetX1() - ny, line.GetY1() + nx, line.GetX1() + ny, line.GetY1() - nx));
 	v2 = _mm_mul_ps(v2, v2);
 	if (_v2[0] + _v2[1] <= rr || _v2[2] + _v2[3] <= rr)
 		return true;
 
 	//Check C and D
-	v2 = { line.GetX2() + ny, line.GetY2() - nx, line.GetX2() - ny, line.GetY2() + nx };
-	v2 = _mm_sub_ps(v1, v2);
+	v2 = _mm_sub_ps(v1,
+		_mm_setr_ps(line.GetX2() + ny, line.GetY2() - nx, line.GetX2() - ny, line.GetY2() + nx));
 	v2 = _mm_mul_ps(v2, v2);
 	if (_v2[0] + _v2[1] <= rr || _v2[2] + _v2[3] <= rr)
 		return true;
@@ -507,20 +507,15 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 #ifdef __L_MATH_VECTORIZE
 	float sx_sy = sx * sy;
 	float sx_cy = sx * cy;
-	__m256 v1_0 = {
-		cy, sx_sy, cx, sy, sx_cy, 
-		cy, sx_sy, cx
-	};
-	__m128 v1_1 = { sy, sx_cy, cx, cx };
-	__m256 v2_0 = {
-		cz, sz, sz, cz, sz,
-		sz, cz, cz
-	};
-	__m128 v2_1 = { sz, cz, sy, cy };
-	v1_0 = _mm256_mul_ps(v1_0, v2_0);
-	v1_1 = _mm_mul_ps(v1_1, v2_1);
-	float* _p0 = v1_0.m256_f32;
-	float* _p1 = v1_1.m128_f32;
+
+	__m256 v_11_22 = _mm256_mul_ps(
+		_mm256_setr_ps(cy, sx_sy, cx, sy, sx_cy, cy, sx_sy, cx),
+		_mm256_setr_ps(cz, sz, sz, cz, sz, sz, cz, cz));
+	__m128 v_23_33 = _mm_mul_ps(
+		_mm_setr_ps(sy, sx_cy, cx, cx),
+		_mm_setr_ps(sz, cz, sy, cy));
+	float* _p0 = v_11_22.m256_f32;
+	float* _p1 = v_23_33.m128_f32;
 
 	mat->_11 = _p0[0] - _p0[1];
 	mat->_12 = -_p0[2];
@@ -547,18 +542,10 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 }
 void DxMath::MatrixApplyScaling(D3DXMATRIX* mat, const D3DXVECTOR3& scale) {
 #ifdef __L_MATH_VECTORIZE
-	__m256 v1 = {
-		mat->_11, mat->_12, mat->_13,
-		mat->_21, mat->_22, mat->_23,
-		mat->_31, mat->_32
-	};
-	__m256 v2 = {
-		scale.x, scale.x, scale.x,
-		scale.y, scale.y, scale.y,
-		scale.z, scale.z
-	};
-	v1 = _mm256_mul_ps(v1, v2);
-	float* _p = v1.m256_f32;
+	__m256 v_mat = _mm256_mul_ps(
+		_mm256_setr_ps(mat->_11, mat->_12, mat->_13, mat->_21, mat->_22, mat->_23, mat->_31, mat->_32),
+		_mm256_setr_ps(scale.x, scale.x, scale.x, scale.y, scale.y, scale.y, scale.z, scale.z));
+	float* _p = v_mat.m256_f32;
 	mat->_11 = _p[0];
 	mat->_12 = _p[1];
 	mat->_13 = _p[2];
@@ -584,33 +571,56 @@ D3DXVECTOR4 DxMath::RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, 
 	float vx = vec.x;
 	float vy = vec.y;
 	float vz = vec.z;
-	
+	float cx = angX->x;
+	float sx = angX->y;
+	float cy = angY->x;
+	float sy = angY->y;
+	float cz = angZ->x;
+	float sz = angZ->y;
+#ifdef __L_MATH_VECTORIZE
 	if (angZ) {
-		float cz = angZ->x;
-		float sz = angZ->y;
-
+		__m128 v_res = _mm_mul_ps(
+			_mm_setr_ps(vx, vy, vx, vy),
+			_mm_setr_ps(cz, sz, sz, cz));
+		vec.x = v_res.m128_f32[0] - v_res.m128_f32[1];
+		vec.y = v_res.m128_f32[2] + v_res.m128_f32[3];
+		vx = vec.x;
+		vy = vec.y;
+	}
+	if (angX) {
+		__m128 v_res = _mm_mul_ps(
+			_mm_setr_ps(vy, vz, vy, vz),
+			_mm_setr_ps(cx, sx, sx, cx));
+		vec.y = v_res.m128_f32[0] - v_res.m128_f32[1];
+		vec.z = v_res.m128_f32[2] + v_res.m128_f32[3];
+		vy = vec.y;
+		vz = vec.z;
+	}
+	if (angY) {
+		__m128 v_res = _mm_mul_ps(
+			_mm_setr_ps(vz, vx, vz, vx),
+			_mm_setr_ps(sy, cy, cy, sy));
+		vec.x = v_res.m128_f32[0] + v_res.m128_f32[1];
+		vec.z = v_res.m128_f32[2] - v_res.m128_f32[3];
+	}
+#else
+	if (angZ) {
 		vec.x = vx * cz - vy * sz;
 		vec.y = vx * sz + vy * cz;
 		vx = vec.x;
 		vy = vec.y;
 	}
 	if (angX) {
-		float cx = angX->x;
-		float sx = angX->y;
-
 		vec.y = vy * cx - vz * sx;
 		vec.z = vy * sx + vz * cx;
 		vy = vec.y;
 		vz = vec.z;
 	}
 	if (angY) {
-		float cy = angY->x;
-		float sy = angY->y;
-
 		vec.x = vz * sy + vx * cy;
 		vec.z = vz * cy - vx * sy;
 	}
-
+#endif
 	return vec;
 }
 void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVECTOR2* angle,
@@ -618,8 +628,6 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 {
 #ifdef __L_MATH_VECTORIZE
 	__m256 v1;
-	__m256 v2;
-	__m128 v3 = { scale->x, scale->y, scale->x, scale->y };
 	float* _p1 = v1.m256_f32;
 
 	//First, divide the UVs
@@ -627,11 +635,8 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 		vert[0].texcoord.x, vert[0].texcoord.y, vert[1].texcoord.x, vert[1].texcoord.y,
 		vert[2].texcoord.x, vert[2].texcoord.y, vert[3].texcoord.x, vert[3].texcoord.y
 	};
-	v2 = {
-		textureSize->x, textureSize->y, textureSize->x, textureSize->y,
-		textureSize->x, textureSize->y, textureSize->x, textureSize->y
-	};
-	v1 = _mm256_mul_ps(v1, v2);
+	v1 = _mm256_mul_ps(v1, _mm256_setr_ps(textureSize->x, textureSize->y, textureSize->x, textureSize->y,
+		textureSize->x, textureSize->y, textureSize->x, textureSize->y));
 	memcpy(&(vert[0].texcoord), &_p1[0], sizeof(D3DXVECTOR2));
 	memcpy(&(vert[1].texcoord), &_p1[2], sizeof(D3DXVECTOR2));
 	memcpy(&(vert[2].texcoord), &_p1[4], sizeof(D3DXVECTOR2));
@@ -640,26 +645,17 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 	//Then, rotate and scale (2 vertices at a time)
 	for (size_t i = 0; i < 4; i += 2) {
 		//Rotate
-		v1 = {
-			vert[i + 0].position.x, vert[i + 0].position.y, vert[i + 0].position.x, vert[i + 0].position.y,
-			vert[i + 1].position.x, vert[i + 1].position.y, vert[i + 1].position.x, vert[i + 1].position.y,
-		};
-		v2 = {
-			angle->x, angle->y, angle->y, angle->x,
-			angle->x, angle->y, angle->y, angle->x
-		};
-		v1 = _mm256_mul_ps(v1, v2);
+		v1 = _mm256_setr_ps(vert[i + 0].position.x, vert[i + 0].position.y, 
+			vert[i + 0].position.x, vert[i + 0].position.y,
+			vert[i + 1].position.x, vert[i + 1].position.y, 
+			vert[i + 1].position.x, vert[i + 1].position.y);
+		v1 = _mm256_mul_ps(v1, _mm256_setr_ps(angle->x, angle->y, angle->y, angle->x,
+			angle->x, angle->y, angle->y, angle->x));
 
 		//Scale
-		v2 = {
-			_p1[0] - _p1[1], _p1[2] + _p1[3],
-			_p1[4] - _p1[5], _p1[6] + _p1[7]
-		};
-		v1 = {
-			position->x, position->y, 
-			position->x, position->y,
-		};
-		v1 = (__m256&)_mm_fmadd_ps((__m128&)v2, v3, (__m128&)v1);
+		v1 = (__m256&)_mm_fmadd_ps(_mm_setr_ps(_p1[0] - _p1[1], _p1[2] + _p1[3], _p1[4] - _p1[5], _p1[6] + _p1[7]), 
+			_mm_setr_ps(scale->x, scale->y, scale->x, scale->y), 
+			_mm_setr_ps(position->x, position->y, position->x, position->y));
 
 		//Save
 		memcpy(&(vert[i + 0].position), &_p1[0], sizeof(D3DXVECTOR2));
