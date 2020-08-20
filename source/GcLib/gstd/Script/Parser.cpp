@@ -266,11 +266,16 @@ namespace gstd {
 
 		script_scanner lex2(*state->lex);
 
+		auto IsReadableToken = [&]() -> bool {
+			return lex2.next != token_kind::tk_end && lex2.next != token_kind::tk_invalid;
+		};
+
 		int var = initVar;
 
 		try {
 			scope_t* current_frame = &frame.back();
 			int cur = 0;
+			int par = 0;
 
 			if (adding_result) {
 				symbol s;
@@ -296,12 +301,21 @@ namespace gstd {
 				}
 			}
 
-			while (cur >= 0 && lex2.next != token_kind::tk_end && lex2.next != token_kind::tk_invalid) {
+			while (cur >= 0 && IsReadableToken()) {
+				if (cur == 0) par = 0;
 				bool is_const = false;
 
 				switch (lex2.next) {
+				case token_kind::tk_open_par:
+					++par;
+					lex2.advance();
+					break;
 				case token_kind::tk_open_cur:
 					++cur;
+					lex2.advance();
+					break;
+				case token_kind::tk_close_par:
+					--par;
 					lex2.advance();
 					break;
 				case token_kind::tk_close_cur:
@@ -414,7 +428,7 @@ namespace gstd {
 				case token_kind::tk_decl_auto:
 				{
 					lex2.advance();
-					if (cur == 0) {
+					if (cur == 0 && par == 0) {
 						{
 							symbol* dup = search_in(current_frame, lex2.word);
 
@@ -442,6 +456,44 @@ namespace gstd {
 					}
 					break;
 				}
+				/*
+				case token_kind::tk_LOOP:
+				case token_kind::tk_TIMES:
+				case token_kind::tk_WHILE:
+				case token_kind::tk_FOR:
+				case token_kind::tk_ASCENT:
+				case token_kind::tk_DESCENT:
+				case token_kind::tk_IF:
+				case token_kind::tk_ELSE:
+				case token_kind::tk_CASE:
+				{
+					while (IsReadableToken()) {
+						if (lex2.next == token_kind::tk_open_par || lex2.next == token_kind::tk_open_cur)
+							break;
+						lex2.advance();
+					}
+
+					if (lex2.next == token_kind::tk_open_par) {
+						int cPar = 0;
+						while (IsReadableToken()) {
+							if (lex2.next == token_kind::tk_open_par) ++cPar;
+							else if (lex2.next == token_kind::tk_close_par) --cPar;
+							if (cPar == 0) break;
+							lex2.advance();
+						}
+						lex2.advance();
+					}
+
+					//Skip until a { for normal blocks or a ; in case of single-lined blocks
+					while (IsReadableToken()) {
+						if (lex2.next == token_kind::tk_open_cur || lex2.next == token_kind::tk_semicolon)
+							break;
+						lex2.advance();
+					}
+
+					break;
+				}
+				*/
 				default:
 					lex2.advance();
 					break;
