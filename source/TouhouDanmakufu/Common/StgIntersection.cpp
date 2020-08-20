@@ -522,8 +522,6 @@ size_t StgIntersectionSpace::_WriteIntersectionCheckList(StgIntersectionManager*
 
 	std::vector<shared_ptr<StgIntersectionTarget>>& listTargetA = listCell_[0];
 	std::vector<shared_ptr<StgIntersectionTarget>>& listTargetB = listCell_[1];
-	auto itrA = listTargetA.begin();
-	auto itrB = listTargetB.begin();
 
 	omp_lock_t* ompLock = manager->GetLock();
 
