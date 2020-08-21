@@ -1257,18 +1257,19 @@ void StgNormalShotObject::Work() {
 
 		if (delay_.time > 0) --(delay_.time);
 
-		{
-			angle_.z += angularVelocity_;
+		angle_.z += angularVelocity_;
+	}
 
-			double angleZ = angle_.z;
+	{
+		double angleZ = angle_.z;
+		if (bEnableMovement_) {
 			if (StgShotData* shotData = _GetShotData()) {
 				if (!shotData->IsFixedAngle()) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
 			}
-
-			if (angleZ != lastAngle_) {
-				move_ = D3DXVECTOR2(cosf(angleZ), sinf(angleZ));
-				lastAngle_ = angleZ;
-			}
+		}
+		if (angleZ != lastAngle_) {
+			move_ = D3DXVECTOR2(cosf(angleZ), sinf(angleZ));
+			lastAngle_ = angleZ;
 		}
 	}
 
@@ -1553,6 +1554,10 @@ void StgLooseLaserObject::Work() {
 
 		if (delay_.time > 0) --(delay_.time);
 	}
+	if (lastAngle_ != GetDirectionAngle()) {
+		lastAngle_ = GetDirectionAngle();
+		move_ = D3DXVECTOR2(cosf(lastAngle_), sinf(lastAngle_));
+	}
 
 	_CommonWorkTask();
 	//	_AddIntersectionRelativeTarget();
@@ -1572,10 +1577,6 @@ void StgLooseLaserObject::_Move() {
 			posYE_ += speed * move_.y;
 		}
 	}
-	if (lastAngle_ != GetDirectionAngle()) {
-		lastAngle_ = GetDirectionAngle();
-		move_ = D3DXVECTOR2(cosf(lastAngle_), sinf(lastAngle_));
-	}
 }
 void StgLooseLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
@@ -1593,8 +1594,8 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	}
 #else
-	bDelete = (posX_ < rect->left&& posXE_ < rect->left) || (posX_ > rect->right && posXE_ > rect->right)
-		|| (posY_ < rect->top&& posYE_ < rect->top) || (posY_ > rect->bottom && posYE_ > rect->bottom);
+	bDelete = (posX_ < rect->left && posXE_ < rect->left) || (posX_ > rect->right && posXE_ > rect->right)
+		|| (posY_ < rect->top && posYE_ < rect->top) || (posY_ > rect->bottom && posYE_ > rect->bottom);
 #endif
 
 	if (bDelete) {
@@ -1845,11 +1846,10 @@ void StgStraightLaserObject::Work() {
 			if (bLaserExpand_)
 				scaleX_ = std::min(1.0f, scaleX_ + 0.1f);
 		}
-
-		if (lastAngle_ != angLaser_) {
-			lastAngle_ = angLaser_;
-			move_ = D3DXVECTOR2(cosf(angLaser_), sinf(angLaser_));
-		}
+	}
+	if (lastAngle_ != angLaser_) {
+		lastAngle_ = angLaser_;
+		move_ = D3DXVECTOR2(cosf(angLaser_), sinf(angLaser_));
 	}
 
 	_CommonWorkTask();
@@ -1875,8 +1875,8 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 #else
 	int posXE = posX_ + (int)(length_ * move_.x);
 	int posYE = posY_ + (int)(length_ * move_.y);
-	bDelete = (posX_ < rect->left&& posXE < rect->left) || (posX_ > rect->right && posXE > rect->right)
-		|| (posY_ < rect->top&& posYE < rect->top) || (posY_ > rect->bottom && posYE > rect->bottom);
+	bDelete = (posX_ < rect->left && posXE < rect->left) || (posX_ > rect->right && posXE > rect->right)
+		|| (posY_ < rect->top && posYE < rect->top) || (posY_ > rect->bottom && posYE > rect->bottom);
 #endif
 
 	if (bDelete) {
