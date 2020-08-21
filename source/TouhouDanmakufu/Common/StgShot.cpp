@@ -395,7 +395,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 		Logger::WriteTop(StringUtility::Format(L"Loaded shot data: %s", path.c_str()));
 		res = true;
 	}
-	catch (gstd::wexception & e) {
+	catch (gstd::wexception& e) {
 		std::wstring log = StringUtility::Format(L"Failed to load shot data: [Line=%d] (%s)", scanner.GetCurrentLine(), e.what());
 		Logger::WriteTop(log);
 		res = false;
@@ -844,6 +844,7 @@ void StgShotObject::_DeleteInAutoClip() {
 
 	StgShotManager* shotManager = stageController_->GetShotManager();
 	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
+
 	if (posX_ < rect->left || posX_ > rect->right || posY_ < rect->top || posY_ > rect->bottom) {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
@@ -1030,7 +1031,7 @@ void StgShotObject::_ProcessTransformAct() {
 			{
 				shared_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
 				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ACCEL, transform.param_d[0]));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL, 
+				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL,
 					Math::DegreeToRadian(transform.param_d[1])));
 				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_SPMAX,
 					GetSpeed() + transform.param_d[0] * transform.param_s[0]));
@@ -1041,7 +1042,7 @@ void StgShotObject::_ProcessTransformAct() {
 				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ACCEL, 0));
 				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL, 0));
 				AddPattern(transform.param_s[1] + transform.param_s[0], pattern, true);
-			}	
+			}
 			break;
 		}
 		case StgPatternShotTransform::TRANSFORM_ANGULAR_MOVE:
@@ -1051,7 +1052,7 @@ void StgShotObject::_ProcessTransformAct() {
 
 			{
 				shared_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL, 
+				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL,
 					Math::DegreeToRadian(transform.param_d[0])));
 				AddPattern(0, pattern, true);
 			}
@@ -1100,7 +1101,7 @@ void StgShotObject::_ProcessTransformAct() {
 						auto objPlayer = stageController_->GetPlayerObject();
 						if (objPlayer) pattern->SetRelativeObjectID(objPlayer);
 						shared_ptr<RandProvider> rand = stageController_->GetStageInformation()->GetRandProvider();
-						pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ANGLE, 
+						pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ANGLE,
 							rand->GetReal(-angleArgument, angleArgument)));
 						break;
 					}
@@ -1165,7 +1166,7 @@ void StgShotObject::_ProcessTransformAct() {
 						(targetSpeed - nowSpeed) / transform.param_s[0]));
 					pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_SPMAX, targetSpeed));
 				}
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL, 
+				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL,
 					Math::AngleDifferenceRad(nowAngle, targetAngle) / transform.param_s[0]));
 				AddPattern(0, pattern, true);
 			}
@@ -1244,6 +1245,7 @@ StgNormalShotObject::StgNormalShotObject(StgStageController* stageController) : 
 	lastAngle_ = 0;
 
 	pShotIntersectionTarget_ = std::make_shared<StgIntersectionTarget_Circle>();
+	listIntersectionTarget_.push_back(pShotIntersectionTarget_);
 }
 StgNormalShotObject::~StgNormalShotObject() {
 
@@ -1286,25 +1288,21 @@ void StgNormalShotObject::_AddIntersectionRelativeTarget() {
 	//RegistIntersectionRelativeTarget(intersectionManager);
 }
 std::vector<shared_ptr<StgIntersectionTarget>> StgNormalShotObject::GetIntersectionTargetList() {
-	std::vector<shared_ptr<StgIntersectionTarget>> res;
-
-	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
-	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
-
-	if (pOwnReference_.expired()) return res;
+	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
+		|| (bUserIntersectionMode_ || !bIntersectionEnable_) || pOwnReference_.expired())
+		return std::vector<shared_ptr<StgIntersectionTarget>>();
 
 	StgShotData* shotData = _GetShotData();
-	if (shotData == nullptr) return res;
+	if (shotData == nullptr) return std::vector<shared_ptr<StgIntersectionTarget>>();
 
-	DxCircle circle = *shotData->GetIntersectionCircleList();
-	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
-
-	if (StgIntersectionTarget_Circle* target = 
-		dynamic_cast<StgIntersectionTarget_Circle*>(pShotIntersectionTarget_.get())) 
+	DxCircle* orgCircle = shotData->GetIntersectionCircleList();
+	StgIntersectionTarget_Circle* target = (StgIntersectionTarget_Circle*)pShotIntersectionTarget_.get();
 	{
-		if (circle.GetX() != 0 || circle.GetY() != 0) {
-			float px = circle.GetX() * move_.x + circle.GetY() * move_.y;
-			float py = circle.GetX() * move_.y - circle.GetY() * move_.x;
+		DxCircle& circle = target->GetCircle();
+
+		if (orgCircle->GetX() != 0 || orgCircle->GetY() != 0) {
+			float px = orgCircle->GetX() * move_.x + orgCircle->GetY() * move_.y;
+			float py = orgCircle->GetX() * move_.y - orgCircle->GetY() * move_.x;
 			circle.SetX(px + posX_);
 			circle.SetY(py + posY_);
 		}
@@ -1312,17 +1310,16 @@ std::vector<shared_ptr<StgIntersectionTarget>> StgNormalShotObject::GetIntersect
 			circle.SetX(posX_);
 			circle.SetY(posY_);
 		}
-		circle.SetR(circle.GetR() * ((hitboxScale_.x + hitboxScale_.y) / 2.0f));
+		circle.SetR(orgCircle->GetR() * ((hitboxScale_.x + hitboxScale_.y) / 2.0f));
 
 		target->SetTargetType(typeOwner_ == OWNER_PLAYER ?
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
 		target->SetObject(pOwnReference_);
-		target->SetCircle(circle);
+		target->SetIntersectionSpace();
 
-		res.push_back(pShotIntersectionTarget_);
+		listIntersectionTarget_[0] = pShotIntersectionTarget_;
 	}
-
-	return res;
+	return listIntersectionTarget_;
 }
 
 void StgNormalShotObject::RenderOnShotManager() {
@@ -1378,7 +1375,7 @@ void StgNormalShotObject::RenderOnShotManager() {
 			rcSrc = anime->GetSource();
 			rcDest = anime->GetDest();
 		}
-		else{
+		else {
 			rcSrc = delayData->GetDelayRect();
 			rcDest = delayData->GetDelayDest();
 		}
@@ -1541,6 +1538,7 @@ StgLooseLaserObject::StgLooseLaserObject(StgStageController* stageController) : 
 	typeObject_ = TypeObject::OBJ_LOOSE_LASER;
 
 	pShotIntersectionTarget_ = std::make_shared<StgIntersectionTarget_Line>();
+	listIntersectionTarget_.push_back(pShotIntersectionTarget_);
 }
 void StgLooseLaserObject::Work() {
 	//1フレーム目は移動しない
@@ -1568,8 +1566,7 @@ void StgLooseLaserObject::_Move() {
 	if (delay_.time <= 0) {
 		float dx = posXE_ - posX_;
 		float dy = posYE_ - posY_;
-
-		if ((dx * dx + dy * dy) > (length_ * length_)) {
+		if ((int)Math::HypotSq(dx, dy) > (length_ * length_)) {
 			float speed = GetSpeed();
 			posXE_ += speed * move_.x;
 			posYE_ += speed * move_.y;
@@ -1584,44 +1581,55 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 	StgShotManager* shotManager = stageController_->GetShotManager();
 	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
-	if ((posX_ < rect->left && posXE_ < rect->left) || (posX_ > rect->right && posXE_ > rect->right) ||
-		(posY_ < rect->top && posYE_ < rect->top) || (posY_ > rect->bottom && posYE_ > rect->bottom))
-	{
+
+	bool bDelete = false;
+
+#ifdef __L_MATH_VECTORIZE
+	__m128i rc_pos = _mm_setr_epi32(posX_, posXE_, posY_, posYE_);
+	__m128i res = _mm_cmplt_epi32(rc_pos, _mm_setr_epi32(rect->left, rect->left, rect->top, rect->top));
+	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
+	if (!bDelete) {
+		res = _mm_cmpgt_epi32(rc_pos, _mm_setr_epi32(rect->right, rect->right, rect->bottom, rect->bottom));
+		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
+	}
+#else
+	bDelete = (posX_ < rect->left&& posXE_ < rect->left) || (posX_ > rect->right && posXE_ > rect->right)
+		|| (posY_ < rect->top&& posYE_ < rect->top) || (posY_ > rect->bottom && posYE_ > rect->bottom);
+#endif
+
+	if (bDelete) {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
 }
 
 std::vector<shared_ptr<StgIntersectionTarget>> StgLooseLaserObject::GetIntersectionTargetList() {
-	std::vector<shared_ptr<StgIntersectionTarget>> res;
-
-	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
-	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
-
-	if (pOwnReference_.expired() || widthIntersection_ == 0) return res;
+	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
+		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
+		|| (pOwnReference_.expired() || widthIntersection_ == 0))
+		return std::vector<shared_ptr<StgIntersectionTarget>>();
 
 	StgShotData* shotData = _GetShotData();
-	if (shotData == nullptr) return res;
+	if (shotData == nullptr) return std::vector<shared_ptr<StgIntersectionTarget>>();
 
 	float lineXS = Math::Lerp::Linear((float)posX_, posXE_, invalidLengthStart_ * 0.5f);
 	float lineYS = Math::Lerp::Linear((float)posY_, posYE_, invalidLengthStart_ * 0.5f);
 	float lineXE = Math::Lerp::Linear(posXE_, (float)posX_, invalidLengthEnd_ * 0.5f);
 	float lineYE = Math::Lerp::Linear(posYE_, (float)posY_, invalidLengthEnd_ * 0.5f);
 
-	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
-	DxWidthLine line(lineXS, lineYS, lineXE, lineYE, widthIntersection_ * hitboxScale_.x);
-
-	if (StgIntersectionTarget_Line* target =
-		dynamic_cast<StgIntersectionTarget_Line*>(pShotIntersectionTarget_.get()))
+	StgIntersectionTarget_Line* target = (StgIntersectionTarget_Line*)pShotIntersectionTarget_.get();
 	{
+		DxWidthLine& line = target->GetLine();
+		line = DxWidthLine(lineXS, lineYS, lineXE, lineYE, widthIntersection_ * hitboxScale_.x);
+
 		target->SetTargetType(typeOwner_ == OWNER_PLAYER ?
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
 		target->SetObject(pOwnReference_);
-		target->SetLine(line);
+		target->SetIntersectionSpace();
 
-		res.push_back(pShotIntersectionTarget_);
+		listIntersectionTarget_[0] = pShotIntersectionTarget_;
 	}
-	return res;
+	return listIntersectionTarget_;
 }
 
 void StgLooseLaserObject::RenderOnShotManager() {
@@ -1704,7 +1712,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 		float dx = posXE_ - posX_;
 		float dy = posYE_ - posY_;
-		float radius = sqrtf(dx * dx + dy * dy);
+		float radius = hypotf(dx, dy);
 
 		renderF = D3DXVECTOR2(dx, dy) / radius;
 
@@ -1769,7 +1777,7 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 
 	float dx = posXE_ - posX_;
 	float dy = posYE_ - posY_;
-	float length = sqrtf(dx * dx + dy * dy);
+	float length = hypotf(dx, dy);
 
 	float listPos[2];
 	gstd::value listScriptValue[4];
@@ -1825,6 +1833,7 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 	move_ = D3DXVECTOR2(1, 0);
 
 	pShotIntersectionTarget_ = std::make_shared<StgIntersectionTarget_Line>();
+	listIntersectionTarget_.push_back(pShotIntersectionTarget_);
 }
 void StgStraightLaserObject::Work() {
 	if (bEnableMovement_) {
@@ -1851,12 +1860,26 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 	StgShotManager* shotManager = stageController_->GetShotManager();
 	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
 
+	bool bDelete = false;
+
+#ifdef __L_MATH_VECTORIZE
+	__m128 v_pos = _mm_setr_ps(0, 0, posX_, posY_);
+	v_pos = _mm_fmadd_ss(_mm_setr_ps(0, 0, length_, length_), _mm_setr_ps(0, 0, move_.x, move_.y), v_pos);
+	__m128i rc_pos = _mm_setr_epi32(posX_, v_pos.m128_f32[2], posY_, v_pos.m128_f32[3]);
+	__m128i res = _mm_cmplt_epi32(rc_pos, _mm_setr_epi32(rect->left, rect->left, rect->top, rect->top));
+	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
+	if (!bDelete) {
+		res = _mm_cmpgt_epi32(rc_pos, _mm_setr_epi32(rect->right, rect->right, rect->bottom, rect->bottom));
+		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
+	}
+#else
 	int posXE = posX_ + (int)(length_ * move_.x);
 	int posYE = posY_ + (int)(length_ * move_.y);
+	bDelete = (posX_ < rect->left&& posXE < rect->left) || (posX_ > rect->right && posXE > rect->right)
+		|| (posY_ < rect->top&& posYE < rect->top) || (posY_ > rect->bottom && posYE > rect->bottom);
+#endif
 
-	if ((posX_ < rect->left && posXE < rect->left) || (posX_ > rect->right && posXE > rect->right) ||
-		(posY_ < rect->top && posYE < rect->top) || (posY_ > rect->bottom && posYE > rect->bottom))
-	{
+	if (bDelete) {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
@@ -1871,14 +1894,14 @@ void StgStraightLaserObject::_DeleteInAutoDeleteFrame() {
 std::vector<shared_ptr<StgIntersectionTarget>> StgStraightLaserObject::GetIntersectionTargetList() {
 	std::vector<shared_ptr<StgIntersectionTarget>> res;
 
-	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
-	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
-
-	if (pOwnReference_.expired() || widthIntersection_ == 0) return res;
+	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
+		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
+		|| (pOwnReference_.expired() || widthIntersection_ == 0)
+		|| (scaleX_ < 1.0 && typeOwner_ != OWNER_PLAYER))
+		return std::vector<shared_ptr<StgIntersectionTarget>>();
 
 	StgShotData* shotData = _GetShotData();
-	if (shotData == nullptr) return res;
-	if (scaleX_ < 1.0 && typeOwner_ != OWNER_PLAYER) return res;
+	if (shotData == nullptr) return std::vector<shared_ptr<StgIntersectionTarget>>();
 
 	float _posXE = posX_ + (length_ * move_.x);
 	float _posYE = posY_ + (length_ * move_.y);
@@ -1887,20 +1910,19 @@ std::vector<shared_ptr<StgIntersectionTarget>> StgStraightLaserObject::GetInters
 	float lineXE = Math::Lerp::Linear(_posXE, (float)posX_, invalidLengthEnd_ * 0.5f);
 	float lineYE = Math::Lerp::Linear(_posYE, (float)posY_, invalidLengthEnd_ * 0.5f);
 
-	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
-	DxWidthLine line(lineXS, lineYS, lineXE, lineYE, widthIntersection_ * hitboxScale_.x);
-
-	if (StgIntersectionTarget_Line* target =
-		dynamic_cast<StgIntersectionTarget_Line*>(pShotIntersectionTarget_.get())) 
+	StgIntersectionTarget_Line* target = (StgIntersectionTarget_Line*)pShotIntersectionTarget_.get();
 	{
+		DxWidthLine& line = target->GetLine();
+		line = DxWidthLine(lineXS, lineYS, lineXE, lineYE, widthIntersection_ * hitboxScale_.x);
+
 		target->SetTargetType(typeOwner_ == OWNER_PLAYER ?
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
 		target->SetObject(pOwnReference_);
-		target->SetLine(line);
+		target->SetIntersectionSpace();
 
-		res.push_back(pShotIntersectionTarget_);
+		listIntersectionTarget_[0] = pShotIntersectionTarget_;
 	}
-	return res;
+	return listIntersectionTarget_;
 }
 void StgStraightLaserObject::RenderOnShotManager() {
 	if (!IsVisible()) return;
@@ -1995,7 +2017,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 					VERTEX_TLX vt;
 
-					_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / delayShotData->GetTextureSize().x, 
+					_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / delayShotData->GetTextureSize().x,
 						ptrSrc[iVert | 0b1] / delayShotData->GetTextureSize().y);
 					_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1]);
 					_SetVertexColorARGB(vt, color);
@@ -2195,7 +2217,7 @@ void StgCurveLaserObject::_DeleteInAutoClip() {
 		return bInX && bInY;
 	};
 
-	std::list<LaserNode>::iterator itrFind = std::find_if(listPosition_.begin(), listPosition_.end(), 
+	std::list<LaserNode>::iterator itrFind = std::find_if(listPosition_.begin(), listPosition_.end(),
 		PredicateNodeInRect);
 
 	//Can't find any node within the bounding rect
@@ -2205,15 +2227,13 @@ void StgCurveLaserObject::_DeleteInAutoClip() {
 	}
 }
 std::vector<shared_ptr<StgIntersectionTarget>> StgCurveLaserObject::GetIntersectionTargetList() {
-	std::vector<shared_ptr<StgIntersectionTarget>> res;
-
-	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return res;
-	if (bUserIntersectionMode_ || !bIntersectionEnable_) return res;//ユーザ定義あたり判定モード
-
-	if (pOwnReference_.expired() || widthIntersection_ == 0) return res;
+	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
+		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
+		|| (pOwnReference_.expired() || widthIntersection_ == 0))
+		return std::vector<shared_ptr<StgIntersectionTarget>>();
 
 	StgShotData* shotData = _GetShotData();
-	if (shotData == nullptr) return res;
+	if (shotData == nullptr) return std::vector<shared_ptr<StgIntersectionTarget>>();
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 
@@ -2227,29 +2247,38 @@ std::vector<shared_ptr<StgIntersectionTarget>> StgCurveLaserObject::GetIntersect
 		int posInvalidE = (int)(countPos * iLengthE);
 		float iWidth = widthIntersection_ * hitboxScale_.x;
 
+		listIntersectionTarget_.resize(countIntersection, nullptr);
+		//std::fill(listIntersectionTarget_.begin(), listIntersectionTarget_.end(), nullptr);
+
 		std::list<LaserNode>::iterator itr = listPosition_.begin();
 		for (size_t iPos = 0; iPos < countIntersection; ++iPos, ++itr) {
-			if ((int)iPos < posInvalidS || (int)iPos > posInvalidE)
+			if ((int)iPos < posInvalidS || (int)iPos > posInvalidE) {
+				listIntersectionTarget_[iPos] = nullptr;
 				continue;
+			}
 
 			std::list<LaserNode>::iterator itrNext = std::next(itr);
 			D3DXVECTOR2* nodeS = &itr->pos;
 			D3DXVECTOR2* nodeE = &itrNext->pos;
 
-			DxWidthLine line(nodeS->x, nodeS->y, nodeE->x, nodeE->y, iWidth);
-			shared_ptr<StgIntersectionTarget_Line> target(new StgIntersectionTarget_Line);
-			if (target) {
-				target->SetTargetType(typeOwner_ == OWNER_PLAYER ?
+			shared_ptr<StgIntersectionTarget>& target = listIntersectionTarget_[iPos];
+			if (target == nullptr) {
+				target = std::make_shared<StgIntersectionTarget_Line>();
+			}
+			{
+				StgIntersectionTarget_Line* pTarget = (StgIntersectionTarget_Line*)target.get();
+				DxWidthLine& line = pTarget->GetLine();
+				line = DxWidthLine(nodeS->x, nodeS->y, nodeE->x, nodeE->y, iWidth);
+
+				pTarget->SetTargetType(typeOwner_ == OWNER_PLAYER ?
 					StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
 				target->SetObject(pOwnReference_);
-				target->SetLine(line);
-
-				res.push_back(target);
+				pTarget->SetIntersectionSpace();
 			}
 		}
 	}
 
-	return res;
+	return listIntersectionTarget_;
 }
 
 void StgCurveLaserObject::RenderOnShotManager() {
@@ -2702,7 +2731,7 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 			int edgeSkip = std::round(Math::RadianToDegree(angleArgument_));
 
 			float r_fac[2] = { cosf(ini_angle), sinf(ini_angle) };
-			
+
 			for (size_t iEdge = 0U; iEdge < numEdges; ++iEdge) {
 				float from_ang = (GM_PI_X2 / numEdges) * (float)iEdge;
 				float to_ang = (GM_PI_X2 / numEdges) * (float)((int)iEdge + edgeSkip);
@@ -2739,7 +2768,7 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 				float angle_cur = GM_PI_X2 / (float)shotWay_ * iWay + angleArgument_;
 				float _rx = 1 * cosf(angle_cur);
 				float _ry = r_eccentricity * sinf(angle_cur);
-				
+
 				float r_fac[2] = { cosf(el_pointing_angle), sinf(el_pointing_angle) };
 				float rx = _rx * r_fac[0] + _ry * r_fac[1];
 				float ry = _rx * r_fac[1] - _ry * r_fac[0];
@@ -2760,9 +2789,9 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 
 			for (size_t iWay = 0U; iWay < shotWay_; ++iWay) {
 				for (size_t iStack = 0U; iStack < shotStack_; ++iStack) {
-					float ss = speedBase_  + (speedArgument_ - speedBase_) *
-						((shotStack_ > 1U && typePattern_ == PATTERN_TYPE_SCATTER_ANGLE) ? 
-						(iStack / (float)(shotStack_ - 1U)) : randGenerator->GetReal());
+					float ss = speedBase_ + (speedArgument_ - speedBase_) *
+						((shotStack_ > 1U && typePattern_ == PATTERN_TYPE_SCATTER_ANGLE) ?
+							(iStack / (float)(shotStack_ - 1U)) : randGenerator->GetReal());
 
 					float sa = ini_angle + ((typePattern_ == PATTERN_TYPE_SCATTER_SPEED) ?
 						(GM_PI_X2 / (float)shotWay_ * iWay) + angleArgument_ * iStack :

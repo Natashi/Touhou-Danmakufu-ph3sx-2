@@ -302,6 +302,7 @@ protected:
 	int frameAutoDelete_;
 	
 	shared_ptr<StgIntersectionTarget> pShotIntersectionTarget_;
+	std::vector<shared_ptr<StgIntersectionTarget>> listIntersectionTarget_;
 	bool bUserIntersectionMode_;
 	bool bIntersectionEnable_;
 	bool bChangeItemEnable_;

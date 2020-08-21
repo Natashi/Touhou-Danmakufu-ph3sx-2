@@ -501,7 +501,7 @@ bool StgIntersectionSpace::Initialize(int left, int top, int right, int bottom) 
 bool StgIntersectionSpace::RegistTarget(int type, shared_ptr<StgIntersectionTarget>& target) {
 	RECT& rect = target->GetIntersectionSpaceRect();
 	if (rect.right < spaceLeft_ || rect.bottom < spaceTop_ ||
-		rect.left >(spaceLeft_ + spaceWidth_) || rect.top >(spaceTop_ + spaceHeight_))
+		rect.left > (spaceLeft_ + spaceWidth_) || rect.top > (spaceTop_ + spaceHeight_))
 		return false;
 
 	listCell_[type].push_back(target);
