@@ -297,7 +297,7 @@ namespace gstd {
 		return value(script_type_manager::get_real_type(), (double)argv->length_as_array());
 	}
 
-	bool BaseFunction::_index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, double index) {
+	bool BaseFunction::_index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index) {
 		if (arg0_type->get_kind() != type_data::type_kind::tk_array) {
 			std::string error = "This value type does not support the array index operation: ";
 			error += type_data::string_representation(arg0_type);
@@ -306,7 +306,8 @@ namespace gstd {
 			return false;
 		}
 		if (index < 0 || index >= arg0_size) {
-			std::string error = "Array index out of bounds.\r\n";
+			std::string error = StringUtility::Format("Array index out of bounds. (indexing=%d, size=%u)\r\n",
+				index, arg0_size);
 			machine->raise_error(error);
 			return false;
 		}
@@ -315,7 +316,7 @@ namespace gstd {
 	const value& BaseFunction::index(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 2);
 
-		double index = argv[1].as_real();
+		int index = argv[1].as_int();
 		if (!_index_check(machine, argv->get_type(), argv->length_as_array(), index))
 			return value::val_empty;
 
@@ -337,8 +338,10 @@ namespace gstd {
 		size_t index_2 = argv[2].as_real();
 
 		if ((index_2 > index_1 && (index_1 < 0 || index_2 > argv->length_as_array()))
-			|| (index_2 < index_1 && (index_2 < 0 || index_1 > argv->length_as_array()))) {
-			std::string error = "Array index out of bounds.\r\n";
+			|| (index_2 < index_1 && (index_2 < 0 || index_1 > argv->length_as_array()))) 
+		{
+			std::string error = StringUtility::Format("Array index out of bounds. (slicing=(%d, %d), size=%u)\r\n",
+				index_1, index_2, argv->length_as_array());
 			machine->raise_error(error);
 			return value();
 		}
@@ -371,11 +374,12 @@ namespace gstd {
 			return value();
 		}
 
-		size_t index_1 = argv[1].as_real();
+		int index_1 = argv[1].as_int();
 		size_t length = argv->length_as_array();
 
-		if (index_1 >= length) {
-			std::string error = "Array index out of bounds.\r\n";
+		if (index_1 < 0 || index_1 >= length) {
+			std::string error = StringUtility::Format("Array index out of bounds. (erasing=%d, size=%u)\r\n",
+				index_1, length);
 			machine->raise_error(error);
 			return value();
 		}
@@ -405,7 +409,10 @@ namespace gstd {
 			return false;
 		}
 		if (arg0_size > 0U && arg0_type->get_element() != arg1_type) {
-			machine->raise_error("Variable type mismatch.\r\n");
+			std::string error = StringUtility::Format("Variable type mismatch. (%s ~ [%s])\r\n",
+				type_data::string_representation(arg0_type).c_str(),
+				type_data::string_representation(arg1_type).c_str());
+			machine->raise_error(error);
 			return false;
 		}
 		return true;
@@ -432,7 +439,9 @@ namespace gstd {
 		}
 
 		if (argv[0].length_as_array() > 0 && argv[1].length_as_array() > 0 && argv[0].get_type() != argv[1].get_type()) {
-			std::string error = "Variable type mismatch.\r\n";
+			std::string error = StringUtility::Format("Variable type mismatch. (%s ~ %s)\r\n",
+				type_data::string_representation(argv[0].get_type()).c_str(),
+				type_data::string_representation(argv[1].get_type()).c_str());
 			machine->raise_error(error);
 			return value();
 		}

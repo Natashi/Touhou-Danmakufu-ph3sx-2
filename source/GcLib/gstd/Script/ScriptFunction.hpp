@@ -53,7 +53,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(successor);
 		DNH_FUNCAPI_DECL_(length);
 
-		static bool _index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, double index);
+		static bool _index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index);
 		static const value& index(script_machine* machine, int argc, const value* argv);
 
 		DNH_FUNCAPI_DECL_(slice);
