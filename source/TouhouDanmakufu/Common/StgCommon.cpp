@@ -455,7 +455,7 @@ void StgMovePattern_Line_Weight::SetAtWeight(double tx, double ty, double weight
 	s_ = ny / dist_;
 }
 void StgMovePattern_Line_Weight::Move() {
-	if (dist_ < 0.2) {
+	if (dist_ < 0.1) {
 		speed_ = 0;
 	}
 	else {
