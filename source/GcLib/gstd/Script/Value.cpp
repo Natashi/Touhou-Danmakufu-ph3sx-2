@@ -19,7 +19,12 @@ std::string type_data::string_representation(type_data* data) {
 	case type_kind::tk_boolean:
 		return "bool";
 	case type_kind::tk_array:
-		return string_representation(data->get_element()) + "-array";
+	{
+		type_data* elem = data->get_element();
+		if (elem->get_kind() == type_kind::tk_char)
+			return "string";
+		return string_representation(elem) + "-array";
+	}
 	}
 	return "invalid";
 }
