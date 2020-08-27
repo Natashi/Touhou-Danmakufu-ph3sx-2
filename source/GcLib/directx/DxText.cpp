@@ -33,17 +33,16 @@ DxCharGlyph::~DxCharGlyph() {}
 
 bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 	code_ = code;
-	font_ = dxFont;
 
 	short colorTop[4];
 	short colorBottom[4];
 	short colorBorder[4];
-	ColorAccess::ToByteArray(font_->GetTopColor(), colorTop);
-	ColorAccess::ToByteArray(font_->GetBottomColor(), colorBottom);
-	ColorAccess::ToByteArray(font_->GetBorderColor(), colorBorder);
+	ColorAccess::ToByteArray(dxFont->GetTopColor(), colorTop);
+	ColorAccess::ToByteArray(dxFont->GetBottomColor(), colorBottom);
+	ColorAccess::ToByteArray(dxFont->GetBorderColor(), colorBorder);
 
-	DxFont::TypeBorder typeBorder = font_->GetBorderType();
-	LONG widthBorder = typeBorder != DxFont::BORDER_NONE ? font_->GetBorderWidth() : 0L;
+	DxFont::TypeBorder typeBorder = dxFont->GetBorderType();
+	LONG widthBorder = typeBorder != DxFont::BORDER_NONE ? dxFont->GetBorderWidth() : 0L;
 
 	HDC hDC = ::GetDC(nullptr);
 	HFONT oldFont = (HFONT)SelectObject(hDC, winFont.GetHandle());
@@ -1153,7 +1152,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						widthBorder = dxFont.GetBorderType() != DxFont::BORDER_NONE ? dxFont.GetBorderWidth() : 0L;
 
 						fontTemp = nullptr;
-						oldFont = (HFONT)SelectObject(hDC, winFont_.GetHandle());
+						SelectObject(hDC, oldFont);
 
 						tagColorBottom = orgColorBottom;
 						tagColorTop = orgColorTop;
@@ -1165,7 +1164,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						widthBorder = font.GetBorderType() != DxFont::BORDER_NONE ? font.GetBorderWidth() : 0L;
 						fontTemp = std::make_shared<Font>();
 						fontTemp->CreateFontIndirect(logFont);
-						oldFont = (HFONT)SelectObject(hDC, fontTemp->GetHandle());
+						SelectObject(hDC, fontTemp->GetHandle());
 					}
 
 					font.SetBottomColor(tagColorBottom);
@@ -1206,8 +1205,8 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 	res->totalWidth_ = totalWidth + widthBorder;
 	res->totalHeight_ = totalHeight + widthBorder;
-	::SelectObject(hDC, oldFont);
-	::ReleaseDC(nullptr, hDC);
+	SelectObject(hDC, oldFont);
+	ReleaseDC(nullptr, hDC);
 
 	return shared_ptr<DxTextInfo>(res);
 }
@@ -1222,12 +1221,12 @@ std::wstring DxTextRenderer::_ReplaceRenderText(std::wstring text) {
 	return text;
 }
 
-void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, const POINT& pos, DxFont* dxFont,
+void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, const POINT& pos, DxFont dxFont,
 	shared_ptr<DxTextLine> textLine)
 {
-	SetFont(dxFont->GetLogFont());
+	SetFont(dxFont.GetLogFont());
 	DxCharCacheKey keyFont;
-	keyFont.font_ = *dxFont;
+	keyFont.font_ = dxFont;
 	LONG textHeight = textLine->GetHeight();
 
 	LONG xRender = pos.x;
@@ -1247,11 +1246,11 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 			DxTextTag::TagType type = tag->GetTagType();
 			if (type == DxTextTag::TYPE_FONT) {
 				DxTextTag_Font* font = (DxTextTag_Font*)tag.get();
-				*dxFont = font->GetFont();
-				keyFont.font_ = *dxFont;
+				dxFont = font->GetFont();
+				keyFont.font_ = dxFont;
 				xOffset = font->GetOffset().x;
 				yOffset = font->GetOffset().y;
-				winFont_.CreateFontIndirect(dxFont->GetLogFont());
+				winFont_.CreateFontIndirect(dxFont.GetLogFont());
 				indexTag++;
 			}
 			else if (type == DxTextTag::TYPE_RUBY) {
@@ -1269,7 +1268,7 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 
 				objRender->AddRenderObject(textRuby->CreateRenderObject(), bias);
 
-				SetFont(dxFont->GetLogFont());
+				SetFont(dxFont.GetLogFont());
 
 				indexTag++;
 			}
@@ -1281,13 +1280,13 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 
 		//キャッシュに存在するか確認
 		keyFont.code_ = code;
-		keyFont.font_ = *dxFont;
+		keyFont.font_ = dxFont;
 
 		shared_ptr<DxCharGlyph> dxChar = cache_.GetChar(keyFont);
 		if (dxChar == nullptr) {
 			//キャッシュにない場合、作成して追加
 			dxChar = std::make_shared<DxCharGlyph>();
-			dxChar->Create(code, winFont_, dxFont);
+			dxChar->Create(code, winFont_, &dxFont);
 			cache_.AddChar(keyFont, dxChar);
 		}
 
@@ -1311,7 +1310,7 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 		objRender->AddRenderObject(shared_ptr<Sprite2D>(spriteText));
 
 		//次の文字
-		xRender += dxChar->GetSize().x - dxFont->GetBorderWidth() + textLine->GetSidePitch();
+		xRender += dxChar->GetSize().x - dxFont.GetBorderWidth() + textLine->GetSidePitch();
 	}
 }
 
@@ -1387,7 +1386,7 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 			heightTotal += textLine->height_ + linePitch;
 			if (heightTotal > heightMax) break;
 
-			_CreateRenderObject(objRender, pos, &dxFont, textLine);
+			_CreateRenderObject(objRender, pos, dxFont, textLine);
 
 			pos.y += textLine->height_ + linePitch;
 		}

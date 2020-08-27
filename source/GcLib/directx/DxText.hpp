@@ -57,7 +57,6 @@ namespace directx {
 	class DxCharGlyph {
 		shared_ptr<Texture> texture_;
 		UINT code_;
-		DxFont* font_;
 
 		GLYPHMETRICS glpMet_;
 		POINT size_;
@@ -70,7 +69,6 @@ namespace directx {
 		POINT& GetSize() { return size_; }
 		POINT& GetMaxSize() { return sizeMax_; }
 		GLYPHMETRICS* GetGM() { return &glpMet_; }
-		LOGFONT& GetInfo() { return font_->GetLogFont(); }
 	};
 
 
@@ -372,7 +370,7 @@ namespace directx {
 		SIZE _GetTextSize(HDC hDC, wchar_t* pText);
 		shared_ptr<DxTextLine> _GetTextInfoSub(const std::wstring& text, DxText* dxText, DxTextInfo* textInfo,
 			shared_ptr<DxTextLine> textLine, HDC& hDC, LONG& totalWidth, LONG& totalHeight);
-		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, const POINT& pos, DxFont* dxFont,
+		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, const POINT& pos, DxFont dxFont,
 			shared_ptr<DxTextLine> textLine);
 		std::wstring _ReplaceRenderText(std::wstring text);
 	public:
