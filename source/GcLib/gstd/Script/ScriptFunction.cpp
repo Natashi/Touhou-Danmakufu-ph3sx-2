@@ -41,6 +41,23 @@ value BaseFunction::F(script_machine* machine, int argc, const value* argv) { \
 }
 
 namespace gstd {
+	bool BaseFunction::_type_assign_check(script_machine* machine, const value* v_src, const value* v_dst) {
+		if (v_dst->has_data() && v_dst->get_type() != v_src->get_type()
+			&& !(v_dst->get_type()->get_kind() == type_data::type_kind::tk_array
+				&& v_src->get_type()->get_kind() == type_data::type_kind::tk_array
+				&& (v_dst->length_as_array() > 0 || v_src->length_as_array() > 0)))
+		{
+			std::string error = "Variable assignment cannot convert its type: ";
+			error += type_data::string_representation(v_dst->get_type());
+			error += " to ";
+			error += type_data::string_representation(v_src->get_type());
+			error += "\r\n";
+			machine->raise_error(error);
+			return false;
+		}
+		return true;
+	}
+
 	double BaseFunction::fmod2(double i, double j) {
 		if (j < 0) {
 			//return (i < 0) ? -(-i % -j) : (i % -j) + j;
@@ -409,7 +426,7 @@ namespace gstd {
 			return false;
 		}
 		if (arg0_size > 0U && arg0_type->get_element() != arg1_type) {
-			std::string error = StringUtility::Format("Variable type mismatch. (%s ~ [%s])\r\n",
+			std::string error = StringUtility::Format("Value type does not match. (%s ~ [%s])\r\n",
 				type_data::string_representation(arg0_type).c_str(),
 				type_data::string_representation(arg1_type).c_str());
 			machine->raise_error(error);
@@ -439,7 +456,7 @@ namespace gstd {
 		}
 
 		if (argv[0].length_as_array() > 0 && argv[1].length_as_array() > 0 && argv[0].get_type() != argv[1].get_type()) {
-			std::string error = StringUtility::Format("Variable type mismatch. (%s ~ %s)\r\n",
+			std::string error = StringUtility::Format("Value type does not match. (%s ~ %s)\r\n",
 				type_data::string_representation(argv[0].get_type()).c_str(),
 				type_data::string_representation(argv[1].get_type()).c_str());
 			machine->raise_error(error);

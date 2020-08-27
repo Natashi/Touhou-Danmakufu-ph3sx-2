@@ -25,6 +25,8 @@ namespace gstd {
 
 	class BaseFunction {
 	public:
+		static bool _type_assign_check(script_machine* machine, const value* v_src, const value* v_dst);
+
 		static double fmod2(double i, double j);
 
 		static value __script_perform_op_array(const value* v_left, const value* v_right, value(*func)(int, const value*));
