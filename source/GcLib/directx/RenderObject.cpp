@@ -237,7 +237,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 			mat._43 = position.z;
 		}
 	}
-	if (matRelative) mat = mat * (*matRelative);
+	if (matRelative) D3DXMatrixMultiply(&mat, &mat, matRelative);
 
 	if (bCoordinate2D) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -297,9 +297,9 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 			matSRT._43 = position.z;
 		}
 
-		mat = mat * matSRT;
+		D3DXMatrixMultiply(&mat, &mat, &matSRT);
 	}
-	if (matRelative) mat = mat * (*matRelative);
+	if (matRelative) D3DXMatrixMultiply(&mat, &mat, matRelative);
 
 	if (bCoordinate2D) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -357,7 +357,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(const D3DXVECTOR3& position, 
 	if (position.x != 0.0f || position.y != 0.0f || position.z != 0.0f) {
 		D3DXMATRIX matTrans;
 		D3DXMatrixTranslation(&matTrans, position.x, position.y, position.z);
-		mat = mat * matTrans;
+		D3DXMatrixMultiply(&mat, &mat, &matTrans);
 	}
 
 	if (matRelative) {
@@ -366,10 +366,10 @@ D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(const D3DXVECTOR3& position, 
 			D3DXVECTOR3 pos;
 			D3DXVec3TransformCoord(&pos, &D3DXVECTOR3(0, 0, 0), matRelative);
 			D3DXMatrixTranslation(&matRelativeE, pos.x, pos.y, pos.z);
-			mat = mat * matRelativeE;
+			D3DXMatrixMultiply(&mat, &mat, &matRelativeE);
 		}
 		else {
-			mat = mat * (*matRelative);
+			D3DXMatrixMultiply(&mat, &mat, matRelative);
 		}
 	}
 	return mat;
@@ -396,7 +396,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrix2D(const D3DXVECTOR3& position, const 
 			mat._43 = position.z;
 		}
 	}
-	if (matCamera) mat = mat * (*matCamera);
+	if (matCamera) D3DXMatrixMultiply(&mat, &mat, matCamera);
 
 	return mat;
 }
@@ -422,11 +422,11 @@ D3DXMATRIX RenderObject::CreateWorldMatrixText2D(const D3DXVECTOR2& centerPositi
 			matSRT._43 = 0.0f;
 		}
 
-		matSRT = mat * matSRT;
+		D3DXMatrixMultiply(&matSRT, &mat, &matSRT);
 		D3DXMatrixTranslation(&mat, centerPosition.x + biasPosition.x, centerPosition.y + biasPosition.y, 0.0f);
-		mat = matSRT * mat;
+		D3DXMatrixMultiply(&mat, &matSRT, &mat);
 	}
-	if (matCamera) mat = mat * (*matCamera);
+	if (matCamera) D3DXMatrixMultiply(&mat, &mat, matCamera);
 
 	return mat;
 }
