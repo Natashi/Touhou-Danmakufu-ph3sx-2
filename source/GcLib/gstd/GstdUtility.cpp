@@ -17,7 +17,6 @@ void SystemUtility::TestCpuSupportSIMD() {
 	bool hasSSE = true;
 	bool hasSSE2 = true;
 	bool hasAVX = true;
-	bool hasFMA = true;
 
 	struct Four {
 		int x[4];
@@ -59,19 +58,14 @@ void SystemUtility::TestCpuSupportSIMD() {
 	//Test AVX
 	hasAVX = f_1_ECX[28];
 
-	//Test FMA
-	hasFMA = f_1_ECX[12];
-
-	if (!hasSSE || !hasSSE2 || !hasAVX || !hasFMA) {
-		std::string err = "The game cannot start because your CPU lacks the required vector instruction sets(s):\r\n\t";
+	if (!hasSSE || !hasSSE2 || !hasAVX) {
+		std::string err = "The game cannot start because your CPU lacks the required vector instruction sets(s):\r\n  ";
 		if (!hasSSE)
 			err += " SSE";
 		if (!hasSSE2)
 			err += " SSE2";
 		if (!hasAVX)
 			err += " AVX";
-		if (!hasFMA)
-			err += " FMA";
 		throw wexception(err);
 	}
 #endif

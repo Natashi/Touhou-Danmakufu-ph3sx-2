@@ -183,6 +183,7 @@ void StgPlayerObject::_Move() {
 		SetSpeed(0);
 	}
 
+	//Add and clip player position
 #ifdef __L_MATH_VECTORIZE
 	__m128d v_pos = { posX_, posY_ };
 	v_pos = _mm_add_pd(v_pos, _mm_setr_pd(sx, sy));
@@ -191,12 +192,8 @@ void StgPlayerObject::_Move() {
 	this->SetX(v_pos.m128d_f64[0]);
 	this->SetY(v_pos.m128d_f64[1]);
 #else
-	double px = posX_ + sx;
-	double py = posY_ + sy;
-
-	//Clip player position
-	SetX(std::clamp(px, (double)rcClip_.left, (double)rcClip_.right));
-	SetY(std::clamp(py, (double)rcClip_.top, (double)rcClip_.bottom));
+	SetX(std::clamp(posX_ + sx, (double)rcClip_.left, (double)rcClip_.right));
+	SetY(std::clamp(posY_ + sy, (double)rcClip_.top, (double)rcClip_.bottom));
 #endif
 }
 void StgPlayerObject::_AddIntersection() {

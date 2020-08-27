@@ -167,15 +167,8 @@ void StgMovePattern_Angle::Move() {
 		SetDirectionAngle(angle + angularVelocity_);
 	}
 
-#ifdef __L_MATH_VECTORIZE
-	__m128d v_pos = { target_->GetPositionX(), target_->GetPositionY() };
-	v_pos = _mm_fmadd_pd(_mm_setr_pd(speed_, speed_), _mm_setr_pd(c_, s_), v_pos);
-	target_->SetPositionX(v_pos.m128d_f64[0]);
-	target_->SetPositionY(v_pos.m128d_f64[1]);
-#else
 	target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
 	target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
-#endif
 
 	++frameWork_;
 }
@@ -359,15 +352,8 @@ StgMovePattern_Line::StgMovePattern_Line(StgMoveObject* target) : StgMovePattern
 }
 void StgMovePattern_Line::Move() {
 	if (frameWork_ < maxFrame_) {
-#ifdef __L_MATH_VECTORIZE
-		__m128d v_pos = { target_->GetPositionX(), target_->GetPositionY() };
-		v_pos = _mm_fmadd_pd(_mm_setr_pd(speed_, speed_), _mm_setr_pd(c_, s_), v_pos);
-		target_->SetPositionX(v_pos.m128d_f64[0]);
-		target_->SetPositionY(v_pos.m128d_f64[1]);
-#else
 		target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
 		target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
-#endif
 	}
 	else {
 		speed_ = 0;
@@ -477,15 +463,8 @@ void StgMovePattern_Line_Weight::Move() {
 		if (speed_ > maxSpeed_)
 			speed_ = maxSpeed_;
 
-#ifdef __L_MATH_VECTORIZE
-		__m128d v_pos = { target_->GetPositionX(), target_->GetPositionY() };
-		v_pos = _mm_fmadd_pd(_mm_setr_pd(speed_, speed_), _mm_setr_pd(c_, s_), v_pos);
-		target_->SetPositionX(v_pos.m128d_f64[0]);
-		target_->SetPositionY(v_pos.m128d_f64[1]);
-#else
 		target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
 		target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
-#endif
 
 		dist_ -= speed_;
 	}

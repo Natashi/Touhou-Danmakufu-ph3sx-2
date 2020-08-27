@@ -1206,15 +1206,8 @@ void StgMovePattern_Item::Move() {
 	if (typeMove_ != MOVE_NONE) {
 		//c_ = cos(angDirection_);
 		//s_ = sin(angDirection_);
-#ifdef __L_MATH_VECTORIZE
-		__m128d v_pos = _mm_setr_pd(px, py);
-		v_pos = _mm_fmadd_pd(_mm_setr_pd(speed_, speed_), _mm_setr_pd(c_, s_), v_pos);
-		target_->SetPositionX(v_pos.m128d_f64[0]);
-		target_->SetPositionY(v_pos.m128d_f64[1]);
-#else
 		target_->SetPositionX(fma(speed_, c_, px));
 		target_->SetPositionY(fma(speed_, s_, py));
-#endif
 	}
 
 	++frame_;
