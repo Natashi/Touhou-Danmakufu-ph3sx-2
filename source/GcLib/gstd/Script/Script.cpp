@@ -246,6 +246,14 @@ void script_machine::run_code() {
 			case command_kind::pc_var_alloc:
 				current->variables.resize(c->ip);
 				break;
+			case command_kind::pc_var_format:
+			{
+				for (size_t i = c->off; i < c->off + c->len; ++i) {
+					if (i >= current->variables.capacity) break;
+					current->variables[i] = value::val_empty;
+				}
+				break;
+			}
 
 			//case command_kind::_pc_jump_target:
 			//	break;
@@ -290,18 +298,11 @@ void script_machine::run_code() {
 
 						value* dest = &(vars[c->variable]);
 						value* src = &stack.back();
-
-						if (dest->has_data() && dest->get_type() != src->get_type()
-							&& !(dest->get_type()->get_kind() == type_kind::tk_array
-								&& src->get_type()->get_kind() == type_kind::tk_array
-								&& (dest->length_as_array() > 0 || src->length_as_array() > 0))) {
-							raise_error(L"A variable cannot change its value type.\r\n");
-							break;
+						if (BaseFunction::_type_assign_check(this, src, dest)) {
+							*dest = *src;
+							dest->unique();
+							stack.pop_back();
 						}
-
-						*dest = *src;
-						dest->unique();
-						stack.pop_back();
 
 						break;
 					}
@@ -317,62 +318,20 @@ void script_machine::run_code() {
 				value* dest = &stack[stack.size() - 2];
 				value* src = &stack[stack.size() - 1];
 
-				if (dest->has_data() && dest->get_type() != src->get_type()
-					&& !(dest->get_type()->get_kind() == type_kind::tk_array
-						&& src->get_type()->get_kind() == type_kind::tk_array
-						&& (dest->length_as_array() > 0 || src->length_as_array() > 0))) {
-					raise_error(L"A variable cannot change its value type.\r\n");
-				}
-				else {
+				if (BaseFunction::_type_assign_check(this, src, dest)) {
 					dest->overwrite(*src);
 					stack.pop_back(2U);
 				}
 
 				break;
 			}
-			//case command_kind::pc_continue_marker:
-			//	break;
-			//case command_kind::pc_loop_back:
-			//	break;
-			case command_kind::pc_loop_continue:
-			case command_kind::pc_break_loop:
 			case command_kind::pc_break_routine:
 				for (environment* i = current.get(); i != nullptr; i = (i->parent).get()) {
 					i->ip = i->sub->codes.size();
 
-					if (c->command == command_kind::pc_break_loop || c->command == command_kind::pc_loop_continue) {
-						bool exit = false;
-						switch (i->sub->kind) {
-						case block_kind::bk_loop:
-						{
-							command_kind targetCommand = command_kind::pc_loop_back;
-							if (c->command == command_kind::pc_loop_continue)
-								targetCommand = command_kind::pc_continue_marker;
-
-							environment* e = (i->parent).get();
-							if (e) {
-								do
-									++(e->ip);
-								while (e->sub->codes[e->ip - 1].command != targetCommand);
-							}
-							else exit = true;
-						}
-						case block_kind::bk_microthread:	//Prevents catastrophes.
-						case block_kind::bk_function:
-						//case block_kind::bk_normal:
-							exit = true;
-						default:
-							break;
-						}
-						if (exit) break;
-					}
-					else {	//pc_break_routine
-						if (i->sub->kind == block_kind::bk_sub || i->sub->kind == block_kind::bk_function
-							|| i->sub->kind == block_kind::bk_microthread)
-							break;
-						else if (i->sub->kind == block_kind::bk_loop)
-							i->parent->stack.clear();
-					}
+					if (i->sub->kind == block_kind::bk_sub || i->sub->kind == block_kind::bk_function
+						|| i->sub->kind == block_kind::bk_microthread)
+						break;
 				}
 				break;
 			case command_kind::pc_call:
@@ -503,8 +462,10 @@ void script_machine::run_code() {
 				std::swap(current->stack[len - 1], current->stack[len - 2]);
 				break;
 			}
-			case command_kind::pc_compare_and_loop_ascent:
-			case command_kind::pc_compare_and_loop_descent:
+
+			//Loop commands
+			case command_kind::pc_loop_ascent:
+			case command_kind::pc_loop_descent:
 			{
 				stack_t& stack = current->stack;
 
@@ -519,13 +480,9 @@ void script_machine::run_code() {
 				}
 				*/
 
-				bool is_skip = c->command == command_kind::pc_compare_and_loop_ascent ?
+				bool bSkip = c->command == command_kind::pc_loop_ascent ?
 					(cmp_res.as_int() <= 0) : (cmp_res.as_int() >= 0);
-				if (is_skip) {
-					do
-						++(current->ip);
-					while (current->sub->codes[current->ip - 1].command != command_kind::pc_loop_back);
-				}
+				current->stack.push_back(value(script_type_manager::get_boolean_type(), bSkip));
 
 				//current->stack.pop_back(2U);
 				break;
@@ -537,28 +494,10 @@ void script_machine::run_code() {
 				int64_t r = i->as_int();
 				if (r > 0)
 					i->set(script_type_manager::get_int_type(), r - 1);
-				else {
-					do
-						++(current->ip);
-					while (current->sub->codes[current->ip - 1].command != command_kind::pc_loop_back);
-				}
-
+				current->stack.push_back(value(script_type_manager::get_boolean_type(), r > 0));
 				break;
 			}
-			case command_kind::pc_loop_if:
-			{
-				stack_t& stack = current->stack;
-				bool c = stack.back().as_boolean();
-				current->stack.pop_back();
-				if (!c) {
-					do
-						++(current->ip);
-					while (current->sub->codes[current->ip - 1].command != command_kind::pc_loop_back);
-				}
-
-				break;
-			}
-			case command_kind::pc_for_each_and_push_first:
+			case command_kind::pc_loop_foreach:
 			{
 				//Stack: .... [array] [counter]
 
@@ -570,16 +509,16 @@ void script_machine::run_code() {
 				std::vector<value>::iterator itrCur = src_array->array_get_begin() + i->as_int();
 				std::vector<value>::iterator itrEnd = src_array->array_get_end();
 
+				bool bSkip = false;
 				if (src_array->get_type()->get_kind() != type_kind::tk_array || itrCur >= itrEnd) {
-					do
-						++(current->ip);
-					while (current->sub->codes[current->ip - 1].command != command_kind::pc_loop_back);
+					bSkip = true;
 				}
 				else {
 					current->stack.push_back(value::new_from(*itrCur));
 					i->set(script_type_manager::get_int_type(), i->as_int() + 1i64);
 				}
 
+				current->stack.push_back(value(script_type_manager::get_boolean_type(), bSkip));
 				break;
 			}
 
@@ -627,6 +566,15 @@ void script_machine::run_code() {
 			}
 
 			//----------------------------------Inline operations----------------------------------
+			case command_kind::pc_inline_top_inc:
+			case command_kind::pc_inline_top_dec:
+			{
+				value* var = &(current->stack.back());
+				value res = (c->command == command_kind::pc_inline_top_inc) ?
+					BaseFunction::successor(this, 1, var) : BaseFunction::predecessor(this, 1, var);
+				*var = res;
+				break;
+			}
 			case command_kind::pc_inline_inc:
 			case command_kind::pc_inline_dec:
 			{
@@ -656,24 +604,29 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_div_asi:
 			case command_kind::pc_inline_mod_asi:
 			case command_kind::pc_inline_pow_asi:
+			case command_kind::pc_inline_cat_asi:
 			{
-				if (c->level >= 0) {
-					value* var = find_variable_symbol(current.get(), c);
-					if (var == nullptr) break;
-
-					value tmp[2] = { *var, current->stack.back() };
-					value res;
-
-#define DEF_CASE(cmd, fn) case cmd: res = BaseFunction::fn(this, 2, tmp); break;
-					switch (c->command) {
+				auto PerformFunction = [&](value* dest, command_kind cmd, value(&argv)[2]) {
+#define DEF_CASE(_c, _fn) case _c: *dest = BaseFunction::_fn(this, 2, argv); break;
+					switch (cmd) {
 						DEF_CASE(command_kind::pc_inline_add_asi, add);
 						DEF_CASE(command_kind::pc_inline_sub_asi, subtract);
 						DEF_CASE(command_kind::pc_inline_mul_asi, multiply);
 						DEF_CASE(command_kind::pc_inline_div_asi, divide);
 						DEF_CASE(command_kind::pc_inline_mod_asi, remainder_);
 						DEF_CASE(command_kind::pc_inline_pow_asi, power);
+						DEF_CASE(command_kind::pc_inline_cat_asi, concatenate);
 					}
 #undef DEF_CASE
+				};
+
+				if (c->level >= 0) {
+					value* var = find_variable_symbol(current.get(), c);
+					if (var == nullptr) break;
+
+					value arg[2] = { *var, current->stack.back() };
+					value res;
+					PerformFunction(&res, c->command, arg);
 
 					current->stack.pop_back();
 					*var = res;
@@ -683,17 +636,7 @@ void script_machine::run_code() {
 
 					value arg[2] = { *dest, current->stack.back() };
 					value res;
-
-#define DEF_CASE(cmd, fn) case cmd: res = BaseFunction::fn(this, 2, arg); break;
-					switch (c->command) {
-						DEF_CASE(command_kind::pc_inline_add_asi, add);
-						DEF_CASE(command_kind::pc_inline_sub_asi, subtract);
-						DEF_CASE(command_kind::pc_inline_mul_asi, multiply);
-						DEF_CASE(command_kind::pc_inline_div_asi, divide);
-						DEF_CASE(command_kind::pc_inline_mod_asi, remainder_);
-						DEF_CASE(command_kind::pc_inline_pow_asi, power);
-					}
-#undef DEF_CASE
+					PerformFunction(&res, c->command, arg);
 
 					dest->overwrite(res);
 					current->stack.pop_back(2U);

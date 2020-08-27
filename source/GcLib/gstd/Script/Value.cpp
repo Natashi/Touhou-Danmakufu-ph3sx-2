@@ -108,8 +108,7 @@ void value::concatenate(const value& x) {
 
 	if (length_as_array() == 0) data->type = x.data->type;
 	for (auto itr = x.data->array_value.begin(); itr != x.data->array_value.end(); ++itr) {
-		value v = *itr;
-		data->array_value.push_back(v);
+		data->array_value.push_back(*itr);
 	}
 }
 

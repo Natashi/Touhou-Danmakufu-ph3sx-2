@@ -240,6 +240,10 @@ void script_scanner::advance() {
 	case L'~':
 		next = token_kind::tk_tilde;
 		ch = next_char();
+		if (ch == L'=') {
+			next = token_kind::tk_concat_assign;
+			ch = next_char();
+		}
 		break;
 	case L'*':
 		next = token_kind::tk_asterisk;

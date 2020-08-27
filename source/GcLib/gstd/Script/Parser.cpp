@@ -37,6 +37,10 @@ namespace gstd {
 	code::code(int the_line, command_kind the_command, size_t the_ip) : code(the_line, the_command) {
 		ip = the_ip;
 	}
+	code::code(int the_line, command_kind the_command, size_t the_off, size_t the_len) : code(the_line, the_command) {
+		off = the_off;
+		len = the_len;
+	}
 	code::code(int the_line, command_kind the_command, const value& the_data) : code(the_line, the_command) {
 		new (&data) value(the_data);
 	}
@@ -66,6 +70,9 @@ namespace gstd {
 		}
 		command = src.command;
 		line = src.line;
+#ifdef _DEBUG
+		var_name = src.var_name;
+#endif
 
 		return *this;
 	}
@@ -116,9 +123,11 @@ namespace gstd {
 		bool exists = this->find(name) != this->end();
 		auto itr = this->equal_range(name);
 
+		//Uh oh! Duplication!
 		if (exists) {
 			symbol* sPrev = &(itr.first->second);
 
+			//Check if the symbol can be overloaded
 			if (!sPrev->can_overload && sPrev->level > 0) {
 				std::string error = StringUtility::Format("Default functions cannot be overloaded. (%s)",
 					sPrev->sub->name.c_str());
@@ -127,8 +136,15 @@ namespace gstd {
 			else {
 				for (auto itrPair = itr.first; itrPair != itr.second; ++itrPair) {
 					if (argc == itrPair->second.sub->arguments) {
+						/*
+						ptr_delete(itrPair->second);
 						itrPair->second = s;
 						return;
+						*/
+						std::string error = StringUtility::Format("An overload with the same number of "
+							"arguments already exists. (%s, argc=%d)",
+							sPrev->sub->name.c_str(), argc);
+						parser_assert(false, error);
 					}
 				}
 			}
@@ -155,10 +171,15 @@ namespace gstd {
 
 			parser_state_t stateParser(lexer_main);
 
-			int countVar = scan_current_scope(&stateParser, 1, nullptr, false);
-			stateParser.AddCode(engine->main_block, code(command_kind::pc_var_alloc, countVar));
+			stateParser.var_count_main = scan_current_scope(&stateParser, 1, nullptr, false);
+			stateParser.AddCode(engine->main_block, code(command_kind::pc_var_alloc, 0));
+			parser_assert(stateParser.var_count_main <= 0xffff,
+				"Too many variables were defined in the scope.\r\n");
 
 			parse_statements(engine->main_block, &stateParser, token_kind::tk_end, token_kind::tk_semicolon);
+			scan_final(engine->main_block, &stateParser);
+
+			engine->main_block->codes[0].ip = stateParser.var_count_main + stateParser.var_count_sub;
 
 			parser_assert(stateParser.next() == token_kind::tk_end,
 				"Unexpected end-of-file while parsing. (Did you forget a semicolon after a string?)\r\n");
@@ -185,7 +206,7 @@ namespace gstd {
 		s.variable = -1;
 		s.can_overload = false;
 		s.can_modify = false;
-		frame[0].singular_insert(func.name, s, func.arguments);
+		frame.begin()->singular_insert(func.name, s, func.arguments);
 	}
 
 	parser::symbol* parser::search(const std::string& name, scope_t** ptrScope) {
@@ -194,9 +215,8 @@ namespace gstd {
 			if (ptrScope) *ptrScope = scope;
 
 			auto itrSymbol = scope->find(name);
-			if (itrSymbol != scope->end()) {
-				return &(itrSymbol->second);
-			}
+			if (itrSymbol != scope->end())
+				return &itrSymbol->second;
 		}
 		return nullptr;
 	}
@@ -210,13 +230,13 @@ namespace gstd {
 			auto itrSymbol = scope->equal_range(name);
 			if (itrSymbol.first != scope->end()) {
 				for (auto itrPair = itrSymbol.first; itrPair != itrSymbol.second; ++itrPair) {
-					if (itrPair->second.sub) {
-						if (argc == itrPair->second.sub->arguments)
-							return &(itrPair->second);
+					symbol* s = &itrPair->second;
+					if (s->sub) {
+						//Check overload
+						if (argc == s->sub->arguments)
+							return s;
 					}
-					else {
-						return &(itrPair->second);
-					}
+					else return s;
 				}
 				return nullptr;
 			}
@@ -226,7 +246,7 @@ namespace gstd {
 	parser::symbol* parser::search_in(scope_t* scope, const std::string& name) {
 		auto itrSymbol = scope->find(name);
 		if (itrSymbol != scope->end())
-			return &(itrSymbol->second);
+			return &itrSymbol->second;
 		return nullptr;
 	}
 	parser::symbol* parser::search_in(scope_t* scope, const std::string& name, int argc) {
@@ -235,13 +255,13 @@ namespace gstd {
 		auto itrSymbol = scope->equal_range(name);
 		if (itrSymbol.first != scope->end()) {
 			for (auto itrPair = itrSymbol.first; itrPair != itrSymbol.second; ++itrPair) {
-				if (itrPair->second.sub) {
-					if (argc == itrPair->second.sub->arguments)
-						return &(itrPair->second);
+				symbol* s = &itrPair->second;
+				if (s->sub) {
+					//Check overload
+					if (argc == s->sub->arguments)
+						return s;
 				}
-				else {
-					return &(itrPair->second);
-				}
+				else return s;
 			}
 		}
 
@@ -254,13 +274,13 @@ namespace gstd {
 
 			auto itrSymbol = itr->find("\x01");
 			if (itrSymbol != itr->end())
-				return &(itrSymbol->second);
+				return &itrSymbol->second;
 		}
 		return nullptr;
 	}
 
 	int parser::scan_current_scope(parser_state_t* state, int level, const std::vector<std::string>* args,
-		bool adding_result, int initVar) 
+		bool adding_result, int initVar)
 	{
 		//Scans and defines scope variables and functions/tasks/subs
 
@@ -373,7 +393,7 @@ namespace gstd {
 
 							//If the level is 1(first user level), also search for duplications in level 0(default level)
 							if (dup == nullptr && level == 1)
-								dup = search_in(&frame[0], name, countArgs);
+								dup = search_in(&*frame.begin(), name, countArgs);
 
 							if (dup) {
 								//Woohoo for detailed error messages.
@@ -434,7 +454,7 @@ namespace gstd {
 
 							//If the level is 1(first user level), also search for duplications in level 0(default level)
 							if (dup == nullptr && level == 1)
-								dup = search_in(&frame[0], lex2.word);
+								dup = search_in(&*frame.begin(), lex2.word);
 
 							if (dup) {
 								std::string error = StringUtility::Format("A variable of the same name "
@@ -945,8 +965,10 @@ continue_as_variadic:
 				return command_kind::pc_inline_mod_asi;
 			case token_kind::tk_power_assign:
 				return command_kind::pc_inline_pow_asi;
+			case token_kind::tk_concat_assign:
+				return command_kind::pc_inline_cat_asi;
 			}
-			return command_kind::pc_inline_add_asi;
+			return command_kind::pc_null;
 		};
 
 		bool need_terminator = true;
@@ -989,25 +1011,26 @@ continue_as_variadic:
 					parse_expression(block, state);
 					state->AddCode(block, code(command_kind::pc_assign_writable, 0, 0, name));
 					break;
-				case token_kind::tk_inc:
-				case token_kind::tk_dec:
-				{
-					command_kind f = (state->next() == token_kind::tk_inc) ? command_kind::pc_inline_inc :
-						command_kind::pc_inline_dec;
-					state->advance();
-					state->AddCode(block, code(f, -1, 0, name));
-					break;
-				}
 				case token_kind::tk_add_assign:
 				case token_kind::tk_subtract_assign:
 				case token_kind::tk_multiply_assign:
 				case token_kind::tk_divide_assign:
 				case token_kind::tk_remainder_assign:
 				case token_kind::tk_power_assign:
+				case token_kind::tk_concat_assign:
 				{
 					command_kind f = get_op_assign_command(state->next());
 					state->advance();
 					parse_expression(block, state);
+					state->AddCode(block, code(f, -1, 0, name));
+					break;
+				}
+				case token_kind::tk_inc:
+				case token_kind::tk_dec:
+				{
+					command_kind f = (state->next() == token_kind::tk_inc) ? command_kind::pc_inline_inc :
+						command_kind::pc_inline_dec;
+					state->advance();
 					state->AddCode(block, code(f, -1, 0, name));
 					break;
 				}
@@ -1023,6 +1046,7 @@ continue_as_variadic:
 			case token_kind::tk_divide_assign:
 			case token_kind::tk_remainder_assign:
 			case token_kind::tk_power_assign:
+			case token_kind::tk_concat_assign:
 			{
 				assert_const(state, s, name);
 
@@ -1091,55 +1115,61 @@ continue_as_variadic:
 		case token_kind::tk_LOCAL:
 		case token_kind::tk_open_cur:
 			if (state->next() == token_kind::tk_LOCAL) state->advance();
-			parse_inline_block(nullptr, block, state, block_kind::bk_normal, false);
+			parse_block(block, state, nullptr, false);
 			need_terminator = false;
 			break;
 		case token_kind::tk_LOOP:
 		{
 			state->advance();
 			size_t ip_begin = state->ip;
-
 			if (state->next() == token_kind::tk_open_par) {
 				parse_parentheses(block, state);
-				size_t ip = state->ip;
 				{
-					script_block tmp(block->level, block_kind::bk_normal);
-					parser_state_t tmpState(state->lex, state->ip);
+					state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
 
-					tmpState.AddCode(&tmp, code(command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
+					size_t ip_loop_begin = state->ip;
+					state->AddCode(block, code(command_kind::pc_loop_count));
+					size_t ip_loopchk = state->ip;
+					state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 
-					size_t ip_loop_begin = tmpState.ip;
-					tmpState.AddCode(&tmp, code(command_kind::pc_loop_count));
+					size_t ip_block_begin = state->ip;
+					size_t childSize = parse_block(block, state, nullptr, true);
 
-					script_block* childBlock = nullptr;
-					size_t childSize = parse_inline_block(&childBlock, &tmp, &tmpState, block_kind::bk_loop, true);
-
-					tmpState.AddCode(&tmp, code(command_kind::pc_continue_marker));
-					tmpState.AddCode(&tmp, code(command_kind::pc_jump, ip_loop_begin));
-					tmpState.AddCode(&tmp, code(command_kind::pc_loop_back));
-					tmpState.AddCode(&tmp, code(command_kind::pc_pop, 1));
+					size_t ip_continue = state->ip;
+					state->AddCode(block, code(command_kind::pc_jump, ip_loop_begin));
+					size_t ip_back = state->ip;
+					state->AddCode(block, code(command_kind::pc_pop, 1));
 
 					//Try to optimize looped yield to a wait
-					if (childSize == 1U && childBlock->codes[0].command == command_kind::pc_yield) {
-						engine->blocks.pop_back();
+					if (childSize == 1U && block->codes[ip_block_begin].command == command_kind::pc_yield) {
+						while (state->ip > ip_loop_begin)
+							state->PopCode(block);
 						state->AddCode(block, code(command_kind::pc_wait));
 					}
 					//Discard everything if the loop is empty
-					else if (childSize > 0U) {
-						block->codes.insert(block->codes.end(), tmp.codes.begin(), tmp.codes.end());
-						state->ip = tmpState.ip;
+					else if (childSize == 0U) {
+						while (state->ip > ip_loop_begin)
+							state->PopCode(block);
+					}
+					else {
+						block->codes[ip_loopchk].ip = ip_back;
+						link_break_continue(block, state, ip_block_begin, ip_continue, ip_back, ip_continue);
 					}
 				}
 			}
 			else {
-				size_t blockSize = parse_inline_block(nullptr, block, state, block_kind::bk_loop, true);
-				state->AddCode(block, code(command_kind::pc_continue_marker));
-				state->AddCode(block, code(command_kind::pc_jump, ip_begin));
-				state->AddCode(block, code(command_kind::pc_loop_back));
+				size_t childSize = parse_block(block, state, nullptr, true);
 
-				if (blockSize == 0U) {
+				size_t ip_continue = state->ip;
+				state->AddCode(block, code(command_kind::pc_jump, ip_begin));
+				size_t ip_back = state->ip;
+
+				if (childSize == 0U) {
 					while (state->ip > ip_begin)
 						state->PopCode(block);
+				}
+				else {
+					link_break_continue(block, state, ip_begin, ip_continue, ip_back, ip_continue);
 				}
 			}
 
@@ -1149,38 +1179,40 @@ continue_as_variadic:
 		case token_kind::tk_TIMES:
 		{
 			state->advance();
-			size_t ip_begin = state->ip;
 
 			parse_parentheses(block, state);
-			size_t ip = state->ip;
-			if (state->next() == token_kind::tk_LOOP)
-				state->advance();
+			if (state->next() == token_kind::tk_LOOP) state->advance();
+
 			{
-				script_block tmp(block->level, block_kind::bk_normal);
-				parser_state_t tmpState(state->lex, state->ip);
+				state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
 
-				tmpState.AddCode(&tmp, code(command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
+				size_t ip_loop_begin = state->ip;
+				state->AddCode(block, code(command_kind::pc_loop_count));
+				size_t ip_loopchk = state->ip;
+				state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 
-				size_t ip_loop_begin = tmpState.ip;
-				tmpState.AddCode(&tmp, code(command_kind::pc_loop_count));
+				size_t ip_block_begin = state->ip;
+				size_t childSize = parse_block(block, state, nullptr, true);
 
-				script_block* childBlock = nullptr;
-				size_t childSize = parse_inline_block(&childBlock, &tmp, &tmpState, block_kind::bk_loop, true);
-
-				tmpState.AddCode(&tmp, code(command_kind::pc_continue_marker));
-				tmpState.AddCode(&tmp, code(command_kind::pc_jump, ip_loop_begin));
-				tmpState.AddCode(&tmp, code(command_kind::pc_loop_back));
-				tmpState.AddCode(&tmp, code(command_kind::pc_pop, 1));
+				size_t ip_continue = state->ip;
+				state->AddCode(block, code(command_kind::pc_jump, ip_loop_begin));
+				size_t ip_back = state->ip;
+				state->AddCode(block, code(command_kind::pc_pop, 1));
 
 				//Try to optimize looped yield to a wait
-				if (childSize == 1U && childBlock->codes[0].command == command_kind::pc_yield) {
-					engine->blocks.pop_back();
+				if (childSize == 1U && block->codes[ip_block_begin].command == command_kind::pc_yield) {
+					while (state->ip > ip_loop_begin)
+						state->PopCode(block);
 					state->AddCode(block, code(command_kind::pc_wait));
 				}
 				//Discard everything if the loop is empty
-				else if (childSize > 0U) {
-					block->codes.insert(block->codes.end(), tmp.codes.begin(), tmp.codes.end());
-					state->ip = tmpState.ip;
+				else if (childSize == 0U) {
+					while (state->ip > ip_loop_begin)
+						state->PopCode(block);
+				}
+				else {
+					block->codes[ip_loopchk].ip = ip_back;
+					link_break_continue(block, state, ip_block_begin, ip_continue, ip_back, ip_continue);
 				}
 			}
 
@@ -1196,17 +1228,23 @@ continue_as_variadic:
 			if (state->next() == token_kind::tk_LOOP)
 				state->advance();
 
-			state->AddCode(block, code(command_kind::pc_loop_if));
+			size_t ip_loopchk = state->ip;
+			state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 
-			size_t newBlockSize = parse_inline_block(nullptr, block, state, block_kind::bk_loop, true);
+			size_t ip_block_begin = state->ip;
+			size_t childSize = parse_block(block, state, nullptr, true);
 
-			state->AddCode(block, code(command_kind::pc_continue_marker));
+			size_t ip_continue = state->ip;
 			state->AddCode(block, code(command_kind::pc_jump, ip));
-			state->AddCode(block, code(command_kind::pc_loop_back));
+			size_t ip_back = state->ip;
 
-			if (newBlockSize == 0U) {
+			if (childSize == 0U) {
 				while (state->ip > ip)
 					state->PopCode(block);
+			}
+			else {
+				block->codes[ip_loopchk].ip = ip_back;
+				link_break_continue(block, state, ip_block_begin, ip_continue, ip_back, ip_continue);
 			}
 
 			need_terminator = false;
@@ -1229,7 +1267,7 @@ continue_as_variadic:
 
 				parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
 
-				std::string feIdentifier = state->lex->word;
+				std::string counterName = state->lex->word;
 
 				state->advance();
 				parser_assert(state, state->next() == token_kind::tk_IN || state->next() == token_kind::tk_colon,
@@ -1250,32 +1288,31 @@ continue_as_variadic:
 
 				size_t ip = state->ip;
 
-				state->AddCode(block, code(command_kind::pc_for_each_and_push_first));
+				state->AddCode(block, code(command_kind::pc_loop_foreach));
+				size_t ip_loopchk = state->ip;
+				state->AddCode(block, code(command_kind::pc_jump_if, 0U));
 
-				script_block* b = engine->new_block(block->level + 1, block_kind::bk_loop);
+				size_t childSize = 0U;
 				{
-					parser_state_t newState(state->lex);
-
 					std::vector<std::string> counter;
-					counter.push_back(feIdentifier);
-
-					parse_block(b, &newState, &counter, false, true);
+					counter.push_back(counterName);
+					childSize = parse_block(block, state, &counter, true);
 				}
 
-				//state->AddCode(block, code(command_kind::pc_dup_n, 1));
-				state->AddCode(block, code(command_kind::pc_call, b, 1));
-
-				state->AddCode(block, code(command_kind::pc_continue_marker));
+				size_t ip_continue = state->ip;
 				state->AddCode(block, code(command_kind::pc_jump, ip));
-				state->AddCode(block, code(command_kind::pc_loop_back));
+				size_t ip_back = state->ip;
 
 				//Pop twice for the array and the counter
 				state->AddCode(block, code(command_kind::pc_pop, 2));
 
-				if (b->codes.size() == 1U) {	//1 for pc_assign
-					engine->blocks.pop_back();
+				if (childSize <= 1U) {	//1 for pc_assign
 					while (state->ip > ip_for_begin)
 						state->PopCode(block);
+				}
+				else {
+					block->codes[ip_loopchk].ip = ip_back;
+					link_break_continue(block, state, ip, ip_continue, ip_back, ip_continue);
 				}
 			}
 			else if (state->next() == token_kind::tk_open_par) {	//Regular for loop
@@ -1285,6 +1322,7 @@ continue_as_variadic:
 				bool isNewVarConst = false;
 				std::string newVarName = "";
 
+				script_scanner* const lex_org = state->lex;
 				script_scanner lex_s1(*state->lex);		//First statement (initialization)
 
 				if (IsDeclToken(state->next()) || state->next() == token_kind::tk_const) {
@@ -1314,58 +1352,59 @@ continue_as_variadic:
 
 				script_scanner lex_s4(*state->lex);		//Loop body
 
-				script_block* forBlock = engine->new_block(block->level + 1, block_kind::bk_normal);
-				state->AddCode(block, code(command_kind::pc_call, forBlock, 0));
-
-				parser_state_t forBlockState(state->lex);
-
+				size_t ip_loopchk = 0;
+				size_t ip_continue = 0;
+				size_t ip_back = 0;
 				size_t codeBlockSize = 0;
 
 				//For block
-				frame.push_back(scope_t(forBlock->kind));
+				frame.push_back(scope_t(block->kind));
 				{
 					if (isNewVar) {
 						symbol s;
-						s.level = forBlock->level;
+						s.level = block->level;
 						s.sub = nullptr;
-						s.variable = 0;
+						s.variable = state->var_count_main;
 						s.can_overload = false;
 						s.can_modify = !isNewVarConst;
 						frame.back().singular_insert(newVarName, s);
+						state->GrowVarCount(1);
 					}
 
 					//Initialization statement
-					forBlockState.lex = &lex_s1;
-					forBlockState.AddCode(forBlock, code(command_kind::pc_var_alloc, 1));
-					parse_single_statement(forBlock, &forBlockState, true, token_kind::tk_semicolon);
+					state->lex = &lex_s1;
+					parse_single_statement(block, state, true, token_kind::tk_semicolon);
 
-					size_t ip_begin = forBlock->codes.size();
+					size_t ip_begin = state->ip;
 
 					//Evaluation statement
 					if (hasExpr) {
-						forBlockState.lex = &lex_s2;
-						parse_expression(forBlock, &forBlockState);
-						parser_assert(&forBlockState, lex_s2.next == token_kind::tk_semicolon, "Expected a semicolon (;).");
-						forBlockState.AddCode(forBlock, code(command_kind::pc_loop_if));
+						state->lex = &lex_s2;
+						parse_expression(block, state);
+						parser_assert(state, lex_s2.next == token_kind::tk_semicolon, "Expected a semicolon (;).");
+						ip_loopchk = state->ip;
+						state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 					}
 
 					//Parse loop body
-					forBlockState.lex = &lex_s4;
-					codeBlockSize = parse_inline_block(nullptr, forBlock, &forBlockState, block_kind::bk_loop, true);
-					state->lex->copy_state(forBlockState.lex);
+					state->lex = &lex_s4;
+					codeBlockSize = parse_block(block, state, nullptr, true);
 
-					forBlockState.AddCode(forBlock, code(command_kind::pc_continue_marker));
+					ip_continue = state->ip;
 					{
 						//Update statement
-						forBlockState.lex = &lex_s3;
-						parse_single_statement(forBlock, &forBlockState, false, token_kind::tk_comma);
+						state->lex = &lex_s3;
+						parse_single_statement(block, state, false, token_kind::tk_comma);
 						while (lex_s3.next == token_kind::tk_comma) {
 							lex_s3.advance();
-							parse_single_statement(forBlock, &forBlockState, false, token_kind::tk_comma);
+							parse_single_statement(block, state, false, token_kind::tk_comma);
 						}
 					}
-					forBlockState.AddCode(forBlock, code(command_kind::pc_jump, ip_begin));
-					forBlockState.AddCode(forBlock, code(command_kind::pc_loop_back));
+					state->AddCode(block, code(command_kind::pc_jump, ip_begin));
+					ip_back = state->ip;
+
+					state->lex = lex_org;
+					state->lex->copy_state(&lex_s4);
 				}
 				frame.pop_back();
 
@@ -1373,6 +1412,10 @@ continue_as_variadic:
 					engine->blocks.pop_back();	//forBlock
 					while (state->ip > ip_for_begin)
 						state->PopCode(block);
+				}
+				else {
+					block->codes[ip_loopchk].ip = ip_back;
+					link_break_continue(block, state, ip_for_begin, ip_continue, ip_back, ip_continue);
 				}
 			}
 			else {
@@ -1421,53 +1464,54 @@ continue_as_variadic:
 			if (state->next() == token_kind::tk_LOOP)
 				state->advance();
 
-			state->AddCode(block, code(command_kind::pc_dup_n_unique, 2));	//s1 s2		-> s1 s2 s1
-			state->AddCode(block, code(command_kind::pc_dup_n_unique, 2));	//s1 s2 s1	-> s1 s2 s1 s2
+			//state->AddCode(block, code(command_kind::pc_dup_n_unique, 2));	//s1 s2		-> s1 s2 s1
+			//state->AddCode(block, code(command_kind::pc_dup_n_unique, 2));	//s1 s2 s1	-> s1 s2 s1 s2
 
 			if (isAscent)
 				state->AddCode(block, code(command_kind::pc_swap));
 
 			size_t ip = state->ip;
 			
-			state->AddCode(block, code(isAscent ? command_kind::pc_compare_and_loop_ascent :
-				command_kind::pc_compare_and_loop_descent));
+			state->AddCode(block, code(isAscent ? command_kind::pc_loop_ascent : command_kind::pc_loop_descent));
+			size_t ip_loopchk = state->ip;
+			state->AddCode(block, code(command_kind::pc_jump_if, 0U));
 
 			if (!isAscent) {
-				state->AddCode(block, code(command_kind::pc_dup_n, 1));
-				state->AddCode(block, code(command_kind::pc_inline_dec, -1, 0, "!0"));
+				state->AddCode(block, code(command_kind::pc_inline_top_dec));
+				//state->AddCode(block, code(command_kind::pc_dup_n, 1));
+				//state->AddCode(block, code(command_kind::pc_inline_dec, -1, 0, "!0"));
 			}
 
 			state->AddCode(block, code(command_kind::pc_dup_n, 1));
 
-			script_block* b = engine->new_block(block->level + 1, block_kind::bk_loop);
+			size_t childSize = 0U;
 			{
-				parser_state_t newState(state->lex);
-
 				std::vector<std::string> counter;
 				counter.push_back(counterName);
-
-				parse_block(b, &newState, &counter, false, true);
+				childSize = parse_block(block, state, &counter, true);
 			}
 
-			state->AddCode(block, code(command_kind::pc_call, b, 1));
-
-			state->AddCode(block, code(command_kind::pc_continue_marker));
+			size_t ip_continue = state->ip;
 
 			if (isAscent) {
-				state->AddCode(block, code(command_kind::pc_dup_n, 1));
-				state->AddCode(block, code(command_kind::pc_inline_inc, -1, 0, "!0"));
+				state->AddCode(block, code(command_kind::pc_inline_top_inc));
+				//state->AddCode(block, code(command_kind::pc_dup_n, 1));
+				//state->AddCode(block, code(command_kind::pc_inline_inc, -1, 0, "!0"));
 			}
 
 			state->AddCode(block, code(command_kind::pc_jump, ip));
-			state->AddCode(block, code(command_kind::pc_loop_back));
+			size_t ip_back = state->ip;
 
 			//Pop twice for two statements * 2
-			state->AddCode(block, code(command_kind::pc_pop, 2 * 2));
+			state->AddCode(block, code(command_kind::pc_pop, 2));
 
-			if (b->codes.size() == 1U) {	//1 for pc_assign
-				engine->blocks.pop_back();
+			if (childSize <= 1U) {	//1 for pc_assign
 				while (state->ip > ip_ascdsc_begin)
 					state->PopCode(block);
+			}
+			else {
+				block->codes[ip_loopchk].ip = ip_back;
+				link_break_continue(block, state, ip_ascdsc_begin, ip_continue, ip_back, ip_continue);
 			}
 
 			need_terminator = false;
@@ -1489,7 +1533,7 @@ continue_as_variadic:
 				//Jump to next case if false
 				parse_parentheses(block, state);
 				state->AddCode(block, code(command_kind::_pc_jump_if_not, indexLabel));
-				parse_inline_block(nullptr, block, state, block_kind::bk_normal, true);
+				parse_block(block, state, nullptr, true);
 
 				if (state->next() == token_kind::tk_ELSE) {
 					state->advance();
@@ -1499,7 +1543,7 @@ continue_as_variadic:
 
 					mapLabelCode.insert(std::make_pair(indexLabel, state->ip));
 					if (state->next() != token_kind::tk_IF) {
-						parse_inline_block(nullptr, block, state, block_kind::bk_normal, true);
+						parse_block(block, state, nullptr, true);
 						hasNextCase = false;
 					}
 					else if (state->next() == token_kind::tk_IF) hasNextCase = true;
@@ -1557,7 +1601,7 @@ continue_as_variadic:
 				state->AddCode(block, code(command_kind::_pc_jump, indexLabel + 1));
 
 				mapLabelCode.insert(std::make_pair(indexLabel, state->ip));
-				parse_inline_block(nullptr, block, state, block_kind::bk_normal, true);
+				parse_block(block, state, nullptr, true);
 
 				//Jump to exit
 				state->AddCode(block, code(command_kind::_pc_jump, UINT_MAX));
@@ -1567,7 +1611,7 @@ continue_as_variadic:
 			}
 			if (state->next() == token_kind::tk_OTHERS) {
 				state->advance();
-				parse_inline_block(nullptr, block, state, block_kind::bk_normal, true);
+				parse_block(block, state, nullptr, true);
 			}
 			state->AddCode(block, code(command_kind::pc_pop, 1));
 
@@ -1695,16 +1739,42 @@ continue_as_variadic:
 			else {
 				if (state->next() == token_kind::tk_open_par) {
 					state->advance();
-					parser_assert(state, state->next() == token_kind::tk_close_par, "Only an empty parameter list is allowed here.\r\n");
+					parser_assert(state, state->next() == token_kind::tk_close_par, 
+						"Only an empty parameter list is allowed here.\r\n");
 					state->advance();
 				}
 			}
 
 			s = search_in(pScope, funcName, args.size());
+			parser_assert(state, s->sub->codes.size() == 0,
+				"Function body already defined.\r\n");
 
 			{
+				frame.push_back(scope_t(s->sub->kind));
+
 				parser_state_t newState(state->lex);
-				parse_block(s->sub, &newState, &args, s->sub->kind == block_kind::bk_function, false);
+
+				parser_assert(&newState, newState.next() == token_kind::tk_open_cur, "\"{\" is required.\r\n");
+				newState.advance();
+
+				newState.var_count_main = scan_current_scope(&newState, s->sub->level, 
+					&args, s->sub->kind == block_kind::bk_function);
+				newState.AddCode(s->sub, code(command_kind::pc_var_alloc, 0));
+
+				for (size_t i = 0; i < args.size(); ++i) {
+					const std::string& name = args[i];
+					symbol* svar = search(name);
+					newState.AddCode(s->sub, code(command_kind::pc_assign, svar->level, svar->variable, name));
+				}
+				parse_statements(s->sub, &newState, token_kind::tk_close_cur, token_kind::tk_semicolon);
+				scan_final(s->sub, &newState);
+
+				s->sub->codes[0].ip = newState.var_count_main + newState.var_count_sub;
+
+				parser_assert(&newState, newState.next() == token_kind::tk_close_cur, "\"}\" is required.\r\n");
+				newState.advance();
+
+				frame.pop_back();
 			}
 
 			need_terminator = false;
@@ -1727,66 +1797,73 @@ continue_as_variadic:
 		}
 	}
 
-	size_t parser::parse_inline_block(script_block** blockRes, script_block* block, 
-		parser_state_t* state, block_kind kind, bool allow_single) 
+	size_t parser::parse_block(script_block* block, parser_state_t* state, 
+		const std::vector<std::string>* args, bool allow_single) 
 	{
-		script_block* b = engine->new_block(block->level + 1, kind);
-		if (blockRes) *blockRes = b;
+		size_t prev_size = state->ip;
 
-		parser_state_t newState(state->lex);
-		parse_block(b, &newState, nullptr, false, allow_single);
+		parser_state_t newState(state->lex, state->ip);
+		newState.state_pred = state;
 
-		if (b->codes.size() == 0U) {
-			engine->blocks.pop_back();
-			return 0;
-		}
+		size_t varc_prev_total = 0;
+		for (parser_state_t* iState = state; iState != nullptr; iState = iState->state_pred)
+			varc_prev_total += iState->var_count_main;
 
-		state->AddCode(block, code(command_kind::pc_call, b, 0));
-		return b->codes.size();
-	}
-
-	void parser::parse_block(script_block* block, parser_state_t* state, std::vector<std::string> const* args,
-		bool adding_result, bool allow_single) 
-	{
-		bool single_line = state->next() != token_kind::tk_open_cur && allow_single;
+		bool single_line = newState.next() != token_kind::tk_open_cur && allow_single;
 		if (!single_line) {
-			parser_assert(state, state->next() == token_kind::tk_open_cur, "\"{\" is required.\r\n");
-			state->advance();
+			parser_assert(&newState, newState.next() == token_kind::tk_open_cur, "\"{\" is required.\r\n");
+			newState.advance();
 		}
 
 		frame.push_back(scope_t(block->kind));
 
 		if (!single_line) {
-			int countVar = scan_current_scope(state, block->level, args, adding_result);
-			state->AddCode(block, code(command_kind::pc_var_alloc, countVar));
+			newState.var_count_main = scan_current_scope(&newState, block->level, args, false,
+				varc_prev_total);
 		}
-		if (args) {
+		else if (args) {
 			scope_t* ptrBackFrame = &frame.back();
+			for (size_t i = 0; i < args->size(); ++i) {
+				symbol s;
+				s.level = block->level;
+				s.sub = nullptr;
+				s.variable = varc_prev_total + i;
+				s.can_overload = false;
+				s.can_modify = true;
+				ptrBackFrame->singular_insert(args->at(i), s);
+			}
+			newState.var_count_main = args->size();
+		}
 
+		size_t ip_var_format = newState.ip;
+		newState.AddCode(block, code(command_kind::pc_var_format, 0, newState.var_count_main));
+
+		if (args) {
 			for (size_t i = 0; i < args->size(); ++i) {
 				const std::string& name = args->at(i);
-				if (single_line) {	//As scan_current_scope won't be called.
-					symbol s = { block->level, nullptr, (int)i, false, true };
-					ptrBackFrame->singular_insert(name, s);
-				}
-
 				symbol* s = search(name);
-				state->AddCode(block, code(command_kind::pc_assign, s->level, s->variable, name));
+				newState.AddCode(block, code(command_kind::pc_assign, s->level, s->variable, name));
 			}
 		}
-		if (single_line) {
-			parse_single_statement(block, state, true, token_kind::tk_semicolon);
-		}
-		else {
-			parse_statements(block, state, token_kind::tk_close_cur, token_kind::tk_semicolon);
-		}
+		if (single_line)
+			parse_single_statement(block, &newState, true, token_kind::tk_semicolon);
+		else
+			parse_statements(block, &newState, token_kind::tk_close_cur, token_kind::tk_semicolon);
 
 		frame.pop_back();
 
 		if (!single_line) {
-			parser_assert(state, state->next() == token_kind::tk_close_cur, "\"}\" is required.\r\n");
-			state->advance();
+			parser_assert(&newState, newState.next() == token_kind::tk_close_cur, "\"}\" is required.\r\n");
+			newState.advance();
 		}
+
+		block->codes[ip_var_format].off = varc_prev_total;
+		block->codes[ip_var_format].len = newState.var_count_main /*+ newState.var_count_sub*/;
+
+		state->ip = newState.ip;
+		state->GrowVarCount(newState.var_count_main + newState.var_count_sub);
+
+		return block->codes.size() - prev_size;
 	}
 
 	void parser::optimize_expression(script_block* block, parser_state_t* state) {
@@ -1913,5 +1990,31 @@ continue_as_variadic:
 		}
 
 		block->codes = newCodes;
+	}
+	///Replaces breaks and continues with jumps
+	void parser::link_break_continue(script_block* block, parser_state_t* state,
+		size_t ip_begin, size_t ip_end, size_t ip_break, size_t ip_continue) 
+	{
+		auto itrBegin = block->codes.begin() + ip_begin;
+		auto itrEnd = block->codes.begin() + ip_end + 1;
+		for (auto itr = itrBegin; itr != itrEnd; ++itr) {
+			if (itr == block->codes.end()) return;
+			switch (itr->command) {
+			case command_kind::pc_break_loop:
+				*itr = code(itr->line, command_kind::pc_jump, ip_break);
+				break;
+			case command_kind::pc_loop_continue:
+				*itr = code(itr->line, command_kind::pc_jump, ip_continue);
+				break;
+			}
+		}
+	}
+	void parser::scan_final(script_block* block, parser_state_t* state) {
+		for (auto itr = block->codes.begin(); itr != block->codes.end(); ++itr) {
+			parser_assert(itr->line, itr->command != command_kind::pc_break_loop,
+				"\"break\" may only be used inside a loop.");
+			parser_assert(itr->line, itr->command != command_kind::pc_loop_continue,
+				"\"continue\" may only be used inside a loop.");
+		}
 	}
 }

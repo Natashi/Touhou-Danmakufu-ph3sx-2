@@ -12,7 +12,7 @@
 
 namespace gstd {
 	enum class command_kind : uint8_t {
-		pc_var_alloc, 
+		pc_var_alloc, pc_var_format,
 		pc_assign, pc_assign_writable, pc_break_loop, pc_break_routine,
 		pc_call, pc_call_and_push_result,
 
@@ -27,28 +27,33 @@ namespace gstd {
 
 		pc_dup_n, pc_dup_n_unique,
 
-		pc_for, pc_for_each_and_push_first,
-		pc_compare_and_loop_ascent, pc_compare_and_loop_descent,
-		pc_loop_count, pc_loop_if, pc_loop_continue, pc_continue_marker, pc_loop_back,
+		pc_loop_ascent, pc_loop_descent, pc_loop_count, pc_loop_foreach,
+		pc_loop_continue,
 
 		pc_construct_array,
 		pc_pop, pc_push_value, pc_push_variable, pc_swap, pc_yield, pc_wait,
 
 		//Inline operations
+		pc_inline_top_inc, pc_inline_top_dec,
 		pc_inline_inc, pc_inline_dec,
-		pc_inline_add_asi, pc_inline_sub_asi, pc_inline_mul_asi, pc_inline_div_asi, pc_inline_mod_asi, pc_inline_pow_asi,
+
+		pc_inline_add_asi, pc_inline_sub_asi, pc_inline_mul_asi, pc_inline_div_asi, pc_inline_mod_asi, 
+		pc_inline_pow_asi, pc_inline_cat_asi,
+
 		pc_inline_neg, pc_inline_not, pc_inline_abs,
 		pc_inline_add, pc_inline_sub, pc_inline_mul, pc_inline_div, pc_inline_mod, pc_inline_pow,
 		pc_inline_app, pc_inline_cat,
+
 		pc_inline_cmp_e, pc_inline_cmp_g, pc_inline_cmp_ge, pc_inline_cmp_l, pc_inline_cmp_le, pc_inline_cmp_ne,
 		pc_inline_logic_and, pc_inline_logic_or,
+
 		pc_inline_cast_var,
 		pc_inline_index_array,
 
 		pc_null = 0xff,
 	};
 	enum class block_kind : uint8_t {
-		bk_normal, bk_loop, bk_sub, bk_function, bk_microthread
+		bk_normal, bk_sub, bk_function, bk_microthread
 	};
 
 	struct code;
@@ -70,9 +75,6 @@ namespace gstd {
 #endif
 
 		union {
-			struct {	//pc_push_value
-				value data;
-			};
 			struct {	//assign/push_variable
 				int level;
 				size_t variable;
@@ -84,6 +86,13 @@ namespace gstd {
 			struct {	//loop_back
 				size_t ip;
 			};
+			struct {	//var_format
+				size_t off;
+				size_t len;
+			};
+			struct {	//push_value
+				value data;
+			};
 		};
 
 		code();
@@ -91,6 +100,7 @@ namespace gstd {
 		code(int the_line, command_kind the_command, int the_level, size_t the_variable, const std::string& the_name);
 		code(int the_line, command_kind the_command, script_block* the_sub, int the_arguments);
 		code(int the_line, command_kind the_command, size_t the_ip);
+		code(int the_line, command_kind the_command, size_t the_off, size_t the_len);
 		code(int the_line, command_kind the_command, const value& the_data);
 
 		code(command_kind the_command) : code(0, the_command) {}
@@ -99,6 +109,7 @@ namespace gstd {
 		code(command_kind the_command, script_block* the_sub, int the_arguments)
 			: code(0, the_command, the_sub, the_arguments) {}
 		code(command_kind the_command, size_t the_ip) : code(0, the_command, the_ip) {}
+		code(command_kind the_command, size_t the_off, size_t the_len) : code(0, the_command, the_off, the_len) {}
 		code(command_kind the_command, const value& the_data) : code(0, the_command, the_data) {}
 
 		code(const code& src);
@@ -111,13 +122,24 @@ namespace gstd {
 	class parser {
 	private:
 		//Have a blatant name plagiarisation from thecl. Good morning.
-		struct parser_state_t {
+		class parser_state_t {
+		public:
+			parser_state_t* state_pred;
 			script_scanner* lex;
 			size_t ip;
+			size_t var_count_main;
+			size_t var_count_sub;
 
-			parser_state_t() : lex(nullptr), ip(0) {}
-			parser_state_t(script_scanner* _lex) : lex(_lex), ip(0) {}
-			parser_state_t(script_scanner* _lex, size_t _ip) : lex(_lex), ip(_ip) {}
+			parser_state_t() : state_pred(nullptr), lex(nullptr), ip(0) {
+				var_count_main = 0;
+				var_count_sub = 0;
+			}
+			parser_state_t(script_scanner* _lex) : parser_state_t() {
+				lex = _lex;
+			}
+			parser_state_t(script_scanner* _lex, size_t _ip) : parser_state_t(_lex) {
+				ip = _ip;
+			}
 
 			void AddCode(script_block* bk, code&& cd) {
 				cd.line = lex->line;
@@ -127,6 +149,9 @@ namespace gstd {
 			void PopCode(script_block* bk) {
 				bk->codes.pop_back();
 				--ip;
+			}
+			void GrowVarCount(size_t count) {
+				var_count_sub = std::max(var_count_sub, count);
 			}
 
 			token_kind next() const { return lex->next; }
@@ -149,7 +174,7 @@ namespace gstd {
 			void singular_insert(const std::string& name, const symbol& s, int argc = 0);
 		};
 
-		std::vector<scope_t> frame;
+		std::list<scope_t> frame;
 		script_scanner* lexer_main;
 		script_engine* engine;
 		bool error;
@@ -179,10 +204,8 @@ namespace gstd {
 			bool check_terminator, token_kind statement_terminator);
 		void parse_statements(script_block* block, parser_state_t* state,
 			token_kind block_terminator, token_kind statement_terminator);
-		size_t parse_inline_block(script_block** blockRes, script_block* block, parser_state_t* state,
-			block_kind kind, bool allow_single = false);
-		void parse_block(script_block* block, parser_state_t* state, const std::vector<std::string>* args,
-			bool adding_result, bool allow_single = false);
+		size_t parse_block(script_block* block, parser_state_t* state, 
+			const std::vector<std::string>* args, bool allow_single = false);
 	private:
 		void register_function(const function& func);
 		symbol* search(const std::string& name, scope_t** ptrScope = nullptr);
@@ -199,11 +222,16 @@ namespace gstd {
 
 		void optimize_expression(script_block* block, parser_state_t* state);
 		void link_jump(script_block* block, parser_state_t* state, size_t ip_off);
+		void link_break_continue(script_block* block, parser_state_t* state, 
+			size_t ip_begin, size_t ip_end, size_t ip_break, size_t ip_continue);
+		void scan_final(script_block* block, parser_state_t* state);
 
 		inline static void parser_assert(bool expr, const std::wstring& error);
 		inline static void parser_assert(bool expr, const std::string& error);
 		inline static void parser_assert(parser_state_t* state, bool expr, const std::wstring& error);
 		inline static void parser_assert(parser_state_t* state, bool expr, const std::string& error);
+		inline static void parser_assert(int line, bool expr, const std::wstring& error);
+		inline static void parser_assert(int line, bool expr, const std::string& error);
 
 		inline static bool test_variadic(int require, int argc);
 		inline static bool IsDeclToken(token_kind tk);
@@ -226,6 +254,14 @@ namespace gstd {
 	void parser::parser_assert(parser_state_t* state, bool expr, const std::string& error) {
 		if (!expr)
 			throw parser_error_mapped(state->lex->line, error);
+	}
+	void parser::parser_assert(int line, bool expr, const std::wstring& error) {
+		if (!expr)
+			throw parser_error_mapped(line, error);
+	}
+	void parser::parser_assert(int line, bool expr, const std::string& error) {
+		if (!expr)
+			throw parser_error_mapped(line, error);
 	}
 
 	bool parser::test_variadic(int require, int argc) {

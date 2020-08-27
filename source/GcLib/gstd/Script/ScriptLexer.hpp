@@ -32,7 +32,8 @@ namespace gstd {
 		tk_bit_and, tk_bit_or, tk_bit_xor, tk_bit_shf_left, tk_bit_shf_right, 
 		tk_at, 
 		tk_inc, tk_dec, tk_range, tk_args_variadic,
-		tk_add_assign, tk_subtract_assign, tk_multiply_assign, tk_divide_assign, tk_remainder_assign, tk_power_assign,
+		tk_add_assign, tk_subtract_assign, tk_multiply_assign, tk_divide_assign, tk_remainder_assign, 
+		tk_power_assign, tk_concat_assign,
 
 		tk_decl_auto, tk_const,
 		tk_decl_real, tk_decl_char, tk_decl_string, tk_decl_bool,
