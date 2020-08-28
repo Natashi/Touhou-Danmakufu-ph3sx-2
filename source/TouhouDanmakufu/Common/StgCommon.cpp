@@ -400,6 +400,8 @@ void StgMovePattern_Line_Frame::SetAtFrame(double tx, double ty, int frame, lerp
 	moveLerpFunc = lerpFunc;
 	diffLerpFunc = diffFunc;
 
+	maxFrame_ = std::max(frame, 1);
+
 	positionDiff_[0] = tx - iniPos_[0];
 	positionDiff_[1] = ty - iniPos_[1];
 	double dist = hypot(positionDiff_[0], positionDiff_[1]);
@@ -407,7 +409,6 @@ void StgMovePattern_Line_Frame::SetAtFrame(double tx, double ty, int frame, lerp
 
 	speed_ = diffLerpFunc(0.0) * speedRate_;
 	angDirection_ = atan2(positionDiff_[1], positionDiff_[0]);
-	maxFrame_ = frame;
 
 	c_ = positionDiff_[0] / dist;
 	s_ = positionDiff_[1] / dist;
