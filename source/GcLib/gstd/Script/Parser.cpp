@@ -322,7 +322,6 @@ namespace gstd {
 			}
 
 			while (cur >= 0 && IsReadableToken()) {
-				if (cur == 0) par = 0;
 				bool is_const = false;
 
 				switch (lex2.next) {
@@ -340,6 +339,7 @@ namespace gstd {
 					break;
 				case token_kind::tk_close_cur:
 					--cur;
+					if (cur == 0) par = 0;
 					lex2.advance();
 					break;
 				case token_kind::tk_at:
@@ -1368,7 +1368,7 @@ continue_as_variadic:
 						s.can_overload = false;
 						s.can_modify = !isNewVarConst;
 						frame.back().singular_insert(newVarName, s);
-						state->GrowVarCount(1);
+						state->GrowVarCount(state->var_count_main + 1);
 					}
 
 					//Initialization statement
@@ -1409,12 +1409,11 @@ continue_as_variadic:
 				frame.pop_back();
 
 				if (codeBlockSize == 0U) {
-					engine->blocks.pop_back();	//forBlock
 					while (state->ip > ip_for_begin)
 						state->PopCode(block);
 				}
 				else {
-					block->codes[ip_loopchk].ip = ip_back;
+					if (hasExpr) block->codes[ip_loopchk].ip = ip_back;
 					link_break_continue(block, state, ip_for_begin, ip_continue, ip_back, ip_continue);
 				}
 			}
