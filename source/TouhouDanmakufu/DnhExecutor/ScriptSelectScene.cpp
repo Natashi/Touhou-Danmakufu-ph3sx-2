@@ -620,7 +620,7 @@ PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) 
 				replay->GetUserName().c_str(),
 				replay->GetTotalScore(),
 				replay->GetPlayerScriptReplayName().c_str(),
-				replay->GetAvarageFps(),
+				replay->GetAverageFps(),
 				replay->GetDateAsString().c_str()
 			);
 			AddMenuItem(new PlayTypeSelectMenuItem(text, mx, itemY));

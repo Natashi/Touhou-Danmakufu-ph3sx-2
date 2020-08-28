@@ -60,7 +60,7 @@ bool ReplayInformation::SaveToFile(const std::wstring& scriptPath, int index) {
 	rec.SetRecordAsStringW("comment", comment_);
 	rec.SetRecordAsStringW("userName", userName_);
 	rec.SetRecord("totalScore", totalScore_);
-	rec.SetRecordAsDouble("fpsAverage", fpsAvarage_);
+	rec.SetRecordAsDouble("fpsAverage", fpsAverage_);
 	rec.SetRecord("date", date_);
 
 	RecordBuffer recUserData;
@@ -151,7 +151,7 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 	res->comment_ = rec.GetRecordAsStringW("comment");
 	res->userName_ = rec.GetRecordAsStringW("userName");
 	rec.GetRecord("totalScore", res->totalScore_);
-	res->fpsAvarage_ = rec.GetRecordAsDouble("fpsAverage");
+	res->fpsAverage_ = rec.GetRecordAsDouble("fpsAverage");
 	rec.GetRecord("date", res->date_);
 
 	res->userData_->Clear();
@@ -182,7 +182,7 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 }
 
 //ReplayInformation::StageData
-double ReplayInformation::StageData::GetFramePerSecondAvarage() {
+double ReplayInformation::StageData::GetFramePerSecondAverage() {
 	double res = 0;
 	for (size_t iFrame = 0; iFrame < listFramePerSecond_.size(); iFrame++) {
 		res += listFramePerSecond_[iFrame];

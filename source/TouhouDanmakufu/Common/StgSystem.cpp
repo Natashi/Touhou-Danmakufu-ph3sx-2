@@ -36,16 +36,13 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 	camera3D->thisProjectionChanged_ = true;
 	camera2D->Reset();
 
-	//キャッシュをクリア
 	scriptEngineCache_->Clear();
 
-	//キー設定
 	EDirectInput* input = EDirectInput::GetInstance();
 	input->ResetVirtualKeyMap();
 
 	ref_count_ptr<ScriptInformation> infoMain = infoSystem_->GetMainScriptInformation();
 
-	//アーカイブ
 	EFileManager* fileManager = EFileManager::GetInstance();
 	const std::wstring& archiveMain = infoMain->GetArchivePath();
 	if (archiveMain.size() > 0) {
@@ -126,7 +123,6 @@ void StgSystemController::Work() {
 		EFileManager* fileManager = EFileManager::GetInstance();
 		fileManager->ClearArchiveFileCache();
 
-		//終了
 		bool bRetry = false;
 		if (infoSystem_->IsError()) {
 			std::wstring error = infoSystem_->GetErrorMessage();
@@ -134,7 +130,6 @@ void StgSystemController::Work() {
 				ErrorDialog::ShowErrorDialog(error);
 			}
 			else {
-				//リトライ
 				bRetry = true;
 			}
 		}
@@ -199,7 +194,6 @@ void StgSystemController::RenderScriptObject() {
 	}
 
 	if (bPause && !bPackageMode) {
-		//停止
 		stageController_->GetPauseManager()->Render();
 	}
 	else {
@@ -230,7 +224,6 @@ void StgSystemController::RenderScriptObject() {
 
 
 		if (bReplay) {
-			//リプレイ中
 /*
 			ref_count_ptr<StgStageInformation> infoStage = stageController_->GetStageInformation();
 			ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage->GetReplayData();
@@ -274,10 +267,6 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 		bPause = infoStage->IsPause();
 	}
 
-	//以下の場合にステージ描画有効とする
-	//・パッケージモードでない(一時停止もステージ処理側で処理するため)
-	//・パッケージスクリプトの場合は、一時停止をパッケージスクリプトで処理するため
-	//　一時停止中はSTGシーンは描画対象外とする
 	bool bValidStage = (scene == StgSystemInformation::SCENE_STG || !infoSystem_->IsPackageMode()) &&
 		stageController_ != nullptr && !bPause;
 	if (bValidStage) {
@@ -285,13 +274,11 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 		objectManagerStage->PrepareRenderObject();
 		pRenderListStage = objectManagerStage->GetRenderObjectListPointer();
 	}
-
 	if (infoSystem_->IsPackageMode()) {
 		objectManagerPackage = packageController_->GetMainObjectManager();
 		objectManagerPackage->PrepareRenderObject();
 		pRenderListPackage = objectManagerPackage->GetRenderObjectListPointer();
 	}
-
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
@@ -307,8 +294,6 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 		stageInfo = stageController_->GetStageInformation();
 		RECT* rcStgFrame = stageInfo->GetStgFrameRect();
 
-		//pause後に、フォーカスリセット値が上書きされていることがあるので
-		//STGシーン用にリセット値を更新する
 		ref_count_ptr<D3DXVECTOR2> pos = new D3DXVECTOR2;
 		pos->x = (rcStgFrame->right - rcStgFrame->left) / 2.0f;
 		pos->y = (rcStgFrame->bottom - rcStgFrame->top) / 2.0f;
@@ -327,7 +312,6 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 
 		stageInfo->SetStgFrameRect(rect);
 		if (scene != StgSystemInformation::SCENE_STG) {
-			//STGシーンでないならカメラ座標をリセットしておく
 			orgFocusPos = camera2D->GetFocusPosition();
 			focusPos = orgFocusPos;
 		}
@@ -335,8 +319,8 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 
 	RECT* rcStgFrame = stageInfo->GetStgFrameRect();
 
-	int stgWidth = rcStgFrame->right - rcStgFrame->left;
-	int stgHeight = rcStgFrame->bottom - rcStgFrame->top;
+	LONG stgWidth = rcStgFrame->right - rcStgFrame->left;
+	LONG stgHeight = rcStgFrame->bottom - rcStgFrame->top;
 	POINT stgCenter = { rcStgFrame->left + stgWidth / 2, rcStgFrame->top + stgHeight / 2 };
 	int priMinStgFrame = stageInfo->GetStgFrameMinPriority();
 	int priMaxStgFrame = stageInfo->GetStgFrameMaxPriority();
@@ -354,7 +338,6 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	focusPos.x -= stgWidth / 2;
 	focusPos.y -= stgHeight / 2;
 
-	//フォグ設定
 	bool bFogEnable = false;
 	D3DCOLOR fogColor = D3DCOLOR_ARGB(255, 255, 255, 255);
 	float fogStart = 0;
@@ -374,7 +357,6 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 
 	graphics->SetVertexFog(bFogEnable, fogColor, fogStart, fogEnd);
 
-	//描画開始前リセット
 	camera2D->SetEnable(false);
 	camera2D->Reset();
 	graphics->ResetViewPort();
@@ -392,7 +374,6 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 
 	for (int iPri = priMin; iPri <= priMax; iPri++) {
 		if (iPri >= priMinStgFrame && !bRunMinStgFrame) {
-			//STGフレーム開始
 			if (bValidStage && iPri < invalidPriMin)
 				graphics->ClearRenderTarget(rcStgFrame);
 
@@ -444,12 +425,12 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 
 			if (effect) effect->End();
 
+			//Intersection visualizer
 			if (iPri == priMaxStgFrame - 1 /*&& graphics->IsMainRenderLoop()*/) {
 				stageController_->GetIntersectionManager()->RenderVisualizer();
 			}
 		}
 
-		//パッケージ
 		if (objectManagerPackage) {
 			ID3DXEffect* effect = nullptr;
 			UINT cPass = 1;
@@ -490,7 +471,6 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 			camera2D->UpdateMatrix();
 		}
 		if (iPri >= priMaxStgFrame && !bRunMaxStgFrame) {
-			//STGフレーム終了
 			camera2D->SetEnable(false);
 			camera2D->Reset();
 			graphics->ResetViewPort();
@@ -543,7 +523,6 @@ void StgSystemController::_ControlScene() {
 			stageController_->Work();
 
 		if (infoStage->IsEnd()) {
-			//次ステージへ
 			stageController_->CloseScene();
 			if (infoSystem_->IsPackageMode()) {
 				stageController_->RenderToTransitionTexture();
@@ -672,7 +651,7 @@ ref_count_ptr<ReplayInformation> StgSystemController::CreateReplayInformation() 
 
 	//システム関連
 	int64_t totalScore = infoLastStage->GetScore();
-	double fpsAvarage = 0;
+	double fpsAverage = 0;
 
 	//ステージ
 	if (infoSystem_->IsPackageMode()) {
@@ -684,22 +663,22 @@ ref_count_ptr<ReplayInformation> StgSystemController::CreateReplayInformation() 
 			ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage->GetReplayData();
 			res->SetStageData(infoStage->GetStageIndex(), replayStageData);
 
-			fpsAvarage += replayStageData->GetFramePerSecondAvarage();
+			fpsAverage += replayStageData->GetFramePerSecondAverage();
 		}
 		if (listStageData.size() > 0)
-			fpsAvarage = fpsAvarage / listStageData.size();
+			fpsAverage = fpsAverage / listStageData.size();
 	}
 	else {
 		ref_count_ptr<ReplayInformation::StageData> replayStageData = infoLastStage->GetReplayData();
 		res->SetStageData(0, replayStageData);
-		fpsAvarage = replayStageData->GetFramePerSecondAvarage();
+		fpsAverage = replayStageData->GetFramePerSecondAverage();
 	}
 
 	SYSTEMTIME sysTime;
 	GetLocalTime(&sysTime);
 	res->SetDate(sysTime);
 	res->SetTotalScore(totalScore);
-	res->SetAvarageFps(fpsAvarage);
+	res->SetAverageFps(fpsAverage);
 
 	return res;
 }

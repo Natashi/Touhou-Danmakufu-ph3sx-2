@@ -29,7 +29,7 @@ private:
 	std::wstring comment_;
 	std::wstring userName_;
 	int64_t totalScore_;
-	double fpsAvarage_;
+	double fpsAverage_;
 	SYSTEMTIME date_;
 
 	shared_ptr<ScriptCommonData> userData_;
@@ -52,8 +52,8 @@ public:
 	void SetUserName(const std::wstring& name) { userName_ = name; }
 	int64_t GetTotalScore() { return totalScore_; }
 	void SetTotalScore(int64_t score) { totalScore_ = score; }
-	double GetAvarageFps() { return fpsAvarage_; }
-	void SetAvarageFps(double fps) { fpsAvarage_ = fps; }
+	double GetAverageFps() { return fpsAverage_; }
+	void SetAverageFps(double fps) { fpsAverage_ = fps; }
 	SYSTEMTIME& GetDate() { return date_; }
 	void SetDate(SYSTEMTIME& date) { date_ = date; }
 	std::wstring GetDateAsString();
@@ -122,7 +122,7 @@ public:
 	void SetRandSeed(uint32_t seed) { randSeed_ = seed; }
 	float GetFramePerSecond(int frame) { int index = frame / 60; int res = index < listFramePerSecond_.size() ? listFramePerSecond_[index] : 0; return res; }
 	void AddFramePerSecond(float frame) { listFramePerSecond_.push_back(frame); }
-	double GetFramePerSecondAvarage();
+	double GetFramePerSecondAverage();
 	ref_count_ptr<gstd::RecordBuffer> GetReplayKeyRecord() { return recordKey_; }
 	void SetReplayKeyRecord(ref_count_ptr<gstd::RecordBuffer> rec) { recordKey_ = rec; }
 	std::set<std::string> GetCommonDataAreaList();

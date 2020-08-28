@@ -948,7 +948,7 @@ gstd::value StgControlScript::Func_GetReplayInfo(gstd::script_machine* machine, 
 		res = script->CreateRealValue(replayInfo->GetTotalScore());
 		break;
 	case REPLAY_FPS_AVERAGE:
-		res = script->CreateRealValue(replayInfo->GetAvarageFps());
+		res = script->CreateRealValue(replayInfo->GetAverageFps());
 		break;
 	case REPLAY_PLAYER_NAME:
 		res = script->CreateStringValue(replayInfo->GetPlayerScriptReplayName());
