@@ -1613,10 +1613,11 @@ continue_as_variadic:
 				state->advance();
 				parse_block(block, state, nullptr, true);
 			}
-			state->AddCode(block, code(command_kind::pc_pop, 1));
 
 			size_t ip_end = state->ip;
 			mapLabelCode.insert(std::make_pair(UINT_MAX, ip_end));
+
+			state->AddCode(block, code(command_kind::pc_pop, 1));
 
 			//Replace labels with actual code offset
 			for (; ip_begin < ip_end; ++ip_begin) {
