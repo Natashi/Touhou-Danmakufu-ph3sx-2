@@ -12,6 +12,22 @@ std::wstring operator+(std::wstring l, const std::wstring& r) {
 
 //================================================================
 //SystemUtility
+
+//Vector compile checks
+#ifdef __L_MATH_VECTORIZE
+#if !defined(_XM_X64_) && !defined(_XM_X86_)
+#if defined(_M_AMD64) || defined(_AMD64_)
+#define _XM_X64_
+#elif defined(_M_IX86) || defined(_X86_)
+#define _XM_X86_
+#endif
+#endif
+
+#if (!defined(_XM_X86_) && !defined(_XM_X64_))
+#error Compilation on vectorized mode requires x86 intrinsics
+#endif
+#endif
+
 void SystemUtility::TestCpuSupportSIMD() {
 #ifdef __L_MATH_VECTORIZE
 	bool hasSSE = true;
