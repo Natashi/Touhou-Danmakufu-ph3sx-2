@@ -154,10 +154,8 @@ void ScriptManager::CloseScript(int64_t id) {
 			pScript->SetEndScript();
 
 			mapClosedScriptResult_[id] = pScript->GetResultValue();
-			if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT) {
-				int64_t targetID = mapClosedScriptResult_.begin()->first;
-				mapClosedScriptResult_.erase(targetID);
-			}
+			if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT)
+				mapClosedScriptResult_.erase(mapClosedScriptResult_.begin());
 
 			if (pScript->IsAutoDeleteObject())
 				pScript->GetObjectManager()->DeleteObjectByScriptID(id);
@@ -170,10 +168,8 @@ void ScriptManager::CloseScript(shared_ptr<ManagedScript> id) {
 	id->SetEndScript();
 
 	mapClosedScriptResult_[id->GetScriptID()] = id->GetResultValue();
-	if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT) {
-		int64_t targetID = mapClosedScriptResult_.begin()->first;
-		mapClosedScriptResult_.erase(targetID);
-	}
+	if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT)
+		mapClosedScriptResult_.erase(mapClosedScriptResult_.begin());
 
 	if (id->IsAutoDeleteObject())
 		id->GetObjectManager()->DeleteObjectByScriptID(id->GetScriptID());
@@ -185,10 +181,8 @@ void ScriptManager::CloseScriptOnType(int type) {
 
 			int64_t id = pScript->GetScriptID();
 			mapClosedScriptResult_[id] = pScript->GetResultValue();
-			if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT) {
-				int64_t targetID = mapClosedScriptResult_.begin()->first;
-				mapClosedScriptResult_.erase(targetID);
-			}
+			if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT)
+				mapClosedScriptResult_.erase(mapClosedScriptResult_.begin());
 
 			if (pScript->IsAutoDeleteObject())
 				pScript->GetObjectManager()->DeleteObjectByScriptID(id);
