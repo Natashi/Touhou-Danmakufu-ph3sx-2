@@ -1352,70 +1352,109 @@ continue_as_variadic:
 
 				script_scanner lex_s4(*state->lex);		//Loop body
 
+				size_t varc_prev_total = 0;
+				size_t ip_var_format = 0;
 				size_t ip_loopchk = 0;
 				size_t ip_continue = 0;
 				size_t ip_back = 0;
 				size_t codeBlockSize = 0;
 
+				parser_state_t newState(state->lex, state->ip);
+				newState.state_pred = state;
+
 				//For block
 				frame.push_back(scope_t(block->kind));
 				{
 					if (isNewVar) {
+						for (parser_state_t* iState = state; iState != nullptr; iState = iState->state_pred)
+							varc_prev_total += iState->var_count_main;
+
 						symbol s;
 						s.level = block->level;
 						s.sub = nullptr;
-						s.variable = state->var_count_main;
+						s.variable = varc_prev_total;
 						s.can_overload = false;
 						s.can_modify = !isNewVarConst;
 						frame.back().singular_insert(newVarName, s);
-						state->GrowVarCount(state->var_count_main + 1);
+
+						newState.var_count_main = 1;
+
+						ip_var_format = newState.ip;
+						newState.AddCode(block, code(command_kind::pc_var_format, 0, 0));
 					}
 
 					//Initialization statement
-					state->lex = &lex_s1;
-					parse_single_statement(block, state, true, token_kind::tk_semicolon);
+					newState.lex = &lex_s1;
+					parse_single_statement(block, &newState, true, token_kind::tk_semicolon);
 
-					size_t ip_begin = state->ip;
+					size_t ip_begin = newState.ip;
 
 					//Evaluation statement
 					if (hasExpr) {
-						state->lex = &lex_s2;
-						parse_expression(block, state);
+						newState.lex = &lex_s2;
+						parse_expression(block, &newState);
 						parser_assert(state, lex_s2.next == token_kind::tk_semicolon, "Expected a semicolon (;).");
-						ip_loopchk = state->ip;
-						state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
+						ip_loopchk = newState.ip;
+						newState.AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 					}
 
 					//Parse loop body
-					state->lex = &lex_s4;
-					codeBlockSize = parse_block(block, state, nullptr, true);
+					newState.lex = &lex_s4;
+					{
+						size_t prev = newState.ip;
 
-					ip_continue = state->ip;
+						bool single_line = newState.next() != token_kind::tk_open_cur;
+						if (!single_line)
+							newState.advance();
+
+						if (single_line)
+							parse_single_statement(block, &newState, true, token_kind::tk_semicolon);
+						else {
+							newState.var_count_main += scan_current_scope(&newState, block->level, nullptr, 
+								false, varc_prev_total);
+							parse_statements(block, &newState, token_kind::tk_close_cur, token_kind::tk_semicolon);
+						}
+
+						if (!single_line)
+							newState.advance();
+
+						codeBlockSize = newState.ip - prev;
+					}
+
+					ip_continue = newState.ip;
 					{
 						//Update statement
-						state->lex = &lex_s3;
-						parse_single_statement(block, state, false, token_kind::tk_comma);
+						newState.lex = &lex_s3;
+						parse_single_statement(block, &newState, false, token_kind::tk_comma);
 						while (lex_s3.next == token_kind::tk_comma) {
 							lex_s3.advance();
-							parse_single_statement(block, state, false, token_kind::tk_comma);
+							parse_single_statement(block, &newState, false, token_kind::tk_comma);
 						}
 					}
-					state->AddCode(block, code(command_kind::pc_jump, ip_begin));
-					ip_back = state->ip;
+					newState.AddCode(block, code(command_kind::pc_jump, ip_begin));
+					ip_back = newState.ip;
 
-					state->lex = lex_org;
-					state->lex->copy_state(&lex_s4);
+					newState.lex = lex_org;
+					newState.lex->copy_state(&lex_s4);
 				}
 				frame.pop_back();
 
 				if (codeBlockSize == 0U) {
-					while (state->ip > ip_for_begin)
-						state->PopCode(block);
+					while (newState.ip > ip_for_begin)
+						newState.PopCode(block);
 				}
 				else {
+					if (isNewVar) {
+						block->codes[ip_var_format].off = varc_prev_total;
+						block->codes[ip_var_format].len = newState.var_count_main;
+					}
+
 					if (hasExpr) block->codes[ip_loopchk].ip = ip_back;
-					link_break_continue(block, state, ip_for_begin, ip_continue, ip_back, ip_continue);
+					link_break_continue(block, &newState, ip_for_begin, ip_continue, ip_back, ip_continue);
 				}
+
+				state->ip = newState.ip;
+				if (isNewVar) state->GrowVarCount(newState.var_count_main + newState.var_count_sub);
 			}
 			else {
 				parser_assert(state, false, "\"(\" is required.\r\n");
@@ -1836,7 +1875,8 @@ continue_as_variadic:
 		}
 
 		size_t ip_var_format = newState.ip;
-		newState.AddCode(block, code(command_kind::pc_var_format, 0, newState.var_count_main));
+		if (newState.var_count_main > 0)
+			newState.AddCode(block, code(command_kind::pc_var_format, 0, newState.var_count_main));
 
 		if (args) {
 			for (size_t i = 0; i < args->size(); ++i) {
@@ -1857,8 +1897,10 @@ continue_as_variadic:
 			newState.advance();
 		}
 
-		block->codes[ip_var_format].off = varc_prev_total;
-		block->codes[ip_var_format].len = newState.var_count_main /*+ newState.var_count_sub*/;
+		if (newState.var_count_main > 0) {
+			block->codes[ip_var_format].off = varc_prev_total;
+			block->codes[ip_var_format].len = newState.var_count_main /*+ newState.var_count_sub*/;
+		}
 
 		state->ip = newState.ip;
 		state->GrowVarCount(newState.var_count_main + newState.var_count_sub);
