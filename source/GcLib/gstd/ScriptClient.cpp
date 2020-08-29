@@ -126,6 +126,7 @@ function const commonFunction[] =
 	{ "GetDirectoryList", ScriptClientBase::Func_GetDirectoryList, 1 },
 
 	//Path utility
+	{ "GetModuleName", ScriptClientBase::Func_GetModuleName, 0 },
 	{ "GetModuleDirectory", ScriptClientBase::Func_GetModuleDirectory, 0 },
 	{ "GetFileDirectory", ScriptClientBase::Func_GetFileDirectory, 1 },
 	{ "GetFileDirectoryFromModule", ScriptClientBase::Func_GetFileDirectoryFromModule, 1 },
@@ -1402,6 +1403,10 @@ value ScriptClientBase::Func_GetDirectoryList(script_machine* machine, int argc,
 }
 
 //Path utility
+value ScriptClientBase::Func_GetModuleName(script_machine* machine, int argc, const value* argv) {
+	const std::wstring& res = PathProperty::GetModuleName();
+	return ScriptClientBase::CreateStringValue(res);
+}
 value ScriptClientBase::Func_GetModuleDirectory(script_machine* machine, int argc, const value* argv) {
 	const std::wstring& res = PathProperty::GetModuleDirectory();
 	return ScriptClientBase::CreateStringValue(res);

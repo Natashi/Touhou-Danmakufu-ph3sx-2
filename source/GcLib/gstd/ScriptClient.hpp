@@ -227,6 +227,7 @@ namespace gstd {
 		static value Func_GetDirectoryList(script_machine* machine, int argc, const value* argv);
 
 		//Path utility
+		DNH_FUNCAPI_DECL_(Func_GetModuleName);
 		DNH_FUNCAPI_DECL_(Func_GetModuleDirectory);
 		DNH_FUNCAPI_DECL_(Func_GetFileDirectory);
 		DNH_FUNCAPI_DECL_(Func_GetFileDirectoryFromModule);
