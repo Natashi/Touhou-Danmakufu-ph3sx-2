@@ -210,6 +210,7 @@ namespace gstd {
 		void SetColumnText(int cx, const std::wstring& text);
 		void AddRow(const std::wstring& text);
 		void SetText(int row, int column, const std::wstring& text);
+		void SetText(int row, int column, const wchar_t* text);
 		void DeleteRow(int row);
 		int GetRowCount();
 		std::wstring GetText(int row, int column);

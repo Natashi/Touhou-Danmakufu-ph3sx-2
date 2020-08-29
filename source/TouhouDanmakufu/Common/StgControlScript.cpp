@@ -1114,10 +1114,10 @@ bool ScriptInfoPanel::_AddedLogger(HWND hTab) {
 	wndScript_.Create(hWnd_, styleListView);
 	wndScript_.AddColumn(64, 0, L"Address");
 	wndScript_.AddColumn(32, 1, L"ID");
-	wndScript_.AddColumn(224, 2, L"Name");
-	wndScript_.AddColumn(64, 3, L"Status");
-	wndScript_.AddColumn(92, 4, L"Task Count");
-	
+	wndScript_.AddColumn(60, 2, L"Type");
+	wndScript_.AddColumn(224, 3, L"Name");
+	wndScript_.AddColumn(64, 4, L"Status");
+	wndScript_.AddColumn(92, 5, L"Task Count");
 
 	wndSplitter_.Create(hWnd_, WSplitter::TYPE_HORIZONTAL);
 	wndSplitter_.SetRatioY(0.5f);
@@ -1182,6 +1182,41 @@ void ScriptInfoPanel::_TerminateScriptAll() {
 	}
 }
 
+const wchar_t* ScriptInfoPanel::GetScriptTypeName(ManagedScript* script) {
+	if (script == nullptr) return L"Null";
+	if (dynamic_cast<StgStageScript*>(script)) {
+		switch (script->GetScriptType()) {
+		case StgStageScript::TYPE_SYSTEM:
+			return L"System";
+		case StgStageScript::TYPE_STAGE:
+			return L"Stage";
+		case StgStageScript::TYPE_PLAYER:
+			return L"Player";
+		case StgStageScript::TYPE_ITEM:
+			return L"Item";
+		case StgStageScript::TYPE_SHOT:
+			return L"Shot";
+		}
+	}
+	else if (dynamic_cast<StgPackageScript*>(script)) {
+		switch (script->GetScriptType()) {
+		case StgPackageScript::TYPE_PACKAGE_MAIN:
+			return L"Package";
+		}
+	}
+	else if (dynamic_cast<StgUserExtendSceneScript*>(script)) {
+		switch (script->GetScriptType()) {
+		case StgUserExtendSceneScript::TYPE_PAUSE_SCENE:
+			return L"PauseScene";
+		case StgUserExtendSceneScript::TYPE_END_SCENE:
+			return L"EndScene";
+		case StgUserExtendSceneScript::TYPE_REPLAY_SCENE:
+			return L"ReplaySaveScene";
+		}
+	}
+	return L"Unknown";
+}
+
 void ScriptInfoPanel::Update(StgSystemController* systemController) {
 	if (!IsWindowVisible()) return;
 
@@ -1226,10 +1261,11 @@ void ScriptInfoPanel::Update(StgSystemController* systemController) {
 					listScript_.push_back(script);
 					wndScript_.SetText(iScript, 0, StringUtility::Format(L"%08x", (int)script.get()));
 					wndScript_.SetText(iScript, 1, StringUtility::Format(L"%d", script->GetScriptID()));
-					wndScript_.SetText(iScript, 2,
+					wndScript_.SetText(iScript, 2, GetScriptTypeName(script.get()));
+					wndScript_.SetText(iScript, 3,
 						StringUtility::Format(L"%s", PathProperty::GetFileName(script->GetPath()).c_str()));
-					wndScript_.SetText(iScript, 3, status);
-					wndScript_.SetText(iScript, 4, StringUtility::Format(L"%u", script->GetThreadCount()));
+					wndScript_.SetText(iScript, 4, status);
+					wndScript_.SetText(iScript, 5, StringUtility::Format(L"%u", script->GetThreadCount()));
 				};
 
 				ScriptManager* manager = vecScriptManager[selectedIndex];

@@ -469,6 +469,9 @@ void WListView::AddRow(const std::wstring& text) {
 	ListView_InsertItem(hWnd_, &item);
 }
 void WListView::SetText(int row, int column, const std::wstring& text) {
+	SetText(row, column, text.c_str());
+}
+void WListView::SetText(int row, int column, const wchar_t* text) {
 	std::wstring pre = GetText(row, column);
 	if (pre == text) return;
 
@@ -485,7 +488,7 @@ void WListView::SetText(int row, int column, const std::wstring& text) {
 
 	LV_ITEM item;
 	item.iItem = row;
-	item.pszText = const_cast<LPWSTR>(text.c_str());
+	item.pszText = const_cast<LPWSTR>(text);
 	item.iSubItem = column;
 	item.mask = LVIF_TEXT;
 	ListView_SetItem(hWnd_, &item);

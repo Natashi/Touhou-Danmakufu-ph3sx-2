@@ -187,6 +187,8 @@ protected:
 	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);//オーバーライド用プロシージャ
 
 	void _TerminateScriptAll();
+
+	static const wchar_t* GetScriptTypeName(ManagedScript* script);
 public:
 	ScriptInfoPanel();
 	~ScriptInfoPanel();
