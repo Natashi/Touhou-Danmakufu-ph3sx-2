@@ -419,6 +419,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Returns an array of all filepaths stored inside the specified archive.
 			The archive must have already been loaded with AddArchiveFile, otherwise an empty array will be returned.
 			
+	GetModuleName
+		Description:
+			Returns the file name of the engine, without the extension.
+			
 	GetFileDirectoryFromModule
 		Arguments:
 			1) (string) path

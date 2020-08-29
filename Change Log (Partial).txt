@@ -122,8 +122,24 @@
 	
 1.10c:
 	- Fixed a bug in the UserShotData where rect can override animation_data.
+	- Fixed a bug in the UserShotData where collision did not work at all.
 	- Added functionality to change the color of the delay cloud per-shot.
 	- Fixed a parser bug with nested single-lined statements.
 	- Fixed a rare bug where object IDs may get duplicated when objects are created in rapid succession.
 	- Fixed a bug where the default charset for some fonts are incorrectly determined.
 	- Utilized UPX Executable Packer to reduce file size.
+	
+1.11a:
+	- Reworked some math calculations. SIMD instructions are utilized.
+	- Following the above change, an old, non-SIMD version will also be provided in case your CPU do not support vectorization.
+	- Added a hitbox visualization mode.
+	- Improved the line-circle intersection algorithm.
+	- Overloaded ObjMove_SetDestAtFrame, where movement interpolation mode can be specified.
+	- Fixed a bug where the graze count obtained via GetGraze() may desync with the one obtained via EV_GRAZE's event argument.
+	- Fixed a bug where ObjText_GetTotalWidth/Height may break the font tag.
+	- Fixed a bug where font text tag properties do not get reset after using ObjText_SetText.
+	- Obj_GetValue will now ACTUALLY NOT crash the game if the requested value does not exist.
+	- Changed error messages of some default functions to be more descriptive to aid debugging.
+	- Greatly improved script variable allocation.
+	- Added a concatenate-assign operator. (~=)
+	- Un-Utilized UPX Executable Packer to reduce file size.
