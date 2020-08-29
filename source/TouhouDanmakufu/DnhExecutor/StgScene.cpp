@@ -8,11 +8,17 @@
 **********************************************************/
 void EStgSystemController::DoEnd() {
 	SystemController::GetInstance()->GetSceneManager()->TransScriptSelectScene_Last();
+
+	EShaderManager* shaderManager = EShaderManager::GetInstance();
+	shaderManager->Clear();
 }
 void EStgSystemController::DoRetry() {
 	SceneManager* sceneManager = SystemController::GetInstance()->GetSceneManager();
 	ref_count_ptr<StgStageInformation> infoStage = stageController_->GetStageInformation();
 	sceneManager->TransStgScene(infoStage->GetMainScriptInformation(), infoStage->GetPlayerScriptInformation(), nullptr);
+
+	EShaderManager* shaderManager = EShaderManager::GetInstance();
+	shaderManager->Clear();
 }
 
 
@@ -26,4 +32,7 @@ void PStgSystemController::DoEnd() {
 }
 void PStgSystemController::DoRetry() {
 	SystemController::GetInstance()->Reset();
+
+	EShaderManager* shaderManager = EShaderManager::GetInstance();
+	shaderManager->Clear();
 }
