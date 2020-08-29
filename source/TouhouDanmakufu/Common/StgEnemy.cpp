@@ -17,7 +17,7 @@ StgEnemyManager::~StgEnemyManager() {
 }
 void StgEnemyManager::Work() {
 	for (auto itr = listObj_.begin(); itr != listObj_.end(); ) {
-		shared_ptr<StgEnemyObject> obj = (*itr);
+		shared_ptr<StgEnemyObject>& obj = (*itr);
 		if (obj->IsDeleted()) {
 			obj->ClearEnemyObject();
 			itr = listObj_.erase(itr);
@@ -138,7 +138,6 @@ bool StgEnemyBossSceneObject::_NextStep() {
 
 	auto scriptManager = stageController_->GetScriptManager();
 
-	//現ステップ終了通知
 	if (activeData_)
 		scriptManager->RequestEventAll(StgStageScript::EV_END_BOSS_STEP);
 
@@ -154,7 +153,6 @@ bool StgEnemyBossSceneObject::_NextStep() {
 
 	shared_ptr<StgEnemyBossSceneData> oldActiveData = activeData_;
 
-	//敵登録
 	StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
 	activeData_ = listData_[dataStep_][dataIndex_];
 	std::vector<shared_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
@@ -173,24 +171,21 @@ bool StgEnemyBossSceneObject::_NextStep() {
 		objectManager->ActivateObject(obj->GetObjectID(), true);
 	}
 
-	//スクリプト開始
-	weak_ptr<ManagedScript> pWeakScript = activeData_->GetScriptPointer();
-	if (auto pScript = pWeakScript.lock()) {
-		scriptManager->StartScript(pScript);
-	}
-	else {
-		throw gstd::wexception(StringUtility::Format(L"_NextStep: Script wasn't loaded or has been unloaded. [%d, %d]", 
+	shared_ptr<ManagedScript> script = activeData_->GetScriptPointer();
+	if (!script->IsLoad()) {
+		throw gstd::wexception(StringUtility::Format(L"_NextStep: Script wasn't loaded or has been unloaded. [%d, %d]",
 			dataStep_, dataIndex_));
 	}
+	else {
+		scriptManager->StartScript(script);
+	}
 
-	//新ステップ開始通知
 	scriptManager->RequestEventAll(StgStageScript::EV_START_BOSS_STEP);
 
 	return true;
 }
 void StgEnemyBossSceneObject::Work() {
 	if (activeData_->IsReadyNext()) {
-		//次ステップ遷移可能
 		bool bEnemyExists = false;
 		for (shared_ptr<StgEnemyBossObject>& iEnemy : activeData_->GetEnemyObjectList())
 			bEnemyExists |= !iEnemy->IsDeleted();
@@ -198,7 +193,6 @@ void StgEnemyBossSceneObject::Work() {
 		if (!bEnemyExists) {
 			bool bNext = _NextStep();
 			if (!bNext) {
-				//終了
 				StgEnemyManager* enemyManager = stageController_->GetEnemyManager();
 				StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
 				objectManager->DeleteObject(idObject_);
@@ -209,7 +203,6 @@ void StgEnemyBossSceneObject::Work() {
 
 	}
 	else if (!activeData_->IsReadyNext()) {
-		//タイマー監視
 		bool bZeroTimer = false;
 		int timer = activeData_->GetSpellTimer();
 		if (timer > 0) {
@@ -220,25 +213,21 @@ void StgEnemyBossSceneObject::Work() {
 			}
 		}
 
-		//ラストスペル監視
 		bool bEndLastSpell = false;
 		if (activeData_->IsLastSpell()) {
 			bEndLastSpell = activeData_->GetPlayerShootDownCount() > 0;
 		}
 
 		if (bZeroTimer || bEndLastSpell) {
-			//タイマー0なら敵のライフを0にする
 			for (shared_ptr<StgEnemyBossObject>& iEnemy : activeData_->GetEnemyObjectList())
 				iEnemy->SetLife(0);
 
 			if (bZeroTimer) {
-				//タイムアウト通知
 				auto scriptManager = stageController_->GetScriptManager();
 				scriptManager->RequestEventAll(StgStageScript::EV_TIMEOUT);
 			}
 		}
 
-		//次シーンへの遷移フラグ設定
 		std::vector<shared_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
 		bool bReadyNext = true;
 		if (activeData_->IsRequireAllDown()) {
@@ -258,9 +247,6 @@ void StgEnemyBossSceneObject::Work() {
 
 		if (bReadyNext) {
 			if (activeData_->IsSpellCard()) {
-				//スペルカード取得
-				//・タイマー0／スペル使用／被弾時は取得不可
-				//・耐久の場合はタイマー0でも取得可能
 				bool bGain = (activeData_->IsDurable() || activeData_->GetSpellTimer() > 0)
 					&& (activeData_->GetPlayerShootDownCount() == 0 && activeData_->GetPlayerSpellCount() == 0);
 
@@ -276,7 +262,6 @@ void StgEnemyBossSceneObject::Work() {
 	}
 }
 void StgEnemyBossSceneObject::Activate() {
-	//スクリプトを読み込んでいなかったら読み込む。
 	if (!bLoad_)
 		LoadAllScriptInThread();
 
@@ -286,8 +271,7 @@ void StgEnemyBossSceneObject::Activate() {
 	for (std::vector<shared_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
 		size_t iData = 0;
 		for (shared_ptr<StgEnemyBossSceneData> pData : iStep) {
-			weak_ptr<ManagedScript> weakScript = pData->GetScriptPointer();
-			shared_ptr<ManagedScript> script = weakScript.lock();
+			shared_ptr<ManagedScript> script = pData->GetScriptPointer();
 
 			if (script == nullptr)
 				throw gstd::wexception(StringUtility::Format(L"Script wasn't loaded: %s", pData->GetPath().c_str()));
@@ -306,7 +290,6 @@ void StgEnemyBossSceneObject::Activate() {
 
 			if (stageController_->GetSystemInformation()->IsError()) continue;
 
-			//ライフ読み込み
 			std::vector<double> listLife;
 			gstd::value vLife = script->RequestEvent(StgStageScript::EV_REQUEST_LIFE);
 			if (script->IsRealValue(vLife) || script->IsIntValue(vLife)) {
@@ -325,18 +308,15 @@ void StgEnemyBossSceneObject::Activate() {
 					pData->GetPath().c_str()));
 			pData->SetLifeList(listLife);
 
-			//タイマー読み込み
 			gstd::value vTimer = script->RequestEvent(StgStageScript::EV_REQUEST_TIMER);
 			if (vTimer.has_data())
 				pData->SetOriginalSpellTimer(vTimer.as_real() * STANDARD_FPS);
 
-			//スペル
 			gstd::value vSpell = script->RequestEvent(StgStageScript::EV_REQUEST_IS_SPELL);
 			if (vSpell.has_data())
 				pData->SetSpellCard(vSpell.as_boolean());
 
 			{
-				//スコア、ラストスペル、耐久スペルを読み込む
 				gstd::value vScore = script->RequestEvent(StgStageScript::EV_REQUEST_SPELL_SCORE);
 				if (vScore.has_data()) pData->SetSpellScore(vScore.as_real());
 
@@ -350,7 +330,6 @@ void StgEnemyBossSceneObject::Activate() {
 				if (vAllDown.has_data()) pData->SetRequireAllDown(vAllDown.as_boolean());
 			}
 
-			//敵オブジェクト作成
 			std::vector<shared_ptr<StgEnemyBossObject>> listEnemyObject;
 			for (size_t iEnemy = 0; iEnemy < listLife.size(); iEnemy++) {
 				shared_ptr<StgEnemyBossObject> obj = shared_ptr<StgEnemyBossObject>(new StgEnemyBossObject(stageController_));
@@ -363,9 +342,7 @@ void StgEnemyBossSceneObject::Activate() {
 		}
 	}
 
-	//登録
 	_NextStep();
-
 }
 void StgEnemyBossSceneObject::AddData(int step, shared_ptr<StgEnemyBossSceneData> data) {
 	if (listData_.size() <= step)
@@ -376,7 +353,7 @@ void StgEnemyBossSceneObject::LoadAllScriptInThread() {
 	auto scriptManager = stageController_->GetScriptManager();
 	for (std::vector<shared_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
 		for (shared_ptr<StgEnemyBossSceneData> pData : iStep) {
-			auto script = scriptManager->LoadScriptInThread(pData->GetPath(), StgStageScript::TYPE_SYSTEM);
+			auto script = scriptManager->LoadScriptInThread(pData->GetPath(), StgStageScript::TYPE_STAGE);
 			pData->SetScriptPointer(script);
 		}
 	}
@@ -488,5 +465,3 @@ int64_t StgEnemyBossSceneData::GetCurrentSpellScore() {
 	}
 	return res;
 }
-
-

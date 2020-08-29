@@ -115,18 +115,20 @@ void ScriptManager::StartScript(int64_t id) {
 		listScriptRun_.push_back(script);
 	}
 
-	if (script != nullptr && !IsError()) {
+	if (script) {
+		if (IsError()) script->RaiseError(error_);
+
 		std::map<std::string, script_block*>::iterator itrEvent;
 		if (script->IsEventExists("Initialize", itrEvent))
 			script->Run(itrEvent);
 	}
 }
-void ScriptManager::StartScript(shared_ptr<ManagedScript> id) {
-	if (!id->IsLoad()) {
+void ScriptManager::StartScript(shared_ptr<ManagedScript> script) {
+	if (!script->IsLoad()) {
 		int count = 0;
-		while (!id->IsLoad()) {
+		while (!script->IsLoad()) {
 			if (count % 1000 == 999)
-				Logger::WriteTop(StringUtility::Format(L"読み込み完了待機(ScriptManager)：%s", id->GetPath().c_str()));
+				Logger::WriteTop(StringUtility::Format(L"読み込み完了待機(ScriptManager)：%s", script->GetPath().c_str()));
 			Sleep(1);
 			count++;
 		}
@@ -134,14 +136,16 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> id) {
 
 	{
 		Lock lock(lock_);
-		mapScriptLoad_.erase(id->GetScriptID());
-		listScriptRun_.push_back(id);
+		mapScriptLoad_.erase(script->GetScriptID());
+		listScriptRun_.push_back(script);
 	}
 
-	if (id != nullptr && !IsError()) {
+	if (script) {
+		if (IsError()) script->RaiseError(error_);
+
 		std::map<std::string, script_block*>::iterator itrEvent;
-		if (id->IsEventExists("Initialize", itrEvent))
-			id->Run(itrEvent);
+		if (script->IsEventExists("Initialize", itrEvent))
+			script->Run(itrEvent);
 	}
 }
 void ScriptManager::CloseScript(int64_t id) {

@@ -43,8 +43,8 @@ protected:
 
 	bool bEnableGetIntersectionPositionFetch_;
 
-	std::vector<std::weak_ptr<StgIntersectionTarget>> ptrIntersectionToShot_;
-	std::vector<std::weak_ptr<StgIntersectionTarget>> ptrIntersectionToPlayer_;
+	std::vector<weak_ptr<StgIntersectionTarget>> ptrIntersectionToShot_;
+	std::vector<weak_ptr<StgIntersectionTarget>> ptrIntersectionToPlayer_;
 
 	virtual void _Move();
 	virtual void _AddRelativeIntersection();
@@ -131,7 +131,7 @@ public:
 class StgEnemyBossSceneData {
 private:
 	std::wstring path_;
-	weak_ptr<ManagedScript> ptrScript_;
+	shared_ptr<ManagedScript> ptrScript_;
 
 	std::vector<double> listLife_;
 	std::vector<shared_ptr<StgEnemyBossObject>> listEnemyObject_;
@@ -152,8 +152,8 @@ public:
 	virtual ~StgEnemyBossSceneData() {}
 	std::wstring& GetPath() { return path_; }
 	void SetPath(const std::wstring& path) { path_ = path; }
-	weak_ptr<ManagedScript> GetScriptPointer() { return ptrScript_; }
-	void SetScriptPointer(weak_ptr<ManagedScript> id) { ptrScript_ = id; }
+	shared_ptr<ManagedScript> GetScriptPointer() { return ptrScript_; }
+	void SetScriptPointer(shared_ptr<ManagedScript> id) { ptrScript_ = id; }
 	std::vector<double>& GetLifeList() { return listLife_; }
 	void SetLifeList(std::vector<double>& list) { listLife_ = list; }
 	std::vector<shared_ptr<StgEnemyBossObject>>& GetEnemyObjectList() { return listEnemyObject_; }
