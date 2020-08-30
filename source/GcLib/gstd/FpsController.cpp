@@ -18,7 +18,7 @@ FpsController::FpsController() {
 FpsController::~FpsController() {
 	::timeEndPeriod(1);
 }
-int FpsController::_GetTime() {
+DWORD FpsController::_GetTime() {
 	//	int res = ::timeGetTime();
 
 	LARGE_INTEGER nFreq;
@@ -30,7 +30,7 @@ int FpsController::_GetTime() {
 	//auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()).time_since_epoch();
 	//return std::chrono::duration_cast<std::chrono::milliseconds>(ms).count();
 }
-void FpsController::_Sleep(int msec) {
+void FpsController::_Sleep(DWORD msec) {
 	::Sleep(msec);
 	/*
 		int time = _GetTime();
@@ -40,20 +40,19 @@ void FpsController::_Sleep(int msec) {
 }
 void FpsController::RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) {
 	for (auto itr = listFpsControlObject_.begin(); itr != listFpsControlObject_.end(); itr++) {
-		ref_count_weak_ptr<FpsControlObject> tObj = (*itr);
+		ref_count_weak_ptr<FpsControlObject>& tObj = *itr;
 		if (obj.GetPointer() == tObj.GetPointer()) {
 			listFpsControlObject_.erase(itr);
 			break;
 		}
 	}
 }
-int FpsController::GetControlObjectFps() {
-	int res = fps_;
+DWORD FpsController::GetControlObjectFps() {
+	DWORD res = fps_;
 	for (auto itr = listFpsControlObject_.begin(); itr != listFpsControlObject_.end(); ) {
-		ref_count_weak_ptr<FpsControlObject> obj = (*itr);
+		ref_count_weak_ptr<FpsControlObject>& obj = *itr;
 		if (obj.IsExists()) {
-			int fps = obj->GetFps();
-			res = std::min(res, fps);
+			res = std::min(res, obj->GetFps());
 			++itr;
 		}
 		else
@@ -77,57 +76,52 @@ StaticFpsController::~StaticFpsController() {
 
 }
 void StaticFpsController::Wait() {
-	int time = _GetTime();
+	DWORD fpsTarget = bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps());
 
-	double tFps = fps_;
-	tFps = std::min(tFps, (double)GetControlObjectFps());
-	if (bFastMode_) tFps = fastModeFpsRate_;
+	DWORD timeCurrent = _GetTime();
+	DWORD timeDelta = timeCurrent - timePrevious_;
 
-	int sTime = time - timePrevious_;//前フレームとの時間差
-
-	int frameAs1Sec = sTime * tFps;
-	int time1Sec = 1000 + timeError_;
-	int sleepTime = 0;
+	int frameAs1Sec = timeDelta * fpsTarget;
+	int time1Sec = CLOCKS_PER_SEC + timeError_;
+	DWORD sleepTime = 0;
 	timeError_ = 0;
-	if (frameAs1Sec < time1Sec) {
-		sleepTime = (time1Sec - frameAs1Sec) / tFps; //待機時間
-		if (sleepTime < 0) sleepTime = 0;
-		if (bUseTimer_ || rateSkip_ != 0) {
-			_Sleep(sleepTime);//一定時間たつまで、sleep
-			timeError_ = (time1Sec - frameAs1Sec) % (int)tFps;
-		}
 
+	if (frameAs1Sec < time1Sec) {
+		sleepTime = std::max((time1Sec - frameAs1Sec) / (int)fpsTarget, 0);
+
+		if (bUseTimer_ || rateSkip_ != 0) {
+			_Sleep(sleepTime);
+			timeError_ = (time1Sec - frameAs1Sec) % (int)fpsTarget;
+		}
 		if (timeError_ < 0) timeError_ = 0;
 	}
 
-	//1frameにかかった時間を保存
-	double timeCorrect = (double)sleepTime;
-	if (time - timePrevious_ > 0)
-		listFps_.push_back(time - timePrevious_ + ceil(timeCorrect));
+	if (timeDelta > 0)
+		listFps_.push_back(timeCurrent - timePrevious_ + ceil(sleepTime));
 	timePrevious_ = _GetTime();
 
-	if (time - timeCurrentFpsUpdate_ >= 500) {//一秒ごとに表示フレーム数を更新
-		if (listFps_.size() != 0) {
-			double tFpsCurrent = 0;
-			for (auto itr = listFps_.begin(); itr != listFps_.end(); itr++) {
-				tFpsCurrent += (*itr);
-			}
-			fpsCurrent_ = (double)(1000.0) / ((double)tFpsCurrent / (double)listFps_.size());
+	if (timeCurrent - timeCurrentFpsUpdate_ >= 500) {
+		if (listFps_.size() > 0) {
+			DWORD tFpsCurrent = 0;
+			for (DWORD iFps : listFps_)
+				tFpsCurrent += iFps;
+
+			fpsCurrent_ = 1000.0f / (tFpsCurrent / (float)listFps_.size());
 			listFps_.clear();
 		}
 		else fpsCurrent_ = 0;
 
-		timeCurrentFpsUpdate_ = _GetTime();
+		timeCurrentFpsUpdate_ = timePrevious_;
 	}
 	++countSkip_;
 
-	int rateSkip = rateSkip_;
+	size_t rateSkip = rateSkip_;
 	if (bFastMode_) rateSkip = fastModeFpsRate_ / 60U;
 	countSkip_ %= (rateSkip + 1);
 	bCriticalFrame_ = false;
 }
 bool StaticFpsController::IsSkip() {
-	int rateSkip = rateSkip_;
+	size_t rateSkip = rateSkip_;
 	if (bFastMode_) rateSkip = fastModeFpsRate_ / 60U;
 	if (rateSkip == 0 || bCriticalFrame_) return false;
 	if (countSkip_ % (rateSkip + 1) != 0)
@@ -155,68 +149,63 @@ AutoSkipFpsController::~AutoSkipFpsController() {
 
 }
 void AutoSkipFpsController::Wait() {
-	int time = _GetTime();
+	DWORD fpsTarget = bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps());
 
-	double tFps = fps_;
-	tFps = std::min(tFps, (double)GetControlObjectFps());
-	if (bFastMode_) tFps = fastModeFpsRate_;
+	DWORD timeCurrent = _GetTime();
+	DWORD timeDelta = timeCurrent - timePrevious_;
 
-	int sTime = time - timePrevious_;//前フレームとの時間差
-	int frameAs1Sec = sTime * tFps;
-	int time1Sec = 1000 + timeError_;
-	int sleepTime = 0;
+	int frameAs1Sec = timeDelta * fpsTarget;
+	int time1Sec = CLOCKS_PER_SEC + timeError_;
+	DWORD sleepTime = 0;
 	timeError_ = 0;
-	if (frameAs1Sec < time1Sec || bCriticalFrame_) {
-		sleepTime = (time1Sec - frameAs1Sec) / tFps; //待機時間
-		if (sleepTime < 0 || countSkip_ - 1 >= 0) sleepTime = 0;
-		if (bUseTimer_)
-			_Sleep(sleepTime);//一定時間たつまで、sleep
 
-		timeError_ = (time1Sec - frameAs1Sec) % (int)tFps;
+	if (frameAs1Sec < time1Sec || bCriticalFrame_) {
+		sleepTime = (countSkip_ >= 1) ? 0 : std::max((time1Sec - frameAs1Sec) / (int)fpsTarget, 0);
+
+		if (bUseTimer_)
+			_Sleep(sleepTime);
+		timeError_ = (time1Sec - frameAs1Sec) % (int)fpsTarget;
 		//if(timeError_< 0 )timeError_ = 0;
 	}
 	else if (countSkip_ <= 0) {
-		countSkip_ += (double)sTime * (double)tFps / 1000 + 1;
-		if (countSkip_ > countSkipMax_)
-			countSkip_ = countSkipMax_;
+		countSkip_ += std::min((timeDelta * fpsTarget / 1000U) + 1, countSkipMax_);
 	}
 
 	--countSkip_;
 	bCriticalFrame_ = false;
 
 	{
-		//1Workにかかった時間を保存
-		double timeCorrect = (double)sleepTime;
-		if (time - timePrevious_ > 0)
-			listFpsWork_.push_back(time - timePrevious_ + ceil(timeCorrect));
-		timePrevious_ = _GetTime();;
+		DWORD timeCorrect = sleepTime;
+		if (timeDelta > 0)
+			listFpsWork_.push_back(timeDelta + timeCorrect);
+		timePrevious_ = _GetTime();
 	}
 	if (countSkip_ <= 0) {
-		//1描画にかかった時間を保存
-		time = _GetTime();
-		if (time - timePreviousRender_ > 0)
-			listFpsRender_.push_back(time - timePreviousRender_);
+		timeCurrent = _GetTime();
+		timeDelta = timeCurrent - timePrevious_;
+		if (timeDelta > 0)
+			listFpsRender_.push_back(timeDelta);
 		timePreviousRender_ = _GetTime();
 	}
 
 	timePrevious_ = _GetTime();
-	if (time - timeCurrentFpsUpdate_ >= 500) {//一秒ごとに表示フレーム数を更新
+	if (timePrevious_ - timeCurrentFpsUpdate_ >= 500) {
 		if (listFpsWork_.size() != 0) {
-			float tFpsCurrent = 0;
-			for (auto itr = listFpsWork_.begin(); itr != listFpsWork_.end(); itr++) {
-				tFpsCurrent += (*itr);
-			}
-			fpsCurrentWork_ = (float)(1000.0f) / ((float)tFpsCurrent / (float)listFpsWork_.size());
+			DWORD tFpsCurrent = 0;
+			for (DWORD iFps : listFpsWork_)
+				tFpsCurrent += iFps;
+
+			fpsCurrentWork_ = 1000.0f / (tFpsCurrent / (float)listFpsWork_.size());
 			listFpsWork_.clear();
 		}
 		else fpsCurrentWork_ = 0;
 
 		if (listFpsRender_.size() != 0) {
-			float tFpsCurrent = 0;
-			for (auto itr = listFpsRender_.begin(); itr != listFpsRender_.end(); itr++) {
-				tFpsCurrent += (*itr);
-			}
-			fpsCurrentRender_ = (float)(1000.0f) / ((float)tFpsCurrent / (float)listFpsRender_.size());
+			DWORD tFpsCurrent = 0;
+			for (DWORD iFps : listFpsRender_)
+				tFpsCurrent += iFps;
+
+			fpsCurrentRender_ = 1000.0f / (tFpsCurrent / (float)listFpsRender_.size());
 			listFpsRender_.clear();
 		}
 		else fpsCurrentRender_ = 0;

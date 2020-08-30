@@ -509,8 +509,8 @@ void StgStageInformation::UpdateShotAutoDeleteClip() {
 /**********************************************************
 //PseudoSlowInformation
 **********************************************************/
-int PseudoSlowInformation::GetFps() {
-	int fps = STANDARD_FPS;
+DWORD PseudoSlowInformation::GetFps() {
+	DWORD fps = STANDARD_FPS;
 	int target = TARGET_ALL;
 
 	auto itrPlayer = mapDataPlayer_.find(target);
@@ -529,7 +529,7 @@ bool PseudoSlowInformation::IsValidFrame(int target) {
 	return res;
 }
 void PseudoSlowInformation::Next() {
-	int fps = STANDARD_FPS;
+	DWORD fps = STANDARD_FPS;
 	int target = TARGET_ALL;
 
 	auto itrPlayer = mapDataPlayer_.find(target);
@@ -554,8 +554,8 @@ void PseudoSlowInformation::Next() {
 
 	mapValid_[target] = bValid;
 }
-void PseudoSlowInformation::AddSlow(int fps, int owner, int target) {
-	fps = std::clamp(fps, 1, STANDARD_FPS);
+void PseudoSlowInformation::AddSlow(DWORD fps, int owner, int target) {
+	fps = std::clamp(fps, (DWORD)1, (DWORD)STANDARD_FPS);
 	ref_count_ptr<SlowData> data = new SlowData();
 	data->SetFps(fps);
 	switch (owner) {

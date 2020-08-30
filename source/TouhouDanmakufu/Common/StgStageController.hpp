@@ -214,27 +214,26 @@ private:
 	std::map<int, gstd::ref_count_ptr<SlowData>> mapDataPlayer_;
 	std::map<int, gstd::ref_count_ptr<SlowData>> mapDataEnemy_;
 	std::map<int, bool> mapValid_;
-
 public:
 	PseudoSlowInformation() { current_ = 0; }
 	virtual ~PseudoSlowInformation() {}
-	virtual int GetFps();
+	virtual DWORD GetFps();
 
 	bool IsValidFrame(int target);
 	void Next();
 
-	void AddSlow(int fps, int owner, int target);
+	void AddSlow(DWORD fps, int owner, int target);
 	void RemoveSlow(int owner, int target);
 };
 
 class PseudoSlowInformation::SlowData {
 private:
-	int fps_;
+	DWORD fps_;
 public:
 	SlowData() { fps_ = STANDARD_FPS; }
 	virtual ~SlowData() {}
-	int GetFps() { return fps_; }
-	void SetFps(int fps) { fps_ = fps; }
+	DWORD GetFps() { return fps_; }
+	void SetFps(DWORD fps) { fps_ = fps; }
 };
 
 #endif
