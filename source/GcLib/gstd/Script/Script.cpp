@@ -722,9 +722,9 @@ void script_machine::run_code() {
 				value* var2 = &(current->stack.back());
 				value* var1 = var2 - 1;
 
-				value res;
-				res.set(script_type_manager::get_boolean_type(), c->command == command_kind::pc_inline_logic_and ?
-				(var1->as_boolean() && var2->as_boolean()) : (var1->as_boolean() || var2->as_boolean()));
+				bool b = c->command == command_kind::pc_inline_logic_and ?
+					(var1->as_boolean() && var2->as_boolean()) : (var1->as_boolean() || var2->as_boolean());
+				value res(script_type_manager::get_boolean_type(), b);
 
 				current->stack.pop_back(2U);
 				current->stack.push_back(res);
@@ -763,6 +763,7 @@ void script_machine::run_code() {
 				size_t len = current->stack.back().length_as_array();
 				current->stack.pop_back(1U);
 				current->stack.push_back(value(script_type_manager::get_real_type(), (double)len));
+				break;
 			}
 			//default:
 			//	assert(false);
