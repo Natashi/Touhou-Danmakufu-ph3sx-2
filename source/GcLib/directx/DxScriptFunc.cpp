@@ -113,8 +113,10 @@ function const dxFunction[] =
 	{ "GetCameraYaw", DxScript::Func_GetCameraYaw, 0 },
 	{ "GetCameraPitch", DxScript::Func_GetCameraPitch, 0 },
 	{ "GetCameraRoll", DxScript::Func_GetCameraRoll, 0 },
-	{ "GetCameraViewProjectionMatrix", DxScript::Func_GetCameraViewProjectionMatrix, 0 },
 	{ "SetCameraPerspectiveClip", DxScript::Func_SetCameraPerspectiveClip, 2 },
+	{ "GetCameraViewMatrix", DxScript::Func_GetCameraViewMatrix, 0 },
+	{ "GetCameraProjectionMatrix", DxScript::Func_GetCameraProjectionMatrix, 0 },
+	{ "GetCameraViewProjectionMatrix", DxScript::Func_GetCameraViewProjectionMatrix, 0 },
 
 	//Dx関数：カメラ2D
 	{ "Set2DCameraFocusX", DxScript::Func_Set2DCameraFocusX, 1 },
@@ -1665,20 +1667,27 @@ value DxScript::Func_GetCameraRoll(script_machine* machine, int argc, const valu
 	float res = graphics->GetCamera()->GetRoll();
 	return DxScript::CreateRealValue(Math::RadianToDegree(res));
 }
-value DxScript::Func_GetCameraViewProjectionMatrix(script_machine* machine, int argc, const value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-
-	D3DXMATRIX* matViewProj = &graphics->GetCamera()->GetViewProjectionMatrix();
-
-	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(matViewProj), 16U);
-}
 value DxScript::Func_SetCameraPerspectiveClip(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	auto camera = graphics->GetCamera();
 	camera->SetPerspectiveClip(argv[0].as_real(), argv[1].as_real());
 	camera->thisProjectionChanged_ = true;
 	return value();
+}
+value DxScript::Func_GetCameraViewMatrix(script_machine* machine, int argc, const value* argv) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	D3DXMATRIX* matView = &graphics->GetCamera()->GetViewMatrix();
+	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(matView), 16U);
+}
+value DxScript::Func_GetCameraProjectionMatrix(script_machine* machine, int argc, const value* argv) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	D3DXMATRIX* matProj = &graphics->GetCamera()->GetProjectionMatrix();
+	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(matProj), 16U);
+}
+value DxScript::Func_GetCameraViewProjectionMatrix(script_machine* machine, int argc, const value* argv) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	D3DXMATRIX* matViewProj = &graphics->GetCamera()->GetViewProjectionMatrix();
+	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(matViewProj), 16U);
 }
 
 //Dx関数：カメラ2D

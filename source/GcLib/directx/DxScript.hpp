@@ -867,6 +867,8 @@ namespace directx {
 
 		static gstd::value Func_SetCameraPerspectiveClip(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
+		DNH_FUNCAPI_DECL_(Func_GetCameraViewMatrix);
+		DNH_FUNCAPI_DECL_(Func_GetCameraProjectionMatrix);
 		DNH_FUNCAPI_DECL_(Func_GetCameraViewProjectionMatrix);
 
 		//Dxä÷êîÅFÉJÉÅÉâ2D
