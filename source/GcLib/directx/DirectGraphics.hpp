@@ -351,7 +351,7 @@ namespace directx {
 		float GetFocusX() { return pos_.x; }
 		float GetFocusY() { return pos_.y; }
 		void SetFocus(float x, float y) { pos_.x = x; pos_.y = y; }
-		void SetFocus(D3DXVECTOR2 pos) { pos_ = pos; }
+		void SetFocus(const D3DXVECTOR2& pos) { pos_ = pos; }
 		void SetFocusX(float x) { pos_.x = x; }
 		void SetFocusY(float y) { pos_.y = y; }
 		double GetRatio() { return std::max(ratioX_, ratioY_); }
@@ -364,7 +364,7 @@ namespace directx {
 		void SetAngleZ(double angle) { angleZ_ = angle; }
 
 		RECT GetClip() { return rcClip_; }
-		void SetClip(RECT rect) { rcClip_ = rect; }
+		void SetClip(const RECT& rect) { rcClip_ = rect; }
 
 		void SetResetFocus(gstd::ref_count_ptr<D3DXVECTOR2>& pos) { posReset_ = pos; }
 		void Reset();

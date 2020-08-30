@@ -720,7 +720,7 @@ namespace directx {
 		void SetFogParam(bool bEnable, D3DCOLOR fogColor, float start, float end);
 		size_t GetTotalObjectCreateCount() { return totalObjectCreateCount_; }
 
-		bool IsFogEneble() { return bFogEnable_; }
+		bool IsFogEnable() { return bFogEnable_; }
 		D3DCOLOR GetFogColor() { return fogColor_; }
 		float GetFogStart() { return fogStart_; }
 		float GetFogEnd() { return fogEnd_; }

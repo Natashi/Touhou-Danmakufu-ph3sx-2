@@ -114,7 +114,7 @@ namespace directx {
 		bool IsEndScript() { return bEndScript_; }
 		void SetEndScript() { bEndScript_ = true; }
 		bool IsAutoDeleteObject() { return bAutoDeleteObject_; }
-		void SetAutoDeleteObject(bool bEneble) { bAutoDeleteObject_ = bEneble; }
+		void SetAutoDeleteObject(bool bEnable) { bAutoDeleteObject_ = bEnable; }
 		bool IsPaused() { return bPaused_; }
 
 		gstd::value RequestEvent(int type);

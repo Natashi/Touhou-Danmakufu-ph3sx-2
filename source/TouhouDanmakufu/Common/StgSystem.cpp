@@ -343,13 +343,13 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	float fogStart = 0;
 	float fogEnd = 0;
 	if (objectManagerStage) {
-		bFogEnable = objectManagerStage->IsFogEneble();
+		bFogEnable = objectManagerStage->IsFogEnable();
 		fogColor = objectManagerStage->GetFogColor();
 		fogStart = objectManagerStage->GetFogStart();
 		fogEnd = objectManagerStage->GetFogEnd();
 	}
 	else if (objectManagerPackage) {
-		bFogEnable = objectManagerPackage->IsFogEneble();
+		bFogEnable = objectManagerPackage->IsFogEnable();
 		fogColor = objectManagerPackage->GetFogColor();
 		fogStart = objectManagerPackage->GetFogStart();
 		fogEnd = objectManagerPackage->GetFogEnd();
@@ -373,7 +373,7 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	camera2D->UpdateMatrix();
 
 	for (int iPri = priMin; iPri <= priMax; iPri++) {
-		if (iPri >= priMinStgFrame && !bRunMinStgFrame) {
+		if (!bRunMinStgFrame && iPri >= priMinStgFrame) {
 			if (bValidStage && iPri < invalidPriMin)
 				graphics->ClearRenderTarget(rcStgFrame);
 
@@ -470,7 +470,7 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 			//camera2D->SetEnable(false);
 			camera2D->UpdateMatrix();
 		}
-		if (iPri >= priMaxStgFrame && !bRunMaxStgFrame) {
+		if (!bRunMaxStgFrame && iPri >= priMaxStgFrame) {
 			camera2D->SetEnable(false);
 			camera2D->Reset();
 			graphics->ResetViewPort();

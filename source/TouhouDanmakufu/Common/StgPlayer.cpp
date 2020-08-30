@@ -189,8 +189,8 @@ void StgPlayerObject::_Move() {
 	v_pos = _mm_add_pd(v_pos, _mm_setr_pd(sx, sy));
 	v_pos = _mm_max_pd(v_pos, _mm_setr_pd((double)rcClip_.left, (double)rcClip_.top));
 	v_pos = _mm_min_pd(v_pos, _mm_setr_pd((double)rcClip_.right, (double)rcClip_.bottom));
-	this->SetX(v_pos.m128d_f64[0]);
-	this->SetY(v_pos.m128d_f64[1]);
+	SetX(v_pos.m128d_f64[0]);
+	SetY(v_pos.m128d_f64[1]);
 #else
 	SetX(std::clamp(posX_ + sx, (double)rcClip_.left, (double)rcClip_.right));
 	SetY(std::clamp(posY_ + sy, (double)rcClip_.top, (double)rcClip_.bottom));
