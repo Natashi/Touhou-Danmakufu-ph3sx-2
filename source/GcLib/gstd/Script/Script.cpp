@@ -583,14 +583,14 @@ void script_machine::run_code() {
 					value* var = find_variable_symbol(current.get(), c);
 					if (var == nullptr) break;
 
-					value res = (c->command == command_kind::pc_inline_inc) ? 
+					value res = (c->command == command_kind::pc_inline_inc) ?
 						BaseFunction::successor(this, 1, var) : BaseFunction::predecessor(this, 1, var);
 					*var = res;
 				}
 				else {
 					value* var = &(current->stack.back());
 
-					value res = (c->command == command_kind::pc_inline_inc) ? 
+					value res = (c->command == command_kind::pc_inline_inc) ?
 						BaseFunction::successor(this, 1, var) : BaseFunction::predecessor(this, 1, var);
 					if (!res.has_data()) break;
 					var->overwrite(res);
@@ -724,7 +724,7 @@ void script_machine::run_code() {
 
 				value res;
 				res.set(script_type_manager::get_boolean_type(), c->command == command_kind::pc_inline_logic_and ?
-					(var1->as_boolean() && var2->as_boolean()) : (var1->as_boolean() || var2->as_boolean()));
+				(var1->as_boolean() && var2->as_boolean()) : (var1->as_boolean() || var2->as_boolean()));
 
 				current->stack.pop_back(2U);
 				current->stack.push_back(res);
@@ -757,6 +757,12 @@ void script_machine::run_code() {
 				current->stack.pop_back(2U);
 				current->stack.push_back(res);
 				break;
+			}
+			case command_kind::pc_inline_length_array:
+			{
+				size_t len = current->stack.back().length_as_array();
+				current->stack.pop_back(1U);
+				current->stack.push_back(value(script_type_manager::get_real_type(), (double)len));
 			}
 			//default:
 			//	assert(false);

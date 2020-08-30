@@ -81,7 +81,7 @@ namespace gstd {
 	const function base_operations[] = {
 		//{ "true", true_, 0 },
 		//{ "false", false_, 0 },
-		{ "length", BaseFunction::length, 1 },
+		//{ "length", BaseFunction::length, 1 },
 		{ "not", BaseFunction::not_, 1 },
 		{ "negative", BaseFunction::negative, 1 },
 		{ "predecessor", BaseFunction::predecessor, 1 },
@@ -597,8 +597,8 @@ namespace gstd {
 		{
 			std::string name = state->lex->word;
 			state->advance();
-			int argc = parse_arguments(block, state);
 
+			int argc = parse_arguments(block, state);
 			symbol* s = search(name, argc);
 
 			if (s == nullptr) {
@@ -653,6 +653,11 @@ continue_as_variadic:
 			state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)target));
 			return;
 		}
+		case token_kind::tk_LENGTH:
+			state->advance();
+			parse_parentheses(block, state);
+			state->AddCode(block, code(command_kind::pc_inline_length_array));
+			return;
 		case token_kind::tk_open_bra:
 		{
 			state->advance();

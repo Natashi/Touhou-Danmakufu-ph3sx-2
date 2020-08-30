@@ -512,6 +512,7 @@ std::map<std::string, token_kind> script_scanner::token_map = {
 	{ "as_real", token_kind::tk_cast_real },
 	{ "as_char", token_kind::tk_cast_char },
 	{ "as_bool", token_kind::tk_cast_bool },
+	{ "length", token_kind::tk_LENGTH },
 	{ "alternative", token_kind::tk_ALTERNATIVE },
 	//{ "switch", token_kind::tk_ALTERNATIVE },
 	{ "case", token_kind::tk_CASE },

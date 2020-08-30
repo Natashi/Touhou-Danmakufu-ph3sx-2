@@ -49,6 +49,7 @@ namespace gstd {
 
 		pc_inline_cast_var,
 		pc_inline_index_array,
+		pc_inline_length_array,
 
 		pc_null = 0xff,
 	};
