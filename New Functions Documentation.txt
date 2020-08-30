@@ -806,6 +806,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Used with CAMERA_LOOKAT mode. 
 			Sets the camera's "look-at" position.
 			
+	GetCameraViewMatrix
+		Description:
+			Returns the 3D camera's view matrix.
+			
+	GetCameraProjectionMatrix
+		Description:
+			Returns the 3D camera's projection matrix.
+			
 	GetCameraViewProjectionMatrix
 		Description:
 			Returns the 3D camera's view-projection matrix.
