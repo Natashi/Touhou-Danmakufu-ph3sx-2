@@ -760,9 +760,9 @@ void script_machine::run_code() {
 			}
 			case command_kind::pc_inline_length_array:
 			{
-				size_t len = current->stack.back().length_as_array();
-				current->stack.pop_back(1U);
-				current->stack.push_back(value(script_type_manager::get_real_type(), (double)len));
+				value* var = &(current->stack.back());
+				size_t len = var->length_as_array();
+				var->set(script_type_manager::get_real_type(), (double)len);
 				break;
 			}
 			//default:
