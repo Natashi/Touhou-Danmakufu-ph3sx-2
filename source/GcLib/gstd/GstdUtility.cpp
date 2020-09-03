@@ -299,10 +299,14 @@ std::string StringUtility::Format(const char* str, ...) {
 	return res;
 }
 std::string StringUtility::Format(const char* str, va_list va) {
-	size_t size = _vsnprintf(nullptr, 0U, str, va);
+	//The size returned by _vsnprintf does NOT include null terminator
+	int size = _vsnprintf(nullptr, 0U, str, va);
 	std::string res;
-	res.resize(size + 1);
-	_vsnprintf(const_cast<char*>(res.c_str()), res.size(), str, va);
+	if (size > 0) {
+		res.resize(size + 1);
+		_vsnprintf((char*)res.c_str(), res.size(), str, va);
+		res.pop_back();	//Don't include the null terminator
+	}
 	return res;
 }
 
@@ -441,10 +445,14 @@ std::wstring StringUtility::Format(const wchar_t* str, ...) {
 	return res;
 }
 std::wstring StringUtility::Format(const wchar_t* str, va_list va) {
-	size_t size = _vsnwprintf(nullptr, 0U, str, va);
+	//The size returned by _vsnwprintf does NOT include null terminator
+	int size = _vsnwprintf(nullptr, 0U, str, va);
 	std::wstring res;
-	res.resize(size + 1);
-	_vsnwprintf(const_cast<wchar_t*>(res.c_str()), res.size(), str, va);
+	if (size > 0) {
+		res.resize(size + 1);
+		_vsnwprintf((wchar_t*)res.c_str(), res.size(), str, va);
+		res.pop_back();
+	}
 	return res;
 }
 std::wstring StringUtility::FormatToWide(const char* str, ...) {
