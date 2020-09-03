@@ -1257,19 +1257,17 @@ void StgNormalShotObject::Work() {
 
 		if (delay_.time > 0) --(delay_.time);
 
-		angle_.z += angularVelocity_;
-	}
+		{
+			angle_.z += angularVelocity_;
 
-	{
-		double angleZ = angle_.z;
-		if (bEnableMovement_) {
+			double angleZ = angle_.z;
 			if (StgShotData* shotData = _GetShotData()) {
 				if (!shotData->IsFixedAngle()) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
 			}
-		}
-		if (angleZ != lastAngle_) {
-			move_ = D3DXVECTOR2(cosf(angleZ), sinf(angleZ));
-			lastAngle_ = angleZ;
+			if (angleZ != lastAngle_) {
+				move_ = D3DXVECTOR2(cosf(angleZ), sinf(angleZ));
+				lastAngle_ = angleZ;
+			}
 		}
 	}
 
@@ -1542,7 +1540,6 @@ StgLooseLaserObject::StgLooseLaserObject(StgStageController* stageController) : 
 	listIntersectionTarget_.push_back(pShotIntersectionTarget_);
 }
 void StgLooseLaserObject::Work() {
-	//1ƒtƒŒ[ƒ€–Ú‚ÍˆÚ“®‚µ‚È‚¢
 	if (frameWork_ == 0) {
 		posXE_ = posX_;
 		posYE_ = posY_;
@@ -1553,10 +1550,6 @@ void StgLooseLaserObject::Work() {
 		_Move();
 
 		if (delay_.time > 0) --(delay_.time);
-	}
-	if (lastAngle_ != GetDirectionAngle()) {
-		lastAngle_ = GetDirectionAngle();
-		move_ = D3DXVECTOR2(cosf(lastAngle_), sinf(lastAngle_));
 	}
 
 	_CommonWorkTask();
@@ -1576,6 +1569,10 @@ void StgLooseLaserObject::_Move() {
 			posXE_ += speed * move_.x;
 			posYE_ += speed * move_.y;
 		}
+	}
+	if (lastAngle_ != GetDirectionAngle()) {
+		lastAngle_ = GetDirectionAngle();
+		move_ = D3DXVECTOR2(cosf(lastAngle_), sinf(lastAngle_));
 	}
 }
 void StgLooseLaserObject::_DeleteInAutoClip() {
@@ -1846,10 +1843,11 @@ void StgStraightLaserObject::Work() {
 			if (bLaserExpand_)
 				scaleX_ = std::min(1.0f, scaleX_ + 0.1f);
 		}
-	}
-	if (lastAngle_ != angLaser_) {
-		lastAngle_ = angLaser_;
-		move_ = D3DXVECTOR2(cosf(angLaser_), sinf(angLaser_));
+
+		if (lastAngle_ != angLaser_) {
+			lastAngle_ = angLaser_;
+			move_ = D3DXVECTOR2(cosf(angLaser_), sinf(angLaser_));
+		}
 	}
 
 	_CommonWorkTask();
