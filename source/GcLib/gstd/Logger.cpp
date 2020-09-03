@@ -479,10 +479,8 @@ void WindowLogger::LogPanel::AddText(const std::wstring& text) {
 	HWND hEdit = wndEdit_.GetWindowHandle();
 	int pos = GetWindowTextLength(hEdit);
 	if (pos + wndEdit_.GetTextLength() >= wndEdit_.GetMaxTextLength()) {
-		std::wstring textNew = wndEdit_.GetText();
-		textNew = textNew.substr(textNew.size() / 2) + L"\r\n";
-		wndEdit_.SetText(textNew);
-
+		::SendMessage(hEdit, EM_SETSEL, 0, wndEdit_.GetMaxTextLength() / 2);
+		::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)L"");
 		pos = GetWindowTextLength(hEdit);
 	}
 	::SendMessage(hEdit, EM_SETSEL, pos, pos);
