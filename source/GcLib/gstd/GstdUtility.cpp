@@ -299,24 +299,10 @@ std::string StringUtility::Format(const char* str, ...) {
 	return res;
 }
 std::string StringUtility::Format(const char* str, va_list va) {
+	size_t size = _vsnprintf(nullptr, 0U, str, va);
 	std::string res;
-	char buf[256];
-	if (_vsnprintf(buf, sizeof(buf), str, va) < 0) {	//バッファを超えていた場合、動的に確保する
-		size_t size = sizeof(buf);
-		while (true) {
-			size *= 2;
-			char* nBuf = new char[size];
-			if (_vsnprintf(nBuf, size, str, va) >= 0) {
-				res = nBuf;
-				delete[] nBuf;
-				break;
-			}
-			delete[] nBuf;
-		}
-	}
-	else {
-		res = buf;
-	}
+	res.resize(size + 1);
+	_vsnprintf(const_cast<char*>(res.c_str()), res.size(), str, va);
 	return res;
 }
 
@@ -455,49 +441,17 @@ std::wstring StringUtility::Format(const wchar_t* str, ...) {
 	return res;
 }
 std::wstring StringUtility::Format(const wchar_t* str, va_list va) {
+	size_t size = _vsnwprintf(nullptr, 0U, str, va);
 	std::wstring res;
-	wchar_t buf[256];
-	if (_vsnwprintf(buf, sizeof(buf) / 2U - 1U, str, va) < 0) {	//バッファを超えていた場合、動的に確保する
-		size_t size = sizeof(buf);
-		while (true) {
-			size *= 2U;
-			wchar_t* nBuf = new wchar_t[size];
-			if (_vsnwprintf(nBuf, size / 2U - 1U, str, va) >= 0) {
-				res = nBuf;
-				delete[] nBuf;
-				break;
-			}
-			delete[] nBuf;
-		}
-	}
-	else {
-		res = buf;
-	}
+	res.resize(size + 1);
+	_vsnwprintf(const_cast<wchar_t*>(res.c_str()), res.size(), str, va);
 	return res;
 }
 std::wstring StringUtility::FormatToWide(const char* str, ...) {
-	std::string res;
-	char buf[256];
 	va_list	vl;
 	va_start(vl, str);
-	if (_vsnprintf(buf, sizeof(buf), str, vl) < 0) {	//バッファを超えていた場合、動的に確保する
-		size_t size = sizeof(buf);
-		while (true) {
-			size *= 2;
-			char* nBuf = new char[size];
-			if (_vsnprintf(nBuf, size, str, vl) >= 0) {
-				res = nBuf;
-				delete[] nBuf;
-				break;
-			}
-			delete[] nBuf;
-		}
-	}
-	else {
-		res = buf;
-	}
+	std::string res = StringUtility::Format(str, vl);
 	va_end(vl);
-
 	return StringUtility::ConvertMultiToWide(res);
 }
 
