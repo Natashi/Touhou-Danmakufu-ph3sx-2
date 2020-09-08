@@ -120,16 +120,12 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 			}
 		}
 
-		if (bScript) {
-			//IDがなかった場合はしょうがないのでファイル名にする。
+		if (bScript && title.size() > 0) {
 			if (idScript.size() == 0)
 				idScript = PathProperty::GetFileNameWithoutExtension(pathScript);
 
-			if (replayName.size() == 0) {
-				replayName = idScript;
-				if (replayName.size() > 8)
-					replayName = replayName.substr(0, 8);
-			}
+			if (replayName.size() == 0)
+				replayName = idScript.substr(0, std::min(8U, replayName.size()));
 
 			if (pathImage.size() > 2) {
 				if (pathImage[0] == L'.' &&
@@ -197,7 +193,7 @@ std::vector<std::wstring> ScriptInformation::_GetStringList(Scanner& scanner) {
 std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScriptInformationList() {
 	std::vector<ref_count_ptr<ScriptInformation>> res;
 	std::wstring dirInfo = PathProperty::GetFileDirectory(GetScriptPath());
-	for (const std::wstring& pathPlayer : GetPlayerList()) {
+	for (const std::wstring& pathPlayer : listPlayer_) {
 		std::wstring path = EPathProperty::ExtendRelativeToFull(dirInfo, pathPlayer);
 
 		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
