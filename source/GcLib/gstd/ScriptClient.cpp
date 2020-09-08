@@ -1075,35 +1075,52 @@ value ScriptClientBase::Func_RandEff(script_machine* machine, int argc, const va
 	return script->CreateRealValue(res);
 }
 
+static value _ScriptValueLerp(script_machine* machine, const value* v1, const value* v2, double vx, 
+	double (*lerpFunc)(double, double, double)) 
+{
+	if (v1->get_type()->get_kind() == type_data::type_kind::tk_array 
+		&& v2->get_type()->get_kind() == type_data::type_kind::tk_array)
+	{
+		if (v1->length_as_array() != v2->length_as_array()) {
+			std::string err = StringUtility::Format("Sizes must be the same when interpolating arrays. (%u and %u)",
+				v1->length_as_array(), v2->length_as_array());
+			machine->raise_error(err);
+		}
+
+		std::vector<value> resArr;
+		resArr.resize(v1->length_as_array());
+		for (size_t i = 0; i < v1->length_as_array(); ++i) {
+			const value* a1 = &v1->index_as_array(i);
+			resArr[i] = _ScriptValueLerp(machine, a1, &v2->index_as_array(i), vx, lerpFunc);
+		}
+
+		value res;
+		res.set(v1->get_type(), resArr);
+		return res;
+	}
+	else {
+		return ScriptClientBase::CreateRealValue(lerpFunc(v1->as_real(), v2->as_real(), vx));
+	}
+}
 value ScriptClientBase::Func_Interpolate_Linear(script_machine* machine, int argc, const value* argv) {
-	double a = argv[0].as_real();
-	double b = argv[1].as_real();
 	double x = argv[2].as_real();
-	return CreateRealValue(Math::Lerp::Linear(a, b, x));
+	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, Math::Lerp::Linear);
 }
 value ScriptClientBase::Func_Interpolate_Smooth(script_machine* machine, int argc, const value* argv) {
-	double a = argv[0].as_real();
-	double b = argv[1].as_real();
 	double x = argv[2].as_real();
-	return CreateRealValue(Math::Lerp::Smooth(a, b, x));
+	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, Math::Lerp::Smooth);
 }
 value ScriptClientBase::Func_Interpolate_Smoother(script_machine* machine, int argc, const value* argv) {
-	double a = argv[0].as_real();
-	double b = argv[1].as_real();
 	double x = argv[2].as_real();
-	return CreateRealValue(Math::Lerp::Smoother(a, b, x));
+	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, Math::Lerp::Smoother);
 }
 value ScriptClientBase::Func_Interpolate_Accelerate(script_machine* machine, int argc, const value* argv) {
-	double a = argv[0].as_real();
-	double b = argv[1].as_real();
 	double x = argv[2].as_real();
-	return CreateRealValue(Math::Lerp::Accelerate(a, b, x));
+	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, Math::Lerp::Accelerate);
 }
 value ScriptClientBase::Func_Interpolate_Decelerate(script_machine* machine, int argc, const value* argv) {
-	double a = argv[0].as_real();
-	double b = argv[1].as_real();
 	double x = argv[2].as_real();
-	return CreateRealValue(Math::Lerp::Decelerate(a, b, x));
+	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, Math::Lerp::Decelerate);
 }
 value ScriptClientBase::Func_Interpolate_Modulate(script_machine* machine, int argc, const value* argv) {
 	double a = argv[0].as_real();
