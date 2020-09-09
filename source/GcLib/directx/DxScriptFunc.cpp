@@ -214,8 +214,11 @@ function const dxFunction[] =
 	{ "ObjRender_SetVertexShaderRenderingMode", DxScript::Func_ObjRender_SetVertexShaderRenderingMode, 2 },
 	{ "ObjRender_SetLightingEnable", DxScript::Func_ObjRender_SetLightingEnable, 3 },
 	{ "ObjRender_SetLightingDiffuseColor", DxScript::Func_ObjRender_SetLightingDiffuseColor, 4 },
+	{ "ObjRender_SetLightingDiffuseColor", DxScript::Func_ObjRender_SetLightingDiffuseColor, 2 },	//Overloaded
 	{ "ObjRender_SetLightingSpecularColor", DxScript::Func_ObjRender_SetLightingSpecularColor, 4 },
+	{ "ObjRender_SetLightingSpecularColor", DxScript::Func_ObjRender_SetLightingSpecularColor, 2 },	//Overloaded
 	{ "ObjRender_SetLightingAmbientColor", DxScript::Func_ObjRender_SetLightingAmbientColor, 4 },
+	{ "ObjRender_SetLightingAmbientColor", DxScript::Func_ObjRender_SetLightingAmbientColor, 2 },	//Overloaded
 	{ "ObjRender_SetLightingDirection", DxScript::Func_ObjRender_SetLightingDirection, 4 },
 
 	//Dx関数：オブジェクト操作(ShaderObject)
@@ -287,6 +290,7 @@ function const dxFunction[] =
 	{ "ObjParticleList_SetAngleZ", DxScript::Func_ObjParticleList_SetAngleSingle<2>, 2 },
 	{ "ObjParticleList_SetAngle", DxScript::Func_ObjParticleList_SetAngle, 4 },
 	{ "ObjParticleList_SetColor", DxScript::Func_ObjParticleList_SetColor, 4 },
+	{ "ObjParticleList_SetColor", DxScript::Func_ObjParticleList_SetColor, 2 },	//Overloaded
 	{ "ObjParticleList_SetAlpha", DxScript::Func_ObjParticleList_SetAlpha, 2 },
 	{ "ObjParticleList_SetExtraData", DxScript::Func_ObjParticleList_SetExtraData, 4 },
 	{ "ObjParticleList_AddInstance", DxScript::Func_ObjParticleList_AddInstance, 1 },
@@ -296,6 +300,7 @@ function const dxFunction[] =
 	{ "ObjMesh_Create", DxScript::Func_ObjMesh_Create, 0 },
 	{ "ObjMesh_Load", DxScript::Func_ObjMesh_Load, 2 },
 	{ "ObjMesh_SetColor", DxScript::Func_ObjMesh_SetColor, 4 },
+	{ "ObjMesh_SetColor", DxScript::Func_ObjMesh_SetColor, 2 },	//Overloaded
 	{ "ObjMesh_SetAlpha", DxScript::Func_ObjMesh_SetAlpha, 2 },
 	{ "ObjMesh_SetAnimation", DxScript::Func_ObjMesh_SetAnimation, 3 },
 	{ "ObjMesh_SetCoordinate2D", DxScript::Func_ObjMesh_SetCoordinate2D, 2 },
@@ -309,16 +314,20 @@ function const dxFunction[] =
 	{ "ObjText_SetFontBold", DxScript::Func_ObjText_SetFontBold, 2 },
 	{ "ObjText_SetFontWeight", DxScript::Func_ObjText_SetFontWeight, 2 },
 	{ "ObjText_SetFontColorTop", DxScript::Func_ObjText_SetFontColorTop, 4 },
+	{ "ObjText_SetFontColorTop", DxScript::Func_ObjText_SetFontColorTop, 2 },			//Overloaded
 	{ "ObjText_SetFontColorBottom", DxScript::Func_ObjText_SetFontColorBottom, 4 },
+	{ "ObjText_SetFontColorBottom", DxScript::Func_ObjText_SetFontColorBottom, 2 },		//Overloaded
 	{ "ObjText_SetFontBorderWidth", DxScript::Func_ObjText_SetFontBorderWidth, 2 },
 	{ "ObjText_SetFontBorderType", DxScript::Func_ObjText_SetFontBorderType, 2 },
 	{ "ObjText_SetFontBorderColor", DxScript::Func_ObjText_SetFontBorderColor, 4 },
+	{ "ObjText_SetFontBorderColor", DxScript::Func_ObjText_SetFontBorderColor, 2 },		//Overloaded
 	{ "ObjText_SetFontCharacterSet", DxScript::Func_ObjText_SetFontCharacterSet, 2 },
 	{ "ObjText_SetMaxWidth", DxScript::Func_ObjText_SetMaxWidth, 2 },
 	{ "ObjText_SetMaxHeight", DxScript::Func_ObjText_SetMaxHeight, 2 },
 	{ "ObjText_SetLinePitch", DxScript::Func_ObjText_SetLinePitch, 2 },
 	{ "ObjText_SetSidePitch", DxScript::Func_ObjText_SetSidePitch, 2 },
 	{ "ObjText_SetVertexColor", DxScript::Func_ObjText_SetVertexColor, 5 },
+	{ "ObjText_SetVertexColor", DxScript::Func_ObjText_SetVertexColor, 2 },				//Overloaded
 	{ "ObjText_SetTransCenter", DxScript::Func_ObjText_SetTransCenter, 3 },
 	{ "ObjText_SetAutoTransCenter", DxScript::Func_ObjText_SetAutoTransCenter, 2 },
 	{ "ObjText_SetHorizontalAlignment", DxScript::Func_ObjText_SetHorizontalAlignment, 2 },
@@ -2548,12 +2557,18 @@ value DxScript::Func_ObjRender_SetLightingDiffuseColor(gstd::script_machine* mac
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		if (auto objLight = obj->GetLightPointer()) {
-			D3DCOLORVALUE color = {
-				(float)argv[1].as_real() / 255.0f,
-				(float)argv[2].as_real() / 255.0f,
-				(float)argv[3].as_real() / 255.0f,
-				0.0f,
-			};
+			D3DCOLORVALUE color = { 1.0f, 1.0f, 1.0f, 0.0f };
+			if (argc == 4) {
+				color.r = (float)argv[1].as_real() / 255.0f;
+				color.g = (float)argv[2].as_real() / 255.0f;
+				color.b = (float)argv[3].as_real() / 255.0f;
+			}
+			else {
+				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int());
+				color.r = colorNorm.y;
+				color.g = colorNorm.z;
+				color.b = colorNorm.w;
+			}
 			objLight->SetColorDiffuse(color);
 		}
 	}
@@ -2567,12 +2582,18 @@ value DxScript::Func_ObjRender_SetLightingSpecularColor(gstd::script_machine* ma
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		if (auto objLight = obj->GetLightPointer()) {
-			D3DCOLORVALUE color = {
-				(float)argv[1].as_real() / 255.0f,
-				(float)argv[2].as_real() / 255.0f,
-				(float)argv[3].as_real() / 255.0f,
-				0.0f,
-			};
+			D3DCOLORVALUE color = { 1.0f, 1.0f, 1.0f, 0.0f };
+			if (argc == 4) {
+				color.r = (float)argv[1].as_real() / 255.0f;
+				color.g = (float)argv[2].as_real() / 255.0f;
+				color.b = (float)argv[3].as_real() / 255.0f;
+			}
+			else {
+				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int());
+				color.r = colorNorm.y;
+				color.g = colorNorm.z;
+				color.b = colorNorm.w;
+			}
 			objLight->SetColorSpecular(color);
 		}
 	}
@@ -2586,12 +2607,18 @@ value DxScript::Func_ObjRender_SetLightingAmbientColor(gstd::script_machine* mac
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		if (auto objLight = obj->GetLightPointer()) {
-			D3DCOLORVALUE color = {
-				(float)argv[1].as_real() / 255.0f,
-				(float)argv[2].as_real() / 255.0f,
-				(float)argv[3].as_real() / 255.0f,
-				0.0f,
-			};
+			D3DCOLORVALUE color = { 1.0f, 1.0f, 1.0f, 0.0f };
+			if (argc == 4) {
+				color.r = (float)argv[1].as_real() / 255.0f;
+				color.g = (float)argv[2].as_real() / 255.0f;
+				color.b = (float)argv[3].as_real() / 255.0f;
+			}
+			else {
+				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int());
+				color.r = colorNorm.y;
+				color.g = colorNorm.z;
+				color.b = colorNorm.w;
+			}
 			objLight->SetColorAmbient(color);
 		}
 	}
@@ -3324,7 +3351,15 @@ value DxScript::Func_ObjParticleList_SetColor(script_machine* machine, int argc,
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle) objParticle->SetInstanceColorRGB(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
+		if (objParticle) {
+			if (argc == 4) {
+				objParticle->SetInstanceColorRGB(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
+			}
+			else {
+				D3DXVECTOR4 vecColor = ColorAccess::ToVec4((D3DCOLOR)argv[1].as_int());
+				objParticle->SetInstanceColorRGB(vecColor.y, vecColor.z, vecColor.w);
+			}
+		}
 	}
 	return value();
 }
@@ -3425,8 +3460,15 @@ value DxScript::Func_ObjMesh_SetColor(script_machine* machine, int argc, const v
 	DxScript* script = (DxScript*)machine->data;
 	int id = (int)argv[0].as_real();
 	DxScriptMeshObject* obj = dynamic_cast<DxScriptMeshObject*>(script->GetObjectPointer(id));
-	if (obj)
-		obj->SetColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
+	if (obj) {
+		if (argc == 4) {
+			obj->SetColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
+		}
+		else {
+			D3DXVECTOR4 vecColor = ColorAccess::ToVec4((D3DCOLOR)argv[1].as_int());
+			obj->SetColor(vecColor.y, vecColor.z, vecColor.w);
+		}
+	}
 	return value();
 }
 value DxScript::Func_ObjMesh_SetAlpha(script_machine* machine, int argc, const value* argv) {
@@ -3542,10 +3584,17 @@ value DxScript::Func_ObjText_SetFontColorTop(script_machine* machine, int argc, 
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		byte r = ColorAccess::ClampColorRet(argv[1].as_int());
-		byte g = ColorAccess::ClampColorRet(argv[2].as_int());
-		byte b = ColorAccess::ClampColorRet(argv[3].as_int());
-		obj->SetFontColorTop(r, g, b);
+		if (argc == 4) {
+			byte r = ColorAccess::ClampColorRet(argv[1].as_int());
+			byte g = ColorAccess::ClampColorRet(argv[2].as_int());
+			byte b = ColorAccess::ClampColorRet(argv[3].as_int());
+			obj->SetFontColorTop(r, g, b);
+		}
+		else {
+			D3DCOLOR color = argv[1].as_int();
+			obj->SetFontColorTop(ColorAccess::GetColorR(color), 
+				ColorAccess::GetColorG(color), ColorAccess::GetColorB(color));
+		}
 	}
 	return value();
 }
@@ -3554,10 +3603,17 @@ value DxScript::Func_ObjText_SetFontColorBottom(script_machine* machine, int arg
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		byte r = ColorAccess::ClampColorRet(argv[1].as_int());
-		byte g = ColorAccess::ClampColorRet(argv[2].as_int());
-		byte b = ColorAccess::ClampColorRet(argv[3].as_int());
-		obj->SetFontColorBottom(r, g, b);
+		if (argc == 4) {
+			byte r = ColorAccess::ClampColorRet(argv[1].as_int());
+			byte g = ColorAccess::ClampColorRet(argv[2].as_int());
+			byte b = ColorAccess::ClampColorRet(argv[3].as_int());
+			obj->SetFontColorBottom(r, g, b);
+		}
+		else {
+			D3DCOLOR color = argv[1].as_int();
+			obj->SetFontColorBottom(ColorAccess::GetColorR(color),
+				ColorAccess::GetColorG(color), ColorAccess::GetColorB(color));
+		}
 	}
 	return value();
 }
@@ -3586,10 +3642,17 @@ value DxScript::Func_ObjText_SetFontBorderColor(script_machine* machine, int arg
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		byte r = ColorAccess::ClampColorRet(argv[1].as_int());
-		byte g = ColorAccess::ClampColorRet(argv[2].as_int());
-		byte b = ColorAccess::ClampColorRet(argv[3].as_int());
-		obj->SetFontBorderColor(r, g, b);
+		if (argc == 4) {
+			byte r = ColorAccess::ClampColorRet(argv[1].as_int());
+			byte g = ColorAccess::ClampColorRet(argv[2].as_int());
+			byte b = ColorAccess::ClampColorRet(argv[3].as_int());
+			obj->SetFontBorderColor(r, g, b);
+		}
+		else {
+			D3DCOLOR color = argv[1].as_int();
+			obj->SetFontBorderColor(ColorAccess::GetColorR(color),
+				ColorAccess::GetColorG(color), ColorAccess::GetColorB(color));
+		}
 	}
 	return value();
 }
@@ -3598,8 +3661,7 @@ value DxScript::Func_ObjText_SetFontCharacterSet(script_machine* machine, int ar
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int cSet = argv[1].as_int();
-		ColorAccess::ClampColor(cSet);	//Also clamps to [0-255], so it works too
+		BYTE cSet = ColorAccess::ClampColorRet(argv[1].as_int());	//Also clamps to [0-255], so it works too
 		obj->SetCharset((BYTE)cSet);
 	}
 	return value();
@@ -3649,10 +3711,14 @@ value DxScript::Func_ObjText_SetVertexColor(script_machine* machine, int argc, c
 	int id = (int)argv[0].as_real();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		__m128i c = Vectorize::Set128I_32(argv[1].as_int(), argv[2].as_int(),
-			argv[3].as_int(), argv[4].as_int());
-		D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
-		obj->SetVertexColor(color);
+		if (argc == 5) {
+			D3DCOLOR color = ColorAccess::ToD3DCOLOR(Vectorize::Set128I_32(argv[1].as_int(), 
+				argv[2].as_int(), argv[3].as_int(), argv[4].as_int()));
+			obj->SetVertexColor(color);
+		}
+		else {
+			obj->SetVertexColor((D3DCOLOR)argv[1].as_int());
+		}
 	}
 	return value();
 }
