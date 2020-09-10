@@ -1191,11 +1191,11 @@ value ScriptClientBase::Func_ToString(script_machine* machine, int argc, const v
 	return CreateStringValue(argv->as_string());
 }
 value ScriptClientBase::Func_ItoA(script_machine* machine, int argc, const value* argv) {
-	std::wstring res = StringUtility::Format(L"%d", (int)argv->as_real());
+	std::wstring res = std::to_wstring(argv->as_int());
 	return CreateStringValue(res);
 }
 value ScriptClientBase::Func_RtoA(script_machine* machine, int argc, const value* argv) {
-	std::wstring res = StringUtility::Format(L"%f", argv->as_real());
+	std::wstring res = std::to_wstring(argv->as_real());
 	return CreateStringValue(res);
 }
 value ScriptClientBase::Func_RtoA_Ex(script_machine* machine, int argc, const value* argv) {
@@ -1307,7 +1307,7 @@ value ScriptClientBase::Func_VtoS(script_machine* machine, int argc, const value
 }
 value ScriptClientBase::Func_AtoI(script_machine* machine, int argc, const value* argv) {
 	std::wstring str = argv->as_string();
-	int num = StringUtility::ToInteger(str);
+	int64_t num = wcstoll(str.c_str(), nullptr, 10);
 	return CreateRealValue(num);
 }
 value ScriptClientBase::Func_AtoR(script_machine* machine, int argc, const value* argv) {
@@ -1316,16 +1316,12 @@ value ScriptClientBase::Func_AtoR(script_machine* machine, int argc, const value
 	return CreateRealValue(num);
 }
 value ScriptClientBase::Func_TrimString(script_machine* machine, int argc, const value* argv) {
-	std::wstring str = argv->as_string();
-	std::wstring res = StringUtility::Trim(str);
+	std::wstring res = StringUtility::Trim(argv->as_string());
 	return CreateStringValue(res);
 }
 value ScriptClientBase::Func_SplitString(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-	std::wstring str = argv[0].as_string();
-	std::wstring delim = argv[1].as_string();
-	std::vector<std::wstring> list = StringUtility::Split(str, delim);
-
+	std::vector<std::wstring> list = StringUtility::Split(argv[0].as_string(), argv[1].as_string());
 	return script->CreateStringArrayValue(list);
 }
 
