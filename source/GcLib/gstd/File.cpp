@@ -462,45 +462,29 @@ ref_count_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	else {
 		//Cannot find a physical file, search in the archive entries.
 
-		std::vector<ArchiveFileEntry::ptr> listEntry;
+		std::list<ArchiveFileEntry::ptr> listMatchEntry;
 
-		std::unordered_map<int, std::wstring> mapArchivePath;
-
-		std::wstring key = PathProperty::GetFileName(pathAsUnique);
-		for (auto itr = mapArchiveFile_.begin(); itr != mapArchiveFile_.end(); ++itr) {
-			const std::wstring& pathArchive = itr->first;
-			ref_count_ptr<ArchiveFile> fileArchive = itr->second;
-			if (!fileArchive->IsExists(key)) continue;
-
-			std::vector<ArchiveFileEntry::ptr> list = fileArchive->GetEntryList(key);
-			listEntry.insert(listEntry.end(), list.begin(), list.end());
-			for (auto itrEntry = list.begin(); itrEntry != list.end(); ++itrEntry) {
-				int addr = (int)(itrEntry->get());
-				mapArchivePath[addr] = pathArchive;
-			}
+		std::wstring name = PathProperty::GetFileName(pathAsUnique);
+		for (auto itrArchive = mapArchiveFile_.begin(); itrArchive != mapArchiveFile_.end(); ++itrArchive) {
+			std::vector<ArchiveFileEntry::ptr> list = itrArchive->second->GetEntryList(name);
+			for (auto iEntry : list)
+				listMatchEntry.push_back(iEntry);
 		}
 
-		if (listEntry.size() == 1) {	//No duplicate paths
-			ArchiveFileEntry::ptr entry = listEntry[0];
-
-			int addr = (int)entry.get();
-			const std::wstring& pathArchive = mapArchivePath[addr];
-			ref_count_ptr<File> file = new File(pathArchive);
+		if (listMatchEntry.size() == 1U) {
+			ArchiveFileEntry::ptr& entry = *listMatchEntry.begin();
+			ref_count_ptr<File> file = new File(entry->archiveParent->GetPath());
 			res = new ManagedFileReader(file, entry);
 		}
-		else {
-			const std::wstring& module = PathProperty::GetModuleDirectory();
+		else if (listMatchEntry.size() > 0U) {
+			std::wstring fileTargetDir = PathProperty::GetDirectoryWithoutModuleDirectory(pathAsUnique);
+			fileTargetDir = PathProperty::ReplaceYenToSlash(fileTargetDir);
 
-			std::wstring target = StringUtility::ReplaceAll(pathAsUnique, module, L"");
-			for (auto itrEntry = listEntry.begin(); itrEntry != listEntry.end(); ++itrEntry) {
-				ArchiveFileEntry::ptr entry = *itrEntry;
-
-				const std::wstring& dir = entry->directory;
-				if (target.find(dir) == std::wstring::npos) continue;
-
-				int addr = (int)entry.get();
-				std::wstring pathArchive = mapArchivePath[addr];
-				ref_count_ptr<File> file = new File(pathArchive);
+			for (auto itr = listMatchEntry.begin(); itr != listMatchEntry.end(); ++itr) {
+				ArchiveFileEntry::ptr& entry = *itr;
+				if (fileTargetDir.find(entry->directory) == std::wstring::npos)
+					continue;
+				ref_count_ptr<File> file = new File(entry->archiveParent->GetPath());
 				res = new ManagedFileReader(file, entry);
 				break;
 			}

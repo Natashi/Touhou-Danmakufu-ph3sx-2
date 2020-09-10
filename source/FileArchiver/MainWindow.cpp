@@ -83,7 +83,6 @@ LRESULT MainWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 	}
 	case WM_DESTROY:
 	{
-		//設定保存
 		_SaveEnvironment();
 		::PostQuitMessage(0);
 		break;
@@ -93,7 +92,7 @@ LRESULT MainWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 	{
 		int id = wParam & 0xffff;
 		switch (id) {
-		case IDCANCEL://閉じるボタン
+		case IDCANCEL:
 		case ID_MENUITEM_EXIT:
 			::DestroyWindow(hWnd);
 			break;
@@ -136,7 +135,8 @@ LRESULT MainWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 		break;
 	}
 
-	case WM_DROPFILES:return _DropFiles(wParam, lParam);
+	case WM_DROPFILES:
+		return _DropFiles(wParam, lParam);
 
 	case WM_SIZE:
 	{
@@ -183,7 +183,7 @@ BOOL MainWindow::_DropFiles(WPARAM wParam, LPARAM lParam) {
 	HDROP hDrop = (HDROP)wParam;
 	UINT uFileNo = DragQueryFile((HDROP)wParam, 0xFFFFFFFF, NULL, 0);
 
-	for (int iDrop = 0; iDrop < (int)uFileNo; iDrop++) {
+	for (UINT iDrop = 0; iDrop < uFileNo; iDrop++) {
 		DragQueryFile(hDrop, iDrop, szFileName, sizeof(szFileName));
 		std::wstring path = szFileName;
 
@@ -197,9 +197,11 @@ BOOL MainWindow::_DropFiles(WPARAM wParam, LPARAM lParam) {
 	return FALSE;
 }
 void MainWindow::_AddFileFromDialog() {
-	const int maxFileCount = 64;
+	constexpr size_t maxFileCount = 128U;
+
 	wchar_t outFileName[MAX_PATH * maxFileCount];
 	ZeroMemory(&outFileName, MAX_PATH * maxFileCount);
+
 	OPENFILENAME ofn;
 	ZeroMemory(&ofn, sizeof(OPENFILENAME));
 	ofn.lStructSize = sizeof(OPENFILENAME);
@@ -207,24 +209,24 @@ void MainWindow::_AddFileFromDialog() {
 	ofn.nMaxFile = MAX_PATH * maxFileCount;
 	ofn.lpstrFile = outFileName;
 	ofn.lpstrTitle = L"Add file";
-	ofn.Flags = OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_HIDEREADONLY;
+	ofn.Flags = OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
 	if (!GetOpenFileName(&ofn)) return;
 
 	wchar_t* endstr = wcschr(outFileName, '\0');
 	wchar_t* nextstr = endstr + 1;
 
-	if (*(nextstr) == L'\0')//選択したファイルが１つ
-	{
+	if (*nextstr == L'\0') {
+		//One file selected
 		std::wstring path = outFileName;
 		std::wstring dirBase = PathProperty::GetFileDirectory(path);
 		_AddFile(dirBase, path);
 	}
-	else //複数選択
-	{
-		while (*(nextstr) != L'\0') {
+	else {
+		//Multiple files selected
+		while (*nextstr != L'\0') {
 			endstr = wcschr(nextstr, L'\0');
 			std::wstring path = outFileName;
-			path += L"\\";
+			path += L"/";
 			path += nextstr;
 			nextstr = endstr + 1;
 
@@ -306,19 +308,12 @@ void MainWindow::_RemoveFile() {
 	buttonDecompile_.SetWindowEnable(listFile_.size() > 0);
 }
 void MainWindow::_RemoveAllFile() {
-	while (listFile_.size() > 0U) {
-		std::wstring name = wndListFile_.GetText(0, COL_FILENAME);
-		std::wstring dir = wndListFile_.GetText(0, COL_DIRECTORY);
-
-		wndListFile_.DeleteRow(0);
-
-		std::wstring key = dir + name;
-		listFile_.erase(key);
-	}
+	wndListFile_.Clear();
+	listFile_.clear();
 
 	buttonDecompile_.SetWindowEnable(false);
 }
-bool MainWindow::_IsValidFilePath(std::wstring dirBase, std::wstring path) {
+bool MainWindow::_IsValidFilePath(const std::wstring& dirBase, const std::wstring& path) {
 	if (path.size() == 0) return false;
 	bool res = true;
 
@@ -331,13 +326,13 @@ bool MainWindow::_IsValidFilePath(std::wstring dirBase, std::wstring path) {
 		Logger::WriteTop(StringUtility::Format(L"File already exists. [%s]", key.c_str()));
 	return res;
 }
-std::wstring MainWindow::_CreateKey(std::wstring dirBase, std::wstring path) {
+std::wstring MainWindow::_CreateKey(const std::wstring& dirBase, const std::wstring& path) {
 	std::wstring name = PathProperty::GetFileName(path);
 	std::wstring dir = _CreateRelativeDirectory(dirBase, path);
 	std::wstring key = dir + name;
 	return key;
 }
-std::wstring MainWindow::_CreateRelativeDirectory(std::wstring dirBase, std::wstring path) {
+std::wstring MainWindow::_CreateRelativeDirectory(const std::wstring& dirBase, const std::wstring& path) {
 	std::wstring dirFull = PathProperty::GetFileDirectory(path);
 	std::wstring dir = StringUtility::ReplaceAll(dirFull, dirBase, L"");
 	return dir;
@@ -405,7 +400,11 @@ void MainWindow::_Archive() {
 		std::wstring dir = wndListFile_.GetText(iRow, COL_DIRECTORY);
 		std::wstring ext = PathProperty::GetFileExtension(path);
 
-		std::shared_ptr<gstd::ArchiveFileEntry> entry = std::shared_ptr<gstd::ArchiveFileEntry>(new gstd::ArchiveFileEntry);
+		dir = PathProperty::ReplaceYenToSlash(dir);
+		if (dir.size() > 0 && dir.back() != L'/')
+			dir.push_back(L'/');
+
+		std::shared_ptr<gstd::ArchiveFileEntry> entry = std::make_shared<gstd::ArchiveFileEntry>();
 		entry->name = path;
 		//entry->nameSize = path.size();
 		entry->directory = dir;

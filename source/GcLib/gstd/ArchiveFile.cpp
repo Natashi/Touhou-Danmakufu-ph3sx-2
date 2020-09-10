@@ -57,18 +57,16 @@ FileArchiver::~FileArchiver() {
 
 //-------------------------------------------------------------------------------------------------------------
 
-bool FileArchiver::CreateArchiveFile(std::wstring path) {
+bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 	bool res = true;
 
 	uint8_t headerKeyBase = 0;
 	uint8_t headerKeyStep = 0;
 	ArchiveEncryption::GetKeyHashHeader(ArchiveEncryption::ARCHIVE_ENCRYPTION_KEY, headerKeyBase, headerKeyStep);
 
-	DeleteFile(path.c_str());
-
 	std::wstring pathTmp = StringUtility::Format(L"%s_tmp", path.c_str());
-	std::ofstream fileArchive;
-	fileArchive.open(pathTmp, std::ios::binary);
+	std::fstream fileArchive;
+	fileArchive.open(pathTmp, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
 
 	if (!fileArchive.is_open())
 		throw gstd::wexception(StringUtility::Format(L"Cannot create an archive at [%s].", path.c_str()).c_str());
@@ -102,7 +100,8 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 		byte localKeyBase = 0;
 		byte localKeyStep = 0;
 		{
-			std::wstring strHash = StringUtility::Format(L"%s%s", entry->directory.c_str(), entry->name.c_str());
+			std::wstring strHash = StringUtility::Format(L"%s%s%u", 
+				entry->directory.c_str(), entry->name.c_str(), entry->sizeFull ^ 0xe54f077a);
 			ArchiveEncryption::GetKeyHashFile(StringUtility::ConvertWideToMulti(strHash).c_str(), 
 				headerKeyBase, headerKeyStep, localKeyBase, localKeyStep);
 		}
@@ -173,8 +172,6 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 	fileArchive.write((char*)&header.headerOffset, sizeof(uint32_t));
 	fileArchive.write((char*)&header.headerSize, sizeof(uint32_t));
 
-	fileArchive.close();
-
 	/*
 	if (true) {
 		std::ofstream fileTestOutput(StringUtility::Format(L"%s_head.txt", path.c_str()), std::ios::trunc);
@@ -200,18 +197,23 @@ bool FileArchiver::CreateArchiveFile(std::wstring path) {
 	}
 	*/
 
-	res = EncryptArchive(path, &header, headerKeyBase, headerKeyStep);
+	res = EncryptArchive(fileArchive, path, &header, headerKeyBase, headerKeyStep);
+	fileArchive.close();
+
+	DeleteFileW(pathTmp.c_str());
+
 	return res;
 }
 
-bool FileArchiver::EncryptArchive(std::wstring path, ArchiveFileHeader* header, byte keyBase, byte keyStep) {
-	std::wstring pathTmp = StringUtility::Format(L"%s_tmp", path.c_str());
-
-	std::ifstream src;
-	src.open(pathTmp, std::ios::binary);
+bool FileArchiver::EncryptArchive(std::fstream& inSrc, const std::wstring& pathOut, ArchiveFileHeader* header,
+	byte keyBase, byte keyStep) 
+{
+	if (!inSrc.is_open()) return false;
+	inSrc.clear();
+	inSrc.seekg(0);
 
 	std::ofstream dest;
-	dest.open(path, std::ios::binary | std::ios::trunc);
+	dest.open(pathOut, std::ios::binary | std::ios::trunc);
 
 	constexpr size_t CHUNK = 16384U;
 	char buf[CHUNK];
@@ -220,7 +222,7 @@ bool FileArchiver::EncryptArchive(std::wstring path, ArchiveFileHeader* header, 
 	byte headerBase = keyBase;
 
 	{
-		src.read(buf, sizeof(ArchiveFileHeader));
+		inSrc.read(buf, sizeof(ArchiveFileHeader));
 		ArchiveEncryption::ShiftBlock((byte*)buf, sizeof(ArchiveFileHeader), headerBase, keyStep);
 		dest.write(buf, sizeof(ArchiveFileHeader));
 	}
@@ -232,13 +234,13 @@ bool FileArchiver::EncryptArchive(std::wstring path, ArchiveFileHeader* header, 
 
 			byte localBase = entry->keyBase;
 
-			src.clear();
-			src.seekg(entry->offsetPos, std::ios::beg);
+			inSrc.clear();
+			inSrc.seekg(entry->offsetPos, std::ios::beg);
 			dest.seekp(entry->offsetPos, std::ios::beg);
 
 			do {
-				src.read(buf, CHUNK);
-				read = src.gcount();
+				inSrc.read(buf, CHUNK);
+				read = inSrc.gcount();
 				if (read > count) read = count;
 
 				ArchiveEncryption::ShiftBlock((byte*)buf, read, localBase, entry->keyStep);
@@ -249,17 +251,17 @@ bool FileArchiver::EncryptArchive(std::wstring path, ArchiveFileHeader* header, 
 		}
 	}
 
-	src.clear();
+	inSrc.clear();
 
 	{
 		size_t infoSize = header->headerSize;
 
-		src.seekg(header->headerOffset, std::ios::beg);
+		inSrc.seekg(header->headerOffset, std::ios::beg);
 		dest.seekp(header->headerOffset, std::ios::beg);
 
 		do {
-			src.read(buf, CHUNK);
-			read = src.gcount();
+			inSrc.read(buf, CHUNK);
+			read = inSrc.gcount();
 			if (read > infoSize) read = infoSize;
 
 			ArchiveEncryption::ShiftBlock((byte*)buf, read, headerBase, keyStep);
@@ -269,10 +271,7 @@ bool FileArchiver::EncryptArchive(std::wstring path, ArchiveFileHeader* header, 
 		} while (infoSize > 0U && read > 0U);
 	}
 
-	src.close();
 	dest.close();
-
-	DeleteFile(pathTmp.c_str());
 
 	return true;
 }
@@ -381,7 +380,7 @@ std::set<std::wstring> ArchiveFile::GetKeyList() {
 	}
 	return res;
 }
-std::vector<ArchiveFileEntry::ptr> ArchiveFile::GetEntryList(std::wstring name) {
+std::vector<ArchiveFileEntry::ptr> ArchiveFile::GetEntryList(const std::wstring& name) {
 	std::vector<ArchiveFileEntry::ptr> res;
 	if (!IsExists(name)) return res;
 
@@ -392,7 +391,7 @@ std::vector<ArchiveFileEntry::ptr> ArchiveFile::GetEntryList(std::wstring name) 
 
 	return res;
 }
-bool ArchiveFile::IsExists(std::wstring name) {
+bool ArchiveFile::IsExists(const std::wstring& name) {
 	return mapEntry_.find(name) != mapEntry_.end();
 }
 ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr entry) {

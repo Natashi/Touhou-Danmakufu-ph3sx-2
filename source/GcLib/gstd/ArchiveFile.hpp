@@ -48,8 +48,8 @@ namespace gstd {
 		ArchiveFile* archiveParent;
 
 		const size_t GetRecordSize() {
-			return static_cast<size_t>(directory.size() * sizeof(wchar_t) + name.size() * sizeof(wchar_t) +
-				sizeof(uint32_t) * 5 + sizeof(TypeCompression) + sizeof(byte) * 2);
+			return ((directory.size() + name.size()) * sizeof(wchar_t) + sizeof(uint32_t) * 2 
+				+ sizeof(TypeCompression) + sizeof(uint32_t) * 3 + sizeof(byte) * 2);
 		}
 
 		void _WriteEntryRecord(std::stringstream& buf);
@@ -68,9 +68,10 @@ namespace gstd {
 		virtual ~FileArchiver();
 
 		void AddEntry(ArchiveFileEntry::ptr entry) { listEntry_.push_back(entry); }
-		bool CreateArchiveFile(std::wstring path);
+		bool CreateArchiveFile(const std::wstring& path);
 
-		bool EncryptArchive(std::wstring path, ArchiveFileHeader* header, byte keyBase, byte keyStep);
+		bool EncryptArchive(std::fstream& inSrc, const std::wstring& pathOut, ArchiveFileHeader* header, 
+			byte keyBase, byte keyStep);
 	};
 
 	/**********************************************************
@@ -94,8 +95,8 @@ namespace gstd {
 
 		std::set<std::wstring> GetKeyList();
 		std::multimap<std::wstring, ArchiveFileEntry::ptr>& GetEntryMap() { return mapEntry_; }
-		std::vector<ArchiveFileEntry::ptr> GetEntryList(std::wstring name);
-		bool IsExists(std::wstring name);
+		std::vector<ArchiveFileEntry::ptr> GetEntryList(const std::wstring& name);
+		bool IsExists(const std::wstring& name);
 		static ref_count_ptr<ByteBuffer> CreateEntryBuffer(ArchiveFileEntry::ptr entry);
 		//ref_count_ptr<ByteBuffer> GetBuffer(std::string name);
 	};

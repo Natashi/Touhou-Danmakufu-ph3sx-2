@@ -33,9 +33,9 @@ private:
 	void _AddFile(std::wstring dirBase, std::wstring path);
 	void _RemoveFile();
 	void _RemoveAllFile();
-	bool _IsValidFilePath(std::wstring dirBase, std::wstring path);
-	std::wstring _CreateKey(std::wstring dirBase, std::wstring path);
-	std::wstring _CreateRelativeDirectory(std::wstring dirBase, std::wstring path);
+	bool _IsValidFilePath(const std::wstring& dirBase, const std::wstring& path);
+	std::wstring _CreateKey(const std::wstring& dirBase, const std::wstring& path);
+	std::wstring _CreateRelativeDirectory(const std::wstring& dirBase, const std::wstring& path);
 	void _StartArchive();
 
 	virtual void _Run();
