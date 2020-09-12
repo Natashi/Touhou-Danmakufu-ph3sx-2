@@ -37,7 +37,7 @@ void SystemController::Reset() {
 	else {
 		ref_count_ptr<ScriptInformation> info = ScriptInformation::CreateScriptInformation(pathPackageScript, false);
 		if (info == nullptr)
-			ShowErrorDialog(ErrorUtility::GetFileNotFoundErrorMessage(pathPackageScript));
+			ShowErrorDialog(L"ScriptReset: " + ErrorUtility::GetFileNotFoundErrorMessage(pathPackageScript, true));
 		else 
 			sceneManager_->TransPackageScene(info, true);
 	}

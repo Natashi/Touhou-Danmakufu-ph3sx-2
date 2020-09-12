@@ -329,7 +329,7 @@ void TextureManager::_ReleaseTextureData(const std::wstring& name) {
 
 		auto itr = mapTextureData_.find(name);
 		if (itr != mapTextureData_.end()) {
-			itr->second->bLoad_ = true;		//読み込み完了扱い
+			itr->second->bLoad_ = true;
 			mapTextureData_.erase(itr);
 			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", name.c_str()));
 		}
@@ -343,7 +343,7 @@ void TextureManager::_ReleaseTextureData(std::map<std::wstring, shared_ptr<Textu
 
 		if (itr != mapTextureData_.end()) {
 			const std::wstring& name = itr->second->name_;
-			itr->second->bLoad_ = true;		//読み込み完了扱い
+			itr->second->bLoad_ = true;
 			mapTextureData_.erase(itr);
 			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", name.c_str()));
 		}
@@ -443,7 +443,7 @@ void TextureManager::RestoreDxResource() {
 			HRESULT hr = graphics->GetDevice()->UpdateSurface(surfaceSrc, nullptr, surfaceDst, nullptr);
 			if (FAILED(hr)) {
 				std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: "
-					"Render target restoration failed [%s]\t\r\n%s: %s",
+					"Render target restoration failed [%s]\r\n\t%s: %s",
 					data->name_.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
 				Logger::WriteTop(err);
 			}
@@ -461,11 +461,10 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
-	//まだ作成されていないなら、作成
 	try {
-		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-		if (reader == nullptr) throw gstd::wexception("File not found.");
-		if (!reader->Open()) throw gstd::wexception("Cannot open file for reading.");
+		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+		if (reader == nullptr || !reader->Open())
+			throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
 		size_t size = reader->GetFileSize();
 		ByteBuffer buf;
@@ -476,8 +475,9 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 		//		D3DXGetImageInfoFromFileInMemory(buf.GetPointer(), size, &info);
 
 		D3DCOLOR colorKey = D3DCOLOR_ARGB(255, 0, 0, 0);
-		if (path.find(L".bmp") == std::wstring::npos)//bmpのみカラーキー適応
+		if (path.find(L".bmp") == std::wstring::npos)
 			colorKey = 0;
+
 		D3DFORMAT pixelFormat = graphics->GetConfigData().GetColorMode() == DirectGraphicsConfig::COLOR_MODE_32BIT ? 
 			D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
 
@@ -517,7 +517,7 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 		Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. [%s]", path.c_str()));
 	}
 	catch (gstd::wexception& e) {
-		std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture; %s\t[%s]", e.what(), path.c_str());
+		std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture \"%s\"\r\n    %s", path.c_str(), e.what());
 		Logger::WriteTop(str);
 		return false;
 	}
@@ -567,7 +567,6 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 			&data->pTexture_, nullptr);
 
 		if (FAILED(hr)) {
-			//テクスチャを正方形にする
 			if (width > height) height = width;
 			else if (height > width) width = height;
 
@@ -663,12 +662,11 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 				data->useMipMap_ = genMipmap;
 				data->useNonPowerOfTwo_ = flgNonPowerOfTwo;
 
-				//画像情報だけ事前に読み込み
 				if (bLoadImageInfo) {
 					try {
-						ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-						if (reader == nullptr) throw gstd::wexception("Texture released.");
-						if (!reader->Open()) throw gstd::wexception("File not found.");
+						shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+						if (reader == nullptr || !reader->Open())
+							throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
 						size_t size = reader->GetFileSize();
 						ByteBuffer buf;
@@ -696,10 +694,10 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 						data->infoImage_ = info;
 					}
 					catch (gstd::wexception& e) {
-						std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture; %s\t[%s]", 
-							e.what(), path.c_str());
+						std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture (Load Thread) \"%s\"\r\n\t%s", 
+							path.c_str(), e.what());
 						Logger::WriteTop(str);
-						data->bLoad_ = true;//読み込み完了扱い
+						data->bLoad_ = true;
 						bLoadTarget = false;
 					}
 				}
@@ -730,16 +728,15 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 		if (data == nullptr || data->bLoad_) return;
 
 		long countRef = data.use_count();
-		//自身とTextureManager内の数だけになったら読み込まない。
 		if (countRef <= 2) {
-			data->bLoad_ = true;//念のため読み込み完了扱い
+			data->bLoad_ = true;
 			return;
 		}
 
 		try {
-			ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-			if (reader == nullptr) throw gstd::wexception("Texture released.");
-			if (!reader->Open()) throw gstd::wexception("File not found.");
+			shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+			if (reader == nullptr || !reader->Open())
+				throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
 			size_t size = reader->GetFileSize();
 			ByteBuffer buf;
@@ -769,11 +766,11 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 			if (data->useMipMap_) data->pTexture_->GenerateMipSubLevels();
 			D3DXGetImageInfoFromFileInMemory(buf.GetPointer(), size, &data->infoImage_);
 
-			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. (Load Thread) [%s]", path.c_str()));
+			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. (Load Thread) \"%s\"", path.c_str()));
 		}
 		catch (gstd::wexception& e) {
-			std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture (Load Thread); %s\t[%s]",
-				e.what(), path.c_str());
+			std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture (Load Thread) \"%s\"\r\n\t%s",
+				path.c_str(), e.what());
 			Logger::WriteTop(str);
 		}
 		data->bLoad_ = true;

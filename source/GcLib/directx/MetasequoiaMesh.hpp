@@ -31,7 +31,7 @@ namespace directx {
 	public:
 		MetasequoiaMeshData();
 		~MetasequoiaMeshData();
-		bool CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader);
+		bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader);
 	};
 
 	class MetasequoiaMeshData::Material {
@@ -93,7 +93,7 @@ namespace directx {
 	public:
 		MetasequoiaMesh() {}
 		virtual ~MetasequoiaMesh() {}
-		virtual bool CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader);
+		virtual bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader);
 		virtual bool CreateFromFileInLoadThread(const std::wstring& path);
 		virtual std::wstring GetPath();
 		virtual void Render();

@@ -174,9 +174,9 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 
 	try {
 		path = PathProperty::GetUnique(path);
-		ref_count_ptr<FileReader> reader = fileManager->GetFileReader(path);
-		if (reader == nullptr) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path).c_str());
-		if (!reader->Open()) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path).c_str());
+		shared_ptr<FileReader> reader = fileManager->GetFileReader(path);
+		if (reader == nullptr || !reader->Open())
+			throw gstd::wexception(L"CreateSoundPlayer: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
 		size_t sizeFile = reader->GetFileSize();
 		if (sizeFile <= 64) throw gstd::wexception();
@@ -292,9 +292,9 @@ shared_ptr<SoundInfo> DirectSoundManager::GetSoundInfo(const std::wstring& path)
 bool DirectSoundManager::AddSoundInfoFromFile(const std::wstring& path) {
 	bool res = false;
 	FileManager* fileManager = FileManager::GetBase();
-	ref_count_ptr<FileReader> reader = fileManager->GetFileReader(path);
+	shared_ptr<FileReader> reader = fileManager->GetFileReader(path);
 	if (reader == nullptr || !reader->Open()) {
-		Logger::WriteTop(ErrorUtility::GetFileNotFoundErrorMessage(path));
+		Logger::WriteTop(L"AddSoundInfoFromFile: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 		return false;
 	}
 
@@ -970,7 +970,7 @@ SoundPlayerWave::SoundPlayerWave() {
 
 }
 SoundPlayerWave::~SoundPlayerWave() {}
-bool SoundPlayerWave::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool SoundPlayerWave::_CreateBuffer(shared_ptr<gstd::FileReader> reader) {
 	FileManager* fileManager = FileManager::GetBase();
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 
@@ -1138,7 +1138,7 @@ SoundStreamingPlayerWave::SoundStreamingPlayerWave() {
 	posWaveStart_ = 0;
 	posWaveEnd_ = 0;
 }
-bool SoundStreamingPlayerWave::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool SoundStreamingPlayerWave::_CreateBuffer(shared_ptr<gstd::FileReader> reader) {
 	FileManager* fileManager = FileManager::GetBase();
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 
@@ -1295,7 +1295,7 @@ SoundStreamingPlayerOgg::~SoundStreamingPlayerOgg() {
 	thread_->Join();
 	ov_clear(&fileOgg_);
 }
-bool SoundStreamingPlayerOgg::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool SoundStreamingPlayerOgg::_CreateBuffer(shared_ptr<gstd::FileReader> reader) {
 	FileManager* fileManager = FileManager::GetBase();
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 
@@ -1495,7 +1495,7 @@ SoundStreamingPlayerMp3::~SoundStreamingPlayerMp3() {
 	}
 }
 
-bool SoundStreamingPlayerMp3::_CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<gstd::FileReader> reader) {
 	reader_ = reader;
 	reader_->SetFilePointerBegin();
 

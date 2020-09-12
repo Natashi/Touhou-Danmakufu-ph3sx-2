@@ -10,9 +10,9 @@
 const std::wstring ScriptInformation::DEFAULT = L"DEFAULT";
 
 ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(const std::wstring& pathScript, bool bNeedHeader) {
-	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(pathScript);
+	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(pathScript);
 	if (reader == nullptr || !reader->Open()) {
-		Logger::WriteTop(ErrorUtility::GetFileNotFoundErrorMessage(pathScript));
+		Logger::WriteTop(L"CreateScriptInformation: " + ErrorUtility::GetFileNotFoundErrorMessage(pathScript, true));
 		return nullptr;
 	}
 
@@ -196,9 +196,9 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScr
 	for (const std::wstring& pathPlayer : listPlayer_) {
 		std::wstring path = EPathProperty::ExtendRelativeToFull(dirInfo, pathPlayer);
 
-		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader == nullptr || !reader->Open()) {
-			Logger::WriteTop(ErrorUtility::GetFileNotFoundErrorMessage(path));
+			Logger::WriteTop(L"CreatePlayerScriptInformationList: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 			continue;
 		}
 
@@ -239,16 +239,16 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 		ArchiveFile archive(path);
 		if (!archive.Open()) return res;
 
-		std::multimap<std::wstring, ArchiveFileEntry::ptr>& mapEntry = archive.GetEntryMap();
+		std::multimap<std::wstring, shared_ptr<ArchiveFileEntry>>& mapEntry = archive.GetEntryMap();
 		for (auto itr = mapEntry.begin(); itr != mapEntry.end(); itr++) {
-			ArchiveFileEntry::ptr entry = itr->second;
+			shared_ptr<ArchiveFileEntry> entry = itr->second;
 
 			std::wstring ext = PathProperty::GetFileExtension(entry->name);
 			if (ScriptInformation::IsExcludeExtention(ext)) continue;
 
 			std::wstring tPath = PathProperty::GetFileDirectory(path) + entry->directory + entry->name;
 
-			ref_count_ptr<gstd::ByteBuffer> buffer = ArchiveFile::CreateEntryBuffer(entry);
+			shared_ptr<ByteBuffer> buffer = ArchiveFile::CreateEntryBuffer(entry);
 			std::string source = "";
 			size_t size = buffer->GetSize();
 			source.resize(size);

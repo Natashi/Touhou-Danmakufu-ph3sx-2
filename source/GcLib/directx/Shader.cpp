@@ -84,7 +84,7 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 	}
 
 	//path = PathProperty::GetUnique(path);
-	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open()) {
 		std::wstring log = StringUtility::Format(L"ShaderManager: Shader load failed. [%s]", path.c_str());
 		Logger::WriteTop(log);

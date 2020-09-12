@@ -1685,18 +1685,18 @@ value DxScript::Func_SetCameraPerspectiveClip(script_machine* machine, int argc,
 }
 value DxScript::Func_GetCameraViewMatrix(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	D3DXMATRIX* matView = &graphics->GetCamera()->GetViewMatrix();
-	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(matView), 16U);
+	const D3DXMATRIX* matView = &graphics->GetCamera()->GetViewMatrix();
+	return DxScript::CreateRealArrayValue(reinterpret_cast<const FLOAT*>(matView), 16U);
 }
 value DxScript::Func_GetCameraProjectionMatrix(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	D3DXMATRIX* matProj = &graphics->GetCamera()->GetProjectionMatrix();
-	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(matProj), 16U);
+	const D3DXMATRIX* matProj = &graphics->GetCamera()->GetProjectionMatrix();
+	return DxScript::CreateRealArrayValue(reinterpret_cast<const FLOAT*>(matProj), 16U);
 }
 value DxScript::Func_GetCameraViewProjectionMatrix(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	D3DXMATRIX* matViewProj = &graphics->GetCamera()->GetViewProjectionMatrix();
-	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(matViewProj), 16U);
+	const D3DXMATRIX* matViewProj = &graphics->GetCamera()->GetViewProjectionMatrix();
+	return DxScript::CreateRealArrayValue(reinterpret_cast<const FLOAT*>(matViewProj), 16U);
 }
 
 //Dxä÷êîÅFÉJÉÅÉâ2D
@@ -4137,7 +4137,7 @@ gstd::value DxScript::Func_ObjFile_Open(gstd::script_machine* machine, int argc,
 		std::wstring path = argv[1].as_string();
 		path = PathProperty::GetUnique(path);
 
-		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader && reader->Open()) {
 			obj->isArchived_ = reader->IsArchived();
 			res = obj->OpenR(reader);
@@ -4154,7 +4154,7 @@ gstd::value DxScript::Func_ObjFile_OpenNW(gstd::script_machine* machine, int arg
 		std::wstring path = argv[1].as_string();
 		path = PathProperty::GetUnique(path);
 
-		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader && reader->Open()) {
 			obj->isArchived_ = reader->IsArchived();
 			if (!obj->isArchived_) {
@@ -4183,7 +4183,7 @@ gstd::value DxScript::Func_ObjFile_GetSize(gstd::script_machine* machine, int ar
 	int res = 0;
 	DxFileObject* obj = dynamic_cast<DxFileObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<File> file = obj->GetFile();
+		shared_ptr<File>& file = obj->GetFile();
 		res = file != nullptr ? file->GetSize() : 0;
 	}
 	return script->CreateRealValue(res);
@@ -4284,7 +4284,7 @@ gstd::value DxScript::Func_ObjFileB_GetPointer(gstd::script_machine* machine, in
 	size_t res = 0;
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
+		shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 		res = buffer->GetOffset();
 	}
 	return script->CreateRealValue(res);
@@ -4295,7 +4295,7 @@ gstd::value DxScript::Func_ObjFileB_Seek(gstd::script_machine* machine, int argc
 	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		int pos = argv[1].as_int();
-		gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
+		shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 		buffer->Seek(pos);
 	}
 	return gstd::value();
@@ -4308,7 +4308,7 @@ gstd::value DxScript::Func_ObjFileB_ReadBoolean(gstd::script_machine* machine, i
 	if (!obj->IsReadableSize(1))
 		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
+	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 	bool res = buffer->ReadBoolean();
 	return script->CreateBooleanValue(res);
 }
@@ -4320,7 +4320,7 @@ gstd::value DxScript::Func_ObjFileB_ReadByte(gstd::script_machine* machine, int 
 	if (!obj->IsReadableSize(1))
 		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
+	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 	char res = buffer->ReadCharacter();
 	return script->CreateRealValue(res);
 }
@@ -4332,7 +4332,7 @@ gstd::value DxScript::Func_ObjFileB_ReadShort(gstd::script_machine* machine, int
 	if (!obj->IsReadableSize(2))
 		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
+	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 	short bv = buffer->ReadShort();
 	if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
 		ByteOrder::Reverse(&bv, sizeof(bv));
@@ -4347,7 +4347,7 @@ gstd::value DxScript::Func_ObjFileB_ReadInteger(gstd::script_machine* machine, i
 	if (!obj->IsReadableSize(4))
 		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
+	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 	int bv = buffer->ReadInteger();
 	if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
 		ByteOrder::Reverse(&bv, sizeof(bv));
@@ -4363,7 +4363,7 @@ gstd::value DxScript::Func_ObjFileB_ReadLong(gstd::script_machine* machine, int 
 	if (!obj->IsReadableSize(8))
 		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
+	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 	int64_t bv = buffer->ReadInteger64();
 	if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
 		ByteOrder::Reverse(&bv, sizeof(bv));
@@ -4378,7 +4378,7 @@ gstd::value DxScript::Func_ObjFileB_ReadFloat(gstd::script_machine* machine, int
 	if (!obj->IsReadableSize(4))
 		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
+	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 	float res = 0;
 	if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG) {
 		int bv = buffer->ReadInteger();
@@ -4398,7 +4398,7 @@ gstd::value DxScript::Func_ObjFileB_ReadDouble(gstd::script_machine* machine, in
 	if (!obj->IsReadableSize(8))
 		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
+	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 	double res = 0;
 	if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG) {
 		int64_t bv = buffer->ReadInteger64();
@@ -4423,7 +4423,7 @@ gstd::value DxScript::Func_ObjFileB_ReadString(gstd::script_machine* machine, in
 	std::vector<byte> data;
 	data.resize(readSize);
 
-	gstd::ref_count_ptr<gstd::ByteBuffer> buffer = obj->GetBuffer();
+	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 	buffer->Read(&data[0], readSize);
 
 	std::wstring res;

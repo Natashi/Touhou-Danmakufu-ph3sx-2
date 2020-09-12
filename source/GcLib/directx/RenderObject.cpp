@@ -218,7 +218,7 @@ size_t RenderObject::_GetPrimitiveCount(size_t count) {
 
 D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
 	const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
-	D3DXMATRIX* matRelative, bool bCoordinate2D) 
+	const D3DXMATRIX* matRelative, bool bCoordinate2D)
 {
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
@@ -261,8 +261,8 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 		D3DXMATRIX matScale;
 		D3DXMatrixScaling(&matScale, 200.0f, 200.0f, -0.002f);
 
-		D3DXMATRIX& matInvView = camera->GetViewInverseMatrix();
-		D3DXMATRIX& matInvProj = camera->GetProjectionInverseMatrix();
+		const D3DXMATRIX& matInvView = camera->GetViewInverseMatrix();
+		const D3DXMATRIX& matInvProj = camera->GetProjectionInverseMatrix();
 		D3DXMATRIX matInvViewPort;
 		D3DXMatrixIdentity(&matInvViewPort);
 		matInvViewPort._11 = 1.0f / width;
@@ -277,7 +277,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 	return mat;
 }
 D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3DXVECTOR3& scale, 
-	const D3DXVECTOR3& angle, D3DXMATRIX* matRelative, bool bCoordinate2D) 
+	const D3DXVECTOR3& angle, const D3DXMATRIX* matRelative, bool bCoordinate2D)
 {
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
@@ -322,8 +322,8 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 		D3DXMATRIX matScale;
 		D3DXMatrixScaling(&matScale, 200.0f, 200.0f, -0.002f);
 
-		D3DXMATRIX& matInvView = camera->GetViewInverseMatrix();
-		D3DXMATRIX& matInvProj = camera->GetProjectionInverseMatrix();
+		const D3DXMATRIX& matInvView = camera->GetViewInverseMatrix();
+		const D3DXMATRIX& matInvProj = camera->GetProjectionInverseMatrix();
 		D3DXMATRIX matInvViewPort;
 		D3DXMatrixIdentity(&matInvViewPort);
 		matInvViewPort._11 = 1.0f / width;
@@ -340,7 +340,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 
 D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
 	const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
-	D3DXMATRIX* matRelative, bool bBillboard) 
+	const D3DXMATRIX* matRelative, bool bBillboard)
 {
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
@@ -376,7 +376,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(const D3DXVECTOR3& position, 
 }
 
 D3DXMATRIX RenderObject::CreateWorldMatrix2D(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
-	const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ, D3DXMATRIX* matCamera) 
+	const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ, const D3DXMATRIX* matCamera)
 {
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
@@ -402,7 +402,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrix2D(const D3DXVECTOR3& position, const 
 }
 D3DXMATRIX RenderObject::CreateWorldMatrixText2D(const D3DXVECTOR2& centerPosition, const D3DXVECTOR3& scale,
 	const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
-	const D3DXVECTOR2& objectPosition, const D3DXVECTOR2& biasPosition, D3DXMATRIX* matCamera)
+	const D3DXVECTOR2& objectPosition, const D3DXVECTOR2& biasPosition, const D3DXMATRIX* matCamera)
 {
 	D3DXMATRIX mat;
 	D3DXMatrixTranslation(&mat, -centerPosition.x, -centerPosition.y, 0.0f);
@@ -1146,7 +1146,7 @@ void RenderObjectBNX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 
 	DWORD bFogEnable = FALSE;
 	if (bCoordinate2D_) {
-		device->GetTransform(D3DTS_VIEW, &camera->GetIdentity());
+		//device->GetTransform(D3DTS_VIEW, &camera->GetIdentity());
 		device->GetRenderState(D3DRS_FOGENABLE, &bFogEnable);
 		device->SetRenderState(D3DRS_FOGENABLE, FALSE);
 		RenderObject::SetCoordinate2dDeviceMatrix();
@@ -2249,7 +2249,7 @@ void DxMesh::Release() {
 bool DxMesh::CreateFromFile(const std::wstring& path) {
 	try {
 		//path = PathProperty::GetUnique(path);
-		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader == nullptr) throw gstd::wexception("File not found.");
 		return CreateFromFileReader(reader);
 	}
@@ -2401,7 +2401,7 @@ void DxMeshManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> 
 		if (data->bLoad_) return;
 
 		bool res = false;
-		ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader != nullptr && reader->Open()) {
 			res = data->CreateFromFileReader(reader);
 		}

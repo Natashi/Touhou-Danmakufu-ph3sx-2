@@ -27,8 +27,6 @@ namespace gstd {
 
 	class ArchiveFileEntry {
 	public:
-		using ptr = std::shared_ptr<ArchiveFileEntry>;
-
 		enum TypeCompression : uint8_t {
 			CT_NONE,
 			CT_ZLIB,
@@ -62,12 +60,12 @@ namespace gstd {
 	**********************************************************/
 	class FileArchiver {
 	private:
-		std::list<ArchiveFileEntry::ptr> listEntry_;
+		std::list<shared_ptr<ArchiveFileEntry>> listEntry_;
 	public:
 		FileArchiver();
 		virtual ~FileArchiver();
 
-		void AddEntry(ArchiveFileEntry::ptr entry) { listEntry_.push_back(entry); }
+		void AddEntry(shared_ptr<ArchiveFileEntry> entry) { listEntry_.push_back(entry); }
 		bool CreateArchiveFile(const std::wstring& path);
 
 		bool EncryptArchive(std::fstream& inSrc, const std::wstring& pathOut, ArchiveFileHeader* header, 
@@ -81,7 +79,7 @@ namespace gstd {
 	private:
 		std::wstring basePath_;
 		std::ifstream file_;
-		std::multimap<std::wstring, ArchiveFileEntry::ptr> mapEntry_;
+		std::multimap<std::wstring, shared_ptr<ArchiveFileEntry>> mapEntry_;
 		uint8_t keyBase_;
 		uint8_t keyStep_;
 	public:
@@ -94,10 +92,10 @@ namespace gstd {
 		std::wstring& GetPath() { return basePath_; }
 
 		std::set<std::wstring> GetKeyList();
-		std::multimap<std::wstring, ArchiveFileEntry::ptr>& GetEntryMap() { return mapEntry_; }
-		std::vector<ArchiveFileEntry::ptr> GetEntryList(const std::wstring& name);
+		std::multimap<std::wstring, shared_ptr<ArchiveFileEntry>>& GetEntryMap() { return mapEntry_; }
+		std::vector<shared_ptr<ArchiveFileEntry>> GetEntryList(const std::wstring& name);
 		bool IsExists(const std::wstring& name);
-		static ref_count_ptr<ByteBuffer> CreateEntryBuffer(ArchiveFileEntry::ptr entry);
+		static shared_ptr<ByteBuffer> CreateEntryBuffer(shared_ptr<ArchiveFileEntry> entry);
 		//ref_count_ptr<ByteBuffer> GetBuffer(std::string name);
 	};
 

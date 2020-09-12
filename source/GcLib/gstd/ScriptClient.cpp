@@ -413,7 +413,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 				}
 
 				std::vector<char> placement;
-				ref_count_ptr<FileReader> reader;
+				shared_ptr<FileReader> reader;
 				reader = fileManager->GetFileReader(wPath);
 				if (reader == nullptr || !reader->Open()) {
 					int line = scanner.GetCurrentLine();
@@ -710,10 +710,9 @@ bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 	}
 
 	engine_->SetPath(path);
-	ref_count_ptr<FileReader> reader;
-	reader = FileManager::GetBase()->GetFileReader(path);
-	if (reader == nullptr) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
-	if (!reader->Open()) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
+	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+	if (reader == nullptr || !reader->Open())
+		throw gstd::wexception(L"SetScriptFileSource: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
 	size_t size = reader->GetFileSize();
 	std::vector<char> source;
@@ -1847,7 +1846,7 @@ void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
 
 	std::vector<std::string> listKey = record.GetKeyList();
 	for (const std::string& key : listKey) {
-		ref_count_ptr<RecordEntry> entry = record.GetEntry(key);
+		shared_ptr<RecordEntry> entry = record.GetEntry(key);
 		gstd::ByteBuffer& buffer = entry->GetBufferRef();
 
 		gstd::value storedVal;

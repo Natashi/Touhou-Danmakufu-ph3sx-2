@@ -145,15 +145,15 @@ ByteBuffer& ByteBuffer::operator=(const ByteBuffer& other) noexcept {
 /**********************************************************
 //File
 **********************************************************/
+std::wstring File::lastError_ = L"";
 File::File() {
+	hFile_ = INVALID_HANDLE_VALUE;
 	path_ = L"";
 	perms_ = 0;
 	bOpen_ = false;
 }
-File::File(const std::wstring& path) {
+File::File(const std::wstring& path) : File() {
 	path_ = path;
-	perms_ = 0;
-	bOpen_ = false;
 }
 File::~File() {
 	Close();
@@ -222,14 +222,10 @@ bool File::IsDirectory() {
 }
 size_t File::GetSize() {
 	size_t res = 0;
-	if (bOpen_) {
-		std::streampos org_off = hFile_.tellg();
-		hFile_.seekg(0, std::ios::end);
-		res = hFile_.tellg();
-		hFile_.seekg(org_off, std::ios::beg);
-		return res;
-	}
+	if (bOpen_ && hFile_ != INVALID_HANDLE_VALUE)
+		return ::GetFileSize(hFile_, nullptr);
 
+	//File not opened
 	try {
 		res = stdfs::file_size(path_);
 	}
@@ -245,37 +241,62 @@ bool File::Open() {
 bool File::Open(DWORD typeAccess) {
 	this->Close();
 	
-	std::ios_base::openmode modeOpen = 0;
+	DWORD modeAccess = 0;
+	DWORD modeShare = FILE_SHARE_READ;
+	DWORD modeCreation = OPEN_EXISTING;
 
-	if (typeAccess == AccessType::READ) modeOpen = std::ios::in;
-	else if (typeAccess == AccessType::WRITE) modeOpen = std::ios::in | std::ios::out;
-	else if (typeAccess == AccessType::WRITEONLY) modeOpen = std::ios::out | std::ios::trunc;
+	if (typeAccess == AccessType::READ) {
+		modeAccess = GENERIC_READ;
+	}
+	else if (typeAccess == AccessType::WRITE) {
+		modeAccess = GENERIC_READ | GENERIC_WRITE;
+	}
+	else if (typeAccess == AccessType::WRITEONLY) {
+		modeAccess = GENERIC_WRITE;
+		modeCreation = CREATE_ALWAYS;
+	}
 
-	if ((typeAccess & TEXTBASED) == 0) modeOpen |= std::ios::binary;
-
-	if (modeOpen == 0) return false;
+	if (modeAccess == 0) return false;
 	perms_ = typeAccess;
 
-	hFile_.open(path_, modeOpen);
+	hFile_ = ::CreateFile(path_.c_str(), modeAccess, modeShare, nullptr,
+		modeCreation, FILE_ATTRIBUTE_NORMAL, nullptr);
+	bOpen_ = hFile_ != INVALID_HANDLE_VALUE;
+	if (!bOpen_) {
+		DWORD code = ::GetLastError();
+		std::wstring errStr = L"Unknown error";
+		if (code != 0) {
+			LPWSTR buf = nullptr;
+			size_t size = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				nullptr, code, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, 0, nullptr);
+			errStr = std::wstring(buf, size);
+			LocalFree(buf);
+		}
+		lastError_ = StringUtility::FormatToWide("%s (code=%d)", errStr.c_str(), code);
+	}
+	else
+		lastError_ = L"No error";
 
-	bOpen_ = hFile_.is_open();
 	return bOpen_;
 }
 void File::Close() {
-	if (bOpen_) hFile_.close();
+	if (hFile_ != INVALID_HANDLE_VALUE) {
+		::CloseHandle(hFile_);
+		hFile_ = INVALID_HANDLE_VALUE;
+	}
 	bOpen_ = false;
 	perms_ = 0;
 }
 
 DWORD File::Read(LPVOID buf, DWORD size) {
-	hFile_.read((char*)buf, size);
-	hFile_.clear();
-	return hFile_.gcount();
+	DWORD res = 0;
+	::ReadFile(hFile_, buf, size, &res, nullptr);
+	return res;
 }
 DWORD File::Write(LPVOID buf, DWORD size) {
-	hFile_.write((const char*)buf, size);
-	hFile_.clear();
-	return size;
+	DWORD res = 0;
+	::WriteFile(hFile_, buf, size, &res, nullptr);
+	return res;
 }
 bool File::IsEqualsPath(const std::wstring& path1, const std::wstring& path2) {
 #ifdef __L_STD_FILESYSTEM
@@ -383,7 +404,7 @@ bool FileManager::Initialize() {
 	thisBase_ = this;
 
 #if defined(DNH_PROJ_EXECUTOR)
-	threadLoad_ = new LoadThread();
+	threadLoad_ = shared_ptr<LoadThread>(new LoadThread());
 	threadLoad_->Start();
 #endif
 
@@ -406,12 +427,12 @@ bool FileManager::AddArchiveFile(const std::wstring& path) {
 	if (mapArchiveFile_.find(path) != mapArchiveFile_.end())
 		return true;
 
-	ref_count_ptr<ArchiveFile> file = new ArchiveFile(path);
+	shared_ptr<ArchiveFile> file = shared_ptr<ArchiveFile>(new ArchiveFile(path));
 	if (!file->Open()) return false;
 
 	std::set<std::wstring> listKeyCurrent;
 	for (auto itrFile = mapArchiveFile_.begin(); itrFile != mapArchiveFile_.end(); ++itrFile) {
-		ref_count_ptr<ArchiveFile> tFile = itrFile->second;
+		shared_ptr<ArchiveFile> tFile = itrFile->second;
 		std::set<std::wstring> tList = tFile->GetKeyList();
 		for (auto itrList = tList.begin(); itrList != tList.end(); ++itrList) {
 			listKeyCurrent.insert(*itrList);
@@ -436,8 +457,8 @@ bool FileManager::RemoveArchiveFile(const std::wstring& path) {
 	mapArchiveFile_.erase(path);
 	return true;
 }
-ref_count_ptr<ArchiveFile> FileManager::GetArchiveFile(const std::wstring& name) {
-	ref_count_ptr<ArchiveFile> res = nullptr;
+shared_ptr<ArchiveFile> FileManager::GetArchiveFile(const std::wstring& name) {
+	shared_ptr<ArchiveFile> res = nullptr;
 	auto itrFind = mapArchiveFile_.find(name);
 	if (itrFind != mapArchiveFile_.end())
 		res = itrFind->second;
@@ -450,42 +471,42 @@ bool FileManager::ClearArchiveFileCache() {
 #endif
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
-ref_count_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
+shared_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	std::wstring pathAsUnique = PathProperty::GetUnique(path);
 
-	ref_count_ptr<FileReader> res = nullptr;
-	ref_count_ptr<File> fileRaw = new File(pathAsUnique);
+	shared_ptr<FileReader> res = nullptr;
+	shared_ptr<File> fileRaw(new File(pathAsUnique));
 	if (fileRaw->IsExists()) {
-		res = new ManagedFileReader(fileRaw, nullptr);
+		res = shared_ptr<ManagedFileReader>(new ManagedFileReader(fileRaw, nullptr));
 	}
 #if defined(DNH_PROJ_EXECUTOR)
 	else {
 		//Cannot find a physical file, search in the archive entries.
 
-		std::list<ArchiveFileEntry::ptr> listMatchEntry;
+		std::list<shared_ptr<ArchiveFileEntry>> listMatchEntry;
 
 		std::wstring name = PathProperty::GetFileName(pathAsUnique);
 		for (auto itrArchive = mapArchiveFile_.begin(); itrArchive != mapArchiveFile_.end(); ++itrArchive) {
-			std::vector<ArchiveFileEntry::ptr> list = itrArchive->second->GetEntryList(name);
+			std::vector<shared_ptr<ArchiveFileEntry>> list = itrArchive->second->GetEntryList(name);
 			for (auto iEntry : list)
 				listMatchEntry.push_back(iEntry);
 		}
 
 		if (listMatchEntry.size() == 1U) {
-			ArchiveFileEntry::ptr& entry = *listMatchEntry.begin();
-			ref_count_ptr<File> file = new File(entry->archiveParent->GetPath());
-			res = new ManagedFileReader(file, entry);
+			shared_ptr<ArchiveFileEntry>& entry = *listMatchEntry.begin();
+			shared_ptr<File> file(new File(entry->archiveParent->GetPath()));
+			res = shared_ptr<ManagedFileReader>(new ManagedFileReader(file, entry));
 		}
 		else if (listMatchEntry.size() > 0U) {
 			std::wstring fileTargetDir = PathProperty::GetDirectoryWithoutModuleDirectory(pathAsUnique);
 			fileTargetDir = PathProperty::ReplaceYenToSlash(fileTargetDir);
 
 			for (auto itr = listMatchEntry.begin(); itr != listMatchEntry.end(); ++itr) {
-				ArchiveFileEntry::ptr& entry = *itr;
+				shared_ptr<ArchiveFileEntry>& entry = *itr;
 				if (fileTargetDir.find(entry->directory) == std::wstring::npos)
 					continue;
-				ref_count_ptr<File> file = new File(entry->archiveParent->GetPath());
-				res = new ManagedFileReader(file, entry);
+				shared_ptr<File> file(new File(entry->archiveParent->GetPath()));
+				res = shared_ptr<ManagedFileReader>(new ManagedFileReader(file, entry));
 				break;
 			}
 		}
@@ -496,8 +517,8 @@ ref_count_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	return res;
 }
 
-ref_count_ptr<ByteBuffer> FileManager::_GetByteBuffer(shared_ptr<ArchiveFileEntry> entry) {
-	ref_count_ptr<ByteBuffer> res = nullptr;
+shared_ptr<ByteBuffer> FileManager::_GetByteBuffer(shared_ptr<ArchiveFileEntry> entry) {
+	shared_ptr<ByteBuffer> res = nullptr;
 	try {
 		Lock lock(lock_);
 
@@ -524,8 +545,8 @@ void FileManager::_ReleaseByteBuffer(shared_ptr<ArchiveFileEntry> entry) {
 		auto itr = mapByteBuffer_.find(key);
 
 		if (itr == mapByteBuffer_.end()) return;
-		ref_count_ptr<ByteBuffer> buffer = itr->second;
-		if (buffer.GetReferenceCount() == 2) {
+		shared_ptr<ByteBuffer> buffer = itr->second;
+		if (buffer.use_count() == 2) {
 			mapByteBuffer_.erase(itr);
 		}
 	}
@@ -657,7 +678,7 @@ void FileManager::LoadThread::RemoveListener(FileManager::LoadThreadListener* li
 /**********************************************************
 //ManagedFileReader
 **********************************************************/
-ManagedFileReader::ManagedFileReader(ref_count_ptr<File> file, std::shared_ptr<ArchiveFileEntry> entry) {
+ManagedFileReader::ManagedFileReader(shared_ptr<File> file, shared_ptr<ArchiveFileEntry> entry) {
 	offset_ = 0;
 	file_ = file;
 
@@ -722,8 +743,7 @@ BOOL ManagedFileReader::SetFilePointerBegin() {
 	BOOL res = FALSE;
 	offset_ = 0;
 	if (type_ == TYPE_NORMAL) {
-		file_->SetFilePointerBegin();
-		res = !file_->Fail();
+		res = file_->SetFilePointerBegin();
 	}
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
@@ -736,8 +756,7 @@ BOOL ManagedFileReader::SetFilePointerBegin() {
 BOOL ManagedFileReader::SetFilePointerEnd() {
 	BOOL res = FALSE;
 	if (type_ == TYPE_NORMAL) {
-		file_->SetFilePointerEnd();
-		res = !file_->Fail();
+		res = file_->SetFilePointerEnd();
 	}
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
@@ -750,13 +769,11 @@ BOOL ManagedFileReader::SetFilePointerEnd() {
 BOOL ManagedFileReader::Seek(size_t offset) {
 	BOOL res = FALSE;
 	if (type_ == TYPE_NORMAL) {
-		file_->Seek(offset);
-		res = !file_->Fail();
+		res = file_->Seek(offset, FILE_BEGIN);
 	}
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
-		if (buffer_) {
+		if (buffer_)
 			res = TRUE;
-		}
 	}
 	if (res == TRUE)
 		offset_ = offset;
@@ -765,7 +782,7 @@ BOOL ManagedFileReader::Seek(size_t offset) {
 size_t ManagedFileReader::GetFilePointer() {
 	size_t res = 0;
 	if (type_ == TYPE_NORMAL) {
-		res = file_->GetFilePointerRead();
+		res = file_->GetFilePointer();
 	}
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
@@ -831,12 +848,10 @@ RecordBuffer::~RecordBuffer() {
 void RecordBuffer::Clear() {
 	mapEntry_.clear();
 }
-ref_count_ptr<RecordEntry> RecordBuffer::GetEntry(const std::string& key) {
-	ref_count_ptr<RecordEntry> res;
-
+shared_ptr<RecordEntry> RecordBuffer::GetEntry(const std::string& key) {
+	shared_ptr<RecordEntry> res = nullptr;
 	auto itr = mapEntry_.find(key);
 	if (itr != mapEntry_.end()) res = itr->second;
-
 	return res;
 }
 bool RecordBuffer::IsExists(const std::string& key) {
@@ -854,7 +869,7 @@ void RecordBuffer::Write(Writer& writer) {
 	writer.Write<uint32_t>(countEntry);
 
 	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); ++itr) {
-		ref_count_ptr<RecordEntry> entry = itr->second;
+		shared_ptr<RecordEntry>& entry = itr->second;
 		entry->_WriteEntryRecord(writer);
 	}
 }
@@ -863,7 +878,7 @@ void RecordBuffer::Read(Reader& reader) {
 	uint32_t countEntry = 0;
 	reader.Read<uint32_t>(countEntry);
 	for (size_t iEntry = 0; iEntry < countEntry; ++iEntry) {
-		ref_count_ptr<RecordEntry> entry = new RecordEntry();
+		shared_ptr<RecordEntry> entry(new RecordEntry());
 		entry->_ReadEntryRecord(reader);
 
 		const std::string& key = entry->GetKey();
@@ -938,7 +953,7 @@ std::string RecordBuffer::GetRecordAsStringA(const std::string& key) {
 	if (itr == mapEntry_.end()) return "";
 
 	std::string res;
-	ref_count_ptr<RecordEntry> entry = itr->second;
+	shared_ptr<RecordEntry>& entry = itr->second;
 	int type = entry->GetType();
 	ByteBuffer& buffer = entry->GetBufferRef();
 	buffer.Seek(0);
@@ -960,7 +975,7 @@ std::wstring RecordBuffer::GetRecordAsStringW(const std::string& key) {
 	if (itr == mapEntry_.end()) return L"";
 
 	std::wstring res;
-	ref_count_ptr<RecordEntry> entry = itr->second;
+	shared_ptr<RecordEntry>& entry = itr->second;
 	int type = entry->GetType();
 	ByteBuffer& buffer = entry->GetBufferRef();
 	buffer.Seek(0);
@@ -987,7 +1002,7 @@ bool RecordBuffer::GetRecordAsRecordBuffer(const std::string& key, RecordBuffer&
 	return true;
 }
 void RecordBuffer::SetRecord(int type, const std::string& key, LPVOID buf, DWORD size) {
-	ref_count_ptr<RecordEntry> entry = new RecordEntry();
+	shared_ptr<RecordEntry> entry(new RecordEntry());
 	entry->SetType((char)type);
 	entry->SetKey(key);
 	ByteBuffer& buffer = entry->GetBufferRef();
@@ -996,7 +1011,7 @@ void RecordBuffer::SetRecord(int type, const std::string& key, LPVOID buf, DWORD
 	mapEntry_[key] = entry;
 }
 void RecordBuffer::SetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record) {
-	ref_count_ptr<RecordEntry> entry = new RecordEntry();
+	shared_ptr<RecordEntry> entry(new RecordEntry());
 	entry->SetType((char)RecordEntry::TYPE_RECORD);
 	entry->SetKey(key);
 	ByteBuffer& buffer = entry->GetBufferRef();
@@ -1020,10 +1035,10 @@ bool PropertyFile::Load(const std::wstring& path) {
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	FileManager* fileManager = FileManager::GetBase();
 	if (fileManager) {
-		ref_count_ptr<FileReader> reader = fileManager->GetFileReader(path);
+		shared_ptr<FileReader> reader = fileManager->GetFileReader(path);
 
 		if (reader == nullptr || !reader->Open()) {
-			Logger::WriteTop(ErrorUtility::GetFileNotFoundErrorMessage(path));
+			Logger::WriteTop(L"PropertyFile::Load: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 			return false;
 		}
 
@@ -1129,25 +1144,25 @@ SystemValueManager::~SystemValueManager() {}
 bool SystemValueManager::Initialize() {
 	if (thisBase_) return false;
 
-	mapRecord_[RECORD_SYSTEM] = new RecordBuffer();
-	mapRecord_[RECORD_SYSTEM_GLOBAL] = new RecordBuffer();
+	mapRecord_[RECORD_SYSTEM] = std::make_shared<RecordBuffer>();
+	mapRecord_[RECORD_SYSTEM_GLOBAL] = std::make_shared<RecordBuffer>();
 
 	thisBase_ = this;
 	return true;
 }
-void SystemValueManager::ClearRecordBuffer(std::string key) {
+void SystemValueManager::ClearRecordBuffer(const std::string& key) {
 	if (!IsExists(key)) return;
 	mapRecord_[key]->Clear();
 }
-bool SystemValueManager::IsExists(std::string key) {
+bool SystemValueManager::IsExists(const std::string& key) {
 	return mapRecord_.find(key) != mapRecord_.end();
 }
-bool SystemValueManager::IsExists(std::string keyRecord, std::string keyValue) {
+bool SystemValueManager::IsExists(const std::string& keyRecord, const std::string& keyValue) {
 	if (!IsExists(keyRecord)) return false;
-	gstd::ref_count_ptr<RecordBuffer> record = GetRecordBuffer(keyRecord);
+	shared_ptr<RecordBuffer> record = GetRecordBuffer(keyRecord);
 	return record->IsExists(keyValue);
 }
-gstd::ref_count_ptr<RecordBuffer> SystemValueManager::GetRecordBuffer(std::string key) {
+shared_ptr<RecordBuffer> SystemValueManager::GetRecordBuffer(const std::string& key) {
 	return IsExists(key) ? mapRecord_[key] : nullptr;
 }
 #endif

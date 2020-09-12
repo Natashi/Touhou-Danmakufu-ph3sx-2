@@ -140,7 +140,7 @@ namespace gstd {
 			return GetLastErrorMessage(GetLastError());
 		}
 		static std::wstring GetErrorMessage(int type);
-		static std::wstring GetFileNotFoundErrorMessage(const std::wstring& path);
+		static std::wstring GetFileNotFoundErrorMessage(const std::wstring& path, bool bErrorExtended = false);
 		static std::wstring GetParseErrorMessage(int line, const std::wstring& what) {
 			return GetParseErrorMessage(L"", line, what);
 		}

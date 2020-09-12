@@ -41,7 +41,7 @@ namespace directx {
 	public:
 		ElfreinaMeshData();
 		~ElfreinaMeshData();
-		bool CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader);
+		bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader);
 		std::vector<gstd::ref_count_ptr<Bone>>& GetBones() { return bone_; }
 	};
 
@@ -145,7 +145,7 @@ namespace directx {
 	public:
 		ElfreinaMesh() {}
 		virtual ~ElfreinaMesh() {}
-		virtual bool CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader);
+		virtual bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader);
 		virtual bool CreateFromFileInLoadThread(const std::wstring& path);
 		virtual std::wstring GetPath();
 		virtual void Render();

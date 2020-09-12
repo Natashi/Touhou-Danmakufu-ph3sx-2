@@ -63,7 +63,7 @@ void StgShotManager::Render(int targetPriority) {
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 
-	D3DXMATRIX& matCamera = camera2D->GetMatrix();
+	const D3DXMATRIX& matCamera = camera2D->GetMatrix();
 
 	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted() || !obj->IsActive() || obj->GetRenderPriorityI() != targetPriority) continue;
@@ -71,7 +71,8 @@ void StgShotManager::Render(int targetPriority) {
 	}
 
 	{
-		D3DXMATRIX matProj = matCamera * graphics->GetViewPortMatrix();
+		D3DXMATRIX matProj;
+		D3DXMatrixMultiply(&matProj, &matCamera, &graphics->GetViewPortMatrix());
 		effectLayer_->SetMatrix(handleEffectWorld_, &matProj);
 	}
 
@@ -286,9 +287,9 @@ StgShotDataList::~StgShotDataList() {
 bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 	if (!bReload && listReadPath_.find(path) != listReadPath_.end()) return true;
 
-	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-	if (reader == nullptr) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
-	if (!reader->Open()) throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
+	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+	if (reader == nullptr || !reader->Open())
+		throw gstd::wexception(L"AddShotDataList: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 	std::string source = reader->ReadAllString();
 
 	bool res = false;

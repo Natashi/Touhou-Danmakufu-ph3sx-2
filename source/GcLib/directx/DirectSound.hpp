@@ -206,7 +206,7 @@ namespace directx {
 		size_t pathHash_;
 		gstd::CriticalSection lock_;
 		IDirectSoundBuffer8* pDirectSoundBuffer_;
-		gstd::ref_count_ptr<gstd::FileReader> reader_;
+		shared_ptr<gstd::FileReader> reader_;
 		SoundDivision* division_;
 
 		DirectSoundManager::FileFormat format_;
@@ -226,7 +226,7 @@ namespace directx {
 		bool flgUpdateStreamOffset_;
 		size_t audioSizeTotal_;		//In bytes.
 
-		virtual bool _CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader) = 0;
+		virtual bool _CreateBuffer(shared_ptr<gstd::FileReader> reader) = 0;
 		virtual void _SetSoundInfo();
 		static LONG _GetVolumeAsDirectSoundDecibel(float rate);
 	public:
@@ -319,7 +319,7 @@ namespace directx {
 		virtual DWORD GetCurrentPosition();
 		size_t* DbgGetStreamCopyPos() { return lastStreamCopyPos_; }
 
-		size_t GetReaderRefCount() { return reader_ ? 0 : reader_.GetReferenceCount(); }
+		size_t GetReaderRefCount() { return reader_ ? 0 : reader_.use_count(); }
 	};
 	class SoundStreamingPlayer::StreamingThread : public gstd::Thread, public gstd::InnerClass<SoundStreamingPlayer> {
 	public:
@@ -335,7 +335,7 @@ namespace directx {
 	**********************************************************/
 	class SoundPlayerWave : public SoundPlayer {
 	protected:
-		virtual bool _CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader);
+		virtual bool _CreateBuffer(shared_ptr<gstd::FileReader> reader);
 	public:
 		SoundPlayerWave();
 		virtual ~SoundPlayerWave();
@@ -354,7 +354,7 @@ namespace directx {
 	protected:
 		size_t posWaveStart_;
 		size_t posWaveEnd_;
-		virtual bool _CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader);
+		virtual bool _CreateBuffer(shared_ptr<gstd::FileReader> reader);
 		virtual size_t _CopyBuffer(LPVOID pMem, DWORD dwSize);
 	public:
 		SoundStreamingPlayerWave();
@@ -370,7 +370,7 @@ namespace directx {
 		OggVorbis_File fileOgg_;
 		ov_callbacks oggCallBacks_;
 
-		virtual bool _CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader);
+		virtual bool _CreateBuffer(shared_ptr<gstd::FileReader> reader);
 		virtual size_t _CopyBuffer(LPVOID pMem, DWORD dwSize);
 
 		static size_t _ReadOgg(void* ptr, size_t size, size_t nmemb, void* source);
@@ -399,7 +399,7 @@ namespace directx {
 		double timeCurrent_;
 		gstd::ref_count_ptr<gstd::ByteBuffer> bufDecode_;
 
-		virtual bool _CreateBuffer(gstd::ref_count_ptr<gstd::FileReader> reader);
+		virtual bool _CreateBuffer(shared_ptr<gstd::FileReader> reader);
 		virtual size_t _CopyBuffer(LPVOID pMem, DWORD dwSize);
 		size_t _ReadAcmStream(char* pBuffer, size_t size);
 	public:

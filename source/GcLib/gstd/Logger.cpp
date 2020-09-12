@@ -119,7 +119,6 @@ void FileLogger::_Write(SYSTEMTIME& time, const std::wstring& str) {
 		out += L"\n";
 
 		size_t pos = file.GetSize();
-		file.SeekWrite(pos, std::ios::beg);
 		file.Write(&out[0], StringUtility::GetByteSize(out));
 
 		bool bOverSize = file.GetSize() > sizeMax_;

@@ -15,7 +15,7 @@ ElfreinaMeshData::ElfreinaMeshData() {}
 ElfreinaMeshData::~ElfreinaMeshData() {
 
 }
-bool ElfreinaMeshData::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool ElfreinaMeshData::CreateFromFileReader(shared_ptr<gstd::FileReader> reader) {
 	bool res = false;
 	path_ = reader->GetOriginalPath();
 	size_t size = reader->GetFileSize();
@@ -813,7 +813,7 @@ void RenderObjectElfreinaBlock::CalculateZValue() {
 }
 
 //ElfreinaMesh
-bool ElfreinaMesh::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool ElfreinaMesh::CreateFromFileReader(shared_ptr<gstd::FileReader> reader) {
 	bool res = false;
 	{
 		Lock lock(DxMeshManager::GetBase()->GetLock());

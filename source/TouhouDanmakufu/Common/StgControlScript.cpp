@@ -381,7 +381,7 @@ gstd::value StgControlScript::Func_GetArchiveFilePathList(gstd::script_machine* 
 	std::wstring name = argv[0].as_string();
 	bool bExtendPath = argv[1].as_boolean();
 
-	ref_count_ptr<ArchiveFile> archive = fileManager->GetArchiveFile(name);
+	shared_ptr<ArchiveFile> archive = fileManager->GetArchiveFile(name);
 	if (archive) {
 		std::wstring archiveBaseDir = PathProperty::GetFileDirectory(archive->GetPath());
 
@@ -545,7 +545,7 @@ gstd::value StgControlScript::Func_GetScriptInfoA1(gstd::script_machine* machine
 		script->mapScriptInfo_[path] = infoScript;
 	}
 	if (infoScript == nullptr)
-		throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path));
+		throw gstd::wexception(L"GetScriptInfoA1: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
 	value res;
 	switch (type) {

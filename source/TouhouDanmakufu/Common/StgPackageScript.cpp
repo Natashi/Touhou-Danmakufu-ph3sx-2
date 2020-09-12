@@ -226,10 +226,10 @@ gstd::value StgPackageScript::Func_SetStageMainScript(gstd::script_machine* mach
 	ref_count_ptr<StgStageInformation> infoStage = nextStageData->GetStageInformation();
 
 	std::wstring path = argv[0].as_string();
-	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open()) {
-		std::wstring error = ErrorUtility::GetFileNotFoundErrorMessage(path);
-		script->RaiseError(error);
+		std::wstring error = ErrorUtility::GetFileNotFoundErrorMessage(path, true);
+		script->RaiseError(L"SetStageMainScript: " + error);
 	}
 
 	std::string source = "";
@@ -240,7 +240,7 @@ gstd::value StgPackageScript::Func_SetStageMainScript(gstd::script_machine* mach
 	ref_count_ptr<ScriptInformation> infoScript =
 		ScriptInformation::CreateScriptInformation(path, L"", source, false);
 	if (infoScript == nullptr)
-		script->RaiseError(ErrorUtility::GetFileNotFoundErrorMessage(path));
+		script->RaiseError(L"SetStageMainScript: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
 	infoStage->SetMainScriptInformation(infoScript);
 
@@ -256,10 +256,10 @@ gstd::value StgPackageScript::Func_SetStagePlayerScript(gstd::script_machine* ma
 	ref_count_ptr<StgStageInformation> infoStage = nextStageData->GetStageInformation();
 
 	std::wstring path = argv[0].as_string();
-	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open()) {
-		std::wstring error = ErrorUtility::GetFileNotFoundErrorMessage(path);
-		script->RaiseError(error);
+		std::wstring error = ErrorUtility::GetFileNotFoundErrorMessage(path, true);
+		script->RaiseError(L"SetStagePlayerScript: " + error);
 	}
 
 	std::string source = "";
@@ -284,8 +284,8 @@ gstd::value StgPackageScript::Func_SetStageReplayFile(gstd::script_machine* mach
 	ref_count_ptr<ReplayInformation> infoRepray =
 		ReplayInformation::CreateFromFile(pathReplay);
 	if (infoRepray == nullptr) {
-		std::wstring path = ErrorUtility::GetFileNotFoundErrorMessage(pathReplay);
-		script->RaiseError(path);
+		std::wstring path = ErrorUtility::GetFileNotFoundErrorMessage(pathReplay, true);
+		script->RaiseError(L"SetStageReplayFile: " + path);
 	}
 	infoPackage->SetReplayInformation(infoRepray);
 	return value();

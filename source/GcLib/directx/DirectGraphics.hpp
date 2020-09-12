@@ -114,6 +114,8 @@ namespace directx {
 		gstd::ref_count_ptr<DxCamera2D> camera2D_;
 		shared_ptr<Texture> textureTarget_;
 
+		D3DXMATRIX matViewPort_;
+
 		VertexBufferManager* bufferManager_;
 
 		VertexFogState stateFog_;
@@ -133,8 +135,6 @@ namespace directx {
 		virtual bool Initialize(HWND hWnd);
 		virtual bool Initialize(HWND hWnd, DirectGraphicsConfig& config);
 
-		
-
 		void AddDirectGraphicsListener(DirectGraphicsListener* listener);
 		void RemoveDirectGraphicsListener(DirectGraphicsListener* listener);
 		ScreenMode GetScreenMode() { return modeScreen_; }
@@ -146,20 +146,20 @@ namespace directx {
 
 		IDirect3DSurface9* GetBaseSurface() { return pBackSurf_; }
 
-		void BeginScene(bool bMainRender = true, bool bClear = true);	//描画開始
-		void EndScene(bool bPresent = true);	//描画終了
+		void BeginScene(bool bMainRender = true, bool bClear = true);
+		void EndScene(bool bPresent = true);
 		void ClearRenderTarget();
 		void ClearRenderTarget(RECT* rect);
 		void SetRenderTarget(shared_ptr<Texture> texture, bool bResetState = true);
 		shared_ptr<Texture> GetRenderTarget() { return textureTarget_; }
 
-		//レンダリングステートラッパ
-		void SetLightingEnable(bool bEnable);//ライティング
-		void SetSpecularEnable(bool bEnable);//スペキュラ
-		void SetCullingMode(DWORD mode);//カリング
-		void SetShadingMode(DWORD mode);//シェーディング
-		void SetZBufferEnable(bool bEnable);//Zバッファ参照
-		void SetZWriteEnable(bool bEnable);//Zバッファ書き込み
+		//Render states
+		void SetLightingEnable(bool bEnable);
+		void SetSpecularEnable(bool bEnable);
+		void SetCullingMode(DWORD mode);
+		void SetShadingMode(DWORD mode);
+		void SetZBufferEnable(bool bEnable);
+		void SetZWriteEnable(bool bEnable);
 		void SetAlphaTest(bool bEnable, DWORD ref = 0, D3DCMPFUNC func = D3DCMP_GREATER);
 		void SetBlendMode(BlendMode mode, int stage = 0);
 		BlendMode GetBlendMode() { return previousBlendMode_; }
@@ -185,10 +185,9 @@ namespace directx {
 		HRESULT SetFullscreenAntiAliasing(bool bEnable);
 		bool IsSupportMultiSample(D3DMULTISAMPLE_TYPE type);
 
-		D3DXMATRIX matViewPort_;
 		void SetViewPort(int x, int y, int width, int height);
 		void ResetViewPort();
-		D3DXMATRIX& GetViewPortMatrix() { return matViewPort_; }
+		const D3DXMATRIX& GetViewPortMatrix() { return matViewPort_; }
 
 		LONG GetScreenWidth();
 		LONG GetScreenHeight();
@@ -268,8 +267,8 @@ namespace directx {
 		DxCamera();
 		virtual ~DxCamera();
 		void Reset();
-		D3DXVECTOR3 GetCameraPosition() { return camPos_; }
-		D3DXVECTOR3 GetFocusPosition() { return pos_; }
+		const D3DXVECTOR3& GetCameraPosition() { return camPos_; }
+		const D3DXVECTOR3& GetFocusPosition() { return pos_; }
 		void SetFocus(float x, float y, float z) { pos_.x = x; pos_.y = y; pos_.z = z; }
 		void SetFocusX(float x) { pos_.x = x; }
 		void SetFocusY(float y) { pos_.y = y; }
@@ -312,14 +311,14 @@ namespace directx {
 
 		D3DXVECTOR2 TransformCoordinateTo2D(D3DXVECTOR3 pos);
 
-		D3DXMATRIX& GetViewMatrix() { return matView_; }
-		D3DXMATRIX& GetViewProjectionMatrix() { return matViewProjection_; }
-		D3DXMATRIX& GetViewInverseMatrix() { return matViewInverse_; }
-		D3DXMATRIX& GetViewTransposedMatrix() { return matViewTranspose_; }
-		D3DXMATRIX& GetProjectionMatrix() { return matProjection_; }
-		D3DXMATRIX& GetProjectionInverseMatrix() { return matProjectionInverse_; }
+		const D3DXMATRIX& GetViewMatrix() { return matView_; }
+		const D3DXMATRIX& GetViewProjectionMatrix() { return matViewProjection_; }
+		const D3DXMATRIX& GetViewInverseMatrix() { return matViewInverse_; }
+		const D3DXMATRIX& GetViewTransposedMatrix() { return matViewTranspose_; }
+		const D3DXMATRIX& GetProjectionMatrix() { return matProjection_; }
+		const D3DXMATRIX& GetProjectionInverseMatrix() { return matProjectionInverse_; }
 
-		D3DXMATRIX& GetIdentity() { return matIdentity_; }
+		const D3DXMATRIX& GetIdentity() { return matIdentity_; }
 	};
 
 	/**********************************************************
@@ -347,7 +346,7 @@ namespace directx {
 		bool IsEnable() { return bEnable_; }
 		void SetEnable(bool bEnable) { bEnable_ = bEnable; }
 
-		D3DXVECTOR2 GetFocusPosition() { return pos_; }
+		const D3DXVECTOR2& GetFocusPosition() { return pos_; }
 		float GetFocusX() { return pos_.x; }
 		float GetFocusY() { return pos_.y; }
 		void SetFocus(float x, float y) { pos_.x = x; pos_.y = y; }
@@ -363,7 +362,7 @@ namespace directx {
 		double GetAngleZ() { return angleZ_; }
 		void SetAngleZ(double angle) { angleZ_ = angle; }
 
-		RECT GetClip() { return rcClip_; }
+		const RECT& GetClip() { return rcClip_; }
 		void SetClip(const RECT& rect) { rcClip_ = rect; }
 
 		void SetResetFocus(gstd::ref_count_ptr<D3DXVECTOR2>& pos) { posReset_ = pos; }
@@ -374,7 +373,7 @@ namespace directx {
 		inline static D3DXVECTOR2 GetLeftTopPosition(D3DXVECTOR2 focus, double ratioX, double ratioY, RECT rcClip);
 
 		void UpdateMatrix();
-		D3DXMATRIX& GetMatrix() { return bEnable_ ? matCamera_ : matIdentity_; }
+		const D3DXMATRIX& GetMatrix() { return bEnable_ ? matCamera_ : matIdentity_; }
 	};
 #endif
 }

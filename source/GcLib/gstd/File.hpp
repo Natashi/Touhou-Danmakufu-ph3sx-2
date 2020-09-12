@@ -128,19 +128,17 @@ namespace gstd {
 
 	/**********************************************************
 	//File
-	//ファイルは、x:\fffff.xxx
-	//ディレクトリはx:\ddddd\
 	**********************************************************/
 	class File : public Writer, public Reader {
+		static std::wstring lastError_;
 	public:
 		enum AccessType : DWORD {
 			READ = 0x1,
 			WRITE = 0x2,
 			WRITEONLY = 0x4,
-			TEXTBASED = 0x8,
 		};
 	protected:
-		std::fstream hFile_;
+		HANDLE hFile_;
 		std::wstring path_;
 		DWORD perms_;
 		bool bOpen_;
@@ -148,6 +146,8 @@ namespace gstd {
 		File();
 		File(const std::wstring& path);
 		virtual ~File();
+
+		static const std::wstring& GetLastError() { return lastError_; }
 
 		static bool CreateFileDirectory(const std::wstring& path);
 		static bool IsExists(const std::wstring& path);
@@ -159,7 +159,7 @@ namespace gstd {
 
 		size_t GetSize();
 		std::wstring& GetPath() { return path_; }
-		std::fstream& GetFileStream() { return hFile_; }
+		const HANDLE GetFileHandle() { return hFile_; }
 
 		virtual bool Open();
 		bool Open(DWORD typeAccess);
@@ -168,22 +168,12 @@ namespace gstd {
 		virtual DWORD Write(LPVOID buf, DWORD size);
 		virtual DWORD Read(LPVOID buf, DWORD size);
 
-		void SetFilePointerBegin() { hFile_.seekg(0, std::ios::beg); }
-		void SetFilePointerEnd() { hFile_.seekg(0, std::ios::end); }
-		void Seek(size_t offset, const std::ios::_Seekdir& seek = std::ios::beg) {
-			SeekRead(offset, seek);
-			SeekWrite(offset, seek);
+		BOOL SetFilePointerBegin() { return ::SetFilePointer(hFile_, 0, nullptr, FILE_BEGIN); }
+		BOOL SetFilePointerEnd() { return ::SetFilePointer(hFile_, 0, nullptr, FILE_END); }
+		BOOL Seek(size_t offset, DWORD seek) {
+			return ::SetFilePointer(hFile_, offset, nullptr, seek);
 		}
-		void SeekRead(size_t offset, const std::ios::_Seekdir& seek) {
-			hFile_.seekg(offset, seek);
-		}
-		void SeekWrite(size_t offset, const std::ios::_Seekdir& seek) {
-			if (perms_ & AccessType::WRITE) hFile_.seekp(offset, seek);
-		}
-		size_t GetFilePointerRead() { return hFile_.tellg(); }
-		size_t GetFilePointerWrite() { return hFile_.tellp(); }
-
-		bool Fail() { return bOpen_ ? hFile_.fail() : false; }
+		size_t GetFilePointer() { return ::SetFilePointer(hFile_, 0, NULL, FILE_CURRENT); }
 
 		static bool IsEqualsPath(const std::wstring& path1, const std::wstring& path2);
 		static std::vector<std::wstring> GetFilePathList(const std::wstring& dir);
@@ -218,13 +208,13 @@ namespace gstd {
 	protected:
 		gstd::CriticalSection lock_;
 #if defined(DNH_PROJ_EXECUTOR)
-		gstd::ref_count_ptr<LoadThread> threadLoad_;
+		shared_ptr<LoadThread> threadLoad_;
 #endif
-		std::map<std::wstring, ref_count_ptr<ArchiveFile>> mapArchiveFile_;
-		std::map<std::wstring, ref_count_ptr<ByteBuffer>> mapByteBuffer_;
+		std::map<std::wstring, shared_ptr<ArchiveFile>> mapArchiveFile_;
+		std::map<std::wstring, shared_ptr<ByteBuffer>> mapByteBuffer_;
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
-		ref_count_ptr<ByteBuffer> _GetByteBuffer(shared_ptr<ArchiveFileEntry> entry);
+		shared_ptr<ByteBuffer> _GetByteBuffer(shared_ptr<ArchiveFileEntry> entry);
 		void _ReleaseByteBuffer(shared_ptr<ArchiveFileEntry> entry);
 #endif
 	public:
@@ -242,12 +232,12 @@ namespace gstd {
 
 		bool AddArchiveFile(const std::wstring& path);
 		bool RemoveArchiveFile(const std::wstring& path);
-		ref_count_ptr<ArchiveFile> GetArchiveFile(const std::wstring& name);
+		shared_ptr<ArchiveFile> GetArchiveFile(const std::wstring& name);
 		bool ClearArchiveFileCache();
 #endif
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
-		ref_count_ptr<FileReader> GetFileReader(const std::wstring& path);
+		shared_ptr<FileReader> GetFileReader(const std::wstring& path);
 #endif
 	};
 
@@ -317,13 +307,13 @@ namespace gstd {
 		};
 
 		FILETYPE type_;
-		ref_count_ptr<File> file_;
-		std::shared_ptr<ArchiveFileEntry> entry_;
+		shared_ptr<File> file_;
+		shared_ptr<ArchiveFileEntry> entry_;
 
-		ref_count_ptr<ByteBuffer> buffer_;
+		shared_ptr<ByteBuffer> buffer_;
 		size_t offset_;
 	public:
-		ManagedFileReader(ref_count_ptr<File> file, std::shared_ptr<ArchiveFileEntry> entry);
+		ManagedFileReader(shared_ptr<File> file, shared_ptr<ArchiveFileEntry> entry);
 		~ManagedFileReader();
 
 		virtual bool Open();
@@ -338,7 +328,7 @@ namespace gstd {
 		virtual bool IsArchived();
 		virtual bool IsCompressed();
 
-		virtual ref_count_ptr<ByteBuffer> GetBuffer() { return buffer_; }
+		virtual shared_ptr<ByteBuffer> GetBuffer() { return buffer_; }
 	};
 #endif
 
@@ -398,22 +388,21 @@ namespace gstd {
 	**********************************************************/
 	class RecordBuffer : public Recordable {
 	private:
-		std::unordered_map<std::string, ref_count_ptr<RecordEntry>> mapEntry_;
+		std::unordered_map<std::string, shared_ptr<RecordEntry>> mapEntry_;
 	public:
 		RecordBuffer();
 		virtual ~RecordBuffer();
-		void Clear();//保持データクリア
+		void Clear();
 		size_t GetEntryCount() { return mapEntry_.size(); }
 		bool IsExists(const std::string& key);
 		std::vector<std::string> GetKeyList();
-		ref_count_ptr<RecordEntry> GetEntry(const std::string& key);
+		shared_ptr<RecordEntry> GetEntry(const std::string& key);
 
 		void Write(Writer& writer);
 		void Read(Reader& reader);
 		bool WriteToFile(const std::wstring& path, std::string header = HEADER_RECORDFILE);
 		bool ReadFromFile(const std::wstring& path, std::string header = HEADER_RECORDFILE);
 
-		//エントリ
 		int GetEntryType(const std::string& key);
 		size_t GetEntrySize(const std::string& key);
 
@@ -511,20 +500,18 @@ namespace gstd {
 		const static std::string RECORD_SYSTEM_GLOBAL;
 	private:
 		static SystemValueManager* thisBase_;
-
 	protected:
-		std::map<std::string, gstd::ref_count_ptr<RecordBuffer>> mapRecord_;
-
+		std::map<std::string, shared_ptr<RecordBuffer>> mapRecord_;
 	public:
 		SystemValueManager();
 		virtual ~SystemValueManager();
 		static SystemValueManager* GetBase() { return thisBase_; }
 		virtual bool Initialize();
 
-		virtual void ClearRecordBuffer(std::string key);
-		bool IsExists(std::string key);
-		bool IsExists(std::string keyRecord, std::string keyValue);
-		gstd::ref_count_ptr<RecordBuffer> GetRecordBuffer(std::string key);
+		virtual void ClearRecordBuffer(const std::string& key);
+		bool IsExists(const std::string& key);
+		bool IsExists(const std::string& keyRecord, const std::string& keyValue);
+		shared_ptr<RecordBuffer> GetRecordBuffer(const std::string& key);
 	};
 #endif
 }

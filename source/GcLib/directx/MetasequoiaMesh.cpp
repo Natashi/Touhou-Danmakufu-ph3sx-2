@@ -17,7 +17,7 @@ MetasequoiaMeshData::~MetasequoiaMeshData() {
 	for (auto& obj : renderList_) ptr_delete(obj);
 	for (auto& obj : materialList_) ptr_delete(obj);
 }
-bool MetasequoiaMeshData::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool MetasequoiaMeshData::CreateFromFileReader(shared_ptr<gstd::FileReader> reader) {
 	bool res = false;
 	path_ = reader->GetOriginalPath();
 	std::string text;
@@ -472,7 +472,7 @@ void MetasequoiaMeshData::RenderObject::Render(D3DXMATRIX* matTransform) {
 }
 
 //MetasequoiaMesh
-bool MetasequoiaMesh::CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool MetasequoiaMesh::CreateFromFileReader(shared_ptr<gstd::FileReader> reader) {
 	bool res = false;
 	{
 		Lock lock(DxMeshManager::GetBase()->GetLock());

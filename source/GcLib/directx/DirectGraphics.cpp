@@ -1194,13 +1194,14 @@ D3DXVECTOR2 DxCamera::TransformCoordinateTo2D(D3DXVECTOR3 pos) {
 	D3DXVECTOR4 vect;
 	D3DXVec3Transform(&vect, &pos, &matViewProjection_);
 
+	/*
 	if (vect.w > 0) {
 		vect.x = width / 2.0f + (vect.x / vect.w) * width / 2.0f;
 		vect.y = height / 2.0f - (vect.y / vect.w) * height / 2.0f; // ‚x•ûŒü‚Íã‚ª³‚Æ‚È‚é‚½‚ß
 	}
+	*/
 
-	D3DXVECTOR2 res(vect.x, vect.y);
-	return res;
+	return D3DXVECTOR2(vect.x, vect.y);
 }
 
 /**********************************************************

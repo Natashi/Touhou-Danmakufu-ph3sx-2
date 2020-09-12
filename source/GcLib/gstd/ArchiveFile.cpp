@@ -84,7 +84,7 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 
 	//Write the files and record their information.
 	for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr) {
-		ArchiveFileEntry::ptr entry = *itr;
+		shared_ptr<ArchiveFileEntry> entry = *itr;
 
 		std::ifstream file;
 		file.open(entry->name, std::ios::binary);
@@ -144,7 +144,7 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 		size_t totalSize = 0U;
 
 		for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr) {
-			ArchiveFileEntry::ptr entry = *itr;
+			shared_ptr<ArchiveFileEntry> entry = *itr;
 
 			std::wstring name = entry->name;
 			entry->name = PathProperty::GetFileName(name);
@@ -182,7 +182,7 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 
 		size_t i = 0;
 		for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr, ++i) {
-			ArchiveFileEntry::ptr entry = *itr;
+			shared_ptr<ArchiveFileEntry> entry = *itr;
 			std::string pathCom = StringUtility::ConvertWideToMulti(entry->directory + entry->name);
 			fileTestOutput << StringUtility::Format("%d: [%s] [%s]\n", i, 
 				StringUtility::ConvertWideToMulti(entry->directory).c_str(),
@@ -335,7 +335,7 @@ bool ArchiveFile::Open() {
 		file_.clear();
 
 		for (size_t iEntry = 0U; iEntry < header.entryCount; ++iEntry) {
-			ArchiveFileEntry::ptr entry = std::make_shared<ArchiveFileEntry>();
+			shared_ptr<ArchiveFileEntry> entry = std::make_shared<ArchiveFileEntry>();
 
 			uint32_t sizeEntry = 0U; 
 			bufInfo.read((char*)&sizeEntry, sizeof(uint32_t));
@@ -355,7 +355,7 @@ bool ArchiveFile::Open() {
 			}
 			*/
 
-			mapEntry_.insert(std::pair<std::wstring, ArchiveFileEntry::ptr>(entry->name, entry));
+			mapEntry_.insert(std::pair<std::wstring, shared_ptr<ArchiveFileEntry>>(entry->name, entry));
 		}
 
 		res = true;
@@ -374,18 +374,18 @@ void ArchiveFile::Close() {
 std::set<std::wstring> ArchiveFile::GetKeyList() {
 	std::set<std::wstring> res;
 	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); itr++) {
-		ArchiveFileEntry::ptr entry = itr->second;
+		shared_ptr<ArchiveFileEntry> entry = itr->second;
 		//std::wstring key = entry->GetDirectory() + entry->GetName();
 		res.insert(entry->name);
 	}
 	return res;
 }
-std::vector<ArchiveFileEntry::ptr> ArchiveFile::GetEntryList(const std::wstring& name) {
-	std::vector<ArchiveFileEntry::ptr> res;
+std::vector<shared_ptr<ArchiveFileEntry>> ArchiveFile::GetEntryList(const std::wstring& name) {
+	std::vector<shared_ptr<ArchiveFileEntry>> res;
 	if (!IsExists(name)) return res;
 
 	for (auto itrPair = mapEntry_.equal_range(name); itrPair.first != itrPair.second; itrPair.first++) {
-		ArchiveFileEntry::ptr entry = (itrPair.first)->second;
+		shared_ptr<ArchiveFileEntry> entry = (itrPair.first)->second;
 		res.push_back(entry);
 	}
 
@@ -394,8 +394,8 @@ std::vector<ArchiveFileEntry::ptr> ArchiveFile::GetEntryList(const std::wstring&
 bool ArchiveFile::IsExists(const std::wstring& name) {
 	return mapEntry_.find(name) != mapEntry_.end();
 }
-ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr entry) {
-	ref_count_ptr<ByteBuffer> res;
+shared_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(shared_ptr<ArchiveFileEntry> entry) {
+	shared_ptr<ByteBuffer> res;
 
 	std::ifstream* file = &entry->archiveParent->GetFile();
 	if (file->is_open()) {
@@ -403,7 +403,7 @@ ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr e
 		case ArchiveFileEntry::CT_NONE:
 		{
 			file->seekg(entry->offsetPos, std::ios::beg);
-			res = new ByteBuffer();
+			res = shared_ptr<ByteBuffer>(new ByteBuffer());
 			res->SetSize(entry->sizeFull);
 			file->read(res->GetPointer(), entry->sizeFull);
 
@@ -416,7 +416,7 @@ ref_count_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry::ptr e
 		case ArchiveFileEntry::CT_ZLIB:
 		{
 			file->seekg(entry->offsetPos, std::ios::beg);
-			res = new ByteBuffer();
+			res = shared_ptr<ByteBuffer>(new ByteBuffer());
 			//res->SetSize(entry->sizeFull);
 
 			ByteBuffer rawBuf;

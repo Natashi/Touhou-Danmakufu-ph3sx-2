@@ -551,19 +551,20 @@ namespace directx {
 	class DxFileObject : public DxScriptObjectBase {
 		friend DxScript;
 	protected:
-		gstd::ref_count_ptr<gstd::File> file_;
-		gstd::ref_count_ptr<gstd::FileReader> reader_;
+		shared_ptr<gstd::File> file_;
+		shared_ptr<gstd::FileReader> reader_;
 		bool isArchived_;
 	public:
 		DxFileObject();
 		~DxFileObject();
-		gstd::ref_count_ptr<gstd::File> GetFile() { return file_; }
+
+		shared_ptr<gstd::File> GetFile() { return file_; }
 
 		virtual void Render() {}
 		virtual void SetRenderState() {}
 
 		virtual bool OpenR(const std::wstring& path);
-		virtual bool OpenR(gstd::ref_count_ptr<gstd::FileReader> reader);
+		virtual bool OpenR(shared_ptr<gstd::FileReader> reader);
 		virtual bool OpenRW(std::wstring path);
 		virtual bool Store() = 0;
 		virtual void Close();
@@ -588,7 +589,7 @@ namespace directx {
 		DxTextFileObject();
 		virtual ~DxTextFileObject();
 		virtual bool OpenR(const std::wstring& path);
-		virtual bool OpenR(gstd::ref_count_ptr<gstd::FileReader> reader);
+		virtual bool OpenR(shared_ptr<gstd::FileReader> reader);
 		virtual bool OpenRW(const std::wstring& path);
 		virtual bool Store();
 		size_t GetLineCount() { return listLine_.size(); }
@@ -612,16 +613,16 @@ namespace directx {
 	protected:
 		int byteOrder_;
 		unsigned int codePage_;
-		gstd::ref_count_ptr<gstd::ByteBuffer> buffer_;
+		shared_ptr<gstd::ByteBuffer> buffer_;
 	public:
 		DxBinaryFileObject();
 		virtual ~DxBinaryFileObject();
 		virtual bool OpenR(const std::wstring& path);
-		virtual bool OpenR(gstd::ref_count_ptr<gstd::FileReader> reader);
+		virtual bool OpenR(shared_ptr<gstd::FileReader> reader);
 		virtual bool OpenRW(const std::wstring& path);
 		virtual bool Store();
 
-		gstd::ref_count_ptr<gstd::ByteBuffer> GetBuffer() { return buffer_; }
+		shared_ptr<gstd::ByteBuffer> GetBuffer() { return buffer_; }
 		bool IsReadableSize(size_t size);
 
 		unsigned int GetCodePage() { return codePage_; }

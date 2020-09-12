@@ -773,14 +773,16 @@ void DxSoundObject::Play() {
 DxFileObject::DxFileObject() {
 	isArchived_ = false;
 }
-DxFileObject::~DxFileObject() {}
+DxFileObject::~DxFileObject() {
+	Close();
+}
 bool DxFileObject::OpenR(const std::wstring& path) {
-	file_ = new File(path);
+	file_ = shared_ptr<File>(new File(path));
 	bool res = file_->Open();
 	if (!res) file_ = nullptr;
 	return res;
 }
-bool DxFileObject::OpenR(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool DxFileObject::OpenR(shared_ptr<gstd::FileReader> reader) {
 	file_ = nullptr;
 	reader_ = reader;
 	return true;
@@ -800,7 +802,7 @@ bool DxFileObject::OpenRW(std::wstring path) {
 		return false;
 	}
 
-	file_ = new File(path);
+	file_ = shared_ptr<File>(new File(path));
 	bool res = file_->Open(File::WRITE);
 	if (!res) file_ = nullptr;
 	return res;
@@ -835,7 +837,7 @@ bool DxTextFileObject::OpenR(const std::wstring& path) {
 
 	return _ParseLines(text);
 }
-bool DxTextFileObject::OpenR(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool DxTextFileObject::OpenR(shared_ptr<gstd::FileReader> reader) {
 	listLine_.clear();
 	reader_ = reader;
 
@@ -962,10 +964,10 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 	return true;
 }
 bool DxTextFileObject::Store() {
-	if (isArchived_) return false;
+	if (isArchived_ || file_ == nullptr) return false;
 	if (file_ == nullptr) return false;
 
-	file_->SeekWrite(0, std::ios::beg);
+	file_->Seek(0, std::ios::beg);
 
 	if (bomSize_ > 0) file_->Write(bomHead_, bomSize_);
 
@@ -1109,18 +1111,18 @@ bool DxBinaryFileObject::OpenR(const std::wstring& path) {
 	if (!res) return false;
 
 	size_t size = file_->GetSize();
-	buffer_ = new gstd::ByteBuffer();
+	buffer_ = shared_ptr<ByteBuffer>(new ByteBuffer());
 	buffer_->SetSize(size);
 
 	file_->Read(buffer_->GetPointer(), size);
 
 	return true;
 }
-bool DxBinaryFileObject::OpenR(gstd::ref_count_ptr<gstd::FileReader> reader) {
+bool DxBinaryFileObject::OpenR(shared_ptr<gstd::FileReader> reader) {
 	reader_ = reader;
 
 	size_t size = reader->GetFileSize();
-	buffer_ = dynamic_cast<ManagedFileReader*>(reader.GetPointer())->GetBuffer();
+	buffer_ = dynamic_cast<ManagedFileReader*>(reader.get())->GetBuffer();
 
 	return true;
 }
@@ -1129,7 +1131,7 @@ bool DxBinaryFileObject::OpenRW(const std::wstring& path) {
 	if (!res) return false;
 
 	size_t size = file_->GetSize();
-	buffer_ = new gstd::ByteBuffer();
+	buffer_ = shared_ptr<ByteBuffer>(new ByteBuffer());
 	buffer_->SetSize(size);
 
 	file_->Read(buffer_->GetPointer(), size);

@@ -196,17 +196,17 @@ namespace directx {
 
 		static D3DXMATRIX CreateWorldMatrix(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
 			const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
-			D3DXMATRIX* matRelative, bool bCoordinate2D = false);
+			const D3DXMATRIX* matRelative, bool bCoordinate2D = false);
 		static D3DXMATRIX CreateWorldMatrix(const D3DXVECTOR3& position, const D3DXVECTOR3& scale, const D3DXVECTOR3& angle,
-			D3DXMATRIX* matRelative, bool bCoordinate2D = false);
+			const D3DXMATRIX* matRelative, bool bCoordinate2D = false);
 		static D3DXMATRIX CreateWorldMatrixSprite3D(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
 			const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
-			D3DXMATRIX* matRelative, bool bBillboard = false);
+			const D3DXMATRIX* matRelative, bool bBillboard = false);
 		static D3DXMATRIX CreateWorldMatrix2D(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
-			const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ, D3DXMATRIX* matCamera);
+			const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ, const D3DXMATRIX* matCamera);
 		static D3DXMATRIX CreateWorldMatrixText2D(const D3DXVECTOR2& centerPosition, const D3DXVECTOR3& scale,
 			const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
-			const D3DXVECTOR2& objectPosition, const D3DXVECTOR2& biasPosition, D3DXMATRIX* matCamera);
+			const D3DXVECTOR2& objectPosition, const D3DXVECTOR2& biasPosition, const D3DXMATRIX* matCamera);
 		static void SetCoordinate2dDeviceMatrix();
 
 		void SetDxObjectReference(DxScriptRenderObject* obj) { dxObjParent_ = obj; }
@@ -635,7 +635,7 @@ namespace directx {
 		virtual ~DxMeshData();
 		void SetName(const std::wstring& name) { name_ = name; }
 		std::wstring& GetName() { return name_; }
-		virtual bool CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader) = 0;
+		virtual bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader) = 0;
 	};
 	class DxMesh : public gstd::FileManager::LoadObject {
 	public:
@@ -663,7 +663,7 @@ namespace directx {
 		virtual ~DxMesh();
 		virtual void Release();
 		bool CreateFromFile(const std::wstring& path);
-		virtual bool CreateFromFileReader(gstd::ref_count_ptr<gstd::FileReader> reader) = 0;
+		virtual bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader) = 0;
 		virtual bool CreateFromFileInLoadThread(const std::wstring& path, int type);
 		virtual bool CreateFromFileInLoadThread(const std::wstring& path) = 0;
 		virtual std::wstring GetPath() = 0;

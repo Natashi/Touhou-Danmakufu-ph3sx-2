@@ -34,18 +34,11 @@ void SystemUtility::TestCpuSupportSIMD() {
 	bool hasSSE2 = true;
 	bool hasAVX = true;
 
-	struct Four {
-		int x[4];
-		Four(int(&src)[4]) {
-			memcpy(x, src, sizeof(int) * 4);
-		}
-	};
-
 	std::bitset<32> f_1_ECX;
 	std::bitset<32> f_1_EDX;
 	std::bitset<32> f_7_EBX;
 	std::bitset<32> f_7_ECX;
-	std::vector<Four> cpuData;
+	std::vector<std::array<int, 4>> cpuData;
 
 	int cpui[4];
 	__cpuid(cpui, 0);
@@ -53,18 +46,20 @@ void SystemUtility::TestCpuSupportSIMD() {
 
 	for (int i = 0; i <= nIds; ++i) {
 		__cpuidex(cpui, i, 0);
-		cpuData.push_back(Four(cpui));
+		std::array<int, 4> arr;
+		memcpy(arr.data(), cpui, sizeof(cpui));
+		cpuData.push_back(arr);
 	}
 
 	// load bitset with flags for function 0x00000001
 	if (nIds >= 1) {
-		f_1_ECX = cpuData[1].x[2];
-		f_1_EDX = cpuData[1].x[3];
+		f_1_ECX = cpuData[1][2];
+		f_1_EDX = cpuData[1][3];
 	}
 	// load bitset with flags for function 0x00000007
 	if (nIds >= 7) {
-		f_7_EBX = cpuData[7].x[1];
-		f_7_ECX = cpuData[7].x[2];
+		f_7_EBX = cpuData[7][1];
+		f_7_ECX = cpuData[7][2];
 	}
 
 	//Test SSE
@@ -591,9 +586,14 @@ std::wstring ErrorUtility::GetErrorMessage(int type) {
 		res = L"Invalid index";
 	return res;
 }
-std::wstring ErrorUtility::GetFileNotFoundErrorMessage(const std::wstring& path) {
+std::wstring ErrorUtility::GetFileNotFoundErrorMessage(const std::wstring& path, bool bErrorExtended) {
 	std::wstring res = GetErrorMessage(ERROR_FILE_NOTFOUND);
-	res += StringUtility::Format(L" path[%s]", path.c_str());
+	res += StringUtility::Format(L" \"%s\"", path.c_str());
+	if (bErrorExtended) {
+		//auto sysErr = std::system_error(errno, std::system_category());
+		//res += StringUtility::FormatToWide("\r\n  System: %s (code=%d)", sysErr.code().message(), sysErr.code().value());
+		res += StringUtility::Format(L"\r\n    System: %s", File::GetLastError().c_str());
+	}
 	return res;
 }
 std::wstring ErrorUtility::GetParseErrorMessage(const std::wstring& path, int line, const std::wstring& what) {

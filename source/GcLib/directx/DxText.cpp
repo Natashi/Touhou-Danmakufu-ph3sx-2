@@ -1410,7 +1410,7 @@ void DxTextRenderer::Render(DxText* dxText, shared_ptr<DxTextInfo> textInfo) {
 	}
 }
 bool DxTextRenderer::AddFontFromFile(const std::wstring& path) {
-	ref_count_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr) 
 		throw gstd::wexception(StringUtility::Format(L"AddFontFromFile: File not found. [%s]", path.c_str()));
 	if (!reader->Open()) 
