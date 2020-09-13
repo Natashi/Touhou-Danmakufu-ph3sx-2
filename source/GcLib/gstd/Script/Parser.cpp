@@ -1120,7 +1120,7 @@ continue_as_variadic:
 		case token_kind::tk_LOCAL:
 		case token_kind::tk_open_cur:
 			if (state->next() == token_kind::tk_LOCAL) state->advance();
-			parse_block(block, state, nullptr, false);
+			parse_block_inlined(block, state, false);
 			need_terminator = false;
 			break;
 		case token_kind::tk_LOOP:
@@ -1132,13 +1132,16 @@ continue_as_variadic:
 				{
 					state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
 
+					size_t ip_var_format = state->ip;
+					state->AddCode(block, code(command_kind::pc_var_format, 0, 0));
+
 					size_t ip_loop_begin = state->ip;
 					state->AddCode(block, code(command_kind::pc_loop_count));
 					size_t ip_loopchk = state->ip;
 					state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 
 					size_t ip_block_begin = state->ip;
-					size_t childSize = parse_block(block, state, nullptr, true);
+					auto blockParam = parse_block(block, state, nullptr, true);
 
 					size_t ip_continue = state->ip;
 					state->AddCode(block, code(command_kind::pc_jump, ip_loop_begin));
@@ -1146,35 +1149,44 @@ continue_as_variadic:
 					state->AddCode(block, code(command_kind::pc_pop, 1));
 
 					//Try to optimize looped yield to a wait
-					if (childSize == 1U && block->codes[ip_block_begin].command == command_kind::pc_yield) {
+					if (blockParam.first == 1U && block->codes[ip_block_begin].command == command_kind::pc_yield) {
 						while (state->ip > ip_loop_begin)
 							state->PopCode(block);
 						state->AddCode(block, code(command_kind::pc_wait));
 					}
 					//Discard everything if the loop is empty
-					else if (childSize == 0U) {
+					else if (blockParam.first == 0U) {
 						while (state->ip > ip_loop_begin)
 							state->PopCode(block);
 					}
 					else {
 						block->codes[ip_loopchk].ip = ip_back;
 						link_break_continue(block, state, ip_block_begin, ip_continue, ip_back, ip_continue);
+
+						block->codes[ip_var_format].off = blockParam.second[0];
+						block->codes[ip_var_format].len = blockParam.second[1];
 					}
 				}
 			}
 			else {
-				size_t childSize = parse_block(block, state, nullptr, true);
+				size_t ip_var_format = state->ip;
+				state->AddCode(block, code(command_kind::pc_var_format, 0, 0));
+
+				auto blockParam = parse_block(block, state, nullptr, true);
 
 				size_t ip_continue = state->ip;
 				state->AddCode(block, code(command_kind::pc_jump, ip_begin));
 				size_t ip_back = state->ip;
 
-				if (childSize == 0U) {
+				if (blockParam.first == 0U) {
 					while (state->ip > ip_begin)
 						state->PopCode(block);
 				}
 				else {
 					link_break_continue(block, state, ip_begin, ip_continue, ip_back, ip_continue);
+
+					block->codes[ip_var_format].off = blockParam.second[0];
+					block->codes[ip_var_format].len = blockParam.second[1];
 				}
 			}
 
@@ -1191,13 +1203,16 @@ continue_as_variadic:
 			{
 				state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
 
+				size_t ip_var_format = state->ip;
+				state->AddCode(block, code(command_kind::pc_var_format, 0, 0));
+
 				size_t ip_loop_begin = state->ip;
 				state->AddCode(block, code(command_kind::pc_loop_count));
 				size_t ip_loopchk = state->ip;
 				state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 
 				size_t ip_block_begin = state->ip;
-				size_t childSize = parse_block(block, state, nullptr, true);
+				auto blockParam = parse_block(block, state, nullptr, true);
 
 				size_t ip_continue = state->ip;
 				state->AddCode(block, code(command_kind::pc_jump, ip_loop_begin));
@@ -1205,19 +1220,22 @@ continue_as_variadic:
 				state->AddCode(block, code(command_kind::pc_pop, 1));
 
 				//Try to optimize looped yield to a wait
-				if (childSize == 1U && block->codes[ip_block_begin].command == command_kind::pc_yield) {
+				if (blockParam.first == 1U && block->codes[ip_block_begin].command == command_kind::pc_yield) {
 					while (state->ip > ip_loop_begin)
 						state->PopCode(block);
 					state->AddCode(block, code(command_kind::pc_wait));
 				}
 				//Discard everything if the loop is empty
-				else if (childSize == 0U) {
+				else if (blockParam.first == 0U) {
 					while (state->ip > ip_loop_begin)
 						state->PopCode(block);
 				}
 				else {
 					block->codes[ip_loopchk].ip = ip_back;
 					link_break_continue(block, state, ip_block_begin, ip_continue, ip_back, ip_continue);
+
+					block->codes[ip_var_format].off = blockParam.second[0];
+					block->codes[ip_var_format].len = blockParam.second[1];
 				}
 			}
 
@@ -1227,6 +1245,10 @@ continue_as_variadic:
 		case token_kind::tk_WHILE:
 		{
 			state->advance();
+
+			size_t ip_var_format = state->ip;
+			state->AddCode(block, code(command_kind::pc_var_format, 0, 0));
+
 			size_t ip = state->ip;
 
 			parse_parentheses(block, state);
@@ -1237,19 +1259,22 @@ continue_as_variadic:
 			state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 
 			size_t ip_block_begin = state->ip;
-			size_t childSize = parse_block(block, state, nullptr, true);
+			auto blockParam = parse_block(block, state, nullptr, true);
 
 			size_t ip_continue = state->ip;
 			state->AddCode(block, code(command_kind::pc_jump, ip));
 			size_t ip_back = state->ip;
 
-			if (childSize == 0U) {
+			if (blockParam.first == 0U) {
 				while (state->ip > ip)
 					state->PopCode(block);
 			}
 			else {
 				block->codes[ip_loopchk].ip = ip_back;
 				link_break_continue(block, state, ip_block_begin, ip_continue, ip_back, ip_continue);
+
+				block->codes[ip_var_format].off = blockParam.second[0];
+				block->codes[ip_var_format].len = blockParam.second[1];
 			}
 
 			need_terminator = false;
@@ -1279,6 +1304,9 @@ continue_as_variadic:
 					"\"in\" or a colon is required.\r\n");
 				state->advance();
 
+				size_t ip_var_format = state->ip;
+				state->AddCode(block, code(command_kind::pc_var_format, 0, 0));
+
 				//The array
 				parse_expression(block, state);
 
@@ -1297,11 +1325,11 @@ continue_as_variadic:
 				size_t ip_loopchk = state->ip;
 				state->AddCode(block, code(command_kind::pc_jump_if, 0U));
 
-				size_t childSize = 0U;
+				std::pair<size_t, std::array<size_t, 2>> blockParam = std::make_pair(0, std::array<size_t, 2>{ 0, 0 });
 				{
 					std::vector<std::string> counter;
 					counter.push_back(counterName);
-					childSize = parse_block(block, state, &counter, true);
+					blockParam = parse_block(block, state, &counter, true);
 				}
 
 				size_t ip_continue = state->ip;
@@ -1311,13 +1339,16 @@ continue_as_variadic:
 				//Pop twice for the array and the counter
 				state->AddCode(block, code(command_kind::pc_pop, 2));
 
-				if (childSize <= 1U) {	//1 for pc_assign
+				if (blockParam.first <= 1U) {	//1 for pc_assign
 					while (state->ip > ip_for_begin)
 						state->PopCode(block);
 				}
 				else {
 					block->codes[ip_loopchk].ip = ip_back;
 					link_break_continue(block, state, ip, ip_continue, ip_back, ip_continue);
+
+					block->codes[ip_var_format].off = blockParam.second[0];
+					block->codes[ip_var_format].len = blockParam.second[1];
 				}
 			}
 			else if (state->next() == token_kind::tk_open_par) {	//Regular for loop
@@ -1449,13 +1480,13 @@ continue_as_variadic:
 						newState.PopCode(block);
 				}
 				else {
+					if (hasExpr) block->codes[ip_loopchk].ip = ip_back;
+					link_break_continue(block, &newState, ip_for_begin, ip_continue, ip_back, ip_continue);
+
 					if (isNewVar) {
 						block->codes[ip_var_format].off = varc_prev_total;
 						block->codes[ip_var_format].len = newState.var_count_main;
 					}
-
-					if (hasExpr) block->codes[ip_loopchk].ip = ip_back;
-					link_break_continue(block, &newState, ip_for_begin, ip_continue, ip_back, ip_continue);
 				}
 
 				state->ip = newState.ip;
@@ -1513,6 +1544,9 @@ continue_as_variadic:
 			if (isAscent)
 				state->AddCode(block, code(command_kind::pc_swap));
 
+			size_t ip_var_format = state->ip;
+			state->AddCode(block, code(command_kind::pc_var_format, 0, 0));
+
 			size_t ip = state->ip;
 			
 			state->AddCode(block, code(isAscent ? command_kind::pc_loop_ascent : command_kind::pc_loop_descent));
@@ -1527,11 +1561,11 @@ continue_as_variadic:
 
 			state->AddCode(block, code(command_kind::pc_dup_n, 1));
 
-			size_t childSize = 0U;
+			std::pair<size_t, std::array<size_t, 2>> blockParam = std::make_pair(0, std::array<size_t, 2>{ 0, 0 });
 			{
 				std::vector<std::string> counter;
 				counter.push_back(counterName);
-				childSize = parse_block(block, state, &counter, true);
+				blockParam = parse_block(block, state, &counter, true);
 			}
 
 			size_t ip_continue = state->ip;
@@ -1548,13 +1582,16 @@ continue_as_variadic:
 			//Pop twice for two statements * 2
 			state->AddCode(block, code(command_kind::pc_pop, 2));
 
-			if (childSize <= 1U) {	//1 for pc_assign
+			if (blockParam.first <= 1U) {	//1 for pc_assign
 				while (state->ip > ip_ascdsc_begin)
 					state->PopCode(block);
 			}
 			else {
 				block->codes[ip_loopchk].ip = ip_back;
 				link_break_continue(block, state, ip_ascdsc_begin, ip_continue, ip_back, ip_continue);
+
+				block->codes[ip_var_format].off = blockParam.second[0];
+				block->codes[ip_var_format].len = blockParam.second[1];
 			}
 
 			need_terminator = false;
@@ -1576,7 +1613,7 @@ continue_as_variadic:
 				//Jump to next case if false
 				parse_parentheses(block, state);
 				state->AddCode(block, code(command_kind::_pc_jump_if_not, indexLabel));
-				parse_block(block, state, nullptr, true);
+				parse_block_inlined(block, state);
 
 				if (state->next() == token_kind::tk_ELSE) {
 					state->advance();
@@ -1586,7 +1623,7 @@ continue_as_variadic:
 
 					mapLabelCode.insert(std::make_pair(indexLabel, state->ip));
 					if (state->next() != token_kind::tk_IF) {
-						parse_block(block, state, nullptr, true);
+						parse_block_inlined(block, state);
 						hasNextCase = false;
 					}
 					else if (state->next() == token_kind::tk_IF) hasNextCase = true;
@@ -1644,7 +1681,7 @@ continue_as_variadic:
 				state->AddCode(block, code(command_kind::_pc_jump, indexLabel + 1));
 
 				mapLabelCode.insert(std::make_pair(indexLabel, state->ip));
-				parse_block(block, state, nullptr, true);
+				parse_block_inlined(block, state);
 
 				//Jump to exit
 				state->AddCode(block, code(command_kind::_pc_jump, UINT_MAX));
@@ -1654,7 +1691,7 @@ continue_as_variadic:
 			}
 			if (state->next() == token_kind::tk_OTHERS) {
 				state->advance();
-				parse_block(block, state, nullptr, true);
+				parse_block_inlined(block, state);
 			}
 
 			size_t ip_end = state->ip;
@@ -1841,8 +1878,8 @@ continue_as_variadic:
 		}
 	}
 
-	size_t parser::parse_block(script_block* block, parser_state_t* state, 
-		const std::vector<std::string>* args, bool allow_single) 
+	std::pair<size_t, std::array<size_t, 2>> parser::parse_block(script_block* block,
+		parser_state_t* state, const std::vector<std::string>* args, bool allow_single) 
 	{
 		size_t prev_size = state->ip;
 
@@ -1862,8 +1899,8 @@ continue_as_variadic:
 		frame.push_back(scope_t(block->kind));
 
 		if (!single_line) {
-			newState.var_count_main = scan_current_scope(&newState, block->level, args, false,
-				varc_prev_total);
+			newState.var_count_main = scan_current_scope(&newState, block->level, 
+				args, false, varc_prev_total);
 		}
 		else if (args) {
 			scope_t* ptrBackFrame = &frame.back();
@@ -1878,10 +1915,6 @@ continue_as_variadic:
 			}
 			newState.var_count_main = args->size();
 		}
-
-		size_t ip_var_format = newState.ip;
-		if (newState.var_count_main > 0)
-			newState.AddCode(block, code(command_kind::pc_var_format, 0, newState.var_count_main));
 
 		if (args) {
 			for (size_t i = 0; i < args->size(); ++i) {
@@ -1902,15 +1935,27 @@ continue_as_variadic:
 			newState.advance();
 		}
 
-		if (newState.var_count_main > 0) {
-			block->codes[ip_var_format].off = varc_prev_total;
-			block->codes[ip_var_format].len = newState.var_count_main /*+ newState.var_count_sub*/;
-		}
-
 		state->ip = newState.ip;
 		state->GrowVarCount(newState.var_count_main + newState.var_count_sub);
 
-		return block->codes.size() - prev_size;
+		return std::make_pair(block->codes.size() - prev_size, 
+			std::array<size_t, 2>{ varc_prev_total, newState.var_count_main });
+	}
+	size_t parser::parse_block_inlined(script_block* block, parser_state_t* state, bool allow_single) {
+		size_t ip_var_format = state->ip;
+		state->AddCode(block, code(command_kind::pc_var_format, 0, 0));
+
+		auto blockParam = parse_block(block, state, nullptr, allow_single);
+
+		if (blockParam.first == 0U) {
+			state->PopCode(block);	//For pc_var_format
+		}
+		else {
+			block->codes[ip_var_format].off = blockParam.second[0];
+			block->codes[ip_var_format].len = blockParam.second[1];
+		}
+
+		return blockParam.first;
 	}
 
 	void parser::optimize_expression(script_block* block, parser_state_t* state) {
