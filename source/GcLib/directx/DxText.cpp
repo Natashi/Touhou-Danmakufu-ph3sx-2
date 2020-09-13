@@ -1411,21 +1411,16 @@ void DxTextRenderer::Render(DxText* dxText, shared_ptr<DxTextInfo> textInfo) {
 }
 bool DxTextRenderer::AddFontFromFile(const std::wstring& path) {
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-	if (reader == nullptr) 
-		throw gstd::wexception(StringUtility::Format(L"AddFontFromFile: File not found. [%s]", path.c_str()));
-	if (!reader->Open()) 
-		throw gstd::wexception(StringUtility::Format(L"AddFontFromFile: Cannot open file for reading. [%s]", path.c_str()));
+	if (reader == nullptr || !reader->Open())
+		throw gstd::wexception(L"AddFontFromFile: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
-	size_t size = reader->GetFileSize();
-	ByteBuffer buf;
-	buf.SetSize(size);
-	reader->Read(buf.GetPointer(), size);
+	std::string source = reader->ReadAllString();
 
 	DWORD count = 0;
-	HANDLE handle = ::AddFontMemResourceEx(buf.GetPointer(), size, nullptr, &count);
+	HANDLE hFont = ::AddFontMemResourceEx((LPVOID)source.c_str(), source.size(), nullptr, &count);
 
 	Logger::WriteTop(StringUtility::Format(L"AddFontFromFile: Font loaded. [%s]", path.c_str()));
-	return handle != 0;
+	return hFont != 0;
 }
 
 /**********************************************************
