@@ -16,10 +16,7 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 		return nullptr;
 	}
 
-	std::string source = "";
-	size_t size = reader->GetFileSize();
-	source.resize(size);
-	reader->Read(&source[0], size);
+	std::string source = reader->ReadAllString();
 
 	ref_count_ptr<ScriptInformation> res = CreateScriptInformation(pathScript, L"", source, bNeedHeader);
 	return res;
@@ -202,10 +199,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScr
 			continue;
 		}
 
-		std::string source = "";
-		size_t size = reader->GetFileSize();
-		source.resize(size);
-		reader->Read(&source[0], size);
+		std::string source = reader->ReadAllString();
 
 		ref_count_ptr<ScriptInformation> info =
 			ScriptInformation::CreateScriptInformation(path, L"", source);

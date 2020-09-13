@@ -46,6 +46,8 @@ namespace directx {
 		D3DXIMAGE_INFO* GetImageInfo() { return &infoImage_; }
 
 		size_t GetResourceSize() { return resourceSize_; }
+
+		void CalculateResourceSize();
 	};
 
 	class Texture : public gstd::FileManager::LoadObject {

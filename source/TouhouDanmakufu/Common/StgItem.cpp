@@ -318,10 +318,8 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 		RECT rcDelay = { -1, -1, -1, -1 };
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
-			if (tok.GetType() == Token::Type::TK_EOF)//Eofの識別子が来たらファイルの調査終了
-			{
+			if (tok.GetType() == Token::Type::TK_EOF)
 				break;
-			}
 			else if (tok.GetType() == Token::Type::TK_ID) {
 				std::wstring element = tok.GetElement();
 				if (element == L"ItemData") {

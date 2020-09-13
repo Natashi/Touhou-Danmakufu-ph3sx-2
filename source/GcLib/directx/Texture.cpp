@@ -29,11 +29,25 @@ TextureData::~TextureData() {
 	ptr_release(lpRenderSurface_);
 	ptr_release(lpRenderZ_);
 }
+void TextureData::CalculateResourceSize() {
+	size_t size = infoImage_.Width * infoImage_.Height;
+	if (useMipMap_) {
+		UINT wd = infoImage_.Width;
+		UINT ht = infoImage_.Height;
+		while (wd > 1U && ht > 1U) {
+			wd /= 2U;
+			ht /= 2U;
+			size += wd * ht;
+		}
+	}
+	resourceSize_ = size * Texture::GetFormatBPP(infoImage_.Format);
+}
 
 /**********************************************************
 //Texture
 **********************************************************/
-Texture::Texture() {}
+Texture::Texture() {
+}
 Texture::Texture(Texture* texture) {
 	{
 #ifdef __L_TEXTURE_THREADSAFE
@@ -466,17 +480,17 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 		if (reader == nullptr || !reader->Open())
 			throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
-		size_t size = reader->GetFileSize();
-		ByteBuffer buf;
-		buf.SetSize(size);
-		reader->Read(buf.GetPointer(), size);
+		std::string source = reader->ReadAllString();
 
 		//		D3DXIMAGE_INFO info;
 		//		D3DXGetImageInfoFromFileInMemory(buf.GetPointer(), size, &info);
 
+		/*
 		D3DCOLOR colorKey = D3DCOLOR_ARGB(255, 0, 0, 0);
 		if (path.find(L".bmp") == std::wstring::npos)
 			colorKey = 0;
+		*/
+		D3DCOLOR colorKey = 0x00000000;
 
 		D3DFORMAT pixelFormat = graphics->GetConfigData().GetColorMode() == DirectGraphicsConfig::COLOR_MODE_32BIT ? 
 			D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
@@ -486,7 +500,7 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 		data->useNonPowerOfTwo_ = flgNonPowerOfTwo;
 
 		HRESULT hr = D3DXCreateTextureFromFileInMemoryEx(DirectGraphics::GetBase()->GetDevice(),
-			buf.GetPointer(), size,
+			source.c_str(), source.size(),
 			(data->useNonPowerOfTwo_) ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT,
 			(data->useNonPowerOfTwo_) ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT,
 			0, 0, pixelFormat, D3DPOOL_MANAGED, D3DX_FILTER_BOX, D3DX_DEFAULT, colorKey,
@@ -500,19 +514,9 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 		mapTextureData_[path] = data;
 		data->manager_ = this;
 		data->name_ = path;
-		D3DXGetImageInfoFromFileInMemory(buf.GetPointer(), size, &data->infoImage_);
+		D3DXGetImageInfoFromFileInMemory(source.c_str(), source.size(), &data->infoImage_);
 
-		data->resourceSize_ = data->infoImage_.Width * data->infoImage_.Height;
-		if (data->useMipMap_) {
-			UINT wd = data->infoImage_.Width;
-			UINT ht = data->infoImage_.Height;
-			while (wd > 1U && ht > 1U) {
-				wd /= 2U;
-				ht /= 2U;
-				data->resourceSize_ += wd * ht;
-			}
-		}
-		data->resourceSize_ *= Texture::GetFormatBPP(data->infoImage_.Format);
+		data->CalculateResourceSize();
 
 		Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. [%s]", path.c_str()));
 	}
@@ -538,16 +542,14 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 		if (width == 0U) {
 			size_t screenWidth = graphics->GetScreenWidth();
 			width = 1U;
-			while (width <= screenWidth) {
-				width *= 2U;
-			}
+			while (width <= screenWidth)
+				width = width << 1;
 		}
 		if (height == 0U) {
 			size_t screenHeight = graphics->GetScreenHeight();
 			height = 1U;
-			while (height <= screenHeight) {
-				height *= 2U;
-			}
+			while (height <= screenHeight)
+				height = height << 1;
 		}
 		if (width > 4096U) width = 4096U;
 		if (height > 4096U) height = 4096U;
@@ -668,30 +670,15 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 						if (reader == nullptr || !reader->Open())
 							throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
-						size_t size = reader->GetFileSize();
-						ByteBuffer buf;
-						buf.SetSize(size);
-						reader->Read(buf.GetPointer(), size);
+						std::string source = reader->ReadAllString();
 
 						D3DXIMAGE_INFO info;
-						HRESULT hr = D3DXGetImageInfoFromFileInMemory(buf.GetPointer(), size, &info);
-						if (FAILED(hr)) {
+						HRESULT hr = D3DXGetImageInfoFromFileInMemory(source.c_str(), source.size(), &info);
+						if (FAILED(hr))
 							throw gstd::wexception("D3DXGetImageInfoFromFileInMemory failure.");
-						}
-
-						data->resourceSize_ = data->infoImage_.Width * data->infoImage_.Height;
-						if (data->useMipMap_) {
-							UINT wd = data->infoImage_.Width;
-							UINT ht = data->infoImage_.Height;
-							while (wd > 1U && ht > 1U) {
-								wd /= 2U;
-								ht /= 2U;
-								data->resourceSize_ += wd * ht;
-							}
-						}
-						data->resourceSize_ *= Texture::GetFormatBPP(data->infoImage_.Format);
 
 						data->infoImage_ = info;
+						data->CalculateResourceSize();
 					}
 					catch (gstd::wexception& e) {
 						std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture (Load Thread) \"%s\"\r\n\t%s", 
@@ -738,14 +725,11 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 			if (reader == nullptr || !reader->Open())
 				throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
-			size_t size = reader->GetFileSize();
-			ByteBuffer buf;
-			buf.SetSize(size);
-			reader->Read(buf.GetPointer(), size);
+			std::string source = reader->ReadAllString();
 
 			/*
 			D3DCOLOR colorKey = D3DCOLOR_ARGB(255, 0, 0, 0);
-			if (path.find(L".bmp") == std::wstring::npos)//bmpのみカラーキー適応
+			if (path.find(L".bmp") == std::wstring::npos)
 				colorKey = 0;
 			*/
 			D3DCOLOR colorKey = 0x00000000;
@@ -754,7 +738,7 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 				D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
 
 			HRESULT hr = D3DXCreateTextureFromFileInMemoryEx(DirectGraphics::GetBase()->GetDevice(), 
-				buf.GetPointer(), size,
+				source.c_str(), source.size(),
 				(data->useNonPowerOfTwo_) ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT, 
 				(data->useNonPowerOfTwo_) ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT, 
 				0, 0, pixelFormat, D3DPOOL_MANAGED, D3DX_FILTER_BOX, D3DX_DEFAULT, colorKey,
@@ -764,7 +748,9 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 			}
 
 			if (data->useMipMap_) data->pTexture_->GenerateMipSubLevels();
-			D3DXGetImageInfoFromFileInMemory(buf.GetPointer(), size, &data->infoImage_);
+			D3DXGetImageInfoFromFileInMemory(source.c_str(), source.size(), &data->infoImage_);
+
+			data->CalculateResourceSize();
 
 			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. (Load Thread) \"%s\"", path.c_str()));
 		}

@@ -302,10 +302,8 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
-			if (tok.GetType() == Token::Type::TK_EOF)//Eofの識別子が来たらファイルの調査終了
-			{
+			if (tok.GetType() == Token::Type::TK_EOF)
 				break;
-			}
 			else if (tok.GetType() == Token::Type::TK_ID) {
 				std::wstring element = tok.GetElement();
 				if (element == L"ShotData") {

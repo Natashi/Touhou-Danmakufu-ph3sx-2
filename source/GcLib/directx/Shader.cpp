@@ -92,29 +92,14 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 		return false;
 	}
 
-	size_t size = reader->GetFileSize();
-	ByteBuffer buf;
-	buf.SetSize(size);
-	reader->Read(buf.GetPointer(), size);
-
-	std::string source;
-	source.resize(size);
-	memcpy(&source[0], buf.GetPointer(), size);
+	std::string source = reader->ReadAllString();
 
 	shared_ptr<ShaderData> data(new ShaderData());
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ID3DXBuffer* pErr = nullptr;
-	HRESULT hr = D3DXCreateEffect(
-		graphics->GetDevice(),
-		source.c_str(),
-		source.size(),
-		nullptr, nullptr,
-		0,
-		nullptr,
-		&data->effect_,
-		&pErr
-	);
+	HRESULT hr = D3DXCreateEffect(graphics->GetDevice(), source.c_str(), source.size(), 
+		nullptr, nullptr, 0, nullptr, &data->effect_, &pErr);
 
 	bool res = true;
 	if (FAILED(hr)) {
@@ -156,16 +141,8 @@ bool ShaderManager::_CreateFromText(const std::string& source, shared_ptr<Shader
 
 	shared_ptr<ShaderData> data(new ShaderData());
 	ID3DXBuffer* pErr = nullptr;
-	HRESULT hr = D3DXCreateEffect(
-		graphics->GetDevice(),
-		source.c_str(),
-		source.size(),
-		nullptr, nullptr,
-		0,
-		nullptr,
-		&data->effect_,
-		&pErr
-	);
+	HRESULT hr = D3DXCreateEffect(graphics->GetDevice(), source.c_str(), source.size(),
+		nullptr, nullptr, 0, nullptr, &data->effect_, &pErr);
 
 	std::string tStr = StringUtility::Slice(source, 128);
 	if (FAILED(hr)) {
