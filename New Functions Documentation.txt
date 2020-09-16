@@ -257,6 +257,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Interpolation method is linear.
 				Direct formula is (a + (b - a) * (x))
 				Represented by the red graph.
+				
+			When interpolating between two arrays, but they must be of the same size.
 
 	Interpolate_Smooth
 		Arguments:
@@ -268,6 +270,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Interpolation method is first-order smoothstep curve.
 				Direct formula is (a + (b - a) * (x^2 * (3 - 2 * x)))
 				Represented by the blue graph.
+				
+			When interpolating between two arrays, but they must be of the same size.
 
 	Interpolate_Smoother
 		Arguments:
@@ -279,6 +283,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Interpolation method is second-order smoothstep curve.
 				Direct formula is (a + (b - a) * (x^3 * (x * (x * 6 - 15) + 10)))
 				Represented by the green graph.
+				
+			When interpolating between two arrays, but they must be of the same size.
 
 	Interpolate_Accelerate
 		Arguments:
@@ -290,6 +296,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Interpolation method is parabolic.
 				Direct formula is (a + (b - a) * (x^2))
 				Represented by the purple graph.
+				
+			When interpolating between two arrays, but they must be of the same size.
 
 	Interpolate_Decelerate
 		Arguments:
@@ -301,6 +309,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Interpolation method is inverse parabolic.
 				Direct formula is (a + (b - a) * (1 - (1 - x)^2))
 				Represented by the black graph.
+				
+			When interpolating between two arrays, but they must be of the same size.
 
 	Interpolate_Modulate
 		Arguments:
@@ -311,7 +321,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is sine.
-				Direct formula is (a + (b - a) * (x + (rsin(2pi * x) / (2pi))))
+				Direct formula is (a + (b - a) * (x + (rsin(2pi * x) / (2pi)) * c))
 				Represented by the dotted red graph.
 
 	Interpolate_Overshoot
@@ -323,7 +333,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is half sine.
-				Direct formula is (a + (b - a) * (x + (rsin(pi * x) / pi)))
+				Direct formula is (a + (b - a) * (x + (rsin(pi * x) / pi) * c))
 				Represented by the dotted blue graph.
 
 	Interpolate_QuadraticBezier
@@ -1046,6 +1056,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 				The default color value is (128, 128, 128).
 				
+		ObjRender_SetLightingDiffuseColor (Overload)
+			Arguments:
+				1) object ID
+				2) color
+			Description:
+				Overloaded with 2 arguments.
+				
+				Sets the object's diffuse lighting color as an XRGB hexadecimal color value.
+				
 		ObjRender_SetLightingSpecularColor
 			Arguments:
 				1) object ID
@@ -1057,6 +1076,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 				The default color value is (0, 0, 0).
 				
+		ObjRender_SetLightingSpecularColor (Overload)
+			Arguments:
+				1) object ID
+				2) color
+			Description:
+				Overloaded with 2 arguments.
+				
+				Sets the object's specular lighting color as an XRGB hexadecimal color value.
+				
 		ObjRender_SetLightingAmbientColor
 			Arguments:
 				1) object ID
@@ -1067,6 +1095,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				Sets the ambient color of the lighting.
 				
 				The default color value is (128, 128, 128).
+				
+		ObjRender_SetLightingAmbientColor (Overload)
+			Arguments:
+				1) object ID
+				2) color
+			Description:
+				Overloaded with 2 arguments.
+				
+				Sets the object's ambient lighting color as an XRGB hexadecimal color value.
 				
 		ObjRender_SetLightingDirection
 			Arguments:
@@ -1231,6 +1268,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			4) color blue
 		Description:
 			Sets the instance RGB color data.
+			
+	ObjParticleList_SetColor (Overload)
+		Arguments:
+			1) object ID
+			2) color
+		Description:
+			Overloaded with 2 arguments.
+		
+			Sets the instance color data as an XRGB hexadecimal color value.
 
 	ObjParticleList_SetAlpha
 		Arguments:
@@ -1260,6 +1306,17 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) object ID
 		Description:
 			Clears all previously submitted instance data of the current frame.
+			
+	--------------------------------> Mesh Object Functions <--------------------------------
+	
+	ObjMesh_SetColor (Overload)
+		Arguments:
+			1) object ID
+			2) color
+		Description:
+			Overloaded with 2 arguments.
+		
+			Sets the mesh object's color as an XRGB hexadecimal color value.
 	
 	--------------------------------> Text Object Functions <--------------------------------
 	
@@ -1288,6 +1345,42 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			To ensure that font glyphs generate correctly, match the text object's charset with the font's charset.
 			*The font charset is reset to either ANSI_CHARSET or SHIFTJIS_CHARSET every time ObjText_SetFontType is used.
+			
+	ObjText_SetFontColorTop (Overload)
+		Arguments:
+			1) object ID
+			2) color
+		Description:
+			Overloaded with 2 arguments.
+		
+			Sets the text object's font's top color as an XRGB hexadecimal color value.
+			
+	ObjText_SetFontColorBottom (Overload)
+		Arguments:
+			1) object ID
+			2) color
+		Description:
+			Overloaded with 2 arguments.
+		
+			Sets the text object's font's bottom color as an XRGB hexadecimal color value.
+			
+	ObjText_SetFontBorderColor (Overload)
+		Arguments:
+			1) object ID
+			2) color
+		Description:
+			Overloaded with 2 arguments.
+		
+			Sets the text object's font's border color as an XRGB hexadecimal color value.
+			
+	ObjText_SetVertexColor (Overload)
+		Arguments:
+			1) object ID
+			2) color
+		Description:
+			Overloaded with 2 arguments.
+		
+			Sets the text object's color as an ARGB hexadecimal color value.
 	
 	--------------------------------> Sound Object Functions <--------------------------------
 	
