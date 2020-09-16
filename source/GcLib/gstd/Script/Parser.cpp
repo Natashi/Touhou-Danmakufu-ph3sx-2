@@ -129,8 +129,15 @@ namespace gstd {
 
 			//Check if the symbol can be overloaded
 			if (!sPrev->can_overload && sPrev->level > 0) {
-				std::string error = StringUtility::Format("Default functions cannot be overloaded. (%s)",
-					sPrev->sub->name.c_str());
+				std::string error = "";
+				if (sPrev->sub) {	//Scripter attempted to overload a default function
+					error = StringUtility::Format("\"%s\": Function cannot be overloaded.",
+						name.c_str());
+				}
+				else {				//Scripter duplicated parameter/variable name
+					error = StringUtility::Format("\"%s\": Duplicated parameter name.",
+						name.c_str());
+				}
 				parser_assert(false, error);
 			}
 			else {
