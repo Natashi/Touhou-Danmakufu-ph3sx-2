@@ -82,7 +82,7 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 	wndStyleWin_ = WS_OVERLAPPEDWINDOW - WS_SIZEBOX;
 	hAttachedWindow_ = hWnd;
 
-	//FullScreenModeの設定
+	//Fullscreen mode settings
 	ZeroMemory(&d3dppFull_, sizeof(D3DPRESENT_PARAMETERS));
 	d3dppFull_.hDeviceWindow = hWnd;
 	d3dppFull_.BackBufferWidth = config.GetScreenSize().x;
@@ -98,7 +98,7 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 	d3dppFull_.PresentationInterval = config.IsVSyncEnable() ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 	d3dppFull_.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
 
-	//WindowModeの設定
+	//Windowed mode settings
 	D3DDISPLAYMODE dmode;
 	HRESULT hrAdapt = pDirect3D_->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &dmode);
 	ZeroMemory(&d3dppWin_, sizeof(D3DPRESENT_PARAMETERS));
@@ -115,7 +115,7 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 	d3dppWin_.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
 	d3dppWin_.FullScreen_RefreshRateInHz = 0;
 
-	if (!config.IsWindowed()) {//FullScreenMode
+	if (!config.IsWindowed()) {	//Fullscreen Mode
 		::SetWindowLong(hWnd, GWL_STYLE, wndStyleFull_);
 		::ShowWindow(hWnd, SW_SHOW);
 	}
@@ -223,10 +223,7 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 		}
 	}
 
-	// BackSurface取得
 	pDevice_->GetRenderTarget(0, &pBackSurf_);
-
-	// Zバッファ取得
 	pDevice_->GetDepthStencilSurface(&pZBuffer_);
 
 	bufferManager_ = new VertexBufferManager();
@@ -269,17 +266,19 @@ void DirectGraphics::_Restore() {
 	//The device was lost, wait until it's able to be restored
 	HRESULT hr = pDevice_->TestCooperativeLevel();
 	if (hr == D3DERR_DEVICELOST) {
-		while (true) {
-			Sleep(1000);
+		size_t count = 0;
+		do {
+			Sleep(100);
+			count += 100;
+			hr = pDevice_->TestCooperativeLevel();
 			//The device is now able to be restored, break out of the loop
-			if ((hr = pDevice_->TestCooperativeLevel()) == D3DERR_DEVICENOTRESET) break;
-		}
+			if (hr == D3DERR_DEVICENOTRESET)
+				break;
+		} while (count < 6000);
 	}
 
-	// リストア
 	_ReleaseDxResource();
 
-	//デバイスリセット
 	if (modeScreen_ == SCREENMODE_FULLSCREEN)
 		pDevice_->Reset(&d3dppFull_);
 	else
@@ -326,17 +325,13 @@ void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
 
 	SetBlendMode(MODE_BLEND_ALPHA);
 
-	//αテスト
 	SetAlphaTest(true, 0, D3DCMP_GREATER);
 
-	//Zテスト
 	SetZBufferEnable(false);
 	SetZWriteEnable(false);
 
-	//Filtering
 	SetTextureFilter(D3DTEXF_LINEAR, D3DTEXF_LINEAR, D3DTEXF_NONE);
 
-	//ViewPort
 	ResetViewPort();
 }
 void DirectGraphics::AddDirectGraphicsListener(DirectGraphicsListener* listener) {
@@ -466,60 +461,55 @@ void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 	pDevice_->SetRenderState(D3DRS_DESTBLENDALPHA, dba);
 
 	switch (mode) {
-	case MODE_BLEND_NONE://なし
+	case MODE_BLEND_NONE:		//No blending
 		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		SETBLENDOP(D3DBLENDOP_ADD, FALSE);
 		SETBLENDARGS(D3DBLEND_ONE, D3DBLEND_ZERO, D3DBLEND_ONE, D3DBLEND_ZERO);
 		break;
-	case MODE_BLEND_ALPHA_INV:	//α and Invert
+	case MODE_BLEND_ALPHA_INV:		//Alpha + Invert
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLORARG1, D3DTA_TEXTURE | D3DTA_COMPLEMENT);
-	case MODE_BLEND_ALPHA://αで半透明合成
+	case MODE_BLEND_ALPHA:			//Alpha
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
-	case MODE_BLEND_ADD_RGB://RGBで加算合成
+	case MODE_BLEND_ADD_RGB:		//Add - Alpha
 		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_ONE, D3DBLEND_ONE, D3DBLEND_ONE, D3DBLEND_ONE);
 		break;
-	case MODE_BLEND_ADD_ARGB://αで加算合成
+	case MODE_BLEND_ADD_ARGB:		//Add + Alpha
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_SRCALPHA, D3DBLEND_ONE, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
-	case MODE_BLEND_MULTIPLY://乗算合成
+	case MODE_BLEND_MULTIPLY:		//Multiply
 		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_ZERO, D3DBLEND_SRCCOLOR, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
-	case MODE_BLEND_SUBTRACT://減算合成
+	case MODE_BLEND_SUBTRACT:		//Subtract
 		SETBLENDOP(D3DBLENDOP_REVSUBTRACT, TRUE);
 		SETBLENDARGS(D3DBLEND_SRCALPHA, D3DBLEND_ONE, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
-	case MODE_BLEND_SHADOW://影描画用
+	case MODE_BLEND_SHADOW:			//Invert + Multiply
 		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_ZERO, D3DBLEND_INVSRCCOLOR, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
-	case MODE_BLEND_INV_DESTRGB://描画先色反転合成
+	case MODE_BLEND_INV_DESTRGB:	//Dest invert
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_INVDESTCOLOR, D3DBLEND_INVSRCCOLOR, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
 	}
 
-	// 減算半透明合成
+	//Reverse Subtract
 	//pDevice_->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_REVSUBTRACT);
 	//pDevice_->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
 	//pDevice_->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
 
-	// ハイライト(覆い焼き)
+	//Highlight
 	//pDevice_->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
 	//pDevice_->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
 	//pDevice_->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE); 
-
-	// リバース(反転)
-	//pDevice_->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
-	//pDevice_->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_INVDESTCOLOR);
-	//pDevice_->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
 }
 void DirectGraphics::SetFillMode(DWORD mode) {
 	pDevice_->SetRenderState(D3DRS_FILLMODE, mode);
@@ -949,7 +939,6 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 
 		Application::GetBase()->SetActive(true);
 
-		//テクスチャ解放
 		_ReleaseDxResource();
 
 		HRESULT hrReset = E_FAIL;
@@ -1023,9 +1012,9 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 			throw gstd::wexception(err);
 		}
 
-		//テクスチャレストア
 		_RestoreDxResource();
 	}
+	//Pseudo fullscreen mode
 	else {
 		if (modeScreen_ == SCREENMODE_FULLSCREEN) {
 			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleWin_);
