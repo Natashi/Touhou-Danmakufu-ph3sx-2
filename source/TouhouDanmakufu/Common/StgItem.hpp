@@ -49,7 +49,7 @@ public:
 
 	SpriteList2D* GetItemRenderer() { return listSpriteItem_; }
 	SpriteList2D* GetDigitRenderer() { return listSpriteDigit_; }
-	void GetValidRenderPriorityList(std::vector<PriListBool>& list);
+	void GetValidRenderPriorityList(std::vector<bool>& list);
 
 	StgItemDataList* GetItemDataList() { return listItemData_; }
 	bool LoadItemData(const std::wstring& path, bool bReload = false);

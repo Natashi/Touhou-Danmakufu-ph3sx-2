@@ -226,10 +226,10 @@ size_t StgShotManager::GetShotCount(int typeOwner) {
 	return res;
 }
 
-void StgShotManager::GetValidRenderPriorityList(std::vector<PriListBool>& list) {
+void StgShotManager::GetValidRenderPriorityList(std::vector<bool>& list) {
 	auto objectManager = stageController_->GetMainObjectManager();
 	list.resize(objectManager->GetRenderBucketCapacity());
-	ZeroMemory(&list[0], objectManager->GetRenderBucketCapacity() * sizeof(PriListBool));
+	std::fill(list.begin(), list.end(), false);
 
 	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;

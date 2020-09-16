@@ -43,8 +43,8 @@ protected:
 	virtual void DoRetry() = 0;
 	void _ControlScene();
 
-	std::vector<PriListBool> listShotValidPriority_;
-	std::vector<PriListBool> listItemValidPriority_;
+	std::vector<bool> listShotValidPriority_;
+	std::vector<bool> listItemValidPriority_;
 public:
 	StgSystemController();
 	~StgSystemController();

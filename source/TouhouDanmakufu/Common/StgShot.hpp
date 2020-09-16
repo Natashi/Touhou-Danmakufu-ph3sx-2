@@ -70,7 +70,7 @@ public:
 	size_t GetShotCount(int typeOnwer);
 	size_t GetShotCountAll() { return listObj_.size(); }
 
-	void GetValidRenderPriorityList(std::vector<PriListBool>& list);
+	void GetValidRenderPriorityList(std::vector<bool>& list);
 
 	void SetDeleteEventEnableByType(int type, bool bEnable);
 	bool IsDeleteEventEnable(int bit) { return listDeleteEventEnable_[bit]; }

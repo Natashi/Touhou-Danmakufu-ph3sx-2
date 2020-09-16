@@ -13,12 +13,6 @@ const std::wstring DNH_EXE_DEFAULT = L"th_dnh_ph3sx.exe";
 const std::wstring DNH_VERSION = L"v1.11a";
 constexpr const size_t DNH_VERSION_NUM = /*e*/621;	//OWO!!!!!
 
-#if NDEBUG
-typedef bool PriListBool;
-#else
-typedef byte PriListBool;
-#endif
-
 #endif
 
 
