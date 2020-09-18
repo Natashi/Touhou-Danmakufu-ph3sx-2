@@ -143,11 +143,6 @@ namespace gstd {
 			else {
 				for (auto itrPair = itr.first; itrPair != itr.second; ++itrPair) {
 					if (argc == itrPair->second.sub->arguments) {
-						/*
-						ptr_delete(itrPair->second);
-						itrPair->second = s;
-						return;
-						*/
 						std::string error = StringUtility::Format("An overload with the same number of "
 							"arguments already exists. (%s, argc=%d)",
 							sPrev->sub->name.c_str(), argc);
@@ -204,15 +199,11 @@ namespace gstd {
 	}
 
 	void parser::register_function(const function& func) {
-		symbol s;
-		s.level = 0;
-		s.sub = engine->new_block(0, block_kind::bk_function);
-		s.sub->arguments = func.arguments;
-		s.sub->name = func.name;
-		s.sub->func = func.func;
-		s.variable = -1;
-		s.can_overload = false;
-		s.can_modify = false;
+		script_block* block = engine->new_block(0, block_kind::bk_function);
+		block->arguments = func.arguments;
+		block->name = func.name;
+		block->func = func.func;
+		symbol s = symbol(0, block, -1, false, false);
 		frame.begin()->singular_insert(func.name, s, func.arguments);
 	}
 
@@ -305,25 +296,13 @@ namespace gstd {
 			int par = 0;
 
 			if (adding_result) {
-				symbol s;
-				s.level = level;
-				s.sub = nullptr;
-				s.variable = var;
-				s.can_overload = false;
-				s.can_modify = false;
-				++var;
+				symbol s = symbol(level, nullptr, var++, false, false);
 				current_frame->singular_insert("\x01", s);
 			}
 
 			if (args) {
 				for (size_t i = 0; i < args->size(); ++i) {
-					symbol s;
-					s.level = level;
-					s.sub = nullptr;
-					s.variable = var;
-					s.can_overload = false;
-					s.can_modify = true;
-					++var;
+					symbol s = symbol(level, nullptr, var++, false, true);
 					current_frame->singular_insert(args->at(i), s);
 				}
 			}
@@ -433,15 +412,11 @@ namespace gstd {
 							}
 						}
 
-						symbol s;
-						s.level = level;
-						s.sub = engine->new_block(level + 1, kind);
-						s.sub->name = name;
-						s.sub->func = nullptr;
-						s.sub->arguments = countArgs;
-						s.variable = -1;
-						s.can_overload = kind != block_kind::bk_sub;
-						s.can_modify = false;
+						script_block* newBlock = engine->new_block(level + 1, kind);
+						newBlock->name = name;
+						newBlock->func = nullptr;
+						newBlock->arguments = countArgs;
+						symbol s = symbol(level, newBlock, -1, kind != block_kind::bk_sub, false);
 						current_frame->singular_insert(name, s, countArgs);
 					}
 				}
@@ -470,13 +445,7 @@ namespace gstd {
 							}
 						}
 
-						symbol s;
-						s.level = level;
-						s.sub = nullptr;
-						s.variable = var;
-						s.can_overload = false;
-						s.can_modify = !is_const;
-						++var;
+						symbol s = symbol(level, nullptr, var++, false, !is_const);
 						current_frame->singular_insert(lex2.word, s);
 
 						lex2.advance();
@@ -1412,12 +1381,7 @@ continue_as_variadic:
 						for (parser_state_t* iState = state; iState != nullptr; iState = iState->state_pred)
 							varc_prev_total += iState->var_count_main;
 
-						symbol s;
-						s.level = block->level;
-						s.sub = nullptr;
-						s.variable = varc_prev_total;
-						s.can_overload = false;
-						s.can_modify = !isNewVarConst;
+						symbol s = symbol(block->level, nullptr, varc_prev_total, false, !isNewVarConst);
 						frame.back().singular_insert(newVarName, s);
 
 						newState.var_count_main = 1;
@@ -1912,12 +1876,7 @@ continue_as_variadic:
 		else if (args) {
 			scope_t* ptrBackFrame = &frame.back();
 			for (size_t i = 0; i < args->size(); ++i) {
-				symbol s;
-				s.level = block->level;
-				s.sub = nullptr;
-				s.variable = varc_prev_total + i;
-				s.can_overload = false;
-				s.can_modify = true;
+				symbol s = symbol(block->level, nullptr, varc_prev_total + i, false, true);
 				ptrBackFrame->singular_insert(args->at(i), s);
 			}
 			newState.var_count_main = args->size();

@@ -163,8 +163,12 @@ namespace gstd {
 			int level;
 			script_block* sub;
 			int variable;
-			bool can_overload = true;
-			bool can_modify = true;		//Applies to the scripter, not the engine
+			bool can_overload;
+			bool can_modify;		//Applies to the scripter, not the engine
+
+			symbol() : level(0), sub(nullptr), variable(-1), can_overload(true), can_modify(true) {}
+			symbol(int lv, script_block* pSub, int var, bool bOver, bool bMod) : level(lv), sub(pSub), 
+				variable(var), can_overload(bOver), can_modify(bMod) {}
 		};
 
 		struct scope_t : public std::multimap<std::string, symbol> {
