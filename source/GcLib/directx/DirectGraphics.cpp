@@ -439,7 +439,7 @@ void DirectGraphics::SetAlphaTest(bool bEnable, DWORD ref, D3DCMPFUNC func) {
 }
 void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 	if (mode == previousBlendMode_) return;
-	if (previousBlendMode_ = (BlendMode)-999) {
+	if (previousBlendMode_ == (BlendMode)-999) {
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLOROP, D3DTOP_MODULATE);
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
 		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
