@@ -832,7 +832,7 @@ void StgItemObject::SetAlpha(int alpha) {
 	color_ = (color_ & 0x00ffffff) | ((byte)alpha << 24);
 }
 void StgItemObject::SetColor(int r, int g, int b) {
-	__m128i c = Vectorize::Set128I_32(color_ >> 24, r, g, b);
+	__m128i c = Vectorize::Set(color_ >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 }
 void StgItemObject::SetToPosition(D3DXVECTOR2& pos) {

@@ -97,6 +97,13 @@
 #include <d3dx9.h>
 #include <dsound.h>
 
+/*
+#pragma warning(push)
+#pragma warning (disable : 4838)	//require narrowing conversion
+#include <xnamath.h>
+#pragma warning(pop)
+*/
+
 #pragma comment(lib, "msacm32.lib")
 #pragma comment(lib, "d3dx9.lib")
 #pragma comment(lib, "dsound.lib")

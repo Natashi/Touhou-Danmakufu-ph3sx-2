@@ -216,7 +216,7 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 							short c_r = colorR * oAlpha / 255 + colorBorder[1] * bAlpha / 255;
 							short c_g = colorG * oAlpha / 255 + colorBorder[2] * bAlpha / 255;
 							short c_b = colorB * oAlpha / 255 + colorBorder[3] * bAlpha / 255;
-							__m128i c = Vectorize::Set128I_32(0, c_r, c_g, c_b);
+							__m128i c = Vectorize::Set(0, c_r, c_g, c_b);
 							color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 							color = (color & 0x00ffffff) | 0xff000000;
 						}

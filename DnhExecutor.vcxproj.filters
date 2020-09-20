@@ -412,6 +412,9 @@
     <ClInclude Include="source\GcLib\directx\MetasequoiaMesh.hpp">
       <Filter>source\GcLib\directx\Mesh</Filter>
     </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\VectorExtension.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="source\TouhouDanmakufu\DnhExecutor\DnhExecuter.rc">

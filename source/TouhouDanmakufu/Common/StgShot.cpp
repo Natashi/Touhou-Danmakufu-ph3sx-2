@@ -990,7 +990,7 @@ void StgShotObject::SetAlpha(int alpha) {
 	color_ = (color_ & 0x00ffffff) | ((byte)alpha << 24);
 }
 void StgShotObject::SetColor(int r, int g, int b) {
-	__m128i c = Vectorize::Set128I_32(color_ >> 24, r, g, b);
+	__m128i c = Vectorize::Set(color_ >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 }
 
@@ -1582,11 +1582,13 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 	bool bDelete = false;
 
 #ifdef __L_MATH_VECTORIZE
-	__m128i rc_pos = _mm_setr_epi32(posX_, posXE_, posY_, posYE_);
-	__m128i res = _mm_cmplt_epi32(rc_pos, _mm_setr_epi32(rect->left, rect->left, rect->top, rect->top));
+	__m128i rc_pos = Vectorize::Set((int)posX_, (int)posXE_, (int)posY_, (int)posYE_);
+	__m128i res = _mm_cmplt_epi32(rc_pos, 
+		Vectorize::Set(rect->left, rect->left, rect->top, rect->top));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	if (!bDelete) {
-		res = _mm_cmpgt_epi32(rc_pos, _mm_setr_epi32(rect->right, rect->right, rect->bottom, rect->bottom));
+		res = _mm_cmpgt_epi32(rc_pos, 
+			Vectorize::Set(rect->right, rect->right, rect->bottom, rect->bottom));
 		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	}
 #else
@@ -1860,13 +1862,14 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 	bool bDelete = false;
 
 #ifdef __L_MATH_VECTORIZE
-	__m128 v_pos = _mm_setr_ps(0, 0, posX_, posY_);
-	v_pos = _mm_fmadd_ss(_mm_setr_ps(0, 0, length_, length_), _mm_setr_ps(0, 0, move_.x, move_.y), v_pos);
-	__m128i rc_pos = _mm_setr_epi32(posX_, v_pos.m128_f32[2], posY_, v_pos.m128_f32[3]);
-	__m128i res = _mm_cmplt_epi32(rc_pos, _mm_setr_epi32(rect->left, rect->left, rect->top, rect->top));
+	__m128 v_pos = Vectorize::Set(posX_, posY_, 0.0f, 0.0f);
+	v_pos = Vectorize::MulAdd(Vectorize::Set((float)length_, (float)length_, 0.0f, 0.0f),
+		Vectorize::Set(move_.x, move_.y, 0.0f, 0.0f), v_pos);
+	__m128i rc_pos = Vectorize::Set((int)posX_, (int)v_pos.m128_f32[0], (int)posY_, (int)v_pos.m128_f32[1]);
+	__m128i res = _mm_cmplt_epi32(rc_pos, Vectorize::Set(rect->left, rect->left, rect->top, rect->top));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	if (!bDelete) {
-		res = _mm_cmpgt_epi32(rc_pos, _mm_setr_epi32(rect->right, rect->right, rect->bottom, rect->bottom));
+		res = _mm_cmpgt_epi32(rc_pos, Vectorize::Set(rect->right, rect->right, rect->bottom, rect->bottom));
 		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	}
 #else

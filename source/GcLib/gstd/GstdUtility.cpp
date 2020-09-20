@@ -71,108 +71,13 @@ void SystemUtility::TestCpuSupportSIMD() {
 
 	if (!hasSSE || !hasSSE2 || !hasAVX) {
 		std::string err = "The game cannot start because your CPU lacks the required vector instruction sets(s):\r\n  ";
-		if (!hasSSE)
-			err += " SSE";
-		if (!hasSSE2)
-			err += " SSE2";
-		if (!hasAVX)
-			err += " AVX";
+		if (!hasSSE)	err += " SSE";
+		if (!hasSSE2)	err += " SSE2";
+		if (!hasAVX)	err += " AVX";
 		throw wexception(err);
 	}
 #endif
 }
-
-//================================================================
-//Vectorize
-__m128i Vectorize::Set128I_32(int a, int b, int c, int d) {
-	__m128i res;
-#ifndef __L_MATH_VECTORIZE
-	int* ptr = reinterpret_cast<int*>(&res);
-	ptr[0] = a;
-	ptr[1] = b;
-	ptr[2] = c;
-	ptr[3] = d;
-#else
-	res = _mm_setr_epi32(a, b, c, d);
-#endif
-	return res;
-}
-#ifndef __L_MATH_VECTORIZE
-__m128 Vectorize::Add128S(const __m128& a, const __m128& b) {
-	__m128 res = a;
-	float* pR = reinterpret_cast<float*>(&res);
-	const float* pB = reinterpret_cast<const float*>(&b);
-	for (int i = 0; i < 4; ++i)
-		pR[i] += pB[i];
-	return res;
-}
-__m128 Vectorize::Sub128S(const __m128& a, const __m128& b) {
-	__m128 res = a;
-	float* pR = reinterpret_cast<float*>(&res);
-	const float* pB = reinterpret_cast<const float*>(&b);
-	for (int i = 0; i < 4; ++i)
-		pR[i] -= pB[i];
-	return res;
-}
-__m128 Vectorize::Mul128S(const __m128& a, const __m128& b) {
-	__m128 res = a;
-	float* pR = reinterpret_cast<float*>(&res);
-	const float* pB = reinterpret_cast<const float*>(&b);
-	for (int i = 0; i < 4; ++i)
-		pR[i] *= pB[i];
-	return res;
-}
-__m128 Vectorize::Div128S(const __m128& a, const __m128& b) {
-	__m128 res = a;
-	float* pR = reinterpret_cast<float*>(&res);
-	const float* pB = reinterpret_cast<const float*>(&b);
-	for (int i = 0; i < 4; ++i)
-		pR[i] /= pB[i];
-	return res;
-}
-__m256 Vectorize::Mul256S(const __m256& a, const __m256& b) {
-	__m256 res = a;
-	float* pR = reinterpret_cast<float*>(&res);
-	const float* pB = reinterpret_cast<const float*>(&b);
-	for (int i = 0; i < 8; ++i)
-		pR[i] *= pB[i];
-	return res;
-}
-__m128d Vectorize::FMulAdd128D(const __m128d& a, const __m128d& b, const __m128d& c) {
-	__m128d res = a;
-	double* pR = reinterpret_cast<double*>(&res);
-	const double* pB = reinterpret_cast<const double*>(&b);
-	const double* pC = reinterpret_cast<const double*>(&c);
-	for (int i = 0; i < 2; ++i)
-		pR[i] = fma(pR[i], pB[i], pC[i]);
-	return res;
-}
-__m128i Vectorize::MaxPackedI_32(const __m128i& a, const __m128i& b) {
-	__m128i res = a;
-	int* pR = reinterpret_cast<int*>(&res);
-	const int* pB = reinterpret_cast<const int*>(&b);
-	for (int i = 0; i < 4; ++i)
-		pR[i] = std::max(pR[i], pB[i]);
-	return res;
-}
-__m128i Vectorize::MinPackedI_32(const __m128i& a, const __m128i& b) {
-	__m128i res = a;
-	int* pR = reinterpret_cast<int*>(&res);
-	const int* pB = reinterpret_cast<const int*>(&b);
-	for (int i = 0; i < 4; ++i)
-		pR[i] = std::min(pR[i], pB[i]);
-	return res;
-}
-__m128i Vectorize::ClampPackedI_32(const __m128i& a, const __m128i& b, const __m128i& c) {
-	__m128i res = a;
-	int* pR = reinterpret_cast<int*>(&res);
-	const int* pB = reinterpret_cast<const int*>(&b);
-	const int* pC = reinterpret_cast<const int*>(&c);
-	for (int i = 0; i < 4; ++i)
-		pR[i] = std::clamp(pR[i], pB[i], pC[i]);
-	return res;
-}
-#endif
 
 //================================================================
 //Encoding

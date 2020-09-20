@@ -202,7 +202,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <PreprocessorDefinitions>DNH_PROJ_EXECUTOR;WIN32;_DEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DNH_PROJ_EXECUTOR;__L_MATH_VECTORIZE;WIN32;_DEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>DnhExecutor/Debug/</AssemblerListingLocation>
       <PrecompiledHeaderOutputFile>DnhExecutor\Debug\DnhExecutor.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>DnhExecutor/Debug/</ObjectFileName>
@@ -352,6 +352,7 @@
     <ClInclude Include="source\GcLib\directx\Vertex.hpp" />
     <ClInclude Include="source\GcLib\directx\VertexBuffer.hpp" />
     <ClInclude Include="source\GcLib\GcLib.hpp" />
+    <ClInclude Include="source\GcLib\gstd\VectorExtension.hpp" />
     <ClInclude Include="source\GcLib\gstd\Script\LightweightVector.hpp" />
     <ClInclude Include="source\GcLib\gstd\Script\Parser.hpp" />
     <ClInclude Include="source\GcLib\gstd\Script\ScriptFunction.hpp" />

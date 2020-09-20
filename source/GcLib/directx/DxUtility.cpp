@@ -9,25 +9,20 @@ using namespace directx;
 //ColorAccess
 **********************************************************/
 D3DCOLORVALUE ColorAccess::SetColor(D3DCOLORVALUE& value, D3DCOLOR color) {
-	D3DXVECTOR4 _col = ToVec4Normalized(color);		//argb
+	D3DXVECTOR4 _col = ToVec4Normalized(color);							//argb
 	D3DXVECTOR4 colVec = D3DXVECTOR4(_col.y, _col.z, _col.w, _col.x);	//rgba
 	value = (D3DCOLORVALUE&)ColorAccess::SetColor(colVec, color);
 	return value;
 }
 D3DMATERIAL9 ColorAccess::SetColor(D3DMATERIAL9 mat, D3DCOLOR color) {
-	D3DXVECTOR4 _col = ToVec4Normalized(color);			//argb
-	__m128 col = { _col.y, _col.z, _col.w, _col.x };	//rgba
+	D3DXVECTOR4 _col = ToVec4Normalized(color);					//argb
+	__m128 col = Vectorize::Set(_col.y, _col.z, _col.w, _col.x);	//rgba
 	__m128 dst;
 
 	auto PerformMul = [&](D3DCOLORVALUE* src) {
 		memcpy(&dst, src, sizeof(D3DCOLORVALUE));	//rgba
-#ifdef __L_MATH_VECTORIZE
-		dst = _mm_mul_ps(dst, col);
-#else
-		dst = Vectorize::Mul128S(dst, col);
-#endif
-		//D3DXVECTOR4 cRes = ColorAccess::ClampColorPacked((D3DXVECTOR4&)dst);
-		memcpy(src, &dst, sizeof(D3DCOLORVALUE));
+		dst = Vectorize::Mul(Vectorize::Load((float*)src), col);
+		Vectorize::Store((float*)src, dst);
 	};
 	PerformMul(&mat.Diffuse);
 	PerformMul(&mat.Specular);
@@ -37,65 +32,44 @@ D3DMATERIAL9 ColorAccess::SetColor(D3DMATERIAL9 mat, D3DCOLOR color) {
 	return mat;
 }
 D3DXVECTOR4& ColorAccess::SetColor(D3DXVECTOR4& value, D3DCOLOR color) {
-	__m128 v1 = (__m128&)value;					//argb
-	D3DXVECTOR4 col = ToVec4Normalized(color);	//argb
-#ifdef __L_MATH_VECTORIZE
-	v1 = _mm_mul_ps(v1, (__m128&)col);
-#else
-	v1 = Vectorize::Mul128S(v1, (__m128&)col);
-#endif
-	value = ColorAccess::ClampColorPacked((D3DXVECTOR4&)v1);
+	__m128 v1 = Vectorize::Load(&value.x);					//argb
+	__m128 col = Vectorize::Load(ToVec4Normalized(color));	//argb
+	v1 = Vectorize::Mul(v1, col);
+	value = ColorAccess::ClampColorPacked((__m128i&)v1);
 	return value;
 }
 D3DCOLOR& ColorAccess::SetColor(D3DCOLOR& src, const D3DCOLOR& mul) {
 	D3DXVECTOR4 mulFac = ToVec4Normalized(mul);
-	__m128 vsrc = (__m128&)ToVec4(src);			//argb
-#ifdef __L_MATH_VECTORIZE
-	__m128 res = _mm_mul_ps(vsrc, (__m128&)mulFac);
-#else
-	__m128 res = Vectorize::Mul128S(vsrc, (__m128&)mulFac);
-#endif
+	__m128 vsrc = Vectorize::Load(ToVec4(src));			//argb
+	__m128 res = Vectorize::Mul(vsrc, Vectorize::Load(mulFac));
 	__m128i argb = ColorAccess::ClampColorPackedM((D3DXVECTOR4&)res);
-	int* _i = argb.m128i_i32;
-	src = D3DCOLOR_ARGB(_i[0], _i[1], _i[2], _i[3]);
+	src = D3DCOLOR_ARGB(argb.m128i_i32[0], argb.m128i_i32[1], argb.m128i_i32[2], argb.m128i_i32[3]);
 	return src;
 }
 D3DCOLOR& ColorAccess::ApplyAlpha(D3DCOLOR& color, float alpha) {
-	__m128 v1 = (__m128&)ToVec4(color);			//argb
-	__m128 v2 = { alpha, alpha, alpha, alpha };
-#ifdef __L_MATH_VECTORIZE
-	v1 = _mm_mul_ps(v1, v2);
-#else
-	v1 = Vectorize::Mul128S(v1, v2);
-#endif
-	__m128i argb = ColorAccess::ClampColorPackedM((D3DXVECTOR4&)v1);
-	int* _i = argb.m128i_i32;
-	color = D3DCOLOR_ARGB(_i[0], _i[1], _i[2], _i[3]);
+	__m128 v1 = Vectorize::Load(ToVec4(color));			//argb
+	__m128 v2 = Vectorize::Replicate(alpha);
+	v1 = Vectorize::Mul(v1, v2);
+	__m128i ci = ColorAccess::ClampColorPackedM((D3DXVECTOR4&)v1);
+	color = D3DCOLOR_ARGB(ci.m128i_i32[0], ci.m128i_i32[1], ci.m128i_i32[2], ci.m128i_i32[3]);
 	return color;
 }
 
 D3DXVECTOR4 ColorAccess::ClampColorPacked(const D3DXVECTOR4& src) {
-	__m128i ci = Vectorize::Set128I_32(src[0], src[1], src[2], src[3]);
+	__m128i ci = Vectorize::Set((int)src[0], (int)src[1], (int)src[2], (int)src[3]);
 	return ColorAccess::ClampColorPacked(ci);
 }
 D3DXVECTOR4 ColorAccess::ClampColorPacked(const __m128i& src) {
 	__m128i ci = ColorAccess::ClampColorPackedM(src);
-	int* _i = ci.m128i_i32;
-	return D3DXVECTOR4((float)_i[0], (float)_i[1], (float)_i[2], (float)_i[3]);
+	return D3DXVECTOR4(ci.m128i_i32[0], ci.m128i_i32[1], ci.m128i_i32[2], ci.m128i_i32[3]);
 }
 __m128i ColorAccess::ClampColorPackedM(const D3DXVECTOR4& src) {
-	__m128i ci = Vectorize::Set128I_32(src[0], src[1], src[2], src[3]);
+	__m128i ci = Vectorize::Set((int)src[0], (int)src[1], (int)src[2], (int)src[3]);
 	return ColorAccess::ClampColorPackedM(ci);
 }
 __m128i ColorAccess::ClampColorPackedM(const __m128i& src) {
-	__m128i cn = Vectorize::Set128I_32(0x00, 0x00, 0x00, 0x00);
-	__m128i cx = Vectorize::Set128I_32(0xff, 0xff, 0xff, 0xff);
-#ifdef __L_MATH_VECTORIZE
-	cx = _mm_maskz_min_epi32(0xff, src, cx);
-	return _mm_maskz_max_epi32(0xff, cx, cn);
-#else
-	return Vectorize::ClampPackedI_32(src, cn, cx);
-#endif
+	return (__m128i&)Vectorize::ClampPacked(src, 
+		Vectorize::Replicate(0x00), Vectorize::Replicate(0xff));
 }
 
 D3DXVECTOR3& ColorAccess::RGBtoHSV(D3DXVECTOR3& color, int red, int green, int blue) {
@@ -147,10 +121,9 @@ D3DCOLOR& ColorAccess::HSVtoRGB(D3DCOLOR& color, int hue, int saturation, int va
 	int t = value * (1.0f - s * (1.0f - ff));
 
 	auto GenColor = [](int r, int g, int b) -> D3DCOLOR {
-		__m128i ci = Vectorize::Set128I_32(r, g, b, 0);
+		__m128i ci = Vectorize::Set(r, g, b, 0);
 		ci = ColorAccess::ClampColorPackedM(ci);
-		int* _i = ci.m128i_i32;
-		return D3DCOLOR_XRGB(_i[0], _i[1], _i[2]);
+		return D3DCOLOR_XRGB(ci.m128i_i32[0], ci.m128i_i32[1], ci.m128i_i32[2]);
 	};
 
 	D3DCOLOR rgb = 0xffffffff;
@@ -173,18 +146,13 @@ D3DXVECTOR4 ColorAccess::ToVec4(const D3DCOLOR& color) {
 	return D3DXVECTOR4(GetColorA(color), GetColorR(color), GetColorG(color), GetColorB(color));
 }
 D3DXVECTOR4 ColorAccess::ToVec4Normalized(const D3DCOLOR& color) {
-	D3DXVECTOR4 argb = ToVec4(color);
-	__m128 nor = { 255.0f, 255.0f, 255.0f, 255.0f };
-#ifdef __L_MATH_VECTORIZE
-	nor = _mm_div_ps((__m128&)argb, nor);
-#else
-	nor = Vectorize::Div128S((__m128&)argb, nor);
-#endif
+	__m128 argb = Vectorize::Load(ToVec4(color));
+	__m128 nor = Vectorize::Replicate(1.0f / 255.0f);
+	nor = Vectorize::Mul(argb, nor);
 	return (D3DXVECTOR4&)nor;
 }
-D3DCOLOR ColorAccess::ToD3DCOLOR(const __m128i& color) {
-	const int* _i = color.m128i_i32;
-	return D3DCOLOR_ARGB(_i[0], _i[1], _i[2], _i[3]);
+D3DCOLOR ColorAccess::ToD3DCOLOR(const __m128i& col) {
+	return D3DCOLOR_ARGB(col.m128i_i32[0], col.m128i_i32[1], col.m128i_i32[2], col.m128i_i32[3]);
 }
 D3DCOLOR ColorAccess::ToD3DCOLOR(const D3DXVECTOR4& color) {
 	return D3DCOLOR_ARGB((byte)color.x, (byte)color.y, (byte)color.z, (byte)color.w);
@@ -212,10 +180,9 @@ bool DxMath::IsIntersected(DxCircle& circle1, DxCircle& circle2) {
 	float ry = circle1.GetY() - circle2.GetY();
 	float rr = circle1.GetR() + circle2.GetR();
 #ifdef __L_MATH_VECTORIZE
-	__m128 v1 = _mm_setr_ps(rx, ry, rr, 0);
-	v1 = _mm_mul_ps(v1, v1);
-	float* _v1 = v1.m128_f32;
-	return (_v1[0] + _v1[1]) <= (_v1[2]);
+	__m128 v1 = Vectorize::Set(rx, ry, rr, 0.0f);
+	v1 = Vectorize::Mul(v1, v1);
+	return (v1.m128_f32[0] + v1.m128_f32[1]) <= (v1.m128_f32[2]);
 #else
 	return (rx * rx + ry * ry) <= (rr * rr);
 #endif
@@ -239,9 +206,9 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	float cen_x = (line.GetX1() + line.GetX2()) / 2.0f;
 	float cen_y = (line.GetY1() + line.GetY2()) / 2.0f;
 
-	v1 = _mm_sub_ps(
-		_mm_setr_ps(line.GetX2(), line.GetY2(), cen_x, cen_y), 
-		_mm_setr_ps(line.GetX1(), line.GetY1(), circle.GetX(), circle.GetY()));
+	v1 = Vectorize::Sub(
+		Vectorize::Set(line.GetX2(), line.GetY2(), cen_x, cen_y),
+		Vectorize::Set(line.GetX1(), line.GetY1(), circle.GetX(), circle.GetY()));
 
 	float dx = _v1[0];
 	float dy = _v1[1];
@@ -259,9 +226,9 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	float rsin = dy / line_h;
 
 	//Find vector cross products
-	v1 = _mm_mul_ps(
-		_mm_setr_ps(rcos, rsin, rsin, -rcos),
-		_mm_setr_ps(u_cy, u_cx, u_cy, u_cx));
+	v1 = Vectorize::Mul(
+		Vectorize::Set(rcos, rsin, rsin, -rcos),
+		Vectorize::Set(u_cy, u_cx, u_cy, u_cx));
 	float cross_x = abs(_v1[0] - _v1[1]) * 2.0f;
 	float cross_y = abs(_v1[2] - _v1[3]) * 2.0f;
 
@@ -279,25 +246,23 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	}
 
 	float l_uw = line.GetWidth() / line_h * 0.5f;
-	v1 = _mm_mul_ps(
-		_mm_setr_ps(dx, dy, circle.GetR(), 0),
-		_mm_setr_ps(l_uw, l_uw, circle.GetR(), 0));
+	v1 = Vectorize::Mul(
+		Vectorize::Set(dx, dy, circle.GetR(), 0.0f),
+		Vectorize::Set(l_uw, l_uw, circle.GetR(), 0.0f));
 	float nx = _v1[0];
 	float ny = _v1[1];
 	float rr = _v1[2];
 
 	//Check A and B
-	v1 = _mm_setr_ps(circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY());
-	v2 = _mm_mul_ps(v1,
-		_mm_setr_ps(line.GetX1() - ny, line.GetY1() + nx, line.GetX1() + ny, line.GetY1() - nx));
-	v2 = _mm_mul_ps(v2, v2);
+	v1 = Vectorize::Set(circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY());
+	v2 = Vectorize::Mul(v1, Vectorize::Set(line.GetX1() - ny, line.GetY1() + nx, line.GetX1() + ny, line.GetY1() - nx));
+	v2 = Vectorize::Mul(v2, v2);
 	if (_v2[0] + _v2[1] <= rr || _v2[2] + _v2[3] <= rr)
 		return true;
 
 	//Check C and D
-	v2 = _mm_sub_ps(v1,
-		_mm_setr_ps(line.GetX2() + ny, line.GetY2() - nx, line.GetX2() - ny, line.GetY2() + nx));
-	v2 = _mm_mul_ps(v2, v2);
+	v2 = Vectorize::Sub(v1, Vectorize::Set(line.GetX2() + ny, line.GetY2() - nx, line.GetX2() - ny, line.GetY2() + nx));
+	v2 = Vectorize::Mul(v2, v2);
 	if (_v2[0] + _v2[1] <= rr || _v2[2] + _v2[3] <= rr)
 		return true;
 #else
@@ -358,7 +323,23 @@ bool DxMath::IsIntersected(DxWidthLine& line1, DxWidthLine& line2) {
 		return false;
 	else if (countCheckA == 1 && countCheckB == 1) {
 		//A normal line-line intersection
+#ifdef __L_MATH_VECTORIZE
+		__m128 vec1 = Vectorize::Set(linePairA->GetX2(), linePairA->GetY2(), linePairB->GetX2(), linePairB->GetY2());
+		__m128 vec2 = Vectorize::Set(linePairA->GetX1(), linePairA->GetY1(), linePairB->GetX1(), linePairB->GetY1());
+		float* _v1 = vec1.m128_f32;
+		float* _v2 = vec2.m128_f32;
 
+		vec1 = Vectorize::Sub(vec1, vec2);
+		vec2 = Vectorize::Sub(
+			Vectorize::Set(_v1[0] * _v1[3], linePairA->GetX1(), linePairA->GetY1(), 0.0f), 
+			Vectorize::Set(_v1[2] * _v1[1], linePairB->GetX1(), linePairB->GetY1(), 0.0f));
+
+		float idet = 1.0f / _v2[0];
+		vec2 = Vectorize::Mul(vec1, Vectorize::Set(_v2[2], _v2[1], _v2[2], _v2[1]));
+		vec2 = Vectorize::Mul(vec2, Vectorize::Replicate(idet));
+		float s = _v2[0] - _v2[1];
+		float t = _v2[2] - _v2[3];
+#else
 		float dx1 = linePairA->GetX2() - linePairA->GetX1();
 		float dy1 = linePairA->GetY2() - linePairA->GetY1();
 		float dx2 = linePairB->GetX2() - linePairB->GetX1();
@@ -369,6 +350,7 @@ bool DxMath::IsIntersected(DxWidthLine& line1, DxWidthLine& line2) {
 		float ddy = linePairA->GetY1() - linePairB->GetY1();
 		float s = (dx1 * ddy - dy1 * ddx) * idet;
 		float t = (dx2 * ddy - dy2 * ddx) * idet;
+#endif
 
 		//Issue: fails if the lines are intersecting but parallel
 		return (s >= 0 && s <= 1 && t >= 0 && t <= 1);
@@ -483,14 +465,16 @@ size_t DxMath::SplitWidthLine(DxWidthLine(&dest)[2], DxWidthLine* pSrcLine, floa
 		else width = 1.0f;
 	}
 
-	float sideScale = width / dl * 0.5f;
-	float nx = dx * sideScale;
-	float ny = dy * sideScale;
-
-	dest[0] = DxWidthLine(pSrcLine->GetX1() + ny, pSrcLine->GetY1() - nx,
-		pSrcLine->GetX2() + ny, pSrcLine->GetY2() - nx, 1.0f);
-	dest[1] = DxWidthLine(pSrcLine->GetX1() - ny, pSrcLine->GetY1() + nx,
-		pSrcLine->GetX2() - ny, pSrcLine->GetY2() + nx, 1.0f);
+	__m128 vec1 = Vectorize::Set(pSrcLine->GetX1(), pSrcLine->GetY1(), pSrcLine->GetX2(), pSrcLine->GetY2());
+	__m128 vec2 = Vectorize::Set(dy, -dx, dy, -dx);
+	vec2 = Vectorize::Mul(vec2, Vectorize::Replicate(width / dl * 0.5f));
+	{
+		__m128 res = Vectorize::Add(vec1, vec2);
+		vec2 = Vectorize::Mul(vec2, Vectorize::Replicate(-1.0f));
+		dest[0] = DxWidthLine(res.m128_f32[0], res.m128_f32[1], res.m128_f32[2], res.m128_f32[3], 1.0f);
+		res = Vectorize::Add(vec1, vec2);
+		dest[1] = DxWidthLine(res.m128_f32[0], res.m128_f32[1], res.m128_f32[2], res.m128_f32[3], 1.0f);
+	}
 
 	return 2U;
 };
@@ -504,31 +488,22 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	float sy = angleY.y;
 	float cz = angleZ.x;
 	float sz = angleZ.y;
+	float sx_sy = sx * sy;
+	float sx_cy = sx * cy;
 #ifdef __L_MATH_VECTORIZE
-	float sx_sy = sx * sy;
-	float sx_cy = sx * cy;
-
-	__m256 v_11_22 = _mm256_mul_ps(
-		_mm256_setr_ps(cy, sx_sy, cx, sy, sx_cy, cy, sx_sy, cx),
-		_mm256_setr_ps(cz, sz, sz, cz, sz, sz, cz, cz));
-	__m128 v_23_33 = _mm_mul_ps(
-		_mm_setr_ps(sy, sx_cy, cx, cx),
-		_mm_setr_ps(sz, cz, sy, cy));
-	float* _p0 = v_11_22.m256_f32;
-	float* _p1 = v_23_33.m128_f32;
-
-	mat->_11 = _p0[0] - _p0[1];
-	mat->_12 = -_p0[2];
-	mat->_13 = _p0[3] + _p0[4];
-	mat->_21 = _p0[5] + _p0[6];
-	mat->_22 = _p0[7];
-	mat->_23 = _p1[0] - _p1[1];
-	mat->_31 = -_p1[2];
+	__m128 v1 = Vectorize::Mul(Vectorize::Set(cy, sx_sy, cx, sy), Vectorize::Set(cz, sz, sz, cz));
+	__m128 v2 = Vectorize::Mul(Vectorize::Set(sx_cy, cy, sx_sy, cx), Vectorize::Set(sz, sz, cz, cz));
+	__m128 v3 = Vectorize::Mul(Vectorize::Set(sy, sx_cy, cx, cx), Vectorize::Set(sz, cz, sy, cy));
+	mat->_11 = v1.m128_f32[0] - v1.m128_f32[1];
+	mat->_12 = -v1.m128_f32[2];
+	mat->_13 = v1.m128_f32[3] + v2.m128_f32[0];
+	mat->_21 = v2.m128_f32[1] + v2.m128_f32[2];
+	mat->_22 = v2.m128_f32[3];
+	mat->_23 = v3.m128_f32[0] - v3.m128_f32[1];
+	mat->_31 = -v3.m128_f32[2];
 	mat->_32 = sx;
-	mat->_33 = _p1[3];
+	mat->_33 = v3.m128_f32[3];
 #else
-	float sx_sy = sx * sy;
-	float sx_cy = sx * cy;
 	mat->_11 = cy * cz - sx_sy * sz;
 	mat->_12 = -cx * sz;
 	mat->_13 = sy * cz + sx_cy * sz;
@@ -542,18 +517,17 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 }
 void DxMath::MatrixApplyScaling(D3DXMATRIX* mat, const D3DXVECTOR3& scale) {
 #ifdef __L_MATH_VECTORIZE
-	__m256 v_mat = _mm256_mul_ps(
-		_mm256_setr_ps(mat->_11, mat->_12, mat->_13, mat->_21, mat->_22, mat->_23, mat->_31, mat->_32),
-		_mm256_setr_ps(scale.x, scale.x, scale.x, scale.y, scale.y, scale.y, scale.z, scale.z));
-	float* _p = v_mat.m256_f32;
-	mat->_11 = _p[0];
-	mat->_12 = _p[1];
-	mat->_13 = _p[2];
-	mat->_21 = _p[3];
-	mat->_22 = _p[4];
-	mat->_23 = _p[5];
-	mat->_31 = _p[6];
-	mat->_32 = _p[7];
+	__m256 v_mat = Vectorize::Mul(
+		Vectorize::Set(mat->_11, mat->_12, mat->_13, mat->_21, mat->_22, mat->_23, mat->_31, mat->_32),
+		Vectorize::Set(scale.x, scale.x, scale.x, scale.y, scale.y, scale.y, scale.z, scale.z));
+	mat->_11 = v_mat.m256_f32[0];
+	mat->_12 = v_mat.m256_f32[1];
+	mat->_13 = v_mat.m256_f32[2];
+	mat->_21 = v_mat.m256_f32[3];
+	mat->_22 = v_mat.m256_f32[4];
+	mat->_23 = v_mat.m256_f32[5];
+	mat->_31 = v_mat.m256_f32[6];
+	mat->_32 = v_mat.m256_f32[7];
 	mat->_33 = mat->_33 * scale.z;
 #else
 	mat->_11 *= scale.x;
@@ -579,27 +553,21 @@ D3DXVECTOR4 DxMath::RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, 
 	float sz = angZ->y;
 #ifdef __L_MATH_VECTORIZE
 	if (angZ) {
-		__m128 v_res = _mm_mul_ps(
-			_mm_setr_ps(vx, vy, vx, vy),
-			_mm_setr_ps(cz, sz, sz, cz));
+		__m128 v_res = Vectorize::Mul(Vectorize::Set(vx, vy, vx, vy), Vectorize::Set(cz, sz, sz, cz));
 		vec.x = v_res.m128_f32[0] - v_res.m128_f32[1];
 		vec.y = v_res.m128_f32[2] + v_res.m128_f32[3];
 		vx = vec.x;
 		vy = vec.y;
 	}
 	if (angX) {
-		__m128 v_res = _mm_mul_ps(
-			_mm_setr_ps(vy, vz, vy, vz),
-			_mm_setr_ps(cx, sx, sx, cx));
+		__m128 v_res = Vectorize::Mul(Vectorize::Set(vy, vz, vy, vz), Vectorize::Set(cx, sx, sx, cx));
 		vec.y = v_res.m128_f32[0] - v_res.m128_f32[1];
 		vec.z = v_res.m128_f32[2] + v_res.m128_f32[3];
 		vy = vec.y;
 		vz = vec.z;
 	}
 	if (angY) {
-		__m128 v_res = _mm_mul_ps(
-			_mm_setr_ps(vz, vx, vz, vx),
-			_mm_setr_ps(sy, cy, cy, sy));
+		__m128 v_res = Vectorize::Mul(Vectorize::Set(vz, vx, vz, vx), Vectorize::Set(sy, cy, cy, sy));
 		vec.x = v_res.m128_f32[0] + v_res.m128_f32[1];
 		vec.z = v_res.m128_f32[2] - v_res.m128_f32[3];
 	}
@@ -628,14 +596,16 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 {
 #ifdef __L_MATH_VECTORIZE
 	__m256 v1;
+	__m128 v2;
 	float* _p1 = v1.m256_f32;
+	float* _p2 = v2.m128_f32;
 
 	//First, divide the UVs
 	v1 = {
 		vert[0].texcoord.x, vert[0].texcoord.y, vert[1].texcoord.x, vert[1].texcoord.y,
 		vert[2].texcoord.x, vert[2].texcoord.y, vert[3].texcoord.x, vert[3].texcoord.y
 	};
-	v1 = _mm256_mul_ps(v1, _mm256_setr_ps(textureSize->x, textureSize->y, textureSize->x, textureSize->y,
+	v1 = Vectorize::Mul(v1, Vectorize::Set(textureSize->x, textureSize->y, textureSize->x, textureSize->y,
 		textureSize->x, textureSize->y, textureSize->x, textureSize->y));
 	memcpy(&(vert[0].texcoord), &_p1[0], sizeof(D3DXVECTOR2));
 	memcpy(&(vert[1].texcoord), &_p1[2], sizeof(D3DXVECTOR2));
@@ -645,21 +615,27 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 	//Then, rotate and scale (2 vertices at a time)
 	for (size_t i = 0; i < 4; i += 2) {
 		//Rotate
-		v1 = _mm256_setr_ps(vert[i + 0].position.x, vert[i + 0].position.y, 
+		v1 = Vectorize::Set(vert[i + 0].position.x, vert[i + 0].position.y,
 			vert[i + 0].position.x, vert[i + 0].position.y,
 			vert[i + 1].position.x, vert[i + 1].position.y, 
 			vert[i + 1].position.x, vert[i + 1].position.y);
-		v1 = _mm256_mul_ps(v1, _mm256_setr_ps(angle->x, angle->y, angle->y, angle->x,
+		v1 = Vectorize::Mul(v1, Vectorize::Set(angle->x, angle->y, angle->y, angle->x,
 			angle->x, angle->y, angle->y, angle->x));
 
 		//Scale
-		v1 = (__m256&)_mm_fmadd_ps(_mm_setr_ps(_p1[0] - _p1[1], _p1[2] + _p1[3], _p1[4] - _p1[5], _p1[6] + _p1[7]), 
-			_mm_setr_ps(scale->x, scale->y, scale->x, scale->y), 
-			_mm_setr_ps(position->x, position->y, position->x, position->y));
+		/*
+		v1 = (__m256&)_mm_fmadd_ps(Vectorize::Set(_p1[0] - _p1[1], _p1[2] + _p1[3], _p1[4] - _p1[5], _p1[6] + _p1[7]), 
+			Vectorize::Set(scale->x, scale->y, scale->x, scale->y), 
+			Vectorize::Set(position->x, position->y, position->x, position->y));
+		*/
+		v2 = Vectorize::MulAdd(
+			Vectorize::Set(_p1[0] - _p1[1], _p1[2] + _p1[3], _p1[4] - _p1[5], _p1[6] + _p1[7]),
+			Vectorize::Set(scale->x, scale->y, scale->x, scale->y),
+			Vectorize::Set(position->x, position->y, position->x, position->y));
 
 		//Save
-		memcpy(&(vert[i + 0].position), &_p1[0], sizeof(D3DXVECTOR2));
-		memcpy(&(vert[i + 1].position), &_p1[2], sizeof(D3DXVECTOR2));
+		memcpy(&(vert[i + 0].position), &_p2[0], sizeof(D3DXVECTOR2));
+		memcpy(&(vert[i + 1].position), &_p2[2], sizeof(D3DXVECTOR2));
 	}
 #else
 	vert[0].texcoord.x *= textureSize->x;

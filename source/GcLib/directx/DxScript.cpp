@@ -150,7 +150,7 @@ bool DxScriptPrimitiveObject2D::IsValidVertexIndex(size_t index) {
 }
 void DxScriptPrimitiveObject2D::SetColor(int r, int g, int b) {
 	RenderObjectTLX* obj = GetObjectPointer();
-	__m128i c = Vectorize::Set128I_32(color_ >> 24, r, g, b);
+	__m128i c = Vectorize::Set(color_ >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 	obj->SetColorRGB(color_);
 }
@@ -175,9 +175,8 @@ void DxScriptPrimitiveObject2D::SetVertexAlpha(size_t index, int alpha) {
 }
 void DxScriptPrimitiveObject2D::SetVertexColor(size_t index, int r, int g, int b) {
 	RenderObjectTLX* obj = GetObjectPointer();
-	__m128i c = Vectorize::Set128I_32(0, r, g, b);
-	c = ColorAccess::ClampColorPackedM(c);
-	obj->SetVertexColorRGB(index, ColorAccess::ToD3DCOLOR(c));
+	__m128i c = Vectorize::Set(0, r, g, b);
+	obj->SetVertexColorRGB(index, ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPackedM(c)));
 }
 D3DCOLOR DxScriptPrimitiveObject2D::GetVertexColor(size_t index) {
 	RenderObjectTLX* obj = GetObjectPointer();
@@ -240,7 +239,7 @@ void DxScriptSpriteListObject2D::CleanUp() {
 void DxScriptSpriteListObject2D::SetColor(int r, int g, int b) {
 	D3DCOLOR color = GetSpritePointer()->GetColor();
 
-	__m128i c = Vectorize::Set128I_32(color_ >> 24, r, g, b);
+	__m128i c = Vectorize::Set(color_ >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 
 	GetSpritePointer()->SetColor(color_);
@@ -332,7 +331,7 @@ bool DxScriptPrimitiveObject3D::IsValidVertexIndex(size_t index) {
 }
 void DxScriptPrimitiveObject3D::SetColor(int r, int g, int b) {
 	RenderObjectLX* obj = GetObjectPointer();
-	__m128i c = Vectorize::Set128I_32(color_ >> 24, r, g, b);
+	__m128i c = Vectorize::Set(color_ >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 	obj->SetColorRGB(color_);
 }
@@ -358,9 +357,8 @@ void DxScriptPrimitiveObject3D::SetVertexAlpha(size_t index, int alpha) {
 void DxScriptPrimitiveObject3D::SetVertexColor(size_t index, int r, int g, int b) {
 	if (!IsValidVertexIndex(index)) return;
 	RenderObjectLX* obj = GetObjectPointer();
-	__m128i c = Vectorize::Set128I_32(0, r, g, b);
-	c = ColorAccess::ClampColorPackedM(c);
-	obj->SetVertexColorRGB(index, ColorAccess::ToD3DCOLOR(c));
+	__m128i c = Vectorize::Set(0, r, g, b);
+	obj->SetVertexColorRGB(index, ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPackedM(c)));
 }
 D3DCOLOR DxScriptPrimitiveObject3D::GetVertexColor(size_t index) {
 	RenderObjectLX* obj = GetObjectPointer();
@@ -434,7 +432,7 @@ void DxScriptTrajectoryObject3D::SetColor(int r, int g, int b) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	TrajectoryObject3D* obj = GetObjectPointer();
 
-	__m128i c = Vectorize::Set128I_32(color_ >> 24, r, g, b);
+	__m128i c = Vectorize::Set(color_ >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 
 	obj->SetColor(color_);
@@ -573,7 +571,7 @@ void DxScriptMeshObject::SetRenderState() {
 	mesh_->SetVertexShaderRendering(bVertexShaderMode_);
 }
 void DxScriptMeshObject::SetColor(int r, int g, int b) {
-	__m128i c = Vectorize::Set128I_32(color_ >> 24, r, g, b);
+	__m128i c = Vectorize::Set(color_ >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 }
 void DxScriptMeshObject::SetAlpha(int alpha) {
@@ -703,7 +701,7 @@ void DxScriptTextObject::SetAlpha(int alpha) {
 }
 void DxScriptTextObject::SetColor(int r, int g, int b) {
 	D3DCOLOR color = text_.GetVertexColor();
-	__m128i c = Vectorize::Set128I_32(color >> 24, r, g, b);
+	__m128i c = Vectorize::Set(color >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 	SetVertexColor(color_);
 }
