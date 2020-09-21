@@ -1192,6 +1192,24 @@ D3DXVECTOR2 DxCamera::TransformCoordinateTo2D(D3DXVECTOR3 pos) {
 
 	return D3DXVECTOR2(vect.x, vect.y);
 }
+void DxCamera::PushMatrixState() {
+	listMatrixState_.push_back(matViewProjection_);
+}
+void DxCamera::PopMatrixState() {
+	if (listMatrixState_.empty()) return;
+
+	DirectGraphics* graph = DirectGraphics::GetBase();
+	if (graph == nullptr) return;
+	IDirect3DDevice9* device = graph->GetDevice();
+
+	D3DXMATRIX* top = &listMatrixState_.back();
+
+	matViewProjection_ = *top;
+	device->SetTransform(D3DTS_VIEW, top);
+	device->SetTransform(D3DTS_PROJECTION, &matIdentity_);
+
+	listMatrixState_.pop_back();
+}
 
 /**********************************************************
 //DxCamera2D

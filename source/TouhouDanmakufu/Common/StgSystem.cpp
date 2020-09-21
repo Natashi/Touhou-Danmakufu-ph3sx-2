@@ -372,6 +372,8 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	camera2D->SetFocus(stgCenter.x + focusPos.x, stgCenter.y + focusPos.y);
 	camera2D->UpdateMatrix();
 
+	camera3D->PushMatrixState();
+
 	for (int iPri = priMin; iPri <= priMax; iPri++) {
 		if (!bRunMinStgFrame && iPri >= priMinStgFrame) {
 			if (bValidStage && iPri < invalidPriMin)
@@ -382,6 +384,10 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 
 			camera2D->SetEnable(true);
 
+			camera3D->SetPerspectiveWidth(stgWidth);
+			camera3D->SetPerspectiveHeight(stgHeight);
+			camera3D->SetProjectionMatrix();
+			camera3D->UpdateDeviceViewProjectionMatrix();
 			graphics->SetViewPort(rcStgFrame->left, rcStgFrame->top, stgWidth, stgHeight);
 
 			bRunMinStgFrame = true;
@@ -473,6 +479,8 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 		if (!bRunMaxStgFrame && iPri >= priMaxStgFrame) {
 			camera2D->SetEnable(false);
 			camera2D->Reset();
+
+			camera3D->PopMatrixState();
 			graphics->ResetViewPort();
 
 			bRunMaxStgFrame = true;
@@ -483,6 +491,8 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	camera2D->SetRatioX(focusRatioX);
 	camera2D->SetRatioY(focusRatioY);
 	camera2D->SetAngleZ(focusAngleZ);
+
+	camera3D->PopMatrixState();		//Just in case
 
 	//--------------------------------
 	if (objectManagerStage)

@@ -255,6 +255,8 @@ namespace directx {
 		D3DXMATRIX matIdentity_;
 
 		int modeCamera_;
+
+		std::list<D3DXMATRIX> listMatrixState_;
 	public:
 		enum {
 			MODE_NORMAL,
@@ -319,6 +321,9 @@ namespace directx {
 		const D3DXMATRIX& GetProjectionInverseMatrix() { return matProjectionInverse_; }
 
 		const D3DXMATRIX& GetIdentity() { return matIdentity_; }
+
+		void PushMatrixState();
+		void PopMatrixState();
 	};
 
 	/**********************************************************
