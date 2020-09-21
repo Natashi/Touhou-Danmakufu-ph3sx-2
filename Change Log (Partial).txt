@@ -132,7 +132,7 @@
 1.11a:
 	- Reworked some math calculations. SIMD instructions are utilized.
 	- Following the above change, an old, non-SIMD version will also be provided in case your CPU do not support vectorization.
-	- Added a hitbox visualization mode.
+	- Added a native hitbox visualization mode.
 	- Improved the line-circle intersection algorithm.
 	- Overloaded ObjMove_SetDestAtFrame, where movement interpolation mode can be specified.
 	- Fixed a bug where the graze count obtained via GetGraze() may desync with the one obtained via EV_GRAZE's event argument.
@@ -142,5 +142,9 @@
 	- Changed error messages of some default functions to be more descriptive to aid debugging.
 	- Greatly improved script variable allocation.
 	- Added a concatenate-assign operator. (~=)
+	- Added bitwise operators. (~, &, |, ^^)
 	- Fixed a bug where itoa, atoi, and IntToString would underflow if the input is larger than 2^31-1. (New limit is 2^63-1)
+	- Fixed a bug where the 3D viewport would get stretched out based on the size of the STG frame.
+	- Made the game no longer freeze and crash after Alt-Tab'ing out of true fullscreen mode or after waking the desktop from sleep.
+	- Various optimizations.
 	- Un-Utilized UPX Executable Packer to not-reduce file size.
