@@ -260,33 +260,28 @@ void DirectGraphics::_RestoreDxResource() {
 
 	_InitializeDeviceState(true);
 }
-void DirectGraphics::_Restore() {
-	Logger::WriteTop("DirectGraphics::_Restore");
-
+bool DirectGraphics::_Restore() {
 	//The device was lost, wait until it's able to be restored
 	HRESULT hr = pDevice_->TestCooperativeLevel();
-	if (hr == D3DERR_DEVICELOST) {
-		size_t count = 0;
-		do {
-			Sleep(100);
-			count += 100;
-			hr = pDevice_->TestCooperativeLevel();
-			//The device is now able to be restored, break out of the loop
-			if (hr == D3DERR_DEVICENOTRESET)
-				break;
-		} while (count < 6000);
+	if (hr == D3DERR_DEVICENOTRESET) {					//The device is now able to be restored
+		::InvalidateRect(hAttachedWindow_, nullptr, false);
+
+		_ReleaseDxResource();
+
+		hr = pDevice_->Reset(modeScreen_ == SCREENMODE_FULLSCREEN ? &d3dppFull_ : &d3dppWin_);
+		if (SUCCEEDED(hr)) {
+			_RestoreDxResource();
+			Logger::WriteTop("_Restore: IDirect3DDevice restored.");
+			return true;
+		}
 	}
-
-	_ReleaseDxResource();
-
-	if (modeScreen_ == SCREENMODE_FULLSCREEN)
-		pDevice_->Reset(&d3dppFull_);
-	else
-		pDevice_->Reset(&d3dppWin_);
-
-	_RestoreDxResource();
-
-	Logger::WriteTop("DirectGraphics::_Restore finished.");
+	else if (hr != D3DERR_DEVICELOST && FAILED(hr)) {	//Something went terribly wrong
+		std::wstring err = StringUtility::Format(L"_Restore: Unexpected failure [%s; %s]",
+			DXGetErrorString(hr), DXGetErrorDescription(hr));
+		Logger::WriteTop(err);
+		throw gstd::wexception(err);
+	}
+	return false;
 }
 void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
 	if (bResetCamera) {
@@ -370,8 +365,7 @@ void DirectGraphics::EndScene(bool bPresent) {
 	if (bPresent) {
 		HRESULT hr = pDevice_->Present(nullptr, nullptr, nullptr, nullptr);
 		if (FAILED(hr)) {
-			_Restore();
-			_InitializeDeviceState(true);
+			if (_Restore()) _InitializeDeviceState(true);
 		}
 	}
 }
@@ -975,34 +969,23 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 				SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOSENDCHANGING);
 
 			modeScreen_ = SCREENMODE_WINDOW;
-			/*
-			if (config_.IsShowCursor()) {
-				while (::ShowCursor(TRUE) < 0) {}
-			}
-			else ShowCursor(FALSE);
-			*/
-			::ShowCursor(config_.IsShowCursor() ? TRUE : FALSE);
-			if (!config_.IsShowCursor()) {
-				::SetCursor(nullptr);
-				pDevice_->ShowCursor(FALSE);
-			}
-			else {
-				::SetCursor(lpCursor_);
-				pDevice_->ShowCursor(TRUE);
-			}
 		}
 		else {
 			hrReset = pDevice_->Reset(&d3dppFull_);
 			::SetWindowLong(hAttachedWindow_, GWL_STYLE, wndStyleFull_);
 			::ShowWindow(hAttachedWindow_, SW_SHOW);
 
-			::ShowCursor(FALSE);
-			/*if (!config_.IsShowCursor())*/ {
-				::SetCursor(nullptr);
-				pDevice_->ShowCursor(FALSE);
-			}
-
 			modeScreen_ = SCREENMODE_FULLSCREEN;
+		}
+
+		WindowUtility::SetMouseVisible(config_.IsShowCursor());
+		if (!config_.IsShowCursor()) {
+			::SetCursor(nullptr);
+			pDevice_->ShowCursor(false);
+		}
+		else {
+			::SetCursor(lpCursor_);
+			pDevice_->ShowCursor(true);
 		}
 
 		previousBlendMode_ = (BlendMode)-999;

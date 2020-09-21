@@ -122,7 +122,7 @@ namespace directx {
 
 		void _ReleaseDxResource();
 		void _RestoreDxResource();
-		void _Restore();
+		bool _Restore();
 		void _InitializeDeviceState(bool bResetCamera);
 	public:
 		DirectGraphics();
