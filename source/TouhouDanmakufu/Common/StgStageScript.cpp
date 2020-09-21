@@ -1343,7 +1343,7 @@ gstd::value StgStageScript::Func_DeleteShotAll(gstd::script_machine* machine, in
 	case TYPE_ITEM:typeTo = StgShotManager::TO_TYPE_ITEM; break;
 	}
 
-	stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, 0, 0, 256 * 256);
+	stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, 0, 0, nullptr);
 
 	return value();
 }
@@ -1369,7 +1369,7 @@ gstd::value StgStageScript::Func_DeleteShotInCircle(gstd::script_machine* machin
 	case TYPE_ITEM:typeTo = StgShotManager::TO_TYPE_ITEM; break;
 	}
 
-	stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, posX, posY, radius);
+	stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, posX, posY, &radius);
 
 	return value();
 }

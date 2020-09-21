@@ -171,8 +171,10 @@ RECT* StgShotManager::GetShotAutoDeleteClipRect() {
 	return stageController_->GetStageInformation()->GetShotAutoDeleteClip();
 }
 
-void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, float cx, float cy, float radius) {
-	float rd = radius * radius;
+void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, float cx, float cy, float* radius) {
+	float rd = 0.0f;
+	if (radius)
+		rd = (*radius) * (*radius);
 
 	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
@@ -183,7 +185,7 @@ void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, f
 		float sy = cy - obj->GetPositionY();
 
 		float tr = sx * sx + sy * sy;
-		if (tr <= rd) {
+		if (radius == nullptr || tr <= rd) {
 			if (typeTo == TO_TYPE_IMMEDIATE) {
 				obj->DeleteImmediate();
 			}

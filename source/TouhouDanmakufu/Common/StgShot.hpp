@@ -65,7 +65,7 @@ public:
 
 	RECT* GetShotAutoDeleteClipRect();
 
-	void DeleteInCircle(int typeDelete, int typeTo, int typeOnwer, float cx, float cy, float radius);
+	void DeleteInCircle(int typeDelete, int typeTo, int typeOnwer, float cx, float cy, float* radius);
 	std::vector<int> GetShotIdInCircle(int typeOnwer, float cx, float cy, float radius);
 	size_t GetShotCount(int typeOnwer);
 	size_t GetShotCountAll() { return listObj_.size(); }
