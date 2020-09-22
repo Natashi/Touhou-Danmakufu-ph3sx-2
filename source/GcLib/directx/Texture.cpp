@@ -364,12 +364,13 @@ void TextureManager::_ReleaseTextureData(std::map<std::wstring, shared_ptr<Textu
 	}
 }
 void TextureManager::ReleaseDxResource() {
-	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
-	std::map<std::wstring, shared_ptr<TextureData>>::iterator itrMap;
-	{
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	IDirect3DDevice9* device = graphics->GetDevice();
+	HRESULT deviceHr = graphics->GetDeviceStatus();
+	if (deviceHr != D3DERR_DEVICELOST) {
 		Lock lock(GetLock());
 
-		for (itrMap = mapTextureData_.begin(); itrMap != mapTextureData_.end(); ++itrMap) {
+		for (auto itrMap = mapTextureData_.begin(); itrMap != mapTextureData_.end(); ++itrMap) {
 			TextureData* data = (itrMap->second).get();
 
 			if (data->type_ == TextureData::Type::TYPE_RENDER_TARGET) {
@@ -400,6 +401,12 @@ void TextureManager::ReleaseDxResource() {
 				ptr_release(data->lpRenderZ_);
 			}
 		}
+	}
+	else {
+		std::wstring err = StringUtility::Format(L"TextureManager::ReleaseDxResource: "
+			"D3D device abnormal. Render target surfaces cannot be saved.\r\n\t%s: %s",
+			DXGetErrorString(deviceHr), DXGetErrorDescription(deviceHr));
+		Logger::WriteTop(err);
 	}
 }
 void TextureManager::RestoreDxResource() {

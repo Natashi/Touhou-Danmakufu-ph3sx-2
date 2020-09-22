@@ -98,6 +98,8 @@ namespace directx {
 		IDirect3DSurface9* pBackSurf_;
 		IDirect3DSurface9* pZBuffer_;
 
+		HRESULT deviceStatus_;
+
 		DirectGraphicsConfig config_;
 		HWND hAttachedWindow_;
 		DWORD wndStyleFull_;
@@ -145,6 +147,8 @@ namespace directx {
 		IDirect3DDevice9* GetDevice() { return pDevice_; }
 
 		IDirect3DSurface9* GetBaseSurface() { return pBackSurf_; }
+
+		HRESULT GetDeviceStatus() { return deviceStatus_; }
 
 		void BeginScene(bool bMainRender = true, bool bClear = true);
 		void EndScene(bool bPresent = true);

@@ -38,6 +38,8 @@ DirectGraphics::DirectGraphics() {
 	pBackSurf_ = nullptr;
 	pZBuffer_ = nullptr;
 
+	deviceStatus_ = S_OK;
+
 	camera_ = new DxCamera();
 	camera2D_ = new DxCamera2D();
 	
@@ -166,6 +168,7 @@ bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
 		}
 
 		if (FAILED(hrDevice)) {
+			deviceStatus_ = D3DERR_NOTAVAILABLE;
 			std::wstring err = StringUtility::Format(L"IDirect3DDevice9::CreateDevice failure. [%s]\r\n  %s",
 				DXGetErrorString(hrDevice), DXGetErrorDescription(hrDevice));
 			Logger::WriteTop(err);
@@ -270,6 +273,7 @@ bool DirectGraphics::_Restore() {
 
 		hr = pDevice_->Reset(modeScreen_ == SCREENMODE_FULLSCREEN ? &d3dppFull_ : &d3dppWin_);
 		if (SUCCEEDED(hr)) {
+			deviceStatus_ = hr;
 			_RestoreDxResource();
 			Logger::WriteTop("_Restore: IDirect3DDevice restored.");
 			return true;
@@ -347,7 +351,6 @@ void DirectGraphics::RemoveDirectGraphicsListener(DirectGraphicsListener* listen
 void DirectGraphics::BeginScene(bool bMainRender, bool bClear) {
 	if (bClear) ClearRenderTarget();
 	bMainRender_ = bMainRender;
-	pDevice_->BeginScene();
 
 	if (camera_->thisViewChanged_ || camera_->thisProjectionChanged_) {
 		if (camera_->thisViewChanged_) 
@@ -358,13 +361,15 @@ void DirectGraphics::BeginScene(bool bMainRender, bool bClear) {
 		camera_->thisViewChanged_ = false;
 		camera_->thisProjectionChanged_ = false;
 	}
+
+	pDevice_->BeginScene();
 }
 void DirectGraphics::EndScene(bool bPresent) {
 	pDevice_->EndScene();
 
 	if (bPresent) {
-		HRESULT hr = pDevice_->Present(nullptr, nullptr, nullptr, nullptr);
-		if (FAILED(hr)) {
+		deviceStatus_ = pDevice_->Present(nullptr, nullptr, nullptr, nullptr);
+		if (FAILED(deviceStatus_)) {
 			if (_Restore()) _InitializeDeviceState(true);
 		}
 	}
@@ -709,7 +714,7 @@ DirectGraphicsPrimaryWindow::DirectGraphicsPrimaryWindow() {
 	lpCursor_ = nullptr;
 }
 DirectGraphicsPrimaryWindow::~DirectGraphicsPrimaryWindow() {
-
+	SetThreadExecutionState(ES_CONTINUOUS);		//Just in case
 }
 void DirectGraphicsPrimaryWindow::_PauseDrawing() {
 	//	gstd::Application::GetBase()->SetActive(false);
@@ -1012,6 +1017,9 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 			SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
 			MoveWindowCenter();
 
+			//You can sleep now, 3 hours isn't enough sleep, by the way
+			SetThreadExecutionState(ES_CONTINUOUS);
+
 			modeScreen_ = SCREENMODE_WINDOW;
 		}
 		else {
@@ -1020,6 +1028,9 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleFull_);
 			::ShowWindow(hWnd_, SW_SHOW);
 			::MoveWindow(hWnd_, 0, 0, rect.right, rect.bottom, TRUE);
+
+			//Causes fullscreen to prevent Windows drifting off to Dreamland Drama
+			SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 
 			modeScreen_ = SCREENMODE_FULLSCREEN;
 		}
