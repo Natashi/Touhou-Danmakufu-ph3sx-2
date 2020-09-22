@@ -6,14 +6,14 @@
 namespace gstd {
 	class type_data {
 	public:
-		enum class type_kind : uint8_t {
+		typedef enum : uint8_t {
 			tk_null = 0x00,
 			tk_int = 0x01,
 			tk_real = 0x02,
 			tk_char = 0x04,
 			tk_boolean = 0x08,
 			tk_array = 0x10,
-		};
+		} type_kind;
 
 		type_data(type_kind k, type_data* t = nullptr) : kind(k), element(t) {}
 		type_data(const type_data& source) : kind(source.kind), element(source.element) {}

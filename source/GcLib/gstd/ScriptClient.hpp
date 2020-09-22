@@ -244,6 +244,7 @@ namespace gstd {
 		//共通関数：デバッグ関連
 		static value Func_WriteLog(script_machine* machine, int argc, const value* argv);
 		static value Func_RaiseError(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_RaiseMessageWindow);
 
 		//共通関数：共通データ
 		static value Func_SetCommonData(script_machine* machine, int argc, const value* argv);

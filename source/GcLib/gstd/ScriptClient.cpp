@@ -143,6 +143,8 @@ function const commonFunction[] =
 	//共通関数：デバッグ関連
 	{ "WriteLog", ScriptClientBase::Func_WriteLog, -2 },		//0 fixed + ... -> 1 minimum
 	{ "RaiseError", ScriptClientBase::Func_RaiseError, 1 },
+	{ "RaiseMessageWindow", ScriptClientBase::Func_RaiseMessageWindow, 2 },
+	{ "RaiseMessageWindow", ScriptClientBase::Func_RaiseMessageWindow, 3 },	//Overloaded
 
 	//共通関数：共通データ
 	{ "SetCommonData", ScriptClientBase::Func_SetCommonData, 2 },
@@ -163,11 +165,12 @@ function const commonFunction[] =
 	//定数
 	{ "NULL", constant<0>::func, 0 },
 
-	{ "VAR_REAL", constant<(int)type_data::type_kind::tk_real>::func, 0 },
-	{ "VAR_CHAR", constant<(int)type_data::type_kind::tk_char>::func, 0 },
-	{ "VAR_BOOL", constant<(int)type_data::type_kind::tk_boolean>::func, 0 },
-	{ "VAR_ARRAY", constant<(int)type_data::type_kind::tk_array>::func, 0 },
-	{ "VAR_STRING", constant<(int)type_data::type_kind::tk_array + 1>::func, 0 },
+	{ "VAR_INT", constant<type_data::tk_int>::func, 0 },
+	{ "VAR_REAL", constant<type_data::tk_real>::func, 0 },
+	{ "VAR_CHAR", constant<type_data::tk_char>::func, 0 },
+	{ "VAR_BOOL", constant<type_data::tk_boolean>::func, 0 },
+	{ "VAR_ARRAY", constant<type_data::tk_array>::func, 0 },
+	{ "VAR_STRING", constant<type_data::tk_array | type_data::tk_char>::func, 0 },
 
 	{ "LERP_LINEAR", constant<Math::Lerp::LINEAR>::func, 0 },
 	{ "LERP_SMOOTH", constant<Math::Lerp::SMOOTH>::func, 0 },
@@ -1487,6 +1490,27 @@ value ScriptClientBase::Func_RaiseError(script_machine* machine, int argc, const
 	script->RaiseError(msg);
 
 	return value();
+}
+value ScriptClientBase::Func_RaiseMessageWindow(script_machine* machine, int argc, const value* argv) {
+	std::wstring title = argv[0].as_string();
+	std::wstring message = argv[1].as_string();
+
+	DWORD flags = MB_APPLMODAL | MB_OK;
+	if (argc == 3) {
+		int64_t userFlags = argv[2].as_int();
+		//The Forbidden Flags
+		userFlags = userFlags & (~MB_APPLMODAL);
+		userFlags = userFlags & (~MB_SYSTEMMODAL);
+		userFlags = userFlags & (~MB_TASKMODAL);
+		userFlags = userFlags & (~MB_DEFAULT_DESKTOP_ONLY);
+		userFlags = userFlags & (~MB_SETFOREGROUND);
+		userFlags = userFlags & (~MB_SERVICE_NOTIFICATION);
+		flags = MB_APPLMODAL | userFlags;
+	}
+	
+	int res = MessageBoxW(nullptr, message.c_str(),
+		title.c_str(), flags);
+	return ScriptClientBase::CreateRealValue(res);
 }
 
 //共通関数：共通データ
