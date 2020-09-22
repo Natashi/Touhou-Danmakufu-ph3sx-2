@@ -167,6 +167,13 @@ namespace gstd {
 		if (argv[0].get_type() == argv[1].get_type()) {
 			int r = 0;
 			switch (argv[0].get_type()->get_kind()) {
+			case type_data::type_kind::tk_int:
+			{
+				int64_t a = argv[0].as_int();
+				int64_t b = argv[1].as_int();
+				r = (a == b) ? 0 : (a < b) ? -1 : 1;
+				break;
+			}
 			case type_data::type_kind::tk_real:
 			{
 				double a = argv[0].as_real();
@@ -190,21 +197,21 @@ namespace gstd {
 			}
 			case type_data::type_kind::tk_array:
 			{
-				for (size_t i = 0; i < argv[0].length_as_array(); ++i) {
-					if (i >= argv[1].length_as_array()) {
-						r = +1;	//"123" > "12"
-						break;
-					}
-
-					value v[2];
-					v[0] = argv[0].index_as_array(i);
-					v[1] = argv[1].index_as_array(i);
-					r = _script_compare(2, v).as_real();
-					if (r != 0)
-						break;
+				int64_t sl = argv[0].length_as_array();
+				int64_t sr = argv[1].length_as_array();
+				if (sl != sr) {
+					r = sl < sr ? -1 : 1;
+					break;
 				}
-				if (r == 0 && argv[0].length_as_array() < argv[1].length_as_array()) {
-					r = -1;	//"12" < "123"
+				else {
+					value v[2];
+					for (size_t i = 0; i < sr; ++i) {
+						v[0] = argv[0].index_as_array(i);
+						v[1] = argv[1].index_as_array(i);
+						r = _script_compare(2, v).as_real();
+						if (r != 0)
+							break;
+					}
 				}
 				break;
 			}
@@ -494,35 +501,47 @@ namespace gstd {
 		return value();
 	}
 
+#define BITWISE_RET if (argv[0].get_type()->get_kind() != type_data::type_kind::tk_int && \
+						argv[1].get_type()->get_kind() != type_data::type_kind::tk_int) \
+						return value(script_type_manager::get_real_type(), (double)res); \
+					else \
+						return value(argv->get_type(), res);
 	value BaseFunction::bitwiseNot(script_machine* machine, int argc, const value* argv) {
 		int64_t val = argv[0].as_int();
-		return value(script_type_manager::get_real_type(), (double)(~val));
+		int64_t res = ~val;
+		BITWISE_RET;
 	}
 	value BaseFunction::bitwiseAnd(script_machine* machine, int argc, const value* argv) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
-		return value(script_type_manager::get_real_type(), (double)(val1 & val2));
+		int64_t res = val1 & val2;
+		BITWISE_RET;
 	}
 	value BaseFunction::bitwiseOr(script_machine* machine, int argc, const value* argv) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
-		return value(script_type_manager::get_real_type(), (double)(val1 | val2));
+		int64_t res = val1 | val2;
+		BITWISE_RET;
 	}
 	value BaseFunction::bitwiseXor(script_machine* machine, int argc, const value* argv) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
-		return value(script_type_manager::get_real_type(), (double)(val1 ^ val2));
+		int64_t res = val1 ^ val2;
+		BITWISE_RET;
 	}
 	value BaseFunction::bitwiseLeft(script_machine* machine, int argc, const value* argv) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
-		return value(script_type_manager::get_real_type(), (double)(val1 << val2));
+		int64_t res = val1 << val2;
+		BITWISE_RET;
 	}
 	value BaseFunction::bitwiseRight(script_machine* machine, int argc, const value* argv) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
-		return value(script_type_manager::get_real_type(), (double)(val1 >> val2));
+		int64_t res = val1 >> val2;
+		BITWISE_RET;
 	}
+#undef BITWISE_RET
 
 	value BaseFunction::script_debugBreak(script_machine* machine, int argc, const value* argv) {
 #ifdef _DEBUG

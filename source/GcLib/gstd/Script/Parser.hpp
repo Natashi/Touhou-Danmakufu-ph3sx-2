@@ -275,8 +275,8 @@ namespace gstd {
 	}
 	bool parser::IsDeclToken(token_kind tk) {
 		return tk == token_kind::tk_decl_auto || tk == token_kind::tk_decl_real;
-		// || tk == token_kind::tk_decl_char || tk == token_kind::tk_decl_bool
-		// || tk == token_kind::tk_decl_string;
+		// || tk == token_kind::tk_decl_int || tk == token_kind::tk_decl_char 
+		// || tk == token_kind::tk_decl_bool || tk == token_kind::tk_decl_string;
 	}
 
 	command_kind parser::get_replacing_jump(command_kind c) {

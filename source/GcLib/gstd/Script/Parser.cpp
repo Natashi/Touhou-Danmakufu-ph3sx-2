@@ -536,6 +536,11 @@ namespace gstd {
 
 	void parser::parse_clause(script_block* block, parser_state_t* state) {
 		switch (state->next()) {
+		case token_kind::tk_int:
+			state->AddCode(block, code(command_kind::pc_push_value,
+				value(script_type_manager::get_int_type(), state->lex->int_value)));
+			state->advance();
+			return;
 		case token_kind::tk_real:
 			state->AddCode(block, code(command_kind::pc_push_value, 
 				value(script_type_manager::get_real_type(), state->lex->real_value)));

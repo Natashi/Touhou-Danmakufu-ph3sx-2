@@ -23,7 +23,7 @@ namespace gstd {
 	/* lexical analyzer */
 	enum class token_kind : uint8_t {
 		tk_end, tk_invalid,
-		tk_word, tk_real, tk_char, tk_string,
+		tk_word, tk_int, tk_real, tk_char, tk_string,
 		tk_open_par, tk_close_par, tk_open_bra, tk_close_bra, tk_open_cur, tk_close_cur,
 		tk_open_abs, tk_close_abs, tk_comma, tk_semicolon, tk_colon, tk_query, tk_tilde, tk_assign,
 		tk_plus, tk_minus, tk_asterisk, tk_slash, tk_percent, tk_caret, tk_exclamation, 
@@ -36,7 +36,7 @@ namespace gstd {
 		tk_power_assign, tk_concat_assign,
 
 		tk_decl_auto, tk_const,
-		tk_decl_real, tk_decl_char, tk_decl_string, tk_decl_bool,
+		tk_decl_int, tk_decl_real, tk_decl_char, tk_decl_string, tk_decl_bool,
 		tk_cast_int, tk_cast_real, tk_cast_char, tk_cast_bool,
 		tk_LENGTH,
 		tk_ALTERNATIVE, tk_CASE, tk_OTHERS,
@@ -69,6 +69,7 @@ namespace gstd {
 		std::list<token_kind> token_list;
 
 		std::string word;
+		int64_t int_value;
 		double real_value;
 		wchar_t char_value;
 		std::wstring string_value;

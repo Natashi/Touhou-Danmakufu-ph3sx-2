@@ -422,7 +422,8 @@ void script_scanner::advance() {
 	default:
 		if (std::iswdigit(ch)) {
 			next = token_kind::tk_real;
-			real_value = 0.0;
+			int_value = 0;
+			real_value = 0;
 
 			bool has_decimal_part = false;
 			std::string str_num = "";
@@ -443,29 +444,39 @@ void script_scanner::advance() {
 				}
 			}
 
+			bool bInt = false;
+			if (str_num.back() == 'I' || str_num.back() == 'i') {
+				bInt = true;
+				str_num.pop_back();
+			}
+
 			std::smatch base_match;
 			if (std::regex_match(str_num, base_match, std::regex("0x([0-9a-fA-F]+)"))) {
 				if (has_decimal_part) goto throw_err_no_decimal;
-				real_value = (double)std::strtoll(base_match[1].str().c_str(), nullptr, 16);
+				real_value = int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 16);
 			}
 			else if (std::regex_match(str_num, base_match, std::regex("0o([0-7]+)"))) {
 				if (has_decimal_part) goto throw_err_no_decimal;
-				real_value = (double)std::strtoll(base_match[1].str().c_str(), nullptr, 8);
+				real_value = int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 8);
 			}
 			else if (std::regex_match(str_num, base_match, std::regex("0b([0-1]+)"))) {
 				if (has_decimal_part) goto throw_err_no_decimal;
-				real_value = (double)std::strtoll(base_match[1].str().c_str(), nullptr, 2);
+				real_value = int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 2);
 			}
 			else if (std::regex_match(str_num, base_match, std::regex("[0-9]+(\.[0-9]+)?"))) {
-				real_value = std::strtod(base_match[0].str().c_str(), nullptr);
+				if (bInt) int_value = std::strtoll(base_match[0].str().c_str(), nullptr, 10);
+				else real_value = std::strtod(base_match[0].str().c_str(), nullptr);
 			}
-			else {
-				throw parser_error("Invalid number.\r\n");
+			else throw parser_error("Invalid number.\r\n");
+
+			if (bInt) {
+				//if (has_decimal_part) throw parser_error("Int literals cannot have a decimal part.\r\n");
+				next = token_kind::tk_int;
 			}
 
 			break;
 throw_err_no_decimal:
-			throw parser_error("Cannot create a decimal number in base literals.\r\n");
+			throw parser_error("Cannot create a decimal number with base literals.\r\n");
 		}
 		else if (std::iswalpha(ch) || ch == L'_') {
 			if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
