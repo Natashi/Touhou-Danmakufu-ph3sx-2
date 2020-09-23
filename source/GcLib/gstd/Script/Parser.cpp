@@ -614,19 +614,19 @@ continue_as_variadic:
 		case token_kind::tk_cast_char:
 		case token_kind::tk_cast_bool:
 		{
-			type_data::type_kind target = type_data::type_kind::tk_null;
+			type_data::type_kind target = type_data::tk_null;
 			switch (state->next()) {
 			case token_kind::tk_cast_int:
-				target = type_data::type_kind::tk_int;
+				target = type_data::tk_int;
 				break;
 			case token_kind::tk_cast_real:
-				target = type_data::type_kind::tk_real;
+				target = type_data::tk_real;
 				break;
 			case token_kind::tk_cast_char:
-				target = type_data::type_kind::tk_char;
+				target = type_data::tk_char;
 				break;
 			case token_kind::tk_cast_bool:
-				target = type_data::type_kind::tk_boolean;
+				target = type_data::tk_boolean;
 				break;
 			}
 			state->advance();
@@ -1111,7 +1111,7 @@ continue_as_variadic:
 			if (state->next() == token_kind::tk_open_par) {
 				parse_parentheses(block, state);
 				{
-					state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
+					state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::tk_int));
 
 					size_t ip_var_format = state->ip;
 					state->AddCode(block, code(command_kind::pc_var_format, 0, 0));
@@ -1182,7 +1182,7 @@ continue_as_variadic:
 			if (state->next() == token_kind::tk_LOOP) state->advance();
 
 			{
-				state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::type_kind::tk_int));
+				state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::tk_int));
 
 				size_t ip_var_format = state->ip;
 				state->AddCode(block, code(command_kind::pc_var_format, 0, 0));
