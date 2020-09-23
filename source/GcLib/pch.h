@@ -77,11 +77,13 @@
 #define DIRECTINPUT_VERSION 0x0800
 
 #include <d3d9.h>
+#include <d3dx9.h>
 #include <dinput.h>
 #include <DxErr.h>
 
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "d3d9.lib")
+#pragma comment(lib, "d3dx9.lib")
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxerr.lib")
 
@@ -94,7 +96,6 @@
 #include <msacm.h>
 
 #include <basetsd.h>
-#include <d3dx9.h>
 #include <dsound.h>
 
 /*
@@ -105,7 +106,6 @@
 */
 
 #pragma comment(lib, "msacm32.lib")
-#pragma comment(lib, "d3dx9.lib")
 #pragma comment(lib, "dsound.lib")
 #pragma comment(lib, "d3dxof.lib")
 
