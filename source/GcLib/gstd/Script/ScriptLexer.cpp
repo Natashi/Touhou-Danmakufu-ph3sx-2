@@ -448,6 +448,9 @@ void script_scanner::advance() {
 			if (str_num.back() == 'I' || str_num.back() == 'i') {
 				bInt = true;
 				str_num.pop_back();
+
+				//if (has_decimal_part) throw parser_error("Int literals cannot have a decimal part.\r\n");
+				next = token_kind::tk_int;
 			}
 
 			std::smatch base_match;
@@ -468,11 +471,6 @@ void script_scanner::advance() {
 				else real_value = std::strtod(base_match[0].str().c_str(), nullptr);
 			}
 			else throw parser_error("Invalid number.\r\n");
-
-			if (bInt) {
-				//if (has_decimal_part) throw parser_error("Int literals cannot have a decimal part.\r\n");
-				next = token_kind::tk_int;
-			}
 
 			break;
 throw_err_no_decimal:
