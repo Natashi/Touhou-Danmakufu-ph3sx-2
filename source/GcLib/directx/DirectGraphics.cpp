@@ -727,8 +727,8 @@ void DirectGraphicsPrimaryWindow::_RestartDrawing() {
 	gstd::Application::GetBase()->SetActive(true);
 }
 bool DirectGraphicsPrimaryWindow::Initialize() {
-	this->Initialize(config_);
-	return true;
+	bool res =  this->Initialize(config_);
+	return res;
 }
 bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 	HINSTANCE hInst = ::GetModuleHandle(nullptr);
@@ -793,22 +793,23 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 	::UpdateWindow(hWnd_);
 	this->Attach(hWnd_);
 
-	DirectGraphics::Initialize(hWndGraphics, config);
+	bool res = DirectGraphics::Initialize(hWndGraphics, config);
+	if (res) {
+		ShowCursor(config.IsShowCursor() ? TRUE : FALSE);
 
-	ShowCursor(config.IsShowCursor() ? TRUE : FALSE);
+		if (modeScreen_ == SCREENMODE_WINDOW) {
+			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleWin_);
+			::ShowWindow(hWnd_, SW_SHOW);
 
-	if (modeScreen_ == SCREENMODE_WINDOW) {
-		::SetWindowLong(hWnd_, GWL_STYLE, wndStyleWin_);
-		::ShowWindow(hWnd_, SW_SHOW);
+			RECT wr = { 0, 0, config_.GetScreenSize().x, config_.GetScreenSize().y };
+			AdjustWindowRect(&wr, wndStyleWin_, FALSE);
 
-		RECT wr = { 0, 0, config_.GetScreenSize().x, config_.GetScreenSize().y };
-		AdjustWindowRect(&wr, wndStyleWin_, FALSE);
-
-		SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
-		MoveWindowCenter();
+			SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
+			MoveWindowCenter();
+		}
 	}
 
-	return true;
+	return res;
 }
 
 LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -922,6 +923,7 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 	//True fullscreen mode
 	if (!config_.IsPseudoFullScreen()) {
+		/*
 		if (modeScreen_ == SCREENMODE_WINDOW) {
 			LONG screenWidth = config_.GetScreenSize().x;
 			LONG screenHeight = config_.GetScreenSize().y;
@@ -935,6 +937,7 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 				return;
 			}
 		}
+		*/
 
 		Application::GetBase()->SetActive(true);
 
@@ -942,7 +945,7 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 
 		HRESULT hrReset = E_FAIL;
 
-		if (modeScreen_ == SCREENMODE_FULLSCREEN) {
+		if (modeScreen_ == SCREENMODE_FULLSCREEN) {		//To windowed
 			hrReset = pDevice_->Reset(&d3dppWin_);
 			::SetWindowLong(hAttachedWindow_, GWL_STYLE, wndStyleWin_);
 			::ShowWindow(hAttachedWindow_, SW_SHOW);
@@ -969,13 +972,12 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 			::MoveWindow(hAttachedWindow_, left, top, wWidth, wHeight, TRUE);
 			*/
 
-			::SetWindowPos(hAttachedWindow_, HWND_NOTOPMOST,
-				0, 0, 0, 0,
+			::SetWindowPos(hAttachedWindow_, HWND_NOTOPMOST, 0, 0, 0, 0,
 				SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOSENDCHANGING);
 
 			modeScreen_ = SCREENMODE_WINDOW;
 		}
-		else {
+		else {		//To fullscreen
 			hrReset = pDevice_->Reset(&d3dppFull_);
 			::SetWindowLong(hAttachedWindow_, GWL_STYLE, wndStyleFull_);
 			::ShowWindow(hAttachedWindow_, SW_SHOW);
@@ -1004,7 +1006,7 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 	}
 	//Pseudo fullscreen mode
 	else {
-		if (modeScreen_ == SCREENMODE_FULLSCREEN) {
+		if (modeScreen_ == SCREENMODE_FULLSCREEN) {		//To windowed
 			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleWin_);
 			::ShowWindow(hWnd_, SW_SHOW);
 
@@ -1022,7 +1024,7 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 
 			modeScreen_ = SCREENMODE_WINDOW;
 		}
-		else {
+		else {		//To fullscreen
 			RECT rect;
 			GetWindowRect(GetDesktopWindow(), &rect);
 			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleFull_);

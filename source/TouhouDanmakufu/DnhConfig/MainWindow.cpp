@@ -114,14 +114,9 @@ void MainWindow::_RunExecutor() {
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(STARTUPINFO);
 
-	BOOL res = ::CreateProcess(
-		NULL,
-		(wchar_t*)panelOption_->GetExecutablePath().c_str(),
-		NULL, NULL,
-		TRUE, 0,
-		NULL, NULL,
-		&si, &infoProcess
-	);
+	BOOL res = ::CreateProcessW(nullptr, (wchar_t*)panelOption_->GetExecutablePath().c_str(),
+		nullptr, nullptr, true, 0, nullptr, nullptr,
+		&si, &infoProcess);
 	/*
 	if (res == 0) {
 		std::wstring log = StringUtility::Format(L"Could not start the game. [%s]\r\n", ErrorUtility::GetLastErrorMessage().c_str());
@@ -196,7 +191,7 @@ bool DevicePanel::Initialize(HWND hParent) {
 			comboWindowSize_.AddString(str);
 		}
 	}
-	SetWindowPos(comboWindowSize_.GetWindowHandle(), NULL, 0, 0,
+	SetWindowPos(comboWindowSize_.GetWindowHandle(), nullptr, 0, 0,
 		comboWindowSize_.GetClientWidth(), 200, SWP_NOMOVE);
 
 	comboMultisample_.Attach(::GetDlgItem(hWnd_, IDC_COMBO_MULTISAMPLE));
@@ -218,7 +213,7 @@ bool DevicePanel::Initialize(HWND hParent) {
 			comboMultisample_.AddString(listText[i]);
 		}
 	}
-	SetWindowPos(comboMultisample_.GetWindowHandle(), NULL, 0, 0,
+	SetWindowPos(comboMultisample_.GetWindowHandle(), nullptr, 0, 0,
 		comboMultisample_.GetClientWidth(), 200, SWP_NOMOVE);
 
 	return true;
@@ -282,7 +277,7 @@ void DevicePanel::WriteConfiguration() {
 		screenMode = ScreenMode::SCREENMODE_FULLSCREEN;
 	config->SetScreenMode(screenMode);
 
-	int windowSize = comboWindowSize_.GetSelectedIndex();
+	size_t windowSize = comboWindowSize_.GetSelectedIndex();
 	config->SetWindowSize(windowSize);
 
 	{
@@ -293,7 +288,7 @@ void DevicePanel::WriteConfiguration() {
 			{ 3, D3DMULTISAMPLE_4_SAMPLES },
 		};
 
-		int multiSample = comboMultisample_.GetSelectedIndex();
+		size_t multiSample = comboMultisample_.GetSelectedIndex();
 		config->SetMultiSampleType(mapIndexSample[multiSample]);
 	}
 
@@ -386,7 +381,7 @@ bool KeyPanel::StartUp() {
 		comboPadIndex_.AddString(L"(none)");
 		comboPadIndex_.SetWindowEnable(false);
 	}
-	SetWindowPos(comboPadIndex_.GetWindowHandle(), NULL, 0, 0,
+	SetWindowPos(comboPadIndex_.GetWindowHandle(), nullptr, 0, 0,
 		padDeviceTextWidth, 200, SWP_NOMOVE);
 
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
@@ -404,7 +399,7 @@ LRESULT KeyPanel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 void KeyPanel::_UpdateText(int row) {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 	ref_count_ptr<VirtualKey> vk = config->GetVirtualKey(row);
-	if (vk == NULL) return;
+	if (vk == nullptr) return;
 
 	int16_t keyCode = vk->GetKeyCode();
 	std::wstring strKey = listKeyCode_.GetCodeText(keyCode);

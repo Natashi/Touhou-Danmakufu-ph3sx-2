@@ -215,11 +215,16 @@ bool EDirectGraphics::Initialize() {
 	LONG screenHeight = dnhConfig->GetScreenHeight();	//From th_dnh.def
 	ScreenMode screenMode = dnhConfig->GetScreenMode();
 
-	std::vector<POINT>& windowSizeList = dnhConfig->GetWindowSizeList();
-	int windowSizeIndex = dnhConfig->GetWindowSize();
-
-	LONG windowedWidth = std::max(windowSizeList[windowSizeIndex].x, screenWidth);
-	LONG windowedHeight = std::max(windowSizeList[windowSizeIndex].y, screenHeight);
+	LONG windowedWidth = screenWidth;
+	LONG windowedHeight = screenHeight;
+	{
+		std::vector<POINT>& windowSizeList = dnhConfig->GetWindowSizeList();
+		size_t windowSizeIndex = dnhConfig->GetWindowSize();
+		if (windowSizeIndex < windowSizeList.size()) {
+			windowedWidth = std::max(windowSizeList[windowSizeIndex].x, 320L);
+			windowedHeight = std::max(windowSizeList[windowSizeIndex].y, 240L);
+		}
+	}
 
 	DirectGraphicsConfig dxConfig;
 	dxConfig.SetScreenSize({ screenWidth, screenHeight });
@@ -231,8 +236,11 @@ bool EDirectGraphics::Initialize() {
 	dxConfig.SetReferenceEnable(dnhConfig->IsEnableRef());
 	dxConfig.SetMultiSampleType(dnhConfig->GetMultiSampleType());
 	dxConfig.SetbPseudoFullScreen(dnhConfig->bPseudoFullscreen_);
-	bool res = DirectGraphicsPrimaryWindow::Initialize(dxConfig);
 
+	bool res = DirectGraphicsPrimaryWindow::Initialize(dxConfig);
+	if (!res) return res;
+
+	/*
 	int monitorWidth = ::GetSystemMetrics(SM_CXFULLSCREEN);
 	int monitorHeight = ::GetSystemMetrics(SM_CYFULLSCREEN);
 	bool bFullScreenEnable = screenWidth <= monitorWidth && screenHeight <= monitorHeight;
@@ -248,8 +256,19 @@ bool EDirectGraphics::Initialize() {
 		SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
 		MoveWindowCenter();
 	}
-	SetWindowVisible(true);
+	*/
+	if (screenMode == ScreenMode::SCREENMODE_FULLSCREEN) {
+		ChangeScreenMode();
+	}
+	else {
+		RECT wr = { 0, 0, windowedWidth, windowedHeight };
+		AdjustWindowRect(&wr, wndStyleWin_, FALSE);
 
+		SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
+		MoveWindowCenter();
+	}
+
+	SetWindowVisible(true);
 	return res;
 }
 void EDirectGraphics::SetRenderStateFor2D(BlendMode type) {
@@ -263,9 +282,8 @@ LRESULT EDirectGraphics::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, L
 	case WM_SYSCOMMAND:
 	{
 		int nId = wParam & 0xffff;
-		if (nId == WindowLogger::MENU_ID_OPEN) {
+		if (nId == WindowLogger::MENU_ID_OPEN)
 			ELogger::GetInstance()->ShowLogWindow();
-		}
 		break;
 	}
 	}

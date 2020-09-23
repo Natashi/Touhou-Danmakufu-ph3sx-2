@@ -153,7 +153,7 @@ public:
 	int fpsType_;
 
 	std::vector<POINT> windowSizeList_;
-	int sizeWindow_;
+	size_t sizeWindow_;
 	int fastModeSpeed_;
 
 	bool bVSync_;
@@ -172,8 +172,8 @@ public:
 
 	std::wstring pathPackageScript_;
 	std::wstring windowTitle_;
-	int screenWidth_;
-	int screenHeight_;
+	LONG screenWidth_;
+	LONG screenHeight_;
 
 	bool _LoadDefinitionFile();
 public:
@@ -185,8 +185,8 @@ public:
 	ScreenMode GetScreenMode() { return modeScreen_; }
 	void SetScreenMode(ScreenMode mode) { modeScreen_ = mode; }
 	std::vector<POINT>& GetWindowSizeList() { return windowSizeList_; }
-	int GetWindowSize() { return sizeWindow_; }
-	void SetWindowSize(int size) { sizeWindow_ = size; }
+	size_t GetWindowSize() { return sizeWindow_; }
+	void SetWindowSize(size_t size) { sizeWindow_ = size; }
 	int GetFpsType() { return fpsType_; }
 	void SetFpsType(int type) { fpsType_ = type; }
 	int GetSkipModeSpeedRate() { return fastModeSpeed_; }
@@ -216,7 +216,7 @@ public:
 
 	std::wstring& GetPackageScriptPath() { return pathPackageScript_; }
 	std::wstring& GetWindowTitle() { return windowTitle_; }
-	int GetScreenWidth() { return screenWidth_; }
-	int GetScreenHeight() { return screenHeight_; }
+	LONG GetScreenWidth() { return screenWidth_; }
+	LONG GetScreenHeight() { return screenHeight_; }
 };
 #endif

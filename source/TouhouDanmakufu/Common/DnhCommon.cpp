@@ -468,10 +468,10 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 	windowTitle_ = prop.GetString(L"window.title", L"");
 
 	screenWidth_ = prop.GetInteger(L"screen.width", 640);
-	screenWidth_ = std::clamp(screenWidth_, 320, 1920);
+	screenWidth_ = std::clamp(screenWidth_, 320L, 1920L);
 
 	screenHeight_ = prop.GetInteger(L"screen.height", 480);
-	screenHeight_ = std::clamp(screenHeight_, 240, 1200);
+	screenHeight_ = std::clamp(screenHeight_, 240L, 1200L);
 
 	fastModeSpeed_ = prop.GetInteger(L"skip.rate", 20);
 	fastModeSpeed_ = std::clamp(fastModeSpeed_, 1, 50);
@@ -493,14 +493,16 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 						POINT size;
 						size.x = wcstol(match[1].str().c_str(), nullptr, 10);
 						size.y = wcstol(match[2].str().c_str(), nullptr, 10);
-						if (size.x < 320) size.x = 320;
-						if (size.y < 240) size.y = 240;
+						size.x = std::clamp(size.x, 320L, 1920L);
+						size.y = std::clamp(size.y, 240L, 1200L);
 
 						windowSizeList_.push_back(size);
 					}
 				}
 			}
 		}
+		if (windowSizeList_.size() == 0)
+			windowSizeList_ = { { 640, 480 }, { 800, 600 }, { 960, 720 }, { 1280, 960 } };
 	}
 
 	return true;
@@ -508,6 +510,7 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 
 bool DnhConfiguration::LoadConfigFile() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"config.dat";
+
 	RecordBuffer record;
 	bool res = record.ReadFromFile(path);
 	if (!res) return false;
@@ -519,15 +522,16 @@ bool DnhConfiguration::LoadConfigFile() {
 	}
 
 	record.GetRecord<ScreenMode>("modeScreen", modeScreen_);
-	record.GetRecord<int>("sizeWindow", sizeWindow_);
+	record.GetRecord<size_t>("sizeWindow", sizeWindow_);
 
 	record.GetRecord<int>("fpsType", fpsType_);
 	record.GetRecord<int>("modeColor", modeColor_);
+
 	record.GetRecord<bool>("bVSync", bVSync_);
 	record.GetRecord<bool>("bDeviceREF", referenceRasterizer_);
 	record.GetRecord<bool>("bPseudoFullscreen", bPseudoFullscreen_);
 
-	record.GetRecord<DWORD>("typeMultiSamples", (DWORD&)multiSamples_);
+	record.GetRecord<D3DMULTISAMPLE_TYPE>("typeMultiSamples", multiSamples_);
 
 	pathExeLaunch_ = record.GetRecordAsStringW("pathLaunch");
 	if (pathExeLaunch_.size() == 0) pathExeLaunch_ = DNH_EXE_DEFAULT;
@@ -563,18 +567,21 @@ bool DnhConfiguration::LoadConfigFile() {
 }
 bool DnhConfiguration::SaveConfigFile() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"config.dat";
+
 	RecordBuffer record;
 	record.SetRecordAsInteger("version", DNH_VERSION_NUM);
 
 	record.SetRecord<ScreenMode>("modeScreen", modeScreen_);
-	record.SetRecordAsInteger("sizeWindow", sizeWindow_);
+	record.SetRecord<size_t>("sizeWindow", sizeWindow_);
 	
 	record.SetRecordAsInteger("fpsType", fpsType_);
 	record.SetRecordAsInteger("modeColor", modeColor_);
+
 	record.SetRecordAsBoolean("bVSync", bVSync_);
 	record.SetRecordAsBoolean("bDeviceREF", referenceRasterizer_);
 	record.SetRecordAsBoolean("bPseudoFullscreen", bPseudoFullscreen_);
-	record.SetRecord<DWORD>("typeMultiSamples", (DWORD&)multiSamples_);
+
+	record.SetRecord<D3DMULTISAMPLE_TYPE>("typeMultiSamples", multiSamples_);
 
 	record.SetRecordAsStringW("pathLaunch", pathExeLaunch_);
 
