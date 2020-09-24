@@ -24,6 +24,7 @@ namespace gstd {
 		static std::string string_representation(type_data* data);
 
 		bool operator==(const type_data& other);
+		bool operator!=(const type_data& other) { return !this->operator==(other); }
 		bool operator<(const type_data& other) const;
 	private:
 		type_kind kind = type_kind::tk_null;
