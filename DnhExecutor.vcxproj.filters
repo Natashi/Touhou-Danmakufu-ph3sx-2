@@ -65,9 +65,6 @@
     <ClCompile Include="source\GcLib\directx\DirectSound.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
-    <ClCompile Include="source\GcLib\directx\DxScript.cpp">
-      <Filter>source\GcLib\directx</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\directx\DxText.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
@@ -182,9 +179,6 @@
     <ClCompile Include="source\GcLib\gstd\Script\ScriptLexer.cpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClCompile>
-    <ClCompile Include="source\GcLib\directx\DxScriptFunc.cpp">
-      <Filter>source\GcLib\directx</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\gstd\Script\Parser.cpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClCompile>
@@ -204,6 +198,12 @@
       <Filter>source\GcLib\directx\Mesh</Filter>
     </ClCompile>
     <ClCompile Include="source\GcLib\directx\HLSL.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DxObject.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DxScript.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
   </ItemGroup>
@@ -251,9 +251,6 @@
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\DxLib.hpp">
-      <Filter>source\GcLib\directx</Filter>
-    </ClInclude>
-    <ClInclude Include="source\GcLib\directx\DxScript.hpp">
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\DxText.hpp">
@@ -414,6 +411,12 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\VectorExtension.hpp">
       <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxObject.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxScript.hpp">
+      <Filter>source\GcLib\directx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -14,7 +14,6 @@
 
 #include "RandProvider.hpp"
 
-#include "ScriptClient.hpp"
 #include "FpsController.hpp"
 #endif
 

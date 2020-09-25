@@ -263,8 +263,8 @@
     <ClCompile Include="source\GcLib\directx\DirectGraphics.cpp" />
     <ClCompile Include="source\GcLib\directx\DirectInput.cpp" />
     <ClCompile Include="source\GcLib\directx\DirectSound.cpp" />
+    <ClCompile Include="source\GcLib\directx\DxObject.cpp" />
     <ClCompile Include="source\GcLib\directx\DxScript.cpp" />
-    <ClCompile Include="source\GcLib\directx\DxScriptFunc.cpp" />
     <ClCompile Include="source\GcLib\directx\DxText.cpp" />
     <ClCompile Include="source\GcLib\directx\DxUtility.cpp" />
     <ClCompile Include="source\GcLib\directx\DxWindow.cpp" />
@@ -337,6 +337,7 @@
     <ClInclude Include="source\GcLib\directx\DirectSound.hpp" />
     <ClInclude Include="source\GcLib\directx\DxConstant.hpp" />
     <ClInclude Include="source\GcLib\directx\DxLib.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxObject.hpp" />
     <ClInclude Include="source\GcLib\directx\DxScript.hpp" />
     <ClInclude Include="source\GcLib\directx\DxText.hpp" />
     <ClInclude Include="source\GcLib\directx\DxUtility.hpp" />

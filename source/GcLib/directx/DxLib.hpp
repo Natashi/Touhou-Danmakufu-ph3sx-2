@@ -24,9 +24,9 @@
 
 #include "TransitionEffect.hpp"
 //#include "DxWindow.hpp"
+#include "DxObject.hpp"
 #include "DxScript.hpp"
 #include "ScriptManager.hpp"
-//#include "EventScript.hpp"
 
 #include "DirectSound.hpp"
 #endif
