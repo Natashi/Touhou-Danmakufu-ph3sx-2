@@ -73,7 +73,10 @@ const function stgControlFunction[] =
 	{ "GetScriptPathList", StgControlScript::Func_GetScriptPathList, 2 },
 	{ "GetScriptInfoA1", StgControlScript::Func_GetScriptInfoA1, 2 },
 
+	//Engine utility
 	{ "IsEngineFastMode", StgControlScript::Func_IsEngineFastMode, 0 },
+	{ "GetConfigWindowSizeIndex", StgControlScript::Func_GetConfigWindowSizeIndex, 0 },
+	{ "GetConfigWindowSizeList", StgControlScript::Func_GetConfigWindowSizeList, 0 },
 
 	//STG共通関数：描画関連
 	{ "ClearInvalidRenderPriority", StgControlScript::Func_ClearInvalidRenderPriority, 0 },
@@ -576,7 +579,24 @@ gstd::value StgControlScript::Func_GetScriptInfoA1(gstd::script_machine* machine
 }
 
 gstd::value StgControlScript::Func_IsEngineFastMode(script_machine* machine, int argc, const value* argv) {
-	return StgControlScript::CreateBooleanValue(EFpsController::GetInstance()->IsFastMode());
+	EFpsController* controller = EFpsController::GetInstance();
+	return StgControlScript::CreateBooleanValue(controller->IsFastMode());
+}
+gstd::value StgControlScript::Func_GetConfigWindowSizeIndex(script_machine* machine, int argc, const value* argv) {
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
+	size_t index = config->GetWindowSize();
+	return StgControlScript::CreateIntValue(index);
+}
+gstd::value StgControlScript::Func_GetConfigWindowSizeList(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = (StgControlScript*)machine->data;
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
+	auto sizeList = config->GetWindowSizeList();
+	std::vector<gstd::value> resListSizes;
+	if (!sizeList.empty()) {
+		for (POINT& iPoint : sizeList)
+			resListSizes.push_back(StgControlScript::CreateRealArrayValue((LONG*)&iPoint, 2U));
+	}
+	return script->CreateValueArrayValue(resListSizes);
 }
 
 //STG共通関数：描画関連

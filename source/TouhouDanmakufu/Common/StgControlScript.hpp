@@ -124,7 +124,10 @@ public:
 	static gstd::value Func_GetScriptPathList(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetScriptInfoA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
+	//Engine utility
 	DNH_FUNCAPI_DECL_(Func_IsEngineFastMode);
+	DNH_FUNCAPI_DECL_(Func_GetConfigWindowSizeIndex);
+	DNH_FUNCAPI_DECL_(Func_GetConfigWindowSizeList);
 
 	//STGêßå‰ã§í ä÷êîÅFï`âÊä÷òA
 	static gstd::value Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv);
