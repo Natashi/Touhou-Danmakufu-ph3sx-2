@@ -76,6 +76,7 @@ value* value::set(type_data* t, int64_t v) {
 	unique();
 	data->type = t;
 	data->int_value = v;
+	return this;
 }
 value* value::set(type_data* t, double v) {
 	unique();
