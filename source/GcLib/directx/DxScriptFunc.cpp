@@ -146,6 +146,7 @@ function const dxFunction[] =
 	//Color
 	{ "ColorARGBToHex", DxScript::Func_ColorARGBToHex, 4 },
 	{ "ColorHexToARGB", DxScript::Func_ColorHexToARGB, 1 },
+	{ "ColorHexToARGB", DxScript::Func_ColorHexToARGB, 2 },		//Overloaded
 	{ "ColorRGBtoHSV", DxScript::Func_ColorRGBtoHSV, 3 },
 	{ "ColorHSVtoRGB", DxScript::Func_ColorHSVtoRGB, 3 },
 	{ "ColorHSVtoHexRGB", DxScript::Func_ColorHSVtoHexRGB, 3 },
@@ -394,6 +395,9 @@ function const dxFunction[] =
 	{ "ObjFileB_WriteLong", DxScript::Func_ObjFileB_WriteLong, 2 },
 	{ "ObjFileB_WriteFloat", DxScript::Func_ObjFileB_WriteFloat, 2 },
 	{ "ObjFileB_WriteDouble", DxScript::Func_ObjFileB_WriteDouble, 2 },
+	
+	//ColorHexToARGB
+		//WIP
 
 	//íËêî
 	{ "ID_INVALID", constant<DxScript::ID_INVALID>::func, 0 },
@@ -455,24 +459,17 @@ function const dxFunction[] =
 	{ "BORDER_FULL", constant<DxFont::BORDER_FULL>::func, 0 },
 	{ "BORDER_SHADOW", constant<DxFont::BORDER_SHADOW>::func, 0 },
 
-	/*
-	{ "CHARSET_ANSI", constant<ANSI_CHARSET>::func, 0 },
-	{ "CHARSET_DEFAULT", constant<DEFAULT_CHARSET>::func, 0 },
-	{ "CHARSET_SHIFTJIS", constant<SHIFTJIS_CHARSET>::func, 0 },
-	{ "CHARSET_HANGUL", constant<HANGUL_CHARSET>::func, 0 },
-	{ "CHARSET_JOHAB", constant<JOHAB_CHARSET>::func, 0 },
-	{ "CHARSET_GB2312", constant<GB2312_CHARSET>::func, 0 },
-	{ "CHARSET_CHINESEBIG5", constant<CHINESEBIG5_CHARSET>::func, 0 },
-	{ "CHARSET_GREEK", constant<GREEK_CHARSET>::func, 0 },
-	{ "CHARSET_TURKISH", constant<TURKISH_CHARSET>::func, 0 },
-	{ "CHARSET_VIETNAMESE", constant<VIETNAMESE_CHARSET>::func, 0 },
-	{ "CHARSET_", constant<HEBREW_CHARSET>::func, 0 },
-	{ "CHARSET_", constant<ARABIC_CHARSET>::func, 0 },
-	{ "CHARSET_", constant<BALTIC_CHARSET>::func, 0 },
-	{ "CHARSET_", constant<RUSSIAN_CHARSET>::func, 0 },
-	{ "CHARSET_", constant<THAI_CHARSET>::func, 0 },
-	{ "CHARSET_", constant<EASTEUROPE_CHARSET>::func, 0 },
-	*/
+	DNH_CONST_DECL("CHARSET_ANSI", ANSI_CHARSET),
+	DNH_CONST_DECL("CHARSET_DEFAULT", DEFAULT_CHARSET),
+	DNH_CONST_DECL("CHARSET_SHIFTJIS", SHIFTJIS_CHARSET),
+	DNH_CONST_DECL("CHARSET_HANGUL", HANGUL_CHARSET),
+	DNH_CONST_DECL("CHARSET_JOHAB", JOHAB_CHARSET),
+	DNH_CONST_DECL("CHARSET_CHINESEBIG5", CHINESEBIG5_CHARSET),
+	DNH_CONST_DECL("CHARSET_TURKISH", TURKISH_CHARSET),
+	DNH_CONST_DECL("CHARSET_VIETNAMESE", VIETNAMESE_CHARSET),
+	DNH_CONST_DECL("CHARSET_HEBREW", HEBREW_CHARSET),
+	DNH_CONST_DECL("CHARSET_ARABIC", ARABIC_CHARSET),
+	DNH_CONST_DECL("CHARSET_THAI", THAI_CHARSET),
 
 	{ "SOUND_BGM", constant<SoundDivision::DIVISION_BGM>::func, 0 },
 	{ "SOUND_SE", constant<SoundDivision::DIVISION_SE>::func, 0 },
@@ -689,7 +686,7 @@ gstd::value DxScript::Func_MatrixIdentity(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
 
-	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(mat.m), 16U);
 }
 gstd::value DxScript::Func_MatrixInverse(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -1867,6 +1864,30 @@ gstd::value DxScript::Func_ColorARGBToHex(gstd::script_machine* machine, int arg
 gstd::value DxScript::Func_ColorHexToARGB(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	D3DCOLOR color = (D3DCOLOR)argv[0].as_int();
 	D3DXVECTOR4 vecColor = ColorAccess::ToVec4(color);
+
+	if (argc > 1) {
+		//Control format
+		//MSB                         LSB   (16 bit)
+		//000000   00      00  00  00  00
+		//Unused   Count   1st 2nd 3rd 4th
+
+		uint16_t control = argv[1].as_int() & 0x3ff;
+		if (control != 0x31b) {		//0x31b -> 11 00 01 10 11 (regular ARGB)
+			byte nChannel = ((control >> 8) & 0x3) + 1;
+			byte sc0 = (control >> 6) & 0x3;
+			byte sc1 = (control >> 4) & 0x3;
+			byte sc2 = (control >> 2) & 0x3;
+			byte sc3 = control & 0x3;
+
+			D3DXVECTOR4 colorPermute;
+			colorPermute.x = ((FLOAT*)&vecColor)[sc0];
+			colorPermute.y = ((FLOAT*)&vecColor)[sc1];
+			colorPermute.z = ((FLOAT*)&vecColor)[sc2];
+			colorPermute.w = ((FLOAT*)&vecColor)[sc3];
+
+			return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&colorPermute), nChannel);
+		}
+	}
 	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&vecColor), 4U);
 }
 gstd::value DxScript::Func_ColorRGBtoHSV(gstd::script_machine* machine, int argc, const gstd::value* argv) {
