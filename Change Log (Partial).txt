@@ -143,8 +143,11 @@
 	- Greatly improved script variable allocation.
 	- Added a concatenate-assign operator. (~=)
 	- Added bitwise operators. (~, &, |, ^^)
+	- Int values can now be declared with a suffix 'i' or 'I'.
+	- Added implicit type casting in default script operations.
 	- Fixed a bug where itoa, atoi, and IntToString would underflow if the input is larger than 2^31-1. (New limit is 2^63-1)
 	- Fixed a bug where the 3D viewport would get stretched out based on the size of the STG frame.
 	- Made the game no longer freeze and crash after Alt-Tab'ing out of true fullscreen mode or after waking the desktop from sleep.
+	- Pseudo-fullscreen mode now stops Windows from going to sleep.
 	- Various optimizations.
 	- Un-Utilized UPX Executable Packer to not-reduce file size.

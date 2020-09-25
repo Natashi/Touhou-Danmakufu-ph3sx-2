@@ -22,6 +22,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the type of the given value.
 			Examples:
+				-60i        -> VAR_INT
 				920         -> VAR_REAL
 				false       -> VAR_BOOL
 				"str"       -> VAR_STRING
@@ -192,6 +193,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	--------------------------------> Maths <--------------------------------
 	
+	clamp
+		Arguments:
+			1) value
+			2) lower bound
+			3) upper bound
+		Description:
+			Returns the given value clamped between the specified range.
+	
 	exp
 		Arguments:
 			1) value
@@ -258,7 +267,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				Direct formula is (a + (b - a) * (x))
 				Represented by the red graph.
 				
-			When interpolating between two arrays, but they must be of the same size.
+			When interpolating between two arrays, they must be of the same size.
 
 	Interpolate_Smooth
 		Arguments:
@@ -271,7 +280,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				Direct formula is (a + (b - a) * (x^2 * (3 - 2 * x)))
 				Represented by the blue graph.
 				
-			When interpolating between two arrays, but they must be of the same size.
+			When interpolating between two arrays, they must be of the same size.
 
 	Interpolate_Smoother
 		Arguments:
@@ -284,7 +293,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				Direct formula is (a + (b - a) * (x^3 * (x * (x * 6 - 15) + 10)))
 				Represented by the green graph.
 				
-			When interpolating between two arrays, but they must be of the same size.
+			When interpolating between two arrays, they must be of the same size.
 
 	Interpolate_Accelerate
 		Arguments:
@@ -297,7 +306,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				Direct formula is (a + (b - a) * (x^2))
 				Represented by the purple graph.
 				
-			When interpolating between two arrays, but they must be of the same size.
+			When interpolating between two arrays, they must be of the same size.
 
 	Interpolate_Decelerate
 		Arguments:
@@ -310,7 +319,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				Direct formula is (a + (b - a) * (1 - (1 - x)^2))
 				Represented by the black graph.
 				
-			When interpolating between two arrays, but they must be of the same size.
+			When interpolating between two arrays, they must be of the same size.
 
 	Interpolate_Modulate
 		Arguments:
@@ -517,6 +526,39 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Change.
 			
 			Writes the values of the given arguments to the LogWindow.
+			
+	RaiseMessageWindow
+		Arguments:
+			1) (string) title text
+			2) (string) description text
+			3) (int) window flags
+		Description:
+			Raises a message window similar to RaiseError, but does not terminate the script. 
+			The game will be paused until the message window is addressed. The LogWindow will not be affected.
+			
+			For the list of window flags, refer to this page:
+			https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-messagebox
+				
+				The following flags are not allowed and will be automatically deleted:
+					MB_SETFOREGROUND
+					MB_DEFAULT_DESKTOP_ONLY
+					MB_SERVICE_NOTIFICATION
+					MB_SYSTEMMODAL
+					MB_TASKMODAL
+				The following flags are forced:
+					MB_APPLMODAL
+					
+			The return value is dependent on the user's interaction with the message window.
+			Refer to the same page for the list and explaination of return values.
+			
+	RaiseMessageWindow (Overload)
+		Arguments:
+			1) (string) title text
+			2) (string) description text
+		Description:
+			Overloaded with 2 arguments.
+			
+			Triggers RaiseMessageWindow with MB_OK as the window flag value.
 			
 	--------------------------------> Common Data <--------------------------------
 	
@@ -865,8 +907,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Returns an ARGB hexadecimal color value of the given colors.
 			
 			Examples:
-				ColorARGBtoHex(255, 255, 255, 255)	-> 0xFFFFFFFF
-				ColorARGBtoHex(67, 255, 0, 125)		-> 0x43FF007D
+				ColorARGBToHex(255, 255, 255, 255)	-> 0xFFFFFFFF
+				ColorARGBToHex(67, 255, 0, 125)		-> 0x43FF007D
 				
 	ColorHexToARGB
 		Arguments:
@@ -875,8 +917,57 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Returns an ARGB color array of the given hexadecimal color (D3DCOLOR).
 			
 			Examples:
-				ColorHextoARGB(0xFFFFFFFF)	-> [255, 255, 255, 255]
-				ColorARGBtoHex(0x43FF007D)	-> [67, 255, 0, 125]
+				ColorHexToARGB(0xFFFFFFFF)	-> [255, 255, 255, 255]
+				ColorHexToARGB(0x43FF007D)	-> [67, 255, 0, 125]
+				
+	ColorHexToARGB (Overload)
+		Arguments:
+			1) hex color
+			2) control
+		Description:
+			Overloaded with 2 arguments.
+		
+			Returns an ARGB color array of the given hexadecimal color (D3DCOLOR), controlled by the control argument.
+			
+			The control value dictates which color channels to output, and in which order.
+				The bit format is:
+					MSB                         LSB   (16 bit)
+					000000   00      00  00  00  00
+					Unused   Count   1st 2nd 3rd 4th
+					
+					- Bits 0-5 are unused.
+					- Bits 6-7 control the amount of color channels to return, subtracted by 1. 
+						(11 is 4 channels, 10 is 3, 01 is 2, 00 is 1)
+					- Bits 8-15 control with order of the color channels, color channels can be duplicated.
+						00 (0) signifies the A channel.
+						01 (1) signifies the R channel.
+						10 (2) signifies the G channel.
+						11 (3) signifies the B channel.
+						
+					Examples:
+						0b1100011011 (0x31b) -> [A, R, G, B]
+						0b1101101100 (0x36c) -> [R, G, B, A]
+						0b1100000000 (0x300) -> [A, A, A, A]
+						0b1001101100 (0x26c) -> [R, G, B]
+						0b0001000000 (0x040) -> [R]
+						
+			For people whose brain lacks the required amount of sanity (or lack thereof) to understand the control argument, here are some constants:
+				COLOR_PERMUTE_ARGB
+				COLOR_PERMUTE_RGBA
+				COLOR_PERMUTE_BGRA
+				COLOR_PERMUTE_RGB
+				COLOR_PERMUTE_BGR
+				COLOR_PERMUTE_A
+				COLOR_PERMUTE_R
+				COLOR_PERMUTE_G
+				COLOR_PERMUTE_B
+			
+			Examples:
+				ColorHexToARGB(0xFFFFFFFF, 0x31b)	-> [255, 255, 255, 255]
+				ColorHexToARGB(0xFFFFFFFF, 0x000)	-> [255]
+				ColorHexToARGB(0x43FF007D, 0x31b)	-> [67, 255, 0, 125]
+				ColorHexToARGB(0x43FF007D, 0x36c)	-> [255, 0, 125, 67]
+				ColorHexToARGB(0x43FF007D, 0x2e4)	-> [125, 0, 255]
 	
 	ColorRGBtoHSV
 		Arguments:
@@ -1339,9 +1430,22 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Sets the charset for the following text object.
 			
-			List of available charset values:
+			The following constants are defined:
+				CHARSET_ANSI
+				CHARSET_DEFAULT
+				CHARSET_SHIFTJIS
+				CHARSET_HANGUL
+				CHARSET_JOHAB
+				CHARSET_CHINESEBIG5
+				CHARSET_TURKISH
+				CHARSET_VIETNAMESE
+				CHARSET_HEBREW
+				CHARSET_ARABIC
+				CHARSET_THAI
+			
+			For the full list of all charset values, refer to here:
 				https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-wmf/0d0b32ac-a836-4bd2-a112-b6000a1b4fc9
-			OEM_CHARSET should not be used.
+			Avoid using DEFAULT_CHARSET and OEM_CHARSET, as they are device-dependent.
 			
 			To ensure that font glyphs generate correctly, match the text object's charset with the font's charset.
 			*The font charset is reset to either ANSI_CHARSET or SHIFTJIS_CHARSET every time ObjText_SetFontType is used.

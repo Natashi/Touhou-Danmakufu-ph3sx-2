@@ -13,6 +13,17 @@
 		Used to declare a constant.
 			
 - New Features
+	- Int Types
+		Int types represent integers.
+		Can be declared by suffixing an 'I' or an 'i' to number literals.
+		
+		Example:
+			let a = 5000I;
+			let b = 0xff0fei;
+			let c = -92.24i;	//Will be rounded to -92
+		
+		To advanced scripters, an int is 64 bits large.
+		
 	- Constant Variables
 		Variables whose values cannot be changed.
 		Any attempt to do so will throw a compile-time error.
