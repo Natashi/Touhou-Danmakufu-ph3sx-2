@@ -1969,8 +1969,8 @@ void ParticleRendererBase::AddInstance() {
 	VERTEX_INSTANCE instance;
 	instance.diffuse_color = instColor_;
 	instance.xyz_pos_x_scale = D3DXVECTOR4(instPosition_.x, instPosition_.y, instPosition_.z, instScale_.x);
-	instance.yz_scale_xy_ang = D3DXVECTOR4(instScale_.y, instScale_.z, instAngle_.x, instAngle_.y);
-	instance.z_ang_extra = D3DXVECTOR4(instAngle_.z, instUserData_.x, instUserData_.y, instUserData_.z);
+	instance.yz_scale_xy_ang = D3DXVECTOR4(instScale_.y, instScale_.z, -instAngle_.x, -instAngle_.y);
+	instance.z_ang_extra = D3DXVECTOR4(-instAngle_.z, instUserData_.x, instUserData_.y, instUserData_.z);
 	instanceData_[countInstance_++] = instance;
 }
 void ParticleRendererBase::ClearInstance() {
