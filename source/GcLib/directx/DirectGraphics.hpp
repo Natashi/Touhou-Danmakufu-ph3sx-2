@@ -45,29 +45,29 @@ namespace directx {
 		DirectGraphicsConfig();
 		virtual ~DirectGraphicsConfig();
 
-		bool IsShowWindow() { return bShowWindow_; }
+		bool IsShowWindow() const { return bShowWindow_; }
 		void SetShowWindow(bool b) { bShowWindow_ = b; }
-		bool IsShowCursor() { return bShowCursor_; }
+		bool IsShowCursor() const { return bShowCursor_; }
 		void SetShowCursor(bool b) { bShowCursor_ = b; }
 
-		POINT& GetScreenSize() { return sizeScreen_; }
+		const POINT& GetScreenSize() const { return sizeScreen_; }
 		void SetScreenSize(const POINT& size) { sizeScreen_ = size; }
-		POINT& GetScreenWindowedSize() { return sizeScreenWindowed_; }
+		const POINT& GetScreenWindowedSize() const { return sizeScreenWindowed_; }
 		void SetScreenWindowedSize(const POINT& size) { sizeScreenWindowed_ = size; }
 
-		bool IsWindowed() { return bWindowed_; }
+		bool IsWindowed() const { return bWindowed_; }
 		void SetWindowd(bool bWindowed) { bWindowed_ = bWindowed; }
-		bool IsReferenceEnable() { return bUseRef_; }
+		bool IsReferenceEnable() const { return bUseRef_; }
 		void SetReferenceEnable(bool bEnable) { bUseRef_ = bEnable; }
-		int GetColorMode() { return colorMode_; }
+		int GetColorMode() const { return colorMode_; }
 		void SetColorMode(int mode) { colorMode_ = mode; }
-		bool IsTripleBufferEnable() { return bUseTripleBuffer_; }
+		bool IsTripleBufferEnable() const { return bUseTripleBuffer_; }
 		void SetTripleBufferEnable(bool bEnable) { bUseTripleBuffer_ = bEnable; }
-		bool IsVSyncEnable() { return bVSync_; }
+		bool IsVSyncEnable() const { return bVSync_; }
 		void SetVSyncEnable(bool bEnable) { bVSync_ = bEnable; }
-		bool IsPseudoFullScreen() { return bPseudoFullScreen_; }
+		bool IsPseudoFullScreen() const { return bPseudoFullScreen_; }
 		void SetbPseudoFullScreen(bool b) { bPseudoFullScreen_ = b; }
-		D3DMULTISAMPLE_TYPE GetMultiSampleType() { return typeSamples_; }
+		D3DMULTISAMPLE_TYPE GetMultiSampleType() const { return typeSamples_; }
 		void SetMultiSampleType(D3DMULTISAMPLE_TYPE type) { typeSamples_ = type; }
 	};
 
@@ -135,7 +135,7 @@ namespace directx {
 		HWND GetAttachedWindowHandle() { return hAttachedWindow_; }
 
 		virtual bool Initialize(HWND hWnd);
-		virtual bool Initialize(HWND hWnd, DirectGraphicsConfig& config);
+		virtual bool Initialize(HWND hWnd, const DirectGraphicsConfig& config);
 
 		void AddDirectGraphicsListener(DirectGraphicsListener* listener);
 		void RemoveDirectGraphicsListener(DirectGraphicsListener* listener);
@@ -143,7 +143,7 @@ namespace directx {
 		D3DPRESENT_PARAMETERS GetFullScreenPresentParameter() { return d3dppFull_; }
 		D3DPRESENT_PARAMETERS GetWindowPresentParameter() { return d3dppWin_; }
 
-		DirectGraphicsConfig& GetConfigData() { return config_; }
+		const DirectGraphicsConfig& GetConfigData() { return config_; }
 		IDirect3DDevice9* GetDevice() { return pDevice_; }
 
 		IDirect3DSurface9* GetBaseSurface() { return pBackSurf_; }

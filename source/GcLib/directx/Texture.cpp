@@ -422,7 +422,6 @@ void TextureManager::RestoreDxResource() {
 				UINT width = data->infoImage_.Width;
 				UINT height = data->infoImage_.Height;
 
-				DirectGraphicsConfig* config = &graphics->GetConfigData();
 				D3DMULTISAMPLE_TYPE typeSample = graphics->GetMultiSampleType();
 				DWORD* qualitySample = graphics->GetMultiSampleQuality();
 

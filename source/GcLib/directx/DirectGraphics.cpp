@@ -72,7 +72,7 @@ DirectGraphics::~DirectGraphics() {
 bool DirectGraphics::Initialize(HWND hWnd) {
 	return this->Initialize(hWnd, config_);
 }
-bool DirectGraphics::Initialize(HWND hWnd, DirectGraphicsConfig& config) {
+bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	if (thisBase_) return false;
 
 	Logger::WriteTop("DirectGraphics: Initialize.");

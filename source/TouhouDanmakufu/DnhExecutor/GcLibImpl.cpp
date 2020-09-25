@@ -155,14 +155,14 @@ bool EApplication::_Loop() {
 			fpsController->GetCurrentRenderFps());
 		logger->SetInfo(0, L"Fps", fps);
 
-		POINT& screenSize = graphics->GetConfigData().GetScreenSize();
-		POINT& screenSizeWindowed = graphics->GetConfigData().GetScreenWindowedSize();
+		const POINT& screenSize = graphics->GetConfigData().GetScreenSize();
+		const POINT& screenSizeWindowed = graphics->GetConfigData().GetScreenWindowedSize();
 		//int widthScreen = widthConfig * graphics->GetScreenWidthRatio();
 		//int heightScreen = heightConfig * graphics->GetScreenHeightRatio();
-		std::wstring screenInf = StringUtility::Format(L"Width: %d/%d, Height: %d/%d",
+		std::wstring screenInfo = StringUtility::Format(L"Width: %d/%d, Height: %d/%d",
 			screenSizeWindowed.x, screenSize.x,
 			screenSizeWindowed.y, screenSize.y);
-		logger->SetInfo(1, L"Screen", screenInf);
+		logger->SetInfo(1, L"Screen", screenInfo);
 
 		logger->SetInfo(2, L"Font cache",
 			StringUtility::Format(L"%d", EDxTextRenderer::GetInstance()->GetCacheCount()));
