@@ -13,25 +13,25 @@ script_type_manager::script_type_manager() {
 	if (base_) return;
 	base_ = this;
 
-	int_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_int)).first);
-	real_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_real)).first);
-	char_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_char)).first);
-	boolean_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_boolean)).first);
-	string_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_array,
+	int_type = deref_itr(types.insert(type_data(type_data::tk_int)).first);
+	real_type = deref_itr(types.insert(type_data(type_data::tk_real)).first);
+	char_type = deref_itr(types.insert(type_data(type_data::tk_char)).first);
+	boolean_type = deref_itr(types.insert(type_data(type_data::tk_boolean)).first);
+	string_type = deref_itr(types.insert(type_data(type_data::tk_array,
 		char_type)).first);		//Char array (string)
-	int_array_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_array,
+	int_array_type = deref_itr(types.insert(type_data(type_data::tk_array,
 		int_type)).first);		//Int array
-	real_array_type = deref_itr(types.insert(type_data(type_data::type_kind::tk_array,
+	real_array_type = deref_itr(types.insert(type_data(type_data::tk_array,
 		real_type)).first);		//Real array
 
 	//Bool array
-	types.insert(type_data(type_data::type_kind::tk_array, boolean_type));
+	types.insert(type_data(type_data::tk_array, boolean_type));
 	//String array (Might not really be all that necessary to initialize it here)
-	types.insert(type_data(type_data::type_kind::tk_array, string_type));
+	types.insert(type_data(type_data::tk_array, string_type));
 }
 
 type_data* script_type_manager::get_array_type(type_data* element) {
-	type_data target = type_data(type_data::type_kind::tk_array, element);
+	type_data target = type_data(type_data::tk_array, element);
 	auto itr = types.find(target);
 	if (itr == types.end()) {
 		//No types found, insert and return the new type
@@ -183,8 +183,6 @@ void script_machine::call(std::map<std::string, script_block*>::iterator event_i
 }
 
 void script_machine::run_code() {
-	typedef type_data::type_kind type_kind;
-
 	environment_ptr current = *current_thread_index;
 
 	while (!finished && !bTerminate) {
@@ -510,7 +508,7 @@ void script_machine::run_code() {
 				std::vector<value>::iterator itrEnd = src_array->array_get_end();
 
 				bool bSkip = false;
-				if (src_array->get_type()->get_kind() != type_kind::tk_array || itrCur >= itrEnd) {
+				if (src_array->get_type()->get_kind() != type_data::tk_array || itrCur >= itrEnd) {
 					bSkip = true;
 				}
 				else {
@@ -733,20 +731,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_cast_var:
 			{
 				value* var = &(current->stack.back());
-				switch ((type_data::type_kind)c->ip) {
-				case type_data::type_kind::tk_int:
-					var->set(script_type_manager::get_int_type(), var->as_int());
-					break;
-				case type_data::type_kind::tk_real:
-					var->set(script_type_manager::get_real_type(), var->as_real());
-					break;
-				case type_data::type_kind::tk_char:
-					var->set(script_type_manager::get_char_type(), var->as_char());
-					break;
-				case type_data::type_kind::tk_boolean:
-					var->set(script_type_manager::get_boolean_type(), var->as_boolean());
-					break;
-				}
+				BaseFunction::_value_cast(var, (type_data::type_kind)c->ip);
 				break;
 			}
 			case command_kind::pc_inline_index_array:
@@ -762,7 +747,7 @@ void script_machine::run_code() {
 			{
 				value* var = &(current->stack.back());
 				size_t len = var->length_as_array();
-				var->set(script_type_manager::get_real_type(), (double)len);
+				var->set(script_type_manager::get_int_type(), (int64_t)len);
 				break;
 			}
 			//default:

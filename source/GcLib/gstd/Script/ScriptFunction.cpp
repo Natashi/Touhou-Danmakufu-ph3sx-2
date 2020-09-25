@@ -41,32 +41,58 @@ value BaseFunction::F(script_machine* machine, int argc, const value* argv) { \
 }
 
 namespace gstd {
+	static inline bool _type_check_two_any(type_data* type_l, type_data* type_r, uint8_t type) {
+		if (type_l != nullptr && type_r != nullptr) {
+			uint8_t type_combine = (uint8_t)type_l->get_kind() | (uint8_t)type_r->get_kind();
+			return (type_combine & type) != 0;
+		}
+		return false;
+	}
+	static inline const bool _is_force_convert_real(type_data* type) {
+		return type->get_kind() & (type_data::tk_real | type_data::tk_array);
+	}
+	static const void _raise_error_unsupported(script_machine* machine, type_data* type, const std::string& op_name) {
+		std::string error = StringUtility::Format("This value type does not support the %s operation: %s\r\n",
+			op_name.c_str(), type_data::string_representation(type).c_str());
+		machine->raise_error(error);
+	}
+
+	//-------------------------------------------------------------------------------------------
+
+	type_data::type_kind BaseFunction::_type_test_promotion(type_data* type_l, type_data* type_r) {
+		if (type_l == nullptr || type_r == nullptr) return type_data::tk_null;
+		uint8_t kind_l = type_l->get_kind();
+		uint8_t kind_r = type_r->get_kind();
+		uint8_t type_combine = kind_l | kind_r;
+		//In order of highest->lowest priority
+		if (type_combine & (uint8_t)type_data::tk_array)
+			return kind_l == kind_r ? type_data::tk_array : type_data::tk_null;
+		else if (type_combine & (uint8_t)type_data::tk_real)
+			return type_data::tk_real;
+		else if (type_combine & (uint8_t)type_data::tk_int)
+			return type_data::tk_int;
+		else if (type_combine & (uint8_t)type_data::tk_char)
+			return type_data::tk_char;
+		else if (type_combine & (uint8_t)type_data::tk_boolean)
+			return type_data::tk_boolean;
+		return type_data::tk_real;
+	}
 	bool BaseFunction::_type_assign_check(script_machine* machine, const value* v_src, const value* v_dst) {
-		if (v_dst->has_data() && v_dst->get_type() != v_src->get_type()
-			&& !(v_dst->get_type()->get_kind() == type_data::type_kind::tk_array
-				&& v_src->get_type()->get_kind() == type_data::type_kind::tk_array
-				&& (v_dst->length_as_array() > 0 || v_src->length_as_array() > 0)))
-		{
+		if (!v_dst->has_data()) return true;		//dest is null, assign ahead
+		type_data* type_src = v_src->get_type();
+		type_data* type_dst = v_dst->get_type();
+		if (type_src != type_dst					//If the types are different
+			&& !((type_src->get_kind() & type_dst->get_kind()) == type_data::tk_array	//unless they're both arrays
+				&& (v_dst->length_as_array() == 0 || v_src->length_as_array() == 0))) {		//and either is empty
 			std::string error = "Variable assignment cannot convert its type: ";
-			error += type_data::string_representation(v_dst->get_type());
+			error += type_data::string_representation(type_dst);
 			error += " to ";
-			error += type_data::string_representation(v_src->get_type());
+			error += type_data::string_representation(type_src);
 			error += "\r\n";
 			machine->raise_error(error);
 			return false;
 		}
 		return true;
-	}
-
-	double BaseFunction::fmod2(double i, double j) {
-		if (j < 0) {
-			//return (i < 0) ? -(-i % -j) : (i % -j) + j;
-			return (i < 0) ? -fmod(-i, -j) : fmod(i, -j) + j;
-		}
-		else {
-			//return (i < 0) ? -(-i % j) + j : i % j;
-			return (i < 0) ? -fmod(-i, j) + j : fmod(i, j);
-		}
 	}
 
 	value BaseFunction::__script_perform_op_array(const value* v_left, const value* v_right, value(*func)(int, const value*)) {
@@ -76,7 +102,7 @@ namespace gstd {
 		size_t ct_left = v_left->length_as_array();
 		resArr.resize(ct_left);
 
-		if (v_right->get_type()->get_kind() == type_data::type_kind::tk_array) {
+		if (v_right->get_type()->get_kind() == type_data::tk_array) {
 			size_t ct_op = std::min(v_right->length_as_array(), ct_left);
 			value v[2];
 			for (size_t i = 0; i < ct_op; ++i) {
@@ -99,48 +125,103 @@ namespace gstd {
 		return result;
 	}
 
-	value BaseFunction::_script_add(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
-			return __script_perform_op_array(&argv[0], &argv[1], _script_add);
+	inline double BaseFunction::_fmod2(double i, double j) {
+		if (j < 0)
+			return (i < 0) ? -fmod(-i, -j) : fmod(i, -j) + j;
 		else
-			return value(script_type_manager::get_real_type(), argv[0].as_real() + argv[1].as_real());
+			return (i < 0) ? -fmod(-i, j) + j : fmod(i, j);
+	}
+	inline int64_t BaseFunction::_mod2(int64_t i, int64_t j) {
+		if (j < 0)
+			return (i < 0) ? -(-i % -j) : (i % -j) + j;
+		else
+			return (i < 0) ? -(-i % j) + j : (i % j);
+	}
+
+	value* BaseFunction::_value_cast(value* val, type_data::type_kind kind) {
+		if (val == nullptr || val->get_type() == nullptr || val->get_type()->get_kind() == kind)
+			return val;
+		switch (kind) {
+		case type_data::tk_int:
+			val->set(script_type_manager::get_int_type(), val->as_int());
+			break;
+		case type_data::tk_real:
+			val->set(script_type_manager::get_real_type(), val->as_real());
+			break;
+		case type_data::tk_char:
+			val->set(script_type_manager::get_char_type(), val->as_char());
+			break;
+		case type_data::tk_boolean:
+			val->set(script_type_manager::get_boolean_type(), val->as_boolean());
+			break;
+		}
+		return val;
+	}
+
+	//-------------------------------------------------------------------------------------------
+
+	value BaseFunction::_script_add(int argc, const value* argv) {
+		if (argv->get_type()->get_kind() == type_data::tk_array)
+			return __script_perform_op_array(&argv[0], &argv[1], _script_add);
+		else {
+			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
+				return value(script_type_manager::get_real_type(), argv[0].as_real() + argv[1].as_real());
+			else
+				return value(script_type_manager::get_int_type(), argv[0].as_int() + argv[1].as_int());
+		}
 	}
 	SCRIPT_DECLARE_OP(add);
 
 	value BaseFunction::_script_subtract(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
+		if (argv->get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_subtract);
-		else
-			return value(script_type_manager::get_real_type(), argv[0].as_real() - argv[1].as_real());
+		else {
+			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
+				return value(script_type_manager::get_real_type(), argv[0].as_real() - argv[1].as_real());
+			else
+				return value(script_type_manager::get_int_type(), argv[0].as_int() - argv[1].as_int());
+		}
 	}
 	SCRIPT_DECLARE_OP(subtract);
 
 	value BaseFunction::_script_multiply(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
+		if (argv->get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_multiply);
-		else
-			return value(script_type_manager::get_real_type(), argv[0].as_real() * argv[1].as_real());
+		else {
+			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
+				return value(script_type_manager::get_real_type(), argv[0].as_real() * argv[1].as_real());
+			else
+				return value(script_type_manager::get_int_type(), argv[0].as_int() * argv[1].as_int());
+		}
 	}
 	SCRIPT_DECLARE_OP(multiply);
 
 	value BaseFunction::_script_divide(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
+		if (argv->get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_divide);
-		else
-			return value(script_type_manager::get_real_type(), argv[0].as_real() / argv[1].as_real());
+		else {
+			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
+				return value(script_type_manager::get_real_type(), argv[0].as_real() / argv[1].as_real());
+			else
+				return value(script_type_manager::get_int_type(), argv[0].as_int() / argv[1].as_int());
+		}
 	}
 	SCRIPT_DECLARE_OP(divide);
 
 	value BaseFunction::_script_remainder_(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
+		if (argv->get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_remainder_);
-		else
-			return value(script_type_manager::get_real_type(), fmod2(argv[0].as_real(), argv[1].as_real()));
+		else {
+			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
+				return value(script_type_manager::get_real_type(), _fmod2(argv[0].as_real(), argv[1].as_real()));
+			else
+				return value(script_type_manager::get_int_type(), _mod2(argv[0].as_int(), argv[1].as_int()));
+		}
 	}
 	SCRIPT_DECLARE_OP(remainder_);
 
 	value BaseFunction::_script_negative(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::type_kind::tk_array) {
+		if (argv->get_type()->get_kind() == type_data::tk_array) {
 			value result;
 			std::vector<value> resArr;
 			resArr.resize(argv->length_as_array());
@@ -150,52 +231,63 @@ namespace gstd {
 			result.set(argv->get_type(), resArr);
 			return result;
 		}
-		else
-			return value(script_type_manager::get_real_type(), -argv->as_real());
+		else {
+			if (argv->get_type()->get_kind() == type_data::tk_real)
+				return value(script_type_manager::get_real_type(), -argv->as_real());
+			else
+				return value(script_type_manager::get_int_type(), -argv->as_int());
+		}
 	}
 	SCRIPT_DECLARE_OP(negative);
 
 	value BaseFunction::_script_power(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::type_kind::tk_array)
+		if (argv->get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_power);
-		else
-			return value(script_type_manager::get_real_type(), std::pow(argv[0].as_real(), argv[1].as_real()));
+		else {
+			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
+				return value(script_type_manager::get_real_type(), std::pow(argv[0].as_real(), argv[1].as_real()));
+			else {
+				return value(script_type_manager::get_int_type(),
+					(int64_t)(std::pow(argv[0].as_int(), argv[1].as_int()) + 0.01));
+			}
+		}
 	}
 	SCRIPT_DECLARE_OP(power);
 
 	value BaseFunction::_script_compare(int argc, const value* argv) {
-		if (argv[0].get_type() == argv[1].get_type()) {
+		type_data::type_kind type_check = _type_test_promotion(argv[0].get_type(), argv[1].get_type());
+		if (type_check != type_data::tk_null) {
 			int r = 0;
-			switch (argv[0].get_type()->get_kind()) {
-			case type_data::type_kind::tk_int:
+			switch (type_check) {
+			case type_data::tk_int:
 			{
 				int64_t a = argv[0].as_int();
 				int64_t b = argv[1].as_int();
 				r = (a == b) ? 0 : (a < b) ? -1 : 1;
 				break;
 			}
-			case type_data::type_kind::tk_real:
+			case type_data::tk_real:
 			{
 				double a = argv[0].as_real();
 				double b = argv[1].as_real();
 				r = (a == b) ? 0 : (a < b) ? -1 : 1;
 				break;
 			}
-			case type_data::type_kind::tk_char:
+			case type_data::tk_char:
 			{
 				wchar_t a = argv[0].as_char();
 				wchar_t b = argv[1].as_char();
 				r = (a == b) ? 0 : (a < b) ? -1 : 1;
 				break;
 			}
-			case type_data::type_kind::tk_boolean:
+			case type_data::tk_boolean:
 			{
 				bool a = argv[0].as_boolean();
 				bool b = argv[1].as_boolean();
 				r = (a == b) ? 0 : (a < b) ? -1 : 1;
 				break;
 			}
-			case type_data::type_kind::tk_array:
+			case type_data::tk_array:
 			{
 				int64_t sl = argv[0].length_as_array();
 				int64_t sr = argv[1].length_as_array();
@@ -215,18 +307,13 @@ namespace gstd {
 				}
 				break;
 			}
-			default:
-				std::string error = "This value type does not support the compare operation: ";
-				error += type_data::string_representation(argv->get_type());
-				error += "\r\n";
-				throw error;
 			}
 			return value(script_type_manager::get_int_type(), (int64_t)r);
 		}
 		else {
-			std::string error = "Values of different types are being compared: ";
+			std::string error = "Unsupported compare operation: ";
 			error += type_data::string_representation(argv[0].get_type());
-			error += ", ";
+			error += " and ";
 			error += type_data::string_representation(argv[1].get_type());
 			error += "\r\n";
 			throw error;
@@ -240,26 +327,23 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(not_);
 
 	value BaseFunction::modc(script_machine* machine, int argc, const value* argv) {
-		double x = argv[0].as_real();
-		double y = argv[1].as_real();
-		return value(script_type_manager::get_real_type(), fmod(x, y));
+		if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
+			return value(script_type_manager::get_real_type(), fmod(argv[0].as_real(), argv[1].as_real()));
+		else
+			return value(script_type_manager::get_int_type(), argv[0].as_int() % argv[1].as_int());
 	}
 
 	value BaseFunction::predecessor(script_machine* machine, int argc, const value* argv) {
-		assert(argc == 1);
-		assert(argv->has_data());
 		switch (argv->get_type()->get_kind()) {
-		case type_data::type_kind::tk_real:
+		case type_data::tk_int:
+			return value(argv->get_type(), argv->as_int() - 1i64);
+		case type_data::tk_real:
 			return value(argv->get_type(), argv->as_real() - 1);
-		case type_data::type_kind::tk_char:
-		{
-			wchar_t c = argv->as_char();
-			--c;
-			return value(argv->get_type(), c);
-		}
-		case type_data::type_kind::tk_boolean:
+		case type_data::tk_char:
+			return value(argv->get_type(), (wchar_t)(argv->as_char() - 1));
+		case type_data::tk_boolean:
 			return value(argv->get_type(), false);
-		case type_data::type_kind::tk_array:
+		case type_data::tk_array:
 		{
 			value result;
 			std::vector<value> resArr;
@@ -272,29 +356,22 @@ namespace gstd {
 		}
 		default:
 		{
-			std::string error = "This value type does not support the predecessor operation: ";
-			error += type_data::string_representation(argv->get_type());
-			error += "\r\n";
-			machine->raise_error(error);
+			_raise_error_unsupported(machine, argv->get_type(), "predecessor");
 			return value();
 		}
 		}
 	}
 	value BaseFunction::successor(script_machine* machine, int argc, const value* argv) {
-		assert(argc == 1);
-		assert(argv->has_data());
 		switch (argv->get_type()->get_kind()) {
-		case type_data::type_kind::tk_real:
+		case type_data::tk_int:
+			return value(argv->get_type(), argv->as_int() + 1i64);
+		case type_data::tk_real:
 			return value(argv->get_type(), argv->as_real() + 1);
-		case type_data::type_kind::tk_char:
-		{
-			wchar_t c = argv->as_char();
-			++c;
-			return value(argv->get_type(), c);
-		}
-		case type_data::type_kind::tk_boolean:
+		case type_data::tk_char:
+			return value(argv->get_type(), (wchar_t)(argv->as_char() + 1));
+		case type_data::tk_boolean:
 			return value(argv->get_type(), true);
-		case type_data::type_kind::tk_array:
+		case type_data::tk_array:
 		{
 			value result;
 			std::vector<value> resArr;
@@ -307,10 +384,7 @@ namespace gstd {
 		}
 		default:
 		{
-			std::string error = "This value type does not support the successor operation: ";
-			error += type_data::string_representation(argv->get_type());
-			error += "\r\n";
-			machine->raise_error(error);
+			_raise_error_unsupported(machine, argv->get_type(), "successor");
 			return value();
 		}
 		}
@@ -318,15 +392,12 @@ namespace gstd {
 
 	value BaseFunction::length(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 1);
-		return value(script_type_manager::get_real_type(), (double)argv->length_as_array());
+		return value(script_type_manager::get_int_type(), (int64_t)argv->length_as_array());
 	}
 
 	bool BaseFunction::_index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index) {
-		if (arg0_type->get_kind() != type_data::type_kind::tk_array) {
-			std::string error = "This value type does not support the array index operation: ";
-			error += type_data::string_representation(arg0_type);
-			error += "\r\n";
-			machine->raise_error(error);
+		if (arg0_type->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, arg0_type, "array index");
 			return false;
 		}
 		if (index < 0 || index >= arg0_size) {
@@ -350,11 +421,8 @@ namespace gstd {
 	value BaseFunction::slice(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 3);
 
-		if (argv->get_type()->get_kind() != type_data::type_kind::tk_array) {
-			std::string error = "This value type does not support the array slice operation: ";
-			error += type_data::string_representation(argv->get_type());
-			error += "\r\n";
-			machine->raise_error(error);
+		if (argv->get_type()->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, argv->get_type(), "array slice");
 			return value();
 		}
 
@@ -390,11 +458,8 @@ namespace gstd {
 	value BaseFunction::erase(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 2);
 
-		if (argv->get_type()->get_kind() != type_data::type_kind::tk_array) {
-			std::string error = "This value type does not support the array erase operation: ";
-			error += type_data::string_representation(argv->get_type());
-			error += "\r\n";
-			machine->raise_error(error);
+		if (argv->get_type()->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, argv->get_type(), "array erase");
 			return value();
 		}
 
@@ -425,11 +490,8 @@ namespace gstd {
 	}
 
 	bool BaseFunction::_append_check(script_machine* machine, size_t arg0_size, type_data* arg0_type, type_data* arg1_type) {
-		if (arg0_type->get_kind() != type_data::type_kind::tk_array) {
-			std::string error = "This value type does not support the array append operation: ";
-			error += type_data::string_representation(arg0_type);
-			error += "\r\n";
-			machine->raise_error(error);
+		if (arg0_type->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, arg0_type, "array append");
 			return false;
 		}
 		if (arg0_size > 0U && arg0_type->get_element() != arg1_type) {
@@ -453,12 +515,8 @@ namespace gstd {
 	value BaseFunction::concatenate(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 2);
 
-		if (argv[0].get_type()->get_kind() != type_data::type_kind::tk_array
-			|| argv[1].get_type()->get_kind() != type_data::type_kind::tk_array) {
-			std::string error = "This value type does not support the array concatenate operation: ";
-			error += type_data::string_representation(argv->get_type());
-			error += "\r\n";
-			machine->raise_error(error);
+		if (!_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_array)) {
+			_raise_error_unsupported(machine, argv->get_type(), "array concatenate");
 			return value();
 		}
 
@@ -501,8 +559,7 @@ namespace gstd {
 		return value();
 	}
 
-#define BITWISE_RET if (argv[0].get_type()->get_kind() != type_data::type_kind::tk_int && \
-						argv[1].get_type()->get_kind() != type_data::type_kind::tk_int) \
+#define BITWISE_RET if (_is_force_convert_real(argv[0].get_type()) || _is_force_convert_real(argv[1].get_type())) \
 						return value(script_type_manager::get_real_type(), (double)res); \
 					else \
 						return value(argv->get_type(), res);

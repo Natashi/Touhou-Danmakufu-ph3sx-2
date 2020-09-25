@@ -25,11 +25,17 @@ namespace gstd {
 
 	class BaseFunction {
 	public:
+		static type_data::type_kind _type_test_promotion(type_data* type_l, type_data* type_r);
 		static bool _type_assign_check(script_machine* machine, const value* v_src, const value* v_dst);
 
-		static double fmod2(double i, double j);
-
 		static value __script_perform_op_array(const value* v_left, const value* v_right, value(*func)(int, const value*));
+
+		inline static double _fmod2(double i, double j);
+		inline static int64_t _mod2(int64_t i, int64_t j);
+
+		static value* _value_cast(value* val, type_data::type_kind kind);
+
+		//---------------------------------------------------------------------
 
 		static value _script_add(int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(add);
