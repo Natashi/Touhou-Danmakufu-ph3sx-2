@@ -466,8 +466,8 @@ void script_scanner::advance() {
 				if (has_decimal_part) goto throw_err_no_decimal;
 				real_value = int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 2);
 			}
-			else if (std::regex_match(str_num, base_match, std::regex("[0-9]+(\.[0-9]+)?"))) {
-				if (bInt) int_value = std::strtoll(base_match[0].str().c_str(), nullptr, 10);
+			else if (std::regex_match(str_num, base_match, std::regex("([0-9]+)(\.[0-9]+)?"))) {
+				if (bInt) int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 10);
 				else real_value = std::strtod(base_match[0].str().c_str(), nullptr);
 			}
 			else throw parser_error("Invalid number.\r\n");
