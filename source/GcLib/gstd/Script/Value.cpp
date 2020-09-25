@@ -168,7 +168,7 @@ double value::as_real() const {
 	if (kind & type_data::tk_array) {
 		if (data->type->get_element()->get_kind() == type_data::type_kind::tk_char) {
 			try {
-				return std::stol(as_string());
+				return std::stod(as_string());
 			}
 			catch (...) {
 				return 0.0;
