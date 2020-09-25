@@ -84,8 +84,13 @@ namespace directx {
 		static gstd::value Func_SetVirtualKeyState(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
 		//Dxä÷êîÅFï`âÊån
+		DNH_FUNCAPI_DECL_(Func_GetMonitorWidth);
+		DNH_FUNCAPI_DECL_(Func_GetMonitorHeight);
 		static gstd::value Func_GetScreenWidth(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetScreenHeight(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_GetWindowedWidth);
+		DNH_FUNCAPI_DECL_(Func_GetWindowedHeight);
+		DNH_FUNCAPI_DECL_(Func_IsFullscreenMode);
 		static gstd::value Func_LoadTexture(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_LoadTextureInLoadThread(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_LoadTextureEx);

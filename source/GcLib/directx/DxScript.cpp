@@ -50,8 +50,13 @@ function const dxFunction[] =
 	{ "SetVirtualKeyState", DxScript::Func_SetVirtualKeyState, 2 },
 
 	//DxŠÖ”F•`‰æŒn
+	{ "GetMonitorWidth", DxScript::Func_GetMonitorWidth, 0 },
+	{ "GetMonitorHeight", DxScript::Func_GetMonitorHeight, 0 },
 	{ "GetScreenWidth", DxScript::Func_GetScreenWidth, 0 },
 	{ "GetScreenHeight", DxScript::Func_GetScreenHeight, 0 },
+	{ "GetWindowedWidth", DxScript::Func_GetWindowedWidth, 0 },
+	{ "GetWindowedHeight", DxScript::Func_GetWindowedHeight, 0 },
+	{ "IsFullscreenMode", DxScript::Func_IsFullscreenMode, 0 },
 	{ "LoadTexture", DxScript::Func_LoadTexture, 1 },
 	{ "LoadTextureEx", DxScript::Func_LoadTextureEx, 3 },
 	{ "LoadTextureInLoadThread", DxScript::Func_LoadTextureInLoadThread, 1 },
@@ -1023,6 +1028,14 @@ gstd::value DxScript::Func_SetVirtualKeyState(gstd::script_machine* machine, int
 	return value();
 }
 //DxŠÖ”F•`‰æŒn
+gstd::value DxScript::Func_GetMonitorWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	LONG res = ::GetSystemMetrics(SM_CXSCREEN);
+	return DxScript::CreateRealValue(res);
+}
+gstd::value DxScript::Func_GetMonitorHeight(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	LONG res = ::GetSystemMetrics(SM_CYSCREEN);
+	return DxScript::CreateRealValue(res);
+}
 gstd::value DxScript::Func_GetScreenWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG res = graphics->GetScreenWidth();
@@ -1032,6 +1045,21 @@ gstd::value DxScript::Func_GetScreenHeight(gstd::script_machine* machine, int ar
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG res = graphics->GetScreenHeight();
 	return DxScript::CreateRealValue(res);
+}
+gstd::value DxScript::Func_GetWindowedWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	LONG res = graphics->GetConfigData().GetScreenWindowedSize().x;
+	return DxScript::CreateRealValue(res);
+}
+gstd::value DxScript::Func_GetWindowedHeight(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	LONG res = graphics->GetConfigData().GetScreenWindowedSize().y;
+	return DxScript::CreateRealValue(res);
+}
+gstd::value DxScript::Func_IsFullscreenMode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	bool res = graphics->GetScreenMode() == ScreenMode::SCREENMODE_FULLSCREEN;
+	return DxScript::CreateBooleanValue(res);
 }
 value DxScript::Func_LoadTexture(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
