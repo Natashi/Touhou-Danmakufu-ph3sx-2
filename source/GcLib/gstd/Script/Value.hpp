@@ -56,11 +56,11 @@ namespace gstd {
 
 		bool has_data() const { return data != nullptr; }
 
-		void set(type_data* t, int64_t v);
-		void set(type_data* t, double v);
-		void set(type_data* t, wchar_t v);
-		void set(type_data* t, bool v);
-		void set(type_data* t, std::vector<value>& v);
+		value* set(type_data* t, int64_t v);
+		value* set(type_data* t, double v);
+		value* set(type_data* t, wchar_t v);
+		value* set(type_data* t, bool v);
+		value* set(type_data* t, std::vector<value>& v);
 
 		void append(type_data* t, const value& x);
 		void concatenate(const value& x);

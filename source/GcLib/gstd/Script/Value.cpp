@@ -72,30 +72,34 @@ value::value(type_data* t, const std::wstring& v) {
 		data->array_value.push_back(value(t->get_element(), ch));
 }
 
-void value::set(type_data* t, int64_t v) {
+value* value::set(type_data* t, int64_t v) {
 	unique();
 	data->type = t;
 	data->int_value = v;
 }
-void value::set(type_data* t, double v) {
+value* value::set(type_data* t, double v) {
 	unique();
 	data->type = t;
 	data->real_value = v;
+	return this;
 }
-void value::set(type_data* t, wchar_t v) {
+value* value::set(type_data* t, wchar_t v) {
 	unique();
 	data->type = t;
 	data->char_value = v;
+	return this;
 }
-void value::set(type_data* t, bool v) {
+value* value::set(type_data* t, bool v) {
 	unique();
 	data->type = t;
 	data->boolean_value = v;
+	return this;
 }
-void value::set(type_data* t, std::vector<value>& v) {
+value* value::set(type_data* t, std::vector<value>& v) {
 	unique();
 	data->type = t;
 	data->array_value = v;
+	return this;
 }
 
 void value::append(type_data* t, const value& x) {

@@ -143,17 +143,13 @@ namespace gstd {
 			return val;
 		switch (kind) {
 		case type_data::tk_int:
-			val->set(script_type_manager::get_int_type(), val->as_int());
-			break;
+			return val->set(script_type_manager::get_int_type(), val->as_int());
 		case type_data::tk_real:
-			val->set(script_type_manager::get_real_type(), val->as_real());
-			break;
+			return val->set(script_type_manager::get_real_type(), val->as_real());
 		case type_data::tk_char:
-			val->set(script_type_manager::get_char_type(), val->as_char());
-			break;
+			return val->set(script_type_manager::get_char_type(), val->as_char());
 		case type_data::tk_boolean:
-			val->set(script_type_manager::get_boolean_type(), val->as_boolean());
-			break;
+			return val->set(script_type_manager::get_boolean_type(), val->as_boolean());
 		}
 		return val;
 	}

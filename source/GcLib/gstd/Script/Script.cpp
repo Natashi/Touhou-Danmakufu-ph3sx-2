@@ -409,9 +409,8 @@ void script_machine::run_code() {
 			case command_kind::pc_compare_le:
 			case command_kind::pc_compare_ne:
 			{
-				stack_t& stack = current->stack;
-				value& t = stack.back();
-				int r = t.as_int();
+				value* t = &current->stack.back();
+				int r = t->as_int();
 				bool b = false;
 				switch (c->command) {
 				case command_kind::pc_compare_e:
@@ -433,8 +432,7 @@ void script_machine::run_code() {
 					b = r != 0;
 					break;
 				}
-				t.set(script_type_manager::get_boolean_type(), b);
-
+				t->set(script_type_manager::get_boolean_type(), b);
 				break;
 			}
 			case command_kind::pc_dup_n:
@@ -465,9 +463,7 @@ void script_machine::run_code() {
 			case command_kind::pc_loop_ascent:
 			case command_kind::pc_loop_descent:
 			{
-				stack_t& stack = current->stack;
-
-				value* cmp_arg = (value*)(&stack.back() - 1);
+				value* cmp_arg = (value*)(&current->stack.back() - 1);
 				value cmp_res = BaseFunction::compare(this, 2, cmp_arg);
 
 				/*
@@ -487,8 +483,7 @@ void script_machine::run_code() {
 			}
 			case command_kind::pc_loop_count:
 			{
-				stack_t& stack = current->stack;
-				value* i = &stack.back();
+				value* i = &current->stack.back();
 				int64_t r = i->as_int();
 				if (r > 0)
 					i->set(script_type_manager::get_int_type(), r - 1);
@@ -499,9 +494,7 @@ void script_machine::run_code() {
 			{
 				//Stack: .... [array] [counter]
 
-				stack_t& stack = current->stack;
-
-				value* i = &stack.back();
+				value* i = &current->stack.back();
 				value* src_array = i - 1;
 
 				std::vector<value>::iterator itrCur = src_array->array_get_begin() + i->as_int();
