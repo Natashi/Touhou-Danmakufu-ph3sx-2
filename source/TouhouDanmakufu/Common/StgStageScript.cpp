@@ -243,8 +243,7 @@ int StgStageScriptObjectManager::CreatePlayerObject() {
 /**********************************************************
 //StgStageScript
 **********************************************************/
-function const stgFunction[] =
-{
+static const std::vector<function> stgStageFunction = {
 	//STG共通関数：共通データ
 	{ "SaveCommonDataAreaToReplayFile", StgStageScript::Func_SaveCommonDataAreaToReplayFile, 1 },
 	{ "LoadCommonDataAreaFromReplayFile", StgStageScript::Func_LoadCommonDataAreaFromReplayFile, 1 },
@@ -329,7 +328,6 @@ function const stgFunction[] =
 	{ "CreateLooseLaserA1", StgStageScript::Func_CreateLooseLaserA1, 8 },
 	{ "CreateStraightLaserA1", StgStageScript::Func_CreateStraightLaserA1, 8 },
 	{ "CreateCurveLaserA1", StgStageScript::Func_CreateCurveLaserA1, 8 },
-	//{"StgStraightLaserA1", StgStageScript::Func_CreateStraightLaserA1, 8},
 	{ "SetShotIntersectionCircle", StgStageScript::Func_SetShotIntersectionCircle, 3 },
 	{ "SetShotIntersectionLine", StgStageScript::Func_SetShotIntersectionLine, 5 },
 	{ "GetShotIdInCircleA1", StgStageScript::Func_GetShotIdInCircleA1, 3 },
@@ -527,149 +525,176 @@ function const stgFunction[] =
 	{ "ObjCol_GetListOfIntersectedEnemyID", StgStageScript::Func_ObjCol_GetListOfIntersectedEnemyID, 1 },
 	{ "ObjCol_GetListOfIntersectedShotID", StgStageScript::Func_ObjCol_GetListOfIntersectedShotID, 1 },
 	{ "ObjCol_GetIntersectedCount", StgStageScript::Func_ObjCol_GetIntersectedCount, 1 },
-
-	//定数
-	{ "SCREEN_WIDTH", constant<640>::func, 0 },
-	{ "SCREEN_HEIGHT", constant<480>::func, 0 },
-	{ "TYPE_ALL", constant<StgStageScript::TYPE_ALL>::func, 0 },
-	{ "TYPE_SHOT", constant<StgStageScript::TYPE_SHOT>::func, 0 },
-	{ "TYPE_CHILD", constant<StgStageScript::TYPE_CHILD>::func, 0 },
-	{ "TYPE_IMMEDIATE", constant<StgStageScript::TYPE_IMMEDIATE>::func, 0 },
-	{ "TYPE_FADE", constant<StgStageScript::TYPE_FADE>::func, 0 },
-	{ "TYPE_ITEM", constant<StgStageScript::TYPE_ITEM>::func, 0 },
-
-	{ "OWNER_PLAYER", constant<StgShotObject::OWNER_PLAYER>::func, 0 },
-	{ "OWNER_ENEMY", constant<StgShotObject::OWNER_ENEMY>::func, 0 },
-
-	{ "DELAY_DEFAULT", constant<StgShotObject::DelayParameter::DELAY_DEFAULT>::func, 0 },
-	{ "DELAY_LERP", constant<StgShotObject::DelayParameter::DELAY_LERP>::func, 0 },
-
-	{ "PATTERN_FAN", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_FAN>::func, 0 },
-	{ "PATTERN_FAN_AIMED", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_FAN_AIMED>::func, 0 },
-	{ "PATTERN_RING", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_RING>::func, 0 },
-	{ "PATTERN_RING_AIMED", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_RING_AIMED>::func, 0 },
-	{ "PATTERN_ARROW", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_ARROW>::func, 0 },
-	{ "PATTERN_ARROW_AIMED", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_ARROW_AIMED>::func, 0 },
-	{ "PATTERN_POLYGON", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_POLYGON>::func, 0 },
-	{ "PATTERN_POLYGON_AIMED", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_POLYGON_AIMED>::func, 0 },
-	{ "PATTERN_ELLIPSE", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_ELLIPSE>::func, 0 },
-	{ "PATTERN_ELLIPSE_AIMED", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_ELLIPSE_AIMED>::func, 0 },
-	{ "PATTERN_SCATTER_ANGLE", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER_ANGLE>::func, 0 },
-	{ "PATTERN_SCATTER_SPEED", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER_SPEED>::func, 0 },
-	{ "PATTERN_SCATTER", constant<StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER>::func, 0 },
-	{ "PATTERN_BASEPOINT_RESET", constant<StgPatternShotObjectGenerator::BASEPOINT_RESET>::func, 0 },
-
-	{ "TRANSFORM_WAIT", constant<StgPatternShotTransform::TRANSFORM_WAIT>::func, 0 },
-	{ "TRANSFORM_ADD_SPEED_ANGLE", constant<StgPatternShotTransform::TRANSFORM_ADD_SPEED_ANGLE>::func, 0 },
-	{ "TRANSFORM_ANGULAR_MOVE", constant<StgPatternShotTransform::TRANSFORM_ANGULAR_MOVE>::func, 0 },
-	{ "TRANSFORM_N_DECEL_CHANGE", constant<StgPatternShotTransform::TRANSFORM_N_DECEL_CHANGE>::func, 0 },
-	{ "TRANSFORM_GRAPHIC_CHANGE", constant<StgPatternShotTransform::TRANSFORM_GRAPHIC_CHANGE>::func, 0 },
-	{ "TRANSFORM_BLEND_CHANGE", constant<StgPatternShotTransform::TRANSFORM_BLEND_CHANGE>::func, 0 },
-	{ "TRANSFORM_TO_SPEED_ANGLE", constant<StgPatternShotTransform::TRANSFORM_TO_SPEED_ANGLE>::func, 0 },
-	{ "TRANSFORM_ADDPATTERNA1", constant<StgPatternShotTransform::TRANSFORM_ADDPATTERNA1>::func, 0 },
-	{ "TRANSFORM_ADDPATTERNA2", constant<StgPatternShotTransform::TRANSFORM_ADDPATTERNA2>::func, 0 },
-
-	{ "STATE_NORMAL", constant<StgPlayerObject::STATE_NORMAL>::func, 0 },
-	{ "STATE_HIT", constant<StgPlayerObject::STATE_HIT>::func, 0 },
-	{ "STATE_DOWN", constant<StgPlayerObject::STATE_DOWN>::func, 0 },
-	{ "STATE_END", constant<StgPlayerObject::STATE_END>::func, 0 },
-
-	{ "ITEM_1UP", constant<StgItemObject::ITEM_1UP>::func, 0 },
-	{ "ITEM_1UP_S", constant<StgItemObject::ITEM_1UP_S>::func, 0 },
-	{ "ITEM_SPELL", constant<StgItemObject::ITEM_SPELL>::func, 0 },
-	{ "ITEM_SPELL_S", constant<StgItemObject::ITEM_SPELL_S>::func, 0 },
-	{ "ITEM_POWER", constant<StgItemObject::ITEM_POWER>::func, 0 },
-	{ "ITEM_POWER_S", constant<StgItemObject::ITEM_POWER_S>::func, 0 },
-	{ "ITEM_POINT", constant<StgItemObject::ITEM_POINT>::func, 0 },
-	{ "ITEM_POINT_S", constant<StgItemObject::ITEM_POINT_S>::func, 0 },
-	{ "ITEM_USER", constant<StgItemObject::ITEM_USER>::func, 0 },
-
-	{ "ITEM_MOVE_DOWN", constant<StgMovePattern_Item::MOVE_DOWN>::func, 0 },
-	{ "ITEM_MOVE_TOPLAYER", constant<StgMovePattern_Item::MOVE_TOPLAYER>::func, 0 },
-	{ "ITEM_MOVE_SCORE", constant<StgMovePattern_Item::MOVE_SCORE>::func, 0 },
-
-	{ "OBJ_PLAYER", constant<(int)TypeObject::OBJ_PLAYER>::func, 0 },
-	{ "OBJ_SPELL_MANAGE", constant<(int)TypeObject::OBJ_SPELL_MANAGE>::func, 0 },
-	{ "OBJ_SPELL", constant<(int)TypeObject::OBJ_SPELL>::func, 0 },
-	{ "OBJ_ENEMY", constant<(int)TypeObject::OBJ_ENEMY>::func, 0 },
-	{ "OBJ_ENEMY_BOSS", constant<(int)TypeObject::OBJ_ENEMY_BOSS>::func, 0 },
-	{ "OBJ_ENEMY_BOSS_SCENE", constant<(int)TypeObject::OBJ_ENEMY_BOSS_SCENE>::func, 0 },
-	{ "OBJ_SHOT", constant<(int)TypeObject::OBJ_SHOT>::func, 0 },
-	{ "OBJ_LOOSE_LASER", constant<(int)TypeObject::OBJ_LOOSE_LASER>::func, 0 },
-	{ "OBJ_STRAIGHT_LASER", constant<(int)TypeObject::OBJ_STRAIGHT_LASER>::func, 0 },
-	{ "OBJ_CURVE_LASER", constant<(int)TypeObject::OBJ_CURVE_LASER>::func, 0 },
-	{ "OBJ_ITEM", constant<(int)TypeObject::OBJ_ITEM>::func, 0 },
-
-	{ "INFO_LIFE", constant<StgStageScript::INFO_LIFE>::func, 0 },
-	{ "INFO_DAMAGE_RATE_SHOT", constant<StgStageScript::INFO_DAMAGE_RATE_SHOT>::func, 0 },
-	{ "INFO_DAMAGE_RATE_SPELL", constant<StgStageScript::INFO_DAMAGE_RATE_SPELL>::func, 0 },
-	{ "INFO_SHOT_HIT_COUNT", constant<StgStageScript::INFO_SHOT_HIT_COUNT>::func, 0 },
-	{ "INFO_TIMER", constant<StgStageScript::INFO_TIMER>::func, 0 },
-	{ "INFO_TIMERF", constant<StgStageScript::INFO_TIMERF>::func, 0 },
-	{ "INFO_ORGTIMERF", constant<StgStageScript::INFO_ORGTIMERF>::func, 0 },
-	{ "INFO_IS_SPELL", constant<StgStageScript::INFO_IS_SPELL>::func, 0 },
-	{ "INFO_IS_LAST_SPELL", constant<StgStageScript::INFO_IS_LAST_SPELL>::func, 0 },
-	{ "INFO_IS_DURABLE_SPELL", constant<StgStageScript::INFO_IS_DURABLE_SPELL>::func, 0 },
-	{ "INFO_SPELL_SCORE", constant<StgStageScript::INFO_SPELL_SCORE>::func, 0 },
-	{ "INFO_REMAIN_STEP_COUNT", constant<StgStageScript::INFO_REMAIN_STEP_COUNT>::func, 0 },
-	{ "INFO_ACTIVE_STEP_LIFE_COUNT", constant<StgStageScript::INFO_ACTIVE_STEP_LIFE_COUNT>::func, 0 },
-	{ "INFO_ACTIVE_STEP_TOTAL_MAX_LIFE", constant<StgStageScript::INFO_ACTIVE_STEP_TOTAL_MAX_LIFE>::func, 0 },
-	{ "INFO_ACTIVE_STEP_TOTAL_LIFE", constant<StgStageScript::INFO_ACTIVE_STEP_TOTAL_LIFE>::func, 0 },
-	{ "INFO_ACTIVE_STEP_LIFE_RATE_LIST", constant<StgStageScript::INFO_ACTIVE_STEP_LIFE_RATE_LIST>::func, 0 },
-	{ "INFO_IS_LAST_STEP", constant<StgStageScript::INFO_IS_LAST_STEP>::func, 0 },
-	{ "INFO_PLAYER_SHOOTDOWN_COUNT", constant<StgStageScript::INFO_PLAYER_SHOOTDOWN_COUNT>::func, 0 },
-	{ "INFO_PLAYER_SPELL_COUNT", constant<StgStageScript::INFO_PLAYER_SPELL_COUNT>::func, 0 },
-	{ "INFO_CURRENT_LIFE", constant<StgStageScript::INFO_CURRENT_LIFE>::func, 0 },
-	{ "INFO_CURRENT_LIFE_MAX", constant<StgStageScript::INFO_CURRENT_LIFE_MAX>::func, 0 },
-
-	{ "INFO_ITEM_SCORE", constant<StgStageScript::INFO_ITEM_SCORE>::func, 0 },
-
-	{ "INFO_EXISTS", constant<StgStageScript::INFO_EXISTS>::func, 0 },
-	{ "INFO_PATH", constant<StgStageScript::INFO_PATH>::func, 0 },
-	{ "INFO_RECT", constant<StgStageScript::INFO_RECT>::func, 0 },
-	{ "INFO_DELAY_COLOR", constant<StgStageScript::INFO_DELAY_COLOR>::func, 0 },
-	{ "INFO_BLEND", constant<StgStageScript::INFO_BLEND>::func, 0 },
-	{ "INFO_COLLISION", constant<StgStageScript::INFO_COLLISION>::func, 0 },
-	{ "INFO_COLLISION_LIST", constant<StgStageScript::INFO_COLLISION_LIST>::func, 0 },
-	{ "INFO_IS_FIXED_ANGLE", constant<StgStageScript::INFO_IS_FIXED_ANGLE>::func, 0 },
-
-	{ "EV_REQUEST_LIFE", constant<StgStageScript::EV_REQUEST_LIFE>::func, 0 },
-	{ "EV_REQUEST_TIMER", constant<StgStageScript::EV_REQUEST_TIMER>::func, 0 },
-	{ "EV_REQUEST_IS_SPELL", constant<StgStageScript::EV_REQUEST_IS_SPELL>::func, 0 },
-	{ "EV_REQUEST_IS_LAST_SPELL", constant<StgStageScript::EV_REQUEST_IS_LAST_SPELL>::func, 0 },
-	{ "EV_REQUEST_IS_DURABLE_SPELL", constant<StgStageScript::EV_REQUEST_IS_DURABLE_SPELL>::func, 0 },
-	{ "EV_REQUEST_REQUIRE_ALL_DOWN", constant<StgStageScript::EV_REQUEST_REQUIRE_ALL_DOWN>::func, 0 },
-	{ "EV_REQUEST_SPELL_SCORE", constant<StgStageScript::EV_REQUEST_SPELL_SCORE>::func, 0 },
-	{ "EV_REQUEST_REPLAY_TARGET_COMMON_AREA", constant<StgStageScript::EV_REQUEST_REPLAY_TARGET_COMMON_AREA>::func, 0 },
-
-	{ "EV_TIMEOUT", constant<StgStageScript::EV_TIMEOUT>::func, 0 },
-	{ "EV_START_BOSS_SPELL", constant<StgStageScript::EV_START_BOSS_SPELL>::func, 0 },
-	{ "EV_END_BOSS_SPELL", constant<StgStageScript::EV_END_BOSS_SPELL>::func, 0 },
-	{ "EV_GAIN_SPELL", constant<StgStageScript::EV_GAIN_SPELL>::func, 0 },
-	{ "EV_START_BOSS_STEP", constant<StgStageScript::EV_START_BOSS_STEP>::func, 0 },
-	{ "EV_END_BOSS_STEP", constant<StgStageScript::EV_END_BOSS_STEP>::func, 0 },
-
-	{ "EV_PLAYER_SHOOTDOWN", constant<StgStageScript::EV_PLAYER_SHOOTDOWN>::func, 0 },
-	{ "EV_PLAYER_SPELL", constant<StgStageScript::EV_PLAYER_SPELL>::func, 0 },
-	{ "EV_PLAYER_REBIRTH", constant<StgStageScript::EV_PLAYER_REBIRTH>::func, 0 },
-
-	{ "REBIRTH_DEFAULT", constant<StgPlayerObject::REBIRTH_DEFAULT>::func, 0 },
-
-	{ "EV_PAUSE_ENTER", constant<StgStageScript::EV_PAUSE_ENTER>::func, 0 },
-	{ "EV_PAUSE_LEAVE", constant<StgStageScript::EV_PAUSE_LEAVE>::func, 0 },
-
-	{ "TARGET_ALL", constant<StgStageScript::TARGET_ALL>::func, 0 },
-	{ "TARGET_ENEMY", constant<StgStageScript::TARGET_ENEMY>::func, 0 },
-	{ "TARGET_PLAYER", constant<StgStageScript::TARGET_PLAYER>::func, 0 },
-
-	{ "TOPLAYER_CHANGE", constant<StgMovePattern::TOPLAYER_CHANGE>::func, 0 },
-	{ "NO_CHANGE", constant<StgMovePattern::NO_CHANGE>::func, 0 },
 };
+static const std::vector<constant> stgStageConstant = {
+	//Screen sizes
+	//constant("SCREEN_WIDTH", 640),
+	//constant("SCREEN_HEIGHT", 480),
+
+	constant("TYPE_ALL", StgStageScript::TYPE_ALL),
+	constant("TYPE_SHOT", StgStageScript::TYPE_SHOT),
+	constant("TYPE_CHILD", StgStageScript::TYPE_CHILD),
+	constant("TYPE_IMMEDIATE", StgStageScript::TYPE_IMMEDIATE),
+	constant("TYPE_FADE", StgStageScript::TYPE_FADE),
+	constant("TYPE_ITEM", StgStageScript::TYPE_ITEM),
+
+	//Shot owners
+	constant("OWNER_PLAYER", StgShotObject::OWNER_PLAYER),
+	constant("OWNER_ENEMY", StgShotObject::OWNER_ENEMY),
+
+	//Shot delay types
+	constant("DELAY_DEFAULT", StgShotObject::DelayParameter::DELAY_DEFAULT),
+	constant("DELAY_LERP", StgShotObject::DelayParameter::DELAY_LERP),
+
+	//Pattern shot pattern types
+	constant("PATTERN_FAN", StgPatternShotObjectGenerator::PATTERN_TYPE_FAN),
+	constant("PATTERN_FAN_AIMED", StgPatternShotObjectGenerator::PATTERN_TYPE_FAN_AIMED),
+	constant("PATTERN_RING", StgPatternShotObjectGenerator::PATTERN_TYPE_RING),
+	constant("PATTERN_RING_AIMED", StgPatternShotObjectGenerator::PATTERN_TYPE_RING_AIMED),
+	constant("PATTERN_ARROW", StgPatternShotObjectGenerator::PATTERN_TYPE_ARROW),
+	constant("PATTERN_ARROW_AIMED", StgPatternShotObjectGenerator::PATTERN_TYPE_ARROW_AIMED),
+	constant("PATTERN_POLYGON", StgPatternShotObjectGenerator::PATTERN_TYPE_POLYGON),
+	constant("PATTERN_POLYGON_AIMED", StgPatternShotObjectGenerator::PATTERN_TYPE_POLYGON_AIMED),
+	constant("PATTERN_ELLIPSE", StgPatternShotObjectGenerator::PATTERN_TYPE_ELLIPSE),
+	constant("PATTERN_ELLIPSE_AIMED", StgPatternShotObjectGenerator::PATTERN_TYPE_ELLIPSE_AIMED),
+	constant("PATTERN_SCATTER_ANGLE", StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER_ANGLE),
+	constant("PATTERN_SCATTER_SPEED", StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER_SPEED),
+	constant("PATTERN_SCATTER", StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER),
+	constant("PATTERN_BASEPOINT_RESET", StgPatternShotObjectGenerator::BASEPOINT_RESET),
+
+	//Pattern shot transforms
+	constant("TRANSFORM_WAIT", StgPatternShotTransform::TRANSFORM_WAIT),
+	constant("TRANSFORM_ADD_SPEED_ANGLE", StgPatternShotTransform::TRANSFORM_ADD_SPEED_ANGLE),
+	constant("TRANSFORM_ANGULAR_MOVE", StgPatternShotTransform::TRANSFORM_ANGULAR_MOVE),
+	constant("TRANSFORM_N_DECEL_CHANGE", StgPatternShotTransform::TRANSFORM_N_DECEL_CHANGE),
+	constant("TRANSFORM_GRAPHIC_CHANGE", StgPatternShotTransform::TRANSFORM_GRAPHIC_CHANGE),
+	constant("TRANSFORM_BLEND_CHANGE", StgPatternShotTransform::TRANSFORM_BLEND_CHANGE),
+	constant("TRANSFORM_TO_SPEED_ANGLE", StgPatternShotTransform::TRANSFORM_TO_SPEED_ANGLE),
+	constant("TRANSFORM_ADDPATTERNA1", StgPatternShotTransform::TRANSFORM_ADDPATTERNA1),
+	constant("TRANSFORM_ADDPATTERNA2", StgPatternShotTransform::TRANSFORM_ADDPATTERNA2),
+
+	//Player states
+	constant("STATE_NORMAL", StgPlayerObject::STATE_NORMAL),
+	constant("STATE_HIT", StgPlayerObject::STATE_HIT),
+	constant("STATE_DOWN", StgPlayerObject::STATE_DOWN),
+	constant("STATE_END", StgPlayerObject::STATE_END),
+
+	//Item types
+	constant("ITEM_1UP", StgItemObject::ITEM_1UP),
+	constant("ITEM_1UP_S", StgItemObject::ITEM_1UP_S),
+	constant("ITEM_SPELL", StgItemObject::ITEM_SPELL),
+	constant("ITEM_SPELL_S", StgItemObject::ITEM_SPELL_S),
+	constant("ITEM_POWER", StgItemObject::ITEM_POWER),
+	constant("ITEM_POWER_S", StgItemObject::ITEM_POWER_S),
+	constant("ITEM_POINT", StgItemObject::ITEM_POINT),
+	constant("ITEM_POINT_S", StgItemObject::ITEM_POINT_S),
+	constant("ITEM_USER", StgItemObject::ITEM_USER),
+
+	//Item move types
+	constant("ITEM_MOVE_DOWN", StgMovePattern_Item::MOVE_DOWN),
+	constant("ITEM_MOVE_TOPLAYER", StgMovePattern_Item::MOVE_TOPLAYER),
+	constant("ITEM_MOVE_SCORE", StgMovePattern_Item::MOVE_SCORE),
+
+	//Object types
+	constant("OBJ_PLAYER", (int)TypeObject::OBJ_PLAYER),
+	constant("OBJ_SPELL_MANAGE", (int)TypeObject::OBJ_SPELL_MANAGE),
+	constant("OBJ_SPELL", (int)TypeObject::OBJ_SPELL),
+	constant("OBJ_ENEMY", (int)TypeObject::OBJ_ENEMY),
+	constant("OBJ_ENEMY_BOSS", (int)TypeObject::OBJ_ENEMY_BOSS),
+	constant("OBJ_ENEMY_BOSS_SCENE", (int)TypeObject::OBJ_ENEMY_BOSS_SCENE),
+	constant("OBJ_SHOT", (int)TypeObject::OBJ_SHOT),
+	constant("OBJ_LOOSE_LASER", (int)TypeObject::OBJ_LOOSE_LASER),
+	constant("OBJ_STRAIGHT_LASER", (int)TypeObject::OBJ_STRAIGHT_LASER),
+	constant("OBJ_CURVE_LASER", (int)TypeObject::OBJ_CURVE_LASER),
+	constant("OBJ_ITEM", (int)TypeObject::OBJ_ITEM),
+
+	//ObjEnemyBossScene_GetInfo info types
+	constant("INFO_LIFE", StgStageScript::INFO_LIFE),
+	constant("INFO_DAMAGE_RATE_SHOT", StgStageScript::INFO_DAMAGE_RATE_SHOT),
+	constant("INFO_DAMAGE_RATE_SPELL", StgStageScript::INFO_DAMAGE_RATE_SPELL),
+	constant("INFO_SHOT_HIT_COUNT", StgStageScript::INFO_SHOT_HIT_COUNT),
+	constant("INFO_TIMER", StgStageScript::INFO_TIMER),
+	constant("INFO_TIMERF", StgStageScript::INFO_TIMERF),
+	constant("INFO_ORGTIMERF", StgStageScript::INFO_ORGTIMERF),
+	constant("INFO_IS_SPELL", StgStageScript::INFO_IS_SPELL),
+	constant("INFO_IS_LAST_SPELL", StgStageScript::INFO_IS_LAST_SPELL),
+	constant("INFO_IS_DURABLE_SPELL", StgStageScript::INFO_IS_DURABLE_SPELL),
+	constant("INFO_SPELL_SCORE", StgStageScript::INFO_SPELL_SCORE),
+	constant("INFO_REMAIN_STEP_COUNT", StgStageScript::INFO_REMAIN_STEP_COUNT),
+	constant("INFO_ACTIVE_STEP_LIFE_COUNT", StgStageScript::INFO_ACTIVE_STEP_LIFE_COUNT),
+	constant("INFO_ACTIVE_STEP_TOTAL_MAX_LIFE", StgStageScript::INFO_ACTIVE_STEP_TOTAL_MAX_LIFE),
+	constant("INFO_ACTIVE_STEP_TOTAL_LIFE", StgStageScript::INFO_ACTIVE_STEP_TOTAL_LIFE),
+	constant("INFO_ACTIVE_STEP_LIFE_RATE_LIST", StgStageScript::INFO_ACTIVE_STEP_LIFE_RATE_LIST),
+	constant("INFO_IS_LAST_STEP", StgStageScript::INFO_IS_LAST_STEP),
+	constant("INFO_PLAYER_SHOOTDOWN_COUNT", StgStageScript::INFO_PLAYER_SHOOTDOWN_COUNT),
+	constant("INFO_PLAYER_SPELL_COUNT", StgStageScript::INFO_PLAYER_SPELL_COUNT),
+	constant("INFO_CURRENT_LIFE", StgStageScript::INFO_CURRENT_LIFE),
+	constant("INFO_CURRENT_LIFE_MAX", StgStageScript::INFO_CURRENT_LIFE_MAX),
+
+	constant("INFO_ITEM_SCORE", StgStageScript::INFO_ITEM_SCORE),
+
+	//GetShotDataInfoA1 info types
+	constant("INFO_EXISTS", StgStageScript::INFO_EXISTS),
+	constant("INFO_PATH", StgStageScript::INFO_PATH),
+	constant("INFO_RECT", StgStageScript::INFO_RECT),
+	constant("INFO_DELAY_COLOR", StgStageScript::INFO_DELAY_COLOR),
+	constant("INFO_BLEND", StgStageScript::INFO_BLEND),
+	constant("INFO_COLLISION", StgStageScript::INFO_COLLISION),
+	constant("INFO_COLLISION_LIST", StgStageScript::INFO_COLLISION_LIST),
+	constant("INFO_IS_FIXED_ANGLE", StgStageScript::INFO_IS_FIXED_ANGLE),
+	
+	//STG scene events
+	constant("EV_REQUEST_LIFE", StgStageScript::EV_REQUEST_LIFE),
+	constant("EV_REQUEST_TIMER", StgStageScript::EV_REQUEST_TIMER),
+	constant("EV_REQUEST_IS_SPELL", StgStageScript::EV_REQUEST_IS_SPELL),
+	constant("EV_REQUEST_IS_LAST_SPELL", StgStageScript::EV_REQUEST_IS_LAST_SPELL),
+	constant("EV_REQUEST_IS_DURABLE_SPELL", StgStageScript::EV_REQUEST_IS_DURABLE_SPELL),
+	constant("EV_REQUEST_REQUIRE_ALL_DOWN", StgStageScript::EV_REQUEST_REQUIRE_ALL_DOWN),
+	constant("EV_REQUEST_SPELL_SCORE", StgStageScript::EV_REQUEST_SPELL_SCORE),
+	constant("EV_REQUEST_REPLAY_TARGET_COMMON_AREA", StgStageScript::EV_REQUEST_REPLAY_TARGET_COMMON_AREA),
+
+	//Boss scene events
+	constant("EV_TIMEOUT", StgStageScript::EV_TIMEOUT),
+	constant("EV_START_BOSS_SPELL", StgStageScript::EV_START_BOSS_SPELL),
+	constant("EV_END_BOSS_SPELL", StgStageScript::EV_END_BOSS_SPELL),
+	constant("EV_GAIN_SPELL", StgStageScript::EV_GAIN_SPELL),
+	constant("EV_START_BOSS_STEP", StgStageScript::EV_START_BOSS_STEP),
+	constant("EV_END_BOSS_STEP", StgStageScript::EV_END_BOSS_STEP),
+
+	//Player events
+	constant("EV_PLAYER_SHOOTDOWN", StgStageScript::EV_PLAYER_SHOOTDOWN),
+	constant("EV_PLAYER_SPELL", StgStageScript::EV_PLAYER_SPELL),
+	constant("EV_PLAYER_REBIRTH", StgStageScript::EV_PLAYER_REBIRTH),
+
+	constant("REBIRTH_DEFAULT", StgPlayerObject::REBIRTH_DEFAULT),
+
+	//Pause events
+	constant("EV_PAUSE_ENTER", StgStageScript::EV_PAUSE_ENTER),
+	constant("EV_PAUSE_LEAVE", StgStageScript::EV_PAUSE_LEAVE),
+
+	constant("TARGET_ALL", StgStageScript::TARGET_ALL),
+	constant("TARGET_ENEMY", StgStageScript::TARGET_ENEMY),
+	constant("TARGET_PLAYER", StgStageScript::TARGET_PLAYER),
+
+	//AddPattern constants
+	constant("TOPLAYER_CHANGE", StgMovePattern::TOPLAYER_CHANGE),
+	constant("NO_CHANGE", StgMovePattern::NO_CHANGE),
+};
+
 StgStageScript::StgStageScript(StgStageController* stageController) : StgControlScript(stageController->GetSystemController()) {
 	stageController_ = stageController;
 
 	typeScript_ = TYPE_STAGE;
-	_AddFunction(stgFunction, sizeof(stgFunction) / sizeof(function));
+	_AddFunction(&stgStageFunction);
+	_AddConstant(&stgStageConstant);
+
+	{
+		const std::vector<constant> stgStageConstantsEx = {
+			constant("SCREEN_WIDTH", DirectGraphics::GetBase()->GetScreenWidth()),
+			constant("SCREEN_HEIGHT", DirectGraphics::GetBase()->GetScreenHeight()),
+		};
+		_AddConstant(&stgStageConstantsEx);
+	}
 
 	ref_count_ptr<StgStageInformation> info = stageController_->GetStageInformation();
 	mt_ = info->GetRandProvider();
@@ -4595,54 +4620,51 @@ gstd::value StgStageScript::Func_ObjCol_GetIntersectedCount(gstd::script_machine
 /**********************************************************
 //StgSystemScript
 **********************************************************/
-function const stgSystemFunction[] =
-{
-	//関数：
-
-
-	//定数
-	{ "__stgSystemFunction__",constant<0>::func, 0 },
+static const std::vector<constant> stgSystemConstant = {
+	constant("__stgSystemFunction__", 0),
 };
+
 StgStageSystemScript::StgStageSystemScript(StgStageController* stageController) : StgStageScript(stageController) {
 	typeScript_ = TYPE_SYSTEM;
-	_AddFunction(stgSystemFunction, sizeof(stgSystemFunction) / sizeof(function));
+	_AddConstant(&stgSystemConstant);
 }
 StgStageSystemScript::~StgStageSystemScript() {}
 
 /**********************************************************
 //StgStageItemScript
 **********************************************************/
-function const stgItemFunction[] =
-{
+static const std::vector<constant> stgItemConstant = {
 	//定数
-	{ "EV_GET_ITEM", constant<StgStageItemScript::EV_GET_ITEM>::func, 0 },
-	{ "EV_DELETE_SHOT_IMMEDIATE", constant<StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE>::func, 0 },
-	{ "EV_DELETE_SHOT_TO_ITEM", constant<StgStageItemScript::EV_DELETE_SHOT_TO_ITEM>::func, 0 },
-	{ "EV_DELETE_SHOT_FADE", constant<StgStageItemScript::EV_DELETE_SHOT_FADE>::func, 0 },
+	constant("EV_GET_ITEM", StgStageItemScript::EV_GET_ITEM),
+	constant("EV_DELETE_SHOT_IMMEDIATE", StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE),
+	constant("EV_DELETE_SHOT_TO_ITEM", StgStageItemScript::EV_DELETE_SHOT_TO_ITEM),
+	constant("EV_DELETE_SHOT_FADE", StgStageItemScript::EV_DELETE_SHOT_FADE),
 
-	{ "EV_GRAZE", constant<StgStagePlayerScript::EV_GRAZE>::func, 0 },
+	constant("EV_GRAZE", StgStagePlayerScript::EV_GRAZE),
 };
+
 StgStageItemScript::StgStageItemScript(StgStageController* stageController) : StgStageScript(stageController) {
 	typeScript_ = TYPE_ITEM;
-	_AddFunction(stgItemFunction, sizeof(stgItemFunction) / sizeof(function));
+	_AddConstant(&stgItemConstant);
 }
 StgStageItemScript::~StgStageItemScript() {}
 
 /**********************************************************
 //StgStageShotScript
 **********************************************************/
-function const stgShotFunction[] =
-{
-	//定数
-	{ "EV_DELETE_SHOT_IMMEDIATE", constant<StgStageScript::EV_DELETE_SHOT_IMMEDIATE>::func, 0 },
-	{ "EV_DELETE_SHOT_TO_ITEM", constant<StgStageScript::EV_DELETE_SHOT_TO_ITEM>::func, 0 },
-	{ "EV_DELETE_SHOT_FADE", constant<StgStageScript::EV_DELETE_SHOT_FADE>::func, 0 },
-	
+static const std::vector<function> stgShotFunction = {
 	{ "SetShotDeleteEventEnable", StgStageShotScript::Func_SetShotDeleteEventEnable, 2 },
+};
+static const std::vector<constant> stgShotConstant = {
+	//定数
+	constant("EV_DELETE_SHOT_IMMEDIATE", StgStageScript::EV_DELETE_SHOT_IMMEDIATE),
+	constant("EV_DELETE_SHOT_TO_ITEM", StgStageScript::EV_DELETE_SHOT_TO_ITEM),
+	constant("EV_DELETE_SHOT_FADE", StgStageScript::EV_DELETE_SHOT_FADE),
 };
 StgStageShotScript::StgStageShotScript(StgStageController* stageController) : StgStageScript(stageController) {
 	typeScript_ = TYPE_SHOT;
-	_AddFunction(stgShotFunction, sizeof(stgShotFunction) / sizeof(function));
+	_AddFunction(&stgShotFunction);
+	_AddConstant(&stgShotConstant);
 }
 StgStageShotScript::~StgStageShotScript() {}
 
@@ -4661,8 +4683,7 @@ gstd::value StgStageShotScript::Func_SetShotDeleteEventEnable(gstd::script_machi
 /**********************************************************
 //StgPlayerScript
 **********************************************************/
-function const stgPlayerFunction[] =
-{
+static const std::vector<function> stgPlayerFunction = {
 	//関数：
 	{ "CreatePlayerShotA1", StgStagePlayerScript::Func_CreatePlayerShotA1, 7 },
 	{ "CallSpell", StgStagePlayerScript::Func_CallSpell, 0 },
@@ -4680,18 +4701,21 @@ function const stgPlayerFunction[] =
 	{ "ObjSpell_SetEraseShot", StgStagePlayerScript::Func_ObjSpell_SetEraseShot, 2 },
 	{ "ObjSpell_SetIntersectionCircle", StgStagePlayerScript::Func_ObjSpell_SetIntersectionCircle, 4 },
 	{ "ObjSpell_SetIntersectionLine", StgStagePlayerScript::Func_ObjSpell_SetIntersectionLine, 6 },
+};
+static const std::vector<constant> stgPlayerConstant = {
+	//Player events
 
-	//定数
-	{ "EV_REQUEST_SPELL", constant<StgStagePlayerScript::EV_REQUEST_SPELL>::func, 0 },
-	{ "EV_GRAZE", constant<StgStagePlayerScript::EV_GRAZE>::func, 0 },
-	{ "EV_HIT", constant<StgStagePlayerScript::EV_HIT>::func, 0 },
-	{ "EV_DELETE_SHOT_PLAYER", constant<StgStagePlayerScript::EV_DELETE_SHOT_PLAYER>::func, 0 },
+	constant("EV_REQUEST_SPELL", StgStagePlayerScript::EV_REQUEST_SPELL),
+	constant("EV_GRAZE", StgStagePlayerScript::EV_GRAZE),
+	constant("EV_HIT", StgStagePlayerScript::EV_HIT),
+	constant("EV_DELETE_SHOT_PLAYER", StgStagePlayerScript::EV_DELETE_SHOT_PLAYER),
 
-	{ "EV_GET_ITEM", constant<StgStageItemScript::EV_GET_ITEM>::func, 0 },
+	constant("EV_GET_ITEM", StgStageItemScript::EV_GET_ITEM),
 };
 StgStagePlayerScript::StgStagePlayerScript(StgStageController* stageController) : StgStageScript(stageController) {
 	typeScript_ = TYPE_PLAYER;
-	_AddFunction(stgPlayerFunction, sizeof(stgPlayerFunction) / sizeof(function));
+	_AddFunction(&stgPlayerFunction);
+	_AddConstant(&stgPlayerConstant);
 }
 StgStagePlayerScript::~StgStagePlayerScript() {}
 

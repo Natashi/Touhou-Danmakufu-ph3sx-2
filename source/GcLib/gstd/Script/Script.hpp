@@ -42,8 +42,8 @@ namespace gstd {
 
 	class script_engine {
 	public:
-		script_engine(const std::string& source, int funcc, const function* funcv);
-		script_engine(const std::vector<char>& source, int funcc, const function* funcv);
+		script_engine(const std::string& source, std::vector<function>* list_func, std::vector<constant>* list_const);
+		script_engine(const std::vector<char>& source, std::vector<function>* list_func, std::vector<constant>* list_const);
 		virtual ~script_engine();
 
 		script_engine& operator=(const script_engine& source) = default;
@@ -158,21 +158,5 @@ namespace gstd {
 		value* find_variable_symbol(environment* current_env, code* var_data);
 	public:
 		size_t get_thread_count() { return threads.size(); }
-	};
-
-#define DNH_CONST_DECL(word, val) { word, constant<val>::func, 0 }
-	template<int num>
-	class constant {
-	public:
-		static value func(script_machine* machine, int argc, const value* argv) {
-			return value(script_type_manager::get_real_type(), (double)num);
-		}
-	};
-	template<const double* pVal>
-	class pconstant {
-	public:
-		static value func(script_machine* machine, int argc, const value* argv) {
-			return value(script_type_manager::get_real_type(), *pVal);
-		}
 	};
 }

@@ -78,7 +78,7 @@ namespace gstd {
 	}
 #pragma pop_macro("new")
 
-	const function base_operations[] = {
+	static const std::vector<function> base_operations = {
 		//{ "true", true_, 0 },
 		//{ "false", false_, 0 },
 		//{ "length", BaseFunction::length, 1 },
@@ -155,33 +155,79 @@ namespace gstd {
 		this->insert(std::make_pair(name, s));
 	}
 
-	parser::parser(script_engine* e, script_scanner* s, int funcc, const function* funcv) {
+	parser::parser(script_engine* e, script_scanner* s) {
 		engine = e;
 		lexer_main = s;
 		error = false;
 
+		count_base_constants = 0;
+
 		frame.push_back(scope_t(block_kind::bk_normal));		//Scope for default symbols
 
-		for (size_t i = 0; i < sizeof(base_operations) / sizeof(function); ++i)
-			register_function(base_operations[i]);
+		//Base script operations
+		for (auto& iFunc : base_operations)
+			register_function(iFunc);
 
-		for (size_t i = 0; i < funcc; ++i)
-			register_function(funcv[i]);
+		{
+			block_const_reg = engine->new_block(1, block_kind::bk_normal);
+			block_const_reg->name = "$_scpt_const_reg";
+			engine->main_block->codes.push_back(code(command_kind::pc_var_alloc, 0));
+			engine->main_block->codes.push_back(code(command_kind::pc_call, block_const_reg, 0));
+		}
+	}
+	void parser::load_functions(std::vector<function>* list_func) {
+		//Client script function extensions
+		for (auto itr = list_func->begin(); itr != list_func->end(); ++itr)
+			register_function(*itr);
+	}
+	void parser::load_constants(std::vector<constant>* list_const) {
+		size_t iConst = count_base_constants;
+		for (auto itr = list_const->begin(); itr != list_const->end(); ++itr, ++iConst) {
+			const constant* pConst = &*itr;
 
+			symbol s = symbol(0, nullptr, iConst, false, false);
+			frame.begin()->singular_insert(pConst->name, s);
+
+			value const_value;
+			switch (pConst->type) {
+			case type_data::tk_int:
+				const_value.set(script_type_manager::get_int_type(), (int64_t&)pConst->data);
+				break;
+			case type_data::tk_real:
+				const_value.set(script_type_manager::get_real_type(), (double&)pConst->data);
+				break;
+			case type_data::tk_char:
+				const_value.set(script_type_manager::get_char_type(), (wchar_t&)pConst->data);
+				break;
+			case type_data::tk_boolean:
+				const_value.set(script_type_manager::get_boolean_type(), (bool&)pConst->data);
+				break;
+			default:
+				continue;
+			}
+			block_const_reg->codes.push_back(code(command_kind::pc_push_value, const_value));
+			block_const_reg->codes.push_back(code(command_kind::pc_assign, 0, iConst, pConst->name));
+		}
+		count_base_constants += list_const->size();
+	}
+	void parser::begin_parse() {
 		try {
 			frame.push_back(scope_t(block_kind::bk_normal));	//Scope for user symbols
 
 			parser_state_t stateParser(lexer_main);
 
-			stateParser.var_count_main = scan_current_scope(&stateParser, 1, nullptr, false);
-			stateParser.AddCode(engine->main_block, code(command_kind::pc_var_alloc, 0));
-			parser_assert(stateParser.var_count_main <= 0xffff,
-				"Too many variables were defined in the scope.\r\n");
+			script_block* blockScriptMain = engine->new_block(1, block_kind::bk_normal);
+			blockScriptMain->name = "$_scpt_main";
+			engine->main_block->codes.push_back(code(0, command_kind::pc_call, blockScriptMain, 0));
 
-			parse_statements(engine->main_block, &stateParser, token_kind::tk_end, token_kind::tk_semicolon);
-			scan_final(engine->main_block, &stateParser);
+			stateParser.var_count_main = scan_current_scope(&stateParser, 1, nullptr, false, 0);
+			stateParser.AddCode(blockScriptMain, code(command_kind::pc_var_alloc, 0));
 
-			engine->main_block->codes[0].ip = stateParser.var_count_main + stateParser.var_count_sub;
+			parse_statements(blockScriptMain, &stateParser, token_kind::tk_end, token_kind::tk_semicolon);
+			scan_final(blockScriptMain, &stateParser);
+
+			engine->main_block->codes[0].ip = count_base_constants;
+			blockScriptMain->codes[0].ip = stateParser.var_count_main + stateParser.var_count_sub;
 
 			parser_assert(stateParser.next() == token_kind::tk_end,
 				"Unexpected end-of-file while parsing. (Did you forget a semicolon after a string?)\r\n");

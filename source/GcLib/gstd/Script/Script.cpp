@@ -42,12 +42,16 @@ type_data* script_type_manager::get_array_type(type_data* element) {
 
 /* script_engine */
 
-script_engine::script_engine(const std::string& source, int funcc, const function* funcv) {
-	main_block = new_block(1, block_kind::bk_normal);
+script_engine::script_engine(const std::string& source, std::vector<function>* list_func, std::vector<constant>* list_const) {
+	main_block = new_block(0, block_kind::bk_normal);
 
 	const char* end = &source[0] + source.size();
 	script_scanner s(source.c_str(), end);
-	parser p(this, &s, funcc, funcv);
+	parser p(this, &s);
+
+	if (list_func) p.load_functions(list_func);
+	if (list_const) p.load_constants(list_const);
+	p.begin_parse();
 
 	events = p.events;
 
@@ -56,8 +60,8 @@ script_engine::script_engine(const std::string& source, int funcc, const functio
 	error_line = p.error_line;
 }
 
-script_engine::script_engine(const std::vector<char>& source, int funcc, const function* funcv) {
-	main_block = new_block(1, block_kind::bk_normal);
+script_engine::script_engine(const std::vector<char>& source, std::vector<function>* list_func, std::vector<constant>* list_const) {
+	main_block = new_block(0, block_kind::bk_normal);
 
 	if (false) {
 		wchar_t* pStart = (wchar_t*)&source[0];
@@ -67,7 +71,11 @@ script_engine::script_engine(const std::vector<char>& source, int funcc, const f
 	}
 	const char* end = &source[0] + source.size();
 	script_scanner s(&source[0], end);
-	parser p(this, &s, funcc, funcv);
+	parser p(this, &s);
+
+	if (list_func) p.load_functions(list_func);
+	if (list_const) p.load_constants(list_const);
+	p.begin_parse();
 
 	events = p.events;
 
@@ -75,7 +83,6 @@ script_engine::script_engine(const std::vector<char>& source, int funcc, const f
 	error_message = p.error_message;
 	error_line = p.error_line;
 }
-
 script_engine::~script_engine() {
 	blocks.clear();
 }

@@ -45,8 +45,7 @@ bool ScriptEngineCache::IsExists(const std::wstring& name) {
 /**********************************************************
 //ScriptClientBase
 **********************************************************/
-function const commonFunction[] =
-{
+static const std::vector<function> commonFunction = {
 	//共通関数：スクリプト引数結果
 	{ "GetScriptArgument", ScriptClientBase::Func_GetScriptArgument, 1 },
 	{ "GetScriptArgumentCount", ScriptClientBase::Func_GetScriptArgumentCount, 0 },
@@ -81,7 +80,9 @@ function const commonFunction[] =
 	{ "hypot", ScriptClientBase::Func_Hypot, 2 },
 
 	{ "rand", ScriptClientBase::Func_Rand, 2 },
+	{ "rand_int", ScriptClientBase::Func_RandI, 2 },
 	{ "prand", ScriptClientBase::Func_RandEff, 2 },
+	{ "prand_int", ScriptClientBase::Func_RandEffI, 2 },
 
 	{ "ToDegrees", ScriptClientBase::Func_ToDegrees, 1 },
 	{ "ToRadians", ScriptClientBase::Func_ToRadians, 1 },
@@ -161,44 +162,46 @@ function const commonFunction[] =
 	{ "IsCommonDataAreaExists", ScriptClientBase::Func_IsCommonDataAreaExists, 1 },
 	{ "GetCommonDataAreaKeyList", ScriptClientBase::Func_GetCommonDataAreaKeyList, 0 },
 	{ "GetCommonDataValueKeyList", ScriptClientBase::Func_GetCommonDataValueKeyList, 1 },
+};
+static const std::vector<constant> commonConstant = {
+	constant("NULL", 0i64),
 
-	//定数
-	{ "NULL", constant<0>::func, 0 },
+	//Types for typeof and ftypeof
+	constant("VAR_INT", type_data::tk_int),
+	constant("VAR_REAL", type_data::tk_real),
+	constant("VAR_CHAR", type_data::tk_char),
+	constant("VAR_BOOL", type_data::tk_boolean),
+	constant("VAR_ARRAY", type_data::tk_array),
+	constant("VAR_STRING", type_data::tk_array | type_data::tk_char),
 
-	{ "VAR_INT", constant<type_data::tk_int>::func, 0 },
-	{ "VAR_REAL", constant<type_data::tk_real>::func, 0 },
-	{ "VAR_CHAR", constant<type_data::tk_char>::func, 0 },
-	{ "VAR_BOOL", constant<type_data::tk_boolean>::func, 0 },
-	{ "VAR_ARRAY", constant<type_data::tk_array>::func, 0 },
-	{ "VAR_STRING", constant<type_data::tk_array | type_data::tk_char>::func, 0 },
+	//Interpolation modes
+	constant("LERP_LINEAR", Math::Lerp::LINEAR),
+	constant("LERP_SMOOTH", Math::Lerp::SMOOTH),
+	constant("LERP_SMOOTHER", Math::Lerp::SMOOTHER),
+	constant("LERP_ACCELERATE", Math::Lerp::ACCELERATE),
+	constant("LERP_DECELERATE", Math::Lerp::DECELERATE),
 
-	{ "LERP_LINEAR", constant<Math::Lerp::LINEAR>::func, 0 },
-	{ "LERP_SMOOTH", constant<Math::Lerp::SMOOTH>::func, 0 },
-	{ "LERP_SMOOTHER", constant<Math::Lerp::SMOOTHER>::func, 0 },
-	{ "LERP_ACCELERATE", constant<Math::Lerp::ACCELERATE>::func, 0 },
-	{ "LERP_DECELERATE", constant<Math::Lerp::DECELERATE>::func, 0 },
-
-	{ "pi", pconstant<&GM_PI>::func, 0 },		//For compatibility reasons.
-	{ "M_PI", pconstant<&GM_PI>::func, 0 },
-	{ "M_PI_2", pconstant<&GM_PI_2>::func, 0 },
-	{ "M_PI_4", pconstant<&GM_PI_4>::func, 0 },
-	{ "M_PI_X2", pconstant<&GM_PI_X2>::func, 0 },
-	{ "M_PI_X4", pconstant<&GM_PI_X4>::func, 0 },
-	{ "M_1_PI", pconstant<&GM_1_PI>::func, 0 },
-	{ "M_2_PI", pconstant<&GM_2_PI>::func, 0 },
-	{ "M_SQRTPI", pconstant<&GM_SQRTP>::func, 0 },
-	{ "M_1_SQRTPI", pconstant<&GM_1_SQRTP>::func, 0 },
-	{ "M_2_SQRTPI", pconstant<&GM_2_SQRTP>::func, 0 },
-	{ "M_SQRT2", pconstant<&GM_SQRT2>::func, 0 },
-	{ "M_SQRT2_2", pconstant<&GM_SQRT2_2>::func, 0 },
-	{ "M_SQRT2_X2", pconstant<&GM_SQRT2_X2>::func, 0 },
-	{ "M_E", pconstant<&GM_E>::func, 0 },
-	{ "M_LOG2E", pconstant<&GM_LOG2E>::func, 0 },
-	{ "M_LOG10E", pconstant<&GM_LOG10E>::func, 0 },
-	{ "M_LN2", pconstant<&GM_LN2>::func, 0 },
-	{ "M_LN10", pconstant<&GM_LN10>::func, 0 },
-	{ "M_PHI", pconstant<&GM_PHI>::func, 0 },
-	{ "M_1_PHI", pconstant<&GM_1_PHI>::func, 0 },
+	//Math constants
+	constant("M_PI", GM_PI),
+	constant("M_PI_2", GM_PI_2),
+	constant("M_PI_4", GM_PI_4),
+	constant("M_PI_X2", GM_PI_X2),
+	constant("M_PI_X4", GM_PI_X4),
+	constant("M_1_PI", GM_1_PI),
+	constant("M_2_PI", GM_2_PI),
+	constant("M_SQRTPI", GM_SQRTP),
+	constant("M_1_SQRTPI", GM_1_SQRTP),
+	constant("M_2_SQRTPI", GM_2_SQRTP),
+	constant("M_SQRT2", GM_SQRT2),
+	constant("M_SQRT2_2", GM_SQRT2_2),
+	constant("M_SQRT2_X2", GM_SQRT2_X2),
+	constant("M_E", GM_E),
+	constant("M_LOG2E", GM_LOG2E),
+	constant("M_LOG10E", GM_LOG10E),
+	constant("M_LN2", GM_LN2),
+	constant("M_LN10", GM_LN10),
+	constant("M_PHI", GM_PHI),
+	constant("M_1_PHI", GM_1_PHI),
 };
 
 ScriptClientBase::ScriptClientBase() {
@@ -210,9 +213,8 @@ ScriptClientBase::ScriptClientBase() {
 	valueRes_ = value();
 
 	pTypeManager_ = script_type_manager::get_instance();
-	//Leak
 	if (pTypeManager_ == nullptr)
-		pTypeManager_ = new script_type_manager;
+		pTypeManager_ = new script_type_manager();
 
 	commonDataManager_ = new ScriptCommonDataManager();
 
@@ -226,7 +228,8 @@ ScriptClientBase::ScriptClientBase() {
 		mtEffect_->Initialize(((seed ^ 0xf27ea021) << 11) ^ ((seed ^ 0x8b56c1b5) >> 11));
 	}
 
-	_AddFunction(commonFunction, sizeof(commonFunction) / sizeof(function));
+	_AddFunction(&commonFunction);
+	_AddConstant(&commonConstant);
 }
 ScriptClientBase::~ScriptClientBase() {
 	ptr_delete(machine_);
@@ -234,16 +237,14 @@ ScriptClientBase::~ScriptClientBase() {
 }
 
 void ScriptClientBase::_AddFunction(const char* name, callback f, size_t arguments) {
-	function tFunc;
-	tFunc.name = name;
-	tFunc.func = f;
-	tFunc.arguments = arguments;
+	function tFunc(name, f, arguments);
 	func_.push_back(tFunc);
 }
-void ScriptClientBase::_AddFunction(const function* f, size_t count) {
-	size_t funcPos = func_.size();
-	func_.resize(funcPos + count);
-	memcpy(&func_[funcPos], f, sizeof(function) * count);
+void ScriptClientBase::_AddFunction(const std::vector<gstd::function>* f) {
+	func_.insert(func_.end(), f->cbegin(), f->cend());
+}
+void ScriptClientBase::_AddConstant(const std::vector<gstd::constant>* c) {
+	const_.insert(const_.end(), c->cbegin(), c->cend());
 }
 
 void ScriptClientBase::_RaiseError(int line, const std::wstring& message) {
@@ -701,7 +702,7 @@ bool ScriptClientBase::_CreateEngine() {
 
 	std::vector<char>& source = engine_->GetSource();
 
-	ref_count_ptr<script_engine> engine = new script_engine(source, func_.size(), &func_[0]);
+	ref_count_ptr<script_engine> engine = new script_engine(source, &func_, &const_);
 	engine_->SetEngine(engine);
 	return true;
 }
@@ -1063,11 +1064,16 @@ value ScriptClientBase::Func_Hypot(script_machine* machine, int argc, const valu
 value ScriptClientBase::Func_Rand(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	script->CheckRunInMainThread();
-
 	double min = argv[0].as_real();
 	double max = argv[1].as_real();
-	double res = script->mt_->GetReal(min, max);
-	return script->CreateRealValue(res);
+	return script->CreateRealValue(script->mt_->GetReal(min, max));
+}
+value ScriptClientBase::Func_RandI(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	script->CheckRunInMainThread();
+	double min = argv[0].as_int();
+	double max = argv[1].as_int() + 0.9999999;
+	return script->CreateIntValue(script->mt_->GetReal(min, max));
 }
 value ScriptClientBase::Func_RandEff(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
@@ -1075,6 +1081,12 @@ value ScriptClientBase::Func_RandEff(script_machine* machine, int argc, const va
 	double max = argv[1].as_real();
 	double res = script->mtEffect_->GetReal(min, max);
 	return script->CreateRealValue(res);
+}
+value ScriptClientBase::Func_RandEffI(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	double min = argv[0].as_int();
+	double max = argv[1].as_int() + 0.9999999;
+	return script->CreateIntValue(script->mtEffect_->GetReal(min, max));
 }
 
 static value _ScriptValueLerp(script_machine* machine, const value* v1, const value* v2, double vx, 
@@ -1176,16 +1188,16 @@ value ScriptClientBase::Func_TypeOf(script_machine* machine, int argc, const val
 
 	if (type->get_kind() == type_data::type_kind::tk_array) {
 		if (type->get_element()->get_kind() == type_data::type_kind::tk_char)
-			return CreateRealValue((int)type_data::type_kind::tk_array + 1);	//String
+			return CreateIntValue((int)type_data::type_kind::tk_array + 1);	//String
 	}
-	return CreateRealValue((int)type->get_kind());
+	return CreateIntValue(type->get_kind());
 }
 value ScriptClientBase::Func_FTypeOf(script_machine* machine, int argc, const value* argv) {
 	type_data* type = argv->get_type();
 	while (type->get_kind() == type_data::type_kind::tk_array)
 		type = type->get_element();
 
-	return CreateRealValue((int)(type->get_kind()));
+	return CreateIntValue(type->get_kind());
 }
 
 //組み込み関数：文字列操作

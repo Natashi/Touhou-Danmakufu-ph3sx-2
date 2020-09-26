@@ -207,17 +207,13 @@ void StgPauseScene::Finish() {
 /**********************************************************
 //StgPauseSceneScript
 **********************************************************/
-const function stgPauseFunction[] =
-{
-	//関数：
-
-	//定数：
-	{ "__stgPauseFunction__", constant<0>::func, 0 },
-
+static const std::vector<constant> stgPauseConstant = {
+	constant("__stgPauseFunction__", 0),
 };
+
 StgPauseSceneScript::StgPauseSceneScript(StgSystemController* controller) : StgUserExtendSceneScript(controller) {
 	typeScript_ = TYPE_PAUSE_SCENE;
-	_AddFunction(stgPauseFunction, sizeof(stgPauseFunction) / sizeof(function));
+	_AddConstant(&stgPauseConstant);
 }
 StgPauseSceneScript::~StgPauseSceneScript() {}
 
@@ -279,17 +275,12 @@ void StgEndScene::Finish() {
 /**********************************************************
 //StgEndSceneScript
 **********************************************************/
-const function stgEndFunction[] =
-{
-	//関数：
-
-	//定数：
-	{ "__stgEndFunction__", constant<0>::func, 0 },
-
+static const std::vector<constant> stgEndFunction = {
+	constant("__stgEndFunction__", 0),
 };
 StgEndSceneScript::StgEndSceneScript(StgSystemController* controller) : StgUserExtendSceneScript(controller) {
 	typeScript_ = TYPE_END_SCENE;
-	_AddFunction(stgEndFunction, sizeof(stgEndFunction) / sizeof(function));
+	_AddConstant(&stgEndFunction);
 }
 StgEndSceneScript::~StgEndSceneScript() {}
 
@@ -344,16 +335,11 @@ void StgReplaySaveScene::Finish() {
 /**********************************************************
 //StgReplaySaveScript
 **********************************************************/
-const function stgReplaySaveFunction[] =
-{
-	//関数：
-
-	//定数：
-	{ "__stgReplaySaveFunction__", constant<0>::func, 0 },
-
+static const std::vector<constant> stgReplaySaveFunction = {
+	constant("__stgReplaySaveFunction__", 0),
 };
 StgReplaySaveScript::StgReplaySaveScript(StgSystemController* controller) : StgUserExtendSceneScript(controller) {
 	typeScript_ = TYPE_REPLAY_SCENE;
-	_AddFunction(stgReplaySaveFunction, sizeof(stgReplaySaveFunction) / sizeof(function));
+	_AddConstant(&stgReplaySaveFunction);
 }
 StgReplaySaveScript::~StgReplaySaveScript() {}

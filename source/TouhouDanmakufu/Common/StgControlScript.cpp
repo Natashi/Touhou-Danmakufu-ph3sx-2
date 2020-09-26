@@ -35,8 +35,7 @@ void StgControlScriptInformation::LoadReplayInformation(std::wstring pathMainScr
 /**********************************************************
 //StgControlScript
 **********************************************************/
-const function stgControlFunction[] =
-{
+static const std::vector<function> stgControlFunction = {
 	//関数：
 	//STG制御共通関数：共通データ
 	{ "SaveCommonDataAreaA1", StgControlScript::Func_SaveCommonDataAreaA1, 1 },
@@ -112,55 +111,64 @@ const function stgControlFunction[] =
 	{ "SetReplayUserData", StgControlScript::Func_SetReplayUserData, 2 },
 	{ "IsReplayUserDataExists", StgControlScript::Func_IsReplayUserDataExists, 2 },
 	{ "SaveReplay", StgControlScript::Func_SaveReplay, 2 },
-
-	//定数：
-	{ "EV_USER_COUNT", constant<StgControlScript::EV_USER_COUNT>::func, 0 },
-	{ "EV_USER", constant<StgControlScript::EV_USER>::func, 0 },
-	{ "EV_USER_SYSTEM", constant<StgControlScript::EV_USER_SYSTEM>::func, 0 },
-	{ "EV_USER_STAGE", constant<StgControlScript::EV_USER_STAGE>::func, 0 },
-	{ "EV_USER_PLAYER", constant<StgControlScript::EV_USER_PLAYER>::func, 0 },
-	{ "EV_USER_PACKAGE", constant<StgControlScript::EV_USER_PACKAGE>::func, 0 },
-
-	{ "TYPE_SCRIPT_ALL", constant<StgControlScript::TYPE_SCRIPT_ALL>::func, 0 },
-	{ "TYPE_SCRIPT_PLAYER", constant<StgControlScript::TYPE_SCRIPT_PLAYER>::func, 0 },
-	{ "TYPE_SCRIPT_SINGLE", constant<StgControlScript::TYPE_SCRIPT_SINGLE>::func, 0 },
-	{ "TYPE_SCRIPT_PLURAL", constant<StgControlScript::TYPE_SCRIPT_PLURAL>::func, 0 },
-	{ "TYPE_SCRIPT_STAGE", constant<StgControlScript::TYPE_SCRIPT_STAGE>::func, 0 },
-	{ "TYPE_SCRIPT_PACKAGE", constant<StgControlScript::TYPE_SCRIPT_PACKAGE>::func, 0 },
-
-	{ "INFO_SCRIPT_TYPE", constant<StgControlScript::INFO_SCRIPT_TYPE>::func, 0 },
-	{ "INFO_SCRIPT_PATH", constant<StgControlScript::INFO_SCRIPT_PATH>::func, 0 },
-	{ "INFO_SCRIPT_ID", constant<StgControlScript::INFO_SCRIPT_ID>::func, 0 },
-	{ "INFO_SCRIPT_TITLE", constant<StgControlScript::INFO_SCRIPT_TITLE>::func, 0 },
-	{ "INFO_SCRIPT_TEXT", constant<StgControlScript::INFO_SCRIPT_TEXT>::func, 0 },
-	{ "INFO_SCRIPT_IMAGE", constant<StgControlScript::INFO_SCRIPT_IMAGE>::func, 0 },
-	{ "INFO_SCRIPT_REPLAY_NAME", constant<StgControlScript::INFO_SCRIPT_REPLAY_NAME>::func, 0 },
-
-	{ "REPLAY_FILE_PATH", constant<StgControlScript::REPLAY_FILE_PATH>::func, 0 },
-	{ "REPLAY_DATE_TIME", constant<StgControlScript::REPLAY_DATE_TIME>::func, 0 },
-	{ "REPLAY_USER_NAME", constant<StgControlScript::REPLAY_USER_NAME>::func, 0 },
-	{ "REPLAY_TOTAL_SCORE", constant<StgControlScript::REPLAY_TOTAL_SCORE>::func, 0 },
-	{ "REPLAY_FPS_AVERAGE", constant<StgControlScript::REPLAY_FPS_AVERAGE>::func, 0 },
-	{ "REPLAY_PLAYER_NAME", constant<StgControlScript::REPLAY_PLAYER_NAME>::func, 0 },
-	{ "REPLAY_STAGE_INDEX_LIST", constant<StgControlScript::REPLAY_STAGE_INDEX_LIST>::func, 0 },
-	{ "REPLAY_STAGE_START_SCORE_LIST", constant<StgControlScript::REPLAY_STAGE_START_SCORE_LIST>::func, 0 },
-	{ "REPLAY_STAGE_LAST_SCORE_LIST", constant<StgControlScript::REPLAY_STAGE_LAST_SCORE_LIST>::func, 0 },
-	{ "REPLAY_COMMENT", constant<StgControlScript::REPLAY_COMMENT>::func, 0 },
-
-	{ "REPLAY_INDEX_ACTIVE", constant<ReplayInformation::INDEX_ACTIVE>::func, 0 },
-	{ "REPLAY_INDEX_DIGIT_MIN", constant<ReplayInformation::INDEX_DIGIT_MIN>::func, 0 },
-	{ "REPLAY_INDEX_DIGIT_MAX", constant<ReplayInformation::INDEX_DIGIT_MAX>::func, 0 },
-	{ "REPLAY_INDEX_USER", constant<ReplayInformation::INDEX_USER>::func, 0 },
-
-	{ "RESULT_CANCEL", constant<StgControlScript::RESULT_CANCEL>::func, 0 },
-	{ "RESULT_END", constant<StgControlScript::RESULT_END>::func, 0 },
-	{ "RESULT_RETRY", constant<StgControlScript::RESULT_RETRY>::func, 0 },
-	{ "RESULT_SAVE_REPLAY", constant<StgControlScript::RESULT_SAVE_REPLAY>::func, 0 },
 };
+static const std::vector<constant> stgControlConstant = {
+	//Events
+	constant("EV_USER_COUNT", StgControlScript::EV_USER_COUNT),
+	constant("EV_USER", StgControlScript::EV_USER),
+	constant("EV_USER_SYSTEM", StgControlScript::EV_USER_SYSTEM),
+	constant("EV_USER_STAGE", StgControlScript::EV_USER_STAGE),
+	constant("EV_USER_PLAYER", StgControlScript::EV_USER_PLAYER),
+	constant("EV_USER_PACKAGE", StgControlScript::EV_USER_PACKAGE),
+
+	//GetScriptInfoA1 script types
+	constant("TYPE_SCRIPT_ALL", StgControlScript::TYPE_SCRIPT_ALL),
+	constant("TYPE_SCRIPT_PLAYER", StgControlScript::TYPE_SCRIPT_PLAYER),
+	constant("TYPE_SCRIPT_SINGLE", StgControlScript::TYPE_SCRIPT_SINGLE),
+	constant("TYPE_SCRIPT_PLURAL", StgControlScript::TYPE_SCRIPT_PLURAL),
+	constant("TYPE_SCRIPT_STAGE", StgControlScript::TYPE_SCRIPT_STAGE),
+	constant("TYPE_SCRIPT_PACKAGE", StgControlScript::TYPE_SCRIPT_PACKAGE),
+
+	//Script infos
+	constant("INFO_SCRIPT_TYPE", StgControlScript::INFO_SCRIPT_TYPE),
+	constant("INFO_SCRIPT_PATH", StgControlScript::INFO_SCRIPT_PATH),
+	constant("INFO_SCRIPT_ID", StgControlScript::INFO_SCRIPT_ID),
+	constant("INFO_SCRIPT_TITLE", StgControlScript::INFO_SCRIPT_TITLE),
+	constant("INFO_SCRIPT_TEXT", StgControlScript::INFO_SCRIPT_TEXT),
+	constant("INFO_SCRIPT_IMAGE", StgControlScript::INFO_SCRIPT_IMAGE),
+	constant("INFO_SCRIPT_REPLAY_NAME", StgControlScript::INFO_SCRIPT_REPLAY_NAME),
+
+	//Replay data infos
+	constant("REPLAY_FILE_PATH", StgControlScript::REPLAY_FILE_PATH),
+	constant("REPLAY_DATE_TIME", StgControlScript::REPLAY_DATE_TIME),
+	constant("REPLAY_USER_NAME", StgControlScript::REPLAY_USER_NAME),
+	constant("REPLAY_TOTAL_SCORE", StgControlScript::REPLAY_TOTAL_SCORE),
+	constant("REPLAY_FPS_AVERAGE", StgControlScript::REPLAY_FPS_AVERAGE),
+	constant("REPLAY_PLAYER_NAME", StgControlScript::REPLAY_PLAYER_NAME),
+	constant("REPLAY_STAGE_INDEX_LIST", StgControlScript::REPLAY_STAGE_INDEX_LIST),
+	constant("REPLAY_STAGE_START_SCORE_LIST", StgControlScript::REPLAY_STAGE_START_SCORE_LIST),
+	constant("REPLAY_STAGE_LAST_SCORE_LIST", StgControlScript::REPLAY_STAGE_LAST_SCORE_LIST),
+	constant("REPLAY_COMMENT", StgControlScript::REPLAY_COMMENT),
+
+	//Replay index
+	constant("REPLAY_INDEX_ACTIVE", ReplayInformation::INDEX_ACTIVE),
+	constant("REPLAY_INDEX_DIGIT_MIN", ReplayInformation::INDEX_DIGIT_MIN),
+	constant("REPLAY_INDEX_DIGIT_MAX", ReplayInformation::INDEX_DIGIT_MAX),
+	constant("REPLAY_INDEX_USER", ReplayInformation::INDEX_USER),
+
+	//Common script results
+	constant("RESULT_CANCEL", StgControlScript::RESULT_CANCEL),
+	constant("RESULT_END", StgControlScript::RESULT_END),
+	constant("RESULT_RETRY", StgControlScript::RESULT_RETRY),
+	constant("RESULT_SAVE_REPLAY", StgControlScript::RESULT_SAVE_REPLAY),
+};
+
 StgControlScript::StgControlScript(StgSystemController* systemController) {
 	systemController_ = systemController;
 	scriptManager_ = nullptr;
-	_AddFunction(stgControlFunction, sizeof(stgControlFunction) / sizeof(function));
+
+	_AddFunction(&stgControlFunction);
+	_AddConstant(&stgControlConstant);
 
 	bLoad_ = false;
 	bEndScript_ = false;

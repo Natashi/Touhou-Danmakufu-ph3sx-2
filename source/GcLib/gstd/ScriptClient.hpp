@@ -70,7 +70,8 @@ namespace gstd {
 		gstd::ref_count_ptr<ScriptEngineData> engine_;
 		script_machine* machine_;
 
-		std::vector<function> func_;
+		std::vector<gstd::function> func_;
+		std::vector<gstd::constant> const_;
 		shared_ptr<RandProvider> mt_;
 		shared_ptr<RandProvider> mtEffect_;
 		gstd::ref_count_ptr<ScriptCommonDataManager> commonDataManager_;
@@ -83,7 +84,8 @@ namespace gstd {
 		gstd::value valueRes_;
 
 		void _AddFunction(const char* name, callback f, size_t arguments);
-		void _AddFunction(const function* f, size_t count);
+		void _AddFunction(const std::vector<gstd::function>* f);
+		void _AddConstant(const std::vector<gstd::constant>* c);
 		void _RaiseErrorFromEngine();
 		void _RaiseErrorFromMachine();
 		void _RaiseError(int line, const std::wstring& message);
@@ -184,7 +186,9 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_Hypot);
 
 		static value Func_Rand(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_RandI);
 		DNH_FUNCAPI_DECL_(Func_RandEff);
+		DNH_FUNCAPI_DECL_(Func_RandEffI);
 
 		DNH_FUNCAPI_DECL_(Func_ToDegrees);
 		DNH_FUNCAPI_DECL_(Func_ToRadians);

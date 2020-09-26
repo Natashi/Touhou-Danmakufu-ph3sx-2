@@ -187,9 +187,15 @@ namespace gstd {
 		int error_line;
 		std::map<std::string, script_block*> events;
 
-		parser(script_engine* e, script_scanner* s, int funcc, const function* funcv);
+		script_block* block_const_reg;
+		size_t count_base_constants;
 
+		parser(script_engine* e, script_scanner* s);
 		virtual ~parser() {}
+
+		void load_functions(std::vector<function>* list_func);
+		void load_constants(std::vector<constant>* list_const);
+		void begin_parse();
 
 		void parse_parentheses(script_block* block, parser_state_t* state);
 		void parse_clause(script_block* block, parser_state_t* state);

@@ -41,6 +41,21 @@ value BaseFunction::F(script_machine* machine, int argc, const value* argv) { \
 }
 
 namespace gstd {
+	constant::constant(const char* name_, int64_t d_int) : name(name_), type(type_data::tk_int) {
+		memcpy(&data, &d_int, sizeof(int64_t));
+	}
+	constant::constant(const char* name_, double d_real) : name(name_), type(type_data::tk_real) {
+		memcpy(&data, &d_real, sizeof(double));
+	}
+	constant::constant(const char* name_, wchar_t d_char) : name(name_), type(type_data::tk_char) {
+		memcpy(&data, &d_char, sizeof(wchar_t));
+	}
+	constant::constant(const char* name_, bool d_bool) : name(name_), type(type_data::tk_boolean) {
+		memcpy(&data, &d_bool, sizeof(bool));
+	}
+
+	//-------------------------------------------------------------------------------------------
+
 	static inline bool _type_check_two_any(type_data* type_l, type_data* type_r, uint8_t type) {
 		if (type_l != nullptr && type_r != nullptr) {
 			uint8_t type_combine = (uint8_t)type_l->get_kind() | (uint8_t)type_r->get_kind();

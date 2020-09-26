@@ -327,10 +327,7 @@ void ScriptManager::AddRelativeScriptManagerMutual(weak_ptr<ScriptManager> manag
 /**********************************************************
 //ManagedScript
 **********************************************************/
-const function commonFunction[] =
-{
-	//関数：
-
+static const std::vector<function> commonFunction = {
 	//制御共通関数：スクリプト操作
 	{ "LoadScript", ManagedScript::Func_LoadScript, 1 },
 	{ "LoadScriptInThread", ManagedScript::Func_LoadScriptInThread, 1 },
@@ -349,9 +346,10 @@ const function commonFunction[] =
 	{ "NotifyEventAll", ManagedScript::Func_NotifyEventAll, -3 },	//1 fixed + ... -> 2 minimum
 	{ "PauseScript", ManagedScript::Func_PauseScript, 2 },
 };
+
 ManagedScript::ManagedScript() {
 	scriptManager_ = nullptr;
-	_AddFunction(commonFunction, sizeof(commonFunction) / sizeof(function));
+	_AddFunction(&commonFunction);
 
 	bLoad_ = false;
 	bEndScript_ = false;

@@ -21,6 +21,21 @@ namespace gstd {
 		const char* name;
 		callback func;
 		int arguments;
+
+		function(const char* name_, callback func_) : function(name_, func_, 0) {};
+		function(const char* name_, callback func_, int argc) : name(name_), 
+			func(func_), arguments(argc) {};
+	};
+	struct constant {
+		const char* name;
+		type_data::type_kind type;
+		uint64_t data;
+
+		constant(const char* name_, int d_int) : constant(name_, (int64_t)d_int) {};
+		constant(const char* name_, int64_t d_int);
+		constant(const char* name_, double d_real);
+		constant(const char* name_, wchar_t d_char);
+		constant(const char* name_, bool d_bool);
 	};
 
 	class BaseFunction {

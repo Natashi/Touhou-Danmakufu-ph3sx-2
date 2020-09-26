@@ -46,8 +46,7 @@ shared_ptr<ManagedScript> StgPackageScriptManager::Create(int type) {
 /**********************************************************
 //StgPackageScript
 **********************************************************/
-const function stgPackageFunction[] =
-{
+static const std::vector<function> stgPackageFunction = {
 	//パッケージ共通関数：パッケージ操作
 	{ "ClosePackage", StgPackageScript::Func_ClosePackage, 0 },
 
@@ -63,16 +62,20 @@ const function stgPackageFunction[] =
 	{ "GetStageSceneResult", StgPackageScript::Func_GetStageSceneResult, 0 },
 	{ "PauseStageScene", StgPackageScript::Func_PauseStageScene, 1 },
 	{ "TerminateStageScene", StgPackageScript::Func_TerminateStageScene, 0 },
-
-	//定数：
-	{ "STAGE_STATE_FINISHED", constant<StgPackageScript::STAGE_STATE_FINISHED>::func, 0 },
-
-	{ "STAGE_RESULT_BREAK_OFF", constant<StgStageInformation::RESULT_BREAK_OFF>::func, 0 },
-	{ "STAGE_RESULT_PLAYER_DOWN", constant<StgStageInformation::RESULT_PLAYER_DOWN>::func, 0 },
-	{ "STAGE_RESULT_CLEARED", constant<StgStageInformation::RESULT_CLEARED>::func, 0 },
 };
+static const std::vector<constant> stgPackageConstant = {
+	//GetStageSceneState state
+	constant("STAGE_STATE_FINISHED", StgPackageScript::STAGE_STATE_FINISHED),
+
+	//TerminateStageScene results
+	constant("STAGE_RESULT_BREAK_OFF", StgStageInformation::RESULT_BREAK_OFF),
+	constant("STAGE_RESULT_PLAYER_DOWN", StgStageInformation::RESULT_PLAYER_DOWN),
+	constant("STAGE_RESULT_CLEARED", StgStageInformation::RESULT_CLEARED),
+};
+
 StgPackageScript::StgPackageScript(StgPackageController* packageController) : StgControlScript(packageController->GetSystemController()) {
-	_AddFunction(stgPackageFunction, sizeof(stgPackageFunction) / sizeof(function));
+	_AddFunction(&stgPackageFunction);
+	_AddConstant(&stgPackageConstant);
 
 	typeScript_ = TYPE_PACKAGE_MAIN;
 	packageController_ = packageController;
