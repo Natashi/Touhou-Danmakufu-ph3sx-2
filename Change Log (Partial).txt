@@ -149,5 +149,6 @@
 	- Fixed a bug where the 3D viewport would get stretched out based on the size of the STG frame.
 	- Made the game no longer freeze and crash after Alt-Tab'ing out of true fullscreen mode or after waking the desktop from sleep.
 	- Pseudo-fullscreen mode now stops Windows from going to sleep.
+	- Fixed a mistake involving matrix multiplication order in the shader for particle list objects.
 	- Various optimizations.
 	- Un-Utilized UPX Executable Packer to not-reduce file size.

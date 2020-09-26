@@ -428,7 +428,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Behaves similar to printf.
 			Returns the formatted string.
 		
-	--------------------------------> File Path <--------------------------------
+	--------------------------------> File Path and Archives <--------------------------------
 	
 	GetArchiveFilePathList
 		Arguments:
@@ -489,12 +489,20 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns true if the given directory exists.
 			
-	--------------------------------> Archive <--------------------------------
+	--------------------------------> Engine Utilities <--------------------------------
 	
 	IsEngineFastMode
 		Description:
 			Returns whether the engine is in the "fast mode" state.
 			(Note: Normally triggered with the LCtrl key.)
+			
+	GetConfigWindowSizeIndex
+		Description:
+			Returns the config's selected window size index.
+			
+	GetConfigWindowSizeList
+		Description:
+			Returns an array of the window sizes specified in th_dnh.def.
 			
 	--------------------------------> Screenshot <--------------------------------
 		
@@ -604,7 +612,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			*Scripts paused with PauseScript would still get notified.
 			
 			It is possible to pass as many event arguments as you want.
-			
+	
 	--------------------------------> Script <--------------------------------
 			
 	PauseScript
@@ -616,6 +624,29 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Causes an error is the script ID is the ID of the script from which the function was called,
 				aka; "a script cannot pause itself".
 				
+	--------------------------------> Screen Status <--------------------------------
+	
+	GetMonitorWidth
+		Description:
+			Returns the width of the primary display monitor.
+			
+	GetMonitorHeight
+		Description:
+			Returns the height of the primary display monitor.
+	
+	GetWindowedWidth
+		Description:
+			Returns the width of the windowed mode.
+			
+	GetWindowedHeight
+		Description:
+			Returns the height of the windowed mode.
+			
+	IsFullscreenMode
+		Description:
+			Returns whether or not the game is in fullscreen mode.
+			Both pseudo and true fullscreen return true.
+	
 	--------------------------------> Matrix <--------------------------------
 	
 	A "matrix" here is a 16-member array representing a 4x4 matrix arranged row-by-row.
@@ -1600,6 +1631,21 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Writes double value to the binary file object at the current write pointer.
 			
 ---------------------------------------------->	[Stage Script] <----------------------------------------------
+
+	-------------------------------->  Base Stage Functions <--------------------------------
+	
+	SetIntersectionVisualization
+		Arguments:
+			1) (bool) enable
+		Description:
+			Enables active visualization of all intersection object hitboxes.
+			
+			Color codes:
+				Green   : Player hitbox+grazebox
+				Blue    : Player shot
+				Cyan    : Player spell
+				Yellow  : Enemy hitbox+killbox
+				Red     : Enemy shot
 	
 	--------------------------------> Player Functions <--------------------------------
 	
@@ -2380,21 +2426,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				OWNER_ENEMY
 				
 ---------------------------------------------->	[Player Script] <----------------------------------------------
-
-	-------------------------------->  Basic Stage Functions <--------------------------------
-	
-	SetIntersectionVisualization
-		Arguments:
-			1) (bool) enable
-		Description:
-			Enables active visualization of all intersection object hitboxes.
-			
-			Color codes:
-				Green   : Player hitbox+grazebox
-				Blue    : Player shot
-				Cyan    : Player spell
-				Yellow  : Enemy hitbox+killbox
-				Red     : Enemy shot
 
 	-------------------------------->  Normal Functions <--------------------------------
 	
