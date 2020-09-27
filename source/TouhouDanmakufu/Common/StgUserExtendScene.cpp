@@ -145,8 +145,8 @@ void StgPauseScene::Work() {
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
 	ref_count_ptr<StgStageInformation> infoStage = systemController_->GetStageController()->GetStageInformation();
 	gstd::value resValue = scriptManager_->GetResultValue();
-	if (ManagedScript::IsRealValue(resValue)) {
-		int result = (int)resValue.as_real();
+	if (resValue.has_data()) {
+		int result = resValue.as_int();
 		if (result == StgControlScript::RESULT_CANCEL) {
 		}
 		else if (result == StgControlScript::RESULT_END) {
@@ -233,8 +233,8 @@ void StgEndScene::Work() {
 
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
 	gstd::value resValue = scriptManager_->GetResultValue();
-	if (ManagedScript::IsRealValue(resValue)) {
-		int result = (int)resValue.as_real();
+	if (resValue.has_data()) {
+		int result = resValue.as_int();
 		if (result == StgControlScript::RESULT_SAVE_REPLAY) {
 			//info->SetStgEnd();
 			systemController_->TransReplaySaveScene();
@@ -297,8 +297,8 @@ void StgReplaySaveScene::Work() {
 
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
 	gstd::value resValue = scriptManager_->GetResultValue();
-	if (ManagedScript::IsRealValue(resValue)) {
-		int result = (int)resValue.as_real();
+	if (resValue.has_data()) {
+		int result = resValue.as_int();
 		if (result == StgControlScript::RESULT_END) {
 			infoSystem->SetStgEnd();
 		}
