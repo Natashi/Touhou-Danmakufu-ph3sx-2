@@ -296,7 +296,7 @@ void StgEnemyBossSceneObject::Activate() {
 				double life = vLife.as_real();
 				listLife.push_back(life);
 			}
-			else if (script->IsRealArrayValue(vLife)) {
+			else if (script->IsRealArrayValue(vLife) || script->IsIntArrayValue(vLife)) {
 				for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
 					double life = vLife.index_as_array(iLife).as_real();
 					listLife.push_back(life);
