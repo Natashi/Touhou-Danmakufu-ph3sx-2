@@ -243,7 +243,7 @@ void StgPlayerObject::KillSelf(bool bCalledFromScript) {
 		state_ = STATE_HIT;
 		frameState_ = infoPlayer_->frameRebirth_;
 
-		gstd::value valueHitObjectID = script_->CreateRealValue(bCalledFromScript ? DxScript::ID_INVALID : hitObjectID_);
+		gstd::value valueHitObjectID = script_->CreateIntValue(bCalledFromScript ? DxScript::ID_INVALID : hitObjectID_);
 		script_->RequestEvent(StgStagePlayerScript::EV_HIT, &valueHitObjectID, 1);
 	}
 }
@@ -273,8 +273,8 @@ void StgPlayerObject::SendGrazeEvent() {
 	listGrazedShot_.clear();
 
 	value listScriptValue[3];
-	listScriptValue[0] = script_->CreateRealValue(iValidGraze);
-	listScriptValue[1] = script_->CreateRealArrayValue(listShotID);
+	listScriptValue[0] = script_->CreateIntValue(iValidGraze);
+	listScriptValue[1] = script_->CreateIntArrayValue(listShotID);
 	listScriptValue[2] = script_->CreateValueArrayValue(listValPos);
 	script_->RequestEvent(StgStagePlayerScript::EV_GRAZE, listScriptValue, 3);
 

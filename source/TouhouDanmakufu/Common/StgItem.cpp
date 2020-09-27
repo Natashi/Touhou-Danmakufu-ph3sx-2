@@ -859,8 +859,8 @@ StgItemObject_1UP::StgItemObject_1UP(StgStageController* stageController) : StgI
 }
 void StgItemObject_1UP::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	gstd::value listValue[2] = { 
-		DxScript::CreateRealValue(typeItem_), 
-		DxScript::CreateRealValue(idObject_)
+		DxScript::CreateIntValue(typeItem_), 
+		DxScript::CreateIntValue(idObject_)
 	};
 	_NotifyEventToPlayerScript(listValue, 2);
 	_NotifyEventToItemScript(listValue, 2);
@@ -877,8 +877,8 @@ StgItemObject_Bomb::StgItemObject_Bomb(StgStageController* stageController) : St
 }
 void StgItemObject_Bomb::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
 	gstd::value listValue[2] = {
-		DxScript::CreateRealValue(typeItem_),
-		DxScript::CreateRealValue(idObject_)
+		DxScript::CreateIntValue(typeItem_),
+		DxScript::CreateIntValue(idObject_)
 	};
 	_NotifyEventToPlayerScript(listValue, 2);
 	_NotifyEventToItemScript(listValue, 2);
@@ -900,8 +900,8 @@ void StgItemObject_Power::Intersect(shared_ptr<StgIntersectionTarget> ownTarget,
 	stageController_->GetStageInformation()->AddScore(score_);
 
 	gstd::value listValue[2] = {
-		DxScript::CreateRealValue(typeItem_),
-		DxScript::CreateRealValue(idObject_)
+		DxScript::CreateIntValue(typeItem_),
+		DxScript::CreateIntValue(idObject_)
 	};
 	_NotifyEventToPlayerScript(listValue, 2);
 	_NotifyEventToItemScript(listValue, 2);
@@ -922,8 +922,8 @@ void StgItemObject_Point::Intersect(shared_ptr<StgIntersectionTarget> ownTarget,
 	stageController_->GetStageInformation()->AddScore(score_);
 
 	gstd::value listValue[2] = {
-		DxScript::CreateRealValue(typeItem_),
-		DxScript::CreateRealValue(idObject_)
+		DxScript::CreateIntValue(typeItem_),
+		DxScript::CreateIntValue(idObject_)
 	};
 	_NotifyEventToPlayerScript(listValue, 2);
 	_NotifyEventToItemScript(listValue, 2);
@@ -1131,8 +1131,8 @@ void StgItemObject_User::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, 
 	stageController_->GetStageInformation()->AddScore(score_);
 
 	gstd::value listValue[2] = {
-		DxScript::CreateRealValue(typeItem_),
-		DxScript::CreateRealValue(idObject_)
+		DxScript::CreateIntValue(typeItem_),
+		DxScript::CreateIntValue(idObject_)
 	};
 	_NotifyEventToPlayerScript(listValue, 2);
 	_NotifyEventToItemScript(listValue, 2);

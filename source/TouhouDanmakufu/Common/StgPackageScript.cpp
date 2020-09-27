@@ -298,7 +298,7 @@ gstd::value StgPackageScript::Func_GetStageSceneState(gstd::script_machine* mach
 	if (scene == StgSystemInformation::SCENE_PACKAGE_CONTROL)
 		res = STAGE_STATE_FINISHED;
 
-	return script->CreateRealValue(res);
+	return script->CreateIntValue(res);
 }
 gstd::value StgPackageScript::Func_GetStageSceneResult(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgPackageScript* script = (StgPackageScript*)machine->data;
@@ -314,7 +314,7 @@ gstd::value StgPackageScript::Func_GetStageSceneResult(gstd::script_machine* mac
 		res = infoStage->GetResult();
 	}
 
-	return script->CreateRealValue(res);
+	return script->CreateIntValue(res);
 }
 gstd::value StgPackageScript::Func_PauseStageScene(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgPackageScript* script = (StgPackageScript*)machine->data;

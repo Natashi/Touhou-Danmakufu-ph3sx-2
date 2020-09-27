@@ -419,7 +419,7 @@ gstd::value ManagedScript::Func_LoadScript(gstd::script_machine* machine, int ar
 	target->scriptParam_ = script->scriptParam_;
 
 	int64_t res = scriptManager->LoadScript(path, target);
-	return script->CreateRealValue(res);
+	return script->CreateIntValue(res);
 }
 gstd::value ManagedScript::Func_LoadScriptInThread(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
@@ -431,7 +431,7 @@ gstd::value ManagedScript::Func_LoadScriptInThread(gstd::script_machine* machine
 	target->scriptParam_ = script->scriptParam_;
 
 	int64_t res = scriptManager->LoadScriptInThread(path, target);
-	return script->CreateRealValue(res);
+	return script->CreateIntValue(res);
 }
 gstd::value ManagedScript::Func_StartScript(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
@@ -462,12 +462,12 @@ gstd::value ManagedScript::Func_IsCloseScript(gstd::script_machine* machine, int
 gstd::value ManagedScript::Func_GetOwnScriptID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
 	int64_t res = script->GetScriptID();
-	return script->CreateRealValue(res);
+	return script->CreateIntValue(res);
 }
 gstd::value ManagedScript::Func_GetEventType(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
 	int res = script->typeEvent_;
-	return script->CreateRealValue(res);
+	return script->CreateIntValue(res);
 }
 gstd::value ManagedScript::Func_GetEventArgument(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
@@ -480,7 +480,7 @@ gstd::value ManagedScript::Func_GetEventArgument(script_machine* machine, int ar
 }
 gstd::value ManagedScript::Func_GetEventArgumentCount(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
-	return script->CreateRealValue(script->listValueEventSize_);
+	return script->CreateIntValue(script->listValueEventSize_);
 }
 gstd::value ManagedScript::Func_SetScriptArgument(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;

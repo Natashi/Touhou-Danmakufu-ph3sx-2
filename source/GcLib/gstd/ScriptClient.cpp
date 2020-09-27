@@ -963,7 +963,7 @@ value ScriptClientBase::Func_GetScriptArgument(script_machine* machine, int argc
 value ScriptClientBase::Func_GetScriptArgumentCount(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = (ScriptClientBase*)machine->data;
 	size_t res = script->listValueArg_.size();
-	return script->CreateRealValue(res);
+	return script->CreateIntValue(res);
 }
 value ScriptClientBase::Func_SetScriptResult(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = (ScriptClientBase*)machine->data;
@@ -1331,7 +1331,7 @@ value ScriptClientBase::Func_VtoS(script_machine* machine, int argc, const value
 value ScriptClientBase::Func_AtoI(script_machine* machine, int argc, const value* argv) {
 	std::wstring str = argv->as_string();
 	int64_t num = wcstoll(str.c_str(), nullptr, 10);
-	return CreateRealValue(num);
+	return CreateIntValue(num);
 }
 value ScriptClientBase::Func_AtoR(script_machine* machine, int argc, const value* argv) {
 	std::wstring str = argv->as_string();
@@ -1531,7 +1531,7 @@ value ScriptClientBase::Func_RaiseMessageWindow(script_machine* machine, int arg
 	
 	int res = MessageBoxW(nullptr, message.c_str(),
 		title.c_str(), flags);
-	return ScriptClientBase::CreateRealValue(res);
+	return ScriptClientBase::CreateIntValue(res);
 }
 
 //共通関数：共通データ

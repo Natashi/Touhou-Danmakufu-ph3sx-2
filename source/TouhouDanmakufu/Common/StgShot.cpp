@@ -831,9 +831,9 @@ void StgShotObject::_DeleteInLife() {
 			float listPos[2] = { posX, posY };
 
 			value listScriptValue[3];
-			listScriptValue[0] = scriptPlayer->CreateRealValue(idObject_);
+			listScriptValue[0] = scriptPlayer->CreateIntValue(idObject_);
 			listScriptValue[1] = scriptPlayer->CreateRealArrayValue(listPos, 2U);
-			listScriptValue[2] = scriptPlayer->CreateRealValue(GetShotDataID());
+			listScriptValue[2] = scriptPlayer->CreateIntValue(GetShotDataID());
 			scriptPlayer->RequestEvent(StgStagePlayerScript::EV_DELETE_SHOT_PLAYER, listScriptValue, 3);
 		}
 	}
@@ -908,10 +908,10 @@ void StgShotObject::_SendDeleteEvent(int bit) {
 	}
 
 	value listScriptValue[4];
-	listScriptValue[0] = ManagedScript::CreateRealValue(idObject_);
+	listScriptValue[0] = ManagedScript::CreateIntValue(idObject_);
 	listScriptValue[1] = ManagedScript::CreateRealArrayValue(listPos, 2U);
 	listScriptValue[2] = ManagedScript::CreateBooleanValue(false);
-	listScriptValue[3] = ManagedScript::CreateRealValue(GetShotDataID());
+	listScriptValue[3] = ManagedScript::CreateIntValue(GetShotDataID());
 	scriptShot->RequestEvent(typeEvent, listScriptValue, 4);
 }
 
@@ -1460,10 +1460,10 @@ void StgNormalShotObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 		float listPos[2] = { posX, posY };
 
 		gstd::value listScriptValue[4];
-		listScriptValue[0] = scriptItem->CreateRealValue(idObject_);
+		listScriptValue[0] = scriptItem->CreateIntValue(idObject_);
 		listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
 		listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
-		listScriptValue[3] = scriptItem->CreateRealValue(GetShotDataID());
+		listScriptValue[3] = scriptItem->CreateIntValue(GetShotDataID());
 		scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 	}
 
@@ -1791,10 +1791,10 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 			listPos[0] = posX;
 			listPos[1] = posY;
 
-			listScriptValue[0] = scriptItem->CreateRealValue(idObject_);
+			listScriptValue[0] = scriptItem->CreateIntValue(idObject_);
 			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
 			listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
-			listScriptValue[3] = scriptItem->CreateRealValue(GetShotDataID());
+			listScriptValue[3] = scriptItem->CreateIntValue(GetShotDataID());
 			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 
@@ -2104,10 +2104,10 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 			listPos[0] = itemX;
 			listPos[1] = itemY;
 
-			listScriptValue[0] = scriptItem->CreateRealValue(idObject_);
+			listScriptValue[0] = scriptItem->CreateIntValue(idObject_);
 			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
 			listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
-			listScriptValue[3] = scriptItem->CreateRealValue(GetShotDataID());
+			listScriptValue[3] = scriptItem->CreateIntValue(GetShotDataID());
 			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 
@@ -2443,9 +2443,9 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 
 	gstd::value listScriptValue[4];
 	if (scriptItem) {
-		listScriptValue[0] = scriptItem->CreateRealValue(idObject_);
+		listScriptValue[0] = scriptItem->CreateIntValue(idObject_);
 		listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
-		listScriptValue[3] = scriptItem->CreateRealValue(GetShotDataID());
+		listScriptValue[3] = scriptItem->CreateIntValue(GetShotDataID());
 	}
 
 	size_t countToItem = 0U;
