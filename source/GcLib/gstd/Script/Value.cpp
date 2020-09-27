@@ -146,8 +146,10 @@ int64_t value::as_int() const {
 		return data->int_value;
 	if (kind & type_data::tk_real)
 		return (int64_t)(data->real_value + (data->real_value > 0 ? 0.01 : -0.01));
-	if (kind & (type_data::tk_char | type_data::tk_boolean))
+	if (kind & type_data::tk_char)
 		return (int64_t)data->char_value;
+	if (kind & type_data::tk_boolean)
+		return (int64_t)data->boolean_value;
 	if (kind & type_data::tk_array) {
 		if (data->type->get_element()->get_kind() == type_data::type_kind::tk_char) {
 			try {
@@ -168,8 +170,10 @@ double value::as_real() const {
 		return data->real_value;
 	if (kind & type_data::tk_int)
 		return (double)data->int_value;
-	if (kind & (type_data::tk_char | type_data::tk_boolean))
+	if (kind & type_data::tk_char)
 		return (double)data->char_value;
+	if (kind & type_data::tk_boolean)
+		return (double)data->boolean_value;
 	if (kind & type_data::tk_array) {
 		if (data->type->get_element()->get_kind() == type_data::type_kind::tk_char) {
 			try {
