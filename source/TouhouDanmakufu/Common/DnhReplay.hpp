@@ -82,7 +82,7 @@ private:
 	int64_t scoreLast_;
 	int64_t graze_;
 	int64_t point_;
-	int frameEnd_;
+	DWORD frameEnd_;
 	uint32_t randSeed_;
 	std::vector<float> listFramePerSecond_;
 	ref_count_ptr<gstd::RecordBuffer> recordKey_;
@@ -116,8 +116,8 @@ public:
 	void SetGraze(int64_t graze) { graze_ = graze; }
 	int64_t GetPoint() { return point_; }
 	void SetPoint(int64_t point) { point_ = point; }
-	int GetEndFrame() { return frameEnd_; }
-	void SetEndFrame(int frame) { frameEnd_ = frame; }
+	DWORD GetEndFrame() { return frameEnd_; }
+	void SetEndFrame(DWORD frame) { frameEnd_ = frame; }
 	uint32_t GetRandSeed() { return randSeed_; }
 	void SetRandSeed(uint32_t seed) { randSeed_ = seed; }
 	float GetFramePerSecond(int frame) { int index = frame / 60; int res = index < listFramePerSecond_.size() ? listFramePerSecond_[index] : 0; return res; }

@@ -271,7 +271,7 @@ void StgStageController::CloseScene() {
 		replayStageData->SetReplayKeyRecord(recKey);
 
 		//ÅIƒtƒŒ[ƒ€
-		int stageFrame = infoStage_->GetCurrentFrame();
+		DWORD stageFrame = infoStage_->GetCurrentFrame();
 		replayStageData->SetEndFrame(stageFrame);
 
 		replayStageData->SetLastScore(infoStage_->GetScore());
@@ -379,7 +379,7 @@ void StgStageController::Work() {
 
 			if (!infoStage_->IsReplay()) {
 				//Add FPS data to the replay file
-				int stageFrame = infoStage_->GetCurrentFrame();
+				DWORD stageFrame = infoStage_->GetCurrentFrame();
 				if (stageFrame % 60 == 0) {
 					ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage_->GetReplayData();
 					float framePerSecond = EFpsController::GetInstance()->GetCurrentFps();

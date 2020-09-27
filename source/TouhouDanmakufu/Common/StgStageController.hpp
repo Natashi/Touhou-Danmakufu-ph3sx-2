@@ -84,7 +84,7 @@ private:
 	bool bEndStg_;
 	bool bPause_;
 	bool bReplay_;//ƒŠƒvƒŒƒC
-	int frame_;
+	DWORD frame_;
 	int stageIndex_;
 
 	ref_count_ptr<ScriptInformation> infoMainScript_;
@@ -108,8 +108,7 @@ private:
 	int64_t graze_;
 	int64_t point_;
 	int result_;
-	int timeStart_;
-
+	DWORD timeStart_;
 public:
 	StgStageInformation();
 	virtual ~StgStageInformation();
@@ -119,7 +118,7 @@ public:
 	void SetPause(bool bPause) { bPause_ = bPause; }
 	bool IsReplay() { return bReplay_; }
 	void SetReplay(bool bReplay) { bReplay_ = bReplay; }
-	int GetCurrentFrame() { return frame_; }
+	DWORD GetCurrentFrame() { return frame_; }
 	void AdvanceFrame() { frame_++; }
 	int GetStageIndex() { return stageIndex_; }
 	void SetStageIndex(int index) { stageIndex_ = index; }
@@ -168,8 +167,8 @@ public:
 	int GetResult() { return result_; }
 	void SetResult(int result) { result_ = result; }
 
-	int GetStageStartTime() { return timeStart_; }
-	void SetStageStartTime(int time) { timeStart_ = time; }
+	DWORD GetStageStartTime() { return timeStart_; }
+	void SetStageStartTime(DWORD time) { timeStart_ = time; }
 };
 
 /**********************************************************
