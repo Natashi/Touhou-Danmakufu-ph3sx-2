@@ -141,8 +141,10 @@ namespace gstd {
 		static bool IsIntValue(value& v);
 		static bool IsBooleanValue(value& v);
 		static bool IsStringValue(value& v);
+		static bool IsArrayValue(value& v);
 		static bool IsArrayValue(value& v, type_data* element);
 		static bool IsRealArrayValue(value& v);
+		static bool IsIntArrayValue(value& v);
 
 		static void IsMatrix(script_machine*& machine, const value& v);
 		static void IsVector(script_machine*& machine, const value& v, size_t count);

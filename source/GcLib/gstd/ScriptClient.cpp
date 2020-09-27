@@ -257,10 +257,11 @@ void ScriptClientBase::_RaiseError(int line, const std::wstring& message) {
 
 	std::wstring fileName = PathProperty::GetFileName(entry->path_);
 
-	std::wstring str = StringUtility::Format(L"%s\r\n%s" "\r\n[%s] " "line-> %d\r\n\r\n«\r\n%s\r\n```",
+	std::wstring str = StringUtility::Format(L"%s\r\n%s" "\r\n[%s (main=%s)] " "line-> %d\r\n\r\n«\r\n%s\r\n```",
 		message.c_str(),
 		entry->path_.c_str(),
 		fileName.c_str(),
+		PathProperty::GetFileName(engine_->GetPath()).c_str(),
 		lineOriginal,
 		errorPos.c_str());
 	throw wexception(str);
@@ -893,6 +894,10 @@ bool ScriptClientBase::IsStringValue(value& v) {
 	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_string_type();
 }
+bool ScriptClientBase::IsArrayValue(value& v) {
+	if (!v.has_data()) return false;
+	return v.get_type()->get_kind() == type_data::tk_array;
+}
 bool ScriptClientBase::IsArrayValue(value& v, type_data* element) {
 	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_instance()->get_array_type(element);
@@ -900,6 +905,10 @@ bool ScriptClientBase::IsArrayValue(value& v, type_data* element) {
 bool ScriptClientBase::IsRealArrayValue(value& v) {
 	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_real_array_type();
+}
+bool ScriptClientBase::IsIntArrayValue(value& v) {
+	if (!v.has_data()) return false;
+	return v.get_type() == script_type_manager::get_int_array_type();
 }
 void ScriptClientBase::IsMatrix(script_machine*& machine, const value& v) {
 	type_data* typeMatrix = script_type_manager::get_real_array_type();
