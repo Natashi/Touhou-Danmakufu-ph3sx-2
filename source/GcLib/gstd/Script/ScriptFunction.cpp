@@ -75,7 +75,6 @@ namespace gstd {
 	//-------------------------------------------------------------------------------------------
 
 	type_data::type_kind BaseFunction::_type_test_promotion(type_data* type_l, type_data* type_r) {
-		if (type_l == nullptr || type_r == nullptr) return type_data::tk_null;
 		uint8_t kind_l = type_l->get_kind();
 		uint8_t kind_r = type_r->get_kind();
 		uint8_t type_combine = kind_l | kind_r;
@@ -96,18 +95,25 @@ namespace gstd {
 		if (!v_dst->has_data()) return true;		//dest is null, assign ahead
 		type_data* type_src = v_src->get_type();
 		type_data* type_dst = v_dst->get_type();
+		/*
 		if (type_src != type_dst					//If the types are different
 			&& !((type_src->get_kind() & type_dst->get_kind()) == type_data::tk_array	//unless they're both arrays
 				&& (v_dst->length_as_array() == 0 || v_src->length_as_array() == 0))) {		//and either is empty
-			std::string error = "Variable assignment cannot convert its type: ";
-			error += type_data::string_representation(type_dst);
-			error += " to ";
-			error += type_data::string_representation(type_src);
-			error += "\r\n";
+		*/
+
+		if (type_src == type_dst || !_type_check_two_any(type_dst, type_src, type_data::tk_array))
+			return true;
+		else if (type_src->get_kind() == type_dst->get_kind() 
+			&& (v_dst->length_as_array() == 0 || v_src->length_as_array() == 0))
+			return true;
+		{
+			std::string error = StringUtility::Format(
+				"Variable assignment cannot convert from type \"%s\" to \"%s\".\r\n", 
+				type_data::string_representation(type_dst).c_str(),
+				type_data::string_representation(type_src).c_str());
 			machine->raise_error(error);
-			return false;
 		}
-		return true;
+		return false;
 	}
 
 	value BaseFunction::__script_perform_op_array(const value* v_left, const value* v_right, value(*func)(int, const value*)) {
@@ -266,62 +272,65 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(power);
 
 	value BaseFunction::_script_compare(int argc, const value* argv) {
-		type_data::type_kind type_check = _type_test_promotion(argv[0].get_type(), argv[1].get_type());
-		if (type_check != type_data::tk_null) {
-			int r = 0;
-			switch (type_check) {
-			case type_data::tk_int:
-			{
-				int64_t a = argv[0].as_int();
-				int64_t b = argv[1].as_int();
-				r = (a == b) ? 0 : (a < b) ? -1 : 1;
-				break;
-			}
-			case type_data::tk_real:
-			{
-				double a = argv[0].as_real();
-				double b = argv[1].as_real();
-				r = (a == b) ? 0 : (a < b) ? -1 : 1;
-				break;
-			}
-			case type_data::tk_char:
-			{
-				wchar_t a = argv[0].as_char();
-				wchar_t b = argv[1].as_char();
-				r = (a == b) ? 0 : (a < b) ? -1 : 1;
-				break;
-			}
-			case type_data::tk_boolean:
-			{
-				bool a = argv[0].as_boolean();
-				bool b = argv[1].as_boolean();
-				r = (a == b) ? 0 : (a < b) ? -1 : 1;
-				break;
-			}
-			case type_data::tk_array:
-			{
-				int64_t sl = argv[0].length_as_array();
-				int64_t sr = argv[1].length_as_array();
-				if (sl != sr) {
-					r = sl < sr ? -1 : 1;
+		if (argv[0].get_type() != nullptr && argv[1].get_type() != nullptr) {
+			type_data::type_kind type_check = _type_test_promotion(argv[0].get_type(), argv[1].get_type());
+			if (type_check != type_data::tk_null) {
+				int r = 0;
+				switch (type_check) {
+				case type_data::tk_int:
+				{
+					int64_t a = argv[0].as_int();
+					int64_t b = argv[1].as_int();
+					r = (a == b) ? 0 : (a < b) ? -1 : 1;
 					break;
 				}
-				else {
-					value v[2];
-					for (size_t i = 0; i < sr; ++i) {
-						v[0] = argv[0].index_as_array(i);
-						v[1] = argv[1].index_as_array(i);
-						r = _script_compare(2, v).as_real();
-						if (r != 0)
-							break;
-					}
+				case type_data::tk_real:
+				{
+					double a = argv[0].as_real();
+					double b = argv[1].as_real();
+					r = (a == b) ? 0 : (a < b) ? -1 : 1;
+					break;
 				}
-				break;
+				case type_data::tk_char:
+				{
+					wchar_t a = argv[0].as_char();
+					wchar_t b = argv[1].as_char();
+					r = (a == b) ? 0 : (a < b) ? -1 : 1;
+					break;
+				}
+				case type_data::tk_boolean:
+				{
+					bool a = argv[0].as_boolean();
+					bool b = argv[1].as_boolean();
+					r = (a == b) ? 0 : (a < b) ? -1 : 1;
+					break;
+				}
+				case type_data::tk_array:
+				{
+					int64_t sl = argv[0].length_as_array();
+					int64_t sr = argv[1].length_as_array();
+					if (sl != sr) {
+						r = sl < sr ? -1 : 1;
+						break;
+					}
+					else {
+						value v[2];
+						for (size_t i = 0; i < sr; ++i) {
+							v[0] = argv[0].index_as_array(i);
+							v[1] = argv[1].index_as_array(i);
+							r = _script_compare(2, v).as_real();
+							if (r != 0)
+								break;
+						}
+					}
+					break;
+				}
+				}
+				return value(script_type_manager::get_int_type(), (int64_t)r);
 			}
-			}
-			return value(script_type_manager::get_int_type(), (int64_t)r);
 		}
-		else {
+
+		{
 			std::string error = "Unsupported compare operation: ";
 			error += type_data::string_representation(argv[0].get_type());
 			error += " and ";

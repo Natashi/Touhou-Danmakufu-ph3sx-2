@@ -43,7 +43,7 @@ type_data* script_type_manager::get_array_type(type_data* element) {
 /* script_engine */
 
 script_engine::script_engine(const std::string& source, std::vector<function>* list_func, std::vector<constant>* list_const) {
-	main_block = new_block(0, block_kind::bk_normal);
+	main_block = new_block(1, block_kind::bk_normal);
 
 	const char* end = &source[0] + source.size();
 	script_scanner s(source.c_str(), end);
@@ -61,7 +61,7 @@ script_engine::script_engine(const std::string& source, std::vector<function>* l
 }
 
 script_engine::script_engine(const std::vector<char>& source, std::vector<function>* list_func, std::vector<constant>* list_const) {
-	main_block = new_block(0, block_kind::bk_normal);
+	main_block = new_block(1, block_kind::bk_normal);
 
 	if (false) {
 		wchar_t* pStart = (wchar_t*)&source[0];
@@ -294,18 +294,15 @@ void script_machine::run_code() {
 
 				for (environment* i = current.get(); i != nullptr; i = (i->parent).get()) {
 					if (i->sub->level == c->level) {
-						variables_t& vars = i->variables;
-
-						//Should never happen with pc_var_alloc, but it's here as a failsafe anyway
-						if (vars.capacity <= c->variable) {
-							vars.resize(c->variable + 4);
-						}
-
-						value* dest = &(vars[c->variable]);
+						value* dest = &(i->variables[c->variable]);
 						value* src = &stack.back();
 						if (BaseFunction::_type_assign_check(this, src, dest)) {
+							type_data* prev_type = dest->get_type();
 							*dest = *src;
 							dest->unique();
+							if (prev_type && prev_type != src->get_type())
+								BaseFunction::_value_cast(dest, prev_type->get_kind());
+
 							stack.pop_back();
 						}
 
@@ -324,7 +321,11 @@ void script_machine::run_code() {
 				value* src = &stack[stack.size() - 1];
 
 				if (BaseFunction::_type_assign_check(this, src, dest)) {
+					type_data* prev_type = dest->get_type();
 					dest->overwrite(*src);
+					if (prev_type && prev_type != src->get_type())
+						BaseFunction::_value_cast(dest, prev_type->get_kind());
+
 					stack.pop_back(2U);
 				}
 
@@ -346,7 +347,7 @@ void script_machine::run_code() {
 				//assert(current_stack.size() >= c->arguments);
 
 				if (current_stack.size() < c->arguments) {
-					std::wstring error = StringUtility::FormatToWide(
+					std::string error = StringUtility::Format(
 						"Unexpected script error: Stack size[%d] is less than the number of arguments[%d].\r\n",
 						current_stack.size(), c->arguments);
 					raise_error(error);
@@ -779,6 +780,10 @@ value* script_machine::find_variable_symbol(environment* current_env, code* var_
 		}
 	}
 
-	raise_error(L"Variable hasn't been initialized.\r\n");
+#ifdef _DEBUG
+	raise_error(StringUtility::Format("Variable hasn't been initialized: %s\r\n", var_data->var_name.c_str()));
+#else
+	raise_error("Variable hasn't been initialized.\r\n");
+#endif
 	return nullptr;
 }

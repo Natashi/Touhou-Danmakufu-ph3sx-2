@@ -169,7 +169,7 @@ namespace gstd {
 			register_function(iFunc);
 
 		{
-			block_const_reg = engine->new_block(1, block_kind::bk_normal);
+			block_const_reg = engine->new_block(2, block_kind::bk_normal);
 			block_const_reg->name = "$_scpt_const_reg";
 			engine->main_block->codes.push_back(code(command_kind::pc_var_alloc, 0));
 			engine->main_block->codes.push_back(code(command_kind::pc_call, block_const_reg, 0));
@@ -184,9 +184,6 @@ namespace gstd {
 		size_t iConst = count_base_constants;
 		for (auto itr = list_const->begin(); itr != list_const->end(); ++itr, ++iConst) {
 			const constant* pConst = &*itr;
-
-			symbol s = symbol(0, nullptr, iConst, false, false);
-			frame.begin()->singular_insert(pConst->name, s);
 
 			value const_value;
 			switch (pConst->type) {
@@ -206,7 +203,10 @@ namespace gstd {
 				continue;
 			}
 			block_const_reg->codes.push_back(code(command_kind::pc_push_value, const_value));
-			block_const_reg->codes.push_back(code(command_kind::pc_assign, 0, iConst, pConst->name));
+			block_const_reg->codes.push_back(code(command_kind::pc_assign, 1, iConst, pConst->name));
+
+			symbol s = symbol(1, nullptr, iConst, false, false);
+			frame.begin()->singular_insert(pConst->name, s);
 		}
 		count_base_constants += list_const->size();
 	}
@@ -215,19 +215,16 @@ namespace gstd {
 			frame.push_back(scope_t(block_kind::bk_normal));	//Scope for user symbols
 
 			parser_state_t stateParser(lexer_main);
+			stateParser.ip = engine->main_block->codes.size();
 
-			script_block* blockScriptMain = engine->new_block(1, block_kind::bk_normal);
-			blockScriptMain->name = "$_scpt_main";
-			engine->main_block->codes.push_back(code(0, command_kind::pc_call, blockScriptMain, 0));
+			stateParser.var_count_main = scan_current_scope(&stateParser, 1, nullptr, false, count_base_constants);
+			stateParser.var_count_main += count_base_constants;
 
-			stateParser.var_count_main = scan_current_scope(&stateParser, 1, nullptr, false, 0);
-			stateParser.AddCode(blockScriptMain, code(command_kind::pc_var_alloc, 0));
+			parse_statements(engine->main_block, &stateParser, token_kind::tk_end, token_kind::tk_semicolon);
+			scan_final(engine->main_block, &stateParser);
 
-			parse_statements(blockScriptMain, &stateParser, token_kind::tk_end, token_kind::tk_semicolon);
-			scan_final(blockScriptMain, &stateParser);
-
-			engine->main_block->codes[0].ip = count_base_constants;
-			blockScriptMain->codes[0].ip = stateParser.var_count_main + stateParser.var_count_sub;
+			//for pc_var_alloc
+			engine->main_block->codes[0].ip = count_base_constants + stateParser.var_count_main + stateParser.var_count_sub;
 
 			parser_assert(stateParser.next() == token_kind::tk_end,
 				"Unexpected end-of-file while parsing. (Did you forget a semicolon after a string?)\r\n");
