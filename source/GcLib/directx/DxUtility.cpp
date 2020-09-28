@@ -517,17 +517,22 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 }
 void DxMath::MatrixApplyScaling(D3DXMATRIX* mat, const D3DXVECTOR3& scale) {
 #ifdef __L_MATH_VECTORIZE
-	__m256 v_mat = Vectorize::Mul(
-		Vectorize::Set(mat->_11, mat->_12, mat->_13, mat->_21, mat->_22, mat->_23, mat->_31, mat->_32),
-		Vectorize::Set(scale.x, scale.x, scale.x, scale.y, scale.y, scale.y, scale.z, scale.z));
-	mat->_11 = v_mat.m256_f32[0];
-	mat->_12 = v_mat.m256_f32[1];
-	mat->_13 = v_mat.m256_f32[2];
-	mat->_21 = v_mat.m256_f32[3];
-	mat->_22 = v_mat.m256_f32[4];
-	mat->_23 = v_mat.m256_f32[5];
-	mat->_31 = v_mat.m256_f32[6];
-	mat->_32 = v_mat.m256_f32[7];
+	__m128 v_mat = Vectorize::Mul(
+		Vectorize::Set(mat->_11, mat->_12, mat->_13, mat->_21),
+		Vectorize::Set(scale.x, scale.x, scale.x, scale.y));
+	mat->_11 = v_mat.m128_f32[0];
+	mat->_12 = v_mat.m128_f32[1];
+	mat->_13 = v_mat.m128_f32[2];
+	mat->_21 = v_mat.m128_f32[3];
+
+	v_mat = Vectorize::Mul(
+		Vectorize::Set(mat->_22, mat->_23, mat->_31, mat->_32),
+		Vectorize::Set(scale.y, scale.y, scale.z, scale.z));
+	mat->_22 = v_mat.m128_f32[0];
+	mat->_23 = v_mat.m128_f32[1];
+	mat->_31 = v_mat.m128_f32[2];
+	mat->_32 = v_mat.m128_f32[3];
+
 	mat->_33 = mat->_33 * scale.z;
 #else
 	mat->_11 *= scale.x;
@@ -595,47 +600,44 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 	D3DXVECTOR2* position, D3DXVECTOR2* textureSize) 
 {
 #ifdef __L_MATH_VECTORIZE
-	__m256 v1;
+	__m128 v1;
 	__m128 v2;
-	float* _p1 = v1.m256_f32;
-	float* _p2 = v2.m128_f32;
+	__m128 v3;
 
-	//First, divide the UVs
-	v1 = {
-		vert[0].texcoord.x, vert[0].texcoord.y, vert[1].texcoord.x, vert[1].texcoord.y,
-		vert[2].texcoord.x, vert[2].texcoord.y, vert[3].texcoord.x, vert[3].texcoord.y
-	};
-	v1 = Vectorize::Mul(v1, Vectorize::Set(textureSize->x, textureSize->y, textureSize->x, textureSize->y,
-		textureSize->x, textureSize->y, textureSize->x, textureSize->y));
-	memcpy(&(vert[0].texcoord), &_p1[0], sizeof(D3DXVECTOR2));
-	memcpy(&(vert[1].texcoord), &_p1[2], sizeof(D3DXVECTOR2));
-	memcpy(&(vert[2].texcoord), &_p1[4], sizeof(D3DXVECTOR2));
-	memcpy(&(vert[3].texcoord), &_p1[6], sizeof(D3DXVECTOR2));
+	//Divide the UVs, textureSize should already be inverted
+	{
+		v3 = Vectorize::Set(textureSize->x, textureSize->y, textureSize->x, textureSize->y);
+		v1 = Vectorize::Mul(
+			Vectorize::Set(vert[0].texcoord.x, vert[0].texcoord.y, vert[1].texcoord.x, vert[1].texcoord.y), v3);
+		v2 = Vectorize::Mul(
+			Vectorize::Set(vert[2].texcoord.x, vert[2].texcoord.y, vert[3].texcoord.x, vert[3].texcoord.y), v3);
+		//Store
+		memcpy(&(vert[0].texcoord), &v1.m128_f32[0], sizeof(D3DXVECTOR2));
+		memcpy(&(vert[1].texcoord), &v1.m128_f32[2], sizeof(D3DXVECTOR2));
+		memcpy(&(vert[2].texcoord), &v2.m128_f32[0], sizeof(D3DXVECTOR2));
+		memcpy(&(vert[3].texcoord), &v2.m128_f32[2], sizeof(D3DXVECTOR2));
+	}
 
-	//Then, rotate and scale (2 vertices at a time)
-	for (size_t i = 0; i < 4; i += 2) {
+	//Initialize rotation factor and then scale
+	v3 = Vectorize::Mul(
+		Vectorize::Set(angle->x, angle->y, angle->y, angle->x),
+		Vectorize::Set(scale->x, scale->y, scale->x, scale->y));
+	for (size_t i = 0; i < 4; i += 2) {		//2 vertices at a time
 		//Rotate
-		v1 = Vectorize::Set(vert[i + 0].position.x, vert[i + 0].position.y,
-			vert[i + 0].position.x, vert[i + 0].position.y,
-			vert[i + 1].position.x, vert[i + 1].position.y, 
-			vert[i + 1].position.x, vert[i + 1].position.y);
-		v1 = Vectorize::Mul(v1, Vectorize::Set(angle->x, angle->y, angle->y, angle->x,
-			angle->x, angle->y, angle->y, angle->x));
+		v1 = Vectorize::Mul(Vectorize::Set(vert[i + 0].position.x, vert[i + 0].position.y,
+			vert[i + 0].position.x, vert[i + 0].position.y), v3);
+		v2 = Vectorize::Mul(Vectorize::Set(vert[i + 1].position.x, vert[i + 1].position.y,
+			vert[i + 1].position.x, vert[i + 1].position.y), v3);
+		v1 = Vectorize::AddSub(
+			Vectorize::Set(v1.m128_f32[2], v1.m128_f32[0], v2.m128_f32[2], v2.m128_f32[0]), 
+			Vectorize::Set(v1.m128_f32[3], v1.m128_f32[1], v2.m128_f32[3], v2.m128_f32[1]));
 
-		//Scale
-		/*
-		v1 = (__m256&)_mm_fmadd_ps(Vectorize::Set(_p1[0] - _p1[1], _p1[2] + _p1[3], _p1[4] - _p1[5], _p1[6] + _p1[7]), 
-			Vectorize::Set(scale->x, scale->y, scale->x, scale->y), 
-			Vectorize::Set(position->x, position->y, position->x, position->y));
-		*/
-		v2 = Vectorize::MulAdd(
-			Vectorize::Set(_p1[0] - _p1[1], _p1[2] + _p1[3], _p1[4] - _p1[5], _p1[6] + _p1[7]),
-			Vectorize::Set(scale->x, scale->y, scale->x, scale->y),
-			Vectorize::Set(position->x, position->y, position->x, position->y));
+		//Translate
+		v2 = Vectorize::Add(v1, Vectorize::Set(position->x, position->y, position->x, position->y));
 
-		//Save
-		memcpy(&(vert[i + 0].position), &_p2[0], sizeof(D3DXVECTOR2));
-		memcpy(&(vert[i + 1].position), &_p2[2], sizeof(D3DXVECTOR2));
+		//Store
+		memcpy(&(vert[i + 0].position), &v2.m128_f32[0], sizeof(D3DXVECTOR2));
+		memcpy(&(vert[i + 1].position), &v2.m128_f32[2], sizeof(D3DXVECTOR2));
 	}
 #else
 	vert[0].texcoord.x *= textureSize->x;
