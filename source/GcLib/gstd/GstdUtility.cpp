@@ -32,9 +32,8 @@ void SystemUtility::TestCpuSupportSIMD() {
 #ifdef __L_MATH_VECTORIZE
 	bool hasSSE = true;
 	bool hasSSE2 = true;
-	bool hasAVX = true;
-	bool hasAVX512F = true;
-	bool hasAVX512VL = true;
+	bool hasSSE3 = true;
+	bool hasSSE4_1 = true;
 
 	std::bitset<32> f_1_ECX;
 	std::bitset<32> f_1_EDX;
@@ -72,19 +71,15 @@ void SystemUtility::TestCpuSupportSIMD() {
 	//Test SSE
 	hasSSE = f_1_EDX[25];
 	hasSSE2 = f_1_EDX[26];
+	hasSSE3 = f_1_ECX[0];
+	hasSSE4_1 = f_1_ECX[19];
 
-	//Test AVX
-	hasAVX = f_1_ECX[28];
-	hasAVX512F = f_7_EBX[16];
-	hasAVX512VL = f_7_EBX[31];
-
-	if (!hasSSE || !hasSSE2 || !hasAVX) {
+	if (!hasSSE || !hasSSE2 || !hasSSE3 || !hasSSE4_1) {
 		std::string err = "The game cannot start because your CPU lacks the required vector instruction sets(s):\r\n  ";
 		if (!hasSSE)	err += " SSE";
 		if (!hasSSE2)	err += " SSE2";
-		if (!hasAVX)	err += " AVX";
-		if (!hasAVX512F)	err += " AVX512F";
-		if (!hasAVX512VL)	err += " AVX512VL";
+		if (!hasSSE3)	err += " SSE3";
+		if (!hasSSE4_1)	err += " SSE4.1";
 		throw wexception(err);
 	}
 #endif
