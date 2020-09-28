@@ -186,6 +186,7 @@ void StgPlayerObject::_Move() {
 	//Add and clip player position
 #ifdef __L_MATH_VECTORIZE
 	__m128d v_pos = { posX_, posY_ };
+	//SSE2
 	v_pos = _mm_add_pd(v_pos, _mm_setr_pd(sx, sy));
 	v_pos = _mm_max_pd(v_pos, _mm_setr_pd((double)rcClip_.left, (double)rcClip_.top));
 	v_pos = _mm_min_pd(v_pos, _mm_setr_pd((double)rcClip_.right, (double)rcClip_.bottom));

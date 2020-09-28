@@ -1150,7 +1150,7 @@ void StgShotObject::_ProcessTransformAct() {
 			double targetAngle = transform.param_d[1];
 
 			if (targetAngle == StgMovePattern::TOPLAYER_CHANGE) {
-				StgPlayerObject* objPlayer = stageController_->GetPlayerObjectPtr();
+				shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
 				if (objPlayer)
 					targetAngle = atan2(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());
 			}
@@ -1585,6 +1585,7 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 
 #ifdef __L_MATH_VECTORIZE
 	__m128i rc_pos = Vectorize::Set((int)posX_, (int)posXE_, (int)posY_, (int)posYE_);
+	//SSE2
 	__m128i res = _mm_cmplt_epi32(rc_pos, 
 		Vectorize::Set(rect->left, rect->left, rect->top, rect->top));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
@@ -1730,7 +1731,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 		}
 
 		//color = ColorAccess::ApplyAlpha(color, alpha);
-		SetRect(&rcDest, -widthRender_ / 2, 0, widthRender_ / 2, radius);
+		SetRect(&rcDest, widthRender_ / 2, 0, -widthRender_ / 2, radius);
 	}
 
 	VERTEX_TLX verts[4];
@@ -1868,6 +1869,7 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 	v_pos = Vectorize::MulAdd(Vectorize::Set((float)length_, (float)length_, 0.0f, 0.0f),
 		Vectorize::Set(move_.x, move_.y, 0.0f, 0.0f), v_pos);
 	__m128i rc_pos = Vectorize::Set((int)posX_, (int)v_pos.m128_f32[0], (int)posY_, (int)v_pos.m128_f32[1]);
+	//SSE2
 	__m128i res = _mm_cmplt_epi32(rc_pos, Vectorize::Set(rect->left, rect->left, rect->top, rect->top));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	if (!bDelete) {
@@ -1968,7 +1970,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 		if (widthRender_ > 0) {
 			float _rWidth = fabs(widthRender_ / 2.0f) * scaleX_;
 			_rWidth = std::max(_rWidth, 0.5f);
-			D3DXVECTOR4 rcDest(-_rWidth, length_, _rWidth, 0);
+			D3DXVECTOR4 rcDest(_rWidth, length_, -_rWidth, 0);
 
 			VERTEX_TLX verts[4];
 			LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
@@ -2565,7 +2567,7 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 	if (idVector) idVector->clear();
 
 	StgStageScript* script = (StgStageScript*)scriptData;
-	StgPlayerObject* objPlayer = controller->GetPlayerObjectPtr();
+	shared_ptr<StgPlayerObject> objPlayer = controller->GetPlayerObject();
 	StgStageScriptObjectManager* objManager = controller->GetMainObjectManager();
 	StgShotManager* shotManager = controller->GetShotManager();
 	shared_ptr<RandProvider> randGenerator = controller->GetStageInformation()->GetRandProvider();
