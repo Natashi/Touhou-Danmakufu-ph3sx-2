@@ -57,7 +57,6 @@ public:
 
 	shared_ptr<DxScriptObjectBase> GetMainRenderObject(int idObject) { return objectManagerMain_->GetObject(idObject); }
 	shared_ptr<StgPlayerObject> GetPlayerObject() { return objectManagerMain_->GetPlayerObjectPtr(); }
-	StgPlayerObject* GetPlayerObjectPtr() { return objectManagerMain_->GetPlayerObjectPtr().get(); }
 
 	StgSystemController* GetSystemController() { return systemController_; }
 	ref_count_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
