@@ -184,18 +184,14 @@ void StgPlayerObject::_Move() {
 	}
 
 	//Add and clip player position
-#ifdef __L_MATH_VECTORIZE
-	__m128d v_pos = { posX_, posY_ };
-	//SSE2
-	v_pos = _mm_add_pd(v_pos, _mm_setr_pd(sx, sy));
-	v_pos = _mm_max_pd(v_pos, _mm_setr_pd((double)rcClip_.left, (double)rcClip_.top));
-	v_pos = _mm_min_pd(v_pos, _mm_setr_pd((double)rcClip_.right, (double)rcClip_.bottom));
-	SetX(v_pos.m128d_f64[0]);
-	SetY(v_pos.m128d_f64[1]);
-#else
-	SetX(std::clamp(posX_ + sx, (double)rcClip_.left, (double)rcClip_.right));
-	SetY(std::clamp(posY_ + sy, (double)rcClip_.top, (double)rcClip_.bottom));
-#endif
+	{
+		__m128d v_pos = Vectorize::Add(Vectorize::Set(posX_, posY_), Vectorize::Set(sx, sy));
+		v_pos = Vectorize::ClampPacked(v_pos,
+			Vectorize::SetD(rcClip_.left, rcClip_.top),
+			Vectorize::SetD(rcClip_.right, rcClip_.bottom));
+		SetX(v_pos.m128d_f64[0]);
+		SetY(v_pos.m128d_f64[1]);
+	}
 }
 void StgPlayerObject::_AddIntersection() {
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();

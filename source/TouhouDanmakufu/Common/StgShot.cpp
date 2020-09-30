@@ -1584,7 +1584,7 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 	bool bDelete = false;
 
 #ifdef __L_MATH_VECTORIZE
-	__m128i rc_pos = Vectorize::Set((int)posX_, (int)posXE_, (int)posY_, (int)posYE_);
+	__m128i rc_pos = Vectorize::SetI(posX_, posXE_, posY_, posYE_);
 	//SSE2
 	__m128i res = _mm_cmplt_epi32(rc_pos, 
 		Vectorize::Set(rect->left, rect->left, rect->top, rect->top));
@@ -1866,9 +1866,9 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 
 #ifdef __L_MATH_VECTORIZE
 	__m128 v_pos = Vectorize::Set(posX_, posY_, 0.0f, 0.0f);
-	v_pos = Vectorize::MulAdd(Vectorize::Set((float)length_, (float)length_, 0.0f, 0.0f),
+	v_pos = Vectorize::MulAdd(Vectorize::SetF(length_, length_, 0.0f, 0.0f),
 		Vectorize::Set(move_.x, move_.y, 0.0f, 0.0f), v_pos);
-	__m128i rc_pos = Vectorize::Set((int)posX_, (int)v_pos.m128_f32[0], (int)posY_, (int)v_pos.m128_f32[1]);
+	__m128i rc_pos = Vectorize::SetI(posX_, v_pos.m128_f32[0], posY_, v_pos.m128_f32[1]);
 	//SSE2
 	__m128i res = _mm_cmplt_epi32(rc_pos, Vectorize::Set(rect->left, rect->left, rect->top, rect->top));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);

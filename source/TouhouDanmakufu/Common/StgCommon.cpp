@@ -41,39 +41,6 @@ void StgMoveObject::_AttachReservedPattern(std::shared_ptr<StgMovePattern> patte
 	if (pattern_ == nullptr)
 		pattern_ = std::shared_ptr<StgMovePattern_Angle>(new StgMovePattern_Angle(this));
 
-	/*
-	int newMoveType = pattern->GetType();
-	if (newMoveType == StgMovePattern::TYPE_ANGLE) {
-		StgMovePattern_Angle* angPattern = dynamic_cast<StgMovePattern_Angle*>(pattern.get());
-		if (angPattern->GetSpeed() == StgMovePattern::NO_CHANGE)
-			angPattern->SetSpeed(pattern_->GetSpeed());
-		if (angPattern->GetDirectionAngle() == StgMovePattern::NO_CHANGE)
-			angPattern->SetDirectionAngle(pattern_->GetDirectionAngle());
-
-		if (StgMovePattern_Angle* patternSrcAng = (StgMovePattern_Angle*)pattern_.get()) {
-			if (angPattern->acceleration_ == StgMovePattern::NO_CHANGE)
-				angPattern->SetAcceleration(patternSrcAng->acceleration_);
-			if (angPattern->maxSpeed_ == StgMovePattern::NO_CHANGE)
-				angPattern->SetMaxSpeed(patternSrcAng->maxSpeed_);
-			if (angPattern->angularVelocity_ == StgMovePattern::NO_CHANGE)
-				angPattern->SetAngularVelocity(patternSrcAng->angularVelocity_);
-		}
-	}
-	else if (newMoveType == StgMovePattern::TYPE_XY) {
-		StgMovePattern_XY* xyPattern = dynamic_cast<StgMovePattern_XY*>(pattern.get());
-
-		double speed = pattern_->GetSpeed();
-		//double angle = pattern_->GetDirectionAngle();
-		double speedX = speed * pattern_->c_;
-		double speedY = speed * pattern_->s_;
-
-		if (xyPattern->GetSpeedX() == StgMovePattern::NO_CHANGE)
-			xyPattern->SetSpeedX(speedX);
-		if (xyPattern->GetSpeedY() == StgMovePattern::NO_CHANGE)
-			xyPattern->SetSpeedY(speedY);
-	}
-	*/
-
 	pattern->_Activate(pattern_.get());
 	pattern_ = pattern;
 }
@@ -167,8 +134,14 @@ void StgMovePattern_Angle::Move() {
 		SetDirectionAngle(angle + angularVelocity_);
 	}
 
-	target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
-	target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
+	{
+		__m128d v1 = Vectorize::MulAdd(
+			Vectorize::Replicate(speed_),
+			Vectorize::Set(c_, s_),
+			Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()));
+		target_->SetPositionX(v1.m128d_f64[0]);
+		target_->SetPositionY(v1.m128d_f64[1]);
+	}
 
 	++frameWork_;
 }
@@ -236,11 +209,10 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 	}
 
 	if (shared_ptr<StgMoveObject> obj = idRelative_.lock()) {
-		double px = target_->GetPositionX();
-		double py = target_->GetPositionY();
-		double tx = obj->GetPositionX();
-		double ty = obj->GetPositionY();
-		newAngle += atan2(ty - py, tx - px);
+		__m128d v1 = Vectorize::Sub(
+			Vectorize::Set(obj->GetPositionX(), obj->GetPositionY()),
+			Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()));
+		newAngle += atan2(v1.m128d_f64[1], v1.m128d_f64[0]);
 	}
 	speed_ = newSpeed;
 	//angDirection_ = newAngle;
@@ -284,8 +256,13 @@ void StgMovePattern_XY::Move() {
 			s_ = std::max(s_, maxSpeedY_);
 	}
 
-	target_->SetPositionX(target_->GetPositionX() + c_);
-	target_->SetPositionY(target_->GetPositionY() + s_);
+	{
+		__m128d v1 = Vectorize::Add(
+			Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()),
+			Vectorize::Set(c_, s_));
+		target_->SetPositionX(v1.m128d_f64[0]);
+		target_->SetPositionY(v1.m128d_f64[1]);
+	}
 
 	++frameWork_;
 }
@@ -303,10 +280,17 @@ void StgMovePattern_XY::_Activate(StgMovePattern* _src) {
 		StgMovePattern_Angle* src = (StgMovePattern_Angle*)_src;
 		c_ = _src->GetSpeedX();
 		s_ = _src->GetSpeedY();
-		accelerationX_ = src->acceleration_ * c_;
-		accelerationY_ = src->acceleration_ * s_;
-		maxSpeedX_ = src->maxSpeed_ * c_;
-		maxSpeedY_ = src->maxSpeed_ * s_;
+		{
+			__m128d v1 = Vectorize::Set(c_, s_);
+			__m128d v2 = Vectorize::Mul(v1,
+				Vectorize::Replicate(src->acceleration_));
+			accelerationX_ = v2.m128d_f64[0];
+			accelerationY_ = v2.m128d_f64[1];
+			v2 = Vectorize::Mul(v1,
+				Vectorize::Replicate(src->maxSpeed_));
+			maxSpeedX_ = v2.m128d_f64[0];
+			maxSpeedY_ = v2.m128d_f64[1];
+		}
 	}
 
 	for (auto& pairCmd : listCommand_) {
@@ -352,8 +336,12 @@ StgMovePattern_Line::StgMovePattern_Line(StgMoveObject* target) : StgMovePattern
 }
 void StgMovePattern_Line::Move() {
 	if (frameWork_ < maxFrame_) {
-		target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
-		target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
+		__m128d v1 = Vectorize::MulAdd(
+			Vectorize::Replicate(speed_),
+			Vectorize::Set(c_, s_),
+			Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()));
+		target_->SetPositionX(v1.m128d_f64[0]);
+		target_->SetPositionY(v1.m128d_f64[1]);
 	}
 	else {
 		speed_ = 0;
@@ -371,17 +359,18 @@ void StgMovePattern_Line_Speed::SetAtSpeed(double tx, double ty, double speed) {
 	targetPos_[0] = tx;
 	targetPos_[1] = ty;
 
-	double nx = tx - iniPos_[0];
-	double ny = ty - iniPos_[1];
-	double dist = hypot(nx, ny);
+	__m128d v1 = Vectorize::Sub(Vectorize::Load(targetPos_), Vectorize::Load(iniPos_));
+	__m128d v2 = Vectorize::Mul(v1, v1);
+	double dist = sqrt(v2.m128d_f64[0] + v2.m128d_f64[1]);
 
 	//speed_ = speed;
-	angDirection_ = atan2(ny, nx);
+	angDirection_ = atan2(v1.m128d_f64[1], v1.m128d_f64[0]);
 	maxFrame_ = std::floor(dist / speed + 0.001);
 	speed_ = dist / maxFrame_;	//Speed correction to reach the destination in integer frames
 
-	c_ = nx / dist;
-	s_ = ny / dist;
+	v1 = Vectorize::Mul(v1, Vectorize::Replicate(1.0 / dist));
+	c_ = v1.m128d_f64[0];
+	s_ = v1.m128d_f64[1];
 }
 
 StgMovePattern_Line_Frame::StgMovePattern_Line_Frame(StgMoveObject* target) : StgMovePattern_Line(target) {
@@ -402,16 +391,21 @@ void StgMovePattern_Line_Frame::SetAtFrame(double tx, double ty, int frame, lerp
 
 	maxFrame_ = std::max(frame, 1);
 
-	positionDiff_[0] = tx - iniPos_[0];
-	positionDiff_[1] = ty - iniPos_[1];
-	double dist = hypot(positionDiff_[0], positionDiff_[1]);
+	__m128d v1 = Vectorize::Sub(Vectorize::Load(targetPos_), Vectorize::Load(iniPos_));
+	positionDiff_[0] = v1.m128d_f64[0];
+	positionDiff_[1] = v1.m128d_f64[1];
+
+	__m128d v2 = Vectorize::Mul(v1, v1);
+	double dist = sqrt(v2.m128d_f64[0] + v2.m128d_f64[1]);
+
 	speedRate_ = dist / (double)frame;
 
 	speed_ = diffLerpFunc(0.0) * speedRate_;
 	angDirection_ = atan2(positionDiff_[1], positionDiff_[0]);
 
-	c_ = positionDiff_[0] / dist;
-	s_ = positionDiff_[1] / dist;
+	v1 = Vectorize::Mul(v1, Vectorize::Replicate(1.0 / dist));
+	c_ = v1.m128d_f64[0];
+	s_ = v1.m128d_f64[1];
 }
 void StgMovePattern_Line_Frame::Move() {
 	if (frameWork_ < maxFrame_) {
@@ -446,14 +440,16 @@ void StgMovePattern_Line_Weight::SetAtWeight(double tx, double ty, double weight
 	weight_ = weight;
 	maxSpeed_ = maxSpeed;
 
-	double nx = tx - iniPos_[0];
-	double ny = ty - iniPos_[1];
-	dist_ = hypot(nx, ny);
-	speed_ = maxSpeed_;
-	angDirection_ = atan2(ny, nx);
+	__m128d v1 = Vectorize::Sub(Vectorize::Load(targetPos_), Vectorize::Load(iniPos_));
+	__m128d v2 = Vectorize::Mul(v1, v1);
+	dist_ = sqrt(v2.m128d_f64[0] + v2.m128d_f64[1]);
 
-	c_ = nx / dist_;
-	s_ = ny / dist_;
+	speed_ = maxSpeed_;
+	angDirection_ = atan2(v1.m128d_f64[1], v1.m128d_f64[0]);
+
+	v1 = Vectorize::Mul(v1, Vectorize::Replicate(1.0 / dist_));
+	c_ = v1.m128d_f64[0];
+	s_ = v1.m128d_f64[1];
 }
 void StgMovePattern_Line_Weight::Move() {
 	if (dist_ < 0.1) {
@@ -464,8 +460,14 @@ void StgMovePattern_Line_Weight::Move() {
 		if (speed_ > maxSpeed_)
 			speed_ = maxSpeed_;
 
-		target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
-		target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
+		{
+			__m128d v1 = Vectorize::MulAdd(
+				Vectorize::Replicate(speed_),
+				Vectorize::Set(c_, s_),
+				Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()));
+			target_->SetPositionX(v1.m128d_f64[0]);
+			target_->SetPositionY(v1.m128d_f64[1]);
+		}
 
 		dist_ -= speed_;
 	}
