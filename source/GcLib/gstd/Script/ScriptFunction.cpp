@@ -108,9 +108,9 @@ namespace gstd {
 			return true;
 		{
 			std::string error = StringUtility::Format(
-				"Variable assignment cannot implicitly convert between \"%s\" and \"%s\".\r\n", 
-				type_data::string_representation(type_dst).c_str(),
-				type_data::string_representation(type_src).c_str());
+				"Variable assignment cannot implicitly convert from \"%s\" to \"%s\".\r\n", 
+				type_data::string_representation(type_src).c_str(),
+				type_data::string_representation(type_dst).c_str());
 			machine->raise_error(error);
 		}
 		return false;
