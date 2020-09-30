@@ -56,7 +56,7 @@ D3DCOLOR& ColorAccess::ApplyAlpha(D3DCOLOR& color, float alpha) {
 }
 
 D3DXVECTOR4 ColorAccess::ClampColorPacked(const D3DXVECTOR4& src) {
-	__m128i ci = Vectorize::Set((int)src[0], (int)src[1], (int)src[2], (int)src[3]);
+	__m128i ci = Vectorize::SetI(src[0], src[1], src[2], src[3]);
 	return ColorAccess::ClampColorPacked(ci);
 }
 D3DXVECTOR4 ColorAccess::ClampColorPacked(const __m128i& src) {
@@ -64,7 +64,7 @@ D3DXVECTOR4 ColorAccess::ClampColorPacked(const __m128i& src) {
 	return D3DXVECTOR4(ci.m128i_i32[0], ci.m128i_i32[1], ci.m128i_i32[2], ci.m128i_i32[3]);
 }
 __m128i ColorAccess::ClampColorPackedM(const D3DXVECTOR4& src) {
-	__m128i ci = Vectorize::Set((int)src[0], (int)src[1], (int)src[2], (int)src[3]);
+	__m128i ci = Vectorize::SetI(src[0], src[1], src[2], src[3]);
 	return ColorAccess::ClampColorPackedM(ci);
 }
 __m128i ColorAccess::ClampColorPackedM(const __m128i& src) {
@@ -176,14 +176,16 @@ bool DxMath::IsIntersected(D3DXVECTOR2& pos, std::vector<D3DXVECTOR2>& list) {
 	return res;
 }
 bool DxMath::IsIntersected(DxCircle& circle1, DxCircle& circle2) {
+#ifdef __L_MATH_VECTORIZE
+	__m128 v1 = Vectorize::AddSub(
+		Vectorize::Set(circle1.GetX(), circle1.GetR(), circle1.GetY(), 0.0f),
+		Vectorize::Set(circle2.GetX(), circle2.GetR(), circle2.GetY(), 0.0f));
+	v1 = Vectorize::Mul(v1, v1);
+	return (v1.m128_f32[0] + v1.m128_f32[2]) <= (v1.m128_f32[1]);
+#else
 	float rx = circle1.GetX() - circle2.GetX();
 	float ry = circle1.GetY() - circle2.GetY();
 	float rr = circle1.GetR() + circle2.GetR();
-#ifdef __L_MATH_VECTORIZE
-	__m128 v1 = Vectorize::Set(rx, ry, rr, 0.0f);
-	v1 = Vectorize::Mul(v1, v1);
-	return (v1.m128_f32[0] + v1.m128_f32[1]) <= (v1.m128_f32[2]);
-#else
 	return (rx * rx + ry * ry) <= (rr * rr);
 #endif
 }
@@ -200,8 +202,6 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 
 #ifdef __L_MATH_VECTORIZE
 	__m128 v1, v2;
-	float* _v1 = v1.m128_f32;
-	float* _v2 = v2.m128_f32;
 
 	float cen_x = (line.GetX1() + line.GetX2()) / 2.0f;
 	float cen_y = (line.GetY1() + line.GetY2()) / 2.0f;
@@ -210,10 +210,10 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 		Vectorize::Set(line.GetX2(), line.GetY2(), cen_x, cen_y),
 		Vectorize::Set(line.GetX1(), line.GetY1(), circle.GetX(), circle.GetY()));
 
-	float dx = _v1[0];
-	float dy = _v1[1];
-	float u_cx = _v1[2];
-	float u_cy = _v1[3];
+	float dx = v1.m128_f32[0];
+	float dy = v1.m128_f32[1];
+	float u_cx = v1.m128_f32[2];
+	float u_cy = v1.m128_f32[3];
 
 	float line_hh = Math::HypotSq(dx, dy);
 	if (line_hh < FLT_EPSILON) {
@@ -229,8 +229,10 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	v1 = Vectorize::Mul(
 		Vectorize::Set(rcos, rsin, rsin, -rcos),
 		Vectorize::Set(u_cy, u_cx, u_cy, u_cx));
-	float cross_x = abs(_v1[0] - _v1[1]) * 2.0f;
-	float cross_y = abs(_v1[2] - _v1[3]) * 2.0f;
+	float _cross_x = (v1.m128_f32[0] - v1.m128_f32[1]) * 2.0f;
+	float _cross_y = (v1.m128_f32[2] - v1.m128_f32[3]) * 2.0f;
+	float cross_x = abs(_cross_x);
+	float cross_y = abs(_cross_y);
 
 	bool intersect_w = cross_x <= line.GetWidth();
 	bool intersect_h = cross_y <= line_h;
@@ -249,22 +251,32 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 	v1 = Vectorize::Mul(
 		Vectorize::Set(dx, dy, circle.GetR(), 0.0f),
 		Vectorize::Set(l_uw, l_uw, circle.GetR(), 0.0f));
-	float nx = _v1[0];
-	float ny = _v1[1];
-	float rr = _v1[2];
+	float nx = v1.m128_f32[0];
+	float ny = v1.m128_f32[1];
+	float rr = v1.m128_f32[2];
+
+	v1 = Vectorize::Set(circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY());
 
 	//Check A and B
-	v1 = Vectorize::Set(circle.GetX(), circle.GetY(), circle.GetX(), circle.GetY());
-	v2 = Vectorize::Mul(v1, Vectorize::Set(line.GetX1() - ny, line.GetY1() + nx, line.GetX1() + ny, line.GetY1() - nx));
-	v2 = Vectorize::Mul(v2, v2);
-	if (_v2[0] + _v2[1] <= rr || _v2[2] + _v2[3] <= rr)
-		return true;
-
-	//Check C and D
-	v2 = Vectorize::Sub(v1, Vectorize::Set(line.GetX2() + ny, line.GetY2() - nx, line.GetX2() - ny, line.GetY2() + nx));
-	v2 = Vectorize::Mul(v2, v2);
-	if (_v2[0] + _v2[1] <= rr || _v2[2] + _v2[3] <= rr)
-		return true;
+	if (_cross_y > 0) {
+		v2 = Vectorize::AddSub(
+			Vectorize::Set(line.GetX1(), line.GetY1(), line.GetY1(), line.GetX1()),
+			Vectorize::Set(ny, nx, nx, ny));
+		v2 = Vectorize::Sub(v1, Vectorize::Set(v2.m128_f32[0], v2.m128_f32[1], v2.m128_f32[3], v2.m128_f32[2]));
+		v2 = Vectorize::Mul(v2, v2);
+		if (v2.m128_f32[0] + v2.m128_f32[1] <= rr || v2.m128_f32[2] + v2.m128_f32[3] <= rr)
+			return true;
+	}
+	else {
+		//Check C and D
+		v2 = Vectorize::AddSub(
+			Vectorize::Set(line.GetY2(), line.GetX2(), line.GetX2(), line.GetY2()),
+			Vectorize::Set(nx, ny, ny, nx));
+		v2 = Vectorize::Sub(v1, Vectorize::Set(v2.m128_f32[1], v2.m128_f32[0], v2.m128_f32[2], v2.m128_f32[3]));
+		v2 = Vectorize::Mul(v2, v2);
+		if (v2.m128_f32[0] + v2.m128_f32[1] <= rr || v2.m128_f32[2] + v2.m128_f32[3] <= rr)
+			return true;
+	}
 #else
 	float rr = circle.GetR() * circle.GetR();
 	float cen_x = (line.GetX1() + line.GetX2()) / 2.0f;
@@ -324,21 +336,20 @@ bool DxMath::IsIntersected(DxWidthLine& line1, DxWidthLine& line2) {
 	else if (countCheckA == 1 && countCheckB == 1) {
 		//A normal line-line intersection
 #ifdef __L_MATH_VECTORIZE
-		__m128 vec1 = Vectorize::Set(linePairA->GetX2(), linePairA->GetY2(), linePairB->GetX2(), linePairB->GetY2());
-		__m128 vec2 = Vectorize::Set(linePairA->GetX1(), linePairA->GetY1(), linePairB->GetX1(), linePairB->GetY1());
-		float* _v1 = vec1.m128_f32;
-		float* _v2 = vec2.m128_f32;
+		__m128 v1 = Vectorize::Set(linePairA->GetX2(), linePairA->GetY2(), linePairB->GetX2(), linePairB->GetY2());
+		__m128 v2 = Vectorize::Set(linePairA->GetX1(), linePairA->GetY1(), linePairB->GetX1(), linePairB->GetY1());
 
-		vec1 = Vectorize::Sub(vec1, vec2);
-		vec2 = Vectorize::Sub(
-			Vectorize::Set(_v1[0] * _v1[3], linePairA->GetX1(), linePairA->GetY1(), 0.0f), 
-			Vectorize::Set(_v1[2] * _v1[1], linePairB->GetX1(), linePairB->GetY1(), 0.0f));
+		v1 = Vectorize::Sub(v1, v2);
+		v2 = Vectorize::Sub(
+			Vectorize::Set(v1.m128_f32[0] * v1.m128_f32[3], linePairA->GetX1(), linePairA->GetY1(), 0.0f),
+			Vectorize::Set(v1.m128_f32[2] * v1.m128_f32[1], linePairB->GetX1(), linePairB->GetY1(), 0.0f));
 
-		float idet = 1.0f / _v2[0];
-		vec2 = Vectorize::Mul(vec1, Vectorize::Set(_v2[2], _v2[1], _v2[2], _v2[1]));
-		vec2 = Vectorize::Mul(vec2, Vectorize::Replicate(idet));
-		float s = _v2[0] - _v2[1];
-		float t = _v2[2] - _v2[3];
+		float idet = 1.0f / v2.m128_f32[0];
+		v2 = Vectorize::Mul(v1,
+			Vectorize::Set(v2.m128_f32[2], v2.m128_f32[1], v2.m128_f32[2], v2.m128_f32[1]));
+		v2 = Vectorize::Mul(v2, Vectorize::Replicate(idet));
+		float s = v2.m128_f32[0] - v2.m128_f32[1];
+		float t = v2.m128_f32[2] - v2.m128_f32[3];
 #else
 		float dx1 = linePairA->GetX2() - linePairA->GetX1();
 		float dy1 = linePairA->GetY2() - linePairA->GetY1();
@@ -466,13 +477,13 @@ size_t DxMath::SplitWidthLine(DxWidthLine(&dest)[2], DxWidthLine* pSrcLine, floa
 	}
 
 	__m128 vec1 = Vectorize::Set(pSrcLine->GetX1(), pSrcLine->GetY1(), pSrcLine->GetX2(), pSrcLine->GetY2());
-	__m128 vec2 = Vectorize::Set(dy, -dx, dy, -dx);
-	vec2 = Vectorize::Mul(vec2, Vectorize::Replicate(width / dl * 0.5f));
+	__m128 vec2 = Vectorize::Mul(
+		Vectorize::Set(dy, -dx, dy, -dx), 
+		Vectorize::Replicate(width / dl * 0.5f));
 	{
 		__m128 res = Vectorize::Add(vec1, vec2);
-		vec2 = Vectorize::Mul(vec2, Vectorize::Replicate(-1.0f));
 		dest[0] = DxWidthLine(res.m128_f32[0], res.m128_f32[1], res.m128_f32[2], res.m128_f32[3], 1.0f);
-		res = Vectorize::Add(vec1, vec2);
+		res = Vectorize::Sub(vec1, vec2);
 		dest[1] = DxWidthLine(res.m128_f32[0], res.m128_f32[1], res.m128_f32[2], res.m128_f32[3], 1.0f);
 	}
 
@@ -494,15 +505,20 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	__m128 v1 = Vectorize::Mul(Vectorize::Set(cy, sx_sy, cx, sy), Vectorize::Set(cz, sz, sz, cz));
 	__m128 v2 = Vectorize::Mul(Vectorize::Set(sx_cy, cy, sx_sy, cx), Vectorize::Set(sz, sz, cz, cz));
 	__m128 v3 = Vectorize::Mul(Vectorize::Set(sy, sx_cy, cx, cx), Vectorize::Set(sz, cz, sy, cy));
-	mat->_11 = v1.m128_f32[0] - v1.m128_f32[1];
+
 	mat->_12 = -v1.m128_f32[2];
-	mat->_13 = v1.m128_f32[3] + v2.m128_f32[0];
-	mat->_21 = v2.m128_f32[1] + v2.m128_f32[2];
 	mat->_22 = v2.m128_f32[3];
-	mat->_23 = v3.m128_f32[0] - v3.m128_f32[1];
 	mat->_31 = -v3.m128_f32[2];
 	mat->_32 = sx;
 	mat->_33 = v3.m128_f32[3];
+
+	v1 = Vectorize::AddSub(
+		Vectorize::Set(v1.m128_f32[0], v1.m128_f32[3], v3.m128_f32[0], v2.m128_f32[1]),
+		Vectorize::Set(v1.m128_f32[1], v2.m128_f32[0], v3.m128_f32[1], v2.m128_f32[2]));
+	mat->_11 = v1.m128_f32[0];
+	mat->_13 = v1.m128_f32[1];
+	mat->_21 = v1.m128_f32[3];
+	mat->_23 = v1.m128_f32[2];
 #else
 	mat->_11 = cy * cz - sx_sy * sz;
 	mat->_12 = -cx * sz;
@@ -607,35 +623,32 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 	//Divide the UVs, textureSize should already be inverted
 	{
 		v3 = Vectorize::Set(textureSize->x, textureSize->y, textureSize->x, textureSize->y);
-		v1 = Vectorize::Mul(
-			Vectorize::Set(vert[0].texcoord.x, vert[0].texcoord.y, vert[1].texcoord.x, vert[1].texcoord.y), v3);
-		v2 = Vectorize::Mul(
-			Vectorize::Set(vert[2].texcoord.x, vert[2].texcoord.y, vert[3].texcoord.x, vert[3].texcoord.y), v3);
-		//Store
-		memcpy(&(vert[0].texcoord), &v1.m128_f32[0], sizeof(D3DXVECTOR2));
-		memcpy(&(vert[1].texcoord), &v1.m128_f32[2], sizeof(D3DXVECTOR2));
-		memcpy(&(vert[2].texcoord), &v2.m128_f32[0], sizeof(D3DXVECTOR2));
-		memcpy(&(vert[3].texcoord), &v2.m128_f32[2], sizeof(D3DXVECTOR2));
+		for (size_t i = 0; i < 4; i += 2) {		//2 vertices at a time
+			v1 = Vectorize::Mul(
+				Vectorize::Set(vert[i].texcoord.x, vert[i].texcoord.y, vert[i + 1].texcoord.x, vert[i + 1].texcoord.y), v3);
+			memcpy(&(vert[i + 0].texcoord), &v1.m128_f32[0], sizeof(D3DXVECTOR2));
+			memcpy(&(vert[i + 1].texcoord), &v1.m128_f32[2], sizeof(D3DXVECTOR2));
+		}
 	}
 
 	//Initialize rotation factor and then scale
 	v3 = Vectorize::Mul(
 		Vectorize::Set(angle->x, angle->y, angle->y, angle->x),
 		Vectorize::Set(scale->x, scale->y, scale->x, scale->y));
-	for (size_t i = 0; i < 4; i += 2) {		//2 vertices at a time
+	for (size_t i = 0; i < 4; i += 2) {			//2 vertices at a time
 		//Rotate
 		v1 = Vectorize::Mul(Vectorize::Set(vert[i + 0].position.x, vert[i + 0].position.y,
 			vert[i + 0].position.x, vert[i + 0].position.y), v3);
 		v2 = Vectorize::Mul(Vectorize::Set(vert[i + 1].position.x, vert[i + 1].position.y,
 			vert[i + 1].position.x, vert[i + 1].position.y), v3);
 		v1 = Vectorize::AddSub(
-			Vectorize::Set(v1.m128_f32[2], v1.m128_f32[0], v2.m128_f32[2], v2.m128_f32[0]), 
-			Vectorize::Set(v1.m128_f32[3], v1.m128_f32[1], v2.m128_f32[3], v2.m128_f32[1]));
+			Vectorize::Set(v1.m128_f32[0], v1.m128_f32[2], v2.m128_f32[0], v2.m128_f32[2]), 
+			Vectorize::Set(v1.m128_f32[1], v1.m128_f32[3], v2.m128_f32[1], v2.m128_f32[3]));
 
 		//Translate
-		v2 = Vectorize::Add(v1, Vectorize::Set(position->x, position->y, position->x, position->y));
+		v2 = Vectorize::Add(v1, 
+			Vectorize::Set(position->x, position->y, position->x, position->y));
 
-		//Store
 		memcpy(&(vert[i + 0].position), &v2.m128_f32[0], sizeof(D3DXVECTOR2));
 		memcpy(&(vert[i + 1].position), &v2.m128_f32[2], sizeof(D3DXVECTOR2));
 	}

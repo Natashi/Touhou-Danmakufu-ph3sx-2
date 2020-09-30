@@ -1307,7 +1307,7 @@ gstd::value DxScript::Func_ClearRenderTargetA2(gstd::script_machine* machine, in
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	shared_ptr<Texture> current = graphics->GetRenderTarget();
 
-	__m128i c = Vectorize::Set((int)argv[1].as_int(), argv[2].as_int(),
+	__m128i c = Vectorize::SetI(argv[1].as_int(), argv[2].as_int(),
 		argv[3].as_int(), argv[4].as_int());
 	D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 
