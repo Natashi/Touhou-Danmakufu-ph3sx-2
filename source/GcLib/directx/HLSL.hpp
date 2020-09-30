@@ -29,7 +29,6 @@ namespace directx {
 		static const std::string sourceIntersectVisual2_;
 	};
 	
-
 	class RenderShaderLibrary {
 	public:
 		enum {

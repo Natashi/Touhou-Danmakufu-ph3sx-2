@@ -50,7 +50,7 @@ DirectGraphics::DirectGraphics() {
 	bufferManager_ = nullptr;
 
 	bMainRender_ = true;
-	previousBlendMode_ = (BlendMode)-999;
+	previousBlendMode_ = BlendMode::RESET;
 	D3DXMatrixIdentity(&matViewPort_);
 }
 DirectGraphics::~DirectGraphics() {
@@ -438,7 +438,7 @@ void DirectGraphics::SetAlphaTest(bool bEnable, DWORD ref, D3DCMPFUNC func) {
 }
 void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 	if (mode == previousBlendMode_) return;
-	if (previousBlendMode_ == (BlendMode)-999) {
+	if (previousBlendMode_ == BlendMode::RESET) {
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLOROP, D3DTOP_MODULATE);
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
 		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
@@ -947,6 +947,7 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 
 		if (modeScreen_ == SCREENMODE_FULLSCREEN) {		//To windowed
 			hrReset = pDevice_->Reset(&d3dppWin_);
+
 			::SetWindowLong(hAttachedWindow_, GWL_STYLE, wndStyleWin_);
 			::ShowWindow(hAttachedWindow_, SW_SHOW);
 
@@ -959,19 +960,6 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 			SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
 			MoveWindowCenter();
 
-			/*
-			RECT drect, mrect;
-			HWND hDesk = ::GetDesktopWindow();
-			::GetWindowRect(hDesk, &drect);
-			::GetWindowRect(hAttachedWindow_, &mrect);
-
-			int wWidth = mrect.right - mrect.left;
-			int wHeight = mrect.bottom - mrect.top;
-			int left = drect.right / 2 - wWidth / 2;
-			int top = drect.bottom / 2 - wHeight / 2;
-			::MoveWindow(hAttachedWindow_, left, top, wWidth, wHeight, TRUE);
-			*/
-
 			::SetWindowPos(hAttachedWindow_, HWND_NOTOPMOST, 0, 0, 0, 0,
 				SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOSENDCHANGING);
 
@@ -979,11 +967,21 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 		}
 		else {		//To fullscreen
 			hrReset = pDevice_->Reset(&d3dppFull_);
+
 			::SetWindowLong(hAttachedWindow_, GWL_STYLE, wndStyleFull_);
 			::ShowWindow(hAttachedWindow_, SW_SHOW);
 
 			modeScreen_ = SCREENMODE_FULLSCREEN;
 		}
+
+		previousBlendMode_ = BlendMode::RESET;
+		if (FAILED(hrReset)) {
+			std::wstring err = StringUtility::Format(L"IDirect3DDevice9::Reset: \n%s\n  %s",
+				DXGetErrorString(hrReset), DXGetErrorDescription(hrReset));
+			throw gstd::wexception(err);
+		}
+
+		_RestoreDxResource();
 
 		WindowUtility::SetMouseVisible(config_.IsShowCursor());
 		if (!config_.IsShowCursor()) {
@@ -994,15 +992,6 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 			::SetCursor(lpCursor_);
 			pDevice_->ShowCursor(true);
 		}
-
-		previousBlendMode_ = (BlendMode)-999;
-		if (FAILED(hrReset)) {
-			std::wstring err = StringUtility::Format(L"IDirect3DDevice9::Reset: \n%s\n  %s",
-				DXGetErrorString(hrReset), DXGetErrorDescription(hrReset));
-			throw gstd::wexception(err);
-		}
-
-		_RestoreDxResource();
 	}
 	//Pseudo fullscreen mode
 	else {

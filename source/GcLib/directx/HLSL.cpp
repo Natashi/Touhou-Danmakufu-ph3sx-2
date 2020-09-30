@@ -553,8 +553,10 @@ namespace directx {
 		}
 	}
 	void RenderShaderLibrary::Release() {
-		for (auto& iEffect : listEffect_) ptr_release(iEffect);
-		for (auto& iDecl : listDeclaration_) ptr_release(iDecl);
+		for (auto& iEffect : listEffect_)
+			ptr_release(iEffect);
+		for (auto& iDecl : listDeclaration_)
+			ptr_release(iDecl);
 	}
 
 	void RenderShaderLibrary::OnLostDevice() {

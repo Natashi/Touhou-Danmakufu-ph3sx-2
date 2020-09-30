@@ -85,6 +85,8 @@ namespace directx {
 		MODE_BLEND_SHADOW,		//Invert-multiply blending
 		MODE_BLEND_INV_DESTRGB,	//Difference blending in Ph*tosh*p
 		MODE_BLEND_ALPHA_INV,	//Alpha blending, but the source color is inverted
+
+		RESET = 0xff,
 	} BlendMode;
 
 #if defined(DNH_PROJ_EXECUTOR)

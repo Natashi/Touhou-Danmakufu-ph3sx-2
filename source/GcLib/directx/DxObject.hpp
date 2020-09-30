@@ -613,8 +613,8 @@ namespace directx {
 	**********************************************************/
 	class DxBinaryFileObject : public DxFileObject {
 	protected:
-		int byteOrder_;
-		unsigned int codePage_;
+		byte byteOrder_;
+		byte codePage_;
 		shared_ptr<gstd::ByteBuffer> buffer_;
 	public:
 		DxBinaryFileObject();
@@ -627,11 +627,11 @@ namespace directx {
 		shared_ptr<gstd::ByteBuffer> GetBuffer() { return buffer_; }
 		bool IsReadableSize(size_t size);
 
-		unsigned int GetCodePage() { return codePage_; }
-		void SetCodePage(unsigned int page) { codePage_ = page; }
+		byte GetCodePage() { return codePage_; }
+		void SetCodePage(byte page) { codePage_ = page; }
 
-		void SetByteOrder(int order) { byteOrder_ = order; }
-		int GetByteOrder() { return byteOrder_; }
+		void SetByteOrder(byte order) { byteOrder_ = order; }
+		byte GetByteOrder() { return byteOrder_; }
 	};
 
 	/**********************************************************
