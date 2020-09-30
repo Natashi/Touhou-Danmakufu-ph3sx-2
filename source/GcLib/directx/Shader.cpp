@@ -10,13 +10,21 @@ using namespace directx;
 //ShaderData
 **********************************************************/
 ShaderData::ShaderData() {
-	bLoad_ = false;
 	effect_ = nullptr;
+	bLoad_ = false;
 	bText_ = false;
 }
 ShaderData::~ShaderData() {
 	ptr_release(effect_);
 	bLoad_ = false;
+}
+void ShaderData::ReleaseDxResource() {
+	if (effect_ == nullptr) return;
+	effect_->OnLostDevice();
+}
+void ShaderData::RestoreDxResource() {
+	if (effect_ == nullptr) return;
+	effect_->OnResetDevice();
 }
 
 /**********************************************************
@@ -140,6 +148,7 @@ bool ShaderManager::_CreateFromText(const std::string& source, shared_ptr<Shader
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
 	shared_ptr<ShaderData> data(new ShaderData());
+
 	ID3DXBuffer* pErr = nullptr;
 	HRESULT hr = D3DXCreateEffect(graphics->GetDevice(), source.c_str(), source.size(),
 		nullptr, nullptr, 0, nullptr, &data->effect_, &pErr);
@@ -176,19 +185,21 @@ bool ShaderManager::_CreateUnmanagedFromEffect(ID3DXEffect* effect, shared_ptr<S
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	HRESULT hr = effect->CloneEffect(graphics->GetDevice(), &data->effect_);
 
+	std::string shaderID = StringUtility::Format("%08x", (int)effect);
+
 	bool res = true;
 	if (FAILED(hr)) {
 		res = false;
 		std::string err = DXGetErrorStringA(hr);
-		std::string log = StringUtility::Format("ShaderManager: Shader clone failed. [%08x]\r\n\t%s", (int)effect, err.c_str());
+		std::string log = StringUtility::Format("ShaderManager: Shader clone failed. [%s]\r\n\t%s", 
+			shaderID.c_str(), err.c_str());
 		Logger::WriteTop(log);
 		lastError_ = StringUtility::ConvertMultiToWide(log);
 	}
 	else {
-		std::string log = StringUtility::Format("ShaderManager: Shader cloned. [%08x]", (int)effect);
+		std::string log = StringUtility::Format("ShaderManager: Shader cloned. [%s]", shaderID.c_str());
 		Logger::WriteTop(log);
 
-		data->manager_ = nullptr;
 		data->name_ = L"";
 		data->bLoad_ = true;
 
@@ -210,7 +221,7 @@ void ShaderManager::ReleaseDxResource() {
 
 		for (itrMap = mapShaderData_.begin(); itrMap != mapShaderData_.end(); ++itrMap) {
 			shared_ptr<ShaderData> data = itrMap->second;
-			data->effect_->OnLostDevice();
+			data->ReleaseDxResource();
 		}
 		renderManager_->OnLostDevice();
 	}
@@ -222,7 +233,7 @@ void ShaderManager::RestoreDxResource() {
 
 		for (itrMap = mapShaderData_.begin(); itrMap != mapShaderData_.end(); ++itrMap) {
 			shared_ptr<ShaderData> data = itrMap->second;
-			data->effect_->OnResetDevice();
+			data->RestoreDxResource();
 		}
 		renderManager_->OnResetDevice();
 	}

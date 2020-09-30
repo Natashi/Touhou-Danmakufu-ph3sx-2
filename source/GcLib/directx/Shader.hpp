@@ -24,12 +24,15 @@ namespace directx {
 		ShaderManager* manager_;
 		ID3DXEffect* effect_;
 		std::wstring name_;
-		volatile bool bLoad_;
-		volatile bool bText_;
+		bool bLoad_;
+		bool bText_;
 	public:
 		ShaderData();
 		virtual ~ShaderData();
 		std::wstring& GetName() { return name_; }
+
+		void ReleaseDxResource();
+		void RestoreDxResource();
 	};
 
 	/**********************************************************
