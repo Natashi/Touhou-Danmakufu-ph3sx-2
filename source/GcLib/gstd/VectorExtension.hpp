@@ -11,6 +11,8 @@ namespace gstd {
 		static __forceinline __m128 Load(const D3DXVECTOR4& vec);
 		//Loads vector from float pointer, alignment ignored
 		static __forceinline __m128 Load(float* const ptr);
+		//Loads double vector from double pointer, alignment ignored
+		static __forceinline __m128d Load(double* const ptr);
 		//Stores the data of vector "dst" into float array "ptr" (size=4)
 		static __forceinline void Store(float* const ptr, const __m128& dst);
 
@@ -21,8 +23,16 @@ namespace gstd {
 		//Creates int vector (a, b, c, d)
 		static __forceinline __m128i Set(int a, int b, int c, int d);
 
+		//Set wrappers----------------------------------------------------------------
+		static __forceinline __m128 SetF(float a, float b, float c, float d) { return Set(a, b, c, d); }
+		static __forceinline __m128d SetD(double a, double b) { return Set(a, b); }
+		static __forceinline __m128i SetI(int a, int b, int c, int d) { return Set(a, b, c, d); }
+		//----------------------------------------------------------------------------
+
 		//Generates vector (x, x, x, x)
 		static __forceinline __m128 Replicate(float x);
+		//Generates double vector (x, x)
+		static __forceinline __m128d Replicate(double x);
 		//Generates int vector (x, x, x, x)
 		static __forceinline __m128i Replicate(int x);
 
@@ -56,11 +66,18 @@ namespace gstd {
 		//Fused [multiply]+[add] for double vector
 		static __forceinline __m128d MulAdd(const __m128d& a, const __m128d& b, const __m128d& c);
 
-		//Performs [max] on int vectors a, b
+		//Performs [max] on double vector a and b
+		static __forceinline __m128d MaxPacked(const __m128d& a, const __m128d& b);
+		//Performs [min] on double vector a and b
+		static __forceinline __m128d MinPacked(const __m128d& a, const __m128d& b);
+		//Performs [clamp] on double vector a and b (Fused [min]+[max])
+		static __forceinline __m128d ClampPacked(const __m128d& a, const __m128d& min, const __m128d& max);
+
+		//Performs [max] on int vector a and b
 		static __forceinline __m128i MaxPacked(const __m128i& a, const __m128i& b);
-		//Performs [min] on int vectors a, b
+		//Performs [min] on int vector a and b
 		static __forceinline __m128i MinPacked(const __m128i& a, const __m128i& b);
-		//Performs [clamp] on int vectors a, b (Fused [min]+[max])
+		//Performs [clamp] on int vector a and b (Fused [min]+[max])
 		static __forceinline __m128i ClampPacked(const __m128i& a, const __m128i& min, const __m128i& max);
 	};
 
@@ -78,6 +95,16 @@ namespace gstd {
 #else
 		//SSE
 		res = _mm_loadu_ps(ptr);
+#endif
+		return res;
+	}
+	__m128d Vectorize::Load(double* const ptr) {
+		__m128d res;
+#ifndef __L_MATH_VECTORIZE
+		memcpy(res.m128d_f64, ptr, sizeof(__m128d));
+#else
+		//SSE2
+		res = _mm_loadu_pd(ptr);
 #endif
 		return res;
 	}
@@ -142,6 +169,17 @@ namespace gstd {
 #else
 		//SSE
 		res = _mm_set_ps1(x);
+#endif
+		return res;
+	}
+	__m128d Vectorize::Replicate(double x) {
+		__m128d res;
+#ifndef __L_MATH_VECTORIZE
+		res.m128d_f64[0] = x;
+		res.m128d_f64[1] = x;
+#else
+		//SSE
+		res = _mm_set1_pd(x);
 #endif
 		return res;
 	}
@@ -320,6 +358,43 @@ namespace gstd {
 		//SSE2
 		res = _mm_mul_pd(a, b);
 		res = _mm_add_pd(res, c);
+#endif
+		return res;
+	}
+
+	//---------------------------------------------------------------------
+
+	__m128d Vectorize::MaxPacked(const __m128d& a, const __m128d& b) {
+		__m128d res;
+#ifndef __L_MATH_VECTORIZE
+		for (int i = 0; i < 2; ++i)
+			res.m128d_f64[i] = std::max(a.m128d_f64[i], b.m128d_f64[i]);
+#else
+		//SSE2
+		res = _mm_min_pd(a, b);
+#endif
+		return res;
+	}
+	__m128d Vectorize::MinPacked(const __m128d& a, const __m128d& b) {
+		__m128d res;
+#ifndef __L_MATH_VECTORIZE
+		for (int i = 0; i < 2; ++i)
+			res.m128d_f64[i] = std::min(a.m128d_f64[i], b.m128d_f64[i]);
+#else
+		//SSE2
+		res = _mm_max_pd(a, b);
+#endif
+		return res;
+	}
+	__m128d Vectorize::ClampPacked(const __m128d& a, const __m128d& min, const __m128d& max) {
+		__m128d res;
+#ifndef __L_MATH_VECTORIZE
+		for (int i = 0; i < 2; ++i)
+			res.m128d_f64[i] = std::clamp(a.m128d_f64[i], min.m128d_f64[i], max.m128d_f64[i]);
+#else
+		//SSE2
+		res = _mm_max_pd(a, min);
+		res = _mm_min_pd(res, max);
 #endif
 		return res;
 	}
