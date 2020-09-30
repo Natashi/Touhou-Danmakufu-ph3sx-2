@@ -40,7 +40,16 @@ namespace gstd {
 		//[divide] vector a and b
 		static __forceinline __m128 Div(const __m128& a, const __m128& b);
 
-		//[add] or [subtract] operation depending on element index-> (+, -, +, -)
+		//[add] double vector a and b
+		static __forceinline __m128d Add(const __m128d& a, const __m128d& b);
+		//[subtract] double vector a and b
+		static __forceinline __m128d Sub(const __m128d& a, const __m128d& b);
+		//[multiply] double vector a and b
+		static __forceinline __m128d Mul(const __m128d& a, const __m128d& b);
+		//[divide] double vector a and b
+		static __forceinline __m128d Div(const __m128d& a, const __m128d& b);
+
+		//Alternating [add] and [subtract]-> (-, +, -, +)
 		static __forceinline __m128 AddSub(const __m128& a, const __m128& b);
 		//Fused [multiply]+[add]
 		static __forceinline __m128 MulAdd(const __m128& a, const __m128& b, const __m128& c);
@@ -54,6 +63,10 @@ namespace gstd {
 		//Performs [clamp] on int vectors a, b (Fused [min]+[max])
 		static __forceinline __m128i ClampPacked(const __m128i& a, const __m128i& min, const __m128i& max);
 	};
+
+	//---------------------------------------------------------------------
+	//Implementation
+	//---------------------------------------------------------------------
 
 	__m128 Vectorize::Load(const D3DXVECTOR4& vec) {
 		return Load((float*)&vec);
@@ -76,6 +89,8 @@ namespace gstd {
 		_mm_storeu_ps(ptr, dst);
 #endif
 	}
+
+	//---------------------------------------------------------------------
 
 	__m128 Vectorize::Set(float a, float b, float c, float d) {
 		__m128 res;
@@ -115,6 +130,8 @@ namespace gstd {
 		return res;
 	}
 
+	//---------------------------------------------------------------------
+
 	__m128 Vectorize::Replicate(float x) {
 		__m128 res;
 #ifndef __L_MATH_VECTORIZE
@@ -142,6 +159,8 @@ namespace gstd {
 		return res;
 	}
 
+	//---------------------------------------------------------------------
+
 	__m128 Vectorize::DuplicateEven(const __m128& x) {
 		__m128 res;
 #ifndef __L_MATH_VECTORIZE
@@ -168,6 +187,8 @@ namespace gstd {
 #endif
 		return res;
 	}
+
+	//---------------------------------------------------------------------
 
 	__m128 Vectorize::Add(const __m128& a, const __m128& b) {
 		__m128 res;
@@ -214,14 +235,63 @@ namespace gstd {
 		return res;
 	}
 
+	//---------------------------------------------------------------------
+
+	__m128d Vectorize::Add(const __m128d& a, const __m128d& b) {
+		__m128d res;
+#ifndef __L_MATH_VECTORIZE
+		for (int i = 0; i < 2; ++i)
+			res.m128d_f64[i] = a.m128d_f64[i] + b.m128d_f64[i];
+#else
+		//SSE
+		res = _mm_add_pd(a, b);
+#endif
+		return res;
+	}
+	__m128d Vectorize::Sub(const __m128d& a, const __m128d& b) {
+		__m128d res;
+#ifndef __L_MATH_VECTORIZE
+		for (int i = 0; i < 2; ++i)
+			res.m128d_f64[i] = a.m128d_f64[i] - b.m128d_f64[i];
+#else
+		//SSE
+		res = _mm_sub_pd(a, b);
+#endif
+		return res;
+	}
+	__m128d Vectorize::Mul(const __m128d& a, const __m128d& b) {
+		__m128d res;
+#ifndef __L_MATH_VECTORIZE
+		for (int i = 0; i < 2; ++i)
+			res.m128d_f64[i] = a.m128d_f64[i] * b.m128d_f64[i];
+#else
+		//SSE
+		res = _mm_mul_pd(a, b);
+#endif
+		return res;
+	}
+	__m128d Vectorize::Div(const __m128d& a, const __m128d& b) {
+		__m128d res;
+#ifndef __L_MATH_VECTORIZE
+		for (int i = 0; i < 2; ++i)
+			res.m128d_f64[i] = a.m128d_f64[i] / b.m128d_f64[i];
+#else
+		//SSE
+		res = _mm_div_pd(a, b);
+#endif
+		return res;
+	}
+
+	//---------------------------------------------------------------------
+
 	__m128 Vectorize::AddSub(const __m128& a, const __m128& b) {
 		__m128 res;
 #ifndef __L_MATH_VECTORIZE
 		for (int i = 0; i < 4; ++i) {
 			if ((i & 0b1) == 0)
-				res.m128_f32[i] = a.m128_f32[i] + b.m128_f32[i];
-			else
 				res.m128_f32[i] = a.m128_f32[i] - b.m128_f32[i];
+			else
+				res.m128_f32[i] = a.m128_f32[i] + b.m128_f32[i];
 		}
 #else
 		//SSE3
@@ -253,6 +323,8 @@ namespace gstd {
 #endif
 		return res;
 	}
+
+	//---------------------------------------------------------------------
 
 	__m128i Vectorize::MaxPacked(const __m128i& a, const __m128i& b) {
 		__m128i res;
