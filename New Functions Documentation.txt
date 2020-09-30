@@ -46,26 +46,25 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (any) value
 		Description:
-			Casts the given value to an int value.
-			Please note that int types are not yet properly implemented, and do not support any operations other than comparison.
+			Returns the given value casted to an int value.
 				
 	as_real
 		Arguments:
 			1) (any) value
 		Description:
-			Casts the given value to a real value.
+			Returns the given value casted to a real value.
 			
 	as_bool
 		Arguments:
 			1) (any) value
 		Description:
-			Casts the given value to a bool value.
+			Returns the given value casted to a bool value.
 			
 	as_char
 		Arguments:
 			1) (any) value
 		Description:
-			Casts the given value to a char value.
+			Returns the given value casted to a char value.
 				
 	--------------------------------> Bitwise Operations <--------------------------------
 				
@@ -1632,7 +1631,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 ---------------------------------------------->	[Stage Script] <----------------------------------------------
 
-	-------------------------------->  Base Stage Functions <--------------------------------
+	-------------------------------->  Basic Stage Functions <--------------------------------
 	
 	SetIntersectionVisualization
 		Arguments:

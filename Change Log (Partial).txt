@@ -129,9 +129,15 @@
 	- Fixed a bug where the default charset for some fonts are incorrectly determined.
 	- Utilized UPX Executable Packer to reduce file size.
 	
-1.11a:
+1.20a:
 	- Reworked some math calculations. SIMD instructions are utilized.
-	- Following the above change, an old, non-SIMD version will also be provided in case your CPU do not support vectorization.
+	- Following the above change, a legacy version will also be provided in case your CPU do not support vectorization.
+		- The vectorized version requires the following instruction sets:
+			- SSE
+			- SSE2
+			- SSE3
+			- SSE4.1
+		- Generally, you should be able to run it unless your PC is from 30000BC or you're using a literal potato.
 	- Added a native hitbox visualization mode.
 	- Improved the line-circle intersection algorithm.
 	- Overloaded ObjMove_SetDestAtFrame, where movement interpolation mode can be specified.
@@ -139,12 +145,16 @@
 	- Fixed a bug where ObjText_GetTotalWidth/Height may break the font tag.
 	- Fixed a bug where font text tag properties do not get reset after using ObjText_SetText.
 	- Obj_GetValue will now ACTUALLY NOT crash the game if the requested value does not exist.
+	- Removed the constant 'pi'. Please use 'M_PI' instead.
 	- Changed error messages of some default functions to be more descriptive to aid debugging.
 	- Greatly improved script variable allocation.
 	- Added a concatenate-assign operator. (~=)
 	- Added bitwise operators. (~, &, |, ^^)
 	- Int values can now be declared with a suffix 'i' or 'I'.
-	- Added implicit type casting in default script operations.
+	- Added implicit type casting in default script operations, including comparison and assignment.
+	- Optimized the process of calling default constants.
+	- The default constants SCREEN_WIDTH and SCREEN_HEIGHT will now change to reflect the settings in th_dnh.def.
+	- Some functions will now return int values rather than real values.
 	- Fixed a bug where itoa, atoi, and IntToString would underflow if the input is larger than 2^31-1. (New limit is 2^63-1)
 	- Fixed a bug where the 3D viewport would get stretched out based on the size of the STG frame.
 	- Made the game no longer freeze and crash after Alt-Tab'ing out of true fullscreen mode or after waking the desktop from sleep.
