@@ -703,19 +703,6 @@ void StgShotRenderer::Render(StgShotManager* manager) {
 	countRenderVertex_ = 0U;
 	countRenderIndex_ = 0U;
 }
-/*
-void StgShotRenderer::AddSquareVertex(VERTEX_TLX* listVertex) {
-	TryExpandVertex(countRenderVertex_ + 6U);
-
-	VERTEX_TLX arrangedVerts[] = {
-		listVertex[0], listVertex[2], listVertex[1],
-		listVertex[1], listVertex[2], listVertex[3]
-	};
-	memcpy((VERTEX_TLX*)vertex_.data() + countRenderVertex_, arrangedVerts, strideVertexStreamZero_ * 6U);
-
-	countRenderVertex_ += 6U;
-}
-*/
 void StgShotRenderer::AddSquareVertex(VERTEX_TLX* listVertex) {
 	TryExpandVertex(countRenderVertex_ + 4U);
 	memcpy((VERTEX_TLX*)vertex_.data() + countRenderVertex_, listVertex, strideVertexStreamZero_ * 4U);
@@ -1301,8 +1288,11 @@ std::vector<shared_ptr<StgIntersectionTarget>> StgNormalShotObject::GetIntersect
 		DxCircle& circle = target->GetCircle();
 
 		if (orgCircle->GetX() != 0 || orgCircle->GetY() != 0) {
-			float px = orgCircle->GetX() * move_.x + orgCircle->GetY() * move_.y;
-			float py = orgCircle->GetX() * move_.y - orgCircle->GetY() * move_.x;
+			__m128 v1 = Vectorize::Mul(
+				Vectorize::SetF(orgCircle->GetX(), orgCircle->GetY(), orgCircle->GetX(), orgCircle->GetY()),
+				Vectorize::Set(move_.x, move_.y, move_.y, move_.x));
+			float px = v1.m128_f32[0] + v1.m128_f32[1];
+			float py = v1.m128_f32[2] - v1.m128_f32[3];
 			circle.SetX(px + posX_);
 			circle.SetY(py + posY_);
 		}
@@ -1417,23 +1407,6 @@ void StgNormalShotObject::RenderOnShotManager() {
 	VERTEX_TLX verts[4];
 	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
 	LONG* ptrDst = reinterpret_cast<LONG*>(rcDest);
-	/*
-	for (size_t iVert = 0U; iVert < 4U; ++iVert) {
-		VERTEX_TLX vt;
-
-		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / textureSize->x, ptrSrc[iVert | 0b1] / textureSize->y);
-		_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1]);
-		_SetVertexColorARGB(vt, color);
-
-		float px = vt.position.x * scaleX;
-		float py = vt.position.y * scaleY;
-		vt.position.x = (px * move_.x - py * move_.y) + sposx;
-		vt.position.y = (px * move_.y + py * move_.x) + sposy;
-		vt.position.z = position_.z;
-
-		verts[iVert] = vt;
-	}
-	*/
 	for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 		VERTEX_TLX vt;
 		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
@@ -1451,8 +1424,6 @@ void StgNormalShotObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	auto stageScriptManager = stageController_->GetScriptManager();
 	shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript();
-
-	//assert(scriptItem != nullptr);
 
 	float posX = GetPositionX();
 	float posY = GetPositionY();
@@ -1473,7 +1444,6 @@ void StgNormalShotObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 			auto objectManager = stageController_->GetMainObjectManager();
 			int id = objectManager->AddObject(obj);
 			if (id != DxScript::ID_INVALID) {
-				//弾の座標にアイテムを作成する
 				itemManager->AddItem(obj);
 				obj->SetPositionX(posX);
 				obj->SetPositionY(posY);
@@ -1485,7 +1455,6 @@ void StgNormalShotObject::SetShotDataID(int id) {
 	StgShotData* oldData = _GetShotData();
 	StgShotObject::SetShotDataID(id);
 
-	//角速度更新
 	StgShotData* shotData = _GetShotData();
 	if (shotData != nullptr && oldData != shotData) {
 		if (angularVelocity_ != 0) {
@@ -1563,9 +1532,11 @@ void StgLooseLaserObject::_Move() {
 	DxScriptRenderObject::SetY(posY_);
 
 	if (delay_.time <= 0) {
-		float dx = posXE_ - posX_;
-		float dy = posYE_ - posY_;
-		if ((int)Math::HypotSq(dx, dy) > (length_ * length_)) {
+		__m128 v1 = Vectorize::Sub(
+			Vectorize::SetF(posXE_, posYE_, length_, 0),
+			Vectorize::SetF(posX_, posY_, 0, 0));
+		v1 = Vectorize::Mul(v1, v1);
+		if ((v1.m128_f32[0] + v1.m128_f32[1]) > v1.m128_f32[2]) {
 			float speed = GetSpeed();
 			posXE_ += speed * move_.x;
 			posYE_ += speed * move_.y;
@@ -1614,10 +1585,13 @@ std::vector<shared_ptr<StgIntersectionTarget>> StgLooseLaserObject::GetIntersect
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr) return std::vector<shared_ptr<StgIntersectionTarget>>();
 
-	float lineXS = Math::Lerp::Linear((float)posX_, posXE_, invalidLengthStart_ * 0.5f);
-	float lineYS = Math::Lerp::Linear((float)posY_, posYE_, invalidLengthStart_ * 0.5f);
-	float lineXE = Math::Lerp::Linear(posXE_, (float)posX_, invalidLengthEnd_ * 0.5f);
-	float lineYE = Math::Lerp::Linear(posYE_, (float)posY_, invalidLengthEnd_ * 0.5f);
+	__m128 v1 = Vectorize::Mul(
+		Vectorize::SetF(invalidLengthStart_, invalidLengthEnd_, 0.0f, 0.0f),
+		Vectorize::Set(0.5f, 0.5f, 0.0f, 0.0f));
+	float lineXS = Math::Lerp::Linear((float)posX_, posXE_, v1.m128_f32[0]);
+	float lineYS = Math::Lerp::Linear((float)posY_, posYE_, v1.m128_f32[0]);
+	float lineXE = Math::Lerp::Linear(posXE_, (float)posX_, v1.m128_f32[1]);
+	float lineYE = Math::Lerp::Linear(posYE_, (float)posY_, v1.m128_f32[1]);
 
 	StgIntersectionTarget_Line* target = (StgIntersectionTarget_Line*)pShotIntersectionTarget_.get();
 	{
@@ -1643,7 +1617,6 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 	StgShotRenderer* renderer = nullptr;
 	if (delay_.time > 0) {
-		//遅延時間
 		BlendMode objDelayBlendType = GetSourceBlendType();
 		if (objDelayBlendType == MODE_BLEND_NONE) {
 			renderer = delayData->GetRenderer(MODE_BLEND_ADD_ARGB);
@@ -1737,24 +1710,6 @@ void StgLooseLaserObject::RenderOnShotManager() {
 	VERTEX_TLX verts[4];
 	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
 	LONG* ptrDst = reinterpret_cast<LONG*>(&rcDest);
-	/*
-	for (size_t iVert = 0U; iVert < 4U; iVert++) {
-		VERTEX_TLX vt;
-
-		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / textureSize->x, ptrSrc[iVert | 0b1] / textureSize->y);
-		_SetVertexPosition(vt, ptrDst[iVert | 0b1], ptrDst[(iVert & 0b1) << 1]);
-		_SetVertexColorARGB(vt, color);
-
-		float px = vt.position.x * scaleX;
-		float py = vt.position.y * scaleY;
-		vt.position.x = (px * renderF.x - py * renderF.y) + sposx;
-		vt.position.y = (px * renderF.y + py * renderF.x) + sposy;
-		vt.position.z = position_.z;
-
-		verts[iVert] = vt;
-	}
-	*/
-
 	for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 		VERTEX_TLX vt;
 		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
@@ -1771,8 +1726,6 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	auto stageScriptManager = stageController_->GetScriptManager();
 	shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript();
-
-	//assert(scriptItem != nullptr);
 
 	int ex = GetPositionX();
 	int ey = GetPositionY();
@@ -1804,7 +1757,6 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 				shared_ptr<StgItemObject> obj = shared_ptr<StgItemObject>(new StgItemObject_Bonus(stageController_));
 				int id = stageController_->GetMainObjectManager()->AddObject(obj);
 				if (id != DxScript::ID_INVALID) {
-					//弾の座標にアイテムを作成する
 					itemManager->AddItem(obj);
 					obj->SetPositionX(posX);
 					obj->SetPositionY(posY);
@@ -1907,12 +1859,15 @@ std::vector<shared_ptr<StgIntersectionTarget>> StgStraightLaserObject::GetInters
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr) return std::vector<shared_ptr<StgIntersectionTarget>>();
 
-	float _posXE = posX_ + (length_ * move_.x);
-	float _posYE = posY_ + (length_ * move_.y);
-	float lineXS = Math::Lerp::Linear((float)posX_, _posXE, invalidLengthStart_ * 0.5f);
-	float lineYS = Math::Lerp::Linear((float)posY_, _posYE, invalidLengthStart_ * 0.5f);
-	float lineXE = Math::Lerp::Linear(_posXE, (float)posX_, invalidLengthEnd_ * 0.5f);
-	float lineYE = Math::Lerp::Linear(_posYE, (float)posY_, invalidLengthEnd_ * 0.5f);
+	__m128 v1 = Vectorize::Mul(
+		Vectorize::SetF(length_, length_, invalidLengthStart_, invalidLengthEnd_),
+		Vectorize::Set(move_.x, move_.y, 0.5f, 0.5f));
+	float _posXE = posX_ + v1.m128_f32[0];
+	float _posYE = posY_ + v1.m128_f32[1];
+	float lineXS = Math::Lerp::Linear((float)posX_, _posXE, v1.m128_f32[2]);
+	float lineYS = Math::Lerp::Linear((float)posY_, _posYE, v1.m128_f32[2]);
+	float lineXE = Math::Lerp::Linear(_posXE, (float)posX_, v1.m128_f32[3]);
+	float lineYE = Math::Lerp::Linear(_posYE, (float)posY_, v1.m128_f32[3]);
 
 	StgIntersectionTarget_Line* target = (StgIntersectionTarget_Line*)pShotIntersectionTarget_.get();
 	{
@@ -2093,8 +2048,6 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 	auto stageScriptManager = stageController_->GetScriptManager();
 	shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript();
 
-	//assert(scriptItem != nullptr);
-
 	float listPos[2];
 	gstd::value listScriptValue[4];
 
@@ -2118,7 +2071,6 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 				shared_ptr<StgItemObject> obj = shared_ptr<StgItemObject>(new StgItemObject_Bonus(stageController_));
 				int id = stageController_->GetMainObjectManager()->AddObject(obj);
 				if (id != DxScript::ID_INVALID) {
-					//弾の座標にアイテムを作成する
 					itemManager->AddItem(obj);
 					obj->SetPositionX(itemX);
 					obj->SetPositionY(itemY);
@@ -2339,23 +2291,6 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		VERTEX_TLX verts[4];
 		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
 		LONG* ptrDst = reinterpret_cast<LONG*>(rcDest);
-		/*
-		for (size_t iVert = 0U; iVert < 4U; iVert++) {
-			VERTEX_TLX vt;
-
-			_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / delaySize->x, ptrSrc[iVert | 0b1] / delaySize->y);
-			_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1]);
-			_SetVertexColorARGB(vt, color);
-
-			float px = vt.position.x * expa;
-			float py = vt.position.y * expa;
-			vt.position.x = (px * move_.x - py * move_.y) + sX;
-			vt.position.y = (px * move_.y + py * move_.x) + sY;
-			vt.position.z = position_.z;
-
-			verts[iVert] = vt;
-		}
-		*/
 		for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 			VERTEX_TLX vt;
 			_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
@@ -2440,8 +2375,6 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	auto stageScriptManager = stageController_->GetScriptManager();
 	shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript();
-
-	//assert(scriptItem != nullptr);
 
 	gstd::value listScriptValue[4];
 	if (scriptItem) {
