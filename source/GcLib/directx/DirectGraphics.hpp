@@ -339,8 +339,8 @@ namespace directx {
 	private:
 		bool bEnable_;
 		D3DXVECTOR2 pos_;//è≈ì_
-		double ratioX_;//ägëÂó¶
-		double ratioY_;
+		float ratioX_;//ägëÂó¶
+		float ratioY_;
 		double angleZ_;
 		RECT rcClip_;//éãñÏ
 
@@ -362,12 +362,12 @@ namespace directx {
 		void SetFocus(const D3DXVECTOR2& pos) { pos_ = pos; }
 		void SetFocusX(float x) { pos_.x = x; }
 		void SetFocusY(float y) { pos_.y = y; }
-		double GetRatio() { return std::max(ratioX_, ratioY_); }
-		void SetRatio(double ratio) { ratioX_ = ratio; ratioY_ = ratio; }
-		double GetRatioX() { return ratioX_; }
-		void SetRatioX(double ratio) { ratioX_ = ratio; }
-		double GetRatioY() { return ratioY_; }
-		void SetRatioY(double ratio) { ratioY_ = ratio; }
+		float GetRatio() { return std::max(ratioX_, ratioY_); }
+		void SetRatio(float ratio) { ratioX_ = ratio; ratioY_ = ratio; }
+		float GetRatioX() { return ratioX_; }
+		void SetRatioX(float ratio) { ratioX_ = ratio; }
+		float GetRatioY() { return ratioY_; }
+		void SetRatioY(float ratio) { ratioY_ = ratio; }
 		double GetAngleZ() { return angleZ_; }
 		void SetAngleZ(double angle) { angleZ_ = angle; }
 
@@ -377,9 +377,9 @@ namespace directx {
 		void SetResetFocus(gstd::ref_count_ptr<D3DXVECTOR2>& pos) { posReset_ = pos; }
 		void Reset();
 		inline D3DXVECTOR2 GetLeftTopPosition();
-		inline static D3DXVECTOR2 GetLeftTopPosition(D3DXVECTOR2 focus, double ratio);
-		inline static D3DXVECTOR2 GetLeftTopPosition(D3DXVECTOR2 focus, double ratioX, double ratioY);
-		inline static D3DXVECTOR2 GetLeftTopPosition(D3DXVECTOR2 focus, double ratioX, double ratioY, RECT rcClip);
+		inline static D3DXVECTOR2 GetLeftTopPosition(const D3DXVECTOR2& focus, float ratio);
+		inline static D3DXVECTOR2 GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY);
+		inline static D3DXVECTOR2 GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY, const RECT& rcClip);
 
 		void UpdateMatrix();
 		const D3DXMATRIX& GetMatrix() { return bEnable_ ? matCamera_ : matIdentity_; }

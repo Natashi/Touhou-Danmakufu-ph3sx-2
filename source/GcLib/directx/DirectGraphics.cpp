@@ -1213,8 +1213,8 @@ void DxCamera::PopMatrixState() {
 DxCamera2D::DxCamera2D() {
 	pos_.x = 400;
 	pos_.y = 300;
-	ratioX_ = 1.0;
-	ratioY_ = 1.0;
+	ratioX_ = 1.0f;
+	ratioY_ = 1.0f;
 	angleZ_ = 0;
 	bEnable_ = false;
 
@@ -1235,8 +1235,8 @@ void DxCamera2D::Reset() {
 		pos_.x = posReset_->x;
 		pos_.y = posReset_->y;
 	}
-	ratioX_ = 1.0;
-	ratioY_ = 1.0;
+	ratioX_ = 1.0f;
+	ratioY_ = 1.0f;
 	SetRect(&rcClip_, 0, 0, width, height);
 
 	angleZ_ = 0;
@@ -1244,10 +1244,10 @@ void DxCamera2D::Reset() {
 D3DXVECTOR2 DxCamera2D::GetLeftTopPosition() {
 	return GetLeftTopPosition(pos_, ratioX_, ratioY_, rcClip_);
 }
-D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(D3DXVECTOR2 focus, double ratio) {
+D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(const D3DXVECTOR2& focus, float ratio) {
 	return GetLeftTopPosition(focus, ratio, ratio);
 }
-D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(D3DXVECTOR2 focus, double ratioX, double ratioY) {
+D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG width = graphics->GetScreenWidth();
 	LONG height = graphics->GetScreenHeight();
@@ -1257,68 +1257,48 @@ D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(D3DXVECTOR2 focus, double ratioX, dou
 	rcClip.bottom = height;
 	return GetLeftTopPosition(focus, ratioX, ratioY, rcClip);
 }
-D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(D3DXVECTOR2 focus, double ratioX, double ratioY, RECT rcClip) {
-	LONG width = rcClip.right - rcClip.left;
-	LONG height = rcClip.bottom - rcClip.top;
+D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY, const RECT& rcClip) {
+	LONG width_2 = (rcClip.right - rcClip.left) / 2L;
+	LONG height_2 = (rcClip.bottom - rcClip.top) / 2L;
 
-	LONG cx = rcClip.left + width / 2; //画面の中心座標x
-	LONG cy = rcClip.top + height / 2; //画面の中心座標y
+	LONG cen_x = rcClip.left + width_2;
+	LONG cen_y = rcClip.top + height_2;
 
-	LONG dx = focus.x - cx; //現フォーカスでの画面左端位置
-	LONG dy = focus.y - cy; //現フォーカスでの画面上端位置
+	LONG dx = focus.x - cen_x;
+	LONG dy = focus.y - cen_y;
 
 	D3DXVECTOR2 res;
-	res.x = cx - dx * ratioX; //現フォーカスでの画面中心の位置(x座標変換量)
-	res.y = cy - dy * ratioY; //現フォーカスでの画面中心の位置(y座標変換量)
+	res.x = cen_x - dx * ratioX;
+	res.y = cen_y - dy * ratioY;
 
-	res.x -= (width / 2) * ratioX; //現フォーカスでの画面左の位置(x座標変換量)
-	res.y -= (height / 2) * ratioY; //現フォーカスでの画面中心の位置(x座標変換量)
+	res.x -= width_2 * ratioX;
+	res.y -= height_2 * ratioY;
 
 	return res;
 }
 
 void DxCamera2D::UpdateMatrix() {
 	D3DXVECTOR2 pos = GetLeftTopPosition();
-	/*
-	D3DXMATRIX matScale;
-	D3DXMatrixScaling(&matScale, ratioX_, ratioY_, 1.0);
-	D3DXMATRIX matTrans;
-	D3DXMatrixTranslation(&matTrans, pos.x, pos.y, 0);
-	*/
 
 	D3DXMatrixIdentity(&matCamera_);
 
-	D3DXMATRIX matAngleZ;
-	D3DXMatrixIdentity(&matAngleZ);
 	if (angleZ_ != 0) {
-		/*
-		D3DXMATRIX matTransRot1;
-		D3DXMatrixTranslation(&matTransRot1, -GetFocusX() + pos.x, -GetFocusY() + pos.y, 0);
-		D3DXMATRIX matRot;
-		D3DXMatrixRotationYawPitchRoll(&matRot, 0, 0, angleZ_);
-		D3DXMATRIX matTransRot2;
-		D3DXMatrixTranslation(&matTransRot2, GetFocusX() - pos.x, GetFocusY() - pos.y, 0);
-		matAngleZ = matTransRot1 * matRot * matTransRot2;
-		*/
-
 		float c = cosf(angleZ_);
 		float s = sinf(angleZ_);
-		float x = -GetFocusX() + pos.x;
-		float y = -GetFocusY() + pos.y;
+		float x = GetFocusX() - pos.x;
+		float y = GetFocusY() - pos.y;
 
-		matAngleZ._11 = c;	matAngleZ._12 = s;
-		matAngleZ._21 = s;	matAngleZ._22 = -c;
-		matAngleZ._41 = c * x + s * y - x;
-		matAngleZ._42 = s * x - c * y - y;
-
-		matCamera_ = matAngleZ;
+		__m128 v1 = Vectorize::Mul(
+			Vectorize::Set(c, s, s, c),
+			Vectorize::Set(x, y, x, y));
+		matCamera_._11 = c;
+		matCamera_._12 = -s;
+		matCamera_._21 = s;
+		matCamera_._22 = c;
+		matCamera_._41 = -v1.m128_f32[0] - v1.m128_f32[1] + x;
+		matCamera_._42 = v1.m128_f32[2] - v1.m128_f32[2] + y;
 	}
 
-	/*
-	mat = mat * matScale;
-	mat = mat * matAngleZ;
-	mat = mat * matTrans;
-	*/ 
 	matCamera_._11 *= ratioX_;
 	matCamera_._22 *= ratioY_;
 	matCamera_._41 += pos.x;
