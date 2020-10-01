@@ -1285,7 +1285,7 @@ void DxCamera2D::UpdateMatrix() {
 		matCamera_._21 = s;
 		matCamera_._22 = c;
 		matCamera_._41 = -v1.m128_f32[0] - v1.m128_f32[1] + x;
-		matCamera_._42 = v1.m128_f32[2] - v1.m128_f32[2] + y;
+		matCamera_._42 = v1.m128_f32[2] - v1.m128_f32[3] + y;
 	}
 
 	matCamera_._11 *= ratioX_;
