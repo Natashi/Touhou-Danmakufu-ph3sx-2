@@ -10,6 +10,7 @@ using namespace directx;
 //ShaderData
 **********************************************************/
 ShaderData::ShaderData() {
+	manager_ = nullptr;
 	effect_ = nullptr;
 	bLoad_ = false;
 	bText_ = false;
