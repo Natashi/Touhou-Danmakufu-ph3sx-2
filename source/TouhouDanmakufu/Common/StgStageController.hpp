@@ -35,7 +35,6 @@ private:
 	StgIntersectionManager* intersectionManager_;
 
 	void _SetupReplayTargetCommonDataArea(int64_t idScript);
-
 public:
 	StgStageController(StgSystemController* systemController);
 	virtual ~StgStageController();

@@ -126,9 +126,9 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		prevPlayerInfo->SetRebirthFrame(replayStageData->GetPlayerRebirthFrame());
 	}
 
-	objectManagerMain_ = std::shared_ptr<StgStageScriptObjectManager>(new StgStageScriptObjectManager(this));
+	objectManagerMain_ = std::make_shared<StgStageScriptObjectManager>(this);
 	//_objectManagerMain_ = objectManagerMain_;
-	scriptManager_ = std::shared_ptr<StgStageScriptManager>(new StgStageScriptManager(this));
+	scriptManager_ = std::make_shared<StgStageScriptManager>(this);
 	enemyManager_ = new StgEnemyManager(this);
 	shotManager_ = new StgShotManager(this);
 	itemManager_ = new StgItemManager(this);
@@ -136,14 +136,11 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	pauseManager_ = new StgPauseScene(systemController_);
 
 	//It's a package script, link its manager with the stage's
-	StgPackageController* packageController = systemController_->GetPackageController();
-	if (packageController) {
+	if (StgPackageController* packageController = systemController_->GetPackageController()) {
 		shared_ptr<ScriptManager> packageScriptManager = std::dynamic_pointer_cast<ScriptManager>(packageController->GetScriptManagerRef());
 		shared_ptr<ScriptManager> stageScriptManager = std::dynamic_pointer_cast<ScriptManager>(scriptManager_);
 		ScriptManager::AddRelativeScriptManagerMutual(packageScriptManager, stageScriptManager);
 	}
-
-	auto objectManager = scriptManager_->GetObjectManager();
 
 	ref_count_ptr<ScriptInformation> infoMain = infoStage_->GetMainScriptInformation();
 	std::wstring dirInfo = PathProperty::GetFileDirectory(infoMain->GetScriptPath());
@@ -169,7 +166,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 
 	if (pathPlayerScript.size() > 0) {
 		ELogger::WriteTop(StringUtility::Format(L"Player script: [%s]", pathPlayerScript.c_str()));
-		int idPlayer = objectManager->CreatePlayerObject();
+		int idPlayer = scriptManager_->GetObjectManager()->CreatePlayerObject();
 		objPlayer = std::dynamic_pointer_cast<StgPlayerObject>(GetMainRenderObject(idPlayer));
 
 		if (systemController_->GetSystemInformation()->IsPackageMode())

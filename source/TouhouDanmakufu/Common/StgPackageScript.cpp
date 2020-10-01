@@ -321,19 +321,18 @@ gstd::value StgPackageScript::Func_PauseStageScene(gstd::script_machine* machine
 	StgPackageController* packageController = script->packageController_;
 	StgSystemController* systemController = packageController->GetSystemController();
 	shared_ptr<StgStageController> stageController = systemController->GetStageController();
-	if (stageController == nullptr) return gstd::value();
+	if (stageController) {
+		bool bPause = argv[0].as_boolean();
 
-	bool bPause = argv[0].as_boolean();
+		auto stageScriptManager = stageController->GetScriptManager();
+		ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
+		if (bPause && !infoStage->IsPause())
+			stageScriptManager->RequestEventAll(StgStageScript::EV_PAUSE_ENTER);
+		else if (!bPause && infoStage->IsPause())
+			stageScriptManager->RequestEventAll(StgStageScript::EV_PAUSE_LEAVE);
 
-	auto stageScriptManager = stageController->GetScriptManager();
-	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
-	if (bPause && !infoStage->IsPause())
-		stageScriptManager->RequestEventAll(StgStageScript::EV_PAUSE_ENTER);
-	else if (!bPause && infoStage->IsPause())
-		stageScriptManager->RequestEventAll(StgStageScript::EV_PAUSE_LEAVE);
-
-	infoStage->SetPause(bPause);
-
+		infoStage->SetPause(bPause);
+	}
 	return value();
 }
 gstd::value StgPackageScript::Func_TerminateStageScene(gstd::script_machine* machine, int argc, const gstd::value* argv) {
