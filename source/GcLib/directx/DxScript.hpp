@@ -204,11 +204,11 @@ namespace directx {
 		static gstd::value Func_Obj_SetValue(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_DeleteValue(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_IsValueExists(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		DNH_FUNCAPI_DECL_(Func_Obj_GetValueR);
-		DNH_FUNCAPI_DECL_(Func_Obj_GetValueDR);
-		DNH_FUNCAPI_DECL_(Func_Obj_SetValueR);
-		DNH_FUNCAPI_DECL_(Func_Obj_DeleteValueR);
-		DNH_FUNCAPI_DECL_(Func_Obj_IsValueExistsR);
+		DNH_FUNCAPI_DECL_(Func_Obj_GetValueI);
+		DNH_FUNCAPI_DECL_(Func_Obj_GetValueDI);
+		DNH_FUNCAPI_DECL_(Func_Obj_SetValueI);
+		DNH_FUNCAPI_DECL_(Func_Obj_DeleteValueI);
+		DNH_FUNCAPI_DECL_(Func_Obj_IsValueExistsI);
 		DNH_FUNCAPI_DECL_(Func_Obj_CopyValueTable);
 		static gstd::value Func_Obj_GetType(gstd::script_machine* machine, int argc, const gstd::value* argv);
 

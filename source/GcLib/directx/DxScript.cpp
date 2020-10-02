@@ -168,11 +168,11 @@ static const std::vector<function> dxFunction = {
 	{ "Obj_SetValue", DxScript::Func_Obj_SetValue, 3 },
 	{ "Obj_DeleteValue", DxScript::Func_Obj_DeleteValue, 2 },
 	{ "Obj_IsValueExists", DxScript::Func_Obj_IsValueExists, 2 },
-	{ "Obj_GetValueR", DxScript::Func_Obj_GetValueR, 2 },
-	{ "Obj_GetValueDR", DxScript::Func_Obj_GetValueDR, 3 },
-	{ "Obj_SetValueR", DxScript::Func_Obj_SetValueR, 3 },
-	{ "Obj_DeleteValueR", DxScript::Func_Obj_DeleteValueR, 2 },
-	{ "Obj_IsValueExistsR", DxScript::Func_Obj_IsValueExistsR, 2 },
+	{ "Obj_GetValueI", DxScript::Func_Obj_GetValueI, 2 },
+	{ "Obj_GetValueDI", DxScript::Func_Obj_GetValueDI, 3 },
+	{ "Obj_SetValueI", DxScript::Func_Obj_SetValueI, 3 },
+	{ "Obj_DeleteValueI", DxScript::Func_Obj_DeleteValueI, 2 },
+	{ "Obj_IsValueExistsI", DxScript::Func_Obj_IsValueExistsI, 2 },
 	{ "Obj_CopyValueTable", DxScript::Func_Obj_CopyValueTable, 3 },
 	{ "Obj_GetType", DxScript::Func_Obj_GetType, 1 },
 
@@ -2115,57 +2115,57 @@ gstd::value DxScript::Func_Obj_IsValueExists(gstd::script_machine* machine, int 
 	return script->CreateBooleanValue(res);
 }
 
-gstd::value DxScript::Func_Obj_GetValueR(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value DxScript::Func_Obj_GetValueI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	double keyDbl = argv[1].as_real();
+	int64_t keyInt = argv[1].as_int();
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		auto itr = obj->mapObjectValue_.find(DxScriptObjectBase::GetKeyHashReal(keyDbl));
+		auto itr = obj->mapObjectValue_.find(DxScriptObjectBase::GetKeyHashI64(keyInt));
 		if (itr != obj->mapObjectValue_.end()) return itr->second;
 	}
 	return value();
 }
-gstd::value DxScript::Func_Obj_GetValueDR(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value DxScript::Func_Obj_GetValueDI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	double keyDbl = argv[1].as_real();
+	int64_t keyInt = argv[1].as_int();
 	gstd::value def = argv[2];
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		auto itr = obj->mapObjectValue_.find(DxScriptObjectBase::GetKeyHashReal(keyDbl));
+		auto itr = obj->mapObjectValue_.find(DxScriptObjectBase::GetKeyHashI64(keyInt));
 		if (itr != obj->mapObjectValue_.end()) return itr->second;
 	}
 	return def;
 }
-gstd::value DxScript::Func_Obj_SetValueR(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value DxScript::Func_Obj_SetValueI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	double keyDbl = argv[1].as_real();
+	int64_t keyInt = argv[1].as_int();
 	gstd::value val = argv[2];
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		obj->SetObjectValue(DxScriptObjectBase::GetKeyHashReal(keyDbl), val);
+		obj->SetObjectValue(DxScriptObjectBase::GetKeyHashI64(keyInt), val);
 	}
 
 	return value();
 }
-gstd::value DxScript::Func_Obj_DeleteValueR(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value DxScript::Func_Obj_DeleteValueI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	double keyDbl = argv[1].as_real();
+	int64_t keyInt = argv[1].as_int();
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		obj->DeleteObjectValue(DxScriptObjectBase::GetKeyHashReal(keyDbl));
+		obj->DeleteObjectValue(DxScriptObjectBase::GetKeyHashI64(keyInt));
 	}
 
 	return value();
 }
-gstd::value DxScript::Func_Obj_IsValueExistsR(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value DxScript::Func_Obj_IsValueExistsI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	double keyDbl = argv[1].as_real();
@@ -2174,7 +2174,7 @@ gstd::value DxScript::Func_Obj_IsValueExistsR(gstd::script_machine* machine, int
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		res = obj->IsObjectValueExists(DxScriptObjectBase::GetKeyHashReal(keyDbl));
+		res = obj->IsObjectValueExists(DxScriptObjectBase::GetKeyHashI64(keyDbl));
 	}
 
 	return script->CreateBooleanValue(res);
