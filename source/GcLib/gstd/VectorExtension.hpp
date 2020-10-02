@@ -22,11 +22,14 @@ namespace gstd {
 		static __forceinline __m128d Set(double a, double b);
 		//Creates int vector (a, b, c, d)
 		static __forceinline __m128i Set(int a, int b, int c, int d);
+		//Creates uint vector (a, b, c, d)
+		static __forceinline __m128i Set(unsigned int a, unsigned int b, unsigned int c, unsigned int d);
 
 		//Set wrappers----------------------------------------------------------------
 		static __forceinline __m128 SetF(float a, float b, float c, float d) { return Set(a, b, c, d); }
 		static __forceinline __m128d SetD(double a, double b) { return Set(a, b); }
 		static __forceinline __m128i SetI(int a, int b, int c, int d) { return Set(a, b, c, d); }
+		static __forceinline __m128i SetU(unsigned int a, unsigned int b, unsigned int c, unsigned int d) { return Set(a, b, c, d); }
 		//----------------------------------------------------------------------------
 
 		//Generates vector (x, x, x, x)
@@ -40,6 +43,9 @@ namespace gstd {
 		static __forceinline __m128 DuplicateEven(const __m128& x);
 		//From vector (a, b, c, d), generate a new vector (b, b, d, d)
 		static __forceinline __m128 DuplicateOdd(const __m128& x);
+
+		//[XOR] vector a and b
+		static __forceinline __m128 XOR(const __m128& a, const __m128& b);
 
 		//[add] vector a and b
 		static __forceinline __m128 Add(const __m128& a, const __m128& b);
@@ -156,6 +162,14 @@ namespace gstd {
 #endif
 		return res;
 	}
+	__m128i Vectorize::Set(unsigned int a, unsigned int b, unsigned int c, unsigned int d) {
+		__m128i res;
+		res.m128i_u32[0] = a;
+		res.m128i_u32[1] = b;
+		res.m128i_u32[2] = c;
+		res.m128i_u32[3] = d;
+		return res;
+	}
 
 	//---------------------------------------------------------------------
 
@@ -222,6 +236,22 @@ namespace gstd {
 #else
 		//SSE3
 		res = _mm_movehdup_ps(x);
+#endif
+		return res;
+	}
+
+	//---------------------------------------------------------------------
+
+	__m128 Vectorize::XOR(const __m128& a, const __m128& b) {
+		__m128 res;
+#ifndef __L_MATH_VECTORIZE
+		for (int i = 0; i < 4; ++i) {
+			uint32_t s = (uint32_t&)a.m128_f32[i] ^ (uint32_t&)b.m128_f32[i];
+			res.m128_f32[i] = (float&)s;
+		}
+#else
+		//SSE
+		res = _mm_xor_ps(a, b);
 #endif
 		return res;
 	}
