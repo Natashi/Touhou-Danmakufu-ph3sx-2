@@ -176,6 +176,7 @@ bool DxMath::IsIntersected(D3DXVECTOR2& pos, std::vector<D3DXVECTOR2>& list) {
 	return res;
 }
 bool DxMath::IsIntersected(DxCircle& circle1, DxCircle& circle2) {
+	//Vectorized / Unvectorized -> ~0.95? (x1.05 times)
 #ifdef __L_MATH_VECTORIZE
 	__m128 v1 = Vectorize::AddSub(
 		Vectorize::Set(circle1.GetX(), circle1.GetR(), circle1.GetY(), 0.0f),
@@ -199,7 +200,7 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 
 		<---->	width
 	*/
-
+	//Vectorized / Unvectorized -> ~0.95? (x1.05 times)
 #ifdef __L_MATH_VECTORIZE
 	__m128 v1, v2;
 
@@ -501,7 +502,8 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	float sz = angleZ.y;
 	float sx_sy = sx * sy;
 	float sx_cy = sx * cy;
-#ifdef __L_MATH_VECTORIZE
+	//I am unable to make a vectorized code that performs better than the unvectorized code
+	/*
 	__m128 v1 = Vectorize::Mul(Vectorize::Set(cy, sx_sy, cx, sy), Vectorize::Set(cz, sz, sz, cz));
 	__m128 v2 = Vectorize::Mul(Vectorize::Set(sx_cy, cy, sx_sy, cx), Vectorize::Set(sz, sz, cz, cz));
 	__m128 v3 = Vectorize::Mul(Vectorize::Set(sy, sx_cy, cx, cx), Vectorize::Set(sz, cz, sy, cy));
@@ -519,7 +521,7 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	mat->_13 = v1.m128_f32[1];
 	mat->_21 = v1.m128_f32[3];
 	mat->_23 = v1.m128_f32[2];
-#else
+	*/
 	mat->_11 = cy * cz - sx_sy * sz;
 	mat->_12 = -cx * sz;
 	mat->_13 = sy * cz + sx_cy * sz;
@@ -529,9 +531,9 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	mat->_31 = -cx * sy;
 	mat->_32 = sx;
 	mat->_33 = cx * cy;
-#endif
 }
 void DxMath::MatrixApplyScaling(D3DXMATRIX* mat, const D3DXVECTOR3& scale) {
+	//Vectorized / Unvectorized -> ~0.46 (x2.17 times)
 #ifdef __L_MATH_VECTORIZE
 	__m128 v_mat = Vectorize::Mul(
 		Vectorize::Set(mat->_11, mat->_12, mat->_13, mat->_21),
@@ -615,6 +617,7 @@ D3DXVECTOR4 DxMath::RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, 
 void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVECTOR2* angle,
 	D3DXVECTOR2* position, D3DXVECTOR2* textureSize) 
 {
+	//Vectorized / Unvectorized -> ~0.35 (x2.86 times)
 #ifdef __L_MATH_VECTORIZE
 	__m128 v1;
 	__m128 v2;
