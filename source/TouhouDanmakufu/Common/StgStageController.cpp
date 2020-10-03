@@ -458,7 +458,7 @@ StgStageInformation::StgStageInformation() {
 	frame_ = 0;
 	stageIndex_ = 0;
 
-	SetRect(&rcStgFrame_, 32, 16, 32 + 384, 16 + 448);
+	rcStgFrame_.Set(32, 16, 32 + 384, 16 + 448);
 	SetStgFrameRect(rcStgFrame_);
 
 	priMinStgFrame_ = 20;
@@ -467,7 +467,7 @@ StgStageInformation::StgStageInformation() {
 	priItemObject_ = 60;
 	priCameraFocusPermit_ = 69;
 
-	SetRect(&rcShotAutoDeleteClipOffset_, -64, -64, 64, 64);
+	rcShotAutoDeleteClipOffset_.Set(-64, -64, 64, 64);
 	UpdateShotAutoDeleteClip();
 
 	rand_ = std::make_shared<RandProvider>();
@@ -480,7 +480,7 @@ StgStageInformation::StgStageInformation() {
 	timeStart_ = 0;
 }
 StgStageInformation::~StgStageInformation() {}
-void StgStageInformation::SetStgFrameRect(const RECT& rect, bool bUpdateFocusResetValue) {
+void StgStageInformation::SetStgFrameRect(const DxRect<LONG>& rect, bool bUpdateFocusResetValue) {
 	rcStgFrame_ = rect;
 
 	ref_count_ptr<D3DXVECTOR2> pos = new D3DXVECTOR2;
@@ -497,8 +497,8 @@ void StgStageInformation::SetStgFrameRect(const RECT& rect, bool bUpdateFocusRes
 	}
 }
 void StgStageInformation::UpdateShotAutoDeleteClip() {
-	RECT* rcClip = &rcShotAutoDeleteClipOffset_;
-	SetRect(&rcShotAutoDeleteClip_, rcClip->left, rcClip->top, 
+	DxRect<LONG>* rcClip = &rcShotAutoDeleteClipOffset_;
+	rcShotAutoDeleteClip_.Set(rcClip->left, rcClip->top, 
 		rcClip->right + (rcStgFrame_.right - rcStgFrame_.left),
 		rcClip->bottom + (rcStgFrame_.bottom - rcStgFrame_.top));
 }

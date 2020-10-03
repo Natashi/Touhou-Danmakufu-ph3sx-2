@@ -1504,41 +1504,38 @@ void Sprite2D::Copy(Sprite2D* src) {
 
 	matRelative_ = src->matRelative_;
 }
-void Sprite2D::SetSourceRect(const RECT_D& rcSrc) {
+void Sprite2D::SetSourceRect(const DxRect<int>& rcSrc) {
 	if (texture_ == nullptr) return;
 	float width = texture_->GetWidth();
 	float height = texture_->GetHeight();
 
 	//テクスチャUV
-	SetVertexUV(0, (float)rcSrc.left / width, (float)rcSrc.top / height);
-	SetVertexUV(1, (float)rcSrc.right / width, (float)rcSrc.top / height);
-	SetVertexUV(2, (float)rcSrc.left / width, (float)rcSrc.bottom / height);
-	SetVertexUV(3, (float)rcSrc.right / width, (float)rcSrc.bottom / height);
+	SetVertexUV(0, rcSrc.left / width, rcSrc.top / height);
+	SetVertexUV(1, rcSrc.right / width, rcSrc.top / height);
+	SetVertexUV(2, rcSrc.left / width, rcSrc.bottom / height);
+	SetVertexUV(3, rcSrc.right / width, rcSrc.bottom / height);
 }
-void Sprite2D::SetDestinationRect(const RECT_D& rcDest) {
+void Sprite2D::SetDestinationRect(const DxRect<double>& rcDest) {
 	//頂点位置
 	SetVertexPosition(0, rcDest.left, rcDest.top);
 	SetVertexPosition(1, rcDest.right, rcDest.top);
 	SetVertexPosition(2, rcDest.left, rcDest.bottom);
 	SetVertexPosition(3, rcDest.right, rcDest.bottom);
 }
-void Sprite2D::SetVertex(const RECT_D& rcSrc, const RECT_D& rcDest, D3DCOLOR color) {
+void Sprite2D::SetVertex(const DxRect<int>& rcSrc, const DxRect<double>& rcDest, D3DCOLOR color) {
 	SetSourceRect(rcSrc);
 	SetDestinationRect(rcDest);
 	SetColorRGB(color);
 	SetAlpha(ColorAccess::GetColorA(color));
 }
-RECT_D Sprite2D::GetDestinationRect() {
+DxRect<double> Sprite2D::GetDestinationRect() {
 	constexpr float bias = -0.5f;
 
-	RECT_D rect;
 	VERTEX_TLX* vertexLeftTop = GetVertex(0);
 	VERTEX_TLX* vertexRightBottom = GetVertex(3);
 
-	rect.left = vertexLeftTop->position.x - bias;
-	rect.top = vertexLeftTop->position.y - bias;
-	rect.right = vertexRightBottom->position.x - bias;
-	rect.bottom = vertexRightBottom->position.y - bias;
+	DxRect<double> rect(vertexLeftTop->position.x - bias, vertexLeftTop->position.y - bias,
+		vertexRightBottom->position.x - bias, vertexRightBottom->position.y - bias);
 
 	return rect;
 }
@@ -1552,9 +1549,8 @@ void Sprite2D::SetDestinationCenter() {
 
 	float vWidth = (vertRB->texcoord.x - vertLT->texcoord.x) * width / 2.0f;
 	float vHeight = (vertRB->texcoord.y - vertLT->texcoord.y) * height / 2.0f;
-	RECT_D rcDest = { -vWidth, -vHeight, vWidth, vHeight };
-
-	SetDestinationRect(rcDest);
+	
+	SetDestinationRect(DxRect<double>(-vWidth, -vHeight, vWidth, vHeight));
 }
 
 /**********************************************************
@@ -1714,7 +1710,7 @@ void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 	int destX[] = { (int)rcDest_.left, (int)rcDest_.right, (int)rcDest_.left, (int)rcDest_.right };
 	int destY[] = { (int)rcDest_.top, (int)rcDest_.top, (int)rcDest_.bottom, (int)rcDest_.bottom };
 	*/
-	double* ptrSrc = reinterpret_cast<double*>(&rcSrc_);
+	int* ptrSrc = reinterpret_cast<int*>(&rcSrc_);
 	double* ptrDst = reinterpret_cast<double*>(&rcDest_);
 
 //#pragma omp for
@@ -1761,9 +1757,8 @@ void SpriteList2D::SetDestinationCenter() {
 
 	double vWidth = (rcSrc_.right - rcSrc_.left) / 2.0;
 	double vHeight = (rcSrc_.bottom - rcSrc_.top) / 2.0;
-	RECT_D rcDest = { -vWidth, -vHeight, vWidth, vHeight };
 
-	SetDestinationRect(rcDest);
+	SetDestinationRect(DxRect<double>(-vWidth, -vHeight, vWidth, vHeight));
 }
 void SpriteList2D::CloseVertex() {
 	bCloseVertexList_ = true;
@@ -1793,40 +1788,36 @@ void Sprite3D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3
 
 	RenderObjectLX::Render(matWorld);
 }
-void Sprite3D::SetSourceDestRect(const RECT_D& rcSrc) {
-	RECT_D rcSrcCopy = rcSrc;
-	rcSrcCopy.left = (LONG)rcSrc.left;
-	rcSrcCopy.top = (LONG)rcSrc.top;
-	rcSrcCopy.right = (LONG)rcSrc.right - 1;
-	rcSrcCopy.bottom = (LONG)rcSrc.bottom - 1;
+void Sprite3D::SetSourceDestRect(const DxRect<double>& rcSrc) {
+	DxRect<int> rcSrcCopy(rcSrc.left, rcSrc.top,
+		(int)rcSrc.right - 1, (int)rcSrc.bottom - 1);
 
-	RECT_D rcDest;
 	double width = (rcSrc.right - rcSrc.left) / 2.0;
 	double height = (rcSrc.bottom - rcSrc.top) / 2.0;
-	SetRectD(&rcDest, -width, -height, width, height);
+	DxRect<double> rcDest(-width, -height, width, height);
 
 	SetSourceRect(rcSrcCopy);
 	SetDestinationRect(rcDest);
 }
-void Sprite3D::SetSourceRect(const RECT_D& rcSrc) {
+void Sprite3D::SetSourceRect(const DxRect<int>& rcSrc) {
 	if (texture_ == nullptr) return;
 	float width = texture_->GetWidth();
 	float height = texture_->GetHeight();
 
 	//テクスチャUV
-	SetVertexUV(0, (float)rcSrc.left / width, (float)rcSrc.top / height);
-	SetVertexUV(1, (float)rcSrc.left / width, (float)rcSrc.bottom / height);
-	SetVertexUV(2, (float)rcSrc.right / width, (float)rcSrc.top / height);
-	SetVertexUV(3, (float)rcSrc.right / width, (float)rcSrc.bottom / height);
+	SetVertexUV(0, rcSrc.left / width, rcSrc.top / height);
+	SetVertexUV(1, rcSrc.left / width, rcSrc.bottom / height);
+	SetVertexUV(2, rcSrc.right / width, rcSrc.top / height);
+	SetVertexUV(3, rcSrc.right / width, rcSrc.bottom / height);
 }
-void Sprite3D::SetDestinationRect(const RECT_D& rcDest) {
+void Sprite3D::SetDestinationRect(const DxRect<double>& rcDest) {
 	//頂点位置
 	SetVertexPosition(0, rcDest.left, rcDest.top, 0);
 	SetVertexPosition(1, rcDest.left, rcDest.bottom, 0);
 	SetVertexPosition(2, rcDest.right, rcDest.top, 0);
 	SetVertexPosition(3, rcDest.right, rcDest.bottom, 0);
 }
-void Sprite3D::SetVertex(const RECT_D& rcSrc, const RECT_D& rcDest, D3DCOLOR color) {
+void Sprite3D::SetVertex(const DxRect<int>& rcSrc, const DxRect<double>& rcDest, D3DCOLOR color) {
 	SetSourceRect(rcSrc);
 	SetDestinationRect(rcDest);
 
@@ -1834,8 +1825,8 @@ void Sprite3D::SetVertex(const RECT_D& rcSrc, const RECT_D& rcDest, D3DCOLOR col
 	SetColorRGB(color);
 	SetAlpha(ColorAccess::GetColorA(color));
 }
-void Sprite3D::SetVertex(const RECT_D& rcSrc, D3DCOLOR color) {
-	SetSourceDestRect(rcSrc);
+void Sprite3D::SetVertex(const DxRect<double>& rcSrcDst, D3DCOLOR color) {
+	SetSourceDestRect(rcSrcDst);
 
 	//頂点色
 	SetColorRGB(color);

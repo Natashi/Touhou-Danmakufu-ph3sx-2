@@ -89,115 +89,6 @@ namespace directx {
 		static D3DCOLOR ToD3DCOLOR(const D3DXVECTOR4& color);
 	};
 
-
-	/**********************************************************
-	//Õ“Ë”»’è—p}Œ`
-	**********************************************************/
-	class DxPoint {
-	public:
-		DxPoint() { pos_ = D3DXVECTOR2(0, 0); }
-		DxPoint(float x, float y) { pos_ = D3DXVECTOR2(x, y); }
-		virtual ~DxPoint() {}
-		float GetX() { return pos_.x; }
-		void SetX(float x) { pos_.x = x; }
-		float GetY() { return pos_.y; }
-		void SetY(float y) { pos_.y = y; }
-	private:
-		D3DXVECTOR2 pos_;
-	};
-
-	class DxCircle {
-	public:
-		DxCircle() { cen_ = DxPoint(); r_ = 0; }
-		DxCircle(float x, float y, float r) { cen_ = DxPoint(x, y); r_ = r; }
-		virtual ~DxCircle() {}
-		float GetX() { return cen_.GetX(); }
-		void SetX(float x) { cen_.SetX(x); }
-		float GetY() { return cen_.GetY(); }
-		void SetY(float y) { cen_.SetY(y); }
-		float GetR() { return r_; }
-		void SetR(float r) { r_ = r; }
-	private:
-		DxPoint cen_;
-		float r_;
-	};
-
-	class DxWidthLine {
-		//•‚Ì‚ ‚éü•ª
-	public:
-		DxWidthLine() { p1_ = DxPoint(); p2_ = DxPoint(); width_ = 0; }
-		DxWidthLine(float x1, float y1, float x2, float y2, float width) {
-			p1_ = DxPoint(x1, y1); p2_ = DxPoint(x2, y2); width_ = width;
-		}
-		virtual ~DxWidthLine() {}
-		float GetX1() { return p1_.GetX(); }
-		float GetY1() { return p1_.GetY(); }
-		float GetX2() { return p2_.GetX(); }
-		float GetY2() { return p2_.GetY(); }
-		float GetWidth() { return width_; }
-	private:
-		DxPoint p1_;
-		DxPoint p2_;
-		float width_;
-	};
-
-	class DxLine3D {
-	private:
-		D3DXVECTOR3 vertex_[2];
-	public:
-		DxLine3D() {};
-		DxLine3D(const D3DXVECTOR3 &p1, const D3DXVECTOR3 &p2) {
-			vertex_[0] = p1;
-			vertex_[1] = p2;
-		}
-
-		D3DXVECTOR3& GetPosition(size_t index) { return vertex_[index]; }
-		D3DXVECTOR3& GetPosition1() { return vertex_[0]; }
-		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
-	};
-
-	class DxTriangle {
-	private:
-		D3DXVECTOR3 vertex_[3];
-		D3DXVECTOR3 normal_;
-
-		void _Compute() {
-			D3DXVECTOR3 lv[3];
-			lv[0] = vertex_[1] - vertex_[0];
-			lv[0] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[0]);
-
-			lv[1] = vertex_[2] - vertex_[1];
-			lv[1] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[1]);
-
-			lv[2] = vertex_[0] - vertex_[2];
-			lv[2] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[2]);
-
-			D3DXVECTOR3 cross = *D3DXVec3Cross(&D3DXVECTOR3(), &lv[0], &lv[1]);
-			normal_ = *D3DXVec3Normalize(&D3DXVECTOR3(), &cross);
-		}
-	public:
-		DxTriangle() {}
-		DxTriangle(const D3DXVECTOR3 &p1, const D3DXVECTOR3 &p2, const D3DXVECTOR3 &p3) {
-			vertex_[0] = p1;
-			vertex_[1] = p2;
-			vertex_[2] = p3;
-			_Compute();
-		}
-
-		D3DXVECTOR3& GetPosition(size_t index) { return vertex_[index]; }
-		D3DXVECTOR3& GetPosition1() { return vertex_[0]; }
-		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
-		D3DXVECTOR3& GetPosition3() { return vertex_[2]; }
-		D3DXVECTOR3& GetNormal() { return normal_; }
-		FLOAT GetArea() {
-			D3DXVECTOR3 v_ab = vertex_[0] - vertex_[1];
-			D3DXVECTOR3 v_ac = vertex_[0] - vertex_[2];
-			D3DXVECTOR3 vCross;
-			D3DXVec3Cross(&vCross, &v_ab, &v_ac);
-			return abs(0.5f * D3DXVec3Length(&vCross));
-		}
-	};
-
 	/**********************************************************
 	//DxMath
 	**********************************************************/
@@ -242,23 +133,6 @@ namespace directx {
 		static void TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVECTOR2* angle, 
 			D3DXVECTOR2* position, D3DXVECTOR2* textureSize);
 	};
-
-	struct RECT_D {
-		double left;
-		double top;
-		double right;
-		double bottom;
-	};
-	inline RECT_D GetRectD(const RECT& rect) {
-		RECT_D res = { (double)rect.left, (double)rect.top, (double)rect.right, (double)rect.bottom };
-		return res;
-	}
-	inline void SetRectD(RECT_D* rect, double left, double top, double right, double bottom) {
-		rect->left = left;
-		rect->top = top;
-		rect->right = right;
-		rect->bottom = bottom;
-	}
 }
 
 

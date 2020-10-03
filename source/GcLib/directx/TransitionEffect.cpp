@@ -40,10 +40,12 @@ bool TransitionEffect_FadeOut::IsEnd() {
 void TransitionEffect_FadeOut::Initialize(int frame, shared_ptr<Texture> texture) {
 	diffAlpha_ = 255.0 / frame;
 	alpha_ = 255.0;
+
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG width = graphics->GetScreenWidth();
 	LONG height = graphics->GetScreenHeight();
-	RECT_D rect = { 0., 0., (double)width, (double)height };
+
+	DxRect<int> rect(0, 0, width, height);
 
 	sprite_ = new Sprite2D();
 	sprite_->SetTexture(texture);

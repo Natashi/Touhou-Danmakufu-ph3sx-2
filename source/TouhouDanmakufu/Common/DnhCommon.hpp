@@ -147,8 +147,8 @@ public:
 		FPS_AUTO,
 	};
 public:
-	ScreenMode modeScreen_;	//DirectGraphics::SCREENMODE_FULLSCREEN,SCREENMODE_WINDOW
-	int modeColor_;		//DirectGraphics::COLOR_MODE_32BIT,COLOR_MODE_16BIT
+	ScreenMode modeScreen_;
+	ColorMode modeColor_;
 	
 	int fpsType_;
 
@@ -191,8 +191,8 @@ public:
 	void SetFpsType(int type) { fpsType_ = type; }
 	int GetSkipModeSpeedRate() { return fastModeSpeed_; }
 
-	int GetColorMode() { return modeColor_; }
-	void SetColorMode(int mode) { modeColor_ = mode; }
+	ColorMode GetColorMode() { return modeColor_; }
+	void SetColorMode(ColorMode mode) { modeColor_ = mode; }
 	bool IsEnableVSync() { return bVSync_; }
 	void SetEnableVSync(bool b) { bVSync_ = b; }
 	bool IsEnableRef() { return referenceRasterizer_; }

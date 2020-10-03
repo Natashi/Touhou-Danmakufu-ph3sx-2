@@ -8,7 +8,7 @@
 **********************************************************/
 StgPlayerObject::StgPlayerObject(StgStageController* stageController) : StgMoveObject(stageController) {
 	stageController_ = stageController;
-	typeObject_ = TypeObject::OBJ_PLAYER;
+	typeObject_ = TypeObject::Player;
 
 	infoPlayer_ = new StgPlayerInformation();
 
@@ -16,10 +16,10 @@ StgPlayerObject::StgPlayerObject(StgStageController* stageController) : StgMoveO
 	speedFast_ = 4;
 	speedSlow_ = 1.6;
 	{
-		RECT* rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
+		DxRect<LONG>* rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
 		LONG stgWidth = rcStgFrame->right - rcStgFrame->left;
 		LONG stgHeight = rcStgFrame->bottom - rcStgFrame->top;
-		SetRect(&rcClip_, 0, 0, stgWidth, stgHeight);
+		rcClip_.Set(0, 0, stgWidth, stgHeight);
 	}
 
 	state_ = STATE_NORMAL;
@@ -52,7 +52,7 @@ StgPlayerObject::StgPlayerObject(StgStageController* stageController) : StgMoveO
 }
 StgPlayerObject::~StgPlayerObject() {}
 void StgPlayerObject::_InitializeRebirth() {
-	RECT* rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
+	DxRect<LONG>* rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
 
 	SetX((rebirthX_ == REBIRTH_DEFAULT) ? (rcStgFrame->right - rcStgFrame->left) / 2.0 : rebirthX_);
 	SetY((rebirthY_ == REBIRTH_DEFAULT) ? rcStgFrame->bottom - 48 : rebirthY_);
@@ -295,7 +295,7 @@ void StgPlayerObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, sha
 					hitObjectID_ = objShot->GetObjectID();
 
 					if (enableDeleteShotOnHit_ && objShot->GetLife() != StgShotObject::LIFE_SPELL_REGIST &&
-						objShot->GetObjectType() == TypeObject::OBJ_SHOT)
+						objShot->GetObjectType() == TypeObject::Shot)
 						objShot->ConvertToItem(true);
 				}
 				else if (objShot->IsValidGraze() && (enableGrazeInvincible_ || frameInvincibility_ <= 0)) {

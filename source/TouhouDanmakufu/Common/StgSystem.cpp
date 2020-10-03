@@ -292,7 +292,7 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	ref_count_ptr<StgStageInformation> stageInfo = nullptr;
 	if (bValidStage) {
 		stageInfo = stageController_->GetStageInformation();
-		RECT* rcStgFrame = stageInfo->GetStgFrameRect();
+		DxRect<LONG>* rcStgFrame = stageInfo->GetStgFrameRect();
 
 		ref_count_ptr<D3DXVECTOR2> pos = new D3DXVECTOR2;
 		pos->x = (rcStgFrame->right - rcStgFrame->left) / 2.0f;
@@ -305,8 +305,7 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	else {
 		stageInfo = new StgStageInformation();
 
-		RECT rect;
-		ZeroMemory(&rect, sizeof(RECT));
+		DxRect<LONG> rect;
 		rect.right = graphics->GetScreenWidth();
 		rect.bottom = graphics->GetScreenHeight();
 
@@ -317,7 +316,7 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 		}
 	}
 
-	RECT* rcStgFrame = stageInfo->GetStgFrameRect();
+	DxRect<LONG>* rcStgFrame = stageInfo->GetStgFrameRect();
 
 	LONG stgWidth = rcStgFrame->right - rcStgFrame->left;
 	LONG stgHeight = rcStgFrame->bottom - rcStgFrame->top;

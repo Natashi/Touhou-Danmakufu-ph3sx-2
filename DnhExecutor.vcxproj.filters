@@ -418,6 +418,9 @@
     <ClInclude Include="source\GcLib\directx\DxScript.hpp">
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxTypes.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="source\TouhouDanmakufu\DnhExecutor\DnhExecuter.rc">

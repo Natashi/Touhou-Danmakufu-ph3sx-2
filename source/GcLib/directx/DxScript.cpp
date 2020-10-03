@@ -402,20 +402,20 @@ static const std::vector<function> dxFunction = {
 static const std::vector<constant> dxConstant = {
 	//Object types
 	constant("ID_INVALID", DxScript::ID_INVALID),
-	constant("OBJ_PRIMITIVE_2D", (int)TypeObject::OBJ_PRIMITIVE_2D),
-	constant("OBJ_SPRITE_2D", (int)TypeObject::OBJ_SPRITE_2D),
-	constant("OBJ_SPRITE_LIST_2D", (int)TypeObject::OBJ_SPRITE_LIST_2D),
-	constant("OBJ_PRIMITIVE_3D", (int)TypeObject::OBJ_PRIMITIVE_3D),
-	constant("OBJ_SPRITE_3D", (int)TypeObject::OBJ_SPRITE_3D),
-	constant("OBJ_TRAJECTORY_3D", (int)TypeObject::OBJ_TRAJECTORY_3D),
-	constant("OBJ_PARTICLE_LIST_2D", (int)TypeObject::OBJ_PARTICLE_LIST_2D),
-	constant("OBJ_PARTICLE_LIST_3D", (int)TypeObject::OBJ_PARTICLE_LIST_3D),
-	constant("OBJ_SHADER", (int)TypeObject::OBJ_SHADER),
-	constant("OBJ_MESH", (int)TypeObject::OBJ_MESH),
-	constant("OBJ_TEXT", (int)TypeObject::OBJ_TEXT),
-	constant("OBJ_SOUND", (int)TypeObject::OBJ_SOUND),
-	constant("OBJ_FILE_TEXT", (int)TypeObject::OBJ_FILE_TEXT),
-	constant("OBJ_FILE_BINARY", (int)TypeObject::OBJ_FILE_BINARY),
+	constant("OBJ_PRIMITIVE_2D", (int)TypeObject::Primitive2D),
+	constant("OBJ_SPRITE_2D", (int)TypeObject::Sprite2D),
+	constant("OBJ_SPRITE_LIST_2D", (int)TypeObject::SpriteList2D),
+	constant("OBJ_PRIMITIVE_3D", (int)TypeObject::Primitive3D),
+	constant("OBJ_SPRITE_3D", (int)TypeObject::Sprite3D),
+	constant("OBJ_TRAJECTORY_3D", (int)TypeObject::Trajectory3D),
+	constant("OBJ_PARTICLE_LIST_2D", (int)TypeObject::ParticleList2D),
+	constant("OBJ_PARTICLE_LIST_3D", (int)TypeObject::ParticleList3D),
+	constant("OBJ_SHADER", (int)TypeObject::Shader),
+	constant("OBJ_MESH", (int)TypeObject::Mesh),
+	constant("OBJ_TEXT", (int)TypeObject::Text),
+	constant("OBJ_SOUND", (int)TypeObject::Sound),
+	constant("OBJ_FILE_TEXT", (int)TypeObject::FileText),
+	constant("OBJ_FILE_BINARY", (int)TypeObject::FileBinary),
 
 	//ColorHexToARGB permutations
 	constant("COLOR_PERMUTE_ARGB", 0x31b),
@@ -473,10 +473,17 @@ static const std::vector<constant> dxConstant = {
 	constant("PRIMITIVE_TRIANGLESTRIP", D3DPT_TRIANGLESTRIP),
 	constant("PRIMITIVE_TRIANGLEFAN", D3DPT_TRIANGLEFAN),
 
-	//Border types
-	constant("BORDER_NONE", DxFont::BORDER_NONE),
-	constant("BORDER_FULL", DxFont::BORDER_FULL),
-	constant("BORDER_SHADOW", DxFont::BORDER_SHADOW),
+	//Text object border types
+	constant("BORDER_NONE", (int)TextBorderType::None),
+	constant("BORDER_FULL", (int)TextBorderType::Full),
+	constant("BORDER_SHADOW", (int)TextBorderType::Shadow),
+
+	//Text object alignments
+	constant("ALIGNMENT_LEFT", (int)TextAlignment::Left),
+	constant("ALIGNMENT_RIGHT", (int)TextAlignment::Right),
+	constant("ALIGNMENT_CENTER", (int)TextAlignment::Center),
+	constant("ALIGNMENT_TOP", (int)TextAlignment::Top),
+	constant("ALIGNMENT_BOTTOM", (int)TextAlignment::Bottom),
 
 	//Font character sets
 	constant("CHARSET_ANSI", ANSI_CHARSET),
@@ -497,12 +504,12 @@ static const std::vector<constant> dxConstant = {
 	constant("SOUND_VOICE", SoundDivision::DIVISION_VOICE),
 
 	//Audio file formats
-	constant("SOUND_UNKNOWN", DirectSoundManager::FileFormat::SD_UNKNOWN),
-	constant("SOUND_WAVE", DirectSoundManager::FileFormat::SD_WAVE),
-	constant("SOUND_OGG", DirectSoundManager::FileFormat::SD_OGG),
-	constant("SOUND_MP3", DirectSoundManager::FileFormat::SD_MP3),
-	constant("SOUND_AWAVE", DirectSoundManager::FileFormat::SD_AWAVE),
-	constant("SOUND_MIDI", DirectSoundManager::FileFormat::SD_MIDI),
+	constant("SOUND_UNKNOWN", (int)SoundFileFormat::Unknown),
+	constant("SOUND_WAVE", (int)SoundFileFormat::Wave),
+	constant("SOUND_OGG", (int)SoundFileFormat::Ogg),
+	constant("SOUND_MP3", (int)SoundFileFormat::Mp3),
+	constant("SOUND_AWAVE", (int)SoundFileFormat::AWave),
+	constant("SOUND_MIDI", (int)SoundFileFormat::Midi),
 
 	//ObjSound_GetInfo info types
 	constant("INFO_FORMAT", SoundPlayer::INFO_FORMAT),
@@ -515,11 +522,6 @@ static const std::vector<constant> dxConstant = {
 	constant("INFO_POSITION_SAMPLE", SoundPlayer::INFO_POSITION_SAMPLE),
 	constant("INFO_LENGTH", SoundPlayer::INFO_LENGTH),
 	constant("INFO_LENGTH_SAMPLE", SoundPlayer::INFO_LENGTH_SAMPLE),
-
-	//Text object alignments
-	constant("ALIGNMENT_LEFT", DxText::ALIGNMENT_LEFT),
-	constant("ALIGNMENT_RIGHT", DxText::ALIGNMENT_RIGHT),
-	constant("ALIGNMENT_CENTER", DxText::ALIGNMENT_CENTER),
 
 	//Binary file code pages
 	constant("CODE_ACP", DxScript::CODE_ACP),
@@ -1205,7 +1207,7 @@ gstd::value DxScript::Func_SetFogParam(gstd::script_machine* machine, int argc, 
 	float start = argv[0].as_real();
 	float end = argv[1].as_real();
 
-	__m128i c = Vectorize::Set(0, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
+	__m128i c = Vectorize::SetI(0, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
 	D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 
 	script->GetObjectManager()->SetFogParam(true, color, start, end);
@@ -1337,15 +1339,12 @@ gstd::value DxScript::Func_ClearRenderTargetA3(gstd::script_machine* machine, in
 	byte cb = argv[3].as_int();
 	byte ca = argv[4].as_int();
 
-	LONG rl = (LONG)argv[5].as_int();
-	LONG rt = (LONG)argv[6].as_int();
-	LONG rr = (LONG)argv[7].as_int();
-	LONG rb = (LONG)argv[8].as_int();
-	D3DRECT rc = { rl, rt, rr, rb };
+	DxRect<LONG> rc(argv[5].as_int(), argv[6].as_int(), 
+		argv[7].as_int(), argv[8].as_int());
 
 	IDirect3DDevice9* device = graphics->GetDevice();
 	graphics->SetRenderTarget(texture, false);
-	device->Clear(1, &rc, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(ca, cr, cg, cb), 1.0f, 0);
+	device->Clear(1, (D3DRECT*)&rc, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(ca, cr, cg, cb), 1.0f, 0);
 	graphics->SetRenderTarget(current, false);
 
 	return script->CreateBooleanValue(true);
@@ -1374,9 +1373,9 @@ gstd::value DxScript::Func_SaveRenderedTextureA1(gstd::script_machine* machine, 
 
 		//•Û‘¶
 		IDirect3DSurface9* pSurface = texture->GetD3DSurface();
-		RECT rect = { 0, 0, graphics->GetScreenWidth(), graphics->GetScreenHeight() };
+		DxRect<LONG> rect(0, 0, graphics->GetScreenWidth(), graphics->GetScreenHeight());
 		D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
-			pSurface, nullptr, &rect);
+			pSurface, nullptr, (RECT*)&rect);
 	}
 
 	return value();
@@ -1388,10 +1387,8 @@ gstd::value DxScript::Func_SaveRenderedTextureA2(gstd::script_machine* machine, 
 	std::wstring path = argv[1].as_string();
 	path = PathProperty::GetUnique(path);
 
-	LONG rcLeft = (LONG)argv[2].as_int();
-	LONG rcTop = (LONG)argv[3].as_int();
-	LONG rcRight = (LONG)argv[4].as_int();
-	LONG rcBottom = (LONG)argv[5].as_int();
+	DxRect<LONG> rect(argv[2].as_int(), argv[3].as_int(),
+		argv[4].as_int(), argv[5].as_int());
 
 	TextureManager* textureManager = TextureManager::GetBase();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -1406,9 +1403,8 @@ gstd::value DxScript::Func_SaveRenderedTextureA2(gstd::script_machine* machine, 
 
 		//•Û‘¶
 		IDirect3DSurface9* pSurface = texture->GetD3DSurface();
-		RECT rect = { rcLeft, rcTop, rcRight, rcBottom };
 		D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
-			pSurface, nullptr, &rect);
+			pSurface, nullptr, (RECT*)&rect);
 	}
 
 	return value();
@@ -1420,10 +1416,8 @@ gstd::value DxScript::Func_SaveRenderedTextureA3(gstd::script_machine* machine, 
 	std::wstring path = argv[1].as_string();
 	path = PathProperty::GetUnique(path);
 
-	LONG rcLeft = (LONG)argv[2].as_int();
-	LONG rcTop = (LONG)argv[3].as_int();
-	LONG rcRight = (LONG)argv[4].as_int();
-	LONG rcBottom = (LONG)argv[5].as_int();
+	DxRect<LONG> rect(argv[2].as_int(), argv[3].as_int(),
+		argv[4].as_int(), argv[5].as_int());
 	BYTE imgFormat = argv[6].as_int();
 
 	if (imgFormat < 0)
@@ -1444,9 +1438,8 @@ gstd::value DxScript::Func_SaveRenderedTextureA3(gstd::script_machine* machine, 
 
 		//•Û‘¶
 		IDirect3DSurface9* pSurface = texture->GetD3DSurface();
-		RECT rect = { rcLeft, rcTop, rcRight, rcBottom };
 		D3DXSaveSurfaceToFile(path.c_str(), (D3DXIMAGE_FILEFORMAT)imgFormat,
-			pSurface, nullptr, &rect);
+			pSurface, nullptr, (RECT*)&rect);
 	}
 
 	return value();
@@ -2228,7 +2221,7 @@ value DxScript::Func_Obj_GetType(script_machine* machine, int argc, const value*
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 
-	TypeObject res = TypeObject::OBJ_INVALID;
+	TypeObject res = TypeObject::Invalid;
 
 	DxScriptObjectBase* obj = dynamic_cast<DxScriptObjectBase*>(script->GetObjectPointer(id));
 	if (obj) res = obj->GetObjectType();
@@ -2938,22 +2931,22 @@ value DxScript::Func_ObjPrimitive_Create(script_machine* machine, int argc, cons
 	TypeObject type = (TypeObject)argv[0].as_int();
 
 	shared_ptr<DxScriptPrimitiveObject> obj;
-	if (type == TypeObject::OBJ_PRIMITIVE_2D) {
+	if (type == TypeObject::Primitive2D) {
 		obj = std::make_shared<DxScriptPrimitiveObject2D>();
 	}
-	else if (type == TypeObject::OBJ_SPRITE_2D) {
+	else if (type == TypeObject::Sprite2D) {
 		obj = std::make_shared<DxScriptSpriteObject2D>();
 	}
-	else if (type == TypeObject::OBJ_SPRITE_LIST_2D) {
+	else if (type == TypeObject::SpriteList2D) {
 		obj = std::make_shared<DxScriptSpriteListObject2D>();
 	}
-	else if (type == TypeObject::OBJ_PRIMITIVE_3D) {
+	else if (type == TypeObject::Primitive3D) {
 		obj = std::make_shared<DxScriptPrimitiveObject3D>();
 	}
-	else if (type == TypeObject::OBJ_SPRITE_3D) {
+	else if (type == TypeObject::Sprite3D) {
 		obj = std::make_shared<DxScriptSpriteObject3D>();
 	}
-	else if (type == TypeObject::OBJ_TRAJECTORY_3D) {
+	else if (type == TypeObject::Trajectory3D) {
 		obj = std::make_shared<DxScriptTrajectoryObject3D>();
 	}
 
@@ -3147,12 +3140,8 @@ value DxScript::Func_ObjSprite2D_SetSourceRect(script_machine* machine, int argc
 	int id = argv[0].as_int();
 	DxScriptSpriteObject2D* obj = dynamic_cast<DxScriptSpriteObject2D*>(script->GetObjectPointer(id));
 	if (obj) {
-		RECT_D rcSrc = {
-			(double)argv[1].as_int(),
-			(double)argv[2].as_int(),
-			(double)argv[3].as_int(),
-			(double)argv[4].as_int()
-		};
+		DxRect<int> rcSrc(argv[1].as_int(), argv[2].as_int(),
+			argv[3].as_int(), argv[4].as_int());
 		obj->GetSpritePointer()->SetSourceRect(rcSrc);
 	}
 	return value();
@@ -3162,12 +3151,8 @@ value DxScript::Func_ObjSprite2D_SetDestRect(script_machine* machine, int argc, 
 	int id = argv[0].as_int();
 	DxScriptSpriteObject2D* obj = dynamic_cast<DxScriptSpriteObject2D*>(script->GetObjectPointer(id));
 	if (obj) {
-		RECT_D rcDest = {
-			argv[1].as_real(),
-			argv[2].as_real(),
-			argv[3].as_real(),
-			argv[4].as_real()
-		};
+		DxRect<double> rcDest(argv[1].as_real(), argv[2].as_real(),
+			argv[3].as_real(), argv[4].as_real());
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
 	}
 	return value();
@@ -3187,12 +3172,8 @@ gstd::value DxScript::Func_ObjSpriteList2D_SetSourceRect(gstd::script_machine* m
 	int id = argv[0].as_int();
 	DxScriptSpriteListObject2D* obj = dynamic_cast<DxScriptSpriteListObject2D*>(script->GetObjectPointer(id));
 	if (obj) {
-		RECT_D rcSrc = {
-			(double)argv[1].as_int(),
-			(double)argv[2].as_int(),
-			(double)argv[3].as_int(),
-			(double)argv[4].as_int()
-		};
+		DxRect<int> rcSrc(argv[1].as_int(), argv[2].as_int(),
+			argv[3].as_int(), argv[4].as_int());
 		obj->GetSpritePointer()->SetSourceRect(rcSrc);
 	}
 	return value();
@@ -3202,12 +3183,8 @@ gstd::value DxScript::Func_ObjSpriteList2D_SetDestRect(gstd::script_machine* mac
 	int id = argv[0].as_int();
 	DxScriptSpriteListObject2D* obj = dynamic_cast<DxScriptSpriteListObject2D*>(script->GetObjectPointer(id));
 	if (obj) {
-		RECT_D rcDest = {
-			argv[1].as_real(),
-			argv[2].as_real(),
-			argv[3].as_real(),
-			argv[4].as_real()
-		};
+		DxRect<double> rcDest(argv[1].as_real(), argv[2].as_real(),
+			argv[3].as_real(), argv[4].as_real());
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
 	}
 	return value();
@@ -3259,12 +3236,8 @@ value DxScript::Func_ObjSprite3D_SetSourceRect(script_machine* machine, int argc
 	int id = argv[0].as_int();
 	DxScriptSpriteObject3D* obj = dynamic_cast<DxScriptSpriteObject3D*>(script->GetObjectPointer(id));
 	if (obj) {
-		RECT_D rcSrc = {
-			(double)argv[1].as_int(),
-			(double)argv[2].as_int(),
-			(double)argv[3].as_int(),
-			(double)argv[4].as_int()
-		};
+		DxRect<int> rcSrc(argv[1].as_int(), argv[2].as_int(),
+			argv[3].as_int(), argv[4].as_int());
 		obj->GetSpritePointer()->SetSourceRect(rcSrc);
 	}
 	return value();
@@ -3274,12 +3247,8 @@ value DxScript::Func_ObjSprite3D_SetDestRect(script_machine* machine, int argc, 
 	int id = argv[0].as_int();
 	DxScriptSpriteObject3D* obj = dynamic_cast<DxScriptSpriteObject3D*>(script->GetObjectPointer(id));
 	if (obj) {
-		RECT_D rcDest = {
-			argv[1].as_real(),
-			argv[2].as_real(),
-			argv[3].as_real(),
-			argv[4].as_real()
-		};
+		DxRect<double> rcDest(argv[1].as_real(), argv[2].as_real(),
+			argv[3].as_real(), argv[4].as_real());
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
 	}
 	return value();
@@ -3289,13 +3258,9 @@ value DxScript::Func_ObjSprite3D_SetSourceDestRect(script_machine* machine, int 
 	int id = argv[0].as_int();
 	DxScriptSpriteObject3D* obj = dynamic_cast<DxScriptSpriteObject3D*>(script->GetObjectPointer(id));
 	if (obj) {
-		RECT_D rcSrc = {
-			argv[1].as_real(),
-			argv[2].as_real(),
-			argv[3].as_real(),
-			argv[4].as_real()
-		};
-		obj->GetSpritePointer()->SetSourceDestRect(rcSrc);
+		DxRect<double> rect(argv[1].as_real(), argv[2].as_real(),
+			argv[3].as_real(), argv[4].as_real());
+		obj->GetSpritePointer()->SetSourceDestRect(rect);
 	}
 	return value();
 }
@@ -3345,10 +3310,10 @@ value DxScript::Func_ObjParticleList_Create(script_machine* machine, int argc, c
 	TypeObject type = (TypeObject)argv[0].as_int();
 
 	shared_ptr<DxScriptPrimitiveObject> obj;
-	if (type == TypeObject::OBJ_PARTICLE_LIST_2D) {
+	if (type == TypeObject::ParticleList2D) {
 		obj = std::make_shared<DxScriptParticleListObject2D>();
 	}
-	else if (type == TypeObject::OBJ_PARTICLE_LIST_3D) {
+	else if (type == TypeObject::ParticleList3D) {
 		obj = std::make_shared<DxScriptParticleListObject3D>();
 	}
 
@@ -3705,8 +3670,8 @@ value DxScript::Func_ObjText_SetFontBorderType(script_machine* machine, int argc
 	int id = argv[0].as_int();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int type = argv[1].as_int();
-		obj->SetFontBorderType((DxFont::TypeBorder)type);
+		TextBorderType type = (TextBorderType)argv[1].as_int();
+		obj->SetFontBorderType(type);
 	}
 	return value();
 }
@@ -3785,7 +3750,7 @@ value DxScript::Func_ObjText_SetVertexColor(script_machine* machine, int argc, c
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		if (argc == 5) {
-			D3DCOLOR color = ColorAccess::ToD3DCOLOR(Vectorize::Set((int)argv[1].as_int(), 
+			D3DCOLOR color = ColorAccess::ToD3DCOLOR(Vectorize::SetI(argv[1].as_int(), 
 				argv[2].as_int(), argv[3].as_int(), argv[4].as_int()));
 			obj->SetVertexColor(color);
 		}
@@ -3819,8 +3784,8 @@ gstd::value DxScript::Func_ObjText_SetHorizontalAlignment(gstd::script_machine* 
 	int id = argv[0].as_int();
 	DxScriptTextObject* obj = dynamic_cast<DxScriptTextObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		int align = argv[1].as_int();
-		obj->SetHorizontalAlignment((DxText::Alignment)align);
+		TextAlignment align = (TextAlignment)argv[1].as_int();
+		obj->SetHorizontalAlignment(align);
 	}
 	return value();
 }
@@ -4137,7 +4102,7 @@ gstd::value DxScript::Func_ObjSound_GetInfo(gstd::script_machine* machine, int a
 			WAVEFORMATEX* waveFormat = player->GetWaveFormat();
 			switch (type) {
 			case SoundPlayer::INFO_FORMAT:
-				return script->CreateIntValue(player->GetFormat());
+				return script->CreateIntValue((int)player->GetFormat());
 			case SoundPlayer::INFO_CHANNEL:
 				return script->CreateIntValue(waveFormat->nChannels);
 			case SoundPlayer::INFO_SAMPLE_RATE:
@@ -4163,7 +4128,7 @@ gstd::value DxScript::Func_ObjSound_GetInfo(gstd::script_machine* machine, int a
 
 	switch (type) {
 	case SoundPlayer::INFO_FORMAT:
-		return script->CreateIntValue(DirectSoundManager::FileFormat::SD_UNKNOWN);
+		return script->CreateIntValue((int)SoundFileFormat::Unknown);
 	case SoundPlayer::INFO_CHANNEL:
 	case SoundPlayer::INFO_SAMPLE_RATE:
 	case SoundPlayer::INFO_AVG_BYTE_PER_SEC:
@@ -4186,10 +4151,10 @@ gstd::value DxScript::Func_ObjFile_Create(gstd::script_machine* machine, int arg
 	TypeObject type = (TypeObject)argv[0].as_int();
 
 	shared_ptr<DxFileObject> obj;
-	if (type == TypeObject::OBJ_FILE_TEXT) {
+	if (type == TypeObject::FileText) {
 		obj = shared_ptr<DxFileObject>(new DxTextFileObject());
 	}
-	else if (type == TypeObject::OBJ_FILE_BINARY) {
+	else if (type == TypeObject::FileBinary) {
 		obj = shared_ptr<DxFileObject>(new DxBinaryFileObject());
 	}
 

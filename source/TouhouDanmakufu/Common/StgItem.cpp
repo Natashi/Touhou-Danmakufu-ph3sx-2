@@ -315,7 +315,6 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 		std::vector<StgItemData*> listData;
 
 		std::wstring pathImage = L"";
-		RECT rcDelay = { -1, -1, -1, -1 };
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
 			if (tok.GetType() == Token::Type::TK_EOF)
@@ -425,16 +424,16 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 
 				StgItemData::AnimationData anime;
 
-				RECT rect;
-				rect.left = StringUtility::ToInteger(list[0]);
-				rect.top = StringUtility::ToInteger(list[1]);
-				rect.right = StringUtility::ToInteger(list[2]);
-				rect.bottom = StringUtility::ToInteger(list[3]);
+				DxRect<int> rect(
+					StringUtility::ToInteger(list[0]),
+					StringUtility::ToInteger(list[1]),
+					StringUtility::ToInteger(list[2]),
+					StringUtility::ToInteger(list[3]));
 				anime.rcSrc_ = rect;
 
 				LONG width = rect.right - rect.left;
 				LONG height = rect.bottom - rect.top;
-				RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
+				DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
 				if (width % 2 == 1) rcDest.right++;
 				if (height % 2 == 1) rcDest.bottom++;
 				anime.rcDest_ = rcDest;
@@ -446,16 +445,16 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 			else if (element == L"out") {
 				std::vector<std::wstring> list = _GetArgumentList(scanner);
 
-				RECT rect;
-				rect.left = StringUtility::ToInteger(list[0]);
-				rect.top = StringUtility::ToInteger(list[1]);
-				rect.right = StringUtility::ToInteger(list[2]);
-				rect.bottom = StringUtility::ToInteger(list[3]);
+				DxRect<int> rect(
+					StringUtility::ToInteger(list[0]),
+					StringUtility::ToInteger(list[1]),
+					StringUtility::ToInteger(list[2]),
+					StringUtility::ToInteger(list[3]));
 				data->rcOutSrc_ = rect;
 
 				LONG width = rect.right - rect.left;
 				LONG height = rect.bottom - rect.top;
-				RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
+				DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
 				if (width % 2 == 1) rcDest.right++;
 				if (height % 2 == 1) rcDest.bottom++;
 				data->rcOutDest_ = rcDest;
@@ -507,16 +506,15 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 				if (list.size() == 5) {
 					StgItemData::AnimationData anime;
 					int frame = StringUtility::ToInteger(list[0]);
-					RECT rcSrc = {
+					DxRect<int> rcSrc(
 						StringUtility::ToInteger(list[1]),
 						StringUtility::ToInteger(list[2]),
 						StringUtility::ToInteger(list[3]),
-						StringUtility::ToInteger(list[4]),
-					};
+						StringUtility::ToInteger(list[4]));
 
 					LONG width = rcSrc.right - rcSrc.left;
 					LONG height = rcSrc.bottom - rcSrc.top;
-					RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
+					DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
 					if (width % 2 == 1) rcDest.right++;
 					if (height % 2 == 1) rcDest.bottom++;
 
@@ -558,8 +556,6 @@ std::vector<std::wstring> StgItemDataList::_GetArgumentList(Scanner& scanner) {
 StgItemData::StgItemData(StgItemDataList* listItemData) {
 	listItemData_ = listItemData;
 	typeRender_ = MODE_BLEND_ALPHA;
-	SetRect(&rcOutSrc_, 0, 0, 0, 0);
-	SetRect(&rcOutDest_, 0, 0, 0, 0);
 	alpha_ = 255;
 	totalAnimeFrame_ = 0;
 }
@@ -636,7 +632,7 @@ void StgItemRenderer::AddVertex(VERTEX_TLX& vertex) {
 **********************************************************/
 StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObject(stageController) {
 	stageController_ = stageController;
-	typeObject_ = TypeObject::OBJ_ITEM;
+	typeObject_ = TypeObject::Item;
 
 	pattern_ = std::shared_ptr<StgMovePattern_Item>(new StgMovePattern_Item(this));
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
@@ -694,26 +690,26 @@ void StgItemObject::RenderOnItemManager() {
 			break;
 		}
 
-		RECT rcSrc;
+		DxRect<double> rcSrc;
 		switch (typeItem_) {
 		case ITEM_1UP:
 		case ITEM_1UP_S:
-			SetRect(&rcSrc, 1, 1, 16, 16);
+			rcSrc.Set(1, 1, 16, 16);
 			break;
 		case ITEM_SPELL:
 		case ITEM_SPELL_S:
-			SetRect(&rcSrc, 20, 1, 35, 16);
+			rcSrc.Set(20, 1, 35, 16);
 			break;
 		case ITEM_POWER:
 		case ITEM_POWER_S:
-			SetRect(&rcSrc, 40, 1, 55, 16);
+			rcSrc.Set(40, 1, 55, 16);
 			break;
 		case ITEM_POINT:
 		case ITEM_POINT_S:
-			SetRect(&rcSrc, 1, 20, 16, 35);
+			rcSrc.Set(1, 20, 16, 35);
 			break;
 		case ITEM_BONUS:
-			SetRect(&rcSrc, 20, 20, 35, 35);
+			rcSrc.Set(20, 20, 35, 35);
 			break;
 		}
 
@@ -741,17 +737,16 @@ void StgItemObject::RenderOnItemManager() {
 				break;
 			}
 			if (color != colorOver) {
-				SetRect(&rcSrc, 113, 1, 126, 10);
+				rcSrc.Set(113, 1, 126, 10);
 				posY = 6;
 			}
 			color = colorOver;
 		}
 
-		RECT_D rcSrcD = GetRectD(rcSrc);
 		renderer->SetColor(color);
 		renderer->SetPosition(posX_, posY, 0);
 		renderer->SetScaleXYZ(scale, scale, scale);
-		renderer->SetSourceRect(rcSrcD);
+		renderer->SetSourceRect(rcSrc);
 		renderer->SetDestinationCenter();
 		renderer->AddVertex();
 	}
@@ -770,10 +765,10 @@ void StgItemObject::RenderOnItemManager() {
 			if (score == 0) break;
 		}
 		for (int iNum = listNum.size() - 1; iNum >= 0; iNum--) {
-			RECT_D rcSrc = { (double)(listNum[iNum] * 36), 0.,
-				(double)((listNum[iNum] + 1) * 36 - 1), 31. };
-			RECT_D rcDest = { (double)(posX_ + (listNum.size() - 1 - iNum) * fontSize / 2), (double)posY_,
-				(double)(posX_ + (listNum.size() - iNum)*fontSize / 2), (double)(posY_ + fontSize) };
+			DxRect<double> rcSrc(listNum[iNum] * 36, 0, 
+				(listNum[iNum] + 1) * 36 - 1, 31);
+			DxRect<double> rcDest(posX_ + (listNum.size() - 1 - iNum) * fontSize / 2, posY_,
+				posX_ + (listNum.size() - iNum)*fontSize / 2, posY_ + fontSize);
 			renderer->SetSourceRect(rcSrc);
 			renderer->SetDestinationRect(rcDest);
 			renderer->AddVertex();
@@ -783,11 +778,7 @@ void StgItemObject::RenderOnItemManager() {
 void StgItemObject::_DeleteInAutoClip() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
-	RECT rcClip;
-	ZeroMemory(&rcClip, sizeof(RECT));
-	rcClip.left = -64;
-	rcClip.right = graphics->GetScreenWidth() + 64;
-	rcClip.bottom = graphics->GetScreenHeight() + 64;
+	DxRect<int> rcClip(-64, 0, graphics->GetScreenWidth() + 64, graphics->GetScreenHeight() + 64);
 	bool bDelete = (posX_ < rcClip.left || posX_ > rcClip.right || posY_ > rcClip.bottom);
 	if (!bDelete) return;
 
@@ -1054,8 +1045,8 @@ void StgItemObject_User::RenderOnItemManager() {
 
 	StgItemData::AnimationData* frameData = itemData->GetData(frameWork_);
 
-	RECT* rcSrc = &frameData->rcSrc_;
-	RECT* rcDst = &frameData->rcDest_;
+	DxRect<int>* rcSrc = &frameData->rcSrc_;
+	DxRect<int>* rcDst = &frameData->rcDest_;
 	D3DCOLOR color;
 
 	{
@@ -1092,8 +1083,8 @@ void StgItemObject_User::RenderOnItemManager() {
 	//if(bIntersected_)color = D3DCOLOR_ARGB(255, 255, 0, 0);//ê⁄êGÉeÉXÉg
 
 	VERTEX_TLX verts[4];
-	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
-	LONG* ptrDst = reinterpret_cast<LONG*>(rcDst);
+	int* ptrSrc = reinterpret_cast<int*>(rcSrc);
+	int* ptrDst = reinterpret_cast<int*>(rcDst);
 	/*
 	for (size_t iVert = 0; iVert < 4; iVert++) {
 		VERTEX_TLX vt;

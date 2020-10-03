@@ -91,14 +91,14 @@ private:
 	ref_count_ptr<ReplayInformation::StageData> replayStageData_;
 
 	//STGê›íË
-	RECT rcStgFrame_;
+	DxRect<LONG> rcStgFrame_;
 	int priMinStgFrame_;
 	int priMaxStgFrame_;
 	int priShotObject_;
 	int priItemObject_;
 	int priCameraFocusPermit_;
-	RECT rcShotAutoDeleteClipOffset_;
-	RECT rcShotAutoDeleteClip_;
+	DxRect<LONG> rcShotAutoDeleteClipOffset_;
+	DxRect<LONG> rcShotAutoDeleteClip_;
 
 	//STGèÓïÒ
 	shared_ptr<RandProvider> rand_;
@@ -130,8 +130,8 @@ public:
 	ref_count_ptr<ReplayInformation::StageData> GetReplayData() { return replayStageData_; }
 	void SetReplayData(ref_count_ptr<ReplayInformation::StageData> data) { replayStageData_ = data; }
 
-	RECT* GetStgFrameRect() { return &rcStgFrame_; }
-	void SetStgFrameRect(const RECT& rect, bool bUpdateFocusResetValue = true);
+	DxRect<LONG>* GetStgFrameRect() { return &rcStgFrame_; }
+	void SetStgFrameRect(const DxRect<LONG>& rect, bool bUpdateFocusResetValue = true);
 	int GetStgFrameMinPriority() { return priMinStgFrame_; }
 	void SetStgFrameMinPriority(int pri) { priMinStgFrame_ = pri; }
 	int GetStgFrameMaxPriority() { return priMaxStgFrame_; }
@@ -142,8 +142,8 @@ public:
 	void SetItemObjectPriority(int pri) { priItemObject_ = pri; }
 	int GetCameraFocusPermitPriority() { return priCameraFocusPermit_; }
 	void SetCameraFocusPermitPriority(int pri) { priCameraFocusPermit_ = pri; }
-	RECT* GetShotAutoDeleteClip() { return &rcShotAutoDeleteClip_; }
-	void SetShotAutoDeleteClip(const RECT& rect) { 
+	DxRect<LONG>* GetShotAutoDeleteClip() { return &rcShotAutoDeleteClip_; }
+	void SetShotAutoDeleteClip(const DxRect<LONG>& rect) {
 		rcShotAutoDeleteClipOffset_ = rect;
 		UpdateShotAutoDeleteClip();
 	}

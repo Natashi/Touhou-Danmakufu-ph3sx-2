@@ -55,7 +55,7 @@ protected:
 
 	double speedFast_;
 	double speedSlow_;
-	RECT rcClip_;
+	DxRect<LONG> rcClip_;
 
 	int state_;
 	int frameState_;//各ステートで使用されるフレーム
@@ -114,8 +114,8 @@ public:
 	double GetSlowSpeed() { return speedSlow_; }
 	void SetSlowSpeed(double speed) { speedSlow_ = speed; }
 
-	RECT* GetClip() { return &rcClip_; }
-	void SetClip(RECT rect) { rcClip_ = rect; }
+	DxRect<LONG>* GetClip() { return &rcClip_; }
+	void SetClip(const DxRect<LONG>& rect) { rcClip_ = rect; }
 
 	int GetState() { return state_; }
 	int GetDownStateFrame() { return frameStateDown_; }

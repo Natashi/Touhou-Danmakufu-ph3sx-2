@@ -411,7 +411,7 @@ bool ErrorDialog::ShowModal(std::wstring msg) {
 **********************************************************/
 DnhConfiguration::DnhConfiguration() {
 	modeScreen_ = ScreenMode::SCREENMODE_WINDOW;
-	modeColor_ = DirectGraphicsConfig::COLOR_MODE_32BIT;
+	modeColor_ = ColorMode::COLOR_MODE_32BIT;
 	fpsType_ = FPS_NORMAL;
 	fastModeSpeed_ = 20;
 
@@ -522,10 +522,11 @@ bool DnhConfiguration::LoadConfigFile() {
 	}
 
 	record.GetRecord<ScreenMode>("modeScreen", modeScreen_);
-	record.GetRecord<size_t>("sizeWindow", sizeWindow_);
-
+	record.GetRecord<ColorMode>("modeColor", modeColor_);
+	
 	record.GetRecord<int>("fpsType", fpsType_);
-	record.GetRecord<int>("modeColor", modeColor_);
+	
+	record.GetRecord<size_t>("sizeWindow", sizeWindow_);
 
 	record.GetRecord<bool>("bVSync", bVSync_);
 	record.GetRecord<bool>("bDeviceREF", referenceRasterizer_);
@@ -572,10 +573,11 @@ bool DnhConfiguration::SaveConfigFile() {
 	record.SetRecordAsInteger("version", DNH_VERSION_NUM);
 
 	record.SetRecord<ScreenMode>("modeScreen", modeScreen_);
-	record.SetRecord<size_t>("sizeWindow", sizeWindow_);
-	
+	record.SetRecord<ColorMode>("modeColor", modeColor_);
+
 	record.SetRecordAsInteger("fpsType", fpsType_);
-	record.SetRecordAsInteger("modeColor", modeColor_);
+
+	record.SetRecord<size_t>("sizeWindow", sizeWindow_);
 
 	record.SetRecordAsBoolean("bVSync", bVSync_);
 	record.SetRecordAsBoolean("bDeviceREF", referenceRasterizer_);

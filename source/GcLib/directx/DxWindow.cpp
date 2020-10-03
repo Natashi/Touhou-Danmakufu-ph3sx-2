@@ -265,7 +265,7 @@ DxWindow::DxWindow() {
 	bWindowDelete_ = false;
 	bWindowEnable_ = true;
 	bWindowVisible_ = true;
-	SetRect(&rectWindow_, 0, 0, 0, 0);
+
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 
 	//‹ó‚¢‚Ä‚¢‚éWindowIDŽæ“¾
@@ -350,8 +350,10 @@ void DxWindow::_RenderFrame() {
 	int alphaWindow = GetAbsoluteAlpha();
 	int alphaSprite = ColorAccess::GetColorA(spriteFrame_->GetVertex(0)->diffuse_color);
 	int alpha = std::min(255, alphaWindow * alphaSprite / 255);
-	RECT rcDest = GetAbsoluteWindowRect();
-	RECT_D drcDest = GetRectD(rcDest);
+
+	DxRect<int> rcDest = GetAbsoluteWindowRect();
+	DxRect<double> drcDest = rcDest;
+
 	spriteFrame_->SetDestinationRect(drcDest);
 	spriteFrame_->SetAlpha(alpha);
 	spriteFrame_->Render();
@@ -360,14 +362,14 @@ void DxWindow::_RenderFrame() {
 	graphics->SetBlendMode(MODE_BLEND_ALPHA);
 }
 bool DxWindow::IsIntersected(POINT pos) {
-	RECT rect = GetAbsoluteWindowRect();
+	DxRect<int> rect = GetAbsoluteWindowRect();
 	return pos.x >= rect.left && pos.x <= rect.right && pos.y >= rect.top && pos.y <= rect.bottom;
 }
-RECT DxWindow::GetAbsoluteWindowRect() {
-	RECT res = rectWindow_;
+DxRect<int> DxWindow::GetAbsoluteWindowRect() {
+	DxRect<int> res = rectWindow_;
 	DxWindow* parent = windowParent_;
 	while (parent) {
-		RECT& rect = parent->rectWindow_;
+		DxRect<int>& rect = parent->rectWindow_;
 		res.left += rect.left;
 		res.right += rect.left;
 		res.top += rect.top;
@@ -413,11 +415,11 @@ void DxLabel::Render() {
 }
 void DxLabel::SetText(const std::wstring& str) {
 	if (text_ == nullptr) {
-		RECT rect = GetAbsoluteWindowRect();
+		DxRect<int> rect = GetAbsoluteWindowRect();
 		int width = rect.right - rect.left;
 		int height = rect.bottom - rect.top;
 		text_ = new DxText();
-		text_->SetHorizontalAlignment(DxText::ALIGNMENT_CENTER);
+		text_->SetHorizontalAlignment(TextAlignment::Center);
 		text_->SetFontSize(std::min(width, height));
 		text_->SetPosition(rect.top, rect.bottom);
 	}
@@ -428,11 +430,11 @@ void DxLabel::SetText(ref_count_ptr<DxText> text, bool bArrange) {
 
 	if (bArrange) {
 		int sizeFont = text->GetFontSize();
-		RECT rect = GetAbsoluteWindowRect();
+		DxRect<int> rect = GetAbsoluteWindowRect();
 		int width = rect.right - rect.left;
 		int height = rect.bottom - rect.top;
 		text_->SetMaxWidth(width);
-		text_->SetHorizontalAlignment(DxText::ALIGNMENT_CENTER);
+		text_->SetHorizontalAlignment(TextAlignment::Center);
 		text_->SetPosition(rect.left, rect.top + (height - sizeFont) / 2);
 	}
 }
@@ -474,8 +476,8 @@ void DxButton::RenderIntersectedFrame() {
 	graphics->SetBlendMode(MODE_BLEND_ADD_RGB);
 	Sprite2D sprite;
 	int alpha = 64;
-	RECT_D rcSrc = { 1, 1, 2, 2 };
-	RECT_D rcDest = GetRectD(GetAbsoluteWindowRect());
+	DxRect<int> rcSrc(1, 1, 2, 2);
+	DxRect<double> rcDest = GetAbsoluteWindowRect();
 	sprite.SetVertex(rcSrc, rcDest, D3DCOLOR_ARGB(alpha, alpha, alpha, alpha));
 	sprite.Render();
 	graphics->SetBlendMode(MODE_BLEND_ALPHA);
@@ -487,8 +489,8 @@ void DxButton::RenderSelectedFrame() {
 	graphics->SetBlendMode(MODE_BLEND_ADD_RGB);
 	Sprite2D sprite;
 	int alpha = 64;
-	RECT_D rcSrc = { 1, 1, 2, 2 };
-	RECT_D rcDest = GetRectD(GetAbsoluteWindowRect());
+	DxRect<int> rcSrc(1, 1, 2, 2);
+	DxRect<double> rcDest = GetAbsoluteWindowRect();
 	sprite.SetVertex(rcSrc, rcDest, D3DCOLOR_ARGB(alpha, alpha, alpha, alpha));
 	sprite.Render();
 	graphics->SetBlendMode(MODE_BLEND_ALPHA);
@@ -517,7 +519,7 @@ void DxMessageBox::UpdateWindowRect() {
 	int scrnHeight = graphics->GetScreenHeight();
 
 	int margin = 16;
-	RECT rcWnd = GetWindowRect();
+	DxRect<int> rcWnd = GetWindowRect();
 	int wndWidth = rcWnd.right - rcWnd.left;
 	text_->SetMaxWidth(wndWidth - margin * 2);
 	text_->SetPosition(rcWnd.left + margin, rcWnd.top + margin);
@@ -529,22 +531,22 @@ void DxMessageBox::UpdateWindowRect() {
 	int totalButtonWidth = 0;
 	int buttonHeight = 0;
 	for (iButton = 0; iButton < listButton_.size(); iButton++) {
-		RECT rect = listButton_[iButton]->GetWindowRect();
+		DxRect<int> rect = listButton_[iButton]->GetWindowRect();
 		totalButtonWidth += rect.right - rect.left + margin;
-		buttonHeight = std::max((LONG)buttonHeight, rect.bottom - rect.top);
+		buttonHeight = std::max(buttonHeight, rect.bottom - rect.top);
 	}
 
 	int leftButton = wndWidth / 2 - totalButtonWidth / 2;
 	int topButton = textHeight + margin * 2;
 	for (iButton = 0; iButton < listButton_.size(); iButton++) {
-		RECT rcButton = listButton_[iButton]->GetWindowRect();
+		DxRect<int> rcButton = listButton_[iButton]->GetWindowRect();
 		int width = rcButton.right - rcButton.left;
 		int height = rcButton.bottom - rcButton.top;
-		RECT rect = { leftButton, topButton, leftButton + width, topButton + height };
+		DxRect<int> rect(leftButton, topButton, leftButton + width, topButton + height);
 		leftButton += width + margin;
 		listButton_[iButton]->SetWindowRect(rect);
 	}
 
-	RECT rect = { rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.top + textHeight + buttonHeight + margin * 3 };
+	DxRect<int> rect(rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.top + textHeight + buttonHeight + margin * 3);
 	SetWindowRect(rect);
 }

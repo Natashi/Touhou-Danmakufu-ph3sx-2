@@ -185,9 +185,9 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 		header.SetSize(0x100);
 		reader->Read(header.GetPointer(), header.GetSize());
 
-		FileFormat format = FileFormat::SD_UNKNOWN;
+		SoundFileFormat format = SoundFileFormat::Unknown;
 		if (!memcmp(header.GetPointer(), "RIFF", 4)) {		//WAVE
-			format = FileFormat::SD_WAVE;
+			format = SoundFileFormat::Wave;
 
 			size_t ptr = 0xC;
 			while (ptr <= 0x100) {
@@ -195,25 +195,25 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 				if (memcmp(header.GetPointer(ptr), "fmt ", 4) == 0 && chkSize >= 0x10) {
 					WAVEFORMATEX* wavefmt = (WAVEFORMATEX*)header.GetPointer(ptr + sizeof(uint32_t) * 2);
 					if (wavefmt->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
-						format = FileFormat::SD_AWAVE;	//Surprise! You thought it was .wav, BUT IT WAS ME, .MP3!!
+						format = SoundFileFormat::AWave;	//Surprise! You thought it was .wav, BUT IT WAS ME, .MP3!!
 					break;
 				}
 				ptr += chkSize + sizeof(uint32_t);
 			}
 		}
 		else if (!memcmp(header.GetPointer(), "OggS", 4)) {	//Ogg Vorbis
-			format = FileFormat::SD_OGG;
+			format = SoundFileFormat::Ogg;
 		}
 		else if (!memcmp(header.GetPointer(), "MThd", 4)) {	//midi
-			format = FileFormat::SD_MIDI;
+			format = SoundFileFormat::Midi;
 		}
 		else {		//Death sentence
-			format = FileFormat::SD_MP3;
+			format = SoundFileFormat::Mp3;
 		}
 
 		//Create the sound player object
 		switch (format) {
-		case FileFormat::SD_WAVE:
+		case SoundFileFormat::Wave:
 			if (sizeFile < 1024 * 1024) {
 				//The file is small enough (<1MB), just load the entire thing into memory
 				//Max: ~23.78sec at 44100hz
@@ -224,18 +224,18 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 				res = std::shared_ptr<SoundStreamingPlayerWave>(new SoundStreamingPlayerWave(), SoundPlayer::PtrDelete);
 			}
 			break;
-		case FileFormat::SD_OGG:
+		case SoundFileFormat::Ogg:
 			res = std::shared_ptr<SoundStreamingPlayerOgg>(new SoundStreamingPlayerOgg(), SoundPlayer::PtrDelete);
 			break;
-		case FileFormat::SD_MIDI:
+		case SoundFileFormat::Midi:
 			//Commit seppuku
 			//Commit sudoku
 			//Commit suzaku
 			//Commit shiragiku
-			//Commit die
+			//Commit UaUP
 			break;
-		case FileFormat::SD_MP3:
-		case FileFormat::SD_AWAVE:
+		case SoundFileFormat::Mp3:
+		case SoundFileFormat::AWave:
 			res = std::shared_ptr<SoundStreamingPlayerMp3>(new SoundStreamingPlayerMp3(), SoundPlayer::PtrDelete);
 			break;
 		}

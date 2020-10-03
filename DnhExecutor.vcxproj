@@ -340,6 +340,7 @@
     <ClInclude Include="source\GcLib\directx\DxObject.hpp" />
     <ClInclude Include="source\GcLib\directx\DxScript.hpp" />
     <ClInclude Include="source\GcLib\directx\DxText.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxTypes.hpp" />
     <ClInclude Include="source\GcLib\directx\DxUtility.hpp" />
     <ClInclude Include="source\GcLib\directx\DxWindow.hpp" />
     <ClInclude Include="source\GcLib\directx\ElfreinaMesh.hpp" />

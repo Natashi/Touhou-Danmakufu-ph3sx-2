@@ -483,7 +483,7 @@ gstd::value StgControlScript::Func_GetStgFrameWidth(gstd::script_machine* machin
 
 	LONG res = 0;
 	if (stageController) {
-		RECT* rect = stageController->GetStageInformation()->GetStgFrameRect();
+		DxRect<LONG>* rect = stageController->GetStageInformation()->GetStgFrameRect();
 		res = rect->right - rect->left;
 	}
 
@@ -495,7 +495,7 @@ gstd::value StgControlScript::Func_GetStgFrameHeight(gstd::script_machine* machi
 
 	LONG res = 0;
 	if (stageController) {
-		RECT* rect = stageController->GetStageInformation()->GetStgFrameRect();
+		DxRect<LONG>* rect = stageController->GetStageInformation()->GetStgFrameRect();
 		res = rect->bottom - rect->top;
 	}
 
@@ -734,9 +734,9 @@ gstd::value StgControlScript::Func_SaveSnapShotA1(gstd::script_machine* machine,
 
 	//•Û‘¶
 	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
-	RECT rect = { 0, 0, graphics->GetScreenWidth(), graphics->GetScreenHeight() };
+	DxRect<LONG> rect(0, 0, graphics->GetScreenWidth(), graphics->GetScreenHeight());
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
-		pSurface, nullptr, &rect);
+		pSurface, nullptr, (RECT*)&rect);
 
 	return value();
 }
@@ -746,10 +746,8 @@ gstd::value StgControlScript::Func_SaveSnapShotA2(gstd::script_machine* machine,
 	StgSystemController* systemController = script->systemController_;
 
 	std::wstring path = argv[0].as_string();
-	LONG rcLeft = argv[1].as_int();
-	LONG rcTop = argv[2].as_int();
-	LONG rcRight = argv[3].as_int();
-	LONG rcBottom = argv[4].as_int();
+	DxRect<LONG> rect(argv[1].as_int(), argv[2].as_int(),
+		argv[3].as_int(), argv[4].as_int());
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
@@ -766,9 +764,8 @@ gstd::value StgControlScript::Func_SaveSnapShotA2(gstd::script_machine* machine,
 
 	//•Û‘¶
 	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
-	RECT rect = { rcLeft, rcTop, rcRight, rcBottom };
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
-		pSurface, nullptr, &rect);
+		pSurface, nullptr, (RECT*)&rect);
 	return value();
 }
 gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -777,10 +774,8 @@ gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine,
 	StgSystemController* systemController = script->systemController_;
 
 	std::wstring path = argv[0].as_string();
-	LONG rcLeft = argv[1].as_int();
-	LONG rcTop = argv[2].as_int();
-	LONG rcRight = argv[3].as_int();
-	LONG rcBottom = argv[4].as_int();
+	DxRect<LONG> rect(argv[1].as_int(), argv[2].as_int(),
+		argv[3].as_int(), argv[4].as_int());
 	BYTE imgFormat = argv[5].as_int();
 
 	if (imgFormat < 0)
@@ -803,9 +798,8 @@ gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine,
 
 	//•Û‘¶
 	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
-	RECT rect = { rcLeft, rcTop, rcRight, rcBottom };
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), (D3DXIMAGE_FILEFORMAT)imgFormat,
-		pSurface, nullptr, &rect);
+		pSurface, nullptr, (RECT*)&rect);
 	return value();
 }
 

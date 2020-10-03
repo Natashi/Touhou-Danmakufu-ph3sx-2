@@ -357,13 +357,13 @@ shared_ptr<Shader> ShaderManager::GetShader(const std::wstring& name) {
 //ShaderParameter
 **********************************************************/
 ShaderParameter::ShaderParameter() {
-	type_ = TYPE_UNKNOWN;
+	type_ = ShaderParameterType::Unknown;
 	texture_ = nullptr;
 }
 ShaderParameter::~ShaderParameter() {
 }
 void ShaderParameter::SetMatrix(D3DXMATRIX& matrix) {
-	type_ = TYPE_MATRIX;
+	type_ = ShaderParameterType::Matrix;
 
 	value_.resize(sizeof(D3DXMATRIX));
 	memcpy(value_.data(), &matrix, sizeof(D3DXMATRIX));
@@ -372,7 +372,7 @@ D3DXMATRIX* ShaderParameter::GetMatrix() {
 	return (D3DXMATRIX*)(value_.data());
 }
 void ShaderParameter::SetMatrixArray(std::vector<D3DXMATRIX>& listMatrix) {
-	type_ = TYPE_MATRIX_ARRAY;
+	type_ = ShaderParameterType::MatrixArray;
 
 	value_.resize(listMatrix.size() * sizeof(D3DXMATRIX));
 	memcpy(value_.data(), listMatrix.data(), listMatrix.size() * sizeof(D3DXMATRIX));
@@ -384,7 +384,7 @@ std::vector<D3DXMATRIX> ShaderParameter::GetMatrixArray() {
 	return res;
 }
 void ShaderParameter::SetVector(D3DXVECTOR4& vector) {
-	type_ = TYPE_VECTOR;
+	type_ = ShaderParameterType::Vector;
 
 	value_.resize(sizeof(D3DXVECTOR4));
 	memcpy(value_.data(), &vector, sizeof(D3DXVECTOR4));
@@ -393,7 +393,7 @@ D3DXVECTOR4* ShaderParameter::GetVector() {
 	return (D3DXVECTOR4*)(value_.data());
 }
 void ShaderParameter::SetFloat(FLOAT value) {
-	type_ = TYPE_FLOAT;
+	type_ = ShaderParameterType::Float;
 
 	value_.resize(sizeof(FLOAT));
 	memcpy(value_.data(), &value, sizeof(FLOAT));
@@ -402,7 +402,7 @@ FLOAT* ShaderParameter::GetFloat() {
 	return (FLOAT*)(value_.data());
 }
 void ShaderParameter::SetFloatArray(std::vector<FLOAT>& values) {
-	type_ = TYPE_FLOAT_ARRAY;
+	type_ = ShaderParameterType::FloatArray;
 
 	value_.resize(values.size() * sizeof(FLOAT));
 	memcpy(value_.data(), values.data(), values.size() * sizeof(FLOAT));
@@ -414,7 +414,7 @@ std::vector<FLOAT> ShaderParameter::GetFloatArray() {
 	return res;
 }
 void ShaderParameter::SetTexture(shared_ptr<Texture> texture) {
-	type_ = TYPE_TEXTURE;
+	type_ = ShaderParameterType::Texture;
 
 	texture_ = texture;
 }
@@ -499,50 +499,49 @@ bool Shader::LoadParameter() {
 	HRESULT hr = S_OK;
 
 	for (auto itrParam = mapParam_.begin(); itrParam != mapParam_.end(); ++itrParam) {
-		std::string name = itrParam->first;
+		D3DXHANDLE name = itrParam->first.c_str();
 		shared_ptr<ShaderParameter> param = itrParam->second;
 
 		switch (param->GetType()) {
-		case ShaderParameter::TYPE_MATRIX:
-		{
-			D3DXMATRIX* matrix = param->GetMatrix();
-			hr = effect->SetMatrix(name.c_str(), matrix);
-			break;
-		}
-		case ShaderParameter::TYPE_MATRIX_ARRAY:
-		{
-			std::vector<byte>* raw = param->GetRaw();
-			hr = effect->SetMatrixArray(name.c_str(), 
-				(D3DXMATRIX*)raw->data(), raw->size() / sizeof(D3DXMATRIX));
-			break;
-		}
-		case ShaderParameter::TYPE_VECTOR:
-		{
-			D3DXVECTOR4* vect = param->GetVector();
-			hr = effect->SetVector(name.c_str(), vect);
-			break;
-		}
-		case ShaderParameter::TYPE_FLOAT:
+		case ShaderParameterType::Float:
 		{
 			FLOAT* flt = param->GetFloat();
-			hr = effect->SetFloat(name.c_str(), *flt);
+			hr = effect->SetFloat(name, *flt);
 			break;
 		}
-		case ShaderParameter::TYPE_FLOAT_ARRAY:
+		case ShaderParameterType::FloatArray:
 		{
 			std::vector<byte>* raw = param->GetRaw();
-			hr = effect->SetFloatArray(name.c_str(),
+			hr = effect->SetFloatArray(name,
 				(FLOAT*)raw->data(), raw->size() / sizeof(FLOAT));
 			break;
 		}
-		case ShaderParameter::TYPE_TEXTURE:
+		case ShaderParameterType::Vector:
+		{
+			D3DXVECTOR4* vect = param->GetVector();
+			hr = effect->SetVector(name, vect);
+			break;
+		}
+		case ShaderParameterType::Matrix:
+		{
+			D3DXMATRIX* matrix = param->GetMatrix();
+			hr = effect->SetMatrix(name, matrix);
+			break;
+		}
+		case ShaderParameterType::MatrixArray:
+		{
+			std::vector<byte>* raw = param->GetRaw();
+			hr = effect->SetMatrixArray(name,
+				(D3DXMATRIX*)raw->data(), raw->size() / sizeof(D3DXMATRIX));
+			break;
+		}
+		case ShaderParameterType::Texture:
 		{
 			IDirect3DTexture9* pTex = param->GetTexture()->GetD3DTexture();
-			hr = effect->SetTexture(name.c_str(), pTex);
+			hr = effect->SetTexture(name, pTex);
 			break;
 		}
 		}
-		//if(FAILED(hr)) return false;
 	}
 
 	hr = effect->SetTechnique(technique_.c_str());

@@ -167,7 +167,7 @@ void StgShotManager::AddShot(shared_ptr<StgShotObject> obj) {
 	listObj_.push_back(obj);
 }
 
-RECT* StgShotManager::GetShotAutoDeleteClipRect() {
+DxRect<LONG>* StgShotManager::GetShotAutoDeleteClipRect() {
 	return stageController_->GetStageInformation()->GetShotAutoDeleteClip();
 }
 
@@ -299,8 +299,9 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 	try {
 		std::vector<StgShotData*> listData;
 		std::wstring pathImage = L"";
-		RECT rcDelay = { -1, -1, -1, -1 };
-		RECT rcDelayDest = { -1, -1, -1, -1 };
+
+		DxRect<int> rcDelay(-1, -1, -1, -1);
+		DxRect<int> rcDelayDest(-1, -1, -1, -1);
 
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
@@ -325,18 +326,18 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 				else if (element == L"delay_rect") {
 					std::vector<std::wstring> list = _GetArgumentList(scanner);
 
-					RECT rect;
-					rect.left = StringUtility::ToInteger(list[0]);
-					rect.top = StringUtility::ToInteger(list[1]);
-					rect.right = StringUtility::ToInteger(list[2]);
-					rect.bottom = StringUtility::ToInteger(list[3]);
+					DxRect<int> rect(
+						StringUtility::ToInteger(list[0]),
+						StringUtility::ToInteger(list[1]),
+						StringUtility::ToInteger(list[2]),
+						StringUtility::ToInteger(list[3]));
 					rcDelay = rect;
 
 					LONG width = rect.right - rect.left;
 					LONG height = rect.bottom - rect.top;
-					RECT rcDest = { -width / 2, -height / 2, width / 2, height / 2 };
-					if (width % 2 == 1) rcDest.right += 1;
-					if (height % 2 == 1) rcDest.bottom += 1;
+					DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
+					if (width % 2 == 1) rcDest.right++;
+					if (height % 2 == 1) rcDest.bottom++;
 					rcDelayDest = rcDest;
 				}
 				if (scanner.HasNext())
@@ -435,12 +436,11 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 
 				StgShotData::AnimationData anime;
 
-				RECT rect;
-				rect.left = StringUtility::ToInteger(list[0]);
-				rect.top = StringUtility::ToInteger(list[1]);
-				rect.right = StringUtility::ToInteger(list[2]);
-				rect.bottom = StringUtility::ToInteger(list[3]);
-
+				DxRect<int> rect(
+					StringUtility::ToInteger(list[0]),
+					StringUtility::ToInteger(list[1]),
+					StringUtility::ToInteger(list[2]),
+					StringUtility::ToInteger(list[3]));
 				anime.rcSrc_ = rect;
 				anime.SetDestRect(&anime.rcDst_, &rect);
 
@@ -457,13 +457,12 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 			}
 			else if (element == L"delay_rect") {
 				std::vector<std::wstring> list = _GetArgumentList(scanner);
-
-				RECT rect;
-				rect.left = StringUtility::ToInteger(list[0]);
-				rect.top = StringUtility::ToInteger(list[1]);
-				rect.right = StringUtility::ToInteger(list[2]);
-				rect.bottom = StringUtility::ToInteger(list[3]);
-
+				
+				DxRect<int> rect(
+					StringUtility::ToInteger(list[0]),
+					StringUtility::ToInteger(list[1]),
+					StringUtility::ToInteger(list[2]),
+					StringUtility::ToInteger(list[3]));
 				data->rcDelay_ = rect;
 				StgShotData::AnimationData::SetDestRect(&data->rcDstDelay_, &rect);
 			}
@@ -538,9 +537,9 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 		if (data->listCol_.GetR() <= 0) {
 			float r = 0;
 			if (data->listAnime_.size() > 0) {
-				RECT& rect = data->listAnime_[0].rcSrc_;
-				LONG rx = abs(rect.right - rect.left);
-				LONG ry = abs(rect.bottom - rect.top);
+				DxRect<int>& rect = data->listAnime_[0].rcSrc_;
+				int rx = abs(rect.right - rect.left);
+				int ry = abs(rect.bottom - rect.top);
 				r = std::min(rx, ry) / 3.0f - 3.0f;
 			}
 			DxCircle circle(0, 0, std::max(r, 2.0f));
@@ -570,12 +569,11 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 				if (list.size() == 5) {
 					StgShotData::AnimationData anime;
 					int frame = StringUtility::ToInteger(list[0]);
-					RECT rcSrc = {
+					DxRect<int> rcSrc(
 						StringUtility::ToInteger(list[1]),
 						StringUtility::ToInteger(list[2]),
 						StringUtility::ToInteger(list[3]),
-						StringUtility::ToInteger(list[4]),
-					};
+						StringUtility::ToInteger(list[4]));
 
 					anime.frame_ = frame;
 					anime.rcSrc_ = rcSrc;
@@ -618,7 +616,7 @@ StgShotData::StgShotData(StgShotDataList* listShotData) {
 	typeRender_ = MODE_BLEND_ALPHA;
 	typeDelayRender_ = MODE_BLEND_ADD_ARGB;
 	colorDelay_ = D3DCOLOR_ARGB(255, 255, 255, 255);
-	SetRect(&rcDelay_, -1, -1, -1, -1);
+	rcDelay_.Set(-1, -1, -1, -1);
 	alpha_ = 255;
 	totalAnimeFrame_ = 0;
 	angularVelocityMin_ = 0;
@@ -646,10 +644,10 @@ StgShotData::AnimationData* StgShotData::GetData(size_t frame) {
 	}
 	return &listAnime_[0];
 }
-void StgShotData::AnimationData::SetDestRect(RECT* dst, RECT* src) {
-	LONG width = (src->right - src->left) / 2L;
-	LONG height = (src->bottom - src->top) / 2L;
-	SetRect(dst, -width, -height, width, height);
+void StgShotData::AnimationData::SetDestRect(DxRect<int>* dst, DxRect<int>* src) {
+	int width = (src->right - src->left) / 2L;
+	int height = (src->bottom - src->top) / 2L;
+	dst->Set(-width, -height, width, height);
 	if (width % 2L == 1L) ++(dst->right);
 	if (height % 2L == 1L) ++(dst->bottom);
 }
@@ -831,7 +829,7 @@ void StgShotObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
+	DxRect<LONG>* rect = shotManager->GetShotAutoDeleteClipRect();
 
 	if (posX_ < rect->left || posX_ > rect->right || posY_ < rect->top || posY_ > rect->bottom) {
 		auto objectManager = stageController_->GetMainObjectManager();
@@ -1226,7 +1224,7 @@ float StgShotObject::DelayParameter::_CalculateValue(D3DXVECTOR3* param, lerp_fu
 //StgNormalShotObject
 **********************************************************/
 StgNormalShotObject::StgNormalShotObject(StgStageController* stageController) : StgShotObject(stageController) {
-	typeObject_ = TypeObject::OBJ_SHOT;
+	typeObject_ = TypeObject::Shot;
 	angularVelocity_ = 0;
 
 	move_ = D3DXVECTOR2(1, 0);
@@ -1349,8 +1347,8 @@ void StgNormalShotObject::RenderOnShotManager() {
 	float scaleX = 1.0f;
 	float scaleY = 1.0f;
 
-	RECT* rcSrc;
-	RECT* rcDest;
+	DxRect<int>* rcSrc = nullptr;
+	DxRect<int>* rcDest = nullptr;
 	D3DCOLOR color;
 
 	if (delay_.time > 0) {
@@ -1504,7 +1502,7 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 //StgLooseLaserObject(射出型レーザー)
 **********************************************************/
 StgLooseLaserObject::StgLooseLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
-	typeObject_ = TypeObject::OBJ_LOOSE_LASER;
+	typeObject_ = TypeObject::LooseLaser;
 
 	pShotIntersectionTarget_ = std::make_shared<StgIntersectionTarget_Line>();
 	listIntersectionTarget_.push_back(pShotIntersectionTarget_);
@@ -1550,7 +1548,7 @@ void StgLooseLaserObject::_Move() {
 void StgLooseLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
+	DxRect<LONG>* rect = shotManager->GetShotAutoDeleteClipRect();
 
 	bool bDelete = false;
 
@@ -1646,8 +1644,8 @@ void StgLooseLaserObject::RenderOnShotManager() {
 	FLOAT sposx = position_.x;
 	FLOAT sposy = position_.y;
 
-	RECT* rcSrc;
-	RECT rcDest;
+	DxRect<int>* rcSrc = nullptr;
+	DxRect<int> rcDest;
 	D3DCOLOR color;
 
 	if (delay_.time > 0) {
@@ -1704,12 +1702,12 @@ void StgLooseLaserObject::RenderOnShotManager() {
 		}
 
 		//color = ColorAccess::ApplyAlpha(color, alpha);
-		SetRect(&rcDest, widthRender_ / 2, 0, -widthRender_ / 2, radius);
+		rcDest.Set(widthRender_ / 2, 0, -widthRender_ / 2, radius);
 	}
 
 	VERTEX_TLX verts[4];
-	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
-	LONG* ptrDst = reinterpret_cast<LONG*>(&rcDest);
+	int* ptrSrc = reinterpret_cast<int*>(rcSrc);
+	int* ptrDst = reinterpret_cast<int*>(&rcDest);
 	for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 		VERTEX_TLX vt;
 		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
@@ -1770,7 +1768,7 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 //StgStraightLaserObject(設置型レーザー)
 **********************************************************/
 StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
-	typeObject_ = TypeObject::OBJ_STRAIGHT_LASER;
+	typeObject_ = TypeObject::StraightLaser;
 
 	angLaser_ = 0;
 	frameFadeDelete_ = -1;
@@ -1812,7 +1810,7 @@ void StgStraightLaserObject::Work() {
 void StgStraightLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
+	DxRect<LONG>* rect = shotManager->GetShotAutoDeleteClipRect();
 
 	bool bDelete = false;
 
@@ -1894,7 +1892,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 	FLOAT sposx = position_.x;
 	FLOAT sposy = position_.y;
 
-	RECT* rcSrc;
+	DxRect<int>* rcSrc = nullptr;
 	D3DCOLOR color;
 
 	BlendMode objBlendType = GetBlendType();
@@ -1959,9 +1957,9 @@ void StgStraightLaserObject::RenderOnShotManager() {
 			if (delay_.colorMix) ColorAccess::SetColor(color, color_);
 
 			int sourceWidth = widthRender_ * 2 / 3;
-			D3DXVECTOR4 rcDest(-sourceWidth, -sourceWidth, sourceWidth, sourceWidth);
+			DxRect<float> rcDest(-sourceWidth, -sourceWidth, sourceWidth, sourceWidth);
 
-			auto _AddDelay = [&](StgShotData* delayShotData, RECT* delayRect, D3DXVECTOR2& delayPos, float delaySize) {
+			auto _AddDelay = [&](StgShotData* delayShotData, DxRect<int>* delayRect, D3DXVECTOR2& delayPos, float delaySize) {
 				StgShotRenderer* renderer = nullptr;
 
 				if (objSourceBlendType == MODE_BLEND_NONE)
@@ -1971,8 +1969,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				if (renderer == nullptr) return;
 
 				VERTEX_TLX verts[4];
-				LONG* ptrSrc = reinterpret_cast<LONG*>(delayRect);
-				FLOAT* ptrDst = reinterpret_cast<FLOAT*>(&rcDest);
+				int* ptrSrc = reinterpret_cast<int*>(delayRect);
+				float* ptrDst = reinterpret_cast<float*>(&rcDest);
 				for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 					VERTEX_TLX vt;
 
@@ -2002,7 +2000,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				}
 
 				StgShotData* delayData = nullptr;
-				RECT* delayRect = nullptr;
+				DxRect<int>* delayRect = nullptr;
 
 				if (delay_.id >= 0) {
 					delayData = _GetShotData(delay_.id);
@@ -2025,7 +2023,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				}
 
 				StgShotData* delayData = nullptr;
-				RECT* delayRect = nullptr;
+				DxRect<int>* delayRect = nullptr;
 
 				if (idImageEnd_ >= 0) {
 					delayData = _GetShotData(idImageEnd_);
@@ -2084,7 +2082,7 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 //StgCurveLaserObject(曲がる型レーザー)
 **********************************************************/
 StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
-	typeObject_ = TypeObject::OBJ_CURVE_LASER;
+	typeObject_ = TypeObject::CurveLaser;
 	tipDecrement_ = 0.0f;
 
 	invalidLengthStart_ = 0.02f;
@@ -2163,7 +2161,7 @@ std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::PushNod
 void StgCurveLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	RECT* rect = shotManager->GetShotAutoDeleteClipRect();
+	DxRect<LONG>* rect = shotManager->GetShotAutoDeleteClipRect();
 
 	//Checks if the node is within the bounding rect
 	auto PredicateNodeInRect = [&](LaserNode& node) {
@@ -2258,8 +2256,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		}
 		if (renderer == nullptr) return;
 
-		RECT* rcSrc;
-		RECT* rcDest;
+		DxRect<int>* rcSrc = nullptr;
+		DxRect<int>* rcDest = nullptr;
 		D3DXVECTOR2* delaySize = &delayData->GetTextureSize();
 
 		if (delay_.id >= 0) {
@@ -2289,8 +2287,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		}
 
 		VERTEX_TLX verts[4];
-		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
-		LONG* ptrDst = reinterpret_cast<LONG*>(rcDest);
+		int* ptrSrc = reinterpret_cast<int*>(rcSrc);
+		int* ptrDst = reinterpret_cast<int*>(rcDest);
 		for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 			VERTEX_TLX vt;
 			_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
@@ -2332,11 +2330,11 @@ void StgCurveLaserObject::RenderOnShotManager() {
 
 		D3DXVECTOR2 texSizeInv = D3DXVECTOR2(1.0f / textureSize->x, 1.0f / textureSize->y);
 
-		RECT* rcSrcOrg = anime->GetSource();
+		DxRect<int>* rcSrcOrg = anime->GetSource();
 		float rcInc = ((rcSrcOrg->bottom - rcSrcOrg->top) / (float)countRect) * texSizeInv.y;
 		float rectV = rcSrcOrg->top * texSizeInv.y;
 
-		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrcOrg);
+		int* ptrSrc = reinterpret_cast<int*>(rcSrcOrg);
 
 		size_t iPos = 0U;
 		for (auto itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
@@ -2434,7 +2432,7 @@ StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
 	idShotData_ = -1;
 	typeOwner_ = StgShotObject::OWNER_ENEMY;
 	typePattern_ = PATTERN_TYPE_FAN;
-	typeShot_ = TypeObject::OBJ_SHOT;
+	typeShot_ = TypeObject::Shot;
 	iniBlendType_ = MODE_BLEND_NONE;
 
 	shotWay_ = 1U;
@@ -2522,13 +2520,13 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 
 		shared_ptr<StgShotObject> objShot = nullptr;
 		switch (typeShot_) {
-		case TypeObject::OBJ_SHOT:
+		case TypeObject::Shot:
 		{
 			shared_ptr<StgNormalShotObject> ptrShot = std::make_shared<StgNormalShotObject>(controller);
 			objShot = ptrShot;
 			break;
 		}
-		case TypeObject::OBJ_LOOSE_LASER:
+		case TypeObject::LooseLaser:
 		{
 			shared_ptr<StgLooseLaserObject> ptrShot = std::make_shared<StgLooseLaserObject>(controller);
 			ptrShot->SetLength(laserLength_);
@@ -2536,7 +2534,7 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 			objShot = ptrShot;
 			break;
 		}
-		case TypeObject::OBJ_CURVE_LASER:
+		case TypeObject::CurveLaser:
 		{
 			shared_ptr<StgCurveLaserObject> ptrShot = std::make_shared<StgCurveLaserObject>(controller);
 			ptrShot->SetLength(laserLength_);

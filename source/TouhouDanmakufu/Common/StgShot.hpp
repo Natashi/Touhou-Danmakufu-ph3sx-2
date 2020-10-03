@@ -63,7 +63,7 @@ public:
 	bool LoadPlayerShotData(const std::wstring& path, bool bReload = false);
 	bool LoadEnemyShotData(const std::wstring& path, bool bReload = false);
 
-	RECT* GetShotAutoDeleteClipRect();
+	DxRect<LONG>* GetShotAutoDeleteClipRect();
 
 	void DeleteInCircle(int typeDelete, int typeTo, int typeOnwer, float cx, float cy, float* radius);
 	std::vector<int> GetShotIdInCircle(int typeOnwer, float cx, float cy, float radius);
@@ -113,14 +113,14 @@ class StgShotData {
 	friend StgShotDataList;
 public:
 	struct AnimationData {
-		RECT rcSrc_;
-		RECT rcDst_;
+		DxRect<int> rcSrc_;
+		DxRect<int> rcDst_;
 		size_t frame_;
 
-		RECT* GetSource() { return &rcSrc_; }
-		RECT* GetDest() { return &rcDst_; }
+		DxRect<int>* GetSource() { return &rcSrc_; }
+		DxRect<int>* GetDest() { return &rcDst_; }
 
-		static void SetDestRect(RECT* dst, RECT* src);
+		static void SetDestRect(DxRect<int>* dst, DxRect<int>* src);
 	};
 private:
 	StgShotDataList* listShotData_;
@@ -131,8 +131,8 @@ private:
 	BlendMode typeRender_;
 	BlendMode typeDelayRender_;
 
-	RECT rcDelay_;
-	RECT rcDstDelay_;
+	DxRect<int> rcDelay_;
+	DxRect<int> rcDstDelay_;
 
 	int alpha_;
 	D3DCOLOR colorDelay_;
@@ -153,8 +153,8 @@ public:
 	BlendMode GetRenderType() { return typeRender_; }
 	BlendMode GetDelayRenderType() { return typeDelayRender_; }
 	AnimationData* GetData(size_t frame);
-	RECT* GetDelayRect() { return &rcDelay_; }
-	RECT* GetDelayDest() { return &rcDstDelay_; }
+	DxRect<int>* GetDelayRect() { return &rcDelay_; }
+	DxRect<int>* GetDelayDest() { return &rcDstDelay_; }
 	int GetAlpha() { return alpha_; }
 	D3DCOLOR GetDelayColor() { return colorDelay_; }
 	DxCircle* GetIntersectionCircleList() { return &listCol_; }

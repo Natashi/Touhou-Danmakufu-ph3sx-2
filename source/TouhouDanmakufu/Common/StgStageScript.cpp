@@ -596,17 +596,18 @@ static const std::vector<constant> stgStageConstant = {
 	constant("ITEM_MOVE_SCORE", StgMovePattern_Item::MOVE_SCORE),
 
 	//Object types
-	constant("OBJ_PLAYER", (int)TypeObject::OBJ_PLAYER),
-	constant("OBJ_SPELL_MANAGE", (int)TypeObject::OBJ_SPELL_MANAGE),
-	constant("OBJ_SPELL", (int)TypeObject::OBJ_SPELL),
-	constant("OBJ_ENEMY", (int)TypeObject::OBJ_ENEMY),
-	constant("OBJ_ENEMY_BOSS", (int)TypeObject::OBJ_ENEMY_BOSS),
-	constant("OBJ_ENEMY_BOSS_SCENE", (int)TypeObject::OBJ_ENEMY_BOSS_SCENE),
-	constant("OBJ_SHOT", (int)TypeObject::OBJ_SHOT),
-	constant("OBJ_LOOSE_LASER", (int)TypeObject::OBJ_LOOSE_LASER),
-	constant("OBJ_STRAIGHT_LASER", (int)TypeObject::OBJ_STRAIGHT_LASER),
-	constant("OBJ_CURVE_LASER", (int)TypeObject::OBJ_CURVE_LASER),
-	constant("OBJ_ITEM", (int)TypeObject::OBJ_ITEM),
+	constant("OBJ_PLAYER", (int)TypeObject::Player),
+	constant("OBJ_SPELL_MANAGE", (int)TypeObject::SpellManage),
+	constant("OBJ_SPELL", (int)TypeObject::Spell),
+	constant("OBJ_ENEMY", (int)TypeObject::Enemy),
+	constant("OBJ_ENEMY_BOSS", (int)TypeObject::EnemyBoss),
+	constant("OBJ_ENEMY_BOSS_SCENE", (int)TypeObject::EnemyBossScene),
+	constant("OBJ_SHOT", (int)TypeObject::Shot),
+	constant("OBJ_LOOSE_LASER", (int)TypeObject::LooseLaser),
+	constant("OBJ_STRAIGHT_LASER", (int)TypeObject::StraightLaser),
+	constant("OBJ_CURVE_LASER", (int)TypeObject::CurveLaser),
+	constant("OBJ_SHOT_PATTERN", (int)TypeObject::ShotPattern),
+	constant("OBJ_ITEM", (int)TypeObject::Item),
 
 	//ObjEnemyBossScene_GetInfo info types
 	constant("INFO_LIFE", StgStageScript::INFO_LIFE),
@@ -783,11 +784,8 @@ gstd::value StgStageScript::Func_SetStgFrame(gstd::script_machine* machine, int 
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 
-	RECT rect;
-	rect.left = (LONG)argv[0].as_int();
-	rect.top = (LONG)argv[1].as_int();
-	rect.right = (LONG)argv[2].as_int();
-	rect.bottom = (LONG)argv[3].as_int();
+	DxRect<LONG> rect(argv[0].as_int(), argv[1].as_int(),
+		argv[2].as_int(), argv[3].as_int());
 
 	int min = argv[4].as_int();
 	int max = argv[5].as_int();
@@ -927,11 +925,8 @@ gstd::value StgStageScript::Func_SetPlayerClip(gstd::script_machine* machine, in
 	StgStageScript* script = (StgStageScript*)machine->data;
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
 	if (obj) {
-		RECT rect;
-		rect.left = (LONG)argv[0].as_int();
-		rect.top = (LONG)argv[1].as_int();
-		rect.right = (LONG)argv[2].as_int();
-		rect.bottom = (LONG)argv[3].as_int();
+		DxRect<int> rect(argv[0].as_int(), argv[1].as_int(),
+			argv[2].as_int(), argv[3].as_int());
 		obj->SetClip(rect);
 	}
 	return value();
@@ -1067,8 +1062,8 @@ gstd::value StgStageScript::Func_GetPlayerClip(gstd::script_machine* machine, in
 	LONG listValue[4] = { 0, 0, 0, 0 };
 	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
 	if (obj) {
-		RECT* clip = obj->GetClip();
-		memcpy(listValue, clip, sizeof(LONG) * 4U);
+		DxRect<LONG>* clip = obj->GetClip();
+		memcpy(listValue, clip, sizeof(DxRect<LONG>));
 	}
 	return script->CreateRealArrayValue(listValue, 4);
 }
@@ -1823,11 +1818,8 @@ gstd::value StgStageScript::Func_SetShotAutoDeleteClip(gstd::script_machine* mac
 	StgStageController* stageController = script->stageController_;
 	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 
-	RECT rect;
-	rect.left = -(LONG)argv[0].as_int();
-	rect.top = -(LONG)argv[1].as_int();
-	rect.right = (LONG)argv[2].as_int();
-	rect.bottom = (LONG)argv[3].as_int();
+	DxRect<int> rect(-argv[0].as_int(), -argv[1].as_int(),
+		argv[2].as_int(), argv[3].as_int());
 	infoStage->SetShotAutoDeleteClip(rect);
 
 	return value();
@@ -1862,7 +1854,7 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			break;
 		case INFO_RECT:
 		{
-			LONG list[4] = { 0, 0, 0, 0 };
+			int list[4] = { 0, 0, 0, 0 };
 			res = script->CreateRealArrayValue(list, 4U);
 			break;
 		}
@@ -1902,8 +1894,8 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			break;
 		case INFO_RECT:
 		{
-			RECT* rect = shotData->GetData(0)->GetSource();
-			res = script->CreateRealArrayValue(reinterpret_cast<LONG*>(rect), 4U);
+			DxRect<int>* rect = shotData->GetData(0)->GetSource();
+			res = script->CreateRealArrayValue(reinterpret_cast<int*>(rect), 4U);
 			break;
 		}
 		case INFO_DELAY_COLOR:
@@ -2806,10 +2798,10 @@ gstd::value StgStageScript::Func_ObjEnemy_Create(gstd::script_machine* machine, 
 
 	TypeObject type = (TypeObject)argv[0].as_int();
 	shared_ptr<DxScriptObjectBase> obj;
-	if (type == TypeObject::OBJ_ENEMY) {
+	if (type == TypeObject::Enemy) {
 		obj = shared_ptr<DxScriptObjectBase>(new StgEnemyObject(stageController));
 	}
-	else if (type == TypeObject::OBJ_ENEMY_BOSS) {
+	else if (type == TypeObject::EnemyBoss) {
 		shared_ptr<StgEnemyBossSceneObject> objScene = enemyManager->GetBossSceneObject();
 		if (objScene == nullptr) {
 			throw gstd::wexception(L"Cannot create a boss enemy as there is no active enemy boss scene object.");
@@ -3283,16 +3275,16 @@ gstd::value StgStageScript::Func_ObjShot_Create(gstd::script_machine* machine, i
 	if (stageController->GetShotManager()->GetShotCountAll() < StgShotManager::SHOT_MAX) {
 		TypeObject type = (TypeObject)argv[0].as_int();
 		shared_ptr<StgShotObject> obj;
-		if (type == TypeObject::OBJ_SHOT) {
+		if (type == TypeObject::Shot) {
 			obj = shared_ptr<StgShotObject>(new StgNormalShotObject(stageController));
 		}
-		else if (type == TypeObject::OBJ_LOOSE_LASER) {
+		else if (type == TypeObject::LooseLaser) {
 			obj = shared_ptr<StgShotObject>(new StgLooseLaserObject(stageController));
 		}
-		else if (type == TypeObject::OBJ_STRAIGHT_LASER) {
+		else if (type == TypeObject::StraightLaser) {
 			obj = shared_ptr<StgShotObject>(new StgStraightLaserObject(stageController));
 		}
-		else if (type == TypeObject::OBJ_CURVE_LASER) {
+		else if (type == TypeObject::CurveLaser) {
 			obj = shared_ptr<StgShotObject>(new StgCurveLaserObject(stageController));
 		}
 

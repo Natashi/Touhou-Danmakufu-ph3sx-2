@@ -2,6 +2,8 @@
 
 #include "DirectGraphics.hpp"
 
+#include "DxUtility.hpp"
+
 #if defined(DNH_PROJ_EXECUTOR)
 #include "Texture.hpp"
 #endif
@@ -91,7 +93,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	d3dppFull_.BackBufferHeight = config.GetScreenSize().y;
 	d3dppFull_.Windowed = FALSE;
 	d3dppFull_.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	d3dppFull_.BackBufferFormat = config.GetColorMode() == DirectGraphicsConfig::COLOR_MODE_16BIT ? 
+	d3dppFull_.BackBufferFormat = config.GetColorMode() == ColorMode::COLOR_MODE_16BIT ? 
 		D3DFMT_R5G6B5 : D3DFMT_X8R8G8B8;
 	d3dppFull_.BackBufferCount = 1;
 	d3dppFull_.EnableAutoDepthStencil = TRUE;
@@ -187,7 +189,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 			DWORD* arrQuality = new DWORD[2];
 
 			HRESULT hrColor = pDirect3D_->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, deviceType,
-				config.GetColorMode() == DirectGraphicsConfig::COLOR_MODE_16BIT ? D3DFMT_X4R4G4B4 : D3DFMT_X8R8G8B8,
+				config.GetColorMode() == ColorMode::COLOR_MODE_16BIT ? D3DFMT_X4R4G4B4 : D3DFMT_X8R8G8B8,
 				FALSE, chkSamples[i], &arrQuality[0]);
 			HRESULT hrDepth = pDirect3D_->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, deviceType,
 				D3DFMT_D16, FALSE, chkSamples[i], &arrQuality[1]);
@@ -386,7 +388,7 @@ void DirectGraphics::ClearRenderTarget() {
 	pDevice_->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
 		textureTarget_  != nullptr ? D3DCOLOR_ARGB(0, 0, 0, 0) : D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
 }
-void DirectGraphics::ClearRenderTarget(RECT* rect) {
+void DirectGraphics::ClearRenderTarget(DxRect<LONG>* rect) {
 	//D3DRECT rcDest = { rect.left, rect.top, rect.right, rect.bottom };
 	/*
 	if (textureTarget_ == nullptr) {
@@ -530,10 +532,8 @@ void DirectGraphics::SetVertexFog(bool bEnable, D3DCOLOR color, float start, flo
 	pDevice_->SetRenderState(D3DRS_FOGEND, *(DWORD*)(&end));
 
 	stateFog_.bEnable = bEnable;
-	stateFog_.color.x = ((color >> 16) & 0xff) / 255.0f;
-	stateFog_.color.y = ((color >> 8) & 0xff) / 255.0f;
-	stateFog_.color.z = (color & 0xff) / 255.0f;
-	stateFog_.color.w = ((color >> 24) & 0xff) / 255.0f;
+	D3DXVECTOR4 vColor = ColorAccess::ToVec4(color);	//ARGB
+	stateFog_.color = D3DXVECTOR4(vColor.y, vColor.z, vColor.w, vColor.x);
 	stateFog_.fogDist.x = start;
 	stateFog_.fogDist.y = end;
 }
@@ -693,11 +693,11 @@ POINT DirectGraphics::GetMousePosition() {
 }
 
 void DirectGraphics::SaveBackSurfaceToFile(const std::wstring& path) {
-	RECT rect = { 0, 0, config_.GetScreenSize().x, config_.GetScreenSize().y };
+	DxRect<LONG> rect(0, 0, config_.GetScreenSize().x, config_.GetScreenSize().y);
 	LPDIRECT3DSURFACE9 pBackSurface = nullptr;
 	pDevice_->GetRenderTarget(0, &pBackSurface);
 	D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
-		pBackSurface, nullptr, &rect);
+		pBackSurface, nullptr, (RECT*)&rect);
 	pBackSurface->Release();
 }
 bool DirectGraphics::IsPixelShaderSupported(int major, int minor) {
@@ -1226,7 +1226,8 @@ void DxCamera2D::Reset() {
 	}
 	ratioX_ = 1.0f;
 	ratioY_ = 1.0f;
-	SetRect(&rcClip_, 0, 0, width, height);
+
+	rcClip_.Set(0, 0, width, height);
 
 	angleZ_ = 0;
 }
@@ -1240,13 +1241,12 @@ D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(const D3DXVECTOR2& focus, float ratio
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG width = graphics->GetScreenWidth();
 	LONG height = graphics->GetScreenHeight();
-	RECT rcClip;
-	ZeroMemory(&rcClip, sizeof(RECT));
+	DxRect<LONG> rcClip;
 	rcClip.right = width;
 	rcClip.bottom = height;
 	return GetLeftTopPosition(focus, ratioX, ratioY, rcClip);
 }
-D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY, const RECT& rcClip) {
+D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY, const DxRect<LONG>& rcClip) {
 	LONG width_2 = (rcClip.right - rcClip.left) / 2L;
 	LONG height_2 = (rcClip.bottom - rcClip.top) / 2L;
 

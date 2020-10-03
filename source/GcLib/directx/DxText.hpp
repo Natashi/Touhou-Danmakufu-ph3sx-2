@@ -20,17 +20,11 @@ namespace directx {
 	class DxFont {
 		friend DxCharCache;
 		friend DxCharCacheKey;
-	public:
-		typedef enum : uint8_t {
-			BORDER_NONE,
-			BORDER_FULL,
-			BORDER_SHADOW,
-		} TypeBorder;
 	protected:
 		LOGFONT info_;//フォント種別
 		D3DCOLOR colorTop_;
 		D3DCOLOR colorBottom_;
-		TypeBorder typeBorder_;//縁取り
+		TextBorderType typeBorder_;//縁取り
 		LONG widthBorder_;
 		D3DCOLOR colorBorder_;//縁取り色
 	public:
@@ -42,8 +36,8 @@ namespace directx {
 		D3DCOLOR GetTopColor() { return colorTop_; }
 		void SetBottomColor(D3DCOLOR color) { colorBottom_ = color; }
 		D3DCOLOR GetBottomColor() { return colorBottom_; }
-		void SetBorderType(TypeBorder type) { typeBorder_ = type; }
-		TypeBorder GetBorderType() { return typeBorder_; }
+		void SetBorderType(TextBorderType type) { typeBorder_ = type; }
+		TextBorderType GetBorderType() { return typeBorder_; }
 		void SetBorderWidth(LONG width) { widthBorder_ = width; }
 		LONG GetBorderWidth() { return widthBorder_; }
 		void SetBorderColor(D3DCOLOR color) { colorBorder_ = color; }
@@ -219,19 +213,13 @@ namespace directx {
 	class DxTextInfo;
 	class DxTextRenderer;
 	class DxTextTag {
-	public:
-		typedef enum : uint8_t {
-			TYPE_UNKNOWN,
-			TYPE_RUBY,
-			TYPE_FONT
-		} TagType;
 	protected:
-		TagType typeTag_;
+		TextTagType typeTag_;
 		int indexTag_;
 	public:
-		DxTextTag() { indexTag_ = 0; typeTag_ = TYPE_UNKNOWN; }
+		DxTextTag() { indexTag_ = 0; typeTag_ = TextTagType::Unknown; }
 		virtual ~DxTextTag() {};
-		TagType GetTagType() { return typeTag_; }
+		TextTagType GetTagType() { return typeTag_; }
 		int GetTagIndex() { return indexTag_; }
 		void SetTagIndex(int index) { indexTag_ = index; }
 	};
@@ -241,7 +229,7 @@ namespace directx {
 		std::wstring ruby_;
 		shared_ptr<DxText> dxText_;
 	public:
-		DxTextTag_Ruby() { typeTag_ = TYPE_RUBY; leftMargin_ = 0; }
+		DxTextTag_Ruby() { typeTag_ = TextTagType::Ruby; leftMargin_ = 0; }
 		LONG GetLeftMargin() { return leftMargin_; }
 		void SetLeftMargin(LONG left) { leftMargin_ = left; }
 
@@ -257,7 +245,7 @@ namespace directx {
 		DxFont font_;
 		D3DXVECTOR2 offset_;
 	public:
-		DxTextTag_Font() { typeTag_ = TYPE_FONT; offset_ = D3DXVECTOR2(0, 0); }
+		DxTextTag_Font() { typeTag_ = TextTagType::Font; offset_ = D3DXVECTOR2(0, 0); }
 		void SetFont(DxFont& font) { font_ = font; }
 		DxFont& GetFont() { return font_; }
 
@@ -352,15 +340,6 @@ namespace directx {
 
 	class DxTextRenderer {
 		static DxTextRenderer* thisBase_;
-	public:
-		enum {
-			ALIGNMENT_LEFT,
-			ALIGNMENT_RIGHT,
-			ALIGNMENT_TOP,
-			ALIGNMENT_BOTTOM,
-			ALIGNMENT_CENTER,
-		};
-
 	protected:
 		DxCharCache cache_;
 		gstd::Font winFont_;
@@ -401,14 +380,6 @@ namespace directx {
 	**********************************************************/
 	class DxText {
 		friend DxTextRenderer;
-	public:
-		typedef enum : uint8_t {
-			ALIGNMENT_LEFT = DxTextRenderer::ALIGNMENT_LEFT,
-			ALIGNMENT_RIGHT = DxTextRenderer::ALIGNMENT_RIGHT,
-			ALIGNMENT_TOP = DxTextRenderer::ALIGNMENT_TOP,
-			ALIGNMENT_BOTTOM = DxTextRenderer::ALIGNMENT_BOTTOM,
-			ALIGNMENT_CENTER = DxTextRenderer::ALIGNMENT_CENTER,
-		} Alignment;
 	protected:
 		DxFont dxFont_;
 		POINT pos_;
@@ -416,9 +387,9 @@ namespace directx {
 		LONG heightMax_;
 		float sidePitch_;
 		float linePitch_;
-		RECT margin_;
-		Alignment alignmentHorizontal_;
-		Alignment alignmentVertical_;
+		DxRect<LONG> margin_;
+		TextAlignment alignmentHorizontal_;
+		TextAlignment alignmentVertical_;
 		D3DCOLOR colorVertex_;
 		bool bPermitCamera_;
 		bool bSyntacticAnalysis_;
@@ -456,7 +427,7 @@ namespace directx {
 		void SetFontColorTop(D3DCOLOR color) { dxFont_.SetTopColor(color); }
 		void SetFontColorBottom(D3DCOLOR color) { dxFont_.SetBottomColor(color); }
 		void SetFontBorderWidth(LONG width) { dxFont_.SetBorderWidth(width); }
-		void SetFontBorderType(DxFont::TypeBorder type) { dxFont_.SetBorderType(type); }
+		void SetFontBorderType(TextBorderType type) { dxFont_.SetBorderType(type); }
 		void SetFontBorderColor(D3DCOLOR color) { dxFont_.SetBorderColor(color); }
 
 		POINT& GetPosition() { return pos_; }
@@ -470,12 +441,12 @@ namespace directx {
 		void SetSidePitch(float pitch) { sidePitch_ = pitch; }
 		float GetLinePitch() { return linePitch_; }
 		void SetLinePitch(float pitch) { linePitch_ = pitch; }
-		RECT& GetMargin() { return margin_; }
-		void SetMargin(RECT& margin) { margin_ = margin; }
-		Alignment GetHorizontalAlignment() { return alignmentHorizontal_; }
-		void SetHorizontalAlignment(Alignment value) { alignmentHorizontal_ = value; }
-		Alignment GetVerticalAlignment() { return alignmentVertical_; }
-		void SetVerticalAlignment(Alignment value) { alignmentVertical_ = value; }
+		DxRect<LONG>& GetMargin() { return margin_; }
+		void SetMargin(DxRect<LONG>& margin) { margin_ = margin; }
+		TextAlignment GetHorizontalAlignment() { return alignmentHorizontal_; }
+		void SetHorizontalAlignment(TextAlignment value) { alignmentHorizontal_ = value; }
+		TextAlignment GetVerticalAlignment() { return alignmentVertical_; }
+		void SetVerticalAlignment(TextAlignment value) { alignmentVertical_ = value; }
 
 		D3DCOLOR GetVertexColor() { return colorVertex_; }
 		void SetVertexColor(D3DCOLOR color) { colorVertex_ = color; }

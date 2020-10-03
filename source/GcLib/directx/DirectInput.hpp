@@ -4,19 +4,6 @@
 #include "DxConstant.hpp"
 
 namespace directx {
-	typedef enum : uint8_t {
-		DI_MOUSE_LEFT = 0,
-		DI_MOUSE_RIGHT = 1,
-		DI_MOUSE_MIDDLE = 2,
-	} DIMouseButton;
-
-	typedef enum : uint8_t {
-		KEY_FREE = 0,	 // キーが押されていない状態
-		KEY_PUSH = 1,	 // キーを押した瞬間
-		KEY_PULL = 2,	 // キーが離された瞬間
-		KEY_HOLD = 3,	 // キーが押されている状態
-	} DIKeyState;
-
 	/**********************************************************
 	//DirectInput
 	**********************************************************/

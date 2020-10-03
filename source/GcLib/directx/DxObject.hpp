@@ -12,41 +12,6 @@
 #include "DirectSound.hpp"
 
 namespace directx {
-	enum class TypeObject : int8_t {
-		OBJ_INVALID = -1,
-		OBJ_PRIMITIVE_2D,
-		OBJ_SPRITE_2D,
-		OBJ_SPRITE_LIST_2D,
-		OBJ_PRIMITIVE_3D,
-		OBJ_SPRITE_3D,
-		OBJ_TRAJECTORY_3D,
-
-		OBJ_PARTICLE_LIST_2D,
-		OBJ_PARTICLE_LIST_3D,
-
-		OBJ_SHADER,
-
-		OBJ_MESH,
-		OBJ_TEXT,
-		OBJ_SOUND,
-
-		OBJ_FILE_TEXT,
-		OBJ_FILE_BINARY,
-
-		OBJ_PLAYER = 100,
-		OBJ_SPELL_MANAGE,
-		OBJ_SPELL,
-		OBJ_ENEMY,
-		OBJ_ENEMY_BOSS,
-		OBJ_ENEMY_BOSS_SCENE,
-		OBJ_SHOT,
-		OBJ_LOOSE_LASER,
-		OBJ_STRAIGHT_LASER,
-		OBJ_CURVE_LASER,
-		OBJ_ITEM,
-		OBJ_SHOT_PATTERN,
-	};
-
 	class DxScript;
 	class DxScriptObjectManager;
 	class DxScriptObjectBase;
@@ -492,7 +457,7 @@ namespace directx {
 		void SetFontBorderWidth(LONG width) { 
 			text_.SetFontBorderWidth(width); change_ = CHANGE_ALL;
 		}
-		void SetFontBorderType(DxFont::TypeBorder type) { 
+		void SetFontBorderType(TextBorderType type) {
 			text_.SetFontBorderType(type); change_ = CHANGE_ALL;
 		}
 		void SetFontBorderColor(byte r, byte g, byte b) { 
@@ -505,8 +470,8 @@ namespace directx {
 		void SetMaxHeight(LONG height) { text_.SetMaxHeight(height); change_ = CHANGE_ALL; }
 		void SetLinePitch(float pitch) { text_.SetLinePitch(pitch); change_ = CHANGE_ALL; }
 		void SetSidePitch(float pitch) { text_.SetSidePitch(pitch); change_ = CHANGE_ALL; }
-		void SetHorizontalAlignment(DxText::Alignment value) { text_.SetHorizontalAlignment(value); change_ = CHANGE_ALL; }
-		void SetVerticalAlignment(DxText::Alignment value) { text_.SetVerticalAlignment(value); change_ = CHANGE_ALL; }
+		void SetHorizontalAlignment(TextAlignment value) { text_.SetHorizontalAlignment(value); change_ = CHANGE_ALL; }
+		void SetVerticalAlignment(TextAlignment value) { text_.SetVerticalAlignment(value); change_ = CHANGE_ALL; }
 		void SetPermitCamera(bool bPermit) { text_.SetPermitCamera(bPermit); }
 		void SetSyntacticAnalysis(bool bEnable) { text_.SetSyntacticAnalysis(bEnable); }
 

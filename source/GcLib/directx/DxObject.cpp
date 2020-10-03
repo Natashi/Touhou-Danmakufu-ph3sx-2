@@ -21,7 +21,7 @@ DxScriptObjectBase::DxScriptObjectBase() {
 	manager_ = nullptr;
 	idObject_ = DxScript::ID_INVALID;
 	idScript_ = ScriptClientBase::ID_SCRIPT_FREE;
-	typeObject_ = TypeObject::OBJ_INVALID;
+	typeObject_ = TypeObject::Invalid;
 }
 DxScriptObjectBase::~DxScriptObjectBase() {
 	//if (manager_ != nullptr && idObject_ != DxScript::ID_INVALID)
@@ -59,7 +59,7 @@ DxScriptRenderObject::DxScriptRenderObject() {
 //DxScriptShaderObject
 **********************************************************/
 DxScriptShaderObject::DxScriptShaderObject() {
-	typeObject_ = TypeObject::OBJ_SHADER;
+	typeObject_ = TypeObject::Shader;
 }
 
 /**********************************************************
@@ -96,7 +96,7 @@ void DxScriptPrimitiveObject::SetAngleZ(float z) {
 //DxScriptPrimitiveObject2D
 **********************************************************/
 DxScriptPrimitiveObject2D::DxScriptPrimitiveObject2D() {
-	typeObject_ = TypeObject::OBJ_PRIMITIVE_2D;
+	typeObject_ = TypeObject::Primitive2D;
 	objRender_ = std::make_shared<RenderObjectTLX>();
 	objRender_->SetDxObjectReference(this);
 
@@ -191,7 +191,7 @@ D3DXVECTOR3 DxScriptPrimitiveObject2D::GetVertexPosition(size_t index) {
 //DxScriptSpriteObject2D
 **********************************************************/
 DxScriptSpriteObject2D::DxScriptSpriteObject2D() {
-	typeObject_ = TypeObject::OBJ_SPRITE_2D;
+	typeObject_ = TypeObject::Sprite2D;
 	objRender_ = std::make_shared<Sprite2D>();
 	objRender_->SetDxObjectReference(this);
 }
@@ -216,7 +216,7 @@ void DxScriptSpriteObject2D::Copy(DxScriptSpriteObject2D* src) {
 //DxScriptSpriteListObject2D
 **********************************************************/
 DxScriptSpriteListObject2D::DxScriptSpriteListObject2D() {
-	typeObject_ = TypeObject::OBJ_SPRITE_LIST_2D;
+	typeObject_ = TypeObject::SpriteList2D;
 	objRender_ = std::make_shared<SpriteList2D>();
 	objRender_->SetDxObjectReference(this);
 }
@@ -262,7 +262,7 @@ void DxScriptSpriteListObject2D::CloseVertex() {
 //DxScriptPrimitiveObject3D
 **********************************************************/
 DxScriptPrimitiveObject3D::DxScriptPrimitiveObject3D() {
-	typeObject_ = TypeObject::OBJ_PRIMITIVE_3D;
+	typeObject_ = TypeObject::Primitive3D;
 	objRender_ = std::make_shared<RenderObjectLX>();
 	objRender_->SetDxObjectReference(this);
 	bZWrite_ = false;
@@ -367,7 +367,7 @@ D3DXVECTOR3 DxScriptPrimitiveObject3D::GetVertexPosition(size_t index) {
 //DxScriptSpriteObject3D
 **********************************************************/
 DxScriptSpriteObject3D::DxScriptSpriteObject3D() {
-	typeObject_ = TypeObject::OBJ_SPRITE_3D;
+	typeObject_ = TypeObject::Sprite3D;
 	objRender_ = std::make_shared<Sprite3D>();
 	objRender_->SetDxObjectReference(this);
 }
@@ -375,7 +375,7 @@ DxScriptSpriteObject3D::DxScriptSpriteObject3D() {
 //DxScriptTrajectoryObject3D
 **********************************************************/
 DxScriptTrajectoryObject3D::DxScriptTrajectoryObject3D() {
-	typeObject_ = TypeObject::OBJ_TRAJECTORY_3D;
+	typeObject_ = TypeObject::Trajectory3D;
 	objRender_ = std::make_shared<TrajectoryObject3D>();
 	color_ = 0xffffffff;
 }
@@ -429,7 +429,7 @@ void DxScriptTrajectoryObject3D::SetColor(int r, int g, int b) {
 //DxScriptParticleListObject2D
 **********************************************************/
 DxScriptParticleListObject2D::DxScriptParticleListObject2D() {
-	typeObject_ = TypeObject::OBJ_PARTICLE_LIST_2D;
+	typeObject_ = TypeObject::ParticleList2D;
 	objRender_ = std::make_shared<ParticleRenderer2D>();
 	objRender_->SetDxObjectReference(this);
 }
@@ -469,7 +469,7 @@ void DxScriptParticleListObject2D::CleanUp() {
 //DxScriptParticleListObject3D
 **********************************************************/
 DxScriptParticleListObject3D::DxScriptParticleListObject3D() {
-	typeObject_ = TypeObject::OBJ_PARTICLE_LIST_3D;
+	typeObject_ = TypeObject::ParticleList3D;
 	objRender_ = std::make_shared<ParticleRenderer3D>();
 	objRender_->SetDxObjectReference(this);
 }
@@ -511,7 +511,7 @@ void DxScriptParticleListObject3D::CleanUp() {
 //DxScriptMeshObject
 **********************************************************/
 DxScriptMeshObject::DxScriptMeshObject() {
-	typeObject_ = TypeObject::OBJ_MESH;
+	typeObject_ = TypeObject::Mesh;
 	bZWrite_ = true;
 	bZTest_ = true;
 	bFogEnable_ = true;
@@ -595,7 +595,7 @@ void DxScriptMeshObject::SetAngleZ(float z) {
 //DxScriptTextObject
 **********************************************************/
 DxScriptTextObject::DxScriptTextObject() {
-	typeObject_ = TypeObject::OBJ_TEXT;
+	typeObject_ = TypeObject::Text;
 	change_ = CHANGE_ALL;
 	bAutoCenter_ = true;
 	center_ = D3DXVECTOR2(0, 0);
@@ -736,7 +736,7 @@ void DxScriptTextObject::SetAngleZ(float z) {
 //DxSoundObject
 **********************************************************/
 DxSoundObject::DxSoundObject() {
-	typeObject_ = TypeObject::OBJ_SOUND;
+	typeObject_ = TypeObject::Sound;
 }
 DxSoundObject::~DxSoundObject() {
 	if (player_ && player_.use_count() == 2)
@@ -801,7 +801,7 @@ void DxFileObject::Close() {
 //DxTextFileObject
 **********************************************************/
 DxTextFileObject::DxTextFileObject() {
-	typeObject_ = TypeObject::OBJ_FILE_TEXT;
+	typeObject_ = TypeObject::FileText;
 	encoding_ = Encoding::UTF16LE;
 	bomSize_ = 2U;
 	memcpy(bomHead_, Encoding::BOM_UTF16LE, 2);
@@ -1086,7 +1086,7 @@ void DxTextFileObject::AddLine(const std::wstring& line) {
 //DxBinaryFileObject
 **********************************************************/
 DxBinaryFileObject::DxBinaryFileObject() {
-	typeObject_ = TypeObject::OBJ_FILE_BINARY;
+	typeObject_ = TypeObject::FileBinary;
 	byteOrder_ = ByteOrder::ENDIAN_LITTLE;
 	codePage_ = CP_ACP;
 }

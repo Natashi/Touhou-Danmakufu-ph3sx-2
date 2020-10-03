@@ -9,12 +9,6 @@
 
 namespace directx {
 #if defined(DNH_PROJ_EXECUTOR)
-	struct VertexFogState {
-		bool bEnable;
-		D3DXVECTOR4 color;
-		D3DXVECTOR2 fogDist;
-	};
-
 	class DxCamera;
 	class DxCamera2D;
 	class Texture;
@@ -24,11 +18,6 @@ namespace directx {
 	//DirectGraphicsConfig
 	**********************************************************/
 	class DirectGraphicsConfig {
-	public:
-		enum {
-			COLOR_MODE_32BIT,
-			COLOR_MODE_16BIT,
-		};
 	protected:
 		bool bShowWindow_;
 		bool bShowCursor_;
@@ -36,7 +25,7 @@ namespace directx {
 		POINT sizeScreenWindowed_;
 		bool bWindowed_;
 		bool bUseRef_;
-		int colorMode_;
+		ColorMode colorMode_;
 		bool bUseTripleBuffer_;
 		bool bVSync_;
 		bool bPseudoFullScreen_;
@@ -59,8 +48,8 @@ namespace directx {
 		void SetWindowd(bool bWindowed) { bWindowed_ = bWindowed; }
 		bool IsReferenceEnable() const { return bUseRef_; }
 		void SetReferenceEnable(bool bEnable) { bUseRef_ = bEnable; }
-		int GetColorMode() const { return colorMode_; }
-		void SetColorMode(int mode) { colorMode_ = mode; }
+		ColorMode GetColorMode() const { return colorMode_; }
+		void SetColorMode(ColorMode mode) { colorMode_ = mode; }
 		bool IsTripleBufferEnable() const { return bUseTripleBuffer_; }
 		void SetTripleBufferEnable(bool bEnable) { bUseTripleBuffer_ = bEnable; }
 		bool IsVSyncEnable() const { return bVSync_; }
@@ -70,24 +59,6 @@ namespace directx {
 		D3DMULTISAMPLE_TYPE GetMultiSampleType() const { return typeSamples_; }
 		void SetMultiSampleType(D3DMULTISAMPLE_TYPE type) { typeSamples_ = type; }
 	};
-
-	typedef enum : uint8_t {
-		SCREENMODE_FULLSCREEN,
-		SCREENMODE_WINDOW,
-	} ScreenMode;
-	typedef enum : uint8_t {
-		MODE_BLEND_NONE,		//No blending
-		MODE_BLEND_ALPHA,		//Alpha blending
-		MODE_BLEND_ADD_RGB,		//Add blending, alpha ignored
-		MODE_BLEND_ADD_ARGB,	//Add blending
-		MODE_BLEND_MULTIPLY,	//Multiply blending
-		MODE_BLEND_SUBTRACT,	//Reverse-subtract blending
-		MODE_BLEND_SHADOW,		//Invert-multiply blending
-		MODE_BLEND_INV_DESTRGB,	//Difference blending in Ph*tosh*p
-		MODE_BLEND_ALPHA_INV,	//Alpha blending, but the source color is inverted
-
-		RESET = 0xff,
-	} BlendMode;
 
 #if defined(DNH_PROJ_EXECUTOR)
 	class DirectGraphics {
@@ -155,7 +126,7 @@ namespace directx {
 		void BeginScene(bool bMainRender = true, bool bClear = true);
 		void EndScene(bool bPresent = true);
 		void ClearRenderTarget();
-		void ClearRenderTarget(RECT* rect);
+		void ClearRenderTarget(DxRect<LONG>* rect);
 		void SetRenderTarget(shared_ptr<Texture> texture, bool bResetState = true);
 		shared_ptr<Texture> GetRenderTarget() { return textureTarget_; }
 
@@ -336,15 +307,16 @@ namespace directx {
 	//DxCamera2D
 	**********************************************************/
 	class DxCamera2D {
-	public:
-
 	private:
 		bool bEnable_;
-		D3DXVECTOR2 pos_;//è≈ì_
-		float ratioX_;//ägëÂó¶
+
+		D3DXVECTOR2 pos_;
+
+		float ratioX_;
 		float ratioY_;
 		double angleZ_;
-		RECT rcClip_;//éãñÏ
+
+		DxRect<LONG> rcClip_;
 
 		gstd::ref_count_ptr<D3DXVECTOR2> posReset_;
 
@@ -373,15 +345,15 @@ namespace directx {
 		double GetAngleZ() { return angleZ_; }
 		void SetAngleZ(double angle) { angleZ_ = angle; }
 
-		const RECT& GetClip() { return rcClip_; }
-		void SetClip(const RECT& rect) { rcClip_ = rect; }
+		const DxRect<LONG>& GetClip() { return rcClip_; }
+		void SetClip(const DxRect<LONG>& rect) { rcClip_ = rect; }
 
 		void SetResetFocus(gstd::ref_count_ptr<D3DXVECTOR2>& pos) { posReset_ = pos; }
 		void Reset();
 		inline D3DXVECTOR2 GetLeftTopPosition();
 		inline static D3DXVECTOR2 GetLeftTopPosition(const D3DXVECTOR2& focus, float ratio);
 		inline static D3DXVECTOR2 GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY);
-		inline static D3DXVECTOR2 GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY, const RECT& rcClip);
+		inline static D3DXVECTOR2 GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY, const DxRect<LONG>& rcClip);
 
 		void UpdateMatrix();
 		const D3DXMATRIX& GetMatrix() { return bEnable_ ? matCamera_ : matIdentity_; }

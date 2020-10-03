@@ -14,8 +14,10 @@ ScriptSelectScene::ScriptSelectScene() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG screenWidth = graphics->GetScreenWidth();
 	LONG screenHeight = graphics->GetScreenHeight();
-	RECT_D srcBack = { 0., 0., 640., 480. };
-	RECT_D destBack = { 0., 0., (double)screenWidth, (double)screenHeight };
+
+	DxRect<int> srcBack(0, 0, 640, 480);
+	DxRect<double> destBack(0, 0, screenWidth, screenHeight);
+
 	spriteBack_ = std::make_shared<Sprite2D>();
 	spriteBack_->SetTexture(textureBack);
 	spriteBack_->SetVertex(srcBack, destBack);
@@ -38,7 +40,7 @@ void ScriptSelectScene::Clear() {
 }
 void ScriptSelectScene::_ChangePage() {
 	DxText dxText;
-	dxText.SetFontBorderType(directx::DxFont::BORDER_FULL);
+	dxText.SetFontBorderType(TextBorderType::Full);
 	dxText.SetFontBorderWidth(2);
 	dxText.SetFontSize(16);
 	dxText.SetFontWeight(FW_BOLD);
@@ -198,7 +200,7 @@ void ScriptSelectScene::Render() {
 	DxText dxTextDescription;
 	dxTextDescription.SetFontColorTop(D3DCOLOR_ARGB(255, 128, 128, 255));
 	dxTextDescription.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));
-	dxTextDescription.SetFontBorderType(directx::DxFont::BORDER_FULL);
+	dxTextDescription.SetFontBorderType(TextBorderType::Full);
 	dxTextDescription.SetFontBorderColor(D3DCOLOR_ARGB(255, 255, 255, 255));
 	dxTextDescription.SetFontBorderWidth(2);
 	dxTextDescription.SetFontSize(20);
@@ -221,7 +223,7 @@ void ScriptSelectScene::Render() {
 		DxText dxTextDir;
 		dxTextDir.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 		dxTextDir.SetFontColorBottom(D3DCOLOR_ARGB(255, 255, 128, 128));
-		dxTextDir.SetFontBorderType(directx::DxFont::BORDER_NONE);
+		dxTextDir.SetFontBorderType(TextBorderType::None);
 		dxTextDir.SetFontBorderWidth(0);
 		dxTextDir.SetFontSize(14);
 		dxTextDir.SetFontWeight(FW_BOLD);
@@ -263,7 +265,7 @@ void ScriptSelectScene::Render() {
 
 			DxText dxTextInfo;
 			dxTextInfo.SetFontBorderColor(D3DCOLOR_ARGB(255, 255, 255, 255));
-			dxTextInfo.SetFontBorderType(directx::DxFont::BORDER_NONE);
+			dxTextInfo.SetFontBorderType(TextBorderType::None);
 			dxTextInfo.SetFontBorderWidth(0);
 			dxTextInfo.SetFontSize(16);
 			dxTextInfo.SetFontWeight(FW_BOLD);
@@ -288,8 +290,8 @@ void ScriptSelectScene::Render() {
 
 			texture = spriteImage_->GetTexture();
 			if (texture != nullptr && texture->IsLoad()) {
-				RECT_D rcSrc = { 0., 0., (double)texture->GetWidth(), (double)texture->GetHeight() };
-				RECT_D rcDest = { 340., 250., (double)(rcDest.left + 280), (double)(rcDest.top + 210) };
+				DxRect<int> rcSrc(0, 0, texture->GetWidth(), texture->GetHeight());
+				DxRect<double> rcDest(340, 250, 340 + 280, 250 + 210);
 				spriteImage_->SetSourceRect(rcSrc);
 				spriteImage_->SetDestinationRect(rcDest);
 				spriteImage_->Render();
@@ -349,7 +351,7 @@ void ScriptSelectScene::Render() {
 		DxText dxTextNowLoad;
 		dxTextNowLoad.SetFontColorTop(D3DCOLOR_ARGB(255, 128, 128, 128));
 		dxTextNowLoad.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 64));
-		dxTextNowLoad.SetFontBorderType(directx::DxFont::BORDER_FULL);
+		dxTextNowLoad.SetFontBorderType(TextBorderType::Full);
 		dxTextNowLoad.SetFontBorderColor(D3DCOLOR_ARGB(255, 255, 255, 255));
 		dxTextNowLoad.SetFontBorderWidth(2);
 		dxTextNowLoad.SetFontSize(18);
@@ -696,7 +698,7 @@ PlayTypeSelectMenuItem::PlayTypeSelectMenuItem(const std::wstring& text, int x, 
 	DxText dxText;
 	dxText.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 	dxText.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 64));
-	dxText.SetFontBorderType(directx::DxFont::BORDER_FULL);
+	dxText.SetFontBorderType(TextBorderType::Full);
 	dxText.SetFontBorderColor(D3DCOLOR_ARGB(255, 32, 32, 128));
 	dxText.SetFontBorderWidth(1);
 	dxText.SetFontSize(14);
@@ -742,8 +744,9 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	int screenWidth = graphics->GetScreenWidth();
 	int screenHeight = graphics->GetScreenHeight();
-	RECT_D srcBack = { 0., 0., 640., 480. };
-	RECT_D destBack = { 0., 0., (double)screenWidth, (double)screenHeight };
+
+	DxRect<int> srcBack(0, 0, 640, 480);
+	DxRect<double> destBack(0, 0, screenWidth, screenHeight);
 
 	spriteBack_ = std::make_shared<Sprite2D>();
 	spriteBack_->SetTexture(textureBack);
@@ -837,7 +840,7 @@ void PlayerSelectScene::Render() {
 	if (infoSelected) {
 		DxText dxTextInfo;
 		dxTextInfo.SetFontBorderColor(D3DCOLOR_ARGB(255, 255, 255, 255));
-		dxTextInfo.SetFontBorderType(directx::DxFont::BORDER_NONE);
+		dxTextInfo.SetFontBorderType(TextBorderType::None);
 		dxTextInfo.SetFontWeight(FW_BOLD);
 		//dxTextInfo.SetSyntacticAnalysis(false);
 
@@ -859,8 +862,8 @@ void PlayerSelectScene::Render() {
 
 		texture = spriteImage_->GetTexture();
 		if (texture != nullptr && texture->IsLoad()) {
-			RECT_D rcSrc = { 0., 0., (double)texture->GetWidth(), (double)texture->GetHeight() };
-			RECT_D rcDest = { 0., 0., (double)texture->GetWidth(), (double)texture->GetHeight() };
+			DxRect<int> rcSrc(0, 0, texture->GetWidth(), texture->GetHeight());
+			DxRect<double> rcDest(0, 0, texture->GetWidth(), texture->GetHeight());
 			spriteImage_->SetSourceRect(rcSrc);
 			spriteImage_->SetDestinationRect(rcDest);
 			spriteImage_->Render();
@@ -888,7 +891,7 @@ void PlayerSelectScene::Render() {
 		dxTextInfo.Render();
 
 		//テキスト
-		dxTextInfo.SetFontBorderType(directx::DxFont::BORDER_SHADOW);
+		dxTextInfo.SetFontBorderType(TextBorderType::Shadow);
 		dxTextInfo.SetFontWeight(FW_BOLD);
 		dxTextInfo.SetFontBorderWidth(2);
 		dxTextInfo.SetFontSize(16);
@@ -906,7 +909,7 @@ void PlayerSelectScene::Render() {
 	DxText dxTextDescription;
 	dxTextDescription.SetFontColorTop(D3DCOLOR_ARGB(255, 128, 128, 255));
 	dxTextDescription.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));
-	dxTextDescription.SetFontBorderType(directx::DxFont::BORDER_FULL);
+	dxTextDescription.SetFontBorderType(TextBorderType::Full);
 	dxTextDescription.SetFontBorderColor(D3DCOLOR_ARGB(255, 255, 255, 255));
 	dxTextDescription.SetFontBorderWidth(2);
 	dxTextDescription.SetFontSize(20);
@@ -929,7 +932,7 @@ void PlayerSelectScene::Render() {
 
 				DxText dxText;
 				dxText.SetPosition(mx, my);
-				dxText.SetFontBorderType(directx::DxFont::BORDER_FULL);
+				dxText.SetFontBorderType(TextBorderType::Full);
 				dxText.SetFontBorderWidth(2);
 				dxText.SetFontSize(16);
 				dxText.SetFontWeight(FW_BOLD);

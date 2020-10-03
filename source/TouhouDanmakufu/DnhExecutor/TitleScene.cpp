@@ -16,8 +16,9 @@ TitleScene::TitleScene() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	int screenWidth = graphics->GetScreenWidth();
 	int screenHeight = graphics->GetScreenHeight();
-	RECT_D srcBack = { 0., 0., 640., 480. };
-	RECT_D destBack = { 0., 0., (double)screenWidth, (double)screenHeight };
+
+	DxRect<int> srcBack(0, 0, 640, 480);
+	DxRect<double> destBack(0, 0, screenWidth, screenHeight);
 
 	spriteBack_ = std::make_shared<Sprite2D>();
 	spriteBack_->SetTexture(textureBack);
@@ -100,7 +101,7 @@ TitleSceneMenuItem::TitleSceneMenuItem(std::wstring text, std::wstring descripti
 	DxText dxText;
 	dxText.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 	dxText.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 64));
-	dxText.SetFontBorderType(directx::DxFont::BORDER_FULL);
+	dxText.SetFontBorderType(TextBorderType::Full);
 	dxText.SetFontBorderColor(D3DCOLOR_ARGB(255, 32, 32, 128));
 	dxText.SetFontBorderWidth(2);
 	dxText.SetFontSize(24);

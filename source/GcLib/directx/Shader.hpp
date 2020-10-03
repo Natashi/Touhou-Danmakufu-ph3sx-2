@@ -8,12 +8,10 @@
 #include "Texture.hpp"
 
 namespace directx {
-	//http://msdn.microsoft.com/ja-jp/library/bb944006(v=vs.85).aspx
-	//http://msdn.microsoft.com/ja-jp/library/bb509647(v=vs.85).aspx
-
 	class ShaderManager;
 	class Shader;
 	class ShaderData;
+
 	/**********************************************************
 	//ShaderData
 	**********************************************************/
@@ -91,25 +89,15 @@ namespace directx {
 	//ShaderParameter
 	**********************************************************/
 	class ShaderParameter {
-	public:
-		typedef enum : uint8_t {
-			TYPE_UNKNOWN,
-			TYPE_MATRIX,
-			TYPE_MATRIX_ARRAY,
-			TYPE_VECTOR,
-			TYPE_FLOAT,
-			TYPE_FLOAT_ARRAY,
-			TYPE_TEXTURE,
-		} TypeParameter;
 	private:
-		TypeParameter type_;
+		ShaderParameterType type_;
 		std::vector<byte> value_;
 		shared_ptr<Texture> texture_;
 	public:
 		ShaderParameter();
 		virtual ~ShaderParameter();
 
-		TypeParameter GetType() { return type_; }
+		ShaderParameterType GetType() { return type_; }
 		void SetMatrix(D3DXMATRIX& matrix);
 		inline D3DXMATRIX* GetMatrix();
 		void SetMatrixArray(std::vector<D3DXMATRIX>& matrix);

@@ -51,7 +51,7 @@ shared_ptr<StgEnemyBossSceneObject> StgEnemyManager::GetBossSceneObject() {
 **********************************************************/
 StgEnemyObject::StgEnemyObject(StgStageController* stageController) : StgMoveObject(stageController) {
 	stageController_ = stageController;
-	typeObject_ = TypeObject::OBJ_ENEMY;
+	typeObject_ = TypeObject::Enemy;
 
 	SetRenderPriorityI(40);
 
@@ -118,7 +118,7 @@ void StgEnemyObject::AddReferenceToPlayerIntersection(shared_ptr<StgIntersection
 //StgEnemyBossObject
 **********************************************************/
 StgEnemyBossObject::StgEnemyBossObject(StgStageController* stageController) : StgEnemyObject(stageController) {
-	typeObject_ = TypeObject::OBJ_ENEMY_BOSS;
+	typeObject_ = TypeObject::EnemyBoss;
 }
 
 /**********************************************************
@@ -126,7 +126,7 @@ StgEnemyBossObject::StgEnemyBossObject(StgStageController* stageController) : St
 **********************************************************/
 StgEnemyBossSceneObject::StgEnemyBossSceneObject(StgStageController* stageController) {
 	stageController_ = stageController;
-	typeObject_ = TypeObject::OBJ_ENEMY_BOSS_SCENE;
+	typeObject_ = TypeObject::EnemyBossScene;
 
 	bVisible_ = false;
 	bLoad_ = false;

@@ -85,7 +85,7 @@ namespace directx {
 		bool bWindowDelete_;//削除フラグ
 		bool bWindowEnable_;
 		bool bWindowVisible_;
-		RECT rectWindow_;//ウィンドウ相対座標
+		DxRect<int> rectWindow_;//ウィンドウ相対座標
 		DxWindow* windowParent_;//親ウィンドウ
 		std::list<gstd::ref_count_ptr<DxWindow>> listWindowChild_;//子ウィンドウ
 
@@ -113,9 +113,9 @@ namespace directx {
 
 		int GetID() { return idWindow_; }
 		virtual bool IsIntersected(POINT pos);
-		void SetWindowRect(RECT rect) { rectWindow_ = rect; }
-		RECT GetWindowRect() { return rectWindow_; }
-		RECT GetAbsoluteWindowRect();
+		void SetWindowRect(const DxRect<int>& rect) { rectWindow_ = rect; }
+		DxRect<int> GetWindowRect() { return rectWindow_; }
+		DxRect<int> GetAbsoluteWindowRect();
 		virtual void SetWindowEnable(bool bEnable) { bWindowEnable_ = bEnable; }
 		virtual bool IsWindowEnable() { return bWindowEnable_; }
 		virtual void SetWindowVisible(bool bVisible) { bWindowVisible_ = bVisible; }

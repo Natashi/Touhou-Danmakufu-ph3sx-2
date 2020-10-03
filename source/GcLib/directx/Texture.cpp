@@ -498,7 +498,7 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 		*/
 		D3DCOLOR colorKey = 0x00000000;
 
-		D3DFORMAT pixelFormat = graphics->GetConfigData().GetColorMode() == DirectGraphicsConfig::COLOR_MODE_32BIT ? 
+		D3DFORMAT pixelFormat = graphics->GetConfigData().GetColorMode() == ColorMode::COLOR_MODE_32BIT ?
 			D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
 
 		shared_ptr<TextureData> data(new TextureData());
@@ -569,7 +569,7 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 			qualitySample ? qualitySample[1] : 0, FALSE, &data->lpRenderZ_, nullptr);
 		if (FAILED(hr)) throw false;
 
-		D3DFORMAT fmt = graphics->GetConfigData().GetColorMode() == DirectGraphicsConfig::COLOR_MODE_32BIT ?
+		D3DFORMAT fmt = graphics->GetConfigData().GetColorMode() == ColorMode::COLOR_MODE_32BIT ?
 			D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
 		hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT,
 			&data->pTexture_, nullptr);
@@ -740,7 +740,7 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 			*/
 			D3DCOLOR colorKey = 0x00000000;
 
-			D3DFORMAT pixelFormat = graphics->GetConfigData().GetColorMode() == DirectGraphicsConfig::COLOR_MODE_32BIT ?
+			D3DFORMAT pixelFormat = graphics->GetConfigData().GetColorMode() == ColorMode::COLOR_MODE_32BIT ?
 				D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
 
 			HRESULT hr = D3DXCreateTextureFromFileInMemoryEx(DirectGraphics::GetBase()->GetDevice(), 

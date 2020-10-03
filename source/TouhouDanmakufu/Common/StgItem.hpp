@@ -102,8 +102,8 @@ class StgItemData {
 	friend StgItemDataList;
 public:
 	struct AnimationData {
-		RECT rcSrc_;
-		RECT rcDest_;
+		DxRect<int> rcSrc_;
+		DxRect<int> rcDest_;
 		int frame_;
 	};
 private:
@@ -114,8 +114,8 @@ private:
 
 	int typeItem_;
 	BlendMode typeRender_;
-	RECT rcOutSrc_;
-	RECT rcOutDest_;
+	DxRect<int> rcOutSrc_;
+	DxRect<int> rcOutDest_;
 	int alpha_;
 
 	std::vector<AnimationData> listAnime_;
@@ -129,8 +129,8 @@ public:
 	int GetItemType() { return typeItem_; }
 	BlendMode GetRenderType() { return typeRender_; }
 	AnimationData* GetData(int frame);
-	RECT* GetOutSrc() { return &rcOutSrc_; }
-	RECT* GetOutDest() { return &rcOutDest_; }
+	DxRect<int>* GetOutSrc() { return &rcOutSrc_; }
+	DxRect<int>* GetOutDest() { return &rcOutDest_; }
 	int GetAlpha() { return alpha_; }
 
 	shared_ptr<Texture> GetTexture() { return listItemData_->GetTexture(indexTexture_); }

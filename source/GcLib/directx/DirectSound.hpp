@@ -34,14 +34,6 @@ namespace directx {
 			SD_VOLUME_MIN = DSBVOLUME_MIN,
 			SD_VOLUME_MAX = DSBVOLUME_MAX,
 		};
-		enum FileFormat : uint8_t {
-			SD_UNKNOWN,
-			SD_WAVE,
-			SD_OGG,
-			SD_MP3,
-			SD_AWAVE,	//Wave but mp3
-			SD_MIDI,
-		};
 	private:
 		static DirectSoundManager* thisBase_;
 	protected:
@@ -209,7 +201,7 @@ namespace directx {
 		shared_ptr<gstd::FileReader> reader_;
 		SoundDivision* division_;
 
-		DirectSoundManager::FileFormat format_;
+		SoundFileFormat format_;
 
 		WAVEFORMATEX formatWave_;
 		bool bLoop_;//ÉãÅ[ÉvóLñ≥
@@ -233,7 +225,7 @@ namespace directx {
 		SoundPlayer();
 		virtual ~SoundPlayer();
 
-		DirectSoundManager::FileFormat GetFormat() { return format_; }
+		SoundFileFormat GetFormat() { return format_; }
 
 		std::wstring& GetPath() { return path_; }
 		size_t GetPathHash() { return pathHash_; }

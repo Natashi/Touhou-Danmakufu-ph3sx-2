@@ -360,13 +360,13 @@ SystemResidentTask::SystemResidentTask() {
 
 	textFps_.SetFontColorTop(D3DCOLOR_ARGB(255, 160, 160, 255));
 	textFps_.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));
-	textFps_.SetFontBorderType(directx::DxFont::BORDER_FULL);
+	textFps_.SetFontBorderType(TextBorderType::Full);
 	textFps_.SetFontBorderColor(D3DCOLOR_ARGB(255, 255, 255, 255));
 	textFps_.SetFontBorderWidth(2);
 	textFps_.SetFontSize(14);
 	textFps_.SetFontWeight(FW_BOLD);
 	textFps_.SetMaxWidth(screenWidth - 8);
-	textFps_.SetHorizontalAlignment(DxText::ALIGNMENT_RIGHT);
+	textFps_.SetHorizontalAlignment(TextAlignment::Right);
 	textFps_.SetPosition(0, screenHeight - 20);
 }
 SystemResidentTask::~SystemResidentTask() {}
