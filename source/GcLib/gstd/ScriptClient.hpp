@@ -206,6 +206,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Overshoot);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_QuadraticBezier);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_CubicBezier);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_Hermite);
 
 		DNH_FUNCAPI_DECL_(Func_TypeOf);
 		DNH_FUNCAPI_DECL_(Func_FTypeOf);

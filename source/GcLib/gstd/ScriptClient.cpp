@@ -98,6 +98,7 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_Overshoot", ScriptClientBase::Func_Interpolate_Overshoot, 4 },
 	{ "Interpolate_QuadraticBezier", ScriptClientBase::Func_Interpolate_QuadraticBezier, 4 },
 	{ "Interpolate_CubicBezier", ScriptClientBase::Func_Interpolate_CubicBezier, 5 },
+	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
 
 	{ "typeof", ScriptClientBase::Func_TypeOf, 1 },
 	{ "ftypeof", ScriptClientBase::Func_FTypeOf, 1 },
@@ -1174,7 +1175,7 @@ value ScriptClientBase::Func_Interpolate_QuadraticBezier(script_machine* machine
 	double x = argv[3].as_real();
 
 	double y = 1.0 - x;
-	double res = (a * y * y) + x * (b * x + c * 2.0 * y);
+	double res = (a * y * y) + x * (b * x + c * 2 * y);
 
 	return CreateRealValue(res);
 }
@@ -1187,9 +1188,43 @@ value ScriptClientBase::Func_Interpolate_CubicBezier(script_machine* machine, in
 
 	double y = 1.0 - x;
 	double z = y * y;
-	double res = (a * y * z) + x * ((b * x * x) + (c1 * c1 * c2 * 3.0 * z));
+	double res = (a * y * z) + x * ((b * x * x) + (c1 * c1 * c2 * 3 * z));
 
 	return CreateRealValue(res);
+}
+value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int argc, const value* argv) {
+	//Start and end points
+	double sx = argv[0].as_real();
+	double sy = argv[1].as_real();
+	double ex = argv[2].as_real();
+	double ey = argv[3].as_real();
+
+	//Tangent vectors
+	double vsm = argv[4].as_real();							//start magnitude
+	double vsa = Math::DegreeToRadian(argv[5].as_real());	//start angle
+	double vem = argv[6].as_real();							//end magnitude
+	double vea = Math::DegreeToRadian(argv[7].as_real());	//end angle
+
+	double x = argv[8].as_real();
+
+	double vec_s[2] = { vsm * cos(vsa), vsm * sin(vsa) };
+	double vec_e[2] = { vem * cos(vea), vem * sin(vea) };
+
+	double x_2 = 2 * x;
+	double x2 = x * x;
+	double x_s1 = x - 1;
+	double x_s1_2 = x_s1 * x_s1;
+
+	double rps = (1 + x_2) * x_s1_2;	//(1 + 2t) * (1 - t)^2
+	double rpe = x2 * (3 - x_2);		//t^2 * (3 - 2t)
+	double rvs = x * x_s1_2;			//t * (1 - t)^2
+	double rve = x2 * x_s1;				//t^2 * (t - 1)
+	double res_pos[2] = {
+		sx * rps + ex * rpe + vec_s[0] * rvs + vec_e[0] * rve,
+		sy * rps + ey * rpe + vec_s[1] * rvs + vec_e[1] * rve
+	};
+
+	return CreateRealArrayValue(res_pos, 2U);
 }
 
 value ScriptClientBase::Func_TypeOf(script_machine* machine, int argc, const value* argv) {
