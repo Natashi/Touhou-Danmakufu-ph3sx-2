@@ -621,11 +621,9 @@ namespace gstd {
 #undef BITWISE_RET
 
 	value BaseFunction::script_debugBreak(script_machine* machine, int argc, const value* argv) {
-#ifdef _DEBUG
 		//Prevents crashes if called without a debugger attached, not to prevent external debugging
 		if (IsDebuggerPresent())
 			DebugBreak();
-#endif
 		return value();
 	}
 }
