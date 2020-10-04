@@ -220,3 +220,9 @@ using std::weak_ptr;
 #undef max
 
 #undef GetObject
+
+#define API_DEFINE_GET(_type, _name, _var) _type Get##_name() { return _var; }
+#define API_DEFINE_SET(_type, _name, _var) void Set##_name(_type v) { _var = v; }
+#define API_DEFINE_GETSET(_type, _name, _target) \
+			API_DEFINE_GET(_type, _name, _target) \
+			API_DEFINE_SET(_type, _name, _target)
