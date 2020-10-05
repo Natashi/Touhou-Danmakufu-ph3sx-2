@@ -2226,7 +2226,7 @@ value DxScript::Func_Obj_GetType(script_machine* machine, int argc, const value*
 	DxScriptObjectBase* obj = dynamic_cast<DxScriptObjectBase*>(script->GetObjectPointer(id));
 	if (obj) res = obj->GetObjectType();
 
-	return script->CreateIntValue((int8_t)res);
+	return script->CreateIntValue((uint8_t)res);
 }
 
 
