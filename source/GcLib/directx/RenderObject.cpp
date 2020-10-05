@@ -1557,11 +1557,16 @@ void Sprite2D::SetDestinationCenter() {
 //SpriteList2D
 **********************************************************/
 SpriteList2D::SpriteList2D() {
+	countRenderIndex_ = 0;
+	countRenderIndexPrev_ = 0;
 	countRenderVertex_ = 0;
 	countRenderVertexPrev_ = 0;
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 	bCloseVertexList_ = false;
 	autoClearVertexList_ = false;
+
+	vertexIndices_.resize(64U);
+	vertex_.resize(64U * strideVertexStreamZero_);
 }
 void SpriteList2D::Render() {
 	SpriteList2D::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
@@ -1569,25 +1574,28 @@ void SpriteList2D::Render() {
 void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
+	size_t countRenderIndex = countRenderIndex_;
 	size_t countRenderVertex = countRenderVertex_;
 
-	if (!graphics->IsMainRenderLoop()) countRenderVertex = countRenderVertexPrev_;
-	if (countRenderVertex == 0U) return;
+	if (!graphics->IsMainRenderLoop()) {
+		countRenderIndex = countRenderIndexPrev_;
+		countRenderVertex = countRenderVertexPrev_;
+	}
+	if (countRenderIndex == 0U || countRenderVertex == 0U) return;
 
 	IDirect3DDevice9* device = graphics->GetDevice();
 	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	
 	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
-
 	device->SetFVF(VERTEX_TLX::fvf);
 
 	bool bCamera = camera->IsEnable() && bPermitCamera_;
 	{
 		bool bUseIndex = vertexIndices_.size() > 0;
-		size_t countVertex = std::min(GetVertexCount(countRenderVertex), 65536U);
-		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
-		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
+		size_t countVertex = std::min(countRenderVertex, 43688U);	//10922 * 4
+		size_t countIndex = std::min(countRenderIndex, 65532U);		//10922 * 6
+		size_t countPrim = _GetPrimitiveCount(countIndex);			//Max = 10922 quads
 
 		D3DXMATRIX matWorld;
 		if (bCloseVertexList_)
@@ -1619,10 +1627,8 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 				lockParam.SetSource(vertCopy_, countVertex, sizeof(VERTEX_TLX));
 				vertexBuffer->UpdateBuffer(&lockParam);
 				
-				if (bUseIndex) {
-					lockParam.SetSource(vertexIndices_, countIndex, sizeof(uint16_t));
-					indexBuffer->UpdateBuffer(&lockParam);
-				}
+				lockParam.SetSource(vertexIndices_, countIndex, sizeof(uint16_t));
+				indexBuffer->UpdateBuffer(&lockParam);
 			}
 
 			device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
@@ -1657,12 +1663,7 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 			}
 			for (UINT iPass = 0; iPass < countPass; ++iPass) {
 				if (effect) effect->BeginPass(iPass);
-				if (bUseIndex) {
-					device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
-				}
-				else {
-					device->DrawPrimitive(typePrimitive_, 0, countPrim);
-				}
+				device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
 				if (effect) effect->EndPass();
 			}
 			if (effect) effect->End();
@@ -1673,26 +1674,38 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 	}
 }
 void SpriteList2D::CleanUp() {
+	countRenderIndexPrev_ = countRenderIndex_;
 	countRenderVertexPrev_ = countRenderVertex_;
-	if (autoClearVertexList_ && (GetVertexCount() >= 6)) 
+	if (autoClearVertexList_ && (countRenderIndex_ >= 6))
 		ClearVertexCount();
 }
-void SpriteList2D::_AddVertex(const VERTEX_TLX& vertex) {
-	size_t count = vertex_.size() / strideVertexStreamZero_;
-	if (countRenderVertex_ >= count) {
-		//ƒŠƒTƒCƒY
-		size_t newCount = std::max(10U, (size_t)(count * 1.5));
-		vertex_.resize(newCount * strideVertexStreamZero_);
-	}
-	SetVertex(countRenderVertex_, vertex);
-	++countRenderVertex_;
+void SpriteList2D::_AddVertex(VERTEX_TLX(&verts)[4]) {
+	if (countRenderIndex_ >= 65532U) return;
+
+	size_t indexCount = vertexIndices_.size();
+	size_t vertexCount = vertex_.size() / strideVertexStreamZero_;
+
+	//10922 quads
+	if (countRenderIndex_ + 6 >= indexCount)
+		vertexIndices_.resize(std::min(65532U, indexCount * 2U));
+	if (countRenderVertex_ + 4 >= vertexCount)
+		vertex_.resize(std::min(43688U * strideVertexStreamZero_, vertex_.size() * 2U));
+
+	uint16_t baseIndex = (uint16_t)countRenderVertex_;
+	uint16_t indices[] = { 
+		baseIndex + 0u, baseIndex + 1u, baseIndex + 2u,
+		baseIndex + 1u, baseIndex + 2u, baseIndex + 3u
+	};
+	memcpy(&vertexIndices_[countRenderIndex_], indices, 6U * sizeof(uint16_t));
+	memcpy(&vertex_[countRenderVertex_ * strideVertexStreamZero_], verts, 4U * strideVertexStreamZero_);
+	countRenderIndex_ += 6U;
+	countRenderVertex_ += 4U;
 }
 void SpriteList2D::AddVertex() {
 	SpriteList2D::AddVertex(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
 void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
-	if (bCloseVertexList_ || countRenderVertex_ > 65536 / 6)
-		return;
+	if (bCloseVertexList_ || countRenderVertex_ > 65536 / 6) return;
 
 	if (texture_ == nullptr) return;
 	float width = texture_->GetWidth();
@@ -1701,19 +1714,10 @@ void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 	D3DXMATRIX matWorld = RenderObject::CreateWorldMatrix2D(position_, scale_,
 		angX, angY, angZ, nullptr);
 
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-
-	VERTEX_TLX verts[4];
-	/*
-	float srcX[] = { (float)rcSrc_.left, (float)rcSrc_.right, (float)rcSrc_.left, (float)rcSrc_.right };
-	float srcY[] = { (float)rcSrc_.top, (float)rcSrc_.top, (float)rcSrc_.bottom, (float)rcSrc_.bottom };
-	int destX[] = { (int)rcDest_.left, (int)rcDest_.right, (int)rcDest_.left, (int)rcDest_.right };
-	int destY[] = { (int)rcDest_.top, (int)rcDest_.top, (int)rcDest_.bottom, (int)rcDest_.bottom };
-	*/
 	int* ptrSrc = reinterpret_cast<int*>(&rcSrc_);
 	double* ptrDst = reinterpret_cast<double*>(&rcDest_);
 
-//#pragma omp for
+	VERTEX_TLX verts[4];
 	for (size_t iVert = 0; iVert < 4; ++iVert) {
 		VERTEX_TLX vt;
 		vt.texcoord.x = (float)ptrSrc[(iVert & 0b1) << 1] / width;
@@ -1726,18 +1730,7 @@ void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 		vPos.y = (float)ptrDst[iVert | 0b1] + bias;
 		vPos.z = 1.0f;
 		vPos.w = 1.0f;
-		/*
-		vPos.x *= scale_.x;
-		vPos.y *= scale_.y;
-		vPos.z *= scale_.z;
-		DxMath::RotatePosFromXYZFactor(vPos,
-			(angle_.x == 0.0f) ? nullptr : &angX,
-			(angle_.y == 0.0f) ? nullptr : &angY,
-			(angle_.z == 0.0f) ? nullptr : &angZ);
-		vPos.x += position_.x;
-		vPos.y += position_.y;
-		vPos.z += position_.z;
-		*/
+
 		D3DXVec3TransformCoord((D3DXVECTOR3*)&vPos, (D3DXVECTOR3*)&vPos, &matWorld);
 		vt.position = vPos;
 
@@ -1745,12 +1738,7 @@ void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 		verts[iVert] = vt;
 	}
 
-	_AddVertex(verts[0]);
-	_AddVertex(verts[2]);
-	_AddVertex(verts[1]);
-	_AddVertex(verts[1]);
-	_AddVertex(verts[2]);
-	_AddVertex(verts[3]);
+	_AddVertex(verts);
 }
 void SpriteList2D::SetDestinationCenter() {
 	if (texture_ == nullptr) return;

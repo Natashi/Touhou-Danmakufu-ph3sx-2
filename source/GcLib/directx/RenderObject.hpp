@@ -464,6 +464,8 @@ namespace directx {
 	//矩形スプライトリスト
 	**********************************************************/
 	class SpriteList2D : public RenderObjectTLX {
+		size_t countRenderIndex_;
+		size_t countRenderIndexPrev_;
 		size_t countRenderVertex_;
 		size_t countRenderVertexPrev_;
 
@@ -475,19 +477,23 @@ namespace directx {
 		bool bCloseVertexList_;
 		bool autoClearVertexList_;
 
-		void _AddVertex(const VERTEX_TLX& vertex);
+		void _AddVertex(VERTEX_TLX(&verts)[4]);
 	public:
 		SpriteList2D();
 
-		virtual size_t GetVertexCount() { return GetVertexCount(countRenderVertex_); }
+		virtual size_t GetVertexCount() { return GetVertexCount(countRenderIndex_); }
 		virtual size_t GetVertexCount(size_t count) {
-			return std::min(count, vertex_.size() / strideVertexStreamZero_);
+			return std::min(count, vertexIndices_.size());
 		}
 
 		virtual void Render();
 		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
 
-		void ClearVertexCount() { countRenderVertex_ = 0; bCloseVertexList_ = false; }
+		void ClearVertexCount() { 
+			countRenderIndex_ = 0;
+			countRenderVertex_ = 0;
+			bCloseVertexList_ = false; 
+		}
 		void CleanUp();
 
 		void AddVertex();
