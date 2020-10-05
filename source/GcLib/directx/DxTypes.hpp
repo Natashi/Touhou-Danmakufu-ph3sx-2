@@ -299,6 +299,9 @@ namespace directx {
 			right = r;
 			bottom = b;
 		}
+
+		T GetWidth() const { return right - left; }
+		T GetHeight() const { return bottom - top; }
 	public:
 		T left, top, right, bottom;
 	};
