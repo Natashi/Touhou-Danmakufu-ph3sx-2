@@ -25,6 +25,8 @@ class StgItemManager {
 
 	std::list<DxCircle> listCircleToPlayer_;
 
+	DxRect<LONG> rcDeleteClip_;
+
 	bool bAllItemToPlayer_;
 	bool bCancelToPlayer_;
 	bool bDefaultBonusItemEnable_;
@@ -54,6 +56,9 @@ public:
 	bool LoadItemData(const std::wstring& path, bool bReload = false);
 
 	shared_ptr<StgItemObject> CreateItem(int type);
+
+	void SetItemDeleteClip(const DxRect<LONG>& clip) { rcDeleteClip_ = clip; }
+	DxRect<LONG>* GetItemDeleteClip() { return &rcDeleteClip_; }
 
 	void CollectItemsAll();
 	void CollectItemsInCircle(const DxCircle& circle);

@@ -352,6 +352,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ReloadItemData", StgStageScript::Func_ReloadItemData, 1 },
 	{ "GetItemIdInCircleA1", StgStageScript::Func_GetItemIdInCircleA1, 3 },
 	{ "GetItemIdInCircleA2", StgStageScript::Func_GetItemIdInCircleA2, 4 },
+	{ "SetItemAutoDeleteClip", StgStageScript::Func_SetItemAutoDeleteClip, 4 },
 
 	//STGã§í ä÷êîÅFÇªÇÃëº
 	{ "StartSlow", StgStageScript::Func_StartSlow, 2 },
@@ -1825,11 +1826,10 @@ gstd::value StgStageScript::Func_GetShotCount(gstd::script_machine* machine, int
 gstd::value StgStageScript::Func_SetShotAutoDeleteClip(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
-	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 
-	DxRect<int> rect(-argv[0].as_int(), -argv[1].as_int(),
+	DxRect<LONG> rect(-argv[0].as_int(), -argv[1].as_int(),
 		argv[2].as_int(), argv[3].as_int());
-	infoStage->SetShotAutoDeleteClip(rect);
+	stageController->GetShotManager()->SetShotDeleteClip(rect);
 
 	return value();
 }
@@ -2169,6 +2169,16 @@ gstd::value StgStageScript::Func_GetItemIdInCircleA2(gstd::script_machine* machi
 
 	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, radius, &type);
 	return script->CreateIntArrayValue(listID);
+}
+gstd::value StgStageScript::Func_SetItemAutoDeleteClip(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	DxRect<LONG> rect(-argv[0].as_int(), -argv[1].as_int(),
+		argv[2].as_int(), argv[3].as_int());
+	stageController->GetItemManager()->SetItemDeleteClip(rect);
+
+	return value();
 }
 
 //STGã§í ä÷êîÅFÇªÇÃëº

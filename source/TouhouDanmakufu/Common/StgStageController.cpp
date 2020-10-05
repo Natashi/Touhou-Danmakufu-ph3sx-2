@@ -467,9 +467,6 @@ StgStageInformation::StgStageInformation() {
 	priItemObject_ = 60;
 	priCameraFocusPermit_ = 69;
 
-	rcShotAutoDeleteClipOffset_.Set(-64, -64, 64, 64);
-	UpdateShotAutoDeleteClip();
-
 	rand_ = std::make_shared<RandProvider>();
 	rand_->Initialize(timeGetTime() ^ 0xf5682aeb);
 	score_ = 0;
@@ -487,20 +484,12 @@ void StgStageInformation::SetStgFrameRect(const DxRect<LONG>& rect, bool bUpdate
 	pos->x = (rect.right - rect.left) / 2.0f;
 	pos->y = (rect.bottom - rect.top) / 2.0f;
 
-	UpdateShotAutoDeleteClip();
-
 	if (bUpdateFocusResetValue) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 		camera2D->SetResetFocus(pos);
 		camera2D->Reset();
 	}
-}
-void StgStageInformation::UpdateShotAutoDeleteClip() {
-	DxRect<LONG>* rcClip = &rcShotAutoDeleteClipOffset_;
-	rcShotAutoDeleteClip_.Set(rcClip->left, rcClip->top, 
-		rcClip->right + (rcStgFrame_.right - rcStgFrame_.left),
-		rcClip->bottom + (rcStgFrame_.bottom - rcStgFrame_.top));
 }
 
 /**********************************************************

@@ -15,6 +15,8 @@ StgShotManager::StgShotManager(StgStageController* stageController) {
 	listPlayerShotData_ = new StgShotDataList();
 	listEnemyShotData_ = new StgShotDataList();
 
+	rcDeleteClip_ = DxRect<LONG>(-64, -64, 64, 64);
+
 	RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
 	effectLayer_ = shaderManager_->GetRender2DShader();
 	handleEffectWorld_ = effectLayer_->GetParameterBySemantic(nullptr, "WORLD");
@@ -165,10 +167,6 @@ void StgShotManager::RegistIntersectionTarget() {
 void StgShotManager::AddShot(shared_ptr<StgShotObject> obj) {
 	obj->SetOwnObjectReference();
 	listObj_.push_back(obj);
-}
-
-DxRect<LONG>* StgShotManager::GetShotAutoDeleteClipRect() {
-	return stageController_->GetStageInformation()->GetShotAutoDeleteClip();
 }
 
 void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius) {
@@ -819,9 +817,13 @@ void StgShotObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	DxRect<LONG>* rect = shotManager->GetShotAutoDeleteClipRect();
 
-	if (posX_ < rect->left || posX_ > rect->right || posY_ < rect->top || posY_ > rect->bottom) {
+	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
+	DxRect<LONG>* const rcClipBase = stageController_->GetShotManager()->GetShotDeleteClip();
+
+	if ((LONG)posX_ < rcClipBase->left || (LONG)posX_ > rcStgFrame->GetWidth() + rcClipBase->right
+		|| (LONG)posY_ < rcClipBase->top || (LONG)posY_ > rcStgFrame->GetHeight() + rcClipBase->bottom)
+	{
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
@@ -1537,8 +1539,9 @@ void StgLooseLaserObject::_Move() {
 }
 void StgLooseLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
-	StgShotManager* shotManager = stageController_->GetShotManager();
-	DxRect<LONG>* rect = shotManager->GetShotAutoDeleteClipRect();
+
+	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
+	DxRect<LONG>* const rcClipBase = stageController_->GetShotManager()->GetShotDeleteClip();
 
 	bool bDelete = false;
 
@@ -1546,11 +1549,13 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 	__m128i rc_pos = Vectorize::SetI(posX_, posXE_, posY_, posYE_);
 	//SSE2
 	__m128i res = _mm_cmplt_epi32(rc_pos, 
-		Vectorize::Set(rect->left, rect->left, rect->top, rect->top));
+		Vectorize::SetI(rcClipBase->left, rcClipBase->left, rcClipBase->top, rcClipBase->top));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	if (!bDelete) {
+		LONG rcRight = rcStgFrame->GetWidth() + rcClipBase->right;
+		LONG rcBottom = rcStgFrame->GetHeight() + rcClipBase->bottom;
 		res = _mm_cmpgt_epi32(rc_pos, 
-			Vectorize::Set(rect->right, rect->right, rect->bottom, rect->bottom));
+			Vectorize::SetI(rcRight, rcRight, rcBottom, rcBottom));
 		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	}
 #else
@@ -1799,8 +1804,9 @@ void StgStraightLaserObject::Work() {
 
 void StgStraightLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
-	StgShotManager* shotManager = stageController_->GetShotManager();
-	DxRect<LONG>* rect = shotManager->GetShotAutoDeleteClipRect();
+
+	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
+	DxRect<LONG>* const rcClipBase = stageController_->GetShotManager()->GetShotDeleteClip();
 
 	bool bDelete = false;
 
@@ -1810,10 +1816,14 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 		Vectorize::Set(move_.x, move_.y, 0.0f, 0.0f), v_pos);
 	__m128i rc_pos = Vectorize::SetI(posX_, v_pos.m128_f32[0], posY_, v_pos.m128_f32[1]);
 	//SSE2
-	__m128i res = _mm_cmplt_epi32(rc_pos, Vectorize::Set(rect->left, rect->left, rect->top, rect->top));
+	__m128i res = _mm_cmplt_epi32(rc_pos, 
+		Vectorize::SetI(rcClipBase->left, rcClipBase->left, rcClipBase->top, rcClipBase->top));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	if (!bDelete) {
-		res = _mm_cmpgt_epi32(rc_pos, Vectorize::Set(rect->right, rect->right, rect->bottom, rect->bottom));
+		LONG rcRight = rcStgFrame->GetWidth() + rcClipBase->right;
+		LONG rcBottom = rcStgFrame->GetHeight() + rcClipBase->bottom;
+		res = _mm_cmpgt_epi32(rc_pos,
+			Vectorize::SetI(rcRight, rcRight, rcBottom, rcBottom));
 		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	}
 #else
@@ -2151,13 +2161,17 @@ std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::PushNod
 void StgCurveLaserObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	DxRect<LONG>* rect = shotManager->GetShotAutoDeleteClipRect();
+
+	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
+	DxRect<LONG>* const rcClipBase = stageController_->GetShotManager()->GetShotDeleteClip();
+	LONG rcRight = rcStgFrame->GetWidth() + rcClipBase->right;
+	LONG rcBottom = rcStgFrame->GetHeight() + rcClipBase->bottom;
 
 	//Checks if the node is within the bounding rect
 	auto PredicateNodeInRect = [&](LaserNode& node) {
 		D3DXVECTOR2* pos = &node.pos;
-		bool bInX = pos->x >= rect->left && pos->x <= rect->right;
-		bool bInY = pos->y >= rect->top && pos->y <= rect->bottom;
+		bool bInX = pos->x >= rcClipBase->left && pos->x <= rcRight;
+		bool bInY = pos->y >= rcClipBase->top && pos->y <= rcBottom;
 		return bInX && bInY;
 	};
 

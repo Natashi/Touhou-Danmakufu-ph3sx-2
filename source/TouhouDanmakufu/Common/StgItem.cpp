@@ -26,6 +26,8 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 	textureDigit->CreateFromFile(pathDigit, false, false);
 	listSpriteDigit_->SetTexture(textureDigit);
 
+	rcDeleteClip_ = DxRect<LONG>(-64, 0, 64, 64);
+
 	bCancelToPlayer_ = false;
 	bAllItemToPlayer_ = false;
 	bDefaultBonusItemEnable_ = true;
@@ -801,8 +803,11 @@ void StgItemObject::_DeleteInAutoClip() {
 	if (!bAutoDelete_) return;
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
-	DxRect<int> rcClip(-64, 0, graphics->GetScreenWidth() + 64, graphics->GetScreenHeight() + 64);
-	bool bDelete = (posX_ < rcClip.left || posX_ > rcClip.right || posY_ > rcClip.bottom);
+	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
+	DxRect<LONG>* const rcClipBase = stageController_->GetItemManager()->GetItemDeleteClip();
+
+	bool bDelete = ((LONG)posX_ < rcClipBase->left) || ((LONG)posX_ > rcStgFrame->GetWidth() + rcClipBase->right)
+		|| ((LONG)posY_ > rcStgFrame->GetHeight() + rcClipBase->bottom);
 	if (!bDelete) return;
 
 	stageController_->GetMainObjectManager()->DeleteObject(this);

@@ -297,6 +297,7 @@ public:
 	static gstd::value Func_ReloadItemData(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_GetItemIdInCircleA1);
 	DNH_FUNCAPI_DECL_(Func_GetItemIdInCircleA2);
+	DNH_FUNCAPI_DECL_(Func_SetItemAutoDeleteClip);
 
 	//STGã§í ä÷êîÅFÇªÇÃëº
 	static gstd::value Func_StartSlow(gstd::script_machine* machine, int argc, const gstd::value* argv);

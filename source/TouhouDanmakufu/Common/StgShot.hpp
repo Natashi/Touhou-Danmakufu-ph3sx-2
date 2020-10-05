@@ -46,6 +46,8 @@ protected:
 
 	std::bitset<BIT_EV_DELETE_COUNT> listDeleteEventEnable_;
 
+	DxRect<LONG> rcDeleteClip_;
+
 	ID3DXEffect* effectLayer_;
 	D3DXHANDLE handleEffectWorld_;
 public:
@@ -63,7 +65,8 @@ public:
 	bool LoadPlayerShotData(const std::wstring& path, bool bReload = false);
 	bool LoadEnemyShotData(const std::wstring& path, bool bReload = false);
 
-	DxRect<LONG>* GetShotAutoDeleteClipRect();
+	void SetShotDeleteClip(const DxRect<LONG>& clip) { rcDeleteClip_ = clip; }
+	DxRect<LONG>* GetShotDeleteClip() { return &rcDeleteClip_; }
 
 	void DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius);
 	std::vector<int> GetShotIdInCircle(int typeOwner, int cx, int cy, int radius);

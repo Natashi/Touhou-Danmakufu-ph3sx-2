@@ -142,13 +142,6 @@ public:
 	void SetItemObjectPriority(int pri) { priItemObject_ = pri; }
 	int GetCameraFocusPermitPriority() { return priCameraFocusPermit_; }
 	void SetCameraFocusPermitPriority(int pri) { priCameraFocusPermit_ = pri; }
-	DxRect<LONG>* GetShotAutoDeleteClip() { return &rcShotAutoDeleteClip_; }
-	void SetShotAutoDeleteClip(const DxRect<LONG>& rect) {
-		rcShotAutoDeleteClipOffset_ = rect;
-		UpdateShotAutoDeleteClip();
-	}
-
-	void UpdateShotAutoDeleteClip();
 
 	shared_ptr<RandProvider> GetRandProvider() { return rand_; }
 	//void SetRandProviderSeed(int seed) { rand_->Initialize(seed); }
