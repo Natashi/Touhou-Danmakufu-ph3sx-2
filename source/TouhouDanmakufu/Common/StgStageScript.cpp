@@ -344,14 +344,14 @@ static const std::vector<function> stgStageFunction = {
 	{ "CreateItemU2", StgStageScript::Func_CreateItemU2, 6 },
 	{ "CreateItemScore", StgStageScript::Func_CreateItemScore, 3 },
 	{ "CollectAllItems", StgStageScript::Func_CollectAllItems, 0 },
-	{ "CollectItemsByType", StgStageScript::Func_CollectItemsByType, 1 },
 	{ "CollectItemsInCircle", StgStageScript::Func_CollectItemsInCircle, 3 },
 	{ "CancelCollectItems", StgStageScript::Func_CancelCollectItems, 0 },
 	{ "StartItemScript", StgStageScript::Func_StartItemScript, 1 },
 	{ "SetDefaultBonusItemEnable", StgStageScript::Func_SetDefaultBonusItemEnable, 1 },
 	{ "LoadItemData", StgStageScript::Func_LoadItemData, 1 },
 	{ "ReloadItemData", StgStageScript::Func_ReloadItemData, 1 },
-	{ "SetItemIntersectionRadius", StgStageScript::Func_SetItemIntersectionRadius, 1 },
+	{ "GetItemIdInCircleA1", StgStageScript::Func_GetItemIdInCircleA1, 3 },
+	{ "GetItemIdInCircleA2", StgStageScript::Func_GetItemIdInCircleA2, 4 },
 
 	//STG共通関数：その他
 	{ "StartSlow", StgStageScript::Func_StartSlow, 2 },
@@ -514,13 +514,21 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjItem_SetRenderScoreEnable", StgStageScript::Func_ObjItem_SetRenderScoreEnable, 2 },
 	{ "ObjItem_SetAutoCollectEnable", StgStageScript::Func_ObjItem_SetAutoCollectEnable, 2 },
 	{ "ObjItem_SetDefinedMovePatternA1", StgStageScript::Func_ObjItem_SetDefinedMovePatternA1, 2 },
+	{ "ObjItem_GetInfo", StgStageScript::Func_ObjItem_GetInfo, 2 },
+	{ "ObjItem_SetMoveToPlayer", StgStageScript::Func_ObjItem_SetMoveToPlayer, 2 },
+	{ "ObjItem_IsMoveToPlayer", StgStageScript::Func_ObjItem_IsMoveToPlayer, 1 },
+	{ "ObjItem_Collect", StgStageScript::Func_ObjItem_Collect, 1 },
+	{ "ObjItem_SetAutoDelete", StgStageScript::Func_ObjItem_SetAutoDelete, 2 },
+	{ "ObjItem_SetIntersectionRadius", StgStageScript::Func_ObjItem_SetIntersectionRadius, 2 },
+	{ "ObjItem_SetIntersectionEnable", StgStageScript::Func_ObjItem_SetIntersectionEnable, 2 },
+	{ "ObjItem_SetDefaultCollectMovement", StgStageScript::Func_ObjItem_SetDefaultCollectMovement, 2 },
 
-		//STG共通関数：自機オブジェクト操作
+	//STG共通関数：自機オブジェクト操作
 	{ "ObjPlayer_AddIntersectionCircleA1", StgStageScript::Func_ObjPlayer_AddIntersectionCircleA1, 5 },
 	{ "ObjPlayer_AddIntersectionCircleA2", StgStageScript::Func_ObjPlayer_AddIntersectionCircleA2, 4 },
 	{ "ObjPlayer_ClearIntersection", StgStageScript::Func_ObjPlayer_ClearIntersection, 1 },
 
-		//STG共通関数：当たり判定オブジェクト操作
+	//STG共通関数：当たり判定オブジェクト操作
 	{ "ObjCol_IsIntersected", StgStageScript::Func_ObjCol_IsIntersected, 1 },
 	{ "ObjCol_GetListOfIntersectedEnemyID", StgStageScript::Func_ObjCol_GetListOfIntersectedEnemyID, 1 },
 	{ "ObjCol_GetListOfIntersectedShotID", StgStageScript::Func_ObjCol_GetListOfIntersectedShotID, 1 },
@@ -632,7 +640,10 @@ static const std::vector<constant> stgStageConstant = {
 	constant("INFO_CURRENT_LIFE", StgStageScript::INFO_CURRENT_LIFE),
 	constant("INFO_CURRENT_LIFE_MAX", StgStageScript::INFO_CURRENT_LIFE_MAX),
 
+	//ObjItem_GetInfo info types
 	constant("INFO_ITEM_SCORE", StgStageScript::INFO_ITEM_SCORE),
+	constant("INFO_ITEM_MOVE_TYPE", StgStageScript::INFO_ITEM_MOVE_TYPE),
+	constant("INFO_ITEM_TYPE", StgStageScript::INFO_ITEM_TYPE),
 
 	//GetShotDataInfoA1 info types
 	constant("INFO_EXISTS", StgStageScript::INFO_EXISTS),
@@ -1373,9 +1384,9 @@ gstd::value StgStageScript::Func_DeleteShotInCircle(gstd::script_machine* machin
 
 	int typeDel = argv[0].as_int();
 	int typeTo = argv[1].as_int();
-	float posX = argv[2].as_real();
-	float posY = argv[3].as_real();
-	float radius = argv[4].as_real();
+	int posX = argv[2].as_real();
+	int posY = argv[3].as_real();
+	int radius = argv[4].as_real();
 
 	switch (typeDel) {
 	case TYPE_ALL:typeDel = StgShotManager::DEL_TYPE_ALL; break;
@@ -1767,13 +1778,12 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA1(gstd::script_machine* machi
 	StgStageController* stageController = script->stageController_;
 
 	StgShotManager* shotManager = stageController->GetShotManager();
-	float px = argv[0].as_real();
-	float py = argv[1].as_real();
-	float radius = argv[2].as_real();
+	int px = argv[0].as_real();
+	int py = argv[1].as_real();
+	int radius = argv[2].as_real();
 	int typeOwner = script->GetScriptType() == TYPE_PLAYER ? StgShotObject::OWNER_ENEMY : StgShotObject::OWNER_PLAYER;
 
 	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, radius);
-
 	return script->CreateIntArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetShotIdInCircleA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1781,9 +1791,9 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA2(gstd::script_machine* machi
 	StgStageController* stageController = script->stageController_;
 
 	StgShotManager* shotManager = stageController->GetShotManager();
-	float px = argv[0].as_real();
-	float py = argv[1].as_real();
-	float radius = argv[2].as_real();
+	int px = argv[0].as_real();
+	int py = argv[1].as_real();
+	int radius = argv[2].as_real();
 	int target = argv[3].as_int();
 
 	int typeOwner = StgShotObject::OWNER_NULL;
@@ -1794,7 +1804,6 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA2(gstd::script_machine* machi
 	}
 
 	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, radius);
-
 	return script->CreateIntArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetShotCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1840,74 +1849,59 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 	StgShotData* shotData = nullptr;
 	if (dataList) shotData = dataList->GetData(idShot);
 
-	gstd::value res;
-
 	if (shotData == nullptr) {
 		//script->RaiseError(ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_OUTOFRANGE_INDEX));
 		
 		switch (type) {
 		case INFO_EXISTS:
-			res = script->CreateBooleanValue(false);
-			break;
+			return script->CreateBooleanValue(false);
 		case INFO_PATH:
-			res = script->CreateStringValue(L"");
-			break;
+			return script->CreateStringValue(L"");
 		case INFO_RECT:
 		{
 			int list[4] = { 0, 0, 0, 0 };
-			res = script->CreateRealArrayValue(list, 4U);
-			break;
+			return script->CreateRealArrayValue(list, 4U);
 		}
 		case INFO_DELAY_COLOR:
 		{
 			byte list[4];
 			ColorAccess::ToByteArray(0xffffffff, list);
-			res = script->CreateRealArrayValue((byte*)(list + 1), 3U);
-			break;
+			return script->CreateRealArrayValue((byte*)(list + 1), 3U);
 		}
 		case INFO_BLEND:
-			res = script->CreateIntValue(MODE_BLEND_NONE);
-			break;
+			return script->CreateIntValue(MODE_BLEND_NONE);
 		case INFO_COLLISION:
-			res = script->CreateRealValue(0);
-			break;
+			return script->CreateRealValue(0);
 		case INFO_COLLISION_LIST:
 		{
 			std::vector<gstd::value> listValue;
 			int list[3] = { 0, 0, 0 };
 			listValue.push_back(script->CreateRealArrayValue(list, 3U));
-			res = script->CreateValueArrayValue(listValue);
-			break;
+			return script->CreateValueArrayValue(listValue);
 		}
 		case INFO_IS_FIXED_ANGLE:
-			res = script->CreateBooleanValue(true);
-			break;
+			return script->CreateBooleanValue(true);
 		}
 	}
 	else {
 		switch (type) {
 		case INFO_EXISTS:
-			res = script->CreateBooleanValue(true);
-			break;
+			return script->CreateBooleanValue(true);
 		case INFO_PATH:
-			res = script->CreateStringValue(shotData->GetTexture()->GetName());
-			break;
+			return script->CreateStringValue(shotData->GetTexture()->GetName());
 		case INFO_RECT:
 		{
 			DxRect<int>* rect = shotData->GetData(0)->GetSource();
-			res = script->CreateRealArrayValue(reinterpret_cast<int*>(rect), 4U);
-			break;
+			return script->CreateRealArrayValue(reinterpret_cast<int*>(rect), 4U);
 		}
 		case INFO_DELAY_COLOR:
 		{
 			byte list[4];
 			ColorAccess::ToByteArray(shotData->GetDelayColor(), list);
-			res = script->CreateRealArrayValue((byte*)(list + 1), 3U);
-			break;
+			return script->CreateRealArrayValue((byte*)(list + 1), 3U);
 		}
 		case INFO_BLEND:
-			res = script->CreateIntValue(shotData->GetRenderType());
-			break;
+			return script->CreateIntValue(shotData->GetRenderType());
 		case INFO_COLLISION:
 		{
 			float radius = 0;
@@ -1915,8 +1909,7 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			if (listCircle->GetR() > 0) {
 				radius = listCircle->GetR();
 			}
-			res = script->CreateRealValue(radius);
-			break;
+			return script->CreateRealValue(radius);
 		}
 		case INFO_COLLISION_LIST:
 		{
@@ -1924,16 +1917,14 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			std::vector<gstd::value> listValue;
 			float list[3] = { listCircle->GetR(), listCircle->GetX(), listCircle->GetY() };
 			listValue.push_back(script->CreateRealArrayValue(list, 3U));
-			res = script->CreateValueArrayValue(listValue);
-			break;
+			return script->CreateValueArrayValue(listValue);
 		}
 		case INFO_IS_FIXED_ANGLE:
-			res = script->CreateBooleanValue(shotData->IsFixedAngle());
-			break;
+			return script->CreateBooleanValue(shotData->IsFixedAngle());
 		}
 	}
 
-	return res;
+	return gstd::value();
 }
 gstd::value StgStageScript::Func_StartShotScript(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -2094,14 +2085,6 @@ gstd::value StgStageScript::Func_CollectAllItems(gstd::script_machine* machine, 
 
 	return value();
 }
-gstd::value StgStageScript::Func_CollectItemsByType(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	StgItemManager* itemManager = script->stageController_->GetItemManager();
-
-	int type = argv[0].as_int();
-	itemManager->CollectItemsByType(type);
-	return value();
-}
 gstd::value StgStageScript::Func_CollectItemsInCircle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgItemManager* itemManager = script->stageController_->GetItemManager();
@@ -2164,14 +2147,28 @@ gstd::value StgStageScript::Func_ReloadItemData(gstd::script_machine* machine, i
 	bool res = itemManager->LoadItemData(path, true);
 	return script->CreateBooleanValue(res);
 }
-gstd::value StgStageScript::Func_SetItemIntersectionRadius(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_GetItemIdInCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgItemManager* itemManager = script->stageController_->GetItemManager();
 
-	int r = argv[0].as_int();
-	itemManager->SetItemIntersectionRadius(r);
+	int px = argv[0].as_real();
+	int py = argv[1].as_real();
+	int radius = argv[2].as_real();
 
-	return value();
+	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, radius, nullptr);
+	return script->CreateIntArrayValue(listID);
+}
+gstd::value StgStageScript::Func_GetItemIdInCircleA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
+
+	int px = argv[0].as_real();
+	int py = argv[1].as_real();
+	int radius = argv[2].as_real();
+	int type = argv[3].as_int();
+
+	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, radius, &type);
+	return script->CreateIntArrayValue(listID);
 }
 
 //STG共通関数：その他
@@ -4447,7 +4444,7 @@ gstd::value StgStageScript::Func_ObjItem_SetRenderScoreEnable(gstd::script_machi
 	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		bool bEnable = argv[1].as_boolean();
-		obj->SetChangeItemScore(bEnable);
+		obj->SetDefaultScoreText(bEnable);
 	}
 	return value();
 }
@@ -4473,7 +4470,6 @@ gstd::value StgStageScript::Func_ObjItem_SetDefinedMovePatternA1(gstd::script_ma
 	}
 	return value();
 }
-
 gstd::value StgStageScript::Func_ObjItem_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
@@ -4486,17 +4482,94 @@ gstd::value StgStageScript::Func_ObjItem_GetInfo(gstd::script_machine* machine, 
 			return script->CreateIntValue(0);
 		case INFO_ITEM_MOVE_TYPE:
 			return script->CreateIntValue(StgMovePattern_Item::MOVE_NONE);
+		case INFO_ITEM_TYPE:
+			return script->CreateIntValue(INT_MIN);
 		}
-		return value();
+	}
+	else {
+		switch (type) {
+		case INFO_ITEM_SCORE:
+			return script->CreateIntValue(obj->GetScore());
+		case INFO_ITEM_MOVE_TYPE:
+			return script->CreateIntValue(obj->GetMoveType());
+		case INFO_ITEM_TYPE:
+			return script->CreateIntValue(obj->GetItemType());
+		}
 	}
 
-	switch (type) {
-	case INFO_ITEM_SCORE:
-		return script->CreateIntValue(obj->GetScore());
-	case INFO_ITEM_MOVE_TYPE:
-		return script->CreateIntValue(obj->GetMoveType());
+	return value();
+}
+gstd::value StgStageScript::Func_ObjItem_SetMoveToPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		bool bCollect = argv[1].as_boolean();
+		obj->SetMoveToPlayer(bCollect);
+		if (bCollect)
+			obj->NotifyItemCollectEvent(StgItemObject::COLLECT_SINGLE, 0);
+		else
+			obj->NotifyItemCancelEvent(StgItemObject::CANCEL_SINGLE);
 	}
-
+	return value();
+}
+gstd::value StgStageScript::Func_ObjItem_IsMoveToPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	bool res = false;
+	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
+	if (obj)
+		res = obj->IsMoveToPlayer();
+	return script->CreateBooleanValue(res);
+}
+gstd::value StgStageScript::Func_ObjItem_Collect(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		if (script->stageController_->GetPlayerObject() != nullptr)
+			obj->Intersect(nullptr, nullptr);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjItem_SetAutoDelete(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		bool bEnable = argv[1].as_boolean();
+		obj->SetAutoDelete(bEnable);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjItem_SetIntersectionRadius(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		int radius = std::round(argv[1].as_real());
+		obj->SetIntersectionRadius(radius);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjItem_SetIntersectionEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		bool bEnable = argv[1].as_boolean();
+		obj->SetIntersectionEnable(bEnable);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjItem_SetDefaultCollectMovement(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgItemObject* obj = dynamic_cast<StgItemObject*>(script->GetObjectPointer(id));
+	if (obj) {
+		bool bEnable = argv[1].as_boolean();
+		obj->SetDefaultCollectionMovement(bEnable);
+	}
 	return value();
 }
 
@@ -4626,8 +4699,10 @@ StgStageSystemScript::~StgStageSystemScript() {}
 //StgStageItemScript
 **********************************************************/
 static const std::vector<constant> stgItemConstant = {
-	//定数
 	constant("EV_GET_ITEM", StgStageItemScript::EV_GET_ITEM),
+	constant("EV_COLLECT_ITEM", StgStageItemScript::EV_COLLECT_ITEM),
+	constant("EV_CANCEL_ITEM", StgStageItemScript::EV_CANCEL_ITEM),
+
 	constant("EV_DELETE_SHOT_IMMEDIATE", StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE),
 	constant("EV_DELETE_SHOT_TO_ITEM", StgStageItemScript::EV_DELETE_SHOT_TO_ITEM),
 	constant("EV_DELETE_SHOT_FADE", StgStageItemScript::EV_DELETE_SHOT_FADE),

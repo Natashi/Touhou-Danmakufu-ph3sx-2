@@ -65,9 +65,9 @@ public:
 
 	DxRect<LONG>* GetShotAutoDeleteClipRect();
 
-	void DeleteInCircle(int typeDelete, int typeTo, int typeOnwer, float cx, float cy, float* radius);
-	std::vector<int> GetShotIdInCircle(int typeOnwer, float cx, float cy, float radius);
-	size_t GetShotCount(int typeOnwer);
+	void DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius);
+	std::vector<int> GetShotIdInCircle(int typeOwner, int cx, int cy, int radius);
+	size_t GetShotCount(int typeOwner);
 	size_t GetShotCountAll() { return listObj_.size(); }
 
 	void GetValidRenderPriorityList(std::vector<bool>& list);

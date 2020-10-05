@@ -26,10 +26,9 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 	textureDigit->CreateFromFile(pathDigit, false, false);
 	listSpriteDigit_->SetTexture(textureDigit);
 
-	bDefaultBonusItemEnable_ = true;
+	bCancelToPlayer_ = false;
 	bAllItemToPlayer_ = false;
-
-	itemCollectRadius_ = 16 * 16;
+	bDefaultBonusItemEnable_ = true;
 
 	{
 		RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
@@ -61,6 +60,7 @@ void StgItemManager::Work() {
 		else {
 			float ix = obj->GetPositionX();
 			float iy = obj->GetPositionY();
+
 			if (objPlayer->GetState() == StgPlayerObject::STATE_NORMAL) {
 				bool bMoveToPlayer = false;
 
@@ -70,78 +70,76 @@ void StgItemManager::Work() {
 				//if (obj->GetItemType() == StgItemObject::ITEM_SCORE && obj->GetFrameWork() > 60 * 15)
 				//	obj->Intersect(nullptr, nullptr);
 
-				bool deleted = false;
+				int typeCollect = StgItemObject::COLLECT_PLAYER_SCOPE;
+				uint64_t collectParam = 0;
 
-				int radius = dx * dx + dy * dy;
-				if (radius <= itemCollectRadius_) {
-					obj->Intersect(nullptr, nullptr);
-					deleted = true;
-				}
-				else if (radius <= pr && obj->IsPermitMoveToPlayer()) {
-					obj->SetMoveToPlayer(true);
-					bMoveToPlayer = true;
-				}
-
-				if (!deleted) {
-					if (bCancelToPlayer_) {
-						//自動回収キャンセル
-						obj->SetMoveToPlayer(false);
+				{
+					int radius = dx * dx + dy * dy;
+					if (obj->bIntersectEnable_ && radius <= obj->itemIntersectRadius_) {
+						obj->Intersect(nullptr, nullptr);
+						goto lab_next_item;
 					}
-					else if (obj->IsPermitMoveToPlayer() && !bMoveToPlayer) {
-						if (pAutoItemCollectY >= 0) {
-							//上部自動回収
-							int typeMove = obj->GetMoveType();
-							if (!obj->IsMoveToPlayer() && py <= pAutoItemCollectY)
-								bMoveToPlayer = true;
-						}
+					else if (radius <= pr) {
+						typeCollect = StgItemObject::COLLECT_PLAYER_SCOPE;
+						collectParam = (uint64_t)objPlayer->GetItemIntersectionRadius();
+						bMoveToPlayer = true;
+					}
+				}
 
-						if (listItemTypeToPlayer_.size() > 0) {
-							//自機にアイテムを集める
-							int typeItem = obj->GetItemType();
-							bool bFind = listItemTypeToPlayer_.find(typeItem) != listItemTypeToPlayer_.end();
-							if (bFind)
-								bMoveToPlayer = true;
-						}
+				if (bCancelToPlayer_ && obj->IsMoveToPlayer()) {
+					obj->SetMoveToPlayer(false);
+					obj->NotifyItemCancelEvent(StgItemObject::CANCEL_ALL);
+				}
+				else if (obj->IsPermitMoveToPlayer() && !obj->IsMoveToPlayer()) {
+					if (bMoveToPlayer)
+						goto lab_move_to_player;
 
-						for (DxCircle& circle : listCircleToPlayer_) {
-							float cdx = ix - circle.GetX();
-							float cdy = iy - circle.GetY();
-							float rr = circle.GetR() * circle.GetR();
+					if (bAllItemToPlayer_) {
+						typeCollect = StgItemObject::COLLECT_ALL;
+						bMoveToPlayer = true;
+						goto lab_move_to_player;
+					}
 
-							if ((cdx * cdx + cdy * cdy) <= rr) {
-								bMoveToPlayer = true;
-								break;
-							}
-						}
-
-						if (bAllItemToPlayer_)
+					if (pAutoItemCollectY >= 0) {
+						if (!obj->IsMoveToPlayer() && py <= pAutoItemCollectY) {
+							typeCollect = StgItemObject::COLLECT_PLAYER_LINE;
+							collectParam = (uint64_t)pAutoItemCollectY;
 							bMoveToPlayer = true;
+							goto lab_move_to_player;
+						}
+					}
 
-						if (bMoveToPlayer)
-							obj->SetMoveToPlayer(true);
+					for (DxCircle& circle : listCircleToPlayer_) {
+						float rr = circle.GetR() * circle.GetR();
+						if (Math::HypotSq(ix - circle.GetX(), iy - circle.GetY()) <= rr) {
+							typeCollect = StgItemObject::COLLECT_IN_CIRCLE;
+							collectParam = (uint64_t)circle.GetR();
+							bMoveToPlayer = true;
+							goto lab_move_to_player;
+						}
+					}
+
+					if (bMoveToPlayer) {
+lab_move_to_player:
+						obj->SetMoveToPlayer(true);
+						obj->NotifyItemCollectEvent(typeCollect, collectParam);
 					}
 				}
 			}
-			else {
-				/*
-				if (obj->GetItemType() == StgItemObject::ITEM_SCORE) {
-					std::shared_ptr<StgMovePattern_Item> move =
-						std::shared_ptr<StgMovePattern_Item>(new StgMovePattern_Item(obj.get()));
-					move->SetItemMoveType(StgMovePattern_Item::MOVE_DOWN);
-					obj->SetPattern(move);
-				}
-				*/
+			else if (obj->IsMoveToPlayer()) {
 				obj->SetMoveToPlayer(false);
+				obj->NotifyItemCancelEvent(StgItemObject::CANCEL_PLAYER_DOWN);
 			}
 
+lab_next_item:
 			++itr;
 		}
 	}
-	listItemTypeToPlayer_.clear();
+
 	listCircleToPlayer_.clear();
+
 	bAllItemToPlayer_ = false;
 	bCancelToPlayer_ = false;
-
 }
 void StgItemManager::Render(int targetPriority) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -273,14 +271,26 @@ shared_ptr<StgItemObject> StgItemManager::CreateItem(int type) {
 void StgItemManager::CollectItemsAll() {
 	bAllItemToPlayer_ = true;
 }
-void StgItemManager::CollectItemsByType(int type) {
-	listItemTypeToPlayer_.insert(type);
-}
-void StgItemManager::CollectItemsInCircle(DxCircle circle) {
+void StgItemManager::CollectItemsInCircle(const DxCircle& circle) {
 	listCircleToPlayer_.push_back(circle);
 }
 void StgItemManager::CancelCollectItems() {
 	bCancelToPlayer_ = true;
+}
+
+std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, int radius, int* itemType) {
+	int rr = radius * radius;
+
+	std::vector<int> res;
+	for (shared_ptr<StgItemObject>& obj : listObj_) {
+		if (obj->IsDeleted()) continue;
+		if (itemType != nullptr && (*itemType != obj->GetItemType())) continue;
+
+		if (Math::HypotSq<int>(cx - obj->GetPositionX(), cy - obj->GetPositionY()) <= rr)
+			res.push_back(obj->GetObjectID());
+	}
+
+	return res;
 }
 
 /**********************************************************
@@ -636,27 +646,39 @@ StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObjec
 
 	pattern_ = std::shared_ptr<StgMovePattern_Item>(new StgMovePattern_Item(this));
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
+
+	typeItem_ = INT_MIN;
+
+	frameWork_ = 0;
+
 	score_ = 0;
 
 	bMoveToPlayer_ = false;
 	bPermitMoveToPlayer_ = true;
-	bChangeItemScore_ = true;
 
-	frameWork_ = 0;
+	bDefaultScoreText_ = true;
+
+	bAutoDelete_ = true;
+	bIntersectEnable_ = true;
+	itemIntersectRadius_ = 16 * 16;
+
+	bDefaultCollectionMove_ = true;
 
 	int priItemI = stageController_->GetStageInformation()->GetItemObjectPriority();
 	SetRenderPriorityI(priItemI);
 }
 void StgItemObject::Work() {
-	bool bNullMovePattern = dynamic_cast<StgMovePattern_Item*>(GetPattern().get()) == nullptr;
-	if (bNullMovePattern && IsMoveToPlayer() && bEnableMovement_) {
-		float speed = 8;
-		shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
-		if (objPlayer) {
-			float angle = atan2f(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());
-			float angDirection = angle;
-			SetSpeed(speed);
-			SetDirectionAngle(angDirection);
+	if (bEnableMovement_) {
+		bool bNullMovePattern = dynamic_cast<StgMovePattern_Item*>(GetPattern().get()) == nullptr;
+		if (bNullMovePattern && bDefaultCollectionMove_ && IsMoveToPlayer()) {
+			float speed = 8;
+			shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
+			if (objPlayer) {
+				float angle = atan2f(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());
+				float angDirection = angle;
+				SetSpeed(speed);
+				SetDirectionAngle(angDirection);
+			}
 		}
 	}
 	StgMoveObject::_Move();
@@ -776,6 +798,7 @@ void StgItemObject::RenderOnItemManager() {
 	}
 }
 void StgItemObject::_DeleteInAutoClip() {
+	if (!bAutoDelete_) return;
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
 	DxRect<int> rcClip(-64, 0, graphics->GetScreenWidth() + 64, graphics->GetScreenHeight() + 64);
@@ -799,23 +822,18 @@ void StgItemObject::_CreateScoreItem() {
 	}
 }
 void StgItemObject::_NotifyEventToPlayerScript(gstd::value* listValue, size_t count) {
-	//自機スクリプトへ通知
 	shared_ptr<StgPlayerObject> player = stageController_->GetPlayerObject();
 	if (player == nullptr) return;
 
-	StgStagePlayerScript* scriptPlayer = player->GetPlayerScript();
-
-	scriptPlayer->RequestEvent(StgStageItemScript::EV_GET_ITEM, listValue, count);
+	if (StgStagePlayerScript* scriptPlayer = player->GetPlayerScript()) {
+		scriptPlayer->RequestEvent(StgStageItemScript::EV_GET_ITEM, listValue, count);
+	}
 }
 void StgItemObject::_NotifyEventToItemScript(gstd::value* listValue, size_t count) {
-	//アイテムスクリプトへ通知
 	auto stageScriptManager = stageController_->GetScriptManager();
-	int64_t idItemScript = stageScriptManager->GetItemScriptID();
-	if (idItemScript != StgControlScriptManager::ID_INVALID) {
-		shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetScript(idItemScript);
-		if (scriptItem) {
-			scriptItem->RequestEvent(StgStageItemScript::EV_GET_ITEM, listValue, count);
-		}
+
+	if (shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript()) {
+		scriptItem->RequestEvent(StgStageItemScript::EV_GET_ITEM, listValue, count);
 	}
 }
 void StgItemObject::SetAlpha(int alpha) {
@@ -840,6 +858,30 @@ int StgItemObject::GetMoveType() {
 void StgItemObject::SetMoveType(int type) {
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
 	if (move) move->SetItemMoveType(type);
+}
+
+void StgItemObject::NotifyItemCollectEvent(int type, uint64_t eventParam) {
+	auto stageScriptManager = stageController_->GetScriptManager();
+	if (shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript()) {
+		gstd::value eventArg[4];
+		eventArg[0] = DxScript::CreateIntValue(typeItem_);
+		eventArg[1] = DxScript::CreateIntValue(idObject_);
+		eventArg[2] = DxScript::CreateIntValue(type);
+		eventArg[3] = DxScript::CreateIntValue(eventParam);
+
+		scriptItem->RequestEvent(StgStageItemScript::EV_COLLECT_ITEM, eventArg, 4U);
+	}
+}
+void StgItemObject::NotifyItemCancelEvent(int type) {
+	auto stageScriptManager = stageController_->GetScriptManager();
+	if (shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript()) {
+		gstd::value eventArg[4];
+		eventArg[0] = DxScript::CreateIntValue(typeItem_);
+		eventArg[1] = DxScript::CreateIntValue(idObject_);
+		eventArg[2] = DxScript::CreateIntValue(type);
+
+		scriptItem->RequestEvent(StgStageItemScript::EV_CANCEL_ITEM, eventArg, 3U);
+	}
 }
 
 //StgItemObject_1UP
@@ -886,7 +928,7 @@ StgItemObject_Power::StgItemObject_Power(StgStageController* stageController) : 
 	score_ = 10;
 }
 void StgItemObject_Power::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
-	if (bChangeItemScore_)
+	if (bDefaultScoreText_)
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
 
@@ -908,7 +950,7 @@ StgItemObject_Point::StgItemObject_Point(StgStageController* stageController) : 
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
 void StgItemObject_Point::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
-	if (bChangeItemScore_)
+	if (bDefaultScoreText_)
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
 
@@ -983,7 +1025,7 @@ StgItemObject_User::StgItemObject_User(StgStageController* stageController) : St
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_DOWN);
 
-	bChangeItemScore_ = true;
+	bDefaultScoreText_ = true;
 }
 void StgItemObject_User::SetImageID(int id) {
 	idImage_ = id;
@@ -1117,7 +1159,7 @@ void StgItemObject_User::RenderOnItemManager() {
 	renderer->AddSquareVertex(verts);
 }
 void StgItemObject_User::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
-	if (bChangeItemScore_)
+	if (bDefaultScoreText_)
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
 
@@ -1149,7 +1191,7 @@ void StgMovePattern_Item::Move() {
 
 	double px = target_->GetPositionX();
 	double py = target_->GetPositionY();
-	if (typeMove_ == MOVE_TOPLAYER || itemObject->IsMoveToPlayer()) {
+	if (typeMove_ == MOVE_TOPLAYER || (itemObject->IsDefaultCollectionMovement() && itemObject->IsMoveToPlayer())) {
 		if (frame_ == 0) speed_ = 6;
 		speed_ += 0.075;
 		shared_ptr<StgPlayerObject> objPlayer = stageController->GetPlayerObject();
@@ -1194,10 +1236,12 @@ void StgMovePattern_Item::Move() {
 	}
 
 	if (typeMove_ != MOVE_NONE) {
-		//c_ = cos(angDirection_);
-		//s_ = sin(angDirection_);
-		target_->SetPositionX(fma(speed_, c_, px));
-		target_->SetPositionY(fma(speed_, s_, py));
+		__m128d v1 = Vectorize::MulAdd(
+			Vectorize::Replicate(speed_),
+			Vectorize::Set(c_, s_),
+			Vectorize::Set(px, py));
+		target_->SetPositionX(v1.m128d_f64[0]);
+		target_->SetPositionY(v1.m128d_f64[1]);
 	}
 
 	++frame_;

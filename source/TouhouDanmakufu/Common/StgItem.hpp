@@ -22,13 +22,12 @@ class StgItemManager {
 	StgItemDataList* listItemData_;
 
 	std::list<shared_ptr<StgItemObject>> listObj_;
-	std::set<int> listItemTypeToPlayer_;
+
 	std::list<DxCircle> listCircleToPlayer_;
+
 	bool bAllItemToPlayer_;
 	bool bCancelToPlayer_;
 	bool bDefaultBonusItemEnable_;
-
-	int itemCollectRadius_;
 
 	ID3DXEffect* effectLayer_;
 	D3DXHANDLE handleEffectWorld_;
@@ -57,14 +56,13 @@ public:
 	shared_ptr<StgItemObject> CreateItem(int type);
 
 	void CollectItemsAll();
-	void CollectItemsByType(int type);
-	void CollectItemsInCircle(DxCircle circle);
+	void CollectItemsInCircle(const DxCircle& circle);
 	void CancelCollectItems();
+
+	std::vector<int> GetItemIdInCircle(int cx, int cy, int radius, int* itemType);
 
 	bool IsDefaultBonusItemEnable() { return bDefaultBonusItemEnable_; }
 	void SetDefaultBonusItemEnable(bool bEnable) { bDefaultBonusItemEnable_ = bEnable; }
-
-	void SetItemIntersectionRadius(int r) { itemCollectRadius_ = r * r; }
 };
 
 /**********************************************************
@@ -169,12 +167,11 @@ public:
 	}
 };
 
-
-
 /**********************************************************
 //StgItemObject
 **********************************************************/
 class StgItemObject : public DxScriptRenderObject, public StgMoveObject, public StgIntersectionObject {
+	friend class StgItemManager;
 public:
 	enum {
 		ITEM_1UP = -256 * 256,
@@ -190,18 +187,36 @@ public:
 		ITEM_BONUS,
 
 		ITEM_USER = 0,
+
+		COLLECT_PLAYER_SCOPE = 0,
+		COLLECT_PLAYER_LINE,
+		COLLECT_IN_CIRCLE,
+		COLLECT_ALL,
+		COLLECT_SINGLE,
+
+		CANCEL_PLAYER_DOWN = 0,
+		CANCEL_ALL,
+		CANCEL_SINGLE,
 	};
 protected:
 	StgStageController* stageController_;
 	int typeItem_;
 	//D3DCOLOR color_;
 
-	int64_t score_;
-	bool bMoveToPlayer_; //自機移動フラグ
-	bool bPermitMoveToPlayer_; //自機自動回収許可
-	bool bChangeItemScore_;
-
 	int frameWork_;
+
+	int64_t score_;
+
+	bool bMoveToPlayer_;		//Is the item supposed to be homing in on the player?
+	bool bPermitMoveToPlayer_;	//Can the item home in on the player?
+
+	bool bDefaultScoreText_;
+
+	bool bAutoDelete_;
+	bool bIntersectEnable_;
+	uint32_t itemIntersectRadius_;
+
+	bool bDefaultCollectionMove_;
 
 	void _DeleteInAutoClip();
 	void _CreateScoreItem();
@@ -226,21 +241,34 @@ public:
 	virtual void SetAlpha(int alpha);
 	void SetToPosition(D3DXVECTOR2& pos);
 
-	int64_t GetScore() { return score_; }
-	void SetScore(int64_t score) { score_ = score; }
-	bool IsMoveToPlayer() { return bMoveToPlayer_; }
-	void SetMoveToPlayer(bool b) { bMoveToPlayer_ = b; }
-	bool IsPermitMoveToPlayer() { return bPermitMoveToPlayer_; }
-	void SetPermitMoveToPlayer(bool bPermit) { bPermitMoveToPlayer_ = bPermit; }
-	void SetChangeItemScore(bool b) { bChangeItemScore_ = b; }
-
-	int GetMoveType();
-	void SetMoveType(int type);
-
 	int GetFrameWork() { return frameWork_; }
 
 	int GetItemType() { return typeItem_; }
 	void SetItemType(int type) { typeItem_ = type; }
+
+	int64_t GetScore() { return score_; }
+	void SetScore(int64_t score) { score_ = score; }
+
+	bool IsMoveToPlayer() { return bMoveToPlayer_; }
+	void SetMoveToPlayer(bool b) { bMoveToPlayer_ = b; }
+	bool IsPermitMoveToPlayer() { return bPermitMoveToPlayer_; }
+	void SetPermitMoveToPlayer(bool bPermit) { bPermitMoveToPlayer_ = bPermit; }
+
+	void SetDefaultScoreText(bool b) { bDefaultScoreText_ = b; }
+
+	void SetAutoDelete(bool b) { bAutoDelete_ = b; }
+	void SetIntersectionEnable(bool b) { bIntersectEnable_ = b; }
+	void SetIntersectionRadius(int r) { itemIntersectRadius_ = r * r; }
+
+	bool IsDefaultCollectionMovement() { return bDefaultCollectionMove_; }
+	void SetDefaultCollectionMovement(bool b) { bDefaultCollectionMove_ = b; }
+
+	int GetMoveType();
+	void SetMoveType(int type);
+
+	void NotifyItemCollectEvent(int type, uint64_t eventParam);
+	void NotifyItemCancelEvent(int type);
+
 	StgStageController* GetStageController() { return stageController_; }
 };
 

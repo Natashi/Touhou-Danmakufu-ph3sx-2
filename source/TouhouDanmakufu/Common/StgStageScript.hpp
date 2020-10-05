@@ -114,8 +114,10 @@ public:
 		INFO_CURRENT_LIFE,
 		INFO_CURRENT_LIFE_MAX,
 
+		//ObjItem_GetInfo
 		INFO_ITEM_SCORE,
 		INFO_ITEM_MOVE_TYPE,
+		INFO_ITEM_TYPE,
 
 		//GetShotDataInfoA1
 		INFO_EXISTS,
@@ -154,7 +156,7 @@ public:
 		EV_PAUSE_ENTER,
 		EV_PAUSE_LEAVE,
 
-		//Shot+Item notify events
+		//Shot+Item deletion notify events
 		EV_DELETE_SHOT_IMMEDIATE,
 		EV_DELETE_SHOT_TO_ITEM,
 		EV_DELETE_SHOT_FADE,
@@ -287,14 +289,14 @@ public:
 	static gstd::value Func_CreateItemU2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateItemScore(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CollectAllItems(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_CollectItemsByType(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CollectItemsInCircle(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CancelCollectItems(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_StartItemScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetDefaultBonusItemEnable(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_LoadItemData(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ReloadItemData(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	DNH_FUNCAPI_DECL_(Func_SetItemIntersectionRadius);
+	DNH_FUNCAPI_DECL_(Func_GetItemIdInCircleA1);
+	DNH_FUNCAPI_DECL_(Func_GetItemIdInCircleA2);
 
 	//STG共通関数：その他
 	static gstd::value Func_StartSlow(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -457,13 +459,19 @@ public:
 	static gstd::value Func_ObjItem_SetRenderScoreEnable(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjItem_SetAutoCollectEnable(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjItem_SetDefinedMovePatternA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjItem_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_ObjItem_GetInfo);
+	DNH_FUNCAPI_DECL_(Func_ObjItem_SetMoveToPlayer);
+	DNH_FUNCAPI_DECL_(Func_ObjItem_IsMoveToPlayer);
+	DNH_FUNCAPI_DECL_(Func_ObjItem_Collect);
+	DNH_FUNCAPI_DECL_(Func_ObjItem_SetAutoDelete);
+	DNH_FUNCAPI_DECL_(Func_ObjItem_SetIntersectionRadius);
+	DNH_FUNCAPI_DECL_(Func_ObjItem_SetIntersectionEnable);
+	DNH_FUNCAPI_DECL_(Func_ObjItem_SetDefaultCollectMovement);
 
 	//STG共通関数：自機オブジェクト操作
 	static gstd::value Func_ObjPlayer_AddIntersectionCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjPlayer_AddIntersectionCircleA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjPlayer_ClearIntersection(gstd::script_machine* machine, int argc, const gstd::value* argv);
-
 
 	//STG共通関数：当たり判定オブジェクト操作
 	static gstd::value Func_ObjCol_IsIntersected(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -492,6 +500,8 @@ class StgStageItemScript : public StgStageScript {
 public:
 	enum {
 		EV_GET_ITEM = 1100,
+		EV_COLLECT_ITEM,
+		EV_CANCEL_ITEM,
 	};
 public:
 	StgStageItemScript(StgStageController* stageController);

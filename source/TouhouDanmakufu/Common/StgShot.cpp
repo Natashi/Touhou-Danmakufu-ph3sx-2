@@ -171,47 +171,37 @@ DxRect<LONG>* StgShotManager::GetShotAutoDeleteClipRect() {
 	return stageController_->GetStageInformation()->GetShotAutoDeleteClip();
 }
 
-void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, float cx, float cy, float* radius) {
-	float rd = 0.0f;
+void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius) {
+	int rr = 0;
 	if (radius)
-		rd = (*radius) * (*radius);
+		rr = (*radius) * (*radius);
 
 	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 		if (typeDelete == DEL_TYPE_SHOT && (obj->GetLife() == StgShotObject::LIFE_SPELL_REGIST)) continue;
 
-		float sx = cx - obj->GetPositionX();
-		float sy = cy - obj->GetPositionY();
-
-		float tr = sx * sx + sy * sy;
-		if (radius == nullptr || tr <= rd) {
-			if (typeTo == TO_TYPE_IMMEDIATE) {
+		if (radius == nullptr || Math::HypotSq<int>(cx - obj->GetPositionX(), cy - obj->GetPositionY()) <= rr) {
+			if (typeTo == TO_TYPE_IMMEDIATE)
 				obj->DeleteImmediate();
-			}
-			else if (typeTo == TO_TYPE_FADE) {
+			else if (typeTo == TO_TYPE_FADE)
 				obj->SetFadeDelete();
-			}
-			else if (typeTo == TO_TYPE_ITEM) {
+			else if (typeTo == TO_TYPE_ITEM)
 				obj->ConvertToItem(false);
-			}
 		}
 	}
 }
 
-std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, float cx, float cy, float radius) {
-	float rd = radius * radius;
+std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, int cx, int cy, int radius) {
+	int rr = radius * radius;
 
 	std::vector<int> res;
 	for (shared_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 
-		float sx = cx - obj->GetPositionX();
-		float sy = cy - obj->GetPositionY();
-
-		float tr = sx * sx + sy * sy;
-		if (tr <= rd) res.push_back(obj->GetObjectID());
+		if (Math::HypotSq<int>(cx - obj->GetPositionX(), cy - obj->GetPositionY()) <= rr)
+			res.push_back(obj->GetObjectID());
 	}
 
 	return res;
