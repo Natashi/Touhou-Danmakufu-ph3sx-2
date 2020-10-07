@@ -142,11 +142,17 @@ D3DCOLOR& ColorAccess::HSVtoRGB(D3DCOLOR& color, int hue, int saturation, int va
 	return color;
 }
 
-D3DXVECTOR4 ColorAccess::ToVec4(const D3DCOLOR& color) {
-	return D3DXVECTOR4(GetColorA(color), GetColorR(color), GetColorG(color), GetColorB(color));
+//Permute format
+//MSB        LSB   (8 bits)
+//00  00  00  00
+//1st 2nd 3rd 4th
+D3DXVECTOR4 ColorAccess::ToVec4(const D3DCOLOR& color, uint8_t permute) {
+	byte lColor[4] = { GetColorA(color), GetColorR(color), GetColorG(color), GetColorB(color) };
+	return D3DXVECTOR4(lColor[(permute >> 6) & 3], lColor[(permute >> 4) & 3], 
+		lColor[(permute >> 2) & 3], lColor[permute & 3]);
 }
-D3DXVECTOR4 ColorAccess::ToVec4Normalized(const D3DCOLOR& color) {
-	__m128 argb = Vectorize::Load(ToVec4(color));
+D3DXVECTOR4 ColorAccess::ToVec4Normalized(const D3DCOLOR& color, uint8_t permute) {
+	__m128 argb = Vectorize::Load(ToVec4(color, permute));
 	__m128 nor = Vectorize::Replicate(1.0f / 255.0f);
 	nor = Vectorize::Mul(argb, nor);
 	return (D3DXVECTOR4&)nor;

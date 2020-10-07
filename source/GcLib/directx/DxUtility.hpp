@@ -81,8 +81,12 @@ namespace directx {
 			arr[3] = GetColorB(color);
 		}
 
-		static D3DXVECTOR4 ToVec4(const D3DCOLOR& color);
-		static D3DXVECTOR4 ToVec4Normalized(const D3DCOLOR& color);
+		enum : uint8_t {
+			PERMUTE_ARGB = 0b00011011,
+			PERMUTE_RGBA = 0b01101100,
+		};
+		static D3DXVECTOR4 ToVec4(const D3DCOLOR& color, uint8_t permute = PERMUTE_ARGB);
+		static D3DXVECTOR4 ToVec4Normalized(const D3DCOLOR& color, uint8_t permute = PERMUTE_ARGB);
 		//ARGB
 		static D3DCOLOR ToD3DCOLOR(const __m128i& color);
 		//ARGB
