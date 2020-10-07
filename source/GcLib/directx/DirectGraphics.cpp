@@ -532,8 +532,7 @@ void DirectGraphics::SetVertexFog(bool bEnable, D3DCOLOR color, float start, flo
 	pDevice_->SetRenderState(D3DRS_FOGEND, *(DWORD*)(&end));
 
 	stateFog_.bEnable = bEnable;
-	D3DXVECTOR4 vColor = ColorAccess::ToVec4(color);	//ARGB
-	stateFog_.color = D3DXVECTOR4(vColor.y, vColor.z, vColor.w, vColor.x);
+	stateFog_.color = ColorAccess::ToVec4Normalized(color, ColorAccess::PERMUTE_RGBA);
 	stateFog_.fogDist.x = start;
 	stateFog_.fogDist.y = end;
 }
