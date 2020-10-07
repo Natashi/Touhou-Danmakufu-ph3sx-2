@@ -1908,7 +1908,10 @@ gstd::value DxScript::Func_ColorARGBToHex(gstd::script_machine* machine, int arg
 }
 gstd::value DxScript::Func_ColorHexToARGB(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	D3DCOLOR color = (D3DCOLOR)argv[0].as_int();
-	D3DXVECTOR4 vecColor = ColorAccess::ToVec4(color);
+
+	byte nChannel = 4;
+	uint16_t permute = ColorAccess::PERMUTE_ARGB;
+	D3DXVECTOR4 vecColor;
 
 	if (argc > 1) {
 		//Control format
@@ -1918,22 +1921,13 @@ gstd::value DxScript::Func_ColorHexToARGB(gstd::script_machine* machine, int arg
 
 		uint16_t control = argv[1].as_int() & 0x3ff;
 		if (control != 0x31b) {		//0x31b -> 11 00 01 10 11 (regular ARGB)
-			byte nChannel = ((control >> 8) & 0x3) + 1;
-			byte sc0 = (control >> 6) & 0x3;
-			byte sc1 = (control >> 4) & 0x3;
-			byte sc2 = (control >> 2) & 0x3;
-			byte sc3 = control & 0x3;
-
-			D3DXVECTOR4 colorPermute;
-			colorPermute.x = ((FLOAT*)&vecColor)[sc0];
-			colorPermute.y = ((FLOAT*)&vecColor)[sc1];
-			colorPermute.z = ((FLOAT*)&vecColor)[sc2];
-			colorPermute.w = ((FLOAT*)&vecColor)[sc3];
-
-			return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&colorPermute), nChannel);
+			nChannel = ((control >> 8) & 0x3) + 1;
+			permute = control & 0xff;
 		}
 	}
-	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&vecColor), 4U);
+
+	vecColor = ColorAccess::ToVec4(color, permute);
+	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&vecColor), nChannel);
 }
 gstd::value DxScript::Func_ColorRGBtoHSV(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	byte cr = argv[0].as_int();
@@ -1953,8 +1947,7 @@ gstd::value DxScript::Func_ColorHSVtoRGB(gstd::script_machine* machine, int argc
 	D3DCOLOR rgb = 0xffffffff;
 	ColorAccess::HSVtoRGB(rgb, ch, cs, cv);
 
-	D3DXVECTOR4 rgbVec = ColorAccess::ToVec4(rgb);
-	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&rgbVec.y), 3U);
+	return DxScript::CreateRealArrayValue(reinterpret_cast<byte*>(&rgb) + 1, 3U);
 }
 gstd::value DxScript::Func_ColorHSVtoHexRGB(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	int ch = argv[0].as_int();
@@ -2345,8 +2338,9 @@ value DxScript::Func_ObjRender_SetColor(script_machine* machine, int argc, const
 			obj->SetColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
 		}
 		else {
-			D3DXVECTOR4 vecColor = ColorAccess::ToVec4((D3DCOLOR)argv[1].as_int());
-			obj->SetColor(vecColor.y, vecColor.z, vecColor.w);
+			D3DCOLOR color = argv[1].as_int();
+			obj->SetColor(ColorAccess::GetColorR(color), ColorAccess::GetColorG(color), 
+				ColorAccess::GetColorB(color));
 		}
 	}
 	return value();
@@ -2359,8 +2353,8 @@ value DxScript::Func_ObjRender_SetColorHSV(script_machine* machine, int argc, co
 		D3DCOLOR color = 0xffffffff;
 		ColorAccess::HSVtoRGB(color, argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
 
-		D3DXVECTOR4 vecColor = ColorAccess::ToVec4(color);
-		obj->SetColor(vecColor.y, vecColor.z, vecColor.w);
+		obj->SetColor(ColorAccess::GetColorR(color), ColorAccess::GetColorG(color), 
+			ColorAccess::GetColorB(color));
 	}
 	return value();
 }
@@ -2371,9 +2365,7 @@ value DxScript::Func_ObjRender_GetColor(script_machine* machine, int argc, const
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) color = obj->color_;
 
-	byte listColor[4];
-	ColorAccess::ToByteArray(color, listColor);
-	return script->CreateRealArrayValue((byte*)(listColor + 1), 3U);
+	return script->CreateRealArrayValue(reinterpret_cast<byte*>(color) + 1, 3U);
 }
 value DxScript::Func_ObjRender_SetAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -3051,8 +3043,9 @@ value DxScript::Func_ObjPrimitive_SetVertexColor(script_machine* machine, int ar
 			obj->SetVertexColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
 		}
 		else {
-			D3DXVECTOR4 vecColor = ColorAccess::ToVec4((D3DCOLOR)argv[2].as_int());
-			obj->SetVertexColor(argv[1].as_int(), vecColor.y, vecColor.z, vecColor.w);
+			D3DCOLOR color = argv[2].as_int();
+			obj->SetVertexColor(argv[1].as_int(), ColorAccess::GetColorR(color), ColorAccess::GetColorG(color),
+				ColorAccess::GetColorB(color));
 		}
 	}
 	return value();
@@ -3062,12 +3055,11 @@ value DxScript::Func_ObjPrimitive_SetVertexColorHSV(script_machine* machine, int
 	int id = argv[0].as_int();
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		D3DCOLOR cHSV = 0xffffffff;
-		ColorAccess::HSVtoRGB(cHSV, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
+		D3DCOLOR cRGB = 0xffffffff;
+		ColorAccess::HSVtoRGB(cRGB, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
 
-		byte listRGB[4];
-		ColorAccess::ToByteArray(cHSV, listRGB);
-		obj->SetVertexColor(argv[1].as_int(), listRGB[1], listRGB[2], listRGB[3]);
+		obj->SetVertexColor(argv[1].as_int(), ColorAccess::GetColorR(cRGB),
+			ColorAccess::GetColorG(cRGB), ColorAccess::GetColorB(cRGB));
 	}
 	return value();
 }
@@ -3088,10 +3080,7 @@ value DxScript::Func_ObjPrimitive_GetVertexColor(script_machine* machine, int ar
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) color = obj->GetVertexColor(index);
 
-	byte listRGB[4];
-	ColorAccess::ToByteArray(color, listRGB);
-
-	return script->CreateRealArrayValue((byte*)(listRGB + 1), 3);
+	return script->CreateRealArrayValue(reinterpret_cast<byte*>(color) + 1, 3U);
 }
 value DxScript::Func_ObjPrimitive_GetVertexAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -3114,8 +3103,7 @@ value DxScript::Func_ObjPrimitive_GetVertexPosition(script_machine* machine, int
 	if (obj)
 		pos = obj->GetVertexPosition(index);
 
-	float listPos[3] = { pos.x, pos.y, pos.z };
-	return script->CreateRealArrayValue(listPos, 3U);
+	return script->CreateRealArrayValue(reinterpret_cast<float*>(&pos), 3U);
 }
 value DxScript::Func_ObjPrimitive_SetVertexIndex(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -3123,7 +3111,7 @@ value DxScript::Func_ObjPrimitive_SetVertexIndex(script_machine* machine, int ar
 
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		value valArr = argv[1];
+		const value& valArr = argv[1];
 		std::vector<uint16_t> vecIndex;
 		vecIndex.resize(valArr.length_as_array());
 		for (size_t i = 0; i < valArr.length_as_array(); ++i) {
@@ -3332,7 +3320,8 @@ value DxScript::Func_ObjParticleList_SetPosition(script_machine* machine, int ar
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle) objParticle->SetInstancePosition(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+		if (objParticle)
+			objParticle->SetInstancePosition(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
 	}
 	return value();
 }
@@ -3344,7 +3333,8 @@ value DxScript::Func_ObjParticleList_SetScaleSingle(script_machine* machine, int
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle) objParticle->SetInstanceScaleSingle(ID, argv[1].as_real());
+		if (objParticle)
+			objParticle->SetInstanceScaleSingle(ID, argv[1].as_real());
 	}
 	return value();
 }
@@ -3355,7 +3345,8 @@ value DxScript::Func_ObjParticleList_SetScaleXYZ(script_machine* machine, int ar
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle) objParticle->SetInstanceScale(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+		if (objParticle)
+			objParticle->SetInstanceScale(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
 	}
 	return value();
 }
@@ -3367,7 +3358,8 @@ value DxScript::Func_ObjParticleList_SetAngleSingle(script_machine* machine, int
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle) objParticle->SetInstanceAngleSingle(ID, argv[1].as_real());
+		if (objParticle)
+			objParticle->SetInstanceAngleSingle(ID, argv[1].as_real());
 	}
 	return value();
 }
@@ -3378,7 +3370,8 @@ value DxScript::Func_ObjParticleList_SetAngle(script_machine* machine, int argc,
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle) objParticle->SetInstanceAngle(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+		if (objParticle)
+			objParticle->SetInstanceAngle(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
 	}
 	return value();
 }
@@ -3394,8 +3387,9 @@ value DxScript::Func_ObjParticleList_SetColor(script_machine* machine, int argc,
 				objParticle->SetInstanceColorRGB(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
 			}
 			else {
-				D3DXVECTOR4 vecColor = ColorAccess::ToVec4((D3DCOLOR)argv[1].as_int());
-				objParticle->SetInstanceColorRGB(vecColor.y, vecColor.z, vecColor.w);
+				D3DCOLOR color = argv[1].as_int();
+				objParticle->SetInstanceColorRGB(ColorAccess::GetColorR(color), 
+					ColorAccess::GetColorG(color), ColorAccess::GetColorB(color));
 			}
 		}
 	}
@@ -3408,7 +3402,8 @@ value DxScript::Func_ObjParticleList_SetAlpha(script_machine* machine, int argc,
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle) objParticle->SetInstanceAlpha(argv[1].as_int());
+		if (objParticle)
+			objParticle->SetInstanceAlpha(argv[1].as_int());
 	}
 	return value();
 }
@@ -3419,7 +3414,8 @@ value DxScript::Func_ObjParticleList_SetExtraData(script_machine* machine, int a
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle) objParticle->SetInstanceUserData(D3DXVECTOR3(argv[1].as_real(), argv[2].as_real(), argv[3].as_real()));
+		if (objParticle)
+			objParticle->SetInstanceUserData(D3DXVECTOR3(argv[1].as_real(), argv[2].as_real(), argv[3].as_real()));
 	}
 	return value();
 }
@@ -3430,7 +3426,8 @@ value DxScript::Func_ObjParticleList_AddInstance(script_machine* machine, int ar
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle) objParticle->AddInstance();
+		if (objParticle)
+			objParticle->AddInstance();
 	}
 	return value();
 }
@@ -3441,7 +3438,8 @@ value DxScript::Func_ObjParticleList_ClearInstance(script_machine* machine, int 
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle) objParticle->ClearInstance();
+		if (objParticle)
+			objParticle->ClearInstance();
 	}
 	return value();
 }
@@ -3503,8 +3501,9 @@ value DxScript::Func_ObjMesh_SetColor(script_machine* machine, int argc, const v
 			obj->SetColor(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
 		}
 		else {
-			D3DXVECTOR4 vecColor = ColorAccess::ToVec4((D3DCOLOR)argv[1].as_int());
-			obj->SetColor(vecColor.y, vecColor.z, vecColor.w);
+			D3DCOLOR color = argv[1].as_int();
+			obj->SetColor(ColorAccess::GetColorR(color), ColorAccess::GetColorG(color), 
+				ColorAccess::GetColorB(color));
 		}
 	}
 	return value();

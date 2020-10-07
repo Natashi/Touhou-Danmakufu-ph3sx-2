@@ -1864,9 +1864,8 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		}
 		case INFO_DELAY_COLOR:
 		{
-			byte list[4];
-			ColorAccess::ToByteArray(0xffffffff, list);
-			return script->CreateRealArrayValue((byte*)(list + 1), 3U);
+			byte list[3] = { 0xff, 0xff, 0xff };
+			return script->CreateRealArrayValue(list, 3U);
 		}
 		case INFO_BLEND:
 			return script->CreateIntValue(MODE_BLEND_NONE);
@@ -1896,9 +1895,8 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		}
 		case INFO_DELAY_COLOR:
 		{
-			byte list[4];
-			ColorAccess::ToByteArray(shotData->GetDelayColor(), list);
-			return script->CreateRealArrayValue((byte*)(list + 1), 3U);
+			D3DCOLOR color = shotData->GetDelayColor();
+			return script->CreateRealArrayValue(reinterpret_cast<byte*>(&color) + 1, 3U);
 		}
 		case INFO_BLEND:
 			return script->CreateIntValue(shotData->GetRenderType());
@@ -4040,9 +4038,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodeColor(gstd::script_machine* m
 		}
 	}
 
-	byte colorArray[4];
-	ColorAccess::ToByteArray(color, colorArray);
-	return script->CreateRealArrayValue(colorArray, 4U);
+	return script->CreateRealArrayValue(reinterpret_cast<byte*>(&color) + 1, 4U);
 }
 gstd::value StgStageScript::Func_ObjCrLaser_SetNode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
