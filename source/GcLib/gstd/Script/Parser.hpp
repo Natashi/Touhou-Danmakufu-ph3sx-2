@@ -13,7 +13,9 @@
 namespace gstd {
 	enum class command_kind : uint8_t {
 		pc_var_alloc, pc_var_format,
-		pc_assign, pc_assign_writable, pc_break_loop, pc_break_routine,
+
+		pc_copy_assign, pc_ref_overwrite, 
+		pc_break_loop, pc_break_routine,
 		pc_call, pc_call_and_push_result,
 
 		pc_jump_target,

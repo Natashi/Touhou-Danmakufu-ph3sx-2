@@ -96,11 +96,11 @@ namespace gstd {
 		value& index_as_array(size_t i) { return data->array_value[i]; }
 		type_data* get_type() const { return data ? data->type : nullptr; }
 
-		std::vector<value>::iterator array_get_begin() {
-			return data ? data->array_value.begin() : std::vector<value>::iterator();
+		std::vector<value>::iterator array_get_begin() const {
+			return data->array_value.begin();
 		}
-		std::vector<value>::iterator array_get_end() {
-			return data ? data->array_value.end() : std::vector<value>::iterator();
+		std::vector<value>::iterator array_get_end() const {
+			return data->array_value.end();
 		}
 
 		void overwrite(const value& source);	//Overwrite the pointer's value

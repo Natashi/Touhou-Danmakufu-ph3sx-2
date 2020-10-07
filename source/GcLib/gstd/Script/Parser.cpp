@@ -203,7 +203,7 @@ namespace gstd {
 				continue;
 			}
 			block_const_reg->codes.push_back(code(command_kind::pc_push_value, const_value));
-			block_const_reg->codes.push_back(code(command_kind::pc_assign, 1, iConst, pConst->name));
+			block_const_reg->codes.push_back(code(command_kind::pc_copy_assign, 1, iConst, pConst->name));
 
 			symbol s = symbol(1, nullptr, iConst, false, false);
 			frame.begin()->singular_insert(pConst->name, s);
@@ -633,7 +633,7 @@ namespace gstd {
 
 				std::string error;
 				if (search(name))
-					error = StringUtility::Format("No matching overload for %s with %d arguments was found.\r\n",
+					error = StringUtility::Format("No overload of %s takes %d arguments.\r\n",
 						name.c_str(), argc);
 				else
 					error = StringUtility::Format("%s is not defined.\r\n", name.c_str());
@@ -1018,7 +1018,7 @@ continue_as_variadic:
 
 				state->advance();
 				parse_expression(block, state);
-				state->AddCode(block, code(command_kind::pc_assign, s->level, s->variable, name));
+				state->AddCode(block, code(command_kind::pc_copy_assign, s->level, s->variable, name));
 				break;
 			case token_kind::tk_open_bra:
 				assert_const(state, s, name);
@@ -1038,7 +1038,7 @@ continue_as_variadic:
 				case token_kind::tk_assign:
 					state->advance();
 					parse_expression(block, state);
-					state->AddCode(block, code(command_kind::pc_assign_writable, 0, 0, name));
+					state->AddCode(block, code(command_kind::pc_ref_overwrite, 0, 0, name));
 					break;
 				case token_kind::tk_add_assign:
 				case token_kind::tk_subtract_assign:
@@ -1105,7 +1105,7 @@ continue_as_variadic:
 
 				if (!test_variadic(s->sub->arguments, argc)) {
 					s = search_in(resScope, name, argc);
-					parser_assert(state, s, StringUtility::Format("No matching overload for %s with %d arguments was found.\r\n",
+					parser_assert(state, s, StringUtility::Format("No overload of %s takes %d arguments.\r\n",
 						name.c_str(), argc));
 				}
 
@@ -1135,7 +1135,7 @@ continue_as_variadic:
 
 				state->advance();
 				parse_expression(block, state);
-				state->AddCode(block, code(command_kind::pc_assign, s->level, s->variable, name));
+				state->AddCode(block, code(command_kind::pc_copy_assign, s->level, s->variable, name));
 			}
 
 			break;
@@ -1363,7 +1363,7 @@ continue_as_variadic:
 				//Pop twice for the array and the counter
 				state->AddCode(block, code(command_kind::pc_pop, 2));
 
-				if (blockParam.first <= 1U) {	//1 for pc_assign
+				if (blockParam.first <= 1U) {	//1 for pc_copy_assign
 					while (state->ip > ip_for_begin)
 						state->PopCode(block);
 				}
@@ -1601,7 +1601,7 @@ continue_as_variadic:
 			//Pop twice for two statements * 2
 			state->AddCode(block, code(command_kind::pc_pop, 2));
 
-			if (blockParam.first <= 1U) {	//1 for pc_assign
+			if (blockParam.first <= 1U) {	//1 for pc_copy_assign
 				while (state->ip > ip_ascdsc_begin)
 					state->PopCode(block);
 			}
@@ -1758,7 +1758,7 @@ continue_as_variadic:
 				symbol* s = search_result();
 				parser_assert(state, s, "Only functions may return values.\r\n");
 
-				state->AddCode(block, code(command_kind::pc_assign, s->level, s->variable,
+				state->AddCode(block, code(command_kind::pc_copy_assign, s->level, s->variable,
 					"[function_result]"));
 			}
 			}
@@ -1864,7 +1864,7 @@ continue_as_variadic:
 				for (size_t i = 0; i < args.size(); ++i) {
 					const std::string& name = args[i];
 					symbol* svar = search(name);
-					newState.AddCode(s->sub, code(command_kind::pc_assign, svar->level, svar->variable, name));
+					newState.AddCode(s->sub, code(command_kind::pc_copy_assign, svar->level, svar->variable, name));
 				}
 				parse_statements(s->sub, &newState, token_kind::tk_close_cur, token_kind::tk_semicolon);
 				scan_final(s->sub, &newState);
@@ -1934,7 +1934,7 @@ continue_as_variadic:
 			for (size_t i = 0; i < args->size(); ++i) {
 				const std::string& name = args->at(i);
 				symbol* s = search(name);
-				newState.AddCode(block, code(command_kind::pc_assign, s->level, s->variable, name));
+				newState.AddCode(block, code(command_kind::pc_copy_assign, s->level, s->variable, name));
 			}
 		}
 		if (single_line)

@@ -287,32 +287,26 @@ void script_machine::run_code() {
 				break;
 			}
 
-			case command_kind::pc_assign:
+			case command_kind::pc_copy_assign:
 			{
 				stack_t& stack = current->stack;
 				assert(stack.size() > 0);
 
-				for (environment* i = current.get(); i != nullptr; i = (i->parent).get()) {
-					if (i->sub->level == c->level) {
-						value* dest = &(i->variables[c->variable]);
-						value* src = &stack.back();
-						if (BaseFunction::_type_assign_check(this, src, dest)) {
-							type_data* prev_type = dest->get_type();
-							*dest = *src;
-							dest->unique();
-							if (prev_type && prev_type != src->get_type())
-								BaseFunction::_value_cast(dest, prev_type->get_kind());
+				value* dest = find_variable_symbol(current.get(), c, true);
+				value* src = &stack.back();
+				if (BaseFunction::_type_assign_check(this, src, dest)) {
+					type_data* prev_type = dest->get_type();
+					*dest = *src;
+					dest->unique();
+					if (prev_type && prev_type != src->get_type())
+						BaseFunction::_value_cast(dest, prev_type->get_kind());
 
-							stack.pop_back();
-						}
-
-						break;
-					}
+					stack.pop_back();
 				}
 
 				break;
 			}
-			case command_kind::pc_assign_writable:
+			case command_kind::pc_ref_overwrite:
 			{
 				stack_t& stack = current->stack;
 				assert(stack.size() >= 2);
@@ -757,7 +751,7 @@ void script_machine::run_code() {
 		}
 	}
 }
-value* script_machine::find_variable_symbol(environment* current_env, code* var_data) {
+value* script_machine::find_variable_symbol(environment* current_env, code* var_data, bool allow_null) {
 	/*
 	auto err_uninitialized = [&]() {
 #ifdef _DEBUG
@@ -772,10 +766,10 @@ value* script_machine::find_variable_symbol(environment* current_env, code* var_
 
 	for (environment* i = current_env; i != nullptr; i = (i->parent).get()) {
 		if (i->sub->level == var_data->level) {
-			variables_t& vars = i->variables;
+			value& res = i->variables[var_data->variable];
 
-			if (vars[var_data->variable].has_data())
-				return &vars[var_data->variable];
+			if (allow_null || res.has_data())
+				return &res;
 			else break;
 		}
 	}

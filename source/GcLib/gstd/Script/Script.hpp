@@ -155,7 +155,7 @@ namespace gstd {
 		}
 
 		void run_code();
-		value* find_variable_symbol(environment* current_env, code* var_data);
+		value* find_variable_symbol(environment* current_env, code* var_data, bool allow_null = false);
 	public:
 		size_t get_thread_count() { return threads.size(); }
 	};
