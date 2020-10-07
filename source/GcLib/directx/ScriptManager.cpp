@@ -31,7 +31,7 @@ void ScriptManager::Work(int targetType) {
 		shared_ptr<ManagedScript> script = *itr;
 		int type = script->GetScriptType();
 		if (script->IsPaused() || (targetType != ManagedScript::TYPE_ALL && targetType != type)) {
-			itr++;
+			++itr;
 			continue;
 		}
 
@@ -39,16 +39,17 @@ void ScriptManager::Work(int targetType) {
 			std::map<std::string, script_block*>::iterator itrEvent;
 			if (script->IsEventExists("Finalize", itrEvent))
 				script->Run(itrEvent);
-			itr = listScriptRun_.erase(itr);
+
 			bHasCloseScriptWork_ |= true;
+			itr = listScriptRun_.erase(itr);
 		}
 		else {
 			std::map<std::string, script_block*>::iterator itrEvent;
 			if (script->IsEventExists("MainLoop", itrEvent))
 				script->Run(itrEvent);
-			itr++;
-
+			
 			bHasCloseScriptWork_ |= script->IsEndScript();
+			++itr;
 		}
 	}
 }
@@ -68,23 +69,25 @@ shared_ptr<ManagedScript> ScriptManager::GetScript(int64_t id, bool bSearchRelat
 			for (auto& pScriptRun : listScriptRun_) {
 				if (pScriptRun->GetScriptID() == id) {
 					res = pScriptRun;
-					break;
+					goto get_script_res;
 				}
 			}
 
-			if (res == nullptr && bSearchRelative) {
+			if (bSearchRelative) {
 				for (auto& pWeakManager : listRelativeManager_) {
 					if (auto pManager = pWeakManager.lock()) {
 						for (auto& pScript : pManager->listScriptRun_) {
 							if (pScript->GetScriptID() == id) {
 								res = pScript;
-								break;
+								goto get_script_res;
 							}
 						}
 					}
 				}
 			}
 		}
+get_script_res:
+		;
 	}
 	return res;
 }
@@ -99,13 +102,13 @@ void ScriptManager::StartScript(int64_t id) {
 		script = itrMap->second;
 	}
 
-	if (!script->IsLoad()) {
+	{
 		int count = 0;
 		while (!script->IsLoad()) {
 			if (count % 1000 == 999)
 				Logger::WriteTop(StringUtility::Format(L"読み込み完了待機(ScriptManager)：%s", script->GetPath().c_str()));
 			Sleep(1);
-			count++;
+			++count;
 		}
 	}
 
@@ -124,13 +127,13 @@ void ScriptManager::StartScript(int64_t id) {
 	}
 }
 void ScriptManager::StartScript(shared_ptr<ManagedScript> script) {
-	if (!script->IsLoad()) {
+	{
 		int count = 0;
 		while (!script->IsLoad()) {
 			if (count % 1000 == 999)
 				Logger::WriteTop(StringUtility::Format(L"読み込み完了待機(ScriptManager)：%s", script->GetPath().c_str()));
 			Sleep(1);
-			count++;
+			++count;
 		}
 	}
 
@@ -265,7 +268,7 @@ shared_ptr<ManagedScript> ScriptManager::LoadScriptInThread(const std::wstring& 
 	return script;
 }
 void ScriptManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event) {
-	std::wstring path = event->GetPath();
+	const std::wstring& path = event->GetPath();
 
 	shared_ptr<ManagedScript> script = std::dynamic_pointer_cast<ManagedScript>(event->GetSource());
 	if (script == nullptr || script->IsLoad()) return;
@@ -293,7 +296,7 @@ void ScriptManager::RequestEventAll(int type, const gstd::value* listValue, size
 				if (pScript->IsEndScript() /*|| pScript->IsPaused()*/) continue;
 				pScript->RequestEvent(type, listValue, countArgument);
 			}
-			itrManager++;
+			++itrManager;
 		}
 		else {
 			itrManager = listRelativeManager_.erase(itrManager);
