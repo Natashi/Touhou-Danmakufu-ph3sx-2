@@ -69,7 +69,8 @@ namespace gstd {
 	static const void _raise_error_unsupported(script_machine* machine, type_data* type, const std::string& op_name) {
 		std::string error = StringUtility::Format("This value type does not support the %s operation: %s\r\n",
 			op_name.c_str(), type_data::string_representation(type).c_str());
-		machine->raise_error(error);
+		if (machine) machine->raise_error(error);
+		else throw error;
 	}
 
 	//-------------------------------------------------------------------------------------------
@@ -95,20 +96,15 @@ namespace gstd {
 		if (!v_dst->has_data()) return true;		//dest is null, assign ahead
 		type_data* type_src = v_src->get_type();
 		type_data* type_dst = v_dst->get_type();
-		/*
-		if (type_src != type_dst					//If the types are different
-			&& !((type_src->get_kind() & type_dst->get_kind()) == type_data::tk_array	//unless they're both arrays
-				&& (v_dst->length_as_array() == 0 || v_src->length_as_array() == 0))) {		//and either is empty
-		*/
 
 		if (type_src == type_dst || !_type_check_two_any(type_dst, type_src, type_data::tk_array))
 			return true;
-		else if (type_src->get_kind() == type_dst->get_kind() 
+		else if (type_src->get_kind() == type_dst->get_kind()
 			&& (v_dst->length_as_array() == 0 || v_src->length_as_array() == 0))
 			return true;
 		{
 			std::string error = StringUtility::Format(
-				"Variable assignment cannot implicitly convert from \"%s\" to \"%s\".\r\n", 
+				"Variable assignment cannot implicitly convert from \"%s\" to \"%s\".\r\n",
 				type_data::string_representation(type_src).c_str(),
 				type_data::string_representation(type_dst).c_str());
 			machine->raise_error(error);
@@ -423,7 +419,8 @@ namespace gstd {
 		if (index < 0 || index >= arg0_size) {
 			std::string error = StringUtility::Format("Array index out of bounds. (indexing=%d, size=%u)\r\n",
 				index, arg0_size);
-			machine->raise_error(error);
+			if (machine) machine->raise_error(error);
+			else throw error;
 			return false;
 		}
 		return true;
@@ -518,7 +515,8 @@ namespace gstd {
 			std::string error = StringUtility::Format("Value type does not match. (%s ~ [%s])\r\n",
 				type_data::string_representation(arg0_type).c_str(),
 				type_data::string_representation(arg1_type).c_str());
-			machine->raise_error(error);
+			if (machine) machine->raise_error(error);
+			else throw error;
 			return false;
 		}
 		return true;

@@ -941,6 +941,9 @@ continue_as_variadic:
 
 			block->codes.insert(block->codes.end(), tmp.codes.begin(), tmp.codes.end());
 		}
+		catch (std::string& err) {
+			parser_assert(state, false, err);
+		}
 		catch (std::wstring& err) {
 			parser_assert(state, false, err);
 		}
@@ -2042,6 +2045,60 @@ continue_as_variadic:
 					state->ip -= 2;
 				}
 				else {
+					newCodes.push_back(*iSrcCode);
+				}
+				break;
+			}
+			/* Fuses 
+			 *   pc_push_value a
+			 *   pc_push_value b
+			 *   pc_push_value c
+			 *   pc_push_value d
+			 *   pc_construct_array
+			 * into
+			 *   pc_push_value [a, b, c, d]
+			 */
+			case command_kind::pc_construct_array:
+			{
+				code* ptrBack = &newCodes.back();
+				size_t sizeArray = iSrcCode->ip;
+				if (newCodes.size() >= sizeArray) {
+					type_data* arrayType = script_type_manager::get_string_type();
+					value arrayVal;
+					
+					if (sizeArray > 0) {
+						std::vector<value> listPtrVal;
+						listPtrVal.resize(sizeArray);
+
+						code* ptrCode = ptrBack - ((int)sizeArray - 1);
+						{
+							if (ptrCode->command != command_kind::pc_push_value)
+								goto lab_opt_construct_array_cancel;
+							arrayType = script_type_manager::get_instance()->get_array_type(ptrCode->data.get_type());
+						}
+
+						for (size_t i = 0; i < sizeArray; ++i) {
+							if (ptrCode->command != command_kind::pc_push_value)
+								goto lab_opt_construct_array_cancel;
+							BaseFunction::_append_check(nullptr, 1U, arrayType, ptrCode->data.get_type());
+							listPtrVal[i] = ptrCode->data;
+							++ptrCode;
+						}
+
+						arrayVal.set(arrayType, listPtrVal);
+					}
+					else {
+						arrayVal = value(script_type_manager::get_string_type(), 0i64);
+					}
+
+					for (size_t i = 0; i < sizeArray; ++i) {
+						newCodes.pop_back();
+						--(state->ip);
+					}
+					newCodes.push_back(code(iSrcCode->line, command_kind::pc_push_value, arrayVal));
+				}
+				else {
+lab_opt_construct_array_cancel:
 					newCodes.push_back(*iSrcCode);
 				}
 				break;
