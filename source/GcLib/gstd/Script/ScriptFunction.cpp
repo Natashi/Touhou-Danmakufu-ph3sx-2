@@ -97,17 +97,30 @@ namespace gstd {
 		type_data* type_src = v_src->get_type();
 		type_data* type_dst = v_dst->get_type();
 
-		if (type_src == type_dst || !_type_check_two_any(type_dst, type_src, type_data::tk_array))
-			return true;
+		if (type_src == type_dst)
+			return true;	//Same type
+		else if (!_type_check_two_any(type_dst, type_src, type_data::tk_array))
+			return true;	//Different type, but neither is an array
+		/*
+		//This will also enforce array dimensions to be the same
+		//	for example,
+		//		let a = [1, 2];
+		//		a = [[1, 0], [3]];
+		//	will throw an error with this
 		else if (type_src->get_kind() == type_dst->get_kind()
 			&& (v_dst->length_as_array() == 0 || v_src->length_as_array() == 0))
-			return true;
+			return true;	//Either array is empty, and the members are of the same type
+		*/
+		else if (v_dst->length_as_array() == 0 || v_src->length_as_array() == 0)
+			return true;	//Either array is empty, dimensions ignored
+
 		{
 			std::string error = StringUtility::Format(
 				"Variable assignment cannot implicitly convert from \"%s\" to \"%s\".\r\n",
 				type_data::string_representation(type_src).c_str(),
 				type_data::string_representation(type_dst).c_str());
-			machine->raise_error(error);
+			if (machine) machine->raise_error(error);
+			else throw error;
 		}
 		return false;
 	}
