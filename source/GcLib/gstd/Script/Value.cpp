@@ -21,7 +21,7 @@ std::string type_data::string_representation(type_data* data) {
 	case type_kind::tk_array:
 	{
 		type_data* elem = data->get_element();
-		if (elem->get_kind() == type_kind::tk_char)
+		if (elem != nullptr && elem->get_kind() == type_kind::tk_char)
 			return "string";
 		return string_representation(elem) + "-array";
 	}
@@ -29,19 +29,16 @@ std::string type_data::string_representation(type_data* data) {
 	return "invalid";
 }
 bool type_data::operator==(const type_data& other) {
-	if (this->kind != other.kind) return false;
-
-	//Same element or both null
-	if (this->element == other.element) return true;
-	//Either null
-	else if (this->element == nullptr || other.element == nullptr) return false;
-
-	return (*this->element == *other.element);
+	if (kind != other.kind) return false;
+	if (element != nullptr && other.element != nullptr)
+		return (*element) == (*other.element);
+	return element == other.element;
 }
 bool type_data::operator<(const type_data& other) const {
 	if (kind != other.kind) return ((uint8_t)kind < (uint8_t)other.kind);
-	if (element == nullptr || other.element == nullptr) return false;
-	return (*element) < (*other.element);
+	if (element != nullptr && other.element != nullptr)
+		return (*element) < (*other.element);
+	return element == nullptr && other.element != nullptr;
 }
 
 value value::val_empty = value();
@@ -110,11 +107,8 @@ void value::append(type_data* t, const value& x) {
 }
 void value::concatenate(const value& x) {
 	unique();
-
-	if (length_as_array() == 0) data->type = x.data->type;
-	for (auto itr = x.data->array_value.begin(); itr != x.data->array_value.end(); ++itr) {
-		data->array_value.push_back(*itr);
-	}
+	if (data->type->get_element() == nullptr) data->type = x.data->type;
+	data->array_value.insert(array_get_end(), x.array_get_begin(), x.array_get_end());
 }
 
 void value::overwrite(const value& source) {
@@ -227,15 +221,14 @@ std::wstring value::as_string() const {
 	if (kind & type_data::tk_char)
 		return std::wstring(&data->char_value, 1);
 	if (kind & type_data::tk_array) {
+		std::wstring result = L"";
 		if (type_data* elem = data->type->get_element()) {
 			if (elem->get_kind() == type_data::type_kind::tk_char) {
-				std::wstring result = L"";
 				for (auto& iChar : data->array_value)
 					result += iChar.as_char();
-				return result;
 			}
 			else {
-				std::wstring result = L"[";
+				result = L"[";
 				auto itr = data->array_value.begin();
 				while (itr != data->array_value.end()) {
 					result += itr->as_string();
@@ -243,9 +236,10 @@ std::wstring value::as_string() const {
 					result += L",";
 				}
 				result += L"]";
-				return result;
 			}
 		}
+		else result = L"[]";
+		return result;
 	}
 	return L"(INVALID-TYPE)";
 }
