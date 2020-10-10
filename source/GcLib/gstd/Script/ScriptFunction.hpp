@@ -50,6 +50,10 @@ namespace gstd {
 
 		static value* _value_cast(value* val, type_data::type_kind kind);
 
+		static bool _index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index);
+		static bool _append_check(script_machine* machine, type_data* arg0_type, type_data* arg1_type);
+		static bool _append_check_no_convert(script_machine* machine, type_data* arg0_type, type_data* arg1_type);
+
 		//---------------------------------------------------------------------
 
 		static value _script_add(int argc, const value* argv);
@@ -76,13 +80,11 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(successor);
 		DNH_FUNCAPI_DECL_(length);
 
-		static bool _index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index);
 		static const value& index(script_machine* machine, int argc, const value* argv);
 
 		DNH_FUNCAPI_DECL_(slice);
 		DNH_FUNCAPI_DECL_(erase);
 
-		static bool _append_check(script_machine* machine, size_t arg0_size, type_data* arg0_type, type_data* arg1_type);
 		DNH_FUNCAPI_DECL_(append);
 		DNH_FUNCAPI_DECL_(concatenate);
 

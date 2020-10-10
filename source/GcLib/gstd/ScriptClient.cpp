@@ -821,10 +821,9 @@ void ScriptClientBase::SetArgumentValue(value v, int index) {
 
 value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
+	type_data* type_arr = typeManager->get_array_type(typeManager->get_string_type());
 
 	if (list.size() > 0) {
-		type_data* type_arr = typeManager->get_array_type(typeManager->get_string_type());
-
 		std::vector<value> res_arr;
 		res_arr.resize(list.size());
 		for (size_t iVal = 0U; iVal < list.size(); ++iVal) {
@@ -837,14 +836,13 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
 		return res;
 	}
 
-	return value(typeManager->get_string_type(), 0.0);
+	return value(type_arr, 0i64);
 }
 value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
+	type_data* type_arr = typeManager->get_array_type(typeManager->get_string_type());
 
 	if (list.size() > 0) {
-		type_data* type_arr = typeManager->get_array_type(typeManager->get_string_type());
-
 		std::vector<value> res_arr;
 		res_arr.resize(list.size());
 		for (size_t iVal = 0U; iVal < list.size(); ++iVal) {
@@ -857,7 +855,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) 
 		return res;
 	}
 
-	return value(typeManager->get_string_type(), 0.0);
+	return value(type_arr, 0i64);
 }
 value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
@@ -868,7 +866,7 @@ value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 		std::vector<value> res_arr;
 		res_arr.resize(list.size());
 		for (size_t iVal = 0U; iVal < list.size(); ++iVal) {
-			BaseFunction::_append_check(machine_, iVal, type_array, list[iVal].get_type());
+			BaseFunction::_append_check_no_convert(machine_, type_array, list[iVal].get_type());
 			res_arr[iVal] = list[iVal];
 		}
 
@@ -877,7 +875,7 @@ value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 		return res;
 	}
 
-	return value(typeManager->get_string_type(), 0.0);
+	return value(typeManager->get_null_array_type(), 0i64);
 }
 bool ScriptClientBase::IsRealValue(value& v) {
 	if (!v.has_data()) return false;
@@ -1984,7 +1982,7 @@ gstd::value ScriptCommonData::_ReadRecord(gstd::ByteBuffer& buffer) {
 			res.set(scriptTypeManager->get_array_type(v[0].get_type()), v);
 			return res;
 		}
-		return value(scriptTypeManager->get_string_type(), 0i64);
+		return value(scriptTypeManager->get_null_array_type(), 0i64);
 	}
 	}
 

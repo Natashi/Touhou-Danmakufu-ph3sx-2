@@ -699,7 +699,7 @@ continue_as_variadic:
 				state->AddCode(block, code(command_kind::pc_construct_array, count_member));
 			else
 				state->AddCode(block, code(command_kind::pc_push_value,
-					value(script_type_manager::get_string_type(), 0i64)));
+					value(script_type_manager::get_null_array_type(), 0i64)));
 
 			parser_assert(state, state->next() == token_kind::tk_close_bra, "\"]\" is required.\r\n");
 			state->advance();
@@ -2063,7 +2063,7 @@ continue_as_variadic:
 				code* ptrBack = &newCodes.back();
 				size_t sizeArray = iSrcCode->ip;
 				if (newCodes.size() >= sizeArray) {
-					type_data* arrayType = script_type_manager::get_string_type();
+					type_data* arrayType = nullptr;
 					value arrayVal;
 					
 					if (sizeArray > 0) {
@@ -2071,24 +2071,33 @@ continue_as_variadic:
 						listPtrVal.resize(sizeArray);
 
 						code* ptrCode = ptrBack - ((int)sizeArray - 1);
+						type_data* type_elem = nullptr;
 						{
 							if (ptrCode->command != command_kind::pc_push_value)
 								goto lab_opt_construct_array_cancel;
-							arrayType = script_type_manager::get_instance()->get_array_type(ptrCode->data.get_type());
+							type_elem = ptrCode->data.get_type();
+							arrayType = script_type_manager::get_instance()->get_array_type(type_elem);
 						}
 
 						for (size_t i = 0; i < sizeArray; ++i) {
 							if (ptrCode->command != command_kind::pc_push_value)
 								goto lab_opt_construct_array_cancel;
-							BaseFunction::_append_check(nullptr, 1U, arrayType, ptrCode->data.get_type());
-							listPtrVal[i] = ptrCode->data;
+							{
+								value appending = ptrCode->data;
+								BaseFunction::_append_check(nullptr, arrayType, appending.get_type());
+								if (appending.get_type()->get_kind() != type_elem->get_kind()) {
+									appending.unique();
+									BaseFunction::_value_cast(&appending, type_elem->get_kind());
+								}
+								listPtrVal[i] = appending;
+							}
 							++ptrCode;
 						}
 
 						arrayVal.set(arrayType, listPtrVal);
 					}
 					else {
-						arrayVal = value(script_type_manager::get_string_type(), 0i64);
+						arrayVal = value(script_type_manager::get_null_array_type(), 0i64);
 					}
 
 					for (size_t i = 0; i < sizeArray; ++i) {

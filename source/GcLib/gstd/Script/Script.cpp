@@ -17,6 +17,9 @@ script_type_manager::script_type_manager() {
 	real_type = deref_itr(types.insert(type_data(type_data::tk_real)).first);
 	char_type = deref_itr(types.insert(type_data(type_data::tk_char)).first);
 	boolean_type = deref_itr(types.insert(type_data(type_data::tk_boolean)).first);
+
+	null_array_type = deref_itr(types.insert(type_data(type_data::tk_array)).first);
+
 	string_type = deref_itr(types.insert(type_data(type_data::tk_array,
 		char_type)).first);		//Char array (string)
 	int_array_type = deref_itr(types.insert(type_data(type_data::tk_array,
@@ -518,7 +521,7 @@ void script_machine::run_code() {
 			case command_kind::pc_construct_array:
 			{
 				if (c->ip == 0U) {
-					current->stack.push_back(value(script_type_manager::get_string_type(), 0.0));
+					current->stack.push_back(value(script_type_manager::get_null_array_type(), 0i64));
 					break;
 				}
 
@@ -527,12 +530,20 @@ void script_machine::run_code() {
 
 				value* val_ptr = &current->stack.back() - c->ip + 1;
 
-				type_data* type_arr = script_type_manager::get_instance()->get_array_type(val_ptr->get_type());
+				type_data* type_elem = val_ptr->get_type();
+				type_data* type_arr = script_type_manager::get_instance()->get_array_type(type_elem);
 
 				value res;
 				for (size_t iVal = 0U; iVal < c->ip; ++iVal, ++val_ptr) {
-					BaseFunction::_append_check(this, iVal, type_arr, val_ptr->get_type());
-					res_arr[iVal] = *val_ptr;
+					BaseFunction::_append_check(this, type_arr, val_ptr->get_type());
+					{
+						value appending = *val_ptr;
+						if (appending.get_type()->get_kind() != type_elem->get_kind()) {
+							appending.unique();
+							BaseFunction::_value_cast(&appending, type_elem->get_kind());
+						}
+						res_arr[iVal] = appending;
+					}
 				}
 				res.set(type_arr, res_arr);
 

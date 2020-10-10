@@ -293,10 +293,9 @@ namespace gstd {
 	}
 	template<typename T>
 	value ScriptClientBase::CreateRealArrayValue(T* ptrList, size_t count) {
+		type_data* type_real = script_type_manager::get_real_type();
+		type_data* type_arr = script_type_manager::get_real_array_type();
 		if (ptrList && count > 0) {
-			type_data* type_real = script_type_manager::get_real_type();
-			type_data* type_arr = script_type_manager::get_real_array_type();
-
 			std::vector<value> res_arr;
 			res_arr.resize(count);
 			for (size_t iVal = 0U; iVal < count; ++iVal) {
@@ -307,14 +306,13 @@ namespace gstd {
 			res.set(type_arr, res_arr);
 			return res;
 		}
-		return value(script_type_manager::get_string_type(), 0.0);
+		return value(type_arr, 0i64);
 	}
 	template<typename T>
 	value ScriptClientBase::CreateIntArrayValue(T* ptrList, size_t count) {
+		type_data* type_int = script_type_manager::get_int_type();
+		type_data* type_arr = script_type_manager::get_int_array_type();
 		if (ptrList && count > 0) {
-			type_data* type_int = script_type_manager::get_int_type();
-			type_data* type_arr = script_type_manager::get_int_array_type();
-
 			std::vector<value> res_arr;
 			res_arr.resize(count);
 			for (size_t iVal = 0U; iVal < count; ++iVal) {
@@ -325,7 +323,7 @@ namespace gstd {
 			res.set(type_arr, res_arr);
 			return res;
 		}
-		return value(script_type_manager::get_string_type(), 0.0);
+		return value(type_arr, 0i64);
 	}
 #pragma endregion ScriptClientBase_impl
 

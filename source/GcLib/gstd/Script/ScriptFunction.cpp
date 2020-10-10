@@ -63,6 +63,13 @@ namespace gstd {
 		}
 		return false;
 	}
+	static inline bool _type_check_two_all(type_data* type_l, type_data* type_r, uint8_t type) {
+		if (type_l != nullptr && type_r != nullptr) {
+			uint8_t type_combine = (uint8_t)type_l->get_kind() & (uint8_t)type_r->get_kind();
+			return (type_combine & type) != 0;
+		}
+		return false;
+	}
 	static inline const bool _is_force_convert_real(type_data* type) {
 		return type->get_kind() & (type_data::tk_real | type_data::tk_array);
 	}
@@ -78,8 +85,10 @@ namespace gstd {
 	type_data::type_kind BaseFunction::_type_test_promotion(type_data* type_l, type_data* type_r) {
 		uint8_t kind_l = type_l->get_kind();
 		uint8_t kind_r = type_r->get_kind();
-		uint8_t type_combine = kind_l | kind_r;
+		if (kind_l == kind_r) return (type_data::type_kind)kind_l;
+
 		//In order of highest->lowest priority
+		uint8_t type_combine = kind_l | kind_r;
 		if (type_combine & (uint8_t)type_data::tk_array)
 			return kind_l == kind_r ? type_data::tk_array : type_data::tk_null;
 		else if (type_combine & (uint8_t)type_data::tk_real)
@@ -101,18 +110,9 @@ namespace gstd {
 			return true;	//Same type
 		else if (!_type_check_two_any(type_dst, type_src, type_data::tk_array))
 			return true;	//Different type, but neither is an array
-		/*
-		//This will also enforce array dimensions to be the same
-		//	for example,
-		//		let a = [1, 2];
-		//		a = [[1, 0], [3]];
-		//	will throw an error with this
 		else if (type_src->get_kind() == type_dst->get_kind()
-			&& (v_dst->length_as_array() == 0 || v_src->length_as_array() == 0))
-			return true;	//Either array is empty, and the members are of the same type
-		*/
-		else if (v_dst->length_as_array() == 0 || v_src->length_as_array() == 0)
-			return true;	//Either array is empty, dimensions ignored
+			&& (type_src->get_element() == nullptr || type_dst->get_element() == nullptr))
+			return true;	//Both are arrays, and one is empty
 
 		{
 			std::string error = StringUtility::Format(
@@ -184,10 +184,59 @@ namespace gstd {
 		return val;
 	}
 
+	bool BaseFunction::_index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index) {
+		if (arg0_type->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, arg0_type, "array index");
+			return false;
+		}
+		if (index < 0 || index >= arg0_size) {
+			std::string error = StringUtility::Format("Array index out of bounds. (indexing=%d, size=%u)\r\n",
+				index, arg0_size);
+			if (machine) machine->raise_error(error);
+			else throw error;
+			return false;
+		}
+		return true;
+	}
+
+	bool BaseFunction::_append_check(script_machine* machine, type_data* arg0_type, type_data* arg1_type) {
+		if (arg0_type->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, arg0_type, "array append");
+			return false;
+		}
+		type_data* elem = arg0_type->get_element();
+		if (elem != nullptr && _type_test_promotion(elem, arg1_type) == type_data::tk_null) {
+			std::string error = StringUtility::Format(
+				"Array append cannot implicitly convert from \"%s\" to \"%s\".\r\n",
+				type_data::string_representation(elem).c_str(),
+				type_data::string_representation(arg1_type).c_str());
+			if (machine) machine->raise_error(error);
+			else throw error;
+			return false;
+		}
+		return true;
+	}
+	bool BaseFunction::_append_check_no_convert(script_machine* machine, type_data* arg0_type, type_data* arg1_type) {
+		if (arg0_type->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, arg0_type, "array append");
+			return false;
+		}
+		type_data* elem = arg0_type->get_element();
+		if (elem != nullptr && elem != arg1_type) {
+			std::string error = StringUtility::Format("Value type does not match. (%s ~ [%s])\r\n",
+				type_data::string_representation(arg0_type).c_str(),
+				type_data::string_representation(arg1_type).c_str());
+			if (machine) machine->raise_error(error);
+			else throw error;
+			return false;
+		}
+		return true;
+	}
+
 	//-------------------------------------------------------------------------------------------
 
 	value BaseFunction::_script_add(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::tk_array)
+		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_add);
 		else {
 			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
@@ -199,7 +248,7 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(add);
 
 	value BaseFunction::_script_subtract(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::tk_array)
+		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_subtract);
 		else {
 			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
@@ -211,7 +260,7 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(subtract);
 
 	value BaseFunction::_script_multiply(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::tk_array)
+		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_multiply);
 		else {
 			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
@@ -223,7 +272,7 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(multiply);
 
 	value BaseFunction::_script_divide(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::tk_array)
+		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_divide);
 		else {
 			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
@@ -235,7 +284,7 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(divide);
 
 	value BaseFunction::_script_remainder_(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::tk_array)
+		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_remainder_);
 		else {
 			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
@@ -267,7 +316,7 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(negative);
 
 	value BaseFunction::_script_power(int argc, const value* argv) {
-		if (argv->get_type()->get_kind() == type_data::tk_array)
+		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_power);
 		else {
 			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
@@ -424,20 +473,6 @@ namespace gstd {
 		return value(script_type_manager::get_int_type(), (int64_t)argv->length_as_array());
 	}
 
-	bool BaseFunction::_index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index) {
-		if (arg0_type->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, arg0_type, "array index");
-			return false;
-		}
-		if (index < 0 || index >= arg0_size) {
-			std::string error = StringUtility::Format("Array index out of bounds. (indexing=%d, size=%u)\r\n",
-				index, arg0_size);
-			if (machine) machine->raise_error(error);
-			else throw error;
-			return false;
-		}
-		return true;
-	}
 	const value& BaseFunction::index(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 2);
 
@@ -451,19 +486,20 @@ namespace gstd {
 	value BaseFunction::slice(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 3);
 
-		if (argv->get_type()->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, argv->get_type(), "array slice");
+		if (argv[0].get_type()->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, argv[0].get_type(), "array slice");
 			return value();
 		}
 
-		size_t index_1 = argv[1].as_real();
-		size_t index_2 = argv[2].as_real();
+		size_t length = argv[0].length_as_array();
+		int index_1 = argv[1].as_int();
+		int index_2 = argv[2].as_int();
 
-		if ((index_2 > index_1 && (index_1 < 0 || index_2 > argv->length_as_array()))
-			|| (index_2 < index_1 && (index_2 < 0 || index_1 > argv->length_as_array()))) 
+		if ((index_2 > index_1 && (index_1 < 0 || index_2 > length))
+			|| (index_2 < index_1 && (index_2 < 0 || index_1 > length)))
 		{
 			std::string error = StringUtility::Format("Array index out of bounds. (slicing=(%d, %d), size=%u)\r\n",
-				index_1, index_2, argv->length_as_array());
+				index_1, index_2, length);
 			machine->raise_error(error);
 			return value();
 		}
@@ -474,27 +510,27 @@ namespace gstd {
 		if (index_2 > index_1) {
 			resArr.resize(index_2 - index_1);
 			for (size_t i = index_1, j = 0; i < index_2; ++i, ++j)
-				resArr[j] = argv->index_as_array(i);
+				resArr[j] = argv[0].index_as_array(i);
 		}
 		else if (index_1 > index_2) {
 			resArr.resize(index_1 - index_2);
 			for (size_t i = 0, j = index_1 - 1; i < index_1 - index_2; ++i, --j)
-				resArr[i] = argv->index_as_array(j);
+				resArr[i] = argv[0].index_as_array(j);
 		}
 
-		result.set(argv->get_type(), resArr);
+		result.set(argv[0].get_type(), resArr);
 		return result;
 	}
 	value BaseFunction::erase(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 2);
 
-		if (argv->get_type()->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, argv->get_type(), "array erase");
+		if (argv[0].get_type()->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, argv[0].get_type(), "array erase");
 			return value();
 		}
 
+		size_t length = argv[0].length_as_array();
 		int index_1 = argv[1].as_int();
-		size_t length = argv->length_as_array();
 
 		if (index_1 < 0 || index_1 >= length) {
 			std::string error = StringUtility::Format("Array index out of bounds. (erasing=%d, size=%u)\r\n",
@@ -509,52 +545,50 @@ namespace gstd {
 		{
 			size_t iArr = 0;
 			for (size_t i = 0; i < index_1; ++i) {
-				resArr[iArr++] = argv->index_as_array(i);
+				resArr[iArr++] = argv[0].index_as_array(i);
 			}
 			for (size_t i = index_1 + 1; i < length; ++i) {
-				resArr[iArr++] = argv->index_as_array(i);
+				resArr[iArr++] = argv[0].index_as_array(i);
 			}
 		}
-		result.set(argv->get_type(), resArr);
+		result.set(argv[0].get_type(), resArr);
 		return result;
 	}
 
-	bool BaseFunction::_append_check(script_machine* machine, size_t arg0_size, type_data* arg0_type, type_data* arg1_type) {
-		if (arg0_type->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, arg0_type, "array append");
-			return false;
-		}
-		if (arg0_size > 0U && arg0_type->get_element() != arg1_type) {
-			std::string error = StringUtility::Format("Value type does not match. (%s ~ [%s])\r\n",
-				type_data::string_representation(arg0_type).c_str(),
-				type_data::string_representation(arg1_type).c_str());
-			if (machine) machine->raise_error(error);
-			else throw error;
-			return false;
-		}
-		return true;
-	}
 	value BaseFunction::append(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 2);
 
-		_append_check(machine, argv->length_as_array(), argv->get_type(), argv[1].get_type());
-
+		type_data* type_array = argv[0].get_type();
+		type_data* type_appending = argv[1].get_type();
 		value result = argv[0];
-		result.append(script_type_manager::get_instance()->get_array_type(argv[1].get_type()), argv[1]);
+
+		_append_check(machine, type_array, type_appending);
+		type_data* type_target = type_array->get_element() == nullptr ?
+			script_type_manager::get_instance()->get_array_type(type_appending) : type_array;
+		{
+			value appending = argv[1];
+			if (appending.get_type()->get_kind() != type_target->get_element()->get_kind()) {
+				appending.unique();
+				BaseFunction::_value_cast(&appending, type_target->get_element()->get_kind());
+			}
+			result.append(type_target, appending);
+		}
 		return result;
 	}
 	value BaseFunction::concatenate(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 2);
 
-		if (!_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_array)) {
-			_raise_error_unsupported(machine, argv->get_type(), "array concatenate");
+		type_data* type_l = argv[0].get_type();
+		type_data* type_r = argv[1].get_type();
+		if (type_l->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, type_l, "array concatenate");
 			return value();
 		}
 
-		if (argv[0].length_as_array() > 0 && argv[1].length_as_array() > 0 && argv[0].get_type() != argv[1].get_type()) {
+		if (type_l != type_r && !(type_l->get_element() == nullptr || type_r->get_element() == nullptr)) {
 			std::string error = StringUtility::Format("Value type does not match. (%s ~ %s)\r\n",
-				type_data::string_representation(argv[0].get_type()).c_str(),
-				type_data::string_representation(argv[1].get_type()).c_str());
+				type_data::string_representation(type_l).c_str(),
+				type_data::string_representation(type_r).c_str());
 			machine->raise_error(error);
 			return value();
 		}
