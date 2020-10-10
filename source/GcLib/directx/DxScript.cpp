@@ -2365,7 +2365,7 @@ value DxScript::Func_ObjRender_GetColor(script_machine* machine, int argc, const
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) color = obj->color_;
 
-	return script->CreateRealArrayValue(reinterpret_cast<byte*>(color) + 1, 3U);
+	return script->CreateRealArrayValue(reinterpret_cast<byte*>(&color) + 1, 3U);
 }
 value DxScript::Func_ObjRender_SetAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2622,10 +2622,8 @@ value DxScript::Func_ObjRender_SetLightingDiffuseColor(gstd::script_machine* mac
 				color.b = (float)argv[3].as_real() / 255.0f;
 			}
 			else {
-				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int());
-				color.r = colorNorm.y;
-				color.g = colorNorm.z;
-				color.b = colorNorm.w;
+				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int(), ColorAccess::PERMUTE_RGBA);
+				memcpy(&color, &colorNorm, sizeof(FLOAT) * 3U);
 			}
 			objLight->SetColorDiffuse(color);
 		}
@@ -2647,10 +2645,8 @@ value DxScript::Func_ObjRender_SetLightingSpecularColor(gstd::script_machine* ma
 				color.b = (float)argv[3].as_real() / 255.0f;
 			}
 			else {
-				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int());
-				color.r = colorNorm.y;
-				color.g = colorNorm.z;
-				color.b = colorNorm.w;
+				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int(), ColorAccess::PERMUTE_RGBA);
+				memcpy(&color, &colorNorm, sizeof(FLOAT) * 3U);
 			}
 			objLight->SetColorSpecular(color);
 		}
@@ -2672,10 +2668,8 @@ value DxScript::Func_ObjRender_SetLightingAmbientColor(gstd::script_machine* mac
 				color.b = (float)argv[3].as_real() / 255.0f;
 			}
 			else {
-				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int());
-				color.r = colorNorm.y;
-				color.g = colorNorm.z;
-				color.b = colorNorm.w;
+				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int(), ColorAccess::PERMUTE_RGBA);
+				memcpy(&color, &colorNorm, sizeof(FLOAT) * 3U);
 			}
 			objLight->SetColorAmbient(color);
 		}
@@ -3080,7 +3074,7 @@ value DxScript::Func_ObjPrimitive_GetVertexColor(script_machine* machine, int ar
 	DxScriptPrimitiveObject* obj = dynamic_cast<DxScriptPrimitiveObject*>(script->GetObjectPointer(id));
 	if (obj) color = obj->GetVertexColor(index);
 
-	return script->CreateRealArrayValue(reinterpret_cast<byte*>(color) + 1, 3U);
+	return script->CreateRealArrayValue(reinterpret_cast<byte*>(&color) + 1, 3U);
 }
 value DxScript::Func_ObjPrimitive_GetVertexAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
