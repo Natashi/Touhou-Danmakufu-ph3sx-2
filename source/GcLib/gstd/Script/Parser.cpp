@@ -731,11 +731,11 @@ continue_as_variadic:
 		else {
 			while (state->next() == token_kind::tk_open_bra) {
 				state->advance();
-				parse_expression(block, state);
+				parse_ternary(block, state);
 
 				if (state->next() == token_kind::tk_range) {
 					state->advance();
-					parse_expression(block, state);
+					parse_ternary(block, state);
 					write_operation(block, state, "slice", 3);
 				}
 				else {
@@ -879,7 +879,8 @@ continue_as_variadic:
 	void parser::parse_logic(script_block* block, parser_state_t* state) {
 		parse_bitwise(block, state);
 
-		size_t iter = 0x80000000;
+		size_t base_hash = ((size_t)block ^ 0x45f60e21u) + ((size_t)state ^ 0xce189a9bu) + state->ip * 0x56d3;
+		size_t iter = 0x80000000 + (std::_Hash_array_representation((byte*)&base_hash, 4U) & 0x04ffffff);
 		while (state->next() == token_kind::tk_logic_and || state->next() == token_kind::tk_logic_or) {
 			command_kind cmdLogic = (state->next() == token_kind::tk_logic_and) ?
 				command_kind::pc_inline_logic_and : command_kind::pc_inline_logic_or;
@@ -2100,11 +2101,10 @@ continue_as_variadic:
 						arrayVal = value(script_type_manager::get_null_array_type(), 0i64);
 					}
 
-					for (size_t i = 0; i < sizeArray; ++i) {
+					for (size_t i = 0; i < sizeArray; ++i)
 						newCodes.pop_back();
-						--(state->ip);
-					}
 					newCodes.push_back(code(iSrcCode->line, command_kind::pc_push_value, arrayVal));
+					state->ip -= sizeArray;
 				}
 				else {
 lab_opt_construct_array_cancel:
