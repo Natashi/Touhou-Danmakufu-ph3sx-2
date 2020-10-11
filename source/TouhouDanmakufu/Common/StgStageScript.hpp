@@ -207,6 +207,7 @@ public:
 	static gstd::value Func_SetPlayerRebirthFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetPlayerRebirthLossFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetPlayerAutoItemCollectLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_GetPlayerAutoItemCollectLine);
 	template<void (StgPlayerObject::*Func)(bool)>
 	DNH_FUNCAPI_DECL_(Func_SetPlayerInfoAsBool);
 	template<double (StgPlayerObject::*Func)(void), int DEF>
@@ -214,7 +215,6 @@ public:
 	template<int (StgPlayerObject::*Func)(void), int DEF>
 	DNH_FUNCAPI_DECL_(Func_GetPlayerInfoAsInt);
 	/*
-	DNH_FUNCAPI_DECL_(Func_GetPlayerAutoItemCollectLine);
 	static gstd::value Func_SetForbidPlayerShot(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetForbidPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerX(gstd::script_machine* machine, int argc, const gstd::value* argv);

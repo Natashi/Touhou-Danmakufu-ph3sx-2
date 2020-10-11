@@ -277,7 +277,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "SetPlayerRebirthFrame", StgStageScript::Func_SetPlayerRebirthFrame, 1 },
 	{ "SetPlayerRebirthLossFrame", StgStageScript::Func_SetPlayerRebirthLossFrame, 1 },
 	{ "SetPlayerAutoItemCollectLine", StgStageScript::Func_SetPlayerAutoItemCollectLine, 1 },
-	{ "GetPlayerAutoItemCollectLine", StgStageScript::Func_GetPlayerInfoAsInt<&StgPlayerObject::GetAutoItemCollectY, -1>, 0 },
+	{ "GetPlayerAutoItemCollectLine", StgStageScript::Func_GetPlayerAutoItemCollectLine, 0 },
 	{ "SetForbidPlayerShot", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetForbidShot>, 1 },
 	{ "SetForbidPlayerSpell", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetForbidSpell>, 1 },
 	{ "GetPlayerX", StgStageScript::Func_GetPlayerInfoAsDbl<&StgPlayerObject::GetX, 0>, 0 },
@@ -1015,6 +1015,12 @@ gstd::value StgStageScript::Func_SetPlayerAutoItemCollectLine(gstd::script_machi
 		obj->SetAutoItemCollectY(posY);
 	}
 	return value();
+}
+gstd::value StgStageScript::Func_GetPlayerAutoItemCollectLine(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	shared_ptr<StgPlayerObject> obj = script->stageController_->GetPlayerObject();
+	int posY = obj ? obj->GetAutoItemCollectY() : -1;
+	return script->CreateRealValue(posY);
 }
 gstd::value StgStageScript::Func_SetPlayerItemScope(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
