@@ -49,6 +49,28 @@ namespace gstd {
 	}
 
 	//================================================================
+	//VersionUtility
+	class VersionUtility {
+	public:
+		static inline uint64_t ExtractMajor(uint64_t target) {
+			return (target >> 48) & 0xffff;
+		}
+		static inline uint64_t ExtractMinor(uint64_t target) {
+			return (target >> 32) & 0xffff;
+		}
+		static inline uint64_t ExtractMicro(uint64_t target) {
+			return (target >> 16) & 0xffff;
+		}
+		static inline uint64_t ExtractRevision(uint64_t target) {
+			return target & 0xffff;
+		}
+		//Should ensure compatibility if version's [reserved], [major], and [minor] match target's
+		static inline const bool IsDataBackwardsCompatible(uint32_t target, uint32_t version) {
+			return ((version ^ target) >> 16) == 0;
+		}
+	};
+
+	//================================================================
 	//Encoding
 	class Encoding {
 		//http://msdn.microsoft.com/ja-jp/library/system.text.encoding(v=vs.110).aspx
