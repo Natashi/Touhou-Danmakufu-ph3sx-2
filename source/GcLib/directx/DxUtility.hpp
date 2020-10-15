@@ -5,6 +5,7 @@
 #include "DxConstant.hpp"
 
 namespace directx {
+#if defined(DNH_PROJ_EXECUTOR)
 	/**********************************************************
 	//ColorAccess
 	**********************************************************/
@@ -137,6 +138,7 @@ namespace directx {
 		static void TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVECTOR2* angle, 
 			D3DXVECTOR2* position, D3DXVECTOR2* textureSize);
 	};
+#endif
 }
 
 

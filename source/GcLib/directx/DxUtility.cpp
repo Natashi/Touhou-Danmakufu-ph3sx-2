@@ -5,6 +5,8 @@
 using namespace gstd;
 using namespace directx;
 
+#if defined(DNH_PROJ_EXECUTOR)
+
 /**********************************************************
 //ColorAccess
 **********************************************************/
@@ -680,3 +682,5 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 	}
 #endif
 }
+
+#endif
