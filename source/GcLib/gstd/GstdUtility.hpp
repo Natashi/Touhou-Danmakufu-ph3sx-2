@@ -65,7 +65,7 @@ namespace gstd {
 			return target & 0xffff;
 		}
 		//Should ensure compatibility if version's [reserved], [major], and [minor] match target's
-		static inline const bool IsDataBackwardsCompatible(uint32_t target, uint32_t version) {
+		static inline const bool IsDataBackwardsCompatible(uint64_t target, uint64_t version) {
 			return ((version ^ target) >> 16) == 0;
 		}
 	};

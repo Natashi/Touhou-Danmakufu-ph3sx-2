@@ -278,13 +278,13 @@ gstd::value StgPackageScript::Func_SetStageReplayFile(gstd::script_machine* mach
 	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
 
 	std::wstring pathReplay = argv[0].as_string();
-	ref_count_ptr<ReplayInformation> infoRepray =
+	ref_count_ptr<ReplayInformation> infoReplay =
 		ReplayInformation::CreateFromFile(pathReplay);
-	if (infoRepray == nullptr) {
+	if (infoReplay == nullptr) {
 		std::wstring path = ErrorUtility::GetFileNotFoundErrorMessage(pathReplay, true);
 		script->RaiseError(L"SetStageReplayFile: " + path);
 	}
-	infoPackage->SetReplayInformation(infoRepray);
+	infoPackage->SetReplayInformation(infoReplay);
 	return value();
 }
 gstd::value StgPackageScript::Func_GetStageSceneState(gstd::script_machine* machine, int argc, const gstd::value* argv) {

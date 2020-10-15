@@ -200,7 +200,8 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* ma
 
 		RecordBuffer record;
 		commonData->WriteRecord(record);
-		res = record.WriteToFile(pathSave);
+		res = record.WriteToFile(pathSave, GAME_VERSION_NUM, 
+			ScriptCommonData::HEADER_SAVED_DATA, ScriptCommonData::HEADER_SAVED_DATA_SIZE);
 	}
 
 	return script->CreateBooleanValue(res);
@@ -219,7 +220,8 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* ma
 	std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
 
 	RecordBuffer record;
-	res = record.ReadFromFile(pathSave);
+	res = record.ReadFromFile(pathSave, GAME_VERSION_NUM, 
+		ScriptCommonData::HEADER_SAVED_DATA, ScriptCommonData::HEADER_SAVED_DATA_SIZE);
 	if (res) {
 		shared_ptr<ScriptCommonData> commonData(new ScriptCommonData());
 		commonData->ReadRecord(record);
@@ -247,7 +249,8 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA2(gstd::script_machine* ma
 
 		RecordBuffer record;
 		commonData->WriteRecord(record);
-		res = record.WriteToFile(pathSave);
+		res = record.WriteToFile(pathSave, GAME_VERSION_NUM, 
+			ScriptCommonData::HEADER_SAVED_DATA, ScriptCommonData::HEADER_SAVED_DATA_SIZE);
 	}
 
 	return script->CreateBooleanValue(res);
@@ -263,7 +266,8 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA2(gstd::script_machine* ma
 
 	std::wstring pathSave = argv[1].as_string();
 	RecordBuffer record;
-	res = record.ReadFromFile(pathSave);
+	res = record.ReadFromFile(pathSave, GAME_VERSION_NUM, 
+		ScriptCommonData::HEADER_SAVED_DATA, ScriptCommonData::HEADER_SAVED_DATA_SIZE);
 	if (res) {
 		shared_ptr<ScriptCommonData> commonData(new ScriptCommonData());
 		commonData->ReadRecord(record);

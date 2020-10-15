@@ -354,6 +354,9 @@ namespace gstd {
 	//ScriptCommonData
 	**********************************************************/
 	class ScriptCommonData {
+	public:
+		static constexpr const char* HEADER_SAVED_DATA = "DNHCDR\0\0";
+		static constexpr size_t HEADER_SAVED_DATA_SIZE = 8U;
 	protected:
 		std::map<std::string, gstd::value> mapValue_;
 

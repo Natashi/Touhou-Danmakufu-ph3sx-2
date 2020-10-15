@@ -17,8 +17,6 @@ public:
 		INDEX_USER = 100,
 	};
 
-	static const std::string REC_HEADER;
-
 	class StageData;
 private:
 	std::wstring path_;

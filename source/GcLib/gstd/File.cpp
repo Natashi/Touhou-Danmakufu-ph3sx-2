@@ -807,30 +807,25 @@ bool ManagedFileReader::IsCompressed() {
 //RecordEntry
 **********************************************************/
 RecordEntry::RecordEntry() {
-	type_ = TYPE_UNKNOWN;
 }
 RecordEntry::~RecordEntry() {
-
 }
 size_t RecordEntry::_GetEntryRecordSize() {
 	size_t res = 0;
-	res += sizeof(char);
 	res += sizeof(uint32_t);
 	res += key_.size();
 	res += sizeof(uint32_t);
 	res += buffer_.GetSize();
 	return res;
 }
-void RecordEntry::_WriteEntryRecord(Writer &writer) {
-	writer.WriteCharacter(type_);
+void RecordEntry::_WriteEntryRecord(Writer& writer) {
 	writer.WriteValue<uint32_t>(key_.size());
 	writer.Write(&key_[0], key_.size());
 
 	writer.WriteValue<uint32_t>(buffer_.GetSize());
 	writer.Write(buffer_.GetPointer(), buffer_.GetSize());
 }
-void RecordEntry::_ReadEntryRecord(Reader &reader) {
-	type_ = reader.ReadCharacter();
+void RecordEntry::_ReadEntryRecord(Reader& reader) {
 	key_.resize(reader.ReadValue<uint32_t>());
 	reader.Read(&key_[0], key_.size());
 
@@ -889,38 +884,47 @@ void RecordBuffer::Read(Reader& reader) {
 		mapEntry_[key] = entry;
 	}
 }
-bool RecordBuffer::WriteToFile(const std::wstring& path, std::string header) {
+bool RecordBuffer::WriteToFile(const std::wstring& path, uint64_t version, const char* header, size_t headerSize) {
 	File file(path);
-	if (!file.Open(File::AccessType::WRITEONLY)) return false;
+	if (!file.Open(File::AccessType::WRITEONLY))
+		return false;
 
-	file.Write((char*)&header[0], header.size());
+	file.Write((LPVOID)header, headerSize);
+	file.Write(&version, sizeof(uint64_t));
 	Write(file);
 	file.Close();
 
 	return true;
 }
-bool RecordBuffer::ReadFromFile(const std::wstring& path, std::string header) {
+bool RecordBuffer::ReadFromFile(const std::wstring& path, uint64_t version, const char* header, size_t headerSize) {
 	File file(path);
-	if (!file.Open()) return false;
+	if (!file.Open())
+		return false;
 
-	std::string fHead;
-	fHead.resize(header.size());
-	file.Read(&fHead[0], fHead.size());
-	if (fHead != header) return false;
+	if (file.GetSize() < headerSize + sizeof(uint64_t))
+		return false;
 
+	{
+		std::unique_ptr<char> fHead(new char[headerSize]);
+		file.Read(fHead.get(), headerSize);
+		if (memcmp(fHead.get(), header, headerSize) != 0)
+			return false;
+	}
+	{
+		uint64_t fVersion;
+		file.Read(&fVersion, sizeof(uint64_t));
+		if (!VersionUtility::IsDataBackwardsCompatible(version, fVersion))
+			return false;
+	}
 	Read(file);
 	file.Close();
 
 	return true;
 }
-int RecordBuffer::GetEntryType(const std::string& key) {
-	auto itr = mapEntry_.find(key);
-	if (itr == mapEntry_.end()) return RecordEntry::TYPE_NOENTRY;
-	return itr->second->GetType();
-}
+
 size_t RecordBuffer::GetEntrySize(const std::string& key) {
 	auto itr = mapEntry_.find(key);
-	if (itr == mapEntry_.end()) return 0;
+	if (itr == mapEntry_.end()) return 0U;
 	ByteBuffer& buffer = itr->second->GetBufferRef();
 	return buffer.GetSize();
 }
@@ -932,70 +936,23 @@ bool RecordBuffer::GetRecord(const std::string& key, LPVOID buf, DWORD size) {
 	buffer.Read(buf, size);
 	return true;
 }
-bool RecordBuffer::GetRecordAsBoolean(const std::string& key, bool def) {
-	bool res = def;
-	GetRecord(key, res);
-	return res;
-}
-int RecordBuffer::GetRecordAsInteger(const std::string& key, int def) {
-	int res = def;
-	GetRecord(key, res);
-	return res;
-}
-float RecordBuffer::GetRecordAsFloat(const std::string& key, float def) {
-	float res = def;
-	GetRecord(key, res);
-	return res;
-}
-double RecordBuffer::GetRecordAsDouble(const std::string& key, double def) {
-	double res = def;
-	GetRecord(key, res);
-	return res;
-}
 std::string RecordBuffer::GetRecordAsStringA(const std::string& key) {
 	auto itr = mapEntry_.find(key);
 	if (itr == mapEntry_.end()) return "";
 
-	std::string res;
 	shared_ptr<RecordEntry>& entry = itr->second;
-	int type = entry->GetType();
 	ByteBuffer& buffer = entry->GetBufferRef();
 	buffer.Seek(0);
-	if (type == RecordEntry::TYPE_STRING_A) {
-		res.resize(buffer.GetSize());
-		buffer.Read(&res[0], buffer.GetSize());
-	}
-	else if (type == RecordEntry::TYPE_STRING_W) {
-		std::wstring wstr;
-		wstr.resize(buffer.GetSize() / sizeof(wchar_t));
-		buffer.Read(&wstr[0], buffer.GetSize());
-		res = StringUtility::ConvertWideToMulti(wstr);
-	}
+
+	std::string res;
+	res.resize(buffer.GetSize());
+	buffer.Read(&res[0], buffer.GetSize());
 
 	return res;
 }
 std::wstring RecordBuffer::GetRecordAsStringW(const std::string& key) {
-	auto itr = mapEntry_.find(key);
-	if (itr == mapEntry_.end()) return L"";
-
-	std::wstring res;
-	shared_ptr<RecordEntry>& entry = itr->second;
-	int type = entry->GetType();
-	ByteBuffer& buffer = entry->GetBufferRef();
-	buffer.Seek(0);
-	if (type == RecordEntry::TYPE_STRING_A) {
-		std::string str;
-		str.resize(buffer.GetSize());
-		buffer.Read(&str[0], buffer.GetSize());
-
-		res = StringUtility::ConvertMultiToWide(str);
-	}
-	else if (type == RecordEntry::TYPE_STRING_W) {
-		res.resize(buffer.GetSize() / sizeof(wchar_t));
-		buffer.Read(&res[0], buffer.GetSize());
-	}
-
-	return res;
+	std::string mbstr = GetRecordAsStringA(key);
+	return StringUtility::ConvertMultiToWide(mbstr);
 }
 bool RecordBuffer::GetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record) {
 	auto itr = mapEntry_.find(key);
@@ -1005,9 +962,8 @@ bool RecordBuffer::GetRecordAsRecordBuffer(const std::string& key, RecordBuffer&
 	record.Read(buffer);
 	return true;
 }
-void RecordBuffer::SetRecord(int type, const std::string& key, LPVOID buf, DWORD size) {
+void RecordBuffer::SetRecord(const std::string& key, LPVOID buf, DWORD size) {
 	shared_ptr<RecordEntry> entry(new RecordEntry());
-	entry->SetType((char)type);
 	entry->SetKey(key);
 	ByteBuffer& buffer = entry->GetBufferRef();
 	buffer.SetSize(size);
@@ -1016,7 +972,6 @@ void RecordBuffer::SetRecord(int type, const std::string& key, LPVOID buf, DWORD
 }
 void RecordBuffer::SetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record) {
 	shared_ptr<RecordEntry> entry(new RecordEntry());
-	entry->SetType((char)RecordEntry::TYPE_RECORD);
 	entry->SetKey(key);
 	ByteBuffer& buffer = entry->GetBufferRef();
 	record.Write(buffer);

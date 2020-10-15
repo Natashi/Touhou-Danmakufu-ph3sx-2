@@ -261,7 +261,7 @@ void DevicePanel::ReadConfiguration() {
 		break;
 	}
 
-	SendDlgItemMessage(hWnd_, (config->modeColor_ == DirectGraphicsConfig::COLOR_MODE_32BIT) ?
+	SendDlgItemMessage(hWnd_, (config->modeColor_ == ColorMode::COLOR_MODE_32BIT) ?
 		IDC_RADIO_COLOR_32 : IDC_RADIO_COLOR_16, BM_SETCHECK, BST_CHECKED, 0);
 	SendDlgItemMessage(hWnd_, IDC_VSYNC, BM_SETCHECK, 
 		config->IsEnableVSync() ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -303,11 +303,11 @@ void DevicePanel::WriteConfiguration() {
 		fpsType = DnhConfiguration::FPS_AUTO;
 	config->SetFpsType(fpsType);
 
-	int modeColor = DirectGraphicsConfig::COLOR_MODE_32BIT;
+	ColorMode modeColor = ColorMode::COLOR_MODE_32BIT;
 	if (SendDlgItemMessage(hWnd_, IDC_RADIO_COLOR_32, BM_GETCHECK, 0, 0))
-		modeColor = DirectGraphicsConfig::COLOR_MODE_32BIT;
+		modeColor = ColorMode::COLOR_MODE_32BIT;
 	else if (SendDlgItemMessage(hWnd_, IDC_RADIO_COLOR_16, BM_GETCHECK, 0, 0))
-		modeColor = DirectGraphicsConfig::COLOR_MODE_16BIT;
+		modeColor = ColorMode::COLOR_MODE_16BIT;
 	config->SetColorMode(modeColor);
 
 	config->SetEnableVSync(SendDlgItemMessage(hWnd_, IDC_VSYNC, BM_GETCHECK, 0, 0) == BST_CHECKED);

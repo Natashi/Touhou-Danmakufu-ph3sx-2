@@ -554,14 +554,11 @@ bool KeyReplayManager::IsTargetKeyCode(int16_t key) {
 	return res;
 }
 void KeyReplayManager::ReadRecord(RecordBuffer& record) {
-	size_t countReplayData = 0U;
-	record.GetRecord<size_t>("count", countReplayData);
+	size_t countReplayData = record.GetRecordAs<uint32_t>("count");
 
 	ByteBuffer buffer;
 	buffer.SetSize(sizeof(ReplayData) * countReplayData);
-	std::string key = "data";
-	record.GetRecord(key, buffer.GetPointer(), buffer.GetSize());
-
+	record.GetRecord("data", buffer.GetPointer(), buffer.GetSize());
 	for (size_t iRec = 0; iRec < countReplayData; ++iRec) {
 		ReplayData data;
 		buffer.Read(&data, sizeof(ReplayData));
@@ -569,19 +566,14 @@ void KeyReplayManager::ReadRecord(RecordBuffer& record) {
 	}
 }
 void KeyReplayManager::WriteRecord(RecordBuffer& record) {
-	size_t countReplayData = listReplayData_.size();
-	record.SetRecord<uint32_t>(RecordEntry::TYPE_INTEGER, "count", countReplayData);
+	record.SetRecord<uint32_t>("count", listReplayData_.size());
 
 	ByteBuffer buffer;
 	for (auto itrData = listReplayData_.begin(); itrData != listReplayData_.end(); ++itrData) {
 		ReplayData& data = *itrData;
 		buffer.Write(&data, sizeof(ReplayData));
 	}
-
-	{
-		std::string key = "data";
-		record.SetRecord(key, buffer.GetPointer(), buffer.GetSize());
-	}
+	record.SetRecord("data", buffer.GetPointer(), buffer.GetSize());
 }
 
 #endif

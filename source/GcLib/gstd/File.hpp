@@ -350,21 +350,7 @@ namespace gstd {
 	**********************************************************/
 	class RecordEntry {
 		friend RecordBuffer;
-	public:
-		enum {
-			TYPE_NOENTRY = -2,
-			TYPE_UNKNOWN = -1,
-			TYPE_BOOLEAN = 1,
-			TYPE_INTEGER = 2,
-			TYPE_FLOAT = 3,
-			TYPE_DOUBLE = 4,
-			TYPE_STRING_A = 5,	//char string
-			TYPE_RECORD = 6,
-			TYPE_STRING_W = 7,	//wchar_t string
-		};
-
 	private:
-		char type_;
 		std::string key_;
 		ByteBuffer buffer_;
 
@@ -374,11 +360,10 @@ namespace gstd {
 	public:
 		RecordEntry();
 		virtual ~RecordEntry();
-		char GetType() { return type_; }
 
 		void SetKey(const std::string& key) { key_ = key; }
-		void SetType(char type) { type_ = type; }
 		std::string& GetKey() { return key_; }
+
 		ByteBuffer& GetBufferRef() { return buffer_; }
 	};
 
@@ -400,68 +385,52 @@ namespace gstd {
 
 		void Write(Writer& writer);
 		void Read(Reader& reader);
-		bool WriteToFile(const std::wstring& path, std::string header = HEADER_RECORDFILE);
-		bool ReadFromFile(const std::wstring& path, std::string header = HEADER_RECORDFILE);
+		bool WriteToFile(const std::wstring& path, uint64_t version, const std::string& header) {
+			return WriteToFile(path, version, header.c_str(), header.size());
+		}
+		bool WriteToFile(const std::wstring& path, uint64_t version, const char* header, size_t headerSize);
+		bool ReadFromFile(const std::wstring& path, uint64_t version, const std::string& header) {
+			return ReadFromFile(path, version, header.c_str(), header.size());
+		}
+		bool ReadFromFile(const std::wstring& path, uint64_t version, const char* header, size_t headerSize);
 
-		int GetEntryType(const std::string& key);
 		size_t GetEntrySize(const std::string& key);
 
-		//エントリ取得(文字列キー)
+		//Record get
 		bool GetRecord(const std::string& key, LPVOID buf, DWORD size);
 		template <typename T> bool GetRecord(const std::string& key, T& data) {
-			return GetRecord(key, &data, sizeof(T));
+			return GetRecord(key, (LPVOID)&data, sizeof(T));
 		}
-		bool GetRecordAsBoolean(const std::string& key, bool def = false);
-		int GetRecordAsInteger(const std::string& key, int def = 0);
-		float GetRecordAsFloat(const std::string& key, float def = 0.0f);
-		double GetRecordAsDouble(const std::string& key, double def = 0.0);
+		template <typename T> T GetRecordAs(const std::string& key, T def = T()) {
+			T res = def;
+			GetRecord(key, res);
+			return res;
+		}
+		bool GetRecordAsBoolean(const std::string& key, bool def = false) { return GetRecordAs<bool>(key, false); }
+		int GetRecordAsInteger(const std::string& key, int def = 0) { return GetRecordAs<int>(key, 0); }
+		float GetRecordAsFloat(const std::string& key, float def = 0.0f) { return GetRecordAs<float>(key, 0.0f); }
+		double GetRecordAsDouble(const std::string& key, double def = 0.0) { return GetRecordAs<double>(key, 0.0); }
 		std::string GetRecordAsStringA(const std::string& key);
 		std::wstring GetRecordAsStringW(const std::string& key);
 		bool GetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record);
 
-		//エントリ取得(数値キー)
-		bool GetRecord(int key, LPVOID buf, DWORD size) { return GetRecord(StringUtility::Format("%d", key), buf, size); }
-		template <typename T> bool GetRecord(int key, T& data) { return GetRecord(StringUtility::Format("%d", key), data); }
-		bool GetRecordAsBoolean(int key) { return GetRecordAsBoolean(StringUtility::Format("%d", key)); };
-		int GetRecordAsInteger(int key) { return GetRecordAsInteger(StringUtility::Format("%d", key)); }
-		float GetRecordAsFloat(int key) { return GetRecordAsFloat(StringUtility::Format("%d", key)); }
-		double GetRecordAsDouble(int key) { return GetRecordAsDouble(StringUtility::Format("%d", key)); }
-		std::string GetRecordAsStringA(int key) { return GetRecordAsStringA(StringUtility::Format("%d", key)); }
-		std::wstring GetRecordAsStringW(int key) { return GetRecordAsStringW(StringUtility::Format("%d", key)); }
-		bool GetRecordAsRecordBuffer(int key, RecordBuffer& record) { return GetRecordAsRecordBuffer(StringUtility::Format("%d", key), record); }
-
-
-		//エントリ設定(文字列キー)
-		void SetRecord(const std::string& key, LPVOID buf, DWORD size) { SetRecord(RecordEntry::TYPE_UNKNOWN, key, buf, size); }
-		template <typename T> void SetRecord(const std::string& key, T& data) {
-			SetRecord(RecordEntry::TYPE_UNKNOWN, key, &data, sizeof(T));
+		//Record set
+		void SetRecord(const std::string& key, LPVOID buf, DWORD size);
+		template <typename T> void SetRecord(const std::string& key, const T& data) {
+			SetRecord(key, (LPVOID)&data, sizeof(T));
 		}
-		void SetRecord(int type, const std::string& key, LPVOID buf, DWORD size);
-		template <typename T> void SetRecord(int type, const std::string& key, T& data) {
-			SetRecord(type, key, &data, sizeof(T));
-		}
-		void SetRecordAsBoolean(const std::string& key, bool data) { SetRecord(RecordEntry::TYPE_BOOLEAN, key, data); }
-		void SetRecordAsInteger(const std::string& key, int data) { SetRecord(RecordEntry::TYPE_INTEGER, key, data); }
-		void SetRecordAsFloat(const std::string& key, float data) { SetRecord(RecordEntry::TYPE_FLOAT, key, data); }
-		void SetRecordAsDouble(const std::string& key, double data) { SetRecord(RecordEntry::TYPE_DOUBLE, key, data); }
+		void SetRecordAsBoolean(const std::string& key, bool data) { SetRecord(key, data); }
+		void SetRecordAsInteger(const std::string& key, int data) { SetRecord(key, data); }
+		void SetRecordAsFloat(const std::string& key, float data) { SetRecord(key, data); }
+		void SetRecordAsDouble(const std::string& key, double data) { SetRecord(key, data); }
 		void SetRecordAsStringA(const std::string& key, const std::string& data) { 
-			SetRecord(RecordEntry::TYPE_STRING_A, key, const_cast<char*>(&data[0]), data.size()); 
+			SetRecord(key, (LPVOID)data.c_str(), data.size() * sizeof(char));
 		}
-		void SetRecordAsStringW(const std::string& key, const std::wstring& data) { 
-			SetRecord(RecordEntry::TYPE_STRING_W, key, const_cast<wchar_t*>(&data[0]), data.size() * sizeof(wchar_t));
+		void SetRecordAsStringW(const std::string& key, const std::wstring& data) {
+			std::string mbstr = StringUtility::ConvertWideToMulti(data);
+			SetRecord(key, (LPVOID)mbstr.c_str(), mbstr.size() * sizeof(char));
 		}
 		void SetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record);
-
-		//エントリ設定(数値キー)
-		void SetRecord(int key, LPVOID buf, DWORD size) { SetRecord(StringUtility::Format("%d", key), buf, size); }
-		template <typename T> void SetRecord(int key, T& data) { SetRecord(StringUtility::Format("%d", key), data); }
-		void SetRecordAsBoolean(int key, bool data) { SetRecordAsInteger(StringUtility::Format("%d", key), data); }
-		void SetRecordAsInteger(int key, int data) { SetRecordAsInteger(StringUtility::Format("%d", key), data); }
-		void SetRecordAsFloat(int key, float data) { SetRecordAsFloat(StringUtility::Format("%d", key), data); }
-		void SetRecordAsDouble(int key, double data) { SetRecordAsDouble(StringUtility::Format("%d", key), data); }
-		void SetRecordAsStringA(int key, const std::string& data) { SetRecordAsStringA(StringUtility::Format("%d", key), data); }
-		void SetRecordAsStringW(int key, const std::wstring& data) { SetRecordAsStringW(StringUtility::Format("%d", key), data); }
-		void SetRecordAsRecordBuffer(int key, RecordBuffer& record) { SetRecordAsRecordBuffer(StringUtility::Format("%d", key), record); }
 
 		//Recordable
 		virtual void Read(RecordBuffer& record);

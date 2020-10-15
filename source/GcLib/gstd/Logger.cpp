@@ -182,7 +182,7 @@ bool WindowLogger::Initialize(bool bEnable) {
 void WindowLogger::SaveState() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"LogWindow.dat";
 	RecordBuffer recordMain;
-	bool bRecordExists = recordMain.ReadFromFile(path);
+	bool bRecordExists = recordMain.ReadFromFile(path, 0, HEADER_RECORDFILE);
 
 	if (wndTab_) {
 		int panelIndex = wndTab_->GetCurrentPage();
@@ -210,12 +210,12 @@ void WindowLogger::SaveState() {
 		recordMain.SetRecordAsRecordBuffer("panel", recordPanel);
 	}
 
-	recordMain.WriteToFile(path);
+	recordMain.WriteToFile(path, 0, HEADER_RECORDFILE);
 }
 void WindowLogger::LoadState() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"LogWindow.dat";
 	RecordBuffer recordMain;
-	if (!recordMain.ReadFromFile(path)) return;
+	if (!recordMain.ReadFromFile(path, 0, HEADER_RECORDFILE)) return;
 
 	int panelIndex = recordMain.GetRecordAsInteger("panelIndex");
 	if (panelIndex >= 0 && panelIndex < wndTab_->GetPageCount())
