@@ -13,10 +13,6 @@
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Template|Win32">
-      <Configuration>Template</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <SccProjectName />
@@ -25,10 +21,6 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
@@ -51,9 +43,6 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
@@ -70,7 +59,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>.\bin_th_dnh\</OutDir>
     <IntDir>DnhExecutor\Release\</IntDir>
-    <LinkIncremental>false</LinkIncremental>
+    <LinkIncremental>
+    </LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>th_dnh_ph3sx</TargetName>
@@ -78,7 +68,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (No vectorization)|Win32'">
     <OutDir>.\bin_th_dnh\</OutDir>
     <IntDir>DnhExecutor\Release_vectorless\</IntDir>
-    <LinkIncremental>false</LinkIncremental>
+    <LinkIncremental>
+    </LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>th_dnh_ph3sx_vectorless</TargetName>
@@ -86,14 +77,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>.\bin_th_dnh\</OutDir>
     <IntDir>DnhExecutor/Debug/</IntDir>
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>
+    </LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>th_dnh_d</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -199,7 +187,8 @@
       <Optimization>Disabled</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level2</WarningLevel>
-      <MinimalRebuild>false</MinimalRebuild>
+      <MinimalRebuild>
+      </MinimalRebuild>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>DNH_PROJ_EXECUTOR;__L_MATH_VECTORIZE;WIN32;_DEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -246,19 +235,6 @@
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
-    <Link>
-      <AdditionalDependencies>legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-    </Link>
-    <ClCompile>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>DnhExecutor\Template\DnhExecutor.pch</PrecompiledHeaderOutputFile>
-      <PreprocessorDefinitions>DNH_PROJ_EXECUTOR;</PreprocessorDefinitions>
-    </ClCompile>
-  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\GcLib\directx\DirectGraphics.cpp" />
     <ClCompile Include="source\GcLib\directx\DirectInput.cpp" />
@@ -295,16 +271,14 @@
     <ClCompile Include="source\GcLib\gstd\Window.cpp" />
     <ClCompile Include="source\GcLib\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (No vectorization)|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release (No vectorization)|Win32'">pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">DnhExecutor/Release/DnhExecutor.pch</PrecompiledHeaderOutputFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release (No vectorization)|Win32'">DnhExecutor/Release_vectorless/DnhExecutor.pch</PrecompiledHeaderOutputFile>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">DnhExecutor/Debug/DnhExecutor.pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">DnhExecutor/Debug/DnhExecutor.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">DnhExecutor/Release/DnhExecutor.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (No vectorization)|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release (No vectorization)|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release (No vectorization)|Win32'">DnhExecutor/Release_vectorless/DnhExecutor.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhCommon.cpp" />
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.cpp" />
