@@ -123,6 +123,9 @@ void StgSystemController::Work() {
 		EFileManager* fileManager = EFileManager::GetInstance();
 		fileManager->ClearArchiveFileCache();
 
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+		graphics->GetCamera2D()->Reset();
+
 		bool bRetry = false;
 		if (infoSystem_->IsError()) {
 			std::wstring error = infoSystem_->GetErrorMessage();
