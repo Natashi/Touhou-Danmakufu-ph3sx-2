@@ -154,7 +154,12 @@ namespace directx {
 	/**********************************************************
 	//Shape collisions
 	**********************************************************/
-	class DxPoint {
+	class DxShapeBase {
+	public:
+		DxShapeBase() {};
+		virtual ~DxShapeBase() {};
+	};
+	class DxPoint : public DxShapeBase {
 	public:
 		DxPoint() { pos_ = D3DXVECTOR2(0, 0); }
 		DxPoint(float x, float y) { pos_ = D3DXVECTOR2(x, y); }
@@ -166,7 +171,7 @@ namespace directx {
 	private:
 		D3DXVECTOR2 pos_;
 	};
-	class DxCircle {
+	class DxCircle : public DxShapeBase {
 	public:
 		DxCircle() { cen_ = DxPoint(); r_ = 0; }
 		DxCircle(float x, float y, float r) { cen_ = DxPoint(x, y); r_ = r; }
@@ -181,24 +186,29 @@ namespace directx {
 		DxPoint cen_;
 		float r_;
 	};
-	class DxWidthLine {
+	class DxWidthLine : public DxShapeBase {
 	public:
 		DxWidthLine() { p1_ = DxPoint(); p2_ = DxPoint(); width_ = 0; }
 		DxWidthLine(float x1, float y1, float x2, float y2, float width) {
 			p1_ = DxPoint(x1, y1); p2_ = DxPoint(x2, y2); width_ = width;
 		}
 		virtual ~DxWidthLine() {}
+		void SetX1(float x) { p1_.SetX(x); }
 		float GetX1() const { return p1_.GetX(); }
+		void SetY1(float y) { p1_.SetY(y); }
 		float GetY1() const { return p1_.GetY(); }
+		void SetX2(float x) { p2_.SetX(x); }
 		float GetX2() const { return p2_.GetX(); }
+		void SetY2(float y) { p2_.SetY(y); }
 		float GetY2() const { return p2_.GetY(); }
+		void SetWidth(float w) { width_ = w; }
 		float GetWidth() const { return width_; }
 	private:
 		DxPoint p1_;
 		DxPoint p2_;
 		float width_;
 	};
-	class DxLine3D {
+	class DxLine3D : public DxShapeBase {
 	private:
 		D3DXVECTOR3 vertex_[2];
 	public:
@@ -212,7 +222,7 @@ namespace directx {
 		D3DXVECTOR3& GetPosition1() { return vertex_[0]; }
 		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
 	};
-	class DxTriangle {
+	class DxTriangle : public DxShapeBase {
 	private:
 		D3DXVECTOR3 vertex_[3];
 		D3DXVECTOR3 normal_;
@@ -302,6 +312,11 @@ namespace directx {
 
 		T GetWidth() const { return right - left; }
 		T GetHeight() const { return bottom - top; }
+
+		bool IsIntersected(const DxRect<T>& other) const {
+			return !(other.left > right || other.right < left
+				|| other.top > bottom || other.bottom < top);
+		}
 	public:
 		T left, top, right, bottom;
 	};
