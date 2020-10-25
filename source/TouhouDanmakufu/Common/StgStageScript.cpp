@@ -4598,16 +4598,16 @@ gstd::value StgStageScript::Func_ObjPlayer_AddIntersectionCircleA1(gstd::script_
 
 		DxCircle circle(px, py, rHit);
 
-		shared_ptr<StgIntersectionTarget_Player> targetHit(new StgIntersectionTarget_Player(false));
-		targetHit->SetObject(obj);
-		targetHit->SetCircle(circle);
-		obj->AddIntersectionRelativeTarget(targetHit);
+		shared_ptr<StgIntersectionTarget_Player> target(new StgIntersectionTarget_Player(false));
+		target->SetObject(obj);
+		target->SetCircle(circle);
+		obj->AddIntersectionRelativeTarget(target);
 
 		circle.SetR(rHit + rGraze);
-		shared_ptr<StgIntersectionTarget_Player> targetGraze(new StgIntersectionTarget_Player(true));
-		targetGraze->SetObject(obj);
-		targetGraze->SetCircle(circle);
-		obj->AddIntersectionRelativeTarget(targetGraze);
+		target.reset(new StgIntersectionTarget_Player(true));
+		target->SetObject(obj);
+		target->SetCircle(circle);
+		obj->AddIntersectionRelativeTarget(target);
 	}
 	return value();
 }

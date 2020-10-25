@@ -34,17 +34,18 @@ protected:
 	Shape shape_;
 	weak_ptr<StgIntersectionObject> obj_;
 
-	RECT intersectionSpace_;
+	DxRect<LONG> intersectionSpace_;
 public:
 	StgIntersectionTarget();
 	virtual ~StgIntersectionTarget() {}
 
-	RECT& GetIntersectionSpaceRect() { return intersectionSpace_; }
+	const DxRect<LONG>& GetIntersectionSpaceRect() const { return intersectionSpace_; }
+	void SetIntersectionSpace(const DxRect<LONG>& rect) { intersectionSpace_ = rect; }
 	virtual void SetIntersectionSpace() = 0;
 
-	Type GetTargetType() { return typeTarget_; }
+	Type GetTargetType() const { return typeTarget_; }
 	void SetTargetType(Type type) { typeTarget_ = type; }
-	Shape GetShape() { return shape_; }
+	Shape GetShape() const { return shape_; }
 	weak_ptr<StgIntersectionObject> GetObject() { return obj_; }
 	void SetObject(weak_ptr<StgIntersectionObject> obj) {
 		if (!obj.expired()) obj_ = obj;
@@ -67,7 +68,7 @@ public:
 	virtual void SetIntersectionSpace();
 
 	DxCircle& GetCircle() { return circle_; }
-	void SetCircle(DxCircle& circle) { 
+	void SetCircle(const DxCircle& circle) { 
 		circle_ = circle;
 		SetIntersectionSpace();
 	}
@@ -83,7 +84,7 @@ public:
 	virtual void SetIntersectionSpace();
 
 	DxWidthLine& GetLine() { return line_; }
-	void SetLine(DxWidthLine& line) { 
+	void SetLine(const DxWidthLine& line) { 
 		line_ = line; 
 		SetIntersectionSpace();
 	}
@@ -133,59 +134,12 @@ public:
 	void AddEnemyTargetToPlayer(shared_ptr<StgIntersectionTarget> target);
 	std::vector<StgIntersectionTargetPoint>* GetAllEnemyTargetPoint() { return &listEnemyTargetPoint_; }
 
-	//void CheckDeletedObject(std::string funcName);
-
 	static bool IsIntersected(shared_ptr<StgIntersectionTarget>& target1, shared_ptr<StgIntersectionTarget>& target2);
 
 	omp_lock_t* GetLock() { return &lock_; }
 
 	void AddVisualization(shared_ptr<StgIntersectionTarget>& target);
 };
-
-/**********************************************************
-//StgIntersectionSpace
-//以下サイトを参考
-//　○×（まるぺけ）つくろーどっとコム
-//　http://marupeke296.com/
-**********************************************************/
-/*
-class StgIntersectionSpace {
-	enum {
-		MAX_LEVEL = 9,
-		TYPE_A = 0,
-		TYPE_B = 1,
-	};
-protected:
-	//Cell TARGETA/B listTarget
-	std::vector<std::vector<std::vector<StgIntersectionTarget*>>> listCell_;
-	int listCountLevel_[MAX_LEVEL + 1];	// 各レベルのセル数
-	double spaceWidth_; // 領域のX軸幅
-	double spaceHeight_; // 領域のY軸幅
-	double spaceLeft_; // 領域の左側（X軸最小値）
-	double spaceTop_; // 領域の上側（Y軸最小値）
-	double unitWidth_; // 最小レベル空間の幅単位
-	double unitHeight_; // 最小レベル空間の高単位
-	int countCell_; // 空間の数
-	int unitLevel_; // 最下位レベル
-	StgIntersectionCheckList* listCheck_;
-
-	unsigned int _GetMortonNumber(float left, float top, float right, float bottom);
-	unsigned int  _BitSeparate32(unsigned int  n);
-	unsigned short _Get2DMortonNumber(unsigned short x, unsigned short y);
-	unsigned int  _GetPointElem(float pos_x, float pos_y);
-	void _WriteIntersectionCheckList(int indexSpace, StgIntersectionCheckList*& listCheck, 
-		std::vector<std::vector<StgIntersectionTarget*>> &listStack);
-public:
-	StgIntersectionSpace();
-	virtual ~StgIntersectionSpace();
-	bool Initialize(int level, int left, int top, int right, int bottom);
-	bool RegistTarget(int type, StgIntersectionTarget*& target);
-	bool RegistTargetA(StgIntersectionTarget*& target) { return RegistTarget(TYPE_A, target); }
-	bool RegistTargetB(StgIntersectionTarget*& target) { return RegistTarget(TYPE_B, target); }
-	void ClearTarget();
-	StgIntersectionCheckList* CreateIntersectionCheckList();
-};
-*/
 
 class StgIntersectionCheckList {
 	size_t count_;
@@ -212,10 +166,7 @@ class StgIntersectionSpace {
 protected:
 	std::vector<std::vector<shared_ptr<StgIntersectionTarget>>> listCell_;
 
-	double spaceWidth_; // 領域のX軸幅
-	double spaceHeight_; // 領域のY軸幅
-	double spaceLeft_; // 領域の左側（X軸最小値）
-	double spaceTop_; // 領域の上側（Y軸最小値）
+	DxRect<double> spaceRect_;
 
 	StgIntersectionCheckList* listCheck_;
 
@@ -223,7 +174,7 @@ protected:
 public:
 	StgIntersectionSpace();
 	virtual ~StgIntersectionSpace();
-	bool Initialize(int left, int top, int right, int bottom);
+	bool Initialize(double left, double top, double right, double bottom);
 	bool RegistTarget(int type, shared_ptr<StgIntersectionTarget>& target);
 	bool RegistTargetA(shared_ptr<StgIntersectionTarget>& target) { return RegistTarget(TYPE_A, target); }
 	bool RegistTargetB(shared_ptr<StgIntersectionTarget>& target) { return RegistTarget(TYPE_B, target); }
@@ -232,13 +183,18 @@ public:
 };
 
 class StgIntersectionObject {
+private:
+	struct IntersectionRelativeTarget {
+		DxShapeBase* orgShape;
+		DxRect<LONG> orgIntersectionRect;
+		shared_ptr<StgIntersectionTarget> relTarget;
+	};
 protected:
-	bool bIntersected_;//衝突判定
+	bool bIntersected_;
 	size_t intersectedCount_;
-	std::vector<shared_ptr<StgIntersectionTarget>> listRelativeTarget_;
-	std::vector<DxCircle> listOrgCircle_;
-	std::vector<DxWidthLine> listOrgLine_;
 	std::vector<weak_ptr<StgIntersectionObject>> listIntersectedID_;
+
+	std::vector<IntersectionRelativeTarget> listRelativeTarget_;
 public:
 	StgIntersectionObject() { bIntersected_ = false; intersectedCount_ = 0; }
 	virtual ~StgIntersectionObject() {}
@@ -254,13 +210,15 @@ public:
 	void AddIntersectedId(weak_ptr<StgIntersectionObject> obj) { listIntersectedID_.push_back(obj); }
 	std::vector<weak_ptr<StgIntersectionObject>>& GetIntersectedIdList() { return listIntersectedID_; }
 
-	void ClearIntersectionRelativeTarget();
 	void AddIntersectionRelativeTarget(shared_ptr<StgIntersectionTarget> target);
-	shared_ptr<StgIntersectionTarget> GetIntersectionRelativeTarget(size_t index) { return listRelativeTarget_[index]; }
+	void ClearIntersectionRelativeTarget();
+	shared_ptr<StgIntersectionTarget> GetIntersectionRelativeTarget(size_t index) { return listRelativeTarget_[index].relTarget; }
 
-	void UpdateIntersectionRelativeTarget(int posX, int posY, double angle);
+	void UpdateIntersectionRelativeTarget(float posX, float posY, double angle);
 	void RegistIntersectionRelativeTarget(StgIntersectionManager* manager);
+
 	size_t GetIntersectionRelativeTargetCount() { return listRelativeTarget_.size(); }
+
 	int GetDxScriptObjectID();
 
 	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList() { 
