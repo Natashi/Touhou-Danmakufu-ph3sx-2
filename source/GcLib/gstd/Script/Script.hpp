@@ -160,7 +160,8 @@ namespace gstd {
 		}
 
 		void run_code();
-		value* find_variable_symbol(environment* current_env, code* var_data, bool allow_null = false);
+		value* find_variable_symbol(environment* current_env, 
+			code* c, uint32_t level, uint32_t variable, bool allow_null);
 	public:
 		size_t get_thread_count() { return threads.size(); }
 	};

@@ -42,6 +42,7 @@ namespace gstd {
 	public:
 		static type_data::type_kind _type_test_promotion(type_data* type_l, type_data* type_r);
 		static bool _type_assign_check(script_machine* machine, const value* v_src, const value* v_dst);
+		static bool _type_assign_check_no_convert(script_machine* machine, const value* v_src, const value* v_dst);
 
 		static value __script_perform_op_array(const value* v_left, const value* v_right, value(*func)(int, const value*));
 
@@ -80,7 +81,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(successor);
 		DNH_FUNCAPI_DECL_(length);
 
-		static const value& index(script_machine* machine, int argc, const value* argv);
+		static const value* index(script_machine* machine, int argc, const value* argv);
 
 		DNH_FUNCAPI_DECL_(slice);
 		DNH_FUNCAPI_DECL_(erase);

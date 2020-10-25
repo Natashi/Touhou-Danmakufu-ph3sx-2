@@ -240,7 +240,7 @@ void script_machine::run_code() {
 			case command_kind::pc_wait:
 			{
 				stack_t& stack = current->stack;
-				value* t = &(stack.back());
+				value* t = &stack.back();
 				current->waitCount = (int)t->as_int() - 1;
 				stack.pop_back();
 				if (current->waitCount < 0) break;
@@ -252,21 +252,60 @@ void script_machine::run_code() {
 				break;
 
 			case command_kind::pc_var_alloc:
-				current->variables.resize(c->ip);
+				current->variables.resize(c->arg0);
+				current->variables.length = c->arg0;
 				break;
 			case command_kind::pc_var_format:
 			{
-				for (size_t i = c->off; i < c->off + c->len; ++i) {
+				for (size_t i = c->arg0; i < c->arg0 + c->arg1; ++i) {
 					if (i >= current->variables.capacity) break;
-					current->variables[i] = value::val_empty;
+					current->variables[i] = value();
 				}
+				break;
+			}
+
+			case command_kind::pc_pop:
+				current->stack.pop_back(c->arg0);
+				break;
+			case command_kind::pc_push_value:
+				current->stack.push_back(c->data);
+				break;
+			case command_kind::pc_push_variable:
+			{
+				value* var = find_variable_symbol(current.get(), c, 
+					c->arg0, c->arg1, c->arg2);
+				if (var == nullptr) break;
+				current->stack.push_back(*var);
+				break;
+			}
+			case command_kind::pc_dup_n:
+			{
+				stack_t& stack = current->stack;
+				if (c->arg0 >= stack.size()) break;
+				value* val = &stack.back() - c->arg0;
+				stack.push_back(*val);
+				break;
+			}
+			case command_kind::pc_swap:
+			{
+				size_t len = current->stack.size();
+				if (len < 2) break;
+				std::swap(current->stack[len - 1], current->stack[len - 2]);
+				break;
+			}
+			case command_kind::pc_make_unique:
+			{
+				stack_t& stack = current->stack;
+				if (c->arg0 >= stack.size()) break;
+				value* val = &stack.back() - c->arg0;
+				val->unique();
 				break;
 			}
 
 			//case command_kind::_pc_jump_target:
 			//	break;
 			case command_kind::pc_jump:
-				current->ip = c->ip;
+				current->ip = c->arg0;
 				break;
 			case command_kind::pc_jump_if:
 			case command_kind::pc_jump_if_not:
@@ -275,7 +314,7 @@ void script_machine::run_code() {
 				value* top = &stack.back();
 				bool bJE = c->command == command_kind::pc_jump_if;
 				if ((bJE && top->as_boolean()) || (!bJE && !top->as_boolean()))
-					current->ip = c->ip;
+					current->ip = c->arg0;
 				stack.pop_back();
 				break;
 			}
@@ -286,49 +325,61 @@ void script_machine::run_code() {
 				value* top = &stack.back();
 				bool bJE = c->command == command_kind::pc_jump_if_nopop;
 				if ((bJE && top->as_boolean()) || (!bJE && !top->as_boolean()))
-					current->ip = c->ip;
+					current->ip = c->arg0;
 				break;
 			}
 
 			case command_kind::pc_copy_assign:
+			case command_kind::pc_overwrite_assign:
+			case command_kind::pc_ref_assign:
 			{
 				stack_t& stack = current->stack;
-				assert(stack.size() > 0);
 
-				value* dest = find_variable_symbol(current.get(), c, true);
-				value* src = &stack.back();
-				if (BaseFunction::_type_assign_check(this, src, dest)) {
-					type_data* prev_type = dest->get_type();
-					*dest = *src;
-					dest->unique();
-					if (prev_type && prev_type != src->get_type())
-						BaseFunction::_value_cast(dest, prev_type->get_kind());
+				if (c->command != command_kind::pc_ref_assign) {
+					if (c->command == command_kind::pc_copy_assign) {
+						value* dest = find_variable_symbol(current.get(), c, 
+							c->arg0, c->arg1, true);
+						value* src = &stack.back();
 
-					stack.pop_back();
+						if (dest != nullptr && src != nullptr) {
+							//pc_copy_assign
+							if (BaseFunction::_type_assign_check(this, src, dest)) {
+								type_data* prev_type = dest->get_type();
+
+								*dest = *src;
+								dest->unique();
+
+								if (prev_type && prev_type != src->get_type())
+									BaseFunction::_value_cast(dest, prev_type->get_kind());
+							}
+						}
+						stack.pop_back();
+					}
+					else {		//pc_overwrite_assign
+						value* src = &stack.back();
+						value* dest = src - 1;
+
+						if (dest != nullptr && src != nullptr) {
+							if (BaseFunction::_type_assign_check(this, src, dest)) {
+								type_data* prev_type = dest->get_type();
+
+								dest->overwrite(*src);
+
+								if (prev_type && prev_type != src->get_type())
+									BaseFunction::_value_cast(dest, prev_type->get_kind());
+							}
+						}
+						stack.pop_back(2U);
+					}
+				}
+				else {			//pc_ref_assign (unfinished)
+					
 				}
 
 				break;
 			}
-			case command_kind::pc_ref_overwrite:
-			{
-				stack_t& stack = current->stack;
-				assert(stack.size() >= 2);
 
-				value* dest = &stack[stack.size() - 2];
-				value* src = &stack[stack.size() - 1];
-
-				if (BaseFunction::_type_assign_check(this, src, dest)) {
-					type_data* prev_type = dest->get_type();
-					dest->overwrite(*src);
-					if (prev_type && prev_type != src->get_type())
-						BaseFunction::_value_cast(dest, prev_type->get_kind());
-
-					stack.pop_back(2U);
-				}
-
-				break;
-			}
-			case command_kind::pc_break_routine:
+			case command_kind::pc_sub_return:
 				for (environment* i = current.get(); i != nullptr; i = (i->parent).get()) {
 					i->ip = i->sub->codes.size();
 
@@ -343,23 +394,24 @@ void script_machine::run_code() {
 				stack_t& current_stack = current->stack;
 				//assert(current_stack.size() >= c->arguments);
 
-				if (current_stack.size() < c->arguments) {
+				if (current_stack.size() < c->arg1) {
 					std::string error = StringUtility::Format(
 						"Unexpected script error: Stack size[%d] is less than the number of arguments[%d].\r\n",
-						current_stack.size(), c->arguments);
+						current_stack.size(), c->arg1);
 					raise_error(error);
 					break;
 				}
 
-				if (c->sub->func) {
+				script_block* sub = c->block; //(script_block*)c->arg0
+				if (sub->func) {
 					//Default functions
 
 					size_t sizePrev = current_stack.size();
 
 					value* argv = nullptr;
-					if (sizePrev > 0 && c->arguments > 0)
-						argv = current_stack.at + (sizePrev - c->arguments);
-					value ret = c->sub->func(this, c->arguments, argv);
+					if (sizePrev > 0 && c->arg1 > 0)
+						argv = current_stack.at + (sizePrev - c->arg1);
+					value ret = sub->func(this, c->arg1, argv);
 
 					if (stopped) {
 						--(current->ip);
@@ -368,21 +420,21 @@ void script_machine::run_code() {
 						resuming = false;
 
 						//Erase the passed arguments from the stack
-						current_stack.pop_back(c->arguments);
+						current_stack.pop_back(c->arg1);
 
 						//Return value
 						if (c->command == command_kind::pc_call_and_push_result)
 							current_stack.push_back(ret);
 					}
 				}
-				else if (c->sub->kind == block_kind::bk_microthread) {
+				else if (sub->kind == block_kind::bk_microthread) {
 					//Tasks
-					environment_ptr e = std::make_shared<environment>(current, c->sub);
+					environment_ptr e = std::make_shared<environment>(current, sub);
 					threads.insert(++current_thread_index, e);
 					--current_thread_index;
 
 					//Pass the arguments
-					for (size_t i = 0; i < c->arguments; ++i) {
+					for (size_t i = 0; i < c->arg1; ++i) {
 						e->stack.push_back(current_stack.back());
 						current_stack.pop_back();
 					}
@@ -391,12 +443,12 @@ void script_machine::run_code() {
 				}
 				else {
 					//User-defined functions or internal blocks
-					environment_ptr e = std::make_shared<environment>(current, c->sub);
+					environment_ptr e = std::make_shared<environment>(current, sub);
 					e->has_result = c->command == command_kind::pc_call_and_push_result;
 					*current_thread_index = e;
 
 					//Pass the arguments
-					for (size_t i = 0; i < c->arguments; ++i) {
+					for (size_t i = 0; i < c->arg1; ++i) {
 						e->stack.push_back(current_stack.back());
 						current_stack.pop_back();
 					}
@@ -440,35 +492,12 @@ void script_machine::run_code() {
 				t->set(script_type_manager::get_boolean_type(), b);
 				break;
 			}
-			case command_kind::pc_dup_n:
-			case command_kind::pc_dup_n_unique:
-			{
-				stack_t& stack = current->stack;
-				value* val = &stack.back() - c->ip + 1;
-				if (stack.size() < stack.capacity) {
-					stack.push_back(*val);
-				}
-				else {
-					value valCopy = *val;
-					stack.push_back(valCopy);
-				}
-				if (c->command == command_kind::pc_dup_n_unique)
-					stack.back().unique();
-				break;
-			}
-			case command_kind::pc_swap:
-			{
-				size_t len = current->stack.size();
-				assert(len >= 2);
-				std::swap(current->stack[len - 1], current->stack[len - 2]);
-				break;
-			}
 
 			//Loop commands
 			case command_kind::pc_loop_ascent:
 			case command_kind::pc_loop_descent:
 			{
-				value* cmp_arg = (value*)(&current->stack.back() - 1);
+				value* cmp_arg = &current->stack.back() - 1;
 				value cmp_res = BaseFunction::compare(this, 2, cmp_arg);
 
 				/*
@@ -520,21 +549,21 @@ void script_machine::run_code() {
 
 			case command_kind::pc_construct_array:
 			{
-				if (c->ip == 0U) {
+				if (c->arg0 == 0U) {
 					current->stack.push_back(value(script_type_manager::get_null_array_type(), 0i64));
 					break;
 				}
 
 				std::vector<value> res_arr;
-				res_arr.resize(c->ip);
+				res_arr.resize(c->arg0);
 
-				value* val_ptr = &current->stack.back() - c->ip + 1;
+				value* val_ptr = &current->stack.back() - c->arg0 + 1;
 
 				type_data* type_elem = val_ptr->get_type();
 				type_data* type_arr = script_type_manager::get_instance()->get_array_type(type_elem);
 
 				value res;
-				for (size_t iVal = 0U; iVal < c->ip; ++iVal, ++val_ptr) {
+				for (size_t iVal = 0U; iVal < c->arg0; ++iVal, ++val_ptr) {
 					BaseFunction::_append_check(this, type_arr, val_ptr->get_type());
 					{
 						value appending = *val_ptr;
@@ -547,58 +576,30 @@ void script_machine::run_code() {
 				}
 				res.set(type_arr, res_arr);
 
-				current->stack.pop_back(c->ip);
+				current->stack.pop_back(c->arg0);
 				current->stack.push_back(res);
 				break;
 			}
 
-			case command_kind::pc_pop:
-				current->stack.pop_back(c->ip);
-				break;
-			case command_kind::pc_push_value:
-				current->stack.push_back(c->data);
-				break;
-			case command_kind::pc_push_variable:
-			//case command_kind::pc_push_variable_unique:
-			{
-				value* var = find_variable_symbol(current.get(), c);
-				if (var == nullptr) break;
-				//if (c->command == command_kind::pc_push_variable_unique)
-				//	var->unique();
-				current->stack.push_back(*var);
-				break;
-			}
-
 			//----------------------------------Inline operations----------------------------------
-			case command_kind::pc_inline_top_inc:
-			case command_kind::pc_inline_top_dec:
-			{
-				value* var = &(current->stack.back());
-				value res = (c->command == command_kind::pc_inline_top_inc) ?
-					BaseFunction::successor(this, 1, var) : BaseFunction::predecessor(this, 1, var);
-				*var = res;
-				break;
-			}
 			case command_kind::pc_inline_inc:
 			case command_kind::pc_inline_dec:
 			{
-				//A hack for assign_writable's, since symbol::level can't normally go below 0 anyway
-				if (c->level >= 0) {
-					value* var = find_variable_symbol(current.get(), c);
+				if (c->arg0) {
+					value* var = find_variable_symbol(current.get(), c, 
+						c->arg1, c->arg2, false);
 					if (var == nullptr) break;
-
 					value res = (c->command == command_kind::pc_inline_inc) ?
 						BaseFunction::successor(this, 1, var) : BaseFunction::predecessor(this, 1, var);
 					*var = res;
 				}
 				else {
-					value* var = &(current->stack.back());
-
+					value* var = &current->stack.back();
 					value res = (c->command == command_kind::pc_inline_inc) ?
 						BaseFunction::successor(this, 1, var) : BaseFunction::predecessor(this, 1, var);
-					if (!res.has_data()) break;
+					if (!var->has_data()) break;
 					var->overwrite(res);
-					current->stack.pop_back();
+					if (c->arg1) current->stack.pop_back();
 				}
 				break;
 			}
@@ -610,7 +611,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_pow_asi:
 			case command_kind::pc_inline_cat_asi:
 			{
-				auto PerformFunction = [&](value* dest, command_kind cmd, value(&argv)[2]) {
+				auto PerformFunction = [&](value* dest, command_kind cmd, value* argv) {
 #define DEF_CASE(_c, _fn) case _c: *dest = BaseFunction::_fn(this, 2, argv); break;
 					switch (cmd) {
 						DEF_CASE(command_kind::pc_inline_add_asi, add);
@@ -624,27 +625,27 @@ void script_machine::run_code() {
 #undef DEF_CASE
 				};
 
-				if (c->level >= 0) {
-					value* var = find_variable_symbol(current.get(), c);
-					if (var == nullptr) break;
-
-					value arg[2] = { *var, current->stack.back() };
-					value res;
-					PerformFunction(&res, c->command, arg);
-
-					current->stack.pop_back();
-					*var = res;
-				}
-				else {
-					value* dest = &(current->stack.back()) - 1;
+				value res;
+				if (c->arg0) {
+					value* dest = find_variable_symbol(current.get(), c, 
+						c->arg1, c->arg2, false);
+					if (dest == nullptr) break;
 
 					value arg[2] = { *dest, current->stack.back() };
-					value res;
 					PerformFunction(&res, c->command, arg);
+
+					*dest = res;
+					current->stack.pop_back();
+				}
+				else {
+					value* dest = &current->stack.back() - 1;
+
+					PerformFunction(&res, c->command, dest);
 
 					dest->overwrite(res);
 					current->stack.pop_back(2U);
 				}
+				
 				break;
 			}
 			case command_kind::pc_inline_neg:
@@ -661,8 +662,7 @@ void script_machine::run_code() {
 				}
 #undef DEF_CASE
 
-				current->stack.pop_back();
-				current->stack.push_back(res);
+				current->stack.back() = res;
 				break;
 			}
 			case command_kind::pc_inline_add:
@@ -675,7 +675,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_cat:
 			{
 				value res;
-				value* args = (value*)(&current->stack.back() - 1);
+				value* args = &current->stack.back() - 1;
 
 #define DEF_CASE(cmd, fn) case cmd: res = BaseFunction::fn(this, 2, args); break;
 				switch (c->command) {
@@ -701,7 +701,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_cmp_le:
 			case command_kind::pc_inline_cmp_ne:
 			{
-				value* args = (value*)(&current->stack.back() - 1);
+				value* args = &current->stack.back() - 1;
 				value cmp_res = BaseFunction::compare(this, 2, args);
 				int cmp_r = cmp_res.as_int();
 
@@ -723,7 +723,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_logic_and:
 			case command_kind::pc_inline_logic_or:
 			{
-				value* var2 = &(current->stack.back());
+				value* var2 = &current->stack.back();
 				value* var1 = var2 - 1;
 
 				bool b = c->command == command_kind::pc_inline_logic_and ?
@@ -736,59 +736,60 @@ void script_machine::run_code() {
 			}
 			case command_kind::pc_inline_cast_var:
 			{
-				value* var = &(current->stack.back());
-				BaseFunction::_value_cast(var, (type_data::type_kind)c->ip);
+				value* var = &current->stack.back();
+				BaseFunction::_value_cast(var, (type_data::type_kind)c->arg0);
 				break;
 			}
 			case command_kind::pc_inline_index_array:
 			{
-				value* var = &(current->stack.back()) - 1;
-				const value& res = BaseFunction::index(this, 2, var);
-				if (c->ip) res.unique();
+				value* var = &current->stack.back() - 1;
+				const value* res = BaseFunction::index(this, 2, var);
+				if (c->arg0)
+					res->unique();
+				value res_copy = *res;
 				current->stack.pop_back(2U);
-				current->stack.push_back(res);
+				current->stack.push_back(res_copy);
 				break;
 			}
 			case command_kind::pc_inline_length_array:
 			{
-				value* var = &(current->stack.back());
+				value* var = &current->stack.back();
 				size_t len = var->length_as_array();
 				var->set(script_type_manager::get_int_type(), (int64_t)len);
 				break;
 			}
-			//default:
-			//	assert(false);
 			}
 		}
 	}
 }
-value* script_machine::find_variable_symbol(environment* current_env, code* var_data, bool allow_null) {
-	/*
-	auto err_uninitialized = [&]() {
-#ifdef _DEBUG
-		std::wstring error = L"Variable hasn't been initialized";
-		error += StringUtility::FormatToWide(": %s\r\n", var_data->var_name.c_str());
-		raise_error(error);
-#else
-		raise_error(L"Variable hasn't been initialized.\r\n");
-#endif	
-	};
-	*/
 
+value* script_machine::find_variable_symbol(environment* current_env, code* c, 
+	uint32_t level, uint32_t variable, bool allow_null) 
+{
 	for (environment* i = current_env; i != nullptr; i = (i->parent).get()) {
-		if (i->sub->level == var_data->level) {
-			value& res = i->variables[var_data->variable];
+		if (i->sub->level == level) {
+			value& res = i->variables[variable];
 
 			if (allow_null || res.has_data())
 				return &res;
-			else break;
+			else {
+#ifdef _DEBUG
+				raise_error(StringUtility::Format("Variable hasn't been initialized: %s\r\n", 
+					c->var_name.c_str()));
+#else
+				raise_error("Variable hasn't been initialized.\r\n");
+#endif
+				return nullptr;
+			}
 		}
 	}
 
 #ifdef _DEBUG
-	raise_error(StringUtility::Format("Variable hasn't been initialized: %s\r\n", var_data->var_name.c_str()));
+	raise_error(StringUtility::Format("Variable not found: %s (level=%u,id=%u)\r\n", 
+		c->var_name.c_str(), level, variable));
 #else
-	raise_error("Variable hasn't been initialized.\r\n");
+	raise_error(StringUtility::Format("Variable not found. (level=%u,id=%u)\r\n", 
+		level, variable));
 #endif
 	return nullptr;
 }

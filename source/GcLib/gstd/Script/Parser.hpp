@@ -12,48 +12,98 @@
 
 namespace gstd {
 	enum class command_kind : uint8_t {
-		pc_var_alloc, pc_var_format,
+		pc_yield,				//Transfer control to next thread
+		pc_wait,				//Set nWait to ({esp-0} - 1), and cause thread to do pc_yield until (nWait-- == 0)
 
-		pc_copy_assign, pc_ref_overwrite, 
-		pc_break_loop, pc_break_routine,
-		pc_call, pc_call_and_push_result,
+		pc_var_alloc,			//Resize variable array to [arg0]
+		pc_var_format,			//Set variable array (from=[arg0], length=[arg1]) to empty
 
-		pc_jump_target,
-		pc_jump, pc_jump_if, pc_jump_if_not,
-		pc_jump_if_nopop, pc_jump_if_not_nopop,
-		_pc_jump, _pc_jump_if, _pc_jump_if_not,
-		_pc_jump_if_nopop, _pc_jump_if_not_nopop,
+		pc_pop,					//Pop [arg0] values from stack
+		pc_push_value,			//Push value=[data] to stack
+		pc_push_variable,		//Push variable=[arg0, arg1] to stack, allows null if [arg2]
+		pc_dup_n,				//Push {esp-[arg0]} to stack
+		pc_swap,				//Swap {esp-0} and {esp-1}
+		pc_make_unique,			//Turns {esp-[arg0]} into a unique copy
 
-		pc_compare_e, pc_compare_g, pc_compare_ge, pc_compare_l,
-		pc_compare_le, pc_compare_ne,
+		pc_copy_assign,			//Copy {esp-0} to variable=[arg0, arg1]
+		pc_overwrite_assign,	//Replace data of value {esp-1} with {esp-0}
+		pc_ref_assign,			//Unsupported currently
 
-		pc_dup_n, pc_dup_n_unique,
+		pc_sub_return,			//Return from a function/task/sub
 
-		pc_loop_ascent, pc_loop_descent, pc_loop_count, pc_loop_foreach,
-		pc_loop_continue,
+		pc_call,				//Call (script_block*)[arg0] with argc=[arg1]
+		pc_call_and_push_result,//pc_call, and push result to stack
 
-		pc_construct_array,
-		pc_pop, pc_push_value, pc_push_variable, pc_swap, pc_yield, pc_wait,
+		pc_jump,				//Jump to [arg0]
+		pc_jump_if,				//Jump to [arg0] if ({esp-0} == true), pop stack
+		pc_jump_if_not,			//Jump to [arg0] if ({esp-0} == false), pop stack
+		pc_jump_if_nopop,		//Jump to [arg0] if ({esp-0} == true)
+		pc_jump_if_not_nopop,	//Jump to [arg0] if ({esp-0} == false)
+		pc_jump_target,				//Parser dummy
+		_pc_jump,					//Parser dummy
+		_pc_jump_if,				//Parser dummy
+		_pc_jump_if_not,			//Parser dummy
+		_pc_jump_if_nopop, 			//Parser dummy
+		_pc_jump_if_not_nopop,		//Parser dummy
 
+		pc_compare_e,			//Push ({esp-0} == 0) to stack
+		pc_compare_g, 			//Push ({esp-0} > 0) to stack
+		pc_compare_ge, 			//Push ({esp-0} >= 0) to stack
+		pc_compare_l,			//Push ({esp-0} < 0) to stack
+		pc_compare_le, 			//Push ({esp-0} <= 0) to stack
+		pc_compare_ne,			//Push ({esp-0} != 0) to stack
+
+		pc_loop_ascent,			//Compare({esp-1}, {esp-0}), do pc_compare_le on result and push to stack
+		pc_loop_descent,		//Compare({esp-1}, {esp-0}), do pc_compare_ge on result and push to stack
+		pc_loop_count, 			//Do pc_compare_g {esp-0}, push result to stack, do (--{esp-0}) if false
+		pc_loop_foreach,		//Push true if {esp-0} is larger than array {esp-1}, false otherwise and do (++{esp-0})
+		pc_loop_continue,			//Parser dummy
+		pc_loop_break,				//Parser dummy
+
+		pc_construct_array,		//Create array of length [arg0] from values {esp-0} to {esp-[ip]}, and push to stack
+
+		//------------------------------------------------------------------------
 		//Inline operations
-		pc_inline_top_inc, pc_inline_top_dec,
-		pc_inline_inc, pc_inline_dec,
+		//------------------------------------------------------------------------
+		pc_inline_inc,			//If [arg0]: (++(variable=[arg1, arg2])), else: (++{esp-0}) and pop stack if [arg1]
+		pc_inline_dec,			//If [arg0]: (--(variable=[arg1, arg2])), else: (--{esp-0}) and pop stack if [arg1]
 
-		pc_inline_add_asi, pc_inline_sub_asi, pc_inline_mul_asi, pc_inline_div_asi, pc_inline_mod_asi, 
-		pc_inline_pow_asi, pc_inline_cat_asi,
+		pc_inline_add_asi,		//If [arg0]: ((variable=[arg1, arg2]) += {esp-0}), else: ({esp-1} += {esp-0})
+		pc_inline_sub_asi,		//If [arg0]: ((variable=[arg1, arg2]) -= {esp-0}), else: ({esp-1} -= {esp-0})
+		pc_inline_mul_asi,		//If [arg0]: ((variable=[arg1, arg2]) *= {esp-0}), else: ({esp-1} *= {esp-0})
+		pc_inline_div_asi,		//If [arg0]: ((variable=[arg1, arg2]) /= {esp-0}), else: ({esp-1} /= {esp-0})
+		pc_inline_mod_asi,		//If [arg0]: ((variable=[arg1, arg2]) %= {esp-0}), else: ({esp-1} %= {esp-0})
+		pc_inline_pow_asi,		//If [arg0]: ((variable=[arg1, arg2]) ^= {esp-0}), else: ({esp-1} ^= {esp-0})
+		pc_inline_cat_asi,		//If [arg0]: ((variable=[arg1, arg2]) ~= {esp-0}), else: ({esp-1} ~= {esp-0})
 
-		pc_inline_neg, pc_inline_not, pc_inline_abs,
-		pc_inline_add, pc_inline_sub, pc_inline_mul, pc_inline_div, pc_inline_mod, pc_inline_pow,
-		pc_inline_app, pc_inline_cat,
+		pc_inline_neg,			//Push (-{esp-0}) to stack
+		pc_inline_not,			//Push (!{esp-0}) to stack
+		pc_inline_abs,			//Push abs({esp-0}) to stack
 
-		pc_inline_cmp_e, pc_inline_cmp_g, pc_inline_cmp_ge, pc_inline_cmp_l, pc_inline_cmp_le, pc_inline_cmp_ne,
-		pc_inline_logic_and, pc_inline_logic_or,
+		pc_inline_add,			//Push ({esp-4} + {esp-0}) to stack
+		pc_inline_sub,			//Push ({esp-4} - {esp-0}) to stack
+		pc_inline_mul,			//Push ({esp-4} * {esp-0}) to stack
+		pc_inline_div,			//Push ({esp-4} / {esp-0}) to stack
+		pc_inline_mod,			//Push ({esp-4} % {esp-0}) to stack
+		pc_inline_pow,			//Push ({esp-4} ^ {esp-0}) to stack
+		pc_inline_app,			//Push ({esp-4} ~ to_array({esp-0})) to stack
+		pc_inline_cat,			//Push ({esp-4} ~ {esp-0}) to stack
 
-		pc_inline_cast_var,
-		pc_inline_index_array,
-		pc_inline_length_array,
+		pc_inline_cmp_e,		//Push ({esp-4} == {esp-0}) to stack
+		pc_inline_cmp_g,		//Push ({esp-4} > {esp-0}) to stack
+		pc_inline_cmp_ge,		//Push ({esp-4} >= {esp-0}) to stack
+		pc_inline_cmp_l,		//Push ({esp-4} < {esp-0}) to stack
+		pc_inline_cmp_le,		//Push ({esp-4} <= {esp-0}) to stack
+		pc_inline_cmp_ne,		//Push ({esp-4} != {esp-0}) to stack
 
-		pc_null = 0xff,
+		pc_inline_logic_and,	//Push ({esp-4} && {esp-0}) to stack 
+		pc_inline_logic_or,		//Push ({esp-4} || {esp-0}) to stack
+
+		pc_inline_cast_var,			//Cast {esp-0} to (type_kind)[arg0]
+		pc_inline_index_array,		//Push ((array){esp-1})[{esp-0}] to stack, set unique if [arg0]
+		pc_inline_length_array,		//Push length({esp-0}) to stack
+
+		pc_null = 0xff,			//No operation
 	};
 	enum class block_kind : uint8_t {
 		bk_normal, bk_sub, bk_function, bk_microthread
@@ -61,14 +111,14 @@ namespace gstd {
 
 	struct code;
 	struct script_block {
-		int level;
-		int arguments;
+		uint32_t level;
+		uint32_t arguments;
 		std::string name;
 		callback func;
 		std::vector<code> codes;
 		block_kind kind;
 
-		script_block(int the_level, block_kind the_kind);
+		script_block(uint32_t the_level, block_kind the_kind);
 	};
 	struct code {
 		command_kind command = command_kind::pc_null;
@@ -78,20 +128,17 @@ namespace gstd {
 #endif
 
 		union {
-			struct {	//assign/push_variable
-				int level;
-				size_t variable;
-			};
-			struct {	//call/call_and_push_result
-				script_block* sub;
-				size_t arguments;
-			};
-			struct {	//loop_back
-				size_t ip;
-			};
-			struct {	//var_format
-				size_t off;
-				size_t len;
+			struct {
+				union {
+#ifdef WIN32	//Just in case
+					uint32_t arg0;
+#else
+					uint64_t arg0;
+#endif
+					script_block* block;
+				};
+				uint32_t arg1;
+				uint32_t arg2;
 			};
 			struct {	//push_value
 				value data;
@@ -99,21 +146,18 @@ namespace gstd {
 		};
 
 		code();
-		code(int the_line, command_kind the_command);
-		code(int the_line, command_kind the_command, int the_level, size_t the_variable, const std::string& the_name);
-		code(int the_line, command_kind the_command, script_block* the_sub, int the_arguments);
-		code(int the_line, command_kind the_command, size_t the_ip);
-		code(int the_line, command_kind the_command, size_t the_off, size_t the_len);
-		code(int the_line, command_kind the_command, const value& the_data);
 
-		code(command_kind the_command) : code(0, the_command) {}
-		code(command_kind the_command, int the_level, size_t the_variable, const std::string& the_name)
-			: code(0, the_command, the_level, the_variable, the_name) {}
-		code(command_kind the_command, script_block* the_sub, int the_arguments)
-			: code(0, the_command, the_sub, the_arguments) {}
-		code(command_kind the_command, size_t the_ip) : code(0, the_command, the_ip) {}
-		code(command_kind the_command, size_t the_off, size_t the_len) : code(0, the_command, the_off, the_len) {}
-		code(command_kind the_command, const value& the_data) : code(0, the_command, the_data) {}
+		code(command_kind _command);
+		code(command_kind _command, uint32_t _a0);
+		code(command_kind _command, uint32_t _a0, uint32_t _a1);
+		code(command_kind _command, uint32_t _a0, uint32_t _a1, uint32_t _a2);
+		code(command_kind _command, uint32_t _a0, const std::string& _name);
+		code(command_kind _command, uint32_t _a0, uint32_t _a1, const std::string& _name);
+		code(command_kind _command, uint32_t _a0, uint32_t _a1, uint32_t _a2, const std::string& _name);
+		code(command_kind _command, const value& _data);
+
+		code(int _line, command_kind _command, uint32_t _a0) : code(_command, _a0) { line = _line; }
+		code(int _line, command_kind _command, const value& _data) : code(_command, _data) { line = _line; }
 
 		code(const code& src);
 
@@ -162,14 +206,14 @@ namespace gstd {
 		};
 	public:
 		struct symbol {
-			int level;
+			uint32_t level;
 			script_block* sub;
-			int variable;
+			uint32_t variable;
 			bool can_overload;
 			bool can_modify;		//Applies to the scripter, not the engine
 
 			symbol() : level(0), sub(nullptr), variable(-1), can_overload(true), can_modify(true) {}
-			symbol(int lv, script_block* pSub, int var, bool bOver, bool bMod) : level(lv), sub(pSub), 
+			symbol(uint32_t lv, script_block* pSub, uint32_t var, bool bOver, bool bMod) : level(lv), sub(pSub),
 				variable(var), can_overload(bOver), can_modify(bMod) {}
 		};
 
@@ -202,6 +246,7 @@ namespace gstd {
 		void parse_parentheses(script_block* block, parser_state_t* state);
 		void parse_clause(script_block* block, parser_state_t* state);
 		void parse_prefix(script_block* block, parser_state_t* state);
+		void _parse_array_suffix(script_block* block, parser_state_t* state, bool bSetUnique);
 		void parse_suffix(script_block* block, parser_state_t* state);
 		void parse_product(script_block* block, parser_state_t* state);
 		void parse_sum(script_block* block, parser_state_t* state);

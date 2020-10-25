@@ -102,7 +102,7 @@ namespace gstd {
 		return type_data::tk_real;
 	}
 	bool BaseFunction::_type_assign_check(script_machine* machine, const value* v_src, const value* v_dst) {
-		if (!v_dst->has_data()) return true;		//dest is null, assign ahead
+		if (!v_dst->has_data()) return true;	//dest is null, assign ahead
 		type_data* type_src = v_src->get_type();
 		type_data* type_dst = v_dst->get_type();
 
@@ -119,6 +119,27 @@ namespace gstd {
 				"Variable assignment cannot implicitly convert from \"%s\" to \"%s\".\r\n",
 				type_data::string_representation(type_src).c_str(),
 				type_data::string_representation(type_dst).c_str());
+			if (machine) machine->raise_error(error);
+			else throw error;
+		}
+		return false;
+	}
+	bool BaseFunction::_type_assign_check_no_convert(script_machine* machine, const value* v_src, const value* v_dst) {
+		if (!v_dst->has_data()) return true;		//dest is null, assign ahead
+		type_data* type_src = v_src->get_type();
+		type_data* type_dst = v_dst->get_type();
+
+		if (type_src == type_dst)
+			return true;	//Same type
+		else if (_type_check_two_all(type_src, type_dst, type_data::tk_array)
+			&& (type_src->get_element() == nullptr || type_dst->get_element() == nullptr))
+			return true;	//Different type, but both are arrays, and one is empty
+
+		{
+			std::string error = StringUtility::Format(
+				"Variable assignment cannot assign type \"%s\" to type \"%s\".\r\n",
+				type_data::string_representation(type_dst).c_str(),
+				type_data::string_representation(type_src).c_str());
 			if (machine) machine->raise_error(error);
 			else throw error;
 		}
@@ -473,18 +494,23 @@ namespace gstd {
 		return value(script_type_manager::get_int_type(), (int64_t)argv->length_as_array());
 	}
 
-	const value& BaseFunction::index(script_machine* machine, int argc, const value* argv) {
+	const value* BaseFunction::index(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 2);
 
 		int index = argv[1].as_int();
 		if (!_index_check(machine, argv->get_type(), argv->length_as_array(), index))
-			return value::val_empty;
+			return nullptr;
 
-		return argv->index_as_array(index);
+		return &(argv->index_as_array(index));
 	}
 
 	value BaseFunction::slice(script_machine* machine, int argc, const value* argv) {
-		assert(argc == 3);
+		/*
+		bool bSetUnique = false;
+		if (argc == 4) {
+			bSetUnique = argv[3].as_boolean();
+		}
+		*/
 
 		if (argv[0].get_type()->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, argv[0].get_type(), "array slice");
@@ -509,13 +535,19 @@ namespace gstd {
 
 		if (index_2 > index_1) {
 			resArr.resize(index_2 - index_1);
-			for (size_t i = index_1, j = 0; i < index_2; ++i, ++j)
-				resArr[j] = argv[0].index_as_array(i);
+			for (size_t i = index_1, j = 0; i < index_2; ++i, ++j) {
+				const value& v = argv[0].index_as_array(i);
+				//if (bSetUnique) v.unique();
+				resArr[j] = v;
+			}
 		}
 		else if (index_1 > index_2) {
 			resArr.resize(index_1 - index_2);
-			for (size_t i = 0, j = index_1 - 1; i < index_1 - index_2; ++i, --j)
-				resArr[i] = argv[0].index_as_array(j);
+			for (size_t i = 0, j = index_1 - 1; i < index_1 - index_2; ++i, --j) {
+				const value& v = argv[0].index_as_array(j);
+				//if (bSetUnique) v.unique();
+				resArr[i] = v;
+			}
 		}
 
 		result.set(argv[0].get_type(), resArr);
