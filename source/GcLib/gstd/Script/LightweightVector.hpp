@@ -32,7 +32,7 @@ namespace gstd {
 		inline void pop_back(size_t count = 1U) {
 			if (length < count) count = length;
 			length -= count;
-			//fill_with_empty(at + length, count);
+			fill_with_empty(at + length, count);
 		}
 
 		void clear() {
@@ -65,7 +65,7 @@ namespace gstd {
 		}
 
 		void erase(T* pos);
-		void insert(T* pos, T const& value);
+		void insert(T* pos, const T& value);
 	};
 
 	template<typename T>
@@ -74,8 +74,8 @@ namespace gstd {
 	}
 	template<typename T>
 	void script_vector<T>::fill_with_empty(T* pos, size_t count) {
-		//T empty;
-		for (size_t i = 0; i < count; ++i, ++pos) *pos = T::val_empty;
+		T empty;
+		for (size_t i = 0; i < count; ++i, ++pos) *pos = empty;
 	}
 
 	template<typename T>
