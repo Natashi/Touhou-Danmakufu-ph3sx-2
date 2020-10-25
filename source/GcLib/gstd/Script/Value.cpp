@@ -70,31 +70,31 @@ value::value(type_data* t, const std::wstring& v) {
 }
 
 value* value::set(type_data* t, int64_t v) {
-	unique();
+	data = std::make_shared<body>();
 	data->type = t;
 	data->int_value = v;
 	return this;
 }
 value* value::set(type_data* t, double v) {
-	unique();
+	data = std::make_shared<body>();
 	data->type = t;
 	data->real_value = v;
 	return this;
 }
 value* value::set(type_data* t, wchar_t v) {
-	unique();
+	data = std::make_shared<body>();
 	data->type = t;
 	data->char_value = v;
 	return this;
 }
 value* value::set(type_data* t, bool v) {
-	unique();
+	data = std::make_shared<body>();
 	data->type = t;
 	data->boolean_value = v;
 	return this;
 }
 value* value::set(type_data* t, std::vector<value>& v) {
-	unique();
+	data = std::make_shared<body>();
 	data->type = t;
 	data->array_value = v;
 	return this;

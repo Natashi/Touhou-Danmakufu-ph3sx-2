@@ -111,6 +111,7 @@ namespace gstd {
 		inline void release() {
 			if (data) data.reset();
 		}
+
 		struct body {
 			type_data* type = nullptr;
 			std::vector<value> array_value;
@@ -122,7 +123,6 @@ namespace gstd {
 				int64_t int_value;
 			};
 		};
-
 		mutable std::shared_ptr<body> data;
 	};
 }
