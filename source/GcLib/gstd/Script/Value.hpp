@@ -33,8 +33,6 @@ namespace gstd {
 
 	class value {
 	public:
-		static value val_empty;
-	public:
 		value() : data(nullptr) {}
 		value(type_data* t, int64_t v);
 		value(type_data* t, double v);

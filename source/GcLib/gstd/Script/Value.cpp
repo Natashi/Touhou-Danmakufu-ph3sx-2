@@ -41,7 +41,6 @@ bool type_data::operator<(const type_data& other) const {
 	return element == nullptr && other.element != nullptr;
 }
 
-value value::val_empty = value();
 value::value(type_data* t, int64_t v) {
 	data = std::make_shared<body>();
 	data->type = t;
