@@ -46,17 +46,19 @@ bool ScriptEngineCache::IsExists(const std::wstring& name) {
 //ScriptClientBase
 **********************************************************/
 static const std::vector<function> commonFunction = {
-	//共通関数：スクリプト引数結果
+	//Script functions
 	{ "GetScriptArgument", ScriptClientBase::Func_GetScriptArgument, 1 },
 	{ "GetScriptArgumentCount", ScriptClientBase::Func_GetScriptArgumentCount, 0 },
 	{ "SetScriptResult", ScriptClientBase::Func_SetScriptResult, 1 },
 
-	//共通関数：数学系
+	//Math functions
 	{ "min", ScriptClientBase::Func_Min, 2 },
 	{ "max", ScriptClientBase::Func_Max, 2 },
 	{ "clamp", ScriptClientBase::Func_Clamp, 3 },
 	{ "log", ScriptClientBase::Func_Log, 1 },
 	{ "log10", ScriptClientBase::Func_Log10, 1 },
+
+	//Math functions: Trigonometry
 	{ "cos", ScriptClientBase::Func_Cos, 1 },
 	{ "sin", ScriptClientBase::Func_Sin, 1 },
 	{ "tan", ScriptClientBase::Func_Tan, 1 },
@@ -74,21 +76,25 @@ static const std::vector<function> commonFunction = {
 	{ "ratan", ScriptClientBase::Func_RAtan, 1 },
 	{ "ratan2", ScriptClientBase::Func_RAtan2, 2 },
 
-	{ "exp", ScriptClientBase::Func_Exp, 1 },
-	{ "sqrt", ScriptClientBase::Func_Sqrt, 1 },
-	{ "nroot", ScriptClientBase::Func_NRoot, 2 },
-	{ "hypot", ScriptClientBase::Func_Hypot, 2 },
-
-	{ "rand", ScriptClientBase::Func_Rand, 2 },
-	{ "rand_int", ScriptClientBase::Func_RandI, 2 },
-	{ "prand", ScriptClientBase::Func_RandEff, 2 },
-	{ "prand_int", ScriptClientBase::Func_RandEffI, 2 },
-
+	//Math functions: Angles
 	{ "ToDegrees", ScriptClientBase::Func_ToDegrees, 1 },
 	{ "ToRadians", ScriptClientBase::Func_ToRadians, 1 },
 	{ "NormalizeAngle", ScriptClientBase::Func_NormalizeAngle, 1 },
 	{ "NormalizeAngleR", ScriptClientBase::Func_RNormalizeAngle, 1 },
 
+	//Math functions: Extra
+	{ "exp", ScriptClientBase::Func_Exp, 1 },
+	{ "sqrt", ScriptClientBase::Func_Sqrt, 1 },
+	{ "nroot", ScriptClientBase::Func_NRoot, 2 },
+	{ "hypot", ScriptClientBase::Func_Hypot, 2 },
+
+	//Random
+	{ "rand", ScriptClientBase::Func_Rand, 2 },
+	{ "rand_int", ScriptClientBase::Func_RandI, 2 },
+	{ "prand", ScriptClientBase::Func_RandEff, 2 },
+	{ "prand_int", ScriptClientBase::Func_RandEffI, 2 },
+
+	//Interpolation
 	{ "Interpolate_Linear", ScriptClientBase::Func_Interpolate_Linear, 3 },
 	{ "Interpolate_Smooth", ScriptClientBase::Func_Interpolate_Smooth, 3 },
 	{ "Interpolate_Smoother", ScriptClientBase::Func_Interpolate_Smoother, 3 },
@@ -100,10 +106,7 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_CubicBezier", ScriptClientBase::Func_Interpolate_CubicBezier, 5 },
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
 
-	{ "typeof", ScriptClientBase::Func_TypeOf, 1 },
-	{ "ftypeof", ScriptClientBase::Func_FTypeOf, 1 },
-
-	//共通関数：文字列操作
+	//String functions
 	{ "ToString", ScriptClientBase::Func_ToString, 1 },
 	{ "IntToString", ScriptClientBase::Func_ItoA, 1 },
 	{ "itoa", ScriptClientBase::Func_ItoA, 1 },
@@ -121,13 +124,12 @@ static const std::vector<function> commonFunction = {
 	{ "RegexMatchRepeated", ScriptClientBase::Func_RegexMatchRepeated, 2 },
 	{ "RegexReplace", ScriptClientBase::Func_RegexReplace, 3 },
 
-	//共通関数：パス関連
+	//Path utilities
 	{ "GetParentScriptDirectory", ScriptClientBase::Func_GetParentScriptDirectory, 0 },
 	{ "GetCurrentScriptDirectory", ScriptClientBase::Func_GetCurrentScriptDirectory, 0 },
 	{ "GetFilePathList", ScriptClientBase::Func_GetFilePathList, 1 },
 	{ "GetDirectoryList", ScriptClientBase::Func_GetDirectoryList, 1 },
 
-	//Path utility
 	{ "GetModuleName", ScriptClientBase::Func_GetModuleName, 0 },
 	{ "GetModuleDirectory", ScriptClientBase::Func_GetModuleDirectory, 0 },
 	{ "GetFileDirectory", ScriptClientBase::Func_GetFileDirectory, 1 },
@@ -139,16 +141,16 @@ static const std::vector<function> commonFunction = {
 	{ "IsFileExists", ScriptClientBase::Func_IsFileExists, 1 },
 	{ "IsDirectoryExists", ScriptClientBase::Func_IsDirectoryExists, 1 },
 
-	//共通関数：時刻関連
+	//System time
 	{ "GetCurrentDateTimeS", ScriptClientBase::Func_GetCurrentDateTimeS, 0 },
 
-	//共通関数：デバッグ関連
+	//Debug stuff
 	{ "WriteLog", ScriptClientBase::Func_WriteLog, -2 },		//0 fixed + ... -> 1 minimum
 	{ "RaiseError", ScriptClientBase::Func_RaiseError, 1 },
 	{ "RaiseMessageWindow", ScriptClientBase::Func_RaiseMessageWindow, 2 },
 	{ "RaiseMessageWindow", ScriptClientBase::Func_RaiseMessageWindow, 3 },	//Overloaded
 
-	//共通関数：共通データ
+	//Common data
 	{ "SetCommonData", ScriptClientBase::Func_SetCommonData, 2 },
 	{ "GetCommonData", ScriptClientBase::Func_GetCommonData, 2 },
 	{ "ClearCommonData", ScriptClientBase::Func_ClearCommonData, 0 },
@@ -1223,23 +1225,6 @@ value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int ar
 	};
 
 	return CreateRealArrayValue(res_pos, 2U);
-}
-
-value ScriptClientBase::Func_TypeOf(script_machine* machine, int argc, const value* argv) {
-	type_data* type = argv->get_type();
-
-	if (type->get_kind() == type_data::type_kind::tk_array) {
-		if (type->get_element()->get_kind() == type_data::type_kind::tk_char)
-			return CreateIntValue((int)type_data::type_kind::tk_array + 1);	//String
-	}
-	return CreateIntValue(type->get_kind());
-}
-value ScriptClientBase::Func_FTypeOf(script_machine* machine, int argc, const value* argv) {
-	type_data* type = argv->get_type();
-	while (type->get_kind() == type_data::type_kind::tk_array)
-		type = type->get_element();
-
-	return CreateIntValue(type->get_kind());
 }
 
 //組み込み関数：文字列操作

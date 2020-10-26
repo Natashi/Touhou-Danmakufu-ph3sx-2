@@ -104,6 +104,9 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(bitwiseLeft);
 		DNH_FUNCAPI_DECL_(bitwiseRight);
 
+		DNH_FUNCAPI_DECL_(typeOf);
+		DNH_FUNCAPI_DECL_(typeOfElem);
+
 		DNH_FUNCAPI_DECL_(assert_);
 		DNH_FUNCAPI_DECL_(script_debugBreak);
 	};

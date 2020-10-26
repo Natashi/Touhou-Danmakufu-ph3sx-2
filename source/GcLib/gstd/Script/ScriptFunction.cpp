@@ -650,12 +650,6 @@ namespace gstd {
 	}
 	SCRIPT_DECLARE_OP(absolute);
 
-	value BaseFunction::assert_(script_machine* machine, int argc, const value* argv) {
-		if (!argv[0].as_boolean())
-			machine->raise_error(argv[1].as_string());
-		return value();
-	}
-
 #define BITWISE_RET if (_is_force_convert_real(argv[0].get_type()) || _is_force_convert_real(argv[1].get_type())) \
 						return value(script_type_manager::get_real_type(), (double)res); \
 					else \
@@ -697,6 +691,30 @@ namespace gstd {
 	}
 #undef BITWISE_RET
 
+	value BaseFunction::typeOf(script_machine* machine, int argc, const value* argv) {
+		type_data* type = argv->get_type();
+
+		if (type->get_kind() == type_data::type_kind::tk_array) {
+			type_data* elem = type->get_element();
+			if (elem && elem->get_kind() == type_data::type_kind::tk_char)	//String
+				return value(script_type_manager::get_int_type(), (int64_t)type_data::tk_array + 1);
+		}
+
+		return value(script_type_manager::get_int_type(), (int64_t)type->get_kind());
+	}
+	value BaseFunction::typeOfElem(script_machine* machine, int argc, const value* argv) {
+		type_data* type = argv->get_type();
+		while (type->get_kind() == type_data::type_kind::tk_array)
+			type = type->get_element();
+
+		return value(script_type_manager::get_int_type(), (int64_t)type->get_kind());
+	}
+
+	value BaseFunction::assert_(script_machine* machine, int argc, const value* argv) {
+		if (!argv[0].as_boolean())
+			machine->raise_error(argv[1].as_string());
+		return value();
+	}
 	value BaseFunction::script_debugBreak(script_machine* machine, int argc, const value* argv) {
 		//Prevents crashes if called without a debugger attached, not to prevent external debugging
 		if (IsDebuggerPresent())

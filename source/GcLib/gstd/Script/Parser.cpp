@@ -121,6 +121,9 @@ namespace gstd {
 		{ "bit_left", BaseFunction::bitwiseLeft, 2 },
 		{ "bit_right", BaseFunction::bitwiseRight, 2 },
 
+		{ "typeof", BaseFunction::typeOf, 1 },
+		{ "ftypeof", BaseFunction::typeOfElem, 1 },
+
 		{ "assert", BaseFunction::assert_, 2 },
 		{ "__DEBUG_BREAK", BaseFunction::script_debugBreak, 0 },
 	};
