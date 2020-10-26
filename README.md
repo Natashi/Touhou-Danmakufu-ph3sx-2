@@ -6,7 +6,7 @@ DnhViewer is not provided nor supported.
 Not guaranteed to not randomly crash.
 Do not assume complete backwards compatibility with vanilla ph3. Contact me for a definitive answer.
 
-Mainly intended for use in the upcoming Touhou fangames Sapphire Panlogism and Treasure Castle Labyrinth. A re-upload because GitHub was fucking retarded.
+Mainly intended for use in the upcoming Touhou fangames Sapphire Panlogism and Treasure Castle Labyrinth. A re-upload because GitHub was an incomprehensible piece of *\[EXCESS EXPLETIVE GRACEFULLY REDACTED\]*.
 
 Special Thanks:
 - **WishMakers** - Mainly for providing a non-broken reference point with his th_dnh_woo repository. Slightly-less-mainly for that one pull request I never acted upon.
