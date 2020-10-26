@@ -269,6 +269,8 @@ void StgPlayerObject::SendGrazeEvent() {
 	}
 	listGrazedShot_.clear();
 
+	if (iValidGraze == 0) return;
+
 	value listScriptValue[3];
 	listScriptValue[0] = script_->CreateIntValue(iValidGraze);
 	listScriptValue[1] = script_->CreateIntArrayValue(listShotID);
