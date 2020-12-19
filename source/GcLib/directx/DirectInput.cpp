@@ -16,21 +16,23 @@ DirectInput::DirectInput() {
 	pMouse_ = nullptr;
 }
 DirectInput::~DirectInput() {
+	if (this != thisBase_) return;
+
 	Logger::WriteTop("DirectInput: Finalizing:");
-	for (int16_t iPad = 0; iPad < pJoypad_.size(); ++iPad) {
-		if (pJoypad_[iPad] == nullptr) continue;
-		pJoypad_[iPad]->Unacquire();
-		ptr_release(pJoypad_[iPad]);
+	for (auto& ptrPad : pJoypad_) {
+		if (ptrPad == nullptr) continue;
+		ptrPad->Unacquire();
+		ptr_release(ptrPad);
 	}
 
 	if (pMouse_) {
 		pMouse_->Unacquire();
-		pMouse_->Release();
+		ptr_release(pMouse_);
 	}
 
 	if (pKeyboard_) {
 		pKeyboard_->Unacquire();
-		pKeyboard_->Release();
+		ptr_release(pKeyboard_);
 	}
 
 	ptr_release(pInput_);
@@ -175,62 +177,34 @@ BOOL DirectInput::_GetJoypadCallback(LPDIDEVICEINSTANCE lpddi) {
 
 	{
 		DIPROPRANGE diprg;
-		diprg.diph.dwSize = sizeof(diprg);
-		diprg.diph.dwHeaderSize = sizeof(diprg.diph);
-		diprg.diph.dwObj = DIJOFS_X;
-		diprg.diph.dwHow = DIPH_BYOFFSET;
+		diprg.diph.dwSize = sizeof(DIPROPRANGE);
+		diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+		diprg.diph.dwObj = 0;
+		diprg.diph.dwHow = DIPH_DEVICE;
 		diprg.lMin = -1000;
 		diprg.lMax = +1000;
+
 		hr = pJoypad->SetProperty(DIPROP_RANGE, &diprg.diph);
 		if (FAILED(hr)) {
 			ptr_release(pJoypad);
-			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad X range.");
+			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad axis range.");
 			return DIENUM_CONTINUE;
-		}
-
-		diprg.diph.dwObj = DIJOFS_Y;
-		hr = pJoypad->SetProperty(DIPROP_RANGE, &diprg.diph);
-		if (FAILED(hr)) {
-			ptr_release(pJoypad);
-			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad Y range.");
-			return DIENUM_CONTINUE;
-		}
-
-		diprg.diph.dwObj = DIJOFS_Z;
-		hr = pJoypad->SetProperty(DIPROP_RANGE, &diprg.diph);
-		if (FAILED(hr)) {
-			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad Z range.");
-			//return DIENUM_CONTINUE;
 		}
 	}
 
 	{
 		DIPROPDWORD dipdw;
-		dipdw.diph.dwSize = sizeof(dipdw);
-		dipdw.diph.dwHeaderSize = sizeof(dipdw.diph);
-		dipdw.diph.dwObj = DIJOFS_X;
-		dipdw.diph.dwHow = DIPH_BYOFFSET;
-		dipdw.dwData = 2500;
+		dipdw.diph.dwSize = sizeof(DIPROPDWORD);
+		dipdw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+		dipdw.diph.dwObj = 0;
+		dipdw.diph.dwHow = DIPH_DEVICE;
+		dipdw.dwData = 2000;	//20% deadzone
+
 		hr = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
 		if (FAILED(hr)) {
 			ptr_release(pJoypad);
-			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad X deadzone.");
+			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad axis deadzone.");
 			return DIENUM_CONTINUE;
-		}
-
-		dipdw.diph.dwObj = DIJOFS_Y;
-		hr = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
-		if (FAILED(hr)) {
-			ptr_release(pJoypad);
-			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad Y deadzone.");
-			return DIENUM_CONTINUE;
-		}
-
-		dipdw.diph.dwObj = DIJOFS_Z;
-		hr = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
-		if (FAILED(hr)) {
-			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad Z deadzone.");
-			//return DIENUM_CONTINUE;
 		}
 	}
 
