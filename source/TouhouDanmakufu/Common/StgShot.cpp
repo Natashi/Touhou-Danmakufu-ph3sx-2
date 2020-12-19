@@ -17,9 +17,17 @@ StgShotManager::StgShotManager(StgStageController* stageController) {
 
 	rcDeleteClip_ = DxRect<LONG>(-64, -64, 64, 64);
 
-	RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
-	effectLayer_ = shaderManager_->GetRender2DShader();
-	handleEffectWorld_ = effectLayer_->GetParameterBySemantic(nullptr, "WORLD");
+	{
+		RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
+		effectLayer_ = shaderManager_->GetRender2DShader();
+		handleEffectWorld_ = effectLayer_->GetParameterBySemantic(nullptr, "WORLD");
+	}
+	{
+		auto objectManager = stageController_->GetMainObjectManager();
+		listRenderQueue_.resize(objectManager->GetRenderBucketCapacity());
+		for (auto& iLayer : listRenderQueue_)
+			iLayer.second.resize(32);
+	}
 }
 StgShotManager::~StgShotManager() {
 	for (shared_ptr<StgShotObject> obj : listObj_) {
@@ -44,6 +52,11 @@ void StgShotManager::Work() {
 	}
 }
 void StgShotManager::Render(int targetPriority) {
+	if (targetPriority < 0 || targetPriority >= listRenderQueue_.size()) return;
+
+	auto& renderQueueLayer = listRenderQueue_[targetPriority];
+	if (renderQueueLayer.first == 0) return;
+
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
 
@@ -53,10 +66,6 @@ void StgShotManager::Render(int targetPriority) {
 	graphics->SetLightingEnable(false);
 	graphics->SetTextureFilter(D3DTEXF_LINEAR, D3DTEXF_LINEAR, D3DTEXF_NONE);
 
-	//graphics->SetTextureFilter(DirectGraphics::MODE_TEXTURE_FILTER_POINT);
-	//			MODE_TEXTURE_FILTER_POINT,//補間なし
-	//			MODE_TEXTURE_FILTER_LINEAR,//線形補間
-	//フォグを解除する
 	DWORD bEnableFog = FALSE;
 	device->GetRenderState(D3DRS_FOGENABLE, &bEnableFog);
 	if (bEnableFog)
@@ -65,20 +74,16 @@ void StgShotManager::Render(int targetPriority) {
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 
-	const D3DXMATRIX& matCamera = camera2D->GetMatrix();
-
-	for (shared_ptr<StgShotObject>& obj : listObj_) {
-		if (obj->IsDeleted() || !obj->IsActive() || obj->GetRenderPriorityI() != targetPriority) continue;
-		obj->RenderOnShotManager();
-	}
-
 	{
 		D3DXMATRIX matProj;
-		D3DXMatrixMultiply(&matProj, &matCamera, &graphics->GetViewPortMatrix());
+		D3DXMatrixMultiply(&matProj, &camera2D->GetMatrix(), &graphics->GetViewPortMatrix());
 		effectLayer_->SetMatrix(handleEffectWorld_, &matProj);
 	}
 
-	//描画
+	for (size_t i = 0; i < renderQueueLayer.first; ++i) {
+		renderQueueLayer.second[i]->RenderOnShotManager();
+	}
+
 	size_t countBlendType = StgShotDataList::RENDER_TYPE_COUNT;
 	BlendMode blendMode[] =
 	{
@@ -155,6 +160,18 @@ void StgShotManager::Render(int targetPriority) {
 	if (bEnableFog)
 		graphics->SetFogEnable(true);
 }
+void StgShotManager::LoadRenderQueue() {
+	for (auto& iLayer : listRenderQueue_)
+		iLayer.first = 0;
+
+	for (shared_ptr<StgShotObject>& obj : listObj_) {
+		if (obj->IsDeleted() || !obj->IsActive()) continue;
+		auto& iQueue = listRenderQueue_[obj->GetRenderPriorityI()];
+		while (iQueue.first >= iQueue.second.size())
+			iQueue.second.resize(iQueue.second.size() * 2);
+		iQueue.second[(iQueue.first)++] = obj.get();
+	}
+}
 
 void StgShotManager::RegistIntersectionTarget() {
 	for (shared_ptr<StgShotObject>& obj : listObj_) {
@@ -216,17 +233,6 @@ size_t StgShotManager::GetShotCount(int typeOwner) {
 	return res;
 }
 
-void StgShotManager::GetValidRenderPriorityList(std::vector<bool>& list) {
-	auto objectManager = stageController_->GetMainObjectManager();
-	list.resize(objectManager->GetRenderBucketCapacity());
-	std::fill(list.begin(), list.end(), false);
-
-	for (shared_ptr<StgShotObject>& obj : listObj_) {
-		if (obj->IsDeleted()) continue;
-		int pri = obj->GetRenderPriorityI();
-		list[pri] = true;
-	}
-}
 void StgShotManager::SetDeleteEventEnableByType(int type, bool bEnable) {
 	int bit = 0;
 	switch (type) {
@@ -369,7 +375,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 
 			data->indexTexture_ = textureIndex;
 			{
-				auto texture = listTexture_[data->indexTexture_];
+				shared_ptr<Texture>& texture = listTexture_[data->indexTexture_];
 				data->textureSize_.x = texture->GetWidth();
 				data->textureSize_.y = texture->GetHeight();
 			}
@@ -892,7 +898,7 @@ void StgShotObject::_SendDeleteEvent(int bit) {
 	scriptShot->RequestEvent(typeEvent, listScriptValue, 4);
 }
 
-void StgShotObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
+void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	shared_ptr<StgIntersectionObject> ptrObj = otherTarget->GetObject().lock();
 
 	float damage = 0;
@@ -900,9 +906,9 @@ void StgShotObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, share
 	switch (otherType) {
 	case StgIntersectionTarget::TYPE_PLAYER:
 	{
-		//自機
 		if (frameGrazeInvalid_ <= 0)
-			frameGrazeInvalid_ = frameGrazeInvalidStart_ > 0 ? frameGrazeInvalidStart_ : INT_MAX;
+			frameGrazeInvalid_ = frameGrazeInvalidStart_ > 0 ? 
+			frameGrazeInvalidStart_ : INT_MAX;
 		break;
 	}
 	case StgIntersectionTarget::TYPE_PLAYER_SHOT:
@@ -931,6 +937,7 @@ void StgShotObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, share
 	case StgIntersectionTarget::TYPE_ENEMY:
 	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 	{
+		//Don't reduce penetration with lasers
 		if (dynamic_cast<StgLaserObject*>(this) == nullptr)
 			damage = 1;
 		break;

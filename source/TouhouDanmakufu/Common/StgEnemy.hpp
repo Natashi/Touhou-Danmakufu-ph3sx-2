@@ -54,7 +54,7 @@ public:
 
 	virtual void Work();
 	virtual void Activate();
-	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
+	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 	virtual void ClearEnemyObject() { ClearIntersectionRelativeTarget(); }
 	virtual void RegistIntersectionTarget();
 

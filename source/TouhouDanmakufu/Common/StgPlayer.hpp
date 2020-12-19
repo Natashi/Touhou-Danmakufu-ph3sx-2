@@ -92,7 +92,7 @@ public:
 
 	virtual void Work();
 	void Move();
-	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
+	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 	void CallSpell();
 	void KillSelf(bool bCalledFromScript);
 
@@ -182,7 +182,7 @@ protected:
 public:
 	StgPlayerSpellObject(StgStageController* stageController);
 	virtual void Work();
-	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
+	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 
 	double GetDamage() { return damage_; }
 	void SetDamage(double damage) { damage_ = damage; }

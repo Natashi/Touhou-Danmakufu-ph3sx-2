@@ -283,9 +283,9 @@ void StgPlayerObject::SendGrazeEvent() {
 		itemScript->RequestEvent(StgStagePlayerScript::EV_GRAZE, listScriptValue, 3);
 }
 
-void StgPlayerObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
-	shared_ptr<StgIntersectionTarget_Player> own = std::dynamic_pointer_cast<StgIntersectionTarget_Player>(ownTarget);
-	if (own == nullptr) return;
+void StgPlayerObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
+	StgIntersectionTarget_Player* tPlayer = dynamic_cast<StgIntersectionTarget_Player*>(ownTarget);
+	if (tPlayer == nullptr) return;
 
 	if (auto ptrObj = otherTarget->GetObject().lock()) {
 		StgIntersectionTarget::Type otherType = otherTarget->GetTargetType();
@@ -293,7 +293,7 @@ void StgPlayerObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, sha
 		case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 		{
 			if (StgShotObject* objShot = dynamic_cast<StgShotObject*>(ptrObj.get())) {
-				if (!own->IsGraze()) {
+				if (!tPlayer->IsGraze()) {
 					hitObjectID_ = objShot->GetObjectID();
 
 					if (enableDeleteShotOnHit_ && objShot->GetLife() != StgShotObject::LIFE_SPELL_REGIST &&
@@ -304,17 +304,16 @@ void StgPlayerObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, sha
 					listGrazedShot_.push_back(otherTarget->GetObject());
 				}
 			}
+			break;
 		}
-		break;
 		case StgIntersectionTarget::TYPE_ENEMY:
 		{
-			//“G
-			if (!own->IsGraze()) {
+			if (!tPlayer->IsGraze()) {
 				if (StgEnemyObject* objEnemy = dynamic_cast<StgEnemyObject*>(ptrObj.get()))
 					hitObjectID_ = objEnemy->GetObjectID();
 			}
+			break;
 		}
-		break;
 		}
 	}
 }
@@ -362,7 +361,7 @@ void StgPlayerSpellObject::Work() {
 		objectManager->DeleteObject(this);
 	}
 }
-void StgPlayerSpellObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
+void StgPlayerSpellObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	double damage = 0;
 	StgIntersectionTarget::Type otherType = otherTarget->GetTargetType();
 	switch (otherType) {

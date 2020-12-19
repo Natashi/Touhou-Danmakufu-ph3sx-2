@@ -14,8 +14,6 @@ StgIntersectionManager::StgIntersectionManager() {
 	LONG screenWidth = graphics->GetScreenWidth();
 	LONG screenHeight = graphics->GetScreenWidth();
 
-	omp_init_lock(&lock_);
-
 	//_CreatePool(2);
 	listSpace_.resize(3);
 	for (size_t iSpace = 0; iSpace < listSpace_.size(); iSpace++) {
@@ -105,8 +103,6 @@ StgIntersectionManager::~StgIntersectionManager() {
 		ptr_delete(itr);
 	}
 	listSpace_.clear();
-
-	omp_destroy_lock(&lock_);
 }
 void StgIntersectionManager::Work() {
 	objIntersectionVisualizerCircle_->CleanUp();
@@ -126,39 +122,39 @@ void StgIntersectionManager::Work() {
 	size_t totalTarget = 0;
 	for (auto itr = listSpace_.begin(); itr != listSpace_.end(); itr++) {
 		StgIntersectionSpace* space = *itr;
-		StgIntersectionCheckList* listCheck = space->CreateIntersectionCheckList(this, totalTarget);
 
-		size_t countCheck = listCheck->GetCheckCount();
+		size_t currentCheck = 0;
+		auto listCheck = space->CreateIntersectionCheckList(this, currentCheck);
 
-		for (size_t iCheck = 0; iCheck < countCheck; iCheck++) {
-			shared_ptr<StgIntersectionTarget> targetA = listCheck->GetTargetA(iCheck);
-			shared_ptr<StgIntersectionTarget> targetB = listCheck->GetTargetB(iCheck);
+		for (size_t iCheck = 0; iCheck < currentCheck; iCheck++) {
+			auto& cTargetPair = listCheck->at(iCheck);
 
+			StgIntersectionTarget* targetA = cTargetPair.first;
+			StgIntersectionTarget* targetB = cTargetPair.second;
 			if (targetA == nullptr || targetB == nullptr) continue;
 
-			bool bIntersected = IsIntersected(targetA, targetB);
-			if (!bIntersected) continue;
+			if (IsIntersected(targetA, targetB)) {
+				weak_ptr<StgIntersectionObject> objA = targetA->GetObject();
+				weak_ptr<StgIntersectionObject> objB = targetB->GetObject();
+				auto ptrA = objA.lock();
+				auto ptrB = objB.lock();
 
-			weak_ptr<StgIntersectionObject> objA = targetA->GetObject();
-			weak_ptr<StgIntersectionObject> objB = targetB->GetObject();
-			auto ptrA = objA.lock();
-			auto ptrB = objB.lock();
-
-			{
-				if (ptrA) {
-					ptrA->Intersect(targetA, targetB);
-					ptrA->SetIntersected();
-					if (ptrB) ptrA->AddIntersectedId(objB);
-				}
-				if (ptrB) {
-					ptrB->Intersect(targetB, targetA);
-					ptrB->SetIntersected();
-					if (ptrA) ptrB->AddIntersectedId(objA);
+				{
+					if (ptrA) {
+						ptrA->Intersect(targetA, targetB);
+						ptrA->SetIntersected();
+						if (ptrB) ptrA->AddIntersectedId(objB);
+					}
+					if (ptrB) {
+						ptrB->Intersect(targetB, targetA);
+						ptrB->SetIntersected();
+						if (ptrA) ptrB->AddIntersectedId(objA);
+					}
 				}
 			}
 		}
 
-		totalCheck += countCheck;
+		totalCheck += currentCheck;
 		space->ClearTarget();
 	}
 
@@ -289,39 +285,41 @@ void StgIntersectionManager::AddEnemyTargetToPlayer(shared_ptr<StgIntersectionTa
 	}
 }
 
-bool StgIntersectionManager::IsIntersected(shared_ptr<StgIntersectionTarget>& target1, shared_ptr<StgIntersectionTarget>& target2) {
-	bool res = false;
-	StgIntersectionTarget::Shape shape1 = target1->GetShape();
-	StgIntersectionTarget::Shape shape2 = target2->GetShape();
-	StgIntersectionTarget* p1 = target1.get();
-	StgIntersectionTarget* p2 = target2.get();
-	if (p1 == nullptr || p2 == nullptr) return false;
-	if (shape1 == StgIntersectionTarget::SHAPE_CIRCLE && shape2 == StgIntersectionTarget::SHAPE_CIRCLE) {
-		StgIntersectionTarget_Circle* c1 = dynamic_cast<StgIntersectionTarget_Circle*>(p1);
-		StgIntersectionTarget_Circle* c2 = dynamic_cast<StgIntersectionTarget_Circle*>(p2);
-		res = DxMath::IsIntersected(c1->GetCircle(), c2->GetCircle());
-	}
-	else if ((shape1 == StgIntersectionTarget::SHAPE_CIRCLE && shape2 == StgIntersectionTarget::SHAPE_LINE) ||
-		(shape1 == StgIntersectionTarget::SHAPE_LINE && shape2 == StgIntersectionTarget::SHAPE_CIRCLE)) {
-		StgIntersectionTarget_Circle* c = nullptr;
-		StgIntersectionTarget_Line* l = nullptr;
-		if (shape1 == StgIntersectionTarget::SHAPE_CIRCLE && shape2 == StgIntersectionTarget::SHAPE_LINE) {
-			c = dynamic_cast<StgIntersectionTarget_Circle*>(p1);
-			l = dynamic_cast<StgIntersectionTarget_Line*>(p2);
+bool StgIntersectionManager::IsIntersected(StgIntersectionTarget* p1, StgIntersectionTarget* p2) {
+	if (p1 != nullptr && p2 != nullptr) {
+		StgIntersectionTarget::Shape shape1 = p1->GetShape();
+		StgIntersectionTarget::Shape shape2 = p2->GetShape();
+		if (shape1 == StgIntersectionTarget::SHAPE_CIRCLE && shape2 == StgIntersectionTarget::SHAPE_CIRCLE) {
+			StgIntersectionTarget_Circle* c1 = dynamic_cast<StgIntersectionTarget_Circle*>(p1);
+			StgIntersectionTarget_Circle* c2 = dynamic_cast<StgIntersectionTarget_Circle*>(p2);
+			if (c1 == nullptr || c2 == nullptr) goto lab_fail;
+			return DxMath::IsIntersected(c1->GetCircle(), c2->GetCircle());
 		}
-		else {
-			c = dynamic_cast<StgIntersectionTarget_Circle*>(p2);
-			l = dynamic_cast<StgIntersectionTarget_Line*>(p1);
-		}
+		else if ((shape1 == StgIntersectionTarget::SHAPE_CIRCLE && shape2 == StgIntersectionTarget::SHAPE_LINE) ||
+			(shape1 == StgIntersectionTarget::SHAPE_LINE && shape2 == StgIntersectionTarget::SHAPE_CIRCLE)) {
+			StgIntersectionTarget_Circle* c = nullptr;
+			StgIntersectionTarget_Line* l = nullptr;
+			if (shape1 == StgIntersectionTarget::SHAPE_CIRCLE && shape2 == StgIntersectionTarget::SHAPE_LINE) {
+				c = dynamic_cast<StgIntersectionTarget_Circle*>(p1);
+				l = dynamic_cast<StgIntersectionTarget_Line*>(p2);
+			}
+			else {
+				c = dynamic_cast<StgIntersectionTarget_Circle*>(p2);
+				l = dynamic_cast<StgIntersectionTarget_Line*>(p1);
+			}
 
-		res = DxMath::IsIntersected(c->GetCircle(), l->GetLine());
+			if (c == nullptr || l == nullptr) goto lab_fail;
+			return DxMath::IsIntersected(c->GetCircle(), l->GetLine());
+		}
+		else if (shape1 == StgIntersectionTarget::SHAPE_LINE && shape2 == StgIntersectionTarget::SHAPE_LINE) {
+			StgIntersectionTarget_Line* l1 = dynamic_cast<StgIntersectionTarget_Line*>(p1);
+			StgIntersectionTarget_Line* l2 = dynamic_cast<StgIntersectionTarget_Line*>(p2);
+			if (l1 == nullptr || l2 == nullptr) goto lab_fail;
+			return DxMath::IsIntersected(l1->GetLine(), l2->GetLine());
+		}
 	}
-	else if (shape1 == StgIntersectionTarget::SHAPE_LINE && shape2 == StgIntersectionTarget::SHAPE_LINE) {
-		StgIntersectionTarget_Line* l1 = dynamic_cast<StgIntersectionTarget_Line*>(p1);
-		StgIntersectionTarget_Line* l2 = dynamic_cast<StgIntersectionTarget_Line*>(p2);
-		res = DxMath::IsIntersected(l1->GetLine(), l2->GetLine());
-	}
-	return res;
+lab_fail:
+	return false;
 }
 
 void StgIntersectionManager::AddVisualization(shared_ptr<StgIntersectionTarget>& target) {
@@ -479,81 +477,90 @@ shared_ptr<StgIntersectionTarget> StgIntersectionCheckList::GetTargetB(size_t in
 **********************************************************/
 StgIntersectionSpace::StgIntersectionSpace() {
 	spaceRect_ = DxRect<double>(0, 0, 0, 0);
-
-	listCheck_ = new StgIntersectionCheckList();
+	previousCheckCreated_ = 0;
 }
 StgIntersectionSpace::~StgIntersectionSpace() {
-	ptr_delete(listCheck_);
 }
 bool StgIntersectionSpace::Initialize(double left, double top, double right, double bottom) {
-	listCell_.resize(2);
-
 	spaceRect_ = DxRect<double>(left, top, right, bottom);
-
+	pooledCheckList_.resize(64U);
 	return true;
 }
-bool StgIntersectionSpace::RegistTarget(int type, shared_ptr<StgIntersectionTarget>& target) {
-	const DxRect<LONG>& rect = target->GetIntersectionSpaceRect();
-	if (rect.right < spaceRect_.left || rect.bottom < spaceRect_.top ||
-		rect.left > spaceRect_.right || rect.top > spaceRect_.bottom)
+bool StgIntersectionSpace::RegistTarget(ListTarget* pVec, shared_ptr<StgIntersectionTarget>& target) {
+	if (!spaceRect_.IsIntersected(target->GetIntersectionSpaceRect()))
 		return false;
-
-	listCell_[type].push_back(target);
+	pVec->push_back(target);
 	return true;
 }
 void StgIntersectionSpace::ClearTarget() {
-	for (auto& iCell : listCell_)
-		iCell.clear();
+	pairTargetList_.first.clear();
+	pairTargetList_.second.clear();
+	for (size_t i = 0; i < pooledCheckList_.size(); ++i) {
+		if (i >= previousCheckCreated_) break;
+		pooledCheckList_[i].first = nullptr;
+		pooledCheckList_[i].second = nullptr;
+	}
 }
 
-StgIntersectionCheckList* StgIntersectionSpace::CreateIntersectionCheckList(StgIntersectionManager* manager, size_t& total) {
-	listCheck_->Clear();
-	total += _WriteIntersectionCheckList(manager);
-	return listCheck_;
-}
-size_t StgIntersectionSpace::_WriteIntersectionCheckList(StgIntersectionManager* manager) {
-	std::vector<shared_ptr<StgIntersectionTarget>>& listTargetA = listCell_[0];
-	std::vector<shared_ptr<StgIntersectionTarget>>& listTargetB = listCell_[1];
+std::vector<StgIntersectionSpace::TargetCheckListPair>* StgIntersectionSpace::CreateIntersectionCheckList(
+	StgIntersectionManager* manager, size_t& total) 
+{
+	ListTarget* pListTargetA = &pairTargetList_.first;
+	ListTarget* pListTargetB = &pairTargetList_.second;
 
-	omp_lock_t* ompLock = manager->GetLock();
+	CriticalSection& criticalSection = manager->GetLock();
+	volatile unsigned int count = 0;
 
 	if (manager->IsRenderIntersection()) {
-#pragma omp for
-		for (int i = 0; i < listTargetA.size(); ++i) {
-			shared_ptr<StgIntersectionTarget>& target = listTargetA[i];
-			manager->AddVisualization(target);
-		}
-#pragma omp for
-		for (int i = 0; i < listTargetB.size(); ++i) {
-			shared_ptr<StgIntersectionTarget>& target = listTargetB[i];
-			manager->AddVisualization(target);
-		}
+		ParallelFor(pListTargetA->size(), [&](size_t i) {
+			manager->AddVisualization(pListTargetA->at(i));
+		});
+		ParallelFor(pListTargetB->size(), [&](size_t i) {
+			manager->AddVisualization(pListTargetB->at(i));
+		});
 	}
 
-	std::atomic<size_t> count{ 0 };
+	if (pListTargetA->size() > 0 && pListTargetB->size() > 0) {
+		static std::mutex mtx;
 
-#pragma omp for
-	for (int iA = 0; iA < listTargetA.size(); ++iA) {
-		shared_ptr<StgIntersectionTarget>& targetA = listTargetA[iA];
-
-		for (size_t iB = 0; iB < listTargetB.size(); ++iB) {
-			shared_ptr<StgIntersectionTarget>& targetB = listTargetB[iB];
-
-			const DxRect<LONG>& rc1 = targetA->GetIntersectionSpaceRect();
-			const DxRect<LONG>& rc2 = targetB->GetIntersectionSpaceRect();
-
-			if (!rc1.IsIntersected(rc2)) continue;
-			++count;
-
-			{
-				omp_set_lock(ompLock);
-				listCheck_->AddTargetPair(targetA, targetB);
-				omp_unset_lock(ompLock);
+		auto CheckSpaceRect = [&](StgIntersectionTarget* targetA, StgIntersectionTarget* targetB) {
+			if (targetA == nullptr || targetB == nullptr) return;
+			const DxRect<LONG>& boundA = targetA->GetIntersectionSpaceRect();
+			const DxRect<LONG>& boundB = targetB->GetIntersectionSpaceRect();
+			if (boundA.IsIntersected(boundB)) {
+				if ((size_t)count >= pooledCheckList_.size()) {
+					Lock lock(criticalSection);
+					pooledCheckList_.resize(pooledCheckList_.size() * 2);
+				}
+				pooledCheckList_[(size_t)count] = std::make_pair(targetA, targetB);
+				InterlockedIncrement(&count);
 			}
+		};
+
+		//Attempt to most efficiently utilize multithreading
+		if (pListTargetA->size() >= pListTargetB->size()) {
+			ParallelFor(pListTargetA->size(), [&](size_t iA) {
+				StgIntersectionTarget* pTargetA = pListTargetA->at(iA).get();
+				for (auto itrB = pListTargetB->begin(); itrB != pListTargetB->end(); ++itrB) {
+					StgIntersectionTarget* pTargetB = itrB->get();
+					CheckSpaceRect(pTargetA, pTargetB);
+				}
+			});
+		}
+		else {
+			ParallelFor(pListTargetB->size(), [&](size_t iB) {
+				StgIntersectionTarget* pTargetB = pListTargetB->at(iB).get();
+				for (auto itrA = pListTargetA->begin(); itrA != pListTargetA->end(); ++itrA) {
+					StgIntersectionTarget* pTargetA = itrA->get();
+					CheckSpaceRect(pTargetA, pTargetB);
+				}
+			});
 		}
 	}
 
-	return count;
+	total = (size_t)count;
+	previousCheckCreated_ = total;
+	return &pooledCheckList_;
 }
 
 /**********************************************************

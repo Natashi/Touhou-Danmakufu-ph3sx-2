@@ -101,7 +101,7 @@ static const std::vector<function> stgControlFunction = {
 	{ "GetFreePlayerScriptCount", StgControlScript::Func_GetFreePlayerScriptCount, 0 },
 	{ "GetFreePlayerScriptInfo", StgControlScript::Func_GetFreePlayerScriptInfo, 2 },
 
-		//STG制御共通関数：リプレイ関連
+	//STG制御共通関数：リプレイ関連
 	{ "LoadReplayList", StgControlScript::Func_LoadReplayList, 0 },
 	{ "GetValidReplayIndices", StgControlScript::Func_GetValidReplayIndices, 0 },
 	{ "IsValidReplayIndex", StgControlScript::Func_IsValidReplayIndex, 1 },
@@ -616,7 +616,7 @@ gstd::value StgControlScript::Func_ClearInvalidRenderPriority(gstd::script_machi
 	StgControlScript* script = (StgControlScript*)machine->data;
 	StgSystemController* systemController = script->systemController_;
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
-	infoSystem->SetInvaridRenderPriority(-1, -1);
+	infoSystem->SetInvalidRenderPriority(-1, -1);
 
 	return value();
 }
@@ -627,7 +627,7 @@ gstd::value StgControlScript::Func_SetInvalidRenderPriorityA1(gstd::script_machi
 
 	int priMin = argv[0].as_int();
 	int priMax = argv[1].as_int();
-	infoSystem->SetInvaridRenderPriority(priMin, priMax);
+	infoSystem->SetInvalidRenderPriority(priMin, priMax);
 
 	return value();
 }

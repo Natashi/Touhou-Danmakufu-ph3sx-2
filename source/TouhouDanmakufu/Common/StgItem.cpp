@@ -37,6 +37,12 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 		effectLayer_ = shaderManager_->GetRender2DShader();
 		handleEffectWorld_ = effectLayer_->GetParameterBySemantic(nullptr, "WORLD");
 	}
+	{
+		auto objectManager = stageController_->GetMainObjectManager();
+		listRenderQueue_.resize(objectManager->GetRenderBucketCapacity());
+		for (auto& iLayer : listRenderQueue_)
+			iLayer.second.resize(32);
+	}
 }
 StgItemManager::~StgItemManager() {
 	ptr_delete(listSpriteItem_);
@@ -144,6 +150,11 @@ lab_next_item:
 	bCancelToPlayer_ = false;
 }
 void StgItemManager::Render(int targetPriority) {
+	if (targetPriority < 0 || targetPriority >= listRenderQueue_.size()) return;
+
+	auto& renderQueueLayer = listRenderQueue_[targetPriority];
+	if (renderQueueLayer.first == 0) return;
+
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
 
@@ -153,7 +164,6 @@ void StgItemManager::Render(int targetPriority) {
 	graphics->SetLightingEnable(false);
 	graphics->SetTextureFilter(D3DTEXF_LINEAR, D3DTEXF_LINEAR, D3DTEXF_NONE);
 
-	//ƒtƒHƒO‚ð‰ðœ‚·‚é
 	DWORD bEnableFog = FALSE;
 	device->GetRenderState(D3DRS_FOGENABLE, &bEnableFog);
 	if (bEnableFog)
@@ -162,17 +172,14 @@ void StgItemManager::Render(int targetPriority) {
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 
-	const D3DXMATRIX& matCamera = camera2D->GetMatrix();
-
-	for (shared_ptr<StgItemObject>& obj : listObj_) {
-		if (obj->IsDeleted() || obj->GetRenderPriorityI() != targetPriority) continue;
-		obj->RenderOnItemManager();
-	}
-
 	{
 		D3DXMATRIX matProj;
-		D3DXMatrixMultiply(&matProj, &matCamera, &graphics->GetViewPortMatrix());
+		D3DXMatrixMultiply(&matProj, &camera2D->GetMatrix(), &graphics->GetViewPortMatrix());
 		effectLayer_->SetMatrix(handleEffectWorld_, &matProj);
+	}
+
+	for (size_t i = 0; i < renderQueueLayer.first; ++i) {
+		renderQueueLayer.second[i]->RenderOnItemManager();
 	}
 
 	RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
@@ -227,16 +234,16 @@ void StgItemManager::Render(int targetPriority) {
 	if (bEnableFog)
 		graphics->SetFogEnable(true);
 }
-
-void StgItemManager::GetValidRenderPriorityList(std::vector<bool>& list) {
-	auto objectManager = stageController_->GetMainObjectManager();
-	list.resize(objectManager->GetRenderBucketCapacity());
-	std::fill(list.begin(), list.end(), false);
+void StgItemManager::LoadRenderQueue() {
+	for (auto& iLayer : listRenderQueue_)
+		iLayer.first = 0;
 
 	for (shared_ptr<StgItemObject>& obj : listObj_) {
-		if (obj->IsDeleted()) continue;
-		int pri = obj->GetRenderPriorityI();
-		list[pri] = true;
+		if (obj->IsDeleted() || !obj->IsActive()) continue;
+		auto& iQueue = listRenderQueue_[obj->GetRenderPriorityI()];
+		while (iQueue.first >= iQueue.second.size())
+			iQueue.second.resize(iQueue.second.size() * 2);
+		iQueue.second[(iQueue.first)++] = obj.get();
 	}
 }
 
@@ -381,7 +388,7 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 
 			data->indexTexture_ = textureIndex;
 			{
-				auto texture = listTexture_[data->indexTexture_];
+				shared_ptr<Texture>& texture = listTexture_[data->indexTexture_];
 				data->textureSize_.x = texture->GetWidth();
 				data->textureSize_.y = texture->GetHeight();
 			}
@@ -895,7 +902,7 @@ StgItemObject_1UP::StgItemObject_1UP(StgStageController* stageController) : StgI
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
-void StgItemObject_1UP::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
+void StgItemObject_1UP::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	gstd::value listValue[2] = { 
 		DxScript::CreateIntValue(typeItem_), 
 		DxScript::CreateIntValue(idObject_)
@@ -913,7 +920,7 @@ StgItemObject_Bomb::StgItemObject_Bomb(StgStageController* stageController) : St
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
-void StgItemObject_Bomb::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
+void StgItemObject_Bomb::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	gstd::value listValue[2] = {
 		DxScript::CreateIntValue(typeItem_),
 		DxScript::CreateIntValue(idObject_)
@@ -932,7 +939,7 @@ StgItemObject_Power::StgItemObject_Power(StgStageController* stageController) : 
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 	score_ = 10;
 }
-void StgItemObject_Power::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
+void StgItemObject_Power::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	if (bDefaultScoreText_)
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
@@ -954,7 +961,7 @@ StgItemObject_Point::StgItemObject_Point(StgStageController* stageController) : 
 	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
 	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
-void StgItemObject_Point::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
+void StgItemObject_Point::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	if (bDefaultScoreText_)
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
@@ -991,7 +998,7 @@ void StgItemObject_Bonus::Work() {
 		objectManager->DeleteObject(this);
 	}
 }
-void StgItemObject_Bonus::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
+void StgItemObject_Bonus::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);
 
@@ -1020,7 +1027,7 @@ void StgItemObject_Score::Work() {
 	}
 	++frameDelete_;
 }
-void StgItemObject_Score::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) { }
+void StgItemObject_Score::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) { }
 
 //StgItemObject_User
 StgItemObject_User::StgItemObject_User(StgStageController* stageController) : StgItemObject(stageController) {
@@ -1163,7 +1170,7 @@ void StgItemObject_User::RenderOnItemManager() {
 
 	renderer->AddSquareVertex(verts);
 }
-void StgItemObject_User::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
+void StgItemObject_User::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	if (bDefaultScoreText_)
 		_CreateScoreItem();
 	stageController_->GetStageInformation()->AddScore(score_);

@@ -106,8 +106,7 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 	FillMemory(lock.pBits, lock.Pitch * sizeMax_.y, 0);
 
 	if (size > 0) {
-#pragma omp for
-		for (LONG iy = 0; iy < sizeMax_.y; ++iy) {
+		auto _GenRow = [&](LONG iy) {
 			LONG yBmp = iy - glyphOriginY - widthBorder;
 
 			float iRateY = yBmp * iBmp_h_inv;
@@ -121,12 +120,12 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 				short alpha = 255;
 				if (uFormat != GGO_BITMAP) {
 					LONG posBmp = xBmp + iBmp_w * yBmp;
-					alpha = xBmp >= 0 && xBmp < iBmp_w && yBmp >= 0 && yBmp < iBmp_h ?
+					alpha = xBmp >= 0 && xBmp < iBmp_w&& yBmp >= 0 && yBmp < iBmp_h ?
 						(255 * ptr[posBmp]) / (level - 1) : 0;
 				}
 				else {
 					if (xBmp >= 0 && xBmp < iBmp_w && yBmp >= 0 && yBmp < iBmp_h) {
-						UINT lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
+						UINT lineByte = (1 + (iBmp_w / 32)) * 4;
 						LONG posBmp = xBmp / 8 + lineByte * yBmp;
 						alpha = ((ptr[posBmp] >> (7 - xBmp % 8)) & 0b1) ? 255 : 0;
 					}
@@ -150,12 +149,12 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 
 								LONG tAlpha = 255;
 								if (uFormat != GGO_BITMAP) {
-									tAlpha = ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h ?
+									tAlpha = ax >= 0 && ax < iBmp_w&& ay >= 0 && ay < iBmp_h ?
 										(255 * ptr[ax + iBmp_w * ay]) / (level - 1) : 0;
 								}
 								else {
 									if (ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h) {
-										UINT lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
+										UINT lineByte = (1 + (iBmp_w / 32)) * 4;
 										LONG tPos = ax / 8 + lineByte * ay;
 										tAlpha = ((ptr[tPos] >> (7 - ax % 8)) & 0b1) ? 255 : 0;
 									}
@@ -194,12 +193,12 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 							for (LONG ay = yBmp - cDist; ay <= by; ++ay) {
 								LONG tAlpha = 255;
 								if (uFormat != GGO_BITMAP) {
-									tAlpha = tAlpha = ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h ?
+									tAlpha = tAlpha = ax >= 0 && ax < iBmp_w&& ay >= 0 && ay < iBmp_h ?
 										(255 * ptr[ax + iBmp_w * ay]) / (level - 1) : 0;
 								}
 								else {
 									if (ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h) {
-										UINT lineByte = (1 + (iBmp_w / 32)) * 4; // 1行に使用しているBYTE数（4バイト境界あり）
+										UINT lineByte = (1 + (iBmp_w / 32)) * 4;
 										LONG tPos = ax / 8 + lineByte * ay;
 										tAlpha = ((ptr[tPos] >> (7 - ax % 8)) & 0b1) ? 255 : 0;
 									}
@@ -229,7 +228,9 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 
 				memcpy((BYTE*)lock.pBits + lock.Pitch * iy + 4 * ix, &color, sizeof(D3DCOLOR));
 			}
-		}
+		};
+
+		ParallelFor(sizeMax_.y, _GenRow);
 	}
 	pTexture->UnlockRect(0);
 

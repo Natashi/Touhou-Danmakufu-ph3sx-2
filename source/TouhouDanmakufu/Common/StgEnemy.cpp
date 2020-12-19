@@ -85,7 +85,7 @@ void StgEnemyObject::_AddRelativeIntersection() {
 	RegistIntersectionRelativeTarget(intersectionManager);
 }
 void StgEnemyObject::Activate() {}
-void StgEnemyObject::Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget) {
+void StgEnemyObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	double damage = 0;
 	if (auto ptrObj = otherTarget->GetObject().lock()) {
 		if (otherTarget->GetTargetType() == StgIntersectionTarget::TYPE_PLAYER_SHOT) {

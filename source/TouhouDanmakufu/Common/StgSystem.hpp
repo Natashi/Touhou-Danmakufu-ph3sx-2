@@ -42,9 +42,6 @@ protected:
 	virtual void DoEnd() = 0;
 	virtual void DoRetry() = 0;
 	void _ControlScene();
-
-	std::vector<bool> listShotValidPriority_;
-	std::vector<bool> listItemValidPriority_;
 public:
 	StgSystemController();
 	~StgSystemController();
@@ -139,9 +136,9 @@ public:
 	ref_count_ptr<ReplayInformation> GetActiveReplayInformation() { return infoReplayActive_; }
 	void SetActiveReplayInformation(ref_count_ptr<ReplayInformation> info) { infoReplayActive_ = info; }
 
-	void SetInvaridRenderPriority(int priMin, int priMax);
-	int GetInvaridRenderPriorityMin() { return invalidPriMin_; }
-	int GetInvaridRenderPriorityMax() { return invalidPriMax_; }
+	void SetInvalidRenderPriority(int priMin, int priMax);
+	int GetInvalidRenderPriorityMin() { return invalidPriMin_; }
+	int GetInvalidRenderPriorityMax() { return invalidPriMax_; }
 
 	void AddReplayTargetKey(int16_t id) { listReplayTargetKey_.insert(id); }
 	std::set<int16_t>& GetReplayTargetKeyList() { return listReplayTargetKey_; }

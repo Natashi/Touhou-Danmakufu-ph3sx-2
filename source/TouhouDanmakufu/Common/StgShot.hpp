@@ -42,7 +42,9 @@ protected:
 	StgStageController* stageController_;
 	StgShotDataList* listPlayerShotData_;
 	StgShotDataList* listEnemyShotData_;
+
 	std::list<shared_ptr<StgShotObject>> listObj_;
+	std::vector<std::pair<size_t, std::vector<StgShotObject*>>> listRenderQueue_;
 
 	std::bitset<BIT_EV_DELETE_COUNT> listDeleteEventEnable_;
 
@@ -53,8 +55,11 @@ protected:
 public:
 	StgShotManager(StgStageController* stageController);
 	virtual ~StgShotManager();
+
 	void Work();
 	void Render(int targetPriority);
+	void LoadRenderQueue();
+
 	void RegistIntersectionTarget();
 
 	void AddShot(shared_ptr<StgShotObject> obj);
@@ -72,8 +77,6 @@ public:
 	std::vector<int> GetShotIdInCircle(int typeOwner, int cx, int cy, int radius);
 	size_t GetShotCount(int typeOwner);
 	size_t GetShotCountAll() { return listObj_.size(); }
-
-	void GetValidRenderPriorityList(std::vector<bool>& list);
 
 	void SetDeleteEventEnableByType(int type, bool bEnable);
 	bool IsDeleteEventEnable(int bit) { return listDeleteEventEnable_[bit]; }
@@ -345,7 +348,7 @@ public:
 	virtual void Render() {}//一括で描画するためオブジェクト管理での描画はしない
 	virtual void Activate() {}
 	virtual void RenderOnShotManager() {}
-	virtual void Intersect(shared_ptr<StgIntersectionTarget> ownTarget, shared_ptr<StgIntersectionTarget> otherTarget);
+	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 	virtual void ClearShotObject() { ClearIntersectionRelativeTarget(); }
 	virtual void RegistIntersectionTarget() = 0;
 

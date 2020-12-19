@@ -215,8 +215,8 @@ void StgSystemController::RenderScriptObject() {
 			countRender = std::max(objectManagerPackage->GetRenderBucketCapacity() - 1, countRender);
 		}
 
-		int invalidPriMin = infoSystem_->GetInvaridRenderPriorityMin();
-		int invalidPriMax = infoSystem_->GetInvaridRenderPriorityMax();
+		int invalidPriMin = infoSystem_->GetInvalidRenderPriorityMin();
+		int invalidPriMax = infoSystem_->GetInvalidRenderPriorityMax();
 		if (invalidPriMin < 0 && invalidPriMax < 0) {
 			RenderScriptObject(0, countRender);
 		}
@@ -329,12 +329,12 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	int priShot = stageInfo->GetShotObjectPriority();
 	int priItem = stageInfo->GetItemObjectPriority();
 	int priCamera = stageInfo->GetCameraFocusPermitPriority();
-	int invalidPriMin = infoSystem_->GetInvaridRenderPriorityMin();
-	int invalidPriMax = infoSystem_->GetInvaridRenderPriorityMax();
+	int invalidPriMin = infoSystem_->GetInvalidRenderPriorityMin();
+	int invalidPriMax = infoSystem_->GetInvalidRenderPriorityMax();
 
 	if (bValidStage) {
-		stageController_->GetShotManager()->GetValidRenderPriorityList(listShotValidPriority_);
-		stageController_->GetItemManager()->GetValidRenderPriorityList(listItemValidPriority_);
+		stageController_->GetItemManager()->LoadRenderQueue();
+		stageController_->GetShotManager()->LoadRenderQueue();
 	}
 
 	focusPos.x -= stgWidth / 2;
@@ -411,10 +411,8 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 				if (effect) effect->BeginPass(iPass);
 
 				if (bValidStage) {
-					if (listShotValidPriority_[iPri])
-						stageController_->GetShotManager()->Render(iPri);
-					if (listItemValidPriority_[iPri])
-						stageController_->GetItemManager()->Render(iPri);
+					stageController_->GetItemManager()->Render(iPri);
+					stageController_->GetShotManager()->Render(iPri);
 				}
 				if (pRenderListStage != nullptr && iPri < pRenderListStage->size()) {
 					for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
@@ -781,7 +779,7 @@ void StgSystemInformation::ResetRetry() {
 	bRetry_ = false;
 	listError_.clear();
 }
-void StgSystemInformation::SetInvaridRenderPriority(int priMin, int priMax) {
+void StgSystemInformation::SetInvalidRenderPriority(int priMin, int priMax) {
 	invalidPriMin_ = priMin;
 	invalidPriMax_ = priMax;
 }

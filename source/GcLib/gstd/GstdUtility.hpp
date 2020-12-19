@@ -28,7 +28,7 @@ namespace gstd {
 	//================================================================
 	//ThreadUtility
 	template<class F>
-	static void ParallelAscent(size_t countLoop, F&& func) {
+	static void ParallelFor(size_t countLoop, F&& func) {
 		size_t countCore = std::max(std::thread::hardware_concurrency(), 1U);
 
 		std::vector<std::future<void>> workers;
@@ -124,7 +124,6 @@ namespace gstd {
 		static std::string Trim(const std::string& str);
 
 		//----------------------------------------------------------------
-		//std::wstring.sizeは文字数を返す。バイト数ではない。
 		static std::vector<std::wstring> Split(const std::wstring& str, const std::wstring& delim);
 		static void Split(const std::wstring& str, const std::wstring& delim, std::vector<std::wstring>& res);
 		static std::wstring Format(const wchar_t* str, ...);

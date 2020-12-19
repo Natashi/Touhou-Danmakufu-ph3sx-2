@@ -2235,7 +2235,7 @@ gstd::value StgStageScript::Func_IsIntersected_Obj_Obj(gstd::script_machine* mac
 	bool res = false;
 	for (auto& target1 : listTarget1) {
 		for (auto& target2 : listTarget2) {
-			res = StgIntersectionManager::IsIntersected(target1, target2);
+			res = StgIntersectionManager::IsIntersected(target1.get(), target2.get());
 			if (res && PARTIAL) goto chk_skip;
 		}
 	}
