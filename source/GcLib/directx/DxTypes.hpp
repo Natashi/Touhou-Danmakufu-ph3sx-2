@@ -310,6 +310,7 @@ namespace directx {
 			bottom = b;
 		}
 
+		RECT AsRect() const { return { left, top, right, bottom }; }
 		T GetWidth() const { return right - left; }
 		T GetHeight() const { return bottom - top; }
 
