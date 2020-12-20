@@ -52,6 +52,7 @@ namespace gstd {
 
 		virtual void LocateParts() {}//‰æ–Ê•”•i”z’u
 		void MoveWindowCenter();
+		void MoveWindowCenter(const RECT& rcWindow);	//rcWindow must have already been adjusted
 
 		static HWND GetTopParentWindow(HWND hWnd);
 	};

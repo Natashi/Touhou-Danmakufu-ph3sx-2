@@ -106,14 +106,19 @@ LRESULT WindowBase::_CallPreviousWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wP
 		FALSE : ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 void WindowBase::MoveWindowCenter() {
-	RECT drect, mrect;
-	HWND hDesk = ::GetDesktopWindow();
-	::GetWindowRect(hDesk, &drect);
-	::GetWindowRect(hWnd_, &mrect);
-	int tWidth = mrect.right - mrect.left;
-	int tHeight = mrect.bottom - mrect.top;
-	int left = drect.right / 2 - tWidth / 2;
-	int top = drect.bottom / 2 - tHeight / 2;
+	RECT rcWindow;
+	::GetWindowRect(hWnd_, &rcWindow);
+	MoveWindowCenter(rcWindow);
+}
+void WindowBase::MoveWindowCenter(const RECT& rcWindow) {
+	RECT rcMonitor;
+	::GetWindowRect(::GetDesktopWindow(), &rcMonitor);
+
+	LONG tWidth = rcWindow.right - rcWindow.left;
+	LONG tHeight = rcWindow.bottom - rcWindow.top;
+	LONG left = rcMonitor.right / 2L - tWidth / 2L;
+	LONG top = std::max(0L, rcMonitor.bottom / 2L - tHeight / 2L);
+
 	::MoveWindow(hWnd_, left, top, tWidth, tHeight, TRUE);
 }
 HWND WindowBase::GetTopParentWindow(HWND hWnd) {
