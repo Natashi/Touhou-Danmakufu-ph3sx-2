@@ -233,7 +233,7 @@ void DevicePanel::ReadConfiguration() {
 		break;
 	}
 
-	comboWindowSize_.SetSelectedIndex(config->sizeWindow_);
+	comboWindowSize_.SetSelectedIndex(std::min<int>(config->sizeWindow_, comboWindowSize_.GetCount()));
 
 	{
 		std::map<D3DMULTISAMPLE_TYPE, int> mapSampleIndex = {
@@ -340,9 +340,9 @@ bool KeyPanel::Initialize(HWND hParent) {
 
 	viewKey_ = new KeyListView();
 	viewKey_->Attach(hListKey);
-	viewKey_->AddColumn(120, COL_ACTION, L"Action");
-	viewKey_->AddColumn(100, COL_KEY_ASSIGN, L"Keyboard");
-	viewKey_->AddColumn(80, COL_PAD_ASSIGN, L"Pad");
+	viewKey_->AddColumn(128, COL_ACTION, L"Action");
+	viewKey_->AddColumn(92, COL_KEY_ASSIGN, L"Keyboard");
+	viewKey_->AddColumn(92, COL_PAD_ASSIGN, L"Pad");
 
 	std::map<int, std::wstring> mapViewText;
 	mapViewText[EDirectInput::KEY_LEFT] = L"Left";
@@ -406,7 +406,7 @@ void KeyPanel::_UpdateText(int row) {
 	viewKey_->SetText(row, COL_KEY_ASSIGN, strKey);
 
 	int16_t padButton = vk->GetPadButton();
-	std::wstring strPad = StringUtility::Format(L"PAD %02d", padButton);
+	std::wstring strPad = StringUtility::Format(L"%02d", padButton);
 	viewKey_->SetText(row, COL_PAD_ASSIGN, strPad);
 
 }
