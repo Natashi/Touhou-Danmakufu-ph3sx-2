@@ -237,38 +237,57 @@ bool EDirectGraphics::Initialize() {
 	dxConfig.SetMultiSampleType(dnhConfig->GetMultiSampleType());
 	dxConfig.SetbPseudoFullScreen(dnhConfig->bPseudoFullscreen_);
 
+	{
+		RECT rcMonitor;
+		::GetWindowRect(::GetDesktopWindow(), &rcMonitor);
+
+		LONG monitorWd = rcMonitor.right - rcMonitor.left;
+		LONG monitorHt = rcMonitor.bottom - rcMonitor.top;
+		/*
+		{
+			auto rcMonitorClient = ClientSizeToWindowSize(rcMonitor, SCREENMODE_WINDOW);
+
+			//What this does:
+			//	1. Imagine a window whose client size is the monitor size
+			//	2. Calculate its window size with AdjustWindowRect (or ClientSizeToWindowSize)
+			//	3. Subtract the size difference from the original monitor size
+			//	4. You have obtained the CLIENT SIZE whose WINDOW SIZE is the monitor size
+			monitorWd = monitorWd - (rcMonitorClient.GetWidth() - monitorWd);
+			monitorHt = monitorHt - (rcMonitorClient.GetHeight() - monitorHt);
+		}
+		*/
+
+		if (windowedWidth > monitorWd || windowedHeight > monitorHt) {
+			std::wstring msg = StringUtility::Format(L"Your monitor size (usable=%dx%d) is too small "
+				"for the game's window size (%dx%d).\n\nAdjust the window size to fit?",
+				monitorWd, monitorHt, windowedWidth, windowedHeight);
+
+			int res = ::MessageBoxW(nullptr, msg.c_str(), L"Warning", MB_APPLMODAL | MB_ICONINFORMATION | MB_YESNO);
+			if (res == IDYES) {
+				//(w1 / h1) = (w2 / h2)
+				LONG newWidth, newHeight;
+				double aspectRatioWH = windowedWidth / (double)windowedHeight;
+				if (windowedWidth > monitorWd) {
+					newWidth = monitorWd;
+					newHeight = newWidth * (1.0 / aspectRatioWH);
+				}
+				if (windowedHeight > monitorHt) {	//not else
+					newHeight = monitorHt;
+					newWidth = newHeight * (aspectRatioWH);
+				}
+				windowedWidth = newWidth;
+				windowedHeight = newHeight;
+				dxConfig.SetScreenWindowedSize({ windowedWidth, windowedHeight });
+			}
+		}
+	}
+
 	bool res = DirectGraphicsPrimaryWindow::Initialize(dxConfig);
-	if (!res) return res;
-
-	/*
-	int monitorWidth = ::GetSystemMetrics(SM_CXFULLSCREEN);
-	int monitorHeight = ::GetSystemMetrics(SM_CYFULLSCREEN);
-	bool bFullScreenEnable = screenWidth <= monitorWidth && screenHeight <= monitorHeight;
-
-	//コンフィグ反映
-	if (screenMode == ScreenMode::SCREENMODE_FULLSCREEN && bFullScreenEnable) {
-		ChangeScreenMode();
-	}
-	else {
-		RECT wr = { 0, 0, windowedWidth, windowedHeight };
-		AdjustWindowRect(&wr, wndStyleWin_, FALSE);
-
-		SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
-		MoveWindowCenter();
-	}
-	*/
-	if (screenMode == ScreenMode::SCREENMODE_FULLSCREEN) {
-		ChangeScreenMode();
-	}
-	else {
-		RECT wr = { 0, 0, windowedWidth, windowedHeight };
-		AdjustWindowRect(&wr, wndStyleWin_, FALSE);
-
-		SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
-		MoveWindowCenter();
+	if (res) {
+		ChangeScreenMode(screenMode, false);
+		SetWindowVisible(true);
 	}
 
-	SetWindowVisible(true);
 	return res;
 }
 void EDirectGraphics::SetRenderStateFor2D(BlendMode type) {

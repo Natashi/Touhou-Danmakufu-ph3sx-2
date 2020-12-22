@@ -75,8 +75,10 @@ namespace directx {
 
 		DirectGraphicsConfig config_;
 		HWND hAttachedWindow_;
-		DWORD wndStyleFull_;
-		DWORD wndStyleWin_;
+	protected:
+		static constexpr DWORD wndStyleFull_ = WS_POPUP;
+		static constexpr DWORD wndStyleWin_ = WS_OVERLAPPEDWINDOW - WS_SIZEBOX;
+	protected:
 		ScreenMode modeScreen_;
 		std::list<DirectGraphicsListener*> listListener_;
 
@@ -171,6 +173,7 @@ namespace directx {
 		double GetScreenWidthRatio();
 		double GetScreenHeightRatio();
 		POINT GetMousePosition();
+		static DxRect<LONG> ClientSizeToWindowSize(const DxRect<LONG>& rc, ScreenMode mode);
 
 		gstd::ref_count_ptr<DxCamera> GetCamera() { return camera_; }
 		gstd::ref_count_ptr<DxCamera2D> GetCamera2D() { return camera2D_; }
@@ -185,17 +188,21 @@ namespace directx {
 	class DirectGraphicsPrimaryWindow : public DirectGraphics, public gstd::WindowBase {
 	protected:
 		gstd::WindowBase wndGraphics_;
+		HCURSOR lpCursor_;
+
+		ScreenMode newScreenMode_;
+	protected:
 		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);//オーバーライド用プロシージャ
 		void _PauseDrawing();
 		void _RestartDrawing();
-
-		HCURSOR lpCursor_;
 	public:
 		DirectGraphicsPrimaryWindow();
 		~DirectGraphicsPrimaryWindow();
 		virtual bool Initialize();
 		virtual bool Initialize(DirectGraphicsConfig& config);
+
 		void ChangeScreenMode();
+		void ChangeScreenMode(ScreenMode newMode, bool bNoRepeated = true);
 	};
 
 	/**********************************************************

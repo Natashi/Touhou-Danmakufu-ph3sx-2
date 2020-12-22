@@ -82,8 +82,6 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	if (pDirect3D_ == nullptr) throw gstd::wexception("Direct3DCreate9 error.");
 
 	config_ = config;
-	wndStyleFull_ = WS_POPUP;
-	wndStyleWin_ = WS_OVERLAPPEDWINDOW - WS_SIZEBOX;
 	hAttachedWindow_ = hWnd;
 
 	//Fullscreen mode settings
@@ -690,6 +688,11 @@ POINT DirectGraphics::GetMousePosition() {
 
 	return res;
 }
+DxRect<LONG> DirectGraphics::ClientSizeToWindowSize(const DxRect<LONG>& rc, ScreenMode mode) {
+	DxRect<LONG> out = rc;
+	::AdjustWindowRect((RECT*)&out, mode == SCREENMODE_WINDOW ? wndStyleWin_ : wndStyleFull_, FALSE);
+	return out;
+}
 
 void DirectGraphics::SaveBackSurfaceToFile(const std::wstring& path) {
 	DxRect<LONG> rect(0, 0, config_.GetScreenSize().x, config_.GetScreenSize().y);
@@ -711,6 +714,7 @@ bool DirectGraphics::IsPixelShaderSupported(int major, int minor) {
 **********************************************************/
 DirectGraphicsPrimaryWindow::DirectGraphicsPrimaryWindow() {
 	lpCursor_ = nullptr;
+	newScreenMode_ = ScreenMode::SCREENMODE_WINDOW;
 }
 DirectGraphicsPrimaryWindow::~DirectGraphicsPrimaryWindow() {
 	SetThreadExecutionState(ES_CONTINUOUS);		//Just in case
@@ -748,13 +752,10 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		wcex.hIconSm = nullptr;
 		::RegisterClassEx(&wcex);
 
-		RECT wr = { 0, 0, config.GetScreenSize().x, config.GetScreenSize().y };
-		AdjustWindowRect(&wr, wndStyleWin_, FALSE);
-
-		hWnd_ = ::CreateWindow(wcex.lpszClassName,
-			L"",
-			WS_OVERLAPPEDWINDOW - WS_SIZEBOX,
-			0, 0, wr.right - wr.left, wr.bottom - wr.top, nullptr, nullptr, hInst, nullptr);
+		DxRect<LONG> wr = ClientSizeToWindowSize(
+			{ 0, 0, config.GetScreenSize().x, config.GetScreenSize().y }, SCREENMODE_WINDOW);
+		hWnd_ = ::CreateWindowW(wcex.lpszClassName, L"", wndStyleWin_,
+			0, 0, wr.GetWidth(), wr.GetHeight(), nullptr, nullptr, hInst, nullptr);
 	}
 
 
@@ -776,7 +777,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		LONG screenWidth = config.GetScreenSize().x; //+ ::GetSystemMetrics(SM_CXEDGE) + 10;
 		LONG screenHeight = config.GetScreenSize().y; //+ ::GetSystemMetrics(SM_CYEDGE) + 10;
 
-		HWND hWnd = ::CreateWindow(wcex.lpszClassName,
+		HWND hWnd = ::CreateWindowW(wcex.lpszClassName,
 			L"",
 			WS_CHILD | WS_VISIBLE,
 			0, 0, screenWidth, screenHeight, hWnd_, nullptr, hInst, nullptr);
@@ -797,14 +798,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		ShowCursor(config.IsShowCursor() ? TRUE : FALSE);
 
 		if (modeScreen_ == SCREENMODE_WINDOW) {
-			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleWin_);
-			::ShowWindow(hWnd_, SW_SHOW);
-
-			RECT wr = { 0, 0, config_.GetScreenSize().x, config_.GetScreenSize().y };
-			AdjustWindowRect(&wr, wndStyleWin_, FALSE);
-
-			SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
-			MoveWindowCenter();
+			ChangeScreenMode(SCREENMODE_WINDOW, false);
 		}
 	}
 
@@ -845,26 +839,37 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 	}
 	case WM_SIZE:
 	{
+		UINT targetWidth = LOWORD(lParam);
+		UINT targetHeight = HIWORD(lParam);
+
 		if (wndGraphics_.GetWindowHandle() != nullptr) {
-			RECT rect;
-			::GetClientRect(hWnd, &rect);
-			int width = rect.right;
-			int height = rect.bottom;
+			RECT rcParent;
+			::GetClientRect(hWnd, &rcParent);
 
-			LONG screenWidth = config_.GetScreenSize().x;
-			LONG screenHeight = config_.GetScreenSize().y;
+			LONG wdParent = rcParent.right - rcParent.left;
+			LONG htParent = rcParent.bottom - rcParent.top;
 
-			double ratioWH = (double)screenWidth / (double)screenHeight;
-			if (width > rect.right) width = rect.right;
-			height = (double)width / ratioWH;
+			if (newScreenMode_ == SCREENMODE_WINDOW) {
+				//To windowed
 
-			double ratioHW = (double)screenHeight / (double)screenWidth;
-			if (height > rect.bottom) height = rect.bottom;
-			width = (double)height / ratioHW;
+				wndGraphics_.SetBounds(0, 0, wdParent, htParent);
+			}
+			else {
+				//To fullscreen
 
-			int wX = (rect.right - width) / 2;
-			int wY = (rect.bottom - height) / 2;
-			wndGraphics_.SetBounds(wX, wY, width, height);
+				LONG baseWidth = config_.GetScreenWindowedSize().x;
+				LONG baseHeight = config_.GetScreenWindowedSize().y;
+
+				double aspectRatioWH = baseWidth / (double)baseHeight;
+				double scalingRatio = std::min(targetWidth / (double)baseWidth, targetHeight / (double)baseHeight);
+
+				LONG newWidth = baseWidth * scalingRatio;
+				LONG newHeight = baseHeight * scalingRatio;
+
+				LONG wX = (wdParent - newWidth) / 2L;
+				LONG wY = (htParent - newHeight) / 2L;
+				wndGraphics_.SetBounds(wX, wY, newWidth, newHeight);
+			}
 		}
 
 		return FALSE;
@@ -875,27 +880,13 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 		int wWidth = ::GetSystemMetrics(SM_CXFULLSCREEN);
 		int wHeight = ::GetSystemMetrics(SM_CYFULLSCREEN);
 
-		LONG screenWidth = config_.GetScreenSize().x;
-		LONG screenHeight = config_.GetScreenSize().y;
+		LONG screenWidth = config_.GetScreenWindowedSize().x;
+		LONG screenHeight = config_.GetScreenWindowedSize().y;
 
-		RECT wr = { 0, 0, screenWidth, screenHeight };
-		AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW - WS_SIZEBOX, FALSE);
+		DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 
-		int width = wr.right - wr.left;
-		int height = wr.bottom - wr.top;
-
-		/*
-		double ratioWH = (double)screenWidth / (double)screenHeight;
-		if (width > wWidth) width = wWidth;
-		height = (double)width / ratioWH;
-
-		double ratioHW = 1.0 / ratioWH;
-		if (height > wHeight) height = wHeight;
-		width = (double)height / ratioHW;
-		*/
-
-		info->ptMaxSize.x = width;
-		info->ptMaxSize.y = height;
+		info->ptMaxSize.x = wr.GetWidth();
+		info->ptMaxSize.y = wr.GetHeight();
 		return FALSE;
 	}
 	/*
@@ -920,6 +911,15 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 }
 
 void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
+	if (modeScreen_ == SCREENMODE_WINDOW)
+		ChangeScreenMode(SCREENMODE_FULLSCREEN);
+	else
+		ChangeScreenMode(SCREENMODE_WINDOW);
+}
+void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoRepeated) {
+	if (bNoRepeated && (newMode == modeScreen_)) return;
+	newScreenMode_ = newMode;
+
 	//True fullscreen mode
 	if (!config_.IsPseudoFullScreen()) {
 		/*
@@ -944,7 +944,7 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 
 		HRESULT hrReset = E_FAIL;
 
-		if (modeScreen_ == SCREENMODE_FULLSCREEN) {		//To windowed
+		if (newMode == SCREENMODE_WINDOW) {		//To windowed
 			hrReset = pDevice_->Reset(&d3dppWin_);
 
 			::SetWindowLong(hAttachedWindow_, GWL_STYLE, wndStyleWin_);
@@ -953,24 +953,19 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 			LONG screenWidth = config_.GetScreenWindowedSize().x;
 			LONG screenHeight = config_.GetScreenWindowedSize().y;
 
-			RECT wr = { 0, 0, screenWidth, screenHeight };
-			AdjustWindowRect(&wr, wndStyleWin_, FALSE);
+			DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 
-			SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
-			MoveWindowCenter();
+			SetBounds(0, 0, wr.GetWidth(), wr.GetHeight());
+			MoveWindowCenter(wr.AsRect());
 
 			::SetWindowPos(hAttachedWindow_, HWND_NOTOPMOST, 0, 0, 0, 0,
 				SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOSENDCHANGING);
-
-			modeScreen_ = SCREENMODE_WINDOW;
 		}
 		else {		//To fullscreen
 			hrReset = pDevice_->Reset(&d3dppFull_);
 
 			::SetWindowLong(hAttachedWindow_, GWL_STYLE, wndStyleFull_);
 			::ShowWindow(hAttachedWindow_, SW_SHOW);
-
-			modeScreen_ = SCREENMODE_FULLSCREEN;
 		}
 
 		previousBlendMode_ = BlendMode::RESET;
@@ -994,23 +989,20 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 	}
 	//Pseudo fullscreen mode
 	else {
-		if (modeScreen_ == SCREENMODE_FULLSCREEN) {		//To windowed
+		if (newMode == SCREENMODE_WINDOW) {		//To windowed
 			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleWin_);
 			::ShowWindow(hWnd_, SW_SHOW);
 
 			LONG screenWidth = config_.GetScreenWindowedSize().x;
 			LONG screenHeight = config_.GetScreenWindowedSize().y;
 
-			RECT wr = { 0, 0, screenWidth, screenHeight };
-			AdjustWindowRect(&wr, wndStyleWin_, FALSE);
+			DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 
-			SetBounds(0, 0, wr.right - wr.left, wr.bottom - wr.top);
-			MoveWindowCenter();
+			SetBounds(0, 0, wr.GetWidth(), wr.GetHeight());
+			MoveWindowCenter(wr.AsRect());
 
 			//You can sleep now, 3 hours isn't enough sleep, by the way
 			SetThreadExecutionState(ES_CONTINUOUS);
-
-			modeScreen_ = SCREENMODE_WINDOW;
 		}
 		else {		//To fullscreen
 			RECT rect;
@@ -1021,13 +1013,11 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode() {
 
 			//Causes fullscreen to prevent Windows drifting off to Dreamland Drama
 			SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
-
-			modeScreen_ = SCREENMODE_FULLSCREEN;
 		}
 	}
 
+	modeScreen_ = newMode;
 }
-
 
 /**********************************************************
 //DxCamera
