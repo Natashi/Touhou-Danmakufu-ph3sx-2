@@ -1284,12 +1284,14 @@ std::vector<shared_ptr<StgIntersectionTarget>> StgNormalShotObject::GetIntersect
 	{
 		DxCircle& circle = target->GetCircle();
 
+		float intersectMeanScale = (hitboxScale_.x + hitboxScale_.y) / 2.0f;
+
 		if (orgCircle->GetX() != 0 || orgCircle->GetY() != 0) {
 			__m128 v1 = Vectorize::Mul(
 				Vectorize::SetF(orgCircle->GetX(), orgCircle->GetY(), orgCircle->GetX(), orgCircle->GetY()),
 				Vectorize::Set(move_.x, move_.y, move_.y, move_.x));
-			float px = v1.m128_f32[0] + v1.m128_f32[1];
-			float py = v1.m128_f32[2] - v1.m128_f32[3];
+			float px = (v1.m128_f32[0] + v1.m128_f32[1]) * intersectMeanScale;
+			float py = (v1.m128_f32[2] - v1.m128_f32[3]) * intersectMeanScale;
 			circle.SetX(px + posX_);
 			circle.SetY(py + posY_);
 		}
@@ -1297,7 +1299,7 @@ std::vector<shared_ptr<StgIntersectionTarget>> StgNormalShotObject::GetIntersect
 			circle.SetX(posX_);
 			circle.SetY(posY_);
 		}
-		circle.SetR(orgCircle->GetR() * ((hitboxScale_.x + hitboxScale_.y) / 2.0f));
+		circle.SetR(orgCircle->GetR() * intersectMeanScale);
 
 		target->SetTargetType(typeOwner_ == OWNER_PLAYER ?
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
