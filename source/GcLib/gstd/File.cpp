@@ -107,7 +107,7 @@ DWORD ByteBuffer::Write(LPVOID buf, DWORD size) {
 	if (offset_ + size > reserve_) {
 		size_t sizeNew = (offset_ + size) * 2;
 		_Resize(sizeNew);
-		size_ = 0;//‚ ‚Æ‚ÅÄŒvŽZ
+		size_ = 0;
 	}
 
 	memcpy(&data_[offset_], buf, size);
@@ -116,9 +116,11 @@ DWORD ByteBuffer::Write(LPVOID buf, DWORD size) {
 	return size;
 }
 DWORD ByteBuffer::Read(LPVOID buf, DWORD size) {
-	memcpy(buf, &data_[offset_], size);
-	offset_ += size;
-	return size;
+	if (offset_ >= size_) return 0;
+	size_t readable = std::min<size_t>(size, size_ - offset_);
+	memcpy(buf, &data_[offset_], readable);
+	offset_ += readable;
+	return readable;
 }
 _NODISCARD char* ByteBuffer::GetPointer(size_t offset) {
 #if _DEBUG
