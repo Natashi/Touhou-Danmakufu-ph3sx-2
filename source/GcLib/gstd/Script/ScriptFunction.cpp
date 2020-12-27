@@ -298,8 +298,14 @@ namespace gstd {
 		else {
 			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
 				return value(script_type_manager::get_real_type(), argv[0].as_real() / argv[1].as_real());
-			else
-				return value(script_type_manager::get_int_type(), argv[0].as_int() / argv[1].as_int());
+			else {
+				int64_t deno = argv[1].as_int();
+				if (deno == 0) {
+					std::string error = "Invalid operation: integer division by zero.\r\n";
+					throw error;
+				}
+				return value(script_type_manager::get_int_type(), argv[0].as_int() / deno);
+			}
 		}
 	}
 	SCRIPT_DECLARE_OP(divide);
