@@ -1547,7 +1547,7 @@ value ScriptClientBase::Func_RaiseMessageWindow(script_machine* machine, int arg
 		flags = MB_APPLMODAL | userFlags;
 	}
 	
-	int res = MessageBoxW(nullptr, message.c_str(),
+	int res = ::MessageBoxW(nullptr, message.c_str(),
 		title.c_str(), flags);
 	return ScriptClientBase::CreateIntValue(res);
 }

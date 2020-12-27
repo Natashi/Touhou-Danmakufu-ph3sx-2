@@ -40,16 +40,24 @@ namespace directx {
 
 		void SetObjectManager(std::shared_ptr<DxScriptObjectManager> manager) { objManager_ = manager; }
 		std::shared_ptr<DxScriptObjectManager> GetObjectManager() { return objManager_; }
+
 		void SetMaxObject(size_t size) { objManager_->SetMaxObject(size); }
 		void SetRenderBucketCapacity(int capacity) { objManager_->SetRenderBucketCapacity(capacity); }
+
 		virtual int AddObject(shared_ptr<DxScriptObjectBase> obj, bool bActivate = true);
 		virtual void ActivateObject(int id, bool bActivate) { objManager_->ActivateObject(id, bActivate); }
+
 		shared_ptr<DxScriptObjectBase> GetObject(int id) { return objManager_->GetObject(id); }
 		DxScriptObjectBase* GetObjectPointer(int id) { return objManager_->GetObjectPointer(id); }
+		template<class T> T* GetObjectPointerAs(int id) { return dynamic_cast<T*>(GetObjectPointer(id)); }
+
 		virtual void DeleteObject(int id) { objManager_->DeleteObject(id); }
 		void ClearObject() { objManager_->ClearObject(); }
+
 		virtual void WorkObject() { objManager_->WorkObject(); }
 		virtual void RenderObject() { objManager_->RenderObject(); }
+
+		//------------------------------------------------------------------------------------------
 
 		DNH_FUNCAPI_DECL_(Func_MatrixIdentity);
 		DNH_FUNCAPI_DECL_(Func_MatrixInverse);

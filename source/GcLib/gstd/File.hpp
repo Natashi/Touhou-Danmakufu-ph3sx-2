@@ -76,9 +76,9 @@ namespace gstd {
 		virtual bool Open() = 0;
 		virtual void Close() = 0;
 		virtual size_t GetFileSize() = 0;
-		virtual BOOL SetFilePointerBegin() = 0;
-		virtual BOOL SetFilePointerEnd() = 0;
-		virtual BOOL Seek(size_t offset) = 0;
+		virtual bool SetFilePointerBegin() = 0;
+		virtual bool SetFilePointerEnd() = 0;
+		virtual bool Seek(size_t offset) = 0;
 		virtual size_t GetFilePointer() = 0;
 		virtual bool IsArchived() { return false; }
 		virtual bool IsCompressed() { return false; }
@@ -100,28 +100,29 @@ namespace gstd {
 		size_t offset_;
 		char* data_;
 
-		size_t _GetReservedSize();
-		void _Resize(size_t size);
+		size_t _GetReservedSize() { return reserve_; }
 	public:
 		ByteBuffer();
 		ByteBuffer(ByteBuffer& buffer);
 		ByteBuffer(std::stringstream& stream);
 		virtual ~ByteBuffer();
+
 		void Copy(ByteBuffer& src);
 		void Copy(std::stringstream& src);
 		void Clear();
 
-		void Seek(size_t pos);
 		void SetSize(size_t size);
+		void Reserve(size_t newReserve);
+
 		size_t GetSize() { return size_; }
 		size_t size() { return size_; }
 		size_t GetOffset() { return offset_; }
 
+		void Seek(size_t pos);
 		virtual DWORD Write(LPVOID buf, DWORD size);
 		virtual DWORD Read(LPVOID buf, DWORD size);
 
 		_NODISCARD char* GetPointer(size_t offset = 0);
-		_NODISCARD char& operator[](size_t offset);
 
 		ByteBuffer& operator=(const ByteBuffer& other) noexcept;
 	};
@@ -138,10 +139,9 @@ namespace gstd {
 			WRITEONLY = 0x4,
 		};
 	protected:
-		HANDLE hFile_;
+		std::fstream hFile_;
 		std::wstring path_;
 		DWORD perms_;
-		bool bOpen_;
 	public:
 		File();
 		File(const std::wstring& path);
@@ -153,13 +153,17 @@ namespace gstd {
 		static bool IsExists(const std::wstring& path);
 		static bool IsDirectory(const std::wstring& path);
 
+		static bool IsEqualsPath(const std::wstring& path1, const std::wstring& path2);
+		static std::vector<std::wstring> GetFilePathList(const std::wstring& dir);
+		static std::vector<std::wstring> GetDirectoryPathList(const std::wstring& dir);
+
 		void Delete();
 		bool IsExists();
 		bool IsDirectory();
 
 		size_t GetSize();
 		std::wstring& GetPath() { return path_; }
-		const HANDLE GetFileHandle() { return hFile_; }
+		const std::fstream& GetFileHandle() { return hFile_; }
 
 		virtual bool Open();
 		bool Open(DWORD typeAccess);
@@ -168,16 +172,10 @@ namespace gstd {
 		virtual DWORD Write(LPVOID buf, DWORD size);
 		virtual DWORD Read(LPVOID buf, DWORD size);
 
-		BOOL SetFilePointerBegin() { return ::SetFilePointer(hFile_, 0, nullptr, FILE_BEGIN); }
-		BOOL SetFilePointerEnd() { return ::SetFilePointer(hFile_, 0, nullptr, FILE_END); }
-		BOOL Seek(size_t offset, DWORD seek) {
-			return ::SetFilePointer(hFile_, offset, nullptr, seek);
-		}
-		size_t GetFilePointer() { return ::SetFilePointer(hFile_, 0, NULL, FILE_CURRENT); }
-
-		static bool IsEqualsPath(const std::wstring& path1, const std::wstring& path2);
-		static std::vector<std::wstring> GetFilePathList(const std::wstring& dir);
-		static std::vector<std::wstring> GetDirectoryPathList(const std::wstring& dir);
+		bool File::SetFilePointerBegin(AccessType type = READ) { return this->Seek(0, std::ios::beg, type); }
+		bool File::SetFilePointerEnd(AccessType type = READ) { return this->Seek(0, std::ios::end, type); }
+		bool Seek(size_t offset, DWORD way, AccessType type = READ);
+		size_t GetFilePointer(AccessType type = READ);
 	};
 
 
@@ -320,9 +318,9 @@ namespace gstd {
 		virtual void Close();
 		virtual size_t GetFileSize();
 		virtual DWORD Read(LPVOID buf, DWORD size);
-		virtual BOOL SetFilePointerBegin();
-		virtual BOOL SetFilePointerEnd();
-		virtual BOOL Seek(size_t offset);
+		virtual bool SetFilePointerBegin();
+		virtual bool SetFilePointerEnd();
+		virtual bool Seek(size_t offset);
 		virtual size_t GetFilePointer();
 
 		virtual bool IsArchived();

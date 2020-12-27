@@ -519,7 +519,7 @@ namespace directx {
 	protected:
 		shared_ptr<gstd::File> file_;
 		shared_ptr<gstd::FileReader> reader_;
-		bool isArchived_;
+		bool bWritable_;
 	public:
 		DxFileObject();
 		~DxFileObject();
@@ -531,11 +531,11 @@ namespace directx {
 
 		virtual bool OpenR(const std::wstring& path);
 		virtual bool OpenR(shared_ptr<gstd::FileReader> reader);
-		virtual bool OpenRW(std::wstring path);
+		virtual bool OpenRW(const std::wstring& path);
 		virtual bool Store() = 0;
 		virtual void Close();
 
-		virtual bool IsArchived() { return isArchived_; }
+		virtual bool IsWritable() { return bWritable_; }
 	};
 
 	/**********************************************************
@@ -566,10 +566,7 @@ namespace directx {
 
 		void AddLine(const std::string& line);
 		void AddLine(const std::wstring& line);
-		void ClearLine() { 
-			if (isArchived_) return;
-			listLine_.clear(); 
-		}
+		void ClearLine() { listLine_.clear(); }
 	};
 
 	/**********************************************************
@@ -579,23 +576,29 @@ namespace directx {
 	protected:
 		byte byteOrder_;
 		byte codePage_;
-		shared_ptr<gstd::ByteBuffer> buffer_;
+		gstd::ByteBuffer* buffer_;
+		size_t lastRead_;
 	public:
 		DxBinaryFileObject();
 		virtual ~DxBinaryFileObject();
+
 		virtual bool OpenR(const std::wstring& path);
 		virtual bool OpenR(shared_ptr<gstd::FileReader> reader);
 		virtual bool OpenRW(const std::wstring& path);
 		virtual bool Store();
 
-		shared_ptr<gstd::ByteBuffer> GetBuffer() { return buffer_; }
-		bool IsReadableSize(size_t size);
+		gstd::ByteBuffer* const GetBuffer() { return buffer_; }
 
 		byte GetCodePage() { return codePage_; }
 		void SetCodePage(byte page) { codePage_ = page; }
 
 		void SetByteOrder(byte order) { byteOrder_ = order; }
 		byte GetByteOrder() { return byteOrder_; }
+
+		bool IsReadableSize(size_t size);
+		DWORD Read(LPVOID data, size_t size);
+		DWORD Write(LPVOID data, size_t size);
+		size_t GetLastReadSize() { return lastRead_; }
 	};
 
 	/**********************************************************

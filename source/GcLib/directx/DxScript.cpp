@@ -451,9 +451,9 @@ static const std::vector<constant> dxConstant = {
 	constant("IFF_PNG", D3DXIFF_PNG),
 	constant("IFF_DDS", D3DXIFF_DDS),
 	constant("IFF_PPM", D3DXIFF_PPM),
-	//	constant("IFF_DIB", D3DXIFF_DIB),
-	//	constant("IFF_HDR", D3DXIFF_HDR),
-	//	constant("IFF_PFM", D3DXIFF_PFM),
+	//constant("IFF_DIB", D3DXIFF_DIB),
+	//constant("IFF_HDR", D3DXIFF_HDR),
+	//constant("IFF_PFM", D3DXIFF_PFM),
 
 	//Texture filtering
 	constant("FILTER_NONE", D3DTEXF_NONE),
@@ -4170,7 +4170,7 @@ gstd::value DxScript::Func_ObjFile_Open(gstd::script_machine* machine, int argc,
 
 		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader && reader->Open()) {
-			obj->isArchived_ = reader->IsArchived();
+			obj->bWritable_ = !reader->IsArchived();
 			res = obj->OpenR(reader);
 		}
 	}
@@ -4187,16 +4187,19 @@ gstd::value DxScript::Func_ObjFile_OpenNW(gstd::script_machine* machine, int arg
 
 		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader && reader->Open()) {
-			obj->isArchived_ = reader->IsArchived();
-			if (!obj->isArchived_) {
-				res = obj->OpenRW(path);
-			}
-			else {
-				//Cannot write to an archived file, fall back to read-only permission
+			//Cannot write to an archived file, fall back to read-only permission
+			if (reader->IsArchived()) {
 				res = obj->OpenR(reader);
+				obj->bWritable_ = false;
+
+				goto lab_open_done;
 			}
 		}
+
+		res = obj->OpenRW(path);
+		obj->bWritable_ = true;
 	}
+lab_open_done:
 	return script->CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_ObjFile_Store(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -4204,7 +4207,7 @@ gstd::value DxScript::Func_ObjFile_Store(gstd::script_machine* machine, int argc
 	int id = argv[0].as_int();
 	bool res = false;
 	DxFileObject* obj = dynamic_cast<DxFileObject*>(script->GetObjectPointer(id));
-	if (obj && !obj->isArchived_)
+	if (obj)
 		res = obj->Store();
 	return script->CreateBooleanValue(res);
 }
@@ -4245,8 +4248,7 @@ gstd::value DxScript::Func_ObjFileT_SetLineText(gstd::script_machine* machine, i
 	int id = argv[0].as_int();
 	DxTextFileObject* obj = dynamic_cast<DxTextFileObject*>(script->GetObjectPointer(id));
 
-	//Cannot write to an archived file
-	if (obj && !obj->isArchived_) {
+	if (obj ) {
 		int line = argv[1].as_int();
 		std::wstring text = argv[2].as_string();
 		obj->SetLineAsWString(text, line);
@@ -4272,8 +4274,8 @@ gstd::value DxScript::Func_ObjFileT_AddLine(gstd::script_machine* machine, int a
 	int id = argv[0].as_int();
 	DxTextFileObject* obj = dynamic_cast<DxTextFileObject*>(script->GetObjectPointer(id));
 
-	//Cannot write to an archived file
-	if (obj && !obj->isArchived_) obj->AddLine(argv[1].as_string());
+	if (obj)
+		obj->AddLine(argv[1].as_string());
 
 	return value();
 }
@@ -4283,7 +4285,8 @@ gstd::value DxScript::Func_ObjFileT_ClearLine(gstd::script_machine* machine, int
 	DxTextFileObject* obj = dynamic_cast<DxTextFileObject*>(script->GetObjectPointer(id));
 
 	//Cannot write to an archived file
-	if (obj && !obj->isArchived_) obj->ClearLine();
+	if (obj)
+		obj->ClearLine();
 
 	return value();
 }
@@ -4291,193 +4294,182 @@ gstd::value DxScript::Func_ObjFileT_ClearLine(gstd::script_machine* machine, int
 //Dx関数：ファイル操作(DxBinaryFileObject)
 gstd::value DxScript::Func_ObjFileB_SetByteOrder(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
+	
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
 	if (obj) {
 		int order = argv[1].as_int();
 		obj->SetByteOrder(order);
 	}
+
 	return gstd::value();
 }
 gstd::value DxScript::Func_ObjFileB_SetCharacterCode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
+	
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
 	if (obj) {
 		byte code = (byte)argv[1].as_int();
 		obj->SetCodePage(code);
 	}
+
 	return gstd::value();
 }
 gstd::value DxScript::Func_ObjFileB_GetPointer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
+	
 	size_t res = 0;
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
+
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
 	if (obj) {
-		shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
-		res = buffer->GetOffset();
+		ByteBuffer* buffer = obj->GetBuffer();
+		res = buffer ? buffer->GetOffset() : 0;
 	}
+
 	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_Seek(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
+	
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
 	if (obj) {
 		int pos = argv[1].as_int();
-		shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
-		buffer->Seek(pos);
+		ByteBuffer* buffer = obj->GetBuffer();
+		if (buffer)
+			buffer->Seek(pos);
 	}
+
 	return gstd::value();
 }
 gstd::value DxScript::Func_ObjFileB_ReadBoolean(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return script->CreateBooleanValue(false);
-	if (!obj->IsReadableSize(1))
-		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
-	bool res = buffer->ReadBoolean();
+	bool res = false;
+	
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) 
+		obj->Read(&res, sizeof(res));
+
 	return script->CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_ReadByte(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return script->CreateIntValue(0);
-	if (!obj->IsReadableSize(1))
-		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
-	char res = buffer->ReadCharacter();
+	int8_t res = 0;
+
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj)
+		obj->Read(&res, sizeof(res));
+
 	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_ReadShort(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return script->CreateIntValue(0);
-	if (!obj->IsReadableSize(2))
-		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
-	short bv = buffer->ReadShort();
-	if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
-		ByteOrder::Reverse(&bv, sizeof(bv));
+	int16_t res = 0;
 
-	return script->CreateIntValue(bv);
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
+		obj->Read(&res, sizeof(res));
+		if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
+			ByteOrder::Reverse(&res, sizeof(res));
+	}
+
+	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_ReadInteger(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return script->CreateIntValue(0);
-	if (!obj->IsReadableSize(4))
-		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
-	int bv = buffer->ReadInteger();
-	if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
-		ByteOrder::Reverse(&bv, sizeof(bv));
+	int32_t res = 0;
 
-	double res = bv;
-	return script->CreateIntValue(bv);
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
+		obj->Read(&res, sizeof(res));
+		if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
+			ByteOrder::Reverse(&res, sizeof(res));
+	}
+
+	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_ReadLong(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return script->CreateIntValue(0);
-	if (!obj->IsReadableSize(8))
-		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
-	int64_t bv = buffer->ReadInteger64();
-	if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
-		ByteOrder::Reverse(&bv, sizeof(bv));
+	int64_t res = 0;
 
-	return script->CreateIntValue(bv);
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
+		obj->Read(&res, sizeof(res));
+		if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
+			ByteOrder::Reverse(&res, sizeof(res));
+	}
+
+	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_ReadFloat(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return script->CreateRealValue(0);
-	if (!obj->IsReadableSize(4))
-		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 	float res = 0;
-	if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG) {
-		int bv = buffer->ReadInteger();
-		ByteOrder::Reverse(&bv, sizeof(bv));
-		res = (float&)bv;
+
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
+		obj->Read(&res, sizeof(res));
+		if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
+			ByteOrder::Reverse(&res, sizeof(res));
 	}
-	else
-		res = buffer->ReadFloat();
 
 	return script->CreateRealValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_ReadDouble(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return script->CreateRealValue(0);
-	if (!obj->IsReadableSize(8))
-		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
 
-	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
 	double res = 0;
-	if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG) {
-		int64_t bv = buffer->ReadInteger64();
-		ByteOrder::Reverse(&bv, sizeof(bv));
-		res = (double&)bv;
+
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
+		obj->Read(&res, sizeof(res));
+		if (obj->GetByteOrder() == ByteOrder::ENDIAN_BIG)
+			ByteOrder::Reverse(&res, sizeof(res));
 	}
-	else
-		res = buffer->ReadDouble();
 
 	return script->CreateRealValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_ReadString(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj == nullptr) return script->CreateStringValue(std::wstring());
-
-	size_t readSize = (size_t)argv[1].as_real();
-	if (!obj->IsReadableSize(readSize))
-		script->RaiseError(gstd::ErrorUtility::GetErrorMessage(ErrorUtility::ERROR_END_OF_FILE));
-
-	std::vector<byte> data;
-	data.resize(readSize);
-
-	shared_ptr<ByteBuffer>& buffer = obj->GetBuffer();
-	buffer->Read(&data[0], readSize);
 
 	std::wstring res;
-	int code = obj->GetCodePage();
-	if (code == CODE_ACP || code == CODE_UTF8) {
-		std::string str;
-		str.resize(readSize);
-		memcpy(&str[0], &data[0], readSize);
 
-		res = StringUtility::ConvertMultiToWide(str, code == CODE_UTF8 ? CP_UTF8 : CP_ACP);
-	}
-	else if (code == CODE_UTF16LE || code == CODE_UTF16BE) {
-		size_t strSize = readSize / 2 * 2;
-		size_t wsize = strSize / 2;
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
+		size_t readSize = (size_t)argv[1].as_real();
 
-		res.resize(wsize);
-		memcpy(&res[0], &data[0], readSize);
+		std::vector<byte> data(readSize);
+		obj->Read(&data[0], readSize);
+		readSize = obj->GetLastReadSize();
 
-		if (code == CODE_UTF16BE) {
-			for (auto itr = res.begin(); itr != res.end(); ++itr) {
-				wchar_t ch = *itr;
-				*itr = (ch >> 8) | (ch << 8);
-			}
+		int cp = obj->GetCodePage();
+		switch (cp) {
+		case CODE_UTF16LE:
+		case CODE_UTF16BE:
+		{
+			size_t strSize = readSize / 2 * 2;
+			size_t wchCount = strSize / 2;
+
+			res.resize(wchCount);
+			memcpy(&res[0], &data[0], strSize);
+
+			if (cp == CODE_UTF16BE)
+				ByteOrder::Reverse(&res[0], strSize);
+		}
+		case CODE_ACP:
+		case CODE_UTF8:
+		default:
+		{
+			std::string str;
+			str.resize(readSize);
+			memcpy(&str[0], &data[0], readSize);
+
+			res = StringUtility::ConvertMultiToWide(str, cp == CODE_UTF8 ? CODE_UTF8 : CODE_ACP);
+			//Don't optimize that ternary, it's intentional so that any unknown formats get the ANSI treatment
+		}
 		}
 	}
 
@@ -4486,85 +4478,92 @@ gstd::value DxScript::Func_ObjFileB_ReadString(gstd::script_machine* machine, in
 
 gstd::value DxScript::Func_ObjFileB_WriteBoolean(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
+
 	DWORD res = 0;
 
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj && !obj->IsArchived()) {
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
 		bool data = argv[1].as_boolean();
-		res = obj->GetBuffer()->Write(&data, sizeof(bool));
+		res = obj->Write(&data, sizeof(bool));
 	}
+
 	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_WriteByte(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
+
 	DWORD res = 0;
 
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj && !obj->IsArchived()) {
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
 		byte data = (byte)argv[1].as_int();
-		res = obj->GetBuffer()->Write(&data, sizeof(byte));
+		res = obj->Write(&data, sizeof(byte));
 	}
+
 	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_WriteShort(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
+
 	DWORD res = 0;
 
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj && !obj->IsArchived()) {
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
 		int16_t data = (int16_t)argv[1].as_int();
-		res = obj->GetBuffer()->Write(&data, sizeof(int16_t));
+		res = obj->Write(&data, sizeof(int16_t));
 	}
+
 	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_WriteInteger(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
+
 	DWORD res = 0;
 
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj && !obj->IsArchived()) {
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
 		int32_t data = (int32_t)argv[1].as_int();
-		res = obj->GetBuffer()->Write(&data, sizeof(int32_t));
+		res = obj->Write(&data, sizeof(int32_t));
 	}
+
 	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_WriteLong(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
+
 	DWORD res = 0;
 
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj && !obj->IsArchived()) {
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
 		int64_t data = (int64_t)argv[1].as_int();
-		res = obj->GetBuffer()->Write(&data, sizeof(int64_t));
+		res = obj->Write(&data, sizeof(int64_t));
 	}
+
 	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_WriteFloat(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
+
 	DWORD res = 0;
 
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj && !obj->IsArchived()) {
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
 		float data = argv[1].as_real();
-		res = obj->GetBuffer()->Write(&data, sizeof(float));
+		res = obj->Write(&data, sizeof(float));
 	}
+
 	return script->CreateRealValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_WriteDouble(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
+
 	DWORD res = 0;
 
-	int id = argv[0].as_int();
-	DxBinaryFileObject* obj = dynamic_cast<DxBinaryFileObject*>(script->GetObjectPointer(id));
-	if (obj && !obj->IsArchived()) {
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	if (obj) {
 		double data = argv[1].as_real();
-		res = obj->GetBuffer()->Write(&data, sizeof(double));
+		res = obj->Write(&data, sizeof(double));
 	}
+
 	return script->CreateRealValue(res);
 }

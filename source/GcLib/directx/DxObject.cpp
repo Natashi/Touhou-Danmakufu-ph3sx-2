@@ -756,15 +756,23 @@ void DxSoundObject::Play() {
 //DxFileObject
 **********************************************************/
 DxFileObject::DxFileObject() {
-	isArchived_ = false;
+	bWritable_ = true;
 }
 DxFileObject::~DxFileObject() {
 	Close();
 }
 bool DxFileObject::OpenR(const std::wstring& path) {
-	file_ = shared_ptr<File>(new File(path));
+	std::wstring cPath = path;
+	cPath = PathProperty::Canonicalize(cPath);
+	cPath = PathProperty::ReplaceYenToSlash(cPath);
+
+	file_ = shared_ptr<File>(new File(cPath));
 	bool res = file_->Open();
-	if (!res) file_ = nullptr;
+	if (!res) {
+		file_ = nullptr;
+		std::wstring err = StringUtility::Format(L"DxFileObject: Failed to open \"%s\"\r\n\tSystem: %s",
+			path.c_str(), File::GetLastError().c_str());
+	}
 	return res;
 }
 bool DxFileObject::OpenR(shared_ptr<gstd::FileReader> reader) {
@@ -772,29 +780,34 @@ bool DxFileObject::OpenR(shared_ptr<gstd::FileReader> reader) {
 	reader_ = reader;
 	return true;
 }
-bool DxFileObject::OpenRW(std::wstring path) {
-	path = PathProperty::Canonicalize(path);
-	path = PathProperty::ReplaceYenToSlash(path);
+bool DxFileObject::OpenRW(const std::wstring& path) {
+	std::wstring cPath = path;
+	cPath = PathProperty::Canonicalize(cPath);
+	cPath = PathProperty::ReplaceYenToSlash(cPath);
 
-	std::wstring dir = PathProperty::GetFileDirectory(path);
+	std::wstring dir = PathProperty::GetFileDirectory(cPath);
 	bool bDir = File::CreateFileDirectory(dir);
 	if (!bDir) return false;
 
 	//Security; to prevent scripts from being able to access external files
 	const std::wstring& dirModule = PathProperty::GetModuleDirectory();
 	if (dir.find(dirModule) == std::wstring::npos) {
-		Logger::WriteTop(StringUtility::Format("DxFileObject: OpenNW cannot open external files. [%s]", path.c_str()));
+		Logger::WriteTop(StringUtility::Format("DxFileObject: OpenW cannot open external files. [%s]", path.c_str()));
 		return false;
 	}
 
-	file_ = shared_ptr<File>(new File(path));
+	file_ = shared_ptr<File>(new File(cPath));
 	bool res = file_->Open(File::WRITE);
-	if (!res) file_ = nullptr;
+	if (!res) {
+		file_ = nullptr;
+		std::wstring err = StringUtility::Format(L"DxFileObject: Failed to open \"%s\"\r\n\tSystem: %s", 
+			path.c_str(), File::GetLastError().c_str());
+	}
 	return res;
 }
 void DxFileObject::Close() {
-	if (file_ == nullptr) return;
-	file_->Close();
+	if (file_)
+		file_->Close();
 }
 
 /**********************************************************
@@ -949,10 +962,9 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 	return true;
 }
 bool DxTextFileObject::Store() {
-	if (isArchived_ || file_ == nullptr) return false;
-	if (file_ == nullptr) return false;
+	if (!bWritable_ || file_ == nullptr) return false;
 
-	file_->Seek(0, std::ios::beg);
+	file_->Seek(0, std::ios::beg, File::WRITE);
 
 	if (bomSize_ > 0) file_->Write(bomHead_, bomSize_);
 
@@ -993,13 +1005,10 @@ std::string DxTextFileObject::GetLineAsString(size_t line) {
 	if (src.size() > 0) {
 		if (bytePerChar_ == 1) {
 			res.resize(src.size());
-			memcpy(&res[0], &src[0], src.size());
+			memcpy(res.data(), src.data(), src.size());
 		}
 		else if (bytePerChar_ == 2) {
-			std::wstring _res;
-			_res.resize(src.size());
-			memcpy(&_res[0], &src[0], src.size());
-			res = StringUtility::ConvertWideToMulti(_res);
+			res = StringUtility::ConvertWideToMulti(src);
 		}
 	}
 	return res;
@@ -1013,18 +1022,17 @@ std::wstring DxTextFileObject::GetLineAsWString(size_t line) {
 	if (src.size() > 0) {
 		if (bytePerChar_ == 2) {
 			res.resize(src.size() / 2U);
-			memcpy(&res[0], &src[0], src.size());
+			memcpy(res.data(), src.data(), res.size() * sizeof(wchar_t));
 		}
 		else if (bytePerChar_ == 1) {
-			std::string _res;
-			_res.resize(src.size());
-			memcpy(&_res[0], &src[0], src.size());
-			res = StringUtility::ConvertMultiToWide(_res);
+			res = StringUtility::ConvertMultiToWide(src);
 		}
 	}
 	return res;
 }
 void DxTextFileObject::SetLineAsString(const std::string& text, size_t line) {
+	if (!bWritable_) return;
+
 	line--; //Line number begins at 1
 	if (line >= listLine_.size()) return;
 
@@ -1043,6 +1051,8 @@ void DxTextFileObject::SetLineAsString(const std::string& text, size_t line) {
 	listLine_[line] = newLine;
 }
 void DxTextFileObject::SetLineAsWString(const std::wstring& text, size_t line) {
+	if (!bWritable_) return;
+
 	line--; //Line number begins at 1
 	if (line >= listLine_.size()) return;
 
@@ -1061,13 +1071,16 @@ void DxTextFileObject::SetLineAsWString(const std::wstring& text, size_t line) {
 	listLine_[line] = newLine;
 }
 void DxTextFileObject::_AddLine(const char* pChar, size_t count) {
-	if (isArchived_) return;
+	if (!bWritable_) return;
+
 	std::vector<char> newLine;
 	newLine.resize(count);
 	memcpy(&newLine[0], pChar, count);
 	listLine_.push_back(newLine);
 }
 void DxTextFileObject::AddLine(const std::string& line) {
+	if (!bWritable_) return;
+
 	if (bytePerChar_ == 1) _AddLine(&line[0], line.size() * sizeof(char));
 	else if (bytePerChar_ == 2) {
 		std::wstring str = StringUtility::ConvertMultiToWide(line);
@@ -1075,6 +1088,8 @@ void DxTextFileObject::AddLine(const std::string& line) {
 	}
 }
 void DxTextFileObject::AddLine(const std::wstring& line) {
+	if (!bWritable_) return;
+
 	if (bytePerChar_ == 2) _AddLine((const char*)&line[0], line.size() * sizeof(wchar_t));
 	else if (bytePerChar_ == 1) {
 		std::string str = StringUtility::ConvertWideToMulti(line);
@@ -1090,13 +1105,16 @@ DxBinaryFileObject::DxBinaryFileObject() {
 	byteOrder_ = ByteOrder::ENDIAN_LITTLE;
 	codePage_ = CP_ACP;
 }
-DxBinaryFileObject::~DxBinaryFileObject() {}
+DxBinaryFileObject::~DxBinaryFileObject() {
+	ptr_delete(buffer_);
+}
+
 bool DxBinaryFileObject::OpenR(const std::wstring& path) {
 	bool res = DxFileObject::OpenR(path);
 	if (!res) return false;
 
 	size_t size = file_->GetSize();
-	buffer_ = shared_ptr<ByteBuffer>(new ByteBuffer());
+	buffer_ = new ByteBuffer();
 	buffer_->SetSize(size);
 
 	file_->Read(buffer_->GetPointer(), size);
@@ -1106,9 +1124,12 @@ bool DxBinaryFileObject::OpenR(const std::wstring& path) {
 bool DxBinaryFileObject::OpenR(shared_ptr<gstd::FileReader> reader) {
 	reader_ = reader;
 
-	size_t size = reader->GetFileSize();
-	buffer_ = dynamic_cast<ManagedFileReader*>(reader.get())->GetBuffer();
+	auto srcBuffer = dynamic_cast<ManagedFileReader*>(reader.get())->GetBuffer();
 
+	size_t size = reader->GetFileSize();
+	buffer_ = new ByteBuffer();
+	buffer_->Copy(*srcBuffer);
+	
 	return true;
 }
 bool DxBinaryFileObject::OpenRW(const std::wstring& path) {
@@ -1116,7 +1137,7 @@ bool DxBinaryFileObject::OpenRW(const std::wstring& path) {
 	if (!res) return false;
 
 	size_t size = file_->GetSize();
-	buffer_ = shared_ptr<ByteBuffer>(new ByteBuffer());
+	buffer_ = new ByteBuffer();
 	buffer_->SetSize(size);
 
 	file_->Read(buffer_->GetPointer(), size);
@@ -1124,18 +1145,31 @@ bool DxBinaryFileObject::OpenRW(const std::wstring& path) {
 	return true;
 }
 bool DxBinaryFileObject::Store() {
-	if (isArchived_) return false;
-	if (file_ == nullptr) return false;
+	if (!bWritable_ || file_ == nullptr) return false;
 
-	file_->SetFilePointerBegin();
+	file_->SetFilePointerBegin(File::WRITE);
 	file_->Write(buffer_->GetPointer(), buffer_->GetSize());
 
 	return true;
 }
+
 bool DxBinaryFileObject::IsReadableSize(size_t size) {
 	size_t pos = buffer_->GetOffset();
 	bool res = pos + size <= buffer_->GetSize();
 	return res;
+}
+DWORD DxBinaryFileObject::Read(LPVOID data, size_t size) {
+	if (buffer_ == nullptr || data == nullptr || size == 0) {
+		lastRead_ = 0;
+	}
+	else {
+		lastRead_ = buffer_->Read(data, size);
+	}
+	return lastRead_;
+}
+DWORD DxBinaryFileObject::Write(LPVOID data, size_t size) {
+	if (!bWritable_ || buffer_ == nullptr) return 0;
+	return buffer_->Write(data, size);
 }
 
 /**********************************************************
@@ -1240,7 +1274,7 @@ DxScriptObjectBase* DxScriptObjectManager::GetObjectPointer(int id) {
 void DxScriptObjectManager::DeleteObject(int id) {
 	if (id < 0 || id >= obj_.size()) return;
 
-	auto ptr = obj_[id];
+	shared_ptr<DxScriptObjectBase> ptr = obj_[id];	//Copy
 	if (ptr == nullptr) return;
 
 	ptr->bDeleted_ = true;

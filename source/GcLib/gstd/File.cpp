@@ -13,9 +13,9 @@
 
 using namespace gstd;
 
-/**********************************************************
+//*******************************************************************
 //ByteBuffer
-**********************************************************/
+//*******************************************************************
 ByteBuffer::ByteBuffer() {
 	data_ = nullptr;
 	Clear();
@@ -32,30 +32,11 @@ ByteBuffer::ByteBuffer(std::stringstream& stream) {
 }
 ByteBuffer::~ByteBuffer() {
 	Clear();
-	ptr_delete_scalar(data_);
 }
-size_t ByteBuffer::_GetReservedSize() {
-	return reserve_;
-}
-void ByteBuffer::_Resize(size_t size) {
-	char* oldData = data_;
-	size_t oldSize = size_;
 
-	data_ = new char[size];
-	ZeroMemory(data_, size);
-
-	//元のデータをコピー
-	size_t sizeCopy = std::min(size, oldSize);
-	memcpy(data_, oldData, sizeCopy);
-	reserve_ = size;
-	size_ = size;
-
-	//古いデータを削除
-	delete[] oldData;
-}
 void ByteBuffer::Copy(ByteBuffer& src) {
 	if (data_ != nullptr && src.reserve_ != reserve_) {
-		delete[] data_;
+		ptr_delete_scalar(data_);
 		data_ = new char[src.reserve_];
 		ZeroMemory(data_, src.reserve_);
 	}
@@ -72,17 +53,13 @@ void ByteBuffer::Copy(std::stringstream& src) {
 	size_t size = src.tellg();
 	src.seekg(0, std::ios::beg);
 
-	size_t newReserve = size > 0 ? 0x1u << (size_t)ceil(log2f(size)) : 1u;
-
-	if (data_) {
-		delete[] data_;
-		data_ = new char[newReserve];
-		ZeroMemory(data_, newReserve);
-	}
-
 	offset_ = org;
-	reserve_ = newReserve;
 	size_ = size;
+	reserve_ = 4U;
+	while (reserve_ < size) reserve_ = reserve_ * 2;
+
+	ptr_delete_scalar(data_);
+	data_ = new char[reserve_];
 
 	src.read(data_, size);
 	src.clear();
@@ -91,23 +68,48 @@ void ByteBuffer::Copy(std::stringstream& src) {
 }
 void ByteBuffer::Clear() {
 	ptr_delete_scalar(data_);
-	data_ = new char[0];
 	offset_ = 0;
 	reserve_ = 0;
 	size_ = 0;
 }
+
+void ByteBuffer::SetSize(size_t size) {
+	size_t oldSize = size_;
+	if (size < reserve_) {
+		//The current reserve is enough for the new size
+		size_ = size;
+	}
+	else {
+		//The new size is bigger than the reserve, expand the array
+
+		size_t newReserve = 4U;
+		while (newReserve < size) newReserve = newReserve * 2;
+		Reserve(newReserve);
+
+		size_ = size;
+	}
+}
+void ByteBuffer::Reserve(size_t newReserve) {
+	if (reserve_ == newReserve) return;
+
+	char* newBuf = new char[newReserve];
+	ZeroMemory(newBuf, newReserve);
+
+	if (data_) {
+		memcpy(newBuf, data_, std::min(size_, newReserve));
+		ptr_delete_scalar(data_);
+	}
+	data_ = newBuf;
+	reserve_ = newReserve;
+}
+
 void ByteBuffer::Seek(size_t pos) {
 	offset_ = pos;
 	if (offset_ > size_) offset_ = size_;
 }
-void ByteBuffer::SetSize(size_t size) {
-	_Resize(size);
-}
 DWORD ByteBuffer::Write(LPVOID buf, DWORD size) {
 	if (offset_ + size > reserve_) {
-		size_t sizeNew = (offset_ + size) * 2;
-		_Resize(sizeNew);
-		size_ = 0;
+		SetSize(offset_ + size);
 	}
 
 	memcpy(&data_[offset_], buf, size);
@@ -122,37 +124,31 @@ DWORD ByteBuffer::Read(LPVOID buf, DWORD size) {
 	offset_ += readable;
 	return readable;
 }
+
 _NODISCARD char* ByteBuffer::GetPointer(size_t offset) {
+	if (data_ == nullptr) return nullptr;
 #if _DEBUG
 	if (offset > size_)
-		throw gstd::wexception(L"ByteBuffer: Index out of bounds.");
+		throw gstd::wexception("ByteBuffer: Index out of bounds.");
 #endif
 	return &data_[offset];
 }
-_NODISCARD char& ByteBuffer::operator[](size_t offset) {
-#if _DEBUG
-	if (offset > size_)
-		throw gstd::wexception(L"ByteBuffer: Index out of bounds.");
-#endif
-	return data_[offset];
-}
+
 ByteBuffer& ByteBuffer::operator=(const ByteBuffer& other) noexcept {
 	if (this != std::addressof(other)) {
 		Clear();
 		Copy(const_cast<ByteBuffer&>(other));
 	}
-	return (*this);
+	return *this;
 }
 
-/**********************************************************
+//*******************************************************************
 //File
-**********************************************************/
+//*******************************************************************
 std::wstring File::lastError_ = L"";
 File::File() {
-	hFile_ = INVALID_HANDLE_VALUE;
 	path_ = L"";
 	perms_ = 0;
-	bOpen_ = false;
 }
 File::File(const std::wstring& path) : File() {
 	path_ = path;
@@ -160,6 +156,7 @@ File::File(const std::wstring& path) : File() {
 File::~File() {
 	Close();
 }
+
 bool File::CreateFileDirectory(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
 	stdfs::path dir = stdfs::path(path).parent_path();
@@ -215,95 +212,7 @@ bool File::IsDirectory(const std::wstring& path) {
 #endif
 	return res;
 }
-void File::Delete() {
-	Close();
-	::DeleteFile(path_.c_str());
-}
-bool File::IsExists() {
-	if (bOpen_) return true;
-	return IsExists(path_);
-}
-bool File::IsDirectory() {
-	return IsDirectory(path_);
-}
-size_t File::GetSize() {
-	size_t res = 0;
-	if (bOpen_ && hFile_ != INVALID_HANDLE_VALUE)
-		return ::GetFileSize(hFile_, nullptr);
 
-	//File not opened
-	try {
-		res = stdfs::file_size(path_);
-	}
-	catch (stdfs::filesystem_error&) {
-		res = 0;
-	}
-	return res;
-}
-
-bool File::Open() {
-	return this->Open(AccessType::READ);
-}
-bool File::Open(DWORD typeAccess) {
-	this->Close();
-	
-	DWORD modeAccess = 0;
-	DWORD modeShare = FILE_SHARE_READ;
-	DWORD modeCreation = OPEN_EXISTING;
-
-	if (typeAccess == AccessType::READ) {
-		modeAccess = GENERIC_READ;
-	}
-	else if (typeAccess == AccessType::WRITE) {
-		modeAccess = GENERIC_READ | GENERIC_WRITE;
-	}
-	else if (typeAccess == AccessType::WRITEONLY) {
-		modeAccess = GENERIC_WRITE;
-		modeCreation = CREATE_ALWAYS;
-	}
-
-	if (modeAccess == 0) return false;
-	perms_ = typeAccess;
-
-	hFile_ = ::CreateFile(path_.c_str(), modeAccess, modeShare, nullptr,
-		modeCreation, FILE_ATTRIBUTE_NORMAL, nullptr);
-	bOpen_ = hFile_ != INVALID_HANDLE_VALUE;
-	if (!bOpen_) {
-		DWORD code = ::GetLastError();
-		std::wstring errStr = L"Unknown error";
-		if (code != 0) {
-			LPWSTR buf = nullptr;
-			size_t size = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-				nullptr, code, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, 0, nullptr);
-			errStr = std::wstring(buf, size);
-			LocalFree(buf);
-		}
-		lastError_ = StringUtility::FormatToWide("%s (code=%d)", errStr.c_str(), code);
-	}
-	else
-		lastError_ = L"No error";
-
-	return bOpen_;
-}
-void File::Close() {
-	if (hFile_ != INVALID_HANDLE_VALUE) {
-		::CloseHandle(hFile_);
-		hFile_ = INVALID_HANDLE_VALUE;
-	}
-	bOpen_ = false;
-	perms_ = 0;
-}
-
-DWORD File::Read(LPVOID buf, DWORD size) {
-	DWORD res = 0;
-	::ReadFile(hFile_, buf, size, &res, nullptr);
-	return res;
-}
-DWORD File::Write(LPVOID buf, DWORD size) {
-	DWORD res = 0;
-	::WriteFile(hFile_, buf, size, &res, nullptr);
-	return res;
-}
 bool File::IsEqualsPath(const std::wstring& path1, const std::wstring& path2) {
 #ifdef __L_STD_FILESYSTEM
 	bool res = (path_t(path1) == path_t(path2));
@@ -395,9 +304,101 @@ std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir) {
 	return res;
 }
 
-/**********************************************************
+void File::Delete() {
+	Close();
+	::DeleteFile(path_.c_str());
+}
+bool File::IsExists() {
+	if (hFile_.is_open()) return true;
+	return IsExists(path_);
+}
+bool File::IsDirectory() {
+	return IsDirectory(path_);
+}
+size_t File::GetSize() {
+	size_t res = 0;
+	if (hFile_.is_open()) {
+		size_t prev = GetFilePointer();
+		SetFilePointerEnd();
+		size_t size = GetFilePointer();
+		Seek(prev, std::ios::beg);
+		return size;
+	}
+
+	//File not opened
+	try {
+		res = stdfs::file_size(path_);
+	}
+	catch (stdfs::filesystem_error&) {
+		res = 0;
+	}
+	return res;
+}
+
+bool File::Open() {
+	return this->Open(AccessType::READ);
+}
+bool File::Open(DWORD typeAccess) {
+	this->Close();
+	
+	std::ios::openmode modeAccess = 0;
+	if (typeAccess == READ) {
+		modeAccess = std::ios::in;
+	}
+	else if (typeAccess == WRITE) {
+		modeAccess = std::ios::in | std::ios::out;
+	}
+	else if (typeAccess == WRITEONLY) {
+		modeAccess = std::ios::out | std::ios::trunc;
+	}
+
+	if (modeAccess == 0) return false;
+	perms_ = typeAccess;
+
+	hFile_.clear();
+	hFile_.exceptions(std::ios::failbit);
+	try {
+		hFile_.open(path_, modeAccess | std::ios::binary);
+	}
+	catch (std::system_error& e) {
+		lastError_ = StringUtility::FormatToWide("%s (code=%d)", 
+			strerror(errno), errno);
+	}
+	hFile_.exceptions(0);
+
+	return hFile_.is_open();
+}
+void File::Close() {
+	hFile_.close();
+	perms_ = 0;
+}
+
+DWORD File::Read(LPVOID buf, DWORD size) {
+	hFile_.read((char*)buf, size);
+	return hFile_.gcount();
+}
+DWORD File::Write(LPVOID buf, DWORD size) {
+	hFile_.write((char*)buf, size);
+	return hFile_.good();
+}
+
+bool File::Seek(size_t offset, DWORD way, AccessType type) {
+	if (!hFile_.is_open()) return false;
+	hFile_.clear();
+	if (type == READ)
+		hFile_.seekg(offset, way);
+	else
+		hFile_.seekp(offset, way);
+	return hFile_.good();
+}
+size_t File::GetFilePointer(AccessType type) {
+	if (type == READ) return hFile_.tellg();
+	else return hFile_.tellp();
+}
+
+//*******************************************************************
 //FileManager
-**********************************************************/
+//*******************************************************************
 FileManager* FileManager::thisBase_ = nullptr;
 FileManager::FileManager() {}
 FileManager::~FileManager() {
@@ -494,7 +495,7 @@ shared_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 		std::wstring name = PathProperty::GetFileName(pathAsUnique);
 		for (auto itrArchive = mapArchiveFile_.begin(); itrArchive != mapArchiveFile_.end(); ++itrArchive) {
 			std::vector<shared_ptr<ArchiveFileEntry>> list = itrArchive->second->GetEntryList(name);
-			for (auto iEntry : list)
+			for (auto& iEntry : list)
 				listMatchEntry.push_back(iEntry);
 		}
 
@@ -681,9 +682,9 @@ void FileManager::LoadThread::RemoveListener(FileManager::LoadThreadListener* li
 #endif
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
-/**********************************************************
+//*******************************************************************
 //ManagedFileReader
-**********************************************************/
+//*******************************************************************
 ManagedFileReader::ManagedFileReader(shared_ptr<File> file, shared_ptr<ArchiveFileEntry> entry) {
 	offset_ = 0;
 	file_ = file;
@@ -745,8 +746,8 @@ DWORD ManagedFileReader::Read(LPVOID buf, DWORD size) {
 	offset_ += res;
 	return res;
 }
-BOOL ManagedFileReader::SetFilePointerBegin() {
-	BOOL res = FALSE;
+bool ManagedFileReader::SetFilePointerBegin() {
+	bool res = false;
 	offset_ = 0;
 	if (type_ == TYPE_NORMAL) {
 		res = file_->SetFilePointerBegin();
@@ -754,35 +755,33 @@ BOOL ManagedFileReader::SetFilePointerBegin() {
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
 			offset_ = 0;
-			res = TRUE;
+			res = true;
 		}
 	}
 	return res;
 }
-BOOL ManagedFileReader::SetFilePointerEnd() {
-	BOOL res = FALSE;
+bool ManagedFileReader::SetFilePointerEnd() {
+	bool res = false;
 	if (type_ == TYPE_NORMAL) {
 		res = file_->SetFilePointerEnd();
 	}
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
 			offset_ = buffer_->GetSize();
-			res = TRUE;
+			res = true;
 		}
 	}
 	return res;
 }
-BOOL ManagedFileReader::Seek(size_t offset) {
-	BOOL res = FALSE;
+bool ManagedFileReader::Seek(size_t offset) {
+	bool res = false;
 	if (type_ == TYPE_NORMAL) {
-		res = file_->Seek(offset, FILE_BEGIN);
+		res = file_->Seek(offset, std::ios::beg, File::READ);
 	}
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
-		if (buffer_)
-			res = TRUE;
+		res = buffer_ != nullptr;
 	}
-	if (res == TRUE)
-		offset_ = offset;
+	if (res) offset_ = offset;
 	return res;
 }
 size_t ManagedFileReader::GetFilePointer() {
@@ -805,9 +804,9 @@ bool ManagedFileReader::IsCompressed() {
 }
 #endif
 
-/**********************************************************
+//*******************************************************************
 //RecordEntry
-**********************************************************/
+//*******************************************************************
 RecordEntry::RecordEntry() {
 }
 RecordEntry::~RecordEntry() {
@@ -837,9 +836,9 @@ void RecordEntry::_ReadEntryRecord(Reader& reader) {
 }
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
-/**********************************************************
+//*******************************************************************
 //RecordBuffer
-**********************************************************/
+//*******************************************************************
 RecordBuffer::RecordBuffer() {
 
 }
@@ -983,9 +982,9 @@ void RecordBuffer::SetRecordAsRecordBuffer(const std::string& key, RecordBuffer&
 void RecordBuffer::Read(RecordBuffer& record) {}
 void RecordBuffer::Write(RecordBuffer& record) {}
 
-/**********************************************************
+//*******************************************************************
 //PropertyFile
-**********************************************************/
+//*******************************************************************
 PropertyFile::PropertyFile() {}
 PropertyFile::~PropertyFile() {}
 bool PropertyFile::Load(const std::wstring& path) {
@@ -1094,9 +1093,9 @@ double PropertyFile::GetReal(const std::wstring& key, double def) {
 #endif
 
 #if defined(DNH_PROJ_EXECUTOR)
-/**********************************************************
+//*******************************************************************
 //SystemValueManager
-**********************************************************/
+//*******************************************************************
 const std::string SystemValueManager::RECORD_SYSTEM = "__RECORD_SYSTEM__";
 const std::string SystemValueManager::RECORD_SYSTEM_GLOBAL = "__RECORD_SYSTEM_GLOBAL__";
 SystemValueManager* SystemValueManager::thisBase_ = nullptr;
