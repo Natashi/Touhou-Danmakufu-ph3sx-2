@@ -323,7 +323,7 @@ lab_fail:
 }
 
 void StgIntersectionManager::AddVisualization(shared_ptr<StgIntersectionTarget>& target) {
-	//if (!bRenderIntersection_) return;
+	if (!bRenderIntersection_ || target == nullptr) return;
 
 	ParticleRenderer2D* objParticleCircle = objIntersectionVisualizerCircle_->GetParticlePointer();
 	RenderObjectTLX* objParticleLine = objIntersectionVisualizerLine_->GetObjectPointer();
@@ -512,17 +512,21 @@ std::vector<StgIntersectionSpace::TargetCheckListPair>* StgIntersectionSpace::Cr
 	volatile unsigned int count = 0;
 
 	if (manager->IsRenderIntersection()) {
+		/*
 		ParallelFor(pListTargetA->size(), [&](size_t i) {
 			manager->AddVisualization(pListTargetA->at(i));
 		});
 		ParallelFor(pListTargetB->size(), [&](size_t i) {
 			manager->AddVisualization(pListTargetB->at(i));
 		});
+		*/
+		for (auto& pTarget : *pListTargetA)
+			manager->AddVisualization(pTarget);
+		for (auto& pTarget : *pListTargetB)
+			manager->AddVisualization(pTarget);
 	}
 
 	if (pListTargetA->size() > 0 && pListTargetB->size() > 0) {
-		static std::mutex mtx;
-
 		auto CheckSpaceRect = [&](StgIntersectionTarget* targetA, StgIntersectionTarget* targetB) {
 			if (targetA == nullptr || targetB == nullptr) return;
 			const DxRect<LONG>& boundA = targetA->GetIntersectionSpaceRect();

@@ -111,8 +111,8 @@ private:
 
 	shared_ptr<DxScriptParticleListObject2D> objIntersectionVisualizerCircle_;
 	shared_ptr<DxScriptPrimitiveObject2D> objIntersectionVisualizerLine_;
-	std::atomic<size_t> countCircleInstance_;
-	std::atomic<size_t> countLineVertex_;
+	size_t countCircleInstance_;
+	size_t countLineVertex_;
 	bool bRenderIntersection_;
 
 	shared_ptr<Shader> shaderVisualizerCircle_;
