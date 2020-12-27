@@ -155,7 +155,7 @@ std::wstring StringUtility::ConvertMultiToWide(std::vector<char>& buf, int code)
 std::string StringUtility::ConvertWideToMulti(std::vector<char>& buf, int code) {
 	if (buf.size() == 0) return "";
 
-	std::wstring wstr = std::wstring((wchar_t*)buf.data(), (wchar_t*)(buf.data() + buf.size()));
+	std::wstring wstr = std::wstring((wchar_t*)buf.data(), buf.size() / 2U);
 	return ConvertWideToMulti(wstr, code);
 }
 size_t StringUtility::ConvertMultiToWide(char* mbstr, size_t mbcount, std::vector<char>& wres, int code) {
