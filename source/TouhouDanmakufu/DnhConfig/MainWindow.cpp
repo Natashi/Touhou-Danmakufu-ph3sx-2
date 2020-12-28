@@ -23,21 +23,21 @@ bool MainWindow::Initialize() {
 
 	//ƒ^ƒu
 	HWND hTab = GetDlgItem(hWnd_, IDC_TAB_MAIN);
-	wndTab_ = new WTabControll();
+	wndTab_.reset(new WTabControll());
 	wndTab_->Attach(hTab);
 
 	//DevicePanel
-	panelDevice_ = new DevicePanel();
+	panelDevice_.reset(new DevicePanel());
 	panelDevice_->Initialize(hTab);
 	wndTab_->AddTab(L"Device", panelDevice_);
 
 	//KeyPanel
-	panelKey_ = new KeyPanel();
+	panelKey_.reset(new KeyPanel());
 	panelKey_->Initialize(hTab);
 	wndTab_->AddTab(L"Key", panelKey_);
 
 	//OptionPanel
-	panelOption_ = new OptionPanel();
+	panelOption_.reset(new OptionPanel());
 	panelOption_->Initialize(hTab);
 	wndTab_->AddTab(L"Option", panelOption_);
 
@@ -338,7 +338,7 @@ bool KeyPanel::Initialize(HWND hParent) {
 //	HIMAGELIST hImageList = ImageList_Create(32 , 22 , ILC_COLOR4 |ILC_MASK , 2 , 1);
 //	ListView_SetImageList(hList, hImageList, LVSIL_SMALL) ;
 
-	viewKey_ = new KeyListView();
+	viewKey_.reset(new KeyListView());
 	viewKey_->Attach(hListKey);
 	viewKey_->AddColumn(128, COL_ACTION, L"Action");
 	viewKey_->AddColumn(92, COL_KEY_ASSIGN, L"Keyboard");
@@ -499,7 +499,7 @@ bool OptionPanel::Initialize(HWND hParent) {
 	dwStyle |= LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES;
 	ListView_SetExtendedListViewStyle(hListOption, dwStyle);
 
-	viewOption_ = new WListView();
+	viewOption_.reset(new WListView());
 	viewOption_->Attach(hListOption);
 	viewOption_->AddColumn(330, 0, L"Option");
 	viewOption_->SetText(ROW_LOG_WINDOW, 0, L"Show LogWindow on startup");
@@ -508,7 +508,7 @@ bool OptionPanel::Initialize(HWND hParent) {
 
 	HWND hPathBox = ::GetDlgItem(hWnd_, IDC_TEXT_EXE_PATH);
 
-	exePath_ = new WEditBox();
+	exePath_.reset(new WEditBox());
 	exePath_->Attach(hPathBox);
 
 	//executorPath_ = DNH_EXE_DEFAULT;

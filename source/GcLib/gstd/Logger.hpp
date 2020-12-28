@@ -16,14 +16,14 @@ namespace gstd {
 	protected:
 		static Logger* top_;
 		gstd::CriticalSection lock_;
-		std::list<ref_count_ptr<Logger>> listLogger_;
+		std::list<shared_ptr<Logger>> listLogger_;
 		virtual void _WriteChild(SYSTEMTIME& time, const std::wstring& str);
 		virtual void _Write(SYSTEMTIME& time, const std::wstring& str) = 0;
 	public:
 		Logger();
 		virtual ~Logger();
 		virtual bool Initialize() { return true; }
-		void AddLogger(ref_count_ptr<Logger> logger) { listLogger_.push_back(logger); }
+		void AddLogger(shared_ptr<Logger> logger) { listLogger_.push_back(logger); }
 		virtual void Write(const std::string& str);
 		virtual void Write(const std::wstring& str);
 
@@ -87,17 +87,17 @@ namespace gstd {
 	protected:
 		struct AddPanelEvent {
 			std::wstring name;
-			ref_count_ptr<Panel> panel;
+			shared_ptr<Panel> panel;
 		};
 
 		bool bEnable_;
 		int windowState_;
 
-		ref_count_ptr<WindowThread> threadWindow_;
-		ref_count_ptr<WTabControll> wndTab_;
-		ref_count_ptr<WStatusBar> wndStatus_;
-		ref_count_ptr<LogPanel> wndLogPanel_;
-		ref_count_ptr<InfoPanel> wndInfoPanel_;
+		shared_ptr<WindowThread> threadWindow_;
+		shared_ptr<WTabControll> wndTab_;
+		shared_ptr<WStatusBar> wndStatus_;
+		shared_ptr<LogPanel> wndLogPanel_;
+		shared_ptr<InfoPanel> wndInfoPanel_;
 		gstd::CriticalSection lock_;
 		std::list<AddPanelEvent> listEventAddPanel_;
 
@@ -112,14 +112,14 @@ namespace gstd {
 		void SaveState();
 		void LoadState();
 		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
-		bool AddPanel(ref_count_ptr<Panel> panel, const std::wstring& name);
+		bool AddPanel(shared_ptr<Panel> panel, const std::wstring& name);
 
 		int GetState() { return windowState_; }
 
 		void ShowLogWindow();
 		static void InsertOpenCommandInSystemMenu(HWND hWnd);
 
-		ref_count_ptr<WStatusBar> GetStatusBar() { return wndStatus_; }
+		shared_ptr<WStatusBar> GetStatusBar() { return wndStatus_; }
 		void ClearStatusBar();
 		
 		static WindowLogger* GetParent() { return loggerParentGlobal_; }
@@ -193,7 +193,7 @@ namespace gstd {
 			bool bSIMDEnabled;
 		};
 
-		ref_count_ptr<WStatusBar> wndStatus_;
+		shared_ptr<WStatusBar> wndStatus_;
 		InfoPanel* wndInfo_;
 
 		CpuInfo infoCpu_;
@@ -205,7 +205,7 @@ namespace gstd {
 		CpuInfo _GetCpuInformation();
 		double _GetCpuPerformance();
 	public:
-		InfoCollector(ref_count_ptr<WStatusBar> wndStatus, InfoPanel* wndInfo);
+		InfoCollector(shared_ptr<WStatusBar> wndStatus, InfoPanel* wndInfo);
 		~InfoCollector();
 
 		void Initialize();

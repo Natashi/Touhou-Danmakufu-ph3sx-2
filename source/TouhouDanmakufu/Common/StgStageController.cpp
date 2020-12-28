@@ -262,7 +262,7 @@ void StgStageController::CloseScene() {
 	if (!infoStage_->IsReplay()) {
 		//キー
 		ref_count_ptr<RecordBuffer> recKey = new RecordBuffer();
-		keyReplayManager_->WriteRecord(*recKey.GetPointer());
+		keyReplayManager_->WriteRecord(*recKey);
 
 		ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage_->GetReplayData();
 		replayStageData->SetReplayKeyRecord(recKey);
@@ -293,7 +293,7 @@ void StgStageController::_SetupReplayTargetCommonDataArea(int64_t idScript) {
 		listArea.insert(area);
 	}
 
-	gstd::ref_count_ptr<ScriptCommonDataManager> scriptCommonDataManager = systemController_->GetCommonDataManager();
+	shared_ptr<ScriptCommonDataManager> scriptCommonDataManager = systemController_->GetCommonDataManager();
 	if (!infoStage_->IsReplay()) {
 		for (auto itrArea = listArea.begin(); itrArea != listArea.end(); ++itrArea) {
 			const std::string& area = (*itrArea);
@@ -312,14 +312,13 @@ void StgStageController::_SetupReplayTargetCommonDataArea(int64_t idScript) {
 
 void StgStageController::Work() {
 	EDirectInput* input = EDirectInput::GetInstance();
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
+	shared_ptr<StgSystemInformation>& infoSystem = systemController_->GetSystemInformation();
 	bool bPackageMode = infoSystem->IsPackageMode();
 
 	bool bPermitRetryKey = !input->IsTargetKeyCode(DIK_BACK);
 	if (!bPackageMode && bPermitRetryKey && input->GetKeyState(DIK_BACK) == KEY_PUSH) {
 		//リトライ
 		if (!infoStage_->IsReplay()) {
-			ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
 			infoSystem->SetRetry();
 			return;
 		}

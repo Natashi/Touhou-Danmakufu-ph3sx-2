@@ -12,10 +12,10 @@ class OptionPanel;
 **********************************************************/
 class MainWindow : public WindowBase, public gstd::Singleton<MainWindow> {
 protected:
-	ref_count_ptr<WTabControll> wndTab_;
-	ref_count_ptr<DevicePanel> panelDevice_;
-	ref_count_ptr<KeyPanel> panelKey_;
-	ref_count_ptr<OptionPanel> panelOption_;
+	shared_ptr<WTabControll> wndTab_;
+	shared_ptr<DevicePanel> panelDevice_;
+	shared_ptr<KeyPanel> panelKey_;
+	shared_ptr<OptionPanel> panelOption_;
 
 	void _RunExecutor();
 	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -66,7 +66,7 @@ protected:
 	};
 
 	WComboBox comboPadIndex_;
-	ref_count_ptr<KeyListView> viewKey_;
+	shared_ptr<KeyListView> viewKey_;
 	KeyCodeList listKeyCode_;
 	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void _UpdateText(int row);
@@ -96,8 +96,8 @@ protected:
 		ROW_LOG_FILE,
 		ROW_MOUSE_UNVISIBLE,
 	};
-	ref_count_ptr<WListView> viewOption_;
-	ref_count_ptr<WEditBox> exePath_;
+	shared_ptr<WListView> viewOption_;
+	shared_ptr<WEditBox> exePath_;
 
 	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 public:

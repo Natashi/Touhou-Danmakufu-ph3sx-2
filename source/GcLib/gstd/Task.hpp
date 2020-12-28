@@ -21,13 +21,14 @@ namespace gstd {
 	class TaskFunction : public IStringInfo {
 		friend TaskManager;
 	protected:
-		shared_ptr<TaskBase> task_;	//タスクへのポインタ
-		int id_;//id
+		shared_ptr<TaskBase> task_;
+		int id_;
 		bool bEnable_;
 		int delay_;
 	public:
-		TaskFunction() { task_ = nullptr; id_ = TASK_FREE_ID; bEnable_ = true; delay_ = 0; }
+		TaskFunction() : task_(nullptr), id_(TASK_FREE_ID), bEnable_(true), delay_(0) {}
 		virtual ~TaskFunction() {}
+
 		virtual void Call() = 0;
 
 		shared_ptr<TaskBase> GetTask() { return task_; }
@@ -46,10 +47,10 @@ namespace gstd {
 	public:
 		typedef void (T::* Function)();
 	protected:
-
-		Function pFunc;//メンバ関数ポインタ
+		Function pFunc;
 	public:
 		TTaskFunction(shared_ptr<T> task, Function func) { task_ = task; pFunc = func; }
+
 		virtual void Call() {
 			if (task_) ((T*)task_.get()->*pFunc)();
 		}
@@ -69,12 +70,13 @@ namespace gstd {
 	class TaskBase : public IStringInfo {
 		friend TaskManager;
 	protected:
-		int64_t indexTask_;//TaskManagerによってつけられる一意のインデックス
-		int idTask_;//ID
-		int idTaskGroup_;//グループID
+		int64_t indexTask_;
+		int idTask_;
+		int idTaskGroup_;
 	public:
 		TaskBase();
 		virtual ~TaskBase();
+
 		int GetTaskID() { return idTask_; }
 		int64_t GetTaskIndex() { return indexTask_; }
 	};
@@ -89,10 +91,11 @@ namespace gstd {
 		typedef std::map<int, std::vector<std::list<shared_ptr<TaskFunction>>>> function_map;
 	protected:
 		static gstd::CriticalSection lockStatic_;
+
 		std::list<shared_ptr<TaskBase>> listTask_;//タスクの元クラス
 		function_map mapFunc_;//タスク機能のリスト(divFunc, priority, func)
 		int64_t indexTaskManager_;//一意のインデックス
-		ref_count_ptr<TaskInfoPanel> panelInfo_;
+		shared_ptr<TaskInfoPanel> panelInfo_;
 
 		void _ArrangeTask();//必要のなくなった領域削除
 		void _CheckInvalidFunctionDivision(int divFunc);
@@ -127,7 +130,7 @@ namespace gstd {
 		void SetFunctionEnable(bool bEnable, TaskBase* task, int divFunc, int idFunc);//タスク機能の状態を切り替える
 		void SetFunctionEnable(bool bEnable, const std::type_info& info, int divFunc);//タスク機能の状態を切り替える
 
-		void SetInfoPanel(ref_count_ptr<TaskInfoPanel> panel) { panelInfo_ = panel; }
+		void SetInfoPanel(shared_ptr<TaskInfoPanel> panel) { panelInfo_ = panel; }
 		gstd::CriticalSection& GetStaticLock() { return lockStatic_; }
 	};
 
@@ -153,7 +156,7 @@ namespace gstd {
 		int addressLastFindManager_;
 
 		virtual bool _AddedLogger(HWND hTab);
-		void _UpdateTreeView(TaskManager* taskManager, ref_count_ptr<WTreeView::Item> item);
+		void _UpdateTreeView(TaskManager* taskManager, shared_ptr<WTreeView::Item> item);
 		void _UpdateListView(TaskManager* taskManager);
 	public:
 		TaskInfoPanel();

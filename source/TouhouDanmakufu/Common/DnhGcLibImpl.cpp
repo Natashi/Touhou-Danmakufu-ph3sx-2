@@ -55,7 +55,7 @@ ELogger::ELogger() {
 
 }
 void ELogger::Initialize(bool bFile, bool bWindow) {
-	gstd::ref_count_ptr<gstd::FileLogger> fileLogger = new gstd::FileLogger();
+	shared_ptr<gstd::FileLogger> fileLogger(new gstd::FileLogger());
 	fileLogger->Initialize(bFile);
 	fileLogger->Clear();
 
@@ -64,9 +64,9 @@ void ELogger::Initialize(bool bFile, bool bWindow) {
 	Logger::SetTop(this);
 	WindowLogger::Initialize(bWindow);
 
-	panelCommonData_ = new gstd::ScriptCommonDataInfoPanel();
+	panelCommonData_.reset(new gstd::ScriptCommonDataInfoPanel());
 }
-void ELogger::UpdateCommonDataInfoPanel(gstd::ref_count_ptr<ScriptCommonDataManager> commonDataManager) {
+void ELogger::UpdateCommonDataInfoPanel(shared_ptr<ScriptCommonDataManager> commonDataManager) {
 	panelCommonData_->Update(commonDataManager);
 }
 

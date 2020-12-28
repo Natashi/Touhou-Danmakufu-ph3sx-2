@@ -355,19 +355,19 @@ void TaskInfoPanel::Update(TaskManager* taskManager) {
 	if (abs(time - timeLastUpdate_) < timeUpdateInterval_) return;
 	timeLastUpdate_ = time;
 
-	ref_count_ptr<WTreeView::Item> itemRoot = wndTreeView_.GetRootItem();
+	shared_ptr<WTreeView::Item> itemRoot = wndTreeView_.GetRootItem();
 	itemRoot->SetText(taskManager->GetInfoAsString());
 	itemRoot->SetParam((LPARAM)taskManager);
 	_UpdateTreeView(taskManager, itemRoot);
 
 	int addressManager = 0;
-	ref_count_ptr<WTreeView::Item> itemSelected = wndTreeView_.GetSelectedItem();
+	shared_ptr<WTreeView::Item> itemSelected = wndTreeView_.GetSelectedItem();
 	if (itemSelected) {
 		addressManager = itemSelected->GetParam();
 	}
 	_UpdateListView((TaskManager*)addressManager);
 }
-void TaskInfoPanel::_UpdateTreeView(TaskManager* taskManager, ref_count_ptr<WTreeView::Item> item) {
+void TaskInfoPanel::_UpdateTreeView(TaskManager* taskManager, shared_ptr<WTreeView::Item> item) {
 	//“o˜^
 	std::set<int> setAddress;
 	{
@@ -379,10 +379,10 @@ void TaskInfoPanel::_UpdateTreeView(TaskManager* taskManager, ref_count_ptr<WTre
 			if (task == nullptr) continue;
 
 			int address = (int)task;
-			ref_count_ptr<WTreeView::Item> itemChild = nullptr;
-			std::list<ref_count_ptr<WTreeView::Item>> listChild = item->GetChildList();
+			shared_ptr<WTreeView::Item> itemChild = nullptr;
+			std::list<shared_ptr<WTreeView::Item>> listChild = item->GetChildList();
 			for (auto itrChild = listChild.begin(); itrChild != listChild.end(); ++itrChild) {
-				ref_count_ptr<WTreeView::Item> iItem = *itrChild;
+				shared_ptr<WTreeView::Item>& iItem = *itrChild;
 				LPARAM param = iItem->GetParam();
 				if (param != address) continue;
 				itemChild = iItem;
@@ -402,9 +402,9 @@ void TaskInfoPanel::_UpdateTreeView(TaskManager* taskManager, ref_count_ptr<WTre
 
 	//íœ
 	{
-		std::list<ref_count_ptr<WTreeView::Item>> listChild = item->GetChildList();
+		std::list<shared_ptr<WTreeView::Item>> listChild = item->GetChildList();
 		for (auto itrChild = listChild.begin(); itrChild != listChild.end(); ++itrChild) {
-			ref_count_ptr<WTreeView::Item> iItem = *itrChild;
+			shared_ptr<WTreeView::Item>& iItem = *itrChild;
 			LPARAM param = iItem->GetParam();
 			if (setAddress.find(param) == setAddress.end()) iItem->Delete();
 		}

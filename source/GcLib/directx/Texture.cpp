@@ -944,7 +944,7 @@ void TextureInfoPanel::Update(TextureManager* manager) {
 
 		WindowLogger* logger = WindowLogger::GetParent();
 		if (logger) {
-			ref_count_ptr<WStatusBar> statusBar = logger->GetStatusBar();
+			shared_ptr<WStatusBar> statusBar = logger->GetStatusBar();
 			statusBar->SetText(0, L"Available Video Memory");
 			statusBar->SetText(1, StringUtility::Format(L"%u MB", texMem));
 		}

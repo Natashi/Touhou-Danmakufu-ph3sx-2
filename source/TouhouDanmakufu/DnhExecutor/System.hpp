@@ -26,9 +26,9 @@ public:
 	void Reset();
 	void ClearTaskWithoutSystem();
 
-	SceneManager* GetSceneManager() { return sceneManager_.GetPointer(); }
-	TransitionManager* GetTransitionManager() { return transitionManager_.GetPointer(); }
-	SystemInformation* GetSystemInformation() { return infoSystem_.GetPointer(); }
+	SceneManager* GetSceneManager() { return sceneManager_.get(); }
+	TransitionManager* GetTransitionManager() { return transitionManager_.get(); }
+	SystemInformation* GetSystemInformation() { return infoSystem_.get(); }
 
 	void ShowErrorDialog(const std::wstring& msg);
 };

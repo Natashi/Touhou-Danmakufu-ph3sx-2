@@ -78,26 +78,26 @@ bool EApplication::_Initialize() {
 	ETaskManager* taskManager = ETaskManager::CreateInstance();
 	taskManager->Initialize();
 
-	gstd::ref_count_ptr<gstd::TaskInfoPanel> panelTask = new gstd::TaskInfoPanel();
+	shared_ptr<gstd::TaskInfoPanel> panelTask(new gstd::TaskInfoPanel());
 	bool bAddTaskPanel = logger->AddPanel(panelTask, L"Thread");
 	if (bAddTaskPanel) taskManager->SetInfoPanel(panelTask);
 
-	gstd::ref_count_ptr<directx::TextureInfoPanel> panelTexture = new directx::TextureInfoPanel();
+	shared_ptr<directx::TextureInfoPanel> panelTexture(new directx::TextureInfoPanel());
 	bool bTexturePanel = logger->AddPanel(panelTexture, L"Texture");
 	if (bTexturePanel) textureManager->SetInfoPanel(panelTexture);
 
-	gstd::ref_count_ptr<directx::DxMeshInfoPanel> panelMesh = new directx::DxMeshInfoPanel();
+	shared_ptr<directx::DxMeshInfoPanel> panelMesh(new directx::DxMeshInfoPanel());
 	bool bMeshPanel = logger->AddPanel(panelMesh, L"Mesh");
 	if (bMeshPanel) meshManager->SetInfoPanel(panelMesh);
 
-	gstd::ref_count_ptr<directx::SoundInfoPanel> panelSound = new directx::SoundInfoPanel();
+	shared_ptr<directx::SoundInfoPanel> panelSound(new directx::SoundInfoPanel());
 	bool bSoundPanel = logger->AddPanel(panelSound, L"Sound");
 	if (bSoundPanel) soundManager->SetInfoPanel(panelSound);
 
-	gstd::ref_count_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData = logger->GetScriptCommonDataInfoPanel();
+	shared_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData = logger->GetScriptCommonDataInfoPanel();
 	logger->AddPanel(panelCommonData, L"Common Data");
 
-	gstd::ref_count_ptr<ScriptInfoPanel> panelScript = new ScriptInfoPanel();
+	shared_ptr<ScriptInfoPanel> panelScript(new ScriptInfoPanel());
 	logger->AddPanel(panelScript, L"Script");
 
 	logger->LoadState();

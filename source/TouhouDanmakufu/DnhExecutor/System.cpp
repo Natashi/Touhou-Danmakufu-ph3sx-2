@@ -140,7 +140,7 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 
 	try {
 		//STGシーン初期化
-		ref_count_ptr<StgSystemInformation> infoStgSystem = new StgSystemInformation();
+		shared_ptr<StgSystemInformation> infoStgSystem(new StgSystemInformation());
 		infoStgSystem->SetMainScriptInformation(infoMain);
 		shared_ptr<StgSystemController> task(new EStgSystemController());
 
@@ -163,6 +163,9 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 	}
 	catch (gstd::wexception& e) {
 		Logger::WriteTop(e.what());
+
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+		graphics->GetCamera2D()->Reset();
 
 		SystemController* system = SystemController::GetInstance();
 		system->ShowErrorDialog(e.what());
@@ -209,6 +212,9 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 	catch (gstd::wexception& e) {
 		Logger::WriteTop(e.what());
 
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+		graphics->GetCamera2D()->Reset();
+
 		SystemController* system = SystemController::GetInstance();
 		system->ShowErrorDialog(e.what());
 		system->GetSceneManager()->TransScriptSelectScene_Last();
@@ -223,7 +229,7 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 
 	try {
 		//STGシーン初期化
-		ref_count_ptr<StgSystemInformation> infoStgSystem = new StgSystemInformation();
+		shared_ptr<StgSystemInformation> infoStgSystem(new StgSystemInformation());
 		infoStgSystem->SetMainScriptInformation(infoMain);
 
 		shared_ptr<StgSystemController> task = nullptr;
@@ -251,6 +257,9 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 	}
 	catch (gstd::wexception& e) {
 		Logger::WriteTop(e.what());
+
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+		graphics->GetCamera2D()->Reset();
 
 		SystemController* system = SystemController::GetInstance();
 		system->ShowErrorDialog(e.what());

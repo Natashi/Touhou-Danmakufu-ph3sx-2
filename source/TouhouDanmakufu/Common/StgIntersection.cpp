@@ -434,7 +434,7 @@ void StgIntersectionManager::CheckDeletedObject(std::string funcName) {
 		for (; itr != listUsed->end(); itr++) {
 			shared_ptr<StgIntersectionTarget>& target = (*itr);
 			ref_count_weak_ptr<DxScriptObjectBase>::unsync dxObj =
-				ref_count_weak_ptr<DxScriptObjectBase>::unsync::DownCast(target->GetObject());
+				ref_count_weak_ptr<DxScriptObjectBase>::unsync::Cast(target->GetObject());
 			if (dxObj != NULL && dxObj->IsDeleted()) {
 				ELogger::WriteTop(StringUtility::Format(L"%s(deleted):%s", funcName.c_str(), target->GetInfoAsString().c_str()));
 			}

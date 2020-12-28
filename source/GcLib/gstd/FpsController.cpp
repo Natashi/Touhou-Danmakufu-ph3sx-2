@@ -39,9 +39,10 @@ void FpsController::_Sleep(DWORD msec) {
 	*/
 }
 void FpsController::RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) {
+	if (obj.expired()) return;
 	for (auto itr = listFpsControlObject_.begin(); itr != listFpsControlObject_.end(); itr++) {
 		ref_count_weak_ptr<FpsControlObject>& tObj = *itr;
-		if (obj.GetPointer() == tObj.GetPointer()) {
+		if (obj.get() == tObj.get()) {
 			listFpsControlObject_.erase(itr);
 			break;
 		}

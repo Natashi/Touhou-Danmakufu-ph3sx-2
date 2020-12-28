@@ -1733,24 +1733,19 @@ size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 }
 size_t SoundStreamingPlayerMp3::_ReadAcmStream(char* pBuffer, size_t size) {
 	size_t sizeWrite = 0;
-	if (bufDecode_) {
+	size_t bufSize = bufDecode_.GetSize();
+	if (bufSize > 0) {
 		//前回デコード分を書き込み
-		size_t bufSize = bufDecode_->GetSize();
 		size_t copySize = std::min(size, bufSize);
 
-		memcpy(pBuffer, bufDecode_->GetPointer(), copySize);
+		memcpy(pBuffer, bufDecode_.GetPointer(), copySize);
 		sizeWrite += copySize;
 		if (bufSize > copySize) {
-			size_t newSize = bufSize - copySize;
-			gstd::ref_count_ptr<gstd::ByteBuffer> buffer = new gstd::ByteBuffer();
-			buffer->SetSize(newSize);
-			memcpy(buffer->GetPointer(), bufDecode_->GetPointer() + copySize, newSize);
-
-			bufDecode_ = buffer;
+			bufDecode_.SetSize(bufSize - copySize);
 			return sizeWrite;
 		}
 
-		bufDecode_ = nullptr;
+		bufDecode_.SetSize(0);
 		pBuffer += sizeWrite;
 	}
 
@@ -1769,9 +1764,8 @@ size_t SoundStreamingPlayerMp3::_ReadAcmStream(char* pBuffer, size_t size) {
 	if (sizeDecode > copySize) {
 		//今回余った分を、次回用にバッファリング
 		size_t newSize = sizeDecode - copySize;
-		bufDecode_ = new gstd::ByteBuffer();
-		bufDecode_->SetSize(newSize);
-		memcpy(bufDecode_->GetPointer(), acmStreamHeader_.pbDst + copySize, newSize);
+		bufDecode_.SetSize(newSize);
+		memcpy(bufDecode_.GetPointer(), acmStreamHeader_.pbDst + copySize, newSize);
 	}
 	sizeWrite += copySize;
 
@@ -1790,7 +1784,7 @@ bool SoundStreamingPlayerMp3::Seek(double time) {
 		double posSeekMp3 = mp3BlockSize * mp3BlockIndex;
 		reader_->Seek(posMp3DataStart_ + posSeekMp3);
 
-		bufDecode_ = nullptr;
+		bufDecode_.SetSize(0);
 		timeCurrent_ = mp3BlockIndex * mp3BlockSize / formatMp3_.wfx.nAvgBytesPerSec;
 	}
 
@@ -1808,7 +1802,7 @@ bool SoundStreamingPlayerMp3::Seek(int64_t sample) {
 		double posSeekMp3 = mp3BlockSize * mp3BlockIndex;
 		reader_->Seek(posMp3DataStart_ + posSeekMp3);
 
-		bufDecode_ = nullptr;
+		bufDecode_.SetSize(0);
 		timeCurrent_ = mp3BlockIndex * mp3BlockSize / formatMp3_.wfx.nAvgBytesPerSec;
 	}
 

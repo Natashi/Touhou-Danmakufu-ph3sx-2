@@ -201,8 +201,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScr
 
 		std::string source = reader->ReadAllString();
 
-		ref_count_ptr<ScriptInformation> info =
-			ScriptInformation::CreateScriptInformation(path, L"", source);
+		auto info = ScriptInformation::CreateScriptInformation(path, L"", source);
 		if (info != nullptr && info->GetType() == ScriptInformation::TYPE_PLAYER) {
 			res.push_back(info);
 		}
@@ -248,7 +247,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 			source.resize(size);
 			buffer->Read(&source[0], size);
 
-			ref_count_ptr<ScriptInformation> info = CreateScriptInformation(tPath, path, source, bNeedHeader);
+			auto info = CreateScriptInformation(tPath, path, source, bNeedHeader);
 			if (info) res.push_back(info);
 		}
 	}
@@ -262,7 +261,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 		source.resize(size);
 		file.Read(&source[0], size);
 
-		ref_count_ptr<ScriptInformation> info = CreateScriptInformation(path, L"", source, bNeedHeader);
+		auto info = CreateScriptInformation(path, L"", source, bNeedHeader);
 		if (info) res.push_back(info);
 
 		file.Close();

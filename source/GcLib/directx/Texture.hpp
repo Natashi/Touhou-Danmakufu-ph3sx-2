@@ -100,7 +100,7 @@ namespace directx {
 		std::map<std::wstring, shared_ptr<Texture>> mapTexture_;
 		std::map<std::wstring, shared_ptr<TextureData>> mapTextureData_;
 		std::list<std::pair<std::map<std::wstring, shared_ptr<TextureData>>::iterator, IDirect3DSurface9*>> listRefreshSurface_;
-		gstd::ref_count_ptr<TextureInfoPanel> panelInfo_;
+		shared_ptr<TextureInfoPanel> panelInfo_;
 
 		void _ReleaseTextureData(const std::wstring& name);
 		void _ReleaseTextureData(std::map<std::wstring, shared_ptr<TextureData>>::iterator itr);
@@ -130,7 +130,7 @@ namespace directx {
 		shared_ptr<Texture> CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo = false);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
-		void SetInfoPanel(gstd::ref_count_ptr<TextureInfoPanel> panel) { panelInfo_ = panel; }
+		void SetInfoPanel(shared_ptr<TextureInfoPanel> panel) { panelInfo_ = panel; }
 	};
 
 	/**********************************************************

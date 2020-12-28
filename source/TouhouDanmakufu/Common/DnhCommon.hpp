@@ -89,27 +89,21 @@ private:
 class ScriptInformation::Sort {
 public:
 	BOOL operator()(const ref_count_ptr<ScriptInformation>& lf, const ref_count_ptr<ScriptInformation>& rf) {
-		ref_count_ptr<ScriptInformation> lsp = lf;
-		ref_count_ptr<ScriptInformation> rsp = rf;
-		ScriptInformation* lp = (ScriptInformation*)lsp.GetPointer();
-		ScriptInformation* rp = (ScriptInformation*)rsp.GetPointer();
-		std::wstring& lPath = lp->GetScriptPath();
-		std::wstring& rPath = rp->GetScriptPath();
-		BOOL res = CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+		std::wstring& lPath = lf->GetScriptPath();
+		std::wstring& rPath = lf->GetScriptPath();
+		int res = ::CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
 			lPath.c_str(), -1, rPath.c_str(), -1);
-		return res == CSTR_LESS_THAN ? TRUE : FALSE;
+		return res == CSTR_LESS_THAN;
 	}
 };
 
 struct ScriptInformation::PlayerListSort {
 	BOOL operator()(const ref_count_ptr<ScriptInformation>& lf, const ref_count_ptr<ScriptInformation>& rf) {
-		ref_count_ptr<ScriptInformation> lsp = lf;
-		ref_count_ptr<ScriptInformation> rsp = rf;
-		std::wstring& lPath = lsp->GetScriptPath();
-		std::wstring& rPath = rsp->GetScriptPath();
-		BOOL res = CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+		std::wstring& lPath = lf->GetScriptPath();
+		std::wstring& rPath = lf->GetScriptPath();
+		int res = ::CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
 			lPath.c_str(), -1, rPath.c_str(), -1);
-		return res == CSTR_LESS_THAN ? TRUE : FALSE;
+		return res == CSTR_LESS_THAN;
 	}
 };
 #endif

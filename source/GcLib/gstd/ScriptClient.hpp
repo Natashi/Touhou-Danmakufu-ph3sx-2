@@ -43,14 +43,14 @@ namespace gstd {
 	**********************************************************/
 	class ScriptEngineCache {
 	protected:
-		std::map<std::wstring, ref_count_ptr<ScriptEngineData>> cache_;
+		std::map<std::wstring, shared_ptr<ScriptEngineData>> cache_;
 	public:
 		ScriptEngineCache();
 		virtual ~ScriptEngineCache();
 		void Clear();
 
-		void AddCache(const std::wstring& name, ref_count_ptr<ScriptEngineData> data);
-		ref_count_ptr<ScriptEngineData> GetCache(const std::wstring& name);
+		void AddCache(const std::wstring& name, shared_ptr<ScriptEngineData> data);
+		shared_ptr<ScriptEngineData> GetCache(const std::wstring& name);
 		bool IsExists(const std::wstring& name);
 	};
 
@@ -66,15 +66,15 @@ namespace gstd {
 		script_type_manager* pTypeManager_;
 
 		bool bError_;
-		gstd::ref_count_ptr<ScriptEngineCache> cache_;
-		gstd::ref_count_ptr<ScriptEngineData> engine_;
+		shared_ptr<ScriptEngineCache> cache_;
+		shared_ptr<ScriptEngineData> engine_;
 		script_machine* machine_;
 
 		std::vector<gstd::function> func_;
 		std::vector<gstd::constant> const_;
 		shared_ptr<RandProvider> mt_;
 		shared_ptr<RandProvider> mtEffect_;
-		gstd::ref_count_ptr<ScriptCommonDataManager> commonDataManager_;
+		shared_ptr<ScriptCommonDataManager> commonDataManager_;
 		int mainThreadID_;
 		int64_t idScript_;
 
@@ -96,8 +96,11 @@ namespace gstd {
 	public:
 		ScriptClientBase();
 		virtual ~ScriptClientBase();
-		void SetScriptEngineCache(gstd::ref_count_ptr<ScriptEngineCache> cache) { cache_ = cache; }
-		gstd::ref_count_ptr<ScriptEngineData> GetEngine() { return engine_; }
+
+		void SetScriptEngineCache(shared_ptr<ScriptEngineCache> cache) { cache_ = cache; }
+
+		shared_ptr<ScriptEngineData> GetEngine() { return engine_; }
+
 		virtual bool SetSourceFromFile(std::wstring path);
 		virtual void SetSource(std::vector<char>& source);
 		virtual void SetSource(const std::string& source);
@@ -150,7 +153,7 @@ namespace gstd {
 		static void IsVector(script_machine*& machine, const value& v, size_t count);
 
 		void CheckRunInMainThread();
-		ScriptCommonDataManager* GetCommonDataManager() { return commonDataManager_.GetPointer(); }
+		ScriptCommonDataManager* GetCommonDataManager() { return commonDataManager_.get(); }
 
 		//共通関数：スクリプト引数結果
 		static value Func_GetScriptArgument(script_machine* machine, int argc, const value* argv);
@@ -427,7 +430,7 @@ namespace gstd {
 			COL_VALUE,
 		};
 
-		gstd::ref_count_ptr<ScriptCommonDataManager> commonDataManager_;
+		shared_ptr<ScriptCommonDataManager> commonDataManager_;
 		std::vector<std::map<std::string, shared_ptr<ScriptCommonData>>::iterator> vecMapItr_;
 
 		gstd::CriticalSection lock_;
@@ -446,7 +449,7 @@ namespace gstd {
 		ScriptCommonDataInfoPanel();
 		void SetUpdateInterval(int time) { timeUpdateInterval_ = time; }
 		virtual void LocateParts();
-		virtual void Update(gstd::ref_count_ptr<ScriptCommonDataManager> commonDataManager);
+		virtual void Update(shared_ptr<ScriptCommonDataManager>& commonDataManager);
 	};
 
 }

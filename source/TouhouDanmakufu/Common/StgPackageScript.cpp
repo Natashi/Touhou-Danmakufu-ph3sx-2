@@ -103,7 +103,7 @@ gstd::value StgPackageScript::Func_InitializeStageScene(gstd::script_machine* ma
 	StgPackageController* packageController = script->packageController_;
 
 	StgSystemController* systemController = packageController->GetSystemController();
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+	shared_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
 	infoSystem->SetActiveReplayInformation(nullptr);
 
 	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
@@ -115,7 +115,7 @@ gstd::value StgPackageScript::Func_FinalizeStageScene(gstd::script_machine* mach
 	StgPackageScript* script = (StgPackageScript*)machine->data;
 	StgPackageController* packageController = script->packageController_;
 	StgSystemController* systemController = packageController->GetSystemController();
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+	shared_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
 
 	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
 	if (infoPackage->GetNextStageData() != nullptr && infoPackage->GetNextStageData()->GetPrevStageInformation() == nullptr)
@@ -140,7 +140,7 @@ gstd::value StgPackageScript::Func_StartStageScene(gstd::script_machine* machine
 	script->_CheckNextStageExists();
 
 	StgSystemController* systemController = packageController->GetSystemController();
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+	shared_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
 	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
 	ref_count_ptr<StgStageStartData> nextStageData = infoPackage->GetNextStageData();
 	ref_count_ptr<StgStageInformation> infoStage = nextStageData->GetStageInformation();
@@ -291,7 +291,7 @@ gstd::value StgPackageScript::Func_GetStageSceneState(gstd::script_machine* mach
 	StgPackageScript* script = (StgPackageScript*)machine->data;
 	StgPackageController* packageController = script->packageController_;
 	StgSystemController* systemController = packageController->GetSystemController();
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+	shared_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
 
 	int res = -1;
 	int scene = infoSystem->GetScene();

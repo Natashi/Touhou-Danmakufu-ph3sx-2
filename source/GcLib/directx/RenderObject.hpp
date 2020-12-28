@@ -732,9 +732,11 @@ namespace directx {
 		static DxMeshManager* thisBase_;
 	protected:
 		gstd::CriticalSection lock_;
+
 		std::map<std::wstring, shared_ptr<DxMesh>> mapMesh_;
 		std::map<std::wstring, shared_ptr<DxMeshData>> mapMeshData_;
-		gstd::ref_count_ptr<DxMeshInfoPanel> panelInfo_;
+
+		shared_ptr<DxMeshInfoPanel> panelInfo_;
 
 		void _AddMeshData(const std::wstring& name, shared_ptr<DxMeshData> data);
 		shared_ptr<DxMeshData> _GetMeshData(const std::wstring& name);
@@ -754,7 +756,7 @@ namespace directx {
 		shared_ptr<DxMesh> CreateFromFileInLoadThread(const std::wstring& path, int type);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
-		void SetInfoPanel(gstd::ref_count_ptr<DxMeshInfoPanel> panel) { panelInfo_ = panel; }
+		void SetInfoPanel(shared_ptr<DxMeshInfoPanel> panel) { panelInfo_ = panel; }
 	};
 
 	class DxMeshInfoPanel : public gstd::WindowLogger::Panel, public gstd::Thread {

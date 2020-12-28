@@ -48,7 +48,7 @@ namespace directx {
 		std::map<int, SoundDivision*> mapDivision_;
 		std::map<std::wstring, shared_ptr<SoundInfo>> mapInfo_;
 
-		gstd::ref_count_ptr<SoundInfoPanel> panelInfo_;
+		shared_ptr<SoundInfoPanel> panelInfo_;
 
 		shared_ptr<SoundPlayer> _GetPlayer(const std::wstring& path);
 		shared_ptr<SoundPlayer> _CreatePlayer(std::wstring path);
@@ -72,7 +72,7 @@ namespace directx {
 		SoundDivision* GetSoundDivision(int index);
 		shared_ptr<SoundInfo> GetSoundInfo(const std::wstring& path);
 
-		void SetInfoPanel(gstd::ref_count_ptr<SoundInfoPanel> panel) { 
+		void SetInfoPanel(shared_ptr<SoundInfoPanel> panel) {
 			gstd::Lock lock(lock_); 
 			panelInfo_ = panel; 
 		}
@@ -389,7 +389,8 @@ namespace directx {
 		size_t posMp3DataEnd_;
 		DWORD waveDataSize_;
 		double timeCurrent_;
-		gstd::ref_count_ptr<gstd::ByteBuffer> bufDecode_;
+
+		gstd::ByteBuffer bufDecode_;
 
 		virtual bool _CreateBuffer(shared_ptr<gstd::FileReader> reader);
 		virtual size_t _CopyBuffer(LPVOID pMem, DWORD dwSize);

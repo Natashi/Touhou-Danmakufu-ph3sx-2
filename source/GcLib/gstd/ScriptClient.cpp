@@ -30,10 +30,10 @@ ScriptEngineCache::~ScriptEngineCache() {}
 void ScriptEngineCache::Clear() {
 	cache_.clear();
 }
-void ScriptEngineCache::AddCache(const std::wstring& name, ref_count_ptr<ScriptEngineData> data) {
+void ScriptEngineCache::AddCache(const std::wstring& name, shared_ptr<ScriptEngineData> data) {
 	cache_[name] = data;
 }
-ref_count_ptr<ScriptEngineData> ScriptEngineCache::GetCache(const std::wstring& name) {
+shared_ptr<ScriptEngineData> ScriptEngineCache::GetCache(const std::wstring& name) {
 	auto itrFind = cache_.find(name);
 	if (cache_.find(name) == cache_.end()) return nullptr;
 	return itrFind->second;
@@ -209,8 +209,10 @@ static const std::vector<constant> commonConstant = {
 
 ScriptClientBase::ScriptClientBase() {
 	bError_ = false;
-	engine_ = new ScriptEngineData();
+
+	engine_.reset(new ScriptEngineData());
 	machine_ = nullptr;
+
 	mainThreadID_ = -1;
 	idScript_ = ID_SCRIPT_FREE;
 	valueRes_ = value();
@@ -219,7 +221,7 @@ ScriptClientBase::ScriptClientBase() {
 	if (pTypeManager_ == nullptr)
 		pTypeManager_ = new script_type_manager();
 
-	commonDataManager_ = new ScriptCommonDataManager();
+	commonDataManager_.reset(new ScriptCommonDataManager());
 
 	{
 		DWORD seed = timeGetTime();
@@ -756,7 +758,7 @@ void ScriptClientBase::Compile() {
 	}
 
 	ptr_delete(machine_);
-	machine_ = new script_machine(engine_->GetEngine().GetPointer());
+	machine_ = new script_machine(engine_->GetEngine().get());
 	if (machine_->get_error()) {
 		bError_ = true;
 		_RaiseErrorFromMachine();
@@ -2068,7 +2070,7 @@ void ScriptCommonDataInfoPanel::LocateParts() {
 	wndListViewArea_.SetBounds(wx, wy, wWidth, ySplitter);
 	wndListViewValue_.SetBounds(wx, ySplitter + heightSplitter, wWidth, wHeight - ySplitter - heightSplitter);
 }
-void ScriptCommonDataInfoPanel::Update(gstd::ref_count_ptr<ScriptCommonDataManager> commonDataManager) {
+void ScriptCommonDataInfoPanel::Update(shared_ptr<ScriptCommonDataManager>& commonDataManager) {
 	if (!IsWindowVisible()) return;
 	{
 		Lock lock(lock_);
@@ -2117,7 +2119,7 @@ void ScriptCommonDataInfoPanel::_UpdateValueView() {
 		return;
 	}
 
-	shared_ptr<ScriptCommonData> selectedArea = commonDataManager_->GetData(vecMapItr_[indexArea]);
+	shared_ptr<ScriptCommonData>& selectedArea = commonDataManager_->GetData(vecMapItr_[indexArea]);
 	int iRow = 0;
 	for (auto itr = selectedArea->MapBegin(); itr != selectedArea->MapEnd(); ++itr, ++iRow) {
 		gstd::value val = selectedArea->GetValue(itr);

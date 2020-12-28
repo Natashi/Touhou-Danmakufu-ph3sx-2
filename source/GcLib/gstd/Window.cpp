@@ -573,18 +573,18 @@ void WTreeView::Create(HWND hWndParent, Style& style) {
 void WTreeView::CreateRootItem(ItemStyle& style) {
 	this->Clear();
 
-	itemRoot_ = new Item();
+	itemRoot_.reset(new Item());
 	itemRoot_->hTree_ = hWnd_;
 
 	TVINSERTSTRUCT& tvis = style.GetInsertStruct();
 	tvis.hParent = TVI_ROOT;
 	itemRoot_->hItem_ = TreeView_InsertItem(hWnd_, &tvis);
 }
-ref_count_ptr<WTreeView::Item> WTreeView::GetSelectedItem() {
+shared_ptr<WTreeView::Item> WTreeView::GetSelectedItem() {
 	HTREEITEM hTreeItem = TreeView_GetSelection(hWnd_);
 	if (hTreeItem == nullptr) return nullptr;
 
-	ref_count_ptr<Item> res = new Item();
+	shared_ptr<Item> res(new Item());
 	res->hTree_ = hWnd_;
 	res->hItem_ = hTreeItem;
 	return res;
@@ -596,8 +596,8 @@ WTreeView::Item::Item() {
 WTreeView::Item::~Item() {
 
 }
-ref_count_ptr<WTreeView::Item> WTreeView::Item::CreateChild(WTreeView::ItemStyle& style) {
-	ref_count_ptr<Item> item = new Item();
+shared_ptr<WTreeView::Item> WTreeView::Item::CreateChild(WTreeView::ItemStyle& style) {
+	shared_ptr<Item> item(new Item());
 	item->hTree_ = hTree_;
 
 	TVINSERTSTRUCT& tvis = style.GetInsertStruct();
@@ -641,13 +641,13 @@ LPARAM WTreeView::Item::GetParam() {
 	TreeView_GetItem(hTree_, &tvi);
 	return tvi.lParam;
 }
-std::list<ref_count_ptr<WTreeView::Item>> WTreeView::Item::GetChildList() {
-	std::list<ref_count_ptr<Item>> res;
+std::list<shared_ptr<WTreeView::Item>> WTreeView::Item::GetChildList() {
+	std::list<shared_ptr<Item>> res;
 	HTREEITEM hChild = TreeView_GetChild(hTree_, hItem_);
 	while (true) {
 		if (hChild == nullptr) break;
 
-		ref_count_ptr<Item> item = new Item();
+		shared_ptr<Item> item(new Item());
 		item->hTree_ = hTree_;
 		item->hItem_ = hChild;
 		res.push_back(item);
@@ -685,10 +685,10 @@ LRESULT WTabControll::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
 void WTabControll::AddTab(const std::wstring& text) {
-	ref_count_ptr<WPanel> panel = new WPanel();
+	shared_ptr<WPanel> panel(new WPanel());
 	this->AddTab(text, panel);
 }
-void WTabControll::AddTab(const std::wstring& text, ref_count_ptr<WPanel> panel) {
+void WTabControll::AddTab(const std::wstring& text, shared_ptr<WPanel> panel) {
 	TC_ITEM item;
 	item.mask = TCIF_TEXT;
 	item.pszText = const_cast<wchar_t*>(text.c_str());

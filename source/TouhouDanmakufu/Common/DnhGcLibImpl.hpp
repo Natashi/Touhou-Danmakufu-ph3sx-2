@@ -28,13 +28,13 @@ public:
 //ELogger
 **********************************************************/
 class ELogger : public Singleton<ELogger>, public WindowLogger {
-	gstd::ref_count_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData_;
+	shared_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData_;
 public:
 	ELogger();
 	void Initialize(bool bFile, bool bWindow);
 
-	gstd::ref_count_ptr<gstd::ScriptCommonDataInfoPanel> GetScriptCommonDataInfoPanel() { return panelCommonData_; }
-	void UpdateCommonDataInfoPanel(gstd::ref_count_ptr<ScriptCommonDataManager> commonDataManager);
+	shared_ptr<gstd::ScriptCommonDataInfoPanel> GetScriptCommonDataInfoPanel() { return panelCommonData_; }
+	void UpdateCommonDataInfoPanel(shared_ptr<ScriptCommonDataManager> commonDataManager);
 };
 
 

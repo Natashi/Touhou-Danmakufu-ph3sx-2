@@ -21,7 +21,7 @@ class PseudoSlowInformation;
 class StgStageController {
 private:
 	StgSystemController* systemController_;
-	ref_count_ptr<StgSystemInformation> infoSystem_;
+	shared_ptr<StgSystemInformation> infoSystem_;
 	ref_count_ptr<StgStageInformation> infoStage_;
 	ref_count_ptr<PseudoSlowInformation> infoSlow_;
 
@@ -58,7 +58,7 @@ public:
 	shared_ptr<StgPlayerObject> GetPlayerObject() { return objectManagerMain_->GetPlayerObjectPtr(); }
 
 	StgSystemController* GetSystemController() { return systemController_; }
-	ref_count_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
+	shared_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
 	ref_count_ptr<StgStageInformation> GetStageInformation() { return infoStage_; }
 	ref_count_ptr<KeyReplayManager> GetKeyReplayManager() { return keyReplayManager_; }
 

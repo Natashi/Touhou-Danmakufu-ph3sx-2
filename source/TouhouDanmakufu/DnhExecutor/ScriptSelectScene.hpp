@@ -83,8 +83,8 @@ public:
 	BOOL operator()(const ref_count_ptr<MenuItem>& lf, const ref_count_ptr<MenuItem>& rf) {
 		ref_count_ptr<MenuItem> lsp = lf;
 		ref_count_ptr<MenuItem> rsp = rf;
-		ScriptSelectSceneMenuItem* lp = (ScriptSelectSceneMenuItem*)lsp.GetPointer();
-		ScriptSelectSceneMenuItem* rp = (ScriptSelectSceneMenuItem*)rsp.GetPointer();
+		ScriptSelectSceneMenuItem* lp = (ScriptSelectSceneMenuItem*)lsp.get();
+		ScriptSelectSceneMenuItem* rp = (ScriptSelectSceneMenuItem*)rsp.get();
 
 		if (lp->GetType() == ScriptSelectSceneMenuItem::TYPE_DIR &&
 			rp->GetType() != ScriptSelectSceneMenuItem::TYPE_DIR) return TRUE;

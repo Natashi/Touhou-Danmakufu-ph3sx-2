@@ -26,7 +26,7 @@ RenderBlock::~RenderBlock() {
 	obj_ = nullptr;
 }
 void RenderBlock::Render() {
-	RenderObject* obj = (RenderObject*)obj_.GetPointer();
+	RenderObject* obj = (RenderObject*)obj_.get();
 	obj->SetPosition(position_);
 	obj->SetAngle(angle_);
 	obj->SetScale(scale_);
@@ -93,7 +93,7 @@ RenderStateFunction::~RenderStateFunction() {
 void RenderStateFunction::CallRenderStateFunction() {
 	for (auto itr = mapFuncRenderState_.begin(); itr != mapFuncRenderState_.end(); ++itr) {
 		RenderStateFunction::FUNC_TYPE type = itr->first;
-		gstd::ByteBuffer* args = itr->second.GetPointer();
+		gstd::ByteBuffer* args = itr->second.get();
 		args->Seek(0);
 		if (type == RenderStateFunction::FUNC_LIGHTING) {
 			bool bEnable = args->ReadBoolean();
@@ -1365,7 +1365,7 @@ void RenderObjectB2NX::SetVertexNormal(size_t index, float x, float y, float z) 
 RenderObjectB2NXBlock::RenderObjectB2NXBlock() {}
 RenderObjectB2NXBlock::~RenderObjectB2NXBlock() {}
 void RenderObjectB2NXBlock::Render() {
-	RenderObjectB2NX* obj = (RenderObjectB2NX*)obj_.GetPointer();
+	RenderObjectB2NX* obj = (RenderObjectB2NX*)obj_.get();
 	obj->SetMatrix(matrix_);
 	RenderBlock::Render();
 }
@@ -1471,7 +1471,7 @@ void RenderObjectB4NX::SetVertexNormal(size_t index, float x, float y, float z) 
 RenderObjectB4NXBlock::RenderObjectB4NXBlock() {}
 RenderObjectB4NXBlock::~RenderObjectB4NXBlock() {}
 void RenderObjectB4NXBlock::Render() {
-	RenderObjectB4NX* obj = (RenderObjectB4NX*)obj_.GetPointer();
+	RenderObjectB4NX* obj = (RenderObjectB4NX*)obj_.get();
 	obj->SetMatrix(matrix_);
 	RenderBlock::Render();
 }

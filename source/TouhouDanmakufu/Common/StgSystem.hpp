@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_SYSTEM__
-#define __TOUHOUDANMAKUFU_DNHSTG_SYSTEM__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -14,7 +13,6 @@
 #include "StgUserExtendScene.hpp"
 #include "StgPackageController.hpp"
 
-
 class StgSystemInformation;
 /**********************************************************
 //StgSystemController
@@ -27,9 +25,9 @@ public:
 		TASK_PRI_RENDER = 4,
 	};
 protected:
-	ref_count_ptr<StgSystemInformation> infoSystem_;
-	ref_count_ptr<ScriptEngineCache> scriptEngineCache_;
-	ref_count_ptr<ScriptCommonDataManager> commonDataManager_;
+	shared_ptr<StgSystemInformation> infoSystem_;
+	shared_ptr<ScriptEngineCache> scriptEngineCache_;
+	shared_ptr<ScriptCommonDataManager> commonDataManager_;
 
 	shared_ptr<StgEndScene> endScene_;
 	shared_ptr<StgReplaySaveScene> replaySaveScene_;
@@ -37,7 +35,7 @@ protected:
 	shared_ptr<StgStageController> stageController_;
 	shared_ptr<StgPackageController> packageController_;
 
-	ref_count_ptr<StgControlScriptInformation> infoControlScript_;
+	shared_ptr<StgControlScriptInformation> infoControlScript_;
 
 	virtual void DoEnd() = 0;
 	virtual void DoRetry() = 0;
@@ -46,7 +44,7 @@ public:
 	StgSystemController();
 	~StgSystemController();
 
-	void Initialize(ref_count_ptr<StgSystemInformation> infoSystem);
+	void Initialize(shared_ptr<StgSystemInformation> infoSystem);
 	void Start(ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay);
 
 	void Work();
@@ -59,13 +57,13 @@ public:
 
 	static StgSystemController* GetBase() { return base_; }
 
-	ref_count_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
+	shared_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
 	shared_ptr<StgStageController> GetStageController() { return stageController_; }
 	StgPackageController* GetPackageController() { return packageController_.get(); }
-	ref_count_ptr<StgControlScriptInformation> GetControlScriptInformation() { return infoControlScript_; }
+	shared_ptr<StgControlScriptInformation> GetControlScriptInformation() { return infoControlScript_; }
 
-	ref_count_ptr<ScriptEngineCache> GetScriptEngineCache() { return scriptEngineCache_; }
-	ref_count_ptr<ScriptCommonDataManager> GetCommonDataManager() { return commonDataManager_; }
+	shared_ptr<ScriptEngineCache> GetScriptEngineCache() { return scriptEngineCache_; }
+	shared_ptr<ScriptCommonDataManager> GetCommonDataManager() { return commonDataManager_; }
 
 	void StartStgScene(ref_count_ptr<StgStageInformation> infoStage, ref_count_ptr<ReplayInformation::StageData> replayStageData);
 	void StartStgScene(ref_count_ptr<StgStageStartData> startData);
@@ -144,7 +142,3 @@ public:
 	std::set<int16_t>& GetReplayTargetKeyList() { return listReplayTargetKey_; }
 
 };
-
-
-
-#endif
