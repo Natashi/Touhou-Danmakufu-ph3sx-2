@@ -34,7 +34,10 @@ namespace gstd {
 		//----------------------------------------------------------------------
 
 		virtual void DeleteResource() noexcept {	//Deletes managed pointer
-			ptr_delete_scalar(pPtr_);
+			if constexpr (std::is_array_v<T>)
+				ptr_delete_scalar(pPtr_);
+			else
+				ptr_delete(pPtr_);
 		}
 		virtual void DeleteSelf() noexcept {		//Deletes [this]
 			delete this;
