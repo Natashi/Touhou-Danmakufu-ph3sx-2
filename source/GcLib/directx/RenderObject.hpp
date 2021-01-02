@@ -9,126 +9,10 @@
 #include "Shader.hpp"
 
 namespace directx {
-	class RenderObjectBase;
-	class RenderManager;
-	class RenderStateFunction;
-	class RenderBlock;
-	class RenderObject;
-	
-	/**********************************************************
-	//RenderBlock
-	**********************************************************/
-	class RenderBlock {
-	protected:
-		float posSortKey_;
-		gstd::ref_count_ptr<RenderStateFunction> func_;
-		gstd::ref_count_ptr<RenderObject> obj_;
-
-		D3DXVECTOR3 position_;//移動先座標
-		D3DXVECTOR3 angle_;//回転角度
-		D3DXVECTOR3 scale_;//拡大率
-
-	public:
-		RenderBlock();
-		virtual ~RenderBlock();
-		void SetRenderFunction(gstd::ref_count_ptr<RenderStateFunction> func) { func_ = func; }
-		virtual void Render();
-
-		virtual void CalculateZValue() = 0;
-		float GetZValue() { return posSortKey_; }
-		void SetZValue(float pos) { posSortKey_ = pos; }
-		virtual bool IsTranslucent() = 0;//Zソート対象に使用
-
-		void SetRenderObject(gstd::ref_count_ptr<RenderObject> obj) { obj_ = obj; }
-		gstd::ref_count_ptr<RenderObject> GetRenderObject() { return obj_; }
-		void SetPosition(const D3DXVECTOR3& pos) { position_ = pos; }
-		void SetAngle(const D3DXVECTOR3& angle) { angle_ = angle; }
-		void SetScale(const D3DXVECTOR3& scale) { scale_ = scale; }
-	};
-
-	class RenderBlocks {
-	protected:
-		std::list<gstd::ref_count_ptr<RenderBlock>> listBlock_;
-	public:
-		RenderBlocks() {};
-		virtual ~RenderBlocks() {};
-		void Add(gstd::ref_count_ptr<RenderBlock> block) { listBlock_.push_back(block); }
-		std::list<gstd::ref_count_ptr<RenderBlock>>& GetList() { return listBlock_; }
-
-	};
-
-	/**********************************************************
-	//RenderManager
-	//レンダリング管理
-	//3D不透明オブジェクト
-	//3D半透明オブジェクトZソート順
-	//2Dオブジェクト
-	//順に描画する
-	**********************************************************/
-	class RenderManager {
-		class ComparatorRenderBlockTranslucent;
-	protected:
-		std::list<gstd::ref_count_ptr<RenderBlock>> listBlockOpaque_;
-		std::list<gstd::ref_count_ptr<RenderBlock>> listBlockTranslucent_;
-	public:
-		RenderManager();
-		virtual ~RenderManager();
-		virtual void Render();
-		void AddBlock(gstd::ref_count_ptr<RenderBlock> block);
-		void AddBlock(gstd::ref_count_ptr<RenderBlocks> blocks);
-	};
-
-	class RenderManager::ComparatorRenderBlockTranslucent {
-	public:
-		bool operator()(gstd::ref_count_ptr<RenderBlock> l, gstd::ref_count_ptr<RenderBlock> r) {
-			return l->GetZValue() > r->GetZValue();
-		}
-	};
-
-	/**********************************************************
-	//RenderStateFunction
-	**********************************************************/
-	class RenderStateFunction {
-		friend RenderObjectBase;
-		enum FUNC_TYPE {
-			FUNC_LIGHTING,
-			FUNC_CULLING,
-			FUNC_ZBUFFER_ENABLE,
-			FUNC_ZBUFFER_WRITE_ENABLE,
-			FUNC_BLEND,
-			FUNC_TEXTURE_FILTER,
-		};
-
-		std::map<FUNC_TYPE, gstd::ref_count_ptr<gstd::ByteBuffer>> mapFuncRenderState_;
-	public:
-		RenderStateFunction();
-		virtual ~RenderStateFunction();
-		void CallRenderStateFunction();
-
-		//レンダリングステート設定(RenderManager用)
-		void SetLightingEnable(bool bEnable);//ライティング
-		void SetCullingMode(DWORD mode);//カリング
-		void SetZBufferEnable(bool bEnable);//Zバッファ参照
-		void SetZWriteEnable(bool bEnable);//Zバッファ書き込み
-		void SetBlendMode(DWORD mode, int stage = 0);
-		void SetTextureFilter(DWORD mode, int stage = 0);
-	};
-
-	class Matrices {
-		std::vector<D3DXMATRIX> matrix_;
-	public:
-		Matrices() {};
-		virtual ~Matrices() {};
-		void SetSize(size_t size) { 
-			matrix_.resize(size); 
-			for (size_t iMat = 0; iMat < size; iMat++)
-				D3DXMatrixIdentity(&matrix_[iMat]);
-		}
-		size_t GetSize() { return matrix_.size(); }
-		void SetMatrix(size_t index, const D3DXMATRIX& mat) { matrix_[index] = mat; }
-		D3DXMATRIX& GetMatrix(size_t index) { return matrix_[index]; }
-	};
-
+	//*******************************************************************
+	//DirectionalLightingState
+	//	Contains lighting data for 3D lighting
+	//*******************************************************************
 	class DirectionalLightingState {
 	public:
 		DirectionalLightingState();
@@ -149,14 +33,11 @@ namespace directx {
 		D3DLIGHT9 light_;
 	};
 
-	/**********************************************************
-	//RenderObject
-	//レンダリングオブジェクト
-	//描画の最小単位
-	//RenderManagerに登録して描画してもらう
-	//(直接描画も可能)
-	**********************************************************/
 	class DxScriptRenderObject;
+	//*******************************************************************
+	//RenderObject
+	//	Base class for ObjRender
+	//*******************************************************************
 	class RenderObject {
 	protected:
 		DxScriptRenderObject* dxObjParent_;
@@ -249,11 +130,10 @@ namespace directx {
 		void SetShader(shared_ptr<Shader> shader) { shader_ = shader; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//RenderObjectTLX
-	//座標3D変換済み、ライティング済み、テクスチャ有り
-	//2D自由変形スプライト用
-	**********************************************************/
+	//	2D render object
+	//*******************************************************************
 	class RenderObjectTLX : public RenderObject {
 	protected:
 		bool bPermitCamera_;
@@ -266,7 +146,6 @@ namespace directx {
 		virtual void Render(const D3DXMATRIX& matTransform);
 		virtual void SetVertexCount(size_t count);
 
-		//頂点設定
 		VERTEX_TLX* GetVertex(size_t index);
 		void SetVertex(size_t index, const VERTEX_TLX& vertex);
 		void SetVertexPosition(size_t index, float x, float y, float z = 1.0f, float w = 1.0f);
@@ -280,16 +159,14 @@ namespace directx {
 		void SetColorRGB(D3DCOLOR color);
 		void SetAlpha(int alpha);
 
-		//カメラ
 		bool IsPermitCamera() { return bPermitCamera_; }
 		void SetPermitCamera(bool bPermit) { bPermitCamera_ = bPermit; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//RenderObjectLX
-	//ライティング済み、テクスチャ有り
-	//3Dエフェクト用
-	**********************************************************/
+	//	3D render object
+	//*******************************************************************
 	class RenderObjectLX : public RenderObject {
 	public:
 		RenderObjectLX();
@@ -299,7 +176,6 @@ namespace directx {
 		virtual void Render(const D3DXMATRIX& matTransform);
 		virtual void SetVertexCount(size_t count);
 
-		//頂点設定
 		VERTEX_LX* GetVertex(size_t index);
 		void SetVertex(size_t index, const VERTEX_LX& vertex);
 		void SetVertexPosition(size_t index, float x, float y, float z);
@@ -314,10 +190,11 @@ namespace directx {
 		void SetAlpha(int alpha);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//RenderObjectNX
-	//法線有り、テクスチャ有り
-	**********************************************************/
+	//	3D render object with vertex normal data
+	//	For meshes
+	//*******************************************************************
 	class RenderObjectNX : public RenderObject {
 	protected:
 		D3DCOLOR color_;
@@ -339,113 +216,10 @@ namespace directx {
 		void SetColor(D3DCOLOR color) { color_ = color; }
 	};
 
-	/**********************************************************
-	//RenderObjectBNX
-	//頂点ブレンド
-	//法線有り
-	//テクスチャ有り
-	**********************************************************/
-	class RenderObjectBNX : public RenderObject {
-	protected:
-		gstd::ref_count_ptr<Matrices> matrix_;
-
-		D3DCOLOR color_;
-		D3DMATERIAL9 materialBNX_;
-
-		IDirect3DVertexBuffer9* pVertexBuffer_;
-		IDirect3DIndexBuffer9* pIndexBuffer_;
-
-		virtual void _CopyVertexBufferOnInitialize() = 0;
-	public:
-		RenderObjectBNX();
-		~RenderObjectBNX();
-
-		void InitializeVertexBuffer();
-		virtual void Render();
-		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
-
-		//描画用設定
-		void SetMatrix(gstd::ref_count_ptr<Matrices> matrix) { matrix_ = matrix; }
-		void SetColor(D3DCOLOR color) { color_ = color; }
-	};
-
-	class RenderObjectBNXBlock : public RenderBlock {
-	protected:
-		gstd::ref_count_ptr<Matrices> matrix_;
-		D3DCOLOR color_;
-
-	public:
-		void SetMatrix(gstd::ref_count_ptr<Matrices> matrix) { matrix_ = matrix; }
-		void SetColor(D3DCOLOR color) { color_ = color; }
-		bool IsTranslucent() { return ColorAccess::GetColorA(color_) != 255; }
-	};
-
-	/**********************************************************
-	//RenderObjectB2NX
-	//頂点ブレンド2
-	//法線有り
-	//テクスチャ有り
-	**********************************************************/
-	class RenderObjectB2NX : public RenderObjectBNX {
-	protected:
-		virtual void _CopyVertexBufferOnInitialize();
-	public:
-		RenderObjectB2NX();
-		~RenderObjectB2NX();
-
-		virtual void CalculateWeightCenter();
-
-		//頂点設定
-		VERTEX_B2NX* GetVertex(size_t index);
-		void SetVertex(size_t index, const VERTEX_B2NX& vertex);
-		void SetVertexPosition(size_t index, float x, float y, float z);
-		void SetVertexUV(size_t index, float u, float v);
-		void SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate);
-		void SetVertexNormal(size_t index, float x, float y, float z);
-	};
-
-	class RenderObjectB2NXBlock : public RenderObjectBNXBlock {
-	public:
-		RenderObjectB2NXBlock();
-		virtual ~RenderObjectB2NXBlock();
-		virtual void Render();
-	};
-	
-	/**********************************************************
-	//RenderObjectB4NX
-	//頂点ブレンド4
-	//法線有り
-	//テクスチャ有り
-	**********************************************************/
-	class RenderObjectB4NX : public RenderObjectBNX {
-	protected:
-		virtual void _CopyVertexBufferOnInitialize();
-	public:
-		RenderObjectB4NX();
-		~RenderObjectB4NX();
-
-		virtual void CalculateWeightCenter();
-
-		//頂点設定
-		VERTEX_B4NX* GetVertex(size_t index);
-		void SetVertex(size_t index, const VERTEX_B4NX& vertex);
-		void SetVertexPosition(size_t index, float x, float y, float z);
-		void SetVertexUV(size_t index, float u, float v);
-		void SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate);
-		void SetVertexNormal(size_t index, float x, float y, float z);
-	};
-
-	class RenderObjectB4NXBlock : public RenderObjectBNXBlock {
-	public:
-		RenderObjectB4NXBlock();
-		virtual ~RenderObjectB4NXBlock();
-		virtual void Render();
-	};
-
-	/**********************************************************
+	//*******************************************************************
 	//Sprite2D
-	//矩形スプライト
-	**********************************************************/
+	//	RenderObjectTLX with pre-defined 4-vertex layout
+	//*******************************************************************
 	class Sprite2D : public RenderObjectTLX {
 	public:
 		Sprite2D();
@@ -459,10 +233,10 @@ namespace directx {
 		DxRect<double> GetDestinationRect();
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//SpriteList2D
-	//矩形スプライトリスト
-	**********************************************************/
+	//	Render list of 2D sprites
+	//*******************************************************************
 	class SpriteList2D : public RenderObjectTLX {
 		size_t countRenderIndex_;
 		size_t countRenderIndexPrev_;
@@ -508,10 +282,10 @@ namespace directx {
 		void SetAutoClearVertex(bool clear) { autoClearVertexList_ = clear; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//Sprite3D
-	//矩形スプライト
-	**********************************************************/
+	//	RenderObjectLX with pre-defined 4-vertex layout
+	//*******************************************************************
 	class Sprite3D : public RenderObjectLX {
 	protected:
 		bool bBillboard_;
@@ -530,10 +304,10 @@ namespace directx {
 		void SetBillboardEnable(bool bEnable) { bBillboard_ = bEnable; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//TrajectoryObject3D
-	//3D軌跡
-	**********************************************************/
+	//	Fuck?
+	//*******************************************************************
 	class TrajectoryObject3D : public RenderObjectLX {
 		struct Data {
 			int alpha;
@@ -565,9 +339,10 @@ namespace directx {
 		void SetColor(D3DCOLOR color) { color_ = color; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//ParticleRendererBase
-	**********************************************************/
+	//	Base class for instanced render objects
+	//*******************************************************************
 	class ParticleRendererBase {
 	public:
 		ParticleRendererBase();
@@ -608,30 +383,27 @@ namespace directx {
 		D3DXVECTOR3 instAngle_;
 		D3DXVECTOR3 instUserData_;
 	};
-	/**********************************************************
+
+	//*******************************************************************
 	//ParticleRenderer2D
-	**********************************************************/
+	//	2D render object utilizing hardware instancing
+	//*******************************************************************
 	class ParticleRenderer2D : public ParticleRendererBase, public Sprite2D {
 	public:
 		ParticleRenderer2D();
 		virtual void Render();
 	};
-	/**********************************************************
+
+	//*******************************************************************
 	//ParticleRenderer3D
-	**********************************************************/
+	//	3D render object utilizing hardware instancing
+	//*******************************************************************
 	class ParticleRenderer3D : public ParticleRendererBase, public Sprite3D {
 	public:
 		ParticleRenderer3D();
 		virtual void Render();
 	};
 
-	/**********************************************************
-	//DxMesh
-	**********************************************************/
-	enum {
-		MESH_ELFREINA,
-		MESH_METASEQUOIA,
-	};
 	class DxMeshManager;
 	class DxMeshData {
 	public:
@@ -650,6 +422,9 @@ namespace directx {
 	class DxMesh : public gstd::FileManager::LoadObject {
 	public:
 		friend DxMeshManager;
+		enum {
+			MESH_METASEQUOIA,
+		};
 	protected:
 		DxScriptRenderObject* dxObjParent_;
 
@@ -721,10 +496,11 @@ namespace directx {
 		void SetShader(shared_ptr<Shader> shader) { shader_ = shader; }
 	};
 
-	/**********************************************************
-	//DxMeshManager
-	**********************************************************/
 	class DxMeshInfoPanel;
+	//*******************************************************************
+	//DxMeshManager
+	//	Manager class for all mesh resources
+	//*******************************************************************
 	class DxMeshManager : public gstd::FileManager::LoadThreadListener {
 		friend DxMeshData;
 		friend DxMesh;
@@ -749,8 +525,8 @@ namespace directx {
 		gstd::CriticalSection& GetLock() { return lock_; }
 
 		virtual void Clear();
-		virtual void Add(const std::wstring& name, shared_ptr<DxMesh> mesh);//参照を保持します
-		virtual void Release(const std::wstring& name);//保持している参照を解放します
+		virtual void Add(const std::wstring& name, shared_ptr<DxMesh> mesh);
+		virtual void Release(const std::wstring& name);
 		virtual bool IsDataExists(const std::wstring& name);
 
 		shared_ptr<DxMesh> CreateFromFileInLoadThread(const std::wstring& path, int type);

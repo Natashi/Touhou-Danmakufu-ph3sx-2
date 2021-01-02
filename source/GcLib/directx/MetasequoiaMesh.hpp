@@ -39,11 +39,11 @@ namespace directx {
 		friend MetasequoiaMeshData;
 		friend MetasequoiaMeshData::RenderObject;
 	protected:
-		std::wstring name_;//材質名
+		std::wstring name_;
 		D3DMATERIAL9 mat_;
-		shared_ptr<Texture> texture_;//模様マッピング 相対パス
-		std::string pathTextureAlpha_;//透明マッピングの名前 相対パス(未使用)
-		std::string pathTextureBump_;//凹凸マッピングの名前 相対パス(未使用)
+		shared_ptr<Texture> texture_;
+		std::string pathTextureAlpha_;
+		std::string pathTextureBump_;
 	public:
 		Material() : texture_(nullptr) { ZeroMemory(&mat_, sizeof(D3DMATERIAL9)); };
 		virtual ~Material() {};
@@ -53,22 +53,20 @@ namespace directx {
 		friend MetasequoiaMeshData;
 	protected:
 		struct Face {
-			//面の頂点
 			struct Vertex {
-				size_t indexVertex_;//頂点のインデックス
-				D3DXVECTOR2 tcoord_;//テクスチャの座標
+				size_t indexVertex_;
+				D3DXVECTOR2 tcoord_;
 			};
-			int indexMaterial_;//マテリアルのインデックス
-			std::vector<Vertex> vertices_;//面の頂点
-			Face() { indexMaterial_ = -1; }
+			int indexMaterial_ = -1;
+			std::vector<Vertex> vertices_;
 		};
 
 		bool bVisible_;
 		D3DXVECTOR3 color_;
 
-		std::wstring name_;	//オブジェクト名
-		std::vector<D3DXVECTOR3> vertices_;	//頂点たち
-		std::vector<Face> faces_;	//面たち
+		std::wstring name_;
+		std::vector<D3DXVECTOR3> vertices_;
+		std::vector<Face> faces_;
 	public:
 		Object() : bVisible_(false), color_(1, 1, 1) {}
 		virtual ~Object() {}

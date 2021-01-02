@@ -40,7 +40,8 @@ bool MetasequoiaMeshData::CreateFromFileReader(shared_ptr<gstd::FileReader> read
 		res = true;
 	}
 	catch (gstd::wexception& e) {
-		Logger::WriteTop(StringUtility::Format(L"MetasequoiaMeshData parsing error. [line %d-> %s]", scanner.GetCurrentLine(), e.what()));
+		Logger::WriteTop(StringUtility::Format(L"MetasequoiaMeshData parsing error. [line %d-> %s]", 
+			scanner.GetCurrentLine(), e.what()));
 		res = false;
 	}
 	return res;
@@ -223,8 +224,7 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 
 	//Faces are sorted per-material
 	size_t iMapFace = 0U;
-	std::map<int, std::list<MetasequoiaMeshData::Object::Face*>>::iterator itrMap;
-	for (itrMap = mapFace.begin(); itrMap != mapFace.end(); itrMap++, iMapFace++) {
+	for (auto itrMap = mapFace.begin(); itrMap != mapFace.end(); itrMap++, iMapFace++) {
 		int indexMaterial = itrMap->first;
 		//if (indexMaterial < 0) continue;
 
@@ -240,7 +240,8 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 		size_t countVert = 0;
 		for (auto itrFace = listFace.begin(); itrFace != listFace.end(); ++itrFace) {
 			MetasequoiaMeshData::Object::Face* face = *itrFace;
-			switch (face->vertices_.size()) {
+			size_t vc = face->vertices_.size();
+			switch (vc) {
 			case 3:		//Triangle
 				countVert += 3;
 				break;
@@ -248,15 +249,11 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 				countVert += 6;
 				break;
 			default:	//Polygon (Kill me)
-				if (face->vertices_.size() > 4)
-					countVert += 3 * (face->vertices_.size() - 2);
+				if (vc > 4)
+					countVert += 3 * (vc - 2);
 				break;
 			}
 		}
-
-		std::vector<ref_count_ptr<NormalData>> listNormalData;
-		listNormalData.resize(countVert);
-
 		render->SetVertexCount(countVert);
 
 		size_t posVert = 0;
@@ -419,19 +416,6 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 						vert->normal = tri.GetNormal();
 					}
 					posVert += 3;
-				}
-			}
-		}
-
-		size_t countNormalData = listNormalData.size();
-		for (size_t iData = 0; iData < countNormalData; iData++) {
-			ref_count_ptr<NormalData> normalData = listNormalData[iData];
-			if (normalData) {
-				size_t countVertexIndex = normalData->listIndex_.size();
-				for (size_t iVert = 0; iVert < countVertexIndex; iVert++) {
-					size_t nvVertexIndex = normalData->listIndex_[iVert];
-					VERTEX_NX* vert = render->GetVertex(nvVertexIndex);
-					vert->normal = normalData->normal_;
 				}
 			}
 		}

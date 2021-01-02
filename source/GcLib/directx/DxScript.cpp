@@ -7,7 +7,7 @@
 #include "DxObject.hpp"
 #include "DirectInput.hpp"
 #include "MetasequoiaMesh.hpp"
-#include "ElfreinaMesh.hpp"
+//#include "ElfreinaMesh.hpp"
 
 using namespace gstd;
 using namespace directx;

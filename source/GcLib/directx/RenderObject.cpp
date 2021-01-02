@@ -6,7 +6,7 @@
 #include "Shader.hpp"
 
 #include "MetasequoiaMesh.hpp"
-#include "ElfreinaMesh.hpp"
+//#include "ElfreinaMesh.hpp"
 
 #include "DxScript.hpp"
 
@@ -15,143 +15,9 @@
 using namespace gstd;
 using namespace directx;
 
-/**********************************************************
-//RenderBlock
-**********************************************************/
-RenderBlock::RenderBlock() {
-	posSortKey_ = 0;
-}
-RenderBlock::~RenderBlock() {
-	func_ = nullptr;
-	obj_ = nullptr;
-}
-void RenderBlock::Render() {
-	RenderObject* obj = (RenderObject*)obj_.get();
-	obj->SetPosition(position_);
-	obj->SetAngle(angle_);
-	obj->SetScale(scale_);
-	if (func_)
-		func_->CallRenderStateFunction();
-	obj->Render();
-}
-
-/**********************************************************
-//RenderManager
-**********************************************************/
-RenderManager::RenderManager() {}
-RenderManager::~RenderManager() {}
-void RenderManager::Render() {
-	DirectGraphics* graph = DirectGraphics::GetBase();
-
-	//不透明
-	graph->SetZBufferEnable(true);
-	graph->SetZWriteEnable(true);
-	for (auto itrOpaque = listBlockOpaque_.begin(); itrOpaque != listBlockOpaque_.end(); ++itrOpaque) {
-		(*itrOpaque)->Render();
-	}
-
-	//半透明
-	graph->SetZBufferEnable(true);
-	graph->SetZWriteEnable(false);
-	for (auto itrTrans = listBlockTranslucent_.begin(); itrTrans != listBlockTranslucent_.end(); ++itrTrans) {
-		(*itrTrans)->CalculateZValue();
-	}
-	//SortUtility::CombSort(listBlockTranslucent_.begin(), listBlockTranslucent_.end(), ComparatorRenderBlockTranslucent());
-	listBlockTranslucent_.sort(ComparatorRenderBlockTranslucent());
-	for (auto itrTrans = listBlockTranslucent_.begin(); itrTrans != listBlockTranslucent_.end(); ++itrTrans) {
-		(*itrTrans)->Render();
-	}
-
-	listBlockOpaque_.clear();
-	listBlockTranslucent_.clear();
-}
-void RenderManager::AddBlock(gstd::ref_count_ptr<RenderBlock> block) {
-	if (block == nullptr) return;
-	if (block->IsTranslucent()) {
-		listBlockTranslucent_.push_back(block);
-	}
-	else {
-		listBlockOpaque_.push_back(block);
-	}
-}
-void RenderManager::AddBlock(gstd::ref_count_ptr<RenderBlocks> blocks) {
-	std::list<gstd::ref_count_ptr<RenderBlock>>& listBlock = blocks->GetList();
-	for (auto itr = listBlock.begin(); itr != listBlock.end(); ++itr) {
-		AddBlock(*itr);
-	}
-}
-
-/**********************************************************
-//RenderStateFunction
-**********************************************************/
-RenderStateFunction::RenderStateFunction() {
-
-}
-RenderStateFunction::~RenderStateFunction() {
-
-}
-void RenderStateFunction::CallRenderStateFunction() {
-	for (auto itr = mapFuncRenderState_.begin(); itr != mapFuncRenderState_.end(); ++itr) {
-		RenderStateFunction::FUNC_TYPE type = itr->first;
-		gstd::ByteBuffer* args = itr->second.get();
-		args->Seek(0);
-		if (type == RenderStateFunction::FUNC_LIGHTING) {
-			bool bEnable = args->ReadBoolean();
-			DirectGraphics::GetBase()->SetLightingEnable(bEnable);
-		}
-		//TODO
-	}
-	mapFuncRenderState_.clear();
-}
-
-void RenderStateFunction::SetLightingEnable(bool bEnable) {
-	size_t sizeArgs = sizeof(bEnable);
-	gstd::ByteBuffer* args = new gstd::ByteBuffer();
-	args->SetSize(sizeArgs);
-	args->WriteBoolean(bEnable);
-	mapFuncRenderState_[RenderStateFunction::FUNC_LIGHTING] = args;
-}
-void RenderStateFunction::SetCullingMode(DWORD mode) {
-	size_t sizeArgs = sizeof(mode);
-	gstd::ByteBuffer* args = new gstd::ByteBuffer();
-	args->SetSize(sizeArgs);
-	args->WriteInteger(mode);
-	mapFuncRenderState_[RenderStateFunction::FUNC_CULLING] = args;
-}
-void RenderStateFunction::SetZBufferEnable(bool bEnable) {
-	size_t sizeArgs = sizeof(bEnable);
-	gstd::ByteBuffer* args = new gstd::ByteBuffer();
-	args->SetSize(sizeArgs);
-	args->WriteBoolean(bEnable);
-	mapFuncRenderState_[RenderStateFunction::FUNC_ZBUFFER_ENABLE] = args;
-}
-void RenderStateFunction::SetZWriteEnable(bool bEnable) {
-	size_t sizeArgs = sizeof(bEnable);
-	gstd::ByteBuffer* args = new gstd::ByteBuffer();
-	args->SetSize(sizeArgs);
-	args->WriteBoolean(bEnable);
-	mapFuncRenderState_[RenderStateFunction::FUNC_ZBUFFER_WRITE_ENABLE] = args;
-}
-void RenderStateFunction::SetBlendMode(DWORD mode, int stage) {
-	size_t sizeArgs = sizeof(mode) + sizeof(stage);
-	gstd::ByteBuffer* args = new gstd::ByteBuffer();
-	args->SetSize(sizeArgs);
-	args->WriteInteger(mode);
-	args->WriteInteger(stage);
-	mapFuncRenderState_[RenderStateFunction::FUNC_BLEND] = args;
-}
-void RenderStateFunction::SetTextureFilter(DWORD mode, int stage) {
-	size_t sizeArgs = sizeof(mode) + sizeof(stage);
-	gstd::ByteBuffer* args = new gstd::ByteBuffer();
-	args->SetSize(sizeArgs);
-	args->WriteInteger(mode);
-	args->WriteInteger(stage);
-	mapFuncRenderState_[RenderStateFunction::FUNC_TEXTURE_FILTER] = args;
-}
-
-/**********************************************************
+//*******************************************************************
 //DirectionalLightingState
-**********************************************************/
+//*******************************************************************
 DirectionalLightingState::DirectionalLightingState() {
 	bLightEnable_ = false;
 	bSpecularEnable_ = false;
@@ -174,9 +40,9 @@ void DirectionalLightingState::Apply() {
 	if (bLightEnable_) device->SetLight(0, &light_);
 }
 
-/**********************************************************
+//*******************************************************************
 //RenderObject
-**********************************************************/
+//*******************************************************************
 RenderObject::RenderObject() {
 	typePrimitive_ = D3DPT_TRIANGLELIST;
 	position_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
@@ -212,7 +78,6 @@ size_t RenderObject::_GetPrimitiveCount(size_t count) {
 	}
 	return 0U;
 }
-
 
 //---------------------------------------------------------------------
 
@@ -454,10 +319,10 @@ void RenderObject::SetCoordinate2dDeviceMatrix() {
 	device->SetTransform(D3DTS_VIEW, &viewMat);
 }
 
-/**********************************************************
+//*******************************************************************
 //RenderObjectTLX
 //座標3D変換済み、ライティング済み、テクスチャ有り
-**********************************************************/
+//*******************************************************************
 RenderObjectTLX::RenderObjectTLX() {
 	strideVertexStreamZero_ = sizeof(VERTEX_TLX);
 	bPermitCamera_ = true;
@@ -649,10 +514,9 @@ void RenderObjectTLX::SetAlpha(int alpha) {
 	}
 }
 
-/**********************************************************
+//*******************************************************************
 //RenderObjectLX
-//ライティング済み、テクスチャ有り
-**********************************************************/
+//*******************************************************************
 RenderObjectLX::RenderObjectLX() {
 	strideVertexStreamZero_ = sizeof(VERTEX_LX);
 }
@@ -962,9 +826,9 @@ void RenderObjectLX::SetAlpha(int alpha) {
 	}
 }
 
-/**********************************************************
+//*******************************************************************
 //RenderObjectNX
-**********************************************************/
+//*******************************************************************
 RenderObjectNX::RenderObjectNX() {
 	strideVertexStreamZero_ = sizeof(VERTEX_NX);
 
@@ -990,9 +854,9 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 
 	{
 		bool bUseIndex = vertexIndices_.size() > 0;
-		size_t countVertex = std::min(GetVertexCount(), 65536U);
-		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
-		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
+		size_t countVertex = GetVertexCount();
+		size_t countIndex = vertexIndices_.size();
+		size_t countPrim = _GetPrimitiveCount(bUseIndex ? countIndex : countVertex);
 
 		VertexBufferManager* vbManager = VertexBufferManager::GetBase();
 		FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
@@ -1095,393 +959,11 @@ void RenderObjectNX::SetVertexNormal(size_t index, float x, float y, float z) {
 	vertex->normal.z = z;
 }
 
-/**********************************************************
-//RenderObjectBNX
-**********************************************************/
-RenderObjectBNX::RenderObjectBNX() {
-	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
-
-	materialBNX_.Diffuse.a = 1.0f; materialBNX_.Diffuse.r = 1.0f; materialBNX_.Diffuse.g = 1.0f; materialBNX_.Diffuse.b = 1.0f;
-	materialBNX_.Ambient.a = 1.0f; materialBNX_.Ambient.r = 1.0f; materialBNX_.Ambient.g = 1.0f; materialBNX_.Ambient.b = 1.0f;
-	materialBNX_.Specular.a = 1.0f; materialBNX_.Specular.r = 1.0f; materialBNX_.Specular.g = 1.0f; materialBNX_.Specular.b = 1.0f;
-	materialBNX_.Emissive.a = 1.0f; materialBNX_.Emissive.r = 1.0f; materialBNX_.Emissive.g = 1.0f; materialBNX_.Emissive.b = 1.0f;
-
-	pVertexBuffer_ = nullptr;
-	pIndexBuffer_ = nullptr;
-}
-RenderObjectBNX::~RenderObjectBNX() {
-	ptr_release(pVertexBuffer_);
-	ptr_release(pIndexBuffer_);
-}
-void RenderObjectBNX::InitializeVertexBuffer() {
-	size_t countVertex = GetVertexCount();
-	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
-	device->CreateVertexBuffer(countVertex * sizeof(VERTEX_BNX), 0, 0, D3DPOOL_MANAGED, &pVertexBuffer_, nullptr);
-
-	//コピー
-	_CopyVertexBufferOnInitialize();
-
-	size_t countIndex = vertexIndices_.size();
-	if (countIndex != 0) {
-		device->CreateIndexBuffer(sizeof(short) * countIndex,
-			D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_MANAGED, &pIndexBuffer_, nullptr);
-
-		BYTE *bufIndex;
-		HRESULT hrLockIndex = pIndexBuffer_->Lock(0, 0, reinterpret_cast<void**>(&bufIndex), 0);
-		if (!FAILED(hrLockIndex)) {
-			memcpy(bufIndex, &vertexIndices_[0], sizeof(short) * countIndex);
-			pIndexBuffer_->Unlock();
-		}
-	}
-}
-void RenderObjectBNX::Render() {
-	RenderObjectBNX::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
-}
-void RenderObjectBNX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
-	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
-
-	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
-
-	ref_count_ptr<DxCamera> camera = DirectGraphics::GetBase()->GetCamera();
-
-	DWORD bFogEnable = FALSE;
-	if (bCoordinate2D_) {
-		//device->GetTransform(D3DTS_VIEW, &camera->GetIdentity());
-		device->GetRenderState(D3DRS_FOGENABLE, &bFogEnable);
-		device->SetRenderState(D3DRS_FOGENABLE, FALSE);
-		RenderObject::SetCoordinate2dDeviceMatrix();
-	}
-
-	if (false) {
-		D3DXMATRIX matWorld = RenderObject::CreateWorldMatrix(position_, scale_,
-			angX, angY, angZ, matRelative_.get(), bCoordinate2D_);
-		device->SetTransform(D3DTS_WORLD, &matWorld);
-
-		size_t sizeMatrix = matrix_->GetSize();
-		for (size_t iMatrix = 0; iMatrix < sizeMatrix; ++iMatrix) {
-			D3DXMATRIX matrix = matrix_->GetMatrix(iMatrix) * matWorld;
-			device->SetTransform(D3DTS_WORLDMATRIX(iMatrix),
-				&matrix);
-		}
-
-		device->SetRenderState(D3DRS_INDEXEDVERTEXBLENDENABLE, TRUE);
-		device->SetRenderState(D3DRS_VERTEXBLEND, D3DVBF_1WEIGHTS);
-
-		device->SetFVF(VERTEX_B2NX::fvf);
-		if (vertexIndices_.size() == 0) {
-			device->DrawPrimitiveUP(typePrimitive_, _GetPrimitiveCount(), vertex_.data(), strideVertexStreamZero_);
-		}
-		else {
-			device->DrawIndexedPrimitiveUP(typePrimitive_, 0, GetVertexCount(), _GetPrimitiveCount(),
-				&vertexIndices_[0], D3DFMT_INDEX16, vertex_.data(), strideVertexStreamZero_);
-		}
-
-		device->SetRenderState(D3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
-		device->SetRenderState(D3DRS_VERTEXBLEND, D3DVBF_DISABLE);
-	}
-	else {
-		RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
-
-		ID3DXEffect* shader = shaderManager->GetSkinnedMeshShader();
-
-		if (shader != nullptr) {
-			shader->SetTechnique("BasicTec");
-
-			D3DXVECTOR4 tmpVec;
-			shader->SetMatrix(shader->GetParameterBySemantic(nullptr, "VIEWPROJECTION"), &camera->GetViewProjectionMatrix());
-
-			D3DXMATRIX matWorld = RenderObject::CreateWorldMatrix(position_, scale_,
-				angX, angY, angZ, matRelative_.get(), bCoordinate2D_);
-
-			D3DLIGHT9 light;
-			device->GetLight(0, &light);
-			D3DCOLORVALUE diffuse = materialBNX_.Diffuse;
-			diffuse.r = std::min(diffuse.r + light.Diffuse.r, 1.0f);
-			diffuse.g = std::min(diffuse.g + light.Diffuse.g, 1.0f);
-			diffuse.b = std::min(diffuse.b + light.Diffuse.b, 1.0f);
-			diffuse = ColorAccess::SetColor(diffuse, color_);
-
-			D3DCOLORVALUE ambient = materialBNX_.Ambient;
-			ambient.r = std::min(ambient.r + light.Ambient.r, 1.0f);
-			ambient.g = std::min(ambient.g + light.Ambient.g, 1.0f);
-			ambient.b = std::min(ambient.b + light.Ambient.b, 1.0f);
-			ambient = ColorAccess::SetColor(ambient, color_);
-
-			{
-				tmpVec = D3DXVECTOR4(1.0f, 1.0f, 1.0f, 1.0f);
-				shader->SetVector(shader->GetParameterByName(nullptr, "lightDirection"), &tmpVec);
-			}
-			shader->SetVector(shader->GetParameterBySemantic(nullptr, "MATERIALAMBIENT"), reinterpret_cast<D3DXVECTOR4*>(&diffuse));
-			shader->SetVector(shader->GetParameterBySemantic(nullptr, "MATERIALDIFFUSE"), reinterpret_cast<D3DXVECTOR4*>(&ambient));
-
-			//フォグ
-			DWORD fogNear = 0;
-			DWORD fogFar = 0;
-			device->GetRenderState(D3DRS_FOGSTART, &fogNear);
-			device->GetRenderState(D3DRS_FOGEND, &fogFar);
-
-			shader->SetFloat(shader->GetParameterByName(nullptr, "fogNear"), *(float*)&fogNear);
-			shader->SetFloat(shader->GetParameterByName(nullptr, "fogFar"), *(float*)&fogFar);
-
-			//座標変換
-			size_t sizeMatrix = matrix_->GetSize();
-			std::vector<D3DXMATRIX> listMatrix(sizeMatrix);
-			for (size_t iMatrix = 0; iMatrix < sizeMatrix; ++iMatrix) {
-				D3DXMATRIX matrix = matrix_->GetMatrix(iMatrix) * matWorld;
-				listMatrix[iMatrix] = matrix;
-			}
-			shader->SetMatrixArray(shader->GetParameterBySemantic(nullptr, "WORLDMATRIXARRAY"),
-				reinterpret_cast<const D3DXMATRIX*>(&listMatrix[0]), sizeMatrix);
-
-			device->SetVertexDeclaration(shaderManager->GetVertexDeclarationBNX());
-			device->SetStreamSource(0, pVertexBuffer_, 0, sizeof(VERTEX_BNX));
-
-			UINT cPass = 1;
-			shader->Begin(&cPass, 0);
-			for (UINT i = 0; i < cPass; ++i) {
-				shader->BeginPass(i);
-				if (vertexIndices_.size() == 0) {
-					device->SetIndices(nullptr);
-					device->DrawPrimitive(typePrimitive_, 0, _GetPrimitiveCount());
-				}
-				else {
-					device->SetIndices(pIndexBuffer_);
-					device->DrawIndexedPrimitive(typePrimitive_, 0,
-						0, GetVertexCount(),
-						0, _GetPrimitiveCount());
-				}
-				shader->EndPass();
-			}
-			shader->End();
-		}
-		else {
-			Logger::WriteTop(StringUtility::Format("Shader error. [%s]", "DEFAULT"));
-		}
-
-		device->SetVertexDeclaration(nullptr);
-		device->SetIndices(nullptr);
-		device->SetTexture(0, nullptr);
-	}
-
-	if (bCoordinate2D_) {
-		device->SetTransform(D3DTS_VIEW, &camera->GetViewProjectionMatrix());
-		device->SetRenderState(D3DRS_FOGENABLE, bFogEnable);
-	}
-}
-
-/**********************************************************
-//RenderObjectB2NX
-**********************************************************/
-RenderObjectB2NX::RenderObjectB2NX() {
-	strideVertexStreamZero_ = sizeof(VERTEX_B2NX);
-}
-RenderObjectB2NX::~RenderObjectB2NX() {
-
-}
-void RenderObjectB2NX::_CopyVertexBufferOnInitialize() {
-	size_t countVertex = GetVertexCount();
-	VERTEX_BNX* bufVertex;
-	HRESULT hrLockVertex = pVertexBuffer_->Lock(0, 0, reinterpret_cast<void**>(&bufVertex), D3DLOCK_NOSYSLOCK);
-	if (!FAILED(hrLockVertex)) {
-		for (size_t iVert = 0; iVert < countVertex; ++iVert) {
-			VERTEX_BNX* dest = &bufVertex[iVert];
-			VERTEX_B2NX* src = GetVertex(iVert);
-			ZeroMemory(dest, sizeof(VERTEX_BNX));
-
-			dest->position = src->position;
-			dest->normal = src->normal;
-			dest->texcoord = src->texcoord;
-
-			for (size_t iBlend = 0; iBlend < 2; ++iBlend) {
-				size_t indexBlend = BitAccess::GetByte(src->blendIndex, iBlend * 8);
-				dest->blendIndex[iBlend] = indexBlend;
-			}
-
-			dest->blendRate[0] = src->blendRate;
-			dest->blendRate[1] = 1.0f - dest->blendRate[0];
-		}
-		pVertexBuffer_->Unlock();
-	}
-}
-void RenderObjectB2NX::CalculateWeightCenter() {
-	double xTotal = 0;
-	double yTotal = 0;
-	double zTotal = 0;
-	size_t countVert = GetVertexCount();
-	for (size_t iVert = 0; iVert < countVert; ++iVert) {
-		VERTEX_B2NX* vertex = GetVertex(iVert);
-		xTotal += vertex->position.x;
-		yTotal += vertex->position.y;
-		zTotal += vertex->position.z;
-	}
-	xTotal /= countVert;
-	yTotal /= countVert;
-	zTotal /= countVert;
-	posWeightCenter_.x = (float)xTotal;
-	posWeightCenter_.y = (float)yTotal;
-	posWeightCenter_.z = (float)zTotal;
-}
-
-VERTEX_B2NX* RenderObjectB2NX::GetVertex(size_t index) {
-	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size()) return nullptr;
-	return (VERTEX_B2NX*)&vertex_[pos];
-}
-void RenderObjectB2NX::SetVertex(size_t index, const VERTEX_B2NX& vertex) {
-	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size()) return;
-	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
-}
-void RenderObjectB2NX::SetVertexPosition(size_t index, float x, float y, float z) {
-	VERTEX_B2NX* vertex = GetVertex(index);
-	if (vertex == nullptr) return;
-
-	constexpr float bias = -0.5f;
-	vertex->position.x = x + bias;
-	vertex->position.y = y + bias;
-	vertex->position.z = z;
-}
-void RenderObjectB2NX::SetVertexUV(size_t index, float u, float v) {
-	VERTEX_B2NX* vertex = GetVertex(index);
-	if (vertex == nullptr) return;
-	vertex->texcoord.x = u;
-	vertex->texcoord.y = v;
-}
-void RenderObjectB2NX::SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate) {
-	VERTEX_B2NX* vertex = GetVertex(index);
-	if (vertex == nullptr) return;
-	gstd::BitAccess::SetByte(vertex->blendIndex, pos * 8, indexBlend);
-	if (pos == 0) vertex->blendRate = rate;
-}
-void RenderObjectB2NX::SetVertexNormal(size_t index, float x, float y, float z) {
-	VERTEX_B2NX* vertex = GetVertex(index);
-	if (vertex == nullptr) return;
-	vertex->normal.x = x;
-	vertex->normal.y = y;
-	vertex->normal.z = z;
-}
-
-//RenderObjectB2NXBlock
-RenderObjectB2NXBlock::RenderObjectB2NXBlock() {}
-RenderObjectB2NXBlock::~RenderObjectB2NXBlock() {}
-void RenderObjectB2NXBlock::Render() {
-	RenderObjectB2NX* obj = (RenderObjectB2NX*)obj_.get();
-	obj->SetMatrix(matrix_);
-	RenderBlock::Render();
-}
-
-/**********************************************************
-//RenderObjectB4NX
-**********************************************************/
-RenderObjectB4NX::RenderObjectB4NX() {
-	strideVertexStreamZero_ = sizeof(VERTEX_B4NX);
-}
-RenderObjectB4NX::~RenderObjectB4NX() {
-
-}
-void RenderObjectB4NX::_CopyVertexBufferOnInitialize() {
-	size_t countVertex = GetVertexCount();
-	VERTEX_BNX* bufVertex;
-	HRESULT hrLockVertex = pVertexBuffer_->Lock(0, 0, reinterpret_cast<void**>(&bufVertex), D3DLOCK_NOSYSLOCK);
-	if (!FAILED(hrLockVertex)) {
-		for (size_t iVert = 0; iVert < countVertex; ++iVert) {
-			VERTEX_BNX* dest = &bufVertex[iVert];
-			VERTEX_B4NX* src = GetVertex(iVert);
-			ZeroMemory(dest, sizeof(VERTEX_BNX));
-
-			dest->position = src->position;
-			dest->normal = src->normal;
-			dest->texcoord = src->texcoord;
-
-			for (size_t iBlend = 0; iBlend < 4; ++iBlend) {
-				size_t indexBlend = BitAccess::GetByte(src->blendIndex, iBlend * 8);
-				dest->blendIndex[iBlend] = indexBlend;
-			}
-
-			float lastRate = 1.0f;
-			for (size_t iRate = 0; iRate < 3; ++iRate) {
-				float rate = src->blendRate[iRate];
-				dest->blendRate[iRate] = rate;
-				lastRate -= rate;
-			}
-			dest->blendRate[3] = lastRate;
-		}
-		pVertexBuffer_->Unlock();
-	}
-}
-void RenderObjectB4NX::CalculateWeightCenter() {
-	double xTotal = 0;
-	double yTotal = 0;
-	double zTotal = 0;
-	size_t countVert = GetVertexCount();
-	for (size_t iVert = 0; iVert < countVert; ++iVert) {
-		VERTEX_B4NX* vertex = GetVertex(iVert);
-		xTotal += vertex->position.x;
-		yTotal += vertex->position.y;
-		zTotal += vertex->position.z;
-	}
-	xTotal /= countVert;
-	yTotal /= countVert;
-	zTotal /= countVert;
-	posWeightCenter_.x = (float)xTotal;
-	posWeightCenter_.y = (float)yTotal;
-	posWeightCenter_.z = (float)zTotal;
-}
-
-VERTEX_B4NX* RenderObjectB4NX::GetVertex(size_t index) {
-	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size()) return nullptr;
-	return (VERTEX_B4NX*)&vertex_[pos];
-}
-void RenderObjectB4NX::SetVertex(size_t index, const VERTEX_B4NX& vertex) {
-	size_t pos = index * strideVertexStreamZero_;
-	if (pos >= vertex_.size()) return;
-	memcpy(&vertex_[pos], &vertex, strideVertexStreamZero_);
-}
-void RenderObjectB4NX::SetVertexPosition(size_t index, float x, float y, float z) {
-	VERTEX_B4NX* vertex = GetVertex(index);
-	if (vertex == nullptr) return;
-
-	constexpr float bias = -0.5f;
-	vertex->position.x = x + bias;
-	vertex->position.y = y + bias;
-	vertex->position.z = z;
-}
-void RenderObjectB4NX::SetVertexUV(size_t index, float u, float v) {
-	VERTEX_B4NX* vertex = GetVertex(index);
-	if (vertex == nullptr) return;
-	vertex->texcoord.x = u;
-	vertex->texcoord.y = v;
-}
-void RenderObjectB4NX::SetVertexBlend(size_t index, int pos, BYTE indexBlend, float rate) {
-	VERTEX_B4NX* vertex = GetVertex(index);
-	if (vertex == nullptr) return;
-	gstd::BitAccess::SetByte(vertex->blendIndex, pos * 8, indexBlend);
-	if (pos <= 2) vertex->blendRate[pos] = rate;
-}
-void RenderObjectB4NX::SetVertexNormal(size_t index, float x, float y, float z) {
-	VERTEX_B4NX* vertex = GetVertex(index);
-	if (vertex == nullptr) return;
-	vertex->normal.x = x;
-	vertex->normal.y = y;
-	vertex->normal.z = z;
-}
-
-//RenderObjectB4NXBlock
-RenderObjectB4NXBlock::RenderObjectB4NXBlock() {}
-RenderObjectB4NXBlock::~RenderObjectB4NXBlock() {}
-void RenderObjectB4NXBlock::Render() {
-	RenderObjectB4NX* obj = (RenderObjectB4NX*)obj_.get();
-	obj->SetMatrix(matrix_);
-	RenderBlock::Render();
-}
-
-/**********************************************************
+//*******************************************************************
 //Sprite2D
-//矩形スプライト
-**********************************************************/
+//*******************************************************************
 Sprite2D::Sprite2D() {
-	SetVertexCount(4);//左上、右上、左下、右下
+	SetVertexCount(4);	//Top-left, top-right, bottom-left, bottom-right (Z pattern)
 	SetPrimitiveType(D3DPT_TRIANGLESTRIP);
 
 	flgUseVertexBufferMode_ = false;
@@ -1509,14 +991,12 @@ void Sprite2D::SetSourceRect(const DxRect<int>& rcSrc) {
 	float width = texture_->GetWidth();
 	float height = texture_->GetHeight();
 
-	//テクスチャUV
 	SetVertexUV(0, rcSrc.left / width, rcSrc.top / height);
 	SetVertexUV(1, rcSrc.right / width, rcSrc.top / height);
 	SetVertexUV(2, rcSrc.left / width, rcSrc.bottom / height);
 	SetVertexUV(3, rcSrc.right / width, rcSrc.bottom / height);
 }
 void Sprite2D::SetDestinationRect(const DxRect<double>& rcDest) {
-	//頂点位置
 	SetVertexPosition(0, rcDest.left, rcDest.top);
 	SetVertexPosition(1, rcDest.right, rcDest.top);
 	SetVertexPosition(2, rcDest.left, rcDest.bottom);
@@ -1544,8 +1024,8 @@ void Sprite2D::SetDestinationCenter() {
 	float width = texture_->GetWidth();
 	float height = texture_->GetHeight();
 
-	VERTEX_TLX* vertLT = GetVertex(0); //左上
-	VERTEX_TLX* vertRB = GetVertex(3); //右下
+	VERTEX_TLX* vertLT = GetVertex(0); //Top-left
+	VERTEX_TLX* vertRB = GetVertex(3); //Bottom-right
 
 	float vWidth = (vertRB->texcoord.x - vertLT->texcoord.x) * width / 2.0f;
 	float vHeight = (vertRB->texcoord.y - vertLT->texcoord.y) * height / 2.0f;
@@ -1553,9 +1033,9 @@ void Sprite2D::SetDestinationCenter() {
 	SetDestinationRect(DxRect<double>(-vWidth, -vHeight, vWidth, vHeight));
 }
 
-/**********************************************************
+//*******************************************************************
 //SpriteList2D
-**********************************************************/
+//*******************************************************************
 SpriteList2D::SpriteList2D() {
 	countRenderIndex_ = 0;
 	countRenderIndexPrev_ = 0;
@@ -1752,11 +1232,11 @@ void SpriteList2D::CloseVertex() {
 	bCloseVertexList_ = true;
 }
 
-/**********************************************************
+//*******************************************************************
 //Sprite3D
-**********************************************************/
+//*******************************************************************
 Sprite3D::Sprite3D() {
-	SetVertexCount(4);//左上、右上、左下、右下
+	SetVertexCount(4);	//Top-left, top-right, bottom-left, bottom-right (Z pattern)
 	SetPrimitiveType(D3DPT_TRIANGLESTRIP);
 	bBillboard_ = false;
 
@@ -1792,14 +1272,12 @@ void Sprite3D::SetSourceRect(const DxRect<int>& rcSrc) {
 	float width = texture_->GetWidth();
 	float height = texture_->GetHeight();
 
-	//テクスチャUV
 	SetVertexUV(0, rcSrc.left / width, rcSrc.top / height);
 	SetVertexUV(1, rcSrc.left / width, rcSrc.bottom / height);
 	SetVertexUV(2, rcSrc.right / width, rcSrc.top / height);
 	SetVertexUV(3, rcSrc.right / width, rcSrc.bottom / height);
 }
 void Sprite3D::SetDestinationRect(const DxRect<double>& rcDest) {
-	//頂点位置
 	SetVertexPosition(0, rcDest.left, rcDest.top, 0);
 	SetVertexPosition(1, rcDest.left, rcDest.bottom, 0);
 	SetVertexPosition(2, rcDest.right, rcDest.top, 0);
@@ -1809,7 +1287,6 @@ void Sprite3D::SetVertex(const DxRect<int>& rcSrc, const DxRect<double>& rcDest,
 	SetSourceRect(rcSrc);
 	SetDestinationRect(rcDest);
 
-	//頂点色
 	SetColorRGB(color);
 	SetAlpha(ColorAccess::GetColorA(color));
 }
@@ -1821,9 +1298,9 @@ void Sprite3D::SetVertex(const DxRect<double>& rcSrcDst, D3DCOLOR color) {
 	SetAlpha(ColorAccess::GetColorA(color));
 }
 
-/**********************************************************
+//*******************************************************************
 //TrajectoryObject3D
-**********************************************************/
+//*******************************************************************
 TrajectoryObject3D::TrajectoryObject3D() {
 	SetPrimitiveType(D3DPT_TRIANGLESTRIP);
 	diffAlpha_ = 20;
@@ -1837,8 +1314,7 @@ D3DXMATRIX TrajectoryObject3D::_CreateWorldTransformMatrix() {
 	return mat;
 }
 void TrajectoryObject3D::Work() {
-	std::list<Data>::iterator itr;
-	for (itr = listData_.begin(); itr != listData_.end();) {
+	for (auto itr = listData_.begin(); itr != listData_.end();) {
 		Data& data = (*itr);
 		data.alpha -= diffAlpha_;
 		if (data.alpha < 0) itr = listData_.erase(itr);
@@ -1857,8 +1333,7 @@ void TrajectoryObject3D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY
 
 	float dWidth = 1.0 / width / listData_.size();
 	size_t iData = 0;
-	std::list<Data>::iterator itr;
-	for (itr = listData_.begin(); itr != listData_.end(); ++itr, ++iData) {
+	for (auto itr = listData_.begin(); itr != listData_.end(); ++itr, ++iData) {
 		Data data = (*itr);
 		int alpha = data.alpha;
 		for (size_t iPos = 0; iPos < 2; ++iPos) {
@@ -1924,9 +1399,9 @@ void TrajectoryObject3D::AddPoint(const D3DXMATRIX& mat) {
 
 }
 
-/**********************************************************
+//*******************************************************************
 //ParticleRendererBase
-**********************************************************/
+//*******************************************************************
 ParticleRendererBase::ParticleRendererBase() {
 	countInstance_ = 0U;
 	countInstancePrev_ = 0U;
@@ -2185,9 +1660,9 @@ void ParticleRenderer3D::Render() {
 	}
 }
 
-/**********************************************************
+//*******************************************************************
 //DxMesh
-**********************************************************/
+//*******************************************************************
 DxMeshData::DxMeshData() {
 	manager_ = DxMeshManager::GetBase();
 	bLoad_ = true;
@@ -2215,8 +1690,7 @@ void DxMesh::Release() {
 		Lock lock(manager->GetLock());
 		if (data_) {
 			if (manager->IsDataExists(data_->GetName())) {
-				int countRef = data_.use_count();
-				//自身とDxMeshManager内の数だけになったら削除
+				long countRef = data_.use_count();
 				if (countRef == 2) {
 					manager->_ReleaseMeshData(data_->GetName());
 				}
@@ -2253,9 +1727,9 @@ bool DxMesh::CreateFromFileInLoadThread(const std::wstring& path, int type) {
 	return res;
 }
 
-/**********************************************************
+//*******************************************************************
 //DxMeshManager
-**********************************************************/
+//*******************************************************************
 DxMeshManager* DxMeshManager::thisBase_ = nullptr;
 DxMeshManager::DxMeshManager() {}
 DxMeshManager::~DxMeshManager() {
