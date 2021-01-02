@@ -146,16 +146,7 @@ ByteBuffer& ByteBuffer::operator=(const ByteBuffer& other) noexcept {
 //File
 //*******************************************************************
 std::wstring File::lastError_ = L"";
-File::File() {
-	path_ = L"";
-	perms_ = 0;
-}
-File::File(const std::wstring& path) : File() {
-	path_ = path;
-}
-File::~File() {
-	Close();
-}
+std::map<std::wstring, size_t> File::mapFileUseCount_ = {};
 
 bool File::CreateFileDirectory(const std::wstring& path) {
 #ifdef __L_STD_FILESYSTEM
@@ -304,6 +295,17 @@ std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir) {
 	return res;
 }
 
+File::File() {
+	path_ = L"";
+	perms_ = 0;
+}
+File::File(const std::wstring& path) : File() {
+	path_ = path;
+}
+File::~File() {
+	Close();
+}
+
 void File::Delete() {
 	Close();
 	::DeleteFile(path_.c_str());
@@ -366,9 +368,26 @@ bool File::Open(DWORD typeAccess) {
 	}
 	hFile_.exceptions(0);
 
+#if _DEBUG
+	if (hFile_.is_open()) {
+		auto itr = mapFileUseCount_.find(path_);
+		if (itr != mapFileUseCount_.end())
+			++(itr->second);
+		else
+			mapFileUseCount_.insert(std::make_pair(path_, 1));
+	}
+#endif
+
 	return hFile_.is_open();
 }
 void File::Close() {
+#if _DEBUG
+	if (hFile_.is_open()) {
+		auto itr = mapFileUseCount_.find(path_);
+		if (itr != mapFileUseCount_.end())
+			--(itr->second);
+	}
+#endif
 	hFile_.close();
 	perms_ = 0;
 }
