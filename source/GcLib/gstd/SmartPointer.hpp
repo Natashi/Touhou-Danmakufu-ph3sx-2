@@ -1,13 +1,13 @@
 #pragma once
 
 //Update: I found a use for these.
-//	I'm gonna be using these for non-atomic, performance-sensitive parts of the engine from now on.
+//	I can customize them to use in place of shared_ptr's because of their non-atomicity option
 
 #include "../pch.h"
 
 namespace gstd {
 	//Base for reference counting
-	template<class T>
+	template<class T, bool ATOMIC>
 	class _ptr_ref_counter {
 	public:
 		uint32_t countRef_ = 0;		//Strong refs
@@ -17,14 +17,14 @@ namespace gstd {
 		_ptr_ref_counter(T* src) noexcept {
 			pPtr_ = src;
 		}
-		template<class U> _ptr_ref_counter(const _ptr_ref_counter<U>& other) noexcept {
+		template<class U, bool ATOMIC> _ptr_ref_counter(const _ptr_ref_counter<U, ATOMIC>& other) noexcept {
 			countRef_ = other.countRef_;
 			countWeak_ = other.countWeak_;
 			pPtr_ = (T*)other.pPtr_;
 		}
 
 		_ptr_ref_counter& operator=(_ptr_ref_counter& other) = default;
-		template<class U> _ptr_ref_counter<T>& operator=(_ptr_ref_counter<U>& other) {
+		template<class U, bool ATOMIC> _ptr_ref_counter<T, ATOMIC>& operator=(_ptr_ref_counter<U, ATOMIC>& other) {
 			countRef_ = other.countRef_;
 			countWeak_ = other.countWeak_;
 			pPtr_ = (T*)other.pPtr_;
@@ -43,17 +43,29 @@ namespace gstd {
 			delete this;
 		}
 
-		void AddRef() noexcept { ++countRef_; }
-		void AddRefWeak() noexcept { ++countWeak_; }
+		void AddRef() noexcept {
+			if constexpr (ATOMIC) _MT_INCR(countRef_);
+			else ++countRef_;
+		}
+		void AddRefWeak() noexcept {
+			if constexpr (ATOMIC) _MT_INCR(countWeak_);
+			else ++countWeak_;
+		}
 		bool RemoveRef() noexcept {
-			if ((--countRef_) == 0) {
+			if constexpr (ATOMIC) _MT_DECR(countRef_);
+			else --countRef_;
+
+			if (countRef_ == 0) {
 				DeleteResource();
 				return false;
 			}
 			return true;
 		}
 		bool RemoveRefWeak() noexcept {
-			if ((--countWeak_) == 0) {
+			if constexpr (ATOMIC) _MT_DECR(countWeak_);
+			else --countWeak_;
+
+			if (countWeak_ == 0) {
 				DeleteSelf();
 				return false;
 			}
@@ -61,15 +73,18 @@ namespace gstd {
 		}
 	};
 
-	template<class T> class ref_count_weak_ptr;
+	template<class T, bool ATOMIC> class ref_count_weak_ptr;
 
 	//A non-atomic smart pointer
-	template<class T>
+	template<class T, bool ATOMIC = true>
 	class ref_count_ptr {
-		template<class U> friend class ref_count_ptr;
-		friend ref_count_weak_ptr<T>;
+		template<class U, bool ATOMIC> friend class ref_count_ptr;
+		friend ref_count_weak_ptr<T, ATOMIC>;
+	public:
+		using _MyCounter = _ptr_ref_counter<T, ATOMIC>;
+		using _MyType = ref_count_ptr<T, ATOMIC>;
 	private:
-		_ptr_ref_counter<T>* pInfo_ = nullptr;
+		_MyCounter* pInfo_ = nullptr;
 		T* pPtr_ = nullptr;
 	private:
 		void _AddRef() noexcept {
@@ -88,14 +103,14 @@ namespace gstd {
 		void _SetPointer(T* src) noexcept {
 			_RemoveRef();
 			if (src) {
-				pInfo_ = new _ptr_ref_counter<T>(src);
+				pInfo_ = new _MyCounter(src);
 				pPtr_ = src;
 			}
 			_AddRef();
 		}
-		template<class U> void _SetPointerFromInfo(_ptr_ref_counter<U>* info, T* src) noexcept {
+		template<class U> void _SetPointerFromInfo(_ptr_ref_counter<U, ATOMIC>* info, T* src) noexcept {
 			_RemoveRef();
-			pInfo_ = (_ptr_ref_counter<T>*)info;
+			pInfo_ = (_MyCounter*)info;
 			pPtr_ = src;
 			_AddRef();
 		}
@@ -106,10 +121,10 @@ namespace gstd {
 		ref_count_ptr(T* src) {
 			_SetPointer(src);
 		}
-		ref_count_ptr(const ref_count_ptr<T>& src) {
+		ref_count_ptr(const _MyType& src) {
 			_SetPointerFromInfo<T>(src.pInfo_, src.pPtr_);
 		}
-		template<class U> ref_count_ptr(ref_count_ptr<U>& src) {
+		template<class U> ref_count_ptr(ref_count_ptr<U, ATOMIC>& src) {
 			_SetPointerFromInfo<U>(src.pInfo_, (T*)src.pPtr_);
 		}
 
@@ -119,17 +134,17 @@ namespace gstd {
 
 		//----------------------------------------------------------------------
 
-		ref_count_ptr<T>& operator=(T* src) {
+		_MyType& operator=(T* src) {
 			if (get() != src) _SetPointer(src);
 			return *this;
 		}
-		ref_count_ptr<T>& operator=(const ref_count_ptr<T>& src) {
+		_MyType& operator=(const _MyType& src) {
 			if (get() != src.get()) {
 				_SetPointerFromInfo<T>(src.pInfo_, src.pPtr_);
 			}
 			return *this;
 		}
-		template<class U> ref_count_ptr<T>& operator=(ref_count_ptr<U>& src) {
+		template<class U> _MyType& operator=(ref_count_ptr<U>& src) {
 			if (get() != src.get()) {
 				_SetPointerFromInfo<U>(src.pInfo_, (T*)src.pPtr_);
 			}
@@ -148,18 +163,19 @@ namespace gstd {
 		T& operator[](size_t n) const { return get()[n]; }
 
 		inline bool unique() const { return use_count() == 1U; }
+		inline bool atomic() const { return ATOMIC; }
 
 		//----------------------------------------------------------------------
 
 		const bool operator==(nullptr_t) const { return get() == nullptr; }
 		const bool operator==(const T* p) const { return get() == p; }
-		const bool operator==(const ref_count_ptr<T>& p) const { return get() == p.get(); }
-		template<class U> bool operator==(ref_count_ptr<U>& p) const { return get() == (T*)p.get(); }
+		const bool operator==(const _MyType& p) const { return get() == p.get(); }
+		template<class U, bool _ATO> bool operator==(ref_count_ptr<U, _ATO>& p) const { return get() == (T*)p.get(); }
 
 		const bool operator!=(nullptr_t) const { return get() != nullptr; }
 		const bool operator!=(const T* p) const { return get() != p; }
-		const bool operator!=(const ref_count_ptr<T>& p) const { return get() != p.get(); }
-		template<class U> bool operator!=(ref_count_ptr<U>& p) const { return get() != (T*)p.get(); }
+		const bool operator!=(const _MyType& p) const { return get() != p.get(); }
+		template<class U, bool _ATO> bool operator!=(ref_count_ptr<U, _ATO>& p) const { return get() != (T*)p.get(); }
 
 		explicit operator bool() const {
 			return pInfo_ ? (pInfo_->countRef_ > 0) : false;
@@ -167,8 +183,8 @@ namespace gstd {
 
 		//----------------------------------------------------------------------
 
-		template<class U> static ref_count_ptr<T> Cast(ref_count_ptr<U>& src) {
-			ref_count_ptr<T> res;
+		template<class U> static _MyType Cast(ref_count_ptr<U, ATOMIC>& src) {
+			_MyType res;
 			if (T* castPtr = dynamic_cast<T*>(src.get())) {
 				res._SetPointerFromInfo<U>(src.pInfo_, castPtr);
 			}
@@ -177,11 +193,14 @@ namespace gstd {
 	};
 
 	//A non-atomic smart pointer (weak ref)
-	template<class T>
+	template<class T, bool ATOMIC = true>
 	class ref_count_weak_ptr {
-		template<class U> friend class ref_count_weak_ptr;
+		template<class U, bool ATOMIC> friend class ref_count_weak_ptr;
+	public:
+		using _MyCounter = _ptr_ref_counter<T, ATOMIC>;
+		using _MyType = ref_count_weak_ptr<T, ATOMIC>;
 	private:
-		_ptr_ref_counter<T>* pInfo_ = nullptr;
+		_MyCounter* pInfo_ = nullptr;
 		T* pPtr_ = nullptr;
 	private:
 		void _AddRef() noexcept {
@@ -195,9 +214,9 @@ namespace gstd {
 			pPtr_ = nullptr;
 		}
 
-		template<class U> void _SetPointerFromInfo(_ptr_ref_counter<U>* info, T* src) noexcept {
+		template<class U> void _SetPointerFromInfo(_ptr_ref_counter<U, ATOMIC>* info, T* src) noexcept {
 			_RemoveRef();
-			pInfo_ = (_ptr_ref_counter<T>*)info;
+			pInfo_ = (_MyCounter*)info;
 			pPtr_ = src;
 			_AddRef();
 		}
@@ -205,7 +224,7 @@ namespace gstd {
 		ref_count_weak_ptr() {
 			pInfo_ = nullptr;
 		}
-		ref_count_weak_ptr(const ref_count_weak_ptr<T>& src) {
+		ref_count_weak_ptr(const _MyType& src) {
 			_SetPointerFromInfo<T>(src.pInfo_, src.pPtr_);
 		}
 		template<class U> ref_count_weak_ptr(ref_count_weak_ptr<U>& src) {
@@ -221,19 +240,19 @@ namespace gstd {
 
 		//----------------------------------------------------------------------
 
-		ref_count_weak_ptr<T>& operator=(const ref_count_weak_ptr<T>& src) {
+		_MyType& operator=(const _MyType& src) {
 			if (get() != src.get()) {
 				_SetPointerFromInfo<T>(src.pInfo_, src.pPtr_);
 			}
 			return *this;
 		}
-		ref_count_weak_ptr<T>& operator=(const ref_count_ptr<T>& src) {	//Create from ref_count_ptr
+		_MyType& operator=(const ref_count_ptr<T, ATOMIC>& src) {	//Create from ref_count_ptr
 			if (get() != src.get()) {
 				_SetPointerFromInfo<T>(src.pInfo_, src.pPtr_);
 			}
 			return *this;
 		}
-		template<class U> ref_count_weak_ptr& operator=(ref_count_weak_ptr<U>& src) {
+		template<class U> ref_count_weak_ptr& operator=(ref_count_weak_ptr<U, ATOMIC>& src) {
 			if (get() != src.get()) {
 				_SetPointerFromInfo<U>(src.pInfo_, (T*)src.pPtr_);
 			}
@@ -254,6 +273,8 @@ namespace gstd {
 		T* operator->() const { return get(); }
 		T& operator[](size_t n) const { return get()[n]; }
 
+		inline bool atomic() const { return ATOMIC; }
+
 		//----------------------------------------------------------------------
 
 		const bool operator==(nullptr_t) const {
@@ -262,10 +283,10 @@ namespace gstd {
 		const bool operator==(const T* p) const {
 			return IsExists() ? get() == p : (p == nullptr);
 		}
-		const bool operator==(const ref_count_ptr<T>& p) const {
+		const bool operator==(const _MyType& p) const {
 			return IsExists() ? get() == p.get() : (p.get() == nullptr);
 		}
-		template<class U> bool operator==(ref_count_ptr<U>& p) const {
+		template<class U, bool _ATO> bool operator==(ref_count_ptr<U, _ATO>& p) const {
 			return IsExists() ? (get() == (T*)p.get()) : (p.get() == nullptr);
 		}
 
@@ -275,10 +296,10 @@ namespace gstd {
 		const bool operator!=(const T* p) const {
 			return IsExists() ? get() != p : (p != nullptr);
 		}
-		const bool operator!=(const ref_count_ptr<T>& p) const {
+		const bool operator!=(const _MyType& p) const {
 			return IsExists() ? get() != p.get() : (p.get() != nullptr);
 		}
-		template<class U> bool operator!=(ref_count_ptr<U>& p) const {
+		template<class U, bool _ATO> bool operator!=(ref_count_ptr<U, _ATO>& p) const {
 			return IsExists() ? (get() != (T*)p.get()) : (p.get() != nullptr);
 		}
 
@@ -288,8 +309,8 @@ namespace gstd {
 
 		//----------------------------------------------------------------------
 
-		template<class U> static ref_count_weak_ptr<T> Cast(ref_count_weak_ptr<U>& src) {
-			ref_count_weak_ptr<T> res;
+		template<class U> static _MyType Cast(ref_count_weak_ptr<U, ATOMIC>& src) {
+			_MyType res;
 			if (T* castPtr = dynamic_cast<T*>(src.get())) {
 				res._SetPointerFromInfo<U>(src.pInfo_, castPtr);
 			}
