@@ -42,58 +42,50 @@ bool type_data::operator<(const type_data& other) const {
 }
 
 value::value(type_data* t, int64_t v) {
-	data = std::make_shared<body>();
-	data->type = t;
-	data->int_value = v;
+	this->set(t, v);
 }
 value::value(type_data* t, double v) {
-	data = std::make_shared<body>();
-	data->type = t;
-	data->real_value = v;
+	this->set(t, v);
 }
 value::value(type_data* t, wchar_t v) {
-	data = std::make_shared<body>();
-	data->type = t;
-	data->char_value = v;
+	this->set(t, v);
 }
 value::value(type_data* t, bool v) {
-	data = std::make_shared<body>();
-	data->type = t;
-	data->boolean_value = v;
+	this->set(t, v);
 }
 value::value(type_data* t, const std::wstring& v) {
-	data = std::make_shared<body>();
-	data->type = t;
-	for (wchar_t ch : v)
-		data->array_value.push_back(value(t->get_element(), ch));
+	std::vector<value> vec(v.size());
+	for (size_t i = 0; i < v.size(); ++i)
+		vec[i] = value(t->get_element(), v[i]);
+	this->set(t, vec);
 }
 
 value* value::set(type_data* t, int64_t v) {
-	data = std::make_shared<body>();
+	data = new body;
 	data->type = t;
 	data->int_value = v;
 	return this;
 }
 value* value::set(type_data* t, double v) {
-	data = std::make_shared<body>();
+	data = new body;
 	data->type = t;
 	data->real_value = v;
 	return this;
 }
 value* value::set(type_data* t, wchar_t v) {
-	data = std::make_shared<body>();
+	data = new body;
 	data->type = t;
 	data->char_value = v;
 	return this;
 }
 value* value::set(type_data* t, bool v) {
-	data = std::make_shared<body>();
+	data = new body;
 	data->type = t;
 	data->boolean_value = v;
 	return this;
 }
 value* value::set(type_data* t, std::vector<value>& v) {
-	data = std::make_shared<body>();
+	data = new body;
 	data->type = t;
 	data->array_value = v;
 	return this;
@@ -106,8 +98,10 @@ void value::append(type_data* t, const value& x) {
 }
 void value::concatenate(const value& x) {
 	unique();
-	if (data->type->get_element() == nullptr) data->type = x.data->type;
-	data->array_value.insert(array_get_end(), x.array_get_begin(), x.array_get_end());
+	if (data->type->get_element() == nullptr)
+		data->type = x.data->type;
+	data->array_value.insert(array_get_end(),
+		x.array_get_begin(), x.array_get_end());
 }
 
 void value::overwrite(const value& source) {
@@ -122,13 +116,13 @@ value value::new_from(const value& source) {
 	return res;
 }
 
-void value::unique() const {
+void value::unique() {
 	if (data == nullptr) {
-		data = std::make_shared<body>();
+		data = new body;
 		data->type = nullptr;
 	}
 	else if (!data.unique()) {
-		data = std::make_shared<body>(*data);
+		data = new body(*data);
 	}
 }
 

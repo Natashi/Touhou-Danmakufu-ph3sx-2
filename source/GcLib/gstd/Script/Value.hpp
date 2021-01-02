@@ -32,6 +32,23 @@ namespace gstd {
 	};
 
 	class value {
+	private:
+		struct body {
+			type_data* type = nullptr;
+			std::vector<value> array_value;
+
+			union {
+				double real_value = 0.0;
+				wchar_t char_value;
+				bool boolean_value;
+				int64_t int_value;
+			};
+		};
+		ref_count_ptr<body, false> data;
+	private:
+		inline void release() {
+			data = nullptr;
+		}
 	public:
 		value() : data(nullptr) {}
 		value(type_data* t, int64_t v);
@@ -52,7 +69,23 @@ namespace gstd {
 			return *this;
 		}
 
+		//--------------------------------------------------------------------------
+
 		bool has_data() const { return data != nullptr; }
+		type_data* get_type() const { return data ? data->type : nullptr; }
+
+		size_t length_as_array() const { return data->array_value.size(); }
+		const value& index_as_array(size_t i) const { return data->array_value[i]; }
+		value& index_as_array(size_t i) { return data->array_value[i]; }
+
+		std::vector<value>::iterator array_get_begin() const {
+			return data->array_value.begin();
+		}
+		std::vector<value>::iterator array_get_end() const {
+			return data->array_value.end();
+		}
+
+		//--------------------------------------------------------------------------
 
 		value* set(type_data* t, int64_t v);
 		value* set(type_data* t, double v);
@@ -63,64 +96,17 @@ namespace gstd {
 		void append(type_data* t, const value& x);
 		void concatenate(const value& x);
 
+		void overwrite(const value& source);	//Overwrite the pointer's value
+		static value new_from(const value& source);
+
+		void unique();
+
+		//--------------------------------------------------------------------------
+
 		int64_t as_int() const;
 		double as_real() const;
 		wchar_t as_char() const;
 		bool as_boolean() const;
 		std::wstring as_string() const;
-
-		/*
-		size_t length_as_array() const {
-			return data ? data->array_value.size() : 0U;
-		}
-		const value& index_as_array(size_t i) const {
-			return data ? data->array_value[i] : value::val_empty;
-		}
-		value& index_as_array(size_t i) {
-			return data ? data->array_value[i] : value::val_empty;
-		}
-		type_data* get_type() const {
-			return data ? data->type : nullptr;
-		}
-		std::vector<value>::iterator array_get_begin() {
-			return data ? data->array_value.begin() : std::vector<value>::iterator();
-		}
-		std::vector<value>::iterator array_get_end() {
-			return data ? data->array_value.end() : std::vector<value>::iterator();
-		}
-		*/
-		size_t length_as_array() const { return data->array_value.size(); }
-		const value& index_as_array(size_t i) const { return data->array_value[i]; }
-		value& index_as_array(size_t i) { return data->array_value[i]; }
-		type_data* get_type() const { return data ? data->type : nullptr; }
-
-		std::vector<value>::iterator array_get_begin() const {
-			return data->array_value.begin();
-		}
-		std::vector<value>::iterator array_get_end() const {
-			return data->array_value.end();
-		}
-
-		void overwrite(const value& source);	//Overwrite the pointer's value
-		static value new_from(const value& source);
-
-		void unique() const;
-	private:
-		inline void release() {
-			if (data) data.reset();
-		}
-
-		struct body {
-			type_data* type = nullptr;
-			std::vector<value> array_value;
-
-			union {
-				double real_value = 0.0;
-				wchar_t char_value;
-				bool boolean_value;
-				int64_t int_value;
-			};
-		};
-		mutable std::shared_ptr<body> data;
 	};
 }

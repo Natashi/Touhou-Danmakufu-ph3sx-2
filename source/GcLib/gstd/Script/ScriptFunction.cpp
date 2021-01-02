@@ -507,7 +507,7 @@ namespace gstd {
 		if (!_index_check(machine, argv->get_type(), argv->length_as_array(), index))
 			return nullptr;
 
-		return &(argv->index_as_array(index));
+		return &argv->index_as_array(index);
 	}
 
 	value BaseFunction::slice(script_machine* machine, int argc, const value* argv) {

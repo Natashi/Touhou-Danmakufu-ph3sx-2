@@ -743,7 +743,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_index_array:
 			{
 				value* var = &current->stack.back() - 1;
-				const value* res = BaseFunction::index(this, 2, var);
+				value* res = (value*)BaseFunction::index(this, 2, var);
 				if (res == nullptr) break;
 				if (c->arg0)
 					res->unique();
