@@ -213,6 +213,7 @@ template<typename T> static constexpr inline void ptr_release(T*& ptr) {
 	if (ptr) ptr->Release();
 	ptr = nullptr;
 }
+using std::unique_ptr;
 using std::shared_ptr;
 using std::weak_ptr;
 
