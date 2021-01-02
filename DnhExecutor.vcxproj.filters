@@ -191,9 +191,6 @@
     <ClCompile Include="source\GcLib\gstd\ScriptClient.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
-    <ClCompile Include="source\GcLib\directx\ElfreinaMesh.cpp">
-      <Filter>source\GcLib\directx\Mesh</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\directx\MetasequoiaMesh.cpp">
       <Filter>source\GcLib\directx\Mesh</Filter>
     </ClCompile>
@@ -402,9 +399,6 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\ScriptClient.hpp">
       <Filter>source\GcLib\gstd</Filter>
-    </ClInclude>
-    <ClInclude Include="source\GcLib\directx\ElfreinaMesh.hpp">
-      <Filter>source\GcLib\directx\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\MetasequoiaMesh.hpp">
       <Filter>source\GcLib\directx\Mesh</Filter>
