@@ -3,9 +3,9 @@
 #include "StgCommon.hpp"
 #include "StgSystem.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgMoveObject
-**********************************************************/
+//*******************************************************************
 StgMoveObject::StgMoveObject(StgStageController* stageController) {
 	posX_ = 0;
 	posY_ = 0;
@@ -23,14 +23,11 @@ void StgMoveObject::_Move() {
 
 	if (mapPattern_.size() > 0) {
 		auto itr = mapPattern_.begin();
-		int frame = itr->first;
-		if (frame == framePattern_) {
-			std::list<shared_ptr<StgMovePattern>>& patternList = itr->second;
-			while (patternList.size() > 0) {
-				_AttachReservedPattern(patternList.front());
-				patternList.pop_front();
-			}
-			mapPattern_.erase(itr);
+		while (framePattern_ >= itr->first) {
+			for (auto& ipPattern : itr->second)
+				_AttachReservedPattern(ipPattern);
+			itr = mapPattern_.erase(itr);
+			if (mapPattern_.size() == 0) return;
 		}
 	}
 
@@ -91,10 +88,9 @@ void StgMoveObject::SetSpeedY(double speedY) {
 	pattern->SetSpeedY(speedY);
 }
 
-/**********************************************************
+//*******************************************************************
 //StgMovePattern
-**********************************************************/
-//StgMovePattern
+//*******************************************************************
 StgMovePattern::StgMovePattern(StgMoveObject* target) {
 	target_ = target;
 	idShotData_ = NO_CHANGE;
@@ -110,7 +106,9 @@ shared_ptr<StgMoveObject> StgMovePattern::_GetMoveObject(int id) {
 	return std::dynamic_pointer_cast<StgMoveObject>(base);
 }
 
+//*******************************************************************
 //StgMovePattern_Angle
+//*******************************************************************
 StgMovePattern_Angle::StgMovePattern_Angle(StgMoveObject* target) : StgMovePattern(target) {
 	typeMove_ = TYPE_ANGLE;
 	speed_ = 0;
@@ -134,14 +132,8 @@ void StgMovePattern_Angle::Move() {
 		SetDirectionAngle(angle + angularVelocity_);
 	}
 
-	{
-		__m128d v1 = Vectorize::MulAdd(
-			Vectorize::Replicate(speed_),
-			Vectorize::Set(c_, s_),
-			Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()));
-		target_->SetPositionX(v1.m128d_f64[0]);
-		target_->SetPositionY(v1.m128d_f64[1]);
-	}
+	target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
+	target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
 
 	++frameWork_;
 }
@@ -230,7 +222,9 @@ void StgMovePattern_Angle::SetDirectionAngle(double angle) {
 	angDirection_ = angle;
 }
 
+//*******************************************************************
 //StgMovePattern_XY
+//*******************************************************************
 StgMovePattern_XY::StgMovePattern_XY(StgMoveObject* target) : StgMovePattern(target) {
 	typeMove_ = TYPE_XY;
 	c_ = 0;
@@ -256,13 +250,8 @@ void StgMovePattern_XY::Move() {
 			s_ = std::max(s_, maxSpeedY_);
 	}
 
-	{
-		__m128d v1 = Vectorize::Add(
-			Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()),
-			Vectorize::Set(c_, s_));
-		target_->SetPositionX(v1.m128d_f64[0]);
-		target_->SetPositionY(v1.m128d_f64[1]);
-	}
+	target_->SetPositionX(target_->GetPositionX() + c_);
+	target_->SetPositionY(target_->GetPositionY() + s_);
 
 	++frameWork_;
 }
@@ -324,7 +313,9 @@ void StgMovePattern_XY::_Activate(StgMovePattern* _src) {
 	}
 }
 
+//*******************************************************************
 //StgMovePattern_Line
+//*******************************************************************
 StgMovePattern_Line::StgMovePattern_Line(StgMoveObject* target) : StgMovePattern(target) {
 	typeMove_ = TYPE_LINE;
 	typeLine_ = TYPE_NONE;
@@ -336,12 +327,8 @@ StgMovePattern_Line::StgMovePattern_Line(StgMoveObject* target) : StgMovePattern
 }
 void StgMovePattern_Line::Move() {
 	if (frameWork_ < maxFrame_) {
-		__m128d v1 = Vectorize::MulAdd(
-			Vectorize::Replicate(speed_),
-			Vectorize::Set(c_, s_),
-			Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()));
-		target_->SetPositionX(v1.m128d_f64[0]);
-		target_->SetPositionY(v1.m128d_f64[1]);
+		target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
+		target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
 	}
 	else {
 		speed_ = 0;
@@ -460,14 +447,8 @@ void StgMovePattern_Line_Weight::Move() {
 		if (speed_ > maxSpeed_)
 			speed_ = maxSpeed_;
 
-		{
-			__m128d v1 = Vectorize::MulAdd(
-				Vectorize::Replicate(speed_),
-				Vectorize::Set(c_, s_),
-				Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()));
-			target_->SetPositionX(v1.m128d_f64[0]);
-			target_->SetPositionY(v1.m128d_f64[1]);
-		}
+		target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
+		target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
 
 		dist_ -= speed_;
 	}
