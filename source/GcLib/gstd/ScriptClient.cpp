@@ -24,16 +24,16 @@ void ScriptEngineData::SetSource(std::vector<char>& source) {
 //ScriptEngineCache
 **********************************************************/
 ScriptEngineCache::ScriptEngineCache() {
-
 }
-ScriptEngineCache::~ScriptEngineCache() {}
+ScriptEngineCache::~ScriptEngineCache() {
+}
 void ScriptEngineCache::Clear() {
 	cache_.clear();
 }
-void ScriptEngineCache::AddCache(const std::wstring& name, shared_ptr<ScriptEngineData> data) {
+void ScriptEngineCache::AddCache(const std::wstring& name, ref_count_ptr<ScriptEngineData>& data) {
 	cache_[name] = data;
 }
-shared_ptr<ScriptEngineData> ScriptEngineCache::GetCache(const std::wstring& name) {
+ref_count_ptr<ScriptEngineData> ScriptEngineCache::GetCache(const std::wstring& name) {
 	auto itrFind = cache_.find(name);
 	if (cache_.find(name) == cache_.end()) return nullptr;
 	return itrFind->second;
@@ -207,19 +207,16 @@ static const std::vector<constant> commonConstant = {
 	constant("M_1_PHI", GM_1_PHI),
 };
 
+script_type_manager* ScriptClientBase::pTypeManager_ = new script_type_manager();
 ScriptClientBase::ScriptClientBase() {
 	bError_ = false;
 
-	engine_.reset(new ScriptEngineData());
+	engine_ = new ScriptEngineData();
 	machine_ = nullptr;
 
 	mainThreadID_ = -1;
 	idScript_ = ID_SCRIPT_FREE;
 	valueRes_ = value();
-
-	pTypeManager_ = script_type_manager::get_instance();
-	if (pTypeManager_ == nullptr)
-		pTypeManager_ = new script_type_manager();
 
 	commonDataManager_.reset(new ScriptCommonDataManager());
 
@@ -237,8 +234,6 @@ ScriptClientBase::ScriptClientBase() {
 	_AddConstant(&commonConstant);
 }
 ScriptClientBase::~ScriptClientBase() {
-	ptr_delete(machine_);
-	engine_ = nullptr;
 }
 
 void ScriptClientBase::_AddFunction(const char* name, callback f, size_t arguments) {
@@ -338,7 +333,6 @@ std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 	return res;
 }
 std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
-	//TODO とりあえず実装
 	std::wstring pathSource = engine_->GetPath();
 	std::vector<char> res = source;
 	FileManager* fileManager = FileManager::GetBase();
@@ -363,15 +357,13 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
 			//mapTokens.push_back(tok);
-			if (tok.GetType() == Token::Type::TK_EOF)//Eofの識別子が来たらファイルの調査終了
-			{
+			if (tok.GetType() == Token::Type::TK_EOF) {
 				break;
 			}
 			else if (tok.GetType() == Token::Type::TK_SHARP) {
-				size_t ptrPosBeforeInclude = scanner.GetCurrentPointer() - 1;
+				size_t posBeforeInclude = scanner.GetCurrentPointer() - 1;
 				if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE)
-					ptrPosBeforeInclude--;
-				std::vector<char>::iterator posBeforeInclude = res.begin() + ptrPosBeforeInclude;
+					posBeforeInclude--;
 
 				tok = scanner.Next();
 				if (tok.GetElement() != L"include") continue;
@@ -396,16 +388,15 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 					//bNeedNewLine = true;
 				}
 
-				size_t ptrPosAfterInclude = scanner.GetCurrentPointer();
-				std::vector<char>::iterator posAfterInclude = res.begin() + scanner.GetCurrentPointer();
+				size_t posAfterInclude = scanner.GetCurrentPointer();
 				scanner.SetCurrentPointer(posCurrent);
 
-				// "../"から始まっていたら、前に"./"をつける。
-				if (wPath.find(L"../") == 0 || wPath.find(L"..\\") == 0) {
+				//Transform a "../" or a "..\" at the start into a "./"
+				if (wPath._Starts_with(L"../") || wPath._Starts_with(L"..\\"))
 					wPath = L"./" + wPath;
-				}
 
-				if (wPath.find(L".\\") != std::wstring::npos || wPath.find(L"./") != std::wstring::npos) {	//".\"展開
+				//Expand the relative "./" into the full path
+				if (wPath.find(L".\\") != std::wstring::npos || wPath.find(L"./") != std::wstring::npos) {
 					int line = scanner.GetCurrentLine();
 					const std::wstring& linePath = mapLine->GetPath(line);
 					std::wstring tDir = PathProperty::GetFileDirectory(linePath);
@@ -416,97 +407,98 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 				wPath = PathProperty::GetUnique(wPath);
 
 				bool bAlreadyIncluded = setReadPath.find(wPath) != setReadPath.end();
-				if (bAlreadyIncluded) {//すでに読み込まれていた
+				if (bAlreadyIncluded) {
 					Logger::WriteTop(StringUtility::Format(L"Scanner: File already included, skipping. (%s)", wPath.c_str()));
-					res.erase(posBeforeInclude, posAfterInclude);
+					res.erase(res.begin() + posBeforeInclude, res.begin() + posAfterInclude);
 					break;
 				}
 
 				std::vector<char> placement;
-				shared_ptr<FileReader> reader;
-				reader = fileManager->GetFileReader(wPath);
-				if (reader == nullptr || !reader->Open()) {
-					int line = scanner.GetCurrentLine();
-					source = res;
-					engine_->SetSource(source);
+				{
+					shared_ptr<FileReader> reader = fileManager->GetFileReader(wPath);
+					if (reader == nullptr || !reader->Open()) {
+						int line = scanner.GetCurrentLine();
+						source = res;
+						engine_->SetSource(source);
 
-					std::wstring error = StringUtility::Format(L"Include file is not found. [%s]\r\n", wPath.c_str());
-					_RaiseError(line, error);
-				}
+						std::wstring error = StringUtility::Format(L"Include file is not found. [%s]\r\n", wPath.c_str());
+						_RaiseError(line, error);
+					}
 
-				//Detect target encoding
-				size_t targetBomSize = 0;
-				Encoding::Type includeEncoding = Encoding::UTF8;
-				if (reader->GetFileSize() >= 2) {
-					byte data[3];
-					reader->Read(data, 3);
+					//Detect target encoding
+					size_t targetBomSize = 0;
+					Encoding::Type includeEncoding = Encoding::UTF8;
+					if (reader->GetFileSize() >= 2) {
+						byte data[3];
+						reader->Read(data, 3);
 
-					includeEncoding = Encoding::Detect(data, reader->GetFileSize());
-					targetBomSize = Encoding::GetBomSize(includeEncoding);
+						includeEncoding = Encoding::Detect(data, reader->GetFileSize());
+						targetBomSize = Encoding::GetBomSize(includeEncoding);
 
-					reader->SetFilePointerBegin();
-				}
+						reader->SetFilePointerBegin();
+					}
 
-				if (includeEncoding == Encoding::UTF16LE || includeEncoding == Encoding::UTF16BE) {
-					//Including UTF-16
+					if (includeEncoding == Encoding::UTF16LE || includeEncoding == Encoding::UTF16BE) {
+						//Including UTF-16
 
-					reader->Seek(targetBomSize);
-					placement.resize(reader->GetFileSize() - targetBomSize); //- BOM size
-					reader->Read(&placement[0], placement.size());
+						reader->Seek(targetBomSize);
+						placement.resize(reader->GetFileSize() - targetBomSize); //- BOM size
+						reader->Read(&placement[0], placement.size());
 
-					if (placement.size() > 0U) {
-						//Convert the including file to UTF-8
-						if (mainEncoding == Encoding::UTF8 || mainEncoding == Encoding::UTF8BOM) {
-							if (includeEncoding == Encoding::UTF16BE) {
-								for (auto itr = placement.begin(); itr != placement.end(); itr += 2) {
-									wchar_t& wch = (wchar_t&)*itr;
-									wch = (wch >> 8) | (wch << 8);
+						if (placement.size() > 0U) {
+							//Convert the including file to UTF-8
+							if (mainEncoding == Encoding::UTF8 || mainEncoding == Encoding::UTF8BOM) {
+								if (includeEncoding == Encoding::UTF16BE) {
+									for (auto itr = placement.begin(); itr != placement.end(); itr += 2) {
+										wchar_t& wch = (wchar_t&)*itr;
+										wch = (wch >> 8) | (wch << 8);
+									}
 								}
-							}
 
-							std::vector<char> mbres;
-							size_t countMbRes = StringUtility::ConvertWideToMulti((wchar_t*)placement.data(),
-								placement.size() / 2U, mbres, CP_UTF8);
-							if (countMbRes == 0) {
-								std::wstring error = StringUtility::Format(L"Error reading include file. "
-									"(%s -> UTF-8) [%s]\r\n",
-									includeEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
-								_RaiseError(scanner.GetCurrentLine(), error);
-							}
+								std::vector<char> mbres;
+								size_t countMbRes = StringUtility::ConvertWideToMulti((wchar_t*)placement.data(),
+									placement.size() / 2U, mbres, CP_UTF8);
+								if (countMbRes == 0) {
+									std::wstring error = StringUtility::Format(L"Error reading include file. "
+										"(%s -> UTF-8) [%s]\r\n",
+										includeEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
+									_RaiseError(scanner.GetCurrentLine(), error);
+								}
 
-							includeEncoding = mainEncoding;
-							placement = mbres;
+								includeEncoding = mainEncoding;
+								placement = mbres;
+							}
 						}
 					}
-				}
-				else {
-					//Including UTF-8
+					else {
+						//Including UTF-8
 
-					reader->Seek(targetBomSize);
-					placement.resize(reader->GetFileSize() - targetBomSize);
-					reader->Read(&placement[0], placement.size());
+						reader->Seek(targetBomSize);
+						placement.resize(reader->GetFileSize() - targetBomSize);
+						reader->Read(&placement[0], placement.size());
 
-					if (placement.size() > 0U) {
-						//Convert the include file to UTF-16 if it's in UTF-8
-						if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE) {
-							size_t placementSize = placement.size();
+						if (placement.size() > 0U) {
+							//Convert the include file to UTF-16 if it's in UTF-8
+							if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE) {
+								size_t placementSize = placement.size();
 
-							std::vector<char> wplacement;
-							size_t countWRes = StringUtility::ConvertMultiToWide(placement.data(),
-								placementSize, wplacement, CP_UTF8);
-							if (countWRes == 0) {
-								std::wstring error = StringUtility::Format(L"Error reading include file. "
-									"(UTF-8 -> %s) [%s]\r\n",
-									mainEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
-								_RaiseError(scanner.GetCurrentLine(), error);
-							}
+								std::vector<char> wplacement;
+								size_t countWRes = StringUtility::ConvertMultiToWide(placement.data(),
+									placementSize, wplacement, CP_UTF8);
+								if (countWRes == 0) {
+									std::wstring error = StringUtility::Format(L"Error reading include file. "
+										"(UTF-8 -> %s) [%s]\r\n",
+										mainEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
+									_RaiseError(scanner.GetCurrentLine(), error);
+								}
 
-							placement = wplacement;
+								placement = wplacement;
 
-							//Swap bytes for UTF-16 BE
-							if (mainEncoding == Encoding::UTF16BE) {
-								for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
-									std::swap(*wItr, *(wItr + 1));
+								//Swap bytes for UTF-16 BE
+								if (mainEncoding == Encoding::UTF16BE) {
+									for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
+										std::swap(*wItr, *(wItr + 1));
+									}
 								}
 							}
 						}
@@ -518,9 +510,9 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 
 				{
 					std::vector<char> newSource;
-					newSource.insert(newSource.begin(), res.begin(), posBeforeInclude);
+					newSource.insert(newSource.begin(), res.begin(), res.begin() + posBeforeInclude);
 					newSource.insert(newSource.end(), placement.begin(), placement.end());
-					newSource.insert(newSource.end(), posAfterInclude, res.end());
+					newSource.insert(newSource.end(), res.begin() + posAfterInclude, res.end());
 
 					res = newSource;
 				}
@@ -610,20 +602,6 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 	}
 
 	/*
-	if (true) {
-		std::wstring pathTest = PathProperty::GetModuleDirectory() +
-			StringUtility::Format(L"temp/script_incl_%s", PathProperty::GetFileName(pathSource).c_str());
-		pathTest = PathProperty::Canonicalize(pathTest);
-		pathTest = PathProperty::ReplaceYenToSlash(pathTest);
-
-		File file(pathTest);
-		File::CreateFileDirectory(pathTest);
-		file.Open(File::WRITEONLY);
-		file.Write(tmpCh, sizeBuf);
-		file.Close();
-	}
-	*/
-	/*
 	{
 		std::wstring pathTest = PathProperty::GetModuleDirectory() + StringUtility::Format(L"temp\\script_token_%s.txt", PathProperty::GetFileName(pathSource).c_str());
 		File file(pathTest);
@@ -704,13 +682,9 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 	return res;
 }
 bool ScriptClientBase::_CreateEngine() {
-	ptr_delete(machine_);
-
-	std::vector<char>& source = engine_->GetSource();
-
-	ref_count_ptr<script_engine> engine = new script_engine(source, &func_, &const_);
+	ref_count_ptr<script_engine> engine = new script_engine(engine_->GetSource(), &func_, &const_);
 	engine_->SetEngine(engine);
-	return true;
+	return !engine->get_error();
 }
 bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 	path = PathProperty::GetUnique(path);
@@ -747,8 +721,8 @@ void ScriptClientBase::Compile() {
 		std::vector<char> source = _Include(engine_->GetSource());
 		engine_->SetSource(source);
 
-		_CreateEngine();
-		if (engine_->GetEngine()->get_error()) {
+		bool bCreateSuccess = _CreateEngine();
+		if (!bCreateSuccess) {
 			bError_ = true;
 			_RaiseErrorFromEngine();
 		}
@@ -757,8 +731,7 @@ void ScriptClientBase::Compile() {
 		}
 	}
 
-	ptr_delete(machine_);
-	machine_ = new script_machine(engine_->GetEngine().get());
+	machine_.reset(new script_machine(engine_->GetEngine().get()));
 	if (machine_->get_error()) {
 		bError_ = true;
 		_RaiseErrorFromMachine();
@@ -806,8 +779,10 @@ bool ScriptClientBase::Run(std::map<std::string, script_block*>::iterator target
 }
 bool ScriptClientBase::IsEventExists(const std::string& name, std::map<std::string, script_block*>::iterator& res) {
 	if (bError_) {
-		if (machine_ && machine_->get_error()) _RaiseErrorFromMachine();
-		else if (engine_->GetEngine()->get_error()) _RaiseErrorFromEngine();
+		if (machine_ && machine_->get_error())
+			_RaiseErrorFromMachine();
+		else if (engine_->GetEngine()->get_error())
+			_RaiseErrorFromEngine();
 		return false;
 	}
 	return machine_->has_event(name, res);
@@ -870,7 +845,7 @@ value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 		std::vector<value> res_arr;
 		res_arr.resize(list.size());
 		for (size_t iVal = 0U; iVal < list.size(); ++iVal) {
-			BaseFunction::_append_check_no_convert(machine_, type_array, list[iVal].get_type());
+			BaseFunction::_append_check_no_convert(machine_.get(), type_array, list[iVal].get_type());
 			res_arr[iVal] = list[iVal];
 		}
 
@@ -913,7 +888,7 @@ bool ScriptClientBase::IsIntArrayValue(value& v) {
 	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_int_array_type();
 }
-void ScriptClientBase::IsMatrix(script_machine*& machine, const value& v) {
+void ScriptClientBase::IsMatrix(script_machine* machine, const value& v) {
 	type_data* typeMatrix = script_type_manager::get_real_array_type();
 	if (v.get_type() != typeMatrix) {
 		std::string err = "Invalid type, only matrices of real numbers may be used.";
@@ -924,7 +899,7 @@ void ScriptClientBase::IsMatrix(script_machine*& machine, const value& v) {
 		machine->raise_error(err);
 	}
 }
-void ScriptClientBase::IsVector(script_machine*& machine, const value& v, size_t count) {
+void ScriptClientBase::IsVector(script_machine* machine, const value& v, size_t count) {
 	type_data* typeVector = script_type_manager::get_real_array_type();
 	if (v.get_type() != typeVector) {
 		std::string err = "Vector element must be real value.";

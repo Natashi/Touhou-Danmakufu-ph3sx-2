@@ -25,8 +25,8 @@ public:
 		TASK_PRI_RENDER = 4,
 	};
 protected:
-	shared_ptr<StgSystemInformation> infoSystem_;
-	shared_ptr<ScriptEngineCache> scriptEngineCache_;
+	ref_count_ptr<StgSystemInformation> infoSystem_;
+	ref_count_ptr<ScriptEngineCache> scriptEngineCache_;
 	shared_ptr<ScriptCommonDataManager> commonDataManager_;
 
 	shared_ptr<StgEndScene> endScene_;
@@ -35,7 +35,7 @@ protected:
 	shared_ptr<StgStageController> stageController_;
 	shared_ptr<StgPackageController> packageController_;
 
-	shared_ptr<StgControlScriptInformation> infoControlScript_;
+	ref_count_ptr<StgControlScriptInformation> infoControlScript_;
 
 	virtual void DoEnd() = 0;
 	virtual void DoRetry() = 0;
@@ -44,7 +44,7 @@ public:
 	StgSystemController();
 	~StgSystemController();
 
-	void Initialize(shared_ptr<StgSystemInformation> infoSystem);
+	void Initialize(ref_count_ptr<StgSystemInformation> infoSystem);
 	void Start(ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay);
 
 	void Work();
@@ -57,12 +57,14 @@ public:
 
 	static StgSystemController* GetBase() { return base_; }
 
-	shared_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
+	ref_count_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
+
 	shared_ptr<StgStageController> GetStageController() { return stageController_; }
 	StgPackageController* GetPackageController() { return packageController_.get(); }
-	shared_ptr<StgControlScriptInformation> GetControlScriptInformation() { return infoControlScript_; }
 
-	shared_ptr<ScriptEngineCache> GetScriptEngineCache() { return scriptEngineCache_; }
+	ref_count_ptr<StgControlScriptInformation> GetControlScriptInformation() { return infoControlScript_; }
+
+	ref_count_ptr<ScriptEngineCache> GetScriptEngineCache() { return scriptEngineCache_; }
 	shared_ptr<ScriptCommonDataManager> GetCommonDataManager() { return commonDataManager_; }
 
 	void StartStgScene(ref_count_ptr<StgStageInformation> infoStage, ref_count_ptr<ReplayInformation::StageData> replayStageData);

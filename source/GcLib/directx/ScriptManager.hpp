@@ -16,8 +16,10 @@ namespace directx {
 			ID_INVALID = -1,
 		};
 	protected:
+		static std::atomic<int64_t> idScript_;
+
 		gstd::CriticalSection lock_;
-		static int64_t idScript_;
+		
 		bool bHasCloseScriptWork_;
 
 		std::wstring error_;
@@ -40,7 +42,7 @@ namespace directx {
 		virtual bool IsError() { return error_ != L""; }
 
 		int GetMainThreadID() { return mainThreadID_; }
-		int64_t IssueScriptID() { { gstd::Lock lock(lock_); idScript_++; return idScript_; } }
+		int64_t IssueScriptID() { return ++idScript_; }
 
 		std::map<int64_t, shared_ptr<ManagedScript>>& GetMapScriptLoad() { return mapScriptLoad_; }
 		std::list<shared_ptr<ManagedScript>>& GetRunningScriptList() { return listScriptRun_; }
@@ -56,6 +58,11 @@ namespace directx {
 		int IsHasCloseScliptWork() { return bHasCloseScriptWork_; }
 		size_t GetAllScriptThreadCount();
 		void TerminateScriptAll(const std::wstring& message);
+
+		void OrphanAllScripts() { 
+			mapScriptLoad_.clear();
+			listScriptRun_.clear();
+		}
 
 		int64_t LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script);
 		shared_ptr<ManagedScript> LoadScript(const std::wstring& path, int type);
@@ -79,13 +86,13 @@ namespace directx {
 		ManagedScriptParameter() {}
 		virtual ~ManagedScriptParameter() {}
 	};
+
 	class ManagedScript : public DxScript, public gstd::FileManager::LoadObject {
 		friend ScriptManager;
 	public:
 		enum {
 			TYPE_ALL = -1,
 		};
-
 	protected:
 		ScriptManager* scriptManager_;
 

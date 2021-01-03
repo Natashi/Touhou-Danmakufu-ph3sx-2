@@ -16,13 +16,13 @@ StgSystemController::StgSystemController() {
 }
 StgSystemController::~StgSystemController() {
 }
-void StgSystemController::Initialize(shared_ptr<StgSystemInformation> infoSystem) {
+void StgSystemController::Initialize(ref_count_ptr<StgSystemInformation> infoSystem) {
 	base_ = this;
 
 	infoSystem_ = infoSystem;
 	commonDataManager_.reset(new ScriptCommonDataManager());
-	scriptEngineCache_.reset(new ScriptEngineCache());
-	infoControlScript_.reset(new StgControlScriptInformation());
+	scriptEngineCache_ = new ScriptEngineCache();
+	infoControlScript_ = new StgControlScriptInformation();
 }
 void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay) {
 	//DirectX
@@ -553,6 +553,8 @@ void StgSystemController::_ControlScene() {
 			}
 			else
 				TransStgEndScene();
+
+			stageController_ = nullptr;
 		}
 		break;
 	}

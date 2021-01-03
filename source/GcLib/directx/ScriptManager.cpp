@@ -8,7 +8,7 @@ using namespace directx;
 /**********************************************************
 //ScriptManager
 **********************************************************/
-int64_t ScriptManager::idScript_ = 0;
+std::atomic<int64_t> ScriptManager::idScript_ = 0;
 ScriptManager::ScriptManager() {
 	mainThreadID_ = GetCurrentThreadId();
 
@@ -236,12 +236,7 @@ int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedS
 	return res;
 }
 int64_t ScriptManager::LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script) {
-	int64_t res = 0;
-	{
-		Lock lock(lock_);
-		res = _LoadScript(path, script);
-		mapScriptLoad_[res] = script;
-	}
+	int64_t res = _LoadScript(path, script);
 	return res;
 }
 shared_ptr<ManagedScript> ScriptManager::LoadScript(const std::wstring& path, int type) {

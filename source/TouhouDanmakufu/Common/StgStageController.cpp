@@ -18,7 +18,10 @@ StgStageController::StgStageController(StgSystemController* systemController) {
 }
 StgStageController::~StgStageController() {
 	objectManagerMain_ = nullptr;
-	scriptManager_ = nullptr;
+	if (scriptManager_) {
+		scriptManager_->OrphanAllScripts();
+		scriptManager_ = nullptr;
+	}
 	ptr_delete(enemyManager_);
 	ptr_delete(shotManager_);
 	ptr_delete(itemManager_);
@@ -312,7 +315,7 @@ void StgStageController::_SetupReplayTargetCommonDataArea(int64_t idScript) {
 
 void StgStageController::Work() {
 	EDirectInput* input = EDirectInput::GetInstance();
-	shared_ptr<StgSystemInformation>& infoSystem = systemController_->GetSystemInformation();
+	ref_count_ptr<StgSystemInformation>& infoSystem = systemController_->GetSystemInformation();
 	bool bPackageMode = infoSystem->IsPackageMode();
 
 	bool bPermitRetryKey = !input->IsTargetKeyCode(DIK_BACK);

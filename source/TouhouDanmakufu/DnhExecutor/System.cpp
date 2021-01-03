@@ -140,7 +140,7 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 
 	try {
 		//STGシーン初期化
-		shared_ptr<StgSystemInformation> infoStgSystem(new StgSystemInformation());
+		ref_count_ptr<StgSystemInformation> infoStgSystem(new StgSystemInformation());
 		infoStgSystem->SetMainScriptInformation(infoMain);
 		shared_ptr<StgSystemController> task(new EStgSystemController());
 
@@ -229,7 +229,7 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 
 	try {
 		//STGシーン初期化
-		shared_ptr<StgSystemInformation> infoStgSystem(new StgSystemInformation());
+		ref_count_ptr<StgSystemInformation> infoStgSystem(new StgSystemInformation());
 		infoStgSystem->SetMainScriptInformation(infoMain);
 
 		shared_ptr<StgSystemController> task = nullptr;

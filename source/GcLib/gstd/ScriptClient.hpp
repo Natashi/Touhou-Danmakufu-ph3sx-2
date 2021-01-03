@@ -19,23 +19,28 @@ namespace gstd {
 	class ScriptEngineData {
 	protected:
 		std::wstring path_;
+
 		Encoding::Type encoding_;
 		std::vector<char> source_;
-		gstd::ref_count_ptr<script_engine> engine_;
-		gstd::ref_count_ptr<ScriptFileLineMap> mapLine_;
+
+		ref_count_ptr<script_engine> engine_;
+		ref_count_ptr<ScriptFileLineMap> mapLine_;
 	public:
 		ScriptEngineData();
 		virtual ~ScriptEngineData();
 
 		void SetPath(const std::wstring& path) { path_ = path; }
 		std::wstring& GetPath() { return path_; }
+
 		void SetSource(std::vector<char>& source);
 		std::vector<char>& GetSource() { return source_; }
 		Encoding::Type GetEncoding() { return encoding_; }
-		void SetEngine(gstd::ref_count_ptr<script_engine> engine) { engine_ = engine; }
-		gstd::ref_count_ptr<script_engine> GetEngine() { return engine_; }
-		gstd::ref_count_ptr<ScriptFileLineMap> GetScriptFileLineMap() { return mapLine_; }
-		void SetScriptFileLineMap(gstd::ref_count_ptr<ScriptFileLineMap> mapLine) { mapLine_ = mapLine; }
+
+		void SetEngine(ref_count_ptr<script_engine>& engine) { engine_ = engine; }
+		ref_count_ptr<script_engine> GetEngine() { return engine_; }
+
+		ref_count_ptr<ScriptFileLineMap> GetScriptFileLineMap() { return mapLine_; }
+		void SetScriptFileLineMap(ref_count_ptr<ScriptFileLineMap>& mapLine) { mapLine_ = mapLine; }
 	};
 
 	/**********************************************************
@@ -43,14 +48,15 @@ namespace gstd {
 	**********************************************************/
 	class ScriptEngineCache {
 	protected:
-		std::map<std::wstring, shared_ptr<ScriptEngineData>> cache_;
+		std::map<std::wstring, ref_count_ptr<ScriptEngineData>> cache_;
 	public:
 		ScriptEngineCache();
 		virtual ~ScriptEngineCache();
 		void Clear();
 
-		void AddCache(const std::wstring& name, shared_ptr<ScriptEngineData> data);
-		shared_ptr<ScriptEngineData> GetCache(const std::wstring& name);
+		void AddCache(const std::wstring& name, ref_count_ptr<ScriptEngineData>& data);
+		ref_count_ptr<ScriptEngineData> GetCache(const std::wstring& name);
+
 		bool IsExists(const std::wstring& name);
 	};
 
@@ -58,54 +64,59 @@ namespace gstd {
 	//ScriptBase
 	**********************************************************/
 	class ScriptClientBase {
+		static script_type_manager* pTypeManager_;
 	public:
 		enum {
 			ID_SCRIPT_FREE = -1,
 		};
 	protected:
-		script_type_manager* pTypeManager_;
-
 		bool bError_;
-		shared_ptr<ScriptEngineCache> cache_;
-		shared_ptr<ScriptEngineData> engine_;
-		script_machine* machine_;
+
+		ref_count_ptr<ScriptEngineCache> cache_;
+		ref_count_ptr<ScriptEngineData> engine_;
+		unique_ptr<script_machine> machine_;
 
 		std::vector<gstd::function> func_;
 		std::vector<gstd::constant> const_;
 		shared_ptr<RandProvider> mt_;
 		shared_ptr<RandProvider> mtEffect_;
+
 		shared_ptr<ScriptCommonDataManager> commonDataManager_;
-		int mainThreadID_;
-		int64_t idScript_;
 
 		gstd::CriticalSection criticalSection_;
 
+		int mainThreadID_;
+		int64_t idScript_;
+
 		std::vector<gstd::value> listValueArg_;
 		gstd::value valueRes_;
-
+	protected:
 		void _AddFunction(const char* name, callback f, size_t arguments);
 		void _AddFunction(const std::vector<gstd::function>* f);
 		void _AddConstant(const std::vector<gstd::constant>* c);
+
 		void _RaiseErrorFromEngine();
 		void _RaiseErrorFromMachine();
 		void _RaiseError(int line, const std::wstring& message);
 		std::wstring _GetErrorLineSource(int line);
+
 		virtual std::vector<char> _Include(std::vector<char>& source);
 		virtual bool _CreateEngine();
+
 		std::wstring _ExtendPath(std::wstring path);
 	public:
 		ScriptClientBase();
 		virtual ~ScriptClientBase();
 
-		void SetScriptEngineCache(shared_ptr<ScriptEngineCache> cache) { cache_ = cache; }
+		static script_type_manager* GetDefaultScriptTypeManager() { return pTypeManager_; }
 
-		shared_ptr<ScriptEngineData> GetEngine() { return engine_; }
+		void SetScriptEngineCache(ref_count_ptr<ScriptEngineCache>& cache) { cache_ = cache; }
+
+		ref_count_ptr<ScriptEngineData> GetEngine() { return engine_; }
 
 		virtual bool SetSourceFromFile(std::wstring path);
 		virtual void SetSource(std::vector<char>& source);
 		virtual void SetSource(const std::string& source);
-
-		script_type_manager* GetDefaultScriptTypeManager() { return pTypeManager_; }
 
 		std::wstring& GetPath() { return engine_->GetPath(); }
 		void SetPath(const std::wstring& path) { engine_->SetPath(path); }
@@ -149,8 +160,8 @@ namespace gstd {
 		static bool IsRealArrayValue(value& v);
 		static bool IsIntArrayValue(value& v);
 
-		static void IsMatrix(script_machine*& machine, const value& v);
-		static void IsVector(script_machine*& machine, const value& v, size_t count);
+		static void IsMatrix(script_machine* machine, const value& v);
+		static void IsVector(script_machine* machine, const value& v, size_t count);
 
 		void CheckRunInMainThread();
 		ScriptCommonDataManager* GetCommonDataManager() { return commonDataManager_.get(); }
