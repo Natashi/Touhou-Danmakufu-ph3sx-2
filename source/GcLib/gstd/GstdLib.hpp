@@ -1,5 +1,4 @@
-#ifndef __GSTD_LIB__
-#define __GSTD_LIB__
+#pragma once
 
 #include "../pch.h"
 
@@ -24,4 +23,5 @@
 #include "ArchiveFile.hpp"
 #endif
 
-#endif
+using gstd::ref_unsync_ptr;
+using gstd::ref_unsync_weak_ptr;
