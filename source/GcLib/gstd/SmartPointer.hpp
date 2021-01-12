@@ -23,8 +23,14 @@ namespace gstd {
 			pPtr_ = (T*)other.pPtr_;
 		}
 
-		_ptr_ref_counter& operator=(_ptr_ref_counter& other) = default;
-		template<class U, bool ATOMIC> _ptr_ref_counter<T, ATOMIC>& operator=(_ptr_ref_counter<U, ATOMIC>& other) {
+		_ptr_ref_counter& operator=(_ptr_ref_counter<T, ATOMIC>& other) noexcept {
+			countRef_ = other.countRef_;
+			countWeak_ = other.countWeak_;
+			pPtr_ = other.pPtr_;
+			return *this;
+		}
+		template<class U, bool ATOMIC>
+		_ptr_ref_counter<T, ATOMIC>& operator=(_ptr_ref_counter<U, ATOMIC>& other) noexcept {
 			countRef_ = other.countRef_;
 			countWeak_ = other.countWeak_;
 			pPtr_ = (T*)other.pPtr_;
@@ -33,21 +39,21 @@ namespace gstd {
 
 		//----------------------------------------------------------------------
 
-		virtual void DeleteResource() noexcept {	//Deletes managed pointer
+		inline void DeleteResource() noexcept {	//Deletes managed pointer
 			if constexpr (std::is_array_v<T>)
 				ptr_delete_scalar(pPtr_);
 			else
 				ptr_delete(pPtr_);
 		}
-		virtual void DeleteSelf() noexcept {		//Deletes [this]
+		inline void DeleteSelf() noexcept {		//Deletes [this]
 			delete this;
 		}
 
-		void AddRef() noexcept {
+		inline void AddRef() noexcept {
 			if constexpr (ATOMIC) _MT_INCR(countRef_);
 			else ++countRef_;
 		}
-		void AddRefWeak() noexcept {
+		inline void AddRefWeak() noexcept {
 			if constexpr (ATOMIC) _MT_INCR(countWeak_);
 			else ++countWeak_;
 		}
@@ -91,12 +97,12 @@ namespace gstd {
 		_MyCounter* pInfo_ = nullptr;
 		T* pPtr_ = nullptr;
 	private:
-		void _AddRef() noexcept {
+		inline void _AddRef() noexcept {
 			if (pInfo_ == nullptr) return;
 			pInfo_->AddRef();
 			pInfo_->AddRefWeak();
 		}
-		void _RemoveRef() noexcept {
+		inline void _RemoveRef() noexcept {
 			if (pInfo_ == nullptr) return;
 			pInfo_->RemoveRef();
 			pInfo_->RemoveRefWeak();
@@ -104,15 +110,16 @@ namespace gstd {
 			pPtr_ = nullptr;
 		}
 
-		void _SetPointerNew(T* src) noexcept {
+		inline void _SetPointerNew(T* src) noexcept {
 			_RemoveRef();
 			if (src) {
 				pInfo_ = new _MyCounter(src);
 				pPtr_ = src;
+				_AddRef();
 			}
-			_AddRef();
 		}
-		template<class U> void _SetPointerFromInfo(_ptr_ref_counter<U, ATOMIC>* info, T* src) noexcept {
+		template<class U>
+		inline void _SetPointerFromInfo(_ptr_ref_counter<U, ATOMIC>* info, T* src) noexcept {
 			_RemoveRef();
 			pInfo_ = (_MyCounter*)info;
 			pPtr_ = src;
@@ -207,18 +214,19 @@ namespace gstd {
 		_MyCounter* pInfo_ = nullptr;
 		T* pPtr_ = nullptr;
 	private:
-		void _AddRef() noexcept {
+		inline void _AddRef() noexcept {
 			if (pInfo_ == nullptr) return;
 			pInfo_->AddRefWeak();
 		}
-		void _RemoveRef() noexcept {
+		inline void _RemoveRef() noexcept {
 			if (pInfo_ == nullptr) return;
 			pInfo_->RemoveRefWeak();
 			pInfo_ = nullptr;
 			pPtr_ = nullptr;
 		}
 
-		template<class U> void _SetPointerFromInfo(_ptr_ref_counter<U, ATOMIC>* info, T* src) noexcept {
+		template<class U>
+		inline void _SetPointerFromInfo(_ptr_ref_counter<U, ATOMIC>* info, T* src) noexcept {
 			_RemoveRef();
 			pInfo_ = (_MyCounter*)info;
 			pPtr_ = src;
