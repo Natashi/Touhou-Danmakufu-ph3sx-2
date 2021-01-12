@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_CONTROLSCRIPT__
-#define __TOUHOUDANMAKUFU_DNHSTG_CONTROLSCRIPT__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -10,8 +9,6 @@ class StgControlScript;
 //StgControlScriptManager
 **********************************************************/
 class StgControlScriptManager : public ScriptManager {
-protected:
-
 public:
 	StgControlScriptManager();
 	virtual ~StgControlScriptManager();
@@ -21,12 +18,12 @@ public:
 //StgControlScriptInformation
 **********************************************************/
 class StgControlScriptInformation {
-	std::vector<ref_count_ptr<ScriptInformation>> listFreePlayer_; //標準自機
-	ref_count_ptr<ReplayInformationManager> replayManager_; //リプレイ情報
-
+	std::vector<ref_count_ptr<ScriptInformation>> listFreePlayer_;
+	ref_count_ptr<ReplayInformationManager> replayManager_;
 public:
 	StgControlScriptInformation();
 	virtual ~StgControlScriptInformation();
+
 	void LoadFreePlayerList();
 	std::vector<ref_count_ptr<ScriptInformation>>& GetFreePlayerList() { return listFreePlayer_; }
 
@@ -41,7 +38,6 @@ class StgControlScript : public DnhScript {
 	friend StgControlScriptManager;
 public:
 	enum {
-		//イベント
 		EV_USER_COUNT = 100000,
 		EV_USER = 1000000,
 		EV_USER_SYSTEM = 2000000,
@@ -83,9 +79,7 @@ public:
 protected:
 	StgSystemController* systemController_;
 
-	//スクリプト情報のキャッシュ
 	std::map<std::wstring, ref_count_ptr<ScriptInformation>> mapScriptInfo_;
-
 public:
 	StgControlScript(StgSystemController* systemController);
 
@@ -165,7 +159,6 @@ public:
 	static gstd::value Func_SaveReplay(gstd::script_machine* machine, int argc, const gstd::value* argv);
 };
 
-
 /**********************************************************
 //ScriptInfoPanel
 **********************************************************/
@@ -195,10 +188,8 @@ protected:
 public:
 	ScriptInfoPanel();
 	~ScriptInfoPanel();
+
 	virtual void LocateParts();
 
 	virtual void Update(StgSystemController* systemController);
 };
-
-#endif
-

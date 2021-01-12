@@ -50,7 +50,7 @@ StgItemManager::~StgItemManager() {
 	ptr_delete(listItemData_);
 }
 void StgItemManager::Work() {
-	shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
+	ref_unsync_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
 	if (objPlayer == nullptr) return;
 
 	float px = objPlayer->GetX();
@@ -59,7 +59,7 @@ void StgItemManager::Work() {
 	int pAutoItemCollectY = objPlayer->GetAutoItemCollectY();
 
 	for (auto itr = listObj_.begin(); itr != listObj_.end();) {
-		shared_ptr<StgItemObject>& obj = *itr;
+		ref_unsync_ptr<StgItemObject>& obj = *itr;
 
 		if (obj->IsDeleted()) {
 			//obj->Clear();
@@ -238,7 +238,7 @@ void StgItemManager::LoadRenderQueue() {
 	for (auto& iLayer : listRenderQueue_)
 		iLayer.first = 0;
 
-	for (shared_ptr<StgItemObject>& obj : listObj_) {
+	for (ref_unsync_ptr<StgItemObject>& obj : listObj_) {
 		if (obj->IsDeleted() || !obj->IsActive()) continue;
 		auto& iQueue = listRenderQueue_[obj->GetRenderPriorityI()];
 		while (iQueue.first >= iQueue.second.size())
@@ -250,27 +250,27 @@ void StgItemManager::LoadRenderQueue() {
 bool StgItemManager::LoadItemData(const std::wstring& path, bool bReload) {
 	return listItemData_->AddItemDataList(path, bReload);
 }
-shared_ptr<StgItemObject> StgItemManager::CreateItem(int type) {
-	shared_ptr<StgItemObject> res;
+ref_unsync_ptr<StgItemObject> StgItemManager::CreateItem(int type) {
+	ref_unsync_ptr<StgItemObject> res;
 	switch (type) {
 	case StgItemObject::ITEM_1UP:
 	case StgItemObject::ITEM_1UP_S:
-		res = shared_ptr<StgItemObject>(new StgItemObject_1UP(stageController_));
+		res = new StgItemObject_1UP(stageController_);
 		break;
 	case StgItemObject::ITEM_SPELL:
 	case StgItemObject::ITEM_SPELL_S:
-		res = shared_ptr<StgItemObject>(new StgItemObject_Bomb(stageController_));
+		res = new StgItemObject_Bomb(stageController_);
 		break;
 	case StgItemObject::ITEM_POWER:
 	case StgItemObject::ITEM_POWER_S:
-		res = shared_ptr<StgItemObject>(new StgItemObject_Power(stageController_));
+		res = new StgItemObject_Power(stageController_);
 		break;
 	case StgItemObject::ITEM_POINT:
 	case StgItemObject::ITEM_POINT_S:
-		res = shared_ptr<StgItemObject>(new StgItemObject_Point(stageController_));
+		res = new StgItemObject_Point(stageController_);
 		break;
 	case StgItemObject::ITEM_USER:
-		res = shared_ptr<StgItemObject>(new StgItemObject_User(stageController_));
+		res = new StgItemObject_User(stageController_);
 		break;
 	}
 	res->SetItemType(type);
@@ -291,7 +291,7 @@ std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, int radius, i
 	int rr = radius * radius;
 
 	std::vector<int> res;
-	for (shared_ptr<StgItemObject>& obj : listObj_) {
+	for (ref_unsync_ptr<StgItemObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if (itemType != nullptr && (*itemType != obj->GetItemType())) continue;
 
@@ -653,7 +653,7 @@ StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObjec
 	stageController_ = stageController;
 	typeObject_ = TypeObject::Item;
 
-	pattern_ = std::shared_ptr<StgMovePattern_Item>(new StgMovePattern_Item(this));
+	pattern_ = new StgMovePattern_Item(this);
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 
 	typeItem_ = INT_MIN;
@@ -681,7 +681,7 @@ void StgItemObject::Work() {
 		bool bNullMovePattern = dynamic_cast<StgMovePattern_Item*>(GetPattern().get()) == nullptr;
 		if (bNullMovePattern && bDefaultCollectionMove_ && IsMoveToPlayer()) {
 			float speed = 8;
-			shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
+			ref_unsync_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
 			if (objPlayer) {
 				float angle = atan2f(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());
 				float angDirection = angle;
@@ -824,7 +824,8 @@ void StgItemObject::_CreateScoreItem() {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 
 	if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
-		shared_ptr<StgItemObject_Score> obj = shared_ptr<StgItemObject_Score>(new StgItemObject_Score(stageController_));
+		ref_unsync_ptr<StgItemObject_Score> obj = new StgItemObject_Score(stageController_);
+
 		obj->SetX(posX_);
 		obj->SetY(posY_);
 		obj->SetScore(score_);
@@ -834,7 +835,7 @@ void StgItemObject::_CreateScoreItem() {
 	}
 }
 void StgItemObject::_NotifyEventToPlayerScript(gstd::value* listValue, size_t count) {
-	shared_ptr<StgPlayerObject> player = stageController_->GetPlayerObject();
+	ref_unsync_ptr<StgPlayerObject> player = stageController_->GetPlayerObject();
 	if (player == nullptr) return;
 
 	if (StgStagePlayerScript* scriptPlayer = player->GetPlayerScript()) {
@@ -857,19 +858,18 @@ void StgItemObject::SetColor(int r, int g, int b) {
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 }
 void StgItemObject::SetToPosition(D3DXVECTOR2& pos) {
-	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
-	move->SetToPosition(pos);
+	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
+		move->SetToPosition(pos);
 }
 int StgItemObject::GetMoveType() {
 	int res = StgMovePattern_Item::MOVE_NONE;
-
-	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
-	if (move) res = move->GetItemMoveType();
+	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
+		res = move->GetItemMoveType();
 	return res;
 }
 void StgItemObject::SetMoveType(int type) {
-	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
-	if (move) move->SetItemMoveType(type);
+	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
+		move->SetItemMoveType(type);
 }
 
 void StgItemObject::NotifyItemCollectEvent(int type, uint64_t eventParam) {
@@ -899,8 +899,9 @@ void StgItemObject::NotifyItemCancelEvent(int type) {
 //StgItemObject_1UP
 StgItemObject_1UP::StgItemObject_1UP(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_1UP;
-	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
-	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
+
+	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
+		move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
 void StgItemObject_1UP::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	gstd::value listValue[2] = { 
@@ -917,8 +918,8 @@ void StgItemObject_1UP::Intersect(StgIntersectionTarget* ownTarget, StgIntersect
 //StgItemObject_Bomb
 StgItemObject_Bomb::StgItemObject_Bomb(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_SPELL;
-	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
-	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
+	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
+		move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
 void StgItemObject_Bomb::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	gstd::value listValue[2] = {
@@ -935,8 +936,10 @@ void StgItemObject_Bomb::Intersect(StgIntersectionTarget* ownTarget, StgIntersec
 //StgItemObject_Power
 StgItemObject_Power::StgItemObject_Power(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_POWER;
-	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
-	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
+
+	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
+		move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
+
 	score_ = 10;
 }
 void StgItemObject_Power::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
@@ -958,8 +961,9 @@ void StgItemObject_Power::Intersect(StgIntersectionTarget* ownTarget, StgInterse
 //StgItemObject_Point
 StgItemObject_Point::StgItemObject_Point(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_POINT;
-	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
-	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
+
+	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
+		move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
 }
 void StgItemObject_Point::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	if (bDefaultScoreText_)
@@ -980,8 +984,8 @@ void StgItemObject_Point::Intersect(StgIntersectionTarget* ownTarget, StgInterse
 //StgItemObject_Bonus
 StgItemObject_Bonus::StgItemObject_Bonus(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_BONUS;
-	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
-	move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPLAYER);
+	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
+		move->SetItemMoveType(StgMovePattern_Item::MOVE_TOPLAYER);
 
 	int graze = stageController->GetStageInformation()->GetGraze();
 	score_ = (int)(graze / 40) * 10 + 300;
@@ -989,7 +993,7 @@ StgItemObject_Bonus::StgItemObject_Bonus(StgStageController* stageController) : 
 void StgItemObject_Bonus::Work() {
 	StgItemObject::Work();
 
-	shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
+	ref_unsync_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
 	if (objPlayer != nullptr && objPlayer->GetState() != StgPlayerObject::STATE_NORMAL) {
 		_CreateScoreItem();
 		stageController_->GetStageInformation()->AddScore(score_);
@@ -1009,8 +1013,9 @@ void StgItemObject_Bonus::Intersect(StgIntersectionTarget* ownTarget, StgInterse
 //StgItemObject_Score
 StgItemObject_Score::StgItemObject_Score(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_SCORE;
-	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
-	move->SetItemMoveType(StgMovePattern_Item::MOVE_SCORE);
+
+	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
+		move->SetItemMoveType(StgMovePattern_Item::MOVE_SCORE);
 
 	bPermitMoveToPlayer_ = false;
 
@@ -1034,8 +1039,9 @@ StgItemObject_User::StgItemObject_User(StgStageController* stageController) : St
 	typeItem_ = ITEM_USER;
 	idImage_ = -1;
 	frameWork_ = 0;
-	auto move = std::dynamic_pointer_cast<StgMovePattern_Item>(pattern_);
-	move->SetItemMoveType(StgMovePattern_Item::MOVE_DOWN);
+
+	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
+		move->SetItemMoveType(StgMovePattern_Item::MOVE_DOWN);
 
 	bDefaultScoreText_ = true;
 }
@@ -1206,7 +1212,7 @@ void StgMovePattern_Item::Move() {
 	if (typeMove_ == MOVE_TOPLAYER || (itemObject->IsDefaultCollectionMovement() && itemObject->IsMoveToPlayer())) {
 		if (frame_ == 0) speed_ = 6;
 		speed_ += 0.075;
-		shared_ptr<StgPlayerObject> objPlayer = stageController->GetPlayerObject();
+		ref_unsync_ptr<StgPlayerObject> objPlayer = stageController->GetPlayerObject();
 		if (objPlayer) {
 			double angle = atan2(objPlayer->GetY() - py, objPlayer->GetX() - px);
 			angDirection_ = angle;

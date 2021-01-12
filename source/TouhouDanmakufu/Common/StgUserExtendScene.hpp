@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_USER_EXTEND_SCENE__
-#define __TOUHOUDANMAKUFU_DNHSTG_USER_EXTEND_SCENE__
+#pragma once
 
 #include "../../GcLib/pch.h"
 #include "StgCommon.hpp"
@@ -12,7 +11,8 @@ class StgUserExtendSceneScriptManager;
 class StgUserExtendScene {
 protected:
 	StgSystemController* systemController_;
-	std::shared_ptr<StgUserExtendSceneScriptManager> scriptManager_;
+
+	shared_ptr<StgUserExtendSceneScriptManager> scriptManager_;
 
 	void _InitializeScript(const std::wstring& path, int type);
 	void _CallScriptMainLoop();
@@ -21,15 +21,15 @@ protected:
 public:
 	StgUserExtendScene(StgSystemController* controller);
 	virtual ~StgUserExtendScene();
+
 	StgUserExtendSceneScriptManager* GetScriptManager() { return scriptManager_.get(); }
-	std::shared_ptr<StgUserExtendSceneScriptManager> GetScriptManagerRef() { return scriptManager_; }
+	shared_ptr<StgUserExtendSceneScriptManager> GetScriptManagerRef() { return scriptManager_; }
 
 	virtual void Work();
 	virtual void Render();
 
 	virtual void Start();
 	virtual void Finish();
-
 };
 
 /**********************************************************
@@ -39,11 +39,12 @@ class StgUserExtendSceneScript;
 class StgUserExtendSceneScriptManager : public StgControlScriptManager {
 protected:
 	StgSystemController* systemController_;
-	shared_ptr<DxScriptObjectManager> objectManager_;
 
+	shared_ptr<DxScriptObjectManager> objectManager_;
 public:
 	StgUserExtendSceneScriptManager(StgSystemController* controller);
 	virtual ~StgUserExtendSceneScriptManager();
+
 	virtual void Work();
 	virtual void Render();
 	virtual shared_ptr<ManagedScript> Create(int type);
@@ -62,10 +63,6 @@ public:
 		TYPE_END_SCENE,
 		TYPE_REPLAY_SCENE,
 	};
-
-protected:
-
-
 public:
 	StgUserExtendSceneScript(StgSystemController* controller);
 	virtual ~StgUserExtendSceneScript();
@@ -76,10 +73,6 @@ public:
 **********************************************************/
 class StgPauseSceneScript;
 class StgPauseScene : public StgUserExtendScene {
-public:
-
-private:
-
 public:
 	StgPauseScene(StgSystemController* controller);
 	virtual ~StgPauseScene();
@@ -92,14 +85,6 @@ public:
 
 class StgPauseSceneScript : public StgUserExtendSceneScript {
 public:
-	enum {
-
-	};
-
-protected:
-
-
-public:
 	StgPauseSceneScript(StgSystemController* controller);
 	virtual ~StgPauseSceneScript();
 };
@@ -110,10 +95,6 @@ public:
 **********************************************************/
 class StgEndScript;
 class StgEndScene : public StgUserExtendScene {
-public:
-
-private:
-
 public:
 	StgEndScene(StgSystemController* controller);
 	virtual ~StgEndScene();
@@ -129,13 +110,6 @@ public:
 **********************************************************/
 class StgEndSceneScript : public StgUserExtendSceneScript {
 public:
-	enum {
-
-	};
-
-protected:
-
-public:
 	StgEndSceneScript(StgSystemController* controller);
 	virtual ~StgEndSceneScript();
 };
@@ -145,10 +119,6 @@ public:
 **********************************************************/
 class StgReplaySaveScript;
 class StgReplaySaveScene : public StgUserExtendScene {
-public:
-
-private:
-
 public:
 	StgReplaySaveScene(StgSystemController* controller);
 	virtual ~StgReplaySaveScene();
@@ -164,18 +134,6 @@ public:
 **********************************************************/
 class StgReplaySaveScript : public StgUserExtendSceneScript {
 public:
-	enum {
-
-	};
-
-protected:
-
-public:
 	StgReplaySaveScript(StgSystemController* controller);
 	virtual ~StgReplaySaveScript();
-
 };
-
-
-#endif
-

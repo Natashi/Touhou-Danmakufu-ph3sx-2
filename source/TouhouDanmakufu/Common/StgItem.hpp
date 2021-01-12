@@ -21,7 +21,7 @@ class StgItemManager {
 	SpriteList2D* listSpriteDigit_;
 	StgItemDataList* listItemData_;
 
-	std::list<shared_ptr<StgItemObject>> listObj_;
+	std::list<ref_unsync_ptr<StgItemObject>> listObj_;
 	std::vector<std::pair<size_t, std::vector<StgItemObject*>>> listRenderQueue_;
 
 	std::list<DxCircle> listCircleToPlayer_;
@@ -46,7 +46,7 @@ public:
 	void Render(int targetPriority);
 	void LoadRenderQueue();
 
-	void AddItem(shared_ptr<StgItemObject> obj) { 
+	void AddItem(ref_unsync_ptr<StgItemObject> obj) {
 		listObj_.push_back(obj); 
 	}
 	size_t GetItemCount() { return listObj_.size(); }
@@ -57,7 +57,7 @@ public:
 	StgItemDataList* GetItemDataList() { return listItemData_; }
 	bool LoadItemData(const std::wstring& path, bool bReload = false);
 
-	shared_ptr<StgItemObject> CreateItem(int type);
+	ref_unsync_ptr<StgItemObject> CreateItem(int type);
 
 	void SetItemDeleteClip(const DxRect<LONG>& clip) { rcDeleteClip_ = clip; }
 	DxRect<LONG>* GetItemDeleteClip() { return &rcDeleteClip_; }
@@ -235,7 +235,7 @@ public:
 	virtual bool HasNormalRendering() { return false; }
 
 	virtual void Work();
-	virtual void Render() {}//一括で描画するためオブジェクト管理での描画はしない
+	virtual void Render() {}
 	virtual void RenderOnItemManager();
 	virtual void SetRenderState() {}
 	virtual void Activate() {}
@@ -328,8 +328,10 @@ class StgItemObject_User : public StgItemObject {
 	void _SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color);
 public:
 	StgItemObject_User(StgStageController* stageController);
+
 	virtual void Work();
 	virtual void RenderOnItemManager();
+
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 
 	void SetImageID(int id);
@@ -342,10 +344,10 @@ class StgMovePattern_Item : public StgMovePattern {
 public:
 	enum {
 		MOVE_NONE,
-		MOVE_TOPOSITION_A,//指定ポイントへの移動(60フレーム)
-		MOVE_DOWN,//下降
-		MOVE_TOPLAYER,//自機へ移動
-		MOVE_SCORE,//得点(上昇)
+		MOVE_TOPOSITION_A,	//Move to the specified target position
+		MOVE_DOWN,			//Downwards, default
+		MOVE_TOPLAYER,		//Yeet to player
+		MOVE_SCORE,			//Yeet to player but score
 	};
 
 protected:
@@ -357,6 +359,7 @@ protected:
 	D3DXVECTOR2 posTo_;
 public:
 	StgMovePattern_Item(StgMoveObject* target);
+
 	virtual void Move();
 	int GetType() { return TYPE_OTHER; }
 	virtual double GetSpeed() { return speed_; }

@@ -347,6 +347,3 @@ gstd::value StgPackageScript::Func_TerminateStageScene(gstd::script_machine* mac
 	}
 	return value();
 }
-
-
-

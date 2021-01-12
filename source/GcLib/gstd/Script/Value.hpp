@@ -44,7 +44,7 @@ namespace gstd {
 				int64_t int_value;
 			};
 		};
-		ref_count_ptr<body, false> data;
+		ref_unsync_ptr<body> data;
 	private:
 		inline void release() {
 			data = nullptr;

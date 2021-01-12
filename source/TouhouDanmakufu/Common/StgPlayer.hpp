@@ -50,20 +50,21 @@ public:
 protected:
 	StgStageController* stageController_;
 	StgStagePlayerScript* script_;
+
 	ref_count_ptr<StgPlayerInformation> infoPlayer_;
-	shared_ptr<StgPlayerSpellManageObject> objSpell_;
+	ref_unsync_ptr<StgPlayerSpellManageObject> objSpell_;
 
 	double speedFast_;
 	double speedSlow_;
 	DxRect<LONG> rcClip_;
 
 	int state_;
-	int frameState_;//各ステートで使用されるフレーム
-	int frameRebirthMax_;//くらいボム有効フレーム初期値
-	int frameRebirthDiff_;//くらいボム減少量
+	int frameState_;
+	int frameRebirthMax_;	//Maximum deathbomb frame
+	int frameRebirthDiff_;	//Deathbomb frame reduction per hit
 	int frameStateDown_;
 
-	std::list<weak_ptr<StgIntersectionObject>> listGrazedShot_;
+	std::list<ref_unsync_weak_ptr<StgIntersectionObject>> listGrazedShot_;
 	int hitObjectID_;
 
 	double itemCircle_;
@@ -103,10 +104,10 @@ public:
 
 	ref_count_ptr<StgPlayerInformation> GetPlayerInformation() { return infoPlayer_; }
 	void SetPlayerInforamtion(ref_count_ptr<StgPlayerInformation> info) { infoPlayer_ = info; }
-	shared_ptr<StgPlayerSpellManageObject> GetSpellManageObject() { return objSpell_; }
+	ref_unsync_ptr<StgPlayerSpellManageObject> GetSpellManageObject() { return objSpell_; }
 
 	StgStagePlayerScript* GetPlayerScript() { return script_; }
-	shared_ptr<StgPlayerObject> GetOwnObject();
+	ref_unsync_ptr<StgPlayerObject> GetOwnObject();
 	double GetX() { return posX_; }
 	double GetY() { return posY_; }
 	double GetFastSpeed() { return speedFast_; }

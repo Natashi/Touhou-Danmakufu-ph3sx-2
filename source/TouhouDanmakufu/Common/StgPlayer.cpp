@@ -89,7 +89,7 @@ void StgPlayerObject::Work() {
 
 			bool bEnemyLastSpell = false;
 
-			shared_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
+			ref_unsync_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
 			if (objBossScene) {
 				objBossScene->AddPlayerShootDownCount();
 				if (objBossScene->GetActiveData()->IsLastSpell())
@@ -210,7 +210,7 @@ void StgPlayerObject::CallSpell() {
 	if (!IsPermitSpell()) return;
 
 	auto objectManager = stageController_->GetMainObjectManager();
-	objSpell_ = shared_ptr<StgPlayerSpellManageObject>(new StgPlayerSpellManageObject());
+	objSpell_ = new StgPlayerSpellManageObject();
 	int idSpell = objectManager->AddObject(objSpell_);
 
 	gstd::value vUse = script_->RequestEvent(StgStagePlayerScript::EV_REQUEST_SPELL);
@@ -229,7 +229,7 @@ void StgPlayerObject::CallSpell() {
 	}
 
 	StgEnemyManager* enemyManager = stageController_->GetEnemyManager();
-	shared_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
+	ref_unsync_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
 	if (objBossScene) objBossScene->AddPlayerSpellCount();
 
 	auto scriptManager = stageController_->GetScriptManager();
@@ -254,9 +254,9 @@ void StgPlayerObject::SendGrazeEvent() {
 
 	size_t iValidGraze = 0;
 	for (auto iObj = listGrazedShot_.begin(); iObj != listGrazedShot_.end(); ++iObj) {
-		if (auto ptrObj = iObj->lock()) {
+		if (auto& wObj = *iObj) {
 			//No need to check for a nullptr, listGrazedShot_ only contains StgShotObject* anyway
-			StgShotObject* objShot = dynamic_cast<StgShotObject*>(ptrObj.get());
+			StgShotObject* objShot = dynamic_cast<StgShotObject*>(wObj.get());
 			if (!objShot->IsDeleted()) {
 				double listShotPos[2] = { objShot->GetPositionX(), objShot->GetPositionY() };
 				listValPos.push_back(script_->CreateRealArrayValue(listShotPos, 2U));
@@ -287,12 +287,12 @@ void StgPlayerObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectio
 	StgIntersectionTarget_Player* tPlayer = dynamic_cast<StgIntersectionTarget_Player*>(ownTarget);
 	if (tPlayer == nullptr) return;
 
-	if (auto ptrObj = otherTarget->GetObject().lock()) {
+	if (auto wObj = otherTarget->GetObject()) {
 		StgIntersectionTarget::Type otherType = otherTarget->GetTargetType();
 		switch (otherType) {
 		case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 		{
-			if (StgShotObject* objShot = dynamic_cast<StgShotObject*>(ptrObj.get())) {
+			if (StgShotObject* objShot = dynamic_cast<StgShotObject*>(wObj.get())) {
 				if (!tPlayer->IsGraze()) {
 					hitObjectID_ = objShot->GetObjectID();
 
@@ -301,7 +301,7 @@ void StgPlayerObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectio
 						objShot->ConvertToItem(true);
 				}
 				else if (objShot->IsValidGraze() && (enableGrazeInvincible_ || frameInvincibility_ <= 0)) {
-					listGrazedShot_.push_back(otherTarget->GetObject());
+					listGrazedShot_.push_back(wObj);
 				}
 			}
 			break;
@@ -309,7 +309,7 @@ void StgPlayerObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectio
 		case StgIntersectionTarget::TYPE_ENEMY:
 		{
 			if (!tPlayer->IsGraze()) {
-				if (StgEnemyObject* objEnemy = dynamic_cast<StgEnemyObject*>(ptrObj.get()))
+				if (StgEnemyObject* objEnemy = dynamic_cast<StgEnemyObject*>(wObj.get()))
 					hitObjectID_ = objEnemy->GetObjectID();
 			}
 			break;
@@ -317,8 +317,8 @@ void StgPlayerObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectio
 		}
 	}
 }
-shared_ptr<StgPlayerObject> StgPlayerObject::GetOwnObject() {
-	return std::dynamic_pointer_cast<StgPlayerObject>(stageController_->GetMainRenderObject(idObject_));
+ref_unsync_ptr<StgPlayerObject> StgPlayerObject::GetOwnObject() {
+	return ref_unsync_ptr<StgPlayerObject>::Cast(stageController_->GetMainRenderObject(idObject_));
 }
 bool StgPlayerObject::IsPermitShot() {
 	//以下のとき不可
@@ -331,9 +331,9 @@ bool StgPlayerObject::IsPermitSpell() {
 	//・ラストスペル中
 	StgEnemyManager* enemyManager = stageController_->GetEnemyManager();
 	bool bEnemyLastSpell = false;
-	shared_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
+	ref_unsync_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
 	if (objBossScene) {
-		shared_ptr<StgEnemyBossSceneData> data = objBossScene->GetActiveData();
+		ref_unsync_ptr<StgEnemyBossSceneData> data = objBossScene->GetActiveData();
 		if (data != nullptr && data->IsLastSpell())
 			bEnemyLastSpell = true;
 	}

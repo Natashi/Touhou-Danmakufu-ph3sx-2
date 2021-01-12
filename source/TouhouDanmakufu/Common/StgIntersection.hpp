@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_INTERSECTION__
-#define __TOUHOUDANMAKUFU_DNHSTG_INTERSECTION__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -32,7 +31,7 @@ protected:
 	//int mortonNo_;
 	Type typeTarget_;
 	Shape shape_;
-	weak_ptr<StgIntersectionObject> obj_;
+	ref_unsync_weak_ptr<StgIntersectionObject> obj_;
 
 	DxRect<LONG> intersectionSpace_;
 public:
@@ -46,9 +45,11 @@ public:
 	Type GetTargetType() const { return typeTarget_; }
 	void SetTargetType(Type type) { typeTarget_ = type; }
 	Shape GetShape() const { return shape_; }
-	weak_ptr<StgIntersectionObject> GetObject() { return obj_; }
-	void SetObject(weak_ptr<StgIntersectionObject> obj) {
-		if (!obj.expired()) obj_ = obj;
+
+	ref_unsync_weak_ptr<StgIntersectionObject> GetObject() { return obj_; }
+	void SetObject(ref_unsync_weak_ptr<StgIntersectionObject> obj) {
+		if (!obj.expired())
+			obj_ = obj;
 	}
 
 	//int GetMortonNumber() { return mortonNo_; }
@@ -109,8 +110,8 @@ private:
 	std::vector<StgIntersectionTargetPoint> listEnemyTargetPoint_;
 	std::vector<StgIntersectionTargetPoint> listEnemyTargetPointNext_;
 
-	shared_ptr<DxScriptParticleListObject2D> objIntersectionVisualizerCircle_;
-	shared_ptr<DxScriptPrimitiveObject2D> objIntersectionVisualizerLine_;
+	ref_unsync_ptr<DxScriptParticleListObject2D> objIntersectionVisualizerCircle_;
+	ref_unsync_ptr<DxScriptPrimitiveObject2D> objIntersectionVisualizerLine_;
 	size_t countCircleInstance_;
 	size_t countLineVertex_;
 	bool bRenderIntersection_;
@@ -129,23 +130,23 @@ public:
 	void SetRenderIntersection(bool b) { bRenderIntersection_ = b; }
 	bool IsRenderIntersection() { return bRenderIntersection_; }
 
-	void AddTarget(shared_ptr<StgIntersectionTarget> target);
-	void AddEnemyTargetToShot(shared_ptr<StgIntersectionTarget> target);
-	void AddEnemyTargetToPlayer(shared_ptr<StgIntersectionTarget> target);
+	void AddTarget(ref_unsync_ptr<StgIntersectionTarget> target);
+	void AddEnemyTargetToShot(ref_unsync_ptr<StgIntersectionTarget> target);
+	void AddEnemyTargetToPlayer(ref_unsync_ptr<StgIntersectionTarget> target);
 	std::vector<StgIntersectionTargetPoint>* GetAllEnemyTargetPoint() { return &listEnemyTargetPoint_; }
 
 	static bool IsIntersected(StgIntersectionTarget* target1, StgIntersectionTarget* target2);
 
 	CriticalSection& GetLock() { return lock_; }
 
-	void AddVisualization(shared_ptr<StgIntersectionTarget>& target);
+	void AddVisualization(ref_unsync_ptr<StgIntersectionTarget>& target);
 };
 
 class StgIntersectionCheckList {
 	size_t count_;
 	//std::vector<StgIntersectionTarget*> listTargetA_;
 	//std::vector<StgIntersectionTarget*> listTargetB_;
-	std::vector<std::pair<shared_ptr<StgIntersectionTarget>, shared_ptr<StgIntersectionTarget>>> listTargetPair_;
+	std::vector<std::pair<ref_unsync_ptr<StgIntersectionTarget>, ref_unsync_ptr<StgIntersectionTarget>>> listTargetPair_;
 public:
 	StgIntersectionCheckList();
 	virtual ~StgIntersectionCheckList();
@@ -153,9 +154,9 @@ public:
 	void Clear() { count_ = 0; }
 	size_t GetCheckCount() { return count_; }
 
-	void AddTargetPair(shared_ptr<StgIntersectionTarget>& targetA, shared_ptr<StgIntersectionTarget>& targetB);
-	shared_ptr<StgIntersectionTarget> GetTargetA(size_t index);
-	shared_ptr<StgIntersectionTarget> GetTargetB(size_t index);
+	void AddTargetPair(ref_unsync_ptr<StgIntersectionTarget>& targetA, ref_unsync_ptr<StgIntersectionTarget>& targetB);
+	ref_unsync_ptr<StgIntersectionTarget> GetTargetA(size_t index);
+	ref_unsync_ptr<StgIntersectionTarget> GetTargetB(size_t index);
 };
 
 class StgIntersectionSpace {
@@ -164,7 +165,7 @@ class StgIntersectionSpace {
 		TYPE_B = 1,
 	};
 public:
-	typedef std::vector<shared_ptr<StgIntersectionTarget>> ListTarget;
+	typedef std::vector<ref_unsync_ptr<StgIntersectionTarget>> ListTarget;
 	typedef std::pair<StgIntersectionTarget*, StgIntersectionTarget*> TargetCheckListPair;
 protected:
 	DxRect<double> spaceRect_;
@@ -178,9 +179,9 @@ public:
 
 	bool Initialize(double left, double top, double right, double bottom);
 
-	bool RegistTarget(ListTarget* pVec, shared_ptr<StgIntersectionTarget>& target);
-	bool RegistTargetA(shared_ptr<StgIntersectionTarget>& target) { return RegistTarget(&pairTargetList_.first, target); }
-	bool RegistTargetB(shared_ptr<StgIntersectionTarget>& target) { return RegistTarget(&pairTargetList_.second, target); }
+	bool RegistTarget(ListTarget* pVec, ref_unsync_ptr<StgIntersectionTarget>& target);
+	bool RegistTargetA(ref_unsync_ptr<StgIntersectionTarget>& target) { return RegistTarget(&pairTargetList_.first, target); }
+	bool RegistTargetB(ref_unsync_ptr<StgIntersectionTarget>& target) { return RegistTarget(&pairTargetList_.second, target); }
 	void ClearTarget();
 
 	std::vector<TargetCheckListPair>* CreateIntersectionCheckList(StgIntersectionManager* manager, size_t& total);
@@ -191,12 +192,12 @@ private:
 	struct IntersectionRelativeTarget {
 		DxShapeBase* orgShape;
 		DxRect<LONG> orgIntersectionRect;
-		shared_ptr<StgIntersectionTarget> relTarget;
+		ref_unsync_ptr<StgIntersectionTarget> relTarget;
 	};
 protected:
 	bool bIntersected_;
 	size_t intersectedCount_;
-	std::vector<weak_ptr<StgIntersectionObject>> listIntersectedID_;
+	std::vector<ref_unsync_weak_ptr<StgIntersectionObject>> listIntersectedID_;
 
 	std::vector<IntersectionRelativeTarget> listRelativeTarget_;
 public:
@@ -211,12 +212,12 @@ public:
 
 	size_t GetIntersectedCount() { return intersectedCount_; }
 	void ClearIntersectedIdList() { listIntersectedID_.clear(); }
-	void AddIntersectedId(weak_ptr<StgIntersectionObject> obj) { listIntersectedID_.push_back(obj); }
-	std::vector<weak_ptr<StgIntersectionObject>>& GetIntersectedIdList() { return listIntersectedID_; }
+	void AddIntersectedId(ref_unsync_weak_ptr<StgIntersectionObject> obj) { listIntersectedID_.push_back(obj); }
+	std::vector<ref_unsync_weak_ptr<StgIntersectionObject>>& GetIntersectedIdList() { return listIntersectedID_; }
 
-	void AddIntersectionRelativeTarget(shared_ptr<StgIntersectionTarget> target);
+	void AddIntersectionRelativeTarget(ref_unsync_ptr<StgIntersectionTarget> target);
 	void ClearIntersectionRelativeTarget();
-	shared_ptr<StgIntersectionTarget> GetIntersectionRelativeTarget(size_t index) { return listRelativeTarget_[index].relTarget; }
+	ref_unsync_ptr<StgIntersectionTarget> GetIntersectionRelativeTarget(size_t index) { return listRelativeTarget_[index].relTarget; }
 
 	void UpdateIntersectionRelativeTarget(float posX, float posY, double angle);
 	void RegistIntersectionRelativeTarget(StgIntersectionManager* manager);
@@ -225,14 +226,14 @@ public:
 
 	int GetDxScriptObjectID();
 
-	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList() { 
-		return std::vector<shared_ptr<StgIntersectionTarget>>();
+	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList() {
+		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
 	}
 };
 
 inline void StgIntersectionTarget::ClearObjectIntersectedIdList() { 
-	if (auto ptr = obj_.lock()) 
-		ptr->ClearIntersectedIdList();
+	if (!obj_.expired()) 
+		obj_->ClearIntersectedIdList();
 }
 
 /**********************************************************
@@ -242,13 +243,11 @@ class StgEnemyObject;
 class StgIntersectionTargetPoint {
 private:
 	POINT pos_;
-	weak_ptr<StgEnemyObject> ptrObject_;
+	ref_unsync_weak_ptr<StgEnemyObject> ptrObject_;
 public:
 	POINT& GetPoint() { return pos_; }
 	void SetPoint(POINT& pos) { pos_ = pos; }
-	weak_ptr<StgEnemyObject> GetObjectRef() { return ptrObject_; }
-	void SetObjectRef(weak_ptr<StgEnemyObject> id) { ptrObject_ = id; }
+
+	ref_unsync_weak_ptr<StgEnemyObject> GetObjectRef() { return ptrObject_; }
+	void SetObjectRef(ref_unsync_weak_ptr<StgEnemyObject> id) { ptrObject_ = id; }
 };
-
-#endif
-

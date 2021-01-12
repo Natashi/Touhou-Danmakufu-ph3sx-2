@@ -16,9 +16,9 @@ namespace directx {
 	class DxScriptObjectManager;
 	class DxScriptObjectBase;
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptObjectBase
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptObjectBase {
 		friend DxScript;
 		friend DxScriptObjectManager;
@@ -77,9 +77,9 @@ namespace directx {
 		void DeleteObjectValue(const std::wstring& key) { DeleteObjectValue(GetKeyHash(key)); }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptRenderObject
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptRenderObject : public DxScriptObjectBase {
 		friend DxScript;
 	protected:
@@ -100,10 +100,13 @@ namespace directx {
 		D3DTEXTUREFILTERTYPE filterMip_;
 		bool bVertexShaderMode_;
 
-		weak_ptr<DxScriptRenderObject> objRelative_;
+		gstd::ref_count_weak_ptr<DxScriptRenderObject, false> objRelative_;
 		std::wstring nameRelativeBone_;
 	public:
 		DxScriptRenderObject();
+
+		virtual void Render() {}
+		virtual void SetRenderState() {}
 
 		virtual bool HasNormalRendering() { return true; }
 
@@ -135,25 +138,25 @@ namespace directx {
 
 		void SetBlendType(BlendMode type) { typeBlend_ = type; }
 		BlendMode GetBlendType() { return typeBlend_; }
-		void SetRelativeObject(weak_ptr<DxScriptRenderObject> id, const std::wstring& bone) {
-			objRelative_ = id; 
-			nameRelativeBone_ = bone; 
-		}
 
 		virtual shared_ptr<Shader> GetShader() { return nullptr; }
 		virtual void SetShader(shared_ptr<Shader> shader) {}
-		virtual void Render() {}
-		virtual void SetRenderState() {}
+
+		void SetRelativeObject(gstd::ref_count_weak_ptr<DxScriptRenderObject, false> id, const std::wstring& bone) {
+			objRelative_ = id;
+			nameRelativeBone_ = bone;
+		}
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptShaderObject
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptShaderObject : public DxScriptRenderObject {
 	private:
 		shared_ptr<Shader> shader_;
 	public:
 		DxScriptShaderObject();
+
 		virtual shared_ptr<Shader> GetShader() { return shader_; }
 		virtual void SetShader(shared_ptr<Shader> shader) { shader_ = shader; }
 
@@ -161,9 +164,9 @@ namespace directx {
 		virtual void SetAlpha(int alpha) {}
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptPrimitiveObject
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptPrimitiveObject : public DxScriptRenderObject {
 		friend DxScript;
 	protected:
@@ -208,30 +211,35 @@ namespace directx {
 		}
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptPrimitiveObject2D
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptPrimitiveObject2D : public DxScriptPrimitiveObject {
 	public:
 		DxScriptPrimitiveObject2D();
+
 		virtual void Render();
 		virtual void SetRenderState();
+
 		RenderObjectTLX* GetObjectPointer() { return dynamic_cast<RenderObjectTLX*>(objRender_.get()); }
-		virtual bool IsValidVertexIndex(size_t index);
+
 		virtual void SetColor(int r, int g, int b);
 		virtual void SetAlpha(int alpha);
+
+		virtual bool IsValidVertexIndex(size_t index);
 		virtual void SetVertexPosition(size_t index, float x, float y, float z);
 		virtual void SetVertexUV(size_t index, float u, float v);
 		virtual void SetVertexAlpha(size_t index, int alpha);
 		virtual void SetVertexColor(size_t index, int r, int g, int b);
 		virtual D3DCOLOR GetVertexColor(size_t index);
+
 		void SetPermitCamera(bool bPermit);
 		virtual D3DXVECTOR3 GetVertexPosition(size_t index);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptSpriteObject2D
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptSpriteObject2D : public DxScriptPrimitiveObject2D {
 	public:
 		DxScriptSpriteObject2D();
@@ -239,35 +247,41 @@ namespace directx {
 		Sprite2D* GetSpritePointer() { return dynamic_cast<Sprite2D*>(objRender_.get()); }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptSpriteListObject2D
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptSpriteListObject2D : public DxScriptPrimitiveObject2D {
 	public:
 		DxScriptSpriteListObject2D();
 
 		virtual void CleanUp();
 
+		SpriteList2D* GetSpritePointer() { return (SpriteList2D*)objRender_.get(); }
+
 		virtual void SetColor(int r, int g, int b);
 		virtual void SetAlpha(int alpha);
+
 		void AddVertex();
 		void CloseVertex();
-		SpriteList2D* GetSpritePointer() { return (SpriteList2D*)objRender_.get(); }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptPrimitiveObject3D
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptPrimitiveObject3D : public DxScriptPrimitiveObject {
 		friend DxScript;
 	public:
 		DxScriptPrimitiveObject3D();
+
 		virtual void Render();
 		virtual void SetRenderState();
+
 		RenderObjectLX* GetObjectPointer() { return dynamic_cast<RenderObjectLX*>(objRender_.get()); }
-		virtual bool IsValidVertexIndex(size_t index);
+
 		virtual void SetColor(int r, int g, int b);
 		virtual void SetAlpha(int alpha);
+
+		virtual bool IsValidVertexIndex(size_t index);
 		virtual void SetVertexPosition(size_t index, float x, float y, float z);
 		virtual void SetVertexUV(size_t index, float u, float v);
 		virtual void SetVertexAlpha(size_t index, int alpha);
@@ -275,29 +289,33 @@ namespace directx {
 		virtual D3DCOLOR GetVertexColor(size_t index);
 		virtual D3DXVECTOR3 GetVertexPosition(size_t index);
 	};
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptSpriteObject3D
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptSpriteObject3D : public DxScriptPrimitiveObject3D {
 	public:
 		DxScriptSpriteObject3D();
+
 		Sprite3D* GetSpritePointer() { return dynamic_cast<Sprite3D*>(objRender_.get()); }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptTrajectoryObject3D
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptTrajectoryObject3D : public DxScriptPrimitiveObject {
 	public:
 		DxScriptTrajectoryObject3D();
+
 		virtual void Work();
 		virtual void Render();
 		virtual void SetRenderState();
+
 		TrajectoryObject3D* GetObjectPointer() { return dynamic_cast<TrajectoryObject3D*>(objRender_.get()); }
 
-		virtual bool IsValidVertexIndex(size_t index) { return false; }
 		virtual void SetColor(int r, int g, int b);
 		virtual void SetAlpha(int alpha) {};
+
+		virtual bool IsValidVertexIndex(size_t index) { return false; }
 		virtual void SetVertexPosition(size_t index, float x, float y, float z) {};
 		virtual void SetVertexUV(size_t index, float u, float v) {};
 		virtual void SetVertexAlpha(size_t index, int alpha) {};
@@ -306,9 +324,9 @@ namespace directx {
 		virtual D3DXVECTOR3 GetVertexPosition(size_t index) { return D3DXVECTOR3(0, 0, 0); }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptParticleListObject2D
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptParticleListObject2D : public DxScriptSpriteObject2D {
 	public:
 		DxScriptParticleListObject2D();
@@ -324,9 +342,9 @@ namespace directx {
 
 		ParticleRenderer2D* GetParticlePointer() { return (ParticleRenderer2D*)objRender_.get(); }
 	};
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptParticleListObject3D
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptParticleListObject3D : public DxScriptSpriteObject3D {
 	public:
 		DxScriptParticleListObject3D();
@@ -343,9 +361,9 @@ namespace directx {
 		ParticleRenderer3D* GetParticlePointer() { return (ParticleRenderer3D*)objRender_.get(); }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptMeshObject
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptMeshObject : public DxScriptRenderObject {
 		friend DxScript;
 	protected:
@@ -359,15 +377,19 @@ namespace directx {
 		D3DXVECTOR2 angZ_;
 	public:
 		DxScriptMeshObject();
+
 		virtual void Render();
+		virtual void SetRenderState();
 
 		virtual DirectionalLightingState* GetLightPointer() { return mesh_->GetLighting(); }
 
-		virtual void SetRenderState();
+		
 		virtual void SetColor(int r, int g, int b);
 		virtual void SetAlpha(int alpha);
+
 		void SetMesh(shared_ptr<DxMesh> mesh) { mesh_ = mesh; }
 		shared_ptr<DxMesh> GetMesh() { return mesh_; }
+
 		int GetAnimeFrame() { return time_; }
 		std::wstring& GetAnimeName() { return anime_; }
 
@@ -390,9 +412,9 @@ namespace directx {
 		virtual void SetShader(shared_ptr<Shader> shader);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptTextObject
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptTextObject : public DxScriptRenderObject {
 		friend DxScript;
 	private:
@@ -403,10 +425,12 @@ namespace directx {
 		};
 	protected:
 		byte change_;
+
 		DxText text_;
 		shared_ptr<DxTextInfo> textInfo_;
 		shared_ptr<DxTextRenderObject> objRender_;
-		D3DXVECTOR2 center_;//座標変換の中心
+
+		D3DXVECTOR2 center_;	//Transformation center
 		bool bAutoCenter_;
 
 		DWORD charSet_;
@@ -490,9 +514,9 @@ namespace directx {
 		}
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxSoundObject
-	**********************************************************/
+	//*******************************************************************
 	class DxSoundObject : public DxScriptObjectBase {
 		friend DxScript;
 	protected:
@@ -501,6 +525,7 @@ namespace directx {
 	public:
 		DxSoundObject();
 		~DxSoundObject();
+
 		virtual void Render() {}
 		virtual void SetRenderState() {}
 
@@ -511,9 +536,9 @@ namespace directx {
 		SoundPlayer::PlayStyle& GetStyle() { return style_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxFileObject
-	**********************************************************/
+	//*******************************************************************
 	class DxFileObject : public DxScriptObjectBase {
 		friend DxScript;
 	protected:
@@ -538,12 +563,13 @@ namespace directx {
 		virtual bool IsWritable() { return bWritable_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxTextFileObject
-	**********************************************************/
+	//*******************************************************************
 	class DxTextFileObject : public DxFileObject {
 	protected:
 		std::vector<std::vector<char>> listLine_;
+
 		gstd::Encoding::Type encoding_;
 		size_t bomSize_;
 		byte bomHead_[3];
@@ -569,13 +595,14 @@ namespace directx {
 		void ClearLine() { listLine_.clear(); }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxBinaryFileObject
-	**********************************************************/
+	//*******************************************************************
 	class DxBinaryFileObject : public DxFileObject {
 	protected:
 		byte byteOrder_;
 		byte codePage_;
+
 		gstd::ByteBuffer* buffer_;
 		size_t lastRead_;
 	public:
@@ -601,9 +628,9 @@ namespace directx {
 		size_t GetLastReadSize() { return lastRead_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxScriptObjectManager
-	**********************************************************/
+	//*******************************************************************
 	class DxScriptObjectManager {
 		friend DxScriptObjectBase;
 	public:
@@ -614,14 +641,14 @@ namespace directx {
 		};
 
 		struct RenderList {
-			std::vector<shared_ptr<DxScriptObjectBase>> list;
+			std::vector<ref_unsync_ptr<DxScriptObjectBase>> list;
 			size_t size = 0;
 
-			void Add(shared_ptr<DxScriptObjectBase>& ptr);
+			void Add(ref_unsync_ptr<DxScriptObjectBase>& ptr);
 			void Clear();
 
-			std::vector<shared_ptr<DxScriptObjectBase>>::const_iterator begin() { return list.cbegin(); }
-			std::vector<shared_ptr<DxScriptObjectBase>>::const_iterator end() { return begin() + size; }
+			std::vector<ref_unsync_ptr<DxScriptObjectBase>>::const_iterator begin() { return list.cbegin(); }
+			std::vector<ref_unsync_ptr<DxScriptObjectBase>>::const_iterator end() { return begin() + size; }
 		};
 
 		enum : size_t {
@@ -630,8 +657,10 @@ namespace directx {
 	protected:
 		size_t totalObjectCreateCount_;
 		std::list<int> listUnusedIndex_;
-		std::vector<shared_ptr<DxScriptObjectBase>> obj_;
-		std::list<shared_ptr<DxScriptObjectBase>> listActiveObject_;
+
+		std::vector<ref_unsync_ptr<DxScriptObjectBase>> obj_;
+		std::list<ref_unsync_ptr<DxScriptObjectBase>> listActiveObject_;
+
 		std::unordered_map<std::wstring, shared_ptr<SoundInfo>> mapReservedSound_;
 
 		bool bFogEnable_;
@@ -653,12 +682,12 @@ namespace directx {
 		size_t GetRenderBucketCapacity() { return listObjRender_.size(); }
 		void SetRenderBucketCapacity(size_t capacity);
 
-		virtual int AddObject(shared_ptr<DxScriptObjectBase> obj, bool bActivate = true);
+		virtual int AddObject(ref_unsync_ptr<DxScriptObjectBase> obj, bool bActivate = true);
 		//void AddObject(int id, shared_ptr<DxScriptObjectBase> obj, bool bActivate = true);
 		void ActivateObject(int id, bool bActivate);
-		void ActivateObject(shared_ptr<DxScriptObjectBase> obj, bool bActivate);
+		void ActivateObject(ref_unsync_ptr<DxScriptObjectBase> obj, bool bActivate);
 
-		shared_ptr<DxScriptObjectBase> GetObject(int id) {
+		ref_unsync_ptr<DxScriptObjectBase> GetObject(int id) {
 			return ((id < 0 || id >= obj_.size()) ? nullptr : obj_[id]); 
 		}
 
@@ -666,12 +695,13 @@ namespace directx {
 
 		DxScriptObjectBase* GetObjectPointer(int id);
 		virtual void DeleteObject(int id);
-		virtual void DeleteObject(shared_ptr<DxScriptObjectBase> obj);
+		virtual void DeleteObject(ref_unsync_ptr<DxScriptObjectBase> obj);
 		virtual void DeleteObject(DxScriptObjectBase* obj);
 
 		void ClearObject();
 		void DeleteObjectByScriptID(int64_t idScript);
-		void AddRenderObject(shared_ptr<DxScriptObjectBase> obj);//要フレームごとに登録
+
+		void AddRenderObject(ref_unsync_ptr<DxScriptObjectBase> obj);
 		void WorkObject();
 		virtual void RenderObject();
 		void CleanupObject();

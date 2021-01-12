@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_PACKAGECONTROLLER__
-#define __TOUHOUDANMAKUFU_DNHSTG_PACKAGECONTROLLER__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -13,12 +12,13 @@ class StgPackageInformation;
 class StgPackageController {
 private:
 	StgSystemController* systemController_;
+
 	ref_count_ptr<StgPackageInformation> infoPackage_;
 	std::shared_ptr<StgPackageScriptManager> scriptManager_;
-
 public:
 	StgPackageController(StgSystemController* systemController);
 	virtual ~StgPackageController();
+
 	void Initialize();
 
 	void Work();
@@ -37,12 +37,14 @@ public:
 //StgPackageInformation
 **********************************************************/
 class StgPackageInformation {
-	bool bEndPackage_;
 	ref_count_ptr<StgStageStartData> nextStageStartData_;
-	ref_count_ptr<ReplayInformation> infoReplay_;
 	std::vector<ref_count_ptr<StgStageStartData>> listStageData_;
+
+	ref_count_ptr<ReplayInformation> infoReplay_;
 	ref_count_ptr<ScriptInformation> infoMainScript_;
+
 	int timeStart_;
+	bool bEndPackage_;
 public:
 	StgPackageInformation();
 	virtual ~StgPackageInformation();
@@ -65,5 +67,3 @@ public:
 	int GetPackageStartTime() { return timeStart_; }
 	void SetPackageStartTime(int time) { timeStart_ = time; }
 };
-
-#endif

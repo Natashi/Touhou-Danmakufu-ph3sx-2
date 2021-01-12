@@ -538,7 +538,7 @@ void StgSystemController::_ControlScene() {
 				stageController_->RenderToTransitionTexture();
 				if (infoStage->GetResult() == StgStageInformation::RESULT_UNKNOWN) {
 					int sceneResult = StgStageInformation::RESULT_CLEARED;
-					shared_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
+					ref_unsync_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
 					if (objPlayer) {
 						int statePlayer = objPlayer->GetState();
 						if (statePlayer == StgPlayerObject::STATE_END)

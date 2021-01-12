@@ -13,20 +13,21 @@ class StgEnemyBossSceneObject;
 **********************************************************/
 class StgEnemyManager {
 	StgStageController* stageController_;
-	std::list<shared_ptr<StgEnemyObject>> listObj_;
-	shared_ptr<StgEnemyBossSceneObject> objBossScene_;
+	std::list<ref_unsync_ptr<StgEnemyObject>> listObj_;
+	ref_unsync_ptr<StgEnemyBossSceneObject> objBossScene_;
 public:
 	StgEnemyManager(StgStageController* stageController);
 	virtual ~StgEnemyManager();
+
 	void Work();
 	void RegistIntersectionTarget();
 
-	void AddEnemy(shared_ptr<StgEnemyObject> obj) { listObj_.push_back(obj); }
+	void AddEnemy(ref_unsync_ptr<StgEnemyObject> obj) { listObj_.push_back(obj); }
 	size_t GetEnemyCount() { return listObj_.size(); }
 
-	void SetBossSceneObject(shared_ptr<StgEnemyBossSceneObject> obj);
-	shared_ptr<StgEnemyBossSceneObject> GetBossSceneObject();
-	std::list<shared_ptr<StgEnemyObject>>& GetEnemyList() { return listObj_; }
+	void SetBossSceneObject(ref_unsync_ptr<StgEnemyBossSceneObject> obj);
+	ref_unsync_ptr<StgEnemyBossSceneObject> GetBossSceneObject();
+	std::list<ref_unsync_ptr<StgEnemyObject>>& GetEnemyList() { return listObj_; }
 };
 
 /**********************************************************
@@ -43,8 +44,8 @@ protected:
 
 	bool bEnableGetIntersectionPositionFetch_;
 
-	std::vector<weak_ptr<StgIntersectionTarget>> ptrIntersectionToShot_;
-	std::vector<weak_ptr<StgIntersectionTarget>> ptrIntersectionToPlayer_;
+	std::vector<ref_unsync_weak_ptr<StgIntersectionTarget>> ptrIntersectionToShot_;
+	std::vector<ref_unsync_weak_ptr<StgIntersectionTarget>> ptrIntersectionToPlayer_;
 
 	virtual void _Move();
 	virtual void _AddRelativeIntersection();
@@ -61,7 +62,7 @@ public:
 	virtual void SetX(double x) { posX_ = x; DxScriptRenderObject::SetX(x); }
 	virtual void SetY(double y) { posY_ = y; DxScriptRenderObject::SetY(y); }
 
-	shared_ptr<StgEnemyObject> GetOwnObject();
+	ref_unsync_ptr<StgEnemyObject> GetOwnObject();
 	double GetLife() { return life_; }
 	void SetLife(double life) { life_ = life; }
 	void AddLife(double inc) { life_ += inc; life_ = std::max(life_, 0.0); }
@@ -73,10 +74,10 @@ public:
 	void SetEnableGetIntersectionPosition(bool flg) { bEnableGetIntersectionPositionFetch_ = flg; }
 	bool GetEnableGetIntersectionPosition() { return bEnableGetIntersectionPositionFetch_; }
 
-	void AddReferenceToShotIntersection(shared_ptr<StgIntersectionTarget> pointer);
-	void AddReferenceToPlayerIntersection(shared_ptr<StgIntersectionTarget> pointer);
-	std::vector<weak_ptr<StgIntersectionTarget>>* GetIntersectionListShot() { return &ptrIntersectionToShot_; }
-	std::vector<weak_ptr<StgIntersectionTarget>>* GetIntersectionListPlayer() { return &ptrIntersectionToPlayer_; }
+	void AddReferenceToShotIntersection(ref_unsync_ptr<StgIntersectionTarget> target);
+	void AddReferenceToPlayerIntersection(ref_unsync_ptr<StgIntersectionTarget> target);
+	std::vector<ref_unsync_weak_ptr<StgIntersectionTarget>>* GetIntersectionListShot() { return &ptrIntersectionToShot_; }
+	std::vector<ref_unsync_weak_ptr<StgIntersectionTarget>>* GetIntersectionListPlayer() { return &ptrIntersectionToPlayer_; }
 };
 
 /**********************************************************
@@ -100,19 +101,20 @@ private:
 
 	int dataStep_;
 	int dataIndex_;
-	shared_ptr<StgEnemyBossSceneData> activeData_;
-	std::vector<std::vector<shared_ptr<StgEnemyBossSceneData>>> listData_;
+	ref_unsync_ptr<StgEnemyBossSceneData> activeData_;
+	std::vector<std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>> listData_;
 
 	bool _NextStep();
 public:
 	StgEnemyBossSceneObject(StgStageController* stageController);
+
 	virtual void Work();
 	virtual void Activate();
-	virtual void Render() {}//何もしない
-	virtual void SetRenderState() {}//何もしない
+	virtual void Render() {}
+	virtual void SetRenderState() {}
 
-	void AddData(int step, shared_ptr<StgEnemyBossSceneData> data);
-	shared_ptr<StgEnemyBossSceneData> GetActiveData() { return activeData_; }
+	void AddData(int step, ref_unsync_ptr<StgEnemyBossSceneData> data);
+	ref_unsync_ptr<StgEnemyBossSceneData> GetActiveData() { return activeData_; }
 	void LoadAllScriptInThread();
 
 	size_t GetRemainStepCount();
@@ -134,37 +136,43 @@ private:
 	shared_ptr<ManagedScript> ptrScript_;
 
 	std::vector<double> listLife_;
-	std::vector<shared_ptr<StgEnemyBossObject>> listEnemyObject_;
-	int countCreate_;//ボス生成数。listEnemyObject_を超えて生成しようとしたらエラー。
+	std::vector<ref_unsync_ptr<StgEnemyBossObject>> listEnemyObject_;
+	int countCreate_;			//The maximum amount of bosses allowed in listEnemyObject_
 	bool bReadyNext_;
 
-	bool bSpell_;//スペルカード
-	bool bLastSpell_;//ラストスペル
-	bool bDurable_;//耐久スペル
-	bool bRequireAllShotdown_;	//Whether the step will end when all boss objects are dead
 	int64_t scoreSpell_;
-	int timerSpellOrg_;//初期タイマー フレーム単位 -1で無効
-	int timerSpell_;//タイマー フレーム単位 -1で無効
-	int countPlayerShootDown_;//自機撃破数
-	int countPlayerSpell_;//自機スペル使用数
+
+	bool bSpell_;				//Currently a spell?
+	bool bLastSpell_;			//Last spell? (th8-style)
+	bool bDurable_;				//Survival spell
+	bool bRequireAllShotdown_;	//End the step only when all boss objects are dead?
+
+	int timerSpellOrg_;			//Original timer
+	int timerSpell_;			//Current timer
+	int countPlayerShootDown_;	//Player death count
+	int countPlayerSpell_;		//Player bomb count
 public:
 	StgEnemyBossSceneData();
 	virtual ~StgEnemyBossSceneData() {}
+
 	std::wstring& GetPath() { return path_; }
 	void SetPath(const std::wstring& path) { path_ = path; }
 	shared_ptr<ManagedScript> GetScriptPointer() { return ptrScript_; }
 	void SetScriptPointer(shared_ptr<ManagedScript> id) { ptrScript_ = id; }
+
 	std::vector<double>& GetLifeList() { return listLife_; }
 	void SetLifeList(std::vector<double>& list) { listLife_ = list; }
-	std::vector<shared_ptr<StgEnemyBossObject>>& GetEnemyObjectList() { return listEnemyObject_; }
-	void SetEnemyObjectList(std::vector<shared_ptr<StgEnemyBossObject>>& list) { listEnemyObject_ = list; }
+	std::vector<ref_unsync_ptr<StgEnemyBossObject>>& GetEnemyObjectList() { return listEnemyObject_; }
+	void SetEnemyObjectList(std::vector<ref_unsync_ptr<StgEnemyBossObject>>& list) { listEnemyObject_ = list; }
 	int GetEnemyBossIdInCreate();
+
 	bool IsReadyNext() { return bReadyNext_; }
 	void SetReadyNext() { bReadyNext_ = true; }
 
 	int64_t GetCurrentSpellScore();
 	int64_t GetSpellScore() { return scoreSpell_; }
 	void SetSpellScore(int64_t score) { scoreSpell_ = score; }
+
 	int GetSpellTimer() { return timerSpell_; }
 	void SetSpellTimer(int timer) { timerSpell_ = timer; }
 	int GetOriginalSpellTimer() { return timerSpellOrg_; }

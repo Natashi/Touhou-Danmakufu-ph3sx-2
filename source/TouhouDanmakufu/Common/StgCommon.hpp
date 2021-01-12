@@ -25,14 +25,15 @@ private:
 protected:
 	double posX_;
 	double posY_;
-	shared_ptr<StgMovePattern> pattern_;
+
+	ref_unsync_ptr<StgMovePattern> pattern_;
 
 	bool bEnableMovement_;
 
 	int framePattern_;
-	std::map<int, std::list<shared_ptr<StgMovePattern>>> mapPattern_;
+	std::map<int, std::list<ref_unsync_ptr<StgMovePattern>>> mapPattern_;
 	virtual void _Move();
-	void _AttachReservedPattern(std::shared_ptr<StgMovePattern> pattern);
+	void _AttachReservedPattern(ref_unsync_ptr<StgMovePattern> pattern);
 public:
 	StgMoveObject(StgStageController* stageController);
 	virtual ~StgMoveObject();
@@ -53,11 +54,11 @@ public:
 	void SetSpeedX(double speedX);
 	void SetSpeedY(double speedY);
 
-	std::shared_ptr<StgMovePattern> GetPattern() { return pattern_; }
-	void SetPattern(std::shared_ptr<StgMovePattern> pattern) {
+	ref_unsync_ptr<StgMovePattern> GetPattern() { return pattern_; }
+	void SetPattern(ref_unsync_ptr<StgMovePattern> pattern) {
 		pattern_ = pattern;
 	}
-	void AddPattern(int frameDelay, std::shared_ptr<StgMovePattern> pattern, bool bForceMap = false);
+	void AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap = false);
 };
 
 /**********************************************************
@@ -89,11 +90,12 @@ protected:
 	std::list<std::pair<int8_t, double>> listCommand_;
 
 	StgStageController* _GetStageController() { return target_->stageController_; }
-	shared_ptr<StgMoveObject> _GetMoveObject(int id);
+	ref_unsync_ptr<StgMoveObject> _GetMoveObject(int id);
 	virtual void _Activate(StgMovePattern* src) {}
 public:
 	StgMovePattern(StgMoveObject* target);
 	virtual ~StgMovePattern() {}
+
 	virtual void Move() = 0;
 
 	void AddCommand(std::pair<uint8_t, double> cmd) { listCommand_.push_back(cmd); }
@@ -131,7 +133,8 @@ protected:
 	double acceleration_;
 	double maxSpeed_;
 	double angularVelocity_;
-	weak_ptr<StgMoveObject> idRelative_;
+
+	ref_unsync_weak_ptr<StgMoveObject> objRelative_;
 
 	virtual void _Activate(StgMovePattern* src);
 public:
@@ -146,8 +149,9 @@ public:
 	void SetAcceleration(double accel) { acceleration_ = accel; }
 	void SetMaxSpeed(double max) { maxSpeed_ = max; }
 	void SetAngularVelocity(double av) { angularVelocity_ = av; }
-	void SetRelativeObjectID(shared_ptr<StgMoveObject> obj) { idRelative_ = obj; }
-	void SetRelativeObjectID(int id) { idRelative_ = _GetMoveObject(id); }
+
+	void SetRelativeObject(ref_unsync_weak_ptr<StgMoveObject> obj) { objRelative_ = obj; }
+	void SetRelativeObject(int id) { objRelative_ = _GetMoveObject(id); }
 
 	virtual inline double GetSpeedX() {
 		return (speed_ * c_);

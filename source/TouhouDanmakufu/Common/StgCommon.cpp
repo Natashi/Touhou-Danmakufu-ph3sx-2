@@ -34,14 +34,14 @@ void StgMoveObject::_Move() {
 	pattern_->Move();
 	++framePattern_;
 }
-void StgMoveObject::_AttachReservedPattern(std::shared_ptr<StgMovePattern> pattern) {
+void StgMoveObject::_AttachReservedPattern(ref_unsync_ptr<StgMovePattern> pattern) {
 	if (pattern_ == nullptr)
-		pattern_ = std::shared_ptr<StgMovePattern_Angle>(new StgMovePattern_Angle(this));
+		pattern_ = new StgMovePattern_Angle(this);
 
 	pattern->_Activate(pattern_.get());
 	pattern_ = pattern;
 }
-void StgMoveObject::AddPattern(int frameDelay, std::shared_ptr<StgMovePattern> pattern, bool bForceMap) {
+void StgMoveObject::AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap) {
 	if (frameDelay == 0 && !bForceMap)
 		_AttachReservedPattern(pattern);
 	else {
@@ -56,7 +56,7 @@ double StgMoveObject::GetSpeed() {
 }
 void StgMoveObject::SetSpeed(double speed) {
 	if (pattern_ == nullptr || pattern_->GetType() != StgMovePattern::TYPE_ANGLE) {
-		pattern_ = std::shared_ptr<StgMovePattern_Angle>(new StgMovePattern_Angle(this));
+		pattern_ = new StgMovePattern_Angle(this);
 	}
 	StgMovePattern_Angle* pattern = dynamic_cast<StgMovePattern_Angle*>(pattern_.get());
 	pattern->SetSpeed(speed);
@@ -68,21 +68,21 @@ double StgMoveObject::GetDirectionAngle() {
 }
 void StgMoveObject::SetDirectionAngle(double angle) {
 	if (pattern_ == nullptr || pattern_->GetType() != StgMovePattern::TYPE_ANGLE) {
-		pattern_ = std::shared_ptr<StgMovePattern_Angle>(new StgMovePattern_Angle(this));
+		pattern_ = new StgMovePattern_Angle(this);
 	}
 	StgMovePattern_Angle* pattern = dynamic_cast<StgMovePattern_Angle*>(pattern_.get());
 	pattern->SetDirectionAngle(angle);
 }
 void StgMoveObject::SetSpeedX(double speedX) {
 	if (pattern_ == nullptr || pattern_->GetType() != StgMovePattern::TYPE_XY) {
-		pattern_ = std::shared_ptr<StgMovePattern_XY>(new StgMovePattern_XY(this));
+		pattern_ = new StgMovePattern_XY(this);
 	}
 	StgMovePattern_XY* pattern = dynamic_cast<StgMovePattern_XY*>(pattern_.get());
 	pattern->SetSpeedX(speedX);
 }
 void StgMoveObject::SetSpeedY(double speedY) {
 	if (pattern_ == nullptr || pattern_->GetType() != StgMovePattern::TYPE_XY) {
-		pattern_ = std::shared_ptr<StgMovePattern_XY>(new StgMovePattern_XY(this));
+		pattern_ = new StgMovePattern_XY(this);
 	}
 	StgMovePattern_XY* pattern = dynamic_cast<StgMovePattern_XY*>(pattern_.get());
 	pattern->SetSpeedY(speedY);
@@ -99,11 +99,11 @@ StgMovePattern::StgMovePattern(StgMoveObject* target) {
 	c_ = 1;
 	s_ = 0;
 }
-shared_ptr<StgMoveObject> StgMovePattern::_GetMoveObject(int id) {
-	shared_ptr<DxScriptObjectBase> base = _GetStageController()->GetMainRenderObject(id);
+ref_unsync_ptr<StgMoveObject> StgMovePattern::_GetMoveObject(int id) {
+	ref_unsync_ptr<DxScriptObjectBase> base = _GetStageController()->GetMainRenderObject(id);
 	if (base == nullptr || base->IsDeleted()) return nullptr;
 
-	return std::dynamic_pointer_cast<StgMoveObject>(base);
+	return ref_unsync_ptr<StgMoveObject>::Cast(base);
 }
 
 //*******************************************************************
@@ -116,7 +116,7 @@ StgMovePattern_Angle::StgMovePattern_Angle(StgMoveObject* target) : StgMovePatte
 	acceleration_ = 0;
 	maxSpeed_ = 0;
 	angularVelocity_ = 0;
-	idRelative_ = weak_ptr<StgMoveObject>();
+	objRelative_ = ref_unsync_weak_ptr<StgMoveObject>();
 }
 void StgMovePattern_Angle::Move() {
 	double angle = angDirection_;
@@ -200,9 +200,9 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 		}
 	}
 
-	if (shared_ptr<StgMoveObject> obj = idRelative_.lock()) {
+	if (objRelative_) {
 		__m128d v1 = Vectorize::Sub(
-			Vectorize::Set(obj->GetPositionX(), obj->GetPositionY()),
+			Vectorize::Set(objRelative_->GetPositionX(), objRelative_->GetPositionY()),
 			Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()));
 		newAngle += atan2(v1.m128d_f64[1], v1.m128d_f64[0]);
 	}

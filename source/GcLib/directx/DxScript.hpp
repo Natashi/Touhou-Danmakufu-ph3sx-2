@@ -44,10 +44,10 @@ namespace directx {
 		void SetMaxObject(size_t size) { objManager_->SetMaxObject(size); }
 		void SetRenderBucketCapacity(int capacity) { objManager_->SetRenderBucketCapacity(capacity); }
 
-		virtual int AddObject(shared_ptr<DxScriptObjectBase> obj, bool bActivate = true);
+		virtual int AddObject(ref_unsync_ptr<DxScriptObjectBase> obj, bool bActivate = true);
 		virtual void ActivateObject(int id, bool bActivate) { objManager_->ActivateObject(id, bActivate); }
 
-		shared_ptr<DxScriptObjectBase> GetObject(int id) { return objManager_->GetObject(id); }
+		ref_unsync_ptr<DxScriptObjectBase> GetObject(int id) { return objManager_->GetObject(id); }
 		DxScriptObjectBase* GetObjectPointer(int id) { return objManager_->GetObjectPointer(id); }
 		template<class T> T* GetObjectPointerAs(int id) { return dynamic_cast<T*>(GetObjectPointer(id)); }
 

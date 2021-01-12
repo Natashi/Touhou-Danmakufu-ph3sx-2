@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_STAGESCRIPT__
-#define __TOUHOUDANMAKUFU_DNHSTG_STAGESCRIPT__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -8,7 +7,6 @@
 
 class StgStageScriptObjectManager;
 class StgStageScript;
-
 
 /**********************************************************
 //StgStageScriptManager
@@ -53,7 +51,7 @@ class StgPlayerObject;
 class StgStageScriptObjectManager : public DxScriptObjectManager {
 	StgStageController* stageController_;
 
-	shared_ptr<StgPlayerObject> ptrObjPlayer_;
+	ref_unsync_ptr<StgPlayerObject> ptrObjPlayer_;
 	int idObjPlayer_;
 public:
 	StgStageScriptObjectManager(StgStageController* stageController);
@@ -65,7 +63,7 @@ public:
 	virtual void RenderObject(int priMin, int priMax);
 
 	int GetPlayerObjectID() { return idObjPlayer_; }
-	shared_ptr<StgPlayerObject> GetPlayerObjectPtr() { return ptrObjPlayer_; }
+	ref_unsync_ptr<StgPlayerObject> GetPlayerObject() { return ptrObjPlayer_; }
 	int CreatePlayerObject();
 };
 
@@ -166,7 +164,6 @@ public:
 		TARGET_PLAYER,
 	};
 protected:
-
 	StgStageController* stageController_;
 public:
 	StgStageScript(StgStageController* stageController);
@@ -246,7 +243,6 @@ public:
 	*/
 	DNH_FUNCAPI_DECL_(Func_SetPlayerRebirthPosition);
 
-
 	//STG共通関数：敵
 	static gstd::value Func_GetEnemyBossSceneObjectID(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetEnemyBossObjectID(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -258,7 +254,6 @@ public:
 	static gstd::value Func_GetEnemyIntersectionPositionByIdA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_LoadEnemyShotData(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ReloadEnemyShotData(gstd::script_machine* machine, int argc, const gstd::value* argv);
-
 
 	//STG共通関数：弾
 	static gstd::value Func_DeleteShotAll(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -280,7 +275,6 @@ public:
 	static gstd::value Func_SetShotAutoDeleteClip(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetShotDataInfoA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_StartShotScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
-
 
 	//STG共通関数：アイテム
 	static gstd::value Func_CreateItemA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -481,7 +475,6 @@ public:
 	static gstd::value Func_ObjCol_GetIntersectedCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
 };
 
-
 /**********************************************************
 //StgSystemScript
 **********************************************************/
@@ -529,7 +522,6 @@ public:
 
 };
 
-
 /**********************************************************
 //StgStagePlayerScript
 **********************************************************/
@@ -564,6 +556,3 @@ public:
 	static gstd::value Func_ObjSpell_SetIntersectionLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
 };
-
-
-#endif

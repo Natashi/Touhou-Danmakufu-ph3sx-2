@@ -10,37 +10,36 @@ StgEnemyManager::StgEnemyManager(StgStageController* stageController) {
 	stageController_ = stageController;
 }
 StgEnemyManager::~StgEnemyManager() {
-	for (shared_ptr<StgEnemyObject>& obj : listObj_) {
+	for (ref_unsync_ptr<StgEnemyObject>& obj : listObj_) {
 		if (obj)
 			obj->ClearEnemyObject();
 	}
 }
 void StgEnemyManager::Work() {
-	for (auto itr = listObj_.begin(); itr != listObj_.end(); ) {
-		shared_ptr<StgEnemyObject>& obj = (*itr);
+	for (auto itr = listObj_.begin(); itr != listObj_.end();) {
+		ref_unsync_ptr<StgEnemyObject>& obj = (*itr);
 		if (obj->IsDeleted()) {
 			obj->ClearEnemyObject();
 			itr = listObj_.erase(itr);
 		}
-		else itr++;
+		else ++itr;
 	}
-
 }
 void StgEnemyManager::RegistIntersectionTarget() {
-	for (shared_ptr<StgEnemyObject>& obj : listObj_) {
+	for (ref_unsync_ptr<StgEnemyObject>& obj : listObj_) {
 		if (!obj->IsDeleted()) {
 			obj->ClearIntersectedIdList();
 			obj->RegistIntersectionTarget();
 		}
 	}
 }
-void StgEnemyManager::SetBossSceneObject(shared_ptr<StgEnemyBossSceneObject> obj) {
+void StgEnemyManager::SetBossSceneObject(ref_unsync_ptr<StgEnemyBossSceneObject> obj) {
 	if (objBossScene_ != nullptr && !objBossScene_->IsDeleted())
 		throw gstd::wexception("ObjEnemyBossScene already exists.");
 	objBossScene_ = obj;
 }
-shared_ptr<StgEnemyBossSceneObject> StgEnemyManager::GetBossSceneObject() {
-	shared_ptr<StgEnemyBossSceneObject> res = nullptr;
+ref_unsync_ptr<StgEnemyBossSceneObject> StgEnemyManager::GetBossSceneObject() {
+	ref_unsync_ptr<StgEnemyBossSceneObject> res;
 	if (objBossScene_ != nullptr && !objBossScene_->IsDeleted())
 		res = objBossScene_;
 	return res;
@@ -87,7 +86,7 @@ void StgEnemyObject::_AddRelativeIntersection() {
 void StgEnemyObject::Activate() {}
 void StgEnemyObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	double damage = 0;
-	if (auto ptrObj = otherTarget->GetObject().lock()) {
+	if (auto ptrObj = otherTarget->GetObject()) {
 		if (otherTarget->GetTargetType() == StgIntersectionTarget::TYPE_PLAYER_SHOT) {
 			if (StgShotObject* shot = dynamic_cast<StgShotObject*>(ptrObj.get())) {
 				damage = shot->GetDamage() * (shot->IsSpellFactor() ? rateDamageSpell_ : rateDamageShot_) / 100.0;
@@ -104,14 +103,14 @@ void StgEnemyObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersection
 void StgEnemyObject::RegistIntersectionTarget() {
 	_AddRelativeIntersection();
 }
-shared_ptr<StgEnemyObject> StgEnemyObject::GetOwnObject() {
-	return std::dynamic_pointer_cast<StgEnemyObject>(stageController_->GetMainRenderObject(idObject_));
+ref_unsync_ptr<StgEnemyObject> StgEnemyObject::GetOwnObject() {
+	return ref_unsync_ptr<StgEnemyObject>::Cast(stageController_->GetMainRenderObject(idObject_));
 }
-void StgEnemyObject::AddReferenceToShotIntersection(shared_ptr<StgIntersectionTarget> pointer) {
-	ptrIntersectionToShot_.push_back(pointer);
+void StgEnemyObject::AddReferenceToShotIntersection(ref_unsync_ptr<StgIntersectionTarget> target) {
+	ptrIntersectionToShot_.push_back(target);
 }
-void StgEnemyObject::AddReferenceToPlayerIntersection(shared_ptr<StgIntersectionTarget> pointer) {
-	ptrIntersectionToPlayer_.push_back(pointer);
+void StgEnemyObject::AddReferenceToPlayerIntersection(ref_unsync_ptr<StgIntersectionTarget> target) {
+	ptrIntersectionToPlayer_.push_back(target);
 }
 
 /**********************************************************
@@ -151,19 +150,20 @@ bool StgEnemyBossSceneObject::_NextStep() {
 		}
 	}
 
-	shared_ptr<StgEnemyBossSceneData> oldActiveData = activeData_;
+	ref_unsync_ptr<StgEnemyBossSceneData> oldActiveData = activeData_;
 
 	StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
+
 	activeData_ = listData_[dataStep_][dataIndex_];
-	std::vector<shared_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
+	std::vector<ref_unsync_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
 	std::vector<double>& listLife = activeData_->GetLifeList();
 	for (size_t iEnemy = 0; iEnemy < listEnemy.size(); ++iEnemy) {
-		shared_ptr<StgEnemyBossObject> obj = listEnemy[iEnemy];
+		ref_unsync_ptr<StgEnemyBossObject> obj = listEnemy[iEnemy];
 		obj->SetLife(listLife[iEnemy]);
 		if (oldActiveData) {
-			std::vector<shared_ptr<StgEnemyBossObject>> listOldEnemyObject = oldActiveData->GetEnemyObjectList();
+			std::vector<ref_unsync_ptr<StgEnemyBossObject>>& listOldEnemyObject = oldActiveData->GetEnemyObjectList();
 			if (iEnemy < listOldEnemyObject.size()) {
-				shared_ptr<StgEnemyBossObject> objOld = listOldEnemyObject[iEnemy];
+				ref_unsync_ptr<StgEnemyBossObject>& objOld = listOldEnemyObject[iEnemy];
 				obj->SetPositionX(objOld->GetPositionX());
 				obj->SetPositionY(objOld->GetPositionY());
 			}
@@ -187,7 +187,7 @@ bool StgEnemyBossSceneObject::_NextStep() {
 void StgEnemyBossSceneObject::Work() {
 	if (activeData_->IsReadyNext()) {
 		bool bEnemyExists = false;
-		for (shared_ptr<StgEnemyBossObject>& iEnemy : activeData_->GetEnemyObjectList())
+		for (ref_unsync_ptr<StgEnemyBossObject>& iEnemy : activeData_->GetEnemyObjectList())
 			bEnemyExists |= !iEnemy->IsDeleted();
 
 		if (!bEnemyExists) {
@@ -219,7 +219,7 @@ void StgEnemyBossSceneObject::Work() {
 		}
 
 		if (bZeroTimer || bEndLastSpell) {
-			for (shared_ptr<StgEnemyBossObject>& iEnemy : activeData_->GetEnemyObjectList())
+			for (ref_unsync_ptr<StgEnemyBossObject>& iEnemy : activeData_->GetEnemyObjectList())
 				iEnemy->SetLife(0);
 
 			if (bZeroTimer) {
@@ -228,11 +228,12 @@ void StgEnemyBossSceneObject::Work() {
 			}
 		}
 
-		std::vector<shared_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
+		std::vector<ref_unsync_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
 		bool bReadyNext = true;
 		if (activeData_->IsRequireAllDown()) {
 			for (auto itr = listEnemy.begin(); itr != listEnemy.end(); ++itr) {
-				if ((*itr)->GetLife() > 0) bReadyNext = false;
+				if ((*itr)->GetLife() > 0)
+					bReadyNext = false;
 			}
 		}
 		else {
@@ -268,9 +269,9 @@ void StgEnemyBossSceneObject::Activate() {
 	auto scriptManager = stageController_->GetScriptManager();
 	StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
 
-	for (std::vector<shared_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
+	for (std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
 		size_t iData = 0;
-		for (shared_ptr<StgEnemyBossSceneData> pData : iStep) {
+		for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : iStep) {
 			shared_ptr<ManagedScript> script = pData->GetScriptPointer();
 
 			if (script == nullptr)
@@ -330,9 +331,9 @@ void StgEnemyBossSceneObject::Activate() {
 				if (vAllDown.has_data()) pData->SetRequireAllDown(vAllDown.as_boolean());
 			}
 
-			std::vector<shared_ptr<StgEnemyBossObject>> listEnemyObject;
+			std::vector<ref_unsync_ptr<StgEnemyBossObject>> listEnemyObject;
 			for (size_t iEnemy = 0; iEnemy < listLife.size(); iEnemy++) {
-				shared_ptr<StgEnemyBossObject> obj = shared_ptr<StgEnemyBossObject>(new StgEnemyBossObject(stageController_));
+				ref_unsync_ptr<StgEnemyBossObject> obj = new StgEnemyBossObject(stageController_);
 				int idEnemy = objectManager->AddObject(obj, false);
 				listEnemyObject.push_back(obj);
 			}
@@ -344,15 +345,15 @@ void StgEnemyBossSceneObject::Activate() {
 
 	_NextStep();
 }
-void StgEnemyBossSceneObject::AddData(int step, shared_ptr<StgEnemyBossSceneData> data) {
+void StgEnemyBossSceneObject::AddData(int step, ref_unsync_ptr<StgEnemyBossSceneData> data) {
 	if (listData_.size() <= step)
 		listData_.resize(step + 1);
 	listData_[step].push_back(data);
 }
 void StgEnemyBossSceneObject::LoadAllScriptInThread() {
 	auto scriptManager = stageController_->GetScriptManager();
-	for (std::vector<shared_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
-		for (shared_ptr<StgEnemyBossSceneData> pData : iStep) {
+	for (std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
+		for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : iStep) {
 			auto script = scriptManager->LoadScriptInThread(pData->GetPath(), StgStageScript::TYPE_STAGE);
 			pData->SetScriptPointer(script);
 		}
@@ -371,7 +372,7 @@ size_t StgEnemyBossSceneObject::GetActiveStepLifeCount() {
 double StgEnemyBossSceneObject::GetActiveStepTotalMaxLife() {
 	if (dataStep_ >= listData_.size()) return 0;
 	double res = 0;
-	for (shared_ptr<StgEnemyBossSceneData>& pData : listData_[dataStep_]) {
+	for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : listData_[dataStep_]) {
 		for (double iLife : pData->GetLifeList())
 			res = res + iLife;
 	}
@@ -390,7 +391,7 @@ double StgEnemyBossSceneObject::GetActiveStepLife(size_t index) {
 	if (index < dataIndex_) return 0;
 
 	double res = 0;
-	shared_ptr<StgEnemyBossSceneData> data = listData_[dataStep_][index];
+	ref_unsync_ptr<StgEnemyBossSceneData>& data = listData_[dataStep_][index];
 	if (index == dataIndex_) {
 		for (auto& iEnemyObj : data->GetEnemyObjectList())
 			res += iEnemyObj->GetLife();
@@ -409,7 +410,7 @@ std::vector<double> StgEnemyBossSceneObject::GetActiveStepLifeRateList() {
 	double rate = 0;
 
 	size_t iData = 0;
-	for (shared_ptr<StgEnemyBossSceneData>& pSceneData : listData_[dataStep_]) {
+	for (ref_unsync_ptr<StgEnemyBossSceneData>& pSceneData : listData_[dataStep_]) {
 		double life = 0;
 		
 		for (double iLife : pSceneData->GetLifeList())
@@ -452,7 +453,7 @@ int StgEnemyBossSceneData::GetEnemyBossIdInCreate() {
 		throw gstd::wexception(log);
 	}
 
-	shared_ptr<StgEnemyBossObject> obj = listEnemyObject_[countCreate_];
+	ref_unsync_ptr<StgEnemyBossObject> obj = listEnemyObject_[countCreate_];
 	++countCreate_;
 
 	return obj->GetObjectID();

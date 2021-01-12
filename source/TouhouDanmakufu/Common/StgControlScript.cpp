@@ -24,13 +24,11 @@ void StgControlScriptInformation::LoadFreePlayerList() {
 	const std::wstring& dir = EPathProperty::GetPlayerScriptRootDirectory();
 	listFreePlayer_ = ScriptInformation::FindPlayerScriptInformationList(dir);
 
-	//ソート
 	std::sort(listFreePlayer_.begin(), listFreePlayer_.end(), ScriptInformation::PlayerListSort());
 }
 void StgControlScriptInformation::LoadReplayInformation(std::wstring pathMainScript) {
 	replayManager_->UpdateInformationList(pathMainScript);
 }
-
 
 /**********************************************************
 //StgControlScript
@@ -177,7 +175,6 @@ StgControlScript::StgControlScript(StgSystemController* systemController) {
 	SetScriptEngineCache(systemController->GetScriptEngineCache());
 	commonDataManager_ = systemController->GetCommonDataManager();
 }
-
 
 //STG制御共通関数：共通データ
 gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -830,7 +827,6 @@ gstd::value StgControlScript::Func_GetPlayerReplayName(gstd::script_machine* mac
 
 	return script->CreateStringValue(replayName);
 }
-
 
 //STG制御共通関数：ユーザスクリプト
 gstd::value StgControlScript::Func_SetPauseScriptPath(gstd::script_machine* machine, int argc, const gstd::value* argv) {

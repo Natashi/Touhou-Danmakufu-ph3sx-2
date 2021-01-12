@@ -163,14 +163,14 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		}
 	}
 
-	shared_ptr<StgPlayerObject> objPlayer = nullptr;
+	ref_unsync_ptr<StgPlayerObject> objPlayer = nullptr;
 	ref_count_ptr<ScriptInformation> infoPlayer = infoStage_->GetPlayerScriptInformation();
 	const std::wstring& pathPlayerScript = infoPlayer->GetScriptPath();
 
 	if (pathPlayerScript.size() > 0) {
 		ELogger::WriteTop(StringUtility::Format(L"Player script: [%s]", pathPlayerScript.c_str()));
 		int idPlayer = scriptManager_->GetObjectManager()->CreatePlayerObject();
-		objPlayer = std::dynamic_pointer_cast<StgPlayerObject>(GetMainRenderObject(idPlayer));
+		objPlayer = ref_unsync_ptr<StgPlayerObject>::Cast(GetMainRenderObject(idPlayer));
 
 		if (systemController_->GetSystemInformation()->IsPackageMode())
 			objPlayer->SetEnableStateEnd(false);
@@ -241,7 +241,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	}
 
 	if (!infoStage_->IsReplay()) {
-		shared_ptr<StgPlayerObject> objPlayer = GetPlayerObject();
+		ref_unsync_ptr<StgPlayerObject> objPlayer = GetPlayerObject();
 		if (objPlayer) {
 			replayStageData->SetPlayerLife(objPlayer->GetLife());
 			replayStageData->SetPlayerBombCount(objPlayer->GetSpell());
@@ -355,8 +355,11 @@ void StgStageController::Work() {
 			scriptManager_->Work(StgStageScript::TYPE_SHOT);
 			scriptManager_->Work(StgStageScript::TYPE_ITEM);
 
-			shared_ptr<StgPlayerObject> objPlayer = GetPlayerObject();
-			if (objPlayer) objPlayer->Move();	//Move the player
+			ref_unsync_ptr<StgPlayerObject> objPlayer = GetPlayerObject();
+
+			//Move the player
+			if (objPlayer)
+				objPlayer->Move();
 			//Process the player script
 			scriptManager_->Work(StgStageScript::TYPE_PLAYER);
 
@@ -374,10 +377,11 @@ void StgStageController::Work() {
 			intersectionManager_->Work();
 
 			//Process graze events
-			if (objPlayer) objPlayer->SendGrazeEvent();
+			if (objPlayer)
+				objPlayer->SendGrazeEvent();
 
 			if (!infoStage_->IsReplay()) {
-				//Add FPS data to the replay file
+				//Add FPS entry to the replay data
 				DWORD stageFrame = infoStage_->GetCurrentFrame();
 				if (stageFrame % 60 == 0) {
 					ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage_->GetReplayData();

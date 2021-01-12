@@ -132,7 +132,6 @@ StgUserExtendSceneScript::StgUserExtendSceneScript(StgSystemController* systemCo
 }
 StgUserExtendSceneScript::~StgUserExtendSceneScript() {}
 
-
 /**********************************************************
 //StgPauseScene
 **********************************************************/
@@ -219,7 +218,6 @@ StgPauseSceneScript::~StgPauseSceneScript() {}
 
 //ˆêŽž’âŽ~ê—pŠÖ”FˆêŽž’âŽ~‘€ì
 
-
 /**********************************************************
 //StgEndScene
 **********************************************************/
@@ -248,7 +246,6 @@ void StgEndScene::Work() {
 		EDirectInput::GetInstance()->ResetInputState();
 		Finish();
 	}
-
 }
 
 void StgEndScene::Start() {

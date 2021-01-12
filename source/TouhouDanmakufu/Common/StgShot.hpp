@@ -43,7 +43,7 @@ protected:
 	StgShotDataList* listPlayerShotData_;
 	StgShotDataList* listEnemyShotData_;
 
-	std::list<shared_ptr<StgShotObject>> listObj_;
+	std::list<ref_unsync_ptr<StgShotObject>> listObj_;
 	std::vector<std::pair<size_t, std::vector<StgShotObject*>>> listRenderQueue_;
 
 	std::bitset<BIT_EV_DELETE_COUNT> listDeleteEventEnable_;
@@ -62,7 +62,7 @@ public:
 
 	void RegistIntersectionTarget();
 
-	void AddShot(shared_ptr<StgShotObject> obj);
+	void AddShot(ref_unsync_ptr<StgShotObject> obj);
 
 	StgShotDataList* GetPlayerShotDataList() { return listPlayerShotData_; }
 	StgShotDataList* GetEnemyShotDataList() { return listEnemyShotData_; }
@@ -282,7 +282,7 @@ public:
 protected:
 	StgStageController* stageController_;
 
-	weak_ptr<StgShotObject> pOwnReference_;
+	ref_unsync_weak_ptr<StgShotObject> pOwnReference_;
 
 	int frameWork_;
 	int idShotData_;
@@ -307,8 +307,8 @@ protected:
 	bool bSpellFactor_;
 	int frameAutoDelete_;
 	
-	shared_ptr<StgIntersectionTarget> pShotIntersectionTarget_;
-	std::vector<shared_ptr<StgIntersectionTarget>> listIntersectionTarget_;
+	ref_unsync_ptr<StgIntersectionTarget> pShotIntersectionTarget_;
+	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listIntersectionTarget_;
 	bool bUserIntersectionMode_;
 	bool bIntersectionEnable_;
 	bool bChangeItemEnable_;
@@ -345,9 +345,10 @@ public:
 	virtual bool HasNormalRendering() { return false; }
 
 	virtual void Work();
-	virtual void Render() {}//一括で描画するためオブジェクト管理での描画はしない
+	virtual void Render() {}
 	virtual void Activate() {}
 	virtual void RenderOnShotManager() {}
+
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 	virtual void ClearShotObject() { ClearIntersectionRelativeTarget(); }
 	virtual void RegistIntersectionTarget() = 0;
@@ -420,11 +421,13 @@ class StgNormalShotObject : public StgShotObject {
 	friend class StgShotObject;
 protected:
 	double angularVelocity_;
+
 	void _AddIntersectionRelativeTarget();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
 public:
 	StgNormalShotObject(StgStageController* stageController);
 	virtual ~StgNormalShotObject();
+
 	virtual void Work();
 	virtual void RenderOnShotManager();
 
@@ -436,7 +439,7 @@ public:
 		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
 	}
 
-	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
+	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	virtual void SetShotDataID(int id);
 };
 
@@ -451,9 +454,11 @@ protected:
 	float invalidLengthStart_;
 	float invalidLengthEnd_;
 	float itemDistance_;
+
 	void _AddIntersectionRelativeTarget();
 public:
 	StgLaserObject(StgStageController* stageController);
+
 	virtual void ClearShotObject() {
 		ClearIntersectionRelativeTarget();
 	}
@@ -476,21 +481,22 @@ public:
 **********************************************************/
 class StgLooseLaserObject : public StgLaserObject {
 protected:
-	float posXE_;//後方x
-	float posYE_;//後方y
+	float posXE_;
+	float posYE_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
 public:
 	StgLooseLaserObject(StgStageController* stageController);
+
 	virtual void Work();
 	virtual void RenderOnShotManager();
 
 	virtual void RegistIntersectionTarget() {
 		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
 	}
-	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
+	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	virtual void SetX(float x) { StgShotObject::SetX(x); posXE_ = x; }
 	virtual void SetY(float y) { StgShotObject::SetY(y); posYE_ = y; }
 };
@@ -516,12 +522,13 @@ protected:
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
 public:
 	StgStraightLaserObject(StgStageController* stageController);
+
 	virtual void Work();
 	virtual void RenderOnShotManager();
 	virtual void RegistIntersectionTarget() {
 		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
 	}
-	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
+	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 
 	double GetLaserAngle() { return angLaser_; }
 	void SetLaserAngle(double angle) { angLaser_ = angle; }
@@ -556,12 +563,13 @@ protected:
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
 public:
 	StgCurveLaserObject(StgStageController* stageController);
+
 	virtual void Work();
 	virtual void RenderOnShotManager();
 	virtual void RegistIntersectionTarget() {
 		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
 	}
-	virtual std::vector<shared_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
+	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
 
 	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, D3DCOLOR col = 0xffffffff);
@@ -594,7 +602,7 @@ public:
 		BASEPOINT_RESET = -256 * 256,
 	};
 private:
-	shared_ptr<StgMoveObject> parent_;
+	ref_unsync_ptr<StgMoveObject> parent_;
 
 	int idShotData_;
 	int typeOwner_;
@@ -635,7 +643,7 @@ public:
 	virtual void Render() {}
 	virtual void SetRenderState() {}
 
-	void CopyFrom(shared_ptr<StgPatternShotObjectGenerator> other) {
+	void CopyFrom(ref_unsync_ptr<StgPatternShotObjectGenerator> other) {
 		StgPatternShotObjectGenerator::CopyFrom(other.get());
 	}
 	void CopyFrom(StgPatternShotObjectGenerator* other);
@@ -644,7 +652,7 @@ public:
 	void SetTransformation(size_t off, StgPatternShotTransform& entry);
 	void ClearTransformation() { listTransformation_.clear(); }
 
-	void SetParent(shared_ptr<StgMoveObject> obj) { parent_ = obj; }
+	void SetParent(ref_unsync_ptr<StgMoveObject> obj) { parent_ = obj; }
 
 	void FireSet(void* scriptData, StgStageController* controller, std::vector<int>* idVector);
 
