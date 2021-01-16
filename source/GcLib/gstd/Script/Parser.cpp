@@ -1413,14 +1413,15 @@ continue_as_variadic:
 				//For block
 				frame.push_back(scope_t(block->kind));
 				{
-					if (isNewVar) {
-						for (parser_state_t* iState = state; iState != nullptr; iState = iState->state_pred)
-							varc_prev_total += iState->var_count_main;
+					for (parser_state_t* iState = state; iState != nullptr; iState = iState->state_pred)
+						varc_prev_total += iState->var_count_main;
 
+					if (isNewVar) {
 						symbol s = symbol(block->level, nullptr, varc_prev_total, false, !isNewVarConst);
 						frame.back().singular_insert(newVarName, s);
 
 						newState.var_count_main = 1;
+						++varc_prev_total;
 
 						ip_var_format = newState.ip;
 						newState.AddCode(block, code(command_kind::pc_var_format, 0U, 0));
