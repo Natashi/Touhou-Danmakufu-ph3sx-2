@@ -137,36 +137,52 @@ wchar_t script_scanner::parse_utf8_char() {
 void script_scanner::skip() {
 	wchar_t ch1 = current_char();
 	wchar_t ch2 = index_from_current_char(1);
-	while (ch1 == '\r' || ch1 == '\n' || ch1 == L'\t' || ch1 == L' '
-		|| ch1 == L'#' || (ch1 == L'/' && (ch2 == L'/' || ch2 == L'*'))) 
-	{
-		if (ch1 == L'#' || (ch1 == L'/' && (ch2 == L'/' || ch2 == L'*'))) {
-			if (ch1 == L'#' || ch2 == L'/') {
-				do {
-					ch1 = next_char();
-				} while (ch1 != L'\r' && ch1 != L'\n');
+
+	bool bReskip = true;
+	while (bReskip) {
+		bReskip = false;
+
+		//Skip whitespaces
+		if (std::iswspace(ch1)) {
+			bReskip = true;
+			while (std::iswspace(ch1)) {
+				if (ch1 == L'\n') ++line;
+				ch1 = next_char();
 			}
-			else {
-				next_char();
+			ch2 = index_from_current_char(1);
+		}
+
+		//Skip block comment
+		if (ch1 == L'/' && ch2 == L'*') {
+			bReskip = true;
+
+			next_char();
+			while (true) {
 				ch1 = next_char();
 				ch2 = index_from_current_char(1);
-				while (ch1 != L'*' || ch2 != L'/') {
-					if (ch1 == L'\n') ++line;
-					ch1 = next_char();
-					ch2 = index_from_current_char(1);
-				}
-				ch1 = next_char();
-				ch1 = next_char();
+
+				if (current >= endPoint)
+					throw parser_error("Block comment unenclosed at end of file.\r\n");
+				else if (ch1 == L'\n') ++line;
+
+				if (ch1 == L'*' && ch2 == L'/') break;
 			}
-		}
-		else if (ch1 == L'\n') {
-			++line;
+			next_char();
+
 			ch1 = next_char();
+			ch2 = index_from_current_char(1);
 		}
-		else {
-			ch1 = next_char();
+
+		//Skip line comments and unrecognized #'s
+		if (ch1 == L'#' || (ch1 == L'/' && ch2 == L'/')) {
+			bReskip = true;
+			while (true) {
+				ch1 = next_char();
+				if (ch1 == L'\n') break;
+			}
+			//++line;
+			ch2 = index_from_current_char(1);
 		}
-		ch2 = index_from_current_char(1);
 	}
 }
 
@@ -466,13 +482,16 @@ void script_scanner::advance() {
 				if (has_decimal_part) goto throw_err_no_decimal;
 				real_value = int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 2);
 			}
-			else if (std::regex_match(str_num, base_match, std::regex("([0-9]+)(\.[0-9]+)?"))) {
+			else if (std::regex_match(str_num, base_match, std::regex("([0-9]+)(?:\.[0-9]+)?"))) {
 				if (bInt) int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 10);
 				else real_value = std::strtod(base_match[0].str().c_str(), nullptr);
 			}
-			else throw parser_error("Invalid number.\r\n");
+			else goto throw_err_invalid_num;
 
 			break;
+
+throw_err_invalid_num:
+			throw parser_error("Invalid number.\r\n");
 throw_err_no_decimal:
 			throw parser_error("Cannot create a decimal number with base literals.\r\n");
 		}
