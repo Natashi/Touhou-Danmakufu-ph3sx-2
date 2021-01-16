@@ -131,23 +131,22 @@ namespace gstd {
 
 		class environment {
 		public:
-			environment(std::shared_ptr<environment> parent, script_block* b);
-			~environment();
-
-			std::shared_ptr<environment> parent;
+			ref_unsync_ptr<environment> parent;
 			script_block* sub;
 			int ip;
 			variables_t variables;
 			stack_t stack;
 			bool has_result;
 			int waitCount;
+		public:
+			environment(ref_unsync_ptr<environment> parent, script_block* b);
+			~environment();
 		};
-		using environment_ptr = std::shared_ptr<environment>;
 
-		std::list<environment_ptr> list_parent_environment;
+		std::list<ref_unsync_ptr<environment>> list_parent_environment;
 
-		std::list<environment_ptr> threads;
-		std::list<environment_ptr>::iterator current_thread_index;
+		std::list<ref_unsync_ptr<environment>> threads;
+		std::list<ref_unsync_ptr<environment>>::iterator current_thread_index;
 		bool finished;
 		bool stopped;
 		bool resuming;

@@ -108,7 +108,7 @@ script_machine::script_machine(script_engine* the_engine) {
 script_machine::~script_machine() {
 }
 
-script_machine::environment::environment(std::shared_ptr<environment> parent, script_block* b) {
+script_machine::environment::environment(ref_unsync_ptr<environment> parent, script_block* b) {
 	this->parent = parent;
 	this->sub = b;
 	this->ip = 0;
@@ -127,7 +127,7 @@ bool script_machine::has_event(const std::string& event_name, std::map<std::stri
 	return res != engine->events.end();
 }
 int script_machine::get_current_line() {
-	environment_ptr current = *current_thread_index;
+	ref_unsync_ptr<environment>& current = *current_thread_index;
 	return (current->sub->codes[current->ip]).line;
 }
 
@@ -138,7 +138,7 @@ void script_machine::run() {
 	if (threads.size() == 0) {
 		error_line = -1;
 
-		threads.push_back(std::make_shared<environment>(nullptr, engine->main_block));
+		threads.push_back(new environment(nullptr, engine->main_block));
 		current_thread_index = threads.begin();
 
 		finished = false;
@@ -176,8 +176,8 @@ void script_machine::call(std::map<std::string, script_block*>::iterator event_i
 		auto prev_thread = current_thread_index;
 		current_thread_index = threads.begin();
 
-		environment_ptr& env_first = *current_thread_index;
-		env_first = std::make_shared<environment>(env_first, event_itr->second);
+		ref_unsync_ptr<environment>& env_first = *current_thread_index;
+		env_first = new environment(env_first, event_itr->second);
 
 		finished = false;
 
@@ -193,7 +193,7 @@ void script_machine::call(std::map<std::string, script_block*>::iterator event_i
 }
 
 void script_machine::run_code() {
-	environment_ptr current = *current_thread_index;
+	ref_unsync_ptr<environment> current = *current_thread_index;
 
 	while (!finished && !bTerminate) {
 		if (current->waitCount > 0) {
@@ -203,8 +203,8 @@ void script_machine::run_code() {
 			continue;
 		}
 
-		if (current->ip >= current->sub->codes.size()) {
-			environment_ptr parent = current->parent;
+		if (current->ip >= current->sub->codes.size()) {	//Routine finished
+			ref_unsync_ptr<environment>& parent = current->parent;
 
 			bool bFinish = false;
 			if (parent == nullptr)
@@ -429,7 +429,7 @@ void script_machine::run_code() {
 				}
 				else if (sub->kind == block_kind::bk_microthread) {
 					//Tasks
-					environment_ptr e = std::make_shared<environment>(current, sub);
+					ref_unsync_ptr<environment> e = new environment(current, sub);
 					threads.insert(++current_thread_index, e);
 					--current_thread_index;
 
@@ -443,7 +443,7 @@ void script_machine::run_code() {
 				}
 				else {
 					//User-defined functions or internal blocks
-					environment_ptr e = std::make_shared<environment>(current, sub);
+					ref_unsync_ptr<environment> e = new environment(current, sub);
 					e->has_result = c->command == command_kind::pc_call_and_push_result;
 					*current_thread_index = e;
 
