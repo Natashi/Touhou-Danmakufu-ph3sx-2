@@ -1554,24 +1554,27 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
 	DxRect<LONG>* const rcClipBase = stageController_->GetShotManager()->GetShotDeleteClip();
 
+	LONG rcLeft = rcClipBase->left;
+	LONG rcTop = rcClipBase->top;
+	LONG rcRight = rcStgFrame->GetWidth() + rcClipBase->right;
+	LONG rcBottom = rcStgFrame->GetHeight() + rcClipBase->bottom;
+
 	bool bDelete = false;
 
 #ifdef __L_MATH_VECTORIZE
 	__m128i rc_pos = Vectorize::SetI(posX_, posXE_, posY_, posYE_);
 	//SSE2
 	__m128i res = _mm_cmplt_epi32(rc_pos, 
-		Vectorize::SetI(rcClipBase->left, rcClipBase->left, rcClipBase->top, rcClipBase->top));
+		Vectorize::SetI(rcLeft, rcLeft, rcTop, rcTop));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	if (!bDelete) {
-		LONG rcRight = rcStgFrame->GetWidth() + rcClipBase->right;
-		LONG rcBottom = rcStgFrame->GetHeight() + rcClipBase->bottom;
 		res = _mm_cmpgt_epi32(rc_pos, 
 			Vectorize::SetI(rcRight, rcRight, rcBottom, rcBottom));
 		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	}
 #else
-	bDelete = (posX_ < rect->left && posXE_ < rect->left) || (posX_ > rect->right && posXE_ > rect->right)
-		|| (posY_ < rect->top && posYE_ < rect->top) || (posY_ > rect->bottom && posYE_ > rect->bottom);
+	bDelete = (posX_ < rcLeft && posXE_ < rcLeft) || (posX_ > rcRight && posXE_ > rcRight)
+		|| (posY_ < rcTop && posYE_ < rcTop) || (posY_ > rcBottom && posYE_ > rcBottom);
 #endif
 
 	if (bDelete) {
@@ -1820,6 +1823,11 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
 	DxRect<LONG>* const rcClipBase = stageController_->GetShotManager()->GetShotDeleteClip();
 
+	LONG rcLeft = rcClipBase->left;
+	LONG rcTop = rcClipBase->top;
+	LONG rcRight = rcStgFrame->GetWidth() + rcClipBase->right;
+	LONG rcBottom = rcStgFrame->GetHeight() + rcClipBase->bottom;
+
 	bool bDelete = false;
 
 #ifdef __L_MATH_VECTORIZE
@@ -1829,11 +1837,9 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 	__m128i rc_pos = Vectorize::SetI(posX_, v_pos.m128_f32[0], posY_, v_pos.m128_f32[1]);
 	//SSE2
 	__m128i res = _mm_cmplt_epi32(rc_pos, 
-		Vectorize::SetI(rcClipBase->left, rcClipBase->left, rcClipBase->top, rcClipBase->top));
+		Vectorize::SetI(rcLeft, rcLeft, rcTop, rcTop));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	if (!bDelete) {
-		LONG rcRight = rcStgFrame->GetWidth() + rcClipBase->right;
-		LONG rcBottom = rcStgFrame->GetHeight() + rcClipBase->bottom;
 		res = _mm_cmpgt_epi32(rc_pos,
 			Vectorize::SetI(rcRight, rcRight, rcBottom, rcBottom));
 		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
@@ -1841,8 +1847,8 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 #else
 	int posXE = posX_ + (int)(length_ * move_.x);
 	int posYE = posY_ + (int)(length_ * move_.y);
-	bDelete = (posX_ < rect->left && posXE < rect->left) || (posX_ > rect->right && posXE > rect->right)
-		|| (posY_ < rect->top && posYE < rect->top) || (posY_ > rect->bottom && posYE > rect->bottom);
+	bDelete = (posX_ < rcLeft && posXE < rcLeft) || (posX_ > rcRight && posXE > rcRight)
+		|| (posY_ < rcTop && posYE < rcTop) || (posY_ > rcBottom && posYE > rcBottom);
 #endif
 
 	if (bDelete) {
