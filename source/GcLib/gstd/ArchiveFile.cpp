@@ -355,7 +355,7 @@ bool ArchiveFile::Open() {
 			}
 			*/
 
-			mapEntry_.insert(std::pair<std::wstring, shared_ptr<ArchiveFileEntry>>(entry->name, entry));
+			mapEntry_.insert(std::make_pair(entry->name, entry));
 		}
 
 		res = true;
