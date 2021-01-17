@@ -416,7 +416,7 @@ namespace gstd {
 		}
 
 		{
-			std::string error = "Unsupported compare operation: ";
+			std::string error = "Unsupported implicit comparison between ";
 			error += type_data::string_representation(argv[0].get_type());
 			error += " and ";
 			error += type_data::string_representation(argv[1].get_type());
