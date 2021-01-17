@@ -876,10 +876,10 @@ void StgItemObject::NotifyItemCollectEvent(int type, uint64_t eventParam) {
 	auto stageScriptManager = stageController_->GetScriptManager();
 	if (shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript()) {
 		gstd::value eventArg[4];
-		eventArg[0] = DxScript::CreateIntValue(typeItem_);
-		eventArg[1] = DxScript::CreateIntValue(idObject_);
+		eventArg[0] = DxScript::CreateIntValue(idObject_);
+		eventArg[1] = DxScript::CreateIntValue(typeItem_);
 		eventArg[2] = DxScript::CreateIntValue(type);
-		eventArg[3] = DxScript::CreateIntValue(eventParam);
+		eventArg[3] = DxScript::CreateRealValue(eventParam);
 
 		scriptItem->RequestEvent(StgStageItemScript::EV_COLLECT_ITEM, eventArg, 4U);
 	}
@@ -888,8 +888,8 @@ void StgItemObject::NotifyItemCancelEvent(int type) {
 	auto stageScriptManager = stageController_->GetScriptManager();
 	if (shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript()) {
 		gstd::value eventArg[4];
-		eventArg[0] = DxScript::CreateIntValue(typeItem_);
-		eventArg[1] = DxScript::CreateIntValue(idObject_);
+		eventArg[0] = DxScript::CreateIntValue(idObject_);
+		eventArg[1] = DxScript::CreateIntValue(typeItem_);
 		eventArg[2] = DxScript::CreateIntValue(type);
 
 		scriptItem->RequestEvent(StgStageItemScript::EV_CANCEL_ITEM, eventArg, 3U);
