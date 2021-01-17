@@ -780,7 +780,7 @@ void DxSoundObject::Play() {
 //DxFileObject
 //*******************************************************************
 DxFileObject::DxFileObject() {
-	bWritable_ = true;
+	bWritable_ = false;
 }
 DxFileObject::~DxFileObject() {
 	Close();
@@ -1060,8 +1060,6 @@ std::wstring DxTextFileObject::GetLineAsWString(size_t line) {
 	return res;
 }
 void DxTextFileObject::SetLineAsString(const std::string& text, size_t line) {
-	if (!bWritable_) return;
-
 	line--; //Line number begins at 1
 	if (line >= listLine_.size()) return;
 
@@ -1080,8 +1078,6 @@ void DxTextFileObject::SetLineAsString(const std::string& text, size_t line) {
 	listLine_[line] = newLine;
 }
 void DxTextFileObject::SetLineAsWString(const std::wstring& text, size_t line) {
-	if (!bWritable_) return;
-
 	line--; //Line number begins at 1
 	if (line >= listLine_.size()) return;
 
@@ -1101,16 +1097,12 @@ void DxTextFileObject::SetLineAsWString(const std::wstring& text, size_t line) {
 }
 
 void DxTextFileObject::_AddLine(const char* pChar, size_t count) {
-	if (!bWritable_) return;
-
 	std::vector<char> newLine;
 	newLine.resize(count);
 	memcpy(&newLine[0], pChar, count);
 	listLine_.push_back(newLine);
 }
 void DxTextFileObject::AddLine(const std::string& line) {
-	if (!bWritable_) return;
-
 	if (bytePerChar_ == 1) _AddLine(&line[0], line.size() * sizeof(char));
 	else if (bytePerChar_ == 2) {
 		std::wstring str = StringUtility::ConvertMultiToWide(line);
@@ -1118,8 +1110,6 @@ void DxTextFileObject::AddLine(const std::string& line) {
 	}
 }
 void DxTextFileObject::AddLine(const std::wstring& line) {
-	if (!bWritable_) return;
-
 	if (bytePerChar_ == 2) _AddLine((const char*)&line[0], line.size() * sizeof(wchar_t));
 	else if (bytePerChar_ == 1) {
 		std::string str = StringUtility::ConvertWideToMulti(line);
@@ -1198,7 +1188,7 @@ DWORD DxBinaryFileObject::Read(LPVOID data, size_t size) {
 	return lastRead_;
 }
 DWORD DxBinaryFileObject::Write(LPVOID data, size_t size) {
-	if (!bWritable_ || buffer_ == nullptr) return 0;
+	if (buffer_ == nullptr) return 0;
 	return buffer_->Write(data, size);
 }
 
