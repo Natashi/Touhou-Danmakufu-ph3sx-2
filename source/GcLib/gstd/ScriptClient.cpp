@@ -112,7 +112,7 @@ static const std::vector<function> commonFunction = {
 	{ "itoa", ScriptClientBase::Func_ItoA, 1 },
 	{ "rtoa", ScriptClientBase::Func_RtoA, 1 },
 	//{ "rtoa_ex", ScriptClientBase::Func_RtoA_Ex, -2 },
-	{ "rtoa_ex", ScriptClientBase::Func_RtoA_Ex, 2 },
+	//{ "rtoa_ex", ScriptClientBase::Func_RtoA_Ex, 2 },
 	{ "rtos", ScriptClientBase::Func_RtoS, 2 },
 	{ "vtos", ScriptClientBase::Func_VtoS, 2 },
 	{ "atoi", ScriptClientBase::Func_AtoI, 1 },
