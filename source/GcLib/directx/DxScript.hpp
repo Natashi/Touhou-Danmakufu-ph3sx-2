@@ -401,7 +401,7 @@ namespace directx {
 		//Dx関数：ファイル操作(DxTextFileObject)
 		static gstd::value Func_ObjFileT_GetLineCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileT_GetLineText(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_ObjFileT_SetLineText(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_ObjFileT_SetLineText);
 		static gstd::value Func_ObjFileT_SplitLineText(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileT_AddLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileT_ClearLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -411,6 +411,9 @@ namespace directx {
 		static gstd::value Func_ObjFileB_SetCharacterCode(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileB_GetPointer(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileB_Seek(gstd::script_machine* machine, int argc, const gstd::value* argv);
+
+		DNH_FUNCAPI_DECL_(Func_ObjFileB_GetLastRead);
+
 		static gstd::value Func_ObjFileB_ReadBoolean(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileB_ReadByte(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileB_ReadShort(gstd::script_machine* machine, int argc, const gstd::value* argv);

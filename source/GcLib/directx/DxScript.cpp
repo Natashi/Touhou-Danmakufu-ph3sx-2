@@ -54,6 +54,7 @@ static const std::vector<function> dxFunction = {
 	{ "GetWindowedWidth", DxScript::Func_GetWindowedWidth, 0 },
 	{ "GetWindowedHeight", DxScript::Func_GetWindowedHeight, 0 },
 	{ "IsFullscreenMode", DxScript::Func_IsFullscreenMode, 0 },
+
 	{ "LoadTexture", DxScript::Func_LoadTexture, 1 },
 	{ "LoadTextureEx", DxScript::Func_LoadTextureEx, 3 },
 	{ "LoadTextureInLoadThread", DxScript::Func_LoadTextureInLoadThread, 1 },
@@ -171,11 +172,13 @@ static const std::vector<function> dxFunction = {
 	{ "Obj_SetValue", DxScript::Func_Obj_SetValue, 3 },
 	{ "Obj_DeleteValue", DxScript::Func_Obj_DeleteValue, 2 },
 	{ "Obj_IsValueExists", DxScript::Func_Obj_IsValueExists, 2 },
+
 	{ "Obj_GetValueI", DxScript::Func_Obj_GetValueI, 2 },
 	{ "Obj_GetValueDI", DxScript::Func_Obj_GetValueDI, 3 },
 	{ "Obj_SetValueI", DxScript::Func_Obj_SetValueI, 3 },
 	{ "Obj_DeleteValueI", DxScript::Func_Obj_DeleteValueI, 2 },
 	{ "Obj_IsValueExistsI", DxScript::Func_Obj_IsValueExistsI, 2 },
+
 	{ "Obj_CopyValueTable", DxScript::Func_Obj_CopyValueTable, 3 },
 	{ "Obj_GetType", DxScript::Func_Obj_GetType, 1 },
 
@@ -386,6 +389,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjFileB_SetCharacterCode", DxScript::Func_ObjFileB_SetCharacterCode, 2 },
 	{ "ObjFileB_GetPointer", DxScript::Func_ObjFileB_GetPointer, 1 },
 	{ "ObjFileB_Seek", DxScript::Func_ObjFileB_Seek, 2 },
+	{ "ObjFileB_GetLastRead", DxScript::Func_ObjFileB_GetLastRead, 1 },
 	{ "ObjFileB_ReadBoolean", DxScript::Func_ObjFileB_ReadBoolean, 1 },
 	{ "ObjFileB_ReadByte", DxScript::Func_ObjFileB_ReadByte, 1 },
 	{ "ObjFileB_ReadShort", DxScript::Func_ObjFileB_ReadShort, 1 },
@@ -1060,31 +1064,31 @@ gstd::value DxScript::Func_SetVirtualKeyState(gstd::script_machine* machine, int
 //Dx関数：描画系
 gstd::value DxScript::Func_GetMonitorWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	LONG res = ::GetSystemMetrics(SM_CXSCREEN);
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateIntValue(res);
 }
 gstd::value DxScript::Func_GetMonitorHeight(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	LONG res = ::GetSystemMetrics(SM_CYSCREEN);
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateIntValue(res);
 }
 gstd::value DxScript::Func_GetScreenWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG res = graphics->GetScreenWidth();
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateIntValue(res);
 }
 gstd::value DxScript::Func_GetScreenHeight(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG res = graphics->GetScreenHeight();
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateIntValue(res);
 }
 gstd::value DxScript::Func_GetWindowedWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG res = graphics->GetConfigData().GetScreenWindowedSize().x;
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateIntValue(res);
 }
 gstd::value DxScript::Func_GetWindowedHeight(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG res = graphics->GetConfigData().GetScreenWindowedSize().y;
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateIntValue(res);
 }
 gstd::value DxScript::Func_IsFullscreenMode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -1369,19 +1373,19 @@ gstd::value DxScript::Func_SaveRenderedTextureA1(gstd::script_machine* machine, 
 	if (texture == nullptr)
 		texture = textureManager->GetTexture(nameTexture);
 
+	HRESULT res = E_FAIL;
 	if (texture) {
-		//フォルダ生成
+		//Create the directory (if it doesn't exist)
 		std::wstring dir = PathProperty::GetFileDirectory(path);
 		File::CreateFileDirectory(dir);
 
-		//保存
 		IDirect3DSurface9* pSurface = texture->GetD3DSurface();
 		DxRect<LONG> rect(0, 0, graphics->GetScreenWidth(), graphics->GetScreenHeight());
-		D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
+		res = D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
 			pSurface, nullptr, (RECT*)&rect);
 	}
 
-	return value();
+	return script->CreateBooleanValue(SUCCEEDED(res));
 }
 gstd::value DxScript::Func_SaveRenderedTextureA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -1399,18 +1403,19 @@ gstd::value DxScript::Func_SaveRenderedTextureA2(gstd::script_machine* machine, 
 	shared_ptr<Texture> texture = script->_GetTexture(nameTexture);
 	if (texture == nullptr)
 		texture = textureManager->GetTexture(nameTexture);
+
+	HRESULT res = E_FAIL;
 	if (texture) {
-		//フォルダ生成
+		//Create the directory (if it doesn't exist)
 		std::wstring dir = PathProperty::GetFileDirectory(path);
 		File::CreateFileDirectory(dir);
 
-		//保存
 		IDirect3DSurface9* pSurface = texture->GetD3DSurface();
 		D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
 			pSurface, nullptr, (RECT*)&rect);
 	}
 
-	return value();
+	return script->CreateBooleanValue(SUCCEEDED(res));
 }
 gstd::value DxScript::Func_SaveRenderedTextureA3(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -1434,18 +1439,19 @@ gstd::value DxScript::Func_SaveRenderedTextureA3(gstd::script_machine* machine, 
 	shared_ptr<Texture> texture = script->_GetTexture(nameTexture);
 	if (texture == nullptr)
 		texture = textureManager->GetTexture(nameTexture);
+
+	HRESULT res = E_FAIL;
 	if (texture) {
-		//フォルダ生成
+		//Create the directory (if it doesn't exist)
 		std::wstring dir = PathProperty::GetFileDirectory(path);
 		File::CreateFileDirectory(dir);
 
-		//保存
 		IDirect3DSurface9* pSurface = texture->GetD3DSurface();
 		D3DXSaveSurfaceToFile(path.c_str(), (D3DXIMAGE_FILEFORMAT)imgFormat,
 			pSurface, nullptr, (RECT*)&rect);
 	}
 
-	return value();
+	return script->CreateBooleanValue(SUCCEEDED(res));
 }
 gstd::value DxScript::Func_IsPixelShaderSupported(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	int major = argv[0].as_int();
@@ -4178,7 +4184,8 @@ gstd::value DxScript::Func_ObjFile_Open(gstd::script_machine* machine, int argc,
 
 		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader && reader->Open()) {
-			obj->bWritable_ = !reader->IsArchived();
+			//obj->bWritable_ = !reader->IsArchived();
+			obj->bWritable_ = false;
 			res = obj->OpenR(reader);
 		}
 	}
@@ -4347,6 +4354,14 @@ gstd::value DxScript::Func_ObjFileB_Seek(gstd::script_machine* machine, int argc
 	}
 
 	return gstd::value();
+}
+gstd::value DxScript::Func_ObjFileB_GetLastRead(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
+	size_t res = obj ? obj->GetLastReadSize() : 0;
+
+	return script->CreateIntValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_ReadBoolean(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
