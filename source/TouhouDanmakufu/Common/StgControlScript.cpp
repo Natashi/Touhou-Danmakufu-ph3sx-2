@@ -729,17 +729,15 @@ gstd::value StgControlScript::Func_SaveSnapShotA1(gstd::script_machine* machine,
 	graphics->EndScene(false);
 	graphics->SetRenderTarget(nullptr, false);
 
-	//フォルダ生成
+	//Create the directory (if it doesn't exist)
 	std::wstring dir = PathProperty::GetFileDirectory(path);
 	File::CreateFileDirectory(dir);
 
-	//保存
 	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
 	DxRect<LONG> rect(0, 0, graphics->GetScreenWidth(), graphics->GetScreenHeight());
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
 		pSurface, nullptr, (RECT*)&rect);
-
-	return value();
+	return script->CreateBooleanValue(SUCCEEDED(hr));
 }
 gstd::value StgControlScript::Func_SaveSnapShotA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
@@ -759,15 +757,14 @@ gstd::value StgControlScript::Func_SaveSnapShotA2(gstd::script_machine* machine,
 	graphics->EndScene(false);
 	graphics->SetRenderTarget(nullptr, false);
 
-	//フォルダ生成
+	//Create the directory (if it doesn't exist)
 	std::wstring dir = PathProperty::GetFileDirectory(path);
 	File::CreateFileDirectory(dir);
 
-	//保存
 	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
 		pSurface, nullptr, (RECT*)&rect);
-	return value();
+	return script->CreateBooleanValue(SUCCEEDED(hr));
 }
 gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
@@ -793,15 +790,14 @@ gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine,
 	graphics->EndScene(false);
 	graphics->SetRenderTarget(nullptr, false);
 
-	//フォルダ生成
+	//Create the directory (if it doesn't exist)
 	std::wstring dir = PathProperty::GetFileDirectory(path);
 	File::CreateFileDirectory(dir);
 
-	//保存
 	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), (D3DXIMAGE_FILEFORMAT)imgFormat,
 		pSurface, nullptr, (RECT*)&rect);
-	return value();
+	return script->CreateBooleanValue(SUCCEEDED(hr));
 }
 
 //STG制御共通関数：自機関連
