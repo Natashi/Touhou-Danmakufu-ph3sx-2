@@ -363,8 +363,9 @@ bool File::Open(DWORD typeAccess) {
 		hFile_.open(path_, modeAccess | std::ios::binary);
 	}
 	catch (std::system_error& e) {
+		int code = errno;
 		lastError_ = StringUtility::FormatToWide("%s (code=%d)", 
-			strerror(errno), errno);
+			strerror(code), code);
 	}
 	hFile_.exceptions(0);
 

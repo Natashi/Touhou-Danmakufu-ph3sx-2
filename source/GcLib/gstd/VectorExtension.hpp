@@ -2,6 +2,8 @@
 
 #include "../pch.h"
 
+#if defined(DNH_PROJ_EXECUTOR)
+
 namespace gstd {
 	//================================================================
 	//Vectorize
@@ -466,3 +468,5 @@ namespace gstd {
 		return res;
 	}
 }
+
+#endif
