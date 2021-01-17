@@ -131,26 +131,28 @@
 	
 1.20a:
 	- Reworked some math calculations. SIMD instructions are utilized.
-	- Following the above change, a legacy version will also be provided in case your CPU do not support vectorization.
-		- The vectorized version requires the following instruction sets:
-			- SSE
-			- SSE2
-			- SSE3
-			- SSE4.1
-		- Generally, you should be able to run it unless your PC is from 30000BC or you're using a literal potato.
+		- A legacy version will also be provided in case your CPU do not support vectorization.
+			- The vectorized version requires the following instruction sets:
+				- SSE
+				- SSE2
+				- SSE3
+				- SSE4.1
+			- Generally, you should be able to run it unless your PC is from 30000BC or you're using a literal potato.
 	- Added a native hitbox visualization mode.
-	- Improved the line-circle intersection algorithm.
+	- Improved the line-circle intersection algorithm. New algorithm behaves like a circle-polygon intersection.
 	- Overloaded ObjMove_SetDestAtFrame, where movement interpolation mode can be specified.
 	- Fixed a bug where the graze count obtained via GetGraze() may desync with the one obtained via EV_GRAZE's event argument.
 	- Fixed a bug where ObjText_GetTotalWidth/Height may break the font tag.
 	- Fixed a bug where font text tag properties do not get reset after using ObjText_SetText.
 	- Obj_GetValue will now ACTUALLY NOT crash the game if the requested value does not exist.
+	- Renamed the "Obj_[..]ValueR" function series to "Obj_[..]ValueI".
 	- Removed the constant 'pi'. Please use 'M_PI' instead.
 	- Changed error messages of some default functions to be more descriptive to aid debugging.
 	- Greatly improved script variable allocation.
 	- Added a concatenate-assign operator. (~=)
 	- Added bitwise operators. (~, &, |, ^^)
 	- Int values can now be declared with a suffix 'i' or 'I'.
+		- Static type declaration is planned.
 	- Added implicit type casting in default script operations, including comparison and assignment.
 	- Optimized the process of calling default constants.
 	- The default constants SCREEN_WIDTH and SCREEN_HEIGHT will now change to reflect the settings in th_dnh.def.
@@ -158,7 +160,12 @@
 	- Fixed a bug where itoa, atoi, and IntToString would underflow if the input is larger than 2^31-1. (New limit is 2^63-1)
 	- Fixed a bug where the 3D viewport would get stretched out based on the size of the STG frame.
 	- Made the game no longer freeze and crash after Alt-Tab'ing out of true fullscreen mode or after waking the desktop from sleep.
-	- Pseudo-fullscreen mode now stops Windows from going to sleep.
-	- Fixed a mistake involving matrix multiplication order in the shader for particle list objects.
+	- Pseudo-fullscreen mode now stops Windows from drifting off to Dreamland.
+	- Fixed a mistake involving matrix multiplication order in the internal shader for particle list objects.
+	- Removed CollectItemsByType and SetItemIntersectionRadius.
+	- Added new event, EV_COLLECT_ITEM, which triggers when the item starts to move towards the player.
+	- If ObjFile_Open/ObjFile_OpenNW fails, the reason for failure will now be written to the LogWindow.
+	- The ObjFileB_Read[...] functions no longer throw an error when attempting to read past EOF.
+		- ObjFileB_GetLastRead can be used to obtain the amount of bytes read in the last read operation.
 	- Various optimizations.
 	- Un-Utilized UPX Executable Packer to not-reduce file size.

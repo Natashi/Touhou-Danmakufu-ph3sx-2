@@ -19,6 +19,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	typeof
 		Arguments:
 			1) (any) value
+		Returns:
+			(int) type
 		Description:
 			Returns the type of the given value.
 			Examples:
@@ -31,6 +33,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ftypeof
 		Arguments:
 			1) (any) value
+		Returns:
+			(int) type
 		Description:
 			Returns the root type of the given value.
 			Examples:
@@ -45,24 +49,32 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	as_int
 		Arguments:
 			1) (any) value
+		Returns:
+			(int) result
 		Description:
 			Returns the given value casted to an int value.
 				
 	as_real
 		Arguments:
 			1) (any) value
+		Returns:
+			(int) result
 		Description:
 			Returns the given value casted to a real value.
 			
 	as_bool
 		Arguments:
 			1) (any) value
+		Returns:
+			(int) result
 		Description:
 			Returns the given value casted to a bool value.
 			
 	as_char
 		Arguments:
 			1) (any) value
+		Returns:
+			(int) result
 		Description:
 			Returns the given value casted to a char value.
 				
@@ -70,86 +82,110 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 	bit_not
 		Arguments:
-			1) value
+			1) (int) value
+		Returns:
+			(int) result
 		Description:
-			Rounds and clamps the value and performs a bitwise NOT operation.
+			Performs a bitwise NOT operation.
 
 	bit_and
 		Arguments:
-			1) value 1
-			2) value 2
+			1) (int) value 1
+			2) (int) value 2
+		Returns:
+			(int) result
 		Description:
-			Rounds and clamps the values and performs a bitwise AND operation.
+			Performs a bitwise AND operation.
 
 	bit_or
 		Arguments:
-			1) value 1
-			2) value 2
+			1) (int) value 1
+			2) (int) value 2
+		Returns:
+			(int) result
 		Description:
-			Rounds and clamps the values and performs a bitwise OR operation.
+			Performs a bitwise OR operation.
 
 	bit_xor
 		Arguments:
-			1) value 1
-			2) value 2
+			1) (int) value 1
+			2) (int) value 2
+		Returns:
+			(int) result
 		Description:
-			Rounds and clamps the values and performs a bitwise XOR operation.
+			Performs a bitwise XOR operation.
 
 	bit_left
 		Arguments:
-			1) value
-			2) shift factor
+			1) (int) value
+			2) (int) shift factor
+		Returns:
+			(int) result
 		Description:
-			Rounds and clamps the value and performs a bitwise left shift operation.
+			Performs a bitwise left shift operation.
 
 	bit_right
 		Arguments:
-			1) value
-			2) shift factor
+			1) (int) value
+			2) (int) shift factor
+		Returns:
+			(int) result
 		Description:
-			Rounds and clamps the value and performs a bitwise right shift operation.
+			Performs a bitwise right shift operation.
 			
 	--------------------------------> Trigonometry and Angular Maths <--------------------------------
 
 	sincos
 		Arguments:
 			1) angle
-		Description:
-			[sin(angle), cos(angle)]
+		Returns:
+			(real[2]) [sin(angle), cos(angle)]
 
 	rsin
 		Arguments:
 			1) angle
+		Returns:
+			(real) result
 		Description:
 			sin() for radians input.
 
 	rcos
 		Arguments:
 			1) angle (radians)
+		Returns:
+			(real) result
 		Description:
 			cos() for radians input.
 
 	rtan
 		Arguments:
 			1) angle (radians)
+		Returns:
+			(real) result
 		Description:
 			tan() for radians input.
 
 	rsincos
 		Arguments:
 			1) angle (radians)
+		Returns:
+			(real[2]) result
 		Description:
 			sincos() for radians input.
 
 	rasin
 		Arguments:
 			1) value
+		Returns:
+			(real) result
 		Description:
 			asin() for radians output.
 
 	racos
 		Arguments:
 			1) value
+		Returns:
+			(real) result
 		Description:
 			acos() for radians output.
 
@@ -157,36 +193,48 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) y
 			2) x
+		Returns:
+			(real) result
 		Description:
 			atan() for radians output.
 
 	ratan2
 		Arguments:
 			1) value
+		Returns:
+			(real) result
 		Description:
 			atan2() for radians output.
 			
 	ToDegrees
 		Arguments:
 			1) angle
+		Returns:
+			(real) result
 		Description:
 			Converts the given angle to degrees.
 
 	ToRadians
 		Arguments:
 			1) angle
+		Returns:
+			(real) result
 		Description:
 			Converts the given angle to radians.
 
 	NormalizeAngle
 		Arguments:
 			1) angle (degrees)
+		Returns:
+			(real) result
 		Description:
 			Normalizes the given angle. (Range = [0, 360])
 
 	NormalizeAngleR
 		Arguments:
 			1) angle (radians)
+		Returns:
+			(real) result
 		Description:
 			Normalizes the given angle. (Range = [0, 2pi])
 			
@@ -197,18 +245,24 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) value
 			2) lower bound
 			3) upper bound
+		Returns:
+			(real) result
 		Description:
 			Returns the given value clamped between the specified range.
 	
 	exp
 		Arguments:
 			1) value
+		Returns:
+			(real) result
 		Description:
 			Returns e (Euler's number) raised to the power of the given value.
 
 	sqrt
 		Arguments:
 			1) value
+		Returns:
+			(real) result
 		Description:
 			Returns the square root of the given value. Much faster than pow(value, 0.5).
 			
@@ -216,6 +270,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) value
 			2) root
+		Returns:
+			(real) result
 		Description:
 			Returns the nth root of the given value. Equivalent to pow(value, 1 / root).
 			
@@ -223,31 +279,35 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) a
 			2) b
+		Returns:
+			(real) result
 		Description:
 			Returns the hypotenuse of the triangle formed by the two given values.
 			
-		[-------------------------------> Constants <-------------------------------]
+			Formula: hypot(x, b) => sqrt(a * a + b * b)
+			
+	--------------------------------> Constants <--------------------------------
 		
-			M_PI        = pi                ; 3.14159265358979323846
-			M_PI_2      = M_PI / 2          ; 1.57079632679489661923
-			M_PI_4      = M_PI / 4          ; 0.78539816339744830962
-			M_PI_X2     = M_PI * 2          ; 6.28318530717958647693
-			M_PI_X4     = M_PI * 4          ; 12.5663706143591729539
-			M_1_PI      = 1 / M_PI          ; 0.31830988618379067154
-			M_2_PI      = 2 / M_PI          ; 0.63661977236758134308
-			M_SQRTPI    = sqrt(M_PI)        ; 1.772453850905516027298
-			M_1_SQRTPI  = 1 / sqrt(M_PI)    ; 0.56418958354775628695
-			M_2_SQRTPI  = 2 / sqrt(M_PI)    ; 1.128379167095512573896
-			M_SQRT2     = sqrt(2)           ; 1.4142135623730950488
-			M_SQRT2_2   = sqrt(2) / 2       ; 0.7071067811865475244
-			M_SQRT2_X2  = sqrt(2) * 2       ; 2.8284271247461900976
-			M_E         = e                 ; 2.71828182845904523536
-			M_LOG2E     = log2(e)           ; 1.44269504088896340736
-			M_LOG10E    = log10(e)          ; 0.43429448190325182765
-			M_LN2       = ln(2)             ; 0.69314718055994530942
-			M_LN10      = ln(10)            ; 2.30258509299404568402
-			M_PHI       = (1 + sqrt(5)) / 2 ; 1.61803398874989484821
-			M_1_PHI     = 1 / M_PHI         ; 0.6180339887498948482
+		M_PI        = pi                ; 3.14159265358979323846
+		M_PI_2      = M_PI / 2          ; 1.57079632679489661923
+		M_PI_4      = M_PI / 4          ; 0.78539816339744830962
+		M_PI_X2     = M_PI * 2          ; 6.28318530717958647693
+		M_PI_X4     = M_PI * 4          ; 12.5663706143591729539
+		M_1_PI      = 1 / M_PI          ; 0.31830988618379067154
+		M_2_PI      = 2 / M_PI          ; 0.63661977236758134308
+		M_SQRTPI    = sqrt(M_PI)        ; 1.772453850905516027298
+		M_1_SQRTPI  = 1 / sqrt(M_PI)    ; 0.56418958354775628695
+		M_2_SQRTPI  = 2 / sqrt(M_PI)    ; 1.128379167095512573896
+		M_SQRT2     = sqrt(2)           ; 1.4142135623730950488
+		M_SQRT2_2   = sqrt(2) / 2       ; 0.7071067811865475244
+		M_SQRT2_X2  = sqrt(2) * 2       ; 2.8284271247461900976
+		M_E         = e                 ; 2.71828182845904523536
+		M_LOG2E     = log2(e)           ; 1.44269504088896340736
+		M_LOG10E    = log10(e)          ; 0.43429448190325182765
+		M_LN2       = ln(2)             ; 0.69314718055994530942
+		M_LN10      = ln(10)            ; 2.30258509299404568402
+		M_PHI       = (1 + sqrt(5)) / 2 ; 1.61803398874989484821
+		M_1_PHI     = 1 / M_PHI         ; 0.6180339887498948482
 			
 	--------------------------------> Interpolation <--------------------------------
 	
@@ -260,6 +320,11 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) a
 			2) b
 			3) x
+		Returns:
+			IF a, b are not arrays
+				(real) result
+			ELSE
+				(real[length(a)]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is linear.
@@ -273,6 +338,11 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) a
 			2) b
 			3) x
+		Returns:
+			IF a, b are not arrays
+				(real) result
+			ELSE
+				(real[length(a)]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is first-order smoothstep curve.
@@ -286,6 +356,11 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) a
 			2) b
 			3) x
+		Returns:
+			IF a, b are not arrays
+				(real) result
+			ELSE
+				(real[length(a)]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is second-order smoothstep curve.
@@ -299,6 +374,11 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) a
 			2) b
 			3) x
+		Returns:
+			IF a, b are not arrays
+				(real) result
+			ELSE
+				(real[length(a)]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is parabolic.
@@ -312,6 +392,11 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) a
 			2) b
 			3) x
+		Returns:
+			IF a, b are not arrays
+				(real) result
+			ELSE
+				(real[length(a)]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is inverse parabolic.
@@ -326,6 +411,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) b
 			3) c
 			4) x
+		Returns:
+			(real) result
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is sine.
@@ -338,6 +425,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) b
 			3) c
 			4) x
+		Returns:
+			(real) result
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is half sine.
@@ -350,6 +439,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) b
 			3) c
 			4) x
+		Returns:
+			(real) result
 		Description:
 			Calculates a coordinate component of a quadratic Bezier curve.
 				Direct formula is ((a * (1 - x)^2) + (2 * c * x * (1 - x)) + (b * x^2))
@@ -362,19 +453,63 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) c1
 			4) c2
 			5) x
+		Returns:
+			(real) result
 		Description:
 			Calculates a coordinate component of a cubic Bezier curve.
 				Direct formula is ((a * (1 - x)^3) + (3 * c1 * x * (1 - x)^2) + (3 * c2 * x^2 * (1 - x)) + (b * x^3))
 				Represented by the red graph.
+				
+	Interpolate_Hermite
+		Arguments:
+			1) start x
+			2) start y
+			3) end x
+			4) end y
+			5) starting point tangent vector magnitude
+			6) starting point tangent vector angle (degrees)
+			5) ending point tangent vector magnitude
+			6) ending point tangent vector angle (degrees)
+			9) x
+		Returns:
+			(real[2]) [x, y]
+		Description:
+			Calculates the position along the given cubic Hermite spline curve.
+			
+			https://en.wikipedia.org/wiki/Cubic_Hermite_spline
 			
 	--------------------------------> Random <--------------------------------
+	
+	rand_int
+		Arguments:
+			1) min
+			2) max
+		Returns:
+			(int) random integer
+		Description:
+			Returns a random integer within the range [a, b].
+			
+			Formula: rand_int(a, b) => as_int(rand(as_int(a), as_int(b) + 0.99999));
 
 	prand
 		Arguments:
 			1) min
 			2) max
+		Returns:
+			(real) random value
 		Description:
-			Exactly like rand(), but the seed of which doesn't get saved to replays, and has no effect on the calculation of rand().
+			Exactly like rand(), but the seed of which doesn't get saved to replays, and does not affect the state of rand().
+			
+	prand_int
+		Arguments:
+			1) min
+			2) max
+		Returns:
+			(int) random integer
+		Description:
+			Returns a random integer within the range [a, b] using the prand() function.
+			
+			Formula: prand_int(a, b) => as_int(prand(as_int(a), as_int(b) + 0.99999));
 			
 	--------------------------------> Regular Expression <--------------------------------
 			
@@ -382,6 +517,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (string) source string
 			2) (string) pattern
+		Returns:
+			(string[]) match groups
 		Description:
 			Uses regular expression to match patterns in a given string.
 			Returns a string array of matches.
@@ -395,6 +532,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (string) source string
 			2) (string) pattern
+		Returns:
+			(string[][]) array of match groups
 		Description:
 			Behaves like RegexMatch, but returns all matches in the string rather than only the first match.
 			Example:
@@ -416,16 +555,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				RegexReplace("Example String", "(a|e|i)", "*")	-> "Ex*mpl* Str*ng"
 				RegexReplace("Red, Green, and Blue", "[A-Z]+[a-zA-Z]*", "\'$&\'")
 							-> "'Red', 'Green', and 'Blue'"
-
-	--------------------------------> String <--------------------------------
-	
-	rtoa_ex
-		Arguments:
-			1) (string) format
-			2) (any) value
-		Description:
-			Behaves similar to printf.
-			Returns the formatted string.
 		
 	--------------------------------> File Path and Archives <--------------------------------
 	
@@ -433,17 +562,23 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (string) archive path
 			2) (bool) print full path
+		Returns:
+			(string[]) file names of stored entries
 		Description:
 			Returns an array of all filepaths stored inside the specified archive.
 			The archive must have already been loaded with AddArchiveFile, otherwise an empty array will be returned.
 			
 	GetModuleName
+		Returns:
+			(string) module name
 		Description:
 			Returns the file name of the engine, without the extension.
 			
 	GetFileDirectoryFromModule
 		Arguments:
 			1) (string) path
+		Returns:
+			(string) directory name
 		Description:
 			Returns the directory of the given file path, without the directory of the engine.
 			The given path does not need to actually exist.
@@ -451,6 +586,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	GetFileTopDirectory
 		Arguments:
 			1) (string) path
+		Returns:
+			(string) directory name
 		Description:
 			Returns the topmost directory of the given file path.
 			The given path does not need to actually exist.
@@ -458,6 +595,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	GetFileName
 		Arguments:
 			1) (string) path
+		Returns:
+			(string) file name
 		Description:
 			Returns the file name of the given file path.
 			The given path does not need to actually exist.
@@ -465,6 +604,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	GetFileNameWithoutExtension
 		Arguments:
 			1) (string) path
+		Returns:
+			(string) file name
 		Description:
 			Returns the file name of the given file path, without its extension.
 			The given path does not need to actually exist.
@@ -472,6 +613,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	GetFileExtension
 		Arguments:
 			1) (string) path
+		Returns:
+			(string) file extension
 		Description:
 			Returns the file extension of the given file path.
 			The given path does not need to actually exist.
@@ -479,27 +622,37 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	IsFileExists
 		Arguments:
 			1) (string) path
+		Returns:
+			(bool) result
 		Description:
 			Returns true if the given file exists.
 			
 	IsDirectoryExists
 		Arguments:
 			1) (string) path
+		Returns:
+			(bool) result
 		Description:
 			Returns true if the given directory exists.
 			
 	--------------------------------> Engine Utilities <--------------------------------
 	
 	IsEngineFastMode
+		Returns:
+			(bool) result
 		Description:
 			Returns whether the engine is in the "fast mode" state.
 			(Note: Normally triggered with the LCtrl key.)
 			
 	GetConfigWindowSizeIndex
+		Returns:
+			(int) index
 		Description:
 			Returns the config's selected window size index.
 			
 	GetConfigWindowSizeList
+		Returns:
+			(int[][]) available window sizes
 		Description:
 			Returns an array of the window sizes specified in th_dnh.def.
 			
@@ -513,8 +666,11 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			4) rectangle right
 			5) rectangle bottom
 			6) (struct) format
+		Returns:
+			(bool) result
 		Description:
 			Renders the whole screen to a texture and saves the specified rectangular area of the texture to a file with the given name.
+			Returns true if the save was successful.
 			
 			Available formats are:
 				IFF_BMP: Bitmap file. 										(.bmp) (default)
@@ -539,6 +695,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (string) title text
 			2) (string) description text
 			3) (int) window flags
+		Returns:
+			(int) window result
 		Description:
 			Raises a message window similar to RaiseError, but does not terminate the script. 
 			The game will be paused until the message window is addressed. The LogWindow will not be affected.
@@ -562,6 +720,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (string) title text
 			2) (string) description text
+		Returns:
+			(int) window result
 		Description:
 			Overloaded with 2 arguments.
 			
@@ -579,6 +739,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	--------------------------------> Event <--------------------------------
 
 	GetEventArgumentCount
+		Returns:
+			(int) count
 		Description:
 			Returns the event argument count of the active event.
 				
@@ -587,6 +749,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) script ID
 			2) event type
 			3+) (any) arguments...
+		Returns:
+			(any) event result
 		Description:
 			Change.
 			
@@ -596,6 +760,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) event type
 			2+) (any) arguments...
+		Returns:
+			(any) event result
 		Description:
 			NotifyEvent's the script in which it was called.
 			
@@ -626,25 +792,47 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	--------------------------------> Screen Status <--------------------------------
 	
 	GetMonitorWidth
+		Returns:
+			(int) monitor width
 		Description:
 			Returns the width of the primary display monitor.
 			
 	GetMonitorHeight
+		Returns:
+			(int) monitor height
 		Description:
 			Returns the height of the primary display monitor.
+			
+	GetScreenWidth
+		Returns:
+			(int) screen width
+		Description:
+			Returns the width of the engine screen. (specified in th_dnh.def as "screen.width")
+			
+	GetScreenHeight
+		Returns:
+			(int) screen height
+		Description:
+			Returns the height of the engine screen. (specified in th_dnh.def as "screen.height")
 	
 	GetWindowedWidth
+		Returns:
+			(int) window width
 		Description:
 			Returns the width of the windowed mode.
 			
 	GetWindowedHeight
+		Returns:
+			(int) window width
 		Description:
 			Returns the height of the windowed mode.
 			
 	IsFullscreenMode
+		Returns:
+			(bool) result
 		Description:
 			Returns whether or not the game is in fullscreen mode.
-			Both pseudo and true fullscreen return true.
+			Both pseudo and true fullscreen modes register as true.
 	
 	--------------------------------> Matrix <--------------------------------
 	
@@ -655,12 +843,16 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			[5, 5, 0, 2]	-> VECTOR4
 
 	MatrixIdentity
+		Returns:
+			(matrix) the identity matrix
 		Description:
 			Contructs an identity matrix.
 
 	MatrixInverse
 		Arguments:
 			1) matrix
+		Returns:
+			(matrix) result
 		Description:
 			Inverses the given matrix.
 
@@ -668,6 +860,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) matrix1
 			2) matrix2
+		Returns:
+			(matrix) result
 		Description:
 			Adds two matrices together.
 			Note: Directly using the "+" operator also works.
@@ -676,6 +870,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) matrix1
 			2) matrix2
+		Returns:
+			(matrix) result
 		Description:
 			Subtracts two matrices.
 			Note: Directly using the "-" operator also works.
@@ -684,6 +880,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) matrix1
 			2) matrix2
+		Returns:
+			(matrix) result
 		Description:
 			Multiplies two matrices together.
 			
@@ -691,18 +889,24 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) matrix1
 			2) matrix2
+		Returns:
+			(matrix) result
 		Description:
 			Divides two matrices.
 
 	MatrixTranspose
 		Arguments:
 			1) matrix
+		Returns:
+			(matrix) result
 		Description:
 			Transposes the given matrix.
 			
 	MatrixDeterminant
 		Arguments:
 			1) matrix
+		Returns:
+			(real) result
 		Description:
 			Calculates the determinant of the given matrix.
 
@@ -711,6 +915,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (VECTOR3) eye vector
 			2) (VECTOR3) destination vector
 			3) (VECTOR3) orientation vector
+		Returns:
+			(matrix) result
 		Description:
 			Constructs a left-handed look-at matrix.
 
@@ -719,6 +925,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (VECTOR3) eye vector
 			2) (VECTOR3) destination vector
 			3) (VECTOR3) orientation vector
+		Returns:
+			(matrix) result
 		Description:
 			Constructs a right-handed look-at matrix.
 			
@@ -735,6 +943,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	GetSoundDivisionVolumeRate
 		Arguments:
 			1) division
+		Returns:
+			(real) volume rate
 		Description:
 			Returns the volume rate of the given sound division.
 			
@@ -745,6 +955,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (string) path
 			2) (bool) use mipmap
 			3) (bool) use non-power-of-two
+		Returns:
+			(bool) loading result
 		Description:
 			Returns a boolean value of whether loading was successful.
 		
@@ -757,6 +969,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (string) path
 			2) (bool) use mipmap
 			3) (bool) use non-power-of-two
+		Returns:
+			(bool) loading result
 		Description:
 			Returns a boolean value of whether initial loading was successful.
 		
@@ -765,6 +979,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	LoadShader
 		Arguments:
 			1) (string) path
+		Returns:
+			(bool) loading result
 		Description:
 			Loads a shader file, and returns a boolean value of whether loading was successful.
 			
@@ -777,6 +993,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	LoadMesh
 		Arguments:
 			1) (string) path
+		Returns:
+			(bool) loading result
 		Description:
 			Loads a mesh data file, and returns a boolean value of whether loading was successful.
 			
@@ -793,6 +1011,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (string) name
 			2) width
 			3) height
+		Returns:
+			(bool) creation result
 		Description:
 			Returns a boolean value of whether creation was successful.
 			
@@ -802,6 +1022,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ClearRenderTargetA1
 		Arguments:
 			1) (string) name
+		Returns:
+			(bool) clear result
 		Description:
 			Previously [SetRenderTarget].
 		
@@ -816,6 +1038,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) clear color green
 			4) clear color blue
 			5) clear color alpha
+		Returns:
+			(bool) clear result
 		Description:
 			Returns a boolean value of whether the operation was successful.
 			
@@ -832,6 +1056,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			7) rectangle top
 			8) rectangle right
 			9) rectangle bottom
+		Returns:
+			(bool) clear result
 		Description:
 			Returns a boolean value of whether the operation was successful.
 			
@@ -846,6 +1072,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			5) rectangle right
 			6) rectangle bottom
 			7) (struct) format
+		Returns:
+			(bool) save result
 		Description:
 			SaveRenderedTextureA2, with the added ability of image format specification.
 			
@@ -889,24 +1117,34 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Sets the camera's "look-at" position.
 			
 	GetCameraViewMatrix
+		Returns:
+			(matrix) view matrix
 		Description:
 			Returns the 3D camera's view matrix.
 			
 	GetCameraProjectionMatrix
+		Returns:
+			(matrix) projection matrix
 		Description:
 			Returns the 3D camera's projection matrix.
 			
 	GetCameraViewProjectionMatrix
+		Returns:
+			(matrix) view-projection matrix
 		Description:
 			Returns the 3D camera's view-projection matrix.
 	
 	--------------------------------> Intersection <--------------------------------
 	
 	IsIntersected_Circle_Circle
+		Returns:
+			(bool) intersection
 		Description:
 			Now usable in scripts of all types.
 
 	IsIntersected_Line_Circle
+		Returns:
+			(bool) intersection
 		Description:
 			Now usable in scripts of all types.
 			
@@ -922,6 +1160,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			8) line 2 - end x
 			9) line 2 - end y
 			10) line 2 - width
+		Returns:
+			(bool) intersection
 		Description:
 			Returns true if the given line segments intersect.
 			
@@ -933,6 +1173,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) red
 			3) green
 			4) blue
+		Returns:
+			(int) hex color
 		Description:
 			Returns an ARGB hexadecimal color value of the given colors.
 			
@@ -943,6 +1185,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ColorHexToARGB
 		Arguments:
 			1) hex color
+		Returns:
+			(int[4]) ARGB color
 		Description:
 			Returns an ARGB color array of the given hexadecimal color (D3DCOLOR).
 			
@@ -954,6 +1198,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) hex color
 			2) control
+		Returns:
+			(int[]) color array
 		Description:
 			Overloaded with 2 arguments.
 		
@@ -968,7 +1214,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 					- Bits 0-5 are unused.
 					- Bits 6-7 control the amount of color channels to return, subtracted by 1. 
 						(11 is 4 channels, 10 is 3, 01 is 2, 00 is 1)
-					- Bits 8-15 control with order of the color channels, color channels can be duplicated.
+					- Bits 8-15 control the order of the color channels, duplication is allowed.
 						00 (0) signifies the A channel.
 						01 (1) signifies the R channel.
 						10 (2) signifies the G channel.
@@ -1004,6 +1250,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) red
 			2) green
 			3) blue
+		Returns:
+			(int[3]) color array
 		Description:
 			Returns the given RGB color as a HSV color array.
 			
@@ -1012,6 +1260,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) hue
 			2) saturation
 			3) value
+		Returns:
+			(int[3]) color array
 		Description:
 			Returns the given HSV color as an RGB color array.
 			
@@ -1020,45 +1270,57 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) hue
 			2) saturation
 			3) value
+		Returns:
+			(int) hex color
 		Description:
 			Returns the given HSV color as an XRGB hexadecimal color.
 	
 	--------------------------------> Base Object Functions <--------------------------------
 	
-	Obj_GetValueR
+	Obj_GetValueI
 		Arguments:
 			1) object ID
-			2) key
+			2) (int) key
+		Returns:
+			(any) value
 		Description:
 			Obj_GetValue with real value key.
 
-	Obj_GetValueDR
+	Obj_GetValueDI
 		Arguments:
 			1) object ID
 			2) key
 			3) default
+		Returns:
+			(any) value
 		Description:
 			Obj_GetValueD with real value key.
 
-	Obj_SetValueR
+	Obj_SetValueI
 		Arguments:
 			1) object ID
 			2) key
 			3) value
+		Returns:
+			(any) value
 		Description:
 			Obj_SetValue with real value key.
 
-	Obj_DeleteValueR
+	Obj_DeleteValueI
 		Arguments:
 			1) object ID
 			2) key
+		Returns:
+			(any) value
 		Description:
 			Obj_DeleteValue with real value key.
 
-	Obj_IsValueExistsR
+	Obj_IsValueExistsI
 		Arguments:
 			1) object ID
 			2) key
+		Returns:
+			(any) value
 		Description:
 			Obj_IsValueExists with real value key.
 			
@@ -1067,6 +1329,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) destination object ID
 			2) source object ID
 			3) mode
+		Returns:
+			(int) source object's object value amount
 		Description:
 			Copies the source's object value table to the destination's object value table.
 			
@@ -1098,16 +1362,29 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 				Example:
 					ObjRender_SetColorHex(obj, 0xFF7B32) -> ObjRender_SetColor(obj, 255, 123, 50)
+					
+		ObjRender_SetColorHSV
+			Arguments:
+				1) object ID
+				2) color hue
+				3) color saturation
+				4) color value
+			Description:
+				Sets the object's RGB color as a HSV color.
 		
 		ObjRender_GetColor
 			Arguments:
 				1) object ID
+			Returns:
+				(int[3]) color
 			Description:
 				Returns an [r, g, b] array of the object's color.
 				
 		ObjRender_GetAlpha
 			Arguments:
 				1) object ID
+			Returns:
+				(int) alpha
 			Description:
 				Returns the object's alpha value.
 					
@@ -1264,6 +1541,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID
 			2) vertex index
+		Returns:
+			(int[3]) color
 		Description:
 			Returns the vertex color as an [r, g, b] array.
 			
@@ -1271,6 +1550,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID
 			2) vertex index
+		Returns:
+			(int) alpha
 		Description:
 			Returns the vertex alpha value.
 			
@@ -1546,6 +1827,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID
 			2) (struct) type
+		Returns:
+			[varies]
 		Description:
 			Returns the value of the requested information about the sound object.
 			
@@ -1577,57 +1860,184 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 					- The total length of the audio in seconds.
 				INFO_LENGTH_SAMPLE
 					- The total length of the audio in sample count.
+					
+	--------------------------------> Text File Object Functions <--------------------------------
+	
+	ObjFileT_SetLineText
+		Arguments:
+			1) object ID
+			2) (int) line number
+			3) (string) new text
+		Description:
+			Sets the text of the given line of the text file object.
+			
+			*Note that the actual file content is only updated upon calling ObjFile_Store.
 	
 	--------------------------------> Binary File Object Functions <--------------------------------
+	
+	ObjFileB_GetLastRead
+		Arguments:
+			1) object ID
+		Returns:
+			(int) result
+		Description:
+			Returns the amount of bytes read at the last read operation.
+			
+			A result of 0 may indicate an end-of-file.
+	
+	ObjFileB_ReadBoolean
+		Arguments:
+			1) object ID
+		Returns:
+			(bool) result
+		Description:
+			Change.
+			No longer throws an error upon attempting to read past the end-of-file.
+		
+			Reads a boolean value from the binary file object.
+			Advances the read pointer by 1.
+
+	ObjFileB_ReadByte
+		Arguments:
+			1) object ID
+		Returns:
+			(int) result
+		Description:
+			Change.
+			No longer throws an error upon attempting to read past the end-of-file.
+		
+			Reads a byte value from the binary file object.
+			Advances the read pointer by 1.
+
+	ObjFileB_ReadShort
+		Arguments:
+			1) object ID
+		Returns:
+			(int) result
+		Description:
+			Change.
+			No longer throws an error upon attempting to read past the end-of-file.
+		
+			Reads a short integer value from the binary file object.
+			Advances the read pointer by 2.
+
+	ObjFileB_ReadInteger
+		Arguments:
+			1) object ID
+		Returns:
+			(int) result
+		Description:
+			Change.
+			No longer throws an error upon attempting to read past the end-of-file.
+		
+			Reads an integer value from the binary file object.
+			Advances the read pointer by 4.
+
+	ObjFileB_ReadLong
+		Arguments:
+			1) object ID
+		Returns:
+			(int) result
+		Description:
+			Change.
+			No longer throws an error upon attempting to read past the end-of-file.
+		
+			Reads a long integer value from the binary file object.
+			Advances the read pointer by 8.
+
+	ObjFileB_ReadFloat
+		Arguments:
+			1) object ID
+		Returns:
+			(real) result
+		Description:
+			Change.
+			No longer throws an error upon attempting to read past the end-of-file.
+		
+			Reads a single-precision float value from the binary file object.
+			Advances the read pointer by 4.
+
+	ObjFileB_ReadDouble
+		Arguments:
+			1) object ID
+		Returns:
+			(real) result
+		Description:
+			Change.
+			No longer throws an error upon attempting to read past the end-of-file.
+		
+			Reads a double-precision float value from the binary file object.
+			Advances the read pointer by 8.
 	
 	ObjFileB_WriteBoolean
 		Arguments:
 			1) object ID
 			2) (bool) value
+		Returns:
+			(int) bytes written
 		Description:
-			Writes boolean value to the binary file object at the current write pointer.
+			Writes a boolean value to the binary file object at the current write pointer.
+			Advances the write pointer by 1.
 
 	ObjFileB_WriteByte
 		Arguments:
 			1) object ID
-			2) value
+			2) (int) value
+		Returns:
+			(int) bytes written
 		Description:
-			Writes byte value to the binary file object at the current write pointer.
+			Writes a boolean value to the binary file object at the current write pointer.
+			Advances the write pointer by 1.
 
 	ObjFileB_WriteShort
 		Arguments:
 			1) object ID
-			2) value
+			2) (int) value
+		Returns:
+			(int) bytes written
 		Description:
-			Writes short value to the binary file object at the current write pointer.
+			Writes a short integer value to the binary file object at the current write pointer.
+			Advances the write pointer by 2.
 
 	ObjFileB_WriteInteger
 		Arguments:
 			1) object ID
-			2) value
+			2) (int) value
+		Returns:
+			(int) bytes written
 		Description:
-			Writes integer value to the binary file object at the current write pointer.
+			Writes an integer value to the binary file object at the current write pointer.
+			Advances the write pointer by 4.
 
 	ObjFileB_WriteLong
 		Arguments:
 			1) object ID
-			2) value
+			2) (int) value
+		Returns:
+			(int) bytes written
 		Description:
-			Writes long integer value to the binary file object at the current write pointer.
+			Writes a long integer value to the binary file object at the current write pointer.
+			Advances the write pointer by 8.
 
 	ObjFileB_WriteFloat
 		Arguments:
 			1) object ID
 			2) value
+		Returns:
+			(int) bytes written
 		Description:
-			Writes float value to the binary file object at the current write pointer.
+			Writes a single-precision float value to the binary file object at the current write pointer.
+			Advances the write pointer by 4.
 
 	ObjFileB_WriteDouble
 		Arguments:
 			1) object ID
 			2) value
+		Returns:
+			(int) bytes written
 		Description:
-			Writes double value to the binary file object at the current write pointer.
+			Writes a double-precision float value to the binary file object at the current write pointer.
+			Advances the write pointer by 8.
 			
 ---------------------------------------------->	[Stage Script] <----------------------------------------------
 
@@ -1649,10 +2059,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	--------------------------------> Player Functions <--------------------------------
 	
 	GetPlayerScriptID
+		Returns:
+			(int) script ID
 		Description:
 			Returns the script ID of the player object.
 			
 	GetPlayerAutoItemCollectLine
+		Returns:
+			(real) position
 		Description:
 			Returns the position of the player's item autocollection line.
 			
@@ -1664,6 +2078,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Effect equivalent to CollectItemsInCircle.
 
 	GetPlayerItemScope
+		Returns:
+			(real) scope size
 		Description:
 			Gets the player's item collection scope radius.
 			
@@ -1707,6 +2123,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	--------------------------------> Shot Functions <--------------------------------
 	
 	GetShotDataInfoA1
+		Returns:
+			[varies]
 		Description:
 			Addition + Change.
 			
@@ -1718,11 +2136,37 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	--------------------------------> Item Functions <--------------------------------
 	
-	SetItemIntersectionRadius
+	SetItemAutoDeleteClip
 		Arguments:
-			1) radius
+			1) left
+			2) top
+			3) right
+			4) bottom
 		Description:
-			Sets the radius around the player in which items are collected. (Not the item scope, which only "sucks" in the items.)
+			Sets the margin that item objects are allowed to traverse past the edges of the STG field before getting automatically deleted.
+			
+			Basically, SetShotAutoDeleteClip for items.
+			
+	GetItemIdInCircleA1
+		Arguments:
+			1) circle x
+			2) circle y
+			3) circle radius
+		Returns:
+			(int[]) item object IDs
+		Description:
+			Returns the object ID of all item objects within the specified circle.
+			
+	GetItemIdInCircleA2
+		Arguments:
+			1) circle x
+			2) circle y
+			3) circle radius
+			4) (int) item type
+		Returns:
+			(int[]) item object IDs
+		Description:
+			Returns the object ID of all item objects of the specified type within the specified circle.
 	
 	--------------------------------> Intersection Functions <--------------------------------
 	
@@ -1730,6 +2174,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID 1
 			2) object ID 2
+		Returns:
+			(bool) intersection
 		Description:
 			Returns true if any of both object's hitboxes intersect.
 			
@@ -1737,6 +2183,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID 1
 			2) object ID 2
+		Returns:
+			(bool) intersection
 		Description:
 			Returns true if all of both object's hitboxes intersect.
 	
@@ -1779,6 +2227,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjMove_GetSpeedX
 		Arguments:
 			1) object ID
+		Returns:
+			(real) x speed
 		Description:
 			Gets the move object's X speed.
 			Also works for objects using the "angle" move mode.
@@ -1786,6 +2236,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjMove_GetSpeedY
 		Arguments:
 			1) object ID
+		Returns:
+			(real) y speed
 		Description:
 			Gets the move object's Y speed.
 			Also works for objects using the "angle" move mode.
@@ -1827,6 +2279,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjMove_GetProcessMovement
 		Arguments:
 			1) object ID
+		Returns:
+			(bool) result
 		Description:
 			Returns true if the object is allowed to execute movement-related routines.
 	
@@ -1835,6 +2289,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjEnemy_GetIntersectionCircleListToShot
 		Arguments:
 			1) object ID
+		Returns:
+			(real[3][]) intersection circles
 		Description:
 			Returns an array of arrays of the enemy object's intersection circle to player shot.
 			e.g. [[x1, y1, radius1], [x2, y2, radius2], ...]
@@ -1842,6 +2298,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjEnemy_GetIntersectionCircleListToPlayer
 		Arguments:
 			1) object ID
+		Returns:
+			(real[3][]) intersection circles
 		Description:
 			Returns an array of arrays of the enemy object's intersection circle to player hitbox.
 			e.g. [[x1, y1, radius1], [x2, y2, radius2], ...]
@@ -1883,6 +2341,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjShot_GetIntersectionEnable
 		Arguments:
 			1) object ID
+		Returns:
+			(bool) intersection enable
 		Description:
 			Returns whether ObjShot_SetIntersectionEnable was set on the shot object.
 			
@@ -2031,6 +2491,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjShot_IsValidGraze
 		Arguments:
 			1) object ID
+		Returns:
+			(bool) graze validity
 		Description:
 			Returns whether the shot object is currently able to be grazed.
 	
@@ -2078,6 +2540,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjStLaser_GetPermitExpand
 		Arguments:
 			1) object ID
+		Returns:
+			(bool) permit expand
 		Description:
 			Returns whether the straight laser is permitted to expand after the delay period.
 			
@@ -2087,6 +2551,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID
 			2) node index
+		Returns:
+			(int) node pointer
 		Description:
 			Returns the pointer value of the specified node index.
 			The pointer is used in other node-related functions.
@@ -2094,44 +2560,52 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			As node traversal is relatively expensive, it is not recommended to repeatedly use this function.
 			
 			At each frame, the node at the laser's end is invalidated if the laser is able to move.
-			Using an invalid pointer may cause a memory corruption.
+			Using an invalid pointer may cause a memory access violation.
 			
 	ObjCrLaser_GetNodePointerList
 		Arguments:
 			1) object ID
+		Returns:
+			(int[]) node pointers
 		Description:
 			Returns a list of node pointers of the curvy laser object.
 			The pointers are used in other node-related functions.
 
 			At each frame, the node at the laser's end is invalidated if the laser is able to move.
-			Using an invalid pointer may cause a memory corruption.
+			Using an invalid pointer may cause a memory access violation.
 			
 	ObjCrLaser_GetNodePosition
 		Arguments:
 			1) object ID
 			2) node pointer
+		Returns:
+			(real[2]) node position
 		Description:
 			Returns the [x, y] position array of the specified node.
 			
-			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
 			
 	ObjCrLaser_GetNodeAngle
 		Arguments:
 			1) object ID
 			2) node pointer
+		Returns:
+			(real) node angle
 		Description:
 			Returns the facing angle of the specified node.
 			
-			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
 			
 	ObjCrLaser_GetNodeColor
 		Arguments:
 			1) object ID
 			2) node pointer
+		Returns:
+			(int[4]) node color
 		Description:
 			Returns the [a, r, g, b] color array of the specified node.
 			
-			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
 			
 	ObjCrLaser_SetNode
 		Arguments:
@@ -2144,7 +2618,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Sets the position, angle, and color of the specified node.
 			
-			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
 			
 	ObjCrLaser_SetNodePosition
 		Arguments:
@@ -2155,7 +2629,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Sets the position of the specified node.
 			
-			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
 			
 	ObjCrLaser_SetNodeAngle
 		Arguments:
@@ -2165,7 +2639,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Sets the angle of the specified node.
 			
-			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
 			
 	ObjCrLaser_SetNodeColor
 		Arguments:
@@ -2176,7 +2650,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Sets the color of the specified node.
 			The color may be constructed with ColorARGBtoHex.
 			
-			The node pointer is obtained with ObjCrLaser_GetNodePointer, do NOT pass in any other values.
+			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
 			
 	ObjCrLaser_AddNode
 		Arguments:
@@ -2417,6 +2891,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID
 			2) shot owner type
+		Returns:
+			(int[]) intersected shot IDs
 		Description:
 			Returns an array of all shot objects of the specified owner type currently intersecting with the object.
 			
@@ -2424,6 +2900,108 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				OWNER_PLAYER
 				OWNER_ENEMY
 				
+	-------------------------------->  Item Object Functions <--------------------------------
+	
+	ObjItem_SetMoveToPlayer
+		Arguments:
+			1) object ID
+			2) (bool) move to player
+		Description:
+			Causes the item object to start or stop moving to the player.
+			
+			If set to true, EV_COLLECT_ITEM will be notified.
+			If set to false, EV_CANCEL_ITEM will be notified.
+			
+				
+			
+	ObjItem_IsMoveToPlayer
+		Arguments:
+			1) object ID
+		Returns:
+			(bool) result
+		Description:
+			Returns whether the item object is moving to the player.
+			
+	ObjItem_Collect
+		Arguments:
+			1) object ID
+		Description:
+			Causes the item object to be instantly collected.
+			
+			Not affected by ObjItem_SetIntersectionEnable.
+			
+	ObjItem_SetAutoDelete
+		Arguments:
+			1) object ID
+			2) (bool) auto delete
+		Description:
+			Sets whether the item will be subject to the auto-deletion clip.
+			
+			The auto-deletion clip size can be altered using SetItemAutoDeleteClip.
+			
+	ObjItem_SetIntersectionRadius
+		Arguments:
+			1) object ID
+			2) (int) radius
+		Description:
+			Sets the item object's player intersection radius.
+			
+	ObjItem_SetIntersectionEnable
+		Arguments:
+			1) object ID
+			2) (bool) enable
+		Description:
+			Sets whether the item object is allowed to directly intersect with the player.
+			
+	ObjItem_SetDefaultCollectMovement
+		Arguments:
+			1) object ID
+			2) (bool) enable
+		Description:
+			Sets whether the item object will use the built-in autocollection behaviour.
+			
+			Intended to be used in tandem with EV_COLLECT_ITEM.
+			
+---------------------------------------------->	[Item Script] <----------------------------------------------
+			
+	--------------------------------> Events <--------------------------------
+	
+		EV_COLLECT_ITEM is notified when an item is autocollected.
+			Actions that trigger this event:
+				- Collision with the player's item scope.
+				- The player moving up into the item autocollection line.
+				- Using CollectItemsInCircle, CollectAllItems, or ObjItem_SetMoveToPlayer.
+	
+			Event arguments:
+				1) (int) item object ID
+				2) (int) item type
+				3) (int) collection type
+					0 - Player scope
+					1 - Player autocollection line
+					2 - Via CollectItemsInCircle
+					3 - Via CollectAllItems
+					4 - Via ObjItem_SetMoveToPlayer
+				4) (real) collection info
+					Varies with collection type:
+						Type 0 -> Player item scope radius
+						Type 1 -> Player autocollection line position
+						Type 2 -> Collection circle size
+						Type 3 -> 0
+						Type 4 -> 0
+		
+		EV_CANCEL_ITEM is notified when an item's autocollection is canceled.
+			Actions that trigger this event:
+				- The player leaving STATE_NORMAL while the item is in the middle of being collected.
+				- Using CancelCollectItems or ObjItem_SetMoveToPlayer.
+		
+			Event arguments:
+				1) (int) item object ID
+				2) (int) item type
+				3) (int) cancel type
+					0 - Player died
+					1 - Via CancelCollectItems
+					2 - Via ObjItem_SetMoveToPlayer
+		
 ---------------------------------------------->	[Player Script] <----------------------------------------------
 
 	-------------------------------->  Normal Functions <--------------------------------
@@ -2431,7 +3009,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	KillPlayer
 		Description:
 			Kills the player.
-
+			
 	-------------------------------->  Shot Functions <--------------------------------
 
 	CreatePlayerShotA1
@@ -2439,3 +3017,13 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Change.
 			No longer returns a null value if SetForbidPlayerShot was set to true.
 	
+	
+	--------------------------------> Events <--------------------------------
+			
+		EV_DELETE_SHOT_PLAYER is notified to the player script when a player shot is deleted upon collision with an enemy intersection.
+			*ObjShot_SetPenetration(obj, 0) can also be used to forcibly activate the event.
+		
+			Event arguments:
+				1) (int) shot object ID
+				2) (real[2]) position
+				3) (int) shot graphic ID
