@@ -204,6 +204,11 @@ namespace gstd {
 			token_kind next() const { return lex->next; }
 			void advance() const { return lex->advance(); }
 		};
+		struct block_return_t {
+			size_t size;
+			size_t alloc_base;
+			size_t alloc_size;
+		};
 	public:
 		struct symbol {
 			uint32_t level;
@@ -262,7 +267,8 @@ namespace gstd {
 			bool check_terminator, token_kind statement_terminator);
 		void parse_statements(script_block* block, parser_state_t* state,
 			token_kind block_terminator, token_kind statement_terminator);
-		std::pair<size_t, std::array<size_t, 2>> parse_block(script_block* block, parser_state_t* state,
+
+		block_return_t parse_block(script_block* block, parser_state_t* state,
 			const std::vector<std::string>* args, bool allow_single = false);
 		size_t parse_block_inlined(script_block* block, parser_state_t* state, bool allow_single = true);
 	private:

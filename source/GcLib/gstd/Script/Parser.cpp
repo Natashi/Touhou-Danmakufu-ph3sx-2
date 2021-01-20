@@ -1153,7 +1153,7 @@ continue_as_variadic:
 					state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 
 					size_t ip_block_begin = state->ip;
-					auto blockParam = parse_block(block, state, nullptr, true);
+					block_return_t blockParam = parse_block(block, state, nullptr, true);
 
 					size_t ip_continue = state->ip;
 					state->AddCode(block, code(command_kind::pc_jump, ip_loop_begin));
@@ -1161,13 +1161,13 @@ continue_as_variadic:
 					state->AddCode(block, code(command_kind::pc_pop, 1));
 
 					//Try to optimize looped yield to a wait
-					if (blockParam.first == 1U && block->codes[ip_block_begin].command == command_kind::pc_yield) {
+					if (blockParam.size == 1U && block->codes[ip_block_begin].command == command_kind::pc_yield) {
 						while (state->ip > ip_loop_begin)
 							state->PopCode(block);
 						state->AddCode(block, code(command_kind::pc_wait));
 					}
 					//Discard everything if the loop is empty
-					else if (blockParam.first == 0U) {
+					else if (blockParam.size == 0U) {
 						while (state->ip > ip_loop_begin)
 							state->PopCode(block);
 					}
@@ -1175,8 +1175,8 @@ continue_as_variadic:
 						block->codes[ip_loopchk].arg0 = ip_back;
 						link_break_continue(block, state, ip_block_begin, ip_continue, ip_back, ip_continue);
 
-						block->codes[ip_var_format].arg0 = blockParam.second[0];
-						block->codes[ip_var_format].arg1 = blockParam.second[1];
+						block->codes[ip_var_format].arg0 = blockParam.alloc_base;
+						block->codes[ip_var_format].arg1 = blockParam.alloc_size;
 					}
 				}
 			}
@@ -1184,21 +1184,21 @@ continue_as_variadic:
 				size_t ip_var_format = state->ip;
 				state->AddCode(block, code(command_kind::pc_var_format, 0U, 0));
 
-				auto blockParam = parse_block(block, state, nullptr, true);
+				block_return_t blockParam = parse_block(block, state, nullptr, true);
 
 				size_t ip_continue = state->ip;
 				state->AddCode(block, code(command_kind::pc_jump, ip_begin));
 				size_t ip_back = state->ip;
 
-				if (blockParam.first == 0U) {
+				if (blockParam.size == 0U) {
 					while (state->ip > ip_begin)
 						state->PopCode(block);
 				}
 				else {
 					link_break_continue(block, state, ip_begin, ip_continue, ip_back, ip_continue);
 
-					block->codes[ip_var_format].arg0 = blockParam.second[0];
-					block->codes[ip_var_format].arg1 = blockParam.second[1];
+					block->codes[ip_var_format].arg0 = blockParam.alloc_base;
+					block->codes[ip_var_format].arg1 = blockParam.alloc_size;
 				}
 			}
 
@@ -1224,7 +1224,7 @@ continue_as_variadic:
 				state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 
 				size_t ip_block_begin = state->ip;
-				auto blockParam = parse_block(block, state, nullptr, true);
+				block_return_t blockParam = parse_block(block, state, nullptr, true);
 
 				size_t ip_continue = state->ip;
 				state->AddCode(block, code(command_kind::pc_jump, ip_loop_begin));
@@ -1232,13 +1232,13 @@ continue_as_variadic:
 				state->AddCode(block, code(command_kind::pc_pop, 1));
 
 				//Try to optimize looped yield to a wait
-				if (blockParam.first == 1U && block->codes[ip_block_begin].command == command_kind::pc_yield) {
+				if (blockParam.size == 1U && block->codes[ip_block_begin].command == command_kind::pc_yield) {
 					while (state->ip > ip_loop_begin)
 						state->PopCode(block);
 					state->AddCode(block, code(command_kind::pc_wait));
 				}
 				//Discard everything if the loop is empty
-				else if (blockParam.first == 0U) {
+				else if (blockParam.size == 0U) {
 					while (state->ip > ip_loop_begin)
 						state->PopCode(block);
 				}
@@ -1246,8 +1246,8 @@ continue_as_variadic:
 					block->codes[ip_loopchk].arg0 = ip_back;
 					link_break_continue(block, state, ip_block_begin, ip_continue, ip_back, ip_continue);
 
-					block->codes[ip_var_format].arg0 = blockParam.second[0];
-					block->codes[ip_var_format].arg1 = blockParam.second[1];
+					block->codes[ip_var_format].arg0 = blockParam.alloc_base;
+					block->codes[ip_var_format].arg1 = blockParam.alloc_size;
 				}
 			}
 
@@ -1271,13 +1271,13 @@ continue_as_variadic:
 			state->AddCode(block, code(command_kind::pc_jump_if_not, 0U));
 
 			size_t ip_block_begin = state->ip;
-			auto blockParam = parse_block(block, state, nullptr, true);
+			block_return_t blockParam = parse_block(block, state, nullptr, true);
 
 			size_t ip_continue = state->ip;
 			state->AddCode(block, code(command_kind::pc_jump, ip));
 			size_t ip_back = state->ip;
 
-			if (blockParam.first == 0U) {
+			if (blockParam.size == 0U) {
 				while (state->ip > ip)
 					state->PopCode(block);
 			}
@@ -1285,8 +1285,8 @@ continue_as_variadic:
 				block->codes[ip_loopchk].arg0 = ip_back;
 				link_break_continue(block, state, ip_block_begin, ip_continue, ip_back, ip_continue);
 
-				block->codes[ip_var_format].arg0 = blockParam.second[0];
-				block->codes[ip_var_format].arg1 = blockParam.second[1];
+				block->codes[ip_var_format].arg0 = blockParam.alloc_base;
+				block->codes[ip_var_format].arg1 = blockParam.alloc_size;
 			}
 
 			need_terminator = false;
@@ -1309,7 +1309,7 @@ continue_as_variadic:
 
 				parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
 
-				std::string counterName = state->lex->word;
+				std::string iteratorName = state->lex->word;
 
 				state->advance();
 				parser_assert(state, state->next() == token_kind::tk_IN || state->next() == token_kind::tk_colon,
@@ -1337,11 +1337,10 @@ continue_as_variadic:
 				size_t ip_loopchk = state->ip;
 				state->AddCode(block, code(command_kind::pc_jump_if, 0U));
 
-				std::pair<size_t, std::array<size_t, 2>> blockParam;
+				block_return_t blockParam;
 				{
-					std::vector<std::string> counter;
-					counter.push_back(counterName);
-					blockParam = parse_block(block, state, &counter, true);
+					std::vector<std::string> argv = { iteratorName };
+					blockParam = parse_block(block, state, &argv, true);
 				}
 
 				size_t ip_continue = state->ip;
@@ -1351,7 +1350,7 @@ continue_as_variadic:
 				//Pop twice for the array and the counter
 				state->AddCode(block, code(command_kind::pc_pop, 2));
 
-				if (blockParam.first <= 1U) {	//1 for pc_copy_assign
+				if (blockParam.size <= 1U) {	//1 for pc_copy_assign
 					while (state->ip > ip_for_begin)
 						state->PopCode(block);
 				}
@@ -1359,33 +1358,36 @@ continue_as_variadic:
 					block->codes[ip_loopchk].arg0 = ip_back;
 					link_break_continue(block, state, ip, ip_continue, ip_back, ip_continue);
 
-					block->codes[ip_var_format].arg0 = blockParam.second[0];
-					block->codes[ip_var_format].arg1 = blockParam.second[1];
+					block->codes[ip_var_format].arg0 = blockParam.alloc_base;
+					block->codes[ip_var_format].arg1 = blockParam.alloc_size;
 				}
 			}
 			else if (state->next() == token_kind::tk_open_par) {	//Regular for loop
 				state->advance();
 
-				bool isNewVar = false;
-				bool isNewVarConst = false;
-				std::string newVarName = "";
+				struct _var_symbol {
+					std::string name;
+					bool bConst;
+				};
+				std::vector<_var_symbol> listNewVars;
 
 				script_scanner* const lex_org = state->lex;
 				script_scanner lex_s1(*state->lex);		//First statement (initialization)
 
 				if (IsDeclToken(state->next()) || state->next() == token_kind::tk_const) {
-					isNewVar = true;
-					isNewVarConst = state->next() == token_kind::tk_const;
+					_var_symbol nVar;
+					nVar.bConst = state->next() == token_kind::tk_const;
 					state->advance();
 					parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
-					newVarName = state->lex->word;
+					nVar.name = state->lex->word;
+					listNewVars.push_back(nVar);
 				}
 
 				while (state->next() != token_kind::tk_semicolon) state->advance();
 				state->advance();
 
-				bool hasExpr = true;
-				if (state->next() == token_kind::tk_semicolon) hasExpr = false;
+				bool hasEvalExpr = true;
+				if (state->next() == token_kind::tk_semicolon) hasEvalExpr = false;
 
 				script_scanner lex_s2(*state->lex);		//Second statement (evaluation)
 
@@ -1416,16 +1418,17 @@ continue_as_variadic:
 					for (parser_state_t* iState = state; iState != nullptr; iState = iState->state_pred)
 						varc_prev_total += iState->var_count_main;
 
-					if (isNewVar) {
-						symbol s = symbol(block->level, nullptr, varc_prev_total, false, !isNewVarConst);
-						frame.back().singular_insert(newVarName, s);
+					for (size_t iNewVar = 0; iNewVar < listNewVars.size(); ++iNewVar) {
+						_var_symbol* pVarData = &listNewVars[iNewVar];
 
-						newState.var_count_main = 1;
-						++varc_prev_total;
-
-						ip_var_format = newState.ip;
-						newState.AddCode(block, code(command_kind::pc_var_format, 0U, 0));
+						symbol s = symbol(block->level, nullptr, varc_prev_total + iNewVar, 
+							false, !pVarData->bConst);
+						frame.back().singular_insert(pVarData->name, s);
 					}
+					newState.var_count_main = listNewVars.size();
+
+					ip_var_format = newState.ip;
+					newState.AddCode(block, code(command_kind::pc_var_format, 0U, 0));
 
 					//Initialization statement
 					newState.lex = &lex_s1;
@@ -1434,7 +1437,7 @@ continue_as_variadic:
 					size_t ip_begin = newState.ip;
 
 					//Evaluation statement
-					if (hasExpr) {
+					if (hasEvalExpr) {
 						newState.lex = &lex_s2;
 						parse_expression(block, &newState);
 						parser_assert(state, lex_s2.next == token_kind::tk_semicolon, "Expected a semicolon (;).");
@@ -1455,7 +1458,7 @@ continue_as_variadic:
 							parse_single_statement(block, &newState, true, token_kind::tk_semicolon);
 						else {
 							newState.var_count_main += scan_current_scope(&newState, block->level, nullptr, 
-								false, varc_prev_total);
+								false, varc_prev_total + listNewVars.size());
 							parse_statements(block, &newState, token_kind::tk_close_cur, token_kind::tk_semicolon);
 						}
 
@@ -1488,17 +1491,15 @@ continue_as_variadic:
 						newState.PopCode(block);
 				}
 				else {
-					if (hasExpr) block->codes[ip_loopchk].arg0 = ip_back;
+					if (hasEvalExpr) block->codes[ip_loopchk].arg0 = ip_back;
 					link_break_continue(block, &newState, ip_for_begin, ip_continue, ip_back, ip_continue);
 
-					if (isNewVar) {
-						block->codes[ip_var_format].arg0 = varc_prev_total;
-						block->codes[ip_var_format].arg1 = newState.var_count_main;
-					}
+					block->codes[ip_var_format].arg0 = varc_prev_total;
+					block->codes[ip_var_format].arg1 = newState.var_count_main;
 				}
 
 				state->ip = newState.ip;
-				if (isNewVar) state->GrowVarCount(newState.var_count_main + newState.var_count_sub);
+				state->GrowVarCount(newState.var_count_main + newState.var_count_sub);
 			}
 			else {
 				parser_assert(state, false, "\"(\" is required.\r\n");
@@ -1566,11 +1567,10 @@ continue_as_variadic:
 
 			state->AddCode(block, code(command_kind::pc_dup_n, 0));
 
-			std::pair<size_t, std::array<size_t, 2>> blockParam;
+			block_return_t blockParam;
 			{
-				std::vector<std::string> counter;
-				counter.push_back(counterName);
-				blockParam = parse_block(block, state, &counter, true);
+				std::vector<std::string> argv = { counterName };
+				blockParam = parse_block(block, state, &argv, true);
 			}
 
 			size_t ip_continue = state->ip;
@@ -1585,7 +1585,7 @@ continue_as_variadic:
 			//Pop twice for two statements
 			state->AddCode(block, code(command_kind::pc_pop, 2));
 
-			if (blockParam.first <= 1U) {	//1 for pc_copy_assign
+			if (blockParam.size <= 1U) {	//1 for pc_copy_assign
 				while (state->ip > ip_ascdsc_begin)
 					state->PopCode(block);
 			}
@@ -1593,8 +1593,8 @@ continue_as_variadic:
 				block->codes[ip_loopchk].arg0 = ip_back;
 				link_break_continue(block, state, ip_ascdsc_begin, ip_continue, ip_back, ip_continue);
 
-				block->codes[ip_var_format].arg0 = blockParam.second[0];
-				block->codes[ip_var_format].arg1 = blockParam.second[1];
+				block->codes[ip_var_format].arg0 = blockParam.alloc_base;
+				block->codes[ip_var_format].arg1 = blockParam.alloc_size;
 			}
 
 			need_terminator = false;
@@ -1809,7 +1809,7 @@ continue_as_variadic:
 							state->advance();
 							parser_assert(state, state->next() == token_kind::tk_word, "Parameter name is required.\r\n");
 						}
-						//TODO: Give scripters access to defining functions with variadic argument counts. (After 1.10a)
+						//TODO: Give scripters the ability to define vararg functions
 						args.push_back(state->lex->word);
 						state->advance();
 						if (state->next() != token_kind::tk_comma)
@@ -1882,8 +1882,8 @@ continue_as_variadic:
 		}
 	}
 
-	std::pair<size_t, std::array<size_t, 2>> parser::parse_block(script_block* block,
-		parser_state_t* state, const std::vector<std::string>* args, bool allow_single) 
+	parser::block_return_t parser::parse_block(script_block* block, parser_state_t* state,
+		const std::vector<std::string>* args, bool allow_single) 
 	{
 		size_t prev_size = state->ip;
 
@@ -1937,24 +1937,24 @@ continue_as_variadic:
 		state->ip = newState.ip;
 		state->GrowVarCount(newState.var_count_main + newState.var_count_sub);
 
-		return std::make_pair(block->codes.size() - prev_size, 
-			std::array<size_t, 2>{ varc_prev_total, newState.var_count_main });
+		block_return_t blockRet = { block->codes.size() - prev_size, varc_prev_total, newState.var_count_main };
+		return blockRet;
 	}
 	size_t parser::parse_block_inlined(script_block* block, parser_state_t* state, bool allow_single) {
 		size_t ip_var_format = state->ip;
 		state->AddCode(block, code(command_kind::pc_var_format, 0U, 0));
 
-		auto blockParam = parse_block(block, state, nullptr, allow_single);
+		block_return_t blockParam = parse_block(block, state, nullptr, allow_single);
 
-		if (blockParam.first == 0U) {
+		if (blockParam.size == 0U) {
 			state->PopCode(block);	//For pc_var_format
 		}
 		else {
-			block->codes[ip_var_format].arg0 = blockParam.second[0];
-			block->codes[ip_var_format].arg1 = blockParam.second[1];
+			block->codes[ip_var_format].arg0 = blockParam.alloc_base;
+			block->codes[ip_var_format].arg1 = blockParam.alloc_size;
 		}
 
-		return blockParam.first;
+		return blockParam.size;
 	}
 
 	void parser::optimize_expression(script_block* block, parser_state_t* state) {
