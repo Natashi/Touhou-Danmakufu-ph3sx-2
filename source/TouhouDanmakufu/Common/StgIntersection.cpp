@@ -134,8 +134,8 @@ void StgIntersectionManager::Work() {
 			if (targetA == nullptr || targetB == nullptr) continue;
 
 			if (IsIntersected(targetA, targetB)) {
-				ref_unsync_weak_ptr<StgIntersectionObject> ptrA = targetA->GetObject();
-				ref_unsync_weak_ptr<StgIntersectionObject> ptrB = targetB->GetObject();
+				ref_unsync_weak_ptr<StgIntersectionObject>& ptrA = targetA->GetObject();
+				ref_unsync_weak_ptr<StgIntersectionObject>& ptrB = targetB->GetObject();
 				{
 					if (ptrA) {
 						ptrA->Intersect(targetA, targetB);
@@ -684,45 +684,25 @@ std::wstring StgIntersectionTarget::GetInfoAsString() {
 }
 
 void StgIntersectionTarget_Circle::SetIntersectionSpace() {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	constexpr LONG margin = 16L;
-	LONG screenWidth = graphics->GetScreenWidth() + margin;
-	LONG screenHeight = graphics->GetScreenWidth() + margin;
+	constexpr LONG MARGIN = 1L;
 
 	LONG x = circle_.GetX();
 	LONG y = circle_.GetY();
-	LONG r = circle_.GetR();
+	LONG r = (LONG)(circle_.GetR() + 0.1f) + MARGIN;
 
-	LONG x1 = std::clamp(x - r, -margin, screenWidth);
-	LONG x2 = std::clamp(x + r, -margin, screenWidth);
-	LONG y1 = std::clamp(y - r, -margin, screenHeight);
-	LONG y2 = std::clamp(y + r, -margin, screenHeight);
-	intersectionSpace_ = { x1, y1, x2, y2 };
+	intersectionSpace_ = DxRect<LONG>(x - r, y - r, x + r, y + r);
 }
 void StgIntersectionTarget_Line::SetIntersectionSpace() {
-	float l = line_.GetX1();
-	float t = line_.GetY1();
-	float r = line_.GetX2();
-	float b = line_.GetY2();
-	float width = line_.GetWidth();
+	constexpr LONG MARGIN = 2L;
+
+	LONG l = line_.GetX1();
+	LONG t = line_.GetY1();
+	LONG r = line_.GetX2();
+	LONG b = line_.GetY2();
+	LONG wd = line_.GetWidth() + MARGIN;
 
 	if (l > r) std::swap(l, r);
 	if (t > b) std::swap(t, b);
-	l -= width;
-	t -= width;
-	r += width;
-	b += width;
 
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-
-	constexpr LONG margin = 16L;
-	LONG screenWidth = graphics->GetScreenWidth() + margin;
-	LONG screenHeight = graphics->GetScreenWidth() + margin;
-
-	intersectionSpace_ = { 
-		std::clamp((LONG)l, -margin, screenWidth),
-		std::clamp((LONG)t, -margin, screenWidth),
-		std::clamp((LONG)r, -margin, screenHeight),
-		std::clamp((LONG)b, -margin, screenHeight)
-	};
+	intersectionSpace_ = DxRect<LONG>(l - wd, t - wd, r + wd, b + wd);
 }
