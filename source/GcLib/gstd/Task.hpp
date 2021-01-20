@@ -1,5 +1,4 @@
-#ifndef __GSTD_TASK__
-#define __GSTD_TASK__
+#pragma once
 
 #include "../pch.h"
 
@@ -15,9 +14,10 @@ namespace gstd {
 		TASK_FREE_ID = 0xffffffff,
 		TASK_GROUP_FREE_ID = 0xffffffff,
 	};
-	/**********************************************************
+
+	//*******************************************************************
 	//TaskFunction
-	**********************************************************/
+	//*******************************************************************
 	class TaskFunction : public IStringInfo {
 		friend TaskManager;
 	protected:
@@ -45,7 +45,7 @@ namespace gstd {
 	template <class T>
 	class TTaskFunction : public TaskFunction {
 	public:
-		typedef void (T::* Function)();
+		typedef void (T::*Function)();
 	protected:
 		Function pFunc;
 	public:
@@ -64,9 +64,9 @@ namespace gstd {
 		}
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//TaskBase
-	**********************************************************/
+	//*******************************************************************
 	class TaskBase : public IStringInfo {
 		friend TaskManager;
 	protected:
@@ -81,9 +81,9 @@ namespace gstd {
 		int64_t GetTaskIndex() { return indexTask_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//TaskManager
-	**********************************************************/
+	//*******************************************************************
 	class TaskInfoPanel;
 	class TaskManager : public TaskBase {
 		friend TaskInfoPanel;
@@ -92,51 +92,54 @@ namespace gstd {
 	protected:
 		static gstd::CriticalSection lockStatic_;
 
-		std::list<shared_ptr<TaskBase>> listTask_;//タスクの元クラス
-		function_map mapFunc_;//タスク機能のリスト(divFunc, priority, func)
-		int64_t indexTaskManager_;//一意のインデックス
+		std::list<shared_ptr<TaskBase>> listTask_;
+		function_map mapFunc_;			//Map of <division, vector<priority, functions>>
+		int64_t indexTaskManager_;		//Unique ID for created tasks
 		shared_ptr<TaskInfoPanel> panelInfo_;
 
-		void _ArrangeTask();//必要のなくなった領域削除
+		void _ArrangeTask();			//Erase finished tasks
 		void _CheckInvalidFunctionDivision(int divFunc);
 	public:
 		TaskManager();
 		virtual ~TaskManager();
-		void Clear();//全タスク削除
+
+		void Clear();
 		void ClearTask();
-		void AddTask(shared_ptr<TaskBase> task);//タスクを追加
-		shared_ptr<TaskBase> GetTask(int idTask);//指定したIDのタスクを取得
+
+		shared_ptr<TaskBase> GetTask(int idTask);
 		shared_ptr<TaskBase> GetTask(const std::type_info& info);
-		void RemoveTask(TaskBase* task);//指定したタスクを削除
-		void RemoveTask(int idTask);//タスク元IDで削除
-		void RemoveTaskGroup(int idGroup);//タスクをグループで削除
-		void RemoveTask(const std::type_info& info);//クラス型で削除
-		void RemoveTaskWithoutTypeInfo(std::set<const std::type_info*> listInfo);//クラス型以外のタスクを削除
 		std::list<shared_ptr<TaskBase>>& GetTaskList() { return listTask_; }
 
+		void AddTask(shared_ptr<TaskBase> task);
+		void RemoveTask(TaskBase* task);
+		void RemoveTask(int idTask);
+		void RemoveTaskGroup(int idGroup);
+		void RemoveTask(const std::type_info& info);
+		void RemoveTaskWithoutTypeInfo(std::set<const std::type_info*> listInfo);
+
 		void InitializeFunctionDivision(int divFunc, int maxPri);
-		void CallFunction(int divFunc);//タスク機能実行
-		void AddFunction(int divFunc, shared_ptr<TaskFunction> func, int pri, int idFunc = TASK_FREE_ID);//タスク機能追加
-		void RemoveFunction(TaskBase* task);//タスク機能削除
-		void RemoveFunction(TaskBase* task, int divFunc, int idFunc);//タスク機能削除
-		void RemoveFunction(const std::type_info& info);//タスク機能削除
+		void CallFunction(int divFunc);
+		void AddFunction(int divFunc, shared_ptr<TaskFunction> func, int pri, int idFunc = TASK_FREE_ID);
+		void RemoveFunction(TaskBase* task);
+		void RemoveFunction(TaskBase* task, int divFunc, int idFunc);
+		void RemoveFunction(const std::type_info& info);
 		function_map GetFunctionMap() { return mapFunc_; }
 
-		void SetFunctionEnable(bool bEnable);//全タスク機能の状態を切り替える
-		void SetFunctionEnable(bool bEnable, int divFunc);//タスク機能の状態を切り替える
-		void SetFunctionEnable(bool bEnable, int idTask, int divFunc);//タスク機能の状態を切り替える
-		void SetFunctionEnable(bool bEnable, int idTask, int divFunc, int idFunc);//タスク機能の状態を切り替える
-		void SetFunctionEnable(bool bEnable, TaskBase* task, int divFunc);//タスク機能の状態を切り替える
-		void SetFunctionEnable(bool bEnable, TaskBase* task, int divFunc, int idFunc);//タスク機能の状態を切り替える
-		void SetFunctionEnable(bool bEnable, const std::type_info& info, int divFunc);//タスク機能の状態を切り替える
+		void SetFunctionEnable(bool bEnable);
+		void SetFunctionEnable(bool bEnable, int divFunc);
+		void SetFunctionEnable(bool bEnable, int idTask, int divFunc);
+		void SetFunctionEnable(bool bEnable, int idTask, int divFunc, int idFunc);
+		void SetFunctionEnable(bool bEnable, TaskBase* task, int divFunc);
+		void SetFunctionEnable(bool bEnable, TaskBase* task, int divFunc, int idFunc);
+		void SetFunctionEnable(bool bEnable, const std::type_info& info, int divFunc);
 
 		void SetInfoPanel(shared_ptr<TaskInfoPanel> panel) { panelInfo_ = panel; }
 		gstd::CriticalSection& GetStaticLock() { return lockStatic_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//TaskInfoPanel
-	**********************************************************/
+	//*******************************************************************
 	class TaskInfoPanel : public WindowLogger::Panel {
 	protected:
 		enum {
@@ -160,26 +163,27 @@ namespace gstd {
 		void _UpdateListView(TaskManager* taskManager);
 	public:
 		TaskInfoPanel();
+
 		void SetUpdateInterval(int time) { timeUpdateInterval_ = time; }
+
 		virtual void LocateParts();
 		virtual void Update(TaskManager* taskManager);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//WorkRenderTaskManager
-	//動作、描画機能を保持するTaskManager
-	**********************************************************/
+	//	Manages update and render loops
+	//*******************************************************************
 	class WorkRenderTaskManager : public TaskManager {
 		enum {
-			DIV_FUNC_WORK,		//動作
-			DIV_FUNC_RENDER,	//描画
+			DIV_FUNC_WORK,
+			DIV_FUNC_RENDER,
 		};
 	public:
 		WorkRenderTaskManager();
 		~WorkRenderTaskManager();
 		virtual void InitializeFunctionDivision(int maxPriWork, int maxPriRender);
 
-		//動作機能
 		void CallWorkFunction();
 		void AddWorkFunction(shared_ptr<TaskFunction> func, int pri, int idFunc = TASK_FREE_ID);
 		void RemoveWorkFunction(TaskBase* task, int idFunc);
@@ -190,7 +194,6 @@ namespace gstd {
 		void SetWorkFunctionEnable(bool bEnable, TaskBase* task, int idFunc);
 		void SetWorkFunctionEnable(bool bEnable, const std::type_info& info);
 
-		//描画機能
 		void CallRenderFunction();
 		void AddRenderFunction(shared_ptr<TaskFunction> func, int pri, int idFunc = TASK_FREE_ID);
 		void RemoveRenderFunction(TaskBase* task, int idFunc);
@@ -202,5 +205,3 @@ namespace gstd {
 		void SetRenderFunctionEnable(bool bEnable, const std::type_info& info);
 	};
 }
-
-#endif
