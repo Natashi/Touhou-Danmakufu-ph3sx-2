@@ -35,11 +35,13 @@ void SystemUtility::TestCpuSupportSIMD() {
 	bool hasSSE3 = true;
 	bool hasSSE4_1 = true;
 
+	struct _Four { int m[4]; };
+
 	std::bitset<32> f_1_ECX;
 	std::bitset<32> f_1_EDX;
 	std::bitset<32> f_7_EBX;
 	std::bitset<32> f_7_ECX;
-	std::vector<std::array<int, 4>> cpuData;
+	std::vector<_Four> cpuData;
 
 	memset(&f_1_ECX[0], 0, 32 / 8);
 	memset(&f_1_EDX[0], 0, 32 / 8);
@@ -52,20 +54,20 @@ void SystemUtility::TestCpuSupportSIMD() {
 
 	for (int i = 0; i <= nIds; ++i) {
 		__cpuidex(cpui, i, 0);
-		std::array<int, 4> arr;
-		memcpy(arr.data(), cpui, sizeof(cpui));
+		_Four arr;
+		memcpy(&arr, cpui, sizeof(cpui));
 		cpuData.push_back(arr);
 	}
 
 	// load bitset with flags for function 0x00000001
 	if (nIds >= 1) {
-		f_1_ECX = cpuData[1][2];
-		f_1_EDX = cpuData[1][3];
+		f_1_ECX = cpuData[1].m[2];
+		f_1_EDX = cpuData[1].m[3];
 	}
 	// load bitset with flags for function 0x00000007
 	if (nIds >= 7) {
-		f_7_EBX = cpuData[7][1];
-		f_7_ECX = cpuData[7][2];
+		f_7_EBX = cpuData[7].m[1];
+		f_7_ECX = cpuData[7].m[2];
 	}
 
 	//Test SSE
