@@ -1936,7 +1936,7 @@ gstd::value DxScript::Func_ColorHexToARGB(gstd::script_machine* machine, int arg
 	}
 
 	vecColor = ColorAccess::ToVec4(color, permute);
-	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&vecColor), nChannel);
+	return DxScript::CreateIntArrayValue(reinterpret_cast<FLOAT*>(&vecColor), nChannel);
 }
 gstd::value DxScript::Func_ColorRGBtoHSV(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	byte cr = argv[0].as_int();
@@ -1946,7 +1946,7 @@ gstd::value DxScript::Func_ColorRGBtoHSV(gstd::script_machine* machine, int argc
 	D3DXVECTOR3 hsv;
 	ColorAccess::RGBtoHSV(hsv, cr, cg, cb);
 
-	return DxScript::CreateRealArrayValue(reinterpret_cast<FLOAT*>(&hsv), 3U);
+	return DxScript::CreateIntArrayValue(reinterpret_cast<FLOAT*>(&hsv), 3U);
 }
 gstd::value DxScript::Func_ColorHSVtoRGB(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	int ch = argv[0].as_int();
@@ -1956,7 +1956,9 @@ gstd::value DxScript::Func_ColorHSVtoRGB(gstd::script_machine* machine, int argc
 	D3DCOLOR rgb = 0xffffffff;
 	ColorAccess::HSVtoRGB(rgb, ch, cs, cv);
 
-	return DxScript::CreateRealArrayValue(reinterpret_cast<byte*>(&rgb) + 1, 3U);
+	byte listColor[4];
+	ColorAccess::ToByteArray(rgb, listColor);
+	return DxScript::CreateIntArrayValue(listColor + 1, 3U);
 }
 gstd::value DxScript::Func_ColorHSVtoHexRGB(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	int ch = argv[0].as_int();
@@ -2374,7 +2376,9 @@ value DxScript::Func_ObjRender_GetColor(script_machine* machine, int argc, const
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) color = obj->color_;
 
-	return script->CreateRealArrayValue(reinterpret_cast<byte*>(&color) + 1, 3U);
+	byte listColor[4];
+	ColorAccess::ToByteArray(color, listColor);
+	return script->CreateIntArrayValue(listColor + 1, 3U);
 }
 value DxScript::Func_ObjRender_SetAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -3084,7 +3088,9 @@ value DxScript::Func_ObjPrimitive_GetVertexColor(script_machine* machine, int ar
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) color = obj->GetVertexColor(index);
 
-	return script->CreateRealArrayValue(reinterpret_cast<byte*>(&color) + 1, 3U);
+	byte listColor[4];
+	ColorAccess::ToByteArray(color, listColor);
+	return script->CreateIntArrayValue(listColor + 1, 3U);
 }
 value DxScript::Func_ObjPrimitive_GetVertexAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
