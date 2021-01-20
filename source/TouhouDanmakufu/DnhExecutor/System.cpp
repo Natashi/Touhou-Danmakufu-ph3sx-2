@@ -138,6 +138,8 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 	EDirectInput* input = EDirectInput::GetInstance();
 	input->ClearKeyState();
 
+	ETaskManager* taskManager = ETaskManager::GetInstance();
+
 	try {
 		//STGシーン初期化
 		ref_count_ptr<StgSystemInformation> infoStgSystem(new StgSystemInformation());
@@ -145,7 +147,6 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 		shared_ptr<StgSystemController> task(new EStgSystemController());
 
 		//STGタスク初期化
-		ETaskManager* taskManager = ETaskManager::GetInstance();
 		task->Initialize(infoStgSystem);
 		task->Start(infoPlayer, infoReplay);
 
@@ -227,6 +228,8 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 	EDirectInput* input = EDirectInput::GetInstance();
 	input->ClearKeyState();
 
+	ETaskManager* taskManager = ETaskManager::GetInstance();
+
 	try {
 		//STGシーン初期化
 		ref_count_ptr<StgSystemInformation> infoStgSystem(new StgSystemInformation());
@@ -239,7 +242,6 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 			task = std::make_shared<PStgSystemController>();
 
 		//STGタスク初期化
-		ETaskManager* taskManager = ETaskManager::GetInstance();
 		task->Initialize(infoStgSystem);
 		task->Start(nullptr, nullptr);
 

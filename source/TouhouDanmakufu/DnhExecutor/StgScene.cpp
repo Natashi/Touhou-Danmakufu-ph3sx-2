@@ -7,10 +7,15 @@
 //EStgSystemController
 **********************************************************/
 void EStgSystemController::DoEnd() {
+	_OnSystemEnd();
+
 	SystemController::GetInstance()->GetSceneManager()->TransScriptSelectScene_Last();
 
 	EShaderManager* shaderManager = EShaderManager::GetInstance();
 	shaderManager->Clear();
+
+	ETaskManager* taskManager = ETaskManager::GetInstance();
+	taskManager->RemoveTask(typeid(EStgSystemController));
 }
 void EStgSystemController::DoRetry() {
 	SceneManager* sceneManager = SystemController::GetInstance()->GetSceneManager();
@@ -26,9 +31,14 @@ void EStgSystemController::DoRetry() {
 //PStgSystemController
 **********************************************************/
 void PStgSystemController::DoEnd() {
+	_OnSystemEnd();
+
 	EDirectGraphics* graphics = EDirectGraphics::CreateInstance();
 	graphics->SetWindowVisible(false);
 	EApplication::GetInstance()->End();
+
+	ETaskManager* taskManager = ETaskManager::GetInstance();
+	taskManager->RemoveTask(typeid(PStgSystemController));
 }
 void PStgSystemController::DoRetry() {
 	SystemController::GetInstance()->Reset();
