@@ -1,5 +1,4 @@
-#ifndef __DIRECTX_DXLIB__
-#define __DIRECTX_DXLIB__
+#pragma once
 
 #include "../pch.h"
 
@@ -32,5 +31,3 @@
 #endif
 
 #include "DirectInput.hpp"
-
-#endif
