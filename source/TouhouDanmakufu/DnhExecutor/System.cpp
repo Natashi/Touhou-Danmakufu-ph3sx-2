@@ -166,7 +166,7 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 		Logger::WriteTop(e.what());
 
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		graphics->GetCamera2D()->Reset();
+		graphics->GetCamera2D()->ResetAll();
 
 		SystemController* system = SystemController::GetInstance();
 		system->ShowErrorDialog(e.what());
@@ -214,7 +214,7 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 		Logger::WriteTop(e.what());
 
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		graphics->GetCamera2D()->Reset();
+		graphics->GetCamera2D()->ResetAll();
 
 		SystemController* system = SystemController::GetInstance();
 		system->ShowErrorDialog(e.what());
@@ -261,7 +261,7 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 		Logger::WriteTop(e.what());
 
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		graphics->GetCamera2D()->Reset();
+		graphics->GetCamera2D()->ResetAll();
 
 		SystemController* system = SystemController::GetInstance();
 		system->ShowErrorDialog(e.what());
