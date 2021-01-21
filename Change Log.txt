@@ -1,5 +1,12 @@
 A mostly-complete history log of engine updates can be found here.
 
+1.20b:
+	- Fixed a bug that caused for loops using new variables to not function correctly.
+	- Fixed a bug that caused all GetColor functions to return incorrect values. (Including GetShotDataInfoA1)
+	- Fixed a bug where off-centered player hitboxes would behave strangely.
+	- Fixed the game crashing on script end/retry. (How the fuck did I not notice this before 1.20a release bloody hell)
+	- Added ObjShot_SetSpinAngularVelocity.
+
 1.20a:
 	- Reworked some math calculations. SIMD instructions are utilized.
 		- A legacy version will also be provided in case your CPU do not support vectorization.

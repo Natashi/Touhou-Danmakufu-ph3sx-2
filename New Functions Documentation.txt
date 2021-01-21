@@ -2495,6 +2495,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			(bool) graze validity
 		Description:
 			Returns whether the shot object is currently able to be grazed.
+			
+	ObjShot_SetSpinAngularVelocity
+		Arguments:
+			1) object ID
+			2) spin angular velocity
+		Description:
+			Sets the Z angle spin speed of the shot graphic.
+			The default spin speed is specified in the graphic's shot data as "angular_velocity", this function allows you to override that value.
 	
 	--------------------------------> Straight Laser Object Functions <--------------------------------
 	
@@ -2902,6 +2910,22 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 	-------------------------------->  Item Object Functions <--------------------------------
 	
+	ObjItem_GetInfo
+		Arguments:
+			1) object ID
+			2) (struct) info type
+		Returns:
+			[varies]
+		Description:
+			Addition.
+			
+			INFO_ITEM_MOVE_TYPE:
+				Returns the move type of the item object.
+				Returned values are the possible inputs of ObjItem_SetDefinedMovePatternA1.
+				
+			INFO_ITEM_TYPE:
+				Returns the graphic ID of the item object.
+	
 	ObjItem_SetMoveToPlayer
 		Arguments:
 			1) object ID
@@ -2911,8 +2935,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			If set to true, EV_COLLECT_ITEM will be notified.
 			If set to false, EV_CANCEL_ITEM will be notified.
-			
-				
 			
 	ObjItem_IsMoveToPlayer
 		Arguments:
