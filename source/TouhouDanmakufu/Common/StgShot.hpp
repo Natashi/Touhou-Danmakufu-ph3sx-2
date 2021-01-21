@@ -441,6 +441,8 @@ public:
 
 	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	virtual void SetShotDataID(int id);
+
+	void SetGraphicAngularVelocity(double agv) { angularVelocity_ = agv; }
 };
 
 /**********************************************************
