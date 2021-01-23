@@ -73,7 +73,29 @@ Preamble:
                 }
             
         
-        1.1.4: Constants
+        1.1.4: Iterators
+        
+            Iterator variables declared in for-loops, ascent-loops, and descent-loops SHOULD be named single, lowercase letters of the alphabet starting with "i",
+            progressing to the next letter for each nested loop. This convention MAY be bypassed if more semantic information is necessary.
+            
+            Iterator variables declared in for-each-loops SHOULD have single-word names prefixed with "i".
+            
+            EXAMPLE:
+            
+                for (let i = 0; i < 2; i++) {
+                    ascent (j in 0 .. 3) {
+                        descent (k in 0 .. 4) {
+                            // ...
+                        }
+                    }
+                }
+                
+                for each (iObj in arrObj) {
+                    // ...
+                }
+            
+        
+        1.1.5: Constants
         
             As mentioned previously, constants MUST use SCREAMING_SNAKE_CASE. All constants SHOULD be declared in a dedicated constant library.
             Numeric constants SHOULD be integers instead of real numbers (currently denoted by the "i" suffix at the end of the literal).
