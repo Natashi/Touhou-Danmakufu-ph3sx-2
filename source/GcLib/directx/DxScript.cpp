@@ -27,6 +27,7 @@ static const std::vector<function> dxFunction = {
 	{ "MatrixDeterminant", DxScript::Func_MatrixDeterminant, 1 },
 	{ "MatrixLookAtLH", DxScript::Func_MatrixLookatLH, 3 },
 	{ "MatrixLookAtRH", DxScript::Func_MatrixLookatRH, 3 },
+	{ "MatrixTransformVector", DxScript::Func_MatrixTransformVector, 2 },
 
 	//Sound functions
 	{ "LoadSound", DxScript::Func_LoadSound, 1 },
@@ -62,8 +63,7 @@ static const std::vector<function> dxFunction = {
 	{ "RemoveTexture", DxScript::Func_RemoveTexture, 1 },
 	{ "GetTextureWidth", DxScript::Func_GetTextureWidth, 1 },
 	{ "GetTextureHeight", DxScript::Func_GetTextureHeight, 1 },
-	{ "SetFogEnable", DxScript::Func_SetFogEnable, 1 },
-	{ "SetFogParam", DxScript::Func_SetFogParam, 5 },
+	
 	{ "CreateRenderTarget", DxScript::Func_CreateRenderTarget, 1 },
 	{ "CreateRenderTargetEx", DxScript::Func_CreateRenderTargetEx, 3 },
 	//{ "SetRenderTarget", DxScript::Func_SetRenderTarget, 2 },
@@ -77,6 +77,11 @@ static const std::vector<function> dxFunction = {
 	{ "SaveRenderedTextureA3", DxScript::Func_SaveRenderedTextureA3, 7 },
 	{ "IsPixelShaderSupported", DxScript::Func_IsPixelShaderSupported, 2 },
 	//{ "SetAntiAliasing", DxScript::Func_SetEnableAntiAliasing, 1 },
+
+	//Fog
+	{ "SetFogEnable", DxScript::Func_SetFogEnable, 1 },
+	{ "SetFogParam", DxScript::Func_SetFogParam, 5 },
+	{ "SetFogParam", DxScript::Func_SetFogParam, 3 },		//Overloaded
 
 	//Font functions
 	{ "InstallFont", DxScript::Func_InstallFont, 1 },
@@ -733,7 +738,7 @@ gstd::value DxScript::Func_MatrixInverse(gstd::script_machine* machine, int argc
 	IsMatrix(machine, arg0);
 
 	D3DXMATRIX mat;
-	FLOAT* ptrMat = &mat._11;
+	FLOAT* ptrMat = (FLOAT*)&mat;
 	for (size_t i = 0; i < 16; ++i) {
 		ptrMat[i] = arg0.index_as_array(i).as_real();
 	}
@@ -750,7 +755,7 @@ gstd::value DxScript::Func_MatrixAdd(gstd::script_machine* machine, int argc, co
 	IsMatrix(machine, arg1);
 
 	D3DXMATRIX mat;
-	FLOAT* ptrMat = &mat._11;
+	FLOAT* ptrMat = (FLOAT*)&mat;
 	for (size_t i = 0; i < 16; ++i) {
 		const value& v0 = arg0.index_as_array(i);
 		const value& v1 = arg1.index_as_array(i);
@@ -768,7 +773,7 @@ gstd::value DxScript::Func_MatrixSubtract(gstd::script_machine* machine, int arg
 	IsMatrix(machine, arg1);
 
 	D3DXMATRIX mat;
-	FLOAT* ptrMat = &mat._11;
+	FLOAT* ptrMat = (FLOAT*)&mat;
 	for (size_t i = 0; i < 16; ++i) {
 		const value& v0 = arg0.index_as_array(i);
 		const value& v1 = arg1.index_as_array(i);
@@ -785,15 +790,15 @@ gstd::value DxScript::Func_MatrixMultiply(gstd::script_machine* machine, int arg
 	IsMatrix(machine, arg0);
 	IsMatrix(machine, arg1);
 
-	D3DXMATRIX mat;
-	FLOAT* ptrMat = &mat._11;
+	D3DXMATRIX mat1;
+	D3DXMATRIX mat2;
 	for (size_t i = 0; i < 16; ++i) {
-		const value& v0 = arg0.index_as_array(i);
-		const value& v1 = arg1.index_as_array(i);
-		ptrMat[i] = v0.as_real() * v1.as_real();
+		((FLOAT*)&mat1)[i] = arg0.index_as_array(i).as_real();
+		((FLOAT*)&mat2)[i] = arg1.index_as_array(i).as_real();
 	}
+	D3DXMatrixMultiply(&mat1, &mat1, &mat2);
 
-	return script->CreateRealArrayValue(ptrMat, 16U);
+	return script->CreateRealArrayValue((FLOAT*)&mat1, 16U);
 }
 gstd::value DxScript::Func_MatrixDivide(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -803,15 +808,16 @@ gstd::value DxScript::Func_MatrixDivide(gstd::script_machine* machine, int argc,
 	IsMatrix(machine, arg0);
 	IsMatrix(machine, arg1);
 
-	D3DXMATRIX mat;
-	FLOAT* ptrMat = &mat._11;
+	D3DXMATRIX mat1;
+	D3DXMATRIX mat2;
 	for (size_t i = 0; i < 16; ++i) {
-		const value& v0 = arg0.index_as_array(i);
-		const value& v1 = arg1.index_as_array(i);
-		ptrMat[i] = v0.as_real() / v1.as_real();
+		((FLOAT*)&mat1)[i] = arg0.index_as_array(i).as_real();
+		((FLOAT*)&mat2)[i] = arg1.index_as_array(i).as_real();
 	}
+	D3DXMatrixInverse(&mat2, nullptr, &mat2);
+	D3DXMatrixMultiply(&mat1, &mat1, &mat2);
 
-	return script->CreateRealArrayValue(ptrMat, 16U);
+	return script->CreateRealArrayValue((FLOAT*)&mat1, 16U);
 }
 gstd::value DxScript::Func_MatrixTranspose(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -820,7 +826,7 @@ gstd::value DxScript::Func_MatrixTranspose(gstd::script_machine* machine, int ar
 	IsMatrix(machine, arg0);
 
 	D3DXMATRIX mat;
-	FLOAT* ptrMat = &mat._11;
+	FLOAT* ptrMat = (FLOAT*)&mat;
 	for (size_t i = 0; i < 16; ++i) {
 		ptrMat[i] = arg0.index_as_array(i).as_real();
 	}
@@ -835,7 +841,7 @@ gstd::value DxScript::Func_MatrixDeterminant(gstd::script_machine* machine, int 
 	IsMatrix(machine, arg0);
 
 	D3DXMATRIX mat;
-	FLOAT* ptrMat = &mat._11;
+	FLOAT* ptrMat = (FLOAT*)&mat;
 	for (size_t i = 0; i < 16; ++i) {
 		ptrMat[i] = arg0.index_as_array(i).as_real();
 	}
@@ -857,7 +863,7 @@ gstd::value DxScript::Func_MatrixLookatLH(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtLH(&mat, &eye, &dest, &up);
 
-	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&mat), 16U);
 }
 gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -874,7 +880,31 @@ gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtRH(&mat, &eye, &dest, &up);
 
-	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&(mat._11)), 16U);
+	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&mat), 16U);
+}
+gstd::value DxScript::Func_MatrixTransformVector(gstd::script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	const value& argVect = argv[0];
+	IsVector(machine, argVect, 3);
+
+	const value& argMat = argv[1];
+	IsMatrix(machine, argMat);
+
+	D3DXVECTOR3 vect;
+	vect.x = argVect.index_as_array(0).as_real();
+	vect.y = argVect.index_as_array(1).as_real();
+	vect.z = argVect.index_as_array(2).as_real();
+
+	D3DXMATRIX mat;
+	for (size_t i = 0; i < 16; ++i) {
+		((FLOAT*)&mat)[i] = argMat.index_as_array(i).as_real();
+	}
+
+	D3DXVECTOR4 out;
+	D3DXVec3Transform(&out, &vect, &mat);
+
+	return script->CreateRealArrayValue((FLOAT*)&out, 4U);
 }
 
 //DxŠÖ”FƒVƒXƒeƒ€ŒnŒn
@@ -1214,10 +1244,16 @@ gstd::value DxScript::Func_SetFogParam(gstd::script_machine* machine, int argc, 
 	float start = argv[0].as_real();
 	float end = argv[1].as_real();
 
-	__m128i c = Vectorize::SetI(0, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
-	D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
-
+	D3DCOLOR color = 0xffffffff;
+	if (argc > 2) {
+		__m128i c = Vectorize::SetI(0, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
+		color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
+	}
+	else {
+		color = argv[2].as_int();
+	}
 	script->GetObjectManager()->SetFogParam(true, color, start, end);
+
 	return value();
 }
 gstd::value DxScript::Func_CreateRenderTarget(gstd::script_machine* machine, int argc, const gstd::value* argv) {
