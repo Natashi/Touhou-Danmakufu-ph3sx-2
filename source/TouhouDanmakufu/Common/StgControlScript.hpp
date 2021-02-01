@@ -83,13 +83,13 @@ protected:
 public:
 	StgControlScript(StgSystemController* systemController);
 
-	//STG制御共通関数：共通データ
+	//Area common data save/load
 	static gstd::value Func_SaveCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_LoadCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SaveCommonDataAreaA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_LoadCommonDataAreaA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-	//STG制御共通関数：キー系
+	//Virtual keys
 	static gstd::value Func_AddVirtualKey(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_AddReplayTargetVirtualKey(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetSkipModeKey(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -101,10 +101,15 @@ public:
 	static gstd::value Func_AddGraze(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPoint(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_AddPoint(gstd::script_machine* machine, int argc, const gstd::value* argv);
+
 	static gstd::value Func_IsReplay(gstd::script_machine* machine, int argc, const gstd::value* argv);
+
 	static gstd::value Func_AddArchiveFile(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_GetArchiveFilePathList);
+
 	static gstd::value Func_GetCurrentFps(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_GetLastFrameUpdateSpeed);
+	DNH_FUNCAPI_DECL_(Func_GetLastFrameRenderSpeed);
 	static gstd::value Func_GetStageTime(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetStageTimeF(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPackageTime(gstd::script_machine* machine, int argc, const gstd::value* argv);

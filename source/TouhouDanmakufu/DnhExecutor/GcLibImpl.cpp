@@ -41,11 +41,9 @@ bool EApplication::_Initialize() {
 	if (configWindowTitle.size() > 0)
 		appName = configWindowTitle;
 
-	//マウス表示
 	if (!config->IsMouseVisible())
 		WindowUtility::SetMouseVisible(false);
 
-	//DirectX初期化
 	EDirectGraphics* graphics = EDirectGraphics::CreateInstance();
 	graphics->Initialize();
 	HWND hWndMain = graphics->GetWindowHandle();
@@ -120,7 +118,7 @@ bool EApplication::_Loop() {
 	HWND hWndGraphics = graphics->GetWindowHandle();
 	HWND hWndLogger = ELogger::GetInstance()->GetWindowHandle();
 	if (hWndFocused != hWndGraphics && hWndFocused != hWndLogger) {
-		//非アクティブ時は動作しない
+		//Pause main thread when the window isn't focused
 		::Sleep(10);
 		return true;
 	}
@@ -129,26 +127,32 @@ bool EApplication::_Loop() {
 	input->Update();
 	if (input->GetKeyState(DIK_LCONTROL) == KEY_HOLD &&
 		input->GetKeyState(DIK_LSHIFT) == KEY_HOLD &&
-		input->GetKeyState(DIK_R) == KEY_PUSH) {
-		//リセット
+		input->GetKeyState(DIK_R) == KEY_PUSH) 
+	{
 		SystemController* systemController = SystemController::CreateInstance();
 		systemController->Reset();
 	}
 
-	//bool bSaveRT = input->GetKeyState(DIK_P) == KEY_HOLD;
-
 	{
+		static uint32_t loopCount = 0;
+
 		taskManager->CallWorkFunction();
+		taskManager->SetWorkTime(taskManager->GetTimeSpentOnLastFuncCall());
+
 		if (!fpsController->IsSkip()) {
 			graphics->BeginScene();
+
 			taskManager->CallRenderFunction();
+			taskManager->SetRenderTime(taskManager->GetTimeSpentOnLastFuncCall());
+
 			graphics->EndScene();
 		}
 
+		if ((++loopCount) % 30 == 0)
+			taskManager->ArrangeTask();
 		fpsController->Wait();
 	}
 
-	//ログ関連
 	if (logger->IsWindowVisible()) {
 		std::wstring fps = StringUtility::Format(L"Work: %.2ffps, Draw: %.2ffps",
 			fpsController->GetCurrentWorkFps(),
@@ -168,12 +172,13 @@ bool EApplication::_Loop() {
 			StringUtility::Format(L"%d", EDxTextRenderer::GetInstance()->GetCacheCount()));
 	}
 
-	//高速動作
-	int16_t fastModeKey = fpsController->GetFastModeKey();
-	if (input->GetKeyState(fastModeKey) == KEY_HOLD)
-		fpsController->SetFastMode(true);
-	else if (input->GetKeyState(fastModeKey) == KEY_PULL || input->GetKeyState(fastModeKey) == KEY_FREE)
-		fpsController->SetFastMode(false);
+	{
+		int16_t fastModeKey = fpsController->GetFastModeKey();
+		if (input->GetKeyState(fastModeKey) == KEY_HOLD)
+			fpsController->SetFastMode(true);
+		else if (input->GetKeyState(fastModeKey) == KEY_PULL || input->GetKeyState(fastModeKey) == KEY_FREE)
+			fpsController->SetFastMode(false);
+	}
 
 	return true;
 }

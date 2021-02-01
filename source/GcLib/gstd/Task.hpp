@@ -97,11 +97,14 @@ namespace gstd {
 		int64_t indexTaskManager_;		//Unique ID for created tasks
 		shared_ptr<TaskInfoPanel> panelInfo_;
 
-		void _ArrangeTask();			//Erase finished tasks
+		uint64_t timeSpentLastCall_;
+
 		void _CheckInvalidFunctionDivision(int divFunc);
 	public:
 		TaskManager();
 		virtual ~TaskManager();
+
+		void ArrangeTask();				//Erase finished tasks
 
 		void Clear();
 		void ClearTask();
@@ -135,6 +138,8 @@ namespace gstd {
 
 		void SetInfoPanel(shared_ptr<TaskInfoPanel> panel) { panelInfo_ = panel; }
 		gstd::CriticalSection& GetStaticLock() { return lockStatic_; }
+
+		uint32_t GetTimeSpentOnLastFuncCall() { return timeSpentLastCall_; }
 	};
 
 	//*******************************************************************
@@ -182,6 +187,7 @@ namespace gstd {
 	public:
 		WorkRenderTaskManager();
 		~WorkRenderTaskManager();
+
 		virtual void InitializeFunctionDivision(int maxPriWork, int maxPriRender);
 
 		void CallWorkFunction();

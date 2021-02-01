@@ -86,8 +86,18 @@ class ETaskManager : public Singleton<ETaskManager>, public WorkRenderTaskManage
 		TASK_WORK_PRI_MAX = 10,
 		TASK_RENDER_PRI_MAX = 10,
 	};
+
+	uint64_t timeSpentOnRender_;
+	uint64_t timeSpentOnWork_;
 public:
+	ETaskManager();
+
 	bool Initialize();
+
+	uint64_t GetRenderTime() { return timeSpentOnRender_; }
+	void SetRenderTime(uint64_t t) { timeSpentOnRender_ = t; }
+	uint64_t SetWorkTime() { return timeSpentOnWork_; }
+	void SetWorkTime(uint64_t t) { timeSpentOnWork_ = t; }
 };
 
 /**********************************************************

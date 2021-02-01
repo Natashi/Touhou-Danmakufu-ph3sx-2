@@ -140,6 +140,9 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 
 	ETaskManager* taskManager = ETaskManager::GetInstance();
 
+	taskManager->RemoveTask(typeid(EStgSystemController));
+	taskManager->RemoveTask(typeid(PStgSystemController));
+
 	try {
 		//STGシーン初期化
 		ref_count_ptr<StgSystemInformation> infoStgSystem(new StgSystemInformation());
@@ -229,6 +232,9 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 	input->ClearKeyState();
 
 	ETaskManager* taskManager = ETaskManager::GetInstance();
+
+	taskManager->RemoveTask(typeid(EStgSystemController));
+	taskManager->RemoveTask(typeid(PStgSystemController));
 
 	try {
 		//STGシーン初期化

@@ -100,6 +100,10 @@ EFpsController::EFpsController() {
 /**********************************************************
 //ETaskManager
 **********************************************************/
+ETaskManager::ETaskManager() {
+	timeSpentOnRender_ = 0;
+	timeSpentOnWork_ = 0;
+}
 bool ETaskManager::Initialize() {
 	InitializeFunctionDivision(TASK_WORK_PRI_MAX, TASK_RENDER_PRI_MAX);
 	return true;

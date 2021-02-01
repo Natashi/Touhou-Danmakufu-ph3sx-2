@@ -53,10 +53,15 @@ static const std::vector<function> stgControlFunction = {
 	{ "AddGraze", StgControlScript::Func_AddGraze, 1 },
 	{ "GetPoint", StgControlScript::Func_GetPoint, 0 },
 	{ "AddPoint", StgControlScript::Func_AddPoint, 1 },
+
 	{ "IsReplay", StgControlScript::Func_IsReplay, 0 },
+
 	{ "AddArchiveFile", StgControlScript::Func_AddArchiveFile, 1 },
 	{ "GetArchiveFilePathList", StgControlScript::Func_GetArchiveFilePathList, 2 },
+
 	{ "GetCurrentFps", StgControlScript::Func_GetCurrentFps, 0 },
+	{ "GetLastFrameUpdateSpeed", StgControlScript::Func_GetLastFrameUpdateSpeed, 0 },
+	{ "GetLastFrameRenderSpeed", StgControlScript::Func_GetLastFrameRenderSpeed, 0 },
 	{ "GetStageTime", StgControlScript::Func_GetStageTime, 0 },
 	{ "GetStageTimeF", StgControlScript::Func_GetStageTimeF, 0 },
 	{ "GetPackageTime", StgControlScript::Func_GetPackageTime, 0 },
@@ -411,6 +416,14 @@ gstd::value StgControlScript::Func_GetArchiveFilePathList(gstd::script_machine* 
 gstd::value StgControlScript::Func_GetCurrentFps(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	EFpsController* fpsController = EFpsController::GetInstance();
 	return StgControlScript::CreateRealValue(fpsController->GetCurrentWorkFps());
+}
+gstd::value StgControlScript::Func_GetLastFrameUpdateSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	ETaskManager* taskManager = ETaskManager::GetInstance();
+	return StgControlScript::CreateIntValue(taskManager->SetWorkTime());
+}
+gstd::value StgControlScript::Func_GetLastFrameRenderSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	ETaskManager* taskManager = ETaskManager::GetInstance();
+	return StgControlScript::CreateIntValue(taskManager->GetRenderTime());
 }
 gstd::value StgControlScript::Func_GetStageTime(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;

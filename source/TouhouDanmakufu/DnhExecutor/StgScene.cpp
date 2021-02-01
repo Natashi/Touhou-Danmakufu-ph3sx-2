@@ -7,8 +7,6 @@
 //EStgSystemController
 **********************************************************/
 void EStgSystemController::DoEnd() {
-	_OnSystemEnd();
-
 	SystemController::GetInstance()->GetSceneManager()->TransScriptSelectScene_Last();
 
 	EShaderManager* shaderManager = EShaderManager::GetInstance();
@@ -31,8 +29,6 @@ void EStgSystemController::DoRetry() {
 //PStgSystemController
 **********************************************************/
 void PStgSystemController::DoEnd() {
-	_OnSystemEnd();
-
 	EDirectGraphics* graphics = EDirectGraphics::CreateInstance();
 	graphics->SetWindowVisible(false);
 	EApplication::GetInstance()->End();

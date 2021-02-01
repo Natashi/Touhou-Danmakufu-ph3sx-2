@@ -603,9 +603,6 @@ void StgSystemController::_ControlScene() {
 		logger->SetInfo(5, L"Object count", StringUtility::Format(L"%u", objectCount));
 	}
 }
-void StgSystemController::_OnSystemEnd() {
-	scriptEngineCache_->Clear();
-}
 
 void StgSystemController::StartStgScene(ref_count_ptr<StgStageInformation> infoStage, ref_count_ptr<ReplayInformation::StageData> replayStageData) {
 	ref_count_ptr<StgStageStartData> startData = new StgStageStartData();

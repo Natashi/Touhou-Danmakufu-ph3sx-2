@@ -28,12 +28,18 @@ TaskBase::~TaskBase() {
 gstd::CriticalSection TaskManager::lockStatic_;
 TaskManager::TaskManager() {
 	indexTaskManager_ = 0;
+
+	timeSpentLastCall_ = 0;
 }
 TaskManager::~TaskManager() {
 	this->Clear();
 	panelInfo_ = nullptr;
 }
-void TaskManager::_ArrangeTask() {
+void TaskManager::_CheckInvalidFunctionDivision(int divFunc) {
+	if (mapFunc_.find(divFunc) == mapFunc_.end())
+		throw gstd::wexception("TaskManager: Invalid function division");
+}
+void TaskManager::ArrangeTask() {
 	//Erase dead tasks
 	for (auto itrTask = listTask_.begin(); itrTask != listTask_.end();) {
 		if (*itrTask == nullptr)
@@ -46,21 +52,12 @@ void TaskManager::_ArrangeTask() {
 		for (auto& iListFunc : itrDiv->second) {
 			for (auto itrFunc = iListFunc.begin(); itrFunc != iListFunc.end();) {
 				if (*itrFunc == nullptr) itrFunc = iListFunc.erase(itrFunc);
-				else {
-					int delay = (*itrFunc)->GetDelay();
-					if (delay > 0)
-						(*itrFunc)->SetDelay(delay - 1);
-					++itrFunc;
-				}
+				else ++itrFunc;
 			}
 		}
 	}
 
 	if (panelInfo_) panelInfo_->Update(this);
-}
-void TaskManager::_CheckInvalidFunctionDivision(int divFunc) {
-	if (mapFunc_.find(divFunc) == mapFunc_.end())
-		throw gstd::wexception("TaskManager: Invalid function division");
 }
 void TaskManager::Clear() {
 	listTask_.clear();
@@ -152,17 +149,23 @@ void TaskManager::InitializeFunctionDivision(int divFunc, int maxPri) {
 void TaskManager::CallFunction(int divFunc) {
 	_CheckInvalidFunctionDivision(divFunc);
 
+	timeSpentLastCall_ = 0;
+
 	auto itrDiv = mapFunc_.find(divFunc);
 	if (itrDiv != mapFunc_.end()) {
+		auto timePrev = std::chrono::system_clock::now();
 		for (auto& iListFunc : itrDiv->second) {
 			for (auto& iFunc : iListFunc) {
-				if (iFunc == nullptr) continue;
-				if (!iFunc->bEnable_ || iFunc->IsDelay()) continue;
+				if (iFunc == nullptr || !iFunc->bEnable_) continue;
+				if (iFunc->GetDelay() > 0) {
+					iFunc->SetDelay(iFunc->GetDelay() - 1);
+					continue;
+				}
 				iFunc->Call();
 			}
 		}
+		timeSpentLastCall_ = (std::chrono::system_clock::now() - timePrev).count();
 	}
-	_ArrangeTask();
 }
 void TaskManager::AddFunction(int divFunc, shared_ptr<TaskFunction> func, int pri, int idFunc) {
 	auto itrDiv = mapFunc_.find(divFunc);
