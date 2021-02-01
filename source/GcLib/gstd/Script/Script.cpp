@@ -489,7 +489,7 @@ void script_machine::run_code() {
 					b = r != 0;
 					break;
 				}
-				t->set(script_type_manager::get_boolean_type(), b);
+				t->reset(script_type_manager::get_boolean_type(), b);
 				break;
 			}
 
@@ -520,7 +520,7 @@ void script_machine::run_code() {
 				value* i = &current->stack.back();
 				int64_t r = i->as_int();
 				if (r > 0)
-					i->set(script_type_manager::get_int_type(), r - 1);
+					i->reset(script_type_manager::get_int_type(), r - 1);
 				current->stack.push_back(value(script_type_manager::get_boolean_type(), r > 0));
 				break;
 			}
@@ -540,7 +540,7 @@ void script_machine::run_code() {
 				}
 				else {
 					current->stack.push_back(value::new_from(*itrCur));
-					i->set(script_type_manager::get_int_type(), i->as_int() + 1i64);
+					i->reset(script_type_manager::get_int_type(), i->as_int() + 1i64);
 				}
 
 				current->stack.push_back(value(script_type_manager::get_boolean_type(), bSkip));
@@ -574,7 +574,7 @@ void script_machine::run_code() {
 						res_arr[iVal] = appending;
 					}
 				}
-				res.set(type_arr, res_arr);
+				res.reset(type_arr, res_arr);
 
 				current->stack.pop_back(c->arg0);
 				current->stack.push_back(res);
@@ -607,6 +607,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_sub_asi:
 			case command_kind::pc_inline_mul_asi:
 			case command_kind::pc_inline_div_asi:
+			case command_kind::pc_inline_fdiv_asi:
 			case command_kind::pc_inline_mod_asi:
 			case command_kind::pc_inline_pow_asi:
 			case command_kind::pc_inline_cat_asi:
@@ -618,6 +619,7 @@ void script_machine::run_code() {
 						DEF_CASE(command_kind::pc_inline_sub_asi, subtract);
 						DEF_CASE(command_kind::pc_inline_mul_asi, multiply);
 						DEF_CASE(command_kind::pc_inline_div_asi, divide);
+						DEF_CASE(command_kind::pc_inline_fdiv_asi, fdivide);
 						DEF_CASE(command_kind::pc_inline_mod_asi, remainder_);
 						DEF_CASE(command_kind::pc_inline_pow_asi, power);
 						DEF_CASE(command_kind::pc_inline_cat_asi, concatenate);
@@ -669,6 +671,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_sub:
 			case command_kind::pc_inline_mul:
 			case command_kind::pc_inline_div:
+			case command_kind::pc_inline_fdiv:
 			case command_kind::pc_inline_mod:
 			case command_kind::pc_inline_pow:
 			case command_kind::pc_inline_app:
@@ -683,6 +686,7 @@ void script_machine::run_code() {
 					DEF_CASE(command_kind::pc_inline_sub, subtract);
 					DEF_CASE(command_kind::pc_inline_mul, multiply);
 					DEF_CASE(command_kind::pc_inline_div, divide);
+					DEF_CASE(command_kind::pc_inline_fdiv, fdivide);
 					DEF_CASE(command_kind::pc_inline_mod, remainder_);
 					DEF_CASE(command_kind::pc_inline_pow, power);
 					DEF_CASE(command_kind::pc_inline_app, append);
@@ -705,7 +709,7 @@ void script_machine::run_code() {
 				value cmp_res = BaseFunction::compare(this, 2, args);
 				int cmp_r = cmp_res.as_int();
 
-#define DEF_CASE(cmd, expr) case cmd: cmp_res.set(script_type_manager::get_boolean_type(), expr); break;
+#define DEF_CASE(cmd, expr) case cmd: cmp_res.reset(script_type_manager::get_boolean_type(), expr); break;
 				switch (c->command) {
 					DEF_CASE(command_kind::pc_inline_cmp_e, cmp_r == 0);
 					DEF_CASE(command_kind::pc_inline_cmp_g, cmp_r > 0);
@@ -756,7 +760,7 @@ void script_machine::run_code() {
 			{
 				value* var = &current->stack.back();
 				size_t len = var->length_as_array();
-				var->set(script_type_manager::get_int_type(), (int64_t)len);
+				var->reset(script_type_manager::get_int_type(), (int64_t)len);
 				break;
 			}
 			}

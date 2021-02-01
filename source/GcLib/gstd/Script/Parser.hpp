@@ -72,6 +72,7 @@ namespace gstd {
 		pc_inline_sub_asi,		//If [arg0]: ((variable=[arg1, arg2]) -= {esp-0}), else: ({esp-1} -= {esp-0})
 		pc_inline_mul_asi,		//If [arg0]: ((variable=[arg1, arg2]) *= {esp-0}), else: ({esp-1} *= {esp-0})
 		pc_inline_div_asi,		//If [arg0]: ((variable=[arg1, arg2]) /= {esp-0}), else: ({esp-1} /= {esp-0})
+		pc_inline_fdiv_asi,		//If [arg0]: ((variable=[arg1, arg2]) ~/= {esp-0}), else: ({esp-1} ~/= {esp-0})
 		pc_inline_mod_asi,		//If [arg0]: ((variable=[arg1, arg2]) %= {esp-0}), else: ({esp-1} %= {esp-0})
 		pc_inline_pow_asi,		//If [arg0]: ((variable=[arg1, arg2]) ^= {esp-0}), else: ({esp-1} ^= {esp-0})
 		pc_inline_cat_asi,		//If [arg0]: ((variable=[arg1, arg2]) ~= {esp-0}), else: ({esp-1} ~= {esp-0})
@@ -84,6 +85,7 @@ namespace gstd {
 		pc_inline_sub,			//Push ({esp-4} - {esp-0}) to stack
 		pc_inline_mul,			//Push ({esp-4} * {esp-0}) to stack
 		pc_inline_div,			//Push ({esp-4} / {esp-0}) to stack
+		pc_inline_fdiv,			//Push ({esp-4} ~/ {esp-0}) to stack
 		pc_inline_mod,			//Push ({esp-4} % {esp-0}) to stack
 		pc_inline_pow,			//Push ({esp-4} ^ {esp-0}) to stack
 		pc_inline_app,			//Push ({esp-4} ~ to_array({esp-0})) to stack

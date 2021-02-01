@@ -42,50 +42,67 @@ bool type_data::operator<(const type_data& other) const {
 }
 
 value::value(type_data* t, int64_t v) {
-	this->set(t, v);
+	this->reset(t, v);
 }
 value::value(type_data* t, double v) {
-	this->set(t, v);
+	this->reset(t, v);
 }
 value::value(type_data* t, wchar_t v) {
-	this->set(t, v);
+	this->reset(t, v);
 }
 value::value(type_data* t, bool v) {
-	this->set(t, v);
+	this->reset(t, v);
 }
 value::value(type_data* t, const std::wstring& v) {
 	std::vector<value> vec(v.size());
 	for (size_t i = 0; i < v.size(); ++i)
 		vec[i] = value(t->get_element(), v[i]);
-	this->set(t, vec);
+	this->reset(t, vec);
 }
 
-value* value::set(type_data* t, int64_t v) {
+value* value::reset(type_data* t, int64_t v) {
 	data = new body;
 	data->type = t;
 	data->int_value = v;
 	return this;
 }
-value* value::set(type_data* t, double v) {
+value* value::reset(type_data* t, double v) {
 	data = new body;
+	return this->set(t, v);
+}
+value* value::reset(type_data* t, wchar_t v) {
+	data = new body;
+	return this->set(t, v);
+}
+value* value::reset(type_data* t, bool v) {
+	data = new body;
+	return this->set(t, v);
+}
+value* value::reset(type_data* t, std::vector<value>& v) {
+	data = new body;
+	return this->set(t, v);
+}
+value* value::set(type_data* t, int64_t v) {
+	data->type = t;
+	data->int_value = v;
+	return this;
+}
+value* value::set(type_data* t, double v) {
 	data->type = t;
 	data->real_value = v;
 	return this;
 }
 value* value::set(type_data* t, wchar_t v) {
-	data = new body;
 	data->type = t;
 	data->char_value = v;
 	return this;
 }
 value* value::set(type_data* t, bool v) {
-	data = new body;
 	data->type = t;
 	data->boolean_value = v;
 	return this;
 }
 value* value::set(type_data* t, std::vector<value>& v) {
-	data = new body;
 	data->type = t;
 	data->array_value = v;
 	return this;

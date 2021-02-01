@@ -87,6 +87,11 @@ namespace gstd {
 
 		//--------------------------------------------------------------------------
 
+		value* reset(type_data* t, int64_t v);
+		value* reset(type_data* t, double v);
+		value* reset(type_data* t, wchar_t v);
+		value* reset(type_data* t, bool v);
+		value* reset(type_data* t, std::vector<value>& v);
 		value* set(type_data* t, int64_t v);
 		value* set(type_data* t, double v);
 		value* set(type_data* t, wchar_t v);

@@ -172,7 +172,7 @@ namespace gstd {
 			}
 		}
 
-		result.set(v_left->get_type(), resArr);
+		result.reset(v_left->get_type(), resArr);
 		return result;
 	}
 
@@ -194,13 +194,13 @@ namespace gstd {
 			return val;
 		switch (kind) {
 		case type_data::tk_int:
-			return val->set(script_type_manager::get_int_type(), val->as_int());
+			return val->reset(script_type_manager::get_int_type(), val->as_int());
 		case type_data::tk_real:
-			return val->set(script_type_manager::get_real_type(), val->as_real());
+			return val->reset(script_type_manager::get_real_type(), val->as_real());
 		case type_data::tk_char:
-			return val->set(script_type_manager::get_char_type(), val->as_char());
+			return val->reset(script_type_manager::get_char_type(), val->as_char());
 		case type_data::tk_boolean:
-			return val->set(script_type_manager::get_boolean_type(), val->as_boolean());
+			return val->reset(script_type_manager::get_boolean_type(), val->as_boolean());
 		}
 		return val;
 	}
@@ -253,6 +253,27 @@ namespace gstd {
 		}
 		return true;
 	}
+	value BaseFunction::_create_empty(type_data* type) {
+		value res;
+		if (type) {
+			switch (type->get_kind()) {
+			case type_data::tk_int:
+				res.reset(type, 0i64); break;
+			case type_data::tk_real:
+				res.reset(type, 0.0); break;
+			case type_data::tk_char:
+				res.reset(type, L'\0'); break;
+			case type_data::tk_boolean:
+				res.reset(type, false); break;
+			case type_data::tk_array:
+			{
+				std::vector<value> vec;
+				res.reset(type, vec); break;
+			}
+			}
+		}
+		return res;
+	}
 
 	//-------------------------------------------------------------------------------------------
 
@@ -300,15 +321,31 @@ namespace gstd {
 				return value(script_type_manager::get_real_type(), argv[0].as_real() / argv[1].as_real());
 			else {
 				int64_t deno = argv[1].as_int();
-				if (deno == 0) {
-					std::string error = "Invalid operation: integer division by zero.\r\n";
-					throw error;
-				}
-				return value(script_type_manager::get_int_type(), argv[0].as_int() / deno);
+				if (deno == 0)
+					throw std::string("Invalid operation: integer division by zero.\r\n");
+				return value(script_type_manager::get_int_type(), (int64_t)(argv[0].as_int() / deno));
 			}
 		}
 	}
 	SCRIPT_DECLARE_OP(divide);
+
+	value BaseFunction::_script_fdivide(int argc, const value* argv) {
+		if (argv[0].get_type()->get_kind() == type_data::tk_array)
+			return __script_perform_op_array(&argv[0], &argv[1], _script_fdivide);
+		else {
+			int64_t res;
+			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
+				res = argv[0].as_real() / argv[1].as_real();
+			else {
+				int64_t deno = argv[1].as_int();
+				if (deno == 0)
+					throw std::string("Invalid operation: integer division by zero.\r\n");
+				res = argv[0].as_int() / deno;
+			}
+			return value(script_type_manager::get_int_type(), res);
+		}
+	}
+	SCRIPT_DECLARE_OP(fdivide);
 
 	value BaseFunction::_script_remainder_(int argc, const value* argv) {
 		if (argv[0].get_type()->get_kind() == type_data::tk_array)
@@ -330,7 +367,7 @@ namespace gstd {
 			for (size_t i = 0; i < argv->length_as_array(); ++i) {
 				resArr[i] = _script_negative(1, &argv->index_as_array(i));
 			}
-			result.set(argv->get_type(), resArr);
+			result.reset(argv->get_type(), resArr);
 			return result;
 		}
 		else {
@@ -456,7 +493,7 @@ namespace gstd {
 			for (size_t i = 0; i < argv->length_as_array(); ++i) {
 				resArr[i] = predecessor(machine, 1, &(argv->index_as_array(i)));
 			}
-			result.set(argv->get_type(), resArr);
+			result.reset(argv->get_type(), resArr);
 			return result;
 		}
 		default:
@@ -484,7 +521,7 @@ namespace gstd {
 			for (size_t i = 0; i < argv->length_as_array(); ++i) {
 				resArr[i] = successor(machine, 1, &(argv->index_as_array(i)));
 			}
-			result.set(argv->get_type(), resArr);
+			result.reset(argv->get_type(), resArr);
 			return result;
 		}
 		default:
@@ -498,6 +535,50 @@ namespace gstd {
 	value BaseFunction::length(script_machine* machine, int argc, const value* argv) {
 		assert(argc == 1);
 		return value(script_type_manager::get_int_type(), (int64_t)argv->length_as_array());
+	}
+	value BaseFunction::resize(script_machine* machine, int argc, const value* argv) {
+		value* val = const_cast<value*>(&argv[0]);
+		type_data* valType = val->get_type();
+
+		if (valType->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, argv->get_type(), "resize");
+			return value();
+		}
+
+		size_t oldSize = val->length_as_array();
+		size_t newSize = argv[1].as_int();
+		type_data* newType = val->get_type();
+
+		if (newSize != oldSize) {
+			std::vector<value> arrVal(newSize);
+
+			for (size_t i = 0; i < oldSize && i < newSize; ++i)
+				arrVal[i] = val->index_as_array(i);
+			if (newSize > oldSize) {
+				value fill;
+				if (argc == 3) {	//Has fill value
+					fill = argv[2];
+					if (oldSize > 0) {
+						if (!BaseFunction::_append_check(machine, valType, fill.get_type())) return value();
+						BaseFunction::_value_cast(&fill, valType->get_element()->get_kind());
+					}
+					else newType = script_type_manager::get_instance()->get_array_type(fill.get_type());
+				}
+				else {
+					if (valType->get_element() == nullptr) {
+						machine->raise_error("Resizing from an uninitialized array requires a fill value.\r\n");
+						return value();
+					}
+					fill = BaseFunction::_create_empty(valType->get_element());
+				}
+
+				for (size_t i = oldSize; i < newSize; ++i)
+					arrVal[i] = value::new_from(fill);
+			}
+
+			val->set(newType, arrVal);
+		}
+		return value();
 	}
 
 	const value* BaseFunction::index(script_machine* machine, int argc, const value* argv) {
@@ -556,7 +637,7 @@ namespace gstd {
 			}
 		}
 
-		result.set(argv[0].get_type(), resArr);
+		result.reset(argv[0].get_type(), resArr);
 		return result;
 	}
 	value BaseFunction::erase(script_machine* machine, int argc, const value* argv) {
@@ -589,7 +670,7 @@ namespace gstd {
 				resArr[iArr++] = argv[0].index_as_array(i);
 			}
 		}
-		result.set(argv[0].get_type(), resArr);
+		result.reset(argv[0].get_type(), resArr);
 		return result;
 	}
 

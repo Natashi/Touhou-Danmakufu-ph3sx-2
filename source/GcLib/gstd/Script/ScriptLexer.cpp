@@ -260,6 +260,14 @@ void script_scanner::advance() {
 			next = token_kind::tk_concat_assign;
 			ch = next_char();
 		}
+		else if (ch == L'/') {
+			next = token_kind::tk_f_slash;
+			ch = next_char();
+			if (ch == L'=') {
+				next = token_kind::tk_fdivide_assign;
+				ch = next_char();
+			}
+		}
 		break;
 	case L'*':
 		next = token_kind::tk_asterisk;
@@ -524,8 +532,8 @@ throw_err_no_decimal:
 		}
 	}
 
-	token_list.push_back(next);
-	if (token_list.size() > MAX_TOKEN_LIST) token_list.pop_front();
+	token_list.push_front(next);
+	if (token_list.size() > MAX_TOKEN_LIST) token_list.pop_back();
 }
 
 std::map<std::string, token_kind> script_scanner::token_map = {
@@ -536,11 +544,14 @@ std::map<std::string, token_kind> script_scanner::token_map = {
 	//{ "char", token_kind::tk_decl_char },
 	//{ "string", token_kind::tk_decl_string },
 	//{ "bool", token_kind::tk_decl_bool },
+
 	{ "as_int", token_kind::tk_cast_int },
 	{ "as_real", token_kind::tk_cast_real },
 	{ "as_char", token_kind::tk_cast_char },
 	{ "as_bool", token_kind::tk_cast_bool },
+
 	{ "length", token_kind::tk_LENGTH },
+
 	{ "alternative", token_kind::tk_ALTERNATIVE },
 	//{ "switch", token_kind::tk_ALTERNATIVE },
 	{ "case", token_kind::tk_CASE },
@@ -556,6 +567,7 @@ std::map<std::string, token_kind> script_scanner::token_map = {
 	{ "ascent", token_kind::tk_ASCENT },
 	{ "descent", token_kind::tk_DESCENT },
 	{ "in", token_kind::tk_IN },
+
 	{ "local", token_kind::tk_LOCAL },
 	{ "function", token_kind::tk_FUNCTION },
 	{ "sub", token_kind::tk_SUB },
@@ -563,8 +575,10 @@ std::map<std::string, token_kind> script_scanner::token_map = {
 	{ "continue", token_kind::tk_CONTINUE },
 	{ "break", token_kind::tk_BREAK },
 	{ "return", token_kind::tk_RETURN },
+
 	{ "yield", token_kind::tk_YIELD },
 	{ "wait", token_kind::tk_WAIT },
+
 	{ "true", token_kind::tk_TRUE },
 	{ "false", token_kind::tk_FALSE },
 };

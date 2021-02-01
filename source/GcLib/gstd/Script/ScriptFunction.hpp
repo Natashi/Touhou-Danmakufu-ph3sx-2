@@ -55,6 +55,8 @@ namespace gstd {
 		static bool _append_check(script_machine* machine, type_data* arg0_type, type_data* arg1_type);
 		static bool _append_check_no_convert(script_machine* machine, type_data* arg0_type, type_data* arg1_type);
 
+		static value _create_empty(type_data* type);
+
 		//---------------------------------------------------------------------
 
 		static value _script_add(int argc, const value* argv);
@@ -65,6 +67,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(multiply);
 		static value _script_divide(int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(divide);
+		static value _script_fdivide(int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(fdivide);
 		static value _script_remainder_(int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(remainder_);
 		static value _script_negative(int argc, const value* argv);
@@ -79,7 +83,9 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(modc);
 		DNH_FUNCAPI_DECL_(predecessor);
 		DNH_FUNCAPI_DECL_(successor);
+
 		DNH_FUNCAPI_DECL_(length);
+		DNH_FUNCAPI_DECL_(resize);
 
 		static const value* index(script_machine* machine, int argc, const value* argv);
 

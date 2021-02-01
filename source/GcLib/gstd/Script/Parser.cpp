@@ -86,7 +86,6 @@ namespace gstd {
 #pragma pop_macro("new")
 
 	static const std::vector<function> base_operations = {
-		//{ "length", BaseFunction::length, 1 },
 		{ "not", BaseFunction::not_, 1 },
 		{ "negative", BaseFunction::negative, 1 },
 		{ "predecessor", BaseFunction::predecessor, 1 },
@@ -106,6 +105,10 @@ namespace gstd {
 		{ "remainder", BaseFunction::remainder_, 2 },
 		{ "modc", BaseFunction::modc, 2 },
 		{ "power", BaseFunction::power, 2 },
+
+		//{ "length", BaseFunction::length, 1 },
+		{ "resize", BaseFunction::resize, 2 },
+		{ "resize", BaseFunction::resize, 3 },	//Overloaded
 
 		{ "slice", BaseFunction::slice, 3 },
 		//{ "slice", BaseFunction::slice, 4 },	//Overloaded
@@ -197,16 +200,16 @@ namespace gstd {
 			value const_value;
 			switch (pConst->type) {
 			case type_data::tk_int:
-				const_value.set(script_type_manager::get_int_type(), (int64_t&)pConst->data);
+				const_value.reset(script_type_manager::get_int_type(), (int64_t&)pConst->data);
 				break;
 			case type_data::tk_real:
-				const_value.set(script_type_manager::get_real_type(), (double&)pConst->data);
+				const_value.reset(script_type_manager::get_real_type(), (double&)pConst->data);
 				break;
 			case type_data::tk_char:
-				const_value.set(script_type_manager::get_char_type(), (wchar_t&)pConst->data);
+				const_value.reset(script_type_manager::get_char_type(), (wchar_t&)pConst->data);
 				break;
 			case type_data::tk_boolean:
-				const_value.set(script_type_manager::get_boolean_type(), (bool&)pConst->data);
+				const_value.reset(script_type_manager::get_boolean_type(), (bool&)pConst->data);
 				break;
 			default:
 				continue;
@@ -802,9 +805,14 @@ continue_as_variadic:
 	void parser::parse_product(script_block* block, parser_state_t* state) {
 		parse_prefix(block, state);
 		while (state->next() == token_kind::tk_asterisk || state->next() == token_kind::tk_slash
-			|| state->next() == token_kind::tk_percent) {
-			command_kind f = (state->next() == token_kind::tk_asterisk) ? command_kind::pc_inline_mul :
-				(state->next() == token_kind::tk_slash) ? command_kind::pc_inline_div : command_kind::pc_inline_mod;
+			|| state->next() == token_kind::tk_percent)
+		{
+			command_kind f = command_kind::pc_inline_mod;	//tk_percent
+			switch (state->next()) {
+			case token_kind::tk_asterisk: f = command_kind::pc_inline_mul; break;
+			case token_kind::tk_slash: f = command_kind::pc_inline_div; break;
+			case token_kind::tk_f_slash: f = command_kind::pc_inline_fdiv; break;
+			}
 			state->advance();
 			parse_prefix(block, state);
 			state->AddCode(block, code(f));
@@ -814,9 +822,13 @@ continue_as_variadic:
 	void parser::parse_sum(script_block* block, parser_state_t* state) {
 		parse_product(block, state);
 		while (state->next() == token_kind::tk_tilde || state->next() == token_kind::tk_plus
-			|| state->next() == token_kind::tk_minus) {
-			command_kind f = (state->next() == token_kind::tk_tilde) ? command_kind::pc_inline_cat :
-				(state->next() == token_kind::tk_plus) ? command_kind::pc_inline_add : command_kind::pc_inline_sub;
+			|| state->next() == token_kind::tk_minus)
+		{
+			command_kind f = command_kind::pc_inline_sub;	//tk_minus
+			switch (state->next()) {
+			case token_kind::tk_tilde: f = command_kind::pc_inline_cat; break;
+			case token_kind::tk_plus: f = command_kind::pc_inline_add; break;
+			}
 			state->advance();
 			parse_product(block, state);
 			state->AddCode(block, code(f));
@@ -1046,6 +1058,7 @@ continue_as_variadic:
 			case token_kind::tk_subtract_assign:
 			case token_kind::tk_multiply_assign:
 			case token_kind::tk_divide_assign:
+			case token_kind::tk_fdivide_assign:
 			case token_kind::tk_remainder_assign:
 			case token_kind::tk_power_assign:
 			case token_kind::tk_concat_assign:
@@ -1058,6 +1071,7 @@ continue_as_variadic:
 					DEF_CASE(token_kind::tk_subtract_assign, command_kind::pc_inline_sub_asi);
 					DEF_CASE(token_kind::tk_multiply_assign, command_kind::pc_inline_mul_asi);
 					DEF_CASE(token_kind::tk_divide_assign, command_kind::pc_inline_div_asi);
+					DEF_CASE(token_kind::tk_fdivide_assign, command_kind::pc_inline_fdiv_asi);
 					DEF_CASE(token_kind::tk_remainder_assign, command_kind::pc_inline_mod_asi);
 					DEF_CASE(token_kind::tk_power_assign, command_kind::pc_inline_pow_asi);
 					DEF_CASE(token_kind::tk_concat_assign, command_kind::pc_inline_cat_asi);
@@ -2074,7 +2088,7 @@ continue_as_variadic:
 							++ptrPushValueCode;
 						}
 
-						arrayVal.set(arrayType, listPtrVal);
+						arrayVal.reset(arrayType, listPtrVal);
 					}
 					else {
 						arrayVal = value(script_type_manager::get_null_array_type(), 0i64);

@@ -811,7 +811,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
 		}
 
 		value res;
-		res.set(type_arr, res_arr);
+		res.reset(type_arr, res_arr);
 		return res;
 	}
 
@@ -830,7 +830,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) 
 		}
 
 		value res;
-		res.set(type_arr, res_arr);
+		res.reset(type_arr, res_arr);
 		return res;
 	}
 
@@ -850,7 +850,7 @@ value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 		}
 
 		value res;
-		res.set(type_array, res_arr);
+		res.reset(type_array, res_arr);
 		return res;
 	}
 
@@ -906,7 +906,7 @@ void ScriptClientBase::IsVector(script_machine* machine, const value& v, size_t 
 		machine->raise_error(err);
 	}
 	if (v.length_as_array() != count) {
-		std::string err = StringUtility::Format("Incorrect vector size. (Expected %d )", count);
+		std::string err = StringUtility::Format("Incorrect vector size. (Expected %d)", count);
 		machine->raise_error(err);
 	}
 }
@@ -1096,7 +1096,7 @@ static value _ScriptValueLerp(script_machine* machine, const value* v1, const va
 		}
 
 		value res;
-		res.set(v1->get_type(), resArr);
+		res.reset(v1->get_type(), resArr);
 		return res;
 	}
 	else {
@@ -1941,7 +1941,7 @@ gstd::value ScriptCommonData::_ReadRecord(gstd::ByteBuffer& buffer) {
 				v[iArray] = _ReadRecord(buffer);
 			}
 			value res;
-			res.set(scriptTypeManager->get_array_type(v[0].get_type()), v);
+			res.reset(scriptTypeManager->get_array_type(v[0].get_type()), v);
 			return res;
 		}
 		return value(scriptTypeManager->get_null_array_type(), 0i64);
