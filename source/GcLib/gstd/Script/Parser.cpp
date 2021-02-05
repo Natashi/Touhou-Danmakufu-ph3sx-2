@@ -430,11 +430,12 @@ namespace gstd {
 						}
 
 						{
-							symbol* dup = search_in(current_frame, name, countArgs);
+							//First, search for duplications in the default symbol level
+							symbol* dup = search_in(&*frame.begin(), name);
 
-							//If the level is 1(first user level), also search for duplications in level 0(default level)
-							if (dup == nullptr && level == 1)
-								dup = search_in(&*frame.begin(), name, countArgs);
+							//Default symbol isn't being redefined/overloaded, check user-defined symbols in the current scope
+							if (dup == nullptr)
+								dup = search_in(current_frame, name, countArgs);
 
 							if (dup) {
 								//Woohoo for detailed error messages.
@@ -487,15 +488,16 @@ namespace gstd {
 					lex2.advance();
 					if (cur == 0 && par == 0) {
 						{
-							symbol* dup = search_in(current_frame, lex2.word);
+							//First, search for duplications in the default symbol level
+							symbol* dup = search_in(&*frame.begin(), lex2.word);
 
-							//If the level is 1(first user level), also search for duplications in level 0(default level)
-							if (dup == nullptr && level == 1)
-								dup = search_in(&*frame.begin(), lex2.word);
+							//Default symbol isn't being redefined/overloaded, check user-defined symbols in the current scope
+							if (dup == nullptr)
+								dup = search_in(current_frame, lex2.word);
 
 							if (dup) {
-								std::string error = StringUtility::Format("A variable of the same name "
-									"was already declared in the current scope.\r\n", lex2.word.c_str());
+								std::string error = StringUtility::Format("\'%s\' was already declared "
+									"in the same scope.\r\n", lex2.word.c_str());
 								parser_assert(false, error);
 							}
 						}
