@@ -282,8 +282,9 @@ void script_machine::run_code() {
 			{
 				stack_t& stack = current->stack;
 				if (c->arg0 >= stack.size()) break;
-				value* val = &stack.back() - c->arg0;
-				stack.push_back(*val);
+				value val = *(&stack.back() - c->arg0);
+				if (c->arg1) val.unique();
+				stack.push_back(val);
 				break;
 			}
 			case command_kind::pc_swap:

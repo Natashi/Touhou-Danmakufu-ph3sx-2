@@ -1317,6 +1317,13 @@ continue_as_variadic:
 				parser_assert(state, state->next() == token_kind::tk_open_par, "\"(\" is required.\r\n");
 
 				state->advance();
+
+				bool bHasOpenPar = false;
+				if (state->next() == token_kind::tk_open_par) {
+					bHasOpenPar = true;
+					state->advance();
+				}
+
 				if (state->next() == token_kind::tk_decl_auto) state->advance();
 				else if (state->next() == token_kind::tk_const)
 					parser_assert(state, false, "The counter variable cannot be const.\r\n");
@@ -1324,8 +1331,28 @@ continue_as_variadic:
 				parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
 
 				std::string iteratorName = state->lex->word;
+				std::string loopCounterName = "";
 
 				state->advance();
+				if (state->next() == token_kind::tk_comma) {
+					//Format: "for each (i,j in array)"
+					//	i = loop count
+					//	j = array element
+
+					state->advance();
+					parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
+
+					loopCounterName = iteratorName;
+					iteratorName = state->lex->word;
+
+					state->advance();
+				}
+
+				if (bHasOpenPar) {
+					parser_assert(state, state->next() == token_kind::tk_close_par, "\")\" is required.\r\n");
+					state->advance();
+				}
+
 				parser_assert(state, state->next() == token_kind::tk_IN || state->next() == token_kind::tk_colon,
 					"\"in\" or a colon is required.\r\n");
 				state->advance();
@@ -1353,7 +1380,14 @@ continue_as_variadic:
 
 				block_return_t blockParam;
 				{
-					std::vector<std::string> argv = { iteratorName };
+					std::vector<std::string> argv;
+					if (loopCounterName.size() > 0) {
+						//Duplicate the counter variable
+						state->AddCode(block, code(command_kind::pc_dup_n, 1U, true));
+						state->AddCode(block, code(command_kind::pc_inline_dec, false, false));
+						argv = { loopCounterName, iteratorName };
+					}
+					else argv.push_back(iteratorName);
 					blockParam = parse_block(block, state, &argv, true);
 				}
 
@@ -1579,7 +1613,7 @@ continue_as_variadic:
 				state->AddCode(block, code(command_kind::pc_inline_dec, false, false));
 			}
 
-			state->AddCode(block, code(command_kind::pc_dup_n, 0));
+			state->AddCode(block, code(command_kind::pc_dup_n, 0U, false));
 
 			block_return_t blockParam;
 			{
@@ -1685,7 +1719,7 @@ continue_as_variadic:
 
 				do {
 					state->advance();
-					state->AddCode(block, code(command_kind::pc_dup_n, 0));
+					state->AddCode(block, code(command_kind::pc_dup_n, 0U, false));
 					parse_expression(block, state);
 					state->AddCode(block, code(command_kind::pc_inline_cmp_e));
 					state->AddCode(block, code(command_kind::_pc_jump_if, indexLabel));

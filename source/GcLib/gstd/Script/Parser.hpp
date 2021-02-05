@@ -21,7 +21,7 @@ namespace gstd {
 		pc_pop,					//Pop [arg0] values from stack
 		pc_push_value,			//Push value=[data] to stack
 		pc_push_variable,		//Push variable=[arg0, arg1] to stack, allows null if [arg2]
-		pc_dup_n,				//Push {esp-[arg0]} to stack
+		pc_dup_n,				//Push {esp-[arg0]} to stack, make unique if [arg1]
 		pc_swap,				//Swap {esp-0} and {esp-1}
 		pc_make_unique,			//Turns {esp-[arg0]} into a unique copy
 
