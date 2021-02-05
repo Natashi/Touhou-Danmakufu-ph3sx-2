@@ -314,7 +314,7 @@ namespace gstd {
 			}
 
 			value res;
-			res.set(type_arr, res_arr);
+			res.reset(type_arr, res_arr);
 			return res;
 		}
 		return value(type_arr, 0i64);
@@ -331,7 +331,7 @@ namespace gstd {
 			}
 
 			value res;
-			res.set(type_arr, res_arr);
+			res.reset(type_arr, res_arr);
 			return res;
 		}
 		return value(type_arr, 0i64);
