@@ -232,7 +232,7 @@ Preamble:
             let someNum = 6*9+4/20-6%66;
             someNum ++;
         
-        // NAZ: I will literally kill you if you don't put spaces in between your operators like in the "DON'T" example. It's entirely unreadable for me.
+        // NAZ: I will send you to the Shadow Realm if you don't put spaces in between your operators like in the "DON'T" example. It's entirely unreadable for me.
     
     2.2: Variables and Constants
     
