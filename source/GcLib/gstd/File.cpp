@@ -342,17 +342,18 @@ bool File::Open() {
 }
 bool File::Open(DWORD typeAccess) {
 	this->Close();
+
+	constexpr const std::ios::openmode ACC_READ = std::ios::in;
+	constexpr const std::ios::openmode ACC_READWRITE = std::ios::in | std::ios::out;
+	constexpr const std::ios::openmode ACC_NEWWRITEONLY = std::ios::out | std::ios::trunc;
 	
 	std::ios::openmode modeAccess = 0;
-	if (typeAccess == READ) {
-		modeAccess = std::ios::in;
-	}
-	else if (typeAccess == WRITE) {
-		modeAccess = std::ios::in | std::ios::out;
-	}
-	else if (typeAccess == WRITEONLY) {
-		modeAccess = std::ios::out | std::ios::trunc;
-	}
+	if (typeAccess == READ)
+		modeAccess = ACC_READ;
+	else if (typeAccess == WRITE)
+		modeAccess = ACC_READWRITE;
+	else if (typeAccess == WRITEONLY)
+		modeAccess = ACC_NEWWRITEONLY;
 
 	if (modeAccess == 0) return false;
 	perms_ = typeAccess;
@@ -360,7 +361,14 @@ bool File::Open(DWORD typeAccess) {
 	hFile_.clear();
 	hFile_.exceptions(std::ios::failbit);
 	try {
-		hFile_.open(path_, modeAccess | std::ios::binary);
+		try {
+			hFile_.open(path_, modeAccess | std::ios::binary);
+		}
+		catch (std::system_error& e) {
+			if (typeAccess == WRITE)	//Open failed, file might not exist, try creating one
+				hFile_.open(path_, ACC_NEWWRITEONLY | std::ios::in | std::ios::binary);
+			else throw e;
+		}
 	}
 	catch (std::system_error& e) {
 		int code = errno;
@@ -394,6 +402,7 @@ void File::Close() {
 }
 
 DWORD File::Read(LPVOID buf, DWORD size) {
+	hFile_.clear();
 	hFile_.read((char*)buf, size);
 	return hFile_.gcount();
 }
