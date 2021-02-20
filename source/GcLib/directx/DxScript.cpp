@@ -12,9 +12,9 @@
 using namespace gstd;
 using namespace directx;
 
-/**********************************************************
+//*******************************************************************
 //DxScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<function> dxFunction = {
 	//Matrix operations
 	{ "MatrixIdentity", DxScript::Func_MatrixIdentity, 0 },
@@ -4254,7 +4254,7 @@ gstd::value DxScript::Func_ObjFile_OpenNW(gstd::script_machine* machine, int arg
 		}
 
 		res = obj->OpenRW(path);
-		obj->bWritable_ = true;
+		obj->bWritable_ = res;
 	}
 lab_open_done:
 	return script->CreateBooleanValue(res);
