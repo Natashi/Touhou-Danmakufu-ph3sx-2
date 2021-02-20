@@ -795,8 +795,9 @@ bool DxFileObject::OpenR(const std::wstring& path) {
 	bool res = file_->Open();
 	if (!res) {
 		file_ = nullptr;
-		std::wstring err = StringUtility::Format(L"DxFileObject: Failed to open \"%s\"\r\n\tSystem: %s",
+		std::wstring err = StringUtility::Format(L"DxFileObject: Failed to open file. [%s]\r\n\tSystem: %s",
 			path.c_str(), File::GetLastError().c_str());
+		Logger::WriteTop(err);
 	}
 	return res;
 }
@@ -812,7 +813,10 @@ bool DxFileObject::OpenRW(const std::wstring& path) {
 
 	std::wstring dir = PathProperty::GetFileDirectory(cPath);
 	bool bDir = File::CreateFileDirectory(dir);
-	if (!bDir) return false;
+	if (!bDir) {
+		Logger::WriteTop(StringUtility::Format("DxFileObject: Failed to create the directory. [%s]", path.c_str()));
+		return false;
+	}
 
 	//Security; to prevent scripts from being able to access external files
 	const std::wstring& dirModule = PathProperty::GetModuleDirectory();
@@ -825,14 +829,17 @@ bool DxFileObject::OpenRW(const std::wstring& path) {
 	bool res = file_->Open(File::WRITE);
 	if (!res) {
 		file_ = nullptr;
-		std::wstring err = StringUtility::Format(L"DxFileObject: Failed to open \"%s\"\r\n\tSystem: %s", 
+		std::wstring err = StringUtility::Format(L"DxFileObject: Failed to open file. [%s]\r\n\tSystem: %s", 
 			path.c_str(), File::GetLastError().c_str());
+		Logger::WriteTop(err);
 	}
 	return res;
 }
 void DxFileObject::Close() {
-	if (file_)
+	if (file_) {
 		file_->Close();
+		file_ = nullptr;
+	}
 }
 
 //*******************************************************************
