@@ -414,7 +414,7 @@ namespace directx {
 
 		void SetFontType(const wchar_t* type);
 		LONG GetFontSize() { return dxFont_.GetLogFont().lfHeight; }
-		void SetFontSize(LONG size) { dxFont_.GetLogFont().lfHeight = size;; }
+		void SetFontSize(LONG size) { dxFont_.GetLogFont().lfHeight = size; }
 		LONG GetFontWeight() { return dxFont_.GetLogFont().lfWeight; }
 		void SetFontWeight(LONG weight) { dxFont_.GetLogFont().lfWeight = weight; }
 		bool GetFontItalic() { return dxFont_.GetLogFont().lfItalic; }

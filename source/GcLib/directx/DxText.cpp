@@ -803,6 +803,7 @@ SIZE DxTextRenderer::_GetTextSize(HDC hDC, wchar_t* pText) {
 	::GetTextExtentPoint32(hDC, pText, charCount, &size);
 	return size;
 }
+
 shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text, DxText* dxText, DxTextInfo* textInfo,
 	shared_ptr<DxTextLine> textLine, HDC& hDC, LONG& totalWidth, LONG& totalHeight)
 {
@@ -813,6 +814,9 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text,
 	LONG heightMax = dxText->GetMaxHeight();
 	LONG widthBorder = dxFont.GetBorderType() != TextBorderType::None ? dxFont.GetBorderWidth() : 0L;
 	textLine->SetSidePitch(sidePitch);
+
+	if (widthMax < dxText->GetFontSize())
+		return nullptr;
 
 	const std::wstring strFirstForbid = L"」、。";
 
@@ -844,6 +848,10 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text,
 		SIZE size = _GetTextSize(hDC, pText);
 		LONG lw = size.cx + widthBorder + sidePitch;
 		LONG lh = size.cy;
+		if (totalHeight + size.cy > heightMax) {
+			textLine = nullptr;
+			break;
+		}
 		if (textLine->width_ + lw + sizeNext.cx >= widthMax) {
 			//改行
 			totalWidth = std::max(totalWidth, textLine->width_);
@@ -853,10 +861,7 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text,
 			textLine->SetSidePitch(sidePitch);
 			continue;
 		}
-		if (totalHeight + size.cy > heightMax) {
-			textLine = nullptr;
-			break;
-		}
+		
 		textLine->width_ += lw;
 		textLine->height_ = std::max(textLine->height_, lh);
 		textLine->code_.push_back(code);
@@ -1330,65 +1335,68 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 		TextAlignment alignmentHorizontal = dxText->GetHorizontalAlignment();
 		TextAlignment alignmentVertical = dxText->GetVerticalAlignment();
 
-		POINT pos = { 0, 0 };
-
-		bool bAutoIndent = textInfo->IsAutoIndent();
-
-		switch (alignmentVertical) {
-		case TextAlignment::Center:
 		{
-			LONG cy = pos.y + heightMax / 2L;
-			pos.y = cy - textInfo->totalHeight_ / 2L;
-			break;
-		}
-		case TextAlignment::Bottom:
-		{
-			LONG by = pos.y + heightMax;
-			pos.y = by - textInfo->totalHeight_;
-			break;
-		}
-		case TextAlignment::Top:
-		default:
-			break;
-		}
-		pos.y += margin.top;
+			POINT pos = { 0, 0 };
 
-		LONG heightTotal = 0L;
-		size_t countLine = textInfo->textLine_.size();
-		int lineStart = textInfo->GetValidStartLine() - 1;
-		int lineEnd = textInfo->GetValidEndLine() - 1;
-		for (int iLine = lineStart; iLine <= lineEnd; iLine++) {
-			shared_ptr<DxTextLine> textLine = textInfo->GetTextLine(iLine);
-			pos.x = 0;//dxText->GetPosition().x;
-			if (iLine == 0) pos.x += margin.left;
+			bool bAutoIndent = textInfo->IsAutoIndent();
 
-			switch (alignmentHorizontal) {
+			switch (alignmentVertical) {
 			case TextAlignment::Center:
 			{
-				LONG cx = pos.x + widthMax / 2L;
-				pos.x = cx - textLine->width_ / 2L;
+				LONG cy = pos.y + heightMax / 2L;
+				pos.y = cy - textInfo->totalHeight_ / 2L;
 				break;
 			}
-			case TextAlignment::Right:
+			case TextAlignment::Bottom:
 			{
-				LONG rx = pos.x + widthMax;
-				pos.x = rx - textLine->width_;
+				LONG by = pos.y + heightMax;
+				pos.y = by - textInfo->totalHeight_;
 				break;
 			}
-			case TextAlignment::Left:
+			case TextAlignment::Top:
 			default:
-				if (iLine >= 1 && bAutoIndent)
-					pos.x = dxText->GetFontSize();
 				break;
 			}
+			pos.y += margin.top;
 
-			heightTotal += textLine->height_ + linePitch;
-			if (heightTotal > heightMax) break;
+			LONG heightTotal = 0L;
+			size_t countLine = textInfo->textLine_.size();
+			int lineStart = textInfo->GetValidStartLine() - 1;
+			int lineEnd = textInfo->GetValidEndLine() - 1;
+			for (int iLine = lineStart; iLine <= lineEnd; iLine++) {
+				shared_ptr<DxTextLine> textLine = textInfo->GetTextLine(iLine);
+				pos.x = 0;//dxText->GetPosition().x;
+				if (iLine == 0) pos.x += margin.left;
 
-			_CreateRenderObject(objRender, pos, dxFont, textLine);
+				switch (alignmentHorizontal) {
+				case TextAlignment::Center:
+				{
+					LONG cx = pos.x + widthMax / 2L;
+					pos.x = cx - textLine->width_ / 2L;
+					break;
+				}
+				case TextAlignment::Right:
+				{
+					LONG rx = pos.x + widthMax;
+					pos.x = rx - textLine->width_;
+					break;
+				}
+				case TextAlignment::Left:
+				default:
+					if (iLine >= 1 && bAutoIndent)
+						pos.x = dxText->GetFontSize();
+					break;
+				}
 
-			pos.y += textLine->height_ + linePitch;
+				heightTotal += textLine->height_ + linePitch;
+				if (heightTotal > heightMax) break;
+
+				_CreateRenderObject(objRender, pos, dxFont, textLine);
+
+				pos.y += textLine->height_ + linePitch;
+			}
 		}
+
 		return objRender;
 	}
 
