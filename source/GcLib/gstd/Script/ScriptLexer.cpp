@@ -47,38 +47,35 @@ void script_scanner::copy_state(script_scanner* src) {
 	line = src->line;
 }
 
-wchar_t script_scanner::current_char() {
+std::wstring script_scanner::tostr(const char* b, const char* e) {
+	std::wstring res = L"";
+	while (b < e) {
+		res += _process_char(b);
+		b += Encoding::GetCharSize(encoding);
+	}
+	return res;
+}
+
+wchar_t script_scanner::_process_char(const char* ch) {
 	wchar_t res = L'\0';
 	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
-		res = (wchar_t&)current[0];
+		res = *(wchar_t*)ch;
 		if (encoding == Encoding::UTF16BE)
 			res = (res >> 8) | (res << 8);
 	}
-	else {
-		res = *current;
-	}
+	else res = *ch;
 	return res;
+}
+wchar_t script_scanner::current_char() {
+	return _process_char(current);
 }
 wchar_t script_scanner::index_from_current_char(int index) {
-	wchar_t res = L'\0';
-	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
-		const char* pos = current + index * 2;
-		if (pos >= endPoint) return L'\0';
-		res = *(wchar_t*)pos;
-		if (encoding == Encoding::UTF16BE)
-			res = (res >> 8) | (res << 8);
-	}
-	else {
-		const char* pos = current + index;
-		if (pos >= endPoint) return L'\0';
-		res = (wchar_t)*pos;
-	}
-
-	return res;
+	const char* pos = current + index * Encoding::GetCharSize(encoding);
+	if (pos >= endPoint) return L'\0';
+	return _process_char(pos);
 }
 wchar_t script_scanner::next_char() {
-	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) current += 2;
-	else ++current;
+	current += Encoding::GetCharSize(encoding);
 	return current_char();
 }
 
@@ -410,7 +407,7 @@ void script_scanner::advance() {
 		wchar_t enclosing = ch;
 		next = ch == L'\"' ? token_kind::tk_string : token_kind::tk_char;
 
-		if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
+		{
 			std::wstring s;
 			while (true) {
 				ch = next_char();
@@ -422,19 +419,6 @@ void script_scanner::advance() {
 			}
 			next_char();
 			string_value = s;
-		}
-		else {
-			std::string s;
-			while (true) {
-				ch = next_char();
-				if (ch == L'\n') ++line;	//For multiple-lined strings
-
-				if (ch == L'\\') ch = parse_escape_char();
-				else if (ch == enclosing) break;
-				s += (char)ch;
-			}
-			next_char();
-			string_value = StringUtility::ConvertMultiToWide(s);
 		}
 
 		if (next == token_kind::tk_char) {
@@ -504,22 +488,11 @@ throw_err_no_decimal:
 			throw parser_error("Cannot create a decimal number with base literals.\r\n");
 		}
 		else if (std::iswalpha(ch) || ch == L'_') {
-			if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
-				word = "";
-				do {
-					word += (char)ch;
-					ch = next_char();
-				} while (std::iswalpha(ch) || ch == '_' || std::iswdigit(ch));
-			}
-			else {
-				char* pStart = (char*)current;
-				char* pEnd = pStart;
-				do {
-					ch = next_char();
-					pEnd = (char*)current;
-				} while (std::iswalpha(ch) || ch == '_' || std::iswdigit(ch));
-				word = std::string(pStart, pEnd);
-			}
+			word = "";
+			do {
+				word += (char)ch;
+				ch = next_char();
+			} while (std::iswalpha(ch) || ch == '_' || std::iswdigit(ch));
 
 			std::map<std::string, token_kind>::iterator itr = token_map.find(word);
 			if (itr != token_map.end())
