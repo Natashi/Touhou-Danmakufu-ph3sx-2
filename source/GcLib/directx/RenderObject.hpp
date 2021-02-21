@@ -111,11 +111,6 @@ namespace directx {
 		void SetAngleXYZ(float angx = 0.0f, float angy = 0.0f, float angz = 0.0f) { angle_.x = angx; angle_.y = angy; angle_.z = angz; }
 		void SetScale(const D3DXVECTOR3& scale) { scale_ = scale; }
 		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f) { scale_.x = sx; scale_.y = sy; scale_.z = sz; }
-		void SetTexture(Texture* texture) { 
-			if (texture)
-				texture_ = std::make_shared<Texture>(texture);
-			else texture_ = nullptr;
-		}
 		void SetTexture(shared_ptr<Texture> texture) { texture_ = texture; }
 
 		bool IsCoordinate2D() { return bCoordinate2D_; }
