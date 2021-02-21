@@ -1853,6 +1853,7 @@ continue_as_variadic:
 			std::vector<std::string> args;
 			if (s->sub->kind != block_kind::bk_sub) {
 				if (state->next() == token_kind::tk_open_par) {
+					const char* pInvalidToken = state->lex->get();
 					state->advance();
 					while (state->next() == token_kind::tk_word || IsDeclToken(state->next())) {
 						if (IsDeclToken(state->next())) {
@@ -1864,9 +1865,15 @@ continue_as_variadic:
 						state->advance();
 						if (state->next() != token_kind::tk_comma)
 							break;
+						pInvalidToken = state->lex->get();
 						state->advance();
 					}
-					parser_assert(state, state->next() == token_kind::tk_close_par, "\")\" is required.\r\n");
+					if (state->next() != token_kind::tk_close_par) {
+						std::wstring err = StringUtility::Format(
+							L"\"%s\" cannot be used in a parameter list.\r\n",
+							state->lex->tostr(pInvalidToken, state->lex->get()).c_str());
+						parser_assert(state, false, err);
+					}
 					state->advance();
 				}
 			}
