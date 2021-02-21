@@ -120,7 +120,14 @@ size_t Encoding::GetBomSize(Type encoding) {
 	}
 	return 0U;
 }
-
+size_t Encoding::GetCharSize(Type encoding) {
+	switch (encoding) {
+	case Type::UTF16LE:
+	case Type::UTF16BE:
+		return 2U;
+	}
+	return 1U;
+}
 
 //================================================================
 //StringUtility

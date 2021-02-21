@@ -88,6 +88,7 @@ namespace gstd {
 		static Type Detect(const void* data, size_t dataSize);
 		static size_t GetBomSize(const void* data, size_t dataSize);
 		static size_t GetBomSize(Type encoding);
+		static size_t GetCharSize(Type encoding);
 
 		static const byte BOM_UTF16LE[];
 		static const byte BOM_UTF16BE[];
