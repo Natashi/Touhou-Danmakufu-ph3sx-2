@@ -12,9 +12,9 @@ namespace directx {
 	class TextureManager;
 	class TextureInfoPanel;
 
-	/**********************************************************
+	//*******************************************************************
 	//Texture
-	**********************************************************/
+	//*******************************************************************
 	class TextureData {
 		friend Texture;
 		friend TextureManager;
@@ -84,9 +84,9 @@ namespace directx {
 		static size_t GetFormatBPP(D3DFORMAT format);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//TextureManager
-	**********************************************************/
+	//*******************************************************************
 	class TextureManager : public DirectGraphicsListener, public gstd::FileManager::LoadThreadListener {
 		friend Texture;
 		friend TextureData;
@@ -133,16 +133,16 @@ namespace directx {
 		void SetInfoPanel(shared_ptr<TextureInfoPanel> panel) { panelInfo_ = panel; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//TextureInfoPanel
-	**********************************************************/
+	//*******************************************************************
 	class TextureInfoPanel : public gstd::WindowLogger::Panel, public gstd::Thread {
 	protected:
 		enum {
 			ROW_ADDRESS,
 			ROW_NAME,
 			ROW_FULLNAME,
-			ROW_COUNT_REFFRENCE,
+			ROW_REFCOUNT,
 			ROW_WIDTH_IMAGE,
 			ROW_HEIGHT_IMAGE,
 			ROW_SIZE,

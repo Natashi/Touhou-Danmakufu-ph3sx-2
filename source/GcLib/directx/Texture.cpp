@@ -6,9 +6,9 @@
 using namespace gstd;
 using namespace directx;
 
-/**********************************************************
+//*******************************************************************
 //TextureData
-**********************************************************/
+//*******************************************************************
 TextureData::TextureData() {
 	manager_ = nullptr;
 	pTexture_ = nullptr;
@@ -43,9 +43,9 @@ void TextureData::CalculateResourceSize() {
 	resourceSize_ = size * Texture::GetFormatBPP(infoImage_.Format);
 }
 
-/**********************************************************
+//*******************************************************************
 //Texture
-**********************************************************/
+//*******************************************************************
 Texture::Texture() {
 }
 Texture::Texture(Texture* texture) {
@@ -293,9 +293,9 @@ size_t Texture::GetFormatBPP(D3DFORMAT format) {
 	}
 }
 
-/**********************************************************
+//*******************************************************************
 //TextureManager
-**********************************************************/
+//*******************************************************************
 const std::wstring TextureManager::TARGET_TRANSITION = L"__RENDERTARGET_TRANSITION__";
 TextureManager* TextureManager::thisBase_ = nullptr;
 TextureManager::TextureManager() {
@@ -849,9 +849,9 @@ std::map<std::wstring, shared_ptr<TextureData>>::iterator TextureManager::IsData
 	return res;
 }
 
-/**********************************************************
+//*******************************************************************
 //TextureInfoPanel
-**********************************************************/
+//*******************************************************************
 TextureInfoPanel::TextureInfoPanel() {
 	timeUpdateInterval_ = 1000;
 }
@@ -869,13 +869,13 @@ bool TextureInfoPanel::_AddedLogger(HWND hTab) {
 	styleListView.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	wndListView_.Create(hWnd_, styleListView);
 
-	wndListView_.AddColumn(64, ROW_ADDRESS, L"Address");
-	wndListView_.AddColumn(96, ROW_NAME, L"Name");
-	wndListView_.AddColumn(64, ROW_FULLNAME, L"FullName");
-	wndListView_.AddColumn(32, ROW_COUNT_REFFRENCE, L"Ref");
+	wndListView_.AddColumn(60, ROW_ADDRESS, L"Address");
+	wndListView_.AddColumn(144, ROW_NAME, L"Name");
+	wndListView_.AddColumn(144, ROW_FULLNAME, L"Full Path");
+	wndListView_.AddColumn(36, ROW_REFCOUNT, L"Uses");
 	wndListView_.AddColumn(48, ROW_WIDTH_IMAGE, L"Width");
 	wndListView_.AddColumn(48, ROW_HEIGHT_IMAGE, L"Height");
-	wndListView_.AddColumn(72, ROW_SIZE, L"Size");
+	wndListView_.AddColumn(60, ROW_SIZE, L"Size");
 
 	Start();
 
@@ -900,50 +900,71 @@ void TextureInfoPanel::_Run() {
 void TextureInfoPanel::Update(TextureManager* manager) {
 	if (!IsWindowVisible()) return;
 
-	std::set<std::wstring> setKey;
+	struct TextureDisplay {
+		int address;
+		std::wstring fileName;
+		std::wstring fullPath;
+		int countRef;
+		uint32_t wd;
+		uint32_t ht;
+		uint32_t size;
+	};
+
+	std::vector<TextureDisplay> listTextureDisp;
 	{
 		Lock lock(manager->GetLock());
 
-		std::map<std::wstring, shared_ptr<TextureData>>& mapData = manager->mapTextureData_;
-		for (auto itrMap = mapData.begin(); itrMap != mapData.end(); itrMap++) {
-			const std::wstring& name = itrMap->first;
-			TextureData* data = (itrMap->second).get();
+		{
+			auto& mapData = manager->mapTextureData_;
+			listTextureDisp.resize(mapData.size());
 
-			std::wstring key = StringUtility::Format(L"%08x", (int)data);
-			int index = wndListView_.GetIndexInColumn(key, ROW_ADDRESS);
-			if (index == -1) {
-				index = wndListView_.GetRowCount();
-				wndListView_.SetText(index, ROW_ADDRESS, key);
+			int iTex = 0;
+			for (auto itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap) {
+				const std::wstring& name = itrMap->first;
+				TextureData* data = (itrMap->second).get();
+
+				int countRef = (itrMap->second).use_count();
+				D3DXIMAGE_INFO* infoImage = &data->infoImage_;
+
+				TextureDisplay displayData = {
+					(int)data,
+					PathProperty::GetFileName(name),
+					name,
+					countRef,
+					infoImage->Width,
+					infoImage->Height,
+					data->GetResourceSize()
+				};
+				listTextureDisp[iTex++] = displayData;
+			}
+		}
+
+		{
+			int iRow = 0;
+			for (; iRow < listTextureDisp.size(); ++iRow) {
+				TextureDisplay* data = &listTextureDisp[iRow];
+
+				wndListView_.SetText(iRow, ROW_ADDRESS, StringUtility::Format(L"%08x", data->address));
+				wndListView_.SetText(iRow, ROW_NAME, data->fileName);
+				wndListView_.SetText(iRow, ROW_FULLNAME, data->fullPath);
+				wndListView_.SetText(iRow, ROW_REFCOUNT, std::to_wstring(data->countRef));
+				wndListView_.SetText(iRow, ROW_WIDTH_IMAGE, std::to_wstring(data->wd));
+				wndListView_.SetText(iRow, ROW_HEIGHT_IMAGE, std::to_wstring(data->ht));
+				wndListView_.SetText(iRow, ROW_SIZE, std::to_wstring(data->size));
 			}
 
-			int countRef = (itrMap->second).use_count();
-			D3DXIMAGE_INFO* infoImage = &data->infoImage_;
-
-			wndListView_.SetText(index, ROW_NAME, PathProperty::GetFileName(name));
-			wndListView_.SetText(index, ROW_FULLNAME, name);
-			wndListView_.SetText(index, ROW_COUNT_REFFRENCE, StringUtility::Format(L"%d", countRef));
-			wndListView_.SetText(index, ROW_WIDTH_IMAGE, StringUtility::Format(L"%d", infoImage->Width));
-			wndListView_.SetText(index, ROW_HEIGHT_IMAGE, StringUtility::Format(L"%d", infoImage->Height));
-			wndListView_.SetText(index, ROW_SIZE, StringUtility::Format(L"%d", data->GetResourceSize()));
-
-			setKey.insert(key);
+			for (; iRow < wndListView_.GetRowCount(); ++iRow)
+				wndListView_.DeleteRow(iRow);
 		}
 	}
 
-	for (int iRow = 0; iRow < wndListView_.GetRowCount();) {
-		std::wstring key = wndListView_.GetText(iRow, ROW_ADDRESS);
-		if (setKey.find(key) != setKey.end())iRow++;
-		else wndListView_.DeleteRow(iRow);
-	}
-
 	{
-		Lock lock(manager->GetLock());
-
 		IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
 		UINT texMem = device->GetAvailableTextureMem() / (1024U * 1024U);
 
-		WindowLogger* logger = WindowLogger::GetParent();
-		if (logger) {
+		if (WindowLogger* logger = WindowLogger::GetParent()) {
+			Lock lock(manager->GetLock());
+
 			shared_ptr<WStatusBar> statusBar = logger->GetStatusBar();
 			statusBar->SetText(0, L"Available Video Memory");
 			statusBar->SetText(1, StringUtility::Format(L"%u MB", texMem));
