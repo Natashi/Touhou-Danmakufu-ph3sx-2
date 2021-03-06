@@ -133,7 +133,7 @@ public:
 class StgEnemyBossSceneData {
 private:
 	std::wstring path_;
-	shared_ptr<ManagedScript> ptrScript_;
+	weak_ptr<ManagedScript> ptrScript_;
 
 	std::vector<double> listLife_;
 	std::vector<ref_unsync_ptr<StgEnemyBossObject>> listEnemyObject_;
@@ -157,8 +157,8 @@ public:
 
 	std::wstring& GetPath() { return path_; }
 	void SetPath(const std::wstring& path) { path_ = path; }
-	shared_ptr<ManagedScript> GetScriptPointer() { return ptrScript_; }
-	void SetScriptPointer(shared_ptr<ManagedScript> id) { ptrScript_ = id; }
+	weak_ptr<ManagedScript> GetScriptPointer() { return ptrScript_; }
+	void SetScriptPointer(weak_ptr<ManagedScript> id) { ptrScript_ = id; }
 
 	std::vector<double>& GetLifeList() { return listLife_; }
 	void SetLifeList(std::vector<double>& list) { listLife_ = list; }
