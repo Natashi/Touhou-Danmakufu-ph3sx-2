@@ -26,7 +26,6 @@ public:
 	};
 protected:
 	ref_count_ptr<StgSystemInformation> infoSystem_;
-	ref_count_ptr<ScriptEngineCache> scriptEngineCache_;
 	shared_ptr<ScriptCommonDataManager> commonDataManager_;
 
 	shared_ptr<StgEndScene> endScene_;
@@ -64,7 +63,6 @@ public:
 
 	ref_count_ptr<StgControlScriptInformation> GetControlScriptInformation() { return infoControlScript_; }
 
-	ref_count_ptr<ScriptEngineCache> GetScriptEngineCache() { return scriptEngineCache_; }
 	shared_ptr<ScriptCommonDataManager> GetCommonDataManager() { return commonDataManager_; }
 
 	void StartStgScene(ref_count_ptr<StgStageInformation> infoStage, ref_count_ptr<ReplayInformation::StageData> replayStageData);

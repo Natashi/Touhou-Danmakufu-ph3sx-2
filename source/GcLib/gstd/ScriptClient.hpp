@@ -44,23 +44,6 @@ namespace gstd {
 	};
 
 	/**********************************************************
-	//ScriptEngineCache
-	**********************************************************/
-	class ScriptEngineCache {
-	protected:
-		std::map<std::wstring, ref_count_ptr<ScriptEngineData>> cache_;
-	public:
-		ScriptEngineCache();
-		virtual ~ScriptEngineCache();
-		void Clear();
-
-		void AddCache(const std::wstring& name, ref_count_ptr<ScriptEngineData>& data);
-		ref_count_ptr<ScriptEngineData> GetCache(const std::wstring& name);
-
-		bool IsExists(const std::wstring& name);
-	};
-
-	/**********************************************************
 	//ScriptBase
 	**********************************************************/
 	class ScriptClientBase {
@@ -72,7 +55,6 @@ namespace gstd {
 	protected:
 		bool bError_;
 
-		ref_count_ptr<ScriptEngineCache> cache_;
 		ref_count_ptr<ScriptEngineData> engine_;
 		unique_ptr<script_machine> machine_;
 
@@ -109,8 +91,6 @@ namespace gstd {
 		virtual ~ScriptClientBase();
 
 		static script_type_manager* GetDefaultScriptTypeManager() { return pTypeManager_; }
-
-		void SetScriptEngineCache(ref_count_ptr<ScriptEngineCache>& cache) { cache_ = cache; }
 
 		ref_count_ptr<ScriptEngineData> GetEngine() { return engine_; }
 

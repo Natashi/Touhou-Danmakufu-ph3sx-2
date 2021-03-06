@@ -59,10 +59,7 @@ namespace directx {
 		size_t GetAllScriptThreadCount();
 		void TerminateScriptAll(const std::wstring& message);
 
-		void OrphanAllScripts() { 
-			mapScriptLoad_.clear();
-			listScriptRun_.clear();
-		}
+		void OrphanAllScripts();
 
 		int64_t LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script);
 		shared_ptr<ManagedScript> LoadScript(const std::wstring& path, int type);

@@ -215,6 +215,22 @@ void ScriptManager::TerminateScriptAll(const std::wstring& message) {
 		}
 	}
 }
+void ScriptManager::OrphanAllScripts() {
+	{
+		Lock lock(lock_);
+
+		mapScriptLoad_.clear();
+		listScriptRun_.clear();
+
+		/*
+		for (auto itr = listRelativeManager_.begin(); itr != listRelativeManager_.end(); ++itr) {
+			if (auto pManager = itr->lock())
+				pManager->OrphanAllScripts();
+		}
+		*/
+	}
+}
+
 int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script) {
 	int64_t res = 0;
 
@@ -365,6 +381,10 @@ ManagedScript::~ManagedScript() {
 
 	//ptr_delete_scalar(listValueEvent_);
 	listValueEventSize_ = 0;
+
+	Logger::WriteTop(StringUtility::Format(
+		L"Released script: %s (Manager=%08x, Type=%d)",
+		PathProperty::GetFileName(GetPath()).c_str(), (int)scriptManager_, typeScript_));
 }
 void ManagedScript::SetScriptManager(ScriptManager* manager) {
 	scriptManager_ = manager;

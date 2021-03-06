@@ -6,9 +6,9 @@
 
 using namespace gstd;
 
-/**********************************************************
+//*******************************************************************
 //ScriptEngineData
-**********************************************************/
+//*******************************************************************
 ScriptEngineData::ScriptEngineData() {
 	encoding_ = Encoding::UNKNOWN;
 	mapLine_ = new ScriptFileLineMap();
@@ -20,31 +20,9 @@ void ScriptEngineData::SetSource(std::vector<char>& source) {
 	source_ = source;
 }
 
-/**********************************************************
-//ScriptEngineCache
-**********************************************************/
-ScriptEngineCache::ScriptEngineCache() {
-}
-ScriptEngineCache::~ScriptEngineCache() {
-}
-void ScriptEngineCache::Clear() {
-	cache_.clear();
-}
-void ScriptEngineCache::AddCache(const std::wstring& name, ref_count_ptr<ScriptEngineData>& data) {
-	cache_[name] = data;
-}
-ref_count_ptr<ScriptEngineData> ScriptEngineCache::GetCache(const std::wstring& name) {
-	auto itrFind = cache_.find(name);
-	if (cache_.find(name) == cache_.end()) return nullptr;
-	return itrFind->second;
-}
-bool ScriptEngineCache::IsExists(const std::wstring& name) {
-	return cache_.find(name) != cache_.end();
-}
-
-/**********************************************************
+//*******************************************************************
 //ScriptClientBase
-**********************************************************/
+//*******************************************************************
 static const std::vector<function> commonFunction = {
 	//Script functions
 	{ "GetScriptArgument", ScriptClientBase::Func_GetScriptArgument, 1 },
@@ -432,7 +410,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 						byte data[3];
 						reader->Read(data, 3);
 
-						includeEncoding = Encoding::Detect(data, reader->GetFileSize());
+						includeEncoding = Encoding::Detect((char*)data, reader->GetFileSize());
 						targetBomSize = Encoding::GetBomSize(includeEncoding);
 
 						reader->SetFilePointerBegin();
@@ -449,9 +427,8 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 							//Convert the including file to UTF-8
 							if (mainEncoding == Encoding::UTF8 || mainEncoding == Encoding::UTF8BOM) {
 								if (includeEncoding == Encoding::UTF16BE) {
-									for (auto itr = placement.begin(); itr != placement.end(); itr += 2) {
-										wchar_t& wch = (wchar_t&)*itr;
-										wch = (wch >> 8) | (wch << 8);
+									for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
+										std::swap(*wItr, *(wItr + 1));
 									}
 								}
 
@@ -688,10 +665,6 @@ bool ScriptClientBase::_CreateEngine() {
 }
 bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 	path = PathProperty::GetUnique(path);
-	if (cache_ != nullptr && cache_->IsExists(path)) {
-		engine_ = cache_->GetCache(path);
-		return true;
-	}
 
 	engine_->SetPath(path);
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
@@ -703,6 +676,7 @@ bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 	source.resize(size);
 	reader->Read(&source[0], size);
 	this->SetSource(source);
+
 	return true;
 }
 void ScriptClientBase::SetSource(const std::string& source) {
@@ -725,9 +699,6 @@ void ScriptClientBase::Compile() {
 		if (!bCreateSuccess) {
 			bError_ = true;
 			_RaiseErrorFromEngine();
-		}
-		if (cache_ != nullptr && engine_->GetPath().size() != 0) {
-			cache_->AddCache(engine_->GetPath(), engine_);
 		}
 	}
 
@@ -1705,9 +1676,9 @@ value ScriptClientBase::Func_GetCommonDataValueKeyList(script_machine* machine, 
 }
 
 
-/**********************************************************
+//*******************************************************************
 //ScriptFileLineMap
-**********************************************************/
+//*******************************************************************
 ScriptFileLineMap::ScriptFileLineMap() {
 
 }
@@ -1779,9 +1750,9 @@ std::wstring& ScriptFileLineMap::GetPath(int line) {
 	return entry->path_;
 }
 
-/**********************************************************
+//*******************************************************************
 //ScriptCommonDataManager
-**********************************************************/
+//*******************************************************************
 const std::string ScriptCommonDataManager::nameAreaDefault_ = "";
 ScriptCommonDataManager::ScriptCommonDataManager() {
 	defaultAreaIterator_ = CreateArea(nameAreaDefault_);
@@ -1842,9 +1813,9 @@ void ScriptCommonDataManager::SetData(CommonDataMap::iterator itr, shared_ptr<Sc
 	if (itr == mapData_.end()) return;
 	itr->second = commonData;
 }
-/**********************************************************
+//*******************************************************************
 //ScriptCommonData
-**********************************************************/
+//*******************************************************************
 ScriptCommonData::ScriptCommonData() {}
 ScriptCommonData::~ScriptCommonData() {}
 void ScriptCommonData::Clear() {
@@ -1998,9 +1969,9 @@ void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, const gstd::value&
 }
 
 
-/**********************************************************
+//*******************************************************************
 //ScriptCommonDataPanel
-**********************************************************/
+//*******************************************************************
 ScriptCommonDataInfoPanel::ScriptCommonDataInfoPanel() {
 	timeLastUpdate_ = 0;
 	timeUpdateInterval_ = 1000;

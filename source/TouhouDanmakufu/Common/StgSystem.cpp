@@ -6,24 +6,21 @@
 #include "StgStageScript.hpp"
 #include "StgPlayer.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgSystemController
-**********************************************************/
+//*******************************************************************
 StgSystemController* StgSystemController::base_ = nullptr;
 StgSystemController::StgSystemController() {
 	stageController_ = nullptr;
 	packageController_ = nullptr;
 }
 StgSystemController::~StgSystemController() {
-	if (scriptEngineCache_)
-		scriptEngineCache_->Clear();
 }
 void StgSystemController::Initialize(ref_count_ptr<StgSystemInformation> infoSystem) {
 	base_ = this;
 
 	infoSystem_ = infoSystem;
 	commonDataManager_.reset(new ScriptCommonDataManager());
-	scriptEngineCache_ = new ScriptEngineCache();
 	infoControlScript_ = new StgControlScriptInformation();
 }
 void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay) {
@@ -37,8 +34,6 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 	camera3D->SetPerspectiveClip(10, 2000);
 	camera3D->thisProjectionChanged_ = true;
 	camera2D->Reset();
-
-	scriptEngineCache_->Clear();
 
 	EDirectInput* input = EDirectInput::GetInstance();
 	input->ResetVirtualKeyMap();
@@ -748,9 +743,9 @@ void StgSystemController::GetAllScriptList(std::list<weak_ptr<ScriptManager>>& l
 		listRes.push_back(replaySaveScene_->GetScriptManagerRef());
 }
 
-/**********************************************************
+//*******************************************************************
 //StgSystemInformation
-**********************************************************/
+//*******************************************************************
 StgSystemInformation::StgSystemInformation() {
 	scene_ = SCENE_NULL;
 	bEndStg_ = false;
