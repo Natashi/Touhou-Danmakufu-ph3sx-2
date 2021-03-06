@@ -85,14 +85,20 @@ namespace gstd {
 			UTF16BE,
 		} Type;
 	public:
-		static Type Detect(const void* data, size_t dataSize);
-		static size_t GetBomSize(const void* data, size_t dataSize);
-		static size_t GetBomSize(Type encoding);
-		static size_t GetCharSize(Type encoding);
-
 		static const byte BOM_UTF16LE[];
 		static const byte BOM_UTF16BE[];
 		static const byte BOM_UTF8[];
+	public:
+		static Type Detect(const char* data, size_t dataSize);
+		static size_t GetBomSize(const char* data, size_t dataSize);
+		static size_t GetBomSize(Type encoding);
+		static size_t GetCharSize(Type encoding);
+
+		static wchar_t BytesToWChar(const char* data, Type encoding);
+		static std::string BytesToString(const char* pBegin, const char* pEnd, Type encoding);
+		static std::string BytesToString(const char* pBegin, size_t count, Type encoding);
+		static std::wstring BytesToWString(const char* pBegin, const char* pEnd, Type encoding);
+		static std::wstring BytesToWString(const char* pBegin, size_t count, Type encoding);
 	};
 
 

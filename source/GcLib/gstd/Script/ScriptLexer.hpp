@@ -62,7 +62,6 @@ namespace gstd {
 		const char* current;
 		const char* endPoint;
 
-		wchar_t _process_char(const char* ch);
 		wchar_t current_char();
 		wchar_t index_from_current_char(int index);
 		inline wchar_t next_char();
@@ -90,7 +89,9 @@ namespace gstd {
 		void copy_state(script_scanner* src);
 
 		const char* get() { return current; }
-		std::wstring tostr(const char* b, const char* e);
+		inline std::wstring tostr(const char* b, const char* e) {
+			return Encoding::BytesToWString(b, e, encoding);
+		}
 
 		void skip();
 		void advance();

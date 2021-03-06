@@ -254,61 +254,26 @@ void ScriptClientBase::_RaiseErrorFromMachine() {
 }
 std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 	if (line == 0) return L"";
+
 	Encoding::Type encoding = engine_->GetEncoding();
 	std::vector<char>& source = engine_->GetSource();
-	char* pbuf = (char*)&source[0];
-	char* sbuf = pbuf;
-	char* ebuf = sbuf + source.size();
 
 	int tLine = 1;
-	int rLine = line;
-	while (pbuf < ebuf) {
-		if (tLine == rLine)
+
+	char* pStr = source.data();
+	char* pEnd = pStr + source.size();
+	while (pStr < pEnd) {
+		if (tLine == line)
 			break;
 
-		if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
-			wchar_t ch = (wchar_t&)*pbuf;
-			if (encoding == Encoding::UTF16BE) ch = (ch >> 8) | (ch << 8);
-			if (ch == L'\n')
-				tLine++;
-			pbuf += 2;
-		}
-		else {
-			if (*pbuf == '\n')
-				tLine++;
-			pbuf++;
-		}
+		if (Encoding::BytesToWChar(pStr, encoding) == L'\n')
+			++tLine;
+		pStr += Encoding::GetCharSize(encoding);
 	}
 
-	const size_t countMax = 256;
-	size_t count = 0;
-
-	sbuf = pbuf;
-	while (pbuf < ebuf && count < countMax) {
-		pbuf++;
-		count++;
-	}
-
-	size_t size = count > 0U ? count - 1U : 0U;
-
-	std::wstring res;
-	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
-		wchar_t* wbufS = (wchar_t*)sbuf;
-		wchar_t* wbufE = wbufS + size;
-		res = std::wstring(wbufS, wbufE);
-		if (encoding == Encoding::UTF16BE) {
-			for (auto itr = res.begin(); itr != res.end(); ++itr) {
-				wchar_t& wch = *itr;
-				wch = (wch >> 8) | (wch << 8);
-			}
-		}
-	}
-	else {
-		std::string sStr = std::string(sbuf, sbuf + size);
-		res = StringUtility::ConvertMultiToWide(sStr);
-	}
-
-	return res;
+	constexpr size_t DISP_MAX = 256;
+	size_t size = std::min(DISP_MAX, (size_t)(pEnd - pStr));
+	return Encoding::BytesToWString(pStr, size, encoding);
 }
 std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 	std::wstring pathSource = engine_->GetPath();

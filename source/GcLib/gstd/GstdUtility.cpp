@@ -92,7 +92,7 @@ void SystemUtility::TestCpuSupportSIMD() {
 const byte Encoding::BOM_UTF16LE[] = { 0xFF, 0xFE };
 const byte Encoding::BOM_UTF16BE[] = { 0xFE, 0xFF };
 const byte Encoding::BOM_UTF8[] = { 0xEF, 0xBB, 0xBF };
-Encoding::Type Encoding::Detect(const void* data, size_t dataSize) {
+Encoding::Type Encoding::Detect(const char* data, size_t dataSize) {
 	if (dataSize < 2U) return Type::UTF8;
 	if (memcmp(data, BOM_UTF16LE, 2) == 0) return Type::UTF16LE;
 	else if (memcmp(data, BOM_UTF16BE, 2) == 0) return Type::UTF16BE;
@@ -101,7 +101,7 @@ Encoding::Type Encoding::Detect(const void* data, size_t dataSize) {
 	}
 	return Type::UTF8;
 }
-size_t Encoding::GetBomSize(const void* data, size_t dataSize) {
+size_t Encoding::GetBomSize(const char* data, size_t dataSize) {
 	if (dataSize < 2) return 0U;
 	if (memcmp(data, BOM_UTF16LE, 2) == 0 || memcmp(data, BOM_UTF16BE, 2) == 0)
 		return 2U;
@@ -127,6 +127,47 @@ size_t Encoding::GetCharSize(Type encoding) {
 		return 2U;
 	}
 	return 1U;
+}
+wchar_t Encoding::BytesToWChar(const char* data, Type encoding) {
+	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
+		wchar_t res = *(wchar_t*)data;
+		if (encoding == Encoding::UTF16BE)
+			res = (res >> 8) | (res << 8);
+		return res;
+	}
+	return (wchar_t)(*data);
+}
+std::string Encoding::BytesToString(const char* pBegin, const char* pEnd, Type encoding) {
+	if (GetCharSize(encoding) == 1) {
+		return std::string(pBegin, pEnd);
+	}
+	else {
+		std::wstring res;
+		while (pBegin < pEnd) {
+			res += BytesToWChar(pBegin, encoding);
+			pBegin += Encoding::GetCharSize(encoding);
+		}
+		return StringUtility::ConvertWideToMulti(res);
+	}
+}
+std::string Encoding::BytesToString(const char* pBegin, size_t count, Type encoding) {
+	return BytesToString(pBegin, (const char*)(pBegin + count), encoding);
+}
+std::wstring Encoding::BytesToWString(const char* pBegin, const char* pEnd, Type encoding) {
+	if (GetCharSize(encoding) == 1) {
+		return StringUtility::ConvertMultiToWide(std::string(pBegin, pEnd));
+	}
+	else {
+		std::wstring res;
+		while (pBegin < pEnd) {
+			res += BytesToWChar(pBegin, encoding);
+			pBegin += Encoding::GetCharSize(encoding);
+		}
+		return res;
+	}
+}
+std::wstring Encoding::BytesToWString(const char* pBegin, size_t count, Type encoding) {
+	return BytesToWString(pBegin, (const char*)(pBegin + count), encoding);
 }
 
 //================================================================
@@ -242,26 +283,12 @@ size_t StringUtility::CountCharacter(std::vector<char>& str, char c) {
 	Encoding::Type encoding = Encoding::Detect(str.data(), str.size());
 
 	size_t count = 0;
-	char* pbuf = &str[0];
-	char* ebuf = &str.back();
-	while (pbuf <= ebuf) {
-		if (encoding == Encoding::UTF16LE) {
-			wchar_t ch = (wchar_t&)*pbuf;
-			if (ch == (wchar_t)c)
-				count++;
-			pbuf += 2;
-		}
-		else if (encoding == Encoding::UTF16BE) {
-			wchar_t ch = (wchar_t&)*pbuf;
-			ch = (ch >> 8) | (ch << 8);
-			if (ch == (wchar_t)c)
-				count++;
-			pbuf += 2;
-		}
-		else {
-			if (*pbuf == c) count++;
-			++pbuf;
-		}
+	char* pBegin = str.data();
+	char* pEnd = pBegin + str.size();
+	while (pBegin < pEnd) {
+		if (Encoding::BytesToWChar(pBegin, encoding) == c)
+			++count;
+		pBegin += Encoding::GetCharSize(encoding);
 	}
 	return count;
 
@@ -585,31 +612,14 @@ Scanner::Scanner(std::vector<char>& buf) {
 	SetPointerBegin();
 }
 Scanner::~Scanner() {
-
 }
 wchar_t Scanner::_CurrentChar() {
-	wchar_t res = L'\0';
-	if (typeEncoding_ == Encoding::UTF16LE) {
-		if (pointer_ + 1 < buffer_.size())
-			res = (wchar_t&)buffer_[pointer_];
-	}
-	else if (typeEncoding_ == Encoding::UTF16BE) {
-		if (pointer_ + 1 < buffer_.size()) {
-			res = (wchar_t&)buffer_[pointer_];
-			res = (res >> 8) | (res << 8);
-		}
-	}
-	else {
-		if (pointer_ < buffer_.size()) {
-			char ch = buffer_[pointer_];
-			res = ch;
-		}
-	}
-	return res;
+	wchar_t wch = Encoding::BytesToWChar(&buffer_[pointer_], typeEncoding_);
+	return wch;
 }
 
 wchar_t Scanner::_NextChar() {
-	if (HasNext() == false) {
+	if (!HasNext()) {
 		/*
 		Logger::WriteTop(L"I’[ˆÙí”­¶->");
 
@@ -629,23 +639,15 @@ wchar_t Scanner::_NextChar() {
 		}
 		*/
 
-		_RaiseError(L"Scanner::_NextChar: End-of-file already reached.");
+		_RaiseError(L"Scanner: End-of-file already reached.");
 		//bufStr_ = nullptr;
 		//return L'\0';
 	}
 
-	if (typeEncoding_ == Encoding::UTF16LE || typeEncoding_ == Encoding::UTF16BE) {
-		pointer_ += 2;
-	}
-	else {
-		pointer_++;
-	}
-
+	pointer_ += Encoding::GetCharSize(typeEncoding_);
 	bufStr_ = &buffer_[pointer_];
 
-	wchar_t res = _CurrentChar();
-	if (typeEncoding_ == Encoding::UTF8 || typeEncoding_ == Encoding::UTF8BOM) res = res & 0xff;
-	return res;
+	return _CurrentChar();
 }
 void Scanner::_SkipComment() {
 	while (true) {
@@ -809,62 +811,20 @@ Token& Scanner::Next() {
 	}
 	}
 
-	if (type == Token::Type::TK_STRING) {
-		std::wstring wstr;
-		if (typeEncoding_ == Encoding::UTF16LE || typeEncoding_ == Encoding::UTF16BE) {
-			wchar_t* pPosStart = (wchar_t*)&buffer_[posStart];
-			wchar_t* pPosEnd = (wchar_t*)&buffer_[pointer_];
-			wstr = std::wstring(pPosStart, pPosEnd);
-			if (typeEncoding_ == Encoding::UTF16BE) {
-				for (auto itr = wstr.begin(); itr != wstr.end(); ++itr) {
-					wchar_t& wch = *itr;
-					wch = (wch >> 8) | (wch << 8);
-				}
-			}
+	{
+		std::wstring wstr = Encoding::BytesToWString(
+			&buffer_[posStart], &buffer_[pointer_], typeEncoding_);
+		if (type == Token::Type::TK_STRING)
 			wstr = StringUtility::ReplaceAll(wstr, L"\\\"", L"\"");
-		}
-		else {
-			char* pPosStart = &buffer_[posStart];
-			char* pPosEnd = &buffer_[pointer_];
-			std::string str = std::string(pPosStart, pPosEnd);
-			str = StringUtility::ReplaceAll(str, "\\\"", "\"");
-			wstr = StringUtility::ConvertMultiToWide(str);
-		}
-
-		token_ = Token(type, wstr, posStart, pointer_);
-	}
-	else {
-		std::wstring wstr;
-		if (typeEncoding_ == Encoding::UTF16LE || typeEncoding_ == Encoding::UTF16BE) {
-			wchar_t* pPosStart = (wchar_t*)&buffer_[posStart];
-			wchar_t* pPosEnd = (wchar_t*)&buffer_[pointer_];
-			wstr = std::wstring(pPosStart, pPosEnd);
-			if (typeEncoding_ == Encoding::UTF16BE) {
-				for (auto itr = wstr.begin(); itr != wstr.end(); ++itr) {
-					wchar_t& wch = *itr;
-					wch = (wch >> 8) | (wch << 8);
-				}
-			}
-		}
-		else {
-			char* pPosStart = &buffer_[posStart];
-			char* pPosEnd = &buffer_[pointer_];
-			std::string str = std::string(pPosStart, pPosEnd);
-			wstr = StringUtility::ConvertMultiToWide(str);
-		}
 		token_ = Token(type, wstr, posStart, pointer_);
 	}
 
 	listDebugToken_.push_back(token_);
-
 	return token_;
 }
 bool Scanner::HasNext() {
-	//	bool res = true;
-	//	res &= pointer_ < buffer_.size();
-	//	res &= _CurrentChar() != L'\0';
-	//	res &= token_.GetType() != Token::Type::TK_EOF;
-	return pointer_ < buffer_.size() && _CurrentChar() != L'\0' && token_.GetType() != Token::Type::TK_EOF;
+	return pointer_ < buffer_.size() && _CurrentChar() != L'\0' 
+		&& token_.GetType() != Token::Type::TK_EOF;
 }
 void Scanner::CheckType(Token& tok, Token::Type type) {
 	if (tok.type_ != type) {
@@ -882,45 +842,20 @@ int Scanner::GetCurrentLine() {
 	if (buffer_.size() == 0) return 0;
 
 	int line = 1;
-	char* pbuf = &buffer_[0];
-	char* ebuf = &buffer_[pointer_];
-	while (true) {
-		if (typeEncoding_ == Encoding::UTF16LE || typeEncoding_ == Encoding::UTF16BE) {
-			if (pbuf + 1 >= ebuf) break;
-			wchar_t wch = (wchar_t&)*pbuf;
-			if (typeEncoding_ == Encoding::UTF16BE) 
-				wch = (wch >> 8) | (wch << 8);
-			if (wch == L'\n') ++line;
-			pbuf += 2;
-		}
-		else {
-			if (pbuf >= ebuf) break;
 
-			if (*pbuf == '\n') line++;
-			pbuf++;
-		}
+	char* pStr = &buffer_[0];
+	char* pEnd = &buffer_[pointer_];
+	while (pStr <= pEnd) {
+		if (Encoding::BytesToWChar(pStr, typeEncoding_) == L'\n')
+			++line;
+		pStr += Encoding::GetCharSize(typeEncoding_);
 	}
+
 	return line;
 }
 std::wstring Scanner::GetString(int start, int end) {
-	std::wstring res;
-	if (typeEncoding_ == Encoding::UTF16LE || typeEncoding_ == Encoding::UTF16BE) {
-		wchar_t* pPosStart = (wchar_t*)&buffer_[start];
-		wchar_t* pPosEnd = (wchar_t*)&buffer_[end];
-		res = std::wstring(pPosStart, pPosEnd);
-		if (typeEncoding_ == Encoding::UTF16BE) {
-			for (auto itr = res.begin(); itr != res.end(); ++itr) {
-				wchar_t& wch = *itr;
-				wch = (wch >> 8) | (wch << 8);
-			}
-		}
-	}
-	else {
-		char* pPosStart = &buffer_[start];
-		char* pPosEnd = &buffer_[end];
-		std::string str = std::string(pPosStart, pPosEnd);
-		res = StringUtility::ConvertMultiToWide(str);
-	}
+	std::wstring res = Encoding::BytesToWString(
+		&buffer_[start], &buffer_[end], typeEncoding_);
 	return res;
 }
 bool Scanner::CompareMemory(int start, int end, const char* data) {

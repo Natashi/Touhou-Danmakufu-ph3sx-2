@@ -47,32 +47,13 @@ void script_scanner::copy_state(script_scanner* src) {
 	line = src->line;
 }
 
-std::wstring script_scanner::tostr(const char* b, const char* e) {
-	std::wstring res = L"";
-	while (b < e) {
-		res += _process_char(b);
-		b += Encoding::GetCharSize(encoding);
-	}
-	return res;
-}
-
-wchar_t script_scanner::_process_char(const char* ch) {
-	wchar_t res = L'\0';
-	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
-		res = *(wchar_t*)ch;
-		if (encoding == Encoding::UTF16BE)
-			res = (res >> 8) | (res << 8);
-	}
-	else res = *ch;
-	return res;
-}
 wchar_t script_scanner::current_char() {
-	return _process_char(current);
+	return Encoding::BytesToWChar(current, encoding);
 }
 wchar_t script_scanner::index_from_current_char(int index) {
 	const char* pos = current + index * Encoding::GetCharSize(encoding);
 	if (pos >= endPoint) return L'\0';
-	return _process_char(pos);
+	return Encoding::BytesToWChar(pos, encoding);
 }
 wchar_t script_scanner::next_char() {
 	current += Encoding::GetCharSize(encoding);
