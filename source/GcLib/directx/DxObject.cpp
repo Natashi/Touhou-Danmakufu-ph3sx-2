@@ -924,12 +924,12 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 	if (bomSize_ > src.size()) return true;
 
 	try {
-		if (bytePerChar_ == 1U) {
+		if (bytePerChar_ == 1U) {			//UTF-8
 			std::vector<char> tmp;
 
 			auto itr = src.begin() + bomSize_;
 			for (; itr != src.end();) {
-				char* ch = &*itr;
+				char* ch = itr._Ptr;
 				if (*ch == '\r' || *ch == '\n') {
 					++itr;
 					++ch;
@@ -946,23 +946,23 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 
 			if (tmp.size() > 0) listLine_.push_back(tmp);
 		}
-		else if (bytePerChar_ == 2U) {
+		else if (bytePerChar_ == 2U) {		//UTF-16
 			bool bLittleEndian = encoding_ == Encoding::UTF16LE;
 
+			//CR/LF base for comparisons
 			wchar_t CH_CR = L'\r';
 			wchar_t CH_LF = L'\n';
-			if (!bLittleEndian) {
-				CH_CR = (CH_CR >> 8) | (CH_CR << 8);
-				CH_LF = (CH_LF >> 8) | (CH_LF << 8);
+			if (!bLittleEndian) {	//Big Endian, swap bytes
+				ByteOrder::Reverse(&CH_CR, 2);
+				ByteOrder::Reverse(&CH_LF, 2);
 			}
 
 			auto push_line = [&](std::vector<char>& vecLine) {
-				if (!bLittleEndian && vecLine.size() > 0) {
-					if (vecLine.size() % 2 == 1) throw;
-					size_t iChar = 0;
-					for (wchar_t* pChar = (wchar_t*)&vecLine[0]; iChar < vecLine.size(); iChar += 2, ++pChar) {
-						wchar_t ch = *pChar;
-						*pChar = (ch >> 8) | (ch << 8);
+				if (vecLine.size() & 0b1) vecLine.pop_back();
+				if (!bLittleEndian) {
+					//Turn Big Endian into Little Endian
+					for (auto itr = vecLine.begin(); itr != vecLine.end(); itr += 2) {
+						std::swap(*itr, *(itr + 1));
 					}
 				}
 				listLine_.push_back(vecLine);
@@ -972,7 +972,7 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 
 			auto itr = src.begin() + bomSize_;
 			for (; itr != src.end();) {
-				wchar_t* wch = (wchar_t*)&*itr;
+				wchar_t* wch = (wchar_t*)itr._Ptr;
 				if (*wch == CH_CR || *wch == CH_LF) {
 					itr += 2;
 					++wch;
@@ -1016,13 +1016,11 @@ bool DxTextFileObject::Store() {
 		}
 		else if (encoding_ == Encoding::UTF16BE) {
 			if (str.size() > 0) {
-				std::vector<char> strSwap = str;
-				auto itrVec = strSwap.begin();
-				for (wchar_t* pChar = (wchar_t*)(&*itrVec); itrVec != strSwap.end(); itrVec += 2, ++pChar) {
-					wchar_t ch = *pChar;
-					*pChar = (ch >> 8) | (ch << 8);
+				std::vector<char> vecTmp = str;
+				for (auto itr = vecTmp.begin(); itr != vecTmp.end(); itr += 2) {
+					std::swap(*itr, *(itr + 1));
 				}
-				file_->Write(&strSwap[0], strSwap.size());
+				file_->Write(&vecTmp[0], vecTmp.size());
 			}
 
 			if (iLine < listLine_.size() - 1)
@@ -1050,7 +1048,7 @@ std::string DxTextFileObject::GetLineAsString(size_t line) {
 	return res;
 }
 std::wstring DxTextFileObject::GetLineAsWString(size_t line) {
-	line--; //Line number begins at 1
+	line--;		//Line number begins at 1
 	if (line >= listLine_.size()) return L"";
 
 	std::wstring res = L"";
@@ -1067,7 +1065,7 @@ std::wstring DxTextFileObject::GetLineAsWString(size_t line) {
 	return res;
 }
 void DxTextFileObject::SetLineAsString(const std::string& text, size_t line) {
-	line--; //Line number begins at 1
+	line--;		//Line number begins at 1
 	if (line >= listLine_.size()) return;
 
 	std::vector<char> newLine;

@@ -172,12 +172,14 @@ bool StgEnemyBossSceneObject::_NextStep() {
 	}
 
 	weak_ptr<ManagedScript> pWeakScript = activeData_->GetScriptPointer();
-	shared_ptr<ManagedScript> pScript = pWeakScript.lock();
-	if (!pScript->IsLoad()) {
-		throw gstd::wexception(StringUtility::Format(L"_NextStep: Script wasn't loaded or has been unloaded. [%d, %d]",
-			dataStep_, dataIndex_));
-	} else {
-		scriptManager->StartScript(pScript);
+	if (auto pScript = pWeakScript.lock()) {
+		if (!pScript->IsLoad()) {
+			throw gstd::wexception(StringUtility::Format(L"_NextStep: Script wasn't loaded or has been unloaded. [%d, %d]",
+				dataStep_, dataIndex_));
+		}
+		else {
+			scriptManager->StartScript(pScript);
+		}
 	}
 
 	scriptManager->RequestEventAll(StgStageScript::EV_START_BOSS_STEP);
@@ -272,16 +274,15 @@ void StgEnemyBossSceneObject::Activate() {
 	for (std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
 		size_t iData = 0;
 		for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : iStep) {
-			weak_ptr<ManagedScript> weakScript = pData->GetScriptPointer();
-			shared_ptr<ManagedScript> script = weakScript.lock();
+			shared_ptr<ManagedScript> pScript = pData->GetScriptPointer().lock();
 
-			if (script == nullptr)
+			if (pScript == nullptr)
 				throw gstd::wexception(StringUtility::Format(L"Script wasn't loaded: %s", pData->GetPath().c_str()));
-			if (!script->IsLoad()) {
+			if (!pScript->IsLoad()) {
 				size_t count = 0;
-				while (!script->IsLoad()) {
+				while (!pScript->IsLoad()) {
 					if (count % 1000 == 999) {
-						std::wstring log = StringUtility::Format(L"Waiting for script load: [%d, %d] %s", 
+						std::wstring log = StringUtility::Format(L"Waiting for script load: [%d, %d] %s",
 							iStep, iData, pData->GetPath());
 						Logger::WriteTop(log);
 					}
@@ -293,12 +294,12 @@ void StgEnemyBossSceneObject::Activate() {
 			if (stageController_->GetSystemInformation()->IsError()) continue;
 
 			std::vector<double> listLife;
-			gstd::value vLife = script->RequestEvent(StgStageScript::EV_REQUEST_LIFE);
-			if (script->IsRealValue(vLife) || script->IsIntValue(vLife)) {
+			gstd::value vLife = pScript->RequestEvent(StgStageScript::EV_REQUEST_LIFE);
+			if (pScript->IsRealValue(vLife) || pScript->IsIntValue(vLife)) {
 				double life = vLife.as_real();
 				listLife.push_back(life);
 			}
-			else if (script->IsRealArrayValue(vLife) || script->IsIntArrayValue(vLife)) {
+			else if (pScript->IsRealArrayValue(vLife) || pScript->IsIntArrayValue(vLife)) {
 				for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
 					double life = vLife.index_as_array(iLife).as_real();
 					listLife.push_back(life);
@@ -306,29 +307,29 @@ void StgEnemyBossSceneObject::Activate() {
 			}
 
 			if (listLife.size() == 0)
-				throw gstd::wexception(StringUtility::Format(L"EV_REQUEST_LIFE must return a value. (%s)", 
+				throw gstd::wexception(StringUtility::Format(L"EV_REQUEST_LIFE must return a value. (%s)",
 					pData->GetPath().c_str()));
 			pData->SetLifeList(listLife);
 
-			gstd::value vTimer = script->RequestEvent(StgStageScript::EV_REQUEST_TIMER);
+			gstd::value vTimer = pScript->RequestEvent(StgStageScript::EV_REQUEST_TIMER);
 			if (vTimer.has_data())
 				pData->SetOriginalSpellTimer(vTimer.as_real() * STANDARD_FPS);
 
-			gstd::value vSpell = script->RequestEvent(StgStageScript::EV_REQUEST_IS_SPELL);
+			gstd::value vSpell = pScript->RequestEvent(StgStageScript::EV_REQUEST_IS_SPELL);
 			if (vSpell.has_data())
 				pData->SetSpellCard(vSpell.as_boolean());
 
 			{
-				gstd::value vScore = script->RequestEvent(StgStageScript::EV_REQUEST_SPELL_SCORE);
+				gstd::value vScore = pScript->RequestEvent(StgStageScript::EV_REQUEST_SPELL_SCORE);
 				if (vScore.has_data()) pData->SetSpellScore(vScore.as_real());
 
-				gstd::value vLast = script->RequestEvent(StgStageScript::EV_REQUEST_IS_LAST_SPELL);
+				gstd::value vLast = pScript->RequestEvent(StgStageScript::EV_REQUEST_IS_LAST_SPELL);
 				if (vLast.has_data()) pData->SetLastSpell(vLast.as_boolean());
 
-				gstd::value vDurable = script->RequestEvent(StgStageScript::EV_REQUEST_IS_DURABLE_SPELL);
+				gstd::value vDurable = pScript->RequestEvent(StgStageScript::EV_REQUEST_IS_DURABLE_SPELL);
 				if (vDurable.has_data()) pData->SetDurable(vDurable.as_boolean());
 
-				gstd::value vAllDown = script->RequestEvent(StgStageScript::EV_REQUEST_REQUIRE_ALL_DOWN);
+				gstd::value vAllDown = pScript->RequestEvent(StgStageScript::EV_REQUEST_REQUIRE_ALL_DOWN);
 				if (vAllDown.has_data()) pData->SetRequireAllDown(vAllDown.as_boolean());
 			}
 
