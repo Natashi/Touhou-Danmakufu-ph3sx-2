@@ -50,9 +50,8 @@ Texture::Texture() {
 }
 Texture::Texture(Texture* texture) {
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
-#endif
+
 		data_ = texture->data_;
 	}
 }
@@ -61,18 +60,16 @@ Texture::~Texture() {
 }
 void Texture::Release() {
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
-#endif
+
 		if (data_) {
 			TextureManager* manager = data_->manager_;
 			if (manager) {
 				auto itrData = manager->IsDataExistsItr(data_->name_);
 
 				//No other references other than the one here and the one in TextureManager
-				if (data_.use_count() == 2) {
+				if (data_.use_count() <= 2)
 					manager->_ReleaseTextureData(itrData);
-				}
 			}
 			data_ = nullptr;
 		}
@@ -80,114 +77,68 @@ void Texture::Release() {
 }
 std::wstring Texture::GetName() {
 	std::wstring res = L"";
-	{
-#ifdef __L_TEXTURE_THREADSAFE
-		Lock lock(TextureManager::GetBase()->GetLock());
-#endif
-		if (data_) res = data_->GetName();
-	}
+	if (data_) res = data_->GetName();
 	return res;
 }
 
 bool Texture::CreateFromData(const std::wstring& name) {
-	bool res = false;
-	{
-#ifdef __L_TEXTURE_THREADSAFE
-		Lock lock(TextureManager::GetBase()->GetLock());
-#endif
-		if (data_) Release();
+	if (data_) Release();
 
-		TextureManager* manager = TextureManager::GetBase();
-		auto itrData = manager->IsDataExistsItr(name);
+	TextureManager* manager = TextureManager::GetBase();
+	auto itrData = manager->IsDataExistsItr(name);
 
-		if (itrData != manager->mapTextureData_.end())
-			data_ = itrData->second;
-		res = data_ != nullptr;
-	}
-	return res;
+	if (itrData != manager->mapTextureData_.end())
+		data_ = itrData->second;
+	return data_ != nullptr;
 }
 bool Texture::CreateFromData(shared_ptr<TextureData> data) {
-	bool res = false;
-	{
-		Lock lock(TextureManager::GetBase()->GetLock());
-
-		if (data_) Release();
-
-		if (data)
-			data_ = data;
-		res = data_ != nullptr;
-	}
-	return res;
+	if (data_) Release();
+	if (data) data_ = data;
+	return data_ != nullptr;
 }
 bool Texture::CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo) {
 	//path = PathProperty::GetUnique(path);
+	if (data_) Release();
 
-	bool res = false;
-	{
-		Lock lock(TextureManager::GetBase()->GetLock());
-
-		if (data_) Release();
-
-		TextureManager* manager = TextureManager::GetBase();
-		shared_ptr<Texture> texture = manager->CreateFromFile(path, genMipmap, flgNonPowerOfTwo);
-		if (texture) data_ = texture->data_;
-		res = data_ != nullptr;
-	}
-
-	return res;
+	TextureManager* manager = TextureManager::GetBase();
+	shared_ptr<Texture> texture = manager->CreateFromFile(path, genMipmap, flgNonPowerOfTwo);
+	if (texture) data_ = texture->data_;
+	return data_ != nullptr;
 }
 bool Texture::CreateRenderTarget(const std::wstring& name, size_t width, size_t height) {
-	bool res = false;
-	{
-		Lock lock(TextureManager::GetBase()->GetLock());
+	if (data_) Release();
 
-		if (data_) Release();
-
-		TextureManager* manager = TextureManager::GetBase();
-		shared_ptr<Texture> texture = manager->CreateRenderTarget(name, width, height);
-		if (texture) data_ = texture->data_;
-		res = data_ != nullptr;
-	}
-	return res;
+	TextureManager* manager = TextureManager::GetBase();
+	shared_ptr<Texture> texture = manager->CreateRenderTarget(name, width, height);
+	if (texture) data_ = texture->data_;
+	return data_ != nullptr;
 }
 bool Texture::CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo) {
 	//path = PathProperty::GetUnique(path);
 
-	bool res = false;
-	{
-		Lock lock(TextureManager::GetBase()->GetLock());
+	if (data_) Release();
 
-		if (data_) Release();
-
-		TextureManager* manager = TextureManager::GetBase();
-		shared_ptr<Texture> texture = manager->CreateFromFileInLoadThread(path, bLoadImageInfo, genMipmap, flgNonPowerOfTwo);
-		if (texture) data_ = texture->data_;
-		res = data_ != nullptr;
-	}
-
-	return res;
+	TextureManager* manager = TextureManager::GetBase();
+	shared_ptr<Texture> texture = manager->CreateFromFileInLoadThread(path, bLoadImageInfo, genMipmap, flgNonPowerOfTwo);
+	if (texture) data_ = texture->data_;
+	return data_ != nullptr;
 }
-void Texture::SetTexture(IDirect3DTexture9 *pTexture) {
-	{
-#ifdef __L_TEXTURE_THREADSAFE
-		Lock lock(TextureManager::GetBase()->GetLock());
-#endif
-		if (data_) Release();
+void Texture::SetTexture(IDirect3DTexture9* pTexture) {
+	if (data_) Release();
 
-		TextureData* textureData = new TextureData();
-		textureData->pTexture_ = pTexture;
-		D3DSURFACE_DESC desc;
-		pTexture->GetLevelDesc(0, &desc);
+	TextureData* textureData = new TextureData();
+	textureData->pTexture_ = pTexture;
+	D3DSURFACE_DESC desc;
+	pTexture->GetLevelDesc(0, &desc);
 
-		D3DXIMAGE_INFO* infoImage = &textureData->infoImage_;
-		infoImage->Width = desc.Width;
-		infoImage->Height = desc.Height;
-		infoImage->Format = desc.Format;
-		infoImage->ImageFileFormat = D3DXIFF_BMP;
-		infoImage->ResourceType = D3DRTYPE_TEXTURE;
+	D3DXIMAGE_INFO* infoImage = &textureData->infoImage_;
+	infoImage->Width = desc.Width;
+	infoImage->Height = desc.Height;
+	infoImage->Format = desc.Format;
+	infoImage->ImageFileFormat = D3DXIFF_BMP;
+	infoImage->ResourceType = D3DRTYPE_TEXTURE;
 
-		data_ = shared_ptr<TextureData>(textureData);
-	}
+	data_ = shared_ptr<TextureData>(textureData);
 }
 
 IDirect3DTexture9* Texture::GetD3DTexture() {
@@ -328,18 +279,15 @@ bool TextureManager::Initialize() {
 }
 void TextureManager::Clear() {
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(lock_);
-#endif
+
 		mapTexture_.clear();
 		mapTextureData_.clear();
 	}
 }
 void TextureManager::_ReleaseTextureData(const std::wstring& name) {
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(lock_);
-#endif
 
 		auto itr = mapTextureData_.find(name);
 		if (itr != mapTextureData_.end()) {
@@ -351,9 +299,7 @@ void TextureManager::_ReleaseTextureData(const std::wstring& name) {
 }
 void TextureManager::_ReleaseTextureData(std::map<std::wstring, shared_ptr<TextureData>>::iterator itr) {
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(lock_);
-#endif
 
 		if (itr != mapTextureData_.end()) {
 			const std::wstring& name = itr->second->name_;
@@ -770,36 +716,22 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 }
 
 shared_ptr<TextureData> TextureManager::GetTextureData(const std::wstring& name) {
-	shared_ptr<TextureData> res = nullptr;
-	{
-		Lock lock(lock_);
-
-		auto itr = mapTextureData_.find(name);
-		if (itr != mapTextureData_.end()) {
-			res = itr->second;
-		}
-	}
-	return res;
+	auto itr = mapTextureData_.find(name);
+	if (itr != mapTextureData_.end())
+		return itr->second;
+	return nullptr;
 }
 
 shared_ptr<Texture> TextureManager::GetTexture(const std::wstring& name) {
-	shared_ptr<Texture> res;
-	{
-		Lock lock(lock_);
-
-		auto itr = mapTexture_.find(name);
-		if (itr != mapTexture_.end()) {
-			res = itr->second;
-		}
-	}
-	return res;
+	auto itr = mapTexture_.find(name);
+	if (itr != mapTexture_.end())
+		return itr->second;
+	return nullptr;
 }
 
 void TextureManager::Add(const std::wstring& name, shared_ptr<Texture> texture) {
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(lock_);
-#endif
 
 		bool bExist = mapTexture_.find(name) != mapTexture_.end();
 		if (!bExist) {
@@ -809,42 +741,23 @@ void TextureManager::Add(const std::wstring& name, shared_ptr<Texture> texture) 
 }
 void TextureManager::Release(const std::wstring& name) {
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(lock_);
-#endif
 
 		mapTexture_.erase(name);
 	}
 }
 void TextureManager::Release(std::map<std::wstring, shared_ptr<Texture>>::iterator itr) {
 	{
-#ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(lock_);
-#endif
 
 		mapTexture_.erase(itr);
 	}
 }
 bool TextureManager::IsDataExists(const std::wstring& name) {
-	bool res = false;
-	{
-#ifdef __L_TEXTURE_THREADSAFE
-		Lock lock(lock_);
-#endif
-
-		res = mapTextureData_.find(name) != mapTextureData_.end();
-	}
-	return res;
+	return mapTextureData_.find(name) != mapTextureData_.end();
 }
 std::map<std::wstring, shared_ptr<TextureData>>::iterator TextureManager::IsDataExistsItr(const std::wstring& name, bool* bRes) {
-	auto res = mapTextureData_.end();
-	{
-#ifdef __L_TEXTURE_THREADSAFE
-		Lock lock(lock_);
-#endif
-
-		res = mapTextureData_.find(name);
-	}
+	auto res = mapTextureData_.find(name);
 	if (bRes) *bRes = res != mapTextureData_.end();
 	return res;
 }

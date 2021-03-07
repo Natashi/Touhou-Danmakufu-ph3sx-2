@@ -194,9 +194,6 @@ namespace stdfs = std::filesystem;
 using path_t = stdfs::path;
 #endif
 
-//Guarantee thread-safety in texture management
-//#define __L_TEXTURE_THREADSAFE
-
 //------------------------------------------------------------------------------
 
 //Pointer utilities
