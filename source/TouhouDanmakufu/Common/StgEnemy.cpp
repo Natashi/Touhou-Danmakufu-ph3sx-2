@@ -171,13 +171,13 @@ bool StgEnemyBossSceneObject::_NextStep() {
 		objectManager->ActivateObject(obj->GetObjectID(), true);
 	}
 
-	shared_ptr<ManagedScript> script = activeData_->GetScriptPointer();
-	if (!script->IsLoad()) {
+	weak_ptr<ManagedScript> pWeakScript = activeData_->GetScriptPointer();
+	shared_ptr<ManagedScript> pScript = pWeakScript.lock();
+	if (!pScript->IsLoad()) {
 		throw gstd::wexception(StringUtility::Format(L"_NextStep: Script wasn't loaded or has been unloaded. [%d, %d]",
 			dataStep_, dataIndex_));
-	}
-	else {
-		scriptManager->StartScript(script);
+	} else {
+		scriptManager->StartScript(pScript);
 	}
 
 	scriptManager->RequestEventAll(StgStageScript::EV_START_BOSS_STEP);
@@ -272,7 +272,8 @@ void StgEnemyBossSceneObject::Activate() {
 	for (std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
 		size_t iData = 0;
 		for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : iStep) {
-			shared_ptr<ManagedScript> script = pData->GetScriptPointer();
+			weak_ptr<ManagedScript> weakScript = pData->GetScriptPointer();
+			shared_ptr<ManagedScript> script = weakScript.lock();
 
 			if (script == nullptr)
 				throw gstd::wexception(StringUtility::Format(L"Script wasn't loaded: %s", pData->GetPath().c_str()));
