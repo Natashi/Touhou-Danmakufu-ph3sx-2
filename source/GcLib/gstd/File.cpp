@@ -296,6 +296,7 @@ std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir) {
 }
 
 File::File() {
+	hFile_ = nullptr;
 	path_ = L"";
 	perms_ = 0;
 }
@@ -311,7 +312,7 @@ void File::Delete() {
 	::DeleteFile(path_.c_str());
 }
 bool File::IsExists() {
-	if (hFile_.is_open()) return true;
+	if (IsOpen()) return true;
 	return IsExists(path_);
 }
 bool File::IsDirectory() {
@@ -319,7 +320,7 @@ bool File::IsDirectory() {
 }
 size_t File::GetSize() {
 	size_t res = 0;
-	if (hFile_.is_open()) {
+	if (IsOpen()) {
 		size_t prev = GetFilePointer();
 		SetFilePointerEnd();
 		size_t size = GetFilePointer();
@@ -358,15 +359,16 @@ bool File::Open(DWORD typeAccess) {
 	if (modeAccess == 0) return false;
 	perms_ = typeAccess;
 
-	hFile_.clear();
-	hFile_.exceptions(std::ios::failbit);
+	hFile_ = new std::fstream();
+
+	hFile_->exceptions(std::ios::failbit);
 	try {
 		try {
-			hFile_.open(path_, modeAccess | std::ios::binary);
+			hFile_->open(path_, modeAccess | std::ios::binary);
 		}
 		catch (std::system_error& e) {
 			if (typeAccess == WRITE)	//Open failed, file might not exist, try creating one
-				hFile_.open(path_, ACC_NEWWRITEONLY | std::ios::in | std::ios::binary);
+				hFile_->open(path_, ACC_NEWWRITEONLY | std::ios::in | std::ios::binary);
 			else throw e;
 		}
 	}
@@ -375,54 +377,61 @@ bool File::Open(DWORD typeAccess) {
 		lastError_ = StringUtility::FormatToWide("%s (code=%d)", 
 			strerror(code), code);
 	}
-	hFile_.exceptions(0);
+	hFile_->exceptions(0);
 
+	if (hFile_->is_open()) {
 #if _DEBUG
-	if (hFile_.is_open()) {
 		auto itr = mapFileUseCount_.find(path_);
 		if (itr != mapFileUseCount_.end())
 			++(itr->second);
 		else
 			mapFileUseCount_.insert(std::make_pair(path_, 1));
-	}
 #endif
-
-	return hFile_.is_open();
+		return true;
+	}
+	return false;
 }
 void File::Close() {
+	if (hFile_) {
 #if _DEBUG
-	if (hFile_.is_open()) {
-		auto itr = mapFileUseCount_.find(path_);
-		if (itr != mapFileUseCount_.end())
-			--(itr->second);
-	}
+		if (hFile_->is_open()) {
+			auto itr = mapFileUseCount_.find(path_);
+			if (itr != mapFileUseCount_.end())
+				--(itr->second);
+		}
 #endif
-	hFile_.close();
+		hFile_->close();
+		delete hFile_;
+	}
+	hFile_ = nullptr;
 	perms_ = 0;
 }
 
 DWORD File::Read(LPVOID buf, DWORD size) {
-	hFile_.clear();
-	hFile_.read((char*)buf, size);
-	return hFile_.gcount();
+	if (!IsOpen()) return 0;
+	hFile_->clear();
+	hFile_->read((char*)buf, size);
+	return hFile_->gcount();
 }
 DWORD File::Write(LPVOID buf, DWORD size) {
-	hFile_.write((char*)buf, size);
-	return hFile_.good();
+	if (!IsOpen()) return 0;
+	hFile_->write((char*)buf, size);
+	return hFile_->good();
 }
 
 bool File::Seek(size_t offset, DWORD way, AccessType type) {
-	if (!hFile_.is_open()) return false;
-	hFile_.clear();
+	if (!IsOpen()) return false;
+	hFile_->clear();
 	if (type == READ)
-		hFile_.seekg(offset, way);
+		hFile_->seekg(offset, way);
 	else
-		hFile_.seekp(offset, way);
-	return hFile_.good();
+		hFile_->seekp(offset, way);
+	return hFile_->good();
 }
 size_t File::GetFilePointer(AccessType type) {
-	if (type == READ) return hFile_.tellg();
-	else return hFile_.tellp();
+	if (!IsOpen()) return 0;
+	if (type == READ) return hFile_->tellg();
+	else return hFile_->tellp();
 }
 
 //*******************************************************************
@@ -775,11 +784,11 @@ DWORD ManagedFileReader::Read(LPVOID buf, DWORD size) {
 	offset_ += res;
 	return res;
 }
-bool ManagedFileReader::SetFilePointerBegin() {
+bool ManagedFileReader::SetFilePointerBegin(File::AccessType type) {
 	bool res = false;
 	offset_ = 0;
 	if (type_ == TYPE_NORMAL) {
-		res = file_->SetFilePointerBegin();
+		res = file_->SetFilePointerBegin(type);
 	}
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
@@ -789,10 +798,10 @@ bool ManagedFileReader::SetFilePointerBegin() {
 	}
 	return res;
 }
-bool ManagedFileReader::SetFilePointerEnd() {
+bool ManagedFileReader::SetFilePointerEnd(File::AccessType type) {
 	bool res = false;
 	if (type_ == TYPE_NORMAL) {
-		res = file_->SetFilePointerEnd();
+		res = file_->SetFilePointerEnd(type);
 	}
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {
@@ -802,10 +811,10 @@ bool ManagedFileReader::SetFilePointerEnd() {
 	}
 	return res;
 }
-bool ManagedFileReader::Seek(size_t offset) {
+bool ManagedFileReader::Seek(size_t offset, File::AccessType type) {
 	bool res = false;
 	if (type_ == TYPE_NORMAL) {
-		res = file_->Seek(offset, std::ios::beg, File::READ);
+		res = file_->Seek(offset, std::ios::beg, type);
 	}
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		res = buffer_ != nullptr;
@@ -813,10 +822,10 @@ bool ManagedFileReader::Seek(size_t offset) {
 	if (res) offset_ = offset;
 	return res;
 }
-size_t ManagedFileReader::GetFilePointer() {
+size_t ManagedFileReader::GetFilePointer(File::AccessType type) {
 	size_t res = 0;
 	if (type_ == TYPE_NORMAL) {
-		res = file_->GetFilePointer();
+		res = file_->GetFilePointer(type);
 	}
 	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
 		if (buffer_) {

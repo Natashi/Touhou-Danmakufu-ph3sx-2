@@ -64,32 +64,6 @@ namespace gstd {
 	};
 
 	//*******************************************************************
-	//FileReader
-	//*******************************************************************
-	class FileReader : public Reader {
-		friend FileManager;
-	protected:
-		std::wstring pathOriginal_;
-		void _SetOriginalPath(const std::wstring& path) { pathOriginal_ = path; }
-	public:
-		virtual bool Open() = 0;
-		virtual void Close() = 0;
-		virtual size_t GetFileSize() = 0;
-		virtual bool SetFilePointerBegin() = 0;
-		virtual bool SetFilePointerEnd() = 0;
-		virtual bool Seek(size_t offset) = 0;
-		virtual size_t GetFilePointer() = 0;
-		virtual bool IsArchived() { return false; }
-		virtual bool IsCompressed() { return false; }
-
-		std::wstring& GetOriginalPath() { return pathOriginal_; }
-		std::string ReadAllString() {
-			SetFilePointerBegin();
-			return ReadString(GetFileSize());
-		}
-	};
-
-	//*******************************************************************
 	//ByteBuffer
 	//*******************************************************************
 	class ByteBuffer : public Writer, public Reader {
@@ -139,7 +113,7 @@ namespace gstd {
 			WRITEONLY = 0x4,
 		};
 	protected:
-		std::fstream hFile_;
+		std::fstream* hFile_;
 		std::wstring path_;
 		DWORD perms_;
 	public:
@@ -161,9 +135,11 @@ namespace gstd {
 		bool IsExists();
 		bool IsDirectory();
 
+		bool IsOpen() { return hFile_ && hFile_->is_open(); }
+
 		size_t GetSize();
 		std::wstring& GetPath() { return path_; }
-		const std::fstream& GetFileHandle() { return hFile_; }
+		const std::fstream* GetFileHandle() { return hFile_; }
 
 		virtual bool Open();
 		bool Open(DWORD typeAccess);
@@ -178,6 +154,35 @@ namespace gstd {
 		size_t GetFilePointer(AccessType type = READ);
 	};
 
+	//*******************************************************************
+	//FileReader
+	//*******************************************************************
+	class FileReader : public Reader {
+		friend FileManager;
+	protected:
+		std::wstring pathOriginal_;
+
+		void _SetOriginalPath(const std::wstring& path) { pathOriginal_ = path; }
+	public:
+		virtual bool Open() = 0;
+		virtual void Close() = 0;
+
+		virtual size_t GetFileSize() = 0;
+
+		virtual bool SetFilePointerBegin(File::AccessType type = File::READ) = 0;
+		virtual bool SetFilePointerEnd(File::AccessType type = File::READ) = 0;
+		virtual bool Seek(size_t offset, File::AccessType type = File::READ) = 0;
+		virtual size_t GetFilePointer(File::AccessType type = File::READ) = 0;
+
+		virtual bool IsArchived() { return false; }
+		virtual bool IsCompressed() { return false; }
+
+		std::wstring& GetOriginalPath() { return pathOriginal_; }
+		std::string ReadAllString() {
+			SetFilePointerBegin(File::READ);
+			return ReadString(GetFileSize());
+		}
+	};
 
 	class ArchiveFileEntry;
 	class ArchiveFile;
@@ -318,10 +323,11 @@ namespace gstd {
 		virtual void Close();
 		virtual size_t GetFileSize();
 		virtual DWORD Read(LPVOID buf, DWORD size);
-		virtual bool SetFilePointerBegin();
-		virtual bool SetFilePointerEnd();
-		virtual bool Seek(size_t offset);
-		virtual size_t GetFilePointer();
+
+		virtual bool SetFilePointerBegin(File::AccessType type = File::READ);
+		virtual bool SetFilePointerEnd(File::AccessType type = File::READ);
+		virtual bool Seek(size_t offset, File::AccessType type = File::READ);
+		virtual size_t GetFilePointer(File::AccessType type = File::READ);
 
 		virtual bool IsArchived();
 		virtual bool IsCompressed();
