@@ -223,3 +223,5 @@ using std::weak_ptr;
 #define API_DEFINE_GETSET(_type, _name, _target) \
 			API_DEFINE_GET(_type, _name, _target) \
 			API_DEFINE_SET(_type, _name, _target)
+
+#define LOCK_WEAK(_v, _p) if (auto _v = (_p).lock())
