@@ -799,14 +799,12 @@ void StgShotObject::_DeleteInLife() {
 	_SendDeleteEvent(StgShotManager::BIT_EV_DELETE_IMMEDIATE);
 
 	auto objectManager = stageController_->GetMainObjectManager();
+	auto scriptManager = stageController_->GetScriptManager();
 
-	if (typeOwner_ == StgShotObject::OWNER_PLAYER) {
-		auto scriptManager = stageController_->GetScriptManager();
-		shared_ptr<ManagedScript> scriptPlayer = scriptManager->GetPlayerScript();
-
+	if (scriptManager != nullptr && typeOwner_ == StgShotObject::OWNER_PLAYER) {
 		float posX = GetPositionX();
 		float posY = GetPositionY();
-		if (scriptManager != nullptr && scriptPlayer != nullptr) {
+		LOCK_WEAK (scriptPlayer, scriptManager->GetPlayerScript()) {
 			float listPos[2] = { posX, posY };
 
 			value listScriptValue[3];
@@ -867,35 +865,32 @@ void StgShotObject::_CommonWorkTask() {
 void StgShotObject::_SendDeleteEvent(int bit) {
 	if (typeOwner_ != OWNER_ENEMY) return;
 
-	auto stageScriptManager = stageController_->GetScriptManager();
-	shared_ptr<ManagedScript> scriptShot = stageScriptManager->GetShotScript();
-	if (scriptShot == nullptr) return;
-
 	StgShotManager* shotManager = stageController_->GetShotManager();
-	bool bSendEnable = shotManager->IsDeleteEventEnable(bit);
-	if (!bSendEnable) return;
+	if (!shotManager->IsDeleteEventEnable(bit)) return;
 
-	double listPos[2] = { GetPositionX(), GetPositionY() };
+	LOCK_WEAK(scriptShot, stageController_->GetScriptManager()->GetShotScript()) {
+		double listPos[2] = { GetPositionX(), GetPositionY() };
 
-	int typeEvent = 0;
-	switch (bit) {
-	case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
-		typeEvent = StgStageShotScript::EV_DELETE_SHOT_IMMEDIATE;
-		break;
-	case StgShotManager::BIT_EV_DELETE_TO_ITEM:
-		typeEvent = StgStageShotScript::EV_DELETE_SHOT_TO_ITEM;
-		break;
-	case StgShotManager::BIT_EV_DELETE_FADE:
-		typeEvent = StgStageShotScript::EV_DELETE_SHOT_FADE;
-		break;
+		int typeEvent = 0;
+		switch (bit) {
+		case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
+			typeEvent = StgStageShotScript::EV_DELETE_SHOT_IMMEDIATE;
+			break;
+		case StgShotManager::BIT_EV_DELETE_TO_ITEM:
+			typeEvent = StgStageShotScript::EV_DELETE_SHOT_TO_ITEM;
+			break;
+		case StgShotManager::BIT_EV_DELETE_FADE:
+			typeEvent = StgStageShotScript::EV_DELETE_SHOT_FADE;
+			break;
+		}
+
+		value listScriptValue[4];
+		listScriptValue[0] = ManagedScript::CreateIntValue(idObject_);
+		listScriptValue[1] = ManagedScript::CreateRealArrayValue(listPos, 2U);
+		listScriptValue[2] = ManagedScript::CreateBooleanValue(false);
+		listScriptValue[3] = ManagedScript::CreateIntValue(GetShotDataID());
+		scriptShot->RequestEvent(typeEvent, listScriptValue, 4);
 	}
-
-	value listScriptValue[4];
-	listScriptValue[0] = ManagedScript::CreateIntValue(idObject_);
-	listScriptValue[1] = ManagedScript::CreateRealArrayValue(listPos, 2U);
-	listScriptValue[2] = ManagedScript::CreateBooleanValue(false);
-	listScriptValue[3] = ManagedScript::CreateIntValue(GetShotDataID());
-	scriptShot->RequestEvent(typeEvent, listScriptValue, 4);
 }
 
 void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
@@ -1424,19 +1419,18 @@ void StgNormalShotObject::RenderOnShotManager() {
 void StgNormalShotObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	auto stageScriptManager = stageController_->GetScriptManager();
-	shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript();
 
 	float posX = GetPositionX();
 	float posY = GetPositionY();
-	if (scriptItem) {
+	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
 		float listPos[2] = { posX, posY };
 
 		gstd::value listScriptValue[4];
-		listScriptValue[0] = scriptItem->CreateIntValue(idObject_);
-		listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
-		listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
-		listScriptValue[3] = scriptItem->CreateIntValue(GetShotDataID());
-		scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
+		listScriptValue[0] = itemScript->CreateIntValue(idObject_);
+		listScriptValue[1] = itemScript->CreateRealArrayValue(listPos, 2U);
+		listScriptValue[2] = itemScript->CreateBooleanValue(flgPlayerCollision);
+		listScriptValue[3] = itemScript->CreateIntValue(GetShotDataID());
+		itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 	}
 
 	if (itemManager->IsDefaultBonusItemEnable() && !flgPlayerCollision) {
@@ -1733,7 +1727,8 @@ void StgLooseLaserObject::RenderOnShotManager() {
 void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	auto stageScriptManager = stageController_->GetScriptManager();
-	shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript();
+
+	shared_ptr<ManagedScript> itemScript = stageScriptManager->GetItemScript().lock();
 
 	int ex = GetPositionX();
 	int ey = GetPositionY();
@@ -1749,15 +1744,15 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 		float posX = ex - itemPos * move_.x;
 		float posY = ey - itemPos * move_.y;
 
-		if (scriptItem) {
+		if (itemScript) {
 			listPos[0] = posX;
 			listPos[1] = posY;
 
-			listScriptValue[0] = scriptItem->CreateIntValue(idObject_);
-			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
-			listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
-			listScriptValue[3] = scriptItem->CreateIntValue(GetShotDataID());
-			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
+			listScriptValue[0] = itemScript->CreateIntValue(idObject_);
+			listScriptValue[1] = itemScript->CreateRealArrayValue(listPos, 2U);
+			listScriptValue[2] = itemScript->CreateBooleanValue(flgPlayerCollision);
+			listScriptValue[3] = itemScript->CreateIntValue(GetShotDataID());
+			itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 
 		if (itemManager->IsDefaultBonusItemEnable() && delay_.time == 0 && !flgPlayerCollision) {
@@ -2063,7 +2058,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	auto stageScriptManager = stageController_->GetScriptManager();
-	shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript();
+
+	shared_ptr<ManagedScript> itemScript = stageScriptManager->GetItemScript().lock();
 
 	float listPos[2];
 	gstd::value listScriptValue[4];
@@ -2072,15 +2068,15 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 		float itemX = posX_ + itemPos * move_.x;
 		float itemY = posY_ + itemPos * move_.y;
 
-		if (scriptItem) {
+		if (itemScript) {
 			listPos[0] = itemX;
 			listPos[1] = itemY;
 
-			listScriptValue[0] = scriptItem->CreateIntValue(idObject_);
-			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
-			listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
-			listScriptValue[3] = scriptItem->CreateIntValue(GetShotDataID());
-			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
+			listScriptValue[0] = itemScript->CreateIntValue(idObject_);
+			listScriptValue[1] = itemScript->CreateRealArrayValue(listPos, 2U);
+			listScriptValue[2] = itemScript->CreateBooleanValue(flgPlayerCollision);
+			listScriptValue[3] = itemScript->CreateIntValue(GetShotDataID());
+			itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 
 		if (itemManager->IsDefaultBonusItemEnable() && delay_.time == 0 && !flgPlayerCollision) {
@@ -2396,22 +2392,23 @@ void StgCurveLaserObject::RenderOnShotManager() {
 void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	auto stageScriptManager = stageController_->GetScriptManager();
-	shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript();
+
+	shared_ptr<ManagedScript> itemScript = stageScriptManager->GetItemScript().lock();
 
 	gstd::value listScriptValue[4];
-	if (scriptItem) {
-		listScriptValue[0] = scriptItem->CreateIntValue(idObject_);
-		listScriptValue[2] = scriptItem->CreateBooleanValue(flgPlayerCollision);
-		listScriptValue[3] = scriptItem->CreateIntValue(GetShotDataID());
+	if (itemScript) {
+		listScriptValue[0] = itemScript->CreateIntValue(idObject_);
+		listScriptValue[2] = itemScript->CreateBooleanValue(flgPlayerCollision);
+		listScriptValue[3] = itemScript->CreateIntValue(GetShotDataID());
 	}
 
 	size_t countToItem = 0U;
 
 	auto RequestItem = [&](float ix, float iy) {
-		if (scriptItem) {
+		if (itemScript) {
 			float listPos[2] = { ix, iy };
-			listScriptValue[1] = scriptItem->CreateRealArrayValue(listPos, 2U);
-			scriptItem->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
+			listScriptValue[1] = itemScript->CreateRealArrayValue(listPos, 2U);
+			itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 		if (itemManager->IsDefaultBonusItemEnable() && delay_.time == 0 && !flgPlayerCollision) {
 			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {

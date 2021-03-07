@@ -20,9 +20,9 @@ protected:
 	int64_t idItemScript_;
 	int64_t idShotScript_;
 
-	shared_ptr<ManagedScript> ptrPlayerScript_;
-	shared_ptr<ManagedScript> ptrItemScript_;
-	shared_ptr<ManagedScript> ptrShotScript_;
+	weak_ptr<ManagedScript> ptrPlayerScript_;
+	weak_ptr<ManagedScript> ptrItemScript_;
+	weak_ptr<ManagedScript> ptrShotScript_;
 public:
 	StgStageScriptManager(StgStageController* stageController);
 	virtual ~StgStageScriptManager();
@@ -36,12 +36,12 @@ public:
 	int64_t GetPlayerScriptID() { return idPlayerScript_; }
 	int64_t GetItemScriptID() { return idItemScript_; }
 	int64_t GetShotScriptID() { return idShotScript_; }
-	void SetPlayerScript(shared_ptr<ManagedScript> id);
-	void SetItemScript(shared_ptr<ManagedScript> id);
-	void SetShotScript(shared_ptr<ManagedScript> id);
-	shared_ptr<ManagedScript> GetPlayerScript() { return ptrPlayerScript_; }
-	shared_ptr<ManagedScript> GetItemScript() { return ptrItemScript_; }
-	shared_ptr<ManagedScript> GetShotScript() { return ptrShotScript_; }
+	void SetPlayerScript(weak_ptr<ManagedScript> id);
+	void SetItemScript(weak_ptr<ManagedScript> id);
+	void SetShotScript(weak_ptr<ManagedScript> id);
+	weak_ptr<ManagedScript> GetPlayerScript() { return ptrPlayerScript_; }
+	weak_ptr<ManagedScript> GetItemScript() { return ptrItemScript_; }
+	weak_ptr<ManagedScript> GetShotScript() { return ptrShotScript_; }
 };
 
 /**********************************************************

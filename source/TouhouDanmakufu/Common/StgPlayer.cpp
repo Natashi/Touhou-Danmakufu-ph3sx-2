@@ -278,8 +278,7 @@ void StgPlayerObject::SendGrazeEvent() {
 	script_->RequestEvent(StgStagePlayerScript::EV_GRAZE, listScriptValue, 3);
 
 	auto stageScriptManager = stageController_->GetScriptManager();
-	shared_ptr<ManagedScript> itemScript = stageScriptManager->GetItemScript();
-	if (itemScript)
+	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript())
 		itemScript->RequestEvent(StgStagePlayerScript::EV_GRAZE, listScriptValue, 3);
 }
 

@@ -75,7 +75,7 @@ shared_ptr<ManagedScript> ScriptManager::GetScript(int64_t id, bool bSearchRelat
 
 			if (bSearchRelative) {
 				for (auto& pWeakManager : listRelativeManager_) {
-					if (auto pManager = pWeakManager.lock()) {
+					LOCK_WEAK(pManager, pWeakManager) {
 						for (auto& pScript : pManager->listScriptRun_) {
 							if (pScript->GetScriptID() == id) {
 								res = pScript;

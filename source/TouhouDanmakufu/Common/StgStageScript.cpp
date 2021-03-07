@@ -15,13 +15,8 @@ StgStageScriptManager::StgStageScriptManager(StgStageController* stageController
 	idPlayerScript_ = ID_INVALID;
 	idItemScript_ = ID_INVALID;
 	idShotScript_ = ID_INVALID;
-
-	ptrPlayerScript_ = nullptr;
-	ptrItemScript_ = nullptr;
-	ptrShotScript_ = nullptr;
 }
 StgStageScriptManager::~StgStageScriptManager() {
-
 }
 
 void StgStageScriptManager::SetError(std::wstring error) {
@@ -57,17 +52,17 @@ shared_ptr<ManagedScript> StgStageScriptManager::Create(int type) {
 	return res;
 }
 
-void StgStageScriptManager::SetPlayerScript(shared_ptr<ManagedScript> id) {
+void StgStageScriptManager::SetPlayerScript(weak_ptr<ManagedScript> id) {
 	ptrPlayerScript_ = id;
-	idPlayerScript_ = id->GetScriptID();
+	LOCK_WEAK(pScript, id) idPlayerScript_ = pScript->GetScriptID();
 }
-void StgStageScriptManager::SetItemScript(shared_ptr<ManagedScript> id) {
+void StgStageScriptManager::SetItemScript(weak_ptr<ManagedScript> id) {
 	ptrItemScript_ = id;
-	idItemScript_ = id->GetScriptID();
+	LOCK_WEAK(pScript, id) idItemScript_ = pScript->GetScriptID();
 }
-void StgStageScriptManager::SetShotScript(shared_ptr<ManagedScript> id) {
+void StgStageScriptManager::SetShotScript(weak_ptr<ManagedScript> id) {
 	ptrShotScript_ = id;
-	idShotScript_ = id->GetScriptID();
+	LOCK_WEAK(pScript, id) idShotScript_ = pScript->GetScriptID();
 }
 
 

@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_ENEMY__
-#define __TOUHOUDANMAKUFU_DNHSTG_ENEMY__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -157,6 +156,7 @@ public:
 
 	std::wstring& GetPath() { return path_; }
 	void SetPath(const std::wstring& path) { path_ = path; }
+
 	weak_ptr<ManagedScript> GetScriptPointer() { return ptrScript_; }
 	void SetScriptPointer(weak_ptr<ManagedScript> id) { ptrScript_ = id; }
 
@@ -191,5 +191,3 @@ public:
 	void AddPlayerSpellCount() { countPlayerSpell_++; }
 	int GetPlayerSpellCount() { return countPlayerSpell_; }
 };
-
-#endif

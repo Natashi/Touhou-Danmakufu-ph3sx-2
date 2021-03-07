@@ -171,8 +171,7 @@ bool StgEnemyBossSceneObject::_NextStep() {
 		objectManager->ActivateObject(obj->GetObjectID(), true);
 	}
 
-	weak_ptr<ManagedScript> pWeakScript = activeData_->GetScriptPointer();
-	if (auto pScript = pWeakScript.lock()) {
+	LOCK_WEAK(pScript, activeData_->GetScriptPointer()) {
 		if (!pScript->IsLoad()) {
 			throw gstd::wexception(StringUtility::Format(L"_NextStep: Script wasn't loaded or has been unloaded. [%d, %d]",
 				dataStep_, dataIndex_));

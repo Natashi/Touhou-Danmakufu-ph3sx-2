@@ -845,8 +845,8 @@ void StgItemObject::_NotifyEventToPlayerScript(gstd::value* listValue, size_t co
 void StgItemObject::_NotifyEventToItemScript(gstd::value* listValue, size_t count) {
 	auto stageScriptManager = stageController_->GetScriptManager();
 
-	if (shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript()) {
-		scriptItem->RequestEvent(StgStageItemScript::EV_GET_ITEM, listValue, count);
+	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
+		itemScript->RequestEvent(StgStageItemScript::EV_GET_ITEM, listValue, count);
 	}
 }
 void StgItemObject::SetAlpha(int alpha) {
@@ -874,25 +874,25 @@ void StgItemObject::SetMoveType(int type) {
 
 void StgItemObject::NotifyItemCollectEvent(int type, uint64_t eventParam) {
 	auto stageScriptManager = stageController_->GetScriptManager();
-	if (shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript()) {
+	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
 		gstd::value eventArg[4];
 		eventArg[0] = DxScript::CreateIntValue(idObject_);
 		eventArg[1] = DxScript::CreateIntValue(typeItem_);
 		eventArg[2] = DxScript::CreateIntValue(type);
 		eventArg[3] = DxScript::CreateRealValue(eventParam);
 
-		scriptItem->RequestEvent(StgStageItemScript::EV_COLLECT_ITEM, eventArg, 4U);
+		itemScript->RequestEvent(StgStageItemScript::EV_COLLECT_ITEM, eventArg, 4U);
 	}
 }
 void StgItemObject::NotifyItemCancelEvent(int type) {
 	auto stageScriptManager = stageController_->GetScriptManager();
-	if (shared_ptr<ManagedScript> scriptItem = stageScriptManager->GetItemScript()) {
+	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
 		gstd::value eventArg[4];
 		eventArg[0] = DxScript::CreateIntValue(idObject_);
 		eventArg[1] = DxScript::CreateIntValue(typeItem_);
 		eventArg[2] = DxScript::CreateIntValue(type);
 
-		scriptItem->RequestEvent(StgStageItemScript::EV_CANCEL_ITEM, eventArg, 3U);
+		itemScript->RequestEvent(StgStageItemScript::EV_CANCEL_ITEM, eventArg, 3U);
 	}
 }
 
