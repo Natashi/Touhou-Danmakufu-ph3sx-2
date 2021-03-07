@@ -56,6 +56,16 @@ namespace gstd {
 	};
 
 	//================================================================
+	//StaticLock
+	class StaticLock {
+	protected:
+		static CRITICAL_SECTION* cs_;
+	public:
+		StaticLock();
+		~StaticLock();
+	};
+
+	//================================================================
 	//ThreadSignal
 	class ThreadSignal {
 		HANDLE hEvent_;

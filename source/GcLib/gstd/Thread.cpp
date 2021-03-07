@@ -67,7 +67,7 @@ DWORD Thread::Join(int mills) {
 //================================================================
 //CriticalSection
 CriticalSection::CriticalSection() {
-	idThread_ = NULL;
+	idThread_ = 0;
 	countLock_ = 0;
 	::InitializeCriticalSection(&cs_);
 }
@@ -75,7 +75,7 @@ CriticalSection::~CriticalSection() {
 	::DeleteCriticalSection(&cs_);
 }
 void CriticalSection::Enter() {
-	if (::GetCurrentThreadId() == idThread_) {//カレントスレッド
+	if (::GetCurrentThreadId() == idThread_) {
 		countLock_++;
 		return;
 	}
@@ -94,8 +94,22 @@ void CriticalSection::Leave() {
 	else {
 		throw std::exception("CriticalSection: Thread cannot be locked.");
 	}
-	idThread_ = NULL;
+	idThread_ = 0;
 	::LeaveCriticalSection(&cs_);
+}
+
+//================================================================
+//StaticLock
+CRITICAL_SECTION* StaticLock::cs_ = nullptr;
+StaticLock::StaticLock() {
+	if (cs_ == nullptr) {
+		cs_ = new CRITICAL_SECTION;
+		::InitializeCriticalSection(cs_);
+	}
+	::EnterCriticalSection(cs_);
+}
+StaticLock::~StaticLock() {
+	::LeaveCriticalSection(cs_);
 }
 
 //================================================================
