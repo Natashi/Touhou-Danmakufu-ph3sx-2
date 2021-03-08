@@ -10,9 +10,9 @@ class StgIntersectionCheckList;
 
 class StgIntersectionObject;
 
-/**********************************************************
+//*******************************************************************
 //StgIntersectionTarget
-**********************************************************/
+//*******************************************************************
 class StgIntersectionTarget : public IStringInfo {
 	friend StgIntersectionManager;
 public:
@@ -93,11 +93,9 @@ public:
 
 class StgIntersectionTargetPoint;
 
-/**********************************************************
+//*******************************************************************
 //StgIntersectionManager
-//‰º‹L‚ðŽQl
-//http://marupeke296.com/COL_2D_No8_QuadTree.html
-**********************************************************/
+//*******************************************************************
 class StgIntersectionManager {
 private:
 	enum {
@@ -236,9 +234,9 @@ inline void StgIntersectionTarget::ClearObjectIntersectedIdList() {
 		obj_->ClearIntersectedIdList();
 }
 
-/**********************************************************
+//*******************************************************************
 //StgIntersectionTargetPoint
-**********************************************************/
+//*******************************************************************
 class StgEnemyObject;
 class StgIntersectionTargetPoint {
 private:

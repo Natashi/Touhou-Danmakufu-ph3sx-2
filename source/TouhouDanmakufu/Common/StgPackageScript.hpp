@@ -6,9 +6,9 @@
 #include "StgControlScript.hpp"
 #include "StgStageController.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgPackageScriptManager
-**********************************************************/
+//*******************************************************************
 class StgPackageScript;
 class StgPackageScriptManager : public StgControlScriptManager {
 protected:
@@ -27,9 +27,9 @@ public:
 	std::shared_ptr<DxScriptObjectManager> GetObjectManagerRef() { return objectManager_; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgPackageScript
-**********************************************************/
+//*******************************************************************
 class StgPackageScript : public StgControlScript {
 public:
 	enum {

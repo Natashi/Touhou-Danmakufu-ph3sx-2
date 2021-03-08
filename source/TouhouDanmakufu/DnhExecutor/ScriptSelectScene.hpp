@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_EXE_SCRIPT_SELECT_SCENE__
-#define __TOUHOUDANMAKUFU_EXE_SCRIPT_SELECT_SCENE__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -8,9 +7,9 @@
 
 class ScriptSelectSceneMenuItem;
 class ScriptSelectModel;
-/**********************************************************
+//*******************************************************************
 //ScriptSelectScene
-**********************************************************/
+//*******************************************************************
 class ScriptSelectScene : public TaskBase, public MenuTask {
 public:
 	enum {
@@ -38,10 +37,10 @@ private:
 	int frameSelect_;
 
 	virtual void _ChangePage();
-
 public:
 	ScriptSelectScene();
 	~ScriptSelectScene();
+
 	virtual void Work();
 	virtual void Render();
 	virtual void Clear();
@@ -50,7 +49,6 @@ public:
 	void SetModel(ref_count_ptr<ScriptSelectModel> model);
 	void ClearModel();
 	void AddMenuItem(std::list<ref_count_ptr<ScriptSelectSceneMenuItem>>& listItem);
-
 };
 
 class ScriptSelectSceneMenuItem : public MenuItem {
@@ -63,11 +61,11 @@ public:
 		TYPE_PACKAGE,
 		TYPE_DIR,
 	};
-
 private:
 	int type_;
 	std::wstring path_;
 	ref_count_ptr<ScriptInformation> info_;
+
 	ScriptSelectScene* _GetScriptSelectScene() { return (ScriptSelectScene*)menu_; }
 public:
 	ScriptSelectSceneMenuItem(int type, const std::wstring& path, ref_count_ptr<ScriptInformation> info);
@@ -99,15 +97,14 @@ public:
 	}
 };
 
-/**********************************************************
+//*******************************************************************
 //ScriptSelectModel
-**********************************************************/
+//*******************************************************************
 class ScriptSelectModel {
 	friend ScriptSelectScene;
 protected:
 	volatile bool bCreated_;
 	ScriptSelectScene* scene_;
-
 public:
 	ScriptSelectModel();
 	virtual ~ScriptSelectModel();
@@ -126,7 +123,6 @@ public:
 		TYPE_DIR = ScriptSelectScene::TYPE_DIR,
 		TYPE_ALL = ScriptSelectScene::TYPE_ALL,
 	};
-
 protected:
 	int type_;
 	std::wstring dir_;
@@ -134,6 +130,7 @@ protected:
 	int timeLastUpdate_;
 
 	std::list<ref_count_ptr<ScriptSelectSceneMenuItem>> listItem_;
+	
 	virtual void _Run();
 	virtual void _SearchScript(const std::wstring& dir);
 	void _CreateMenuItem(const std::wstring& path);
@@ -142,6 +139,7 @@ protected:
 public:
 	ScriptSelectFileModel(int type, const std::wstring& dir);
 	virtual ~ScriptSelectFileModel();
+
 	virtual void CreateMenuItem();
 
 	int GetType() { return type_; }
@@ -151,21 +149,21 @@ public:
 	void SetWaitPath(const std::wstring& path) { pathWait_ = path; }
 };
 
-/**********************************************************
+//*******************************************************************
 //PlayTypeSelectScene
-**********************************************************/
+//*******************************************************************
 class PlayTypeSelectScene : public TaskBase, public MenuTask {
 public:
 	enum {
 		TASK_PRI_WORK = 6,
 		TASK_PRI_RENDER = 6,
 	};
-
 private:
 	ref_count_ptr<ScriptInformation> info_;
 	ref_count_ptr<ReplayInformationManager> replayInfoManager_;
 public:
 	PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info);
+
 	void Work();
 	void Render();
 };
@@ -177,20 +175,20 @@ class PlayTypeSelectMenuItem : public TextLightUpMenuItem {
 public:
 	PlayTypeSelectMenuItem(const std::wstring& text, int x, int y);
 	virtual ~PlayTypeSelectMenuItem();
+
 	void Work();
 	void Render();
 };
 
-/**********************************************************
+//*******************************************************************
 //PlayerSelectScene
-**********************************************************/
+//*******************************************************************
 class PlayerSelectScene : public TaskBase, public MenuTask {
 public:
 	enum {
 		TASK_PRI_WORK = 7,
 		TASK_PRI_RENDER = 7,
 	};
-
 private:
 	shared_ptr<Sprite2D> spriteBack_;
 	shared_ptr<Sprite2D> spriteImage_;
@@ -201,22 +199,20 @@ private:
 	virtual void _ChangePage() { frameSelect_ = 0; };
 public:
 	PlayerSelectScene(ref_count_ptr<ScriptInformation> info);
+
 	void Work();
 	void Render();
 };
 class PlayerSelectMenuItem : public TextLightUpMenuItem {
-	ref_count_ptr<ScriptInformation> info_;//é©ã@èÓïÒ
+	ref_count_ptr<ScriptInformation> info_;
 
 	PlayerSelectScene* _GetTitleScene() { return (PlayerSelectScene*)menu_; }
 public:
 	PlayerSelectMenuItem(ref_count_ptr<ScriptInformation> info);
 	virtual ~PlayerSelectMenuItem();
+
 	void Work();
 	void Render();
 
 	ref_count_ptr<ScriptInformation> GetScriptInformation() { return info_; }
 };
-
-
-#endif
-

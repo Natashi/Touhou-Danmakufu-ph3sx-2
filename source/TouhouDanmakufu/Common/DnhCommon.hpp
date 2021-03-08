@@ -5,9 +5,9 @@
 #include "DnhConstant.hpp"
 
 #if defined(DNH_PROJ_EXECUTOR)
-/**********************************************************
+//*******************************************************************
 //ScriptInformation
-**********************************************************/
+//*******************************************************************
 class ScriptInformation {
 public:
 	enum {
@@ -41,6 +41,7 @@ private:
 public:
 	ScriptInformation() {}
 	virtual ~ScriptInformation() {}
+
 	int GetType() { return type_; }
 	void SetType(int type) { type_ = type; }
 	std::wstring& GetArchivePath() { return pathArchive_; }
@@ -108,9 +109,9 @@ struct ScriptInformation::PlayerListSort {
 };
 #endif
 
-/**********************************************************
+//*******************************************************************
 //ErrorDialog
-**********************************************************/
+//*******************************************************************
 class ErrorDialog : public ModalDialog {
 protected:
 	static HWND hWndParentStatic_;
@@ -122,6 +123,7 @@ protected:
 
 public:
 	ErrorDialog(HWND hParent);
+
 	bool ShowModal(std::wstring msg);
 
 	static void SetParentWindowHandle(HWND hWndParent) { hWndParentStatic_ = hWndParent; }
@@ -129,9 +131,9 @@ public:
 };
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
-/**********************************************************
+//*******************************************************************
 //DnhConfiguration
-**********************************************************/
+//*******************************************************************
 class DnhConfiguration : public Singleton<DnhConfiguration> {
 public:
 	enum {
@@ -173,6 +175,7 @@ public:
 public:
 	DnhConfiguration();
 	virtual ~DnhConfiguration();
+
 	bool LoadConfigFile();
 	bool SaveConfigFile();
 

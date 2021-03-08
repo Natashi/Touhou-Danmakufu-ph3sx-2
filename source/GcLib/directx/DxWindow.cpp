@@ -7,9 +7,9 @@
 using namespace gstd;
 using namespace directx;
 
-/**********************************************************
+//*******************************************************************
 //DxWindowManager
-**********************************************************/
+//*******************************************************************
 DxWindowManager::DxWindowManager() {
 }
 DxWindowManager::~DxWindowManager() {
@@ -256,9 +256,9 @@ void DxWindowManager::SetWindowEnableWithoutArgumentWindow(bool bEnable, DxWindo
 	}
 }
 
-/**********************************************************
+//*******************************************************************
 //DxWindow
-**********************************************************/
+//*******************************************************************
 std::list<int> DxWindow::listWndId_;
 DxWindow::DxWindow() {
 	windowParent_ = nullptr;
@@ -401,9 +401,9 @@ int DxWindow::GetAbsoluteAlpha() {
 	return res;
 }
 
-/**********************************************************
+//*******************************************************************
 //DxLabel
-**********************************************************/
+//*******************************************************************
 DxLabel::DxLabel() {
 }
 void DxLabel::Work() {
@@ -440,9 +440,9 @@ void DxLabel::SetText(ref_count_ptr<DxText> text, bool bArrange) {
 }
 
 
-/**********************************************************
+//*******************************************************************
 //DxButton
-**********************************************************/
+//*******************************************************************
 DxButton::DxButton() {
 	bIntersected_ = false;
 	bSelected_ = false;
@@ -497,9 +497,9 @@ void DxButton::RenderSelectedFrame() {
 }
 
 
-/**********************************************************
+//*******************************************************************
 //DxMessageBox
-**********************************************************/
+//*******************************************************************
 DxMessageBox::DxMessageBox() {
 	index_ = INDEX_NULL;
 }
@@ -507,7 +507,7 @@ void DxMessageBox::DispatchedEvent(gstd::ref_count_ptr<DxWindowEvent> event) {
 	_DispatchEventToChild(event);
 
 }
-void DxMessageBox::SetText(ref_count_ptr<DxText> text) {
+void DxMessageBox::SetText(gstd::ref_count_ptr<DxText> text) {
 	text_ = text;
 }
 void DxMessageBox::SetButton(std::vector<gstd::ref_count_ptr<DxButton>> listButton) {

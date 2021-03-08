@@ -1,13 +1,12 @@
-#ifndef __TOUHOUDANMAKUFU_DNHREPLAY__
-#define __TOUHOUDANMAKUFU_DNHREPLAY__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
 #include "DnhCommon.hpp"
 
-/**********************************************************
+//*******************************************************************
 //ReplayInformation
-**********************************************************/
+//*******************************************************************
 class ReplayInformation {
 public:
 	enum {
@@ -71,7 +70,6 @@ public:
 
 class ReplayInformation::StageData {
 private:
-	//ステージ情報
 	std::wstring mainScriptID_;
 	std::wstring mainScriptName_;
 	std::wstring mainScriptRelativePath_;
@@ -81,12 +79,12 @@ private:
 	int64_t graze_;
 	int64_t point_;
 	DWORD frameEnd_;
+
 	uint32_t randSeed_;
 	std::vector<float> listFramePerSecond_;
 	ref_count_ptr<gstd::RecordBuffer> recordKey_;
 	std::map<std::string, ref_count_ptr<gstd::RecordBuffer>> mapCommonData_;
 
-	//自機情報
 	std::wstring playerScriptID_;
 	std::wstring playerScriptFileName_;
 	std::wstring playerScriptReplayName_;
@@ -94,8 +92,7 @@ private:
 	double playerLife_;
 	double playerBombCount_;
 	double playerPower_;
-	int playerRebirthFrame_;//くらいボム有効フレーム
-
+	int playerRebirthFrame_;	//Current deathbomb frame
 public:
 	StageData() { recordKey_ = new gstd::RecordBuffer(); scoreStart_ = 0; scoreLast_ = 0; }
 	virtual ~StageData() {}
@@ -146,12 +143,10 @@ public:
 	void WriteRecord(gstd::RecordBuffer& record);
 };
 
-/**********************************************************
+//*******************************************************************
 //ReplayInformationManager
-**********************************************************/
+//*******************************************************************
 class ReplayInformationManager {
-public:
-
 protected:
 	std::map<int, ref_count_ptr<ReplayInformation>> mapInfo_;
 public:
@@ -162,5 +157,3 @@ public:
 	std::vector<int> GetIndexList();
 	ref_count_ptr<ReplayInformation> GetInformation(int index);
 };
-
-#endif

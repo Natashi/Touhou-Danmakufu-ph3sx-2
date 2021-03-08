@@ -4,9 +4,9 @@
 #include "DnhCommon.hpp"
 #include "DnhGcLibImpl.hpp"
 
-/**********************************************************
+//*******************************************************************
 //DnhScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<constant> dnhConstant = {
 	//Oops! All virtual keys!
 	constant("KEY_INVALID", EDirectInput::KEY_INVALID),

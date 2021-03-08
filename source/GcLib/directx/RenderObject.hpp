@@ -1,5 +1,4 @@
-#ifndef __DIRECTX_RENDEROBJECT__
-#define __DIRECTX_RENDEROBJECT__
+#pragma once
 
 #include "../pch.h"
 
@@ -9,10 +8,10 @@
 #include "Shader.hpp"
 
 namespace directx {
-	//*******************************************************************
+	//****************************************************************************
 	//DirectionalLightingState
 	//	Contains lighting data for 3D lighting
-	//*******************************************************************
+	//****************************************************************************
 	class DirectionalLightingState {
 	public:
 		DirectionalLightingState();
@@ -34,10 +33,10 @@ namespace directx {
 	};
 
 	class DxScriptRenderObject;
-	//*******************************************************************
+	//****************************************************************************
 	//RenderObject
 	//	Base class for ObjRender
-	//*******************************************************************
+	//****************************************************************************
 	class RenderObject {
 	protected:
 		DxScriptRenderObject* dxObjParent_;
@@ -65,7 +64,9 @@ namespace directx {
 	public:
 		RenderObject();
 		virtual ~RenderObject();
+
 		virtual void Render() = 0;
+
 		virtual void CalculateWeightCenter() {}
 		D3DXVECTOR3 GetWeightCenter() { return posWeightCenter_; }
 		shared_ptr<Texture> GetTexture() { return texture_; }
@@ -125,10 +126,10 @@ namespace directx {
 		void SetShader(shared_ptr<Shader> shader) { shader_ = shader; }
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//RenderObjectTLX
 	//	2D render object
-	//*******************************************************************
+	//****************************************************************************
 	class RenderObjectTLX : public RenderObject {
 	protected:
 		bool bPermitCamera_;
@@ -136,9 +137,11 @@ namespace directx {
 	public:
 		RenderObjectTLX();
 		~RenderObjectTLX();
+
 		virtual void Render();
 		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
 		virtual void Render(const D3DXMATRIX& matTransform);
+
 		virtual void SetVertexCount(size_t count);
 
 		VERTEX_TLX* GetVertex(size_t index);
@@ -158,17 +161,19 @@ namespace directx {
 		void SetPermitCamera(bool bPermit) { bPermitCamera_ = bPermit; }
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//RenderObjectLX
 	//	3D render object
-	//*******************************************************************
+	//****************************************************************************
 	class RenderObjectLX : public RenderObject {
 	public:
 		RenderObjectLX();
 		~RenderObjectLX();
+
 		virtual void Render();
 		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
 		virtual void Render(const D3DXMATRIX& matTransform);
+		
 		virtual void SetVertexCount(size_t count);
 
 		VERTEX_LX* GetVertex(size_t index);
@@ -185,11 +190,11 @@ namespace directx {
 		void SetAlpha(int alpha);
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//RenderObjectNX
 	//	3D render object with vertex normal data
 	//	For meshes
-	//*******************************************************************
+	//****************************************************************************
 	class RenderObjectNX : public RenderObject {
 	protected:
 		D3DCOLOR color_;
@@ -199,6 +204,7 @@ namespace directx {
 	public:
 		RenderObjectNX();
 		~RenderObjectNX();
+		
 		virtual void Render();
 		virtual void Render(D3DXMATRIX* matTransform);
 
@@ -211,14 +217,15 @@ namespace directx {
 		void SetColor(D3DCOLOR color) { color_ = color; }
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//Sprite2D
 	//	RenderObjectTLX with pre-defined 4-vertex layout
-	//*******************************************************************
+	//****************************************************************************
 	class Sprite2D : public RenderObjectTLX {
 	public:
 		Sprite2D();
 		~Sprite2D();
+		
 		void Copy(Sprite2D* src);
 		void SetSourceRect(const DxRect<int>& rcSrc);
 		void SetDestinationRect(const DxRect<double>& rcDest);
@@ -228,10 +235,10 @@ namespace directx {
 		DxRect<double> GetDestinationRect();
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//SpriteList2D
 	//	Render list of 2D sprites
-	//*******************************************************************
+	//****************************************************************************
 	class SpriteList2D : public RenderObjectTLX {
 		size_t countRenderIndex_;
 		size_t countRenderIndexPrev_;
@@ -277,10 +284,10 @@ namespace directx {
 		void SetAutoClearVertex(bool clear) { autoClearVertexList_ = clear; }
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//Sprite3D
 	//	RenderObjectLX with pre-defined 4-vertex layout
-	//*******************************************************************
+	//****************************************************************************
 	class Sprite3D : public RenderObjectLX {
 	protected:
 		bool bBillboard_;
@@ -299,10 +306,10 @@ namespace directx {
 		void SetBillboardEnable(bool bEnable) { bBillboard_ = bEnable; }
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//TrajectoryObject3D
 	//	Fuck?
-	//*******************************************************************
+	//****************************************************************************
 	class TrajectoryObject3D : public RenderObjectLX {
 		struct Data {
 			int alpha;
@@ -317,13 +324,16 @@ namespace directx {
 		Data dataLast1_;
 		Data dataLast2_;
 		std::list<Data> listData_;
+
 		virtual D3DXMATRIX _CreateWorldTransformMatrix();
 	public:
 		TrajectoryObject3D();
 		~TrajectoryObject3D();
+		
 		virtual void Work();
 		virtual void Render();
 		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
+		
 		void SetInitialLine(const D3DXVECTOR3& pos1, const D3DXVECTOR3& pos2) {
 			dataInit_.pos1 = pos1;
 			dataInit_.pos2 = pos2;
@@ -334,10 +344,10 @@ namespace directx {
 		void SetColor(D3DCOLOR color) { color_ = color; }
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//ParticleRendererBase
 	//	Base class for instanced render objects
-	//*******************************************************************
+	//****************************************************************************
 	class ParticleRendererBase {
 	public:
 		ParticleRendererBase();
@@ -379,23 +389,25 @@ namespace directx {
 		D3DXVECTOR3 instUserData_;
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//ParticleRenderer2D
 	//	2D render object utilizing hardware instancing
-	//*******************************************************************
+	//****************************************************************************
 	class ParticleRenderer2D : public ParticleRendererBase, public Sprite2D {
 	public:
 		ParticleRenderer2D();
+
 		virtual void Render();
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//ParticleRenderer3D
 	//	3D render object utilizing hardware instancing
-	//*******************************************************************
+	//****************************************************************************
 	class ParticleRenderer3D : public ParticleRendererBase, public Sprite3D {
 	public:
 		ParticleRenderer3D();
+
 		virtual void Render();
 	};
 
@@ -410,8 +422,10 @@ namespace directx {
 	public:
 		DxMeshData();
 		virtual ~DxMeshData();
+
 		void SetName(const std::wstring& name) { name_ = name; }
 		std::wstring& GetName() { return name_; }
+
 		virtual bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader) = 0;
 	};
 	class DxMesh : public gstd::FileManager::LoadObject {
@@ -441,6 +455,7 @@ namespace directx {
 	public:
 		DxMesh();
 		virtual ~DxMesh();
+
 		virtual void Release();
 		bool CreateFromFile(const std::wstring& path);
 		virtual bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader) = 0;
@@ -492,10 +507,10 @@ namespace directx {
 	};
 
 	class DxMeshInfoPanel;
-	//*******************************************************************
+	//****************************************************************************
 	//DxMeshManager
 	//	Manager class for all mesh resources
-	//*******************************************************************
+	//****************************************************************************
 	class DxMeshManager : public gstd::FileManager::LoadThreadListener {
 		friend DxMeshData;
 		friend DxMesh;
@@ -515,7 +530,9 @@ namespace directx {
 	public:
 		DxMeshManager();
 		virtual ~DxMeshManager();
+
 		static DxMeshManager* GetBase() { return thisBase_; }
+
 		bool Initialize();
 		gstd::CriticalSection& GetLock() { return lock_; }
 
@@ -545,9 +562,8 @@ namespace directx {
 	public:
 		DxMeshInfoPanel();
 		~DxMeshInfoPanel();
+
 		virtual void LocateParts();
 		virtual void Update(DxMeshManager* manager);
 	};
 }
-
-#endif

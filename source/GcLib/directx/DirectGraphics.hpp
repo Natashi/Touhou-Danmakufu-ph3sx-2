@@ -14,9 +14,9 @@ namespace directx {
 	class Texture;
 #endif
 
-	/**********************************************************
+	//*******************************************************************
 	//DirectGraphicsConfig
-	**********************************************************/
+	//*******************************************************************
 	class DirectGraphicsConfig {
 	protected:
 		bool bShowWindow_;
@@ -182,9 +182,9 @@ namespace directx {
 		bool IsPixelShaderSupported(int major, int minor);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DirectGraphicsPrimaryWindow
-	**********************************************************/
+	//*******************************************************************
 	class DirectGraphicsPrimaryWindow : public DirectGraphics, public gstd::WindowBase {
 	protected:
 		gstd::WindowBase wndGraphics_;
@@ -193,11 +193,13 @@ namespace directx {
 		ScreenMode newScreenMode_;
 	protected:
 		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);//オーバーライド用プロシージャ
+		
 		void _PauseDrawing();
 		void _RestartDrawing();
 	public:
 		DirectGraphicsPrimaryWindow();
 		~DirectGraphicsPrimaryWindow();
+
 		virtual bool Initialize();
 		virtual bool Initialize(DirectGraphicsConfig& config);
 
@@ -205,11 +207,11 @@ namespace directx {
 		void ChangeScreenMode(ScreenMode newMode, bool bNoRepeated = true);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxCamera
-	**********************************************************/
+	//*******************************************************************
 	class DxCamera {
-		D3DXVECTOR3 pos_;//焦点
+		D3DXVECTOR3 pos_;
 		D3DXVECTOR3 camPos_;
 
 		//D3DXVECTOR3 laPosEye_;
@@ -310,9 +312,9 @@ namespace directx {
 		void PopMatrixState();
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxCamera2D
-	**********************************************************/
+	//*******************************************************************
 	class DxCamera2D {
 	private:
 		bool bEnable_;

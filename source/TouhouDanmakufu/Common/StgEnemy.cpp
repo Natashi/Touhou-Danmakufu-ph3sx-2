@@ -3,9 +3,9 @@
 #include "StgEnemy.hpp"
 #include "StgSystem.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgEnemyManager
-**********************************************************/
+//*******************************************************************
 StgEnemyManager::StgEnemyManager(StgStageController* stageController) {
 	stageController_ = stageController;
 }
@@ -45,9 +45,9 @@ ref_unsync_ptr<StgEnemyBossSceneObject> StgEnemyManager::GetBossSceneObject() {
 	return res;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgEnemyObject
-**********************************************************/
+//*******************************************************************
 StgEnemyObject::StgEnemyObject(StgStageController* stageController) : StgMoveObject(stageController) {
 	stageController_ = stageController;
 	typeObject_ = TypeObject::Enemy;
@@ -113,16 +113,16 @@ void StgEnemyObject::AddReferenceToPlayerIntersection(ref_unsync_ptr<StgIntersec
 	ptrIntersectionToPlayer_.push_back(target);
 }
 
-/**********************************************************
+//*******************************************************************
 //StgEnemyBossObject
-**********************************************************/
+//*******************************************************************
 StgEnemyBossObject::StgEnemyBossObject(StgStageController* stageController) : StgEnemyObject(stageController) {
 	typeObject_ = TypeObject::EnemyBoss;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgEnemyBossSceneObject
-**********************************************************/
+//*******************************************************************
 StgEnemyBossSceneObject::StgEnemyBossSceneObject(StgStageController* stageController) {
 	stageController_ = stageController;
 	typeObject_ = TypeObject::EnemyBossScene;

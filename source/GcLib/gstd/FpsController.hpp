@@ -1,5 +1,4 @@
-#ifndef __GSTD_FPSCONTROLLER__
-#define __GSTD_FPSCONTROLLER__
+#pragma once
 
 #include "../pch.h"
 
@@ -7,9 +6,9 @@
 
 namespace gstd {
 	class FpsControlObject;
-	/**********************************************************
+	//*******************************************************************
 	//FpsController
-	**********************************************************/
+	//*******************************************************************
 	class FpsController {
 	protected:
 		DWORD fps_;			//ê›íËÇ≥ÇÍÇƒÇ¢ÇÈFPS
@@ -26,6 +25,7 @@ namespace gstd {
 	public:
 		FpsController();
 		virtual ~FpsController();
+
 		virtual void SetFps(DWORD fps) { fps_ = fps; }
 		virtual DWORD GetFps() { return fps_; }
 		virtual void SetTimerEnable(bool b) { bUseTimer_ = b; }
@@ -48,9 +48,9 @@ namespace gstd {
 		DWORD GetControlObjectFps();
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//StaticFpsController
-	**********************************************************/
+	//*******************************************************************
 	class StaticFpsController : public FpsController {
 	protected:
 		float fpsCurrent_;		//åªç›ÇÃFPS
@@ -77,9 +77,9 @@ namespace gstd {
 		virtual float GetCurrentRenderFps() { return GetCurrentFps(); }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//AutoSkipFpsController
-	**********************************************************/
+	//*******************************************************************
 	class AutoSkipFpsController : public FpsController {
 	protected:
 		float fpsCurrentWork_;		//é¿ç€ÇÃfps
@@ -106,15 +106,14 @@ namespace gstd {
 		float GetCurrentRenderFps() { return fpsCurrentRender_; };
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//FpsControlObject
-	**********************************************************/
+	//*******************************************************************
 	class FpsControlObject {
 	public:
 		FpsControlObject() {}
 		virtual ~FpsControlObject() {}
+
 		virtual DWORD GetFps() = 0;
 	};
 }
-
-#endif

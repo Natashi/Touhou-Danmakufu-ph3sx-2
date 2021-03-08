@@ -5,9 +5,9 @@
 #include "ScriptSelectScene.hpp"
 #include "StgScene.hpp"
 
-/**********************************************************
+//*******************************************************************
 //SystemController
-**********************************************************/
+//*******************************************************************
 SystemController::SystemController() {
 	sceneManager_ = new SceneManager();
 	transitionManager_ = new TransitionManager();
@@ -56,9 +56,9 @@ void SystemController::ShowErrorDialog(const std::wstring& msg) {
 	dialog.ShowModal(msg);
 }
 
-/**********************************************************
+//*******************************************************************
 //SceneManager
-**********************************************************/
+//*******************************************************************
 SceneManager::SceneManager() {}
 SceneManager::~SceneManager() {}
 void SceneManager::TransTitleScene() {
@@ -282,9 +282,9 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 	}
 }
 
-/**********************************************************
+//*******************************************************************
 //TransitionManager
-**********************************************************/
+//*******************************************************************
 TransitionManager::TransitionManager() {}
 TransitionManager::~TransitionManager() {}
 void TransitionManager::_CreateCurrentSceneTexture() {
@@ -338,9 +338,9 @@ void SystemTransitionEffectTask::Render() {
 	TransitionEffectTask::Render();
 }
 
-/**********************************************************
+//*******************************************************************
 //SystemInformation
-**********************************************************/
+//*******************************************************************
 SystemInformation::SystemInformation() {
 	lastTitleSelectedIndex_ = 0;
 	dirLastScriptSearch_ = EPathProperty::GetStgScriptRootDirectory();
@@ -367,9 +367,9 @@ void SystemInformation::UpdateFreePlayerScriptInformationList() {
 	std::sort(listFreePlayer_.begin(), listFreePlayer_.end(), ScriptInformation::PlayerListSort());
 }
 
-/**********************************************************
+//*******************************************************************
 //SystemResidentTask
-**********************************************************/
+//*******************************************************************
 SystemResidentTask::SystemResidentTask() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG screenWidth = graphics->GetScreenWidth();

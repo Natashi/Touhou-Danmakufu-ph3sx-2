@@ -2,9 +2,9 @@
 
 #include "GcLibImpl.hpp"
 
-/**********************************************************
-WinMain
-**********************************************************/
+//*******************************************************************
+//WinMain
+//*******************************************************************
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow) {
 	HWND handleWindow = nullptr;
 

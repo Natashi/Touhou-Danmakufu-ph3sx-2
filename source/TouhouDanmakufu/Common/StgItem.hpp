@@ -9,9 +9,9 @@ class StgItemDataList;
 class StgItemObject;
 class StgItemData;
 class StgItemRenderer;
-/**********************************************************
+//*******************************************************************
 //StgItemManager
-**********************************************************/
+//*******************************************************************
 class StgItemManager {
 	friend class StgItemRenderer;
 
@@ -72,9 +72,9 @@ public:
 	void SetDefaultBonusItemEnable(bool bEnable) { bDefaultBonusItemEnable_ = bEnable; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgItemDataList
-**********************************************************/
+//*******************************************************************
 class StgItemDataList {
 public:
 	enum {
@@ -143,9 +143,9 @@ public:
 	StgItemRenderer* GetRenderer(BlendMode type);
 };
 
-/**********************************************************
+//*******************************************************************
 //StgItemRenderer
-**********************************************************/
+//*******************************************************************
 class StgItemRenderer : public RenderObjectTLX {
 	friend class StgItemManager;
 
@@ -174,9 +174,9 @@ public:
 	}
 };
 
-/**********************************************************
+//*******************************************************************
 //StgItemObject
-**********************************************************/
+//*******************************************************************
 class StgItemObject : public DxScriptRenderObject, public StgMoveObject, public StgIntersectionObject {
 	friend class StgItemManager;
 public:
@@ -282,30 +282,35 @@ public:
 class StgItemObject_1UP : public StgItemObject {
 public:
 	StgItemObject_1UP(StgStageController* stageController);
+	
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 };
 
 class StgItemObject_Bomb : public StgItemObject {
 public:
 	StgItemObject_Bomb(StgStageController* stageController);
+	
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 };
 
 class StgItemObject_Power : public StgItemObject {
 public:
 	StgItemObject_Power(StgStageController* stageController);
+	
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 };
 
 class StgItemObject_Point : public StgItemObject {
 public:
 	StgItemObject_Point(StgStageController* stageController);
+	
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 };
 
 class StgItemObject_Bonus : public StgItemObject {
 public:
 	StgItemObject_Bonus(StgStageController* stageController);
+	
 	virtual void Work();
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 };
@@ -314,6 +319,7 @@ class StgItemObject_Score : public StgItemObject {
 	int frameDelete_;
 public:
 	StgItemObject_Score(StgStageController* stageController);
+	
 	virtual void Work();
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 };
@@ -337,9 +343,9 @@ public:
 	void SetImageID(int id);
 };
 
-/**********************************************************
+//*******************************************************************
 //StgMovePattern_Item
-**********************************************************/
+//*******************************************************************
 class StgMovePattern_Item : public StgMovePattern {
 public:
 	enum {
@@ -361,6 +367,7 @@ public:
 	StgMovePattern_Item(StgMoveObject* target);
 
 	virtual void Move();
+
 	int GetType() { return TYPE_OTHER; }
 	virtual double GetSpeed() { return speed_; }
 	virtual double GetDirectionAngle() { return angDirection_; }

@@ -3,9 +3,9 @@
 #include "MainWindow.hpp"
 #include "GcLibImpl.hpp"
 
-/**********************************************************
+//*******************************************************************
 //MainWindow
-**********************************************************/
+//*******************************************************************
 MainWindow::MainWindow() {
 }
 MainWindow::~MainWindow() {
@@ -168,9 +168,9 @@ void MainWindow::WriteConfiguration() {
 	panelOption_->WriteConfiguration();
 }
 
-/**********************************************************
+//*******************************************************************
 //DevicePanel
-**********************************************************/
+//*******************************************************************
 DevicePanel::DevicePanel() {
 }
 DevicePanel::~DevicePanel() {
@@ -315,9 +315,9 @@ void DevicePanel::WriteConfiguration() {
 	config->bPseudoFullscreen_ = SendDlgItemMessage(hWnd_, IDC_PSEUDOFULLSCREEN, BM_GETCHECK, 0, 0) == BST_CHECKED;
 }
 
-/**********************************************************
+//*******************************************************************
 //KeyPanel
-**********************************************************/
+//*******************************************************************
 KeyPanel::KeyPanel() {
 }
 KeyPanel::~KeyPanel() {
@@ -480,9 +480,9 @@ LRESULT KeyPanel::KeyListView::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wPa
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
 
-/**********************************************************
+//*******************************************************************
 //OptionPanel
-**********************************************************/
+//*******************************************************************
 OptionPanel::OptionPanel() {
 }
 OptionPanel::~OptionPanel() {

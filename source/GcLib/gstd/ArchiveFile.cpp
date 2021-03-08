@@ -5,9 +5,9 @@
 
 using namespace gstd;
 
-/**********************************************************
+//*******************************************************************
 //ArchiveFileEntry
-**********************************************************/
+//*******************************************************************
 void ArchiveFileEntry::_WriteEntryRecord(std::stringstream& buf) {
 	uint32_t directorySize = directory.size();
 	buf.write((char*)&directorySize, sizeof(uint32_t));
@@ -45,9 +45,9 @@ void ArchiveFileEntry::_ReadEntryRecord(std::stringstream& buf) {
 	buf.read((char*)&keyStep, sizeof(uint8_t));
 }
 
-/**********************************************************
+//*******************************************************************
 //FileArchiver
-**********************************************************/
+//*******************************************************************
 FileArchiver::FileArchiver() {
 
 }
@@ -276,9 +276,9 @@ bool FileArchiver::EncryptArchive(std::fstream& inSrc, const std::wstring& pathO
 	return true;
 }
 
-/**********************************************************
+//*******************************************************************
 //ArchiveFile
-**********************************************************/
+//*******************************************************************
 ArchiveFile::ArchiveFile(std::wstring path) {
 	file_.open(path, std::ios::binary);
 	basePath_ = path;

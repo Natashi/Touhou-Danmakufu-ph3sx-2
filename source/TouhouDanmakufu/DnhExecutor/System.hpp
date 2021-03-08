@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_EXE_SYSTEM__
-#define __TOUHOUDANMAKUFU_EXE_SYSTEM__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -10,19 +9,19 @@ class SystemController;
 class SceneManager;
 class TransitionManager;
 class SystemInformation;
-/**********************************************************
+//*******************************************************************
 //SystemController
-**********************************************************/
+//*******************************************************************
 class SystemController : public Singleton<SystemController> {
 	friend Singleton<SystemController>;
-	SystemController();
-
+private:
 	ref_count_ptr<SceneManager> sceneManager_;
 	ref_count_ptr<TransitionManager> transitionManager_;
 	ref_count_ptr<SystemInformation> infoSystem_;
-
 public:
+	SystemController();
 	virtual ~SystemController();
+
 	void Reset();
 	void ClearTaskWithoutSystem();
 
@@ -33,16 +32,14 @@ public:
 	void ShowErrorDialog(const std::wstring& msg);
 };
 
-
-/**********************************************************
+//*******************************************************************
 //SceneManager
-**********************************************************/
+//*******************************************************************
 class SceneManager {
 public:
 	SceneManager();
 	virtual ~SceneManager();
 
-	//ÉVÅ[ÉìïœçX
 	void TransTitleScene();
 
 	void TransScriptSelectScene(int type);
@@ -60,13 +57,14 @@ public:
 	void TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, bool bOnlyPackage = false);
 };
 
-/**********************************************************
+//*******************************************************************
 //TransitionManager
-**********************************************************/
+//*******************************************************************
 class TransitionManager {
 	enum {
 		TASK_PRI = 8,
 	};
+private:
 	void _CreateCurrentSceneTexture();
 	void _AddTask(ref_count_ptr<TransitionEffect> effect);
 public:
@@ -82,9 +80,9 @@ public:
 	void Render();
 };
 
-/**********************************************************
+//*******************************************************************
 //SystemInformation
-**********************************************************/
+//*******************************************************************
 class SystemInformation {
 	int lastTitleSelectedIndex_;
 	std::wstring dirLastScriptSearch_;
@@ -96,7 +94,6 @@ class SystemInformation {
 	std::vector<ref_count_ptr<ScriptInformation>> listFreePlayer_;
 
 	void _SearchFreePlayerScript(const std::wstring& dir);
-
 public:
 	SystemInformation();
 	virtual ~SystemInformation();
@@ -118,25 +115,18 @@ public:
 	std::vector<ref_count_ptr<ScriptInformation>>& GetFreePlayerScriptInformationList() { return listFreePlayer_; }
 };
 
-
-/**********************************************************
+//*******************************************************************
 //SystemResidentTask
-**********************************************************/
+//*******************************************************************
 class SystemResidentTask : public TaskBase {
 public:
 	enum {
 		TASK_PRI_RENDER_FPS = 9,
 	};
-
 private:
 	DxText textFps_;
-
 public:
 	SystemResidentTask();
 	~SystemResidentTask();
 	void RenderFps();
 };
-
-#endif
-
-

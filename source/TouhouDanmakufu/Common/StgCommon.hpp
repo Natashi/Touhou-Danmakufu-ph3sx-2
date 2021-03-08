@@ -15,9 +15,9 @@ class StgStageInformation;
 class StgSystemInformation;
 class StgMovePattern;
 
-/**********************************************************
+//*******************************************************************
 //StgMoveObject
-**********************************************************/
+//*******************************************************************
 class StgMoveObject {
 	friend StgMovePattern;
 private:
@@ -61,9 +61,9 @@ public:
 	void AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap = false);
 };
 
-/**********************************************************
+//*******************************************************************
 //StgMovePattern
-**********************************************************/
+//*******************************************************************
 class StgMovePattern {
 	friend StgMoveObject;
 public:
@@ -182,6 +182,7 @@ protected:
 	virtual void _Activate(StgMovePattern* src);
 public:
 	StgMovePattern_XY(StgMoveObject* target);
+
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return hypot(c_, s_); }

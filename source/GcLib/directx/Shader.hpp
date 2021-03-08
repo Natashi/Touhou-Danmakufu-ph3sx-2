@@ -1,5 +1,4 @@
-#ifndef __DIRECTX_SHADER__
-#define __DIRECTX_SHADER__
+#pragma once
 
 #include "../pch.h"
 
@@ -12,9 +11,9 @@ namespace directx {
 	class Shader;
 	class ShaderData;
 
-	/**********************************************************
+	//*******************************************************************
 	//ShaderData
-	**********************************************************/
+	//*******************************************************************
 	class ShaderData {
 		friend Shader;
 		friend ShaderManager;
@@ -27,15 +26,16 @@ namespace directx {
 	public:
 		ShaderData();
 		virtual ~ShaderData();
+
 		std::wstring& GetName() { return name_; }
 
 		void ReleaseDxResource();
 		void RestoreDxResource();
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//ShaderManager
-	**********************************************************/
+	//*******************************************************************
 	class RenderShaderLibrary;
 	class ShaderManager : public DirectGraphicsListener {
 		friend Shader;
@@ -59,7 +59,9 @@ namespace directx {
 	public:
 		ShaderManager();
 		virtual ~ShaderManager();
+
 		static ShaderManager* GetBase() { return thisBase_; }
+		
 		virtual bool Initialize();
 		gstd::CriticalSection& GetLock() { return lock_; }
 		void Clear();
@@ -85,9 +87,9 @@ namespace directx {
 		std::wstring& GetLastError() { return lastError_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//ShaderParameter
-	**********************************************************/
+	//*******************************************************************
 	class ShaderParameter {
 	private:
 		ShaderParameterType type_;
@@ -114,9 +116,9 @@ namespace directx {
 		inline std::vector<byte>* GetRaw() { return &value_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//Shader
-	**********************************************************/
+	//*******************************************************************
 	class Shader {
 		friend ShaderManager;
 	protected:
@@ -135,6 +137,7 @@ namespace directx {
 		Shader();
 		Shader(Shader* shader);
 		virtual ~Shader();
+
 		void Release();
 
 		bool LoadParameter();
@@ -154,6 +157,3 @@ namespace directx {
 		bool SetTexture(const std::string& name, shared_ptr<Texture> texture);
 	};
 }
-
-
-#endif

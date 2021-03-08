@@ -4,9 +4,9 @@
 #include "StgSystem.hpp"
 #include "StgPackageController.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgPackageScriptManager
-**********************************************************/
+//*******************************************************************
 StgPackageScriptManager::StgPackageScriptManager(StgSystemController* controller) {
 	systemController_ = controller;
 	objectManager_ = std::shared_ptr<DxScriptObjectManager>(new DxScriptObjectManager);
@@ -43,9 +43,9 @@ shared_ptr<ManagedScript> StgPackageScriptManager::Create(int type) {
 }
 
 
-/**********************************************************
+//*******************************************************************
 //StgPackageScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<function> stgPackageFunction = {
 	//パッケージ共通関数：パッケージ操作
 	{ "ClosePackage", StgPackageScript::Func_ClosePackage, 0 },

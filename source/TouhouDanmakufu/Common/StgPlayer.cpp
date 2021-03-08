@@ -3,9 +3,9 @@
 #include "StgPlayer.hpp"
 #include "StgSystem.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgPlayerObject
-**********************************************************/
+//*******************************************************************
 StgPlayerObject::StgPlayerObject(StgStageController* stageController) : StgMoveObject(stageController) {
 	stageController_ = stageController;
 	typeObject_ = TypeObject::Player;
@@ -344,9 +344,9 @@ bool StgPlayerObject::IsWaitLastSpell() {
 	return res;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgPlayerSpellObject
-**********************************************************/
+//*******************************************************************
 StgPlayerSpellObject::StgPlayerSpellObject(StgStageController* stageController) {
 	stageController_ = stageController;
 	damage_ = 0;

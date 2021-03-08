@@ -1,5 +1,4 @@
-#ifndef __DIRECTX_TEXTURE__
-#define __DIRECTX_TEXTURE__
+#pragma once
 
 #include "../pch.h"
 
@@ -12,9 +11,9 @@ namespace directx {
 	class TextureManager;
 	class TextureInfoPanel;
 
-	//*******************************************************************
+	//****************************************************************************
 	//Texture
-	//*******************************************************************
+	//****************************************************************************
 	class TextureData {
 		friend Texture;
 		friend TextureManager;
@@ -35,13 +34,14 @@ namespace directx {
 		bool useMipMap_;
 		bool useNonPowerOfTwo_;
 
-		IDirect3DSurface9* lpRenderSurface_;//バックバッファ実体(レンダリングターゲット用)
-		IDirect3DSurface9* lpRenderZ_;//バックバッファのZバッファ実体(レンダリングターゲット用)
+		IDirect3DSurface9* lpRenderSurface_;
+		IDirect3DSurface9* lpRenderZ_;
 
 		size_t resourceSize_;
 	public:
 		TextureData();
 		virtual ~TextureData();
+
 		std::wstring& GetName() { return name_; }
 		D3DXIMAGE_INFO* GetImageInfo() { return &infoImage_; }
 
@@ -61,6 +61,7 @@ namespace directx {
 		Texture();
 		Texture(Texture* texture);
 		virtual ~Texture();
+
 		void Release();
 
 		std::wstring GetName();
@@ -84,9 +85,9 @@ namespace directx {
 		static size_t GetFormatBPP(D3DFORMAT format);
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//TextureManager
-	//*******************************************************************
+	//****************************************************************************
 	class TextureManager : public DirectGraphicsListener, public gstd::FileManager::LoadThreadListener {
 		friend Texture;
 		friend TextureData;
@@ -109,13 +110,15 @@ namespace directx {
 	public:
 		TextureManager();
 		virtual ~TextureManager();
+
 		static TextureManager* GetBase() { return thisBase_; }
+		
 		virtual bool Initialize();
 		gstd::CriticalSection& GetLock() { return lock_; }
 
 		virtual void Clear();
-		virtual void Add(const std::wstring& name, shared_ptr<Texture> texture);//テクスチャの参照を保持します
-		virtual void Release(const std::wstring& name);//保持している参照を解放します
+		virtual void Add(const std::wstring& name, shared_ptr<Texture> texture);
+		virtual void Release(const std::wstring& name);
 		virtual void Release(std::map<std::wstring, shared_ptr<Texture>>::iterator itr);
 		virtual bool IsDataExists(const std::wstring& name);
 		virtual std::map<std::wstring, shared_ptr<TextureData>>::iterator IsDataExistsItr(const std::wstring& name, bool* res = nullptr);
@@ -133,9 +136,9 @@ namespace directx {
 		void SetInfoPanel(shared_ptr<TextureInfoPanel> panel) { panelInfo_ = panel; }
 	};
 
-	//*******************************************************************
+	//****************************************************************************
 	//TextureInfoPanel
-	//*******************************************************************
+	//****************************************************************************
 	class TextureInfoPanel : public gstd::WindowLogger::Panel, public gstd::Thread {
 	protected:
 		enum {
@@ -155,9 +158,8 @@ namespace directx {
 	public:
 		TextureInfoPanel();
 		~TextureInfoPanel();
+
 		virtual void LocateParts();
 		virtual void Update(TextureManager* manager);
 	};
 }
-
-#endif

@@ -7,9 +7,9 @@ using namespace directx;
 
 #if defined(DNH_PROJ_EXECUTOR)
 
-/**********************************************************
+//*******************************************************************
 //ColorAccess
-**********************************************************/
+//*******************************************************************
 D3DCOLORVALUE ColorAccess::SetColor(D3DCOLORVALUE& value, D3DCOLOR color) {
 	D3DXVECTOR4 _col = ToVec4Normalized(color);							//argb
 	D3DXVECTOR4 colVec = D3DXVECTOR4(_col.y, _col.z, _col.w, _col.x);	//rgba
@@ -166,9 +166,9 @@ D3DCOLOR ColorAccess::ToD3DCOLOR(const D3DXVECTOR4& color) {
 	return D3DCOLOR_ARGB((byte)color.x, (byte)color.y, (byte)color.z, (byte)color.w);
 }
 
-/**********************************************************
+//*******************************************************************
 //DxMath
-**********************************************************/
+//*******************************************************************
 bool DxMath::IsIntersected(D3DXVECTOR2& pos, std::vector<D3DXVECTOR2>& list) {
 	if (list.size() <= 2) return false;
 

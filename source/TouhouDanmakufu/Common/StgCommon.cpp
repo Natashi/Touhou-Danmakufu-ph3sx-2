@@ -3,9 +3,9 @@
 #include "StgCommon.hpp"
 #include "StgSystem.hpp"
 
-//*******************************************************************
+//****************************************************************************
 //StgMoveObject
-//*******************************************************************
+//****************************************************************************
 StgMoveObject::StgMoveObject(StgStageController* stageController) {
 	posX_ = 0;
 	posY_ = 0;
@@ -88,9 +88,9 @@ void StgMoveObject::SetSpeedY(double speedY) {
 	pattern->SetSpeedY(speedY);
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgMovePattern
-//*******************************************************************
+//****************************************************************************
 StgMovePattern::StgMovePattern(StgMoveObject* target) {
 	target_ = target;
 	idShotData_ = NO_CHANGE;
@@ -106,9 +106,9 @@ ref_unsync_ptr<StgMoveObject> StgMovePattern::_GetMoveObject(int id) {
 	return ref_unsync_ptr<StgMoveObject>::Cast(base);
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgMovePattern_Angle
-//*******************************************************************
+//****************************************************************************
 StgMovePattern_Angle::StgMovePattern_Angle(StgMoveObject* target) : StgMovePattern(target) {
 	typeMove_ = TYPE_ANGLE;
 	speed_ = 0;
@@ -222,9 +222,9 @@ void StgMovePattern_Angle::SetDirectionAngle(double angle) {
 	angDirection_ = angle;
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgMovePattern_XY
-//*******************************************************************
+//****************************************************************************
 StgMovePattern_XY::StgMovePattern_XY(StgMoveObject* target) : StgMovePattern(target) {
 	typeMove_ = TYPE_XY;
 	c_ = 0;
@@ -313,9 +313,9 @@ void StgMovePattern_XY::_Activate(StgMovePattern* _src) {
 	}
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgMovePattern_Line
-//*******************************************************************
+//****************************************************************************
 StgMovePattern_Line::StgMovePattern_Line(StgMoveObject* target) : StgMovePattern(target) {
 	typeMove_ = TYPE_LINE;
 	typeLine_ = TYPE_NONE;

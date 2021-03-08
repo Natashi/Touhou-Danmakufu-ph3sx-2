@@ -1,17 +1,17 @@
-#ifndef __GSTD_THREAD__
-#define __GSTD_THREAD__
+#pragma once
 
 #include "../pch.h"
 
 namespace gstd {
-	//================================================================
+	//****************************************************************************
 	//Thread
+	//****************************************************************************
 	class Thread {
 	public:
 		enum Status {
-			RUN,//‰Ò“­’†
-			STOP,//’âŽ~’†
-			REQUEST_STOP,//’âŽ~—v‹’† 
+			RUN,
+			STOP,
+			REQUEST_STOP,
 		};
 	private:
 		static unsigned int __stdcall _StaticRun(LPVOID data);
@@ -19,11 +19,12 @@ namespace gstd {
 		volatile HANDLE hThread_;
 		unsigned int idThread_;
 		volatile Status status_;
-		virtual void _Run() = 0;
 
+		virtual void _Run() = 0;
 	public:
 		Thread();
 		virtual ~Thread();
+
 		virtual void Start();
 		virtual void Stop();
 		bool IsStop();
@@ -32,8 +33,9 @@ namespace gstd {
 		Status GetStatus() { return status_; }
 	};
 
-	//================================================================
+	//****************************************************************************
 	//CriticalSection
+	//****************************************************************************
 	class CriticalSection {
 		CRITICAL_SECTION cs_;
 		volatile DWORD idThread_;
@@ -41,12 +43,15 @@ namespace gstd {
 	public:
 		CriticalSection();
 		~CriticalSection();
+
 		void Enter();
 		void Leave();
 	};
 
-	//================================================================
+	//****************************************************************************
 	//Lock
+	//	Mutex locking based on a critical section object
+	//****************************************************************************
 	class Lock {
 	protected:
 		CriticalSection* cs_;
@@ -55,8 +60,10 @@ namespace gstd {
 		virtual ~Lock() { cs_->Leave(); }
 	};
 
-	//================================================================
+	//****************************************************************************
 	//StaticLock
+	//	Basic mutex locking
+	//****************************************************************************
 	class StaticLock {
 	protected:
 		static CRITICAL_SECTION* cs_;
@@ -65,16 +72,17 @@ namespace gstd {
 		~StaticLock();
 	};
 
-	//================================================================
+	//****************************************************************************
 	//ThreadSignal
+	//	Wrapper for thread event signaling
+	//****************************************************************************
 	class ThreadSignal {
 		HANDLE hEvent_;
 	public:
 		ThreadSignal(bool bManualReset = false);
 		virtual ~ThreadSignal();
+
 		DWORD Wait(int mills = INFINITE);
 		void SetSignal(bool bOn = true);
 	};
 }
-
-#endif

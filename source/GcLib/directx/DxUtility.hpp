@@ -1,14 +1,13 @@
-#ifndef __DIRECTX_UTILITY__
-#define __DIRECTX_UTILITY__
+#pragma once
 
 #include "../pch.h"
 #include "DxConstant.hpp"
 
 namespace directx {
 #if defined(DNH_PROJ_EXECUTOR)
-	/**********************************************************
+	//*******************************************************************
 	//ColorAccess
-	**********************************************************/
+	//*******************************************************************
 	class ColorAccess {
 	public:
 		enum {
@@ -94,9 +93,9 @@ namespace directx {
 		static D3DCOLOR ToD3DCOLOR(const D3DXVECTOR4& color);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxMath
-	**********************************************************/
+	//*******************************************************************
 	class DxMath {
 	public:
 		static inline D3DXVECTOR2 Normalize(const D3DXVECTOR2 &v) {
@@ -140,6 +139,3 @@ namespace directx {
 	};
 #endif
 }
-
-
-#endif

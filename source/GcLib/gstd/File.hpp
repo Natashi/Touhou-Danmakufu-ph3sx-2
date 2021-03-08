@@ -1,5 +1,4 @@
-#ifndef __GSTD_FILE__
-#define __GSTD_FILE__
+#pragma once
 
 #include "../pch.h"
 
@@ -17,6 +16,7 @@ namespace gstd {
 	class Writer {
 	public:
 		virtual ~Writer() {};
+
 		virtual DWORD Write(LPVOID buf, DWORD size) = 0;
 		template <typename T> DWORD Write(T& data) {
 			return Write(&data, sizeof(T));
@@ -39,6 +39,7 @@ namespace gstd {
 	class Reader {
 	public:
 		virtual ~Reader() {};
+
 		virtual DWORD Read(LPVOID buf, DWORD size) = 0;
 		template <typename T> DWORD Read(T& data) {
 			return Read(&data, sizeof(T));
@@ -221,9 +222,11 @@ namespace gstd {
 		void _ReleaseByteBuffer(shared_ptr<ArchiveFileEntry> entry);
 #endif
 	public:
-		static FileManager* GetBase() { return thisBase_; }
 		FileManager();
 		virtual ~FileManager();
+
+		static FileManager* GetBase() { return thisBase_; }
+
 		virtual bool Initialize();
 
 #if defined(DNH_PROJ_EXECUTOR)
@@ -262,9 +265,12 @@ namespace gstd {
 	public:
 		LoadThread();
 		virtual ~LoadThread();
+
 		virtual void Stop();
+
 		bool IsThreadLoadComplete();
 		bool IsThreadLoadExists(std::wstring path);
+		
 		void AddEvent(shared_ptr<FileManager::LoadThreadEvent> event);
 		void AddListener(FileManager::LoadThreadListener* listener);
 		void RemoveListener(FileManager::LoadThreadListener* listener);
@@ -345,6 +351,7 @@ namespace gstd {
 	class Recordable {
 	public:
 		virtual ~Recordable() {}
+
 		virtual void Read(RecordBuffer& record) = 0;
 		virtual void Write(RecordBuffer& record) = 0;
 	};
@@ -381,6 +388,7 @@ namespace gstd {
 	public:
 		RecordBuffer();
 		virtual ~RecordBuffer();
+
 		void Clear();
 		size_t GetEntryCount() { return mapEntry_.size(); }
 		bool IsExists(const std::string& key);
@@ -478,7 +486,9 @@ namespace gstd {
 	public:
 		SystemValueManager();
 		virtual ~SystemValueManager();
+
 		static SystemValueManager* GetBase() { return thisBase_; }
+		
 		virtual bool Initialize();
 
 		virtual void ClearRecordBuffer(const std::string& key);
@@ -488,6 +498,3 @@ namespace gstd {
 	};
 #endif
 }
-
-
-#endif

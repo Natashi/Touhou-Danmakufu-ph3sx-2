@@ -6,9 +6,9 @@
 #include "StgPackageScript.hpp"
 
 class StgPackageInformation;
-/**********************************************************
+//*******************************************************************
 //StgPackageController
-**********************************************************/
+//*******************************************************************
 class StgPackageController {
 private:
 	StgSystemController* systemController_;
@@ -33,9 +33,9 @@ public:
 	DxScriptObjectManager* GetMainObjectManager() { return scriptManager_->GetObjectManager(); }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgPackageInformation
-**********************************************************/
+//*******************************************************************
 class StgPackageInformation {
 	ref_count_ptr<StgStageStartData> nextStageStartData_;
 	std::vector<ref_count_ptr<StgStageStartData>> listStageData_;

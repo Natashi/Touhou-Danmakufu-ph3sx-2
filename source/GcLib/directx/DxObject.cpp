@@ -10,9 +10,9 @@
 using namespace gstd;
 using namespace directx;
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptObjectBase
-//*******************************************************************
+//****************************************************************************
 DxScriptObjectBase::DxScriptObjectBase() {
 	bVisible_ = true;
 	priRender_ = 50;
@@ -35,9 +35,9 @@ double DxScriptObjectBase::GetRenderPriority() {
 	return (double)priRender_ / (manager_->GetRenderBucketCapacity() - 1U);
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptRenderObject
-//*******************************************************************
+//****************************************************************************
 DxScriptRenderObject::DxScriptRenderObject() {
 	bZWrite_ = false;
 	bZTest_ = false;
@@ -56,16 +56,16 @@ DxScriptRenderObject::DxScriptRenderObject() {
 	bVertexShaderMode_ = false;
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptShaderObject
-//*******************************************************************
+//****************************************************************************
 DxScriptShaderObject::DxScriptShaderObject() {
 	typeObject_ = TypeObject::Shader;
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptPrimitiveObject
-//*******************************************************************
+//****************************************************************************
 DxScriptPrimitiveObject::DxScriptPrimitiveObject() {
 	angX_ = D3DXVECTOR2(1, 0);
 	angY_ = D3DXVECTOR2(1, 0);
@@ -94,9 +94,9 @@ void DxScriptPrimitiveObject::SetAngleZ(float z) {
 	}
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptPrimitiveObject2D
-//*******************************************************************
+//****************************************************************************
 DxScriptPrimitiveObject2D::DxScriptPrimitiveObject2D() {
 	typeObject_ = TypeObject::Primitive2D;
 	objRender_ = std::make_shared<RenderObjectTLX>();
@@ -193,9 +193,9 @@ void DxScriptPrimitiveObject2D::SetPermitCamera(bool bPermit) {
 	obj->SetPermitCamera(bPermit);
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptSpriteObject2D
-//*******************************************************************
+//****************************************************************************
 DxScriptSpriteObject2D::DxScriptSpriteObject2D() {
 	typeObject_ = TypeObject::Sprite2D;
 	objRender_ = std::make_shared<Sprite2D>();
@@ -219,9 +219,9 @@ void DxScriptSpriteObject2D::Copy(DxScriptSpriteObject2D* src) {
 	destSprite2D->Copy(srcSprite2D);
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptSpriteListObject2D
-//*******************************************************************
+//****************************************************************************
 DxScriptSpriteListObject2D::DxScriptSpriteListObject2D() {
 	typeObject_ = TypeObject::SpriteList2D;
 	objRender_ = std::make_shared<SpriteList2D>();
@@ -268,9 +268,9 @@ void DxScriptSpriteListObject2D::CloseVertex() {
 	angZ_ = D3DXVECTOR2(1, 0);
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptPrimitiveObject3D
-//*******************************************************************
+//****************************************************************************
 DxScriptPrimitiveObject3D::DxScriptPrimitiveObject3D() {
 	typeObject_ = TypeObject::Primitive3D;
 	objRender_ = std::make_shared<RenderObjectLX>();
@@ -375,18 +375,18 @@ D3DXVECTOR3 DxScriptPrimitiveObject3D::GetVertexPosition(size_t index) {
 	return res;
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptSpriteObject3D
-//*******************************************************************
+//****************************************************************************
 DxScriptSpriteObject3D::DxScriptSpriteObject3D() {
 	typeObject_ = TypeObject::Sprite3D;
 	objRender_ = std::make_shared<Sprite3D>();
 	objRender_->SetDxObjectReference(this);
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptTrajectoryObject3D
-//*******************************************************************
+//****************************************************************************
 DxScriptTrajectoryObject3D::DxScriptTrajectoryObject3D() {
 	typeObject_ = TypeObject::Trajectory3D;
 	objRender_ = std::make_shared<TrajectoryObject3D>();
@@ -438,9 +438,9 @@ void DxScriptTrajectoryObject3D::SetColor(int r, int g, int b) {
 	obj->SetColor(color_);
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptParticleListObject2D
-//*******************************************************************
+//****************************************************************************
 DxScriptParticleListObject2D::DxScriptParticleListObject2D() {
 	typeObject_ = TypeObject::ParticleList2D;
 	objRender_ = std::make_shared<ParticleRenderer2D>();
@@ -480,9 +480,9 @@ void DxScriptParticleListObject2D::CleanUp() {
 	GetParticlePointer()->ClearInstance();
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptParticleListObject3D
-//*******************************************************************
+//****************************************************************************
 DxScriptParticleListObject3D::DxScriptParticleListObject3D() {
 	typeObject_ = TypeObject::ParticleList3D;
 	objRender_ = std::make_shared<ParticleRenderer3D>();
@@ -523,9 +523,9 @@ void DxScriptParticleListObject3D::CleanUp() {
 	GetParticlePointer()->ClearInstance();
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptMeshObject
-//*******************************************************************
+//****************************************************************************
 DxScriptMeshObject::DxScriptMeshObject() {
 	typeObject_ = TypeObject::Mesh;
 	bZWrite_ = true;
@@ -609,9 +609,9 @@ void DxScriptMeshObject::SetAngleZ(float z) {
 	}
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptTextObject
-//*******************************************************************
+//****************************************************************************
 DxScriptTextObject::DxScriptTextObject() {
 	typeObject_ = TypeObject::Text;
 	change_ = CHANGE_ALL;
@@ -755,9 +755,9 @@ void DxScriptTextObject::SetAngleZ(float z) {
 	}
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxSoundObject
-//*******************************************************************
+//****************************************************************************
 DxSoundObject::DxSoundObject() {
 	typeObject_ = TypeObject::Sound;
 }
@@ -776,9 +776,9 @@ void DxSoundObject::Play() {
 		player_->Play(style_);
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxFileObject
-//*******************************************************************
+//****************************************************************************
 DxFileObject::DxFileObject() {
 	bWritable_ = false;
 }
@@ -842,9 +842,9 @@ void DxFileObject::Close() {
 	}
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxTextFileObject
-//*******************************************************************
+//****************************************************************************
 DxTextFileObject::DxTextFileObject() {
 	typeObject_ = TypeObject::FileText;
 	encoding_ = Encoding::UTF16LE;
@@ -1122,9 +1122,9 @@ void DxTextFileObject::AddLine(const std::wstring& line) {
 	}
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxBinaryFileObject
-//*******************************************************************
+//****************************************************************************
 DxBinaryFileObject::DxBinaryFileObject() {
 	typeObject_ = TypeObject::FileBinary;
 	byteOrder_ = ByteOrder::ENDIAN_LITTLE;
@@ -1197,9 +1197,9 @@ DWORD DxBinaryFileObject::Write(LPVOID data, size_t size) {
 	return buffer_->Write(data, size);
 }
 
-//*******************************************************************
+//****************************************************************************
 //DxScriptObjectManager
-//*******************************************************************
+//****************************************************************************
 DxScriptObjectManager::DxScriptObjectManager() {
 	SetMaxObject(DEFAULT_CONTAINER_CAPACITY);
 	SetRenderBucketCapacity(101);

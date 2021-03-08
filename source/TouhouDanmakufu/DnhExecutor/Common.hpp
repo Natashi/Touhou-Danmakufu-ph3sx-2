@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_EXE_COMMON__
-#define __TOUHOUDANMAKUFU_EXE_COMMON__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -8,9 +7,9 @@
 
 #include "GcLibImpl.hpp"
 
-/**********************************************************
+//*******************************************************************
 //MenuTask
-**********************************************************/
+//*******************************************************************
 class MenuItem;
 class MenuTask {
 protected:
@@ -41,13 +40,14 @@ protected:
 	virtual void _ChangePage() {};
 
 	bool _IsWaitedKeyFree() { return bWaitedKeyFree_; }
-
 public:
 	MenuTask();
 	virtual ~MenuTask();
+
 	virtual void Clear();
 	virtual void Work();
 	virtual void Render();
+
 	void SetActive(bool bActive) { bActive_ = bActive; }
 
 	virtual void AddMenuItem(ref_count_ptr<MenuItem> item);
@@ -67,6 +67,7 @@ protected:
 public:
 	MenuItem() {}
 	virtual ~MenuItem() {}
+
 	virtual void Work() {}
 	virtual void Render() {}
 };
@@ -78,7 +79,4 @@ protected:
 	int _GetSelectedItemAlpha();
 public:
 	TextLightUpMenuItem();
-
 };
-
-#endif

@@ -6,9 +6,9 @@
 #include "ArchiveEncryption.hpp"
 
 namespace gstd {
-	/**********************************************************
+	//*******************************************************************
 	//ArchiveFileEntry
-	**********************************************************/
+	//*******************************************************************
 	class FileArchiver;
 	class ArchiveFile;
 
@@ -55,9 +55,9 @@ namespace gstd {
 	};
 #pragma pack(pop)
 
-	/**********************************************************
+	//*******************************************************************
 	//FileArchiver
-	**********************************************************/
+	//*******************************************************************
 	class FileArchiver {
 	private:
 		std::list<shared_ptr<ArchiveFileEntry>> listEntry_;
@@ -72,9 +72,9 @@ namespace gstd {
 			byte keyBase, byte keyStep);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//ArchiveFile
-	**********************************************************/
+	//*******************************************************************
 	class ArchiveFile {
 	private:
 		std::wstring basePath_;
@@ -85,6 +85,7 @@ namespace gstd {
 	public:
 		ArchiveFile(std::wstring path);
 		virtual ~ArchiveFile();
+
 		bool Open();
 		void Close();
 
@@ -99,9 +100,9 @@ namespace gstd {
 		//ref_count_ptr<ByteBuffer> GetBuffer(std::string name);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//Compressor
-	**********************************************************/
+	//*******************************************************************
 	class Compressor {
 		using in_stream_t = std::basic_istream<char, std::char_traits<char>>;
 		using out_stream_t = std::basic_ostream<char, std::char_traits<char>>;

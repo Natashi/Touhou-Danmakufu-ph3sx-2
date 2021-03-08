@@ -14,9 +14,9 @@
 #include "StgPackageController.hpp"
 
 class StgSystemInformation;
-/**********************************************************
+//*******************************************************************
 //StgSystemController
-**********************************************************/
+//*******************************************************************
 class StgSystemController : public TaskBase {
 	static StgSystemController* base_;
 public:
@@ -76,9 +76,9 @@ public:
 	void GetAllScriptList(std::list<weak_ptr<ScriptManager>>& listRes);
 };
 
-/**********************************************************
+//*******************************************************************
 //StgSystemInformation
-**********************************************************/
+//*******************************************************************
 class StgSystemInformation {
 public:
 	enum {

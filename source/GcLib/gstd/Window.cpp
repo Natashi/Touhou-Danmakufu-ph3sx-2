@@ -4,9 +4,9 @@
 
 using namespace gstd;
 
-/**********************************************************
+//****************************************************************************
 //WindowBase
-**********************************************************/
+//****************************************************************************
 const wchar_t* PROP_THIS = L"__THIS__";
 std::list<int> WindowBase::listWndId_;
 CriticalSection WindowBase::lock_;
@@ -131,9 +131,9 @@ HWND WindowBase::GetTopParentWindow(HWND hWnd) {
 	return res;
 }
 
-/**********************************************************
+//****************************************************************************
 //ModalDialog
-**********************************************************/
+//****************************************************************************
 void ModalDialog::Create(HWND hParent, LPCTSTR resource) {
 	hParent_ = hParent;
 	hWnd_ = CreateDialog((HINSTANCE)GetWindowLong(hParent, GWL_HINSTANCE),
@@ -165,9 +165,9 @@ void ModalDialog::_FinishMessageLoop() {
 	::SetWindowPos(hParent_, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 	bEndDialog_ = true;
 }
-/**********************************************************
+//****************************************************************************
 //WPanel
-**********************************************************/
+//****************************************************************************
 void WPanel::Create(HWND hWndParent) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 
@@ -190,9 +190,9 @@ LRESULT WPanel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
 
-/**********************************************************
+//****************************************************************************
 //WLabel
-**********************************************************/
+//****************************************************************************
 WLabel::WLabel() {
 	colorText_ = RGB(0, 0, 0);
 	colorBack_ = GetSysColor(COLOR_WINDOW);
@@ -245,9 +245,9 @@ std::wstring WLabel::GetText() {
 int WLabel::GetTextLength() {
 	return ::GetWindowTextLength(hWnd_);
 }
-/**********************************************************
+//****************************************************************************
 //WButton
-**********************************************************/
+//****************************************************************************
 void WButton::Create(HWND hWndParent) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 	hWnd_ = ::CreateWindow(
@@ -278,9 +278,9 @@ bool WButton::IsChecked() {
 	return bCheck;
 }
 
-/**********************************************************
+//****************************************************************************
 //WGroupBox
-**********************************************************/
+//****************************************************************************
 void WGroupBox::Create(HWND hWndParent) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 	hWnd_ = ::CreateWindow(
@@ -296,9 +296,9 @@ void WGroupBox::SetText(const std::wstring& text) {
 	::SetWindowText(hWnd_, text.c_str());
 }
 
-/**********************************************************
+//****************************************************************************
 //WEditBox
-**********************************************************/
+//****************************************************************************
 void WEditBox::Create(HWND hWndParent, WEditBox::Style& style) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 
@@ -329,9 +329,9 @@ int WEditBox::GetTextLength() {
 	return ::GetWindowTextLength(hWnd_);
 }
 
-/**********************************************************
+//****************************************************************************
 //WListBox
-**********************************************************/
+//****************************************************************************
 //http://gurigumi.s349.xrea.com/programming/visualcpp/sdk_dialog_listbox.html
 //http://web.kyoto-inet.or.jp/people/ysskondo/from16/chap17.html
 void WListBox::Create(HWND hWndParent, WListBox::Style& style) {
@@ -378,9 +378,9 @@ std::wstring WListBox::GetText(int index) {
 	return res;
 }
 
-/**********************************************************
+//****************************************************************************
 //WComboBox
-**********************************************************/
+//****************************************************************************
 void WComboBox::Create(HWND hWndParent, WComboBox::Style& style) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 
@@ -426,9 +426,9 @@ void WComboBox::AddString(const std::wstring& str) {
 void WComboBox::InsertString(int index, const std::wstring& str) {
 	SendMessage(hWnd_, CB_INSERTSTRING, index, (LPARAM)str.c_str());
 }
-/**********************************************************
+//****************************************************************************
 //WListView
-**********************************************************/
+//****************************************************************************
 void WListView::Create(HWND hWndParent, Style& style) {
 	//WS_EX_CLIENTEDGE
 	//WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS 
@@ -553,9 +553,9 @@ void WListView::ClearSelection() {
 		ListView_SetItemState(hWnd_, index, 0, LVIS_FOCUSED | LVIS_SELECTED);
 }
 
-/**********************************************************
+//****************************************************************************
 //WTreeView
-**********************************************************/
+//****************************************************************************
 WTreeView::WTreeView() {}
 WTreeView::~WTreeView() {
 	this->Clear();
@@ -657,9 +657,9 @@ std::list<shared_ptr<WTreeView::Item>> WTreeView::Item::GetChildList() {
 
 	return res;
 }
-/**********************************************************
+//****************************************************************************
 //WTabControll
-**********************************************************/
+//****************************************************************************
 WTabControll::~WTabControll() {
 	vectPanel_.clear();
 }
@@ -720,9 +720,9 @@ void WTabControll::LocateParts() {
 	}
 }
 
-/**********************************************************
+//****************************************************************************
 //WStatusBar
-**********************************************************/
+//****************************************************************************
 void WStatusBar::Create(HWND hWndParent) {
 	hWnd_ = CreateStatusWindow(WS_CHILD | WS_VISIBLE | CCS_BOTTOM | SBARS_SIZEGRIP, nullptr, hWndParent, NULL);
 	this->Attach(hWnd_);
@@ -738,9 +738,9 @@ void WStatusBar::SetBounds(WPARAM wParam, LPARAM lParam) {
 	::SendMessage(hWnd_, WM_SIZE, wParam, lParam);
 }
 
-/**********************************************************
+//****************************************************************************
 //WSplitter
-**********************************************************/
+//****************************************************************************
 WSplitter::WSplitter() {
 	bCapture_ = false;
 	ratioX_ = 0.5f;
@@ -839,9 +839,9 @@ LRESULT WSplitter::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 }
 
 
-/**********************************************************
+//****************************************************************************
 //WindowUtility
-**********************************************************/
+//****************************************************************************
 void WindowUtility::SetMouseVisible(bool bVisible) {
 	if (bVisible) {
 		while (ShowCursor(TRUE) < 0) {}

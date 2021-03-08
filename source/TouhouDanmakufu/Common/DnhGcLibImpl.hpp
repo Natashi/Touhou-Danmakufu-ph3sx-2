@@ -1,14 +1,13 @@
-#ifndef __TOUHOUDANMAKUFU_DNHGCLIBIMPL__
-#define __TOUHOUDANMAKUFU_DNHGCLIBIMPL__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
 #include "DnhConstant.hpp"
 
 #if defined(DNH_PROJ_EXECUTOR)
-/**********************************************************
+//*******************************************************************
 //EPathProperty
-**********************************************************/
+//*******************************************************************
 class EPathProperty : public Singleton<EPathProperty>, public PathProperty {
 public:
 	static const std::wstring& GetSystemResourceDirectory();
@@ -24,13 +23,14 @@ public:
 	static std::wstring GetCommonDataPath(const std::wstring& scriptPath, const std::wstring& area);
 };
 
-/**********************************************************
+//*******************************************************************
 //ELogger
-**********************************************************/
+//*******************************************************************
 class ELogger : public Singleton<ELogger>, public WindowLogger {
 	shared_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData_;
 public:
 	ELogger();
+
 	void Initialize(bool bFile, bool bWindow);
 
 	shared_ptr<gstd::ScriptCommonDataInfoPanel> GetScriptCommonDataInfoPanel() { return panelCommonData_; }
@@ -38,9 +38,9 @@ public:
 };
 
 
-/**********************************************************
+//*******************************************************************
 //EFpsController
-**********************************************************/
+//*******************************************************************
 class EFpsController : public Singleton<EFpsController> {
 private:
 	int16_t fastModeKey_;
@@ -70,17 +70,17 @@ public:
 };
 #endif
 
-/**********************************************************
+//*******************************************************************
 //EFileManager
-**********************************************************/
+//*******************************************************************
 class EFileManager : public Singleton<EFileManager>, public FileManager {
 
 };
 
 #if defined(DNH_PROJ_EXECUTOR)
-/**********************************************************
+//*******************************************************************
 //ETaskManager
-**********************************************************/
+//*******************************************************************
 class ETaskManager : public Singleton<ETaskManager>, public WorkRenderTaskManager {
 	enum {
 		TASK_WORK_PRI_MAX = 10,
@@ -100,9 +100,9 @@ public:
 	void SetWorkTime(uint64_t t) { timeSpentOnWork_ = t; }
 };
 
-/**********************************************************
+//*******************************************************************
 //ETextureManager
-**********************************************************/
+//*******************************************************************
 class ETextureManager : public Singleton<ETextureManager>, public TextureManager {
 	enum {
 		MAX_RESERVED_RENDERTARGET = 3,
@@ -112,38 +112,38 @@ public:
 	std::wstring GetReservedRenderTargetName(int index);
 };
 
-/**********************************************************
+//*******************************************************************
 //EMeshManager
-**********************************************************/
+//*******************************************************************
 class EMeshManager : public Singleton<EMeshManager>, public DxMeshManager {
 
 };
 
-/**********************************************************
+//*******************************************************************
 //EMeshManager
-**********************************************************/
+//*******************************************************************
 class EShaderManager : public Singleton<EShaderManager>, public ShaderManager {
 
 };
 
-/**********************************************************
+//*******************************************************************
 //EDxTextRenderer
-**********************************************************/
+//*******************************************************************
 class EDxTextRenderer : public Singleton<EDxTextRenderer>, public DxTextRenderer {
 
 };
 
-/**********************************************************
+//*******************************************************************
 //EDirectSoundManager
-**********************************************************/
+//*******************************************************************
 class EDirectSoundManager : public Singleton<EDirectSoundManager>, public DirectSoundManager {
 
 };
 #endif
 
-/**********************************************************
+//*******************************************************************
 //EDirectInput
-**********************************************************/
+//*******************************************************************
 class EDirectInput : public Singleton<EDirectInput>, public VirtualKeyManager {
 public:
 	enum {
@@ -171,11 +171,10 @@ public:
 	};
 
 	int padIndex_;
-
 public:
 	virtual bool Initialize(HWND hWnd);
+
 	void ResetVirtualKeyMap();
+
 	int GetPadIndex() { return padIndex_; }
 };
-
-#endif

@@ -3,9 +3,9 @@
 #include "../../GcLib/pch.h"
 
 namespace directx {
-	/**********************************************************
+	//*******************************************************************
 	//DirectGraphicsListener
-	**********************************************************/
+	//*******************************************************************
 	class DirectGraphicsListener {
 	public:
 		virtual ~DirectGraphicsListener() {}
@@ -13,9 +13,9 @@ namespace directx {
 		virtual void RestoreDxResource() {}
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DirectGraphics
-	**********************************************************/
+	//*******************************************************************
 	typedef enum : uint8_t {
 		COLOR_MODE_32BIT,
 		COLOR_MODE_16BIT,
@@ -44,9 +44,9 @@ namespace directx {
 		D3DXVECTOR2 fogDist;
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DirectInput
-	**********************************************************/
+	//*******************************************************************
 	typedef enum : uint8_t {
 		DI_MOUSE_LEFT = 0,
 		DI_MOUSE_RIGHT = 1,
@@ -60,9 +60,9 @@ namespace directx {
 		KEY_HOLD = 3,	 //Key is being pressed, both in the previous and current frame
 	} DIKeyState;
 
-	/**********************************************************
+	//*******************************************************************
 	//DirectSound
-	**********************************************************/
+	//*******************************************************************
 	enum class SoundFileFormat : uint8_t {
 		Unknown,	//Invalid
 		Wave,		//WAVE RIFF
@@ -72,9 +72,9 @@ namespace directx {
 		Midi,		//MIDI (unsupported)
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//Shader
-	**********************************************************/
+	//*******************************************************************
 	enum class ShaderParameterType : uint8_t {
 		Unknown,
 		Float,			//Float
@@ -85,9 +85,9 @@ namespace directx {
 		Texture,		//IDirect3DTexture9* object
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxObject
-	**********************************************************/
+	//*******************************************************************
 	enum class TypeObject : uint8_t {
 		Primitive2D,
 		Sprite2D,
@@ -130,9 +130,9 @@ namespace directx {
 		Invalid = 0xff,
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxText
-	**********************************************************/
+	//*******************************************************************
 	enum class TextBorderType : uint8_t {
 		None,
 		Full,
@@ -151,9 +151,9 @@ namespace directx {
 		Bottom,
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//Shape collisions
-	**********************************************************/
+	//*******************************************************************
 	class DxShapeBase {
 	public:
 		DxShapeBase() {};
@@ -164,6 +164,7 @@ namespace directx {
 		DxPoint() { pos_ = D3DXVECTOR2(0, 0); }
 		DxPoint(float x, float y) { pos_ = D3DXVECTOR2(x, y); }
 		virtual ~DxPoint() {}
+		
 		float GetX() const { return pos_.x; }
 		void SetX(float x) { pos_.x = x; }
 		float GetY() const { return pos_.y; }
@@ -176,6 +177,7 @@ namespace directx {
 		DxCircle() { cen_ = DxPoint(); r_ = 0; }
 		DxCircle(float x, float y, float r) { cen_ = DxPoint(x, y); r_ = r; }
 		virtual ~DxCircle() {}
+		
 		float GetX() const { return cen_.GetX(); }
 		void SetX(float x) { cen_.SetX(x); }
 		float GetY() const { return cen_.GetY(); }
@@ -193,6 +195,7 @@ namespace directx {
 			p1_ = DxPoint(x1, y1); p2_ = DxPoint(x2, y2); width_ = width;
 		}
 		virtual ~DxWidthLine() {}
+
 		void SetX1(float x) { p1_.SetX(x); }
 		float GetX1() const { return p1_.GetX(); }
 		void SetY1(float y) { p1_.SetY(y); }
@@ -264,9 +267,9 @@ namespace directx {
 		}
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//Rect
-	**********************************************************/
+	//*******************************************************************
 	template<typename T>
 	class DxRect {
 	public:

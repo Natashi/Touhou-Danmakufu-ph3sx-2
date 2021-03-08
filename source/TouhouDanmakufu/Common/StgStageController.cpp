@@ -3,9 +3,9 @@
 #include "StgStageController.hpp"
 #include "StgSystem.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgStageController
-**********************************************************/
+//*******************************************************************
 StgStageController::StgStageController(StgSystemController* systemController) {
 	systemController_ = systemController;
 	infoSystem_ = systemController_->GetSystemInformation();
@@ -454,9 +454,9 @@ shared_ptr<StgPlayerObject> StgStageController::GetPlayerObject() {
 }
 */
 
-/**********************************************************
+//*******************************************************************
 //StgStageInformation
-**********************************************************/
+//*******************************************************************
 StgStageInformation::StgStageInformation() {
 	bEndStg_ = false;
 	bPause_ = false;
@@ -498,9 +498,9 @@ void StgStageInformation::SetStgFrameRect(const DxRect<LONG>& rect, bool bUpdate
 	}
 }
 
-/**********************************************************
+//*******************************************************************
 //PseudoSlowInformation
-**********************************************************/
+//*******************************************************************
 DWORD PseudoSlowInformation::GetFps() {
 	DWORD fps = STANDARD_FPS;
 	int target = TARGET_ALL;

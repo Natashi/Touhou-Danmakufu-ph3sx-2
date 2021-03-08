@@ -5,9 +5,9 @@
 using namespace gstd;
 using namespace directx;
 
-/**********************************************************
+//*******************************************************************
 //DirectSoundManager
-**********************************************************/
+//*******************************************************************
 DirectSoundManager* DirectSoundManager::thisBase_ = nullptr;
 
 DirectSoundManager::DirectSoundManager() {
@@ -479,9 +479,9 @@ void DirectSoundManager::SoundManageThread::_Fade() {
 }
 
 
-/**********************************************************
+//*******************************************************************
 //SoundInfoPanel
-**********************************************************/
+//*******************************************************************
 SoundInfoPanel::SoundInfoPanel() {
 	timeLastUpdate_ = 0;
 	timeUpdateInterval_ = 500;
@@ -586,9 +586,9 @@ void SoundInfoPanel::Update(DirectSoundManager* soundManager) {
 	}
 	*/
 }
-/**********************************************************
+//*******************************************************************
 //SoundDivision
-**********************************************************/
+//*******************************************************************
 SoundDivision::SoundDivision() {
 	rateVolume_ = 100;
 }
@@ -596,9 +596,9 @@ SoundDivision::~SoundDivision() {
 
 }
 
-/**********************************************************
+//*******************************************************************
 //SoundPlayer
-**********************************************************/
+//*******************************************************************
 SoundPlayer::SoundPlayer() {
 	pDirectSoundBuffer_ = nullptr;
 	reader_ = nullptr;
@@ -780,9 +780,9 @@ SoundPlayer::PlayStyle::~PlayStyle() {
 
 }
 
-/**********************************************************
+//*******************************************************************
 //SoundStreamingPlayer
-**********************************************************/
+//*******************************************************************
 SoundStreamingPlayer::SoundStreamingPlayer() {
 	pDirectSoundNotify_ = nullptr;
 	ZeroMemory(hEvent_, sizeof(HANDLE) * 3);
@@ -963,9 +963,9 @@ void SoundStreamingPlayer::StreamingThread::Notify(size_t index) {
 	SetEvent(player->hEvent_[index]);
 }
 
-/**********************************************************
+//*******************************************************************
 //SoundPlayerWave
-**********************************************************/
+//*******************************************************************
 SoundPlayerWave::SoundPlayerWave() {
 
 }
@@ -1131,9 +1131,9 @@ bool SoundPlayerWave::Seek(int64_t sample) {
 	}
 	return true;
 }
-/**********************************************************
+//*******************************************************************
 //SoundStreamingPlayerWave
-**********************************************************/
+//*******************************************************************
 SoundStreamingPlayerWave::SoundStreamingPlayerWave() {
 	posWaveStart_ = 0;
 	posWaveEnd_ = 0;
@@ -1286,9 +1286,9 @@ bool SoundStreamingPlayerWave::Seek(int64_t sample) {
 	}
 	return true;
 }
-/**********************************************************
+//*******************************************************************
 //SoundStreamingPlayerOgg
-**********************************************************/
+//*******************************************************************
 SoundStreamingPlayerOgg::SoundStreamingPlayerOgg() {}
 SoundStreamingPlayerOgg::~SoundStreamingPlayerOgg() {
 	this->Stop();
@@ -1477,9 +1477,9 @@ long SoundStreamingPlayerOgg::_TellOgg(void* source) {
 	return player->reader_->GetFilePointer();
 }
 
-/**********************************************************
+//*******************************************************************
 //SoundStreamingPlayerMp3
-**********************************************************/
+//*******************************************************************
 SoundStreamingPlayerMp3::SoundStreamingPlayerMp3() {
 	hAcmStream_ = nullptr;
 	posMp3DataStart_ = 0;

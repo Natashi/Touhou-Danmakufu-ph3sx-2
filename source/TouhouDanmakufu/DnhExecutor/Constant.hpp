@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_EXE_CONSTANT__
-#define __TOUHOUDANMAKUFU_EXE_CONSTANT__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -7,5 +6,3 @@
 #include "../Common/DnhCommon.hpp"
 
 #include "resource.h"
-
-#endif

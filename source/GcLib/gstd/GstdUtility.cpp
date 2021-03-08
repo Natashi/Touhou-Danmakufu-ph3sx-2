@@ -5,13 +5,9 @@
 
 using namespace gstd;
 
-std::wstring operator+(std::wstring l, const std::wstring& r) {
-	l += r;
-	return l;
-}
-
-//================================================================
+//*******************************************************************
 //SystemUtility
+//*******************************************************************
 
 //Vector compile checks
 #ifdef __L_MATH_VECTORIZE
@@ -87,8 +83,9 @@ void SystemUtility::TestCpuSupportSIMD() {
 #endif
 }
 
-//================================================================
+//*******************************************************************
 //Encoding
+//*******************************************************************
 const byte Encoding::BOM_UTF16LE[] = { 0xFF, 0xFE };
 const byte Encoding::BOM_UTF16BE[] = { 0xFE, 0xFF };
 const byte Encoding::BOM_UTF8[] = { 0xEF, 0xBB, 0xBF };
@@ -170,8 +167,9 @@ std::wstring Encoding::BytesToWString(const char* pBegin, size_t count, Type enc
 	return BytesToWString(pBegin, (const char*)(pBegin + count), encoding);
 }
 
-//================================================================
+//*******************************************************************
 //StringUtility
+//*******************************************************************
 std::wstring StringUtility::ConvertMultiToWide(const std::string& str, int code) {
 	if (str.size() == 0) return L"";
 
@@ -505,8 +503,9 @@ size_t StringUtility::CountAsciiSizeCharacter(const std::wstring& str) {
 	return res;
 }
 
-//================================================================
+//*******************************************************************
 //ErrorUtility
+//*******************************************************************
 std::wstring ErrorUtility::GetLastErrorMessage(DWORD error) {
 	LPVOID lpMsgBuf;
 	::FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -549,8 +548,9 @@ std::wstring ErrorUtility::GetParseErrorMessage(const std::wstring& path, int li
 	return res;
 }
 
-//================================================================
+//*******************************************************************
 //ByteOrder
+//*******************************************************************
 void ByteOrder::Reverse(LPVOID buf, DWORD size) {
 	if (size < 2) return;
 
@@ -568,8 +568,9 @@ void ByteOrder::Reverse(LPVOID buf, DWORD size) {
 }
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
-//================================================================
+//*******************************************************************
 //Scanner
+//*******************************************************************
 Scanner::Scanner(char* str, size_t size) {
 	std::vector<char> buf;
 	buf.resize(size);
@@ -934,10 +935,10 @@ std::string Token::GetIdentifierA() {
 #endif
 
 #if defined(DNH_PROJ_EXECUTOR)
-//================================================================
+//*******************************************************************
 //TextParser
+//*******************************************************************
 TextParser::TextParser() {
-
 }
 TextParser::TextParser(const std::string& source) {
 	SetSource(source);
@@ -1148,8 +1149,9 @@ double TextParser::GetReal() {
 	return res.GetReal();
 }
 
-//================================================================
+//*******************************************************************
 //Font
+//*******************************************************************
 //const wchar_t* Font::GOTHIC  = L"標準ゴシック";
 //const wchar_t* Font::MINCHOH = L"標準明朝";
 const wchar_t* Font::GOTHIC = L"MS Gothic";

@@ -5,9 +5,9 @@
 using namespace gstd;
 using namespace directx;
 
-/**********************************************************
+//*******************************************************************
 //TransitionEffect
-**********************************************************/
+//*******************************************************************
 TransitionEffect::TransitionEffect() {
 
 }
@@ -15,9 +15,9 @@ TransitionEffect::~TransitionEffect() {
 
 }
 
-/**********************************************************
+//*******************************************************************
 //TransitionEffect_FadeOut
-**********************************************************/
+//*******************************************************************
 void TransitionEffect_FadeOut::Work() {
 	if (sprite_ == nullptr) return;
 	alpha_ -= diffAlpha_;
@@ -52,9 +52,9 @@ void TransitionEffect_FadeOut::Initialize(int frame, shared_ptr<Texture> texture
 	sprite_->SetVertex(rect, rect, D3DCOLOR_ARGB((int)alpha_, 255, 255, 255));
 }
 
-/**********************************************************
+//*******************************************************************
 //TransitionEffectTask
-**********************************************************/
+//*******************************************************************
 TransitionEffectTask::TransitionEffectTask() {
 }
 TransitionEffectTask::~TransitionEffectTask() {

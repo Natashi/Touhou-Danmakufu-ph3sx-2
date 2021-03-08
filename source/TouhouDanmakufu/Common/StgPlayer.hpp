@@ -1,6 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_PLAYER__
-#define __TOUHOUDANMAKUFU_DNHSTG_PLAYER__
-
+#pragma once
 #include "../../GcLib/pch.h"
 
 #include "StgCommon.hpp"
@@ -12,16 +10,16 @@ class StgPlayerInformation;
 class StgPlayerSpellManageObject;
 class StgPlayerSpellObject;
 
-/**********************************************************
+//*******************************************************************
 //StgPlayerObject
-**********************************************************/
+//*******************************************************************
 class StgPlayerInformation {
 	friend StgPlayerObject;
 private:
 	double life_;
 	double countBomb_;
 	double power_;
-	int frameRebirth_;//くらいボム有効フレーム
+	int frameRebirth_;
 public:
 	StgPlayerInformation() {}
 	virtual ~StgPlayerInformation() {}
@@ -88,7 +86,9 @@ protected:
 public:
 	StgPlayerObject(StgStageController* stageController);
 	virtual ~StgPlayerObject();
+
 	void Clear() { ClearIntersectionRelativeTarget(); }
+
 	void SetScript(StgStagePlayerScript* script) { script_ = script; }
 
 	virtual void Work();
@@ -157,31 +157,33 @@ class StgIntersectionTarget_Player : public StgIntersectionTarget_Circle {
 	bool bGraze_;
 public:
 	StgIntersectionTarget_Player(bool bGraze) { typeTarget_ = TYPE_PLAYER; bGraze_ = bGraze; }
+	
 	bool IsGraze() { return bGraze_; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgPlayerSpellManageObject
-**********************************************************/
+//*******************************************************************
 class StgPlayerSpellManageObject : public DxScriptObjectBase {
 public:
 	StgPlayerSpellManageObject() { bVisible_ = false; }
+	
 	virtual void Render() {}
 	virtual void SetRenderState() {}
 };
 
-/**********************************************************
+//*******************************************************************
 //StgPlayerSpellObject
-**********************************************************/
+//*******************************************************************
 class StgPlayerSpellObject : public DxScriptPrimitiveObject2D, public StgIntersectionObject {
 protected:
 	StgStageController* stageController_;
 	double damage_;
 	bool bEraseShot_;
-	double life_;//貫通力
-
+	double life_;
 public:
 	StgPlayerSpellObject(StgStageController* stageController);
+	
 	virtual void Work();
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 
@@ -192,6 +194,3 @@ public:
 	double GetLife() { return life_; }
 	void SetLife(double life) { life_ = life; }
 };
-
-
-#endif

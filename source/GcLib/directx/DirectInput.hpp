@@ -4,9 +4,9 @@
 #include "DxConstant.hpp"
 
 namespace directx {
-	/**********************************************************
+	//*******************************************************************
 	//DirectInput
-	**********************************************************/
+	//*******************************************************************
 	class DirectInput {
 		static DirectInput* thisBase_;
 	public:
@@ -26,10 +26,10 @@ namespace directx {
 		BYTE stateKey_[MAX_KEY];
 		DIMOUSESTATE stateMouse_;
 		std::vector<DIJOYSTATE> statePad_;
-		std::vector<LONG> padRes_;		//Minumum response for pad input
+		std::vector<LONG> padRes_;						//Minumum response for pad input
 
-		DIKeyState bufKey_[MAX_KEY];				//Keyboard key states
-		DIKeyState bufMouse_[MAX_MOUSE_BUTTON];		//Mouse key states
+		DIKeyState bufKey_[MAX_KEY];					//Keyboard key states
+		DIKeyState bufMouse_[MAX_MOUSE_BUTTON];			//Mouse key states
 		std::vector<std::vector<DIKeyState>> bufPad_;	//Joypad key states
 
 		void _WrapDXErr(HRESULT hr, const std::string& routine, const std::string& msg, bool bThrow = false);
@@ -52,6 +52,7 @@ namespace directx {
 	public:
 		DirectInput();
 		virtual ~DirectInput();
+
 		static DirectInput* GetBase() { return thisBase_; }
 
 		virtual bool Initialize(HWND hWnd);
@@ -75,9 +76,9 @@ namespace directx {
 		DIDEVICEINSTANCE GetPadDeviceInformation(int16_t padIndex);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//VirtualKeyManager
-	**********************************************************/
+	//*******************************************************************
 	class VirtualKeyManager;
 	class VirtualKey {
 		friend VirtualKeyManager;
@@ -89,6 +90,7 @@ namespace directx {
 	public:
 		VirtualKey(int16_t keyboard, int16_t padIndex, int16_t padButton);
 		virtual ~VirtualKey();
+
 		DIKeyState GetKeyState() { return state_; }
 		void SetKeyState(DIKeyState state) { state_ = state; }
 
@@ -108,6 +110,7 @@ namespace directx {
 	public:
 		VirtualKeyManager();
 		~VirtualKeyManager();
+
 		virtual void Update();
 		void ClearKeyState();
 
@@ -120,9 +123,9 @@ namespace directx {
 	};
 
 #if defined(DNH_PROJ_EXECUTOR)
-	/**********************************************************
+	//*******************************************************************
 	//KeyReplayManager
-	**********************************************************/
+	//*******************************************************************
 	class KeyReplayManager {
 	public:
 		enum {
@@ -149,6 +152,7 @@ namespace directx {
 	public:
 		KeyReplayManager(VirtualKeyManager* input);
 		virtual ~KeyReplayManager();
+
 		void SetManageState(int state) { state_ = state; }
 		void AddTarget(int16_t key);
 		bool IsTargetKeyCode(int16_t key);
@@ -161,7 +165,7 @@ namespace directx {
 }
 
 //DirectInput Key Code Table
-/**************************************************************************
+/****************************************************************************
 	0x01 DIK_ESCAPE			Esc
 	0x02 DIK_1				1
 	0x03 DIK_2				2
@@ -285,4 +289,4 @@ namespace directx {
 	0xDD DIK_APPS			Menu
 	0xDE DIK_POWER			Power
 	0xDF DIK_SLEEP			Sleep
-**************************************************************************/
+****************************************************************************/

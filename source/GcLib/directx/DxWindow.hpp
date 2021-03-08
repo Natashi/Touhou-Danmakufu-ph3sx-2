@@ -1,5 +1,4 @@
-#ifndef __DIRECTX_DXWINDOW__
-#define __DIRECTX_DXWINDOW__
+#pragma once
 
 #include "../pch.h"
 
@@ -12,9 +11,9 @@ namespace directx {
 	class DxWindow;
 	class DxWindowEvent;
 
-	/**********************************************************
+	//*******************************************************************
 	//DxWindowEvent
-	**********************************************************/
+	//*******************************************************************
 	class DxWindowEvent {
 		friend DxWindowManager;
 	public:
@@ -35,6 +34,7 @@ namespace directx {
 	public:
 		DxWindowEvent() { type_ = 0; };
 		virtual ~DxWindowEvent() {};
+
 		void SetSourceWindow(gstd::ref_count_ptr<DxWindow> source) { windowSource_ = source; }
 		gstd::ref_count_ptr<DxWindow> GetSourceWindow() { return windowSource_; }
 		void AddEventType(int type) { type_ |= type; }
@@ -42,9 +42,9 @@ namespace directx {
 		bool IsEmpty() { return type_ == 0; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxWindowManager
-	**********************************************************/
+	//*******************************************************************
 	class DxWindowManager : public gstd::TaskBase {
 	protected:
 		std::list<gstd::ref_count_ptr<DxWindow>> listWindow_;//最前面がアクティブ
@@ -56,6 +56,7 @@ namespace directx {
 	public:
 		DxWindowManager();
 		virtual ~DxWindowManager();
+		
 		void Clear();
 
 		void AddWindow(gstd::ref_count_ptr<DxWindow> window);
@@ -72,9 +73,9 @@ namespace directx {
 		gstd::ref_count_ptr<DxWindow> GetIntersectedWindow(POINT& pos, gstd::ref_count_ptr<DxWindow> parent = NULL);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxWindow
-	**********************************************************/
+	//*******************************************************************
 	class DxWindow {
 		friend DxWindowManager;
 	private:
@@ -100,6 +101,7 @@ namespace directx {
 	public:
 		DxWindow();
 		virtual ~DxWindow();
+
 		virtual void DeleteWindow();//削除フラグを立てます
 		bool IsWindowDelete() { return bWindowDelete_; }
 		void Dispose();//各参照などを解放します
@@ -129,30 +131,33 @@ namespace directx {
 		void SetFrameSprite(gstd::ref_count_ptr<Sprite2D> sprite) { spriteFrame_ = sprite; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxLabel
-	**********************************************************/
+	//*******************************************************************
 	class DxLabel : public DxWindow {
 	protected:
 		gstd::ref_count_ptr<DxText> text_;
 
 	public:
 		DxLabel();
+
 		virtual void Work();
 		virtual void Render();
+
 		void SetText(const std::wstring& str);
 		void SetText(gstd::ref_count_ptr<DxText> text, bool bArrange = false);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxButton
-	**********************************************************/
+	//*******************************************************************
 	class DxButton : public DxLabel {
 	protected:
 		bool bIntersected_;
 		bool bSelected_;
 	public:
 		DxButton();
+
 		virtual void Work();
 		virtual void Render();
 		virtual void RenderIntersectedFrame();
@@ -163,22 +168,21 @@ namespace directx {
 		void SetSelected(bool bSelected) { bSelected_ = bSelected; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxMessageBox
-	**********************************************************/
+	//*******************************************************************
 	class DxMessageBox : public DxWindow {
 	public:
 		enum {
 			INDEX_NULL = -1,
 		};
-
 	protected:
 		int index_;
 		gstd::ref_count_ptr<DxText> text_;
 		std::vector<gstd::ref_count_ptr<DxButton>> listButton_;
-
 	public:
 		DxMessageBox();
+
 		virtual void DispatchedEvent(gstd::ref_count_ptr<DxWindowEvent> event);
 		void SetText(gstd::ref_count_ptr<DxText> text);
 		void SetButton(std::vector<gstd::ref_count_ptr<DxButton>> listButton);
@@ -186,6 +190,3 @@ namespace directx {
 		void UpdateWindowRect();
 	};
 }
-
-
-#endif

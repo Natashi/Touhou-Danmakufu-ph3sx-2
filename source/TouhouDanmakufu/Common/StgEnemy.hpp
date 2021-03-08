@@ -7,9 +7,9 @@
 
 class StgEnemyObject;
 class StgEnemyBossSceneObject;
-/**********************************************************
+//*******************************************************************
 //StgEnemyManager
-**********************************************************/
+//*******************************************************************
 class StgEnemyManager {
 	StgStageController* stageController_;
 	std::list<ref_unsync_ptr<StgEnemyObject>> listObj_;
@@ -29,9 +29,9 @@ public:
 	std::list<ref_unsync_ptr<StgEnemyObject>>& GetEnemyList() { return listObj_; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgEnemyObject
-**********************************************************/
+//*******************************************************************
 class StgEnemyObject : public DxScriptSpriteObject2D, public StgMoveObject, public StgIntersectionObject {
 protected:
 	StgStageController* stageController_;
@@ -79,9 +79,9 @@ public:
 	std::vector<ref_unsync_weak_ptr<StgIntersectionTarget>>* GetIntersectionListPlayer() { return &ptrIntersectionToPlayer_; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgEnemyBossObject
-**********************************************************/
+//*******************************************************************
 class StgEnemyBossObject : public StgEnemyObject {
 private:
 	int timeSpellCard_;
@@ -89,9 +89,9 @@ public:
 	StgEnemyBossObject(StgStageController* stageController);
 };
 
-/**********************************************************
+//*******************************************************************
 //StgEnemyBossSceneObject
-**********************************************************/
+//*******************************************************************
 class StgEnemyBossSceneData;
 class StgEnemyBossSceneObject : public DxScriptObjectBase {
 private:

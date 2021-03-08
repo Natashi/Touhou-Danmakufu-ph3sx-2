@@ -6,9 +6,9 @@
 #include "StgEnemy.hpp"
 #include "StgSystem.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgIntersectionManager
-**********************************************************/
+//*******************************************************************
 StgIntersectionManager::StgIntersectionManager() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG screenWidth = graphics->GetScreenWidth();
@@ -436,9 +436,9 @@ void StgIntersectionManager::CheckDeletedObject(std::string funcName) {
 }
 */
 
-/**********************************************************
+//*******************************************************************
 //StgIntersectionCheckList
-**********************************************************/
+//*******************************************************************
 StgIntersectionCheckList::StgIntersectionCheckList() { 
 	count_ = 0; 
 }
@@ -465,9 +465,9 @@ ref_unsync_ptr<StgIntersectionTarget> StgIntersectionCheckList::GetTargetB(size_
 	return target;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgIntersectionSpace
-**********************************************************/
+//*******************************************************************
 StgIntersectionSpace::StgIntersectionSpace() {
 	spaceRect_ = DxRect<double>(0, 0, 0, 0);
 	previousCheckCreated_ = 0;
@@ -560,9 +560,9 @@ std::vector<StgIntersectionSpace::TargetCheckListPair>* StgIntersectionSpace::Cr
 	return &pooledCheckList_;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgIntersectionObject
-**********************************************************/
+//*******************************************************************
 void StgIntersectionObject::AddIntersectionRelativeTarget(ref_unsync_ptr<StgIntersectionTarget> target) {
 	IntersectionRelativeTarget newTarget;
 	{
@@ -631,9 +631,9 @@ int StgIntersectionObject::GetDxScriptObjectID() {
 	return res;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgIntersectionTarget
-**********************************************************/
+//*******************************************************************
 StgIntersectionTarget::StgIntersectionTarget() {
 	//mortonNo_ = -1;
 	ZeroMemory(&intersectionSpace_, sizeof(RECT));

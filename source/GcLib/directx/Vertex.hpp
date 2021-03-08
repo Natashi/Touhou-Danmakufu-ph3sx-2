@@ -1,15 +1,15 @@
-#ifndef __DIRECTX_VERTEX__
-#define __DIRECTX_VERTEX__
+#pragma once
 
 #include "../pch.h"
 
 #include "DxConstant.hpp"
 
 namespace directx {
-	/**********************************************************
-	//FVF頂点フォーマット
-	//http://msdn.microsoft.com/ja-jp/library/cc324487.aspx
-	**********************************************************/
+	//*******************************************************************
+	//Docs for FVF (Flexible Vertex Format)
+	//https://docs.microsoft.com/en-us/windows/win32/direct3d9/d3dfvf
+	//*******************************************************************
+
 	static const D3DVERTEXELEMENT9 ELEMENTS_TL[] = {
 		{ 0, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITIONT, 0 },
 		{ 0, 16, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0 },
@@ -246,5 +246,3 @@ namespace directx {
 		enum { fvf = (D3DFVF_XYZB4 | D3DFVF_LASTBETA_UBYTE4 | D3DFVF_NORMAL | D3DFVF_TEX1) };
 	};
 }
-
-#endif

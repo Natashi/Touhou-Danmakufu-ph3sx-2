@@ -3,9 +3,9 @@
 #include "StgScene.hpp"
 #include "System.hpp"
 
-/**********************************************************
+//*******************************************************************
 //EStgSystemController
-**********************************************************/
+//*******************************************************************
 void EStgSystemController::DoEnd() {
 	SystemController::GetInstance()->GetSceneManager()->TransScriptSelectScene_Last();
 
@@ -25,9 +25,9 @@ void EStgSystemController::DoRetry() {
 }
 
 
-/**********************************************************
+//*******************************************************************
 //PStgSystemController
-**********************************************************/
+//*******************************************************************
 void PStgSystemController::DoEnd() {
 	EDirectGraphics* graphics = EDirectGraphics::CreateInstance();
 	graphics->SetWindowVisible(false);

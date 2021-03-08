@@ -3,9 +3,9 @@
 #include "ScriptSelectScene.hpp"
 #include "System.hpp"
 
-/**********************************************************
+//*******************************************************************
 //ScriptSelectScene
-**********************************************************/
+//*******************************************************************
 ScriptSelectScene::ScriptSelectScene() {
 	std::wstring pathBack = EPathProperty::GetSystemImageDirectory() + L"System_ScriptSelect_Background.png";
 	shared_ptr<Texture> textureBack(new Texture());
@@ -459,9 +459,9 @@ ScriptSelectSceneMenuItem::ScriptSelectSceneMenuItem(int type, const std::wstrin
 }
 ScriptSelectSceneMenuItem::~ScriptSelectSceneMenuItem() {}
 
-/**********************************************************
+//*******************************************************************
 //ScriptSelectModel
-**********************************************************/
+//*******************************************************************
 ScriptSelectModel::ScriptSelectModel() {
 	bCreated_ = false;
 }
@@ -593,9 +593,9 @@ void ScriptSelectFileModel::CreateMenuItem() {
 	Start();
 }
 
-/**********************************************************
+//*******************************************************************
 //PlayTypeSelectScene
-**********************************************************/
+//*******************************************************************
 PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) {
 	pageMaxY_ = 10;
 	bPageChangeX_ = true;
@@ -727,9 +727,9 @@ void PlayTypeSelectMenuItem::Render() {
 	}
 }
 
-/**********************************************************
+//*******************************************************************
 //PlayerSelectScene
-**********************************************************/
+//*******************************************************************
 PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 	pageMaxY_ = 4;
 	bPageChangeX_ = true;

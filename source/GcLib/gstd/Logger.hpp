@@ -9,9 +9,9 @@
 #include "Window.hpp"
 
 namespace gstd {
-	/**********************************************************
+	//*******************************************************************
 	//Logger
-	**********************************************************/
+	//*******************************************************************
 	class Logger {
 	protected:
 		static Logger* top_;
@@ -22,8 +22,11 @@ namespace gstd {
 	public:
 		Logger();
 		virtual ~Logger();
+
 		virtual bool Initialize() { return true; }
+
 		void AddLogger(shared_ptr<Logger> logger) { listLogger_.push_back(logger); }
+		
 		virtual void Write(const std::string& str);
 		virtual void Write(const std::wstring& str);
 
@@ -33,9 +36,9 @@ namespace gstd {
 	};
 
 #if defined(DNH_PROJ_EXECUTOR)
-	/**********************************************************
+	//*******************************************************************
 	//FileLogger
-	**********************************************************/
+	//*******************************************************************
 	class FileLogger : public Logger {
 	protected:
 		bool bEnable_;
@@ -47,19 +50,21 @@ namespace gstd {
 	public:
 		FileLogger();
 		~FileLogger();
+
 		void Clear();
 		bool Initialize(bool bEnable = true);
 		bool Initialize(std::wstring path, bool bEnable = true);
+		
 		bool SetPath(const std::wstring& path);
 		void SetMaxFileSize(int size) { sizeMax_ = size; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//WindowLogger
 	//ログウィンドウ
 	//ウィンドウは別スレッド動作です
 	//Natashi: Only instantiate once.
-	**********************************************************/
+	//*******************************************************************
 	class WindowLogger : public Logger, public WindowBase {
 	public:
 		class WindowThread;
@@ -83,13 +88,13 @@ namespace gstd {
 			STATE_CLOSED,
 		};
 
-		static WindowLogger* loggerParentGlobal_;
-	protected:
 		struct AddPanelEvent {
 			std::wstring name;
 			shared_ptr<Panel> panel;
 		};
-
+	public:
+		static WindowLogger* loggerParentGlobal_;
+	protected:
 		bool bEnable_;
 		int windowState_;
 
@@ -108,9 +113,12 @@ namespace gstd {
 	public:
 		WindowLogger();
 		~WindowLogger();
+
 		bool Initialize(bool bEnable = true);
+
 		void SaveState();
 		void LoadState();
+
 		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
 		bool AddPanel(shared_ptr<Panel> panel, const std::wstring& name);
 
@@ -128,6 +136,7 @@ namespace gstd {
 		friend WindowLogger;
 	protected:
 		WindowThread(WindowLogger* logger);
+
 		void _Run();
 	};
 	class WindowLogger::Panel : public WPanel {
@@ -146,7 +155,9 @@ namespace gstd {
 	public:
 		LogPanel();
 		~LogPanel();
+
 		virtual void LocateParts();
+
 		void AddText(const std::wstring& text);
 		void ClearText();
 	};
@@ -172,7 +183,9 @@ namespace gstd {
 	public:
 		InfoPanel();
 		~InfoPanel();
+
 		virtual void LocateParts();
+
 		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
 	};
 

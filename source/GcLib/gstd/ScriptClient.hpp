@@ -13,9 +13,9 @@ namespace gstd {
 	class ScriptFileLineMap;
 	class ScriptCommonDataManager;
 
-	/**********************************************************
+	//*******************************************************************
 	//ScriptEngineData
-	**********************************************************/
+	//*******************************************************************
 	class ScriptEngineData {
 	protected:
 		std::wstring path_;
@@ -43,9 +43,9 @@ namespace gstd {
 		void SetScriptFileLineMap(ref_count_ptr<ScriptFileLineMap>& mapLine) { mapLine_ = mapLine; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//ScriptBase
-	**********************************************************/
+	//*******************************************************************
 	class ScriptClientBase {
 		static script_type_manager* pTypeManager_;
 	public:
@@ -318,9 +318,9 @@ namespace gstd {
 	}
 #pragma endregion ScriptClientBase_impl
 
-	/**********************************************************
+	//*******************************************************************
 	//ScriptFileLineMap
-	**********************************************************/
+	//*******************************************************************
 	class ScriptFileLineMap {
 	public:
 		struct Entry {
@@ -341,9 +341,9 @@ namespace gstd {
 		std::list<Entry>& GetEntryList() { return listEntry_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//ScriptCommonData
-	**********************************************************/
+	//*******************************************************************
 	class ScriptCommonData {
 	public:
 		static constexpr const char* HEADER_SAVED_DATA = "DNHCDR\0\0";
@@ -374,9 +374,9 @@ namespace gstd {
 		void WriteRecord(gstd::RecordBuffer& record);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//ScriptCommonDataManager
-	**********************************************************/
+	//*******************************************************************
 	class ScriptCommonDataManager {
 	public:
 		using CommonDataMap = std::map<std::string, shared_ptr<ScriptCommonData>>;
@@ -410,9 +410,9 @@ namespace gstd {
 		gstd::CriticalSection& GetLock() { return lock_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//ScriptCommonDataInfoPanel
-	**********************************************************/
+	//*******************************************************************
 	class ScriptCommonDataInfoPanel : public WindowLogger::Panel {
 	protected:
 		enum {

@@ -3,9 +3,9 @@
 #include "StgControlScript.hpp"
 #include "StgSystem.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgControlScriptManager
-**********************************************************/
+//*******************************************************************
 StgControlScriptManager::StgControlScriptManager() {
 
 }
@@ -13,9 +13,9 @@ StgControlScriptManager::~StgControlScriptManager() {
 
 }
 
-/**********************************************************
+//*******************************************************************
 //StgControlScriptInformation
-**********************************************************/
+//*******************************************************************
 StgControlScriptInformation::StgControlScriptInformation() {
 	replayManager_ = new ReplayInformationManager();
 }
@@ -30,9 +30,9 @@ void StgControlScriptInformation::LoadReplayInformation(std::wstring pathMainScr
 	replayManager_->UpdateInformationList(pathMainScript);
 }
 
-/**********************************************************
+//*******************************************************************
 //StgControlScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<function> stgControlFunction = {
 	//関数：
 	//STG制御共通関数：共通データ
@@ -1108,9 +1108,9 @@ gstd::value StgControlScript::Func_SaveReplay(gstd::script_machine* machine, int
 }
 
 
-/**********************************************************
+//*******************************************************************
 //ScriptInfoPanel
-**********************************************************/
+//*******************************************************************
 ScriptInfoPanel::ScriptInfoPanel() {
 	timeUpdateInterval_ = 500;
 }

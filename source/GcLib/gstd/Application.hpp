@@ -1,14 +1,13 @@
-#ifndef __GSTD_APPLICATION__
-#define __GSTD_APPLICATION__
+#pragma once
 
 #include "../pch.h"
 
 #include "GstdUtility.hpp"
 
 namespace gstd {
-	/**********************************************************
+	//****************************************************************************
 	//Application
-	**********************************************************/
+	//****************************************************************************
 	class Application {
 	private:
 		static Application* thisBase_;
@@ -20,6 +19,7 @@ namespace gstd {
 		Application();
 	public:
 		virtual ~Application();
+
 		static Application* GetBase() { return thisBase_; }
 		bool Initialize();
 
@@ -36,5 +36,3 @@ namespace gstd {
 		static HINSTANCE GetApplicationHandle() { return ::GetModuleHandle(NULL); }
 	};
 }
-
-#endif

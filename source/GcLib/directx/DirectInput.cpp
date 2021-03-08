@@ -5,9 +5,9 @@
 using namespace gstd;
 using namespace directx;
 
-/**********************************************************
+//*******************************************************************
 //DirectInput
-**********************************************************/
+//*******************************************************************
 DirectInput* DirectInput::thisBase_ = nullptr;
 DirectInput::DirectInput() {
 	hWnd_ = nullptr;
@@ -385,9 +385,9 @@ DIDEVICEINSTANCE DirectInput::GetPadDeviceInformation(int16_t padIndex) {
 	return state;
 }
 
-/**********************************************************
+//*******************************************************************
 //VirtualKey
-**********************************************************/
+//*******************************************************************
 VirtualKey::VirtualKey(int16_t keyboard, int16_t padIndex, int16_t padButton) {
 	keyboard_ = keyboard;
 	padIndex_ = padIndex;
@@ -396,9 +396,9 @@ VirtualKey::VirtualKey(int16_t keyboard, int16_t padIndex, int16_t padButton) {
 }
 VirtualKey::~VirtualKey() {}
 
-/**********************************************************
+//*******************************************************************
 //VirtualKeyManager
-**********************************************************/
+//*******************************************************************
 VirtualKeyManager::VirtualKeyManager() {
 
 }
@@ -462,9 +462,9 @@ bool VirtualKeyManager::IsTargetKeyCode(int16_t key) {
 }
 
 #if defined(DNH_PROJ_EXECUTOR)
-/**********************************************************
+//*******************************************************************
 //KeyReplayManager
-**********************************************************/
+//*******************************************************************
 KeyReplayManager::KeyReplayManager(VirtualKeyManager* input) {
 	frame_ = 0;
 	input_ = input;

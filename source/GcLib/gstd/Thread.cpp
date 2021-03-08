@@ -5,10 +5,11 @@
 
 using namespace gstd;
 
-//================================================================
+//*******************************************************************
 //Thread
+//*******************************************************************
 Thread::Thread() {
-	hThread_ = NULL;
+	hThread_ = nullptr;
 	idThread_ = 0;
 	status_ = STOP;
 }
@@ -17,7 +18,7 @@ Thread::~Thread() {
 	this->Join();
 	if (hThread_) {
 		::CloseHandle(hThread_);
-		hThread_ = NULL;
+		hThread_ = nullptr;
 		idThread_ = 0;
 	}
 }
@@ -38,14 +39,13 @@ void Thread::Start() {
 		this->Stop();
 		this->Join();
 	}
-
 	hThread_ = (HANDLE)_beginthreadex(nullptr, 0, _StaticRun, (void*)this, 0, &idThread_);
 }
 void Thread::Stop() {
 	if (status_ == RUN) status_ = REQUEST_STOP;
 }
 bool Thread::IsStop() {
-	return hThread_ == NULL || status_ == STOP;
+	return hThread_ == nullptr || status_ == STOP;
 }
 DWORD Thread::Join(int mills) {
 	DWORD res = WAIT_OBJECT_0;
@@ -56,16 +56,17 @@ DWORD Thread::Join(int mills) {
 
 	if (hThread_) {
 		if (res != WAIT_TIMEOUT)
-			::CloseHandle(hThread_);//タイムアウトの場合クローズできない
-		hThread_ = NULL;
+			::CloseHandle(hThread_);
+		hThread_ = nullptr;
 		idThread_ = 0;
 		status_ = STOP;
 	}
 	return res;
 }
 
-//================================================================
+//*******************************************************************
 //CriticalSection
+//*******************************************************************
 CriticalSection::CriticalSection() {
 	idThread_ = 0;
 	countLock_ = 0;
@@ -98,8 +99,9 @@ void CriticalSection::Leave() {
 	::LeaveCriticalSection(&cs_);
 }
 
-//================================================================
+//*******************************************************************
 //StaticLock
+//*******************************************************************
 CRITICAL_SECTION* StaticLock::cs_ = nullptr;
 StaticLock::StaticLock() {
 	if (cs_ == nullptr) {
@@ -112,11 +114,11 @@ StaticLock::~StaticLock() {
 	::LeaveCriticalSection(cs_);
 }
 
-//================================================================
+//*******************************************************************
 //ThreadSignal
+//*******************************************************************
 ThreadSignal::ThreadSignal(bool bManualReset) {
-	BOOL bManual = bManualReset ? TRUE : FALSE;
-	hEvent_ = ::CreateEvent(nullptr, bManual, FALSE, nullptr);
+	hEvent_ = ::CreateEventW(nullptr, bManualReset, false, nullptr);
 }
 ThreadSignal::~ThreadSignal() {
 	::CloseHandle(hEvent_);

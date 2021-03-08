@@ -11,9 +11,9 @@
 using namespace gstd;
 using namespace directx;
 
-/**********************************************************
+//*******************************************************************
 //DirectGraphicsConfig
-**********************************************************/
+//*******************************************************************
 DirectGraphicsConfig::DirectGraphicsConfig() {
 	bShowWindow_ = true;
 	sizeScreen_ = { 640, 480 };
@@ -30,9 +30,9 @@ DirectGraphicsConfig::~DirectGraphicsConfig() {
 }
 
 #if defined(DNH_PROJ_EXECUTOR)
-/**********************************************************
+//*******************************************************************
 //DirectGraphics
-**********************************************************/
+//*******************************************************************
 DirectGraphics* DirectGraphics::thisBase_ = nullptr;
 DirectGraphics::DirectGraphics() {
 	pDirect3D_ = nullptr;
@@ -709,9 +709,9 @@ bool DirectGraphics::IsPixelShaderSupported(int major, int minor) {
 	return res;
 }
 
-/**********************************************************
+//*******************************************************************
 //DirectGraphicsPrimaryWindow
-**********************************************************/
+//*******************************************************************
 DirectGraphicsPrimaryWindow::DirectGraphicsPrimaryWindow() {
 	lpCursor_ = nullptr;
 	newScreenMode_ = ScreenMode::SCREENMODE_WINDOW;
@@ -1019,9 +1019,9 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 	modeScreen_ = newMode;
 }
 
-/**********************************************************
+//*******************************************************************
 //DxCamera
-**********************************************************/
+//*******************************************************************
 DxCamera::DxCamera() {
 	Reset();
 }
@@ -1185,9 +1185,9 @@ void DxCamera::PopMatrixState() {
 	listMatrixState_.pop_back();
 }
 
-/**********************************************************
+//*******************************************************************
 //DxCamera2D
-**********************************************************/
+//*******************************************************************
 DxCamera2D::DxCamera2D() {
 	pos_.x = 400;
 	pos_.y = 300;

@@ -1,10 +1,10 @@
-#ifndef __GSTD_RANDPROVIDER__
-#define __GSTD_RANDPROVIDER__
+#pragma once
 
 #include "../pch.h"
 
 namespace gstd {
 	/*
+	//Mersenne Twister
 	class RandProvider {
 		enum {
 			MT_W = 32,
@@ -65,6 +65,7 @@ namespace gstd {
 		RandProvider();
 		RandProvider(uint32_t s);
 		virtual ~RandProvider() {}
+
 		void Initialize(uint32_t s);
 
 		uint32_t GetSeed() { return seed_; }
@@ -76,5 +77,3 @@ namespace gstd {
 		double GetReal(double min, double max);
 	};
 }
-
-#endif

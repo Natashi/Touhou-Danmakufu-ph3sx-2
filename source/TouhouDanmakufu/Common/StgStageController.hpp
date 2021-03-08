@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_STAGECONTROLLER__
-#define __TOUHOUDANMAKUFU_DNHSTG_STAGECONTROLLER__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -15,9 +14,9 @@
 class StgStageInformation;
 class StgStageStartData;
 class PseudoSlowInformation;
-/**********************************************************
+//*******************************************************************
 //StgStageController
-**********************************************************/
+//*******************************************************************
 class StgStageController {
 private:
 	StgSystemController* systemController_;
@@ -38,10 +37,13 @@ private:
 public:
 	StgStageController(StgSystemController* systemController);
 	virtual ~StgStageController();
+
 	void Initialize(ref_count_ptr<StgStageStartData> startData);
 	void CloseScene();
+
 	void Work();
 	void Render();
+
 	void RenderToTransitionTexture();
 
 	StgStageScriptObjectManager* GetMainObjectManager() { return objectManagerMain_.get(); }
@@ -66,9 +68,9 @@ public:
 };
 
 
-/**********************************************************
+//*******************************************************************
 //StgStageInformation
-**********************************************************/
+//*******************************************************************
 class StgStageInformation {
 public:
 	enum {
@@ -77,11 +79,10 @@ public:
 		RESULT_PLAYER_DOWN,
 		RESULT_CLEARED,
 	};
-
 private:
 	bool bEndStg_;
 	bool bPause_;
-	bool bReplay_;//ÉäÉvÉåÉC
+	bool bReplay_;
 	DWORD frame_;
 	int stageIndex_;
 
@@ -89,8 +90,6 @@ private:
 	ref_count_ptr<ScriptInformation> infoPlayerScript_;
 	ref_count_ptr<StgPlayerInformation> infoPlayerObject_;
 	ref_count_ptr<ReplayInformation::StageData> replayStageData_;
-
-	//STGê›íË
 	DxRect<LONG> rcStgFrame_;
 	int priMinStgFrame_;
 	int priMaxStgFrame_;
@@ -100,7 +99,6 @@ private:
 	DxRect<LONG> rcShotAutoDeleteClipOffset_;
 	DxRect<LONG> rcShotAutoDeleteClip_;
 
-	//STGèÓïÒ
 	shared_ptr<RandProvider> rand_;
 	int64_t score_;
 	int64_t graze_;
@@ -110,6 +108,7 @@ private:
 public:
 	StgStageInformation();
 	virtual ~StgStageInformation();
+
 	bool IsEnd() { return bEndStg_; }
 	void SetEnd() { bEndStg_ = true; }
 	bool IsPause() { return bPause_; }
@@ -162,16 +161,15 @@ public:
 	void SetStageStartTime(DWORD time) { timeStart_ = time; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgStageStartData
-**********************************************************/
+//*******************************************************************
 class StgStageStartData {
 private:
 	ref_count_ptr<StgStageInformation> infoStage_;
 	ref_count_ptr<ReplayInformation::StageData> replayStageData_;
 	ref_count_ptr<StgStageInformation> prevStageInfo_;
 	ref_count_ptr<StgPlayerInformation> prevPlayerInfo_;
-
 public:
 	StgStageStartData() {}
 	virtual ~StgStageStartData() {}
@@ -187,9 +185,9 @@ public:
 
 };
 
-/**********************************************************
+//*******************************************************************
 //PseudoSlowInformation
-**********************************************************/
+//*******************************************************************
 class PseudoSlowInformation : public gstd::FpsControlObject {
 public:
 	class SlowData;
@@ -198,7 +196,6 @@ public:
 		OWNER_ENEMY,
 		TARGET_ALL,
 	};
-
 private:
 	int current_;
 	std::map<int, gstd::ref_count_ptr<SlowData>> mapDataPlayer_;
@@ -207,6 +204,7 @@ private:
 public:
 	PseudoSlowInformation() { current_ = 0; }
 	virtual ~PseudoSlowInformation() {}
+
 	virtual DWORD GetFps();
 
 	bool IsValidFrame(int target);
@@ -222,8 +220,7 @@ private:
 public:
 	SlowData() { fps_ = STANDARD_FPS; }
 	virtual ~SlowData() {}
+
 	DWORD GetFps() { return fps_; }
 	void SetFps(DWORD fps) { fps_ = fps; }
 };
-
-#endif

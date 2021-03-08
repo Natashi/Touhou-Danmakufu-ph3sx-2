@@ -6,9 +6,9 @@
 
 using namespace gstd;
 
-//*******************************************************************
+//****************************************************************************
 //ScriptEngineData
-//*******************************************************************
+//****************************************************************************
 ScriptEngineData::ScriptEngineData() {
 	encoding_ = Encoding::UNKNOWN;
 	mapLine_ = new ScriptFileLineMap();
@@ -20,9 +20,9 @@ void ScriptEngineData::SetSource(std::vector<char>& source) {
 	source_ = source;
 }
 
-//*******************************************************************
+//****************************************************************************
 //ScriptClientBase
-//*******************************************************************
+//****************************************************************************
 static const std::vector<function> commonFunction = {
 	//Script functions
 	{ "GetScriptArgument", ScriptClientBase::Func_GetScriptArgument, 1 },
@@ -1641,9 +1641,9 @@ value ScriptClientBase::Func_GetCommonDataValueKeyList(script_machine* machine, 
 }
 
 
-//*******************************************************************
+//****************************************************************************
 //ScriptFileLineMap
-//*******************************************************************
+//****************************************************************************
 ScriptFileLineMap::ScriptFileLineMap() {
 
 }
@@ -1715,9 +1715,9 @@ std::wstring& ScriptFileLineMap::GetPath(int line) {
 	return entry->path_;
 }
 
-//*******************************************************************
+//****************************************************************************
 //ScriptCommonDataManager
-//*******************************************************************
+//****************************************************************************
 const std::string ScriptCommonDataManager::nameAreaDefault_ = "";
 ScriptCommonDataManager::ScriptCommonDataManager() {
 	defaultAreaIterator_ = CreateArea(nameAreaDefault_);
@@ -1778,9 +1778,9 @@ void ScriptCommonDataManager::SetData(CommonDataMap::iterator itr, shared_ptr<Sc
 	if (itr == mapData_.end()) return;
 	itr->second = commonData;
 }
-//*******************************************************************
+//****************************************************************************
 //ScriptCommonData
-//*******************************************************************
+//****************************************************************************
 ScriptCommonData::ScriptCommonData() {}
 ScriptCommonData::~ScriptCommonData() {}
 void ScriptCommonData::Clear() {
@@ -1934,9 +1934,9 @@ void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, const gstd::value&
 }
 
 
-//*******************************************************************
+//****************************************************************************
 //ScriptCommonDataPanel
-//*******************************************************************
+//****************************************************************************
 ScriptCommonDataInfoPanel::ScriptCommonDataInfoPanel() {
 	timeLastUpdate_ = 0;
 	timeUpdateInterval_ = 1000;

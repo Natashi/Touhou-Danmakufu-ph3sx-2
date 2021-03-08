@@ -4,9 +4,9 @@
 #include "DnhCommon.hpp"
 
 #if defined(DNH_PROJ_EXECUTOR)
-/**********************************************************
+//*******************************************************************
 //EPathProperty
-**********************************************************/
+//*******************************************************************
 const std::wstring& EPathProperty::GetSystemResourceDirectory() {
 	static std::wstring path = GetModuleDirectory() + L"resource/";
 	return path;
@@ -48,9 +48,9 @@ std::wstring EPathProperty::GetCommonDataPath(const std::wstring& scriptPath, co
 	return path;
 }
 
-/**********************************************************
+//*******************************************************************
 //ELogger
-**********************************************************/
+//*******************************************************************
 ELogger::ELogger() {
 
 }
@@ -70,9 +70,9 @@ void ELogger::UpdateCommonDataInfoPanel(shared_ptr<ScriptCommonDataManager> comm
 	panelCommonData_->Update(commonDataManager);
 }
 
-/**********************************************************
+//*******************************************************************
 //EFpsController
-**********************************************************/
+//*******************************************************************
 EFpsController::EFpsController() {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 	int fpsType = config->GetFpsType();
@@ -97,9 +97,9 @@ EFpsController::EFpsController() {
 #endif
 
 #if defined(DNH_PROJ_EXECUTOR)
-/**********************************************************
+//*******************************************************************
 //ETaskManager
-**********************************************************/
+//*******************************************************************
 ETaskManager::ETaskManager() {
 	timeSpentOnRender_ = 0;
 	timeSpentOnWork_ = 0;
@@ -109,9 +109,9 @@ bool ETaskManager::Initialize() {
 	return true;
 }
 
-/**********************************************************
+//*******************************************************************
 //ETextureManager
-**********************************************************/
+//*******************************************************************
 bool ETextureManager::Initialize() {
 	bool res = TextureManager::Initialize();
 	if (!res)
@@ -140,9 +140,9 @@ std::wstring ETextureManager::GetReservedRenderTargetName(int index) {
 }
 #endif
 
-/**********************************************************
+//*******************************************************************
 //EDirectInput
-**********************************************************/
+//*******************************************************************
 bool EDirectInput::Initialize(HWND hWnd) {
 	padIndex_ = 0;
 

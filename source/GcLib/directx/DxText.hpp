@@ -1,5 +1,4 @@
-#ifndef __DIRECTX_DXTEXT__
-#define __DIRECTX_DXTEXT__
+#pragma once
 
 #include "../pch.h"
 
@@ -14,40 +13,47 @@ namespace directx {
 	class DxTextRenderer;
 	class DxText;
 
-	/**********************************************************
+	//*******************************************************************
 	//DxFont
-	**********************************************************/
+	//*******************************************************************
 	class DxFont {
 		friend DxCharCache;
 		friend DxCharCacheKey;
 	protected:
-		LOGFONT info_;//フォント種別
+		LOGFONT info_;
+
 		D3DCOLOR colorTop_;
 		D3DCOLOR colorBottom_;
-		TextBorderType typeBorder_;//縁取り
+
+		TextBorderType typeBorder_;
 		LONG widthBorder_;
-		D3DCOLOR colorBorder_;//縁取り色
+		D3DCOLOR colorBorder_;
 	public:
 		DxFont();
 		virtual ~DxFont();
+
 		void SetLogFont(LOGFONT& font) { info_ = font; }
 		LOGFONT& GetLogFont() { return info_; }
+
 		void SetTopColor(D3DCOLOR color) { colorTop_ = color; }
 		D3DCOLOR GetTopColor() { return colorTop_; }
 		void SetBottomColor(D3DCOLOR color) { colorBottom_ = color; }
 		D3DCOLOR GetBottomColor() { return colorBottom_; }
+		
 		void SetBorderType(TextBorderType type) { typeBorder_ = type; }
 		TextBorderType GetBorderType() { return typeBorder_; }
+		
 		void SetBorderWidth(LONG width) { widthBorder_ = width; }
 		LONG GetBorderWidth() { return widthBorder_; }
+		
 		void SetBorderColor(D3DCOLOR color) { colorBorder_ = color; }
 		D3DCOLOR GetBorderColor() { return colorBorder_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxCharGlyph
 	//文字1文字のテクスチャ
-	**********************************************************/
+	//*******************************************************************
 	class DxCharGlyph {
 		shared_ptr<Texture> texture_;
 		UINT code_;
@@ -58,6 +64,7 @@ namespace directx {
 	public:
 		DxCharGlyph();
 		virtual ~DxCharGlyph();
+
 		bool Create(UINT code, gstd::Font& winFont, DxFont* dxFont);
 		shared_ptr<Texture> GetTexture() { return texture_; }
 		POINT& GetSize() { return size_; }
@@ -66,10 +73,10 @@ namespace directx {
 	};
 
 
-	/**********************************************************
+	//*******************************************************************
 	//DxCharCache
 	//文字キャッシュ
-	**********************************************************/
+	//*******************************************************************
 	class DxCharCacheKey {
 		friend DxCharCache;
 		friend DxTextRenderer;
@@ -115,6 +122,7 @@ namespace directx {
 	public:
 		DxCharCache();
 		~DxCharCache();
+
 		void Clear();
 		size_t GetCacheCount() { return mapCache_.size(); }
 
@@ -122,9 +130,9 @@ namespace directx {
 		void AddChar(DxCharCacheKey& key, shared_ptr<DxCharGlyph> value);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxTextScanner
-	**********************************************************/
+	//*******************************************************************
 	class DxTextScanner;
 	class DxTextToken {
 		friend DxTextScanner;
@@ -205,10 +213,10 @@ namespace directx {
 		void SetTagScanEnable(bool bEnable) { bTagScan_ = bEnable; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxTextRenderer
 	//テキスト描画エンジン
-	**********************************************************/
+	//*******************************************************************
 	class DxTextLine;
 	class DxTextInfo;
 	class DxTextRenderer;
@@ -219,6 +227,7 @@ namespace directx {
 	public:
 		DxTextTag() { indexTag_ = 0; typeTag_ = TextTagType::Unknown; }
 		virtual ~DxTextTag() {};
+
 		TextTagType GetTagType() { return typeTag_; }
 		int GetTagIndex() { return indexTag_; }
 		void SetTagIndex(int index) { indexTag_ = index; }
@@ -230,6 +239,7 @@ namespace directx {
 		shared_ptr<DxText> dxText_;
 	public:
 		DxTextTag_Ruby() { typeTag_ = TextTagType::Ruby; leftMargin_ = 0; }
+		
 		LONG GetLeftMargin() { return leftMargin_; }
 		void SetLeftMargin(LONG left) { leftMargin_ = left; }
 
@@ -246,6 +256,7 @@ namespace directx {
 		D3DXVECTOR2 offset_;
 	public:
 		DxTextTag_Font() { typeTag_ = TextTagType::Font; offset_ = D3DXVECTOR2(0, 0); }
+		
 		void SetFont(DxFont& font) { font_ = font; }
 		DxFont& GetFont() { return font_; }
 
@@ -263,10 +274,12 @@ namespace directx {
 	public:
 		DxTextLine() { width_ = 0; height_ = 0; sidePitch_ = 0; }
 		virtual ~DxTextLine() {};
+		
 		LONG GetWidth() { return width_; }
 		LONG GetHeight() { return height_; }
 		LONG GetSidePitch() { return sidePitch_; }
 		void SetSidePitch(LONG pitch) { sidePitch_ = pitch; }
+
 		std::vector<UINT>& GetTextCodes() { return code_; }
 		size_t GetTextCodeCount() { return code_.size(); }
 		size_t GetTagCount() { return tag_.size(); }
@@ -284,6 +297,7 @@ namespace directx {
 	public:
 		DxTextInfo() { totalWidth_ = 0; totalHeight_ = 0; lineValidStart_ = 1; lineValidEnd_ = 0; bAutoIndent_ = false; }
 		virtual ~DxTextInfo() {};
+
 		LONG GetTotalWidth() { return totalWidth_; }
 		LONG GetTotalHeight() { return totalHeight_; }
 		int GetValidStartLine() { return lineValidStart_; }
@@ -355,6 +369,7 @@ namespace directx {
 	public:
 		DxTextRenderer();
 		virtual ~DxTextRenderer();
+
 		static DxTextRenderer* GetBase() { return thisBase_; }
 		bool Initialize();
 		gstd::CriticalSection& GetLock() { return lock_; }
@@ -374,14 +389,15 @@ namespace directx {
 		bool AddFontFromFile(const std::wstring& path);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//DxText
 	//テキスト描画
-	**********************************************************/
+	//*******************************************************************
 	class DxText {
 		friend DxTextRenderer;
 	protected:
 		DxFont dxFont_;
+
 		POINT pos_;
 		LONG widthMax_;
 		LONG heightMax_;
@@ -400,6 +416,7 @@ namespace directx {
 	public:
 		DxText();
 		virtual ~DxText();
+
 		void Copy(const DxText& src);
 		virtual void Render();
 		void Render(shared_ptr<DxTextInfo> textInfo);
@@ -464,5 +481,3 @@ namespace directx {
 		void SetShader(shared_ptr<Shader> shader) { shader_ = shader; }
 	};
 }
-
-#endif

@@ -6,9 +6,9 @@
 #include "StgStageScript.hpp"
 #include "StgPlayer.hpp"
 
-//*******************************************************************
+//****************************************************************************
 //StgSystemController
-//*******************************************************************
+//****************************************************************************
 StgSystemController* StgSystemController::base_ = nullptr;
 StgSystemController::StgSystemController() {
 	stageController_ = nullptr;
@@ -743,9 +743,9 @@ void StgSystemController::GetAllScriptList(std::list<weak_ptr<ScriptManager>>& l
 		listRes.push_back(replaySaveScene_->GetScriptManagerRef());
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgSystemInformation
-//*******************************************************************
+//****************************************************************************
 StgSystemInformation::StgSystemInformation() {
 	scene_ = SCENE_NULL;
 	bEndStg_ = false;

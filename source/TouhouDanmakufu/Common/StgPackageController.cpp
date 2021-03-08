@@ -3,9 +3,9 @@
 #include "StgPackageController.hpp"
 #include "StgSystem.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgPackageController
-**********************************************************/
+//*******************************************************************
 StgPackageController::StgPackageController(StgSystemController* systemController) {
 	systemController_ = systemController;
 	scriptManager_ = nullptr;
@@ -51,9 +51,9 @@ void StgPackageController::RenderToTransitionTexture() {
 	graphics->SetRenderTarget(nullptr, false);
 }
 
-/**********************************************************
+//*******************************************************************
 //StgPackageInformation
-**********************************************************/
+//*******************************************************************
 StgPackageInformation::StgPackageInformation() {
 	bEndPackage_ = false;
 	timeStart_ = 0;

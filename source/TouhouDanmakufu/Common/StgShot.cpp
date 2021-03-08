@@ -6,9 +6,9 @@
 #include "StgItem.hpp"
 #include "../../GcLib/directx/HLSL.hpp"
 
-//*******************************************************************
+//****************************************************************************
 //StgShotManager
-//*******************************************************************
+//****************************************************************************
 StgShotManager::StgShotManager(StgStageController* stageController) {
 	stageController_ = stageController;
 
@@ -261,9 +261,9 @@ bool StgShotManager::LoadEnemyShotData(const std::wstring& path, bool bReload) {
 	return listEnemyShotData_->AddShotDataList(path, bReload);
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgShotDataList
-//*******************************************************************
+//****************************************************************************
 StgShotDataList::StgShotDataList() {
 	listRenderer_.resize(RENDER_TYPE_COUNT);
 	defaultDelayColor_ = 0xffffffff;	//Solid white
@@ -646,9 +646,9 @@ void StgShotData::AnimationData::SetDestRect(DxRect<int>* dst, DxRect<int>* src)
 	if (height % 2L == 1L) ++(dst->bottom);
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgShotRenderer
-//*******************************************************************
+//****************************************************************************
 StgShotRenderer::StgShotRenderer() {
 	countRenderVertex_ = 0U;
 	countMaxVertex_ = 8192U;
@@ -728,9 +728,9 @@ void StgShotRenderer::AddSquareVertex_CurveLaser(VERTEX_TLX* listVertex, bool bA
 	countRenderVertex_ += 2U;
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgShotObject
-//*******************************************************************
+//****************************************************************************
 StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObject(stageController) {
 	stageController_ = stageController;
 
@@ -1215,9 +1215,9 @@ float StgShotObject::DelayParameter::_CalculateValue(D3DXVECTOR3* param, lerp_fu
 	}
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgNormalShotObject
-//*******************************************************************
+//****************************************************************************
 StgNormalShotObject::StgNormalShotObject(StgStageController* stageController) : StgShotObject(stageController) {
 	typeObject_ = TypeObject::Shot;
 	angularVelocity_ = 0;
@@ -1467,9 +1467,9 @@ void StgNormalShotObject::SetShotDataID(int id) {
 	}
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgLaserObject(レーザー基本部)
-//*******************************************************************
+//****************************************************************************
 StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObject(stageController) {
 	life_ = LIFE_SPELL_REGIST;
 	length_ = 0;
@@ -1495,9 +1495,9 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 		intersectionManager->AddTarget(iTarget);
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgLooseLaserObject(射出型レーザー)
-//*******************************************************************
+//****************************************************************************
 StgLooseLaserObject::StgLooseLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
 	typeObject_ = TypeObject::LooseLaser;
 
@@ -1769,9 +1769,9 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	}
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgStraightLaserObject(設置型レーザー)
-//*******************************************************************
+//****************************************************************************
 StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
 	typeObject_ = TypeObject::StraightLaser;
 
@@ -2093,9 +2093,9 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 	}
 }
 
-//*******************************************************************
+//****************************************************************************
 //StgCurveLaserObject(曲がる型レーザー)
-//*******************************************************************
+//****************************************************************************
 StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
 	typeObject_ = TypeObject::CurveLaser;
 	tipDecrement_ = 0.0f;
@@ -2445,9 +2445,9 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 }
 
 
-//*******************************************************************
+//****************************************************************************
 //StgPatternShotObjectGenerator (ECL-style bullets firing)
-//*******************************************************************
+//****************************************************************************
 StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
 	parent_ = nullptr;
 	idShotData_ = -1;

@@ -4,9 +4,9 @@
 #include "DnhGcLibImpl.hpp"
 
 #if defined(DNH_PROJ_EXECUTOR)
-/**********************************************************
+//*******************************************************************
 //ScriptInformation
-**********************************************************/
+//*******************************************************************
 const std::wstring ScriptInformation::DEFAULT = L"DEFAULT";
 
 ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(const std::wstring& pathScript, bool bNeedHeader) {
@@ -309,9 +309,9 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::FindPlayerScrip
 }
 #endif
 
-/**********************************************************
+//*******************************************************************
 //ErrorDialog
-**********************************************************/
+//*******************************************************************
 HWND ErrorDialog::hWndParentStatic_ = nullptr;
 ErrorDialog::ErrorDialog(HWND hParent) {
 	hParent_ = hParent;
@@ -405,9 +405,9 @@ bool ErrorDialog::ShowModal(std::wstring msg) {
 	return true;
 }
 
-/**********************************************************
+//*******************************************************************
 //DnhConfiguration
-**********************************************************/
+//*******************************************************************
 DnhConfiguration::DnhConfiguration() {
 	modeScreen_ = ScreenMode::SCREENMODE_WINDOW;
 	modeColor_ = ColorMode::COLOR_MODE_32BIT;

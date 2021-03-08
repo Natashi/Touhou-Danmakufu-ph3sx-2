@@ -6,9 +6,9 @@
 #include "StgShot.hpp"
 #include "StgItem.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgStageScriptManager
-**********************************************************/
+//*******************************************************************
 StgStageScriptManager::StgStageScriptManager(StgStageController* stageController) {
 	stageController_ = stageController;
 	objManager_ = stageController_->GetMainObjectManagerRef();
@@ -66,9 +66,9 @@ void StgStageScriptManager::SetShotScript(weak_ptr<ManagedScript> id) {
 }
 
 
-/**********************************************************
+//*******************************************************************
 //StgStageScriptObjectManager
-**********************************************************/
+//*******************************************************************
 StgStageScriptObjectManager::StgStageScriptObjectManager(StgStageController* stageController) {
 	stageController_ = stageController;
 	SetMaxObject(DEFAULT_CONTAINER_CAPACITY);
@@ -236,9 +236,9 @@ int StgStageScriptObjectManager::CreatePlayerObject() {
 }
 
 
-/**********************************************************
+//*******************************************************************
 //StgStageScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<function> stgStageFunction = {
 	//STG共通関数：共通データ
 	{ "SaveCommonDataAreaToReplayFile", StgStageScript::Func_SaveCommonDataAreaToReplayFile, 1 },
@@ -4706,9 +4706,9 @@ gstd::value StgStageScript::Func_ObjCol_GetIntersectedCount(gstd::script_machine
 	return script->CreateRealValue(res);
 }
 
-/**********************************************************
+//*******************************************************************
 //StgSystemScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<constant> stgSystemConstant = {
 	constant("__stgSystemFunction__", 0),
 };
@@ -4719,9 +4719,9 @@ StgStageSystemScript::StgStageSystemScript(StgStageController* stageController) 
 }
 StgStageSystemScript::~StgStageSystemScript() {}
 
-/**********************************************************
+//*******************************************************************
 //StgStageItemScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<constant> stgItemConstant = {
 	constant("EV_GET_ITEM", StgStageItemScript::EV_GET_ITEM),
 	constant("EV_COLLECT_ITEM", StgStageItemScript::EV_COLLECT_ITEM),
@@ -4740,9 +4740,9 @@ StgStageItemScript::StgStageItemScript(StgStageController* stageController) : St
 }
 StgStageItemScript::~StgStageItemScript() {}
 
-/**********************************************************
+//*******************************************************************
 //StgStageShotScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<function> stgShotFunction = {
 	{ "SetShotDeleteEventEnable", StgStageShotScript::Func_SetShotDeleteEventEnable, 2 },
 };
@@ -4771,9 +4771,9 @@ gstd::value StgStageShotScript::Func_SetShotDeleteEventEnable(gstd::script_machi
 	return value();
 }
 
-/**********************************************************
+//*******************************************************************
 //StgPlayerScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<function> stgPlayerFunction = {
 	//関数：
 	{ "CreatePlayerShotA1", StgStagePlayerScript::Func_CreatePlayerShotA1, 7 },

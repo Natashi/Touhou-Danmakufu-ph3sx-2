@@ -4,9 +4,9 @@
 #include "StgCommon.hpp"
 #include "StgControlScript.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgUserExtendScene
-**********************************************************/
+//*******************************************************************
 class StgUserExtendSceneScriptManager;
 class StgUserExtendScene {
 protected:
@@ -32,9 +32,9 @@ public:
 	virtual void Finish();
 };
 
-/**********************************************************
+//*******************************************************************
 //StgUserExtendSceneScriptManager
-**********************************************************/
+//*******************************************************************
 class StgUserExtendSceneScript;
 class StgUserExtendSceneScriptManager : public StgControlScriptManager {
 protected:
@@ -53,9 +53,9 @@ public:
 	gstd::value GetResultValue();
 };
 
-/**********************************************************
+//*******************************************************************
 //StgUserExtendSceneScript
-**********************************************************/
+//*******************************************************************
 class StgUserExtendSceneScript : public StgControlScript {
 public:
 	enum {
@@ -68,9 +68,9 @@ public:
 	virtual ~StgUserExtendSceneScript();
 };
 
-/**********************************************************
+//*******************************************************************
 //StgPauseScene
-**********************************************************/
+//*******************************************************************
 class StgPauseSceneScript;
 class StgPauseScene : public StgUserExtendScene {
 public:
@@ -90,9 +90,9 @@ public:
 };
 
 
-/**********************************************************
+//*******************************************************************
 //StgEndScene
-**********************************************************/
+//*******************************************************************
 class StgEndScript;
 class StgEndScene : public StgUserExtendScene {
 public:
@@ -105,18 +105,18 @@ public:
 	void Finish();
 };
 
-/**********************************************************
+//*******************************************************************
 //StgEndSceneScript
-**********************************************************/
+//*******************************************************************
 class StgEndSceneScript : public StgUserExtendSceneScript {
 public:
 	StgEndSceneScript(StgSystemController* controller);
 	virtual ~StgEndSceneScript();
 };
 
-/**********************************************************
+//*******************************************************************
 //StgReplaySaveScene
-**********************************************************/
+//*******************************************************************
 class StgReplaySaveScript;
 class StgReplaySaveScene : public StgUserExtendScene {
 public:
@@ -129,9 +129,9 @@ public:
 	void Finish();
 };
 
-/**********************************************************
+//*******************************************************************
 //StgReplaySaveScript
-**********************************************************/
+//*******************************************************************
 class StgReplaySaveScript : public StgUserExtendSceneScript {
 public:
 	StgReplaySaveScript(StgSystemController* controller);

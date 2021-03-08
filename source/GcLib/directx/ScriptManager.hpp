@@ -6,9 +6,9 @@
 
 namespace directx {
 	class ManagedScript;
-	/**********************************************************
+	//*******************************************************************
 	//ScriptManager
-	**********************************************************/
+	//*******************************************************************
 	class ScriptManager : public gstd::FileManager::LoadThreadListener {
 	public:
 		enum {
@@ -34,6 +34,7 @@ namespace directx {
 	public:
 		ScriptManager();
 		virtual ~ScriptManager();
+
 		virtual void Work();
 		virtual void Work(int targetType);
 		virtual void Render();
@@ -75,9 +76,9 @@ namespace directx {
 	};
 
 
-	/**********************************************************
+	//*******************************************************************
 	//ManagedScript
-	**********************************************************/
+	//*******************************************************************
 	class ManagedScriptParameter {
 	public:
 		ManagedScriptParameter() {}

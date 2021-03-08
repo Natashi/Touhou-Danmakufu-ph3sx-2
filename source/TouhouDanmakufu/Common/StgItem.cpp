@@ -5,9 +5,9 @@
 #include "StgStageScript.hpp"
 #include "StgPlayer.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgItemManager
-**********************************************************/
+//*******************************************************************
 StgItemManager::StgItemManager(StgStageController* stageController) {
 	stageController_ = stageController;
 	listItemData_ = new StgItemDataList();
@@ -302,9 +302,9 @@ std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, int radius, i
 	return res;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgItemDataList
-**********************************************************/
+//*******************************************************************
 StgItemDataList::StgItemDataList() {
 	listRenderer_.resize(RENDER_TYPE_COUNT);
 }
@@ -599,9 +599,9 @@ StgItemRenderer* StgItemData::GetRenderer(BlendMode type) {
 	return listItemData_->GetRenderer(indexTexture_, type - 1);
 }
 
-/**********************************************************
+//*******************************************************************
 //StgItemRenderer
-**********************************************************/
+//*******************************************************************
 StgItemRenderer::StgItemRenderer() {
 	countRenderVertex_ = 0;
 	countMaxVertex_ = 256 * 256;
@@ -646,9 +646,9 @@ void StgItemRenderer::AddVertex(VERTEX_TLX& vertex) {
 	++countRenderVertex_;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgItemObject
-**********************************************************/
+//*******************************************************************
 StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObject(stageController) {
 	stageController_ = stageController;
 	typeObject_ = TypeObject::Item;
@@ -1193,9 +1193,9 @@ void StgItemObject_User::Intersect(StgIntersectionTarget* ownTarget, StgIntersec
 }
 
 
-/**********************************************************
+//*******************************************************************
 //StgMovePattern_Item
-**********************************************************/
+//*******************************************************************
 StgMovePattern_Item::StgMovePattern_Item(StgMoveObject* target) : StgMovePattern(target) {
 	frame_ = 0;
 	typeMove_ = MOVE_DOWN;

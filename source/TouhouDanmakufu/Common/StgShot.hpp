@@ -1,5 +1,4 @@
-#ifndef __TOUHOUDANMAKUFU_DNHSTG_SHOT__
-#define __TOUHOUDANMAKUFU_DNHSTG_SHOT__
+#pragma once
 
 #include "../../GcLib/pch.h"
 
@@ -10,9 +9,9 @@ class StgShotDataList;
 class StgShotData;
 class StgShotRenderer;
 class StgShotObject;
-/**********************************************************
+//*******************************************************************
 //StgShotManager
-**********************************************************/
+//*******************************************************************
 class StgShotManager {
 	//uint16_t RTARGET_VERT_INDICES[6];
 	//size_t vertRTw;
@@ -82,9 +81,9 @@ public:
 	bool IsDeleteEventEnable(int bit) { return listDeleteEventEnable_[bit]; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgShotDataList
-**********************************************************/
+//*******************************************************************
 class StgShotDataList {
 public:
 	enum {
@@ -175,9 +174,9 @@ public:
 	StgShotRenderer* GetRenderer(BlendMode type);
 };
 
-/**********************************************************
+//*******************************************************************
 //StgShotRenderer
-**********************************************************/
+//*******************************************************************
 class StgShotRenderer : public RenderObjectTLX {
 	friend class StgShotManager;
 
@@ -221,9 +220,9 @@ private:
 	}
 };
 
-/**********************************************************
+//*******************************************************************
 //StgShotObject
-**********************************************************/
+//*******************************************************************
 struct StgPatternShotTransform;
 class StgShotObject : public DxScriptRenderObject, public StgMoveObject, public StgIntersectionObject {
 	friend StgPatternShotTransform;
@@ -414,9 +413,9 @@ public:
 	virtual void ConvertToItem(bool flgPlayerCollision);
 };
 
-/**********************************************************
+//*******************************************************************
 //StgNormalShotObject
-**********************************************************/
+//*******************************************************************
 class StgNormalShotObject : public StgShotObject {
 	friend class StgShotObject;
 protected:
@@ -445,9 +444,9 @@ public:
 	void SetGraphicAngularVelocity(double agv) { angularVelocity_ = agv; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgLaserObject(レーザー基本部)
-**********************************************************/
+//*******************************************************************
 class StgLaserObject : public StgShotObject {
 protected:
 	int length_;
@@ -478,9 +477,9 @@ public:
 	void SetItemDistance(float dist) { itemDistance_ = std::max(dist, 0.1f); }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgLooseLaserObject(射出型レーザー)
-**********************************************************/
+//*******************************************************************
 class StgLooseLaserObject : public StgLaserObject {
 protected:
 	float posXE_;
@@ -503,9 +502,9 @@ public:
 	virtual void SetY(float y) { StgShotObject::SetY(y); posYE_ = y; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgStraightLaserObject(設置型レーザー)
-**********************************************************/
+//*******************************************************************
 class StgStraightLaserObject : public StgLaserObject {
 protected:
 	double angLaser_;
@@ -546,9 +545,9 @@ public:
 	bool GetLaserExpand() { return bLaserExpand_; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgCurveLaserObject(曲がる型レーザー)
-**********************************************************/
+//*******************************************************************
 class StgCurveLaserObject : public StgLaserObject {
 public:
 	struct LaserNode {
@@ -581,9 +580,9 @@ public:
 };
 
 
-/**********************************************************
+//*******************************************************************
 //StgPatternShotObjectGenerator (ECL-style bullets firing)
-**********************************************************/
+//*******************************************************************
 class StgPatternShotObjectGenerator : public DxScriptObjectBase {
 public:
 	enum {
@@ -712,5 +711,3 @@ struct StgPatternShotTransform {
 	int param_s[3];
 	double param_d[3];
 };
-
-#endif

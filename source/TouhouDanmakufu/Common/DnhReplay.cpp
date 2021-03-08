@@ -3,9 +3,9 @@
 #include "DnhReplay.hpp"
 #include "DnhGcLibImpl.hpp"
 
-/**********************************************************
+//*******************************************************************
 //ReplayInformation
-**********************************************************/
+//*******************************************************************
 ReplayInformation::ReplayInformation() {
 	userData_ = std::make_shared<ScriptCommonData>();
 }
@@ -303,9 +303,9 @@ void ReplayInformation::StageData::WriteRecord(gstd::RecordBuffer& record) {
 	record.SetRecordAsInteger("playerRebirthFrame", playerRebirthFrame_);
 }
 
-/**********************************************************
+//*******************************************************************
 //ReplayInformationManager
-**********************************************************/
+//*******************************************************************
 ReplayInformationManager::ReplayInformationManager() {
 
 }

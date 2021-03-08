@@ -5,9 +5,9 @@
 #include "StgSystem.hpp"
 #include "StgStageScript.hpp"
 
-/**********************************************************
+//*******************************************************************
 //StgUserExtendScene
-**********************************************************/
+//*******************************************************************
 StgUserExtendScene::StgUserExtendScene(StgSystemController* controller) {
 	systemController_ = controller;
 	scriptManager_ = nullptr;
@@ -56,9 +56,9 @@ void StgUserExtendScene::Render() {
 void StgUserExtendScene::Start() {}
 void StgUserExtendScene::Finish() {}
 
-/**********************************************************
+//*******************************************************************
 //StgUserExtendSceneScriptManager
-**********************************************************/
+//*******************************************************************
 StgUserExtendSceneScriptManager::StgUserExtendSceneScriptManager(StgSystemController* controller) {
 	systemController_ = controller;
 	objectManager_ = std::shared_ptr<DxScriptObjectManager>(new DxScriptObjectManager);
@@ -120,9 +120,9 @@ gstd::value StgUserExtendSceneScriptManager::GetResultValue() {
 	return res;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgUserExtendSceneScript
-**********************************************************/
+//*******************************************************************
 StgUserExtendSceneScript::StgUserExtendSceneScript(StgSystemController* systemController) : StgControlScript(systemController) {
 	shared_ptr<StgStageController> stageController = systemController_->GetStageController();
 
@@ -132,9 +132,9 @@ StgUserExtendSceneScript::StgUserExtendSceneScript(StgSystemController* systemCo
 }
 StgUserExtendSceneScript::~StgUserExtendSceneScript() {}
 
-/**********************************************************
+//*******************************************************************
 //StgPauseScene
-**********************************************************/
+//*******************************************************************
 StgPauseScene::StgPauseScene(StgSystemController* controller) : StgUserExtendScene(controller) {}
 StgPauseScene::~StgPauseScene() {}
 void StgPauseScene::Work() {
@@ -203,9 +203,9 @@ void StgPauseScene::Finish() {
 	stageScriptManager->RequestEventAll(StgStageScript::EV_PAUSE_LEAVE);
 }
 
-/**********************************************************
+//*******************************************************************
 //StgPauseSceneScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<constant> stgPauseConstant = {
 	constant("__stgPauseFunction__", 0),
 };
@@ -218,9 +218,9 @@ StgPauseSceneScript::~StgPauseSceneScript() {}
 
 //àÍéûí‚é~êÍópä÷êîÅFàÍéûí‚é~ëÄçÏ
 
-/**********************************************************
+//*******************************************************************
 //StgEndScene
-**********************************************************/
+//*******************************************************************
 StgEndScene::StgEndScene(StgSystemController* controller) : StgUserExtendScene(controller) {
 
 }
@@ -269,9 +269,9 @@ void StgEndScene::Finish() {
 	scriptManager_ = nullptr;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgEndSceneScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<constant> stgEndFunction = {
 	constant("__stgEndFunction__", 0),
 };
@@ -281,9 +281,9 @@ StgEndSceneScript::StgEndSceneScript(StgSystemController* controller) : StgUserE
 }
 StgEndSceneScript::~StgEndSceneScript() {}
 
-/**********************************************************
+//*******************************************************************
 //StgReplaySaveScene
-**********************************************************/
+//*******************************************************************
 StgReplaySaveScene::StgReplaySaveScene(StgSystemController* controller) : StgUserExtendScene(controller) {
 
 }
@@ -329,9 +329,9 @@ void StgReplaySaveScene::Finish() {
 	scriptManager_ = nullptr;
 }
 
-/**********************************************************
+//*******************************************************************
 //StgReplaySaveScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<constant> stgReplaySaveFunction = {
 	constant("__stgReplaySaveFunction__", 0),
 };

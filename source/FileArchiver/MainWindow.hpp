@@ -1,18 +1,14 @@
-#ifndef __MAIN_WINDOW__
-#define __MAIN_WINDOW__
+#pragma once
 
 #include "../GcLib/pch.h"
 #include "Constant.hpp"
 
-/**********************************************************
+//*******************************************************************
 //MainWindow
-**********************************************************/
+//*******************************************************************
 class MainWindow : public WindowBase, public Singleton<MainWindow>, Thread {
-private:
-
 protected:
 	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 private:
 	enum {
 		COL_FILENAME = 0,
@@ -25,7 +21,7 @@ private:
 	WStatusBar wndStatus_;
 
 	std::wstring pathArchive_;
-	std::set<std::wstring> listFile_;//èdï°ìoò^ÇñhÇÆ
+	std::set<std::wstring> listFile_;
 
 	BOOL _DropFiles(WPARAM wParam, LPARAM lParam);
 	void _AddFileFromDialog();
@@ -48,6 +44,3 @@ public:
 	~MainWindow();
 	bool Initialize();
 };
-
-
-#endif

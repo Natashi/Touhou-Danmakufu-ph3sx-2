@@ -1,13 +1,12 @@
-#ifndef __DIRECTX_METASEQUOIAMESH__
-#define __DIRECTX_METASEQUOIAMESH__
+#pragma once
 
 #include "../pch.h"
 #include "RenderObject.hpp"
 
 namespace directx {
-	/**********************************************************
+	//*******************************************************************
 	//MetasequoiaMesh
-	**********************************************************/
+	//*******************************************************************
 	class MetasequoiaMesh;
 	class MetasequoiaMeshData : public DxMeshData {
 		friend MetasequoiaMesh;
@@ -31,6 +30,7 @@ namespace directx {
 	public:
 		MetasequoiaMeshData();
 		~MetasequoiaMeshData();
+
 		bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader);
 	};
 
@@ -82,8 +82,8 @@ namespace directx {
 	public:
 		RenderObject() : material_(nullptr), objectColor_(1, 1, 1) {};
 		virtual ~RenderObject() {};
-		virtual void Render() {
-		}
+
+		virtual void Render() {}
 		void Render(D3DXMATRIX* matTransform);
 	};
 
@@ -91,12 +91,12 @@ namespace directx {
 	public:
 		MetasequoiaMesh() {}
 		virtual ~MetasequoiaMesh() {}
+
 		virtual bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader);
 		virtual bool CreateFromFileInLoadThread(const std::wstring& path);
 		virtual std::wstring GetPath();
+
 		virtual void Render();
 		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
 	};
 }
-
-#endif

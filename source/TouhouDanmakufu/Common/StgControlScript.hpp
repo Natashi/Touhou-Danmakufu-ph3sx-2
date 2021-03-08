@@ -5,18 +5,18 @@
 #include "StgCommon.hpp"
 
 class StgControlScript;
-/**********************************************************
+//*******************************************************************
 //StgControlScriptManager
-**********************************************************/
+//*******************************************************************
 class StgControlScriptManager : public ScriptManager {
 public:
 	StgControlScriptManager();
 	virtual ~StgControlScriptManager();
 };
 
-/**********************************************************
+//*******************************************************************
 //StgControlScriptInformation
-**********************************************************/
+//*******************************************************************
 class StgControlScriptInformation {
 	std::vector<ref_count_ptr<ScriptInformation>> listFreePlayer_;
 	ref_count_ptr<ReplayInformationManager> replayManager_;
@@ -31,9 +31,9 @@ public:
 	ref_count_ptr<ReplayInformationManager> GetReplayInformationManager() { return replayManager_; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgControlScript
-**********************************************************/
+//*******************************************************************
 class StgControlScript : public DnhScript {
 	friend StgControlScriptManager;
 public:
@@ -164,9 +164,9 @@ public:
 	static gstd::value Func_SaveReplay(gstd::script_machine* machine, int argc, const gstd::value* argv);
 };
 
-/**********************************************************
+//*******************************************************************
 //ScriptInfoPanel
-**********************************************************/
+//*******************************************************************
 class ScriptInfoPanel : public WindowLogger::Panel, public gstd::Thread {
 protected:
 	int timeUpdateInterval_;

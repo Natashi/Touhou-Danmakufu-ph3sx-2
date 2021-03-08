@@ -7,9 +7,9 @@
 class DevicePanel;
 class KeyPanel;
 class OptionPanel;
-/**********************************************************
+//*******************************************************************
 //MainWindow
-**********************************************************/
+//*******************************************************************
 class MainWindow : public WindowBase, public gstd::Singleton<MainWindow> {
 protected:
 	shared_ptr<WTabControll> wndTab_;
@@ -22,6 +22,7 @@ protected:
 public:
 	MainWindow();
 	~MainWindow();
+
 	bool Initialize();
 	bool StartUp();
 
@@ -35,9 +36,9 @@ public:
 	void WriteConfiguration();
 };
 
-/**********************************************************
+//*******************************************************************
 //DevicePanel
-**********************************************************/
+//*******************************************************************
 class DevicePanel : public WPanel {
 protected:
 	WComboBox comboWindowSize_;
@@ -47,15 +48,16 @@ protected:
 public:
 	DevicePanel();
 	~DevicePanel();
+
 	bool Initialize(HWND hParent);
 
 	void ReadConfiguration();
 	void WriteConfiguration();
 };
 
-/**********************************************************
+//*******************************************************************
 //KeyPanel
-**********************************************************/
+//*******************************************************************
 class KeyPanel : public WPanel {
 	class KeyListView;
 protected:
@@ -68,13 +70,16 @@ protected:
 	WComboBox comboPadIndex_;
 	shared_ptr<KeyListView> viewKey_;
 	KeyCodeList listKeyCode_;
+
 	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void _UpdateText(int row);
 public:
 	KeyPanel();
 	~KeyPanel();
+
 	bool Initialize(HWND hParent);
 	bool StartUp();
+
 	void UpdateKeyAssign();
 
 	void ReadConfiguration();
@@ -86,9 +91,9 @@ protected:
 	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-/**********************************************************
+//*******************************************************************
 //OptionPanel
-**********************************************************/
+//*******************************************************************
 class OptionPanel : public WPanel {
 protected:
 	enum {
@@ -103,6 +108,7 @@ protected:
 public:
 	OptionPanel();
 	~OptionPanel();
+
 	bool Initialize(HWND hParent);
 
 	std::wstring GetExecutablePath() { return exePath_->GetText(); }

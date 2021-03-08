@@ -1,5 +1,4 @@
-#ifndef __DIRECTX_VERTEXBUFFER__
-#define __DIRECTX_VERTEXBUFFER__
+#pragma once
 
 #include "../pch.h"
 
@@ -171,5 +170,3 @@ namespace directx {
 		virtual void CreateBuffers(IDirect3DDevice9* device);
 	};
 }
-
-#endif

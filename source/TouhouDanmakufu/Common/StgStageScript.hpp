@@ -8,9 +8,9 @@
 class StgStageScriptObjectManager;
 class StgStageScript;
 
-/**********************************************************
+//*******************************************************************
 //StgStageScriptManager
-**********************************************************/
+//*******************************************************************
 class StgStageScriptManager : public StgControlScriptManager {
 protected:
 	StgStageController* stageController_;
@@ -44,9 +44,9 @@ public:
 	weak_ptr<ManagedScript> GetShotScript() { return ptrShotScript_; }
 };
 
-/**********************************************************
+//*******************************************************************
 //StgStageScriptObjectManager
-**********************************************************/
+//*******************************************************************
 class StgPlayerObject;
 class StgStageScriptObjectManager : public DxScriptObjectManager {
 	StgStageController* stageController_;
@@ -68,9 +68,9 @@ public:
 };
 
 
-/**********************************************************
+//*******************************************************************
 //StgStageScript
-**********************************************************/
+//*******************************************************************
 class StgStageScript : public StgControlScript {
 	friend StgStageScriptManager;
 public:
@@ -476,9 +476,9 @@ public:
 	static gstd::value Func_ObjCol_GetIntersectedCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
 };
 
-/**********************************************************
+//*******************************************************************
 //StgSystemScript
-**********************************************************/
+//*******************************************************************
 class StgStageSystemScript : public StgStageScript {
 public:
 	StgStageSystemScript(StgStageController* stageController);
@@ -488,9 +488,9 @@ public:
 
 };
 
-/**********************************************************
+//*******************************************************************
 //StgStageItemScript
-**********************************************************/
+//*******************************************************************
 class StgStageItemScript : public StgStageScript {
 public:
 	enum {
@@ -506,9 +506,9 @@ public:
 
 };
 
-/**********************************************************
+//*******************************************************************
 //StgStageShotScript
-**********************************************************/
+//*******************************************************************
 class StgStageShotScript : public StgStageScript {
 public:
 	enum {
@@ -523,9 +523,9 @@ public:
 
 };
 
-/**********************************************************
+//*******************************************************************
 //StgStagePlayerScript
-**********************************************************/
+//*******************************************************************
 class StgStagePlayerScript : public StgStageScript {
 public:
 	enum {

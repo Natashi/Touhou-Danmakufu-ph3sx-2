@@ -1,5 +1,4 @@
-#ifndef __DIRECTX_DIRECTSOUND__
-#define __DIRECTX_DIRECTSOUND__
+#pragma once
 
 #include "../pch.h"
 #include "DxConstant.hpp"
@@ -21,9 +20,9 @@ namespace directx {
 	class AcmMp3;
 	class AcmMp3Wave;
 
-	/**********************************************************
+	//*******************************************************************
 	//DirectSoundManager
-	**********************************************************/
+	//*******************************************************************
 	class DirectSoundManager {
 	public:
 		class SoundManageThread;
@@ -82,23 +81,22 @@ namespace directx {
 		void SetFadeDeleteAll();
 	};
 
-	//フェードイン／フェードアウト制御
-	//必要なくなったバッファの開放など
 	class DirectSoundManager::SoundManageThread : public gstd::Thread, public gstd::InnerClass<DirectSoundManager> {
 		friend DirectSoundManager;
 	protected:
 		int timeCurrent_;
 		int timePrevious_;
-
+	protected:
 		SoundManageThread(DirectSoundManager* manager);
+
 		void _Run();
-		void _Arrange();//必要なくなったデータを削除
-		void _Fade();//フェード処理
+		void _Arrange();
+		void _Fade();
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//SoundInfoPanel
-	**********************************************************/
+	//*******************************************************************
 	class SoundInfoPanel : public gstd::WindowLogger::Panel {
 	protected:
 		struct Info {
@@ -119,15 +117,16 @@ namespace directx {
 		virtual bool _AddedLogger(HWND hTab);
 	public:
 		SoundInfoPanel();
+
 		void SetUpdateInterval(int time) { timeUpdateInterval_ = time; }
 		virtual void LocateParts();
+
 		virtual void Update(DirectSoundManager* soundManager);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//SoundDivision
-	//音量などを共有するためのクラス
-	**********************************************************/
+	//*******************************************************************
 	class SoundDivision {
 	public:
 		enum {
@@ -136,17 +135,18 @@ namespace directx {
 			DIVISION_VOICE,
 		};
 	protected:
-		double rateVolume_;//音量割合(0-100)
+		double rateVolume_;		//0~100
 	public:
 		SoundDivision();
 		virtual ~SoundDivision();
+
 		void SetVolumeRate(double rate) { rateVolume_ = rate; }
 		double GetVolumeRate() { return rateVolume_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//SoundInfo
-	**********************************************************/
+	//*******************************************************************
 	class SoundInfo {
 		friend DirectSoundManager;
 	private:
@@ -163,9 +163,9 @@ namespace directx {
 		double GetLoopEndTime() { return timeLoopEnd_; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//SoundPlayer
-	**********************************************************/
+	//*******************************************************************
 	class SoundPlayer {
 		friend DirectSoundManager;
 		friend DirectSoundManager::SoundManageThread;
@@ -204,19 +204,19 @@ namespace directx {
 		SoundFileFormat format_;
 
 		WAVEFORMATEX formatWave_;
-		bool bLoop_;//ループ有無
-		double timeLoopStart_;//ループ開始時間
-		double timeLoopEnd_;//ループ終了時間
+		bool bLoop_;				//Loop enable
+		double timeLoopStart_;		//Loop start (in seconds)
+		double timeLoopEnd_;		//Loop end (in seconds)
 		bool bPause_;
 
-		bool bDelete_;//削除フラグ
-		bool bFadeDelete_;//フェードアウト後に削除
-		bool bAutoDelete_;//自動削除
-		double rateVolume_;//音量割合(0-100)
-		double rateVolumeFadePerSec_;//フェード時の音量低下割合
+		bool bDelete_;
+		bool bFadeDelete_;
+		bool bAutoDelete_;			//Allows deletion when the sound ends
+		double rateVolume_;			//0~100
+		double rateVolumeFadePerSec_;
 		
 		bool flgUpdateStreamOffset_;
-		size_t audioSizeTotal_;		//In bytes.
+		size_t audioSizeTotal_;		//In bytes
 
 		virtual bool _CreateBuffer(shared_ptr<gstd::FileReader> reader) = 0;
 		virtual void _SetSoundInfo();
@@ -265,6 +265,7 @@ namespace directx {
 	public:
 		PlayStyle();
 		virtual ~PlayStyle();
+
 		void SetLoopEnable(bool bLoop) { bLoop_ = bLoop; }
 		bool IsLoopEnable() { return bLoop_; }
 		void SetLoopStartTime(double time) { timeLoopStart_ = time; }
@@ -277,19 +278,21 @@ namespace directx {
 		void SetRestart(bool b) { bRestart_ = b; }
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//SoundStreamPlayer
-	**********************************************************/
+	//*******************************************************************
 	class SoundStreamingPlayer : public SoundPlayer {
 		class StreamingThread;
 		friend StreamingThread;
 	protected:
 		HANDLE hEvent_[3];
-		IDirectSoundNotify* pDirectSoundNotify_;//イベント
-		size_t sizeCopy_;
+		IDirectSoundNotify* pDirectSoundNotify_;
 		StreamingThread* thread_;
+
 		bool bStreaming_;
-		bool bRequestStop_;//ループ完了時のフラグ。すぐ停止すると最後のバッファが再生されないため。
+		bool bRequestStop_;
+
+		size_t sizeCopy_;
 
 		size_t lastStreamCopyPos_[2];
 		DWORD bufferPositionAtCopy_[2];
@@ -322,9 +325,9 @@ namespace directx {
 		void Notify(size_t index);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//SoundPlayerWave
-	**********************************************************/
+	//*******************************************************************
 	class SoundPlayerWave : public SoundPlayer {
 	protected:
 		virtual bool _CreateBuffer(shared_ptr<gstd::FileReader> reader);
@@ -339,9 +342,9 @@ namespace directx {
 		virtual bool Seek(int64_t sample);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//SoundStreamingPlayerWave
-	**********************************************************/
+	//*******************************************************************
 	class SoundStreamingPlayerWave : public SoundStreamingPlayer {
 	protected:
 		size_t posWaveStart_;
@@ -350,13 +353,14 @@ namespace directx {
 		virtual size_t _CopyBuffer(LPVOID pMem, DWORD dwSize);
 	public:
 		SoundStreamingPlayerWave();
+
 		virtual bool Seek(double time);
 		virtual bool Seek(int64_t sample);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//SoundStreamingPlayerOgg
-	**********************************************************/
+	//*******************************************************************
 	class SoundStreamingPlayerOgg : public SoundStreamingPlayer {
 	protected:
 		OggVorbis_File fileOgg_;
@@ -372,13 +376,14 @@ namespace directx {
 	public:
 		SoundStreamingPlayerOgg();
 		~SoundStreamingPlayerOgg();
+
 		virtual bool Seek(double time);
 		virtual bool Seek(int64_t sample);
 	};
 
-	/**********************************************************
+	//*******************************************************************
 	//SoundStreamingPlayerMp3
-	**********************************************************/
+	//*******************************************************************
 	class SoundStreamingPlayerMp3 : public SoundStreamingPlayer {
 	protected:
 		MPEGLAYER3WAVEFORMAT formatMp3_;
@@ -390,7 +395,7 @@ namespace directx {
 		DWORD waveDataSize_;
 		double timeCurrent_;
 
-		gstd::ByteBuffer bufDecode_;
+		gstd::ByteBuffer bufDecode_;	//Temp buffer containing decoded ACM stream data
 
 		virtual bool _CreateBuffer(shared_ptr<gstd::FileReader> reader);
 		virtual size_t _CopyBuffer(LPVOID pMem, DWORD dwSize);
@@ -398,9 +403,8 @@ namespace directx {
 	public:
 		SoundStreamingPlayerMp3();
 		~SoundStreamingPlayerMp3();
+
 		virtual bool Seek(double time);
 		virtual bool Seek(int64_t sample);
 	};
 }
-
-#endif

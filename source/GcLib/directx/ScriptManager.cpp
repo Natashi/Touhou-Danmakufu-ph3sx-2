@@ -5,9 +5,9 @@
 using namespace gstd;
 using namespace directx;
 
-/**********************************************************
+//*******************************************************************
 //ScriptManager
-**********************************************************/
+//*******************************************************************
 std::atomic<int64_t> ScriptManager::idScript_ = 0;
 ScriptManager::ScriptManager() {
 	mainThreadID_ = GetCurrentThreadId();
@@ -338,9 +338,9 @@ void ScriptManager::AddRelativeScriptManagerMutual(weak_ptr<ScriptManager> manag
 	}
 }
 
-/**********************************************************
+//*******************************************************************
 //ManagedScript
-**********************************************************/
+//*******************************************************************
 static const std::vector<function> commonFunction = {
 	//制御共通関数：スクリプト操作
 	{ "LoadScript", ManagedScript::Func_LoadScript, 1 },
