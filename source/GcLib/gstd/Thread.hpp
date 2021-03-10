@@ -14,10 +14,10 @@ namespace gstd {
 			REQUEST_STOP,
 		};
 	private:
-		static unsigned int __stdcall _StaticRun(LPVOID data);
+		static DWORD __stdcall _StaticRun(LPVOID data);
 	protected:
 		volatile HANDLE hThread_;
-		unsigned int idThread_;
+		volatile DWORD idThread_;
 		volatile Status status_;
 
 		virtual void _Run() = 0;
@@ -28,7 +28,7 @@ namespace gstd {
 		virtual void Start();
 		virtual void Stop();
 		bool IsStop();
-		DWORD Join(int mills = INFINITE);
+		DWORD Join(DWORD mills = INFINITE);
 
 		Status GetStatus() { return status_; }
 	};

@@ -22,7 +22,7 @@ Thread::~Thread() {
 		idThread_ = 0;
 	}
 }
-unsigned int __stdcall Thread::_StaticRun(LPVOID data) {
+DWORD __stdcall Thread::_StaticRun(LPVOID data) {
 	try {
 		Thread* thread = reinterpret_cast<Thread*>(data);
 		thread->status_ = RUN;
@@ -30,7 +30,7 @@ unsigned int __stdcall Thread::_StaticRun(LPVOID data) {
 		thread->status_ = STOP;
 	}
 	catch (...) {
-		//ƒGƒ‰[‚Í–³Ž‹
+		//Errors unhandled
 	}
 	return 0;
 }
@@ -39,7 +39,7 @@ void Thread::Start() {
 		this->Stop();
 		this->Join();
 	}
-	hThread_ = (HANDLE)_beginthreadex(nullptr, 0, _StaticRun, (void*)this, 0, &idThread_);
+	hThread_ = CreateThread(nullptr, 0, _StaticRun, (void*)this, 0, (LPDWORD)&idThread_);
 }
 void Thread::Stop() {
 	if (status_ == RUN) status_ = REQUEST_STOP;
@@ -47,7 +47,7 @@ void Thread::Stop() {
 bool Thread::IsStop() {
 	return hThread_ == nullptr || status_ == STOP;
 }
-DWORD Thread::Join(int mills) {
+DWORD Thread::Join(DWORD mills) {
 	DWORD res = WAIT_OBJECT_0;
 
 	if (hThread_) {
