@@ -59,15 +59,13 @@ namespace gstd {
 		static std::map<std::string, token_kind> token_map;
 
 		Encoding::Type encoding;
+		size_t bytePerChar;
 		const char* current;
 		const char* endPoint;
 
 		wchar_t current_char();
 		wchar_t index_from_current_char(int index);
 		inline wchar_t next_char();
-
-		wchar_t parse_escape_char();
-		wchar_t parse_utf8_char();
 	public:
 		enum {
 			MAX_TOKEN_LIST = 64,

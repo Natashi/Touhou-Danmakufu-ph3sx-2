@@ -125,6 +125,15 @@ size_t Encoding::GetCharSize(Type encoding) {
 	}
 	return 1U;
 }
+size_t Encoding::GetMultibyteSize(const char* data) {
+	const char* begin = data;
+	if (((byte)data[0] > 0xc0) && ((data[1] & 0xc0) == 0x80)) {
+		do {
+			data += 1;
+		} while ((data[0] & 0xc0) == 0x80);
+	}
+	return (data - begin);
+}
 wchar_t Encoding::BytesToWChar(const char* data, Type encoding) {
 	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
 		wchar_t res = *(wchar_t*)data;
@@ -230,6 +239,91 @@ size_t StringUtility::ConvertWideToMulti(wchar_t* wstr, size_t wcount, std::vect
 }
 
 //----------------------------------------------------------------
+
+#define CRET(x) res = x; break;
+char StringUtility::ParseEscapeSequence(const char* str, char** pEnd) {
+	char res;
+	if ((res = *(str++)) != '\\')
+		goto lab_ret;
+
+	char lead = *(str++);
+	switch (res = lead) {
+	case '\"': CRET('\"');
+	case '\'': CRET('\'');
+	case '\\': CRET('\\');
+	case 'f': CRET('\f');
+	case 'n': CRET('\n');
+	case 'r': CRET('\r');
+	case 't': CRET('\t');
+	case 'v': CRET('\v');
+	case '0': CRET('\0');
+	case 'x':
+	{
+		if (std::isxdigit(*str)) {
+			char* end = nullptr;
+			res = (char)strtol(str, &end, 16);
+			str = end;
+		}
+	}
+	}
+
+lab_ret:
+	if (pEnd) *pEnd = (char*)str;
+	return res;
+}
+wchar_t StringUtility::ParseEscapeSequence(const wchar_t* wstr, wchar_t** pEnd) {
+	wchar_t res;
+	if ((res = *(wstr++)) != '\\')
+		goto lab_ret;
+
+	wchar_t lead = *(wstr++);
+	switch (res = lead) {
+	case '\"': CRET('\"');
+	case '\'': CRET('\'');
+	case '\\': CRET('\\');
+	case 'f': CRET('\f');
+	case 'n': CRET('\n');
+	case 'r': CRET('\r');
+	case 't': CRET('\t');
+	case 'v': CRET('\v');
+	case '0': CRET('\0');
+	case 'x':
+	{
+		if (std::isxdigit(*wstr)) {
+			wchar_t* end = nullptr;
+			res = (wchar_t)wcstol(wstr, &end, 16);
+			wstr = end;
+		}
+	}
+	}
+
+lab_ret:
+	if (pEnd) *pEnd = (wchar_t*)wstr;
+	return res;
+}
+#undef CRET
+
+std::string StringUtility::ParseStringWithEscape(const std::string& str) {
+	std::string res;
+	const char* pStr = str.data();
+	const char* pEnd = str.data() + str.size();
+	while (pStr < pEnd) {
+		res += ParseEscapeSequence(pStr, (char**)&pStr);
+	}
+	return res;
+}
+std::wstring StringUtility::ParseStringWithEscape(const std::wstring& wstr) {
+	std::wstring res;
+	const wchar_t* pStr = wstr.data();
+	const wchar_t* pEnd = wstr.data() + wstr.size();
+	while (pStr < pEnd) {
+		res += ParseEscapeSequence(pStr, (wchar_t**)&pStr);
+	}
+	return res;
+}
+
+//----------------------------------------------------------------
+
 std::vector<std::string> StringUtility::Split(const std::string& str, const std::string& delim) {
 	std::vector<std::string> res;
 	Split(str, delim, res);
@@ -362,7 +456,9 @@ std::string StringUtility::Trim(const std::string& str) {
 
 	return res;
 }
+
 //----------------------------------------------------------------
+
 std::vector<std::wstring> StringUtility::Split(const std::wstring& str, const std::wstring& delim) {
 	std::vector<std::wstring> res;
 	Split(str, delim, res);
@@ -728,13 +824,17 @@ Token& Scanner::Next() {
 	case L'<': _NextChar(); type = Token::Type::TK_LESS; break;
 	case L'>': _NextChar(); type = Token::Type::TK_GREATER; break;
 	case L'\"':
+	case L'\'':
 	{
+		wchar_t enclosing = ch;
+
+		ch = _NextChar();
 		while (true) {
+			if (ch == L'\\') ch = _NextChar();	//Skip escaped characters
+			else if (ch == enclosing) break;
 			ch = _NextChar();
-			if (ch == L'\\') ch = _NextChar();
-			else if (ch == L'\"') break;
 		}
-		if (ch == L'\"')
+		if (ch == enclosing)
 			_NextChar();	//Advance once after string end
 		else {
 			std::wstring error = GetString(posStart, pointer_);
@@ -790,7 +890,7 @@ Token& Scanner::Next() {
 		else {
 			//ch = _NextChar();
 			type = Token::Type::TK_UNKNOWN;
-			if (typeEncoding_ == Encoding::UTF8) {
+			if (Encoding::GetCharSize(typeEncoding_) == 1) {
 				size_t mb_count = 0;
 
 				//It's a multi-byte sequence
@@ -816,7 +916,7 @@ Token& Scanner::Next() {
 		std::wstring wstr = Encoding::BytesToWString(
 			&buffer_[posStart], &buffer_[pointer_], typeEncoding_);
 		if (type == Token::Type::TK_STRING)
-			wstr = StringUtility::ReplaceAll(wstr, L"\\\"", L"\"");
+			wstr = StringUtility::ParseStringWithEscape(wstr);
 		token_ = Token(type, wstr, posStart, pointer_);
 	}
 
@@ -857,6 +957,7 @@ int Scanner::GetCurrentLine() {
 std::wstring Scanner::GetString(int start, int end) {
 	std::wstring res = Encoding::BytesToWString(
 		&buffer_[start], &buffer_[end], typeEncoding_);
+	res = StringUtility::ParseStringWithEscape(res);
 	return res;
 }
 bool Scanner::CompareMemory(int start, int end, const char* data) {

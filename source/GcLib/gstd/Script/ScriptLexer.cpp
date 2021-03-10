@@ -11,21 +11,15 @@ script_scanner::script_scanner(const char* source, const char* end) : current(so
 	line = 1;
 	
 	encoding = Encoding::Detect(source, (size_t)(end - source));
-	switch (encoding) {
-	case Encoding::UTF8BOM:
-		encoding = Encoding::UTF8;
-		current += 3;
-		break;
-	case Encoding::UTF16LE:
-	case Encoding::UTF16BE:
-		current += 2;
-		break;
-	}
+	bytePerChar = Encoding::GetCharSize(encoding);
+
+	current += Encoding::GetBomSize(encoding);
 
 	advance();
 }
 script_scanner::script_scanner(const script_scanner& source) {
 	encoding = source.encoding;
+	bytePerChar = source.bytePerChar;
 	current = source.current;
 	endPoint = source.endPoint;
 	next = source.next;
@@ -36,6 +30,7 @@ script_scanner::script_scanner(const script_scanner& source) {
 
 void script_scanner::copy_state(script_scanner* src) {
 	encoding = src->encoding;
+	bytePerChar = src->bytePerChar;
 	current = src->current;
 	endPoint = src->endPoint;
 	next = src->next;
@@ -51,65 +46,13 @@ wchar_t script_scanner::current_char() {
 	return Encoding::BytesToWChar(current, encoding);
 }
 wchar_t script_scanner::index_from_current_char(int index) {
-	const char* pos = current + index * Encoding::GetCharSize(encoding);
+	const char* pos = current + index * bytePerChar;
 	if (pos >= endPoint) return L'\0';
 	return Encoding::BytesToWChar(pos, encoding);
 }
 wchar_t script_scanner::next_char() {
-	current += Encoding::GetCharSize(encoding);
+	current += bytePerChar;
 	return current_char();
-}
-
-//Will not consume the last character
-wchar_t script_scanner::parse_escape_char() {
-	wchar_t lead = next_char();
-	/*
-	if (encoding == Encoding::UTF8 && (lead >= 0xc0u)) {	//UTF-8
-		lead = parse_utf8_char();
-	}
-	*/
-	switch (lead) {
-	case L'\"': return L'\"';
-	case L'\'': return L'\'';
-	case L'\\': return L'\\';
-	case L'f': return L'\f';
-	case L'n': return L'\n';
-	case L'r': return L'\r';
-	case L't': return L'\t';
-	case L'v': return L'\v';
-	case L'0': return L'\0';
-	case L'x':
-	{
-		std::string str;
-		wchar_t nextCh = 0;
-		while (std::isxdigit(nextCh = index_from_current_char(1))) {
-			str += nextCh;
-			next_char();
-		}
-		if (str.size() == 0) return L'x';
-		else return (wchar_t)strtol(str.c_str(), nullptr, 16);
-	}
-	}
-	return lead;
-}
-wchar_t script_scanner::parse_utf8_char() {
-	char ch = current_char();
-	std::string str;
-
-	size_t countBytes = 0;
-	while ((ch & 0x80u) == 0x80u) {
-		++countBytes;
-		ch <<= 1;
-	}
-
-	ch = current_char();
-	for (;;) {
-		str += ch;
-		if (--countBytes) ch = next_char();
-		else break;
-	}
-
-	return StringUtility::ConvertMultiToWide(str)[0];
 }
 
 void script_scanner::skip() {
@@ -389,21 +332,24 @@ void script_scanner::advance() {
 		next = ch == L'\"' ? token_kind::tk_string : token_kind::tk_char;
 
 		{
-			std::wstring s;
+			ch = next_char();
+			const char* pBeg = current;
 			while (true) {
-				ch = next_char();
-				if (ch == L'\n') ++line;	//For multiple-lined strings
-
-				if (ch == L'\\') ch = parse_escape_char();
+				if (ch == L'\n') ++line;			//For multiple-lined strings
+				else if (ch == L'\\') next_char();	//Skip escaped characters
 				else if (ch == enclosing) break;
-				s += ch;
+				ch = next_char();
 			}
+			const char* pEnd = current;
+
 			next_char();
-			string_value = s;
+			string_value = Encoding::BytesToWString(pBeg, pEnd, encoding);
+			string_value = StringUtility::ParseStringWithEscape(string_value);
 		}
 
 		if (next == token_kind::tk_char) {
-			if (string_value.size() > 1) throw parser_error("A value of type char may only be one character long.");
+			if (string_value.size() > 1)
+				throw parser_error("A value of type char may only be one character long.");
 			char_value = string_value[0];
 		}
 		break;

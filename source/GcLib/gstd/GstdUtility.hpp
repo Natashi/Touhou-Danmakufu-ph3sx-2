@@ -94,6 +94,7 @@ namespace gstd {
 		static size_t GetBomSize(Type encoding);
 		static size_t GetCharSize(Type encoding);
 
+		static size_t GetMultibyteSize(const char* data);
 		static wchar_t BytesToWChar(const char* data, Type encoding);
 		static std::string BytesToString(const char* pBegin, const char* pEnd, Type encoding);
 		static std::string BytesToString(const char* pBegin, size_t count, Type encoding);
@@ -114,6 +115,14 @@ namespace gstd {
 		static size_t ConvertWideToMulti(wchar_t* mbstr, size_t wcount, std::vector<char>& mbres, int code);
 
 		//----------------------------------------------------------------
+
+		static char ParseEscapeSequence(const char* str, char** pEnd);
+		static wchar_t ParseEscapeSequence(const wchar_t* wstr, wchar_t** pEnd);
+		static std::string ParseStringWithEscape(const std::string& str);
+		static std::wstring ParseStringWithEscape(const std::wstring& wstr);
+
+		//----------------------------------------------------------------
+
 		static std::vector<std::string> Split(const std::string& str, const std::string& delim);
 		static void Split(const std::string& str, const std::string& delim, std::vector<std::string>& res);
 		static std::string Format(const char* str, ...);
@@ -121,8 +130,10 @@ namespace gstd {
 
 		static size_t CountCharacter(const std::string& str, char c);
 		static size_t CountCharacter(std::vector<char>& str, char c);
+
 		static int ToInteger(const std::string& s);
 		static double ToDouble(const std::string& s);
+
 		static std::string Replace(const std::string& source, const std::string& pattern, const std::string& placement);
 		static std::string ReplaceAll(const std::string& source, const std::string& pattern, const std::string& placement,
 			size_t replaceCount = UINT_MAX, size_t start = 0, size_t end = 0);
@@ -131,6 +142,7 @@ namespace gstd {
 		static std::string Trim(const std::string& str);
 
 		//----------------------------------------------------------------
+
 		static std::vector<std::wstring> Split(const std::wstring& str, const std::wstring& delim);
 		static void Split(const std::wstring& str, const std::wstring& delim, std::vector<std::wstring>& res);
 		static std::wstring Format(const wchar_t* str, ...);
@@ -138,8 +150,10 @@ namespace gstd {
 		static std::wstring FormatToWide(const char* str, ...);
 
 		static size_t CountCharacter(const std::wstring& str, wchar_t c);
+
 		static int ToInteger(const std::wstring& s);
 		static double ToDouble(const std::wstring& s);
+
 		static std::wstring Replace(const std::wstring& source, const std::wstring& pattern, const std::wstring& placement);
 		static std::wstring ReplaceAll(const std::wstring& source, const std::wstring& pattern, const std::wstring& placement,
 			size_t replaceCount = UINT_MAX, size_t start = 0, size_t end = 0);
@@ -148,8 +162,9 @@ namespace gstd {
 		static std::wstring Trim(const std::wstring& str);
 
 		static size_t CountAsciiSizeCharacter(const std::wstring& str);
-		static size_t GetByteSize(const std::wstring& str) {
-			return str.size() * sizeof(wchar_t);
+		template<class E, class T = std::char_traits<E>, class A = std::allocator<E>>
+		static size_t GetByteSize(const std::basic_string<E, T, A>& str) {
+			return str.size() * sizeof(E);
 		}
 	};
 
