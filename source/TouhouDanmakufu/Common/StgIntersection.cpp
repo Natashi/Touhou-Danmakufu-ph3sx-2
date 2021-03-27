@@ -180,7 +180,8 @@ void StgIntersectionManager::RenderVisualizer() {
 }
 void StgIntersectionManager::AddTarget(ref_unsync_ptr<StgIntersectionTarget> target) {
 	if (target == nullptr) return;
-	if (auto obj = target->GetObject()) {
+	//if (auto obj = target->GetObject()) {
+	{
 		StgIntersectionTarget::Type type = target->GetTargetType();
 		switch (type) {
 		case StgIntersectionTarget::TYPE_PLAYER:
@@ -192,38 +193,40 @@ void StgIntersectionManager::AddTarget(ref_unsync_ptr<StgIntersectionTarget> tar
 		case StgIntersectionTarget::TYPE_PLAYER_SPELL:
 		{
 			listSpace_[SPACE_PLAYERSHOT_ENEMY]->RegistTargetA(target);
+			if (auto obj = target->GetObject()) {
+				bool bEraseShot = false;
 
-			bool bEraseShot = false;
+				if (type == StgIntersectionTarget::TYPE_PLAYER_SHOT) {
+					StgShotObject* shot = (StgShotObject*)obj.get();
+					if (shot)
+						bEraseShot = shot->IsEraseShot();
+				}
+				else if (type == StgIntersectionTarget::TYPE_PLAYER_SPELL) {
+					StgPlayerSpellObject* spell = (StgPlayerSpellObject*)obj.get();
+					if (spell)
+						bEraseShot = spell->IsEraseShot();
+				}
 
-			if (type == StgIntersectionTarget::TYPE_PLAYER_SHOT) {
-				StgShotObject* shot = (StgShotObject*)obj.get();
-				if (shot)
-					bEraseShot = shot->IsEraseShot();
-			}
-			else if (type == StgIntersectionTarget::TYPE_PLAYER_SPELL) {
-				StgPlayerSpellObject* spell = (StgPlayerSpellObject*)obj.get();
-				if (spell)
-					bEraseShot = spell->IsEraseShot();
-			}
-
-			if (bEraseShot) {
-				listSpace_[SPACE_PLAYERSHOT_ENEMYSHOT]->RegistTargetA(target);
+				if (bEraseShot)
+					listSpace_[SPACE_PLAYERSHOT_ENEMYSHOT]->RegistTargetA(target);
 			}
 			break;
 		}
 		case StgIntersectionTarget::TYPE_ENEMY:
 		{
-			listSpace_[SPACE_PLAYER_ENEMY]->RegistTargetB(target);
-			listSpace_[SPACE_PLAYERSHOT_ENEMY]->RegistTargetB(target);
+			if (auto obj = target->GetObject()) {
+				listSpace_[SPACE_PLAYER_ENEMY]->RegistTargetB(target);
+				listSpace_[SPACE_PLAYERSHOT_ENEMY]->RegistTargetB(target);
 
-			if (auto circle = ref_unsync_ptr<StgIntersectionTarget_Circle>::Cast(target)) {
-				ref_unsync_weak_ptr<StgEnemyObject> objEnemy = ref_unsync_weak_ptr<StgEnemyObject>::Cast(obj);
-				if (objEnemy) {
-					POINT pos = { (int)circle->GetCircle().GetX(), (int)circle->GetCircle().GetY() };
-					StgIntersectionTargetPoint tp;
-					tp.SetObjectRef(objEnemy);
-					tp.SetPoint(pos);
-					listEnemyTargetPointNext_.push_back(tp);
+				if (auto circle = ref_unsync_ptr<StgIntersectionTarget_Circle>::Cast(target)) {
+					ref_unsync_weak_ptr<StgEnemyObject> objEnemy = ref_unsync_weak_ptr<StgEnemyObject>::Cast(obj);
+					if (objEnemy) {
+						POINT pos = { (int)circle->GetCircle().GetX(), (int)circle->GetCircle().GetY() };
+						StgIntersectionTargetPoint tp;
+						tp.SetObjectRef(objEnemy);
+						tp.SetPoint(pos);
+						listEnemyTargetPointNext_.push_back(tp);
+					}
 				}
 			}
 

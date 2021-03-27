@@ -67,17 +67,14 @@ void StgPlayerObject::Work() {
 
 	switch (state_) {
 	case STATE_NORMAL:
-		if (hitObjectID_ != DxScript::ID_INVALID) {
-			KillSelf(false);
-		}
-		else {
-			//_Move();
-			if (input->GetVirtualKeyState(EDirectInput::KEY_BOMB) == KEY_PUSH)
-				CallSpell();
+	{
+		//_Move();
+		if (input->GetVirtualKeyState(EDirectInput::KEY_BOMB) == KEY_PUSH)
+			CallSpell();
 
-			_AddIntersection();
-		}
+		_AddIntersection();
 		break;
+	}
 	case STATE_HIT:
 		//Check deathbomb
 		if (input->GetVirtualKeyState(EDirectInput::KEY_BOMB) == KEY_PUSH)
@@ -141,9 +138,10 @@ void StgPlayerObject::Work() {
 }
 void StgPlayerObject::Move() {
 	if (state_ == STATE_NORMAL && bEnableMovement_) {
-		if (hitObjectID_ == DxScript::ID_INVALID || frameInvincibility_ > 0) {
-			_Move();
-		}
+		_Move();
+	}
+	else {
+		SetSpeed(0);
 	}
 }
 void StgPlayerObject::_Move() {
@@ -235,12 +233,12 @@ void StgPlayerObject::CallSpell() {
 	auto scriptManager = stageController_->GetScriptManager();
 	scriptManager->RequestEventAll(StgStageScript::EV_PLAYER_SPELL);
 }
-void StgPlayerObject::KillSelf(bool bCalledFromScript) {
-	if (frameInvincibility_ <= 0) {
+void StgPlayerObject::KillSelf(int hitObj) {
+	if (state_ == STATE_NORMAL && frameInvincibility_ <= 0) {
 		state_ = STATE_HIT;
 		frameState_ = infoPlayer_->frameRebirth_;
 
-		gstd::value valueHitObjectID = script_->CreateIntValue(bCalledFromScript ? DxScript::ID_INVALID : hitObjectID_);
+		gstd::value valueHitObjectID = script_->CreateIntValue(hitObj);
 		script_->RequestEvent(StgStagePlayerScript::EV_HIT, &valueHitObjectID, 1);
 	}
 }
@@ -286,34 +284,37 @@ void StgPlayerObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectio
 	StgIntersectionTarget_Player* tPlayer = dynamic_cast<StgIntersectionTarget_Player*>(ownTarget);
 	if (tPlayer == nullptr) return;
 
-	if (auto wObj = otherTarget->GetObject()) {
-		StgIntersectionTarget::Type otherType = otherTarget->GetTargetType();
-		switch (otherType) {
-		case StgIntersectionTarget::TYPE_ENEMY_SHOT:
-		{
-			if (StgShotObject* objShot = dynamic_cast<StgShotObject*>(wObj.get())) {
-				if (!tPlayer->IsGraze()) {
-					hitObjectID_ = objShot->GetObjectID();
-
-					if (enableDeleteShotOnHit_ && objShot->GetLife() != StgShotObject::LIFE_SPELL_REGIST &&
-						objShot->GetObjectType() == TypeObject::Shot)
-						objShot->ConvertToItem(true);
-				}
-				else if (objShot->IsValidGraze() && (enableGrazeInvincible_ || frameInvincibility_ <= 0)) {
+	auto wObj = otherTarget->GetObject();
+	switch (otherTarget->GetTargetType()) {
+	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
+	{
+		auto objShot = dynamic_cast<StgShotObject*>(wObj.get());
+		if (!tPlayer->IsGraze()) {
+			int hitID = DxScript::ID_INVALID;
+			if (objShot) {
+				hitID = objShot->GetObjectID();
+				if (enableDeleteShotOnHit_ && objShot->GetLife() != StgShotObject::LIFE_SPELL_REGIST &&
+					objShot->GetObjectType() == TypeObject::Shot)
+					objShot->ConvertToItem(true);
+			}
+			KillSelf(hitID);
+		}
+		else {
+			if (objShot) {
+				if (objShot->IsValidGraze() && (enableGrazeInvincible_ || frameInvincibility_ <= 0))
 					listGrazedShot_.push_back(wObj);
-				}
 			}
-			break;
 		}
-		case StgIntersectionTarget::TYPE_ENEMY:
-		{
-			if (!tPlayer->IsGraze()) {
-				if (StgEnemyObject* objEnemy = dynamic_cast<StgEnemyObject*>(wObj.get()))
-					hitObjectID_ = objEnemy->GetObjectID();
-			}
-			break;
+		break;
+	}
+	case StgIntersectionTarget::TYPE_ENEMY:
+	{
+		if (!tPlayer->IsGraze()) {
+			if (auto objEnemy = dynamic_cast<StgEnemyObject*>(wObj.get()))
+				KillSelf(objEnemy->GetObjectID());
 		}
-		}
+		break;
+	}
 	}
 }
 ref_unsync_ptr<StgPlayerObject> StgPlayerObject::GetOwnObject() {

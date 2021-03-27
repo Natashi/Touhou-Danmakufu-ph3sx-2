@@ -4893,8 +4893,7 @@ gstd::value StgStagePlayerScript::Func_KillPlayer(gstd::script_machine* machine,
 	StgStagePlayerScript* script = (StgStagePlayerScript*)machine->data;
 	ref_unsync_ptr<StgPlayerObject> objPlayer = script->stageController_->GetPlayerObject();
 	if (objPlayer) {
-		if (objPlayer->GetState() == StgPlayerObject::STATE_NORMAL)
-			objPlayer->KillSelf(true);
+		objPlayer->KillSelf(ID_INVALID);
 	}
 	return value();
 }

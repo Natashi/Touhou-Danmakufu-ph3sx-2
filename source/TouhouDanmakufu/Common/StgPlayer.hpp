@@ -95,7 +95,7 @@ public:
 	void Move();
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 	void CallSpell();
-	void KillSelf(bool bCalledFromScript);
+	void KillSelf(int hitObj);
 
 	void SendGrazeEvent();
 
