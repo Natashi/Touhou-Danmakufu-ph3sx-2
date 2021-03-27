@@ -56,7 +56,7 @@ namespace gstd {
 	};
 
 	class script_scanner {
-		static std::map<std::string, token_kind> token_map;
+		static std::unordered_map<std::string, token_kind> token_map;
 
 		Encoding::Type encoding;
 		size_t bytePerChar;

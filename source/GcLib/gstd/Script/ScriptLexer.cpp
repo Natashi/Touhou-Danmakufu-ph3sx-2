@@ -421,7 +421,7 @@ throw_err_no_decimal:
 				ch = next_char();
 			} while (std::iswalpha(ch) || ch == '_' || std::iswdigit(ch));
 
-			std::map<std::string, token_kind>::iterator itr = token_map.find(word);
+			auto itr = token_map.find(word);
 			if (itr != token_map.end())
 				next = itr->second;
 			else
@@ -436,7 +436,7 @@ throw_err_no_decimal:
 	if (token_list.size() > MAX_TOKEN_LIST) token_list.pop_back();
 }
 
-std::map<std::string, token_kind> script_scanner::token_map = {
+std::unordered_map<std::string, token_kind> script_scanner::token_map = {
 	{ "let", token_kind::tk_decl_auto },
 	{ "var", token_kind::tk_decl_auto },
 	{ "const", token_kind::tk_const },
