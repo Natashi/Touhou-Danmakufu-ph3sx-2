@@ -98,8 +98,7 @@ private:
 	D3DCOLOR defaultDelayColor_;
 
 	void _ScanShot(std::vector<StgShotData*>& listData, Scanner& scanner);
-	void _ScanAnimation(StgShotData*& shotData, Scanner& scanner);
-	std::vector<std::wstring> _GetArgumentList(Scanner& scanner);
+	static void _ScanAnimation(StgShotData*& shotData, Scanner& scanner);
 public:
 	StgShotDataList();
 	virtual ~StgShotDataList();

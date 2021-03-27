@@ -87,8 +87,7 @@ private:
 	std::vector<StgItemData*> listData_;
 
 	void _ScanItem(std::vector<StgItemData*>& listData, Scanner& scanner);
-	void _ScanAnimation(StgItemData* itemData, Scanner& scanner);
-	std::vector<std::wstring> _GetArgumentList(Scanner& scanner);
+	static void _ScanAnimation(StgItemData* itemData, Scanner& scanner);
 public:
 	StgItemDataList();
 	virtual ~StgItemDataList();

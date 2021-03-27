@@ -418,9 +418,77 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 	if (tok.GetType() == Token::Type::TK_NEWLINE) tok = scanner.Next();
 	scanner.CheckType(tok, Token::Type::TK_OPENC);
 
-	StgItemData* data = new StgItemData(this);
-	int id = -1;
-	int typeItem = -1;
+	struct Data {
+		StgItemData* itemData;
+		int id = -1;
+		int typeItem = -1;
+	} data;
+	data.itemData = new StgItemData(this);
+
+	//--------------------------------------------------------------
+
+#define LAMBDA_SETI(m) [](Data* i, Scanner& s) { \
+						s.CheckType(s.Next(), Token::Type::TK_EQUAL); \
+						i->m = s.Next().GetInteger(); \
+					}
+#define LAMBDA_CREATELIST(scanner) std::vector<std::wstring> list = scanner.GetArgumentList(); \
+						DxRect<int> rect( \
+							StringUtility::ToInteger(list[0]), \
+							StringUtility::ToInteger(list[1]), \
+							StringUtility::ToInteger(list[2]), \
+							StringUtility::ToInteger(list[3])); \
+						LONG width = rect.right - rect.left; \
+						LONG height = rect.bottom - rect.top; \
+						DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2); \
+						if (width % 2 == 1) ++(rcDest.right); \
+						if (height % 2 == 1) ++(rcDest.bottom);
+	auto funcSetRect = [](Data* i, Scanner& s) {
+		LAMBDA_CREATELIST(s);
+
+		StgItemData::AnimationData anime;
+		anime.rcSrc_ = rect;
+		anime.rcDest_ = rcDest;
+
+		i->itemData->listAnime_.resize(1);
+		i->itemData->listAnime_[0] = anime;
+		i->itemData->totalAnimeFrame_ = 1;
+	};
+	auto funcSetOut = [](Data* i, Scanner& s) {
+		LAMBDA_CREATELIST(s);
+
+		i->itemData->rcOutSrc_ = rect;
+		i->itemData->rcOutDest_ = rcDest;
+	};
+	auto funcSetBlendType = [](Data* i, Scanner& s) {
+		s.CheckType(s.Next(), Token::Type::TK_EQUAL);
+
+		BlendMode typeRender = MODE_BLEND_ALPHA;
+		static const std::unordered_map<std::wstring, BlendMode> mapBlendType = {
+			{ L"ADD", MODE_BLEND_ADD_RGB },
+			{ L"ADD_RGB", MODE_BLEND_ADD_RGB },
+			{ L"ADD_ARGB", MODE_BLEND_ADD_ARGB },
+		};
+		auto itr = mapBlendType.find(s.Next().GetElement());
+		if (itr != mapBlendType.end())
+			typeRender = itr->second;
+		i->itemData->typeRender_ = typeRender;
+	};
+
+	//Do NOT use [&] lambdas
+	static const std::unordered_map<std::wstring, std::function<void(Data*, Scanner&)>> mapFunc = {
+		{ L"id", LAMBDA_SETI(id) },
+		{ L"type", LAMBDA_SETI(typeItem) },
+		{ L"alpha", LAMBDA_SETI(itemData->alpha_) },
+		{ L"rect", funcSetRect },
+		{ L"out", funcSetOut },
+		{ L"render", funcSetBlendType },
+		{ L"AnimationData", [](Data* i, Scanner& s) { _ScanAnimation(i->itemData, s); } },
+	};
+
+#undef LAMBDA_SETI
+#undef LAMBDA_CREATELIST
+
+	//--------------------------------------------------------------
 
 	while (true) {
 		tok = scanner.Next();
@@ -430,81 +498,21 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 		else if (tok.GetType() == Token::Type::TK_ID) {
 			std::wstring element = tok.GetElement();
 
-			if (element == L"id") {
-				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-				id = scanner.Next().GetInteger();
-			}
-			else if (element == L"type") {
-				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-				typeItem = scanner.Next().GetInteger();
-			}
-			else if (element == L"rect") {
-				std::vector<std::wstring> list = _GetArgumentList(scanner);
-
-				StgItemData::AnimationData anime;
-
-				DxRect<int> rect(
-					StringUtility::ToInteger(list[0]),
-					StringUtility::ToInteger(list[1]),
-					StringUtility::ToInteger(list[2]),
-					StringUtility::ToInteger(list[3]));
-				anime.rcSrc_ = rect;
-
-				LONG width = rect.right - rect.left;
-				LONG height = rect.bottom - rect.top;
-				DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
-				if (width % 2 == 1) rcDest.right++;
-				if (height % 2 == 1) rcDest.bottom++;
-				anime.rcDest_ = rcDest;
-
-				data->listAnime_.resize(1);
-				data->listAnime_[0] = anime;
-				data->totalAnimeFrame_ = 1;
-			}
-			else if (element == L"out") {
-				std::vector<std::wstring> list = _GetArgumentList(scanner);
-
-				DxRect<int> rect(
-					StringUtility::ToInteger(list[0]),
-					StringUtility::ToInteger(list[1]),
-					StringUtility::ToInteger(list[2]),
-					StringUtility::ToInteger(list[3]));
-				data->rcOutSrc_ = rect;
-
-				LONG width = rect.right - rect.left;
-				LONG height = rect.bottom - rect.top;
-				DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
-				if (width % 2 == 1) rcDest.right++;
-				if (height % 2 == 1) rcDest.bottom++;
-				data->rcOutDest_ = rcDest;
-			}
-			else if (element == L"render") {
-				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-				std::wstring render = scanner.Next().GetElement();
-				if (render == L"ADD" || render == L"ADD_RGB")
-					data->typeRender_ = MODE_BLEND_ADD_RGB;
-				else if (render == L"ADD_ARGB")
-					data->typeRender_ = MODE_BLEND_ADD_ARGB;
-			}
-			else if (element == L"alpha") {
-				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-				data->alpha_ = scanner.Next().GetInteger();
-			}
-			else if (element == L"AnimationData") {
-				_ScanAnimation(data, scanner);
-			}
+			auto itrFind = mapFunc.find(element);
+			if (itrFind != mapFunc.end())
+				itrFind->second(&data, scanner);
 		}
 	}
 
-	if (id >= 0) {
-		if (listData.size() <= id)
-			listData.resize(id + 1);
+	if (data.id >= 0) {
+		if (listData.size() <= data.id)
+			listData.resize(data.id + 1);
 
-		if (typeItem < 0)
-			typeItem = id;
-		data->typeItem_ = typeItem;
+		if (data.typeItem < 0)
+			data.typeItem = data.id;
+		data.itemData->typeItem_ = data.typeItem;
 
-		listData[id] = data;
+		listData[data.id] = data.itemData;
 	}
 }
 void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
@@ -521,7 +529,7 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 			std::wstring element = tok.GetElement();
 
 			if (element == L"animation_data") {
-				std::vector<std::wstring> list = _GetArgumentList(scanner);
+				std::vector<std::wstring> list = scanner.GetArgumentList();
 				if (list.size() == 5) {
 					StgItemData::AnimationData anime;
 					int frame = StringUtility::ToInteger(list[0]);
@@ -547,28 +555,6 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 			}
 		}
 	}
-}
-std::vector<std::wstring> StgItemDataList::_GetArgumentList(Scanner& scanner) {
-	std::vector<std::wstring> res;
-	scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-
-	Token& tok = scanner.Next();
-
-	if (tok.GetType() == Token::Type::TK_OPENP) {
-		while (true) {
-			tok = scanner.Next();
-			Token::Type type = tok.GetType();
-			if (type == Token::Type::TK_CLOSEP) break;
-			else if (type != Token::Type::TK_COMMA) {
-				std::wstring str = tok.GetElement();
-				res.push_back(str);
-			}
-		}
-	}
-	else {
-		res.push_back(tok.GetElement());
-	}
-	return res;
 }
 
 //StgItemData

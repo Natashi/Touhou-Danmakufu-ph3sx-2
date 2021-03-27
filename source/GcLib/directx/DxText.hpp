@@ -171,14 +171,6 @@ namespace directx {
 	};
 
 	class DxTextScanner {
-	public:
-		const static DxTextToken::Type TOKEN_TAG_START;
-		const static DxTextToken::Type TOKEN_TAG_END;
-		const static std::wstring TAG_START;
-		const static std::wstring TAG_END;
-		const static std::wstring TAG_NEW_LINE;
-		const static std::wstring TAG_RUBY;
-		const static std::wstring TAG_FONT;
 	protected:
 		int line_;
 		std::vector<wchar_t> buffer_;

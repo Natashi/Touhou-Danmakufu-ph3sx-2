@@ -311,14 +311,14 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 					pathImage = scanner.Next().GetString();
 				}
 				else if (element == L"delay_color") {
-					std::vector<std::wstring> list = _GetArgumentList(scanner);
+					std::vector<std::wstring> list = scanner.GetArgumentList();
 					defaultDelayColor_ = D3DCOLOR_ARGB(255,
 						StringUtility::ToInteger(list[0]),
 						StringUtility::ToInteger(list[1]),
 						StringUtility::ToInteger(list[2]));
 				}
 				else if (element == L"delay_rect") {
-					std::vector<std::wstring> list = _GetArgumentList(scanner);
+					std::vector<std::wstring> list = scanner.GetArgumentList();
 
 					DxRect<int> rect(
 						StringUtility::ToInteger(list[0]),
@@ -409,9 +409,126 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 	if (tok.GetType() == Token::Type::TK_NEWLINE) tok = scanner.Next();
 	scanner.CheckType(tok, Token::Type::TK_OPENC);
 
-	StgShotData* data = new StgShotData(this);
-	data->colorDelay_ = defaultDelayColor_;
-	int id = -1;
+	struct Data {
+		StgShotData* shotData;
+		int id = -1;
+	} data;
+	data.shotData = new StgShotData(this);
+	data.shotData->colorDelay_ = defaultDelayColor_;
+
+	//--------------------------------------------------------------
+
+#define LAMBDA_SETV(m, f) [](Data* i, Scanner& s) { \
+		s.CheckType(s.Next(), Token::Type::TK_EQUAL); \
+		i->m = s.Next().f(); \
+	}
+#define LAMBDA_CREATELIST(scanner) std::vector<std::wstring> list = scanner.GetArgumentList(); \
+						DxRect<int> rect( \
+							StringUtility::ToInteger(list[0]), \
+							StringUtility::ToInteger(list[1]), \
+							StringUtility::ToInteger(list[2]), \
+							StringUtility::ToInteger(list[3])); \
+						LONG width = rect.right - rect.left; \
+						LONG height = rect.bottom - rect.top; \
+						DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2); \
+						if (width % 2 == 1) ++(rcDest.right); \
+						if (height % 2 == 1) ++(rcDest.bottom);
+	auto funcSetRect = [](Data* i, Scanner& s) {
+		LAMBDA_CREATELIST(s);
+
+		StgShotData::AnimationData anime;
+		anime.rcSrc_ = rect;
+		anime.SetDestRect(&anime.rcDst_, &rect);
+
+		i->shotData->listAnime_.resize(1);
+		i->shotData->listAnime_[0] = anime;
+		i->shotData->totalAnimeFrame_ = 1;
+	};
+	auto funcSetDelayRect = [](Data* i, Scanner& s) {
+		LAMBDA_CREATELIST(s);
+
+		i->shotData->rcDelay_ = rect;
+		StgShotData::AnimationData::SetDestRect(&i->shotData->rcDstDelay_, &rect);
+	};
+	auto funcSetDelayColor = [](Data* i, Scanner& s) {
+		std::vector<std::wstring> list = s.GetArgumentList();
+		i->shotData->colorDelay_ = D3DCOLOR_ARGB(255,
+			StringUtility::ToInteger(list[0]),
+			StringUtility::ToInteger(list[1]),
+			StringUtility::ToInteger(list[2]));
+	};
+
+	static const std::unordered_map<std::wstring, BlendMode> mapBlendType = {
+		{ L"ADD", MODE_BLEND_ADD_RGB },
+		{ L"ADD_RGB", MODE_BLEND_ADD_RGB },
+		{ L"ADD_ARGB", MODE_BLEND_ADD_ARGB },
+		{ L"MULTIPLY", MODE_BLEND_MULTIPLY },
+		{ L"SUBTRACT", MODE_BLEND_SUBTRACT },
+		{ L"SHADOW", MODE_BLEND_SHADOW },
+		{ L"ALPHA_INV", MODE_BLEND_ALPHA_INV },
+	};
+#define LAMBDA_SETBLEND(m) [](Data* i, Scanner& s) { \
+		s.CheckType(s.Next(), Token::Type::TK_EQUAL); \
+		BlendMode typeRender = MODE_BLEND_ALPHA; \
+		auto itr = mapBlendType.find(s.Next().GetElement()); \
+		if (itr != mapBlendType.end()) \
+			typeRender = itr->second; \
+		i->shotData->m = typeRender; \
+	}
+	auto funcSetCollision = [](Data* i, Scanner& s) {
+		DxCircle circle;
+		std::vector<std::wstring> list = s.GetArgumentList();
+		if (list.size() == 1) {
+			circle.SetR(StringUtility::ToDouble(list[0]));
+		}
+		else if (list.size() == 3) {
+			circle.SetR(StringUtility::ToDouble(list[0]));
+			circle.SetX(StringUtility::ToDouble(list[1]));
+			circle.SetY(StringUtility::ToDouble(list[2]));
+		}
+		i->shotData->listCol_ = circle;
+	};
+	auto funcSetAngularVel = [](Data* i, Scanner& s) {
+		s.CheckType(s.Next(), Token::Type::TK_EQUAL);
+		Token& tok = s.Next();
+		if (tok.GetElement() == L"rand") {
+			std::vector<std::wstring> list = s.GetArgumentList(false);
+			if (list.size() == 2) {
+				i->shotData->angularVelocityMin_ = Math::DegreeToRadian(StringUtility::ToDouble(list[0]));
+				i->shotData->angularVelocityMax_ = Math::DegreeToRadian(StringUtility::ToDouble(list[1]));
+			}
+		}
+		else {
+			i->shotData->angularVelocityMin_ = Math::DegreeToRadian(tok.GetReal());
+			i->shotData->angularVelocityMax_ = i->shotData->angularVelocityMin_;
+		}
+	};
+	auto funcLoadAnimation = [](Data* i, Scanner& s) {
+		i->shotData->listAnime_.clear();
+		i->shotData->totalAnimeFrame_ = 0;
+		_ScanAnimation(i->shotData, s);
+	};
+
+	//Do NOT use [&] lambdas
+	static const std::unordered_map<std::wstring, std::function<void(Data*, Scanner&)>> mapFunc = {
+		{ L"id", LAMBDA_SETV(id, GetInteger) },
+		{ L"rect", funcSetRect },
+		{ L"delay_rect", funcSetDelayRect },
+		{ L"delay_color", funcSetDelayColor },
+		{ L"collision", funcSetCollision },
+		{ L"render", LAMBDA_SETBLEND(typeRender_) },
+		{ L"delay_render", LAMBDA_SETBLEND(typeDelayRender_) },
+		{ L"alpha", LAMBDA_SETV(shotData->alpha_, GetInteger) },
+		{ L"angular_velocity", funcSetAngularVel },
+		{ L"fixed_angle", LAMBDA_SETV(shotData->bFixedAngle_, GetBoolean) },
+		{ L"AnimationData", funcLoadAnimation },
+	};
+
+#undef LAMBDA_SETV
+#undef LAMBDA_CREATELIST
+#undef LAMBDA_SETBLEND
+
+	//--------------------------------------------------------------
 
 	while (true) {
 		tok = scanner.Next();
@@ -421,128 +538,28 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 		else if (tok.GetType() == Token::Type::TK_ID) {
 			std::wstring element = tok.GetElement();
 
-			if (element == L"id") {
-				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-				id = scanner.Next().GetInteger();
-			}
-			else if (element == L"rect") {
-				std::vector<std::wstring> list = _GetArgumentList(scanner);
-
-				StgShotData::AnimationData anime;
-
-				DxRect<int> rect(
-					StringUtility::ToInteger(list[0]),
-					StringUtility::ToInteger(list[1]),
-					StringUtility::ToInteger(list[2]),
-					StringUtility::ToInteger(list[3]));
-				anime.rcSrc_ = rect;
-				anime.SetDestRect(&anime.rcDst_, &rect);
-
-				data->listAnime_.resize(1);
-				data->listAnime_[0] = anime;
-				data->totalAnimeFrame_ = 1;
-			}
-			else if (element == L"delay_color") {
-				std::vector<std::wstring> list = _GetArgumentList(scanner);
-				data->colorDelay_ = D3DCOLOR_ARGB(255,
-					StringUtility::ToInteger(list[0]),
-					StringUtility::ToInteger(list[1]),
-					StringUtility::ToInteger(list[2]));
-			}
-			else if (element == L"delay_rect") {
-				std::vector<std::wstring> list = _GetArgumentList(scanner);
-				
-				DxRect<int> rect(
-					StringUtility::ToInteger(list[0]),
-					StringUtility::ToInteger(list[1]),
-					StringUtility::ToInteger(list[2]),
-					StringUtility::ToInteger(list[3]));
-				data->rcDelay_ = rect;
-				StgShotData::AnimationData::SetDestRect(&data->rcDstDelay_, &rect);
-			}
-			else if (element == L"collision") {
-				DxCircle circle;
-				std::vector<std::wstring> list = _GetArgumentList(scanner);
-				if (list.size() == 1) {
-					circle.SetR(StringUtility::ToDouble(list[0]));
-				}
-				else if (list.size() == 3) {
-					circle.SetR(StringUtility::ToDouble(list[0]));
-					circle.SetX(StringUtility::ToDouble(list[1]));
-					circle.SetY(StringUtility::ToDouble(list[2]));
-				}
-
-				data->listCol_ = circle;
-			}
-			else if (element == L"render" || element == L"delay_render") {
-				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-				std::wstring strRender = scanner.Next().GetElement();
-				BlendMode typeRender = MODE_BLEND_ALPHA;
-
-				if (strRender == L"ADD" || strRender == L"ADD_RGB")
-					typeRender = MODE_BLEND_ADD_RGB;
-				else if (strRender == L"ADD_ARGB")
-					typeRender = MODE_BLEND_ADD_ARGB;
-				else if (strRender == L"MULTIPLY")
-					typeRender = MODE_BLEND_MULTIPLY;
-				else if (strRender == L"SUBTRACT")
-					typeRender = MODE_BLEND_SUBTRACT;
-				else if (strRender == L"INV_DESTRGB")
-					typeRender = MODE_BLEND_INV_DESTRGB;
-
-				if (element.size() == 6 /*element == L"render"*/)
-					data->typeRender_ = typeRender;
-				else if (element.size() == 12 /*element == L"delay_render"*/)
-					data->typeDelayRender_ = typeRender;
-			}
-			else if (element == L"alpha") {
-				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-				data->alpha_ = scanner.Next().GetInteger();
-			}
-			else if (element == L"angular_velocity") {
-				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-				tok = scanner.Next();
-				if (tok.GetElement() == L"rand") {
-					scanner.CheckType(scanner.Next(), Token::Type::TK_OPENP);
-					data->angularVelocityMin_ = Math::DegreeToRadian(scanner.Next().GetReal());
-					scanner.CheckType(scanner.Next(), Token::Type::TK_COMMA);
-					data->angularVelocityMax_ = Math::DegreeToRadian(scanner.Next().GetReal());
-					scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEP);
-				}
-				else {
-					data->angularVelocityMin_ = Math::DegreeToRadian(tok.GetReal());
-					data->angularVelocityMax_ = data->angularVelocityMin_;
-				}
-			}
-			else if (element == L"fixed_angle") {
-				scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-				tok = scanner.Next();
-				data->bFixedAngle_ = tok.GetElement() == L"true";
-			}
-			else if (element == L"AnimationData") {
-				data->listAnime_.clear();
-				data->totalAnimeFrame_ = 0;
-				_ScanAnimation(data, scanner);
-			}
+			auto itrFind = mapFunc.find(element);
+			if (itrFind != mapFunc.end())
+				itrFind->second(&data, scanner);
 		}
 	}
 
-	if (id >= 0) {
-		if (data->listCol_.GetR() <= 0) {
+	if (data.id >= 0) {
+		if (data.shotData->listCol_.GetR() <= 0) {
 			float r = 0;
-			if (data->listAnime_.size() > 0) {
-				DxRect<int>& rect = data->listAnime_[0].rcSrc_;
+			if (data.shotData->listAnime_.size() > 0) {
+				DxRect<int>& rect = data.shotData->listAnime_[0].rcSrc_;
 				int rx = abs(rect.right - rect.left);
 				int ry = abs(rect.bottom - rect.top);
 				r = std::min(rx, ry) / 3.0f - 3.0f;
 			}
 			DxCircle circle(0, 0, std::max(r, 2.0f));
-			data->listCol_ = circle;
+			data.shotData->listCol_ = circle;
 		}
-		if (listData.size() <= id)
-			listData.resize(id + 1);
+		if (listData.size() <= data.id)
+			listData.resize(data.id + 1);
 
-		listData[id] = data;
+		listData[data.id] = data.shotData;
 	}
 }
 void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
@@ -559,7 +576,7 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 			std::wstring element = tok.GetElement();
 
 			if (element == L"animation_data") {
-				std::vector<std::wstring> list = _GetArgumentList(scanner);
+				std::vector<std::wstring> list = scanner.GetArgumentList();
 				if (list.size() == 5) {
 					StgShotData::AnimationData anime;
 					int frame = StringUtility::ToInteger(list[0]);
@@ -579,28 +596,6 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 			}
 		}
 	}
-}
-std::vector<std::wstring> StgShotDataList::_GetArgumentList(Scanner& scanner) {
-	std::vector<std::wstring> res;
-	scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
-
-	Token& tok = scanner.Next();
-
-	if (tok.GetType() == Token::Type::TK_OPENP) {
-		while (true) {
-			tok = scanner.Next();
-			Token::Type type = tok.GetType();
-			if (type == Token::Type::TK_CLOSEP) break;
-			else if (type != Token::Type::TK_COMMA) {
-				std::wstring str = tok.GetElement();
-				res.push_back(str);
-			}
-		}
-	}
-	else {
-		res.push_back(tok.GetElement());
-	}
-	return res;
 }
 
 //StgShotData

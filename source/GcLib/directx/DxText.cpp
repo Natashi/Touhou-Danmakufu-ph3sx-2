@@ -321,15 +321,17 @@ void DxCharCache::AddChar(DxCharCacheKey& key, shared_ptr<DxCharGlyph> value) {
 //*******************************************************************
 //DxTextScanner
 //*******************************************************************
-const DxTextToken::Type DxTextScanner::TOKEN_TAG_START = DxTextToken::Type::TK_OPENB;
-const DxTextToken::Type DxTextScanner::TOKEN_TAG_END = DxTextToken::Type::TK_CLOSEB;
-const std::wstring DxTextScanner::TAG_START = L"[";
-const std::wstring DxTextScanner::TAG_END = L"]";
-const std::wstring DxTextScanner::TAG_NEW_LINE = L"r";
-const std::wstring DxTextScanner::TAG_RUBY = L"ruby";
-const std::wstring DxTextScanner::TAG_FONT = L"font";
-const wchar_t CHAR_TAG_START = L'[';
-const wchar_t CHAR_TAG_END = L']';
+static const DxTextToken::Type TOKEN_TAG_START = DxTextToken::Type::TK_OPENB;
+static const DxTextToken::Type TOKEN_TAG_END = DxTextToken::Type::TK_CLOSEB;
+static const std::wstring TAG_START = L"[";
+static const std::wstring TAG_END = L"]";
+static const std::wstring TAG_NEW_LINE = L"r";
+static const std::wstring TAG_RUBY = L"ruby";
+static const std::wstring TAG_FONT = L"font";
+static const std::wstring TAG_FONT2 = L"f";
+static const wchar_t CHAR_TAG_START = L'[';
+static const wchar_t CHAR_TAG_END = L']';
+
 DxTextScanner::DxTextScanner(wchar_t* str, size_t charCount) {
 	std::vector<wchar_t> buf;
 	buf.resize(charCount);
@@ -597,8 +599,8 @@ DxTextToken& DxTextScanner::Next() {
 			break;
 		}
 		}
-		if (type == DxTextScanner::TOKEN_TAG_START) bTagScan_ = true;
-		else if (type == DxTextScanner::TOKEN_TAG_END) bTagScan_ = false;
+		if (type == TOKEN_TAG_START) bTagScan_ = true;
+		else if (type == TOKEN_TAG_END) bTagScan_ = false;
 
 		if (type == DxTextToken::Type::TK_STRING) {
 			//\を除去
@@ -870,6 +872,29 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text,
 	}
 	return textLine;
 }
+
+std::vector<std::wstring> GetScannerStringArgumentList(DxTextScanner& scan, std::vector<wchar_t>::iterator beg) {
+	std::vector<std::wstring> list;
+
+	scan.SetCurrentPointer(beg);
+	DxTextToken& tok = scan.Next();
+	if (tok.GetType() == DxTextToken::Type::TK_OPENP) {
+		while (true) {
+			tok = scan.Next();
+			DxTextToken::Type type = tok.GetType();
+			if (type == DxTextToken::Type::TK_CLOSEP) break;
+			else if (type != DxTextToken::Type::TK_COMMA) {
+				std::wstring& str = tok.GetElement();
+				list.push_back(str);
+			}
+		}
+	}
+	else {
+		list.push_back(tok.GetElement());
+	}
+
+	return list;
+}
 shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	SetFont(dxText->dxFont_.GetLogFont());
 	DxTextInfo* res = new DxTextInfo();
@@ -890,16 +915,24 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	LONG totalHeight = 0;
 	LONG widthBorder = dxFont.GetBorderType() != TextBorderType::None ? dxFont.GetBorderWidth() : 0L;
 
-	const D3DCOLOR orgColorTop = dxFont.GetTopColor();
-	const D3DCOLOR orgColorBottom = dxFont.GetBottomColor();
-	const D3DCOLOR orgColorBorder = dxFont.GetBorderColor();
-	const bool orgItalic = dxFont.GetLogFont().lfItalic;
-	//const bool orgUnderline = dxFont.GetLogFont().lfUnderline;
-	D3DCOLOR tagColorBottom = orgColorBottom;
-	D3DCOLOR tagColorTop = orgColorTop;
-	D3DCOLOR tagColorBorder = orgColorBorder;
-	bool tagItalic = orgItalic;
-	//bool tagUnderline = orgUnderline;
+	struct TempFontData {
+		D3DCOLOR colorTop;
+		D3DCOLOR colorBottom;
+		D3DCOLOR colorBorder;
+		bool italic;
+		bool underl;
+		bool strike;
+	};
+
+	const TempFontData orgFontData = {
+		dxFont.GetTopColor(),
+		dxFont.GetBottomColor(),
+		dxFont.GetBorderColor(),
+		(bool)dxFont.GetLogFont().lfItalic,
+		(bool)dxFont.GetLogFont().lfUnderline,
+		(bool)dxFont.GetLogFont().lfStrikeOut
+	};
+	TempFontData curFontData = orgFontData;
 
 	shared_ptr<DxTextLine> textLine(new DxTextLine());
 	textLine->width_ = margin.left;
@@ -927,11 +960,11 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 				textLine = _GetTextInfoSub(text, dxText, res, textLine, hDC, totalWidth, totalHeight);
 				if (textLine == nullptr) bEnd = true;
 			}
-			else if (typeToken == DxTextScanner::TOKEN_TAG_START) {
+			else if (typeToken == TOKEN_TAG_START) {
 				size_t indexTag = textLine->code_.size();
 				tok = scan.Next();
 				const std::wstring& element = tok.GetElement();
-				if (element == DxTextScanner::TAG_NEW_LINE) {
+				if (element == TAG_NEW_LINE) {
 					//改行
 					if (textLine->height_ == 0) {
 						//空文字の場合も空白文字で高さを計算する
@@ -946,224 +979,186 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 					textLine = std::make_shared<DxTextLine>();
 				}
-				else if (element == DxTextScanner::TAG_RUBY) {
-					shared_ptr<DxTextTag_Ruby> tag(new DxTextTag_Ruby());
-					tag->SetTagIndex(indexTag);
+				else if (element == TAG_RUBY) {
+					struct Data {
+						shared_ptr<DxTextTag_Ruby> tag;
+						LONG sizeOff = 0;
+						LONG weightRuby = FW_BOLD;
+						LONG leftOff = 0;
+						LONG pitchOff = 0;
+					} data;
 
-					LONG sizeOff = 0;
-					LONG weightRuby = FW_BOLD;
-					LONG leftOff = 0;
-					LONG pitchOff = 0;
+					data.tag.reset(new DxTextTag_Ruby());
+					data.tag->SetTagIndex(indexTag);
+
+#define LAMBDA_SET(m, f) [](Data* i, DxTextScanner& sc) { i->m = sc.Next().f(); }
+					//Do NOT use [&] lambdas
+					static const std::unordered_map<std::wstring, std::function<void(Data*, DxTextScanner&)>> mapFunc = {
+						{ L"rb", [&](Data* i, DxTextScanner& sc) { i->tag->SetText(sc.Next().GetString()); } },
+						{ L"rt", [&](Data* i, DxTextScanner& sc) { i->tag->SetRuby(sc.Next().GetString()); } },
+						{ L"size", LAMBDA_SET(sizeOff, GetInteger) },
+						{ L"sz", LAMBDA_SET(sizeOff, GetInteger) },
+						{ L"wg", LAMBDA_SET(weightRuby, GetInteger) },
+						{ L"ox", LAMBDA_SET(leftOff, GetInteger) },
+						{ L"op", LAMBDA_SET(pitchOff, GetInteger) },
+					};
+#undef LAMBDA_SET
 
 					while (true) {
 						tok = scan.Next();
-						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END) break;
+						if (tok.GetType() == TOKEN_TAG_END) break;
 						const std::wstring& str = tok.GetElement();
-						if (str == L"rb") {
+
+						auto itrFind = mapFunc.find(str);
+						if (itrFind != mapFunc.end()) {
 							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
-							std::wstring text = scan.Next().GetString();
-							tag->SetText(text);
-						}
-						else if (str == L"rt") {
-							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
-							std::wstring text = scan.Next().GetString();
-							tag->SetRuby(text);
-						}
-						else if (str == L"sz") {
-							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
-							sizeOff = scan.Next().GetInteger();
-						}
-						else if (str == L"wg") {
-							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
-							weightRuby = scan.Next().GetInteger();
-						}
-						else if (str == L"ox") {
-							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
-							leftOff = scan.Next().GetInteger();
-						}
-						else if (str == L"op") {
-							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
-							pitchOff = scan.Next().GetInteger();
+							itrFind->second(&data, scan);
 						}
 					}
 
 					size_t linePos = res->GetLineCount();
 					size_t codeCount = textLine->GetTextCodes().size();
-					const std::wstring& text = tag->GetText();
+					const std::wstring& text = data.tag->GetText();
 					shared_ptr<DxTextLine> textLineRuby = textLine;
 					textLine = _GetTextInfoSub(text, dxText, res, textLine, hDC, totalWidth, totalHeight);
 
 					SIZE sizeTextBase;
 					::GetTextExtentPoint32(hDC, &text[0], text.size(), &sizeTextBase);
 
-					LONG rubyFontWidth = dxText->GetFontSize() / 2L + sizeOff;
-
-					const std::wstring& sRuby = tag->GetRuby();
-					size_t rubyCount = StringUtility::CountAsciiSizeCharacter(sRuby);
+					LONG rubyFontWidth = dxText->GetFontSize() / 2L + data.sizeOff;
+					size_t rubyCount = StringUtility::CountAsciiSizeCharacter(data.tag->GetRuby());
 					if (rubyCount > 0) {
 						LONG rubySpace = std::max(sizeTextBase.cx - rubyFontWidth / 2L, 0L);
 						LONG rubyGap = rubySpace / std::max((LONG)rubyCount, 1L) - rubyFontWidth / 2L;
 						LONG rubyPitch = std::clamp(rubyGap, 0L, (LONG)(rubyFontWidth * 1.2f));
 
-						tag->SetLeftMargin(leftOff);
+						data.tag->SetLeftMargin(data.leftOff);
 
 						shared_ptr<DxText> dxTextRuby(new DxText());
-						dxTextRuby->SetText(tag->GetRuby());
+						dxTextRuby->SetText(data.tag->GetRuby());
 						dxTextRuby->SetFont(dxFont);
 						dxTextRuby->SetPosition(dxText->GetPosition());
 						dxTextRuby->SetMaxWidth(dxText->GetMaxWidth());
-						dxTextRuby->SetSidePitch(rubyPitch + pitchOff);
+						dxTextRuby->SetSidePitch(rubyPitch + data.pitchOff);
 						dxTextRuby->SetLinePitch(linePitch + dxText->GetFontSize() - rubyFontWidth);
-						dxTextRuby->SetFontWeight(weightRuby);
+						dxTextRuby->SetFontWeight(data.weightRuby);
 						dxTextRuby->SetFontItalic(false);
 						dxTextRuby->SetFontUnderLine(false);
 						dxTextRuby->SetFontSize(rubyFontWidth);
 						dxTextRuby->SetFontBorderWidth(dxFont.GetBorderWidth() / 2);
-						tag->SetRenderText(dxTextRuby);
+						data.tag->SetRenderText(dxTextRuby);
 
 						size_t currentCodeCount = textLineRuby->GetTextCodes().size();
 						if (codeCount == currentCodeCount) {
 							//タグが完全に次の行に回る場合
-							tag->SetTagIndex(0);
-							textLine->tag_.push_back(tag);
+							data.tag->SetTagIndex(0);
+							textLine->tag_.push_back(data.tag);
 						}
 						else {
-							textLineRuby->tag_.push_back(tag);
+							textLineRuby->tag_.push_back(data.tag);
 						}
 					}
 				}
-				else if (element == DxTextScanner::TAG_FONT) {
-					DxTextTag_Font* tag = new DxTextTag_Font();
+				else if (element == TAG_FONT || element == TAG_FONT2) {
 					DxFont font = dxText->GetFont();
 					LOGFONT& logFont = font.GetLogFont();
-					tag->SetTagIndex(indexTag);
 
-					bool bClear = false;
-					while (true) {
-						tok = scan.Next();
-						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END) break;
-						//else if (tok.GetType() == DxTextToken::Type::TK_COMMA) continue;
-						std::wstring command = tok.GetElement();
-						if (command == L"reset") {
-							bClear = true;
-						}
-						else {
-							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
-							auto pointerBefore = scan.GetCurrentPointer();
-							DxTextToken& arg = scan.Next();
-							if (command == L"size") {
-								logFont.lfHeight = arg.GetInteger();
-							}
-							else if (command == L"ox") {
-								tag->GetOffset().x = arg.GetInteger();
-							}
-							else if (command == L"oy") {
-								tag->GetOffset().y = arg.GetInteger();
-							}
-							else if (command == L"it") {
-								tagItalic = arg.GetBoolean();
-							}
-							else if (command == L"wg") {
-								logFont.lfWeight = arg.GetInteger();
-							}
-							/*
-							else if (str == L"un") {
-								tagUnderline = arg.GetBoolean();
-							}
-							*/
-							else if (command.size() == 2) {
-								std::wsmatch base_match;
-								if (std::regex_search(command, base_match, std::wregex(L"[bto][rgb]"))) {
-									D3DCOLOR mask = 0xffffffff;
-									byte shifting = 0;
-									D3DCOLOR* colorDst = nullptr;
+					struct Data {
+						shared_ptr<DxTextTag_Font> tag;
+						bool bClear = false;
+						TempFontData* fontData = nullptr;
+						LOGFONT* logFont = nullptr;
+					} data;
+					data.tag.reset(new DxTextTag_Font());
+					data.tag->SetTagIndex(indexTag);
+					data.fontData = &curFontData;
+					data.logFont = &logFont;
 
-									switch (command[0]) {
-									case L'b':	//[b]ottom color
-										colorDst = &tagColorBottom;
-										break;
-									case L't':	//[t]op color
-										colorDst = &tagColorTop;
-										break;
-									case L'o':	//b[o]rder color
-										colorDst = &tagColorBorder;
-										break;
-									}
-									switch (command[1]) {
-									case L'r':	//red
-										mask = 0xff00ffff;
-										shifting = 16;
-										break;
-									case L'g':	//green
-										mask = 0xffff00ff;
-										shifting = 8;
-										break;
-									case L'b':	//blue
-										mask = 0xffffff00;
-										shifting = 0;
-										break;
-									}
+					//--------------------------------------------------------------
 
-									byte c = ColorAccess::ClampColorRet(arg.GetInteger());
-									*colorDst = (*colorDst & mask) | (c << shifting);
-								}
-								else if (std::regex_search(command, base_match, std::wregex(L"[bto]c"))) {
-									D3DCOLOR* colorDst = nullptr;
+					auto funcClear = [](Data* i, DxTextScanner&) { i->bClear = true; };
 
-									switch (command[0]) {
-									case L'b':	//[b]ottom color
-										colorDst = &tagColorBottom;
-										break;
-									case L't':	//[t]op color
-										colorDst = &tagColorTop;
-										break;
-									case L'o':	//b[o]rder color
-										colorDst = &tagColorBorder;
-										break;
-									}
-
-									scan.SetCurrentPointer(pointerBefore);
-									std::vector<std::wstring> list;
-									{
-										DxTextToken& tok = scan.Next();
-										if (tok.GetType() == DxTextToken::Type::TK_OPENP) {
-											while (true) {
-												tok = scan.Next();
-												DxTextToken::Type type = tok.GetType();
-												if (type == DxTextToken::Type::TK_CLOSEP) break;
-												else if (type != DxTextToken::Type::TK_COMMA) {
-													std::wstring& str = tok.GetElement();
-													list.push_back(str);
-												}
-											}
-										}
-										else {
-											list.push_back(tok.GetElement());
-										}
-									}
-
-									if (list.size() == 3) {
-										byte r = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[0]));
-										byte g = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[1]));
-										byte b = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[2]));
-										*colorDst = (*colorDst & 0xff000000) | (D3DCOLOR_XRGB(r, g, b) & 0x00ffffff);
-									}
-								}
-							}
-						}
+#define CHK_EQ scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL); \
+					auto pointerBefore = scan.GetCurrentPointer(); \
+					DxTextToken& arg = scan.Next();
+#define LAMBDA_SET_I(m) [](Data* i, DxTextScanner& scan) { CHK_EQ; i->m = arg.GetInteger(); }
+#define LAMBDA_SET_B(m) [](Data* i, DxTextScanner& scan) { CHK_EQ; i->m = arg.GetBoolean(); }
+#define LAMBDA_SET_COLOR_S(mask, shift, dst) [](Data* i, DxTextScanner& scan) { \
+						CHK_EQ; \
+						byte c = ColorAccess::ClampColorRet(arg.GetInteger()); \
+						i->dst = ((i->dst) & (DWORD)(mask)) | (c << (byte)(shift)); \
+					}
+#define LAMBDA_SET_COLOR_PK(dst) [](Data* i, DxTextScanner& scan) { \
+						CHK_EQ; \
+						scan.SetCurrentPointer(pointerBefore); \
+						std::vector<std::wstring> list = GetScannerStringArgumentList(scan, pointerBefore); \
+						if (list.size() >= 3) { \
+							byte r = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[0])); \
+							byte g = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[1])); \
+							byte b = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[2])); \
+							i->dst = ((i->dst) & 0xff000000) | (D3DCOLOR_XRGB(r, g, b) & 0x00ffffff); \
+						} \
 					}
 
-					if (bClear) {
+					//Do NOT use [&] lambdas
+					static const std::unordered_map<std::wstring, std::function<void(Data*, DxTextScanner&)>> mapFunc = {
+						{ L"r", funcClear },
+						{ L"rs", funcClear },
+						{ L"reset", funcClear },
+						{ L"c", funcClear },
+						{ L"clr", funcClear },
+						{ L"clear", funcClear },
+
+						{ L"sz", LAMBDA_SET_I(logFont->lfHeight) },
+						{ L"size", LAMBDA_SET_I(logFont->lfHeight) },
+						{ L"wg", LAMBDA_SET_I(logFont->lfWeight) },
+						{ L"it", LAMBDA_SET_B(fontData->italic) },
+						{ L"un", LAMBDA_SET_B(fontData->underl) },		//doesn't work
+						{ L"st", LAMBDA_SET_B(fontData->strike) },		//doesn't work
+						{ L"ox", LAMBDA_SET_I(tag->GetOffset().x) },
+						{ L"oy", LAMBDA_SET_I(tag->GetOffset().y) },
+
+						{ L"br", LAMBDA_SET_COLOR_S(0xff00ffff, 16, fontData->colorBottom) },
+						{ L"bg", LAMBDA_SET_COLOR_S(0xffff00ff, 8, fontData->colorBottom) },
+						{ L"bb", LAMBDA_SET_COLOR_S(0xffffff00, 0, fontData->colorBottom) },
+						{ L"tr", LAMBDA_SET_COLOR_S(0xff00ffff, 16, fontData->colorTop) },
+						{ L"tg", LAMBDA_SET_COLOR_S(0xffff00ff, 8, fontData->colorTop) },
+						{ L"tb", LAMBDA_SET_COLOR_S(0xffffff00, 0, fontData->colorTop) },
+						{ L"or", LAMBDA_SET_COLOR_S(0xff00ffff, 16, fontData->colorBorder) },
+						{ L"og", LAMBDA_SET_COLOR_S(0xffff00ff, 8, fontData->colorBorder) },
+						{ L"ob", LAMBDA_SET_COLOR_S(0xffffff00, 0, fontData->colorBorder) },
+
+						{ L"bc", LAMBDA_SET_COLOR_PK(fontData->colorBottom) },
+						{ L"tc", LAMBDA_SET_COLOR_PK(fontData->colorTop) },
+						{ L"oc", LAMBDA_SET_COLOR_PK(fontData->colorBorder) },
+					};
+
+#undef CHK_EQ
+#undef LAMBDA_SET_I
+#undef LAMBDA_SET_B
+#undef LAMBDA_SET_COLOR_S
+#undef LAMBDA_SET_COLOR_PK
+
+					//--------------------------------------------------------------
+					
+					while (true) {
+						tok = scan.Next();
+						if (tok.GetType() == TOKEN_TAG_END) break;
+						//else if (tok.GetType() == DxTextToken::Type::TK_COMMA) continue;
+						std::wstring command = tok.GetElement();
+
+						auto itrFind = mapFunc.find(command);
+						if (itrFind != mapFunc.end())
+							itrFind->second(&data, scan);
+					}
+
+					if (data.bClear) {
 						widthBorder = dxFont.GetBorderType() != TextBorderType::None ? dxFont.GetBorderWidth() : 0L;
 
 						fontTemp = nullptr;
 						SelectObject(hDC, oldFont);
 
-						tagColorBottom = orgColorBottom;
-						tagColorTop = orgColorTop;
-						tagColorBorder = orgColorBorder;
-						tagItalic = orgItalic;
-						//tagUnderline = orgUnderline;
+						curFontData = orgFontData;
 					}
 					else {
 						widthBorder = font.GetBorderType() != TextBorderType::None ? font.GetBorderWidth() : 0L;
@@ -1172,20 +1167,21 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						SelectObject(hDC, fontTemp->GetHandle());
 					}
 
-					font.SetBottomColor(tagColorBottom);
-					font.SetTopColor(tagColorTop);
-					font.SetBorderColor(tagColorBorder);
-					logFont.lfItalic = tagItalic;
-					//logFont.lfUnderline = tagUnderline;
+					font.SetBottomColor(curFontData.colorBottom);
+					font.SetTopColor(curFontData.colorTop);
+					font.SetBorderColor(curFontData.colorBorder);
+					logFont.lfItalic = curFontData.italic;
+					logFont.lfUnderline = curFontData.underl;
+					logFont.lfStrikeOut = curFontData.strike;
 
-					tag->SetFont(font);
-					textLine->tag_.push_back(shared_ptr<DxTextTag_Font>(tag));
+					data.tag->SetFont(font);
+					textLine->tag_.push_back(data.tag);
 				}
 				else {
-					std::wstring text = DxTextScanner::TAG_START;
+					std::wstring text = TAG_START;
 					text += tok.GetElement();
 					while (true) {
-						if (tok.GetType() == DxTextScanner::TOKEN_TAG_END)
+						if (tok.GetType() == TOKEN_TAG_END)
 							break;
 						tok = scan.Next();
 						text += tok.GetElement();
@@ -1445,6 +1441,7 @@ DxText::DxText() {
 	ZeroMemory(&logFont, sizeof(LOGFONT));
 	logFont.lfEscapement = 0;
 	logFont.lfWidth = 0;
+	//logFont.lfStrikeOut = 1;
 	logFont.lfCharSet = ANSI_CHARSET;
 	SetFont(logFont);
 	SetFontSize(20);

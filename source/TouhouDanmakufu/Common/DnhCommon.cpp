@@ -21,6 +21,7 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 	ref_count_ptr<ScriptInformation> res = CreateScriptInformation(pathScript, L"", source, bNeedHeader);
 	return res;
 }
+
 ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(const std::wstring& pathScript, 
 	const std::wstring& pathArchive, const std::string& source, bool bNeedHeader) 
 {
@@ -29,21 +30,24 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 	Scanner scanner(source);
 	Encoding::Type encoding = scanner.GetEncoding();
 	try {
+		struct Info {
+			std::wstring idScript = L"";
+			std::wstring title = L"";
+			std::wstring text = L"";
+			std::wstring pathImage = L"";
+			std::wstring pathSystem = DEFAULT;
+			std::wstring pathBackground = DEFAULT;
+			std::wstring pathBGM = DEFAULT;
+			std::vector<std::wstring> listPlayer;
+			std::wstring replayName = L"";
+		} info;
+
 		bool bScript = false;
 		int type = TYPE_SINGLE;
 		if (!bNeedHeader) {
 			type = TYPE_UNKNOWN;
 			bScript = true;
 		}
-		std::wstring idScript = L"";
-		std::wstring title = L"";
-		std::wstring text = L"";
-		std::wstring pathImage = L"";
-		std::wstring pathSystem = DEFAULT;
-		std::wstring pathBackground = DEFAULT;
-		std::wstring pathBGM = DEFAULT;
-		std::vector<std::wstring> listPlayer;
-		std::wstring replayName = L"";
 
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
@@ -61,15 +65,12 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 					int start = tok.GetStartPointer();
 					int end = tok.GetEndPointer();
 					if (encoding == Encoding::UTF8 || encoding == Encoding::UTF8BOM) {
-						//First, try ANSI
-						std::string multiThDmf = StringUtility::ConvertWideToMulti(L"“Œ•û’e–‹•—", CP_ACP);
-						bValidDanmakufuHeader = scanner.CompareMemory(start, end, multiThDmf.data());
+						static std::string multiThDmfANSI = StringUtility::ConvertWideToMulti(L"“Œ•û’e–‹•—", CP_ACP);
+						static std::string multiThDmfUTF8 = StringUtility::ConvertWideToMulti(L"“Œ•û’e–‹•—", CP_UTF8);
 
-						//Second, try UTF-8
-						if (!bValidDanmakufuHeader) {
-							multiThDmf = StringUtility::ConvertWideToMulti(L"“Œ•û’e–‹•—", CP_UTF8);
-							bValidDanmakufuHeader = scanner.CompareMemory(start, end, multiThDmf.data());
-						}
+						//Try ANSI, then UTF-8
+						bValidDanmakufuHeader = scanner.CompareMemory(start, end, multiThDmfANSI.data())
+							|| scanner.CompareMemory(start, end, multiThDmfUTF8.data());
 					}
 				}
 
@@ -80,51 +81,48 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 					std::wstring strType = tok.GetElement();
 					if (scanner.Next().GetType() != Token::Type::TK_CLOSEB) throw gstd::wexception();
 
-					if (strType == L"Single") type = TYPE_SINGLE;
-					else if (strType == L"Plural") type = TYPE_PLURAL;
-					else if (strType == L"Stage") type = TYPE_STAGE;
-					else if (strType == L"Package") type = TYPE_PACKAGE;
-					else if (strType == L"Player") type = TYPE_PLAYER;
+					static const std::unordered_map<std::wstring, int> mapTypes = {
+						{ L"Single", TYPE_SINGLE },
+						{ L"Plural", TYPE_PLURAL },
+						{ L"Stage", TYPE_STAGE },
+						{ L"Package", TYPE_PACKAGE },
+						{ L"Player", TYPE_PLAYER },
+					};
+					auto itrFind = mapTypes.find(strType);
+					if (itrFind != mapTypes.end()) type = itrFind->second;
 					else if (!bNeedHeader) throw gstd::wexception();
 				}
-				else if (element == L"ID") {
-					idScript = _GetString(scanner);
-				}
-				else if (element == L"Title") {
-					title = _GetString(scanner);
-				}
-				else if (element == L"Text") {
-					text = _GetString(scanner);
-				}
-				else if (element == L"Image") {
-					pathImage = _GetString(scanner);
-				}
-				else if (element == L"System") {
-					pathSystem = _GetString(scanner);
-				}
-				else if (element == L"Background") {
-					pathBackground = _GetString(scanner);
-				}
-				else if (element == L"BGM") {
-					pathBGM = _GetString(scanner);
-				}
-				else if (element == L"Player") {
-					listPlayer = _GetStringList(scanner);
-				}
-				else if (element == L"ReplayName") {
-					replayName = _GetString(scanner);
+				else {
+#define LAMBDA_GETSTR(m) [](Info* i, Scanner& sc) { i->m = _GetString(sc); }
+					//Do NOT use [&] lambdas
+					static const std::unordered_map<std::wstring, std::function<void(Info*, Scanner&)>> mapFunc = {
+						{ L"ID", LAMBDA_GETSTR(idScript) },
+						{ L"Title", LAMBDA_GETSTR(title) },
+						{ L"Text", LAMBDA_GETSTR(text) },
+						{ L"Image", LAMBDA_GETSTR(pathImage) },
+						{ L"System", LAMBDA_GETSTR(pathSystem) },
+						{ L"Background", LAMBDA_GETSTR(pathBackground) },
+						{ L"BGM", LAMBDA_GETSTR(pathBGM) },
+						{ L"Player", [](Info* i, Scanner& sc) { i->listPlayer = _GetStringList(sc); } },
+						{ L"ReplayName", LAMBDA_GETSTR(replayName) },
+					};
+#undef LAMBDA_GETSTR
+					auto itrFind = mapFunc.find(element);
+					if (itrFind != mapFunc.end())
+						itrFind->second(&info, scanner);
 				}
 			}
 		}
 
-		if (bScript && title.size() > 0) {
-			if (idScript.size() == 0)
-				idScript = PathProperty::GetFileNameWithoutExtension(pathScript);
+		if (bScript && info.title.size() > 0) {
+			if (info.idScript.size() == 0)
+				info.idScript = PathProperty::GetFileNameWithoutExtension(pathScript);
 
-			if (replayName.size() == 0)
-				replayName = idScript.substr(0, std::min(8U, replayName.size()));
+			if (info.replayName.size() == 0)
+				info.replayName = info.idScript.substr(0, std::min(8U, info.replayName.size()));
 
-			if (pathImage.size() > 2) {
+			if (info.pathImage.size() > 2) {
+				std::wstring& pathImage = info.pathImage;
 				if (pathImage[0] == L'.' &&
 					(pathImage[1] == L'/' || pathImage[1] == L'\\')) {
 					pathImage = pathImage.substr(2);
@@ -137,15 +135,15 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 			res->SetArchivePath(pathArchive);
 			res->SetType(type);
 
-			res->SetID(idScript);
-			res->SetTitle(title);
-			res->SetText(text);
-			res->SetImagePath(pathImage);
-			res->SetSystemPath(pathSystem);
-			res->SetBackgroundPath(pathBackground);
-			res->SetBgmPath(pathBGM);
-			res->SetPlayerList(listPlayer);
-			res->SetReplayName(replayName);
+			res->SetID(info.idScript);
+			res->SetTitle(info.title);
+			res->SetText(info.text);
+			res->SetImagePath(info.pathImage);
+			res->SetSystemPath(info.pathSystem);
+			res->SetBackgroundPath(info.pathBackground);
+			res->SetBgmPath(info.pathBGM);
+			res->SetPlayerList(info.listPlayer);
+			res->SetReplayName(info.replayName);
 		}
 	}
 	catch (...) {
@@ -155,13 +153,21 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 	return res;
 }
 bool ScriptInformation::IsExcludeExtention(const std::wstring& ext) {
-	bool res = false;
-	if (ext == L".dat" || ext == L".mid" || ext == L".wav" || ext == L".mp3" || ext == L".ogg" ||
-		ext == L".bmp" || ext == L".png" || ext == L".jpg" || ext == L".jpeg" ||
-		ext == L".mqo" || ext == L".elem") {
-		res = true;
-	}
-	return res;
+	static std::set<std::wstring> setExt = {
+		L".dat",
+
+		L".ttf", L".otf",
+
+		L".mid", L".wav", L".mp3", L".ogg",
+
+		L".dxt",
+		L".bmp", L".jpg", L".jpeg",
+		L".tga", L".png", L".ppm",
+		L".dib", L".hdr", L".pfm",
+
+		L".mqo", L".elem",
+	};
+	return setExt.find(ext) != setExt.end();
 }
 std::wstring ScriptInformation::_GetString(Scanner& scanner) {
 	std::wstring res = DEFAULT;
