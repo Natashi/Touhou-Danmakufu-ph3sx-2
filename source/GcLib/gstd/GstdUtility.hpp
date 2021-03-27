@@ -693,6 +693,8 @@ namespace gstd {
 		std::wstring GetString(int start, int end);
 
 		bool CompareMemory(int start, int end, const char* data);
+
+		std::vector<std::wstring> GetArgumentList(bool bRequireEqual = true);
 	};
 #endif
 

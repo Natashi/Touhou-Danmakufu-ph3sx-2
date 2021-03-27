@@ -430,7 +430,7 @@ std::string StringUtility::ReplaceAll(const std::string& source, char pattern, c
 				c = placement;
 		}
 	}
-	else {
+	else {		//Deleting all nulls from the string
 		for (const char& c : source) {
 			if (c != pattern)
 				result.push_back(c);
@@ -551,7 +551,7 @@ std::wstring StringUtility::ReplaceAll(const std::wstring& source, wchar_t patte
 				c = placement;
 		}
 	}
-	else {
+	else {		//Deleting all nulls from the string
 		for (const wchar_t& c : source) {
 			if (c != pattern)
 				result.push_back(c);
@@ -967,6 +967,29 @@ bool Scanner::CompareMemory(int start, int end, const char* data) {
 	bool res = memcmp(&buffer_[start], data, bufSize) == 0;
 	return res;
 }
+std::vector<std::wstring> Scanner::GetArgumentList(bool bRequireEqual) {
+	std::vector<std::wstring> res;
+
+	if (bRequireEqual)
+		CheckType(Next(), Token::Type::TK_EQUAL);
+
+	Token& tok = Next();
+	if (tok.GetType() == Token::Type::TK_OPENP) {
+		while (true) {
+			tok = Next();
+			Token::Type type = tok.GetType();
+			if (type == Token::Type::TK_CLOSEP) break;
+			else if (type != Token::Type::TK_COMMA) {
+				std::wstring str = tok.GetElement();
+				res.push_back(str);
+			}
+		}
+	}
+	else {
+		res.push_back(tok.GetElement());
+	}
+	return res;
+}
 
 //Token
 const char* Token::Type_Str[] = {
@@ -1274,18 +1297,17 @@ void Font::Clear() {
 	}
 }
 void Font::CreateFont(const wchar_t* type, int size, bool bBold, bool bItalic, bool bLine) {
-	LOGFONT fontInfo;
+	ZeroMemory(&info_, sizeof(info_));
 
-	lstrcpy(fontInfo.lfFaceName, type);
-	fontInfo.lfWeight = bBold ? FW_BOLD : FW_NORMAL;
-	fontInfo.lfEscapement = 0;
-	fontInfo.lfWidth = 0;
-	fontInfo.lfHeight = size;
-	fontInfo.lfItalic = bItalic;
-	fontInfo.lfUnderline = bLine;
-	fontInfo.lfCharSet = DetectCharset(type);
+	info_.lfHeight = size;
+	info_.lfWeight = bBold ? FW_BOLD : FW_NORMAL;
+	info_.lfItalic = bItalic;
+	info_.lfUnderline = bLine;
+	//info_.lfStrikeOut = 1;
+	info_.lfCharSet = DetectCharset(type);
+	lstrcpy(info_.lfFaceName, type);
 
-	this->CreateFontIndirect(fontInfo);
+	this->CreateFontIndirect(info_);
 }
 void Font::CreateFontIndirect(LOGFONT& fontInfo) {
 	if (hFont_) this->Clear();
