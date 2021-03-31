@@ -195,7 +195,7 @@ void ScriptSelectScene::Render() {
 	}
 
 	std::wstring strDescription = StringUtility::Format(
-		L"ファイルを選択してください (%s：%d/%d)", strType.c_str(), pageCurrent_, GetPageCount());
+		L"Script select (%s, Page:%d/%d)", strType.c_str(), pageCurrent_, GetPageCount());
 
 	DxText dxTextDescription;
 	dxTextDescription.SetFontColorTop(D3DCOLOR_ARGB(255, 128, 128, 255));
@@ -904,7 +904,7 @@ void PlayerSelectScene::Render() {
 	}
 
 	std::wstring strDescription = StringUtility::Format(
-		L"攻撃方法を選択してください (%d/%d)", pageCurrent_, GetPageCount());
+		L"Player select (Page:%d/%d)", pageCurrent_, GetPageCount());
 
 	DxText dxTextDescription;
 	dxTextDescription.SetFontColorTop(D3DCOLOR_ARGB(255, 128, 128, 255));
