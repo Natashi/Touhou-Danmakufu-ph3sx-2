@@ -97,7 +97,6 @@ static const std::vector<function> commonFunction = {
 	{ "ator", ScriptClientBase::Func_AtoR, 1 },
 	{ "TrimString", ScriptClientBase::Func_TrimString, 1 },
 	{ "SplitString", ScriptClientBase::Func_SplitString, 2 },
-	{ "CompareString", ScriptClientBase::Func_CompareString, 2 },
 
 	{ "RegexMatch", ScriptClientBase::Func_RegexMatch, 2 },
 	{ "RegexMatchRepeated", ScriptClientBase::Func_RegexMatchRepeated, 2 },
@@ -1278,26 +1277,6 @@ value ScriptClientBase::Func_SplitString(script_machine* machine, int argc, cons
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	std::vector<std::wstring> list = StringUtility::Split(argv[0].as_string(), argv[1].as_string());
 	return script->CreateStringArrayValue(list);
-}
-value ScriptClientBase::Func_CompareString(script_machine* machine, int argc, const value* argv) {
-	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-
-	std::wstring str1 = argv[0].as_string();
-	std::wstring str2 = argv[1].as_string();
-	int res = 0;
-
-	if (str1.size() != str2.size())
-		res = str1.size() < str2.size() ? -1 : 1;
-	else {
-		for (size_t i = 0; i < str1.size(); ++i) {
-			if (str1[i] != str2[i]) {
-				res = str1[i] < str2[i] ? -1 : 1;
-				break;
-			}
-		}
-	}
-
-	return script->CreateIntValue(res);
 }
 
 value ScriptClientBase::Func_RegexMatch(script_machine* machine, int argc, const value* argv) {
