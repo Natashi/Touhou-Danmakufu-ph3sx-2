@@ -31,12 +31,12 @@ DxCharGlyph::DxCharGlyph() {
 }
 DxCharGlyph::~DxCharGlyph() {}
 
-bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
+bool DxCharGlyph::Create(UINT code, const Font& winFont, const DxFont* dxFont) {
 	code_ = code;
 
-	short colorTop[4];
-	short colorBottom[4];
-	short colorBorder[4];
+	static short colorTop[4];
+	static short colorBottom[4];
+	static short colorBorder[4];
 	ColorAccess::ToByteArray(dxFont->GetTopColor(), colorTop);
 	ColorAccess::ToByteArray(dxFont->GetBottomColor(), colorBottom);
 	ColorAccess::ToByteArray(dxFont->GetBorderColor(), colorBorder);
@@ -44,44 +44,48 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 	TextBorderType typeBorder = dxFont->GetBorderType();
 	LONG widthBorder = typeBorder != TextBorderType::None ? dxFont->GetBorderWidth() : 0L;
 
+	//--------------------------------------------------------------
+
 	HDC hDC = ::GetDC(nullptr);
-	HFONT oldFont = (HFONT)SelectObject(hDC, winFont.GetHandle());
+	HFONT oldFont = (HFONT)::SelectObject(hDC, winFont.GetHandle());
+
+	//--------------------------------------------------------------
 
 	const TEXTMETRIC& tm = winFont.GetMetrics();
 
-	UINT uFormat = GGO_GRAY2_BITMAP;	//typeBorder == DxFont::BORDER_FULL ? GGO_BITMAP : GGO_GRAY2_BITMAP;
-	if (dxFont->GetLogFont().lfHeight <= 12)
-		uFormat = GGO_BITMAP;
+	const UINT uFormat = GGO_GRAY8_BITMAP;
+	const UINT BMP_LEVEL = 64 + 1;
+	const UINT BMP_LEVEL_1 = BMP_LEVEL - 1;
 
-	const MAT2 mat = { { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 1 } };
+	static constexpr const MAT2 mat = { { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 1 } };
 	DWORD size = ::GetGlyphOutline(hDC, code, uFormat, &glpMet_, 0, nullptr, &mat);
 
-	UINT iBmp_w = uFormat != GGO_BITMAP ? glpMet_.gmBlackBoxX + (4 - (glpMet_.gmBlackBoxX % 4)) % 4 : glpMet_.gmBlackBoxX;
+	UINT iBmp_w = Math::CeilBase(glpMet_.gmBlackBoxX, 4);
 	UINT iBmp_h = glpMet_.gmBlackBoxY;
-	LONG level = 5;		//GGO_GRAY4_BITMAP;
 
 	size_.x = glpMet_.gmCellIncX + widthBorder * 2;
 	size_.y = tm.tmHeight + widthBorder * 2;
 
-	float iBmp_h_inv = 1 / (float)iBmp_h;
+	FLOAT iBmp_h_inv = 1.0f / iBmp_h;
 	LONG glyphOriginX = glpMet_.gmptGlyphOrigin.x;
 	LONG glyphOriginY = tm.tmAscent - glpMet_.gmptGlyphOrigin.y;
 	sizeMax_.x = iBmp_w + widthBorder * 2 + glyphOriginX + (tm.tmItalic ? tm.tmOverhang : 0);
 	sizeMax_.y = iBmp_h + widthBorder * 2 + glyphOriginY;
 
+	//--------------------------------------------------------------
+
 	UINT widthTexture = 1;
 	UINT heightTexture = 1;
 	while (widthTexture < sizeMax_.x) {
 		widthTexture = widthTexture << 1;
-		if (widthTexture >= 0x4000u) return false;
+		if (widthTexture >= 0x2000u) return false;
 	}
 	while (heightTexture < sizeMax_.y) {
 		heightTexture = heightTexture << 1;
-		if (heightTexture >= 0x4000u) return false;
+		if (heightTexture >= 0x2000u) return false;
 	}
 
-	//if (sizeMax_.x > widthTexture) sizeMax_.x = widthTexture;
-	//if (sizeMax_.y > heightTexture) sizeMax_.y = heightTexture;
+	//--------------------------------------------------------------
 
 	IDirect3DTexture9* pTexture = nullptr;
 	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
@@ -89,152 +93,146 @@ bool DxCharGlyph::Create(UINT code, Font& winFont, DxFont* dxFont) {
 		D3DPOOL_DEFAULT, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
 	if (FAILED(hr)) return false;
 
-	//RECT lockingRect = { 0, 0, sizeMax_.x, sizeMax_.y };
 	D3DLOCKED_RECT lock;
 	if (FAILED(pTexture->LockRect(0, &lock, nullptr, D3DLOCK_DISCARD))) {
 		ptr_release(pTexture);
 		return false;
 	}
 
-	BYTE* ptr = new BYTE[size];
-	::GetGlyphOutline(hDC, code, uFormat, &glpMet_, size, ptr, &mat);
+	{
+		BYTE* ptr = new BYTE[size];
+		::GetGlyphOutline(hDC, code, uFormat, &glpMet_, size, ptr, &mat);
 
-	//Restore previous font handle and discard the device context
-	::SelectObject(hDC, oldFont);
-	::ReleaseDC(nullptr, hDC);
+		//Restore previous font handle and discard the device context
+		::SelectObject(hDC, oldFont);
+		::ReleaseDC(nullptr, hDC);
 
-	FillMemory(lock.pBits, lock.Pitch * sizeMax_.y, 0);
+		/*
+		{
+			auto _GenUnderline = [&](FLOAT ty, FLOAT sz) {
+				FLOAT flStart = ty - sz;
+				FLOAT flEnd = ty + sz;
+				LONG llStart = std::floorf(flStart);
+				LONG llEnd = std::ceilf(flEnd);
 
-	if (size > 0) {
-		auto _GenRow = [&](LONG iy) {
-			LONG yBmp = iy - glyphOriginY - widthBorder;
-
-			float iRateY = yBmp * iBmp_h_inv;
-			short colorR = Math::Lerp::Linear(colorTop[1], colorBottom[1], iRateY);
-			short colorG = Math::Lerp::Linear(colorTop[2], colorBottom[2], iRateY);
-			short colorB = Math::Lerp::Linear(colorTop[3], colorBottom[3], iRateY);
-
-			for (LONG ix = 0; ix < sizeMax_.x; ++ix) {
-				LONG xBmp = ix - glyphOriginX - widthBorder;
-
-				short alpha = 255;
-				if (uFormat != GGO_BITMAP) {
-					LONG posBmp = xBmp + iBmp_w * yBmp;
-					alpha = xBmp >= 0 && xBmp < iBmp_w&& yBmp >= 0 && yBmp < iBmp_h ?
-						(255 * ptr[posBmp]) / (level - 1) : 0;
-				}
-				else {
-					if (xBmp >= 0 && xBmp < iBmp_w && yBmp >= 0 && yBmp < iBmp_h) {
-						UINT lineByte = (1 + (iBmp_w / 32)) * 4;
-						LONG posBmp = xBmp / 8 + lineByte * yBmp;
-						alpha = ((ptr[posBmp] >> (7 - xBmp % 8)) & 0b1) ? 255 : 0;
+				for (LONG iy = std::max(llStart, 0L); iy < std::min(llEnd, sizeMax_.y); ++iy) {
+					LONG yBmp = iy - glyphOriginY - widthBorder;
+					for (LONG ix = 0; ix < sizeMax_.x; ++ix) {
+						LONG xBmp = ix - glyphOriginX - widthBorder;
+						if ((xBmp >= 0 && xBmp < iBmp_w) && (yBmp >= 0 && yBmp < iBmp_h))
+							ptr[std::min(iBmp_w * yBmp + xBmp, size - 1)] = BMP_LEVEL;
 					}
-					else alpha = 0;
 				}
+			};
 
-				D3DCOLOR color = 0x00000000;
+			FLOAT lineSize = std::max(tm.tmHeight * 0.02f, 0.5f);
+			
+			if (tm.tmUnderlined)
+				_GenUnderline(tm.tmAscent, lineSize);
+			if (tm.tmStruckOut)
+				_GenUnderline(tm.tmInternalLeading + (tm.tmHeight - tm.tmAscent) + tm.tmAscent / 2L, lineSize);
+		}
+		*/
 
-				if (typeBorder != TextBorderType::None && alpha != 255) {
-					//Generate borders
-					if (alpha == 0) {
-						size_t count = 0;
-						LONG antiDist = 0;
-						LONG bx = typeBorder == TextBorderType::Full ? xBmp + widthBorder + antiDist : xBmp + 1;
-						LONG by = typeBorder == TextBorderType::Full ? yBmp + widthBorder + antiDist : yBmp + 1;
-						LONG minAlphaEnableDist = 255 * 255;
-						for (LONG ax = xBmp - widthBorder - antiDist; ax <= bx; ++ax) {
-							for (LONG ay = yBmp - widthBorder - antiDist; ay <= by; ++ay) {
-								LONG dist = abs(ax - xBmp) + abs(ay - yBmp);
-								if (dist > widthBorder + antiDist || dist == 0) continue;
+		FillMemory(lock.pBits, lock.Pitch * sizeMax_.y, 0);
 
-								LONG tAlpha = 255;
-								if (uFormat != GGO_BITMAP) {
-									tAlpha = ax >= 0 && ax < iBmp_w&& ay >= 0 && ay < iBmp_h ?
-										(255 * ptr[ax + iBmp_w * ay]) / (level - 1) : 0;
+		if (size > 0) {
+			auto _GenRow = [&](LONG iy) {
+				LONG yBmp = iy - glyphOriginY - widthBorder;
+
+				float yColorLerp = yBmp * iBmp_h_inv;
+				short colorR = Math::Lerp::Linear(colorTop[1], colorBottom[1], yColorLerp);
+				short colorG = Math::Lerp::Linear(colorTop[2], colorBottom[2], yColorLerp);
+				short colorB = Math::Lerp::Linear(colorTop[3], colorBottom[3], yColorLerp);
+
+				for (LONG ix = 0; ix < sizeMax_.x; ++ix) {
+					LONG xBmp = ix - glyphOriginX - widthBorder;
+					bool bInsideBmp = (xBmp >= 0 && xBmp < iBmp_w) && (yBmp >= 0 && yBmp < iBmp_h);
+
+					D3DCOLOR color = 0x00000000;
+
+					short alpha = bInsideBmp ? (255 * ptr[iBmp_w * yBmp + xBmp] / BMP_LEVEL_1) : 0;
+
+					if (typeBorder != TextBorderType::None && alpha != 255) {
+						if (alpha == 0) {		//Generate external borders
+							size_t count = 0;
+							LONG minAlphaEnableDist = 255 * 255;
+
+							const LONG D_MARGIN = widthBorder + 0;
+							LONG bx = typeBorder == TextBorderType::Full ? xBmp + D_MARGIN : xBmp + 1;
+							LONG by = typeBorder == TextBorderType::Full ? yBmp + D_MARGIN : yBmp + 1;
+
+							for (LONG ax = xBmp - D_MARGIN; ax <= bx; ++ax) {
+								for (LONG ay = yBmp - D_MARGIN; ay <= by; ++ay) {
+									LONG dist = abs(ax - xBmp) + abs(ay - yBmp);
+									if (dist > D_MARGIN || dist == 0) continue;
+
+									bool _bInsideBmp = (ax >= 0 && ax < iBmp_w) && (ay >= 0 && ay < iBmp_h);
+
+									LONG tAlpha = _bInsideBmp ? (255 * ptr[iBmp_w * ay + ax]) / BMP_LEVEL_1 : 0;
+									if (tAlpha > 0 && dist < minAlphaEnableDist)
+										minAlphaEnableDist = dist;
+
+									LONG tCount = tAlpha / dist * 2L;
+									if (typeBorder == TextBorderType::Shadow && (ax >= xBmp || ay >= yBmp))
+										tCount /= 2L;
+									count += tCount;
 								}
-								else {
-									if (ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h) {
-										UINT lineByte = (1 + (iBmp_w / 32)) * 4;
-										LONG tPos = ax / 8 + lineByte * ay;
-										tAlpha = ((ptr[tPos] >> (7 - ax % 8)) & 0b1) ? 255 : 0;
-									}
-									else tAlpha = 0;
+							}
+
+							short destAlpha = 0;
+							if (minAlphaEnableDist < widthBorder)
+								destAlpha = 255;
+							else if (minAlphaEnableDist == widthBorder)
+								destAlpha = count;
+							else destAlpha = 0;
+
+							//color = ColorAccess::SetColorA(color, ColorAccess::GetColorA(colorBorder)*count/255);
+							byte c_a = ColorAccess::ClampColorRet(colorBorder[0] * destAlpha / 255);
+							color = D3DCOLOR_ARGB(c_a, colorBorder[1], colorBorder[2], colorBorder[3]);
+						}
+						else {				//Generate internal borders + smooth outlines
+							size_t count = 0;
+
+							const LONG C_DIST = 1;
+							LONG bx = typeBorder == TextBorderType::Full ? xBmp + C_DIST : xBmp + 1;
+							LONG by = typeBorder == TextBorderType::Full ? yBmp + C_DIST : yBmp + 1;
+
+							for (LONG ax = xBmp - C_DIST; ax <= bx; ++ax) {
+								for (LONG ay = yBmp - C_DIST; ay <= by; ++ay) {
+									bool _bInsideBmp = (ax >= 0 && ax < iBmp_w) && (ay >= 0 && ay < iBmp_h);
+									if (!_bInsideBmp) continue;
+									if (ptr[iBmp_w * ay + ax]) ++count;
 								}
+							}
 
-								if (tAlpha > 0)
-									minAlphaEnableDist = std::min(minAlphaEnableDist, dist);
-
-								LONG tCount = tAlpha / dist * 2L;
-								if (typeBorder == TextBorderType::Shadow && (ax >= xBmp || ay >= yBmp))
-									tCount /= 2L;
-								count += tCount;
+							{
+								LONG oAlpha = std::min(count >= 2 ? alpha : alpha + 64, 255);
+								LONG bAlpha = 255 - oAlpha;
+								short c_r = colorR * oAlpha / 255 + colorBorder[1] * bAlpha / 255;
+								short c_g = colorG * oAlpha / 255 + colorBorder[2] * bAlpha / 255;
+								short c_b = colorB * oAlpha / 255 + colorBorder[3] * bAlpha / 255;
+								__m128i c = Vectorize::SetI(0, c_r, c_g, c_b);
+								color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
+								color = (color & 0x00ffffff) | 0xff000000;
 							}
 						}
-
-						int destAlpha = 0;
-						if (minAlphaEnableDist < widthBorder)
-							destAlpha = 255;
-						else if (minAlphaEnableDist == widthBorder)
-							destAlpha = count;
-						else destAlpha = 0;
-						//color = ColorAccess::SetColorA(color, ColorAccess::GetColorA(colorBorder)*count/255);
-						byte c_a = ColorAccess::ClampColorRet(colorBorder[0] * destAlpha / 255);
-						color = D3DCOLOR_ARGB(c_a, colorBorder[1], colorBorder[2], colorBorder[3]);
 					}
-					else {
-						short oAlpha = alpha + 64;
-						if (alpha > 255) alpha = 255;
-
-						size_t count = 0;
-						LONG cDist = 1;
-						LONG bx = typeBorder == TextBorderType::Full ? xBmp + cDist : xBmp + 1;
-						LONG by = typeBorder == TextBorderType::Full ? yBmp + cDist : yBmp + 1;
-						for (LONG ax = xBmp - cDist; ax <= bx; ++ax) {
-							for (LONG ay = yBmp - cDist; ay <= by; ++ay) {
-								LONG tAlpha = 255;
-								if (uFormat != GGO_BITMAP) {
-									tAlpha = tAlpha = ax >= 0 && ax < iBmp_w&& ay >= 0 && ay < iBmp_h ?
-										(255 * ptr[ax + iBmp_w * ay]) / (level - 1) : 0;
-								}
-								else {
-									if (ax >= 0 && ax < iBmp_w && ay >= 0 && ay < iBmp_h) {
-										UINT lineByte = (1 + (iBmp_w / 32)) * 4;
-										LONG tPos = ax / 8 + lineByte * ay;
-										tAlpha = ((ptr[tPos] >> (7 - ax % 8)) & 0b1) ? 255 : 0;
-									}
-									else tAlpha = 0;
-								}
-
-								if (tAlpha > 0) ++count;
-							}
-						}
-						if (count >= 2) oAlpha = alpha;
-
-						{
-							LONG bAlpha = 255 - oAlpha;
-							short c_r = colorR * oAlpha / 255 + colorBorder[1] * bAlpha / 255;
-							short c_g = colorG * oAlpha / 255 + colorBorder[2] * bAlpha / 255;
-							short c_b = colorB * oAlpha / 255 + colorBorder[3] * bAlpha / 255;
-							__m128i c = Vectorize::Set(0, c_r, c_g, c_b);
-							color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
-							color = (color & 0x00ffffff) | 0xff000000;
-						}
+					else {		//Font outline
+						if (typeBorder != TextBorderType::None && alpha > 0) alpha = 255;
+						color = (D3DCOLOR_XRGB(colorR, colorG, colorB) & 0x00ffffff) | (alpha << 24);
 					}
-				}
-				else {
-					if (typeBorder != TextBorderType::None && alpha > 0) alpha = 255;
-					color = (D3DCOLOR_XRGB(colorR, colorG, colorB) & 0x00ffffff) | (alpha << 24);
-				}
 
-				memcpy((BYTE*)lock.pBits + lock.Pitch * iy + 4 * ix, &color, sizeof(D3DCOLOR));
-			}
-		};
+					memcpy((BYTE*)lock.pBits + lock.Pitch * iy + 4 * ix, &color, sizeof(D3DCOLOR));
+				}
+			};
 
-		ParallelFor(sizeMax_.y, _GenRow);
+			ParallelFor(sizeMax_.y, _GenRow);
+		}
+
+		pTexture->UnlockRect(0);
+		delete[] ptr;
 	}
-	pTexture->UnlockRect(0);
-
-	delete[] ptr;
 
 	texture_ = std::make_shared<Texture>();
 	texture_->SetTexture(pTexture);
@@ -908,7 +906,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	shared_ptr<Font> fontTemp;
 
 	HDC hDC = ::GetDC(nullptr);
-	HFONT oldFont = (HFONT)SelectObject(hDC, winFont_.GetHandle());
+	HFONT oldFont = (HFONT)::SelectObject(hDC, winFont_.GetHandle());
 
 	bool bEnd = false;
 	LONG totalWidth = 0;
@@ -978,6 +976,12 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					}
 
 					textLine = std::make_shared<DxTextLine>();
+					{
+						widthBorder = dxFont.GetBorderType() != TextBorderType::None ? dxFont.GetBorderWidth() : 0L;
+						fontTemp = nullptr;
+						::SelectObject(hDC, oldFont);
+						curFontData = orgFontData;
+					}
 				}
 				else if (element == TAG_RUBY) {
 					struct Data {
@@ -1154,17 +1158,15 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 					if (data.bClear) {
 						widthBorder = dxFont.GetBorderType() != TextBorderType::None ? dxFont.GetBorderWidth() : 0L;
-
 						fontTemp = nullptr;
-						SelectObject(hDC, oldFont);
-
+						::SelectObject(hDC, oldFont);
 						curFontData = orgFontData;
 					}
 					else {
 						widthBorder = font.GetBorderType() != TextBorderType::None ? font.GetBorderWidth() : 0L;
 						fontTemp = std::make_shared<Font>();
 						fontTemp->CreateFontIndirect(logFont);
-						SelectObject(hDC, fontTemp->GetHandle());
+						::SelectObject(hDC, fontTemp->GetHandle());
 					}
 
 					font.SetBottomColor(curFontData.colorBottom);
@@ -1206,8 +1208,8 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 	res->totalWidth_ = totalWidth + widthBorder;
 	res->totalHeight_ = totalHeight + widthBorder;
-	SelectObject(hDC, oldFont);
-	ReleaseDC(nullptr, hDC);
+	::SelectObject(hDC, oldFont);
+	::ReleaseDC(nullptr, hDC);
 
 	return shared_ptr<DxTextInfo>(res);
 }
@@ -1226,8 +1228,10 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 	shared_ptr<DxTextLine> textLine)
 {
 	SetFont(dxFont.GetLogFont());
+
 	DxCharCacheKey keyFont;
 	keyFont.font_ = dxFont;
+
 	LONG textHeight = textLine->GetHeight();
 
 	LONG xRender = pos.x;
@@ -1274,28 +1278,19 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 			else break;
 		}
 
-		//文字コード
-		UINT code = textLine->code_[iCode];
+		LONG yGap = 0L;
+		yRender = pos.y + yGap;
 
-		//キャッシュに存在するか確認
-		keyFont.code_ = code;
-		keyFont.font_ = dxFont;
-
+		keyFont.code_ = textLine->code_[iCode];
 		shared_ptr<DxCharGlyph> dxChar = cache_.GetChar(keyFont);
 		if (dxChar == nullptr) {
-			//キャッシュにない場合、作成して追加
 			dxChar = std::make_shared<DxCharGlyph>();
-			dxChar->Create(code, winFont_, &dxFont);
+			dxChar->Create(keyFont.code_, winFont_, &dxFont);
 			cache_.AddChar(keyFont, dxChar);
 		}
 
-		//描画
 		shared_ptr<Sprite2D> spriteText(new Sprite2D());
-
-		LONG yGap = 0L;
-		yRender = pos.y + yGap;
-		shared_ptr<Texture> texture = dxChar->GetTexture();
-		spriteText->SetTexture(texture);
+		spriteText->SetTexture(dxChar->GetTexture());
 
 		//		int objWidth = texture->GetWidth();//dxChar->GetWidth();
 		//		int objHeight = texture->GetHeight();//dxChar->GetHeight();

@@ -34,20 +34,21 @@ namespace directx {
 
 		void SetLogFont(LOGFONT& font) { info_ = font; }
 		LOGFONT& GetLogFont() { return info_; }
+		const LOGFONT& GetLogFont() const { return info_; }
 
 		void SetTopColor(D3DCOLOR color) { colorTop_ = color; }
-		D3DCOLOR GetTopColor() { return colorTop_; }
+		const D3DCOLOR GetTopColor() const { return colorTop_; }
 		void SetBottomColor(D3DCOLOR color) { colorBottom_ = color; }
-		D3DCOLOR GetBottomColor() { return colorBottom_; }
+		D3DCOLOR GetBottomColor() const { return colorBottom_; }
 		
 		void SetBorderType(TextBorderType type) { typeBorder_ = type; }
-		TextBorderType GetBorderType() { return typeBorder_; }
+		TextBorderType GetBorderType() const { return typeBorder_; }
 		
 		void SetBorderWidth(LONG width) { widthBorder_ = width; }
-		LONG GetBorderWidth() { return widthBorder_; }
+		LONG GetBorderWidth() const { return widthBorder_; }
 		
 		void SetBorderColor(D3DCOLOR color) { colorBorder_ = color; }
-		D3DCOLOR GetBorderColor() { return colorBorder_; }
+		D3DCOLOR GetBorderColor() const { return colorBorder_; }
 	};
 
 	//*******************************************************************
@@ -65,7 +66,7 @@ namespace directx {
 		DxCharGlyph();
 		virtual ~DxCharGlyph();
 
-		bool Create(UINT code, gstd::Font& winFont, DxFont* dxFont);
+		bool Create(UINT code, const gstd::Font& winFont, const DxFont* dxFont);
 		shared_ptr<Texture> GetTexture() { return texture_; }
 		POINT& GetSize() { return size_; }
 		POINT& GetMaxSize() { return sizeMax_; }
