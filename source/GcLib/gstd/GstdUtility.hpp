@@ -258,6 +258,13 @@ namespace gstd {
 			};
 		}
 
+		static inline size_t FloorBase(size_t val, size_t base) {
+			return (val % base != 0) ? ((val / base) * base) : val;
+		}
+		static inline size_t CeilBase(size_t val, size_t base) {
+			return (val % base != 0) ? ((val / base) * base + base) : val;
+		}
+
 		static inline const double Round(double val) { return std::round(val); }
 		static inline const int Trunc(double val) { return (int)(val + 0.01); }
 
@@ -796,9 +803,9 @@ namespace gstd {
 		void CreateFontIndirect(LOGFONT& fontInfo);
 		void Clear();
 
-		HFONT GetHandle() { return hFont_; }
-		const LOGFONT& GetInfo() { return info_; }
-		const TEXTMETRICW& GetMetrics() { return metrics_; }
+		HFONT GetHandle() const { return hFont_; }
+		const LOGFONT& GetInfo() const { return info_; }
+		const TEXTMETRICW& GetMetrics() const { return metrics_; }
 
 		static BYTE DetectCharset(const wchar_t* type);
 	};
