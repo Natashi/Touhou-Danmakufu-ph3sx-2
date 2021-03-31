@@ -206,7 +206,7 @@ namespace gstd {
 	}
 
 	bool BaseFunction::_index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index) {
-		if (arg0_type->get_kind() != type_data::tk_array) {
+		if (arg0_type == nullptr || arg0_type->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, arg0_type, "array index");
 			return false;
 		}
@@ -221,7 +221,7 @@ namespace gstd {
 	}
 
 	bool BaseFunction::_append_check(script_machine* machine, type_data* arg0_type, type_data* arg1_type) {
-		if (arg0_type->get_kind() != type_data::tk_array) {
+		if (arg0_type == nullptr || arg0_type->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, arg0_type, "array append");
 			return false;
 		}
@@ -238,7 +238,7 @@ namespace gstd {
 		return true;
 	}
 	bool BaseFunction::_append_check_no_convert(script_machine* machine, type_data* arg0_type, type_data* arg1_type) {
-		if (arg0_type->get_kind() != type_data::tk_array) {
+		if (arg0_type == nullptr || arg0_type->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, arg0_type, "array append");
 			return false;
 		}
@@ -592,13 +592,6 @@ namespace gstd {
 	}
 
 	value BaseFunction::slice(script_machine* machine, int argc, const value* argv) {
-		/*
-		bool bSetUnique = false;
-		if (argc == 4) {
-			bSetUnique = argv[3].as_boolean();
-		}
-		*/
-
 		if (argv[0].get_type()->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, argv[0].get_type(), "array slice");
 			return value();
@@ -608,8 +601,8 @@ namespace gstd {
 		int index_1 = argv[1].as_int();
 		int index_2 = argv[2].as_int();
 
-		if ((index_2 > index_1 && (index_1 < 0 || index_2 > length))
-			|| (index_2 < index_1 && (index_2 < 0 || index_1 > length)))
+		if ((index_2 > index_1 && (index_1 < 0))
+			|| (index_2 < index_1 && (index_2 < 0)))
 		{
 			std::string error = StringUtility::Format("Array index out of bounds. (slicing=(%d, %d), size=%u)\r\n",
 				index_1, index_2, length);
@@ -620,20 +613,26 @@ namespace gstd {
 		value result;
 		std::vector<value> resArr;
 
-		if (index_2 > index_1) {
-			resArr.resize(index_2 - index_1);
-			for (size_t i = index_1, j = 0; i < index_2; ++i, ++j) {
-				const value& v = argv[0].index_as_array(i);
-				//if (bSetUnique) v.unique();
-				resArr[j] = v;
+		if (length > 0) {
+			if (index_2 > index_1) {
+				index_1 = std::max<int>(index_1, 0);
+				index_2 = std::min<int>(index_2, length);
+
+				resArr.resize(index_2 - index_1);
+				for (size_t i = 0, j = index_1; i < resArr.size(); ++i, ++j) {
+					const value& v = argv[0].index_as_array(j);
+					resArr[i] = v;
+				}
 			}
-		}
-		else if (index_1 > index_2) {
-			resArr.resize(index_1 - index_2);
-			for (size_t i = 0, j = index_1 - 1; i < index_1 - index_2; ++i, --j) {
-				const value& v = argv[0].index_as_array(j);
-				//if (bSetUnique) v.unique();
-				resArr[i] = v;
+			else if (index_1 > index_2) {		//Reverse
+				index_1 = std::min<int>(index_1, length);
+				index_2 = std::max<int>(index_2, 0);
+
+				resArr.resize(index_1 - index_2);
+				for (size_t i = 0, j = index_1 - 1; i < resArr.size(); ++i, --j) {
+					const value& v = argv[0].index_as_array(j);
+					resArr[i] = v;
+				}
 			}
 		}
 
