@@ -175,14 +175,13 @@ namespace directx {
 	protected:
 		int line_;
 		std::vector<wchar_t> buffer_;
-		std::vector<wchar_t>::iterator pointer_;//今の位置
-		DxTextToken token_;//現在のトークン
-		boolean bTagScan_;
+		std::vector<wchar_t>::iterator pointer_;
+		DxTextToken token_;
+		bool bTagScan_;
 
-		wchar_t _NextChar();//ポインタを進めて次の文字を調べる
-		virtual void _SkipComment();//コメントをとばす
-		virtual void _SkipSpace();//空白をとばす
-		virtual void _RaiseError(const std::wstring& str);//例外を投げます
+		wchar_t _NextChar();
+		virtual void _SkipSpace();
+		virtual void _RaiseError(const std::wstring& str);
 		bool _IsTextStartSign();
 		bool _IsTextScan();
 	public:
@@ -191,7 +190,7 @@ namespace directx {
 		DxTextScanner(std::vector<wchar_t>& buf);
 		virtual ~DxTextScanner();
 
-		DxTextToken& GetToken();//現在のトークンを取得
+		DxTextToken& GetToken();
 		DxTextToken& Next();
 		bool HasNext();
 		void CheckType(DxTextToken& tok, int type);

@@ -373,46 +373,10 @@ wchar_t DxTextScanner::_NextChar() {
 		line_++;
 	return *pointer_;
 }
-void DxTextScanner::_SkipComment() {
-	while (true) {
-		std::vector<wchar_t>::iterator posStart = pointer_;
-		if (bTagScan_) _SkipSpace();
-
-		wchar_t ch = *pointer_;
-
-		if (ch == L'/') {//コメントアウト処理
-			std::vector<wchar_t>::iterator tPos = pointer_;
-			ch = _NextChar();
-			if (ch == L'/') {// "//"
-				while (true) {
-					ch = _NextChar();
-					if (ch == L'\r' || ch == L'\n') break;
-				}
-			}
-			else if (ch == L'*') {// "/*"-"*/"
-				while (true) {
-					ch = _NextChar();
-					if (ch == L'*') {
-						ch = _NextChar();
-						if (ch == L'/') break;
-					}
-				}
-				ch = _NextChar();
-			}
-			else {
-				pointer_ = tPos;
-				ch = L'/';
-			}
-		}
-
-		//スキップも空白飛ばしも無い場合、終了
-		if (posStart == pointer_) break;
-	}
-}
 void DxTextScanner::_SkipSpace() {
 	wchar_t ch = *pointer_;
 	while (true) {
-		if (ch != L' ' && ch != L'\t') break;
+		if (!std::iswspace(ch)) break;
 		ch = _NextChar();
 	}
 }
@@ -422,47 +386,23 @@ void DxTextScanner::_RaiseError(const std::wstring& str) {
 bool DxTextScanner::_IsTextStartSign() {
 	if (bTagScan_) return false;
 
-	bool res = false;
+	wchar_t prev = pointer_ == buffer_.begin() ? '\0' : pointer_[-1];
 	wchar_t ch = *pointer_;
 
-	if (false && ch == L'\\') {
-		std::vector<wchar_t>::iterator pos = pointer_;
-		ch = _NextChar();//次のタグまで進める
-		bool bLess = ch == CHAR_TAG_START;
-		if (!bLess) {
-			res = false;
-			SetCurrentPointer(pos);
-		}
-		else {
-			res = !bLess;
-		}
-	}
-	else {
-		bool bLess = ch == CHAR_TAG_START;
-		res = !bLess;
-	}
-
-	return res;
+	return prev == '\\' || ch != CHAR_TAG_START;
 }
 bool DxTextScanner::_IsTextScan() {
-	bool res = false;
+	wchar_t prev = *pointer_;
 	wchar_t ch = _NextChar();
 	if (!HasNext()) {
 		return false;
 	}
-	else if (ch == L'/') {
-		ch = *(pointer_ + 1);
-		if (ch == L'/' || ch == L'*') res = false;
-	}
-	else {
-		bool bGreater = ch == CHAR_TAG_END;
-		if (ch == CHAR_TAG_END) {
+	else if (prev != '\\') {
+		if (ch == CHAR_TAG_END)
 			_RaiseError(L"DxTextScanner: Unexpected tag end token (]) in text.");
-		}
-		bool bNotLess = ch != CHAR_TAG_START;
-		res = bNotLess;
+		return ch != CHAR_TAG_START;
 	}
-	return res;
+	return true;
 }
 DxTextToken& DxTextScanner::GetToken() {
 	return token_;
@@ -476,7 +416,7 @@ DxTextToken& DxTextScanner::Next() {
 		_RaiseError(log);
 	}
 
-	_SkipComment();//コメントをとばします
+	//_SkipComment();
 
 	wchar_t ch = *pointer_;
 	if (ch == L'\0') {
@@ -485,26 +425,25 @@ DxTextToken& DxTextScanner::Next() {
 	}
 
 	DxTextToken::Type type = DxTextToken::Type::TK_UNKNOWN;
-	std::vector<wchar_t>::iterator posStart = pointer_;//先頭を保存
+	std::vector<wchar_t>::iterator posStart = pointer_;
 
-	if (_IsTextStartSign()) {
+	if (_IsTextStartSign()) {	//Regular text
 		ch = *pointer_;
-
 		posStart = pointer_;
-		while (_IsTextScan()) {
 
-		}
+		while (_IsTextScan());
 
 		ch = *pointer_;
 
 		type = DxTextToken::Type::TK_TEXT;
 		std::wstring text = std::wstring(posStart, pointer_);
-		text = StringUtility::ReplaceAll(text, L'\\', L'\0');
+		//text = StringUtility::ParseStringWithEscape(text);
 		token_ = DxTextToken(type, text);
 	}
-	else {
+	else {						//Text tag contents
 		switch (ch) {
-		case L'\0': type = DxTextToken::Type::TK_EOF; break;//終端
+		case L'\0': type = DxTextToken::Type::TK_EOF; break;
+
 		case L',': _NextChar(); type = DxTextToken::Type::TK_COMMA;  break;
 		case L'=': _NextChar(); type = DxTextToken::Type::TK_EQUAL;  break;
 		case L'(': _NextChar(); type = DxTextToken::Type::TK_OPENP; break;
@@ -525,15 +464,13 @@ DxTextToken& DxTextScanner::Next() {
 
 		case L'\"':
 		{
-			ch = _NextChar();	//1つ進めて
-			
+			ch = _NextChar();
 			while (true) {
-				ch = _NextChar();
-				if (ch == L'\\') ch = _NextChar();
+				if (ch == L'\\') ch = _NextChar();	//Skip escaped characters
 				else if (ch == L'\"') break;
+				ch = _NextChar();
 			}
-
-			if (ch == L'\"')	//ダブルクオーテーションだったら1つ進める
+			if (ch == L'\"')
 				_NextChar();
 			else 
 				_RaiseError(L"Next(Text): Unexpected end-of-file while parsing string.");
@@ -541,9 +478,10 @@ DxTextToken& DxTextScanner::Next() {
 			break;
 		}
 
+		//Newlines
 		case L'\r':
-		case L'\n'://改行
-			//改行がいつまでも続くようなのも1つの改行として扱う
+		case L'\n':
+			//Skip other successive newlines
 			while (ch == L'\r' || ch == L'\n') ch = _NextChar();
 			type = DxTextToken::Type::TK_NEWLINE;
 			break;
@@ -552,42 +490,39 @@ DxTextToken& DxTextScanner::Next() {
 		case L'-':
 		{
 			if (ch == L'+') {
-				ch = _NextChar(); type = DxTextToken::Type::TK_PLUS;
-
+				ch = _NextChar();
+				type = DxTextToken::Type::TK_PLUS;
 			}
 			else if (ch == L'-') {
-				ch = _NextChar(); type = DxTextToken::Type::TK_MINUS;
+				ch = _NextChar();
+				type = DxTextToken::Type::TK_MINUS;
 			}
-
-			if (!iswdigit(ch)) break;//次が数字でないなら抜ける
+			if (!iswdigit(ch)) break;
 		}
-
 
 		default:
 		{
 			if (iswdigit(ch)) {
-				//整数か実数
-				while (iswdigit(ch))ch = _NextChar();//数字だけの間ポインタを進める
+				while (iswdigit(ch)) ch = _NextChar();
 				type = DxTextToken::Type::TK_INT;
+
 				if (ch == L'.') {
-					//実数か整数かを調べる。小数点があったら実数
+					//Int -> Real
 					ch = _NextChar();
-					while (iswdigit(ch))ch = _NextChar();//数字だけの間ポインタを進める
+					while (iswdigit(ch)) ch = _NextChar();
 					type = DxTextToken::Type::TK_REAL;
 				}
 
 				if (ch == L'E' || ch == L'e') {
-					//1E-5みたいなケース
-					std::vector<wchar_t>::iterator pos = pointer_;
+					//Exponent format
 					ch = _NextChar();
-					while (iswdigit(ch) || ch == L'-')ch = _NextChar();//数字だけの間ポインタを進める
+					while (iswdigit(ch) || ch == L'-') ch = _NextChar();
 					type = DxTextToken::Type::TK_REAL;
 				}
-
 			}
 			else if (iswalpha(ch) || ch == L'_') {
-				//たぶん識別子
-				while (iswalpha(ch) || iswdigit(ch) || ch == L'_')ch = _NextChar();//たぶん識別子な間ポインタを進める
+				while (iswalpha(ch) || iswdigit(ch) || ch == L'_')
+					ch = _NextChar();
 				type = DxTextToken::Type::TK_ID;
 			}
 			else {
@@ -597,19 +532,16 @@ DxTextToken& DxTextScanner::Next() {
 			break;
 		}
 		}
+
 		if (type == TOKEN_TAG_START) bTagScan_ = true;
 		else if (type == TOKEN_TAG_END) bTagScan_ = false;
 
-		if (type == DxTextToken::Type::TK_STRING) {
-			//\を除去
-			std::wstring tmpStr(posStart, pointer_);
-			std::wstring str = StringUtility::ReplaceAll(tmpStr, L"\\\"", L"\"");
-			token_ = DxTextToken(type, str);
+		{
+			std::wstring wstr = std::wstring(posStart, pointer_);
+			if (type == DxTextToken::Type::TK_STRING)
+				wstr = StringUtility::ParseStringWithEscape(wstr);
+			token_ = DxTextToken(type, wstr);
 		}
-		else {
-			token_ = DxTextToken(type, std::wstring(posStart, pointer_));
-		}
-
 	}
 
 	return token_;
@@ -895,6 +827,7 @@ std::vector<std::wstring> GetScannerStringArgumentList(DxTextScanner& scan, std:
 }
 shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	SetFont(dxText->dxFont_.GetLogFont());
+
 	DxTextInfo* res = new DxTextInfo();
 	const std::wstring& text = dxText->GetText();
 	DxFont& dxFont = dxText->GetFont();
@@ -963,25 +896,16 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 				tok = scan.Next();
 				const std::wstring& element = tok.GetElement();
 				if (element == TAG_NEW_LINE) {
-					//改行
 					if (textLine->height_ == 0) {
-						//空文字の場合も空白文字で高さを計算する
+						//Insert a dummy space if there is no text
 						textLine = _GetTextInfoSub(L" ", dxText, res, textLine, hDC, totalWidth, totalHeight);
 					}
 
-					if (textLine) {
-						totalWidth = std::max(totalWidth, textLine->width_);
-						totalHeight += textLine->height_ + linePitch;
-						res->AddTextLine(textLine);
-					}
+					totalWidth = std::max(totalWidth, textLine->width_);
+					totalHeight += textLine->height_ + linePitch;
+					res->AddTextLine(textLine);
 
 					textLine = std::make_shared<DxTextLine>();
-					{
-						widthBorder = dxFont.GetBorderType() != TextBorderType::None ? dxFont.GetBorderWidth() : 0L;
-						fontTemp = nullptr;
-						::SelectObject(hDC, oldFont);
-						curFontData = orgFontData;
-					}
 				}
 				else if (element == TAG_RUBY) {
 					struct Data {
@@ -1144,7 +1068,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 #undef LAMBDA_SET_COLOR_PK
 
 					//--------------------------------------------------------------
-					
+
 					while (true) {
 						tok = scan.Next();
 						if (tok.GetType() == TOKEN_TAG_END) break;
@@ -1214,6 +1138,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 	return shared_ptr<DxTextInfo>(res);
 }
 std::wstring DxTextRenderer::_ReplaceRenderText(std::wstring text) {
+	//StringUtility::ReplaceAll(text, x, L'\0') is "erase all occurences of x"
 	text = StringUtility::ReplaceAll(text, L'\r', L'\0');
 	text = StringUtility::ReplaceAll(text, L'\n', L'\0');
 	text = StringUtility::ReplaceAll(text, L'\t', L'\0');
