@@ -106,6 +106,12 @@ namespace gstd {
 		{ "modc", BaseFunction::modc, 2 },
 		{ "power", BaseFunction::power, 2 },
 
+		{ "as_int_array", BaseFunction::cast_int_array, 1 },
+		{ "as_real_array", BaseFunction::cast_real_array, 1 },
+		{ "as_bool_array", BaseFunction::cast_bool_array, 1 },
+		{ "as_char_array", BaseFunction::cast_char_array, 1 },
+		{ "as_x_array", BaseFunction::cast_x_array, 2 },
+
 		//{ "length", BaseFunction::length, 1 },
 		{ "resize", BaseFunction::resize, 2 },
 		{ "resize", BaseFunction::resize, 3 },	//Overloaded

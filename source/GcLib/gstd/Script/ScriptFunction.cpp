@@ -277,6 +277,60 @@ namespace gstd {
 
 	//-------------------------------------------------------------------------------------------
 
+	value BaseFunction::_cast_array(script_machine* machine, const value* argv, type_data* target) {
+		type_data* arg0_type = argv->get_type();
+		if (arg0_type == nullptr || arg0_type->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, arg0_type, "array cast");
+			return value();
+		}
+		else {
+			value res;
+			{
+				std::vector<value> arrVal(argv->length_as_array());
+				for (size_t i = 0; i < arrVal.size(); ++i) {
+					value nv = value::new_from(argv->index_as_array(i));
+					BaseFunction::_value_cast(&nv, target->get_kind());
+					arrVal[i] = nv;
+				}
+				res.set(script_type_manager::get_instance()->get_array_type(target), arrVal);
+			}
+			return res;
+		}
+	}
+	value BaseFunction::cast_int_array(script_machine* machine, int argc, const value* argv) {
+		return _cast_array(machine, argv, script_type_manager::get_int_type());
+	}
+	value BaseFunction::cast_real_array(script_machine* machine, int argc, const value* argv) {
+		return _cast_array(machine, argv, script_type_manager::get_real_type());
+	}
+	value BaseFunction::cast_bool_array(script_machine* machine, int argc, const value* argv) {
+		return _cast_array(machine, argv, script_type_manager::get_boolean_type());
+	}
+	value BaseFunction::cast_char_array(script_machine* machine, int argc, const value* argv) {
+		return _cast_array(machine, argv, script_type_manager::get_char_type());
+		//return value(script_type_manager::get_string_type(), argv->as_string());
+	}
+	value BaseFunction::cast_x_array(script_machine* machine, int argc, const value* argv) {
+		type_data::type_kind targetKind = (type_data::type_kind)argv[1].as_int();
+		switch (targetKind) {
+		case type_data::tk_int:
+		case type_data::tk_real:
+		case type_data::tk_char:
+		case type_data::tk_boolean:
+			break;
+		default:
+		{
+			type_data tmp(targetKind);
+			std::string error = StringUtility::Format("Invalid target type for array cast: %s\r\n",
+				type_data::string_representation(&tmp).c_str());
+			machine->raise_error(error);
+			return value();
+		}
+		}
+		return _cast_array(machine, argv, 
+			script_type_manager::get_instance()->get_type(targetKind));
+	}
+
 	value BaseFunction::_script_add(int argc, const value* argv) {
 		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_add);

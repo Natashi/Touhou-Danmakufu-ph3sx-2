@@ -37,7 +37,16 @@ type_data* script_type_manager::get_array_type(type_data* element) {
 	type_data target = type_data(type_data::tk_array, element);
 	auto itr = types.find(target);
 	if (itr == types.end()) {
-		//No types found, insert and return the new type
+		//No type found, insert and return the new type
+		itr = types.insert(target).first;
+	}
+	return deref_itr(itr);
+}
+type_data* script_type_manager::get_type(type_data::type_kind kind) {
+	type_data target = type_data(kind);
+	auto itr = types.find(target);
+	if (itr == types.end()) {
+		//No type found, insert and return the new type
 		itr = types.insert(target).first;
 	}
 	return deref_itr(itr);

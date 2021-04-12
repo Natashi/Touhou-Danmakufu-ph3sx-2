@@ -59,6 +59,13 @@ namespace gstd {
 
 		//---------------------------------------------------------------------
 
+		static value _cast_array(script_machine* machine, const value* argv, type_data* target);
+		static value cast_int_array(script_machine* machine, int argc, const value* argv);
+		static value cast_real_array(script_machine* machine, int argc, const value* argv);
+		static value cast_bool_array(script_machine* machine, int argc, const value* argv);
+		static value cast_char_array(script_machine* machine, int argc, const value* argv);
+		static value cast_x_array(script_machine* machine, int argc, const value* argv);
+
 		static value _script_add(int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(add);
 		static value _script_subtract(int argc, const value* argv);
