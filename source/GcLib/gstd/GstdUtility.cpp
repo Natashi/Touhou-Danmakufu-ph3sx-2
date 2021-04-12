@@ -753,14 +753,14 @@ void Scanner::_SkipComment() {
 
 		wchar_t ch = _CurrentChar();
 
-		if (ch == L'/') {//コメントアウト処理
+		if (ch == L'/') {			//Comment initial
 			int tPos = pointer_;
 			ch = _NextChar();
-			if (ch == L'/') {// "//"
+			if (ch == L'/') {		//Line comment
 				while (ch != L'\r' && ch != L'\n' && HasNext())
 					ch = _NextChar();
 			}
-			else if (ch == L'*') {// "/*"-"*/"
+			else if (ch == L'*') {	//Block comment
 				while (true) {
 					ch = _NextChar();
 					if (ch == L'*') {
@@ -844,11 +844,15 @@ Token& Scanner::Next() {
 		type = Token::Type::TK_STRING;
 		break;
 	}
+
+	//Newlines
 	case L'\r':
 	case L'\n':
+		//Skip other successive newlines
 		while (ch == L'\r' || ch == L'\n') ch = _NextChar();
 		type = Token::Type::TK_NEWLINE;
 		break;
+
 	case L'+':
 	case L'-':
 	{
