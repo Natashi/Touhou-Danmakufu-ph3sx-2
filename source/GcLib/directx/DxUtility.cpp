@@ -10,13 +10,13 @@ using namespace directx;
 //*******************************************************************
 //ColorAccess
 //*******************************************************************
-D3DCOLORVALUE ColorAccess::SetColor(D3DCOLORVALUE& value, D3DCOLOR color) {
+D3DCOLORVALUE ColorAccess::MultiplyColor(D3DCOLORVALUE& value, D3DCOLOR color) {
 	D3DXVECTOR4 _col = ToVec4Normalized(color);							//argb
 	D3DXVECTOR4 colVec = D3DXVECTOR4(_col.y, _col.z, _col.w, _col.x);	//rgba
-	value = (D3DCOLORVALUE&)ColorAccess::SetColor(colVec, color);
+	value = (D3DCOLORVALUE&)MultiplyColor(colVec, color);
 	return value;
 }
-D3DMATERIAL9 ColorAccess::SetColor(D3DMATERIAL9 mat, D3DCOLOR color) {
+D3DMATERIAL9 ColorAccess::MultiplyColor(D3DMATERIAL9 mat, D3DCOLOR color) {
 	D3DXVECTOR4 _col = ToVec4Normalized(color);					//argb
 	__m128 col = Vectorize::Set(_col.y, _col.z, _col.w, _col.x);	//rgba
 	__m128 dst;
@@ -33,27 +33,27 @@ D3DMATERIAL9 ColorAccess::SetColor(D3DMATERIAL9 mat, D3DCOLOR color) {
 
 	return mat;
 }
-D3DXVECTOR4& ColorAccess::SetColor(D3DXVECTOR4& value, D3DCOLOR color) {
+D3DXVECTOR4& ColorAccess::MultiplyColor(D3DXVECTOR4& value, D3DCOLOR color) {
 	__m128 v1 = Vectorize::Load(&value.x);					//argb
 	__m128 col = Vectorize::Load(ToVec4Normalized(color));	//argb
 	v1 = Vectorize::Mul(v1, col);
-	value = ColorAccess::ClampColorPacked((__m128i&)v1);
+	value = ClampColorPacked((__m128i&)v1);
 	return value;
 }
-D3DCOLOR& ColorAccess::SetColor(D3DCOLOR& src, const D3DCOLOR& mul) {
+D3DCOLOR& ColorAccess::MultiplyColor(D3DCOLOR& src, const D3DCOLOR& mul) {
 	D3DXVECTOR4 mulFac = ToVec4Normalized(mul);
 	__m128 vsrc = Vectorize::Load(ToVec4(src));			//argb
 	__m128 res = Vectorize::Mul(vsrc, Vectorize::Load(mulFac));
-	__m128i argb = ColorAccess::ClampColorPackedM((D3DXVECTOR4&)res);
-	src = D3DCOLOR_ARGB(argb.m128i_i32[0], argb.m128i_i32[1], argb.m128i_i32[2], argb.m128i_i32[3]);
+	__m128i argb = ClampColorPackedM((D3DXVECTOR4&)res);
+	src = ToD3DCOLOR(argb);
 	return src;
 }
 D3DCOLOR& ColorAccess::ApplyAlpha(D3DCOLOR& color, float alpha) {
 	__m128 v1 = Vectorize::Load(ToVec4(color));			//argb
 	__m128 v2 = Vectorize::Replicate(alpha);
 	v1 = Vectorize::Mul(v1, v2);
-	__m128i ci = ColorAccess::ClampColorPackedM((D3DXVECTOR4&)v1);
-	color = D3DCOLOR_ARGB(ci.m128i_i32[0], ci.m128i_i32[1], ci.m128i_i32[2], ci.m128i_i32[3]);
+	__m128i ci = ClampColorPackedM((D3DXVECTOR4&)v1);
+	color = ToD3DCOLOR(ci);
 	return color;
 }
 
@@ -158,12 +158,6 @@ D3DXVECTOR4 ColorAccess::ToVec4Normalized(const D3DCOLOR& color, uint8_t permute
 	__m128 nor = Vectorize::Replicate(1.0f / 255.0f);
 	nor = Vectorize::Mul(argb, nor);
 	return (D3DXVECTOR4&)nor;
-}
-D3DCOLOR ColorAccess::ToD3DCOLOR(const __m128i& col) {
-	return D3DCOLOR_ARGB(col.m128i_i32[0], col.m128i_i32[1], col.m128i_i32[2], col.m128i_i32[3]);
-}
-D3DCOLOR ColorAccess::ToD3DCOLOR(const D3DXVECTOR4& color) {
-	return D3DCOLOR_ARGB((byte)color.x, (byte)color.y, (byte)color.z, (byte)color.w);
 }
 
 //*******************************************************************

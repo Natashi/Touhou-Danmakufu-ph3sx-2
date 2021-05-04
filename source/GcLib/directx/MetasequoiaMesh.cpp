@@ -446,10 +446,11 @@ void MetasequoiaMeshData::RenderObject::Render(D3DXMATRIX* matTransform) {
 	SetTexture(material_ ? material_->texture_ : nullptr);
 
 	D3DXVECTOR4 tColor = D3DXVECTOR4(1, objectColor_.x, objectColor_.y, objectColor_.z) * 255.0f;
-	ColorAccess::SetColor(tColor, color_);
+	ColorAccess::MultiplyColor(tColor, color_);
 	D3DCOLOR dColor = ColorAccess::ToD3DCOLOR(tColor);
 
-	D3DMATERIAL9 tMaterial = ColorAccess::SetColor(material_ ? material_->mat_ : nullMaterial_->mat_, dColor);
+	D3DMATERIAL9 tMaterial = ColorAccess::MultiplyColor(
+		material_ ? material_->mat_ : nullMaterial_->mat_, dColor);
 	device->SetMaterial(&tMaterial);
 
 	RenderObjectNX::Render(matTransform);

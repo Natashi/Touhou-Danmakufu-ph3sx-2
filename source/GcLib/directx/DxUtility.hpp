@@ -49,10 +49,10 @@ namespace directx {
 			return gstd::BitAccess::SetByte(color, BIT_BLUE, (byte)blue);
 		}
 
-		static D3DCOLORVALUE SetColor(D3DCOLORVALUE& value, D3DCOLOR color);
-		static D3DMATERIAL9 SetColor(D3DMATERIAL9 mat, D3DCOLOR color);
-		static D3DXVECTOR4& SetColor(D3DXVECTOR4& value, D3DCOLOR color);
-		static D3DCOLOR& SetColor(D3DCOLOR& src, const D3DCOLOR& mul);
+		static D3DCOLORVALUE MultiplyColor(D3DCOLORVALUE& value, D3DCOLOR color);
+		static D3DMATERIAL9 MultiplyColor(D3DMATERIAL9 mat, D3DCOLOR color);
+		static D3DXVECTOR4& MultiplyColor(D3DXVECTOR4& value, D3DCOLOR color);
+		static D3DCOLOR& MultiplyColor(D3DCOLOR& src, const D3DCOLOR& mul);
 		static D3DCOLOR& ApplyAlpha(D3DCOLOR& color, float alpha);
 
 		static D3DXVECTOR3& RGBtoHSV(D3DXVECTOR3& color, int red, int green, int blue);
@@ -87,10 +87,15 @@ namespace directx {
 		};
 		static D3DXVECTOR4 ToVec4(const D3DCOLOR& color, uint8_t permute = PERMUTE_ARGB);
 		static D3DXVECTOR4 ToVec4Normalized(const D3DCOLOR& color, uint8_t permute = PERMUTE_ARGB);
+
 		//ARGB
-		static D3DCOLOR ToD3DCOLOR(const __m128i& color);
-		//ARGB
-		static D3DCOLOR ToD3DCOLOR(const D3DXVECTOR4& color);
+		static inline D3DCOLOR ToD3DCOLOR(const __m128i& col) {
+			return D3DCOLOR_ARGB(col.m128i_i32[0], col.m128i_i32[1], col.m128i_i32[2], col.m128i_i32[3]);
+		}
+		//ARGB, vector of [0~255]
+		static inline D3DCOLOR ToD3DCOLOR(const D3DXVECTOR4& col) {
+			return D3DCOLOR_ARGB((byte)col.x, (byte)col.y, (byte)col.z, (byte)col.w);
+		}
 	};
 
 	//*******************************************************************

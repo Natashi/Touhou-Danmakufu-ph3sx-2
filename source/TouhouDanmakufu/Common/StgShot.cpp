@@ -1362,7 +1362,7 @@ void StgNormalShotObject::RenderOnShotManager() {
 		}
 
 		color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
-		if (delay_.colorMix) ColorAccess::SetColor(color, color_);
+		if (delay_.colorMix) ColorAccess::MultiplyColor(color, color_);
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
 			color = (color & 0x00ffffff) | (alpha << 24);
@@ -1667,7 +1667,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 		}
 
 		color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
-		if (delay_.colorMix) ColorAccess::SetColor(color, color_);
+		if (delay_.colorMix) ColorAccess::MultiplyColor(color, color_);
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
 			color = (color & 0x00ffffff) | (alpha << 24);
@@ -1963,7 +1963,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 		if ((bUseSouce_ || bUseEnd_) && (frameFadeDelete_ < 0)) {	//Delay cloud(s)
 			color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
-			if (delay_.colorMix) ColorAccess::SetColor(color, color_);
+			if (delay_.colorMix) ColorAccess::MultiplyColor(color, color_);
 
 			int sourceWidth = widthRender_ * 2 / 3;
 			DxRect<float> rcDest(-sourceWidth, -sourceWidth, sourceWidth, sourceWidth);
@@ -2295,7 +2295,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		}
 
 		D3DCOLOR color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
-		if (delay_.colorMix) ColorAccess::SetColor(color, color_);
+		if (delay_.colorMix) ColorAccess::MultiplyColor(color, color_);
 		{
 			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
 			color = (color & 0x00ffffff) | (alpha << 24);
@@ -2365,7 +2365,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				byte alpha = ColorAccess::ClampColorRet(nodeAlpha * alphaRateShot);
 				thisColor = (thisColor & 0x00ffffff) | (alpha << 24);
 			}
-			if (itr->color != 0xffffffff) ColorAccess::SetColor(thisColor, itr->color);
+			if (itr->color != 0xffffffff) ColorAccess::MultiplyColor(thisColor, itr->color);
 
 			VERTEX_TLX verts[2];
 			for (size_t iVert = 0U; iVert < 2U; ++iVert) {
