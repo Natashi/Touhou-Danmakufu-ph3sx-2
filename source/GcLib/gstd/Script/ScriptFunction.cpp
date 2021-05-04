@@ -620,7 +620,7 @@ namespace gstd {
 				}
 				else {
 					if (valType->get_element() == nullptr) {
-						machine->raise_error("Resizing from an uninitialized array requires a fill value.\r\n");
+						machine->raise_error("Resizing from an empty array requires a fill value.\r\n");
 						return value();
 					}
 					fill = BaseFunction::_create_empty(valType->get_element());
