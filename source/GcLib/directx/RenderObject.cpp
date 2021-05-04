@@ -1083,16 +1083,29 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 				angX, angY, angZ, bCamera ? &camera->GetMatrix() : nullptr);
 
 		vertCopy_ = vertex_;
-		if (!bVertexShaderMode_) {
+		{
+			byte mulAlpha = color_ >> 24;
+			float rMulAlpha = 1.0f;
+			bool bMulAlpha = mulAlpha != 0xff;
+			if (bMulAlpha)
+				rMulAlpha = mulAlpha / 255.0f;
+
 			for (size_t iVert = 0; iVert < countVertex; ++iVert) {
 				size_t pos = iVert * strideVertexStreamZero_;
 				VERTEX_TLX* vertex = (VERTEX_TLX*)&vertCopy_[pos];
-				D3DXVECTOR4* vPos = &vertex->position;
+				D3DXVECTOR3* vPos = (D3DXVECTOR3*)(&vertex->position);
 
-				if (bCloseVertexList_)
-					D3DXVec3TransformCoord((D3DXVECTOR3*)vPos, (D3DXVECTOR3*)vPos, &matWorld);
-				else if (bCamera)
-					D3DXVec3TransformCoord((D3DXVECTOR3*)vPos, (D3DXVECTOR3*)vPos, &camera->GetMatrix());
+				if (!bVertexShaderMode_) {
+					if (bCloseVertexList_)
+						D3DXVec3TransformCoord(vPos, vPos, &matWorld);
+					else if (bCamera)
+						D3DXVec3TransformCoord(vPos, vPos, &camera->GetMatrix());
+				}
+				if (bCloseVertexList_ && bMulAlpha) {
+					//Multiply alpha
+					ColorAccess::SetColorA(vertex->diffuse_color,
+						(vertex->diffuse_color >> 24) * rMulAlpha);
+				}
 			}
 		}
 
@@ -1230,6 +1243,10 @@ void SpriteList2D::SetDestinationCenter() {
 }
 void SpriteList2D::CloseVertex() {
 	bCloseVertexList_ = true;
+	SetColor(0xffffffff);
+}
+void SpriteList2D::SetColor(D3DCOLOR color) {
+	color_ = color;
 }
 
 //****************************************************************************

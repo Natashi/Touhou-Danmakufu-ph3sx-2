@@ -278,7 +278,7 @@ namespace directx {
 		void SetDestinationRect(const DxRect<double>& rcDest) { rcDest_ = rcDest; }
 		void SetDestinationCenter();
 		D3DCOLOR GetColor() { return color_; }
-		void SetColor(D3DCOLOR color) { color_ = color; }
+		void SetColor(D3DCOLOR color);
 		void CloseVertex();
 
 		void SetAutoClearVertex(bool clear) { autoClearVertexList_ = clear; }
