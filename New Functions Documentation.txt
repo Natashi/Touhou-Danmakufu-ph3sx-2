@@ -750,7 +750,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) rectangle top
 			4) rectangle right
 			5) rectangle bottom
-			6) (struct) format
+			6) (const) format
 		Returns:
 			(bool) result
 		Description:
@@ -1165,7 +1165,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			4) rectangle top
 			5) rectangle right
 			6) rectangle bottom
-			7) (struct) format
+			7) (const) format
 		Returns:
 			(bool) save result
 		Description:
@@ -1198,7 +1198,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	SetCameraMode
 		Arguments:
-			1) (struct) mode
+			1) (const) mode
 		Description:
 			Switches the 3D camera between available modes.
 			Modes:
@@ -1502,7 +1502,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		ObjRender_SetTextureFilterMin
 			Arguments:
 				1) object ID
-				2) (struct) mode
+				2) (const) mode
 			Description:
 				Sets the minification filtering mode for the render object.
 				Filtering modes:
@@ -1514,14 +1514,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		ObjRender_SetTextureFilterMag
 			Arguments:
 				1) object ID
-				2) (struct) mode
+				2) (const) mode
 			Description:
 				Sets the magnification filtering mode for the render object.
 
 		ObjRender_SetTextureFilterMip
 			Arguments:
 				1) object ID
-				2) (struct) mode
+				2) (const) mode
 			Description:
 				Sets the mipmap filtering mode for the render object.
 				
@@ -1693,7 +1693,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjParticleList_Create
 		Arguments:
-			1) (struct) type
+			1) (const) type
 		Description:
 			Creates a new particle list object and returns its ID.
 			Available types are:
@@ -1935,7 +1935,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjSound_GetInfo
 		Arguments:
 			1) object ID
-			2) (struct) type
+			2) (const) type
 		Returns:
 			[varies]
 		Description:
@@ -2315,7 +2315,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) target x
 			3) target y
 			4) frame
-			5) (struct) interpolation mode
+			5) (const) interpolation mode
 		Description:
 			Overloaded with 5 arguments.
 		
@@ -2439,7 +2439,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjShot_SetOwnerType
 		Arguments:
 			1) object ID
-			2) (struct) type
+			2) (const) type
 		Description:
 			Sets the shot object's owner type.
 			Available types are:
@@ -2539,9 +2539,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjShot_SetDelayMode
 		Arguments:
 			1) object ID
-			2) (struct) delay mode
-			3) (struct) scale interpolation mode
-			4) (struct) alpha interpolation mode
+			2) (const) delay mode
+			3) (const) scale interpolation mode
+			4) (const) alpha interpolation mode
 		Description:
 			Sets the properties of the shot object's delay cloud.
 			
@@ -2809,7 +2809,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjPatternShot_SetPatternType
 		Arguments:
 			1) object ID
-			2) (struct) type
+			2) (const) type
 		Description:
 			Sets the firing pattern of the given shot pattern object.
 			Available pattern types:
@@ -2838,7 +2838,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjPatternShot_SetShotType
 		Arguments:
 			1) object ID
-			2) (struct) type
+			2) (const) type
 		Description:
 			Sets the shot type of the given shot pattern object.
 			Supported types:
@@ -2849,7 +2849,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjPatternShot_SetInitialBlendMode
 		Arguments:
 			1) object ID
-			2) (struct) blend type
+			2) (const) blend type
 		Description:
 			Sets the initial blend type of the shots.
 			See ObjRender_SetBlendType for the list of blend types.
@@ -2947,7 +2947,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjPatternShot_AddTransform
 		Arguments:
 			1) object ID
-			2) (struct) transform type
+			2) (const) transform type
 			3) int argument 1	(Designated "S0")
 			4) int argument 2	(Designated "S1")
 			5) int argument 3	(Designated "S2")
@@ -2992,7 +2992,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID
 			2) transform index
-			3) (struct) transform type
+			3) (const) transform type
 			4) int argument 1
 			5) int argument 2
 			6) int argument 3
@@ -3022,7 +3022,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjItem_GetInfo
 		Arguments:
 			1) object ID
-			2) (struct) info type
+			2) (const) info type
 		Returns:
 			[varies]
 		Description:
