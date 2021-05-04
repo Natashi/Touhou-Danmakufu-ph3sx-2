@@ -4,7 +4,7 @@
 #include "MainWindow.hpp"
 
 //*******************************************************************
-WinMain
+//WinMain
 //*******************************************************************
 int APIENTRY wWinMain(HINSTANCE hInstance,
                         HINSTANCE hPrevInstance,
@@ -12,8 +12,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
                         int nCmdShow )
 {
 	DebugUtility::DumpMemoryLeaksOnExit();
-	try
-	{
+	try {
 		MainWindow* wndMain = MainWindow::CreateInstance();
 		wndMain->Initialize();
 		wndMain->SetWindowVisible(true);
@@ -27,13 +26,11 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
 			app->_Finalize();
 		}
 	}
-	catch(std::exception& e)
-	{
+	catch(std::exception& e) {
 		std::wstring error = StringUtility::ConvertMultiToWide(e.what());
 		Logger::WriteTop(error);
 	}
-	catch(gstd::wexception& e)
-	{
+	catch(gstd::wexception& e) {
 		Logger::WriteTop(e.what());
 	}
 

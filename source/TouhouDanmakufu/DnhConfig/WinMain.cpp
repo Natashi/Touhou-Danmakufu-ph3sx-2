@@ -5,7 +5,7 @@
 
 
 //*******************************************************************
-WinMain
+//WinMain
 //*******************************************************************
 int WINAPI wWinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
