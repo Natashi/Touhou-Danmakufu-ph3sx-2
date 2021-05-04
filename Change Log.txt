@@ -1,5 +1,20 @@
 A mostly-complete history log of engine updates can be found here.
 
+1.21a:
+	- Fixed MatrixMultiply and MatrixDivide functioning incorrectly.
+	- Added MatrixTransformVector for transforming a Vector3 by a transformation matrix.
+	- Added a hex overload for SetFogParam.
+	- Added a floored division operation. ("~/" and "~/=")
+	- Added "resize", a function for resizing arrays.
+	- Modified the functionality of the array slice operation and operator.
+		- Upper slice bound is automatically capped at the array's size.
+	- More options for text object tags.
+	- Increased the smoothness of rendered fonts.
+	- Fixed SetShotIntersectionCircle and SetShotIntersectionLine not working.
+	- Fixed a memory leak issue that was causing the "too many open files" error message.
+	- Using ObjRender_SetAlpha on a 2D sprite list object whose vertices were closed will now have an alpha-multiply effect.
+	- Optimizations.
+
 1.20b:
 	- Fixed a bug that caused for loops using new variables to not function correctly.
 	- Fixed a bug that caused all GetColor functions to return incorrect values. (Including GetShotDataInfoA1)

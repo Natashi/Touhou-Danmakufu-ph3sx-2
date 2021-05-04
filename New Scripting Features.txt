@@ -132,6 +132,14 @@
 			XOR	(^^)
 			Left Shift (<<), Right Shift (>>)
 		-> Lower operator precedence
+		
+	- Floored Division
+		A division operation that only returns an integer.
+		
+		Floored Division:
+			~/
+		Floored Division-Assign:
+			~/=
 
 - Optimizations
 	- The engine will now try to perform basic optimizations on maths expressions.
@@ -180,7 +188,62 @@
 			if (true) a += 10;
 			else a -= 4;
 			
-		Can be used everywhere except function/task/sub declarations, @ blocks, and local{} blocks.
+		Can be used everywhere except function/task/sub declarations, @-blocks, and local{} blocks.
 
 - Others
 	- Some default functions now allow for variadic argument counts.
+	
+- Text Object Tags
+	Text object tags are special formatting patterns that are used to dynamically modify text objects.
+	
+	Available tags:
+	
+		r
+			Inserts a new line. Also resets formatting from other tags.
+			
+		font/f
+			Modifies the font.
+			
+			Available tag arguments:
+				reset/rs/r/clear/clr/c
+					Resets the text to its original settings.  Present in vanilla ph3 as "clear".
+				size/sz
+					Changes the font size. Unchanged from vanilla ph3.
+				ox/oy
+					Changes the position offset.
+				it
+					Toggles italic. (true/false or 1/0)
+				wg
+					Changes the font's weight.
+				br/bg/bb
+					Changes the font's bottom color.
+				tr/tg/tb
+					Changes the font's top color.
+				or/og/ob
+					Changes the font's border color.
+				bc
+					Changes the font's bottom color as a (r, g, b) list.
+				tc
+					Changes the font's top color as a (r, g, b) list.
+				oc
+					Changes the font's border color as a (r, g, b) list.
+		
+			Usage example:
+				ObjText_SetText(obj, "Lorem ipsum [font size=48 it=1 bc=(255, 0, 0)]dolor sit[font clear] amet");
+				
+		ruby
+			Creates a ruby/furigana text.
+			
+			Available tag arguments:
+				rb
+					Sets the main text. Unchanged from vanilla ph3.
+				rt
+					Sets the furigana. Unchanged from vanilla ph3.
+				sz
+					Changes the furigana's font size.
+				wg
+					Changes the furigana's font weight.
+				ox
+					Changes the furigana's left margin.
+				op
+					Changes the furigana's side pitch.

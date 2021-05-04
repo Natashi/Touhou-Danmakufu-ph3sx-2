@@ -656,6 +656,18 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns an array of the window sizes specified in th_dnh.def.
 			
+	GetLastFrameUpdateSpeed
+		Returns:
+			(int) milliseconds
+		Description:
+			Returns the time the engine took to update scripts in the previous frame in milliseconds.
+			
+	GetLastFrameRenderSpeed
+		Returns:
+			(int) milliseconds
+		Description:
+			Returns the time the engine took to render the previous frame in milliseconds.
+			
 	--------------------------------> Screenshot <--------------------------------
 		
 	SaveSnapShotA3
@@ -930,6 +942,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Constructs a right-handed look-at matrix.
 			
+	MatrixTransformVector
+		Arguments:
+			1) (VECTOR3) position
+			2) (matrix) transformation matrix
+		Returns:
+			(VECTOR4) result
+		Description:
+			Transforms the given (x, y, z, 1) point with the given matrix.
+			
 	--------------------------------> Sound <--------------------------------
 	
 	SetSoundDivisionVolumeRate
@@ -1084,6 +1105,21 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				IFF_PNG: Portable Network Graphics file. 					(.png)
 				IFF_DDS: DirectDraw Surface file. 							(.dds)
 				IFF_PPM: Portable PixelMap graphics file. 					(.ppm)
+				
+	--------------------------------> Fog <--------------------------------
+	
+	SetFogParam (Overload)
+		Arguments:
+			1) fog start
+			2) fog end
+			3) fog color
+		Description:
+			Overloaded with 3 arguments.
+				
+				Sets the fog color as an XRGB hexadecimal color value.
+				
+				Example:
+					SetFogParam(0, 1024, 0xFF7B32) -> SetFogParam(0, 1024, 255, 123, 50)
 	
 	--------------------------------> 3D Camera <--------------------------------
 	
@@ -1347,7 +1383,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Description:
 				Addition.
 				
-				BLEND_INV_ALPHA - Alpha blending with source color inversion.
+				BLEND_ALPHA_INV - Alpha blending with source color inversion.
 	
 		[---------------------------> Color & Alpha <---------------------------]
 	
@@ -1361,7 +1397,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				Sets the object's RGB color as an XRGB hexadecimal color value.
 				
 				Example:
-					ObjRender_SetColorHex(obj, 0xFF7B32) -> ObjRender_SetColor(obj, 255, 123, 50)
+					ObjRender_SetColor(obj, 0xFF7B32) -> ObjRender_SetColor(obj, 255, 123, 50)
 					
 		ObjRender_SetColorHSV
 			Arguments:
