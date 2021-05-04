@@ -44,6 +44,30 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				[8, 0, 2]   -> VAR_REAL
 				[[["a"]]]   -> VAR_CHAR
 				
+	resize
+		Arguments:
+			1) (array) array
+			2) (int) new size
+		Description:
+			Resizes the given array, on the condition that the array must not be an empty array.
+			
+			As the array is passed-by-value, the result is written to the array passed to the function rather than returned as a new value.
+			
+	resize (Overload)
+		Arguments:
+			1) (array) array
+			2) (int) new size
+			3) (any) fill value
+		Description:
+			Overloaded with 3 arguments.
+		
+			Resizes the given array.
+			
+			If the new size is larger than the old size, newly inserted elements will be assigned the fill value.
+			Unless the array is an empty array, the fill value's type must match the array element's.
+			
+			As the array is passed-by-value, the result is written to the array passed to the function rather than returned as a new value.
+				
 	--------------------------------> Type Casting <--------------------------------
 	
 	as_int
@@ -77,6 +101,55 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			(int) result
 		Description:
 			Returns the given value casted to a char value.
+			
+	as_int_array
+		Arguments:
+			1) (any[]) array
+		Returns:
+			(int[]) result
+		Description:
+			Casts each element of the array to an int, then returns the result.
+			
+	as_real_array
+		Arguments:
+			1) (any[]) array
+		Returns:
+			(real[]) result
+		Description:
+			Casts each element of the array to a real, then returns the result.
+			
+	as_bool_array
+		Arguments:
+			1) (any[]) array
+		Returns:
+			(bool[]) result
+		Description:
+			Casts each element of the array to a bool, then returns the result.
+			
+	as_char_array
+		Arguments:
+			1) (any[]) array
+		Returns:
+			(char[]) result
+		Description:
+			Casts each element of the array to a char, then returns the result.
+			
+			Not an alias of ToString.
+			
+	as_x_array
+		Arguments:
+			1) (any[]) array
+			2) (const) type
+		Returns:
+			(T[]) result
+		Description:
+			Casts each element of the array to the given type, then returns the result.
+			
+			Supported types:
+				VAR_INT
+				VAR_REAL
+				VAR_BOOL
+				VAR_CHAR
 				
 	--------------------------------> Bitwise Operations <--------------------------------
 				
