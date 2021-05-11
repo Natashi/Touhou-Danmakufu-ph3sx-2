@@ -45,15 +45,11 @@ bool EApplication::_Initialize() {
 		WindowUtility::SetMouseVisible(false);
 
 	EDirectGraphics* graphics = EDirectGraphics::CreateInstance();
-	graphics->Initialize();
-	HWND hWndMain = graphics->GetWindowHandle();
-	WindowLogger::InsertOpenCommandInSystemMenu(hWndMain);
-	::SetWindowText(hWndMain, appName.c_str());
-	::SetClassLong(hWndMain, GCL_HICON, (LONG)LoadIcon(GetApplicationHandle(), MAKEINTRESOURCE(IDI_ICON)));
-
+	graphics->Initialize(appName);
 	ptrGraphics = graphics;
 
-	ErrorDialog::SetParentWindowHandle(hWndMain);
+	HWND hWndDisplay = graphics->GetParentHWND();
+	ErrorDialog::SetParentWindowHandle(hWndDisplay);
 
 	ETextureManager* textureManager = ETextureManager::CreateInstance();
 	textureManager->Initialize();
@@ -68,10 +64,10 @@ bool EApplication::_Initialize() {
 	textRenderer->Initialize();
 
 	EDirectSoundManager* soundManager = EDirectSoundManager::CreateInstance();
-	soundManager->Initialize(hWndMain);
+	soundManager->Initialize(hWndDisplay);
 
 	EDirectInput* input = EDirectInput::CreateInstance();
-	input->Initialize(hWndMain);
+	input->Initialize(hWndDisplay);
 
 	ETaskManager* taskManager = ETaskManager::CreateInstance();
 	taskManager->Initialize();
@@ -214,7 +210,7 @@ EDirectGraphics::EDirectGraphics() {
 
 }
 EDirectGraphics::~EDirectGraphics() {}
-bool EDirectGraphics::Initialize() {
+bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 	DnhConfiguration* dnhConfig = DnhConfiguration::GetInstance();
 	LONG screenWidth = dnhConfig->GetScreenWidth();		//From th_dnh.def
 	LONG screenHeight = dnhConfig->GetScreenHeight();	//From th_dnh.def
@@ -289,6 +285,13 @@ bool EDirectGraphics::Initialize() {
 
 	bool res = DirectGraphicsPrimaryWindow::Initialize(dxConfig);
 	if (res) {
+		HWND hWndDisplay = GetParentHWND();
+		HICON winIcon = ::LoadIconW(Application::GetApplicationHandle(), MAKEINTRESOURCE(IDI_ICON));
+
+		::SetWindowText(hWndDisplay, windowTitle.c_str());
+		::SetClassLong(hWndDisplay, GCL_HICON, (LONG)winIcon);
+		WindowLogger::InsertOpenCommandInSystemMenu(hWndDisplay);
+
 		ChangeScreenMode(screenMode, false);
 		SetWindowVisible(true);
 	}

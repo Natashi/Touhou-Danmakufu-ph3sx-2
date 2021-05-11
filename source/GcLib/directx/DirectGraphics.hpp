@@ -190,9 +190,12 @@ namespace directx {
 		gstd::WindowBase wndGraphics_;
 		HCURSOR lpCursor_;
 
+		HWND hWndParent_;
+		HWND hWndContent_;
+
 		ScreenMode newScreenMode_;
 	protected:
-		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);//オーバーライド用プロシージャ
+		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		
 		void _PauseDrawing();
 		void _RestartDrawing();
@@ -205,6 +208,9 @@ namespace directx {
 
 		void ChangeScreenMode();
 		void ChangeScreenMode(ScreenMode newMode, bool bNoRepeated = true);
+
+		HWND GetParentHWND() { return hWndParent_; }
+		HWND GetContentHWND() { return hWndContent_; }
 	};
 
 	//*******************************************************************

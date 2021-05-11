@@ -35,6 +35,6 @@ public:
 	EDirectGraphics();
 	~EDirectGraphics();
 
-	virtual bool Initialize();
+	virtual bool Initialize(const std::wstring& windowTitle);
 	void SetRenderStateFor2D(BlendMode type);
 };

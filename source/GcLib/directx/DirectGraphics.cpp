@@ -714,6 +714,10 @@ bool DirectGraphics::IsPixelShaderSupported(int major, int minor) {
 //*******************************************************************
 DirectGraphicsPrimaryWindow::DirectGraphicsPrimaryWindow() {
 	lpCursor_ = nullptr;
+
+	hWndParent_ = nullptr;
+	hWndContent_ = nullptr;
+
 	newScreenMode_ = ScreenMode::SCREENMODE_WINDOW;
 }
 DirectGraphicsPrimaryWindow::~DirectGraphicsPrimaryWindow() {
@@ -746,7 +750,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		wcex.hInstance = hInst;
 		wcex.hIcon = nullptr;
 		wcex.hCursor = lpCursor_;
-		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOWTEXT);
+		wcex.hbrBackground = (HBRUSH)::GetStockObject(BLACK_BRUSH);
 		wcex.lpszMenuName = nullptr;
 		wcex.lpszClassName = nameClass.c_str();
 		wcex.hIconSm = nullptr;
@@ -756,12 +760,14 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 			{ 0, 0, config.GetScreenSize().x, config.GetScreenSize().y }, SCREENMODE_WINDOW);
 		hWnd_ = ::CreateWindowW(wcex.lpszClassName, L"", wndStyleWin_,
 			0, 0, wr.GetWidth(), wr.GetHeight(), nullptr, nullptr, hInst, nullptr);
+
+		hWndParent_ = hWnd_;
 	}
 
 
-	HWND hWndGraphics = nullptr;
 	if (config.IsPseudoFullScreen()) {
-		//擬似フルスクリーンの場合は、子ウィンドウにDirectGraphicsを配置する
+		//Create a child window to handle contents (parent window handles black bars)
+
 		std::wstring nameClass = L"DirectGraphicsPrimaryWindow.Child";
 		WNDCLASSEX wcex;
 		ZeroMemory(&wcex, sizeof(wcex));
@@ -770,36 +776,38 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		wcex.lpfnWndProc = (WNDPROC)WindowBase::_StaticWindowProcedure;
 		wcex.hInstance = hInst;
 		wcex.hCursor = lpCursor_;
-		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOWTEXT);
+		wcex.hbrBackground = (HBRUSH)::GetStockObject(BLACK_BRUSH);
 		wcex.lpszClassName = nameClass.c_str();
 		::RegisterClassEx(&wcex);
 
 		LONG screenWidth = config.GetScreenSize().x; //+ ::GetSystemMetrics(SM_CXEDGE) + 10;
 		LONG screenHeight = config.GetScreenSize().y; //+ ::GetSystemMetrics(SM_CYEDGE) + 10;
 
-		HWND hWnd = ::CreateWindowW(wcex.lpszClassName,
+		HWND hWndChild = ::CreateWindowW(wcex.lpszClassName,
 			L"",
 			WS_CHILD | WS_VISIBLE,
 			0, 0, screenWidth, screenHeight, hWnd_, nullptr, hInst, nullptr);
-		wndGraphics_.Attach(hWnd);
+		wndGraphics_.Attach(hWndChild);
 
-		hWndGraphics = hWnd;
+		hWndContent_ = hWndChild;
 	}
 	else {
 		if (config.IsShowWindow())
 			::ShowWindow(hWnd_, SW_SHOW);
-		hWndGraphics = hWnd_;
+		hWndContent_ = hWnd_;
 	}
+
 	::UpdateWindow(hWnd_);
 	this->Attach(hWnd_);
 
-	bool res = DirectGraphics::Initialize(hWndGraphics, config);
+	bool res = DirectGraphics::Initialize(hWndContent_, config);
 	if (res) {
 		ShowCursor(config.IsShowCursor() ? TRUE : FALSE);
-
+		/*
 		if (modeScreen_ == SCREENMODE_WINDOW) {
 			ChangeScreenMode(SCREENMODE_WINDOW, false);
 		}
+		*/
 	}
 
 	return res;
@@ -842,6 +850,7 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 		UINT targetWidth = LOWORD(lParam);
 		UINT targetHeight = HIWORD(lParam);
 
+		//Parent window resized with ChangeScreenMode, change the child window's rect
 		if (wndGraphics_.GetWindowHandle() != nullptr) {
 			RECT rcParent;
 			::GetClientRect(hWnd, &rcParent);
@@ -1002,7 +1011,7 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 			MoveWindowCenter(wr.AsRect());
 
 			//You can sleep now, 3 hours isn't enough sleep, by the way
-			SetThreadExecutionState(ES_CONTINUOUS);
+			::SetThreadExecutionState(ES_CONTINUOUS);
 		}
 		else {		//To fullscreen
 			RECT rect;
@@ -1012,7 +1021,7 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 			::MoveWindow(hWnd_, 0, 0, rect.right, rect.bottom, TRUE);
 
 			//Causes fullscreen to prevent Windows drifting off to Dreamland Drama
-			SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
+			::SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 		}
 	}
 
