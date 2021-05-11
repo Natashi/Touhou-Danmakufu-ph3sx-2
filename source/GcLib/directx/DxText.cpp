@@ -807,20 +807,33 @@ std::vector<std::wstring> GetScannerStringArgumentList(DxTextScanner& scan, std:
 	std::vector<std::wstring> list;
 
 	scan.SetCurrentPointer(beg);
+
 	DxTextToken& tok = scan.Next();
+	std::wstring tmp = L"";
+
+	auto _AddStr = [&]() {
+		tmp = StringUtility::Trim(tmp);
+		if (tmp.size() > 0)
+			list.push_back(tmp);
+		tmp = L"";
+	};
+
 	if (tok.GetType() == DxTextToken::Type::TK_OPENP) {
 		while (true) {
 			tok = scan.Next();
+
 			DxTextToken::Type type = tok.GetType();
-			if (type == DxTextToken::Type::TK_CLOSEP) break;
-			else if (type != DxTextToken::Type::TK_COMMA) {
-				std::wstring& str = tok.GetElement();
-				list.push_back(str);
+			if (type == DxTextToken::Type::TK_CLOSEP || type == DxTextToken::Type::TK_COMMA) {
+				_AddStr();
+				if (type == DxTextToken::Type::TK_CLOSEP)
+					break;
 			}
+			else tmp += tok.GetElement();
 		}
 	}
 	else {
-		list.push_back(tok.GetElement());
+		tmp = tok.GetElement();
+		_AddStr();
 	}
 
 	return list;

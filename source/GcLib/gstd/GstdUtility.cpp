@@ -978,20 +978,33 @@ std::vector<std::wstring> Scanner::GetArgumentList(bool bRequireEqual) {
 		CheckType(Next(), Token::Type::TK_EQUAL);
 
 	Token& tok = Next();
+	std::wstring tmp = L"";
+
+	auto _AddStr = [&]() {
+		tmp = StringUtility::Trim(tmp);
+		if (tmp.size() > 0)
+			res.push_back(tmp);
+		tmp = L"";
+	};
+
 	if (tok.GetType() == Token::Type::TK_OPENP) {
 		while (true) {
 			tok = Next();
+
 			Token::Type type = tok.GetType();
-			if (type == Token::Type::TK_CLOSEP) break;
-			else if (type != Token::Type::TK_COMMA) {
-				std::wstring str = tok.GetElement();
-				res.push_back(str);
+			if (type == Token::Type::TK_CLOSEP || type == Token::Type::TK_COMMA) {
+				_AddStr();
+				if (type == Token::Type::TK_CLOSEP)
+					break;
 			}
+			else tmp += tok.GetElement();
 		}
 	}
 	else {
-		res.push_back(tok.GetElement());
+		tmp = tok.GetElement();
+		_AddStr();
 	}
+
 	return res;
 }
 
