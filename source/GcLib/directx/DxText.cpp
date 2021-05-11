@@ -919,18 +919,39 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					data.tag.reset(new DxTextTag_Ruby());
 					data.tag->SetTagIndex(indexTag);
 
-#define LAMBDA_SET(m, f) [](Data* i, DxTextScanner& sc) { i->m = sc.Next().f(); }
+					//--------------------------------------------------------------
+
+					auto _FuncSetText = [](Data* i, DxTextScanner& sc) {
+						i->tag->SetText(sc.Next().GetString());
+					};
+					auto _FuncSetRuby = [](Data* i, DxTextScanner& sc) {
+						i->tag->SetRuby(sc.Next().GetString());
+					};
+					auto _FuncSetSize = [](Data* i, DxTextScanner& sc) {
+						i->sizeOff = sc.Next().GetInteger();
+					};
+					auto _FuncSetWeight = [](Data* i, DxTextScanner& sc) {
+						i->weightRuby = sc.Next().GetInteger();
+					};
+					auto _FuncSetLeft = [](Data* i, DxTextScanner& sc) {
+						i->leftOff = sc.Next().GetInteger();
+					};
+					auto _FuncSetPitch = [](Data* i, DxTextScanner& sc) {
+						i->pitchOff = sc.Next().GetInteger();
+					};
+
 					//Do NOT use [&] lambdas
 					static const std::unordered_map<std::wstring, std::function<void(Data*, DxTextScanner&)>> mapFunc = {
-						{ L"rb", [&](Data* i, DxTextScanner& sc) { i->tag->SetText(sc.Next().GetString()); } },
-						{ L"rt", [&](Data* i, DxTextScanner& sc) { i->tag->SetRuby(sc.Next().GetString()); } },
-						{ L"size", LAMBDA_SET(sizeOff, GetInteger) },
-						{ L"sz", LAMBDA_SET(sizeOff, GetInteger) },
-						{ L"wg", LAMBDA_SET(weightRuby, GetInteger) },
-						{ L"ox", LAMBDA_SET(leftOff, GetInteger) },
-						{ L"op", LAMBDA_SET(pitchOff, GetInteger) },
+						{ L"rb", _FuncSetText },
+						{ L"rt", _FuncSetRuby },
+						{ L"size", _FuncSetSize },
+						{ L"sz", _FuncSetSize },
+						{ L"wg", _FuncSetWeight },
+						{ L"ox", _FuncSetLeft },
+						{ L"op", _FuncSetPitch },
 					};
-#undef LAMBDA_SET
+
+					//--------------------------------------------------------------
 
 					while (true) {
 						tok = scan.Next();
@@ -1004,68 +1025,134 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 					//--------------------------------------------------------------
 
-					auto funcClear = [](Data* i, DxTextScanner&) { i->bClear = true; };
+					
 
 #define CHK_EQ scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL); \
 					auto pointerBefore = scan.GetCurrentPointer(); \
 					DxTextToken& arg = scan.Next();
-#define LAMBDA_SET_I(m) [](Data* i, DxTextScanner& scan) { CHK_EQ; i->m = arg.GetInteger(); }
-#define LAMBDA_SET_B(m) [](Data* i, DxTextScanner& scan) { CHK_EQ; i->m = arg.GetBoolean(); }
-#define LAMBDA_SET_COLOR_S(mask, shift, dst) [](Data* i, DxTextScanner& scan) { \
-						CHK_EQ; \
-						byte c = ColorAccess::ClampColorRet(arg.GetInteger()); \
-						i->dst = ((i->dst) & (DWORD)(mask)) | (c << (byte)(shift)); \
-					}
-#define LAMBDA_SET_COLOR_PK(dst) [](Data* i, DxTextScanner& scan) { \
-						CHK_EQ; \
-						scan.SetCurrentPointer(pointerBefore); \
-						std::vector<std::wstring> list = GetScannerStringArgumentList(scan, pointerBefore); \
-						if (list.size() >= 3) { \
-							byte r = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[0])); \
-							byte g = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[1])); \
-							byte b = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[2])); \
-							i->dst = ((i->dst) & 0xff000000) | (D3DCOLOR_XRGB(r, g, b) & 0x00ffffff); \
-						} \
-					}
+#define INIT_LAMBDA(_name) auto _name = [](Data* i, DxTextScanner& scan)
+#define INIT_LAMBDA2(_name) auto _name = [&](Data* i, DxTextScanner& scan)
+					INIT_LAMBDA(_FuncClear) { i->bClear = true; };
+					INIT_LAMBDA(_FuncSetSize) {
+						CHK_EQ;
+						i->logFont->lfHeight = arg.GetInteger();
+					};
+					INIT_LAMBDA(_FuncSetWeight) {
+						CHK_EQ;
+						i->logFont->lfWeight = arg.GetInteger();
+					};
+					INIT_LAMBDA(_FuncSetItalic) {
+						CHK_EQ;
+						i->fontData->italic = arg.GetBoolean();
+					};
+					INIT_LAMBDA(_FuncSetOffX) {
+						CHK_EQ;
+						i->tag->GetOffset().x = arg.GetInteger();
+					};
+					INIT_LAMBDA(_FuncSetOffY) {
+						CHK_EQ;
+						i->tag->GetOffset().y = arg.GetInteger();
+					};
+
+					auto __FuncSetColor_S = [](int col, D3DCOLOR* dst, DWORD mask, byte shift) {
+						byte c = ColorAccess::ClampColorRet(col);
+						*dst = ((*dst) & mask) | (c << shift);
+					};
+					INIT_LAMBDA2(_FuncSetColor_SB_R) {
+						CHK_EQ;
+						__FuncSetColor_S(arg.GetInteger(), &i->fontData->colorBottom, 0xff00ffff, 16);
+					};
+					INIT_LAMBDA2(_FuncSetColor_SB_G) {
+						CHK_EQ;
+						__FuncSetColor_S(arg.GetInteger(), &i->fontData->colorBottom, 0xffff00ff, 8);
+					};
+					INIT_LAMBDA2(_FuncSetColor_SB_B) {
+						CHK_EQ;
+						__FuncSetColor_S(arg.GetInteger(), &i->fontData->colorBottom, 0xffffff00, 0);
+					};
+					INIT_LAMBDA2(_FuncSetColor_ST_R) {
+						CHK_EQ;
+						__FuncSetColor_S(arg.GetInteger(), &i->fontData->colorTop, 0xff00ffff, 16);
+					};
+					INIT_LAMBDA2(_FuncSetColor_ST_G) {
+						CHK_EQ;
+						__FuncSetColor_S(arg.GetInteger(), &i->fontData->colorTop, 0xffff00ff, 8);
+					};
+					INIT_LAMBDA2(_FuncSetColor_ST_B) {
+						CHK_EQ;
+						__FuncSetColor_S(arg.GetInteger(), &i->fontData->colorTop, 0xffffff00, 0);
+					};
+					INIT_LAMBDA2(_FuncSetColor_SO_R) {
+						CHK_EQ;
+						__FuncSetColor_S(arg.GetInteger(), &i->fontData->colorBorder, 0xff00ffff, 16);
+					};
+					INIT_LAMBDA2(_FuncSetColor_SO_G ) {
+						CHK_EQ;
+						__FuncSetColor_S(arg.GetInteger(), &i->fontData->colorBorder, 0xffff00ff, 8);
+					};
+					INIT_LAMBDA2(_FuncSetColor_SO_B) {
+						CHK_EQ;
+						__FuncSetColor_S(arg.GetInteger(), &i->fontData->colorBorder, 0xffffff00, 0);
+					};
+
+					auto __FuncSetColor_P = [](DxTextScanner& scan, std::vector<wchar_t>::iterator before, D3DCOLOR* dst) {
+						scan.SetCurrentPointer(before);
+						std::vector<std::wstring> list = GetScannerStringArgumentList(scan, before);
+						if (list.size() >= 3) {
+							byte r = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[0]));
+							byte g = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[1]));
+							byte b = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[2]));
+							*dst = ((*dst) & 0xff000000) | (D3DCOLOR_XRGB(r, g, b) & 0x00ffffff);
+						}
+					};
+					INIT_LAMBDA2(_FuncSetColor_P_B) {
+						CHK_EQ; 
+						__FuncSetColor_P(scan, pointerBefore, &i->fontData->colorBottom);
+					};
+					INIT_LAMBDA2(_FuncSetColor_P_T) {
+						CHK_EQ;
+						__FuncSetColor_P(scan, pointerBefore, &i->fontData->colorTop);
+					};
+					INIT_LAMBDA2(_FuncSetColor_P_O) {
+						CHK_EQ;
+						__FuncSetColor_P(scan, pointerBefore, &i->fontData->colorBorder);
+					};
+#undef CHK_EQ
+#undef INIT_LAMBDA
+#undef INIT_LAMBDA2
 
 					//Do NOT use [&] lambdas
 					static const std::unordered_map<std::wstring, std::function<void(Data*, DxTextScanner&)>> mapFunc = {
-						{ L"r", funcClear },
-						{ L"rs", funcClear },
-						{ L"reset", funcClear },
-						{ L"c", funcClear },
-						{ L"clr", funcClear },
-						{ L"clear", funcClear },
+						{ L"r", _FuncClear },
+						{ L"rs", _FuncClear },
+						{ L"reset", _FuncClear },
+						{ L"c", _FuncClear },
+						{ L"clr", _FuncClear },
+						{ L"clear", _FuncClear },
 
-						{ L"sz", LAMBDA_SET_I(logFont->lfHeight) },
-						{ L"size", LAMBDA_SET_I(logFont->lfHeight) },
-						{ L"wg", LAMBDA_SET_I(logFont->lfWeight) },
-						{ L"it", LAMBDA_SET_B(fontData->italic) },
-						{ L"un", LAMBDA_SET_B(fontData->underl) },		//doesn't work
-						{ L"st", LAMBDA_SET_B(fontData->strike) },		//doesn't work
-						{ L"ox", LAMBDA_SET_I(tag->GetOffset().x) },
-						{ L"oy", LAMBDA_SET_I(tag->GetOffset().y) },
+						{ L"sz", _FuncSetSize },
+						{ L"size", _FuncSetSize },
+						{ L"wg", _FuncSetWeight },
+						{ L"it", _FuncSetItalic },
+						//{ L"un", LAMBDA_SET_B(fontData->underl) },		//doesn't work
+						//{ L"st", LAMBDA_SET_B(fontData->strike) },		//doesn't work
+						{ L"ox", _FuncSetOffX },
+						{ L"oy", _FuncSetOffY },
 
-						{ L"br", LAMBDA_SET_COLOR_S(0xff00ffff, 16, fontData->colorBottom) },
-						{ L"bg", LAMBDA_SET_COLOR_S(0xffff00ff, 8, fontData->colorBottom) },
-						{ L"bb", LAMBDA_SET_COLOR_S(0xffffff00, 0, fontData->colorBottom) },
-						{ L"tr", LAMBDA_SET_COLOR_S(0xff00ffff, 16, fontData->colorTop) },
-						{ L"tg", LAMBDA_SET_COLOR_S(0xffff00ff, 8, fontData->colorTop) },
-						{ L"tb", LAMBDA_SET_COLOR_S(0xffffff00, 0, fontData->colorTop) },
-						{ L"or", LAMBDA_SET_COLOR_S(0xff00ffff, 16, fontData->colorBorder) },
-						{ L"og", LAMBDA_SET_COLOR_S(0xffff00ff, 8, fontData->colorBorder) },
-						{ L"ob", LAMBDA_SET_COLOR_S(0xffffff00, 0, fontData->colorBorder) },
+						{ L"br", _FuncSetColor_SB_R },
+						{ L"bg", _FuncSetColor_SB_G },
+						{ L"bb", _FuncSetColor_SB_B },
+						{ L"tr", _FuncSetColor_ST_R },
+						{ L"tg", _FuncSetColor_ST_G },
+						{ L"tb", _FuncSetColor_ST_B },
+						{ L"or", _FuncSetColor_SO_R },
+						{ L"og", _FuncSetColor_SO_G },
+						{ L"ob", _FuncSetColor_SO_B },
 
-						{ L"bc", LAMBDA_SET_COLOR_PK(fontData->colorBottom) },
-						{ L"tc", LAMBDA_SET_COLOR_PK(fontData->colorTop) },
-						{ L"oc", LAMBDA_SET_COLOR_PK(fontData->colorBorder) },
+						{ L"bc", _FuncSetColor_P_B },
+						{ L"tc", _FuncSetColor_P_T },
+						{ L"oc", _FuncSetColor_P_O },
 					};
-
-#undef CHK_EQ
-#undef LAMBDA_SET_I
-#undef LAMBDA_SET_B
-#undef LAMBDA_SET_COLOR_S
-#undef LAMBDA_SET_COLOR_PK
 
 					//--------------------------------------------------------------
 
