@@ -190,9 +190,9 @@ namespace gstd {
 				ip = _ip;
 			}
 
-			void AddCode(script_block* bk, code&& cd) {
-				cd.line = lex->line;
+			void AddCode(script_block* bk, const code& cd) {
 				bk->codes.push_back(cd);
+				bk->codes.back().line = lex->line;
 				++ip;
 			}
 			void PopCode(script_block* bk) {

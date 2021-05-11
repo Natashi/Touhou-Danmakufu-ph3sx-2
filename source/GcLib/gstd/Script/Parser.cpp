@@ -643,6 +643,11 @@ namespace gstd {
 			std::string name = state->lex->word;
 			state->advance();
 
+#ifdef _DEBUG
+			if (name == "__PARSER_BREAK_")
+				DebugBreak();
+#endif
+
 			int argc = parse_arguments(block, state);
 			symbol* s = search(name, argc);
 
@@ -985,7 +990,8 @@ continue_as_variadic:
 			optimize_expression(&tmp, state);
 			link_jump(&tmp, state, ip);
 
-			block->codes.insert(block->codes.end(), tmp.codes.begin(), tmp.codes.end());
+			for (auto& i : tmp.codes)
+				block->codes.push_back(i);
 		}
 		catch (std::string& err) {
 			parser_assert(state, false, err);
