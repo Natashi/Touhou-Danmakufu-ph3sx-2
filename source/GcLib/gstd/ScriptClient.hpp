@@ -146,12 +146,14 @@ namespace gstd {
 		void CheckRunInMainThread();
 		ScriptCommonDataManager* GetCommonDataManager() { return commonDataManager_.get(); }
 
-		//共通関数：スクリプト引数結果
+		//-------------------------------------------------------------------------
+
+		//Script functions
 		static value Func_GetScriptArgument(script_machine* machine, int argc, const value* argv);
 		static value Func_GetScriptArgumentCount(script_machine* machine, int argc, const value* argv);
 		static value Func_SetScriptResult(script_machine* machine, int argc, const value* argv);
 
-		//共通関数：数学系
+		//Maths functions
 		static value Func_Min(script_machine* machine, int argc, const value* argv);
 		static value Func_Max(script_machine* machine, int argc, const value* argv);
 		static value Func_Clamp(script_machine* machine, int argc, const value* argv);
@@ -181,16 +183,19 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_NRoot);
 		DNH_FUNCAPI_DECL_(Func_Hypot);
 
+		//Math functions; random
 		static value Func_Rand(script_machine* machine, int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(Func_RandI);
 		DNH_FUNCAPI_DECL_(Func_RandEff);
 		DNH_FUNCAPI_DECL_(Func_RandEffI);
 
+		//Math functions; angle helper
 		DNH_FUNCAPI_DECL_(Func_ToDegrees);
 		DNH_FUNCAPI_DECL_(Func_ToRadians);
 		DNH_FUNCAPI_DECL_(Func_NormalizeAngle);
 		DNH_FUNCAPI_DECL_(Func_RNormalizeAngle);
 
+		//Math functions; interpolation
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Linear);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Smooth);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Smoother);
@@ -202,7 +207,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_Interpolate_CubicBezier);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Hermite);
 
-		//共通関数：文字列操作
+		//String manipulations
 		static value Func_ToString(script_machine* machine, int argc, const value* argv);
 		static value Func_ItoA(script_machine* machine, int argc, const value* argv);
 		static value Func_RtoA(script_machine* machine, int argc, const value* argv);
@@ -214,17 +219,17 @@ namespace gstd {
 		static value Func_TrimString(script_machine* machine, int argc, const value* argv);
 		static value Func_SplitString(script_machine* machine, int argc, const value* argv);
 
+		//String manipulations; regular expressions
 		DNH_FUNCAPI_DECL_(Func_RegexMatch);
 		DNH_FUNCAPI_DECL_(Func_RegexMatchRepeated);
 		DNH_FUNCAPI_DECL_(Func_RegexReplace);
 
-		//共通関数：パス関連
+		//Path utility
 		static value Func_GetParentScriptDirectory(script_machine* machine, int argc, const value* argv);
 		static value Func_GetCurrentScriptDirectory(script_machine* machine, int argc, const value* argv);
 		static value Func_GetFilePathList(script_machine* machine, int argc, const value* argv);
 		static value Func_GetDirectoryList(script_machine* machine, int argc, const value* argv);
 
-		//Path utility
 		DNH_FUNCAPI_DECL_(Func_GetModuleName);
 		DNH_FUNCAPI_DECL_(Func_GetModuleDirectory);
 		DNH_FUNCAPI_DECL_(Func_GetFileDirectory);
@@ -236,15 +241,17 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_IsFileExists);
 		DNH_FUNCAPI_DECL_(Func_IsDirectoryExists);
 
-		//共通関数：時刻関連
+		//System time
+		DNH_FUNCAPI_DECL_(Func_GetSystemTimeMilliS);
+		DNH_FUNCAPI_DECL_(Func_GetSystemTimeNanoS);
 		static value Func_GetCurrentDateTimeS(script_machine* machine, int argc, const value* argv);
 
-		//共通関数：デバッグ関連
+		//Debugging
 		static value Func_WriteLog(script_machine* machine, int argc, const value* argv);
 		static value Func_RaiseError(script_machine* machine, int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(Func_RaiseMessageWindow);
 
-		//共通関数：共通データ
+		//Script common data
 		static value Func_SetCommonData(script_machine* machine, int argc, const value* argv);
 		static value Func_GetCommonData(script_machine* machine, int argc, const value* argv);
 		static value Func_ClearCommonData(script_machine* machine, int argc, const value* argv);
@@ -335,6 +342,7 @@ namespace gstd {
 	public:
 		ScriptFileLineMap();
 		virtual ~ScriptFileLineMap();
+
 		void AddEntry(const std::wstring& path, int lineAdd, int lineCount);
 		Entry* GetEntry(int line);
 		std::wstring& GetPath(int line);
@@ -438,7 +446,9 @@ namespace gstd {
 		void _UpdateValueView();
 	public:
 		ScriptCommonDataInfoPanel();
+
 		void SetUpdateInterval(int time) { timeUpdateInterval_ = time; }
+
 		virtual void LocateParts();
 		virtual void Update(shared_ptr<ScriptCommonDataManager>& commonDataManager);
 	};

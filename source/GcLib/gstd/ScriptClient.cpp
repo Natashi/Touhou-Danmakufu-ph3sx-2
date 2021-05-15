@@ -120,6 +120,8 @@ static const std::vector<function> commonFunction = {
 	{ "IsDirectoryExists", ScriptClientBase::Func_IsDirectoryExists, 1 },
 
 	//System time
+	{ "GetSystemTimeMilliS", ScriptClientBase::Func_GetSystemTimeMilliS, 0 },
+	{ "GetSystemTimeNanoS", ScriptClientBase::Func_GetSystemTimeNanoS, 0 },
 	{ "GetCurrentDateTimeS", ScriptClientBase::Func_GetCurrentDateTimeS, 0 },
 
 	//Debug stuff
@@ -1412,6 +1414,16 @@ value ScriptClientBase::Func_IsDirectoryExists(script_machine* machine, int argc
 }
 
 //ã§í ä÷êîÅFéûçèä÷òA
+value ScriptClientBase::Func_GetSystemTimeMilliS(script_machine* machine, int argc, const value* argv) {
+	auto duration = std::chrono::system_clock::now().time_since_epoch();
+	int64_t time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+	return ScriptClientBase::CreateIntValue(time);
+}
+value ScriptClientBase::Func_GetSystemTimeNanoS(script_machine* machine, int argc, const value* argv) {
+	auto duration = std::chrono::system_clock::now().time_since_epoch();
+	int64_t time = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+	return ScriptClientBase::CreateIntValue(time);
+}
 value ScriptClientBase::Func_GetCurrentDateTimeS(script_machine* machine, int argc, const value* argv) {
 	SYSTEMTIME date;
 	GetLocalTime(&date);
