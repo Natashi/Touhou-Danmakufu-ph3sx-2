@@ -266,6 +266,12 @@ namespace gstd {
 		static value Func_IsCommonDataAreaExists(script_machine* machine, int argc, const value* argv);
 		static value Func_GetCommonDataAreaKeyList(script_machine* machine, int argc, const value* argv);
 		static value Func_GetCommonDataValueKeyList(script_machine* machine, int argc, const value* argv);
+
+		DNH_FUNCAPI_DECL_(Func_LoadCommonDataValuePointer);
+		DNH_FUNCAPI_DECL_(Func_LoadAreaCommonDataValuePointer);
+		DNH_FUNCAPI_DECL_(Func_IsValidCommonDataValuePointer);
+		DNH_FUNCAPI_DECL_(Func_SetCommonDataPtr);
+		DNH_FUNCAPI_DECL_(Func_GetCommonDataPtr);
 	};
 #pragma region ScriptClientBase_impl
 	value ScriptClientBase::CreateRealValue(double r) {
@@ -356,7 +362,14 @@ namespace gstd {
 	public:
 		static constexpr const char* HEADER_SAVED_DATA = "DNHCDR\0\0";
 		static constexpr size_t HEADER_SAVED_DATA_SIZE = 8U;
+		static constexpr size_t DATA_HASH = 0xabcdef69u;
+
+		struct _Script_PointerData {
+			ScriptCommonData* pArea = nullptr;
+			gstd::value* pData = nullptr;
+		};
 	protected:
+		volatile size_t verifHash_;
 		std::map<std::string, gstd::value> mapValue_;
 
 		gstd::value _ReadRecord(gstd::ByteBuffer& buffer);
@@ -380,6 +393,9 @@ namespace gstd {
 
 		void ReadRecord(gstd::RecordBuffer& record);
 		void WriteRecord(gstd::RecordBuffer& record);
+
+		bool CheckHash() { return verifHash_ == DATA_HASH; }
+		static bool Script_DecomposePtr(uint64_t val, _Script_PointerData* dst);
 	};
 
 	//*******************************************************************

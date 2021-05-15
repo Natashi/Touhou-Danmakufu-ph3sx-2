@@ -147,6 +147,15 @@ static const std::vector<function> commonFunction = {
 	{ "IsCommonDataAreaExists", ScriptClientBase::Func_IsCommonDataAreaExists, 1 },
 	{ "GetCommonDataAreaKeyList", ScriptClientBase::Func_GetCommonDataAreaKeyList, 0 },
 	{ "GetCommonDataValueKeyList", ScriptClientBase::Func_GetCommonDataValueKeyList, 1 },
+
+	{ "LoadCommonDataValuePointer", ScriptClientBase::Func_LoadCommonDataValuePointer, 1 },
+	{ "LoadCommonDataValuePointer", ScriptClientBase::Func_LoadCommonDataValuePointer, 2 },			//Overloaded
+	{ "LoadAreaCommonDataValuePointer", ScriptClientBase::Func_LoadAreaCommonDataValuePointer, 2 },
+	{ "LoadAreaCommonDataValuePointer", ScriptClientBase::Func_LoadAreaCommonDataValuePointer, 3 },	//Overloaded
+	{ "IsValidCommonDataValuePointer", ScriptClientBase::Func_IsValidCommonDataValuePointer, 1 },
+	{ "SetCommonDataPtr", ScriptClientBase::Func_SetCommonDataPtr, 2 },
+	{ "GetCommonDataPtr", ScriptClientBase::Func_GetCommonDataPtr, 1 },
+	{ "GetCommonDataPtr", ScriptClientBase::Func_GetCommonDataPtr, 2 },		//Overloaded
 };
 static const std::vector<constant> commonConstant = {
 	constant("NULL", 0i64),
@@ -1662,6 +1671,101 @@ value ScriptClientBase::Func_GetCommonDataValueKeyList(script_machine* machine, 
 	return script->CreateStringArrayValue(listKey);
 }
 
+value ScriptClientBase::Func_LoadCommonDataValuePointer(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+
+	auto itrArea = commonDataManager->GetDefaultAreaIterator();
+	auto dataArea = commonDataManager->GetData(itrArea);
+	std::string key = StringUtility::ConvertWideToMulti(argv[0].as_string());
+
+	uint64_t res = (uint64_t)nullptr;
+
+	{
+		value* pData = nullptr;
+
+		auto resFind = dataArea->IsExists(key);
+		if (resFind.first) {
+			pData = &(resFind.second->second);
+		}
+		else if (argc == 3) {
+			dataArea->SetValue(key, argv[2]);
+			pData = &(dataArea->IsExists(key).second->second);
+		}
+		else dataArea = nullptr;
+
+		//Galaxy brain hax method
+		res = ((uint64_t)(dataArea.get()) << 32) | (uint64_t)(pData);
+	}
+
+	return script->CreateIntValue((int64_t&)res);
+}
+value ScriptClientBase::Func_LoadAreaCommonDataValuePointer(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+
+	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
+	std::string key = StringUtility::ConvertWideToMulti(argv[1].as_string());
+
+	uint64_t res = (uint64_t)nullptr;
+
+	{
+		ScriptCommonData* pArea = commonDataManager->GetData(area).get();
+		value* pData = nullptr;
+
+		if (pArea) {
+			auto resFind = pArea->IsExists(key);
+			if (resFind.first) {
+				pData = &(resFind.second->second);
+			}
+			else if (argc == 3) {
+				pArea->SetValue(key, argv[2]);
+				pData = &(pArea->IsExists(key).second->second);
+			}
+			else pArea = nullptr;
+
+			res = ((uint64_t)(pArea) << 32) | (uint64_t)(pData);
+		}
+	}
+
+	return script->CreateIntValue((int64_t&)res);
+}
+value ScriptClientBase::Func_SetCommonDataPtr(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+
+	int64_t val = argv[0].as_int();
+
+	ScriptCommonData::_Script_PointerData ptrData;
+	if (ScriptCommonData::Script_DecomposePtr((uint64_t&)val, &ptrData)) {
+		*(ptrData.pData) = argv[1];
+	}
+
+	return value();
+}
+value ScriptClientBase::Func_GetCommonDataPtr(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+
+	value res;
+	if (argc == 3) res = argv[2];
+
+	int64_t val = argv[0].as_int();
+
+	ScriptCommonData::_Script_PointerData ptrData;
+	if (ScriptCommonData::Script_DecomposePtr((uint64_t&)val, &ptrData)) {
+		res = *(ptrData.pData);
+	}
+
+	return res;
+}
+value ScriptClientBase::Func_IsValidCommonDataValuePointer(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+
+	int64_t val = argv[0].as_int();
+	return script->CreateBooleanValue(ScriptCommonData::Script_DecomposePtr((uint64_t&)val, nullptr));
+}
 
 //****************************************************************************
 //ScriptFileLineMap
@@ -1803,7 +1907,9 @@ void ScriptCommonDataManager::SetData(CommonDataMap::iterator itr, shared_ptr<Sc
 //****************************************************************************
 //ScriptCommonData
 //****************************************************************************
-ScriptCommonData::ScriptCommonData() {}
+ScriptCommonData::ScriptCommonData() {
+	verifHash_ = DATA_HASH;
+}
 ScriptCommonData::~ScriptCommonData() {}
 void ScriptCommonData::Clear() {
 	mapValue_.clear();
@@ -1955,6 +2061,21 @@ void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, const gstd::value&
 	}
 }
 
+bool ScriptCommonData::Script_DecomposePtr(uint64_t val, _Script_PointerData* dst) {
+	//Pointer format:
+	//	63    32				31     0
+	//	xxxxxxxx				xxxxxxxx
+	//	(ScriptCommonData*)		(value*)
+
+	ScriptCommonData* pArea = (ScriptCommonData*)(val >> 32);
+	value* pData = (value*)(val & 0xffffffff);
+
+	if (dst) {
+		dst->pArea = pArea;
+		dst->pData = pData;
+	}
+	return pArea != nullptr && pData != nullptr && pArea->CheckHash();
+}
 
 //****************************************************************************
 //ScriptCommonDataPanel
