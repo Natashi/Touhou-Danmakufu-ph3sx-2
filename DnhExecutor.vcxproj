@@ -104,6 +104,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <OpenMPSupport>false</OpenMPSupport>
       <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
