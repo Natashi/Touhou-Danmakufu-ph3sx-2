@@ -1688,8 +1688,8 @@ value ScriptClientBase::Func_LoadCommonDataValuePointer(script_machine* machine,
 		if (resFind.first) {
 			pData = &(resFind.second->second);
 		}
-		else if (argc == 3) {
-			dataArea->SetValue(key, argv[2]);
+		else if (argc == 2) {
+			dataArea->SetValue(key, argv[1]);
 			pData = &(dataArea->IsExists(key).second->second);
 		}
 		else dataArea = nullptr;
