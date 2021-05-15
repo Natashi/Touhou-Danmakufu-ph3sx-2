@@ -133,10 +133,12 @@ static const std::vector<function> commonFunction = {
 	//Common data
 	{ "SetCommonData", ScriptClientBase::Func_SetCommonData, 2 },
 	{ "GetCommonData", ScriptClientBase::Func_GetCommonData, 2 },
+	{ "GetCommonData", ScriptClientBase::Func_GetCommonData, 1 },	//Overloaded
 	{ "ClearCommonData", ScriptClientBase::Func_ClearCommonData, 0 },
 	{ "DeleteCommonData", ScriptClientBase::Func_DeleteCommonData, 1 },
 	{ "SetAreaCommonData", ScriptClientBase::Func_SetAreaCommonData, 3 },
 	{ "GetAreaCommonData", ScriptClientBase::Func_GetAreaCommonData, 3 },
+	{ "GetAreaCommonData", ScriptClientBase::Func_GetAreaCommonData, 2 },	//Overloaded
 	{ "ClearAreaCommonData", ScriptClientBase::Func_ClearAreaCommonData, 1 },
 	{ "DeleteAreaCommonData", ScriptClientBase::Func_DeleteAreaCommonData, 2 },
 	{ "DeleteWholeAreaCommonData", ScriptClientBase::Func_DeleteWholeAreaCommonData, 1 },
@@ -1481,34 +1483,39 @@ value ScriptClientBase::Func_RaiseMessageWindow(script_machine* machine, int arg
 value ScriptClientBase::Func_SetCommonData(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
-	auto area = commonDataManager->GetDefaultAreaIterator();
 
+	auto itrArea = commonDataManager->GetDefaultAreaIterator();
 	std::string key = StringUtility::ConvertWideToMulti(argv[0].as_string());
-	shared_ptr<ScriptCommonData> data = commonDataManager->GetData(area);
-	data->SetValue(key, argv[1]);
+	shared_ptr<ScriptCommonData> dataArea = commonDataManager->GetData(itrArea);
+	dataArea->SetValue(key, argv[1]);
 
 	return value();
 }
 value ScriptClientBase::Func_GetCommonData(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
-	auto area = commonDataManager->GetDefaultAreaIterator();
 
+	value res;
+	if (argc == 2)
+		res = argv[1];
+
+	auto itrArea = commonDataManager->GetDefaultAreaIterator();
 	std::string key = StringUtility::ConvertWideToMulti(argv[0].as_string());
-	shared_ptr<ScriptCommonData> data = commonDataManager->GetData(area);
+	shared_ptr<ScriptCommonData> dataArea = commonDataManager->GetData(itrArea);
 
-	auto resFind = data->IsExists(key);
-	if (!resFind.first) return argv[1];
+	auto resFind = dataArea->IsExists(key);
+	if (resFind.first)
+		res = resFind.second->second;
 
-	return resFind.second->second;
+	return res;
 }
 value ScriptClientBase::Func_ClearCommonData(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
-	auto area = commonDataManager->GetDefaultAreaIterator();
 
-	shared_ptr<ScriptCommonData> data = commonDataManager->GetData(area);
-	data->Clear();
+	auto itrArea = commonDataManager->GetDefaultAreaIterator();
+	shared_ptr<ScriptCommonData> dataArea = commonDataManager->GetData(itrArea);
+	dataArea->Clear();
 
 	return value();
 }
@@ -1518,8 +1525,8 @@ value ScriptClientBase::Func_DeleteCommonData(script_machine* machine, int argc,
 	auto area = commonDataManager->GetDefaultAreaIterator();
 
 	std::string key = StringUtility::ConvertWideToMulti(argv[0].as_string());
-	shared_ptr<ScriptCommonData> data = commonDataManager->GetData(area);
-	data->DeleteValue(key);
+	shared_ptr<ScriptCommonData> dataArea = commonDataManager->GetData(area);
+	dataArea->DeleteValue(key);
 
 	return value();
 }
@@ -1532,8 +1539,8 @@ value ScriptClientBase::Func_SetAreaCommonData(script_machine* machine, int argc
 
 	auto resFind = commonDataManager->IsExists(area);
 	if (resFind.first) {
-		shared_ptr<ScriptCommonData> data = commonDataManager->GetData(resFind.second);
-		data->SetValue(key, argv[2]);
+		shared_ptr<ScriptCommonData> dataArea = commonDataManager->GetData(resFind.second);
+		dataArea->SetValue(key, argv[2]);
 	}
 
 	return value();
@@ -1542,18 +1549,21 @@ value ScriptClientBase::Func_GetAreaCommonData(script_machine* machine, int argc
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
 
+	value res;
+	if (argc == 3)
+		res = argv[2];
+
 	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
 	std::string key = StringUtility::ConvertWideToMulti(argv[1].as_string());
-	value dv = argv[2];
 
 	auto resFindArea = commonDataManager->IsExists(area);
 	if (resFindArea.first) {
-		shared_ptr<ScriptCommonData> data = commonDataManager->GetData(resFindArea.second);
-		auto resFindData = data->IsExists(key);
+		shared_ptr<ScriptCommonData> dataArea = commonDataManager->GetData(resFindArea.second);
+		auto resFindData = dataArea->IsExists(key);
 		if (resFindData.first)
-			return data->GetValue(resFindData.second);
+			res = dataArea->GetValue(resFindData.second);
 	}
-	return argv[2];
+	return res;
 }
 value ScriptClientBase::Func_ClearAreaCommonData(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
@@ -1563,8 +1573,8 @@ value ScriptClientBase::Func_ClearAreaCommonData(script_machine* machine, int ar
 
 	auto resFind = commonDataManager->IsExists(area);
 	if (resFind.first) {
-		shared_ptr<ScriptCommonData> data = commonDataManager->GetData(resFind.second);
-		data->Clear();
+		shared_ptr<ScriptCommonData> dataArea = commonDataManager->GetData(resFind.second);
+		dataArea->Clear();
 	}
 
 	return value();
@@ -1578,8 +1588,8 @@ value ScriptClientBase::Func_DeleteAreaCommonData(script_machine* machine, int a
 
 	auto resFind = commonDataManager->IsExists(area);
 	if (resFind.first) {
-		shared_ptr<ScriptCommonData> data = commonDataManager->GetData(resFind.second);
-		data->DeleteValue(key);
+		shared_ptr<ScriptCommonData> dataArea = commonDataManager->GetData(resFind.second);
+		dataArea->DeleteValue(key);
 	}
 
 	return value();
