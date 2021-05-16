@@ -128,6 +128,7 @@ namespace directx {
 		static gstd::value Func_ResetShader(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ResetShaderI(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_IsPixelShaderSupported(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_IsVertexShaderSupported);
 		DNH_FUNCAPI_DECL_(Func_SetEnableAntiAliasing);
 
 		DNH_FUNCAPI_DECL_(Func_LoadMesh);

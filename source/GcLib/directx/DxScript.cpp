@@ -75,7 +75,9 @@ static const std::vector<function> dxFunction = {
 	{ "SaveRenderedTextureA1", DxScript::Func_SaveRenderedTextureA1, 2 },
 	{ "SaveRenderedTextureA2", DxScript::Func_SaveRenderedTextureA2, 6 },
 	{ "SaveRenderedTextureA3", DxScript::Func_SaveRenderedTextureA3, 7 },
+
 	{ "IsPixelShaderSupported", DxScript::Func_IsPixelShaderSupported, 2 },
+	{ "IsVertexShaderSupported", DxScript::Func_IsVertexShaderSupported, 2 },
 	//{ "SetAntiAliasing", DxScript::Func_SetEnableAntiAliasing, 1 },
 
 	//Fog
@@ -1490,13 +1492,24 @@ gstd::value DxScript::Func_SaveRenderedTextureA3(gstd::script_machine* machine, 
 	return script->CreateBooleanValue(SUCCEEDED(res));
 }
 gstd::value DxScript::Func_IsPixelShaderSupported(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	int major = argv[0].as_int();
-	int minor = argv[1].as_int();
+	DWORD major = argv[0].as_int();
+	DWORD minor = argv[1].as_int();
 
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	bool res = graphics->IsPixelShaderSupported(major, minor);
+	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
 
-	return DxScript::CreateBooleanValue(res);
+	D3DCAPS9 caps;
+	device->GetDeviceCaps(&caps);
+	return DxScript::CreateBooleanValue(caps.PixelShaderVersion >= D3DPS_VERSION(major, minor));
+}
+gstd::value DxScript::Func_IsVertexShaderSupported(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DWORD major = argv[0].as_int();
+	DWORD minor = argv[1].as_int();
+
+	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
+
+	D3DCAPS9 caps;
+	device->GetDeviceCaps(&caps);
+	return DxScript::CreateBooleanValue(caps.VertexShaderVersion >= D3DVS_VERSION(major, minor));
 }
 gstd::value DxScript::Func_SetEnableAntiAliasing(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	bool enable = argv[0].as_boolean();

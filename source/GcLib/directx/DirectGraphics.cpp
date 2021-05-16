@@ -702,12 +702,6 @@ void DirectGraphics::SaveBackSurfaceToFile(const std::wstring& path) {
 		pBackSurface, nullptr, (RECT*)&rect);
 	pBackSurface->Release();
 }
-bool DirectGraphics::IsPixelShaderSupported(int major, int minor) {
-	D3DCAPS9 caps;
-	pDevice_->GetDeviceCaps(&caps);
-	bool res = caps.PixelShaderVersion >= D3DPS_VERSION(major, minor);
-	return res;
-}
 
 //*******************************************************************
 //DirectGraphicsPrimaryWindow

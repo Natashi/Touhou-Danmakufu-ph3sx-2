@@ -179,7 +179,6 @@ namespace directx {
 		gstd::ref_count_ptr<DxCamera2D> GetCamera2D() { return camera2D_; }
 
 		void SaveBackSurfaceToFile(const std::wstring& path);
-		bool IsPixelShaderSupported(int major, int minor);
 	};
 
 	//*******************************************************************
