@@ -103,17 +103,18 @@ namespace gstd {
 	}
 	bool BaseFunction::_type_assign_check(script_machine* machine, const value* v_src, const value* v_dst) {
 		if (!v_dst->has_data()) return true;	//dest is null, assign ahead
+
 		type_data* type_src = v_src->get_type();
 		type_data* type_dst = v_dst->get_type();
-
-		if (type_src == type_dst)
-			return true;	//Same type
-		else if (!_type_check_two_any(type_dst, type_src, type_data::tk_array))
-			return true;	//Different type, but neither is an array
-		else if (type_src->get_kind() == type_dst->get_kind()
-			&& (type_src->get_element() == nullptr || type_dst->get_element() == nullptr))
-			return true;	//Both are arrays, and one is empty
-
+		if (v_src->has_data()) {
+			if (type_src == type_dst)
+				return true;	//Same type
+			else if (!_type_check_two_any(type_dst, type_src, type_data::tk_array))
+				return true;	//Different type, but neither is an array
+			else if (type_src->get_kind() == type_dst->get_kind()
+				&& (type_src->get_element() == nullptr || type_dst->get_element() == nullptr))
+				return true;	//Both are arrays, and one is empty
+		}
 		{
 			std::string error = StringUtility::Format(
 				"Variable assignment cannot implicitly convert from \"%s\" to \"%s\".\r\n",
@@ -126,15 +127,16 @@ namespace gstd {
 	}
 	bool BaseFunction::_type_assign_check_no_convert(script_machine* machine, const value* v_src, const value* v_dst) {
 		if (!v_dst->has_data()) return true;		//dest is null, assign ahead
+
 		type_data* type_src = v_src->get_type();
 		type_data* type_dst = v_dst->get_type();
-
-		if (type_src == type_dst)
-			return true;	//Same type
-		else if (_type_check_two_all(type_src, type_dst, type_data::tk_array)
-			&& (type_src->get_element() == nullptr || type_dst->get_element() == nullptr))
-			return true;	//Different type, but both are arrays, and one is empty
-
+		if (v_src->has_data()) {
+			if (type_src == type_dst)
+				return true;	//Same type
+			else if (_type_check_two_all(type_src, type_dst, type_data::tk_array)
+				&& (type_src->get_element() == nullptr || type_dst->get_element() == nullptr))
+				return true;	//Different type, but both are arrays, and one is empty
+		}
 		{
 			std::string error = StringUtility::Format(
 				"Variable assignment cannot assign type \"%s\" to type \"%s\".\r\n",
