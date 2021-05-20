@@ -765,6 +765,20 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				IFF_DDS: DirectDraw Surface file. 							(.dds)
 				IFF_PPM: Portable PixelMap graphics file. 					(.ppm)
 				
+	--------------------------------> Time <--------------------------------
+	
+	GetSystemTimeMilliS
+		Returns:
+			(int) time
+		Description:
+			Returns the time of the system clock in milliseconds.
+			
+	GetSystemTimeNanoS
+		Returns:
+			(int) time
+		Description:
+			Returns the time of the system clock in nanoseconds.
+				
 	--------------------------------> Debugging <--------------------------------
 	
 	WriteLog
@@ -814,12 +828,121 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	--------------------------------> Common Data <--------------------------------
 	
+	GetCommonData (Overload)
+		Arguments:
+			1) (string) key
+		Returns:
+			(any) stored value
+		Description:
+			Overloaded with 1 argument.
+			
+			A variant of GetCommonData(key, default) where the "default value" argument is omitted.
+			A null value will be returned if the requested key-value pair does not exist.
+			
+	GetAreaCommonData (Overload)
+		Arguments:
+			1) (string) area
+			2) (string) key
+		Returns:
+			(any) stored value
+		Description:
+			Overloaded with 2 arguments.
+			
+			A variant of GetAreaCommonData(area, key, default) where the "default value" argument is omitted.
+			A null value will be returned if the requested key-value pair does not exist.
+	
 	DeleteWholeAreaCommonData
 		Arguments:
 			1) (string) name
 		Description:
 			Deletes the whole area common data, not just the key-value list.
 			To use the area common data again, it must be recreated with CreateCommonDataArea.
+			
+	LoadCommonDataValuePointer
+		Arguments:
+			1) (string) key
+			2) (any) initial value
+		Returns:
+			(int) value pointer
+		Description:
+			Obtains a value pointer to the common data value in the default area.
+			
+			If the requested common data does not exist, it will be created and initialized with the provided value.
+			
+	LoadCommonDataValuePointer (Overload)
+		Arguments:
+			1) (string) key
+		Returns:
+			(int) value pointer
+		Description:
+			Overloaded with 1 argument.
+		
+			Obtains a value pointer to the common data value in the default area.
+			
+			If the requested common data does not exist, a null pointer will be returned.
+			
+	LoadAreaCommonDataValuePointer
+		Arguments:
+			1) (string) area
+			2) (string) key
+			3) (any) initial value
+		Returns:
+			(int) value pointer
+		Description:
+			Obtains a value pointer to the common data value in the given area.
+			
+			If the requested common data does not exist, it will be created and initialized with the provided value.
+			
+	LoadAreaCommonDataValuePointer (Overload)
+		Arguments:
+			1) (string) area
+			2) (string) key
+		Returns:
+			(int) value pointer
+		Description:
+			Overloaded with 1 argument.
+		
+			Obtains a value pointer to the common data value in the given area.
+			
+			If the requested common data does not exist, a null pointer will be returned.
+			
+	SetCommonDataPtr
+		Arguments:
+			1) (int) value pointer
+			2) (any) value
+		Description:
+			SetCommonData/SetAreaCommonData using pointers.
+			
+			The use of direct pointers mitigate the need for map traversals present in regular common data accesses,
+				and thus would remarkably improve speed.
+			Using an invalid pointer may cause a memory access violation.
+			
+	GetCommonDataPtr
+		Arguments:
+			1) (int) value pointer
+			2) (any) default value
+		Returns:
+			(any) stored value
+		Description:
+			GetCommonData/GetAreaCommonData using pointers.
+			
+			The use of direct pointers mitigate the need for map traversals present in regular common data accesses,
+				and thus would remarkably improve speed.
+			Using an invalid pointer may cause a memory access violation.
+			
+	GetCommonDataPtr (Overload)
+		Arguments:
+			1) (int) value pointer
+		Returns:
+			(any) stored value
+		Description:
+			Overloaded with 1 argument.
+		
+			GetCommonData/GetAreaCommonData using pointers.
+			
+			The use of direct pointers mitigate the need for map traversals present in regular common data accesses,
+				and thus would remarkably improve speed.
+			Using an invalid pointer may cause a memory access violation.
 	
 	--------------------------------> Event <--------------------------------
 
@@ -1178,6 +1301,17 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				IFF_PNG: Portable Network Graphics file. 					(.png)
 				IFF_DDS: DirectDraw Surface file. 							(.dds)
 				IFF_PPM: Portable PixelMap graphics file. 					(.ppm)
+				
+	--------------------------------> Device Capabilities <--------------------------------
+				
+	IsVertexShaderSupported
+		Arguments:
+			1) (int) major
+			2) (int) minor
+		Returns:
+			(bool) result
+		Description:
+			Checks if the video card on the device supports the given vertex shader version.
 				
 	--------------------------------> Fog <--------------------------------
 	
