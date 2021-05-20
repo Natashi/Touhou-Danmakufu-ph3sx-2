@@ -529,7 +529,7 @@ static const std::vector<function> stgStageFunction = {
 	//STG共通関数：当たり判定オブジェクト操作
 	{ "ObjCol_IsIntersected", StgStageScript::Func_ObjCol_IsIntersected, 1 },
 	{ "ObjCol_GetListOfIntersectedEnemyID", StgStageScript::Func_ObjCol_GetListOfIntersectedEnemyID, 1 },
-	{ "ObjCol_GetListOfIntersectedShotID", StgStageScript::Func_ObjCol_GetListOfIntersectedShotID, 1 },
+	{ "ObjCol_GetListOfIntersectedShotID", StgStageScript::Func_ObjCol_GetListOfIntersectedShotID, 2 },
 	{ "ObjCol_GetIntersectedCount", StgStageScript::Func_ObjCol_GetIntersectedCount, 1 },
 };
 static const std::vector<constant> stgStageConstant = {
