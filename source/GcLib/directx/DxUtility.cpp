@@ -197,7 +197,6 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 		A----B	(x1, y1)
 		|    |
 		|    |
-		|    |
 		D----C	(x2, y2)
 
 		<---->	width
@@ -239,16 +238,34 @@ bool DxMath::IsIntersected(DxCircle& circle, DxWidthLine& line) {
 
 	bool intersect_w = cross_x <= line.GetWidth();
 	bool intersect_h = cross_y <= line_h;
-	if (intersect_w && intersect_h)
+	if (intersect_w && intersect_h)			//The circle's center lies inside the rectangle
 		return true;
 	else if (intersect_w || intersect_h) {
+		//The circle's center lies within these regions
+		/*
+		    |here|
+		----A----B----
+		here|    |here
+		----D----C----
+			|here|
+		*/
+
 		float r2 = circle.GetR() * 2.0f;
-		if (intersect_w && (cross_y <= line_h + r2))
+		if (intersect_w && (cross_y <= line_h + r2))			//Horizontal regions
 			return true;
-		if (intersect_h && (cross_x <= line.GetWidth() + r2))
+		if (intersect_h && (cross_x <= line.GetWidth() + r2))	//Vertical regions
 			return true;
 		return false;
 	}
+
+	//The circle's center lies within the outer diagonal regions
+	/*
+	here|    |here
+	----A----B----
+		|    |
+	----D----C----
+	here|    |here
+	*/
 
 	float l_uw = line.GetWidth() / line_h * 0.5f;
 	v1 = Vectorize::Mul(
