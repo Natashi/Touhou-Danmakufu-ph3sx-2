@@ -290,7 +290,7 @@ namespace gstd {
 			{
 				std::vector<value> arrVal(argv->length_as_array());
 				for (size_t i = 0; i < arrVal.size(); ++i) {
-					value nv = value::new_from(argv->index_as_array(i));
+					value nv = argv->index_as_array(i);
 					BaseFunction::_value_cast(&nv, target->get_kind());
 					arrVal[i] = nv;
 				}
@@ -629,7 +629,7 @@ namespace gstd {
 				}
 
 				for (size_t i = oldSize; i < newSize; ++i)
-					arrVal[i] = value::new_from(fill);
+					arrVal[i] = fill;
 			}
 
 			val->set(newType, arrVal);
@@ -637,14 +637,11 @@ namespace gstd {
 		return value();
 	}
 
-	const value* BaseFunction::index(script_machine* machine, int argc, const value* argv) {
-		assert(argc == 2);
-
-		int index = argv[1].as_int();
-		if (!_index_check(machine, argv->get_type(), argv->length_as_array(), index))
+	const value* BaseFunction::index(script_machine* machine, int argc, value* arr, value* indexer) {
+		size_t index = indexer->as_int();
+		if (!_index_check(machine, arr->get_type(), arr->length_as_array(), index))
 			return nullptr;
-
-		return &argv->index_as_array(index);
+		return &arr->index_as_array(index);
 	}
 
 	value BaseFunction::slice(script_machine* machine, int argc, const value* argv) {
@@ -742,7 +739,6 @@ namespace gstd {
 		{
 			value appending = argv[1];
 			if (appending.get_type()->get_kind() != type_target->get_element()->get_kind()) {
-				appending.unique();
 				BaseFunction::_value_cast(&appending, type_target->get_element()->get_kind());
 			}
 			result.append(type_target, appending);

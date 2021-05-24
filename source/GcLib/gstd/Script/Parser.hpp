@@ -20,14 +20,15 @@ namespace gstd {
 
 		pc_pop,					//Pop [arg0] values from stack
 		pc_push_value,			//Push value=[data] to stack
-		pc_push_variable,		//Push variable=[arg0, arg1] to stack, allows null if [arg2]
-		pc_dup_n,				//Push {esp-[arg0]} to stack, make unique if [arg1]
+		pc_push_variable,		//Push value of variable=[arg0, arg1] to stack, allows null if [arg2]
+		pc_push_variable2,		//Push pointer of variable=[arg0, arg1] to stack, allows null if [arg2]
+		pc_dup_n,				//Push {esp-[arg0]} to stack
 		pc_swap,				//Swap {esp-0} and {esp-1}
-		pc_make_unique,			//Turns {esp-[arg0]} into a unique copy
+		pc_load_ptr,			//Push &{esp-[arg0]} to the stack
+		pc_unload_ptr,			//Dereferences {esp-[arg0]}
 
-		pc_copy_assign,			//Copy {esp-0} to variable=[arg0, arg1]
-		pc_overwrite_assign,	//Replace data of value {esp-1} with {esp-0}
-		pc_ref_assign,			//Unsupported currently
+		pc_copy_assign,			//Copy variable=[arg0, arg1] to {esp-0}
+		pc_ref_assign,			//Set *{esp-1} to {esp-0}
 
 		pc_sub_return,			//Return from a function/task/sub
 
@@ -60,7 +61,7 @@ namespace gstd {
 		pc_loop_continue,			//Parser dummy
 		pc_loop_break,				//Parser dummy
 
-		pc_construct_array,		//Create array of length [arg0] from values {esp-0} to {esp-[ip]}, and push to stack
+		pc_construct_array,		//Create array of length [arg0] from values {esp-0} to {esp-[arg0]}, and push to stack
 
 		//------------------------------------------------------------------------
 		//Inline operations
@@ -68,44 +69,45 @@ namespace gstd {
 		pc_inline_inc,			//If [arg0]: (++(variable=[arg1, arg2])), else: (++{esp-0}) and pop stack if [arg1]
 		pc_inline_dec,			//If [arg0]: (--(variable=[arg1, arg2])), else: (--{esp-0}) and pop stack if [arg1]
 
-		pc_inline_add_asi,		//If [arg0]: ((variable=[arg1, arg2]) += {esp-0}), else: ({esp-1} += {esp-0})
-		pc_inline_sub_asi,		//If [arg0]: ((variable=[arg1, arg2]) -= {esp-0}), else: ({esp-1} -= {esp-0})
-		pc_inline_mul_asi,		//If [arg0]: ((variable=[arg1, arg2]) *= {esp-0}), else: ({esp-1} *= {esp-0})
-		pc_inline_div_asi,		//If [arg0]: ((variable=[arg1, arg2]) /= {esp-0}), else: ({esp-1} /= {esp-0})
-		pc_inline_fdiv_asi,		//If [arg0]: ((variable=[arg1, arg2]) ~/= {esp-0}), else: ({esp-1} ~/= {esp-0})
-		pc_inline_mod_asi,		//If [arg0]: ((variable=[arg1, arg2]) %= {esp-0}), else: ({esp-1} %= {esp-0})
-		pc_inline_pow_asi,		//If [arg0]: ((variable=[arg1, arg2]) ^= {esp-0}), else: ({esp-1} ^= {esp-0})
-		pc_inline_cat_asi,		//If [arg0]: ((variable=[arg1, arg2]) ~= {esp-0}), else: ({esp-1} ~= {esp-0})
+		pc_inline_add_asi,		//If [arg0]: ((variable=[arg1, arg2]) += {esp-0}), else: (*{esp-1} += {esp-0})
+		pc_inline_sub_asi,		//If [arg0]: ((variable=[arg1, arg2]) -= {esp-0}), else: (*{esp-1} -= {esp-0})
+		pc_inline_mul_asi,		//If [arg0]: ((variable=[arg1, arg2]) *= {esp-0}), else: (*{esp-1} *= {esp-0})
+		pc_inline_div_asi,		//If [arg0]: ((variable=[arg1, arg2]) /= {esp-0}), else: (*{esp-1} /= {esp-0})
+		pc_inline_fdiv_asi,		//If [arg0]: ((variable=[arg1, arg2]) ~/= {esp-0}), else: (*{esp-1} ~/= {esp-0})
+		pc_inline_mod_asi,		//If [arg0]: ((variable=[arg1, arg2]) %= {esp-0}), else: (*{esp-1} %= {esp-0})
+		pc_inline_pow_asi,		//If [arg0]: ((variable=[arg1, arg2]) ^= {esp-0}), else: (*{esp-1} ^= {esp-0})
+		pc_inline_cat_asi,		//If [arg0]: ((variable=[arg1, arg2]) ~= {esp-0}), else: (*{esp-1} ~= {esp-0})
 
 		pc_inline_neg,			//Push (-{esp-0}) to stack
 		pc_inline_not,			//Push (!{esp-0}) to stack
 		pc_inline_abs,			//Push abs({esp-0}) to stack
 
-		pc_inline_add,			//Push ({esp-4} + {esp-0}) to stack
-		pc_inline_sub,			//Push ({esp-4} - {esp-0}) to stack
-		pc_inline_mul,			//Push ({esp-4} * {esp-0}) to stack
-		pc_inline_div,			//Push ({esp-4} / {esp-0}) to stack
-		pc_inline_fdiv,			//Push ({esp-4} ~/ {esp-0}) to stack
-		pc_inline_mod,			//Push ({esp-4} % {esp-0}) to stack
-		pc_inline_pow,			//Push ({esp-4} ^ {esp-0}) to stack
-		pc_inline_app,			//Push ({esp-4} ~ to_array({esp-0})) to stack
-		pc_inline_cat,			//Push ({esp-4} ~ {esp-0}) to stack
+		pc_inline_add,			//Push ({esp-1} + {esp-0}) to stack
+		pc_inline_sub,			//Push ({esp-1} - {esp-0}) to stack
+		pc_inline_mul,			//Push ({esp-1} * {esp-0}) to stack
+		pc_inline_div,			//Push ({esp-1} / {esp-0}) to stack
+		pc_inline_fdiv,			//Push ({esp-1} ~/ {esp-0}) to stack
+		pc_inline_mod,			//Push ({esp-1} % {esp-0}) to stack
+		pc_inline_pow,			//Push ({esp-1} ^ {esp-0}) to stack
+		pc_inline_app,			//Push ({esp-1} ~ to_array({esp-0})) to stack
+		pc_inline_cat,			//Push ({esp-1} ~ {esp-0}) to stack
 
-		pc_inline_cmp_e,		//Push ({esp-4} == {esp-0}) to stack
-		pc_inline_cmp_g,		//Push ({esp-4} > {esp-0}) to stack
-		pc_inline_cmp_ge,		//Push ({esp-4} >= {esp-0}) to stack
-		pc_inline_cmp_l,		//Push ({esp-4} < {esp-0}) to stack
-		pc_inline_cmp_le,		//Push ({esp-4} <= {esp-0}) to stack
-		pc_inline_cmp_ne,		//Push ({esp-4} != {esp-0}) to stack
+		pc_inline_cmp_e,		//Push ({esp-1} == {esp-0}) to stack
+		pc_inline_cmp_g,		//Push ({esp-1} > {esp-0}) to stack
+		pc_inline_cmp_ge,		//Push ({esp-1} >= {esp-0}) to stack
+		pc_inline_cmp_l,		//Push ({esp-1} < {esp-0}) to stack
+		pc_inline_cmp_le,		//Push ({esp-1} <= {esp-0}) to stack
+		pc_inline_cmp_ne,		//Push ({esp-1} != {esp-0}) to stack
 
-		pc_inline_logic_and,	//Push ({esp-4} && {esp-0}) to stack 
-		pc_inline_logic_or,		//Push ({esp-4} || {esp-0}) to stack
+		pc_inline_logic_and,	//Push ({esp-1} && {esp-0}) to stack 
+		pc_inline_logic_or,		//Push ({esp-1} || {esp-0}) to stack
 
 		pc_inline_cast_var,			//Cast {esp-0} to (type_kind)[arg0]
-		pc_inline_index_array,		//Push ((array){esp-1})[{esp-0}] to stack, set unique if [arg0]
+		pc_inline_index_array,		//Push &((*{esp-1})[{esp-0}]) to stack
+		pc_inline_index_array2,		//Push ({esp-1})[{esp-0}] to stack
 		pc_inline_length_array,		//Push length({esp-0}) to stack
 
-		pc_null = 0xff,			//No operation
+		pc_nop = 0xff,			//No operation
 	};
 	enum class block_kind : uint8_t {
 		bk_normal, bk_sub, bk_function, bk_microthread
@@ -123,7 +125,7 @@ namespace gstd {
 		script_block(uint32_t the_level, block_kind the_kind);
 	};
 	struct code {
-		command_kind command = command_kind::pc_null;
+		command_kind command = command_kind::pc_nop;
 		int line = -1;
 #ifdef _DEBUG
 		std::string var_name;	//For assign/push_variable
@@ -253,7 +255,8 @@ namespace gstd {
 		void parse_parentheses(script_block* block, parser_state_t* state);
 		void parse_clause(script_block* block, parser_state_t* state);
 		void parse_prefix(script_block* block, parser_state_t* state);
-		void _parse_array_suffix(script_block* block, parser_state_t* state, bool bSetUnique);
+		void _parse_array_suffix_lvalue(script_block* block, parser_state_t* state);
+		void _parse_array_suffix_rvalue(script_block* block, parser_state_t* state);
 		void parse_suffix(script_block* block, parser_state_t* state);
 		void parse_product(script_block* block, parser_state_t* state);
 		void parse_sum(script_block* block, parser_state_t* state);

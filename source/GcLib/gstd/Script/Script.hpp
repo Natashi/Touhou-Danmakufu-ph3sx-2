@@ -2,6 +2,7 @@
 
 #include "../../pch.h"
 
+#include "ValueVector.hpp"
 #include "ScriptFunction.hpp"
 #include "Parser.hpp"
 
@@ -15,6 +16,7 @@ namespace gstd {
 		static type_data* get_real_type() { return base_->real_type; }
 		static type_data* get_char_type() { return base_->char_type; }
 		static type_data* get_boolean_type() { return base_->boolean_type; }
+		static type_data* get_ptr_type() { return base_->ptr_type; }
 		
 		static type_data* get_null_array_type() { return base_->null_array_type; }
 		static type_data* get_string_type() { return base_->string_type; }
@@ -35,6 +37,7 @@ namespace gstd {
 		type_data* real_type;
 		type_data* char_type;
 		type_data* boolean_type;
+		type_data* ptr_type;
 
 		type_data* null_array_type;
 		type_data* string_type;
@@ -117,7 +120,6 @@ namespace gstd {
 	private:
 		script_machine();
 		script_machine(const script_machine& source);
-		script_machine& operator=(const script_machine& source);
 
 		script_engine* engine;
 
@@ -127,16 +129,13 @@ namespace gstd {
 
 		bool bTerminate;
 
-		typedef script_vector<value> variables_t;
-		typedef script_vector<value> stack_t;
-
 		class environment {
 		public:
 			ref_unsync_ptr<environment> parent;
 			script_block* sub;
 			int ip;
-			variables_t variables;
-			stack_t stack;
+			script_value_vector variables;
+			script_value_vector stack;
 			bool has_result;
 			int waitCount;
 		public:

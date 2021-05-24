@@ -17,6 +17,7 @@ script_type_manager::script_type_manager() {
 	real_type = deref_itr(types.insert(type_data(type_data::tk_real)).first);
 	char_type = deref_itr(types.insert(type_data(type_data::tk_char)).first);
 	boolean_type = deref_itr(types.insert(type_data(type_data::tk_boolean)).first);
+	ptr_type = deref_itr(types.insert(type_data(type_data::tk_pointer)).first);
 
 	null_array_type = deref_itr(types.insert(type_data(type_data::tk_array)).first);
 
@@ -241,6 +242,9 @@ void script_machine::run_code() {
 			}
 		}
 		else {
+			script_value_vector& stack = current->stack;
+			script_value_vector& variables = current->variables;
+
 			code* c = &(current->sub->codes[current->ip]);
 			error_line = c->line;
 			++(current->ip);
@@ -248,7 +252,6 @@ void script_machine::run_code() {
 			switch (c->command) {
 			case command_kind::pc_wait:
 			{
-				stack_t& stack = current->stack;
 				value* t = &stack.back();
 				current->waitCount = (int)t->as_int() - 1;
 				stack.pop_back();
@@ -261,54 +264,64 @@ void script_machine::run_code() {
 				break;
 
 			case command_kind::pc_var_alloc:
-				current->variables.resize(c->arg0);
-				current->variables.length = c->arg0;
+				variables.resize(c->arg0);
+				variables.length = c->arg0;
 				break;
 			case command_kind::pc_var_format:
 			{
 				for (size_t i = c->arg0; i < c->arg0 + c->arg1; ++i) {
-					if (i >= current->variables.capacity) break;
-					current->variables[i] = value();
+					if (i >= variables.capacity) break;
+					variables[i] = value();
 				}
 				break;
 			}
 
 			case command_kind::pc_pop:
-				current->stack.pop_back(c->arg0);
+				stack.pop_back(c->arg0);
 				break;
 			case command_kind::pc_push_value:
-				current->stack.push_back(c->data);
+				stack.push_back(c->data);
 				break;
 			case command_kind::pc_push_variable:
+			case command_kind::pc_push_variable2:
 			{
 				value* var = find_variable_symbol(current.get(), c, 
 					c->arg0, c->arg1, c->arg2);
 				if (var == nullptr) break;
-				current->stack.push_back(*var);
+
+				if (c->command == command_kind::pc_push_variable)
+					stack.push_back(*var);
+				else
+					stack.push_back(value(script_type_manager::get_ptr_type(), var));
+
 				break;
 			}
 			case command_kind::pc_dup_n:
 			{
-				stack_t& stack = current->stack;
 				if (c->arg0 >= stack.size()) break;
-				value val = *(&stack.back() - c->arg0);
-				if (c->arg1) val.unique();
-				stack.push_back(val);
+				value* val = &stack.back() - c->arg0;
+				stack.push_back(*val);
 				break;
 			}
 			case command_kind::pc_swap:
 			{
-				size_t len = current->stack.size();
+				size_t len = stack.size();
 				if (len < 2) break;
-				std::swap(current->stack[len - 1], current->stack[len - 2]);
+				std::swap(stack[len - 1], stack[len - 2]);
 				break;
 			}
-			case command_kind::pc_make_unique:
+			case command_kind::pc_load_ptr:
 			{
-				stack_t& stack = current->stack;
 				if (c->arg0 >= stack.size()) break;
 				value* val = &stack.back() - c->arg0;
-				val->unique();
+				stack.push_back(value(script_type_manager::get_ptr_type(), val));
+				break;
+			}
+			case command_kind::pc_unload_ptr:
+			{
+				value* val = &stack.back();
+				value* valAtPtr = val->as_ptr();
+				*val = *valAtPtr;
 				break;
 			}
 
@@ -320,7 +333,6 @@ void script_machine::run_code() {
 			case command_kind::pc_jump_if:
 			case command_kind::pc_jump_if_not:
 			{
-				stack_t& stack = current->stack;
 				value* top = &stack.back();
 				bool bJE = c->command == command_kind::pc_jump_if;
 				if ((bJE && top->as_boolean()) || (!bJE && !top->as_boolean()))
@@ -331,7 +343,6 @@ void script_machine::run_code() {
 			case command_kind::pc_jump_if_nopop:
 			case command_kind::pc_jump_if_not_nopop:
 			{
-				stack_t& stack = current->stack;
 				value* top = &stack.back();
 				bool bJE = c->command == command_kind::pc_jump_if_nopop;
 				if ((bJE && top->as_boolean()) || (!bJE && !top->as_boolean()))
@@ -340,50 +351,41 @@ void script_machine::run_code() {
 			}
 
 			case command_kind::pc_copy_assign:
-			case command_kind::pc_overwrite_assign:
 			case command_kind::pc_ref_assign:
 			{
-				stack_t& stack = current->stack;
+				if (c->command == command_kind::pc_copy_assign) {
+					value* dest = find_variable_symbol(current.get(), c,
+						c->arg0, c->arg1, true);
+					value* src = &stack.back();
 
-				if (c->command != command_kind::pc_ref_assign) {
-					if (c->command == command_kind::pc_copy_assign) {
-						value* dest = find_variable_symbol(current.get(), c, 
-							c->arg0, c->arg1, true);
-						value* src = &stack.back();
+					if (dest != nullptr && src != nullptr) {
+						//pc_copy_assign
+						if (BaseFunction::_type_assign_check(this, src, dest)) {
+							type_data* prev_type = dest->get_type();
 
-						if (dest != nullptr && src != nullptr) {
-							//pc_copy_assign
-							if (BaseFunction::_type_assign_check(this, src, dest)) {
-								type_data* prev_type = dest->get_type();
+							*dest = *src;
 
-								*dest = *src;
-								dest->unique();
-
-								if (prev_type && prev_type != src->get_type())
-									BaseFunction::_value_cast(dest, prev_type->get_kind());
-							}
+							if (prev_type && prev_type != src->get_type())
+								BaseFunction::_value_cast(dest, prev_type->get_kind());
 						}
-						stack.pop_back();
 					}
-					else {		//pc_overwrite_assign
-						value* src = &stack.back();
-						value* dest = src - 1;
-
-						if (dest != nullptr && src != nullptr) {
-							if (BaseFunction::_type_assign_check(this, src, dest)) {
-								type_data* prev_type = dest->get_type();
-
-								dest->overwrite(*src);
-
-								if (prev_type && prev_type != src->get_type())
-									BaseFunction::_value_cast(dest, prev_type->get_kind());
-							}
-						}
-						stack.pop_back(2U);
-					}
+					stack.pop_back();
 				}
-				else {			//pc_ref_assign (unfinished)
-					
+				else {		//pc_ref_assign
+					value* src = &stack.back();
+					value* dest = src[-1].as_ptr();
+
+					if (dest != nullptr && src != nullptr) {
+						if (BaseFunction::_type_assign_check(this, src, dest)) {
+							type_data* prev_type = dest->get_type();
+
+							*dest = *src;
+
+							if (prev_type && prev_type != src->get_type())
+								BaseFunction::_value_cast(dest, prev_type->get_kind());
+						}
+					}
+					stack.pop_back(2U);
 				}
 
 				break;
@@ -401,13 +403,12 @@ void script_machine::run_code() {
 			case command_kind::pc_call:
 			case command_kind::pc_call_and_push_result:
 			{
-				stack_t& current_stack = current->stack;
 				//assert(current_stack.size() >= c->arguments);
 
-				if (current_stack.size() < c->arg1) {
+				if (stack.size() < c->arg1) {
 					std::string error = StringUtility::Format(
 						"Unexpected script error: Stack size[%d] is less than the number of arguments[%d].\r\n",
-						current_stack.size(), c->arg1);
+						stack.size(), c->arg1);
 					raise_error(error);
 					break;
 				}
@@ -416,11 +417,11 @@ void script_machine::run_code() {
 				if (sub->func) {
 					//Default functions
 
-					size_t sizePrev = current_stack.size();
+					size_t sizePrev = stack.size();
 
 					value* argv = nullptr;
 					if (sizePrev > 0 && c->arg1 > 0)
-						argv = current_stack.at + (sizePrev - c->arg1);
+						argv = stack.at + (sizePrev - c->arg1);
 					value ret = sub->func(this, c->arg1, argv);
 
 					if (stopped) {
@@ -430,11 +431,11 @@ void script_machine::run_code() {
 						resuming = false;
 
 						//Erase the passed arguments from the stack
-						current_stack.pop_back(c->arg1);
+						stack.pop_back(c->arg1);
 
 						//Return value
 						if (c->command == command_kind::pc_call_and_push_result)
-							current_stack.push_back(ret);
+							stack.push_back(ret);
 					}
 				}
 				else if (sub->kind == block_kind::bk_microthread) {
@@ -445,8 +446,8 @@ void script_machine::run_code() {
 
 					//Pass the arguments
 					for (size_t i = 0; i < c->arg1; ++i) {
-						e->stack.push_back(current_stack.back());
-						current_stack.pop_back();
+						e->stack.push_back(stack.back());
+						stack.pop_back();
 					}
 
 					current = *current_thread_index;
@@ -459,8 +460,8 @@ void script_machine::run_code() {
 
 					//Pass the arguments
 					for (size_t i = 0; i < c->arg1; ++i) {
-						e->stack.push_back(current_stack.back());
-						current_stack.pop_back();
+						e->stack.push_back(stack.back());
+						stack.pop_back();
 					}
 
 					current = e;
@@ -476,7 +477,7 @@ void script_machine::run_code() {
 			case command_kind::pc_compare_le:
 			case command_kind::pc_compare_ne:
 			{
-				value* t = &current->stack.back();
+				value* t = &stack.back();
 				int r = t->as_int();
 				bool b = false;
 				switch (c->command) {
@@ -507,7 +508,7 @@ void script_machine::run_code() {
 			case command_kind::pc_loop_ascent:
 			case command_kind::pc_loop_descent:
 			{
-				value* cmp_arg = &current->stack.back() - 1;
+				value* cmp_arg = &stack.back() - 1;
 				value cmp_res = BaseFunction::compare(this, 2, cmp_arg);
 
 				/*
@@ -520,25 +521,24 @@ void script_machine::run_code() {
 
 				bool bSkip = c->command == command_kind::pc_loop_ascent ?
 					(cmp_res.as_int() <= 0) : (cmp_res.as_int() >= 0);
-				current->stack.push_back(value(script_type_manager::get_boolean_type(), bSkip));
+				stack.push_back(value(script_type_manager::get_boolean_type(), bSkip));
 
-				//current->stack.pop_back(2U);
+				//stack.pop_back(2U);
 				break;
 			}
 			case command_kind::pc_loop_count:
 			{
-				value* i = &current->stack.back();
+				value* i = &stack.back();
 				int64_t r = i->as_int();
 				if (r > 0)
 					i->reset(script_type_manager::get_int_type(), r - 1);
-				current->stack.push_back(value(script_type_manager::get_boolean_type(), r > 0));
+				stack.push_back(value(script_type_manager::get_boolean_type(), r > 0));
 				break;
 			}
 			case command_kind::pc_loop_foreach:
 			{
 				//Stack: .... [array] [counter]
-
-				value* i = &current->stack.back();
+				value* i = &stack.back();
 				value* src_array = i - 1;
 
 				std::vector<value>::iterator itrCur = src_array->array_get_begin() + i->as_int();
@@ -549,25 +549,25 @@ void script_machine::run_code() {
 					bSkip = true;
 				}
 				else {
-					current->stack.push_back(value::new_from(*itrCur));
-					i->reset(script_type_manager::get_int_type(), i->as_int() + 1i64);
+					stack.push_back(*itrCur);
+					i->set(i->get_type(), i->as_int() + 1i64);
 				}
 
-				current->stack.push_back(value(script_type_manager::get_boolean_type(), bSkip));
+				stack.push_back(value(script_type_manager::get_boolean_type(), bSkip));
 				break;
 			}
 
 			case command_kind::pc_construct_array:
 			{
 				if (c->arg0 == 0U) {
-					current->stack.push_back(value(script_type_manager::get_null_array_type(), 0i64));
+					stack.push_back(BaseFunction::_create_empty(script_type_manager::get_null_array_type()));
 					break;
 				}
 
 				std::vector<value> res_arr;
 				res_arr.resize(c->arg0);
 
-				value* val_ptr = &current->stack.back() - c->arg0 + 1;
+				value* val_ptr = &stack.back() - c->arg0 + 1;
 
 				type_data* type_elem = val_ptr->get_type();
 				type_data* type_arr = script_type_manager::get_instance()->get_array_type(type_elem);
@@ -578,7 +578,6 @@ void script_machine::run_code() {
 					{
 						value appending = *val_ptr;
 						if (appending.get_type()->get_kind() != type_elem->get_kind()) {
-							appending.unique();
 							BaseFunction::_value_cast(&appending, type_elem->get_kind());
 						}
 						res_arr[iVal] = appending;
@@ -586,8 +585,8 @@ void script_machine::run_code() {
 				}
 				res.reset(type_arr, res_arr);
 
-				current->stack.pop_back(c->arg0);
-				current->stack.push_back(res);
+				stack.pop_back(c->arg0);
+				stack.push_back(res);
 				break;
 			}
 
@@ -604,12 +603,13 @@ void script_machine::run_code() {
 					*var = res;
 				}
 				else {
-					value* var = &current->stack.back();
+					value* var = stack.back().as_ptr();
+					if (!var->has_data()) break;
 					value res = (c->command == command_kind::pc_inline_inc) ?
 						BaseFunction::successor(this, 1, var) : BaseFunction::predecessor(this, 1, var);
-					if (!var->has_data()) break;
-					var->overwrite(res);
-					if (c->arg1) current->stack.pop_back();
+					*var = res;
+					if (c->arg1)
+						stack.pop_back();
 				}
 				break;
 			}
@@ -643,19 +643,20 @@ void script_machine::run_code() {
 						c->arg1, c->arg2, false);
 					if (dest == nullptr) break;
 
-					value arg[2] = { *dest, current->stack.back() };
+					value arg[2] = { *dest, stack.back() };
 					PerformFunction(&res, c->command, arg);
 
 					*dest = res;
-					current->stack.pop_back();
+					stack.pop_back();
 				}
 				else {
-					value* dest = &current->stack.back() - 1;
+					value* dest = &stack.back() - 1;
 
-					PerformFunction(&res, c->command, dest);
+					value arg[2] = { *dest->as_ptr(), dest[1] };
+					PerformFunction(&res, c->command, arg);
 
-					dest->overwrite(res);
-					current->stack.pop_back(2U);
+					*(dest->as_ptr()) = res;
+					stack.pop_back(2U);
 				}
 				
 				break;
@@ -665,8 +666,9 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_abs:
 			{
 				value res;
+				value* arg = &stack.back();
 
-#define DEF_CASE(cmd, fn) case cmd: res = BaseFunction::fn(this, 1, &current->stack.back()); break;
+#define DEF_CASE(cmd, fn) case cmd: res = BaseFunction::fn(this, 1, arg); break;
 				switch (c->command) {
 					DEF_CASE(command_kind::pc_inline_neg, negative);
 					DEF_CASE(command_kind::pc_inline_not, not_);
@@ -674,7 +676,7 @@ void script_machine::run_code() {
 				}
 #undef DEF_CASE
 
-				current->stack.back() = res;
+				*arg = res;
 				break;
 			}
 			case command_kind::pc_inline_add:
@@ -688,7 +690,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_cat:
 			{
 				value res;
-				value* args = &current->stack.back() - 1;
+				value* args = &stack.back() - 1;
 
 #define DEF_CASE(cmd, fn) case cmd: res = BaseFunction::fn(this, 2, args); break;
 				switch (c->command) {
@@ -704,8 +706,8 @@ void script_machine::run_code() {
 				}
 #undef DEF_CASE
 
-				current->stack.pop_back(2U);
-				current->stack.push_back(res);
+				stack.pop_back(2U);
+				stack.push_back(res);
 				break;
 			}
 			case command_kind::pc_inline_cmp_e:
@@ -715,7 +717,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_cmp_le:
 			case command_kind::pc_inline_cmp_ne:
 			{
-				value* args = &current->stack.back() - 1;
+				value* args = &stack.back() - 1;
 				value cmp_res = BaseFunction::compare(this, 2, args);
 				int cmp_r = cmp_res.as_int();
 
@@ -730,45 +732,60 @@ void script_machine::run_code() {
 				}
 #undef DEF_CASE
 
-				current->stack.pop_back(2U);
-				current->stack.push_back(cmp_res);
+				stack.pop_back(2U);
+				stack.push_back(cmp_res);
 				break;
 			}
 			case command_kind::pc_inline_logic_and:
 			case command_kind::pc_inline_logic_or:
 			{
-				value* var2 = &current->stack.back();
+				value* var2 = &stack.back();
 				value* var1 = var2 - 1;
 
 				bool b = c->command == command_kind::pc_inline_logic_and ?
 					(var1->as_boolean() && var2->as_boolean()) : (var1->as_boolean() || var2->as_boolean());
 				value res(script_type_manager::get_boolean_type(), b);
 
-				current->stack.pop_back(2U);
-				current->stack.push_back(res);
+				stack.pop_back(2U);
+				stack.push_back(res);
 				break;
 			}
 			case command_kind::pc_inline_cast_var:
 			{
-				value* var = &current->stack.back();
+				value* var = &stack.back();
 				BaseFunction::_value_cast(var, (type_data::type_kind)c->arg0);
 				break;
 			}
 			case command_kind::pc_inline_index_array:
 			{
-				value* var = &current->stack.back() - 1;
-				value* res = (value*)BaseFunction::index(this, 2, var);
-				if (res == nullptr) break;
-				if (c->arg0)
-					res->unique();
-				value res_copy = *res;
-				current->stack.pop_back(2U);
-				current->stack.push_back(res_copy);
+				value* arr = &stack.back() - 1;
+				value* idx = arr + 1;
+
+				value* pRes = (value*)BaseFunction::index(this, 2, arr->as_ptr(), idx);
+				if (pRes == nullptr) break;
+				
+				*arr = value(script_type_manager::get_ptr_type(), pRes);
+				stack.pop_back(1U);	//pop idx
+				
+				break;
+			}
+			case command_kind::pc_inline_index_array2:
+			{
+				value* arr = &stack.back() - 1;
+				value* idx = arr + 1;
+
+				value* pRes = (value*)BaseFunction::index(this, 2, arr, idx);
+				if (pRes == nullptr) break;
+
+				value res = *pRes;
+				stack.pop_back(2U);
+				stack.push_back(res);
+
 				break;
 			}
 			case command_kind::pc_inline_length_array:
 			{
-				value* var = &current->stack.back();
+				value* var = &stack.back();
 				size_t len = var->length_as_array();
 				var->reset(script_type_manager::get_int_type(), (int64_t)len);
 				break;

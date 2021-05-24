@@ -3,8 +3,6 @@
 #include "../../pch.h"
 
 #include "../Logger.hpp"
-
-#include "LightweightVector.hpp"
 #include "Value.hpp"
 
 namespace gstd {
@@ -20,11 +18,13 @@ namespace gstd {
 	struct function {
 		const char* name;
 		callback func;
-		int arguments;
+		int argc;
+		const char* signature;
 
-		function(const char* name_, callback func_) : function(name_, func_, 0) {};
-		function(const char* name_, callback func_, int argc) : name(name_), 
-			func(func_), arguments(argc) {};
+		function(const char* name_, callback func_) : function(name_, func_, 0, "") {};
+		function(const char* name_, callback func_, int argc_) : function(name_, func_, argc_, "") {};
+		function(const char* name_, callback func_, int argc_, const char* signature_) : name(name_),
+			func(func_), argc(argc_), signature(signature_) {};
 	};
 	struct constant {
 		const char* name;
@@ -94,7 +94,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(length);
 		DNH_FUNCAPI_DECL_(resize);
 
-		static const value* index(script_machine* machine, int argc, const value* argv);
+		static const value* index(script_machine* machine, int argc, value* arr, value* indexer);
 
 		DNH_FUNCAPI_DECL_(slice);
 		DNH_FUNCAPI_DECL_(erase);

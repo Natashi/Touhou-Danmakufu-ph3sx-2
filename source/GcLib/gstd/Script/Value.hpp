@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../pch.h"
-#include "LightweightVector.hpp"
 
 namespace gstd {
 	class type_data {
@@ -13,6 +12,7 @@ namespace gstd {
 			tk_char = 0x04,
 			tk_boolean = 0x08,
 			tk_array = 0x10,
+			tk_pointer = 0x20,
 		} type_kind;
 
 		type_data(type_kind k, type_data* t = nullptr) : kind(k), element(t) {}
@@ -33,57 +33,47 @@ namespace gstd {
 
 	class value {
 	private:
-		struct body {
-			type_data* type = nullptr;
-			std::vector<value> array_value;
+		type_data::type_kind kind = type_data::tk_null;
+		type_data* type = nullptr;
 
-			union {
-				double real_value = 0.0;
+		union {
+			struct {
+				double real_value;
 				wchar_t char_value;
 				bool boolean_value;
 				int64_t int_value;
+				value* ptr_value;
 			};
+			std::vector<value> array_value;
 		};
-		ref_unsync_ptr<body> data;
-	private:
-		inline void release() {
-			data = nullptr;
-		}
 	public:
-		value() : data(nullptr) {}
+		value() {}
 		value(type_data* t, int64_t v);
 		value(type_data* t, double v);
 		value(type_data* t, wchar_t v);
 		value(type_data* t, bool v);
+		value(type_data* t, value* v);
 		value(type_data* t, const std::wstring& v);
 		value(const value& source) {
-			data = source.data;
+			*this = source;
 		}
 
-		~value() {
-			release();
-		}
+		~value();
+		void release();
 
-		value& operator=(const value& source) {
-			data = source.data;
-			return *this;
-		}
+		value& operator=(const value& source);
 
 		//--------------------------------------------------------------------------
 
-		bool has_data() const { return data != nullptr; }
-		type_data* get_type() const { return data ? data->type : nullptr; }
+		bool has_data() const { return type != nullptr; }
+		type_data* get_type() const { return type; }
 
-		size_t length_as_array() const { return data->array_value.size(); }
-		const value& index_as_array(size_t i) const { return data->array_value[i]; }
-		value& index_as_array(size_t i) { return data->array_value[i]; }
+		size_t length_as_array() const;
+		const value& index_as_array(size_t i) const;
+		value& index_as_array(size_t i);
 
-		std::vector<value>::iterator array_get_begin() const {
-			return data->array_value.begin();
-		}
-		std::vector<value>::iterator array_get_end() const {
-			return data->array_value.end();
-		}
+		std::vector<value>::iterator array_get_begin() const;
+		std::vector<value>::iterator array_get_end() const;
 
 		//--------------------------------------------------------------------------
 
@@ -91,20 +81,17 @@ namespace gstd {
 		value* reset(type_data* t, double v);
 		value* reset(type_data* t, wchar_t v);
 		value* reset(type_data* t, bool v);
+		value* reset(type_data* t, value* v);
 		value* reset(type_data* t, std::vector<value>& v);
 		value* set(type_data* t, int64_t v);
 		value* set(type_data* t, double v);
 		value* set(type_data* t, wchar_t v);
 		value* set(type_data* t, bool v);
+		value* set(type_data* t, value* v);
 		value* set(type_data* t, std::vector<value>& v);
 
 		void append(type_data* t, const value& x);
 		void concatenate(const value& x);
-
-		void overwrite(const value& source);	//Overwrite the pointer's value
-		static value new_from(const value& source);
-
-		void unique();
 
 		//--------------------------------------------------------------------------
 
@@ -112,6 +99,7 @@ namespace gstd {
 		double as_real() const;
 		wchar_t as_char() const;
 		bool as_boolean() const;
+		value* as_ptr() const { return ptr_value; }
 		std::wstring as_string() const;
 	};
 }

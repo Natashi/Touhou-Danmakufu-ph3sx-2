@@ -18,6 +18,8 @@ std::string type_data::string_representation(type_data* data) {
 		return "char";
 	case type_kind::tk_boolean:
 		return "bool";
+	case type_kind::tk_pointer:
+		return "pointer";
 	case type_kind::tk_array:
 	{
 		type_data* elem = data->get_element();
@@ -42,120 +44,180 @@ bool type_data::operator<(const type_data& other) const {
 }
 
 value::value(type_data* t, int64_t v) {
-	this->reset(t, v);
+	this->set(t, v);
 }
 value::value(type_data* t, double v) {
-	this->reset(t, v);
+	this->set(t, v);
 }
 value::value(type_data* t, wchar_t v) {
-	this->reset(t, v);
+	this->set(t, v);
 }
 value::value(type_data* t, bool v) {
-	this->reset(t, v);
+	this->set(t, v);
+}
+value::value(type_data* t, value* v) {
+	this->set(t, v);
 }
 value::value(type_data* t, const std::wstring& v) {
 	std::vector<value> vec(v.size());
 	for (size_t i = 0; i < v.size(); ++i)
 		vec[i] = value(t->get_element(), v[i]);
-	this->reset(t, vec);
+	this->set(t, vec);
+}
+value::~value() {
+	this->release();
+}
+
+void value::release() {
+	if (!has_data()) return;
+	if (kind == type_data::tk_array)
+		array_value.~vector();
 }
 
 value* value::reset(type_data* t, int64_t v) {
-	data = new body;
-	data->type = t;
-	data->int_value = v;
-	return this;
+	release();
+	return this->set(t, v);
 }
 value* value::reset(type_data* t, double v) {
-	data = new body;
+	release();
 	return this->set(t, v);
 }
 value* value::reset(type_data* t, wchar_t v) {
-	data = new body;
+	release();
 	return this->set(t, v);
 }
 value* value::reset(type_data* t, bool v) {
-	data = new body;
+	release();
+	return this->set(t, v);
+}
+value* value::reset(type_data* t, value* v) {
+	release();
 	return this->set(t, v);
 }
 value* value::reset(type_data* t, std::vector<value>& v) {
-	data = new body;
+	release();
 	return this->set(t, v);
 }
+
+#pragma push_macro("new")
+#undef new
 value* value::set(type_data* t, int64_t v) {
-	data->type = t;
-	data->int_value = v;
+	kind = type_data::tk_int;
+	type = t;
+	new (&int_value) auto(v);
 	return this;
 }
 value* value::set(type_data* t, double v) {
-	data->type = t;
-	data->real_value = v;
+	kind = type_data::tk_real;
+	type = t;
+	new (&real_value) auto(v);
 	return this;
 }
 value* value::set(type_data* t, wchar_t v) {
-	data->type = t;
-	data->char_value = v;
+	kind = type_data::tk_char;
+	type = t;
+	new (&char_value) auto(v);
 	return this;
 }
 value* value::set(type_data* t, bool v) {
-	data->type = t;
-	data->boolean_value = v;
+	kind = type_data::tk_boolean;
+	type = t;
+	new (&boolean_value) auto(v);
+	return this;
+}
+value* value::set(type_data* t, value* v) {
+	kind = type_data::tk_pointer;
+	type = t;
+	new (&ptr_value) auto(v);
 	return this;
 }
 value* value::set(type_data* t, std::vector<value>& v) {
-	data->type = t;
-	data->array_value = v;
+	kind = type_data::tk_array;
+	type = t;
+	new (&array_value) auto(v);
 	return this;
+}
+#pragma pop_macro("new")
+
+value& value::operator=(const value& source) {
+	if (this == std::addressof(source)) return *this;
+	this->~value();
+
+	kind = source.kind;
+	type = source.type;
+	if (type) {
+		if (kind == type_data::tk_int)
+			this->set(source.type, source.int_value);
+		else if (kind == type_data::tk_real)
+			this->set(source.type, source.real_value);
+		else if (kind == type_data::tk_char)
+			this->set(source.type, source.char_value);
+		else if (kind == type_data::tk_boolean)
+			this->set(source.type, source.boolean_value);
+		else if (kind == type_data::tk_pointer)
+			this->set(source.type, source.ptr_value);
+		else if (kind == type_data::tk_array)
+			this->set(source.type, (std::vector<value>&)source.array_value);
+	}
+
+	return *this;
+}
+
+size_t value::length_as_array() const {
+	if (has_data() && kind == type_data::tk_array)
+		return array_value.size();
+	return 0U;
+}
+const value& value::index_as_array(size_t i) const {
+	if (has_data() && kind == type_data::tk_array)
+		return array_value[i];
+	return value();
+}
+value& value::index_as_array(size_t i) {
+	if (has_data() && kind == type_data::tk_array)
+		return array_value[i];
+	return value();
+}
+std::vector<value>::iterator value::array_get_begin() const {
+	if (has_data() && kind == type_data::tk_array)
+		return ((std::vector<value>*)&array_value)->begin();
+	return std::vector<value>::iterator();
+}
+std::vector<value>::iterator value::array_get_end() const {
+	if (has_data() && kind == type_data::tk_array)
+		return ((std::vector<value>*)&array_value)->end();
+	return std::vector<value>::iterator();
 }
 
 void value::append(type_data* t, const value& x) {
-	unique();
-	data->type = t;
-	data->array_value.push_back(x);
+	if (!has_data() || (kind == type_data::tk_array) == 0)
+		this->reset(t, std::vector<value>());
+	type = t;
+	array_value.push_back(x);
 }
 void value::concatenate(const value& x) {
-	unique();
-	if (data->type->get_element() == nullptr)
-		data->type = x.data->type;
-	data->array_value.insert(array_get_end(),
+	if (!has_data() || (kind == type_data::tk_array) == 0)
+		this->reset(x.type, std::vector<value>());
+	if (type->get_element() == nullptr)
+		type = x.type;
+	array_value.insert(array_get_end(),
 		x.array_get_begin(), x.array_get_end());
 }
 
-void value::overwrite(const value& source) {
-	if (data == nullptr) return;
-	if (std::addressof(data) == std::addressof(source.data)) return;
-
-	*data = *source.data;
-}
-value value::new_from(const value& source) {
-	value res = source;
-	res.unique();
-	return res;
-}
-
-void value::unique() {
-	if (data == nullptr) {
-		data = new body;
-		data->type = nullptr;
-	}
-	else if (!data.unique()) {
-		data = new body(*data);
-	}
-}
-
 int64_t value::as_int() const {
-	if (data == nullptr) return 0i64;
-	uint8_t kind = data->type->get_kind();
-	if (kind & type_data::tk_int)
-		return data->int_value;
-	if (kind & type_data::tk_real)
-		return (int64_t)(data->real_value + (data->real_value > 0 ? 0.01 : -0.01));
-	if (kind & type_data::tk_char)
-		return (int64_t)data->char_value;
-	if (kind & type_data::tk_boolean)
-		return (int64_t)data->boolean_value;
-	if (kind & type_data::tk_array) {
-		if (data->type->get_element()->get_kind() == type_data::type_kind::tk_char) {
+	if (!has_data()) return 0i64;
+	if (kind == type_data::tk_int)
+		return int_value;
+	if (kind == type_data::tk_real)
+		return (int64_t)(real_value + (real_value > 0 ? 0.01 : -0.01));
+	if (kind == type_data::tk_char)
+		return (int64_t)char_value;
+	if (kind == type_data::tk_boolean)
+		return (int64_t)boolean_value;
+	if (kind == type_data::tk_pointer)
+		return (uint32_t)ptr_value;
+	if (kind == type_data::tk_array) {
+		if (type->get_element()->get_kind() == type_data::tk_char) {
 			try {
 				return std::stoll(as_string());
 			}
@@ -168,18 +230,19 @@ int64_t value::as_int() const {
 	return 0i64;
 }
 double value::as_real() const {
-	if (data == nullptr) return 0.0;
-	uint8_t kind = data->type->get_kind();
-	if (kind & type_data::tk_real)
-		return data->real_value;
-	if (kind & type_data::tk_int)
-		return (double)data->int_value;
-	if (kind & type_data::tk_char)
-		return (double)data->char_value;
-	if (kind & type_data::tk_boolean)
-		return (double)data->boolean_value;
-	if (kind & type_data::tk_array) {
-		if (data->type->get_element()->get_kind() == type_data::type_kind::tk_char) {
+	if (!has_data()) return 0.0;
+	if (kind == type_data::tk_real)
+		return real_value;
+	if (kind == type_data::tk_int)
+		return (double)int_value;
+	if (kind == type_data::tk_char)
+		return (double)char_value;
+	if (kind == type_data::tk_boolean)
+		return (double)boolean_value;
+	if (kind == type_data::tk_pointer)
+		return (uint32_t)ptr_value;
+	if (kind == type_data::tk_array) {
+		if (type->get_element()->get_kind() == type_data::tk_char) {
 			try {
 				return std::stod(as_string());
 			}
@@ -192,57 +255,62 @@ double value::as_real() const {
 	return 0.0;
 }
 wchar_t value::as_char() const {
-	if (data == nullptr) return L'\0';
-	uint8_t kind = data->type->get_kind();
-	if (kind & type_data::tk_char)
-		return data->char_value;
-	if (kind & type_data::tk_int)
-		return (wchar_t)data->int_value;
-	if (kind & type_data::tk_real)
-		return (wchar_t)data->real_value;
-	if (kind & type_data::tk_boolean)
-		return data->boolean_value ? L'1' : L'0';
-	if (kind & type_data::tk_array)
+	if (!has_data()) return L'\0';
+	if (kind == type_data::tk_char)
+		return char_value;
+	if (kind == type_data::tk_int)
+		return (wchar_t)int_value;
+	if (kind == type_data::tk_real)
+		return (wchar_t)real_value;
+	if (kind == type_data::tk_boolean)
+		return boolean_value ? L'1' : L'0';
+	if (kind == type_data::tk_pointer)
+		return (wchar_t)(ptr_value != nullptr);
+	if (kind == type_data::tk_array)
 		return L'\0';
 	return L'\0';
 }
 bool value::as_boolean() const {
-	if (data == nullptr) return false;
-	uint8_t kind = data->type->get_kind();
-	if (kind & type_data::tk_boolean)
-		return data->boolean_value;
-	if (kind & (type_data::tk_real | type_data::tk_int))
-		return data->int_value;
-	if (kind & type_data::tk_char)
-		return data->char_value;
-	if (kind & type_data::tk_array)
-		return data->array_value.size();
+	if (!has_data()) return false;
+	if (kind == type_data::tk_boolean)
+		return boolean_value;
+	if (kind == type_data::tk_int)
+		return (int_value != 0);
+	if (kind == type_data::tk_real)
+		return (real_value != 0.0);
+	if (kind == type_data::tk_char)
+		return (char_value != L'\0');
+	if (kind == type_data::tk_pointer)
+		return (ptr_value != nullptr);
+	if (kind == type_data::tk_array)
+		return (array_value.size() != 0U);
 	return false;
 }
 std::wstring value::as_string() const {
-	if (data == nullptr) return L"(NULL)";
-	uint8_t kind = data->type->get_kind();
-	if (kind & type_data::tk_real)
-		return std::to_wstring(data->real_value);
-	if (kind & type_data::tk_int)
-		return std::to_wstring(data->int_value);
-	if (kind & type_data::tk_boolean)
-		return data->boolean_value ? L"true" : L"false";
-	if (kind & type_data::tk_char)
-		return std::wstring(&data->char_value, 1);
-	if (kind & type_data::tk_array) {
+	if (!has_data()) return L"(NULL)";
+	if (kind == type_data::tk_real)
+		return std::to_wstring(real_value);
+	if (kind == type_data::tk_int)
+		return std::to_wstring(int_value);
+	if (kind == type_data::tk_boolean)
+		return boolean_value ? L"true" : L"false";
+	if (kind == type_data::tk_char)
+		return std::wstring(&char_value, 1);
+	if (kind == type_data::tk_pointer)
+		return StringUtility::Format(L"%08x", (uint32_t)ptr_value);
+	if (kind == type_data::tk_array) {
 		std::wstring result = L"";
-		if (type_data* elem = data->type->get_element()) {
-			if (elem->get_kind() == type_data::type_kind::tk_char) {
-				for (auto& iChar : data->array_value)
+		if (type_data* elem = type->get_element()) {
+			if (elem->get_kind() == type_data::tk_char) {
+				for (auto& iChar : array_value)
 					result += iChar.as_char();
 			}
 			else {
 				result = L"[";
-				auto itr = data->array_value.begin();
-				while (itr != data->array_value.end()) {
+				auto itr = array_value.begin();
+				while (itr != array_value.end()) {
 					result += itr->as_string();
-					if ((++itr) == data->array_value.end()) break;
+					if ((++itr) == array_value.end()) break;
 					result += L",";
 				}
 				result += L"]";

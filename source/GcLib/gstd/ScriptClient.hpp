@@ -310,7 +310,7 @@ namespace gstd {
 			res.reset(type_arr, res_arr);
 			return res;
 		}
-		return value(type_arr, 0i64);
+		return value(type_arr, std::wstring());
 	}
 	template<typename T>
 	value ScriptClientBase::CreateIntArrayValue(T* ptrList, size_t count) {
@@ -327,7 +327,7 @@ namespace gstd {
 			res.reset(type_arr, res_arr);
 			return res;
 		}
-		return value(type_arr, 0i64);
+		return value(type_arr, std::wstring());
 	}
 #pragma endregion ScriptClientBase_impl
 

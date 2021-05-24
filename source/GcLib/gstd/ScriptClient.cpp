@@ -764,7 +764,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
 		return res;
 	}
 
-	return value(type_arr, 0i64);
+	return value(type_arr, std::wstring());
 }
 value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
@@ -783,7 +783,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) 
 		return res;
 	}
 
-	return value(type_arr, 0i64);
+	return value(type_arr, std::wstring());
 }
 value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
@@ -803,7 +803,7 @@ value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
 		return res;
 	}
 
-	return value(typeManager->get_null_array_type(), 0i64);
+	return value(typeManager->get_null_array_type(), std::wstring());
 }
 bool ScriptClientBase::IsRealValue(value& v) {
 	if (!v.has_data()) return false;
@@ -1939,10 +1939,7 @@ void ScriptCommonData::DeleteValue(const std::string& name) {
 void ScriptCommonData::Copy(shared_ptr<ScriptCommonData>& dataSrc) {
 	mapValue_.clear();
 	for (auto itrKey = dataSrc->MapBegin(); itrKey != dataSrc->MapEnd(); ++itrKey) {
-		gstd::value vDest = itrKey->second;
-		vDest.unique();
-
-		mapValue_.insert(std::make_pair(itrKey->first, vDest));
+		mapValue_.insert(std::make_pair(itrKey->first, itrKey->second));
 	}
 }
 void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
@@ -2008,7 +2005,7 @@ gstd::value ScriptCommonData::_ReadRecord(gstd::ByteBuffer& buffer) {
 			res.reset(scriptTypeManager->get_array_type(v[0].get_type()), v);
 			return res;
 		}
-		return value(scriptTypeManager->get_null_array_type(), 0i64);
+		return value(scriptTypeManager->get_null_array_type(), std::wstring());
 	}
 	}
 
