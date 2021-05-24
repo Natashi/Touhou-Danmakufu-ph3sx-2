@@ -364,7 +364,7 @@ std::vector<char> ScriptClientBase::_Include(std::vector<char>& source) {
 
 				bool bAlreadyIncluded = setReadPath.find(wPath) != setReadPath.end();
 				if (bAlreadyIncluded) {
-					Logger::WriteTop(StringUtility::Format(L"Scanner: File already included, skipping. (%s)", wPath.c_str()));
+					//Logger::WriteTop(StringUtility::Format(L"Scanner: File already included, skipping. (%s)", wPath.c_str()));
 					res.erase(res.begin() + posBeforeInclude, res.begin() + posAfterInclude);
 					break;
 				}

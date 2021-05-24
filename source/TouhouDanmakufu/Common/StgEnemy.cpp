@@ -276,17 +276,16 @@ void StgEnemyBossSceneObject::Activate() {
 			shared_ptr<ManagedScript> pScript = pData->GetScriptPointer().lock();
 
 			if (pScript == nullptr)
-				throw gstd::wexception(StringUtility::Format(L"Script wasn't loaded: %s", pData->GetPath().c_str()));
+				throw gstd::wexception(StringUtility::Format(L"Cannot load script: %s", pData->GetPath().c_str()));
 			if (!pScript->IsLoad()) {
-				size_t count = 0;
+				DWORD count = 0;
 				while (!pScript->IsLoad()) {
-					if (count % 1000 == 999) {
-						std::wstring log = StringUtility::Format(L"Waiting for script load: [%d, %d] %s",
-							iStep, iData, pData->GetPath());
-						Logger::WriteTop(log);
+					if (count % 1000 == 0) {
+						Logger::WriteTop(StringUtility::Format(L"EnemyBossScene: Script is still loading... [%s]",
+							pScript->GetPath().c_str()));
 					}
-					Sleep(1);
-					count++;
+					::Sleep(5);
+					++count;
 				}
 			}
 
@@ -294,13 +293,15 @@ void StgEnemyBossSceneObject::Activate() {
 
 			std::vector<double> listLife;
 			gstd::value vLife = pScript->RequestEvent(StgStageScript::EV_REQUEST_LIFE);
-			if (pScript->IsRealValue(vLife) || pScript->IsIntValue(vLife)) {
-				double life = vLife.as_real();
-				listLife.push_back(life);
-			}
-			else if (pScript->IsRealArrayValue(vLife) || pScript->IsIntArrayValue(vLife)) {
-				for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
-					double life = vLife.index_as_array(iLife).as_real();
+			if (vLife.has_data()) {
+				if (pScript->IsArrayValue(vLife)) {
+					for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
+						double life = vLife.index_as_array(iLife).as_real();
+						listLife.push_back(life);
+					}
+				}
+				else {
+					double life = vLife.as_real();
 					listLife.push_back(life);
 				}
 			}
@@ -356,6 +357,7 @@ void StgEnemyBossSceneObject::LoadAllScriptInThread() {
 	for (std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
 		for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : iStep) {
 			auto script = scriptManager->LoadScriptInThread(pData->GetPath(), StgStageScript::TYPE_STAGE);
+			//auto script = scriptManager->LoadScript(pData->GetPath(), StgStageScript::TYPE_STAGE);
 			pData->SetScriptPointer(script);
 		}
 	}
@@ -450,7 +452,7 @@ StgEnemyBossSceneData::StgEnemyBossSceneData() {
 int StgEnemyBossSceneData::GetEnemyBossIdInCreate() {
 	if (countCreate_ >= listEnemyObject_.size()) {
 		std::string log = StringUtility::Format("Cannot create any more boss objects [Max=%d]\r\n"
-			"**Return an array in EV_REQUEST_LIFE to create multiple bosses.", countCreate_);
+			"**Use an array in EV_REQUEST_LIFE to create multiple bosses.", countCreate_);
 		throw gstd::wexception(log);
 	}
 

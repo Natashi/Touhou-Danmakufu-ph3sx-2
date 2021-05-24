@@ -96,7 +96,7 @@ class StgEnemyBossSceneData;
 class StgEnemyBossSceneObject : public DxScriptObjectBase {
 private:
 	StgStageController* stageController_;
-	volatile bool bLoad_;
+	bool bLoad_;
 
 	int dataStep_;
 	int dataIndex_;
