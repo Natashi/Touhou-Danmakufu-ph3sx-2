@@ -40,7 +40,7 @@ namespace directx {
 		virtual void Render();
 
 		virtual void SetError(const std::wstring& error) { error_ = error; }
-		virtual bool IsError() { return error_ != L""; }
+		virtual bool IsError() { return error_.size() > 0; }
 
 		int GetMainThreadID() { return mainThreadID_; }
 		int64_t IssueScriptID() { return ++idScript_; }
@@ -50,8 +50,8 @@ namespace directx {
 		std::list<weak_ptr<ScriptManager>>& GetRelativeManagerList() { return listRelativeManager_; }
 
 		shared_ptr<ManagedScript> GetScript(int64_t id, bool bSearchRelative = false);
-		void StartScript(int64_t id);
-		void StartScript(shared_ptr<ManagedScript> id);
+		void StartScript(int64_t id, bool bUnload = true);
+		void StartScript(shared_ptr<ManagedScript> id, bool bUnload = true);
 		void CloseScript(int64_t id);
 		void CloseScript(shared_ptr<ManagedScript> id);
 		void CloseScriptOnType(int type);
@@ -67,6 +67,8 @@ namespace directx {
 		int64_t LoadScriptInThread(const std::wstring& path, shared_ptr<ManagedScript> script);
 		shared_ptr<ManagedScript> LoadScriptInThread(const std::wstring& path, int type);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
+		void UnloadScript(int64_t id);
+		void UnloadScript(shared_ptr<ManagedScript> script);
 
 		virtual shared_ptr<ManagedScript> Create(int type) = 0;
 		virtual void RequestEventAll(int type, const gstd::value* listValue = nullptr, size_t countArgument = 0);
@@ -114,8 +116,9 @@ namespace directx {
 
 		ScriptManager* GetScriptManager() { return scriptManager_; }
 
-		int GetScriptType() { return typeScript_; }
 		bool IsLoad() { return bLoad_; }
+
+		int GetScriptType() { return typeScript_; }
 		bool IsEndScript() { return bEndScript_; }
 		void SetEndScript() { bEndScript_ = true; }
 		bool IsAutoDeleteObject() { return bAutoDeleteObject_; }
@@ -132,6 +135,7 @@ namespace directx {
 		//制御共通関数：スクリプト操作
 		static gstd::value Func_LoadScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_LoadScriptInThread(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_UnloadScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_StartScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_CloseScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_IsCloseScript(gstd::script_machine* machine, int argc, const gstd::value* argv);

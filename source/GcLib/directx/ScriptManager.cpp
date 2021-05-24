@@ -91,55 +91,44 @@ get_script_res:
 	}
 	return res;
 }
-void ScriptManager::StartScript(int64_t id) {
-	shared_ptr<ManagedScript> script = nullptr;
+void ScriptManager::StartScript(int64_t id, bool bUnload) {
 	std::map<int64_t, shared_ptr<ManagedScript>>::iterator itrMap;
 	{
 		Lock lock(lock_);
 
 		itrMap = mapScriptLoad_.find(id);
 		if (itrMap == mapScriptLoad_.end()) return;
-		script = itrMap->second;
-	}
 
-	{
-		int count = 0;
-		while (!script->IsLoad()) {
-			if (count % 1000 == 999)
-				Logger::WriteTop(StringUtility::Format(L"読み込み完了待機(ScriptManager)：%s", script->GetPath().c_str()));
-			Sleep(1);
-			++count;
-		}
-	}
-
-	{
-		Lock lock(lock_);
-		mapScriptLoad_.erase(itrMap);
-		listScriptRun_.push_back(script);
-	}
-
-	if (script) {
-		if (IsError()) script->RaiseError(error_);
-
-		std::map<std::string, script_block*>::iterator itrEvent;
-		if (script->IsEventExists("Initialize", itrEvent))
-			script->Run(itrEvent);
+		StartScript(itrMap->second, bUnload);
 	}
 }
-void ScriptManager::StartScript(shared_ptr<ManagedScript> script) {
-	{
-		int count = 0;
+void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) {
+	if (!script->IsLoad()) {
+		DWORD count = 0;
 		while (!script->IsLoad()) {
-			if (count % 1000 == 999)
-				Logger::WriteTop(StringUtility::Format(L"読み込み完了待機(ScriptManager)：%s", script->GetPath().c_str()));
-			Sleep(1);
+			if (count % 1000 == 0) {
+				Logger::WriteTop(StringUtility::Format(L"ScriptManager: Script is still loading... [%s]",
+					script->GetPath().c_str()));
+			}
+			::Sleep(5);
 			++count;
 		}
 	}
 
 	{
 		Lock lock(lock_);
-		mapScriptLoad_.erase(script->GetScriptID());
+
+		for (auto& iScript : listScriptRun_) {
+			if (iScript->GetScriptID() == script->GetScriptID()) {
+				Logger::WriteTop(StringUtility::Format(
+					L"ScriptManager: Cannot run multiple instances of the same loaded script simultaneously. [%s]\r\n",
+					script->GetPath().c_str()));
+				return;
+			}
+		}
+
+		if (bUnload)
+			mapScriptLoad_.erase(script->GetScriptID());
 		listScriptRun_.push_back(script);
 	}
 
@@ -244,7 +233,8 @@ int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedS
 		script->Run(itrEvent);
 
 	{
-		Lock lock(lock_);
+		//Lock lock(lock_);		//Using this seems to hang the lock indefinitely, what???????
+		StaticLock lock = StaticLock();
 		script->bLoad_ = true;
 		mapScriptLoad_[res] = script;
 	}
@@ -293,6 +283,14 @@ void ScriptManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadE
 		SetError(e.what());
 	}
 }
+void ScriptManager::UnloadScript(int64_t id) {
+	Lock lock(lock_);
+	mapScriptLoad_.erase(id);
+}
+void ScriptManager::UnloadScript(shared_ptr<ManagedScript> script) {
+	UnloadScript(script->GetScriptID());
+}
+
 void ScriptManager::RequestEventAll(int type, const gstd::value* listValue, size_t countArgument) {
 	{
 		for (auto& pScript : listScriptRun_) {
@@ -342,19 +340,25 @@ void ScriptManager::AddRelativeScriptManagerMutual(weak_ptr<ScriptManager> manag
 //ManagedScript
 //*******************************************************************
 static const std::vector<function> commonFunction = {
-	//制御共通関数：スクリプト操作
 	{ "LoadScript", ManagedScript::Func_LoadScript, 1 },
 	{ "LoadScriptInThread", ManagedScript::Func_LoadScriptInThread, 1 },
+	{ "UnloadScript", ManagedScript::Func_UnloadScript, 1 },
+
 	{ "StartScript", ManagedScript::Func_StartScript, 1 },
+	{ "StartScript", ManagedScript::Func_StartScript, 2 },	//Overloaded
+
 	{ "CloseScript", ManagedScript::Func_CloseScript, 1 },
+
 	{ "IsCloseScript", ManagedScript::Func_IsCloseScript, 1 },
 	{ "GetOwnScriptID", ManagedScript::Func_GetOwnScriptID, 0 },
+
 	{ "GetEventType", ManagedScript::Func_GetEventType, 0 },
 	{ "GetEventArgument", ManagedScript::Func_GetEventArgument, 1 },
 	{ "GetEventArgumentCount", ManagedScript::Func_GetEventArgumentCount, 0 },
 	{ "SetScriptArgument", ManagedScript::Func_SetScriptArgument, 3 },
 	{ "GetScriptResult", ManagedScript::Func_GetScriptResult, 1 },
 	{ "SetAutoDeleteObject", ManagedScript::Func_SetAutoDeleteObject, 1 },
+
 	{ "NotifyEvent", ManagedScript::Func_NotifyEvent, -4 },			//2 fixed + ... -> 3 minimum
 	{ "NotifyEventOwn", ManagedScript::Func_NotifyEventOwn, -3 },	//1 fixed + ... -> 2 minimum
 	{ "NotifyEventAll", ManagedScript::Func_NotifyEventAll, -3 },	//1 fixed + ... -> 2 minimum
@@ -451,12 +455,26 @@ gstd::value ManagedScript::Func_LoadScriptInThread(gstd::script_machine* machine
 	int64_t res = scriptManager->LoadScriptInThread(path, target);
 	return script->CreateIntValue(res);
 }
-gstd::value ManagedScript::Func_StartScript(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value ManagedScript::Func_UnloadScript(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
 	auto scriptManager = script->scriptManager_;
 
 	int64_t idScript = argv[0].as_int();
-	scriptManager->StartScript(idScript);
+	scriptManager->UnloadScript(idScript);
+
+	return value();
+}
+gstd::value ManagedScript::Func_StartScript(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	ManagedScript* script = (ManagedScript*)machine->data;
+	auto scriptManager = script->scriptManager_;
+
+	bool bUnload = true;
+	if (argc == 2)
+		bUnload = argv[1].as_boolean();
+
+	int64_t idScript = argv[0].as_int();
+	scriptManager->StartScript(idScript, bUnload);
+
 	return value();
 }
 gstd::value ManagedScript::Func_CloseScript(gstd::script_machine* machine, int argc, const gstd::value* argv) {
