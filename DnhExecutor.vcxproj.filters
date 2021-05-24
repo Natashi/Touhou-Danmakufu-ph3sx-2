@@ -203,6 +203,9 @@
     <ClCompile Include="source\GcLib\directx\DxScript.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\Script\ValueVector.cpp">
+      <Filter>source\GcLib\gstd\Script</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">
@@ -373,7 +376,7 @@
     <ClInclude Include="source\GcLib\gstd\Script\Value.hpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClInclude>
-    <ClInclude Include="source\GcLib\gstd\Script\LightweightVector.hpp">
+    <ClInclude Include="source\GcLib\gstd\Script\ValueVector.hpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\Script\ScriptLexer.hpp">

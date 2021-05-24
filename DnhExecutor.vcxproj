@@ -266,6 +266,7 @@
     <ClCompile Include="source\GcLib\gstd\Logger.cpp" />
     <ClCompile Include="source\GcLib\gstd\RandProvider.cpp" />
     <ClCompile Include="source\GcLib\gstd\ScriptClient.cpp" />
+    <ClCompile Include="source\GcLib\gstd\Script\ValueVector.cpp" />
     <ClCompile Include="source\GcLib\gstd\Task.cpp" />
     <ClCompile Include="source\GcLib\gstd\Thread.cpp" />
     <ClCompile Include="source\GcLib\gstd\Window.cpp" />
@@ -328,7 +329,7 @@
     <ClInclude Include="source\GcLib\directx\VertexBuffer.hpp" />
     <ClInclude Include="source\GcLib\GcLib.hpp" />
     <ClInclude Include="source\GcLib\gstd\VectorExtension.hpp" />
-    <ClInclude Include="source\GcLib\gstd\Script\LightweightVector.hpp" />
+    <ClInclude Include="source\GcLib\gstd\Script\ValueVector.hpp" />
     <ClInclude Include="source\GcLib\gstd\Script\Parser.hpp" />
     <ClInclude Include="source\GcLib\gstd\Script\ScriptFunction.hpp" />
     <ClInclude Include="source\GcLib\gstd\Script\ScriptLexer.hpp" />
