@@ -1582,9 +1582,10 @@ std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgLooseLaserObject::GetInter
 	if (shotData == nullptr)
 		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
 
+	float length = 0.5f * hitboxScale_.y;
 	__m128 v1 = Vectorize::Mul(
 		Vectorize::SetF(invalidLengthStart_, invalidLengthEnd_, 0.0f, 0.0f),
-		Vectorize::Set(0.5f, 0.5f, 0.0f, 0.0f));
+		Vectorize::Set(length, length, 0.0f, 0.0f));
 	float lineXS = Math::Lerp::Linear((float)posX_, posXE_, v1.m128_f32[0]);
 	float lineYS = Math::Lerp::Linear((float)posY_, posYE_, v1.m128_f32[0]);
 	float lineXE = Math::Lerp::Linear(posXE_, (float)posX_, v1.m128_f32[1]);
@@ -1866,8 +1867,9 @@ std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgStraightLaserObject::GetIn
 	if (shotData == nullptr)
 		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
 
+	float length = length_ * hitboxScale_.y;
 	__m128 v1 = Vectorize::Mul(
-		Vectorize::SetF(length_, length_, invalidLengthStart_, invalidLengthEnd_),
+		Vectorize::SetF(length, length, invalidLengthStart_, invalidLengthEnd_),
 		Vectorize::Set(move_.x, move_.y, 0.5f, 0.5f));
 	float _posXE = posX_ + v1.m128_f32[0];
 	float _posYE = posY_ + v1.m128_f32[1];
@@ -2221,8 +2223,10 @@ std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgCurveLaserObject::GetInter
 
 		std::list<LaserNode>::iterator itr = listPosition_.begin();
 		for (size_t iPos = 0; iPos < countIntersection; ++iPos, ++itr) {
+			ref_unsync_ptr<StgIntersectionTarget>& target = listIntersectionTarget_[iPos];
 			if ((int)iPos < posInvalidS || (int)iPos > posInvalidE) {
-				listIntersectionTarget_[iPos] = nullptr;
+				if (target)
+					target->SetIntersectionSpace(DxRect<LONG>());
 				continue;
 			}
 
@@ -2230,7 +2234,6 @@ std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgCurveLaserObject::GetInter
 			D3DXVECTOR2* nodeS = &itr->pos;
 			D3DXVECTOR2* nodeE = &itrNext->pos;
 
-			ref_unsync_ptr<StgIntersectionTarget>& target = listIntersectionTarget_[iPos];
 			if (target == nullptr) {
 				target = new StgIntersectionTarget_Line();
 			}
