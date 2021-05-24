@@ -13,7 +13,7 @@ const std::wstring DNH_VERSION = L"v1.22a-pre";
 constexpr const uint64_t _GAME_VERSION_RESERVED = /*e*/621;		//OWO!!!!!
 constexpr const uint64_t _GAME_VERSION_MAJOR = 1;
 constexpr const uint64_t _GAME_VERSION_MINOR = 20;
-constexpr const uint64_t _GAME_VERSION_REVIS = 8;
+constexpr const uint64_t _GAME_VERSION_REVIS = 9;
 
 //00000000 00000000 | 00000000 00000000 | 00000000 00000000 | 00000000 00000000
 //<---RESERVED----> | <-----MAJOR-----> | <-----MINOR-----> | <---REVISIONS--->
