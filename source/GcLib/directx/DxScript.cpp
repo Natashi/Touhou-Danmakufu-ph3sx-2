@@ -159,6 +159,7 @@ static const std::vector<function> dxFunction = {
 
 	//Color conversion functions
 	{ "ColorARGBToHex", DxScript::Func_ColorARGBToHex, 4 },
+	{ "ColorARGBToHex", DxScript::Func_ColorARGBToHex, 1 },		//Overloaded
 	{ "ColorHexToARGB", DxScript::Func_ColorHexToARGB, 1 },
 	{ "ColorHexToARGB", DxScript::Func_ColorHexToARGB, 2 },		//Overloaded
 	{ "ColorRGBtoHSV", DxScript::Func_ColorRGBtoHSV, 3 },
@@ -1958,10 +1959,28 @@ gstd::value DxScript::Func_IsIntersected_Line_Line(gstd::script_machine* machine
 
 //Color
 gstd::value DxScript::Func_ColorARGBToHex(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	byte ca = argv[0].as_int();
-	byte cr = argv[1].as_int();
-	byte cg = argv[2].as_int();
-	byte cb = argv[3].as_int();
+	DWORD color;
+	byte ca = 0xff;
+	byte cr = 0xff;
+	byte cg = 0xff;
+	byte cb = 0xff;
+	if (argc == 4) {
+		ca = argv[0].as_int();
+		cr = argv[1].as_int();
+		cg = argv[2].as_int();
+		cb = argv[3].as_int();
+	}
+	else {
+		const value& val = argv[0];
+		if (DxScript::IsArrayValue(const_cast<value&>(val))) {
+			if (val.length_as_array() >= 4) {
+				ca = val.index_as_array(0).as_int();
+				cr = val.index_as_array(1).as_int();
+				cg = val.index_as_array(2).as_int();
+				cb = val.index_as_array(3).as_int();
+			}
+		}
+	}
 	return DxScript::CreateIntValue(D3DCOLOR_ARGB(ca, cr, cg, cb));
 }
 gstd::value DxScript::Func_ColorHexToARGB(gstd::script_machine* machine, int argc, const gstd::value* argv) {
