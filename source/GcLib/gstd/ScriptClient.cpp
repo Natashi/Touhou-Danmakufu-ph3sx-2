@@ -972,9 +972,11 @@ value ScriptClientBase::Func_Tan(script_machine* machine, int argc, const value*
 value ScriptClientBase::Func_SinCos(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	double ang = Math::DegreeToRadian(argv[0].as_real());
-	double ang = Math::DegreeToRadian(argv[0].as_real());
-	double csArray[2] = { sin(ang), cos(ang) };
-	return script->CreateRealArrayValue(csArray, 2U);
+
+	double scArray[2];
+	Math::DoSinCos(ang, scArray);
+
+	return script->CreateRealArrayValue(scArray, 2U);
 }
 
 value ScriptClientBase::Func_RCos(script_machine* machine, int argc, const value* argv) {
@@ -989,8 +991,11 @@ value ScriptClientBase::Func_RTan(script_machine* machine, int argc, const value
 value ScriptClientBase::Func_RSinCos(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	double ang = argv[0].as_real();
-	double csArray[2] = { sin(ang), cos(ang) };
-	return script->CreateRealArrayValue(csArray, 2U);
+
+	double scArray[2];
+	Math::DoSinCos(ang, scArray);
+
+	return script->CreateRealArrayValue(scArray, 2U);
 }
 
 value ScriptClientBase::Func_Acos(script_machine* machine, int argc, const value* argv) {

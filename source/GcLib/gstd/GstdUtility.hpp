@@ -253,8 +253,17 @@ namespace gstd {
 		}
 
 		static void InitializeFPU() {
-			__asm {
+			_asm {
 				finit
+			};
+		}
+		static inline void DoSinCos(double angle, double* pRes) {
+			_asm {
+				mov esi, DWORD PTR[pRes]	//Load pRes into esi
+				fld QWORD PTR[angle]		//Load angle into the FPU stack
+				fsincos
+				fstp QWORD PTR[esi + 8]		//Pop cos
+				fstp QWORD PTR[esi]			//Pop sin
 			};
 		}
 
