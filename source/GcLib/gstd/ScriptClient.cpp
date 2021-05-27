@@ -21,6 +21,31 @@ void ScriptEngineData::SetSource(std::vector<char>& source) {
 }
 
 //****************************************************************************
+//ScriptEngineCache
+//****************************************************************************
+ScriptEngineCache::ScriptEngineCache() {
+}
+void ScriptEngineCache::Clear() {
+	cache_.clear();
+}
+void ScriptEngineCache::AddCache(const std::wstring& name, ref_count_ptr<ScriptEngineData>& data) {
+	cache_[name] = data;
+}
+void ScriptEngineCache::RemoveCache(const std::wstring& name) {
+	auto itrFind = cache_.find(name);
+	if (cache_.find(name) != cache_.end())
+		cache_.erase(itrFind);
+}
+ref_count_ptr<ScriptEngineData> ScriptEngineCache::GetCache(const std::wstring& name) {
+	auto itrFind = cache_.find(name);
+	if (cache_.find(name) == cache_.end()) return nullptr;
+	return itrFind->second;
+}
+bool ScriptEngineCache::IsExists(const std::wstring& name) {
+	return cache_.find(name) != cache_.end();
+}
+
+//****************************************************************************
 //ScriptClientBase
 //****************************************************************************
 static const std::vector<function> commonFunction = {
@@ -644,6 +669,14 @@ bool ScriptClientBase::_CreateEngine() {
 bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 	path = PathProperty::GetUnique(path);
 
+	if (cache_) {
+		auto pCachedEngine = cache_->GetCache(path);
+		if (pCachedEngine) {
+			engine_ = pCachedEngine;
+			return true;
+		}
+	}
+
 	engine_->SetPath(path);
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open())
@@ -677,6 +710,9 @@ void ScriptClientBase::Compile() {
 		if (!bCreateSuccess) {
 			bError_ = true;
 			_RaiseErrorFromEngine();
+		}
+		if (cache_ != nullptr && engine_->GetPath().size() > 0) {
+			cache_->AddCache(engine_->GetPath(), engine_);
 		}
 	}
 
@@ -935,6 +971,7 @@ value ScriptClientBase::Func_Tan(script_machine* machine, int argc, const value*
 }
 value ScriptClientBase::Func_SinCos(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	double ang = Math::DegreeToRadian(argv[0].as_real());
 	double ang = Math::DegreeToRadian(argv[0].as_real());
 	double csArray[2] = { sin(ang), cos(ang) };
 	return script->CreateRealArrayValue(csArray, 2U);

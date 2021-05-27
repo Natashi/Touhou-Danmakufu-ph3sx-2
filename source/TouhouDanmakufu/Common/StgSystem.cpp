@@ -15,19 +15,24 @@ StgSystemController::StgSystemController() {
 	packageController_ = nullptr;
 }
 StgSystemController::~StgSystemController() {
+	if (scriptEngineCache_)
+		scriptEngineCache_->Clear();
 }
 void StgSystemController::Initialize(ref_count_ptr<StgSystemInformation> infoSystem) {
 	base_ = this;
 
 	infoSystem_ = infoSystem;
+
+	scriptEngineCache_ = new ScriptEngineCache();
 	commonDataManager_.reset(new ScriptCommonDataManager());
 	infoControlScript_ = new StgControlScriptInformation();
 }
 void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay) {
-	//DirectX
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+
+	scriptEngineCache_->Clear();
 
 	camera3D->SetPerspectiveWidth(384);
 	camera3D->SetPerspectiveHeight(448);

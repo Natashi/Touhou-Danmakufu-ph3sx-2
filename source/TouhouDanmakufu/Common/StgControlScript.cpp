@@ -177,6 +177,8 @@ StgControlScript::StgControlScript(StgSystemController* systemController) {
 	bEndScript_ = false;
 	bAutoDeleteObject_ = false;
 
+	SetScriptEngineCache(systemController->GetScriptEngineCache());
+
 	commonDataManager_ = systemController->GetCommonDataManager();
 }
 
