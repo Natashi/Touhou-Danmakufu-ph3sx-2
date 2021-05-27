@@ -343,6 +343,7 @@ static const std::vector<function> commonFunction = {
 	{ "LoadScript", ManagedScript::Func_LoadScript, 1 },
 	{ "LoadScriptInThread", ManagedScript::Func_LoadScriptInThread, 1 },
 	{ "UnloadScript", ManagedScript::Func_UnloadScript, 1 },
+	{ "UnloadScriptFromCache", ManagedScript::Func_UnloadScriptFromCache, 1 },
 
 	{ "StartScript", ManagedScript::Func_StartScript, 1 },
 	{ "StartScript", ManagedScript::Func_StartScript, 2 },	//Overloaded
@@ -461,6 +462,14 @@ gstd::value ManagedScript::Func_UnloadScript(gstd::script_machine* machine, int 
 
 	int64_t idScript = argv[0].as_int();
 	scriptManager->UnloadScript(idScript);
+
+	return value();
+}
+gstd::value ManagedScript::Func_UnloadScriptFromCache(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	ManagedScript* script = (ManagedScript*)machine->data;
+
+	auto cache = script->GetScriptEngineCache();
+	cache->RemoveCache(argv[1].as_string());
 
 	return value();
 }

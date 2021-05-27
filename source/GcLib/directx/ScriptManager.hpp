@@ -136,6 +136,7 @@ namespace directx {
 		static gstd::value Func_LoadScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_LoadScriptInThread(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_UnloadScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_UnloadScriptFromCache(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_StartScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_CloseScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_IsCloseScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
