@@ -387,9 +387,11 @@ ManagedScript::~ManagedScript() {
 	//ptr_delete_scalar(listValueEvent_);
 	listValueEventSize_ = 0;
 
+	/*
 	Logger::WriteTop(StringUtility::Format(
 		L"Released script: %s (Manager=%08x, Type=%d)",
 		PathProperty::GetFileName(GetPath()).c_str(), (int)scriptManager_, typeScript_));
+	*/
 }
 void ManagedScript::SetScriptManager(ScriptManager* manager) {
 	scriptManager_ = manager;
