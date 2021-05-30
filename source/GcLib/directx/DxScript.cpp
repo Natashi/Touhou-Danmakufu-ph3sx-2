@@ -1528,7 +1528,7 @@ value DxScript::Func_LoadMesh(script_machine* machine, int argc, const value* ar
 	path = PathProperty::GetUnique(path);
 
 	if (script->mapMesh_.find(path) == script->mapMesh_.end()) {
-		shared_ptr<DxMesh> mesh;
+		shared_ptr<DxMesh> mesh = std::make_shared<MetasequoiaMesh>();
 		res = mesh->CreateFromFile(path);
 		if (res) {
 			Lock lock(script->criticalSection_);
@@ -1959,7 +1959,6 @@ gstd::value DxScript::Func_IsIntersected_Line_Line(gstd::script_machine* machine
 
 //Color
 gstd::value DxScript::Func_ColorARGBToHex(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DWORD color;
 	byte ca = 0xff;
 	byte cr = 0xff;
 	byte cg = 0xff;
