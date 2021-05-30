@@ -118,7 +118,7 @@ namespace gstd {
 		uint32_t level;
 		uint32_t arguments;
 		std::string name;
-		callback func;
+		dnh_func_callback_t func;
 		std::vector<code> codes;
 		block_kind kind;
 

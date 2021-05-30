@@ -252,7 +252,7 @@ ScriptClientBase::ScriptClientBase() {
 ScriptClientBase::~ScriptClientBase() {
 }
 
-void ScriptClientBase::_AddFunction(const char* name, callback f, size_t arguments) {
+void ScriptClientBase::_AddFunction(const char* name, dnh_func_callback_t f, size_t arguments) {
 	function tFunc(name, f, arguments);
 	func_.push_back(tFunc);
 }

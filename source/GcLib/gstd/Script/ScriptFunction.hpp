@@ -9,21 +9,21 @@ namespace gstd {
 	class script_engine;
 	class script_machine;
 
-	typedef value (*callback)(script_machine* machine, int argc, const value* argv);
+	using dnh_func_callback_t = value (*)(script_machine*, int, const value*);
 
 	//Breaks IntelliSense for some reason
-#define DNH_FUNCAPI_DECL_(fn) static gstd::value fn (gstd::script_machine* machine, int argc, const gstd::value* argv)
-#define DNH_FUNCAPI_(fn) gstd::value fn (gstd::script_machine* machine, int argc, const gstd::value* argv)
+#define DNH_FUNCAPI_DECL_(_fn) static gstd::value _fn (gstd::script_machine*, int, const gstd::value*)
+#define DNH_FUNCAPI_DEF_(_fn) gstd::value _fn (gstd::script_machine* machine, int argc, const gstd::value* argv)
 
 	struct function {
 		const char* name;
-		callback func;
+		dnh_func_callback_t func;
 		int argc;
 		const char* signature;
 
-		function(const char* name_, callback func_) : function(name_, func_, 0, "") {};
-		function(const char* name_, callback func_, int argc_) : function(name_, func_, argc_, "") {};
-		function(const char* name_, callback func_, int argc_, const char* signature_) : name(name_),
+		function(const char* name_, dnh_func_callback_t func_) : function(name_, func_, 0, "") {};
+		function(const char* name_, dnh_func_callback_t func_, int argc_) : function(name_, func_, argc_, "") {};
+		function(const char* name_, dnh_func_callback_t func_, int argc_, const char* signature_) : name(name_),
 			func(func_), argc(argc_), signature(signature_) {};
 	};
 	struct constant {
@@ -60,11 +60,11 @@ namespace gstd {
 		//---------------------------------------------------------------------
 
 		static value _cast_array(script_machine* machine, const value* argv, type_data* target);
-		static value cast_int_array(script_machine* machine, int argc, const value* argv);
-		static value cast_real_array(script_machine* machine, int argc, const value* argv);
-		static value cast_bool_array(script_machine* machine, int argc, const value* argv);
-		static value cast_char_array(script_machine* machine, int argc, const value* argv);
-		static value cast_x_array(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(cast_int_array);
+		DNH_FUNCAPI_DECL_(cast_real_array);
+		DNH_FUNCAPI_DECL_(cast_bool_array);
+		DNH_FUNCAPI_DECL_(cast_char_array);
+		DNH_FUNCAPI_DECL_(cast_x_array);
 
 		static value _script_add(int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(add);

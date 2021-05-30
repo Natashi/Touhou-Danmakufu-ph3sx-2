@@ -93,7 +93,7 @@ namespace gstd {
 		std::vector<gstd::value> listValueArg_;
 		gstd::value valueRes_;
 	protected:
-		void _AddFunction(const char* name, callback f, size_t arguments);
+		void _AddFunction(const char* name, dnh_func_callback_t f, size_t arguments);
 		void _AddFunction(const std::vector<gstd::function>* f);
 		void _AddConstant(const std::vector<gstd::constant>* c);
 

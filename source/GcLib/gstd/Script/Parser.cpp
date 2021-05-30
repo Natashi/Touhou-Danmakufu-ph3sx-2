@@ -2242,6 +2242,7 @@ void parser::link_break_continue(script_block* block, parser_state_t* state,
 		}
 	}
 }
+
 void parser::scan_final(script_block* block, parser_state_t* state) {
 	for (auto itr = block->codes.begin(); itr != block->codes.end(); ++itr) {
 		parser_assert(itr->line, itr->command != command_kind::pc_loop_break,
