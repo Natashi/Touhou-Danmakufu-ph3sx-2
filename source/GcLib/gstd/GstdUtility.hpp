@@ -462,7 +462,7 @@ namespace gstd {
 		//Returns the the path relative to the executable's directory.
 		static std::wstring GetPathWithoutModuleDirectory(const std::wstring& path) {
 			const std::wstring& dirModule = GetModuleDirectory();
-			std::wstring res = Canonicalize(path);
+			std::wstring res = GetUnique(path);
 			if (res.find(dirModule) != std::wstring::npos) {
 				res = res.substr(dirModule.size());
 			}
