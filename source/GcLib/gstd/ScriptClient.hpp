@@ -58,6 +58,8 @@ namespace gstd {
 		void RemoveCache(const std::wstring& name);
 		ref_count_ptr<ScriptEngineData> GetCache(const std::wstring& name);
 
+		const std::map<std::wstring, ref_count_ptr<ScriptEngineData>>& GetMap() { return cache_; }
+
 		bool IsExists(const std::wstring& name);
 	};
 
@@ -116,6 +118,8 @@ namespace gstd {
 		ref_count_ptr<ScriptEngineCache> GetScriptEngineCache() { return cache_; }
 
 		ref_count_ptr<ScriptEngineData> GetEngine() { return engine_; }
+
+		shared_ptr<RandProvider> GetRand() { return mt_; }
 
 		virtual bool SetSourceFromFile(std::wstring path);
 		virtual void SetSource(std::vector<char>& source);
@@ -234,9 +238,9 @@ namespace gstd {
 		static value Func_ToString(script_machine* machine, int argc, const value* argv);
 		static value Func_ItoA(script_machine* machine, int argc, const value* argv);
 		static value Func_RtoA(script_machine* machine, int argc, const value* argv);
-		DNH_FUNCAPI_DECL_(Func_RtoA_Ex);
 		static value Func_RtoS(script_machine* machine, int argc, const value* argv);
 		static value Func_VtoS(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_SPrintF);
 		static value Func_AtoI(script_machine* machine, int argc, const value* argv);
 		static value Func_AtoR(script_machine* machine, int argc, const value* argv);
 		static value Func_TrimString(script_machine* machine, int argc, const value* argv);

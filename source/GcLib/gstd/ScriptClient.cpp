@@ -114,10 +114,9 @@ static const std::vector<function> commonFunction = {
 	{ "IntToString", ScriptClientBase::Func_ItoA, 1 },
 	{ "itoa", ScriptClientBase::Func_ItoA, 1 },
 	{ "rtoa", ScriptClientBase::Func_RtoA, 1 },
-	//{ "rtoa_ex", ScriptClientBase::Func_RtoA_Ex, -2 },
-	//{ "rtoa_ex", ScriptClientBase::Func_RtoA_Ex, 2 },
 	{ "rtos", ScriptClientBase::Func_RtoS, 2 },
 	{ "vtos", ScriptClientBase::Func_VtoS, 2 },
+	{ "StringFormat", ScriptClientBase::Func_SPrintF, -4 },		//2 fixed + ... -> 3 minimum
 	{ "atoi", ScriptClientBase::Func_AtoI, 1 },
 	{ "ator", ScriptClientBase::Func_AtoR, 1 },
 	{ "TrimString", ScriptClientBase::Func_TrimString, 1 },
@@ -1207,23 +1206,6 @@ value ScriptClientBase::Func_RtoA(script_machine* machine, int argc, const value
 	std::wstring res = std::to_wstring(argv->as_real());
 	return CreateStringValue(res);
 }
-value ScriptClientBase::Func_RtoA_Ex(script_machine* machine, int argc, const value* argv) {
-	/*
-	std::wstring res = argv[0].as_string();
-	if (argc > 1) {
-		std::vector<double> f_va_list;
-		for (int i = 1; i < argc; ++i) {
-			f_va_list.push_back(argv[i].as_real());
-		}
-		double* f_data = f_va_list.data();
-
-		res = StringUtility::Format(res.c_str(), reinterpret_cast<va_list>(f_data));
-	}
-	*/
-	std::wstring format = argv[0].as_string();
-	std::wstring res = StringUtility::Format(format.c_str(), argv[1].as_real());
-	return CreateStringValue(res);
-}
 value ScriptClientBase::Func_RtoS(script_machine* machine, int argc, const value* argv) {
 	std::string res = "";
 	std::string fmtV = StringUtility::ConvertWideToMulti(argv[0].as_string());
@@ -1266,7 +1248,7 @@ value ScriptClientBase::Func_RtoS(script_machine* machine, int argc, const value
 		}
 	}
 	catch (...) {
-		res = "error format";
+		res = "[invalid format]";
 	}
 
 	return CreateStringValue(StringUtility::ConvertMultiToWide(res));
@@ -1280,39 +1262,112 @@ value ScriptClientBase::Func_VtoS(script_machine* machine, int argc, const value
 		int countI0 = 0;
 		int countF = 0;
 
+		auto _IsPattern = [](char ch) -> bool {
+			return ch == 'd' || ch == 's' || ch == 'f';
+		};
+
 		int advance = 0;//0:-, 1:0, 2:num, 3:[d,s,f], 4:., 5:num
 		for (char ch : fmtV) {
 			if (advance == 0 && ch == '-')
 				advance = 1;
-			else if ((advance == 0 || advance == 1 || advance == 2) && (ch >= '0' && ch <= '9'))
+			else if ((advance == 0 || advance == 1 || advance == 2) && std::isdigit(ch))
 				advance = 2;
-			else if (advance == 2 && (ch == 'd' || ch == 's' || ch == 'f'))
+			else if (advance == 2 && _IsPattern(ch))
 				advance = 4;
-			else if (advance == 2 && ('.'))
+			else if (advance == 2 && (ch == '.'))
 				advance = 5;
-			else if (advance == 4 && ('.'))
+			else if (advance == 4 && (ch == '.'))
 				advance = 5;
-			else if (advance == 5 && (ch >= '0' && ch <= '9'))
+			else if (advance == 5 && std::isdigit(ch))
 				advance = 5;
-			else if (advance == 5 && (ch == 'd' || ch == 's' || ch == 'f'))
+			else if (advance == 5 && _IsPattern(ch))
 				advance = 6;
 			else throw false;
 		}
 
 		fmtV = std::string("%") + fmtV;
 		char* fmt = (char*)fmtV.c_str();
-		if (strstr(fmt, "d"))
-			res = StringUtility::Format(fmt, argv[1].as_int());
+		if (strstr(fmt, "d")) {
+			fmtV = StringUtility::ReplaceAll(fmtV, "d", "lld");
+			res = StringUtility::Format(fmtV.c_str(), argv[1].as_int());
+		}
 		else if (strstr(fmt, "f"))
 			res = StringUtility::Format(fmt, argv[1].as_real());
 		else if (strstr(fmt, "s"))
 			res = StringUtility::Format(fmt, StringUtility::ConvertWideToMulti(argv[1].as_string()).c_str());
 	}
 	catch (...) {
-		res = "error format";
+		res = "[invalid format]";
 	}
 
 	return CreateStringValue(StringUtility::ConvertMultiToWide(res));
+}
+value ScriptClientBase::Func_SPrintF(script_machine* machine, int argc, const value* argv) {
+	std::wstring res = L"";
+	
+	std::wstring srcStr = argv[0].as_string();
+	std::wstring fmtTypes = argv[1].as_string();
+
+	try {
+		if (fmtTypes.size() > argc - 2) throw false;
+
+		std::vector<std::wstring> stringCache;
+		std::vector<byte> printfArgs;
+
+		char tmp[8];
+
+		size_t iVal = 2;
+		size_t iMem = 0;
+		for (char ch : fmtTypes) {
+			size_t cpySize = 0;
+
+			switch (ch) {
+			case 'd':	//%d
+			case 'x':	//%x
+			case 'o':	//%o
+				cpySize = sizeof(int);
+				*reinterpret_cast<int*>(tmp) = (int)(argv[iVal].as_int());
+				break;
+			case 'l':	//%ld
+				cpySize = sizeof(int64_t);
+				*reinterpret_cast<int64_t*>(tmp) = (int64_t)(argv[iVal].as_int());
+				break;
+			/*
+			case 'f':	//%lf
+			case 'e':	//%e
+				cpySize = sizeof(float);
+				*reinterpret_cast<float*>(tmp) = (float)(argv[iVal].as_real());
+				break;
+			case 'c':	//%c
+				cpySize = sizeof(wchar_t);
+				*reinterpret_cast<wchar_t*>(tmp) = (wchar_t)(argv[iVal].as_char());
+				break;
+			*/
+			case 's':	//%s
+			{
+				stringCache.push_back(argv[iVal].as_string());
+				cpySize = sizeof(wchar_t*);
+				*reinterpret_cast<wchar_t**>(tmp) = (wchar_t*)(stringCache.back().data());
+				break;
+			}
+			default:
+				throw false;
+			}
+
+			printfArgs.resize(printfArgs.size() + cpySize);
+			memcpy(printfArgs.data() + iMem, tmp, cpySize);
+			iMem += cpySize;
+lab_skip_normal_copy:
+			++iVal;
+		}
+
+		res = StringUtility::Format(srcStr.c_str(), reinterpret_cast<va_list>(printfArgs.data()));
+	}
+	catch (bool) {
+		res = L"[invalid format]";
+	}
+
+	return CreateStringValue(res);
 }
 value ScriptClientBase::Func_AtoI(script_machine* machine, int argc, const value* argv) {
 	std::wstring str = argv->as_string();
