@@ -223,6 +223,7 @@ protected:
 	uint32_t itemIntersectRadius_;
 
 	bool bDefaultCollectionMove_;
+	bool bRoundingPosition_;
 
 	void _DeleteInAutoClip();
 	void _CreateScoreItem();
@@ -268,6 +269,8 @@ public:
 
 	bool IsDefaultCollectionMovement() { return bDefaultCollectionMove_; }
 	void SetDefaultCollectionMovement(bool b) { bDefaultCollectionMove_ = b; }
+
+	void SetPositionRounding(bool b) { bRoundingPosition_ = b; }
 
 	int GetMoveType();
 	void SetMoveType(int type);

@@ -293,7 +293,7 @@ void StgPlayerObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectio
 			int hitID = DxScript::ID_INVALID;
 			if (objShot) {
 				hitID = objShot->GetObjectID();
-				if (enableDeleteShotOnHit_ && objShot->GetLife() != StgShotObject::LIFE_SPELL_REGIST &&
+				if (enableDeleteShotOnHit_ && !objShot->IsSpellResist() &&
 					objShot->GetObjectType() == TypeObject::Shot)
 					objShot->ConvertToItem(true);
 			}

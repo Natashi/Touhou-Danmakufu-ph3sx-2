@@ -194,7 +194,7 @@ void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, i
 	for (ref_unsync_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
-		if (typeDelete == DEL_TYPE_SHOT && (obj->GetLife() == StgShotObject::LIFE_SPELL_REGIST)) continue;
+		if (typeDelete == DEL_TYPE_SHOT && obj->IsSpellResist()) continue;
 
 		if (radius == nullptr || Math::HypotSq<int>(cx - obj->GetPositionX(), cy - obj->GetPositionY()) <= rr) {
 			if (typeTo == TO_TYPE_IMMEDIATE)
@@ -736,10 +736,11 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	SetBlendType(MODE_BLEND_NONE);
 
 	damage_ = 1;
-	life_ = LIFE_SPELL_UNREGIST;
+	life_ = 1;
 	bAutoDelete_ = true;
 	bEraseShot_ = false;
 	bSpellFactor_ = false;
+	bSpellResist_ = false;
 
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 
@@ -891,7 +892,6 @@ void StgShotObject::_SendDeleteEvent(int bit) {
 void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	ref_unsync_weak_ptr<StgIntersectionObject> obj = otherTarget->GetObject();
 
-	float damage = 0;
 	StgIntersectionTarget::Type otherType = otherTarget->GetTargetType();
 	switch (otherType) {
 	case StgIntersectionTarget::TYPE_PLAYER:
@@ -906,7 +906,7 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 		if (obj) {
 			if (StgShotObject* shot = dynamic_cast<StgShotObject*>(obj.get())) {
 				bool bEraseShot = shot->IsEraseShot();
-				if (bEraseShot && life_ != LIFE_SPELL_REGIST)
+				if (bEraseShot && !bSpellResist_)
 					ConvertToItem(false);
 			}
 		}
@@ -917,7 +917,7 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 		if (obj) {
 			if (StgPlayerSpellObject* spell = dynamic_cast<StgPlayerSpellObject*>(obj.get())) {
 				bool bEraseShot = spell->IsEraseShot();
-				if (bEraseShot && life_ != LIFE_SPELL_REGIST)
+				if (bEraseShot && !bSpellResist_)
 					ConvertToItem(false);
 			}
 		}
@@ -927,14 +927,12 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 	{
 		//Don't reduce penetration with lasers
-		if (dynamic_cast<StgLaserObject*>(this) == nullptr)
-			damage = 1;
+		if (!bSpellResist_ && dynamic_cast<StgLaserObject*>(this) == nullptr) {
+			--life_;
+		}
 		break;
 	}
 	}
-
-	if (life_ != LIFE_SPELL_REGIST)
-		life_ = std::max(life_ - damage, 0.0);
 }
 StgShotData* StgShotObject::_GetShotData(int id) {
 	StgShotData* res = nullptr;
@@ -1466,7 +1464,7 @@ void StgNormalShotObject::SetShotDataID(int id) {
 //StgLaserObject(レーザー基本部)
 //****************************************************************************
 StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObject(stageController) {
-	life_ = LIFE_SPELL_REGIST;
+	life_ = 9999999;
 	length_ = 0;
 	widthRender_ = 0;
 	widthIntersection_ = -1;

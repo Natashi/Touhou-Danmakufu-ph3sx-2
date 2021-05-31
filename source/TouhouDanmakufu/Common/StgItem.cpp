@@ -658,6 +658,7 @@ StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObjec
 	itemIntersectRadius_ = 16 * 16;
 
 	bDefaultCollectionMove_ = true;
+	bRoundingPosition_ = false;
 
 	int priItemI = stageController_->GetStageInformation()->GetItemObjectPriority();
 	SetRenderPriorityI(priItemI);
@@ -688,6 +689,13 @@ void StgItemObject::RenderOnItemManager() {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	SpriteList2D* renderer = typeItem_ == ITEM_SCORE ?
 		itemManager->GetDigitRenderer() : itemManager->GetItemRenderer();
+
+	FLOAT sposx = posX_;
+	FLOAT sposy = posY_;
+	if (bRoundingPosition_) {
+		sposx = roundf(sposx);
+		sposy = roundf(sposy);
+	}
 
 	if (typeItem_ != ITEM_SCORE) {
 		float scale = 1.0f;
@@ -731,9 +739,8 @@ void StgItemObject::RenderOnItemManager() {
 		}
 
 		//è„Ç…ÇÕÇ›èoÇµÇƒÇ¢ÇÈ
-		float posY = posY_;
 		D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255);
-		if (posY_ <= 0) {
+		if (sposy <= 0) {
 			D3DCOLOR colorOver = D3DCOLOR_ARGB(255, 255, 255, 255);
 			switch (typeItem_) {
 			case ITEM_1UP:
@@ -755,13 +762,13 @@ void StgItemObject::RenderOnItemManager() {
 			}
 			if (color != colorOver) {
 				rcSrc.Set(113, 1, 126, 10);
-				posY = 6;
+				sposy = 6;
 			}
 			color = colorOver;
 		}
 
 		renderer->SetColor(color);
-		renderer->SetPosition(posX_, posY, 0);
+		renderer->SetPosition(sposx, sposy, 0);
 		renderer->SetScaleXYZ(scale, scale, scale);
 		renderer->SetSourceRect(rcSrc);
 		renderer->SetDestinationCenter();
@@ -784,8 +791,8 @@ void StgItemObject::RenderOnItemManager() {
 		for (int iNum = listNum.size() - 1; iNum >= 0; iNum--) {
 			DxRect<double> rcSrc(listNum[iNum] * 36, 0, 
 				(listNum[iNum] + 1) * 36 - 1, 31);
-			DxRect<double> rcDest(posX_ + (listNum.size() - 1 - iNum) * fontSize / 2, posY_,
-				posX_ + (listNum.size() - iNum)*fontSize / 2, posY_ + fontSize);
+			DxRect<double> rcDest(sposx + (listNum.size() - 1 - iNum) * fontSize / 2, sposy,
+				sposx + (listNum.size() - iNum)*fontSize / 2, sposy + fontSize);
 			renderer->SetSourceRect(rcSrc);
 			renderer->SetDestinationRect(rcDest);
 			renderer->AddVertex();
@@ -1083,11 +1090,17 @@ void StgItemObject_User::RenderOnItemManager() {
 
 	if (renderer == nullptr) return;
 
+	FLOAT sposx = position_.x;
+	FLOAT sposy = position_.y;
+	if (bRoundingPosition_) {
+		sposx = roundf(sposx);
+		sposy = roundf(sposy);
+	}
+
 	float scaleX = scale_.x;
 	float scaleY = scale_.y;
 	float c = 1.0f;
 	float s = 0.0f;
-	float posy = position_.y;
 
 	StgItemData::AnimationData* frameData = itemData->GetData(frameWork_);
 
@@ -1110,7 +1123,7 @@ void StgItemObject_User::RenderOnItemManager() {
 		else {
 			scaleX = 1.0;
 			scaleY = 1.0;
-			posy = (rcSrc->bottom - rcSrc->top) / 2;
+			sposy = (rcSrc->bottom - rcSrc->top) / 2;
 		}
 
 		bool bBlendAddRGB = (objBlendType == MODE_BLEND_ADD_RGB);
@@ -1158,7 +1171,7 @@ void StgItemObject_User::RenderOnItemManager() {
 	}
 	D3DXVECTOR2 texSizeInv = D3DXVECTOR2(1.0f / itemData->GetTextureSize().x, 1.0f / itemData->GetTextureSize().y);
 	DxMath::TransformVertex2D(verts, &D3DXVECTOR2(scaleX, scaleY), &D3DXVECTOR2(c, s), 
-		&D3DXVECTOR2(position_.x, posy), &texSizeInv);
+		&D3DXVECTOR2(sposx, sposy), &texSizeInv);
 
 	renderer->AddSquareVertex(verts);
 }
@@ -1250,4 +1263,3 @@ void StgMovePattern_Item::Move() {
 
 	++frame_;
 }
-

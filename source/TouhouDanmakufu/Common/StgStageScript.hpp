@@ -354,6 +354,7 @@ public:
 	static gstd::value Func_ObjEnemyBossScene_SetSpellTimer(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemyBossScene_StartSpell(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_ObjEnemyBossScene_EndSpell);
+	DNH_FUNCAPI_DECL_(Func_ObjEnemyBossScene_SetUnloadCache);
 
 	//STG共通関数：弾オブジェクト操作
 	static gstd::value Func_ObjShot_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -463,6 +464,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjItem_SetIntersectionRadius);
 	DNH_FUNCAPI_DECL_(Func_ObjItem_SetIntersectionEnable);
 	DNH_FUNCAPI_DECL_(Func_ObjItem_SetDefaultCollectMovement);
+	DNH_FUNCAPI_DECL_(Func_ObjItem_SetPositionRounding);
 
 	//STG共通関数：自機オブジェクト操作
 	static gstd::value Func_ObjPlayer_AddIntersectionCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv);

@@ -233,9 +233,6 @@ public:
 
 		FRAME_FADEDELETE = 30,
 		FRAME_FADEDELETE_LASER = 30,
-
-		LIFE_SPELL_UNREGIST = 5,
-		LIFE_SPELL_REGIST = 256 * 256 * 256,
 	};
 
 	struct DelayParameter {
@@ -303,6 +300,7 @@ protected:
 	bool bAutoDelete_;
 	bool bEraseShot_;
 	bool bSpellFactor_;
+	bool bSpellResist_;
 	int frameAutoDelete_;
 	
 	ref_unsync_ptr<StgIntersectionTarget> pShotIntersectionTarget_;
@@ -394,6 +392,9 @@ public:
 	void SetEraseShot(bool bErase) { bEraseShot_ = bErase; }
 	bool IsSpellFactor() { return bSpellFactor_; }
 	void SetSpellFactor(bool bSpell) { bSpellFactor_ = bSpell; }
+	bool IsSpellResist() { return bSpellResist_; }
+	void SetSpellResist(bool bSpell) { bSpellResist_ = bSpell; }
+
 	void SetUserIntersectionMode(bool b) { bUserIntersectionMode_ = b; }
 	void SetIntersectionEnable(bool b) { bIntersectionEnable_ = b; }
 	bool IsIntersectionEnable() { return bIntersectionEnable_; }

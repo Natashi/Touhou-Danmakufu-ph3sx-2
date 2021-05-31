@@ -411,6 +411,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjEnemyBossScene_SetSpellTimer", StgStageScript::Func_ObjEnemyBossScene_SetSpellTimer, 2 },
 	{ "ObjEnemyBossScene_StartSpell", StgStageScript::Func_ObjEnemyBossScene_StartSpell, 1 },
 	{ "ObjEnemyBossScene_EndSpell", StgStageScript::Func_ObjEnemyBossScene_EndSpell, 1 },
+	{ "ObjEnemyBossScene_SetUnloadCache", StgStageScript::Func_ObjEnemyBossScene_SetUnloadCache, 2 },
 
 	//STG共通関数：弾オブジェクト操作
 	{ "ObjShot_Create", StgStageScript::Func_ObjShot_Create, 1 },
@@ -520,6 +521,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjItem_SetIntersectionRadius", StgStageScript::Func_ObjItem_SetIntersectionRadius, 2 },
 	{ "ObjItem_SetIntersectionEnable", StgStageScript::Func_ObjItem_SetIntersectionEnable, 2 },
 	{ "ObjItem_SetDefaultCollectMovement", StgStageScript::Func_ObjItem_SetDefaultCollectMovement, 2 },
+	{ "ObjItem_SetPositionRounding", StgStageScript::Func_ObjItem_SetPositionRounding, 2 },
 
 	//STG共通関数：自機オブジェクト操作
 	{ "ObjPlayer_AddIntersectionCircleA1", StgStageScript::Func_ObjPlayer_AddIntersectionCircleA1, 5 },
@@ -3276,6 +3278,15 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_EndSpell(gstd::script_machine
 	}
 	return value();
 }
+gstd::value StgStageScript::Func_ObjEnemyBossScene_SetUnloadCache(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgEnemyBossSceneObject* obj = script->GetObjectPointerAs<StgEnemyBossSceneObject>(id);
+	if (obj) {
+		obj->SetUnloadCache(argv[1].as_int());
+	}
+	return value();
+}
 
 //STG共通関数：弾オブジェクト操作
 gstd::value StgStageScript::Func_ObjShot_Create(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -3388,13 +3399,8 @@ gstd::value StgStageScript::Func_ObjShot_SetSpellResist(gstd::script_machine* ma
 	int id = argv[0].as_int();
 	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
 	if (obj) {
-		bool bRegist = argv[1].as_boolean();
-		double life = obj->GetLife();
-		if (bRegist)
-			life = StgShotObject::LIFE_SPELL_REGIST;
-		else if (life >= StgShotObject::LIFE_SPELL_UNREGIST)
-			life = StgShotObject::LIFE_SPELL_UNREGIST;
-		obj->SetLife(life);
+		bool bResist = argv[1].as_boolean();
+		obj->SetSpellResist(bResist);
 	}
 	return value();
 }
@@ -3626,7 +3632,7 @@ gstd::value StgStageScript::Func_ObjShot_IsSpellResist(gstd::script_machine* mac
 	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
 	bool res = false;
 	if (obj)
-		res = obj->GetLife() == StgShotObject::LIFE_SPELL_REGIST;
+		res = obj->IsSpellResist();
 	return script->CreateBooleanValue(res);
 }
 
@@ -4594,6 +4600,15 @@ gstd::value StgStageScript::Func_ObjItem_SetDefaultCollectMovement(gstd::script_
 		bool bEnable = argv[1].as_boolean();
 		obj->SetDefaultCollectionMovement(bEnable);
 	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjItem_SetPositionRounding(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+	int id = argv[0].as_int();
+	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
+	if (obj)
+		obj->SetPositionRounding(argv[1].as_boolean());
 	return value();
 }
 
