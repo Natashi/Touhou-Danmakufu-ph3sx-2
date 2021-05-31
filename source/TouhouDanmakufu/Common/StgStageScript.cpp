@@ -402,7 +402,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjEnemy_GetIntersectionCircleListToPlayer", StgStageScript::Func_ObjEnemy_GetIntersectionCircleToPlayer, 1 },
 	{ "ObjEnemy_SetEnableIntersectionPositionFetching", StgStageScript::Func_ObjEnemy_SetEnableIntersectionPositionFetching, 2 },
 
-		//STG共通関数：敵ボスシーンオブジェクト操作
+	//STG共通関数：敵ボスシーンオブジェクト操作
 	{ "ObjEnemyBossScene_Create", StgStageScript::Func_ObjEnemyBossScene_Create, 0 },
 	{ "ObjEnemyBossScene_Regist", StgStageScript::Func_ObjEnemyBossScene_Regist, 1 },
 	{ "ObjEnemyBossScene_Add", StgStageScript::Func_ObjEnemyBossScene_Add, 3 },

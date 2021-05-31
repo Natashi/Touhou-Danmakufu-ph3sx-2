@@ -131,6 +131,18 @@ StgEnemyBossSceneObject::StgEnemyBossSceneObject(StgStageController* stageContro
 	bLoad_ = false;
 	dataStep_ = 0;
 	dataIndex_ = -1;
+
+	bEnableUnloadCache_ = false;
+}
+StgEnemyBossSceneObject::~StgEnemyBossSceneObject() {
+	if (bEnableUnloadCache_) {
+		auto pCache = stageController_->GetSystemController()->GetScriptEngineCache();
+		for (std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
+			for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : iStep) {
+				pCache->RemoveCache(pData->GetPath());
+			}
+		}
+	}
 }
 bool StgEnemyBossSceneObject::_NextStep() {
 	if (dataStep_ >= listData_.size()) return false;

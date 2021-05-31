@@ -98,6 +98,8 @@ private:
 	StgStageController* stageController_;
 	bool bLoad_;
 
+	bool bEnableUnloadCache_;
+
 	int dataStep_;
 	int dataIndex_;
 	ref_unsync_ptr<StgEnemyBossSceneData> activeData_;
@@ -106,6 +108,7 @@ private:
 	bool _NextStep();
 public:
 	StgEnemyBossSceneObject(StgStageController* stageController);
+	~StgEnemyBossSceneObject();
 
 	virtual void Work();
 	virtual void Activate();
@@ -115,6 +118,8 @@ public:
 	void AddData(int step, ref_unsync_ptr<StgEnemyBossSceneData> data);
 	ref_unsync_ptr<StgEnemyBossSceneData> GetActiveData() { return activeData_; }
 	void LoadAllScriptInThread();
+
+	void SetUnloadCache(bool b) { bEnableUnloadCache_ = b; }
 
 	size_t GetRemainStepCount();
 	size_t GetActiveStepLifeCount();
