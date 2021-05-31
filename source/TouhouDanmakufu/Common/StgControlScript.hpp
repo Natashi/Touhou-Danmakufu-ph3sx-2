@@ -176,9 +176,11 @@ protected:
 	WButton buttonTerminateAllScript_;
 	WButton buttonTerminateSingleScript_;
 	WListView wndManager_;
+	WListView wndCache_;
 	WListView wndScript_;
 	//WListBox wndListViewData_;
 	WSplitter wndSplitter_;
+	WSplitter wndSplitter2_;
 
 	std::list<weak_ptr<ManagedScript>> listScript_;
 

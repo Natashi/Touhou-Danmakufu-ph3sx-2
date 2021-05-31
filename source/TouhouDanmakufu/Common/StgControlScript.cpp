@@ -1143,6 +1143,11 @@ bool ScriptInfoPanel::_AddedLogger(HWND hTab) {
 	wndManager_.AddColumn(96, 2, L"Scripts Running");
 	wndManager_.AddColumn(96, 3, L"Scripts Loaded");
 
+	wndCache_.Create(hWnd_, styleListView);
+	wndCache_.AddColumn(40, 0, L"Uses");
+	wndCache_.AddColumn(128, 1, L"Cached Script");
+	wndCache_.AddColumn(448, 2, L"Full Path");
+
 	wndScript_.Create(hWnd_, styleListView);
 	wndScript_.AddColumn(64, 0, L"Address");
 	wndScript_.AddColumn(32, 1, L"ID");
@@ -1150,10 +1155,13 @@ bool ScriptInfoPanel::_AddedLogger(HWND hTab) {
 	wndScript_.AddColumn(224, 3, L"Name");
 	wndScript_.AddColumn(64, 4, L"Status");
 	wndScript_.AddColumn(92, 5, L"Task Count");
-	wndScript_.AddColumn(64, 6, L"Rand Seed");
+	wndScript_.AddColumn(72, 6, L"Rand Seed");
 
 	wndSplitter_.Create(hWnd_, WSplitter::TYPE_HORIZONTAL);
 	wndSplitter_.SetRatioY(0.5f);
+
+	wndSplitter2_.Create(hWnd_, WSplitter::TYPE_VERTICAL);
+	wndSplitter2_.SetRatioX(0.45f);
 
 	Start();
 
@@ -1178,9 +1186,19 @@ void ScriptInfoPanel::LocateParts() {
 	int yManager = xButton1 + hButton1 + 8;
 
 	int yLowerSec = (int)(wHeight * wndSplitter_.GetRatioY());
+	int wSplitter = 4;
 	int hSplitter = 6;
 
-	wndManager_.SetBounds(wx, yManager, wWidth, yLowerSec - yManager);
+	int wManager = wWidth * wndSplitter2_.GetRatioX();
+	int hManager = yLowerSec - yManager;
+
+	int xRightSec = wx + wManager;
+	int xCache = xRightSec + wSplitter;
+
+	wndManager_.SetBounds(wx, yManager, wManager, hManager);
+	wndSplitter2_.SetBounds(xRightSec, yManager, wSplitter, hManager);
+	wndCache_.SetBounds(xCache, yManager, wWidth - xCache, hManager);
+
 	wndSplitter_.SetBounds(wx, yLowerSec, wWidth, hSplitter);
 
 	int yScriptList = yLowerSec + hSplitter;
@@ -1194,12 +1212,17 @@ void ScriptInfoPanel::_Run() {
 	while (GetStatus() == RUN) {
 		ETaskManager* taskManager = ETaskManager::GetInstance();
 		if (taskManager) {
+			bool bSystemAvailable = false;
 			std::list<shared_ptr<TaskBase>>& listTask = taskManager->GetTaskList();
 			for (auto itr = listTask.begin(); itr != listTask.end(); ++itr) {
 				StgSystemController* systemController = dynamic_cast<StgSystemController*>(itr->get());
-				if (systemController)
+				if (systemController) {
 					Update(systemController);
+					bSystemAvailable = true;
+				}
 			}
+			if (!bSystemAvailable)
+				Update(nullptr);
 		}
 		Sleep(timeUpdateInterval_);
 	}
@@ -1255,7 +1278,8 @@ void ScriptInfoPanel::Update(StgSystemController* systemController) {
 
 	std::vector<ScriptManager*> vecScriptManager;
 	std::list<weak_ptr<ScriptManager>> listScriptManager;
-	systemController->GetAllScriptList(listScriptManager);
+	if (systemController)
+		systemController->GetAllScriptList(listScriptManager);
 
 	std::set<shared_ptr<ScriptManager>> setScriptManager;
 	for (auto itr = listScriptManager.begin(); itr != listScriptManager.end(); ++itr) {
@@ -1271,16 +1295,41 @@ void ScriptInfoPanel::Update(StgSystemController* systemController) {
 	}
 
 	{
-		Lock lock(lock_);
+		int iCache = 0;
+		int orgRowCount = wndCache_.GetRowCount();
 
-		size_t i = 0;
-		for (auto itr = setScriptManager.begin(); itr != setScriptManager.end(); ++itr, ++i) {
-			const shared_ptr<ScriptManager>& manager = *itr;
-			wndManager_.SetText(i, 0, StringUtility::Format(L"%08x", (int)manager.get()));
-			wndManager_.SetText(i, 1, StringUtility::Format(L"%d", manager->GetMainThreadID()));
-			wndManager_.SetText(i, 2, StringUtility::Format(L"%u", manager->GetRunningScriptList().size()));
-			wndManager_.SetText(i, 3, StringUtility::Format(L"%u", manager->GetMapScriptLoad().size()));
-			vecScriptManager.push_back(manager.get());
+		if (systemController) {
+			auto& pCacheMap = systemController->GetScriptEngineCache()->GetMap();
+			for (auto itr = pCacheMap.cbegin(); itr != pCacheMap.cend(); ++itr, ++iCache) {
+				ref_count_ptr<ScriptEngineData> pData = itr->second;
+
+				//1 from this, and 1 from in the cache map itself
+				size_t uses = pData.use_count() >= 2 ? (pData.use_count() - 2) : 0;
+				std::wstring path = PathProperty::GetPathWithoutModuleDirectory(pData->GetPath());
+
+				wndCache_.SetText(iCache, 0, StringUtility::Format(L"%u", uses));
+				wndCache_.SetText(iCache, 1, StringUtility::Format(L"%s", PathProperty::GetFileName(path).c_str()));
+				wndCache_.SetText(iCache, 2, StringUtility::Format(L"%s", path.c_str()));
+			}
+		}
+
+		for (int i = iCache; i < orgRowCount; ++i)
+			wndCache_.DeleteRow(i);
+	}
+
+	{
+		{
+			Lock lock(lock_);
+
+			size_t i = 0;
+			for (auto itr = setScriptManager.begin(); itr != setScriptManager.end(); ++itr, ++i) {
+				const shared_ptr<ScriptManager>& manager = *itr;
+				wndManager_.SetText(i, 0, StringUtility::Format(L"%08x", (int)manager.get()));
+				wndManager_.SetText(i, 1, StringUtility::Format(L"%d", manager->GetMainThreadID()));
+				wndManager_.SetText(i, 2, StringUtility::Format(L"%u", manager->GetRunningScriptList().size()));
+				wndManager_.SetText(i, 3, StringUtility::Format(L"%u", manager->GetMapScriptLoad().size()));
+				vecScriptManager.push_back(manager.get());
+			}
 		}
 
 		{
