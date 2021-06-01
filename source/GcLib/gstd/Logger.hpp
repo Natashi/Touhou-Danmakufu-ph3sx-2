@@ -33,6 +33,8 @@ namespace gstd {
 		static void SetTop(Logger* logger) { top_ = logger; }
 		static void WriteTop(const std::string& str) { if (top_) top_->Write(str); }
 		static void WriteTop(const std::wstring& str) { if (top_) top_->Write(str); }
+
+		void FlushFileLogger();
 	};
 
 #if defined(DNH_PROJ_EXECUTOR)
@@ -42,16 +44,20 @@ namespace gstd {
 	class FileLogger : public Logger {
 	protected:
 		bool bEnable_;
+
+		shared_ptr<File> file_;
 		std::wstring path_;
-		std::wstring path2_;
-		int sizeMax_;
+
+		size_t sizeMax_;
+
 		virtual void _Write(SYSTEMTIME& systemTime, const std::wstring& str);
-		void _CreateFile(File& file);
+		void _CreateFile();
 	public:
 		FileLogger();
 		~FileLogger();
 
-		void Clear();
+		void FlushFile();
+
 		bool Initialize(bool bEnable = true);
 		bool Initialize(std::wstring path, bool bEnable = true);
 		

@@ -46,6 +46,14 @@ void Logger::Write(const std::wstring& str) {
 #endif
 }
 
+void Logger::FlushFileLogger() {
+	for (auto iLogger : listLogger_) {
+		if (FileLogger* fileLogger = dynamic_cast<FileLogger*>(iLogger.get())) {
+			fileLogger->FlushFile();
+		}
+	}
+}
+
 #if defined(DNH_PROJ_EXECUTOR)
 //*******************************************************************
 //FileLogger
@@ -53,19 +61,8 @@ void Logger::Write(const std::wstring& str) {
 FileLogger::FileLogger() {
 	sizeMax_ = 10 * 1024 * 1024;//10MB
 }
-
 FileLogger::~FileLogger() {
-
-}
-void FileLogger::Clear() {
-	if (!bEnable_) return;
-
-	File file1(path_);
-	file1.Delete();
-	File file2(path2_);
-	file2.Delete();
-
-	_CreateFile(file1);
+	file_->Close();
 }
 bool FileLogger::Initialize(bool bEnable) {
 	return this->Initialize(L"", bEnable);
@@ -83,54 +80,44 @@ bool FileLogger::SetPath(const std::wstring& path) {
 	if (!bEnable_) return false;
 
 	path_ = path;
-	File file(path);
-	if (file.IsExists() == false) {
-		File::CreateFileDirectory(path);
-		_CreateFile(file);
-	}
+	File::CreateFileDirectory(path_);
 
-	path2_ = path_ + L"_";
+	_CreateFile();
+
 	return true;
 }
-void FileLogger::_CreateFile(File& file) {
-	file.Open(File::WRITEONLY);
-
-	//BOMÅiByte Order MarkÅj
-	file.WriteCharacter((unsigned char)0xFF);
-	file.WriteCharacter((unsigned char)0xFE);
+void FileLogger::_CreateFile() {
+	file_ = shared_ptr<File>(new File(path_));
+	if (file_->Open(File::WRITEONLY)) {
+		//BOM for UTF-16 LE
+		file_->WriteCharacter((unsigned char)0xFF);
+		file_->WriteCharacter((unsigned char)0xFE);
+	}
+}
+void FileLogger::FlushFile() {
+	if (!bEnable_) return;
+	if (file_->IsOpen()) {
+		std::fstream* hFile = file_->GetFileHandle();
+		hFile->flush();
+	}
 }
 void FileLogger::_Write(SYSTEMTIME& time, const std::wstring& str) {
 	if (!bEnable_) return;
 
-	{
+	if (file_->IsOpen()) {
 		Lock lock(lock_);
+
 		std::wstring strTime = StringUtility::Format(
 			//L"%.4d/%.2d/%.2d "
 			L"%.2d:%.2d:%.2d.%.3d ", 
 			//time.wYear, time.wMonth, time.wDay, 
 			time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
-
-		File file(path_);
-		if (!file.Open(File::WRITEONLY)) return;
-
-		std::wstring out = strTime;
-		out += str;
-		out += L"\n";
-
-		size_t pos = file.GetSize();
-		file.Write(&out[0], StringUtility::GetByteSize(out));
-
-		bool bOverSize = file.GetSize() > sizeMax_;
-		file.Close();
-
-		if (bOverSize) {
-			::MoveFileEx(path_.c_str(), path2_.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH);
-			File file1(path_);
-			_CreateFile(file1);
-		}
+		
+		file_->Write(strTime.data(), StringUtility::GetByteSize(strTime));
+		file_->Write((wchar_t*)str.data(), StringUtility::GetByteSize(str));
+		file_->Write(L"\n", sizeof(wchar_t));
 	}
 }
-
 
 //*******************************************************************
 //WindowLogger
@@ -526,6 +513,17 @@ void WindowLogger::InfoPanel::SetInfo(int row, const std::wstring& textInfo, con
 void WindowLogger::InfoPanel::_Run() {
 	while (this->GetStatus() == RUN) {
 		infoCollector_->Update();
+
+#if defined(DNH_PROJ_EXECUTOR)
+		{
+			WindowLogger* wLogger = nullptr;
+			if (wLogger = WindowLogger::GetParent()) {
+				if (wLogger->GetState() == WindowLogger::STATE_RUNNING)
+					wLogger->FlushFileLogger();
+			}
+		}
+#endif
+
 		::Sleep(1000);
 	}
 }

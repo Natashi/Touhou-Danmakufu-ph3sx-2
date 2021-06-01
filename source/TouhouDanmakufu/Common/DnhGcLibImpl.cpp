@@ -57,7 +57,6 @@ ELogger::ELogger() {
 void ELogger::Initialize(bool bFile, bool bWindow) {
 	shared_ptr<gstd::FileLogger> fileLogger(new gstd::FileLogger());
 	fileLogger->Initialize(bFile);
-	fileLogger->Clear();
 
 	this->AddLogger(fileLogger);
 

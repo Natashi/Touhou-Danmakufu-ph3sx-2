@@ -140,7 +140,8 @@ namespace gstd {
 
 		size_t GetSize();
 		std::wstring& GetPath() { return path_; }
-		const std::fstream* GetFileHandle() { return hFile_; }
+		const std::fstream* GetFileHandle() const { return hFile_; }
+		std::fstream* GetFileHandle() { return hFile_; }
 
 		virtual bool Open();
 		bool Open(DWORD typeAccess);
