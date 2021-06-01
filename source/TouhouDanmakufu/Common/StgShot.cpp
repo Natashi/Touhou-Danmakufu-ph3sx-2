@@ -1465,6 +1465,8 @@ void StgNormalShotObject::SetShotDataID(int id) {
 //****************************************************************************
 StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObject(stageController) {
 	life_ = 9999999;
+	bSpellResist_ = true;
+
 	length_ = 0;
 	widthRender_ = 0;
 	widthIntersection_ = -1;
