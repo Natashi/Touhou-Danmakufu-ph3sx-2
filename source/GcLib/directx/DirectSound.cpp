@@ -125,27 +125,6 @@ shared_ptr<SoundPlayer> DirectSoundManager::GetPlayer(const std::wstring& path, 
 
 	return res;
 }
-shared_ptr<SoundPlayer> DirectSoundManager::GetStreamingPlayer(const std::wstring& path) {
-	shared_ptr<SoundPlayer> res;
-	try {
-		Lock lock(lock_);
-
-		res = _GetPlayer(path);
-		if (res == nullptr) {
-			res = _CreatePlayer(path);
-		}
-		else {
-			//If multiple streaming players are reading from the same FileReader, things will break.
-			//Only allow maximum ref_count of 2 (in DirectSoundManager and the parent sound object)
-			SoundStreamingPlayer* playerStreaming = dynamic_cast<SoundStreamingPlayer*>(res.get());
-			if (playerStreaming != nullptr && res.use_count() > 2)
-				res = _CreatePlayer(path);
-		}
-	}
-	catch (...) {}
-
-	return res;
-}
 shared_ptr<SoundPlayer> DirectSoundManager::_GetPlayer(const std::wstring& path) {
 	if (mapPlayer_.find(path) == mapPlayer_.end()) return nullptr;
 
@@ -793,6 +772,8 @@ SoundStreamingPlayer::SoundStreamingPlayer() {
 
 	ZeroMemory(lastStreamCopyPos_, sizeof(size_t) * 2);
 	ZeroMemory(bufferPositionAtCopy_, sizeof(DWORD) * 2);
+
+	lastReadPointer_ = 0;
 }
 SoundStreamingPlayer::~SoundStreamingPlayer() {
 	this->Stop();
@@ -887,6 +868,10 @@ bool SoundStreamingPlayer::Play(PlayStyle& style) {
 		style.SetStartTime(0);
 
 		if (bStreaming_) {
+			::ResetEvent(hEvent_[0]);
+			::ResetEvent(hEvent_[1]);
+			::ResetEvent(hEvent_[2]);
+
 			thread_->Start();
 			pDirectSoundBuffer_->Play(0, 0, DSBPLAY_LOOPING);//再生開始
 		}
@@ -1117,12 +1102,7 @@ bool SoundPlayerWave::IsPlaying() {
 	return res;
 }
 bool SoundPlayerWave::Seek(double time) {
-	{
-		Lock lock(lock_);
-		int pos = time * formatWave_.nAvgBytesPerSec;
-		pDirectSoundBuffer_->SetCurrentPosition(pos);
-	}
-	return true;
+	return Seek((int64_t)(time * formatWave_.nSamplesPerSec));
 }
 bool SoundPlayerWave::Seek(int64_t sample) {
 	{
@@ -1204,6 +1184,7 @@ bool SoundStreamingPlayerWave::_CreateBuffer(shared_ptr<gstd::FileReader> reader
 		posWaveEnd_ = posWaveStart_ + sizeChunk;
 
 		reader_->Seek(posWaveStart_);
+		lastReadPointer_ = reader_->GetFilePointer();
 	}
 	catch (bool) {
 		return false;
@@ -1236,7 +1217,9 @@ size_t SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	size_t posLoopEnd = posWaveStart_ + timeLoopEnd_ * formatWave_.nAvgBytesPerSec;
 	size_t blockSize = formatWave_.nBlockAlign;
 
-	size_t cPos = reader_->GetFilePointer();
+	reader_->Seek(lastReadPointer_);
+
+	size_t cPos = lastReadPointer_;
 	size_t resStreamPos = cPos;
 
 	if (cPos + cSize > posWaveEnd_) {//ファイル終点
@@ -1267,22 +1250,17 @@ size_t SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		reader_->Read(pMem, cSize);
 	}
 
+	lastReadPointer_ = reader_->GetFilePointer();
 	return resStreamPos;
 }
 bool SoundStreamingPlayerWave::Seek(double time) {
-	{
-		Lock lock(lock_);
-		size_t blockSize = formatWave_.nBlockAlign;
-		size_t pos = time * formatWave_.nAvgBytesPerSec;
-		pos = pos / blockSize * blockSize;
-		reader_->Seek(posWaveStart_ + pos);
-	}
-	return true;
+	return Seek((int64_t)(time * formatWave_.nSamplesPerSec));
 }
 bool SoundStreamingPlayerWave::Seek(int64_t sample) {
 	{
 		Lock lock(lock_);
-		reader_->Seek(sample * formatWave_.nBlockAlign);
+		reader_->Seek(posWaveStart_ + sample * formatWave_.nBlockAlign);
+		lastReadPointer_ = reader_->GetFilePointer();
 	}
 	return true;
 }
@@ -1350,11 +1328,16 @@ bool SoundStreamingPlayerOgg::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 		sizeCopy_ = sizeData;
 		_CopyStream(0);
 	}
+	else {
+		ov_pcm_seek(&fileOgg_, 0);
+	}
 
 	return true;
 }
 size_t SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	size_t blockSize = formatWave_.nBlockAlign;
+
+	ov_pcm_seek(&fileOgg_, lastReadPointer_);
 
 	//lastStreamCopyPos_ = (DWORD)(ov_time_tell(&fileOgg_) * formatWave_.nAvgBytesPerSec);
 	size_t resStreamPos = ov_pcm_tell(&fileOgg_) * (size_t)formatWave_.nBlockAlign;
@@ -1415,12 +1398,14 @@ size_t SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		}
 	}
 
+	lastReadPointer_ = ov_pcm_tell(&fileOgg_);
 	return resStreamPos;
 }
 bool SoundStreamingPlayerOgg::Seek(double time) {
 	{
 		Lock lock(lock_);
 		ov_time_seek(&fileOgg_, time);
+		lastReadPointer_ = ov_pcm_tell(&fileOgg_);
 	}
 	return true;
 }
@@ -1428,6 +1413,7 @@ bool SoundStreamingPlayerOgg::Seek(int64_t sample) {
 	{
 		Lock lock(lock_);
 		ov_pcm_seek(&fileOgg_, sample);
+		lastReadPointer_ = ov_pcm_tell(&fileOgg_);
 	}
 	return true;
 }
@@ -1672,6 +1658,8 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	size_t blockSize = formatWave_.nBlockAlign;
 
+	reader_->Seek(lastReadPointer_);
+
 	//lastStreamCopyPos_ = (DWORD)(timeCurrent_ * formatWave_.nAvgBytesPerSec);
 	size_t resStreamPos = timeCurrent_ * formatWave_.nAvgBytesPerSec;
 
@@ -1729,6 +1717,7 @@ size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		}
 	}
 
+	lastReadPointer_ = reader_->GetFilePointer();
 	return resStreamPos;
 }
 size_t SoundStreamingPlayerMp3::_ReadAcmStream(char* pBuffer, size_t size) {
@@ -1773,22 +1762,7 @@ size_t SoundStreamingPlayerMp3::_ReadAcmStream(char* pBuffer, size_t size) {
 }
 
 bool SoundStreamingPlayerMp3::Seek(double time) {
-	double waveBlockSize = acmStreamHeader_.cbDstLength;
-	double mp3BlockSize = acmStreamHeader_.cbSrcLength;
-	double posSeekWave = time * formatWave_.nAvgBytesPerSec;
-
-	double waveBlockIndex = posSeekWave / waveBlockSize;
-	int mp3BlockIndex = (int)floor(waveBlockIndex + 0.5);//(waveBlockIndex * mp3BlockSize / waveBlockSize);
-	{
-		Lock lock(lock_);
-		double posSeekMp3 = mp3BlockSize * mp3BlockIndex;
-		reader_->Seek(posMp3DataStart_ + posSeekMp3);
-
-		bufDecode_.SetSize(0);
-		timeCurrent_ = mp3BlockIndex * mp3BlockSize / formatMp3_.wfx.nAvgBytesPerSec;
-	}
-
-	return true;
+	return Seek((int64_t)(time * formatWave_.nSamplesPerSec));
 }
 bool SoundStreamingPlayerMp3::Seek(int64_t sample) {
 	double waveBlockSize = acmStreamHeader_.cbDstLength;
@@ -1800,7 +1774,9 @@ bool SoundStreamingPlayerMp3::Seek(int64_t sample) {
 	{
 		Lock lock(lock_);
 		double posSeekMp3 = mp3BlockSize * mp3BlockIndex;
+
 		reader_->Seek(posMp3DataStart_ + posSeekMp3);
+		lastReadPointer_ = reader_->GetFilePointer();
 
 		bufDecode_.SetSize(0);
 		timeCurrent_ = mp3BlockIndex * mp3BlockSize / formatMp3_.wfx.nAvgBytesPerSec;

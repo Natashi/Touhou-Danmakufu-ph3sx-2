@@ -66,7 +66,6 @@ namespace directx {
 		gstd::CriticalSection& GetLock() { return lock_; }
 
 		shared_ptr<SoundPlayer> GetPlayer(const std::wstring& path, bool bCreateAlways = false);
-		shared_ptr<SoundPlayer> GetStreamingPlayer(const std::wstring& path);
 		SoundDivision* CreateSoundDivision(int index);
 		SoundDivision* GetSoundDivision(int index);
 		shared_ptr<SoundInfo> GetSoundInfo(const std::wstring& path);
@@ -296,6 +295,8 @@ namespace directx {
 
 		size_t lastStreamCopyPos_[2];
 		DWORD bufferPositionAtCopy_[2];
+
+		size_t lastReadPointer_;
 
 		void _CreateSoundEvent(WAVEFORMATEX& formatWave);
 		virtual void _CopyStream(int indexCopy);

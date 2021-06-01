@@ -762,13 +762,13 @@ DxSoundObject::DxSoundObject() {
 	typeObject_ = TypeObject::Sound;
 }
 DxSoundObject::~DxSoundObject() {
-	if (player_ && player_.use_count() == 2)
+	if (player_)
 		player_->Delete();
 }
 
 bool DxSoundObject::Load(const std::wstring& path) {
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
-	player_ = manager->GetStreamingPlayer(path);
+	player_ = manager->GetPlayer(path);
 	return player_ != nullptr;
 }
 void DxSoundObject::Play() {
