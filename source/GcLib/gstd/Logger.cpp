@@ -46,6 +46,7 @@ void Logger::Write(const std::wstring& str) {
 #endif
 }
 
+#if defined(DNH_PROJ_EXECUTOR)
 void Logger::FlushFileLogger() {
 	for (auto iLogger : listLogger_) {
 		if (FileLogger* fileLogger = dynamic_cast<FileLogger*>(iLogger.get())) {
@@ -53,6 +54,7 @@ void Logger::FlushFileLogger() {
 		}
 	}
 }
+#endif
 
 #if defined(DNH_PROJ_EXECUTOR)
 //*******************************************************************
