@@ -47,7 +47,7 @@ void ScriptManager::Work(int targetType) {
 			std::map<std::string, script_block*>::iterator itrEvent;
 			if (script->IsEventExists("MainLoop", itrEvent))
 				script->Run(itrEvent);
-			
+
 			bHasCloseScriptWork_ |= script->IsEndScript();
 			++itr;
 		}
@@ -143,15 +143,7 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) 
 void ScriptManager::CloseScript(int64_t id) {
 	for (auto& pScript : listScriptRun_) {
 		if (pScript->GetScriptID() == id) {
-			pScript->SetEndScript();
-
-			mapClosedScriptResult_[id] = pScript->GetResultValue();
-			if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT)
-				mapClosedScriptResult_.erase(mapClosedScriptResult_.begin());
-
-			if (pScript->IsAutoDeleteObject())
-				pScript->GetObjectManager()->DeleteObjectByScriptID(id);
-
+			CloseScript(pScript);
 			break;
 		}
 	}
@@ -169,15 +161,7 @@ void ScriptManager::CloseScript(shared_ptr<ManagedScript> id) {
 void ScriptManager::CloseScriptOnType(int type) {
 	for (auto& pScript : listScriptRun_) {
 		if (pScript->GetScriptType() == type) {
-			pScript->SetEndScript();
-
-			int64_t id = pScript->GetScriptID();
-			mapClosedScriptResult_[id] = pScript->GetResultValue();
-			if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT)
-				mapClosedScriptResult_.erase(mapClosedScriptResult_.begin());
-
-			if (pScript->IsAutoDeleteObject())
-				pScript->GetObjectManager()->DeleteObjectByScriptID(id);
+			CloseScript(pScript);
 		}
 	}
 }
@@ -189,7 +173,7 @@ bool ScriptManager::IsCloseScript(int64_t id) {
 size_t ScriptManager::GetAllScriptThreadCount() {
 	size_t res = 0;
 	{
-		Lock lock(lock_);
+		//Lock lock(lock_);
 		for (auto& pScript : listScriptRun_) {
 			res += pScript->GetThreadCount();
 		}
@@ -471,7 +455,7 @@ gstd::value ManagedScript::Func_UnloadScriptFromCache(gstd::script_machine* mach
 	ManagedScript* script = (ManagedScript*)machine->data;
 
 	auto cache = script->GetScriptEngineCache();
-	cache->RemoveCache(argv[1].as_string());
+	cache->RemoveCache(argv[0].as_string());
 
 	return value();
 }

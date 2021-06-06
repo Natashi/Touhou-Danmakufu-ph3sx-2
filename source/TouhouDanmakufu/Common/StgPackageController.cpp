@@ -31,7 +31,8 @@ void StgPackageController::Initialize() {
 void StgPackageController::Work() {
 	scriptManager_->Work();
 	//スクリプトが閉じられた場合は再度実行(描画の継ぎ目を目立たなくする)
-	if (scriptManager_->IsHasCloseScliptWork())
+	//mkm why is this necessary
+	if (scriptManager_->HasCloseScriptWork())
 		scriptManager_->Work();
 }
 void StgPackageController::Render() {

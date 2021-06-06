@@ -56,7 +56,7 @@ namespace directx {
 		void CloseScript(shared_ptr<ManagedScript> id);
 		void CloseScriptOnType(int type);
 		bool IsCloseScript(int64_t id);
-		int IsHasCloseScliptWork() { return bHasCloseScriptWork_; }
+		bool HasCloseScriptWork() { return bHasCloseScriptWork_; }
 		size_t GetAllScriptThreadCount();
 		void TerminateScriptAll(const std::wstring& message);
 
