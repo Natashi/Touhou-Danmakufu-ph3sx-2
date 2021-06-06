@@ -428,7 +428,7 @@ DnhConfiguration::DnhConfiguration() {
 	bPseudoFullscreen_ = true;
 	multiSamples_ = D3DMULTISAMPLE_NONE;
 
-	pathExeLaunch_ = DNH_EXE_DEFAULT;
+	pathExeLaunch_ = DNH_EXE_NAME;
 
 	//ÉLÅ[ìoò^
 	padIndex_ = 0;
@@ -534,7 +534,7 @@ bool DnhConfiguration::LoadConfigFile() {
 	record.GetRecord<D3DMULTISAMPLE_TYPE>("typeMultiSamples", multiSamples_);
 
 	pathExeLaunch_ = record.GetRecordAsStringW("pathLaunch");
-	if (pathExeLaunch_.size() == 0) pathExeLaunch_ = DNH_EXE_DEFAULT;
+	if (pathExeLaunch_.size() == 0) pathExeLaunch_ = DNH_EXE_NAME;
 
 	if (record.IsExists("padIndex"))
 		padIndex_ = record.GetRecordAsInteger("padIndex");

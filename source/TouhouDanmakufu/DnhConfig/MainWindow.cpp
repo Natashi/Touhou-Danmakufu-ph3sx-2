@@ -511,7 +511,7 @@ bool OptionPanel::Initialize(HWND hParent) {
 	exePath_.reset(new WEditBox());
 	exePath_->Attach(hPathBox);
 
-	//executorPath_ = DNH_EXE_DEFAULT;
+	//executorPath_ = DNH_EXE_NAME;
 
 	return true;
 }
@@ -575,7 +575,7 @@ void OptionPanel::WriteConfiguration() {
 	config->SetMouseVisible(ListView_GetCheckState(hListOption, ROW_MOUSE_UNVISIBLE) ? false : true);
 	{
 		std::wstring str = exePath_->GetText();
-		config->SetExePath(str.size() > 0U ? str : DNH_EXE_DEFAULT);
+		config->SetExePath(str.size() > 0U ? str : DNH_EXE_NAME);
 	}
 }
 
