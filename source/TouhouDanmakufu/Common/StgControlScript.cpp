@@ -57,6 +57,7 @@ static const std::vector<function> stgControlFunction = {
 	{ "IsReplay", StgControlScript::Func_IsReplay, 0 },
 
 	{ "AddArchiveFile", StgControlScript::Func_AddArchiveFile, 1 },
+	{ "AddArchiveFile", StgControlScript::Func_AddArchiveFile, 2 },		//Overloaded
 	{ "GetArchiveFilePathList", StgControlScript::Func_GetArchiveFilePathList, 2 },
 
 	{ "GetCurrentFps", StgControlScript::Func_GetCurrentFps, 0 },
@@ -389,7 +390,8 @@ gstd::value StgControlScript::Func_IsReplay(gstd::script_machine* machine, int a
 gstd::value StgControlScript::Func_AddArchiveFile(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	FileManager* fileManager = FileManager::GetBase();
 	std::wstring path = argv[0].as_string();
-	bool res = fileManager->AddArchiveFile(path);
+	size_t readOff = argc > 1 ? argv[1].as_int() : 0;
+	bool res = fileManager->AddArchiveFile(path, readOff);
 	return StgControlScript::CreateBooleanValue(res);
 }
 gstd::value StgControlScript::Func_GetArchiveFilePathList(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1301,10 +1303,10 @@ void ScriptInfoPanel::Update(StgSystemController* systemController) {
 		if (systemController) {
 			auto& pCacheMap = systemController->GetScriptEngineCache()->GetMap();
 			for (auto itr = pCacheMap.cbegin(); itr != pCacheMap.cend(); ++itr, ++iCache) {
-				ref_count_ptr<ScriptEngineData> pData = itr->second;
+				const ref_count_ptr<ScriptEngineData>& pData = itr->second;
 
-				//1 from this, and 1 from in the cache map itself
-				size_t uses = pData.use_count() >= 2 ? (pData.use_count() - 2) : 0;
+				//-1 from in the cache map itself
+				size_t uses = pData.use_count() >= 1 ? (pData.use_count() - 1) : 0;
 				std::wstring path = PathProperty::GetPathWithoutModuleDirectory(pData->GetPath());
 
 				wndCache_.SetText(iCache, 0, StringUtility::Format(L"%u", uses));

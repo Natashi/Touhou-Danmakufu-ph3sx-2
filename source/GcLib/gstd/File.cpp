@@ -372,7 +372,7 @@ bool File::Open(DWORD typeAccess) {
 			else throw e;
 		}
 	}
-	catch (std::system_error& e) {
+	catch (std::system_error&) {
 		int code = errno;
 		lastError_ = StringUtility::FormatToWide("%s (code=%d)", 
 			strerror(code), code);
@@ -468,11 +468,11 @@ void FileManager::EndLoadThread() {
 	}
 }
 
-bool FileManager::AddArchiveFile(const std::wstring& path) {
+bool FileManager::AddArchiveFile(const std::wstring& path, size_t readOff) {
 	if (mapArchiveFile_.find(path) != mapArchiveFile_.end())
 		return true;
 
-	shared_ptr<ArchiveFile> file = shared_ptr<ArchiveFile>(new ArchiveFile(path));
+	shared_ptr<ArchiveFile> file = shared_ptr<ArchiveFile>(new ArchiveFile(path, readOff));
 	if (!file->Open()) return false;
 
 	std::set<std::wstring> listKeyCurrent;

@@ -279,9 +279,10 @@ bool FileArchiver::EncryptArchive(std::fstream& inSrc, const std::wstring& pathO
 //*******************************************************************
 //ArchiveFile
 //*******************************************************************
-ArchiveFile::ArchiveFile(std::wstring path) {
+ArchiveFile::ArchiveFile(std::wstring path, size_t readOffset) {
 	file_.open(path, std::ios::binary);
 	basePath_ = path;
+	globalReadOffset_ = readOffset;
 }
 ArchiveFile::~ArchiveFile() {
 	Close();
@@ -302,6 +303,7 @@ bool ArchiveFile::Open() {
 
 		ArchiveFileHeader header;
 
+		file_.seekg(globalReadOffset_, std::ios::beg);
 		file_.read((char*)&header, sizeof(ArchiveFileHeader));
 		ArchiveEncryption::ShiftBlock((byte*)&header, sizeof(ArchiveFileHeader), keyBase_, keyStep_);
 
@@ -311,7 +313,7 @@ bool ArchiveFile::Open() {
 		uint32_t headerSizeTrue = 0U;
 
 		std::stringstream bufInfo;
-		file_.seekg(header.headerOffset, std::ios::beg);
+		file_.seekg(globalReadOffset_ + header.headerOffset, std::ios::beg);
 		{
 			ByteBuffer tmpBufInfo;
 			tmpBufInfo.SetSize(header.headerSize);
@@ -397,12 +399,15 @@ bool ArchiveFile::IsExists(const std::wstring& name) {
 shared_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(shared_ptr<ArchiveFileEntry> entry) {
 	shared_ptr<ByteBuffer> res;
 
-	std::ifstream* file = &entry->archiveParent->GetFile();
+	ArchiveFile* parentArchive = entry->archiveParent;
+	size_t globalReadOff = parentArchive->globalReadOffset_;
+
+	std::ifstream* file = &parentArchive->GetFile();
 	if (file->is_open()) {
 		switch (entry->compressionType) {
 		case ArchiveFileEntry::CT_NONE:
 		{
-			file->seekg(entry->offsetPos, std::ios::beg);
+			file->seekg(globalReadOff + entry->offsetPos, std::ios::beg);
 			res = shared_ptr<ByteBuffer>(new ByteBuffer());
 			res->SetSize(entry->sizeFull);
 			file->read(res->GetPointer(), entry->sizeFull);
@@ -415,7 +420,7 @@ shared_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(shared_ptr<ArchiveFileEntr
 		}
 		case ArchiveFileEntry::CT_ZLIB:
 		{
-			file->seekg(entry->offsetPos, std::ios::beg);
+			file->seekg(globalReadOff + entry->offsetPos, std::ios::beg);
 			res = shared_ptr<ByteBuffer>(new ByteBuffer());
 			//res->SetSize(entry->sizeFull);
 

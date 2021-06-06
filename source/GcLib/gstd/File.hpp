@@ -237,7 +237,7 @@ namespace gstd {
 		void RemoveLoadThreadListener(FileManager::LoadThreadListener* listener);
 		void WaitForThreadLoadComplete();
 
-		bool AddArchiveFile(const std::wstring& path);
+		bool AddArchiveFile(const std::wstring& path, size_t readOff);
 		bool RemoveArchiveFile(const std::wstring& path);
 		shared_ptr<ArchiveFile> GetArchiveFile(const std::wstring& name);
 		bool ClearArchiveFileCache();

@@ -48,13 +48,13 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 	EFileManager* fileManager = EFileManager::GetInstance();
 	const std::wstring& archiveMain = infoMain->GetArchivePath();
 	if (archiveMain.size() > 0) {
-		fileManager->AddArchiveFile(archiveMain);
+		fileManager->AddArchiveFile(archiveMain, 0);
 	}
 
 	if (infoPlayer) {
 		const std::wstring& archivePlayer = infoPlayer->GetArchivePath();
 		if (archivePlayer.size() > 0) {
-			fileManager->AddArchiveFile(archivePlayer);
+			fileManager->AddArchiveFile(archivePlayer, 0);
 		}
 	}
 

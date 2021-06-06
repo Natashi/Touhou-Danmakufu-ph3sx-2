@@ -235,7 +235,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 	if (memcmp(header, ArchiveEncryption::HEADER_ARCHIVEFILE, ArchiveFileHeader::MAGIC_LENGTH) == 0) {
 		file.Close();
 
-		ArchiveFile archive(path);
+		ArchiveFile archive(path, 0);
 		if (!archive.Open()) return res;
 
 		std::multimap<std::wstring, shared_ptr<ArchiveFileEntry>>& mapEntry = archive.GetEntryMap();

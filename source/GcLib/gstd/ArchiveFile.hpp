@@ -82,8 +82,10 @@ namespace gstd {
 		std::multimap<std::wstring, shared_ptr<ArchiveFileEntry>> mapEntry_;
 		uint8_t keyBase_;
 		uint8_t keyStep_;
+
+		size_t globalReadOffset_;
 	public:
-		ArchiveFile(std::wstring path);
+		ArchiveFile(std::wstring path, size_t readOffset);
 		virtual ~ArchiveFile();
 
 		bool Open();
