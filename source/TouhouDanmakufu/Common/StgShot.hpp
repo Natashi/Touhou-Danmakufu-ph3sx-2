@@ -355,7 +355,7 @@ public:
 	virtual void SetAlpha(int alpha);
 	virtual void SetRenderState() {}
 
-	void SetTransformList(std::list<StgPatternShotTransform>& listTransform) {
+	void SetTransformList(const std::list<StgPatternShotTransform>& listTransform) {
 		listTransformationShotAct_ = listTransform;
 	}
 
@@ -603,7 +603,7 @@ public:
 		BASEPOINT_RESET = -256 * 256,
 	};
 private:
-	ref_unsync_ptr<StgMoveObject> parent_;
+	ref_unsync_weak_ptr<StgMoveObject> parent_;
 
 	int idShotData_;
 	int typeOwner_;

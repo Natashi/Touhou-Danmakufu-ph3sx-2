@@ -2447,7 +2447,8 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 //StgPatternShotObjectGenerator (ECL-style bullets firing)
 //****************************************************************************
 StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
-	parent_ = nullptr;
+	typeObject_ = TypeObject::ShotPattern;
+
 	idShotData_ = -1;
 	typeOwner_ = StgShotObject::OWNER_ENEMY;
 	typePattern_ = PATTERN_TYPE_FAN;
@@ -2475,7 +2476,6 @@ StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
 	laserLength_ = 64;
 }
 StgPatternShotObjectGenerator::~StgPatternShotObjectGenerator() {
-	parent_ = nullptr;
 }
 
 void StgPatternShotObjectGenerator::CopyFrom(StgPatternShotObjectGenerator* other) {
@@ -2525,8 +2525,14 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 	if (idShotData_ < 0) return;
 	if (shotWay_ == 0U || shotStack_ == 0U) return;
 
-	float basePosX = (parent_ != nullptr && basePointX_ == BASEPOINT_RESET) ? parent_->GetPositionX() : basePointX_;
-	float basePosY = (parent_ != nullptr && basePointY_ == BASEPOINT_RESET) ? parent_->GetPositionY() : basePointY_;
+	float basePosX = basePointX_;
+	float basePosY = basePointY_;
+	if (!parent_.expired()) {
+		if (basePointX_ == BASEPOINT_RESET)
+			basePosX = parent_->GetPositionX();
+		if (basePointY_ == BASEPOINT_RESET)
+			basePosY = parent_->GetPositionY();
+	}
 	basePosX += basePointOffsetX_;
 	basePosY += basePointOffsetY_;
 
