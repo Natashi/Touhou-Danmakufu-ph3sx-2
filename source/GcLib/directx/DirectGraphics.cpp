@@ -25,8 +25,7 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 	bVSync_ = false;
 	bPseudoFullScreen_ = true;
 	typeSamples_ = D3DMULTISAMPLE_NONE;
-}
-DirectGraphicsConfig::~DirectGraphicsConfig() {
+	bCheckDeviceCaps_ = true;
 }
 
 #if defined(DNH_PROJ_EXECUTOR)
@@ -226,6 +225,12 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		}
 	}
 
+	{
+		pDevice_->GetDeviceCaps(&deviceCaps_);
+		if (config.IsCheckDeviceCaps())
+			_VerifyDeviceCaps();
+	}
+
 	pDevice_->GetRenderTarget(0, &pBackSurf_);
 	pDevice_->GetDepthStencilSurface(&pZBuffer_);
 
@@ -243,6 +248,136 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 
 	Logger::WriteTop("DirectGraphics: Initialized.");
 	return true;
+}
+
+void DirectGraphics::_VerifyDeviceCaps() {
+	std::vector<std::string> listWarning;
+	std::vector<std::string> listError;
+
+	if ((deviceCaps_.Caps2 & D3DCAPS2_DYNAMICTEXTURES) == 0)
+		listError.push_back("Device doesn't support dynamic textures");
+
+	if ((deviceCaps_.DevCaps & D3DDEVCAPS_DRAWPRIMTLVERTEX) == 0)
+		listError.push_back("Device can't draw TLVERTEX primitives");
+	if ((deviceCaps_.DevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0)
+		listError.push_back("Device lacks hardware transformation/lighting support");
+	//if ((deviceCaps_.DevCaps & D3DDEVCAPS_TEXTURESYSTEMMEMORY) == 0)
+	//	listWarning.push_back("Device can't retrieve textures from system memory");
+	if ((deviceCaps_.DevCaps & D3DDEVCAPS_TEXTUREVIDEOMEMORY) == 0)
+		listError.push_back("Device can't retrieve textures from video memory");
+	if ((deviceCaps_.DevCaps & D3DDEVCAPS_TLVERTEXSYSTEMMEMORY) == 0)
+		listError.push_back("Device can't use buffers in system memory");
+	if ((deviceCaps_.DevCaps & D3DDEVCAPS_TLVERTEXVIDEOMEMORY) == 0)
+		listError.push_back("Device can't use buffers in video memory");
+
+	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_MASKZ) == 0)
+		listWarning.push_back("Device doesn't support depth buffering");
+	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_BLENDOP) == 0)
+		listWarning.push_back("Device lacks alpha blending capabilities");
+	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_PERSTAGECONSTANT) == 0)
+		listError.push_back("Device doesn't support per-stage blending constants");
+	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_SEPARATEALPHABLEND) == 0)
+		listWarning.push_back("Device can't separate blending for the alpha channel");
+
+	if ((deviceCaps_.RasterCaps & D3DPRASTERCAPS_ANISOTROPY) == 0)
+		listWarning.push_back("Device doesn't support anisotropic filtering");
+	if ((deviceCaps_.RasterCaps & D3DPRASTERCAPS_FOGVERTEX) == 0)
+		listWarning.push_back("Device lacks vertex fog support");
+	if ((deviceCaps_.RasterCaps & D3DPRASTERCAPS_ZTEST) == 0)
+		listWarning.push_back("Device lacks Z-Test support");
+
+	if ((deviceCaps_.ZCmpCaps & D3DPCMPCAPS_LESSEQUAL) == 0)
+		listWarning.push_back("Device doesn't support Z-Buffer blending");
+
+	if ((deviceCaps_.SrcBlendCaps & D3DPBLENDCAPS_ONE) == 0
+		|| (deviceCaps_.SrcBlendCaps & D3DPBLENDCAPS_ZERO) == 0
+		|| (deviceCaps_.SrcBlendCaps & D3DPBLENDCAPS_SRCALPHA) == 0
+		|| (deviceCaps_.SrcBlendCaps & D3DPBLENDCAPS_INVDESTCOLOR) == 0)
+		listWarning.push_back("Device lacks some blending capabilities (source)");
+	if ((deviceCaps_.DestBlendCaps & D3DPBLENDCAPS_ONE) == 0
+		|| (deviceCaps_.DestBlendCaps & D3DPBLENDCAPS_ZERO) == 0
+		|| (deviceCaps_.DestBlendCaps & D3DPBLENDCAPS_SRCALPHA) == 0
+		|| (deviceCaps_.DestBlendCaps & D3DPBLENDCAPS_INVSRCALPHA) == 0
+		|| (deviceCaps_.DestBlendCaps & D3DPBLENDCAPS_INVDESTCOLOR) == 0)
+		listWarning.push_back("Device lacks some blending capabilities (dest)");
+
+	if ((deviceCaps_.AlphaCmpCaps & D3DPCMPCAPS_GREATER) == 0)
+		listWarning.push_back("Device might not support alpha-testing");
+
+	if ((deviceCaps_.TextureCaps & D3DPTEXTURECAPS_ALPHA) == 0)
+		listError.push_back("Device doesn't support alpha in textures");
+	if ((deviceCaps_.TextureCaps & D3DPTEXTURECAPS_POW2) != 0
+		&& (deviceCaps_.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL) != 0)
+		listWarning.push_back("Device might not support textures whose sizes aren't powers of two");
+	if ((deviceCaps_.TextureCaps & D3DPTEXTURECAPS_SQUAREONLY) != 0)
+		listWarning.push_back("Device requires that all textures' sizes must be powers of two");
+
+	if ((deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MAGFPOINT) == 0
+		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MAGFLINEAR) == 0
+		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MAGFANISOTROPIC) == 0
+		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MINFPOINT) == 0
+		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MINFLINEAR) == 0
+		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MINFANISOTROPIC) == 0
+		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MIPFPOINT) == 0
+		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MIPFLINEAR) == 0)
+		listWarning.push_back("Device might not support all modes of texture filtering");
+
+	if ((deviceCaps_.TextureAddressCaps & D3DPTADDRESSCAPS_WRAP) == 0)
+		listError.push_back("Device doesn't support texture UV wrapping");
+
+	if ((deviceCaps_.TextureOpCaps & D3DTEXOPCAPS_SELECTARG1) == 0
+		|| (deviceCaps_.TextureOpCaps & D3DTEXOPCAPS_MODULATE) == 0)
+		listWarning.push_back("Device might not support all modes of texture operations");
+
+	if ((deviceCaps_.VertexProcessingCaps & D3DVTXPCAPS_DIRECTIONALLIGHTS) == 0
+		|| deviceCaps_.MaxActiveLights < 1)
+		listWarning.push_back("Device doesn't support directional lighting");
+
+	if (deviceCaps_.MaxStreams < 2)
+		listWarning.push_back("Device might not be able to use hardware instancing");
+
+	if (deviceCaps_.MaxStreamStride < sizeof(VERTEX_TLX))
+		listError.push_back("The max stream stride of the device is less than the size of a basic vertex");
+
+	if (deviceCaps_.VertexShaderVersion < D3DVS_VERSION(2, 0)
+		|| deviceCaps_.MaxVertexShaderConst < 4)
+		listError.push_back("The device's vertex shader support is insufficient (requires vs_2_0)");
+	else if (deviceCaps_.VertexShaderVersion < D3DVS_VERSION(3, 0))
+		listWarning.push_back("The device doesn't support vertex shader Version 3_0");
+
+	if (deviceCaps_.PixelShaderVersion < D3DPS_VERSION(2, 0)
+		|| deviceCaps_.PixelShader1xMaxValue < 1.0f)
+		listError.push_back("The device's pixel shader support is insufficient (requires ps_2_0)");
+	else if (deviceCaps_.PixelShaderVersion < D3DPS_VERSION(3, 0))
+		listWarning.push_back("The device doesn't support pixel shader Version 3_0");
+
+	if (deviceCaps_.NumSimultaneousRTs < 1)
+		listWarning.push_back("Device must support at least 1 render target");
+
+	if (listError.size() > 0) {
+		std::string strAll = "The game cannot start as the\r\n"
+			"Direct3D device has the following issue(s):\r\n";
+		for (auto& str : listError)
+			strAll += "  - " + str + "\r\n";
+		throw wexception(strAll);
+	}
+	else if (listWarning.size() > 0) {
+		std::string strAll = "The game's rendering might behave strangely as the\r\n"
+			"Direct3D device has the following issue(s):\r\n";
+		/*
+		for (auto& str : listError)
+			strAll += "  " + str + "\r\n";
+
+		DWORD flags = MB_APPLMODAL | MB_OK;
+		flags |= MB_ICONWARNING;
+		int res = ::MessageBoxA(nullptr, strAll.c_str(),
+			"Warning", flags);
+		*/
+		Logger::WriteTop(strAll);
+		for (auto& str : listWarning) {
+			Logger::WriteTop("  - " + str);
+		}
+	}
 }
 
 void DirectGraphics::_ReleaseDxResource() {

@@ -30,9 +30,9 @@ namespace directx {
 		bool bVSync_;
 		bool bPseudoFullScreen_;
 		D3DMULTISAMPLE_TYPE typeSamples_;
+		bool bCheckDeviceCaps_;
 	public:
 		DirectGraphicsConfig();
-		virtual ~DirectGraphicsConfig();
 
 		bool IsShowWindow() const { return bShowWindow_; }
 		void SetShowWindow(bool b) { bShowWindow_ = b; }
@@ -58,6 +58,9 @@ namespace directx {
 		void SetbPseudoFullScreen(bool b) { bPseudoFullScreen_ = b; }
 		D3DMULTISAMPLE_TYPE GetMultiSampleType() const { return typeSamples_; }
 		void SetMultiSampleType(D3DMULTISAMPLE_TYPE type) { typeSamples_ = type; }
+
+		bool IsCheckDeviceCaps() const { return bCheckDeviceCaps_; }
+		void SetCheckDeviceCaps(bool b) { bCheckDeviceCaps_ = b; }
 	};
 
 #if defined(DNH_PROJ_EXECUTOR)
@@ -71,6 +74,7 @@ namespace directx {
 		IDirect3DSurface9* pBackSurf_;
 		IDirect3DSurface9* pZBuffer_;
 
+		D3DCAPS9 deviceCaps_;
 		HRESULT deviceStatus_;
 
 		DirectGraphicsConfig config_;
@@ -101,6 +105,8 @@ namespace directx {
 		void _RestoreDxResource();
 		bool _Restore();
 		void _InitializeDeviceState(bool bResetCamera);
+
+		void _VerifyDeviceCaps();
 	public:
 		DirectGraphics();
 		virtual ~DirectGraphics();
