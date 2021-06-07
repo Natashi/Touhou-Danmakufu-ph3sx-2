@@ -23,8 +23,8 @@ void Logger::_WriteChild(SYSTEMTIME& time, const std::wstring& str) {
 
 void Logger::Write(const std::string& str) {
 #if defined(DNH_PROJ_EXECUTOR)
-	if (WindowLogger::GetParent()) {
-		if (WindowLogger::GetParent()->GetState() != WindowLogger::STATE_RUNNING)
+	if (WindowLogger* windowLogger = WindowLogger::GetParent()) {
+		if (windowLogger->GetState() != WindowLogger::STATE_RUNNING)
 			return;
 	}
 
@@ -35,8 +35,8 @@ void Logger::Write(const std::string& str) {
 }
 void Logger::Write(const std::wstring& str) {
 #if defined(DNH_PROJ_EXECUTOR)
-	if (WindowLogger::GetParent()) {
-		if (WindowLogger::GetParent()->GetState() != WindowLogger::STATE_RUNNING)
+	if (WindowLogger* windowLogger = WindowLogger::GetParent()) {
+		if (windowLogger->GetState() != WindowLogger::STATE_RUNNING)
 			return;
 	}
 
@@ -152,7 +152,7 @@ bool WindowLogger::Initialize(bool bEnable) {
 	threadWindow_->Start();
 
 	while (GetWindowHandle() == nullptr) {
-		Sleep(10);
+		::Sleep(10);
 	}
 
 	//LogPanel
@@ -470,12 +470,14 @@ void WindowLogger::LogPanel::AddText(const std::wstring& text) {
 	}
 	::SendMessage(hEdit, EM_SETSEL, pos, pos);
 	::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)text.c_str());
+	::SendMessage(hEdit, EM_SCROLL, 0, 1);
 }
 void WindowLogger::LogPanel::ClearText() {
 	HWND hEdit = wndEdit_.GetWindowHandle();
 	::SendMessage(hEdit, EM_SETSEL, 0, -1);
 	::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)L"");
 }
+
 //WindowLogger::InfoPanel
 WindowLogger::InfoPanel::InfoPanel() {
 	infoCollector_ = new InfoCollector(WindowLogger::GetParent()->GetStatusBar(), this);
@@ -517,12 +519,9 @@ void WindowLogger::InfoPanel::_Run() {
 		infoCollector_->Update();
 
 #if defined(DNH_PROJ_EXECUTOR)
-		{
-			WindowLogger* wLogger = nullptr;
-			if (wLogger = WindowLogger::GetParent()) {
-				if (wLogger->GetState() == WindowLogger::STATE_RUNNING)
-					wLogger->FlushFileLogger();
-			}
+		if (WindowLogger* wLogger = WindowLogger::GetParent()) {
+			if (wLogger->GetState() == WindowLogger::STATE_RUNNING)
+				wLogger->FlushFileLogger();
 		}
 #endif
 
