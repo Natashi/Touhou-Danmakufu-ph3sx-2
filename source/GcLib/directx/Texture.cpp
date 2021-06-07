@@ -503,9 +503,12 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 			while (height <= screenHeight)
 				height = height << 1;
 		}
-		if (width > 4096U) width = 4096U;
-		if (height > 4096U) height = 4096U;
-		//Max size is 67,108,864 bytes (64 megabytes)
+		{
+			size_t maxWidth = std::min<DWORD>(graphics->GetDeviceCaps()->MaxTextureWidth, 4096);
+			size_t maxHeight = std::min<DWORD>(graphics->GetDeviceCaps()->MaxTextureHeight, 4096);
+			if (width > maxWidth) width = maxWidth;
+			if (height > maxHeight) height = maxHeight;
+		}
 
 		D3DMULTISAMPLE_TYPE typeSample = graphics->GetMultiSampleType();
 		DWORD* qualitySample = graphics->GetMultiSampleQuality();
