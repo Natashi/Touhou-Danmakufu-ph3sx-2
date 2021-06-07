@@ -83,6 +83,18 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	config_ = config;
 	hAttachedWindow_ = hWnd;
 
+	D3DCAPS9 capsRef;
+	D3DCAPS9 capsHal;
+	pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, &capsRef);
+	pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &capsHal);
+
+	D3DDEVTYPE deviceType = config.IsReferenceEnable() ? D3DDEVTYPE_REF : D3DDEVTYPE_HAL;
+	deviceCaps_ = deviceType == D3DDEVTYPE_REF ? capsRef : capsHal;
+	if (config.IsCheckDeviceCaps())
+		_VerifyDeviceCaps();
+
+	bool bDeviceVSyncAvailable = (deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_ONE) != 0;
+
 	//Fullscreen mode settings
 	ZeroMemory(&d3dppFull_, sizeof(D3DPRESENT_PARAMETERS));
 	d3dppFull_.hDeviceWindow = hWnd;
@@ -96,7 +108,8 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	d3dppFull_.EnableAutoDepthStencil = TRUE;
 	d3dppFull_.AutoDepthStencilFormat = D3DFMT_D16;
 	d3dppFull_.MultiSampleType = D3DMULTISAMPLE_NONE;
-	d3dppFull_.PresentationInterval = config.IsVSyncEnable() ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+	d3dppFull_.PresentationInterval = (bDeviceVSyncAvailable && config.IsVSyncEnable()) 
+		? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 	d3dppFull_.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
 
 	//Windowed mode settings
@@ -116,61 +129,51 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	d3dppWin_.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
 	d3dppWin_.FullScreen_RefreshRateInHz = 0;
 
-	if (!config.IsWindowed()) {	//Fullscreen Mode
+	if (!config.IsWindowed()) {	//Start in fullscreen Mode
 		::SetWindowLong(hWnd, GWL_STYLE, wndStyleFull_);
 		::ShowWindow(hWnd, SW_SHOW);
 	}
 
-	D3DDEVTYPE deviceType = config.IsReferenceEnable() ? D3DDEVTYPE_REF : D3DDEVTYPE_HAL;
 	{
-		D3DPRESENT_PARAMETERS d3dpp = config.IsWindowed() ? d3dppWin_ : d3dppFull_;
+		D3DPRESENT_PARAMETERS* d3dpp = config.IsWindowed() ? &d3dppWin_ : &d3dppFull_;
 		modeScreen_ = config.IsWindowed() ? SCREENMODE_WINDOW : SCREENMODE_FULLSCREEN;
 
-		constexpr DWORD modeBase = D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE;
-
 		HRESULT hrDevice = E_FAIL;
-
-		if (config.IsReferenceEnable()) {
-			hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, hWnd,
-				D3DCREATE_SOFTWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
-		}
-		else {
-			D3DCAPS9 caps;
-			pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &caps);
-
-			if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0)) {
-				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
-					D3DCREATE_HARDWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
+		{
+			auto _TryCreateDevice = [&](D3DDEVTYPE type, DWORD addFlag) {
+				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, type, hWnd, 
+					addFlag | D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE, d3dpp, &pDevice_);
+			};
+			if (config.IsReferenceEnable()) {
+				_TryCreateDevice(D3DDEVTYPE_REF, D3DCREATE_SOFTWARE_VERTEXPROCESSING);
+			}
+			else {
+				_TryCreateDevice(D3DDEVTYPE_HAL, D3DCREATE_HARDWARE_VERTEXPROCESSING);
 				if (SUCCEEDED(hrDevice)) {
 					Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_HARDWARE_VERTEXPROCESSING)");
 				}
 				else {
-					hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
-						D3DCREATE_SOFTWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
+					_TryCreateDevice(D3DDEVTYPE_HAL, D3DCREATE_SOFTWARE_VERTEXPROCESSING);
 					if (SUCCEEDED(hrDevice))
 						Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
 				}
-			}
-			else {
-				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
-					D3DCREATE_SOFTWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
-				if (SUCCEEDED(hrDevice))
-					Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
-			}
 
-			if (FAILED(hrDevice)) {
-				Logger::WriteTop("DirectGraphics: Cannot create device with HAL.");
-				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, hWnd,
-					D3DCREATE_SOFTWARE_VERTEXPROCESSING | modeBase, &d3dpp, &pDevice_);
-				deviceType = D3DDEVTYPE_REF;
+				if (FAILED(hrDevice)) {
+					std::wstring err = StringUtility::Format(
+						L"Cannot create Direct3D device with HAL. [%s]\r\n  %s\r\n%s",
+						DXGetErrorString(hrDevice), DXGetErrorDescription(hrDevice),
+						L"Restart in reference rasterizer mode.");
+					throw wexception(err);
+				}
 			}
 		}
 
 		if (FAILED(hrDevice)) {
-			deviceStatus_ = D3DERR_NOTAVAILABLE;
-			std::wstring err = StringUtility::Format(L"IDirect3DDevice9::CreateDevice failure. [%s]\r\n  %s",
+			//deviceStatus_ = D3DERR_NOTAVAILABLE;
+			std::wstring err = StringUtility::Format(L"Cannot create Direct3D device. [%s]\r\n  %s",
 				DXGetErrorString(hrDevice), DXGetErrorDescription(hrDevice));
-			Logger::WriteTop(err);
+			if (deviceType == D3DDEVTYPE_HAL)
+				err += L"\r\nRestart in reference rasterizer mode.";
 			throw wexception(err);
 		}
 	}
@@ -225,12 +228,6 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		}
 	}
 
-	{
-		pDevice_->GetDeviceCaps(&deviceCaps_);
-		if (config.IsCheckDeviceCaps())
-			_VerifyDeviceCaps();
-	}
-
 	pDevice_->GetRenderTarget(0, &pBackSurf_);
 	pDevice_->GetDepthStencilSurface(&pZBuffer_);
 
@@ -251,8 +248,11 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 }
 
 void DirectGraphics::_VerifyDeviceCaps() {
-	std::vector<std::string> listWarning;
 	std::vector<std::string> listError;
+	std::vector<std::string> listWarning;
+
+	//listError.push_back("Test");
+	//listWarning.push_back("Test");
 
 	if ((deviceCaps_.Caps2 & D3DCAPS2_DYNAMICTEXTURES) == 0)
 		listError.push_back("Device doesn't support dynamic textures");
@@ -267,15 +267,24 @@ void DirectGraphics::_VerifyDeviceCaps() {
 		listError.push_back("Device can't retrieve textures from video memory");
 	if ((deviceCaps_.DevCaps & D3DDEVCAPS_TLVERTEXSYSTEMMEMORY) == 0)
 		listError.push_back("Device can't use buffers in system memory");
-	if ((deviceCaps_.DevCaps & D3DDEVCAPS_TLVERTEXVIDEOMEMORY) == 0)
-		listError.push_back("Device can't use buffers in video memory");
+	//if ((deviceCaps_.DevCaps & D3DDEVCAPS_TLVERTEXVIDEOMEMORY) == 0)
+	//	listError.push_back("Device can't use buffers in video memory");
 
+	if ((deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_IMMEDIATE) == 0)
+		listError.push_back("D3DPRESENT_INTERVAL_IMMEDIATE is unavailable");
+	if ((deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_ONE) == 0)
+		listWarning.push_back("V-Sync is unavailable");
+
+	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_CULLNONE) == 0
+		|| (deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_CULLCW) == 0
+		|| (deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_CULLCCW) == 0)
+		listWarning.push_back("Device doesn't support all primitive culling modes");
 	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_MASKZ) == 0)
 		listWarning.push_back("Device doesn't support depth buffering");
 	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_BLENDOP) == 0)
 		listWarning.push_back("Device lacks alpha blending capabilities");
-	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_PERSTAGECONSTANT) == 0)
-		listError.push_back("Device doesn't support per-stage blending constants");
+	//if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_PERSTAGECONSTANT) == 0)
+	//	listError.push_back("Device doesn't support per-stage blending constants");
 	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_SEPARATEALPHABLEND) == 0)
 		listWarning.push_back("Device can't separate blending for the alpha channel");
 
@@ -352,31 +361,24 @@ void DirectGraphics::_VerifyDeviceCaps() {
 		listWarning.push_back("The device doesn't support pixel shader Version 3_0");
 
 	if (deviceCaps_.NumSimultaneousRTs < 1)
-		listWarning.push_back("Device must support at least 1 render target");
+		listError.push_back("Device must support at least 1 render target");
+
+	//-------------------------------------------------------------------------------
 
 	if (listError.size() > 0) {
 		std::string strAll = "The game cannot start as the\r\n"
 			"Direct3D device has the following issue(s):\r\n";
 		for (auto& str : listError)
-			strAll += "  - " + str + "\r\n";
+			strAll += "   - " + str + "\r\n";
+		strAll += "Try restarting in reference rasterizer mode\r\n";
 		throw wexception(strAll);
 	}
 	else if (listWarning.size() > 0) {
 		std::string strAll = "The game's rendering might behave strangely as the\r\n"
 			"Direct3D device has the following issue(s):\r\n";
-		/*
 		for (auto& str : listError)
-			strAll += "  " + str + "\r\n";
-
-		DWORD flags = MB_APPLMODAL | MB_OK;
-		flags |= MB_ICONWARNING;
-		int res = ::MessageBoxA(nullptr, strAll.c_str(),
-			"Warning", flags);
-		*/
+			strAll += "   - " + str + "\r\n";
 		Logger::WriteTop(strAll);
-		for (auto& str : listWarning) {
-			Logger::WriteTop("  - " + str);
-		}
 	}
 }
 

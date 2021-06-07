@@ -129,6 +129,7 @@ namespace directx {
 
 		IDirect3DSurface9* GetBaseSurface() { return pBackSurf_; }
 
+		D3DCAPS9* GetDeviceCaps() { return &deviceCaps_; }
 		HRESULT GetDeviceStatus() { return deviceStatus_; }
 
 		void BeginScene(bool bMainRender = true, bool bClear = true);
