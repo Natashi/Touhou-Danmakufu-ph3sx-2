@@ -1002,7 +1002,7 @@ void parser::parse_expression(script_block* block, parser_state_t* state) {
 	}
 }
 
-//Format for variadic arguments (To-be-completed until after 1.10a):
+//Format for variadic arguments:
 // argc = -(n + 1)
 // where n = fixed(required) arguments
 int parser::parse_arguments(script_block* block, parser_state_t* state) {

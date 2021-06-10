@@ -180,15 +180,15 @@ namespace gstd {
 
 	inline double BaseFunction::_fmod2(double i, double j) {
 		if (j < 0)
-			return (i < 0) ? -fmod(-i, -j) : fmod(i, -j) + j;
+			return (i < 0) ? -fmod(-i, -j) : fmod(fmod(i, -j) + j, j);
 		else
-			return (i < 0) ? -fmod(-i, j) + j : fmod(i, j);
+			return (i < 0) ? fmod(j - fmod(-i, j), j) : fmod(i, j);
 	}
 	inline int64_t BaseFunction::_mod2(int64_t i, int64_t j) {
 		if (j < 0)
-			return (i < 0) ? -(-i % -j) : (i % -j) + j;
+			return (i < 0) ? -((-i) % (-j)) : (((i % (-j)) + j) % j);
 		else
-			return (i < 0) ? -(-i % j) + j : (i % j);
+			return (i < 0) ? ((j - ((-i) % j)) % j) : (i % j);
 	}
 
 	value* BaseFunction::_value_cast(value* val, type_data::type_kind kind) {
