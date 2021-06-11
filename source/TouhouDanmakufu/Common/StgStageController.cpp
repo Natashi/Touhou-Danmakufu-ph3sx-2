@@ -470,7 +470,7 @@ StgStageInformation::StgStageInformation() {
 	priMinStgFrame_ = 20;
 	priMaxStgFrame_ = 80;
 	priShotObject_ = 50;
-	priItemObject_ = 60;
+	priItemObject_ = 40;
 	priCameraFocusPermit_ = 69;
 
 	rand_ = std::make_shared<RandProvider>();
