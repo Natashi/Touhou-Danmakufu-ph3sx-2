@@ -449,7 +449,7 @@ void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
 
 	SetCullingMode(D3DCULL_NONE);
 	pDevice_->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
-	pDevice_->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_RGBA(192, 192, 192, 0));
+	pDevice_->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(192, 192, 192));
 	SetLightingEnable(true);
 	SetSpecularEnable(false);
 

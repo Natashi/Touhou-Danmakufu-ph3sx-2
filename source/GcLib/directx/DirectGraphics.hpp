@@ -146,7 +146,7 @@ namespace directx {
 		void SetShadingMode(DWORD mode);
 		void SetZBufferEnable(bool bEnable);
 		void SetZWriteEnable(bool bEnable);
-		void SetAlphaTest(bool bEnable, DWORD ref = 0, D3DCMPFUNC func = D3DCMP_GREATER);
+		void SetAlphaTest(bool bEnable, DWORD ref, D3DCMPFUNC func);
 		void SetBlendMode(BlendMode mode, int stage = 0);
 		BlendMode GetBlendMode() { return previousBlendMode_; }
 		void SetFillMode(DWORD mode);
