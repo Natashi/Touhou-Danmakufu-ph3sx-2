@@ -1115,12 +1115,12 @@ gstd::value DxScript::Func_GetScreenHeight(gstd::script_machine* machine, int ar
 }
 gstd::value DxScript::Func_GetWindowedWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	LONG res = graphics->GetConfigData().GetScreenWindowedSize().x;
+	LONG res = graphics->GetConfigData().sizeScreenWindowed_.x;
 	return DxScript::CreateIntValue(res);
 }
 gstd::value DxScript::Func_GetWindowedHeight(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	LONG res = graphics->GetConfigData().GetScreenWindowedSize().y;
+	LONG res = graphics->GetConfigData().sizeScreenWindowed_.y;
 	return DxScript::CreateIntValue(res);
 }
 gstd::value DxScript::Func_IsFullscreenMode(gstd::script_machine* machine, int argc, const gstd::value* argv) {

@@ -18,7 +18,7 @@ namespace directx {
 	//DirectGraphicsConfig
 	//*******************************************************************
 	class DirectGraphicsConfig {
-	protected:
+	public:
 		bool bShowWindow_;
 		bool bShowCursor_;
 		POINT sizeScreen_;
@@ -29,11 +29,12 @@ namespace directx {
 		bool bUseTripleBuffer_;
 		bool bVSync_;
 		bool bPseudoFullScreen_;
-		D3DMULTISAMPLE_TYPE typeSamples_;
+		D3DMULTISAMPLE_TYPE typeMultiSample_;
 		bool bCheckDeviceCaps_;
 	public:
 		DirectGraphicsConfig();
 
+		/*
 		bool IsShowWindow() const { return bShowWindow_; }
 		void SetShowWindow(bool b) { bShowWindow_ = b; }
 		bool IsShowCursor() const { return bShowCursor_; }
@@ -54,13 +55,14 @@ namespace directx {
 		void SetTripleBufferEnable(bool bEnable) { bUseTripleBuffer_ = bEnable; }
 		bool IsVSyncEnable() const { return bVSync_; }
 		void SetVSyncEnable(bool bEnable) { bVSync_ = bEnable; }
-		bool IsPseudoFullScreen() const { return bPseudoFullScreen_; }
+		bool bPseudoFullScreen_ const { return bPseudoFullScreen_; }
 		void SetbPseudoFullScreen(bool b) { bPseudoFullScreen_ = b; }
 		D3DMULTISAMPLE_TYPE GetMultiSampleType() const { return typeSamples_; }
 		void SetMultiSampleType(D3DMULTISAMPLE_TYPE type) { typeSamples_ = type; }
 
 		bool IsCheckDeviceCaps() const { return bCheckDeviceCaps_; }
 		void SetCheckDeviceCaps(bool b) { bCheckDeviceCaps_ = b; }
+		*/
 	};
 
 #if defined(DNH_PROJ_EXECUTOR)

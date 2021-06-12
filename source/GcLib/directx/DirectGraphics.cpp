@@ -24,7 +24,7 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 	bUseTripleBuffer_ = true;
 	bVSync_ = false;
 	bPseudoFullScreen_ = true;
-	typeSamples_ = D3DMULTISAMPLE_NONE;
+	typeMultiSample_ = D3DMULTISAMPLE_NONE;
 	bCheckDeviceCaps_ = true;
 }
 
@@ -88,9 +88,9 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, &capsRef);
 	pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &capsHal);
 
-	D3DDEVTYPE deviceType = config.IsReferenceEnable() ? D3DDEVTYPE_REF : D3DDEVTYPE_HAL;
+	D3DDEVTYPE deviceType = config.bUseRef_ ? D3DDEVTYPE_REF : D3DDEVTYPE_HAL;
 	deviceCaps_ = deviceType == D3DDEVTYPE_REF ? capsRef : capsHal;
-	if (config.IsCheckDeviceCaps())
+	if (config.bCheckDeviceCaps_)
 		_VerifyDeviceCaps();
 
 	bool bDeviceVSyncAvailable = (deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_ONE) != 0;
@@ -98,17 +98,17 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	//Fullscreen mode settings
 	ZeroMemory(&d3dppFull_, sizeof(D3DPRESENT_PARAMETERS));
 	d3dppFull_.hDeviceWindow = hWnd;
-	d3dppFull_.BackBufferWidth = config.GetScreenSize().x;
-	d3dppFull_.BackBufferHeight = config.GetScreenSize().y;
+	d3dppFull_.BackBufferWidth = config.sizeScreen_.x;
+	d3dppFull_.BackBufferHeight = config.sizeScreen_.y;
 	d3dppFull_.Windowed = FALSE;
 	d3dppFull_.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	d3dppFull_.BackBufferFormat = config.GetColorMode() == ColorMode::COLOR_MODE_16BIT ? 
+	d3dppFull_.BackBufferFormat = config.colorMode_ == ColorMode::COLOR_MODE_16BIT ? 
 		D3DFMT_R5G6B5 : D3DFMT_X8R8G8B8;
 	d3dppFull_.BackBufferCount = 1;
 	d3dppFull_.EnableAutoDepthStencil = TRUE;
 	d3dppFull_.AutoDepthStencilFormat = D3DFMT_D16;
 	d3dppFull_.MultiSampleType = D3DMULTISAMPLE_NONE;
-	d3dppFull_.PresentationInterval = (bDeviceVSyncAvailable && config.IsVSyncEnable()) 
+	d3dppFull_.PresentationInterval = (bDeviceVSyncAvailable && config.bVSync_) 
 		? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 	d3dppFull_.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
 
@@ -116,8 +116,8 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	D3DDISPLAYMODE dmode;
 	HRESULT hrAdapt = pDirect3D_->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &dmode);
 	ZeroMemory(&d3dppWin_, sizeof(D3DPRESENT_PARAMETERS));
-	d3dppWin_.BackBufferWidth = config.GetScreenSize().x;
-	d3dppWin_.BackBufferHeight = config.GetScreenSize().y;
+	d3dppWin_.BackBufferWidth = config.sizeScreen_.x;
+	d3dppWin_.BackBufferHeight = config.sizeScreen_.y;
 	d3dppWin_.Windowed = TRUE;
 	d3dppWin_.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	d3dppWin_.BackBufferFormat = D3DFMT_UNKNOWN;
@@ -129,14 +129,14 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	d3dppWin_.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
 	d3dppWin_.FullScreen_RefreshRateInHz = 0;
 
-	if (!config.IsWindowed()) {	//Start in fullscreen Mode
+	if (!config.bWindowed_) {	//Start in fullscreen Mode
 		::SetWindowLong(hWnd, GWL_STYLE, wndStyleFull_);
 		::ShowWindow(hWnd, SW_SHOW);
 	}
 
 	{
-		D3DPRESENT_PARAMETERS* d3dpp = config.IsWindowed() ? &d3dppWin_ : &d3dppFull_;
-		modeScreen_ = config.IsWindowed() ? SCREENMODE_WINDOW : SCREENMODE_FULLSCREEN;
+		D3DPRESENT_PARAMETERS* d3dpp = config.bWindowed_ ? &d3dppWin_ : &d3dppFull_;
+		modeScreen_ = config.bWindowed_ ? SCREENMODE_WINDOW : SCREENMODE_FULLSCREEN;
 
 		HRESULT hrDevice = E_FAIL;
 		{
@@ -144,7 +144,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, type, hWnd, 
 					addFlag | D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE, d3dpp, &pDevice_);
 			};
-			if (config.IsReferenceEnable()) {
+			if (config.bUseRef_) {
 				_TryCreateDevice(D3DDEVTYPE_REF, D3DCREATE_SOFTWARE_VERTEXPROCESSING);
 			}
 			else {
@@ -189,7 +189,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 			DWORD* arrQuality = new DWORD[2];
 
 			HRESULT hrColor = pDirect3D_->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, deviceType,
-				config.GetColorMode() == ColorMode::COLOR_MODE_16BIT ? D3DFMT_X4R4G4B4 : D3DFMT_X8R8G8B8,
+				config.colorMode_ == ColorMode::COLOR_MODE_16BIT ? D3DFMT_X4R4G4B4 : D3DFMT_X8R8G8B8,
 				FALSE, chkSamples[i], &arrQuality[0]);
 			HRESULT hrDepth = pDirect3D_->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, deviceType,
 				D3DFMT_D16, FALSE, chkSamples[i], &arrQuality[1]);
@@ -200,11 +200,11 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 				std::make_pair(SUCCEEDED(hrColor) && SUCCEEDED(hrDepth), arrQuality)));
 		}
 
-		if (!IsSupportMultiSample(config.GetMultiSampleType())) {
+		if (!IsSupportMultiSample(config.typeMultiSample_)) {
 			Logger::WriteTop("DirectGraphics: Selected multisampling is not supported on this device, falling back to D3DMULTISAMPLE_NONE.");
 		}
-		else if (config.GetMultiSampleType() != D3DMULTISAMPLE_NONE) {
-			if (!config.IsPseudoFullScreen()) {
+		else if (config.typeMultiSample_ != D3DMULTISAMPLE_NONE) {
+			if (!config.bPseudoFullScreen_) {
 				std::map<D3DMULTISAMPLE_TYPE, std::string> mapSampleIndex = {
 					{ D3DMULTISAMPLE_NONE, "D3DMULTISAMPLE_NONE" },
 					{ D3DMULTISAMPLE_2_SAMPLES, "D3DMULTISAMPLE_2_SAMPLES" },
@@ -215,11 +215,11 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 				DWORD* qualities = GetMultiSampleQuality();
 
 				std::string log = StringUtility::Format("DirectGraphics: Anti-aliasing available [%s at Quality (%d, %d)]",
-					mapSampleIndex[config.GetMultiSampleType()].c_str(), qualities[0], qualities[1]);
+					mapSampleIndex[config.typeMultiSample_].c_str(), qualities[0], qualities[1]);
 				Logger::WriteTop(log);
 
-				SetMultiSampleType(config.GetMultiSampleType());
-				//pDevice_->Reset(config.IsWindowed() ? &d3dppWin_ : &d3dppFull_);
+				SetMultiSampleType(config.typeMultiSample_);
+				//pDevice_->Reset(config.bWindowed_ ? &d3dppWin_ : &d3dppFull_);
 				SetFullscreenAntiAliasing(true);
 			}
 			else {
@@ -439,7 +439,7 @@ void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
 			D3DXMatrixLookAtLH(&viewMat, (D3DXVECTOR3*)&viewFrom, &D3DXVECTOR3(0, 0, 0), &D3DXVECTOR3(0, 1, 0));
 
 			D3DXMatrixPerspectiveFovLH(&persMat, D3DXToRadian(45.0),
-				config_.GetScreenSize().x / (float)config_.GetScreenSize().y, 10.0f, 2000.0f);
+				config_.sizeScreen_.x / (float)config_.sizeScreen_.y, 10.0f, 2000.0f);
 
 			viewMat = viewMat * persMat;
 
@@ -773,16 +773,16 @@ void DirectGraphics::ResetViewPort() {
 	SetViewPort(0, 0, GetScreenWidth(), GetScreenHeight());
 }
 LONG DirectGraphics::GetScreenWidth() {
-	return config_.GetScreenSize().x;
+	return config_.sizeScreen_.x;
 }
 LONG DirectGraphics::GetScreenHeight() {
-	return config_.GetScreenSize().y;
+	return config_.sizeScreen_.y;
 }
 double DirectGraphics::GetScreenWidthRatio() {
 	RECT rect;
 	::GetWindowRect(hAttachedWindow_, &rect);
 	double widthWindow = (double)rect.right - (double)rect.left;
-	double widthView = config_.GetScreenSize().x;
+	double widthView = config_.sizeScreen_.x;
 
 	/*
 	DWORD style = ::GetWindowLong(hAttachedWindow_, GWL_STYLE);
@@ -797,7 +797,7 @@ double DirectGraphics::GetScreenHeightRatio() {
 	RECT rect;
 	::GetWindowRect(hAttachedWindow_, &rect);
 	double heightWindow = (double)rect.bottom - (double)rect.top;
-	double heightView = config_.GetScreenSize().y;
+	double heightView = config_.sizeScreen_.y;
 
 	/*
 	DWORD style = ::GetWindowLong(hAttachedWindow_, GWL_STYLE);
@@ -832,7 +832,7 @@ DxRect<LONG> DirectGraphics::ClientSizeToWindowSize(const DxRect<LONG>& rc, Scre
 }
 
 void DirectGraphics::SaveBackSurfaceToFile(const std::wstring& path) {
-	DxRect<LONG> rect(0, 0, config_.GetScreenSize().x, config_.GetScreenSize().y);
+	DxRect<LONG> rect(0, 0, config_.sizeScreen_.x, config_.sizeScreen_.y);
 	LPDIRECT3DSURFACE9 pBackSurface = nullptr;
 	pDevice_->GetRenderTarget(0, &pBackSurface);
 	D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
@@ -888,7 +888,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		::RegisterClassEx(&wcex);
 
 		DxRect<LONG> wr = ClientSizeToWindowSize(
-			{ 0, 0, config.GetScreenSize().x, config.GetScreenSize().y }, SCREENMODE_WINDOW);
+			{ 0, 0, config.sizeScreen_.x, config.sizeScreen_.y }, SCREENMODE_WINDOW);
 		hWnd_ = ::CreateWindowW(wcex.lpszClassName, L"", wndStyleWin_,
 			0, 0, wr.GetWidth(), wr.GetHeight(), nullptr, nullptr, hInst, nullptr);
 
@@ -896,7 +896,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 	}
 
 
-	if (config.IsPseudoFullScreen()) {
+	if (config.bPseudoFullScreen_) {
 		//Create a child window to handle contents (parent window handles black bars)
 
 		std::wstring nameClass = L"DirectGraphicsPrimaryWindow.Child";
@@ -911,8 +911,8 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		wcex.lpszClassName = nameClass.c_str();
 		::RegisterClassEx(&wcex);
 
-		LONG screenWidth = config.GetScreenSize().x; //+ ::GetSystemMetrics(SM_CXEDGE) + 10;
-		LONG screenHeight = config.GetScreenSize().y; //+ ::GetSystemMetrics(SM_CYEDGE) + 10;
+		LONG screenWidth = config.sizeScreen_.x; //+ ::GetSystemMetrics(SM_CXEDGE) + 10;
+		LONG screenHeight = config.sizeScreen_.y; //+ ::GetSystemMetrics(SM_CYEDGE) + 10;
 
 		HWND hWndChild = ::CreateWindowW(wcex.lpszClassName,
 			L"",
@@ -923,7 +923,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		hWndContent_ = hWndChild;
 	}
 	else {
-		if (config.IsShowWindow())
+		if (config.bShowWindow_)
 			::ShowWindow(hWnd_, SW_SHOW);
 		hWndContent_ = hWnd_;
 	}
@@ -933,7 +933,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 
 	bool res = DirectGraphics::Initialize(hWndContent_, config);
 	if (res) {
-		ShowCursor(config.IsShowCursor() ? TRUE : FALSE);
+		ShowCursor(config.bShowCursor_ ? TRUE : FALSE);
 		/*
 		if (modeScreen_ == SCREENMODE_WINDOW) {
 			ChangeScreenMode(SCREENMODE_WINDOW, false);
@@ -997,8 +997,8 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 			else {
 				//To fullscreen
 
-				LONG baseWidth = config_.GetScreenWindowedSize().x;
-				LONG baseHeight = config_.GetScreenWindowedSize().y;
+				LONG baseWidth = config_.sizeScreenWindowed_.x;
+				LONG baseHeight = config_.sizeScreenWindowed_.y;
 
 				double aspectRatioWH = baseWidth / (double)baseHeight;
 				double scalingRatio = std::min(targetWidth / (double)baseWidth, targetHeight / (double)baseHeight);
@@ -1020,8 +1020,8 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 		int wWidth = ::GetSystemMetrics(SM_CXFULLSCREEN);
 		int wHeight = ::GetSystemMetrics(SM_CYFULLSCREEN);
 
-		LONG screenWidth = config_.GetScreenWindowedSize().x;
-		LONG screenHeight = config_.GetScreenWindowedSize().y;
+		LONG screenWidth = config_.sizeScreenWindowed_.x;
+		LONG screenHeight = config_.sizeScreenWindowed_.y;
 
 		DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 
@@ -1061,11 +1061,11 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 	newScreenMode_ = newMode;
 
 	//True fullscreen mode
-	if (!config_.IsPseudoFullScreen()) {
+	if (!config_.bPseudoFullScreen_) {
 		/*
 		if (modeScreen_ == SCREENMODE_WINDOW) {
-			LONG screenWidth = config_.GetScreenSize().x;
-			LONG screenHeight = config_.GetScreenSize().y;
+			LONG screenWidth = config_.sizeScreen_.x;
+			LONG screenHeight = config_.sizeScreen_.y;
 			int wWidth = ::GetSystemMetrics(SM_CXFULLSCREEN);
 			int wHeight = ::GetSystemMetrics(SM_CYFULLSCREEN);
 			bool bFullScreenEnable = screenWidth <= wWidth && screenHeight <= wHeight;
@@ -1090,8 +1090,8 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 			::SetWindowLong(hAttachedWindow_, GWL_STYLE, wndStyleWin_);
 			::ShowWindow(hAttachedWindow_, SW_SHOW);
 
-			LONG screenWidth = config_.GetScreenWindowedSize().x;
-			LONG screenHeight = config_.GetScreenWindowedSize().y;
+			LONG screenWidth = config_.sizeScreenWindowed_.x;
+			LONG screenHeight = config_.sizeScreenWindowed_.y;
 
 			DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 
@@ -1117,8 +1117,8 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 
 		_RestoreDxResource();
 
-		WindowUtility::SetMouseVisible(config_.IsShowCursor());
-		if (!config_.IsShowCursor()) {
+		WindowUtility::SetMouseVisible(config_.bShowCursor_);
+		if (!config_.bShowCursor_) {
 			::SetCursor(nullptr);
 			pDevice_->ShowCursor(false);
 		}
@@ -1133,8 +1133,8 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleWin_);
 			::ShowWindow(hWnd_, SW_SHOW);
 
-			LONG screenWidth = config_.GetScreenWindowedSize().x;
-			LONG screenHeight = config_.GetScreenWindowedSize().y;
+			LONG screenWidth = config_.sizeScreenWindowed_.x;
+			LONG screenHeight = config_.sizeScreenWindowed_.y;
 
 			DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 
