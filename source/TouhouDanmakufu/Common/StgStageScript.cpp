@@ -276,8 +276,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetPlayerAutoItemCollectLine", StgStageScript::Func_GetPlayerAutoItemCollectLine, 0 },
 	{ "SetForbidPlayerShot", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetForbidShot>, 1 },
 	{ "SetForbidPlayerSpell", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetForbidSpell>, 1 },
-	{ "GetPlayerX", StgStageScript::Func_GetPlayerInfoAsDbl<&StgPlayerObject::GetX, 0>, 0 },
-	{ "GetPlayerY", StgStageScript::Func_GetPlayerInfoAsDbl<&StgPlayerObject::GetY, 0>, 0 },
+	{ "GetPlayerX", StgStageScript::Func_GetPlayerX, 0 },
+	{ "GetPlayerY", StgStageScript::Func_GetPlayerY, 0 },
 	{ "GetPlayerState", StgStageScript::Func_GetPlayerInfoAsInt<&StgPlayerObject::GetState, StgPlayerObject::STATE_END>, 0 },
 	{ "GetPlayerSpeed", StgStageScript::Func_GetPlayerSpeed, 0 },
 	{ "GetPlayerClip", StgStageScript::Func_GetPlayerClip, 0 },
@@ -1061,6 +1061,24 @@ gstd::value StgStageScript::Func_SetPlayerRebirthPosition(gstd::script_machine* 
 		objPlayer->SetRebirthPosition(x, y);
 	}
 	return value();
+}
+gstd::value StgStageScript::Func_GetPlayerX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+
+	double pos = DxScript::g_posInvalidX_;
+	if (StgPlayerObject* objPlayer = script->stageController_->GetPlayerObject().get())
+		pos = objPlayer->GetX();
+
+	return script->CreateRealValue(pos);
+}
+gstd::value StgStageScript::Func_GetPlayerY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+
+	double pos = DxScript::g_posInvalidY_;
+	if (StgPlayerObject* objPlayer = script->stageController_->GetPlayerObject().get())
+		pos = objPlayer->GetY();
+
+	return script->CreateRealValue(pos);
 }
 gstd::value StgStageScript::Func_GetPlayerSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -2661,7 +2679,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB3(gstd::script_machine* mach
 gstd::value StgStageScript::Func_ObjMove_GetX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
-	double pos = 0;
+	double pos = DxScript::g_posInvalidX_;
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 	if (obj)
 		pos = obj->GetPositionX();
@@ -2670,7 +2688,7 @@ gstd::value StgStageScript::Func_ObjMove_GetX(gstd::script_machine* machine, int
 gstd::value StgStageScript::Func_ObjMove_GetY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
-	double pos = 0;
+	double pos = DxScript::g_posInvalidY_;
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 	if (obj)
 		pos = obj->GetPositionY();
@@ -4017,7 +4035,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodePointerList(gstd::script_mach
 gstd::value StgStageScript::Func_ObjCrLaser_GetNodePosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
-	float res[2] = { 0, 0 };
+	float res[2] = { (float)DxScript::g_posInvalidX_, (float)DxScript::g_posInvalidY_ };
 	int id = argv[0].as_int();
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {

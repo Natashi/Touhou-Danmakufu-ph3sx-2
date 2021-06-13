@@ -214,10 +214,10 @@ public:
 	/*
 	static gstd::value Func_SetForbidPlayerShot(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetForbidPlayerSpell(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_GetPlayerX(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_GetPlayerY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerState(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	*/
+	static gstd::value Func_GetPlayerX(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_GetPlayerY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerClip(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	/*

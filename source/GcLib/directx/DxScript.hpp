@@ -21,6 +21,9 @@ namespace directx {
 			CODE_UTF16LE,
 			CODE_UTF16BE,
 		};
+		static double g_posInvalidX_;
+		static double g_posInvalidY_;
+		static double g_posInvalidZ_;
 	protected:
 		std::shared_ptr<DxScriptObjectManager> objManager_;
 
@@ -199,6 +202,9 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ColorRGBtoHSV);
 		DNH_FUNCAPI_DECL_(Func_ColorHSVtoRGB);
 		DNH_FUNCAPI_DECL_(Func_ColorHSVtoHexRGB);
+
+		//Other stuff
+		DNH_FUNCAPI_DECL_(Func_SetInvalidPositionReturn);
 
 		//Dx関数：オブジェクト操作(共通)
 		static gstd::value Func_Obj_Delete(gstd::script_machine* machine, int argc, const gstd::value* argv);

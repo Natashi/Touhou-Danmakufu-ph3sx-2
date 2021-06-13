@@ -166,6 +166,9 @@ static const std::vector<function> dxFunction = {
 	{ "ColorHSVtoRGB", DxScript::Func_ColorHSVtoRGB, 3 },
 	{ "ColorHSVtoHexRGB", DxScript::Func_ColorHSVtoHexRGB, 3 },
 
+	//Other stuff
+	{ "SetInvalidPositionReturn", DxScript::Func_SetInvalidPositionReturn, 2 },
+
 	//Base object functions
 	{ "Obj_Delete", DxScript::Func_Obj_Delete, 1 },
 	{ "Obj_IsDeleted", DxScript::Func_Obj_IsDeleted, 1 },
@@ -685,6 +688,9 @@ static const std::vector<constant> dxConstant = {
 	constant("KEY_SLEEP", DIK_SLEEP),
 };
 
+double DxScript::g_posInvalidX_ = -999;
+double DxScript::g_posInvalidY_ = -999;
+double DxScript::g_posInvalidZ_ = 0;
 DxScript::DxScript() {
 	_AddFunction(&dxFunction);
 	_AddConstant(&dxConstant);
@@ -2038,6 +2044,14 @@ gstd::value DxScript::Func_ColorHSVtoHexRGB(gstd::script_machine* machine, int a
 	return DxScript::CreateIntValue(rgb);
 }
 
+//Other stuff
+value DxScript::Func_SetInvalidPositionReturn(script_machine* machine, int argc, const value* argv) {
+	DxScript::g_posInvalidX_ = argv[0].as_real();
+	DxScript::g_posInvalidY_ = argv[1].as_real();
+	//DxScript::g_posInvalidZ_ = argv[2].as_real();
+	return value();
+}
+
 //Dx関数：オブジェクト操作(共通)
 value DxScript::Func_Obj_Delete(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2473,7 +2487,7 @@ value DxScript::Func_ObjRender_SetBlendType(script_machine* machine, int argc, c
 	return value();
 }
 value DxScript::Func_ObjRender_GetX(script_machine* machine, int argc, const value* argv) {
-	FLOAT res = 0;
+	FLOAT res = DxScript::g_posInvalidX_;
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
@@ -2482,7 +2496,7 @@ value DxScript::Func_ObjRender_GetX(script_machine* machine, int argc, const val
 	return script->CreateRealValue(res);
 }
 value DxScript::Func_ObjRender_GetY(script_machine* machine, int argc, const value* argv) {
-	FLOAT res = 0;
+	FLOAT res = DxScript::g_posInvalidY_;
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
@@ -2491,7 +2505,7 @@ value DxScript::Func_ObjRender_GetY(script_machine* machine, int argc, const val
 	return script->CreateRealValue(res);
 }
 value DxScript::Func_ObjRender_GetZ(script_machine* machine, int argc, const value* argv) {
-	FLOAT res = 0;
+	FLOAT res = DxScript::g_posInvalidZ_;
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
@@ -3175,6 +3189,7 @@ value DxScript::Func_ObjPrimitive_GetVertexPosition(script_machine* machine, int
 	int id = argv[0].as_int();
 	int index = argv[1].as_int();
 
+	//D3DXVECTOR3 pos = D3DXVECTOR3(DxScript::g_posInvalidX_, DxScript::g_posInvalidY_, DxScript::g_posInvalidZ_);
 	D3DXVECTOR3 pos = D3DXVECTOR3(0, 0, 0);
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj)
