@@ -133,7 +133,8 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) 
 	}
 
 	if (script) {
-		if (IsError()) script->RaiseError(error_);
+		if (IsError())
+			throw wexception(error_);	//Rethrows the error (for scripts loaded in the load thread)
 
 		std::map<std::string, script_block*>::iterator itrEvent;
 		if (script->IsEventExists("Initialize", itrEvent))
