@@ -2052,6 +2052,12 @@ value DxScript::Func_Obj_IsDeleted(script_machine* machine, int argc, const valu
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	return script->CreateBooleanValue(obj == nullptr);
 }
+value DxScript::Func_Obj_IsExists(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	DxScriptObjectBase* obj = script->GetObjectPointer(id);
+	return script->CreateBooleanValue(obj != nullptr);
+}
 value DxScript::Func_Obj_SetVisible(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
