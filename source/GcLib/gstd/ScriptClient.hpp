@@ -72,6 +72,8 @@ namespace gstd {
 		enum {
 			ID_SCRIPT_FREE = -1,
 		};
+		static uint64_t randCalls_;
+		static uint64_t prandCalls_;
 	protected:
 		bool bError_;
 
@@ -184,8 +186,11 @@ namespace gstd {
 		static value Func_Min(script_machine* machine, int argc, const value* argv);
 		static value Func_Max(script_machine* machine, int argc, const value* argv);
 		static value Func_Clamp(script_machine* machine, int argc, const value* argv);
+
 		static value Func_Log(script_machine* machine, int argc, const value* argv);
 		static value Func_Log10(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_ErF);
+		DNH_FUNCAPI_DECL_(Func_Gamma);
 
 		static value Func_Cos(script_machine* machine, int argc, const value* argv);
 		static value Func_Sin(script_machine* machine, int argc, const value* argv);
@@ -209,12 +214,18 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_Sqrt);
 		DNH_FUNCAPI_DECL_(Func_NRoot);
 		DNH_FUNCAPI_DECL_(Func_Hypot);
+		DNH_FUNCAPI_DECL_(Func_Distance);
+		DNH_FUNCAPI_DECL_(Func_DistanceSq);
+		DNH_FUNCAPI_DECL_(Func_GapAngle);
+		DNH_FUNCAPI_DECL_(Func_RGapAngle);
 
 		//Math functions; random
 		static value Func_Rand(script_machine* machine, int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(Func_RandI);
 		DNH_FUNCAPI_DECL_(Func_RandEff);
 		DNH_FUNCAPI_DECL_(Func_RandEffI);
+		DNH_FUNCAPI_DECL_(Func_GetRandCount);
+		DNH_FUNCAPI_DECL_(Func_GetRandEffCount);
 
 		//Math functions; angle helper
 		DNH_FUNCAPI_DECL_(Func_ToDegrees);

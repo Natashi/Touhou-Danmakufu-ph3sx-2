@@ -58,8 +58,11 @@ static const std::vector<function> commonFunction = {
 	{ "min", ScriptClientBase::Func_Min, 2 },
 	{ "max", ScriptClientBase::Func_Max, 2 },
 	{ "clamp", ScriptClientBase::Func_Clamp, 3 },
+
 	{ "log", ScriptClientBase::Func_Log, 1 },
 	{ "log10", ScriptClientBase::Func_Log10, 1 },
+	{ "erf", ScriptClientBase::Func_ErF, 1 },
+	{ "gamma", ScriptClientBase::Func_Gamma, 1 },
 
 	//Math functions: Trigonometry
 	{ "cos", ScriptClientBase::Func_Cos, 1 },
@@ -70,6 +73,7 @@ static const std::vector<function> commonFunction = {
 	{ "rsin", ScriptClientBase::Func_RSin, 1 },
 	{ "rtan", ScriptClientBase::Func_RTan, 1 },
 	{ "rsincos", ScriptClientBase::Func_RSinCos, 1 },
+
 	{ "acos", ScriptClientBase::Func_Acos, 1 },
 	{ "asin", ScriptClientBase::Func_Asin, 1 },
 	{ "atan", ScriptClientBase::Func_Atan, 1 },
@@ -90,12 +94,18 @@ static const std::vector<function> commonFunction = {
 	{ "sqrt", ScriptClientBase::Func_Sqrt, 1 },
 	{ "nroot", ScriptClientBase::Func_NRoot, 2 },
 	{ "hypot", ScriptClientBase::Func_Hypot, 2 },
+	{ "distance", ScriptClientBase::Func_Distance, 4 },
+	{ "distancesq", ScriptClientBase::Func_DistanceSq, 4 },
+	{ "dottheta", ScriptClientBase::Func_GapAngle, 4 },
+	{ "rdottheta", ScriptClientBase::Func_RGapAngle, 4 },
 
 	//Random
 	{ "rand", ScriptClientBase::Func_Rand, 2 },
 	{ "rand_int", ScriptClientBase::Func_RandI, 2 },
 	{ "prand", ScriptClientBase::Func_RandEff, 2 },
 	{ "prand_int", ScriptClientBase::Func_RandEffI, 2 },
+	{ "count_rand", ScriptClientBase::Func_GetRandCount, 0 },
+	{ "count_prand", ScriptClientBase::Func_GetRandEffCount, 0 },
 
 	//Interpolation
 	{ "Interpolate_Linear", ScriptClientBase::Func_Interpolate_Linear, 3 },
@@ -223,6 +233,8 @@ static const std::vector<constant> commonConstant = {
 };
 
 script_type_manager* ScriptClientBase::pTypeManager_ = new script_type_manager();
+uint64_t ScriptClientBase::randCalls_ = 0;
+uint64_t ScriptClientBase::prandCalls_ = 0;
 ScriptClientBase::ScriptClientBase() {
 	bError_ = false;
 
@@ -958,6 +970,12 @@ value ScriptClientBase::Func_Log(script_machine* machine, int argc, const value*
 value ScriptClientBase::Func_Log10(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(log10(argv[0].as_real()));
 }
+value ScriptClientBase::Func_ErF(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(erf(argv[0].as_real()));
+}
+value ScriptClientBase::Func_Gamma(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(tgamma(argv[0].as_real()));
+}
 
 value ScriptClientBase::Func_Cos(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(cos(Math::DegreeToRadian(argv[0].as_real())));
@@ -1037,10 +1055,34 @@ value ScriptClientBase::Func_NRoot(script_machine* machine, int argc, const valu
 value ScriptClientBase::Func_Hypot(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(hypot(argv[0].as_real(), argv[1].as_real()));
 }
+value ScriptClientBase::Func_Distance(script_machine* machine, int argc, const value* argv) {
+	double dx = argv[2].as_real() - argv[0].as_real();
+	double dy = argv[3].as_real() - argv[1].as_real();
+	return CreateRealValue(hypot(dx, dy));
+}
+value ScriptClientBase::Func_DistanceSq(script_machine* machine, int argc, const value* argv) {
+	double dx = argv[2].as_real() - argv[0].as_real();
+	double dy = argv[3].as_real() - argv[1].as_real();
+	double res = dx * dx + dy * dy;
+	return CreateRealValue(res);
+}
+value ScriptClientBase::Func_GapAngle(script_machine* machine, int argc, const value* argv) {
+	double dx = argv[2].as_real() - argv[0].as_real();
+	double dy = argv[3].as_real() - argv[1].as_real();
+	double res = atan2(dy, dx);
+	return CreateRealValue(Math::RadianToDegree(res));
+}
+value ScriptClientBase::Func_RGapAngle(script_machine* machine, int argc, const value* argv) {
+	double dx = argv[2].as_real() - argv[0].as_real();
+	double dy = argv[3].as_real() - argv[1].as_real();
+	double res = atan2(dy, dx);
+	return CreateRealValue(res);
+}
 
 value ScriptClientBase::Func_Rand(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	script->CheckRunInMainThread();
+	++randCalls_;
 	double min = argv[0].as_real();
 	double max = argv[1].as_real();
 	return script->CreateRealValue(script->mt_->GetReal(min, max));
@@ -1048,12 +1090,14 @@ value ScriptClientBase::Func_Rand(script_machine* machine, int argc, const value
 value ScriptClientBase::Func_RandI(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	script->CheckRunInMainThread();
+	++randCalls_;
 	double min = argv[0].as_int();
 	double max = argv[1].as_int() + 0.9999999;
 	return script->CreateIntValue(script->mt_->GetReal(min, max));
 }
 value ScriptClientBase::Func_RandEff(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	++prandCalls_;
 	double min = argv[0].as_real();
 	double max = argv[1].as_real();
 	double res = script->mtEffect_->GetReal(min, max);
@@ -1061,9 +1105,16 @@ value ScriptClientBase::Func_RandEff(script_machine* machine, int argc, const va
 }
 value ScriptClientBase::Func_RandEffI(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	++prandCalls_;
 	double min = argv[0].as_int();
 	double max = argv[1].as_int() + 0.9999999;
 	return script->CreateIntValue(script->mtEffect_->GetReal(min, max));
+}
+value ScriptClientBase::Func_GetRandCount(script_machine* machine, int argc, const value* argv) {
+	return CreateIntValue(randCalls_);
+}
+value ScriptClientBase::Func_GetRandEffCount(script_machine* machine, int argc, const value* argv) {
+	return CreateIntValue(prandCalls_);
 }
 
 static value _ScriptValueLerp(script_machine* machine, const value* v1, const value* v2, double vx, 
