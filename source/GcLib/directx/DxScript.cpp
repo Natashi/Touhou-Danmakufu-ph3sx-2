@@ -309,6 +309,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjPrim_SetVertexColorHSV", DxScript::Func_ObjPrimitive_SetVertexColorHSV, 5 },
 	{ "ObjPrim_SetVertexAlpha", DxScript::Func_ObjPrimitive_SetVertexAlpha, 3 },
 	{ "ObjPrim_GetVertexColor", DxScript::Func_ObjPrimitive_GetVertexColor, 2 },
+	{ "ObjPrim_GetVertexColor", DxScript::Func_ObjPrimitive_GetVertexColor, 3 },	// Overloaded
 	{ "ObjPrim_GetVertexAlpha", DxScript::Func_ObjPrimitive_GetVertexAlpha, 2 },
 	{ "ObjPrim_GetVertexPosition", DxScript::Func_ObjPrimitive_GetVertexPosition, 2 },
 	{ "ObjPrim_SetVertexIndex", DxScript::Func_ObjPrimitive_SetVertexIndex, 2 },
@@ -3298,9 +3299,15 @@ value DxScript::Func_ObjPrimitive_GetVertexColor(script_machine* machine, int ar
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) color = obj->GetVertexColor(index);
 
-	byte listColor[4];
-	ColorAccess::ToByteArray(color, listColor);
-	return script->CreateIntArrayValue(listColor + 1, 3U);
+	if (argc == 3 && !argv[2].as_boolean()) {
+		return script->CreateIntValue(color - 0xff000000); // Ditto @ GetColor
+	}
+	else {
+		byte listColor[4];
+		ColorAccess::ToByteArray(color, listColor);
+		return script->CreateIntArrayValue(listColor + 1, 3U);
+	}
+
 }
 value DxScript::Func_ObjPrimitive_GetVertexAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
