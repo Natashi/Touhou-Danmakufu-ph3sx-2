@@ -243,10 +243,12 @@ static const std::vector<function> dxFunction = {
 	{ "ObjRender_SetScaleY", DxScript::Func_ObjRender_SetScaleY, 2 },
 	{ "ObjRender_SetScaleZ", DxScript::Func_ObjRender_SetScaleZ, 2 },
 	{ "ObjRender_SetScaleXYZ", DxScript::Func_ObjRender_SetScaleXYZ, 4 },
+	{ "ObjRender_SetScaleXYZ", DxScript::Func_ObjRender_SetScaleXYZ, 2 }, // Overloaded
 	{ "ObjRender_SetColor", DxScript::Func_ObjRender_SetColor, 4 },
 	{ "ObjRender_SetColor", DxScript::Func_ObjRender_SetColor, 2 },		//Overloaded
 	{ "ObjRender_SetColorHSV", DxScript::Func_ObjRender_SetColorHSV, 4 },
 	{ "ObjRender_GetColor", DxScript::Func_ObjRender_GetColor, 1 },
+	{ "ObjRender_GetColor", DxScript::Func_ObjRender_GetColor, 2 },		// Overloaded
 	{ "ObjRender_SetAlpha", DxScript::Func_ObjRender_SetAlpha, 2 },
 	{ "ObjRender_GetAlpha", DxScript::Func_ObjRender_GetAlpha, 1 },
 	{ "ObjRender_SetBlendType", DxScript::Func_ObjRender_SetBlendType, 2 },
@@ -2524,9 +2526,16 @@ value DxScript::Func_ObjRender_SetScaleXYZ(script_machine* machine, int argc, co
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
-		obj->SetScaleX(argv[1].as_real());
-		obj->SetScaleY(argv[2].as_real());
-		obj->SetScaleZ(argv[3].as_real());
+		if (argc == 4) {
+			obj->SetScaleX(argv[1].as_real());
+			obj->SetScaleY(argv[2].as_real());
+			obj->SetScaleZ(argv[3].as_real());
+		}
+		else {
+			obj->SetScaleX(argv[1].as_real());
+			obj->SetScaleY(argv[1].as_real());
+			obj->SetScaleZ(argv[1].as_real());
+		}
 	}
 	return value();
 }
@@ -2566,9 +2575,14 @@ value DxScript::Func_ObjRender_GetColor(script_machine* machine, int argc, const
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) color = obj->color_;
 
-	byte listColor[4];
-	ColorAccess::ToByteArray(color, listColor);
-	return script->CreateIntArrayValue(listColor + 1, 3U);
+	if (argc == 2 && !argv[1].as_boolean())
+		return script->CreateIntValue(color - 0xff000000); // Investigate better methods later
+	else {
+		byte listColor[4];
+		ColorAccess::ToByteArray(color, listColor);
+		return script->CreateIntArrayValue(listColor + 1, 3U);
+	}
+	
 }
 value DxScript::Func_ObjRender_SetAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
