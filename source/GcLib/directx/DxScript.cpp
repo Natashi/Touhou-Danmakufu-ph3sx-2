@@ -13,6 +13,40 @@ using namespace gstd;
 using namespace directx;
 
 //****************************************************************************
+//DxScriptResourceCache
+//****************************************************************************
+DxScriptResourceCache* DxScriptResourceCache::base_ = nullptr;
+DxScriptResourceCache::DxScriptResourceCache() {
+	if (base_)
+		throw wexception("DxScriptResourceCache already instantiated");
+	base_ = this;
+}
+
+void DxScriptResourceCache::ClearResource() {
+	mapTexture.clear();
+	mapMesh.clear();
+	mapShader.clear();
+}
+shared_ptr<Texture> DxScriptResourceCache::GetTexture(const std::wstring& name) {
+	auto itr = mapTexture.find(name);
+	if (itr != mapTexture.end())
+		return itr->second;
+	return nullptr;
+}
+shared_ptr<DxMesh> DxScriptResourceCache::GetMesh(const std::wstring& name) {
+	auto itr = mapMesh.find(name);
+	if (itr != mapMesh.end())
+		return itr->second;
+	return nullptr;
+}
+shared_ptr<Shader> DxScriptResourceCache::GetShader(const std::wstring& name) {
+	auto itr = mapShader.find(name);
+	if (itr != mapShader.end())
+		return itr->second;
+	return nullptr;
+}
+
+//****************************************************************************
 //DxScript
 //****************************************************************************
 static const std::vector<function> dxFunction = {
@@ -694,42 +728,23 @@ double DxScript::g_posInvalidZ_ = 0;
 DxScript::DxScript() {
 	_AddFunction(&dxFunction);
 	_AddConstant(&dxConstant);
+
 	objManager_ = std::shared_ptr<DxScriptObjectManager>(new DxScriptObjectManager());
+
+	{
+		pResouceCache_ = DxScriptResourceCache::GetBase();
+		if (pResouceCache_ == nullptr)
+			pResouceCache_ = new DxScriptResourceCache();
+	}
 }
 DxScript::~DxScript() {
-	_ClearResource();
-}
-void DxScript::_ClearResource() {
-	mapTexture_.clear();
-	mapShader_.clear();
-	mapMesh_.clear();
-
-	for (auto itrSound = mapSoundPlayer_.begin(); itrSound != mapSoundPlayer_.end(); ++itrSound) {
+	for (auto itrSound = mapSoundPlayer_.begin(); itrSound != mapSoundPlayer_.end(); ++itrSound)
 		itrSound->second->Delete();
-	}
 	mapSoundPlayer_.clear();
 }
 int DxScript::AddObject(ref_unsync_ptr<DxScriptObjectBase> obj, bool bActivate) {
 	obj->idScript_ = idScript_;
 	return objManager_->AddObject(obj, bActivate);
-}
-shared_ptr<Texture> DxScript::_GetTexture(const std::wstring& name) {
-	shared_ptr<Texture> res;
-	auto itr = mapTexture_.find(name);
-	if (itr != mapTexture_.end()) res = itr->second;
-	return res;
-}
-shared_ptr<Shader> DxScript::_GetShader(const std::wstring& name) {
-	shared_ptr<Shader> res;
-	auto itr = mapShader_.find(name);
-	if (itr != mapShader_.end()) res = itr->second;
-	return res;
-}
-shared_ptr<DxMesh> DxScript::_GetMesh(const std::wstring& name) {
-	shared_ptr<DxMesh> res;
-	auto itr = mapMesh_.find(name);
-	if (itr != mapMesh_.end()) res = itr->second;
-	return res;
 }
 
 gstd::value DxScript::Func_MatrixIdentity(gstd::script_machine* machine, int argc, const value* argv) {
@@ -1140,12 +1155,13 @@ value DxScript::Func_LoadTexture(script_machine* machine, int argc, const value*
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
 
-	if (script->mapTexture_.find(path) == script->mapTexture_.end()) {
+	auto& mapTexture = script->pResouceCache_->mapTexture;
+	if (mapTexture.find(path) == mapTexture.end()) {
 		shared_ptr<Texture> texture(new Texture());
 		res = texture->CreateFromFile(path, false, false);
 		if (res) {
 			Lock lock(script->criticalSection_);
-			script->mapTexture_[path] = texture;
+			mapTexture[path] = texture;
 		}
 	}
 	return script->CreateBooleanValue(res);
@@ -1156,12 +1172,13 @@ value DxScript::Func_LoadTextureInLoadThread(script_machine* machine, int argc, 
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
 
-	if (script->mapTexture_.find(path) == script->mapTexture_.end()) {
+	auto& mapTexture = script->pResouceCache_->mapTexture;
+	if (mapTexture.find(path) == mapTexture.end()) {
 		shared_ptr<Texture> texture(new Texture());
 		res = texture->CreateFromFileInLoadThread(path, false, false);
 		if (res) {
 			Lock lock(script->criticalSection_);
-			script->mapTexture_[path] = texture;
+			mapTexture[path] = texture;
 		}
 	}
 	return script->CreateBooleanValue(res);
@@ -1174,12 +1191,13 @@ value DxScript::Func_LoadTextureEx(script_machine* machine, int argc, const valu
 	bool useNonPowerOfTwo = argv[2].as_boolean();
 	path = PathProperty::GetUnique(path);
 
-	if (script->mapTexture_.find(path) == script->mapTexture_.end()) {
+	auto& mapTexture = script->pResouceCache_->mapTexture;
+	if (mapTexture.find(path) == mapTexture.end()) {
 		shared_ptr<Texture> texture(new Texture());
 		res = texture->CreateFromFile(path, useMipMap, useNonPowerOfTwo);
 		if (res) {
 			Lock lock(script->criticalSection_);
-			script->mapTexture_[path] = texture;
+			mapTexture[path] = texture;
 		}
 	}
 	return script->CreateBooleanValue(res);
@@ -1192,12 +1210,13 @@ value DxScript::Func_LoadTextureInLoadThreadEx(script_machine* machine, int argc
 	bool useNonPowerOfTwo = argv[2].as_boolean();
 	path = PathProperty::GetUnique(path);
 
-	if (script->mapTexture_.find(path) == script->mapTexture_.end()) {
+	auto& mapTexture = script->pResouceCache_->mapTexture;
+	if (mapTexture.find(path) == mapTexture.end()) {
 		shared_ptr<Texture> texture(new Texture());
 		res = texture->CreateFromFileInLoadThread(path, useMipMap, useNonPowerOfTwo);
 		if (res) {
 			Lock lock(script->criticalSection_);
-			script->mapTexture_[path] = texture;
+			mapTexture[path] = texture;
 		}
 	}
 	return script->CreateBooleanValue(res);
@@ -1208,7 +1227,7 @@ value DxScript::Func_RemoveTexture(script_machine* machine, int argc, const valu
 	path = PathProperty::GetUnique(path);
 	{
 		Lock lock(script->criticalSection_);
-		script->mapTexture_.erase(path);
+		script->pResouceCache_->mapTexture.erase(path);
 	}
 	return value();
 }
@@ -1270,12 +1289,13 @@ gstd::value DxScript::Func_CreateRenderTarget(gstd::script_machine* machine, int
 	bool res = false;
 	std::wstring name = argv[0].as_string();
 
-	if (script->mapTexture_.find(name) == script->mapTexture_.end()) {
+	auto& mapTexture = script->pResouceCache_->mapTexture;
+	if (mapTexture.find(name) == mapTexture.end()) {
 		shared_ptr<Texture> texture(new Texture());
 		res = texture->CreateRenderTarget(name);
 		if (res) {
 			Lock lock(script->criticalSection_);
-			script->mapTexture_[name] = texture;
+			mapTexture[name] = texture;
 		}
 	}
 	return script->CreateBooleanValue(res);
@@ -1288,12 +1308,13 @@ gstd::value DxScript::Func_CreateRenderTargetEx(gstd::script_machine* machine, i
 	double height = argv[2].as_real();
 
 	if (width > 0 && height > 0) {
-		if (script->mapTexture_.find(name) == script->mapTexture_.end()) {
+		auto& mapTexture = script->pResouceCache_->mapTexture;
+		if (mapTexture.find(name) == mapTexture.end()) {
 			shared_ptr<Texture> texture(new Texture());
 			res = texture->CreateRenderTarget(name, (size_t)width, (size_t)height);
 			if (res) {
 				Lock lock(script->criticalSection_);
-				script->mapTexture_[name] = texture;
+				mapTexture[name] = texture;
 			}
 		}
 	}
@@ -1303,8 +1324,10 @@ gstd::value DxScript::Func_SetRenderTarget(gstd::script_machine* machine, int ar
 	DxScript* script = (DxScript*)machine->data;
 	TextureManager* textureManager = TextureManager::GetBase();
 
+	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
+
 	std::wstring name = argv[0].as_string();
-	shared_ptr<Texture> texture = script->_GetTexture(name);
+	shared_ptr<Texture> texture = rsrcCache->GetTexture(name);
 	if (texture == nullptr) {
 		texture = textureManager->GetTexture(name);
 		script->RaiseError("The specified render target does not exist.");
@@ -1330,8 +1353,10 @@ gstd::value DxScript::Func_ClearRenderTargetA1(gstd::script_machine* machine, in
 	DxScript* script = (DxScript*)machine->data;
 	TextureManager* textureManager = TextureManager::GetBase();
 
+	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
+
 	std::wstring name = argv[0].as_string();
-	shared_ptr<Texture> texture = script->_GetTexture(name);
+	shared_ptr<Texture> texture = rsrcCache->GetTexture(name);
 	if (texture == nullptr)
 		texture = textureManager->GetTexture(name);
 	if (texture == nullptr)
@@ -1351,8 +1376,10 @@ gstd::value DxScript::Func_ClearRenderTargetA2(gstd::script_machine* machine, in
 	DxScript* script = (DxScript*)machine->data;
 	TextureManager* textureManager = TextureManager::GetBase();
 
+	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
+
 	std::wstring name = argv[0].as_string();
-	shared_ptr<Texture> texture = script->_GetTexture(name);
+	shared_ptr<Texture> texture = rsrcCache->GetTexture(name);
 	if (texture == nullptr)
 		texture = textureManager->GetTexture(name);
 	if (texture == nullptr)
@@ -1376,8 +1403,10 @@ gstd::value DxScript::Func_ClearRenderTargetA3(gstd::script_machine* machine, in
 	DxScript* script = (DxScript*)machine->data;
 	TextureManager* textureManager = TextureManager::GetBase();
 
+	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
+
 	std::wstring name = argv[0].as_string();
-	shared_ptr<Texture> texture = script->_GetTexture(name);
+	shared_ptr<Texture> texture = rsrcCache->GetTexture(name);
 	if (texture == nullptr)
 		texture = textureManager->GetTexture(name);
 	if (texture == nullptr)
@@ -1414,7 +1443,9 @@ gstd::value DxScript::Func_SaveRenderedTextureA1(gstd::script_machine* machine, 
 	TextureManager* textureManager = TextureManager::GetBase();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
-	shared_ptr<Texture> texture = script->_GetTexture(nameTexture);
+	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
+
+	shared_ptr<Texture> texture = rsrcCache->GetTexture(nameTexture);
 	if (texture == nullptr)
 		texture = textureManager->GetTexture(nameTexture);
 
@@ -1445,7 +1476,9 @@ gstd::value DxScript::Func_SaveRenderedTextureA2(gstd::script_machine* machine, 
 	TextureManager* textureManager = TextureManager::GetBase();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
-	shared_ptr<Texture> texture = script->_GetTexture(nameTexture);
+	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
+
+	shared_ptr<Texture> texture = rsrcCache->GetTexture(nameTexture);
 	if (texture == nullptr)
 		texture = textureManager->GetTexture(nameTexture);
 
@@ -1481,7 +1514,9 @@ gstd::value DxScript::Func_SaveRenderedTextureA3(gstd::script_machine* machine, 
 	TextureManager* textureManager = TextureManager::GetBase();
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
-	shared_ptr<Texture> texture = script->_GetTexture(nameTexture);
+	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
+
+	shared_ptr<Texture> texture = rsrcCache->GetTexture(nameTexture);
 	if (texture == nullptr)
 		texture = textureManager->GetTexture(nameTexture);
 
@@ -1533,12 +1568,13 @@ value DxScript::Func_LoadMesh(script_machine* machine, int argc, const value* ar
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
 
-	if (script->mapMesh_.find(path) == script->mapMesh_.end()) {
+	auto& mapMesh = script->pResouceCache_->mapMesh;
+	if (mapMesh.find(path) == mapMesh.end()) {
 		shared_ptr<DxMesh> mesh = std::make_shared<MetasequoiaMesh>();
 		res = mesh->CreateFromFile(path);
 		if (res) {
 			Lock lock(script->criticalSection_);
-			script->mapMesh_[path] = mesh;
+			mapMesh[path] = mesh;
 		}
 	}
 	return script->CreateBooleanValue(res);
@@ -1549,7 +1585,7 @@ value DxScript::Func_RemoveMesh(script_machine* machine, int argc, const value* 
 	path = PathProperty::GetUnique(path);
 	{
 		Lock lock(script->criticalSection_);
-		script->mapMesh_.erase(path);
+		script->pResouceCache_->mapMesh.erase(path);
 	}
 	return value();
 }
@@ -1560,13 +1596,14 @@ value DxScript::Func_LoadShader(script_machine* machine, int argc, const value* 
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
 
-	if (script->mapShader_.find(path) == script->mapShader_.end()) {
+	auto& mapShader = script->pResouceCache_->mapShader;
+	if (mapShader.find(path) == mapShader.end()) {
 		ShaderManager* manager = ShaderManager::GetBase();
 		shared_ptr<Shader> shader = manager->CreateFromFile(path);
 		res = shader != nullptr;
 		if (res) {
 			Lock lock(script->criticalSection_);
-			script->mapShader_[path] = shader;
+			mapShader[path] = shader;
 		}
 	}
 	return script->CreateBooleanValue(res);
@@ -1577,7 +1614,7 @@ value DxScript::Func_RemoveShader(script_machine* machine, int argc, const value
 	path = PathProperty::GetUnique(path);
 	{
 		Lock lock(script->criticalSection_);
-		script->mapShader_.erase(path);
+		script->pResouceCache_->mapShader.erase(path);
 	}
 	return value();
 }
@@ -2808,8 +2845,10 @@ gstd::value DxScript::Func_ObjShader_SetShaderF(gstd::script_machine* machine, i
 		std::wstring path = argv[1].as_string();
 		path = PathProperty::GetUnique(path);
 
-		auto itr = script->mapShader_.find(path);
-		if (itr != script->mapShader_.end()) {
+		auto& mapShader = script->pResouceCache_->mapShader;
+
+		auto itr = mapShader.find(path);
+		if (itr != mapShader.end()) {
 			obj->SetShader(itr->second);
 			res = true;
 		}
@@ -2991,8 +3030,10 @@ gstd::value DxScript::Func_ObjShader_SetTexture(gstd::script_machine* machine, i
 			std::wstring path = argv[2].as_string();
 			path = PathProperty::GetUnique(path);
 
-			auto itr = script->mapTexture_.find(path);
-			if (itr != script->mapTexture_.end()) {
+			auto& mapTexture = script->pResouceCache_->mapTexture;
+
+			auto itr = mapTexture.find(path);
+			if (itr != mapTexture.end()) {
 				shader->SetTexture(name, itr->second);
 			}
 			else {
@@ -3072,8 +3113,10 @@ value DxScript::Func_ObjPrimitive_SetTexture(script_machine* machine, int argc, 
 		std::wstring path = argv[1].as_string();
 		path = PathProperty::GetUnique(path);
 
-		auto itr = script->mapTexture_.find(path);
-		if (itr != script->mapTexture_.end()) {
+		auto& mapTexture = script->pResouceCache_->mapTexture;
+
+		auto itr = mapTexture.find(path);
+		if (itr != mapTexture.end()) {
 			obj->SetTexture(itr->second);
 		}
 		else {
@@ -3560,8 +3603,10 @@ value DxScript::Func_ObjMesh_Load(script_machine* machine, int argc, const value
 		std::wstring path = argv[1].as_string();
 		path = PathProperty::GetUnique(path);
 
-		auto itr = script->mapMesh_.find(path);
-		if (itr != script->mapMesh_.end()) {
+		auto& mapMesh = script->pResouceCache_->mapMesh;
+
+		auto itr = mapMesh.find(path);
+		if (itr != mapMesh.end()) {
 			mesh = itr->second;
 			res = true;
 		}

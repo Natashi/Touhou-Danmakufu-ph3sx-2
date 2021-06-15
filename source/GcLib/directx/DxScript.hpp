@@ -8,6 +8,27 @@
 #include "DxObject.hpp"
 
 namespace directx {
+	//****************************************************************************
+	//DxScriptResourceCache
+	//****************************************************************************
+	class DxScriptResourceCache {
+		static DxScriptResourceCache* base_;
+	public:
+		std::map<std::wstring, shared_ptr<Texture>> mapTexture;
+		std::map<std::wstring, shared_ptr<DxMesh>> mapMesh;
+		std::map<std::wstring, shared_ptr<Shader>> mapShader;
+	public:
+		DxScriptResourceCache();
+
+		static DxScriptResourceCache* GetBase() { return base_; }
+
+		void ClearResource();
+
+		shared_ptr<Texture> GetTexture(const std::wstring& name);
+		shared_ptr<DxMesh> GetMesh(const std::wstring& name);
+		shared_ptr<Shader> GetShader(const std::wstring& name);
+	};
+
 	//*******************************************************************
 	//DxScript
 	//*******************************************************************
@@ -27,16 +48,9 @@ namespace directx {
 	protected:
 		std::shared_ptr<DxScriptObjectManager> objManager_;
 
-		//Resource management
-		std::map<std::wstring, shared_ptr<Texture>> mapTexture_;
-		std::map<std::wstring, shared_ptr<DxMesh>> mapMesh_;
-		std::map<std::wstring, shared_ptr<Shader>> mapShader_;
 		std::map<std::wstring, shared_ptr<SoundPlayer>> mapSoundPlayer_;
 
-		void _ClearResource();
-		shared_ptr<Texture> _GetTexture(const std::wstring& name);
-		shared_ptr<Shader> _GetShader(const std::wstring& name);
-		shared_ptr<DxMesh> _GetMesh(const std::wstring& name);
+		DxScriptResourceCache* pResouceCache_;
 	public:
 		DxScript();
 		virtual ~DxScript();
