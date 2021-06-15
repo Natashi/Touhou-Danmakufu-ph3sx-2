@@ -32,6 +32,8 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 
+	ScriptClientBase::randCalls_ = 0;
+	ScriptClientBase::prandCalls_ = 0;
 	scriptEngineCache_->Clear();
 
 	camera3D->SetPerspectiveWidth(384);

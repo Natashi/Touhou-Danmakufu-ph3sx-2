@@ -766,7 +766,6 @@ void script_machine::run_code() {
 				
 				*arr = value(script_type_manager::get_ptr_type(), pRes);
 				stack.pop_back(1U);	//pop idx
-				
 				break;
 			}
 			case command_kind::pc_inline_index_array2:
@@ -776,11 +775,10 @@ void script_machine::run_code() {
 
 				value* pRes = (value*)BaseFunction::index(this, 2, arr, idx);
 				if (pRes == nullptr) break;
-
 				value res = *pRes;
+
 				stack.pop_back(2U);
 				stack.push_back(res);
-
 				break;
 			}
 			case command_kind::pc_inline_length_array:
@@ -820,7 +818,7 @@ value* script_machine::find_variable_symbol(environment* current_env, code* c,
 	raise_error(StringUtility::Format("Variable not found: %s (level=%u,id=%u)\r\n", 
 		c->var_name.c_str(), level, variable));
 #else
-	raise_error(StringUtility::Format("Variable not found. (level=%u,id=%u)\r\n", 
+	raise_error(StringUtility::Format("Variable not found (level=%u,id=%u)\r\n", 
 		level, variable));
 #endif
 	return nullptr;

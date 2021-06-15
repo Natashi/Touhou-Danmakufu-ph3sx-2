@@ -8,6 +8,27 @@
 #include "DxObject.hpp"
 
 namespace directx {
+	//****************************************************************************
+	//DxScriptResourceCache
+	//****************************************************************************
+	class DxScriptResourceCache {
+		static DxScriptResourceCache* base_;
+	public:
+		std::map<std::wstring, shared_ptr<Texture>> mapTexture;
+		std::map<std::wstring, shared_ptr<DxMesh>> mapMesh;
+		std::map<std::wstring, shared_ptr<Shader>> mapShader;
+	public:
+		DxScriptResourceCache();
+
+		static DxScriptResourceCache* GetBase() { return base_; }
+
+		void ClearResource();
+
+		shared_ptr<Texture> GetTexture(const std::wstring& name);
+		shared_ptr<DxMesh> GetMesh(const std::wstring& name);
+		shared_ptr<Shader> GetShader(const std::wstring& name);
+	};
+
 	//*******************************************************************
 	//DxScript
 	//*******************************************************************
@@ -21,19 +42,15 @@ namespace directx {
 			CODE_UTF16LE,
 			CODE_UTF16BE,
 		};
+		static double g_posInvalidX_;
+		static double g_posInvalidY_;
+		static double g_posInvalidZ_;
 	protected:
 		std::shared_ptr<DxScriptObjectManager> objManager_;
 
-		//Resource management
-		std::map<std::wstring, shared_ptr<Texture>> mapTexture_;
-		std::map<std::wstring, shared_ptr<DxMesh>> mapMesh_;
-		std::map<std::wstring, shared_ptr<Shader>> mapShader_;
 		std::map<std::wstring, shared_ptr<SoundPlayer>> mapSoundPlayer_;
 
-		void _ClearResource();
-		shared_ptr<Texture> _GetTexture(const std::wstring& name);
-		shared_ptr<Shader> _GetShader(const std::wstring& name);
-		shared_ptr<DxMesh> _GetMesh(const std::wstring& name);
+		DxScriptResourceCache* pResouceCache_;
 	public:
 		DxScript();
 		virtual ~DxScript();
@@ -185,6 +202,8 @@ namespace directx {
 
 		//Dx関数：その他
 		static gstd::value Func_GetObjectDistance(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_GetObjectDistanceSq(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_GetObjectDeltaAngle(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetObject2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Get2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
@@ -199,6 +218,9 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ColorRGBtoHSV);
 		DNH_FUNCAPI_DECL_(Func_ColorHSVtoRGB);
 		DNH_FUNCAPI_DECL_(Func_ColorHSVtoHexRGB);
+
+		//Other stuff
+		DNH_FUNCAPI_DECL_(Func_SetInvalidPositionReturn);
 
 		//Dx関数：オブジェクト操作(共通)
 		static gstd::value Func_Obj_Delete(gstd::script_machine* machine, int argc, const gstd::value* argv);

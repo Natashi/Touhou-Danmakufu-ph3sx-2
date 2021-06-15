@@ -663,8 +663,9 @@ gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machi
 	int priMax = argv[2].as_int();
 	bool bClear = argv[3].as_boolean();
 
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	shared_ptr<Texture> texture = script->_GetTexture(name);
+	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
+
+	shared_ptr<Texture> texture = rsrcCache->GetTexture(name);
 	if (texture == nullptr) {
 		texture = textureManager->GetTexture(name);
 		if (texture == nullptr) {
@@ -679,6 +680,8 @@ gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machi
 	}
 
 	if (texture) {
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+
 		graphics->SetRenderTarget(texture, false);
 		graphics->BeginScene(false, bClear);
 
@@ -700,8 +703,9 @@ gstd::value StgControlScript::Func_RenderToTextureB1(gstd::script_machine* machi
 
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		DirectGraphics* graphics = DirectGraphics::GetBase();
-		shared_ptr<Texture> texture = script->_GetTexture(name);
+		DxScriptResourceCache* rsrcCache = script->pResouceCache_;
+
+		shared_ptr<Texture> texture = rsrcCache->GetTexture(name);
 		if (texture == nullptr) {
 			texture = textureManager->GetTexture(name);
 			if (texture == nullptr) {
@@ -716,6 +720,8 @@ gstd::value StgControlScript::Func_RenderToTextureB1(gstd::script_machine* machi
 		}
 
 		if (texture) {
+			DirectGraphics* graphics = DirectGraphics::GetBase();
+
 			graphics->SetRenderTarget(texture, false);
 			graphics->BeginScene(false, bClear);
 

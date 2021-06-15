@@ -498,7 +498,8 @@ int parser::scan_current_scope(parser_state_t* state, int level, const std::vect
 						if (dup == nullptr)
 							dup = search_in(current_frame, lex2.word);
 
-						if (dup) {
+						//Allows variables to overshadow functions
+						if (dup && dup->sub == nullptr) {
 							std::string error = StringUtility::Format("\'%s\' was already declared "
 								"in the same scope.\r\n", lex2.word.c_str());
 							parser_assert(false, error);
@@ -749,7 +750,7 @@ continue_as_variadic:
 void parser::_parse_array_suffix_lvalue(script_block* block, parser_state_t* state) {
 	while (state->next() == token_kind::tk_open_bra) {
 		state->advance();
-		parse_ternary(block, state);
+		parse_expression(block, state);
 
 		parser_assert(state, state->next() != token_kind::tk_range,
 			"Array slice operation is not allowed here.\r\n");
@@ -2098,13 +2099,33 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 			break;
 		}
 		/* Fuses
-		 *   pc_push_value a
-		 *   pc_push_value b
-		 *   pc_push_value c
-		 *   pc_push_value d
-		 *   pc_construct_array
+		 *		pc_push_value		a
+		 *		pc_push_value		b
+		 *		pc_push_value		c
+		 *		pc_push_value		d
+		 *		pc_construct_array	4
 		 * into
-		 *   pc_push_value [a, b, c, d]
+		 *		pc_push_value		[a, b, c, d]
+		 * 
+		 * 
+		 * Issue: breaks when a ternary is involved (FIXED)
+		 * Fuses
+		 *		pc_push_value		x
+		 *		pc_compare_e
+		 *		pc_jump_if_not		lab_1
+		 *		pc_push_value		a
+		 *		pc_jump				lab_2
+		 *	lab_1:
+		 *		pc_push_value		b
+		 *	lab_2:
+		 *		pc_construct_array	1
+		 * into
+		 *		pc_push_value		x
+		 *		pc_compare_e
+		 *		pc_jump_if_not		lab_1
+		 *		pc_push_value		a
+		 *		pc_jump				lab_2
+		 *		pc_push_value		[b]
 		 */
 		case command_kind::pc_construct_array:
 		{
@@ -2124,6 +2145,10 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 						if (ptrPushValueCode->command != command_kind::pc_push_value)
 							goto lab_opt_construct_array_cancel;
 					}
+					//Make sure the previous value was not part of a ternary statement
+					if (newCodes.size() >= sizeArray + 1 && (ptrPushValueCode[-1]).command == command_kind::pc_jump)
+						goto lab_opt_construct_array_cancel;
+
 					type_data* type_elem = ptrPushValueCode->data.get_type();
 					arrayType = script_type_manager::get_instance()->get_array_type(type_elem);
 
