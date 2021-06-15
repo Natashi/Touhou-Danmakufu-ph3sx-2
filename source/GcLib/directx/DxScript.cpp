@@ -183,6 +183,8 @@ static const std::vector<function> dxFunction = {
 
 	//Position functions
 	{ "GetObjectDistance", DxScript::Func_GetObjectDistance, 2 },
+	{ "GetObjectDistanceSq", DxScript::Func_GetObjectDistanceSq, 2 },
+	{ "GetObjectDeltaAngle", DxScript::Func_GetObjectDeltaAngle, 2 },
 	{ "GetObject2dPosition", DxScript::Func_GetObject2dPosition, 1 },
 	{ "Get2dPosition", DxScript::Func_Get2dPosition, 3 },
 
@@ -1911,21 +1913,84 @@ gstd::value DxScript::Func_Get2DCameraRatioY(gstd::script_machine* machine, int 
 }
 
 //DxŠÖ”F‚»‚Ì‘¼
+static inline bool IsDxObjValid3D(DxScriptObjectBase* obj) {
+	switch (obj->GetObjectType()) {
+	case TypeObject::Primitive3D:
+	case TypeObject::Sprite3D:
+	case TypeObject::Trajectory3D:
+	case TypeObject::ParticleList3D:
+	case TypeObject::Mesh:
+		return true;
+	}
+	return false;
+}
 gstd::value DxScript::Func_GetObjectDistance(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id1 = argv[0].as_int();
 	int id2 = argv[1].as_int();
 
 	FLOAT res = -1.0f;
-	DxScriptRenderObject* obj1 = script->GetObjectPointerAs<DxScriptRenderObject>(id1);
-	if (obj1) {
-		DxScriptRenderObject* obj2 = script->GetObjectPointerAs<DxScriptRenderObject>(id2);
-		if (obj2) {
-			D3DXVECTOR3 diff = obj1->GetPosition() - obj2->GetPosition();
-			res = D3DXVec3Length(&diff);
+	if (DxScriptRenderObject* obj1 = script->GetObjectPointerAs<DxScriptRenderObject>(id1)) {
+		if (DxScriptRenderObject* obj2 = script->GetObjectPointerAs<DxScriptRenderObject>(id2)) {
+			if (IsDxObjValid3D(obj1) || IsDxObjValid3D(obj2)) {
+				D3DXVECTOR3 diff = obj1->GetPosition() - obj2->GetPosition();
+				res = D3DXVec3Length(&diff);
+			}
+			else {
+				D3DXVECTOR2 diff = { 
+					obj1->GetPosition().x - obj2->GetPosition().x,
+					obj1->GetPosition().y - obj2->GetPosition().y };
+				res = D3DXVec2Length(&diff);
+			}
 		}
 	}
 	return script->CreateRealValue(res);
+}
+gstd::value DxScript::Func_GetObjectDistanceSq(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id1 = argv[0].as_int();
+	int id2 = argv[1].as_int();
+
+	FLOAT res = -1.0f;
+	if (DxScriptRenderObject* obj1 = script->GetObjectPointerAs<DxScriptRenderObject>(id1)) {
+		if (DxScriptRenderObject* obj2 = script->GetObjectPointerAs<DxScriptRenderObject>(id2)) {
+			if (IsDxObjValid3D(obj1) || IsDxObjValid3D(obj2)) {
+				D3DXVECTOR3 diff = obj1->GetPosition() - obj2->GetPosition();
+				res = D3DXVec3LengthSq(&diff);
+			}
+			else {
+				D3DXVECTOR2 diff = {
+					obj1->GetPosition().x - obj2->GetPosition().x,
+					obj1->GetPosition().y - obj2->GetPosition().y };
+				res = D3DXVec2LengthSq(&diff);
+			}
+		}
+	}
+	return script->CreateRealValue(res);
+}
+gstd::value DxScript::Func_GetObjectDeltaAngle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id1 = argv[0].as_int();
+	int id2 = argv[1].as_int();
+
+	double res = 0;
+	if (DxScriptRenderObject* obj1 = script->GetObjectPointerAs<DxScriptRenderObject>(id1)) {
+		if (DxScriptRenderObject* obj2 = script->GetObjectPointerAs<DxScriptRenderObject>(id2)) {
+			bool bValid3D = IsDxObjValid3D(obj1) && IsDxObjValid3D(obj2);
+			D3DXVECTOR3& pos1 = obj1->GetPosition();
+			D3DXVECTOR3& pos2 = obj2->GetPosition();
+			if (bValid3D && fabs(pos1.z - pos2.z) < 0.01f) {
+				double dot = D3DXVec3Dot(&pos1, &pos2);
+				double len1 = D3DXVec3LengthSq(&pos1);
+				double len2 = D3DXVec3LengthSq(&pos2);
+				res = acos(dot / sqrt(len1 * len2));
+			}
+			else {
+				res = atan2(pos2.y - pos1.y, pos2.x - pos1.x);
+			}
+		}
+	}
+	return script->CreateRealValue(Math::RadianToDegree(res));
 }
 gstd::value DxScript::Func_GetObject2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;

@@ -202,6 +202,8 @@ namespace directx {
 
 		//Dxä÷êîÅFÇªÇÃëº
 		static gstd::value Func_GetObjectDistance(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_GetObjectDistanceSq(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_GetObjectDeltaAngle(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetObject2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Get2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
