@@ -104,7 +104,7 @@ namespace gstd {
 
 		pc_inline_cast_var,			//Cast {esp-0} to (type_kind)[arg0]
 		pc_inline_index_array,		//Push &((*{esp-1})[{esp-0}]) to stack
-		pc_inline_index_array2,		//Push ({esp-1})[{esp-0}] to stack
+		pc_inline_index_array2,		//Push ({esp-1}[{esp-0}]) to stack
 		pc_inline_length_array,		//Push length({esp-0}) to stack
 
 		pc_nop = 0xff,			//No operation
