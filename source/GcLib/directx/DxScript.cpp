@@ -169,6 +169,7 @@ static const std::vector<function> dxFunction = {
 	//Base object functions
 	{ "Obj_Delete", DxScript::Func_Obj_Delete, 1 },
 	{ "Obj_IsDeleted", DxScript::Func_Obj_IsDeleted, 1 },
+	{ "Obj_IsExists", DxScript::Func_Obj_IsExists, 1 },
 	{ "Obj_SetVisible", DxScript::Func_Obj_SetVisible, 2 },
 	{ "Obj_IsVisible", DxScript::Func_Obj_IsVisible, 1 },
 	{ "Obj_SetRenderPriority", DxScript::Func_Obj_SetRenderPriority, 2 },
