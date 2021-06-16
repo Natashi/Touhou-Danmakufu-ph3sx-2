@@ -63,7 +63,7 @@
     </LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
-    <TargetName>th_dnh_ph3sx</TargetName>
+    <TargetName>th_dnh_ph3sx-zlabel</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (No vectorization)|Win32'">
     <OutDir>.\bin_th_dnh\</OutDir>
@@ -72,7 +72,7 @@
     </LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
-    <TargetName>th_dnh_ph3sx_legacy</TargetName>
+    <TargetName>th_dnh_ph3sx-zlabel_legacy</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>.\bin_th_dnh\</OutDir>
@@ -81,7 +81,7 @@
     </LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
-    <TargetName>th_dnh_d</TargetName>
+    <TargetName>th_dnh_ph3sx-zlabel_debug</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
