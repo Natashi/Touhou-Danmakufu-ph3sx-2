@@ -445,7 +445,7 @@ public:
 };
 
 //*******************************************************************
-//StgLaserObject(レーザー基本部)
+//StgLaserObject(繝ｬ繝ｼ繧ｶ繝ｼ蝓ｺ譛ｬ驛ｨ)
 //*******************************************************************
 class StgLaserObject : public StgShotObject {
 protected:
@@ -478,7 +478,7 @@ public:
 };
 
 //*******************************************************************
-//StgLooseLaserObject(射出型レーザー)
+//StgLooseLaserObject(蟆�蜃ｺ蝙九Ξ繝ｼ繧ｶ繝ｼ)
 //*******************************************************************
 class StgLooseLaserObject : public StgLaserObject {
 protected:
@@ -503,7 +503,7 @@ public:
 };
 
 //*******************************************************************
-//StgStraightLaserObject(設置型レーザー)
+//StgStraightLaserObject(險ｭ鄂ｮ蝙九Ξ繝ｼ繧ｶ繝ｼ)
 //*******************************************************************
 class StgStraightLaserObject : public StgLaserObject {
 protected:
@@ -546,7 +546,7 @@ public:
 };
 
 //*******************************************************************
-//StgCurveLaserObject(曲がる型レーザー)
+//StgCurveLaserObject(譖ｲ縺後ｋ蝙九Ξ繝ｼ繧ｶ繝ｼ)
 //*******************************************************************
 class StgCurveLaserObject : public StgLaserObject {
 public:

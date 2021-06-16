@@ -314,8 +314,6 @@ namespace directx {
 
 		virtual DWORD GetCurrentPosition();
 		size_t* DbgGetStreamCopyPos() { return lastStreamCopyPos_; }
-
-		size_t GetReaderRefCount() { return reader_ ? 0 : reader_.use_count(); }
 	};
 	class SoundStreamingPlayer::StreamingThread : public gstd::Thread, public gstd::InnerClass<SoundStreamingPlayer> {
 	public:

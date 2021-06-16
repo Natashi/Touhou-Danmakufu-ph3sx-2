@@ -494,7 +494,6 @@ std::vector<StgIntersectionSpace::TargetCheckListPair>* StgIntersectionSpace::Cr
 			if (boundA.IsIntersected(boundB)) {
 				Lock lock(criticalSection);
 				if ((size_t)count >= pooledCheckList_.size()) {
-					//Lock lock(criticalSection);
 					pooledCheckList_.resize(pooledCheckList_.size() * 2);
 				}
 				pooledCheckList_[count.load()] = std::make_pair(targetA, targetB);

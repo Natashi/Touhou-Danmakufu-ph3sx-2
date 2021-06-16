@@ -46,7 +46,7 @@ bool ReplayInformation::SaveToFile(const std::wstring& scriptPath, int index) {
 	std::wstring scriptName = PathProperty::GetFileNameWithoutExtension(scriptPath);
 	std::wstring path = dir + scriptName + StringUtility::Format(L"_replay%02d.dat", index);
 
-	//ƒtƒHƒ‹ƒ_ì¬
+	//ãƒ•ã‚©ãƒ«ãƒ€ä½œæˆ
 	File::CreateFileDirectory(dir);
 
 	RecordBuffer rec;

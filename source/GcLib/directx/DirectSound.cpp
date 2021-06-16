@@ -243,7 +243,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::_CreatePlayer(std::wstring path) {
 	}
 	catch (gstd::wexception& e) {
 		res = nullptr;
-		std::wstring str = StringUtility::Format(L"DirectSoundFAudio load failed [%s]\r\n\t%s", path.c_str(), e.what());
+		std::wstring str = StringUtility::Format(L"DirectSoundï¼šAudio load failed [%s]\r\n\t%s", path.c_str(), e.what());
 		Logger::WriteTop(str);
 	}
 	return res;
@@ -496,8 +496,8 @@ void SoundInfoPanel::Update(DirectSoundManager* soundManager) {
 	if (abs(time - timeLastUpdate_) < timeUpdateInterval_) return;
 	timeLastUpdate_ = time;
 
-	//ƒNƒŠƒeƒBƒJƒ‹ƒZƒNƒVƒ‡ƒ““à‚ÅAƒEƒBƒ“ƒhƒE‚ÉƒƒbƒZ[ƒW‚ğ‘—‚é‚Æ
-	//ƒƒbƒN‚·‚é‰Â”\«‚ª‚ ‚é‚Ì‚ÅA•\¦‚·‚éî•ñ‚Ì‚İ‚ğƒRƒs[‚·‚é
+	//ã‚¯ãƒªãƒ†ã‚£ã‚«ãƒ«ã‚»ã‚¯ã‚·ãƒ§ãƒ³å†…ã§ã€ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’é€ã‚‹ã¨
+	//ãƒ­ãƒƒã‚¯ã™ã‚‹å¯èƒ½æ€§ãŒã‚ã‚‹ã®ã§ã€è¡¨ç¤ºã™ã‚‹æƒ…å ±ã®ã¿ã‚’ã‚³ãƒ”ãƒ¼ã™ã‚‹
 	std::list<Info> listInfo;
 	{
 		Lock lock(soundManager->GetLock());
@@ -715,11 +715,11 @@ LONG SoundPlayer::_GetVolumeAsDirectSoundDecibel(float rate) {
 		result = DSBVOLUME_MIN;
 	}
 	else {
-		// 10dB‚Å‰¹—Ê2”{B
-		// ¨(‹‚ß‚édB)
-		//	 = 10 * log2(‰¹—Ê)
-		//	 = 10 * ( log10(‰¹—Ê) / log10(2) )
-		//	 = 33.2... * log10(‰¹—Ê)
+		// 10dBã§éŸ³é‡2å€ã€‚
+		// â†’(æ±‚ã‚ã‚‹dB)
+		//	 = 10 * log2(éŸ³é‡)
+		//	 = 10 * ( log10(éŸ³é‡) / log10(2) )
+		//	 = 33.2... * log10(éŸ³é‡)
 		result = (LONG)(33.2f * log10(rate) * 100);
 	}
 	return result;
@@ -823,16 +823,16 @@ void SoundStreamingPlayer::_CopyStream(int indexCopy) {
 		}
 
 		if (!bStreaming_ || (IsPlaying() && !bRequestStop_)) {
-			if (dwSize1 > 0) {	//ƒoƒbƒtƒ@‘O”¼
+			if (dwSize1 > 0) {	//ãƒãƒƒãƒ•ã‚¡å‰åŠ
 				size_t res = _CopyBuffer(pMem1, dwSize1);
 				lastStreamCopyPos_[indexCopy] = res;
 			}
-			if (dwSize2 > 0) {	//ƒoƒbƒtƒ@Œã”¼
+			if (dwSize2 > 0) {	//ãƒãƒƒãƒ•ã‚¡å¾ŒåŠ
 				_CopyBuffer(pMem2, dwSize2);
 			}
 		}
 		else {
-			//‰‰‘t’†‚Å‚È‚¯‚ê‚Î–³‰¹‚ğ‘‚«‚Ş
+			//æ¼”å¥ä¸­ã§ãªã‘ã‚Œã°ç„¡éŸ³ã‚’æ›¸ãè¾¼ã‚€
 			memset(pMem1, 0, dwSize1);
 			if (dwSize2 != 0)
 				memcpy(pMem2, 0, dwSize2);
@@ -873,7 +873,7 @@ bool SoundStreamingPlayer::Play(PlayStyle& style) {
 			::ResetEvent(hEvent_[2]);
 
 			thread_->Start();
-			pDirectSoundBuffer_->Play(0, 0, DSBPLAY_LOOPING);//Ä¶ŠJn
+			pDirectSoundBuffer_->Play(0, 0, DSBPLAY_LOOPING);//å†ç”Ÿé–‹å§‹
 		}
 		else {
 			DWORD dwFlags = 0;
@@ -1020,7 +1020,7 @@ bool SoundPlayerWave::_CreateBuffer(shared_ptr<gstd::FileReader> reader) {
 		uint32_t posWaveStart = dataChunkOffset + sizeof(uint32_t);
 		uint32_t posWaveEnd = posWaveStart + sizeChunk;
 
-		//Buffer‚Ìì»
+		//Bufferã®ä½œè£½
 		DSBUFFERDESC desc;
 		ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 		desc.dwSize = sizeof(DSBUFFERDESC);
@@ -1032,7 +1032,7 @@ bool SoundPlayerWave::_CreateBuffer(shared_ptr<gstd::FileReader> reader) {
 			(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
 		if (FAILED(hrBuffer)) throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
 
-		//Buffer‚Ö‘‚«‚Ş
+		//Bufferã¸æ›¸ãè¾¼ã‚€
 		LPVOID pMem1, pMem2;
 		DWORD dwSize1, dwSize2;
 		HRESULT hrLock = pDirectSoundBuffer_->Lock(0, sizeChunk, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
@@ -1193,7 +1193,7 @@ bool SoundStreamingPlayerWave::_CreateBuffer(shared_ptr<gstd::FileReader> reader
 		throw e;
 	}
 
-	//Buffer‚Ìì»
+	//Bufferã®ä½œè£½
 	DSBUFFERDESC desc;
 	ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 	desc.dwSize = sizeof(DSBUFFERDESC);
@@ -1206,7 +1206,7 @@ bool SoundStreamingPlayerWave::_CreateBuffer(shared_ptr<gstd::FileReader> reader
 		(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
 	if (FAILED(hrBuffer)) return false;
 
-	//ƒCƒxƒ“ƒgì¬
+	//ã‚¤ãƒ™ãƒ³ãƒˆä½œæˆ
 	_CreateSoundEvent(formatWave_);
 
 	return true;
@@ -1222,7 +1222,7 @@ size_t SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	size_t cPos = lastReadPointer_;
 	size_t resStreamPos = cPos;
 
-	if (cPos + cSize > posWaveEnd_) {//ƒtƒ@ƒCƒ‹I“_
+	if (cPos + cSize > posWaveEnd_) {//ãƒ•ã‚¡ã‚¤ãƒ«çµ‚ç‚¹
 		size_t size1 = cSize + cPos - posWaveEnd_;
 		size_t size2 = (dwSize - cSize) / blockSize * blockSize;
 		size1 = dwSize - size2;
@@ -1234,8 +1234,8 @@ size_t SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		else
 			_RequestStop();
 	}
-	else if (cPos + cSize > posLoopEnd && timeLoopEnd_ > 0) {//ƒ‹[ƒv‚ÌI’[
-		size_t sizeOver = cPos + cSize - posLoopEnd; //ƒ‹[ƒv‚ğ’´‚¦‚½ƒf[ƒ^‚ÌƒTƒCƒY
+	else if (cPos + cSize > posLoopEnd && timeLoopEnd_ > 0) {//ãƒ«ãƒ¼ãƒ—ã®çµ‚ç«¯
+		size_t sizeOver = cPos + cSize - posLoopEnd; //ãƒ«ãƒ¼ãƒ—ã‚’è¶…ãˆãŸãƒ‡ãƒ¼ã‚¿ã®ã‚µã‚¤ã‚º
 		size_t cSize1 = (cSize - sizeOver) / blockSize * blockSize;
 		size_t cSize2 = sizeOver / blockSize * blockSize;
 
@@ -1305,7 +1305,7 @@ bool SoundStreamingPlayerOgg::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 	LONG sizeData = (LONG)ceil((double)vi->channels * (double)vi->rate * ov_time_total(&fileOgg_, -1) * 2.0);
 	audioSizeTotal_ = sizeData;
 
-	//Buffer‚Ìì»
+	//Bufferã®ä½œè£½
 	DWORD sizeBuffer = std::min(2 * formatWave_.nAvgBytesPerSec, (DWORD)sizeData);
 
 	DSBUFFERDESC desc;
@@ -1320,7 +1320,7 @@ bool SoundStreamingPlayerOgg::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 		(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
 	if (FAILED(hrBuffer)) return false;
 
-	//ƒCƒxƒ“ƒgì¬
+	//ã‚¤ãƒ™ãƒ³ãƒˆä½œæˆ
 	_CreateSoundEvent(formatWave_);
 
 	bStreaming_ = sizeBuffer != sizeData;
@@ -1349,7 +1349,7 @@ size_t SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		double cTime = (double)cSize / (double)formatWave_.nAvgBytesPerSec;
 
 		if (timeCurrent + cTime > timeLoopEnd_ && timeLoopEnd_ > 0) {
-			//ƒ‹[ƒvI’[
+			//ãƒ«ãƒ¼ãƒ—çµ‚ç«¯
 			double timeOver = timeCurrent + cTime - timeLoopEnd_;
 			double cTime1 = cTime - timeOver;
 
@@ -1386,7 +1386,7 @@ size_t SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 			sizeWriteTotal += sizeWrite;
 			timeCurrent += (double)sizeWrite / (double)formatWave_.nAvgBytesPerSec;
 
-			if (sizeWrite == 0) {//ƒtƒ@ƒCƒ‹I“_
+			if (sizeWrite == 0) {//ãƒ•ã‚¡ã‚¤ãƒ«çµ‚ç‚¹
 				if (bLoop_) {
 					Seek(timeLoopStart_);
 				}
@@ -1427,7 +1427,7 @@ size_t SoundStreamingPlayerOgg::_ReadOgg(void* ptr, size_t size, size_t nmemb, v
 	return sizeCopy / size;
 }
 int SoundStreamingPlayerOgg::_SeekOgg(void* source, ogg_int64_t offset, int whence) {
-	//Œ»İ‚ÌˆÊ’uî•ñ‚È‚Ç‚ğƒZƒbƒg‚·‚éƒR[ƒ‹ƒoƒbƒNŠÖ”‚Å‚·B
+	//ç¾åœ¨ã®ä½ç½®æƒ…å ±ãªã©ã‚’ã‚»ãƒƒãƒˆã™ã‚‹ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã§ã™ã€‚
 	SoundStreamingPlayerOgg* player = (SoundStreamingPlayerOgg*)source;
 	LONG high = (LONG)((offset & 0xFFFFFFFF00000000) >> 32);
 	LONG low = (LONG)((offset & 0x00000000FFFFFFFF) >> 0);
@@ -1453,12 +1453,12 @@ int SoundStreamingPlayerOgg::_SeekOgg(void* source, ogg_int64_t offset, int when
 	return 0;
 }
 int SoundStreamingPlayerOgg::_CloseOgg(void* source) {
-	//ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚éˆ—‚ğ‚·‚éŠÖ”‚Å‚·B
-	//‚±‚±‚Å‚Í‰½‚à‚µ‚Ä‚¢‚Ü‚¹‚ñB
+	//ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹å‡¦ç†ã‚’ã™ã‚‹é–¢æ•°ã§ã™ã€‚
+	//ã“ã“ã§ã¯ä½•ã‚‚ã—ã¦ã„ã¾ã›ã‚“ã€‚
 	return 0;
 }
 long SoundStreamingPlayerOgg::_TellOgg(void* source) {
-	//ƒtƒ@ƒCƒ‹‚ÌŒ»İ‚ÌˆÊ’u‚ğ•Ô‚·ŠÖ”‚Å‚·B
+	//ãƒ•ã‚¡ã‚¤ãƒ«ã®ç¾åœ¨ã®ä½ç½®ã‚’è¿”ã™é–¢æ•°ã§ã™ã€‚
 	SoundStreamingPlayerOgg* player = (SoundStreamingPlayerOgg*)source;
 	return player->reader_->GetFilePointer();
 }
@@ -1512,19 +1512,19 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 	else if (fileSize > 128) {
 		offsetDataStart = 0;
 
-		// ––”ö‚Ìƒ^ƒO‚ÉˆÚ“®
+		// æœ«å°¾ã®ã‚¿ã‚°ã«ç§»å‹•
 		byte tag[3];
 		reader->Seek(fileSize - 128);
 		reader->Read(tag, sizeof(tag));
 
-		// ƒf[ƒ^‚ÌˆÊ’uAƒTƒCƒY‚ğŒvZ
+		// ãƒ‡ãƒ¼ã‚¿ã®ä½ç½®ã€ã‚µã‚¤ã‚ºã‚’è¨ˆç®—
 		if (memcmp(tag, "TAG", 3) == 0)
-			dataSize = fileSize - 128; // ––”ö‚Ìƒ^ƒO‚ğÈ‚­
+			dataSize = fileSize - 128; // æœ«å°¾ã®ã‚¿ã‚°ã‚’çœã
 		else
-			dataSize = fileSize; // ƒtƒ@ƒCƒ‹‘S‘Ì‚ªMP3ƒf[ƒ^
+			dataSize = fileSize; // ãƒ•ã‚¡ã‚¤ãƒ«å…¨ä½“ãŒMP3ãƒ‡ãƒ¼ã‚¿
 	}
 
-	dataSize -= 4; //mp3ƒwƒbƒ_
+	dataSize -= 4; //mp3ãƒ˜ãƒƒãƒ€
 	posMp3DataStart_ = offsetDataStart + 4;
 	posMp3DataEnd_ = posMp3DataStart_ + dataSize;
 
@@ -1539,7 +1539,7 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 	byte version = (headerData[1] >> 3) & 0x03;
 	byte layer = (headerData[1] >> 1) & 0x03;
 
-	// ƒrƒbƒgƒŒ[ƒg
+	// ãƒ“ãƒƒãƒˆãƒ¬ãƒ¼ãƒˆ
 	const short bitRateTable[][16] = {
 		// MPEG1, Layer1
 		{ 0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, -1 },
@@ -1563,7 +1563,7 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 	}
 	short bitRate = bitRateTable[indexBitrate][headerData[2] >> 4];
 
-	//ƒTƒ“ƒvƒŠƒ“ƒOƒŒ[ƒg
+	//ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ãƒ¬ãƒ¼ãƒˆ
 	const int sampleRateTable[][4] = {
 		{ 44100, 48000, 32000, -1 }, // MPEG1
 		{ 22050, 24000, 16000, -1 }, // MPEG2
@@ -1580,7 +1580,7 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 	byte padding = headerData[2] >> 1 & 0x01;
 	byte channel = headerData[3] >> 6;
 
-	// ƒTƒCƒYæ“¾
+	// ã‚µã‚¤ã‚ºå–å¾—
 	size_t mp3BlockSize = ((144 * bitRate * 1000) / sampleRate) + padding;
 
 	formatMp3_.wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
@@ -1625,7 +1625,7 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 	if (mmResPrepareHeader != 0)
 		return false;
 
-	//Buffer‚Ìì»
+	//Bufferã®ä½œè£½
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 	DWORD sizeBuffer = std::min(2 * formatWave_.nAvgBytesPerSec, waveDataSize_);
 
@@ -1643,7 +1643,7 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 		(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
 	if (FAILED(hrBuffer)) return false;
 
-	//ƒCƒxƒ“ƒgì¬
+	//ã‚¤ãƒ™ãƒ³ãƒˆä½œæˆ
 	_CreateSoundEvent(formatWave_);
 
 	bStreaming_ = sizeBuffer != waveDataSize_;
@@ -1669,7 +1669,7 @@ size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		double cTime = (double)cSize / (double)formatWave_.nAvgBytesPerSec;
 
 		if (timeCurrent_ + cTime > timeLoopEnd_ && timeLoopEnd_ > 0) {
-			//ƒ‹[ƒvI’[
+			//ãƒ«ãƒ¼ãƒ—çµ‚ç«¯
 			double timeOver = timeCurrent_ + cTime - timeLoopEnd_;
 			double cTime1 = cTime - timeOver;
 			size_t cSize1 = cTime1 * formatWave_.nAvgBytesPerSec;
@@ -1705,7 +1705,7 @@ size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 			sizeWriteTotal += sizeWrite;
 			timeCurrent_ += (double)sizeWrite / (double)formatWave_.nAvgBytesPerSec;
 
-			if (sizeWrite == 0) {//ƒtƒ@ƒCƒ‹I“_
+			if (sizeWrite == 0) {//ãƒ•ã‚¡ã‚¤ãƒ«çµ‚ç‚¹
 				if (bLoop_) {
 					Seek(timeLoopStart_);
 				}
@@ -1724,7 +1724,7 @@ size_t SoundStreamingPlayerMp3::_ReadAcmStream(char* pBuffer, size_t size) {
 	size_t sizeWrite = 0;
 	size_t bufSize = bufDecode_.GetSize();
 	if (bufSize > 0) {
-		//‘O‰ñƒfƒR[ƒh•ª‚ğ‘‚«‚İ
+		//å‰å›ãƒ‡ã‚³ãƒ¼ãƒ‰åˆ†ã‚’æ›¸ãè¾¼ã¿
 		size_t copySize = std::min(size, bufSize);
 
 		memcpy(pBuffer, bufDecode_.GetPointer(), copySize);
@@ -1738,7 +1738,7 @@ size_t SoundStreamingPlayerMp3::_ReadAcmStream(char* pBuffer, size_t size) {
 		pBuffer += sizeWrite;
 	}
 
-	//ƒfƒR[ƒh
+	//ãƒ‡ã‚³ãƒ¼ãƒ‰
 	while (true) {
 		size_t readSize = reader_->Read(acmStreamHeader_.pbSrc, acmStreamHeader_.cbSrcLength);
 		if (readSize == 0) return 0;
@@ -1751,7 +1751,7 @@ size_t SoundStreamingPlayerMp3::_ReadAcmStream(char* pBuffer, size_t size) {
 	size_t copySize = std::min(size, sizeDecode);
 	memcpy(pBuffer, acmStreamHeader_.pbDst, copySize);
 	if (sizeDecode > copySize) {
-		//¡‰ñ—]‚Á‚½•ª‚ğAŸ‰ñ—p‚Éƒoƒbƒtƒ@ƒŠƒ“ƒO
+		//ä»Šå›ä½™ã£ãŸåˆ†ã‚’ã€æ¬¡å›ç”¨ã«ãƒãƒƒãƒ•ã‚¡ãƒªãƒ³ã‚°
 		size_t newSize = sizeDecode - copySize;
 		bufDecode_.SetSize(newSize);
 		memcpy(bufDecode_.GetPointer(), acmStreamHeader_.pbDst + copySize, newSize);

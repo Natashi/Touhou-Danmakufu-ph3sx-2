@@ -353,7 +353,7 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 			}
 		}
 
-		//ƒeƒNƒXƒ`ƒƒ“Ç‚İ‚İ
+		//ãƒ†ã‚¯ã‚¹ãƒãƒ£èª­ã¿è¾¼ã¿
 		if (pathImage.size() == 0) throw gstd::wexception("Item texture must be set.");
 		std::wstring dir = PathProperty::GetFileDirectory(path);
 		pathImage = StringUtility::Replace(pathImage, L"./", dir);
@@ -738,7 +738,7 @@ void StgItemObject::RenderOnItemManager() {
 			break;
 		}
 
-		//ã‚É‚Í‚İo‚µ‚Ä‚¢‚é
+		//ä¸Šã«ã¯ã¿å‡ºã—ã¦ã„ã‚‹
 		D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255);
 		if (sposy <= 0) {
 			D3DCOLOR colorOver = D3DCOLOR_ARGB(255, 255, 255, 255);
@@ -1139,7 +1139,7 @@ void StgItemObject_User::RenderOnItemManager() {
 		}
 	}
 
-	//if(bIntersected_)color = D3DCOLOR_ARGB(255, 255, 0, 0);//ÚGƒeƒXƒg
+	//if(bIntersected_)color = D3DCOLOR_ARGB(255, 255, 0, 0);//æ¥è§¦ãƒ†ã‚¹ãƒˆ
 
 	VERTEX_TLX verts[4];
 	int* ptrSrc = reinterpret_cast<int*>(rcSrc);

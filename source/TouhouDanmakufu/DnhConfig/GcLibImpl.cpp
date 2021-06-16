@@ -32,7 +32,7 @@ bool EApplication::_Loop() {
 	HWND hWndFocused = ::GetForegroundWindow();
 	HWND hWndMain = mainWindow->GetWindowHandle();
 	if (hWndFocused != hWndMain) {
-		//”ñƒAƒNƒeƒBƒu‚Í“®ì‚µ‚È‚¢
+		//éã‚¢ã‚¯ãƒ†ã‚£ãƒ–æ™‚ã¯å‹•ä½œã—ãªã„
 		::Sleep(10);
 		return true;
 	}

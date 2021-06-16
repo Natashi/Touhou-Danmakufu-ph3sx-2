@@ -110,6 +110,8 @@ namespace directx {
 		ManagedScript();
 		~ManagedScript();
 
+		virtual void Reset();
+
 		virtual void SetScriptManager(ScriptManager* manager);
 		virtual void SetScriptParameter(shared_ptr<ManagedScriptParameter> param) { scriptParam_ = param; }
 		shared_ptr<ManagedScriptParameter> GetScriptParameter() { return scriptParam_; }
@@ -128,11 +130,11 @@ namespace directx {
 		gstd::value RequestEvent(int type);
 		gstd::value RequestEvent(int type, const gstd::value* listValue, size_t countArgument);
 
-		//§Œä‹¤’ÊŠÖ”F‹¤’Êƒf[ƒ^
+		//åˆ¶å¾¡å…±é€šé–¢æ•°ï¼šå…±é€šãƒ‡ãƒ¼ã‚¿
 		static gstd::value Func_SaveCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_LoadCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//§Œä‹¤’ÊŠÖ”FƒXƒNƒŠƒvƒg‘€ì
+		//åˆ¶å¾¡å…±é€šé–¢æ•°ï¼šã‚¹ã‚¯ãƒªãƒ—ãƒˆæ“ä½œ
 		static gstd::value Func_LoadScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_LoadScriptInThread(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_UnloadScript(gstd::script_machine* machine, int argc, const gstd::value* argv);

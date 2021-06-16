@@ -131,6 +131,7 @@ namespace gstd {
 		void SetPath(const std::wstring& path) { engine_->SetPath(path); }
 
 		virtual void Compile();
+		virtual void Reset();
 		virtual bool Run();
 		virtual bool Run(const std::string& target);
 		virtual bool Run(std::map<std::string, script_block*>::iterator target);

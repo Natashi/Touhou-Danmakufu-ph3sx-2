@@ -6,10 +6,6 @@
 #include "ScriptLexer.hpp"
 #include "ScriptFunction.hpp"
 
-#pragma warning (disable : 4786)	//STL Warning—}~
-#pragma warning (disable : 4018)	//signed ‚Æ unsigned ‚Ì”’l‚ğ”äŠr
-#pragma warning (disable : 4244)	//double' ‚©‚ç 'float' ‚É•ÏŠ·
-
 namespace gstd {
 	enum class command_kind : uint8_t {
 		pc_yield,				//Transfer control to next thread

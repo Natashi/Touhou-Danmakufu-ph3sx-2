@@ -51,7 +51,7 @@ void TitleScene::Work() {
 	if (input->GetVirtualKeyState(EDirectInput::KEY_OK) == KEY_PUSH) {
 		SceneManager* sceneManager = SystemController::GetInstance()->GetSceneManager();
 
-		//‘I‘ðƒCƒ“ƒfƒbƒNƒX•Û‘¶
+		//é¸æŠžã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ä¿å­˜
 		SystemController::GetInstance()->GetSystemInformation()->SetLastTitleSelectedIndex(cursorY_);
 
 		switch (cursorY_) {

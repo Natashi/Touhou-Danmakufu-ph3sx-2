@@ -111,25 +111,23 @@ script_machine::script_machine(script_engine* the_engine) {
 	assert(!the_engine->get_error());
 	engine = the_engine;
 
-	error = false;
-	bTerminate = false;
+	reset();
 }
-
 script_machine::~script_machine() {
 }
 
 script_machine::environment::environment(ref_unsync_ptr<environment> parent, script_block* b) {
 	this->parent = parent;
-	this->sub = b;
-	this->ip = 0;
-	this->variables.clear();
-	this->stack.clear();
-	this->has_result = false;
-	this->waitCount = 0;
+	sub = b;
+	ip = 0;
+	variables.clear();
+	stack.clear();
+	has_result = false;
+	waitCount = 0;
 }
 script_machine::environment::~environment() {
-	this->variables.clear();
-	this->stack.clear();
+	variables.clear();
+	stack.clear();
 }
 
 bool script_machine::has_event(const std::string& event_name, std::map<std::string, script_block*>::iterator& res) {
@@ -141,6 +139,21 @@ int script_machine::get_current_line() {
 	return (current->sub->codes[current->ip]).line;
 }
 
+void script_machine::reset() {
+	error = false;
+	error_message = L"";
+	error_line = -1;
+
+	bTerminate = false;
+
+	finished = false;
+	stopped = false;
+	resuming = false;
+
+	list_parent_environment.clear();
+	threads.clear();
+	current_thread_index = std::list<ref_unsync_ptr<environment>>::iterator();
+}
 void script_machine::run() {
 	if (bTerminate) return;
 

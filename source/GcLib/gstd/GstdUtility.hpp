@@ -580,7 +580,7 @@ namespace gstd {
 
 	//================================================================
 	//InnerClass
-	//C++‚É‚Í“à•”ƒNƒ‰ƒX‚ª‚È‚¢‚Ì‚ÅAŠO•”ƒNƒ‰ƒXƒAƒNƒZƒX—p
+	//C++ã«ã¯å†…éƒ¨ã‚¯ãƒ©ã‚¹ãŒãªã„ã®ã§ã€å¤–éƒ¨ã‚¯ãƒ©ã‚¹ã‚¢ã‚¯ã‚»ã‚¹ç”¨
 	template <class T>
 	class InnerClass {
 		T* outer_;
@@ -673,19 +673,19 @@ namespace gstd {
 		Encoding::Type typeEncoding_;
 		int textStartPointer_;
 		std::vector<char> buffer_;
-		int pointer_;//¡‚ÌˆÊ’u
-		Token token_;//Œ»İ‚Ìƒg[ƒNƒ“
+		int pointer_;//ä»Šã®ä½ç½®
+		Token token_;//ç¾åœ¨ã®ãƒˆãƒ¼ã‚¯ãƒ³
 		bool bPermitSignNumber_;
 		std::list<Token> listDebugToken_;
 
 		const char* bufStr_;
 
 		wchar_t _CurrentChar();
-		wchar_t _NextChar();//ƒ|ƒCƒ“ƒ^‚ği‚ß‚ÄŸ‚Ì•¶š‚ğ’²‚×‚é
+		wchar_t _NextChar();//ãƒã‚¤ãƒ³ã‚¿ã‚’é€²ã‚ã¦æ¬¡ã®æ–‡å­—ã‚’èª¿ã¹ã‚‹
 
-		virtual void _SkipComment();//ƒRƒƒ“ƒg‚ğ‚Æ‚Î‚·
-		virtual void _SkipSpace();//‹ó”’‚ğ‚Æ‚Î‚·
-		virtual void _RaiseError(const std::wstring& str) {	//—áŠO‚ğ“Š‚°‚Ü‚·
+		virtual void _SkipComment();//ã‚³ãƒ¡ãƒ³ãƒˆã‚’ã¨ã°ã™
+		virtual void _SkipSpace();//ç©ºç™½ã‚’ã¨ã°ã™
+		virtual void _RaiseError(const std::wstring& str) {	//ä¾‹å¤–ã‚’æŠ•ã’ã¾ã™
 			throw gstd::wexception(str);
 		}
 	public:
@@ -698,7 +698,7 @@ namespace gstd {
 		void SetPermitSignNumber(bool bEnable) { bPermitSignNumber_ = bEnable; }
 		Encoding::Type GetEncoding() { return typeEncoding_; }
 
-		Token& GetToken() {	//Œ»İ‚Ìƒg[ƒNƒ“‚ğæ“¾
+		Token& GetToken() {	//ç¾åœ¨ã®ãƒˆãƒ¼ã‚¯ãƒ³ã‚’å–å¾—
 			return token_;
 		}
 		Token& Next();

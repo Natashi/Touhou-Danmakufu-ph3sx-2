@@ -234,7 +234,7 @@ std::vector<std::wstring> File::GetFilePathList(const std::wstring& dir) {
 		std::wstring name = data.cFileName;
 		if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 			(name != L".." && name != L".")) {
-			//ƒfƒBƒŒƒNƒgƒŠ
+			//ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª
 			std::wstring tDir = dir + name;
 			tDir += L"\\";
 
@@ -243,7 +243,7 @@ std::vector<std::wstring> File::GetFilePathList(const std::wstring& dir) {
 		if (wcscmp(data.cFileName, L"..") == 0 || wcscmp(data.cFileName, L".") == 0)
 			continue;
 
-		//ƒtƒ@ƒCƒ‹
+		//ãƒ•ã‚¡ã‚¤ãƒ«
 		std::wstring path = dir + name;
 
 		res.push_back(path);
@@ -277,7 +277,7 @@ std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir) {
 		std::wstring name = data.cFileName;
 		if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 			(name != L".." && name != L".")) {
-			//ƒfƒBƒŒƒNƒgƒŠ
+			//ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª
 			std::wstring tDir = dir + name;
 			tDir += L"\\";
 			res.push_back(tDir);
@@ -286,7 +286,7 @@ std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir) {
 		if (wcscmp(data.cFileName, L"..") == 0 || wcscmp(data.cFileName, L".") == 0)
 			continue;
 
-		//ƒtƒ@ƒCƒ‹
+		//ãƒ•ã‚¡ã‚¤ãƒ«
 
 	} while (FindNextFile(hFind, &data));
 	FindClose(hFind);
@@ -633,7 +633,7 @@ void FileManager::LoadThread::_Run() {
 		signal_.Wait(10);
 
 		while (this->GetStatus() == RUN) {
-			//Logger::WriteTop(StringUtility::Format("ƒ[ƒhƒCƒxƒ“ƒgæ‚èo‚µŠJn"));
+			//Logger::WriteTop(StringUtility::Format("ãƒ­ãƒ¼ãƒ‰ã‚¤ãƒ™ãƒ³ãƒˆå–ã‚Šå‡ºã—é–‹å§‹"));
 			shared_ptr<FileManager::LoadThreadEvent> event = nullptr;
 			{
 				Lock lock(lockEvent_);
@@ -642,9 +642,9 @@ void FileManager::LoadThread::_Run() {
 				//listPath_.erase(event->GetPath());
 				listEvent_.pop_front();
 			}
-			//Logger::WriteTop(StringUtility::Format("ƒ[ƒhƒCƒxƒ“ƒgæ‚èo‚µŠ®—¹F%s", event->GetPath().c_str()));
+			//Logger::WriteTop(StringUtility::Format("ãƒ­ãƒ¼ãƒ‰ã‚¤ãƒ™ãƒ³ãƒˆå–ã‚Šå‡ºã—å®Œäº†ï¼š%s", event->GetPath().c_str()));
 
-			//Logger::WriteTop(StringUtility::Format("ƒ[ƒhŠJnF%s", event->GetPath().c_str()));
+			//Logger::WriteTop(StringUtility::Format("ãƒ­ãƒ¼ãƒ‰é–‹å§‹ï¼š%s", event->GetPath().c_str()));
 			{
 				Lock lock(lockListener_);
 
@@ -654,10 +654,10 @@ void FileManager::LoadThread::_Run() {
 						listener->CallFromLoadThread(event);
 				}
 			}
-			//Logger::WriteTop(StringUtility::Format("ƒ[ƒhŠ®—¹F%s", event->GetPath().c_str()));
+			//Logger::WriteTop(StringUtility::Format("ãƒ­ãƒ¼ãƒ‰å®Œäº†ï¼š%s", event->GetPath().c_str()));
 
 		}
-		Sleep(1);//TODO ‚È‚º‚©‘Ò‹@“ü‚ê‚é‚Æ—‚¿‚Ã‚ç‚¢H
+		Sleep(1);//TODO ãªãœã‹å¾…æ©Ÿå…¥ã‚Œã‚‹ã¨è½ã¡ã¥ã‚‰ã„ï¼Ÿ
 	}
 
 	{

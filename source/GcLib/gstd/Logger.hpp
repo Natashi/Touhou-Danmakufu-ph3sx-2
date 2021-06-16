@@ -67,8 +67,8 @@ namespace gstd {
 
 	//*******************************************************************
 	//WindowLogger
-	//ƒƒOƒEƒBƒ“ƒhƒE
-	//ƒEƒBƒ“ƒhƒE‚Í•ÊƒXƒŒƒbƒh“®ì‚Å‚·
+	//ãƒ­ã‚°ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+	//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã¯åˆ¥ã‚¹ãƒ¬ãƒƒãƒ‰å‹•ä½œã§ã™
 	//Natashi: Only instantiate once.
 	//*******************************************************************
 	class WindowLogger : public Logger, public WindowBase {
@@ -197,7 +197,7 @@ namespace gstd {
 
 	class WindowLogger::InfoPanel::InfoCollector {
 	protected:
-		//CPUî•ñ\‘¢‘Ì
+		//CPUæƒ…å ±æ§‹é€ ä½“
 		struct CpuInfo {
 			char venderID[13];
 			char name[49];

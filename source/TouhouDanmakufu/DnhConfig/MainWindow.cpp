@@ -21,7 +21,7 @@ bool MainWindow::Initialize() {
 	Attach(hWnd_);
 	::ShowWindow(hWnd_, SW_HIDE);
 
-	//ƒ^ƒu
+	//ã‚¿ãƒ–
 	HWND hTab = GetDlgItem(hWnd_, IDC_TAB_MAIN);
 	wndTab_.reset(new WTabControll());
 	wndTab_->Attach(hTab);
@@ -41,7 +41,7 @@ bool MainWindow::Initialize() {
 	panelOption_->Initialize(hTab);
 	wndTab_->AddTab(L"Option", panelOption_);
 
-	//‰Šú‰»Š®—¹
+	//åˆæœŸåŒ–å®Œäº†
 	ReadConfiguration();
 	MoveWindowCenter();
 	wndTab_->ShowPage();
@@ -139,7 +139,7 @@ bool MainWindow::Load() {
 	bool res = record.ReadFromFile(path);
 	if(!res)
 	{
-		//::MessageBox(hWnd_, "“Ç‚İ‚İ¸”s", "İ’è‚ğŠJ‚­", MB_OK);
+		//::MessageBox(hWnd_, "èª­ã¿è¾¼ã¿å¤±æ•—", "è¨­å®šã‚’é–‹ã", MB_OK);
 		return false;
 	}
 */
@@ -474,7 +474,7 @@ void KeyPanel::WriteConfiguration() {
 //KeyPanel::KeyListView
 LRESULT KeyPanel::KeyListView::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
-	case WM_KEYDOWN://ƒL[“ü—Í‚ğ–³‹
+	case WM_KEYDOWN://ã‚­ãƒ¼å…¥åŠ›ã‚’ç„¡è¦–
 		return FALSE;
 	}
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);

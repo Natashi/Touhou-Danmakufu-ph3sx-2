@@ -22,7 +22,7 @@ namespace directx {
 
 	/**********************************************************
 	//EventScriptSource
-	//ƒRƒ“ƒpƒCƒ‹‚³‚ê‚½ƒCƒxƒ“ƒgƒXƒNƒŠƒvƒgƒR[ƒh
+	//ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã•ã‚ŒãŸã‚¤ãƒ™ãƒ³ãƒˆã‚¹ã‚¯ãƒªãƒ—ãƒˆã‚³ãƒ¼ãƒ‰
 	**********************************************************/
 	class EventScriptSource {
 		friend EventScriptCompiler;
@@ -93,14 +93,14 @@ namespace directx {
 	protected:
 		int line_;
 		std::vector<char> buffer_;
-		std::vector<char>::iterator pointer_;//¡‚ÌˆÊ’u
-		EventScriptToken token_;//Œ»İ‚Ìƒg[ƒNƒ“
+		std::vector<char>::iterator pointer_;//ä»Šã®ä½ç½®
+		EventScriptToken token_;//ç¾åœ¨ã®ãƒˆãƒ¼ã‚¯ãƒ³
 		boolean bTagScan_;
 
-		char _NextChar();//ƒ|ƒCƒ“ƒ^‚ği‚ß‚ÄŸ‚Ì•¶š‚ğ’²‚×‚é
-		virtual void _SkipComment();//ƒRƒƒ“ƒg‚ğ‚Æ‚Î‚·
-		virtual void _SkipSpace();//‹ó”’‚ğ‚Æ‚Î‚·
-		virtual void _RaiseError(std::wstring str);//—áŠO‚ğ“Š‚°‚Ü‚·
+		char _NextChar();//ãƒã‚¤ãƒ³ã‚¿ã‚’é€²ã‚ã¦æ¬¡ã®æ–‡å­—ã‚’èª¿ã¹ã‚‹
+		virtual void _SkipComment();//ã‚³ãƒ¡ãƒ³ãƒˆã‚’ã¨ã°ã™
+		virtual void _SkipSpace();//ç©ºç™½ã‚’ã¨ã°ã™
+		virtual void _RaiseError(std::wstring str);//ä¾‹å¤–ã‚’æŠ•ã’ã¾ã™
 		bool _IsTextStartSign();
 		bool _IsTextScan();
 	public:
@@ -109,7 +109,7 @@ namespace directx {
 		EventScriptScanner(std::vector<char>& buf);
 		virtual ~EventScriptScanner();
 
-		EventScriptToken& GetToken();//Œ»İ‚Ìƒg[ƒNƒ“‚ğæ“¾
+		EventScriptToken& GetToken();//ç¾åœ¨ã®ãƒˆãƒ¼ã‚¯ãƒ³ã‚’å–å¾—
 		EventScriptToken& Next();
 		bool HasNext();
 		void CheckType(EventScriptToken& tok, int type);
@@ -668,7 +668,7 @@ namespace directx {
 		void SetText(std::wstring text) { text_->SetText(text); }
 	};
 	class EventLogWindow : public EventWindow {
-		int posMin_;//Å’á•\¦ˆÊ’u
+		int posMin_;//æœ€ä½è¡¨ç¤ºä½ç½®
 		int pos_;
 		gstd::ref_count_ptr<DxText> dxText_;
 	public:
@@ -799,7 +799,7 @@ namespace directx {
 		bool IsAutoGlobal() { return bAutoGlobal_; }
 		void SetAutoGlobal(bool bAuto) { bAutoGlobal_ = bAuto; }
 
-		//•Û‘¶
+		//ä¿å­˜
 		void ReadRecord(gstd::RecordBuffer& record, EventEngine* engine);
 		void WriteRecord(gstd::RecordBuffer& record, EventEngine* engine);
 	};
@@ -898,7 +898,7 @@ namespace directx {
 		gstd::ref_count_ptr<EventKeyState> keyState_;
 		gstd::ref_count_ptr<EventSound> sound_;
 		bool bCriticalFrame_;
-		gstd::ref_count_ptr<EventFrame> frameGlobal_;//ƒOƒ[ƒoƒ‹•Ï”—p
+		gstd::ref_count_ptr<EventFrame> frameGlobal_;//ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°ç”¨
 
 		gstd::ref_count_ptr<EventScriptCodeExecuter> activeCodeExecuter_;
 		std::list<gstd::ref_count_ptr<EventScriptCodeExecuter> > parallelCodeExecuter_;
@@ -990,13 +990,13 @@ namespace directx {
 		void Read(gstd::RecordBuffer& record);
 		void Write(gstd::RecordBuffer& record);
 
-		//ŠÖ”FƒXƒNƒŠƒvƒg‘€ì
+		//é–¢æ•°ï¼šã‚¹ã‚¯ãƒªãƒ—ãƒˆæ“ä½œ
 		static gstd::value Func_EndScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetTarget(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetEventValue(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetEventValue(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//ŠÖ”FƒL[“ü—Í
+		//é–¢æ•°ï¼šã‚­ãƒ¼å…¥åŠ›
 		static gstd::value Func_IsSkip(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
 	};

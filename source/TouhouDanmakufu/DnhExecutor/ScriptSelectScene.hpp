@@ -103,7 +103,7 @@ public:
 class ScriptSelectModel {
 	friend ScriptSelectScene;
 protected:
-	volatile bool bCreated_;
+	bool bCreated_;
 	ScriptSelectScene* scene_;
 public:
 	ScriptSelectModel();

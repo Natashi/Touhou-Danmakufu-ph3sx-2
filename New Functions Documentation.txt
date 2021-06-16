@@ -53,6 +53,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			As the array is passed-by-value, the result is written to the array passed to the function rather than returned as a new value.
 			
+			Currently broken.
+			
 	resize (Overload)
 		Arguments:
 			1) (array) array
@@ -67,6 +69,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Unless the array is an empty array, the fill value's type must match the array element's.
 			
 			As the array is passed-by-value, the result is written to the array passed to the function rather than returned as a new value.
+			
+			Currently broken.
 				
 	--------------------------------> Type Casting <--------------------------------
 	
@@ -301,27 +305,82 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(real) result
 		Description:
-			Normalizes the given angle. (Range = [0, 360])
-
+			Normalizes the given angle. (Range = [0, 360))
+			
 	NormalizeAngleR
 		Arguments:
 			1) angle (radians)
 		Returns:
 			(real) result
 		Description:
-			Normalizes the given angle. (Range = [0, 2pi])
+			Normalizes the given angle. (Range = [0, 2pi))
+
+	AngularDistance
+		Arguments:
+			1) angle from (degrees)
+			1) angle to (degrees)
+		Returns:
+			(real) result
+		Description:
+			Calculates the shortest angular distance between the given angles. (Range = [-180, 180))
+			
+	AngularDistanceR
+		Arguments:
+			1) angle from (radians)
+			1) angle to (radians)
+		Returns:
+			(real) result
+		Description:
+			Calculates the shortest angular distance between the given angles. (Range = [-pi, pi))
 			
 	--------------------------------> Maths <--------------------------------
 	
 	clamp
 		Arguments:
-			1) value
+			1) x
 			2) lower bound
 			3) upper bound
 		Returns:
 			(real) result
 		Description:
-			Returns the given value clamped between the specified range.
+			Returns x clamped between the specified range.
+			
+	log2
+		Arguments:
+			1) x
+		Returns:
+			(real) result
+		Description:
+			Returns base-2 logarithm of x.
+			
+	logn
+		Arguments:
+			1) x
+			2) base
+		Returns:
+			(real) result
+		Description:
+			Returns base-n logarithm of x.
+			
+	erf
+		Arguments:
+			1) x
+		Returns:
+			(real) result
+		Description:
+			Returns the error function value of x.
+			
+			erf(x) = (2/sqrt(pi)) * integral(0, x, "e^(-t^2) dt")
+			
+	gamma
+		Arguments:
+			1) x
+		Returns:
+			(real) result
+		Description:
+			Returns the gamma function value of x.
+			
+			gamma(z + 1) = integral(0, infinity, "(x^z)(e^(-x)) dx")
 	
 	exp
 		Arguments:
@@ -329,24 +388,35 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(real) result
 		Description:
-			Returns e (Euler's number) raised to the power of the given value.
+			Returns e (Euler's number) raised to the power of x.
 
 	sqrt
 		Arguments:
-			1) value
+			1) x
 		Returns:
 			(real) result
 		Description:
-			Returns the square root of the given value. Much faster than pow(value, 0.5).
+			Returns the square root of x.
+			Much faster than pow(x, 0.5).
+			
+	cbrt
+		Arguments:
+			1) x
+		Returns:
+			(real) result
+		Description:
+			Returns the cube root of x.
+			Equivalent to (x ^ (1/3)).
 			
 	nroot
 		Arguments:
-			1) value
+			1) x
 			2) root
 		Returns:
 			(real) result
 		Description:
-			Returns the nth root of the given value. Equivalent to pow(value, 1 / root).
+			Returns the nth root of x.
+			Equivalent to pow(x, 1 / root).
 			
 	hypot
 		Arguments:
@@ -357,7 +427,59 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the hypotenuse of the triangle formed by the two given values.
 			
-			Formula: hypot(x, b) => sqrt(a * a + b * b)
+			hypot(a, b) = sqrt(a * a + b * b)
+			
+	distance
+		Arguments:
+			1) x1
+			2) y1
+			3) x2
+			4) y2
+		Returns:
+			(real) result
+		Description:
+			Returns distance between the given two points.
+			
+			distance(x1, y1, x2, y2) = hypot(x1 - x2, y1 - y2)
+			
+	distancesq
+		Arguments:
+			1) x1
+			2) y1
+			3) x2
+			4) y2
+		Returns:
+			(real) result
+		Description:
+			Returns square of the distance between the given two points.
+			
+			distancesq(x1, y1, x2, y2) = (x1 - x2)^2 + (y1 - y2)^2
+			
+	dottheta
+		Arguments:
+			1) x1
+			2) y1
+			3) x2
+			4) y2
+		Returns:
+			(real) result (degrees)
+		Description:
+			Returns angle (in degrees) between the given two points.
+			
+			dottheta(x1, y1, x2, y2) = atan2(y2 - y1, x2 - x1)
+			
+	rdottheta
+		Arguments:
+			1) x1
+			2) y1
+			3) x2
+			4) y2
+		Returns:
+			(real) result (radians)
+		Description:
+			Returns angle (in radians) between the given two points.
+			
+			rdottheta(x1, y1, x2, y2) = ratan2(y2 - y1, x2 - x1)
 			
 	--------------------------------> Constants <--------------------------------
 		
@@ -562,7 +684,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns a random integer within the range [a, b].
 			
-			Formula: rand_int(a, b) => as_int(rand(as_int(a), as_int(b) + 0.99999));
+			rand_int(a, b) = as_int(rand(as_int(a), as_int(b) + 0.99999))
 
 	prand
 		Arguments:
@@ -582,7 +704,23 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns a random integer within the range [a, b] using the prand() function.
 			
-			Formula: prand_int(a, b) => as_int(prand(as_int(a), as_int(b) + 0.99999));
+			prand_int(a, b) = as_int(prand(as_int(a), as_int(b) + 0.99999))
+			
+	count_rand
+		Returns:
+			(int) count
+		Description:
+			Returns the amount of time rand or rand_int have been used.
+			
+			Resets when restarting the game or exiting to the script select menu.
+			
+	count_prand
+		Returns:
+			(int) count
+		Description:
+			Returns the amount of time prand or prand_int have been used.
+			
+			Resets when restarting the game or exiting to the script select menu.
 			
 	--------------------------------> Regular Expression <--------------------------------
 			
@@ -707,63 +845,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			(bool) result
 		Description:
 			Returns true if the given directory exists.
-			
-	--------------------------------> Engine Utilities <--------------------------------
-	
-	IsEngineFastMode
-		Returns:
-			(bool) result
-		Description:
-			Returns whether the engine is in the "fast mode" state.
-			(Note: Normally triggered with the LCtrl key.)
-			
-	GetConfigWindowSizeIndex
-		Returns:
-			(int) index
-		Description:
-			Returns the config's selected window size index.
-			
-	GetConfigWindowSizeList
-		Returns:
-			(int[][]) available window sizes
-		Description:
-			Returns an array of the window sizes specified in th_dnh.def.
-			
-	GetLastFrameUpdateSpeed
-		Returns:
-			(int) milliseconds
-		Description:
-			Returns the time the engine took to update scripts in the previous frame in milliseconds.
-			
-	GetLastFrameRenderSpeed
-		Returns:
-			(int) milliseconds
-		Description:
-			Returns the time the engine took to render the previous frame in milliseconds.
-			
-	--------------------------------> Screenshot <--------------------------------
-		
-	SaveSnapShotA3
-		Arguments:
-			1) (string) path
-			2) rectangle left
-			3) rectangle top
-			4) rectangle right
-			5) rectangle bottom
-			6) (const) format
-		Returns:
-			(bool) result
-		Description:
-			Renders the whole screen to a texture and saves the specified rectangular area of the texture to a file with the given name.
-			Returns true if the save was successful.
-			
-			Available formats are:
-				IFF_BMP: Bitmap file. 										(.bmp) (default)
-				IFF_JPG: Joint Photographic Experts Group graphics file. 	(.jpeg)
-				IFF_TGA: TARGA bitmap file. 								(.tga)
-				IFF_PNG: Portable Network Graphics file. 					(.png)
-				IFF_DDS: DirectDraw Surface file. 							(.dds)
-				IFF_PPM: Portable PixelMap graphics file. 					(.ppm)
 				
 	--------------------------------> Time <--------------------------------
 	
@@ -906,6 +987,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			If the requested common data does not exist, a null pointer will be returned.
 			
+	IsValidCommonDataValuePointer
+		Arguments:
+			1) (int) value pointer
+		Returns:
+			(bool) valid
+		Description:
+			Returns if the given value is a valid common data value pointer.
+	
 	SetCommonDataPtr
 		Arguments:
 			1) (int) value pointer
@@ -943,8 +1032,113 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			The use of direct pointers mitigate the need for map traversals present in regular common data accesses,
 				and thus would remarkably improve speed.
 			Using an invalid pointer may cause a memory access violation.
+			
+	--------------------------------> Engine Utilities <--------------------------------
+	
+	IsEngineFastMode
+		Returns:
+			(bool) result
+		Description:
+			Returns whether the engine is in the "fast mode" state.
+			(Note: Normally triggered with the LCtrl key.)
+			
+	GetConfigWindowSizeIndex
+		Returns:
+			(int) index
+		Description:
+			Returns the config's selected window size index.
+			
+	GetConfigWindowSizeList
+		Returns:
+			(int[][]) available window sizes
+		Description:
+			Returns an array of the window sizes specified in th_dnh.def.
+			
+	GetLastFrameUpdateSpeed
+		Returns:
+			(int) milliseconds
+		Description:
+			Returns the time the engine took to update scripts in the previous frame in milliseconds.
+			
+	GetLastFrameRenderSpeed
+		Returns:
+			(int) milliseconds
+		Description:
+			Returns the time the engine took to render the previous frame in milliseconds.
+			
+	AddArchiveFile (Overload)
+		Arguments:
+			1) (string) path
+			2) (int) offset
+		Returns:
+			(bool) load successful
+		Description:
+			Overloaded with 2 arguments.
+			
+			Loads a .dat archive, with the added capability to specify the read offset.
+			
+	GetArchiveFilePathList
+		Arguments:
+			1) (string) path
+			2) (bool) full path
+		Returns:
+			(string[]) paths
+		Description:
+			Lists out the stored file entries in the given .dat archive.
+			Archive must have already been loaded.
+			
+	--------------------------------> Screenshot <--------------------------------
+		
+	SaveSnapShotA3
+		Arguments:
+			1) (string) path
+			2) rectangle left
+			3) rectangle top
+			4) rectangle right
+			5) rectangle bottom
+			6) (const) format
+		Returns:
+			(bool) result
+		Description:
+			Renders the whole screen to a texture and saves the specified rectangular area of the texture to a file with the given name.
+			Returns true if the save was successful.
+			
+			Available formats are:
+				IFF_BMP: Bitmap file. 										(.bmp) (default)
+				IFF_JPG: Joint Photographic Experts Group graphics file. 	(.jpeg)
+				IFF_TGA: TARGA bitmap file. 								(.tga)
+				IFF_PNG: Portable Network Graphics file. 					(.png)
+				IFF_DDS: DirectDraw Surface file. 							(.dds)
+				IFF_PPM: Portable PixelMap graphics file. 					(.ppm)
 	
 	--------------------------------> Event <--------------------------------
+	
+	UnloadScript
+		Arguments:
+			1) (int) script ID
+		Description:
+			Unloads a script that was loaded with LoadScript or LoadScriptInThread.
+	
+	UnloadScriptFromCache
+		Arguments:
+			1) (string) script path
+		Description:
+			Unloads the given given from the script source cache.
+			
+			Does nothing if the script does not exist in the cache.
+			
+	StartScript (Overload)
+		Arguments:
+			1) (int) script ID
+			2) (bool) unload
+		Description:
+			Overloaded with 2 arguments.
+			
+			Starts the given script, and whether or not to remove the script from the "Loaded Scripts" cache. (NOT the "Script Source" cache)
+			A script that is often restarted would benefit from this overload by using LoadScript only once,
+				and then using StartScript(idScript, false) to avoid having to repeatedly call LoadScript.
+				
+			StartScript(idScript) = StartScript(idScript, true)
 
 	GetEventArgumentCount
 		Returns:
@@ -954,8 +1148,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 	NotifyEvent
 		Arguments:
-			1) script ID
-			2) event type
+			1) (int) script ID
+			2) (int) event type
 			3+) (any) arguments...
 		Returns:
 			(any) event result
@@ -966,7 +1160,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	NotifyEventOwn
 		Arguments:
-			1) event type
+			1) (int) event type
 			2+) (any) arguments...
 		Returns:
 			(any) event result
@@ -977,7 +1171,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	NotifyEventAll
 		Arguments:
-			1) event type
+			1) (int) event type
 			2+) (any) arguments...
 		Description:
 			Change.
@@ -990,7 +1184,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	PauseScript
 		Arguments:
-			1) script ID
+			1) (int) script ID
 			2) (bool) pause
 		Description:
 			Pauses or unpauses the specified script. Not guaranteed to work flawlessly.
@@ -1340,7 +1534,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 					- The normal 3D camera mode, positioned with elevation and azimuth angles.
 				CAMERA_LOOKAT
 					- The new 3D camera mode for maths enthusiasts, with the ability to directly specify camera position and view target position.
-						Configured with SetCameraFocusX/Y/Z and SetCameraPosLookAt.
+						Configured with SetCameraFocusX/Y/Z or SetCameraPosEye and SetCameraPosLookAt.
 
 	SetCameraPosEye
 		Arguments:
@@ -1424,6 +1618,16 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Examples:
 				ColorARGBToHex(255, 255, 255, 255)	-> 0xFFFFFFFF
 				ColorARGBToHex(67, 255, 0, 125)		-> 0x43FF007D
+				
+	ColorARGBToHex (Overload)
+		Arguments:
+			1) (real[4]) color
+		Returns:
+			(int) hex color
+		Description:
+			Overloaded with 1 argument.
+		
+			Returns ColorARGBToHex(color[0], color[1], color[2], color[3]);
 				
 	ColorHexToARGB
 		Arguments:
@@ -1519,6 +1723,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Returns the given HSV color as an XRGB hexadecimal color.
 	
 	--------------------------------> Base Object Functions <--------------------------------
+	
+	SetInvalidPositionReturn
+		Arguments:
+			1) x
+			2) y
+		Description:
+			Sets the default position that position-fetching functions will return if the object does not exist.
+			
+			The default value is (0, 0).
 	
 	Obj_GetValueI
 		Arguments:

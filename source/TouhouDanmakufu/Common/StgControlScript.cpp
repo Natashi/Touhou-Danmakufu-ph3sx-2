@@ -34,19 +34,19 @@ void StgControlScriptInformation::LoadReplayInformation(std::wstring pathMainScr
 //StgControlScript
 //*******************************************************************
 static const std::vector<function> stgControlFunction = {
-	//ŠÖ”F
-	//STG§Œä‹¤’ÊŠÖ”F‹¤’Êƒf[ƒ^
+	//é–¢æ•°ï¼š
+	//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šå…±é€šãƒ‡ãƒ¼ã‚¿
 	{ "SaveCommonDataAreaA1", StgControlScript::Func_SaveCommonDataAreaA1, 1 },
 	{ "LoadCommonDataAreaA1", StgControlScript::Func_LoadCommonDataAreaA1, 1 },
 	{ "SaveCommonDataAreaA2", StgControlScript::Func_SaveCommonDataAreaA2, 2 },
 	{ "LoadCommonDataAreaA2", StgControlScript::Func_LoadCommonDataAreaA2, 2 },
 
-	//STG§Œä‹¤’ÊŠÖ”FƒL[Œn
+	//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šã‚­ãƒ¼ç³»
 	{ "AddVirtualKey", StgControlScript::Func_AddVirtualKey, 3 },
 	{ "AddReplayTargetVirtualKey", StgControlScript::Func_AddReplayTargetVirtualKey, 1 },
 	{ "SetSkipModeKey", StgControlScript::Func_SetSkipModeKey, 1 },
 
-	//STG§Œä‹¤’ÊŠÖ”FƒVƒXƒeƒ€ŠÖ˜A
+	//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šã‚·ã‚¹ãƒ†ãƒ é–¢é€£
 	{ "GetScore", StgControlScript::Func_GetScore, 0 },
 	{ "AddScore", StgControlScript::Func_AddScore, 1 },
 	{ "GetGraze", StgControlScript::Func_GetGraze, 0 },
@@ -81,7 +81,7 @@ static const std::vector<function> stgControlFunction = {
 	{ "GetConfigWindowSizeIndex", StgControlScript::Func_GetConfigWindowSizeIndex, 0 },
 	{ "GetConfigWindowSizeList", StgControlScript::Func_GetConfigWindowSizeList, 0 },
 
-	//STG‹¤’ÊŠÖ”F•`‰æŠÖ˜A
+	//STGå…±é€šé–¢æ•°ï¼šæç”»é–¢é€£
 	{ "ClearInvalidRenderPriority", StgControlScript::Func_ClearInvalidRenderPriority, 0 },
 	{ "SetInvalidRenderPriorityA1", StgControlScript::Func_SetInvalidRenderPriorityA1, 2 },
 	{ "GetReservedRenderTargetName", StgControlScript::Func_GetReservedRenderTargetName, 1 },
@@ -91,21 +91,21 @@ static const std::vector<function> stgControlFunction = {
 	{ "SaveSnapShotA2", StgControlScript::Func_SaveSnapShotA2, 5 },
 	{ "SaveSnapShotA3", StgControlScript::Func_SaveSnapShotA3, 6 },
 
-	//STG§Œä‹¤’ÊŠÖ”F©‹@ŠÖ˜A
+	//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šè‡ªæ©Ÿé–¢é€£
 	{ "GetPlayerID", StgControlScript::Func_GetPlayerID, 0 },
 	{ "GetPlayerReplayName", StgControlScript::Func_GetPlayerReplayName, 0 },
 
-	//STG§Œä‹¤’ÊŠÖ”Fƒ†[ƒUƒXƒNƒŠƒvƒg
+	//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šãƒ¦ãƒ¼ã‚¶ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
 	{ "SetPauseScriptPath", StgControlScript::Func_SetPauseScriptPath, 1 },
 	{ "SetEndSceneScriptPath", StgControlScript::Func_SetEndSceneScriptPath, 1 },
 	{ "SetReplaySaveSceneScriptPath", StgControlScript::Func_SetReplaySaveSceneScriptPath, 1 },
 
-	//STG§Œä‹¤’ÊŠÖ”F©‹@ƒXƒNƒŠƒvƒg
+	//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šè‡ªæ©Ÿã‚¹ã‚¯ãƒªãƒ—ãƒˆ
 	{ "GetLoadFreePlayerScriptList", StgControlScript::Func_GetLoadFreePlayerScriptList, 0 },
 	{ "GetFreePlayerScriptCount", StgControlScript::Func_GetFreePlayerScriptCount, 0 },
 	{ "GetFreePlayerScriptInfo", StgControlScript::Func_GetFreePlayerScriptInfo, 2 },
 
-	//STG§Œä‹¤’ÊŠÖ”FƒŠƒvƒŒƒCŠÖ˜A
+	//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šãƒªãƒ—ãƒ¬ã‚¤é–¢é€£
 	{ "LoadReplayList", StgControlScript::Func_LoadReplayList, 0 },
 	{ "GetValidReplayIndices", StgControlScript::Func_GetValidReplayIndices, 0 },
 	{ "IsValidReplayIndex", StgControlScript::Func_IsValidReplayIndex, 1 },
@@ -169,21 +169,16 @@ static const std::vector<constant> stgControlConstant = {
 
 StgControlScript::StgControlScript(StgSystemController* systemController) {
 	systemController_ = systemController;
-	scriptManager_ = nullptr;
 
 	_AddFunction(&stgControlFunction);
 	_AddConstant(&stgControlConstant);
-
-	bLoad_ = false;
-	bEndScript_ = false;
-	bAutoDeleteObject_ = false;
 
 	SetScriptEngineCache(systemController->GetScriptEngineCache());
 
 	commonDataManager_ = systemController->GetCommonDataManager();
 }
 
-//STG§Œä‹¤’ÊŠÖ”F‹¤’Êƒf[ƒ^
+//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šå…±é€šãƒ‡ãƒ¼ã‚¿
 gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
@@ -281,7 +276,7 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA2(gstd::script_machine* ma
 	return script->CreateBooleanValue(res);
 }
 
-//STG§Œä‹¤’ÊŠÖ”FƒL[Œn
+//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šã‚­ãƒ¼ç³»
 gstd::value StgControlScript::Func_AddVirtualKey(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	EDirectInput* input = EDirectInput::GetInstance();
 	int padIndex = input->GetPadIndex();
@@ -315,7 +310,7 @@ gstd::value StgControlScript::Func_SetSkipModeKey(gstd::script_machine* machine,
 	return value();
 }
 
-//STG§Œä‹¤’ÊŠÖ”FƒVƒXƒeƒ€ŠÖ˜A
+//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šã‚·ã‚¹ãƒ†ãƒ é–¢é€£
 gstd::value StgControlScript::Func_GetScore(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 
@@ -543,7 +538,7 @@ gstd::value StgControlScript::Func_GetScriptPathList(gstd::script_machine* machi
 	for (auto itr = listFile.begin(); itr != listFile.end(); ++itr) {
 		std::wstring path = *itr;
 
-		//–¾‚ç‚©‚ÉŠÖŒW‚È‚³‚»‚¤‚ÈŠg’£q‚ÍœŠO
+		//æ˜ã‚‰ã‹ã«é–¢ä¿‚ãªã•ãã†ãªæ‹¡å¼µå­ã¯é™¤å¤–
 		std::wstring ext = PathProperty::GetFileExtension(path);
 		if (ScriptInformation::IsExcludeExtention(ext)) continue;
 
@@ -624,7 +619,7 @@ gstd::value StgControlScript::Func_GetConfigWindowSizeList(script_machine* machi
 	return script->CreateValueArrayValue(resListSizes);
 }
 
-//STG‹¤’ÊŠÖ”F•`‰æŠÖ˜A
+//STGå…±é€šé–¢æ•°ï¼šæç”»é–¢é€£
 gstd::value StgControlScript::Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	StgSystemController* systemController = script->systemController_;
@@ -822,7 +817,7 @@ gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine,
 	return script->CreateBooleanValue(SUCCEEDED(hr));
 }
 
-//STG§Œä‹¤’ÊŠÖ”F©‹@ŠÖ˜A
+//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šè‡ªæ©Ÿé–¢é€£
 gstd::value StgControlScript::Func_GetPlayerID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 
@@ -846,7 +841,7 @@ gstd::value StgControlScript::Func_GetPlayerReplayName(gstd::script_machine* mac
 	return script->CreateStringValue(replayName);
 }
 
-//STG§Œä‹¤’ÊŠÖ”Fƒ†[ƒUƒXƒNƒŠƒvƒg
+//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šãƒ¦ãƒ¼ã‚¶ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
 gstd::value StgControlScript::Func_SetPauseScriptPath(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	ref_count_ptr<StgSystemInformation> info = script->systemController_->GetSystemInformation();
@@ -875,7 +870,7 @@ gstd::value StgControlScript::Func_SetReplaySaveSceneScriptPath(gstd::script_mac
 	return value();
 }
 
-//STG§Œä‹¤’ÊŠÖ”F©‹@ƒXƒNƒŠƒvƒg
+//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šè‡ªæ©Ÿã‚¹ã‚¯ãƒªãƒ—ãƒˆ
 gstd::value StgControlScript::Func_GetLoadFreePlayerScriptList(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
@@ -930,7 +925,7 @@ gstd::value StgControlScript::Func_GetFreePlayerScriptInfo(gstd::script_machine*
 	return res;
 }
 
-//STG§Œä‹¤’ÊŠÖ”FƒŠƒvƒŒƒCŠÖ˜A
+//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šãƒªãƒ—ãƒ¬ã‚¤é–¢é€£
 gstd::value StgControlScript::Func_LoadReplayList(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();

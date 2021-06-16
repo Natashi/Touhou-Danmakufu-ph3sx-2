@@ -15,7 +15,7 @@ WindowBase::WindowBase() {
 	hWnd_ = nullptr;
 	oldWndProc_ = nullptr;
 
-	//‹ó‚¢‚Ä‚¢‚éWindowIDæ“¾
+	//ç©ºã„ã¦ã„ã‚‹WindowIDå–å¾—
 	{
 		Lock lock(lock_);
 
@@ -35,7 +35,7 @@ WindowBase::WindowBase() {
 WindowBase::~WindowBase() {
 	this->Detach();
 
-	//WindowID‰ğ•ú
+	//WindowIDè§£æ”¾
 	for (auto itr = listWndId_.begin(); itr != listWndId_.end(); ++itr) {
 		if (*itr != idWindow_) continue;
 		listWndId_.erase(itr);
@@ -46,13 +46,13 @@ WindowBase::~WindowBase() {
 bool WindowBase::Attach(HWND hWnd) {
 	if (!hWnd) return false;
 	hWnd_ = hWnd;
-	//ƒ_ƒCƒAƒƒO‚©ƒEƒBƒ“ƒhƒE‚©‚ğ”»’è
+	//ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã‹ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‹ã‚’åˆ¤å®š
 	int typeProc = ::GetWindowLong(hWnd, DWL_DLGPROC) != 0 ? DWL_DLGPROC : GWL_WNDPROC;
 
-	//ƒvƒƒpƒeƒB‚ÉƒCƒ“ƒXƒ^ƒ“ƒX‚ğ“o˜^
+	//ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã«ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ç™»éŒ²
 	::SetProp(hWnd_, PROP_THIS, (HANDLE)this);
 
-	//Šù‘¶‚ÌƒEƒBƒ“ƒhƒE‚ğƒTƒuƒNƒ‰ƒX‰»
+	//æ—¢å­˜ã®ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ã‚µãƒ–ã‚¯ãƒ©ã‚¹åŒ–
 	if (::GetWindowLong(hWnd_, typeProc) != (LONG)_StaticWindowProcedure)
 		oldWndProc_ = (WNDPROC)::SetWindowLong(hWnd_, typeProc, (LONG)_StaticWindowProcedure);
 	return true;
@@ -61,7 +61,7 @@ bool WindowBase::Attach(HWND hWnd) {
 bool WindowBase::Detach() {
 	if (hWnd_ == nullptr) return false;
 
-	//ƒTƒuƒNƒ‰ƒX‰»‚ğ‰ğœ
+	//ã‚µãƒ–ã‚¯ãƒ©ã‚¹åŒ–ã‚’è§£é™¤
 	if (oldWndProc_) {
 		int typeProc = ::GetWindowLong(hWnd_, DWL_DLGPROC) != 0 ? DWL_DLGPROC : GWL_WNDPROC;
 		::SetWindowLong(hWnd_, typeProc, (DWORD)oldWndProc_);
@@ -75,7 +75,7 @@ bool WindowBase::Detach() {
 LRESULT CALLBACK WindowBase::_StaticWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	WindowBase* tWnd = (WindowBase*)::GetProp(hWnd, PROP_THIS);
 
-	//æ“¾‚Å‚«‚È‚©‚Á‚½‚Æ‚«‚Ìˆ—
+	//å–å¾—ã§ããªã‹ã£ãŸã¨ãã®å‡¦ç†
 	if (tWnd == nullptr) {
 		if ((uMsg == WM_CREATE) || (uMsg == WM_NCCREATE))
 			tWnd = (WindowBase*)((LPCREATESTRUCT)lParam)->lpCreateParams;
@@ -90,7 +90,7 @@ LRESULT CALLBACK WindowBase::_StaticWindowProcedure(HWND hWnd, UINT uMsg, WPARAM
 		return lResult;
 	}
 
-	//ƒ_ƒCƒAƒƒO‚ÆƒEƒBƒ“ƒhƒE‚Å•Ô‚·’l‚ğ•ª‚¯‚é
+	//ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã¨ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã§è¿”ã™å€¤ã‚’åˆ†ã‘ã‚‹
 	return ::GetWindowLong(hWnd, DWL_DLGPROC) ?
 		FALSE : ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
@@ -101,7 +101,7 @@ LRESULT WindowBase::_CallPreviousWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wP
 	if (oldWndProc_)
 		return CallWindowProc(oldWndProc_, hWnd, uMsg, wParam, lParam);
 
-	//ƒ_ƒCƒAƒƒO‚ÆƒEƒBƒ“ƒhƒE‚Å•Ô‚·’l‚ğ•ª‚¯‚é
+	//ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã¨ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã§è¿”ã™å€¤ã‚’åˆ†ã‘ã‚‹
 	return ::GetWindowLong(hWnd, DWL_DLGPROC) ?
 		FALSE : ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
@@ -148,7 +148,7 @@ void ModalDialog::_RunMessageLoop() {
 	::ShowWindow(hWnd_, SW_SHOW);
 
 	MSG msg;
-	while (!bEndDialog_) {	//ƒƒbƒZ[ƒWƒ‹[ƒv
+	while (!bEndDialog_) {	//ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ãƒ«ãƒ¼ãƒ—
 		::GetMessage(&msg, nullptr, 0, 0);
 		if (IsDialog() && hWnd_ && IsDialogMessage(hWnd_, &msg)) continue;
 
