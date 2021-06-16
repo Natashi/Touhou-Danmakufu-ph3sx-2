@@ -110,7 +110,7 @@ void StgShotManager::Render(int targetPriority) {
 	{
 		UINT cPass = 1U;
 
-		//Always renders enemy shots above player shots, completely obliterates TAﾎ｣'s wet dream.
+		//Always renders enemy shots above player shots, completely obliterates TAΣ's wet dream.
 		for (size_t iBlend = 0; iBlend < countBlendType; ++iBlend) {
 			bool hasPolygon = false;
 			std::vector<StgShotRenderer*>& listPlayer = listPlayerShotData_->GetRendererList(blendMode[iBlend] - 1);
@@ -339,7 +339,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 			}
 		}
 
-		//繝�繧ｯ繧ｹ繝√Ε隱ｭ縺ｿ霎ｼ縺ｿ
+		//テクスチャ読み込み
 		if (pathImage.size() == 0) throw gstd::wexception("Shot texture must be set.");
 		std::wstring dir = PathProperty::GetFileDirectory(path);
 		pathImage = StringUtility::Replace(pathImage, L"./", dir);
@@ -1461,7 +1461,7 @@ void StgNormalShotObject::SetShotDataID(int id) {
 }
 
 //****************************************************************************
-//StgLaserObject(繝ｬ繝ｼ繧ｶ繝ｼ蝓ｺ譛ｬ驛ｨ)
+//StgLaserObject(レーザー基本部)
 //****************************************************************************
 StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObject(stageController) {
 	life_ = 9999999;
@@ -1491,7 +1491,7 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 }
 
 //****************************************************************************
-//StgLooseLaserObject(蟆�蜃ｺ蝙九Ξ繝ｼ繧ｶ繝ｼ)
+//StgLooseLaserObject(射出型レーザー)
 //****************************************************************************
 StgLooseLaserObject::StgLooseLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
 	typeObject_ = TypeObject::LooseLaser;
@@ -1766,7 +1766,7 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 }
 
 //****************************************************************************
-//StgStraightLaserObject(險ｭ鄂ｮ蝙九Ξ繝ｼ繧ｶ繝ｼ)
+//StgStraightLaserObject(設置型レーザー)
 //****************************************************************************
 StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
 	typeObject_ = TypeObject::StraightLaser;
@@ -2091,7 +2091,7 @@ void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision)
 }
 
 //****************************************************************************
-//StgCurveLaserObject(譖ｲ縺後ｋ蝙九Ξ繝ｼ繧ｶ繝ｼ)
+//StgCurveLaserObject(曲がる型レーザー)
 //****************************************************************************
 StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
 	typeObject_ = TypeObject::CurveLaser;

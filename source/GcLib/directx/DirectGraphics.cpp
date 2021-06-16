@@ -856,9 +856,9 @@ DirectGraphicsPrimaryWindow::~DirectGraphicsPrimaryWindow() {
 }
 void DirectGraphicsPrimaryWindow::_PauseDrawing() {
 	//	gstd::Application::GetBase()->SetActive(false);
-		// ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ã®ãƒ¡ãƒ‹ãƒ¥ãƒ¼ãƒãƒ¼ã‚’æç”»ã™ã‚‹
+		// ƒEƒCƒ“ƒhƒE‚Ìƒƒjƒ…[ƒo[‚ğ•`‰æ‚·‚é
 	::DrawMenuBar(hWnd_);
-	// ã‚¦ã‚¤ãƒ³ãƒ‰ã‚¦ã®ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’æç”»ã™ã‚‹
+	// ƒEƒCƒ“ƒhƒE‚ÌƒtƒŒ[ƒ€‚ğ•`‰æ‚·‚é
 	::RedrawWindow(hWnd_, nullptr, nullptr, RDW_FRAME);
 }
 void DirectGraphicsPrimaryWindow::_RestartDrawing() {
@@ -966,13 +966,13 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 	}
 	case WM_ENTERMENULOOP:
 	{
-		//ãƒ¡ãƒ‹ãƒ¥ãƒ¼ãŒé¸æŠã•ã‚ŒãŸã‚‰å‹•ä½œã‚’åœæ­¢ã™ã‚‹
+		//ƒƒjƒ…[‚ª‘I‘ğ‚³‚ê‚½‚ç“®ì‚ğ’â~‚·‚é
 		_PauseDrawing();
 		return FALSE;
 	}
 	case WM_EXITMENULOOP:
 	{
-		//ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®é¸æŠãŒè§£é™¤ã•ã‚ŒãŸã‚‰å‹•ä½œã‚’å†é–‹ã™ã‚‹
+		//ƒƒjƒ…[‚Ì‘I‘ğ‚ª‰ğœ‚³‚ê‚½‚ç“®ì‚ğÄŠJ‚·‚é
 		_RestartDrawing();
 		return FALSE;
 	}
@@ -1300,7 +1300,7 @@ D3DXVECTOR2 DxCamera::TransformCoordinateTo2D(D3DXVECTOR3 pos) {
 	/*
 	if (vect.w > 0) {
 		vect.x = width / 2.0f + (vect.x / vect.w) * width / 2.0f;
-		vect.y = height / 2.0f - (vect.y / vect.w) * height / 2.0f; // ï¼¹æ–¹å‘ã¯ä¸ŠãŒæ­£ã¨ãªã‚‹ãŸã‚
+		vect.y = height / 2.0f - (vect.y / vect.w) * height / 2.0f; // ‚x•ûŒü‚Íã‚ª³‚Æ‚È‚é‚½‚ß
 	}
 	*/
 

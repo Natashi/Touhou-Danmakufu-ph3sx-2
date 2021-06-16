@@ -16,7 +16,7 @@ namespace directx {
 		D3DDECL_END()
 	};
 	struct VERTEX_TL {
-		//åº§æ¨™3Då¤‰æ›æ¸ˆã¿ã€ãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°æ¸ˆã¿
+		//À•W3D•ÏŠ·Ï‚ÝAƒ‰ƒCƒeƒBƒ“ƒOÏ‚Ý
 		VERTEX_TL() {}
 		VERTEX_TL(D3DXVECTOR4& pos, D3DCOLOR dcol) : position(pos), diffuse_color(dcol) {}
 		D3DXVECTOR4 position;
@@ -45,7 +45,7 @@ namespace directx {
 		D3DDECL_END()
 	};
 	struct VERTEX_TLX {
-		//åº§æ¨™3Då¤‰æ›æ¸ˆã¿ã€ãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°æ¸ˆã¿ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£æœ‰ã‚Š
+		//À•W3D•ÏŠ·Ï‚ÝAƒ‰ƒCƒeƒBƒ“ƒOÏ‚ÝAƒeƒNƒXƒ`ƒƒ—L‚è
 		VERTEX_TLX() {}
 		VERTEX_TLX(D3DXVECTOR4& pos, D3DCOLOR diffcol, D3DXVECTOR2& tex) : position(pos), diffuse_color(diffcol), texcoord(tex) {}
 		D3DXVECTOR4 position;
@@ -66,7 +66,7 @@ namespace directx {
 		D3DDECL_END()
 	};
 	struct VERTEX_L {
-		//ãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°æ¸ˆã¿
+		//ƒ‰ƒCƒeƒBƒ“ƒOÏ‚Ý
 		VERTEX_L() {}
 		VERTEX_L(D3DXVECTOR3& pos, D3DCOLOR col) : position(pos), diffuse_color(col) {}
 		D3DXVECTOR3 position;
@@ -95,7 +95,7 @@ namespace directx {
 		D3DDECL_END()
 	};
 	struct VERTEX_LX {
-		//ãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°æ¸ˆã¿ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£æœ‰ã‚Š
+		//ƒ‰ƒCƒeƒBƒ“ƒOÏ‚ÝAƒeƒNƒXƒ`ƒƒ—L‚è
 		VERTEX_LX() {}
 		VERTEX_LX(D3DXVECTOR3& pos, D3DCOLOR diffcol, D3DXVECTOR2& tex) : position(pos), diffuse_color(diffcol), texcoord(tex) {}
 		D3DXVECTOR3 position;
@@ -110,7 +110,7 @@ namespace directx {
 		D3DDECL_END()
 	};
 	struct VERTEX_N {
-		//æœªãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°
+		//–¢ƒ‰ƒCƒeƒBƒ“ƒO
 		VERTEX_N() {}
 		VERTEX_N(D3DXVECTOR3& pos, D3DXVECTOR3& n) : position(pos), normal(n) {}
 		D3DXVECTOR3 position;
@@ -125,7 +125,7 @@ namespace directx {
 		D3DDECL_END()
 	};
 	struct VERTEX_NX {
-		//æœªãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£æœ‰ã‚Š
+		//–¢ƒ‰ƒCƒeƒBƒ“ƒOAƒeƒNƒXƒ`ƒƒ—L‚è
 		VERTEX_NX() {}
 		VERTEX_NX(D3DXVECTOR3& pos, D3DXVECTOR3& n, D3DXVECTOR2& tc) : position(pos), normal(n), texcoord(tc) {}
 		D3DXVECTOR3 position;
@@ -181,7 +181,7 @@ namespace directx {
 		D3DDECL_END()
 	};
 	struct VERTEX_B1NX {
-		//æœªãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£æœ‰ã‚Šã€é ‚ç‚¹ãƒ–ãƒ¬ãƒ³ãƒ‰1
+		//–¢ƒ‰ƒCƒeƒBƒ“ƒOAƒeƒNƒXƒ`ƒƒ—L‚èA’¸“_ƒuƒŒƒ“ƒh1
 		VERTEX_B1NX() {}
 		VERTEX_B1NX(D3DXVECTOR3& pos, DWORD bi, D3DXVECTOR3& n, D3DXVECTOR2& tc) : position(pos), normal(n), texcoord(tc) {
 			blendIndex = bi;
@@ -202,7 +202,7 @@ namespace directx {
 		D3DDECL_END()
 	};
 	struct VERTEX_B2NX {
-		//æœªãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£æœ‰ã‚Šã€é ‚ç‚¹ãƒ–ãƒ¬ãƒ³ãƒ‰2
+		//–¢ƒ‰ƒCƒeƒBƒ“ƒOAƒeƒNƒXƒ`ƒƒ—L‚èA’¸“_ƒuƒŒƒ“ƒh2
 		VERTEX_B2NX() {}
 		VERTEX_B2NX(D3DXVECTOR3& pos, float rate, BYTE index1, BYTE index2, 
 			D3DXVECTOR3& n, D3DXVECTOR2& tc) : position(pos), normal(n), texcoord(tc) 
@@ -228,7 +228,7 @@ namespace directx {
 		D3DDECL_END()
 	};
 	struct VERTEX_B4NX {
-		//æœªãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£æœ‰ã‚Šã€é ‚ç‚¹ãƒ–ãƒ¬ãƒ³ãƒ‰4
+		//–¢ƒ‰ƒCƒeƒBƒ“ƒOAƒeƒNƒXƒ`ƒƒ—L‚èA’¸“_ƒuƒŒƒ“ƒh4
 		VERTEX_B4NX() {}
 		VERTEX_B4NX(D3DXVECTOR3& pos, float rate[3], BYTE index[4], 
 			D3DXVECTOR3& n, D3DXVECTOR2& tc) : position(pos), normal(n), texcoord(tc) 

@@ -453,12 +453,12 @@ bool DxMath::IsIntersected(DxLine3D& line, std::vector<DxTriangle>& triangles, s
 
 	for (size_t iTri = 0; iTri < triangles.size(); ++iTri) {
 		DxTriangle& tri = triangles[iTri];
-		D3DXPLANE plane;//3è§’å½¢ã®é¢
+		D3DXPLANE plane;//3ŠpŒ`‚Ì–Ê
 		D3DXPlaneFromPoints(&plane, &tri.GetPosition(0), &tri.GetPosition(1), &tri.GetPosition(2));
 
-		D3DXVECTOR3 vOut;// é¢ã¨è¦–ç·šã®äº¤ç‚¹ã®åº§æ¨™
+		D3DXVECTOR3 vOut;// –Ê‚ÆŽ‹ü‚ÌŒð“_‚ÌÀ•W
 		if (D3DXPlaneIntersectLine(&vOut, &plane, &line.GetPosition(0), &line.GetPosition(1))) {
-			// å†…å¤–åˆ¤å®š
+			// “àŠO”»’è
 			D3DXVECTOR3 vN[3];
 			D3DXVECTOR3 vv1, vv2, vv3;
 			vv1 = tri.GetPosition(0) - vOut;
@@ -469,7 +469,7 @@ bool DxMath::IsIntersected(DxLine3D& line, std::vector<DxTriangle>& triangles, s
 			D3DXVec3Cross(&vN[2], &vv3, &vv2);
 			if (D3DXVec3Dot(&vN[0], &vN[1]) < 0 || D3DXVec3Dot(&vN[0], &vN[2]) < 0)
 				continue;
-			else {// å†…å´(3è§’å½¢ã«æŽ¥è§¦)
+			else {// “à‘¤(3ŠpŒ`‚ÉÚG)
 				out.push_back(vOut);
 			}
 		}

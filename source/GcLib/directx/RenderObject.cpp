@@ -321,7 +321,7 @@ void RenderObject::SetCoordinate2dDeviceMatrix() {
 
 //****************************************************************************
 //RenderObjectTLX
-//åº§æ¨™3Då¤‰æ›æ¸ˆã¿ã€ãƒ©ã‚¤ãƒ†ã‚£ãƒ³ã‚°æ¸ˆã¿ã€ãƒ†ã‚¯ã‚¹ãƒãƒ£æœ‰ã‚Š
+//À•W3D•ÏŠ·Ï‚İAƒ‰ƒCƒeƒBƒ“ƒOÏ‚İAƒeƒNƒXƒ`ƒƒ—L‚è
 //****************************************************************************
 RenderObjectTLX::RenderObjectTLX() {
 	strideVertexStreamZero_ = sizeof(VERTEX_TLX);
@@ -1310,7 +1310,7 @@ void Sprite3D::SetVertex(const DxRect<int>& rcSrc, const DxRect<double>& rcDest,
 void Sprite3D::SetVertex(const DxRect<double>& rcSrcDst, D3DCOLOR color) {
 	SetSourceDestRect(rcSrcDst);
 
-	//é ‚ç‚¹è‰²
+	//’¸“_F
 	SetColorRGB(color);
 	SetAlpha(ColorAccess::GetColorA(color));
 }

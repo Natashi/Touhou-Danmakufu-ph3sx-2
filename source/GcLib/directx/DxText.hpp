@@ -53,7 +53,7 @@ namespace directx {
 
 	//*******************************************************************
 	//DxCharGlyph
-	//æ–‡å­—1æ–‡å­—ã®ãƒ†ã‚¯ã‚¹ãƒãƒ£
+	//•¶š1•¶š‚ÌƒeƒNƒXƒ`ƒƒ
 	//*******************************************************************
 	class DxCharGlyph {
 		shared_ptr<Texture> texture_;
@@ -76,7 +76,7 @@ namespace directx {
 
 	//*******************************************************************
 	//DxCharCache
-	//æ–‡å­—ã‚­ãƒ£ãƒƒã‚·ãƒ¥
+	//•¶šƒLƒƒƒbƒVƒ…
 	//*******************************************************************
 	class DxCharCacheKey {
 		friend DxCharCache;
@@ -207,7 +207,7 @@ namespace directx {
 
 	//*******************************************************************
 	//DxTextRenderer
-	//ãƒ†ã‚­ã‚¹ãƒˆæç”»ã‚¨ãƒ³ã‚¸ãƒ³
+	//ƒeƒLƒXƒg•`‰æƒGƒ“ƒWƒ“
 	//*******************************************************************
 	class DxTextLine;
 	class DxTextInfo;
@@ -311,12 +311,12 @@ namespace directx {
 			shared_ptr<Sprite2D> sprite;
 		};
 	protected:
-		POINT position_;//ç§»å‹•å…ˆåº§æ¨™
-		D3DXVECTOR3 scale_;//æ‹¡å¤§ç‡
+		POINT position_;//ˆÚ“®æÀ•W
+		D3DXVECTOR3 scale_;//Šg‘å—¦
 		D3DXVECTOR3 angle_;
 		D3DCOLOR color_;
 		std::list<ObjectData> listData_;
-		D3DXVECTOR2 center_;//åº§æ¨™å¤‰æ›ã®ä¸­å¿ƒ
+		D3DXVECTOR2 center_;//À•W•ÏŠ·‚Ì’†S
 		bool bAutoCenter_;
 		bool bPermitCamera_;
 		shared_ptr<Shader> shader_;
@@ -383,7 +383,7 @@ namespace directx {
 
 	//*******************************************************************
 	//DxText
-	//ãƒ†ã‚­ã‚¹ãƒˆæç”»
+	//ƒeƒLƒXƒg•`‰æ
 	//*******************************************************************
 	class DxText {
 		friend DxTextRenderer;

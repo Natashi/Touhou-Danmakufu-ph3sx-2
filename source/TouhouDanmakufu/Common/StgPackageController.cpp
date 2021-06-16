@@ -20,7 +20,7 @@ void StgPackageController::Initialize() {
 	ref_count_ptr<ScriptInformation> infoScript = infoSystem->GetMainScriptInformation();
 	infoPackage_->SetMainScriptInformation(infoScript);
 
-	//ãƒ¡ã‚¤ãƒ³ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
+	//ƒƒCƒ“ƒXƒNƒŠƒvƒg
 	std::wstring& pathMainScript = infoScript->GetScriptPath();
 	ELogger::WriteTop(StringUtility::Format(L"Package script: [%s]", pathMainScript.c_str()));
 	auto idScript = scriptManager_->LoadScript(pathMainScript, StgPackageScript::TYPE_PACKAGE_MAIN);
@@ -30,7 +30,7 @@ void StgPackageController::Initialize() {
 }
 void StgPackageController::Work() {
 	scriptManager_->Work();
-	//ã‚¹ã‚¯ãƒªãƒ—ãƒˆãŒé–‰ã˜ã‚‰ã‚ŒãŸå ´åˆã¯å†åº¦å®Ÿè¡Œ(æç”»ã®ç¶™ãŽç›®ã‚’ç›®ç«‹ãŸãªãã™ã‚‹)
+	//ƒXƒNƒŠƒvƒg‚ª•Â‚¶‚ç‚ê‚½ê‡‚ÍÄ“xŽÀs(•`‰æ‚ÌŒp‚¬–Ú‚ð–Ú—§‚½‚È‚­‚·‚é)
 	//mkm why is this necessary
 	if (scriptManager_->HasCloseScriptWork())
 		scriptManager_->Work();

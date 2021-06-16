@@ -7,7 +7,7 @@ using namespace directx;
 
 /**********************************************************
 //EventScriptSource
-//ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã•ã‚ŒãŸã‚¤ãƒ™ãƒ³ãƒˆã‚¹ã‚¯ãƒªãƒ—ãƒˆã‚³ãƒ¼ãƒ‰
+//ƒRƒ“ƒpƒCƒ‹‚³‚ê‚½ƒCƒxƒ“ƒgƒXƒNƒŠƒvƒgƒR[ƒh
 **********************************************************/
 EventScriptSource::EventScriptSource() {}
 EventScriptSource::~EventScriptSource() {
@@ -64,7 +64,7 @@ EventScriptScanner::~EventScriptScanner() {
 
 char EventScriptScanner::_NextChar() {
 	if (HasNext() == false) {
-		_RaiseError(L"_NextChar:ã™ã§ã«æ–‡å­—åˆ—çµ‚ç«¯ã§ã™");
+		_RaiseError(L"_NextChar:‚·‚Å‚É•¶š—ñI’[‚Å‚·");
 	}
 
 	if (IsDBCSLeadByte(*pointer_))pointer_ += 2;
@@ -81,7 +81,7 @@ void EventScriptScanner::_SkipComment() {
 
 		char ch = *pointer_;
 
-		if (ch == '/') {//ã‚³ãƒ¡ãƒ³ãƒˆã‚¢ã‚¦ãƒˆå‡¦ç†
+		if (ch == '/') {//ƒRƒƒ“ƒgƒAƒEƒgˆ—
 			std::vector<char>::iterator tPos = pointer_;
 			ch = _NextChar();
 			if (ch == '/') {// "//"
@@ -108,7 +108,7 @@ void EventScriptScanner::_SkipComment() {
 			}
 		}
 
-		//ã‚¹ã‚­ãƒƒãƒ—ã‚‚ç©ºç™½é£›ã°ã—ã‚‚ç„¡ã„å ´åˆã€çµ‚äº†
+		//ƒXƒLƒbƒv‚à‹ó”’”ò‚Î‚µ‚à–³‚¢ê‡AI—¹
 		if (posStart == pointer_)break;
 	}
 }
@@ -130,7 +130,7 @@ bool EventScriptScanner::_IsTextStartSign() {
 
 	if (false && ch == '\\') {
 		std::vector<char>::iterator pos = pointer_;
-		ch = _NextChar();//æ¬¡ã®ã‚¿ã‚°ã¾ã§é€²ã‚ã‚‹
+		ch = _NextChar();//Ÿ‚Ìƒ^ƒO‚Ü‚Åi‚ß‚é
 		bool bDBSSLeadByte = IsDBCSLeadByte(ch) != 0;
 		bool bLess = (!bDBSSLeadByte && ch == CHAR_TAG_START);
 		if (!bLess) {
@@ -160,13 +160,13 @@ bool EventScriptScanner::_IsTextScan() {
 		if (ch == '/' || ch == '*')res = false;
 	}
 	else if (false && ch == '\\') {
-		ch = _NextChar();//æ¬¡ã®ã‚¿ã‚°ã¾ã§é€²ã‚ã‚‹
+		ch = _NextChar();//Ÿ‚Ìƒ^ƒO‚Ü‚Åi‚ß‚é
 		res = true;
 	}
 	else {
 		bool bGreater = (IsDBCSLeadByte(ch) == 0 && ch == CHAR_TAG_END);
 		if (bGreater) {
-			_RaiseError(L"ãƒ†ã‚­ã‚¹ãƒˆä¸­ã«ã‚¿ã‚°çµ‚äº†æ–‡å­—ãŒå­˜åœ¨ã—ã¾ã—ãŸ");
+			_RaiseError(L"ƒeƒLƒXƒg’†‚Éƒ^ƒOI—¹•¶š‚ª‘¶İ‚µ‚Ü‚µ‚½");
 		}
 		bool bNotLess = !(IsDBCSLeadByte(ch) == 0 && ch == CHAR_TAG_START);
 		res = bNotLess;
@@ -178,10 +178,10 @@ EventScriptToken& EventScriptScanner::GetToken() {
 }
 EventScriptToken& EventScriptScanner::Next() {
 	if (!HasNext()) {
-		_RaiseError(L"Next:ã™ã§ã«çµ‚ç«¯ã§ã™");
+		_RaiseError(L"Next:‚·‚Å‚ÉI’[‚Å‚·");
 	}
 
-	_SkipComment();//ã‚³ãƒ¡ãƒ³ãƒˆã‚’ã¨ã°ã—ã¾ã™
+	_SkipComment();//ƒRƒƒ“ƒg‚ğ‚Æ‚Î‚µ‚Ü‚·
 
 	char ch = *pointer_;
 	if (ch == '\0') {
@@ -190,7 +190,7 @@ EventScriptToken& EventScriptScanner::Next() {
 	}
 
 	EventScriptToken::Type type = EventScriptToken::TK_UNKNOWN;
-	std::vector<char>::iterator posStart = pointer_;//å…ˆé ­ã‚’ä¿å­˜
+	std::vector<char>::iterator posStart = pointer_;//æ“ª‚ğ•Û‘¶
 
 	if (_IsTextStartSign()) {
 		ch = *pointer_;
@@ -205,7 +205,7 @@ EventScriptToken& EventScriptScanner::Next() {
 		}
 		else if (!HasNext()) {
 		}
-		//		else _RaiseError("Next:ã™ã§ã«æ–‡å­—åˆ—çµ‚ç«¯ã§ã™");
+		//		else _RaiseError("Next:‚·‚Å‚É•¶š—ñI’[‚Å‚·");
 
 		type = EventScriptToken::TK_TEXT;
 		std::string text = std::string(posStart, pointer_);
@@ -214,7 +214,7 @@ EventScriptToken& EventScriptScanner::Next() {
 	}
 	else {
 		switch (ch) {
-		case '\0': type = EventScriptToken::TK_EOF; break;//çµ‚ç«¯
+		case '\0': type = EventScriptToken::TK_EOF; break;//I’[
 		case ',': _NextChar(); type = EventScriptToken::TK_COMMA;  break;
 		case '=': _NextChar(); type = EventScriptToken::TK_EQUAL;  break;
 		case '(': _NextChar(); type = EventScriptToken::TK_OPENP; break;
@@ -235,22 +235,22 @@ EventScriptToken& EventScriptScanner::Next() {
 
 		case '"':
 		{
-			ch = _NextChar();//1ã¤é€²ã‚ã¦
+			ch = _NextChar();//1‚Âi‚ß‚Ä
 			char pre = ch;
 			while (true) {
 				if (ch == '"' && pre != '\\')break;
 				pre = ch;
-				ch = _NextChar();//æ¬¡ã®ãƒ€ãƒ–ãƒ«ã‚¯ã‚ªãƒ¼ãƒ†ãƒ¼ã‚·ãƒ§ãƒ³ã¾ã§é€²ã‚ã‚‹
+				ch = _NextChar();//Ÿ‚Ìƒ_ƒuƒ‹ƒNƒI[ƒe[ƒVƒ‡ƒ“‚Ü‚Åi‚ß‚é
 			}
 
-			if (ch == '"') _NextChar();//ãƒ€ãƒ–ãƒ«ã‚¯ã‚ªãƒ¼ãƒ†ãƒ¼ã‚·ãƒ§ãƒ³ã ã£ãŸã‚‰1ã¤é€²ã‚ã‚‹
-			else _RaiseError(L"Next:ã™ã§ã«æ–‡å­—åˆ—çµ‚ç«¯ã§ã™");
+			if (ch == '"') _NextChar();//ƒ_ƒuƒ‹ƒNƒI[ƒe[ƒVƒ‡ƒ“‚¾‚Á‚½‚ç1‚Âi‚ß‚é
+			else _RaiseError(L"Next:‚·‚Å‚É•¶š—ñI’[‚Å‚·");
 			type = EventScriptToken::TK_STRING;
 			break;
 		}
 
-		case '\r':case '\n'://æ”¹è¡Œ
-			//æ”¹è¡ŒãŒã„ã¤ã¾ã§ã‚‚ç¶šãã‚ˆã†ãªã®ã‚‚1ã¤ã®æ”¹è¡Œã¨ã—ã¦æ‰±ã†
+		case '\r':case '\n'://‰üs
+			//‰üs‚ª‚¢‚Â‚Ü‚Å‚à‘±‚­‚æ‚¤‚È‚Ì‚à1‚Â‚Ì‰üs‚Æ‚µ‚Äˆµ‚¤
 			while (ch == '\r' || ch == '\n') ch = _NextChar();
 			type = EventScriptToken::TK_NEWLINE;
 			break;
@@ -265,35 +265,35 @@ EventScriptToken& EventScriptScanner::Next() {
 				ch = _NextChar(); type = EventScriptToken::TK_MINUS;
 			}
 
-			if (!isdigit(ch))break;//æ¬¡ãŒæ•°å­—ã§ãªã„ãªã‚‰æŠœã‘ã‚‹
+			if (!isdigit(ch))break;//Ÿ‚ª”š‚Å‚È‚¢‚È‚ç”²‚¯‚é
 		}
 
 
 		default:
 		{
 			if (isdigit(ch)) {
-				//æ•´æ•°ã‹å®Ÿæ•°
-				while (isdigit(ch))ch = _NextChar();//æ•°å­—ã ã‘ã®é–“ãƒã‚¤ãƒ³ã‚¿ã‚’é€²ã‚ã‚‹
+				//®”‚©À”
+				while (isdigit(ch))ch = _NextChar();//”š‚¾‚¯‚ÌŠÔƒ|ƒCƒ“ƒ^‚ği‚ß‚é
 				type = EventScriptToken::TK_INT;
 				if (ch == '.') {
-					//å®Ÿæ•°ã‹æ•´æ•°ã‹ã‚’èª¿ã¹ã‚‹ã€‚å°æ•°ç‚¹ãŒã‚ã£ãŸã‚‰å®Ÿæ•°
+					//À”‚©®”‚©‚ğ’²‚×‚éB¬”“_‚ª‚ ‚Á‚½‚çÀ”
 					ch = _NextChar();
-					while (isdigit(ch))ch = _NextChar();//æ•°å­—ã ã‘ã®é–“ãƒã‚¤ãƒ³ã‚¿ã‚’é€²ã‚ã‚‹
+					while (isdigit(ch))ch = _NextChar();//”š‚¾‚¯‚ÌŠÔƒ|ƒCƒ“ƒ^‚ği‚ß‚é
 					type = EventScriptToken::TK_REAL;
 				}
 
 				if (ch == 'E' || ch == 'e') {
-					//1E-5ã¿ãŸã„ãªã‚±ãƒ¼ã‚¹
+					//1E-5‚İ‚½‚¢‚ÈƒP[ƒX
 					std::vector<char>::iterator pos = pointer_;
 					ch = _NextChar();
-					while (isdigit(ch) || ch == '-')ch = _NextChar();//æ•°å­—ã ã‘ã®é–“ãƒã‚¤ãƒ³ã‚¿ã‚’é€²ã‚ã‚‹
+					while (isdigit(ch) || ch == '-')ch = _NextChar();//”š‚¾‚¯‚ÌŠÔƒ|ƒCƒ“ƒ^‚ği‚ß‚é
 					type = EventScriptToken::TK_REAL;
 				}
 
 			}
 			else if (isalpha(ch) || ch == '_') {
-				//ãŸã¶ã‚“è­˜åˆ¥å­
-				while (isalpha(ch) || isdigit(ch) || ch == '_')ch = _NextChar();//ãŸã¶ã‚“è­˜åˆ¥å­ãªé–“ãƒã‚¤ãƒ³ã‚¿ã‚’é€²ã‚ã‚‹
+				//‚½‚Ô‚ñ¯•Êq
+				while (isalpha(ch) || isdigit(ch) || ch == '_')ch = _NextChar();//‚½‚Ô‚ñ¯•Êq‚ÈŠÔƒ|ƒCƒ“ƒ^‚ği‚ß‚é
 				type = EventScriptToken::TK_ID;
 			}
 			else {
@@ -307,7 +307,7 @@ EventScriptToken& EventScriptScanner::Next() {
 		else if (type == EventScriptScanner::TOKEN_TAG_END)bTagScan_ = false;
 
 		if (type == EventScriptToken::TK_STRING) {
-			//\ã‚’é™¤å»
+			//\‚ğœ‹
 			std::string str = StringUtility::ReplaceAll(std::string(posStart, pointer_), "\\\"", "\"");
 			token_ = EventScriptToken(type, str);
 		}
@@ -365,25 +365,25 @@ int EventScriptScanner::GetCurrentPosition() {
 //EventScriptToken
 std::string& EventScriptToken::GetIdentifier() {
 	if (type_ != TK_ID) {
-		throw gstd::wexception(L"EventScriptToken::GetIdentifier:ãƒ‡ãƒ¼ã‚¿ã®ã‚¿ã‚¤ãƒ—ãŒé•ã„ã¾ã™");
+		throw gstd::wexception(L"EventScriptToken::GetIdentifier:ƒf[ƒ^‚Ìƒ^ƒCƒv‚ªˆá‚¢‚Ü‚·");
 	}
 	return element_;
 }
 std::string EventScriptToken::GetString() {
 	if (type_ != TK_STRING) {
-		throw gstd::wexception(L"EventScriptToken::GetString:ãƒ‡ãƒ¼ã‚¿ã®ã‚¿ã‚¤ãƒ—ãŒé•ã„ã¾ã™");
+		throw gstd::wexception(L"EventScriptToken::GetString:ƒf[ƒ^‚Ìƒ^ƒCƒv‚ªˆá‚¢‚Ü‚·");
 	}
 	return element_.substr(1, element_.size() - 2);
 }
 int EventScriptToken::GetInteger() {
 	if (type_ != TK_INT) {
-		throw gstd::wexception(L"EventScriptToken::GetInterger:ãƒ‡ãƒ¼ã‚¿ã®ã‚¿ã‚¤ãƒ—ãŒé•ã„ã¾ã™");
+		throw gstd::wexception(L"EventScriptToken::GetInterger:ƒf[ƒ^‚Ìƒ^ƒCƒv‚ªˆá‚¢‚Ü‚·");
 	}
 	return atoi(element_.c_str());
 }
 double EventScriptToken::GetReal() {
 	if (type_ != TK_REAL && type_ != TK_INT) {
-		throw gstd::wexception(L"EventScriptToken::GetReal:ãƒ‡ãƒ¼ã‚¿ã®ã‚¿ã‚¤ãƒ—ãŒé•ã„ã¾ã™");
+		throw gstd::wexception(L"EventScriptToken::GetReal:ƒf[ƒ^‚Ìƒ^ƒCƒv‚ªˆá‚¢‚Ü‚·");
 	}
 	return atof(element_.c_str());
 }
@@ -1157,7 +1157,7 @@ void EventScriptCodeExecuter_Transition::Execute() {
 		graphics->ClearRenderTarget();
 		graphics->BeginScene();
 
-		//èƒŒæ™¯ã¯é»’ã§å¡—ã‚Šã¤ã¶ã™
+		//”wŒi‚Í•‚Å“h‚è‚Â‚Ô‚·
 		{
 			Sprite2D back;
 			RECT_D rcDest = { 0., 0., (double)graphics->GetScreenWidth(), (double)graphics->GetScreenHeight() };
@@ -1282,7 +1282,7 @@ void EventScriptCodeExecuter_Image::_Initialize() {
 		bTrans_ = true;
 	}
 
-	//ãƒ‘ã‚¹ç¢ºèª
+	//ƒpƒXŠm”F
 	if (nowSprite_ != NULL) {
 		shared_ptr<Texture> texture = nowSprite_->GetObjectPointer()->GetTexture();
 		if (texture == NULL) {
@@ -1300,7 +1300,7 @@ void EventScriptCodeExecuter_Image::_Initialize() {
 
 		if (path.size() != 0) {
 			if (texture->GetName() != wPath) {
-				//ç”»åƒå¤‰æ›´
+				//‰æ‘œ•ÏX
 				int idObjOld = EventImage::INDEX_OLD_START + idObj;
 				oldSprite_ = new DxScriptSpriteObject2D();
 				oldSprite_->Copy(nowSprite_.GetPointer());
@@ -1387,25 +1387,25 @@ EventWindowManager::EventWindowManager(EventEngine* engine) {
 	bVisibleText_ = true;
 }
 bool EventWindowManager::Initialize() {
-	//ã‚»ãƒ¼ãƒ–ãƒœã‚¿ãƒ³
+	//ƒZ[ƒuƒ{ƒ^ƒ“
 
-	//ãƒ­ãƒ¼ãƒ‰ãƒœã‚¿ãƒ³
+	//ƒ[ƒhƒ{ƒ^ƒ“
 
-	//ã‚­ãƒ£ãƒ—ãƒãƒ£ãƒ¬ã‚¤ãƒ¤
+	//ƒLƒƒƒvƒ`ƒƒƒŒƒCƒ„
 	layerCapture_ = new EventMouseCaptureLayer();
 	AddWindow(layerCapture_);
 
-	//ãƒ†ã‚­ã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+	//ƒeƒLƒXƒgƒEƒBƒ“ƒhƒE
 	wndText_ = new EventTextWindow();
 	AddWindow(wndText_);
 
-	//ãƒ­ã‚°ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+	//ƒƒOƒEƒBƒ“ƒhƒE
 	wndLog_ = new EventLogWindow();
 	AddWindow(wndLog_);
 	wndLog_->SetWindowEnable(false);
 	wndLog_->SetWindowVisible(false);
 
-	//åå‰ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+	//–¼‘OƒEƒBƒ“ƒhƒE
 	wndName_ = new EventNameWindow();
 
 	return true;
@@ -1418,12 +1418,12 @@ void EventWindowManager::Render() {
 	DxWindowManager::Render();
 }
 void EventWindowManager::Read(gstd::RecordBuffer& record) {
-	//åå‰æ¬„
+	//–¼‘O—“
 	std::wstring name = record.GetRecordAsStringW("name");
 	wndName_->SetText(name);
 }
 void EventWindowManager::Write(gstd::RecordBuffer& record) {
-	//åå‰æ¬„
+	//–¼‘O—“
 	std::wstring name = wndName_->GetText();
 	record.SetRecordAsStringW("name", name);
 }
@@ -1662,7 +1662,7 @@ void EventLogWindow::Render() {
 	graphics->ResetViewPort();
 }
 void EventLogWindow::ResetPosition() {
-	//1ãƒšãƒ¼ã‚¸ä»¥ä¸‹ã®ã¨ãã®ä½ç½®ã‚’èª¿ã¹ã‚‹
+	//1ƒy[ƒWˆÈ‰º‚Ì‚Æ‚«‚ÌˆÊ’u‚ğ’²‚×‚é
 	EventEngine* engine = _GetManager()->GetEngine();
 	gstd::ref_count_ptr<EventLogText> log = engine->GetEventLogText();
 
@@ -1720,13 +1720,13 @@ int EventScriptObjectManager::AddObject(gstd::ref_count_ptr<DxScriptObjectBase>:
 void EventScriptObjectManager::Read(gstd::RecordBuffer& record) {
 	if (!record.IsExists("count"))return;
 
-	//æœ‰åŠ¹ãªIDæ•°
+	//—LŒø‚ÈID”
 	int countObj = record.GetRecordAsInteger("count");
 	std::vector<int> listValidId;
 	listValidId.resize(countObj);
 	record.GetRecord("ids", &listValidId[0], listValidId.size() * sizeof(int));
 
-	//ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+	//ƒIƒuƒWƒFƒNƒg
 	for (int iObj = 0; iObj < listValidId.size(); iObj++) {
 		DxScriptSpriteObject2D* obj = new DxScriptSpriteObject2D();
 		Sprite2D* sprite = obj->GetSpritePointer();
@@ -1769,11 +1769,11 @@ void EventScriptObjectManager::Write(gstd::RecordBuffer& record) {
 	}
 	if (listValidId.size() == 0)return;
 
-	//æœ‰åŠ¹ãªIDæ•°
+	//—LŒø‚ÈID”
 	record.SetRecordAsInteger("count", listValidId.size());
 	record.SetRecord("ids", &listValidId[0], listValidId.size() * sizeof(int));
 
-	//ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+	//ƒIƒuƒWƒFƒNƒg
 	for (iObj = 0; iObj < listValidId.size(); iObj++) {
 		int index = listValidId[iObj];
 		gstd::ref_count_ptr<DxScriptSpriteObject2D>::unsync obj =
@@ -1807,7 +1807,7 @@ bool EventText::IsVoiceText() {
 	bool res = false;
 	if (text_.size() >= 2) {
 		std::wstring str = text_.substr(0, 2);
-		res = str.find(L"ã€Œ") != std::wstring::npos;
+		res = str.find(L"u") != std::wstring::npos;
 	}
 	return res;
 }
@@ -1959,16 +1959,16 @@ bool EventFrame::IsInnerBlock() {
 	return res;
 }
 void EventFrame::ReadRecord(gstd::RecordBuffer& record, EventEngine* engine) {
-	//ä½ç½®
+	//ˆÊ’u
 	posCode_ = record.GetRecordAsInteger("posCode_");
 	posReturn_ = record.GetRecordAsInteger("posReturn_");
 
-	//ã‚½ãƒ¼ã‚¹
+	//ƒ\[ƒX
 	std::wstring pathSource = record.GetRecordAsStringW("pathSource");
 	pathSource = PathProperty::GetModuleDirectory() + pathSource;
 	sourceActive_ = engine->GetSource(pathSource);
 
-	//ãƒ–ãƒ­ãƒƒã‚¯ã®ä½ç½®
+	//ƒuƒƒbƒN‚ÌˆÊ’u
 	if (record.IsExists("BlockIndex")) {
 		//if
 		int pos = record.GetRecordAsInteger("BlockIndex");
@@ -1978,9 +1978,9 @@ void EventFrame::ReadRecord(gstd::RecordBuffer& record, EventEngine* engine) {
 		std::string name = record.GetRecordAsStringA("BlockName");
 		block_ = sourceActive_->GetEventBlock(name);
 	}
-	else throw gstd::wexception(L"ãƒ–ãƒ­ãƒƒã‚¯ãŒãªã„?");
+	else throw gstd::wexception(L"ƒuƒƒbƒN‚ª‚È‚¢?");
 
-	//å¤‰æ•°
+	//•Ï”
 	int countValue = record.GetRecordAsInteger("countValue");
 	for (int iValue = 0; iValue < countValue; iValue++) {
 		std::string keyName = StringUtility::Format("valueName%d", iValue);
@@ -1996,19 +1996,19 @@ void EventFrame::ReadRecord(gstd::RecordBuffer& record, EventEngine* engine) {
 
 }
 void EventFrame::WriteRecord(gstd::RecordBuffer& record, EventEngine* engine) {
-	//ä½ç½®
+	//ˆÊ’u
 	record.SetRecordAsInteger("posCode_", posCode_);
 	record.SetRecordAsInteger("posReturn_", posReturn_);
 
-	//ã‚½ãƒ¼ã‚¹
+	//ƒ\[ƒX
 	std::wstring wPathSource = engine->GetSourcePath(sourceActive_);
 	wPathSource = PathProperty::GetPathWithoutModuleDirectory(wPathSource);
 
 	record.SetRecordAsStringW("pathSource", wPathSource);
 
-	//ãƒ–ãƒ­ãƒƒã‚¯ã®ä½ç½®ã‚’è¨˜éŒ²
+	//ƒuƒƒbƒN‚ÌˆÊ’u‚ğ‹L˜^
 	if (gstd::ref_count_ptr<EventScriptCode_If>::DownCast(block_) != NULL) {
-		//ifã®å ´åˆã¯ã‚³ãƒ¼ãƒ‰ã®ä½ç½®
+		//if‚Ìê‡‚ÍƒR[ƒh‚ÌˆÊ’u
 		int index = -1;
 		int codeCount = sourceActive_->GetCodeCount();
 		for (int iCode = 0; iCode < codeCount; iCode++) {
@@ -2020,20 +2020,20 @@ void EventFrame::WriteRecord(gstd::RecordBuffer& record, EventEngine* engine) {
 			}
 		}
 
-		if (index < 0)throw gstd::wexception(L"ifãƒ–ãƒ­ãƒƒã‚¯ãŒä¸æ­£ã§ä¿å­˜ã§ãã¾ã›ã‚“");
+		if (index < 0)throw gstd::wexception(L"ifƒuƒƒbƒN‚ª•s³‚Å•Û‘¶‚Å‚«‚Ü‚¹‚ñ");
 
 		record.SetRecordAsInteger("BlockIndex", index);
 	}
 	else if (gstd::ref_count_ptr<EventScriptBlock_Main>::DownCast(block_) != NULL) {
-		//ãã®ä»–ã¯ãƒ–ãƒ­ãƒƒã‚¯åç§°
+		//‚»‚Ì‘¼‚ÍƒuƒƒbƒN–¼Ì
 		gstd::ref_count_ptr<EventScriptBlock_Main> mainBlock =
 			gstd::ref_count_ptr<EventScriptBlock_Main>::DownCast(block_);
 		std::string name = mainBlock->GetName();
 		record.SetRecordAsStringA("BlockName", name);
 	}
-	else throw gstd::wexception(L"ä¿å­˜ã§ããªã„ãƒ–ãƒ­ãƒƒã‚¯?");
+	else throw gstd::wexception(L"•Û‘¶‚Å‚«‚È‚¢ƒuƒƒbƒN?");
 
-	//å¤‰æ•°
+	//•Ï”
 	int iCountValue = 0;
 	int countValue = mapValue_.size();
 	record.SetRecordAsInteger("countValue", countValue);
@@ -2155,10 +2155,10 @@ void EventImage::SwapForeBackLayerIndex() {
 	indexForeground_ = 1 - indexForeground_;
 }
 void EventImage::Read(gstd::RecordBuffer& record) {
-	//å‰æ™¯ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹
+	//‘OŒiƒCƒ“ƒfƒbƒNƒX
 	indexForeground_ = record.GetRecordAsInteger("fore");
 
-	//ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆç®¡ç†
+	//ƒIƒuƒWƒFƒNƒgŠÇ—
 	for (int iManager = 0; iManager < objManager_.size(); iManager++) {
 		RecordBuffer recManager;
 		record.GetRecordAsRecordBuffer(StringUtility::Format("manager%d", iManager), recManager);
@@ -2166,10 +2166,10 @@ void EventImage::Read(gstd::RecordBuffer& record) {
 	}
 }
 void EventImage::Write(gstd::RecordBuffer& record) {
-	//å‰æ™¯ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹
+	//‘OŒiƒCƒ“ƒfƒbƒNƒX
 	record.SetRecordAsInteger("fore", indexForeground_);
 
-	//ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆç®¡ç†
+	//ƒIƒuƒWƒFƒNƒgŠÇ—
 	for (int iManager = 0; iManager < objManager_.size(); iManager++) {
 		RecordBuffer recManager;
 		objManager_[iManager]->Write(recManager);
@@ -2340,7 +2340,7 @@ void EventEngine::_RunCode() {
 			}
 		}
 		else if (textEvent_->HasNext()) {
-			//è¡¨ç¤ºä¸­ãƒ†ã‚­ã‚¹ãƒˆãŒæ®‹ã£ã¦ã„ã‚‹å ´åˆ
+			//•\¦’†ƒeƒLƒXƒg‚ªc‚Á‚Ä‚¢‚éê‡
 			bool bNext = keyState_->IsNext();
 			bool bSkip = keyState_->IsSkip();
 			if (!bNext && !bSkip) {
@@ -2355,19 +2355,19 @@ void EventEngine::_RunCode() {
 			keyState_->SetNextEnable(false);
 			windowManager_->GetMouseCaptureLayer()->ClearEvent();
 
-			//ãƒ†ã‚­ã‚¹ãƒˆãŒæ®‹ã£ã¦ã„ãªã„å ´åˆã€æ¬¡ã®ã‚³ãƒ¼ãƒ‰ã‚’èª­ã¿è¾¼ã‚€
+			//ƒeƒLƒXƒg‚ªc‚Á‚Ä‚¢‚È‚¢ê‡AŸ‚ÌƒR[ƒh‚ğ“Ç‚İ‚Ş
 			ref_count_ptr<EventFrame> frameActive = *frame_.rbegin();
 			while (frameActive->IsEnd()) {
-				//ãƒ•ãƒ¬ãƒ¼ãƒ çµ‚äº†
+				//ƒtƒŒ[ƒ€I—¹
 				int next = frameActive->GetReturnPosition();
 				frame_.pop_back();
 				if (frame_.size() == 0)return;
 				//if(frameActive->GetBlock()->IsGlobal())return;
-				if (frameActive->IsAutoGlobal())return;//è‡ªå‹•ã‚°ãƒ­ãƒ¼ãƒãƒ«å‡¦ç†ã®å ´åˆã¯æŠœã‘ã‚‹
+				if (frameActive->IsAutoGlobal())return;//©“®ƒOƒ[ƒoƒ‹ˆ—‚Ìê‡‚Í”²‚¯‚é
 				frameActive = *frame_.rbegin();
 				if (next == EventScriptBlock::POS_NULL) {
-					//è¿”ã‚‹ä½ç½®ãŒæŒ‡å®šã•ã‚Œã¦ç„¡ã„å ´åˆã€
-					//ãã®æ¬¡ã®ã‚³ãƒ¼ãƒ‰ã‹ã‚‰ç¶™ç¶šã™ã‚‹
+					//•Ô‚éˆÊ’u‚ªw’è‚³‚ê‚Ä–³‚¢ê‡A
+					//‚»‚ÌŸ‚ÌƒR[ƒh‚©‚çŒp‘±‚·‚é
 					next = frameActive->GetCurrentPosition() + 1;
 				}
 				frameActive->SetCurrentPosition(next);
@@ -2525,7 +2525,7 @@ void EventEngine::_RunCode() {
 						code = frameActive->GetCurrentCode();
 					}
 					else {
-						//ifè©²å½“ãªã—
+						//ifŠY“–‚È‚µ
 						frameActive->SetCurrentPosition(codeIf->GetEndPosition());
 						break;
 					}
@@ -2541,12 +2541,12 @@ void EventEngine::_RunCode() {
 				ref_count_ptr<EventScriptBlock> block;
 				ref_count_ptr<EventFrame> frameJump = new EventFrame();
 				if (path.size() == 0) {
-					//è‡ªã‚¹ã‚¯ãƒªãƒ—ãƒˆ
+					//©ƒXƒNƒŠƒvƒg
 					block = frameActive->GetActiveSource()->GetEventBlock(name);
 					frameJump->SetActiveSource(frameActive->GetActiveSource());
 				}
 				else {
-					//åˆ¥ãƒ•ã‚¡ã‚¤ãƒ«ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
+					//•Êƒtƒ@ƒCƒ‹ƒXƒNƒŠƒvƒg
 					std::wstring wPath = StringUtility::ConvertMultiToWide(path);
 					gstd::ref_count_ptr<EventScriptSource> source = _GetSource(wPath);
 					frameJump->SetActiveSource(source);
@@ -2569,7 +2569,7 @@ void EventEngine::_RunCode() {
 					}
 				}
 				else {
-					_RaiseError(L"å­˜åœ¨ã—ãªã„ãƒ–ãƒ­ãƒƒã‚¯ãŒæŒ‡å®šã•ã‚Œã¾ã—ãŸ");
+					_RaiseError(L"‘¶İ‚µ‚È‚¢ƒuƒƒbƒN‚ªw’è‚³‚ê‚Ü‚µ‚½");
 				}
 
 				continue;
@@ -2586,7 +2586,7 @@ void EventEngine::_RunCode() {
 				int target = parser.GetEventValue(codeScript->GetTargetId())->GetReal();
 				std::vector<std::string> listArg = codeScript->GetArgumentList();
 
-				if (method.size() == 0)_RaiseError(L"methodã®ãªã„ã‚¹ã‚¯ãƒªãƒ—ãƒˆã‚’å®Ÿè¡Œã—ã‚ˆã†ã¨ã—ã¾ã—ãŸ");
+				if (method.size() == 0)_RaiseError(L"method‚Ì‚È‚¢ƒXƒNƒŠƒvƒg‚ğÀs‚µ‚æ‚¤‚Æ‚µ‚Ü‚µ‚½");
 
 				std::wstring wPath = StringUtility::ConvertMultiToWide(path);
 				DxScriptForEvent* script = new DxScriptForEvent(this);
@@ -2632,7 +2632,7 @@ void EventEngine::_RunCode() {
 				}
 			}
 			else {
-				//ä¸æ˜ãªã‚¿ã‚°ã‚„ã€ãƒ†ã‚­ã‚¹ãƒˆãƒ¬ãƒ³ãƒ€ãƒ©ã«ãã®ã¾ã¾ã‚ãŸã™ã‚¿ã‚°
+				//•s–¾‚Èƒ^ƒO‚âAƒeƒLƒXƒgƒŒƒ“ƒ_ƒ‰‚É‚»‚Ì‚Ü‚Ü‚í‚½‚·ƒ^ƒO
 				int res = _RunCode(frameActive, code);
 				if (res == RUN_RETURN_NONE) {
 					std::wstring wText = StringUtility::ConvertMultiToWide(code->GetCodeText());
@@ -2648,12 +2648,12 @@ void EventEngine::_RunCode() {
 		}
 	}
 
-	//ã‚¹ã‚­ãƒƒãƒ—ä¸­ã®å ´åˆã¯ã€å¼·åˆ¶æ›´æ–°ä¸è¦
+	//ƒXƒLƒbƒv’†‚Ìê‡‚ÍA‹­§XV•s—v
 	if (keyState_->IsSkip())
 		bCriticalFrame_ = false;
 }
 void EventEngine::_RunScript() {
-	//ã‚¹ã‚¯ãƒªãƒ—ãƒˆå®Ÿè¡Œ
+	//ƒXƒNƒŠƒvƒgÀs
 	std::list<gstd::ref_count_ptr<DxScriptForEvent> >::iterator itrScript;
 	for (itrScript = listScript_.begin(); itrScript != listScript_.end(); ) {
 		gstd::ref_count_ptr<DxScriptForEvent> &script = (*itrScript);
@@ -2681,7 +2681,7 @@ gstd::ref_count_ptr<EventScriptSource> EventEngine::_GetSource(std::wstring path
 		res = compiler.Compile();
 
 		if (res == NULL) {
-			throw gstd::wexception(L"ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«å¤±æ•—");
+			throw gstd::wexception(L"ƒRƒ“ƒpƒCƒ‹¸”s");
 		}
 
 		ref_count_ptr<EventScriptBlock> block = res->GetEventBlock(EventScriptBlock::BLOCK_GLOBAL);
@@ -2704,10 +2704,10 @@ gstd::ref_count_ptr<EventScriptSource> EventEngine::_GetSource(std::wstring path
 
 void EventEngine::Work() {
 	try {
-		//çŠ¶æ…‹å¤‰æ›´
+		//ó‘Ô•ÏX
 		CheckStateChenge();
 
-		//å®Ÿè¡Œ
+		//Às
 		if (state_ == STATE_RUN) {
 			_RunCode();
 			_RunScript();
@@ -2880,7 +2880,7 @@ bool EventEngine::Load(std::wstring path) {
 bool EventEngine::Load(gstd::RecordBuffer& record) {
 	Read(record);
 
-	//ã¨ã‚Šã‚ãˆãšã‚¯ãƒªãƒƒã‚¯å¾…ã¡
+	//‚Æ‚è‚ ‚¦‚¸ƒNƒŠƒbƒN‘Ò‚¿
 	textEvent_->NextSkip();
 	activeCodeExecuter_ = new EventScriptCodeExecuter_WaitClick(this);
 
@@ -2895,11 +2895,11 @@ bool EventEngine::Save(std::wstring path) {
 	return true;
 }
 void EventEngine::Read(gstd::RecordBuffer& record) {
-	//ãƒ†ã‚­ã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+	//ƒeƒLƒXƒgƒEƒBƒ“ƒhƒE
 	std::wstring textDisp = record.GetRecordAsStringW("DispText");
 	textEvent_->SetSource(textDisp);
 
-	//ã‚¹ã‚¯ãƒªãƒ—ãƒˆãƒ‘ã‚¹
+	//ƒXƒNƒŠƒvƒgƒpƒX
 	int countSource = record.GetRecordAsInteger("SourceCount");
 	for (int iSource = 0; iSource < countSource; iSource++) {
 		std::wstring path = record.GetRecordAsStringW(StringUtility::Format("SourcePath%d", iSource));
@@ -2912,12 +2912,12 @@ void EventEngine::Read(gstd::RecordBuffer& record) {
 		mapSource_[path] = source;
 	}
 
-	//ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°ãƒ•ãƒ¬ãƒ¼ãƒ 
+	//ƒOƒ[ƒoƒ‹•Ï”ƒtƒŒ[ƒ€
 	gstd::RecordBuffer recGlobalFrame;
 	record.GetRecordAsRecordBuffer("GlobalFrame", recGlobalFrame);
 	frameGlobal_->ReadRecord(recGlobalFrame, this);
 
-	//ãƒ•ãƒ¬ãƒ¼ãƒ 
+	//ƒtƒŒ[ƒ€
 	int countFrame = record.GetRecordAsInteger("FrameCount");
 	frame_.resize(countFrame);
 	for (int iFrame = 0; iFrame < countFrame; iFrame++) {
@@ -2929,22 +2929,22 @@ void EventEngine::Read(gstd::RecordBuffer& record) {
 		frame_[iFrame] = frame;
 	}
 
-	//è¡¨ç¤ºä¸­ç”»åƒ
+	//•\¦’†‰æ‘œ
 	RecordBuffer recImage;
 	record.GetRecordAsRecordBuffer("image", recImage);
 	image_->Read(recImage);
 
-	//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+	//ƒEƒBƒ“ƒhƒE
 	RecordBuffer recWindow;
 	record.GetRecordAsRecordBuffer("window", recWindow);
 	windowManager_->Read(recWindow);
 
-	//éŸ³å£°
+	//‰¹º
 	RecordBuffer recSound;
 	record.GetRecordAsRecordBuffer("sound", recSound);
 	sound_->Read(recSound);
 
-	//å®Ÿè¡Œä¸­ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
+	//Às’†ƒXƒNƒŠƒvƒg
 	int countScript = record.GetRecordAsInteger("ScriptCount");
 	for (int iScript = 0; iScript < countScript; iScript++) {
 		RecordBuffer recScript;
@@ -2959,11 +2959,11 @@ void EventEngine::Read(gstd::RecordBuffer& record) {
 	}
 }
 void EventEngine::Write(gstd::RecordBuffer& record) {
-	//ãƒ†ã‚­ã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+	//ƒeƒLƒXƒgƒEƒBƒ“ƒhƒE
 	std::wstring wTextDisp = textEvent_->GetText();
 	record.SetRecordAsStringW("DispText", wTextDisp);
 
-	//ã‚¹ã‚¯ãƒªãƒ—ãƒˆãƒ‘ã‚¹
+	//ƒXƒNƒŠƒvƒgƒpƒX
 	int iSource = 0;
 	record.SetRecordAsInteger("SourceCount", mapSource_.size());
 	std::map<std::wstring, gstd::ref_count_ptr<EventScriptSource> >::iterator itrSource;
@@ -2975,12 +2975,12 @@ void EventEngine::Write(gstd::RecordBuffer& record) {
 		iSource++;
 	}
 
-	//ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°ãƒ•ãƒ¬ãƒ¼ãƒ 
+	//ƒOƒ[ƒoƒ‹•Ï”ƒtƒŒ[ƒ€
 	gstd::RecordBuffer recGlobalFrame;
 	frameGlobal_->WriteRecord(recGlobalFrame, this);
 	record.SetRecordAsRecordBuffer("GlobalFrame", recGlobalFrame);
 
-	//ãƒ•ãƒ¬ãƒ¼ãƒ 
+	//ƒtƒŒ[ƒ€
 	int countFrame = frame_.size();
 	record.SetRecordAsInteger("FrameCount", countFrame);
 	for (int iFrame = 0; iFrame < countFrame; iFrame++) {
@@ -2989,22 +2989,22 @@ void EventEngine::Write(gstd::RecordBuffer& record) {
 		record.SetRecordAsRecordBuffer(StringUtility::Format("Frame%d", iFrame), recFrame);
 	}
 
-	//è¡¨ç¤ºä¸­ç”»åƒ
+	//•\¦’†‰æ‘œ
 	RecordBuffer recImage;
 	image_->Write(recImage);
 	record.SetRecordAsRecordBuffer("image", recImage);
 
-	//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+	//ƒEƒBƒ“ƒhƒE
 	RecordBuffer recWindow;
 	windowManager_->Write(recWindow);
 	record.SetRecordAsRecordBuffer("window", recWindow);
 
-	//éŸ³å£°
+	//‰¹º
 	RecordBuffer recSound;
 	sound_->Write(recSound);
 	record.SetRecordAsRecordBuffer("sound", recSound);
 
-	//å®Ÿè¡Œä¸­ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
+	//Às’†ƒXƒNƒŠƒvƒg
 	int countScript = 0;
 	std::list<gstd::ref_count_ptr<DxScriptForEvent> >::iterator itrScript;
 	for (itrScript = listScript_.begin(); itrScript != listScript_.end(); itrScript++) {
@@ -3025,16 +3025,16 @@ void EventEngine::Write(gstd::RecordBuffer& record) {
 **********************************************************/
 function const eventFunction[] =
 {
-	//é–¢æ•°ï¼šã‚¹ã‚¯ãƒªãƒ—ãƒˆæ“ä½œ
+	//ŠÖ”FƒXƒNƒŠƒvƒg‘€ì
 	{ "EndScript", DxScriptForEvent::Func_EndScript, 0 },
 	{ "GetTarget", DxScriptForEvent::Func_GetTarget, 0 },
 	{ "GetEventValue", DxScriptForEvent::Func_GetEventValue, 1 },
 	{ "SetEventValue", DxScriptForEvent::Func_SetEventValue, 2 },
 
-	//é–¢æ•°ï¼šã‚­ãƒ¼å…¥åŠ›
+	//ŠÖ”FƒL[“ü—Í
 	{ "IsSkip", DxScriptForEvent::Func_IsSkip, 0 },
 
-	//å®šæ•°
+	//’è”
 	{ "ID_TRANSITION",constant<EventImage::ID_TRANSITION>::func, 0 },
 };
 DxScriptForEvent::DxScriptForEvent(EventEngine* engine) {
@@ -3099,17 +3099,17 @@ void DxScriptForEvent::AddArgumentValue(gstd::ref_count_ptr<EventValue> arg) {
 	ScriptClientBase::AddArgumentValue(vArg);
 }
 void DxScriptForEvent::Read(gstd::RecordBuffer& record) {
-	//ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹
+	//ƒtƒ@ƒCƒ‹ƒpƒX
 	std::wstring path = record.GetRecordAsStringW("path");
 	path = PathProperty::GetModuleDirectory() + path;
 
-	//å®Ÿè¡Œãƒ¡ã‚½ãƒƒãƒ‰
+	//Àsƒƒ\ƒbƒh
 	method_ = record.GetRecordAsStringA("method");
 
-	//ã‚¿ãƒ¼ã‚²ãƒƒãƒˆ
+	//ƒ^[ƒQƒbƒg
 	targetId_ = record.GetRecordAsInteger("target");
 
-	//ã‚³ãƒ¼ãƒ‰
+	//ƒR[ƒh
 	code_ = record.GetRecordAsStringA("code");
 
 	if (code_.size() > 0) {
@@ -3121,22 +3121,22 @@ void DxScriptForEvent::Read(gstd::RecordBuffer& record) {
 	}
 }
 void DxScriptForEvent::Write(gstd::RecordBuffer& record) {
-	//ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹
+	//ƒtƒ@ƒCƒ‹ƒpƒX
 	std::wstring path = GetPath();
 	path = PathProperty::GetPathWithoutModuleDirectory(path);
 	record.SetRecordAsStringW("path", path);
 
-	//å®Ÿè¡Œãƒ¡ã‚½ãƒƒãƒ‰
+	//Àsƒƒ\ƒbƒh
 	record.SetRecordAsStringA("method", method_);
 
-	//ã‚¿ãƒ¼ã‚²ãƒƒãƒˆ
+	//ƒ^[ƒQƒbƒg
 	record.SetRecordAsInteger("target", targetId_);
 
-	//ã‚³ãƒ¼ãƒ‰
+	//ƒR[ƒh
 	record.SetRecordAsStringA("code", code_);
 }
 
-//é–¢æ•°ï¼šã‚¹ã‚¯ãƒªãƒ—ãƒˆæ“ä½œ
+//ŠÖ”FƒXƒNƒŠƒvƒg‘€ì
 gstd::value DxScriptForEvent::Func_EndScript(script_machine* machine, int argc, const value* argv) {
 	DxScriptForEvent* script = (DxScriptForEvent*)machine->data;
 	script->bScriptEnd_ = true;
@@ -3151,7 +3151,7 @@ gstd::value DxScriptForEvent::Func_GetEventValue(gstd::script_machine* machine, 
 	std::wstring wName = argv[0].as_string();
 	std::string name = StringUtility::ConvertWideToMulti(wName);
 	gstd::ref_count_ptr<EventValue> eValue = script->engine_->GetEventValue(name);
-	if (eValue == NULL)throw gstd::wexception(StringUtility::Format(L"å­˜åœ¨ã—ãªã„å¤‰æ•°:%s", name.c_str()));
+	if (eValue == NULL)throw gstd::wexception(StringUtility::Format(L"‘¶İ‚µ‚È‚¢•Ï”:%s", name.c_str()));
 
 	int type = eValue->GetType();
 	if (type == EventValue::TYPE_REAL)
@@ -3168,7 +3168,7 @@ gstd::value DxScriptForEvent::Func_SetEventValue(gstd::script_machine* machine, 
 	std::wstring wName = argv[0].as_string();
 	std::string name = StringUtility::ConvertWideToMulti(wName);
 	gstd::ref_count_ptr<EventValue> eValue = script->engine_->GetEventValue(name);
-	if (eValue == NULL)throw gstd::wexception(StringUtility::Format(L"å­˜åœ¨ã—ãªã„å¤‰æ•°:%s", name.c_str()));
+	if (eValue == NULL)throw gstd::wexception(StringUtility::Format(L"‘¶İ‚µ‚È‚¢•Ï”:%s", name.c_str()));
 
 	if (argv[1].get_type() == machine->get_engine()->get_real_type()) {
 		eValue->SetReal(argv[1].as_real());
@@ -3182,7 +3182,7 @@ gstd::value DxScriptForEvent::Func_SetEventValue(gstd::script_machine* machine, 
 	return gstd::value();
 }
 
-//é–¢æ•°ï¼šã‚­ãƒ¼å…¥åŠ›
+//ŠÖ”FƒL[“ü—Í
 gstd::value DxScriptForEvent::Func_IsSkip(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScriptForEvent* script = (DxScriptForEvent*)machine->data;
 	EventEngine* engine = script->engine_;
