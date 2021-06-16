@@ -983,9 +983,6 @@ value ScriptClientBase::Func_LogN(script_machine* machine, int argc, const value
 	double base = argv[1].as_real();
 	return CreateRealValue(log(x) / log(base));
 }
-value ScriptClientBase::Func_Log2(script_machine* machine, int argc, const value* argv) {
-	return CreateRealValue(log2(argv[0].as_real()));
-}
 value ScriptClientBase::Func_ErF(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(erf(argv->as_real()));
 }
