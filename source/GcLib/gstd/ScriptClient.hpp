@@ -199,10 +199,12 @@ namespace gstd {
 		static value Func_Sin(script_machine* machine, int argc, const value* argv);
 		static value Func_Tan(script_machine* machine, int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(Func_SinCos);
+		DNH_FUNCAPI_DECL_(Func_CosSin);
 		DNH_FUNCAPI_DECL_(Func_RCos);
 		DNH_FUNCAPI_DECL_(Func_RSin);
 		DNH_FUNCAPI_DECL_(Func_RTan);
 		DNH_FUNCAPI_DECL_(Func_RSinCos);
+		DNH_FUNCAPI_DECL_(Func_RCosSin);
 
 		static value Func_Acos(script_machine* machine, int argc, const value* argv);
 		static value Func_Asin(script_machine* machine, int argc, const value* argv);
