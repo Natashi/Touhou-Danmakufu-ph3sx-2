@@ -724,8 +724,8 @@ static const std::vector<constant> dxConstant = {
 	constant("KEY_SLEEP", DIK_SLEEP),
 };
 
-double DxScript::g_posInvalidX_ = -999;
-double DxScript::g_posInvalidY_ = -999;
+double DxScript::g_posInvalidX_ = 0;
+double DxScript::g_posInvalidY_ = 0;
 double DxScript::g_posInvalidZ_ = 0;
 DxScript::DxScript() {
 	_AddFunction(&dxFunction);
