@@ -36,7 +36,7 @@ void DxWindowManager::AddWindow(gstd::ref_count_ptr<DxWindow> window) {
 	for (auto itr = listWindow_.begin(); itr != listWindow_.end(); ++itr) {
 		ref_count_ptr<DxWindow>& win = *itr;
 		if (win == nullptr) continue;
-		if (win == window) return;//‘½d“o˜^‚Í‚³‚¹‚È‚¢		
+		if (win == window) return;//å¤šé‡ç™»éŒ²ã¯ã•ã›ãªã„		
 	}
 	window->manager_ = this;
 	listWindow_.push_back(window);
@@ -140,7 +140,7 @@ void DxWindowManager::_DispatchMouseEvent() {
 	gstd::ref_count_ptr<DxWindowEvent> event = new DxWindowEvent();
 	gstd::ref_count_ptr<DxWindow> wndIntersect = GetIntersectedWindow();
 
-	//¶ƒNƒŠƒbƒN
+	//å·¦ã‚¯ãƒªãƒƒã‚¯
 	int mLeftState = input->GetMouseState(DI_MOUSE_LEFT);
 	int mRightState = input->GetMouseState(DI_MOUSE_RIGHT);
 	if (wndCapture_ == nullptr) {
@@ -235,7 +235,7 @@ void DxWindowManager::SetWindowEnableWithoutArgumentWindow(bool bEnable, DxWindo
 		}
 
 		if (bError) {
-			throw gstd::wexception(StringUtility::Format(L"DxWindowƒƒbƒN‚ª•s³‚Å‚·:id[%d] idLock[%d]",
+			throw gstd::wexception(StringUtility::Format(L"DxWindowãƒ­ãƒƒã‚¯ãŒä¸æ­£ã§ã™:id[%d] idLock[%d]",
 				id, idLock).c_str());
 		}
 	}
@@ -268,7 +268,7 @@ DxWindow::DxWindow() {
 
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 
-	//‹ó‚¢‚Ä‚¢‚éWindowIDæ“¾
+	//ç©ºã„ã¦ã„ã‚‹WindowIDå–å¾—
 	listWndId_.sort();
 	int idFree = 0;
 	std::list<int>::iterator itr;
@@ -282,7 +282,7 @@ DxWindow::DxWindow() {
 	typeRenderFrame_ = MODE_BLEND_ALPHA;
 }
 DxWindow::~DxWindow() {
-	//WindowID‰ğ•ú
+	//WindowIDè§£æ”¾
 	for (auto itr = listWndId_.begin(); itr != listWndId_.end(); ++itr) {
 		if (*itr != idWindow_) continue;
 		listWndId_.erase(itr);
@@ -308,7 +308,7 @@ void DxWindow::AddChild(gstd::ref_count_ptr<DxWindow> window) {
 	for (auto itr = listWindowChild_.begin(); itr != listWindowChild_.end(); ++itr) {
 		ref_count_ptr<DxWindow>& win = *itr;
 		if (win == nullptr) continue;
-		if (win == window) return;//‘½d“o˜^‚Í‚³‚¹‚È‚¢		
+		if (win == window) return;//å¤šé‡ç™»éŒ²ã¯ã•ã›ãªã„		
 	}
 	window->manager_ = manager_;
 	window->windowParent_ = this;

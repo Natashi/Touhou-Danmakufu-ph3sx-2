@@ -569,8 +569,8 @@ void StgSystemController::_ControlScene() {
 	}
 
 	if (infoSystem_->IsPackageMode()) {
-		//ƒV[ƒ“•Ï‰»‚É‚Í‘¦À‚ÉƒpƒbƒP[ƒWŠÇ—‹@”\‚ğÀs‚·‚é
-		//ƒpƒbƒP[ƒWƒXƒNƒŠƒvƒg“à‚Å‹N“®‚·‚éƒV[ƒ“‘JˆÚ‚Ì•`‰æ‚È‚Ç‚ª’Ç‚¢‚Â‚©‚È‚­‚È‚é‚½‚ß
+		//ã‚·ãƒ¼ãƒ³å¤‰åŒ–æ™‚ã«ã¯å³åº§ã«ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ç®¡ç†æ©Ÿèƒ½ã‚’å®Ÿè¡Œã™ã‚‹
+		//ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ã‚¹ã‚¯ãƒªãƒ—ãƒˆå†…ã§èµ·å‹•ã™ã‚‹ã‚·ãƒ¼ãƒ³é·ç§»ã®æç”»ãªã©ãŒè¿½ã„ã¤ã‹ãªããªã‚‹ãŸã‚
 		if (scene != infoSystem_->GetScene()) {
 			packageController_->Work();
 		}
@@ -650,13 +650,13 @@ void StgSystemController::TransReplaySaveScene() {
 ref_count_ptr<ReplayInformation> StgSystemController::CreateReplayInformation() {
 	ref_count_ptr<ReplayInformation> res = new ReplayInformation();
 
-	//ƒƒCƒ“ƒXƒNƒŠƒvƒgŠÖ˜A
+	//ãƒ¡ã‚¤ãƒ³ã‚¹ã‚¯ãƒªãƒ—ãƒˆé–¢é€£
 	ref_count_ptr<StgStageInformation> infoLastStage = stageController_->GetStageInformation();
 	ref_count_ptr<ScriptInformation> infoMain = infoSystem_->GetMainScriptInformation();
 	const std::wstring& pathMainScript = infoMain->GetScriptPath();
 	std::wstring nameMainScript = PathProperty::GetFileName(pathMainScript);
 
-	//©‹@ŠÖ˜A
+	//è‡ªæ©Ÿé–¢é€£
 	ref_count_ptr<ScriptInformation> infoPlayer = infoLastStage->GetPlayerScriptInformation();
 	const std::wstring& pathPlayerScript = infoPlayer->GetScriptPath();
 	std::wstring filenamePlayerScript = PathProperty::GetFileName(pathPlayerScript);
@@ -664,11 +664,11 @@ ref_count_ptr<ReplayInformation> StgSystemController::CreateReplayInformation() 
 	res->SetPlayerScriptID(infoPlayer->GetID());
 	res->SetPlayerScriptReplayName(infoPlayer->GetReplayName());
 
-	//ƒVƒXƒeƒ€ŠÖ˜A
+	//ã‚·ã‚¹ãƒ†ãƒ é–¢é€£
 	int64_t totalScore = infoLastStage->GetScore();
 	double fpsAverage = 0;
 
-	//ƒXƒe[ƒW
+	//ã‚¹ãƒ†ãƒ¼ã‚¸
 	if (infoSystem_->IsPackageMode()) {
 		ref_count_ptr<StgPackageInformation> infoPackage = packageController_->GetPackageInformation();
 		std::vector<ref_count_ptr<StgStageStartData>>& listStageData = infoPackage->GetStageDataList();

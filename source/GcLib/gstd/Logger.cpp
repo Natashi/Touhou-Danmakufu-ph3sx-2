@@ -250,12 +250,12 @@ void WindowLogger::_CreateWindow() {
 	::ShowWindow(hWnd_, SW_HIDE);
 	this->Attach(hWnd_);
 
-	//ƒ^ƒu
+	//ã‚¿ãƒ–
 	wndTab_.reset(new WTabControll());
 	wndTab_->Create(hWnd_);
 	HWND hTab = wndTab_->GetWindowHandle();
 
-	//ƒXƒe[ƒ^ƒXƒo[
+	//ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ãƒãƒ¼
 	wndStatus_.reset(new WStatusBar());
 	wndStatus_->Create(hWnd_);
 	std::vector<int> sizeStatus;
@@ -263,7 +263,7 @@ void WindowLogger::_CreateWindow() {
 	sizeStatus.push_back(sizeStatus[0] + 560);
 	wndStatus_->SetPartsSize(sizeStatus);
 
-	//‰Šú‰»Š®—¹
+	//åˆæœŸåŒ–å®Œäº†
 	this->SetBounds(32, 32, 280, 480);
 	wndTab_->ShowPage();
 
@@ -272,7 +272,7 @@ void WindowLogger::_CreateWindow() {
 void WindowLogger::_Run() {
 	_CreateWindow();
 	MSG msg;
-	while (GetMessage(&msg, nullptr, 0, 0)) {	//ƒƒbƒZ[ƒWƒ‹[ƒv
+	while (GetMessage(&msg, nullptr, 0, 0)) {	//ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ãƒ«ãƒ¼ãƒ—
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
@@ -397,7 +397,7 @@ bool WindowLogger::AddPanel(shared_ptr<Panel> panel, const std::wstring& name) {
 	::SendMessage(hWnd_, WM_ADDPANEL, 0, 0);
 
 	while (panel->GetWindowHandle() == nullptr) {
-		Sleep(10);//ƒEƒBƒ“ƒhƒE‚ªì¬Š®—¹‚·‚é‚Ü‚Å‘Ò‹@
+		Sleep(10);//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒä½œæˆå®Œäº†ã™ã‚‹ã¾ã§å¾…æ©Ÿ
 	}
 	return true;
 }
@@ -551,8 +551,8 @@ void WindowLogger::InfoPanel::InfoCollector::Initialize() {
 }
 /*
 void WindowLogger::InfoPanel::InfoCollector::_Run() {
-	//TODO –³Œø‚ÈƒXƒe[ƒ^ƒXƒo[‚ÉƒƒbƒZ[ƒW‚ğ
-	//     ‘—‚é‚Æ‚«AŒÅ‚Ü‚é‰Â”\«‚ ‚èB
+	//TODO ç„¡åŠ¹ãªã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ãƒãƒ¼ã«ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’
+	//     é€ã‚‹ã¨ãã€å›ºã¾ã‚‹å¯èƒ½æ€§ã‚ã‚Šã€‚
 	//infoCpu_ = this->_GetCpuInformation();
 
 	while (this->GetStatus() == RUN) {
@@ -628,65 +628,65 @@ WindowLogger::InfoPanel::InfoCollector::CpuInfo WindowLogger::InfoPanel::InfoCol
 	ZeroMemory(&ci, sizeof(CpuInfo));
 
 	try {
-		/*CPUID–½—ß‚ğƒTƒ|[ƒg‚µ‚Ä‚¢‚é‚©’²‚×‚éB
-		iPentiumˆÈ~‚ÌCPU‚È‚ç‚ÎƒTƒ|[ƒg‚µ‚Ä‚¢‚é‚ç‚µ‚¢cj
-		ƒtƒ‰ƒOƒŒƒWƒXƒ^‚Ì‚Q‚Pƒrƒbƒg–Ú‚ğ•Ï‚¦‚é‚±‚Æ‚ª‚Å‚«‚ê‚ÎƒTƒ|[ƒg‚µ‚Ä‚¢‚éB*/
+		/*CPUIDå‘½ä»¤ã‚’ã‚µãƒãƒ¼ãƒˆã—ã¦ã„ã‚‹ã‹èª¿ã¹ã‚‹ã€‚
+		ï¼ˆPentiumä»¥é™ã®CPUãªã‚‰ã°ã‚µãƒãƒ¼ãƒˆã—ã¦ã„ã‚‹ã‚‰ã—ã„â€¦ï¼‰
+		ãƒ•ãƒ©ã‚°ãƒ¬ã‚¸ã‚¹ã‚¿ã®ï¼’ï¼‘ãƒ“ãƒƒãƒˆç›®ã‚’å¤‰ãˆã‚‹ã“ã¨ãŒã§ãã‚Œã°ã‚µãƒãƒ¼ãƒˆã—ã¦ã„ã‚‹ã€‚*/
 		_asm
 		{
-			pushfd; ƒtƒ‰ƒOƒŒƒWƒXƒ^‚Ì“à—e‚ğƒXƒ^ƒbƒN‚É•Û‘¶
-			pushfd; ƒtƒ‰ƒOƒŒƒWƒXƒ^‚Ì“à—e‚ğƒXƒ^ƒbƒN‚É“ü‚ê‚é
-			pop eax; ƒXƒ^ƒbƒN‚Ì“à—e‚ğeaxƒŒƒWƒXƒ^‚Éæ‚èo‚·
-			xor eax, 00200000h; eaxƒŒƒWƒXƒ^‚Ì21ƒrƒbƒg–Ú‚ğƒrƒbƒg”½“]Ac‚è‚Í‚»‚Ì‚Ü‚Ü
-			push eax; eaxƒŒƒWƒXƒ^‚Ì“à—e‚ğƒXƒ^ƒbƒN‚É“ü‚ê‚é
-			popfd; ƒXƒ^ƒbƒN‚Ì“à—e‚ğƒtƒ‰ƒOƒŒƒWƒXƒ^‚Éæ‚èo‚·
-			pushfd; ƒtƒ‰ƒOƒŒƒWƒXƒ^‚Ì“à—e‚ğƒXƒ^ƒbƒN‚É“ü‚ê‚é
-			pop ebx; ƒXƒ^ƒbƒN‚Ì“à—e‚ğebxƒŒƒWƒXƒ^‚Éæ‚èo‚·
-			popfd; ƒtƒ‰ƒOƒŒƒWƒXƒ^‚Ì“à—e‚ğ•œŒ³
-			cmp eax, ebx; ”äŠr
-			je supported; “™‚µ‚¢‚È‚ç‚ÎƒWƒƒƒ“ƒv
-			mov cpuid_supported, 0; •Ï”‘ã“ü
-			jmp exitasm; –³ğŒƒWƒƒƒ“ƒv
+			pushfd; ãƒ•ãƒ©ã‚°ãƒ¬ã‚¸ã‚¹ã‚¿ã®å†…å®¹ã‚’ã‚¹ã‚¿ãƒƒã‚¯ã«ä¿å­˜
+			pushfd; ãƒ•ãƒ©ã‚°ãƒ¬ã‚¸ã‚¹ã‚¿ã®å†…å®¹ã‚’ã‚¹ã‚¿ãƒƒã‚¯ã«å…¥ã‚Œã‚‹
+			pop eax; ã‚¹ã‚¿ãƒƒã‚¯ã®å†…å®¹ã‚’eaxãƒ¬ã‚¸ã‚¹ã‚¿ã«å–ã‚Šå‡ºã™
+			xor eax, 00200000h; eaxãƒ¬ã‚¸ã‚¹ã‚¿ã®21ãƒ“ãƒƒãƒˆç›®ã‚’ãƒ“ãƒƒãƒˆåè»¢ã€æ®‹ã‚Šã¯ãã®ã¾ã¾
+			push eax; eaxãƒ¬ã‚¸ã‚¹ã‚¿ã®å†…å®¹ã‚’ã‚¹ã‚¿ãƒƒã‚¯ã«å…¥ã‚Œã‚‹
+			popfd; ã‚¹ã‚¿ãƒƒã‚¯ã®å†…å®¹ã‚’ãƒ•ãƒ©ã‚°ãƒ¬ã‚¸ã‚¹ã‚¿ã«å–ã‚Šå‡ºã™
+			pushfd; ãƒ•ãƒ©ã‚°ãƒ¬ã‚¸ã‚¹ã‚¿ã®å†…å®¹ã‚’ã‚¹ã‚¿ãƒƒã‚¯ã«å…¥ã‚Œã‚‹
+			pop ebx; ã‚¹ã‚¿ãƒƒã‚¯ã®å†…å®¹ã‚’ebxãƒ¬ã‚¸ã‚¹ã‚¿ã«å–ã‚Šå‡ºã™
+			popfd; ãƒ•ãƒ©ã‚°ãƒ¬ã‚¸ã‚¹ã‚¿ã®å†…å®¹ã‚’å¾©å…ƒ
+			cmp eax, ebx; æ¯”è¼ƒ
+			je supported; ç­‰ã—ã„ãªã‚‰ã°ã‚¸ãƒ£ãƒ³ãƒ—
+			mov cpuid_supported, 0; å¤‰æ•°ä»£å…¥
+			jmp exitasm; ç„¡æ¡ä»¶ã‚¸ãƒ£ãƒ³ãƒ—
 
 			supported :
-			mov cpuid_supported, 1; •Ï”‘ã“ü
+			mov cpuid_supported, 1; å¤‰æ•°ä»£å…¥
 				exitasm :
 		};
 
-		if (!cpuid_supported) {//CPUID –½—ß‚ğƒTƒ|[ƒg‚µ‚Ä‚È‚¢
+		if (!cpuid_supported) {//CPUID å‘½ä»¤ã‚’ã‚µãƒãƒ¼ãƒˆã—ã¦ãªã„
 			throw gstd::wexception();
 		}
 
-		/*eax=0‚ÅCPUID‚ğŒÄ‚Ño‚µA
-		Eƒxƒ“ƒ_[ID‚Ìæ“¾iƒxƒ“ƒ_[ID‚Íebx -> edx -> ecx‚Ì‡‚ÉƒRƒs[‚³‚ê‚Ü‚·j
-		Eƒxƒ“ƒ_[ID‚ªAuthenticAMD‚È‚çCPU–¼‚ğæ“¾
-		Eeax=1‚Ì‚Æ‚«CPUID–½—ß‚ªƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚é‚©‚Ì’²¸
-		‚ğ‚µ‚Ü‚·B*/
+		/*eax=0ã§CPUIDã‚’å‘¼ã³å‡ºã—ã€
+		ãƒ»ãƒ™ãƒ³ãƒ€ãƒ¼IDã®å–å¾—ï¼ˆãƒ™ãƒ³ãƒ€ãƒ¼IDã¯ebx -> edx -> ecxã®é †ã«ã‚³ãƒ”ãƒ¼ã•ã‚Œã¾ã™ï¼‰
+		ãƒ»ãƒ™ãƒ³ãƒ€ãƒ¼IDãŒAuthenticAMDãªã‚‰CPUåã‚’å–å¾—
+		ãƒ»eax=1ã®ã¨ãCPUIDå‘½ä»¤ãŒã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ã‚‹ã‹ã®èª¿æŸ»
+		ã‚’ã—ã¾ã™ã€‚*/
 		_asm
 		{
 			mov	eax, 0
 			cpuid
-			mov DWORD PTR[VenderID + 0], ebx; Še’l‚ğƒoƒbƒtƒ@‚ÉƒRƒs[
+			mov DWORD PTR[VenderID + 0], ebx; å„å€¤ã‚’ãƒãƒƒãƒ•ã‚¡ã«ã‚³ãƒ”ãƒ¼
 			mov DWORD PTR[VenderID + 4], edx
 			mov DWORD PTR[VenderID + 8], ecx
-			mov BYTE PTR[VenderID + 12], 0; ÅŒã‚Énullptr‚ğ“ü‚ê‚é
+			mov BYTE PTR[VenderID + 12], 0; æœ€å¾Œã«nullptrã‚’å…¥ã‚Œã‚‹
 			mov	eax1cpuid_supported, eax
 		};
 
-		//ƒxƒ“ƒ_[ID‚ğƒRƒs[
+		//ãƒ™ãƒ³ãƒ€ãƒ¼IDã‚’ã‚³ãƒ”ãƒ¼
 		strcpy(ci.venderID, VenderID);
 
-		//VenderID‚ªAuthenticAMD‚È‚çCPU–¼‚ğæ“¾‚Å‚«‚Ü‚·B
+		//VenderIDãŒAuthenticAMDãªã‚‰CPUåã‚’å–å¾—ã§ãã¾ã™ã€‚
 		if (0 == strcmp(ci.venderID, "AuthenticAMD")) {
-			//CPU–¼‚ğæ“¾‚·‚é‚½‚ß‚Éeax=08000002h‚ÅCPUID‚ğŒÄ‚Ño‚µ‚Ü‚·B
+			//CPUåã‚’å–å¾—ã™ã‚‹ãŸã‚ã«eax=08000002hã§CPUIDã‚’å‘¼ã³å‡ºã—ã¾ã™ã€‚
 			_asm
 			{
 				mov	eax, 08000002h
 				cpuid
-				mov DWORD PTR[name + 0], eax; Še’l‚ğƒoƒbƒtƒ@‚ÉƒRƒs[
+				mov DWORD PTR[name + 0], eax; å„å€¤ã‚’ãƒãƒƒãƒ•ã‚¡ã«ã‚³ãƒ”ãƒ¼
 				mov DWORD PTR[name + 4], ebx
 				mov DWORD PTR[name + 8], ecx
 				mov DWORD PTR[name + 12], edx
-				mov BYTE PTR[name + 16], 0; ÅŒã‚Énullptr‚ğ“ü‚ê‚é
+				mov BYTE PTR[name + 16], 0; æœ€å¾Œã«nullptrã‚’å…¥ã‚Œã‚‹
 			};
 			strcpy(ci.name, name);
 
@@ -694,11 +694,11 @@ WindowLogger::InfoPanel::InfoCollector::CpuInfo WindowLogger::InfoPanel::InfoCol
 			{
 				mov	eax, 08000003h
 				cpuid
-				mov DWORD PTR[name + 0], eax; Še’l‚ğƒoƒbƒtƒ@‚ÉƒRƒs[
+				mov DWORD PTR[name + 0], eax; å„å€¤ã‚’ãƒãƒƒãƒ•ã‚¡ã«ã‚³ãƒ”ãƒ¼
 				mov DWORD PTR[name + 4], ebx
 				mov DWORD PTR[name + 8], ecx
 				mov DWORD PTR[name + 12], edx
-				mov BYTE PTR[name + 16], 0; ÅŒã‚Énullptr‚ğ“ü‚ê‚é
+				mov BYTE PTR[name + 16], 0; æœ€å¾Œã«nullptrã‚’å…¥ã‚Œã‚‹
 			};
 			strcat(ci.name, name);
 
@@ -706,28 +706,28 @@ WindowLogger::InfoPanel::InfoCollector::CpuInfo WindowLogger::InfoPanel::InfoCol
 			{
 				mov	eax, 08000004h
 				cpuid
-				mov DWORD PTR[name + 0], eax; Še’l‚ğƒoƒbƒtƒ@‚ÉƒRƒs[
+				mov DWORD PTR[name + 0], eax; å„å€¤ã‚’ãƒãƒƒãƒ•ã‚¡ã«ã‚³ãƒ”ãƒ¼
 				mov DWORD PTR[name + 4], ebx
 				mov DWORD PTR[name + 8], ecx
 				mov DWORD PTR[name + 12], edx
-				mov BYTE PTR[name + 16], 0; ÅŒã‚Énullptr‚ğ“ü‚ê‚é
+				mov BYTE PTR[name + 16], 0; æœ€å¾Œã«nullptrã‚’å…¥ã‚Œã‚‹
 			};
 			strcat(ci.name, name);
 		}
 
-		//ax=1‚Ì‚Æ‚«CPUID–½—ß‚ªƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚é‚©‚Ì’²¸
+		//ax=1ã®ã¨ãCPUIDå‘½ä»¤ãŒã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ã‚‹ã‹ã®èª¿æŸ»
 		if (1 > eax1cpuid_supported) {
-			//eaxƒŒƒWƒXƒ^‚ª‚P‚Ì‚ÉCPUID–½—ß‚ªƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚È‚¢
+			//eaxãƒ¬ã‚¸ã‚¹ã‚¿ãŒï¼‘ã®æ™‚ã«CPUIDå‘½ä»¤ãŒã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ãªã„
 			throw gstd::wexception();
 		}
 
-		/*eaxƒŒƒWƒXƒ^‚É1‚ğ“ü‚ê‚ÄCPUID‚ğŒÄ‚Ño‚µA
-		ECPU‚Ìtype,family,Mode,stepping
-		EMMX–½—ß‚ÌƒTƒ|[ƒg
-		ESIMD–½—ß‚ÌƒTƒ|[ƒg
-		E3DNow!‚ÌƒTƒ|[ƒg
-		ERDTSC–½—ß‚ÌƒTƒ|[ƒgiƒTƒ|[ƒg‚µ‚Ä‚¢‚ê‚ÎƒNƒƒbƒNü”g”‚ğ‘ª’èj
-		‚ğ’²‚×‚Ü‚·B*/
+		/*eaxãƒ¬ã‚¸ã‚¹ã‚¿ã«1ã‚’å…¥ã‚Œã¦CPUIDã‚’å‘¼ã³å‡ºã—ã€
+		ãƒ»CPUã®type,family,Mode,stepping
+		ãƒ»MMXå‘½ä»¤ã®ã‚µãƒãƒ¼ãƒˆ
+		ãƒ»SIMDå‘½ä»¤ã®ã‚µãƒãƒ¼ãƒˆ
+		ãƒ»3DNow!ã®ã‚µãƒãƒ¼ãƒˆ
+		ãƒ»RDTSCå‘½ä»¤ã®ã‚µãƒãƒ¼ãƒˆï¼ˆã‚µãƒãƒ¼ãƒˆã—ã¦ã„ã‚Œã°ã‚¯ãƒ­ãƒƒã‚¯å‘¨æ³¢æ•°ã‚’æ¸¬å®šï¼‰
+		ã‚’èª¿ã¹ã¾ã™ã€‚*/
 		_asm
 		{
 			mov	eax, 1
@@ -736,38 +736,38 @@ WindowLogger::InfoPanel::InfoCollector::CpuInfo WindowLogger::InfoPanel::InfoCol
 			mov	edx_flags, edx
 		};
 
-		//CPU‚Ìtype,family,Mode,stepping‚ğ’²‚×‚é
+		//CPUã®type,family,Mode,steppingã‚’èª¿ã¹ã‚‹
 		ci.type = (eax_flags >> 12) & 0xF;
 		ci.family = (eax_flags >> 8) & 0xF;
 		ci.model = (eax_flags >> 4) & 0xF;
 		ci.stepping = eax_flags & 0xF;
 
-		//MMX–½—ß‚ğƒTƒ|[ƒg‚µ‚Ä‚¢‚é‚©
+		//MMXå‘½ä»¤ã‚’ã‚µãƒãƒ¼ãƒˆã—ã¦ã„ã‚‹ã‹
 		ci.bMMXEnabled = (edx_flags & 0x00800000) ? true : false;
 
-		//SIMD–½—ß‚ğƒTƒ|[ƒg‚µ‚Ä‚¢‚é‚©
+		//SIMDå‘½ä»¤ã‚’ã‚µãƒãƒ¼ãƒˆã—ã¦ã„ã‚‹ã‹
 		ci.bSIMDEnabled = (edx_flags & 0x02000000) ? true : false;
 
-		//AMD 3DNow!‚ğƒTƒ|[ƒg‚µ‚Ä‚¢‚é‚©
+		//AMD 3DNow!ã‚’ã‚µãƒãƒ¼ãƒˆã—ã¦ã„ã‚‹ã‹
 		ci.bAMD3DNowEnabled = (edx_flags & 0x80000000) ? true : false;
 
-		//RDTSC–½—ß‚ğƒTƒ|[ƒg‚µ‚Ä‚¢‚é‚©’²‚×‚é
+		//RDTSCå‘½ä»¤ã‚’ã‚µãƒãƒ¼ãƒˆã—ã¦ã„ã‚‹ã‹èª¿ã¹ã‚‹
 		if (edx_flags & 0x00000010) {
-			//ƒTƒ|[ƒg‚µ‚Ä‚¢‚ê‚ÎƒNƒƒbƒNü”g”‚ğ‘ª’è
-			//RDTSR–½—ß‚ÍCPUƒRƒA‚ÌTime Stamp Counter‚ğeaxƒŒƒWƒXƒ^‚ÉŠi”[‚·‚é–½—ß‚Å‚·B
-			//Time Stamp Counter‚ÍCPU1ƒNƒƒbƒN‚²‚Æ‚ÉƒJƒEƒ“ƒgƒAƒbƒv‚µ‚Ä‚¢‚Ü‚·B
+			//ã‚µãƒãƒ¼ãƒˆã—ã¦ã„ã‚Œã°ã‚¯ãƒ­ãƒƒã‚¯å‘¨æ³¢æ•°ã‚’æ¸¬å®š
+			//RDTSRå‘½ä»¤ã¯CPUã‚³ã‚¢ã®Time Stamp Counterã‚’eaxãƒ¬ã‚¸ã‚¹ã‚¿ã«æ ¼ç´ã™ã‚‹å‘½ä»¤ã§ã™ã€‚
+			//Time Stamp Counterã¯CPU1ã‚¯ãƒ­ãƒƒã‚¯ã”ã¨ã«ã‚«ã‚¦ãƒ³ãƒˆã‚¢ãƒƒãƒ—ã—ã¦ã„ã¾ã™ã€‚
 			_asm rdtsc;
 			_asm mov CPUClock, eax;
 			start = timeGetTime();
-			while (timeGetTime() - start < 1000);//1000ms‘Ò‚Â
+			while (timeGetTime() - start < 1000);//1000mså¾…ã¤
 //			Sleep(1000);
 			_asm rdtsc;
-			_asm sub eax, CPUClock;/*ˆø‚«Z*/
+			_asm sub eax, CPUClock;/*å¼•ãç®—*/
 			_asm mov CPUClock, eax;
 			ci.clock = (double)(CPUClock);
 		}
 		else {
-			//RDTSC–½—ß‚ğƒTƒ|[ƒg‚µ‚Ä‚¢‚È‚¢B
+			//RDTSCå‘½ä»¤ã‚’ã‚µãƒãƒ¼ãƒˆã—ã¦ã„ãªã„ã€‚
 			throw gstd::wexception();
 		}
 
@@ -776,7 +776,7 @@ WindowLogger::InfoPanel::InfoCollector::CpuInfo WindowLogger::InfoPanel::InfoCol
 		if (strcmp(ci.venderID, "AuthenticAMD") == 0) {
 			/*
 			if (ci.family == 5 && ci.model == 8) ci.cpuName = "K6-2";
-			else if (ci.family == 5 && ci.model == 9) ci.cpuName = "K6-‡V";
+			else if (ci.family == 5 && ci.model == 9) ci.cpuName = "K6-â…¢";
 			else if (ci.family == 6 && ci.model == 1) ci.cpuName = "Athlon";
 			else if (ci.family == 6 && ci.model == 2) ci.cpuName = "Athlon";
 			else if (ci.family == 6 && ci.model == 3) ci.cpuName = "Athlon";
@@ -792,13 +792,13 @@ WindowLogger::InfoPanel::InfoCollector::CpuInfo WindowLogger::InfoPanel::InfoCol
 			else if (ci.family == 5 && ci.model == 3) ci.cpuName = "Pentium OverDrive for 486";
 			else if (ci.family == 5 && ci.model == 4) ci.cpuName = "MMX Pentium";
 			else if (ci.family == 6 && ci.model == 1) ci.cpuName = "Pentium Pro";
-			else if (ci.family == 6 && ci.model == 3) ci.cpuName = "Pentium‡U";
-			else if (ci.family == 6 && ci.model == 5) ci.cpuName = "Pentium‡U/Pentium‡UXeon/Celeron";
+			else if (ci.family == 6 && ci.model == 3) ci.cpuName = "Pentiumâ…¡";
+			else if (ci.family == 6 && ci.model == 5) ci.cpuName = "Pentiumâ…¡/Pentiumâ…¡Xeon/Celeron";
 			else if (ci.family == 6 && ci.model == 6) ci.cpuName = "Celeron";
-			else if (ci.family == 6 && ci.model == 7) ci.cpuName = "Pentium‡V/Petium‡VXeon";
-			else if (ci.family == 6 && ci.model == 8) ci.cpuName = "Pentium‡V/Petium‡VXeon/Celeron";
-			else if (ci.family == 6 && ci.model == 9) ci.cpuName = "Petium‡VXeon";
-			else if (ci.family == 6 && ci.model == 10) ci.cpuName = "Pentium‡UOverDrive";
+			else if (ci.family == 6 && ci.model == 7) ci.cpuName = "Pentiumâ…¢/Petiumâ…¢Xeon";
+			else if (ci.family == 6 && ci.model == 8) ci.cpuName = "Pentiumâ…¢/Petiumâ…¢Xeon/Celeron";
+			else if (ci.family == 6 && ci.model == 9) ci.cpuName = "Petiumâ…¢Xeon";
+			else if (ci.family == 6 && ci.model == 10) ci.cpuName = "Pentiumâ…¡OverDrive";
 			else if (ci.family == 15 && ci.model == 0) ci.cpuName = "Pentium4";
 			*/
 		}

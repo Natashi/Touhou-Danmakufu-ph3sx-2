@@ -127,9 +127,11 @@ namespace directx {
 		virtual void RestoreDxResource();
 
 		shared_ptr<TextureData> GetTextureData(const std::wstring& name);
-		shared_ptr<Texture> CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);//テクスチャを読み込みます。TextureDataは保持しますが、Textureは保持しません。
+		shared_ptr<Texture> GetTexture(const std::wstring& name);
+		
+		shared_ptr<Texture> CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
 		shared_ptr<Texture> CreateRenderTarget(const std::wstring& name, size_t width = 0U, size_t height = 0U);
-		shared_ptr<Texture> GetTexture(const std::wstring& name);//作成済みのテクスチャを取得します
+		
 		shared_ptr<Texture> CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo = false);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 

@@ -607,7 +607,7 @@ std::wstring ErrorUtility::GetLastErrorMessage(DWORD error) {
 	::FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
 		error,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Šù’è‚ÌŒ¾Œê
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // æ—¢å®šã®è¨€èª
 		(LPTSTR)&lpMsgBuf,
 		0,
 		NULL
@@ -718,11 +718,11 @@ wchar_t Scanner::_CurrentChar() {
 wchar_t Scanner::_NextChar() {
 	if (!HasNext()) {
 		/*
-		Logger::WriteTop(L"I’[ˆÙí”­¶->");
+		Logger::WriteTop(L"çµ‚ç«¯ç•°å¸¸ç™ºç”Ÿ->");
 
 		int size = buffer_.size() - textStartPointer_;
 		std::wstring source = GetString(textStartPointer_, size);
-		std::wstring target = StringUtility::Format(L"š‹å‰ğÍ‘ÎÛ -> \r\n%s...", source.c_str());
+		std::wstring target = StringUtility::Format(L"å­—å¥è§£æå¯¾è±¡ -> \r\n%s...", source.c_str());
 		Logger::WriteTop(target);
 
 		int index = 1;
@@ -777,7 +777,7 @@ void Scanner::_SkipComment() {
 			}
 		}
 
-		//ƒXƒLƒbƒv‚à‹ó”’”ò‚Î‚µ‚à–³‚¢ê‡AI—¹
+		//ã‚¹ã‚­ãƒƒãƒ—ã‚‚ç©ºç™½é£›ã°ã—ã‚‚ç„¡ã„å ´åˆã€çµ‚äº†
 		if (posStart == pointer_) break;
 	}
 }
@@ -1025,25 +1025,25 @@ const char* Token::Type_Str[] = {
 };
 std::wstring& Token::GetIdentifier() {
 	if (type_ != Type::TK_ID) {
-		throw gstd::wexception(L"Token::GetIdentifier:ƒf[ƒ^‚Ìƒ^ƒCƒv‚ªˆá‚¢‚Ü‚·");
+		throw gstd::wexception(L"Token::GetIdentifier:ãƒ‡ãƒ¼ã‚¿ã®ã‚¿ã‚¤ãƒ—ãŒé•ã„ã¾ã™");
 	}
 	return element_;
 }
 std::wstring Token::GetString() {
 	if (type_ != Type::TK_STRING) {
-		throw gstd::wexception(L"Token::GetString:ƒf[ƒ^‚Ìƒ^ƒCƒv‚ªˆá‚¢‚Ü‚·");
+		throw gstd::wexception(L"Token::GetString:ãƒ‡ãƒ¼ã‚¿ã®ã‚¿ã‚¤ãƒ—ãŒé•ã„ã¾ã™");
 	}
 	return element_.substr(1, element_.size() - 2);
 }
 int Token::GetInteger() {
 	if (type_ != Type::TK_INT) {
-		throw gstd::wexception(L"Token::GetInterger:ƒf[ƒ^‚Ìƒ^ƒCƒv‚ªˆá‚¢‚Ü‚·");
+		throw gstd::wexception(L"Token::GetInterger:ãƒ‡ãƒ¼ã‚¿ã®ã‚¿ã‚¤ãƒ—ãŒé•ã„ã¾ã™");
 	}
 	return StringUtility::ToInteger(element_);
 }
 double Token::GetReal() {
 	if (type_ != Type::TK_REAL && type_ != Type::TK_INT) {
-		throw gstd::wexception(L"Token::GetReal:ƒf[ƒ^‚Ìƒ^ƒCƒv‚ªˆá‚¢‚Ü‚·");
+		throw gstd::wexception(L"Token::GetReal:ãƒ‡ãƒ¼ã‚¿ã®ã‚¿ã‚¤ãƒ—ãŒé•ã„ã¾ã™");
 	}
 	return StringUtility::ToDouble(element_);
 }
@@ -1093,7 +1093,7 @@ TextParser::Result TextParser::_ParseComparison(int pos) {
 		Token& tok = scan_->Next();
 		Token::Type type = tok.GetType();
 		if (type == Token::Type::TK_EXCLAMATION || type == Token::Type::TK_EQUAL) {
-			//u==vu!=v
+			//ã€Œ==ã€ã€Œ!=ã€
 			bool bNot = type == Token::Type::TK_EXCLAMATION;
 			tok = scan_->Next();
 			type = tok.GetType();
@@ -1110,7 +1110,7 @@ TextParser::Result TextParser::_ParseComparison(int pos) {
 					res.valueReal_ != tRes.valueReal_ : res.valueReal_ == tRes.valueReal_;
 			}
 			else {
-				_RaiseError(L"”äŠr‚Å‚«‚È‚¢Œ^");
+				_RaiseError(L"æ¯”è¼ƒã§ããªã„å‹");
 			}
 			res.type_ = Type::TYPE_BOOLEAN;
 		}
@@ -1124,7 +1124,7 @@ TextParser::Result TextParser::_ParseComparison(int pos) {
 				res.valueBoolean_ = res.valueBoolean_ || tRes.valueBoolean_;
 			}
 			else {
-				_RaiseError(L"^‹U’lˆÈŠO‚Å‚Ì||");
+				_RaiseError(L"çœŸå½å€¤ä»¥å¤–ã§ã®||");
 			}
 		}
 		else if (type == Token::Type::TK_AMPERSAND) {
@@ -1137,7 +1137,7 @@ TextParser::Result TextParser::_ParseComparison(int pos) {
 				res.valueBoolean_ = res.valueBoolean_ && tRes.valueBoolean_;
 			}
 			else {
-				_RaiseError(L"^‹U’lˆÈŠO‚Å‚Ì&&");
+				_RaiseError(L"çœŸå½å€¤ä»¥å¤–ã§ã®&&");
 			}
 		}
 		else break;
@@ -1161,7 +1161,7 @@ TextParser::Result TextParser::_ParseSum(int pos) {
 			res.valueString_ = res.GetString() + tRes.GetString();
 		}
 		else {
-			if (tRes.type_ == Type::TYPE_BOOLEAN) _RaiseError(L"^‹U’l‚Ì‰ÁZŒ¸Z");
+			if (tRes.type_ == Type::TYPE_BOOLEAN) _RaiseError(L"çœŸå½å€¤ã®åŠ ç®—æ¸›ç®—");
 			res.pos_ = tRes.pos_;
 			if (type == Token::Type::TK_PLUS)
 				res.valueReal_ += tRes.valueReal_;
@@ -1182,7 +1182,7 @@ TextParser::Result TextParser::_ParseProduct(int pos) {
 		if (type != Token::Type::TK_ASTERISK && type != Token::Type::TK_SLASH) break;
 
 		Result tRes = _ParseTerm(scan_->GetCurrentPointer());
-		if (tRes.type_ == Type::TYPE_BOOLEAN) _RaiseError(L"^‹U’l‚ÌæZœZ");
+		if (tRes.type_ == Type::TYPE_BOOLEAN) _RaiseError(L"çœŸå½å€¤ã®ä¹—ç®—é™¤ç®—");
 
 		res.type_ = tRes.type_;
 		res.pos_ = tRes.pos_;
@@ -1215,7 +1215,7 @@ TextParser::Result TextParser::_ParseTerm(int pos) {
 		res = _ParseComparison(scan_->GetCurrentPointer());
 		scan_->SetCurrentPointer(res.pos_);
 		tok = scan_->Next();
-		if (tok.GetType() != Token::Type::TK_CLOSEP) _RaiseError(L")‚ª‚ ‚è‚Ü‚¹‚ñ");
+		if (tok.GetType() != Token::Type::TK_CLOSEP) _RaiseError(L")ãŒã‚ã‚Šã¾ã›ã‚“");
 	}
 	else {
 		Token::Type type = tok.GetType();
@@ -1231,15 +1231,15 @@ TextParser::Result TextParser::_ParseTerm(int pos) {
 			res.valueString_ = tok.GetString();
 			res.type_ = Type::TYPE_STRING;
 		}
-		else _RaiseError(StringUtility::Format(L"•s³‚Èƒg[ƒNƒ“:%s", tok.GetElement().c_str()));
+		else _RaiseError(StringUtility::Format(L"ä¸æ­£ãªãƒˆãƒ¼ã‚¯ãƒ³:%s", tok.GetElement().c_str()));
 	}
 
 	if (bMinus) {
-		if (res.type_ != Type::TYPE_REAL) _RaiseError(L"À”ˆÈŠO‚Å‚Ì•‰‹L†");
+		if (res.type_ != Type::TYPE_REAL) _RaiseError(L"å®Ÿæ•°ä»¥å¤–ã§ã®è² è¨˜å·");
 		res.valueReal_ = -res.valueReal_;
 	}
 	if (bNot) {
-		if (res.type_ != Type::TYPE_BOOLEAN) _RaiseError(L"^‹U’lˆÈŠO‚Å‚Ì”Û’è");
+		if (res.type_ != Type::TYPE_BOOLEAN) _RaiseError(L"çœŸå½å€¤ä»¥å¤–ã§ã®å¦å®š");
 		res.valueBoolean_ = !res.valueBoolean_;
 	}
 
@@ -1262,7 +1262,7 @@ TextParser::Result TextParser::_ParseIdentifer(int pos) {
 		res.valueBoolean_ = false;
 	}
 	else {
-		_RaiseError(StringUtility::Format(L"•s³‚È¯•Êq:%s", id.c_str()));
+		_RaiseError(StringUtility::Format(L"ä¸æ­£ãªè­˜åˆ¥å­:%s", id.c_str()));
 	}
 
 	return res;
@@ -1276,25 +1276,25 @@ void TextParser::SetSource(const std::string& source) {
 	scan_->SetPermitSignNumber(false);
 }
 TextParser::Result TextParser::GetResult() {
-	if (scan_ == nullptr) _RaiseError(L"ƒeƒLƒXƒg‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ");
+	if (scan_ == nullptr) _RaiseError(L"ãƒ†ã‚­ã‚¹ãƒˆãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“");
 	scan_->SetPointerBegin();
 	Result res = _ParseComparison(scan_->GetCurrentPointer());
-	if (scan_->HasNext()) _RaiseError(StringUtility::Format(L"•s³‚Èƒg[ƒNƒ“:%s", scan_->GetToken().GetElement().c_str()));
+	if (scan_->HasNext()) _RaiseError(StringUtility::Format(L"ä¸æ­£ãªãƒˆãƒ¼ã‚¯ãƒ³:%s", scan_->GetToken().GetElement().c_str()));
 	return res;
 }
 double TextParser::GetReal() {
-	if (scan_ == nullptr) _RaiseError(L"ƒeƒLƒXƒg‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ");
+	if (scan_ == nullptr) _RaiseError(L"ãƒ†ã‚­ã‚¹ãƒˆãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“");
 	scan_->SetPointerBegin();
 	Result res = _ParseSum(scan_->GetCurrentPointer());
-	if (scan_->HasNext()) _RaiseError(StringUtility::Format(L"•s³‚Èƒg[ƒNƒ“:%s", scan_->GetToken().GetElement().c_str()));
+	if (scan_->HasNext()) _RaiseError(StringUtility::Format(L"ä¸æ­£ãªãƒˆãƒ¼ã‚¯ãƒ³:%s", scan_->GetToken().GetElement().c_str()));
 	return res.GetReal();
 }
 
 //*******************************************************************
 //Font
 //*******************************************************************
-//const wchar_t* Font::GOTHIC  = L"•W€ƒSƒVƒbƒN";
-//const wchar_t* Font::MINCHOH = L"•W€–¾’©";
+//const wchar_t* Font::GOTHIC  = L"æ¨™æº–ã‚´ã‚·ãƒƒã‚¯";
+//const wchar_t* Font::MINCHOH = L"æ¨™æº–æ˜æœ";
 const wchar_t* Font::GOTHIC = L"MS Gothic";
 const wchar_t* Font::MINCHOH = L"MS Mincho";
 

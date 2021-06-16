@@ -428,7 +428,7 @@ gstd::value ManagedScript::RequestEvent(int type, const gstd::value* listValue, 
 
 
 
-//STG§Œä‹¤’ÊŠÖ”FƒXƒNƒŠƒvƒg‘€ì
+//STGåˆ¶å¾¡å…±é€šé–¢æ•°ï¼šã‚¹ã‚¯ãƒªãƒ—ãƒˆæ“ä½œ
 gstd::value ManagedScript::Func_LoadScript(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
 	auto scriptManager = script->scriptManager_;

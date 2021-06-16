@@ -102,7 +102,7 @@ private:
 
 	std::list<std::wstring> listError_;
 	ref_count_ptr<ScriptInformation> infoMain_;
-	ref_count_ptr<ReplayInformation> infoReplayActive_; //アクティブリプレイ情報
+	ref_count_ptr<ReplayInformation> infoReplayActive_; //繧｢繧ｯ繝�繧｣繝悶Μ繝励Ξ繧､諠�蝣ｱ
 
 	int invalidPriMin_;
 	int invalidPriMax_;

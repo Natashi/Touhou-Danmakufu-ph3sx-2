@@ -88,10 +88,10 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_MatrixLookatRH);
 		DNH_FUNCAPI_DECL_(Func_MatrixTransformVector);
 
-		//DxŠÖ”FƒVƒXƒeƒ€Œn
+		//Dxé–¢æ•°ï¼šã‚·ã‚¹ãƒ†ãƒ ç³»
 		static gstd::value Func_InstallFont(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”F‰¹ºŒn
+		//Dxé–¢æ•°ï¼šéŸ³å£°ç³»
 		static gstd::value Func_LoadSound(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_RemoveSound(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_PlayBGM(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -100,7 +100,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_SetSoundDivisionVolumeRate);
 		DNH_FUNCAPI_DECL_(Func_GetSoundDivisionVolumeRate);
 
-		//DxŠÖ”FƒL[Œn
+		//Dxé–¢æ•°ï¼šã‚­ãƒ¼ç³»
 		static gstd::value Func_GetKeyState(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetMouseX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetMouseY(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -109,7 +109,7 @@ namespace directx {
 		static gstd::value Func_GetVirtualKeyState(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetVirtualKeyState(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”F•`‰æŒn
+		//Dxé–¢æ•°ï¼šæç”»ç³»
 		DNH_FUNCAPI_DECL_(Func_GetMonitorWidth);
 		DNH_FUNCAPI_DECL_(Func_GetMonitorHeight);
 		static gstd::value Func_GetScreenWidth(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -151,7 +151,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_LoadMesh);
 		DNH_FUNCAPI_DECL_(Func_RemoveMesh);
 
-		//DxŠÖ”FƒJƒƒ‰3D
+		//Dxé–¢æ•°ï¼šã‚«ãƒ¡ãƒ©3D
 		static gstd::value Func_SetCameraFocusX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetCameraFocusY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetCameraFocusZ(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -185,7 +185,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_GetCameraProjectionMatrix);
 		DNH_FUNCAPI_DECL_(Func_GetCameraViewProjectionMatrix);
 
-		//DxŠÖ”FƒJƒƒ‰2D
+		//Dxé–¢æ•°ï¼šã‚«ãƒ¡ãƒ©2D
 		static gstd::value Func_Set2DCameraFocusX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Set2DCameraFocusY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Set2DCameraAngleZ(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -200,7 +200,7 @@ namespace directx {
 		static gstd::value Func_Get2DCameraRatioX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Get2DCameraRatioY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”F‚»‚Ì‘¼
+		//Dxé–¢æ•°ï¼šãã®ä»–
 		static gstd::value Func_GetObjectDistance(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetObjectDistanceSq(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetObjectDeltaAngle(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -222,7 +222,7 @@ namespace directx {
 		//Other stuff
 		DNH_FUNCAPI_DECL_(Func_SetInvalidPositionReturn);
 
-		//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(‹¤’Ê)
+		//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(å…±é€š)
 		static gstd::value Func_Obj_Delete(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_IsDeleted(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_SetVisible(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -244,7 +244,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_Obj_CopyValueTable);
 		static gstd::value Func_Obj_GetType(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(RenderObject)
+		//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(RenderObject)
 		static gstd::value Func_ObjRender_SetX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_SetY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_SetZ(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -289,7 +289,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingAmbientColor);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingDirection);
 
-		//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(ShaderObject)
+		//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(ShaderObject)
 		static gstd::value Func_ObjShader_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_SetShaderF(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_SetShaderO(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -302,7 +302,7 @@ namespace directx {
 		static gstd::value Func_ObjShader_SetFloatArray(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_SetTexture(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(PrimitiveObject)
+		//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(PrimitiveObject)
 		static gstd::value Func_ObjPrimitive_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjPrimitive_SetPrimitiveType(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjPrimitive_GetPrimitiveType(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -320,12 +320,12 @@ namespace directx {
 		static gstd::value Func_ObjPrimitive_GetVertexPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_SetVertexIndex);
 
-		//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(Sprite2D)
+		//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(Sprite2D)
 		static gstd::value Func_ObjSprite2D_SetSourceRect(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSprite2D_SetDestRect(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSprite2D_SetDestCenter(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(SpriteList2D)
+		//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(SpriteList2D)
 		static gstd::value Func_ObjSpriteList2D_SetSourceRect(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSpriteList2D_SetDestRect(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSpriteList2D_SetDestCenter(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -334,13 +334,13 @@ namespace directx {
 		static gstd::value Func_ObjSpriteList2D_ClearVertexCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjSpriteList2D_SetAutoClearVertexCount);
 
-		//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(Sprite3D)
+		//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(Sprite3D)
 		static gstd::value Func_ObjSprite3D_SetSourceRect(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSprite3D_SetDestRect(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSprite3D_SetSourceDestRect(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSprite3D_SetBillboard(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(TrajectoryObject3D)
+		//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(TrajectoryObject3D)
 		static gstd::value Func_ObjTrajectory3D_SetInitialPoint(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjTrajectory3D_SetAlphaVariation(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjTrajectory3D_SetComplementCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -358,7 +358,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjParticleList_AddInstance);
 		DNH_FUNCAPI_DECL_(Func_ObjParticleList_ClearInstance);
 
-		//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(DxMesh)
+		//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(DxMesh)
 		static gstd::value Func_ObjMesh_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjMesh_Load(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjMesh_SetColor(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -367,7 +367,7 @@ namespace directx {
 		static gstd::value Func_ObjMesh_SetCoordinate2D(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjMesh_GetPath(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”FƒeƒLƒXƒg‘€ì(DxText)
+		//Dxé–¢æ•°ï¼šãƒ†ã‚­ã‚¹ãƒˆæ“ä½œ(DxText)
 		static gstd::value Func_ObjText_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjText_SetText(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjText_SetFontType(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -395,7 +395,7 @@ namespace directx {
 		static gstd::value Func_ObjText_GetTotalWidth(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjText_GetTotalHeight(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”F‰¹º‘€ì(DxSoundObject)
+		//Dxé–¢æ•°ï¼šéŸ³å£°æ“ä½œ(DxSoundObject)
 		static gstd::value Func_ObjSound_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSound_Load(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSound_Play(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -415,14 +415,14 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjSound_SetFrequency);
 		DNH_FUNCAPI_DECL_(Func_ObjSound_GetInfo);
 
-		//DxŠÖ”Fƒtƒ@ƒCƒ‹‘€ì(DxFileObject)
+		//Dxé–¢æ•°ï¼šãƒ•ã‚¡ã‚¤ãƒ«æ“ä½œ(DxFileObject)
 		static gstd::value Func_ObjFile_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFile_Open(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFile_OpenNW(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFile_Store(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFile_GetSize(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”Fƒtƒ@ƒCƒ‹‘€ì(DxTextFileObject)
+		//Dxé–¢æ•°ï¼šãƒ•ã‚¡ã‚¤ãƒ«æ“ä½œ(DxTextFileObject)
 		static gstd::value Func_ObjFileT_GetLineCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileT_GetLineText(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjFileT_SetLineText);
@@ -430,7 +430,7 @@ namespace directx {
 		static gstd::value Func_ObjFileT_AddLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileT_ClearLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-		//DxŠÖ”Fƒtƒ@ƒCƒ‹‘€ì(DxBinaryFileObject)
+		//Dxé–¢æ•°ï¼šãƒ•ã‚¡ã‚¤ãƒ«æ“ä½œ(DxBinaryFileObject)
 		static gstd::value Func_ObjFileB_SetByteOrder(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileB_SetCharacterCode(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjFileB_GetPointer(gstd::script_machine* machine, int argc, const gstd::value* argv);

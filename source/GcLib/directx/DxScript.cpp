@@ -933,7 +933,7 @@ gstd::value DxScript::Func_MatrixTransformVector(gstd::script_machine* machine, 
 	return script->CreateRealArrayValue((FLOAT*)&out, 4U);
 }
 
-//DxŠÖ”FƒVƒXƒeƒ€ŒnŒn
+//Dxé–¢æ•°ï¼šã‚·ã‚¹ãƒ†ãƒ ç³»ç³»
 gstd::value DxScript::Func_InstallFont(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
@@ -952,7 +952,7 @@ gstd::value DxScript::Func_InstallFont(gstd::script_machine* machine, int argc, 
 	return script->CreateBooleanValue(res);
 }
 
-//DxŠÖ”F‰¹ºŒn
+//Dxé–¢æ•°ï¼šéŸ³å£°ç³»
 value DxScript::Func_LoadSound(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
@@ -1070,7 +1070,7 @@ value DxScript::Func_GetSoundDivisionVolumeRate(script_machine* machine, int arg
 	return script->CreateRealValue(res);
 }
 
-//DxŠÖ”FƒL[Œn
+//Dxé–¢æ•°ï¼šã‚­ãƒ¼ç³»
 gstd::value DxScript::Func_GetKeyState(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectInput* input = DirectInput::GetBase();
 	int16_t key = (int16_t)argv[0].as_int();
@@ -1117,7 +1117,7 @@ gstd::value DxScript::Func_SetVirtualKeyState(gstd::script_machine* machine, int
 	}
 	return value();
 }
-//DxŠÖ”F•`‰æŒn
+//Dxé–¢æ•°ï¼šæç”»ç³»
 gstd::value DxScript::Func_GetMonitorWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	LONG res = ::GetSystemMetrics(SM_CXSCREEN);
 	return DxScript::CreateIntValue(res);
@@ -1675,7 +1675,7 @@ gstd::value DxScript::Func_ResetShaderI(gstd::script_machine* machine, int argc,
 	return value();
 }
 
-//DxŠÖ”FƒJƒƒ‰3D
+//Dxé–¢æ•°ï¼šã‚«ãƒ¡ãƒ©3D
 value DxScript::Func_SetCameraFocusX(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
@@ -1845,7 +1845,7 @@ value DxScript::Func_GetCameraViewProjectionMatrix(script_machine* machine, int 
 	return DxScript::CreateRealArrayValue(reinterpret_cast<const FLOAT*>(matViewProj), 16U);
 }
 
-//DxŠÖ”FƒJƒƒ‰2D
+//Dxé–¢æ•°ï¼šã‚«ãƒ¡ãƒ©2D
 gstd::value DxScript::Func_Set2DCameraFocusX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	graphics->GetCamera2D()->SetFocusX(argv[0].as_real());
@@ -1912,7 +1912,7 @@ gstd::value DxScript::Func_Get2DCameraRatioY(gstd::script_machine* machine, int 
 	return DxScript::CreateRealValue(res);
 }
 
-//DxŠÖ”F‚»‚Ì‘¼
+//Dxé–¢æ•°ï¼šãã®ä»–
 static inline bool IsDxObjValid3D(DxScriptObjectBase* obj) {
 	switch (obj->GetObjectType()) {
 	case TypeObject::Primitive3D:
@@ -2154,7 +2154,7 @@ value DxScript::Func_SetInvalidPositionReturn(script_machine* machine, int argc,
 	return value();
 }
 
-//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(‹¤’Ê)
+//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(å…±é€š)
 value DxScript::Func_Obj_Delete(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	script->CheckRunInMainThread();
@@ -2417,7 +2417,7 @@ value DxScript::Func_Obj_GetType(script_machine* machine, int argc, const value*
 }
 
 
-//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(RenderObject)
+//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(RenderObject)
 value DxScript::Func_ObjRender_SetX(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
@@ -2886,7 +2886,7 @@ value DxScript::Func_ObjRender_SetLightingDirection(gstd::script_machine* machin
 	return value();
 }
 
-//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(ShaderObject)
+//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(ShaderObject)
 gstd::value DxScript::Func_ObjShader_Create(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	script->CheckRunInMainThread();
@@ -3111,7 +3111,7 @@ gstd::value DxScript::Func_ObjShader_SetTexture(gstd::script_machine* machine, i
 	return value();
 }
 
-//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(PrimitiveObject)
+//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(PrimitiveObject)
 value DxScript::Func_ObjPrimitive_Create(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	script->CheckRunInMainThread();
@@ -3322,7 +3322,7 @@ value DxScript::Func_ObjPrimitive_SetVertexIndex(script_machine* machine, int ar
 	return value();
 }
 
-//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(Sprite2D)
+//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(Sprite2D)
 value DxScript::Func_ObjSprite2D_SetSourceRect(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
@@ -3354,7 +3354,7 @@ value DxScript::Func_ObjSprite2D_SetDestCenter(gstd::script_machine* machine, in
 	return value();
 }
 
-//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(SpriteList2D)
+//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(SpriteList2D)
 gstd::value DxScript::Func_ObjSpriteList2D_SetSourceRect(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
@@ -3418,7 +3418,7 @@ gstd::value DxScript::Func_ObjSpriteList2D_SetAutoClearVertexCount(gstd::script_
 	return value();
 }
 
-//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(Sprite3D)
+//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(Sprite3D)
 value DxScript::Func_ObjSprite3D_SetSourceRect(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
@@ -3462,7 +3462,7 @@ value DxScript::Func_ObjSprite3D_SetBillboard(script_machine* machine, int argc,
 	}
 	return value();
 }
-//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(TrajectoryObject3D)
+//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(TrajectoryObject3D)
 value DxScript::Func_ObjTrajectory3D_SetInitialPoint(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
@@ -3644,7 +3644,7 @@ value DxScript::Func_ObjParticleList_ClearInstance(script_machine* machine, int 
 	return value();
 }
 
-//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(DxMesh)
+//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(DxMesh)
 value DxScript::Func_ObjMesh_Create(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
@@ -3729,7 +3729,7 @@ value DxScript::Func_ObjMesh_SetAnimation(script_machine* machine, int argc, con
 		obj->anime_ = anime;
 		obj->time_ = argv[2].as_int();
 
-		//	D3DXMATRIX mat = obj->mesh_->GetAnimationMatrix(anime, obj->time_, "—I‹v‘O•”");
+		//	D3DXMATRIX mat = obj->mesh_->GetAnimationMatrix(anime, obj->time_, "æ‚ ä¹…å‰éƒ¨");
 		//	D3DXVECTOR3 pos;
 		//	D3DXVec3TransformCoord(&pos, &D3DXVECTOR3(0,0,0), &mat);
 	}
@@ -3757,7 +3757,7 @@ value DxScript::Func_ObjMesh_GetPath(script_machine* machine, int argc, const va
 	return script->CreateStringValue(res);
 }
 
-//DxŠÖ”FƒIƒuƒWƒFƒNƒg‘€ì(DxText)
+//Dxé–¢æ•°ï¼šã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæ“ä½œ(DxText)
 value DxScript::Func_ObjText_Create(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
@@ -4055,7 +4055,7 @@ value DxScript::Func_ObjText_GetTotalHeight(script_machine* machine, int argc, c
 	return script->CreateRealValue(res);
 }
 
-//DxŠÖ”F‰¹º‘€ì(DxSoundObject)
+//Dxé–¢æ•°ï¼šéŸ³å£°æ“ä½œ(DxSoundObject)
 gstd::value DxScript::Func_ObjSound_Create(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
@@ -4349,7 +4349,7 @@ gstd::value DxScript::Func_ObjSound_GetInfo(gstd::script_machine* machine, int a
 	return value();
 }
 
-//DxŠÖ”Fƒtƒ@ƒCƒ‹‘€ì(DxFileObject)
+//Dxé–¢æ•°ï¼šãƒ•ã‚¡ã‚¤ãƒ«æ“ä½œ(DxFileObject)
 gstd::value DxScript::Func_ObjFile_Create(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	//	script->CheckRunInMainThread();
@@ -4436,7 +4436,7 @@ gstd::value DxScript::Func_ObjFile_GetSize(gstd::script_machine* machine, int ar
 	return script->CreateIntValue(res);
 }
 
-//DxŠÖ”Fƒtƒ@ƒCƒ‹‘€ì(DxTextFileObject)
+//Dxé–¢æ•°ï¼šãƒ•ã‚¡ã‚¤ãƒ«æ“ä½œ(DxTextFileObject)
 gstd::value DxScript::Func_ObjFileT_GetLineCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
@@ -4504,7 +4504,7 @@ gstd::value DxScript::Func_ObjFileT_ClearLine(gstd::script_machine* machine, int
 	return value();
 }
 
-//DxŠÖ”Fƒtƒ@ƒCƒ‹‘€ì(DxBinaryFileObject)
+//Dxé–¢æ•°ï¼šãƒ•ã‚¡ã‚¤ãƒ«æ“ä½œ(DxBinaryFileObject)
 gstd::value DxScript::Func_ObjFileB_SetByteOrder(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	

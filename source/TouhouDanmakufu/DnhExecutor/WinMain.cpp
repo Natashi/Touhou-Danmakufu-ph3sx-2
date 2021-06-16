@@ -1,4 +1,4 @@
-﻿#include "source/GcLib/pch.h"
+#include "source/GcLib/pch.h"
 
 #include "GcLibImpl.hpp"
 
@@ -41,10 +41,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		MessageBox(handleWindow, e.what(), 
 			L"Engine Error", MB_ICONERROR | MB_APPLMODAL | MB_OK);
 	}
-	//	catch(...)
-	//	{
-	//		Logger::WriteTop("不明なエラー");
-	//	}
 
 	EApplication::DeleteInstance();
 	EPathProperty::DeleteInstance();
