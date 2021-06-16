@@ -1003,7 +1003,7 @@ value ScriptClientBase::Func_SinCos(script_machine* machine, int argc, const val
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 
 	double scArray[2];
-	Math::DoSinCos(argv->as_real(), scArray);
+	Math::DoSinCos(Math::DegreeToRadian(argv->as_real()), scArray);
 
 	return script->CreateRealArrayValue(scArray, 2U);
 }
