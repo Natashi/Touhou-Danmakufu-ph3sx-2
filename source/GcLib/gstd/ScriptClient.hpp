@@ -188,6 +188,7 @@ namespace gstd {
 		static value Func_Clamp(script_machine* machine, int argc, const value* argv);
 
 		static value Func_Log(script_machine* machine, int argc, const value* argv);
+		static value Func_Log2(script_machine* machine, int argc, const value* argv);
 		static value Func_Log10(script_machine* machine, int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(Func_ErF);
 		DNH_FUNCAPI_DECL_(Func_Gamma);
@@ -232,6 +233,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_ToRadians);
 		DNH_FUNCAPI_DECL_(Func_NormalizeAngle);
 		DNH_FUNCAPI_DECL_(Func_RNormalizeAngle);
+		DNH_FUNCAPI_DECL_(Func_GetAngleDifference);
+		DNH_FUNCAPI_DECL_(Func_RGetAngleDifference);
 
 		//Math functions; interpolation
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Linear);

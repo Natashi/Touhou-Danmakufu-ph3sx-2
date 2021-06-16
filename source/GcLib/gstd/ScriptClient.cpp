@@ -60,6 +60,7 @@ static const std::vector<function> commonFunction = {
 	{ "clamp", ScriptClientBase::Func_Clamp, 3 },
 
 	{ "log", ScriptClientBase::Func_Log, 1 },
+	{ "log2", ScriptClientBase::Func_Log2, 1 },
 	{ "log10", ScriptClientBase::Func_Log10, 1 },
 	{ "erf", ScriptClientBase::Func_ErF, 1 },
 	{ "gamma", ScriptClientBase::Func_Gamma, 1 },
@@ -88,6 +89,8 @@ static const std::vector<function> commonFunction = {
 	{ "ToRadians", ScriptClientBase::Func_ToRadians, 1 },
 	{ "NormalizeAngle", ScriptClientBase::Func_NormalizeAngle, 1 },
 	{ "NormalizeAngleR", ScriptClientBase::Func_RNormalizeAngle, 1 },
+	{ "GetAngleDifference", ScriptClientBase::Func_GetAngleDifference, 2 },
+	{ "GetAngleDifferenceR", ScriptClientBase::Func_RGetAngleDifference, 2 },
 
 	//Math functions: Extra
 	{ "exp", ScriptClientBase::Func_Exp, 1 },
@@ -970,6 +973,9 @@ value ScriptClientBase::Func_Log(script_machine* machine, int argc, const value*
 value ScriptClientBase::Func_Log10(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(log10(argv[0].as_real()));
 }
+value ScriptClientBase::Func_Log2(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(log2(argv[0].as_real()));
+}
 value ScriptClientBase::Func_ErF(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(erf(argv[0].as_real()));
 }
@@ -1501,6 +1507,16 @@ value ScriptClientBase::Func_NormalizeAngle(script_machine* machine, int argc, c
 value ScriptClientBase::Func_RNormalizeAngle(script_machine* machine, int argc, const value* argv) {
 	double ang = argv->as_real();
 	return CreateRealValue(Math::NormalizeAngleRad(ang));
+}
+value ScriptClientBase::Func_GetAngleDifference(script_machine* machine, int argc, const value* argv) {
+	double ang1 = argv[0].as_real();
+	double ang2 = argv[1].as_real();
+	return CreateRealValue(Math::AngleDifferenceDeg(ang1, ang2));
+}
+value ScriptClientBase::Func_RGetAngleDifference(script_machine* machine, int argc, const value* argv) {
+	double ang1 = argv[0].as_real();
+	double ang2 = argv[1].as_real();
+	return CreateRealValue(Math::AngleDifferenceRad(ang1, ang2));
 }
 
 //共通関数：パス関連
