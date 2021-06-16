@@ -25,16 +25,7 @@ bool EApplication::_Initialize() {
 	EFpsController* fpsController = EFpsController::CreateInstance();
 	fpsController->SetFastModeRate((size_t)config->GetSkipModeSpeedRate() * 60U);
 
-	/*
-#if defined(GAME_VERSION_TCL)
-	std::wstring appName = L"東方宝天京　～ Treasure Castle Labyrinth ";
-#elif defined(GAME_VERSION_SP)
-	std::wstring appName = L"東方潮聖書　～ Sapphire Panlogism ";
-#else
-	std::wstring appName = L"東方弾幕風 ph3sx ";
-#endif
-	*/
-	std::wstring appName = L"東方弾幕風 ph3sx ";
+	std::wstring appName = L"Touhou Danmakufu ph3sx-zlabel ";
 	appName += DNH_VERSION;
 
 	const std::wstring& configWindowTitle = config->GetWindowTitle();
