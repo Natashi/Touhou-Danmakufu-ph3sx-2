@@ -242,6 +242,10 @@ namespace gstd {
 			angle = fmod(angle, GM_PI_X2);
 			return angle < 0.0 ? angle + GM_PI_X2 : angle;
 		}
+		static inline double AngleDifferenceDeg(double angle1, double angle2) {
+			double dist = NormalizeAngleDeg(angle2 - angle1);
+			return dist > 180.0 ? dist - 360.0 : dist;
+		}
 		static inline double AngleDifferenceRad(double angle1, double angle2) {
 			double dist = NormalizeAngleRad(angle2 - angle1);
 			return dist > GM_PI ? dist - GM_PI_X2 : dist;
