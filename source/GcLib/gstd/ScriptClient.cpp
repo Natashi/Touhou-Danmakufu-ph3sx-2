@@ -248,9 +248,8 @@ ScriptClientBase::ScriptClientBase() {
 
 	mainThreadID_ = -1;
 	idScript_ = ID_SCRIPT_FREE;
-	valueRes_ = value();
 
-	commonDataManager_.reset(new ScriptCommonDataManager());
+	//commonDataManager_.reset(new ScriptCommonDataManager());
 
 	{
 		DWORD seed = timeGetTime();
@@ -264,6 +263,8 @@ ScriptClientBase::ScriptClientBase() {
 
 	_AddFunction(&commonFunction);
 	_AddConstant(&commonConstant);
+
+	Reset();
 }
 ScriptClientBase::~ScriptClientBase() {
 }
@@ -740,6 +741,11 @@ void ScriptClientBase::Compile() {
 	machine_->data = this;
 }
 
+void ScriptClientBase::Reset() {
+	if (machine_)
+		machine_->reset();
+	valueRes_ = value();
+}
 bool ScriptClientBase::Run() {
 	if (bError_) return false;
 	machine_->run();

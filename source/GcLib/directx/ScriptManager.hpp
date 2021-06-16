@@ -110,6 +110,8 @@ namespace directx {
 		ManagedScript();
 		~ManagedScript();
 
+		virtual void Reset();
+
 		virtual void SetScriptManager(ScriptManager* manager);
 		virtual void SetScriptParameter(shared_ptr<ManagedScriptParameter> param) { scriptParam_ = param; }
 		shared_ptr<ManagedScriptParameter> GetScriptParameter() { return scriptParam_; }

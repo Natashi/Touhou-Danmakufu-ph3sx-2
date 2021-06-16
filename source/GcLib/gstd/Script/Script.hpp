@@ -75,15 +75,48 @@ namespace gstd {
 	};
 
 	class script_machine {
+	private:
+		class environment {
+		public:
+			ref_unsync_ptr<environment> parent;
+			script_block* sub;
+			int ip;
+			script_value_vector variables;
+			script_value_vector stack;
+			bool has_result;
+			int waitCount;
+		public:
+			environment(ref_unsync_ptr<environment> parent, script_block* b);
+			~environment();
+		};
+	public:
+		void* data;		//Pointer to client script class
+
+		script_engine* engine;
+
+		bool error;
+		std::wstring error_message;
+		int error_line;
+
+		bool bTerminate;
+		bool finished;
+		bool stopped;
+		bool resuming;
+
+		std::list<ref_unsync_ptr<environment>> list_parent_environment;
+
+		std::list<ref_unsync_ptr<environment>> threads;
+		std::list<ref_unsync_ptr<environment>>::iterator current_thread_index;
 	public:
 		script_machine(script_engine* the_engine);
 		virtual ~script_machine();
-
-		void* data;		//Pointer to client script class
-
+	public:
+		void reset();
 		void run();
+
 		void call(const std::string& event_name);
 		void call(std::map<std::string, script_block*>::iterator event_itr);
+
 		void resume();
 		void stop() {
 			finished = true;
@@ -117,40 +150,9 @@ namespace gstd {
 		bool has_event(const std::string& event_name, std::map<std::string, script_block*>::iterator& res);
 		int get_current_line();
 		int get_current_thread_addr() { return (int)current_thread_index._Ptr; }
+
+		size_t get_thread_count() { return threads.size(); }
 	private:
-		script_machine();
-		script_machine(const script_machine& source);
-
-		script_engine* engine;
-
-		bool error;
-		std::wstring error_message;
-		int error_line;
-
-		bool bTerminate;
-
-		class environment {
-		public:
-			ref_unsync_ptr<environment> parent;
-			script_block* sub;
-			int ip;
-			script_value_vector variables;
-			script_value_vector stack;
-			bool has_result;
-			int waitCount;
-		public:
-			environment(ref_unsync_ptr<environment> parent, script_block* b);
-			~environment();
-		};
-
-		std::list<ref_unsync_ptr<environment>> list_parent_environment;
-
-		std::list<ref_unsync_ptr<environment>> threads;
-		std::list<ref_unsync_ptr<environment>>::iterator current_thread_index;
-		bool finished;
-		bool stopped;
-		bool resuming;
-
 		void yield() {
 			if (current_thread_index == threads.begin())
 				current_thread_index = std::prev(threads.end());
@@ -159,9 +161,7 @@ namespace gstd {
 		}
 
 		void run_code();
-		value* find_variable_symbol(environment* current_env, 
-			code* c, uint32_t level, uint32_t variable, bool allow_null);
-	public:
-		size_t get_thread_count() { return threads.size(); }
+		value* find_variable_symbol(environment* current_env, code* c,
+			uint32_t level, uint32_t variable, bool allow_null);
 	};
 }

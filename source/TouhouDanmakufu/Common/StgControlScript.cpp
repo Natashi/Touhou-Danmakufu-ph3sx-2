@@ -169,14 +169,9 @@ static const std::vector<constant> stgControlConstant = {
 
 StgControlScript::StgControlScript(StgSystemController* systemController) {
 	systemController_ = systemController;
-	scriptManager_ = nullptr;
 
 	_AddFunction(&stgControlFunction);
 	_AddConstant(&stgControlConstant);
-
-	bLoad_ = false;
-	bEndScript_ = false;
-	bAutoDeleteObject_ = false;
 
 	SetScriptEngineCache(systemController->GetScriptEngineCache());
 

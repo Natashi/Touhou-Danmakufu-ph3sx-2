@@ -136,6 +136,8 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) 
 		if (IsError())
 			throw wexception(error_);	//Rethrows the error (for scripts loaded in the load thread)
 
+		script->Reset();
+
 		std::map<std::string, script_block*>::iterator itrEvent;
 		if (script->IsEventExists("Initialize", itrEvent))
 			script->Run(itrEvent);
@@ -356,9 +358,9 @@ ManagedScript::ManagedScript() {
 	_AddFunction(&commonFunction);
 
 	bLoad_ = false;
+
 	bEndScript_ = false;
 	bAutoDeleteObject_ = false;
-
 	bPaused_ = false;
 
 	typeEvent_ = -1;
@@ -378,6 +380,14 @@ ManagedScript::~ManagedScript() {
 		PathProperty::GetFileName(GetPath()).c_str(), (int)scriptManager_, typeScript_));
 	*/
 }
+
+void ManagedScript::Reset() {
+	ScriptClientBase::Reset();
+
+	bEndScript_ = false;
+	bPaused_ = false;
+}
+
 void ManagedScript::SetScriptManager(ScriptManager* manager) {
 	scriptManager_ = manager;
 	mainThreadID_ = scriptManager_->GetMainThreadID();
