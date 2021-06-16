@@ -289,7 +289,7 @@ void ScriptClientBase::_RaiseError(int line, const std::wstring& message) {
 
 	std::wstring fileName = PathProperty::GetFileName(entry->path_);
 
-	std::wstring str = StringUtility::Format(L"%s\r\n%s" "\r\n[%s (main=%s)] " "line-> %d\r\n\r\n��\r\n%s\r\n�`�`�`",
+	std::wstring str = StringUtility::Format(L"%s\r\n%s" "\r\n[%s (main=%s)] " "line-> %d\r\n\r\n↓\r\n%s\r\n～～～",
 		message.c_str(),
 		entry->path_.c_str(),
 		fileName.c_str(),
@@ -929,7 +929,7 @@ std::wstring ScriptClientBase::_ExtendPath(std::wstring path) {
 	return path;
 }
 
-//���ʊ֐��F�X�N���v�g��������
+//共通関数：スクリプト引数結果
 value ScriptClientBase::Func_GetScriptArgument(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = (ScriptClientBase*)machine->data;
 	int index = argv->as_int();
@@ -950,7 +950,7 @@ value ScriptClientBase::Func_SetScriptResult(script_machine* machine, int argc, 
 	return value();
 }
 
-//�g�ݍ��݊֐��F���w�n
+//組み込み関数：数学系
 value ScriptClientBase::Func_Min(script_machine* machine, int argc, const value* argv) {
 	double v1 = argv[0].as_real();
 	double v2 = argv[1].as_real();
@@ -1259,7 +1259,7 @@ value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int ar
 	return CreateRealArrayValue(res_pos, 2U);
 }
 
-//�g�ݍ��݊֐��F�����񑀍�
+//組み込み関数：文字列操作
 value ScriptClientBase::Func_ToString(script_machine* machine, int argc, const value* argv) {
 	return CreateStringValue(argv->as_string());
 }
@@ -1531,7 +1531,7 @@ value ScriptClientBase::Func_AngularDistanceR(script_machine* machine, int argc,
 	return CreateRealValue(dist);
 }
 
-//���ʊ֐��F�p�X�֘A
+//共通関数：パス関連
 value ScriptClientBase::Func_GetParentScriptDirectory(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	const std::wstring& path = script->GetEngine()->GetPath();
@@ -1600,7 +1600,7 @@ value ScriptClientBase::Func_IsDirectoryExists(script_machine* machine, int argc
 	return ScriptClientBase::CreateBooleanValue(File::IsDirectory(path));
 }
 
-//���ʊ֐��F�����֘A
+//共通関数：時刻関連
 value ScriptClientBase::Func_GetSystemTimeMilliS(script_machine* machine, int argc, const value* argv) {
 	auto duration = std::chrono::system_clock::now().time_since_epoch();
 	int64_t time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
@@ -1624,7 +1624,7 @@ value ScriptClientBase::Func_GetCurrentDateTimeS(script_machine* machine, int ar
 	return ScriptClientBase::CreateStringValue(strDateTime);
 }
 
-//���ʊ֐��F�f�o�b�O�֘A
+//共通関数：デバッグ関連
 value ScriptClientBase::Func_WriteLog(script_machine* machine, int argc, const value* argv) {
 	std::wstring msg = L"";
 	for (int i = 0; i < argc; ) {
@@ -1664,7 +1664,7 @@ value ScriptClientBase::Func_RaiseMessageWindow(script_machine* machine, int arg
 	return ScriptClientBase::CreateIntValue(res);
 }
 
-//���ʊ֐��F���ʃf�[�^
+//共通関数：共通データ
 value ScriptClientBase::Func_SetCommonData(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();

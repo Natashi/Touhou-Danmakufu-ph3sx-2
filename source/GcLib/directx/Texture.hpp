@@ -127,9 +127,9 @@ namespace directx {
 		virtual void RestoreDxResource();
 
 		shared_ptr<TextureData> GetTextureData(const std::wstring& name);
-		shared_ptr<Texture> CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);//ƒeƒNƒXƒ`ƒƒ‚ğ“Ç‚İ‚İ‚Ü‚·BTextureData‚Í•Û‚µ‚Ü‚·‚ªATexture‚Í•Û‚µ‚Ü‚¹‚ñB
+		shared_ptr<Texture> CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);//ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚TextureDataã¯ä¿æŒã—ã¾ã™ãŒã€Textureã¯ä¿æŒã—ã¾ã›ã‚“ã€‚
 		shared_ptr<Texture> CreateRenderTarget(const std::wstring& name, size_t width = 0U, size_t height = 0U);
-		shared_ptr<Texture> GetTexture(const std::wstring& name);//ì¬Ï‚İ‚ÌƒeƒNƒXƒ`ƒƒ‚ğæ“¾‚µ‚Ü‚·
+		shared_ptr<Texture> GetTexture(const std::wstring& name);//ä½œæˆæ¸ˆã¿ã®ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’å–å¾—ã—ã¾ã™
 		shared_ptr<Texture> CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo = false);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
