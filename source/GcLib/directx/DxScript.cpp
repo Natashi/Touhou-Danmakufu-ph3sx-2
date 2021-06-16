@@ -243,6 +243,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjRender_SetScaleY", DxScript::Func_ObjRender_SetScaleY, 2 },
 	{ "ObjRender_SetScaleZ", DxScript::Func_ObjRender_SetScaleZ, 2 },
 	{ "ObjRender_SetScaleXYZ", DxScript::Func_ObjRender_SetScaleXYZ, 4 },
+	{ "ObjRender_SetScaleXYZ", DxScript::Func_ObjRender_SetScaleXYZ, 2 }, //Overloaded
 	{ "ObjRender_SetColor", DxScript::Func_ObjRender_SetColor, 4 },
 	{ "ObjRender_SetColor", DxScript::Func_ObjRender_SetColor, 2 },		//Overloaded
 	{ "ObjRender_SetColorHSV", DxScript::Func_ObjRender_SetColorHSV, 4 },
@@ -343,6 +344,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjParticleList_SetScaleY", DxScript::Func_ObjParticleList_SetScaleSingle<1>, 2 },
 	{ "ObjParticleList_SetScaleZ", DxScript::Func_ObjParticleList_SetScaleSingle<2>, 2 },
 	{ "ObjParticleList_SetScale", DxScript::Func_ObjParticleList_SetScaleXYZ, 4 },
+	{ "ObjParticleList_SetScale", DxScript::Func_ObjParticleList_SetScaleXYZ, 2 }, //Overloaded
 	{ "ObjParticleList_SetAngleX", DxScript::Func_ObjParticleList_SetAngleSingle<0>, 2 },
 	{ "ObjParticleList_SetAngleY", DxScript::Func_ObjParticleList_SetAngleSingle<1>, 2 },
 	{ "ObjParticleList_SetAngleZ", DxScript::Func_ObjParticleList_SetAngleSingle<2>, 2 },
@@ -2524,9 +2526,16 @@ value DxScript::Func_ObjRender_SetScaleXYZ(script_machine* machine, int argc, co
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
-		obj->SetScaleX(argv[1].as_real());
-		obj->SetScaleY(argv[2].as_real());
-		obj->SetScaleZ(argv[3].as_real());
+		if (argc == 4) {
+			obj->SetScaleX(argv[1].as_real());
+			obj->SetScaleY(argv[2].as_real());
+			obj->SetScaleZ(argv[3].as_real());
+		}
+		else {
+			obj->SetScaleX(argv[1].as_real());
+			obj->SetScaleY(argv[1].as_real());
+			obj->SetScaleZ(argv[1].as_real());
+		}
 	}
 	return value();
 }
@@ -3552,8 +3561,13 @@ value DxScript::Func_ObjParticleList_SetScaleXYZ(script_machine* machine, int ar
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
-		if (objParticle)
-			objParticle->SetInstanceScale(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+		if (objParticle) {
+			if (argc == 4)
+				objParticle->SetInstanceScale(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+			else
+				objParticle->SetInstanceScale(argv[1].as_real(), argv[1].as_real(), argv[1].as_real());
+		}
+			
 	}
 	return value();
 }
