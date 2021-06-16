@@ -71,10 +71,12 @@ static const std::vector<function> commonFunction = {
 	{ "sin", ScriptClientBase::Func_Sin, 1 },
 	{ "tan", ScriptClientBase::Func_Tan, 1 },
 	{ "sincos", ScriptClientBase::Func_SinCos, 1 },
+	{ "cossin", ScriptClientBase::Func_CosSin, 1 },
 	{ "rcos", ScriptClientBase::Func_RCos, 1 },
 	{ "rsin", ScriptClientBase::Func_RSin, 1 },
 	{ "rtan", ScriptClientBase::Func_RTan, 1 },
 	{ "rsincos", ScriptClientBase::Func_RSinCos, 1 },
+	{ "rcossin", ScriptClientBase::Func_RCosSin, 1 },
 
 	{ "acos", ScriptClientBase::Func_Acos, 1 },
 	{ "asin", ScriptClientBase::Func_Asin, 1 },
@@ -1013,7 +1015,14 @@ value ScriptClientBase::Func_SinCos(script_machine* machine, int argc, const val
 
 	return script->CreateRealArrayValue(scArray, 2U);
 }
+value ScriptClientBase::Func_CosSin(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 
+	double scArray[2];
+	Math::DoSinCos(-Math::DegreeToRadian(argv->as_real()) + GM_PI_2, scArray);
+
+	return script->CreateRealArrayValue(scArray, 2U);
+}
 value ScriptClientBase::Func_RCos(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(cos(argv->as_real()));
 }
@@ -1028,6 +1037,14 @@ value ScriptClientBase::Func_RSinCos(script_machine* machine, int argc, const va
 
 	double scArray[2];
 	Math::DoSinCos(argv->as_real(), scArray);
+
+	return script->CreateRealArrayValue(scArray, 2U);
+}
+value ScriptClientBase::Func_RCosSin(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+
+	double scArray[2];
+	Math::DoSinCos(-(argv->as_real()) + GM_PI_2, scArray);
 
 	return script->CreateRealArrayValue(scArray, 2U);
 }
