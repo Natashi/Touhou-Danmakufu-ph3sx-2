@@ -1,0 +1,23 @@
+ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
+
+---------------------------------------------->	[Base Script] <----------------------------------------------
+
+	--------------------------------> Trigonometry and Angular Maths <--------------------------------
+
+	cossin
+		Arguments:
+			1) angle
+		Returns:
+			(real[2]) [cos(angle), sin(angle)]
+		Description:
+			Reverse of sincos().
+			cossin(n) is equivalent to sincos(-n + 90).
+
+	rcossin
+		Arguments:
+			1) angle (radians)
+		Returns:
+			(real[2]) result
+		Description:
+			cossin() for radians input.
+			rcossin(n) is equivalent to rsincos(-n + pi / 2).
