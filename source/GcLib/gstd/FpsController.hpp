@@ -11,8 +11,8 @@ namespace gstd {
 	//*******************************************************************
 	class FpsController {
 	protected:
-		DWORD fps_;			//İ’è‚³‚ê‚Ä‚¢‚éFPS
-		bool bUseTimer_;	//ƒ^ƒCƒ}[§Œä
+		DWORD fps_;			//è¨­å®šã•ã‚Œã¦ã„ã‚‹FPS
+		bool bUseTimer_;	//ã‚¿ã‚¤ãƒãƒ¼åˆ¶å¾¡
 		bool bCriticalFrame_;
 		bool bFastMode_;
 
@@ -53,13 +53,13 @@ namespace gstd {
 	//*******************************************************************
 	class StaticFpsController : public FpsController {
 	protected:
-		float fpsCurrent_;		//Œ»İ‚ÌFPS
-		DWORD timePrevious_;			//‘O‰ñWait‚µ‚½‚Æ‚«‚ÌŠÔ
-		int timeError_;				//‚¿‰z‚µŠÔ(Œë·)
-		DWORD timeCurrentFpsUpdate_;	//1•b‚ğ‘ª’è‚·‚é‚½‚ß‚ÌŠÔ•Û
-		size_t rateSkip_;		//•`‰æƒXƒLƒbƒv”
-		size_t countSkip_;		//•`‰æƒXƒLƒbƒvƒJƒEƒ“ƒg
-		std::list<DWORD> listFps_;	//1•b‚²‚Æ‚ÉŒ»İfps‚ğŒvZ‚·‚é‚½‚ß‚Éfps‚ğ•Û
+		float fpsCurrent_;		//ç¾åœ¨ã®FPS
+		DWORD timePrevious_;			//å‰å›Waitã—ãŸã¨ãã®æ™‚é–“
+		int timeError_;				//æŒã¡è¶Šã—æ™‚é–“(èª¤å·®)
+		DWORD timeCurrentFpsUpdate_;	//1ç§’ã‚’æ¸¬å®šã™ã‚‹ãŸã‚ã®æ™‚é–“ä¿æŒ
+		size_t rateSkip_;		//æç”»ã‚¹ã‚­ãƒƒãƒ—æ•°
+		size_t countSkip_;		//æç”»ã‚¹ã‚­ãƒƒãƒ—ã‚«ã‚¦ãƒ³ãƒˆ
+		std::list<DWORD> listFps_;	//1ç§’ã”ã¨ã«ç¾åœ¨fpsã‚’è¨ˆç®—ã™ã‚‹ãŸã‚ã«fpsã‚’ä¿æŒ
 	public:
 		StaticFpsController();
 		~StaticFpsController();
@@ -82,17 +82,17 @@ namespace gstd {
 	//*******************************************************************
 	class AutoSkipFpsController : public FpsController {
 	protected:
-		float fpsCurrentWork_;		//ÀÛ‚Ìfps
-		float fpsCurrentRender_;	//ÀÛ‚Ìfps
-		DWORD timePrevious_;			//‘O‰ñWait‚µ‚½‚Æ‚«‚ÌŠÔ
+		float fpsCurrentWork_;		//å®Ÿéš›ã®fps
+		float fpsCurrentRender_;	//å®Ÿéš›ã®fps
+		DWORD timePrevious_;			//å‰å›Waitã—ãŸã¨ãã®æ™‚é–“
 		DWORD timePreviousWork_;
 		DWORD timePreviousRender_;
-		int timeError_;				//‚¿‰z‚µŠÔ(Œë·)
-		DWORD timeCurrentFpsUpdate_;	//1•b‚ğ‘ª’è‚·‚é‚½‚ß‚ÌŠÔ•Û
+		int timeError_;				//æŒã¡è¶Šã—æ™‚é–“(èª¤å·®)
+		DWORD timeCurrentFpsUpdate_;	//1ç§’ã‚’æ¸¬å®šã™ã‚‹ãŸã‚ã®æ™‚é–“ä¿æŒ
 		std::list<DWORD> listFpsWork_;
 		std::list<DWORD> listFpsRender_;
-		int countSkip_;			//˜A‘±•`‰æƒXƒLƒbƒv”
-		DWORD countSkipMax_;		//Å‘å˜A‘±•`‰æƒXƒLƒbƒv”
+		int countSkip_;			//é€£ç¶šæç”»ã‚¹ã‚­ãƒƒãƒ—æ•°
+		DWORD countSkipMax_;		//æœ€å¤§é€£ç¶šæç”»ã‚¹ã‚­ãƒƒãƒ—æ•°
 	public:
 		AutoSkipFpsController();
 		~AutoSkipFpsController();

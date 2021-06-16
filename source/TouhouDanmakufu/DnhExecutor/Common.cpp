@@ -100,7 +100,7 @@ void MenuTask::_MoveCursor() {
 		}
 
 		if (pageLast != pageCurrent_) {
-			//ページ変更
+			//繝壹�ｼ繧ｸ螟画峩
 			_ChangePage();
 		}
 	}

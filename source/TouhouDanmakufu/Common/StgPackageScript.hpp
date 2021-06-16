@@ -44,10 +44,10 @@ private:
 public:
 	StgPackageScript(StgPackageController* packageController);
 
-	//ƒpƒbƒP[ƒW‹¤’ÊŠÖ”FƒpƒbƒP[ƒW‘€ì
+	//ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸å…±é€šé–¢æ•°ï¼šãƒ‘ãƒƒã‚±ãƒ¼ã‚¸æ“ä½œ
 	static gstd::value Func_ClosePackage(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
-	//ƒpƒbƒP[ƒW‹¤’ÊŠÖ”FƒXƒe[ƒW‘€ì
+	//ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸å…±é€šé–¢æ•°ï¼šã‚¹ãƒ†ãƒ¼ã‚¸æ“ä½œ
 	static gstd::value Func_InitializeStageScene(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_FinalizeStageScene(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_StartStageScene(gstd::script_machine* machine, int argc, const gstd::value* argv);

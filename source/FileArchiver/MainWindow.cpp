@@ -11,7 +11,7 @@ MainWindow::MainWindow() {
 
 }
 MainWindow::~MainWindow() {
-	//ƒRƒ“ƒpƒCƒ‹’†‚È‚ç’â~
+	//ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ä¸­ãªã‚‰åœæ­¢
 	Stop();
 	Join();
 }
@@ -26,7 +26,7 @@ bool MainWindow::Initialize() {
 	this->Attach(hWnd_);
 	ShowWindow(hWnd_, SW_HIDE);
 
-	//Window‚ğ‰æ–Ê‚Ì’†‰›‚ÉˆÚ“®
+	//Windowã‚’ç”»é¢ã®ä¸­å¤®ã«ç§»å‹•
 	SetBounds(0, 0, 640, 480);
 	SetWindowText(hWnd_, WINDOW_TITLE.c_str());
 
@@ -38,11 +38,11 @@ bool MainWindow::Initialize() {
 	int top = drect.bottom / 2 - (mrect.bottom - mrect.top) / 2;
 	::MoveWindow(hWnd_, left, top, mrect.right - mrect.left, mrect.bottom - mrect.top, TRUE);
 
-	//‹tƒRƒ“ƒpƒCƒ‹ƒ{ƒ^ƒ“
+	//é€†ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ãƒœã‚¿ãƒ³
 	buttonDecompile_.Attach(GetDlgItem(hWnd_, IDC_BUTTON_ARCHIVE));
 	buttonDecompile_.SetWindowEnable(false);
 
-	//ƒŠƒXƒg
+	//ãƒªã‚¹ãƒˆ
 	HWND hList = GetDlgItem(hWnd_, IDC_LIST_FILE);
 	DWORD dwStyle = ListView_GetExtendedListViewStyle(hList);
 	dwStyle |= LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES;
@@ -52,13 +52,13 @@ bool MainWindow::Initialize() {
 	wndListFile_.AddColumn(160, COL_DIRECTORY, L"Directory");
 	wndListFile_.AddColumn(256, COL_FULLPATH, L"Path");
 
-	//ƒXƒe[ƒ^ƒXƒo[
+	//ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ãƒãƒ¼
 	wndStatus_.Create(hWnd_);
 	std::vector<int> sizeStatus;
 	sizeStatus.push_back(1600);
 	wndStatus_.SetPartsSize(sizeStatus);
 
-	//İ’è“Ç‚İ‚İ
+	//è¨­å®šèª­ã¿è¾¼ã¿
 	_LoadEnvironment();
 
 	DragAcceptFiles(hWnd_, TRUE);
@@ -368,7 +368,7 @@ void MainWindow::_StartArchive() {
 }
 
 void MainWindow::_Run() {
-	//ƒA[ƒJƒCƒuÀs
+	//ã‚¢ãƒ¼ã‚«ã‚¤ãƒ–å®Ÿè¡Œ
 	_Archive();
 
 	EnableWindow(GetDlgItem(hWnd_, IDC_EDIT_OPTION), TRUE);

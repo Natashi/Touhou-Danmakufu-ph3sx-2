@@ -58,15 +58,15 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 				std::wstring element = tok.GetElement();
 
 				bool bValidDanmakufuHeader = false;
-				if (element == L"TouhouDanmakufu" || element == L"“Œ•û’e–‹•—") {
+				if (element == L"TouhouDanmakufu" || element == L"æ±æ–¹å¼¾å¹•é¢¨") {
 					bValidDanmakufuHeader = true;
 				}
 				else {
 					int start = tok.GetStartPointer();
 					int end = tok.GetEndPointer();
 					if (encoding == Encoding::UTF8 || encoding == Encoding::UTF8BOM) {
-						static std::string multiThDmfANSI = StringUtility::ConvertWideToMulti(L"“Œ•û’e–‹•—", CP_ACP);
-						static std::string multiThDmfUTF8 = StringUtility::ConvertWideToMulti(L"“Œ•û’e–‹•—", CP_UTF8);
+						static std::string multiThDmfANSI = StringUtility::ConvertWideToMulti(L"æ±æ–¹å¼¾å¹•é¢¨", CP_ACP);
+						static std::string multiThDmfUTF8 = StringUtility::ConvertWideToMulti(L"æ±æ–¹å¼¾å¹•é¢¨", CP_UTF8);
 
 						//Try ANSI, then UTF-8
 						bValidDanmakufuHeader = scanner.CompareMemory(start, end, multiThDmfANSI.data())
@@ -285,7 +285,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::FindPlayerScrip
 		std::wstring name = data.cFileName;
 		if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 			(name != L".." && name != L".")) {
-			//ƒfƒBƒŒƒNƒgƒŠ
+			//ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª
 			std::wstring tDir = dir + name + L"/";
 
 			std::vector<ref_count_ptr<ScriptInformation>> list = FindPlayerScriptInformationList(tDir);
@@ -297,10 +297,10 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::FindPlayerScrip
 		if (wcscmp(data.cFileName, L"..") == 0 || wcscmp(data.cFileName, L".") == 0)
 			continue;
 
-		//ƒtƒ@ƒCƒ‹
+		//ãƒ•ã‚¡ã‚¤ãƒ«
 		std::wstring path = dir + name;
 
-		//ƒXƒNƒŠƒvƒg‰ğÍ
+		//ã‚¹ã‚¯ãƒªãƒ—ãƒˆè§£æ
 		std::vector<ref_count_ptr<ScriptInformation>> listInfo = CreateScriptInformationList(path, true);
 		for (size_t iInfo = 0; iInfo < listInfo.size(); iInfo++) {
 			ref_count_ptr<ScriptInformation> info = listInfo[iInfo];
@@ -430,12 +430,12 @@ DnhConfiguration::DnhConfiguration() {
 
 	pathExeLaunch_ = DNH_EXE_NAME;
 
-	//ƒL[“o˜^
+	//ã‚­ãƒ¼ç™»éŒ²
 	padIndex_ = 0;
-	mapKey_[EDirectInput::KEY_LEFT] = new VirtualKey(DIK_LEFT, 0, 0);//ƒL[ƒ{[ƒhu©v‚ÆƒWƒ‡ƒCƒpƒbƒhu©v‚ğ“o˜^
-	mapKey_[EDirectInput::KEY_RIGHT] = new VirtualKey(DIK_RIGHT, 0, 1);//ƒL[ƒ{[ƒhu¨v‚ÆƒWƒ‡ƒCƒpƒbƒhu¨v‚ğ“o˜^
-	mapKey_[EDirectInput::KEY_UP] = new VirtualKey(DIK_UP, 0, 2);//ƒL[ƒ{[ƒhuªv‚ÆƒWƒ‡ƒCƒpƒbƒhuªv‚ğ“o˜^
-	mapKey_[EDirectInput::KEY_DOWN] = new VirtualKey(DIK_DOWN, 0, 3);	//ƒL[ƒ{[ƒhu«v‚ÆƒWƒ‡ƒCƒpƒbƒhu«v‚ğ“o˜^
+	mapKey_[EDirectInput::KEY_LEFT] = new VirtualKey(DIK_LEFT, 0, 0);//ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ã€Œâ†ã€ã¨ã‚¸ãƒ§ã‚¤ãƒ‘ãƒƒãƒ‰ã€Œâ†ã€ã‚’ç™»éŒ²
+	mapKey_[EDirectInput::KEY_RIGHT] = new VirtualKey(DIK_RIGHT, 0, 1);//ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ã€Œâ†’ã€ã¨ã‚¸ãƒ§ã‚¤ãƒ‘ãƒƒãƒ‰ã€Œâ†’ã€ã‚’ç™»éŒ²
+	mapKey_[EDirectInput::KEY_UP] = new VirtualKey(DIK_UP, 0, 2);//ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ã€Œâ†‘ã€ã¨ã‚¸ãƒ§ã‚¤ãƒ‘ãƒƒãƒ‰ã€Œâ†‘ã€ã‚’ç™»éŒ²
+	mapKey_[EDirectInput::KEY_DOWN] = new VirtualKey(DIK_DOWN, 0, 3);	//ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ã€Œâ†“ã€ã¨ã‚¸ãƒ§ã‚¤ãƒ‘ãƒƒãƒ‰ã€Œâ†“ã€ã‚’ç™»éŒ²
 
 	mapKey_[EDirectInput::KEY_OK] = new VirtualKey(DIK_Z, 0, 5);
 	mapKey_[EDirectInput::KEY_CANCEL] = new VirtualKey(DIK_X, 0, 6);

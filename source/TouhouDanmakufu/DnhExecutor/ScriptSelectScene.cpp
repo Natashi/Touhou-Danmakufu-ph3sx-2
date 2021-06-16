@@ -98,13 +98,13 @@ void ScriptSelectScene::Work() {
 		if (item) {
 			bool bDir = item->GetType() == ScriptSelectSceneMenuItem::TYPE_DIR;
 			if (bDir) {
-				//ƒfƒBƒŒƒNƒgƒŠ
+				//ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª
 				ref_count_ptr<ScriptSelectModel> model = nullptr;
 				int index = GetSelectedItemIndex();
 				ScriptSelectSceneMenuItem* pItem = (ScriptSelectSceneMenuItem*)item_[index].get();
 				const std::wstring& dir = pItem->GetPath();
 
-				//ƒy[ƒWƒŠƒZƒbƒg
+				//ãƒšãƒ¼ã‚¸ãƒªã‚»ãƒƒãƒˆ
 				cursorX_ = 0;
 				cursorY_ = 0;
 				pageCurrent_ = 1;
@@ -116,7 +116,7 @@ void ScriptSelectScene::Work() {
 				bWaitedKeyFree_ = false;
 			}
 			else {
-				//ƒXƒNƒŠƒvƒg
+				//ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
 				SetActive(false);
 
 				int index = GetSelectedItemIndex();
@@ -147,7 +147,7 @@ void ScriptSelectScene::Work() {
 			const std::wstring& dir = fileModel->GetDirectory();
 			const std::wstring& root = EPathProperty::GetStgScriptRootDirectory();
 			if (!File::IsEqualsPath(dir, root)) {
-				//ƒLƒƒƒ“ƒZƒ‹
+				//ã‚­ãƒ£ãƒ³ã‚»ãƒ«
 				bTitle = false;
 				const std::wstring& dirOld = SystemController::GetInstance()->GetSystemInformation()->GetLastScriptSearchDirectory();
 				std::wstring::size_type pos = dirOld.find_last_of(L"/", dirOld.size() - 2);
@@ -155,8 +155,8 @@ void ScriptSelectScene::Work() {
 				ref_count_ptr<ScriptSelectFileModel> model = new ScriptSelectFileModel(TYPE_DIR, dir);
 				model->SetWaitPath(dirOld);
 
-				//SetWaitPath‚Å‘I‘ğ’†‚ÌƒpƒX‚ÉˆÚ“®‚³‚¹‚é‚½‚ß‚É
-				//ƒy[ƒWƒŠƒZƒbƒg
+				//SetWaitPathã§é¸æŠä¸­ã®ãƒ‘ã‚¹ã«ç§»å‹•ã•ã›ã‚‹ãŸã‚ã«
+				//ãƒšãƒ¼ã‚¸ãƒªã‚»ãƒƒãƒˆ
 				cursorX_ = 0;
 				cursorY_ = 0;
 				pageCurrent_ = 1;
@@ -210,7 +210,7 @@ void ScriptSelectScene::Render() {
 	//dxTextDescription.SetSyntacticAnalysis(false);
 	dxTextDescription.Render();
 
-	//ƒfƒBƒŒƒNƒgƒŠ–¼
+	//ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå
 	if (GetType() == TYPE_DIR) {
 		ref_count_ptr<ScriptSelectFileModel> fileModel = ref_count_ptr<ScriptSelectFileModel>::Cast(model_);
 		std::wstring dir = fileModel->GetDirectory();
@@ -235,7 +235,7 @@ void ScriptSelectScene::Render() {
 	}
 
 	{
-		//ƒ^ƒCƒgƒ‹
+		//ã‚¿ã‚¤ãƒˆãƒ«
 		Lock lock(cs_);
 		for (int iItem = 0; iItem <= pageMaxY_; iItem++) {
 			shared_ptr<DxTextRenderObject> obj = objMenuText_[iItem];
@@ -271,7 +271,7 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.SetFontWeight(FW_BOLD);
 			//dxTextInfo.SetSyntacticAnalysis(false);
 
-			//ƒCƒ[ƒW
+			//ã‚¤ãƒ¡ãƒ¼ã‚¸
 			shared_ptr<Texture> texture = spriteImage_->GetTexture();
 			std::wstring pathImage1 = L"";
 			if (texture) pathImage1 = texture->GetName();
@@ -297,7 +297,7 @@ void ScriptSelectScene::Render() {
 				spriteImage_->Render();
 			}
 
-			//ƒXƒNƒŠƒvƒgƒpƒX
+			//ã‚¹ã‚¯ãƒªãƒ—ãƒˆãƒ‘ã‚¹
 			std::wstring path = info->GetScriptPath();
 			std::wstring root = EPathProperty::GetStgScriptRootDirectory();
 			root = PathProperty::ReplaceYenToSlash(root);
@@ -317,7 +317,7 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.SetPosition(16, 240);
 			dxTextInfo.Render();
 
-			//ƒXƒNƒŠƒvƒgí•Ê
+			//ã‚¹ã‚¯ãƒªãƒ—ãƒˆç¨®åˆ¥
 			int type = info->GetType();
 			std::wstring strType = L"";
 			switch (type) {
@@ -332,7 +332,7 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.SetPosition(32, 256);
 			dxTextInfo.Render();
 
-			//ƒeƒLƒXƒg
+			//ãƒ†ã‚­ã‚¹ãƒˆ
 			const std::wstring& text = info->GetText();
 			dxTextInfo.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 			dxTextInfo.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));
@@ -346,7 +346,7 @@ void ScriptSelectScene::Render() {
 	}
 
 	if (!model_->IsCreated()) {
-		//ƒ[ƒh’†
+		//ãƒ­ãƒ¼ãƒ‰ä¸­
 		std::wstring text = L"Now Loading...";
 		DxText dxTextNowLoad;
 		dxTextNowLoad.SetFontColorTop(D3DCOLOR_ARGB(255, 128, 128, 128));
@@ -408,13 +408,13 @@ void ScriptSelectScene::AddMenuItem(std::list<ref_count_ptr<ScriptSelectSceneMen
 			MenuTask::AddMenuItem((*itr));
 		}
 
-		//Œ»İ‘I‘ğ’†‚ÌƒAƒCƒeƒ€
+		//ç¾åœ¨é¸æŠä¸­ã®ã‚¢ã‚¤ãƒ†ãƒ 
 		ref_count_ptr<MenuItem> item = GetSelectedMenuItem();
 
-		//ƒ\[ƒg
+		//ã‚½ãƒ¼ãƒˆ
 		std::sort(item_.begin(), item_.end(), ScriptSelectScene::Sort());
 
-		//Œ»İ‘I‘ğ’†‚ÌƒAƒCƒeƒ€‚ÉˆÚ“®
+		//ç¾åœ¨é¸æŠä¸­ã®ã‚¢ã‚¤ãƒ†ãƒ ã«ç§»å‹•
 		if (item) {
 			bool bWait = false;
 			std::wstring path = L"";
@@ -495,7 +495,7 @@ void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
 
 		int time = ::timeGetTime();
 		if (abs(time - timeLastUpdate_) > 500) {
-			//500ms–ˆ‚ÉXV
+			//500msæ¯ã«æ›´æ–°
 			timeLastUpdate_ = time;
 			scene_->AddMenuItem(listItem_);
 			listItem_.clear();
@@ -504,12 +504,12 @@ void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
 		std::wstring name = data.cFileName;
 		if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 			(name != L".." && name != L".")) {
-			//ƒfƒBƒŒƒNƒgƒŠ
+			//ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª
 			std::wstring tDir = dir + name;
 			tDir += L"\\";
 
 			if (type_ == TYPE_DIR) {
-				//ƒfƒBƒŒƒNƒgƒŠ
+				//ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª
 				ref_count_ptr<ScriptSelectSceneMenuItem> item = new ScriptSelectSceneMenuItem(
 					ScriptSelectSceneMenuItem::TYPE_DIR, tDir, nullptr);
 				listItem_.push_back(item);
@@ -522,7 +522,7 @@ void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
 		if (wcscmp(data.cFileName, L"..") == 0 || wcscmp(data.cFileName, L".") == 0)
 			continue;
 
-		//ƒtƒ@ƒCƒ‹
+		//ãƒ•ã‚¡ã‚¤ãƒ«
 		std::wstring path = dir + name;
 
 		_CreateMenuItem(path);
@@ -605,7 +605,7 @@ PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) 
 	int my = 256;
 	AddMenuItem(new PlayTypeSelectMenuItem(L"Play", mx, my));
 
-	//ƒŠƒvƒŒƒC
+	//ãƒªãƒ—ãƒ¬ã‚¤
 	if (info->GetType() != ScriptInformation::TYPE_PACKAGE) {
 		int itemCount = 1;
 		const std::wstring& pathScript = info->GetScriptPath();
@@ -638,15 +638,15 @@ void PlayTypeSelectScene::Work() {
 	EDirectInput* input = EDirectInput::GetInstance();
 	if (input->GetVirtualKeyState(EDirectInput::KEY_OK) == KEY_PUSH) {
 		if (info_->GetType() == ScriptInformation::TYPE_PACKAGE) {
-			//ƒpƒbƒP[ƒWƒ‚[ƒh
+			//ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ãƒ¢ãƒ¼ãƒ‰
 			SceneManager* sceneManager = SystemController::GetInstance()->GetSceneManager();
 			sceneManager->TransPackageScene(info_);
 		}
 		else {
-			//ƒpƒbƒP[ƒWˆÈŠO
+			//ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ä»¥å¤–
 			int indexSelect = GetSelectedItemIndex();
 			if (indexSelect == 0) {
-				//©‹@‘I‘ğ
+				//è‡ªæ©Ÿé¸æŠ
 				TransitionManager* transitionManager = SystemController::GetInstance()->GetTransitionManager();
 				transitionManager->DoFadeOut();
 
@@ -663,7 +663,7 @@ void PlayTypeSelectScene::Work() {
 					&PlayerSelectScene::Render), PlayerSelectScene::TASK_PRI_RENDER);
 			}
 			else {
-				//ƒŠƒvƒŒƒC
+				//ãƒªãƒ—ãƒ¬ã‚¤
 				std::vector<int> listReplayIndex = replayInfoManager_->GetIndexList();
 				int replayIndex = listReplayIndex[indexSelect - 1];
 				ref_count_ptr<ReplayInformation> replay = replayInfoManager_->GetInformation(replayIndex);
@@ -756,7 +756,7 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 
 	SystemInformation* systemInfo = SystemController::GetInstance()->GetSystemInformation();
 
-	//©‹@ˆê——‚ğì¬
+	//è‡ªæ©Ÿä¸€è¦§ã‚’ä½œæˆ
 	std::vector<std::wstring>& listPlayerPath = info_->GetPlayerList();
 	if (listPlayerPath.size() == 0) {
 		listPlayer_ = systemInfo->GetFreePlayerScriptInformationList();
@@ -765,7 +765,7 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 		listPlayer_ = info_->CreatePlayerScriptInformationList();
 	}
 
-	//ƒƒjƒ…[ì¬
+	//ãƒ¡ãƒ‹ãƒ¥ãƒ¼ä½œæˆ
 	for (int iMenu = 0; iMenu < listPlayer_.size(); iMenu++) {
 		AddMenuItem(new PlayerSelectMenuItem(listPlayer_[iMenu]));
 	}
@@ -844,7 +844,7 @@ void PlayerSelectScene::Render() {
 		dxTextInfo.SetFontWeight(FW_BOLD);
 		//dxTextInfo.SetSyntacticAnalysis(false);
 
-		//ƒCƒ[ƒW
+		//ã‚¤ãƒ¡ãƒ¼ã‚¸
 		shared_ptr<Texture> texture = spriteImage_->GetTexture();
 		std::wstring pathImage1 = L"";
 		if (texture) pathImage1 = texture->GetName();
@@ -869,7 +869,7 @@ void PlayerSelectScene::Render() {
 			spriteImage_->Render();
 		}
 
-		//ƒXƒNƒŠƒvƒgƒpƒX
+		//ã‚¹ã‚¯ãƒªãƒ—ãƒˆãƒ‘ã‚¹
 		std::wstring path = infoSelected->GetScriptPath();
 		std::wstring root = EPathProperty::GetStgScriptRootDirectory();
 		root = PathProperty::ReplaceYenToSlash(root);
@@ -890,7 +890,7 @@ void PlayerSelectScene::Render() {
 		dxTextInfo.SetPosition(40, 32);
 		dxTextInfo.Render();
 
-		//ƒeƒLƒXƒg
+		//ãƒ†ã‚­ã‚¹ãƒˆ
 		dxTextInfo.SetFontBorderType(TextBorderType::Shadow);
 		dxTextInfo.SetFontWeight(FW_BOLD);
 		dxTextInfo.SetFontBorderWidth(2);

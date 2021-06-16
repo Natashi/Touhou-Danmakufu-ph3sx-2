@@ -29,7 +29,7 @@ namespace directx {
 			TYPE_MOUSE_RIGHT_HOLD = 1 << 7,
 		};
 	protected:
-		gstd::ref_count_ptr<DxWindow> windowSource_;//ƒEƒBƒ“ƒhƒE
+		gstd::ref_count_ptr<DxWindow> windowSource_;//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
 		int type_;
 	public:
 		DxWindowEvent() { type_ = 0; };
@@ -47,11 +47,11 @@ namespace directx {
 	//*******************************************************************
 	class DxWindowManager : public gstd::TaskBase {
 	protected:
-		std::list<gstd::ref_count_ptr<DxWindow>> listWindow_;//Å‘O–Ê‚ªƒAƒNƒeƒBƒu
+		std::list<gstd::ref_count_ptr<DxWindow>> listWindow_;//æœ€å‰é¢ãŒã‚¢ã‚¯ãƒ†ã‚£ãƒ–
 		gstd::ref_count_ptr<DxWindow> wndCapture_;
 		std::list<int> listLockID_;
 
-		void _ArrangeWindow();//•K—v‚Ì‚È‚­‚È‚Á‚½—Ìˆæíœ
+		void _ArrangeWindow();//å¿…è¦ã®ãªããªã£ãŸé ˜åŸŸå‰Šé™¤
 		virtual void _DispatchMouseEvent();
 	public:
 		DxWindowManager();
@@ -83,12 +83,12 @@ namespace directx {
 	protected:
 		DxWindowManager* manager_;
 		int idWindow_;
-		bool bWindowDelete_;//íœƒtƒ‰ƒO
+		bool bWindowDelete_;//å‰Šé™¤ãƒ•ãƒ©ã‚°
 		bool bWindowEnable_;
 		bool bWindowVisible_;
-		DxRect<int> rectWindow_;//ƒEƒBƒ“ƒhƒE‘Š‘ÎÀ•W
-		DxWindow* windowParent_;//eƒEƒBƒ“ƒhƒE
-		std::list<gstd::ref_count_ptr<DxWindow>> listWindowChild_;//qƒEƒBƒ“ƒhƒE
+		DxRect<int> rectWindow_;//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ç›¸å¯¾åº§æ¨™
+		DxWindow* windowParent_;//è¦ªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
+		std::list<gstd::ref_count_ptr<DxWindow>> listWindowChild_;//å­ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
 
 		D3DCOLOR color_;
 		gstd::ref_count_ptr<Sprite2D> spriteFrame_;
@@ -102,9 +102,9 @@ namespace directx {
 		DxWindow();
 		virtual ~DxWindow();
 
-		virtual void DeleteWindow();//íœƒtƒ‰ƒO‚ğ—§‚Ä‚Ü‚·
+		virtual void DeleteWindow();//å‰Šé™¤ãƒ•ãƒ©ã‚°ã‚’ç«‹ã¦ã¾ã™
 		bool IsWindowDelete() { return bWindowDelete_; }
-		void Dispose();//ŠeQÆ‚È‚Ç‚ğ‰ğ•ú‚µ‚Ü‚·
+		void Dispose();//å„å‚ç…§ãªã©ã‚’è§£æ”¾ã—ã¾ã™
 		virtual void AddedManager() {}
 		void AddChild(gstd::ref_count_ptr<DxWindow> window);
 		virtual void Work() { _WorkChild(); }

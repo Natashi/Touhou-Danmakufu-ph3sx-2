@@ -168,10 +168,10 @@ void StgPauseScene::Work() {
 }
 
 void StgPauseScene::Start() {
-	//’â~ƒCƒxƒ“ƒgŒÄ‚Ño‚µ
+	//åœæ­¢ã‚¤ãƒ™ãƒ³ãƒˆå‘¼ã³å‡ºã—
 	shared_ptr<StgStageController> stageController = systemController_->GetStageController();
 
-	//’â~ˆ—‰Šú‰»
+	//åœæ­¢å‡¦ç†åˆæœŸåŒ–
 	scriptManager_ = nullptr;
 	scriptManager_ = std::shared_ptr<StgUserExtendSceneScriptManager>(new StgUserExtendSceneScriptManager(systemController_));
 	_AddRelativeManager();
@@ -179,7 +179,7 @@ void StgPauseScene::Start() {
 
 	stageController->RenderToTransitionTexture();
 
-	//ƒXƒNƒŠƒvƒg‰Šú‰»
+	//ã‚¹ã‚¯ãƒªãƒ—ãƒˆåˆæœŸåŒ–
 	const std::wstring& path = sysInfo->GetPauseScriptPath();
 	_InitializeScript(path, StgUserExtendSceneScript::TYPE_PAUSE_SCENE);
 
@@ -198,7 +198,7 @@ void StgPauseScene::Finish() {
 	_CallScriptFinalize();
 	scriptManager_ = nullptr;
 
-	//‰ğœƒCƒxƒ“ƒgŒÄ‚Ño‚µ
+	//è§£é™¤ã‚¤ãƒ™ãƒ³ãƒˆå‘¼ã³å‡ºã—
 	auto stageScriptManager = stageController->GetScriptManager();
 	stageScriptManager->RequestEventAll(StgStageScript::EV_PAUSE_LEAVE);
 }
@@ -216,7 +216,7 @@ StgPauseSceneScript::StgPauseSceneScript(StgSystemController* controller) : StgU
 }
 StgPauseSceneScript::~StgPauseSceneScript() {}
 
-//ˆê’â~ê—pŠÖ”Fˆê’â~‘€ì
+//ä¸€æ™‚åœæ­¢å°‚ç”¨é–¢æ•°ï¼šä¸€æ™‚åœæ­¢æ“ä½œ
 
 //*******************************************************************
 //StgEndScene
@@ -257,7 +257,7 @@ void StgEndScene::Start() {
 
 	systemController_->GetStageController()->RenderToTransitionTexture();
 
-	//ƒXƒNƒŠƒvƒg‰Šú‰»
+	//ã‚¹ã‚¯ãƒªãƒ—ãƒˆåˆæœŸåŒ–
 	const std::wstring& path = info->GetEndSceneScriptPath();
 	_InitializeScript(path, StgUserExtendSceneScript::TYPE_END_SCENE);
 }
@@ -317,7 +317,7 @@ void StgReplaySaveScene::Start() {
 
 	//_InitializeTransitionTexture();
 
-	//ƒXƒNƒŠƒvƒg‰Šú‰»
+	//ã‚¹ã‚¯ãƒªãƒ—ãƒˆåˆæœŸåŒ–
 	const std::wstring& path = info->GetReplaySaveSceneScriptPath();
 	_InitializeScript(path, StgUserExtendSceneScript::TYPE_REPLAY_SCENE);
 }

@@ -261,16 +261,16 @@ void StgStageController::CloseScene() {
 	ref_count_weak_ptr<PseudoSlowInformation> wPtr = infoSlow_;
 	EFpsController::GetInstance()->RemoveFpsControlObject(wPtr);
 
-	//ÉäÉvÉåÉC
+	//„É™„Éó„É¨„Ç§
 	if (!infoStage_->IsReplay()) {
-		//ÉLÅ[
+		//„Ç≠„Éº
 		ref_count_ptr<RecordBuffer> recKey = new RecordBuffer();
 		keyReplayManager_->WriteRecord(*recKey);
 
 		ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage_->GetReplayData();
 		replayStageData->SetReplayKeyRecord(recKey);
 
-		//ç≈èIÉtÉåÅ[ÉÄ
+		//ÊúÄÁµÇ„Éï„É¨„Éº„É†
 		DWORD stageFrame = infoStage_->GetCurrentFrame();
 		replayStageData->SetEndFrame(stageFrame);
 
@@ -320,7 +320,7 @@ void StgStageController::Work() {
 
 	bool bPermitRetryKey = !input->IsTargetKeyCode(DIK_BACK);
 	if (!bPackageMode && bPermitRetryKey && input->GetKeyState(DIK_BACK) == KEY_PUSH) {
-		//ÉäÉgÉâÉC
+		//„É™„Éà„É©„Ç§
 		if (!infoStage_->IsReplay()) {
 			infoSystem->SetRetry();
 			return;
@@ -329,13 +329,13 @@ void StgStageController::Work() {
 
 	bool bCurrentPause = infoStage_->IsPause();
 	if (bPackageMode && bCurrentPause) {
-		//ÉpÉbÉPÅ[ÉWÉÇÅ[ÉhÇ≈í‚é~íÜÇÃèÍçáÇÕÅAÉpÉbÉPÅ[ÉWÉXÉNÉäÉvÉgÇ≈èàóùÇ∑ÇÈ
+		//„Éë„ÉÉ„Ç±„Éº„Ç∏„É¢„Éº„Éâ„ÅßÂÅúÊ≠¢‰∏≠„ÅÆÂ†¥Âêà„ÅØ„ÄÅ„Éë„ÉÉ„Ç±„Éº„Ç∏„Çπ„ÇØ„É™„Éó„Éà„ÅßÂá¶ÁêÜ„Åô„Çã
 		return;
 	}
 
 	bool bPauseKey = (input->GetVirtualKeyState(EDirectInput::KEY_PAUSE) == KEY_PUSH);
 	if (bPauseKey && !bPackageMode) {
-		//í‚é~ÉLÅ[âüâ∫
+		//ÂÅúÊ≠¢„Ç≠„ÉºÊäº‰∏ã
 		if (!bCurrentPause)
 			pauseManager_->Start();
 		else
@@ -410,11 +410,11 @@ void StgStageController::Render() {
 		objectManagerMain_->RenderObject();
 
 		if (infoStage_->IsReplay()) {
-			//ÉäÉvÉåÉCíÜ
+			//„É™„Éó„É¨„Ç§‰∏≠
 		}
 	}
 	else {
-		//í‚é~
+		//ÂÅúÊ≠¢
 		pauseManager_->Render();
 	}
 }

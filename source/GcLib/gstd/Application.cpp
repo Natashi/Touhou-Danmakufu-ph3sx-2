@@ -61,11 +61,6 @@ bool Application::Run() {
 #endif
 				throw e;
 			}
-			//			catch(...)
-			//			{
-			//				Logger::WriteTop(L"実行中に例外が発生しました。終了します。");
-			//				break;
-			//			}
 		}
 	}
 
