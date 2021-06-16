@@ -481,6 +481,7 @@ void WorkRenderTaskManager::CallWorkFunction() {
 	CallFunction(DIV_FUNC_WORK);
 }
 void WorkRenderTaskManager::AddWorkFunction(shared_ptr<TaskFunction> func, int pri, int idFunc) {
+	//?????????????
 	func->SetDelay(1);
 	AddFunction(DIV_FUNC_WORK, func, pri, idFunc);
 }
