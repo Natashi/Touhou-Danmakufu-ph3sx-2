@@ -207,8 +207,7 @@ namespace directx {
 		
 		virtual void Render();
 		virtual void Render(D3DXMATRIX* matTransform);
-
-		//í∏ì_ê›íË
+		
 		VERTEX_NX* GetVertex(size_t index);
 		void SetVertex(size_t index, const VERTEX_NX& vertex);
 		void SetVertexPosition(size_t index, float x, float y, float z);

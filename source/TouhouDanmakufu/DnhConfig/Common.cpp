@@ -125,12 +125,12 @@ KeyCodeList::KeyCodeList() {
 	mapText_[DIK_RMENU] = L"RAlt";
 	mapText_[DIK_PAUSE] = L"Pause";
 	mapText_[DIK_HOME] = L"Home";
-	mapText_[DIK_UP] = L"Å™";
+	mapText_[DIK_UP] = L"‚Üë";
 	mapText_[DIK_PRIOR] = L"Page Up";
-	mapText_[DIK_LEFT] = L"Å©";
-	mapText_[DIK_RIGHT] = L"Å®";
+	mapText_[DIK_LEFT] = L"‚Üê";
+	mapText_[DIK_RIGHT] = L"‚Üí";
 	mapText_[DIK_END] = L"End";
-	mapText_[DIK_DOWN] = L"Å´";
+	mapText_[DIK_DOWN] = L"‚Üì";
 	mapText_[DIK_NEXT] = L"Page Down";
 
 	mapText_[DIK_INSERT] = L"Insert";
