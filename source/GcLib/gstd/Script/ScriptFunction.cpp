@@ -819,13 +819,19 @@ namespace gstd {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
 		int64_t res = val1 << val2;
-		BITWISE_RET;
+		if (_is_force_convert_real(argv[0].get_type()))
+			return value(script_type_manager::get_real_type(), (double)res);
+		else
+			return value(argv->get_type(), res);
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::bitwiseRight) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
 		int64_t res = val1 >> val2;
-		BITWISE_RET;
+		if (_is_force_convert_real(argv[0].get_type()))
+			return value(script_type_manager::get_real_type(), (double)res);
+		else
+			return value(argv->get_type(), res);
 	}
 #undef BITWISE_RET
 
