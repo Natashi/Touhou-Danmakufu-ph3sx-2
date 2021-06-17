@@ -123,6 +123,8 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_QuadraticBezier", ScriptClientBase::Func_Interpolate_QuadraticBezier, 4 },
 	{ "Interpolate_CubicBezier", ScriptClientBase::Func_Interpolate_CubicBezier, 5 },
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
+	{ "Interpolate_X", ScriptClientBase::Func_Interpolate_X, 4 },
+	{ "Interpolate_X_PackedInt", ScriptClientBase::Func_Interpolate_X_Packed, 5 },
 
 	//String functions
 	{ "ToString", ScriptClientBase::Func_ToString, 1 },
@@ -1267,6 +1269,42 @@ value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int ar
 	};
 
 	return CreateRealArrayValue(res_pos, 2U);
+}
+
+value ScriptClientBase::Func_Interpolate_X(script_machine* machine, int argc, const value* argv) {
+	double x = argv[2].as_real();
+
+	Math::Lerp::Type type = (Math::Lerp::Type)argv[3].as_int();
+	auto func = Math::Lerp::GetFunc<double, double>(type);
+
+	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, func);
+}
+value ScriptClientBase::Func_Interpolate_X_Packed(script_machine* machine, int argc, const value* argv) {
+	int64_t a = argv[0].as_int();
+	int64_t b = argv[1].as_int();
+	double x = argv[2].as_real();
+
+	Math::Lerp::Type type = (Math::Lerp::Type)argv[3].as_int();
+	auto lerpFunc = Math::Lerp::GetFunc<int64_t, double>(type);
+
+	/*
+	size_t packetSize = argv[4].as_int();
+	if (packetSize >= sizeof(int64_t))
+		return CreateIntValue(lerpFunc(a, b, x));
+	packetSize *= 8U;
+	*/
+	const size_t packetSize = 8U;
+	const uint64_t mask = (1ui64 << packetSize) - 1;
+
+	int64_t res = 0;
+	for (size_t i = 0; i < sizeof(int64_t) * 8; i += packetSize) {
+		int64_t _a = (a >> i) & mask;
+		int64_t _b = (b >> i) & mask;
+		if (_a == 0 && _b == 0) continue;
+		int64_t tmp = lerpFunc(_a, _b, x) & mask;
+		res |= tmp << i;
+	}
+	return CreateIntValue(res);
 }
 
 //組み込み関数：文字列操作
