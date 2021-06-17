@@ -69,7 +69,7 @@ void ShaderManager::_ReleaseShaderData(const std::wstring& name) {
 		if (itr != mapShaderData_.end()) {
 			itr->second->bLoad_ = false;
 			mapShaderData_.erase(itr);
-			Logger::WriteTop(StringUtility::Format(L"ShaderManagerÅFShader released. [%s]", name.c_str()));
+			Logger::WriteTop(StringUtility::Format(L"ShaderManager: Shader released. [%s]", name.c_str()));
 		}
 	}
 }
@@ -80,7 +80,7 @@ void ShaderManager::_ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderD
 			const std::wstring& name = itr->second->name_;
 			itr->second->bLoad_ = false;
 			mapShaderData_.erase(itr);
-			Logger::WriteTop(StringUtility::Format(L"ShaderManagerÅFShader released. [%s]", name.c_str()));
+			Logger::WriteTop(StringUtility::Format(L"ShaderManager: Shader released. [%s]", name.c_str()));
 		}
 	}
 }

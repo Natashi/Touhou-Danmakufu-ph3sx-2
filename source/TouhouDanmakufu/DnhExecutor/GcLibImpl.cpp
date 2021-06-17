@@ -24,17 +24,8 @@ bool EApplication::_Initialize() {
 
 	EFpsController* fpsController = EFpsController::CreateInstance();
 	fpsController->SetFastModeRate((size_t)config->GetSkipModeSpeedRate() * 60U);
-
-	/*
-#if defined(GAME_VERSION_TCL)
-	std::wstring appName = L"“Œ•û•ó“V‹ž@` Treasure Castle Labyrinth ";
-#elif defined(GAME_VERSION_SP)
-	std::wstring appName = L"“Œ•û’ª¹‘@` Sapphire Panlogism ";
-#else
-	std::wstring appName = L"“Œ•û’e–‹•— ph3sx ";
-#endif
-	*/
-	std::wstring appName = L"“Œ•û’e–‹•— ph3sx ";
+	
+	std::wstring appName = L"æ±æ–¹å¼¾å¹•é¢¨ ph3sx ";
 	appName += DNH_VERSION;
 
 	const std::wstring& configWindowTitle = config->GetWindowTitle();
