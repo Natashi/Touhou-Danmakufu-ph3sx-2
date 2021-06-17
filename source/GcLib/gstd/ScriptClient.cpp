@@ -1382,41 +1382,31 @@ value ScriptClientBase::Func_SPrintF(script_machine* machine, int argc, const va
 	try {
 		if (fmtTypes.size() > argc - 2) throw false;
 
-		std::vector<std::wstring> stringCache;
-		std::vector<byte> printfArgs;
-
+		std::list<std::wstring> stringCache;
+		std::vector<byte> fakeVaList;
 		char tmp[8];
 
-		size_t iVal = 2;
+		const value* pValue = &argv[2];
 		size_t iMem = 0;
 		for (char ch : fmtTypes) {
 			size_t cpySize = 0;
 
 			switch (ch) {
-			case 'd':	//%d
-			case 'x':	//%x
-			case 'o':	//%o
+			case 'd':	//int type
 				cpySize = sizeof(int);
-				*reinterpret_cast<int*>(tmp) = (int)(argv[iVal].as_int());
+				*reinterpret_cast<int*>(tmp) = (int)(pValue->as_int());
 				break;
-			case 'l':	//%ld
+			case 'l':	//long int type
 				cpySize = sizeof(int64_t);
-				*reinterpret_cast<int64_t*>(tmp) = (int64_t)(argv[iVal].as_int());
+				*reinterpret_cast<int64_t*>(tmp) = (int64_t)(pValue->as_int());
 				break;
-			/*
-			case 'f':	//%lf
-			case 'e':	//%e
-				cpySize = sizeof(float);
-				*reinterpret_cast<float*>(tmp) = (float)(argv[iVal].as_real());
+			case 'f':	//float type - !! VA_LIST PROMOTES FLOATS TO DOUBLES !!
+				cpySize = sizeof(double);
+				*reinterpret_cast<double*>(tmp) = (double)(pValue->as_real());
 				break;
-			case 'c':	//%c
-				cpySize = sizeof(wchar_t);
-				*reinterpret_cast<wchar_t*>(tmp) = (wchar_t)(argv[iVal].as_char());
-				break;
-			*/
-			case 's':	//%s
+			case 's':	//wstring type
 			{
-				stringCache.push_back(argv[iVal].as_string());
+				stringCache.push_back(pValue->as_string());
 				cpySize = sizeof(wchar_t*);
 				*reinterpret_cast<wchar_t**>(tmp) = (wchar_t*)(stringCache.back().data());
 				break;
@@ -1425,14 +1415,14 @@ value ScriptClientBase::Func_SPrintF(script_machine* machine, int argc, const va
 				throw false;
 			}
 
-			printfArgs.resize(printfArgs.size() + cpySize);
-			memcpy(printfArgs.data() + iMem, tmp, cpySize);
+			fakeVaList.resize(fakeVaList.size() + cpySize);
+			memcpy(fakeVaList.data() + iMem, tmp, cpySize);
 			iMem += cpySize;
-lab_skip_normal_copy:
-			++iVal;
+
+			++pValue;
 		}
 
-		res = StringUtility::Format(srcStr.c_str(), reinterpret_cast<va_list>(printfArgs.data()));
+		res = StringUtility::Format(srcStr.c_str(), reinterpret_cast<va_list>(fakeVaList.data()));
 	}
 	catch (bool) {
 		res = L"[invalid format]";
