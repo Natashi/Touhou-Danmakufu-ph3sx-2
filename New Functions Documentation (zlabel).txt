@@ -61,7 +61,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			(int) result
 			
 		Description:
-			Returns the result of interpolation between the individual bytes of unsigned 32-bit integers a and b, using x as the interpolation value.
+			Returns the result of interpolation between unsigned 32-bit integers a and b, with each byte being interpolated independently, using x as the interpolation value.
 			Ideal for interpolating colors by their hexadecimal values.
 			Interpolation method is linear.
 			
@@ -76,7 +76,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 		Description:
 			Overloaded with 4 arguments.
-			Returns the result of interpolation between the individual bytes of unsigned 32-bit integers a and b, using x as the interpolation value.
+			Returns the result of interpolation between unsigned 32-bit integers a and b, with each byte being interpolated independently, using x as the interpolation value.
 			
 			Available interpolation modes:
 				LERP_LINEAR:
@@ -100,7 +100,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the result of interpolation between the elements of an array, with each [0, 1) segment resulting in interpolation between different adjacent elements.
 			For example, an x value of 2.5 will interpolate between the elements indexed 2 and 3.
-			If the x value is greater than the highest index in the array, the next element used will be the first.
+			If the x value is greater than the highest index in the array, this function will interpolate between the last element and the first one.
 			Interpolation method is linear.
 			
 	Interpolate_Array
@@ -157,4 +157,4 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	KillPlayer
 		Description:
 			Change.
-			Now accessible to all stage-level scripts.
+			Now accessible to all stage-level scripts. (Why, Natashi?)
