@@ -21,6 +21,98 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			cossin() for radians input.
 			rcossin(n) is equivalent to rsincos(-n + pi / 2).
+	
+		--------------------------------> Interpolation <--------------------------------
+	
+	
+	Interpolate_X
+		Arguments:
+			1) a
+			2) b
+			3) x
+			4) (const) interpolation mode
+		Returns:
+			IF a, b are not arrays
+				(real) result
+			ELSE
+				(real[length(a)]) result array
+		Description:
+			Returns the result of interpolation between a and b, using x as the interpolation value.
+			
+			Available movement interpolation modes:
+				LERP_LINEAR:
+					Linear interpolation.
+				LERP_SMOOTH:
+					Smooth interpolation.
+				LERP_SMOOTHER:
+					Smoother interpolation.
+				LERP_ACCELERATE:
+					Accelerating interpolation.
+				LERP_DECELERATE:
+					Decelerating interpolation.
+				
+			When interpolating between two arrays, they must be of the same size.
+			
+	Interpolate_Bytewise
+		Arguments:
+			1) (int) a
+			2) (int) b
+			3) x
+		Returns:
+			(int) result
+			
+		Description:
+			Returns the result of interpolation between the individual bytes of unsigned 32-bit integers a and b, using x as the interpolation value.
+			Interpolation method is linear.
+			
+	Interpolate_Bytewise
+		Arguments:
+			1) (int) a
+			2) (int) b
+			3) x
+			4) (const) interpolation mode
+		Returns:
+			(int) result
+			
+		Description:
+			Overloaded with 4 arguments.
+			Returns the result of interpolation between the individual bytes of unsigned 32-bit integers a and b, using x as the interpolation value.
+			
+			Available interpolation modes:
+				LERP_LINEAR:
+					Linear interpolation.
+				LERP_SMOOTH:
+					Smooth interpolation.
+				LERP_SMOOTHER:
+					Smoother interpolation.
+				LERP_ACCELERATE:
+					Accelerating interpolation.
+				LERP_DECELERATE:
+					Decelerating interpolation.
+	
+--------------------------------> Render Object Functions <--------------------------------
+	
+	[---------------------------> Color & Alpha <---------------------------]
+		
+		ObjRender_GetColorHex
+			Arguments:
+				1) object ID
+			Returns:
+				(int) color
+			Description:
+				Returns the color's XRGB hexadecimal value.
+				
+--------------------------------> Primitive Object Functions <--------------------------------
+			
+	ObjPrim_GetVertexColorHex
+		Arguments:
+			1) object ID
+			2) vertex index
+		Returns:
+			(int) color
+		Description:
+			Returns the vertex color in XRGB hexadecimal format.
+				
 			
 ----------------------------------------------> [Stage Script] <----------------------------------------------
 

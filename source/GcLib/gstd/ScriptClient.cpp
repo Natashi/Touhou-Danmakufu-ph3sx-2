@@ -1286,8 +1286,9 @@ value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int ar
 }
 
 value ScriptClientBase::Func_Interpolate_Bytewise(script_machine* machine, int argc, const value* argv) {
-	unsigned int col1 = argv[0].as_int();
-	unsigned int col2 = argv[1].as_int();
+	// Is this safe? Whatever.
+	uint32_t col1 = argv[0].as_int();
+	uint32_t col2 = argv[1].as_int();
 	double x = argv[2].as_real();
 
 	int a1 = (col1 >> 24) & 0xff;
