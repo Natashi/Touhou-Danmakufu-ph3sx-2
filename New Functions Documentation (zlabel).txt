@@ -1,6 +1,6 @@
 ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
----------------------------------------------->	[Base Script] <----------------------------------------------
+----------------------------------------------> [Base Script] <----------------------------------------------
 
 	--------------------------------> Trigonometry and Angular Maths <--------------------------------
 
@@ -21,3 +21,12 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			cossin() for radians input.
 			rcossin(n) is equivalent to rsincos(-n + pi / 2).
+			
+----------------------------------------------> [Stage Script] <----------------------------------------------
+
+	--------------------------------> Player Functions <--------------------------------
+	
+	KillPlayer
+		Description:
+			Change.
+			Now accessible to all stage-level scripts.

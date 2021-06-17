@@ -242,7 +242,7 @@ void ScriptSelectScene::Render() {
 			if (obj == nullptr) continue;
 			int alphaText = bActive_ ? 255 : 128;
 			obj->SetVertexColor(D3DCOLOR_ARGB(255, alphaText, alphaText, alphaText));
-			obj->SetPosition(32, 48 + iItem * 18);
+			obj->SetPosition(32 + iItem * 4, 48 + iItem * 18);
 			obj->Render();
 
 			if (iItem == cursorY_) {

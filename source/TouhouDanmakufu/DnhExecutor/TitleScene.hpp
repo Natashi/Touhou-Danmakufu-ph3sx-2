@@ -39,7 +39,7 @@ class TitleSceneMenuItem : public TextLightUpMenuItem {
 
 	TitleScene* _GetTitleScene() { return (TitleScene*)menu_; }
 public:
-	TitleSceneMenuItem(std::wstring text, std::wstring description, int x, int y);
+	TitleSceneMenuItem(std::wstring text, std::wstring description, int x, int y, int id);
 	virtual ~TitleSceneMenuItem();
 
 	void Work();

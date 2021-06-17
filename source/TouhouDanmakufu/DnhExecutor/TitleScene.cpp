@@ -37,8 +37,8 @@ TitleScene::TitleScene() {
 	};
 	for (int iItem = 0; iItem < ITEM_COUNT; iItem++) {
 		int x = 48 + iItem * 6 + 12 * pow((double)-1, (int)(iItem - 1));
-		int y = 154 + iItem * 30;
-		AddMenuItem(new TitleSceneMenuItem(strText[iItem], strDescription[iItem], x, y));
+		int y = 154 + iItem * 40;
+		AddMenuItem(new TitleSceneMenuItem(strText[iItem], strDescription[iItem], x, y, iItem));
 	}
 
 	cursorY_ = SystemController::GetInstance()->GetSystemInformation()->GetLastTitleSelectedIndex();
@@ -94,18 +94,24 @@ void TitleScene::Render() {
 }
 
 //TitleSceneMenuItem
-TitleSceneMenuItem::TitleSceneMenuItem(std::wstring text, std::wstring description, int x, int y) {
+TitleSceneMenuItem::TitleSceneMenuItem(std::wstring text, std::wstring description, int x, int y, int id) {
 	pos_.x = x;
 	pos_.y = y;
-
+    D3DCOLOR rgb = 0xffffffff;
+	
 	DxText dxText;
-	dxText.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
-	dxText.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 64));
+
+    ColorAccess::HSVtoRGB(rgb, id * 50, 192, 192);
+	dxText.SetFontColorTop(rgb);
+
+    ColorAccess::HSVtoRGB(rgb, id * 50 + 30, 255, 64);
+	dxText.SetFontColorBottom(rgb);
 	dxText.SetFontBorderType(TextBorderType::Full);
-	dxText.SetFontBorderColor(D3DCOLOR_ARGB(255, 32, 32, 128));
+	dxText.SetFontBorderColor(D3DCOLOR_ARGB(255, 192, 192, 192));
 	dxText.SetFontBorderWidth(2);
-	dxText.SetFontSize(24);
+	dxText.SetFontSize(30);
 	dxText.SetFontWeight(FW_BOLD);
+    dxText.SetFontItalic(true);
 	dxText.SetText(text);
 	objText_ = dxText.CreateRenderObject();
 }
