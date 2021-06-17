@@ -275,10 +275,12 @@ void DirectGraphics::_VerifyDeviceCaps() {
 	if ((deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_ONE) == 0)
 		listWarning.push_back("V-Sync is unavailable");
 
-	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_CULLNONE) == 0
-		|| (deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_CULLCW) == 0
-		|| (deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_CULLCCW) == 0)
-		listWarning.push_back("Device doesn't support all primitive culling modes");
+	if (!(deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_CULLNONE))
+		listWarning.push_back("Device doesn't support culling mode: CULL_NONE");
+	if (!(deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_CULLCW))
+		listWarning.push_back("Device doesn't support culling mode: CULL_CW");
+	if (!(deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_CULLCCW))
+		listWarning.push_back("Device doesn't support culling mode: CULL_CCW");
 	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_MASKZ) == 0)
 		listWarning.push_back("Device doesn't support depth buffering");
 	if ((deviceCaps_.PrimitiveMiscCaps & D3DPMISCCAPS_BLENDOP) == 0)
@@ -321,15 +323,22 @@ void DirectGraphics::_VerifyDeviceCaps() {
 	if ((deviceCaps_.TextureCaps & D3DPTEXTURECAPS_SQUAREONLY) != 0)
 		listWarning.push_back("Device requires that all textures' sizes must be powers of two");
 
-	if ((deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MAGFPOINT) == 0
-		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MAGFLINEAR) == 0
-		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MAGFANISOTROPIC) == 0
-		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MINFPOINT) == 0
-		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MINFLINEAR) == 0
-		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MINFANISOTROPIC) == 0
-		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MIPFPOINT) == 0
-		|| (deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MIPFLINEAR) == 0)
-		listWarning.push_back("Device might not support all modes of texture filtering");
+	if (!(deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MAGFPOINT))
+		listWarning.push_back("Device doesn't support texture filtering: MAG_POINT");
+	if (!(deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MAGFLINEAR))
+		listWarning.push_back("Device doesn't support texture filtering: MAG_LINEAR");
+	if (!(deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MAGFANISOTROPIC))
+		listWarning.push_back("Device doesn't support texture filtering: MAG_ANISOTROPIC");
+	if (!(deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MINFPOINT))
+		listWarning.push_back("Device doesn't support texture filtering: MIN_POINT");
+	if (!(deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MINFLINEAR))
+		listWarning.push_back("Device doesn't support texture filtering: MIN_LINEAR");
+	if (!(deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MINFANISOTROPIC))
+		listWarning.push_back("Device doesn't support texture filtering: MIN_ANISOTROPIC");
+	if (!(deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MIPFPOINT))
+		listWarning.push_back("Device doesn't support texture filtering: MIP_POINT");
+	if (!(deviceCaps_.TextureFilterCaps & D3DPTFILTERCAPS_MIPFLINEAR))
+		listWarning.push_back("Device doesn't support texture filtering: MIP_LINEAR");
 
 	if ((deviceCaps_.TextureAddressCaps & D3DPTADDRESSCAPS_WRAP) == 0)
 		listError.push_back("Device doesn't support texture UV wrapping");
@@ -376,7 +385,7 @@ void DirectGraphics::_VerifyDeviceCaps() {
 	else if (listWarning.size() > 0) {
 		std::string strAll = "The game's rendering might behave strangely as the\r\n"
 			"Direct3D device has the following issue(s):\r\n";
-		for (auto& str : listError)
+		for (auto& str : listWarning)
 			strAll += "   - " + str + "\r\n";
 		Logger::WriteTop(strAll);
 	}
