@@ -457,9 +457,6 @@ static const std::vector<function> dxFunction = {
 	{ "ObjFileB_WriteLong", DxScript::Func_ObjFileB_WriteLong, 2 },
 	{ "ObjFileB_WriteFloat", DxScript::Func_ObjFileB_WriteFloat, 2 },
 	{ "ObjFileB_WriteDouble", DxScript::Func_ObjFileB_WriteDouble, 2 },
-
-	// Exceptional interpolation function because I'm too lazy to make it work without ColorAccess right now
-	{ "Interpolate_Bytewise", DxScript::Func_Interpolate_Bytewise, 3 },
 };
 static const std::vector<constant> dxConstant = {
 	//Object types
@@ -4834,28 +4831,4 @@ gstd::value DxScript::Func_ObjFileB_WriteDouble(gstd::script_machine* machine, i
 	}
 
 	return script->CreateRealValue(res);
-}
-
-gstd::value DxScript::Func_Interpolate_Bytewise(script_machine* machine, int argc, const value* argv) {
-	D3DCOLOR col1 = (D3DCOLOR)argv[0].as_int();
-	D3DCOLOR col2 = (D3DCOLOR)argv[1].as_int();
-	double x = argv[2].as_real();
-
-	byte a1 = ColorAccess::GetColorA(col1);
-	byte a2 = ColorAccess::GetColorA(col2);
-	byte r1 = ColorAccess::GetColorR(col1);
-	byte r2 = ColorAccess::GetColorR(col2);
-	byte g1 = ColorAccess::GetColorG(col1);
-	byte g2 = ColorAccess::GetColorG(col2);
-	byte b1 = ColorAccess::GetColorB(col1);
-	byte b2 = ColorAccess::GetColorB(col2);
-
-	D3DCOLOR colOut = (D3DCOLOR)0xffffffff;
-
-	ColorAccess::SetColorA(colOut, Math::Lerp::Linear(a1, a2, x));
-	ColorAccess::SetColorR(colOut, Math::Lerp::Linear(r1, r2, x));
-	ColorAccess::SetColorG(colOut, Math::Lerp::Linear(g1, g2, x));
-	ColorAccess::SetColorB(colOut, Math::Lerp::Linear(b1, b2, x));
-
-	return CreateIntValue(colOut);
 }

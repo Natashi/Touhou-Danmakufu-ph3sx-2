@@ -125,6 +125,7 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_QuadraticBezier", ScriptClientBase::Func_Interpolate_QuadraticBezier, 4 },
 	{ "Interpolate_CubicBezier", ScriptClientBase::Func_Interpolate_CubicBezier, 5 },
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
+	{ "Interpolate_Bytewise", ScriptClientBase::Func_Interpolate_Bytewise, 3 },
 
 	//String functions
 	{ "ToString", ScriptClientBase::Func_ToString, 1 },
@@ -1280,6 +1281,29 @@ value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int ar
 	};
 
 	return CreateRealArrayValue(res_pos, 2U);
+}
+
+// Further research needed
+value ScriptClientBase::Func_Interpolate_Bytewise(script_machine* machine, int argc, const value* argv) {
+	unsigned int col1 = argv[0].as_int();
+	unsigned int col2 = argv[1].as_int();
+	double x = std::clamp(argv[2].as_real(), 0.0, 1.0); // No overflowing allowed.
+
+	byte a1 = (col1 >> 24) & 0xff;
+	byte a2 = (col2 >> 24) & 0xff;
+	byte r1 = (col1 >> 16) & 0xff;
+	byte r2 = (col2 >> 16) & 0xff;
+	byte g1 = (col1 >> 8) & 0xff;
+	byte g2 = (col2 >> 8) & 0xff;
+	byte b1 = col1 & 0xff;
+	byte b2 = col2 & 0xff;
+
+	byte a = Math::Lerp::Linear(a1, a2, x);
+	byte r = Math::Lerp::Linear(r1, r2, x);
+	byte g = Math::Lerp::Linear(g1, g2, x);
+	byte b = Math::Lerp::Linear(b1, b2, x);
+
+	return CreateIntValue((a << 24) + (r << 16) + (g << 8) + b);
 }
 
 //組み込み関数：文字列操作
