@@ -241,8 +241,8 @@ public:
 class StgMovePattern_Line_Frame : public StgMovePattern_Line {
 	friend class StgMoveObject;
 public:
-	typedef double (*lerp_func)(double, double, double);
-	typedef double (*lerp_diff_func)(double);
+	using lerp_func = Math::Lerp::funcLerp<double, double>;
+	using lerp_diff_func = Math::Lerp::funcLerpDiff<double>;
 protected:
 	double positionDiff_[2];
 	double speedRate_;

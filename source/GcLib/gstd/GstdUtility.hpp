@@ -290,6 +290,12 @@ namespace gstd {
 				ACCELERATE,
 				DECELERATE,
 			} Type;
+
+			template<typename T, typename L>
+			using funcLerp = T(*)(T, T, L);
+
+			template<typename T>
+			using funcLerpDiff = T(*)(T);
 		public:
 			template<typename T, typename L>
 			static inline T Linear(T a, T b, L x) {
@@ -332,6 +338,35 @@ namespace gstd {
 			template<typename T>
 			static inline T DifferentialDecelerate(T x) {
 				return (T)2 * ((T)1 - x);
+			}
+
+			template<typename T, typename L>
+			static funcLerp<T, L> GetFunc(Type type) {
+				switch (type) {
+				case Math::Lerp::SMOOTH:
+					return Smooth<T, L>;
+				case Math::Lerp::SMOOTHER:
+					return Smoother<T, L>;
+				case Math::Lerp::ACCELERATE:
+					return Math::Lerp::Accelerate<T, L>;
+				case Math::Lerp::DECELERATE:
+					return Math::Lerp::Decelerate<T, L>;
+				}
+				return Math::Lerp::Linear<T, L>;
+			}
+			template<typename T>
+			static funcLerpDiff<T> GetFuncDifferential(Type type) {
+				switch (type) {
+				case Math::Lerp::SMOOTH:
+					return DifferentialSmooth<T>;
+				case Math::Lerp::SMOOTHER:
+					return DifferentialSmoother<T>;
+				case Math::Lerp::ACCELERATE:
+					return DifferentialAccelerate<T>;
+				case Math::Lerp::DECELERATE:
+					return DifferentialDecelerate<T>;
+				}
+				return DifferentialLinear<T>;
 			}
 		};
 	};
