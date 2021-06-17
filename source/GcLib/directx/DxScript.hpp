@@ -261,6 +261,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetColor);
 		static gstd::value Func_ObjRender_SetColorHSV(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_GetColor);
+		DNH_FUNCAPI_DECL_(Func_ObjRender_GetColorHex);
 		static gstd::value Func_ObjRender_SetAlpha(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_GetAlpha);
 		static gstd::value Func_ObjRender_SetBlendType(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -317,6 +318,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_SetVertexColorHSV);
 		static gstd::value Func_ObjPrimitive_SetVertexAlpha(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_GetVertexColor);
+		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_GetVertexColorHex);
 		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_GetVertexAlpha);
 		static gstd::value Func_ObjPrimitive_GetVertexPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_SetVertexIndex);

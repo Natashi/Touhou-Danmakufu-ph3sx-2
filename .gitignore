@@ -283,3 +283,6 @@ __pycache__/
 /library/steam_api.lib
 /source/Steam/
 /DnhExecutor/Release_vectorless
+
+# Naudiz's testing chambers
+/sandbox
