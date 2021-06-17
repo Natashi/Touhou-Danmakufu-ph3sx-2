@@ -39,7 +39,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			
-			Available movement interpolation modes:
+			Available interpolation modes:
 				LERP_LINEAR:
 					Linear interpolation.
 				LERP_SMOOTH:
