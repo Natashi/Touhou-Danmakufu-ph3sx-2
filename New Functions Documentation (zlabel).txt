@@ -10,7 +10,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(real[2]) [cos(angle), sin(angle)]
 		Description:
-			Reverse of sincos().
+			sincos() but with its elements reversed. Ideal for XY coordinate arrays.
 			cossin(n) is equivalent to sincos(-n + 90).
 
 	rcossin
@@ -23,7 +23,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			rcossin(n) is equivalent to rsincos(-n + pi / 2).
 	
 		--------------------------------> Interpolation <--------------------------------
-	
 	
 	Interpolate_X
 		Arguments:
@@ -63,6 +62,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 		Description:
 			Returns the result of interpolation between the individual bytes of unsigned 32-bit integers a and b, using x as the interpolation value.
+			Ideal for interpolating colors by their hexadecimal values.
 			Interpolation method is linear.
 			
 	Interpolate_Bytewise
@@ -127,8 +127,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				LERP_DECELERATE:
 					Decelerating interpolation.
 			
-
-	
 --------------------------------> Render Object Functions <--------------------------------
 	
 	[---------------------------> Color & Alpha <---------------------------]
@@ -152,7 +150,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the vertex color in XRGB hexadecimal format.
 				
-			
 ----------------------------------------------> [Stage Script] <----------------------------------------------
 
 	--------------------------------> Player Functions <--------------------------------

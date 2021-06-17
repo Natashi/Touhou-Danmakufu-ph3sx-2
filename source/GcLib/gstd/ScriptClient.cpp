@@ -1365,14 +1365,12 @@ value ScriptClientBase::Func_Interpolate_Array(script_machine* machine, int argc
 	while (from < 0) {
 		x += len;
 		from += len;
-		// Logger::WriteTop(StringUtility::Format("eee %u, %u, %u", x, from, len));
 	}
 	while (from >= len) {
 		x -= len;
 		from -= len;
 	}
 	
-
 	int to = from + 1;
 	if (to >= len) to -= len;
 	double x2 = x - from;
