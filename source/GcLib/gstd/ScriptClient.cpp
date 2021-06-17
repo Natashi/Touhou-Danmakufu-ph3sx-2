@@ -128,6 +128,8 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_Bytewise", ScriptClientBase::Func_Interpolate_Bytewise, 3 },
 	{ "Interpolate_Bytewise", ScriptClientBase::Func_Interpolate_Bytewise, 4 }, // Overloaded
 	{ "Interpolate_X", ScriptClientBase::Func_Interpolate_X, 4 },
+	{ "Interpolate_Array", ScriptClientBase::Func_Interpolate_Array, 2 },
+	{ "Interpolate_Array", ScriptClientBase::Func_Interpolate_Array, 3 }, // Overloaded
 
 	//String functions
 	{ "ToString", ScriptClientBase::Func_ToString, 1 },
@@ -1330,7 +1332,6 @@ value ScriptClientBase::Func_Interpolate_Bytewise(script_machine* machine, int a
 	return CreateIntValue((a << 24) + (r << 16) + (g << 8) + b);
 }
 
-// WORK IN PROGRESS
 value ScriptClientBase::Func_Interpolate_X(script_machine* machine, int argc, const value* argv) {
 	double x = argv[2].as_real();
 	double (*lerpFunc)(double, double, double);
@@ -1353,6 +1354,52 @@ value ScriptClientBase::Func_Interpolate_X(script_machine* machine, int argc, co
 		break;
 	}
 	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, lerpFunc);
+}
+
+value ScriptClientBase::Func_Interpolate_Array(script_machine* machine, int argc, const value* argv) { // :souperdying:
+	double x = argv[1].as_real();
+
+	size_t len = argv[0].length_as_array();
+	int from = (int)floor(x);
+
+	while (from < 0) {
+		x += len;
+		from += len;
+		// Logger::WriteTop(StringUtility::Format("eee %u, %u, %u", x, from, len));
+	}
+	while (from >= len) {
+		x -= len;
+		from -= len;
+	}
+	
+
+	int to = from + 1;
+	if (to >= len) to -= len;
+	double x2 = x - from;
+
+	double (*lerpFunc)(double, double, double) = Math::Lerp::Linear<double, double>;
+	if (argc == 3) {
+		switch (argv[2].as_int()) {
+		case Math::Lerp::SMOOTH:
+			lerpFunc = Math::Lerp::Smooth<double, double>;
+			break;
+		case Math::Lerp::SMOOTHER:
+			lerpFunc = Math::Lerp::Smoother<double, double>;
+			break;
+		case Math::Lerp::ACCELERATE:
+			lerpFunc = Math::Lerp::Accelerate<double, double>;
+			break;
+		case Math::Lerp::DECELERATE:
+			lerpFunc = Math::Lerp::Decelerate<double, double>;
+			break;
+		case Math::Lerp::LINEAR:
+		default:
+			lerpFunc = Math::Lerp::Linear<double, double>;
+			break;
+		}
+	}
+
+	return ScriptClientBase::CreateRealValue(lerpFunc(argv[0].index_as_array(from).as_real(), argv[0].index_as_array(to).as_real(), x2));
 }
 
 //組み込み関数：文字列操作
