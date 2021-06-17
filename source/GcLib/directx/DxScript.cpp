@@ -2532,9 +2532,10 @@ value DxScript::Func_ObjRender_SetScaleXYZ(script_machine* machine, int argc, co
 			obj->SetScaleZ(argv[3].as_real());
 		}
 		else {
-			obj->SetScaleX(argv[1].as_real());
-			obj->SetScaleY(argv[1].as_real());
-			obj->SetScaleZ(argv[1].as_real());
+			float scale = argv[1].as_real();
+			obj->SetScaleX(scale);
+			obj->SetScaleY(scale);
+			obj->SetScaleZ(scale);
 		}
 	}
 	return value();
@@ -3564,8 +3565,10 @@ value DxScript::Func_ObjParticleList_SetScaleXYZ(script_machine* machine, int ar
 		if (objParticle) {
 			if (argc == 4)
 				objParticle->SetInstanceScale(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
-			else
-				objParticle->SetInstanceScale(argv[1].as_real(), argv[1].as_real(), argv[1].as_real());
+			else {
+				float scale = argv[1].as_real();
+				objParticle->SetInstanceScale(scale, scale, scale);
+			}
 		}
 			
 	}
