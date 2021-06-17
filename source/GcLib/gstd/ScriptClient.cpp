@@ -1245,8 +1245,12 @@ value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int ar
 
 	double x = argv[8].as_real();
 
-	double vec_s[2] = { vsm * cos(vsa), vsm * sin(vsa) };
-	double vec_e[2] = { vem * cos(vea), vem * sin(vea) };
+	__m128d vec_s;		//[sin, cos]
+	__m128d vec_e;		//[sin, cos]
+	Math::DoSinCos(vsa, vec_s.m128d_f64);
+	Math::DoSinCos(vea, vec_e.m128d_f64);
+	vec_s = Vectorize::Mul(vec_s, Vectorize::Replicate(vsm));
+	vec_e = Vectorize::Mul(vec_e, Vectorize::Replicate(vem));
 
 	double x_2 = 2 * x;
 	double x2 = x * x;
@@ -1258,8 +1262,8 @@ value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int ar
 	double rvs = x * x_s1_2;			//t * (1 - t)^2
 	double rve = x2 * x_s1;				//t^2 * (t - 1)
 	double res_pos[2] = {
-		sx * rps + ex * rpe + vec_s[0] * rvs + vec_e[0] * rve,
-		sy * rps + ey * rpe + vec_s[1] * rvs + vec_e[1] * rve
+		sx * rps + ex * rpe + vec_s.m128d_f64[1] * rvs + vec_e.m128d_f64[1] * rve,
+		sy * rps + ey * rpe + vec_s.m128d_f64[0] * rvs + vec_e.m128d_f64[0] * rve
 	};
 
 	return CreateRealArrayValue(res_pos, 2U);
