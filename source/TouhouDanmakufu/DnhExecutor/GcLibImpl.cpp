@@ -25,7 +25,7 @@ bool EApplication::_Initialize() {
 	EFpsController* fpsController = EFpsController::CreateInstance();
 	fpsController->SetFastModeRate((size_t)config->GetSkipModeSpeedRate() * 60U);
 
-	std::wstring appName = L"Touhou Danmakufu ph3sx-zlabel ";
+	std::wstring appName = L"東方弾幕風 ph3sx-zlabel ";
 	appName += DNH_VERSION;
 
 	const std::wstring& configWindowTitle = config->GetWindowTitle();
