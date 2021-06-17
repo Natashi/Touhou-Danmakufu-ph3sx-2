@@ -1283,25 +1283,24 @@ value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int ar
 	return CreateRealArrayValue(res_pos, 2U);
 }
 
-// Further research needed
 value ScriptClientBase::Func_Interpolate_Bytewise(script_machine* machine, int argc, const value* argv) {
 	unsigned int col1 = argv[0].as_int();
 	unsigned int col2 = argv[1].as_int();
-	double x = std::clamp(argv[2].as_real(), 0.0, 1.0); // No overflowing allowed.
+	double x = argv[2].as_real();
 
-	byte a1 = (col1 >> 24) & 0xff;
-	byte a2 = (col2 >> 24) & 0xff;
-	byte r1 = (col1 >> 16) & 0xff;
-	byte r2 = (col2 >> 16) & 0xff;
-	byte g1 = (col1 >> 8) & 0xff;
-	byte g2 = (col2 >> 8) & 0xff;
-	byte b1 = col1 & 0xff;
-	byte b2 = col2 & 0xff;
+	int a1 = (col1 >> 24) & 0xff;
+	int a2 = (col2 >> 24) & 0xff;
+	int r1 = (col1 >> 16) & 0xff;
+	int r2 = (col2 >> 16) & 0xff;
+	int g1 = (col1 >> 8) & 0xff;
+	int g2 = (col2 >> 8) & 0xff;
+	int b1 = col1 & 0xff;
+	int b2 = col2 & 0xff;
 
-	byte a = Math::Lerp::Linear(a1, a2, x);
-	byte r = Math::Lerp::Linear(r1, r2, x);
-	byte g = Math::Lerp::Linear(g1, g2, x);
-	byte b = Math::Lerp::Linear(b1, b2, x);
+	int a = std::clamp(Math::Lerp::Linear(a1, a2, x), 0, 0xff);
+	int r = std::clamp(Math::Lerp::Linear(r1, r2, x), 0, 0xff);
+	int g = std::clamp(Math::Lerp::Linear(g1, g2, x), 0, 0xff);
+	int b = std::clamp(Math::Lerp::Linear(b1, b2, x), 0, 0xff);
 
 	return CreateIntValue((a << 24) + (r << 16) + (g << 8) + b);
 }
