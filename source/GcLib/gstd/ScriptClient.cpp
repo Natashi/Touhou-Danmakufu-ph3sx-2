@@ -126,6 +126,8 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_CubicBezier", ScriptClientBase::Func_Interpolate_CubicBezier, 5 },
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
 	{ "Interpolate_Bytewise", ScriptClientBase::Func_Interpolate_Bytewise, 3 },
+	{ "Interpolate_Bytewise", ScriptClientBase::Func_Interpolate_Bytewise, 4 }, // Overloaded
+	{ "Interpolate_X", ScriptClientBase::Func_Interpolate_X, 4 },
 
 	//String functions
 	{ "ToString", ScriptClientBase::Func_ToString, 1 },
@@ -1297,12 +1299,59 @@ value ScriptClientBase::Func_Interpolate_Bytewise(script_machine* machine, int a
 	int b1 = col1 & 0xff;
 	int b2 = col2 & 0xff;
 
-	int a = std::clamp(Math::Lerp::Linear(a1, a2, x), 0, 0xff);
-	int r = std::clamp(Math::Lerp::Linear(r1, r2, x), 0, 0xff);
-	int g = std::clamp(Math::Lerp::Linear(g1, g2, x), 0, 0xff);
-	int b = std::clamp(Math::Lerp::Linear(b1, b2, x), 0, 0xff);
+	int (*lerpFunc)(int, int, double) = Math::Lerp::Linear<int, double>;
+	if (argc == 4) {
+		switch (argv[3].as_int()) {
+		case Math::Lerp::SMOOTH:
+			lerpFunc = Math::Lerp::Smooth<int, double>;
+			break;
+		case Math::Lerp::SMOOTHER:
+			lerpFunc = Math::Lerp::Smoother<int, double>;
+			break;
+		case Math::Lerp::ACCELERATE:
+			lerpFunc = Math::Lerp::Accelerate<int, double>;
+			break;
+		case Math::Lerp::DECELERATE:
+			lerpFunc = Math::Lerp::Decelerate<int, double>;
+			break;
+		case Math::Lerp::LINEAR:
+		default:
+			lerpFunc = Math::Lerp::Linear<int, double>;
+			break;
+		}
+	}
+	
+	int a = std::clamp(lerpFunc(a1, a2, x), 0, 0xff);
+	int r = std::clamp(lerpFunc(r1, r2, x), 0, 0xff);
+	int g = std::clamp(lerpFunc(g1, g2, x), 0, 0xff);
+	int b = std::clamp(lerpFunc(b1, b2, x), 0, 0xff);
 
 	return CreateIntValue((a << 24) + (r << 16) + (g << 8) + b);
+}
+
+// WORK IN PROGRESS
+value ScriptClientBase::Func_Interpolate_X(script_machine* machine, int argc, const value* argv) {
+	double x = argv[2].as_real();
+	double (*lerpFunc)(double, double, double);
+	switch (argv[3].as_int()) {
+	case Math::Lerp::SMOOTH:
+		lerpFunc = Math::Lerp::Smooth<double, double>;
+		break;
+	case Math::Lerp::SMOOTHER:
+		lerpFunc = Math::Lerp::Smoother<double, double>;
+		break;
+	case Math::Lerp::ACCELERATE:
+		lerpFunc = Math::Lerp::Accelerate<double, double>;
+		break;
+	case Math::Lerp::DECELERATE:
+		lerpFunc = Math::Lerp::Decelerate<double, double>;
+		break;
+	case Math::Lerp::LINEAR:
+	default:
+		lerpFunc = Math::Lerp::Linear<double, double>;
+		break;
+	}
+	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, lerpFunc);
 }
 
 //組み込み関数：文字列操作

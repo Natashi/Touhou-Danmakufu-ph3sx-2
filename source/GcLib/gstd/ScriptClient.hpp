@@ -253,6 +253,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_Interpolate_CubicBezier);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Hermite);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Bytewise);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_X);
 
 		//String manipulations
 		static value Func_ToString(script_machine* machine, int argc, const value* argv);
