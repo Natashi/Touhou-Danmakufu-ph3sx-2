@@ -4379,7 +4379,7 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetExtraData(gstd::script_machin
 	int id = argv[0].as_int();
 	StgPatternShotObjectGenerator* obj = script->GetObjectPointerAs<StgPatternShotObjectGenerator>(id);
 	if (obj) {
-		obj->SetExtra(base, argv[1].as_real());
+		obj->SetExtraData(argv[1].as_real());
 	}
 	return value();
 }

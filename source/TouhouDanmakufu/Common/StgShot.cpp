@@ -2469,7 +2469,7 @@ StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
 	angleBase_ = 0;
 	angleArgument_ = 0;
 
-    extra_ 0;
+    extra_ = 0;
 
 	delay_ = 0;
 	//delayMove_ = false;
