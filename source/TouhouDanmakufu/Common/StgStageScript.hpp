@@ -440,6 +440,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetShotCount);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetSpeed);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetAngle);
+	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetExtraData);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetBasePoint);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetBasePointOffset);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetBasePointOffsetCircle);

@@ -497,6 +497,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjPatternShot_SetShotCount", StgStageScript::Func_ObjPatternShot_SetShotCount, 3 },
 	{ "ObjPatternShot_SetSpeed", StgStageScript::Func_ObjPatternShot_SetSpeed, 3 },
 	{ "ObjPatternShot_SetAngle", StgStageScript::Func_ObjPatternShot_SetAngle, 3 },
+	{ "ObjPatternShot_SetExtraData", StgStageScript::Func_ObjPatternShot_SetExtraData, 2 },
 	{ "ObjPatternShot_SetBasePoint", StgStageScript::Func_ObjPatternShot_SetBasePoint, 3 },
 	{ "ObjPatternShot_SetBasePointOffset", StgStageScript::Func_ObjPatternShot_SetBasePointOffset, 3 },
 	{ "ObjPatternShot_SetBasePointOffsetCircle", StgStageScript::Func_ObjPatternShot_SetBasePointOffsetCircle, 3 },
@@ -571,6 +572,8 @@ static const std::vector<constant> stgStageConstant = {
 	constant("PATTERN_SCATTER_ANGLE", StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER_ANGLE),
 	constant("PATTERN_SCATTER_SPEED", StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER_SPEED),
 	constant("PATTERN_SCATTER", StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER),
+	constant("PATTERN_LINE", StgPatternShotObjectGenerator::PATTERN_TYPE_LINE),
+	constant("PATTERN_LINE_AIMED", StgPatternShotObjectGenerator::PATTERN_TYPE_LINE_AIMED),
 	constant("PATTERN_BASEPOINT_RESET", StgPatternShotObjectGenerator::BASEPOINT_RESET),
 
 	//Pattern shot transforms
@@ -4366,6 +4369,17 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetAngle(gstd::script_machine* m
 		float base = Math::DegreeToRadian(argv[1].as_real());
 		float arg = Math::DegreeToRadian(argv[2].as_real());
 		obj->SetAngle(base, arg);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjPatternShot_SetExtraData(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	int id = argv[0].as_int();
+	StgPatternShotObjectGenerator* obj = script->GetObjectPointerAs<StgPatternShotObjectGenerator>(id);
+	if (obj) {
+		obj->SetExtra(base, argv[1].as_real());
 	}
 	return value();
 }

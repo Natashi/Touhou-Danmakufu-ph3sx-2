@@ -599,6 +599,8 @@ public:
 		PATTERN_TYPE_SCATTER_ANGLE,
 		PATTERN_TYPE_SCATTER_SPEED,
 		PATTERN_TYPE_SCATTER,
+        PATTERN_TYPE_LINE,
+        PATTERN_TYPE_LINE_AIMED,
 
 		BASEPOINT_RESET = -256 * 256,
 	};
@@ -629,6 +631,8 @@ private:
 	float speedArgument_;
 	float angleBase_;
 	float angleArgument_;
+
+    float extra_;
 
 	int delay_;
 	//bool delayMove_;
@@ -686,6 +690,9 @@ public:
 		angleBase_ = base;
 		angleArgument_ = arg;
 	}
+    void SetExtraData(float e) {
+        extra_ = e;
+    }
 
 	void SetDelay(int delay) { delay_ = delay; }
 	//void SetDelayMotion(bool b) { delayMove_ = b; }

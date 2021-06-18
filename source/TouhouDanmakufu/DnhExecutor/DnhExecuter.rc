@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// “ú–{Œê resources
+// ï¿½ï¿½ï¿½{ï¿½ï¿½ resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
 #ifdef _WIN32
@@ -55,11 +55,11 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 
-IDI_ICON                ICON    DISCARDABLE     "th_dnh_sx.ico"
+IDI_ICON                ICON    DISCARDABLE     "th_dnh_sx-z.ico"
 //IDI_ICON                ICON    DISCARDABLE     "th_sp_icon.ico"
 //IDI_ICON                ICON    DISCARDABLE     "th_tcl_icon.ico"
 
-#endif    // “ú–{Œê resources
+#endif    // ï¿½ï¿½ï¿½{ï¿½ï¿½ resources
 /////////////////////////////////////////////////////////////////////////////
 
 
