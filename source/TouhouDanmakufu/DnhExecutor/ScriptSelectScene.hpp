@@ -25,7 +25,7 @@ public:
 		TYPE_ALL,
 	};
 	enum {
-		COUNT_MENU_TEXT = 10,
+		COUNT_MENU_TEXT = 12,
 	};
 	class Sort;
 

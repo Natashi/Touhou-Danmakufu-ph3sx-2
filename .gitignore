@@ -286,3 +286,4 @@ __pycache__/
 
 # Naudiz's testing chambers
 /sandbox
+.vscode

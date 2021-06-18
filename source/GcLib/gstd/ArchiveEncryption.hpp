@@ -34,5 +34,5 @@ namespace gstd {
 			}
 		}
 	};
-	inline const std::string ArchiveEncryption::ARCHIVE_ENCRYPTION_KEY = "Mima for Touhou 18";
+	inline const std::string ArchiveEncryption::ARCHIVE_ENCRYPTION_KEY = "Mikuzume's Mind Game (Mastermind Edition)";
 }

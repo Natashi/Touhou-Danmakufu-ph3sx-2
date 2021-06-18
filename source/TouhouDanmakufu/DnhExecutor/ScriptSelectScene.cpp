@@ -24,7 +24,7 @@ ScriptSelectScene::ScriptSelectScene() {
 
 	spriteImage_ = std::make_shared<Sprite2D>();
 
-	pageMaxY_ = 9;
+	pageMaxY_ = 11;
 	objMenuText_.resize(COUNT_MENU_TEXT);
 	bPageChangeX_ = true;
 
@@ -44,6 +44,7 @@ void ScriptSelectScene::_ChangePage() {
 	dxText.SetFontBorderWidth(2);
 	dxText.SetFontSize(16);
 	dxText.SetFontWeight(FW_BOLD);
+    // dxText.SetFontItalic(FW_BOLD);
 	dxText.SetSyntacticAnalysis(false);
 
 	int top = (pageCurrent_ - 1) * (pageMaxY_ + 1);
@@ -242,7 +243,7 @@ void ScriptSelectScene::Render() {
 			if (obj == nullptr) continue;
 			int alphaText = bActive_ ? 255 : 128;
 			obj->SetVertexColor(D3DCOLOR_ARGB(255, alphaText, alphaText, alphaText));
-			obj->SetPosition(32 + iItem * 4, 48 + iItem * 18);
+			obj->SetPosition(32, 48 + iItem * 17);
 			obj->Render();
 
 			if (iItem == cursorY_) {
@@ -269,6 +270,7 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.SetFontBorderWidth(0);
 			dxTextInfo.SetFontSize(16);
 			dxTextInfo.SetFontWeight(FW_BOLD);
+			
 			//dxTextInfo.SetSyntacticAnalysis(false);
 
 			//イメージ
@@ -314,7 +316,7 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 			dxTextInfo.SetFontColorBottom(D3DCOLOR_ARGB(255, 255, 64, 64));
 			dxTextInfo.SetText(path);
-			dxTextInfo.SetPosition(16, 240);
+			dxTextInfo.SetPosition(16, 256);
 			dxTextInfo.Render();
 
 			//スクリプト種別
@@ -329,18 +331,22 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 			dxTextInfo.SetFontColorBottom(D3DCOLOR_ARGB(255, 255, 64, 255));
 			dxTextInfo.SetText(strType);
-			dxTextInfo.SetPosition(32, 256);
+			dxTextInfo.SetPosition(32, 272);
 			dxTextInfo.Render();
 
 			//テキスト
 			const std::wstring& text = info->GetText();
-			dxTextInfo.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
+			dxTextInfo.SetFontColorTop(D3DCOLOR_ARGB(255, 160, 160, 160));
 			dxTextInfo.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));
-			dxTextInfo.SetFontSize(18);
-			dxTextInfo.SetLinePitch(9);
+            dxTextInfo.SetFontBorderType(TextBorderType::Full);
+		    dxTextInfo.SetFontBorderColor(D3DCOLOR_ARGB(255, 255, 255, 255));
+			dxTextInfo.SetFontSize(16);
+			dxTextInfo.SetLinePitch(1);
+            dxTextInfo.SetFontBorderWidth(1);
+			dxTextInfo.SetSidePitch(-1);
 			dxTextInfo.SetText(text);
-			dxTextInfo.SetPosition(24, 288);
-			dxTextInfo.SetMaxWidth(texture == nullptr ? 620 : 320);
+			dxTextInfo.SetPosition(24, 302);
+			dxTextInfo.SetMaxWidth(texture == nullptr ? 600 : 320);
 			dxTextInfo.Render();
 		}
 	}
@@ -731,7 +737,7 @@ void PlayTypeSelectMenuItem::Render() {
 //PlayerSelectScene
 //*******************************************************************
 PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
-	pageMaxY_ = 4;
+	pageMaxY_ = 11;
 	bPageChangeX_ = true;
 	frameSelect_ = 0;
 
@@ -882,24 +888,27 @@ void PlayerSelectScene::Render() {
 			archive = StringUtility::ReplaceAll(archive, root, L"");
 			path += StringUtility::Format(L" [%s]", archive.c_str());
 		}
-
 		dxTextInfo.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 		dxTextInfo.SetFontColorBottom(D3DCOLOR_ARGB(255, 255, 128, 128));
 		dxTextInfo.SetFontSize(14);
 		dxTextInfo.SetText(path);
 		dxTextInfo.SetPosition(40, 32);
+        
 		dxTextInfo.Render();
 
 		//テキスト
 		dxTextInfo.SetFontBorderType(TextBorderType::Shadow);
 		dxTextInfo.SetFontWeight(FW_BOLD);
-		dxTextInfo.SetFontBorderWidth(2);
+		dxTextInfo.SetFontBorderWidth(1);
 		dxTextInfo.SetFontSize(16);
 		dxTextInfo.SetFontBorderColor(D3DCOLOR_ARGB(255, 255, 255, 255));
 		dxTextInfo.SetFontColorTop(D3DCOLOR_ARGB(255, 160, 160, 160));
 		dxTextInfo.SetFontColorBottom(D3DCOLOR_ARGB(255, 255, 64, 64));
 		dxTextInfo.SetText(infoSelected->GetText());
-		dxTextInfo.SetPosition(320, 240);
+        dxTextInfo.SetSidePitch(-1);
+        dxTextInfo.SetLinePitch(1);
+		dxTextInfo.SetPosition(320, 272);
+        dxTextInfo.SetMaxWidth(320);
 		dxTextInfo.Render();
 	}
 
@@ -925,7 +934,7 @@ void PlayerSelectScene::Render() {
 			int index = top + iItem;
 			if (index < item_.size() && item_[index] != nullptr) {
 				int mx = 320;
-				int my = 48 + (iItem % (pageMaxY_ + 1)) * 18;
+				int my = 48 + (iItem % (pageMaxY_ + 1)) * 17;
 
 				PlayerSelectMenuItem* pItem = (PlayerSelectMenuItem*)item_[index].get();
 				ref_count_ptr<ScriptInformation> info = pItem->GetScriptInformation();

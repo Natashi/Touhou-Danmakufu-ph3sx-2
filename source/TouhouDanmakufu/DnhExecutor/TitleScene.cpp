@@ -101,16 +101,16 @@ TitleSceneMenuItem::TitleSceneMenuItem(std::wstring text, std::wstring descripti
 	
 	DxText dxText;
 
-    ColorAccess::HSVtoRGB(rgb, id * 50, 192, 192);
+    ColorAccess::HSVtoRGB(rgb, id * 45 + 30, 192, 192);
 	dxText.SetFontColorTop(rgb);
 
-    ColorAccess::HSVtoRGB(rgb, id * 50 + 30, 255, 64);
+    ColorAccess::HSVtoRGB(rgb, id * 45 + 15, 255, 64);
 	dxText.SetFontColorBottom(rgb);
 	dxText.SetFontBorderType(TextBorderType::Full);
 	dxText.SetFontBorderColor(D3DCOLOR_ARGB(255, 192, 192, 192));
 	dxText.SetFontBorderWidth(2);
 	dxText.SetFontSize(30);
-	dxText.SetFontWeight(FW_BOLD);
+	dxText.SetFontWeight(1000);
     dxText.SetFontItalic(true);
 	dxText.SetText(text);
 	objText_ = dxText.CreateRenderObject();
