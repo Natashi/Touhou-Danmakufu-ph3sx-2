@@ -95,6 +95,8 @@ void TitleScene::Render() {
 
 //TitleSceneMenuItem
 TitleSceneMenuItem::TitleSceneMenuItem(std::wstring text, std::wstring description, int x, int y, int id) {
+    posRoot_.x = x;
+    posRoot_.y = y;
 	pos_.x = x;
 	pos_.y = y;
     D3DCOLOR rgb = 0xffffffff;
@@ -120,10 +122,24 @@ void TitleSceneMenuItem::Work() {
 	_WorkSelectedItem();
 }
 void TitleSceneMenuItem::Render() {
+    // Forgive me for what I am about to do.
+    pos_.x += 2;
+    pos_.y += 2;
+    objText_->SetPosition(pos_);
+    objText_->SetVertexColor(D3DCOLOR_ARGB(128, 0, 0, 0));
+	objText_->Render();
+    pos_.x -= 2;
+    pos_.y -= 2;
 	objText_->SetPosition(pos_);
+    objText_->SetVertexColor(D3DCOLOR_ARGB(255, 255, 255, 255));
 	objText_->Render();
 
-	if (menu_->GetSelectedMenuItem() == this) {
+    bool bSelected = menu_->GetSelectedMenuItem() == this;
+
+    pos_.x = Math::Lerp::Linear(pos_.x, posRoot_.x + (bSelected ? 32 : 0), 0.2);
+    // pos_.y = Math::Lerp::Linear(pos_.y, posRoot_.y + (bSelected ? 64 : 0), 0.01);
+
+	if (bSelected) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		graphics->SetBlendMode(MODE_BLEND_ADD_RGB);
 

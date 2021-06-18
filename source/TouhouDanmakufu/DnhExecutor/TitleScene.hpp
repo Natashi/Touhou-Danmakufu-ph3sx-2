@@ -36,6 +36,7 @@ public:
 class TitleSceneMenuItem : public TextLightUpMenuItem {
 	shared_ptr<DxTextRenderObject> objText_;
 	POINT pos_;
+    POINT posRoot_;
 
 	TitleScene* _GetTitleScene() { return (TitleScene*)menu_; }
 public:
