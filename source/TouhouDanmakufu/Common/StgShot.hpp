@@ -35,7 +35,7 @@ public:
 	};
 
 	enum {
-		SHOT_MAX = 8192,
+		SHOT_MAX = 16384,
 	};
 protected:
 	StgStageController* stageController_;
