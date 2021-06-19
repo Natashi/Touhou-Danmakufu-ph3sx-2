@@ -92,6 +92,12 @@ namespace directx {
 	public:
 		enum {
 			TYPE_ALL = -1,
+
+			STATUS_INVALID = 0,
+			STATUS_LOADED,
+			STATUS_RUNNING,
+			STATUS_PAUSED,
+			STATUS_CLOSING,
 		};
 	protected:
 		ScriptManager* scriptManager_;
@@ -101,6 +107,7 @@ namespace directx {
 		volatile bool bLoad_;
 		bool bEndScript_;
 		bool bAutoDeleteObject_;
+		bool bRunning_;
 		bool bPaused_;
 
 		int typeEvent_;
@@ -125,6 +132,7 @@ namespace directx {
 		void SetEndScript() { bEndScript_ = true; }
 		bool IsAutoDeleteObject() { return bAutoDeleteObject_; }
 		void SetAutoDeleteObject(bool bEnable) { bAutoDeleteObject_ = bEnable; }
+		bool IsRunning() { return bRunning_; }
 		bool IsPaused() { return bPaused_; }
 
 		gstd::value RequestEvent(int type);
@@ -153,6 +161,8 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_NotifyEventOwn);
 		static gstd::value Func_NotifyEventAll(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_PauseScript);
+
+		DNH_FUNCAPI_DECL_(Func_GetScriptStatus);
 	};
 }
 
