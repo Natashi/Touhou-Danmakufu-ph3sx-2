@@ -462,20 +462,24 @@ void WindowLogger::LogPanel::LocateParts() {
 }
 void WindowLogger::LogPanel::AddText(const std::wstring& text) {
 	HWND hEdit = wndEdit_.GetWindowHandle();
-	int pos = wndEdit_.GetTextLength();
-	if (pos + text.size() >= wndEdit_.GetMaxTextLength()) {
-		::SendMessage(hEdit, EM_SETSEL, 0, wndEdit_.GetMaxTextLength() * 0.7);
-		::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)L"");
-		pos = wndEdit_.GetTextLength();
+	if (hEdit) {
+		int pos = wndEdit_.GetTextLength();
+		if (pos + text.size() >= wndEdit_.GetMaxTextLength()) {
+			::SendMessage(hEdit, EM_SETSEL, 0, wndEdit_.GetMaxTextLength() * 0.7);
+			::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)L"");
+			pos = wndEdit_.GetTextLength();
+		}
+		::SendMessage(hEdit, EM_SETSEL, pos, pos);
+		::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)text.c_str());
+		::SendMessage(hEdit, EM_SCROLL, 0, 1);
 	}
-	::SendMessage(hEdit, EM_SETSEL, pos, pos);
-	::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)text.c_str());
-	::SendMessage(hEdit, EM_SCROLL, 0, 1);
 }
 void WindowLogger::LogPanel::ClearText() {
 	HWND hEdit = wndEdit_.GetWindowHandle();
-	::SendMessage(hEdit, EM_SETSEL, 0, -1);
-	::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)L"");
+	if (hEdit) {
+		::SendMessage(hEdit, EM_SETSEL, 0, -1);
+		::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)L"");
+	}
 }
 
 //WindowLogger::InfoPanel
