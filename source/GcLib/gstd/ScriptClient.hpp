@@ -256,6 +256,9 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Array);
 
+		DNH_FUNCAPI_DECL_(Func_Interpolate_X);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Packed);
+
 		//String manipulations
 		static value Func_ToString(script_machine* machine, int argc, const value* argv);
 		static value Func_ItoA(script_machine* machine, int argc, const value* argv);

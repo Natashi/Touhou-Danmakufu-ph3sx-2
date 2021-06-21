@@ -2539,32 +2539,12 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtFrame(gstd::script_machine* ma
 		double ty = argv[2].as_real();
 		int frame = argv[3].as_int();
 
-		StgMovePattern_Line_Frame::lerp_func lerpMode = Math::Lerp::Linear<double, double>;
-		StgMovePattern_Line_Frame::lerp_diff_func lerpModeDiff = Math::Lerp::DifferentialLinear<double>;
+		auto lerpMode = Math::Lerp::Linear<double, double>;
+		auto lerpModeDiff = Math::Lerp::DifferentialLinear<double>;
 		if (argc == 5) {
-			switch (argv[4].as_int()) {
-			case Math::Lerp::SMOOTH:
-				lerpMode = Math::Lerp::Smooth<double, double>;
-				lerpModeDiff = Math::Lerp::DifferentialSmooth<double>;
-				break;
-			case Math::Lerp::SMOOTHER:
-				lerpMode = Math::Lerp::Smoother<double, double>;
-				lerpModeDiff = Math::Lerp::DifferentialSmoother<double>;
-				break;
-			case Math::Lerp::ACCELERATE:
-				lerpMode = Math::Lerp::Accelerate<double, double>;
-				lerpModeDiff = Math::Lerp::DifferentialAccelerate<double>;
-				break;
-			case Math::Lerp::DECELERATE:
-				lerpMode = Math::Lerp::Decelerate<double, double>;
-				lerpModeDiff = Math::Lerp::DifferentialDecelerate<double>;
-				break;
-			case Math::Lerp::LINEAR:
-			default:
-				lerpMode = Math::Lerp::Linear<double, double>;
-				lerpModeDiff = Math::Lerp::DifferentialLinear<double>;
-				break;
-			}
+			Math::Lerp::Type type = (Math::Lerp::Type)argv[4].as_int();
+			lerpMode = Math::Lerp::GetFunc<double, double>(type);
+			lerpModeDiff = Math::Lerp::GetFuncDifferential<double>(type);
 		}
 
 		ref_unsync_ptr<StgMovePattern_Line_Frame> pattern = new StgMovePattern_Line_Frame(obj);
@@ -3848,24 +3828,12 @@ gstd::value StgStageScript::Func_ObjShot_SetDelayMode(gstd::script_machine* mach
 		delay->type = argv[1].as_real();
 
 		auto SetFunc = [](uint8_t typeLerp, StgShotObject::DelayParameter::lerp_func& target) {
-			switch (typeLerp) {
-			case Math::Lerp::SMOOTH:
-				target = Math::Lerp::Smooth<float, float>;
-				break;
-			case Math::Lerp::SMOOTHER:
-				target = Math::Lerp::Smoother<float, float>;
-				break;
-			case Math::Lerp::ACCELERATE:
-				//Not a mistake
+			if (typeLerp == Math::Lerp::ACCELERATE)
 				target = Math::Lerp::Decelerate<float, float>;
-				break;
-			case Math::Lerp::DECELERATE:
+			else if (typeLerp == Math::Lerp::DECELERATE)
 				target = Math::Lerp::Accelerate<float, float>;
-				break;
-			case Math::Lerp::LINEAR:
-			default:
-				target = Math::Lerp::Linear<float, float>;
-			}
+			else
+				target = Math::Lerp::GetFunc<float, float>((Math::Lerp::Type)typeLerp);
 		};
 		
 		SetFunc(argv[2].as_int(), delay->scaleLerpFunc);

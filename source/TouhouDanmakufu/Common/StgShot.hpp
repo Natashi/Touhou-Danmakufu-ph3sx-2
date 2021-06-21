@@ -236,7 +236,7 @@ public:
 	};
 
 	struct DelayParameter {
-		typedef float (*lerp_func)(float, float, float);
+		using lerp_func = Math::Lerp::funcLerp<float, float>;
 		enum {
 			DELAY_DEFAULT,
 			DELAY_LERP,

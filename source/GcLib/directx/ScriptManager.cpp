@@ -137,6 +137,7 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) 
 			throw wexception(error_);	//Rethrows the error (for scripts loaded in the load thread)
 
 		script->Reset();
+		script->bRunning_ = true;
 
 		std::map<std::string, script_block*>::iterator itrEvent;
 		if (script->IsEventExists("Initialize", itrEvent))
@@ -153,6 +154,7 @@ void ScriptManager::CloseScript(int64_t id) {
 }
 void ScriptManager::CloseScript(shared_ptr<ManagedScript> id) {
 	id->SetEndScript();
+	id->bRunning_ = false;
 
 	mapClosedScriptResult_[id->GetScriptID()] = id->GetResultValue();
 	if (mapClosedScriptResult_.size() > MAX_CLOSED_SCRIPT_RESULT)
@@ -223,6 +225,7 @@ int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedS
 		//Lock lock(lock_);		//Using this seems to hang the lock indefinitely, what???????
 		StaticLock lock = StaticLock();
 		script->bLoad_ = true;
+		script->bRunning_ = false;
 		mapScriptLoad_[res] = script;
 	}
 
@@ -326,7 +329,7 @@ void ScriptManager::AddRelativeScriptManagerMutual(weak_ptr<ScriptManager> manag
 //*******************************************************************
 //ManagedScript
 //*******************************************************************
-static const std::vector<function> commonFunction = {
+static const std::vector<function> managedScriptFunction = {
 	{ "LoadScript", ManagedScript::Func_LoadScript, 1 },
 	{ "LoadScriptInThread", ManagedScript::Func_LoadScriptInThread, 1 },
 	{ "UnloadScript", ManagedScript::Func_UnloadScript, 1 },
@@ -351,16 +354,28 @@ static const std::vector<function> commonFunction = {
 	{ "NotifyEventOwn", ManagedScript::Func_NotifyEventOwn, -3 },	//1 fixed + ... -> 2 minimum
 	{ "NotifyEventAll", ManagedScript::Func_NotifyEventAll, -3 },	//1 fixed + ... -> 2 minimum
 	{ "PauseScript", ManagedScript::Func_PauseScript, 2 },
+
+	{ "GetScriptStatus", ManagedScript::Func_GetScriptStatus, 1 },
+};
+static const std::vector<constant> managedScriptConstant = {
+	constant("STATUS_INVALID", ManagedScript::STATUS_INVALID),
+	constant("STATUS_LOADED", ManagedScript::STATUS_LOADED),
+	constant("STATUS_RUNNING", ManagedScript::STATUS_RUNNING),
+	constant("STATUS_PAUSED", ManagedScript::STATUS_PAUSED),
+	constant("STATUS_CLOSING", ManagedScript::STATUS_CLOSING),
 };
 
 ManagedScript::ManagedScript() {
 	scriptManager_ = nullptr;
-	_AddFunction(&commonFunction);
+
+	_AddFunction(&managedScriptFunction);
+	_AddConstant(&managedScriptConstant);
 
 	bLoad_ = false;
 
 	bEndScript_ = false;
 	bAutoDeleteObject_ = false;
+	bRunning_ = false;
 	bPaused_ = false;
 
 	typeEvent_ = -1;
@@ -385,6 +400,7 @@ void ManagedScript::Reset() {
 	ScriptClientBase::Reset();
 
 	bEndScript_ = false;
+	bRunning_ = false;
 	bPaused_ = false;
 }
 
@@ -599,4 +615,23 @@ gstd::value ManagedScript::Func_PauseScript(script_machine* machine, int argc, c
 	if (target) target->bPaused_ = state;
 
 	return value();
+}
+gstd::value ManagedScript::Func_GetScriptStatus(script_machine* machine, int argc, const value* argv) {
+	ManagedScript* script = (ManagedScript*)machine->data;
+	auto scriptManager = script->scriptManager_;
+
+	int res = STATUS_INVALID;
+	int64_t idScript = argv[0].as_int();
+
+	shared_ptr<ManagedScript> pScript = scriptManager->GetScript(idScript, true);
+	if (pScript) {
+		if (pScript->bEndScript_)
+			res = STATUS_CLOSING;
+		else if (pScript->bRunning_)
+			res = pScript->bPaused_ ? STATUS_PAUSED : STATUS_RUNNING;
+		else if (pScript->bLoad_)
+			res = STATUS_LOADED;
+	}
+
+	return CreateIntValue(res);
 }

@@ -125,11 +125,8 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_QuadraticBezier", ScriptClientBase::Func_Interpolate_QuadraticBezier, 4 },
 	{ "Interpolate_CubicBezier", ScriptClientBase::Func_Interpolate_CubicBezier, 5 },
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
-	{ "Interpolate_Bytewise", ScriptClientBase::Func_Interpolate_Bytewise, 3 },
-	{ "Interpolate_Bytewise", ScriptClientBase::Func_Interpolate_Bytewise, 4 }, // Overloaded
 	{ "Interpolate_X", ScriptClientBase::Func_Interpolate_X, 4 },
-	{ "Interpolate_Array", ScriptClientBase::Func_Interpolate_Array, 2 },
-	{ "Interpolate_Array", ScriptClientBase::Func_Interpolate_Array, 3 }, // Overloaded
+	{ "Interpolate_X_PackedInt", ScriptClientBase::Func_Interpolate_X_Packed, 5 },
 
 	//String functions
 	{ "ToString", ScriptClientBase::Func_ToString, 1 },
@@ -1267,8 +1264,12 @@ value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int ar
 
 	double x = argv[8].as_real();
 
-	double vec_s[2] = { vsm * cos(vsa), vsm * sin(vsa) };
-	double vec_e[2] = { vem * cos(vea), vem * sin(vea) };
+	__m128d vec_s;		//[sin, cos]
+	__m128d vec_e;		//[sin, cos]
+	Math::DoSinCos(vsa, vec_s.m128d_f64);
+	Math::DoSinCos(vea, vec_e.m128d_f64);
+	vec_s = Vectorize::Mul(vec_s, Vectorize::Replicate(vsm));
+	vec_e = Vectorize::Mul(vec_e, Vectorize::Replicate(vem));
 
 	double x_2 = 2 * x;
 	double x2 = x * x;
@@ -1280,124 +1281,47 @@ value ScriptClientBase::Func_Interpolate_Hermite(script_machine* machine, int ar
 	double rvs = x * x_s1_2;			//t * (1 - t)^2
 	double rve = x2 * x_s1;				//t^2 * (t - 1)
 	double res_pos[2] = {
-		sx * rps + ex * rpe + vec_s[0] * rvs + vec_e[0] * rve,
-		sy * rps + ey * rpe + vec_s[1] * rvs + vec_e[1] * rve
+		sx * rps + ex * rpe + vec_s.m128d_f64[1] * rvs + vec_e.m128d_f64[1] * rve,
+		sy * rps + ey * rpe + vec_s.m128d_f64[0] * rvs + vec_e.m128d_f64[0] * rve
 	};
 
 	return CreateRealArrayValue(res_pos, 2U);
 }
 
-value ScriptClientBase::Func_Interpolate_Bytewise(script_machine* machine, int argc, const value* argv) {
-	// Is this safe? Whatever.
-	uint32_t col1 = argv[0].as_int();
-	uint32_t col2 = argv[1].as_int();
-	double x = argv[2].as_real();
-
-	int a1 = (col1 >> 24) & 0xff;
-	int a2 = (col2 >> 24) & 0xff;
-	int r1 = (col1 >> 16) & 0xff;
-	int r2 = (col2 >> 16) & 0xff;
-	int g1 = (col1 >> 8) & 0xff;
-	int g2 = (col2 >> 8) & 0xff;
-	int b1 = col1 & 0xff;
-	int b2 = col2 & 0xff;
-
-	int (*lerpFunc)(int, int, double) = Math::Lerp::Linear<int, double>;
-	if (argc == 4) {
-		switch (argv[3].as_int()) {
-		case Math::Lerp::SMOOTH:
-			lerpFunc = Math::Lerp::Smooth<int, double>;
-			break;
-		case Math::Lerp::SMOOTHER:
-			lerpFunc = Math::Lerp::Smoother<int, double>;
-			break;
-		case Math::Lerp::ACCELERATE:
-			lerpFunc = Math::Lerp::Accelerate<int, double>;
-			break;
-		case Math::Lerp::DECELERATE:
-			lerpFunc = Math::Lerp::Decelerate<int, double>;
-			break;
-		case Math::Lerp::LINEAR:
-		default:
-			lerpFunc = Math::Lerp::Linear<int, double>;
-			break;
-		}
-	}
-	
-	int a = std::clamp(lerpFunc(a1, a2, x), 0, 0xff);
-	int r = std::clamp(lerpFunc(r1, r2, x), 0, 0xff);
-	int g = std::clamp(lerpFunc(g1, g2, x), 0, 0xff);
-	int b = std::clamp(lerpFunc(b1, b2, x), 0, 0xff);
-
-	return CreateIntValue((a << 24) + (r << 16) + (g << 8) + b);
-}
-
 value ScriptClientBase::Func_Interpolate_X(script_machine* machine, int argc, const value* argv) {
 	double x = argv[2].as_real();
-	double (*lerpFunc)(double, double, double);
-	switch (argv[3].as_int()) {
-	case Math::Lerp::SMOOTH:
-		lerpFunc = Math::Lerp::Smooth<double, double>;
-		break;
-	case Math::Lerp::SMOOTHER:
-		lerpFunc = Math::Lerp::Smoother<double, double>;
-		break;
-	case Math::Lerp::ACCELERATE:
-		lerpFunc = Math::Lerp::Accelerate<double, double>;
-		break;
-	case Math::Lerp::DECELERATE:
-		lerpFunc = Math::Lerp::Decelerate<double, double>;
-		break;
-	case Math::Lerp::LINEAR:
-	default:
-		lerpFunc = Math::Lerp::Linear<double, double>;
-		break;
-	}
-	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, lerpFunc);
+
+	Math::Lerp::Type type = (Math::Lerp::Type)argv[3].as_int();
+	auto func = Math::Lerp::GetFunc<double, double>(type);
+
+	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, func);
 }
+value ScriptClientBase::Func_Interpolate_X_Packed(script_machine* machine, int argc, const value* argv) {
+	int64_t a = argv[0].as_int();
+	int64_t b = argv[1].as_int();
+	double x = argv[2].as_real();
 
-value ScriptClientBase::Func_Interpolate_Array(script_machine* machine, int argc, const value* argv) { // :souperdying:
-	double x = argv[1].as_real();
+	Math::Lerp::Type type = (Math::Lerp::Type)argv[3].as_int();
+	auto lerpFunc = Math::Lerp::GetFunc<int64_t, double>(type);
 
-	size_t len = argv[0].length_as_array();
-	int from = (int)floor(x);
+	/*
+	size_t packetSize = argv[4].as_int();
+	if (packetSize >= sizeof(int64_t))
+		return CreateIntValue(lerpFunc(a, b, x));
+	packetSize *= 8U;
+	*/
+	const size_t packetSize = 8U;
+	const uint64_t mask = (1ui64 << packetSize) - 1;
 
-	while (from < 0) {
-		x += len;
-		from += len;
+	int64_t res = 0;
+	for (size_t i = 0; i < sizeof(int64_t) * 8; i += packetSize) {
+		int64_t _a = (a >> i) & mask;
+		int64_t _b = (b >> i) & mask;
+		if (_a == 0 && _b == 0) continue;
+		int64_t tmp = lerpFunc(_a, _b, x) & mask;
+		res |= tmp << i;
 	}
-	while (from >= len) {
-		x -= len;
-		from -= len;
-	}
-	
-	int to = from + 1;
-	if (to >= len) to -= len;
-	double x2 = x - from;
-
-	double (*lerpFunc)(double, double, double) = Math::Lerp::Linear<double, double>;
-	if (argc == 3) {
-		switch (argv[2].as_int()) {
-		case Math::Lerp::SMOOTH:
-			lerpFunc = Math::Lerp::Smooth<double, double>;
-			break;
-		case Math::Lerp::SMOOTHER:
-			lerpFunc = Math::Lerp::Smoother<double, double>;
-			break;
-		case Math::Lerp::ACCELERATE:
-			lerpFunc = Math::Lerp::Accelerate<double, double>;
-			break;
-		case Math::Lerp::DECELERATE:
-			lerpFunc = Math::Lerp::Decelerate<double, double>;
-			break;
-		case Math::Lerp::LINEAR:
-		default:
-			lerpFunc = Math::Lerp::Linear<double, double>;
-			break;
-		}
-	}
-
-	return ScriptClientBase::CreateRealValue(lerpFunc(argv[0].index_as_array(from).as_real(), argv[0].index_as_array(to).as_real(), x2));
+	return CreateIntValue(res);
 }
 
 //組み込み関数：文字列操作
