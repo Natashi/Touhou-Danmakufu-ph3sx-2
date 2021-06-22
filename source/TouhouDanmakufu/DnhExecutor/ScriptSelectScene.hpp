@@ -170,6 +170,7 @@ public:
 class PlayTypeSelectMenuItem : public TextLightUpMenuItem {
 	shared_ptr<DxTextRenderObject> objText_;
 	POINT pos_;
+    POINT posRoot_;
 
 	PlayTypeSelectScene* _GetTitleScene() { return (PlayTypeSelectScene*)menu_; }
 public:

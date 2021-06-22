@@ -698,6 +698,8 @@ void PlayTypeSelectScene::Render() {
 
 //PlayTypeSelectMenuItem
 PlayTypeSelectMenuItem::PlayTypeSelectMenuItem(const std::wstring& text, int x, int y) {
+    posRoot_.x = x;
+    posRoot_.y = y;
 	pos_.x = x;
 	pos_.y = y;
 
@@ -720,8 +722,12 @@ void PlayTypeSelectMenuItem::Work() {
 void PlayTypeSelectMenuItem::Render() {
 	objText_->SetPosition(pos_);
 	objText_->Render();
+    
+    bool bSelected = menu_->GetSelectedMenuItem() == this;
 
-	if (menu_->GetSelectedMenuItem() == this) {
+    pos_.x = Math::Lerp::Linear(pos_.x, posRoot_.x + (bSelected ? 16 : 0), 0.25);
+
+	if (bSelected) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		graphics->SetBlendMode(MODE_BLEND_ADD_RGB);
 
