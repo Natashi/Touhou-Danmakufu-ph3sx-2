@@ -2820,6 +2820,34 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
             }
 			break;
 		}
+		case PATTERN_TYPE_ROSE:
+		case PATTERN_TYPE_ROSE_AIMED:
+		{
+			float ini_angle = angleBase_;
+			if (objPlayer != nullptr && typePattern_ == PATTERN_TYPE_ROSE_AIMED)
+				ini_angle += atan2f(objPlayer->GetY() - basePosY, objPlayer->GetX() - basePosX);
+
+			size_t numPetal = shotWay_;
+			size_t numShotPerPetal = shotStack_;
+			int petalSkip = std::round(Math::RadianToDegree(angleArgument_));
+
+			float petalGap = GM_PI_X2 / numPetal;
+			float angGap = (GM_PI_X2 / (numPetal * numShotPerPetal) * petalSkip);
+
+			for (size_t iStack = 0U; iStack < numShotPerPetal; ++iStack) {
+				float ss = speedBase_ + (speedArgument_ - speedBase_) * sinf(GM_PI / numShotPerPetal * iStack);
+
+				for (size_t iShot = 0U; iShot < numPetal; ++iShot) {
+					float sa = ini_angle + iShot * petalGap + iStack * angGap;
+					float r_fac[2] = { cosf(sa), sinf(sa) };
+
+					float sx = basePosX + fireRadiusOffset_ * r_fac[0];
+					float sy = basePosY + fireRadiusOffset_ * r_fac[1];
+					__CreateShot(sx, sy, ss, sa);
+				}
+			}
+			break;
+		}
 		}
 	}
 }
