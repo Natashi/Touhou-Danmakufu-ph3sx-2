@@ -1203,7 +1203,7 @@ void StgShotObject::_ProcessTransformAct() {
 				pattern->AddCommand(std::make_pair(StgMovePattern_XY::SET_S_X + add, speed));
 			if (accel != StgMovePattern::NO_CHANGE)
 				pattern->AddCommand(std::make_pair(StgMovePattern_XY::SET_A_X + add, accel));
-            if (accel != StgMovePattern::NO_CHANGE)
+            if (maxsp != StgMovePattern::NO_CHANGE)
 				pattern->AddCommand(std::make_pair(StgMovePattern_XY::SET_M_X + add, maxsp));
 
 			AddPattern(transform.param_s[0], pattern, true);
