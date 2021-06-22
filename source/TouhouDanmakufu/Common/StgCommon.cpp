@@ -27,7 +27,7 @@ void StgMoveObject::_Move() {
 			for (auto& ipPattern : itr->second)
 				_AttachReservedPattern(ipPattern);
 			itr = mapPattern_.erase(itr);
-			if (mapPattern_.size() == 0) return;
+			if (mapPattern_.size() == 0) break;
 		}
 	}
 
