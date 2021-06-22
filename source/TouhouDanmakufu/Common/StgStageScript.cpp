@@ -586,6 +586,8 @@ static const std::vector<constant> stgStageConstant = {
 	constant("TRANSFORM_TO_SPEED_ANGLE", StgPatternShotTransform::TRANSFORM_TO_SPEED_ANGLE),
 	constant("TRANSFORM_ADDPATTERNA1", StgPatternShotTransform::TRANSFORM_ADDPATTERNA1),
 	constant("TRANSFORM_ADDPATTERNA2", StgPatternShotTransform::TRANSFORM_ADDPATTERNA2),
+	constant("TRANSFORM_ADDPATTERNBX", StgPatternShotTransform::TRANSFORM_ADDPATTERNBX),
+	constant("TRANSFORM_ADDPATTERNBY", StgPatternShotTransform::TRANSFORM_ADDPATTERNBY),
 
 	//Player states
 	constant("STATE_NORMAL", StgPlayerObject::STATE_NORMAL),

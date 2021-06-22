@@ -1189,6 +1189,26 @@ void StgShotObject::_ProcessTransformAct() {
 			AddPattern(transform.param_s[0], pattern, true);
 			break;
 		}
+        case StgPatternShotTransform::TRANSFORM_ADDPATTERNBX:
+        case StgPatternShotTransform::TRANSFORM_ADDPATTERNBY:
+		{
+			int add = transform.act - StgPatternShotTransform::TRANSFORM_ADDPATTERNBX;
+            float speed = transform.param_d[0];
+			float accel = transform.param_d[1];
+			float maxsp = transform.param_d[2];
+
+			ref_unsync_ptr<StgMovePattern_XY> pattern = new StgMovePattern_XY(this);
+			pattern->AddCommand(std::make_pair(StgMovePattern_XY::SET_ZERO, 0));
+			if (speed != StgMovePattern::NO_CHANGE)
+				pattern->AddCommand(std::make_pair(StgMovePattern_XY::SET_S_X + add, speed));
+			if (accel != StgMovePattern::NO_CHANGE)
+				pattern->AddCommand(std::make_pair(StgMovePattern_XY::SET_A_X + add, accel));
+            if (accel != StgMovePattern::NO_CHANGE)
+				pattern->AddCommand(std::make_pair(StgMovePattern_XY::SET_M_X + add, maxsp));
+
+			AddPattern(transform.param_s[0], pattern, true);
+			break;
+		}
 		default:
 			break;
 		}
