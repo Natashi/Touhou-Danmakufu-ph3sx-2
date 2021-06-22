@@ -2840,6 +2840,67 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 			}
 			break;
 		}
+        case PATTERN_TYPE_LINE:
+        case PATTERN_TYPE_LINE_AIMED:
+		{
+			float ini_angle = angleBase_;
+            float angle_off = (float)(angleArgument_ / 2U);
+			if (objPlayer != nullptr && typePattern_ == PATTERN_TYPE_LINE_AIMED)
+				ini_angle += atan2f(objPlayer->GetY() - basePosY, objPlayer->GetX() - basePosX);
+
+			float from_ang = ini_angle + angle_off;
+			float to_ang = ini_angle - angle_off;
+
+            float from_pos[2] = { cosf(from_ang), sinf(from_ang) };
+            float to_pos[2] = { cosf(to_ang), sinf(to_ang) };
+
+            for (size_t iWay = 0U; iWay < shotWay_; ++iWay) {
+                //Will always be just a little short of a full 1, intentional.
+                float rate = iWay / (float)shotWay_;
+
+                float _sx = Math::Lerp::Linear(from_pos[0], to_pos[0], rate);
+                float _sy = Math::Lerp::Linear(from_pos[1], to_pos[1], rate);
+                float sx = basePosX + fireRadiusOffset_ * _sx;
+                float sy = basePosY + fireRadiusOffset_ * _sy;
+                float sa = atan2f(_sy, _sx);
+                float _ss = hypotf(_sx, _sy);
+                for (size_t iStack = 0U; iStack < shotStack_; ++iStack) {
+                    float ss = speedBase_;
+                    if (shotStack_ > 1U) ss += (speedArgument_ - speedBase_) * (iStack / (float)(shotStack_ - 1U));
+                    __CreateShot(sx, sy, ss * _ss, sa);
+                }
+                
+            }
+			break;
+		}
+		case PATTERN_TYPE_ROSE:
+		case PATTERN_TYPE_ROSE_AIMED:
+		{
+			float ini_angle = angleBase_;
+			if (objPlayer != nullptr && typePattern_ == PATTERN_TYPE_ROSE_AIMED)
+				ini_angle += atan2f(objPlayer->GetY() - basePosY, objPlayer->GetX() - basePosX);
+
+			size_t numPetal = shotWay_;
+			size_t numShotPerPetal = shotStack_;
+			int petalSkip = std::round(Math::RadianToDegree(angleArgument_));
+
+			float petalGap = GM_PI_X2 / numPetal;
+			float angGap = (GM_PI_X2 / (numPetal * numShotPerPetal) * petalSkip);
+
+			for (size_t iStack = 0U; iStack < numShotPerPetal; ++iStack) {
+				float ss = speedBase_ + (speedArgument_ - speedBase_) * sinf(GM_PI / numShotPerPetal * iStack);
+
+				for (size_t iShot = 0U; iShot < numPetal; ++iShot) {
+					float sa = ini_angle + iShot * petalGap + iStack * angGap;
+					float r_fac[2] = { cosf(sa), sinf(sa) };
+
+					float sx = basePosX + fireRadiusOffset_ * r_fac[0];
+					float sy = basePosY + fireRadiusOffset_ * r_fac[1];
+					__CreateShot(sx, sy, ss, sa);
+				}
+			}
+			break;
+		}
 		}
 	}
 }
