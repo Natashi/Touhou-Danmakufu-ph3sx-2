@@ -568,6 +568,10 @@ static const std::vector<constant> stgStageConstant = {
 	constant("PATTERN_SCATTER_ANGLE", StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER_ANGLE),
 	constant("PATTERN_SCATTER_SPEED", StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER_SPEED),
 	constant("PATTERN_SCATTER", StgPatternShotObjectGenerator::PATTERN_TYPE_SCATTER),
+	constant("PATTERN_LINE", StgPatternShotObjectGenerator::PATTERN_TYPE_LINE),
+	constant("PATTERN_LINE_AIMED", StgPatternShotObjectGenerator::PATTERN_TYPE_LINE_AIMED),
+	constant("PATTERN_ROSE", StgPatternShotObjectGenerator::PATTERN_TYPE_ROSE),
+	constant("PATTERN_ROSE_AIMED", StgPatternShotObjectGenerator::PATTERN_TYPE_ROSE_AIMED),
 	constant("PATTERN_BASEPOINT_RESET", StgPatternShotObjectGenerator::BASEPOINT_RESET),
 
 	//Pattern shot transforms

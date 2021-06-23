@@ -251,6 +251,10 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Packed);
 
+		//Math functions; rotation
+		DNH_FUNCAPI_DECL_(Func_Rotate2D);
+		DNH_FUNCAPI_DECL_(Func_Rotate3D);
+
 		//String manipulations
 		static value Func_ToString(script_machine* machine, int argc, const value* argv);
 		static value Func_ItoA(script_machine* machine, int argc, const value* argv);
