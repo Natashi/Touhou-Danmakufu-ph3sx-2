@@ -3310,27 +3310,23 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID
 			2) (const) transform type
-			3) argument 1	(Designated "arg1")
-			4) argument 2	(Designated "arg2")
-			5) argument 3	(Designated "arg3")
-			6) argument 4	(Designated "arg4")
-			7) argument 5	(Designated "arg5")
-			8) argument 6	(Designated "arg6")
-			9) argument 7	(Designated "arg7")
-			10) argument 8	(Designated "arg8")
+			3+) transform arguments...
 		Description:
 			Adds a transformation to the shot pattern object.
+			
+			Transforms arguments will be designated, in order: [arg1], [arg2], [arg3], etc...
+			
 			Available transformations are:
-				TRANSFORM_WAIT
+				TRANSFORM_WAIT 				(argc = 1)
 					- Delays the next transformation for [arg1] frames.
-				TRANSFORM_ADD_SPEED_ANGLE
+				TRANSFORM_ADD_SPEED_ANGLE 	(argc = 4)
 					- Waits for [arg2] frames. (Does not delay the next transformation)
 					- For [arg1] frames, sets acceleration to [arg3].
 					- For [arg1] frames, sets angular velocity to [arg4].
-				TRANSFORM_ANGULAR_MOVE
+				TRANSFORM_ANGULAR_MOVE 		(argc = 3)
 					- For [arg1] frames, sets angular velocity to [arg2].
 					- Sets shot graphic "spin" to [arg3].
-				TRANSFORM_N_DECEL_CHANGE
+				TRANSFORM_N_DECEL_CHANGE 	(argc = 5)
 					- For [arg2] times, decelerates/accelerates the shot to a complete halt in [arg1] frames. (See: Aunn's first spell)
 					- Movement will then change depending on [arg3].
 						- 0: Changes the movement angle to [arg5].
@@ -3341,66 +3337,32 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 						- 5, other: No angle change.
 					- All modes sets the speed to [arg4].
 					- Delay the next transformation by ([arg1] * [arg2]) frames.
-				TRANSFORM_GRAPHIC_CHANGE
+				TRANSFORM_GRAPHIC_CHANGE 	(argc = 1)
 					- Changes the shot graphic to [arg1].
-				TRANSFORM_BLEND_CHANGE
+				TRANSFORM_BLEND_CHANGE 		(argc = 1)
 					- Changes the shot blend type to [arg1].
-				TRANSFORM_TO_SPEED_ANGLE
+				TRANSFORM_TO_SPEED_ANGLE 	(argc = 3)
 					- Gradually changes the shot's speed to [arg2] in [arg1] frames.
 					- Gradually changes the shot's angle to [arg3] in [arg1] frames.
 						- Using TOPLAYER_CHANGE will aim the shot to the player object.
 					- NO_CHANGE can be used for [arg2] and [arg3].
-				TRANSFORM_ADDPATTERN_A1
+				TRANSFORM_ADDPATTERN_A1 	(argc = 3)
 					- Applies [ObjMove_AddPatternA1(obj, [arg1], [arg2], [arg3])]
-				TRANSFORM_ADDPATTERN_A2
+				TRANSFORM_ADDPATTERN_A2 	(argc = 8)
 					- Applies [ObjMove_AddPatternA4(obj, [arg1], [arg2], [arg3], [arg4], [arg5], [arg6], [arg7], [arg8])]
-				TRANSFORM_ADDPATTERN_B1
+				TRANSFORM_ADDPATTERN_B1 	(argc = 3)
 					- Applies [ObjMove_AddPatternB1(obj, [arg1], [arg2], [arg3])]
-				TRANSFORM_ADDPATTERN_B2
+				TRANSFORM_ADDPATTERN_B2 	(argc = 8)
 					- Applies [ObjMove_AddPatternB3(obj, [arg1], [arg2], [arg3], [arg4], [arg5], [arg6], [arg7], [arg8])]
-					
-	ObjPatternShot_AddTransform (Overload)
-		Arguments:
-			1) object ID
-			2) (const) transform type
-			3) argument 1
-			4) argument 2
-			5) argument 3
-			6) argument 4
-		Description:
-			Overloaded with 6 arguments.
-			
-			Fewer arguments, for transform types that do not use more than 4 arguments.
 						
 	ObjPatternShot_SetTransform
 		Arguments:
 			1) object ID
 			2) (int) transform index
 			3) (const) transform type
-			4) argument 1
-			5) argument 2
-			6) argument 3
-			7) argument 4
-			8) argument 5
-			9) argument 6
-			9) argument 7
-			9) argument 8
+			4+) transform arguments...
 		Description:
 			Sets transformation to the specified transform index.
-			
-	ObjPatternShot_SetTransform (Overload)
-		Arguments:
-			1) object ID
-			2) (int) transform index
-			3) (const) transform type
-			4) argument 1
-			5) argument 2
-			6) argument 3
-			7) argument 4
-		Description:
-			Overloaded with 7 arguments.
-			
-			Fewer arguments, for transform types that do not use more than 4 arguments.
 			
 	-------------------------------->  Collision Object Functions <--------------------------------
 	

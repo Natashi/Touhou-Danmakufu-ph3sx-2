@@ -503,12 +503,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjPatternShot_SetGraphic", StgStageScript::Func_ObjPatternShot_SetGraphic, 2 },
 	{ "ObjPatternShot_SetLaserParameter", StgStageScript::Func_ObjPatternShot_SetLaserParameter, 3 },
 	{ "ObjPatternShot_CopySettings", StgStageScript::Func_ObjPatternShot_CopySettings, 2 },
-	{ "ObjPatternShot_AddTransform", StgStageScript::Func_ObjPatternShot_AddTransform, 4 },		//Overloaded
-	{ "ObjPatternShot_AddTransform", StgStageScript::Func_ObjPatternShot_AddTransform, 6 },		//Overloaded
-	{ "ObjPatternShot_AddTransform", StgStageScript::Func_ObjPatternShot_AddTransform, 10 },
-	{ "ObjPatternShot_SetTransform", StgStageScript::Func_ObjPatternShot_SetTransform, 5 },		//Overloaded
-	{ "ObjPatternShot_SetTransform", StgStageScript::Func_ObjPatternShot_SetTransform, 7 },		//Overloaded
-	{ "ObjPatternShot_SetTransform", StgStageScript::Func_ObjPatternShot_SetTransform, 11 },
+	{ "ObjPatternShot_AddTransform", StgStageScript::Func_ObjPatternShot_AddTransform, -4 },	//2 fixed + ... -> 3 minimum
+	{ "ObjPatternShot_SetTransform", StgStageScript::Func_ObjPatternShot_SetTransform, -5 },	//3 fixed + ... -> 4 minimum
 
 	//STG共通関数：アイテムオブジェクト操作
 	{ "ObjItem_Create", StgStageScript::Func_ObjItem_Create, 1 },
@@ -734,7 +730,7 @@ gstd::value StgStageScript::Func_SaveCommonDataAreaToReplayFile(gstd::script_mac
 	StgStageController* stageController = script->stageController_;
 	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 	ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage->GetReplayData();
-	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
 
 	if (infoStage->IsReplay())
 		script->RaiseError(L"This function can only be called outside of replays.");
@@ -756,7 +752,7 @@ gstd::value StgStageScript::Func_LoadCommonDataAreaFromReplayFile(gstd::script_m
 	StgStageController* stageController = script->stageController_;
 	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 	ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage->GetReplayData();
-	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
 
 	if (!infoStage->IsReplay())
 		script->RaiseError(L"This function can only be called during replays.");
@@ -4385,7 +4381,9 @@ gstd::value StgStageScript::Func_ObjPatternShot_AddTransform(gstd::script_machin
 
 		StgPatternShotTransform transform;
 		transform.act = (uint8_t)typeAct;
-		for (int i = 0; i < argc - 2; ++i)
+
+		ZeroMemory(transform.param, sizeof(transform.param));
+		for (int i = 0; i < argc - 2 && i < 8; ++i)
 			transform.param[i] = argv[i + 2].as_real();
 
 		obj->AddTransformation(transform);
@@ -4404,7 +4402,9 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetTransform(gstd::script_machin
 
 		StgPatternShotTransform transform;
 		transform.act = (uint8_t)typeAct;
-		for (int i = 0; i < argc - 3; ++i)
+
+		ZeroMemory(transform.param, sizeof(transform.param));
+		for (int i = 0; i < argc - 3 && i < 8; ++i)
 			transform.param[i] = argv[i + 3].as_real();
 
 		obj->SetTransformation(slot, transform);
