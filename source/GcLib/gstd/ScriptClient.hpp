@@ -87,8 +87,6 @@ namespace gstd {
 		shared_ptr<RandProvider> mt_;
 		shared_ptr<RandProvider> mtEffect_;
 
-		shared_ptr<ScriptCommonDataManager> commonDataManager_;
-
 		gstd::CriticalSection criticalSection_;
 
 		int mainThreadID_;
@@ -174,7 +172,6 @@ namespace gstd {
 		static void IsVector(script_machine* machine, const value& v, size_t count);
 
 		void CheckRunInMainThread();
-		ScriptCommonDataManager* GetCommonDataManager() { return commonDataManager_.get(); }
 
 		//-------------------------------------------------------------------------
 
@@ -428,6 +425,8 @@ namespace gstd {
 		void Clear();
 		std::pair<bool, std::map<std::string, gstd::value>::iterator> IsExists(const std::string& name);
 
+		gstd::value* GetValueRef(const std::string& name);
+		gstd::value* GetValueRef(std::map<std::string, gstd::value>::iterator itr);
 		gstd::value GetValue(const std::string& name);
 		gstd::value GetValue(std::map<std::string, gstd::value>::iterator itr);
 		void SetValue(const std::string& name, gstd::value v);
@@ -449,6 +448,7 @@ namespace gstd {
 	//ScriptCommonDataManager
 	//*******************************************************************
 	class ScriptCommonDataManager {
+		static ScriptCommonDataManager* inst_;
 	public:
 		using CommonDataMap = std::map<std::string, shared_ptr<ScriptCommonData>>;
 	protected:
@@ -460,6 +460,8 @@ namespace gstd {
 
 		ScriptCommonDataManager();
 		virtual ~ScriptCommonDataManager();
+
+		static ScriptCommonDataManager* GetInstance() { return inst_; }
 
 		void Clear();
 		void Erase(const std::string& name);
@@ -492,10 +494,11 @@ namespace gstd {
 			COL_VALUE,
 		};
 
-		shared_ptr<ScriptCommonDataManager> commonDataManager_;
 		std::vector<std::map<std::string, shared_ptr<ScriptCommonData>>::iterator> vecMapItr_;
 
 		gstd::CriticalSection lock_;
+
+		ScriptCommonDataManager* commonDataManager_;
 
 		WSplitter wndSplitter_;
 		WListView wndListViewArea_;
@@ -513,7 +516,7 @@ namespace gstd {
 		void SetUpdateInterval(int time) { timeUpdateInterval_ = time; }
 
 		virtual void LocateParts();
-		virtual void Update(shared_ptr<ScriptCommonDataManager>& commonDataManager);
+		virtual void Update();
 	};
 
 }

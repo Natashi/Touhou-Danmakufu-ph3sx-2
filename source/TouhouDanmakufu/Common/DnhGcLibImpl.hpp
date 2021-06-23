@@ -34,7 +34,7 @@ public:
 	void Initialize(bool bFile, bool bWindow);
 
 	shared_ptr<gstd::ScriptCommonDataInfoPanel> GetScriptCommonDataInfoPanel() { return panelCommonData_; }
-	void UpdateCommonDataInfoPanel(shared_ptr<ScriptCommonDataManager> commonDataManager);
+	void UpdateCommonDataInfoPanel();
 };
 
 

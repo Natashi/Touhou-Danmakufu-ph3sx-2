@@ -80,7 +80,7 @@ void StgSystemController::Work() {
 		_ControlScene();
 
 		ELogger* logger = ELogger::GetInstance();
-		logger->UpdateCommonDataInfoPanel(commonDataManager_);
+		logger->UpdateCommonDataInfoPanel();
 	}
 	catch (gstd::wexception& e) {
 		Logger::WriteTop(e.what());
@@ -147,7 +147,7 @@ void StgSystemController::Work() {
 		}
 
 		ELogger* logger = ELogger::GetInstance();
-		logger->UpdateCommonDataInfoPanel(nullptr);
+		logger->UpdateCommonDataInfoPanel();
 
 		EFpsController* fpsController = EFpsController::GetInstance();
 		fpsController->SetFastModeKey(DIK_LCONTROL);
