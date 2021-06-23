@@ -129,6 +129,9 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_X_PackedInt", ScriptClientBase::Func_Interpolate_X_Packed, 5 },
     { "Interpolate_Array", ScriptClientBase::Func_Interpolate_Array, 3 },
 
+	//Rotation
+	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 5 },
+
 	//String functions
 	{ "ToString", ScriptClientBase::Func_ToString, 1 },
 	{ "IntToString", ScriptClientBase::Func_ItoA, 1 },
@@ -1349,6 +1352,27 @@ value ScriptClientBase::Func_Interpolate_Array(script_machine* machine, int argc
 	auto lerpFunc =  Math::Lerp::GetFunc<double, double>(type);
 
 	return ScriptClientBase::CreateRealValue(lerpFunc(argv[0].index_as_array(from).as_real(), argv[0].index_as_array(to).as_real(), x2));
+}
+
+value ScriptClientBase::Func_Rotate2D(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+
+	double xo = argv[2].as_real();
+	double yo = argv[3].as_real();
+	
+	double x = argv[0].as_real() - xo;
+	double y = argv[1].as_real() - yo;
+	double a = Math::DegreeToRadian(argv[4].as_real());
+	double s = sin(a);
+	double c = cos(a);
+	
+	
+	double res[2] {
+		xo + x * c - y * s,
+		yo + x * s + y * c
+	};
+
+	return CreateRealArrayValue(res, 2U);
 }
 
 //組み込み関数：文字列操作
