@@ -415,10 +415,11 @@ int WComboBox::GetSelectedIndex() {
 	return ::SendMessage(hWnd_, CB_GETCURSEL, 0, 0);
 }
 std::wstring WComboBox::GetSelectedText() {
+	std::wstring str;
+	str.resize(1024);
 	int index = GetSelectedIndex();
-	wchar_t buf[256];
-	::SendMessage(hWnd_, CB_GETLBTEXT, index, (LPARAM)buf);
-	return std::wstring(buf);
+	::SendMessage(hWnd_, CB_GETLBTEXT, index, (LPARAM)str.data());
+	return str;
 }
 void WComboBox::AddString(const std::wstring& str) {
 	::SendMessage(hWnd_, CB_ADDSTRING, 0, (LPARAM)str.c_str());
@@ -474,11 +475,13 @@ void WListView::AddRow(const std::wstring& text) {
 	ListView_InsertItem(hWnd_, &item);
 }
 void WListView::SetText(int row, int column, const std::wstring& text) {
-	SetText(row, column, text.c_str());
+	SetText(row, column, text.c_str(), text.size());
 }
-void WListView::SetText(int row, int column, const wchar_t* text) {
-	std::wstring pre = GetText(row, column);
-	if (pre == text) return;
+void WListView::SetText(int row, int column, const wchar_t* text, size_t textSize) {
+	if (textSize < 100) {
+		std::wstring pre = GetText(row, column);
+		if (pre == text) return;
+	}
 
 	int count = ListView_GetItemCount(hWnd_);
 	for (int iRow = count; iRow <= row; iRow++) {
@@ -505,11 +508,20 @@ int WListView::GetRowCount() {
 	return ListView_GetItemCount(hWnd_);
 }
 std::wstring WListView::GetText(int row, int column) {
-	std::wstring res;
-	wchar_t buf[256];
-	ListView_GetItemText(hWnd_, row, column, buf, sizeof(buf));
-	res = buf;
-	return res;
+	if (row >= GetRowCount()) return L"";
+	
+	wchar_t str[256];
+
+	LVITEM lvi;
+	ZeroMemory(&lvi, sizeof(lvi));
+	lvi.iSubItem = column;
+	lvi.cchTextMax = 255;
+	lvi.pszText = str;
+
+	int written = ::SendMessageW(hWnd_, LVM_GETITEMTEXT, (WPARAM)row, (LPARAM)(LV_ITEM*)&lvi);
+
+	return std::wstring(str);
+	
 }
 bool WListView::IsExistsInColumn(const std::wstring& value, int column) {
 	int count = ListView_GetItemCount(hWnd_);
@@ -617,15 +629,17 @@ void WTreeView::Item::SetText(const std::wstring& text) {
 	TreeView_SetItem(hTree_, &tvi);
 }
 std::wstring WTreeView::Item::GetText() {
-	wchar_t text[256];
-	ZeroMemory(text, sizeof(text));
+	std::wstring str;
+	str.resize(2048);
+
 	TVITEM tvi;
 	tvi.mask = TVIF_TEXT;
 	tvi.hItem = hItem_;
-	tvi.cchTextMax = sizeof(text) - 1;
-	tvi.pszText = text;
+	tvi.cchTextMax = str.size();
+	tvi.pszText = str.data();
 	TreeView_GetItem(hTree_, &tvi);
-	return std::wstring(text);
+
+	return str;
 }
 void WTreeView::Item::SetParam(LPARAM param) {
 	TVITEM tvi;

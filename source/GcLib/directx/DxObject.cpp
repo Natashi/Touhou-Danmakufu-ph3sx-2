@@ -1103,8 +1103,10 @@ void DxTextFileObject::SetLineAsWString(const std::wstring& text, size_t line) {
 
 void DxTextFileObject::_AddLine(const char* pChar, size_t count) {
 	std::vector<char> newLine;
-	newLine.resize(count);
-	memcpy(&newLine[0], pChar, count);
+	if (count > 0) {
+		newLine.resize(count);
+		memcpy(&newLine[0], pChar, count);
+	}
 	listLine_.push_back(newLine);
 }
 void DxTextFileObject::AddLine(const std::string& line) {

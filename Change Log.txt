@@ -9,6 +9,7 @@ A mostly-complete history log of engine updates can be found here.
 	- Changed the default render priority of items to 40. (Previously 60, what the fuck mkm)
 	- Changed the behaviour of resource pre-loading. (LoadTexture, LoadMesh, etc.)
 		- Loaded resources are no longer script-dependent, they will remain loaded even if the script that loaded them has been closed.
+	- Changed the arguments of ObjPatternShot_AddTransform/ObjPatternShot_SetTransform.
 	- Improved GetObjectDistance.
 	- Introduced the ability to use StartScript a second time without having to use LoadScript again.
 	- Added GetObjectDistanceSq and GetObjectDeltaAngle.
@@ -18,7 +19,12 @@ A mostly-complete history log of engine updates can be found here.
 	- Added functions for pointer-based common data access.
 	- Added IsVertexShaderSupported.
 	- Added the ability to set the read offset of .dat archives.
-	- Added back in script source caching, plus the ability to remove scripts from the cache.
+	- Added new ObjPatternShot transforms.
+		- TRANSFORM_ADDPATTERN_B1
+		- TRANSFORM_ADDPATTERN_B2
+		- Renamed TRANSFORM_ADDPATTERNA1 to TRANSFORM_ADDPATTERN_A1
+		- Renamed TRANSFORM_ADDPATTERNA2 to TRANSFORM_ADDPATTERN_A2
+	- Added back in script source caching, plus the ability to remove a script from the cache.
 		- Added ObjEnemyBossScene_SetUnloadCache.
 	- Added a "Cached Scripts" panel to the Script tab of the LogWindow.
 	- Added an overload for ColorARGBToHex.
@@ -36,6 +42,7 @@ A mostly-complete history log of engine updates can be found here.
 		- AngularDistance
 		- AngularDistanceR
 	- Added count_rand and count_prand.
+	- Added GetScriptStatus.
 	- Fixed LoadMesh crashing the engine.
 	- Fixed ObjCol_GetListOfIntersectedShotID incorrectly expecting only 1 argument.
 	- Fixed a bug where whitespaces in parameter lists in text object tags are incorrectly parsed.
@@ -54,6 +61,7 @@ A mostly-complete history log of engine updates can be found here.
 	- Fixed a package crash that happens when LoadScriptInLoadThread loads a stage script that contains a parser error.
 	- Fixed a bug that made variable-overshadowing a function throw a parser error.
 		- let power = 100;		//This is possible again.
+	- Fixed a bug where an ObjMove would lag for one frame after applying its last AddPattern transform.
 
 1.21a:
 	- Fixed MatrixMultiply and MatrixDivide functioning incorrectly.

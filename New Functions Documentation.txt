@@ -1111,7 +1111,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				IFF_DDS: DirectDraw Surface file. 							(.dds)
 				IFF_PPM: Portable PixelMap graphics file. 					(.ppm)
 	
-	--------------------------------> Event <--------------------------------
+	--------------------------------> Script <--------------------------------
 	
 	UnloadScript
 		Arguments:
@@ -1139,6 +1139,32 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				and then using StartScript(idScript, false) to avoid having to repeatedly call LoadScript.
 				
 			StartScript(idScript) = StartScript(idScript, true)
+			
+	PauseScript
+		Arguments:
+			1) (int) script ID
+			2) (bool) pause
+		Description:
+			Pauses or unpauses the specified script. Not guaranteed to work flawlessly.
+			Causes an error is the script ID is the ID of the script from which the function was called,
+				aka; "a script cannot pause itself".
+				
+	GetScriptStatus
+		Arguments:
+			1) (int) script ID
+		Returns:
+			(const) status
+		Description:
+			Returns the status of the specified script.
+			
+			Possible return values:
+				- STATUS_LOADED		: Script has been loaded.
+				- STATUS_RUNNING	: Script is running.
+				- STATUS_PAUSED		: Script has been paused.
+				- STATUS_CLOSING	: Script is closing.
+				- STATUS_INVALID	: Any other cases, or invalid script ID.
+				
+	--------------------------------> Event <--------------------------------
 
 	GetEventArgumentCount
 		Returns:
@@ -1179,17 +1205,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			*Scripts paused with PauseScript would still get notified.
 			
 			It is possible to pass as many event arguments as you want.
-	
-	--------------------------------> Script <--------------------------------
-			
-	PauseScript
-		Arguments:
-			1) (int) script ID
-			2) (bool) pause
-		Description:
-			Pauses or unpauses the specified script. Not guaranteed to work flawlessly.
-			Causes an error is the script ID is the ID of the script from which the function was called,
-				aka; "a script cannot pause itself".
 				
 	--------------------------------> Screen Status <--------------------------------
 	
@@ -2726,7 +2741,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjMove_SetProcessMovement
 		Arguments:
 			1) object ID
-			2) (bool) set
+			2) (bool) enable
 		Description:
 			Sets whether the object will be allowed to execute movement-related routines.
 			
@@ -2832,7 +2847,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjShot_SetPositionRounding
 		Arguments:
 			1) object ID
-			2) (bool) set
+			2) (bool) enable
 		Description:
 			If set to true, will cause the shot object to only render in non-floating point coordinates.
 			See: Official Touhou games.
@@ -2840,7 +2855,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjShot_SetDelayMotionEnable
 		Arguments:
 			1) object ID
-			2) (bool) set
+			2) (bool) enable
 		Description:
 			If set to true, will enable the shot object to move in its delay period.
 			Only works on regular shots.
@@ -3168,13 +3183,13 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				PATTERN_ARROW_AIMED
 				PATTERN_POLYGON
 				PATTERN_POLYGON_AIMED
-					- [way]:    Number of polygon vertices.
-					- [stack]:  Number of shots per sides.
+					- [way]:            Number of polygon vertices.
+					- [stack]:          Number of shots per sides.
 					- [angle argument]:	Edge skip, should normally be 1. Other values may result in polygrams.
 					- [speed argument]:	No effect.
 				PATTERN_ELLIPSE
 				PATTERN_ELLIPSE_AIMED
-					- [stack]:  No effect.
+					- [stack]:          No effect.
 					- [angle argument]:	Angle of the ellipse. (Not of the shots)
 					- [base speed]:     Max speed at the ends of the primary axis.
 					- [speed argument]:	Max speed at the ends of the secondary axis.
@@ -3295,57 +3310,57 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) object ID
 			2) (const) transform type
-			3) int argument 1	(Designated "S0")
-			4) int argument 2	(Designated "S1")
-			5) int argument 3	(Designated "S2")
-			6) float argument 1	(Designated "f0")
-			7) float argument 2	(Designated "f1")
-			8) float argument 3	(Designated "f2")
+			3+) transform arguments...
 		Description:
 			Adds a transformation to the shot pattern object.
+			
+			Transforms arguments will be designated, in order: [arg1], [arg2], [arg3], etc...
+			
 			Available transformations are:
-				TRANSFORM_WAIT
-					- Delays the next transformation for S0 frames.
-				TRANSFORM_ADD_SPEED_ANGLE
-					- In S1 frames, sets acceleration to f0 and angular velocity to f1 to the bullet for S0 frames.
-				TRANSFORM_ANGULAR_MOVE
-					- For S0 frames, sets movement angular velocity to f0 and graphic angular velocity to f1.
-				TRANSFORM_N_DECEL_CHANGE
-					- For S1 times, decelerates/accelerates the bullet to a complete halt in S0 frames. (See: Aunn's first spell)
-						Movement will then change depending on S2.
-							- 0: Changes the movement angle to f1.
-							- 1: Increments the movement angle by f1.
-							- 2: Aims to the player with an added randomness factor of -f1 to f1.
-							- 3: Aims to the player with an increment of f1.
-							- 4: Angle becomes random.
-							- 5, other: No angle change.
-						All modes sets the speed to f0.
-						Will also delay the next transformation by (S0 * S1) frames.
-				TRANSFORM_GRAPHIC_CHANGE
-					- Changes the shot graphic to S0.
-				TRANSFORM_BLEND_CHANGE
-					- Changes the shot blend type to S0.
-				TRANSFORM_TO_SPEED_ANGLE
-					- Changes the shot's speed and angle to f0 and f1 in S0 frames.
-						Setting f1 to TOPLAYER_CHANGE will cause the target angle to be the angle to the player object.
-						Setting f0 or f1 to NO_CHANGE will cause the speed/angle to not change.
-				TRANSFORM_ADDPATTERNA1
-					- ObjMove_AddPatternA1(obj, S0, f0, f1);
-				TRANSFORM_ADDPATTERNA2
-					- Should be combined with TRANSFORM_ADDPATTERNA1, as the speed and angle parameters will not be set by this transform.
-					- ObjMove_AddPatternA4(obj, S0, x, x, f0, f1, f2, S2, S1);
+				TRANSFORM_WAIT 				(argc = 1)
+					- Delays the next transformation for [arg1] frames.
+				TRANSFORM_ADD_SPEED_ANGLE 	(argc = 4)
+					- Waits for [arg2] frames. (Does not delay the next transformation)
+					- For [arg1] frames, sets acceleration to [arg3].
+					- For [arg1] frames, sets angular velocity to [arg4].
+				TRANSFORM_ANGULAR_MOVE 		(argc = 3)
+					- For [arg1] frames, sets angular velocity to [arg2].
+					- Sets shot graphic "spin" to [arg3].
+				TRANSFORM_N_DECEL_CHANGE 	(argc = 5)
+					- For [arg2] times, decelerates/accelerates the shot to a complete halt in [arg1] frames. (See: Aunn's first spell)
+					- Movement will then change depending on [arg3].
+						- 0: Changes the movement angle to [arg5].
+						- 1: Increments the movement angle by [arg5].
+						- 2: Aims to the player with an added randomness factor of -[arg5] to [arg5].
+						- 3: Aims to the player with an increment of [arg5].
+						- 4: Angle becomes random.
+						- 5, other: No angle change.
+					- All modes sets the speed to [arg4].
+					- Delay the next transformation by ([arg1] * [arg2]) frames.
+				TRANSFORM_GRAPHIC_CHANGE 	(argc = 1)
+					- Changes the shot graphic to [arg1].
+				TRANSFORM_BLEND_CHANGE 		(argc = 1)
+					- Changes the shot blend type to [arg1].
+				TRANSFORM_TO_SPEED_ANGLE 	(argc = 3)
+					- Gradually changes the shot's speed to [arg2] in [arg1] frames.
+					- Gradually changes the shot's angle to [arg3] in [arg1] frames.
+						- Using TOPLAYER_CHANGE will aim the shot to the player object.
+					- NO_CHANGE can be used for [arg2] and [arg3].
+				TRANSFORM_ADDPATTERN_A1 	(argc = 3)
+					- Applies [ObjMove_AddPatternA1(obj, [arg1], [arg2], [arg3])]
+				TRANSFORM_ADDPATTERN_A2 	(argc = 8)
+					- Applies [ObjMove_AddPatternA4(obj, [arg1], [arg2], [arg3], [arg4], [arg5], [arg6], [arg7], [arg8])]
+				TRANSFORM_ADDPATTERN_B1 	(argc = 3)
+					- Applies [ObjMove_AddPatternB1(obj, [arg1], [arg2], [arg3])]
+				TRANSFORM_ADDPATTERN_B2 	(argc = 8)
+					- Applies [ObjMove_AddPatternB3(obj, [arg1], [arg2], [arg3], [arg4], [arg5], [arg6], [arg7], [arg8])]
 						
 	ObjPatternShot_SetTransform
 		Arguments:
 			1) object ID
-			2) transform index
+			2) (int) transform index
 			3) (const) transform type
-			4) int argument 1
-			5) int argument 2
-			6) int argument 3
-			7) float argument 1
-			8) float argument 2
-			9) float argument 3
+			4+) transform arguments...
 		Description:
 			Sets transformation to the specified transform index.
 			
@@ -3439,6 +3454,13 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Sets whether the item object will use the built-in autocollection behaviour.
 			
 			Intended to be used in tandem with EV_COLLECT_ITEM.
+			
+	ObjItem_SetPositionRounding
+		Arguments:
+			1) object ID
+			2) (bool) enable
+		Description:
+			If set to true, will cause the item object to only render in non-floating point coordinates.
 			
 ---------------------------------------------->	[Item Script] <----------------------------------------------
 			

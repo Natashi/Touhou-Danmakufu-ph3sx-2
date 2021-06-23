@@ -247,7 +247,7 @@ namespace gstd {
 		int GetSelectedRow();
 
 		void SetText(int row, int column, const std::wstring& text);
-		void SetText(int row, int column, const wchar_t* text);
+		void SetText(int row, int column, const wchar_t* text, size_t textSize);
 		std::wstring GetText(int row, int column);		
 
 		void ClearSelection();
