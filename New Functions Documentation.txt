@@ -1158,11 +1158,11 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Returns the status of the specified script.
 			
 			Possible return values:
-				- STATUS_LOADED     : Script has been loaded.
-				- STATUS_RUNNING    : Script is running.
-				- STATUS_PAUSED     : Script has been paused.
-				- STATUS_CLOSING    : Script is closing.
-				- STATUS_INVALID    : Any other cases, or invalid script ID.
+				- STATUS_LOADED		: Script has been loaded.
+				- STATUS_RUNNING	: Script is running.
+				- STATUS_PAUSED		: Script has been paused.
+				- STATUS_CLOSING	: Script is closing.
+				- STATUS_INVALID	: Any other cases, or invalid script ID.
 				
 	--------------------------------> Event <--------------------------------
 
