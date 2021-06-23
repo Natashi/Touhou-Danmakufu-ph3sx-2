@@ -258,7 +258,7 @@ namespace gstd {
 
 		//Math functions; rotation
 		DNH_FUNCAPI_DECL_(Func_Rotate2D);
-		// DNH_FUNCAPI_DECL_(Func_Rotate3D);
+		DNH_FUNCAPI_DECL_(Func_Rotate3D);
 
 		//String manipulations
 		static value Func_ToString(script_machine* machine, int argc, const value* argv);
