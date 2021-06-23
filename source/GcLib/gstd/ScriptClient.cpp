@@ -128,6 +128,7 @@ static const std::vector<function> commonFunction = {
 
 	//Rotation
 	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 5 },
+	{ "Rotate3D", ScriptClientBase::Func_Rotate3D, 9 },
 
 	//String functions
 	{ "ToString", ScriptClientBase::Func_ToString, 1 },
@@ -1323,6 +1324,44 @@ value ScriptClientBase::Func_Rotate2D(script_machine* machine, int argc, const v
 	double res[2] {
 		xo + x * c - y * s,
 		yo + x * s + y * c
+	};
+
+	return CreateRealArrayValue(res, 2U);
+}
+
+//Translated from SP's Rotate3D_D
+value ScriptClientBase::Func_Rotate3D(script_machine* machine, int argc, const value* argv) {
+	double xo = argv[3].as_real();
+	double yo = argv[4].as_real();
+	double zo = argv[5].as_real();
+
+	double x = argv[0].as_real() - xo;
+	double y = argv[1].as_real() - yo;
+	double z = argv[2].as_real() - zo;
+	double xa = Math::DegreeToRadian(argv[6].as_real());
+	double ya = Math::DegreeToRadian(argv[7].as_real());
+	double za = Math::DegreeToRadian(argv[8].as_real());
+	double sx = sin(xa);
+	double cx = cos(xa);
+	double sy = sin(ya);
+	double cy = cos(ya);
+	double sz = sin(za);
+	double cz = cos(za);
+
+	double m11 = cy * cz;
+	double m12 = sx * sy * cz - cx * sz;
+	double m13 = cx * sy * cz + sx * sz;
+	double m21 = cy * sz;
+	double m22 = sx * sy * sz + cx * cz;
+	double m23 = cx * sy * sz - sx * cz;
+	double m31 = -sy;
+	double m32 = sx * cy;
+	double m33 = cx * cy;
+
+	double res[3]{
+		xo + x * m11 + y * m21 + z * m31,
+		yo + x * m12 + y * m22 + z * m32,
+		zo + x * m13 + y * m23 + z * m33
 	};
 
 	return CreateRealArrayValue(res, 2U);
