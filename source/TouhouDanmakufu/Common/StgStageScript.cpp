@@ -503,8 +503,12 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjPatternShot_SetGraphic", StgStageScript::Func_ObjPatternShot_SetGraphic, 2 },
 	{ "ObjPatternShot_SetLaserParameter", StgStageScript::Func_ObjPatternShot_SetLaserParameter, 3 },
 	{ "ObjPatternShot_CopySettings", StgStageScript::Func_ObjPatternShot_CopySettings, 2 },
-	{ "ObjPatternShot_AddTransform", StgStageScript::Func_ObjPatternShot_AddTransform, 8 },
-	{ "ObjPatternShot_SetTransform", StgStageScript::Func_ObjPatternShot_SetTransform, 9 },
+	{ "ObjPatternShot_AddTransform", StgStageScript::Func_ObjPatternShot_AddTransform, 4 },		//Overloaded
+	{ "ObjPatternShot_AddTransform", StgStageScript::Func_ObjPatternShot_AddTransform, 6 },		//Overloaded
+	{ "ObjPatternShot_AddTransform", StgStageScript::Func_ObjPatternShot_AddTransform, 10 },
+	{ "ObjPatternShot_SetTransform", StgStageScript::Func_ObjPatternShot_SetTransform, 5 },		//Overloaded
+	{ "ObjPatternShot_SetTransform", StgStageScript::Func_ObjPatternShot_SetTransform, 7 },		//Overloaded
+	{ "ObjPatternShot_SetTransform", StgStageScript::Func_ObjPatternShot_SetTransform, 11 },
 
 	//STG共通関数：アイテムオブジェクト操作
 	{ "ObjItem_Create", StgStageScript::Func_ObjItem_Create, 1 },
@@ -578,8 +582,10 @@ static const std::vector<constant> stgStageConstant = {
 	constant("TRANSFORM_GRAPHIC_CHANGE", StgPatternShotTransform::TRANSFORM_GRAPHIC_CHANGE),
 	constant("TRANSFORM_BLEND_CHANGE", StgPatternShotTransform::TRANSFORM_BLEND_CHANGE),
 	constant("TRANSFORM_TO_SPEED_ANGLE", StgPatternShotTransform::TRANSFORM_TO_SPEED_ANGLE),
-	constant("TRANSFORM_ADDPATTERNA1", StgPatternShotTransform::TRANSFORM_ADDPATTERNA1),
-	constant("TRANSFORM_ADDPATTERNA2", StgPatternShotTransform::TRANSFORM_ADDPATTERNA2),
+	constant("TRANSFORM_ADDPATTERN_A1", StgPatternShotTransform::TRANSFORM_ADDPATTERN_A1),
+	constant("TRANSFORM_ADDPATTERN_A2", StgPatternShotTransform::TRANSFORM_ADDPATTERN_A2),
+	constant("TRANSFORM_ADDPATTERN_B1", StgPatternShotTransform::TRANSFORM_ADDPATTERN_B1),
+	constant("TRANSFORM_ADDPATTERN_B2", StgPatternShotTransform::TRANSFORM_ADDPATTERN_B2),
 
 	//Player states
 	constant("STATE_NORMAL", StgPlayerObject::STATE_NORMAL),
@@ -2479,9 +2485,10 @@ gstd::value StgStageScript::Func_ObjMove_SetDestAtWeight(gstd::script_machine* m
 	return value();
 }
 
-#define CMD_ADD(v, c) if (v != StgMovePattern::NO_CHANGE) pattern->AddCommand(std::make_pair(c, v));
-#define CMD_ADD_ANG(v, c) if (v != StgMovePattern::NO_CHANGE) \
-							pattern->AddCommand(std::make_pair(c, Math::DegreeToRadian(v)));
+#define ADD_CMD(__cmd, __arg) if (__arg != StgMovePattern::NO_CHANGE) \
+								pattern->AddCommand(std::make_pair(__cmd, __arg));
+#define ADD_CMD2(__cmd, __target, __arg) if (__target != StgMovePattern::NO_CHANGE) \
+								pattern->AddCommand(std::make_pair(__cmd, __arg));
 gstd::value StgStageScript::Func_ObjMove_AddPatternA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
@@ -2494,8 +2501,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA1(gstd::script_machine* mach
 		ref_unsync_ptr<StgMovePattern_Angle> pattern = new StgMovePattern_Angle(obj);
 		pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ZERO, 0));
 
-		CMD_ADD(speed, StgMovePattern_Angle::SET_SPEED);
-		CMD_ADD_ANG(angle, StgMovePattern_Angle::SET_ANGLE);
+		ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
+		ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
 
 		obj->AddPattern(frame, pattern);
 	}
@@ -2509,17 +2516,17 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA2(gstd::script_machine* mach
 		int frame = argv[1].as_int();
 		double speed = argv[2].as_real();
 		double angle = argv[3].as_real();
-		double accele = argv[4].as_real();
-		double angV = argv[5].as_real();
-		double maxSpeed = argv[6].as_real();
+		double accel = argv[4].as_real();
+		double agvel = argv[5].as_real();
+		double maxsp = argv[6].as_real();
 
 		ref_unsync_ptr<StgMovePattern_Angle> pattern = new StgMovePattern_Angle(obj);
 
-		CMD_ADD(speed, StgMovePattern_Angle::SET_SPEED);
-		CMD_ADD_ANG(angle, StgMovePattern_Angle::SET_ANGLE);
-		CMD_ADD(accele, StgMovePattern_Angle::SET_ACCEL);
-		CMD_ADD_ANG(angV, StgMovePattern_Angle::SET_AGVEL);
-		CMD_ADD(maxSpeed, StgMovePattern_Angle::SET_SPMAX);
+		ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
+		ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
+		ADD_CMD(StgMovePattern_Angle::SET_ACCEL, accel);
+		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
+		ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
 
 		obj->AddPattern(frame, pattern);
 	}
@@ -2533,18 +2540,18 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA3(gstd::script_machine* mach
 		int frame = argv[1].as_int();
 		double speed = argv[2].as_real();
 		double angle = argv[3].as_real();
-		double accele = argv[4].as_real();
-		double angV = argv[5].as_real();
-		double maxSpeed = argv[6].as_real();
+		double accel = argv[4].as_real();
+		double agvel = argv[5].as_real();
+		double maxsp = argv[6].as_real();
 		int idShot = argv[7].as_int();
 
 		ref_unsync_ptr<StgMovePattern_Angle> pattern = new StgMovePattern_Angle(obj);
 
-		CMD_ADD(speed, StgMovePattern_Angle::SET_SPEED);
-		CMD_ADD_ANG(angle, StgMovePattern_Angle::SET_ANGLE);
-		CMD_ADD(accele, StgMovePattern_Angle::SET_ACCEL);
-		CMD_ADD_ANG(angV, StgMovePattern_Angle::SET_AGVEL);
-		CMD_ADD(maxSpeed, StgMovePattern_Angle::SET_SPMAX);
+		ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
+		ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
+		ADD_CMD(StgMovePattern_Angle::SET_ACCEL, accel);
+		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
+		ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
 
 		pattern->SetShotDataID(idShot);
 		obj->AddPattern(frame, pattern);
@@ -2559,23 +2566,25 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA4(gstd::script_machine* mach
 		int frame = argv[1].as_int();
 		double speed = argv[2].as_real();
 		double angle = argv[3].as_real();
-		double accele = argv[4].as_real();
-		double angV = argv[5].as_real();
-		double maxSpeed = argv[6].as_real();
+		double accel = argv[4].as_real();
+		double agvel = argv[5].as_real();
+		double maxsp = argv[6].as_real();
 		int idRelative = argv[7].as_int();
 		int idShot = argv[8].as_int();
 
 		ref_unsync_ptr<StgMovePattern_Angle> pattern = new StgMovePattern_Angle(obj);
 
-		CMD_ADD(speed, StgMovePattern_Angle::SET_SPEED);
-		CMD_ADD_ANG(angle, StgMovePattern_Angle::SET_ANGLE);
-		CMD_ADD(accele, StgMovePattern_Angle::SET_ACCEL);
-		CMD_ADD_ANG(angV, StgMovePattern_Angle::SET_AGVEL);
-		CMD_ADD(maxSpeed, StgMovePattern_Angle::SET_SPMAX);
+		ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
+		ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
+		ADD_CMD(StgMovePattern_Angle::SET_ACCEL, accel);
+		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
+		ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
 
-		pattern->SetShotDataID(idShot);
+		if (idShot != StgMovePattern::NO_CHANGE)
+			pattern->SetShotDataID(idShot);
 		if (idRelative != StgMovePattern::NO_CHANGE)
 			pattern->SetRelativeObject(idRelative);
+
 		obj->AddPattern(frame, pattern);
 	}
 	return value();
@@ -2592,8 +2601,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB1(gstd::script_machine* mach
 		ref_unsync_ptr<StgMovePattern_XY> pattern = new StgMovePattern_XY(obj);
 		pattern->AddCommand(std::make_pair(StgMovePattern_XY::SET_ZERO, 0));
 
-		CMD_ADD(speedX, StgMovePattern_XY::SET_S_X);
-		CMD_ADD(speedY, StgMovePattern_XY::SET_S_Y);
+		ADD_CMD(StgMovePattern_XY::SET_S_X, speedX);
+		ADD_CMD(StgMovePattern_XY::SET_S_Y, speedY);
 
 		obj->AddPattern(frame, pattern);
 	}
@@ -2609,17 +2618,17 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB2(gstd::script_machine* mach
 		double speedY = argv[3].as_real();
 		double accelX = argv[4].as_real();
 		double accelY = argv[5].as_real();
-		double maxSpeedX = argv[6].as_real();
-		double maxSpeedY = argv[7].as_real();
+		double maxspX = argv[6].as_real();
+		double maxspY = argv[7].as_real();
 
 		ref_unsync_ptr<StgMovePattern_XY> pattern = new StgMovePattern_XY(obj);
 
-		CMD_ADD(speedX, StgMovePattern_XY::SET_S_X);
-		CMD_ADD(speedY, StgMovePattern_XY::SET_S_Y);
-		CMD_ADD(accelX, StgMovePattern_XY::SET_A_X);
-		CMD_ADD(accelY, StgMovePattern_XY::SET_A_Y);
-		CMD_ADD(maxSpeedX, StgMovePattern_XY::SET_M_X);
-		CMD_ADD(maxSpeedY, StgMovePattern_XY::SET_M_Y);
+		ADD_CMD(StgMovePattern_XY::SET_S_X, speedX);
+		ADD_CMD(StgMovePattern_XY::SET_S_Y, speedY);
+		ADD_CMD(StgMovePattern_XY::SET_A_X, accelX);
+		ADD_CMD(StgMovePattern_XY::SET_A_Y, accelY);
+		ADD_CMD(StgMovePattern_XY::SET_M_X, maxspX);
+		ADD_CMD(StgMovePattern_XY::SET_M_Y, maxspY);
 
 		obj->AddPattern(frame, pattern);
 	}
@@ -2635,26 +2644,28 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB3(gstd::script_machine* mach
 		double speedY = argv[3].as_real();
 		double accelX = argv[4].as_real();
 		double accelY = argv[5].as_real();
-		double maxSpeedX = argv[6].as_real();
-		double maxSpeedY = argv[7].as_real();
+		double maxspX = argv[6].as_real();
+		double maxspY = argv[7].as_real();
 		int idShot = argv[8].as_int();
 
 		ref_unsync_ptr<StgMovePattern_XY> pattern = new StgMovePattern_XY(obj);
 
-		CMD_ADD(speedX, StgMovePattern_XY::SET_S_X);
-		CMD_ADD(speedY, StgMovePattern_XY::SET_S_Y);
-		CMD_ADD(accelX, StgMovePattern_XY::SET_A_X);
-		CMD_ADD(accelY, StgMovePattern_XY::SET_A_Y);
-		CMD_ADD(maxSpeedX, StgMovePattern_XY::SET_M_X);
-		CMD_ADD(maxSpeedY, StgMovePattern_XY::SET_M_Y);
+		ADD_CMD(StgMovePattern_XY::SET_S_X, speedX);
+		ADD_CMD(StgMovePattern_XY::SET_S_Y, speedY);
+		ADD_CMD(StgMovePattern_XY::SET_A_X, accelX);
+		ADD_CMD(StgMovePattern_XY::SET_A_Y, accelY);
+		ADD_CMD(StgMovePattern_XY::SET_M_X, maxspX);
+		ADD_CMD(StgMovePattern_XY::SET_M_Y, maxspY);
 
-		pattern->SetShotDataID(idShot);
+		if (idShot != StgMovePattern::NO_CHANGE)
+			pattern->SetShotDataID(idShot);
+
 		obj->AddPattern(frame, pattern);
 	}
 	return value();
 }
-#undef CMD_ADD
-#undef CMD_ADD_ANG
+#undef ADD_CMD
+#undef ADD_CMD2
 
 gstd::value StgStageScript::Func_ObjMove_GetX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -4374,12 +4385,8 @@ gstd::value StgStageScript::Func_ObjPatternShot_AddTransform(gstd::script_machin
 
 		StgPatternShotTransform transform;
 		transform.act = (uint8_t)typeAct;
-		transform.param_s[0] = argv[2].as_int();
-		transform.param_s[1] = argv[3].as_int();
-		transform.param_s[2] = argv[4].as_int();
-		transform.param_d[0] = argv[5].as_real();
-		transform.param_d[1] = argv[6].as_real();
-		transform.param_d[2] = argv[7].as_real();
+		for (int i = 0; i < argc - 2; ++i)
+			transform.param[i] = argv[i + 2].as_real();
 
 		obj->AddTransformation(transform);
 	}
@@ -4397,12 +4404,8 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetTransform(gstd::script_machin
 
 		StgPatternShotTransform transform;
 		transform.act = (uint8_t)typeAct;
-		transform.param_s[0] = argv[3].as_int();
-		transform.param_s[1] = argv[4].as_int();
-		transform.param_s[2] = argv[5].as_int();
-		transform.param_d[0] = argv[6].as_real();
-		transform.param_d[1] = argv[7].as_real();
-		transform.param_d[2] = argv[8].as_real();
+		for (int i = 0; i < argc - 3; ++i)
+			transform.param[i] = argv[i + 3].as_real();
 
 		obj->SetTransformation(slot, transform);
 	}

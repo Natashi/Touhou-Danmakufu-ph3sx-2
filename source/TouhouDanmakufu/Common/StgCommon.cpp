@@ -159,6 +159,7 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 		newMaxSp = hypot(src->GetMaxSpeedX(), src->GetMaxSpeedY());
 	}
 
+	bool bMaxSpeed2 = false;
 	for (auto& pairCmd : listCommand_) {
 		double& arg = pairCmd.second;
 		switch (pairCmd.first) {
@@ -181,6 +182,10 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 			break;
 		case SET_SPMAX:
 			newMaxSp = arg;
+			break;
+		case SET_SPMAX2:
+			newMaxSp = arg;
+			bMaxSpeed2 = true;
 			break;
 		case ADD_SPEED:
 			newSpeed += arg;
@@ -211,7 +216,7 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 	SetDirectionAngle(newAngle);
 	acceleration_ = newAccel;
 	angularVelocity_ = newAgVel;
-	maxSpeed_ = newMaxSp;
+	maxSpeed_ = newMaxSp + (bMaxSpeed2 ? speed_ : 0);
 }
 void StgMovePattern_Angle::SetDirectionAngle(double angle) {
 	if (angle != StgMovePattern::NO_CHANGE) {
