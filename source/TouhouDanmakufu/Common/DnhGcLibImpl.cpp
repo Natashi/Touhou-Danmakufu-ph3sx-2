@@ -66,8 +66,8 @@ void ELogger::Initialize(bool bFile, bool bWindow) {
 
 	panelCommonData_.reset(new gstd::ScriptCommonDataInfoPanel());
 }
-void ELogger::UpdateCommonDataInfoPanel(shared_ptr<ScriptCommonDataManager> commonDataManager) {
-	panelCommonData_->Update(commonDataManager);
+void ELogger::UpdateCommonDataInfoPanel() {
+	panelCommonData_->Update();
 }
 
 //*******************************************************************

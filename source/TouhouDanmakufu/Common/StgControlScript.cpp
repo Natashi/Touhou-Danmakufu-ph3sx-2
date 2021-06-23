@@ -174,8 +174,6 @@ StgControlScript::StgControlScript(StgSystemController* systemController) {
 	_AddConstant(&stgControlConstant);
 
 	SetScriptEngineCache(systemController->GetScriptEngineCache());
-
-	commonDataManager_ = systemController->GetCommonDataManager();
 }
 
 //STG制御共通関数：共通データ
@@ -185,7 +183,7 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* ma
 
 	std::wstring area = argv[0].as_string();
 	std::string sArea = StringUtility::ConvertWideToMulti(area);
-	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
 
 	bool res = false;
 
@@ -211,7 +209,7 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* ma
 
 	std::wstring area = argv[0].as_string();
 	std::string sArea = StringUtility::ConvertWideToMulti(area);
-	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
 
 	bool res = false;
 
@@ -235,7 +233,7 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA2(gstd::script_machine* ma
 	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
 
 	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
-	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
 
 	bool res = false;
 
@@ -259,7 +257,7 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA2(gstd::script_machine* ma
 	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
 
 	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
-	ScriptCommonDataManager* commonDataManager = script->GetCommonDataManager();
+	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
 
 	bool res = false;
 
