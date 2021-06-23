@@ -1310,8 +1310,6 @@ value ScriptClientBase::Func_Interpolate_X_Packed(script_machine* machine, int a
 }
 
 value ScriptClientBase::Func_Rotate2D(script_machine* machine, int argc, const value* argv) {
-	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-
 	double xo = argv[2].as_real();
 	double yo = argv[3].as_real();
 	
