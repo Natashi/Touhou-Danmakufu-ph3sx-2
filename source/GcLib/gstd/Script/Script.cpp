@@ -337,6 +337,13 @@ void script_machine::run_code() {
 				*val = *valAtPtr;
 				break;
 			}
+			case command_kind::pc_make_unique:
+			{
+				if (c->arg0 >= stack.size()) break;
+				value* val = &stack.back() - c->arg0;
+				val->make_unique();
+				break;
+			}
 
 			//case command_kind::_pc_jump_target:
 			//	break;
@@ -377,6 +384,7 @@ void script_machine::run_code() {
 							type_data* prev_type = dest->get_type();
 
 							*dest = *src;
+							dest->make_unique();
 
 							if (prev_type && prev_type != src->get_type())
 								BaseFunction::_value_cast(dest, prev_type->get_kind());
@@ -591,6 +599,7 @@ void script_machine::run_code() {
 					{
 						value appending = *val_ptr;
 						if (appending.get_type()->get_kind() != type_elem->get_kind()) {
+							appending.make_unique();
 							BaseFunction::_value_cast(&appending, type_elem->get_kind());
 						}
 						res_arr[iVal] = appending;

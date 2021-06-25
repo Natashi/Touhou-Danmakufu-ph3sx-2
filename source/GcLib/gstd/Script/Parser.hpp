@@ -22,6 +22,7 @@ namespace gstd {
 		pc_swap,				//Swap {esp-0} and {esp-1}
 		pc_load_ptr,			//Push &{esp-[arg0]} to the stack
 		pc_unload_ptr,			//Dereferences {esp-[arg0]}
+		pc_make_unique,			//Turns {esp-[arg0]} into a unique array
 
 		pc_copy_assign,			//Copy variable=[arg0, arg1] to {esp-0}
 		pc_ref_assign,			//Set *{esp-1} to {esp-0}

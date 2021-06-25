@@ -44,7 +44,7 @@ namespace gstd {
 				int64_t int_value;
 				value* ptr_value;
 			};
-			std::vector<value> array_value;
+			ref_unsync_ptr<std::vector<value>> p_array_value;
 		};
 	public:
 		value() {}
@@ -65,18 +65,6 @@ namespace gstd {
 
 		//--------------------------------------------------------------------------
 
-		bool has_data() const { return type != nullptr; }
-		type_data* get_type() const { return type; }
-
-		size_t length_as_array() const;
-		const value& index_as_array(size_t i) const;
-		value& index_as_array(size_t i);
-
-		std::vector<value>::iterator array_get_begin() const;
-		std::vector<value>::iterator array_get_end() const;
-
-		//--------------------------------------------------------------------------
-
 		value* reset(type_data* t, int64_t v);
 		value* reset(type_data* t, double v);
 		value* reset(type_data* t, wchar_t v);
@@ -89,9 +77,24 @@ namespace gstd {
 		value* set(type_data* t, bool v);
 		value* set(type_data* t, value* v);
 		value* set(type_data* t, std::vector<value>& v);
+		value* set(type_data* t, ref_unsync_ptr<std::vector<value>> v);
+
+		void make_unique();
 
 		void append(type_data* t, const value& x);
 		void concatenate(const value& x);
+
+		//--------------------------------------------------------------------------
+
+		bool has_data() const { return type != nullptr; }
+		type_data* get_type() const { return type; }
+
+		size_t length_as_array() const;
+		const value& index_as_array(size_t i) const;
+		value& index_as_array(size_t i);
+
+		std::vector<value>::iterator array_get_begin() const;
+		std::vector<value>::iterator array_get_end() const;
 
 		//--------------------------------------------------------------------------
 
