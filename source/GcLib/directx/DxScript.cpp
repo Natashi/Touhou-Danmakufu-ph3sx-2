@@ -39,7 +39,7 @@ shared_ptr<DxMesh> DxScriptResourceCache::GetMesh(const std::wstring& name) {
 		return itr->second;
 	return nullptr;
 }
-shared_ptr<Shader> DxScriptResourceCache::GetShader(const std::wstring& name) {
+shared_ptr<ShaderData> DxScriptResourceCache::GetShader(const std::wstring& name) {
 	auto itr = mapShader.find(name);
 	if (itr != mapShader.end())
 		return itr->second;
@@ -1608,7 +1608,7 @@ value DxScript::Func_LoadShader(script_machine* machine, int argc, const value* 
 		res = shader != nullptr;
 		if (res) {
 			Lock lock(script->criticalSection_);
-			mapShader[path] = shader;
+			mapShader[path] = shader->GetData();
 		}
 	}
 	return script->CreateBooleanValue(res);
@@ -2927,24 +2927,25 @@ gstd::value DxScript::Func_ObjShader_SetShaderF(gstd::script_machine* machine, i
 		std::wstring path = argv[1].as_string();
 		path = PathProperty::GetUnique(path);
 
+		ShaderManager* manager = ShaderManager::GetBase();
 		auto& mapShader = script->pResouceCache_->mapShader;
+
+		shared_ptr<Shader> shader = nullptr;
 
 		auto itr = mapShader.find(path);
 		if (itr != mapShader.end()) {
-			obj->SetShader(itr->second);
-			res = true;
+			shader = manager->CreateFromData(itr->second);
 		}
 		else {
-			ShaderManager* manager = ShaderManager::GetBase();
-			shared_ptr<Shader> shader = manager->CreateFromFile(path);
-			obj->SetShader(shader);
-
-			res = shader != nullptr;
-			if (!res) {
+			shader = manager->CreateFromFile(path);
+			if (shader == nullptr) {
 				const std::wstring& error = manager->GetLastError();
 				script->RaiseError(error);
 			}
 		}
+
+		obj->SetShader(shader);
+		res = shader != nullptr;
 	}
 	return script->CreateBooleanValue(res);
 }

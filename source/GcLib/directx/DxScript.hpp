@@ -16,7 +16,7 @@ namespace directx {
 	public:
 		std::map<std::wstring, shared_ptr<Texture>> mapTexture;
 		std::map<std::wstring, shared_ptr<DxMesh>> mapMesh;
-		std::map<std::wstring, shared_ptr<Shader>> mapShader;
+		std::map<std::wstring, shared_ptr<ShaderData>> mapShader;
 	public:
 		DxScriptResourceCache();
 
@@ -26,7 +26,7 @@ namespace directx {
 
 		shared_ptr<Texture> GetTexture(const std::wstring& name);
 		shared_ptr<DxMesh> GetMesh(const std::wstring& name);
-		shared_ptr<Shader> GetShader(const std::wstring& name);
+		shared_ptr<ShaderData> GetShader(const std::wstring& name);
 	};
 
 	//*******************************************************************
