@@ -101,6 +101,7 @@ namespace gstd {
 
 		DNH_FUNCAPI_DECL_(append);
 		DNH_FUNCAPI_DECL_(concatenate);
+		DNH_FUNCAPI_DECL_(concatenate_direct);
 
 		DNH_FUNCAPI_DECL_(round);
 		DNH_FUNCAPI_DECL_(truncate);

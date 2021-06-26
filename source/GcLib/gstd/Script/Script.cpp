@@ -642,7 +642,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_fdiv_asi:
 			case command_kind::pc_inline_mod_asi:
 			case command_kind::pc_inline_pow_asi:
-			case command_kind::pc_inline_cat_asi:
+			//case command_kind::pc_inline_cat_asi:
 			{
 				auto PerformFunction = [&](value* dest, command_kind cmd, value* argv) {
 #define DEF_CASE(_c, _fn) case _c: *dest = BaseFunction::_fn(this, 2, argv); break;
@@ -654,7 +654,7 @@ void script_machine::run_code() {
 						DEF_CASE(command_kind::pc_inline_fdiv_asi, fdivide);
 						DEF_CASE(command_kind::pc_inline_mod_asi, remainder_);
 						DEF_CASE(command_kind::pc_inline_pow_asi, power);
-						DEF_CASE(command_kind::pc_inline_cat_asi, concatenate);
+						//DEF_CASE(command_kind::pc_inline_cat_asi, concatenate);
 					}
 #undef DEF_CASE
 				};
@@ -672,15 +672,37 @@ void script_machine::run_code() {
 					stack.pop_back();
 				}
 				else {
-					value* dest = &stack.back() - 1;
+					value* pArg = &stack.back() - 1;
+					value& pDest = *(pArg->as_ptr());
 
-					value arg[2] = { *dest->as_ptr(), dest[1] };
+					value arg[2] = { pDest, pArg[1] };
 					PerformFunction(&res, c->command, arg);
 
-					*(dest->as_ptr()) = res;
+					pDest = res;
 					stack.pop_back(2U);
 				}
-				
+				break;
+			}
+			case command_kind::pc_inline_cat_asi:
+			{
+				if (c->arg0) {
+					value* dest = find_variable_symbol(current.get(), c,
+						c->arg1, c->arg2, false);
+					if (dest == nullptr) break;
+
+					value arg[2] = { *dest, stack.back() };
+					BaseFunction::concatenate_direct(this, 2, arg);
+
+					stack.pop_back();
+				}
+				else {
+					value* pArg = &stack.back() - 1;
+
+					value arg[2] = { *(pArg->as_ptr()), pArg[1] };
+					BaseFunction::concatenate_direct(this, 2, arg);
+
+					stack.pop_back(2U);
+				}
 				break;
 			}
 			case command_kind::pc_inline_neg:
@@ -698,6 +720,7 @@ void script_machine::run_code() {
 				}
 #undef DEF_CASE
 
+				arg->make_unique();
 				*arg = res;
 				break;
 			}

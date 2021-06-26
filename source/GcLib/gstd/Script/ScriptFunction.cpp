@@ -731,7 +731,9 @@ namespace gstd {
 
 		type_data* type_array = argv[0].get_type();
 		type_data* type_appending = argv[1].get_type();
+
 		value result = argv[0];
+		result.make_unique();
 
 		_append_check(machine, type_array, type_appending);
 		type_data* type_target = type_array->get_element() == nullptr ?
@@ -745,26 +747,36 @@ namespace gstd {
 		}
 		return result;
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::concatenate) {
-		assert(argc == 2);
 
-		type_data* type_l = argv[0].get_type();
-		type_data* type_r = argv[1].get_type();
+	bool __chk_concat(script_machine* machine, type_data* type_l, type_data* type_r) {
 		if (type_l->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, type_l, "array concatenate");
-			return value();
+			return false;
 		}
-
 		if (type_l != type_r && !(type_l->get_element() == nullptr || type_r->get_element() == nullptr)) {
 			std::string error = StringUtility::Format("Value type does not match. (%s ~ %s)\r\n",
 				type_data::string_representation(type_l).c_str(),
 				type_data::string_representation(type_r).c_str());
 			machine->raise_error(error);
-			return value();
+			return false;
 		}
+		return true;
+	}
+	DNH_FUNCAPI_DEF_(BaseFunction::concatenate) {
+		__chk_concat(machine, argv[0].get_type(), argv[1].get_type());
+
+		value result = argv[0];
+		result.make_unique();
+		result.concatenate(argv[1]);
+
+		return result;
+	}
+	DNH_FUNCAPI_DEF_(BaseFunction::concatenate_direct) {
+		__chk_concat(machine, argv[0].get_type(), argv[1].get_type());
 
 		value result = argv[0];
 		result.concatenate(argv[1]);
+
 		return result;
 	}
 

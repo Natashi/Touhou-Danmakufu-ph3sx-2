@@ -181,14 +181,14 @@ void value::make_unique() {
 void value::append(type_data* t, const value& x) {
 	if (!has_data() || kind != type_data::tk_array)
 		this->reset(t, std::vector<value>());
-	make_unique();
+	//make_unique();
 	type = t;
 	p_array_value->push_back(x);
 }
 void value::concatenate(const value& x) {
 	if (!has_data() || kind != type_data::tk_array)
 		this->reset(x.type, std::vector<value>());
-	make_unique();
+	//make_unique();
 	if (type->get_element() == nullptr)
 		type = x.type;
 	p_array_value->insert(array_get_end(),
@@ -337,4 +337,10 @@ std::wstring value::as_string() const {
 		return result;
 	}
 	return L"(INVALID-TYPE)";
+}
+ref_unsync_ptr<std::vector<value>> value::as_array_ptr() const {
+	if (!has_data()) return nullptr;
+	if (kind == type_data::tk_array)
+		return p_array_value;
+	return nullptr;
 }

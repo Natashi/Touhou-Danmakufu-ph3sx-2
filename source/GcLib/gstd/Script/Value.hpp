@@ -104,5 +104,7 @@ namespace gstd {
 		bool as_boolean() const;
 		value* as_ptr() const { return ptr_value; }
 		std::wstring as_string() const;
+
+		ref_unsync_ptr<std::vector<value>> as_array_ptr() const;
 	};
 }
