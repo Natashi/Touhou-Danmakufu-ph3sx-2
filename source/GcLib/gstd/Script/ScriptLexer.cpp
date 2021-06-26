@@ -444,6 +444,8 @@ std::unordered_map<std::string, token_kind> script_scanner::token_map = {
 	//{ "char", token_kind::tk_decl_char },
 	//{ "string", token_kind::tk_decl_string },
 	//{ "bool", token_kind::tk_decl_bool },
+	// 
+	{ "ref", token_kind::tk_decl_mod_ref },
 
 	{ "as_int", token_kind::tk_cast_int },
 	{ "as_real", token_kind::tk_cast_real },
