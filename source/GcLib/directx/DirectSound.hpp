@@ -169,7 +169,13 @@ namespace directx {
 		friend DirectSoundManager;
 		friend DirectSoundManager::SoundManageThread;
 	public:
-		class PlayStyle;
+		struct PlayStyle {
+			bool bLoop_;				//Loop enable
+			double timeLoopStart_;		//Loop start (in seconds)
+			double timeLoopEnd_;		//Loop end (in seconds)
+			double timeStart_;			//Starting time (in seconds)
+			bool bResume_;				//Resume playing after Stop and Play?
+		};
 	public:
 		enum {
 			FADE_DEFAULT = 20,
@@ -203,9 +209,9 @@ namespace directx {
 		SoundFileFormat format_;
 
 		WAVEFORMATEX formatWave_;
-		bool bLoop_;				//Loop enable
-		double timeLoopStart_;		//Loop start (in seconds)
-		double timeLoopEnd_;		//Loop end (in seconds)
+
+		PlayStyle playStyle_;
+
 		bool bPause_;
 
 		bool bDelete_;
@@ -224,57 +230,46 @@ namespace directx {
 		SoundPlayer();
 		virtual ~SoundPlayer();
 
+		gstd::CriticalSection& GetLock() { return lock_; }
+
+		virtual void Restore() { pDirectSoundBuffer_->Restore(); }
+
+		void SetSoundDivision(SoundDivision* div);
+		void SetSoundDivision(int index);
+
 		SoundFileFormat GetFormat() { return format_; }
 
 		std::wstring& GetPath() { return path_; }
 		size_t GetPathHash() { return pathHash_; }
-		gstd::CriticalSection& GetLock() { return lock_; }
-		virtual void Restore() { pDirectSoundBuffer_->Restore(); }
-		void SetSoundDivision(SoundDivision* div);
-		void SetSoundDivision(int index);
 
 		virtual bool Play();
-		virtual bool Play(PlayStyle& style);
 		virtual bool Stop();
 		virtual bool IsPlaying();
+		void Delete() { bDelete_ = true; }
+
 		virtual bool Seek(double time) = 0;
 		virtual bool Seek(int64_t sample) = 0;
-		virtual bool SetVolumeRate(double rateVolume);
 		virtual void ResetStreamForSeek() {}
-		bool SetPanRate(double ratePan);
+
+		virtual bool SetVolumeRate(double rateVolume);
 		double GetVolumeRate();
+
+		bool SetPanRate(double ratePan);
+
 		void SetFade(double rateVolumeFadePerSec);
 		void SetFadeDelete(double rateVolumeFadePerSec);
-		void SetAutoDelete(bool bAuto = true) { bAutoDelete_ = bAuto; }
 		double GetFadeVolumeRate();
-		void Delete() { bDelete_ = true; }
+
+		void SetAutoDelete(bool bAuto = true) { bAutoDelete_ = bAuto; }
+
 		WAVEFORMATEX* GetWaveFormat() { return &formatWave_; }
+
+		PlayStyle* GetPlayStyle() { return &playStyle_; }
 
 		virtual DWORD GetCurrentPosition();
 		DWORD GetTotalAudioSize() { return audioSizeTotal_; }
 
 		void SetFrequency(DWORD freq);
-	};
-	class SoundPlayer::PlayStyle {
-		bool bLoop_;
-		double timeLoopStart_;
-		double timeLoopEnd_;
-		double timeStart_;
-		bool bRestart_;
-	public:
-		PlayStyle();
-		virtual ~PlayStyle();
-
-		void SetLoopEnable(bool bLoop) { bLoop_ = bLoop; }
-		bool IsLoopEnable() { return bLoop_; }
-		void SetLoopStartTime(double time) { timeLoopStart_ = time; }
-		double GetLoopStartTime() { return timeLoopStart_; }
-		void SetLoopEndTime(double time) { timeLoopEnd_ = time; }
-		double GetLoopEndTime() { return timeLoopEnd_; }
-		void SetStartTime(double time) { timeStart_ = time; }
-		double GetStartTime() { return timeStart_; }
-		bool IsRestart() { return bRestart_; }
-		void SetRestart(bool b) { bRestart_ = b; }
 	};
 
 	//*******************************************************************
@@ -308,7 +303,7 @@ namespace directx {
 
 		virtual void ResetStreamForSeek();
 
-		virtual bool Play(PlayStyle& style);
+		virtual bool Play();
 		virtual bool Stop();
 		virtual bool IsPlaying();
 
@@ -334,7 +329,7 @@ namespace directx {
 		SoundPlayerWave();
 		virtual ~SoundPlayerWave();
 
-		virtual bool Play(PlayStyle& style);
+		virtual bool Play();
 		virtual bool Stop();
 		virtual bool IsPlaying();
 		virtual bool Seek(double time);

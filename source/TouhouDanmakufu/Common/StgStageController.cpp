@@ -233,9 +233,9 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 			if (player) {
 				player->SetAutoDelete(true);
 				player->SetSoundDivision(SoundDivision::DIVISION_BGM);
-				SoundPlayer::PlayStyle style;
-				style.SetLoopEnable(true);
-				player->Play(style);
+
+				player->GetPlayStyle()->bLoop_ = true;
+				player->Play();
 			}
 		}
 	}
