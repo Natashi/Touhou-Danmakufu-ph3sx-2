@@ -73,7 +73,7 @@ public:
 	DxRect<LONG>* GetShotDeleteClip() { return &rcDeleteClip_; }
 
 	void DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius);
-	std::vector<int> GetShotIdInCircle(int typeOwner, int cx, int cy, int radius);
+	std::vector<int> GetShotIdInCircle(int typeOwner, int cx, int cy, int* radius);
 	size_t GetShotCount(int typeOwner);
 	size_t GetShotCountAll() { return listObj_.size(); }
 

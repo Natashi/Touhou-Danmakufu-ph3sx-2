@@ -187,16 +187,28 @@ void StgShotManager::AddShot(ref_unsync_ptr<StgShotObject> obj) {
 }
 
 void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius) {
-	int rr = 0;
-	if (radius)
-		rr = (*radius) * (*radius);
+	int r = radius ? *radius : 0;
+	int rr = r * r;
+
+	int rect_x1 = cx - r;
+	int rect_y1 = cy - r;
+	int rect_x2 = cx + r;
+	int rect_y2 = cy + r;
 
 	for (ref_unsync_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 		if (typeDelete == DEL_TYPE_SHOT && obj->IsSpellResist()) continue;
 
-		if (radius == nullptr || Math::HypotSq<int>(cx - obj->GetPositionX(), cy - obj->GetPositionY()) <= rr) {
+		int sx = obj->GetPositionX();
+		int sy = obj->GetPositionY();
+
+		bool bInCircle = radius == nullptr;
+		if (!bInCircle) {
+			bool bPassAABB = (sx > rect_x1 && sy > rect_y1) && (sx < rect_x2 && sy < rect_y2);
+			bInCircle = bPassAABB && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr;
+		}
+		if (bInCircle) {
 			if (typeTo == TO_TYPE_IMMEDIATE)
 				obj->DeleteImmediate();
 			else if (typeTo == TO_TYPE_FADE)
@@ -207,15 +219,29 @@ void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, i
 	}
 }
 
-std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, int cx, int cy, int radius) {
-	int rr = radius * radius;
+std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, int cx, int cy, int* radius) {
+	int r = radius ? *radius : 0;
+	int rr = r * r;
+
+	int rect_x1 = cx - r;
+	int rect_y1 = cy - r;
+	int rect_x2 = cx + r;
+	int rect_y2 = cy + r;
 
 	std::vector<int> res;
 	for (ref_unsync_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 
-		if (Math::HypotSq<int>(cx - obj->GetPositionX(), cy - obj->GetPositionY()) <= rr)
+		int sx = obj->GetPositionX();
+		int sy = obj->GetPositionY();
+
+		bool bInCircle = radius == nullptr;
+		if (!bInCircle) {
+			bool bPassAABB = (sx > rect_x1 && sy > rect_y1) && (sx < rect_x2&& sy < rect_y2);
+			bInCircle = bPassAABB && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr;
+		}
+		if (bInCircle)
 			res.push_back(obj->GetObjectID());
 	}
 
