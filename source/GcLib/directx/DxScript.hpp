@@ -409,7 +409,7 @@ namespace directx {
 		static gstd::value Func_ObjSound_SetLoopSampleCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjSound_Seek);
 		DNH_FUNCAPI_DECL_(Func_ObjSound_SeekSampleCount);
-		static gstd::value Func_ObjSound_SetRestartEnable(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_ObjSound_SetResumeEnable(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSound_SetSoundDivision(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSound_IsPlaying(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjSound_GetVolumeRate(gstd::script_machine* machine, int argc, const gstd::value* argv);
