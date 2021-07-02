@@ -39,7 +39,7 @@ shared_ptr<DxMesh> DxScriptResourceCache::GetMesh(const std::wstring& name) {
 		return itr->second;
 	return nullptr;
 }
-shared_ptr<Shader> DxScriptResourceCache::GetShader(const std::wstring& name) {
+shared_ptr<ShaderData> DxScriptResourceCache::GetShader(const std::wstring& name) {
 	auto itr = mapShader.find(name);
 	if (itr != mapShader.end())
 		return itr->second;
@@ -1003,12 +1003,13 @@ value DxScript::Func_PlayBGM(script_machine* machine, int argc, const value* arg
 		player->SetAutoDelete(true);
 		player->SetSoundDivision(SoundDivision::DIVISION_BGM);
 
-		SoundPlayer::PlayStyle style;
-		style.SetLoopEnable(true);
-		style.SetLoopStartTime(loopStart);
-		style.SetLoopEndTime(loopEnd);
+		SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
+		pStyle->bLoop_ = true;
+		pStyle->timeLoopStart_ = loopStart;
+		pStyle->timeLoopEnd_ = loopEnd;
+
 		//player->Play(style);
-		script->GetObjectManager()->ReserveSound(player, style);
+		script->GetObjectManager()->ReserveSound(player);
 	}
 	return value();
 }
@@ -1025,10 +1026,11 @@ gstd::value DxScript::Func_PlaySE(gstd::script_machine* machine, int argc, const
 		player->SetAutoDelete(true);
 		player->SetSoundDivision(SoundDivision::DIVISION_SE);
 
-		SoundPlayer::PlayStyle style;
-		style.SetLoopEnable(false);
+		SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
+		pStyle->bLoop_ = false;
+
 		//player->Play(style);
-		script->GetObjectManager()->ReserveSound(player, style);
+		script->GetObjectManager()->ReserveSound(player);
 	}
 	return value();
 }
@@ -1610,7 +1612,7 @@ value DxScript::Func_LoadShader(script_machine* machine, int argc, const value* 
 		res = shader != nullptr;
 		if (res) {
 			Lock lock(script->criticalSection_);
-			mapShader[path] = shader;
+			mapShader[path] = shader->GetData();
 		}
 	}
 	return script->CreateBooleanValue(res);
@@ -2938,24 +2940,25 @@ gstd::value DxScript::Func_ObjShader_SetShaderF(gstd::script_machine* machine, i
 		std::wstring path = argv[1].as_string();
 		path = PathProperty::GetUnique(path);
 
+		ShaderManager* manager = ShaderManager::GetBase();
 		auto& mapShader = script->pResouceCache_->mapShader;
+
+		shared_ptr<Shader> shader = nullptr;
 
 		auto itr = mapShader.find(path);
 		if (itr != mapShader.end()) {
-			obj->SetShader(itr->second);
-			res = true;
+			shader = manager->CreateFromData(itr->second);
 		}
 		else {
-			ShaderManager* manager = ShaderManager::GetBase();
-			shared_ptr<Shader> shader = manager->CreateFromFile(path);
-			obj->SetShader(shader);
-
-			res = shader != nullptr;
-			if (!res) {
+			shader = manager->CreateFromFile(path);
+			if (shader == nullptr) {
 				const std::wstring& error = manager->GetLastError();
 				script->RaiseError(error);
 			}
 		}
+
+		obj->SetShader(shader);
+		res = shader != nullptr;
 	}
 	return script->CreateBooleanValue(res);
 }
@@ -4133,7 +4136,7 @@ gstd::value DxScript::Func_ObjSound_Play(gstd::script_machine* machine, int argc
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			//obj->Play();
-			script->GetObjectManager()->ReserveSound(player, obj->GetStyle());
+			script->GetObjectManager()->ReserveSound(player);
 		}
 	}
 	return value();
@@ -4191,8 +4194,8 @@ gstd::value DxScript::Func_ObjSound_SetLoopEnable(gstd::script_machine* machine,
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
-			SoundPlayer::PlayStyle& style = obj->GetStyle();
-			style.SetLoopEnable(argv[1].as_boolean());
+			SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
+			pStyle->bLoop_ = argv[1].as_boolean();
 		}
 	}
 	return value();
@@ -4204,9 +4207,9 @@ gstd::value DxScript::Func_ObjSound_SetLoopTime(gstd::script_machine* machine, i
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
-			SoundPlayer::PlayStyle& style = obj->GetStyle();
-			style.SetLoopStartTime(argv[1].as_real());
-			style.SetLoopEndTime(argv[2].as_real());
+			SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
+			pStyle->timeLoopStart_ = argv[1].as_real();
+			pStyle->timeLoopEnd_ = argv[2].as_real();
 		}
 	}
 	return value();
@@ -4221,9 +4224,10 @@ gstd::value DxScript::Func_ObjSound_SetLoopSampleCount(gstd::script_machine* mac
 			WAVEFORMATEX* fmt = player->GetWaveFormat();
 			double startTime = argv[1].as_real() / (double)fmt->nSamplesPerSec;
 			double endTime = argv[2].as_real() / (double)fmt->nSamplesPerSec;;
-			SoundPlayer::PlayStyle& style = obj->GetStyle();
-			style.SetLoopStartTime(startTime);
-			style.SetLoopEndTime(endTime);
+
+			SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
+			pStyle->timeLoopStart_ = startTime;
+			pStyle->timeLoopEnd_ = endTime;
 		}
 	}
 	return value();
@@ -4235,12 +4239,15 @@ gstd::value DxScript::Func_ObjSound_Seek(gstd::script_machine* machine, int argc
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
-			//if (player->IsPlaying()) {
-			player->Seek(argv[1].as_real());
-			player->ResetStreamForSeek();
-		//}
-		//else
-		//	obj->GetStyle().SetStartTime(seekTime);
+			double time = argv[1].as_real();
+			if (player->IsPlaying()) {
+				player->Seek(time);
+				player->ResetStreamForSeek();
+			}
+			else {
+				SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
+				pStyle->timeStart_ = time;
+			}
 		}
 	}
 	return value();
@@ -4253,12 +4260,16 @@ gstd::value DxScript::Func_ObjSound_SeekSampleCount(gstd::script_machine* machin
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			WAVEFORMATEX* fmt = player->GetWaveFormat();
-			//if (player->IsPlaying()) {
-			player->Seek(argv[1].as_int());
-			player->ResetStreamForSeek();
-		//}
-		//else
-		//	obj->GetStyle().SetStartTime(seekSample / (double)fmt->nSamplesPerSec);
+
+			int64_t samp = argv[1].as_int();
+			if (player->IsPlaying()) {
+				player->Seek(samp);
+				player->ResetStreamForSeek();
+			}
+			else {
+				SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
+				pStyle->timeStart_ = samp / (double)fmt->nSamplesPerSec;
+			}
 		}
 	}
 	return value();
@@ -4270,8 +4281,8 @@ gstd::value DxScript::Func_ObjSound_SetRestartEnable(gstd::script_machine* machi
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
-			SoundPlayer::PlayStyle& style = obj->GetStyle();
-			style.SetRestart(argv[1].as_boolean());
+			SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
+			pStyle->bResume_ = argv[1].as_boolean();
 		}
 	}
 	return value();

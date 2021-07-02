@@ -637,12 +637,6 @@ namespace directx {
 	class DxScriptObjectManager {
 		friend DxScriptObjectBase;
 	public:
-		struct SoundInfo {
-			shared_ptr<SoundPlayer> player_;
-			SoundPlayer::PlayStyle style_;
-			virtual ~SoundInfo() {}
-		};
-
 		struct RenderList {
 			std::vector<ref_unsync_ptr<DxScriptObjectBase>> list;
 			size_t size = 0;
@@ -664,7 +658,7 @@ namespace directx {
 		std::vector<ref_unsync_ptr<DxScriptObjectBase>> obj_;
 		std::list<ref_unsync_ptr<DxScriptObjectBase>> listActiveObject_;
 
-		std::unordered_map<std::wstring, shared_ptr<SoundInfo>> mapReservedSound_;
+		std::unordered_map<std::wstring, shared_ptr<SoundPlayer>> mapReservedSound_;
 
 		bool bFogEnable_;
 		D3DCOLOR fogColor_;
@@ -718,8 +712,9 @@ namespace directx {
 		void ResetShader(int min, int max);
 		shared_ptr<Shader> GetShader(int index);
 
-		void ReserveSound(shared_ptr<SoundPlayer> player, SoundPlayer::PlayStyle& style);
+		void ReserveSound(shared_ptr<SoundPlayer> player);
 		void DeleteReservedSound(shared_ptr<SoundPlayer> player);
+
 		void SetFogParam(bool bEnable, D3DCOLOR fogColor, float start, float end);
 		size_t GetTotalObjectCreateCount() { return totalObjectCreateCount_; }
 

@@ -133,6 +133,10 @@ static const std::vector<function> commonFunction = {
 	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 5 },
 	{ "Rotate3D", ScriptClientBase::Func_Rotate3D, 9 },
 
+	//Rotation
+	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 3 },
+	{ "Rotate3D", ScriptClientBase::Func_Rotate3D, 6 },
+
 	//String functions
 	{ "ToString", ScriptClientBase::Func_ToString, 1 },
 	{ "IntToString", ScriptClientBase::Func_ItoA, 1 },
@@ -1409,6 +1413,58 @@ value ScriptClientBase::Func_Rotate3D(script_machine* machine, int argc, const v
 	};
 
 	return CreateRealArrayValue(res, 2U);
+}
+
+value ScriptClientBase::Func_Rotate2D(script_machine* machine, int argc, const value* argv) {
+	double x = argv[0].as_real();
+	double y = argv[1].as_real();
+
+	double sc[2];
+	Math::DoSinCos(Math::DegreeToRadian(argv[2].as_real()), sc);
+	
+	double res[2] = {
+		x * sc[1] - y * sc[0],
+		x * sc[0] + y * sc[1]
+	};
+	return CreateRealArrayValue(res, 2U);
+}
+value ScriptClientBase::Func_Rotate3D(script_machine* machine, int argc, const value* argv) {
+	double x = argv[0].as_real();
+	double y = argv[1].as_real();
+	double z = argv[2].as_real();
+
+	double sc_x[2];
+	double sc_y[2];
+	double sc_z[2];
+	Math::DoSinCos(Math::DegreeToRadian(argv[3].as_real()), sc_x);
+	Math::DoSinCos(Math::DegreeToRadian(argv[4].as_real()), sc_y);
+	Math::DoSinCos(Math::DegreeToRadian(argv[5].as_real()), sc_z);
+
+	double cx = sc_x[1];
+	double sx = sc_x[0];
+	double cy = sc_y[1];
+	double sy = sc_y[0];
+	double cz = sc_z[1];
+	double sz = sc_z[0];
+	double sx_sy = sx * sy;
+	double sx_cy = sx * cy;
+
+	double m11 = cy * cz - sx_sy * sz;
+	double m12 = -cx * sz;
+	double m13 = sy * cz + sx_cy * sz;
+	double m21 = cy * sz + sx_sy * cz;
+	double m22 = cx * cz;
+	double m23 = sy * sz - sx_cy * cz;
+	double m31 = -cx * sy;
+	double m32 = sx;
+	double m33 = cx * cy;
+
+	double res[3] = {
+		x * m11 + y * m21 + z * m31,
+		x * m12 + y * m22 + z * m32,
+		x * m13 + y * m23 + z * m33
+	};
+	return CreateRealArrayValue(res, 3U);
 }
 
 //組み込み関数：文字列操作

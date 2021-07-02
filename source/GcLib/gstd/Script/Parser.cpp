@@ -1327,7 +1327,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 		size_t ip_for_begin = state->ip;
 
-		if (state->next() == token_kind::tk_EACH) {				//Foreach loop
+		if (state->next() == token_kind::tk_EACH) {				//For-each loop
 			state->advance();
 			parser_assert(state, state->next() == token_kind::tk_open_par, "\"(\" is required.\r\n");
 
@@ -1339,10 +1339,12 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 				state->advance();
 			}
 
-			if (state->next() == token_kind::tk_decl_auto) state->advance();
-			else if (state->next() == token_kind::tk_const)
-				parser_assert(state, false, "The counter variable cannot be const.\r\n");
-
+			auto _SkipDecl = [&]() {
+				if (state->next() == token_kind::tk_decl_auto) state->advance();
+				else if (state->next() == token_kind::tk_const)
+					parser_assert(state, false, "The counter variable cannot be const.\r\n");
+			};
+			_SkipDecl();
 			parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
 
 			std::string iteratorName = state->lex->word;
@@ -1355,6 +1357,8 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 				//	j = array element
 
 				state->advance();
+
+				_SkipDecl();
 				parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
 
 				loopCounterName = iteratorName;
@@ -1372,11 +1376,19 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 				"\"in\" or a colon is required.\r\n");
 			state->advance();
 
+			bool bMakeArrayUnique = true;
+			if (state->next() == token_kind::tk_decl_mod_ref) {
+				bMakeArrayUnique = false;
+				state->advance();
+			}
+
 			size_t ip_var_format = state->ip;
 			state->AddCode(block, code(command_kind::pc_var_format, 0U, 0));
 
 			//The array
 			parse_expression(block, state);
+			if (bMakeArrayUnique)
+				state->AddCode(block, code(command_kind::pc_make_unique, 0));
 
 			parser_assert(state, state->next() == token_kind::tk_close_par, "\")\" is required.\r\n");
 			state->advance();
@@ -2106,26 +2118,6 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 		 *		pc_construct_array	4
 		 * into
 		 *		pc_push_value		[a, b, c, d]
-		 * 
-		 * 
-		 * Issue: breaks when a ternary is involved (FIXED)
-		 * Fuses
-		 *		pc_push_value		x
-		 *		pc_compare_e
-		 *		pc_jump_if_not		lab_1
-		 *		pc_push_value		a
-		 *		pc_jump				lab_2
-		 *	lab_1:
-		 *		pc_push_value		b
-		 *	lab_2:
-		 *		pc_construct_array	1
-		 * into
-		 *		pc_push_value		x
-		 *		pc_compare_e
-		 *		pc_jump_if_not		lab_1
-		 *		pc_push_value		a
-		 *		pc_jump				lab_2
-		 *		pc_push_value		[b]
 		 */
 		case command_kind::pc_construct_array:
 		{
@@ -2157,6 +2149,7 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 							value appending = ptrPushValueCode->data;
 							BaseFunction::_append_check(nullptr, arrayType, appending.get_type());
 							if (appending.get_type()->get_kind() != type_elem->get_kind()) {
+								appending.make_unique();
 								BaseFunction::_value_cast(&appending, type_elem->get_kind());
 							}
 							listPtrVal[i] = appending;

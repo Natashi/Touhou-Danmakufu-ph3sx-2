@@ -329,6 +329,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "CreateCurveLaserA1", StgStageScript::Func_CreateCurveLaserA1, 8 },
 	{ "SetShotIntersectionCircle", StgStageScript::Func_SetShotIntersectionCircle, 3 },
 	{ "SetShotIntersectionLine", StgStageScript::Func_SetShotIntersectionLine, 5 },
+	{ "GetShotIdAll", StgStageScript::Func_GetShotIdAll, 1 },
 	{ "GetShotIdInCircleA1", StgStageScript::Func_GetShotIdInCircleA1, 3 },
 	{ "GetShotIdInCircleA2", StgStageScript::Func_GetShotIdInCircleA2, 4 },
 	{ "GetShotCount", StgStageScript::Func_GetShotCount, 1 },
@@ -1898,6 +1899,23 @@ gstd::value StgStageScript::Func_SetShotIntersectionLine(gstd::script_machine* m
 
 	return value();
 }
+gstd::value StgStageScript::Func_GetShotIdAll(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	StgShotManager* shotManager = stageController->GetShotManager();
+	int target = argv[0].as_int();
+
+	int typeOwner = StgShotObject::OWNER_NULL;
+	switch (target) {
+	case TARGET_ALL:typeOwner = StgShotObject::OWNER_NULL; break;
+	case TARGET_PLAYER:typeOwner = StgShotObject::OWNER_PLAYER; break;
+	case TARGET_ENEMY:typeOwner = StgShotObject::OWNER_ENEMY; break;
+	}
+
+	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, 0, 0, nullptr);
+	return script->CreateIntArrayValue(listID);
+}
 gstd::value StgStageScript::Func_GetShotIdInCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
@@ -1908,7 +1926,7 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA1(gstd::script_machine* machi
 	int radius = argv[2].as_real();
 	int typeOwner = script->GetScriptType() == TYPE_PLAYER ? StgShotObject::OWNER_ENEMY : StgShotObject::OWNER_PLAYER;
 
-	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, radius);
+	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, &radius);
 	return script->CreateIntArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetShotIdInCircleA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1928,7 +1946,7 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA2(gstd::script_machine* machi
 	case TARGET_ENEMY:typeOwner = StgShotObject::OWNER_ENEMY; break;
 	}
 
-	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, radius);
+	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, &radius);
 	return script->CreateIntArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetShotCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {

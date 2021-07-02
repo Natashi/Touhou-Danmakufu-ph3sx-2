@@ -585,9 +585,12 @@ SoundPlayer::SoundPlayer() {
 	pathHash_ = 0;
 
 	ZeroMemory(&formatWave_, sizeof(WAVEFORMATEX));
-	bLoop_ = false;
-	timeLoopStart_ = 0;
-	timeLoopEnd_ = 0;
+
+	playStyle_.bLoop_ = false;
+	playStyle_.timeLoopStart_ = 0;
+	playStyle_.timeLoopEnd_ = 0;
+	playStyle_.timeStart_ = 0;
+	playStyle_.bResume_ = false;
 
 	bDelete_ = false;
 	bFadeDelete_ = false;
@@ -608,8 +611,8 @@ SoundPlayer::~SoundPlayer() {
 void SoundPlayer::_SetSoundInfo() {
 	shared_ptr<SoundInfo> info = manager_->GetSoundInfo(path_);
 	if (info == nullptr) return;
-	timeLoopStart_ = info->GetLoopStartTime();
-	timeLoopEnd_ = info->GetLoopEndTime();
+	playStyle_.timeLoopStart_ = info->GetLoopStartTime();
+	playStyle_.timeLoopEnd_ = info->GetLoopEndTime();
 }
 void SoundPlayer::SetSoundDivision(SoundDivision* div) {
 	division_ = div;
@@ -623,10 +626,6 @@ void SoundPlayer::SetSoundDivision(int index) {
 	}
 }
 bool SoundPlayer::Play() {
-	PlayStyle style;
-	return Play(style);
-}
-bool SoundPlayer::Play(PlayStyle& style) {
 	return false;
 }
 bool SoundPlayer::Stop() {
@@ -747,18 +746,6 @@ void SoundPlayer::SetFrequency(DWORD freq) {
 	//	DXGetErrorString(hr), DXGetErrorDescription(hr));
 }
 
-//PlayStyle
-SoundPlayer::PlayStyle::PlayStyle() {
-	bLoop_ = false;
-	timeLoopStart_ = 0;
-	timeLoopEnd_ = 0;
-	timeStart_ = 0;
-	bRestart_ = false;
-}
-SoundPlayer::PlayStyle::~PlayStyle() {
-
-}
-
 //*******************************************************************
 //SoundStreamingPlayer
 //*******************************************************************
@@ -840,7 +827,7 @@ void SoundStreamingPlayer::_CopyStream(int indexCopy) {
 		pDirectSoundBuffer_->Unlock(pMem1, dwSize1, pMem2, dwSize2);
 	}
 }
-bool SoundStreamingPlayer::Play(PlayStyle& style) {
+bool SoundStreamingPlayer::Play() {
 	if (IsPlaying()) return true;
 
 	{
@@ -851,21 +838,14 @@ bool SoundStreamingPlayer::Play(PlayStyle& style) {
 		bFadeDelete_ = false;
 
 		SetFade(0);
-
-		bLoop_ = style.IsLoopEnable();
-		timeLoopStart_ = style.GetLoopStartTime();
-		timeLoopEnd_ = style.GetLoopEndTime();
-		//		if(timeLoopEnd_ == 0)timeLoopEnd_ = (double)sizeWave_ / (double)formatWave_.nAvgBytesPerSec;
-		//		fadeValuePerMillSec_ = 0;
-
 		_SetSoundInfo();
 
 		bRequestStop_ = false;
-		if (!bPause_ || !style.IsRestart()) {
-			this->Seek(style.GetStartTime());
+		if (!bPause_ || !playStyle_.bResume_) {
+			this->Seek(playStyle_.timeStart_);
 			pDirectSoundBuffer_->SetCurrentPosition(0);
 		}
-		style.SetStartTime(0);
+		playStyle_.timeStart_ = 0;
 
 		if (bStreaming_) {
 			::ResetEvent(hEvent_[0]);
@@ -877,7 +857,7 @@ bool SoundStreamingPlayer::Play(PlayStyle& style) {
 		}
 		else {
 			DWORD dwFlags = 0;
-			if (style.IsLoopEnable())
+			if (playStyle_.bLoop_)
 				dwFlags = DSBPLAY_LOOPING;
 			pDirectSoundBuffer_->Play(0, 0, dwFlags);
 		}
@@ -1057,7 +1037,7 @@ bool SoundPlayerWave::_CreateBuffer(shared_ptr<gstd::FileReader> reader) {
 
 	return true;
 }
-bool SoundPlayerWave::Play(PlayStyle& style) {
+bool SoundPlayerWave::Play() {
 	{
 		Lock lock(lock_);
 		if (bFadeDelete_)
@@ -1067,13 +1047,13 @@ bool SoundPlayerWave::Play(PlayStyle& style) {
 		SetFade(0);
 
 		DWORD dwFlags = 0;
-		if (style.IsLoopEnable())
+		if (playStyle_.bLoop_)
 			dwFlags = DSBPLAY_LOOPING;
 
-		if (!bPause_ || !style.IsRestart()) {
-			this->Seek(style.GetStartTime());
+		if (!bPause_ || !playStyle_.bResume_) {
+			this->Seek(playStyle_.timeStart_);
 		}
-		style.SetStartTime(0);
+		playStyle_.timeStart_ = 0;
 
 		HRESULT hr = pDirectSoundBuffer_->Play(0, 0, dwFlags);
 		if (hr == DSERR_BUFFERLOST) {
@@ -1212,9 +1192,12 @@ bool SoundStreamingPlayerWave::_CreateBuffer(shared_ptr<gstd::FileReader> reader
 	return true;
 }
 size_t SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
+	double loopStart = playStyle_.timeLoopStart_;
+	double loopEnd = playStyle_.timeLoopEnd_;
+
 	size_t cSize = dwSize;
-	size_t posLoopStart = posWaveStart_ + timeLoopStart_ * formatWave_.nAvgBytesPerSec;
-	size_t posLoopEnd = posWaveStart_ + timeLoopEnd_ * formatWave_.nAvgBytesPerSec;
+	size_t posLoopStart = posWaveStart_ + loopStart * formatWave_.nAvgBytesPerSec;
+	size_t posLoopEnd = posWaveStart_ + loopEnd * formatWave_.nAvgBytesPerSec;
 	size_t blockSize = formatWave_.nBlockAlign;
 
 	reader_->Seek(lastReadPointer_);
@@ -1228,20 +1211,22 @@ size_t SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		size1 = dwSize - size2;
 
 		reader_->Read(pMem, size2);
-		Seek(timeLoopStart_);
-		if (bLoop_)
+
+		Seek(loopStart);
+		if (playStyle_.bLoop_)
 			reader_->Read((char*)pMem + size2, size1);
 		else
 			_RequestStop();
 	}
-	else if (cPos + cSize > posLoopEnd && timeLoopEnd_ > 0) {//ループの終端
+	else if (cPos + cSize > posLoopEnd && loopEnd > 0) {//ループの終端
 		size_t sizeOver = cPos + cSize - posLoopEnd; //ループを超えたデータのサイズ
 		size_t cSize1 = (cSize - sizeOver) / blockSize * blockSize;
 		size_t cSize2 = sizeOver / blockSize * blockSize;
 
 		reader_->Read(pMem, cSize1);
-		Seek(timeLoopStart_);
-		if (bLoop_)
+
+		Seek(loopStart);
+		if (playStyle_.bLoop_)
 			reader_->Read((char*)pMem + cSize1, cSize2);
 		else
 			_RequestStop();
@@ -1335,6 +1320,9 @@ bool SoundStreamingPlayerOgg::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 	return true;
 }
 size_t SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
+	double loopStart = playStyle_.timeLoopStart_;
+	double loopEnd = playStyle_.timeLoopEnd_;
+
 	size_t blockSize = formatWave_.nBlockAlign;
 
 	ov_pcm_seek(&fileOgg_, lastReadPointer_);
@@ -1348,9 +1336,9 @@ size_t SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		size_t cSize = dwSize - sizeWriteTotal;
 		double cTime = (double)cSize / (double)formatWave_.nAvgBytesPerSec;
 
-		if (timeCurrent + cTime > timeLoopEnd_ && timeLoopEnd_ > 0) {
+		if (timeCurrent + cTime > loopEnd && loopEnd > 0) {
 			//ループ終端
-			double timeOver = timeCurrent + cTime - timeLoopEnd_;
+			double timeOver = timeCurrent + cTime - loopEnd;
 			double cTime1 = cTime - timeOver;
 
 			size_t cSize1 = cTime1 * formatWave_.nAvgBytesPerSec;
@@ -1373,8 +1361,8 @@ size_t SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 				timeCurrent += (double)size1Write / (double)formatWave_.nAvgBytesPerSec;
 			}
 
-			if (bLoop_) {
-				Seek(timeLoopStart_);
+			if (playStyle_.bLoop_) {
+				Seek(loopStart);
 			}
 			else {
 				_RequestStop();
@@ -1387,8 +1375,8 @@ size_t SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 			timeCurrent += (double)sizeWrite / (double)formatWave_.nAvgBytesPerSec;
 
 			if (sizeWrite == 0) {//ファイル終点
-				if (bLoop_) {
-					Seek(timeLoopStart_);
+				if (playStyle_.bLoop_) {
+					Seek(loopStart);
 				}
 				else {
 					_RequestStop();
@@ -1656,6 +1644,9 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<gstd::FileReader> reader)
 	return true;
 }
 size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
+	double loopStart = playStyle_.timeLoopStart_;
+	double loopEnd = playStyle_.timeLoopEnd_;
+
 	size_t blockSize = formatWave_.nBlockAlign;
 
 	reader_->Seek(lastReadPointer_);
@@ -1668,9 +1659,9 @@ size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		size_t cSize = dwSize - sizeWriteTotal;
 		double cTime = (double)cSize / (double)formatWave_.nAvgBytesPerSec;
 
-		if (timeCurrent_ + cTime > timeLoopEnd_ && timeLoopEnd_ > 0) {
+		if (timeCurrent_ + cTime > loopEnd && loopEnd > 0) {
 			//ループ終端
-			double timeOver = timeCurrent_ + cTime - timeLoopEnd_;
+			double timeOver = timeCurrent_ + cTime - loopEnd;
 			double cTime1 = cTime - timeOver;
 			size_t cSize1 = cTime1 * formatWave_.nAvgBytesPerSec;
 			cSize1 = cSize1 / blockSize * blockSize;
@@ -1692,8 +1683,8 @@ size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 				timeCurrent_ += (double)size1Write / (double)formatWave_.nAvgBytesPerSec;
 			}
 
-			if (bLoop_) {
-				Seek(timeLoopStart_);
+			if (playStyle_.bLoop_) {
+				Seek(loopStart);
 			}
 			else {
 				_RequestStop();
@@ -1706,8 +1697,8 @@ size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 			timeCurrent_ += (double)sizeWrite / (double)formatWave_.nAvgBytesPerSec;
 
 			if (sizeWrite == 0) {//ファイル終点
-				if (bLoop_) {
-					Seek(timeLoopStart_);
+				if (playStyle_.bLoop_) {
+					Seek(loopStart);
 				}
 				else {
 					_RequestStop();

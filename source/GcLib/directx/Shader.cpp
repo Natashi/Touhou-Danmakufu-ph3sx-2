@@ -58,7 +58,6 @@ bool ShaderManager::Initialize() {
 void ShaderManager::Clear() {
 	{
 		Lock lock(lock_);
-		mapShader_.clear();
 		mapShaderData_.clear();
 	}
 }
@@ -86,6 +85,7 @@ void ShaderManager::_ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderD
 }
 bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderData>& dest) {
 	lastError_ = L"";
+
 	auto itr = mapShaderData_.find(path);
 	if (itr != mapShaderData_.end()) {
 		dest = itr->second;
@@ -138,6 +138,7 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 }
 bool ShaderManager::_CreateFromText(const std::string& source, shared_ptr<ShaderData>& dest) {
 	lastError_ = L"";
+
 	std::wstring id = _GetTextSourceID(source);
 	auto itr = mapShaderData_.find(id);
 	if (itr != mapShaderData_.end()) {
@@ -272,18 +273,13 @@ shared_ptr<Shader> ShaderManager::CreateFromFile(const std::wstring& path) {
 	shared_ptr<Shader> res = nullptr;
 	{
 		Lock lock(lock_);
-		auto itr = mapShader_.find(path);
-		if (itr != mapShader_.end()) {
-			res = itr->second;
-		}
-		else {
-			shared_ptr<ShaderData> data = nullptr;
-			if (_CreateFromFile(path, data)) {
-				res = std::make_shared<Shader>();
-				res->data_ = data;
 
-				//mapShader_[path] = res;
-			}
+		shared_ptr<ShaderData> data = nullptr;
+		_CreateFromFile(path, data);
+
+		if (data) {
+			res = std::make_shared<Shader>();
+			res->data_ = data;
 		}
 	}
 	return res;
@@ -292,20 +288,25 @@ shared_ptr<Shader> ShaderManager::CreateFromText(const std::string& source) {
 	shared_ptr<Shader> res = nullptr;
 	{
 		Lock lock(lock_);
-		std::wstring id = _GetTextSourceID(source);
 
-		auto itr = mapShader_.find(id);
-		if (itr != mapShader_.end()) {
-			res = itr->second;
+		shared_ptr<ShaderData> data = nullptr;
+		_CreateFromText(source, data);
+
+		if (data) {
+			res = std::make_shared<Shader>();
+			res->data_ = data;
 		}
-		else {
-			shared_ptr<ShaderData> data = nullptr;
-			if (_CreateFromText(source, data)) {
-				res = std::make_shared<Shader>();
-				res->data_ = data;
+	}
+	return res;
+}
+shared_ptr<Shader> ShaderManager::CreateFromData(shared_ptr<ShaderData> data) {
+	shared_ptr<Shader> res = nullptr;
+	{
+		Lock lock(lock_);
 
-				//mapShader_[id] = res;
-			}
+		if (data) {
+			res = std::make_shared<Shader>();
+			res->data_ = data;
 		}
 	}
 	return res;
@@ -327,30 +328,6 @@ shared_ptr<Shader> ShaderManager::CreateFromFileInLoadThread(const std::wstring&
 	return false;
 }
 void ShaderManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event) {
-}
-
-void ShaderManager::AddShader(const std::wstring& name, shared_ptr<Shader> shader) {
-	{
-		Lock lock(lock_);
-		mapShader_[name] = shader;
-	}
-}
-void ShaderManager::DeleteShader(const std::wstring& name) {
-	{
-		Lock lock(lock_);
-		mapShader_.erase(name);
-	}
-}
-shared_ptr<Shader> ShaderManager::GetShader(const std::wstring& name) {
-	shared_ptr<Shader> res = nullptr;
-	{
-		Lock lock(lock_);
-		auto itr = mapShader_.find(name);
-		if (itr != mapShader_.end()) {
-			res = itr->second;
-		}
-	}
-	return res;
 }
 
 //*******************************************************************
@@ -460,20 +437,19 @@ ID3DXEffect* Shader::GetEffect() {
 	if (data_) res = data_->effect_;
 	return res;
 }
-bool Shader::CreateFromFile(const std::wstring& path) {
-	//path = PathProperty::GetUnique(path);
 
+bool Shader::CreateFromFile(const std::wstring& path) {
 	bool res = false;
 	{
 		Lock lock(ShaderManager::GetBase()->GetLock());
 		if (data_) Release();
+
 		ShaderManager* manager = ShaderManager::GetBase();
 		shared_ptr<Shader> shader = manager->CreateFromFile(path);
 		if (shader)
 			data_ = shader->data_;
 		res = data_ != nullptr;
 	}
-
 	return res;
 }
 bool Shader::CreateFromText(const std::string& source) {
@@ -481,14 +457,27 @@ bool Shader::CreateFromText(const std::string& source) {
 	{
 		Lock lock(ShaderManager::GetBase()->GetLock());
 		if (data_) Release();
+
 		ShaderManager* manager = ShaderManager::GetBase();
 		shared_ptr<Shader> shader = manager->CreateFromText(source);
-		if (shader) {
+		if (shader)
 			data_ = shader->data_;
-		}
 		res = data_ != nullptr;
 	}
-
+	return res;
+}
+bool Shader::CreateFromData(shared_ptr<ShaderData> data) {
+	bool res = false;
+	{
+		Lock lock(ShaderManager::GetBase()->GetLock());
+		if (data_) Release();
+		
+		ShaderManager* manager = ShaderManager::GetBase();
+		shared_ptr<Shader> shader = manager->CreateFromData(data);
+		if (shader)
+			data_ = shader->data_;
+		res = data_ != nullptr;
+	}
 	return res;
 }
 

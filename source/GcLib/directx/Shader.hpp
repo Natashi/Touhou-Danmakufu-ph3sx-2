@@ -43,7 +43,7 @@ namespace directx {
 		static ShaderManager* thisBase_;
 	protected:
 		gstd::CriticalSection lock_;
-		std::map<std::wstring, shared_ptr<Shader>> mapShader_;
+
 		std::map<std::wstring, shared_ptr<ShaderData>> mapShaderData_;
 
 		std::wstring lastError_;
@@ -74,15 +74,13 @@ namespace directx {
 		virtual bool IsDataExists(const std::wstring& name);
 		virtual std::map<std::wstring, shared_ptr<ShaderData>>::iterator IsDataExistsItr(std::wstring& name);
 		shared_ptr<ShaderData> GetShaderData(const std::wstring& name);
+
 		shared_ptr<Shader> CreateFromFile(const std::wstring& path);
 		shared_ptr<Shader> CreateFromText(const std::string& source);
+		shared_ptr<Shader> CreateFromData(shared_ptr<ShaderData> data);
 		shared_ptr<Shader> CreateUnmanagedFromEffect(ID3DXEffect* effect);
 		shared_ptr<Shader> CreateFromFileInLoadThread(const std::wstring& path);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
-
-		void AddShader(const std::wstring& name, shared_ptr<Shader> shader);
-		void DeleteShader(const std::wstring& name);
-		shared_ptr<Shader> GetShader(const std::wstring& name);
 
 		std::wstring& GetLastError() { return lastError_; }
 	};
@@ -142,10 +140,13 @@ namespace directx {
 
 		bool LoadParameter();
 
+		shared_ptr<ShaderData> GetData() { return data_; }
 		ID3DXEffect* GetEffect();
 
 		bool CreateFromFile(const std::wstring& path);
 		bool CreateFromText(const std::string& source);
+		bool CreateFromData(shared_ptr<ShaderData> data);
+
 		bool IsLoad() { return data_ != nullptr && data_->bLoad_; }
 
 		bool SetTechnique(const std::string& name);

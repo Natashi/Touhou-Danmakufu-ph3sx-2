@@ -773,7 +773,7 @@ bool DxSoundObject::Load(const std::wstring& path) {
 }
 void DxSoundObject::Play() {
 	if (player_)
-		player_->Play(style_);
+		player_->Play();
 }
 
 //****************************************************************************
@@ -1367,9 +1367,8 @@ void DxScriptObjectManager::WorkObject() {
 	//Play cached sounds
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 	for (auto itrSound = mapReservedSound_.begin(); itrSound != mapReservedSound_.end(); ++itrSound) {
-		shared_ptr<SoundInfo>& info = itrSound->second;
-		shared_ptr<SoundPlayer>& player = info->player_;
-		player->Play(info->style_);
+		shared_ptr<SoundPlayer> player = itrSound->second;
+		player->Play();
 	}
 	mapReservedSound_.clear();
 }
@@ -1456,13 +1455,9 @@ void DxScriptObjectManager::ResetShader(int min, int max) {
 	SetShader(nullptr, min, max);
 }
 
-void DxScriptObjectManager::ReserveSound(shared_ptr<SoundPlayer> player, SoundPlayer::PlayStyle& style) {
-	shared_ptr<SoundInfo> info(new SoundInfo());
-	info->player_ = player;
-	info->style_ = style;
-
+void DxScriptObjectManager::ReserveSound(shared_ptr<SoundPlayer> player) {
 	const std::wstring& path = player->GetPath();
-	mapReservedSound_[path] = info;
+	mapReservedSound_[path] = player;
 }
 void DxScriptObjectManager::DeleteReservedSound(shared_ptr<SoundPlayer> player) {
 	const std::wstring& path = player->GetPath();

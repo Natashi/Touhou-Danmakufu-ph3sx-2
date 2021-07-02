@@ -71,7 +71,7 @@ value::~value() {
 void value::release() {
 	if (!has_data()) return;
 	if (kind == type_data::tk_array)
-		array_value.~vector();
+		p_array_value.~ref_count_ptr();
 }
 
 value* value::reset(type_data* t, int64_t v) {
@@ -134,7 +134,14 @@ value* value::set(type_data* t, value* v) {
 value* value::set(type_data* t, std::vector<value>& v) {
 	kind = type_data::tk_array;
 	type = t;
-	new (&array_value) auto(v);
+	ref_unsync_ptr<std::vector<value>> nv = new std::vector<value>(v);
+	new (&p_array_value) auto(nv);
+	return this;
+}
+value* value::set(type_data* t, ref_unsync_ptr<std::vector<value>> v) {
+	kind = type_data::tk_array;
+	type = t;
+	new (&p_array_value) auto(v);
 	return this;
 }
 #pragma pop_macro("new")
@@ -157,51 +164,61 @@ value& value::operator=(const value& source) {
 		else if (kind == type_data::tk_pointer)
 			this->set(source.type, source.ptr_value);
 		else if (kind == type_data::tk_array)
-			this->set(source.type, (std::vector<value>&)source.array_value);
+			this->set(source.type, source.p_array_value);
 	}
 
 	return *this;
 }
 
+void value::make_unique() {
+	if (has_data() && kind == type_data::tk_array) {
+		if (p_array_value.use_count() == 1) return;
+		std::vector<value> vec = *p_array_value.get();
+		this->reset(type, vec);
+	}
+}
+
+void value::append(type_data* t, const value& x) {
+	if (!has_data() || kind != type_data::tk_array)
+		this->reset(t, std::vector<value>());
+	//make_unique();
+	type = t;
+	p_array_value->push_back(x);
+}
+void value::concatenate(const value& x) {
+	if (!has_data() || kind != type_data::tk_array)
+		this->reset(x.type, std::vector<value>());
+	//make_unique();
+	if (type->get_element() == nullptr)
+		type = x.type;
+	p_array_value->insert(array_get_end(),
+		x.array_get_begin(), x.array_get_end());
+}
+
 size_t value::length_as_array() const {
 	if (has_data() && kind == type_data::tk_array)
-		return array_value.size();
+		return p_array_value->size();
 	return 0U;
 }
 const value& value::index_as_array(size_t i) const {
 	if (has_data() && kind == type_data::tk_array)
-		return array_value[i];
+		return p_array_value->at(i);
 	return value();
 }
 value& value::index_as_array(size_t i) {
 	if (has_data() && kind == type_data::tk_array)
-		return array_value[i];
+		return p_array_value->at(i);
 	return value();
 }
 std::vector<value>::iterator value::array_get_begin() const {
 	if (has_data() && kind == type_data::tk_array)
-		return ((std::vector<value>*)&array_value)->begin();
+		return p_array_value->begin();
 	return std::vector<value>::iterator();
 }
 std::vector<value>::iterator value::array_get_end() const {
 	if (has_data() && kind == type_data::tk_array)
-		return ((std::vector<value>*)&array_value)->end();
+		return p_array_value->end();
 	return std::vector<value>::iterator();
-}
-
-void value::append(type_data* t, const value& x) {
-	if (!has_data() || (kind == type_data::tk_array) == 0)
-		this->reset(t, std::vector<value>());
-	type = t;
-	array_value.push_back(x);
-}
-void value::concatenate(const value& x) {
-	if (!has_data() || (kind == type_data::tk_array) == 0)
-		this->reset(x.type, std::vector<value>());
-	if (type->get_element() == nullptr)
-		type = x.type;
-	array_value.insert(array_get_end(),
-		x.array_get_begin(), x.array_get_end());
 }
 
 int64_t value::as_int() const {
@@ -283,7 +300,7 @@ bool value::as_boolean() const {
 	if (kind == type_data::tk_pointer)
 		return (ptr_value != nullptr);
 	if (kind == type_data::tk_array)
-		return (array_value.size() != 0U);
+		return (p_array_value->size() != 0U);
 	return false;
 }
 std::wstring value::as_string() const {
@@ -302,15 +319,15 @@ std::wstring value::as_string() const {
 		std::wstring result = L"";
 		if (type_data* elem = type->get_element()) {
 			if (elem->get_kind() == type_data::tk_char) {
-				for (auto& iChar : array_value)
-					result += iChar.as_char();
+				for (auto itr = p_array_value->begin(); itr != p_array_value->end(); ++itr)
+					result += itr->as_char();
 			}
 			else {
 				result = L"[";
-				auto itr = array_value.begin();
-				while (itr != array_value.end()) {
+				auto itr = p_array_value->begin();
+				while (itr != p_array_value->end()) {
 					result += itr->as_string();
-					if ((++itr) == array_value.end()) break;
+					if ((++itr) == p_array_value->end()) break;
 					result += L",";
 				}
 				result += L"]";
@@ -320,4 +337,10 @@ std::wstring value::as_string() const {
 		return result;
 	}
 	return L"(INVALID-TYPE)";
+}
+ref_unsync_ptr<std::vector<value>> value::as_array_ptr() const {
+	if (!has_data()) return nullptr;
+	if (kind == type_data::tk_array)
+		return p_array_value;
+	return nullptr;
 }
