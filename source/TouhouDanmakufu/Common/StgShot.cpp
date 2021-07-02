@@ -2882,7 +2882,7 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 
             for (size_t iWay = 0U; iWay < shotWay_; ++iWay) {
                 //Will always be just a little short of a full 1, intentional.
-                float rate = iWay / (float)shotWay_;
+                float rate = shotWay_ > 1U ? iWay / ((float)shotWay_ - 1) : 0.5f;
 
                 float _sx = Math::Lerp::Linear(from_pos[0], to_pos[0], rate);
                 float _sy = Math::Lerp::Linear(from_pos[1], to_pos[1], rate);
