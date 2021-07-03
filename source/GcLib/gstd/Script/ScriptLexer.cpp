@@ -432,25 +432,32 @@ throw_err_no_decimal:
 		}
 	}
 
-	token_list.push_front(next);
-	if (token_list.size() > MAX_TOKEN_LIST) token_list.pop_back();
+	{
+		prev_ptr_list.push_front(current);
+		if (prev_ptr_list.size() > MAX_TOKEN_LIST) prev_ptr_list.pop_back();
+
+		token_list.push_front(next);
+		if (token_list.size() > MAX_TOKEN_LIST) token_list.pop_back();
+	}
 }
 
 std::unordered_map<std::string, token_kind> script_scanner::token_map = {
 	{ "let", token_kind::tk_decl_auto },
 	{ "var", token_kind::tk_decl_auto },
-	{ "const", token_kind::tk_const },
 	{ "real", token_kind::tk_decl_real },
-	//{ "char", token_kind::tk_decl_char },
-	//{ "string", token_kind::tk_decl_string },
-	//{ "bool", token_kind::tk_decl_bool },
-	// 
+	{ "int", token_kind::tk_decl_int },
+	{ "char", token_kind::tk_decl_char },
+	{ "string", token_kind::tk_decl_string },
+	{ "bool", token_kind::tk_decl_bool },
+
+	{ "const", token_kind::tk_decl_mod_const },
 	{ "ref", token_kind::tk_decl_mod_ref },
 
 	{ "as_int", token_kind::tk_cast_int },
 	{ "as_real", token_kind::tk_cast_real },
 	{ "as_char", token_kind::tk_cast_char },
 	{ "as_bool", token_kind::tk_cast_bool },
+	{ "as_string", token_kind::tk_cast_string },
 
 	{ "length", token_kind::tk_LENGTH },
 

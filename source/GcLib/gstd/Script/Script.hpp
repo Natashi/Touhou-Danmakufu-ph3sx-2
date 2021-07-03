@@ -23,8 +23,9 @@ namespace gstd {
 		static type_data* get_int_array_type() { return base_->int_array_type; }
 		static type_data* get_real_array_type() { return base_->real_array_type; }
 
-		type_data* get_array_type(type_data* element);
+		type_data* get_type(type_data* type);
 		type_data* get_type(type_data::type_kind kind);
+		type_data* get_array_type(type_data* element);
 
 		static script_type_manager* get_instance() { return base_; }
 	private:

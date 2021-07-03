@@ -56,20 +56,6 @@ namespace gstd {
 
 	//-------------------------------------------------------------------------------------------
 
-	static inline bool _type_check_two_any(type_data* type_l, type_data* type_r, uint8_t type) {
-		if (type_l != nullptr && type_r != nullptr) {
-			uint8_t type_combine = (uint8_t)type_l->get_kind() | (uint8_t)type_r->get_kind();
-			return (type_combine & type) != 0;
-		}
-		return false;
-	}
-	static inline bool _type_check_two_all(type_data* type_l, type_data* type_r, uint8_t type) {
-		if (type_l != nullptr && type_r != nullptr) {
-			uint8_t type_combine = (uint8_t)type_l->get_kind() & (uint8_t)type_r->get_kind();
-			return (type_combine & type) != 0;
-		}
-		return false;
-	}
 	static inline const bool _is_force_convert_real(type_data* type) {
 		return type->get_kind() & (type_data::tk_real | type_data::tk_array);
 	}
@@ -103,10 +89,13 @@ namespace gstd {
 	}
 	bool BaseFunction::_type_assign_check(script_machine* machine, const value* v_src, const value* v_dst) {
 		if (!v_dst->has_data()) return true;	//dest is null, assign ahead
-
 		type_data* type_src = v_src->get_type();
 		type_data* type_dst = v_dst->get_type();
-		if (v_src->has_data()) {
+		return _type_assign_check(machine, type_src, type_dst);
+	}
+	bool BaseFunction::_type_assign_check(script_machine* machine, type_data* type_src, type_data* type_dst) {
+		if (type_dst == nullptr) return true;	//dest is null, assign ahead
+		if (type_src) {
 			if (type_src == type_dst)
 				return true;	//Same type
 			else if (!_type_check_two_any(type_dst, type_src, type_data::tk_array))
@@ -117,7 +106,7 @@ namespace gstd {
 		}
 		{
 			std::string error = StringUtility::Format(
-				"Variable assignment cannot implicitly convert from \"%s\" to \"%s\".\r\n",
+				"Cannot implicitly convert from \"%s\" to \"%s\".\r\n",
 				type_data::string_representation(type_src).c_str(),
 				type_data::string_representation(type_dst).c_str());
 			if (machine) machine->raise_error(error);
@@ -139,11 +128,26 @@ namespace gstd {
 		}
 		{
 			std::string error = StringUtility::Format(
-				"Variable assignment cannot assign type \"%s\" to type \"%s\".\r\n",
+				"Cannot assign type \"%s\" to type \"%s\".\r\n",
 				type_data::string_representation(type_dst).c_str(),
 				type_data::string_representation(type_src).c_str());
 			if (machine) machine->raise_error(error);
 			else throw error;
+		}
+		return false;
+	}
+
+	bool BaseFunction::_type_check_two_any(type_data* type_l, type_data* type_r, uint8_t type) {
+		if (type_l != nullptr && type_r != nullptr) {
+			uint8_t type_combine = (uint8_t)type_l->get_kind() | (uint8_t)type_r->get_kind();
+			return (type_combine & type) != 0;
+		}
+		return false;
+	}
+	bool BaseFunction::_type_check_two_all(type_data* type_l, type_data* type_r, uint8_t type) {
+		if (type_l != nullptr && type_r != nullptr) {
+			uint8_t type_combine = (uint8_t)type_l->get_kind() & (uint8_t)type_r->get_kind();
+			return (type_combine & type) != 0;
 		}
 		return false;
 	}
@@ -191,10 +195,13 @@ namespace gstd {
 			return (i < 0) ? ((j - ((-i) % j)) % j) : (i % j);
 	}
 
-	value* BaseFunction::_value_cast(value* val, type_data::type_kind kind) {
-		if (val == nullptr || val->get_type() == nullptr || val->get_type()->get_kind() == kind)
+	value* BaseFunction::_value_cast(value* val, type_data* cast) {
+		return _value_cast(val, cast->get_kind());
+	}
+	value* BaseFunction::_value_cast(value* val, type_data::type_kind cast) {
+		if (val == nullptr || val->get_type() == nullptr || val->get_type()->get_kind() == cast)
 			return val;
-		switch (kind) {
+		switch (cast) {
 		case type_data::tk_int:
 			return val->reset(script_type_manager::get_int_type(), val->as_int());
 		case type_data::tk_real:
@@ -277,9 +284,25 @@ namespace gstd {
 		return res;
 	}
 
+	type_data::type_kind BaseFunction::_typeof(type_data* type) {
+		if (type->get_kind() == type_data::tk_array) {
+			type_data* elem = type->get_element();
+			if (elem && elem->get_kind() == type_data::tk_char) {	//String
+				return type_data::tk_string;
+			}
+		}
+		return type->get_kind();
+	}
+	type_data::type_kind BaseFunction::_rtypeof(type_data* type) {
+		type_data* typec = type;
+		while (typec->get_kind() == type_data::tk_array)
+			typec = typec->get_element();
+		return typec->get_kind();
+	}
+
 	//-------------------------------------------------------------------------------------------
 
-	value BaseFunction::_cast_array(script_machine* machine, const value* argv, type_data* target) {
+	value BaseFunction::_cast_array(script_machine* machine, const value* argv, type_data::type_kind target, bool bSetType) {
 		type_data* arg0_type = argv->get_type();
 		if (arg0_type == nullptr || arg0_type->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, arg0_type, "array cast");
@@ -291,25 +314,43 @@ namespace gstd {
 				std::vector<value> arrVal(argv->length_as_array());
 				for (size_t i = 0; i < arrVal.size(); ++i) {
 					value nv = argv->index_as_array(i);
-					BaseFunction::_value_cast(&nv, target->get_kind());
+					if (nv.get_type()->get_kind() == type_data::tk_array)
+						nv = _cast_array(machine, &nv, target, false);
+					else
+						BaseFunction::_value_cast(&nv, target);
 					arrVal[i] = nv;
 				}
-				res.set(script_type_manager::get_instance()->get_array_type(target), arrVal);
+
+				{
+					script_type_manager* typeManager = script_type_manager::get_instance();
+					type_data* setType = nullptr;
+
+					if (bSetType) {
+						type_data tmp = type_data(target, nullptr);
+						setType = typeManager->get_type(&tmp);
+
+						for (type_data* iType = argv->get_type(); iType->get_element(); iType = iType->get_element())
+							setType = typeManager->get_array_type(setType);
+					}
+					else setType = script_type_manager::get_string_type();
+
+					res.set(setType, arrVal);
+				}
 			}
 			return res;
 		}
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::cast_int_array) {
-		return _cast_array(machine, argv, script_type_manager::get_int_type());
+		return _cast_array(machine, argv, type_data::tk_int, true);
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::cast_real_array) {
-		return _cast_array(machine, argv, script_type_manager::get_real_type());
+		return _cast_array(machine, argv, type_data::tk_real, true);
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::cast_bool_array) {
-		return _cast_array(machine, argv, script_type_manager::get_boolean_type());
+		return _cast_array(machine, argv, type_data::tk_boolean, true);
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::cast_char_array) {
-		return _cast_array(machine, argv, script_type_manager::get_char_type());
+		return _cast_array(machine, argv, type_data::tk_char, true);
 		//return value(script_type_manager::get_string_type(), argv->as_string());
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::cast_x_array) {
@@ -329,8 +370,7 @@ namespace gstd {
 			return value();
 		}
 		}
-		return _cast_array(machine, argv, 
-			script_type_manager::get_instance()->get_type(targetKind));
+		return _cast_array(machine, argv, targetKind, true);
 	}
 
 	value BaseFunction::_script_add(int argc, const value* argv) {
@@ -616,7 +656,7 @@ namespace gstd {
 					fill = argv[2];
 					if (oldSize > 0) {
 						if (!BaseFunction::_append_check(machine, valType, fill.get_type())) return value();
-						BaseFunction::_value_cast(&fill, valType->get_element()->get_kind());
+						BaseFunction::_value_cast(&fill, valType->get_element());
 					}
 					else newType = script_type_manager::get_instance()->get_array_type(fill.get_type());
 				}
@@ -741,7 +781,7 @@ namespace gstd {
 		{
 			value appending = argv[1];
 			if (appending.get_type()->get_kind() != type_target->get_element()->get_kind()) {
-				BaseFunction::_value_cast(&appending, type_target->get_element()->get_kind());
+				BaseFunction::_value_cast(&appending, type_target->get_element());
 			}
 			result.append(type_target, appending);
 		}
@@ -848,22 +888,12 @@ namespace gstd {
 #undef BITWISE_RET
 
 	DNH_FUNCAPI_DEF_(BaseFunction::typeOf) {
-		type_data* type = argv->get_type();
-
-		if (type->get_kind() == type_data::type_kind::tk_array) {
-			type_data* elem = type->get_element();
-			if (elem && elem->get_kind() == type_data::type_kind::tk_char)	//String
-				return value(script_type_manager::get_int_type(), (int64_t)type_data::tk_array + 1);
-		}
-
-		return value(script_type_manager::get_int_type(), (int64_t)type->get_kind());
+		int64_t kind = _typeof(argv->get_type());
+		return value(script_type_manager::get_int_type(), kind);
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::typeOfElem) {
-		type_data* type = argv->get_type();
-		while (type->get_kind() == type_data::type_kind::tk_array)
-			type = type->get_element();
-
-		return value(script_type_manager::get_int_type(), (int64_t)type->get_kind());
+		int64_t kind = _rtypeof(argv->get_type());
+		return value(script_type_manager::get_int_type(), kind);
 	}
 
 	DNH_FUNCAPI_DEF_(BaseFunction::assert_) {

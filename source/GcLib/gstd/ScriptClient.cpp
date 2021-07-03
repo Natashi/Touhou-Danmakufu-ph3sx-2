@@ -211,7 +211,7 @@ static const std::vector<constant> commonConstant = {
 	constant("VAR_CHAR", type_data::tk_char),
 	constant("VAR_BOOL", type_data::tk_boolean),
 	constant("VAR_ARRAY", type_data::tk_array),
-	constant("VAR_STRING", type_data::tk_array | type_data::tk_char),
+	constant("VAR_STRING", type_data::tk_string),
 
 	//Interpolation modes
 	constant("LERP_LINEAR", Math::Lerp::LINEAR),

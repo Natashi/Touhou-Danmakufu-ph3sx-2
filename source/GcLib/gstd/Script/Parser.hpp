@@ -100,6 +100,7 @@ namespace gstd {
 		pc_inline_logic_or,		//Push ({esp-1} || {esp-0}) to stack
 
 		pc_inline_cast_var,			//Cast {esp-0} to (type_kind)[arg0]
+		pc_inline_cast_var2,		//Cast {esp-0} to (type_data*)[arg0] with type checking
 		pc_inline_index_array,		//Push &((*{esp-1})[{esp-0}]) to stack
 		pc_inline_index_array2,		//Push ({esp-1}[{esp-0}]) to stack
 		pc_inline_length_array,		//Push length({esp-0}) to stack
@@ -211,16 +212,40 @@ namespace gstd {
 			size_t alloc_size;
 		};
 	public:
+		struct arg_data {
+			std::string name;
+			type_data* type;
+			bool bConst;
+
+			arg_data() : arg_data("", nullptr, false) {}
+			arg_data(const std::string& name_) : arg_data(name_, nullptr, false) {}
+			arg_data(const std::string& name_, bool bConst_) : arg_data(name_, nullptr, bConst_) {}
+			arg_data(const std::string& name_, type_data* type_, bool bConst_)
+				: name(name_), type(type_), bConst(bConst_) {}
+		};
 		struct symbol {
 			uint32_t level;
-			script_block* sub;
-			uint32_t variable;
-			bool can_overload;
-			bool can_modify;		//Applies to the scripter, not the engine
+			type_data* type = nullptr;
+			bool bVariable = true;
 
-			symbol() : level(0), sub(nullptr), variable(-1), can_overload(true), can_modify(true) {}
-			symbol(uint32_t lv, script_block* pSub, uint32_t var, bool bOver, bool bMod) : level(lv), sub(pSub),
-				variable(var), can_overload(bOver), can_modify(bMod) {}
+			//Func/task/sub
+			struct {
+				bool bAllowOverload;
+				script_block* sub;
+				std::vector<arg_data> argData;
+			};
+			//Variable
+			struct {
+				uint32_t var;
+				bool bConst;		//Applies to the scripter, not the engine
+				bool bAssigned;
+			};
+
+			symbol();
+			symbol(uint32_t lv, type_data* type_);
+			symbol(uint32_t lv, type_data* type_, bool overl, script_block* pSub);
+			symbol(uint32_t lv, type_data* type_, bool overl, script_block* pSub, const std::vector<arg_data>& argData_);
+			symbol(uint32_t lv, type_data* type_, uint32_t var_, bool bConst_);
 		};
 
 		struct scope_t : public std::multimap<std::string, symbol> {
@@ -228,7 +253,7 @@ namespace gstd {
 
 			scope_t(block_kind the_kind) : kind(the_kind) {}
 
-			void singular_insert(const std::string& name, const symbol& s, int argc = 0);
+			symbol* singular_insert(const std::string& name, const symbol& s, int argc = 0);
 		};
 
 		std::list<scope_t> frame;
@@ -264,25 +289,27 @@ namespace gstd {
 		void parse_ternary(script_block* block, parser_state_t* state);
 		void parse_expression(script_block* block, parser_state_t* state);
 
-		int parse_arguments(script_block* block, parser_state_t* state);
+		int parse_arguments(script_block* block, parser_state_t* state, const std::vector<arg_data>* argsData);
 		void parse_single_statement(script_block* block, parser_state_t* state, 
 			bool check_terminator, token_kind statement_terminator);
 		void parse_statements(script_block* block, parser_state_t* state,
 			token_kind block_terminator, token_kind statement_terminator);
 
 		block_return_t parse_block(script_block* block, parser_state_t* state,
-			const std::vector<std::string>* args, bool allow_single = false);
+			const std::vector<arg_data>* args, bool allow_single = false);
 		size_t parse_block_inlined(script_block* block, parser_state_t* state, bool allow_single = true);
 	private:
 		void register_function(const function& func);
+
 		symbol* search(const std::string& name, scope_t** ptrScope = nullptr);
 		symbol* search(const std::string& name, int argc, scope_t** ptrScope = nullptr);
 		symbol* search_in(scope_t* scope, const std::string& name);
 		symbol* search_in(scope_t* scope, const std::string& name, int argc);
 		symbol* search_result();
 
-		int scan_current_scope(parser_state_t* state, int level, const std::vector<std::string>* args,
-			bool adding_result, int initVar = 0);
+		arg_data parse_variable_decl(parser_state_t* state, bool bParameter);
+		void parse_type_decl(parser_state_t* state, arg_data* pArg);
+		int scan_current_scope(parser_state_t* state, int level, int initVar, const std::vector<arg_data>* args);
 
 		void write_operation(script_block* block, parser_state_t* state, const char* name, int clauses);
 		void write_operation(script_block* block, parser_state_t* state, const symbol* s, int clauses);
@@ -335,9 +362,10 @@ namespace gstd {
 		return (require <= -1) && (argc >= (-require - 1));
 	}
 	bool parser::IsDeclToken(token_kind tk) {
-		return tk == token_kind::tk_decl_auto || tk == token_kind::tk_decl_real;
-		// || tk == token_kind::tk_decl_int || tk == token_kind::tk_decl_char 
-		// || tk == token_kind::tk_decl_bool || tk == token_kind::tk_decl_string;
+		return tk == token_kind::tk_decl_auto || tk == token_kind::tk_decl_real
+			|| tk == token_kind::tk_decl_int || tk == token_kind::tk_decl_char 
+			|| tk == token_kind::tk_decl_bool || tk == token_kind::tk_decl_string
+			|| tk == token_kind::tk_decl_mod_const;
 	}
 
 	command_kind parser::get_replacing_jump(command_kind c) {

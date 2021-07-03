@@ -37,7 +37,8 @@ bool type_data::operator==(const type_data& other) {
 	return element == other.element;
 }
 bool type_data::operator<(const type_data& other) const {
-	if (kind != other.kind) return ((uint8_t)kind < (uint8_t)other.kind);
+	if (kind != other.kind)
+		return ((uint8_t)kind < (uint8_t)other.kind);
 	if (element != nullptr && other.element != nullptr)
 		return (*element) < (*other.element);
 	return element == nullptr && other.element != nullptr;
