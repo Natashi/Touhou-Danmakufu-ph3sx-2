@@ -57,6 +57,7 @@ namespace gstd {
 		CriticalSection* cs_;
 	public:
 		Lock(CriticalSection& cs) { cs_ = &cs; cs_->Enter(); }
+		Lock(CriticalSection* cs) { cs_ = cs; cs_->Enter(); }
 		virtual ~Lock() { cs_->Leave(); }
 	};
 
