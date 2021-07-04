@@ -837,27 +837,27 @@ continue_as_variadic:
 	case token_kind::tk_cast_bool:
 	case token_kind::tk_cast_string:
 	{
-		type_data::type_kind target = type_data::tk_null;
+		type_data* target = nullptr;
 		switch (state->next()) {
 		case token_kind::tk_cast_int:
-			target = type_data::tk_int;
+			target = script_type_manager::get_int_type();
 			break;
 		case token_kind::tk_cast_real:
-			target = type_data::tk_real;
+			target = script_type_manager::get_real_type();
 			break;
 		case token_kind::tk_cast_char:
-			target = type_data::tk_char;
+			target = script_type_manager::get_char_type();
 			break;
 		case token_kind::tk_cast_bool:
-			target = type_data::tk_boolean;
+			target = script_type_manager::get_boolean_type();
 			break;
 		case token_kind::tk_cast_string:
-			target = type_data::tk_string;
+			target = script_type_manager::get_string_type();
 			break;
 		}
 		state->advance();
 		parse_parentheses(block, state);
-		state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)target));
+		state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)target, false));
 		return;
 	}
 	case token_kind::tk_LENGTH:
@@ -1173,7 +1173,7 @@ int parser::parse_arguments(script_block* block, parser_state_t* state, const st
 			if (argsData && argsData->size() > 0) {
 				const arg_data* arg = &argsData->at(argc);
 				if (arg->type != nullptr)
-					state->AddCode(block, code(command_kind::pc_inline_cast_var2, (uint32_t)arg->type));
+					state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)arg->type, true));
 			}
 			++argc;
 			if (state->next() != token_kind::tk_comma) break;
@@ -1228,8 +1228,8 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			state->advance();
 			parse_expression(block, state);
 
-			if (!s->bAssigned && s->type != nullptr) {
-				state->AddCode(block, code(command_kind::pc_inline_cast_var2, (uint32_t)s->type));
+			if (/*!s->bAssigned &&*/ s->type != nullptr) {
+				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)s->type, true));
 			}
 			s->bAssigned = true;
 
@@ -1331,7 +1331,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 				parse_expression(block, state);
 				if (s->type != nullptr) {
-					state->AddCode(block, code(command_kind::pc_inline_cast_var2, (uint32_t)s->type));
+					state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)s->type, true));
 				}
 
 				state->AddCode(block, code(command_kind::pc_copy_assign,
@@ -1361,7 +1361,8 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		if (state->next() == token_kind::tk_open_par) {
 			parse_parentheses(block, state);
 			{
-				state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::tk_int));
+				state->AddCode(block, code(command_kind::pc_inline_cast_var, 
+					(uint32_t)script_type_manager::get_int_type(), false));
 
 				size_t ip_var_format = state->ip;
 				state->AddCode(block, code(command_kind::pc_var_format, 0U, 0));
@@ -1432,7 +1433,8 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		if (state->next() == token_kind::tk_LOOP) state->advance();
 
 		{
-			state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::tk_int));
+			state->AddCode(block, code(command_kind::pc_inline_cast_var, 
+				(uint32_t)script_type_manager::get_int_type(), false));
 
 			size_t ip_var_format = state->ip;
 			state->AddCode(block, code(command_kind::pc_var_format, 0U, 0));
@@ -2009,7 +2011,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 			parse_expression(block, state);
 			if (s->type != nullptr) {
-				state->AddCode(block, code(command_kind::pc_inline_cast_var2, (uint32_t)s->type));
+				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)s->type, true));
 			}
 			state->AddCode(block, code(command_kind::pc_copy_assign,
 				s->level, s->var, "!res"));
@@ -2151,12 +2153,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			//Function arguments
 			for (const auto& iArg : s->argData) {
 				symbol* sVar = search(iArg.name);
-				/*
-				sVar->bConst = iArg.bConst;
-				if (iArg.type != token_kind::tk_decl_auto) {
-					newState.AddCode(s->sub, code(command_kind::pc_inline_cast_var2, (uint32_t)iArg.type));
-				}
-				*/
+				//No need to type-convert arguments here
 				newState.AddCode(s->sub, code(command_kind::pc_copy_assign,
 					sVar->level, sVar->var, iArg.name));
 			}
@@ -2227,7 +2224,7 @@ parser::block_return_t parser::parse_block(script_block* block, parser_state_t* 
 		for (size_t i = 0; i < args->size(); ++i) {
 			const arg_data* arg = &args->at(i);
 			if (arg->type != nullptr) {
-				newState.AddCode(block, code(command_kind::pc_inline_cast_var2, (uint32_t)arg->type));
+				newState.AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)arg->type, true));
 			}
 			newState.AddCode(block, code(command_kind::pc_copy_assign,
 				block->level, varc_prev_total + i, arg->name));
@@ -2379,11 +2376,11 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 					for (size_t i = 0; i < sizeArray; ++i) {
 						{
 							value appending = ptrPushValueCode->data;
+							appending.make_unique();
+
 							BaseFunction::_append_check(nullptr, arrayType, appending.get_type());
-							if (appending.get_type()->get_kind() != type_elem->get_kind()) {
-								appending.make_unique();
-								BaseFunction::_value_cast(&appending, type_elem);
-							}
+							BaseFunction::_value_cast(nullptr, &appending, type_elem);
+
 							listPtrVal[i] = appending;
 						}
 						++ptrPushValueCode;

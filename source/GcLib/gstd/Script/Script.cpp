@@ -385,7 +385,7 @@ void script_machine::run_code() {
 							dest->make_unique();
 
 							if (prev_type && prev_type != src->get_type())
-								BaseFunction::_value_cast(dest, prev_type);
+								BaseFunction::_value_cast(this, dest, prev_type);
 						}
 					}
 					stack.pop_back();
@@ -401,7 +401,7 @@ void script_machine::run_code() {
 							*dest = *src;
 
 							if (prev_type && prev_type != src->get_type())
-								BaseFunction::_value_cast(dest, prev_type);
+								BaseFunction::_value_cast(this, dest, prev_type);
 						}
 					}
 					stack.pop_back(2U);
@@ -598,7 +598,7 @@ void script_machine::run_code() {
 						value appending = *val_ptr;
 						if (appending.get_type()->get_kind() != type_elem->get_kind()) {
 							appending.make_unique();
-							BaseFunction::_value_cast(&appending, type_elem);
+							BaseFunction::_value_cast(this, &appending, type_elem);
 						}
 						res_arr[iVal] = appending;
 					}
@@ -666,7 +666,7 @@ void script_machine::run_code() {
 					value arg[2] = { *dest, stack.back() };
 					PerformFunction(&res, c->command, arg);
 
-					BaseFunction::_value_cast(&res, dest->get_type());
+					BaseFunction::_value_cast(this, &res, dest->get_type());
 					*dest = res;
 
 					stack.pop_back();
@@ -678,7 +678,7 @@ void script_machine::run_code() {
 					value arg[2] = { pDest, pArg[1] };
 					PerformFunction(&res, c->command, arg);
 
-					BaseFunction::_value_cast(&res, pDest.get_type());
+					BaseFunction::_value_cast(this, &res, pDest.get_type());
 					pDest = res;
 
 					stack.pop_back(2U);
@@ -800,21 +800,18 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_cast_var:
 			{
 				value* var = &stack.back();
-				BaseFunction::_value_cast(var, (type_data::type_kind)c->arg0);
-				break;
-			}
-			case command_kind::pc_inline_cast_var2:
-			{
-				value* var = &stack.back();
 
 				type_data* castFrom = var->get_type();
 				type_data* castTo = (type_data*)c->arg0;
 
-				if (castTo && castFrom != castTo) {
-					if (BaseFunction::_type_assign_check(this, castFrom, castTo)) {
-						BaseFunction::_value_cast(var, castTo);
+				if (c->arg1) {
+					if (castTo && castFrom != castTo) {
+						if (BaseFunction::_type_assign_check(this, castFrom, castTo)) {
+							BaseFunction::_value_cast(this, var, castTo);
+						}
 					}
 				}
+				else BaseFunction::_value_cast(this, var, castTo);
 
 				break;
 			}
