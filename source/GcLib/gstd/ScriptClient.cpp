@@ -113,6 +113,8 @@ static const std::vector<function> commonFunction = {
 	{ "prand_int", ScriptClientBase::Func_RandEffI, 2 },
 	{ "count_rand", ScriptClientBase::Func_GetRandCount, 0 },
 	{ "count_prand", ScriptClientBase::Func_GetRandEffCount, 0 },
+	{ "reset_count_rand", ScriptClientBase::Func_ResetRandCount, 0 },
+	{ "reset_count_prand", ScriptClientBase::Func_ResetRandEffCount, 0 },
 
 	//Interpolation
 	{ "Interpolate_Linear", ScriptClientBase::Func_Interpolate_Linear, 3 },
@@ -218,7 +220,7 @@ static const std::vector<constant> commonConstant = {
 	constant("VAR_CHAR", type_data::tk_char),
 	constant("VAR_BOOL", type_data::tk_boolean),
 	constant("VAR_ARRAY", type_data::tk_array),
-	constant("VAR_STRING", type_data::tk_array | type_data::tk_char),
+	constant("VAR_STRING", type_data::tk_string),
 
 	//Interpolation modes
 	constant("LERP_LINEAR", Math::Lerp::LINEAR),
@@ -1163,6 +1165,14 @@ value ScriptClientBase::Func_GetRandCount(script_machine* machine, int argc, con
 value ScriptClientBase::Func_GetRandEffCount(script_machine* machine, int argc, const value* argv) {
 	return CreateIntValue(prandCalls_);
 }
+value ScriptClientBase::Func_ResetRandCount(script_machine* machine, int argc, const value* argv) {
+	randCalls_ = 0;
+	return value();
+}
+value ScriptClientBase::Func_ResetRandEffCount(script_machine* machine, int argc, const value* argv) {
+	prandCalls_ = 0;
+	return value();
+}
 
 static value _ScriptValueLerp(script_machine* machine, const value* v1, const value* v2, double vx, 
 	double (*lerpFunc)(double, double, double)) 
@@ -2065,7 +2075,7 @@ value ScriptClientBase::Func_GetCommonDataPtr(script_machine* machine, int argc,
 	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
 
 	value res;
-	if (argc == 3) res = argv[2];
+	if (argc == 2) res = argv[1];
 
 	int64_t val = argv[0].as_int();
 

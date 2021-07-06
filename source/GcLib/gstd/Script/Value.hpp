@@ -13,6 +13,7 @@ namespace gstd {
 			tk_boolean = 0x08,
 			tk_array = 0x10,
 			tk_pointer = 0x20,
+			tk_string = 0x40,	//Dummy for the parser
 		} type_kind;
 
 		type_data(type_kind k, type_data* t = nullptr) : kind(k), element(t) {}

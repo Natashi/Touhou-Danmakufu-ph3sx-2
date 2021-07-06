@@ -413,7 +413,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjSound_SetLoopSampleCount", DxScript::Func_ObjSound_SetLoopSampleCount, 3 },
 	{ "ObjSound_Seek", DxScript::Func_ObjSound_Seek, 2 },
 	{ "ObjSound_SeekSampleCount", DxScript::Func_ObjSound_SeekSampleCount, 2 },
-	{ "ObjSound_SetRestartEnable", DxScript::Func_ObjSound_SetRestartEnable, 2 },
+	{ "ObjSound_SetResumeEnable", DxScript::Func_ObjSound_SetResumeEnable, 2 },
 	{ "ObjSound_SetSoundDivision", DxScript::Func_ObjSound_SetSoundDivision, 2 },
 	{ "ObjSound_IsPlaying", DxScript::Func_ObjSound_IsPlaying, 1 },
 	{ "ObjSound_GetVolumeRate", DxScript::Func_ObjSound_GetVolumeRate, 1 },
@@ -4274,7 +4274,7 @@ gstd::value DxScript::Func_ObjSound_SeekSampleCount(gstd::script_machine* machin
 	}
 	return value();
 }
-gstd::value DxScript::Func_ObjSound_SetRestartEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value DxScript::Func_ObjSound_SetResumeEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	DxSoundObject* obj = script->GetObjectPointerAs<DxSoundObject>(id);

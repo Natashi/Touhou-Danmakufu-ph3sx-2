@@ -30,27 +30,25 @@ script_type_manager::script_type_manager() {
 
 	//Bool array
 	types.insert(type_data(type_data::tk_array, boolean_type));
-	//String array (Might not really be all that necessary to initialize it here)
+	//String array
 	types.insert(type_data(type_data::tk_array, string_type));
 }
 
-type_data* script_type_manager::get_array_type(type_data* element) {
-	type_data target = type_data(type_data::tk_array, element);
-	auto itr = types.find(target);
+type_data* script_type_manager::get_type(type_data* type) {
+	auto itr = types.find(*type);
 	if (itr == types.end()) {
 		//No type found, insert and return the new type
-		itr = types.insert(target).first;
+		itr = types.insert(*type).first;
 	}
 	return deref_itr(itr);
 }
 type_data* script_type_manager::get_type(type_data::type_kind kind) {
 	type_data target = type_data(kind);
-	auto itr = types.find(target);
-	if (itr == types.end()) {
-		//No type found, insert and return the new type
-		itr = types.insert(target).first;
-	}
-	return deref_itr(itr);
+	return get_type(&target);
+}
+type_data* script_type_manager::get_array_type(type_data* element) {
+	type_data target = type_data(type_data::tk_array, element);
+	return get_type(&target);
 }
 
 /* script_engine */
@@ -387,7 +385,7 @@ void script_machine::run_code() {
 							dest->make_unique();
 
 							if (prev_type && prev_type != src->get_type())
-								BaseFunction::_value_cast(dest, prev_type->get_kind());
+								BaseFunction::_value_cast(this, dest, prev_type);
 						}
 					}
 					stack.pop_back();
@@ -403,7 +401,7 @@ void script_machine::run_code() {
 							*dest = *src;
 
 							if (prev_type && prev_type != src->get_type())
-								BaseFunction::_value_cast(dest, prev_type->get_kind());
+								BaseFunction::_value_cast(this, dest, prev_type);
 						}
 					}
 					stack.pop_back(2U);
@@ -600,7 +598,7 @@ void script_machine::run_code() {
 						value appending = *val_ptr;
 						if (appending.get_type()->get_kind() != type_elem->get_kind()) {
 							appending.make_unique();
-							BaseFunction::_value_cast(&appending, type_elem->get_kind());
+							BaseFunction::_value_cast(this, &appending, type_elem);
 						}
 						res_arr[iVal] = appending;
 					}
@@ -668,7 +666,9 @@ void script_machine::run_code() {
 					value arg[2] = { *dest, stack.back() };
 					PerformFunction(&res, c->command, arg);
 
+					BaseFunction::_value_cast(this, &res, dest->get_type());
 					*dest = res;
+
 					stack.pop_back();
 				}
 				else {
@@ -678,7 +678,9 @@ void script_machine::run_code() {
 					value arg[2] = { pDest, pArg[1] };
 					PerformFunction(&res, c->command, arg);
 
+					BaseFunction::_value_cast(this, &res, pDest.get_type());
 					pDest = res;
+
 					stack.pop_back(2U);
 				}
 				break;
@@ -798,7 +800,19 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_cast_var:
 			{
 				value* var = &stack.back();
-				BaseFunction::_value_cast(var, (type_data::type_kind)c->arg0);
+
+				type_data* castFrom = var->get_type();
+				type_data* castTo = (type_data*)c->arg0;
+
+				if (c->arg1) {
+					if (castTo && castFrom != castTo) {
+						if (BaseFunction::_type_assign_check(this, castFrom, castTo)) {
+							BaseFunction::_value_cast(this, var, castTo);
+						}
+					}
+				}
+				else BaseFunction::_value_cast(this, var, castTo);
+
 				break;
 			}
 			case command_kind::pc_inline_index_array:

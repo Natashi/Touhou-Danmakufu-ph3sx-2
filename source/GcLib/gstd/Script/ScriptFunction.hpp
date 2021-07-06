@@ -41,15 +41,22 @@ namespace gstd {
 	class BaseFunction {
 	public:
 		static type_data::type_kind _type_test_promotion(type_data* type_l, type_data* type_r);
+
+		static bool __type_assign_check(type_data* type_src, type_data* type_dst);
+		static bool __type_assign_check_no_convert(type_data* type_src, type_data* type_dst);
 		static bool _type_assign_check(script_machine* machine, const value* v_src, const value* v_dst);
+		static bool _type_assign_check(script_machine* machine, type_data* type_src, type_data* type_dst);
 		static bool _type_assign_check_no_convert(script_machine* machine, const value* v_src, const value* v_dst);
+
+		static bool _type_check_two_any(type_data* type_l, type_data* type_r, uint8_t type);
+		static bool _type_check_two_all(type_data* type_l, type_data* type_r, uint8_t type);
 
 		static value __script_perform_op_array(const value* v_left, const value* v_right, value(*func)(int, const value*));
 
 		inline static double _fmod2(double i, double j);
 		inline static int64_t _mod2(int64_t i, int64_t j);
 
-		static value* _value_cast(value* val, type_data::type_kind kind);
+		static value* _value_cast(script_machine* machine, value* val, type_data* cast);
 
 		static bool _index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index);
 		static bool _append_check(script_machine* machine, type_data* arg0_type, type_data* arg1_type);
@@ -57,9 +64,12 @@ namespace gstd {
 
 		static value _create_empty(type_data* type);
 
+		static type_data::type_kind _typeof(type_data* type);
+		static type_data::type_kind _rtypeof(type_data* type);
+
 		//---------------------------------------------------------------------
 
-		static value _cast_array(script_machine* machine, const value* argv, type_data* target);
+		static value _cast_array(script_machine* machine, const value* argv, type_data::type_kind target);
 		DNH_FUNCAPI_DECL_(cast_int_array);
 		DNH_FUNCAPI_DECL_(cast_real_array);
 		DNH_FUNCAPI_DECL_(cast_bool_array);

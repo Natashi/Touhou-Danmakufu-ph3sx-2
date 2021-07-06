@@ -34,6 +34,8 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 
 	ScriptClientBase::randCalls_ = 0;
 	ScriptClientBase::prandCalls_ = 0;
+	if (DxScriptResourceCache* dxRsrcCache = DxScriptResourceCache::GetBase())
+		dxRsrcCache->ClearResource();
 	scriptEngineCache_->Clear();
 
 	camera3D->SetPerspectiveWidth(384);
@@ -554,6 +556,15 @@ void StgSystemController::_ControlScene() {
 
 				ref_count_ptr<StgPackageInformation> infoPackage = packageController_->GetPackageInformation();
 				infoPackage->FinishCurrentStage();
+
+				if (StgStageScriptManager* scriptManager = stageController_->GetScriptManager()) {
+					scriptManager->CloseScriptOnType(StgStageScript::TYPE_STAGE);
+					scriptManager->CloseScriptOnType(StgStageScript::TYPE_ITEM);
+					scriptManager->CloseScriptOnType(StgStageScript::TYPE_SHOT);
+					scriptManager->CloseScriptOnType(StgStageScript::TYPE_PLAYER);
+					scriptManager->CloseScriptOnType(StgStageScript::TYPE_SYSTEM);
+					scriptManager->OrphanAllScripts();
+				}
 			}
 			else
 				TransStgEndScene();

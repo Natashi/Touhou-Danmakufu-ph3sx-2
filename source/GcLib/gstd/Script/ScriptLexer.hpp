@@ -40,11 +40,12 @@ namespace gstd {
 		tk_at, 
 		tk_inc, tk_dec, tk_range, tk_args_variadic,
 
-		tk_decl_auto, tk_const, 
-		tk_decl_int, tk_decl_real, tk_decl_char, tk_decl_string, tk_decl_bool,
-		tk_decl_mod_ref,
+		tk_decl_auto, 
+		tk_decl_int, tk_decl_real, tk_decl_char, tk_decl_bool, tk_decl_string,
 
-		tk_cast_int, tk_cast_real, tk_cast_char, tk_cast_bool,
+		tk_decl_mod_const, tk_decl_mod_ref,
+
+		tk_cast_int, tk_cast_real, tk_cast_char, tk_cast_bool, tk_cast_string,
 
 		tk_LENGTH, 
 
@@ -74,6 +75,8 @@ namespace gstd {
 		};
 	public:
 		token_kind next;
+
+		std::list<const char*> prev_ptr_list;
 		std::list<token_kind> token_list;
 
 		std::string word;

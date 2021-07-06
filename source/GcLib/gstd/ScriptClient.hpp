@@ -229,6 +229,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_RandEffI);
 		DNH_FUNCAPI_DECL_(Func_GetRandCount);
 		DNH_FUNCAPI_DECL_(Func_GetRandEffCount);
+		DNH_FUNCAPI_DECL_(Func_ResetRandCount);
+		DNH_FUNCAPI_DECL_(Func_ResetRandEffCount);
 
 		//Math functions; angle helper
 		DNH_FUNCAPI_DECL_(Func_ToDegrees);

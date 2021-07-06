@@ -83,6 +83,37 @@ code& code::operator=(const code& src) {
 }
 #pragma pop_macro("new")
 
+//=========================================================================
+
+parser::symbol::symbol() : symbol(0, nullptr) {
+}
+parser::symbol::symbol(uint32_t lv, type_data* type_) {
+	level = lv;
+	type = type_;
+}
+parser::symbol::symbol(uint32_t lv, type_data* type_, bool overl, script_block* pSub) 
+	: symbol(lv, type_) 
+{
+	bVariable = false;
+	bAllowOverload = true;
+	sub = pSub;
+}
+parser::symbol::symbol(uint32_t lv, type_data* type_, bool overl, script_block* pSub, const std::vector<arg_data>& argData_)
+	: symbol(lv, type_, overl, pSub)
+{
+	argData = argData_;
+}
+parser::symbol::symbol(uint32_t lv, type_data* type_, uint32_t var_, bool bConst_) 
+	: symbol(lv, type_) 
+{
+	bVariable = true;
+	var = var_;
+	bConst = bConst_;
+	bAssigned = false;
+}
+
+//=========================================================================
+
 static const std::vector<function> base_operations = {
 	{ "not", BaseFunction::not_, 1 },
 	{ "negative", BaseFunction::negative, 1 },
@@ -135,7 +166,7 @@ static const std::vector<function> base_operations = {
 	{ "__DEBUG_BREAK", BaseFunction::script_debugBreak, 0 },
 };
 
-void parser::scope_t::singular_insert(const std::string& name, const symbol& s, int argc) {
+parser::symbol* parser::scope_t::singular_insert(const std::string& name, const symbol& s, int argc) {
 	bool exists = this->find(name) != this->end();
 	auto itr = this->equal_range(name);
 
@@ -144,13 +175,13 @@ void parser::scope_t::singular_insert(const std::string& name, const symbol& s, 
 		symbol* sPrev = &(itr.first->second);
 
 		//Check if the symbol can be overloaded
-		if (!sPrev->can_overload && sPrev->level > 0) {
+		if (!sPrev->bAllowOverload && sPrev->level > 0) {
 			std::string error = "";
-			if (sPrev->sub) {	//Scripter attempted to overload a default function
+			if (!sPrev->bVariable) {	//Scripter attempted to overload a default function
 				error = StringUtility::Format("\"%s\": Function cannot be overloaded.",
 					name.c_str());
 			}
-			else {				//Scripter duplicated parameter/variable name
+			else {						//Scripter duplicated parameter/variable name
 				error = StringUtility::Format("\"%s\": Duplicated parameter name.",
 					name.c_str());
 			}
@@ -168,7 +199,7 @@ void parser::scope_t::singular_insert(const std::string& name, const symbol& s, 
 		}
 	}
 
-	this->insert(std::make_pair(name, s));
+	return &(this->insert(std::make_pair(name, s))->second);
 }
 
 parser::parser(script_engine* e, script_scanner* s) {
@@ -221,7 +252,8 @@ void parser::load_constants(std::vector<constant>* list_const) {
 		block_const_reg->codes.push_back(code(command_kind::pc_push_value, const_value));
 		block_const_reg->codes.push_back(code(command_kind::pc_copy_assign, 1, iConst, pConst->name));
 
-		symbol s = symbol(1, nullptr, iConst, false, false);
+		symbol s = symbol(1, nullptr, iConst, true);
+		s.bAssigned = true;
 		frame.begin()->singular_insert(pConst->name, s);
 	}
 	count_base_constants += list_const->size();
@@ -233,7 +265,7 @@ void parser::begin_parse() {
 		parser_state_t stateParser(lexer_main);
 		stateParser.ip = engine->main_block->codes.size();
 
-		stateParser.var_count_main = scan_current_scope(&stateParser, 1, nullptr, false, count_base_constants);
+		stateParser.var_count_main = scan_current_scope(&stateParser, 1, count_base_constants, nullptr);
 		stateParser.var_count_main += count_base_constants;
 
 		parse_statements(engine->main_block, &stateParser, token_kind::tk_end, token_kind::tk_semicolon);
@@ -262,7 +294,7 @@ void parser::register_function(const function& func) {
 	block->arguments = func.argc;
 	block->name = func.name;
 	block->func = func.func;
-	symbol s = symbol(0, block, -1, false, false);
+	symbol s = symbol(0, nullptr, false, block);
 	frame.begin()->singular_insert(func.name, s, func.argc);
 }
 
@@ -288,7 +320,7 @@ parser::symbol* parser::search(const std::string& name, int argc, scope_t** ptrS
 		if (itrSymbol.first != scope->end()) {
 			for (auto itrPair = itrSymbol.first; itrPair != itrSymbol.second; ++itrPair) {
 				symbol* s = &itrPair->second;
-				if (s->sub) {
+				if (!s->bVariable) {
 					//Check overload
 					if (argc == s->sub->arguments)
 						return s;
@@ -313,7 +345,7 @@ parser::symbol* parser::search_in(scope_t* scope, const std::string& name, int a
 	if (itrSymbol.first != scope->end()) {
 		for (auto itrPair = itrSymbol.first; itrPair != itrSymbol.second; ++itrPair) {
 			symbol* s = &itrPair->second;
-			if (s->sub) {
+			if (!s->bVariable) {
 				//Check overload
 				if (argc == s->sub->arguments)
 					return s;
@@ -336,8 +368,117 @@ parser::symbol* parser::search_result() {
 	return nullptr;
 }
 
-int parser::scan_current_scope(parser_state_t* state, int level, const std::vector<std::string>* args,
-	bool adding_result, int initVar) 	{
+bool _lexer_skip_post_decl(script_scanner* lex, int* pBrk, int* pPar) {
+	while (lex->next != token_kind::tk_semicolon) {
+		if (lex->next == token_kind::tk_open_bra) ++(*pBrk);
+		else if (lex->next == token_kind::tk_close_bra) --(*pBrk);
+
+		if (lex->next == token_kind::tk_open_par) ++(*pPar);
+		else if (lex->next == token_kind::tk_close_par) --(*pPar);
+
+		if (lex->next == token_kind::tk_comma
+			&& (*pBrk) == 0 && (*pPar) == 0) break;
+
+		lex->advance();
+	}
+	if (lex->next == token_kind::tk_semicolon) {
+		lex->advance();
+		return false;
+	}
+	else lex->advance();
+	return true;
+}
+
+type_data* _token_kind_to_type_data(token_kind token) {
+	switch (token) {
+	case token_kind::tk_decl_real:
+		return script_type_manager::get_real_type();
+	case token_kind::tk_decl_char:
+		return script_type_manager::get_char_type();
+	case token_kind::tk_decl_bool:
+		return script_type_manager::get_boolean_type();
+	case token_kind::tk_decl_string:
+		return script_type_manager::get_string_type();
+	}
+	return script_type_manager::get_int_type();
+}
+
+parser::arg_data parser::parse_variable_decl(parser_state_t* state, bool bParameter) {
+	arg_data var;
+
+	parse_type_decl(state, &var);
+
+	//parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
+	if (state->next() != token_kind::tk_word) {
+		const char* prevPtr = *std::next(state->lex->prev_ptr_list.begin());
+		std::wstring tokStr = state->lex->tostr(prevPtr, state->lex->get());
+		tokStr = StringUtility::Trim(tokStr);
+		std::wstring err = StringUtility::Format(
+			L"\"%s\" cannot be used to declare a %s name.\r\n",
+			tokStr.c_str(), bParameter ? L"parameter" : L"variable");
+		parser_assert(state, false, err);
+	}
+	var.name = state->lex->word;
+
+	state->advance();
+
+	return var;
+}
+void parser::parse_type_decl(parser_state_t* state, arg_data* pArg) {
+	token_kind typeBaseTok = token_kind::tk_decl_auto;
+	size_t arrayCount = 0;
+	bool bSpecifiedType = false;
+
+	while (IsDeclToken(state->next())) {
+		if (state->next() == token_kind::tk_decl_mod_const) {
+			pArg->bConst = true;
+
+			state->advance();
+		}
+		else if (!bSpecifiedType) {
+			bSpecifiedType = true;
+			typeBaseTok = state->next();
+
+			state->advance();
+
+			if (state->next() == token_kind::tk_open_bra) {
+				parser_assert(state, typeBaseTok != token_kind::tk_decl_auto,
+					"An array type declaration cannot be typeless.\r\n");
+				while (state->next() == token_kind::tk_open_bra) {
+					state->advance();
+					parser_assert(state, state->next() == token_kind::tk_close_bra,
+						"\"]\" is required.\r\n");
+					state->advance();
+					++arrayCount;
+				}
+			}
+		}
+		else {
+			parser_assert(state, false, "Type already specified.\r\n");
+		}
+	}
+
+	if (typeBaseTok == token_kind::tk_decl_auto)
+		pArg->type = nullptr;
+	else {
+		type_data* typeBase = _token_kind_to_type_data(typeBaseTok);
+		if (arrayCount == 0) {
+			pArg->type = typeBase;
+		}
+		else {
+			script_type_manager* typeManager = script_type_manager::get_instance();
+
+			pArg->type = typeManager->get_array_type(typeBase);
+
+			if (arrayCount > 1) {
+				for (size_t i = 1; i < arrayCount; ++i)
+					pArg->type = typeManager->get_array_type(pArg->type);
+			}
+		}
+	}
+}
+
+int parser::scan_current_scope(parser_state_t* state, int level, int initVar, const std::vector<arg_data>* args) {
 	//Scans and defines scope variables and functions/tasks/subs
 
 	script_scanner lex2(*state->lex);
@@ -350,24 +491,19 @@ int parser::scan_current_scope(parser_state_t* state, int level, const std::vect
 
 	try {
 		scope_t* current_frame = &frame.back();
+		int brk = 0;
 		int cur = 0;
 		int par = 0;
 
-		if (adding_result) {
-			symbol s = symbol(level, nullptr, var++, false, false);
-			current_frame->singular_insert("\x01", s);
-		}
-
 		if (args) {
 			for (size_t i = 0; i < args->size(); ++i) {
-				symbol s = symbol(level, nullptr, var++, false, true);
-				current_frame->singular_insert(args->at(i), s);
+				const arg_data* arg = &args->at(i);
+				symbol s = symbol(level, arg->type, var++, arg->bConst);
+				current_frame->singular_insert(arg->name, s);
 			}
 		}
 
 		while (cur >= 0 && IsReadableToken()) {
-			bool is_const = false;
-
 			switch (lex2.next) {
 			case token_kind::tk_open_par:
 				++par;
@@ -383,7 +519,10 @@ int parser::scan_current_scope(parser_state_t* state, int level, const std::vect
 				break;
 			case token_kind::tk_close_cur:
 				--cur;
-				if (cur == 0) par = 0;
+				if (cur == 0) {
+					brk = 0;
+					par = 0;
+				}
 				lex2.advance();
 				break;
 			case token_kind::tk_at:
@@ -398,40 +537,57 @@ int parser::scan_current_scope(parser_state_t* state, int level, const std::vect
 						block_kind::bk_sub : (type == token_kind::tk_FUNCTION) ?
 						block_kind::bk_function : block_kind::bk_microthread;
 
+					type_data* funcReturnType = nullptr;
+					if (lex2.next == token_kind::tk_l) {	//<
+						parser_assert(kind == block_kind::bk_function,
+							"Only functions may have a value type specifier.\r\n");
+
+						lex2.advance();
+
+						arg_data tmp;
+
+						parser_state_t dummyState = parser_state_t(&lex2);
+						parse_type_decl(&dummyState, &tmp);
+
+						//parser_assert(&dummyState, !tmp.bConst, "Function return cannot be const.\r\n");
+
+						//>
+						parser_assert(&dummyState, lex2.next == token_kind::tk_g, 
+							"\">\" is required.\r\n");
+						lex2.advance();
+
+						funcReturnType = tmp.type;
+					}
+
 					std::string name = lex2.word;
-					int countArgs = 0;
+					std::vector<arg_data> argData;
 
 					lex2.advance();
 					if (lex2.next == token_kind::tk_open_par) {
 						lex2.advance();
 
 						//I honestly should just throw out support for subs
-						if (lex2.next != token_kind::tk_close_par && kind == block_kind::bk_sub) {
+						if (kind == block_kind::bk_sub && lex2.next != token_kind::tk_close_par) {
 							parser_assert(state, false, "A parameter list in not allowed here.\r\n");
 						}
 						else {
+							parser_state_t dummyState = parser_state_t(&lex2);
 							while (lex2.next == token_kind::tk_word || IsDeclToken(lex2.next)) {
-								++countArgs;
+								//TODO: Give scripters the ability to define vararg functions
 
-								if (IsDeclToken(lex2.next)) lex2.advance();
+								arg_data nArg = parse_variable_decl(&dummyState, true);
+								argData.push_back(nArg);
 
-								if (lex2.next == token_kind::tk_word) lex2.advance();
-								//TODO: Make it available to the scripters
-								/*
-								else if (lex2.next == token_kind::tk_args_variadic) {
-									countArgs = -countArgs;
-									lex2.advance();
-									break;
-								}
-								*/
 								if (lex2.next != token_kind::tk_comma)
 									break;
-
 								lex2.advance();
 							}
+							parser_assert(&dummyState, lex2.next == token_kind::tk_close_par, "\")\" is required.\r\n");
+							lex2.advance();
 						}
 					}
 
+					size_t countArgs = argData.size();
 					{
 						//First, search for duplications in the default symbol level
 						symbol* dup = search_in(&*frame.begin(), name);
@@ -462,7 +618,7 @@ int parser::scan_current_scope(parser_state_t* state, int level, const std::vect
 							error += typeSub;
 							error += StringUtility::Format(" of the same name was already defined "
 								"in the current scope: \'%s\'\r\n", name.c_str());
-							if (dup->can_overload && countArgs >= 0)
+							if (dup->bAllowOverload && countArgs >= 0)
 								error += "**You may overload functions and tasks by giving them "
 								"different argument counts.\r\n";
 							else
@@ -475,82 +631,68 @@ int parser::scan_current_scope(parser_state_t* state, int level, const std::vect
 					newBlock->name = name;
 					newBlock->func = nullptr;
 					newBlock->arguments = countArgs;
-					symbol s = symbol(level, newBlock, -1, kind != block_kind::bk_sub, false);
+					symbol s = symbol(level, funcReturnType, kind != block_kind::bk_sub, newBlock, argData);
 					current_frame->singular_insert(name, s, countArgs);
 				}
 			}
 			break;
-			case token_kind::tk_const:
-				is_const = true;
+
+			case token_kind::tk_decl_mod_const:
 			case token_kind::tk_decl_real:
-			//case token_kind::tk_decl_char:
-			//case token_kind::tk_decl_bool:
-			//case token_kind::tk_decl_string:
+			case token_kind::tk_decl_int:
+			case token_kind::tk_decl_char:
+			case token_kind::tk_decl_bool:
+			case token_kind::tk_decl_string:
 			case token_kind::tk_decl_auto:
 			{
-				lex2.advance();
 				if (cur == 0 && par == 0) {
-					{
-						//First, search for duplications in the default symbol level
-						symbol* dup = search_in(&*frame.begin(), lex2.word);
+					parser_state_t dummyState = parser_state_t(&lex2);
+					arg_data firstArg = arg_data();
 
-						//Default symbol isn't being redefined/overloaded, check user-defined symbols in the current scope
-						if (dup == nullptr)
-							dup = search_in(current_frame, lex2.word);
+					while (true) {
+						arg_data nArg = parse_variable_decl(&dummyState, false);
+						if (firstArg.name.size() == 0)
+							firstArg = nArg;
 
-						//Allows variables to overshadow functions
-						if (dup && dup->sub == nullptr) {
-							std::string error = StringUtility::Format("\'%s\' was already declared "
-								"in the same scope.\r\n", lex2.word.c_str());
-							parser_assert(false, error);
+						nArg.type = firstArg.type;
+						nArg.bConst = firstArg.bConst;
+
+						{
+							{
+								//First, search for duplications in the default symbol level
+								symbol* dup = search_in(&*frame.begin(), nArg.name);
+
+								//Default symbol isn't being redefined/overloaded, check user-defined symbols in the current scope
+								if (dup == nullptr)
+									dup = search_in(current_frame, nArg.name);
+
+								//Allows variables to overshadow functions
+								if (dup && dup->bVariable) {
+									std::string error = StringUtility::Format("\'%s\' was already declared "
+										"in the same scope.\r\n", nArg.name.c_str());
+									parser_assert(false, error);
+								}
+							}
+
+							symbol s = symbol(level, nArg.type, var++, nArg.bConst);
+							current_frame->singular_insert(nArg.name, s);
 						}
+
+						brk = 0;
+						if (!_lexer_skip_post_decl(&lex2, &brk, &par))
+							break;
 					}
 
-					symbol s = symbol(level, nullptr, var++, false, !is_const);
-					current_frame->singular_insert(lex2.word, s);
-
+					brk = 0;
+					cur = 0;
+					par = 0;
+				}
+				else {
 					lex2.advance();
 				}
 				break;
 			}
-			/*
-			case token_kind::tk_LOOP:
-			case token_kind::tk_TIMES:
-			case token_kind::tk_WHILE:
-			case token_kind::tk_FOR:
-			case token_kind::tk_ASCENT:
-			case token_kind::tk_DESCENT:
-			case token_kind::tk_IF:
-			case token_kind::tk_ELSE:
-			case token_kind::tk_CASE:
-			{
-				while (IsReadableToken()) {
-					if (lex2.next == token_kind::tk_open_par || lex2.next == token_kind::tk_open_cur)
-						break;
-					lex2.advance();
-				}
 
-				if (lex2.next == token_kind::tk_open_par) {
-					int cPar = 0;
-					while (IsReadableToken()) {
-						if (lex2.next == token_kind::tk_open_par) ++cPar;
-						else if (lex2.next == token_kind::tk_close_par) --cPar;
-						if (cPar == 0) break;
-						lex2.advance();
-					}
-					lex2.advance();
-				}
-
-				//Skip until a { for normal blocks or a ; in case of single-lined blocks
-				while (IsReadableToken()) {
-					if (lex2.next == token_kind::tk_open_cur || lex2.next == token_kind::tk_semicolon)
-						break;
-					lex2.advance();
-				}
-
-				break;
-			}
-			*/
 			default:
 				lex2.advance();
 				break;
@@ -567,6 +709,7 @@ int parser::scan_current_scope(parser_state_t* state, int level, const std::vect
 
 void parser::write_operation(script_block* block, parser_state_t* state, const char* name, int clauses) {
 	symbol* s = search(name, clauses);
+	parser_assert(state, !s->bVariable, StringUtility::Format("write_operation: \"%s\" is not callable", name));
 	{
 		std::string error = StringUtility::Format(
 			"Invalid argument count for the default function \"%s\". (argc=%d)",
@@ -577,6 +720,7 @@ void parser::write_operation(script_block* block, parser_state_t* state, const c
 }
 void parser::write_operation(script_block* block, parser_state_t* state, const symbol* s, int clauses) {
 	parser_assert(state, s != nullptr, "write_operation: symbol is null");
+	parser_assert(state, !s->bVariable, "write_operation: symbol is not callable");
 	{
 		std::string error = StringUtility::Format(
 			"Invalid argument count for the default function \"%s\". (argc=%d, expected=%d)",
@@ -646,26 +790,35 @@ void parser::parse_clause(script_block* block, parser_state_t* state) {
 			DebugBreak();
 #endif
 
-		int argc = parse_arguments(block, state);
+		script_scanner lex_tmp(*state->lex);
+		parser_state_t dummyState(&lex_tmp, state->ip);
+		script_block dummyBlock(0, block_kind::bk_normal);
+
+		int argc = parse_arguments(&dummyBlock, &dummyState, nullptr);
 		symbol* s = search(name, argc);
 
 		if (s == nullptr) {
 			if (s = search(name)) {
-				if (test_variadic(s->sub->arguments, argc))
+				if (!s->bVariable && test_variadic(s->sub->arguments, argc))
 					goto continue_as_variadic;
 			}
 
 			std::string error;
-			if (search(name))
+			if (s == nullptr)
+				error = StringUtility::Format("%s is not defined.\r\n", name.c_str());
+			else if (s->bVariable)
+				error = StringUtility::Format("%s is not callable.\r\n", name.c_str());
+			//else if (search(name))
+			else
 				error = StringUtility::Format("No overload of %s takes %d arguments.\r\n",
 					name.c_str(), argc);
-			else
-				error = StringUtility::Format("%s is not defined.\r\n", name.c_str());
+
 			parser_assert(state, false, error);
 		}
 
 continue_as_variadic:
-		if (s->sub) {
+		if (!s->bVariable) {
+			parse_arguments(block, state, &s->argData);
 			parser_assert(state, s->sub->kind == block_kind::bk_function,
 				"Tasks and subs cannot return values.\r\n");
 			state->AddCode(block, code(command_kind::pc_call_and_push_result, (uint32_t)s->sub, argc));
@@ -673,7 +826,7 @@ continue_as_variadic:
 		else {
 			//Variable
 			state->AddCode(block, code(command_kind::pc_push_variable,
-				s->level, s->variable, false, name));
+				s->level, s->var, false, name));
 		}
 
 		return;
@@ -682,25 +835,29 @@ continue_as_variadic:
 	case token_kind::tk_cast_real:
 	case token_kind::tk_cast_char:
 	case token_kind::tk_cast_bool:
+	case token_kind::tk_cast_string:
 	{
-		type_data::type_kind target = type_data::tk_null;
+		type_data* target = nullptr;
 		switch (state->next()) {
 		case token_kind::tk_cast_int:
-			target = type_data::tk_int;
+			target = script_type_manager::get_int_type();
 			break;
 		case token_kind::tk_cast_real:
-			target = type_data::tk_real;
+			target = script_type_manager::get_real_type();
 			break;
 		case token_kind::tk_cast_char:
-			target = type_data::tk_char;
+			target = script_type_manager::get_char_type();
 			break;
 		case token_kind::tk_cast_bool:
-			target = type_data::tk_boolean;
+			target = script_type_manager::get_boolean_type();
+			break;
+		case token_kind::tk_cast_string:
+			target = script_type_manager::get_string_type();
 			break;
 		}
 		state->advance();
 		parse_parentheses(block, state);
-		state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)target));
+		state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)target, false));
 		return;
 	}
 	case token_kind::tk_LENGTH:
@@ -820,7 +977,7 @@ void parser::parse_prefix(script_block* block, parser_state_t* state) {
 void parser::parse_product(script_block* block, parser_state_t* state) {
 	parse_prefix(block, state);
 	while (state->next() == token_kind::tk_asterisk || state->next() == token_kind::tk_slash
-		|| state->next() == token_kind::tk_percent)
+		|| state->next() == token_kind::tk_f_slash || state->next() == token_kind::tk_percent)
 	{
 		command_kind f = command_kind::pc_inline_mod;	//tk_percent
 		switch (state->next()) {
@@ -1006,14 +1163,19 @@ void parser::parse_expression(script_block* block, parser_state_t* state) {
 //Format for variadic arguments:
 // argc = -(n + 1)
 // where n = fixed(required) arguments
-int parser::parse_arguments(script_block* block, parser_state_t* state) {
-	int result = 0;
+int parser::parse_arguments(script_block* block, parser_state_t* state, const std::vector<arg_data>* argsData) {
+	int argc = 0;
 	if (state->next() == token_kind::tk_open_par) {
 		state->advance();
 
 		while (state->next() != token_kind::tk_close_par) {
-			++result;
 			parse_expression(block, state);
+			if (argsData && argsData->size() > 0) {
+				const arg_data* arg = &argsData->at(argc);
+				if (arg->type != nullptr)
+					state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)arg->type, true));
+			}
+			++argc;
 			if (state->next() != token_kind::tk_comma) break;
 			state->advance();
 		}
@@ -1021,15 +1183,16 @@ int parser::parse_arguments(script_block* block, parser_state_t* state) {
 		parser_assert(state, state->next() == token_kind::tk_close_par, "\")\" is required.\r\n");
 		state->advance();
 	}
-	return result;
+	return argc;
 }
 
 void parser::parse_single_statement(script_block* block, parser_state_t* state,
-	bool check_terminator, token_kind statement_terminator) 	{
+	bool check_terminator, token_kind statement_terminator)
+{
 	auto assert_const = [&](symbol* s, const std::string& name) {
-		if (!s->can_modify) {
+		if (s->bConst) {
 			std::string error = StringUtility::Format("\"%s\": ", name.c_str());
-			if (s->sub)
+			if (!s->bVariable)
 				parser_assert(state, false, error + "Functions, tasks, and subs are implicitly const\r\n"
 					"and thus cannot be modified in this manner.\r\n");
 			else
@@ -1051,10 +1214,10 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		state->advance();
 
 		bool isArrayElement = false;
-		if (s->sub == nullptr) {
+		if (s->bVariable) {
 			if (state->next() == token_kind::tk_open_bra) {
 				isArrayElement = true;
-				state->AddCode(block, code(command_kind::pc_push_variable2, s->level, s->variable, false, name));
+				state->AddCode(block, code(command_kind::pc_push_variable2, s->level, s->var, false, name));
 				_parse_array_suffix_lvalue(block, state);
 			}
 		}
@@ -1064,10 +1227,16 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			assert_const(s, name);
 			state->advance();
 			parse_expression(block, state);
+
+			if (/*!s->bAssigned &&*/ s->type != nullptr) {
+				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)s->type, true));
+			}
+			s->bAssigned = true;
+
 			if (isArrayElement)
 				state->AddCode(block, code(command_kind::pc_ref_assign));
 			else
-				state->AddCode(block, code(command_kind::pc_copy_assign, s->level, s->variable, name));
+				state->AddCode(block, code(command_kind::pc_copy_assign, s->level, s->var, name));
 			break;
 		case token_kind::tk_add_assign:
 		case token_kind::tk_subtract_assign:
@@ -1097,7 +1266,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			if (isArrayElement)
 				state->AddCode(block, code(f, false, name));
 			else
-				state->AddCode(block, code(f, true, s->level, s->variable, name));
+				state->AddCode(block, code(f, true, s->level, s->var, name));
 			break;
 		}
 		case token_kind::tk_inc:
@@ -1110,14 +1279,19 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			if (isArrayElement)
 				state->AddCode(block, code(f, false, true, name));
 			else
-				state->AddCode(block, code(f, true, s->level, s->variable, name));
+				state->AddCode(block, code(f, true, s->level, s->var, name));
 			break;
 		}
 		default:
 		{
-			parser_assert(state, s->sub, "A variable cannot be called as if it was a function, a task, or a sub.\r\n");
+			parser_assert(state, !s->bVariable, 
+				"A variable cannot be called as if it was a function, a task, or a sub.\r\n");
 
-			int argc = parse_arguments(block, state);
+			script_scanner lex_tmp(*state->lex);
+			parser_state_t dummyState(&lex_tmp, state->ip);
+			script_block dummyBlock(0, block_kind::bk_normal);
+
+			int argc = parse_arguments(&dummyBlock, &dummyState, nullptr);
 
 			if (!test_variadic(s->sub->arguments, argc)) {
 				s = search_in(resScope, name, argc);
@@ -1125,6 +1299,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 					name.c_str(), argc));
 			}
 
+			parse_arguments(block, state, &s->argData);
 			state->AddCode(block, code(command_kind::pc_call, (uint32_t)s->sub, argc));
 
 			break;
@@ -1133,26 +1308,41 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 		break;
 	}
-	case token_kind::tk_const:
 	case token_kind::tk_decl_real:
-	//case token_kind::tk_decl_char:
-	//case token_kind::tk_decl_bool:
-	//case token_kind::tk_decl_string:
+	case token_kind::tk_decl_int:
+	case token_kind::tk_decl_char:
+	case token_kind::tk_decl_bool:
+	case token_kind::tk_decl_string:
 	case token_kind::tk_decl_auto:
+	case token_kind::tk_decl_mod_const:
 	{
-		state->advance();
+		while (state->next() != token_kind::tk_word) state->advance();
 		parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
 
-		std::string name = state->lex->word;
-
-		state->advance();
-		if (state->next() == token_kind::tk_assign) {
-			symbol* s = search(name);
-
+		while (true) {
+			std::string name = state->lex->word;
 			state->advance();
-			parse_expression(block, state);
-			state->AddCode(block, code(command_kind::pc_copy_assign,
-				s->level, s->variable, name));
+
+			if (state->next() == token_kind::tk_assign) {
+				symbol* s = search(name);
+				s->bAssigned = true;
+
+				state->advance();
+
+				parse_expression(block, state);
+				if (s->type != nullptr) {
+					state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)s->type, true));
+				}
+
+				state->AddCode(block, code(command_kind::pc_copy_assign,
+					s->level, s->var, name));
+			}
+
+			if (state->next() == token_kind::tk_semicolon) break;
+			else if (state->next() == token_kind::tk_comma)
+				state->advance();
+			else
+				parser_assert(state, false, "Invalid statement.\r\n");
 		}
 
 		break;
@@ -1171,7 +1361,8 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		if (state->next() == token_kind::tk_open_par) {
 			parse_parentheses(block, state);
 			{
-				state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::tk_int));
+				state->AddCode(block, code(command_kind::pc_inline_cast_var, 
+					(uint32_t)script_type_manager::get_int_type(), false));
 
 				size_t ip_var_format = state->ip;
 				state->AddCode(block, code(command_kind::pc_var_format, 0U, 0));
@@ -1242,7 +1433,8 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		if (state->next() == token_kind::tk_LOOP) state->advance();
 
 		{
-			state->AddCode(block, code(command_kind::pc_inline_cast_var, (size_t)type_data::tk_int));
+			state->AddCode(block, code(command_kind::pc_inline_cast_var, 
+				(uint32_t)script_type_manager::get_int_type(), false));
 
 			size_t ip_var_format = state->ip;
 			state->AddCode(block, code(command_kind::pc_var_format, 0U, 0));
@@ -1339,32 +1531,29 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 				state->advance();
 			}
 
-			auto _SkipDecl = [&]() {
-				if (state->next() == token_kind::tk_decl_auto) state->advance();
-				else if (state->next() == token_kind::tk_const)
-					parser_assert(state, false, "The counter variable cannot be const.\r\n");
+			std::vector<arg_data> listCounterVars;
+			auto _ParseDecl = [&]() {
+				arg_data nCounter = parse_variable_decl(state, false);
+
+				parser_assert(state, !nCounter.bConst, "The counter variable cannot be const.\r\n");
+
+				listCounterVars.push_back(nCounter);
 			};
-			_SkipDecl();
-			parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
 
-			std::string iteratorName = state->lex->word;
-			std::string loopCounterName = "";
+			_ParseDecl();
 
-			state->advance();
 			if (state->next() == token_kind::tk_comma) {
-				//Format: "for each (i,j in array)"
+				//Format: 
+				//		"for each (i, j in array)"
+				//		"for each (let i, let j in array)"
+				//		"for each ((i, j) in array)"
+				//		"for each ((let i, let j) in array)"
 				//	i = loop count
 				//	j = array element
 
 				state->advance();
 
-				_SkipDecl();
-				parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
-
-				loopCounterName = iteratorName;
-				iteratorName = state->lex->word;
-
-				state->advance();
+				_ParseDecl();
 			}
 
 			if (bHasOpenPar) {
@@ -1407,16 +1596,13 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 			block_return_t blockParam;
 			{
-				std::vector<std::string> argv;
-				if (loopCounterName.size() > 0) {
+				if (listCounterVars.size() == 2) {
 					//Decrease the counter variable by 1
 					state->AddCode(block, code(command_kind::pc_dup_n, 1U));
 					state->AddCode(block, code(command_kind::pc_load_ptr, 0));
 					state->AddCode(block, code(command_kind::pc_inline_dec, false, true));
-					argv = { loopCounterName, iteratorName };
 				}
-				else argv.push_back(iteratorName);
-				blockParam = parse_block(block, state, &argv, true);
+				blockParam = parse_block(block, state, &listCounterVars, true);
 			}
 
 			size_t ip_continue = state->ip;
@@ -1441,26 +1627,33 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		else if (state->next() == token_kind::tk_open_par) {	//Regular for loop
 			state->advance();
 
-			struct _var_symbol {
-				std::string name;
-				bool bConst;
-			};
-			std::vector<_var_symbol> listNewVars;
+			std::vector<arg_data> listNewVars;
 
 			script_scanner* const lex_org = state->lex;
 			script_scanner lex_s1(*state->lex);		//First statement (initialization)
 
-			if (IsDeclToken(state->next()) || state->next() == token_kind::tk_const) {
-				_var_symbol nVar;
-				nVar.bConst = state->next() == token_kind::tk_const;
-				state->advance();
-				parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
-				nVar.name = state->lex->word;
-				listNewVars.push_back(nVar);
-			}
+			if (IsDeclToken(state->next())) {
+				arg_data firstArg = arg_data();
 
-			while (state->next() != token_kind::tk_semicolon) state->advance();
-			state->advance();
+				while (true) {
+					arg_data nArg = parse_variable_decl(state, false);
+					if (firstArg.name.size() == 0)
+						firstArg = nArg;
+
+					nArg.type = firstArg.type;
+					nArg.bConst = firstArg.bConst;
+					listNewVars.push_back(nArg);
+
+					int brk = 0;
+					int par = 0;
+					if (!_lexer_skip_post_decl(state->lex, &brk, &par))
+						break;
+				}
+			}
+			else {
+				while (state->next() != token_kind::tk_semicolon) state->advance();
+				state->advance();
+			}
 
 			bool hasEvalExpr = true;
 			if (state->next() == token_kind::tk_semicolon) hasEvalExpr = false;
@@ -1472,9 +1665,18 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 			script_scanner lex_s3(*state->lex);		//Third statement (update)
 
-			while (state->next() != token_kind::tk_semicolon && state->next() != token_kind::tk_close_par) state->advance();
-			state->advance();
-			if (state->next() == token_kind::tk_close_par) state->advance();
+			{
+				int cur = 0;
+				while (true) {
+					if (state->next() == token_kind::tk_open_par) ++cur;
+					else if (state->next() == token_kind::tk_close_par) {
+						if (cur == 0) break;
+						--cur;
+					}
+					state->advance();
+				}
+				state->advance();
+			}
 
 			script_scanner lex_s4(*state->lex);		//Loop body
 
@@ -1494,11 +1696,11 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 				for (parser_state_t* iState = state; iState != nullptr; iState = iState->state_pred)
 					varc_prev_total += iState->var_count_main;
 
+				//Register new vars to the parser
 				for (size_t iNewVar = 0; iNewVar < listNewVars.size(); ++iNewVar) {
-					_var_symbol* pVarData = &listNewVars[iNewVar];
-
-					symbol s = symbol(block->level, nullptr, varc_prev_total + iNewVar,
-						false, !pVarData->bConst);
+					arg_data* pVarData = &listNewVars[iNewVar];
+					symbol s = symbol(block->level, pVarData->type, 
+						varc_prev_total + iNewVar, pVarData->bConst);
 					frame.back().singular_insert(pVarData->name, s);
 				}
 				newState.var_count_main = listNewVars.size();
@@ -1533,8 +1735,8 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 					if (single_line)
 						parse_single_statement(block, &newState, true, token_kind::tk_semicolon);
 					else {
-						newState.var_count_main += scan_current_scope(&newState, block->level, nullptr,
-							false, varc_prev_total + listNewVars.size());
+						newState.var_count_main += scan_current_scope(&newState, block->level, 
+							varc_prev_total + listNewVars.size(), nullptr);
 						parse_statements(block, &newState, token_kind::tk_close_cur, token_kind::tk_semicolon);
 					}
 
@@ -1593,15 +1795,8 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		parser_assert(state, state->next() == token_kind::tk_open_par, "\"(\" is required.\r\n");
 		state->advance();
 
-		if (IsDeclToken(state->next())) state->advance();
-		else if (state->next() == token_kind::tk_const)
-			parser_assert(false, "The counter variable cannot be const.\r\n");
-
-		parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
-
-		std::string counterName = state->lex->word;
-
-		state->advance();
+		arg_data counterData = parse_variable_decl(state, false);
+		parser_assert(state, !counterData.bConst, "The counter variable cannot be const.\r\n");
 
 		parser_assert(state, state->next() == token_kind::tk_IN, "\"in\" is required.\r\n");
 		state->advance();
@@ -1644,7 +1839,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 		block_return_t blockParam;
 		{
-			std::vector<std::string> argv = { counterName };
+			std::vector<arg_data> argv = { counterData };
 			blockParam = parse_block(block, state, &argv, true);
 		}
 
@@ -1808,7 +2003,6 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		case token_kind::tk_end:
 		case token_kind::tk_invalid:
 		case token_kind::tk_semicolon:
-		case token_kind::tk_close_cur:
 			break;
 		default:
 		{
@@ -1816,8 +2010,11 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			parser_assert(state, s, "Only functions may return values.\r\n");
 
 			parse_expression(block, state);
+			if (s->type != nullptr) {
+				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)s->type, true));
+			}
 			state->AddCode(block, code(command_kind::pc_copy_assign,
-				s->level, s->variable, "!f_ebp"));
+				s->level, s->var, "!res"));
 		}
 		}
 		state->AddCode(block, code(command_kind::pc_sub_return));
@@ -1841,6 +2038,12 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		token_kind token = state->next();
 
 		state->advance();
+
+		if (state->next() == token_kind::tk_l) {	//<...>
+			while (state->next() != token_kind::tk_g) state->advance();
+			state->advance();
+		}
+
 		if (state->next() != token_kind::tk_word) {
 			std::string error = "This token cannot be used to declare a";
 			switch (token) {
@@ -1874,30 +2077,22 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 		state->advance();
 
-		std::vector<std::string> args;
+		/*
+		std::vector<arg_data> args;
 		if (s->sub->kind != block_kind::bk_sub) {
 			if (state->next() == token_kind::tk_open_par) {
-				const char* pInvalidToken = state->lex->get();
 				state->advance();
 				while (state->next() == token_kind::tk_word || IsDeclToken(state->next())) {
-					if (IsDeclToken(state->next())) {
-						state->advance();
-						parser_assert(state, state->next() == token_kind::tk_word, "Parameter name is required.\r\n");
-					}
 					//TODO: Give scripters the ability to define vararg functions
-					args.push_back(state->lex->word);
-					state->advance();
+
+					arg_data nArg = parse_variable_decl(state, true);
+					args.push_back(nArg);
+
 					if (state->next() != token_kind::tk_comma)
 						break;
-					pInvalidToken = state->lex->get();
 					state->advance();
 				}
-				if (state->next() != token_kind::tk_close_par) {
-					std::wstring err = StringUtility::Format(
-						L"\"%s\" cannot be used in a parameter list.\r\n",
-						state->lex->tostr(pInvalidToken, state->lex->get()).c_str());
-					parser_assert(state, false, err);
-				}
+				parser_assert(state, state->next() == token_kind::tk_close_par, "\")\" is required.\r\n");
 				state->advance();
 			}
 		}
@@ -1909,8 +2104,25 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 				state->advance();
 			}
 		}
+		*/
+		size_t argc = 0;
+		if (state->next() == token_kind::tk_open_par) {
+			state->advance();
+			if (state->next() != token_kind::tk_close_par) {
+				while (true) {
+					if (state->next() == token_kind::tk_comma)
+						++argc;
+					else if (state->next() == token_kind::tk_close_par) {
+						++argc;
+						break;
+					}
+					state->advance();
+				}
+			}
+			state->advance();
+		}
 
-		s = search_in(pScope, funcName, args.size());
+		s = search_in(pScope, funcName, argc);
 		parser_assert(state, s->sub->codes.size() == 0,
 			"Function body already defined.\r\n");
 
@@ -1922,15 +2134,28 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			parser_assert(&newState, newState.next() == token_kind::tk_open_cur, "\"{\" is required.\r\n");
 			newState.advance();
 
-			newState.var_count_main = scan_current_scope(&newState, s->sub->level,
-				&args, s->sub->kind == block_kind::bk_function);
-			newState.AddCode(s->sub, code(command_kind::pc_var_alloc, 0));
+			{
+				int totalVar = 0;
+
+				if (s->sub->kind == block_kind::bk_function) {
+					symbol sRes = symbol(s->sub->level, s->type, 0, false);
+					frame.back().singular_insert("\x01", sRes);		//Function return
+
+					totalVar = 1;
+				}
+
+				totalVar += scan_current_scope(&newState, s->sub->level, totalVar, &s->argData);
+				newState.AddCode(s->sub, code(command_kind::pc_var_alloc, 0));
+
+				newState.var_count_main = totalVar;
+			}
 
 			//Function arguments
-			for (const auto& iName : args) {
-				symbol* sVar = search(iName);
+			for (const auto& iArg : s->argData) {
+				symbol* sVar = search(iArg.name);
+				//No need to type-convert arguments here
 				newState.AddCode(s->sub, code(command_kind::pc_copy_assign,
-					sVar->level, sVar->variable, iName));
+					sVar->level, sVar->var, iArg.name));
 			}
 			parse_statements(s->sub, &newState, token_kind::tk_close_cur, token_kind::tk_semicolon);
 			scan_final(s->sub, &newState);
@@ -1956,14 +2181,15 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 	}
 }
 void parser::parse_statements(script_block* block, parser_state_t* state,
-	token_kind block_terminator, token_kind statement_terminator) 	{
+	token_kind block_terminator, token_kind statement_terminator)
+{
 	for (; state->next() != block_terminator; ) {
 		parse_single_statement(block, state, true, statement_terminator);
 	}
 }
 
 parser::block_return_t parser::parse_block(script_block* block, parser_state_t* state,
-	const std::vector<std::string>* args, bool allow_single) 	{
+	const std::vector<arg_data>* args, bool allow_single) 	{
 	size_t prev_size = state->ip;
 
 	parser_state_t newState(state->lex, state->ip);
@@ -1982,23 +2208,26 @@ parser::block_return_t parser::parse_block(script_block* block, parser_state_t* 
 	frame.push_back(scope_t(block->kind));
 
 	if (!single_line) {
-		newState.var_count_main = scan_current_scope(&newState, block->level,
-			args, false, varc_prev_total);
+		newState.var_count_main = scan_current_scope(&newState, block->level, varc_prev_total, args);
 	}
 	else if (args) {
 		scope_t* ptrBackFrame = &frame.back();
 		for (size_t i = 0; i < args->size(); ++i) {
-			symbol s = symbol(block->level, nullptr, varc_prev_total + i, false, true);
-			ptrBackFrame->singular_insert(args->at(i), s);
+			const arg_data* arg = &args->at(i);
+			symbol s = symbol(block->level, arg->type, varc_prev_total + i, arg->bConst);
+			ptrBackFrame->singular_insert(arg->name, s);
 		}
 		newState.var_count_main = args->size();
 	}
 
 	if (args) {
 		for (size_t i = 0; i < args->size(); ++i) {
-			const std::string& name = args->at(i);
+			const arg_data* arg = &args->at(i);
+			if (arg->type != nullptr) {
+				newState.AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)arg->type, true));
+			}
 			newState.AddCode(block, code(command_kind::pc_copy_assign,
-				block->level, varc_prev_total + i, name));
+				block->level, varc_prev_total + i, arg->name));
 		}
 	}
 	if (single_line)
@@ -2147,11 +2376,11 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 					for (size_t i = 0; i < sizeArray; ++i) {
 						{
 							value appending = ptrPushValueCode->data;
+							appending.make_unique();
+
 							BaseFunction::_append_check(nullptr, arrayType, appending.get_type());
-							if (appending.get_type()->get_kind() != type_elem->get_kind()) {
-								appending.make_unique();
-								BaseFunction::_value_cast(&appending, type_elem->get_kind());
-							}
+							BaseFunction::_value_cast(nullptr, &appending, type_elem);
+
 							listPtrVal[i] = appending;
 						}
 						++ptrPushValueCode;
