@@ -482,6 +482,11 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 	fastModeSpeed_ = std::clamp(fastModeSpeed_, 1, 50);
 
 	{
+		std::wstring str = prop.GetString(L"dynamic.scaling", L"false");
+		bDynamicScaling_ = str == L"true" ? true : StringUtility::ToInteger(str);
+	}
+
+	{
 		if (prop.HasProperty(L"window.size.list")) {
 			std::wstring strList = prop.GetString(L"window.size.list", L"");
 			if (strList.size() >= 3) {	//Minimum format: "0x0"

@@ -17,13 +17,13 @@ using namespace directx;
 DirectGraphicsConfig::DirectGraphicsConfig() {
 	bShowWindow_ = true;
 	sizeScreen_ = { 640, 480 };
-	sizeScreenWindowed_ = { 640, 480 };
+	sizeScreenDisplay_ = { 640, 480 };
 	bWindowed_ = true;
 	bUseRef_ = false;
 	colorMode_ = COLOR_MODE_32BIT;
 	bUseTripleBuffer_ = true;
 	bVSync_ = false;
-	bPseudoFullScreen_ = true;
+	bBorderlessFullscreen_ = true;
 	typeMultiSample_ = D3DMULTISAMPLE_NONE;
 	bCheckDeviceCaps_ = true;
 }
@@ -95,11 +95,21 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 
 	bool bDeviceVSyncAvailable = (deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_ONE) != 0;
 
+	UINT dxBackBufferW = config.sizeScreen_.x;
+	UINT dxBackBufferH = config.sizeScreen_.y;
+	if (config.bUseDynamicScaling_) {
+		dxBackBufferW = config.sizeScreenDisplay_.x;
+		dxBackBufferH = config.sizeScreenDisplay_.y;
+
+		G_DX_COORDS_MUL.x = dxBackBufferW / (float)config.sizeScreen_.x;
+		G_DX_COORDS_MUL.y = dxBackBufferH / (float)config.sizeScreen_.y;
+	}
+
 	//Fullscreen mode settings
 	ZeroMemory(&d3dppFull_, sizeof(D3DPRESENT_PARAMETERS));
 	d3dppFull_.hDeviceWindow = hWnd;
-	d3dppFull_.BackBufferWidth = config.sizeScreen_.x;
-	d3dppFull_.BackBufferHeight = config.sizeScreen_.y;
+	d3dppFull_.BackBufferWidth = dxBackBufferW;
+	d3dppFull_.BackBufferHeight = dxBackBufferH;
 	d3dppFull_.Windowed = FALSE;
 	d3dppFull_.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	d3dppFull_.BackBufferFormat = config.colorMode_ == ColorMode::COLOR_MODE_16BIT ? 
@@ -116,8 +126,8 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	D3DDISPLAYMODE dmode;
 	HRESULT hrAdapt = pDirect3D_->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &dmode);
 	ZeroMemory(&d3dppWin_, sizeof(D3DPRESENT_PARAMETERS));
-	d3dppWin_.BackBufferWidth = config.sizeScreen_.x;
-	d3dppWin_.BackBufferHeight = config.sizeScreen_.y;
+	d3dppWin_.BackBufferWidth = dxBackBufferW;
+	d3dppWin_.BackBufferHeight = dxBackBufferH;
 	d3dppWin_.Windowed = TRUE;
 	d3dppWin_.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	d3dppWin_.BackBufferFormat = D3DFMT_UNKNOWN;
@@ -204,7 +214,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 			Logger::WriteTop("DirectGraphics: Selected multisampling is not supported on this device, falling back to D3DMULTISAMPLE_NONE.");
 		}
 		else if (config.typeMultiSample_ != D3DMULTISAMPLE_NONE) {
-			if (!config.bPseudoFullScreen_) {
+			if (!config.bBorderlessFullscreen_) {
 				std::map<D3DMULTISAMPLE_TYPE, std::string> mapSampleIndex = {
 					{ D3DMULTISAMPLE_NONE, "D3DMULTISAMPLE_NONE" },
 					{ D3DMULTISAMPLE_2_SAMPLES, "D3DMULTISAMPLE_2_SAMPLES" },
@@ -905,7 +915,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 	}
 
 
-	if (config.bPseudoFullScreen_) {
+	if (config.bBorderlessFullscreen_) {
 		//Create a child window to handle contents (parent window handles black bars)
 
 		std::wstring nameClass = L"DirectGraphicsPrimaryWindow.Child";
@@ -1006,8 +1016,8 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 			else {
 				//To fullscreen
 
-				LONG baseWidth = config_.sizeScreenWindowed_.x;
-				LONG baseHeight = config_.sizeScreenWindowed_.y;
+				LONG baseWidth = config_.sizeScreenDisplay_.x;
+				LONG baseHeight = config_.sizeScreenDisplay_.y;
 
 				double aspectRatioWH = baseWidth / (double)baseHeight;
 				double scalingRatio = std::min(targetWidth / (double)baseWidth, targetHeight / (double)baseHeight);
@@ -1029,8 +1039,8 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 		int wWidth = ::GetSystemMetrics(SM_CXFULLSCREEN);
 		int wHeight = ::GetSystemMetrics(SM_CYFULLSCREEN);
 
-		LONG screenWidth = config_.sizeScreenWindowed_.x;
-		LONG screenHeight = config_.sizeScreenWindowed_.y;
+		LONG screenWidth = config_.sizeScreenDisplay_.x;
+		LONG screenHeight = config_.sizeScreenDisplay_.y;
 
 		DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 
@@ -1070,23 +1080,7 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 	newScreenMode_ = newMode;
 
 	//True fullscreen mode
-	if (!config_.bPseudoFullScreen_) {
-		/*
-		if (modeScreen_ == SCREENMODE_WINDOW) {
-			LONG screenWidth = config_.sizeScreen_.x;
-			LONG screenHeight = config_.sizeScreen_.y;
-			int wWidth = ::GetSystemMetrics(SM_CXFULLSCREEN);
-			int wHeight = ::GetSystemMetrics(SM_CYFULLSCREEN);
-			bool bFullScreenEnable = screenWidth <= wWidth && screenHeight <= wHeight;
-			if (!bFullScreenEnable) {
-				std::string log = StringUtility::Format(
-					"This display does not support fullscreen mode : display[%d-%d] screen[%d-%d]", wWidth, wHeight, screenWidth, screenHeight);
-				Logger::WriteTop(log);
-				return;
-			}
-		}
-		*/
-
+	if (!config_.bBorderlessFullscreen_) {
 		Application::GetBase()->SetActive(true);
 
 		_ReleaseDxResource();
@@ -1099,8 +1093,8 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 			::SetWindowLong(hAttachedWindow_, GWL_STYLE, wndStyleWin_);
 			::ShowWindow(hAttachedWindow_, SW_SHOW);
 
-			LONG screenWidth = config_.sizeScreenWindowed_.x;
-			LONG screenHeight = config_.sizeScreenWindowed_.y;
+			LONG screenWidth = config_.sizeScreenDisplay_.x;
+			LONG screenHeight = config_.sizeScreenDisplay_.y;
 
 			DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 
@@ -1136,14 +1130,14 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 			pDevice_->ShowCursor(true);
 		}
 	}
-	//Pseudo fullscreen mode
+	//Borderless fullscreen mode
 	else {
 		if (newMode == SCREENMODE_WINDOW) {		//To windowed
 			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleWin_);
 			::ShowWindow(hWnd_, SW_SHOW);
 
-			LONG screenWidth = config_.sizeScreenWindowed_.x;
-			LONG screenHeight = config_.sizeScreenWindowed_.y;
+			LONG screenWidth = config_.sizeScreenDisplay_.x;
+			LONG screenHeight = config_.sizeScreenDisplay_.y;
 
 			DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 

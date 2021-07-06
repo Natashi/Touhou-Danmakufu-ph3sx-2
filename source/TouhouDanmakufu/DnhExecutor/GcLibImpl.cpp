@@ -147,7 +147,7 @@ bool EApplication::_Loop() {
 		logger->SetInfo(0, L"Fps", fps);
 
 		const POINT& screenSize = graphics->GetConfigData().sizeScreen_;
-		const POINT& screenSizeWindowed = graphics->GetConfigData().sizeScreenWindowed_;
+		const POINT& screenSizeWindowed = graphics->GetConfigData().sizeScreenDisplay_;
 		//int widthScreen = widthConfig * graphics->GetScreenWidthRatio();
 		//int heightScreen = heightConfig * graphics->GetScreenHeightRatio();
 		std::wstring screenInfo = StringUtility::Format(L"Width: %d/%d, Height: %d/%d",
@@ -220,14 +220,15 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 
 	DirectGraphicsConfig dxConfig;
 	dxConfig.sizeScreen_ = { screenWidth, screenHeight };
-	dxConfig.sizeScreenWindowed_ = { windowedWidth, windowedHeight };
+	dxConfig.sizeScreenDisplay_ = { windowedWidth, windowedHeight };
 	dxConfig.bShowWindow_ = true;
 	dxConfig.bShowCursor_ = dnhConfig->IsMouseVisible();
 	dxConfig.colorMode_ = dnhConfig->GetColorMode();
 	dxConfig.bVSync_ = dnhConfig->IsEnableVSync();
 	dxConfig.bUseRef_ = dnhConfig->IsEnableRef();
 	dxConfig.typeMultiSample_ = dnhConfig->GetMultiSampleType();
-	dxConfig.bPseudoFullScreen_ = dnhConfig->bPseudoFullscreen_;
+	dxConfig.bBorderlessFullscreen_ = dnhConfig->bPseudoFullscreen_;
+	dxConfig.bUseDynamicScaling_ = dnhConfig->UseDynamicScaling();
 
 	{
 		RECT rcMonitor;
@@ -269,7 +270,7 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 				}
 				windowedWidth = newWidth;
 				windowedHeight = newHeight;
-				dxConfig.sizeScreenWindowed_ = { windowedWidth, windowedHeight };
+				dxConfig.sizeScreenDisplay_ = { windowedWidth, windowedHeight };
 			}
 		}
 	}

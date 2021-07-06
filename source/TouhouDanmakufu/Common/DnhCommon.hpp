@@ -150,6 +150,8 @@ public:
 
 	std::vector<POINT> windowSizeList_;
 	size_t sizeWindow_;
+	bool bDynamicScaling_;
+
 	int fastModeSpeed_;
 
 	bool bVSync_;
@@ -184,6 +186,8 @@ public:
 	std::vector<POINT>& GetWindowSizeList() { return windowSizeList_; }
 	size_t GetWindowSize() { return sizeWindow_; }
 	void SetWindowSize(size_t size) { sizeWindow_ = size; }
+	bool UseDynamicScaling() { return bDynamicScaling_; }
+
 	int GetFpsType() { return fpsType_; }
 	void SetFpsType(int type) { fpsType_ = type; }
 	int GetSkipModeSpeedRate() { return fastModeSpeed_; }
