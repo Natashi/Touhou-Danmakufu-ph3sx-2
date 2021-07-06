@@ -1273,7 +1273,7 @@ void StgShotObject::_ProcessTransformAct() {
 
 			int shotID = transform.param[7];
 
-			ref_unsync_ptr<StgMovePattern_Angle> pattern = new StgMovePattern_Angle(this);
+			ref_unsync_ptr<StgMovePattern_XY> pattern = new StgMovePattern_XY(this);
 
 			ADD_CMD(StgMovePattern_XY::SET_S_X, speedX);
 			ADD_CMD(StgMovePattern_XY::SET_S_Y, speedY);
