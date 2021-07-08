@@ -410,7 +410,7 @@ void KeyPanel::_UpdateText(int row) {
 
 }
 void KeyPanel::UpdateKeyAssign() {
-	int row = viewKey_->GetSelectedRow();
+	int row = viewKey_->GetSelectedRow();;
 	if (row < 0) return;
 
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
