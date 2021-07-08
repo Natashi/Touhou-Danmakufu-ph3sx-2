@@ -321,7 +321,6 @@ void DevicePanel::WriteConfiguration() {
 KeyPanel::KeyPanel() {
 }
 KeyPanel::~KeyPanel() {
-
 }
 bool KeyPanel::Initialize(HWND hParent) {
 	hWnd_ = ::CreateDialog((HINSTANCE)GetWindowLong(NULL, GWL_HINSTANCE),
@@ -411,7 +410,7 @@ void KeyPanel::_UpdateText(int row) {
 
 }
 void KeyPanel::UpdateKeyAssign() {
-	int row = viewKey_->GetSelectedRow();
+	int row = viewKey_->GetSelectedRow();;
 	if (row < 0) return;
 
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
@@ -451,12 +450,6 @@ void KeyPanel::UpdateKeyAssign() {
 		_UpdateText(row);
 
 		int nextRow = row + 1;
-		if (pushKeyCode >= 0 && false) {
-			if (pushKeyCode == DIK_UP)
-				nextRow++;
-			if (pushKeyCode == DIK_DOWN)
-				nextRow--;
-		}
 		if (nextRow >= viewKey_->GetRowCount())
 			nextRow = 0;
 		viewKey_->SetSelectedRow(nextRow);
@@ -474,7 +467,9 @@ void KeyPanel::WriteConfiguration() {
 //KeyPanel::KeyListView
 LRESULT KeyPanel::KeyListView::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
-	case WM_KEYDOWN://キー入力を無視
+	case WM_CHAR:
+		return FALSE;	//Disables item searching
+	case WM_KEYDOWN:
 		return FALSE;
 	}
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
