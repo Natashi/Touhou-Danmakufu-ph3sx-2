@@ -1228,14 +1228,16 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			state->advance();
 			parse_expression(block, state);
 
-			if (/*!s->bAssigned &&*/ s->type != nullptr) {
-				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)s->type, true));
-			}
 			s->bAssigned = true;
+			if (type_data* cvtType = s->type) {
+				if (isArrayElement)
+					cvtType = cvtType->get_element();
+				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)cvtType, true));
+			}
 
 			if (isArrayElement)
 				state->AddCode(block, code(command_kind::pc_ref_assign));
-			else
+			else 
 				state->AddCode(block, code(command_kind::pc_copy_assign, s->level, s->var, name));
 			break;
 		case token_kind::tk_add_assign:
