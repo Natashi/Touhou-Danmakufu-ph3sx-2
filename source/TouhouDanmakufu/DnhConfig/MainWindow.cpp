@@ -359,7 +359,6 @@ bool KeyPanel::Initialize(HWND hParent) {
 	mapViewText[EDirectInput::KEY_PAUSE] = L"Pause";
 	for (auto itr = mapViewText.begin(); itr != mapViewText.end(); ++itr) {
 		const std::wstring& text = itr->second;
-		const std::wstring& text = L"\u2063" + itr->second; // :nothere:
 		viewKey_->SetText(itr->first, COL_ACTION, text);
 		_UpdateText(itr->first);
 	}
