@@ -145,6 +145,11 @@ value* value::set(type_data* t, ref_unsync_ptr<std::vector<value>> v) {
 	new (&p_array_value) auto(v);
 	return this;
 }
+value* value::set(type_data* t) {
+	kind = t ? t->get_kind() : type_data::tk_null;
+	type = t;
+	return this;
+}
 #pragma pop_macro("new")
 
 value& value::operator=(const value& source) {

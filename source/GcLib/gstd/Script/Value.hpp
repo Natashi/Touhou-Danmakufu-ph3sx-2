@@ -79,6 +79,7 @@ namespace gstd {
 		value* set(type_data* t, value* v);
 		value* set(type_data* t, std::vector<value>& v);
 		value* set(type_data* t, ref_unsync_ptr<std::vector<value>> v);
+		value* set(type_data* t);
 
 		void make_unique();
 
