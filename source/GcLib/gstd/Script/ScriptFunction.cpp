@@ -669,7 +669,7 @@ namespace gstd {
 		return value(script_type_manager::get_int_type(), (int64_t)argv->length_as_array());
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::resize) {
-		value* val = const_cast<value*>(&argv[0]);
+		const value* val = &argv[0];
 		type_data* valType = val->get_type();
 
 		if (valType->get_kind() != type_data::tk_array) {
@@ -681,6 +681,8 @@ namespace gstd {
 		size_t newSize = argv[1].as_int();
 		type_data* newType = val->get_type();
 
+		value res = *val;
+		res.make_unique();
 		if (newSize != oldSize) {
 			std::vector<value> arrVal(newSize);
 
@@ -708,9 +710,9 @@ namespace gstd {
 					arrVal[i] = fill;
 			}
 
-			val->set(newType, arrVal);
+			res.set(newType, arrVal);
 		}
-		return value();
+		return res;
 	}
 
 	const value* BaseFunction::index(script_machine* machine, int argc, value* arr, value* indexer) {
