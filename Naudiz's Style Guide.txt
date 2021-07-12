@@ -5,7 +5,7 @@ Preamble:
     In the code examples below, the sequence "// ..." (two slashes, one space, three full stops) denotes a line where, in most cases, more code should be written.
     However, such code is unnecessary for the purposes of each example.
     
-    Comments from the writer that do not necessarily dictate style guidelines are preceded by the sequence "// NAZ: ". 
+    Comments from the writer that do not necessarily dictate style guidelines are preceded by the sequence "// DOG: ". 
 
 1: Identifiers
 
@@ -13,22 +13,28 @@ Preamble:
     
         Note:
 
-            Variables MUST be written using camelCase, while constants MUST use SCREAMING_SNAKE_CASE.
+            Variables and constants SHOULD be declared with explicit type keywords (real, int, bool, char, string, etc.), unless the type is unknown,
+            in which case either "let" or "var" is used. These keywords are interchangeable, but the scripter MUST decide on one to use consistently.
+            
+            Variables MUST be written using camelCase*, while constants MUST use SCREAMING_SNAKE_CASE.
             Related identifiers SHOULD share the leading parts of their names for alphabetization purposes.
+            
+            In cases where variables have short names or are uninitialized, multiple variables MAY be declared on the same line, separated by commas.
+            They SHOULD be of the same type, so fewer keywords are necessary.
+            
+            *If necessary, a prefix or suffix MAY be added to a variable in the snake_case style.
             
             DO:
             
-                let posX;
-                let posY;
-                const BOSS_RUMIA = 0i;
-                const BOSS_CIRNO = 1i;
+                real posX, posY;
+                const int BOSS_RUMIA = 0;
+                const int BOSS_CIRNO = 1;
                 
             DON'T:
             
-                let xPos;
-                let yPos;
-                const RUMIA_BOSS = 0i;
-                const CIRNO_BOSS = 1i;
+                let xPos, yPos;
+                const RUMIA_BOSS = 0;
+                const CIRNO_BOSS = 1;
             
         
         1.1.1: Local Variables
@@ -37,10 +43,9 @@ Preamble:
             
             EXAMPLE:
             
-                function DoSomething()
+                function<void> DoSomething()
                 {
-                    let posX;
-                    let posY;
+                    real posX, posY;
                     // ...
                 }
             
@@ -52,8 +57,8 @@ Preamble:
             
             EXAMPLE:
             
-                let _objEnemy;
-                let _objPlayer;
+                int _objEnemy;
+                int _objPlayer;
                 
                 @Initialize
                 {
@@ -65,9 +70,11 @@ Preamble:
         
             Function and task parameters SHOULD be denoted with a trailing underscore.
             
+            Parameters SHOULD be declared with type keywords, or either "let" or "var" if unknown.
+            
             EXAMPLE:
             
-                function DoSomethingElse(foo_, bar_)
+                function<void> DoSomethingElse(int foo_, real bar_)
                 {
                     // ...
                 }
@@ -75,14 +82,17 @@ Preamble:
         
         1.1.4: Iterators
         
-            Iterator variables declared in for-loops, ascent-loops, and descent-loops SHOULD be named single, lowercase letters of the alphabet starting with "i",
+            Iterator variables declared in for-loops, ascent-loops, and descent-loops SHOULD be named lowercase letters of the alphabet starting with "i",
             progressing to the next letter for each nested loop. This convention MAY be bypassed if more semantic information is necessary.
             
             Iterator variables declared in for-each-loops SHOULD have single-word names prefixed with "i".
             
+            Fun fact: It is possible to add a second iterator to a for-each-loop, which is written before the first and iterates through the array's indices (starting from 0) instead of its elements.
+            This variable SHOULD follow the same rules as those declared in for-loops.
+            
             EXAMPLE:
             
-                for (let i = 0; i < 2; i++) {
+                for (int i = 0; i < 2; i++) {
                     ascent (j in 0 .. 3) {
                         descent (k in 0 .. 4) {
                             // ...
@@ -93,19 +103,25 @@ Preamble:
                 for each (iObj in arrObj) {
                     // ...
                 }
+                
+                for each ((i, iObj) in arrObj) {
+                    // ...
+                }
             
         
         1.1.5: Constants
         
-            As mentioned previously, constants MUST use SCREAMING_SNAKE_CASE. All constants SHOULD be declared in a dedicated constant library.
-            Numeric constants SHOULD be integers instead of real numbers (currently denoted by the "i" suffix at the end of the literal).
+            As mentioned previously, constants MUST use SCREAMING_SNAKE_CASE. All constants SHOULD be defined in a dedicated constant library.
+            Numeric constants SHOULD be integers instead of real numbers (denoted in decimal literals by appending the character "i" at the end,
+            but this is not necessary if the constant type is explicitly defined).
+            
             
             EXAMPLE:
             
-                const PLAYER_REIMU = 0i;
-                const PLAYER_MARISA = 1i;
-                const PLAYER_MIMA = 2i;
-                const PLAYER_YUKA = 3i;
+                const int PLAYER_REIMU = 0;
+                const int PLAYER_MARISA = 1;
+                const int PLAYER_MIMA = 2;
+                const int PLAYER_YUKA = 3;
             
         
     
@@ -113,35 +129,38 @@ Preamble:
     
         Note:
             
+            
             Function, task, and subroutine names all MUST use PascalCase to differentiate them from other identifiers.
             The root of the identifier name SHOULD begin with a verb.
             
-            // NAZ: The "Is...Exists" structure is Engrish through and through, but I use it for consistency with built-in function names.
+            // DOG: The "Is...Exists" structure is Engrish through and through, but I use it for consistency with built-in function names.
             
             EXAMPLE:
                 
-                function DoSomething()
+                function<void> DoSomething()
                 {
                     // ...
                 }
                 
-                function GetSomething(foo_)
+                function<int> GetSomething(int foo_)
                 {
                     // ...
                 }
                 
-                function SetSomething(foo_, bar_)
+                function<void> SetSomething(int foo_, real bar_)
                 {
                     // ...
                 }
                 
-                function IsSomethingExists(foo_)
+                function<bool> IsSomethingExists(int foo_)
                 {
                     // ...
                 }
             
         
         1.2.1: Functions
+            
+            Functions SHOULD be declared with explicit type keywords in angle brackets, unless the type is unknown or variant.
             
             Function names MUST use PascalCase with no underscores.*
             Function calls require trailing parentheses, even when there are no arguments.
@@ -150,23 +169,23 @@ Preamble:
             
             EXAMPLE:
             
-                function DoSomething()
+                function<void> DoSomething()
                 {
                     // ...
                 }
                 
-                function DoSomethingElse(foo_, bar_)
+                function<void> DoSomethingElse(bool foo_, real bar_)
                 {
                     DoSomething();
                     // ...
                 }
                 
-                function Obj_DoSomething(obj_)
+                function<void> Obj_DoSomething(int obj_)
                 {
                     // ...
                 }
                 
-                function DoSomething_Obj_Obj(obj1_, obj2_)
+                function<void> DoSomething_Obj_Obj(int obj1_, int obj2_)
                 {
                     // ...
                 }
@@ -174,13 +193,14 @@ Preamble:
         
         1.2.2: Tasks
             
-            Task names MUST use PascalCase with a leading underscore. The same rules about affixes and parentheses that apply to functions apply here.
+            Task names SHOULD use one of the following styles (and consistently): PascalCase with a leading underscore, OR PascalCase with a leading uppercase T.
+            The same rules about affixes and parentheses that apply to functions apply here.
             
-            // NAZ: I like to treat my tasks as private routines, so often times you'll see me create a "public" function that calls task nested inside.
+            // DOG: I like to treat my tasks as private routines, so often times you'll see me create a "public" function that calls task nested inside.
             
             EXAMPLE:
             
-                task _RenderPlayer(_id)
+                task _RenderPlayer(int id_)
                 {
                     // ...
                 }
@@ -194,13 +214,15 @@ Preamble:
         
         1.2.3: Subroutines
         
-            Subroutines MUST use PascalCase with a trailing underscore. Parentheses MAY be used.
+            Subroutines MUST use PascalCase, and SHOULD include a trailing underscore. Parentheses MAY be used.
             
-            // NAZ: I don't think I've ever used one of these, lol. I came up with the underscore rule on the fly.
+            It is possible to use the at sign (@) in place of the "sub" keyword, but scripters SHOULD NOT do so, to prevent confusion with built-in routines (@Initialize, @MainLoop, @Finalize, etc.).
+            
+            // DOG: I don't think I've ever used one of these, lol. I came up with the underscore rule on the fly.
             
             EXAMPLE:
             
-                sub DoSomethingDifferent_()
+                sub DoSomethingDifferent_
                 {
                     // ...
                 }
@@ -212,43 +234,43 @@ Preamble:
     
     Note:
     
-        For the sake of consistency, spaces MUST be used instead of tabs in ALL cases.
+        For the sake of consistency, spaces SHOULD be used instead of tabs in ALL cases.
         The default tab is equivalent to 4 spaces; any decent editor should have an option to insert spaces upon pressing the tab key.
     
     2.1: Operators
     
         Expressions and statements consisting of one or more literals and/or identifiers MUST employ one space on both sides of all binary and ternary operators
-        (= +, -, *, /, %, ^, ~, +=, -=, *=, /=, %=, ^=, ~=, ==, !=, >, <, >=, <=, &&, ||, &, |, ^^, .., ?, :).
+        (= +, -, *, /, ~/, %, ^, ~, +=, -=, *=, /=, ~/=, %=, ^=, ~=, ==, !=, >, <, >=, <=, &&, ||, &, |, ^^, .., ?, :).
         
         Expressions and statements consisting of an identifier and a unary operator (!, ++, --) MUST NOT employ a space between the operator and operand.
         
         DO:
         
-            let someNum = 6 * 9 + 4 / 20 - 6 % 66;
+            real someNum = 6 * 9 + 4 / 20 - 6 % 66;
             someNum++;
         
         DON'T:
         
-            let someNum = 6*9+4/20-6%66;
+            real someNum = 6*9+4/20-6%66;
             someNum ++;
         
-        // NAZ: I will send you to the Shadow Realm if you don't put spaces in between your operators like in the "DON'T" example. It's entirely unreadable for me.
+        // DOG: I will send you to the Shadow Realm if you don't put spaces in between your operators like in the "DON'T" example. It's entirely unreadable for me.
     
     2.2: Variables and Constants
     
         Variable and constant declaration and assignment statements MUST employ one space between the keyword (let, var, const) and the identifier,
         and on both sides of the assignment operator (=) if applicable.*
         
-        There is a limit of one declaration or assignment statement per line.
+        As stated previously, if identifiers have short names or are uninitialized, their declarations MAY go on the same line, separated by commas and followed by spaces.
         
         *Additional spaces MAY be used to vertically align the operator and right-hand side of each statement in a group of statements. See the example.
         
         EXAMPLE:
         
-            const BGM_TITLE     = 0i;
-            const BGM_1_ROAD    = 1i;
-            const BGM_1_BOSS    = 2i;
-            const BGM_GAMEOVER  = 3i;
+            const int BGM_TITLE     = 0;
+            const int BGM_1_ROAD    = 1;
+            const int BGM_1_BOSS    = 2;
+            const int BGM_GAMEOVER  = 3;
         
     
     2.3: Functions, Tasks, and Subroutines
@@ -267,7 +289,7 @@ Preamble:
         Function and task arguments MAY span several indented lines for readability purposes.
         There SHOULD be an empty space following each multi-line function call, unless it precedes a closing brace or parenthesis.
         
-        // NAZ: This is only really applicable if the arguments get unbearably long, though. The example just demonstrates it just because.
+        // DOG: This is only really applicable if the arguments get unbearably long, though. The example just demonstrates it just because.
         
         EXAMPLE:
         
@@ -275,13 +297,16 @@ Preamble:
             {
                 DoSomething(
                     true,
-                    false
+                    1,
+                    1.1,
+                    'e',
+                    "abc"
                 );
                 
                 // ...
             }
             
-            function DoSomething(foo_, bar_)
+            function<void> DoSomething(bool foo_, int bar_, real baz_, char qux_, string quux_)
             {
                 // ...
             }
@@ -299,6 +324,7 @@ Preamble:
         
         For for-loops, each statement ending in a semicolon MUST be followed by a space, i.e. the first and second.
         The second and third statements may be omitted, in which case a space SHOULD be used instead.
+        When statements are combined with commas, there MUST be a space after each of them.
         
         *Conditionals and loops containing a single statement terminated with a semicolon MAY be written without curly braces,
         in which case they SHOULD be written on the same line as the rest of the statement, following a space.
@@ -307,13 +333,13 @@ Preamble:
         
         EXAMPLE 1 (VERBOSE):
         
-            for (let i = 1; i <= 10; i++) {
+            for (int i = 1, j = 2; i <= 10; i++, j--) {
                 alternative (i)
                 case (1) {
-                    WriteLog("i is 1!");
+                    WriteLog("i is 1!", "j is 2!");
                 }
                 case (2) {
-                    WriteLog("i is 2!");
+                    WriteLog("i is 2!", "j is 1!");
                 }
                 others {
                     WriteLog("I can't count that high!");
@@ -330,18 +356,18 @@ Preamble:
         
         EXAMPLE 2 (CONCISE):
         
-            for (let i = 1; i <= 10; i++) {
+            for (int i = 1, j = 2; i <= 10; i++, j--) {
                 alternative (i)
-                case (1)    WriteLog("i is 1!");
-                case (2)    WriteLog("i is 2!");
+                case (1)    WriteLog("i is 1!", "j is 2!");
+                case (2)    WriteLog("i is 2!", "j is 1!");
                 others      WriteLog("I can't count that high!");
                 
                 if (i >= 3) break;
                 else loop (5) yield;
             }
         
-        // NAZ: With "wait" being built-in there's no use case for "loop (n) yield;".
-        // NAZ: I simply wanted to demonstrate nested structures and how they can be shortened.
+        // DOG: With "wait" being built-in there's no use case for "loop (n) yield;".
+        // DOG: I simply wanted to demonstrate nested structures and how they can be shortened.
     
     2.5: Arrays
         
@@ -357,14 +383,14 @@ Preamble:
         
         EXAMPLE:
             
-            let arrSmall = [1, 2, 3];
-            let arrBig = [
+            int[] arrSmall = [1, 2, 3];
+            int[][] arrBig = [
                 [1, 2, 3],
                 [4, 5, 6, 7],
                 [8, 9, 10, 11, 12]
             ];
             
-            let arrBigger = [
+            int[][][] arrBigger = [
                 [
                     [1, 2, 3],
                     [4, 5, 6, 7],
@@ -375,9 +401,9 @@ Preamble:
                 ]
             ];
             
-            let numSmall = arrSmall[2];
-            let numBig = arrBig[2][4];
-            let numBigger = arrBigger[1][2][6];
+            int numSmall = arrSmall[2];
+            int numBig = arrBig[2][4];
+            int numBigger = arrBigger[1][2][6];
         
     
 
