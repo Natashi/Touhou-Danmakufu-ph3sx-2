@@ -87,7 +87,7 @@ Preamble:
             
             Iterator variables declared in for-each-loops SHOULD have single-word names prefixed with "i".
             
-            Fun fact: It is possible to add a second iterator to a for-each-loop, which is written before the first and iterates through the array's indices (starting from 0) instead of its elements.
+            Fun fact: It is possible to add a second iterator to a for-each-loop, which is listed before the first and iterates through the array's indices (starting from 0) instead of its elements.
             This variable SHOULD follow the same rules as those declared in for-loops.
             
             EXAMPLE:
@@ -318,8 +318,8 @@ Preamble:
         (if, else, loop, while, ascent, descent, in, for, each, alternative, case, others, switch, default, local, yield, break, continue),
         unless said keyword by itself is a statement (yield, break, continue), in which case it is simply terminated with a semicolon.
         
-        For conditionals and loops, the opening curly brace MUST go on the same line as the preceding keyword or closing parenthesis, following a space.*
-        The closing curly brace MUST go on its own line, except in the case of "else" and "else if" which SHOULD be written after a space following the closing brace.
+        For conditionals and loops, the opening curly brace SHOULD go on the same line as the preceding keyword or closing parenthesis, following a space.*
+        The closing curly brace SHOULD go on its own line, except in the case of "else" and "else if" which SHOULD be written after a space following the closing brace.
         Loops and conditional structures SHOULD be followed by an empty line.
         
         For for-loops, each statement ending in a semicolon MUST be followed by a space, i.e. the first and second.
