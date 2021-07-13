@@ -460,7 +460,7 @@ Preamble:
         As a preface, what the #include directive does is tell the engine to copy the contents of a given text file and paste them into the script, replacing the #include directive.
         If a file has already been included in the script, it will be skipped.
         
-        To reduce the number of #include calls in any given script, the scripter SHOULD create files with the express purpose of including several other files, ideally in a hierarchical manner.
+        To reduce the amount of boilerplate in each script file, the scripter SHOULD create files with the express purpose of including several other files, ideally in a hierarchical manner.
         
         DO:
             // In include_main.dnh
