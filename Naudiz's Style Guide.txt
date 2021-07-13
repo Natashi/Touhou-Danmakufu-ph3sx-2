@@ -5,7 +5,7 @@ Preamble:
     In the code examples below, the sequence "// ..." (two slashes, one space, three full stops) denotes a line where, in most cases, more code should be written.
     However, such code is unnecessary for the purposes of each example.
     
-    Comments from the writer that do not necessarily dictate style guidelines are preceded by the sequence "// DOG: ". 
+    Comments from the writer that do not necessarily dictate style guidelines are preceded by the sequence "// NAZ: ". 
 
 1: Identifiers
 
@@ -32,9 +32,9 @@ Preamble:
                 
             DON'T:
             
-                let xPos, yPos;
-                const RUMIA_BOSS = 0;
-                const CIRNO_BOSS = 1;
+                let xPos
+                let yPos;
+                const RUMIA_BOSS = 0, CIRNO_BOSS = 1;
             
         
         1.1.1: Local Variables
@@ -120,8 +120,8 @@ Preamble:
             
                 const int PLAYER_REIMU = 0;
                 const int PLAYER_MARISA = 1;
-                const int PLAYER_MIMA = 2;
-                const int PLAYER_YUKA = 3;
+                const int PLAYER_SAKUYA = 2;
+                const int PLAYER_SANAE = 3;
             
         
     
@@ -133,7 +133,7 @@ Preamble:
             Function, task, and subroutine names all MUST use PascalCase to differentiate them from other identifiers.
             The root of the identifier name SHOULD begin with a verb.
             
-            // DOG: The "Is...Exists" structure is Engrish through and through, but I use it for consistency with built-in function names.
+            // NAZ: The "Is...Exists" structure is Engrish through and through, but I use it for consistency with built-in function names.
             
             EXAMPLE:
                 
@@ -196,7 +196,7 @@ Preamble:
             Task names SHOULD use one of the following styles (and consistently): PascalCase with a leading underscore, OR PascalCase with a leading uppercase T.
             The same rules about affixes and parentheses that apply to functions apply here.
             
-            // DOG: I like to treat my tasks as private routines, so often times you'll see me create a "public" function that calls task nested inside.
+            // NAZ: I like to treat my tasks as private routines, so often times you'll see me create a "public" function that calls task nested inside.
             
             EXAMPLE:
             
@@ -218,7 +218,7 @@ Preamble:
             
             It is possible to use the at sign (@) in place of the "sub" keyword, but scripters SHOULD NOT do so, to prevent confusion with built-in routines (@Initialize, @MainLoop, @Finalize, etc.).
             
-            // DOG: I don't think I've ever used one of these, lol. I came up with the underscore rule on the fly.
+            // NAZ: I don't think I've ever used one of these, lol. I came up with the underscore rule on the fly.
             
             EXAMPLE:
             
@@ -254,7 +254,7 @@ Preamble:
             real someNum = 6*9+4/20-6%66;
             someNum ++;
         
-        // DOG: I will send you to the Shadow Realm if you don't put spaces in between your operators like in the "DON'T" example. It's entirely unreadable for me.
+        // NAZ: I will send you to the Shadow Realm if you don't put spaces in between your operators like in the "DON'T" example. It's entirely unreadable for me.
     
     2.2: Variables and Constants
     
@@ -289,7 +289,7 @@ Preamble:
         Function and task arguments MAY span several indented lines for readability purposes.
         There SHOULD be an empty space following each multi-line function call, unless it precedes a closing brace or parenthesis.
         
-        // DOG: This is only really applicable if the arguments get unbearably long, though. The example just demonstrates it just because.
+        // NAZ: This is only really applicable if the arguments get unbearably long, though. The example just demonstrates it just because.
         
         EXAMPLE:
         
@@ -366,8 +366,8 @@ Preamble:
                 else loop (5) yield;
             }
         
-        // DOG: With "wait" being built-in there's no use case for "loop (n) yield;".
-        // DOG: I simply wanted to demonstrate nested structures and how they can be shortened.
+        // NAZ: With "wait" being built-in there's no use case for "loop (n) yield;".
+        // NAZ: I simply wanted to demonstrate nested structures and how they can be shortened.
     
     2.5: Arrays
         
@@ -407,3 +407,197 @@ Preamble:
         
     
 
+3: Organization
+    
+    3.1: Script Structure
+    
+        All scripts SHOULD have their sections organized in the following order:
+        
+            1. Headers (#TouhouDanmakufu, #ScriptVersion*, #Title, #Text, #System, #Background, #BGM)
+            2. #include directives
+            3. Global variables
+            4. Predefined routines (@Initialize, @Event, @MainLoop, @Finalize, @Loading)
+            5. Script-specific routines
+            
+        *The #ScriptVersion header can only take one possible argument (3), and SHOULD be omitted altogether.
+            
+        EXAMPLE:
+        
+            #TouhouDanmakufu[Stage]
+            #Title["Example Stage"]
+            #Text["An example of a stage script."]
+            #System["script/script_system.dnh"]
+            
+            #include "script/include_stg.dnh"
+            
+            int _idScript;
+            
+            @Initialize
+            {
+                _idScript = GetOwnScriptID();
+                _Main();
+            }
+            
+            @MainLoop
+            {
+                yield;
+            }
+            
+            @Finalize
+            {
+                WriteLog("Game over!");
+            }
+            
+            task _Main()
+            {
+                while (GetPlayerState() != STATE_END) yield;
+                CloseScript(_idScript);
+            }
+        
+    
+    3.2: Included Files
+        
+        As a preface, what the #include directive does is tell the engine to copy the contents of a given text file and paste them into the script, replacing the #include directive.
+        If a file has already been included in the script, it will be skipped.
+        
+        To reduce the number of #include calls in any given script, the scripter SHOULD create files with the express purpose of including several other files, ideally in a hierarchical manner.
+        
+        DO:
+            // In include_main.dnh
+            
+                #include "./lib_main.dnh"
+                #include "./lib_const.dnh"
+                #include "./lib_math.dnh"
+                #include "./lib_render.dnh"
+                #include "./lib_event.dnh"
+            
+            // In include_stg.dnh
+            
+                #include "./include_main.dnh"
+                #include "./lib_stg.dnh"
+                #include "./lib_move.dnh"
+                #include "./lib_shot.dnh"
+                #include "./lib_enemy.dnh"
+                
+            // In include_boss.dnh
+            
+                #include "./include_stg.dnh"
+                #include "./lib_boss.dnh"
+                #include "./lib_anim.dnh"
+                #include "./lib_spell.dnh"
+            
+            // In the main script
+            
+                #TouhouDanmakufu[Single]
+                // ...
+                
+                #include "script/include_boss.dnh"
+                
+                @Initialize
+                {
+                    // ...
+                }
+            
+        
+        DON'T:
+        
+            // In the main script
+            
+                #TouhouDanmakufu[Single]
+                // ...
+                
+                #include "./lib_main.dnh"
+                #include "./lib_const.dnh"
+                #include "./lib_math.dnh"
+                #include "./lib_render.dnh"
+                #include "./lib_event.dnh"
+                #include "./lib_stg.dnh"
+                #include "./lib_move.dnh"
+                #include "./lib_shot.dnh"
+                #include "./lib_enemy.dnh"
+                #include "./lib_boss.dnh"
+                #include "./lib_anim.dnh"
+                #include "./lib_spell.dnh"
+                
+                @Initialize
+                {
+                    // ...
+                }
+            
+        
+        // NAZ: These file paths assume that the script as well as all of the library files are located in the base script directory.
+        // NAZ: Ideally, you should have a dedicated lib folder, possibly with subfolders corresponding to the libraries contained in each "include" file.
+    
+    3.3: Script Routines
+    
+        Scripts (particularly those in which danmaku is created) SHOULD call a task named _Main (or TMain, depending on your chosen style) from @Initialize.
+        This task SHOULD be the ultimate source of all other script-specific routine invocations.
+        
+        The scripter SHOULD make use of nesting for a few reasons:
+            
+            1. To ensure that variables are limited to their intended scopes.
+            2. To prevent the need to pass variables around unnecessarily via arguments.
+        
+        EXAMPLE 1 (NON-NESTED):
+        
+            task _Main()
+            {
+                real dir;
+                
+                loop {
+                    dir = rand(0, 360);
+                    _Fire(dir);
+                    wait(60);
+                    
+                }
+            }
+            
+            task _Fire(real dir_)
+            {
+                real speed = 1;
+                
+                loop (5) {
+                    Shoot(speed, dir_);
+                    speed++;
+                    wait(2);
+                }
+            }
+            
+            function<void> Shoot(real speed_, real dir_)
+            {
+                int obj = CreateShotA1(someX, someY, speed_, dir_, someID, 15);
+                ObjShot_SetDeleteFrame(obj, 180);
+            }
+            
+        EXAMPLE 2 (NESTED):
+        
+            task _Main()
+            {
+                real dir;
+                
+                loop {
+                    dir = rand(0, 360);
+                    _Fire();
+                    wait(60);
+                }
+                
+                task _Fire()
+                {
+                    real speed = 1;
+                    
+                    loop (5) {
+                        Shoot_;
+                        speed++;
+                        wait(2);
+                    }
+                    
+                    sub Shoot_
+                    {
+                        int obj = CreateShotA1(someX, someY, speed, dir, someID, 15);
+                        ObjShot_SetDeleteFrame(obj, 180);
+                    }
+                }
+            }
+            
+        // NAZ: These examples are intentionally bare-bones and only exist for the purposes of demonstrating how nesting can simplify task and function signatures and establish a sense of hierarchy.
+    
