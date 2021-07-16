@@ -25,12 +25,18 @@ bool EApplication::_Initialize() {
 	EFpsController* fpsController = EFpsController::CreateInstance();
 	fpsController->SetFastModeRate((size_t)config->GetSkipModeSpeedRate() * 60U);
 	
-	std::wstring appName = L"東方弾幕風 ph3sx ";
-	appName += DNH_VERSION;
+	std::wstring appName = L"";
 
 	const std::wstring& configWindowTitle = config->GetWindowTitle();
-	if (configWindowTitle.size() > 0)
+	if (configWindowTitle.size() > 0) {
 		appName = configWindowTitle;
+	}
+	else {
+		appName = L"東方弾幕風 ph3sx " + DNH_VERSION;
+	}
+#ifdef _DEBUG
+	appName = L"[ph3sx_DEBUG]" + appName;
+#endif
 
 	if (!config->IsMouseVisible())
 		WindowUtility::SetMouseVisible(false);
