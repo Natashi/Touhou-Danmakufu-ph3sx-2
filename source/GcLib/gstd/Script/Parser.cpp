@@ -2389,7 +2389,7 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 							appending.make_unique();
 
 							BaseFunction::_append_check(nullptr, arrayType, appending.get_type());
-							BaseFunction::_value_cast(nullptr, &appending, type_elem);
+							BaseFunction::_value_cast(&appending, type_elem);
 
 							listPtrVal[i] = appending;
 						}

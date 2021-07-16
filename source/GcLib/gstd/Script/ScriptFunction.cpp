@@ -195,6 +195,8 @@ namespace gstd {
 		}
 
 		result.reset(v_left->get_type(), resArr);
+		//_value_cast(&result, result.get_type());
+
 		return result;
 	}
 
@@ -211,8 +213,8 @@ namespace gstd {
 			return (i < 0) ? ((j - ((-i) % j)) % j) : (i % j);
 	}
 
-	value* BaseFunction::_value_cast(script_machine* machine, value* val, type_data* cast) {
-		if (val == nullptr || val->get_type() == nullptr || val->get_type() == cast)
+	value* BaseFunction::_value_cast(value* val, type_data* cast) {
+		if (val == nullptr || val->get_type() == nullptr)
 			return val;
 		switch (cast->get_kind()) {
 		case type_data::tk_int:
@@ -225,13 +227,11 @@ namespace gstd {
 			return val->reset(cast, val->as_boolean());
 		case type_data::tk_array:
 			if (type_data* castElem = cast->get_element()) {
-				switch (castElem->get_kind()) {
-				case type_data::tk_int:
-					*val = cast_int_array(machine, 1, val); break;
-				case type_data::tk_real:
-					*val = cast_real_array(machine, 1, val); break;
-				case type_data::tk_char:
-					*val = value(cast, val->as_string()); break;
+				if (val->length_as_array() > 0) {
+					std::vector<value> arrVal = *(val->as_array_ptr());
+					for (value& iVal : arrVal)
+						_value_cast(&iVal, castElem);
+					return val->reset(cast, arrVal);
 				}
 			}
 		}
@@ -348,7 +348,7 @@ namespace gstd {
 					elemType = nextElemType;
 			}
 			else
-				BaseFunction::_value_cast(machine, &nv, rootType);
+				BaseFunction::_value_cast(&nv, rootType);
 			arrVal[i] = nv;
 		}
 
@@ -694,13 +694,13 @@ namespace gstd {
 					fill = argv[2];
 					if (oldSize > 0) {
 						if (!BaseFunction::_append_check(machine, valType, fill.get_type())) return value();
-						BaseFunction::_value_cast(machine, &fill, valType->get_element());
+						BaseFunction::_value_cast(&fill, valType->get_element());
 					}
 					else newType = script_type_manager::get_instance()->get_array_type(fill.get_type());
 				}
 				else {
 					if (valType->get_element() == nullptr) {
-						machine->raise_error("Resizing from an empty array requires a fill value.\r\n");
+						machine->raise_error("Resizing from a null array requires a fill value.\r\n");
 						return value();
 					}
 					fill = BaseFunction::_create_empty(valType->get_element());
@@ -819,7 +819,7 @@ namespace gstd {
 		{
 			value appending = argv[1];
 			if (appending.get_type() != type_target->get_element()) {
-				BaseFunction::_value_cast(machine, &appending, type_target->get_element());
+				BaseFunction::_value_cast(&appending, type_target->get_element());
 			}
 			result.append(type_target, appending);
 		}
@@ -850,7 +850,7 @@ namespace gstd {
 		value concat = argv[1];
 		if (concat.get_type() != result.get_type()) {
 			concat.make_unique();
-			BaseFunction::_value_cast(machine, &concat, result.get_type());
+			BaseFunction::_value_cast(&concat, result.get_type());
 		}
 		result.concatenate(concat);
 
@@ -864,7 +864,7 @@ namespace gstd {
 		value concat = argv[1];
 		if (concat.get_type() != result.get_type()) {
 			concat.make_unique();
-			BaseFunction::_value_cast(machine, &concat, result.get_type());
+			BaseFunction::_value_cast(&concat, result.get_type());
 		}
 		result.concatenate(concat);
 

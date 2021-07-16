@@ -12,6 +12,7 @@ namespace gstd {
 	public:
 		script_type_manager();
 
+		static type_data* get_null_type() { return base_->null_type; }
 		static type_data* get_int_type() { return base_->int_type; }
 		static type_data* get_real_type() { return base_->real_type; }
 		static type_data* get_char_type() { return base_->char_type; }
@@ -34,6 +35,7 @@ namespace gstd {
 		std::set<type_data> types;
 
 		//Common types for quick access without std::set traversal
+		type_data* null_type;
 		type_data* int_type;
 		type_data* real_type;
 		type_data* char_type;
