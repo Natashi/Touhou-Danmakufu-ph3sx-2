@@ -219,8 +219,8 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 		std::vector<POINT>& windowSizeList = dnhConfig->GetWindowSizeList();
 		size_t windowSizeIndex = dnhConfig->GetWindowSize();
 		if (windowSizeIndex < windowSizeList.size()) {
-			windowedWidth = std::max(windowSizeList[windowSizeIndex].x, 320L);
-			windowedHeight = std::max(windowSizeList[windowSizeIndex].y, 240L);
+			windowedWidth = windowSizeList[windowSizeIndex].x;
+			windowedHeight = windowSizeList[windowSizeIndex].y;
 		}
 	}
 

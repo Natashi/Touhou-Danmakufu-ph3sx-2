@@ -473,13 +473,13 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 	windowTitle_ = prop.GetString(L"window.title", L"");
 
 	screenWidth_ = prop.GetInteger(L"screen.width", 640);
-	screenWidth_ = std::clamp(screenWidth_, 320L, 1920L);
+	// screenWidth_ = std::clamp(screenWidth_, 320L, 1920L);
 
 	screenHeight_ = prop.GetInteger(L"screen.height", 480);
-	screenHeight_ = std::clamp(screenHeight_, 240L, 1200L);
+	// screenHeight_ = std::clamp(screenHeight_, 240L, 1200L);
 
 	fastModeSpeed_ = prop.GetInteger(L"skip.rate", 20);
-	fastModeSpeed_ = std::clamp(fastModeSpeed_, 1, 50);
+	// fastModeSpeed_ = std::clamp(fastModeSpeed_, 1, 50);
 
 	{
 		std::wstring str = prop.GetString(L"dynamic.scaling", L"false");
@@ -503,8 +503,8 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 						POINT size;
 						size.x = wcstol(match[1].str().c_str(), nullptr, 10);
 						size.y = wcstol(match[2].str().c_str(), nullptr, 10);
-						size.x = std::clamp(size.x, 320L, 1920L);
-						size.y = std::clamp(size.y, 240L, 1200L);
+						// size.x = std::clamp(size.x, 320L, 1920L);
+						// size.y = std::clamp(size.y, 240L, 1200L);
 
 						windowSizeList_.push_back(size);
 					}
