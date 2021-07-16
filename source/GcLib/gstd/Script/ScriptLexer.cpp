@@ -45,7 +45,7 @@ void script_scanner::copy_state(script_scanner* src) {
 wchar_t script_scanner::current_char() {
 	return Encoding::BytesToWChar(current, encoding);
 }
-wchar_t script_scanner::index_from_current_char(int index) {
+wchar_t script_scanner::peek_next_char(int index) {
 	const char* pos = current + index * bytePerChar;
 	if (pos >= endPoint) return L'\0';
 	return Encoding::BytesToWChar(pos, encoding);
@@ -57,7 +57,7 @@ wchar_t script_scanner::next_char() {
 
 void script_scanner::skip() {
 	wchar_t ch1 = current_char();
-	wchar_t ch2 = index_from_current_char(1);
+	wchar_t ch2 = peek_next_char(1);
 
 	bool bReskip = true;
 	while (bReskip) {
@@ -70,7 +70,7 @@ void script_scanner::skip() {
 				if (ch1 == L'\n') ++line;
 				ch1 = next_char();
 			}
-			ch2 = index_from_current_char(1);
+			ch2 = peek_next_char(1);
 		}
 
 		//Skip block comment
@@ -80,18 +80,17 @@ void script_scanner::skip() {
 			next_char();
 			while (true) {
 				ch1 = next_char();
-				ch2 = index_from_current_char(1);
+				ch2 = peek_next_char(1);
 
-				if (current >= endPoint)
-					throw parser_error("Block comment unenclosed at end of file.\r\n");
-				else if (ch1 == L'\n') ++line;
+				scanner_assert(current < endPoint, "Block comment unenclosed at end of file.");
+				if (ch1 == L'\n') ++line;
 
 				if (ch1 == L'*' && ch2 == L'/') break;
 			}
 			next_char();
 
 			ch1 = next_char();
-			ch2 = index_from_current_char(1);
+			ch2 = peek_next_char(1);
 		}
 
 		//Skip line comments and unrecognized #'s
@@ -102,7 +101,7 @@ void script_scanner::skip() {
 				if (ch1 == L'\n') break;
 			}
 			//++line;
-			ch2 = index_from_current_char(1);
+			ch2 = peek_next_char(1);
 		}
 	}
 }
@@ -322,7 +321,7 @@ void script_scanner::advance() {
 			}
 			*/
 		}
-		else throw parser_error("Invalid period(.) placement.\r\n");
+		else scanner_assert(false, "Invalid period(.) placement.");
 		break;
 
 	case L'\"':
@@ -348,8 +347,7 @@ void script_scanner::advance() {
 		}
 
 		if (next == token_kind::tk_char) {
-			if (string_value.size() > 1)
-				throw parser_error("A value of type char may only be one character long.");
+			scanner_assert(string_value.size() == 1, "A value of type char may only be one character long.");
 			char_value = string_value[0];
 		}
 		break;
@@ -360,59 +358,100 @@ void script_scanner::advance() {
 			int_value = 0;
 			real_value = 0;
 
-			bool has_decimal_part = false;
-			std::string str_num = "";
-			do {
-				str_num += ch;
+			bool bBaseLiteral = false;
+			std::string strNum = "";
+
+			if (std::iswdigit(ch)) {
+				strNum += ch;
 				ch = next_char();
-			} while (std::iswdigit(ch) || std::iswalpha(ch));
-			{
-				wchar_t ch2 = index_from_current_char(1);
-				if (ch == L'.' && std::iswdigit(ch2)) {
-					has_decimal_part = true;
-					str_num += ch;
+			}
+			if (strNum[0] == '0' && (ch == 'b' || ch == 'o' || ch == 'x')) {
+				bBaseLiteral = true;
+
+				wchar_t lead = ch;
+
+				ch = next_char();
+				scanner_assert(std::iswdigit(ch) || std::iswxdigit(ch), "Invalid base literal.");
+
+				strNum = "";
+				do {
+					if (ch != '\'')
+						strNum += ch;
 					ch = next_char();
-					while (std::iswdigit(ch) || std::iswalpha(ch)) {
-						str_num += ch;
-						ch = next_char();
+				} while (std::iswdigit(ch) || std::iswxdigit(ch) || ch == '\'');
+
+				auto _ValidateAndParseNum = [](std::string& str, int base, int (*funcValidate)(wint_t)) -> uint64_t {
+					size_t i = 0;
+					for (wchar_t ch : str) {
+						if ((i++) >= str.size() - 1) break;
+						scanner_assert(funcValidate(ch), "Invalid base literal.");
 					}
+					return std::strtoull(str.c_str(), nullptr, base);
+				};
+
+				uint64_t result = 0;
+				if (lead == 'x') {
+					result = _ValidateAndParseNum(strNum, 16, std::iswxdigit);
+				}
+				else if (lead == 'o') {
+					result = _ValidateAndParseNum(strNum, 8, 
+						[](wint_t ch) -> int { return (ch >= '0') && (ch < '8'); });
+					result = std::strtoull(strNum.c_str(), nullptr, 8);
+				}
+				else if (lead == 'b') {
+					result = _ValidateAndParseNum(strNum, 2, 
+						[](wint_t ch) -> int { return ch == '0' || ch == '1'; });
+				}
+
+				int_value = (int64_t&)result;
+				real_value = result;
+				next = token_kind::tk_int;
+			}
+			else {
+				while (std::iswdigit(ch) || ch == '\'') {
+					if (ch != '\'')
+						strNum += ch;
+					ch = next_char();
+				};
+
+				wchar_t ch2 = peek_next_char(1);
+				if (ch == L'.' && std::iswdigit(ch2)) {
+					strNum += ch;
+					ch = next_char();
+					do {
+						if (ch != '\'')
+							strNum += ch;
+						ch = next_char();
+					} while (std::iswdigit(ch) || ch == '\'');
+				}
+
+				//real_value = std::strtod(strNum.c_str(), nullptr);
+				//int_value = real_value;
+				next = token_kind::tk_real;
+			}
+
+			{
+				wchar_t suffix = std::towlower(ch);
+				if (suffix == L'i') {
+					next = token_kind::tk_int;
+					ch = next_char();
+				}
+				else if (suffix == L'r') {
+					next = token_kind::tk_real;
+					ch = next_char();
 				}
 			}
 
-			bool bInt = false;
-			if (str_num.back() == 'I' || str_num.back() == 'i') {
-				bInt = true;
-				str_num.pop_back();
-
-				//if (has_decimal_part) throw parser_error("Int literals cannot have a decimal part.\r\n");
-				next = token_kind::tk_int;
+			if (!bBaseLiteral) {
+				if (next == token_kind::tk_int) {
+					int_value = std::strtoll(strNum.c_str(), nullptr, 10);
+				}
+				else {
+					real_value = std::strtod(strNum.c_str(), nullptr);
+				}
 			}
-
-			std::smatch base_match;
-			if (std::regex_match(str_num, base_match, std::regex("0x([0-9a-fA-F]+)"))) {
-				if (has_decimal_part) goto throw_err_no_decimal;
-				real_value = int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 16);
-			}
-			else if (std::regex_match(str_num, base_match, std::regex("0o([0-7]+)"))) {
-				if (has_decimal_part) goto throw_err_no_decimal;
-				real_value = int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 8);
-			}
-			else if (std::regex_match(str_num, base_match, std::regex("0b([0-1]+)"))) {
-				if (has_decimal_part) goto throw_err_no_decimal;
-				real_value = int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 2);
-			}
-			else if (std::regex_match(str_num, base_match, std::regex("([0-9]+)(?:\\.[0-9]+)?"))) {
-				if (bInt) int_value = std::strtoll(base_match[1].str().c_str(), nullptr, 10);
-				else real_value = std::strtod(base_match[0].str().c_str(), nullptr);
-			}
-			else goto throw_err_invalid_num;
 
 			break;
-
-throw_err_invalid_num:
-			throw parser_error("Invalid number.\r\n");
-throw_err_no_decimal:
-			throw parser_error("Cannot create a decimal number with base literals.\r\n");
 		}
 		else if (std::iswalpha(ch) || ch == L'_') {
 			word = "";

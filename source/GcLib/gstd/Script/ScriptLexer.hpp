@@ -67,8 +67,13 @@ namespace gstd {
 		const char* endPoint;
 
 		wchar_t current_char();
-		wchar_t index_from_current_char(int index);
+		wchar_t peek_next_char(int index);
 		inline wchar_t next_char();
+
+		static void scanner_assert(bool expr, const std::string& error) {
+			if (!expr)
+				throw parser_error(error + "\r\n");
+		}
 	public:
 		enum {
 			MAX_TOKEN_LIST = 64,
