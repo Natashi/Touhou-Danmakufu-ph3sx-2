@@ -391,6 +391,8 @@ bool _lexer_skip_post_decl(script_scanner* lex, int* pBrk, int* pPar) {
 
 type_data* _token_kind_to_type_data(token_kind token) {
 	switch (token) {
+	case token_kind::tk_decl_int:
+		return script_type_manager::get_int_type();
 	case token_kind::tk_decl_real:
 		return script_type_manager::get_real_type();
 	case token_kind::tk_decl_char:
@@ -400,13 +402,17 @@ type_data* _token_kind_to_type_data(token_kind token) {
 	case token_kind::tk_decl_string:
 		return script_type_manager::get_string_type();
 	}
-	return script_type_manager::get_int_type();
+	return script_type_manager::get_null_type();
 }
 
 parser::arg_data parser::parse_variable_decl(parser_state_t* state, bool bParameter) {
 	arg_data var;
 
 	parse_type_decl(state, &var);
+	if (var.type) {
+		parser_assert(state, var.type->get_kind() != type_data::tk_null,
+			"A void type cannot be used to declare a variable.\r\n");
+	}
 
 	//parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
 	if (state->next() != token_kind::tk_word) {
@@ -2013,6 +2019,8 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 			parse_expression(block, state);
 			if (s->type != nullptr) {
+				parser_assert(state, s->type->get_kind() != type_data::tk_null,
+					"Functions marked with \"void\" cannot have a return value.\r\n");
 				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)s->type, true));
 			}
 			state->AddCode(block, code(command_kind::pc_copy_assign,

@@ -444,6 +444,7 @@ throw_err_no_decimal:
 std::unordered_map<std::string, token_kind> script_scanner::token_map = {
 	{ "let", token_kind::tk_decl_auto },
 	{ "var", token_kind::tk_decl_auto },
+	{ "void", token_kind::tk_decl_void },
 	{ "real", token_kind::tk_decl_real },
 	{ "int", token_kind::tk_decl_int },
 	{ "char", token_kind::tk_decl_char },
