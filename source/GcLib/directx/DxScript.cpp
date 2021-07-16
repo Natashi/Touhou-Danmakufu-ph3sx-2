@@ -4531,7 +4531,7 @@ gstd::value DxScript::Func_ObjFileT_SplitLineText(gstd::script_machine* machine,
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	DxTextFileObject* obj = script->GetObjectPointerAs<DxTextFileObject>(id);
-	if (obj == nullptr) return script->CreateStringValue(std::wstring());
+	if (obj == nullptr) return script->CreateStringArrayValue(std::vector<std::wstring>());
 
 	int pos = argv[1].as_int();
 	std::wstring delim = argv[2].as_string();

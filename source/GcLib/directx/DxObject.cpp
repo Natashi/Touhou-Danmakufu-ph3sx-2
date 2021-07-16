@@ -884,7 +884,6 @@ bool DxTextFileObject::OpenR(shared_ptr<gstd::FileReader> reader) {
 	return _ParseLines(text);
 }
 bool DxTextFileObject::OpenRW(const std::wstring& path) {
-	listLine_.clear();
 	bool res = DxFileObject::OpenRW(path);
 	if (!res) return false;
 
@@ -900,9 +899,12 @@ bool DxTextFileObject::OpenRW(const std::wstring& path) {
 }
 
 bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
+	listLine_.clear();
 	encoding_ = Encoding::Detect(src.data(), src.size());
 	bomSize_ = 0;
 	bytePerChar_ = 1;
+	ZeroMemory(lineEnding_, sizeof(lineEnding_));
+	lineEndingSize_ = 0;
 
 	switch (encoding_) {
 	case Encoding::UTF8BOM:
@@ -929,22 +931,37 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 
 			auto itr = src.begin() + bomSize_;
 			for (; itr != src.end();) {
-				char* ch = itr._Ptr;
-				if (*ch == '\r' || *ch == '\n') {
-					++itr;
-					++ch;
-					if (*ch == '\r' || *ch == '\n') ++itr;
-
+				char ch = *itr;
+				if (ch == '\n') {
 					listLine_.push_back(tmp);
 					tmp.clear();
 				}
 				else {
-					tmp.push_back(*ch);
-					++itr;
+					tmp.push_back(ch);
+				}
+				++itr;
+			}
+			if (tmp.size() > 0) listLine_.push_back(tmp);
+
+			for (auto& iLineVec : listLine_) {
+				if (iLineVec.size() > 0) {
+					if (lineEndingSize_ == 0) {
+						if (iLineVec.back() == '\r') {
+							memcpy(lineEnding_, "\r\n", 2);
+							lineEndingSize_ = 2;
+						}
+						else {
+							memcpy(lineEnding_, "\n", 1);
+							lineEndingSize_ = 1;
+						}
+					}
+
+					while (iLineVec.back() == '\r') {
+						iLineVec.pop_back();
+						if (iLineVec.empty()) break;
+					}
 				}
 			}
-
-			if (tmp.size() > 0) listLine_.push_back(tmp);
 		}
 		else if (bytePerChar_ == 2U) {		//UTF-16
 			bool bLittleEndian = encoding_ == Encoding::UTF16LE;
@@ -959,12 +976,6 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 
 			auto push_line = [&](std::vector<char>& vecLine) {
 				if (vecLine.size() & 0b1) vecLine.pop_back();
-				if (!bLittleEndian) {
-					//Turn Big Endian into Little Endian
-					for (auto itr = vecLine.begin(); itr != vecLine.end(); itr += 2) {
-						std::swap(*itr, *(itr + 1));
-					}
-				}
 				listLine_.push_back(vecLine);
 			};
 
@@ -973,22 +984,49 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 			auto itr = src.begin() + bomSize_;
 			for (; itr != src.end();) {
 				wchar_t* wch = (wchar_t*)itr._Ptr;
-				if (*wch == CH_CR || *wch == CH_LF) {
-					itr += 2;
-					++wch;
-					if (*wch == CH_CR || *wch == CH_LF) itr += 2;
-					
+				if (*wch == CH_LF) {
 					push_line(tmp);
 					tmp.clear();
 				}
 				else {
 					tmp.push_back(((char*)wch)[0]);
 					tmp.push_back(((char*)wch)[1]);
-					itr += 2;
+				}
+				itr += 2;
+			}
+			if (tmp.size() > 0) push_line(tmp);
+
+			for (auto& iLineVec : listLine_) {
+				if (iLineVec.size() > 0) {
+					wchar_t* pWCh = (wchar_t*)((&iLineVec.back()) - 1);
+
+					if (lineEndingSize_ == 0) {
+						if (*pWCh == CH_CR) {
+							memcpy(&lineEnding_[0], &CH_CR, 2);
+							memcpy(&lineEnding_[2], &CH_LF, 2);
+							lineEndingSize_ = 4;
+						}
+						else {
+							memcpy(&lineEnding_[0], &CH_LF, 2);
+							lineEndingSize_ = 2;
+						}
+					}
+
+					while (*pWCh == CH_CR) {
+						iLineVec.pop_back();
+						iLineVec.pop_back();
+						if (iLineVec.empty()) break;
+						pWCh = (wchar_t*)((&iLineVec.back()) - 1);
+					}
+
+					if (!bLittleEndian) {
+						//Turn Big Endian into Little Endian
+						for (auto itr = iLineVec.begin(); itr != iLineVec.end(); itr += 2) {
+							std::swap(*itr, *(itr + 1));
+						}
+					}
 				}
 			}
-
-			if (tmp.size() > 0) push_line(tmp);
 		}
 	}
 	catch (...) {
@@ -1007,12 +1045,8 @@ bool DxTextFileObject::Store() {
 		std::vector<char>& str = listLine_[iLine];
 
 		if (encoding_ == Encoding::UTF16LE || bytePerChar_ == 1) {
-			if (str.size() > 0) file_->Write(&str[0], str.size());
-
-			if (iLine < listLine_.size() - 1) {
-				if (bytePerChar_ == 1) file_->Write("\r\n", 2);
-				else if (bytePerChar_ == 2) file_->Write(L"\r\n", 4);
-			}
+			if (str.size() > 0)
+				file_->Write(&str[0], str.size());
 		}
 		else if (encoding_ == Encoding::UTF16BE) {
 			if (str.size() > 0) {
@@ -1022,10 +1056,10 @@ bool DxTextFileObject::Store() {
 				}
 				file_->Write(&vecTmp[0], vecTmp.size());
 			}
-
-			if (iLine < listLine_.size() - 1)
-				file_->Write("\0\r\0\n", 4);
 		}
+
+		if (iLine < listLine_.size() - 1)
+			file_->Write(lineEnding_, lineEndingSize_);
 	}
 	return true;
 }

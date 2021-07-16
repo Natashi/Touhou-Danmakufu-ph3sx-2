@@ -369,15 +369,13 @@ void DirectGraphics::_VerifyDeviceCaps() {
 
 	if (deviceCaps_.VertexShaderVersion < D3DVS_VERSION(2, 0)
 		|| deviceCaps_.MaxVertexShaderConst < 4)
-		listError.push_back("The device's vertex shader support is insufficient (requires vs_2_0)");
+		listError.push_back("The device's vertex shader support is insufficient (vs_2_0 required)");
 	else if (deviceCaps_.VertexShaderVersion < D3DVS_VERSION(3, 0))
-		listWarning.push_back("The device doesn't support vertex shader Version 3_0");
+		listWarning.push_back("The device's vertex shader support is insufficient (vs_3_0 recommended)");
 
-	if (deviceCaps_.PixelShaderVersion < D3DPS_VERSION(2, 0)
+	if (deviceCaps_.PixelShaderVersion < D3DPS_VERSION(3, 0)
 		|| deviceCaps_.PixelShader1xMaxValue < 1.0f)
-		listError.push_back("The device's pixel shader support is insufficient (requires ps_2_0)");
-	else if (deviceCaps_.PixelShaderVersion < D3DPS_VERSION(3, 0))
-		listWarning.push_back("The device doesn't support pixel shader Version 3_0");
+		listError.push_back("The device's pixel shader support is insufficient (ps_3_0 required)");
 
 	if (deviceCaps_.NumSimultaneousRTs < 1)
 		listError.push_back("Device must support at least 1 render target");
