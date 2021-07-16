@@ -156,7 +156,7 @@ namespace directx {
 			"float2 ay = float2(sin(inVs.i_yzsc_xyang.w), cos(inVs.i_yzsc_xyang.w));"
 			"float2 az = float2(sin(inVs.i_zang_usdat.x), cos(inVs.i_zang_usdat.x));"
 
-			"float4x4 instanceMat = float4x4("
+			"float4x4 matInstance = float4x4("
 				"float4("
 					"t_scale.x * (ay.y * az.y - ax.x * ay.x * az.x),"
 					"t_scale.x * (-ax.y * az.x),"
@@ -180,7 +180,7 @@ namespace directx {
 
 			"outVs.diffuse = inVs.diffuse * inVs.i_color;"
 			"outVs.texCoord = inVs.texCoord;"
-			"outVs.position = mul(inVs.position, instanceMat);"
+			"outVs.position = mul(inVs.position, matInstance);"
 			"outVs.position = mul(outVs.position, g_mWorldViewProj);"
 			"outVs.position.z = 1.0f;"
 
@@ -254,7 +254,7 @@ namespace directx {
 			"float2 ay = float2(sin(inVs.i_yzsc_xyang.w), cos(inVs.i_yzsc_xyang.w));"
 			"float2 az = float2(sin(inVs.i_zang_usdat.x), cos(inVs.i_zang_usdat.x));"
 
-			"float4x4 instanceMat = float4x4("
+			"float4x4 matInstance = float4x4("
 				"float4("
 					"t_scale.x * (ay.y * az.y - ax.x * ay.x * az.x),"
 					"t_scale.x * (-ax.y * az.x),"
@@ -279,7 +279,7 @@ namespace directx {
 			"outVs.diffuse = inVs.diffuse * inVs.i_color;"
 			"outVs.texCoord = inVs.texCoord;"
 
-			"outVs.position = mul(float4(inVs.position, 1.0f), instanceMat);"
+			"outVs.position = mul(float4(inVs.position, 1.0f), matInstance);"
 			//"outVs.position.w = outVs.position.z;"
 			"outVs.position = mul(outVs.position, g_mCamera);"
 			"outVs.position.xyz += inVs.i_xyzpos_xsc.xyz;"
@@ -315,19 +315,19 @@ namespace directx {
 
 		"technique Render {"
 			"pass P0 {"
-				"VertexShader = compile vs_2_0 mainVS();"
+				"VertexShader = compile vs_3_0 mainVS();"
 				"PixelShader = compile ps_3_0 mainPS();"
 			"}"
 		"}"
 		"technique RenderInv {"
 			"pass P0 {"
-				"VertexShader = compile vs_2_0 mainVS();"
+				"VertexShader = compile vs_3_0 mainVS();"
 				"PixelShader = compile ps_3_0 mainPS_inv();"
 			"}"
 		"}"
 		"technique RenderNoTexture {"
 			"pass P0 {"
-				"VertexShader = compile vs_2_0 mainVS();"
+				"VertexShader = compile vs_3_0 mainVS();"
 				"PixelShader = compile ps_3_0 mainPS_textureless();"
 			"}"
 		"}";
@@ -357,7 +357,7 @@ namespace directx {
 			
 			"float t_scale = inVs.i_xyzpos_xsc.w;"
 
-			"float4x4 instanceMat = float4x4("
+			"float4x4 matInstance = float4x4("
 				"float4(t_scale, 0, 0, 0),"
 				"float4(0, t_scale, 0, 0),"
 				"(float4)0,"
@@ -365,7 +365,7 @@ namespace directx {
 			");"
 
 			"outVs.diffuse = inVs.diffuse * inVs.i_color;"
-			"outVs.position = mul(inVs.position, instanceMat);"
+			"outVs.position = mul(inVs.position, matInstance);"
 			"outVs.position = mul(outVs.position, g_mWorldViewProj);"
 			"outVs.position.z = 1.0f;"
 
