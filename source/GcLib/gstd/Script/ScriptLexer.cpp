@@ -524,6 +524,7 @@ std::unordered_map<std::string, token_kind> script_scanner::token_map = {
 
 	{ "local", token_kind::tk_LOCAL },
 	{ "function", token_kind::tk_FUNCTION },
+	{ "func", token_kind::tk_FUNCTION },
 	{ "sub", token_kind::tk_SUB },
 	{ "task", token_kind::tk_TASK },
 	{ "async", token_kind::tk_ASYNC },
