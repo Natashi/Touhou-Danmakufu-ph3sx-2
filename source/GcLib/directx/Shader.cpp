@@ -95,7 +95,7 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 	//path = PathProperty::GetUnique(path);
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open()) {
-		std::wstring log = StringUtility::Format(L"ShaderManager: Shader load failed. [%s]", path.c_str());
+		std::wstring log = StringUtility::Format(L"ShaderManager: Shader compile failed. [%s]", path.c_str());
 		Logger::WriteTop(log);
 		lastError_ = log;
 		return false;
@@ -113,12 +113,14 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 	bool res = true;
 	if (FAILED(hr)) {
 		res = false;
-		std::wstring err = L"";
+		std::wstring err = L"unknown error";
 		if (pErr) {
 			char* cText = (char*)pErr->GetBufferPointer();
 			err = StringUtility::ConvertMultiToWide(cText);
 		}
-		std::wstring log = StringUtility::Format(L"ShaderManager: Shader load failed. [%s]\r\n\t%s", path.c_str(), err.c_str());
+		std::wstring log = StringUtility::Format(
+			L"ShaderManager: Shader compile failed. [%s]\r\n\t%s\r\n\t%s", 
+			path.c_str(), DXGetErrorStringW(hr), err.c_str());
 		Logger::WriteTop(log);
 		lastError_ = log;
 	}
@@ -158,9 +160,12 @@ bool ShaderManager::_CreateFromText(const std::string& source, shared_ptr<Shader
 	std::string tStr = StringUtility::Slice(source, 128);
 	if (FAILED(hr)) {
 		res = false;
-		char* err = nullptr;
-		if (pErr) err = (char*)pErr->GetBufferPointer();
-		std::string log = StringUtility::Format("ShaderManager: Shader load failed. [%s]\r\n\t%s", tStr.c_str(), err);
+		char* err = "unknown error";
+		if (pErr)
+			err = (char*)pErr->GetBufferPointer();
+		std::string log = StringUtility::Format(
+			"ShaderManager: Shader compile failed. [%s]\r\n\t%s\r\n\t%s",
+			tStr.c_str(), DXGetErrorStringA(hr), err);
 		Logger::WriteTop(log);
 		lastError_ = StringUtility::ConvertMultiToWide(log);
 	}

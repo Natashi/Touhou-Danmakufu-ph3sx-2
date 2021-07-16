@@ -40,7 +40,7 @@ namespace gstd {
 		tk_at, 
 		tk_inc, tk_dec, tk_range, tk_args_variadic,
 
-		tk_decl_auto, 
+		tk_decl_auto, tk_decl_void,
 		tk_decl_int, tk_decl_real, tk_decl_char, tk_decl_bool, tk_decl_string,
 
 		tk_decl_mod_const, tk_decl_mod_ref,
@@ -67,8 +67,13 @@ namespace gstd {
 		const char* endPoint;
 
 		wchar_t current_char();
-		wchar_t index_from_current_char(int index);
+		wchar_t peek_next_char(int index);
 		inline wchar_t next_char();
+
+		static void scanner_assert(bool expr, const std::string& error) {
+			if (!expr)
+				throw parser_error(error + "\r\n");
+		}
 	public:
 		enum {
 			MAX_TOKEN_LIST = 64,

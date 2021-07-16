@@ -21,48 +21,24 @@ namespace directx {
 	public:
 		bool bShowWindow_;
 		bool bShowCursor_;
-		POINT sizeScreen_;
-		POINT sizeScreenWindowed_;
+
 		bool bWindowed_;
-		bool bUseRef_;
+		bool bBorderlessFullscreen_;
+
+		POINT sizeScreen_;
+		POINT sizeScreenDisplay_;
+		bool bUseDynamicScaling_;
+
 		ColorMode colorMode_;
+		D3DMULTISAMPLE_TYPE typeMultiSample_;
+
+		bool bUseRef_;
 		bool bUseTripleBuffer_;
 		bool bVSync_;
-		bool bPseudoFullScreen_;
-		D3DMULTISAMPLE_TYPE typeMultiSample_;
+
 		bool bCheckDeviceCaps_;
 	public:
 		DirectGraphicsConfig();
-
-		/*
-		bool IsShowWindow() const { return bShowWindow_; }
-		void SetShowWindow(bool b) { bShowWindow_ = b; }
-		bool IsShowCursor() const { return bShowCursor_; }
-		void SetShowCursor(bool b) { bShowCursor_ = b; }
-
-		const POINT& GetScreenSize() const { return sizeScreen_; }
-		void SetScreenSize(const POINT& size) { sizeScreen_ = size; }
-		const POINT& GetScreenWindowedSize() const { return sizeScreenWindowed_; }
-		void SetScreenWindowedSize(const POINT& size) { sizeScreenWindowed_ = size; }
-
-		bool IsWindowed() const { return bWindowed_; }
-		void SetWindowd(bool bWindowed) { bWindowed_ = bWindowed; }
-		bool IsReferenceEnable() const { return bUseRef_; }
-		void SetReferenceEnable(bool bEnable) { bUseRef_ = bEnable; }
-		ColorMode GetColorMode() const { return colorMode_; }
-		void SetColorMode(ColorMode mode) { colorMode_ = mode; }
-		bool IsTripleBufferEnable() const { return bUseTripleBuffer_; }
-		void SetTripleBufferEnable(bool bEnable) { bUseTripleBuffer_ = bEnable; }
-		bool IsVSyncEnable() const { return bVSync_; }
-		void SetVSyncEnable(bool bEnable) { bVSync_ = bEnable; }
-		bool bPseudoFullScreen_ const { return bPseudoFullScreen_; }
-		void SetbPseudoFullScreen(bool b) { bPseudoFullScreen_ = b; }
-		D3DMULTISAMPLE_TYPE GetMultiSampleType() const { return typeSamples_; }
-		void SetMultiSampleType(D3DMULTISAMPLE_TYPE type) { typeSamples_ = type; }
-
-		bool IsCheckDeviceCaps() const { return bCheckDeviceCaps_; }
-		void SetCheckDeviceCaps(bool b) { bCheckDeviceCaps_ = b; }
-		*/
 	};
 
 #if defined(DNH_PROJ_EXECUTOR)

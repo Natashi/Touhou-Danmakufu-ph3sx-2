@@ -56,7 +56,7 @@ namespace gstd {
 		inline static double _fmod2(double i, double j);
 		inline static int64_t _mod2(int64_t i, int64_t j);
 
-		static value* _value_cast(script_machine* machine, value* val, type_data* cast);
+		static value* _value_cast(value* val, type_data* cast);
 
 		static bool _index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index);
 		static bool _append_check(script_machine* machine, type_data* arg0_type, type_data* arg1_type);

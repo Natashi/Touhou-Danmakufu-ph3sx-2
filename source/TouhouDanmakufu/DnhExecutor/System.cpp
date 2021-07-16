@@ -29,7 +29,7 @@ void SystemController::Reset() {
 	fileManager->ClearArchiveFileCache();
 
 	DnhConfiguration* config = DnhConfiguration::CreateInstance();
-	const std::wstring& pathPackageScript = config->GetPackageScriptPath();
+	std::wstring pathPackageScript = config->GetPackageScriptPath();
 	if (pathPackageScript.size() == 0) {
 		infoSystem_->UpdateFreePlayerScriptInformationList();
 		sceneManager_->TransTitleScene();

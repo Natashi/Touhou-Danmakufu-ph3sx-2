@@ -145,6 +145,11 @@ value* value::set(type_data* t, ref_unsync_ptr<std::vector<value>> v) {
 	new (&p_array_value) auto(v);
 	return this;
 }
+value* value::set(type_data* t) {
+	kind = t ? t->get_kind() : type_data::tk_null;
+	type = t;
+	return this;
+}
 #pragma pop_macro("new")
 
 value& value::operator=(const value& source) {
@@ -175,6 +180,8 @@ void value::make_unique() {
 	if (has_data() && kind == type_data::tk_array) {
 		if (p_array_value.use_count() == 1) return;
 		std::vector<value> vec = *p_array_value.get();
+		for (value& v : vec)
+			v.make_unique();
 		this->reset(type, vec);
 	}
 }
@@ -204,12 +211,12 @@ size_t value::length_as_array() const {
 const value& value::index_as_array(size_t i) const {
 	if (has_data() && kind == type_data::tk_array)
 		return p_array_value->at(i);
-	return value();
+	throw wexception("index_as_array: not an array");
 }
 value& value::index_as_array(size_t i) {
 	if (has_data() && kind == type_data::tk_array)
 		return p_array_value->at(i);
-	return value();
+	throw wexception("index_as_array: not an array");
 }
 std::vector<value>::iterator value::array_get_begin() const {
 	if (has_data() && kind == type_data::tk_array)

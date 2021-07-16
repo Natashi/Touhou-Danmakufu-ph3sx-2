@@ -13,6 +13,7 @@ script_type_manager::script_type_manager() {
 	if (base_) return;
 	base_ = this;
 
+	null_type = deref_itr(types.insert(type_data(type_data::tk_null)).first);
 	int_type = deref_itr(types.insert(type_data(type_data::tk_int)).first);
 	real_type = deref_itr(types.insert(type_data(type_data::tk_real)).first);
 	char_type = deref_itr(types.insert(type_data(type_data::tk_char)).first);
@@ -292,6 +293,7 @@ void script_machine::run_code() {
 				break;
 			case command_kind::pc_push_value:
 				stack.push_back(c->data);
+				//stack.back().make_unique();
 				break;
 			case command_kind::pc_push_variable:
 			case command_kind::pc_push_variable2:
@@ -312,6 +314,7 @@ void script_machine::run_code() {
 				if (c->arg0 >= stack.size()) break;
 				value* val = &stack.back() - c->arg0;
 				stack.push_back(*val);
+				//stack.back().make_unique();
 				break;
 			}
 			case command_kind::pc_swap:
@@ -385,7 +388,7 @@ void script_machine::run_code() {
 							dest->make_unique();
 
 							if (prev_type && prev_type != src->get_type())
-								BaseFunction::_value_cast(this, dest, prev_type);
+								BaseFunction::_value_cast(dest, prev_type);
 						}
 					}
 					stack.pop_back();
@@ -401,7 +404,7 @@ void script_machine::run_code() {
 							*dest = *src;
 
 							if (prev_type && prev_type != src->get_type())
-								BaseFunction::_value_cast(this, dest, prev_type);
+								BaseFunction::_value_cast(dest, prev_type);
 						}
 					}
 					stack.pop_back(2U);
@@ -569,6 +572,7 @@ void script_machine::run_code() {
 				}
 				else {
 					stack.push_back(*itrCur);
+					//stack.back().make_unique();
 					i->set(i->get_type(), i->as_int() + 1i64);
 				}
 
@@ -598,7 +602,7 @@ void script_machine::run_code() {
 						value appending = *val_ptr;
 						if (appending.get_type()->get_kind() != type_elem->get_kind()) {
 							appending.make_unique();
-							BaseFunction::_value_cast(this, &appending, type_elem);
+							BaseFunction::_value_cast(&appending, type_elem);
 						}
 						res_arr[iVal] = appending;
 					}
@@ -666,7 +670,7 @@ void script_machine::run_code() {
 					value arg[2] = { *dest, stack.back() };
 					PerformFunction(&res, c->command, arg);
 
-					BaseFunction::_value_cast(this, &res, dest->get_type());
+					BaseFunction::_value_cast(&res, dest->get_type());
 					*dest = res;
 
 					stack.pop_back();
@@ -678,7 +682,7 @@ void script_machine::run_code() {
 					value arg[2] = { pDest, pArg[1] };
 					PerformFunction(&res, c->command, arg);
 
-					BaseFunction::_value_cast(this, &res, pDest.get_type());
+					BaseFunction::_value_cast(&res, pDest.get_type());
 					pDest = res;
 
 					stack.pop_back(2U);
@@ -807,11 +811,11 @@ void script_machine::run_code() {
 				if (c->arg1) {
 					if (castTo && castFrom != castTo) {
 						if (BaseFunction::_type_assign_check(this, castFrom, castTo)) {
-							BaseFunction::_value_cast(this, var, castTo);
+							BaseFunction::_value_cast(var, castTo);
 						}
 					}
 				}
-				else BaseFunction::_value_cast(this, var, castTo);
+				else BaseFunction::_value_cast(var, castTo);
 
 				break;
 			}
@@ -857,10 +861,10 @@ value* script_machine::find_variable_symbol(environment* current_env, code* c,
 {
 	for (environment* i = current_env; i != nullptr; i = (i->parent).get()) {
 		if (i->sub->level == level) {
-			value& res = i->variables[variable];
+			value* res = &(i->variables[variable]);
 
-			if (allow_null || res.has_data())
-				return &res;
+			if (allow_null || res->has_data())
+				return res;
 			else {
 #ifdef _DEBUG
 				raise_error(StringUtility::Format("Variable hasn't been initialized: %s\r\n", 

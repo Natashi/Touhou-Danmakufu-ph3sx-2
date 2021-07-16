@@ -391,6 +391,8 @@ bool _lexer_skip_post_decl(script_scanner* lex, int* pBrk, int* pPar) {
 
 type_data* _token_kind_to_type_data(token_kind token) {
 	switch (token) {
+	case token_kind::tk_decl_int:
+		return script_type_manager::get_int_type();
 	case token_kind::tk_decl_real:
 		return script_type_manager::get_real_type();
 	case token_kind::tk_decl_char:
@@ -400,13 +402,17 @@ type_data* _token_kind_to_type_data(token_kind token) {
 	case token_kind::tk_decl_string:
 		return script_type_manager::get_string_type();
 	}
-	return script_type_manager::get_int_type();
+	return script_type_manager::get_null_type();
 }
 
 parser::arg_data parser::parse_variable_decl(parser_state_t* state, bool bParameter) {
 	arg_data var;
 
 	parse_type_decl(state, &var);
+	if (var.type) {
+		parser_assert(state, var.type->get_kind() != type_data::tk_null,
+			"A void type cannot be used to declare a variable.\r\n");
+	}
 
 	//parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
 	if (state->next() != token_kind::tk_word) {
@@ -1228,14 +1234,16 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			state->advance();
 			parse_expression(block, state);
 
-			if (/*!s->bAssigned &&*/ s->type != nullptr) {
-				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)s->type, true));
-			}
 			s->bAssigned = true;
+			if (type_data* cvtType = s->type) {
+				if (isArrayElement)
+					cvtType = cvtType->get_element();
+				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)cvtType, true));
+			}
 
 			if (isArrayElement)
 				state->AddCode(block, code(command_kind::pc_ref_assign));
-			else
+			else 
 				state->AddCode(block, code(command_kind::pc_copy_assign, s->level, s->var, name));
 			break;
 		case token_kind::tk_add_assign:
@@ -2011,6 +2019,8 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 			parse_expression(block, state);
 			if (s->type != nullptr) {
+				parser_assert(state, s->type->get_kind() != type_data::tk_null,
+					"Functions marked with \"void\" cannot have a return value.\r\n");
 				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)s->type, true));
 			}
 			state->AddCode(block, code(command_kind::pc_copy_assign,
@@ -2379,7 +2389,7 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 							appending.make_unique();
 
 							BaseFunction::_append_check(nullptr, arrayType, appending.get_type());
-							BaseFunction::_value_cast(nullptr, &appending, type_elem);
+							BaseFunction::_value_cast(&appending, type_elem);
 
 							listPtrVal[i] = appending;
 						}

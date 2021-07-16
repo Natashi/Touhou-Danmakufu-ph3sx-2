@@ -361,10 +361,18 @@ namespace gstd {
 		return (require <= -1) && (argc >= (-require - 1));
 	}
 	bool parser::IsDeclToken(token_kind tk) {
-		return tk == token_kind::tk_decl_auto || tk == token_kind::tk_decl_real
-			|| tk == token_kind::tk_decl_int || tk == token_kind::tk_decl_char 
-			|| tk == token_kind::tk_decl_bool || tk == token_kind::tk_decl_string
-			|| tk == token_kind::tk_decl_mod_const;
+		switch (tk) {
+		case token_kind::tk_decl_auto:
+		case token_kind::tk_decl_void:
+		case token_kind::tk_decl_real:
+		case token_kind::tk_decl_int:
+		case token_kind::tk_decl_char:
+		case token_kind::tk_decl_bool:
+		case token_kind::tk_decl_string:
+		case token_kind::tk_decl_mod_const:
+			return true;
+		}
+		return false;
 	}
 
 	command_kind parser::get_replacing_jump(command_kind c) {

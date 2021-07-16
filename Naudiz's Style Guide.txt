@@ -13,22 +13,28 @@ Preamble:
     
         Note:
 
-            Variables MUST be written using camelCase, while constants MUST use SCREAMING_SNAKE_CASE.
+            Variables and constants SHOULD be declared with explicit type keywords (real, int, bool, char, string, etc.), unless the type is unknown,
+            in which case either "let" or "var" is used. These keywords are interchangeable, but the scripter MUST decide on one to use consistently.
+            
+            Variables MUST be written using camelCase*, while constants MUST use SCREAMING_SNAKE_CASE.
             Related identifiers SHOULD share the leading parts of their names for alphabetization purposes.
+            
+            In cases where variables have short names or are uninitialized, multiple variables MAY be declared on the same line, separated by commas.
+            They SHOULD be of the same type, so fewer keywords are necessary.
+            
+            *If necessary, a prefix or suffix MAY be added to a variable in the snake_case style.
             
             DO:
             
-                let posX;
-                let posY;
-                const BOSS_RUMIA = 0i;
-                const BOSS_CIRNO = 1i;
+                real posX, posY;
+                const int BOSS_RUMIA = 0;
+                const int BOSS_CIRNO = 1;
                 
             DON'T:
             
-                let xPos;
+                let xPos
                 let yPos;
-                const RUMIA_BOSS = 0i;
-                const CIRNO_BOSS = 1i;
+                const RUMIA_BOSS = 0, CIRNO_BOSS = 1;
             
         
         1.1.1: Local Variables
@@ -37,10 +43,9 @@ Preamble:
             
             EXAMPLE:
             
-                function DoSomething()
+                function<void> DoSomething()
                 {
-                    let posX;
-                    let posY;
+                    real posX, posY;
                     // ...
                 }
             
@@ -52,8 +57,8 @@ Preamble:
             
             EXAMPLE:
             
-                let _objEnemy;
-                let _objPlayer;
+                int _objEnemy;
+                int _objPlayer;
                 
                 @Initialize
                 {
@@ -65,9 +70,11 @@ Preamble:
         
             Function and task parameters SHOULD be denoted with a trailing underscore.
             
+            Parameters SHOULD be declared with type keywords, or either "let" or "var" if unknown.
+            
             EXAMPLE:
             
-                function DoSomethingElse(foo_, bar_)
+                function<void> DoSomethingElse(int foo_, real bar_)
                 {
                     // ...
                 }
@@ -75,14 +82,17 @@ Preamble:
         
         1.1.4: Iterators
         
-            Iterator variables declared in for-loops, ascent-loops, and descent-loops SHOULD be named single, lowercase letters of the alphabet starting with "i",
+            Iterator variables declared in for-loops, ascent-loops, and descent-loops SHOULD be named lowercase letters of the alphabet starting with "i",
             progressing to the next letter for each nested loop. This convention MAY be bypassed if more semantic information is necessary.
             
             Iterator variables declared in for-each-loops SHOULD have single-word names prefixed with "i".
             
+            Fun fact: It is possible to add a second iterator to a for-each-loop, which is listed before the first and iterates through the array's indices (starting from 0) instead of its elements.
+            This variable SHOULD follow the same rules as those declared in for-loops.
+            
             EXAMPLE:
             
-                for (let i = 0; i < 2; i++) {
+                for (int i = 0; i < 2; i++) {
                     ascent (j in 0 .. 3) {
                         descent (k in 0 .. 4) {
                             // ...
@@ -93,25 +103,32 @@ Preamble:
                 for each (iObj in arrObj) {
                     // ...
                 }
+                
+                for each ((i, iObj) in arrObj) {
+                    // ...
+                }
             
         
         1.1.5: Constants
         
-            As mentioned previously, constants MUST use SCREAMING_SNAKE_CASE. All constants SHOULD be declared in a dedicated constant library.
-            Numeric constants SHOULD be integers instead of real numbers (currently denoted by the "i" suffix at the end of the literal).
+            As mentioned previously, constants MUST use SCREAMING_SNAKE_CASE. All constants SHOULD be defined in a dedicated constant library.
+            Numeric constants SHOULD be integers instead of real numbers (denoted in decimal literals by appending the character "i" at the end,
+            but this is not necessary if the constant type is explicitly defined).
+            
             
             EXAMPLE:
             
-                const PLAYER_REIMU = 0i;
-                const PLAYER_MARISA = 1i;
-                const PLAYER_MIMA = 2i;
-                const PLAYER_YUKA = 3i;
+                const int PLAYER_REIMU = 0;
+                const int PLAYER_MARISA = 1;
+                const int PLAYER_SAKUYA = 2;
+                const int PLAYER_SANAE = 3;
             
         
     
     1.2: Functions, Tasks, and Subroutines
     
         Note:
+            
             
             Function, task, and subroutine names all MUST use PascalCase to differentiate them from other identifiers.
             The root of the identifier name SHOULD begin with a verb.
@@ -120,28 +137,30 @@ Preamble:
             
             EXAMPLE:
                 
-                function DoSomething()
+                function<void> DoSomething()
                 {
                     // ...
                 }
                 
-                function GetSomething(foo_)
+                function<int> GetSomething(int foo_)
                 {
                     // ...
                 }
                 
-                function SetSomething(foo_, bar_)
+                function<void> SetSomething(int foo_, real bar_)
                 {
                     // ...
                 }
                 
-                function IsSomethingExists(foo_)
+                function<bool> IsSomethingExists(int foo_)
                 {
                     // ...
                 }
             
         
         1.2.1: Functions
+            
+            Functions SHOULD be declared with explicit type keywords in angle brackets, unless the type is unknown or variant.
             
             Function names MUST use PascalCase with no underscores.*
             Function calls require trailing parentheses, even when there are no arguments.
@@ -150,23 +169,23 @@ Preamble:
             
             EXAMPLE:
             
-                function DoSomething()
+                function<void> DoSomething()
                 {
                     // ...
                 }
                 
-                function DoSomethingElse(foo_, bar_)
+                function<void> DoSomethingElse(bool foo_, real bar_)
                 {
                     DoSomething();
                     // ...
                 }
                 
-                function Obj_DoSomething(obj_)
+                function<void> Obj_DoSomething(int obj_)
                 {
                     // ...
                 }
                 
-                function DoSomething_Obj_Obj(obj1_, obj2_)
+                function<void> DoSomething_Obj_Obj(int obj1_, int obj2_)
                 {
                     // ...
                 }
@@ -174,13 +193,14 @@ Preamble:
         
         1.2.2: Tasks
             
-            Task names MUST use PascalCase with a leading underscore. The same rules about affixes and parentheses that apply to functions apply here.
+            Task names SHOULD use one of the following styles (and consistently): PascalCase with a leading underscore, OR PascalCase with a leading uppercase T.
+            The same rules about affixes and parentheses that apply to functions apply here.
             
             // NAZ: I like to treat my tasks as private routines, so often times you'll see me create a "public" function that calls task nested inside.
             
             EXAMPLE:
             
-                task _RenderPlayer(_id)
+                task _RenderPlayer(int id_)
                 {
                     // ...
                 }
@@ -194,13 +214,15 @@ Preamble:
         
         1.2.3: Subroutines
         
-            Subroutines MUST use PascalCase with a trailing underscore. Parentheses MAY be used.
+            Subroutines MUST use PascalCase, and SHOULD include a trailing underscore. Parentheses MAY be used.
+            
+            It is possible to use the at sign (@) in place of the "sub" keyword, but scripters SHOULD NOT do so, to prevent confusion with built-in routines (@Initialize, @MainLoop, @Finalize, etc.).
             
             // NAZ: I don't think I've ever used one of these, lol. I came up with the underscore rule on the fly.
             
             EXAMPLE:
             
-                sub DoSomethingDifferent_()
+                sub DoSomethingDifferent_
                 {
                     // ...
                 }
@@ -212,24 +234,24 @@ Preamble:
     
     Note:
     
-        For the sake of consistency, spaces MUST be used instead of tabs in ALL cases.
+        For the sake of consistency, spaces SHOULD be used instead of tabs in ALL cases.
         The default tab is equivalent to 4 spaces; any decent editor should have an option to insert spaces upon pressing the tab key.
     
     2.1: Operators
     
         Expressions and statements consisting of one or more literals and/or identifiers MUST employ one space on both sides of all binary and ternary operators
-        (= +, -, *, /, %, ^, ~, +=, -=, *=, /=, %=, ^=, ~=, ==, !=, >, <, >=, <=, &&, ||, &, |, ^^, .., ?, :).
+        (= +, -, *, /, ~/, %, ^, ~, +=, -=, *=, /=, ~/=, %=, ^=, ~=, ==, !=, >, <, >=, <=, &&, ||, &, |, ^^, .., ?, :).
         
         Expressions and statements consisting of an identifier and a unary operator (!, ++, --) MUST NOT employ a space between the operator and operand.
         
         DO:
         
-            let someNum = 6 * 9 + 4 / 20 - 6 % 66;
+            real someNum = 6 * 9 + 4 / 20 - 6 % 66;
             someNum++;
         
         DON'T:
         
-            let someNum = 6*9+4/20-6%66;
+            real someNum = 6*9+4/20-6%66;
             someNum ++;
         
         // NAZ: I will send you to the Shadow Realm if you don't put spaces in between your operators like in the "DON'T" example. It's entirely unreadable for me.
@@ -239,16 +261,16 @@ Preamble:
         Variable and constant declaration and assignment statements MUST employ one space between the keyword (let, var, const) and the identifier,
         and on both sides of the assignment operator (=) if applicable.*
         
-        There is a limit of one declaration or assignment statement per line.
+        As stated previously, if identifiers have short names or are uninitialized, their declarations MAY go on the same line, separated by commas and followed by spaces.
         
         *Additional spaces MAY be used to vertically align the operator and right-hand side of each statement in a group of statements. See the example.
         
         EXAMPLE:
         
-            const BGM_TITLE     = 0i;
-            const BGM_1_ROAD    = 1i;
-            const BGM_1_BOSS    = 2i;
-            const BGM_GAMEOVER  = 3i;
+            const int BGM_TITLE     = 0;
+            const int BGM_1_ROAD    = 1;
+            const int BGM_1_BOSS    = 2;
+            const int BGM_GAMEOVER  = 3;
         
     
     2.3: Functions, Tasks, and Subroutines
@@ -275,13 +297,16 @@ Preamble:
             {
                 DoSomething(
                     true,
-                    false
+                    1,
+                    1.1,
+                    'e',
+                    "abc"
                 );
                 
                 // ...
             }
             
-            function DoSomething(foo_, bar_)
+            function<void> DoSomething(bool foo_, int bar_, real baz_, char qux_, string quux_)
             {
                 // ...
             }
@@ -293,12 +318,13 @@ Preamble:
         (if, else, loop, while, ascent, descent, in, for, each, alternative, case, others, switch, default, local, yield, break, continue),
         unless said keyword by itself is a statement (yield, break, continue), in which case it is simply terminated with a semicolon.
         
-        For conditionals and loops, the opening curly brace MUST go on the same line as the preceding keyword or closing parenthesis, following a space.*
-        The closing curly brace MUST go on its own line, except in the case of "else" and "else if" which SHOULD be written after a space following the closing brace.
+        For conditionals and loops, the opening curly brace SHOULD go on the same line as the preceding keyword or closing parenthesis, following a space.*
+        The closing curly brace SHOULD go on its own line, except in the case of "else" and "else if" which SHOULD be written after a space following the closing brace.
         Loops and conditional structures SHOULD be followed by an empty line.
         
         For for-loops, each statement ending in a semicolon MUST be followed by a space, i.e. the first and second.
         The second and third statements may be omitted, in which case a space SHOULD be used instead.
+        When statements are combined with commas, there MUST be a space after each of them.
         
         *Conditionals and loops containing a single statement terminated with a semicolon MAY be written without curly braces,
         in which case they SHOULD be written on the same line as the rest of the statement, following a space.
@@ -307,13 +333,13 @@ Preamble:
         
         EXAMPLE 1 (VERBOSE):
         
-            for (let i = 1; i <= 10; i++) {
+            for (int i = 1, j = 2; i <= 10; i++, j--) {
                 alternative (i)
                 case (1) {
-                    WriteLog("i is 1!");
+                    WriteLog("i is 1!", "j is 2!");
                 }
                 case (2) {
-                    WriteLog("i is 2!");
+                    WriteLog("i is 2!", "j is 1!");
                 }
                 others {
                     WriteLog("I can't count that high!");
@@ -330,10 +356,10 @@ Preamble:
         
         EXAMPLE 2 (CONCISE):
         
-            for (let i = 1; i <= 10; i++) {
+            for (int i = 1, j = 2; i <= 10; i++, j--) {
                 alternative (i)
-                case (1)    WriteLog("i is 1!");
-                case (2)    WriteLog("i is 2!");
+                case (1)    WriteLog("i is 1!", "j is 2!");
+                case (2)    WriteLog("i is 2!", "j is 1!");
                 others      WriteLog("I can't count that high!");
                 
                 if (i >= 3) break;
@@ -357,14 +383,14 @@ Preamble:
         
         EXAMPLE:
             
-            let arrSmall = [1, 2, 3];
-            let arrBig = [
+            int[] arrSmall = [1, 2, 3];
+            int[][] arrBig = [
                 [1, 2, 3],
                 [4, 5, 6, 7],
                 [8, 9, 10, 11, 12]
             ];
             
-            let arrBigger = [
+            int[][][] arrBigger = [
                 [
                     [1, 2, 3],
                     [4, 5, 6, 7],
@@ -375,9 +401,203 @@ Preamble:
                 ]
             ];
             
-            let numSmall = arrSmall[2];
-            let numBig = arrBig[2][4];
-            let numBigger = arrBigger[1][2][6];
+            int numSmall = arrSmall[2];
+            int numBig = arrBig[2][4];
+            int numBigger = arrBigger[1][2][6];
         
     
 
+3: Organization
+    
+    3.1: Script Structure
+    
+        All scripts SHOULD have their sections organized in the following order:
+        
+            1. Headers (#TouhouDanmakufu, #ScriptVersion*, #Title, #Text, #System, #Background, #BGM)
+            2. #include directives
+            3. Global variables
+            4. Predefined routines (@Initialize, @Event, @MainLoop, @Finalize, @Loading)
+            5. Script-specific routines
+            
+        *The #ScriptVersion header can only take one possible argument (3), and SHOULD be omitted altogether.
+            
+        EXAMPLE:
+        
+            #TouhouDanmakufu[Stage]
+            #Title["Example Stage"]
+            #Text["An example of a stage script."]
+            #System["script/script_system.dnh"]
+            
+            #include "script/include_stg.dnh"
+            
+            int _idScript;
+            
+            @Initialize
+            {
+                _idScript = GetOwnScriptID();
+                _Main();
+            }
+            
+            @MainLoop
+            {
+                yield;
+            }
+            
+            @Finalize
+            {
+                WriteLog("Game over!");
+            }
+            
+            task _Main()
+            {
+                while (GetPlayerState() != STATE_END) yield;
+                CloseScript(_idScript);
+            }
+        
+    
+    3.2: Included Files
+        
+        As a preface, what the #include directive does is tell the engine to copy the contents of a given text file and paste them into the script, replacing the #include directive.
+        If a file has already been included in the script, it will be skipped.
+        
+        To reduce the amount of boilerplate in each script file, the scripter SHOULD create files with the express purpose of including several other files, ideally in a hierarchical manner.
+        
+        DO:
+            // In include_main.dnh
+            
+                #include "./lib_main.dnh"
+                #include "./lib_const.dnh"
+                #include "./lib_math.dnh"
+                #include "./lib_render.dnh"
+                #include "./lib_event.dnh"
+            
+            // In include_stg.dnh
+            
+                #include "./include_main.dnh"
+                #include "./lib_stg.dnh"
+                #include "./lib_move.dnh"
+                #include "./lib_shot.dnh"
+                #include "./lib_enemy.dnh"
+                
+            // In include_boss.dnh
+            
+                #include "./include_stg.dnh"
+                #include "./lib_boss.dnh"
+                #include "./lib_anim.dnh"
+                #include "./lib_spell.dnh"
+            
+            // In the main script
+            
+                #TouhouDanmakufu[Single]
+                // ...
+                
+                #include "script/include_boss.dnh"
+                
+                @Initialize
+                {
+                    // ...
+                }
+            
+        
+        DON'T:
+        
+            // In the main script
+            
+                #TouhouDanmakufu[Single]
+                // ...
+                
+                #include "./lib_main.dnh"
+                #include "./lib_const.dnh"
+                #include "./lib_math.dnh"
+                #include "./lib_render.dnh"
+                #include "./lib_event.dnh"
+                #include "./lib_stg.dnh"
+                #include "./lib_move.dnh"
+                #include "./lib_shot.dnh"
+                #include "./lib_enemy.dnh"
+                #include "./lib_boss.dnh"
+                #include "./lib_anim.dnh"
+                #include "./lib_spell.dnh"
+                
+                @Initialize
+                {
+                    // ...
+                }
+            
+        
+        // NAZ: These file paths assume that the script as well as all of the library files are located in the base script directory.
+        // NAZ: Ideally, you should have a dedicated lib folder, possibly with subfolders corresponding to the libraries contained in each "include" file.
+    
+    3.3: Script Routines
+    
+        Scripts (particularly those in which danmaku is created) SHOULD call a task named _Main (or TMain, depending on your chosen style) from @Initialize.
+        This task SHOULD be the ultimate source of all other script-specific routine invocations.
+        
+        The scripter SHOULD make use of nesting for a few reasons:
+            
+            1. To ensure that variables are limited to their intended scopes.
+            2. To prevent the need to pass variables around unnecessarily via arguments.
+        
+        EXAMPLE 1 (NON-NESTED):
+        
+            task _Main()
+            {
+                real dir;
+                
+                loop {
+                    dir = rand(0, 360);
+                    _Fire(dir);
+                    wait(60);
+                    
+                }
+            }
+            
+            task _Fire(real dir_)
+            {
+                real speed = 1;
+                
+                loop (5) {
+                    Shoot(speed, dir_);
+                    speed++;
+                    wait(2);
+                }
+            }
+            
+            function<void> Shoot(real speed_, real dir_)
+            {
+                int obj = CreateShotA1(someX, someY, speed_, dir_, someID, 15);
+                ObjShot_SetDeleteFrame(obj, 180);
+            }
+            
+        EXAMPLE 2 (NESTED):
+        
+            task _Main()
+            {
+                real dir;
+                
+                loop {
+                    dir = rand(0, 360);
+                    _Fire();
+                    wait(60);
+                }
+                
+                task _Fire()
+                {
+                    real speed = 1;
+                    
+                    loop (5) {
+                        Shoot_;
+                        speed++;
+                        wait(2);
+                    }
+                    
+                    sub Shoot_
+                    {
+                        int obj = CreateShotA1(someX, someY, speed, dir, someID, 15);
+                        ObjShot_SetDeleteFrame(obj, 180);
+                    }
+                }
+            }
+            
+        // NAZ: These examples are intentionally bare-bones and only exist for the purposes of demonstrating how nesting can simplify task and function signatures and establish a sense of hierarchy.
+    

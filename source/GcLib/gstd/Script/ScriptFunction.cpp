@@ -93,19 +93,20 @@ namespace gstd {
 		if (type_src) {
 			if (type_src == type_dst)
 				return true;		//Same type
-			else if (!_type_check_two_any(type_dst, type_src, type_data::tk_array))
+			if (!_type_check_two_any(type_dst, type_src, type_data::tk_array))
 				return true;		//Different type, but neither is an array
 			if (type_src->get_kind() == type_dst->get_kind()) {
 				type_data* elem_src = type_src->get_element();
 				type_data* elem_dst = type_dst->get_element();
 
 				if (elem_src == nullptr || elem_dst == nullptr)
-					return true;	//Both are arrays, and one is empty
+					return true;	//One is a null array (empty array)
 
-				type_data::type_kind kind_src = _rtypeof(elem_src);
-				type_data::type_kind kind_dst = _rtypeof(elem_dst);
-				if ((kind_src | kind_dst) == (type_data::tk_int | type_data::tk_real))
+				if ((elem_src->get_kind() | elem_dst->get_kind()) == (type_data::tk_int | type_data::tk_real))
 					return true;	//Allow implicit (int[]) <-> (real[]) conversion
+
+				if (_type_check_two_all(elem_src, elem_dst, type_data::tk_array))
+					return __type_assign_check(elem_src, elem_dst);
 			}
 		}
 		return false;
@@ -194,6 +195,8 @@ namespace gstd {
 		}
 
 		result.reset(v_left->get_type(), resArr);
+		//_value_cast(&result, result.get_type());
+
 		return result;
 	}
 
@@ -210,31 +213,29 @@ namespace gstd {
 			return (i < 0) ? ((j - ((-i) % j)) % j) : (i % j);
 	}
 
-	value* BaseFunction::_value_cast(script_machine* machine, value* val, type_data* cast) {
-		if (val == nullptr || val->get_type() == nullptr || val->get_type() == cast)
+	value* BaseFunction::_value_cast(value* val, type_data* cast) {
+		if (val == nullptr || val->get_type() == nullptr)
 			return val;
 		switch (cast->get_kind()) {
 		case type_data::tk_int:
-			return val->reset(script_type_manager::get_int_type(), val->as_int());
+			return val->reset(cast, val->as_int());
 		case type_data::tk_real:
-			return val->reset(script_type_manager::get_real_type(), val->as_real());
+			return val->reset(cast, val->as_real());
 		case type_data::tk_char:
-			return val->reset(script_type_manager::get_char_type(), val->as_char());
+			return val->reset(cast, val->as_char());
 		case type_data::tk_boolean:
-			return val->reset(script_type_manager::get_boolean_type(), val->as_boolean());
+			return val->reset(cast, val->as_boolean());
 		case type_data::tk_array:
 			if (type_data* castElem = cast->get_element()) {
-				switch (castElem->get_kind()) {
-				case type_data::tk_int:
-					*val = cast_int_array(machine, 1, val); break;
-				case type_data::tk_real:
-					*val = cast_real_array(machine, 1, val); break;
-				case type_data::tk_char:
-					*val = value(script_type_manager::get_string_type(), val->as_string()); break;
+				if (val->length_as_array() > 0) {
+					std::vector<value> arrVal = *(val->as_array_ptr());
+					for (value& iVal : arrVal)
+						_value_cast(&iVal, castElem);
+					return val->reset(cast, arrVal);
 				}
-				return val;
 			}
 		}
+		val->set(cast);
 		return val;
 	}
 
@@ -277,7 +278,7 @@ namespace gstd {
 		}
 		type_data* elem = arg0_type->get_element();
 		if (elem != nullptr && elem != arg1_type) {
-			std::string error = StringUtility::Format("Value type does not match. (%s ~ [%s])\r\n",
+			std::string error = StringUtility::Format("Invalid value type for append: %s ~ [%s]\r\n",
 				type_data::string_representation(arg0_type).c_str(),
 				type_data::string_representation(arg1_type).c_str());
 			if (machine) machine->raise_error(error);
@@ -309,6 +310,8 @@ namespace gstd {
 	}
 
 	type_data::type_kind BaseFunction::_typeof(type_data* type) {
+		if (type == nullptr)
+			return type_data::tk_null;
 		if (type->get_kind() == type_data::tk_array) {
 			type_data* elem = type->get_element();
 			if (elem && elem->get_kind() == type_data::tk_char) {	//String
@@ -318,9 +321,14 @@ namespace gstd {
 		return type->get_kind();
 	}
 	type_data::type_kind BaseFunction::_rtypeof(type_data* type) {
+		if (type == nullptr)
+			return type_data::tk_null;
 		type_data* typec = type;
-		while (typec->get_kind() == type_data::tk_array)
+		while (typec->get_kind() == type_data::tk_array) {
 			typec = typec->get_element();
+			if (typec == nullptr)
+				return type_data::tk_null;
+		}
 		return typec->get_kind();
 	}
 
@@ -340,7 +348,7 @@ namespace gstd {
 					elemType = nextElemType;
 			}
 			else
-				BaseFunction::_value_cast(machine, &nv, rootType);
+				BaseFunction::_value_cast(&nv, rootType);
 			arrVal[i] = nv;
 		}
 
@@ -661,7 +669,7 @@ namespace gstd {
 		return value(script_type_manager::get_int_type(), (int64_t)argv->length_as_array());
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::resize) {
-		value* val = const_cast<value*>(&argv[0]);
+		const value* val = &argv[0];
 		type_data* valType = val->get_type();
 
 		if (valType->get_kind() != type_data::tk_array) {
@@ -673,6 +681,8 @@ namespace gstd {
 		size_t newSize = argv[1].as_int();
 		type_data* newType = val->get_type();
 
+		value res = *val;
+		res.make_unique();
 		if (newSize != oldSize) {
 			std::vector<value> arrVal(newSize);
 
@@ -684,13 +694,13 @@ namespace gstd {
 					fill = argv[2];
 					if (oldSize > 0) {
 						if (!BaseFunction::_append_check(machine, valType, fill.get_type())) return value();
-						BaseFunction::_value_cast(machine, &fill, valType->get_element());
+						BaseFunction::_value_cast(&fill, valType->get_element());
 					}
 					else newType = script_type_manager::get_instance()->get_array_type(fill.get_type());
 				}
 				else {
 					if (valType->get_element() == nullptr) {
-						machine->raise_error("Resizing from an empty array requires a fill value.\r\n");
+						machine->raise_error("Resizing from a null array requires a fill value.\r\n");
 						return value();
 					}
 					fill = BaseFunction::_create_empty(valType->get_element());
@@ -700,9 +710,9 @@ namespace gstd {
 					arrVal[i] = fill;
 			}
 
-			val->set(newType, arrVal);
+			res.set(newType, arrVal);
 		}
-		return value();
+		return res;
 	}
 
 	const value* BaseFunction::index(script_machine* machine, int argc, value* arr, value* indexer) {
@@ -809,7 +819,7 @@ namespace gstd {
 		{
 			value appending = argv[1];
 			if (appending.get_type() != type_target->get_element()) {
-				BaseFunction::_value_cast(machine, &appending, type_target->get_element());
+				BaseFunction::_value_cast(&appending, type_target->get_element());
 			}
 			result.append(type_target, appending);
 		}
@@ -821,8 +831,9 @@ namespace gstd {
 			_raise_error_unsupported(machine, type_l, "array concatenate");
 			return false;
 		}
-		if (type_l != type_r && !(type_l->get_element() == nullptr || type_r->get_element() == nullptr)) {
-			std::string error = StringUtility::Format("Value type does not match. (%s ~ %s)\r\n",
+		//if (type_l != type_r && !(type_l->get_element() == nullptr || type_r->get_element() == nullptr)) {
+		if (!BaseFunction::__type_assign_check(type_l, type_r)) {
+			std::string error = StringUtility::Format("Invalid value type for concatenate: %s ~ %s\r\n",
 				type_data::string_representation(type_l).c_str(),
 				type_data::string_representation(type_r).c_str());
 			machine->raise_error(error);
@@ -835,7 +846,13 @@ namespace gstd {
 
 		value result = argv[0];
 		result.make_unique();
-		result.concatenate(argv[1]);
+
+		value concat = argv[1];
+		if (concat.get_type() != result.get_type()) {
+			concat.make_unique();
+			BaseFunction::_value_cast(&concat, result.get_type());
+		}
+		result.concatenate(concat);
 
 		return result;
 	}
@@ -843,7 +860,13 @@ namespace gstd {
 		__chk_concat(machine, argv[0].get_type(), argv[1].get_type());
 
 		value result = argv[0];
-		result.concatenate(argv[1]);
+
+		value concat = argv[1];
+		if (concat.get_type() != result.get_type()) {
+			concat.make_unique();
+			BaseFunction::_value_cast(&concat, result.get_type());
+		}
+		result.concatenate(concat);
 
 		return result;
 	}
