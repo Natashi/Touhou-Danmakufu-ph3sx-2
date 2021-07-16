@@ -903,6 +903,8 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 	encoding_ = Encoding::Detect(src.data(), src.size());
 	bomSize_ = 0;
 	bytePerChar_ = 1;
+	ZeroMemory(lineEnding_, sizeof(lineEnding_));
+	lineEndingSize_ = 0;
 
 	switch (encoding_) {
 	case Encoding::UTF8BOM:
@@ -943,6 +945,17 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 
 			for (auto& iLineVec : listLine_) {
 				if (iLineVec.size() > 0) {
+					if (lineEndingSize_ == 0) {
+						if (iLineVec.back() == '\r') {
+							memcpy(lineEnding_, "\r\n", 2);
+							lineEndingSize_ = 2;
+						}
+						else {
+							memcpy(lineEnding_, "\n", 1);
+							lineEndingSize_ = 1;
+						}
+					}
+
 					while (iLineVec.back() == '\r') {
 						iLineVec.pop_back();
 						if (iLineVec.empty()) break;
@@ -987,6 +1000,18 @@ bool DxTextFileObject::_ParseLines(std::vector<char>& src) {
 				if (iLineVec.size() > 0) {
 					wchar_t* pWCh = (wchar_t*)((&iLineVec.back()) - 1);
 
+					if (lineEndingSize_ == 0) {
+						if (*pWCh == CH_CR) {
+							memcpy(&lineEnding_[0], &CH_CR, 2);
+							memcpy(&lineEnding_[2], &CH_LF, 2);
+							lineEndingSize_ = 4;
+						}
+						else {
+							memcpy(&lineEnding_[0], &CH_LF, 2);
+							lineEndingSize_ = 2;
+						}
+					}
+
 					while (*pWCh == CH_CR) {
 						iLineVec.pop_back();
 						iLineVec.pop_back();
@@ -1020,12 +1045,8 @@ bool DxTextFileObject::Store() {
 		std::vector<char>& str = listLine_[iLine];
 
 		if (encoding_ == Encoding::UTF16LE || bytePerChar_ == 1) {
-			if (str.size() > 0) file_->Write(&str[0], str.size());
-
-			if (iLine < listLine_.size() - 1) {
-				if (bytePerChar_ == 1) file_->Write("\r\n", 2);
-				else if (bytePerChar_ == 2) file_->Write(L"\r\n", 4);
-			}
+			if (str.size() > 0)
+				file_->Write(&str[0], str.size());
 		}
 		else if (encoding_ == Encoding::UTF16BE) {
 			if (str.size() > 0) {
@@ -1035,10 +1056,10 @@ bool DxTextFileObject::Store() {
 				}
 				file_->Write(&vecTmp[0], vecTmp.size());
 			}
-
-			if (iLine < listLine_.size() - 1)
-				file_->Write("\0\r\0\n", 4);
 		}
+
+		if (iLine < listLine_.size() - 1)
+			file_->Write(lineEnding_, lineEndingSize_);
 	}
 	return true;
 }

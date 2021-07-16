@@ -575,6 +575,8 @@ namespace directx {
 		size_t bomSize_;
 		byte bomHead_[3];
 		size_t bytePerChar_;
+		char lineEnding_[4];
+		size_t lineEndingSize_;
 
 		bool _ParseLines(std::vector<char>& src);
 		void _AddLine(const char* pChar, size_t count);
