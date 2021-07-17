@@ -86,6 +86,7 @@ void SceneManager::TransScriptSelectScene(int type) {
 	SystemController::GetInstance()->ClearTaskWithoutSystem();
 
 	ETaskManager* taskManager = ETaskManager::GetInstance();
+
 	shared_ptr<ScriptSelectScene> task(new ScriptSelectScene());
 	taskManager->AddTask(task);
 	taskManager->AddWorkFunction(TTaskFunction<ScriptSelectScene>::Create(task,
