@@ -1041,6 +1041,17 @@ bool DxTextFileObject::Store() {
 
 	if (bomSize_ > 0) file_->Write(bomHead_, bomSize_);
 
+	if (lineEndingSize_ == 0) {
+		if (bytePerChar_ == 1) {
+			lineEnding_[0] = '\n';
+			lineEndingSize_ = 1;
+		}
+		else {
+			memcpy(lineEnding_, encoding_ == Encoding::UTF16LE ? "\n\0" : "\0\n", 2);
+			lineEndingSize_ = 2;
+		}
+	}
+
 	for (size_t iLine = 0; iLine < listLine_.size(); ++iLine) {
 		std::vector<char>& str = listLine_[iLine];
 
