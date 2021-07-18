@@ -41,6 +41,9 @@ namespace directx {
 
 		virtual void SetError(const std::wstring& error) { error_ = error; }
 		virtual bool IsError() { return error_.size() > 0; }
+		void TryThrowError() {
+			if (IsError()) throw gstd::wexception(error_);
+		}
 
 		int GetMainThreadID() { return mainThreadID_; }
 		int64_t IssueScriptID() { return ++idScript_; }
@@ -102,9 +105,12 @@ namespace directx {
 	protected:
 		ScriptManager* scriptManager_;
 
+		volatile bool bBeginLoad_;
+		volatile bool bLoad_;
+
 		int typeScript_;
 		shared_ptr<ManagedScriptParameter> scriptParam_;
-		volatile bool bLoad_;
+		
 		bool bEndScript_;
 		bool bAutoDeleteObject_;
 		bool bRunning_;
@@ -125,6 +131,7 @@ namespace directx {
 
 		ScriptManager* GetScriptManager() { return scriptManager_; }
 
+		bool IsBeginLoad() { return bBeginLoad_; }
 		bool IsLoad() { return bLoad_; }
 
 		int GetScriptType() { return typeScript_; }

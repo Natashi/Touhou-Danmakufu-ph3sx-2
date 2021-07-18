@@ -103,14 +103,18 @@ void ScriptManager::StartScript(int64_t id, bool bUnload) {
 	}
 }
 void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) {
+	if (!script->IsBeginLoad()) {
+		throw wexception(StringUtility::Format(L"ScriptManager: Script isn't loaded [%s]",
+			script->GetPath().c_str()));
+	}
 	if (!script->IsLoad()) {
 		DWORD count = 0;
 		while (!script->IsLoad()) {
-			if (count % 1000 == 0) {
+			if (count % 100 == 0) {
 				Logger::WriteTop(StringUtility::Format(L"ScriptManager: Script is still loading... [%s]",
 					script->GetPath().c_str()));
 			}
-			::Sleep(5);
+			::Sleep(10);
 			++count;
 		}
 	}
@@ -133,8 +137,7 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) 
 	}
 
 	if (script) {
-		if (IsError())
-			throw wexception(error_);	//Rethrows the error (for scripts loaded in the load thread)
+		TryThrowError();	//Rethrows the error (for scripts loaded in the load thread)
 
 		script->Reset();
 		script->bRunning_ = true;
@@ -210,9 +213,9 @@ void ScriptManager::OrphanAllScripts() {
 }
 
 int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script) {
-	int64_t res = 0;
+	int64_t res = script->GetScriptID();
 
-	res = script->GetScriptID();
+	script->bBeginLoad_ = true;
 
 	script->SetSourceFromFile(path);
 	script->Compile();
@@ -243,7 +246,7 @@ shared_ptr<ManagedScript> ScriptManager::LoadScript(const std::wstring& path, in
 int64_t ScriptManager::LoadScriptInThread(const std::wstring& path, shared_ptr<ManagedScript> script) {
 	int64_t res = 0;
 	{
-		Lock lock(lock_);
+		StaticLock lock = StaticLock();		//???????
 
 		res = script->GetScriptID();
 		mapScriptLoad_[res] = script;
@@ -371,6 +374,7 @@ ManagedScript::ManagedScript() {
 	_AddFunction(&managedScriptFunction);
 	_AddConstant(&managedScriptConstant);
 
+	bBeginLoad_ = false;
 	bLoad_ = false;
 
 	bEndScript_ = false;
