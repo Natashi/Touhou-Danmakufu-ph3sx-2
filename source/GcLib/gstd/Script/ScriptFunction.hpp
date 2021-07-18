@@ -105,6 +105,7 @@ namespace gstd {
 
 		DNH_FUNCAPI_DECL_(length);
 		DNH_FUNCAPI_DECL_(resize);
+		DNH_FUNCAPI_DECL_(contains);
 
 		static const value* index(script_machine* machine, int argc, value* arr, value* indexer);
 

@@ -754,6 +754,32 @@ namespace gstd {
 		return res;
 	}
 
+	DNH_FUNCAPI_DEF_(BaseFunction::contains) {
+		assert(argc == 2);
+
+		const value* arr = &argv[0];
+		type_data* arrType = arr->get_type();
+
+		if (arrType->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, argv->get_type(), "contains");
+			return value();
+		}
+
+		value val = argv[1];
+		size_t length = arr->length_as_array();
+
+		bool res = false;
+
+		for (size_t i = 0; i < length && !res; ++i) {
+			value args[2] = { arr->index_as_array(i), val };
+			if (BaseFunction::compare(machine, 2, args).as_int() == 0) {
+				res = true;
+			}
+		}
+		
+		return value(script_type_manager::get_boolean_type(), res);
+	}
+
 	const value* BaseFunction::index(script_machine* machine, int argc, value* arr, value* indexer) {
 		size_t index = indexer->as_int();
 		if (!_index_check(machine, arr->get_type(), arr->length_as_array(), index))
