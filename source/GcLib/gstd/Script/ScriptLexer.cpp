@@ -375,10 +375,10 @@ void script_scanner::advance() {
 
 				strNum = "";
 				do {
-					if (ch != '\'')
+					if (ch != '_')
 						strNum += ch;
 					ch = next_char();
-				} while (std::iswdigit(ch) || std::iswxdigit(ch) || ch == '\'');
+				} while (std::iswdigit(ch) || std::iswxdigit(ch) || ch == '_');
 
 				auto _ValidateAndParseNum = [](std::string& str, int base, int (*funcValidate)(wint_t)) -> uint64_t {
 					size_t i = 0;
@@ -408,8 +408,8 @@ void script_scanner::advance() {
 				next = token_kind::tk_int;
 			}
 			else {
-				while (std::iswdigit(ch) || ch == '\'') {
-					if (ch != '\'')
+				while (std::iswdigit(ch) || ch == '_') {
+					if (ch != '_')
 						strNum += ch;
 					ch = next_char();
 				};
@@ -419,10 +419,10 @@ void script_scanner::advance() {
 					strNum += ch;
 					ch = next_char();
 					do {
-						if (ch != '\'')
+						if (ch != '_')
 							strNum += ch;
 						ch = next_char();
-					} while (std::iswdigit(ch) || ch == '\'');
+					} while (std::iswdigit(ch) || ch == '_');
 				}
 
 				//real_value = std::strtod(strNum.c_str(), nullptr);

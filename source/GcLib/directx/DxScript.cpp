@@ -1282,7 +1282,7 @@ gstd::value DxScript::Func_SetFogParam(gstd::script_machine* machine, int argc, 
 	float end = argv[1].as_real();
 
 	D3DCOLOR color = 0xffffffff;
-	if (argc > 2) {
+	if (argc > 3) {
 		__m128i c = Vectorize::SetI(0, argv[2].as_int(), argv[3].as_int(), argv[4].as_int());
 		color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 	}

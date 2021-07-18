@@ -17,6 +17,8 @@ StgSystemController::StgSystemController() {
 StgSystemController::~StgSystemController() {
 	if (scriptEngineCache_)
 		scriptEngineCache_->Clear();
+	if (DxScriptResourceCache* dxRsrcCache = DxScriptResourceCache::GetBase())
+		dxRsrcCache->ClearResource();
 }
 void StgSystemController::Initialize(ref_count_ptr<StgSystemInformation> infoSystem) {
 	base_ = this;
@@ -34,8 +36,6 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 
 	ScriptClientBase::randCalls_ = 0;
 	ScriptClientBase::prandCalls_ = 0;
-	if (DxScriptResourceCache* dxRsrcCache = DxScriptResourceCache::GetBase())
-		dxRsrcCache->ClearResource();
 	scriptEngineCache_->Clear();
 
 	camera3D->SetPerspectiveWidth(384);

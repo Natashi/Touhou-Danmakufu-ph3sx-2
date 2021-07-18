@@ -321,19 +321,14 @@ ref_unsync_ptr<StgPlayerObject> StgPlayerObject::GetOwnObject() {
 	return ref_unsync_ptr<StgPlayerObject>::Cast(stageController_->GetMainRenderObject(idObject_));
 }
 bool StgPlayerObject::IsPermitShot() {
-	//以下のとき不可
-	//・会話中
 	return !bForbidShot_;
 }
 bool StgPlayerObject::IsPermitSpell() {
-	//以下のとき不可
-	//・会話中
-	//・ラストスペル中
 	StgEnemyManager* enemyManager = stageController_->GetEnemyManager();
 	bool bEnemyLastSpell = false;
 	ref_unsync_ptr<StgEnemyBossSceneObject> objBossScene = enemyManager->GetBossSceneObject();
 	if (objBossScene) {
-		ref_unsync_ptr<StgEnemyBossSceneData> data = objBossScene->GetActiveData();
+		shared_ptr<StgEnemyBossSceneData> data = objBossScene->GetActiveData();
 		if (data != nullptr && data->IsLastSpell())
 			bEnemyLastSpell = true;
 	}

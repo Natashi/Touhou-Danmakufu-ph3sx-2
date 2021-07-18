@@ -67,7 +67,7 @@ namespace gstd {
 	//****************************************************************************
 	class StaticLock {
 	protected:
-		static CRITICAL_SECTION* cs_;
+		static std::recursive_mutex* mtx_;
 	public:
 		StaticLock();
 		~StaticLock();

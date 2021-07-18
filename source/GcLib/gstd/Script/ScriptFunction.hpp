@@ -62,6 +62,8 @@ namespace gstd {
 		static bool _append_check(script_machine* machine, type_data* arg0_type, type_data* arg1_type);
 		static bool _append_check_no_convert(script_machine* machine, type_data* arg0_type, type_data* arg1_type);
 
+		static bool _null_check(script_machine* machine, const value* argv, size_t count);
+
 		static value _create_empty(type_data* type);
 
 		static type_data::type_kind _typeof(type_data* type);

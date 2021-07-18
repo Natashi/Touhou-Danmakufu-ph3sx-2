@@ -102,16 +102,15 @@ void CriticalSection::Leave() {
 //*******************************************************************
 //StaticLock
 //*******************************************************************
-CRITICAL_SECTION* StaticLock::cs_ = nullptr;
+std::recursive_mutex* StaticLock::mtx_ = nullptr;
 StaticLock::StaticLock() {
-	if (cs_ == nullptr) {
-		cs_ = new CRITICAL_SECTION;
-		::InitializeCriticalSection(cs_);
+	if (mtx_ == nullptr) {
+		mtx_ = new std::recursive_mutex();
 	}
-	::EnterCriticalSection(cs_);
+	mtx_->lock();
 }
 StaticLock::~StaticLock() {
-	::LeaveCriticalSection(cs_);
+	mtx_->unlock();
 }
 
 //*******************************************************************
