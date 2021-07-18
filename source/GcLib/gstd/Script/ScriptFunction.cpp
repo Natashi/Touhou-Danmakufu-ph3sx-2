@@ -287,6 +287,18 @@ namespace gstd {
 		}
 		return true;
 	}
+	bool BaseFunction::_null_check(script_machine* machine, const value* argv, size_t count) {
+		for (size_t i = 0; i < count; ++i) {
+			const value* val = &argv[i];
+			if (val == nullptr || !val->has_data()) {
+				std::string error = StringUtility::Format("Unsupported operation: value is null\r\n");
+				if (machine) machine->raise_error(error);
+				return false;
+			}
+		}
+		return true;
+	}
+
 	value BaseFunction::_create_empty(type_data* type) {
 		value res;
 		if (type) {
@@ -390,6 +402,8 @@ namespace gstd {
 		//return value(script_type_manager::get_string_type(), argv->as_string());
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::cast_x_array) {
+		_null_check(nullptr, argv, argc);
+
 		type_data::type_kind targetKind = (type_data::type_kind)argv[1].as_int();
 		switch (targetKind) {
 		case type_data::tk_int:
@@ -410,6 +424,8 @@ namespace gstd {
 	}
 
 	value BaseFunction::_script_add(int argc, const value* argv) {
+		_null_check(nullptr, argv, argc);
+
 		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_add);
 		else {
@@ -422,6 +438,8 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(add);
 
 	value BaseFunction::_script_subtract(int argc, const value* argv) {
+		_null_check(nullptr, argv, argc);
+
 		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_subtract);
 		else {
@@ -434,6 +452,8 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(subtract);
 
 	value BaseFunction::_script_multiply(int argc, const value* argv) {
+		_null_check(nullptr, argv, argc);
+
 		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_multiply);
 		else {
@@ -446,6 +466,8 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(multiply);
 
 	value BaseFunction::_script_divide(int argc, const value* argv) {
+		_null_check(nullptr, argv, argc);
+
 		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_divide);
 		else {
@@ -462,6 +484,8 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(divide);
 
 	value BaseFunction::_script_fdivide(int argc, const value* argv) {
+		_null_check(nullptr, argv, argc);
+
 		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_fdivide);
 		else {
@@ -480,6 +504,8 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(fdivide);
 
 	value BaseFunction::_script_remainder_(int argc, const value* argv) {
+		_null_check(nullptr, argv, argc);
+
 		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_remainder_);
 		else {
@@ -492,6 +518,8 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(remainder_);
 
 	value BaseFunction::_script_negative(int argc, const value* argv) {
+		_null_check(nullptr, argv, argc);
+
 		if (argv->get_type()->get_kind() == type_data::tk_array) {
 			value result;
 			std::vector<value> resArr;
@@ -512,6 +540,8 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(negative);
 
 	value BaseFunction::_script_power(int argc, const value* argv) {
+		_null_check(nullptr, argv, argc);
+
 		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_power);
 		else {
@@ -526,6 +556,8 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(power);
 
 	value BaseFunction::_script_compare(int argc, const value* argv) {
+		//_null_check(nullptr, argv, argc);
+
 		if (argv[0].get_type() != nullptr && argv[1].get_type() != nullptr) {
 			type_data::type_kind type_check = _type_test_promotion(argv[0].get_type(), argv[1].get_type());
 			if (type_check != type_data::tk_null) {
@@ -601,6 +633,8 @@ namespace gstd {
 	SCRIPT_DECLARE_OP(not_);
 
 	DNH_FUNCAPI_DEF_(BaseFunction::modc) {
+		_null_check(machine, argv, argc);
+
 		if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
 			return value(script_type_manager::get_real_type(), fmod(argv[0].as_real(), argv[1].as_real()));
 		else
@@ -608,6 +642,8 @@ namespace gstd {
 	}
 
 	DNH_FUNCAPI_DEF_(BaseFunction::predecessor) {
+		_null_check(machine, argv, argc);
+
 		switch (argv->get_type()->get_kind()) {
 		case type_data::tk_int:
 			return value(argv->get_type(), argv->as_int() - 1i64);
@@ -636,6 +672,8 @@ namespace gstd {
 		}
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::successor) {
+		_null_check(machine, argv, argc);
+
 		switch (argv->get_type()->get_kind()) {
 		case type_data::tk_int:
 			return value(argv->get_type(), argv->as_int() + 1i64);
@@ -665,10 +703,11 @@ namespace gstd {
 	}
 
 	DNH_FUNCAPI_DEF_(BaseFunction::length) {
-		assert(argc == 1);
 		return value(script_type_manager::get_int_type(), (int64_t)argv->length_as_array());
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::resize) {
+		_null_check(machine, argv, argc);
+
 		const value* val = &argv[0];
 		type_data* valType = val->get_type();
 
@@ -723,6 +762,8 @@ namespace gstd {
 	}
 
 	DNH_FUNCAPI_DEF_(BaseFunction::slice) {
+		_null_check(machine, argv, argc);
+
 		if (argv[0].get_type()->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, argv[0].get_type(), "array slice");
 			return value();
@@ -771,7 +812,7 @@ namespace gstd {
 		return result;
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::erase) {
-		assert(argc == 2);
+		_null_check(machine, argv, argc);
 
 		if (argv[0].get_type()->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, argv[0].get_type(), "array erase");
@@ -805,7 +846,7 @@ namespace gstd {
 	}
 
 	DNH_FUNCAPI_DEF_(BaseFunction::append) {
-		assert(argc == 2);
+		_null_check(machine, argv, argc);
 
 		type_data* type_array = argv[0].get_type();
 		type_data* type_appending = argv[1].get_type();
@@ -831,6 +872,10 @@ namespace gstd {
 			_raise_error_unsupported(machine, type_l, "array concatenate");
 			return false;
 		}
+		if (type_r->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, type_r, "array concatenate");
+			return false;
+		}
 		//if (type_l != type_r && !(type_l->get_element() == nullptr || type_r->get_element() == nullptr)) {
 		if (!BaseFunction::__type_assign_check(type_l, type_r)) {
 			std::string error = StringUtility::Format("Invalid value type for concatenate: %s ~ %s\r\n",
@@ -842,6 +887,7 @@ namespace gstd {
 		return true;
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::concatenate) {
+		_null_check(machine, argv, argc);
 		__chk_concat(machine, argv[0].get_type(), argv[1].get_type());
 
 		value result = argv[0];
@@ -857,6 +903,7 @@ namespace gstd {
 		return result;
 	}
 	DNH_FUNCAPI_DEF_(BaseFunction::concatenate_direct) {
+		_null_check(machine, argv, argc);
 		__chk_concat(machine, argv[0].get_type(), argv[1].get_type());
 
 		value result = argv[0];
