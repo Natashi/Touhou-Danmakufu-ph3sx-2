@@ -2857,7 +2857,7 @@ gstd::value StgStageScript::Func_ObjEnemy_Create(gstd::script_machine* machine, 
 			throw gstd::wexception(L"Cannot create a boss enemy as there is no active enemy boss scene object.");
 		}
 
-		ref_unsync_ptr<StgEnemyBossSceneData> data = objScene->GetActiveData();
+		shared_ptr<StgEnemyBossSceneData> data = objScene->GetActiveData();
 		int id = data->GetEnemyBossIdInCreate();
 		return script->CreateIntValue(id);
 	}
@@ -3116,7 +3116,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_Add(gstd::script_machine* mac
 		std::wstring path = argv[2].as_string();
 		path = PathProperty::GetUnique(path);
 
-		ref_unsync_ptr<StgEnemyBossSceneData> data = new StgEnemyBossSceneData();
+		shared_ptr<StgEnemyBossSceneData> data(new StgEnemyBossSceneData());
 		data->SetPath(path);
 		obj->AddData(step, data);
 	}
@@ -3162,7 +3162,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_GetInfo(gstd::script_machine*
 		return value();
 	}
 
-	ref_unsync_ptr<StgEnemyBossSceneData> sceneData = obj->GetActiveData();
+	shared_ptr<StgEnemyBossSceneData> sceneData = obj->GetActiveData();
 	switch (type) {
 	case INFO_IS_SPELL:
 	{
@@ -3271,7 +3271,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_SetSpellTimer(gstd::script_ma
 	int id = argv[0].as_int();
 	StgEnemyBossSceneObject* obj = script->GetObjectPointerAs<StgEnemyBossSceneObject>(id);
 	if (obj) {
-		ref_unsync_ptr<StgEnemyBossSceneData> sceneData = obj->GetActiveData();
+		shared_ptr<StgEnemyBossSceneData> sceneData = obj->GetActiveData();
 		if (sceneData) {
 			int timer = argv[1].as_int();
 			sceneData->SetSpellTimer(timer);
@@ -3284,7 +3284,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_StartSpell(gstd::script_machi
 	int id = argv[0].as_int();
 	StgEnemyBossSceneObject* obj = script->GetObjectPointerAs<StgEnemyBossSceneObject>(id);
 	if (obj) {
-		ref_unsync_ptr<StgEnemyBossSceneData> sceneData = obj->GetActiveData();
+		shared_ptr<StgEnemyBossSceneData> sceneData = obj->GetActiveData();
 		if (sceneData) {
 			sceneData->SetSpellCard(true);
 			script->scriptManager_->RequestEventAll(EV_START_BOSS_SPELL);
@@ -3297,7 +3297,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_EndSpell(gstd::script_machine
 	int id = argv[0].as_int();
 	StgEnemyBossSceneObject* obj = script->GetObjectPointerAs<StgEnemyBossSceneObject>(id);
 	if (obj) {
-		ref_unsync_ptr<StgEnemyBossSceneData> sceneData = obj->GetActiveData();
+		shared_ptr<StgEnemyBossSceneData> sceneData = obj->GetActiveData();
 		if (sceneData) {
 			sceneData->SetSpellCard(false);
 			script->scriptManager_->RequestEventAll(EV_END_BOSS_SPELL);

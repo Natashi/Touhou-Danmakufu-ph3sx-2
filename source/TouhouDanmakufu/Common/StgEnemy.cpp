@@ -8,25 +8,29 @@
 //*******************************************************************
 StgEnemyManager::StgEnemyManager(StgStageController* stageController) {
 	stageController_ = stageController;
+
+	FileManager::GetBase()->AddLoadThreadListener(this);
 }
 StgEnemyManager::~StgEnemyManager() {
-	for (ref_unsync_ptr<StgEnemyObject>& obj : listObj_) {
+	for (ref_unsync_ptr<StgEnemyObject>& obj : listEnemy_) {
 		if (obj)
 			obj->ClearEnemyObject();
 	}
+
+	FileManager::GetBase()->RemoveLoadThreadListener(this);
 }
 void StgEnemyManager::Work() {
-	for (auto itr = listObj_.begin(); itr != listObj_.end();) {
+	for (auto itr = listEnemy_.begin(); itr != listEnemy_.end();) {
 		ref_unsync_ptr<StgEnemyObject>& obj = (*itr);
 		if (obj->IsDeleted()) {
 			obj->ClearEnemyObject();
-			itr = listObj_.erase(itr);
+			itr = listEnemy_.erase(itr);
 		}
 		else ++itr;
 	}
 }
 void StgEnemyManager::RegistIntersectionTarget() {
-	for (ref_unsync_ptr<StgEnemyObject>& obj : listObj_) {
+	for (ref_unsync_ptr<StgEnemyObject>& obj : listEnemy_) {
 		if (!obj->IsDeleted()) {
 			obj->ClearIntersectedIdList();
 			obj->RegistIntersectionTarget();
@@ -43,6 +47,114 @@ ref_unsync_ptr<StgEnemyBossSceneObject> StgEnemyManager::GetBossSceneObject() {
 	if (objBossScene_ != nullptr && !objBossScene_->IsDeleted())
 		res = objBossScene_;
 	return res;
+}
+
+class _ListBossSceneData : public FileManager::LoadObject {
+public:
+	_ListBossSceneData(std::vector<shared_ptr<StgEnemyBossSceneData>>* listStepData) {
+		ptr = listStepData;
+	}
+
+	std::vector<shared_ptr<StgEnemyBossSceneData>>* ptr;
+};
+void StgEnemyManager::LoadBossSceneScriptsInThread(std::vector<shared_ptr<StgEnemyBossSceneData>>* listStepData) {
+	Lock lock(lock_);
+	{
+		shared_ptr<_ListBossSceneData> pListData;
+		pListData.reset(new _ListBossSceneData(listStepData));
+
+		shared_ptr<FileManager::LoadThreadEvent> event(new FileManager::LoadThreadEvent(this, L"", pListData));
+		FileManager::GetBase()->AddLoadThreadEvent(event);
+	}
+}
+void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> event) {
+	shared_ptr<_ListBossSceneData> pListData = std::dynamic_pointer_cast<_ListBossSceneData>(event->GetSource());
+	if (pListData == nullptr) return;
+
+	{
+		Lock lock(lock_);
+
+		auto scriptManager = stageController_->GetScriptManager();
+		StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
+
+		for (auto itrData = pListData->ptr->begin(); itrData != pListData->ptr->end(); ++itrData) {
+			shared_ptr<StgEnemyBossSceneData> pData = *itrData;
+			if (pData->bLoad_) return;
+
+			try {
+				auto script = scriptManager->LoadScript(pData->GetPath(), StgStageScript::TYPE_STAGE);
+				if (script == nullptr)
+					throw gstd::wexception(StringUtility::Format(L"Cannot load script: %s", pData->GetPath().c_str()));
+				pData->SetScriptPointer(script);
+
+				{
+					StaticLock lock2 = StaticLock();
+
+					if (stageController_->GetSystemInformation()->IsError())
+						throw gstd::wexception(stageController_->GetSystemInformation()->GetErrorMessage());
+
+					std::vector<double> listLife;
+					gstd::value vLife = script->RequestEvent(StgStageScript::EV_REQUEST_LIFE);
+					if (vLife.has_data()) {
+						if (script->IsArrayValue(vLife)) {
+							for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
+								double life = vLife.index_as_array(iLife).as_real();
+								listLife.push_back(life);
+							}
+						}
+						else {
+							double life = vLife.as_real();
+							listLife.push_back(life);
+						}
+					}
+
+					if (listLife.size() == 0)
+						throw gstd::wexception(StringUtility::Format(L"EV_REQUEST_LIFE must return a value. (%s)",
+							pData->GetPath().c_str()));
+					pData->SetLifeList(listLife);
+
+					gstd::value vTimer = script->RequestEvent(StgStageScript::EV_REQUEST_TIMER);
+					if (vTimer.has_data())
+						pData->SetOriginalSpellTimer(vTimer.as_real() * STANDARD_FPS);
+
+					gstd::value vSpell = script->RequestEvent(StgStageScript::EV_REQUEST_IS_SPELL);
+					if (vSpell.has_data())
+						pData->SetSpellCard(vSpell.as_boolean());
+
+					{
+						gstd::value vScore = script->RequestEvent(StgStageScript::EV_REQUEST_SPELL_SCORE);
+						if (vScore.has_data()) pData->SetSpellScore(vScore.as_real());
+
+						gstd::value vLast = script->RequestEvent(StgStageScript::EV_REQUEST_IS_LAST_SPELL);
+						if (vLast.has_data()) pData->SetLastSpell(vLast.as_boolean());
+
+						gstd::value vDurable = script->RequestEvent(StgStageScript::EV_REQUEST_IS_DURABLE_SPELL);
+						if (vDurable.has_data()) pData->SetDurable(vDurable.as_boolean());
+
+						gstd::value vAllDown = script->RequestEvent(StgStageScript::EV_REQUEST_REQUIRE_ALL_DOWN);
+						if (vAllDown.has_data()) pData->SetRequireAllDown(vAllDown.as_boolean());
+					}
+
+					std::vector<ref_unsync_ptr<StgEnemyBossObject>> listEnemyObject;
+					for (size_t iEnemy = 0; iEnemy < listLife.size(); iEnemy++) {
+						ref_unsync_ptr<StgEnemyBossObject> obj = new StgEnemyBossObject(stageController_);
+						int idEnemy = objectManager->AddObject(obj, false);
+						listEnemyObject.push_back(obj);
+					}
+					pData->SetEnemyObjectList(listEnemyObject);
+				}
+
+				pData->bLoad_ = true;
+			}
+			catch (wexception& e) {
+				pData->SetScriptPointer(weak_ptr<ManagedScript>());
+				pData->bLoad_ = false;
+
+				scriptManager->SetError(e.GetMessageW());
+			}
+			if (scriptManager->IsError()) break;
+		}
+	}
 }
 
 //*******************************************************************
@@ -127,30 +239,54 @@ StgEnemyBossSceneObject::StgEnemyBossSceneObject(StgStageController* stageContro
 	stageController_ = stageController;
 	typeObject_ = TypeObject::EnemyBossScene;
 
-	bVisible_ = false;
-	bLoad_ = false;
+	bScriptsLoaded_ = false;
+	bEnableUnloadCache_ = false;
+
 	dataStep_ = 0;
 	dataIndex_ = -1;
-
-	bEnableUnloadCache_ = false;
 }
 StgEnemyBossSceneObject::~StgEnemyBossSceneObject() {
 	if (bEnableUnloadCache_) {
 		auto pCache = stageController_->GetSystemController()->GetScriptEngineCache();
-		for (std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
-			for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : iStep) {
+		for (std::vector<shared_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
+			for (shared_ptr<StgEnemyBossSceneData>& pData : iStep) {
 				pCache->RemoveCache(pData->GetPath());
 			}
 		}
 	}
 }
-bool StgEnemyBossSceneObject::_NextStep() {
+
+void StgEnemyBossSceneObject::_WaitForStepLoad(int iStep) {
+	auto scriptManager = stageController_->GetScriptManager();
+
+	for (shared_ptr<StgEnemyBossSceneData> pData : listData_[iStep]) {
+		if (!pData->IsLoad()) {
+			DWORD count = 0;
+			while (!pData->IsLoad()) {
+				if (count % 100 == 0) {
+					Logger::WriteTop(StringUtility::Format(L"_NextScript: Script is still loading... [%s]",
+						PathProperty::GetFileName(pData->GetPath()).c_str()));
+				}
+				::Sleep(10);
+				scriptManager->TryThrowError();
+				++count;
+			}
+		}
+	}
+}
+bool StgEnemyBossSceneObject::_NextScript() {
 	if (dataStep_ >= listData_.size()) return false;
 
 	auto scriptManager = stageController_->GetScriptManager();
+	StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
 
-	if (activeData_)
+	shared_ptr<StgEnemyBossSceneData> oldActiveData = activeData_;
+
+	if (oldActiveData)
 		scriptManager->RequestEventAll(StgStageScript::EV_END_BOSS_STEP);
+	else if (dataIndex_ == -1) {
+		_WaitForStepLoad(0);
+	}
 
 	dataIndex_++;
 	if (dataIndex_ >= listData_[dataStep_].size()) {
@@ -158,42 +294,39 @@ bool StgEnemyBossSceneObject::_NextStep() {
 		while (true) {
 			dataStep_++;
 			if (dataStep_ >= listData_.size()) return false;
-			if (listData_[dataStep_].size() > 0) break;
-		}
-	}
-
-	ref_unsync_ptr<StgEnemyBossSceneData> oldActiveData = activeData_;
-
-	StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
-
-	activeData_ = listData_[dataStep_][dataIndex_];
-	std::vector<ref_unsync_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
-	std::vector<double>& listLife = activeData_->GetLifeList();
-	for (size_t iEnemy = 0; iEnemy < listEnemy.size(); ++iEnemy) {
-		ref_unsync_ptr<StgEnemyBossObject> obj = listEnemy[iEnemy];
-		obj->SetLife(listLife[iEnemy]);
-		if (oldActiveData) {
-			std::vector<ref_unsync_ptr<StgEnemyBossObject>>& listOldEnemyObject = oldActiveData->GetEnemyObjectList();
-			if (iEnemy < listOldEnemyObject.size()) {
-				ref_unsync_ptr<StgEnemyBossObject>& objOld = listOldEnemyObject[iEnemy];
-				obj->SetPositionX(objOld->GetPositionX());
-				obj->SetPositionY(objOld->GetPositionY());
+			if (listData_[dataStep_].size() > 0) {
+				_WaitForStepLoad(dataStep_);
+				break;
 			}
 		}
-		objectManager->ActivateObject(obj->GetObjectID(), true);
 	}
+
+	activeData_ = listData_[dataStep_][dataIndex_];
 
 	LOCK_WEAK(pScript, activeData_->GetScriptPointer()) {
-		if (!pScript->IsLoad()) {
-			throw gstd::wexception(StringUtility::Format(L"_NextStep: Script wasn't loaded or has been unloaded. [%d, %d]",
-				dataStep_, dataIndex_));
+		std::vector<ref_unsync_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
+		std::vector<double>& listLife = activeData_->GetLifeList();
+		for (size_t iEnemy = 0; iEnemy < listEnemy.size(); ++iEnemy) {
+			ref_unsync_ptr<StgEnemyBossObject> obj = listEnemy[iEnemy];
+			obj->SetLife(listLife[iEnemy]);
+			if (oldActiveData) {
+				std::vector<ref_unsync_ptr<StgEnemyBossObject>>& listOldEnemyObject = oldActiveData->GetEnemyObjectList();
+				if (iEnemy < listOldEnemyObject.size()) {
+					ref_unsync_ptr<StgEnemyBossObject>& objOld = listOldEnemyObject[iEnemy];
+					obj->SetPositionX(objOld->GetPositionX());
+					obj->SetPositionY(objOld->GetPositionY());
+				}
+			}
+			objectManager->ActivateObject(obj->GetObjectID(), true);
 		}
-		else {
-			scriptManager->StartScript(pScript);
-		}
-	}
 
-	scriptManager->RequestEventAll(StgStageScript::EV_START_BOSS_STEP);
+		scriptManager->StartScript(pScript);
+		scriptManager->RequestEventAll(StgStageScript::EV_START_BOSS_STEP);
+	}
+	else {
+		throw gstd::wexception(StringUtility::Format(L"_NextScript: Invalid script at step %d, index %d",
+			dataStep_, dataIndex_));
+	}
 
 	return true;
 }
@@ -204,7 +337,7 @@ void StgEnemyBossSceneObject::Work() {
 			bEnemyExists |= !iEnemy->IsDeleted();
 
 		if (!bEnemyExists) {
-			bool bNext = _NextStep();
+			bool bNext = _NextScript();
 			if (!bNext) {
 				StgEnemyManager* enemyManager = stageController_->GetEnemyManager();
 				StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
@@ -276,104 +409,22 @@ void StgEnemyBossSceneObject::Work() {
 	}
 }
 void StgEnemyBossSceneObject::Activate() {
-	if (!bLoad_)
+	if (!bScriptsLoaded_)
 		LoadAllScriptInThread();
 
-	auto scriptManager = stageController_->GetScriptManager();
-	StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
-
-	for (std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
-		size_t iData = 0;
-		for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : iStep) {
-			shared_ptr<ManagedScript> pScript = pData->GetScriptPointer().lock();
-
-			if (pScript == nullptr)
-				throw gstd::wexception(StringUtility::Format(L"Cannot load script: %s", pData->GetPath().c_str()));
-			if (!pScript->IsLoad()) {
-				DWORD count = 0;
-				while (!pScript->IsLoad()) {
-					if (count % 1000 == 0) {
-						Logger::WriteTop(StringUtility::Format(L"EnemyBossScene: Script is still loading... [%s]",
-							pScript->GetPath().c_str()));
-					}
-					::Sleep(5);
-					++count;
-				}
-			}
-
-			if (stageController_->GetSystemInformation()->IsError()) continue;
-
-			std::vector<double> listLife;
-			gstd::value vLife = pScript->RequestEvent(StgStageScript::EV_REQUEST_LIFE);
-			if (vLife.has_data()) {
-				if (pScript->IsArrayValue(vLife)) {
-					for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
-						double life = vLife.index_as_array(iLife).as_real();
-						listLife.push_back(life);
-					}
-				}
-				else {
-					double life = vLife.as_real();
-					listLife.push_back(life);
-				}
-			}
-
-			if (listLife.size() == 0)
-				throw gstd::wexception(StringUtility::Format(L"EV_REQUEST_LIFE must return a value. (%s)",
-					pData->GetPath().c_str()));
-			pData->SetLifeList(listLife);
-
-			gstd::value vTimer = pScript->RequestEvent(StgStageScript::EV_REQUEST_TIMER);
-			if (vTimer.has_data())
-				pData->SetOriginalSpellTimer(vTimer.as_real() * STANDARD_FPS);
-
-			gstd::value vSpell = pScript->RequestEvent(StgStageScript::EV_REQUEST_IS_SPELL);
-			if (vSpell.has_data())
-				pData->SetSpellCard(vSpell.as_boolean());
-
-			{
-				gstd::value vScore = pScript->RequestEvent(StgStageScript::EV_REQUEST_SPELL_SCORE);
-				if (vScore.has_data()) pData->SetSpellScore(vScore.as_real());
-
-				gstd::value vLast = pScript->RequestEvent(StgStageScript::EV_REQUEST_IS_LAST_SPELL);
-				if (vLast.has_data()) pData->SetLastSpell(vLast.as_boolean());
-
-				gstd::value vDurable = pScript->RequestEvent(StgStageScript::EV_REQUEST_IS_DURABLE_SPELL);
-				if (vDurable.has_data()) pData->SetDurable(vDurable.as_boolean());
-
-				gstd::value vAllDown = pScript->RequestEvent(StgStageScript::EV_REQUEST_REQUIRE_ALL_DOWN);
-				if (vAllDown.has_data()) pData->SetRequireAllDown(vAllDown.as_boolean());
-			}
-
-			std::vector<ref_unsync_ptr<StgEnemyBossObject>> listEnemyObject;
-			for (size_t iEnemy = 0; iEnemy < listLife.size(); iEnemy++) {
-				ref_unsync_ptr<StgEnemyBossObject> obj = new StgEnemyBossObject(stageController_);
-				int idEnemy = objectManager->AddObject(obj, false);
-				listEnemyObject.push_back(obj);
-			}
-			pData->SetEnemyObjectList(listEnemyObject);
-
-			++iData;
-		}
-	}
-
-	_NextStep();
+	_NextScript();
 }
-void StgEnemyBossSceneObject::AddData(int step, ref_unsync_ptr<StgEnemyBossSceneData> data) {
+void StgEnemyBossSceneObject::AddData(int step, shared_ptr<StgEnemyBossSceneData> data) {
 	if (listData_.size() <= step)
 		listData_.resize(step + 1);
 	listData_[step].push_back(data);
 }
 void StgEnemyBossSceneObject::LoadAllScriptInThread() {
-	auto scriptManager = stageController_->GetScriptManager();
-	for (std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
-		for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : iStep) {
-			auto script = scriptManager->LoadScriptInThread(pData->GetPath(), StgStageScript::TYPE_STAGE);
-			//auto script = scriptManager->LoadScript(pData->GetPath(), StgStageScript::TYPE_STAGE);
-			pData->SetScriptPointer(script);
-		}
+	for (std::vector<shared_ptr<StgEnemyBossSceneData>>& iStep : listData_) {
+		stageController_->GetEnemyManager()->LoadBossSceneScriptsInThread(&iStep);
 	}
-	bLoad_ = true;
+
+	bScriptsLoaded_ = true;
 }
 size_t StgEnemyBossSceneObject::GetRemainStepCount() {
 	int res = listData_.size() - dataStep_ - 1;
@@ -387,7 +438,7 @@ size_t StgEnemyBossSceneObject::GetActiveStepLifeCount() {
 double StgEnemyBossSceneObject::GetActiveStepTotalMaxLife() {
 	if (dataStep_ >= listData_.size()) return 0;
 	double res = 0;
-	for (ref_unsync_ptr<StgEnemyBossSceneData>& pData : listData_[dataStep_]) {
+	for (shared_ptr<StgEnemyBossSceneData> pData : listData_[dataStep_]) {
 		for (double iLife : pData->GetLifeList())
 			res = res + iLife;
 	}
@@ -405,8 +456,10 @@ double StgEnemyBossSceneObject::GetActiveStepLife(size_t index) {
 	if (dataStep_ >= listData_.size()) return 0;
 	if (index < dataIndex_) return 0;
 
+	shared_ptr<StgEnemyBossSceneData> data = listData_[dataStep_][index];
+
 	double res = 0;
-	ref_unsync_ptr<StgEnemyBossSceneData>& data = listData_[dataStep_][index];
+	
 	if (index == dataIndex_) {
 		for (auto& iEnemyObj : data->GetEnemyObjectList())
 			res += iEnemyObj->GetLife();
@@ -415,6 +468,7 @@ double StgEnemyBossSceneObject::GetActiveStepLife(size_t index) {
 		for (double iLife : data->GetLifeList())
 			res += iLife;
 	}
+
 	return res;
 }
 std::vector<double> StgEnemyBossSceneObject::GetActiveStepLifeRateList() {
@@ -425,7 +479,7 @@ std::vector<double> StgEnemyBossSceneObject::GetActiveStepLifeRateList() {
 	double rate = 0;
 
 	size_t iData = 0;
-	for (ref_unsync_ptr<StgEnemyBossSceneData>& pSceneData : listData_[dataStep_]) {
+	for (shared_ptr<StgEnemyBossSceneData> pSceneData : listData_[dataStep_]) {
 		double life = 0;
 		
 		for (double iLife : pSceneData->GetLifeList())
@@ -448,6 +502,8 @@ void StgEnemyBossSceneObject::AddPlayerSpellCount() {
 
 //StgEnemyBossSceneData
 StgEnemyBossSceneData::StgEnemyBossSceneData() {
+	bLoad_ = false;
+
 	countCreate_ = 0;
 	bReadyNext_ = false;
 

@@ -7,26 +7,37 @@
 
 class StgEnemyObject;
 class StgEnemyBossSceneObject;
+class StgEnemyBossSceneData;
 //*******************************************************************
 //StgEnemyManager
 //*******************************************************************
-class StgEnemyManager {
+class StgEnemyManager : public FileManager::LoadThreadListener {
+private:
+	CriticalSection lock_;
+
 	StgStageController* stageController_;
-	std::list<ref_unsync_ptr<StgEnemyObject>> listObj_;
+
+	std::list<ref_unsync_ptr<StgEnemyObject>> listEnemy_;
+
 	ref_unsync_ptr<StgEnemyBossSceneObject> objBossScene_;
 public:
 	StgEnemyManager(StgStageController* stageController);
 	virtual ~StgEnemyManager();
 
+	CriticalSection& GetLock() { return lock_; }
+
 	void Work();
 	void RegistIntersectionTarget();
 
-	void AddEnemy(ref_unsync_ptr<StgEnemyObject> obj) { listObj_.push_back(obj); }
-	size_t GetEnemyCount() { return listObj_.size(); }
+	void AddEnemy(ref_unsync_ptr<StgEnemyObject> obj) { listEnemy_.push_back(obj); }
+	size_t GetEnemyCount() { return listEnemy_.size(); }
 
 	void SetBossSceneObject(ref_unsync_ptr<StgEnemyBossSceneObject> obj);
 	ref_unsync_ptr<StgEnemyBossSceneObject> GetBossSceneObject();
-	std::list<ref_unsync_ptr<StgEnemyObject>>& GetEnemyList() { return listObj_; }
+	std::list<ref_unsync_ptr<StgEnemyObject>>& GetEnemyList() { return listEnemy_; }
+
+	void LoadBossSceneScriptsInThread(std::vector<shared_ptr<StgEnemyBossSceneData>>* listStepData);
+	virtual void CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> event);
 };
 
 //*******************************************************************
@@ -92,20 +103,20 @@ public:
 //*******************************************************************
 //StgEnemyBossSceneObject
 //*******************************************************************
-class StgEnemyBossSceneData;
 class StgEnemyBossSceneObject : public DxScriptObjectBase {
 private:
 	StgStageController* stageController_;
-	bool bLoad_;
 
+	bool bScriptsLoaded_;
 	bool bEnableUnloadCache_;
 
 	int dataStep_;
 	int dataIndex_;
-	ref_unsync_ptr<StgEnemyBossSceneData> activeData_;
-	std::vector<std::vector<ref_unsync_ptr<StgEnemyBossSceneData>>> listData_;
+	shared_ptr<StgEnemyBossSceneData> activeData_;
+	std::vector<std::vector<shared_ptr<StgEnemyBossSceneData>>> listData_;
 
-	bool _NextStep();
+	void _WaitForStepLoad(int iStep);
+	bool _NextScript();
 public:
 	StgEnemyBossSceneObject(StgStageController* stageController);
 	~StgEnemyBossSceneObject();
@@ -115,8 +126,8 @@ public:
 	virtual void Render() {}
 	virtual void SetRenderState() {}
 
-	void AddData(int step, ref_unsync_ptr<StgEnemyBossSceneData> data);
-	ref_unsync_ptr<StgEnemyBossSceneData> GetActiveData() { return activeData_; }
+	void AddData(int step, shared_ptr<StgEnemyBossSceneData> data);
+	shared_ptr<StgEnemyBossSceneData> GetActiveData() { return activeData_; }
 	void LoadAllScriptInThread();
 
 	void SetUnloadCache(bool b) { bEnableUnloadCache_ = b; }
@@ -135,7 +146,10 @@ public:
 };
 
 class StgEnemyBossSceneData {
+	friend class StgEnemyManager;
 private:
+	volatile bool bLoad_;
+
 	std::wstring path_;
 	weak_ptr<ManagedScript> ptrScript_;
 
@@ -158,6 +172,8 @@ private:
 public:
 	StgEnemyBossSceneData();
 	virtual ~StgEnemyBossSceneData() {}
+
+	bool IsLoad() { return bLoad_; }
 
 	std::wstring& GetPath() { return path_; }
 	void SetPath(const std::wstring& path) { path_ = path; }
