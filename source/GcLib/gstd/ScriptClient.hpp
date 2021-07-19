@@ -271,6 +271,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_RegexMatchRepeated);
 		DNH_FUNCAPI_DECL_(Func_RegexReplace);
 
+		DNH_FUNCAPI_DECL_(Func_DigitToArray);
+
 		//Path utility
 		static value Func_GetParentScriptDirectory(script_machine* machine, int argc, const value* argv);
 		static value Func_GetCurrentScriptDirectory(script_machine* machine, int argc, const value* argv);

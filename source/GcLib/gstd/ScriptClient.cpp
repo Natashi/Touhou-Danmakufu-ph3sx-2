@@ -151,6 +151,10 @@ static const std::vector<function> commonFunction = {
 	{ "RegexMatchRepeated", ScriptClientBase::Func_RegexMatchRepeated, 2 },
 	{ "RegexReplace", ScriptClientBase::Func_RegexReplace, 3 },
 
+	//Array functions
+	{ "DigitToArray", ScriptClientBase::Func_DigitToArray, 1 },
+	{ "DigitToArray", ScriptClientBase::Func_DigitToArray, 2 }, //Overloaded
+
 	//Path utilities
 	{ "GetParentScriptDirectory", ScriptClientBase::Func_GetParentScriptDirectory, 0 },
 	{ "GetCurrentScriptDirectory", ScriptClientBase::Func_GetCurrentScriptDirectory, 0 },
@@ -1588,6 +1592,29 @@ value ScriptClientBase::Func_RegexReplace(script_machine* machine, int argc, con
 	std::wstring pattern = argv[1].as_string();
 	std::wstring replacing = argv[2].as_string();
 	return script->CreateStringValue(std::regex_replace(str, std::wregex(pattern), replacing));
+}
+value ScriptClientBase::Func_DigitToArray(script_machine* machine, int argc, const value* argv) {
+	// mkm why didn't you just hardcode this
+	int64_t input = abs(argv[0].as_int()); // Just forget about negatives tbh
+	std::vector<size_t> res;
+
+	int64_t length = 0;
+	if (argc == 2) {
+		length = argv[1].as_int();
+		if (length < 0) {
+			std::string error = "Length cannot be negative.";
+			machine->raise_error(error);
+			return value();
+		}
+	}
+
+	// length applies to leading digits, not trailing ones. What should I do about overflow though :thinkies:
+	for (size_t i = 0; (argc == 1 && input != 0) || (argc == 2 && i < length); ++i) {
+		res.insert(res.begin(), input % 10);
+		input /= 10;
+	}
+
+	return CreateIntArrayValue(res);
 }
 
 value ScriptClientBase::Func_ToDegrees(script_machine* machine, int argc, const value* argv) {
