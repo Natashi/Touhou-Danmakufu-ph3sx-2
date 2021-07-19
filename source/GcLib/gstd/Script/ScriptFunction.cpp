@@ -882,8 +882,10 @@ namespace gstd {
 	}
 
 	const value* BaseFunction::index(script_machine* machine, int argc, value* arr, value* indexer) {
-		size_t index = indexer->as_int();
-		if (!_index_check(machine, arr->get_type(), arr->length_as_array(), index))
+		int64_t index = indexer->as_int();
+		size_t length = arr->length_as_array();
+		if (index < 0) index = length + index;
+		if (!_index_check(machine, arr->get_type(), length, index))
 			return nullptr;
 		return &arr->index_as_array(index);
 	}
