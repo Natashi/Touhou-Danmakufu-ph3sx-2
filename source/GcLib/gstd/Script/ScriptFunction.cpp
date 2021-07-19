@@ -799,7 +799,6 @@ namespace gstd {
 		value res = *val;
 		res.make_unique();
 
-		// std::vector<value> arrOld(size);
 		std::vector<value> arrVal(size);
 
 		// Populate source array
