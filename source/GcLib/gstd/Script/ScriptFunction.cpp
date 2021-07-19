@@ -833,8 +833,7 @@ namespace gstd {
 		}
 
 		if (argc < 3 && stop < start) step = -1;
-
-		if (argc == 3 && (step == 0
+		else if (argc == 3 && (step == 0
 			|| (start > stop && step > 0)
 			|| (start < stop && step < 0)
 			)) {
