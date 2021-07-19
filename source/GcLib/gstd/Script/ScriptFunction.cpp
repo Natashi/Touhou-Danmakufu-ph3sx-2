@@ -59,15 +59,17 @@ namespace gstd {
 	static inline const bool _is_force_convert_real(type_data* type) {
 		return type->get_kind() & (type_data::tk_real | type_data::tk_array);
 	}
-	static const void _raise_error_unsupported(script_machine* machine, type_data* type, const std::string& op_name) {
+
+	//-------------------------------------------------------------------------------------------
+
+	const void BaseFunction::_raise_error_unsupported(script_machine* machine, type_data* type, const std::string& op_name) {
 		std::string error = StringUtility::Format("This value type does not support the %s operation: %s\r\n",
 			op_name.c_str(), type_data::string_representation(type).c_str());
 		if (machine) machine->raise_error(error);
 		else throw error;
 	}
 
-	//-------------------------------------------------------------------------------------------
-
+	
 	type_data::type_kind BaseFunction::_type_test_promotion(type_data* type_l, type_data* type_r) {
 		uint8_t kind_l = type_l->get_kind();
 		uint8_t kind_r = type_r->get_kind();
@@ -241,7 +243,7 @@ namespace gstd {
 
 	bool BaseFunction::_index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index) {
 		if (arg0_type == nullptr || arg0_type->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, arg0_type, "array index");
+			BaseFunction::_raise_error_unsupported(machine, arg0_type, "array index");
 			return false;
 		}
 		if (index < 0 || index >= arg0_size) {
@@ -256,7 +258,7 @@ namespace gstd {
 
 	bool BaseFunction::_append_check(script_machine* machine, type_data* arg0_type, type_data* arg1_type) {
 		if (arg0_type == nullptr || arg0_type->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, arg0_type, "array append");
+			BaseFunction::_raise_error_unsupported(machine, arg0_type, "array append");
 			return false;
 		}
 		type_data* elem = arg0_type->get_element();
@@ -273,7 +275,7 @@ namespace gstd {
 	}
 	bool BaseFunction::_append_check_no_convert(script_machine* machine, type_data* arg0_type, type_data* arg1_type) {
 		if (arg0_type == nullptr || arg0_type->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, arg0_type, "array append");
+			BaseFunction::_raise_error_unsupported(machine, arg0_type, "array append");
 			return false;
 		}
 		type_data* elem = arg0_type->get_element();
@@ -373,7 +375,7 @@ namespace gstd {
 	value BaseFunction::_cast_array(script_machine* machine, const value* argv, type_data::type_kind target) {
 		type_data* arg0_type = argv->get_type();
 		if (arg0_type == nullptr || arg0_type->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, arg0_type, "array cast");
+			BaseFunction::_raise_error_unsupported(machine, arg0_type, "array cast");
 			return value();
 		}
 		else {
@@ -666,7 +668,7 @@ namespace gstd {
 		}
 		default:
 		{
-			_raise_error_unsupported(machine, argv->get_type(), "predecessor");
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "predecessor");
 			return value();
 		}
 		}
@@ -696,7 +698,7 @@ namespace gstd {
 		}
 		default:
 		{
-			_raise_error_unsupported(machine, argv->get_type(), "successor");
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "successor");
 			return value();
 		}
 		}
@@ -712,7 +714,7 @@ namespace gstd {
 		type_data* valType = val->get_type();
 
 		if (valType->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, argv->get_type(), "resize");
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "resize");
 			return value();
 		}
 
@@ -761,7 +763,7 @@ namespace gstd {
 		type_data* valType = val->get_type();
 
 		if (valType->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, argv->get_type(), "reverse");
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "reverse");
 			return value();
 		}
 
@@ -789,9 +791,10 @@ namespace gstd {
 		if (argc == 2) bRev = argv[1].as_boolean();
 
 		if (valType->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, argv->get_type(), "sort");
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "sort");
 			return value();
 		}
+	
 
 		size_t size = val->length_as_array();
 		type_data* type = val->get_type();
@@ -860,7 +863,7 @@ namespace gstd {
 		type_data* arrType = arr->get_type();
 
 		if (arrType->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, argv->get_type(), "contains");
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "contains");
 			return value();
 		}
 
@@ -889,7 +892,7 @@ namespace gstd {
 		_null_check(machine, argv, argc);
 
 		if (argv[0].get_type()->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, argv[0].get_type(), "array slice");
+			BaseFunction::_raise_error_unsupported(machine, argv[0].get_type(), "array slice");
 			return value();
 		}
 
@@ -939,7 +942,7 @@ namespace gstd {
 		_null_check(machine, argv, argc);
 
 		if (argv[0].get_type()->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, argv[0].get_type(), "array erase");
+			BaseFunction::_raise_error_unsupported(machine, argv[0].get_type(), "array erase");
 			return value();
 		}
 
@@ -993,11 +996,11 @@ namespace gstd {
 
 	bool __chk_concat(script_machine* machine, type_data* type_l, type_data* type_r) {
 		if (type_l->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, type_l, "array concatenate");
+			BaseFunction::_raise_error_unsupported(machine, type_l, "array concatenate");
 			return false;
 		}
 		if (type_r->get_kind() != type_data::tk_array) {
-			_raise_error_unsupported(machine, type_r, "array concatenate");
+			BaseFunction::_raise_error_unsupported(machine, type_r, "array concatenate");
 			return false;
 		}
 		//if (type_l != type_r && !(type_l->get_element() == nullptr || type_r->get_element() == nullptr)) {

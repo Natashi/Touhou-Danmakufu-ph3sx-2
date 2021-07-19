@@ -111,6 +111,8 @@ static const std::vector<function> commonFunction = {
 	{ "rand_int", ScriptClientBase::Func_RandI, 2 },
 	{ "prand", ScriptClientBase::Func_RandEff, 2 },
 	{ "prand_int", ScriptClientBase::Func_RandEffI, 2 },
+	{ "choose", ScriptClientBase::Func_Choose, 1 },
+	{ "pchoose", ScriptClientBase::Func_ChooseEff, 1 },
 	{ "count_rand", ScriptClientBase::Func_GetRandCount, 0 },
 	{ "count_prand", ScriptClientBase::Func_GetRandEffCount, 0 },
 	{ "reset_count_rand", ScriptClientBase::Func_ResetRandCount, 0 },
@@ -1162,6 +1164,45 @@ value ScriptClientBase::Func_RandEffI(script_machine* machine, int argc, const v
 	double min = argv[0].as_int();
 	double max = argv[1].as_int() + 0.9999999;
 	return script->CreateIntValue(script->mtEffect_->GetReal(min, max));
+}
+
+value ScriptClientBase::Func_Choose(script_machine* machine, int argc, const value* argv) {
+	BaseFunction::_null_check(machine, argv, argc);
+
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+
+	const value* val = &argv[0];
+	type_data* valType = val->get_type();
+
+	if (valType->get_kind() != type_data::tk_array) {
+		BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "choose");
+		return value();
+	}
+
+	size_t size = val->length_as_array() - 1;
+	int64_t index = script->mt_->GetReal(0, size + 0.9999999);
+	++randCalls_;
+
+	return val->index_as_array(index);
+}
+value ScriptClientBase::Func_ChooseEff(script_machine* machine, int argc, const value* argv) {
+	BaseFunction::_null_check(machine, argv, argc);
+
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+
+	const value* val = &argv[0];
+	type_data* valType = val->get_type();
+
+	if (valType->get_kind() != type_data::tk_array) {
+		BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "pchoose");
+		return value();
+	}
+
+	size_t size = val->length_as_array() - 1;
+	int64_t index = script->mtEffect_->GetReal(0, size + 0.9999999);
+	++prandCalls_;
+
+	return val->index_as_array(index);
 }
 value ScriptClientBase::Func_GetRandCount(script_machine* machine, int argc, const value* argv) {
 	return CreateIntValue(randCalls_);
