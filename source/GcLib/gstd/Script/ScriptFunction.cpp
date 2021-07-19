@@ -832,7 +832,7 @@ namespace gstd {
 			if (argc == 3) step = argv[2].as_int();
 		}
 
-		if (argc < 3 && stop < 0) step = -1;
+		if (argc < 3 && stop < start) step = -1;
 
 		if (argc == 3 && (step == 0
 			|| (start > stop && step > 0)
