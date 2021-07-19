@@ -193,6 +193,8 @@ static const std::vector<function> dxFunction = {
 	{ "IsIntersected_Line_Circle", DxScript::Func_IsIntersected_Line_Circle, 8 },
 	{ "IsIntersected_Line_Line", DxScript::Func_IsIntersected_Line_Line, 10 },
 
+	{ "IsIntersected_Circle_RegularPolygon", DxScript::Func_IsIntersected_Circle_RegularPolygon, 8 },
+
 	//Color conversion functions
 	{ "ColorARGBToHex", DxScript::Func_ColorARGBToHex, 4 },
 	{ "ColorARGBToHex", DxScript::Func_ColorARGBToHex, 1 },		//Overloaded
@@ -2069,6 +2071,40 @@ gstd::value DxScript::Func_IsIntersected_Line_Line(gstd::script_machine* machine
 	);
 
 	bool res = DxMath::IsIntersected(line1, line2);
+	return DxScript::CreateBooleanValue(res);
+}
+// This is for you, necky.
+gstd::value DxScript::Func_IsIntersected_Circle_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	/*
+		real f = M_PI / vertexes_;
+	real dx = pointX_ - centerX_;
+	real dy = pointY_ - centerY_;
+	real dist = hypot(dy, dx);
+	
+	return (dist <= radius_) && ((dist <= (radius_ * rcos(M_PI / vertexes_)) || (dist <= ((radius_ * rcos(f)) / rcos(modc((NormalizeAngle(atan2(dy, dx)) - angle_) * (M_PI / 180), 2 * f) - f)))));
+	*/
+
+	double cx = argv[0].as_real();
+	double cy = argv[1].as_real();
+	double cr = argv[2].as_real();
+
+	double px = argv[3].as_real();
+	double py = argv[4].as_real();
+	double pr = argv[5].as_real();
+	int64_t ps = argv[6].as_int();
+	double pa = argv[7].as_real();
+
+	double f = GM_PI / ps;
+	double cosf = cos(f);
+	double dx = cx - px;
+	double dy = cy - py;
+	double dist = hypot(dy, dx) - cr;
+
+	bool res = (dist <= pr)
+		&& ((dist <= (pr * cosf)
+			|| (dist <= ((pr * cosf) / cos(fmod((Math::NormalizeAngleRad(atan2(dy, dx)) - pa) * GM_PI, 2 * f) - f)))));
+
+	
 	return DxScript::CreateBooleanValue(res);
 }
 
