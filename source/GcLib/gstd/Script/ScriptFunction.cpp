@@ -768,7 +768,6 @@ namespace gstd {
 		}
 
 		size_t size = val->length_as_array();
-		type_data* type = val->get_type();
 
 		value res = *val;
 		res.make_unique();
@@ -777,7 +776,7 @@ namespace gstd {
 
 		for (size_t i = 0; i < size; ++i) arrVal[i] = val->index_as_array(size - i - 1);
 
-		res.set(type, arrVal);
+		res.set(valType, arrVal);
 		return res;
 	}
 
@@ -797,7 +796,6 @@ namespace gstd {
 	
 
 		size_t size = val->length_as_array();
-		type_data* type = val->get_type();
 
 		value res = *val;
 		res.make_unique();
@@ -819,7 +817,7 @@ namespace gstd {
 			std::swap(arrVal[i], arrVal[idx]);
 		}
 
-		res.set(type, arrVal);
+		res.set(valType, arrVal);
 		return res;
 	}
 
