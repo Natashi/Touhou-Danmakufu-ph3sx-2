@@ -113,6 +113,8 @@ static const std::vector<function> commonFunction = {
 	{ "prand_int", ScriptClientBase::Func_RandEffI, 2 },
 	{ "choose", ScriptClientBase::Func_Choose, 1 },
 	{ "pchoose", ScriptClientBase::Func_ChooseEff, 1 },
+	{ "shuffle", ScriptClientBase::Func_Shuffle, 1 },
+	{ "pshuffle", ScriptClientBase::Func_ShuffleEff, 1 },
 	{ "count_rand", ScriptClientBase::Func_GetRandCount, 0 },
 	{ "count_prand", ScriptClientBase::Func_GetRandEffCount, 0 },
 	{ "reset_count_rand", ScriptClientBase::Func_ResetRandCount, 0 },
@@ -1203,6 +1205,78 @@ value ScriptClientBase::Func_ChooseEff(script_machine* machine, int argc, const 
 	++prandCalls_;
 
 	return val->index_as_array(index);
+}
+value ScriptClientBase::Func_Shuffle(script_machine* machine, int argc, const value* argv) {
+	BaseFunction::_null_check(machine, argv, argc);
+
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+
+	const value* val = &argv[0];
+	type_data* valType = val->get_type();
+
+	if (valType->get_kind() != type_data::tk_array) {
+		BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "shuffle");
+		return value();
+	}
+
+	size_t size = val->length_as_array();
+
+	value res = *val;
+	res.make_unique();
+
+	std::vector<value> arrVal;
+	std::vector<value> arrOld(size);
+
+	// Populate source array
+	for (size_t i = 0; i < size; ++i)
+		arrOld[i] = val->index_as_array(i);
+
+	for (size_t i = 0; i < size; ++i) {
+		int64_t index = (i == size - 1) ? 0 : script->mt_->GetReal(0, size - 0.0000001 - i);
+		arrVal.push_back(arrOld[index]);
+		arrOld.erase(arrOld.begin() + index);
+	}
+
+	++randCalls_;
+
+	res.set(valType, arrVal);
+	return res;
+}
+value ScriptClientBase::Func_ShuffleEff(script_machine* machine, int argc, const value* argv) {
+	BaseFunction::_null_check(machine, argv, argc);
+
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+
+	const value* val = &argv[0];
+	type_data* valType = val->get_type();
+
+	if (valType->get_kind() != type_data::tk_array) {
+		BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "pshuffle");
+		return value();
+	}
+
+	size_t size = val->length_as_array();
+
+	value res = *val;
+	res.make_unique();
+
+	std::vector<value> arrVal;
+	std::vector<value> arrOld(size);
+
+	// Populate source array
+	for (size_t i = 0; i < size; ++i)
+		arrOld[i] = val->index_as_array(i);
+
+	for (size_t i = 0; i < size; ++i) {
+		int64_t index = (i == size - 1) ? 0 : script->mtEffect_->GetReal(0, size - 0.0000001 - i);
+		arrVal.push_back(arrOld[index]);
+		arrOld.erase(arrOld.begin() + index);
+	}
+
+	++prandCalls_;
+
+	res.set(valType, arrVal);
+	return res;
 }
 value ScriptClientBase::Func_GetRandCount(script_machine* machine, int argc, const value* argv) {
 	return CreateIntValue(randCalls_);
