@@ -754,6 +754,31 @@ namespace gstd {
 		return res;
 	}
 
+	DNH_FUNCAPI_DEF_(BaseFunction::reverse) {
+		_null_check(machine, argv, argc);
+
+		const value* val = &argv[0];
+		type_data* valType = val->get_type();
+
+		if (valType->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, argv->get_type(), "reverse");
+			return value();
+		}
+
+		size_t size = val->length_as_array();
+		type_data* type = val->get_type();
+
+		value res = *val;
+		res.make_unique();
+
+		std::vector<value> arrVal(size);
+
+		for (size_t i = 0; i < size; ++i) arrVal[i] = val->index_as_array(size - i - 1);
+
+		res.set(type, arrVal);
+		return res;
+	}
+
 	DNH_FUNCAPI_DEF_(BaseFunction::range) {
 		int64_t start = 0;
 		int64_t stop = 0;
