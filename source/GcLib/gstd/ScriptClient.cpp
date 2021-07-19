@@ -160,9 +160,10 @@ static const std::vector<function> commonFunction = {
 	{ "RegexMatchRepeated", ScriptClientBase::Func_RegexMatchRepeated, 2 },
 	{ "RegexReplace", ScriptClientBase::Func_RegexReplace, 3 },
 
-	//Array functions
+	//Digit functions
 	{ "DigitToArray", ScriptClientBase::Func_DigitToArray, 1 },
 	{ "DigitToArray", ScriptClientBase::Func_DigitToArray, 2 }, //Overloaded
+	{ "GetDigitCount", ScriptClientBase::Func_GetDigitCount, 1 },
 
 	//Path utilities
 	{ "GetParentScriptDirectory", ScriptClientBase::Func_GetParentScriptDirectory, 0 },
@@ -1793,6 +1794,17 @@ value ScriptClientBase::Func_DigitToArray(script_machine* machine, int argc, con
 	}
 
 	return CreateIntArrayValue(res);
+}
+value ScriptClientBase::Func_GetDigitCount(script_machine* machine, int argc, const value* argv) {
+	int64_t input = argv[0].as_int();
+	size_t res = 0;
+
+	for (size_t i = 0; input != 0; ++i) {
+		res++;
+		input /= 10;
+	}
+
+	return CreateIntValue(res);
 }
 
 value ScriptClientBase::Func_ToDegrees(script_machine* machine, int argc, const value* argv) {

@@ -102,6 +102,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(not_);
 
 		DNH_FUNCAPI_DECL_(modc);
+		DNH_FUNCAPI_DECL_(modf);
 		DNH_FUNCAPI_DECL_(predecessor);
 		DNH_FUNCAPI_DECL_(successor);
 
@@ -122,9 +123,12 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(concatenate_direct);
 
 		DNH_FUNCAPI_DECL_(round);
+		DNH_FUNCAPI_DECL_(round_base);
 		DNH_FUNCAPI_DECL_(truncate);
 		DNH_FUNCAPI_DECL_(ceil);
+		DNH_FUNCAPI_DECL_(ceil_base);
 		DNH_FUNCAPI_DECL_(floor);
+		DNH_FUNCAPI_DECL_(floor_base);
 
 		static value _script_absolute(int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(absolute);

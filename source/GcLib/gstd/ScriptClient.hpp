@@ -280,7 +280,9 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_RegexMatchRepeated);
 		DNH_FUNCAPI_DECL_(Func_RegexReplace);
 
+		//Digit functions
 		DNH_FUNCAPI_DECL_(Func_DigitToArray);
+		DNH_FUNCAPI_DECL_(Func_GetDigitCount);
 
 		//Path utility
 		static value Func_GetParentScriptDirectory(script_machine* machine, int argc, const value* argv);

@@ -120,10 +120,13 @@ static const std::vector<function> base_operations = {
 	{ "predecessor", BaseFunction::predecessor, 1 },
 	{ "successor", BaseFunction::successor, 1 },
 	{ "round", BaseFunction::round, 1 },
+	{ "round_base", BaseFunction::round_base, 2 },
 	{ "trunc", BaseFunction::truncate, 1 },
 	{ "truncate", BaseFunction::truncate, 1 },
 	{ "ceil", BaseFunction::ceil, 1 },
+	{ "ceil_base", BaseFunction::ceil_base, 2 },
 	{ "floor", BaseFunction::floor, 1 },
+	{ "floor_base", BaseFunction::floor_base, 2 },
 	//{ "abs", BaseFunction::absolute, 1 },
 	{ "absolute", BaseFunction::absolute, 1 },
 
@@ -133,6 +136,7 @@ static const std::vector<function> base_operations = {
 	{ "divide", BaseFunction::divide, 2 },
 	{ "remainder", BaseFunction::remainder_, 2 },
 	{ "modc", BaseFunction::modc, 2 },
+	{ "modf", BaseFunction::modf, 1 },
 	{ "power", BaseFunction::power, 2 },
 
 	{ "as_int_array", BaseFunction::cast_int_array, 1 },

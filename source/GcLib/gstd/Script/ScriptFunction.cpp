@@ -643,6 +643,12 @@ namespace gstd {
 			return value(script_type_manager::get_int_type(), argv[0].as_int() % argv[1].as_int());
 	}
 
+	DNH_FUNCAPI_DEF_(BaseFunction::modf) {
+		double r = argv->as_real();
+		r -= (r > 0) ? std::floor(r) : std::ceil(r);
+		return value(script_type_manager::get_real_type(), r);
+	}
+
 	DNH_FUNCAPI_DEF_(BaseFunction::predecessor) {
 		_null_check(machine, argv, argc);
 
@@ -1047,6 +1053,12 @@ namespace gstd {
 		double r = std::floor(argv->as_real() + 0.5);
 		return value(script_type_manager::get_real_type(), r);
 	}
+	DNH_FUNCAPI_DEF_(BaseFunction::round_base) {
+		double v = argv[0].as_real();
+		double base = argv[1].as_real();
+		double r = std::floor(v / base + 0.5) * base;
+		return value(script_type_manager::get_real_type(), r);
+	}
 	DNH_FUNCAPI_DEF_(BaseFunction::truncate) {
 		double r = argv->as_real();
 		return value(script_type_manager::get_real_type(), (r > 0) ? std::floor(r) : std::ceil(r));
@@ -1054,10 +1066,19 @@ namespace gstd {
 	DNH_FUNCAPI_DEF_(BaseFunction::ceil) {
 		return value(script_type_manager::get_real_type(), std::ceil(argv->as_real()));
 	}
+	DNH_FUNCAPI_DEF_(BaseFunction::ceil_base) {
+		double v = argv[0].as_real();
+		double base = argv[1].as_real();
+		return value(script_type_manager::get_real_type(), std::ceil(v / base) * base);
+	}
 	DNH_FUNCAPI_DEF_(BaseFunction::floor) {
 		return value(script_type_manager::get_real_type(), std::floor(argv->as_real()));
 	}
-
+	DNH_FUNCAPI_DEF_(BaseFunction::floor_base) {
+		double v = argv[0].as_real();
+		double base = argv[1].as_real();
+		return value(script_type_manager::get_real_type(), std::floor(v / base) * base);
+	}
 	value BaseFunction::_script_absolute(int argc, const value* argv) {
 		return value(script_type_manager::get_real_type(), std::fabs(argv->as_real()));
 	}
