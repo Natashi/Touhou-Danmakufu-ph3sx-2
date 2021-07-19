@@ -106,6 +106,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(length);
 		DNH_FUNCAPI_DECL_(resize);
 		DNH_FUNCAPI_DECL_(reverse);
+		DNH_FUNCAPI_DECL_(sort);
 		DNH_FUNCAPI_DECL_(range);
 		DNH_FUNCAPI_DECL_(contains);
 

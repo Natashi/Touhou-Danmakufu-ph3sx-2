@@ -779,6 +779,48 @@ namespace gstd {
 		return res;
 	}
 
+	DNH_FUNCAPI_DEF_(BaseFunction::sort) {
+		_null_check(machine, argv, argc);
+
+		const value* val = &argv[0];
+		type_data* valType = val->get_type();
+
+		bool bRev = false;
+		if (argc == 2) bRev = argv[1].as_boolean();
+
+		if (valType->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, argv->get_type(), "sort");
+			return value();
+		}
+
+		size_t size = val->length_as_array();
+		type_data* type = val->get_type();
+
+		value res = *val;
+		res.make_unique();
+
+		// std::vector<value> arrOld(size);
+		std::vector<value> arrVal(size);
+
+		// Populate source array
+		for (size_t i = 0; i < size; ++i)
+			arrVal[i] = val->index_as_array(i);
+
+		for (size_t i = 0; i < size - 1; ++i) {
+			size_t idx = i;
+			for (size_t j = i + 1; j < size; ++j) {
+				value args[2] = { arrVal[idx], arrVal[j] };
+				if (compare(machine, 2, args).as_int() == (bRev ? -1 : 1)) {
+					idx = j;
+				}
+			}
+			std::swap(arrVal[i], arrVal[idx]);
+		}
+
+		res.set(type, arrVal);
+		return res;
+	}
+
 	DNH_FUNCAPI_DEF_(BaseFunction::range) {
 		int64_t start = 0;
 		int64_t stop = 0;
