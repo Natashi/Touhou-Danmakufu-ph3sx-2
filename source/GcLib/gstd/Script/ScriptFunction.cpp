@@ -842,16 +842,12 @@ namespace gstd {
 			machine->raise_error(error);
 			return value();
 		}
-		
-		size_t length = abs(stop - start) / abs(step);
 
 		value result;
 		std::vector<value> resArr;
 
-		resArr.resize(length);
-
-		for (int64_t i = 0, j = start; i < length; ++i, j += step) {
-			resArr[i] = value(script_type_manager::get_int_type(), j);
+		for (int64_t i = start; (step > 0 && i < stop) || (step < 0 && i > stop); i += step) {
+			resArr.push_back(value(script_type_manager::get_int_type(), i));
 		}
 
 		result.reset(script_type_manager::get_int_array_type(), resArr);
