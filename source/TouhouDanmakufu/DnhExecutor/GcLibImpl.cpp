@@ -110,20 +110,14 @@ bool EApplication::_Loop() {
 	HWND hWndFocused = ::GetForegroundWindow();
 	HWND hWndGraphics = graphics->GetWindowHandle();
 	HWND hWndLogger = ELogger::GetInstance()->GetWindowHandle();
-	/*
-		if (hWndFocused != hWndGraphics && hWndFocused != hWndLogger) {
-			//Pause main thread when the window isn't focused
-			::Sleep(10);
-			return true;
-		}
-	
-	*/
+	if (hWndFocused != hWndGraphics && hWndFocused != hWndLogger) {
+		//Pause main thread when the window isn't focused
+		::Sleep(10);
+		return true;
+	}
 
 	EDirectInput* input = EDirectInput::GetInstance();
-	// But what if DIDN'T pause when out of focus :O
-	if (hWndFocused != hWndGraphics && hWndFocused != hWndLogger) input->ClearKeyState();
-	else input->Update();
-
+	input->Update();
 	if (input->GetKeyState(DIK_LCONTROL) == KEY_HOLD &&
 		input->GetKeyState(DIK_LSHIFT) == KEY_HOLD &&
 		input->GetKeyState(DIK_R) == KEY_PUSH) 
