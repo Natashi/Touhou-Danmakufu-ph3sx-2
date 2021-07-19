@@ -754,6 +754,44 @@ namespace gstd {
 		return res;
 	}
 
+	DNH_FUNCAPI_DEF_(BaseFunction::range) {
+		int64_t start = 0;
+		int64_t stop = 0;
+		int64_t step = 1;
+
+		if (argc == 1) stop = argv[0].as_int();
+		else {
+			start = argv[0].as_int();
+			stop = argv[1].as_int();
+			if (argc == 3) step = argv[2].as_int();
+		}
+
+		if (argc < 3 && stop < 0) step = -1;
+
+		if (argc == 3 && (step == 0
+			|| (start > stop && step > 0)
+			|| (start < stop && step < 0)
+			)) {
+			std::string error = "Invalid range.";
+			machine->raise_error(error);
+			return value();
+		}
+		
+		size_t length = abs(stop - start) / abs(step);
+
+		value result;
+		std::vector<value> resArr;
+
+		resArr.resize(length);
+
+		for (int64_t i = 0, j = start; i < length; ++i, j += step) {
+			resArr[i] = value(script_type_manager::get_int_type(), j);
+		}
+
+		result.reset(script_type_manager::get_int_array_type(), resArr);
+		return result;
+	}
+
 	DNH_FUNCAPI_DEF_(BaseFunction::contains) {
 		_null_check(machine, argv, argc);
 

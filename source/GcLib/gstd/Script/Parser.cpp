@@ -145,6 +145,10 @@ static const std::vector<function> base_operations = {
 	{ "resize", BaseFunction::resize, 2 },
 	{ "resize", BaseFunction::resize, 3 },	//Overloaded
 
+	{ "range", BaseFunction::range, 1 },	
+	{ "range", BaseFunction::range, 2 },	//Overloaded
+	{ "range", BaseFunction::range, 3 },	//Overloaded x2
+
 	{ "contains", BaseFunction::contains, 2 },
 
 	{ "slice", BaseFunction::slice, 3 },
