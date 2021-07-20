@@ -103,10 +103,12 @@ void ScriptManager::StartScript(int64_t id, bool bUnload) {
 	}
 }
 void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) {
+	/*
 	if (!script->IsBeginLoad()) {
 		throw wexception(StringUtility::Format(L"ScriptManager: Script isn't loaded [%s]",
 			script->GetPath().c_str()));
 	}
+	*/
 	if (!script->IsLoad()) {
 		DWORD count = 0;
 		while (!script->IsLoad()) {
@@ -141,6 +143,8 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) 
 
 		script->Reset();
 		script->bRunning_ = true;
+
+		script->Run();	//Execute code in the global scope
 
 		std::map<std::string, script_block*>::iterator itrEvent;
 		if (script->IsEventExists("Initialize", itrEvent))
@@ -215,7 +219,10 @@ void ScriptManager::OrphanAllScripts() {
 int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script) {
 	int64_t res = script->GetScriptID();
 
-	script->bBeginLoad_ = true;
+	{
+		StaticLock lock = StaticLock();
+		script->bBeginLoad_ = true;
+	}
 
 	script->SetSourceFromFile(path);
 	script->Compile();

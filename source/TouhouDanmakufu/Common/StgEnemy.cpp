@@ -146,13 +146,16 @@ void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent
 
 				pData->bLoad_ = true;
 			}
-			catch (wexception& e) {
-				pData->SetScriptPointer(weak_ptr<ManagedScript>());
-				pData->bLoad_ = false;
+			catch (gstd::wexception& e) {
+				Logger::WriteTop(e.what());
 
-				scriptManager->SetError(e.GetMessageW());
+				pData->SetScriptPointer(weak_ptr<ManagedScript>());
+				pData->bLoad_ = true;
+
+				scriptManager->SetError(e.what());
+
+				break;
 			}
-			if (scriptManager->IsError()) break;
 		}
 	}
 }
@@ -268,10 +271,10 @@ void StgEnemyBossSceneObject::_WaitForStepLoad(int iStep) {
 						PathProperty::GetFileName(pData->GetPath()).c_str()));
 				}
 				::Sleep(10);
-				scriptManager->TryThrowError();
 				++count;
 			}
 		}
+		scriptManager->TryThrowError();
 	}
 }
 bool StgEnemyBossSceneObject::_NextScript() {
