@@ -255,6 +255,8 @@ int64_t ScriptManager::LoadScriptInThread(const std::wstring& path, shared_ptr<M
 	{
 		StaticLock lock = StaticLock();		//???????
 
+		script->SetPath(path);
+
 		res = script->GetScriptID();
 		mapScriptLoad_[res] = script;
 
