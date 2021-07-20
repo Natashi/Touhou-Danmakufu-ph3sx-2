@@ -1108,9 +1108,13 @@ void parser::parse_bitwise(script_block* block, parser_state_t* state) {
 void parser::parse_logic(script_block* block, parser_state_t* state) {
 	parse_bitwise(block, state);
 
+	bool hasExpr = false;
+
 	size_t base_hash = ((size_t)block ^ 0x45f60e21u) + ((size_t)state ^ 0xce189a9bu) + state->ip * 0x56d3;
 	size_t iter = 0x80000000 + (std::_Hash_array_representation((byte*)&base_hash, 4U) & 0x04ffffff);
 	while (state->next() == token_kind::tk_logic_and || state->next() == token_kind::tk_logic_or) {
+		hasExpr = true;
+
 		command_kind cmdLogic = (state->next() == token_kind::tk_logic_and) ?
 			command_kind::pc_inline_logic_and : command_kind::pc_inline_logic_or;
 		command_kind cmdJump = (state->next() == token_kind::tk_logic_and) ?
@@ -1126,6 +1130,11 @@ void parser::parse_logic(script_block* block, parser_state_t* state) {
 		--(state->ip);
 
 		++iter;
+	}
+
+	if (hasExpr) {
+		state->AddCode(block, code(command_kind::pc_inline_cast_var,
+			(uint32_t)script_type_manager::get_boolean_type(), false));
 	}
 }
 
