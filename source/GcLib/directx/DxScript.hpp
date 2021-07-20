@@ -212,6 +212,9 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Circle);
 		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Line);
 
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Circle_RegularPolygon);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Circle_Ellipse);
+
 		//Color
 		DNH_FUNCAPI_DECL_(Func_ColorARGBToHex);
 		DNH_FUNCAPI_DECL_(Func_ColorHexToARGB);
