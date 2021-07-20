@@ -768,22 +768,15 @@ bool ScriptClientBase::Run(const std::string& target) {
 
 	std::map<std::string, script_block*>::iterator itrEvent;
 	if (!machine_->has_event(target, itrEvent)) {
-		_RaiseError(0, StringUtility::FormatToWide("The requested event does not exist. [%s]", target.c_str()));
+		_RaiseError(0, StringUtility::FormatToWide("Event doesn't exist. [%s]", target.c_str()));
 	}
 
-	Run();
-	machine_->call(itrEvent);
-
-	if (machine_->get_error()) {
-		bError_ = true;
-		_RaiseErrorFromMachine();
-	}
-	return true;
+	return Run(itrEvent);
 }
 bool ScriptClientBase::Run(std::map<std::string, script_block*>::iterator target) {
 	if (bError_) return false;
 
-	Run();
+	//Run();
 	machine_->call(target);
 
 	if (machine_->get_error()) {
