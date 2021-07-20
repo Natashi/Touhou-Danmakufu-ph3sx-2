@@ -2085,18 +2085,24 @@ gstd::value DxScript::Func_IsIntersected_Circle_RegularPolygon(gstd::script_mach
 	double pa = argv[7].as_real();
 
 	double f = GM_PI / ps;
-	double cosf = cos(f);
+	double cf = cos(f);
 	double dx = cx - px;
 	double dy = cy - py;
 	double dist = hypot(dy, dx) - cr;
 
-	bool res = (dist <= pr)
-		&& ((dist <= (pr * cosf)
-			|| (dist <= ((pr * cosf) / cos(fmod((Math::NormalizeAngleRad(atan2(dy, dx)) - pa) * GM_PI, 2 * f) - f)))));
+	bool res = dist <= pr;
+	if (res) {
+		double pr_cf = pr * cf;
+
+		res = dist <= pr_cf;
+		if (!res) {
+			double ang = fmod((Math::NormalizeAngleRad(atan2(dy, dx)) - pa) * GM_PI, 2 * f);
+			res = dist <= (pr_cf / cos(ang - f));
+		}
+	}
 
 	return DxScript::CreateBooleanValue(res);
 }
-
 gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	double cx = argv[0].as_real();
 	double cy = argv[1].as_real();
