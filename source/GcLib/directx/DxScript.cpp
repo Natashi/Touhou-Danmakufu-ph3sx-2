@@ -2104,19 +2104,48 @@ gstd::value DxScript::Func_IsIntersected_Circle_RegularPolygon(gstd::script_mach
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	double cx = argv[0].as_real();
-	double cy = argv[1].as_real();
-	double cr = argv[2].as_real();
+	auto _IsIntersected_CircleEllipse = [](
+		double cx, double cy, double cr,
+		double ex, double ey, double ea, double eb) -> bool
+	{
+		double dx = cx - ex;
+		double dy = cy - ey;
+		double dd = hypot(dx, dy);
 
-	double ex = argv[3].as_real();
-	double ey = argv[4].as_real();
-	double erx = argv[5].as_real();
-	double ery = argv[6].as_real();
+		//Eccentricity is negligible, just use a circle-circle intersection
+		if (abs(ea - eb) < 0.1)
+			return dd <= (cr + ea);
 
-	double dx = cx - ex;
-	double dy = cy - ey;
+		//Circle's center is close enough to the ellipse's, check if the radius is smaller than the shorter axis
+		if (dd < 0.01)
+			return cr < std::min(ea, eb);
 
-	bool res = ((dx * dx) / (erx * erx) + (dy * dy) / (ery * ery)) <= cr;
+		double th_c = dx / dd;
+		double th_s = dy / dd;
+
+		//Point on the ellipse
+		double p1_x = ex - ea * th_c;
+		double p1_y = ey - eb * th_s;
+
+		if (Math::HypotSq(p1_x - cx, p1_y - cy) <= cr * cr)
+			return true;
+
+		//Point on the circle
+		double p2_x = cx + cr * th_c;
+		double p2_y = cy + cr * th_s;
+
+		double dx2 = p2_x - ex;
+		double dy2 = p2_y - ey;
+
+		if ((dx2 * dx2) / (ea * ea) + (dy2 * dy2) / (eb * eb) <= 1)
+			return true;
+
+		return false;
+	};
+
+	bool res = _IsIntersected_CircleEllipse(
+		argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
+		argv[3].as_real(), argv[4].as_real(), argv[5].as_real(), argv[6].as_real());
 
 	return DxScript::CreateBooleanValue(res);
 }
