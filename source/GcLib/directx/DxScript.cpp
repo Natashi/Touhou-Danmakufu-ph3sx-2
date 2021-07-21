@@ -2116,9 +2116,9 @@ gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* ma
 		if (abs(ea - eb) < 0.1)
 			return dd <= (cr + ea);
 
-		//Circle's center is close enough to the ellipse's, check if the radius is smaller than the shorter axis
-		if (dd < 0.01)
-			return cr < std::min(ea, eb);
+		//Circle shares origin with ellipse
+		if (dd < 0.1)
+			return true;
 
 		double th_c = dx / dd;
 		double th_s = dy / dd;
