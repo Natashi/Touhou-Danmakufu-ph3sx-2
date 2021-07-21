@@ -2086,14 +2086,14 @@ gstd::value DxScript::Func_IsIntersected_Circle_RegularPolygon(gstd::script_mach
 	int64_t ps = argv[6].as_int();
 	double pa = argv[7].as_real();
 
-	double f = GM_PI / ps;
-	double cf = cos(f);
 	double dx = cx - px;
 	double dy = cy - py;
 	double dist = hypot(dy, dx) - cr;
 
 	bool res = dist <= pr;
 	if (res) {
+		double f = GM_PI / ps;
+		double cf = cos(f);
 		double pr_cf = pr * cf;
 
 		res = dist <= pr_cf;
@@ -2116,6 +2116,7 @@ gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* ma
 	double ery = argv[6].as_int();
 	double ea = argv[7].as_real();
 
+	// For the purpose of making our lives easier, ensure that ery is the greater of the two radii.
 	if (erx > ery) {
 		std::swap(erx, ery);
 		ea += GM_PI_2;
@@ -2125,11 +2126,10 @@ gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* ma
 	double dy = cy - ey;
 	double dist = hypot(dy, dx) - cr;
 
-	bool res = dist <= ery;
-	if (res) {
-
-		res = dist <= erx;
-		if (!res) {
+	bool res = dist <= erx;
+	if (!res) {
+		res = dist <= ery;
+		if (res) {
 			double sc[2];
 			double ang = atan2(dy, dx);
 			Math::DoSinCos(ea + ang, sc);
