@@ -425,8 +425,6 @@ namespace directx {
 	//RenderShaderLibrary
 	//*******************************************************************
 	RenderShaderLibrary::RenderShaderLibrary() {
-		listEffect_.resize(6, nullptr);
-		listDeclaration_.resize(6, nullptr);
 		Initialize();
 	}
 	RenderShaderLibrary::~RenderShaderLibrary() {
@@ -450,6 +448,7 @@ namespace directx {
 				std::make_pair(&ShaderSource::sourceIntersectVisual1_, &ShaderSource::nameIntersectVisual1_),
 				std::make_pair(&ShaderSource::sourceIntersectVisual2_, &ShaderSource::nameIntersectVisual2_)
 			};
+			listEffect_.resize(listCreate.size(), nullptr);
 			for (size_t iEff = 0U; iEff < listCreate.size(); ++iEff) {
 				const std::string* source = listCreate[iEff].first;
 				const std::string* name = listCreate[iEff].second;
@@ -467,7 +466,8 @@ namespace directx {
 				}
 			}
 		}
-		listEffect_[0]->SetTechnique("Render");
+		if (listEffect_[0])
+			listEffect_[0]->SetTechnique("Render");
 
 		{
 			std::vector<std::pair<const D3DVERTEXELEMENT9*, std::string>> listCreate = {
@@ -477,6 +477,7 @@ namespace directx {
 				std::make_pair(ELEMENTS_TLX_INSTANCED, "ELEMENTS_TLX_INSTANCED"),
 				std::make_pair(ELEMENTS_LX_INSTANCED, "ELEMENTS_LX_INSTANCED")
 			};
+			listDeclaration_.resize(listCreate.size(), nullptr);
 			for (size_t iDecl = 0U; iDecl < listCreate.size(); ++iDecl) {
 				const D3DVERTEXELEMENT9* elem = listCreate[iDecl].first;
 				const std::string& name = listCreate[iDecl].second;
@@ -499,11 +500,15 @@ namespace directx {
 	}
 
 	void RenderShaderLibrary::OnLostDevice() {
-		for (auto& iEffect : listEffect_)
-			iEffect->OnLostDevice();
+		for (auto iEffect : listEffect_) {
+			if (iEffect)
+				iEffect->OnLostDevice();
+		}
 	}
 	void RenderShaderLibrary::OnResetDevice() {
-		for (auto& iEffect : listEffect_)
-			iEffect->OnResetDevice();
+		for (auto iEffect : listEffect_) {
+			if (iEffect)
+				iEffect->OnResetDevice();
+		}
 	}
 }
