@@ -95,7 +95,7 @@ parser::symbol::symbol(uint32_t lv, type_data* type_, bool overl, script_block* 
 	: symbol(lv, type_) 
 {
 	bVariable = false;
-	bAllowOverload = true;
+	bAllowOverload = overl;
 	sub = pSub;
 }
 parser::symbol::symbol(uint32_t lv, type_data* type_, bool overl, script_block* pSub, const std::vector<arg_data>& argData_)
@@ -622,15 +622,18 @@ int parser::scan_current_scope(parser_state_t* state, int level, int initVar, co
 								break;
 							}
 
-							std::string error = "A ";
-							error += typeSub;
-							error += StringUtility::Format(" of the same name was already defined "
-								"in the current scope: \'%s\'\r\n", name.c_str());
-							if (dup->bAllowOverload && countArgs >= 0)
+							std::string error;
+							if (dup->bAllowOverload && countArgs >= 0) {
+								error = "A " + typeSub;
+								error += StringUtility::Format(" of the same name was already defined "
+									"in the current scope: \'%s\'\r\n", name.c_str());
 								error += "**You may overload functions and tasks by giving them "
-								"different argument counts.\r\n";
-							else
-								error += StringUtility::Format("**\'%s\' cannot be overloaded.\r\n", name.c_str());
+									"different argument counts.\r\n";
+							}
+							else {
+								error += StringUtility::Format("\'%s\' already exists as a default function "
+									"and cannot be overloaded.\r\n", name.c_str());
+							}
 							parser_assert(false, error);
 						}
 					}
