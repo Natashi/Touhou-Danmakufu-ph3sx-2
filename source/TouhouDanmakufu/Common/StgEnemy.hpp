@@ -173,6 +173,8 @@ public:
 	StgEnemyBossSceneData();
 	virtual ~StgEnemyBossSceneData() {}
 
+	void LoadSceneEvents(StgStageController* stageController);
+
 	bool IsLoad() { return bLoad_; }
 
 	std::wstring& GetPath() { return path_; }

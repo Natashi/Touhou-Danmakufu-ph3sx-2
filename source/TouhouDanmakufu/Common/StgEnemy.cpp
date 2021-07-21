@@ -87,62 +87,12 @@ void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent
 					throw gstd::wexception(StringUtility::Format(L"Cannot load script: %s", pData->GetPath().c_str()));
 				pData->SetScriptPointer(script);
 
+				/*
 				{
 					StaticLock lock2 = StaticLock();
-
-					if (stageController_->GetSystemInformation()->IsError())
-						throw gstd::wexception(stageController_->GetSystemInformation()->GetErrorMessage());
-
-					std::vector<double> listLife;
-					gstd::value vLife = script->RequestEvent(StgStageScript::EV_REQUEST_LIFE);
-					if (vLife.has_data()) {
-						if (script->IsArrayValue(vLife)) {
-							for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
-								double life = vLife.index_as_array(iLife).as_real();
-								listLife.push_back(life);
-							}
-						}
-						else {
-							double life = vLife.as_real();
-							listLife.push_back(life);
-						}
-					}
-
-					if (listLife.size() == 0)
-						throw gstd::wexception(StringUtility::Format(L"EV_REQUEST_LIFE must return a value. (%s)",
-							pData->GetPath().c_str()));
-					pData->SetLifeList(listLife);
-
-					gstd::value vTimer = script->RequestEvent(StgStageScript::EV_REQUEST_TIMER);
-					if (vTimer.has_data())
-						pData->SetOriginalSpellTimer(vTimer.as_real() * STANDARD_FPS);
-
-					gstd::value vSpell = script->RequestEvent(StgStageScript::EV_REQUEST_IS_SPELL);
-					if (vSpell.has_data())
-						pData->SetSpellCard(vSpell.as_boolean());
-
-					{
-						gstd::value vScore = script->RequestEvent(StgStageScript::EV_REQUEST_SPELL_SCORE);
-						if (vScore.has_data()) pData->SetSpellScore(vScore.as_real());
-
-						gstd::value vLast = script->RequestEvent(StgStageScript::EV_REQUEST_IS_LAST_SPELL);
-						if (vLast.has_data()) pData->SetLastSpell(vLast.as_boolean());
-
-						gstd::value vDurable = script->RequestEvent(StgStageScript::EV_REQUEST_IS_DURABLE_SPELL);
-						if (vDurable.has_data()) pData->SetDurable(vDurable.as_boolean());
-
-						gstd::value vAllDown = script->RequestEvent(StgStageScript::EV_REQUEST_REQUIRE_ALL_DOWN);
-						if (vAllDown.has_data()) pData->SetRequireAllDown(vAllDown.as_boolean());
-					}
-
-					std::vector<ref_unsync_ptr<StgEnemyBossObject>> listEnemyObject;
-					for (size_t iEnemy = 0; iEnemy < listLife.size(); iEnemy++) {
-						ref_unsync_ptr<StgEnemyBossObject> obj = new StgEnemyBossObject(stageController_);
-						int idEnemy = objectManager->AddObject(obj, false);
-						listEnemyObject.push_back(obj);
-					}
-					pData->SetEnemyObjectList(listEnemyObject);
+					pData->LoadSceneEvents(stageController_);
 				}
+				*/
 
 				pData->bLoad_ = true;
 			}
@@ -274,7 +224,9 @@ void StgEnemyBossSceneObject::_WaitForStepLoad(int iStep) {
 				++count;
 			}
 		}
+
 		scriptManager->TryThrowError();
+		pData->LoadSceneEvents(stageController_);
 	}
 }
 bool StgEnemyBossSceneObject::_NextScript() {
@@ -539,4 +491,61 @@ int64_t StgEnemyBossSceneData::GetCurrentSpellScore() {
 		res = scoreSpell_ * rate;
 	}
 	return res;
+}
+
+void StgEnemyBossSceneData::LoadSceneEvents(StgStageController* stageController) {
+	auto scriptManager = stageController->GetScriptManager();
+	StgStageScriptObjectManager* objectManager = stageController->GetMainObjectManager();
+
+	LOCK_WEAK(script, ptrScript_) {
+		std::vector<double> listLife;
+		gstd::value vLife = script->RequestEvent(StgStageScript::EV_REQUEST_LIFE);
+		if (vLife.has_data()) {
+			if (script->IsArrayValue(vLife)) {
+				for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
+					double life = vLife.index_as_array(iLife).as_real();
+					listLife.push_back(life);
+				}
+			}
+			else {
+				double life = vLife.as_real();
+				listLife.push_back(life);
+			}
+		}
+
+		if (listLife.size() == 0)
+			throw gstd::wexception(StringUtility::Format(L"EV_REQUEST_LIFE must return a value. (%s)",
+				GetPath().c_str()));
+		SetLifeList(listLife);
+
+		gstd::value vTimer = script->RequestEvent(StgStageScript::EV_REQUEST_TIMER);
+		if (vTimer.has_data())
+			SetOriginalSpellTimer(vTimer.as_real() * STANDARD_FPS);
+
+		gstd::value vSpell = script->RequestEvent(StgStageScript::EV_REQUEST_IS_SPELL);
+		if (vSpell.has_data())
+			SetSpellCard(vSpell.as_boolean());
+
+		{
+			gstd::value vScore = script->RequestEvent(StgStageScript::EV_REQUEST_SPELL_SCORE);
+			if (vScore.has_data()) SetSpellScore(vScore.as_real());
+
+			gstd::value vLast = script->RequestEvent(StgStageScript::EV_REQUEST_IS_LAST_SPELL);
+			if (vLast.has_data()) SetLastSpell(vLast.as_boolean());
+
+			gstd::value vDurable = script->RequestEvent(StgStageScript::EV_REQUEST_IS_DURABLE_SPELL);
+			if (vDurable.has_data()) SetDurable(vDurable.as_boolean());
+
+			gstd::value vAllDown = script->RequestEvent(StgStageScript::EV_REQUEST_REQUIRE_ALL_DOWN);
+			if (vAllDown.has_data()) SetRequireAllDown(vAllDown.as_boolean());
+		}
+
+		std::vector<ref_unsync_ptr<StgEnemyBossObject>> listEnemyObject;
+		for (size_t iEnemy = 0; iEnemy < listLife.size(); iEnemy++) {
+			ref_unsync_ptr<StgEnemyBossObject> obj = new StgEnemyBossObject(stageController);
+			int idEnemy = objectManager->AddObject(obj, false);
+			listEnemyObject.push_back(obj);
+		}
+		SetEnemyObjectList(listEnemyObject);
+	}
 }
