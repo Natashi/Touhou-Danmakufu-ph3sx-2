@@ -194,7 +194,7 @@ static const std::vector<function> dxFunction = {
 	{ "IsIntersected_Line_Line", DxScript::Func_IsIntersected_Line_Line, 10 },
 
 	{ "IsIntersected_Circle_RegularPolygon", DxScript::Func_IsIntersected_Circle_RegularPolygon, 8 },
-	{ "IsIntersected_Circle_Ellipse", DxScript::Func_IsIntersected_Circle_Ellipse, 7 },
+	{ "IsIntersected_Circle_Ellipse", DxScript::Func_IsIntersected_Circle_Ellipse, 8 },
 
 	//Color conversion functions
 	{ "ColorARGBToHex", DxScript::Func_ColorARGBToHex, 4 },
@@ -2106,48 +2106,39 @@ gstd::value DxScript::Func_IsIntersected_Circle_RegularPolygon(gstd::script_mach
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	auto _IsIntersected_CircleEllipse = [](
-		double cx, double cy, double cr,
-		double ex, double ey, double ea, double eb) -> bool
-	{
-		double dx = cx - ex;
-		double dy = cy - ey;
-		double dd = hypot(dx, dy);
+	double cx = argv[0].as_real();
+	double cy = argv[1].as_real();
+	double cr = argv[2].as_real();
 
-		//Eccentricity is negligible, just use a circle-circle intersection
-		if (abs(ea - eb) < 0.1)
-			return dd <= (cr + ea);
+	double ex = argv[3].as_real();
+	double ey = argv[4].as_real();
+	double erx = argv[5].as_real();
+	double ery = argv[6].as_int();
+	double ea = argv[7].as_real();
 
-		//Circle's center is close enough to the ellipse's, check if the radius is smaller than the shorter axis
-		if (dd < 0.01)
-			return cr < std::min(ea, eb);
+	if (erx > ery) {
+		std::swap(erx, ery);
+		ea += GM_PI_2;
+	}
 
-		double th_c = dx / dd;
-		double th_s = dy / dd;
+	double dx = cx - ex;
+	double dy = cy - ey;
+	double dist = hypot(dy, dx) - cr;
 
-		//Point on the ellipse
-		double p1_x = ex - ea * th_c;
-		double p1_y = ey - eb * th_s;
+	bool res = dist <= ery;
+	if (res) {
 
-		if (Math::HypotSq(p1_x - cx, p1_y - cy) <= cr * cr)
-			return true;
-
-		//Point on the circle
-		double p2_x = cx + cr * th_c;
-		double p2_y = cy + cr * th_s;
-
-		double dx2 = p2_x - ex;
-		double dy2 = p2_y - ey;
-
-		if ((dx2 * dx2) / (ea * ea) + (dy2 * dy2) / (eb * eb) <= 1)
-			return true;
-
-		return false;
-	};
-
-	bool res = _IsIntersected_CircleEllipse(
-		argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
-		argv[3].as_real(), argv[4].as_real(), argv[5].as_real(), argv[6].as_real());
+		res = dist <= erx;
+		if (!res) {
+			double sc[2];
+			double ang = atan2(dy, dx);
+			Math::DoSinCos(ea + ang, sc);
+			double a = erx * sc[0];
+			double b = ery * sc[1];
+			
+			res = dist <= (erx * ery) / sqrt(a * a + b * b);
+		}
+	}
 
 	return DxScript::CreateBooleanValue(res);
 }
