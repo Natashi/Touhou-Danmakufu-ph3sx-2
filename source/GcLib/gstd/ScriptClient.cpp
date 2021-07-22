@@ -126,7 +126,7 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_CubicBezier", ScriptClientBase::Func_Interpolate_CubicBezier, 5 },
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
 	{ "Interpolate_X", ScriptClientBase::Func_Interpolate_X, 4 },
-	{ "Interpolate_X_PackedInt", ScriptClientBase::Func_Interpolate_X_Packed, 5 },
+	{ "Interpolate_X_PackedInt", ScriptClientBase::Func_Interpolate_X_Packed, 4 },
 
 	//Rotation
 	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 3 },
@@ -1334,9 +1334,9 @@ value ScriptClientBase::Func_Rotate3D(script_machine* machine, int argc, const v
 	double sc_x[2];
 	double sc_y[2];
 	double sc_z[2];
-	Math::DoSinCos(Math::DegreeToRadian(argv[3].as_real()), sc_x);
-	Math::DoSinCos(Math::DegreeToRadian(argv[4].as_real()), sc_y);
-	Math::DoSinCos(Math::DegreeToRadian(argv[5].as_real()), sc_z);
+	Math::DoSinCos(-Math::DegreeToRadian(argv[3].as_real()), sc_x);
+	Math::DoSinCos(-Math::DegreeToRadian(argv[4].as_real()), sc_y);
+	Math::DoSinCos(-Math::DegreeToRadian(argv[5].as_real()), sc_z);
 
 	double cx = sc_x[1];
 	double sx = sc_x[0];
