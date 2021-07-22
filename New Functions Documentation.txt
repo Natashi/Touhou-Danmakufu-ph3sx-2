@@ -23,7 +23,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			(int) type
 		Description:
 			Returns the type of the given value.
-			Examples:
+			
+			Example:
 				-60i        -> VAR_INT
 				920         -> VAR_REAL
 				false       -> VAR_BOOL
@@ -37,7 +38,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			(int) type
 		Description:
 			Returns the root type of the given value.
-			Examples:
+			
+			Example:
 				920         -> VAR_REAL
 				false       -> VAR_BOOL
 				"str"       -> VAR_CHAR
@@ -46,32 +48,37 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 	resize
 		Arguments:
-			1) (array) array
+			1) (any[]) array
 			2) (int) new size
+		Returns:
+			(any[]) result
 		Description:
-			Resizes the given array, on the condition that the array must not be an empty array.
-			
-			As the array is passed-by-value, the result is written to the array passed to the function rather than returned as a new value.
-			
-			Currently broken.
+			Resizes the given array, on the condition that the array must not be a null array.
 			
 	resize (Overload)
 		Arguments:
-			1) (array) array
+			1) (any[]) array
 			2) (int) new size
 			3) (any) fill value
+		Returns:
+			(any[]) result
 		Description:
 			Overloaded with 3 arguments.
 		
 			Resizes the given array.
 			
 			If the new size is larger than the old size, newly inserted elements will be assigned the fill value.
-			Unless the array is an empty array, the fill value's type must match the array element's.
+			Unless the array is a null array, the fill value's type must match the array element's.
 			
-			As the array is passed-by-value, the result is written to the array passed to the function rather than returned as a new value.
+	contains
+		Arguments:
+			1) (any[]) array
+			2) (any) value
+		Returns:
+			(bool) result
+		Description:
+			Checks if the given value is present as an element of the given array.
 			
-			Currently broken.
-				
 	--------------------------------> Type Casting <--------------------------------
 	
 	as_int
@@ -112,7 +119,12 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(int[]) result
 		Description:
-			Casts each element of the array to an int, then returns the result.
+			Casts array elements to int, then returns the result.
+			
+			Casting is recursive.
+			
+			Example:
+				as_int_array([[true, true], [false, true]]);	//-> [[1, 1], [0, 1]]
 			
 	as_real_array
 		Arguments:
@@ -120,7 +132,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(real[]) result
 		Description:
-			Casts each element of the array to a real, then returns the result.
+			Casts array elements to real, then returns the result.
+			
+			Casting is recursive.
 			
 	as_bool_array
 		Arguments:
@@ -128,7 +142,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(bool[]) result
 		Description:
-			Casts each element of the array to a bool, then returns the result.
+			Casts array elements to bool, then returns the result.
+			
+			Casting is recursive.
 			
 	as_char_array
 		Arguments:
@@ -136,8 +152,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(char[]) result
 		Description:
-			Casts each element of the array to a char, then returns the result.
+			Casts array elements to char, then returns the result.
 			
+			Casting is recursive.
 			Not an alias of ToString.
 			
 	as_x_array
@@ -147,7 +164,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(T[]) result
 		Description:
-			Casts each element of the array to the given type, then returns the result.
+			Casts array elements to the given type, then returns the result.
 			
 			Supported types:
 				VAR_INT
@@ -155,6 +172,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				VAR_BOOL
 				VAR_CHAR
 				
+			Casting is recursive.
+			
 	--------------------------------> Bitwise Operations <--------------------------------
 				
 	bit_not
@@ -481,6 +500,38 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			rdottheta(x1, y1, x2, y2) = ratan2(y2 - y1, x2 - x1)
 			
+	Rotate2D
+		Arguments:
+			1) x
+			2) y
+			3) angle
+		Returns:
+			(real[]) rotated position [x, y]
+		Description:
+			Rotates the given (x, y) point around the origin.
+			
+			Direct formula is:
+				x = x * cos(angle) - y * sin(angle)
+				y = x * sin(angle) + y * cos(angle)
+				
+	Rotate3D
+		Arguments:
+			1) x
+			2) y
+			3) z
+			4) X angle
+			5) Y angle
+			6) Z angle
+		Returns:
+			(real[]) rotated position [x, y, z]
+		Description:
+			Rotates the given (x, y, z) point around the origin with the given Euler angles.
+			
+			Direct formula is:
+				x = x * (cos(angY) * cos(angZ) - sin(angX) * sin(angY) * sin(angZ)) + y * (-cos(angX) * sin(angZ)) + z * (sin(angY) * cos(angZ) + sin(angX) * cos(angY) * sin(angZ))
+				y = x * (cos(angY) * sin(angZ) + sin(angX) * sin(angY) * cos(angZ)) + y * (cos(angX) * cos(angZ)) + z * (sin(angY) * sin(angZ) - sin(angX) * cos(angY) * cos(angZ))
+				z = x * (-cos(angX) * sin(angY)) + y * (sin(angX)) + z * (cos(angX) * cos(angY))
+				
 	--------------------------------> Constants <--------------------------------
 		
 		M_PI        = pi                ; 3.14159265358979323846
@@ -519,7 +570,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			IF a, b are not arrays
 				(real) result
 			ELSE
-				(real[length(a)]) result array
+				(real[]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is linear.
@@ -537,7 +588,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			IF a, b are not arrays
 				(real) result
 			ELSE
-				(real[length(a)]) result array
+				(real[]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is first-order smoothstep curve.
@@ -555,7 +606,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			IF a, b are not arrays
 				(real) result
 			ELSE
-				(real[length(a)]) result array
+				(real[]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is second-order smoothstep curve.
@@ -573,7 +624,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			IF a, b are not arrays
 				(real) result
 			ELSE
-				(real[length(a)]) result array
+				(real[]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is parabolic.
@@ -591,7 +642,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			IF a, b are not arrays
 				(real) result
 			ELSE
-				(real[length(a)]) result array
+				(real[]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is inverse parabolic.
@@ -673,6 +724,58 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			https://en.wikipedia.org/wiki/Cubic_Hermite_spline
 			
+	Interpolate_X
+		Arguments:
+			1) a
+			2) b
+			3) x
+			4) (int) type
+		Returns:
+			IF a, b are not arrays
+				(real) result
+			ELSE
+				(real[]) result array
+		Description:
+			Interpolates between a and b using x with the given interpolation type.
+			
+			Available interpolation types:
+				LERP_LINEAR:
+					Interpolate_Linear
+				LERP_SMOOTH:
+					Interpolate_Smooth
+				LERP_SMOOTHER:
+					Interpolate_Smoother
+				LERP_ACCELERATE:
+					Interpolate_Accelerate
+				LERP_DECELERATE:
+					Interpolate_Decelerate
+					
+	Interpolate_X_PackedInt
+		Arguments:
+			1) (int) a
+			2) (int) b
+			3) x
+			4) (int) type
+		Returns:
+			(int[]) result array
+		Description:
+			Divides a and b (both 8-byte ints) into eight 1-byte chunks, performs interpolation on each pair, and recombines them to return the result.
+			
+			Available interpolation types:
+				LERP_LINEAR:
+					Interpolate_Linear
+				LERP_SMOOTH:
+					Interpolate_Smooth
+				LERP_SMOOTHER:
+					Interpolate_Smoother
+				LERP_ACCELERATE:
+					Interpolate_Accelerate
+				LERP_DECELERATE:
+					Interpolate_Decelerate
+					
+			Example:
+				Interpolate_X_PackedInt(0x37ff4040, 0xaa001010, 0.5, LERP_LINEAR);		//result = 0x707f2828
+			
 	--------------------------------> Random <--------------------------------
 	
 	rand_int
@@ -710,7 +813,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(int) count
 		Description:
-			Returns the amount of time rand or rand_int have been used.
+			Returns the amount of number rand or rand_int have been used.
 			
 			Resets when restarting the game or exiting to the script select menu.
 			
@@ -718,11 +821,56 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(int) count
 		Description:
-			Returns the amount of time prand or prand_int have been used.
+			Returns the amount of number prand or prand_int have been used.
 			
 			Resets when restarting the game or exiting to the script select menu.
 			
-	--------------------------------> Regular Expression <--------------------------------
+	reset_count_rand
+		Description:
+			Sets the rand count to 0.
+			
+	reset_count_prand
+		Description:
+			Sets the prand count to 0.
+			
+	--------------------------------> String <--------------------------------
+	
+	StringFormat
+		Arguments:
+			1) (string) source string
+			2) (string) argument types
+			3+) (any) format arguments...
+		Returns:
+			(string) formatted string
+		Description:
+			Formats the string in the style of sprintf.
+			
+			The number of format arguments must match the number of argument types.
+			
+			Make sure that the amount of format arguments match the formatting tokens in the source string,
+				the game may crash if the formatting tokens count exceeds the format arguments count.
+			
+			Available argument types:
+				- d:	Argument is passed a 32-bit integer (int).
+				- l:	Argument is passed a 64-bit integer (long int).
+				- f:	Argument is passed a floating point number (double).
+				- s:	Argument is passed a string (wstring).
+				
+			Example:
+				StringFormat("This is a %s", "s", "string.");
+				//Result: This is a string.
+				
+				StringFormat("The value is %s", "s", 32);
+				//Result: The value is 32.000000
+				
+				StringFormat("%f + %d = %.2f", "fdf", 1.15836, 2.12, 3.27836);
+				//Result: 1.158360 + 2 = 3.28
+				
+				StringFormat("0x%08x is %d", "ll", 8023465, 8023465);
+				//Result: 0x007a6da9 is 8023465
+				
+				StringFormat("0x%016llx %s %lld", "lsl", 2275101568023465, "is", 2275101568023465);
+				//Result: 0x000815315cca3ba9 is 2275101568023465
 			
 	RegexMatch
 		Arguments:
@@ -733,11 +881,13 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Uses regular expression to match patterns in a given string.
 			Returns a string array of matches.
+			
 			Example:
-				RegexMatch("Voyage 1969", "[0-9]+")
-					-> ["1969"]
-				RegexMatch("S231 A001 S101 S000", "S([0-9]{3})")
-					-> ["S231", "231"]
+				RegexMatch("Voyage 1969", "[0-9]+");
+				//Result: ["1969"]
+				
+				RegexMatch("S231 A001 S101 S000", "S([0-9]{3})");
+				//Result: "S231", "231"]
 
 	RegexMatchRepeated
 		Arguments:
@@ -747,25 +897,34 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			(string[][]) array of match groups
 		Description:
 			Behaves like RegexMatch, but returns all matches in the string rather than only the first match.
+			
 			Example:
-				RegexMatchRepeated("Voyage 1969", "[0-9]+")
-					-> [["1969"]]
-				RegexMatchRepeated("S231 A001 S101 S0040", "S([0-9]{3})")
-					-> [["S231", "231"], ["S101", "101"], ["S004", "004"]]
+				RegexMatchRepeated("Voyage 1969", "[0-9]+");
+				//Result: [["1969"]]
+				
+				RegexMatchRepeated("S231 A001 S101 S0040", "S([0-9]{3})");
+				//Result: [["S231", "231"], ["S101", "101"], ["S004", "004"]]
 			
 	RegexReplace
 		Arguments:
 			1) (string) source string
 			2) (string) pattern
 			2) (string) replacing string
+		Returns:
+			(string) replace result
 		Description:
 			Uses regular expression to replace patterns in a given string.
 			Returns the pattern-replaced string.
+			
 			Example:
-				RegexReplace("Voyage 1969", "[0-9]+", "1970")	-> "Voyage 1970"
-				RegexReplace("Example String", "(a|e|i)", "*")	-> "Ex*mpl* Str*ng"
-				RegexReplace("Red, Green, and Blue", "[A-Z]+[a-zA-Z]*", "\'$&\'")
-							-> "'Red', 'Green', and 'Blue'"
+				RegexReplace("Voyage 1969", "[0-9]+", "1970");
+				//Result: "Voyage 1970"
+				
+				RegexReplace("Example String", "(a|e|i)", "*");
+				//Result: "Ex*mpl* Str*ng"
+				
+				RegexReplace("Red, Green, and Blue", "[A-Z]+[a-zA-Z]*", "\'$&\'");
+				//Result: "'Red', 'Green', and 'Blue'"
 		
 	--------------------------------> File Path and Archives <--------------------------------
 	
@@ -1103,7 +1262,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Renders the whole screen to a texture and saves the specified rectangular area of the texture to a file with the given name.
 			Returns true if the save was successful.
 			
-			Available formats are:
+			Available formats:
 				IFF_BMP: Bitmap file. 										(.bmp) (default)
 				IFF_JPG: Joint Photographic Experts Group graphics file. 	(.jpeg)
 				IFF_TGA: TARGA bitmap file. 								(.tga)
@@ -1138,7 +1297,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			A script that is often restarted would benefit from this overload by using LoadScript only once,
 				and then using StartScript(idScript, false) to avoid having to repeatedly call LoadScript.
 				
-			StartScript(idScript) = StartScript(idScript, true)
+			*StartScript(idScript) = StartScript(idScript, true)
 			
 	PauseScript
 		Arguments:
@@ -1158,11 +1317,12 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Returns the status of the specified script.
 			
 			Possible return values:
-				- STATUS_LOADED		: Script has been loaded.
-				- STATUS_RUNNING	: Script is running.
-				- STATUS_PAUSED		: Script has been paused.
-				- STATUS_CLOSING	: Script is closing.
-				- STATUS_INVALID	: Any other cases, or invalid script ID.
+				- STATUS_LOADING	; Script is currently loading.
+				- STATUS_LOADED		; Script has been loaded.
+				- STATUS_RUNNING	; Script is running.
+				- STATUS_PAUSED		; Script has been paused.
+				- STATUS_CLOSING	; Script is closing.
+				- STATUS_INVALID	; Any other cases, or invalid script ID.
 				
 	--------------------------------> Event <--------------------------------
 
@@ -1184,6 +1344,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			It is possible to pass as many event arguments as you want.
 			
+			*Scripts paused with PauseScript will still be able to run events.
+			
 	NotifyEventOwn
 		Arguments:
 			1) (int) event type
@@ -1195,6 +1357,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			It is possible to pass as many event arguments as you want.
 			
+			*Scripts paused with PauseScript will still be able to run events.
+			
 	NotifyEventAll
 		Arguments:
 			1) (int) event type
@@ -1202,9 +1366,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Change.
 			NotifyEvent's all actively running scripts.
-			*Scripts paused with PauseScript would still get notified.
 			
 			It is possible to pass as many event arguments as you want.
+			
+			*Scripts paused with PauseScript will still be able to run events.
 				
 	--------------------------------> Screen Status <--------------------------------
 	
@@ -1535,7 +1700,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				Sets the fog color as an XRGB hexadecimal color value.
 				
 				Example:
-					SetFogParam(0, 1024, 0xFF7B32) -> SetFogParam(0, 1024, 255, 123, 50)
+					SetFogParam(0, 1024, 0xFF7B32);		//-> SetFogParam(0, 1024, 255, 123, 50);
 	
 	--------------------------------> 3D Camera <--------------------------------
 	
@@ -1589,12 +1754,30 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	--------------------------------> Intersection <--------------------------------
 	
 	IsIntersected_Circle_Circle
+		Arguments:
+			1) circle 1 - x
+			2) circle 1 - y
+			3) circle 1 - radius
+			4) circle 2 - x
+			5) circle 2 - y
+			6) circle 2 - radius
 		Returns:
 			(bool) intersection
 		Description:
 			Now usable in scripts of all types.
-
+			
+			Returns true if the given circles intersect.
+			
 	IsIntersected_Line_Circle
+		Arguments:
+			1) line - start x
+			2) line - start y
+			3) line - end x
+			4) line - end y
+			5) line - width
+			6) circle - x
+			7) circle - y
+			8) circle - radius
 		Returns:
 			(bool) intersection
 		Description:
@@ -1617,6 +1800,35 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns true if the given line segments intersect.
 			
+	IsIntersected_Circle_RegularPolygon
+		Arguments:
+			1) circle - x
+			2) circle - y
+			3) circle - radius
+			4) polygon - x
+			5) polygon - y
+			6) polygon - radius to edge
+			7) polygon - edge count
+			8) polygon - angle
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given circle and polygon intersect.
+			
+	IsIntersected_Circle_Ellipse
+		Arguments:
+			1) circle - x
+			2) circle - y
+			3) circle - radius
+			4) ellipse - x
+			5) ellipse - y
+			6) ellipse - horizontal axis half-length
+			7) ellipse - vertical axis half-length
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given circle and ellipse intersect.
+			
 	--------------------------------> Color Utility <--------------------------------
 	
 	ColorARGBToHex
@@ -1630,9 +1842,12 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns an ARGB hexadecimal color value of the given colors.
 			
-			Examples:
-				ColorARGBToHex(255, 255, 255, 255)	-> 0xFFFFFFFF
-				ColorARGBToHex(67, 255, 0, 125)		-> 0x43FF007D
+			Example:
+				ColorARGBToHex(255, 255, 255, 255);
+				//Result: 0xFFFFFFFF
+				
+				ColorARGBToHex(67, 255, 0, 125);
+				//Result: 0x43FF007D
 				
 	ColorARGBToHex (Overload)
 		Arguments:
@@ -1652,9 +1867,12 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns an ARGB color array of the given hexadecimal color (D3DCOLOR).
 			
-			Examples:
-				ColorHexToARGB(0xFFFFFFFF)	-> [255, 255, 255, 255]
-				ColorHexToARGB(0x43FF007D)	-> [67, 255, 0, 125]
+			Example:
+				ColorHexToARGB(0xFFFFFFFF);
+				//Result: [255, 255, 255, 255]
+				
+				ColorHexToARGB(0x43FF007D);
+				//Result: [67, 255, 0, 125]
 				
 	ColorHexToARGB (Overload)
 		Arguments:
@@ -1700,12 +1918,21 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				COLOR_PERMUTE_G
 				COLOR_PERMUTE_B
 			
-			Examples:
-				ColorHexToARGB(0xFFFFFFFF, 0x31b)	-> [255, 255, 255, 255]
-				ColorHexToARGB(0xFFFFFFFF, 0x000)	-> [255]
-				ColorHexToARGB(0x43FF007D, 0x31b)	-> [67, 255, 0, 125]
-				ColorHexToARGB(0x43FF007D, 0x36c)	-> [255, 0, 125, 67]
-				ColorHexToARGB(0x43FF007D, 0x2e4)	-> [125, 0, 255]
+			Example:
+				ColorHexToARGB(0xFFFFFFFF, 0x31b);
+				//Result: [255, 255, 255, 255]
+				
+				ColorHexToARGB(0xFFFFFFFF, 0x000);
+				//Result: [255]
+				
+				ColorHexToARGB(0x43FF007D, 0x31b)
+				//Result: [67, 255, 0, 125]
+				
+				ColorHexToARGB(0x43FF007D, 0x36c);
+				//Result: [255, 0, 125, 67]
+				
+				ColorHexToARGB(0x43FF007D, 0x2e4);
+				//Result: [125, 0, 255]
 	
 	ColorRGBtoHSV
 		Arguments:
@@ -1747,6 +1974,39 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Sets the default position that position-fetching functions will return if the object does not exist.
 			
 			The default value is (0, 0).
+			
+	GetObjectDistance
+		Arguments:
+			1) object 1 ID
+			2) object 2 ID
+		Returns:
+			(real) distance
+		Description:
+			Change.
+			
+			The Z positions will not be included in the calculation if neither objects are 3D-valid.
+			
+	GetObjectDistanceSq
+		Arguments:
+			1) object 1 ID
+			2) object 2 ID
+		Returns:
+			(real) distance
+		Description:
+			Returns the square of the distance between two objects.
+			
+			The Z positions will not be included in the calculation if neither objects are 3D-valid.
+			
+	GetObjectDeltaAngle
+		Arguments:
+			1) object 1 ID
+			2) object 2 ID
+		Returns:
+			(real) angle
+		Description:
+			Returns the angle between two objects.
+			
+			The Z positions will not be included in the calculation if neither objects are 3D-valid.
 	
 	Obj_GetValueI
 		Arguments:
@@ -1819,6 +2079,20 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				Addition.
 				
 				BLEND_ALPHA_INV - Alpha blending with source color inversion.
+				
+		[---------------------------> Scale <---------------------------]
+		
+		ObjRender_SetScaleXYZ (Overload)
+			Arguments:
+				1) object ID
+				2) scale
+			Description:
+				Overloaded with 2 arguments.
+				
+				Sets the object's XYZ scale.
+				
+				Example:
+					ObjRender_SetScaleXYZ(obj, 2); 	//-> ObjRender_SetScaleXYZ(obj, 2, 2, 2);
 	
 		[---------------------------> Color & Alpha <---------------------------]
 	
@@ -1832,7 +2106,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				Sets the object's RGB color as an XRGB hexadecimal color value.
 				
 				Example:
-					ObjRender_SetColor(obj, 0xFF7B32) -> ObjRender_SetColor(obj, 255, 123, 50)
+					ObjRender_SetColor(obj, 0xFF7B32); 	//-> ObjRender_SetColor(obj, 255, 123, 50);
 					
 		ObjRender_SetColorHSV
 			Arguments:
@@ -2033,14 +2307,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Sets vertex indices to the primitive object. 
 			Required for particle list objects.
-				Example:
-					ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
-					ObjPrim_SetVertexCount(obj, 4);
-					ObjPrim_SetVertexPosition(obj, 0, 0, 0);
-					ObjPrim_SetVertexPosition(obj, 1, 32, 0);
-					ObjPrim_SetVertexPosition(obj, 2, 0, 32);
-					ObjPrim_SetVertexPosition(obj, 3, 32, 32);
-					ObjPrim_SetVertexIndex(obj, [0, 1, 2, 1, 2, 3]);
+			
+			Example:
+				ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+				ObjPrim_SetVertexCount(obj, 4);
+				ObjPrim_SetVertexPosition(obj, 0, 0, 0);
+				ObjPrim_SetVertexPosition(obj, 1, 32, 0);
+				ObjPrim_SetVertexPosition(obj, 2, 0, 32);
+				ObjPrim_SetVertexPosition(obj, 3, 32, 32);
+				ObjPrim_SetVertexIndex(obj, [0, 1, 2, 1, 2, 3]);
 	
 	--------------------------------> 2D Sprite List Object Functions <--------------------------------
 	
@@ -2102,6 +2377,17 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			4) Z scale
 		Description:
 			Sets the instance scale data.
+			
+	ObjParticleList_SetScale (Overload)
+		Arguments:
+			1) object ID
+			2) scale
+		Description:
+			Overloaded with 2 arguments.
+			
+			Sets the instance scale data.
+			
+			ObjParticleList_SetScale(obj, 2);  //->  ObjParticleList_SetScale(obj, 2, 2, 2);
 
 	ObjParticleList_SetAngleX
 		Arguments:
@@ -2270,24 +2556,34 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	--------------------------------> Sound Object Functions <--------------------------------
 	
+	ObjSound_SetResumeEnable
+		Arguments:
+			1) object ID
+			2) (bool) resume enable
+		Description:
+			Formerly ObjSound_SetRestartEnable.
+			Function unchanged.
+			
+			If set to true, using ObjSound_Play on the sound object that was previously stopped with ObjSound_Stop will resume playing where it last left off.
+	
 	ObjSound_Seek
 		Arguments:
 			1) object ID
-			2) sample
+			2) time
 		Description:
-			Seeks to the specified point in the audio.
+			Seeks to the specified time in the audio.
 
 	ObjSound_SeekSampleCount
 		Arguments:
 			1) object ID
-			2) time
+			2) (int) sample
 		Description:
 			Seeks to the specified sample in the audio.
 			
 	ObjSound_SetFrequency
 		Arguments:
 			1) object ID
-			2) frequency
+			2) (int) frequency
 		Description:
 			Sets the frequency of the audio in sample rate.
 			Can be used to increase or decrease play speed.
@@ -2795,6 +3091,13 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Marks the current single as being not-a-spell.
 			
 			I literally do not know why I added this.
+			
+	ObjEnemyBossScene_SetUnloadCache
+		Arguments:
+			1) boss scene object ID
+			2) (bool) unload
+		Description:
+			If set to true, will unload all added scripts from the script source cache upon boss scene end or object deletion.
 	
 	--------------------------------> Shot Object Functions <--------------------------------
 	
@@ -3182,20 +3485,24 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				PATTERN_ARROW
 				PATTERN_ARROW_AIMED
 				PATTERN_POLYGON
-				PATTERN_POLYGON_AIMED
 					- [way]:            Number of polygon vertices.
 					- [stack]:          Number of shots per sides.
-					- [angle argument]:	Edge skip, should normally be 1. Other values may result in polygrams.
+					- [angle argument]:	Edge skip, should normally be 1. Other values will result in polygrams.
 					- [speed argument]:	No effect.
+				PATTERN_POLYGON_AIMED
 				PATTERN_ELLIPSE
-				PATTERN_ELLIPSE_AIMED
 					- [stack]:          No effect.
 					- [angle argument]:	Angle of the ellipse. (Not of the shots)
 					- [base speed]:     Max speed at the ends of the primary axis.
 					- [speed argument]:	Max speed at the ends of the secondary axis.
+				PATTERN_ELLIPSE_AIMED
 				PATTERN_SCATTER_ANGLE
 				PATTERN_SCATTER_SPEED
 				PATTERN_SCATTER
+				PATTERN_LINE
+				PATTERN_ROSE
+					- [way]:            Number of "petals".
+					- [stack]:          Number of shots per petals.
 
 	ObjPatternShot_SetShotType
 		Arguments:
@@ -3466,6 +3773,18 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	--------------------------------> Events <--------------------------------
 	
+		EV_DELETE_SHOT_TO_ITEM is notified when an item is deleted and turned into an item.
+			Actions that trigger this event:
+				- Using ObjShot_ToItem.
+				- Using DeleteShotAll or DeleteShotInCircle with TYPE_ITEM.
+	
+			Event arguments:
+				1) (int) shot object ID
+				2) (real[]) position [x, y]
+				3) (bool) collided with player
+					If true, the shot was deleted from coliision with a player hitbox.
+				4) (int) shot image ID
+	
 		EV_COLLECT_ITEM is notified when an item is autocollected.
 			Actions that trigger this event:
 				- Collision with the player's item scope.
@@ -3521,7 +3840,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	--------------------------------> Events <--------------------------------
 			
 		EV_DELETE_SHOT_PLAYER is notified to the player script when a player shot is deleted upon collision with an enemy intersection.
-			*ObjShot_SetPenetration(obj, 0) can also be used to forcibly activate the event.
+			ObjShot_SetPenetration(obj, 0) can also be used to forcibly activate the event.
 		
 			Event arguments:
 				1) (int) shot object ID
