@@ -136,10 +136,6 @@ static const std::vector<function> commonFunction = {
     { "Interpolate_Array", ScriptClientBase::Func_Interpolate_Array, 3 },
 
 	//Rotation
-	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 5 },
-	{ "Rotate3D", ScriptClientBase::Func_Rotate3D, 9 },
-
-	//Rotation
 	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 3 },
 	{ "Rotate3D", ScriptClientBase::Func_Rotate3D, 6 },
 
@@ -164,6 +160,11 @@ static const std::vector<function> commonFunction = {
 	{ "DigitToArray", ScriptClientBase::Func_DigitToArray, 1 },
 	{ "DigitToArray", ScriptClientBase::Func_DigitToArray, 2 }, //Overloaded
 	{ "GetDigitCount", ScriptClientBase::Func_GetDigitCount, 1 },
+
+	//Point lists
+	{ "GetPoints_Line", ScriptClientBase::Func_GetPoints_Line, 5 },
+	{ "GetPoints_Circle", ScriptClientBase::Func_GetPoints_Circle, 5 },
+
 
 	//Path utilities
 	{ "GetParentScriptDirectory", ScriptClientBase::Func_GetParentScriptDirectory, 0 },
@@ -1799,6 +1800,61 @@ value ScriptClientBase::Func_GetDigitCount(script_machine* machine, int argc, co
 
 	return CreateIntValue(res);
 }
+
+//Point lists
+// Args: x1, y1, x2, y2, midpoints
+value ScriptClientBase::Func_GetPoints_Line(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	script_type_manager* scriptTypeManager = script_type_manager::get_instance();
+	double x1 = argv[0].as_real();
+	double y1 = argv[1].as_real();
+	double x2 = argv[2].as_real();
+	double y2 = argv[3].as_real();
+	size_t mid = std::max(argv[4].as_int(), 0i64);
+
+	double gap = 1.0 / (mid + 1.0);
+
+	value res;
+	std::vector<value> resArr;
+
+	for (size_t i = 0; i < 2 + mid; ++i) {
+		double xy[2] = { Math::Lerp::Linear(x1, x2, i * gap), Math::Lerp::Linear(y1, y2, i * gap) };
+		value v = script->CreateRealArrayValue(xy, 2);
+		resArr.push_back(v);
+	}
+
+	res.reset(scriptTypeManager->get_real_array_type(), resArr);
+	return res;
+}
+
+// Args: x, y, radius, angle, count
+value ScriptClientBase::Func_GetPoints_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	script_type_manager* scriptTypeManager = script_type_manager::get_instance();
+	double x = argv[0].as_real();
+	double y = argv[1].as_real();
+	double rad = argv[2].as_real();
+	double dir = argv[3].as_real();
+	size_t cnt = std::max(argv[4].as_int(), 0i64);
+
+	double gap = GM_PI_X2 / cnt;
+
+	double sc[2];
+
+	value res;
+	std::vector<value> resArr;
+
+	for (size_t i = 0; i < cnt; ++i) {
+		Math::DoSinCos(rad + i * gap, sc);
+		double xy[2] = { x + sc[1] * rad, y + sc[0] * rad };
+		value v = script->CreateRealArrayValue(xy, 2);
+		resArr.push_back(v);
+	}
+
+	res.reset(scriptTypeManager->get_real_array_type(), resArr);
+	return res;
+}
+
 
 value ScriptClientBase::Func_ToDegrees(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(Math::RadianToDegree(argv->as_real()));

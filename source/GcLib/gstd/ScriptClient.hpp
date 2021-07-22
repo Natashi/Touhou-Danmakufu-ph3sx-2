@@ -284,6 +284,10 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_DigitToArray);
 		DNH_FUNCAPI_DECL_(Func_GetDigitCount);
 
+		//Point lists
+		DNH_FUNCAPI_DECL_(Func_GetPoints_Line);
+		DNH_FUNCAPI_DECL_(Func_GetPoints_Circle);
+
 		//Path utility
 		static value Func_GetParentScriptDirectory(script_machine* machine, int argc, const value* argv);
 		static value Func_GetCurrentScriptDirectory(script_machine* machine, int argc, const value* argv);
