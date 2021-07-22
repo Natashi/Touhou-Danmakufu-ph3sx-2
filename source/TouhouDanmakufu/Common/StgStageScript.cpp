@@ -461,6 +461,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjShot_SetSpinAngularVelocity", StgStageScript::Func_ObjShot_SetSpinAngularVelocity, 2 },
 
 	{ "ObjLaser_SetLength", StgStageScript::Func_ObjLaser_SetLength, 2 },
+	{ "ObjLaser_SetExtendRate", StgStageScript::Func_ObjLaser_SetExtendRate, 2 },
+	{ "ObjLaser_SetMaxLength", StgStageScript::Func_ObjLaser_SetMaxLength, 2 },
 	{ "ObjLaser_SetRenderWidth", StgStageScript::Func_ObjLaser_SetRenderWidth, 2 },
 	{ "ObjLaser_SetIntersectionWidth", StgStageScript::Func_ObjLaser_SetIntersectionWidth, 2 },
 	{ "ObjLaser_SetInvalidLength", StgStageScript::Func_ObjLaser_SetInvalidLength, 3 },
@@ -3936,6 +3938,27 @@ gstd::value StgStageScript::Func_ObjLaser_SetLength(gstd::script_machine* machin
 	}
 	return value();
 }
+gstd::value StgStageScript::Func_ObjLaser_SetExtendRate(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgLaserObject* obj = script->GetObjectPointerAs<StgLaserObject>(id);
+	if (obj) {
+		int rate = argv[1].as_int();
+		obj->SetExtendRate(rate);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjLaser_SetMaxLength(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgLaserObject* obj = script->GetObjectPointerAs<StgLaserObject>(id);
+	if (obj) {
+		int length = argv[1].as_int();
+		obj->SetMaxLength(length);
+	}
+	return value();
+}
+
 gstd::value StgStageScript::Func_ObjLaser_SetRenderWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();

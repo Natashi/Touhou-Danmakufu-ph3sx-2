@@ -409,6 +409,8 @@ public:
 	static gstd::value Func_ObjLaser_SetInvalidLength(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_SetItemDistance(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_GetLength(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjLaser_SetExtendRate(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjLaser_SetMaxLength(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_GetRenderWidth(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjLaser_GetIntersectionWidth(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjStLaser_SetAngle(gstd::script_machine* machine, int argc, const gstd::value* argv);

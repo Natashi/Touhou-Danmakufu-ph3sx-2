@@ -452,11 +452,14 @@ protected:
 	int length_;
 	int widthRender_;
 	int widthIntersection_;
+	int extendRate_;
+	int maxLength_;
 	float invalidLengthStart_;
 	float invalidLengthEnd_;
 	float itemDistance_;
 
 	void _AddIntersectionRelativeTarget();
+	void _ExtendLength();
 public:
 	StgLaserObject(StgStageController* stageController);
 
@@ -471,6 +474,8 @@ public:
 		widthRender_ = width;
 		if (widthIntersection_ < 0) widthIntersection_ = width / 4;
 	}
+	void SetExtendRate(int rate) { extendRate_ = rate; }
+	void SetMaxLength(int max) { maxLength_ = max; }
 	int GetIntersectionWidth() { return widthIntersection_; }
 	void SetIntersectionWidth(int width) { widthIntersection_ = width; }
 	void SetInvalidLength(float start, float end) { invalidLengthStart_ = start; invalidLengthEnd_ = end; }

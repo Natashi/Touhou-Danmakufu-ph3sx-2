@@ -1571,6 +1571,8 @@ StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObj
 	length_ = 0;
 	widthRender_ = 0;
 	widthIntersection_ = -1;
+	extendRate_ = 0;
+	maxLength_ = 0;
 	invalidLengthStart_ = 0.1f;
 	invalidLengthEnd_ = 0.1f;
 	frameGrazeInvalidStart_ = 20;
@@ -1589,6 +1591,16 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listTarget = GetIntersectionTargetList();
 	for (auto& iTarget : listTarget)
 		intersectionManager->AddTarget(iTarget);
+}
+void StgLaserObject::_ExtendLength() {
+	if (extendRate_ != 0) {
+		length_ += extendRate_;
+
+		if (extendRate_ > 0)
+			length_ = std::min(length_, maxLength_);
+		if (extendRate_ < 0)
+			length_ = std::max(length_, maxLength_);
+	}
 }
 
 //****************************************************************************
@@ -1609,6 +1621,7 @@ void StgLooseLaserObject::Work() {
 	if (bEnableMovement_) {
 		_ProcessTransformAct();
 		_Move();
+		_ExtendLength();
 
 		if (delay_.time > 0) --(delay_.time);
 	}
@@ -1893,6 +1906,7 @@ void StgStraightLaserObject::Work() {
 	if (bEnableMovement_) {
 		_ProcessTransformAct();
 		_Move();
+		_ExtendLength();
 
 		if (delay_.time > 0) --(delay_.time);
 		else {
@@ -2209,6 +2223,7 @@ void StgCurveLaserObject::Work() {
 	if (bEnableMovement_) {
 		_ProcessTransformAct();
 		_Move();
+		_ExtendLength();
 
 		if (delay_.time > 0) --(delay_.time);
 	}
