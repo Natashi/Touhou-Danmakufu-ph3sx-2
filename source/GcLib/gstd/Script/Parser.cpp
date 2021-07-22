@@ -2195,6 +2195,51 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		need_terminator = false;
 		break;
 	}
+	case token_kind::tk_ASYNC:
+	{
+		state->advance();
+		parser_assert(state, state->next() == token_kind::tk_open_cur, "\"{\" is required.\r\n");
+		state->advance();
+
+		script_block* asyncBlock = engine->new_block(block->level + 1, block_kind::bk_microthread);
+#ifdef _DEBUG
+		asyncBlock->name = StringUtility::Format("!@_bk_async_%08x", 
+			std::hash<uint32_t>::_Do_hash(((uint32_t)block ^ (uint32_t)state) * state->ip + block->level));
+#else
+		asyncBlock->name = "";
+#endif
+		asyncBlock->func = nullptr;
+		asyncBlock->arguments = 0;
+
+		{
+			frame.push_back(scope_t(asyncBlock->kind));
+
+			parser_state_t newState(state->lex);
+
+			{
+				int totalVar = scan_current_scope(&newState, asyncBlock->level, 0, nullptr);
+				newState.AddCode(asyncBlock, code(command_kind::pc_var_alloc, 0));
+
+				newState.var_count_main = totalVar;
+			}
+
+			parse_statements(asyncBlock, &newState, token_kind::tk_close_cur, token_kind::tk_semicolon);
+			scan_final(asyncBlock, &newState);
+
+			asyncBlock->codes[0].arg0 = newState.var_count_main + newState.var_count_sub;
+
+			frame.pop_back();
+		}
+
+		parser_assert(state, state->next() == token_kind::tk_close_cur, "\"}\" is required.\r\n");
+		state->advance();
+
+		if (asyncBlock->codes.size() > 1)
+			state->AddCode(block, code(command_kind::pc_call, (uint32_t)asyncBlock, 0));
+
+		need_terminator = false;
+		break;
+	}
 	}
 
 	if (check_terminator) {

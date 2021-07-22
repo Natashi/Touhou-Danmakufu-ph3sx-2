@@ -765,16 +765,18 @@ namespace gstd {
 			return value();
 		}
 
-		value val = argv[1];
+		const value& val = argv[1];
 		size_t length = arr->length_as_array();
 
+		bool res = false;
 		for (size_t i = 0; i < length; ++i) {
 			value args[2] = { arr->index_as_array(i), val };
-			if (compare(machine, 2, args).as_int() == 0)
-				return value(script_type_manager::get_boolean_type(), true);
+			if (compare(machine, 2, args).as_int() == 0) {
+				res = true;
+				break;
+			}
 		}
-		
-		return value(script_type_manager::get_boolean_type(), false);
+		return value(script_type_manager::get_boolean_type(), res);
 	}
 
 	const value* BaseFunction::index(script_machine* machine, int argc, value* arr, value* indexer) {
