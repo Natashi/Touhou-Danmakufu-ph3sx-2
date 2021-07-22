@@ -101,8 +101,10 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		dxBackBufferW = config.sizeScreenDisplay_.x;
 		dxBackBufferH = config.sizeScreenDisplay_.y;
 
-		G_DX_COORDS_MUL.x = dxBackBufferW / (float)config.sizeScreen_.x;
-		G_DX_COORDS_MUL.y = dxBackBufferH / (float)config.sizeScreen_.y;
+		float coordRateX = dxBackBufferW / (float)config.sizeScreen_.x;
+		float coordRateY = dxBackBufferH / (float)config.sizeScreen_.y;
+
+		G_DX_COORDS_MUL = std::min(coordRateX, coordRateY);
 	}
 
 	//Fullscreen mode settings

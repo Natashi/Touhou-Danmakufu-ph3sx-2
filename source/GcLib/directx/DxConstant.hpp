@@ -9,4 +9,4 @@
 #include "Vertex.hpp"
 #endif
 
-static D3DXVECTOR2 G_DX_COORDS_MUL = D3DXVECTOR2(1, 1);
+static float G_DX_COORDS_MUL = 1.0f;
