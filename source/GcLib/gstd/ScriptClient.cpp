@@ -139,7 +139,7 @@ static const std::vector<function> commonFunction = {
 	{ "rtoa", ScriptClientBase::Func_RtoA, 1 },
 	{ "rtos", ScriptClientBase::Func_RtoS, 2 },
 	{ "vtos", ScriptClientBase::Func_VtoS, 2 },
-	{ "StringFormat", ScriptClientBase::Func_SPrintF, -4 },		//2 fixed + ... -> 3 minimum
+	{ "StringFormat", ScriptClientBase::Func_StringFormat, -4 },	//2 fixed + ... -> 3 minimum
 	{ "atoi", ScriptClientBase::Func_AtoI, 1 },
 	{ "ator", ScriptClientBase::Func_AtoR, 1 },
 	{ "TrimString", ScriptClientBase::Func_TrimString, 1 },
@@ -1473,14 +1473,15 @@ value ScriptClientBase::Func_VtoS(script_machine* machine, int argc, const value
 
 	return CreateStringValue(StringUtility::ConvertMultiToWide(res));
 }
-value ScriptClientBase::Func_SPrintF(script_machine* machine, int argc, const value* argv) {
+value ScriptClientBase::Func_StringFormat(script_machine* machine, int argc, const value* argv) {
 	std::wstring res = L"";
 	
 	std::wstring srcStr = argv[0].as_string();
 	std::wstring fmtTypes = argv[1].as_string();
 
 	try {
-		if (fmtTypes.size() > argc - 2) throw false;
+		if (fmtTypes.size() != argc - 2)
+			throw L"[invalid argc]";
 
 		std::list<std::wstring> stringCache;
 		std::vector<byte> fakeVaList;
@@ -1512,7 +1513,7 @@ value ScriptClientBase::Func_SPrintF(script_machine* machine, int argc, const va
 				break;
 			}
 			default:
-				throw false;
+				throw L"[invalid format]";
 			}
 
 			fakeVaList.resize(fakeVaList.size() + cpySize);
@@ -1524,8 +1525,8 @@ value ScriptClientBase::Func_SPrintF(script_machine* machine, int argc, const va
 
 		res = StringUtility::Format(srcStr.c_str(), reinterpret_cast<va_list>(fakeVaList.data()));
 	}
-	catch (bool) {
-		res = L"[invalid format]";
+	catch (const wchar_t* err) {
+		res = err;
 	}
 
 	return CreateStringValue(res);
