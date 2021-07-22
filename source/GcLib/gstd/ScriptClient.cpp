@@ -164,6 +164,9 @@ static const std::vector<function> commonFunction = {
 	//Point lists
 	{ "GetPoints_Line", ScriptClientBase::Func_GetPoints_Line, 5 },
 	{ "GetPoints_Circle", ScriptClientBase::Func_GetPoints_Circle, 5 },
+	{ "GetPoints_Ellipse", ScriptClientBase::Func_GetPoints_Ellipse, 7 },
+	{ "GetPoints_EquidistantEllipse", ScriptClientBase::Func_GetPoints_EquidistantEllipse, 7 },
+	{ "GetPoints_RegularPolygon", ScriptClientBase::Func_GetPoints_RegularPolygon, 7 },
 
 
 	//Path utilities
@@ -1805,7 +1808,6 @@ value ScriptClientBase::Func_GetDigitCount(script_machine* machine, int argc, co
 // Args: x1, y1, x2, y2, midpoints
 value ScriptClientBase::Func_GetPoints_Line(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-	script_type_manager* scriptTypeManager = script_type_manager::get_instance();
 	double x1 = argv[0].as_real();
 	double y1 = argv[1].as_real();
 	double x2 = argv[2].as_real();
@@ -1815,44 +1817,178 @@ value ScriptClientBase::Func_GetPoints_Line(gstd::script_machine* machine, int a
 	double gap = 1.0 / (mid + 1.0);
 
 	value res;
-	std::vector<value> resArr;
+	std::vector<value> arr;
 
 	for (size_t i = 0; i < 2 + mid; ++i) {
 		double xy[2] = { Math::Lerp::Linear(x1, x2, i * gap), Math::Lerp::Linear(y1, y2, i * gap) };
 		value v = script->CreateRealArrayValue(xy, 2);
-		resArr.push_back(v);
+		arr.push_back(v);
 	}
 
-	res.reset(scriptTypeManager->get_real_array_type(), resArr);
-	return res;
+	return script->CreateValueArrayValue(arr);
 }
 
-// Args: x, y, radius, angle, count
+// Args: x, y, count, radius, angle
 value ScriptClientBase::Func_GetPoints_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-	script_type_manager* scriptTypeManager = script_type_manager::get_instance();
 	double x = argv[0].as_real();
 	double y = argv[1].as_real();
-	double rad = argv[2].as_real();
-	double dir = argv[3].as_real();
-	size_t cnt = std::max(argv[4].as_int(), 0i64);
+	size_t cnt = std::max(argv[2].as_int(), 0i64);
+	double rad = argv[3].as_real();
+	double dir = Math::DegreeToRadian(argv[4].as_real());
+	
 
 	double gap = GM_PI_X2 / cnt;
 
 	double sc[2];
 
-	value res;
-	std::vector<value> resArr;
+	std::vector<value> arr;
 
 	for (size_t i = 0; i < cnt; ++i) {
-		Math::DoSinCos(rad + i * gap, sc);
+		Math::DoSinCos(dir + i * gap, sc);
 		double xy[2] = { x + sc[1] * rad, y + sc[0] * rad };
 		value v = script->CreateRealArrayValue(xy, 2);
-		resArr.push_back(v);
+		arr.push_back(v);
 	}
 
-	res.reset(scriptTypeManager->get_real_array_type(), resArr);
-	return res;
+	return script->CreateValueArrayValue(arr);
+}
+
+// Args: x, y, count, x rad, y rad, offset angle, rotation angle
+value ScriptClientBase::Func_GetPoints_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	double x = argv[0].as_real();
+	double y = argv[1].as_real();
+	size_t cnt = std::max(argv[2].as_int(), 0i64);
+	double rx = argv[3].as_real();
+	double ry = argv[4].as_real();
+	double a1 = Math::DegreeToRadian(argv[5].as_real());
+	double a2 = Math::DegreeToRadian(argv[6].as_real());
+
+	double gap = GM_PI_X2 / cnt;
+
+	double sc1[2];
+	double sc2[2];
+
+	Math::DoSinCos(a2, sc2);
+
+	std::vector<value> arr;
+
+	for (size_t i = 0; i < cnt; ++i) {
+		Math::DoSinCos(a1 + i * gap, sc1);
+		double _xy[2] = { sc1[1] * rx, sc1[0] * ry };
+
+		double xy[2] = {
+			x + _xy[0] * sc2[1] - _xy[1] * sc2[0],
+			y + _xy[0] * sc2[0] + _xy[1] * sc2[1]
+		};
+
+		value v = script->CreateRealArrayValue(xy, 2);
+		arr.push_back(v);
+	}
+
+	return script->CreateValueArrayValue(arr);
+}
+
+// Args: x, y, count, x rad, y rad, offset angle, rotation angle
+value ScriptClientBase::Func_GetPoints_EquidistantEllipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	double x = argv[0].as_real();
+	double y = argv[1].as_real();
+	size_t cnt = std::max(argv[2].as_int(), 0i64);
+	double rx = argv[3].as_real();
+	double ry = argv[4].as_real();
+	double a1 = Math::DegreeToRadian(argv[5].as_real());
+	double a2 = Math::DegreeToRadian(argv[6].as_real());
+
+	std::vector<std::vector<double>> points;
+
+	double sc1[2];
+	double sc2[2];
+
+	double theta = a1;
+	double delta = 1 / 360.0;
+	int microIntegrals = floor(GM_PI_X2 / delta + 0.5);
+	double circ = 0;
+
+	for (int i = 0; i < microIntegrals; ++i) {
+		theta += delta;
+		Math::DoSinCos(theta, sc1);
+		circ += sqrt((rx * sc1[0]) * (rx * sc1[0]) + (ry * sc1[1]) * (ry * sc1[1]));
+	}
+
+	double next = 0;
+	double run = 0;
+
+	for (int i = 0; i < microIntegrals; ++i) {
+		theta += delta;
+		Math::DoSinCos(theta, sc1);
+		if (floor(cnt * run / circ) >= next) {
+			std::vector<double>vec{ rx * sc1[1], ry * sc1[0] };
+			points.push_back(vec);
+			next++;
+			// theta += skip;
+		}
+
+		run += sqrt((rx * sc1[0]) * (rx * sc1[0]) + (ry * sc1[1]) * (ry * sc1[1]));
+	}
+	
+
+	Math::DoSinCos(a2, sc2);
+
+	std::vector<value> arr;
+
+	for (size_t i = 0; i < cnt; ++i) {
+		std::vector<double>& point = points[i];
+
+		double xy[2] = {
+			x + point[0] * sc2[1] - point[1] * sc2[0],
+			y + point[0] * sc2[0] + point[1] * sc2[1]
+		};
+
+		value v = script->CreateRealArrayValue(xy, 2);
+		arr.push_back(v);
+	}
+
+	return script->CreateValueArrayValue(arr);
+}
+
+// Args: x, y, sides, side skip, midpoints, radius, angle
+value ScriptClientBase::Func_GetPoints_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	double x = argv[0].as_real();
+	double y = argv[1].as_real();
+	size_t side = std::max(argv[2].as_int(), 0i64);
+	size_t skip = std::max(argv[3].as_int(), 0i64);
+	size_t mid = std::max(argv[4].as_int(), 0i64);
+	double rad = argv[5].as_real();
+	double dir = Math::DegreeToRadian(argv[6].as_real());
+
+	double gapS = GM_PI_X2 / side * skip;
+	double gapM = 1.0 / (mid + 1);
+
+	double sc[2];
+
+	std::vector<value> arr;
+	std::vector<std::vector<double>> pts;
+
+	for (size_t i = 0; i < side; ++i) {
+		Math::DoSinCos(dir + i * gapS, sc);
+		std::vector vec{ x + sc[1] * rad, y + sc[0] * rad };
+		pts.push_back(vec);
+	}
+
+	for (size_t i = 0; i < side; ++i) {
+		std::vector<double>& pt1 = pts[i];
+		std::vector<double>& pt2 = pts[(i + skip) % side];
+		for (size_t j = 0; j < mid + 1; ++j) {
+			double xy[2] = { Math::Lerp::Linear(pt1[0], pt2[0], j * gapM), Math::Lerp::Linear(pt1[1], pt2[1], j * gapM) };
+			value v = script->CreateRealArrayValue(xy, 2);
+			arr.push_back(v);
+		}
+	}
+
+	return script->CreateValueArrayValue(arr);
 }
 
 

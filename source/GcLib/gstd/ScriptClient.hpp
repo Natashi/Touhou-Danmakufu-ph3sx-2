@@ -287,6 +287,9 @@ namespace gstd {
 		//Point lists
 		DNH_FUNCAPI_DECL_(Func_GetPoints_Line);
 		DNH_FUNCAPI_DECL_(Func_GetPoints_Circle);
+		DNH_FUNCAPI_DECL_(Func_GetPoints_Ellipse);
+		DNH_FUNCAPI_DECL_(Func_GetPoints_EquidistantEllipse);
+		DNH_FUNCAPI_DECL_(Func_GetPoints_RegularPolygon);
 
 		//Path utility
 		static value Func_GetParentScriptDirectory(script_machine* machine, int argc, const value* argv);
