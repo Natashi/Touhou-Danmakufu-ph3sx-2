@@ -1,67 +1,114 @@
 A mostly-complete history log of engine updates can be found here.
 
 1.22a:
-	- Greatly improved the speed of script code interpretation.
-	- Made the maximum sizes of render targets respect the Direct3D device capabilities.
-	- EV_REQUEST_LIFE now accepts all types of values (will be converted to reals).
-		- In case that an array was passed (multiple bosses), each elements will also be converted to reals.
-	- Direct3D device capabilities will now be checked at the start, and the user will be notified if they are insufficient to run the engine.
-	- Changed the default render priority of items to 40. (Previously 60, what the fuck mkm)
-	- Changed the behaviour of resource pre-loading. (LoadTexture, LoadMesh, etc.)
-		- Loaded resources are no longer script-dependent, they will remain loaded even if the script that loaded them has been closed.
-	- Changed the arguments of ObjPatternShot_AddTransform/ObjPatternShot_SetTransform.
-	- Improved GetObjectDistance.
-	- Introduced the ability to use StartScript a second time without having to use LoadScript again.
-	- Added GetObjectDistanceSq and GetObjectDeltaAngle.
-	- Added an overload each for GetCommonData and GetAreaCommonData.
-	- Added GetSystemTimeMilliS and GetSystemTimeNanoS.
-	- Added SetInvalidPositionReturn, a function for changing the "invalid position" from (0, 0).
-	- Added functions for pointer-based common data access.
-	- Added IsVertexShaderSupported.
-	- Added the ability to set the read offset of .dat archives.
-	- Added new ObjPatternShot transforms.
-		- TRANSFORM_ADDPATTERN_B1
-		- TRANSFORM_ADDPATTERN_B2
-		- Renamed TRANSFORM_ADDPATTERNA1 to TRANSFORM_ADDPATTERN_A1
-		- Renamed TRANSFORM_ADDPATTERNA2 to TRANSFORM_ADDPATTERN_A2
-	- Added back in script source caching, plus the ability to remove a script from the cache.
-		- Added ObjEnemyBossScene_SetUnloadCache.
-	- Added a "Cached Scripts" panel to the Script tab of the LogWindow.
-	- Added an overload for ColorARGBToHex.
-	- Added ObjItem_SetPositionRounding.
-	- Added new maths functions.
-		- log2
-		- logn
-		- erf
-		- gamma
-		- distance
-		- distancesq
-		- dottheta
-		- rdottheta
-		- cbrt
-		- AngularDistance
-		- AngularDistanceR
-	- Added count_rand and count_prand.
-	- Added GetScriptStatus.
-	- Fixed LoadMesh crashing the engine.
-	- Fixed ObjCol_GetListOfIntersectedShotID incorrectly expecting only 1 argument.
-	- Fixed a bug where whitespaces in parameter lists in text object tags are incorrectly parsed.
-	- Fixed a bug where the "Show LogWindow" option would disappear if the game was set to start in (borderless) fullscreen mode.
-	- Fixed an issue where the engine would crash if a parser error was thrown from a script that was being loaded in the load thread.
-	- Fixed the sound streamer behaving incorrectly when playing a .wav file larger than 1MB a second time.
-	- Fixed the Y hitbox scale not affecting the hitboxes of laser objects.
-	- Fixed the LogWindow not able to output logs to file.
-	- Fixed a bug where penetrating player shots may randomly not correctly collide with enemy hitboxes and mess up replays.
-	- Fixed the engine crashing if the stage scene is quit and there is an ObjPatternShot, whose parent is a dead boss object, that wasn't manually deleted.
-	- Fixed the LogWindow's Log tab not horizontally scrolling the newest line into view.
-	- Fixed a bug with the remainder operation where using (kn % -n) or (-kn % n) where (k) is an integer results in (-n).
-	- Fixed crash bugs with ternary statements in the following cases:
-		- let a = [condition ? 0 : 1];
-		- a[condition ? 0 : 1] = 100;
-	- Fixed a package crash that happens when LoadScriptInLoadThread loads a stage script that contains a parser error.
-	- Fixed a bug that made variable-overshadowing a function throw a parser error.
-		- let power = 100;		//This is possible again.
-	- Fixed a bug where an ObjMove would lag for one frame after applying its last AddPattern transform.
+	Changes:
+		- Greatly improved the speed of the script code interpreter.
+		- Made the maximum sizes of render targets respect the Direct3D device capabilities.
+		- EV_REQUEST_LIFE now accepts all types of values (will be converted to reals).
+			- In case that an array was passed (multiple bosses), each elements will also be converted to reals.
+		- Direct3D device capabilities will now be checked at the start, and the user will be notified if they are insufficient to run the engine.
+		- Changed the default render priority of items to 40. (Previously 60, what the fuck mkm)
+		- Changed the behaviour of resource pre-loading. (LoadTexture, LoadMesh, etc.)
+			- Loaded resources are no longer script-dependent, they will remain loaded even if the script that loaded them has been closed.
+		- Changed the arguments of ObjPatternShot_AddTransform/ObjPatternShot_SetTransform.
+		- Improved GetObjectDistance.
+		- Introduced the ability to use StartScript a second time without having to use LoadScript again.
+		- Renamed ObjSound_SetRestartEnable to ObjSound_SetResumeEnable.
+			- Usage unchanged.
+		- Rearranged the arguments of ObjPatternShot_Add/SetTransform.
+		- ObjFile_Store now use the source file's original line endings.
+		- Binary, octal, and hexadecimal number literals now default to int.
+		- Changed the usage of the function "resize".
+		- Improved the speed of boss scene scripts loading.
+	Additions:
+		- Many new additions to the scripting language.
+			- See "New Scripting Features".
+		- Added GetObjectDistanceSq and GetObjectDeltaAngle.
+		- Added an overload each for GetCommonData and GetAreaCommonData.
+		- Added GetSystemTimeMilliS and GetSystemTimeNanoS.
+		- Added SetInvalidPositionReturn, a function for changing the "invalid position" from (0, 0).
+		- Added functions for pointer-based common data access:
+			- LoadCommonDataValuePointer
+			- LoadAreaCommonDataValuePointer
+			- IsValidCommonDataValuePointer
+			- SetCommonDataPtr
+			- GetCommonDataPtr
+		- Added IsVertexShaderSupported.
+		- Added the ability to set the read offset of .dat archives.
+		- Added new ObjPatternShot transforms:
+			- TRANSFORM_ADDPATTERN_B1
+			- TRANSFORM_ADDPATTERN_B2
+			- Renamed TRANSFORM_ADDPATTERNA1 to TRANSFORM_ADDPATTERN_A1
+			- Renamed TRANSFORM_ADDPATTERNA2 to TRANSFORM_ADDPATTERN_A2
+		- Added new ObjPatternShot patterns: (thanks to Naudiz)
+			- PATTERN_LINE
+			- PATTERN_ROSE
+		- Added back in script source caching, plus the ability to remove a script from the cache.
+			- Added ObjEnemyBossScene_SetUnloadCache.
+		- Added a "Cached Scripts" panel to the Script tab of the LogWindow.
+		- Added an overload for ColorARGBToHex.
+		- Added ObjItem_SetPositionRounding.
+		- Added new maths functions:
+			- log2
+			- logn
+			- erf
+			- gamma
+			- distance
+			- distancesq
+			- dottheta
+			- rdottheta
+			- cbrt
+			- AngularDistance
+			- AngularDistanceR
+			- Rotate2D
+			- Rotate3D
+		- Added count_rand, count_prand, reset_count_rand, and reset_count_prand.
+		- Added Interpolate_X and Interpolate_X_PackedInt.
+		- Added GetScriptStatus.
+			- STATUS_LOADING
+			- STATUS_LOADED	
+			- STATUS_RUNNING
+			- STATUS_PAUSED	
+			- STATUS_CLOSING
+			- STATUS_INVALID
+		- Added implicit array casting for initialization, assignment, and concatenation.
+			- Only applicable for int[] <-> real[] <-> null
+		- Added array casting functions:
+			- as_int_array
+			- as_real_array
+			- as_bool_array
+			- as_char_array
+			- as_x_array
+		- Added StringFormat, a string formatting function in the style of C's sprintf.
+		- Added IsIntersected_Circle_RegularPolygon and IsIntersected_Circle_Ellipse.
+		- Added a new array function: contains.
+	Bug fixes:
+		- Fixed LoadMesh crashing the engine.
+		- Fixed ObjCol_GetListOfIntersectedShotID incorrectly expecting only 1 argument.
+		- Fixed a bug where whitespaces in parameter lists in text object tags are incorrectly parsed.
+		- Fixed a bug where the "Show LogWindow" option would disappear if the game was set to start in (borderless) fullscreen mode.
+		- Fixed the sound streamer behaving incorrectly when playing a .wav file larger than 1MB a second time.
+		- Fixed a bug where ObjSound_Seek would be ineffectual if used when the sound isn't playing or within 2 frames after being played.
+		- Fixed the Y hitbox scale not affecting the hitboxes of laser objects.
+		- Fixed the LogWindow not able to output logs to file.
+		- Fixed a bug where penetrating player shots may randomly not correctly collide with enemy hitboxes and mess up replays.
+		- Fixed the engine crashing if the stage scene is quit and there is an ObjPatternShot, whose parent is a dead boss object, that wasn't manually deleted.
+		- Fixed the LogWindow's Log tab not horizontally scrolling the newest line into view.
+		- Fixed a bug with the remainder operation where using (kn % -n) or (-kn % n) where (k) is an integer results in (-n).
+		- Fixed crash bugs with ternary statements in the following cases:
+			- let a = [condition ? 0 : 1];
+			- a[condition ? 0 : 1] = 100;
+		- Fixed a package crash that happens when LoadScriptInLoadThread loads a stage script that contains a parser error.
+		- Fixed a bug that made variable-overshadowing a function throw a parser error.
+			- let power = 100;		//This is possible again.
+		- Fixed a bug where an ObjMove would lag for one frame after applying its last AddPattern transform.
+		- Fixed a "feature" where a multidimensional array can host values of different types.
+		- Fixed a bug where Windows' list-searching feature was interfering with key remapping in the config.
+		- Fixed a bug where empty lines in text file object are skipped over in some devices.
+		- Fixed ObjFileT_SplitLineText having an incorrect return value if the object is invalid.
+		- Fixed an issue where the engine's default 3D render shader and 3D particle list shader don't work on AMD graphics cards.
+		- Fixed a null pointer read crash bug during engine initialization.
+		- Fixed a bug where short-circuited logical expressions would not convert to boolean.
 
 1.21a:
 	- Fixed MatrixMultiply and MatrixDivide functioning incorrectly.
