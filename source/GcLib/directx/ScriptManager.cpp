@@ -372,6 +372,7 @@ static const std::vector<function> managedScriptFunction = {
 static const std::vector<constant> managedScriptConstant = {
 	constant("STATUS_INVALID", ManagedScript::STATUS_INVALID),
 	constant("STATUS_LOADED", ManagedScript::STATUS_LOADED),
+	constant("STATUS_LOADING", ManagedScript::STATUS_LOADING),
 	constant("STATUS_RUNNING", ManagedScript::STATUS_RUNNING),
 	constant("STATUS_PAUSED", ManagedScript::STATUS_PAUSED),
 	constant("STATUS_CLOSING", ManagedScript::STATUS_CLOSING),
@@ -642,8 +643,8 @@ gstd::value ManagedScript::Func_GetScriptStatus(script_machine* machine, int arg
 			res = STATUS_CLOSING;
 		else if (pScript->bRunning_)
 			res = pScript->bPaused_ ? STATUS_PAUSED : STATUS_RUNNING;
-		else if (pScript->bLoad_)
-			res = STATUS_LOADED;
+		else if (pScript->bBeginLoad_)
+			res = pScript->bLoad_ ? STATUS_LOADED : STATUS_LOADING;
 	}
 
 	return CreateIntValue(res);

@@ -192,7 +192,6 @@ static const std::vector<function> dxFunction = {
 	{ "IsIntersected_Circle_Circle", DxScript::Func_IsIntersected_Circle_Circle, 6 },
 	{ "IsIntersected_Line_Circle", DxScript::Func_IsIntersected_Line_Circle, 8 },
 	{ "IsIntersected_Line_Line", DxScript::Func_IsIntersected_Line_Line, 10 },
-
 	{ "IsIntersected_Circle_RegularPolygon", DxScript::Func_IsIntersected_Circle_RegularPolygon, 8 },
 	{ "IsIntersected_Circle_Ellipse", DxScript::Func_IsIntersected_Circle_Ellipse, 8 },
 
@@ -1991,9 +1990,9 @@ gstd::value DxScript::Func_GetObjectDeltaAngle(gstd::script_machine* machine, in
 			D3DXVECTOR3& pos2 = obj2->GetPosition();
 			if (bValid3D && fabs(pos1.z - pos2.z) < 0.01f) {
 				double dot = D3DXVec3Dot(&pos1, &pos2);
-				double len1 = D3DXVec3LengthSq(&pos1);
-				double len2 = D3DXVec3LengthSq(&pos2);
-				res = acos(dot / sqrt(len1 * len2));
+				double len1 = D3DXVec3Length(&pos1);
+				double len2 = D3DXVec3Length(&pos2);
+				res = acos(dot / (len1 * len2));
 			}
 			else {
 				res = atan2(pos2.y - pos1.y, pos2.x - pos1.x);
@@ -2006,14 +2005,17 @@ gstd::value DxScript::Func_GetObject2dPosition(gstd::script_machine* machine, in
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 
+	float listRes[2] = { (float)DxScript::g_posInvalidX_, (float)DxScript::g_posInvalidY_ };
+
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
-	if (obj == nullptr) script->RaiseError("Invalid object; object might have been deleted.");
+	if (obj) {
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+		ref_count_ptr<DxCamera> camera = graphics->GetCamera();
 
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-
-	D3DXVECTOR2 point = camera->TransformCoordinateTo2D(obj->GetPosition());
-	float listRes[2] = { point.x, point.y };
+		D3DXVECTOR2 point = camera->TransformCoordinateTo2D(obj->GetPosition());
+		listRes[0] = point.x;
+		listRes[1] = point.y;
+	}
 
 	return script->CreateRealArrayValue(listRes, 2U);
 }

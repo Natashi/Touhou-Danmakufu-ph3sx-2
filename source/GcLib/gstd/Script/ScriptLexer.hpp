@@ -51,7 +51,7 @@ namespace gstd {
 
 		tk_ALTERNATIVE, tk_CASE, tk_OTHERS,
 		tk_IF, tk_ELSE, tk_LOOP, tk_TIMES, tk_WHILE, tk_FOR, tk_EACH, tk_ASCENT, tk_DESCENT, tk_IN,
-		tk_LOCAL, tk_FUNCTION, tk_SUB, tk_TASK,
+		tk_LOCAL, tk_FUNCTION, tk_SUB, tk_TASK, tk_ASYNC,
 		tk_CONTINUE, tk_BREAK, tk_RETURN,
 		tk_YIELD, tk_WAIT,
 

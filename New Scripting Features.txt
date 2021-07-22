@@ -1,249 +1,715 @@
-- New Keywords
-	- switch
-		Equivalent to "alternative".
-	- default
-		Equivalent to "others".
-	- continue
-		Usage similar to "break", but only skips the current iteration of the loop.
-	- for
-		Used to declare a for loop.
-	- each
-		Used in conjunction with "for" to create a for each loop.
-	- const
-		Used to declare a constant.
-			
-- New Features
-	- Int Types
-		Int types represent integers.
-		Can be declared by suffixing an 'I' or an 'i' to number literals.
-		
-		Example:
-			let a = 5000I;
-			let b = 0xff0fei;
-			let c = -92.24i;	//Will be rounded to -92
-		
-		To advanced scripters, an int is 64 bits large.
-		
-	- Constant Variables
-		Variables whose values cannot be changed.
-		Any attempt to do so will throw a compile-time error.
-		
-		Examples:
-			const a = 50;
-			let b = a + 80;			//OK
-			ascent (i in 0..a) {}	//OK
-			a = 100;				//ERROR
-			a *= 4;					//ERROR
-			
-			for (const a = 0; a < 10; a++) {}	//ERROR
-			for (const a = 0; a < 10; b++) {}	//OK
-			
-	- Function Overloading
-		Functions and tasks can be re-declared with different amount of parameters.
-		
-		Example:
-			function DoStuff() {
-				return 0;
-			}
-			function DoStuff(arg0) {
-				return 100;
-			}
-			function DoStuff(arg0, arg1, arg2, arg3) {
-				return arg0 + arg1 + arg2 + arg3;
-			}
-			
-			DoStuff();				//Returns 0
-			DoStuff("foo");			//Returns 100
-			DoStuff(1, 2, 3, 4)		//Returns 10
-			
-	- Loop Continues
-		Skips the current iteration of the loop it was used in.
-		
-		Example:
-			ascent (i in 0..10) {
-				if (i % 2 == 1) { continue; }
-				WriteLog(i)
-			}
-			//Output: 0 2 4 6 8
-			
-	- For Loops
-		Read "Statements and Flow Controls" or something similar on a decent C/C++ tutorial.
-		
-		Examples:
-			for (let a = 0; a < 6; a++) {}
-			
-			let b = 0;
-			for (b = 6; b >= -10; b--) {}
-			
-			for (let c = []; length(c) < 10; c = c ~ [rand(-10, 10)]) {}
-			
-	- For Each Loops
-		Iterates through an array.
-		Note: You can use either "in" or a colon, it doesn't matter.
-		
-		Examples:
-			let sum = 0;
-			for each (iDigit in [0, 1, 2, 3, 4, 5]) {
-				sum += iDigit;
-			}
-
-			let objArray = [obj1, obj2, obj3, obj4];
-			for each (let iObj : objArray) {
-				Obj_Delete(iObj);
-			}
-
-			for each (iChar in "ph3sx") {
-				WriteLog(iChar);
-			}
-
-			let numArray = [0, 1, 2, 3];
-			for each (iNum in numArray) {
-				numArray = numArray ~ [rand(0, 10)];
-				WriteLog(iNum);
-			}
-			//The code above will produce 0, 1, 2, and finally 3, regardless of modifications to numArray during looping.
-			
-	- Local Blocks
-		What had been:
-			local {
-				//code....
-			}
-		Can now be reduced to simply:
-			{
-				//code....
-			}
-			
-		In short: "local" can be omitted.
-		
-	- Ternary Statements
-		Read "Statements and Flow Controls" or something similar on a decent C/C++ tutorial.
+- Re: Syntax Tutorial
 	
-		let variable = expression1 ? expression2 : expression3;
+	- Number literals
 		
-		**The ternary operator has the lowest operator precedence.
+		- Base literals
+			
+			WriteLog(0b1011);   //Binary literal, outputs 11
+			WriteLog(0o503);    //Octal literal, outputs 323
+			WriteLog(0x8f62);   //Hexadecimal literal, outputs 36706
+			
+			Base literals default to integer type unless suffixed otherwise.
+			
+		- Suffix
+			
+			- "r" / "R"
+				Forces a number literal to a real number type.
+			- "i" / "I"
+				Forces a number literal to an integer type.
+				
+			Example:
+				WriteLog(5);        //5.000000
+				WriteLog(5r);       //5.000000
+				WriteLog(5i);       //5
+				WriteLog(0x5f);     //95
+				WriteLog(0x5fr);    //95.000000
+				WriteLog(0x5fi);    //95
+				WriteLog(7.76);     //7.760000
+				WriteLog(7.76r);    //7.760000
+				WriteLog(7.76i);    //7
+				
+		- Digit separator
+			
+			The "_" character can be used in number literals to aid in visibility.
+			Has no effect on the resultant value.
+			
+			WriteLog(5000000000i);      //5000000000
+			WriteLog(5_000_000_000i);   //still 5000000000
+			WriteLog(0x7f23a7e2);       //2133043170
+			WriteLog(0x7f23_a7e2);      //still 2133043170
+			
+	- Variables
 		
-	- Bitwise Operators
-		Operators are usable in addition to functions.
-	
-		-> Higher operator precedence
-			NOT	(~)
-			AND	(&)
-			OR	(|)
-			XOR	(^^)
-			Left Shift (<<), Right Shift (>>)
-		-> Lower operator precedence
+		- Explicit types
+			
+			Originally, you'd declare a variable with one of these three keywords:
+				- let
+				- var
+				- real
+			All three keywords had the same effect on the declaration.
+			
+			However, with update 1.22a, the scripting language has gone through a considerable amount of changes as follows:
+				- You may now explicitly state the type of the variable you are declaring.
+					
+					Example:
+						int a = 700;            //typeof(a) == VAR_INT
+						real b = 56.243;        //typeof(b) == VAR_REAL
+						char c = '0';           //typeof(c) == VAR_CHAR
+						bool d = false;         //typeof(d) == VAR_BOOL
+						string e = "aubergine"; //typeof(e) == VAR_STRING
+						int[] f = [4i, 8];      //typeof(f) == VAR_ARRAY, ftypeof(f) == VAR_INT
+						
+				- This does not change "let" and "var", they will still behave similarly to "auto" in C++.
+					
+					Example:
+						let a = 700i;           //typeof(a) == VAR_INT
+						let b = 56.243;         //typeof(b) == VAR_REAL
+						let c = '0';            //typeof(c) == VAR_CHAR
+						let d = false;          //typeof(d) == VAR_BOOL
+						let e = "aubergine";    //typeof(e) == VAR_STRING
+						let f = [4i, 8];        //typeof(f) == VAR_ARRAY, ftypeof(f) == VAR_INT
+						
+			- You may not use "let[]" or "const[]".
+				
+				An array type declaration may only be used with a non-auto type.
+				
+		- Multiple variables declaration.
+			
+			Example:
+				int a, b = 7, c = 100, d;       //All will be of type "int"
+				const bool e = true, f = true;  //All will be of type "const bool"
+				let g = 56, h = true, i = 6i;   //g will be "real", h will be "bool", and i will be "int"
+				bool[][][] j, k;                //All will be of type "bool[][][]" (3D bool array)
+				
+		- Using "const"
+			
+			"const" is used to declare constant variables.
+			
+			A standalone "const" will behave like a "let".
+			"const" can be prefixed or suffixed by another type.
+			
+			Constant variables cannot be modified.
+			Attempting to do so will throw a compile-time error.
+			
+			Example:
+				const a = 1;
+				const let b = true;
+				const string c = "xolotl";
+				const int d;
+				
+				a = 6;      //ERROR
+				d = 10;     //ERROR
+				
+		- Supplement for smart people
+			
+			ph3sx script type  |  internal C type  |  size in bytes  |
+			----------------------------------------------------------
+			int                |  int64_t          |  8              |
+			real               |  double           |  8              |
+			bool               |  bool             |  1              |
+			char               |  wchar_t          |  2              |
+			
+	- Scoping
+			
+		- "local" has been deprecated. While they have not yet been completely removed, it is advisable to stop using it.
+			
+			- But what can I use in its place?
+				
+				Nothing.
+				Literally.
+				
+				What used to be:
+				
+					local {
+						//...
+					}
+				
+				can now be reduced to just:
+				
+					{
+						//...
+					}
+					
+				Scoping rules will still apply normally, like so:
+				
+					let a;
+					
+					//Only a is accessible here
+					
+					{
+						let b;
+						
+						//a and b are both accessible here
+						
+						{
+							let c;
+							
+							//a, b, and c are all accessible here
+						}
+					}
+					
+	- Operators
 		
-	- Floored Division
-		A division operation that only returns an integer.
+		All available script operators are listed as follows.
+		They are arranged in order of precedence, highest-to-lowest.
 		
-		Floored Division:
-			~/
-		Floored Division-Assign:
-			~/=
-
-- Optimizations
-	- The engine will now try to perform basic optimizations on maths expressions.
-		Examples:
-			a = 5 + 5 - 1;			->	a = 9;
-			a = 5 * 8 / 7;			->	a = 5.714286;
-			a = func(b) + 5 % 10;	->	a = func(b) + 5;
-
-	- Loops and blocks without code will now be optimized away during script compiling.
-		Examples:
-			while (true) {}
+			1.  ()
+					Function call
+						let c = SomeFunc(a, b);
+			1.  as_x()
+					Type cast
+						let a = as_int(x);
+						let b = as_bool(56);
+			1.  length()
+					Array length
+						let a = length(x);
+						let b = length([1, 2, 3]);
+			1.  []
+					Array indexing
+						let a = arr[3];
+						let b = [10, 100, 1000][x];
+			1.  (| |)
+					Absolute
+						let a = (|-4|);         //a == 4
+						let b = (|a|);          //b == 4
+			1.  ()
+					Parentheses
+			2.  ^
+					Power (Right-associative)
+						let a = 2 ^ 4;          //a == 16
+						let b = 2 ^ 2 ^ 3;      //b == 256
+			2.  [..]
+					Array slice
+						let x = [9, 10, 11, 12, 13];
+						let a = x[0..2];        //a == [9, 10]
+						let b = x[2..999];      //b == [11, 12, 13]
+						let c = x[3..0];        //c == [11, 10, 9]
+			3.  +
+					Unary plus
+						let a = +6;
+			3.  -
+					Unary minus
+						let a = -10;
+			3.  !
+					Unary logical not
+						let a = !b;
+			3.  ~
+					Unary bitwise not
+						let a = ~312;           //a == -313
+						let b = ~(0b1011001);   //b == -90
+			4.  *
+					Multiply
+						let a = 4 * 10;         //a == 40
+			4.  /
+					Divide
+						let a = 10 / 3;         //a == 3.333333
+			4.  ~/
+					Floored divide
+						let a = 10 ~/ 3;        //a == 3
+			4.  %
+					Remainder (Modulo)
+						let a = 7 % 4;          //a == 3
+			5.  +
+					Add
+						let a = 3 + 32;         //a == 35
+			5.  -
+					Subtract
+						let a = 9 - 12;         //a == -3
+			5.  ~
+					Array concatenate
+						let a = [8, 3] ~ [10];  //a == [8, 3, 10]
+			6.  <<
+					Bitwise shift left
+						let a = 7 << 3;         //a == 56
+			6.  >>
+					Bitwise shift right
+						let a = 198 >> 2;       //a == 49
+			7.  ==
+			    !=
+			    <
+			    <=
+			    >
+			    >=
+					Comparison
+						let a = 5 < 6;
+						let b = a != false;
+						let c = 10 >= 10;
+			8.  ^^
+					Bitwise XOR
+						let a = 63 ^^ 234;      //a == 213
+			9.  |
+					Bitwise OR
+						let a = 63 | 234;       //a == 255
+			10. &
+					Bitwise AND
+						let a = 63 & 234;       //a == 42
+			11. ||
+					Logical OR
+						let a = true || false;  //a == true
+			11. &&
+					Logical AND
+						let a = true || false;  //a == false
+			12. ?:
+					Ternary expression
+						let a = x > y ? 10 : 20;
+						let b = z == 0 ? x * 10 : y + 4;
+						let c = k ? (y ? 8 : 0) : p ? 5 : 2 + x;
+						
+	- Boolean expressions
+		
+		- Short-circuiting
 			
-			for (let i = 0; i < 10; i++) {}
+			This feature was present in vanilla ph3 as well, but I have yet to see a tutorial mention it, so here it is.
 			
-			ascent (i in 0..100000000000) {}
-
-			{
-			}
+			Short-circuiting (short-circuit evaluation) is an optimization for boolean expressions.
 			
-			loop (1000) {
-			}
-
-			for each (i in "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") {}
+			Take these statements, for example:
+				bool c = a && b;
+				bool z = x || y;
+				
+			This !RUN-TIME! optimization will occur when expression (a) evaluates to false, 
+				where the evaluation of expression (b) will be completely skipped over.
+			Conversely, in the second statement, the evaluation of expression (y) will also be skipped over if
+				expression (x) evaluates to true.
 			
-	- Loops containing a single yield will be automatically transformed into a wait.
-		Examples:
-			loop (60) { yield; }		//-> wait(60);
+			Short-circuiting will take place left-to-right, so it is beneficial to format your logical expressions
+				in a way that more lightweight expressions take place earlier rather than later.
 			
-			let a = 100;
-			loop (a * 2 + 60 - 20) {	//-> wait(a * 2 + 60 - 20);
-				yield;
-			}
-
-- Behaviour Changes
-	- "break;" will no longer cause catastrophes when used outside loops, as its scope of operation no longer extends beyond a task/function.
-	- Backslash escapes (\\) can now be used in char/string values.
-	- A hexadecimal char literal (\x[hex]) can now be used in char/string values.
+			Example:
+				if (bCheckHit && GetShotIdInCircleA2(...)) { /*...*/ }
+				
+				would benefit more from short-circuit evaluation than
+				
+				if (GetShotIdInCircleA2(...) && bCheckHit) { /*...*/ }
+				
+			Short-circuiting only applies to logical expressions, not bitwise expressions.
+			
+			Example:
+				bool c = a & b;
+				
+			Here, both expressions (a) and (b) will be evaluated regardless of the result of expression (a).
+			
+	- Loops
+		
+		- Ascent/Descent
+			
+			Ascent and descent loops remain unchanged, but you may now assign an explicit type to the counter variable.
+			
+			Example:
+				
+				ascent (i in 0..3)
+					WriteLog(i);
+				
+				Will result in the following output:
+					0.000000
+					1.000000
+					2.000000
+				
+				//-----------------------------------------------
+				
+				ascent (i in 0i..3)
+					WriteLog(i);
+				
+				Will result in the following output:
+					0
+					1
+					2
+				
+				//-----------------------------------------------
+				
+				ascent (int i in 0..3)
+					WriteLog(i);
+				
+				Will result in the following output:
+					0
+					1
+					2
+					
+		- In ph3sx, two new loops are available for use.
+			
+			- For loop
+				
+				The for loop is the more generalized version of ascent/descent loops.
+				
+				It's also the standard loop format in most programming languages, 
+					which means I don't have to explain its usage here.
+				
+			- For-each loop
+			
+				The for-each loop is a quick and efficient method to iterate through arrays.
+				
+				Example:
+					
+					int[] arr = [10, 9, 8, 7];
+					for each (int i in arr)
+						WriteLog(i);
+						
+					Will result in the following output:
+						10
+						9
+						8
+						7
+						
+					//-----------------------------------------------
+						
+					for each (real i in arr)
+						WriteLog(i);
+						
+					Will result in the following output:
+						10.000000
+						9.000000
+						8.000000
+						7.000000
+					
+				- The "ref" keyword
+					
+					Normally, the array fed into a for-each loop will be a copy of the original array.
+					However, you can force the loop to directly read from the original array with the "ref" keyword.
+					
+					As the array won't be copied, there would also be some performance benefits to be had, 
+						and the loop will respond to any modifications to the array rather than being unaffected.
+					
+					Example:
+						
+						int[] arr = [1, 2, 3, 4];
+						
+						for each (i in arr) {
+							if (i % 2 == 0)
+								arr ~= [5];
+							WriteLog(i);
+						}
+						WriteLog(arr);
+						
+						Will result in the following output:
+							1
+							2
+							3
+							4
+							[1, 2, 3, 4, 5, 5]
+							
+						//-----------------------------------------------
+							
+						for each (i in ref arr) {
+							if (i % 2 == 0)
+								arr ~= [5];
+							WriteLog(i);
+						}
+						WriteLog(arr);
+						
+						Will result in the following output:
+							1
+							2
+							3
+							4
+							5
+							5
+							[1, 2, 3, 4, 5, 5]
+							
+				- Special syntaxes
+					
+					- There is also another declaration syntax for the for-each loop:
+					
+						{
+							int i = 0;
+							for each (itr in array) {
+								//...
+								i++;
+							}
+						}
+						
+						//is equivalent to:
+						
+						for each (i, itr in array) {
+							//...
+						}
+						
+						- These formats are also allowed:
+						
+							for each ((i, itr) in array) { /*...*/ }
+							for each ((int i, itr) in array) { /*...*/ }
+							for each (i, real itr in array) { /*...*/ }
+							for each ((real i, string itr) in array) { /*...*/ }
+							
+					- You may use a colon(:) in place of the keyword "in"
+					
+						for each (itr : array) { /*...*/ }
+						for each ((i, itr) : array) { /*...*/ }
+						
+		- In addition, there is a new flow control statement "continue".
+			
+			"continue" is used in the same manner as "break", but rather than simply ending the loop,
+				it will merely skip the current iteration of the loop.
+				
+				Example:
+					
+					ascent (int i in 0..8) {
+						if (i % 2 == 0) continue;
+						WriteLog(i);
+					}
+					
+					Will result in the following output:
+						1
+						3
+						5
+						7
+						
+		- Unlike in vanilla ph3, "break" can no longer be used outside a loop.
+			- Attempting to do so will throw a compile-time error.
+			- The same applies to "continue".
+			
+	- Functions, Tasks, Subs ("Callables")
+				
+		- Parameters
+			
+			Parameters, like variables, can have explicit types.
+			
+			Example:
+				
+				function Func(int a, real b, const string[] c) {}
+				
+		- Function return type
+			
+			- You may explicitly specify a function's return type.
+				
+				function<int> Func1(a, b) {
+					return a + b;
+				}
+				
+				WriteLog(Func1(10, 4.2));       //Output: 14
+				WriteLog(Func1(10, "sdfs"));    //ERROR: Invalid implicit casting
+				
+			- Marking a function with type "void" will forbid it from returning a value.
+			
+				function<void> Func1(a, b) {
+					return;         //OK: no return value
+				}
+				
+				function<void> Func2(a, b) {
+					return a + b;   //ERROR: void function can't return a value
+				}
+				
+		- Overloading
+			
+			Two callables with the same name, but different argument counts, will be treated as two different, unique callables.
+			
+			Example:
+				
+				function<int> Func() {
+					return 0;
+				}
+				function<int> Func(a) {
+					return 100;
+				}
+				function<int> Func(a, b, c) {
+					return a + b + c;
+				}
+				
+				DoStuff();              //Returns 0
+				DoStuff("asdf");        //Returns 100
+				DoStuff(1, 2, 3);       //Returns 6
+				
+		- Variadic argument count (varargs)
+			
+			- Some default functions now allow for varargs.
+				
+				Example:
+					
+					NotifyEventAll(EV_USER, 0);
+					NotifyEventAll(EV_USER, 0, 1, 2, 3);
+					NotifyEventAll(EV_USER, 0, 1, 2, 3, 4, 5, 6, 7, 8);
+					
+					//All of the above are valid calls to NotifyEventAll.
+					
+			- You can pass a maximum of around 357900000 arguments, but please please don't actually do that.
+			
+			- Scripters currently cannot define their own callables with varargs.
+			
+	- Async
+		
+		Async blocks can be placed anywhere in the code, they behave like inlined tasks.
+		
 		Example:
-			"\x74"			-> "t"
-			'\x3042'		-> 'あ'
-			"\x042\x5f"		-> "B_"
-	- One-lined statements.
-		Example:
-			ascent (i in 0..10) WriteLog(i);
 			
-			if (true) a += 10;
-			else a -= 4;
+			function Func() {
+				WriteLog(0);
+				
+				async {
+					WriteLog(1);
+					wait(10);
+					WriteLog(2);
+				}
+				
+				return true;
+			}
 			
-		Can be used everywhere except function/task/sub declarations, @-blocks, and local{} blocks.
-
-- Others
-	- Some default functions now allow for variadic argument counts.
-	
+			//is equivalent to:
+			
+			function Func() {
+				WriteLog(0);
+				
+				task AsyncTask() {
+					WriteLog(1);
+					wait(10);
+					WriteLog(2);
+				}
+				AsyncTask();
+				
+				return true;
+			}
+			
+	- Script
+		
+		- Char
+			
+			- Backslash escapes (\\) is properly recognized in char/string literals.
+			- Hexadecimal char literals (\x[hex]) can be used in char/string literals.
+				Example:
+					"\x74"          -> "t"
+					'\x3042'        -> 'あ'
+					"\x042\x5f"     -> "B_"
+				
+		- One-lined statements
+			
+			Example:
+				
+				ascent (i in 0..10) WriteLog(i);
+				
+				if (true) a += 10;
+				else a -= 4;
+				
+			Can be used everywhere except in function/task/sub declarations, async blocks, @-blocks, and local{} blocks.
+			
+	- Optimizations
+		
+		- The script compiler will try to perform basic optimizations on maths expressions.
+			
+			Examples:
+				
+				a = 5 + 5 - 1;          -> optimize ->  a = 9;
+				a = 5 * 8 / 7;          -> optimize ->  a = 5.714286;
+				a = func(b) + 5 % 10;   -> optimize ->  a = func(b) + 5;
+				
+		- Empty loops and blocks will be optimized away during script compiling.
+			
+			Examples:
+				
+				while (true) {}
+				
+				for (let i = 0; i < 10; i++) {}
+				
+				ascent (i in 0..100000000) {}
+				
+				{
+				}
+				
+				loop (1000) {
+				}
+				
+				for each (i in "aaaaaaaaaa") {}
+				
+				async {}
+				
+				//All of the above examples will be optimized away
+				
+		- Loops containing a single yield will be automatically transformed into a wait.
+			
+			Examples:
+				
+				loop (60) yield;            -> optimize ->  wait(60);
+				
+				loop (a * 2 + 60 - 20) {    -> optimize ->  wait(a * 2 + 60 - 20);
+					yield;
+				}
+				
 - Text Object Tags
-	Text object tags are special formatting patterns that are used to dynamically modify text objects.
+	
+	Text object tags are special formatting patterns that can be used to dynamically alter rendering of text objects.
 	
 	Available tags:
-	
-		r
+		
+		- r
+			
 			Inserts a new line. Also resets formatting from other tags.
 			
-		font/f
+		- font / f
+			
 			Modifies the font.
 			
-			Available tag arguments:
-				reset/rs/r/clear/clr/c
-					Resets the text to its original settings.  Present in vanilla ph3 as "clear".
-				size/sz
-					Changes the font size. Unchanged from vanilla ph3.
-				ox/oy
-					Changes the position offset.
-				it
-					Toggles italic. (true/false or 1/0)
-				wg
-					Changes the font's weight.
-				br/bg/bb
-					Changes the font's bottom color.
-				tr/tg/tb
-					Changes the font's top color.
-				or/og/ob
-					Changes the font's border color.
-				bc
-					Changes the font's bottom color as a (r, g, b) list.
-				tc
-					Changes the font's top color as a (r, g, b) list.
-				oc
-					Changes the font's border color as a (r, g, b) list.
-		
-			Usage example:
-				ObjText_SetText(obj, "Lorem ipsum [font size=48 it=1 bc=(255, 0, 0)]dolor sit[font clear] amet");
+			Available tag properties:
 				
-		ruby
-			Creates a ruby/furigana text.
+				- reset / rs / r / clear / clr / c
+					
+					Resets the text to its original settings.  Present in vanilla ph3 as "clear".
+					
+				- size / sz
+					
+					Changes the font size. Unchanged from vanilla ph3.
+					
+				- ox / oy
+					
+					Changes the position offset.
+					
+				- it
+					
+					Toggles italic. (true/false or 1/0)
+					
+				- wg
+					
+					Changes the font's weight.
+					
+				- br / bg / bb
+					
+					Changes the font's bottom color.
+					
+				- tr / tg / tb
+					
+					Changes the font's top color.
+					
+				- or / og / ob
+					
+					Changes the font's border color.
+					
+				- bc
+					
+					Changes the font's bottom color as a (r, g, b) list.
+					
+				- tc
+					
+					Changes the font's top color as a (r, g, b) list.
+					
+				- oc
+					
+					Changes the font's border color as a (r, g, b) list.
+					
+			Example:
+				
+				ObjText_SetText(obj, "Lorem ipsum [font size=48 it=1 bc=(255, 0, 0)]dolor sit[font clr] amet");
+				
+		- ruby
 			
-			Available tag arguments:
-				rb
-					Sets the main text. Unchanged from vanilla ph3.
-				rt
-					Sets the furigana. Unchanged from vanilla ph3.
-				sz
-					Changes the furigana's font size.
-				wg
-					Changes the furigana's font weight.
-				ox
-					Changes the furigana's left margin.
-				op
-					Changes the furigana's side pitch.
+			Creates a ruby(furigana) text.
+			
+			Available tag properties:
+				
+				- rb
+					
+					Sets the main(bottom) text. Unchanged from vanilla ph3.
+				- rt
+					
+					Sets the furigana(top) text. Unchanged from vanilla ph3.
+				- sz
+					
+					Changes the furigana text's font size.
+					
+				- wg
+					
+					Changes the furigana text's font weight.
+					
+				- ox
+					
+					Changes the furigana text's left margin.
+					
+				- op
+					
+					Changes the furigana text's side pitch.
+					

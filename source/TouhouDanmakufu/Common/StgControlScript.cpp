@@ -1304,8 +1304,7 @@ void ScriptInfoPanel::Update(StgSystemController* systemController) {
 			for (auto itr = pCacheMap.cbegin(); itr != pCacheMap.cend(); ++itr, ++iCache) {
 				const ref_count_ptr<ScriptEngineData>& pData = itr->second;
 
-				//-1 from in the cache map itself
-				size_t uses = pData.use_count() >= 1 ? (pData.use_count() - 1) : 0;
+				size_t uses = pData.use_count();
 				std::wstring path = PathProperty::GetPathWithoutModuleDirectory(pData->GetPath());
 
 				wndCache_.SetText(iCache, 0, StringUtility::Format(L"%u", uses));

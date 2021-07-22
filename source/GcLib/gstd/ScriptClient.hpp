@@ -269,7 +269,7 @@ namespace gstd {
 		static value Func_RtoA(script_machine* machine, int argc, const value* argv);
 		static value Func_RtoS(script_machine* machine, int argc, const value* argv);
 		static value Func_VtoS(script_machine* machine, int argc, const value* argv);
-		DNH_FUNCAPI_DECL_(Func_SPrintF);
+		DNH_FUNCAPI_DECL_(Func_StringFormat);
 		static value Func_AtoI(script_machine* machine, int argc, const value* argv);
 		static value Func_AtoR(script_machine* machine, int argc, const value* argv);
 		static value Func_TrimString(script_machine* machine, int argc, const value* argv);

@@ -97,6 +97,7 @@ namespace directx {
 			TYPE_ALL = -1,
 
 			STATUS_INVALID = 0,
+			STATUS_LOADING,
 			STATUS_LOADED,
 			STATUS_RUNNING,
 			STATUS_PAUSED,
