@@ -4,9 +4,9 @@
 		
 		- Base literals
 			
-			WriteLog(0b1011);	//Binary literal, outputs 11
-			WriteLog(0o503);	//Octal literal, outputs 323
-			WriteLog(0x8f62);	//Hexadecimal literal, outputs 36706
+			WriteLog(0b1011);   //Binary literal, outputs 11
+			WriteLog(0o503);    //Octal literal, outputs 323
+			WriteLog(0x8f62);   //Hexadecimal literal, outputs 36706
 			
 			Base literals default to integer type unless suffixed otherwise.
 			
@@ -18,25 +18,25 @@
 				Forces a number literal to an integer type.
 				
 			Example:
-				WriteLog(5);		//5.000000
-				WriteLog(5r);		//5.000000
-				WriteLog(5i);		//5
-				WriteLog(0x5f);		//95
-				WriteLog(0x5fr);	//95.000000
-				WriteLog(0x5fi);	//95
-				WriteLog(7.76);		//7.760000
-				WriteLog(7.76r);	//7.760000
-				WriteLog(7.76i);	//7
+				WriteLog(5);        //5.000000
+				WriteLog(5r);       //5.000000
+				WriteLog(5i);       //5
+				WriteLog(0x5f);     //95
+				WriteLog(0x5fr);    //95.000000
+				WriteLog(0x5fi);    //95
+				WriteLog(7.76);     //7.760000
+				WriteLog(7.76r);    //7.760000
+				WriteLog(7.76i);    //7
 				
 		- Digit separator
 			
 			The "_" character can be used in number literals to aid in visibility.
 			Has no effect on the resultant value.
 			
-			WriteLog(5000000000i);		//5000000000
-			WriteLog(5_000_000_000i);	//still 5000000000
-			WriteLog(0x7f23a7e2);		//2133043170
-			WriteLog(0x7f23_a7e2);		//still 2133043170
+			WriteLog(5000000000i);      //5000000000
+			WriteLog(5_000_000_000i);   //still 5000000000
+			WriteLog(0x7f23a7e2);       //2133043170
+			WriteLog(0x7f23_a7e2);      //still 2133043170
 			
 	- Variables
 		
@@ -56,8 +56,8 @@
 						real b = 56.243;        //typeof(b) == VAR_REAL
 						char c = '0';           //typeof(c) == VAR_CHAR
 						bool d = false;         //typeof(d) == VAR_BOOL
-						string e = "aubergine";	//typeof(e) == VAR_STRING
-						int[] f = [4i, 8];		//typeof(f) == VAR_ARRAY, ftypeof(f) == VAR_INT
+						string e = "aubergine"; //typeof(e) == VAR_STRING
+						int[] f = [4i, 8];      //typeof(f) == VAR_ARRAY, ftypeof(f) == VAR_INT
 						
 				- This does not change "let" and "var", they will still behave similarly to "auto" in C++.
 					
@@ -66,8 +66,8 @@
 						let b = 56.243;         //typeof(b) == VAR_REAL
 						let c = '0';            //typeof(c) == VAR_CHAR
 						let d = false;          //typeof(d) == VAR_BOOL
-						let e = "aubergine";	//typeof(e) == VAR_STRING
-						let f = [4i, 8];		//typeof(f) == VAR_ARRAY, ftypeof(f) == VAR_INT
+						let e = "aubergine";    //typeof(e) == VAR_STRING
+						let f = [4i, 8];        //typeof(f) == VAR_ARRAY, ftypeof(f) == VAR_INT
 						
 			- You may not use "let[]" or "const[]".
 				
@@ -76,10 +76,10 @@
 		- Multiple variables declaration.
 			
 			Example:
-				int a, b = 7, c = 100, d;		//All will be of type "int"
-				const bool e = true, f = true;	//All will be of type "const bool"
-				let g = 56, h = true, i = 6i;	//g will be "real", h will be "bool", and i will be "int"
-				bool[][][] j, k;				//All will be of type "bool[][][]" (3D bool array)
+				int a, b = 7, c = 100, d;       //All will be of type "int"
+				const bool e = true, f = true;  //All will be of type "const bool"
+				let g = 56, h = true, i = 6i;   //g will be "real", h will be "bool", and i will be "int"
+				bool[][][] j, k;                //All will be of type "bool[][][]" (3D bool array)
 				
 		- Using "const"
 			
@@ -97,8 +97,8 @@
 				const string c = "xolotl";
 				const int d;
 				
-				a = 6;		//ERROR
-				d = 10;		//ERROR
+				a = 6;      //ERROR
+				d = 10;     //ERROR
 				
 		- Supplement for smart people
 			
@@ -170,20 +170,20 @@
 						let b = [10, 100, 1000][x];
 			1.  (| |)
 					Absolute
-						let a = (|-4|);		//a == 4
-						let b = (|a|);		//b == 4
+						let a = (|-4|);         //a == 4
+						let b = (|a|);          //b == 4
 			1.  ()
 					Parentheses
 			2.  ^
 					Power (Right-associative)
-						let a = 2 ^ 4;		//a == 16
-						let b = 2 ^ 2 ^ 3;	//b == 256
+						let a = 2 ^ 4;          //a == 16
+						let b = 2 ^ 2 ^ 3;      //b == 256
 			2.  [..]
 					Array slice
 						let x = [9, 10, 11, 12, 13];
-						let a = x[0..2];		//a == [9, 10]
-						let b = x[2..999];		//b == [11, 12, 13]
-						let c = x[3..0];		//c == [11, 10, 9]
+						let a = x[0..2];        //a == [9, 10]
+						let b = x[2..999];      //b == [11, 12, 13]
+						let c = x[3..0];        //c == [11, 10, 9]
 			3.  +
 					Unary plus
 						let a = +6;
@@ -195,35 +195,35 @@
 						let a = !b;
 			3.  ~
 					Unary bitwise not
-						let a = ~312;			//a == -313
-						let b = ~(0b1011001);	//b == -90
+						let a = ~312;           //a == -313
+						let b = ~(0b1011001);   //b == -90
 			4.  *
 					Multiply
-						let a = 4 * 10;			//a == 40
+						let a = 4 * 10;         //a == 40
 			4.  /
 					Divide
-						let a = 10 / 3;			//a == 3.333333
+						let a = 10 / 3;         //a == 3.333333
 			4.  ~/
 					Floored divide
-						let a = 10 ~/ 3;		//a == 3
+						let a = 10 ~/ 3;        //a == 3
 			4.  %
 					Remainder (Modulo)
-						let a = 7 % 4;			//a == 3
+						let a = 7 % 4;          //a == 3
 			5.  +
 					Add
-						let a = 3 + 32;			//a == 35
+						let a = 3 + 32;         //a == 35
 			5.  -
 					Subtract
-						let a = 9 - 12;			//a == -3
+						let a = 9 - 12;         //a == -3
 			5.  ~
 					Array concatenate
-						let a = [8, 3] ~ [10];	//a == [8, 3, 10]
+						let a = [8, 3] ~ [10];  //a == [8, 3, 10]
 			6.  <<
 					Bitwise shift left
-						let a = 7 << 3;			//a == 56
+						let a = 7 << 3;         //a == 56
 			6.  >>
 					Bitwise shift right
-						let a = 198 >> 2;		//a == 49
+						let a = 198 >> 2;       //a == 49
 			7.  ==
 			    !=
 			    <
@@ -236,19 +236,19 @@
 						let c = 10 >= 10;
 			8.  ^^
 					Bitwise XOR
-						let a = 63 ^^ 234;		//a == 213
+						let a = 63 ^^ 234;      //a == 213
 			9.  |
 					Bitwise OR
-						let a = 63 | 234;		//a == 255
+						let a = 63 | 234;       //a == 255
 			10. &
 					Bitwise AND
-						let a = 63 & 234;		//a == 42
+						let a = 63 & 234;       //a == 42
 			11. ||
 					Logical OR
-						let a = true || false;	//a == true
+						let a = true || false;  //a == true
 			11. &&
 					Logical AND
-						let a = true || false;	//a == false
+						let a = true || false;  //a == false
 			12. ?:
 					Ternary expression
 						let a = x > y ? 10 : 20;
@@ -336,7 +336,7 @@
 				
 			- For-each loop
 			
-				The for-each loop is a handy and efficient method to iterate through arrays.
+				The for-each loop is a quick and efficient method to iterate through arrays.
 				
 				Example:
 					
@@ -475,17 +475,17 @@
 					return a + b;
 				}
 				
-				WriteLog(Func1(10, 4.2));		//Output: 14
-				WriteLog(Func1(10, "sdfs"));	//ERROR: Invalid implicit casting
+				WriteLog(Func1(10, 4.2));       //Output: 14
+				WriteLog(Func1(10, "sdfs"));    //ERROR: Invalid implicit casting
 				
 			- Marking a function with type "void" will forbid it from returning a value.
 			
 				function<void> Func1(a, b) {
-					return;			//OK: no return value
+					return;         //OK: no return value
 				}
 				
 				function<void> Func2(a, b) {
-					return a + b;	//ERROR: void function can't return a value
+					return a + b;   //ERROR: void function can't return a value
 				}
 				
 		- Overloading
@@ -504,9 +504,9 @@
 					return a + b + c;
 				}
 				
-				DoStuff();				//Returns 0
-				DoStuff("asdf");		//Returns 100
-				DoStuff(1, 2, 3)		//Returns 6
+				DoStuff();              //Returns 0
+				DoStuff("asdf");        //Returns 100
+				DoStuff(1, 2, 3);       //Returns 6
 				
 		- Variadic argument count (varargs)
 			
@@ -526,7 +526,7 @@
 			
 	- Async
 		
-		Async blocks an be placed anywhere in the code, they behave like inlined tasks.
+		Async blocks can be placed anywhere in the code, they behave like inlined tasks.
 		
 		Example:
 			
@@ -564,9 +564,9 @@
 			- Backslash escapes (\\) is properly recognized in char/string literals.
 			- Hexadecimal char literals (\x[hex]) can be used in char/string literals.
 				Example:
-					"\x74"			-> "t"
-					'\x3042'		-> 'あ'
-					"\x042\x5f"		-> "B_"
+					"\x74"          -> "t"
+					'\x3042'        -> 'あ'
+					"\x042\x5f"     -> "B_"
 				
 		- One-lined statements
 			
@@ -585,9 +585,9 @@
 			
 			Examples:
 				
-				a = 5 + 5 - 1;			-> optimize ->	a = 9;
-				a = 5 * 8 / 7;			-> optimize ->	a = 5.714286;
-				a = func(b) + 5 % 10;	-> optimize ->	a = func(b) + 5;
+				a = 5 + 5 - 1;          -> optimize ->  a = 9;
+				a = 5 * 8 / 7;          -> optimize ->  a = 5.714286;
+				a = func(b) + 5 % 10;   -> optimize ->  a = func(b) + 5;
 				
 		- Empty loops and blocks will be optimized away during script compiling.
 			
@@ -615,9 +615,9 @@
 			
 			Examples:
 				
-				loop (60) yield;			-> optimize ->	wait(60);
+				loop (60) yield;            -> optimize ->  wait(60);
 				
-				loop (a * 2 + 60 - 20) {	-> optimize ->	wait(a * 2 + 60 - 20);
+				loop (a * 2 + 60 - 20) {    -> optimize ->  wait(a * 2 + 60 - 20);
 					yield;
 				}
 				
