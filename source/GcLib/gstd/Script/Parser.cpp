@@ -137,6 +137,7 @@ static const std::vector<function> base_operations = {
 	{ "remainder", BaseFunction::remainder_, 2 },
 	{ "modc", BaseFunction::modc, 2 },
 	{ "modf", BaseFunction::modf, 1 },
+	{ "apo", BaseFunction::apo, 1 },
 	{ "power", BaseFunction::power, 2 },
 
 	{ "as_int_array", BaseFunction::cast_int_array, 1 },

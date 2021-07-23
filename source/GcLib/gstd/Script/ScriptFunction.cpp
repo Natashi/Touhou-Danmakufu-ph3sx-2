@@ -649,6 +649,13 @@ namespace gstd {
 		return value(script_type_manager::get_real_type(), r);
 	}
 
+	//Allows for non-integer side counts because A. no division by 0 errors and B. why not 
+	DNH_FUNCAPI_DEF_(BaseFunction::apo) {
+		double n = argv->as_real();
+		double r = n > 2 ? cos(GM_PI / n) : 0;
+		return value(script_type_manager::get_real_type(), r);
+	}
+
 	DNH_FUNCAPI_DEF_(BaseFunction::predecessor) {
 		_null_check(machine, argv, argc);
 

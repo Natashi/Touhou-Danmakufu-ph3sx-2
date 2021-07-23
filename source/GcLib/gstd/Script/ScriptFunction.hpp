@@ -103,6 +103,7 @@ namespace gstd {
 
 		DNH_FUNCAPI_DECL_(modc);
 		DNH_FUNCAPI_DECL_(modf);
+		DNH_FUNCAPI_DECL_(apo);
 		DNH_FUNCAPI_DECL_(predecessor);
 		DNH_FUNCAPI_DECL_(successor);
 
