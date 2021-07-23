@@ -19,6 +19,9 @@ StgSystemController::~StgSystemController() {
 		scriptEngineCache_->Clear();
 	if (DxScriptResourceCache* dxRsrcCache = DxScriptResourceCache::GetBase())
 		dxRsrcCache->ClearResource();
+
+	if (auto camera2D = DirectGraphics::GetBase()->GetCamera2D())
+		camera2D->ResetAll();
 }
 void StgSystemController::Initialize(ref_count_ptr<StgSystemInformation> infoSystem) {
 	base_ = this;
