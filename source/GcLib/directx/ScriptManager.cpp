@@ -26,15 +26,21 @@ void ScriptManager::Work() {
 }
 void ScriptManager::Work(int targetType) {
 	bHasCloseScriptWork_ = false;
+
+	LARGE_INTEGER startTime, endTime;
+	LARGE_INTEGER timeFreq;
+	QueryPerformanceFrequency(&timeFreq);
 	
 	for (auto itr = listScriptRun_.begin(); itr != listScriptRun_.end(); ) {
 		shared_ptr<ManagedScript> script = *itr;
 		int type = script->GetScriptType();
 		if (script->IsPaused() || (targetType != ManagedScript::TYPE_ALL && targetType != type)) {
+			script->runTime_ = 0;
 			++itr;
 			continue;
 		}
 
+		QueryPerformanceCounter(&startTime);
 		if (script->IsEndScript()) {
 			std::map<std::string, script_block*>::iterator itrEvent;
 			if (script->IsEventExists("Finalize", itrEvent))
@@ -51,6 +57,9 @@ void ScriptManager::Work(int targetType) {
 			bHasCloseScriptWork_ |= script->IsEndScript();
 			++itr;
 		}
+		QueryPerformanceCounter(&endTime);
+
+		script->runTime_ = (endTime.QuadPart - startTime.QuadPart) * 1000000ULL / timeFreq.QuadPart;
 	}
 }
 void ScriptManager::Render() {
@@ -391,6 +400,8 @@ ManagedScript::ManagedScript() {
 	bAutoDeleteObject_ = false;
 	bRunning_ = false;
 	bPaused_ = false;
+
+	runTime_ = 0;
 
 	typeEvent_ = -1;
 	listValueEvent_ = nullptr;

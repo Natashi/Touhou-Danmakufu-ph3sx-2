@@ -1155,8 +1155,8 @@ bool ScriptInfoPanel::_AddedLogger(HWND hTab) {
 	wndScript_.AddColumn(60, 2, L"Type");
 	wndScript_.AddColumn(224, 3, L"Name");
 	wndScript_.AddColumn(64, 4, L"Status");
-	wndScript_.AddColumn(92, 5, L"Task Count");
-	wndScript_.AddColumn(72, 6, L"Rand Seed");
+	wndScript_.AddColumn(80, 5, L"Task Count");
+	wndScript_.AddColumn(80, 6, L"CPU Time (μs)");
 
 	wndSplitter_.Create(hWnd_, WSplitter::TYPE_HORIZONTAL);
 	wndSplitter_.SetRatioY(0.5f);
@@ -1348,7 +1348,7 @@ void ScriptInfoPanel::Update(StgSystemController* systemController) {
 						StringUtility::Format(L"%s", PathProperty::GetFileName(script->GetPath()).c_str()));
 					wndScript_.SetText(iScript, 4, status);
 					wndScript_.SetText(iScript, 5, StringUtility::Format(L"%u", script->GetThreadCount()));
-					wndScript_.SetText(iScript, 6, StringUtility::Format(L"%08x", script->GetRand()->GetSeed()));
+					wndScript_.SetText(iScript, 6, StringUtility::Format(L"%u", script->GetScriptRunTime()));
 				};
 
 				ScriptManager* manager = vecScriptManager[selectedIndex];

@@ -117,6 +117,8 @@ namespace directx {
 		bool bRunning_;
 		bool bPaused_;
 
+		uint64_t runTime_;
+
 		int typeEvent_;
 		gstd::value* listValueEvent_;
 		size_t listValueEventSize_;
@@ -142,6 +144,8 @@ namespace directx {
 		void SetAutoDeleteObject(bool bEnable) { bAutoDeleteObject_ = bEnable; }
 		bool IsRunning() { return bRunning_; }
 		bool IsPaused() { return bPaused_; }
+
+		uint64_t GetScriptRunTime() { return runTime_; }
 
 		gstd::value RequestEvent(int type);
 		gstd::value RequestEvent(int type, const gstd::value* listValue, size_t countArgument);
