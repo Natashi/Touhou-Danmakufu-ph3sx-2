@@ -18,14 +18,13 @@ FpsController::FpsController() {
 FpsController::~FpsController() {
 	::timeEndPeriod(1);
 }
-DWORD FpsController::_GetTime() {
+DWORD FpsController::GetCpuTime() {
 	//	int res = ::timeGetTime();
 
-	LARGE_INTEGER nFreq;
-	LARGE_INTEGER nCounter;
+	LARGE_INTEGER nFreq, nCounter;
 	QueryPerformanceFrequency(&nFreq);
 	QueryPerformanceCounter(&nCounter);
-	return (DWORD)(nCounter.QuadPart * 1000 / nFreq.QuadPart);
+	return (DWORD)(nCounter.QuadPart * 1000UL / nFreq.QuadPart);
 
 	//auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()).time_since_epoch();
 	//return std::chrono::duration_cast<std::chrono::milliseconds>(ms).count();
@@ -68,7 +67,7 @@ DWORD FpsController::GetControlObjectFps() {
 StaticFpsController::StaticFpsController() {
 	rateSkip_ = 0;
 	fpsCurrent_ = 60;
-	timePrevious_ = _GetTime();
+	timePrevious_ = GetCpuTime();
 	timeCurrentFpsUpdate_ = 0;
 	bUseTimer_ = true;
 	timeError_ = 0;
@@ -79,13 +78,13 @@ StaticFpsController::~StaticFpsController() {
 void StaticFpsController::Wait() {
 	DWORD fpsTarget = bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps());
 
-	DWORD timeCurrent = _GetTime();
+	DWORD timeCurrent = GetCpuTime();
 	DWORD timeDelta = timeCurrent - timePrevious_;
 
 	int frameAs1Sec = timeDelta * fpsTarget;
 	int time1Sec = CLOCKS_PER_SEC + timeError_;
 	DWORD sleepTime = 0;
-	timeError_ = 0;
+	//timeError_ = 0;
 
 	if (frameAs1Sec < time1Sec) {
 		sleepTime = std::max((time1Sec - frameAs1Sec) / (int)fpsTarget, 0);
@@ -99,7 +98,7 @@ void StaticFpsController::Wait() {
 
 	if (timeDelta > 0)
 		listFps_.push_back(timeCurrent - timePrevious_ + ceil(sleepTime));
-	timePrevious_ = _GetTime();
+	timePrevious_ = GetCpuTime();
 
 	if (timeCurrent - timeCurrentFpsUpdate_ >= 500) {
 		if (listFps_.size() > 0) {
@@ -135,7 +134,7 @@ bool StaticFpsController::IsSkip() {
 //*******************************************************************
 AutoSkipFpsController::AutoSkipFpsController() {
 	timeError_ = 0;
-	timePrevious_ = _GetTime();
+	timePrevious_ = GetCpuTime();
 	timePreviousWork_ = timePrevious_;
 	timePreviousRender_ = timePrevious_;
 	countSkip_ = 0;
@@ -152,7 +151,7 @@ AutoSkipFpsController::~AutoSkipFpsController() {
 void AutoSkipFpsController::Wait() {
 	DWORD fpsTarget = bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps());
 
-	DWORD timeCurrent = _GetTime();
+	DWORD timeCurrent = GetCpuTime();
 	DWORD timeDelta = timeCurrent - timePrevious_;
 
 	int frameAs1Sec = timeDelta * fpsTarget;
@@ -179,17 +178,17 @@ void AutoSkipFpsController::Wait() {
 		DWORD timeCorrect = sleepTime;
 		if (timeDelta > 0)
 			listFpsWork_.push_back(timeDelta + timeCorrect);
-		timePrevious_ = _GetTime();
+		timePrevious_ = GetCpuTime();
 	}
 	if (countSkip_ <= 0) {
-		timeCurrent = _GetTime();
+		timeCurrent = GetCpuTime();
 		timeDelta = timeCurrent - timePrevious_;
 		if (timeDelta > 0)
 			listFpsRender_.push_back(timeDelta);
-		timePreviousRender_ = _GetTime();
+		timePreviousRender_ = GetCpuTime();
 	}
 
-	timePrevious_ = _GetTime();
+	timePrevious_ = GetCpuTime();
 	if (timePrevious_ - timeCurrentFpsUpdate_ >= 500) {
 		if (listFpsWork_.size() != 0) {
 			DWORD tFpsCurrent = 0;
@@ -211,6 +210,6 @@ void AutoSkipFpsController::Wait() {
 		}
 		else fpsCurrentRender_ = 0;
 
-		timeCurrentFpsUpdate_ = _GetTime();
+		timeCurrentFpsUpdate_ = GetCpuTime();
 	}
 }
