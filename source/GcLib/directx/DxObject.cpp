@@ -54,6 +54,7 @@ DxScriptRenderObject::DxScriptRenderObject() {
 	filterMag_ = D3DTEXF_LINEAR;
 	filterMip_ = D3DTEXF_NONE;
 	bVertexShaderMode_ = false;
+	bEnableMatrix_ = true;
 }
 
 //****************************************************************************
@@ -134,6 +135,7 @@ void DxScriptPrimitiveObject2D::SetRenderState() {
 	graphics->SetCullingMode(modeCulling_);
 	graphics->SetTextureFilter(filterMin_, filterMag_, filterMip_);
 	obj->SetVertexShaderRendering(bVertexShaderMode_);
+	obj->SetDisableMatrixTransformation(!bEnableMatrix_);
 }
 
 void DxScriptPrimitiveObject2D::SetColor(int r, int g, int b) {
@@ -321,6 +323,7 @@ void DxScriptPrimitiveObject3D::SetRenderState() {
 	graphics->SetCullingMode(modeCulling_);
 	graphics->SetTextureFilter(filterMin_, filterMag_, filterMip_);
 	obj->SetVertexShaderRendering(bVertexShaderMode_);
+	obj->SetDisableMatrixTransformation(!bEnableMatrix_);
 }
 
 void DxScriptPrimitiveObject3D::SetColor(int r, int g, int b) {
@@ -426,6 +429,7 @@ void DxScriptTrajectoryObject3D::SetRenderState() {
 	graphics->SetCullingMode(modeCulling_);
 	graphics->SetTextureFilter(filterMin_, filterMag_, filterMip_);
 	obj->SetVertexShaderRendering(bVertexShaderMode_);
+	obj->SetDisableMatrixTransformation(!bEnableMatrix_);
 }
 
 void DxScriptTrajectoryObject3D::SetColor(int r, int g, int b) {
@@ -572,6 +576,7 @@ void DxScriptMeshObject::SetRenderState() {
 
 	graphics->SetTextureFilter(filterMin_, filterMag_, filterMip_);
 	mesh_->SetVertexShaderRendering(bVertexShaderMode_);
+	//mesh_->SetDisableMatrixTransformation(!bEnableMatrix_);
 }
 
 void DxScriptMeshObject::SetColor(int r, int g, int b) {

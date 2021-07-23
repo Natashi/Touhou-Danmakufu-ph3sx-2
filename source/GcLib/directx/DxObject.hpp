@@ -100,6 +100,7 @@ namespace directx {
 		D3DTEXTUREFILTERTYPE filterMag_;
 		D3DTEXTUREFILTERTYPE filterMip_;
 		bool bVertexShaderMode_;
+		bool bEnableMatrix_;
 
 		gstd::ref_count_weak_ptr<DxScriptRenderObject, false> objRelative_;
 		std::wstring nameRelativeBone_;
@@ -136,6 +137,7 @@ namespace directx {
 		void SetFilteringMag(D3DTEXTUREFILTERTYPE filter) { filterMag_ = filter; }
 		void SetFilteringMip(D3DTEXTUREFILTERTYPE filter) { filterMip_ = filter; }
 		void SetVertexShaderRendering(bool b) { bVertexShaderMode_ = b; }
+		void SetLoadWorldMatrix(bool b) { bEnableMatrix_ = b; }
 
 		void SetBlendType(BlendMode type) { typeBlend_ = type; }
 		BlendMode GetBlendType() { return typeBlend_; }

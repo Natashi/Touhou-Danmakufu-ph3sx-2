@@ -273,6 +273,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjRender_SetTextureFilterMag", DxScript::Func_ObjRender_SetTextureFilterMag, 2 },
 	{ "ObjRender_SetTextureFilterMip", DxScript::Func_ObjRender_SetTextureFilterMip, 2 },
 	{ "ObjRender_SetVertexShaderRenderingMode", DxScript::Func_ObjRender_SetVertexShaderRenderingMode, 2 },
+	{ "ObjRender_SetEnableDefaultTransformMatrix", DxScript::Func_ObjRender_SetEnableDefaultTransformMatrix, 2 },
 	{ "ObjRender_SetLightingEnable", DxScript::Func_ObjRender_SetLightingEnable, 3 },
 	{ "ObjRender_SetLightingDiffuseColor", DxScript::Func_ObjRender_SetLightingDiffuseColor, 4 },
 	{ "ObjRender_SetLightingDiffuseColor", DxScript::Func_ObjRender_SetLightingDiffuseColor, 2 },	//Overloaded
@@ -2888,6 +2889,16 @@ value DxScript::Func_ObjRender_SetVertexShaderRenderingMode(gstd::script_machine
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		obj->bVertexShaderMode_ = argv[1].as_boolean();
+
+	return value();
+}
+value DxScript::Func_ObjRender_SetEnableDefaultTransformMatrix(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj)
+		obj->bEnableMatrix_ = argv[1].as_boolean();
 
 	return value();
 }
