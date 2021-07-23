@@ -1324,6 +1324,7 @@ value ScriptClientBase::Func_Choose(script_machine* machine, int argc, const val
 	BaseFunction::_null_check(machine, argv, argc);
 
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	script->CheckRunInMainThread();
 
 	const value* val = &argv[0];
 	type_data* valType = val->get_type();
@@ -1362,6 +1363,7 @@ value ScriptClientBase::Func_Shuffle(script_machine* machine, int argc, const va
 	BaseFunction::_null_check(machine, argv, argc);
 
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	script->CheckRunInMainThread();
 
 	const value* val = &argv[0];
 	type_data* valType = val->get_type();
