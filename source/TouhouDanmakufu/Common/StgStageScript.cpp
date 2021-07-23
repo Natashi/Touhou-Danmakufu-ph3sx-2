@@ -278,6 +278,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "SetForbidPlayerSpell", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetForbidSpell>, 1 },
 	{ "GetPlayerX", StgStageScript::Func_GetPlayerX, 0 },
 	{ "GetPlayerY", StgStageScript::Func_GetPlayerY, 0 },
+	{ "GetPlayerPosition", StgStageScript::Func_GetPlayerPosition, 0 },
 	{ "GetPlayerState", StgStageScript::Func_GetPlayerInfoAsInt<&StgPlayerObject::GetState, StgPlayerObject::STATE_END>, 0 },
 	{ "GetPlayerSpeed", StgStageScript::Func_GetPlayerSpeed, 0 },
 	{ "GetPlayerClip", StgStageScript::Func_GetPlayerClip, 0 },
@@ -382,6 +383,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjMove_AddPatternB3", StgStageScript::Func_ObjMove_AddPatternB3, 9 },
 	{ "ObjMove_GetX", StgStageScript::Func_ObjMove_GetX, 1 },
 	{ "ObjMove_GetY", StgStageScript::Func_ObjMove_GetY, 1 },
+	{ "ObjMove_GetPosition", StgStageScript::Func_ObjMove_GetPosition, 1 },
 	{ "ObjMove_GetSpeed", StgStageScript::Func_ObjMove_GetSpeed, 1 },
 	{ "ObjMove_GetAngle", StgStageScript::Func_ObjMove_GetAngle, 1 },
 	{ "ObjMove_SetSpeedX", StgStageScript::Func_ObjMove_SetSpeedX, 2 },
@@ -1104,6 +1106,17 @@ gstd::value StgStageScript::Func_GetPlayerY(gstd::script_machine* machine, int a
 		pos = objPlayer->GetY();
 
 	return script->CreateRealValue(pos);
+}
+gstd::value StgStageScript::Func_GetPlayerPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+
+	double pos[2]{ DxScript::g_posInvalidX_, DxScript::g_posInvalidY_ };
+	if (StgPlayerObject* objPlayer = script->stageController_->GetPlayerObject().get()) {
+		pos[0] = objPlayer->GetX();
+		pos[1] = objPlayer->GetY();
+	}
+		
+	return script->CreateRealArrayValue(pos, 2U);
 }
 gstd::value StgStageScript::Func_GetPlayerSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -2797,6 +2810,17 @@ gstd::value StgStageScript::Func_ObjMove_GetY(gstd::script_machine* machine, int
 	if (obj)
 		pos = obj->GetPositionY();
 	return script->CreateRealValue(pos);
+}
+gstd::value StgStageScript::Func_ObjMove_GetPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	double pos[2]{ DxScript::g_posInvalidX_, DxScript::g_posInvalidY_ };
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	if (obj) {
+		pos[0] = obj->GetPositionX();
+		pos[1] = obj->GetPositionY();
+	}
+	return script->CreateRealArrayValue(pos, 2U);
 }
 gstd::value StgStageScript::Func_ObjMove_GetSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;

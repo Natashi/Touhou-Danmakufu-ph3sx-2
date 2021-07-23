@@ -218,6 +218,7 @@ public:
 	*/
 	static gstd::value Func_GetPlayerX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerY(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_GetPlayerPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerClip(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	/*
@@ -325,6 +326,7 @@ public:
 	static gstd::value Func_ObjMove_AddPatternB3(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetY(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_GetPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetAngle(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetSpeedX);

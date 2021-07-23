@@ -237,6 +237,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjRender_SetY", DxScript::Func_ObjRender_SetY, 2 },
 	{ "ObjRender_SetZ", DxScript::Func_ObjRender_SetZ, 2 },
 	{ "ObjRender_SetPosition", DxScript::Func_ObjRender_SetPosition, 4 },
+	{ "ObjRender_SetPosition", DxScript::Func_ObjRender_SetPosition, 3 }, //Overloaded
 	{ "ObjRender_SetAngleX", DxScript::Func_ObjRender_SetAngleX, 2 },
 	{ "ObjRender_SetAngleY", DxScript::Func_ObjRender_SetAngleY, 2 },
 	{ "ObjRender_SetAngleZ", DxScript::Func_ObjRender_SetAngleZ, 2 },
@@ -258,6 +259,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjRender_GetX", DxScript::Func_ObjRender_GetX, 1 },
 	{ "ObjRender_GetY", DxScript::Func_ObjRender_GetY, 1 },
 	{ "ObjRender_GetZ", DxScript::Func_ObjRender_GetZ, 1 },
+	{ "ObjRender_GetPosition", DxScript::Func_ObjRender_GetPosition, 1 },
 	{ "ObjRender_GetAngleX", DxScript::Func_ObjRender_GetAngleX, 1 },
 	{ "ObjRender_GetAngleY", DxScript::Func_ObjRender_GetAngleY, 1 },
 	{ "ObjRender_GetAngleZ", DxScript::Func_ObjRender_GetAngleZ, 1 },
@@ -304,6 +306,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjPrim_SetTexture", DxScript::Func_ObjPrimitive_SetTexture, 2 },
 	{ "ObjPrim_GetVertexCount", DxScript::Func_ObjPrimitive_GetVertexCount, 1 },
 	{ "ObjPrim_SetVertexPosition", DxScript::Func_ObjPrimitive_SetVertexPosition, 5 },
+	{ "ObjPrim_SetVertexPosition", DxScript::Func_ObjPrimitive_SetVertexPosition, 4 }, //Overloaded
 	{ "ObjPrim_SetVertexUV", DxScript::Func_ObjPrimitive_SetVertexUV, 4 },
 	{ "ObjPrim_SetVertexUVT", DxScript::Func_ObjPrimitive_SetVertexUVT, 4 },
 	{ "ObjPrim_SetVertexColor", DxScript::Func_ObjPrimitive_SetVertexColor, 5 },
@@ -344,6 +347,7 @@ static const std::vector<function> dxFunction = {
 	//Particle list object functions
 	{ "ObjParticleList_Create", DxScript::Func_ObjParticleList_Create, 1 },
 	{ "ObjParticleList_SetPosition", DxScript::Func_ObjParticleList_SetPosition, 4 },
+	{ "ObjParticleList_SetPosition", DxScript::Func_ObjParticleList_SetPosition, 3 }, //Overloaded
 	{ "ObjParticleList_SetScaleX", DxScript::Func_ObjParticleList_SetScaleSingle<0>, 2 },
 	{ "ObjParticleList_SetScaleY", DxScript::Func_ObjParticleList_SetScaleSingle<1>, 2 },
 	{ "ObjParticleList_SetScaleZ", DxScript::Func_ObjParticleList_SetScaleSingle<2>, 2 },
@@ -2535,7 +2539,7 @@ value DxScript::Func_ObjRender_SetPosition(script_machine* machine, int argc, co
 	if (obj) {
 		obj->SetX(argv[1].as_real());
 		obj->SetY(argv[2].as_real());
-		obj->SetZ(argv[3].as_real());
+		if (argc == 4) obj->SetZ(argv[3].as_real());
 	}
 	return value();
 }
@@ -2709,6 +2713,7 @@ value DxScript::Func_ObjRender_GetY(script_machine* machine, int argc, const val
 		res = obj->position_.y;
 	return script->CreateRealValue(res);
 }
+
 value DxScript::Func_ObjRender_GetZ(script_machine* machine, int argc, const value* argv) {
 	FLOAT res = DxScript::g_posInvalidZ_;
 	DxScript* script = (DxScript*)machine->data;
@@ -2717,6 +2722,16 @@ value DxScript::Func_ObjRender_GetZ(script_machine* machine, int argc, const val
 	if (obj)
 		res = obj->position_.z;
 	return script->CreateRealValue(res);
+}
+value DxScript::Func_ObjRender_GetPosition(script_machine* machine, int argc, const value* argv) {
+	D3DXVECTOR3 pos(DxScript::g_posInvalidX_, DxScript::g_posInvalidY_, DxScript::g_posInvalidZ_);
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj)
+		pos = obj->position_;
+
+	return script->CreateRealArrayValue(reinterpret_cast<float*>(&pos), 3U);
 }
 gstd::value DxScript::Func_ObjRender_GetAngleX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	FLOAT res = 0;
@@ -3308,9 +3323,11 @@ value DxScript::Func_ObjPrimitive_GetVertexCount(script_machine* machine, int ar
 value DxScript::Func_ObjPrimitive_SetVertexPosition(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
+	int index = argv[1].as_int();
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj)
-		obj->SetVertexPosition(argv[1].as_int(), argv[2].as_real(), argv[3].as_real(), argv[4].as_real());
+		obj->SetVertexPosition(index, argv[2].as_real(), argv[3].as_real(), (argc == 5) ? argv[4].as_real() : 0);
+		
 	return value();
 }
 value DxScript::Func_ObjPrimitive_SetVertexUV(script_machine* machine, int argc, const value* argv) {
@@ -3637,7 +3654,7 @@ value DxScript::Func_ObjParticleList_SetPosition(script_machine* machine, int ar
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
 		if (objParticle)
-			objParticle->SetInstancePosition(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+			objParticle->SetInstancePosition(argv[1].as_real(), argv[2].as_real(), (argc == 4) ? argv[3].as_real() : 0);
 	}
 	return value();
 }

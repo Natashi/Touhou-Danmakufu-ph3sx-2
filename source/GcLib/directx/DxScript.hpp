@@ -271,6 +271,7 @@ namespace directx {
 		static gstd::value Func_ObjRender_GetX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_GetY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_GetZ(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_ObjRender_GetPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_GetAngleX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_GetAngleY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjRender_GetAngleZ(gstd::script_machine* machine, int argc, const gstd::value* argv);
