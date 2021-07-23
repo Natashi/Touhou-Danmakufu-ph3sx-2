@@ -203,6 +203,13 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_RSinCos);
 		DNH_FUNCAPI_DECL_(Func_RCosSin);
 
+		DNH_FUNCAPI_DECL_(Func_Sec);
+		DNH_FUNCAPI_DECL_(Func_Csc);
+		DNH_FUNCAPI_DECL_(Func_Cot);
+		DNH_FUNCAPI_DECL_(Func_RSec);
+		DNH_FUNCAPI_DECL_(Func_RCsc);
+		DNH_FUNCAPI_DECL_(Func_RCot);
+
 		static value Func_Acos(script_machine* machine, int argc, const value* argv);
 		static value Func_Asin(script_machine* machine, int argc, const value* argv);
 		static value Func_Atan(script_machine* machine, int argc, const value* argv);
@@ -211,6 +218,19 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_RAsin);
 		DNH_FUNCAPI_DECL_(Func_RAtan);
 		DNH_FUNCAPI_DECL_(Func_RAtan2);
+
+		DNH_FUNCAPI_DECL_(Func_Cas);
+		DNH_FUNCAPI_DECL_(Func_RCas);
+
+		DNH_FUNCAPI_DECL_(Func_CosH);
+		DNH_FUNCAPI_DECL_(Func_SinH);
+		DNH_FUNCAPI_DECL_(Func_TanH);
+		DNH_FUNCAPI_DECL_(Func_AcosH);
+		DNH_FUNCAPI_DECL_(Func_AsinH);
+		DNH_FUNCAPI_DECL_(Func_AtanH);
+		DNH_FUNCAPI_DECL_(Func_SecH);
+		DNH_FUNCAPI_DECL_(Func_CscH);
+		DNH_FUNCAPI_DECL_(Func_CotH);
 
 		DNH_FUNCAPI_DECL_(Func_Exp);
 		DNH_FUNCAPI_DECL_(Func_Sqrt);

@@ -78,6 +78,13 @@ static const std::vector<function> commonFunction = {
 	{ "rsincos", ScriptClientBase::Func_RSinCos, 1 },
 	{ "rcossin", ScriptClientBase::Func_RCosSin, 1 },
 
+	{ "sec", ScriptClientBase::Func_Sec, 1 },
+	{ "csc", ScriptClientBase::Func_Csc, 1 },
+	{ "cot", ScriptClientBase::Func_Cot, 1 },
+	{ "rsec", ScriptClientBase::Func_RSec, 1 },
+	{ "rcsc", ScriptClientBase::Func_RCsc, 1 },
+	{ "rcot", ScriptClientBase::Func_RCot, 1 },
+
 	{ "acos", ScriptClientBase::Func_Acos, 1 },
 	{ "asin", ScriptClientBase::Func_Asin, 1 },
 	{ "atan", ScriptClientBase::Func_Atan, 1 },
@@ -86,6 +93,19 @@ static const std::vector<function> commonFunction = {
 	{ "rasin", ScriptClientBase::Func_RAsin, 1 },
 	{ "ratan", ScriptClientBase::Func_RAtan, 1 },
 	{ "ratan2", ScriptClientBase::Func_RAtan2, 2 },
+
+	{ "cas", ScriptClientBase::Func_Cas, 1 },
+	{ "rcas", ScriptClientBase::Func_RCas, 1 },
+
+	{ "cosh", ScriptClientBase::Func_CosH, 1 },
+	{ "sinh", ScriptClientBase::Func_SinH, 1 },
+	{ "tanh", ScriptClientBase::Func_TanH, 1 },
+	{ "acosh", ScriptClientBase::Func_AcosH, 1 },
+	{ "asinh", ScriptClientBase::Func_AsinH, 1 },
+	{ "atanh", ScriptClientBase::Func_AtanH, 1 },
+	{ "sech", ScriptClientBase::Func_SecH, 1 },
+	{ "csch", ScriptClientBase::Func_CscH, 1 },
+	{ "coth", ScriptClientBase::Func_CotH, 1 },
 
 	//Math functions: Angles
 	{ "ToDegrees", ScriptClientBase::Func_ToDegrees, 1 },
@@ -1068,6 +1088,25 @@ value ScriptClientBase::Func_RCosSin(script_machine* machine, int argc, const va
 	return script->CreateRealArrayValue(scArray, 2U);
 }
 
+value ScriptClientBase::Func_Sec(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(1 / cos(Math::DegreeToRadian(argv->as_real())));
+}
+value ScriptClientBase::Func_Csc(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(1 / sin(Math::DegreeToRadian(argv->as_real())));
+}
+value ScriptClientBase::Func_Cot(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(1 / tan(Math::DegreeToRadian(argv->as_real())));
+}
+value ScriptClientBase::Func_RSec(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(1 / cos(argv->as_real()));
+}
+value ScriptClientBase::Func_RCsc(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(1 / sin(argv->as_real()));
+}
+value ScriptClientBase::Func_RCot(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(1 / tan(argv->as_real()));
+}
+
 value ScriptClientBase::Func_Acos(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(Math::RadianToDegree(acos(argv->as_real())));
 }
@@ -1091,6 +1130,45 @@ value ScriptClientBase::Func_RAtan(script_machine* machine, int argc, const valu
 }
 value ScriptClientBase::Func_RAtan2(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(atan2(argv[0].as_real(), argv[1].as_real()));
+}
+
+value ScriptClientBase::Func_Cas(script_machine* machine, int argc, const value* argv) {
+	double scArray[2];
+	Math::DoSinCos(Math::RadianToDegree(argv->as_real()), scArray);
+	return CreateRealValue(scArray[0] + scArray[1]);
+}
+value ScriptClientBase::Func_RCas(script_machine* machine, int argc, const value* argv) {
+	double scArray[2];
+	Math::DoSinCos(argv->as_real(), scArray);
+	return CreateRealValue(scArray[0] + scArray[1]);
+}
+
+value ScriptClientBase::Func_CosH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(cosh(argv->as_real()));
+}
+value ScriptClientBase::Func_SinH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(sinh(argv->as_real()));
+}
+value ScriptClientBase::Func_TanH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(tanh(argv->as_real()));
+}
+value ScriptClientBase::Func_AcosH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(acosh(argv->as_real()));
+}
+value ScriptClientBase::Func_AsinH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(asinh(argv->as_real()));
+}
+value ScriptClientBase::Func_AtanH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(atanh(argv->as_real()));
+}
+value ScriptClientBase::Func_SecH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(1 / cosh(argv->as_real()));
+}
+value ScriptClientBase::Func_CscH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(1 / sinh(argv->as_real()));
+}
+value ScriptClientBase::Func_CotH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(1 / tanh(argv->as_real()));
 }
 
 value ScriptClientBase::Func_Exp(script_machine* machine, int argc, const value* argv) {
