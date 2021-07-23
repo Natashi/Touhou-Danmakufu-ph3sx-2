@@ -10,6 +10,7 @@ namespace directx {
 	class ShaderManager;
 	class Shader;
 	class ShaderData;
+	class ShaderInfoPanel;
 
 	//*******************************************************************
 	//ShaderData
@@ -17,6 +18,7 @@ namespace directx {
 	class ShaderData {
 		friend Shader;
 		friend ShaderManager;
+		friend ShaderInfoPanel;
 	private:
 		ShaderManager* manager_;
 		ID3DXEffect* effect_;
@@ -40,12 +42,15 @@ namespace directx {
 	class ShaderManager : public DirectGraphicsListener {
 		friend Shader;
 		friend ShaderData;
+		friend ShaderInfoPanel;
+	private:
 		static ShaderManager* thisBase_;
 	protected:
 		gstd::CriticalSection lock_;
 
-		std::map<std::wstring, shared_ptr<ShaderData>> mapShaderData_;
+		shared_ptr<ShaderInfoPanel> panelInfo_;
 
+		std::map<std::wstring, shared_ptr<ShaderData>> mapShaderData_;
 		std::wstring lastError_;
 
 		RenderShaderLibrary* renderManager_;
@@ -83,6 +88,33 @@ namespace directx {
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
 		std::wstring& GetLastError() { return lastError_; }
+
+		void SetInfoPanel(shared_ptr<ShaderInfoPanel> panel) { panelInfo_ = panel; }
+	};
+	//****************************************************************************
+	//ShaderInfoPanel
+	//****************************************************************************
+	class ShaderInfoPanel : public gstd::WindowLogger::Panel, public gstd::Thread {
+	protected:
+		enum {
+			ROW_ADDRESS,
+			ROW_NAME,
+			ROW_REFCOUNT,
+			ROW_EFFECT,
+			ROW_PARAMETERS,
+			ROW_TECHNIQUES,
+		};
+		int timeUpdateInterval_;
+		gstd::WListView wndListView_;
+
+		virtual bool _AddedLogger(HWND hTab);
+		void _Run();
+	public:
+		ShaderInfoPanel();
+		~ShaderInfoPanel();
+
+		virtual void LocateParts();
+		virtual void Update(ShaderManager* manager);
 	};
 
 	//*******************************************************************

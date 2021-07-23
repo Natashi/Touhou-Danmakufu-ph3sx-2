@@ -20,11 +20,12 @@ namespace gstd {
 
 		std::list<ref_count_weak_ptr<FpsControlObject>> listFpsControlObject_;
 
-		inline DWORD _GetTime();
 		inline void _Sleep(DWORD msec);
 	public:
 		FpsController();
 		virtual ~FpsController();
+
+		static DWORD GetCpuTime();
 
 		virtual void SetFps(DWORD fps) { fps_ = fps; }
 		virtual DWORD GetFps() { return fps_; }

@@ -289,6 +289,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetTextureFilterMag);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetTextureFilterMip);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetVertexShaderRenderingMode);
+		DNH_FUNCAPI_DECL_(Func_ObjRender_SetEnableDefaultTransformMatrix);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingEnable);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingDiffuseColor);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingSpecularColor);
