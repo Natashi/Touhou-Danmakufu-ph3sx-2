@@ -77,6 +77,10 @@ bool EApplication::_Initialize() {
 	bool bTexturePanel = logger->AddPanel(panelTexture, L"Texture");
 	if (bTexturePanel) textureManager->SetInfoPanel(panelTexture);
 
+	shared_ptr<directx::ShaderInfoPanel> panelShader(new directx::ShaderInfoPanel());
+	bool bShaderPanel = logger->AddPanel(panelShader, L"Shader");
+	if (bShaderPanel) shaderManager->SetInfoPanel(panelShader);
+
 	shared_ptr<directx::DxMeshInfoPanel> panelMesh(new directx::DxMeshInfoPanel());
 	bool bMeshPanel = logger->AddPanel(panelMesh, L"Mesh");
 	if (bMeshPanel) meshManager->SetInfoPanel(panelMesh);
