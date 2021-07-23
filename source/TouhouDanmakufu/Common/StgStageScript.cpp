@@ -461,20 +461,24 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjShot_SetSpinAngularVelocity", StgStageScript::Func_ObjShot_SetSpinAngularVelocity, 2 },
 
 	{ "ObjLaser_SetLength", StgStageScript::Func_ObjLaser_SetLength, 2 },
-	{ "ObjLaser_SetExtendRate", StgStageScript::Func_ObjLaser_SetExtendRate, 2 },
-	{ "ObjLaser_SetMaxLength", StgStageScript::Func_ObjLaser_SetMaxLength, 2 },
+	
 	{ "ObjLaser_SetRenderWidth", StgStageScript::Func_ObjLaser_SetRenderWidth, 2 },
 	{ "ObjLaser_SetIntersectionWidth", StgStageScript::Func_ObjLaser_SetIntersectionWidth, 2 },
 	{ "ObjLaser_SetInvalidLength", StgStageScript::Func_ObjLaser_SetInvalidLength, 3 },
 	{ "ObjLaser_SetItemDistance", StgStageScript::Func_ObjLaser_SetItemDistance, 2 },
+	{ "ObjLaser_SetExtendRate", StgStageScript::Func_ObjLaser_SetExtendRate, 2 },
+	{ "ObjLaser_SetMaxLength", StgStageScript::Func_ObjLaser_SetMaxLength, 2 },
 	{ "ObjLaser_GetLength", StgStageScript::Func_ObjLaser_GetLength, 1 },
 	{ "ObjLaser_GetRenderWidth", StgStageScript::Func_ObjLaser_GetRenderWidth, 1 },
 	{ "ObjLaser_GetIntersectionWidth", StgStageScript::Func_ObjLaser_GetIntersectionWidth, 1 },
 	{ "ObjStLaser_SetAngle", StgStageScript::Func_ObjStLaser_SetAngle, 2 },
 	{ "ObjStLaser_GetAngle", StgStageScript::Func_ObjStLaser_GetAngle, 1 },
+	{ "ObjStLaser_SetAngularVelocity", StgStageScript::Func_ObjStLaser_SetAngularVelocity, 2 },
 	{ "ObjStLaser_SetSource", StgStageScript::Func_ObjStLaser_SetSource, 2 },
 	{ "ObjStLaser_SetEnd", StgStageScript::Func_ObjStLaser_SetEnd, 2 },
 	{ "ObjStLaser_SetEndGraphic", StgStageScript::Func_ObjStLaser_SetEndGraphic, 2 },
+	{ "ObjStLaser_SetEndPosition", StgStageScript::Func_ObjStLaser_SetEndPosition, 3 },
+	{ "ObjStLaser_GetEndPosition", StgStageScript::Func_ObjStLaser_GetEndPosition, 1 },
 	{ "ObjStLaser_SetDelayScale", StgStageScript::Func_ObjStLaser_SetDelayScale, 3 },
 	{ "ObjStLaser_SetPermitExpand", StgStageScript::Func_ObjStLaser_SetPermitExpand, 2 },
 	{ "ObjStLaser_GetPermitExpand", StgStageScript::Func_ObjStLaser_GetPermitExpand, 1 },
@@ -3938,26 +3942,6 @@ gstd::value StgStageScript::Func_ObjLaser_SetLength(gstd::script_machine* machin
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_ObjLaser_SetExtendRate(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	int id = argv[0].as_int();
-	StgLaserObject* obj = script->GetObjectPointerAs<StgLaserObject>(id);
-	if (obj) {
-		int rate = argv[1].as_int();
-		obj->SetExtendRate(rate);
-	}
-	return value();
-}
-gstd::value StgStageScript::Func_ObjLaser_SetMaxLength(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	int id = argv[0].as_int();
-	StgLaserObject* obj = script->GetObjectPointerAs<StgLaserObject>(id);
-	if (obj) {
-		int length = argv[1].as_int();
-		obj->SetMaxLength(length);
-	}
-	return value();
-}
 
 gstd::value StgStageScript::Func_ObjLaser_SetRenderWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -4000,6 +3984,26 @@ gstd::value StgStageScript::Func_ObjLaser_SetItemDistance(gstd::script_machine* 
 	}
 	return value();
 }
+gstd::value StgStageScript::Func_ObjLaser_SetExtendRate(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgLaserObject* obj = script->GetObjectPointerAs<StgLaserObject>(id);
+	if (obj) {
+		float rate = argv[1].as_real();
+		obj->SetExtendRate(rate);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjLaser_SetMaxLength(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgLaserObject* obj = script->GetObjectPointerAs<StgLaserObject>(id);
+	if (obj) {
+		int length = argv[1].as_int();
+		obj->SetMaxLength(length);
+	}
+	return value();
+}
 gstd::value StgStageScript::Func_ObjLaser_GetLength(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
@@ -4037,6 +4041,7 @@ gstd::value StgStageScript::Func_ObjStLaser_SetAngle(gstd::script_machine* machi
 	}
 	return value();
 }
+
 gstd::value StgStageScript::Func_ObjStLaser_GetAngle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
@@ -4045,6 +4050,16 @@ gstd::value StgStageScript::Func_ObjStLaser_GetAngle(gstd::script_machine* machi
 	if (obj)
 		angle = Math::RadianToDegree(obj->GetLaserAngle());
 	return script->CreateRealValue(angle);
+}
+gstd::value StgStageScript::Func_ObjStLaser_SetAngularVelocity(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgStraightLaserObject* obj = script->GetObjectPointerAs<StgStraightLaserObject>(id);
+	if (obj) {
+		double angVel = argv[1].as_real();
+		obj->SetLaserAngularVelocity(Math::DegreeToRadian(angVel));
+	}
+	return value();
 }
 gstd::value StgStageScript::Func_ObjStLaser_SetSource(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -4069,6 +4084,25 @@ gstd::value StgStageScript::Func_ObjStLaser_SetEndGraphic(gstd::script_machine* 
 	if (obj)
 		obj->SetEndGraphic(argv[1].as_int());
 	return value();
+}
+
+gstd::value StgStageScript::Func_ObjStLaser_SetEndPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgStraightLaserObject* obj = script->GetObjectPointerAs<StgStraightLaserObject>(id);
+	if (obj)
+		obj->SetEndPosition(argv[1].as_real(), argv[2].as_real());
+	return value();
+}
+gstd::value StgStageScript::Func_ObjStLaser_GetEndPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	D3DXVECTOR2 pos { 0, 0 };
+	StgStraightLaserObject* obj = script->GetObjectPointerAs<StgStraightLaserObject>(id);
+	if (obj)
+		pos = obj->GetEndPosition();
+	double res[2]{ pos.x, pos.y };
+	return script->CreateRealArrayValue(res, 2);
 }
 gstd::value StgStageScript::Func_ObjStLaser_SetDelayScale(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;

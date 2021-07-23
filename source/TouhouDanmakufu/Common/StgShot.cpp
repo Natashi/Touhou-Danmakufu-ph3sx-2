@@ -1569,6 +1569,7 @@ StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObj
 	bSpellResist_ = true;
 
 	length_ = 0;
+	lengthF_ = 0;
 	widthRender_ = 0;
 	widthIntersection_ = -1;
 	extendRate_ = 0;
@@ -1594,12 +1595,14 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 }
 void StgLaserObject::_ExtendLength() {
 	if (extendRate_ != 0) {
-		length_ += extendRate_;
+		lengthF_ += extendRate_;
 
 		if (extendRate_ > 0)
-			length_ = std::min(length_, maxLength_);
+			lengthF_ = std::min(lengthF_, (float)maxLength_);
 		if (extendRate_ < 0)
-			length_ = std::max(length_, maxLength_);
+			lengthF_ = std::max(lengthF_, (float)maxLength_);
+
+		length_ = (int)lengthF_;
 	}
 }
 
@@ -1907,6 +1910,8 @@ void StgStraightLaserObject::Work() {
 		_ProcessTransformAct();
 		_Move();
 		_ExtendLength();
+		
+		if (angVelLaser_ != 0) angLaser_ += angVelLaser_;
 
 		if (delay_.time > 0) --(delay_.time);
 		else {

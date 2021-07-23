@@ -450,9 +450,10 @@ public:
 class StgLaserObject : public StgShotObject {
 protected:
 	int length_;
+	float lengthF_;
 	int widthRender_;
 	int widthIntersection_;
-	int extendRate_;
+	float extendRate_;
 	int maxLength_;
 	float invalidLengthStart_;
 	float invalidLengthEnd_;
@@ -468,13 +469,13 @@ public:
 	}
 
 	int GetLength() { return length_; }
-	void SetLength(int length) { length_ = length; }
+	void SetLength(int length) { length_ = length; lengthF_ = (float)length;  }
 	int GetRenderWidth() { return widthRender_; }
 	void SetRenderWidth(int width) {
 		widthRender_ = width;
 		if (widthIntersection_ < 0) widthIntersection_ = width / 4;
 	}
-	void SetExtendRate(int rate) { extendRate_ = rate; }
+	void SetExtendRate(float rate) { extendRate_ = rate; }
 	void SetMaxLength(int max) { maxLength_ = max; }
 	int GetIntersectionWidth() { return widthIntersection_; }
 	void SetIntersectionWidth(int width) { widthIntersection_ = width; }
@@ -513,6 +514,7 @@ public:
 class StgStraightLaserObject : public StgLaserObject {
 protected:
 	double angLaser_;
+	double angVelLaser_;
 
 	bool bUseSouce_;
 	bool bUseEnd_;
@@ -538,11 +540,20 @@ public:
 
 	double GetLaserAngle() { return angLaser_; }
 	void SetLaserAngle(double angle) { angLaser_ = angle; }
+	void SetLaserAngularVelocity(double angVel) { angVelLaser_ = angVel; }
 	void SetFadeDelete() { if (frameFadeDelete_ < 0) frameFadeDelete_ = FRAME_FADEDELETE_LASER; }
 
 	void SetSourceEnable(bool bEnable) { bUseSouce_ = bEnable; }
 	void SetEndEnable(bool bEnable) { bUseEnd_ = bEnable; }
 	void SetEndGraphic(int gr) { idImageEnd_ = gr; }
+	void SetEndPosition(float x, float y) {
+		SetLength(hypotf(x - position_.x, y - position_.y));
+		SetLaserAngle(atan2f(y - position_.y, x - position_.x));
+	}
+	
+	D3DXVECTOR2 GetEndPosition() {
+		return D3DXVECTOR2(position_.x + length_ * cosf(angLaser_), position_.y + length_ * sinf(angLaser_));
+	}
 
 	void SetSourceEndScale(D3DXVECTOR2& s) { delaySize_ = s; }
 
