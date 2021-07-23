@@ -253,6 +253,11 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_GapAngle);
 		DNH_FUNCAPI_DECL_(Func_RGapAngle);
 
+		DNH_FUNCAPI_DECL_(Func_PolarToCartesian);
+		DNH_FUNCAPI_DECL_(Func_RPolarToCartesian);
+		DNH_FUNCAPI_DECL_(Func_CartesianToPolar);
+		DNH_FUNCAPI_DECL_(Func_RCartesianToPolar);
+
 		//Math functions; random
 		static value Func_Rand(script_machine* machine, int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(Func_RandI);

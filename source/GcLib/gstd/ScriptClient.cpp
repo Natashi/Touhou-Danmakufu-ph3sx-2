@@ -135,6 +135,10 @@ static const std::vector<function> commonFunction = {
 	{ "distancesq", ScriptClientBase::Func_DistanceSq, 4 },
 	{ "dottheta", ScriptClientBase::Func_GapAngle, 4 },
 	{ "rdottheta", ScriptClientBase::Func_RGapAngle, 4 },
+	{ "PolarToCartesian", ScriptClientBase::Func_PolarToCartesian, 2 },
+	{ "PolarToCartesianR", ScriptClientBase::Func_RPolarToCartesian, 2 },
+	{ "CartesianToPolar", ScriptClientBase::Func_CartesianToPolar, 2 },
+	{ "CartesianToPolarR", ScriptClientBase::Func_RCartesianToPolar, 2 },
 
 	//Random
 	{ "rand", ScriptClientBase::Func_Rand, 2 },
@@ -1253,6 +1257,35 @@ value ScriptClientBase::Func_RGapAngle(script_machine* machine, int argc, const 
 	double dy = argv[3].as_real() - argv[1].as_real();
 	double res = atan2(dy, dx);
 	return CreateRealValue(res);
+}
+
+value ScriptClientBase::Func_PolarToCartesian(script_machine* machine, int argc, const value* argv) {
+	double scArray[2];
+	double rad = argv[0].as_real();
+	double dir = Math::DegreeToRadian(argv[1].as_real());
+	Math::DoSinCos(dir, scArray);
+	double res[]{ rad * scArray[1], rad * scArray[0] };
+	return CreateRealArrayValue(res, 2U);
+}
+value ScriptClientBase::Func_RPolarToCartesian(script_machine* machine, int argc, const value* argv) {
+	double scArray[2];
+	double rad = argv[0].as_real();
+	double dir = argv[1].as_real();
+	Math::DoSinCos(dir, scArray);
+	double res[]{ rad * scArray[1], rad * scArray[0] };
+	return CreateRealArrayValue(res, 2U);
+}
+value ScriptClientBase::Func_CartesianToPolar(script_machine* machine, int argc, const value* argv) {
+	double x = argv[0].as_real();
+	double y = argv[1].as_real();
+	double res[]{ hypot(x, y), Math::RadianToDegree(atan2(y, x)) };
+	return CreateRealArrayValue(res, 2U);
+}
+value ScriptClientBase::Func_RCartesianToPolar(script_machine* machine, int argc, const value* argv) {
+	double x = argv[0].as_real();
+	double y = argv[1].as_real();
+	double res[]{ hypot(x, y), atan2(y, x) };
+	return CreateRealArrayValue(res, 2U);
 }
 
 value ScriptClientBase::Func_Rand(script_machine* machine, int argc, const value* argv) {
