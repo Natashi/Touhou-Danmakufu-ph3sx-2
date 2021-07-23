@@ -93,9 +93,16 @@ static const std::vector<function> commonFunction = {
 	{ "rasin", ScriptClientBase::Func_RAsin, 1 },
 	{ "ratan", ScriptClientBase::Func_RAtan, 1 },
 	{ "ratan2", ScriptClientBase::Func_RAtan2, 2 },
+	{ "asec", ScriptClientBase::Func_Asec, 1 },
+	{ "acsc", ScriptClientBase::Func_Acsc, 1 },
+	{ "acot", ScriptClientBase::Func_Acot, 1 },
+	{ "rasec", ScriptClientBase::Func_RAsec, 1 },
+	{ "racsc", ScriptClientBase::Func_RAcsc, 1 },
+	{ "racot", ScriptClientBase::Func_RAcot, 1 },
 
 	{ "cas", ScriptClientBase::Func_Cas, 1 },
 	{ "rcas", ScriptClientBase::Func_RCas, 1 },
+	{ "cash", ScriptClientBase::Func_CasH, 1 }, //?????
 
 	{ "cosh", ScriptClientBase::Func_CosH, 1 },
 	{ "sinh", ScriptClientBase::Func_SinH, 1 },
@@ -106,6 +113,9 @@ static const std::vector<function> commonFunction = {
 	{ "sech", ScriptClientBase::Func_SecH, 1 },
 	{ "csch", ScriptClientBase::Func_CscH, 1 },
 	{ "coth", ScriptClientBase::Func_CotH, 1 },
+	{ "asech", ScriptClientBase::Func_AsecH, 1 },
+	{ "acsch", ScriptClientBase::Func_AcscH, 1 },
+	{ "acoth", ScriptClientBase::Func_AcotH, 1 },
 
 	//Math functions: Angles
 	{ "ToDegrees", ScriptClientBase::Func_ToDegrees, 1 },
@@ -1132,6 +1142,25 @@ value ScriptClientBase::Func_RAtan2(script_machine* machine, int argc, const val
 	return CreateRealValue(atan2(argv[0].as_real(), argv[1].as_real()));
 }
 
+value ScriptClientBase::Func_Asec(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(Math::RadianToDegree(acos(1 / argv->as_real())));
+}
+value ScriptClientBase::Func_Acsc(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(Math::RadianToDegree(asin(1 / argv->as_real())));
+}
+value ScriptClientBase::Func_Acot(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(Math::RadianToDegree(atan(1 / argv->as_real())));
+}
+value ScriptClientBase::Func_RAsec(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(acos(1 / argv->as_real()));
+}
+value ScriptClientBase::Func_RAcsc(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(asin(1 / argv->as_real()));
+}
+value ScriptClientBase::Func_RAcot(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(atan(1 / argv->as_real()));
+}
+
 value ScriptClientBase::Func_Cas(script_machine* machine, int argc, const value* argv) {
 	double scArray[2];
 	Math::DoSinCos(Math::RadianToDegree(argv->as_real()), scArray);
@@ -1141,6 +1170,11 @@ value ScriptClientBase::Func_RCas(script_machine* machine, int argc, const value
 	double scArray[2];
 	Math::DoSinCos(argv->as_real(), scArray);
 	return CreateRealValue(scArray[0] + scArray[1]);
+}
+//Is there a better name for this?
+value ScriptClientBase::Func_CasH(script_machine* machine, int argc, const value* argv) {
+	double v = argv->as_real();
+	return CreateRealValue(sinh(v) + cosh(v));
 }
 
 value ScriptClientBase::Func_CosH(script_machine* machine, int argc, const value* argv) {
@@ -1169,6 +1203,15 @@ value ScriptClientBase::Func_CscH(script_machine* machine, int argc, const value
 }
 value ScriptClientBase::Func_CotH(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(1 / tanh(argv->as_real()));
+}
+value ScriptClientBase::Func_AsecH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(acosh(1 / argv->as_real()));
+}
+value ScriptClientBase::Func_AcscH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(asinh(1 / argv->as_real()));
+}
+value ScriptClientBase::Func_AcotH(script_machine* machine, int argc, const value* argv) {
+	return CreateRealValue(atanh(1 / argv->as_real()));
 }
 
 value ScriptClientBase::Func_Exp(script_machine* machine, int argc, const value* argv) {
