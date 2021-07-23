@@ -93,7 +93,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (any) value
 		Returns:
-			(int) result
+			(real) result
 		Description:
 			Returns the given value casted to a real value.
 			
@@ -101,7 +101,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (any) value
 		Returns:
-			(int) result
+			(bool) result
 		Description:
 			Returns the given value casted to a bool value.
 			
@@ -109,7 +109,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (any) value
 		Returns:
-			(int) result
+			(char) result
 		Description:
 			Returns the given value casted to a char value.
 			
@@ -162,7 +162,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (any[]) array
 			2) (const) type
 		Returns:
-			(T[]) result
+			(int[]/real[]/bool[]/char[]) result
 		Description:
 			Casts array elements to the given type, then returns the result.
 			
@@ -506,7 +506,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) y
 			3) angle
 		Returns:
-			(real[]) rotated position [x, y]
+			(real[2]) rotated position [x, y]
 		Description:
 			Rotates the given (x, y) point around the origin.
 			
@@ -523,7 +523,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			5) Y angle
 			6) Z angle
 		Returns:
-			(real[]) rotated position [x, y, z]
+			(real[3]) rotated position [x, y, z]
 		Description:
 			Rotates the given (x, y, z) point around the origin with the given Euler angles.
 			

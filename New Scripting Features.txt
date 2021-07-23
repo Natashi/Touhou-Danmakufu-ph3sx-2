@@ -273,7 +273,7 @@
 				expression (x) evaluates to true.
 			
 			Short-circuiting will take place left-to-right, so it is beneficial to format your logical expressions
-				in a way that more lightweight expressions take place earlier rather than later.
+				in a way that more lightweight expressions get evaluated sooner rather than later.
 			
 			Example:
 				if (bCheckHit && GetShotIdInCircleA2(...)) { /*...*/ }
@@ -286,6 +286,7 @@
 			
 			Example:
 				bool c = a & b;
+				bool d = a | b;
 				
 			Here, both expressions (a) and (b) will be evaluated regardless of the result of expression (a).
 			
@@ -360,7 +361,7 @@
 						9.000000
 						8.000000
 						7.000000
-					
+						
 				- The "ref" keyword
 					
 					Normally, the array fed into a for-each loop will be a copy of the original array.
@@ -424,14 +425,14 @@
 						}
 						
 						- These formats are also allowed:
-						
+							
 							for each ((i, itr) in array) { /*...*/ }
 							for each ((int i, itr) in array) { /*...*/ }
 							for each (i, real itr in array) { /*...*/ }
 							for each ((real i, string itr) in array) { /*...*/ }
 							
 					- You may use a colon(:) in place of the keyword "in"
-					
+						
 						for each (itr : array) { /*...*/ }
 						for each ((i, itr) : array) { /*...*/ }
 						
