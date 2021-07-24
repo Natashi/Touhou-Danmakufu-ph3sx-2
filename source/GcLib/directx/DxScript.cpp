@@ -305,6 +305,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjPrim_GetPrimitiveType", DxScript::Func_ObjPrimitive_GetPrimitiveType, 1 },
 	{ "ObjPrim_SetVertexCount", DxScript::Func_ObjPrimitive_SetVertexCount, 2 },
 	{ "ObjPrim_SetTexture", DxScript::Func_ObjPrimitive_SetTexture, 2 },
+	{ "ObjPrim_GetTexturePath", DxScript::Func_ObjPrimitive_GetTexturePath, 1 },
 	{ "ObjPrim_GetVertexCount", DxScript::Func_ObjPrimitive_GetVertexCount, 1 },
 	{ "ObjPrim_SetVertexPosition", DxScript::Func_ObjPrimitive_SetVertexPosition, 5 },
 	{ "ObjPrim_SetVertexPosition", DxScript::Func_ObjPrimitive_SetVertexPosition, 4 }, //Overloaded
@@ -319,6 +320,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjPrim_GetVertexAlpha", DxScript::Func_ObjPrimitive_GetVertexAlpha, 2 },
 	{ "ObjPrim_GetVertexPosition", DxScript::Func_ObjPrimitive_GetVertexPosition, 2 },
 	{ "ObjPrim_SetVertexIndex", DxScript::Func_ObjPrimitive_SetVertexIndex, 2 },
+	
 
 	//2D sprite object functions
 	{ "ObjSprite2D_SetSourceRect", DxScript::Func_ObjSprite2D_SetSourceRect, 5 },
@@ -3323,6 +3325,18 @@ value DxScript::Func_ObjPrimitive_SetTexture(script_machine* machine, int argc, 
 		}
 	}
 	return value();
+}
+value DxScript::Func_ObjPrimitive_GetTexturePath(script_machine* machine, int argc, const value* argv) {
+	std::wstring res;
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
+	if (obj) {
+		shared_ptr<Texture> tex = obj->GetTexture();
+		if (tex != nullptr)
+			res = tex->GetName();
+	}
+	return script->CreateStringValue(res);
 }
 value DxScript::Func_ObjPrimitive_GetVertexCount(script_machine* machine, int argc, const value* argv) {
 	size_t res = 0;

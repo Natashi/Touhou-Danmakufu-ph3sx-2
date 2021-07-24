@@ -315,6 +315,7 @@ namespace directx {
 		static gstd::value Func_ObjPrimitive_GetPrimitiveType(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjPrimitive_SetVertexCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjPrimitive_SetTexture(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_GetTexturePath);
 		static gstd::value Func_ObjPrimitive_GetVertexCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjPrimitive_SetVertexPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjPrimitive_SetVertexUV(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -327,6 +328,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_GetVertexAlpha);
 		static gstd::value Func_ObjPrimitive_GetVertexPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_ObjPrimitive_SetVertexIndex);
+		
 
 		//Dx関数：オブジェクト操作(Sprite2D)
 		static gstd::value Func_ObjSprite2D_SetSourceRect(gstd::script_machine* machine, int argc, const gstd::value* argv);
