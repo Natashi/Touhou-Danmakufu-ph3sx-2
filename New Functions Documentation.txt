@@ -2141,11 +2141,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				2) (const) mode
 			Description:
 				Sets the minification filtering mode for the render object.
+				
 				Filtering modes:
 					FILTER_NONE
 					FILTER_POINT
-					FILTER_LINEAR (default)
+					FILTER_LINEAR
 					FILTER_ANISOTROPIC
+					
+				Default is FILTER_LINEAR.
 
 		ObjRender_SetTextureFilterMag
 			Arguments:
@@ -2153,6 +2156,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				2) (const) mode
 			Description:
 				Sets the magnification filtering mode for the render object.
+				
+				Default is FILTER_LINEAR.
 
 		ObjRender_SetTextureFilterMip
 			Arguments:
@@ -2160,6 +2165,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				2) (const) mode
 			Description:
 				Sets the mipmap filtering mode for the render object.
+				
+				Default is FILTER_NONE.
 				
 		[---------------------------> Vertex Shader <---------------------------]
 			
@@ -2169,9 +2176,21 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				2) (bool) use vertex shader mode
 			Description:
 				Sets whether the render object will be rendered with support for vertex shaders.
+				Default is false.
 				
 				Rendering will not be performed without an attached shader object when this is set to true.
 				When using vertex shader rendering mode with 3D objects, fog must be manually computed with the shader.
+				
+		ObjRender_SetEnableDefaultTransformMatrix
+			Arguments:
+				1) object ID
+				2) (bool) enable
+			Description:
+				Sets whether the render object will calculate its transformation matrix.
+				Default is true.
+				
+				The transformation matrix contains the object's scale, angle, and position data.
+				If set to false, a transformation matrix will not be created by the engine, resulting in some performance boost.
 				
 		[---------------------------> Lighting <---------------------------]
 		
@@ -3835,7 +3854,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Change.
 			No longer returns a null value if SetForbidPlayerShot was set to true.
-	
 	
 	--------------------------------> Events <--------------------------------
 			
