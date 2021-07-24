@@ -46,6 +46,8 @@ A mostly-complete history log of engine updates can be found here.
 		- Added back in script source caching, plus the ability to remove a script from the cache.
 			- Added ObjEnemyBossScene_SetUnloadCache.
 		- Added a "Cached Scripts" panel to the Script tab of the LogWindow.
+		- Added a "CPU Time" column to the Script tab of the LogWindow.
+		- Added a "Shader" tab to the LogWindow.
 		- Added an overload for ColorARGBToHex.
 		- Added ObjItem_SetPositionRounding.
 		- Added new maths functions:
@@ -82,6 +84,7 @@ A mostly-complete history log of engine updates can be found here.
 		- Added StringFormat, a string formatting function in the style of C's sprintf.
 		- Added IsIntersected_Circle_RegularPolygon and IsIntersected_Circle_Ellipse.
 		- Added a new array function: contains.
+		- Added ObjRender_SetEnableDefaultTransformMatrix.
 	Bug fixes:
 		- Fixed LoadMesh crashing the engine.
 		- Fixed ObjCol_GetListOfIntersectedShotID incorrectly expecting only 1 argument.
