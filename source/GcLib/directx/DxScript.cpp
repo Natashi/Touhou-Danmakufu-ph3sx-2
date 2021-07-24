@@ -2111,17 +2111,24 @@ gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* ma
 		double cx, double cy, double cr,
 		double ex, double ey, double ea, double eb) -> bool
 	{
-		double dx = cx - ex;
-		double dy = cy - ey;
-		double dd = hypot(dx, dy);
+		double dx = ex - cx;
+		double dy = ey - cy;
+		double dx2 = dx * dx;
+		double dy2 = dy * dy;
+
+		double cr2 = cr * cr;
+		double ea2 = ea * ea;
+		double eb2 = eb * eb;
+
+		//One's origin is inside the other
+		if (((dx2 + dy2) <= cr2) || ((dx2 / ea2 + dy2 / eb2) <= 1))
+			return true;
+
+		double dd = sqrt(dx2 + dy2);
 
 		//Eccentricity is negligible, just use a circle-circle intersection
 		if (abs(ea - eb) < 0.1)
 			return dd <= (cr + ea);
-
-		//Circle shares origin with ellipse
-		if (dd < 0.1)
-			return true;
 
 		double th_c = dx / dd;
 		double th_s = dy / dd;
@@ -2130,17 +2137,17 @@ gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* ma
 		double p1_x = ex - ea * th_c;
 		double p1_y = ey - eb * th_s;
 
-		if (Math::HypotSq(p1_x - cx, p1_y - cy) <= cr * cr)
+		if (Math::HypotSq(p1_x - cx, p1_y - cy) <= cr2)
 			return true;
 
 		//Point on the circle
 		double p2_x = cx + cr * th_c;
 		double p2_y = cy + cr * th_s;
 
-		double dx2 = p2_x - ex;
-		double dy2 = p2_y - ey;
+		double dx_p2e = p2_x - ex;
+		double dy_p2e = p2_y - ey;
 
-		if ((dx2 * dx2) / (ea * ea) + (dy2 * dy2) / (eb * eb) <= 1)
+		if (((dx_p2e * dx_p2e) / ea2 + (dy_p2e * dy_p2e) / eb2) <= 1)
 			return true;
 
 		return false;
