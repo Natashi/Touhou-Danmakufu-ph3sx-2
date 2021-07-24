@@ -8,12 +8,12 @@
 constexpr const int STANDARD_FPS = 60;
 
 const std::wstring DNH_EXE_NAME = L"th_dnh_ph3sx.exe";
-const std::wstring DNH_VERSION = L"v1.22a-pre";
+const std::wstring DNH_VERSION = L"v1.30a";
 
 constexpr const uint64_t _GAME_VERSION_RESERVED = /*e*/621;		//OWO!!!!!
 constexpr const uint64_t _GAME_VERSION_MAJOR = 1;
 constexpr const uint64_t _GAME_VERSION_MINOR = 20;
-constexpr const uint64_t _GAME_VERSION_REVIS = 9;
+constexpr const uint64_t _GAME_VERSION_REVIS = 15;
 
 //00000000 00000000 | 00000000 00000000 | 00000000 00000000 | 00000000 00000000
 //<---RESERVED----> | <-----MAJOR-----> | <-----MINOR-----> | <---REVISIONS--->
