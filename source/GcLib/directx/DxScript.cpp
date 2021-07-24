@@ -2113,14 +2113,11 @@ gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* ma
 	{
 		if (er != 0) {
             double sc[2];
-            Math::DoSinCos(er, sc);
-            cx -= ex;
-            cy -= ey;
-            cx = cx * sc[1] - cy * sc[0];
-            cy = cx * sc[0] + cy * sc[1];
-            cx += ex;
-            cy += ey;
-
+            Math::DoSinCos(-Math::DegreeToRadian(er), sc);
+			double cx_ = cx - ex;
+			double cy_ = cy - ey;
+            cx = cx_ * sc[1] - cy_ * sc[0] + ex;
+            cy = cx_ * sc[0] + cy_ * sc[1] + ey;
         }
         
         double dx = ex - cx;
