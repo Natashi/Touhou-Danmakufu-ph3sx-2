@@ -2138,8 +2138,8 @@ gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* ma
 		res = dist <= ery;
 		if (res) {
 			double sc[2];
-			double ang = atan2(dy, dx);
-			Math::DoSinCos(ea + ang, sc);
+			double ang = atan2(dy, dx) - ea;
+			Math::DoSinCos(ang, sc);
 			double a = erx * sc[0];
 			double b = ery * sc[1];
 			

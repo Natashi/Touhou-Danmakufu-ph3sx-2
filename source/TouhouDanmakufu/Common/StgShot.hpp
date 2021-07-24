@@ -469,7 +469,7 @@ public:
 	}
 
 	int GetLength() { return length_; }
-	void SetLength(int length) { length_ = length; lengthF_ = (float)length;  }
+	void SetLength(int length) { length_ = length; lengthF_ = (float)length; maxLength_ = length; }
 	int GetRenderWidth() { return widthRender_; }
 	void SetRenderWidth(int width) {
 		widthRender_ = width;
