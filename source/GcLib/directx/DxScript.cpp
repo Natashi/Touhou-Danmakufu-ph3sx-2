@@ -193,7 +193,7 @@ static const std::vector<function> dxFunction = {
 	{ "IsIntersected_Line_Circle", DxScript::Func_IsIntersected_Line_Circle, 8 },
 	{ "IsIntersected_Line_Line", DxScript::Func_IsIntersected_Line_Line, 10 },
 	{ "IsIntersected_Circle_RegularPolygon", DxScript::Func_IsIntersected_Circle_RegularPolygon, 8 },
-	{ "IsIntersected_Circle_Ellipse", DxScript::Func_IsIntersected_Circle_Ellipse, 7 },
+	{ "IsIntersected_Circle_Ellipse", DxScript::Func_IsIntersected_Circle_Ellipse, 8 },
 
 	//Color conversion functions
 	{ "ColorARGBToHex", DxScript::Func_ColorARGBToHex, 4 },
@@ -2109,9 +2109,21 @@ gstd::value DxScript::Func_IsIntersected_Circle_RegularPolygon(gstd::script_mach
 gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	auto _IsIntersected_CircleEllipse = [](
 		double cx, double cy, double cr,
-		double ex, double ey, double ea, double eb) -> bool
+		double ex, double ey, double ea, double eb, double er) -> bool
 	{
-		double dx = ex - cx;
+		if (er != 0) {
+            double sc[2];
+            Math::DoSinCos(er, sc);
+            cx -= ex;
+            cy -= ey;
+            cx = cx * sc[1] - cy * sc[0];
+            cy = cx * sc[0] + cy * sc[1];
+            cx += ex;
+            cy += ey;
+
+        }
+        
+        double dx = ex - cx;
 		double dy = ey - cy;
 		double dx2 = dx * dx;
 		double dy2 = dy * dy;
@@ -2155,7 +2167,7 @@ gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* ma
 
 	bool res = _IsIntersected_CircleEllipse(
 		argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
-		argv[3].as_real(), argv[4].as_real(), argv[5].as_real(), argv[6].as_real());
+		argv[3].as_real(), argv[4].as_real(), argv[5].as_real(), argv[6].as_real(), argv[7].as_real());
 
 	return DxScript::CreateBooleanValue(res);
 }
