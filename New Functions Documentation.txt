@@ -2281,6 +2281,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	--------------------------------> Primitive Object Functions <--------------------------------
 	
+	ObjPrim_GetTexture
+		Arguments:
+			1) object ID
+		Returns:
+			(string) texture name
+		Description:
+			Returns the path/name of the primitive object's texture.
+	
 	ObjPrim_SetVertexColor (Overload)
 		Arguments:
 			1) object ID
@@ -2299,7 +2307,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			4) color saturation
 			5) color value
 		Description:
-			Sets the vertex color of the primitive object as a HSV color .
+			Sets the vertex color of the primitive object as a HSV color.
 			
 	ObjPrim_GetVertexColor
 		Arguments:

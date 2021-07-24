@@ -1,6 +1,6 @@
 A mostly-complete history log of engine updates can be found here.
 
-1.22a:
+1.30a:
 	Changes:
 		- Greatly improved the speed of the script code interpreter.
 		- Made the maximum sizes of render targets respect the Direct3D device capabilities.
@@ -85,6 +85,7 @@ A mostly-complete history log of engine updates can be found here.
 		- Added IsIntersected_Circle_RegularPolygon and IsIntersected_Circle_Ellipse.
 		- Added a new array function: contains.
 		- Added ObjRender_SetEnableDefaultTransformMatrix.
+		- Added ObjPrim_GetTexture.
 	Bug fixes:
 		- Fixed LoadMesh crashing the engine.
 		- Fixed ObjCol_GetListOfIntersectedShotID incorrectly expecting only 1 argument.
