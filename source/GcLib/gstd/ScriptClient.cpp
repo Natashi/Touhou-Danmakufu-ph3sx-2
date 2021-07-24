@@ -193,7 +193,7 @@ static const std::vector<function> commonFunction = {
 	//Digit functions
 	{ "DigitToArray", ScriptClientBase::Func_DigitToArray, 1 },
 	{ "DigitToArray", ScriptClientBase::Func_DigitToArray, 2 }, //Overloaded
-	{ "GetDigitCount", ScriptClientBase::Func_GetDigitCount, 1 },
+	{ "CountDigits", ScriptClientBase::Func_GetDigitCount, 1 },
 
 	//Point lists
 	{ "GetPoints_Line", ScriptClientBase::Func_GetPoints_Line, 5 },
