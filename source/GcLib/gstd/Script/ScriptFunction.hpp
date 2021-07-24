@@ -113,6 +113,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(sort);
 		DNH_FUNCAPI_DECL_(range);
 		DNH_FUNCAPI_DECL_(contains);
+		DNH_FUNCAPI_DECL_(all);
+		DNH_FUNCAPI_DECL_(any);
 
 		static const value* index(script_machine* machine, int argc, value* arr, value* indexer);
 

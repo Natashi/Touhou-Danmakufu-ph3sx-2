@@ -892,6 +892,48 @@ namespace gstd {
 		return value(script_type_manager::get_boolean_type(), res);
 	}
 
+	DNH_FUNCAPI_DEF_(BaseFunction::all) {
+		_null_check(machine, argv, argc);
+
+		const value* arr = &argv[0];
+		type_data* arrType = arr->get_type();
+
+		if (arrType->get_kind() != type_data::tk_array) {
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "all");
+			return value();
+		}
+
+		const value& val = argv[1];
+		size_t length = arr->length_as_array();
+
+		bool res = true;
+		for (size_t i = 0; i < length && res; ++i)
+			res = arr->index_as_array(i).as_boolean();
+
+		return value(script_type_manager::get_boolean_type(), res);
+	}
+
+	DNH_FUNCAPI_DEF_(BaseFunction::any) {
+		_null_check(machine, argv, argc);
+
+		const value* arr = &argv[0];
+		type_data* arrType = arr->get_type();
+
+		if (arrType->get_kind() != type_data::tk_array) {
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "any");
+			return value();
+		}
+
+		const value& val = argv[1];
+		size_t length = arr->length_as_array();
+
+		bool res = false;
+		for (size_t i = 0; i < length && !res; ++i)
+			res = arr->index_as_array(i).as_boolean();
+
+		return value(script_type_manager::get_boolean_type(), res);
+	}
+
 	const value* BaseFunction::index(script_machine* machine, int argc, value* arr, value* indexer) {
 		int64_t index = indexer->as_int();
 		size_t length = arr->length_as_array();

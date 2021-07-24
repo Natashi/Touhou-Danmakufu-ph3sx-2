@@ -1381,17 +1381,20 @@ value ScriptClientBase::Func_Shuffle(script_machine* machine, int argc, const va
 	std::vector<value> arrVal;
 	std::vector<value> arrOld(size);
 
-	// Populate source array
 	for (size_t i = 0; i < size; ++i)
 		arrOld[i] = val->index_as_array(i);
 
 	for (size_t i = 0; i < size; ++i) {
-		int64_t index = (i == size - 1) ? 0 : script->mt_->GetReal(0, size - 0.0000001 - i);
+		int64_t index = 0;
+		if (i < size - 1) {
+			index = script->mt_->GetReal(0, size - 0.0000001 - i);
+			++randCalls_;
+		}
 		arrVal.push_back(arrOld[index]);
 		arrOld.erase(arrOld.begin() + index);
 	}
 
-	++randCalls_;
+	
 
 	res.set(valType, arrVal);
 	return res;
@@ -1417,17 +1420,18 @@ value ScriptClientBase::Func_ShuffleEff(script_machine* machine, int argc, const
 	std::vector<value> arrVal;
 	std::vector<value> arrOld(size);
 
-	// Populate source array
 	for (size_t i = 0; i < size; ++i)
 		arrOld[i] = val->index_as_array(i);
 
 	for (size_t i = 0; i < size; ++i) {
-		int64_t index = (i == size - 1) ? 0 : script->mtEffect_->GetReal(0, size - 0.0000001 - i);
+		int64_t index = 0;
+		if (i < size - 1) {
+			index = script->mtEffect_->GetReal(0, size - 0.0000001 - i);
+			++prandCalls_;
+		}
 		arrVal.push_back(arrOld[index]);
 		arrOld.erase(arrOld.begin() + index);
 	}
-
-	++prandCalls_;
 
 	res.set(valType, arrVal);
 	return res;
