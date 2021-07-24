@@ -382,6 +382,8 @@ static const std::vector<function> dxFunction = {
 	{ "ObjText_SetFontSize", DxScript::Func_ObjText_SetFontSize, 2 },
 	{ "ObjText_SetFontBold", DxScript::Func_ObjText_SetFontBold, 2 },
 	{ "ObjText_SetFontWeight", DxScript::Func_ObjText_SetFontWeight, 2 },
+	{ "ObjText_SetFontColor", DxScript::Func_ObjText_SetFontColor, 4 },
+	{ "ObjText_SetFontColor", DxScript::Func_ObjText_SetFontColor, 2 }, //Overloaded
 	{ "ObjText_SetFontColorTop", DxScript::Func_ObjText_SetFontColorTop, 4 },
 	{ "ObjText_SetFontColorTop", DxScript::Func_ObjText_SetFontColorTop, 2 },			//Overloaded
 	{ "ObjText_SetFontColorBottom", DxScript::Func_ObjText_SetFontColorBottom, 4 },
@@ -3970,6 +3972,28 @@ value DxScript::Func_ObjText_SetFontWeight(script_machine* machine, int argc, co
 		if (weight < 0) weight = 0;
 		else if (weight > 1000) weight = 1000;
 		obj->SetFontWeight(weight);
+	}
+	return value();
+}
+value DxScript::Func_ObjText_SetFontColor(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	DxScriptTextObject* obj = script->GetObjectPointerAs<DxScriptTextObject>(id);
+	if (obj) {
+		byte r, g, b;
+		if (argc == 4) {
+			r = ColorAccess::ClampColorRet(argv[1].as_int());
+			g = ColorAccess::ClampColorRet(argv[2].as_int());
+			b = ColorAccess::ClampColorRet(argv[3].as_int());
+		}
+		else {
+			D3DCOLOR color = argv[1].as_int();
+			r = ColorAccess::GetColorR(color);
+			g = ColorAccess::GetColorG(color);
+			b = ColorAccess::GetColorB(color);
+		}
+		obj->SetFontColorTop(r, g, b);
+		obj->SetFontColorBottom(r, g, b);
 	}
 	return value();
 }
