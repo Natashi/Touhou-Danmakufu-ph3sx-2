@@ -34,8 +34,10 @@ void ScriptManager::Work(int targetType) {
 	for (auto itr = listScriptRun_.begin(); itr != listScriptRun_.end(); ) {
 		shared_ptr<ManagedScript> script = *itr;
 		int type = script->GetScriptType();
-		if (script->IsPaused() || (targetType != ManagedScript::TYPE_ALL && targetType != type)) {
+
+		if (script->IsPaused())
 			script->runTime_ = 0;
+		if (script->IsPaused() || (targetType != ManagedScript::TYPE_ALL && targetType != type)) {
 			++itr;
 			continue;
 		}
