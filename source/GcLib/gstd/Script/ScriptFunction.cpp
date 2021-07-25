@@ -213,9 +213,26 @@ namespace gstd {
 			return (i < 0) ? ((j - ((-i) % j)) % j) : (i % j);
 	}
 
+	bool BaseFunction::_is_empty_type(value* val) {
+		if (val == nullptr)
+			return true;
+		return _is_empty_type(val->get_type());
+	}
+	bool BaseFunction::_is_empty_type(type_data* type) {
+		if (type == nullptr)
+			return true;
+		return _rtypeof(type) == type_data::tk_null;
+	}
 	value* BaseFunction::_value_cast(value* val, type_data* cast) {
-		if (val == nullptr || val->get_type() == nullptr)
+		if (val == nullptr)
 			return val;
+		if (val->get_type() == nullptr) {
+			val->set(cast);
+			return val;
+		}
+		if (_rtypeof(cast) == type_data::tk_null)
+			return val;
+
 		switch (cast->get_kind()) {
 		case type_data::tk_int:
 			return val->reset(cast, val->as_int());
@@ -343,6 +360,13 @@ namespace gstd {
 		}
 		return typec->get_kind();
 	}
+	size_t _array_dimension(type_data* type) {
+		size_t dim = 0;
+		for (; type != nullptr; type = type->get_element()) {
+			++dim;
+		}
+		return dim;
+	}
 
 	//-------------------------------------------------------------------------------------------
 
@@ -388,20 +412,20 @@ namespace gstd {
 			return res;
 		}
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::cast_int_array) {
+	value BaseFunction::cast_int_array(script_machine* machine, int argc, const value* argv) {
 		return _cast_array(machine, argv, type_data::tk_int);
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::cast_real_array) {
+	value BaseFunction::cast_real_array(script_machine* machine, int argc, const value* argv) {
 		return _cast_array(machine, argv, type_data::tk_real);
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::cast_bool_array) {
+	value BaseFunction::cast_bool_array(script_machine* machine, int argc, const value* argv) {
 		return _cast_array(machine, argv, type_data::tk_boolean);
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::cast_char_array) {
+	value BaseFunction::cast_char_array(script_machine* machine, int argc, const value* argv) {
 		return _cast_array(machine, argv, type_data::tk_char);
 		//return value(script_type_manager::get_string_type(), argv->as_string());
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::cast_x_array) {
+	value BaseFunction::cast_x_array(script_machine* machine, int argc, const value* argv) {
 		_null_check(nullptr, argv, argc);
 
 		type_data::type_kind targetKind = (type_data::type_kind)argv[1].as_int();
@@ -632,7 +656,7 @@ namespace gstd {
 	}
 	SCRIPT_DECLARE_OP(not_);
 
-	DNH_FUNCAPI_DEF_(BaseFunction::modc) {
+	value BaseFunction::modc(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, argv, argc);
 
 		if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_real))
@@ -641,7 +665,7 @@ namespace gstd {
 			return value(script_type_manager::get_int_type(), argv[0].as_int() % argv[1].as_int());
 	}
 
-	DNH_FUNCAPI_DEF_(BaseFunction::predecessor) {
+	value BaseFunction::predecessor(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, argv, argc);
 
 		switch (argv->get_type()->get_kind()) {
@@ -671,7 +695,7 @@ namespace gstd {
 		}
 		}
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::successor) {
+	value BaseFunction::successor(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, argv, argc);
 
 		switch (argv->get_type()->get_kind()) {
@@ -702,11 +726,13 @@ namespace gstd {
 		}
 	}
 
-	DNH_FUNCAPI_DEF_(BaseFunction::length) {
+	value BaseFunction::length(script_machine* machine, int argc, const value* argv) {
 		return value(script_type_manager::get_int_type(), (int64_t)argv->length_as_array());
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::resize) {
-		_null_check(machine, argv, argc);
+	value BaseFunction::resize(script_machine* machine, int argc, const value* argv) {
+		_null_check(machine, &argv[0], 1);
+		if (argc == 3)
+			_null_check(machine, &argv[2], 1);
 
 		const value* val = &argv[0];
 		type_data* valType = val->get_type();
@@ -754,8 +780,8 @@ namespace gstd {
 		return res;
 	}
 
-	DNH_FUNCAPI_DEF_(BaseFunction::contains) {
-		_null_check(machine, argv, argc);
+	value BaseFunction::contains(script_machine* machine, int argc, const value* argv) {
+		_null_check(machine, &argv[0], 1);
 
 		const value* arr = &argv[0];
 		type_data* arrType = arr->get_type();
@@ -780,14 +806,15 @@ namespace gstd {
 	}
 
 	const value* BaseFunction::index(script_machine* machine, int argc, value* arr, value* indexer) {
+		_null_check(machine, arr, 1);
 		size_t index = indexer->as_int();
 		if (!_index_check(machine, arr->get_type(), arr->length_as_array(), index))
 			return nullptr;
 		return &arr->index_as_array(index);
 	}
 
-	DNH_FUNCAPI_DEF_(BaseFunction::slice) {
-		_null_check(machine, argv, argc);
+	value BaseFunction::slice(script_machine* machine, int argc, const value* argv) {
+		_null_check(machine, &argv[0], 1);
 
 		if (argv[0].get_type()->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, argv[0].get_type(), "array slice");
@@ -834,10 +861,11 @@ namespace gstd {
 		}
 
 		result.reset(argv[0].get_type(), resArr);
+		result.make_unique();
 		return result;
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::erase) {
-		_null_check(machine, argv, argc);
+	value BaseFunction::erase(script_machine* machine, int argc, const value* argv) {
+		_null_check(machine, &argv[0], 1);
 
 		if (argv[0].get_type()->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, argv[0].get_type(), "array erase");
@@ -867,10 +895,11 @@ namespace gstd {
 			}
 		}
 		result.reset(argv[0].get_type(), resArr);
+		result.make_unique();
 		return result;
 	}
 
-	DNH_FUNCAPI_DEF_(BaseFunction::append) {
+	value BaseFunction::append(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, argv, argc);
 
 		type_data* type_array = argv[0].get_type();
@@ -911,7 +940,7 @@ namespace gstd {
 		}
 		return true;
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::concatenate) {
+	value BaseFunction::concatenate(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, argv, argc);
 		__chk_concat(machine, argv[0].get_type(), argv[1].get_type());
 
@@ -927,7 +956,7 @@ namespace gstd {
 
 		return result;
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::concatenate_direct) {
+	value BaseFunction::concatenate_direct(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, argv, argc);
 		__chk_concat(machine, argv[0].get_type(), argv[1].get_type());
 
@@ -943,18 +972,18 @@ namespace gstd {
 		return result;
 	}
 
-	DNH_FUNCAPI_DEF_(BaseFunction::round) {
+	value BaseFunction::round(script_machine* machine, int argc, const value* argv) {
 		double r = std::floor(argv->as_real() + 0.5);
 		return value(script_type_manager::get_real_type(), r);
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::truncate) {
+	value BaseFunction::truncate(script_machine* machine, int argc, const value* argv) {
 		double r = argv->as_real();
 		return value(script_type_manager::get_real_type(), (r > 0) ? std::floor(r) : std::ceil(r));
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::ceil) {
+	value BaseFunction::ceil(script_machine* machine, int argc, const value* argv) {
 		return value(script_type_manager::get_real_type(), std::ceil(argv->as_real()));
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::floor) {
+	value BaseFunction::floor(script_machine* machine, int argc, const value* argv) {
 		return value(script_type_manager::get_real_type(), std::floor(argv->as_real()));
 	}
 
@@ -967,30 +996,30 @@ namespace gstd {
 						return value(script_type_manager::get_real_type(), (double)res); \
 					else \
 						return value(argv->get_type(), res);
-	DNH_FUNCAPI_DEF_(BaseFunction::bitwiseNot) {
+	value BaseFunction::bitwiseNot(script_machine* machine, int argc, const value* argv) {
 		int64_t val = argv[0].as_int();
 		int64_t res = ~val;
 		BITWISE_RET;
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::bitwiseAnd) {
+	value BaseFunction::bitwiseAnd(script_machine* machine, int argc, const value* argv) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
 		int64_t res = val1 & val2;
 		BITWISE_RET;
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::bitwiseOr) {
+	value BaseFunction::bitwiseOr(script_machine* machine, int argc, const value* argv) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
 		int64_t res = val1 | val2;
 		BITWISE_RET;
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::bitwiseXor) {
+	value BaseFunction::bitwiseXor(script_machine* machine, int argc, const value* argv) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
 		int64_t res = val1 ^ val2;
 		BITWISE_RET;
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::bitwiseLeft) {
+	value BaseFunction::bitwiseLeft(script_machine* machine, int argc, const value* argv) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
 		int64_t res = val1 << val2;
@@ -999,7 +1028,7 @@ namespace gstd {
 		else
 			return value(argv->get_type(), res);
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::bitwiseRight) {
+	value BaseFunction::bitwiseRight(script_machine* machine, int argc, const value* argv) {
 		int64_t val1 = argv[0].as_int();
 		int64_t val2 = argv[1].as_int();
 		int64_t res = val1 >> val2;
@@ -1010,21 +1039,21 @@ namespace gstd {
 	}
 #undef BITWISE_RET
 
-	DNH_FUNCAPI_DEF_(BaseFunction::typeOf) {
+	value BaseFunction::typeOf(script_machine* machine, int argc, const value* argv) {
 		int64_t kind = _typeof(argv->get_type());
 		return value(script_type_manager::get_int_type(), kind);
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::typeOfElem) {
+	value BaseFunction::typeOfElem(script_machine* machine, int argc, const value* argv) {
 		int64_t kind = _rtypeof(argv->get_type());
 		return value(script_type_manager::get_int_type(), kind);
 	}
 
-	DNH_FUNCAPI_DEF_(BaseFunction::assert_) {
+	value BaseFunction::assert_(script_machine* machine, int argc, const value* argv) {
 		if (!argv[0].as_boolean())
 			machine->raise_error(argv[1].as_string());
 		return value();
 	}
-	DNH_FUNCAPI_DEF_(BaseFunction::script_debugBreak) {
+	value BaseFunction::script_debugBreak(script_machine* machine, int argc, const value* argv) {
 		//Prevents crashes if called without a debugger attached, not to prevent external debugging
 		if (IsDebuggerPresent())
 			DebugBreak();
