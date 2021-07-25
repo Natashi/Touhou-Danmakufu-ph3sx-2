@@ -864,6 +864,66 @@ namespace gstd {
 		result.make_unique();
 		return result;
 	}
+	value BaseFunction::insert(script_machine* machine, int argc, const value* argv) {
+		_null_check(machine, &argv[0], 1);
+		_null_check(machine, &argv[2], 1);
+
+		type_data* arrType = argv[0].get_type();
+		if (arrType->get_kind() != type_data::tk_array) {
+			_raise_error_unsupported(machine, argv[0].get_type(), "array insert");
+			return value();
+		}
+
+		size_t length = argv[0].length_as_array();
+		int insertPos = argv[1].as_int();
+
+		if (insertPos < 0 || (length > 0 && insertPos > length) || (length == 0 && insertPos > 0)) {
+			std::string error = StringUtility::Format("Array index out of bounds. (inserting=%d, size=%u)\r\n",
+				insertPos, length);
+			machine->raise_error(error);
+			return value();
+		}
+		if (length == 0) {
+			arrType = script_type_manager::get_instance()->get_array_type(arrType);
+		}
+
+		value insertVal = argv[2];
+		type_data* insertType = insertVal.get_type();
+		insertVal.make_unique();
+
+		if (_is_empty_type(arrType)) {
+			arrType = script_type_manager::get_instance()->get_array_type(arrType);
+		}
+		else {
+			type_data* elem = arrType->get_element();
+			if (elem != nullptr && !__type_assign_check(elem, insertType)) {
+				std::string error = StringUtility::Format(
+					"Array insert cannot implicitly convert from \"%s\" to \"%s\".\r\n",
+					type_data::string_representation(elem).c_str(),
+					type_data::string_representation(insertType).c_str());
+				machine->raise_error(error);
+				return value();
+			}
+		}
+
+		value result;
+		std::vector<value> resArr;
+		resArr.resize(length + 1U);
+		{
+			size_t iArr = 0;
+			for (size_t i = 0; i < insertPos; ++i) {
+				resArr[iArr++] = argv[0].index_as_array(i);
+			}
+			resArr[iArr++] = insertVal;
+			for (size_t i = insertPos; i < length; ++i) {
+				resArr[iArr++] = argv[0].index_as_array(i);
+			}
+		}
+		result.reset(arrType, resArr);
+		result.make_unique();
+		_value_cast(&result, arrType);
+		return result;
+	}
 	value BaseFunction::erase(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, &argv[0], 1);
 

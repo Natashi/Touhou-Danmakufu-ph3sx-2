@@ -112,6 +112,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(resize);
 		DNH_FUNCAPI_DECL_(contains);
 		DNH_FUNCAPI_DECL_(slice);
+		DNH_FUNCAPI_DECL_(insert);
 		DNH_FUNCAPI_DECL_(erase);
 		DNH_FUNCAPI_DECL_(append);
 		DNH_FUNCAPI_DECL_(concatenate);

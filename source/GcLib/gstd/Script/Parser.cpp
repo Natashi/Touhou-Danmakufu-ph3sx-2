@@ -119,6 +119,7 @@ static const std::vector<function> base_operations = {
 	{ "negative", BaseFunction::negative, 1 },
 	{ "predecessor", BaseFunction::predecessor, 1 },
 	{ "successor", BaseFunction::successor, 1 },
+
 	{ "round", BaseFunction::round, 1 },
 	{ "trunc", BaseFunction::truncate, 1 },
 	{ "truncate", BaseFunction::truncate, 1 },
@@ -144,14 +145,14 @@ static const std::vector<function> base_operations = {
 	//{ "length", BaseFunction::length, 1 },
 	{ "resize", BaseFunction::resize, 2 },
 	{ "resize", BaseFunction::resize, 3 },	//Overloaded
-
 	{ "contains", BaseFunction::contains, 2 },
-
 	{ "slice", BaseFunction::slice, 3 },
 	//{ "slice", BaseFunction::slice, 4 },	//Overloaded
+	{ "insert", BaseFunction::insert, 3 },
 	{ "erase", BaseFunction::erase, 2 },
 	{ "append", BaseFunction::append, 2 },
 	{ "concatenate", BaseFunction::concatenate, 2 },
+
 	{ "compare", BaseFunction::compare, 2 },
 
 	{ "bit_not", BaseFunction::bitwiseNot, 1 },
