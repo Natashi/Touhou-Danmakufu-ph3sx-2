@@ -16,8 +16,8 @@ namespace gstd {
 
 		pc_pop,					//Pop [arg0] values from stack
 		pc_push_value,			//Push value=[data] to stack
-		pc_push_variable,		//Push value of variable=[arg0, arg1] to stack, allows null if [arg2]
-		pc_push_variable2,		//Push pointer of variable=[arg0, arg1] to stack, allows null if [arg2]
+		pc_push_variable,		//Push value of variable=[arg0, arg1] to stack
+		pc_push_variable2,		//Push pointer of variable=[arg0, arg1] to stack
 		pc_dup_n,				//Push {esp-[arg0]} to stack
 		pc_swap,				//Swap {esp-0} and {esp-1}
 		pc_load_ptr,			//Push &{esp-[arg0]} to the stack

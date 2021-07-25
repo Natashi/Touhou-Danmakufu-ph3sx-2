@@ -837,8 +837,7 @@ continue_as_variadic:
 		}
 		else {
 			//Variable
-			state->AddCode(block, code(command_kind::pc_push_variable,
-				s->level, s->var, false, name));
+			state->AddCode(block, code(command_kind::pc_push_variable, s->level, s->var, name));
 		}
 
 		return;
@@ -1238,7 +1237,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		if (s->bVariable) {
 			if (state->next() == token_kind::tk_open_bra) {
 				isArrayElement = true;
-				state->AddCode(block, code(command_kind::pc_push_variable2, s->level, s->var, false, name));
+				state->AddCode(block, code(command_kind::pc_push_variable2, s->level, s->var, name));
 				_parse_array_suffix_lvalue(block, state);
 			}
 		}
