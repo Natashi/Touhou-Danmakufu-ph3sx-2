@@ -83,7 +83,7 @@ A mostly-complete history log of engine updates can be found here.
 			- as_x_array
 		- Added StringFormat, a string formatting function in the style of C's sprintf.
 		- Added IsIntersected_Circle_RegularPolygon and IsIntersected_Circle_Ellipse.
-		- Added a new array function: contains.
+		- Added new array functions: contains, insert.
 		- Added ObjRender_SetEnableDefaultTransformMatrix.
 		- Added ObjPrim_GetTexture.
 	Bug fixes:
