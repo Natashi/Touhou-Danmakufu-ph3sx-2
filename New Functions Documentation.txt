@@ -53,7 +53,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(any[]) result
 		Description:
-			Resizes the given array, on the condition that the array must not be a null array.
+			Resizes the given array.
+			The array must not be a null array.
 			
 	resize (Overload)
 		Arguments:
@@ -68,7 +69,17 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Resizes the given array.
 			
 			If the new size is larger than the old size, newly inserted elements will be assigned the fill value.
-			Unless the array is a null array, the fill value's type must match the array element's.
+			Unless the array is a null array, the fill value's type must be convertible to the array's element type.
+			
+	insert
+		Arguments:
+			1) (any[]) array
+			2) (int) insert position
+			3) (any) value
+		Returns:
+			(any[]) result
+		Description:
+			Inserts the given value into the given position of the array.
 			
 	contains
 		Arguments:
@@ -2281,6 +2292,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	--------------------------------> Primitive Object Functions <--------------------------------
 	
+	ObjPrim_GetTexture
+		Arguments:
+			1) object ID
+		Returns:
+			(string) texture name
+		Description:
+			Returns the path/name of the primitive object's texture.
+	
 	ObjPrim_SetVertexColor (Overload)
 		Arguments:
 			1) object ID
@@ -2299,7 +2318,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			4) color saturation
 			5) color value
 		Description:
-			Sets the vertex color of the primitive object as a HSV color .
+			Sets the vertex color of the primitive object as a HSV color.
 			
 	ObjPrim_GetVertexColor
 		Arguments:

@@ -92,7 +92,7 @@ void script_value_vector::push_back(const value& value) {
 void script_value_vector::pop_back(size_t count) {
 	if (length < count) count = length;
 	length -= count;
-	_fill_with_empty(at + length, count);
+	//_fill_with_empty(at + length, count);
 }
 
 void script_value_vector::erase(value* pos) {

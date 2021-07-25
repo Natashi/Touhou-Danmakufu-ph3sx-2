@@ -1,6 +1,6 @@
 A mostly-complete history log of engine updates can be found here.
 
-1.22a:
+1.30a:
 	Changes:
 		- Greatly improved the speed of the script code interpreter.
 		- Made the maximum sizes of render targets respect the Direct3D device capabilities.
@@ -11,6 +11,7 @@ A mostly-complete history log of engine updates can be found here.
 		- Changed the behaviour of resource pre-loading. (LoadTexture, LoadMesh, etc.)
 			- Loaded resources are no longer script-dependent, they will remain loaded even if the script that loaded them has been closed.
 		- Changed the arguments of ObjPatternShot_AddTransform/ObjPatternShot_SetTransform.
+			- Additionally, the above two functions now take in varargs.
 		- Improved GetObjectDistance.
 		- Introduced the ability to use StartScript a second time without having to use LoadScript again.
 		- Renamed ObjSound_SetRestartEnable to ObjSound_SetResumeEnable.
@@ -83,8 +84,9 @@ A mostly-complete history log of engine updates can be found here.
 			- as_x_array
 		- Added StringFormat, a string formatting function in the style of C's sprintf.
 		- Added IsIntersected_Circle_RegularPolygon and IsIntersected_Circle_Ellipse.
-		- Added a new array function: contains.
+		- Added new array functions: contains, insert.
 		- Added ObjRender_SetEnableDefaultTransformMatrix.
+		- Added ObjPrim_GetTexture.
 	Bug fixes:
 		- Fixed LoadMesh crashing the engine.
 		- Fixed ObjCol_GetListOfIntersectedShotID incorrectly expecting only 1 argument.
@@ -110,6 +112,7 @@ A mostly-complete history log of engine updates can be found here.
 		- Fixed a bug where empty lines in text file object are skipped over in some devices.
 		- Fixed ObjFileT_SplitLineText having an incorrect return value if the object is invalid.
 		- Fixed an issue where the engine's default 3D render shader and 3D particle list shader don't work on AMD graphics cards.
+			- Also updated the shader source files in the sample scripts with this fix.
 		- Fixed a null pointer read crash bug during engine initialization.
 		- Fixed a bug where short-circuited logical expressions would not convert to boolean.
 

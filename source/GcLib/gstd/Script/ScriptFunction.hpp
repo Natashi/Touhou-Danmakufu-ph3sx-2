@@ -58,6 +58,8 @@ namespace gstd {
 		inline static double _fmod2(double i, double j);
 		inline static int64_t _mod2(int64_t i, int64_t j);
 
+		static bool _is_empty_type(value* val);
+		static bool _is_empty_type(type_data* type);
 		static value* _value_cast(value* val, type_data* cast);
 
 		static bool _index_check(script_machine* machine, type_data* arg0_type, size_t arg0_size, int index);
@@ -70,6 +72,7 @@ namespace gstd {
 
 		static type_data::type_kind _typeof(type_data* type);
 		static type_data::type_kind _rtypeof(type_data* type);
+		static size_t _array_dimension(type_data* type);
 
 		//---------------------------------------------------------------------
 
@@ -107,6 +110,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(predecessor);
 		DNH_FUNCAPI_DECL_(successor);
 
+		static const value* index(script_machine* machine, int argc, value* arr, value* indexer);
+
 		DNH_FUNCAPI_DECL_(length);
 		DNH_FUNCAPI_DECL_(resize);
 		DNH_FUNCAPI_DECL_(reverse);
@@ -116,11 +121,9 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(all);
 		DNH_FUNCAPI_DECL_(any);
 
-		static const value* index(script_machine* machine, int argc, value* arr, value* indexer);
-
 		DNH_FUNCAPI_DECL_(slice);
+		DNH_FUNCAPI_DECL_(insert);
 		DNH_FUNCAPI_DECL_(erase);
-
 		DNH_FUNCAPI_DECL_(append);
 		DNH_FUNCAPI_DECL_(concatenate);
 		DNH_FUNCAPI_DECL_(concatenate_direct);

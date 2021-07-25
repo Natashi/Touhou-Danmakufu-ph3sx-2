@@ -25,7 +25,7 @@ std::string type_data::string_representation(type_data* data) {
 		type_data* elem = data->get_element();
 		if (elem != nullptr && elem->get_kind() == type_kind::tk_char)
 			return "string";
-		return string_representation(elem) + "-array";
+		return string_representation(elem) + "[]";
 	}
 	}
 	return "invalid";

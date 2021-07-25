@@ -119,6 +119,7 @@ static const std::vector<function> base_operations = {
 	{ "negative", BaseFunction::negative, 1 },
 	{ "predecessor", BaseFunction::predecessor, 1 },
 	{ "successor", BaseFunction::successor, 1 },
+
 	{ "round", BaseFunction::round, 1 },
 	{ "round_base", BaseFunction::round_base, 2 },
 	{ "trunc", BaseFunction::truncate, 1 },
@@ -164,9 +165,11 @@ static const std::vector<function> base_operations = {
 
 	{ "slice", BaseFunction::slice, 3 },
 	//{ "slice", BaseFunction::slice, 4 },	//Overloaded
+	{ "insert", BaseFunction::insert, 3 },
 	{ "erase", BaseFunction::erase, 2 },
 	{ "append", BaseFunction::append, 2 },
 	{ "concatenate", BaseFunction::concatenate, 2 },
+
 	{ "compare", BaseFunction::compare, 2 },
 
 	{ "bit_not", BaseFunction::bitwiseNot, 1 },
@@ -851,8 +854,7 @@ continue_as_variadic:
 		}
 		else {
 			//Variable
-			state->AddCode(block, code(command_kind::pc_push_variable,
-				s->level, s->var, false, name));
+			state->AddCode(block, code(command_kind::pc_push_variable, s->level, s->var, name));
 		}
 
 		return;
@@ -1252,7 +1254,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		if (s->bVariable) {
 			if (state->next() == token_kind::tk_open_bra) {
 				isArrayElement = true;
-				state->AddCode(block, code(command_kind::pc_push_variable2, s->level, s->var, false, name));
+				state->AddCode(block, code(command_kind::pc_push_variable2, s->level, s->var, name));
 				_parse_array_suffix_lvalue(block, state);
 			}
 		}

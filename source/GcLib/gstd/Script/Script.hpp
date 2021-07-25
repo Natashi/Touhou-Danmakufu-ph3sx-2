@@ -164,7 +164,9 @@ namespace gstd {
 		}
 
 		void run_code();
+
+		template<bool ALLOW_NULL>
 		value* find_variable_symbol(environment* current_env, code* c,
-			uint32_t level, uint32_t variable, bool allow_null);
+			uint32_t level, uint32_t variable);
 	};
 }

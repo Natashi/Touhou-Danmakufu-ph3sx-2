@@ -215,18 +215,17 @@ void script_machine::call(std::map<std::string, script_block*>::iterator event_i
 }
 
 void script_machine::run_code() {
-	ref_unsync_ptr<environment> current = *current_thread_index;
-
 	while (!finished && !bTerminate) {
+		environment* current = current_thread_index->get();
+
 		if (current->waitCount > 0) {
+			--(current->waitCount);
 			yield();
-			--current->waitCount;
-			current = *current_thread_index;
 			continue;
 		}
 
 		if (current->ip >= current->sub->codes.size()) {	//Routine finished
-			ref_unsync_ptr<environment>& parent = current->parent;
+			environment* parent = current->parent.get();
 
 			bool bFinish = false;
 			if (parent == nullptr)
@@ -243,13 +242,12 @@ void script_machine::run_code() {
 				if (current->sub->kind == block_kind::bk_microthread) {
 					current_thread_index = threads.erase(current_thread_index);
 					yield();
-					current = *current_thread_index;
 				}
 				else {
+					ref_unsync_ptr<environment> parent_ref = current->parent;
 					if (current->has_result && parent != nullptr)
 						parent->stack.push_back(current->variables[0]);
-					*current_thread_index = parent;
-					current = parent;
+					*current_thread_index = parent_ref;
 				}
 			}
 		}
@@ -272,7 +270,6 @@ void script_machine::run_code() {
 			//Fallthrough
 			case command_kind::pc_yield:
 				yield();
-				current = *current_thread_index;
 				break;
 
 			case command_kind::pc_var_alloc:
@@ -298,10 +295,9 @@ void script_machine::run_code() {
 			case command_kind::pc_push_variable:
 			case command_kind::pc_push_variable2:
 			{
-				value* var = find_variable_symbol(current.get(), c, 
-					c->arg0, c->arg1, c->arg2);
+				value* var = find_variable_symbol<false>(current, c, c->arg0, c->arg1);
 				if (var == nullptr) break;
-
+				
 				if (c->command == command_kind::pc_push_variable)
 					stack.push_back(*var);
 				else
@@ -375,8 +371,7 @@ void script_machine::run_code() {
 			case command_kind::pc_ref_assign:
 			{
 				if (c->command == command_kind::pc_copy_assign) {
-					value* dest = find_variable_symbol(current.get(), c,
-						c->arg0, c->arg1, true);
+					value* dest = find_variable_symbol<true>(current, c, c->arg0, c->arg1);
 					value* src = &stack.back();
 
 					if (dest != nullptr && src != nullptr) {
@@ -414,7 +409,7 @@ void script_machine::run_code() {
 			}
 
 			case command_kind::pc_sub_return:
-				for (environment* i = current.get(); i != nullptr; i = (i->parent).get()) {
+				for (environment* i = current; i != nullptr; i = (i->parent).get()) {
 					i->ip = i->sub->codes.size();
 
 					if (i->sub->kind == block_kind::bk_sub || i->sub->kind == block_kind::bk_function
@@ -462,7 +457,7 @@ void script_machine::run_code() {
 				}
 				else if (sub->kind == block_kind::bk_microthread) {
 					//Tasks
-					ref_unsync_ptr<environment> e = new environment(current, sub);
+					ref_unsync_ptr<environment> e = new environment(*current_thread_index, sub);
 					threads.insert(++current_thread_index, e);
 					--current_thread_index;
 
@@ -471,12 +466,10 @@ void script_machine::run_code() {
 						e->stack.push_back(stack.back());
 						stack.pop_back();
 					}
-
-					current = *current_thread_index;
 				}
 				else {
 					//User-defined functions or internal blocks
-					ref_unsync_ptr<environment> e = new environment(current, sub);
+					ref_unsync_ptr<environment> e = new environment(*current_thread_index, sub);
 					e->has_result = c->command == command_kind::pc_call_and_push_result;
 					*current_thread_index = e;
 
@@ -485,8 +478,6 @@ void script_machine::run_code() {
 						e->stack.push_back(stack.back());
 						stack.pop_back();
 					}
-
-					current = e;
 				}
 
 				break;
@@ -619,8 +610,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_dec:
 			{
 				if (c->arg0) {
-					value* var = find_variable_symbol(current.get(), c, 
-						c->arg1, c->arg2, false);
+					value* var = find_variable_symbol<false>(current, c, c->arg1, c->arg2);
 					if (var == nullptr) break;
 					value res = (c->command == command_kind::pc_inline_inc) ?
 						BaseFunction::successor(this, 1, var) : BaseFunction::predecessor(this, 1, var);
@@ -663,8 +653,7 @@ void script_machine::run_code() {
 
 				value res;
 				if (c->arg0) {
-					value* dest = find_variable_symbol(current.get(), c, 
-						c->arg1, c->arg2, false);
+					value* dest = find_variable_symbol<false>(current, c, c->arg1, c->arg2);
 					if (dest == nullptr) break;
 
 					value arg[2] = { *dest, stack.back() };
@@ -692,8 +681,7 @@ void script_machine::run_code() {
 			case command_kind::pc_inline_cat_asi:
 			{
 				if (c->arg0) {
-					value* dest = find_variable_symbol(current.get(), c,
-						c->arg1, c->arg2, false);
+					value* dest = find_variable_symbol<false>(current, c, c->arg1, c->arg2);
 					if (dest == nullptr) break;
 
 					value arg[2] = { *dest, stack.back() };
@@ -757,8 +745,10 @@ void script_machine::run_code() {
 				}
 #undef DEF_CASE
 
-				stack.pop_back(2U);
-				stack.push_back(res);
+				//stack.pop_back(2U);
+				//stack.push_back(res);
+				stack.pop_back();
+				stack.back() = res;
 				break;
 			}
 			case command_kind::pc_inline_cmp_e:
@@ -783,8 +773,10 @@ void script_machine::run_code() {
 				}
 #undef DEF_CASE
 
-				stack.pop_back(2U);
-				stack.push_back(cmp_res);
+				//stack.pop_back(2U);
+				//stack.push_back(res);
+				stack.pop_back();
+				stack.back() = cmp_res;
 				break;
 			}
 			case command_kind::pc_inline_logic_and:
@@ -797,8 +789,10 @@ void script_machine::run_code() {
 					(var1->as_boolean() && var2->as_boolean()) : (var1->as_boolean() || var2->as_boolean());
 				value res(script_type_manager::get_boolean_type(), b);
 
-				stack.pop_back(2U);
-				stack.push_back(res);
+				//stack.pop_back(2U);
+				//stack.push_back(res);
+				stack.pop_back();
+				stack.back() = res;
 				break;
 			}
 			case command_kind::pc_inline_cast_var:
@@ -840,8 +834,10 @@ void script_machine::run_code() {
 				if (pRes == nullptr) break;
 				value res = *pRes;
 
-				stack.pop_back(2U);
-				stack.push_back(res);
+				//stack.pop_back(2U);
+				//stack.push_back(res);
+				stack.pop_back();
+				stack.back() = res;
 				break;
 			}
 			case command_kind::pc_inline_length_array:
@@ -856,32 +852,37 @@ void script_machine::run_code() {
 	}
 }
 
-value* script_machine::find_variable_symbol(environment* current_env, code* c, 
-	uint32_t level, uint32_t variable, bool allow_null) 
+template<bool ALLOW_NULL>
+value* script_machine::find_variable_symbol(environment* current_env, code* c,
+	uint32_t level, uint32_t variable)
 {
 	for (environment* i = current_env; i != nullptr; i = (i->parent).get()) {
 		if (i->sub->level == level) {
 			value* res = &(i->variables[variable]);
 
-			if (allow_null || res->has_data())
+			if constexpr (ALLOW_NULL)
 				return res;
 			else {
+				if (res->has_data())
+					return res;
+				else {
 #ifdef _DEBUG
-				raise_error(StringUtility::Format("Variable hasn't been initialized: %s\r\n", 
-					c->var_name.c_str()));
+					raise_error(StringUtility::Format("Variable hasn't been initialized: %s\r\n",
+						c->var_name.c_str()));
 #else
-				raise_error("Variable hasn't been initialized.\r\n");
+					raise_error("Variable hasn't been initialized.\r\n");
 #endif
-				return nullptr;
+					return nullptr;
+				}
 			}
 		}
 	}
 
 #ifdef _DEBUG
-	raise_error(StringUtility::Format("Variable not found: %s (level=%u,id=%u)\r\n", 
+	raise_error(StringUtility::Format("Variable not found: %s (level=%u,id=%u)\r\n",
 		c->var_name.c_str(), level, variable));
 #else
-	raise_error(StringUtility::Format("Variable not found (level=%u,id=%u)\r\n", 
+	raise_error(StringUtility::Format("Variable not found (level=%u,id=%u)\r\n",
 		level, variable));
 #endif
 	return nullptr;
