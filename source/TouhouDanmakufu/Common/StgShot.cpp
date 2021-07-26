@@ -867,7 +867,7 @@ void StgShotObject::_DeleteInAutoDeleteFrame() {
 
 	if (frameAutoDelete_ <= 0)
 		SetFadeDelete();
-	else frameAutoDelete_ = std::max(0, frameAutoDelete_ - 1);
+	else --frameAutoDelete_;
 }
 void StgShotObject::_CommonWorkTask() {
 	if (bEnableMovement_) {
