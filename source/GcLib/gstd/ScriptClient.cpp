@@ -145,6 +145,10 @@ static const std::vector<function> commonFunction = {
 	{ "rand_int", ScriptClientBase::Func_RandI, 2 },
 	{ "prand", ScriptClientBase::Func_RandEff, 2 },
 	{ "prand_int", ScriptClientBase::Func_RandEffI, 2 },
+	{ "rand_array", ScriptClientBase::Func_RandArray, 3 },
+	{ "rand_int_array", ScriptClientBase::Func_RandArrayI, 3 },
+	{ "prand_array", ScriptClientBase::Func_RandEffArray, 3 },
+	{ "prand_int_array", ScriptClientBase::Func_RandEffArrayI, 3 },
 	{ "choose", ScriptClientBase::Func_Choose, 1 },
 	{ "pchoose", ScriptClientBase::Func_ChooseEff, 1 },
 	{ "shuffle", ScriptClientBase::Func_Shuffle, 1 },
@@ -1320,6 +1324,88 @@ value ScriptClientBase::Func_RandEffI(script_machine* machine, int argc, const v
 	return script->CreateIntValue(script->mtEffect_->GetReal(min, max));
 }
 
+value ScriptClientBase::Func_RandArray(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	script->CheckRunInMainThread();
+
+	size_t size = argv[0].as_int();
+	double min = argv[1].as_real();
+	double max = argv[2].as_real();
+	value res;
+	std::vector<value> resArr;
+
+	type_data* type = script_type_manager::get_real_type();
+
+	for (int i = 0; i < size; ++i) {
+		++randCalls_;
+		resArr.push_back(value(type, script->mt_->GetReal(min, max)));
+	}
+
+	res.reset(script_type_manager::get_real_array_type(), resArr);
+	return res;
+}
+value ScriptClientBase::Func_RandEffArray(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	script->CheckRunInMainThread();
+
+	size_t size = argv[0].as_int();
+	double min = argv[1].as_real();
+	double max = argv[2].as_real();
+	value res;
+	std::vector<value> resArr;
+
+	type_data* type = script_type_manager::get_real_type();
+
+	for (int i = 0; i < size; ++i) {
+		++prandCalls_;
+		resArr.push_back(value(type, script->mtEffect_->GetReal(min, max)));
+	}
+
+	res.reset(script_type_manager::get_real_array_type(), resArr);
+	return res;
+}
+
+value ScriptClientBase::Func_RandArrayI(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	script->CheckRunInMainThread();
+
+	size_t size = argv[0].as_int();
+	double min = argv[1].as_int();
+	double max = argv[2].as_int() + 0.9999999;
+	value res;
+	std::vector<value> resArr;
+
+	type_data* type = script_type_manager::get_int_type();
+
+	for (int i = 0; i < size; ++i) {
+		++randCalls_;
+		resArr.push_back(value(type, (int64_t)script->mt_->GetReal(min, max))); // Why is this necessary :dying:
+	}
+
+	res.reset(script_type_manager::get_int_array_type(), resArr);
+	return res;
+}
+value ScriptClientBase::Func_RandEffArrayI(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	script->CheckRunInMainThread();
+
+	size_t size = argv[0].as_int();
+	double min = argv[1].as_int();
+	double max = argv[2].as_int() + 0.9999999;
+	value res;
+	std::vector<value> resArr;
+
+	type_data* type = script_type_manager::get_int_type();
+
+	for (int i = 0; i < size; ++i) {
+		++prandCalls_;
+		resArr.push_back(value(type, (int64_t)script->mtEffect_->GetReal(min, max)));
+	}
+
+	res.reset(script_type_manager::get_int_array_type(), resArr);
+	return res;
+}
+
 value ScriptClientBase::Func_Choose(script_machine* machine, int argc, const value* argv) {
 	BaseFunction::_null_check(machine, argv, argc);
 
@@ -1396,7 +1482,7 @@ value ScriptClientBase::Func_Shuffle(script_machine* machine, int argc, const va
 
 	
 
-	res.set(valType, arrVal);
+	res.reset(valType, arrVal);
 	return res;
 }
 value ScriptClientBase::Func_ShuffleEff(script_machine* machine, int argc, const value* argv) {
@@ -1433,7 +1519,7 @@ value ScriptClientBase::Func_ShuffleEff(script_machine* machine, int argc, const
 		arrOld.erase(arrOld.begin() + index);
 	}
 
-	res.set(valType, arrVal);
+	res.reset(valType, arrVal);
 	return res;
 }
 value ScriptClientBase::Func_GetRandCount(script_machine* machine, int argc, const value* argv) {
