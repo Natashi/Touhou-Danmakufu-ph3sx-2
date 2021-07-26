@@ -1330,12 +1330,15 @@ void StgNormalShotObject::Work() {
 		_ProcessTransformAct();
 		_Move();
 
-		if (delay_.time > 0) --(delay_.time);
+		if (delay_.time > 0) {
+			--(delay_.time);
+			delay_.angle += delay_.spin;
+		}
 
 		{
 			angle_.z += angularVelocity_;
 
-			double angleZ = angle_.z;
+			double angleZ = (delay_.time > 0 && delay_.spin != 0) ? delay_.angle : angle_.z;
 			if (StgShotData* shotData = _GetShotData()) {
 				if (!shotData->IsFixedAngle()) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
 			}
@@ -1626,7 +1629,10 @@ void StgLooseLaserObject::Work() {
 		_Move();
 		
 
-		if (delay_.time > 0) --(delay_.time);
+		if (delay_.time > 0) {
+			--(delay_.time);
+			delay_.angle += delay_.spin;
+		}
 		else _ExtendLength();
 	}
 
@@ -1634,10 +1640,12 @@ void StgLooseLaserObject::Work() {
 	//	_AddIntersectionRelativeTarget();
 }
 void StgLooseLaserObject::_Move() {
-	if (delay_.time == 0)
+	if (delay_.time == 0 || bEnableMotionDelay_)
 		StgMoveObject::_Move();
 	DxScriptRenderObject::SetX(posX_);
 	DxScriptRenderObject::SetY(posY_);
+
+	double angleZ = GetDirectionAngle();
 
 	if (delay_.time <= 0) {
 		__m128 v1 = Vectorize::Sub(
@@ -1649,9 +1657,11 @@ void StgLooseLaserObject::_Move() {
 			posXE_ += speed * move_.x;
 			posYE_ += speed * move_.y;
 		}
+
+		
 	}
-	if (lastAngle_ != GetDirectionAngle()) {
-		lastAngle_ = GetDirectionAngle();
+	if (lastAngle_ != angleZ) {
+		lastAngle_ = angleZ;
 		move_ = D3DXVECTOR2(cosf(lastAngle_), sinf(lastAngle_));
 	}
 }
@@ -1691,7 +1701,7 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 }
 
 std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgLooseLaserObject::GetIntersectionTargetList() {
-	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
+	if ((IsDeleted() || (delay_.time > 0 && !bEnableMotionDelay_) || frameFadeDelete_ >= 0)
 		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
 		|| (pOwnReference_.expired() || widthIntersection_ == 0))
 		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
@@ -1761,16 +1771,41 @@ void StgLooseLaserObject::RenderOnShotManager() {
 	FLOAT sposx = position_.x;
 	FLOAT sposy = position_.y;
 
+	if (delay_.time > 0 && !bEnableMotionDelay_) {
+
+	}
+
 	DxRect<int>* rcSrc = nullptr;
 	DxRect<int> rcDest;
 	D3DCOLOR color;
+
+#define RENDER_VERTEX() \
+	VERTEX_TLX verts[4]; \
+	int* ptrSrc = reinterpret_cast<int*>(rcSrc);\
+	int* ptrDst = reinterpret_cast<int*>(&rcDest);\
+	for (size_t iVert = 0U; iVert < 4U; ++iVert) {\
+		VERTEX_TLX vt; \
+		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]); \
+		_SetVertexPosition(vt, ptrDst[iVert | 0b1], ptrDst[(iVert & 0b1) << 1], position_.z); \
+		_SetVertexColorARGB(vt, color); \
+		verts[iVert] = vt; \
+	} \
+	D3DXVECTOR2 texSizeInv = D3DXVECTOR2(1.0f / textureSize->x, 1.0f / textureSize->y); \
+	DxMath::TransformVertex2D(verts, &D3DXVECTOR2(scaleX, scaleY), &renderF, &D3DXVECTOR2(sposx, sposy), &texSizeInv); \
+	renderer->AddSquareVertex(verts);
+
 
 	if (delay_.time > 0) {
 		float expa = delay_.GetScale();
 		scaleX = expa;
 		scaleY = expa;
 
-		renderF = move_;
+		renderF = (delay_.spin != 0) ? D3DXVECTOR2(cosf(delay_.angle), sinf(delay_.angle)) : move_;
+
+		if (bEnableMotionDelay_) {
+			sposx = posXE_;
+			sposy = posYE_;
+		}
 
 		if (delay_.id >= 0) {
 			textureSize = &delayData->GetTextureSize();
@@ -1795,8 +1830,15 @@ void StgLooseLaserObject::RenderOnShotManager() {
 			sposx = roundf(sposx);
 			sposy = roundf(sposy);
 		}
+
+		RENDER_VERTEX();
 	}
-	else {
+
+
+
+	if (delay_.time == 0 || bEnableMotionDelay_) {
+		sposx = position_.x;
+		sposy = position_.y;
 		scaleX = scale_.x;
 		scaleY = scale_.y;
 
@@ -1820,22 +1862,11 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 		//color = ColorAccess::ApplyAlpha(color, alpha);
 		rcDest.Set(widthRender_ / 2, 0, -widthRender_ / 2, radius);
-	}
 
-	VERTEX_TLX verts[4];
-	int* ptrSrc = reinterpret_cast<int*>(rcSrc);
-	int* ptrDst = reinterpret_cast<int*>(&rcDest);
-	for (size_t iVert = 0U; iVert < 4U; ++iVert) {
-		VERTEX_TLX vt;
-		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
-		_SetVertexPosition(vt, ptrDst[iVert | 0b1], ptrDst[(iVert & 0b1) << 1], position_.z);
-		_SetVertexColorARGB(vt, color);
-		verts[iVert] = vt;
+		RENDER_VERTEX();
 	}
-	D3DXVECTOR2 texSizeInv = D3DXVECTOR2(1.0f / textureSize->x, 1.0f / textureSize->y);
-	DxMath::TransformVertex2D(verts, &D3DXVECTOR2(scaleX, scaleY), &renderF, &D3DXVECTOR2(sposx, sposy), &texSizeInv);
-
-	renderer->AddSquareVertex(verts);
+#undef RENDER_VERTEX
+	
 }
 void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
@@ -1898,6 +1929,7 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 	delaySize_ = D3DXVECTOR2(1, 1);
 
 	scaleX_ = 0.05f;
+
 	bLaserExpand_ = true;
 	delayExtendFrame_ = 0;
 	delayExtendRate_ = 0;
@@ -1923,6 +1955,8 @@ void StgStraightLaserObject::Work() {
 
 			length_ = (int)lengthF_;
 		}
+
+		if (delay_.spin != 0) delay_.angle += delay_.spin;
 		
 		if (angVelLaser_ != 0) angLaser_ += angVelLaser_;
 
@@ -2036,6 +2070,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 	FLOAT sposx = position_.x;
 	FLOAT sposy = position_.y;
 
+	
+
 	DxRect<int>* rcSrc = nullptr;
 	D3DCOLOR color;
 
@@ -2115,6 +2151,10 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				VERTEX_TLX verts[4];
 				int* ptrSrc = reinterpret_cast<int*>(delayRect);
 				float* ptrDst = reinterpret_cast<float*>(&rcDest);
+
+				D3DXVECTOR2 move = (delay_.spin != 0) ? D3DXVECTOR2(cosf(delay_.angle), sinf(delay_.angle)) : move_;
+				
+
 				for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 					VERTEX_TLX vt;
 
@@ -2125,8 +2165,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 					float px = vt.position.x * delaySize;
 					float py = vt.position.y * delaySize;
-					vt.position.x = (py * move_.x + px * move_.y) + delayPos.x;
-					vt.position.y = (py * move_.y - px * move_.x) + delayPos.y;
+					vt.position.x = (py * move.x + px * move.y) + delayPos.x;
+					vt.position.y = (py * move.y - px * move.y) + delayPos.y;
 					vt.position.z = position_.z;
 
 					//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
@@ -2242,24 +2282,29 @@ void StgCurveLaserObject::Work() {
 		_ProcessTransformAct();
 		_Move();
 
-		if (delay_.time > 0) --(delay_.time);
-		else _ExtendLength();
+		if (delay_.time > 0) {
+			--(delay_.time);
+			delay_.angle += delay_.spin;
+		}
+		// else _ExtendLength();
 	}
 
 	_CommonWorkTask();
 	//	_AddIntersectionRelativeTarget();
 }
 void StgCurveLaserObject::_Move() {
-	StgMoveObject::_Move();
+	if (delay_.time == 0 || bEnableMotionDelay_)
+		StgMoveObject::_Move();
 	DxScriptRenderObject::SetX(posX_);
 	DxScriptRenderObject::SetY(posY_);
 
+	double angleZ = GetDirectionAngle();
+
 	{
-		if (lastAngle_ != GetDirectionAngle()) {
-			lastAngle_ = GetDirectionAngle();
+		if (lastAngle_ != angleZ) {
+			lastAngle_ = angleZ;
 			move_ = D3DXVECTOR2(cosf(lastAngle_), sinf(lastAngle_));
 		}
-
 		D3DXVECTOR2 newNodePos(posX_, posY_);
 		D3DXVECTOR2 newNodeVertF(-move_.y, move_.x);	//90 degrees rotation
 		PushNode(CreateNode(newNodePos, newNodeVertF));
@@ -2331,7 +2376,7 @@ void StgCurveLaserObject::_DeleteInAutoClip() {
 	}
 }
 std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgCurveLaserObject::GetIntersectionTargetList() {
-	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
+	if ((IsDeleted() || (delay_.time > 0 && !bEnableMotionDelay_) || frameFadeDelete_ >= 0)
 		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
 		|| (pOwnReference_.expired() || widthIntersection_ == 0))
 		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
@@ -2441,6 +2486,9 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		VERTEX_TLX verts[4];
 		int* ptrSrc = reinterpret_cast<int*>(rcSrc);
 		int* ptrDst = reinterpret_cast<int*>(rcDest);
+
+		D3DXVECTOR2 move = (delay_.spin != 0) ? D3DXVECTOR2(cosf(delay_.angle), sinf(delay_.angle)) : move_;
+
 		for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 			VERTEX_TLX vt;
 			_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
@@ -2449,7 +2497,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 			verts[iVert] = vt;
 		}
 		D3DXVECTOR2 delaySizeInv = D3DXVECTOR2(1.0f / delaySize->x, 1.0f / delaySize->y);
-		DxMath::TransformVertex2D(verts, &D3DXVECTOR2(expa, expa), &move_, &D3DXVECTOR2(sX, sY), &delaySizeInv);
+		DxMath::TransformVertex2D(verts, &D3DXVECTOR2(expa, expa), &move, &D3DXVECTOR2(sX, sY), &delaySizeInv);
 
 		renderer->AddSquareVertex(verts);
 	}

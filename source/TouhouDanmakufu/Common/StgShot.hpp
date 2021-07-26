@@ -249,6 +249,8 @@ public:
 		D3DXVECTOR3 alpha;	//[end, start, factor]
 		D3DCOLOR colorRep;
 		bool colorMix;
+		float spin;
+		float angle;
 
 		uint8_t type;		//0 = default danmakufu, 1 = ZUN-like
 		lerp_func scaleLerpFunc;	//Scale interpolation
@@ -260,6 +262,8 @@ public:
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
 			alphaLerpFunc = Math::Lerp::Linear<float, float>;
 			colorRep = 0x00000000;
+			spin = 0;
+			angle = 0;
 		}
 		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(MODE_BLEND_NONE), type(0), colorMix(false) {
 			scale = D3DXVECTOR3(sMin, sMax, rate);
@@ -267,12 +271,15 @@ public:
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
 			alphaLerpFunc = Math::Lerp::Linear<float, float>;
 			colorRep = 0x00000000;
+			spin = 0;
+			angle = 0;
 		}
 		DelayParameter& operator=(const DelayParameter& source) = default;
 
 		inline float GetScale() { return _CalculateValue(&scale, scaleLerpFunc); }
 		inline float GetAlpha() { return _CalculateValue(&alpha, alphaLerpFunc); }
 		float _CalculateValue(D3DXVECTOR3* param, lerp_func func);
+
 	};
 protected:
 	StgStageController* stageController_;
@@ -379,6 +386,7 @@ public:
 	void SetSourceBlendType(BlendMode type) { delay_.blend = type; }
 	DelayParameter* GetDelayParameter() { return &delay_; }
 	void SetDelayParameter(DelayParameter& param) { delay_ = param; }
+	void SetDelayAngularVelocity(float av) { delay_.spin = av; }
 
 	double GetLife() { return life_; }
 	void SetLife(double life) { life_ = life; }
@@ -523,6 +531,7 @@ protected:
 	D3DXVECTOR2 delaySize_;
 
 	float scaleX_;
+
 	bool bLaserExpand_;
 	int delayExtendFrame_;
 	float delayExtendRate_;
@@ -575,6 +584,7 @@ public:
 		
 	}
 	virtual void SetLength(int length) { StgLaserObject::SetLength(length); delayMaxLength_ = length; }
+	
 };
 
 //*******************************************************************
