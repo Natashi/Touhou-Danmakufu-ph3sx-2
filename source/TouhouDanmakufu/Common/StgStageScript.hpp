@@ -269,7 +269,7 @@ public:
 	static gstd::value Func_CreateCurveLaserA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetShotIntersectionCircle(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SetShotIntersectionLine(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_GetShotIdAll(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_GetAllShotID);
 	static gstd::value Func_GetShotIdInCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetShotIdInCircleA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetShotCount(gstd::script_machine* machine, int argc, const gstd::value* argv);
