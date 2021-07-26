@@ -2164,8 +2164,10 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		}
 
 		s = search_in(pScope, funcName, argc);
-		parser_assert(state, s->sub->codes.size() == 0,
-			"Function body already defined.\r\n");
+		parser_assert(state, s, 
+			StringUtility::Format("Invalid callable declaration: \"%s\"\r\n", funcName.c_str()));
+		parser_assert(state, s->sub->codes.size() == 0, 
+			StringUtility::Format("\"%s\": Body already defined.\r\n", funcName.c_str()));
 
 		{
 			frame.push_back(scope_t(s->sub->kind));
