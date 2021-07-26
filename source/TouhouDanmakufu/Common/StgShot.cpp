@@ -865,13 +865,9 @@ void StgShotObject::_DeleteInFadeDelete() {
 void StgShotObject::_DeleteInAutoDeleteFrame() {
 	if (IsDeleted() || delay_.time > 0) return;
 
-	if (frameAutoDelete_ <= 0) {
-		_SendDeleteEvent(StgShotManager::BIT_EV_DELETE_IMMEDIATE);
-		auto objectManager = stageController_->GetMainObjectManager();
-		objectManager->DeleteObject(this);
-		return;
-	}
-	frameAutoDelete_ = std::max(0, frameAutoDelete_ - 1);
+	if (frameAutoDelete_ <= 0)
+		SetFadeDelete();
+	else frameAutoDelete_ = std::max(0, frameAutoDelete_ - 1);
 }
 void StgShotObject::_CommonWorkTask() {
 	if (bEnableMovement_) {
@@ -2013,13 +2009,6 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
-}
-void StgStraightLaserObject::_DeleteInAutoDeleteFrame() {
-	if (IsDeleted() || delay_.time > 0) return;
-
-	if (frameAutoDelete_ <= 0)
-		SetFadeDelete();
-	else --frameAutoDelete_;
 }
 std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgStraightLaserObject::GetIntersectionTargetList() {
 	std::vector<ref_unsync_ptr<StgIntersectionTarget>> res;

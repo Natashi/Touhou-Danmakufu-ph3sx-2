@@ -329,7 +329,7 @@ protected:
 	virtual void _DeleteInLife();
 	virtual void _DeleteInAutoClip();
 	virtual void _DeleteInFadeDelete();
-	virtual void _DeleteInAutoDeleteFrame();
+	void _DeleteInAutoDeleteFrame();
 	void _CommonWorkTask();
 
 	virtual void _Move();
@@ -538,7 +538,6 @@ protected:
 	int delayMaxLength_;
 
 	virtual void _DeleteInAutoClip();
-	virtual void _DeleteInAutoDeleteFrame();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
 public:
 	StgStraightLaserObject(StgStageController* stageController);
