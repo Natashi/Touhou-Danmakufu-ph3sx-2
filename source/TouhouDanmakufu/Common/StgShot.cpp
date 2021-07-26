@@ -1624,9 +1624,10 @@ void StgLooseLaserObject::Work() {
 	if (bEnableMovement_) {
 		_ProcessTransformAct();
 		_Move();
-		_ExtendLength();
+		
 
 		if (delay_.time > 0) --(delay_.time);
+		else _ExtendLength();
 	}
 
 	_CommonWorkTask();
@@ -2240,9 +2241,9 @@ void StgCurveLaserObject::Work() {
 	if (bEnableMovement_) {
 		_ProcessTransformAct();
 		_Move();
-		_ExtendLength();
 
 		if (delay_.time > 0) --(delay_.time);
+		else _ExtendLength();
 	}
 
 	_CommonWorkTask();
