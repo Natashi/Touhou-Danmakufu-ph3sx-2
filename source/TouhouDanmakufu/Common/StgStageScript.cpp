@@ -485,6 +485,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjStLaser_SetDelayScale", StgStageScript::Func_ObjStLaser_SetDelayScale, 3 },
 	{ "ObjStLaser_SetPermitExpand", StgStageScript::Func_ObjStLaser_SetPermitExpand, 2 },
 	{ "ObjStLaser_GetPermitExpand", StgStageScript::Func_ObjStLaser_GetPermitExpand, 1 },
+	{ "ObjStLaser_SetDelayExtend", StgStageScript::Func_ObjStLaser_SetDelayExtend, 2 },
 	{ "ObjCrLaser_SetTipDecrement", StgStageScript::Func_ObjCrLaser_SetTipDecrement, 2 },
 	{ "ObjCrLaser_GetNodePointer", StgStageScript::Func_ObjCrLaser_GetNodePointer, 2 },
 	{ "ObjCrLaser_GetNodePointerList", StgStageScript::Func_ObjCrLaser_GetNodePointerList, 1 },
@@ -4159,6 +4160,17 @@ gstd::value StgStageScript::Func_ObjStLaser_GetPermitExpand(gstd::script_machine
 	if (obj)
 		res = obj->GetLaserExpand();
 	return script->CreateBooleanValue(res);
+}
+gstd::value StgStageScript::Func_ObjStLaser_SetDelayExtend(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	bool res = false;
+	StgStraightLaserObject* obj = script->GetObjectPointerAs<StgStraightLaserObject>(id);
+	if (obj) {
+		int64_t delay = argv[1].as_int();
+		obj->SetLaserDelayExtend(delay);
+	}
+	return value();
 }
 gstd::value StgStageScript::Func_ObjCrLaser_SetTipDecrement(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;

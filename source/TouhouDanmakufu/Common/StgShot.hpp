@@ -469,7 +469,7 @@ public:
 	}
 
 	int GetLength() { return length_; }
-	void SetLength(int length) { length_ = length; lengthF_ = (float)length; maxLength_ = length; }
+	void SetLength(int length) { length_ = length; lengthF_ = (float)length; }
 	int GetRenderWidth() { return widthRender_; }
 	void SetRenderWidth(int width) {
 		widthRender_ = width;
@@ -524,6 +524,9 @@ protected:
 
 	float scaleX_;
 	bool bLaserExpand_;
+	int delayExtendFrame_;
+	float delayExtendRate_;
+	int delayMaxLength_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _DeleteInAutoDeleteFrame();
@@ -559,6 +562,19 @@ public:
 
 	void SetLaserExpand(bool b) { bLaserExpand_ = b; }
 	bool GetLaserExpand() { return bLaserExpand_; }
+	void SetLaserDelayExtend(int d) { 
+		delayExtendFrame_ = d;
+		if (d > 0) {
+			delayExtendRate_ = lengthF_ / delayExtendFrame_;
+			StgLaserObject::SetLength(0);
+		}
+		else {
+			delayExtendRate_ = 1;
+			StgLaserObject::SetLength(delayMaxLength_);
+		}
+		
+	}
+	virtual void SetLength(int length) { StgLaserObject::SetLength(length); delayMaxLength_ = length; }
 };
 
 //*******************************************************************

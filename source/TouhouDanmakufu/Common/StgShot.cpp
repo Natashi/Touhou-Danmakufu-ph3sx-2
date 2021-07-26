@@ -1899,6 +1899,9 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 
 	scaleX_ = 0.05f;
 	bLaserExpand_ = true;
+	delayExtendFrame_ = 0;
+	delayExtendRate_ = 0;
+	delayMaxLength_ = 0;
 
 	move_ = D3DXVECTOR2(1, 0);
 
@@ -1909,7 +1912,17 @@ void StgStraightLaserObject::Work() {
 	if (bEnableMovement_) {
 		_ProcessTransformAct();
 		_Move();
-		_ExtendLength();
+		
+		if (delayExtendFrame_ == 0 || length_ == delayMaxLength_) _ExtendLength();
+		else {
+			lengthF_ += delayExtendRate_;
+			if (delayExtendRate_ > 0)
+				lengthF_ = std::min(lengthF_, (float)delayMaxLength_);
+			else if (delayExtendRate_ < 0)
+				lengthF_ = std::max(lengthF_, (float)delayMaxLength_);
+
+			length_ = (int)lengthF_;
+		}
 		
 		if (angVelLaser_ != 0) angLaser_ += angVelLaser_;
 
