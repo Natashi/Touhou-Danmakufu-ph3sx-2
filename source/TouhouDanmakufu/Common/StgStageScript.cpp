@@ -319,6 +319,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "DeleteShotInCircle", StgStageScript::Func_DeleteShotInCircle, 5 },
 	{ "CreateShotA1", StgStageScript::Func_CreateShotA1, 6 },
 	{ "CreateShotPA1", StgStageScript::Func_CreateShotPA1, 8 },
+	{ "CreateShotA2", StgStageScript::Func_CreateShotA2, 8 }, //Deprecated, exists for compatibility
 	{ "CreateShotA2", StgStageScript::Func_CreateShotA2, 9 },
 	{ "CreateShotPA2", StgStageScript::Func_CreateShotPA2, 11 },
 	{ "CreateShotOA1", StgStageScript::Func_CreateShotOA1, 5 },
@@ -1542,15 +1543,17 @@ gstd::value StgStageScript::Func_CreateShotA2(gstd::script_machine* machine, int
 		if (id != ID_INVALID) {
 			stageController->GetShotManager()->AddShot(obj);
 
+			int old = (argc == 8); //For legacy scripts without the wvel argument. Please don't omit when scripting for zlabel.
+			
 			double posX = argv[0].as_real();
 			double posY = argv[1].as_real();
 			double speed = argv[2].as_real();
 			double angle = argv[3].as_real();
 			double accele = argv[4].as_real();
             double wvel = Math::DegreeToRadian(argv[5].as_real());
-			double maxSpeed = argv[6].as_real();
-			int idShot = argv[7].as_int();
-			int delay = argv[8].as_int();
+			double maxSpeed = argv[6 - old].as_real();
+			int idShot = argv[7 - old].as_int();
+			int delay = argv[8 - old].as_int();
 			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1565,7 +1568,7 @@ gstd::value StgStageScript::Func_CreateShotA2(gstd::script_machine* machine, int
 			StgMoveObject* objMove = (StgMoveObject*)obj.get();
 			StgMovePattern_Angle* pattern = dynamic_cast<StgMovePattern_Angle*>(objMove->GetPattern().get());
 			pattern->SetAcceleration(accele);
-            pattern->SetAngularVelocity(wvel);
+            if (!old) pattern->SetAngularVelocity(wvel);
 			pattern->SetMaxSpeed(maxSpeed);
 		}
 	}
