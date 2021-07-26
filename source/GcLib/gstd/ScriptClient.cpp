@@ -130,7 +130,9 @@ static const std::vector<function> commonFunction = {
 
 	//Rotation
 	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 3 },
+	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 5 },
 	{ "Rotate3D", ScriptClientBase::Func_Rotate3D, 6 },
+	{ "Rotate3D", ScriptClientBase::Func_Rotate3D, 9 },
 
 	//String functions
 	{ "ToString", ScriptClientBase::Func_ToString, 1 },
@@ -1314,17 +1316,18 @@ value ScriptClientBase::Func_Interpolate_X_Packed(script_machine* machine, int a
 }
 
 value ScriptClientBase::Func_Rotate2D(script_machine* machine, int argc, const value* argv) {
-	double x = argv[0].as_real();
-	double y = argv[1].as_real();
+	double pos[2] = { argv[0].as_real(), argv[1].as_real() };
+	double ang = argv[2].as_real();
 
-	double sc[2];
-	Math::DoSinCos(Math::DegreeToRadian(argv[2].as_real()), sc);
-	
-	double res[2] = {
-		x * sc[1] - y * sc[0],
-		x * sc[0] + y * sc[1]
-	};
-	return CreateRealArrayValue(res, 2U);
+	double ox = 0, oy = 0;
+	if (argc > 3) {
+		ox = argv[3].as_real();
+		oy = argv[4].as_real();
+	}
+
+	Math::Rotate2D(pos, Math::DegreeToRadian(ang), ox, oy);
+
+	return CreateRealArrayValue(pos, 2U);
 }
 value ScriptClientBase::Func_Rotate3D(script_machine* machine, int argc, const value* argv) {
 	double x = argv[0].as_real();
@@ -1337,6 +1340,13 @@ value ScriptClientBase::Func_Rotate3D(script_machine* machine, int argc, const v
 	Math::DoSinCos(-Math::DegreeToRadian(argv[3].as_real()), sc_x);
 	Math::DoSinCos(-Math::DegreeToRadian(argv[4].as_real()), sc_y);
 	Math::DoSinCos(-Math::DegreeToRadian(argv[5].as_real()), sc_z);
+
+	double ox = 0, oy = 0, oz = 0;
+	if (argc > 6) {
+		ox = argv[6].as_real();
+		oy = argv[7].as_real();
+		oz = argv[8].as_real();
+	}
 
 	double cx = sc_x[1];
 	double sx = sc_x[0];
@@ -1357,10 +1367,13 @@ value ScriptClientBase::Func_Rotate3D(script_machine* machine, int argc, const v
 	double m32 = sx;
 	double m33 = cx * cy;
 
+	x -= ox;
+	y -= oy;
+	z -= oz;
 	double res[3] = {
-		x * m11 + y * m21 + z * m31,
-		x * m12 + y * m22 + z * m32,
-		x * m13 + y * m23 + z * m33
+		ox + (x * m11 + y * m21 + z * m31),
+		oy + (x * m12 + y * m22 + z * m32),
+		oz + (x * m13 + y * m23 + z * m33)
 	};
 	return CreateRealArrayValue(res, 3U);
 }
