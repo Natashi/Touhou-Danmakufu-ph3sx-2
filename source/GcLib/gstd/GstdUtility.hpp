@@ -231,6 +231,12 @@ namespace gstd {
 	constexpr double GM_1_PHI = 1.0 / GM_PHI;				//The other golden ratio
 	class Math {
 	public:
+		static void InitializeFPU() {
+			_asm { 
+				finit 
+			};
+		}
+
 		static inline constexpr double DegreeToRadian(double angle) { return angle * GM_PI / 180.0; }
 		static inline constexpr double RadianToDegree(double angle) { return angle * 180.0 / GM_PI; }
 
@@ -256,11 +262,6 @@ namespace gstd {
 			return (x * x + y * y);
 		}
 
-		static void InitializeFPU() {
-			_asm {
-				finit
-			};
-		}
 		static inline void DoSinCos(double angle, double* pRes) {
 			_asm {
 				mov esi, DWORD PTR[pRes]	//Load pRes into esi
@@ -269,6 +270,16 @@ namespace gstd {
 				fstp QWORD PTR[esi + 8]		//Pop cos
 				fstp QWORD PTR[esi]			//Pop sin
 			};
+		}
+		static inline void Rotate2D(double* pos, double ang, double ox, double oy) {
+			double sc[2];
+			DoSinCos(ang, sc);
+			pos[0] -= ox;
+			pos[1] -= oy;
+			double x = pos[0] * sc[1] - pos[1] * sc[0];
+			double y = pos[0] * sc[0] + pos[1] * sc[1];
+			pos[0] = ox + x;
+			pos[1] = oy + y;
 		}
 
 		static inline size_t FloorBase(size_t val, size_t base) {
