@@ -790,7 +790,7 @@ namespace gstd {
 					arrVal[i] = fill;
 			}
 
-			res.set(newType, arrVal);
+			res.reset(newType, arrVal);
 		}
 		return res;
 	}
@@ -815,7 +815,7 @@ namespace gstd {
 
 		for (size_t i = 0; i < size; ++i) arrVal[i] = val->index_as_array(size - i - 1);
 
-		res.set(valType, arrVal);
+		res.reset(valType, arrVal);
 		return res;
 	}
 
@@ -856,7 +856,7 @@ namespace gstd {
 			std::swap(arrVal[i], arrVal[idx]);
 		}
 
-		res.set(valType, arrVal);
+		res.reset(valType, arrVal);
 		return res;
 	}
 
