@@ -1683,14 +1683,13 @@ std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgLooseLaserObject::GetInter
 	if (shotData == nullptr)
 		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
 
-	float length = 0.5f * hitboxScale_.y;
-	__m128 v1 = Vectorize::Mul(
-		Vectorize::SetF(invalidLengthStart_, invalidLengthEnd_, 0.0f, 0.0f),
-		Vectorize::Set(length, length, 0.0f, 0.0f));
-	float lineXS = Math::Lerp::Linear((float)posX_, posXE_, v1.m128_f32[0]);
-	float lineYS = Math::Lerp::Linear((float)posY_, posYE_, v1.m128_f32[0]);
-	float lineXE = Math::Lerp::Linear(posXE_, (float)posX_, v1.m128_f32[1]);
-	float lineYE = Math::Lerp::Linear(posYE_, (float)posY_, v1.m128_f32[1]);
+	float invLengthS = (1.0f - (1.0f - invalidLengthStart_) * hitboxScale_.y) * 0.5f;
+	float invLengthE = (1.0f - (1.0f - invalidLengthEnd_) * hitboxScale_.y) * 0.5f;
+
+	float lineXS = Math::Lerp::Linear((float)posX_, posXE_, invLengthS);
+	float lineYS = Math::Lerp::Linear((float)posY_, posYE_, invLengthS);
+	float lineXE = Math::Lerp::Linear(posXE_, (float)posX_, invLengthE);
+	float lineYE = Math::Lerp::Linear(posYE_, (float)posY_, invLengthE);
 
 	StgIntersectionTarget_Line* target = (StgIntersectionTarget_Line*)pShotIntersectionTarget_.get();
 	{
