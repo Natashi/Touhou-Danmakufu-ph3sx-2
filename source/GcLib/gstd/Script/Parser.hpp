@@ -276,7 +276,7 @@ namespace gstd {
 		void parse_parentheses(script_block* block, parser_state_t* state);
 		void parse_clause(script_block* block, parser_state_t* state);
 		void parse_prefix(script_block* block, parser_state_t* state);
-		void _parse_array_suffix_lvalue(script_block* block, parser_state_t* state);
+		size_t _parse_array_suffix_lvalue(script_block* block, parser_state_t* state);
 		void _parse_array_suffix_rvalue(script_block* block, parser_state_t* state);
 		void parse_suffix(script_block* block, parser_state_t* state);
 		void parse_product(script_block* block, parser_state_t* state);

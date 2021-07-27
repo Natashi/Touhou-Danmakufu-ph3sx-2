@@ -932,11 +932,13 @@ continue_as_variadic:
 	}
 }
 
-void parser::_parse_array_suffix_lvalue(script_block* block, parser_state_t* state) {
+size_t parser::_parse_array_suffix_lvalue(script_block* block, parser_state_t* state) {
+	size_t indexcount = 0;
 	while (state->next() == token_kind::tk_open_bra) {
+		++indexcount;
+
 		state->advance();
 		parse_expression(block, state);
-
 		parser_assert(state, state->next() != token_kind::tk_range,
 			"Array slice operation is not allowed here.\r\n");
 
@@ -945,6 +947,7 @@ void parser::_parse_array_suffix_lvalue(script_block* block, parser_state_t* sta
 		parser_assert(state, state->next() == token_kind::tk_close_bra, "\"]\" is required.\r\n");
 		state->advance();
 	}
+	return indexcount;
 }
 void parser::_parse_array_suffix_rvalue(script_block* block, parser_state_t* state) {
 	while (state->next() == token_kind::tk_open_bra) {
@@ -1251,11 +1254,12 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		state->advance();
 
 		bool isArrayElement = false;
+		size_t arrayIndexCount = 0;
 		if (s->bVariable) {
 			if (state->next() == token_kind::tk_open_bra) {
 				isArrayElement = true;
 				state->AddCode(block, code(command_kind::pc_push_variable2, s->level, s->var, name));
-				_parse_array_suffix_lvalue(block, state);
+				arrayIndexCount = _parse_array_suffix_lvalue(block, state);
 			}
 		}
 
@@ -1266,10 +1270,14 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			parse_expression(block, state);
 
 			s->bAssigned = true;
+
 			if (type_data* cvtType = s->type) {
-				if (isArrayElement)
+				for (size_t i = 0; i < arrayIndexCount; ++i) {
 					cvtType = cvtType->get_element();
-				state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)cvtType, true));
+					if (cvtType == nullptr) break;
+				}
+				if (cvtType)
+					state->AddCode(block, code(command_kind::pc_inline_cast_var, (uint32_t)cvtType, true));
 			}
 
 			if (isArrayElement)

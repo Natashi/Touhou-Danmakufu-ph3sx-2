@@ -247,6 +247,7 @@
     <ClCompile Include="source\GcLib\directx\DxScript.cpp" />
     <ClCompile Include="source\GcLib\directx\DxText.cpp" />
     <ClCompile Include="source\GcLib\directx\DxUtility.cpp" />
+    <ClCompile Include="source\GcLib\directx\DxUtilityIntersection.cpp" />
     <ClCompile Include="source\GcLib\directx\DxWindow.cpp" />
     <ClCompile Include="source\GcLib\directx\HLSL.cpp" />
     <ClCompile Include="source\GcLib\directx\MetasequoiaMesh.cpp" />

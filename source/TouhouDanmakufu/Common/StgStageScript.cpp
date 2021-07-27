@@ -331,7 +331,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "CreateCurveLaserA1", StgStageScript::Func_CreateCurveLaserA1, 8 },
 	{ "SetShotIntersectionCircle", StgStageScript::Func_SetShotIntersectionCircle, 3 },
 	{ "SetShotIntersectionLine", StgStageScript::Func_SetShotIntersectionLine, 5 },
-	{ "GetShotIdAll", StgStageScript::Func_GetShotIdAll, 1 },
+	{ "GetAllShotID", StgStageScript::Func_GetAllShotID, 1 },
 	{ "GetShotIdInCircleA1", StgStageScript::Func_GetShotIdInCircleA1, 3 },
 	{ "GetShotIdInCircleA2", StgStageScript::Func_GetShotIdInCircleA2, 4 },
 	{ "GetShotCount", StgStageScript::Func_GetShotCount, 1 },
@@ -1923,7 +1923,7 @@ gstd::value StgStageScript::Func_SetShotIntersectionLine(gstd::script_machine* m
 
 	return value();
 }
-gstd::value StgStageScript::Func_GetShotIdAll(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_GetAllShotID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
 

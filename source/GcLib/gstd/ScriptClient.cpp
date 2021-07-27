@@ -956,28 +956,6 @@ bool ScriptClientBase::IsIntArrayValue(value& v) {
 	if (!v.has_data()) return false;
 	return v.get_type() == script_type_manager::get_int_array_type();
 }
-void ScriptClientBase::IsMatrix(script_machine* machine, const value& v) {
-	type_data* typeMatrix = script_type_manager::get_real_array_type();
-	if (v.get_type() != typeMatrix) {
-		std::string err = "Invalid type, only matrices of real numbers may be used.";
-		machine->raise_error(err);
-	}
-	if (v.length_as_array() != 16U) {
-		std::string err = "This function only supports operations on 4x4 matrices.";
-		machine->raise_error(err);
-	}
-}
-void ScriptClientBase::IsVector(script_machine* machine, const value& v, size_t count) {
-	type_data* typeVector = script_type_manager::get_real_array_type();
-	if (v.get_type() != typeVector) {
-		std::string err = "Vector element must be real value.";
-		machine->raise_error(err);
-	}
-	if (v.length_as_array() != count) {
-		std::string err = StringUtility::Format("Incorrect vector size. (Expected %d)", count);
-		machine->raise_error(err);
-	}
-}
 
 void ScriptClientBase::CheckRunInMainThread() {
 	if (mainThreadID_ < 0) return;

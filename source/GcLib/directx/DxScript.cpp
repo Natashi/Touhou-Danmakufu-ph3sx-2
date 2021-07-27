@@ -189,11 +189,26 @@ static const std::vector<function> dxFunction = {
 	{ "Get2dPosition", DxScript::Func_Get2dPosition, 3 },
 
 	//Intersection checking functions
+	{ "IsIntersected_Point_Polygon", DxScript::Func_IsIntersected_Point_Polygon, 3 },
+	{ "IsIntersected_Point_Circle", DxScript::Func_IsIntersected_Point_Circle, 5 },
+	{ "IsIntersected_Point_Ellipse", DxScript::Func_IsIntersected_Point_Ellipse, 6 },
+	{ "IsIntersected_Point_Line", DxScript::Func_IsIntersected_Point_Line, 7 },
+	{ "IsIntersected_Point_RegularPolygon", DxScript::Func_IsIntersected_Point_RegularPolygon, 7 },
+
+	{ "IsIntersected_Circle_Polygon", DxScript::Func_IsIntersected_Circle_Polygon, 4 },
 	{ "IsIntersected_Circle_Circle", DxScript::Func_IsIntersected_Circle_Circle, 6 },
-	{ "IsIntersected_Line_Circle", DxScript::Func_IsIntersected_Line_Circle, 8 },
-	{ "IsIntersected_Line_Line", DxScript::Func_IsIntersected_Line_Line, 10 },
+	{ "IsIntersected_Circle_Ellipse", DxScript::Func_IsIntersected_Circle_Ellipse, 7 },
 	{ "IsIntersected_Circle_RegularPolygon", DxScript::Func_IsIntersected_Circle_RegularPolygon, 8 },
-	{ "IsIntersected_Circle_Ellipse", DxScript::Func_IsIntersected_Circle_Ellipse, 8 },
+
+	{ "IsIntersected_Line_Polygon", DxScript::Func_IsIntersected_Line_Polygon, 6 },
+	{ "IsIntersected_Line_Circle", DxScript::Func_IsIntersected_Line_Circle, 8 },
+	{ "IsIntersected_Line_Ellipse", DxScript::Func_IsIntersected_Line_Ellipse, 9 },
+	{ "IsIntersected_Line_Line", DxScript::Func_IsIntersected_Line_Line, 10 },
+	{ "IsIntersected_Line_RegularPolygon", DxScript::Func_IsIntersected_Line_RegularPolygon, 10 },
+
+	{ "IsIntersected_Polygon_Polygon", DxScript::Func_IsIntersected_Polygon_Polygon, 2 },
+	{ "IsIntersected_Polygon_Ellipse", DxScript::Func_IsIntersected_Polygon_Ellipse, 5 },
+	{ "IsIntersected_Polygon_RegularPolygon", DxScript::Func_IsIntersected_Polygon_RegularPolygon, 6 },
 
 	//Color conversion functions
 	{ "ColorARGBToHex", DxScript::Func_ColorARGBToHex, 4 },
@@ -765,79 +780,127 @@ int DxScript::AddObject(ref_unsync_ptr<DxScriptObjectBase> obj, bool bActivate) 
 	return objManager_->AddObject(obj, bActivate);
 }
 
+D3DXMATRIX _script_unpack_matrix(script_machine* machine, const value& v) {
+	D3DXMATRIX res;
+	FLOAT* ptrMat = (FLOAT*)&res;
+
+	if (!v.has_data())
+		goto lab_type_invalid;
+
+	type_data* typeElem = v.get_type()->get_element();
+	if (typeElem == nullptr)
+		goto lab_type_invalid;
+
+	if (typeElem->get_kind() == type_data::tk_array) {
+		if (v.length_as_array() != 4U)
+			goto lab_size_invalid;
+
+		for (size_t i = 0; i < 4; ++i) {
+			type_data* typeElemElem = typeElem->get_element();
+			if (typeElemElem == nullptr)
+				goto lab_type_invalid;
+
+			const value& subArray = v.index_as_array(i);
+			if (subArray.length_as_array() != 4U)
+				goto lab_size_invalid;
+
+			for (size_t j = 0; j < 4; ++i)
+				ptrMat[i * 4 + j] = subArray.index_as_array(j).as_real();
+		}
+	}
+	else {
+		if (v.length_as_array() != 16U)
+			goto lab_size_invalid;
+
+		for (size_t i = 0; i < 16; ++i)
+			ptrMat[i] = v.index_as_array(i).as_real();
+	}
+	
+	goto lab_return;
+lab_size_invalid:
+	{
+		std::string err = "Matrix size must be 4x4.";
+		machine->raise_error(err);
+		goto lab_return;
+	}
+lab_type_invalid:
+	{
+		std::string err = "Invalid value type for matrix.";
+		machine->raise_error(err);
+	}
+lab_return:
+	return res;
+}
+D3DXVECTOR3 _script_unpack_vector3(script_machine* machine, const value& v) {
+	D3DXVECTOR3 res;
+
+	if (!v.has_data())
+		goto lab_type_invalid;
+	if (v.get_type()->get_kind() != type_data::tk_array)
+		goto lab_type_invalid;
+	if (v.length_as_array() != 3)
+		goto lab_size_invalid;
+
+	res = D3DXVECTOR3(
+		(FLOAT)v.index_as_array(0).as_real(), 
+		(FLOAT)v.index_as_array(1).as_real(), 
+		(FLOAT)v.index_as_array(2).as_real());
+
+	goto lab_return;
+lab_size_invalid:
+	{
+		std::string err = "Incorrect vector size. (Expected 3)";
+		machine->raise_error(err);
+		goto lab_return;
+	}
+lab_type_invalid:
+	{
+		std::string err = "Invalid value type for vector.";
+		machine->raise_error(err);
+	}
+lab_return:
+	return res;
+}
+
 gstd::value DxScript::Func_MatrixIdentity(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
 
-	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(mat.m), 16U);
+	return script->CreateRealArrayValue((FLOAT*)&mat, 16U);
 }
 gstd::value DxScript::Func_MatrixInverse(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	const value& arg0 = argv[0];
-	IsMatrix(machine, arg0);
-
-	D3DXMATRIX mat;
-	FLOAT* ptrMat = (FLOAT*)&mat;
-	for (size_t i = 0; i < 16; ++i) {
-		ptrMat[i] = arg0.index_as_array(i).as_real();
-	}
+	D3DXMATRIX mat = _script_unpack_matrix(machine, argv[0]);
 	D3DXMatrixInverse(&mat, nullptr, &mat);
 
-	return script->CreateRealArrayValue(ptrMat, 16U);
+	return script->CreateRealArrayValue((FLOAT*)&mat, 16U);
 }
 gstd::value DxScript::Func_MatrixAdd(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	const value& arg0 = argv[0];
-	const value& arg1 = argv[1];
-	IsMatrix(machine, arg0);
-	IsMatrix(machine, arg1);
+	D3DXMATRIX mat1 = _script_unpack_matrix(machine, argv[0]);
+	D3DXMATRIX mat2 = _script_unpack_matrix(machine, argv[1]);
+	mat1 += mat2;
 
-	D3DXMATRIX mat;
-	FLOAT* ptrMat = (FLOAT*)&mat;
-	for (size_t i = 0; i < 16; ++i) {
-		const value& v0 = arg0.index_as_array(i);
-		const value& v1 = arg1.index_as_array(i);
-		ptrMat[i] = v0.as_real() + v1.as_real();
-	}
-
-	return script->CreateRealArrayValue(ptrMat, 16U);
+	return script->CreateRealArrayValue((FLOAT*)&mat1, 16U);
 }
 gstd::value DxScript::Func_MatrixSubtract(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	const value& arg0 = argv[0];
-	const value& arg1 = argv[1];
-	IsMatrix(machine, arg0);
-	IsMatrix(machine, arg1);
+	D3DXMATRIX mat1 = _script_unpack_matrix(machine, argv[0]);
+	D3DXMATRIX mat2 = _script_unpack_matrix(machine, argv[1]);
+	mat1 -= mat2;
 
-	D3DXMATRIX mat;
-	FLOAT* ptrMat = (FLOAT*)&mat;
-	for (size_t i = 0; i < 16; ++i) {
-		const value& v0 = arg0.index_as_array(i);
-		const value& v1 = arg1.index_as_array(i);
-		ptrMat[i] = v0.as_real() - v1.as_real();
-	}
-
-	return script->CreateRealArrayValue(ptrMat, 16U);
+	return script->CreateRealArrayValue((FLOAT*)&mat1, 16U);
 }
 gstd::value DxScript::Func_MatrixMultiply(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	const value& arg0 = argv[0];
-	const value& arg1 = argv[1];
-	IsMatrix(machine, arg0);
-	IsMatrix(machine, arg1);
-
-	D3DXMATRIX mat1;
-	D3DXMATRIX mat2;
-	for (size_t i = 0; i < 16; ++i) {
-		((FLOAT*)&mat1)[i] = arg0.index_as_array(i).as_real();
-		((FLOAT*)&mat2)[i] = arg1.index_as_array(i).as_real();
-	}
+	D3DXMATRIX mat1 = _script_unpack_matrix(machine, argv[0]);
+	D3DXMATRIX mat2 = _script_unpack_matrix(machine, argv[1]);
 	D3DXMatrixMultiply(&mat1, &mat1, &mat2);
 
 	return script->CreateRealArrayValue((FLOAT*)&mat1, 16U);
@@ -845,17 +908,8 @@ gstd::value DxScript::Func_MatrixMultiply(gstd::script_machine* machine, int arg
 gstd::value DxScript::Func_MatrixDivide(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	const value& arg0 = argv[0];
-	const value& arg1 = argv[1];
-	IsMatrix(machine, arg0);
-	IsMatrix(machine, arg1);
-
-	D3DXMATRIX mat1;
-	D3DXMATRIX mat2;
-	for (size_t i = 0; i < 16; ++i) {
-		((FLOAT*)&mat1)[i] = arg0.index_as_array(i).as_real();
-		((FLOAT*)&mat2)[i] = arg1.index_as_array(i).as_real();
-	}
+	D3DXMATRIX mat1 = _script_unpack_matrix(machine, argv[0]);
+	D3DXMATRIX mat2 = _script_unpack_matrix(machine, argv[1]);
 	D3DXMatrixInverse(&mat2, nullptr, &mat2);
 	D3DXMatrixMultiply(&mat1, &mat1, &mat2);
 
@@ -864,43 +918,24 @@ gstd::value DxScript::Func_MatrixDivide(gstd::script_machine* machine, int argc,
 gstd::value DxScript::Func_MatrixTranspose(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	const value& arg0 = argv[0];
-	IsMatrix(machine, arg0);
-
-	D3DXMATRIX mat;
-	FLOAT* ptrMat = (FLOAT*)&mat;
-	for (size_t i = 0; i < 16; ++i) {
-		ptrMat[i] = arg0.index_as_array(i).as_real();
-	}
+	D3DXMATRIX mat = _script_unpack_matrix(machine, argv[0]);
 	D3DXMatrixTranspose(&mat, &mat);
 
-	return script->CreateRealArrayValue(ptrMat, 16U);
+	return script->CreateRealArrayValue((FLOAT*)&mat, 16U);
 }
 gstd::value DxScript::Func_MatrixDeterminant(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	const value& arg0 = argv[0];
-	IsMatrix(machine, arg0);
-
-	D3DXMATRIX mat;
-	FLOAT* ptrMat = (FLOAT*)&mat;
-	for (size_t i = 0; i < 16; ++i) {
-		ptrMat[i] = arg0.index_as_array(i).as_real();
-	}
+	D3DXMATRIX mat = _script_unpack_matrix(machine, argv[0]);
 
 	return script->CreateRealValue(D3DXMatrixDeterminant(&mat));
 }
 gstd::value DxScript::Func_MatrixLookatLH(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	auto BuildVector = [&](const value& val) -> D3DXVECTOR3 {
-		IsVector(machine, val, 3);
-		return D3DXVECTOR3((FLOAT)val.index_as_array(0).as_real(),
-			(FLOAT)val.index_as_array(1).as_real(), (FLOAT)val.index_as_array(2).as_real());
-	};
-	D3DXVECTOR3 eye = BuildVector(argv[0]);
-	D3DXVECTOR3 dest = BuildVector(argv[1]);
-	D3DXVECTOR3 up = BuildVector(argv[2]);
+	D3DXVECTOR3 eye = _script_unpack_vector3(machine, argv[0]);
+	D3DXVECTOR3 dest = _script_unpack_vector3(machine, argv[1]);
+	D3DXVECTOR3 up = _script_unpack_vector3(machine, argv[2]);
 
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtLH(&mat, &eye, &dest, &up);
@@ -910,14 +945,9 @@ gstd::value DxScript::Func_MatrixLookatLH(gstd::script_machine* machine, int arg
 gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	auto BuildVector = [&](const value& val) -> D3DXVECTOR3 {
-		IsVector(machine, val, 3);
-		return D3DXVECTOR3((FLOAT)val.index_as_array(0).as_real(),
-			(FLOAT)val.index_as_array(1).as_real(), (FLOAT)val.index_as_array(2).as_real());
-	};
-	D3DXVECTOR3 eye = BuildVector(argv[0]);
-	D3DXVECTOR3 dest = BuildVector(argv[1]);
-	D3DXVECTOR3 up = BuildVector(argv[2]);
+	D3DXVECTOR3 eye = _script_unpack_vector3(machine, argv[0]);
+	D3DXVECTOR3 dest = _script_unpack_vector3(machine, argv[1]);
+	D3DXVECTOR3 up = _script_unpack_vector3(machine, argv[2]);
 
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtRH(&mat, &eye, &dest, &up);
@@ -927,21 +957,8 @@ gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int arg
 gstd::value DxScript::Func_MatrixTransformVector(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	const value& argVect = argv[0];
-	IsVector(machine, argVect, 3);
-
-	const value& argMat = argv[1];
-	IsMatrix(machine, argMat);
-
-	D3DXVECTOR3 vect;
-	vect.x = argVect.index_as_array(0).as_real();
-	vect.y = argVect.index_as_array(1).as_real();
-	vect.z = argVect.index_as_array(2).as_real();
-
-	D3DXMATRIX mat;
-	for (size_t i = 0; i < 16; ++i) {
-		((FLOAT*)&mat)[i] = argMat.index_as_array(i).as_real();
-	}
+	D3DXVECTOR3 vect = _script_unpack_vector3(machine, argv[0]);
+	D3DXMATRIX mat = _script_unpack_matrix(machine, argv[1]);
 
 	D3DXVECTOR4 out;
 	D3DXVec3Transform(&out, &vect, &mat);
@@ -2046,136 +2063,172 @@ gstd::value DxScript::Func_Get2dPosition(gstd::script_machine* machine, int argc
 }
 
 //Intersection
+static std::vector<DxPoint> _script_value_to_dxpolygon(script_machine* machine, const gstd::value* v) {
+	std::vector<DxPoint> res;
+
+	if (!v->has_data())
+		goto lab_value_invalid;
+
+	type_data* typeElem = v->get_type()->get_element();
+	if (typeElem == nullptr)
+		goto lab_value_invalid;
+
+	res.resize(v->length_as_array());
+	for (size_t i = 0; i < res.size(); ++i) {
+		const value& subArray = v->index_as_array(i);
+
+		type_data* typeElemElem = typeElem->get_element();
+		if (typeElemElem == nullptr || subArray.length_as_array() != 2U)
+			goto lab_value_invalid;
+
+		res[i] = DxPoint(subArray.index_as_array(0).as_real(), 
+			subArray.index_as_array(1).as_real());
+	}
+
+	goto lab_return;
+lab_value_invalid:
+	{
+		std::string err = "Invalid value for polygon.";
+		machine->raise_error(err);
+	}
+lab_return:
+	return res;
+}
+gstd::value DxScript::Func_IsIntersected_Point_Polygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxPoint point(argv[0].as_real(), argv[1].as_real());
+	std::vector<DxPoint> polygon = _script_value_to_dxpolygon(machine, &argv[2]);
+
+	bool res = DxIntersect::Point_Polygon(&point, &polygon);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Point_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxPoint point(argv[0].as_real(), argv[1].as_real());
+	DxCircle circle(argv[2].as_real(), argv[3].as_real(), argv[4].as_real());
+
+	bool res = DxIntersect::Point_Circle(&point, &circle);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Point_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxPoint point(argv[0].as_real(), argv[1].as_real());
+	DxEllipse ellipse(argv[2].as_real(), argv[3].as_real(), 
+		argv[4].as_real(), argv[5].as_real());
+
+	bool res = DxIntersect::Point_Ellipse(&point, &ellipse);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Point_Line(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxPoint point(argv[0].as_real(), argv[1].as_real());
+	DxWidthLine line(argv[2].as_real(), argv[3].as_real(), argv[4].as_real(),
+		argv[5].as_real(), argv[6].as_real());
+
+	bool res = DxIntersect::Point_LineW(&point, &line);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Point_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxPoint point(argv[0].as_real(), argv[1].as_real());
+	DxRegularPolygon rPolygon(argv[2].as_real(), argv[3].as_real(), 
+		argv[4].as_real(), argv[5].as_int(), Math::DegreeToRadian(argv[6].as_real()));
+
+	bool res = DxIntersect::Point_RegularPolygon(&point, &rPolygon);
+	return DxScript::CreateBooleanValue(res);
+}
+
+gstd::value DxScript::Func_IsIntersected_Circle_Polygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxCircle circle(argv[0].as_real(), argv[1].as_real(), argv[2].as_real());
+	std::vector<DxPoint> polygon = _script_value_to_dxpolygon(machine, &argv[3]);
+
+	bool res = DxIntersect::Circle_Polygon(&circle, &polygon);
+	return DxScript::CreateBooleanValue(res);
+}
 gstd::value DxScript::Func_IsIntersected_Circle_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxCircle circle1(argv[0].as_real(), argv[1].as_real(), argv[2].as_real());
 	DxCircle circle2(argv[3].as_real(), argv[4].as_real(), argv[5].as_real());
 
-	bool res = DxMath::IsIntersected(circle1, circle2);
-	return DxScript::CreateBooleanValue(res);
-}
-gstd::value DxScript::Func_IsIntersected_Line_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxWidthLine line(
-		argv[0].as_real(),
-		argv[1].as_real(),
-		argv[2].as_real(),
-		argv[3].as_real(),
-		argv[4].as_real()
-	);
-	DxCircle circle(argv[5].as_real(), argv[6].as_real(), argv[7].as_real());
-
-	bool res = DxMath::IsIntersected(circle, line);
-	return DxScript::CreateBooleanValue(res);
-}
-gstd::value DxScript::Func_IsIntersected_Line_Line(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxWidthLine line1(
-		argv[0].as_real(),
-		argv[1].as_real(),
-		argv[2].as_real(),
-		argv[3].as_real(),
-		argv[4].as_real()
-	);
-	DxWidthLine line2(
-		argv[5].as_real(),
-		argv[6].as_real(),
-		argv[7].as_real(),
-		argv[8].as_real(),
-		argv[9].as_real()
-	);
-
-	bool res = DxMath::IsIntersected(line1, line2);
-	return DxScript::CreateBooleanValue(res);
-}
-// This is for you, necky.
-gstd::value DxScript::Func_IsIntersected_Circle_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	double cx = argv[0].as_real();
-	double cy = argv[1].as_real();
-	double cr = argv[2].as_real();
-
-	double px = argv[3].as_real();
-	double py = argv[4].as_real();
-	double pr = argv[5].as_real();
-	int64_t ps = argv[6].as_int();
-	double pa = argv[7].as_real();
-
-	double dx = cx - px;
-	double dy = cy - py;
-	double dist = hypot(dy, dx) - cr;
-
-	bool res = dist <= pr;
-	if (res) {
-		double f = GM_PI / ps;
-		double cf = cos(f);
-		double pr_cf = pr * cf;
-
-		res = dist <= pr_cf;
-		if (!res) {
-			double ang = fmod((Math::NormalizeAngleRad(atan2(dy, dx)) - pa) * GM_PI, 2 * f);
-			res = dist <= (pr_cf / cos(ang - f));
-		}
-	}
-
+	bool res = DxIntersect::Circle_Circle(&circle1, &circle2);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	auto _IsIntersected_CircleEllipse = [](
-		double cx, double cy, double cr,
-		double ex, double ey, double ea, double eb, double er) -> bool
-	{
-		if (er != 0) {
-            double sc[2];
-            Math::DoSinCos(-Math::DegreeToRadian(er), sc);
-			double cx_ = cx - ex;
-			double cy_ = cy - ey;
-            cx = cx_ * sc[1] - cy_ * sc[0] + ex;
-            cy = cx_ * sc[0] + cy_ * sc[1] + ey;
-        }
-        
-        double dx = ex - cx;
-		double dy = ey - cy;
-		double dx2 = dx * dx;
-		double dy2 = dy * dy;
+	DxCircle circle(argv[0].as_real(), argv[1].as_real(), argv[2].as_real());
+	DxEllipse ellipse(argv[3].as_real(), argv[4].as_real(),
+		argv[5].as_real(), argv[6].as_real());
 
-		double cr2 = cr * cr;
-		double ea2 = ea * ea;
-		double eb2 = eb * eb;
+	bool res = DxIntersect::Circle_Ellipse(&circle, &ellipse);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Circle_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxCircle circle(argv[0].as_real(), argv[1].as_real(), argv[2].as_real());
+	DxRegularPolygon rPolygon(argv[3].as_real(), argv[4].as_real(), 
+		argv[5].as_real(), argv[6].as_int(), Math::DegreeToRadian(argv[7].as_real()));
 
-		//One's origin is inside the other
-		if (((dx2 + dy2) <= cr2) || ((dx2 / ea2 + dy2 / eb2) <= 1))
-			return true;
+	bool res = DxIntersect::Circle_RegularPolygon(&circle, &rPolygon);
+	return DxScript::CreateBooleanValue(res);
+}
 
-		double dd = sqrt(dx2 + dy2);
+gstd::value DxScript::Func_IsIntersected_Line_Polygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxWidthLine line(argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
+		argv[3].as_real(), argv[4].as_real());
+	std::vector<DxPoint> polygon = _script_value_to_dxpolygon(machine, &argv[5]);
 
-		//Eccentricity is negligible, just use a circle-circle intersection
-		if (abs(ea - eb) < 0.1)
-			return dd <= (cr + ea);
+	bool res = DxIntersect::LineW_Polygon(&line, &polygon);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Line_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxWidthLine line(argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
+		argv[3].as_real(), argv[4].as_real());
+	DxCircle circle(argv[5].as_real(), argv[6].as_real(), argv[7].as_real());
 
-		double th_c = dx / dd;
-		double th_s = dy / dd;
+	bool res = DxIntersect::Line_Circle(&line, &circle);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Line_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxWidthLine line(argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
+		argv[3].as_real(), argv[4].as_real());
+	DxEllipse ellipse(argv[5].as_real(), argv[6].as_real(),
+		argv[7].as_real(), argv[8].as_real());
 
-		//Point on the ellipse
-		double p1_x = ex - ea * th_c;
-		double p1_y = ey - eb * th_s;
+	bool res = DxIntersect::Line_Ellipse(&line, &ellipse);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Line_Line(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxWidthLine line1(argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
+		argv[3].as_real(), argv[4].as_real());
+	DxWidthLine line2(argv[5].as_real(), argv[6].as_real(), argv[7].as_real(),
+		argv[8].as_real(), argv[9].as_real());
 
-		if (Math::HypotSq(p1_x - cx, p1_y - cy) <= cr2)
-			return true;
+	bool res = DxIntersect::LineW_LineW(&line1, &line2);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Line_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxWidthLine line(argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
+		argv[3].as_real(), argv[4].as_real());
+	DxRegularPolygon rPolygon(argv[5].as_real(), argv[6].as_real(),
+		argv[7].as_real(), argv[8].as_int(), Math::DegreeToRadian(argv[9].as_real()));
 
-		//Point on the circle
-		double p2_x = cx + cr * th_c;
-		double p2_y = cy + cr * th_s;
+	bool res = DxIntersect::LineW_RegularPolygon(&line, &rPolygon);
+	return DxScript::CreateBooleanValue(res);
+}
 
-		double dx_p2e = p2_x - ex;
-		double dy_p2e = p2_y - ey;
+gstd::value DxScript::Func_IsIntersected_Polygon_Polygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	std::vector<DxPoint> polygon1 = _script_value_to_dxpolygon(machine, &argv[0]);
+	std::vector<DxPoint> polygon2 = _script_value_to_dxpolygon(machine, &argv[1]);
 
-		if (((dx_p2e * dx_p2e) / ea2 + (dy_p2e * dy_p2e) / eb2) <= 1)
-			return true;
+	bool res = DxIntersect::Polygon_Polygon(&polygon1, &polygon2);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Polygon_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	std::vector<DxPoint> polygon = _script_value_to_dxpolygon(machine, &argv[0]);
+	DxEllipse ellipse(argv[1].as_real(), argv[2].as_real(),
+		argv[3].as_real(), argv[4].as_real());
 
-		return false;
-	};
+	bool res = DxIntersect::Polygon_Ellipse(&polygon, &ellipse);
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsIntersected_Polygon_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	std::vector<DxPoint> polygon = _script_value_to_dxpolygon(machine, &argv[0]);
+	DxRegularPolygon rPolygon(argv[1].as_real(), argv[2].as_real(),
+		argv[3].as_real(), argv[4].as_int(), Math::DegreeToRadian(argv[5].as_real()));
 
-	bool res = _IsIntersected_CircleEllipse(
-		argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
-		argv[3].as_real(), argv[4].as_real(), argv[5].as_real(), argv[6].as_real(), argv[7].as_real());
-
+	bool res = DxIntersect::Polygon_RegularPolygon(&polygon, &rPolygon);
 	return DxScript::CreateBooleanValue(res);
 }
 
