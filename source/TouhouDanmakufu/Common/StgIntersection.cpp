@@ -289,13 +289,13 @@ bool StgIntersectionManager::IsIntersected(StgIntersectionTarget* p1, StgInterse
 			StgIntersectionTarget_Circle* c1 = dynamic_cast<StgIntersectionTarget_Circle*>(p1);
 			StgIntersectionTarget_Circle* c2 = dynamic_cast<StgIntersectionTarget_Circle*>(p2);
 			if (c1 == nullptr || c2 == nullptr) goto lab_fail;
-			return DxMath::IsIntersected(c1->GetCircle(), c2->GetCircle());
+			return DxIntersect::Circle_Circle(&c1->GetCircle(), &c2->GetCircle());
 		}
 		else if (shape1 == StgIntersectionTarget::SHAPE_LINE && shape2 == StgIntersectionTarget::SHAPE_LINE) {
 			StgIntersectionTarget_Line* l1 = dynamic_cast<StgIntersectionTarget_Line*>(p1);
 			StgIntersectionTarget_Line* l2 = dynamic_cast<StgIntersectionTarget_Line*>(p2);
 			if (l1 == nullptr || l2 == nullptr) goto lab_fail;
-			return DxMath::IsIntersected(l1->GetLine(), l2->GetLine());
+			return DxIntersect::LineW_LineW(&l1->GetLine(), &l2->GetLine());
 		}
 		else if ((shape1 == StgIntersectionTarget::SHAPE_CIRCLE && shape2 == StgIntersectionTarget::SHAPE_LINE) ||
 			(shape1 == StgIntersectionTarget::SHAPE_LINE && shape2 == StgIntersectionTarget::SHAPE_CIRCLE)) {
@@ -311,7 +311,7 @@ bool StgIntersectionManager::IsIntersected(StgIntersectionTarget* p1, StgInterse
 			}
 
 			if (c == nullptr || l == nullptr) goto lab_fail;
-			return DxMath::IsIntersected(c->GetCircle(), l->GetLine());
+			return DxIntersect::Circle_LineW(&c->GetCircle(), &l->GetLine());
 		}
 	}
 lab_fail:
@@ -371,7 +371,7 @@ void StgIntersectionManager::AddVisualization(ref_unsync_ptr<StgIntersectionTarg
 		DxWidthLine& line = pTarget->GetLine();
 
 		DxWidthLine splitLines[2];
-		size_t countSplit = DxMath::SplitWidthLine(splitLines, &line, 1.0f, true);
+		size_t countSplit = DxIntersect::SplitWidthLine(splitLines, &line, 1.0f, true);
 
 		if (countSplit > 0U) {
 			D3DXVECTOR2 posList[4] = {

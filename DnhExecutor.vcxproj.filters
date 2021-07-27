@@ -206,6 +206,9 @@
     <ClCompile Include="source\GcLib\gstd\Script\ValueVector.cpp">
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DxUtilityIntersection.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">

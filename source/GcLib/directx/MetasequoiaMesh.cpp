@@ -398,7 +398,7 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 				//Build triangles from the nodes
 				std::vector<FaceTriangulator::Node>::iterator itrNodeBase = polygonNodes.begin();
 				for (size_t iTri = 0; iTri < countTriangle; ++iTri) {
-					DxTriangle tri(itrNodeBase->pos, std::next(itrNodeBase, iTri + 1)->pos,
+					DxTriangle3D tri(itrNodeBase->pos, std::next(itrNodeBase, iTri + 1)->pos,
 						std::next(itrNodeBase, iTri + 2)->pos);
 
 					if (tri.GetArea() <= 0.04f) continue;

@@ -122,14 +122,6 @@ namespace directx {
 			return *D3DXVec3Cross(&D3DXVECTOR3(), &v1, &v2);
 		}
 
-		static bool IsIntersected(D3DXVECTOR2& pos, std::vector<D3DXVECTOR2>& list);
-		static bool IsIntersected(DxCircle& circle1, DxCircle& circle2);
-		static bool IsIntersected(DxCircle& circle, DxWidthLine& line);
-		static bool IsIntersected(DxWidthLine& line1, DxWidthLine& line2);
-		static bool IsIntersected(DxLine3D& line, std::vector<DxTriangle>& triangles, std::vector<D3DXVECTOR3>& out);
-
-		static size_t SplitWidthLine(DxWidthLine(&dest)[2], DxWidthLine* src, float mulWidth = 1.0f, bool bForceDouble = false);
-
 		static inline D3DXVECTOR4 VectMatMulti(D3DXVECTOR4 v, D3DXMATRIX& mat) {
 			D3DXVECTOR4 res;
 			D3DXVec4Transform(&res, &v, &mat);
@@ -141,6 +133,53 @@ namespace directx {
 		static D3DXVECTOR4 RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, D3DXVECTOR2* angY, D3DXVECTOR2* angZ);
 		static void TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVECTOR2* angle, 
 			D3DXVECTOR2* position, D3DXVECTOR2* textureSize);
+	};
+
+	class DxIntersect {
+	public:
+		static inline DxWidthLine _LineW_From_Line(const DxLine* line) {
+			return DxWidthLine(line->GetX1(), line->GetY1(), line->GetX2(), line->GetY2(), 1.0f);
+		}
+		static std::vector<DxPoint> _Polygon_From_LineW(const DxWidthLine* line);
+
+		static size_t SplitWidthLine(DxLine* dest, const DxWidthLine* src, float mulWidth = 1.0f, bool bForceDouble = false);
+
+		//----------------------------------------------------------------
+
+		static bool Point_Polygon(const DxPoint* pos, const std::vector<DxPoint>* verts);
+		static bool Point_Circle(const DxPoint* pos, const DxCircle* circle);
+		static bool Point_Ellipse(const DxPoint* pos, const DxEllipse* ellipse);
+		static bool Point_Line(const DxPoint* pos, const DxLine* line);
+		static bool Point_LineW(const DxPoint* pos, const DxWidthLine* line);
+		static bool Point_RegularPolygon(const DxPoint* pos, const DxRegularPolygon* polygon);
+
+		static bool Circle_Polygon(const DxCircle* circle, const std::vector<DxPoint>* verts);
+		static bool Circle_Circle(const DxCircle* circle1, const DxCircle* circle2);
+		static bool Circle_Ellipse(const DxCircle* circle, const DxEllipse* ellipse);
+		static bool Circle_Line(const DxCircle* circle, const DxLine* line);
+		static bool Circle_LineW(const DxCircle* circle, const DxWidthLine* line);
+		static bool Circle_RegularPolygon(const DxCircle* circle, const DxRegularPolygon* polygon);
+
+		static bool Line_Polygon(const DxLine* line, const std::vector<DxPoint>* verts);
+		static bool Line_Circle(const DxLine* line, const  DxCircle* circle);
+		static bool Line_Ellipse(const DxLine* line, const DxEllipse* ellipse);
+		static bool Line_Line(const DxLine* line1, const DxLine* line2);
+		static bool Line_LineW(const DxLine* line1, const DxWidthLine* line2);
+		static bool Line_RegularPolygon(const DxLine* line, const DxRegularPolygon* polygon);
+
+		static bool LineW_Polygon(const DxWidthLine* line, const std::vector<DxPoint>* verts);
+		static bool LineW_Circle(const DxWidthLine* line, const DxCircle* circle);
+		static bool LineW_Ellipse(const DxWidthLine* line, const DxEllipse* ellipse);
+		static bool LineW_Line(const DxWidthLine* line1, const DxLine* line2);
+		static bool LineW_LineW(const DxWidthLine* line1, const DxWidthLine* line2);
+		static bool LineW_RegularPolygon(const DxWidthLine* line, const DxRegularPolygon* polygon);
+
+		static bool Polygon_Polygon(const std::vector<DxPoint>* verts1, const std::vector<DxPoint>* verts2);
+		static bool Polygon_Circle(const std::vector<DxPoint>* verts, const DxCircle* circle);
+		static bool Polygon_Ellipse(const std::vector<DxPoint>* verts, const DxEllipse* ellipse);
+		static bool Polygon_Line(const std::vector<DxPoint>* verts, const DxLine* line);
+		static bool Polygon_LineW(const std::vector<DxPoint>* verts, const DxWidthLine* line);
+		static bool Polygon_RegularPolygon(const std::vector<DxPoint>* verts, const DxRegularPolygon* polygon);
 	};
 #endif
 }

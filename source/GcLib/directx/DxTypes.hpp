@@ -152,122 +152,6 @@ namespace directx {
 	};
 
 	//*******************************************************************
-	//Shape collisions
-	//*******************************************************************
-	class DxShapeBase {
-	public:
-		DxShapeBase() {};
-		virtual ~DxShapeBase() {};
-	};
-	class DxPoint : public DxShapeBase {
-	public:
-		DxPoint() { pos_ = D3DXVECTOR2(0, 0); }
-		DxPoint(float x, float y) { pos_ = D3DXVECTOR2(x, y); }
-		virtual ~DxPoint() {}
-		
-		float GetX() const { return pos_.x; }
-		void SetX(float x) { pos_.x = x; }
-		float GetY() const { return pos_.y; }
-		void SetY(float y) { pos_.y = y; }
-	private:
-		D3DXVECTOR2 pos_;
-	};
-	class DxCircle : public DxShapeBase {
-	public:
-		DxCircle() { cen_ = DxPoint(); r_ = 0; }
-		DxCircle(float x, float y, float r) { cen_ = DxPoint(x, y); r_ = r; }
-		virtual ~DxCircle() {}
-		
-		float GetX() const { return cen_.GetX(); }
-		void SetX(float x) { cen_.SetX(x); }
-		float GetY() const { return cen_.GetY(); }
-		void SetY(float y) { cen_.SetY(y); }
-		float GetR() const { return r_; }
-		void SetR(float r) { r_ = r; }
-	private:
-		DxPoint cen_;
-		float r_;
-	};
-	class DxWidthLine : public DxShapeBase {
-	public:
-		DxWidthLine() { p1_ = DxPoint(); p2_ = DxPoint(); width_ = 0; }
-		DxWidthLine(float x1, float y1, float x2, float y2, float width) {
-			p1_ = DxPoint(x1, y1); p2_ = DxPoint(x2, y2); width_ = width;
-		}
-		virtual ~DxWidthLine() {}
-
-		void SetX1(float x) { p1_.SetX(x); }
-		float GetX1() const { return p1_.GetX(); }
-		void SetY1(float y) { p1_.SetY(y); }
-		float GetY1() const { return p1_.GetY(); }
-		void SetX2(float x) { p2_.SetX(x); }
-		float GetX2() const { return p2_.GetX(); }
-		void SetY2(float y) { p2_.SetY(y); }
-		float GetY2() const { return p2_.GetY(); }
-		void SetWidth(float w) { width_ = w; }
-		float GetWidth() const { return width_; }
-	private:
-		DxPoint p1_;
-		DxPoint p2_;
-		float width_;
-	};
-	class DxLine3D : public DxShapeBase {
-	private:
-		D3DXVECTOR3 vertex_[2];
-	public:
-		DxLine3D() {};
-		DxLine3D(const D3DXVECTOR3& p1, const D3DXVECTOR3& p2) {
-			vertex_[0] = p1;
-			vertex_[1] = p2;
-		}
-
-		D3DXVECTOR3& GetPosition(size_t index) { return vertex_[index]; }
-		D3DXVECTOR3& GetPosition1() { return vertex_[0]; }
-		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
-	};
-	class DxTriangle : public DxShapeBase {
-	private:
-		D3DXVECTOR3 vertex_[3];
-		D3DXVECTOR3 normal_;
-
-		void _Compute() {
-			D3DXVECTOR3 lv[3];
-			lv[0] = vertex_[1] - vertex_[0];
-			lv[0] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[0]);
-
-			lv[1] = vertex_[2] - vertex_[1];
-			lv[1] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[1]);
-
-			lv[2] = vertex_[0] - vertex_[2];
-			lv[2] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[2]);
-
-			D3DXVECTOR3 cross = *D3DXVec3Cross(&D3DXVECTOR3(), &lv[0], &lv[1]);
-			normal_ = *D3DXVec3Normalize(&D3DXVECTOR3(), &cross);
-		}
-	public:
-		DxTriangle() {}
-		DxTriangle(const D3DXVECTOR3& p1, const D3DXVECTOR3& p2, const D3DXVECTOR3& p3) {
-			vertex_[0] = p1;
-			vertex_[1] = p2;
-			vertex_[2] = p3;
-			_Compute();
-		}
-
-		D3DXVECTOR3& GetPosition(size_t index) { return vertex_[index]; }
-		D3DXVECTOR3& GetPosition1() { return vertex_[0]; }
-		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
-		D3DXVECTOR3& GetPosition3() { return vertex_[2]; }
-		D3DXVECTOR3& GetNormal() { return normal_; }
-		FLOAT GetArea() {
-			D3DXVECTOR3 v_ab = vertex_[0] - vertex_[1];
-			D3DXVECTOR3 v_ac = vertex_[0] - vertex_[2];
-			D3DXVECTOR3 vCross;
-			D3DXVec3Cross(&vCross, &v_ab, &v_ac);
-			return abs(0.5f * D3DXVec3Length(&vCross));
-		}
-	};
-
-	//*******************************************************************
 	//Rect
 	//*******************************************************************
 	template<typename T>
@@ -323,5 +207,163 @@ namespace directx {
 		}
 	public:
 		T left, top, right, bottom;
+	};
+
+	//*******************************************************************
+	//Shape collisions
+	//*******************************************************************
+	class DxShapeBase {
+	public:
+		DxShapeBase() {};
+		virtual ~DxShapeBase() {};
+	};
+
+	class DxPoint : public DxShapeBase {
+	private:
+		D3DXVECTOR2 pos;
+	public:
+		DxPoint() {};
+		DxPoint(float x, float y) { pos = D3DXVECTOR2(x, y); }
+		
+		float GetX() const { return pos.x; }
+		void SetX(float x) { pos.x = x; }
+		float GetY() const { return pos.y; }
+		void SetY(float y) { pos.y = y; }
+	};
+
+	class DxCircle : public DxPoint {
+	private:
+		float r;
+	public:
+		DxCircle() { r = 0; }
+		DxCircle(float x, float y, float _r) : DxPoint(x, y) { r = _r; }
+		
+		float GetR() const { return r; }
+		void SetR(float _r) { r = _r; }
+	};
+	class DxEllipse : public DxPoint {
+	private:
+		float a;
+		float b;
+	public:
+		DxEllipse() { a = 0; b = 0; }
+		DxEllipse(float x, float y, float _a, float _b) : DxPoint(x, y) { a = _a; b = _b; }
+
+		float GetA() const { return a; }
+		void SetA(float _a) { a = _a; }
+		float GetB() const { return b; }
+		void SetB(float _b) { b = _b; }
+	};
+
+	class DxLine : public DxShapeBase {
+	private:
+		DxPoint p1;
+		DxPoint p2;
+	public:
+		DxLine() {};
+		DxLine(float x1, float y1, float x2, float y2) {
+			p1 = DxPoint(x1, y1); p2 = DxPoint(x2, y2);
+		}
+
+		void SetX1(float x) { p1.SetX(x); }
+		float GetX1() const { return p1.GetX(); }
+		void SetY1(float y) { p1.SetY(y); }
+		float GetY1() const { return p1.GetY(); }
+		void SetX2(float x) { p2.SetX(x); }
+		float GetX2() const { return p2.GetX(); }
+		void SetY2(float y) { p2.SetY(y); }
+		float GetY2() const { return p2.GetY(); }
+
+		DxRect<float> GetBounds() const {
+			DxRect<float> bound(GetX1(), GetY1(), GetX2(), GetY2());
+			if (bound.left > bound.right) std::swap(bound.left, bound.right);
+			if (bound.top > bound.bottom) std::swap(bound.top, bound.bottom);
+			return bound;
+		}
+	};
+	class DxWidthLine : public DxLine {
+	private:
+		float w;
+	public:
+		DxWidthLine() { w = 0; }
+		DxWidthLine(float x1, float y1, float x2, float y2, float w_) : DxLine(x1, y1, x2, y2) {
+			w = w_;
+		}
+
+		void SetWidth(float w_) { w = w_; }
+		float GetWidth() const { return w; }
+	};
+
+	class DxRegularPolygon : public DxCircle {
+	private:
+		size_t side;
+		float ang;
+	public:
+		DxRegularPolygon() { side = 1; ang = 0; }
+		DxRegularPolygon(float x, float y, float r, size_t s, float a) : DxCircle(x, y, r) {
+			side = s; ang = a;
+		}
+
+		void SetSide(size_t s) { side = s; }
+		size_t GetSide() const { return side; }
+		void SetAngle(float a) { ang = a; }
+		float GetAngle() const { return ang; }
+	};
+
+	class DxLine3D : public DxShapeBase {
+	private:
+		D3DXVECTOR3 vertex_[2];
+	public:
+		DxLine3D() {};
+		DxLine3D(const D3DXVECTOR3& p1, const D3DXVECTOR3& p2) {
+			vertex_[0] = p1;
+			vertex_[1] = p2;
+		}
+
+		D3DXVECTOR3& GetPosition(size_t index) { return vertex_[index]; }
+		D3DXVECTOR3& GetPosition1() { return vertex_[0]; }
+		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
+	};
+
+	class DxTriangle3D : public DxShapeBase {
+	private:
+		D3DXVECTOR3 vertex_[3];
+		D3DXVECTOR3 normal_;
+
+		void _Compute() {
+			D3DXVECTOR3 lv[3];
+			lv[0] = vertex_[1] - vertex_[0];
+			lv[0] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[0]);
+
+			lv[1] = vertex_[2] - vertex_[1];
+			lv[1] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[1]);
+
+			lv[2] = vertex_[0] - vertex_[2];
+			lv[2] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[2]);
+
+			D3DXVECTOR3 cross = *D3DXVec3Cross(&D3DXVECTOR3(), &lv[0], &lv[1]);
+			normal_ = *D3DXVec3Normalize(&D3DXVECTOR3(), &cross);
+		}
+	public:
+		DxTriangle3D() {}
+		DxTriangle3D(const D3DXVECTOR3& p1, const D3DXVECTOR3& p2, const D3DXVECTOR3& p3) {
+			vertex_[0] = p1;
+			vertex_[1] = p2;
+			vertex_[2] = p3;
+			_Compute();
+		}
+
+		D3DXVECTOR3& GetPosition(size_t index) { return vertex_[index]; }
+		D3DXVECTOR3& GetPosition1() { return vertex_[0]; }
+		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
+		D3DXVECTOR3& GetPosition3() { return vertex_[2]; }
+		D3DXVECTOR3& GetNormal() { return normal_; }
+		FLOAT GetArea() {
+			D3DXVECTOR3 v_ab = vertex_[0] - vertex_[1];
+			D3DXVECTOR3 v_ac = vertex_[0] - vertex_[2];
+			D3DXVECTOR3 vCross;
+			D3DXVec3Cross(&vCross, &v_ab, &v_ac);
+			return abs(0.5f * D3DXVec3Length(&vCross));
+		}
 	};
 }

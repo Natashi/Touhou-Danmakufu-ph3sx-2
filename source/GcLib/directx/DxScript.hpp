@@ -208,12 +208,26 @@ namespace directx {
 		static gstd::value Func_Get2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
 		//Intersection
-		DNH_FUNCAPI_DECL_(Func_IsIntersected_Circle_Circle);
-		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Circle);
-		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Line);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Point_Polygon);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Point_Circle);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Point_Ellipse);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Point_Line);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Point_RegularPolygon);
 
-		DNH_FUNCAPI_DECL_(Func_IsIntersected_Circle_RegularPolygon);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Circle_Polygon);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Circle_Circle);
 		DNH_FUNCAPI_DECL_(Func_IsIntersected_Circle_Ellipse);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Circle_RegularPolygon);
+
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Polygon);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Circle);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Ellipse);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_Line);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Line_RegularPolygon);
+
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Polygon_Polygon);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Polygon_Ellipse);
+		DNH_FUNCAPI_DECL_(Func_IsIntersected_Polygon_RegularPolygon);
 
 		//Color
 		DNH_FUNCAPI_DECL_(Func_ColorARGBToHex);
