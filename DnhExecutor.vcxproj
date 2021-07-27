@@ -129,7 +129,7 @@
       <OutputFile>bin_th_dnh/th_dnh_ph3sx-zlabel.exe</OutputFile>
       <AdditionalDependencies>legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalOptions>/NODEFAULTLIB:"libcmt.lib" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/NODEFAULTLIB:"libcmt.lib" /ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
