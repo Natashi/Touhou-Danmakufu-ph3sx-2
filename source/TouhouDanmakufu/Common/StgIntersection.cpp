@@ -370,7 +370,7 @@ void StgIntersectionManager::AddVisualization(ref_unsync_ptr<StgIntersectionTarg
 		StgIntersectionTarget_Line* pTarget = dynamic_cast<StgIntersectionTarget_Line*>(target.get());
 		DxWidthLine& line = pTarget->GetLine();
 
-		DxWidthLine splitLines[2];
+		DxLine splitLines[2];
 		size_t countSplit = DxIntersect::SplitWidthLine(splitLines, &line, 1.0f, true);
 
 		if (countSplit > 0U) {
