@@ -102,7 +102,6 @@ static const std::vector<function> commonFunction = {
 
 	{ "cas", ScriptClientBase::Func_Cas, 1 },
 	{ "rcas", ScriptClientBase::Func_RCas, 1 },
-	{ "cash", ScriptClientBase::Func_CasH, 1 }, //?????
 
 	{ "cosh", ScriptClientBase::Func_CosH, 1 },
 	{ "sinh", ScriptClientBase::Func_SinH, 1 },
@@ -1161,11 +1160,6 @@ value ScriptClientBase::Func_RCas(script_machine* machine, int argc, const value
 	double scArray[2];
 	Math::DoSinCos(argv->as_real(), scArray);
 	return CreateRealValue(scArray[0] + scArray[1]);
-}
-//Is there a better name for this?
-value ScriptClientBase::Func_CasH(script_machine* machine, int argc, const value* argv) {
-	double v = argv->as_real();
-	return CreateRealValue(sinh(v) + cosh(v));
 }
 
 value ScriptClientBase::Func_CosH(script_machine* machine, int argc, const value* argv) {

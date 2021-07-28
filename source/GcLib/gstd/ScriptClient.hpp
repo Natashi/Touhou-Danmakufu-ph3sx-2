@@ -225,7 +225,6 @@ namespace gstd {
 
 		DNH_FUNCAPI_DECL_(Func_Cas);
 		DNH_FUNCAPI_DECL_(Func_RCas);
-		DNH_FUNCAPI_DECL_(Func_CasH);
 
 		DNH_FUNCAPI_DECL_(Func_CosH);
 		DNH_FUNCAPI_DECL_(Func_SinH);
