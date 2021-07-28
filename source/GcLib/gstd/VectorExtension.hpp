@@ -46,9 +46,6 @@ namespace gstd {
 		//Returns x[0]
 		static __forceinline float ToF32(const __m128& x);
 
-		//From vectors a and b, generate a new vector with _MM_SHUFFLE
-		static __forceinline __m128 Shuffle(const __m128& a, const __m128& b, DWORD shuf);
-
 		//From vectors a and b, generate a new vector (b[2], b[3], a[2], a[3])
 		static __forceinline __m128 DuplicateHL(const __m128& a, const __m128& b);
 		//From vectors a and b, generate a new vector (a[0], a[1], b[0], b[1])
@@ -235,22 +232,6 @@ namespace gstd {
 		//SSE
 		return _mm_cvtss_f32(x);
 #endif
-	}
-
-	__m128 Vectorize::Shuffle(const __m128& a, const __m128& b, DWORD shuf) {
-		__m128 res;
-#ifndef __L_MATH_VECTORIZE
-#define _SELECT(x, ctrl) (x).m128_f32[(ctrl) & 4];
-		res.m128_f32[0] = _SELECT(a, shuf);
-		res.m128_f32[1] = _SELECT(a, shuf >> 2);
-		res.m128_f32[2] = _SELECT(b, shuf >> 4);
-		res.m128_f32[3] = _SELECT(b, shuf >> 6);
-#undef _SELECT
-#else
-		//SSE
-		res = _mm_shuffle_ps(a, b, shuf);
-#endif
-		return res;
 	}
 
 	//---------------------------------------------------------------------
