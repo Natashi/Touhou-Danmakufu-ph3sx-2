@@ -5,6 +5,8 @@
 #if defined(DNH_PROJ_EXECUTOR)
 
 namespace gstd {
+#define _MM_SHUFFLE_R(fp0, fp1, fp2, fp3) _MM_SHUFFLE(fp3, fp2, fp1, fp0)
+
 	//================================================================
 	//Vectorize
 	class Vectorize {
@@ -41,9 +43,19 @@ namespace gstd {
 		//Generates int vector (x, x, x, x)
 		static __forceinline __m128i Replicate(int x);
 
-		//From vector (a, b, c, d), generate a new vector (a, a, c, c)
+		//Returns x[0]
+		static __forceinline float ToF32(const __m128& x);
+
+		//From vectors a and b, generate a new vector with _MM_SHUFFLE
+		static __forceinline __m128 Shuffle(const __m128& a, const __m128& b, DWORD shuf);
+
+		//From vectors a and b, generate a new vector (b[2], b[3], a[2], a[3])
+		static __forceinline __m128 DuplicateHL(const __m128& a, const __m128& b);
+		//From vectors a and b, generate a new vector (a[0], a[1], b[0], b[1])
+		static __forceinline __m128 DuplicateLH(const __m128& a, const __m128& b);
+		//From vector x, generate a new vector (x[0], x[0], x[2], x[2])
 		static __forceinline __m128 DuplicateEven(const __m128& x);
-		//From vector (a, b, c, d), generate a new vector (b, b, d, d)
+		//From vector x, generate a new vector (x[1], x[1], x[3], x[3])
 		static __forceinline __m128 DuplicateOdd(const __m128& x);
 
 		//[XOR] vector a and b
@@ -57,6 +69,9 @@ namespace gstd {
 		static __forceinline __m128 Mul(const __m128& a, const __m128& b);
 		//[divide] vector a and b
 		static __forceinline __m128 Div(const __m128& a, const __m128& b);
+
+		//Computes reciprocal of vector
+		static __forceinline __m128 Rcp(const __m128& x);
 
 		//[add] double vector a and b
 		static __forceinline __m128d Add(const __m128d& a, const __m128d& b);
@@ -75,18 +90,18 @@ namespace gstd {
 		static __forceinline __m128d MulAdd(const __m128d& a, const __m128d& b, const __m128d& c);
 
 		//Performs [max] on double vector a and b
-		static __forceinline __m128d MaxPacked(const __m128d& a, const __m128d& b);
+		static __forceinline __m128d Max(const __m128d& a, const __m128d& b);
 		//Performs [min] on double vector a and b
-		static __forceinline __m128d MinPacked(const __m128d& a, const __m128d& b);
+		static __forceinline __m128d Min(const __m128d& a, const __m128d& b);
 		//Performs [clamp] on double vector a and b (Fused [min]+[max])
-		static __forceinline __m128d ClampPacked(const __m128d& a, const __m128d& min, const __m128d& max);
+		static __forceinline __m128d Clamp(const __m128d& a, const __m128d& min, const __m128d& max);
 
 		//Performs [max] on int vector a and b
-		static __forceinline __m128i MaxPacked(const __m128i& a, const __m128i& b);
+		static __forceinline __m128i Max(const __m128i& a, const __m128i& b);
 		//Performs [min] on int vector a and b
-		static __forceinline __m128i MinPacked(const __m128i& a, const __m128i& b);
+		static __forceinline __m128i Min(const __m128i& a, const __m128i& b);
 		//Performs [clamp] on int vector a and b (Fused [min]+[max])
-		static __forceinline __m128i ClampPacked(const __m128i& a, const __m128i& min, const __m128i& max);
+		static __forceinline __m128i Clamp(const __m128i& a, const __m128i& min, const __m128i& max);
 	};
 
 	//---------------------------------------------------------------------
@@ -213,8 +228,59 @@ namespace gstd {
 		return res;
 	}
 
+	float Vectorize::ToF32(const __m128& x) {
+#ifndef __L_MATH_VECTORIZE
+		return x.m128_f32[0];
+#else
+		//SSE
+		return _mm_cvtss_f32(x);
+#endif
+	}
+
+	__m128 Vectorize::Shuffle(const __m128& a, const __m128& b, DWORD shuf) {
+		__m128 res;
+#ifndef __L_MATH_VECTORIZE
+#define _SELECT(x, ctrl) (x).m128_f32[(ctrl) & 4];
+		res.m128_f32[0] = _SELECT(a, shuf);
+		res.m128_f32[1] = _SELECT(a, shuf >> 2);
+		res.m128_f32[2] = _SELECT(b, shuf >> 4);
+		res.m128_f32[3] = _SELECT(b, shuf >> 6);
+#undef _SELECT
+#else
+		//SSE
+		res = _mm_shuffle_ps(a, b, shuf);
+#endif
+		return res;
+	}
+
 	//---------------------------------------------------------------------
 
+	__m128 Vectorize::DuplicateHL(const __m128& a, const __m128& b) {
+		__m128 res;
+#ifndef __L_MATH_VECTORIZE
+		res.m128_f32[0] = b.m128_f32[2];
+		res.m128_f32[1] = b.m128_f32[3];
+		res.m128_f32[2] = a.m128_f32[2];
+		res.m128_f32[3] = a.m128_f32[3];
+#else
+		//SSE
+		res = _mm_movehl_ps(a, b);
+#endif
+		return res;
+	}
+	__m128 Vectorize::DuplicateLH(const __m128& a, const __m128& b) {
+		__m128 res;
+#ifndef __L_MATH_VECTORIZE
+		res.m128_f32[0] = a.m128_f32[0];
+		res.m128_f32[1] = a.m128_f32[1];
+		res.m128_f32[2] = b.m128_f32[0];
+		res.m128_f32[3] = b.m128_f32[1];
+#else
+		//SSE
+		res = _mm_movelh_ps(a, b);
+#endif
+		return res;
+	}
 	__m128 Vectorize::DuplicateEven(const __m128& x) {
 		__m128 res;
 #ifndef __L_MATH_VECTORIZE
@@ -301,6 +367,18 @@ namespace gstd {
 #else
 		//SSE
 		res = _mm_div_ps(a, b);
+#endif
+		return res;
+	}
+
+	__m128 Vectorize::Rcp(const __m128& x) {
+		__m128 res;
+#ifndef __L_MATH_VECTORIZE
+		for (int i = 0; i < 4; ++i)
+			res.m128_f32[i] = 1.0f / x.m128_f32[i];
+#else
+		//SSE
+		res = _mm_rcp_ps(x);
 #endif
 		return res;
 	}
@@ -396,7 +474,7 @@ namespace gstd {
 
 	//---------------------------------------------------------------------
 
-	__m128d Vectorize::MaxPacked(const __m128d& a, const __m128d& b) {
+	__m128d Vectorize::Max(const __m128d& a, const __m128d& b) {
 		__m128d res;
 #ifndef __L_MATH_VECTORIZE
 		for (int i = 0; i < 2; ++i)
@@ -407,7 +485,7 @@ namespace gstd {
 #endif
 		return res;
 	}
-	__m128d Vectorize::MinPacked(const __m128d& a, const __m128d& b) {
+	__m128d Vectorize::Min(const __m128d& a, const __m128d& b) {
 		__m128d res;
 #ifndef __L_MATH_VECTORIZE
 		for (int i = 0; i < 2; ++i)
@@ -418,7 +496,7 @@ namespace gstd {
 #endif
 		return res;
 	}
-	__m128d Vectorize::ClampPacked(const __m128d& a, const __m128d& min, const __m128d& max) {
+	__m128d Vectorize::Clamp(const __m128d& a, const __m128d& min, const __m128d& max) {
 		__m128d res;
 #ifndef __L_MATH_VECTORIZE
 		for (int i = 0; i < 2; ++i)
@@ -433,7 +511,7 @@ namespace gstd {
 
 	//---------------------------------------------------------------------
 
-	__m128i Vectorize::MaxPacked(const __m128i& a, const __m128i& b) {
+	__m128i Vectorize::Max(const __m128i& a, const __m128i& b) {
 		__m128i res;
 #ifndef __L_MATH_VECTORIZE
 		for (int i = 0; i < 4; ++i)
@@ -444,7 +522,7 @@ namespace gstd {
 #endif
 		return res;
 	}
-	__m128i Vectorize::MinPacked(const __m128i& a, const __m128i& b) {
+	__m128i Vectorize::Min(const __m128i& a, const __m128i& b) {
 		__m128i res;
 #ifndef __L_MATH_VECTORIZE
 		for (int i = 0; i < 4; ++i)
@@ -455,7 +533,7 @@ namespace gstd {
 #endif
 		return res;
 	}
-	__m128i Vectorize::ClampPacked(const __m128i& a, const __m128i& min, const __m128i& max) {
+	__m128i Vectorize::Clamp(const __m128i& a, const __m128i& min, const __m128i& max) {
 		__m128i res;
 #ifndef __L_MATH_VECTORIZE
 		for (int i = 0; i < 4; ++i)

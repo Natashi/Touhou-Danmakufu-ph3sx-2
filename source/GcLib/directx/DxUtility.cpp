@@ -70,7 +70,7 @@ __m128i ColorAccess::ClampColorPackedM(const D3DXVECTOR4& src) {
 	return ColorAccess::ClampColorPackedM(ci);
 }
 __m128i ColorAccess::ClampColorPackedM(const __m128i& src) {
-	return (__m128i&)Vectorize::ClampPacked(src, 
+	return (__m128i&)Vectorize::Clamp(src, 
 		Vectorize::Replicate(0x00), Vectorize::Replicate(0xff));
 }
 
