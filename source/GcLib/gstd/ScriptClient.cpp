@@ -124,6 +124,8 @@ static const std::vector<function> commonFunction = {
 	{ "NormalizeAngleR", ScriptClientBase::Func_NormalizeAngleR, 1 },
 	{ "AngularDistance", ScriptClientBase::Func_AngularDistance, 2 },
 	{ "AngularDistanceR", ScriptClientBase::Func_AngularDistanceR, 2 },
+	{ "ReflectAngle", ScriptClientBase::Func_ReflectAngle, 2 },
+	{ "ReflectAngleR", ScriptClientBase::Func_ReflectAngleR, 2 },
 
 	//Math functions: Extra
 	{ "exp", ScriptClientBase::Func_Exp, 1 },
@@ -2257,6 +2259,18 @@ value ScriptClientBase::Func_AngularDistanceR(script_machine* machine, int argc,
 	double dist = Math::NormalizeAngleRad(angTo - angFrom);
 	if (dist > GM_PI) dist -= GM_PI_X2;
 	return CreateRealValue(dist);
+}
+value ScriptClientBase::Func_ReflectAngle(script_machine* machine, int argc, const value* argv) {
+	double angRay = argv[0].as_real();
+	double angSurf = argv[1].as_real();
+	double angRef = Math::NormalizeAngleDeg(-angRay + 2 * angSurf);
+	return CreateRealValue(angRef);
+}
+value ScriptClientBase::Func_ReflectAngleR(script_machine* machine, int argc, const value* argv) {
+	double angRay = argv[0].as_real();
+	double angSurf = argv[1].as_real();
+	double angRef = Math::NormalizeAngleRad(-angRay + 2 * angSurf);
+	return CreateRealValue(angRef);
 }
 
 //共通関数：パス関連

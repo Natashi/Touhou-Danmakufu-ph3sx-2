@@ -280,6 +280,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_NormalizeAngleR);
 		DNH_FUNCAPI_DECL_(Func_AngularDistance);
 		DNH_FUNCAPI_DECL_(Func_AngularDistanceR);
+		DNH_FUNCAPI_DECL_(Func_ReflectAngle);
+		DNH_FUNCAPI_DECL_(Func_ReflectAngleR);
 
 		//Math functions; interpolation
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Linear);
