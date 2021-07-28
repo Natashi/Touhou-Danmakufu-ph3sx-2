@@ -349,6 +349,7 @@ namespace gstd {
 
 		//System time
 		DNH_FUNCAPI_DECL_(Func_GetSystemTimeMilliS);
+		DNH_FUNCAPI_DECL_(Func_GetSystemTimeMicroS);
 		DNH_FUNCAPI_DECL_(Func_GetSystemTimeNanoS);
 		static value Func_GetCurrentDateTimeS(script_machine* machine, int argc, const value* argv);
 
