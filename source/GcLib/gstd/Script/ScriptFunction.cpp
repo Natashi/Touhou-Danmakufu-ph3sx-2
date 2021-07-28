@@ -667,12 +667,6 @@ namespace gstd {
 			return value(script_type_manager::get_int_type(), argv[0].as_int() % argv[1].as_int());
 	}
 
-	DNH_FUNCAPI_DEF_(BaseFunction::modf) {
-		double r = argv->as_real();
-		r -= (r > 0) ? std::floor(r) : std::ceil(r);
-		return value(script_type_manager::get_real_type(), r);
-	}
-
 	//Allows for non-integer side counts because A. no division by 0 errors and B. why not 
 	DNH_FUNCAPI_DEF_(BaseFunction::apo) {
 		double n = argv->as_real();
