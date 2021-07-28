@@ -216,6 +216,8 @@ namespace directx {
 	public:
 		DxShapeBase() {};
 		virtual ~DxShapeBase() {};
+
+		virtual DxRect<float> GetBounds() const = 0;
 	};
 
 	class DxPoint : public DxShapeBase {
@@ -229,6 +231,10 @@ namespace directx {
 		void SetX(float x) { pos.x = x; }
 		float GetY() const { return pos.y; }
 		void SetY(float y) { pos.y = y; }
+
+		virtual DxRect<float> GetBounds() const {
+			return DxRect<float>(GetX(), GetY(), GetX(), GetY());
+		}
 	};
 
 	class DxCircle : public DxPoint {
@@ -240,6 +246,12 @@ namespace directx {
 		
 		float GetR() const { return r; }
 		void SetR(float _r) { r = _r; }
+
+		virtual DxRect<float> GetBounds() const {
+			float x = GetX();
+			float y = GetY();
+			return DxRect<float>(x - r, y - r, x + r, y + r);
+		}
 	};
 	class DxEllipse : public DxPoint {
 	private:
@@ -253,6 +265,12 @@ namespace directx {
 		void SetA(float _a) { a = _a; }
 		float GetB() const { return b; }
 		void SetB(float _b) { b = _b; }
+
+		virtual DxRect<float> GetBounds() const {
+			float x = GetX();
+			float y = GetY();
+			return DxRect<float>(x - a, y - b, x + a, y + b);
+		}
 	};
 
 	class DxLine : public DxShapeBase {
@@ -274,7 +292,7 @@ namespace directx {
 		void SetY2(float y) { p2.SetY(y); }
 		float GetY2() const { return p2.GetY(); }
 
-		DxRect<float> GetBounds() const {
+		virtual DxRect<float> GetBounds() const {
 			DxRect<float> bound(GetX1(), GetY1(), GetX2(), GetY2());
 			if (bound.left > bound.right) std::swap(bound.left, bound.right);
 			if (bound.top > bound.bottom) std::swap(bound.top, bound.bottom);
@@ -292,6 +310,15 @@ namespace directx {
 
 		void SetWidth(float w_) { w = w_; }
 		float GetWidth() const { return w; }
+
+		virtual DxRect<float> GetBounds() const {
+			float l = GetX1(); float t = GetY1();
+			float r = GetX2(); float b = GetY2();
+			if (l > r) std::swap(l, r);
+			if (t > b) std::swap(t, b);
+			float w2 = w * 0.5f;
+			return DxRect<float>(l - w2, t - w2, r + w2, b + w2);
+		}
 	};
 
 	class DxRegularPolygon : public DxCircle {
@@ -323,6 +350,8 @@ namespace directx {
 		D3DXVECTOR3& GetPosition(size_t index) { return vertex_[index]; }
 		D3DXVECTOR3& GetPosition1() { return vertex_[0]; }
 		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
+
+		virtual DxRect<float> GetBounds() const { return DxRect<float>(); }
 	};
 
 	class DxTriangle3D : public DxShapeBase {
@@ -365,5 +394,7 @@ namespace directx {
 			D3DXVec3Cross(&vCross, &v_ab, &v_ac);
 			return abs(0.5f * D3DXVec3Length(&vCross));
 		}
+
+		virtual DxRect<float> GetBounds() const { return DxRect<float>(); }
 	};
 }

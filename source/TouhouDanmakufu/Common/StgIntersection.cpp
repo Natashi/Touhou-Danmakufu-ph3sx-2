@@ -659,27 +659,3 @@ std::wstring StgIntersectionTarget::GetInfoAsString() {
 
 	return res;
 }
-
-void StgIntersectionTarget_Circle::SetIntersectionSpace() {
-	constexpr LONG MARGIN = 1L;
-
-	LONG x = circle_.GetX();
-	LONG y = circle_.GetY();
-	LONG r = (LONG)(circle_.GetR() + 0.1f) + MARGIN;
-
-	intersectionSpace_ = DxRect<LONG>(x - r, y - r, x + r, y + r);
-}
-void StgIntersectionTarget_Line::SetIntersectionSpace() {
-	constexpr LONG MARGIN = 2L;
-
-	LONG l = line_.GetX1();
-	LONG t = line_.GetY1();
-	LONG r = line_.GetX2();
-	LONG b = line_.GetY2();
-	LONG wd = line_.GetWidth() + MARGIN;
-
-	if (l > r) std::swap(l, r);
-	if (t > b) std::swap(t, b);
-
-	intersectionSpace_ = DxRect<LONG>(l - wd, t - wd, r + wd, b + wd);
-}
