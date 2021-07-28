@@ -1623,13 +1623,13 @@ value ScriptClientBase::Func_AngularDistanceR(script_machine* machine, int argc,
 value ScriptClientBase::Func_ReflectAngle(script_machine* machine, int argc, const value* argv) {
 	double angRay = argv[0].as_real();
 	double angSurf = argv[1].as_real();
-	double angRef = Math::NormalizeAngleDeg(-angRay + 2 * angSurf);
+	double angRef = Math::NormalizeAngleDeg(2 * angSurf - angRay);
 	return CreateRealValue(angRef);
 }
 value ScriptClientBase::Func_ReflectAngleR(script_machine* machine, int argc, const value* argv) {
 	double angRay = argv[0].as_real();
 	double angSurf = argv[1].as_real();
-	double angRef = Math::NormalizeAngleRad(-angRay + 2 * angSurf);
+	double angRef = Math::NormalizeAngleRad(2 * angSurf - angRay);
 	return CreateRealValue(angRef);
 }
 
