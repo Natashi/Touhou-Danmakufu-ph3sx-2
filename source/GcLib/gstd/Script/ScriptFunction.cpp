@@ -971,6 +971,15 @@ namespace gstd {
 		value from = argv[1];
 		value to = argv[2];
 
+		type_data* addType = to.get_type();
+		type_data* elemType = valType->get_element();
+
+		_append_check(machine, valType, addType);
+
+		if (addType != elemType) {
+			BaseFunction::_value_cast(&to, elemType);
+		}
+
 		value res = *val;
 		res.make_unique();
 
