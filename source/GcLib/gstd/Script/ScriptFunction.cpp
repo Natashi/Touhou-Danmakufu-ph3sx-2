@@ -954,6 +954,79 @@ namespace gstd {
 		return value(script_type_manager::get_boolean_type(), res);
 	}
 
+	DNH_FUNCAPI_DEF_(BaseFunction::replace) {
+		_null_check(machine, argv, argc);
+
+		const value* val = &argv[0];
+		type_data* valType = val->get_type();
+
+		if (valType->get_kind() != type_data::tk_array) {
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "replace");
+			return value();
+		}
+
+
+		size_t size = val->length_as_array();
+
+		value from = argv[1];
+		value to = argv[2];
+
+		value res = *val;
+		res.make_unique();
+
+		std::vector<value> arrVal(size);
+
+		// Populate source array
+		for (size_t i = 0; i < size; ++i)
+			arrVal[i] = val->index_as_array(i);
+
+		for (size_t i = 0; i < size; ++i) {
+			value args[2] = { arrVal[i], from };
+			if (compare(machine, 2, args).as_int() == 0) {
+				arrVal[i] = to;
+			}
+		}
+
+		res.reset(valType, arrVal);
+		return res;
+	}
+
+	DNH_FUNCAPI_DEF_(BaseFunction::remove) {
+		_null_check(machine, argv, argc);
+
+		const value* val = &argv[0];
+		type_data* valType = val->get_type();
+
+		if (valType->get_kind() != type_data::tk_array) {
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "remove");
+			return value();
+		}
+
+		size_t size = val->length_as_array();
+
+		value match = argv[1];
+
+		value res = *val;
+		res.make_unique();
+
+		std::vector<value> arrVal(size);
+
+		// Populate source array
+		for (size_t i = 0; i < size; ++i)
+			arrVal[i] = val->index_as_array(i);
+
+		for (size_t i = 0; i < size; ++i) {
+			value args[2] = { arrVal[i], match };
+			if (compare(machine, 2, args).as_int() == 0) {
+				arrVal.erase(arrVal.begin() + i);
+				size--;
+			}
+		}
+
+		res.reset(valType, arrVal);
+		return res;
+	}
+
 	const value* BaseFunction::index(script_machine* machine, int argc, value* arr, value* indexer) {
 		_null_check(machine, arr, 1);
 		size_t index = indexer->as_int();

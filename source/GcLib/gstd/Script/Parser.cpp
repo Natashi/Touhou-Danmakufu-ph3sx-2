@@ -162,6 +162,9 @@ static const std::vector<function> base_operations = {
 	{ "all", BaseFunction::all, 1 },
 	{ "any", BaseFunction::any, 1 },
 
+	{ "replace", BaseFunction::replace, 3 },
+	{ "remove", BaseFunction::remove, 2 },
+
 	{ "slice", BaseFunction::slice, 3 },
 	//{ "slice", BaseFunction::slice, 4 },	//Overloaded
 	{ "insert", BaseFunction::insert, 3 },
