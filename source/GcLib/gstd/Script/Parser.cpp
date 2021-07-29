@@ -163,7 +163,7 @@ static const std::vector<function> base_operations = {
 	{ "any", BaseFunction::any, 1 },
 
 	{ "replace", BaseFunction::replace, 3 },
-	{ "remove", BaseFunction::remove, 2 },
+	{ "remove", BaseFunction::remove, -3 }, //1 fixed + ... -> 2 minimum
 
 	{ "slice", BaseFunction::slice, 3 },
 	//{ "slice", BaseFunction::slice, 4 },	//Overloaded

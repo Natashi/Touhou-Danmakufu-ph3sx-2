@@ -976,9 +976,8 @@ namespace gstd {
 
 		_append_check(machine, valType, addType);
 
-		if (addType != elemType) {
+		if (addType != elemType)
 			BaseFunction::_value_cast(&to, elemType);
-		}
 
 		value res = *val;
 		res.make_unique();
@@ -1013,7 +1012,7 @@ namespace gstd {
 
 		size_t size = val->length_as_array();
 
-		value match = argv[1];
+		size_t count = argc - 1;
 
 		value res = *val;
 		res.make_unique();
@@ -1025,10 +1024,14 @@ namespace gstd {
 			arrVal[i] = val->index_as_array(i);
 
 		for (size_t i = 0; i < size; ++i) {
-			value args[2] = { arrVal[i], match };
-			if (compare(machine, 2, args).as_int() == 0) {
-				arrVal.erase(arrVal.begin() + i);
-				size--;
+			for (size_t j = 1; j <= count; ++j) {
+				value args[2] = { arrVal[i], argv[j] };
+				if (compare(machine, 2, args).as_int() == 0) {
+					arrVal.erase(arrVal.begin() + i);
+					size--;
+					i--;
+					break;
+				}
 			}
 		}
 
