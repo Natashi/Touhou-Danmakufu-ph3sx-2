@@ -326,6 +326,10 @@ namespace gstd {
 		inline static void parser_assert(int line, bool expr, const std::wstring& error);
 		inline static void parser_assert(int line, bool expr, const std::string& error);
 
+		static bool _parser_skip_post_decl(parser_state_t* state, int* pBrk, int* pPar);
+		static void _parser_assert_end(parser_state_t* state);
+		static void _parser_assert_nend(parser_state_t* state);
+
 		inline static bool test_variadic(int require, int argc);
 		inline static bool IsDeclToken(token_kind tk);
 

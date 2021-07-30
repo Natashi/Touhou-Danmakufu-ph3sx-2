@@ -261,6 +261,14 @@ void parser::load_constants(std::vector<constant>* list_const) {
 	}
 	count_base_constants += list_const->size();
 }
+void parser::_parser_assert_end(parser_state_t* state) {
+	parser_assert(state->next() == token_kind::tk_end,
+		"Unexpected end-of-file.\r\n");
+}
+void parser::_parser_assert_nend(parser_state_t* state) {
+	parser_assert(state->next() != token_kind::tk_end,
+		"Unexpected end-of-file while parsing.\r\n");
+}
 void parser::begin_parse() {
 	try {
 		frame.push_back(scope_t(block_kind::bk_normal));	//Scope for user symbols
@@ -277,8 +285,7 @@ void parser::begin_parse() {
 		//for pc_var_alloc
 		engine->main_block->codes[0].arg0 = count_base_constants + stateParser.var_count_main + stateParser.var_count_sub;
 
-		parser_assert(stateParser.next() == token_kind::tk_end,
-			"Unexpected end-of-file while parsing. (Did you forget a semicolon after a string?)\r\n");
+		_parser_assert_end(&stateParser);
 	}
 	catch (parser_error& e) {
 		error = true;
@@ -371,24 +378,31 @@ parser::symbol* parser::search_result() {
 	return nullptr;
 }
 
-bool _lexer_skip_post_decl(script_scanner* lex, int* pBrk, int* pPar) {
-	while (lex->next != token_kind::tk_semicolon) {
-		if (lex->next == token_kind::tk_open_bra) ++(*pBrk);
-		else if (lex->next == token_kind::tk_close_bra) --(*pBrk);
+bool parser::_parser_skip_post_decl(parser_state_t* state, int* pBrk, int* pPar) {
+	while (state->next() != token_kind::tk_semicolon) {
+		if (state->next() == token_kind::tk_open_cur) break;
 
-		if (lex->next == token_kind::tk_open_par) ++(*pPar);
-		else if (lex->next == token_kind::tk_close_par) --(*pPar);
+		if (state->next() == token_kind::tk_open_bra) ++(*pBrk);
+		else if (state->next() == token_kind::tk_close_bra) --(*pBrk);
 
-		if (lex->next == token_kind::tk_comma
+		if (state->next() == token_kind::tk_open_par) ++(*pPar);
+		else if (state->next() == token_kind::tk_close_par) --(*pPar);
+
+		if (state->next() == token_kind::tk_comma
 			&& (*pBrk) == 0 && (*pPar) == 0) break;
 
-		lex->advance();
+		state->advance();
 	}
-	if (lex->next == token_kind::tk_semicolon) {
-		lex->advance();
+	if (state->next() == token_kind::tk_semicolon) {
+		state->advance();
 		return false;
 	}
-	else lex->advance();
+	else if (state->next() == token_kind::tk_comma) {
+		state->advance();
+	}
+	else {
+		parser_assert(state, false, "Invalid statement.");
+	}
 	return true;
 }
 
@@ -691,7 +705,7 @@ int parser::scan_current_scope(parser_state_t* state, int level, int initVar, co
 						}
 
 						brk = 0;
-						if (!_lexer_skip_post_decl(&lex2, &brk, &par))
+						if (!_parser_skip_post_decl(&dummyState, &brk, &par))
 							break;
 					}
 
@@ -753,6 +767,7 @@ void parser::parse_parentheses(script_block* block, parser_state_t* state) {
 }
 
 void parser::parse_clause(script_block* block, parser_state_t* state) {
+	//_parser_assert_nend(state);
 	switch (state->next()) {
 	case token_kind::tk_int:
 		state->AddCode(block, code(command_kind::pc_push_value,
@@ -1662,6 +1677,17 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			script_scanner* const lex_org = state->lex;
 			script_scanner lex_s1(*state->lex);		//First statement (initialization)
 
+			auto _SkipUntilSemicolon = [&]() {
+				while (state->next() != token_kind::tk_semicolon) {
+					switch (state->next()) {
+					case token_kind::tk_open_cur:
+						parser_assert(state, false, "Invalid statement.");
+					}
+					_parser_assert_nend(state);
+					state->advance();
+				}
+			};
+
 			if (IsDeclToken(state->next())) {
 				arg_data firstArg = arg_data();
 
@@ -1676,12 +1702,12 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 					int brk = 0;
 					int par = 0;
-					if (!_lexer_skip_post_decl(state->lex, &brk, &par))
+					if (!_parser_skip_post_decl(state, &brk, &par))
 						break;
 				}
 			}
 			else {
-				while (state->next() != token_kind::tk_semicolon) state->advance();
+				_SkipUntilSemicolon();
 				state->advance();
 			}
 
@@ -1690,7 +1716,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 			script_scanner lex_s2(*state->lex);		//Second statement (evaluation)
 
-			while (state->next() != token_kind::tk_semicolon) state->advance();
+			_SkipUntilSemicolon();
 			state->advance();
 
 			script_scanner lex_s3(*state->lex);		//Third statement (update)
@@ -1698,6 +1724,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			{
 				int cur = 0;
 				while (true) {
+					_parser_assert_nend(state);
 					if (state->next() == token_kind::tk_open_par) ++cur;
 					else if (state->next() == token_kind::tk_close_par) {
 						if (cur == 0) break;
@@ -2252,6 +2279,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 	}
 	}
 
+	//_parser_assert_nend(state);
 	if (check_terminator) {
 		if (need_terminator && state->next() != statement_terminator)
 			parser_assert(state, false, "Expected a semicolon (;).");
