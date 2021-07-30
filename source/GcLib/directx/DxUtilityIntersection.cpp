@@ -72,7 +72,6 @@ bool DxIntersect::Point_Polygon(const DxPoint* pos, const std::vector<DxPoint>* 
 	float px = pos->GetX();
 	float py = pos->GetY();
 	size_t nVert = verts->size();
-	__m128 v1;
 
 	{
 		float minX = FLT_MAX;
@@ -102,38 +101,66 @@ bool DxIntersect::Point_Polygon(const DxPoint* pos, const std::vector<DxPoint>* 
 		float p2y = (*verts)[j].GetY();
 
 		if ((p1y > py) != (p2y > py)) {
-			v1 = Vectorize::Sub(
-				Vectorize::SetF(p2x, py, p2y, 0),
-				Vectorize::SetF(p1x, p1y, p1y, 0));
-			if (px < (v1.m128_f32[0] * v1.m128_f32[1] / v1.m128_f32[2] + p1x))
+			if (px < ((p2x - p1x) * (py - p1y) / (p2y - p1y) + p1x))
 				bInside = !bInside;
 		}
 	}
 	return bInside;
 }
 bool DxIntersect::Point_Circle(const DxPoint* pos, const DxCircle* circle) {
+	//Performance gain not worth vectorizing
+	/*
+	__m128 v1 = Vectorize::SetF(pos->GetX(), pos->GetY(), circle->GetR(), 0);
+	__m128 v2 = Vectorize::SetF(circle->GetX(), circle->GetY(), 0, 0);
+	v1 = Vectorize::Sub(v1, v2);
+	v1 = Vectorize::Mul(v1, v1);
+	//v1 is now (dx2, dy2, rr, 0)
+	v1 = _mm_hadd_ps(v1, v1);
+	return v1.m128_f32[0] <= v1.m128_f32[2];
+	*/
 	float dx = pos->GetX() - circle->GetX();
 	float dy = pos->GetY() - circle->GetY();
-	__m128 v1 = Vectorize::Mul(
-		Vectorize::SetF(dx, dy, circle->GetR(), 0),
-		Vectorize::SetF(dx, dy, circle->GetR(), 0));
-	return (v1.m128_f32[0] + v1.m128_f32[2]) <= v1.m128_f32[2];
+	return Math::HypotSq(dx, dy) <= (circle->GetR() * circle->GetR());
 }
 bool DxIntersect::Point_Ellipse(const DxPoint* pos, const DxEllipse* ellipse) {
+	//Performance gain not worth vectorizing
+	/*
+	__m128 v1 = Vectorize::SetF(pos->GetX(), pos->GetY(), 0, 0);
+	__m128 v2 = Vectorize::SetF(ellipse->GetX(), ellipse->GetY(), 0, 0);
+	v1 = Vectorize::Sub(v1, v2);
+	v2 = Vectorize::SetF(ellipse->GetA(), ellipse->GetB(), 0, 0);
+	v1 = Vectorize::DuplicateLH(v1, v2);
+	//v1 is now (dx, dy, ea, eb)
+
+	v1 = Vectorize::Mul(v1, v1);
+	v2 = Vectorize::Rcp(Vectorize::DuplicateHL(v1, v1));
+	//v2 is now (1/ea2, 1/eb2, ...)
+
+	v1 = Vectorize::Mul(v1, v2);
+
+	v1 = _mm_hadd_ps(v1, v1);
+	return v1.m128_f32[0] <= 1;
+	*/
 	float dx = pos->GetX() - ellipse->GetX();
 	float dy = pos->GetY() - ellipse->GetY();
-	__m128 v1 = Vectorize::Mul(
-		Vectorize::Set(dx, dy, ellipse->GetA(), ellipse->GetB()),
-		Vectorize::Set(dx, dy, ellipse->GetA(), ellipse->GetB()));
-	return (v1.m128_f32[0] / v1.m128_f32[2] + v1.m128_f32[1] / v1.m128_f32[3]) <= 1;
+	float ea2 = ellipse->GetA() * ellipse->GetA();
+	float eb2 = ellipse->GetB() * ellipse->GetB();
+	return ((dx * dx) / ea2 + (dy * dy) / eb2) <= 1;
 }
 bool DxIntersect::Point_Line(const DxPoint* pos, const DxLine* line) {
-	float dd1 = Math::HypotSq(line->GetX1() - line->GetX2(), line->GetY1() - line->GetY2());
-	__m128 v1 = Vectorize::Sub(
-		Vectorize::Set(line->GetX1(), line->GetY1(), line->GetX2(), line->GetY2()),
-		Vectorize::Set(pos->GetX(), pos->GetY(), pos->GetX(), pos->GetY()));
-	float dd2 = v1.m128_f32[0] * v1.m128_f32[1] + v1.m128_f32[2] * v1.m128_f32[3];
-	return abs(dd1 - dd2) <= 1;
+	constexpr const float MARGIN = 2.0f;
+
+	float dx = line->GetX2() - line->GetX1();
+	float dy = line->GetY2() - line->GetY1();
+	float dcx = pos->GetX() - line->GetX1();
+	float dcy = pos->GetY() - line->GetY1();
+
+	float dd = hypot(dx, dy);
+	float i_dd = 1.0f / dd;
+	float dp_1 = (dx * dcy - dy * dcx) * i_dd;
+	float dp_2 = (dx * dcx + dy * dcy) * i_dd;
+
+	return (dp_2 >= 0) && (dp_2 <= dd) && (abs(dp_1) <= MARGIN);
 }
 bool DxIntersect::Point_LineW(const DxPoint* pos, const DxWidthLine* line) {
 	if (abs(line->GetWidth()) <= 1.0f) {
@@ -170,11 +197,16 @@ bool DxIntersect::Circle_Polygon(const DxCircle* circle, const std::vector<DxPoi
 	return Polygon_Circle(verts, circle);
 }
 bool DxIntersect::Circle_Circle(const DxCircle* circle1, const DxCircle* circle2) {
+	/*
 	__m128 v1 = Vectorize::AddSub(
 		Vectorize::Set(circle1->GetX(), circle1->GetR(), circle1->GetY(), 0.0f),
 		Vectorize::Set(circle2->GetX(), circle2->GetR(), circle2->GetY(), 0.0f));
 	v1 = Vectorize::Mul(v1, v1);
 	return (v1.m128_f32[0] + v1.m128_f32[2]) <= (v1.m128_f32[1]);
+	*/
+	float dd = Math::HypotSq(circle1->GetX() - circle2->GetX(), circle1->GetY() - circle2->GetY());
+	float rr = circle1->GetR() + circle2->GetR();
+	return dd <= (rr * rr);
 }
 bool DxIntersect::Circle_Ellipse(const DxCircle* circle, const DxEllipse* ellipse) {
 	float cx = circle->GetX();
@@ -224,6 +256,7 @@ bool DxIntersect::Circle_Ellipse(const DxCircle* circle, const DxEllipse* ellips
 	return false;
 }
 bool DxIntersect::Circle_Line(const DxCircle* circle, const DxLine* line) {
+	/*
 	__m128 v1 = Vectorize::Sub(
 		Vectorize::Set(circle->GetX(), circle->GetY(), line->GetX2(), line->GetY2()),
 		Vectorize::Set(line->GetX1(), line->GetY1(), line->GetX1(), line->GetY1()));
@@ -236,6 +269,20 @@ bool DxIntersect::Circle_Line(const DxCircle* circle, const DxLine* line) {
 	float hx = (v1.m128_f32[2] * t + line->GetX1()) - circle->GetX();
 	float hy = (v1.m128_f32[3] * t + line->GetY1()) - circle->GetY();
 	return Math::HypotSq(hx, hy) <= (circle->GetR() * circle->GetR());
+	*/
+	float dx = line->GetX2() - line->GetX1();
+	float dy = line->GetY2() - line->GetY1();
+	float dcx = circle->GetX() - line->GetX1();
+	float dcy = circle->GetY() - line->GetY1();
+
+	float dp1 = dx * dx + dy * dy;
+	float dp2 = dx * dcx + dy * dcy;
+	float t = std::clamp<float>(dp2 / dp1, 0, 1);
+
+	float hx = line->GetX1() + dx * t;
+	float hy = line->GetY1() + dy * t;
+	float hd = Math::HypotSq(hx - circle->GetX(), hy - circle->GetY());
+	return hd <= (circle->GetR() * circle->GetR());
 }
 bool DxIntersect::Circle_LineW(const DxCircle* circle, const DxWidthLine* line) {
 	/*
@@ -255,8 +302,7 @@ bool DxIntersect::Circle_LineW(const DxCircle* circle, const DxWidthLine* line) 
 	float y2 = line->GetY2();
 	float lw = line->GetWidth();
 
-	//Vectorized / Unvectorized -> ~0.95? (x1.05 times)
-#ifdef __L_MATH_VECTORIZE
+	/*
 	__m128 v1, v2;
 
 	float cen_x = (x1 + x2) / 2.0f;
@@ -292,34 +338,16 @@ bool DxIntersect::Circle_LineW(const DxCircle* circle, const DxWidthLine* line) 
 
 	bool intersect_w = cross_x <= lw;
 	bool intersect_h = cross_y <= line_h;
-	if (intersect_w && intersect_h)			//The circle's center lies inside the rectangle
+	if (intersect_w && intersect_h)
 		return true;
 	else if (intersect_w || intersect_h) {
-		//The circle's center lies within these regions
-		/*
-			|here|
-		----A----B----
-		here|    |here
-		----D----C----
-			|here|
-		*/
-
 		float r2 = cr * 2.0f;
-		if (intersect_w && (cross_y <= line_h + r2))	//Horizontal regions
+		if (intersect_w && (cross_y <= line_h + r2))	
 			return true;
-		if (intersect_h && (cross_x <= lw + r2))		//Vertical regions
+		if (intersect_h && (cross_x <= lw + r2))
 			return true;
 		return false;
 	}
-
-	//The circle's center lies within the outer diagonal regions
-	/*
-	here|    |here
-	----A----B----
-		|    |
-	----D----C----
-	here|    |here
-	*/
 
 	float l_uw = lw / line_h * 0.5f;
 	v1 = Vectorize::Mul(
@@ -337,7 +365,8 @@ bool DxIntersect::Circle_LineW(const DxCircle* circle, const DxWidthLine* line) 
 			Vectorize::Set(ny, nx, nx, ny));
 		v2 = Vectorize::Sub(v1, Vectorize::Set(v2.m128_f32[0], v2.m128_f32[1], v2.m128_f32[3], v2.m128_f32[2]));
 		v2 = Vectorize::Mul(v2, v2);
-		if (v2.m128_f32[0] + v2.m128_f32[1] <= rr || v2.m128_f32[2] + v2.m128_f32[3] <= rr)
+		v2 = _mm_hadd_ps(v2, v2);
+		if (v2.m128_f32[0] <= rr || v2.m128_f32[2] <= rr)
 			return true;
 	}
 	else {
@@ -347,10 +376,12 @@ bool DxIntersect::Circle_LineW(const DxCircle* circle, const DxWidthLine* line) 
 			Vectorize::Set(nx, ny, ny, nx));
 		v2 = Vectorize::Sub(v1, Vectorize::Set(v2.m128_f32[1], v2.m128_f32[0], v2.m128_f32[2], v2.m128_f32[3]));
 		v2 = Vectorize::Mul(v2, v2);
-		if (v2.m128_f32[0] + v2.m128_f32[1] <= rr || v2.m128_f32[2] + v2.m128_f32[3] <= rr)
+		v2 = _mm_hadd_ps(v2, v2);
+		if (v2.m128_f32[0] <= rr || v2.m128_f32[2] <= rr)
 			return true;
 	}
-#else
+	*/
+
 	float rr = cr * cr;
 	float cen_x = (x1 + x2) / 2.0f;
 	float cen_y = (y1 + y2) / 2.0f;
@@ -367,13 +398,22 @@ bool DxIntersect::Circle_LineW(const DxCircle* circle, const DxWidthLine* line) 
 
 	bool intersect_w = cross_x <= lw;
 	bool intersect_h = cross_y <= line_h;
-	if (intersect_w && intersect_h)
+	if (intersect_w && intersect_h)			//The circle's center lies inside the rectangle
 		return true;
 	else if (intersect_w || intersect_h) {
+		//The circle's center lies within these regions
+		/*
+				|here|
+			----A----B----
+			here|    |here
+			----D----C----
+				|here|
+		*/
+
 		float r2 = cr * 2.0f;
-		if (intersect_w && (cross_y <= line_h + r2))
+		if (intersect_w && (cross_y <= line_h + r2))	//Horizontal regions
 			return true;
-		if (intersect_h && (cross_x <= lw + r2))
+		if (intersect_h && (cross_x <= lw + r2))		//Vertical regions
 			return true;
 		return false;
 	}
@@ -382,16 +422,22 @@ bool DxIntersect::Circle_LineW(const DxCircle* circle, const DxWidthLine* line) 
 	float nx = dx * l_uw;
 	float ny = dy * l_uw;
 
-	auto CheckDist = [&](float _tx, float _ty) -> bool {
-		return Math::HypotSq(_tx - cx, _ty - cy) <= rr;
-	};
+	//The circle's center lies within the outer diagonal regions
+	/*
+		here|    |here
+		----A----B----
+			|    |
+		----D----C----
+		here|    |here
+	*/
 
-	if (CheckDist(x1 - ny, y1 + nx)
-		|| CheckDist(x1 + ny, y1 - nx)
-		|| CheckDist(x2 + ny, y2 - nx)
-		|| CheckDist(x2 - ny, y2 + nx))
+#define CHK_DIST(tx, ty) (Math::HypotSq((tx) - cx, (ty) - cy) <= rr)
+	if (CHK_DIST(x1 - ny, y1 + nx)
+		|| CHK_DIST(x1 + ny, y1 - nx)
+		|| CHK_DIST(x2 + ny, y2 - nx)
+		|| CHK_DIST(x2 - ny, y2 + nx))
 		return true;
-#endif
+#undef CHK_DIST
 
 	return false;
 }
@@ -472,43 +518,29 @@ bool DxIntersect::Line_Ellipse(const DxLine* line, const DxEllipse* ellipse) {
 	return false;
 }
 bool DxIntersect::Line_Line(const DxLine* line1, const DxLine* line2) {
-	{
-		//Check bounding box
-		DxRect<float> l1_bound = line1->GetBounds();
-		DxRect<float> l2_bound = line2->GetBounds();
-		if (!l1_bound.IsIntersected(l2_bound))
-			return false;
+	__m128 v1 = Vectorize::Sub(
+		Vectorize::Set(line1->GetX2(), line1->GetY2(), line2->GetX2(), line2->GetY2()),
+		Vectorize::Set(line1->GetX1(), line1->GetY1(), line2->GetX1(), line2->GetY1()));
+
+	float det = v1.m128_f32[0] * v1.m128_f32[3] - v1.m128_f32[2] * v1.m128_f32[1];
+	if (det == 0) {
+		//Lines are parallel, check colinearity
+		float y1 = line1->GetY1();
+		float y2 = line2->GetY1();
+		float y3 = line1->GetY2();
+		float co = line1->GetX1() * (y2 - y3) +
+			line2->GetX1() * (y3 - y1) + line1->GetX2() * (y1 - y2);
+		return co != 0.0f;
 	}
-	float s = 0, t = 0;
-#ifdef __L_MATH_VECTORIZE
-	__m128 v1 = Vectorize::Set(line1->GetX2(), line1->GetY2(), line2->GetX2(), line2->GetY2());
-	__m128 v2 = Vectorize::Set(line1->GetX1(), line1->GetY1(), line2->GetX1(), line2->GetY1());
-
-	v1 = Vectorize::Sub(v1, v2);
-	v2 = Vectorize::Sub(
-		Vectorize::Set(v1.m128_f32[0] * v1.m128_f32[3], line1->GetX1(), line1->GetY1(), 0.0f),
-		Vectorize::Set(v1.m128_f32[2] * v1.m128_f32[1], line2->GetX1(), line2->GetY1(), 0.0f));
-
-	float idet = 1.0f / v2.m128_f32[0];
-	v2 = Vectorize::Mul(v1,
-		Vectorize::Set(v2.m128_f32[2], v2.m128_f32[1], v2.m128_f32[2], v2.m128_f32[1]));
-	v2 = Vectorize::Mul(v2, Vectorize::Replicate(idet));
-	s = v2.m128_f32[0] - v2.m128_f32[1];
-	t = v2.m128_f32[2] - v2.m128_f32[3];
-#else
-	float dx1 = line1->GetX2() - line1->GetX1();
-	float dy1 = line1->GetY2() - line1->GetY1();
-	float dx2 = line2->GetX2() - line2->GetX1();
-	float dy2 = line2->GetY2() - line2->GetY1();
-
-	float idet = 1.0f / (dx1 * dy2 - dx2 * dy1);
-	float ddx = line1->GetX1() - line2->GetX1();
-	float ddy = line1->GetY1() - line2->GetY1();
-	s = (dx1 * ddy - dy1 * ddx) * idet;
-	t = (dx2 * ddy - dy2 * ddx) * idet;
-#endif
-	//Issue: fails if the lines are intersecting but parallel
-	return (s >= 0 && s <= 1 && t >= 0 && t <= 1);
+	else {
+		float idet = 1.0f / det;
+		float ddx = (line1->GetX1() - line2->GetX1()) * idet;
+		float ddy = (line1->GetY1() - line2->GetY1()) * idet;
+		v1 = Vectorize::Mul(v1, Vectorize::SetF(ddy, ddx, ddy, ddx));
+		float s = v1.m128_f32[0] - v1.m128_f32[1];
+		float t = v1.m128_f32[2] - v1.m128_f32[3];
+		return (s >= 0 && s <= 1 && t >= 0 && t <= 1);
+	}
 }
 bool DxIntersect::Line_LineW(const DxLine* line1, const DxWidthLine* line2) {
 	std::vector<DxPoint> verts2 = _Polygon_From_LineW(line2);
@@ -578,7 +610,7 @@ bool DxIntersect::LineW_RegularPolygon(const DxWidthLine* line, const DxRegularP
 bool DxIntersect::Polygon_Polygon(const std::vector<DxPoint>* verts1, const std::vector<DxPoint>* verts2) {
 	size_t vertCount1 = verts1->size();
 	size_t vertCount2 = verts2->size();
-	if (vertCount1 < 2 || vertCount1 < 2)
+	if (vertCount1 < 2 || vertCount2 < 2)
 		return false;
 
 	const std::vector<DxPoint>* listPolygon[2] = { verts1, verts2 };

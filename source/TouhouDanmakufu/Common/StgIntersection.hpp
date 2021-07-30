@@ -66,7 +66,9 @@ public:
 	StgIntersectionTarget_Circle() { shape_ = Shape::SHAPE_CIRCLE; }
 	virtual ~StgIntersectionTarget_Circle() {}
 
-	virtual void SetIntersectionSpace();
+	virtual void SetIntersectionSpace() {
+		StgIntersectionTarget::SetIntersectionSpace(circle_.GetBounds());
+	}
 
 	DxCircle& GetCircle() { return circle_; }
 	void SetCircle(const DxCircle& circle) { 
@@ -82,7 +84,9 @@ public:
 	StgIntersectionTarget_Line() { shape_ = Shape::SHAPE_LINE; }
 	virtual ~StgIntersectionTarget_Line() {}
 
-	virtual void SetIntersectionSpace();
+	virtual void SetIntersectionSpace() {
+		StgIntersectionTarget::SetIntersectionSpace(line_.GetBounds());
+	}
 
 	DxWidthLine& GetLine() { return line_; }
 	void SetLine(const DxWidthLine& line) { 
