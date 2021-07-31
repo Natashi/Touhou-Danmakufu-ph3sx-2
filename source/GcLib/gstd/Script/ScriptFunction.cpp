@@ -809,7 +809,7 @@ namespace gstd {
 		_null_check(machine, arr, 1);
 		int index = indexer->as_int();
 		size_t length = arr->length_as_array();
-		if (index < 0) index = length + index;
+		if (index < 0) index += length;
 		if (!_index_check(machine, arr->get_type(), length, index))
 			return nullptr;
 		return &arr->index_as_array(index);
