@@ -1835,7 +1835,7 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA1(gstd::script_machine* machi
 	int px = argv[0].as_real();
 	int py = argv[1].as_real();
 	int radius = argv[2].as_real();
-	int typeOwner = script->GetScriptType() == TYPE_PLAYER ? StgShotObject::OWNER_ENEMY : StgShotObject::OWNER_PLAYER;
+	int typeOwner = script->GetScriptType() == TYPE_PLAYER ? StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
 	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, &radius);
 	return script->CreateIntArrayValue(listID);
