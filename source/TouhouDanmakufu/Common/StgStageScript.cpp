@@ -3356,12 +3356,6 @@ gstd::value StgStageScript::Func_ObjShot_Regist(gstd::script_machine* machine, i
 	int id = argv[0].as_int();
 
 	if (auto objShot = ref_unsync_ptr<StgShotObject>::Cast(stageController->GetMainRenderObject(id))) {
-		if (script->GetScriptType() == TYPE_PLAYER) {
-			ref_unsync_ptr<StgPlayerObject> objPlayer = stageController->GetPlayerObject();
-			if (objPlayer && !objPlayer->IsPermitShot())
-				return value();
-		}
-
 		StgShotManager* shotManager = stageController->GetShotManager();
 		shotManager->AddShot(objShot);
 		objShot->Activate();
