@@ -533,9 +533,6 @@ protected:
 	float scaleX_;
 
 	bool bLaserExpand_;
-	int delayExtendFrame_;
-	float delayExtendRate_;
-	int delayMaxLength_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
@@ -570,19 +567,6 @@ public:
 
 	void SetLaserExpand(bool b) { bLaserExpand_ = b; }
 	bool GetLaserExpand() { return bLaserExpand_; }
-	void SetLaserDelayExtend(int d) { 
-		delayExtendFrame_ = d;
-		if (d > 0) {
-			delayExtendRate_ = lengthF_ / delayExtendFrame_;
-			StgLaserObject::SetLength(0);
-		}
-		else {
-			delayExtendRate_ = 1;
-			StgLaserObject::SetLength(delayMaxLength_);
-		}
-		
-	}
-	virtual void SetLength(int length) { StgLaserObject::SetLength(length); delayMaxLength_ = length; }
 	
 };
 
