@@ -317,6 +317,7 @@ static const std::vector<function> stgStageFunction = {
 	//STG共通関数：弾
 	{ "DeleteShotAll", StgStageScript::Func_DeleteShotAll, 2 },
 	{ "DeleteShotInCircle", StgStageScript::Func_DeleteShotInCircle, 5 },
+	{ "DeleteShotInRegularPolygon", StgStageScript::Func_DeleteShotInRegularPolygon, 7 },
 	{ "CreateShotA1", StgStageScript::Func_CreateShotA1, 6 },
 	{ "CreateShotPA1", StgStageScript::Func_CreateShotPA1, 8 },
 	{ "CreateShotA2", StgStageScript::Func_CreateShotA2, 8 }, //Deprecated, exists for compatibility
@@ -1439,9 +1440,9 @@ gstd::value StgStageScript::Func_DeleteShotAll(gstd::script_machine* machine, in
 	case TYPE_ITEM:typeTo = StgShotManager::TO_TYPE_ITEM; break;
 	}
 
-	stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, 0, 0, nullptr);
+	size_t res = stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, 0, 0, nullptr);
 
-	return value();
+	return script->CreateIntValue(res);
 }
 gstd::value StgStageScript::Func_DeleteShotInCircle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -1465,9 +1466,37 @@ gstd::value StgStageScript::Func_DeleteShotInCircle(gstd::script_machine* machin
 	case TYPE_ITEM:typeTo = StgShotManager::TO_TYPE_ITEM; break;
 	}
 
-	stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, posX, posY, &radius);
+	size_t res = stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, posX, posY, &radius);
 
-	return value();
+	return script->CreateIntValue(res);
+}
+gstd::value StgStageScript::Func_DeleteShotInRegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	int typeDel = argv[0].as_int();
+	int typeTo = argv[1].as_int();
+	int posX = argv[2].as_real();
+	int posY = argv[3].as_real();
+	int radius = argv[4].as_real();
+	int edges = argv[5].as_int();
+	double angle = argv[6].as_real();
+
+	switch (typeDel) {
+	case TYPE_ALL:typeDel = StgShotManager::DEL_TYPE_ALL; break;
+	case TYPE_SHOT:typeDel = StgShotManager::DEL_TYPE_SHOT; break;
+	case TYPE_CHILD:typeDel = StgShotManager::DEL_TYPE_CHILD; break;
+	}
+
+	switch (typeTo) {
+	case TYPE_IMMEDIATE:typeTo = StgShotManager::TO_TYPE_IMMEDIATE; break;
+	case TYPE_FADE:typeTo = StgShotManager::TO_TYPE_FADE; break;
+	case TYPE_ITEM:typeTo = StgShotManager::TO_TYPE_ITEM; break;
+	}
+
+	size_t res = stageController->GetShotManager()->DeleteInRegularPolygon(typeDel, typeTo, StgShotObject::OWNER_ENEMY, posX, posY, &radius, edges, angle);
+
+	return script->CreateIntValue(res);
 }
 gstd::value StgStageScript::Func_CreateShotA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
