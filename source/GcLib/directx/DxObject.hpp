@@ -718,6 +718,7 @@ namespace directx {
 
 		void ReserveSound(shared_ptr<SoundPlayer> player);
 		void DeleteReservedSound(shared_ptr<SoundPlayer> player);
+		shared_ptr<SoundPlayer> GetReservedSound(shared_ptr<SoundPlayer> player);
 
 		void SetFogParam(bool bEnable, D3DCOLOR fogColor, float start, float end);
 		size_t GetTotalObjectCreateCount() { return totalObjectCreateCount_; }

@@ -755,7 +755,8 @@ SoundStreamingPlayer::SoundStreamingPlayer() {
 	thread_ = new StreamingThread(this);
 
 	bStreaming_ = true;
-	bRequestStop_ = false;
+	bStreamOver_ = false;
+	streamOverIndex_ = -1;
 
 	ZeroMemory(lastStreamCopyPos_, sizeof(size_t) * 2);
 	ZeroMemory(bufferPositionAtCopy_, sizeof(DWORD) * 2);
@@ -802,29 +803,39 @@ void SoundStreamingPlayer::_CopyStream(int indexCopy) {
 			hr = pDirectSoundBuffer_->Restore();
 			hr = pDirectSoundBuffer_->Lock(sizeCopy_ * indexCopy, sizeCopy_, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
 		}
+
 		if (FAILED(hr))
-			_RequestStop();
-
-		if (bRequestStop_) {
 			Stop();
-		}
-
-		if (!bStreaming_ || (IsPlaying() && !bRequestStop_)) {
-			if (dwSize1 > 0) {	//バッファ前半
-				size_t res = _CopyBuffer(pMem1, dwSize1);
-				lastStreamCopyPos_[indexCopy] = res;
-			}
-			if (dwSize2 > 0) {	//バッファ後半
-				_CopyBuffer(pMem2, dwSize2);
-			}
-		}
 		else {
-			//演奏中でなければ無音を書き込む
-			memset(pMem1, 0, dwSize1);
-			if (dwSize2 != 0)
-				memcpy(pMem2, 0, dwSize2);
+			if (bStreamOver_) {
+				if (indexCopy == streamOverIndex_) {
+					streamOverIndex_ = -1;
+					Stop();
+					goto lab_unlock_buf;
+				}
+				goto lab_set_mem_zero;
+			}
+			else if (!bStreaming_ || IsPlaying()) {
+				if (dwSize1 > 0) {
+					size_t res = _CopyBuffer(pMem1, dwSize1);
+					lastStreamCopyPos_[indexCopy] = res;
+				}
+				if (dwSize2 > 0) {
+					_CopyBuffer(pMem2, dwSize2);
+				}
+				if (bStreamOver_)
+					streamOverIndex_ = indexCopy;
+			}
+			else {
+lab_set_mem_zero:
+				memset(pMem1, 0, dwSize1);
+				if (dwSize2 != 0)
+					memset(pMem2, 0, dwSize2);
+			}
+
+lab_unlock_buf:
+			pDirectSoundBuffer_->Unlock(pMem1, dwSize1, pMem2, dwSize2);
 		}
-		pDirectSoundBuffer_->Unlock(pMem1, dwSize1, pMem2, dwSize2);
 	}
 }
 bool SoundStreamingPlayer::Play() {
@@ -840,7 +851,7 @@ bool SoundStreamingPlayer::Play() {
 		SetFade(0);
 		_SetSoundInfo();
 
-		bRequestStop_ = false;
+		bStreamOver_ = false;
 		if (!bPause_ || !playStyle_.bResume_) {
 			this->Seek(playStyle_.timeStart_);
 			pDirectSoundBuffer_->SetCurrentPosition(0);
@@ -1195,44 +1206,45 @@ size_t SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	double loopStart = playStyle_.timeLoopStart_;
 	double loopEnd = playStyle_.timeLoopEnd_;
 
-	size_t cSize = dwSize;
-	size_t posLoopStart = posWaveStart_ + loopStart * formatWave_.nAvgBytesPerSec;
-	size_t posLoopEnd = posWaveStart_ + loopEnd * formatWave_.nAvgBytesPerSec;
-	size_t blockSize = formatWave_.nBlockAlign;
+	int64_t posLoopStart = posWaveStart_ + loopStart * formatWave_.nAvgBytesPerSec;
+	int64_t posLoopEnd = posWaveStart_ + loopEnd * formatWave_.nAvgBytesPerSec;
+	DWORD blockSize = formatWave_.nBlockAlign;
 
 	reader_->Seek(lastReadPointer_);
 
-	size_t cPos = lastReadPointer_;
-	size_t resStreamPos = cPos;
+	DWORD cPos = lastReadPointer_;
+	DWORD resStreamPos = cPos;
 
-	if (cPos + cSize > posWaveEnd_) {//ファイル終点
-		size_t size1 = cSize + cPos - posWaveEnd_;
-		size_t size2 = (dwSize - cSize) / blockSize * blockSize;
-		size1 = dwSize - size2;
+	if (cPos + dwSize > posWaveEnd_) {		//This read will contain the EOF
+		size_t sizeRemain = posWaveEnd_ - cPos;			//Size until the EOF
+		reader_->Read(pMem, sizeRemain);
 
-		reader_->Read(pMem, size2);
+		if (playStyle_.bLoop_) {
+			size_t sizeNext = dwSize - sizeRemain;		//Fill the remaining space
 
-		Seek(loopStart);
-		if (playStyle_.bLoop_)
-			reader_->Read((char*)pMem + size2, size1);
-		else
-			_RequestStop();
+			Seek(posLoopStart);
+			reader_->Read((char*)pMem + sizeRemain, sizeNext);
+		}
+		else {
+			_SetStreamOver();
+		}
 	}
-	else if (cPos + cSize > posLoopEnd && loopEnd > 0) {//ループの終端
-		size_t sizeOver = cPos + cSize - posLoopEnd; //ループを超えたデータのサイズ
-		size_t cSize1 = (cSize - sizeOver) / blockSize * blockSize;
-		size_t cSize2 = sizeOver / blockSize * blockSize;
+	else if (cPos + dwSize > posLoopEnd && loopEnd > 0) {	//This read will contain the looping point
+		DWORD sizeRemain = posLoopEnd - cPos;			//Size until the loop
+		reader_->Read(pMem, sizeRemain);
+		
+		if (playStyle_.bLoop_) {
+			DWORD sizeNext = dwSize - sizeRemain;		//Fill the remaining space
 
-		reader_->Read(pMem, cSize1);
-
-		Seek(loopStart);
-		if (playStyle_.bLoop_)
-			reader_->Read((char*)pMem + cSize1, cSize2);
-		else
-			_RequestStop();
+			Seek(posLoopStart);
+			reader_->Read((char*)pMem + sizeRemain, sizeNext);
+		}
+		else {
+			_SetStreamOver();
+		}
 	}
 	else {
-		reader_->Read(pMem, cSize);
+		reader_->Read(pMem, dwSize);
 	}
 
 	lastReadPointer_ = reader_->GetFilePointer();
@@ -1365,7 +1377,7 @@ size_t SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 				Seek(loopStart);
 			}
 			else {
-				_RequestStop();
+				_SetStreamOver();
 				break;
 			}
 		}
@@ -1379,7 +1391,7 @@ size_t SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 					Seek(loopStart);
 				}
 				else {
-					_RequestStop();
+					_SetStreamOver();
 					break;
 				}
 			}
@@ -1687,7 +1699,7 @@ size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 				Seek(loopStart);
 			}
 			else {
-				_RequestStop();
+				_SetStreamOver();
 				break;
 			}
 		}
@@ -1701,7 +1713,7 @@ size_t SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 					Seek(loopStart);
 				}
 				else {
-					_RequestStop();
+					_SetStreamOver();
 					break;
 				}
 			}

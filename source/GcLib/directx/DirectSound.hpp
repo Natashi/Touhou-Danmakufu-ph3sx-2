@@ -284,7 +284,8 @@ namespace directx {
 		StreamingThread* thread_;
 
 		bool bStreaming_;
-		bool bRequestStop_;
+		bool bStreamOver_;
+		int streamOverIndex_;
 
 		size_t sizeCopy_;
 
@@ -296,7 +297,7 @@ namespace directx {
 		void _CreateSoundEvent(WAVEFORMATEX& formatWave);
 		virtual void _CopyStream(int indexCopy);
 		virtual size_t _CopyBuffer(LPVOID pMem, DWORD dwSize) = 0;
-		void _RequestStop() { bRequestStop_ = true; }
+		void _SetStreamOver() { bStreamOver_ = true; }
 	public:
 		SoundStreamingPlayer();
 		virtual ~SoundStreamingPlayer();

@@ -343,6 +343,9 @@ void RenderObjectTLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 		matWorld = RenderObject::CreateWorldMatrix2D(position_, scale_,
 			angX, angY, angZ, bCamera ? &camera->GetMatrix() : nullptr);
 	}
+	else {
+		matWorld = camera->GetMatrix();
+	}
 
 	RenderObjectTLX::Render(matWorld);
 }
@@ -522,129 +525,6 @@ RenderObjectLX::RenderObjectLX() {
 }
 RenderObjectLX::~RenderObjectLX() {
 }
-/*
-void RenderObjectLX::Render() {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	IDirect3DDevice9* device = graphics->GetDevice();
-	device->SetTexture(0, texture_ ? texture_->GetD3DTexture() : nullptr);
-
-	device->SetSamplerState(0, D3DSAMP_MINFILTER, filterMin_);
-	device->SetSamplerState(0, D3DSAMP_MAGFILTER, filterMag_);
-
-	ShaderManager* manager = ShaderManager::GetBase();
-	RenderShaderLibrary* shaderManager = manager->GetRenderShaderManager();
-
-	D3DXMATRIX bkMatView;
-	D3DXMATRIX bkMatProj;
-	bool wasFogEnable = graphics->IsFogEnable();
-	device->GetTransform(D3DTS_VIEW, &bkMatView);
-	device->GetTransform(D3DTS_PROJECTION, &bkMatProj);
-	device->SetTransform(D3DTS_WORLD, shaderManager->GetIdentityMatrix());
-	device->SetTransform(D3DTS_VIEW, shaderManager->GetIdentityMatrix());
-	device->SetTransform(D3DTS_PROJECTION, shaderManager->GetIdentityMatrix());
-	graphics->SetFogEnable(false);
-
-	{
-		IDirect3DVertexBuffer9* vertexBuffer = VertexBufferManager::GetBase()->GetVertexBuffer(VertexBufferManager::BUFFER_VERTEX_LX);
-		IDirect3DIndexBuffer9* indexBuffer = VertexBufferManager::GetBase()->GetIndexBuffer();
-
-		size_t countVertex = GetVertexCount();
-		size_t countPrim = _GetPrimitiveCount(countVertex);
-
-		ID3DXEffect* shader = shaderManager->GetRender3DShader();
-
-		D3DXMATRIX& matViewProj = DirectGraphics::GetBase()->GetCamera()->GetViewProjectionMatrix();
-
-		void* tmp;
-		bool bUseIndex = vertexIndices_.size() > 0;
-
-		device->SetStreamSource(0, vertexBuffer, 0, sizeof(VERTEX_LX));
-		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationLX());
-		if (bUseIndex) device->SetIndices(indexBuffer);
-
-		vertexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-		if (bUseIndex) {
-			memcpy(tmp, vertex_.GetPointer(), countPrim * sizeof(VERTEX_LX));
-			vertexBuffer->Unlock();
-			indexBuffer->Lock(0, 0, &tmp, D3DLOCK_DISCARD);
-			memcpy(tmp, &vertexIndices_[0], countVertex * sizeof(uint16_t));
-			indexBuffer->Unlock();
-		}
-		else {
-			memcpy(tmp, vertex_.GetPointer(), countVertex * sizeof(VERTEX_LX));
-			vertexBuffer->Unlock();
-		}
-
-		if (shader_ != nullptr) {
-			ID3DXEffect* eff = shader_->GetEffect();
-			eff->SetMatrix(eff->GetParameterBySemantic(nullptr, "VIEWPROJECTION"), &matViewProj);
-
-			HRESULT hr = S_OK;
-
-			BeginShader();
-			{
-				if (bUseIndex) {
-					hr = device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
-				}
-				else {
-					hr = device->DrawPrimitive(typePrimitive_, 0, countPrim);
-				}
-			}
-			EndShader();
-
-#if _DEBUG
-			if (FAILED(hr)) DebugBreak();
-#endif
-		}
-		else {
-			D3DXMATRIX* arrayMatTransform = shaderManager->GetArrayMatrix();
-			int countMatArray = _CreateWorldTransformMatrix(arrayMatTransform);
-
-			shader->SetMatrix(shader->GetParameterBySemantic(nullptr, "VIEWPROJECTION"), &matViewProj);
-			shader->SetMatrixArray(shader->GetParameterByName(nullptr, "matTransform"), arrayMatTransform, countMatArray);
-			shader->SetInt(shader->GetParameterByName(nullptr, "countMatrixTransform"), countMatArray);
-
-			VertexFogState* stateFog = graphics->GetFogState();
-			shader->SetBool(shader->GetParameterByName(nullptr, "useFog"), stateFog->bEnable);
-			shader->SetBool(shader->GetParameterByName(nullptr, "useTexture"), texture != nullptr);
-			if (stateFog->bEnable) {
-				shader->SetFloatArray(shader->GetParameterByName(nullptr, "fogColor"), 
-					reinterpret_cast<float*>(&(stateFog->color)), 3);
-				shader->SetFloatArray(shader->GetParameterByName(nullptr, "fogPos"),
-					reinterpret_cast<float*>(&(stateFog->fogDist)), 2);
-			}
-
-			HRESULT hr = S_OK;
-
-			UINT cPass = 1;
-			shader->Begin(&cPass, 0);
-			for (UINT i = 0; i < cPass; ++i) {
-				shader->BeginPass(i);
-
-				if (bUseIndex) {
-					hr = device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
-				}
-				else {
-					hr = device->DrawPrimitive(typePrimitive_, 0, countPrim);
-				}
-
-				shader->EndPass();
-			}
-			shader->End();
-
-#if _DEBUG
-			if (FAILED(hr)) DebugBreak();
-#endif
-		}
-
-		device->SetVertexDeclaration(nullptr);
-	}
-
-	device->SetTransform(D3DTS_VIEW, &bkMatView);
-	device->SetTransform(D3DTS_PROJECTION, &bkMatProj);
-	graphics->SetFogEnable(wasFogEnable);
-}
-*/
 void RenderObjectLX::Render() {
 	RenderObjectLX::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
@@ -653,6 +533,9 @@ void RenderObjectLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, co
 	if (!disableMatrixTransform_) {
 		matWorld = RenderObject::CreateWorldMatrix(position_, scale_,
 			angX, angY, angZ, matRelative_.get(), false);
+	}
+	else {
+		matWorld = *(matRelative_.get());
 	}
 
 	RenderObjectLX::Render(matWorld);

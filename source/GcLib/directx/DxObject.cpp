@@ -1513,6 +1513,14 @@ void DxScriptObjectManager::DeleteReservedSound(shared_ptr<SoundPlayer> player) 
 	const std::wstring& path = player->GetPath();
 	mapReservedSound_.erase(path);
 }
+shared_ptr<SoundPlayer> DxScriptObjectManager::GetReservedSound(shared_ptr<SoundPlayer> player) {
+	const std::wstring& path = player->GetPath();
+	auto itr = mapReservedSound_.find(path);
+	if (itr != mapReservedSound_.end())
+		return itr->second;
+	return nullptr;
+}
+
 void DxScriptObjectManager::SetFogParam(bool bEnable, D3DCOLOR fogColor, float start, float end) {
 	bFogEnable_ = bEnable;
 	fogColor_ = fogColor;

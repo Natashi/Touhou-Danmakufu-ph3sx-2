@@ -4524,8 +4524,15 @@ gstd::value DxScript::Func_ObjSound_IsPlaying(gstd::script_machine* machine, int
 	DxSoundObject* obj = script->GetObjectPointerAs<DxSoundObject>(id);
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
-		if (player)
+		if (player) {
 			bPlay = player->IsPlaying();
+			if (!bPlay) {
+				//If ObjSound_IsPlaying was called in the same frame as ObjSound_Play,
+				//	player->IsPlaying() would return false
+				auto reservedPlayer = script->GetObjectManager()->GetReservedSound(player);
+				bPlay = reservedPlayer != nullptr;
+			}
+		}
 	}
 	return script->CreateBooleanValue(bPlay);
 }
