@@ -1916,6 +1916,7 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 	typeObject_ = TypeObject::StraightLaser;
 
 	angLaser_ = 0;
+	angVelLaser_ = 0;
 	frameFadeDelete_ = -1;
 
 	bUseSouce_ = true;
@@ -2155,7 +2156,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 					float px = vt.position.x * delaySize;
 					float py = vt.position.y * delaySize;
 					vt.position.x = (py * move.x + px * move.y) + delayPos.x;
-					vt.position.y = (py * move.y - px * move.y) + delayPos.y;
+					vt.position.y = (py * move.y - px * move.x) + delayPos.y;
 					vt.position.z = position_.z;
 
 					//D3DXVec3TransformCoord((D3DXVECTOR3*)&vt.position, (D3DXVECTOR3*)&vt.position, &mat);
