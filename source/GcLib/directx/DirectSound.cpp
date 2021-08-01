@@ -1215,33 +1215,30 @@ size_t SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	DWORD cPos = lastReadPointer_;
 	DWORD resStreamPos = cPos;
 
-	if (cPos + dwSize > posWaveEnd_) {		//This read will contain the EOF
-		size_t sizeRemain = posWaveEnd_ - cPos;			//Size until the EOF
-		reader_->Read(pMem, sizeRemain);
+	auto _ReadStreamWrapped = [&](DWORD readSize) {
+		size_t sizeNext = dwSize - readSize;
+
+		reader_->Read(pMem, readSize);
 
 		if (playStyle_.bLoop_) {
-			size_t sizeNext = dwSize - sizeRemain;		//Fill the remaining space
-
 			Seek(posLoopStart);
-			reader_->Read((char*)pMem + sizeRemain, sizeNext);
+			reader_->Read((char*)pMem + readSize, sizeNext);
 		}
 		else {
+			memset((char*)pMem + readSize, 0, sizeNext);
 			_SetStreamOver();
 		}
+	};
+
+	if (cPos + dwSize > posWaveEnd_) {						//This read will contain the EOF
+		size_t sizeRemain = posWaveEnd_ - cPos;			//Size until the EOF
+
+		_ReadStreamWrapped(sizeRemain);
 	}
 	else if (cPos + dwSize > posLoopEnd && loopEnd > 0) {	//This read will contain the looping point
 		DWORD sizeRemain = posLoopEnd - cPos;			//Size until the loop
-		reader_->Read(pMem, sizeRemain);
-		
-		if (playStyle_.bLoop_) {
-			DWORD sizeNext = dwSize - sizeRemain;		//Fill the remaining space
 
-			Seek(posLoopStart);
-			reader_->Read((char*)pMem + sizeRemain, sizeNext);
-		}
-		else {
-			_SetStreamOver();
-		}
+		_ReadStreamWrapped(sizeRemain);
 	}
 	else {
 		reader_->Read(pMem, dwSize);
