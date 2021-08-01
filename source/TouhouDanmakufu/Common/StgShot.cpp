@@ -301,6 +301,47 @@ std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, int cx, int cy
 
 	return res;
 }
+std::vector<int> StgShotManager::GetShotIdInRegularPolygon(int typeOwner, int cx, int cy, int* radius, int edges, double angle) {
+	int r = radius ? *radius : 0;
+	int rr = r * r;
+
+	int rect_x1 = cx - r;
+	int rect_y1 = cy - r;
+	int rect_x2 = cx + r;
+	int rect_y2 = cy + r;
+
+	std::vector<int> res;
+	for (ref_unsync_ptr<StgShotObject>& obj : listObj_) {
+		if (obj->IsDeleted()) continue;
+		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
+
+		int sx = obj->GetPositionX();
+		int sy = obj->GetPositionY();
+
+		bool bInPolygon = radius == nullptr;
+		if (!bInPolygon && ((sx > rect_x1 && sy > rect_y1) && (sx < rect_x2 && sy < rect_y2))) {
+			float f = GM_PI / (float)edges;
+			float cf = cosf(f);
+			float dx = sx - cx;
+			float dy = sy - cy;
+			float dist = hypotf(dy, dx);
+
+			bInPolygon = dist <= r;
+			if (bInPolygon) {
+				double r_apothem = r * cf;
+				bInPolygon = dist <= r_apothem;
+				if (!bInPolygon) {
+					double ang = fmod(Math::NormalizeAngleRad(atan2(dy, dx)) - Math::DegreeToRadian(angle), 2 * f);
+					bInPolygon = dist <= (r_apothem / cos(ang - f));
+				}
+			}
+		}
+		if (bInPolygon)
+			res.push_back(obj->GetObjectID());
+	}
+
+	return res;
+}
 size_t StgShotManager::GetShotCount(int typeOwner) {
 	size_t res = 0;
 

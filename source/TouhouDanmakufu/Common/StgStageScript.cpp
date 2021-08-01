@@ -1976,7 +1976,7 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA1(gstd::script_machine* machi
 	int px = argv[0].as_real();
 	int py = argv[1].as_real();
 	int radius = argv[2].as_real();
-	int typeOwner = script->GetScriptType() == TYPE_PLAYER ? StgShotObject::OWNER_ENEMY : StgShotObject::OWNER_PLAYER;
+	int typeOwner = script->GetScriptType() == TYPE_PLAYER ? StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
 	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, &radius);
 	return script->CreateIntArrayValue(listID);
@@ -1999,6 +1999,43 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA2(gstd::script_machine* machi
 	}
 
 	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, &radius);
+	return script->CreateIntArrayValue(listID);
+}
+gstd::value StgStageScript::Func_GetShotIdInRegularPolygonA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	StgShotManager* shotManager = stageController->GetShotManager();
+	int px = argv[0].as_real();
+	int py = argv[1].as_real();
+	int radius = argv[2].as_real();
+	int edges = argv[3].as_int();
+	double angle = argv[4].as_real();
+	int typeOwner = script->GetScriptType() == TYPE_PLAYER ? StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
+
+	std::vector<int> listID = shotManager->GetShotIdInRegularPolygon(typeOwner, px, py, &radius, edges, angle);
+	return script->CreateIntArrayValue(listID);
+}
+gstd::value StgStageScript::Func_GetShotIdInRegularPolygonA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	StgShotManager* shotManager = stageController->GetShotManager();
+	int px = argv[0].as_real();
+	int py = argv[1].as_real();
+	int radius = argv[2].as_real();
+	int edges = argv[3].as_int();
+	double angle = argv[4].as_real();
+	int target = argv[5].as_int();
+
+	int typeOwner = StgShotObject::OWNER_NULL;
+	switch (target) {
+	case TARGET_ALL:typeOwner = StgShotObject::OWNER_NULL; break;
+	case TARGET_PLAYER:typeOwner = StgShotObject::OWNER_PLAYER; break;
+	case TARGET_ENEMY:typeOwner = StgShotObject::OWNER_ENEMY; break;
+	}
+
+	std::vector<int> listID = shotManager->GetShotIdInRegularPolygon(typeOwner, px, py, &radius, edges, angle);
 	return script->CreateIntArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetShotCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
