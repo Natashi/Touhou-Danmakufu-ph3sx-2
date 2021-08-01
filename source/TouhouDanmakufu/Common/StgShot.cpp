@@ -356,8 +356,8 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 					LONG width = rect.right - rect.left;
 					LONG height = rect.bottom - rect.top;
 					DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
-					if (width % 2 == 1) rcDest.right++;
-					if (height % 2 == 1) rcDest.bottom++;
+					if (width % 2 == 0) rcDest.right++;
+					if (height % 2 == 0) rcDest.bottom++;
 					rcDelayDest = rcDest;
 				}
 				if (scanner.HasNext())
@@ -457,8 +457,8 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 						LONG width = rect.right - rect.left; \
 						LONG height = rect.bottom - rect.top; \
 						DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2); \
-						if (width % 2 == 1) ++(rcDest.right); \
-						if (height % 2 == 1) ++(rcDest.bottom);
+						if (width % 2 == 0) ++(rcDest.right); \
+						if (height % 2 == 0) ++(rcDest.bottom);
 	auto funcSetRect = [](Data* i, Scanner& s) {
 		LAMBDA_CREATELIST(s);
 
@@ -663,8 +663,8 @@ void StgShotData::AnimationData::SetDestRect(DxRect<int>* dst, DxRect<int>* src)
 	int width = (src->right - src->left) / 2L;
 	int height = (src->bottom - src->top) / 2L;
 	dst->Set(-width, -height, width, height);
-	if (width % 2L == 1L) ++(dst->right);
-	if (height % 2L == 1L) ++(dst->bottom);
+	if (width % 2L == 0L) ++(dst->right);
+	if (height % 2L == 0L) ++(dst->bottom);
 }
 
 //****************************************************************************
@@ -1775,7 +1775,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 	DxRect<int> rcDest;
 	D3DCOLOR color;
 
-#define RENDER_VERTEX() \
+#define RENDER_VERTEX \
 	VERTEX_TLX verts[4]; \
 	int* ptrSrc = reinterpret_cast<int*>(rcSrc);\
 	int* ptrDst = reinterpret_cast<int*>(&rcDest);\
@@ -1827,7 +1827,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 			sposy = roundf(sposy);
 		}
 
-		RENDER_VERTEX();
+		RENDER_VERTEX;
 	}
 
 
@@ -1858,8 +1858,9 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 		//color = ColorAccess::ApplyAlpha(color, alpha);
 		rcDest.Set(widthRender_ / 2, 0, -widthRender_ / 2, radius);
+		if (widthRender_ % 2 == 0) ++(rcDest.left);
 
-		RENDER_VERTEX();
+		RENDER_VERTEX;
 	}
 #undef RENDER_VERTEX
 	
@@ -2079,8 +2080,10 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 		if (widthRender_ > 0) {
 			float _rWidth = fabs(widthRender_ / 2.0f) * scaleX_;
-			_rWidth = std::max(_rWidth, 0.5f);
+			_rWidth = std::max(_rWidth, 1.0f);
 			D3DXVECTOR4 rcDest(_rWidth, length_, -_rWidth, 0);
+
+			if (widthRender_ % 2 == 0) ++(rcDest.x);
 
 			VERTEX_TLX verts[4];
 			LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
@@ -2113,8 +2116,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 			color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
 			if (delay_.colorMix) ColorAccess::MultiplyColor(color, color_);
 
-			int sourceWidth = widthRender_ * 2 / 3;
-			DxRect<float> rcDest(-sourceWidth, -sourceWidth, sourceWidth, sourceWidth);
+			int sourceWidth = widthRender_;
+			DxRect<float> rcDest(-sourceWidth, -sourceWidth, sourceWidth + 1, sourceWidth + 1);
 
 			auto _AddDelay = [&](StgShotData* delayShotData, DxRect<int>* delayRect, D3DXVECTOR2& delayPos, float delaySize) {
 				StgShotRenderer* renderer = nullptr;
