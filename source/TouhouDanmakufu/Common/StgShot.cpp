@@ -186,7 +186,7 @@ void StgShotManager::AddShot(ref_unsync_ptr<StgShotObject> obj) {
 	listObj_.push_back(obj);
 }
 
-void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius) {
+size_t StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius) {
 	int r = radius ? *radius : 0;
 	int rr = r * r;
 
@@ -194,6 +194,8 @@ void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, i
 	int rect_y1 = cy - r;
 	int rect_x2 = cx + r;
 	int rect_y2 = cy + r;
+
+	size_t res = 0;
 
 	for (ref_unsync_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
@@ -215,8 +217,60 @@ void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, i
 				obj->SetFadeDelete();
 			else if (typeTo == TO_TYPE_ITEM)
 				obj->ConvertToItem(false);
+			++res;
 		}
 	}
+
+	return res;
+}
+size_t StgShotManager::DeleteInRegularPolygon(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius, int edges, double angle) {
+	int r = radius ? *radius : 0;
+
+	int rect_x1 = cx - r;
+	int rect_y1 = cy - r;
+	int rect_x2 = cx + r;
+	int rect_y2 = cy + r;
+
+	size_t res = 0;
+
+	for (ref_unsync_ptr<StgShotObject>& obj : listObj_) {
+		if (obj->IsDeleted()) continue;
+		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
+		if (typeDelete == DEL_TYPE_SHOT && obj->IsSpellResist()) continue;
+
+		int sx = obj->GetPositionX();
+		int sy = obj->GetPositionY();
+
+		bool bInPolygon = radius == nullptr;
+		if (!bInPolygon && ((sx > rect_x1 && sy > rect_y1) && (sx < rect_x2 && sy < rect_y2))) {
+			float f = GM_PI / (float) edges;
+			float cf = cosf(f);
+			float dx = sx - cx;
+			float dy = sy - cy;
+			float dist = hypotf(dy, dx);
+				
+			bInPolygon = dist <= r;
+			if (bInPolygon) {
+				double r_apothem = r * cf;
+				bInPolygon = dist <= r_apothem;
+				if (!bInPolygon) {
+					double ang = fmod(Math::NormalizeAngleRad(atan2(dy, dx)) - Math::DegreeToRadian(angle), 2 * f);
+					bInPolygon = dist <= (r_apothem / cos(ang - f));
+				}
+			}
+		}
+		if (bInPolygon) {
+			if (typeTo == TO_TYPE_IMMEDIATE)
+				obj->DeleteImmediate();
+			else if (typeTo == TO_TYPE_FADE)
+				obj->SetFadeDelete();
+			else if (typeTo == TO_TYPE_ITEM)
+				obj->ConvertToItem(false);
+			++res;
+		}
+	}
+
+	return res;
 }
 
 std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, int cx, int cy, int* radius) {
