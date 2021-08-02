@@ -335,6 +335,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetAllShotID", StgStageScript::Func_GetAllShotID, 1 },
 	{ "GetShotIdInCircleA1", StgStageScript::Func_GetShotIdInCircleA1, 3 },
 	{ "GetShotIdInCircleA2", StgStageScript::Func_GetShotIdInCircleA2, 4 },
+	{ "GetShotIdInRegularPolygonA1", StgStageScript::Func_GetShotIdInRegularPolygonA1, 5 },
+	{ "GetShotIdInRegularPolygonA2", StgStageScript::Func_GetShotIdInRegularPolygonA2, 6 },
 	{ "GetShotCount", StgStageScript::Func_GetShotCount, 1 },
 	{ "SetShotAutoDeleteClip", StgStageScript::Func_SetShotAutoDeleteClip, 4 },
 	{ "GetShotDataInfoA1", StgStageScript::Func_GetShotDataInfoA1, 3 },
