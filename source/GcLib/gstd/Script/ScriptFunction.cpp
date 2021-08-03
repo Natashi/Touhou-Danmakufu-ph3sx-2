@@ -944,7 +944,7 @@ namespace gstd {
 		type_data* arrType = arr->get_type();
 
 		if (arrType->get_kind() != type_data::tk_array) {
-			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "indexof");
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "matches");
 			return value();
 		}
 
