@@ -159,6 +159,8 @@ static const std::vector<function> base_operations = {
 	{ "range", BaseFunction::range, 3 },	//Overloaded x2
 
 	{ "contains", BaseFunction::contains, 2 },
+	{ "indexof", BaseFunction::indexof, 2 },
+	{ "matches", BaseFunction::matches, 2 },
 	{ "all", BaseFunction::all, 1 },
 	{ "any", BaseFunction::any, 1 },
 

@@ -912,6 +912,55 @@ namespace gstd {
 		return value(script_type_manager::get_boolean_type(), res);
 	}
 
+	DNH_FUNCAPI_DEF_(BaseFunction::indexof) {
+		_null_check(machine, argv, argc);
+
+		const value* arr = &argv[0];
+		type_data* arrType = arr->get_type();
+
+		if (arrType->get_kind() != type_data::tk_array) {
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "indexof");
+			return value();
+		}
+
+		const value& val = argv[1];
+		size_t length = arr->length_as_array();
+
+		int64_t res = -1;
+		for (size_t i = 0; i < length; ++i) {
+			value args[2] = { arr->index_as_array(i), val };
+			if (compare(machine, 2, args).as_int() == 0) {
+				res = i;
+				break;
+			}
+		}
+		return value(script_type_manager::get_int_type(), res);
+	}
+
+	DNH_FUNCAPI_DEF_(BaseFunction::matches) {
+		_null_check(machine, argv, argc);
+
+		const value* arr = &argv[0];
+		type_data* arrType = arr->get_type();
+
+		if (arrType->get_kind() != type_data::tk_array) {
+			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "indexof");
+			return value();
+		}
+
+		const value& val = argv[1];
+		size_t length = arr->length_as_array();
+
+		int64_t res = 0;
+		for (size_t i = 0; i < length; ++i) {
+			value args[2] = { arr->index_as_array(i), val };
+			if (compare(machine, 2, args).as_int() == 0) {
+				++res;
+			}
+		}
+		return value(script_type_manager::get_int_type(), res);
+	}
+
 	DNH_FUNCAPI_DEF_(BaseFunction::all) {
 		_null_check(machine, argv, argc);
 
