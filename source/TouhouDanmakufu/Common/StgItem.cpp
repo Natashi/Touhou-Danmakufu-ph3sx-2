@@ -427,37 +427,54 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 
 	//--------------------------------------------------------------
 
+	auto _LoadRectList = [](Scanner& _scanner) {
+		std::vector<std::wstring> list = _scanner.GetArgumentList();
+
+		if (list.size() < 4)
+			throw wexception("Invalid argument list size (expected 4)");
+
+		DxRect<int> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
+			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
+
+		LONG width = rect.right - rect.left;
+		LONG height = rect.bottom - rect.top;
+		DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
+		if (width % 2 == 1) ++(rcDest.right);
+		if (height % 2 == 1) ++(rcDest.bottom);
+	};
+
 #define LAMBDA_SETI(m) [](Data* i, Scanner& s) { \
 						s.CheckType(s.Next(), Token::Type::TK_EQUAL); \
 						i->m = s.Next().GetInteger(); \
 					}
-#define LAMBDA_CREATELIST(scanner) std::vector<std::wstring> list = scanner.GetArgumentList(); \
-						DxRect<int> rect( \
-							StringUtility::ToInteger(list[0]), \
-							StringUtility::ToInteger(list[1]), \
-							StringUtility::ToInteger(list[2]), \
-							StringUtility::ToInteger(list[3])); \
-						LONG width = rect.right - rect.left; \
-						LONG height = rect.bottom - rect.top; \
-						DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2); \
-						if (width % 2 == 1) ++(rcDest.right); \
-						if (height % 2 == 1) ++(rcDest.bottom);
 	auto funcSetRect = [](Data* i, Scanner& s) {
-		LAMBDA_CREATELIST(s);
+		std::vector<std::wstring> list = s.GetArgumentList();
+
+		if (list.size() < 4)
+			throw wexception("Invalid argument list size (expected 4)");
+
+		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
+			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
 
 		StgItemData::AnimationData anime;
 		anime.rcSrc_ = rect;
-		anime.rcDest_ = rcDest;
+		anime.rcDst_ = StgItemData::AnimationData::SetDestRect(&rect);
 
 		i->itemData->listAnime_.resize(1);
 		i->itemData->listAnime_[0] = anime;
 		i->itemData->totalAnimeFrame_ = 1;
 	};
 	auto funcSetOut = [](Data* i, Scanner& s) {
-		LAMBDA_CREATELIST(s);
+		std::vector<std::wstring> list = s.GetArgumentList();
 
-		i->itemData->rcOutSrc_ = rect;
-		i->itemData->rcOutDest_ = rcDest;
+		if (list.size() < 4)
+			throw wexception("Invalid argument list size (expected 4)");
+
+		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
+			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
+
+		i->itemData->out_.rcSrc_ = rect;
+		i->itemData->out_.rcDst_ = StgItemData::AnimationData::SetDestRect(&rect);
 	};
 	auto funcSetBlendType = [](Data* i, Scanner& s) {
 		s.CheckType(s.Next(), Token::Type::TK_EQUAL);
@@ -530,42 +547,53 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 
 			if (element == L"animation_data") {
 				std::vector<std::wstring> list = scanner.GetArgumentList();
-				if (list.size() == 5) {
-					StgItemData::AnimationData anime;
-					int frame = StringUtility::ToInteger(list[0]);
-					DxRect<int> rcSrc(
-						StringUtility::ToInteger(list[1]),
-						StringUtility::ToInteger(list[2]),
-						StringUtility::ToInteger(list[3]),
-						StringUtility::ToInteger(list[4]));
 
-					LONG width = rcSrc.right - rcSrc.left;
-					LONG height = rcSrc.bottom - rcSrc.top;
-					DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
-					if (width % 2 == 1) rcDest.right++;
-					if (height % 2 == 1) rcDest.bottom++;
+				if (list.size() < 5)
+					throw wexception("Invalid argument list size (expected 5)");
 
-					anime.frame_ = frame;
-					anime.rcSrc_ = rcSrc;
-					anime.rcDest_ = rcDest;
+				int frame = StringUtility::ToInteger(list[0]);
+				DxRect<LONG> rcSrc(StringUtility::ToInteger(list[1]), StringUtility::ToInteger(list[2]),
+					StringUtility::ToInteger(list[3]), StringUtility::ToInteger(list[4]));
 
-					itemData->listAnime_.push_back(anime);
-					itemData->totalAnimeFrame_ += frame;
-				}
+				StgItemData::AnimationData anime;
+				anime.frame_ = frame;
+				anime.rcSrc_ = rcSrc;
+				anime.rcDst_ = StgItemData::AnimationData::SetDestRect(&rcSrc);
+
+				itemData->listAnime_.push_back(anime);
+				itemData->totalAnimeFrame_ += frame;
 			}
 		}
 	}
 }
 
+//*******************************************************************
 //StgItemData
+//*******************************************************************
 StgItemData::StgItemData(StgItemDataList* listItemData) {
 	listItemData_ = listItemData;
+
+	indexTexture_ = -1;
+	textureSize_ = D3DXVECTOR2(0, 0);
+
+	typeItem_ = -1;
 	typeRender_ = MODE_BLEND_ALPHA;
+
 	alpha_ = 255;
+
+	out_.rcSrc_ = DxRect<LONG>(-1, -1, -1, -1);
+
 	totalAnimeFrame_ = 0;
 }
-StgItemData::~StgItemData() {}
-StgItemData::AnimationData* StgItemData::GetData(int frame) {
+StgItemData::~StgItemData() {
+}
+StgItemRenderer* StgItemData::GetRenderer(BlendMode type) {
+	if (type < MODE_BLEND_ALPHA || type > MODE_BLEND_ADD_ARGB)
+		return listItemData_->GetRenderer(indexTexture_, 0);
+	return listItemData_->GetRenderer(indexTexture_, type - 1);
+}
+
+StgItemData::AnimationData* StgItemData::GetData(size_t frame) {
 	if (totalAnimeFrame_ <= 1)
 		return &listAnime_[0];
 
@@ -579,10 +607,10 @@ StgItemData::AnimationData* StgItemData::GetData(int frame) {
 	}
 	return &listAnime_[0];
 }
-StgItemRenderer* StgItemData::GetRenderer(BlendMode type) {
-	if (type < MODE_BLEND_ALPHA || type > MODE_BLEND_ADD_ARGB)
-		return listItemData_->GetRenderer(indexTexture_, 0);
-	return listItemData_->GetRenderer(indexTexture_, type - 1);
+DxRect<float> StgItemData::AnimationData::SetDestRect(DxRect<LONG>* src) {
+	float width = (src->right - src->left) / 2.0f;
+	float height = (src->bottom - src->top) / 2.0f;
+	return DxRect<float>(-width, -height, width, height);
 }
 
 //*******************************************************************
@@ -1104,16 +1132,16 @@ void StgItemObject_User::RenderOnItemManager() {
 
 	StgItemData::AnimationData* frameData = itemData->GetData(frameWork_);
 
-	DxRect<int>* rcSrc = &frameData->rcSrc_;
-	DxRect<int>* rcDst = &frameData->rcDest_;
+	DxRect<LONG>* rcSrc = frameData->GetSource();
+	DxRect<float>* rcDest = frameData->GetDest();
 	D3DCOLOR color;
 
 	{
 		bool bOutY = false;
 		if (position_.y + (rcSrc->bottom - rcSrc->top) / 2 <= 0) {
 			bOutY = true;
-			rcSrc = itemData->GetOutSrc();
-			rcDst = itemData->GetOutDest();
+			rcSrc = itemData->GetOutRect();
+			rcDest = itemData->GetOutDest();
 		}
 
 		if (!bOutY) {
@@ -1139,33 +1167,24 @@ void StgItemObject_User::RenderOnItemManager() {
 		}
 	}
 
-	//if(bIntersected_)color = D3DCOLOR_ARGB(255, 255, 0, 0);//接触テスト
-
 	VERTEX_TLX verts[4];
-	int* ptrSrc = reinterpret_cast<int*>(rcSrc);
-	int* ptrDst = reinterpret_cast<int*>(rcDst);
-	/*
-	for (size_t iVert = 0; iVert < 4; iVert++) {
-		VERTEX_TLX vt;
-
-		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / itemData->GetTextureSize().x, 
-			ptrSrc[iVert | 0b1] / itemData->GetTextureSize().y);
-		_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1]);
-		_SetVertexColorARGB(vt, color);
-
-		float px = vt.position.x * scaleX;
-		float py = vt.position.y * scaleY;
-		vt.position.x = (px * c - py * s) + position_.x;
-		vt.position.y = (px * s + py * c) + posy;
-		vt.position.z = position_.z;
-
-		verts[iVert] = vt;
-	}
-	*/
+	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
+	float* ptrDst = reinterpret_cast<float*>(rcDest);
 	for (size_t iVert = 0U; iVert < 4U; ++iVert) {
+		//((iVert & 1) << 1)
+		//   0 -> 0
+		//   1 -> 2
+		//   2 -> 0
+		//   3 -> 2
+		//(iVert | 1)
+		//   0 -> 1
+		//   1 -> 1
+		//   2 -> 3
+		//   3 -> 3
+
 		VERTEX_TLX vt;
-		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
-		_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1], position_.z);
+		_SetVertexUV(vt, ptrSrc[(iVert & 1) << 1], ptrSrc[iVert | 1]);
+		_SetVertexPosition(vt, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1], position_.z);
 		_SetVertexColorARGB(vt, color);
 		verts[iVert] = vt;
 	}

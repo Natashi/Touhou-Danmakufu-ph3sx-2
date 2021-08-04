@@ -338,6 +338,10 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 				}
 				else if (element == L"delay_color") {
 					std::vector<std::wstring> list = scanner.GetArgumentList();
+
+					if (list.size() < 3)
+						throw wexception("Invalid argument list size (expected 3)");
+
 					defaultDelayColor_ = D3DCOLOR_ARGB(255,
 						StringUtility::ToInteger(list[0]),
 						StringUtility::ToInteger(list[1]),
@@ -345,6 +349,9 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 				}
 				else if (element == L"delay_rect") {
 					std::vector<std::wstring> list = scanner.GetArgumentList();
+
+					if (list.size() < 4)
+						throw wexception("Invalid argument list size (expected 4)");
 
 					DxRect<int> rect(
 						StringUtility::ToInteger(list[0]),
@@ -451,6 +458,9 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 	auto funcSetRect = [](Data* i, Scanner& s) {
 		std::vector<std::wstring> list = s.GetArgumentList();
 
+		if (list.size() < 4)
+			throw wexception("Invalid argument list size (expected 4)");
+
 		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]), 
 			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
 
@@ -465,6 +475,9 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 	auto funcSetDelayRect = [](Data* i, Scanner& s) {
 		std::vector<std::wstring> list = s.GetArgumentList();
 
+		if (list.size() < 4)
+			throw wexception("Invalid argument list size (expected 4)");
+
 		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
 			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
 
@@ -473,6 +486,10 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 	};
 	auto funcSetDelayColor = [](Data* i, Scanner& s) {
 		std::vector<std::wstring> list = s.GetArgumentList();
+
+		if (list.size() < 3)
+			throw wexception("Invalid argument list size (expected 3)");
+
 		i->shotData->colorDelay_ = D3DCOLOR_ARGB(255,
 			StringUtility::ToInteger(list[0]),
 			StringUtility::ToInteger(list[1]),
@@ -598,25 +615,29 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 
 			if (element == L"animation_data") {
 				std::vector<std::wstring> list = scanner.GetArgumentList();
-				if (list.size() == 5) {
-					int frame = StringUtility::ToInteger(list[0]);
-					DxRect<LONG> rcSrc(StringUtility::ToInteger(list[1]), StringUtility::ToInteger(list[2]),
-						StringUtility::ToInteger(list[3]), StringUtility::ToInteger(list[4]));
 
-					StgShotData::AnimationData anime;
-					anime.frame_ = frame;
-					anime.rcSrc_ = rcSrc;
-					anime.rcDst_ = StgShotData::AnimationData::SetDestRect(&rcSrc);
+				if (list.size() < 5)
+					throw wexception("Invalid argument list size (expected 5)");
 
-					shotData->listAnime_.push_back(anime);
-					shotData->totalAnimeFrame_ += frame;
-				}
+				int frame = StringUtility::ToInteger(list[0]);
+				DxRect<LONG> rcSrc(StringUtility::ToInteger(list[1]), StringUtility::ToInteger(list[2]),
+					StringUtility::ToInteger(list[3]), StringUtility::ToInteger(list[4]));
+
+				StgShotData::AnimationData anime;
+				anime.frame_ = frame;
+				anime.rcSrc_ = rcSrc;
+				anime.rcDst_ = StgShotData::AnimationData::SetDestRect(&rcSrc);
+
+				shotData->listAnime_.push_back(anime);
+				shotData->totalAnimeFrame_ += frame;
 			}
 		}
 	}
 }
 
+//*******************************************************************
 //StgShotData
+//*******************************************************************
 StgShotData::StgShotData(StgShotDataList* listShotData) {
 	listShotData_ = listShotData;
 
@@ -637,7 +658,8 @@ StgShotData::StgShotData(StgShotDataList* listShotData) {
 	angularVelocityMax_ = 0;
 	bFixedAngle_ = false;
 }
-StgShotData::~StgShotData() {}
+StgShotData::~StgShotData() {
+}
 StgShotRenderer* StgShotData::GetRenderer(BlendMode blendType) {
 	if (blendType < MODE_BLEND_ALPHA || blendType > MODE_BLEND_ALPHA_INV)
 		return listShotData_->GetRenderer(indexTexture_, 0);
