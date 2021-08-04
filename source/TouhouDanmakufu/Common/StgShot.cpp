@@ -433,6 +433,10 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 				}
 				else if (element == L"delay_color") {
 					std::vector<std::wstring> list = scanner.GetArgumentList();
+
+					if (list.size() < 3)
+						throw wexception("Invalid argument list size (expected 3)");
+
 					defaultDelayColor_ = D3DCOLOR_ARGB(255,
 						StringUtility::ToInteger(list[0]),
 						StringUtility::ToInteger(list[1]),
@@ -440,6 +444,9 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 				}
 				else if (element == L"delay_rect") {
 					std::vector<std::wstring> list = scanner.GetArgumentList();
+
+					if (list.size() < 4)
+						throw wexception("Invalid argument list size (expected 4)");
 
 					DxRect<int> rect(
 						StringUtility::ToInteger(list[0]),
@@ -451,8 +458,8 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 					LONG width = rect.right - rect.left;
 					LONG height = rect.bottom - rect.top;
 					DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
-					if (width % 2 == 0) rcDest.right++;
-					if (height % 2 == 0) rcDest.bottom++;
+					if (width % 2 == 1) rcDest.right++;
+					if (height % 2 == 1) rcDest.bottom++;
 					rcDelayDest = rcDest;
 				}
 				if (scanner.HasNext())
@@ -501,9 +508,9 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 				data->textureSize_.y = texture->GetHeight();
 			}
 
-			if (data->rcDelay_.left < 0) {
-				data->rcDelay_ = rcDelay;
-				data->rcDstDelay_ = rcDelayDest;
+			if (data->delay_.rcSrc_.left < 0) {
+				data->delay_.rcSrc_ = rcDelay;
+				data->delay_.rcDst_ = rcDelayDest;
 			}
 			listData_[iData] = data;
 		}
@@ -543,36 +550,41 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 		s.CheckType(s.Next(), Token::Type::TK_EQUAL); \
 		i->m = s.Next().f(); \
 	}
-#define LAMBDA_CREATELIST(scanner) std::vector<std::wstring> list = scanner.GetArgumentList(); \
-						DxRect<int> rect( \
-							StringUtility::ToInteger(list[0]), \
-							StringUtility::ToInteger(list[1]), \
-							StringUtility::ToInteger(list[2]), \
-							StringUtility::ToInteger(list[3])); \
-						LONG width = rect.right - rect.left; \
-						LONG height = rect.bottom - rect.top; \
-						DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2); \
-						if (width % 2 == 0) ++(rcDest.right); \
-						if (height % 2 == 0) ++(rcDest.bottom);
 	auto funcSetRect = [](Data* i, Scanner& s) {
-		LAMBDA_CREATELIST(s);
+		std::vector<std::wstring> list = s.GetArgumentList();
+
+		if (list.size() < 4)
+			throw wexception("Invalid argument list size (expected 4)");
+
+		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]), 
+			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
 
 		StgShotData::AnimationData anime;
 		anime.rcSrc_ = rect;
-		anime.SetDestRect(&anime.rcDst_, &rect);
+		anime.rcDst_ = StgShotData::AnimationData::SetDestRect(&rect);
 
 		i->shotData->listAnime_.resize(1);
 		i->shotData->listAnime_[0] = anime;
 		i->shotData->totalAnimeFrame_ = 1;
 	};
 	auto funcSetDelayRect = [](Data* i, Scanner& s) {
-		LAMBDA_CREATELIST(s);
+		std::vector<std::wstring> list = s.GetArgumentList();
 
-		i->shotData->rcDelay_ = rect;
-		StgShotData::AnimationData::SetDestRect(&i->shotData->rcDstDelay_, &rect);
+		if (list.size() < 4)
+			throw wexception("Invalid argument list size (expected 4)");
+
+		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
+			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
+
+		i->shotData->delay_.rcSrc_ = rect;
+		i->shotData->delay_.rcDst_ = StgShotData::AnimationData::SetDestRect(&rect);
 	};
 	auto funcSetDelayColor = [](Data* i, Scanner& s) {
 		std::vector<std::wstring> list = s.GetArgumentList();
+
+		if (list.size() < 3)
+			throw wexception("Invalid argument list size (expected 3)");
+
 		i->shotData->colorDelay_ = D3DCOLOR_ARGB(255,
 			StringUtility::ToInteger(list[0]),
 			StringUtility::ToInteger(list[1]),
@@ -669,7 +681,7 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 		if (data.shotData->listCol_.GetR() <= 0) {
 			float r = 0;
 			if (data.shotData->listAnime_.size() > 0) {
-				DxRect<int>& rect = data.shotData->listAnime_[0].rcSrc_;
+				DxRect<LONG>& rect = data.shotData->listAnime_[0].rcSrc_;
 				int rx = abs(rect.right - rect.left);
 				int ry = abs(rect.bottom - rect.top);
 				r = std::min(rx, ry) / 3.0f - 3.0f;
@@ -698,42 +710,51 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 
 			if (element == L"animation_data") {
 				std::vector<std::wstring> list = scanner.GetArgumentList();
-				if (list.size() == 5) {
-					StgShotData::AnimationData anime;
-					int frame = StringUtility::ToInteger(list[0]);
-					DxRect<int> rcSrc(
-						StringUtility::ToInteger(list[1]),
-						StringUtility::ToInteger(list[2]),
-						StringUtility::ToInteger(list[3]),
-						StringUtility::ToInteger(list[4]));
 
-					anime.frame_ = frame;
-					anime.rcSrc_ = rcSrc;
-					anime.SetDestRect(&anime.rcDst_, &rcSrc);
+				if (list.size() < 5)
+					throw wexception("Invalid argument list size (expected 5)");
 
-					shotData->listAnime_.push_back(anime);
-					shotData->totalAnimeFrame_ += frame;
-				}
+				int frame = StringUtility::ToInteger(list[0]);
+				DxRect<LONG> rcSrc(StringUtility::ToInteger(list[1]), StringUtility::ToInteger(list[2]),
+					StringUtility::ToInteger(list[3]), StringUtility::ToInteger(list[4]));
+
+				StgShotData::AnimationData anime;
+				anime.frame_ = frame;
+				anime.rcSrc_ = rcSrc;
+				anime.rcDst_ = StgShotData::AnimationData::SetDestRect(&rcSrc);
+
+				shotData->listAnime_.push_back(anime);
+				shotData->totalAnimeFrame_ += frame;
 			}
 		}
 	}
 }
 
+//*******************************************************************
 //StgShotData
+//*******************************************************************
 StgShotData::StgShotData(StgShotDataList* listShotData) {
 	listShotData_ = listShotData;
+
+	indexTexture_ = -1;
 	textureSize_ = D3DXVECTOR2(0, 0);
+
 	typeRender_ = MODE_BLEND_ALPHA;
 	typeDelayRender_ = MODE_BLEND_ADD_ARGB;
-	colorDelay_ = D3DCOLOR_ARGB(255, 255, 255, 255);
-	rcDelay_.Set(-1, -1, -1, -1);
+
 	alpha_ = 255;
+
+	delay_.rcSrc_ = DxRect<LONG>(-1, -1, -1, -1);
+	colorDelay_ = D3DCOLOR_ARGB(255, 255, 255, 255);
+	
 	totalAnimeFrame_ = 0;
+
 	angularVelocityMin_ = 0;
 	angularVelocityMax_ = 0;
 	bFixedAngle_ = false;
 }
-StgShotData::~StgShotData() {}
+StgShotData::~StgShotData() {
+}
 StgShotRenderer* StgShotData::GetRenderer(BlendMode blendType) {
 	if (blendType < MODE_BLEND_ALPHA || blendType > MODE_BLEND_ALPHA_INV)
 		return listShotData_->GetRenderer(indexTexture_, 0);
@@ -754,12 +775,10 @@ StgShotData::AnimationData* StgShotData::GetData(size_t frame) {
 	}
 	return &listAnime_[0];
 }
-void StgShotData::AnimationData::SetDestRect(DxRect<int>* dst, DxRect<int>* src) {
-	int width = (src->right - src->left) / 2L;
-	int height = (src->bottom - src->top) / 2L;
-	dst->Set(-width, -height, width, height);
-	if (width % 2L == 0L) ++(dst->right);
-	if (height % 2L == 0L) ++(dst->bottom);
+DxRect<float> StgShotData::AnimationData::SetDestRect(DxRect<LONG>* src) {
+	float width = (src->right - src->left) / 2.0f;
+	float height = (src->bottom - src->top) / 2.0f;
+	return DxRect<float>(-width, -height, width, height);
 }
 
 //****************************************************************************
@@ -1533,8 +1552,8 @@ void StgNormalShotObject::RenderOnShotManager() {
 	float scaleX = 1.0f;
 	float scaleY = 1.0f;
 
-	DxRect<int>* rcSrc = nullptr;
-	DxRect<int>* rcDest = nullptr;
+	DxRect<LONG>* rcSrc = nullptr;
+	DxRect<float>* rcDest = nullptr;
 	D3DCOLOR color;
 
 	if (delay_.time > 0) {
@@ -1590,11 +1609,22 @@ void StgNormalShotObject::RenderOnShotManager() {
 
 	VERTEX_TLX verts[4];
 	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
-	LONG* ptrDst = reinterpret_cast<LONG*>(rcDest);
+	float* ptrDst = reinterpret_cast<float*>(rcDest);
 	for (size_t iVert = 0U; iVert < 4U; ++iVert) {
+		//((iVert & 1) << 1)
+		//   0 -> 0
+		//   1 -> 2
+		//   2 -> 0
+		//   3 -> 2
+		//(iVert | 1)
+		//   0 -> 1
+		//   1 -> 1
+		//   2 -> 3
+		//   3 -> 3
+
 		VERTEX_TLX vt;
-		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
-		_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1], position_.z);
+		_SetVertexUV(vt, ptrSrc[(iVert & 1) << 1], ptrSrc[iVert | 1]);
+		_SetVertexPosition(vt, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1], position_.z);
 		_SetVertexColorARGB(vt, color);
 		verts[iVert] = vt;
 	}
@@ -1862,18 +1892,14 @@ void StgLooseLaserObject::RenderOnShotManager() {
 	FLOAT sposx = position_.x;
 	FLOAT sposy = position_.y;
 
-	if (delay_.time > 0 && !bEnableMotionDelay_) {
-
-	}
-
-	DxRect<int>* rcSrc = nullptr;
-	DxRect<int> rcDest;
+	DxRect<LONG>* rcSrc = nullptr;
+	DxRect<float> rcDest;
 	D3DCOLOR color;
 
 #define RENDER_VERTEX \
 	VERTEX_TLX verts[4]; \
-	int* ptrSrc = reinterpret_cast<int*>(rcSrc);\
-	int* ptrDst = reinterpret_cast<int*>(&rcDest);\
+	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);\
+	float* ptrDst = reinterpret_cast<float*>(&rcDest);\
 	for (size_t iVert = 0U; iVert < 4U; ++iVert) {\
 		VERTEX_TLX vt; \
 		_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]); \
@@ -1953,7 +1979,6 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 		//color = ColorAccess::ApplyAlpha(color, alpha);
 		rcDest.Set(widthRender_ / 2, 0, -widthRender_ / 2, radius);
-		if (widthRender_ % 2 == 0) ++(rcDest.left);
 
 		RENDER_VERTEX;
 	}
@@ -2143,9 +2168,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 	FLOAT sposx = position_.x;
 	FLOAT sposy = position_.y;
 
-	
-
-	DxRect<int>* rcSrc = nullptr;
+	DxRect<LONG>* rcSrc = nullptr;
 	D3DCOLOR color;
 
 	BlendMode objBlendType = GetBlendType();
@@ -2175,10 +2198,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 		if (widthRender_ > 0) {
 			float _rWidth = fabs(widthRender_ / 2.0f) * scaleX_;
-			_rWidth = std::max(_rWidth, 1.0f);
+			_rWidth = std::max(_rWidth, 0.5f);
 			D3DXVECTOR4 rcDest(_rWidth, length_, -_rWidth, 0);
-
-			if (widthRender_ % 2 == 0) ++(rcDest.x);
 
 			VERTEX_TLX verts[4];
 			LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
@@ -2186,8 +2207,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 			for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 				VERTEX_TLX vt;
 
-				_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / textureSize->x, ptrSrc[iVert | 0b1] / textureSize->y);
-				_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1]);
+				_SetVertexUV(vt, ptrSrc[(iVert & 1) << 1] / textureSize->x, ptrSrc[iVert | 1] / textureSize->y);
+				_SetVertexPosition(vt, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1]);
 				_SetVertexColorARGB(vt, color);
 
 				float px = vt.position.x * scale_.x;
@@ -2211,10 +2232,10 @@ void StgStraightLaserObject::RenderOnShotManager() {
 			color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
 			if (delay_.colorMix) ColorAccess::MultiplyColor(color, color_);
 
-			int sourceWidth = widthRender_;
-			DxRect<float> rcDest(-sourceWidth, -sourceWidth, sourceWidth + 1, sourceWidth + 1);
+			int sourceWidth = widthRender_ * 2 / 3;
+			DxRect<float> rcDest(-sourceWidth, -sourceWidth, sourceWidth, sourceWidth);
 
-			auto _AddDelay = [&](StgShotData* delayShotData, DxRect<int>* delayRect, D3DXVECTOR2& delayPos, float delaySize) {
+			auto _AddDelay = [&](StgShotData* delayShotData, DxRect<LONG>* delayRect, D3DXVECTOR2& delayPos, float delaySize) {
 				StgShotRenderer* renderer = nullptr;
 
 				if (objSourceBlendType == MODE_BLEND_NONE)
@@ -2224,7 +2245,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				if (renderer == nullptr) return;
 
 				VERTEX_TLX verts[4];
-				int* ptrSrc = reinterpret_cast<int*>(delayRect);
+				LONG* ptrSrc = reinterpret_cast<LONG*>(delayRect);
 				float* ptrDst = reinterpret_cast<float*>(&rcDest);
 
 				D3DXVECTOR2 move = (delay_.spin != 0) ? D3DXVECTOR2(cosf(delay_.angle), sinf(delay_.angle)) : move_;
@@ -2233,9 +2254,9 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 					VERTEX_TLX vt;
 
-					_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] / delayShotData->GetTextureSize().x,
-						ptrSrc[iVert | 0b1] / delayShotData->GetTextureSize().y);
-					_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1]);
+					_SetVertexUV(vt, ptrSrc[(iVert & 1) << 1] / delayShotData->GetTextureSize().x,
+						ptrSrc[iVert | 1] / delayShotData->GetTextureSize().y);
+					_SetVertexPosition(vt, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1]);
 					_SetVertexColorARGB(vt, color);
 
 					float px = vt.position.x * delaySize;
@@ -2259,7 +2280,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				}
 
 				StgShotData* delayData = nullptr;
-				DxRect<int>* delayRect = nullptr;
+				DxRect<LONG>* delayRect = nullptr;
 
 				if (delay_.id >= 0) {
 					delayData = _GetShotData(delay_.id);
@@ -2282,7 +2303,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 				}
 
 				StgShotData* delayData = nullptr;
-				DxRect<int>* delayRect = nullptr;
+				DxRect<LONG>* delayRect = nullptr;
 
 				if (idImageEnd_ >= 0) {
 					delayData = _GetShotData(idImageEnd_);
@@ -2528,8 +2549,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		}
 		if (renderer == nullptr) return;
 
-		DxRect<int>* rcSrc = nullptr;
-		DxRect<int>* rcDest = nullptr;
+		DxRect<LONG>* rcSrc = nullptr;
+		DxRect<float>* rcDest = nullptr;
 		D3DXVECTOR2* delaySize = &delayData->GetTextureSize();
 
 		if (delay_.id >= 0) {
@@ -2566,8 +2587,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 
 		for (size_t iVert = 0U; iVert < 4U; ++iVert) {
 			VERTEX_TLX vt;
-			_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1], ptrSrc[iVert | 0b1]);
-			_SetVertexPosition(vt, ptrDst[(iVert & 0b1) << 1], ptrDst[iVert | 0b1], position_.z);
+			_SetVertexUV(vt, ptrSrc[(iVert & 1) << 1], ptrSrc[iVert | 1]);
+			_SetVertexPosition(vt, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1], position_.z);
 			_SetVertexColorARGB(vt, color);
 			verts[iVert] = vt;
 		}
@@ -2605,11 +2626,11 @@ void StgCurveLaserObject::RenderOnShotManager() {
 
 		D3DXVECTOR2 texSizeInv = D3DXVECTOR2(1.0f / textureSize->x, 1.0f / textureSize->y);
 
-		DxRect<int>* rcSrcOrg = anime->GetSource();
+		DxRect<LONG>* rcSrcOrg = anime->GetSource();
 		float rcInc = ((rcSrcOrg->bottom - rcSrcOrg->top) / (float)countRect) * texSizeInv.y;
 		float rectV = rcSrcOrg->top * texSizeInv.y;
 
-		int* ptrSrc = reinterpret_cast<int*>(rcSrcOrg);
+		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrcOrg);
 
 		size_t iPos = 0U;
 		for (auto itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
@@ -2631,7 +2652,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 			for (size_t iVert = 0U; iVert < 2U; ++iVert) {
 				VERTEX_TLX vt;
 
-				_SetVertexUV(vt, ptrSrc[(iVert & 0b1) << 1] * texSizeInv.x, rectV);
+				_SetVertexUV(vt, ptrSrc[(iVert & 1) << 1] * texSizeInv.x, rectV);
 				_SetVertexPosition(vt, itr->pos.x + itr->vertOff[iVert].x,
 					itr->pos.y + itr->vertOff[iVert].y, position_.z);
 				_SetVertexColorARGB(vt, thisColor);

@@ -119,14 +119,14 @@ class StgShotData {
 	friend StgShotDataList;
 public:
 	struct AnimationData {
-		DxRect<int> rcSrc_;
-		DxRect<int> rcDst_;
+		DxRect<LONG> rcSrc_;
+		DxRect<float> rcDst_;
 		size_t frame_;
 
-		DxRect<int>* GetSource() { return &rcSrc_; }
-		DxRect<int>* GetDest() { return &rcDst_; }
+		DxRect<LONG>* GetSource() { return &rcSrc_; }
+		DxRect<float>* GetDest() { return &rcDst_; }
 
-		static void SetDestRect(DxRect<int>* dst, DxRect<int>* src);
+		static DxRect<float> SetDestRect(DxRect<LONG>* src);
 	};
 private:
 	StgShotDataList* listShotData_;
@@ -137,15 +137,15 @@ private:
 	BlendMode typeRender_;
 	BlendMode typeDelayRender_;
 
-	DxRect<int> rcDelay_;
-	DxRect<int> rcDstDelay_;
-
 	int alpha_;
+
+	AnimationData delay_;
 	D3DCOLOR colorDelay_;
-	DxCircle listCol_;
 
 	std::vector<AnimationData> listAnime_;
 	size_t totalAnimeFrame_;
+
+	DxCircle listCol_;
 
 	double angularVelocityMin_;
 	double angularVelocityMax_;
@@ -156,19 +156,24 @@ public:
 
 	int GetTextureIndex() { return indexTexture_; }
 	D3DXVECTOR2& GetTextureSize() { return textureSize_; }
+
 	BlendMode GetRenderType() { return typeRender_; }
 	BlendMode GetDelayRenderType() { return typeDelayRender_; }
-	AnimationData* GetData(size_t frame);
-	DxRect<int>* GetDelayRect() { return &rcDelay_; }
-	DxRect<int>* GetDelayDest() { return &rcDstDelay_; }
+
 	int GetAlpha() { return alpha_; }
+
+	DxRect<LONG>* GetDelayRect() { return &delay_.rcSrc_; }
+	DxRect<float>* GetDelayDest() { return &delay_.rcDst_; }
 	D3DCOLOR GetDelayColor() { return colorDelay_; }
+
+	AnimationData* GetData(size_t frame);
+	size_t GetFrameCount() { return listAnime_.size(); }
+
 	DxCircle* GetIntersectionCircleList() { return &listCol_; }
+
 	double GetAngularVelocityMin() { return angularVelocityMin_; }
 	double GetAngularVelocityMax() { return angularVelocityMax_; }
 	bool IsFixedAngle() { return bFixedAngle_; }
-
-	size_t GetFrameCount() { return listAnime_.size(); }
 
 	shared_ptr<Texture> GetTexture() { return listShotData_->GetTexture(indexTexture_); }
 	StgShotRenderer* GetRenderer() { return GetRenderer(typeRender_); }

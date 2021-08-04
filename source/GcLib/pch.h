@@ -213,6 +213,8 @@ using std::unique_ptr;
 using std::shared_ptr;
 using std::weak_ptr;
 
+using QWORD = uint64_t;		//Quad word
+
 #undef min
 #undef max
 

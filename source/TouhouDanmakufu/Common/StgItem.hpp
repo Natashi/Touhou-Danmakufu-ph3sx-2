@@ -106,9 +106,14 @@ class StgItemData {
 	friend StgItemDataList;
 public:
 	struct AnimationData {
-		DxRect<int> rcSrc_;
-		DxRect<int> rcDest_;
-		int frame_;
+		DxRect<LONG> rcSrc_;
+		DxRect<float> rcDst_;
+		size_t frame_;
+
+		DxRect<LONG>* GetSource() { return &rcSrc_; }
+		DxRect<float>* GetDest() { return &rcDst_; }
+
+		static DxRect<float> SetDestRect(DxRect<LONG>* src);
 	};
 private:
 	StgItemDataList* listItemData_;
@@ -118,24 +123,30 @@ private:
 
 	int typeItem_;
 	BlendMode typeRender_;
-	DxRect<int> rcOutSrc_;
-	DxRect<int> rcOutDest_;
+
 	int alpha_;
 
+	AnimationData out_;
+
 	std::vector<AnimationData> listAnime_;
-	int totalAnimeFrame_;
+	size_t totalAnimeFrame_;
 public:
 	StgItemData(StgItemDataList* listItemData);
 	virtual ~StgItemData();
 
 	int GetTextureIndex() { return indexTexture_; }
 	D3DXVECTOR2& GetTextureSize() { return textureSize_; }
+
 	int GetItemType() { return typeItem_; }
 	BlendMode GetRenderType() { return typeRender_; }
-	AnimationData* GetData(int frame);
-	DxRect<int>* GetOutSrc() { return &rcOutSrc_; }
-	DxRect<int>* GetOutDest() { return &rcOutDest_; }
+
 	int GetAlpha() { return alpha_; }
+	
+	DxRect<LONG>* GetOutRect() { return &out_.rcSrc_; }
+	DxRect<float>* GetOutDest() { return &out_.rcDst_; }
+
+	AnimationData* GetData(size_t frame);
+	size_t GetFrameCount() { return listAnime_.size(); }
 
 	shared_ptr<Texture> GetTexture() { return listItemData_->GetTexture(indexTexture_); }
 	StgItemRenderer* GetRenderer() { return GetRenderer(typeRender_); }
