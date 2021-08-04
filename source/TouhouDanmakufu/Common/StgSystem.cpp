@@ -341,11 +341,6 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	int invalidPriMin = infoSystem_->GetInvalidRenderPriorityMin();
 	int invalidPriMax = infoSystem_->GetInvalidRenderPriorityMax();
 
-	if (bValidStage) {
-		stageController_->GetItemManager()->LoadRenderQueue();
-		stageController_->GetShotManager()->LoadRenderQueue();
-	}
-
 	focusPos.x -= stgWidth / 2;
 	focusPos.y -= stgHeight / 2;
 
@@ -368,22 +363,35 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 
 	graphics->SetVertexFog(bFogEnable, fogColor, fogStart, fogEnd);
 
-	camera2D->SetEnable(false);
-	camera2D->Reset();
-	graphics->ResetViewPort();
+	{
+		camera2D->SetEnable(false);
+		camera2D->Reset();
+
+		camera2D->SetRatioX(focusRatioX);
+		camera2D->SetRatioY(focusRatioY);
+		camera2D->SetAngleZ(focusAngleZ);
+		camera2D->SetClip(*rcStgFrame);
+		camera2D->SetFocus(stgCenter.x + focusPos.x, stgCenter.y + focusPos.y);
+		camera2D->UpdateMatrix();
+
+		camera3D->SetPerspectiveWidth(graphics->GetScreenWidth());
+		camera3D->SetPerspectiveHeight(graphics->GetScreenHeight());
+		camera3D->SetProjectionMatrix();
+		camera3D->UpdateDeviceViewProjectionMatrix();
+
+		graphics->ResetViewPort();
+
+		camera3D->PushMatrixState();
+	}
 
 	bool bClearZBufferFor2DCoordinate = false;
 	bool bRunMinStgFrame = false;
 	bool bRunMaxStgFrame = false;
 
-	camera2D->SetRatioX(focusRatioX);
-	camera2D->SetRatioY(focusRatioY);
-	camera2D->SetAngleZ(focusAngleZ);
-	camera2D->SetClip(*rcStgFrame);
-	camera2D->SetFocus(stgCenter.x + focusPos.x, stgCenter.y + focusPos.y);
-	camera2D->UpdateMatrix();
-
-	camera3D->PushMatrixState();
+	if (bValidStage) {
+		stageController_->GetItemManager()->LoadRenderQueue();
+		stageController_->GetShotManager()->LoadRenderQueue();
+	}
 
 	for (int iPri = priMin; iPri <= priMax; iPri++) {
 		if (!bRunMinStgFrame && iPri >= priMinStgFrame) {
