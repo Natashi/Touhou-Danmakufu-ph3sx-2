@@ -416,6 +416,7 @@ static const std::vector<function> stgStageFunction = {
 
 	//STG共通関数：弾オブジェクト操作
 	{ "ObjShot_Create", StgStageScript::Func_ObjShot_Create, 1 },
+	{ "ObjShot_Create", StgStageScript::Func_ObjShot_Create, 2 },	//Overloaded
 	{ "ObjShot_Regist", StgStageScript::Func_ObjShot_Regist, 1 },
 	{ "ObjShot_SetOwnerType", StgStageScript::Func_ObjShot_SetOwnerType, 2 },
 	{ "ObjShot_SetAutoDelete", StgStageScript::Func_ObjShot_SetAutoDelete, 2 },
@@ -1943,8 +1944,8 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			return script->CreateStringValue(shotData->GetTexture()->GetName());
 		case INFO_RECT:
 		{
-			DxRect<int>* rect = shotData->GetData(0)->GetSource();
-			return script->CreateIntArrayValue(reinterpret_cast<int*>(rect), 4U);
+			DxRect<LONG>* rect = shotData->GetData(0)->GetSource();
+			return script->CreateIntArrayValue(reinterpret_cast<LONG*>(rect), 4U);
 		}
 		case INFO_DELAY_COLOR:
 		{
@@ -3341,8 +3342,18 @@ gstd::value StgStageScript::Func_ObjShot_Create(gstd::script_machine* machine, i
 
 		id = ID_INVALID;
 		if (obj) {
-			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
+			bool bPlayer = true;
+			if (argc == 2) {
+				int type = argv[1].as_int();
+				bPlayer = type == StgShotObject::OWNER_PLAYER;
+			}
+			else {
+				bPlayer = script->GetScriptType() == TYPE_PLAYER;
+			}
+
+			int typeOwner = bPlayer ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
+			
 			obj->SetOwnerType(typeOwner);
 			id = script->AddObject(obj, false);
 		}
