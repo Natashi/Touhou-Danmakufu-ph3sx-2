@@ -776,9 +776,11 @@ StgShotData::AnimationData* StgShotData::GetData(size_t frame) {
 	return &listAnime_[0];
 }
 DxRect<float> StgShotData::AnimationData::SetDestRect(DxRect<LONG>* src) {
-	float width = (src->right - src->left) / 2.0f;
-	float height = (src->bottom - src->top) / 2.0f;
-	return DxRect<float>(-width, -height, width, height);
+	LONG rw = src->GetWidth();
+	LONG rh = src->GetHeight();
+	float width = rw / 2.0f;
+	float height = rh / 2.0f;
+	return DxRect<float>(-width + 0.5f, -height + 0.5f, width + 0.5f, height + 0.5f);
 }
 
 //****************************************************************************
@@ -2233,7 +2235,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 			if (delay_.colorMix) ColorAccess::MultiplyColor(color, color_);
 
 			int sourceWidth = widthRender_ * 2 / 3;
-			DxRect<float> rcDest(-sourceWidth, -sourceWidth, sourceWidth, sourceWidth);
+			DxRect<float> rcDest(-sourceWidth + 0.5f, -sourceWidth + 0.5f, sourceWidth + 0.5f, sourceWidth + 0.5f);
 
 			auto _AddDelay = [&](StgShotData* delayShotData, DxRect<LONG>* delayRect, D3DXVECTOR2& delayPos, float delaySize) {
 				StgShotRenderer* renderer = nullptr;
