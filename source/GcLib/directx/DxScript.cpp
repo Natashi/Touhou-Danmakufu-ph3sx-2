@@ -26,6 +26,7 @@ void DxScriptResourceCache::ClearResource() {
 	mapTexture.clear();
 	mapMesh.clear();
 	mapShader.clear();
+	mapSound.clear();
 }
 shared_ptr<Texture> DxScriptResourceCache::GetTexture(const std::wstring& name) {
 	auto itr = mapTexture.find(name);
@@ -42,6 +43,12 @@ shared_ptr<DxMesh> DxScriptResourceCache::GetMesh(const std::wstring& name) {
 shared_ptr<ShaderData> DxScriptResourceCache::GetShader(const std::wstring& name) {
 	auto itr = mapShader.find(name);
 	if (itr != mapShader.end())
+		return itr->second;
+	return nullptr;
+}
+shared_ptr<SoundSourceData> DxScriptResourceCache::GetSound(const std::wstring& name) {
+	auto itr = mapSound.find(name);
+	if (itr != mapSound.end())
 		return itr->second;
 	return nullptr;
 }
@@ -593,8 +600,6 @@ static const std::vector<constant> dxConstant = {
 	constant("SOUND_WAVE", (int)SoundFileFormat::Wave),
 	constant("SOUND_OGG", (int)SoundFileFormat::Ogg),
 	constant("SOUND_MP3", (int)SoundFileFormat::Mp3),
-	constant("SOUND_AWAVE", (int)SoundFileFormat::AWave),
-	constant("SOUND_MIDI", (int)SoundFileFormat::Midi),
 
 	//ObjSound_GetInfo info types
 	constant("INFO_FORMAT", SoundPlayer::INFO_FORMAT),
@@ -771,9 +776,6 @@ DxScript::DxScript() {
 	}
 }
 DxScript::~DxScript() {
-	for (auto itrSound = mapSoundPlayer_.begin(); itrSound != mapSoundPlayer_.end(); ++itrSound)
-		itrSound->second->Delete();
-	mapSoundPlayer_.clear();
 }
 int DxScript::AddObject(ref_unsync_ptr<DxScriptObjectBase> obj, bool bActivate) {
 	obj->idScript_ = idScript_;
@@ -992,26 +994,27 @@ value DxScript::Func_LoadSound(script_machine* machine, int argc, const value* a
 
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
-	if (script->mapSoundPlayer_.find(path) != script->mapSoundPlayer_.end())
-		return script->CreateBooleanValue(true);
 
-	shared_ptr<SoundPlayer> player = manager->GetPlayer(path, true);
-	if (player)
-		script->mapSoundPlayer_[path] = player;
-	
-	return script->CreateBooleanValue(player != nullptr);
+	bool res = true;
+
+	auto& mapSound = script->pResouceCache_->mapSound;
+	if (mapSound.find(path) == mapSound.end()) {
+		shared_ptr<SoundSourceData> sound = manager->GetSoundSource(path, true);
+		res = sound != nullptr;
+		if (res) {
+			Lock lock(script->criticalSection_);
+			mapSound[path] = sound;
+		}
+	}
+	return script->CreateBooleanValue(res);
 }
 value DxScript::Func_RemoveSound(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	DirectSoundManager* manager = DirectSoundManager::GetBase();
-
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
-
-	auto itr = script->mapSoundPlayer_.find(path);
-	if (itr != script->mapSoundPlayer_.end()) {
-		itr->second->Delete();
-		script->mapSoundPlayer_.erase(itr);
+	{
+		Lock lock(script->criticalSection_);
+		script->pResouceCache_->mapSound.erase(path);
 	}
 	return value();
 }
@@ -1022,14 +1025,14 @@ value DxScript::Func_PlayBGM(script_machine* machine, int argc, const value* arg
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
 
-	auto itr = script->mapSoundPlayer_.find(path);
-	if (itr != script->mapSoundPlayer_.end()) {
-		double loopStart = argv[1].as_real();
-		double loopEnd = argv[2].as_real();
-
-		shared_ptr<SoundPlayer> player = itr->second;
+	shared_ptr<SoundSourceData> soundSource = manager->GetSoundSource(path, true);
+	if (soundSource) {
+		shared_ptr<SoundPlayer> player = manager->CreatePlayer(soundSource);
 		player->SetAutoDelete(true);
 		player->SetSoundDivision(SoundDivision::DIVISION_BGM);
+
+		double loopStart = argv[1].as_real();
+		double loopEnd = argv[2].as_real();
 
 		SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
 		pStyle->bLoop_ = true;
@@ -1048,9 +1051,9 @@ gstd::value DxScript::Func_PlaySE(gstd::script_machine* machine, int argc, const
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
 
-	auto itr = script->mapSoundPlayer_.find(path);
-	if (itr != script->mapSoundPlayer_.end()) {
-		shared_ptr<SoundPlayer> player = itr->second;
+	shared_ptr<SoundSourceData> soundSource = manager->GetSoundSource(path, true);
+	if (soundSource) {
+		shared_ptr<SoundPlayer> player = manager->CreatePlayer(soundSource);
 		player->SetAutoDelete(true);
 		player->SetSoundDivision(SoundDivision::DIVISION_SE);
 
@@ -1069,9 +1072,8 @@ value DxScript::Func_StopSound(script_machine* machine, int argc, const value* a
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
 
-	auto itr = script->mapSoundPlayer_.find(path);
-	if (itr != script->mapSoundPlayer_.end()) {
-		shared_ptr<SoundPlayer> player = itr->second;
+	shared_ptr<SoundPlayer> player = manager->GetPlayer(path);
+	if (player) {
 		player->Stop();
 		script->GetObjectManager()->DeleteReservedSound(player);
 	}
@@ -1188,9 +1190,11 @@ gstd::value DxScript::Func_IsFullscreenMode(gstd::script_machine* machine, int a
 }
 value DxScript::Func_LoadTexture(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	bool res = true;
+	
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
+
+	bool res = true;
 
 	auto& mapTexture = script->pResouceCache_->mapTexture;
 	if (mapTexture.find(path) == mapTexture.end()) {
@@ -1205,9 +1209,11 @@ value DxScript::Func_LoadTexture(script_machine* machine, int argc, const value*
 }
 value DxScript::Func_LoadTextureInLoadThread(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	bool res = true;
+	
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
+
+	bool res = true;
 
 	auto& mapTexture = script->pResouceCache_->mapTexture;
 	if (mapTexture.find(path) == mapTexture.end()) {
@@ -1222,11 +1228,13 @@ value DxScript::Func_LoadTextureInLoadThread(script_machine* machine, int argc, 
 }
 value DxScript::Func_LoadTextureEx(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	bool res = true;
+	
 	std::wstring path = argv[0].as_string();
 	bool useMipMap = argv[1].as_boolean();
 	bool useNonPowerOfTwo = argv[2].as_boolean();
 	path = PathProperty::GetUnique(path);
+
+	bool res = true;
 
 	auto& mapTexture = script->pResouceCache_->mapTexture;
 	if (mapTexture.find(path) == mapTexture.end()) {
@@ -1241,11 +1249,13 @@ value DxScript::Func_LoadTextureEx(script_machine* machine, int argc, const valu
 }
 value DxScript::Func_LoadTextureInLoadThreadEx(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	bool res = true;
+	
 	std::wstring path = argv[0].as_string();
 	bool useMipMap = argv[1].as_boolean();
 	bool useNonPowerOfTwo = argv[2].as_boolean();
 	path = PathProperty::GetUnique(path);
+
+	bool res = true;
 
 	auto& mapTexture = script->pResouceCache_->mapTexture;
 	if (mapTexture.find(path) == mapTexture.end()) {
@@ -1601,9 +1611,11 @@ gstd::value DxScript::Func_SetEnableAntiAliasing(gstd::script_machine* machine, 
 
 value DxScript::Func_LoadMesh(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	bool res = true;
+	
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
+
+	bool res = true;
 
 	auto& mapMesh = script->pResouceCache_->mapMesh;
 	if (mapMesh.find(path) == mapMesh.end()) {
@@ -1629,9 +1641,11 @@ value DxScript::Func_RemoveMesh(script_machine* machine, int argc, const value* 
 
 value DxScript::Func_LoadShader(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	bool res = true;
+	
 	std::wstring path = argv[0].as_string();
 	path = PathProperty::GetUnique(path);
+
+	bool res = true;
 
 	auto& mapShader = script->pResouceCache_->mapShader;
 	if (mapShader.find(path) == mapShader.end()) {
@@ -4440,13 +4454,16 @@ gstd::value DxScript::Func_ObjSound_SetLoopSampleCount(gstd::script_machine* mac
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
-			WAVEFORMATEX* fmt = player->GetWaveFormat();
-			double startTime = argv[1].as_real() / (double)fmt->nSamplesPerSec;
-			double endTime = argv[2].as_real() / (double)fmt->nSamplesPerSec;;
+			if (auto soundSource = player->GetSoundSource()) {
+				WAVEFORMATEX* fmt = &soundSource->formatWave_;
 
-			SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
-			pStyle->timeLoopStart_ = startTime;
-			pStyle->timeLoopEnd_ = endTime;
+				double startTime = argv[1].as_real() / (double)fmt->nSamplesPerSec;
+				double endTime = argv[2].as_real() / (double)fmt->nSamplesPerSec;;
+
+				SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
+				pStyle->timeLoopStart_ = startTime;
+				pStyle->timeLoopEnd_ = endTime;
+			}
 		}
 	}
 	return value();
@@ -4478,16 +4495,18 @@ gstd::value DxScript::Func_ObjSound_SeekSampleCount(gstd::script_machine* machin
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
-			WAVEFORMATEX* fmt = player->GetWaveFormat();
+			if (auto soundSource = player->GetSoundSource()) {
+				WAVEFORMATEX* fmt = &soundSource->formatWave_;
 
-			int64_t samp = argv[1].as_int();
-			if (player->IsPlaying()) {
-				player->Seek(samp);
-				player->ResetStreamForSeek();
-			}
-			else {
-				SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
-				pStyle->timeStart_ = samp / (double)fmt->nSamplesPerSec;
+				DWORD samp = argv[1].as_int();
+				if (player->IsPlaying()) {
+					player->Seek(samp);
+					player->ResetStreamForSeek();
+				}
+				else {
+					SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
+					pStyle->timeStart_ = samp / (double)fmt->nSamplesPerSec;
+				}
 			}
 		}
 	}
@@ -4588,28 +4607,30 @@ gstd::value DxScript::Func_ObjSound_GetInfo(gstd::script_machine* machine, int a
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
-			WAVEFORMATEX* waveFormat = player->GetWaveFormat();
-			switch (type) {
-			case SoundPlayer::INFO_FORMAT:
-				return script->CreateIntValue((int)player->GetFormat());
-			case SoundPlayer::INFO_CHANNEL:
-				return script->CreateIntValue(waveFormat->nChannels);
-			case SoundPlayer::INFO_SAMPLE_RATE:
-				return script->CreateIntValue(waveFormat->nSamplesPerSec);
-			case SoundPlayer::INFO_AVG_BYTE_PER_SEC:
-				return script->CreateIntValue(waveFormat->nAvgBytesPerSec);
-			case SoundPlayer::INFO_BLOCK_ALIGN:
-				return script->CreateIntValue(waveFormat->nBlockAlign);
-			case SoundPlayer::INFO_BIT_PER_SAMPLE:
-				return script->CreateIntValue(waveFormat->wBitsPerSample);
-			case SoundPlayer::INFO_POSITION:
-				return script->CreateIntValue(player->GetCurrentPosition() / (double)waveFormat->nAvgBytesPerSec);
-			case SoundPlayer::INFO_POSITION_SAMPLE:
-				return script->CreateIntValue(player->GetCurrentPosition() / waveFormat->nBlockAlign);
-			case SoundPlayer::INFO_LENGTH:
-				return script->CreateIntValue(player->GetTotalAudioSize() / (double)waveFormat->nAvgBytesPerSec);
-			case SoundPlayer::INFO_LENGTH_SAMPLE:
-				return script->CreateIntValue(player->GetTotalAudioSize() / waveFormat->nBlockAlign);
+			if (auto soundSource = player->GetSoundSource()) {
+				WAVEFORMATEX* fmt = &soundSource->formatWave_;
+				switch (type) {
+				case SoundPlayer::INFO_FORMAT:
+					return script->CreateIntValue((int)soundSource->format_);
+				case SoundPlayer::INFO_CHANNEL:
+					return script->CreateIntValue(fmt->nChannels);
+				case SoundPlayer::INFO_SAMPLE_RATE:
+					return script->CreateIntValue(fmt->nSamplesPerSec);
+				case SoundPlayer::INFO_AVG_BYTE_PER_SEC:
+					return script->CreateIntValue(fmt->nAvgBytesPerSec);
+				case SoundPlayer::INFO_BLOCK_ALIGN:
+					return script->CreateIntValue(fmt->nBlockAlign);
+				case SoundPlayer::INFO_BIT_PER_SAMPLE:
+					return script->CreateIntValue(fmt->wBitsPerSample);
+				case SoundPlayer::INFO_POSITION:
+					return script->CreateIntValue(player->GetCurrentPosition() / (double)fmt->nAvgBytesPerSec);
+				case SoundPlayer::INFO_POSITION_SAMPLE:
+					return script->CreateIntValue(player->GetCurrentPosition() / fmt->nBlockAlign);
+				case SoundPlayer::INFO_LENGTH:
+					return script->CreateIntValue(soundSource->audioSizeTotal_ / (double)fmt->nAvgBytesPerSec);
+				case SoundPlayer::INFO_LENGTH_SAMPLE:
+					return script->CreateIntValue(soundSource->audioSizeTotal_ / fmt->nBlockAlign);
+				}
 			}
 			return value();
 		}

@@ -17,6 +17,7 @@ namespace directx {
 		std::map<std::wstring, shared_ptr<Texture>> mapTexture;
 		std::map<std::wstring, shared_ptr<DxMesh>> mapMesh;
 		std::map<std::wstring, shared_ptr<ShaderData>> mapShader;
+		std::map<std::wstring, shared_ptr<SoundSourceData>> mapSound;
 	public:
 		DxScriptResourceCache();
 
@@ -27,6 +28,7 @@ namespace directx {
 		shared_ptr<Texture> GetTexture(const std::wstring& name);
 		shared_ptr<DxMesh> GetMesh(const std::wstring& name);
 		shared_ptr<ShaderData> GetShader(const std::wstring& name);
+		shared_ptr<SoundSourceData> GetSound(const std::wstring& name);
 	};
 
 	//*******************************************************************
@@ -47,8 +49,6 @@ namespace directx {
 		static double g_posInvalidZ_;
 	protected:
 		std::shared_ptr<DxScriptObjectManager> objManager_;
-
-		std::map<std::wstring, shared_ptr<SoundPlayer>> mapSoundPlayer_;
 
 		DxScriptResourceCache* pResouceCache_;
 	public:

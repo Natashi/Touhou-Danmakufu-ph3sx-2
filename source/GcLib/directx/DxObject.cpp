@@ -773,7 +773,16 @@ DxSoundObject::~DxSoundObject() {
 
 bool DxSoundObject::Load(const std::wstring& path) {
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
-	player_ = manager->GetPlayer(path, true);
+
+	player_ = nullptr;
+
+	shared_ptr<SoundSourceData> newSource = manager->GetSoundSource(path, true);
+	if (newSource) {
+		if (newSource != soundSource_)
+			player_ = manager->CreatePlayer(newSource);
+	}
+	soundSource_ = newSource;
+
 	return player_ != nullptr;
 }
 void DxSoundObject::Play() {
