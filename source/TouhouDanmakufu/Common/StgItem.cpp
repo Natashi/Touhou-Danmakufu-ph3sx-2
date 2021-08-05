@@ -608,9 +608,11 @@ StgItemData::AnimationData* StgItemData::GetData(size_t frame) {
 	return &listAnime_[0];
 }
 DxRect<float> StgItemData::AnimationData::SetDestRect(DxRect<LONG>* src) {
-	float width = (src->right - src->left) / 2.0f;
-	float height = (src->bottom - src->top) / 2.0f;
-	return DxRect<float>(-width, -height, width, height);
+	LONG rw = src->GetWidth();
+	LONG rh = src->GetHeight();
+	float width = rw / 2.0f;
+	float height = rh / 2.0f;
+	return DxRect<float>(-width + 0.5f, -height + 0.5f, width + 0.5f, height + 0.5f);
 }
 
 //*******************************************************************
