@@ -523,6 +523,7 @@ namespace directx {
 	class DxSoundObject : public DxScriptObjectBase {
 		friend DxScript;
 	protected:
+		shared_ptr<SoundSourceData> soundSource_;
 		shared_ptr<SoundPlayer> player_;
 		SoundPlayer::PlayStyle style_;
 	public:

@@ -68,8 +68,6 @@ namespace directx {
 		Wave,		//WAVE RIFF
 		Ogg,		//Ogg Vorbis
 		Mp3,		//MPEG3
-		AWave,		//.wav but mp3 actually(?)
-		Midi,		//MIDI (unsupported)
 	};
 
 	//*******************************************************************
