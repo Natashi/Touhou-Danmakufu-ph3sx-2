@@ -84,6 +84,8 @@ namespace gstd {
 
 		std::vector<gstd::function> func_;
 		std::vector<gstd::constant> const_;
+		std::map<std::wstring, std::wstring> definedMacro_;
+
 		shared_ptr<RandProvider> mt_;
 		shared_ptr<RandProvider> mtEffect_;
 
@@ -104,7 +106,7 @@ namespace gstd {
 		void _RaiseError(int line, const std::wstring& message);
 		std::wstring _GetErrorLineSource(int line);
 
-		virtual std::vector<char> _Include(std::vector<char>& source);
+		virtual std::vector<char> _ParsePreprocessors(std::vector<char>& source);
 		virtual bool _CreateEngine();
 
 		std::wstring _ExtendPath(std::wstring path);
