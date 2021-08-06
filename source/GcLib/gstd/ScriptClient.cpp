@@ -335,6 +335,7 @@ ScriptClientBase::ScriptClientBase() {
 	_AddConstant(&commonConstant);
 	{
 		definedMacro_[L"_DNH_PH3SX_"] = L"";
+		definedMacro_[L"_DNH_PH3SX_ZLABEL_"] = L"";
 	}
 
 	Reset();
