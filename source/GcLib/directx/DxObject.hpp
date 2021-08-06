@@ -523,7 +523,7 @@ namespace directx {
 	class DxSoundObject : public DxScriptObjectBase {
 		friend DxScript;
 	protected:
-		shared_ptr<SoundSourceData> soundSource_;
+		std::map<std::wstring, weak_ptr<SoundPlayer>> mapCachedPlayers_;
 		shared_ptr<SoundPlayer> player_;
 		SoundPlayer::PlayStyle style_;
 	public:

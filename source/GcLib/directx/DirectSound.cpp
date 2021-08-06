@@ -349,10 +349,14 @@ void DirectSoundManager::SoundManageThread::_Arrange() {
 				continue;
 			}
 
-			bool bDelete = player->bDelete_ || (player->bAutoDelete_ && !player->IsPlaying());
+			bool bPlaying = player->IsPlaying();
+			bool bDelete = player->bDelete_ || (player->bAutoDelete_ && !bPlaying);
+			if (!bDelete && (itrPlayer->use_count() == 1)) {
+				bDelete = !bPlaying;
+			}
 
 			if (bDelete) {
-				Logger::WriteTop(StringUtility::Format(L"DirectSound: Released player [%s]", player->GetPath().c_str()));
+				//Logger::WriteTop(StringUtility::Format(L"DirectSound: Released player [%s]", player->GetPath().c_str()));
 				player->Stop();
 				itrPlayer = listPlayer->erase(itrPlayer);
 			}
@@ -423,8 +427,8 @@ bool SoundInfoPanel::_AddedLogger(HWND hTab) {
 
 	wndListView_.AddColumn(64, ROW_ADDRESS, L"Address");
 	wndListView_.AddColumn(96, ROW_FILENAME, L"Name");
-	wndListView_.AddColumn(48, ROW_FULLPATH, L"Path");
-	wndListView_.AddColumn(32, ROW_COUNT_REFFRENCE, L"Ref");
+	wndListView_.AddColumn(128, ROW_FULLPATH, L"Path");
+	wndListView_.AddColumn(48, ROW_COUNT_REFFRENCE, L"Uses");
 
 	return true;
 }
