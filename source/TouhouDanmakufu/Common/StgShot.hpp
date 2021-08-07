@@ -504,6 +504,9 @@ protected:
 	double posXE_;
 	double posYE_;
 
+	float posXO_;
+	float posYO_;
+
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
@@ -574,6 +577,8 @@ public:
 protected:
 	std::list<LaserNode> listPosition_;
 	float tipDecrement_;
+	float posXO_;
+	float posYO_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
