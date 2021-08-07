@@ -1162,6 +1162,8 @@ namespace gstd {
 		size_t length = argv[0].length_as_array();
 		int insertPos = argv[1].as_int();
 
+		if (insertPos < 0) insertPos += length;
+
 		if (insertPos < 0 || (length > 0 && insertPos > length) || (length == 0 && insertPos > 0)) {
 			std::string error = StringUtility::Format("Array index out of bounds. (inserting=%d, size=%u)\r\n",
 				insertPos, length);
@@ -1219,6 +1221,8 @@ namespace gstd {
 
 		size_t length = argv[0].length_as_array();
 		int index_1 = argv[1].as_int();
+
+		if (index_1 < 0) index_1 += length;
 
 		if (index_1 < 0 || index_1 >= length) {
 			std::string error = StringUtility::Format("Array index out of bounds. (erasing=%d, size=%u)\r\n",
