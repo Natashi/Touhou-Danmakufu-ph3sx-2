@@ -435,6 +435,7 @@ class StgNormalShotObject : public StgShotObject {
 	friend class StgShotObject;
 protected:
 	double angularVelocity_;
+	bool bFixedAngle_;
 
 	void _AddIntersectionRelativeTarget();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
@@ -457,6 +458,7 @@ public:
 	virtual void SetShotDataID(int id);
 
 	void SetGraphicAngularVelocity(double agv) { angularVelocity_ = agv; }
+	void SetFixedAngle(bool fix) { bFixedAngle_ = fix; }
 };
 
 //*******************************************************************

@@ -1427,6 +1427,7 @@ float StgShotObject::DelayParameter::_CalculateValue(D3DXVECTOR3* param, lerp_fu
 StgNormalShotObject::StgNormalShotObject(StgStageController* stageController) : StgShotObject(stageController) {
 	typeObject_ = TypeObject::Shot;
 	angularVelocity_ = 0;
+	bFixedAngle_ = false;
 
 	move_ = D3DXVECTOR2(1, 0);
 	lastAngle_ = 0;
@@ -1450,9 +1451,11 @@ void StgNormalShotObject::Work() {
 		{
 			angle_.z += angularVelocity_;
 
-			double angleZ = (delay_.time > 0 && delay_.spin != 0) ? delay_.angle : angle_.z;
+			bool bDelay = delay_.time > 0 && delay_.spin != 0;
+
+			double angleZ = bDelay ? delay_.angle : angle_.z;
 			if (StgShotData* shotData = _GetShotData()) {
-				if (!shotData->IsFixedAngle()) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
+				if (!bFixedAngle_ && bDelay) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
 			}
 			if (angleZ != lastAngle_) {
 				move_ = D3DXVECTOR2(cosf(angleZ), sinf(angleZ));
@@ -1679,6 +1682,7 @@ void StgNormalShotObject::SetShotDataID(int id) {
 
 		double avMin = shotData->GetAngularVelocityMin();
 		double avMax = shotData->GetAngularVelocityMax();
+		bFixedAngle_ = shotData->IsFixedAngle();
 		if (avMin != 0 || avMax != 0) {
 			ref_count_ptr<StgStageInformation> stageInfo = stageController_->GetStageInformation();
 			shared_ptr<RandProvider> rand = stageInfo->GetRandProvider();
