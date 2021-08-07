@@ -506,6 +506,9 @@ protected:
 	float posXE_;
 	float posYE_;
 
+	float posXO_;
+	float posYO_;
+
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
@@ -542,6 +545,7 @@ protected:
 	bool bLaserExpand_;
 
 	virtual void _DeleteInAutoClip();
+	virtual void _AddIntersectionRelativeTarget();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
 public:
 	StgStraightLaserObject(StgStageController* stageController);
@@ -590,6 +594,8 @@ public:
 protected:
 	std::list<LaserNode> listPosition_;
 	float tipDecrement_;
+	float posXO_;
+	float posYO_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
