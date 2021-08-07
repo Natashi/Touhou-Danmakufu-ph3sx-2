@@ -2562,11 +2562,11 @@ void StgCurveLaserObject::RenderOnShotManager() {
 	if (delayData != nullptr && delay_.time > 0) {
 		BlendMode objDelayBlendType = GetSourceBlendType();
 		if (objDelayBlendType == MODE_BLEND_NONE) {
-			renderer = shotData->GetRenderer(MODE_BLEND_ADD_ARGB);
+			renderer = delayData->GetRenderer(MODE_BLEND_ADD_ARGB);
 			shotBlendType = MODE_BLEND_ADD_ARGB;
 		}
 		else {
-			renderer = shotData->GetRenderer(objDelayBlendType);
+			renderer = delayData->GetRenderer(objDelayBlendType);
 		}
 		if (renderer == nullptr) return;
 
@@ -2601,8 +2601,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		}
 
 		VERTEX_TLX verts[4];
-		int* ptrSrc = reinterpret_cast<int*>(rcSrc);
-		int* ptrDst = reinterpret_cast<int*>(rcDest);
+		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
+		float* ptrDst = reinterpret_cast<float*>(rcDest);
 
 		D3DXVECTOR2 move = (delay_.spin != 0) ? D3DXVECTOR2(cosf(delay_.angle), sinf(delay_.angle)) : move_;
 
@@ -2707,7 +2707,7 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 			listScriptValue[1] = itemScript->CreateRealArrayValue(listPos, 2U);
 			itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
-		if (itemManager->IsDefaultBonusItemEnable() && delay_.time == 0 && !flgPlayerCollision) {
+		if (itemManager->IsDefaultBonusItemEnable() && (delay_.time == 0 || bEnableMotionDelay_) && !flgPlayerCollision) {
 			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 				ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
 				if (stageController_->GetMainObjectManager()->AddObject(obj) != DxScript::ID_INVALID) {
