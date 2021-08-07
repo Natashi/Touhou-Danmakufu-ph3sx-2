@@ -766,6 +766,14 @@ double DxScript::g_posInvalidZ_ = 0;
 DxScript::DxScript() {
 	_AddFunction(&dxFunction);
 	_AddConstant(&dxConstant);
+	{
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+		const std::vector<constant> dxConstant2 = {
+			constant("SCREEN_WIDTH", graphics->GetScreenWidth()),
+			constant("SCREEN_HEIGHT", graphics->GetScreenHeight()),
+		};
+		_AddConstant(&dxConstant2);
+	}
 
 	objManager_ = std::shared_ptr<DxScriptObjectManager>(new DxScriptObjectManager());
 

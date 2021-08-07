@@ -405,10 +405,12 @@ std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 	return Encoding::BytesToWString(pStr, size, encoding);
 }
 std::vector<char> ScriptClientBase::_ParsePreprocessors(std::vector<char>& source) {
+	FileManager* fileManager = FileManager::GetBase();
+
 	std::wstring pathSource = engine_->GetPath();
 	std::vector<char> res = source;
-	FileManager* fileManager = FileManager::GetBase();
-	std::set<std::wstring> setReadPath;
+	
+	std::set<std::wstring> setIncludedFilePath;
 
 	gstd::ref_count_ptr<ScriptFileLineMap> mapLine = new ScriptFileLineMap();
 	engine_->SetScriptFileLineMap(mapLine);
@@ -416,14 +418,10 @@ std::vector<char> ScriptClientBase::_ParsePreprocessors(std::vector<char>& sourc
 	mapLine->AddEntry(pathSource, 1, StringUtility::CountCharacter(source, '\n') + 1);
 
 	//std::vector<Token> mapTokens;
-	auto _AssertNewline = [&](Scanner* sc) {
-		if (sc->HasNext() && sc->Next().GetType() != Token::Type::TK_NEWLINE) {
-			int line = sc->GetCurrentLine();
-			source = res;
-			engine_->SetSource(source);
-
-			_RaiseError(line, L"A newline is required.\r\n");
-		}
+	auto __RaiseError = [&](int line, const std::wstring& err) {
+		source = res;
+		engine_->SetSource(source);
+		_RaiseError(line, err);
 	};
 	struct _DirectivePos {
 		size_t posBefore;
@@ -431,289 +429,289 @@ std::vector<char> ScriptClientBase::_ParsePreprocessors(std::vector<char>& sourc
 	};
 
 	Encoding::Type mainEncoding = Encoding::UTF8;
-	bool bEnd = false;
-	while (true) {
-		if (bEnd) break;
-		Scanner scanner(res);
+	{
+		Scanner scanner = Scanner(res);
 		mainEncoding = scanner.GetEncoding();
-		size_t resSize = res.size();
+		size_t mainCharSize = Encoding::GetCharSize(mainEncoding);
 
-		bEnd = true;
-		while (scanner.HasNext()) {
-			Token& tok = scanner.Next();
-			//mapTokens.push_back(tok);
-			if (tok.GetType() == Token::Type::TK_EOF) {
-				break;
+		auto _ResetScanner = [&](size_t iniReadPos) {
+			scanner = Scanner(res);
+			scanner.SetCurrentPointer(iniReadPos);
+		};
+		auto _AssertNewline = [&]() {
+			if (scanner.HasNext() && scanner.Next().GetType() != Token::Type::TK_NEWLINE) {
+				int line = scanner.GetCurrentLine();
+				__RaiseError(line, L"A newline is required.\r\n");
 			}
-			else if (tok.GetType() == Token::Type::TK_SHARP) {
-				size_t posBeforeDirective = scanner.GetCurrentPointer() - 1;
-				if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE)
-					posBeforeDirective--;
+		};
+		auto _SkipToNextValidLine = [&]() {
+			Token& tok = scanner.GetToken();
+			while (true) {
+				if (tok.GetType() == Token::Type::TK_EOF) return false;
+				if (!scanner.HasNext()) return false;
 
 				tok = scanner.Next();
-				std::wstring directiveType = tok.GetElement();
+				if (tok.GetType() == Token::Type::TK_NEWLINE) {
+					tok = scanner.Next();
+					break;
+				}
+			}
+			return tok.GetType() != Token::Type::TK_EOF;
+		};
 
-				if (directiveType == L"include") {
-					bEnd = false;
+		scanner.Next();
+		while (true) {
+			bool bReread = false;
+			Token& tok = scanner.GetToken();
+			if (tok.GetType() == Token::Type::TK_SHARP) {
+				size_t posBeforeDirective = scanner.GetCurrentPointer() - mainCharSize;
 
-					size_t posCurrent = scanner.GetCurrentPointer();
-					std::wstring wPath = scanner.Next().GetString();
-					
-					if (scanner.HasNext()) {
-						int posBeforeNewLine = scanner.GetCurrentPointer();
-						_AssertNewline(&scanner);
-						scanner.SetCurrentPointer(posBeforeNewLine);
-					}
+				tok = scanner.Next();
+				if (tok.GetType() == Token::Type::TK_ID) {
+					int directiveLine = scanner.GetCurrentLine();
+					std::wstring directiveType = tok.GetElement();
 
-					size_t posAfterInclude = scanner.GetCurrentPointer();
-					scanner.SetCurrentPointer(posCurrent);
+					if (directiveType == L"include") {
+						std::wstring wPath = scanner.Next().GetString();
 
-					//Transform a "../" or a "..\" at the start into a "./"
-					if (wPath._Starts_with(L"../") || wPath._Starts_with(L"..\\"))
-						wPath = L"./" + wPath;
-
-					//Expand the relative "./" into the full path
-					if (wPath.find(L".\\") != std::wstring::npos || wPath.find(L"./") != std::wstring::npos) {
-						int line = scanner.GetCurrentLine();
-						const std::wstring& linePath = mapLine->GetPath(line);
-						std::wstring tDir = PathProperty::GetFileDirectory(linePath);
-						//std::string tDir = PathProperty::GetFileDirectory(pathSource);
-						wPath = tDir.substr(PathProperty::GetModuleDirectory().size()) + wPath.substr(2);
-					}
-					wPath = PathProperty::GetModuleDirectory() + wPath;
-					wPath = PathProperty::GetUnique(wPath);
-
-					bool bAlreadyIncluded = setReadPath.find(wPath) != setReadPath.end();
-					if (bAlreadyIncluded) {
-						//Logger::WriteTop(StringUtility::Format(L"Scanner: File already included, skipping. (%s)", wPath.c_str()));
-						res.erase(res.begin() + posBeforeDirective, res.begin() + posAfterInclude);
-						break;
-					}
-
-					std::vector<char> placement;
-					{
-						shared_ptr<FileReader> reader = fileManager->GetFileReader(wPath);
-						if (reader == nullptr || !reader->Open()) {
-							int line = scanner.GetCurrentLine();
-							source = res;
-							engine_->SetSource(source);
-
-							std::wstring error = StringUtility::Format(L"Include file is not found. [%s]\r\n", wPath.c_str());
-							_RaiseError(line, error);
+						size_t posAfterInclude = scanner.GetCurrentPointer();
+						if (scanner.HasNext()) {
+							_AssertNewline();
+							scanner.Next();
 						}
 
-						//Detect target encoding
-						size_t targetBomSize = 0;
-						Encoding::Type includeEncoding = Encoding::UTF8;
-						if (reader->GetFileSize() >= 2) {
-							byte data[3];
-							reader->Read(data, 3);
+						//Transform a "../" or a "..\" at the start into a "./"
+						if (wPath._Starts_with(L"../") || wPath._Starts_with(L"..\\"))
+							wPath = L"./" + wPath;
 
-							includeEncoding = Encoding::Detect((char*)data, reader->GetFileSize());
-							targetBomSize = Encoding::GetBomSize(includeEncoding);
-
-							reader->SetFilePointerBegin();
+						//Expand the relative "./" into the full path
+						if (wPath.find(L".\\") != std::wstring::npos || wPath.find(L"./") != std::wstring::npos) {
+							const std::wstring& linePath = mapLine->GetPath(directiveLine);
+							std::wstring tDir = PathProperty::GetFileDirectory(linePath);
+							//std::string tDir = PathProperty::GetFileDirectory(pathSource);
+							wPath = tDir.substr(PathProperty::GetModuleDirectory().size()) + wPath.substr(2);
 						}
+						wPath = PathProperty::GetModuleDirectory() + wPath;
+						wPath = PathProperty::GetUnique(wPath);
 
-						if (includeEncoding == Encoding::UTF16LE || includeEncoding == Encoding::UTF16BE) {
-							//Including UTF-16
+						if (setIncludedFilePath.find(wPath) != setIncludedFilePath.end()) {
+							//Logger::WriteTop(StringUtility::Format(L"Scanner: File already included, skipping. (%s)", wPath.c_str()));
+							res.erase(res.begin() + posBeforeDirective, res.begin() + posAfterInclude);
+							_ResetScanner(posBeforeDirective);
 
-							reader->Seek(targetBomSize);
-							placement.resize(reader->GetFileSize() - targetBomSize); //- BOM size
-							reader->Read(&placement[0], placement.size());
+							goto lab_skip_directive;
+						}
+						setIncludedFilePath.insert(wPath);
 
-							if (placement.size() > 0U) {
-								//Convert the including file to UTF-8
-								if (mainEncoding == Encoding::UTF8 || mainEncoding == Encoding::UTF8BOM) {
-									if (includeEncoding == Encoding::UTF16BE) {
-										for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
-											std::swap(*wItr, *(wItr + 1));
-										}
-									}
-
-									std::vector<char> mbres;
-									size_t countMbRes = StringUtility::ConvertWideToMulti((wchar_t*)placement.data(),
-										placement.size() / 2U, mbres, CP_UTF8);
-									if (countMbRes == 0) {
-										std::wstring error = StringUtility::Format(L"Error reading include file. "
-											"(%s -> UTF-8) [%s]\r\n",
-											includeEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
-										_RaiseError(scanner.GetCurrentLine(), error);
-									}
-
-									includeEncoding = mainEncoding;
-									placement = mbres;
-								}
+						std::vector<char> bufIncluding;
+						{
+							shared_ptr<FileReader> reader = fileManager->GetFileReader(wPath);
+							if (reader == nullptr || !reader->Open()) {
+								std::wstring error = StringUtility::Format(L"Include file is not found. [%s]\r\n", wPath.c_str());
+								__RaiseError(directiveLine, error);
 							}
-						}
-						else {
-							//Including UTF-8
 
-							reader->Seek(targetBomSize);
-							placement.resize(reader->GetFileSize() - targetBomSize);
-							reader->Read(&placement[0], placement.size());
+							//Detect target encoding
+							size_t targetBomSize = 0;
+							Encoding::Type includeEncoding = Encoding::UTF8;
+							if (reader->GetFileSize() >= 2) {
+								byte data[3];
+								reader->Read(data, 3);
 
-							if (placement.size() > 0U) {
-								//Convert the include file to UTF-16 if it's in UTF-8
-								if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE) {
-									size_t placementSize = placement.size();
+								includeEncoding = Encoding::Detect((char*)data, reader->GetFileSize());
+								targetBomSize = Encoding::GetBomSize(includeEncoding);
 
-									std::vector<char> wplacement;
-									size_t countWRes = StringUtility::ConvertMultiToWide(placement.data(),
-										placementSize, wplacement, CP_UTF8);
-									if (countWRes == 0) {
-										std::wstring error = StringUtility::Format(L"Error reading include file. "
-											"(UTF-8 -> %s) [%s]\r\n",
-											mainEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
-										_RaiseError(scanner.GetCurrentLine(), error);
-									}
+								reader->SetFilePointerBegin();
+							}
 
-									placement = wplacement;
+							if (includeEncoding == Encoding::UTF16LE || includeEncoding == Encoding::UTF16BE) {
+								//Including UTF-16
 
-									//Swap bytes for UTF-16 BE
-									if (mainEncoding == Encoding::UTF16BE) {
-										for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
-											std::swap(*wItr, *(wItr + 1));
+								reader->Seek(targetBomSize);
+								bufIncluding.resize(reader->GetFileSize() - targetBomSize); //- BOM size
+								reader->Read(&bufIncluding[0], bufIncluding.size());
+
+								if (bufIncluding.size() > 0U) {
+									//Convert the including file to UTF-8
+									if (mainEncoding == Encoding::UTF8 || mainEncoding == Encoding::UTF8BOM) {
+										if (includeEncoding == Encoding::UTF16BE) {
+											for (auto wItr = bufIncluding.begin(); wItr != bufIncluding.end(); wItr += 2) {
+												std::swap(*wItr, *(wItr + 1));
+											}
 										}
+
+										std::vector<char> mbres;
+										size_t countMbRes = StringUtility::ConvertWideToMulti(
+											(wchar_t*)bufIncluding.data(), bufIncluding.size() / 2U, mbres, CP_UTF8);
+										if (countMbRes == 0) {
+											std::wstring error = StringUtility::Format(L"Error reading include file. "
+												"(%s -> UTF-8) [%s]\r\n",
+												includeEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
+											__RaiseError(scanner.GetCurrentLine(), error);
+										}
+
+										includeEncoding = mainEncoding;
+										bufIncluding = mbres;
 									}
 								}
-							}
-						}
-					}
-					mapLine->AddEntry(wPath,
-						scanner.GetCurrentLine(),
-						StringUtility::CountCharacter(placement, '\n') + 1);
-
-					{
-						std::vector<char> newSource;
-						newSource.insert(newSource.begin(), res.begin(), res.begin() + posBeforeDirective);
-						newSource.insert(newSource.end(), placement.begin(), placement.end());
-						newSource.insert(newSource.end(), res.begin() + posAfterInclude, res.end());
-
-						res = newSource;
-					}
-					setReadPath.insert(wPath);
-
-					if (false) {
-						static int countTest = 0;
-						static std::wstring tPath = L"";
-						if (tPath != pathSource) {
-							countTest = 0;
-							tPath = pathSource;
-						}
-						std::wstring pathTest = PathProperty::GetModuleDirectory() + StringUtility::Format(L"temp\\script_%s%03d.txt", PathProperty::GetFileName(pathSource).c_str(), countTest);
-						File file(pathTest);
-						File::CreateFileDirectory(pathTest);
-						file.Open(File::WRITEONLY);
-						file.Write(&res[0], res.size());
-
-						if (false) {
-							std::string strNewLine = "\r\n";
-							std::wstring strNewLineW = L"\r\n";
-							if (mainEncoding == Encoding::UTF16LE) {
-								file.Write(&strNewLineW[0], strNewLine.size() * sizeof(wchar_t));
-								file.Write(&strNewLineW[0], strNewLine.size() * sizeof(wchar_t));
 							}
 							else {
-								file.Write(&strNewLine[0], strNewLine.size());
-								file.Write(&strNewLine[0], strNewLine.size());
-							}
+								//Including UTF-8
 
-							std::list<ScriptFileLineMap::Entry>& listEntry = mapLine->GetEntryList();
-							std::list<ScriptFileLineMap::Entry>::iterator itr = listEntry.begin();
+								reader->Seek(targetBomSize);
+								bufIncluding.resize(reader->GetFileSize() - targetBomSize);
+								reader->Read(&bufIncluding[0], bufIncluding.size());
 
-							for (; itr != listEntry.end(); itr++) {
-								if (mainEncoding == Encoding::UTF16LE) {
-									ScriptFileLineMap::Entry entry = (*itr);
-									std::wstring strPath = entry.path_ + L"\r\n";
-									std::wstring strLineStart = StringUtility::Format(L"  lineStart   :%4d\r\n", entry.lineStart_);
-									std::wstring strLineEnd = StringUtility::Format(L"  lineEnd     :%4d\r\n", entry.lineEnd_);
-									std::wstring strLineStartOrg = StringUtility::Format(L"  lineStartOrg:%4d\r\n", entry.lineStartOriginal_);
-									std::wstring strLineEndOrg = StringUtility::Format(L"  lineEndOrg  :%4d\r\n", entry.lineEndOriginal_);
+								if (bufIncluding.size() > 0U) {
+									//Convert the include file to UTF-16 if it's in UTF-8
+									if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE) {
+										size_t includeSize = bufIncluding.size();
 
-									file.Write(&strPath[0], strPath.size() * sizeof(wchar_t));
-									file.Write(&strLineStart[0], strLineStart.size() * sizeof(wchar_t));
-									file.Write(&strLineEnd[0], strLineEnd.size() * sizeof(wchar_t));
-									file.Write(&strLineStartOrg[0], strLineStartOrg.size() * sizeof(wchar_t));
-									file.Write(&strLineEndOrg[0], strLineEndOrg.size() * sizeof(wchar_t));
-									file.Write(&strNewLineW[0], strNewLineW.size() * sizeof(wchar_t));
-								}
-								else {
-									ScriptFileLineMap::Entry entry = (*itr);
-									std::string strPath = StringUtility::ConvertWideToMulti(entry.path_) + "\r\n";
-									std::string strLineStart = StringUtility::Format("  lineStart   :%4d\r\n", entry.lineStart_);
-									std::string strLineEnd = StringUtility::Format("  lineEnd     :%4d\r\n", entry.lineEnd_);
-									std::string strLineStartOrg = StringUtility::Format("  lineStartOrg:%4d\r\n", entry.lineStartOriginal_);
-									std::string strLineEndOrg = StringUtility::Format("  lineEndOrg  :%4d\r\n", entry.lineEndOriginal_);
+										std::vector<char> wplacement;
+										size_t countWRes = StringUtility::ConvertMultiToWide(bufIncluding.data(),
+											includeSize, wplacement, CP_UTF8);
+										if (countWRes == 0) {
+											std::wstring error = StringUtility::Format(L"Error reading include file. "
+												"(UTF-8 -> %s) [%s]\r\n",
+												mainEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
+											__RaiseError(scanner.GetCurrentLine(), error);
+										}
 
-									file.Write(&strPath[0], strPath.size());
-									file.Write(&strLineStart[0], strLineStart.size());
-									file.Write(&strLineEnd[0], strLineEnd.size());
-									file.Write(&strLineStartOrg[0], strLineStartOrg.size());
-									file.Write(&strLineEndOrg[0], strLineEndOrg.size());
-									file.Write(&strNewLine[0], strNewLine.size());
+										bufIncluding = wplacement;
+
+										//Swap bytes for UTF-16 BE
+										if (mainEncoding == Encoding::UTF16BE) {
+											for (auto wItr = bufIncluding.begin(); wItr != bufIncluding.end(); wItr += 2) {
+												std::swap(*wItr, *(wItr + 1));
+											}
+										}
+									}
 								}
 							}
 						}
+						mapLine->AddEntry(wPath, directiveLine,
+							StringUtility::CountCharacter(bufIncluding, '\n') + 1);
 
-						countTest++;
+						{
+							res.erase(res.begin() + posBeforeDirective, res.begin() + posAfterInclude);
+							res.insert(res.begin() + posBeforeDirective, bufIncluding.begin(), bufIncluding.end());
+
+							_ResetScanner(posBeforeDirective);
+						}
+
+						if (false) {
+							static int countTest = 0;
+							static std::wstring tPath = L"";
+							if (tPath != pathSource) {
+								countTest = 0;
+								tPath = pathSource;
+							}
+							std::wstring pathTest = PathProperty::GetModuleDirectory() + StringUtility::Format(L"temp\\script_%s%03d.txt", PathProperty::GetFileName(pathSource).c_str(), countTest);
+							File file(pathTest);
+							File::CreateFileDirectory(pathTest);
+							file.Open(File::WRITEONLY);
+							file.Write(&res[0], res.size());
+
+							if (false) {
+								std::string strNewLine = "\r\n";
+								std::wstring strNewLineW = L"\r\n";
+								if (mainEncoding == Encoding::UTF16LE) {
+									file.Write(&strNewLineW[0], strNewLine.size() * sizeof(wchar_t));
+									file.Write(&strNewLineW[0], strNewLine.size() * sizeof(wchar_t));
+								}
+								else {
+									file.Write(&strNewLine[0], strNewLine.size());
+									file.Write(&strNewLine[0], strNewLine.size());
+								}
+
+								std::list<ScriptFileLineMap::Entry>& listEntry = mapLine->GetEntryList();
+								std::list<ScriptFileLineMap::Entry>::iterator itr = listEntry.begin();
+
+								for (; itr != listEntry.end(); itr++) {
+									if (mainEncoding == Encoding::UTF16LE) {
+										ScriptFileLineMap::Entry entry = (*itr);
+										std::wstring strPath = entry.path_ + L"\r\n";
+										std::wstring strLineStart = StringUtility::Format(L"  lineStart   :%4d\r\n", entry.lineStart_);
+										std::wstring strLineEnd = StringUtility::Format(L"  lineEnd     :%4d\r\n", entry.lineEnd_);
+										std::wstring strLineStartOrg = StringUtility::Format(L"  lineStartOrg:%4d\r\n", entry.lineStartOriginal_);
+										std::wstring strLineEndOrg = StringUtility::Format(L"  lineEndOrg  :%4d\r\n", entry.lineEndOriginal_);
+
+										file.Write(&strPath[0], strPath.size() * sizeof(wchar_t));
+										file.Write(&strLineStart[0], strLineStart.size() * sizeof(wchar_t));
+										file.Write(&strLineEnd[0], strLineEnd.size() * sizeof(wchar_t));
+										file.Write(&strLineStartOrg[0], strLineStartOrg.size() * sizeof(wchar_t));
+										file.Write(&strLineEndOrg[0], strLineEndOrg.size() * sizeof(wchar_t));
+										file.Write(&strNewLineW[0], strNewLineW.size() * sizeof(wchar_t));
+									}
+									else {
+										ScriptFileLineMap::Entry entry = (*itr);
+										std::string strPath = StringUtility::ConvertWideToMulti(entry.path_) + "\r\n";
+										std::string strLineStart = StringUtility::Format("  lineStart   :%4d\r\n", entry.lineStart_);
+										std::string strLineEnd = StringUtility::Format("  lineEnd     :%4d\r\n", entry.lineEnd_);
+										std::string strLineStartOrg = StringUtility::Format("  lineStartOrg:%4d\r\n", entry.lineStartOriginal_);
+										std::string strLineEndOrg = StringUtility::Format("  lineEndOrg  :%4d\r\n", entry.lineEndOriginal_);
+
+										file.Write(&strPath[0], strPath.size());
+										file.Write(&strLineStart[0], strLineStart.size());
+										file.Write(&strLineEnd[0], strLineEnd.size());
+										file.Write(&strLineStartOrg[0], strLineStartOrg.size());
+										file.Write(&strLineEndOrg[0], strLineEndOrg.size());
+										file.Write(&strNewLine[0], strNewLine.size());
+									}
+								}
+							}
+
+							countTest++;
+						}
+
+						bReread = true;
 					}
-				}
-				else if (directiveType == L"ifdef" || directiveType == L"ifndef") {
-					//TODO: Unspaghettify this code
-					
-					bEnd = false;
+					else if (directiveType == L"ifdef" || directiveType == L"ifndef") {
+						//TODO: Unspaghettify this code
 
-					bool bIfdef = directiveType.size() == 5;
+						bool bIfdef = directiveType.size() == 5;
 
-					size_t posCurrent = scanner.GetCurrentPointer();
-					std::wstring macroName = scanner.Next().GetElement();
+						std::wstring macroName = scanner.Next().GetElement();
 
-					if (scanner.HasNext()) {
-						int posBeforeNewLine = scanner.GetCurrentPointer();
-						_AssertNewline(&scanner);
-						//scanner.SetCurrentPointer(posBeforeNewLine);
-					}
+						if (scanner.HasNext()) {
+							_AssertNewline();
+							//scanner.Next();
+						}
 
-					_DirectivePos posMain = { posBeforeDirective, (size_t)scanner.GetCurrentPointer() };
-					//scanner.SetCurrentPointer(posCurrent);
+						_DirectivePos posMain = { posBeforeDirective, (size_t)scanner.GetCurrentPointer() };
+						//scanner.SetCurrentPointer(posCurrent);
 
-					bool bValidSkipFirst = false;
-					{
-						auto itrFind = definedMacro_.find(macroName);
-						bool bMacroDefined = definedMacro_.find(macroName) != definedMacro_.end();
-						bValidSkipFirst = bMacroDefined ^ bIfdef;
-						//true + true	-> false
-						//true + false	-> true
-						//false + true	-> true
-						//false + false	-> false
-					}
+						bool bValidSkipFirst = false;
+						{
+							auto itrFind = definedMacro_.find(macroName);
+							bool bMacroDefined = definedMacro_.find(macroName) != definedMacro_.end();
+							bValidSkipFirst = bMacroDefined ^ bIfdef;
+							//true + true	-> false
+							//true + false	-> true
+							//false + true	-> true
+							//false + false	-> false
+						}
 
-					bool bHasElse = false;
-					_DirectivePos posElse;
-					_DirectivePos posEndif;
+						bool bHasElse = false;
+						_DirectivePos posElse;
+						_DirectivePos posEndif;
 
-					auto _ThrowErrorNoEndif = [&]() {
-						std::wstring error = L"The #endif for this directive is missing.";
-						_RaiseError(scanner.GetCurrentLine(), error);
-					};
+						auto _ThrowErrorNoEndif = [&]() {
+							std::wstring error = L"The #endif for this directive is missing.";
+							__RaiseError(scanner.GetCurrentLine(), error);
+						};
 
-					if (!scanner.HasNext())
-						_ThrowErrorNoEndif();
-					{
-						bool bLoop = true;
-						while (bLoop && scanner.HasNext()) {
-							size_t _posBefore = scanner.GetCurrentPointer();
-							Token& ntok = scanner.Next();
-							switch (ntok.GetType()) {
-							case Token::Type::TK_EOF:
-								_ThrowErrorNoEndif();
-							case Token::Type::TK_SHARP:
-							{
+						if (!scanner.HasNext())
+							_ThrowErrorNoEndif();
+						scanner.Next();
+						while (true) {
+							size_t _posBefore = scanner.GetCurrentPointer() - mainCharSize;
+							Token& ntok = scanner.GetToken();
+							if (ntok.GetType() == Token::Type::TK_SHARP) {
 								size_t posCurrent = scanner.GetCurrentPointer();
 								std::wstring strNext = scanner.Next().GetElement();
 
-								_AssertNewline(&scanner);
+								_AssertNewline();
 
 								if (strNext == L"else") {
 									if (bHasElse) {
@@ -725,40 +723,48 @@ std::vector<char> ScriptClientBase::_ParsePreprocessors(std::vector<char>& sourc
 								}
 								else if (strNext == L"endif") {
 									posEndif = { _posBefore, (size_t)scanner.GetCurrentPointer() };
-									bLoop = false;
+									break;
 								}
-
-								break;
 							}
+							if (!_SkipToNextValidLine())
+								_ThrowErrorNoEndif();
+						}
+
+						{
+							std::vector<char> survivedCode;
+							if (!bValidSkipFirst) {
+								size_t posEnd = bHasElse ? posElse.posBefore : posEndif.posBefore;
+								survivedCode.insert(survivedCode.end(),
+									res.begin() + posMain.posAfter, res.begin() + posEnd);
 							}
-						}
-					}
+							else if (bHasElse) {
+								survivedCode.insert(survivedCode.end(),
+									res.begin() + posElse.posAfter, res.begin() + posEndif.posBefore);
+							}
+							res.erase(res.begin() + posBeforeDirective, res.begin() + posEndif.posAfter);
+							res.insert(res.begin() + posBeforeDirective, survivedCode.begin(), survivedCode.end());
 
-					{
-						std::vector<char> survivedCode;
-						if (!bValidSkipFirst) {
-							size_t posEnd = bHasElse ? posElse.posBefore : posEndif.posBefore;
-							survivedCode.insert(survivedCode.end(), 
-								res.begin() + posMain.posAfter, res.begin() + posEnd);
+							_ResetScanner(posBeforeDirective);
 						}
-						else if (bHasElse) {
-							survivedCode.insert(survivedCode.end(), 
-								res.begin() + posElse.posAfter, res.begin() + posEndif.posBefore);
-						}
-						res.erase(res.begin() + posBeforeDirective, res.begin() + posEndif.posAfter);
-						res.insert(res.begin() + posBeforeDirective, survivedCode.begin(), survivedCode.end());
 
-						scanner = Scanner(res);
-						scanner.SetCurrentPointer(posBeforeDirective + survivedCode.size());
+						bReread = true;
 					}
+					/*
+					else {
+						std::wstring error = L"Unrecognized preprocessor directive: " + directiveType;
+						__RaiseError(scanner.GetCurrentLine(), error);
+					}
+					*/
 				}
-				/*
-				else {
-					std::wstring error = L"Unrecognized preprocessor directive: " + directiveType;
-					_RaiseError(scanner.GetCurrentLine(), error);
-				}
-				*/
 			}
+			if (bReread) {
+				bReread = false;
+				tok = scanner.Next();
+				if (tok.GetType() == Token::Type::TK_EOF) break;
+				continue;
+			}
+lab_skip_directive:;
+			if (!_SkipToNextValidLine()) break;
 		}
 
 		if (false) {
@@ -774,79 +780,6 @@ std::vector<char> ScriptClientBase::_ParsePreprocessors(std::vector<char>& sourc
 			file.Close();
 		}
 	}
-
-	/*
-	{
-		std::wstring pathTest = PathProperty::GetModuleDirectory() + StringUtility::Format(L"temp\\script_token_%s.txt", PathProperty::GetFileName(pathSource).c_str());
-		File file(pathTest);
-		file.CreateDirectory();
-		file.Create();
-
-		for (auto& itr = mapTokens.begin(); itr != mapTokens.end(); ++itr) {
-			Token& tk = *itr;
-			const char*& tkStr = Token::Type_Str[(int)tk.GetType()];
-			file.Write(const_cast<char*>(tkStr), strlen(tkStr));
-			file.Write("\n", 1);
-		}
-
-		file.Close();
-	}
-	{
-		std::wstring pathTest = PathProperty::GetModuleDirectory() + StringUtility::Format(L"temp\\script_map_%s.txt", PathProperty::GetFileName(pathSource).c_str());
-		File file(pathTest);
-		file.CreateDirectory();
-		file.Create();
-
-		std::list<ScriptFileLineMap::Entry> listEntry = mapLine->GetEntryList();
-		std::list<ScriptFileLineMap::Entry>::iterator itr = listEntry.begin();
-
-		std::string strNewLine = "\r\n";
-		std::wstring strNewLineW = L"\r\n";
-		if (encoding == Encoding::UTF16LE) {
-			file.Write(&strNewLineW[0], strNewLine.size() * sizeof(wchar_t));
-			file.Write(&strNewLineW[0], strNewLine.size() * sizeof(wchar_t));
-		}
-		else {
-			file.Write(&strNewLine[0], strNewLine.size());
-			file.Write(&strNewLine[0], strNewLine.size());
-		}
-
-		for (; itr != listEntry.end(); itr++) {
-			if (encoding == Encoding::UTF16LE) {
-				ScriptFileLineMap::Entry entry = (*itr);
-				std::wstring strPath = entry.path_ + L"\r\n";
-				std::wstring strLineStart = StringUtility::Format(L"  lineStart   :%4d\r\n", entry.lineStart_);
-				std::wstring strLineEnd = StringUtility::Format(L"  lineEnd     :%4d\r\n", entry.lineEnd_);
-				std::wstring strLineStartOrg = StringUtility::Format(L"  lineStartOrg:%4d\r\n", entry.lineStartOriginal_);
-				std::wstring strLineEndOrg = StringUtility::Format(L"  lineEndOrg  :%4d\r\n", entry.lineEndOriginal_);
-
-				file.Write(&strPath[0], strPath.size() * sizeof(wchar_t));
-				file.Write(&strLineStart[0], strLineStart.size() * sizeof(wchar_t));
-				file.Write(&strLineEnd[0], strLineEnd.size() * sizeof(wchar_t));
-				file.Write(&strLineStartOrg[0], strLineStartOrg.size() * sizeof(wchar_t));
-				file.Write(&strLineEndOrg[0], strLineEndOrg.size() * sizeof(wchar_t));
-				file.Write(&strNewLineW[0], strNewLineW.size() * sizeof(wchar_t));
-			}
-			else {
-				ScriptFileLineMap::Entry entry = (*itr);
-				std::string strPath = StringUtility::ConvertWideToMulti(entry.path_) + "\r\n";
-				std::string strLineStart = StringUtility::Format("  lineStart   :%4d\r\n", entry.lineStart_);
-				std::string strLineEnd = StringUtility::Format("  lineEnd     :%4d\r\n", entry.lineEnd_);
-				std::string strLineStartOrg = StringUtility::Format("  lineStartOrg:%4d\r\n", entry.lineStartOriginal_);
-				std::string strLineEndOrg = StringUtility::Format("  lineEndOrg  :%4d\r\n", entry.lineEndOriginal_);
-
-				file.Write(&strPath[0], strPath.size());
-				file.Write(&strLineStart[0], strLineStart.size());
-				file.Write(&strLineEnd[0], strLineEnd.size());
-				file.Write(&strLineStartOrg[0], strLineStartOrg.size());
-				file.Write(&strLineEndOrg[0], strLineEndOrg.size());
-				file.Write(&strNewLine[0], strNewLine.size());
-			}
-		}
-
-		file.Close();
-	}
-	*/
 
 	res.push_back(0);
 	if (mainEncoding == Encoding::UTF16LE || mainEncoding == Encoding::UTF16BE) {

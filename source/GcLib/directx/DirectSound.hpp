@@ -235,7 +235,8 @@ namespace directx {
 		};
 
 		static void PtrDelete(SoundPlayer* p) {
-			p->Stop();
+			if (p->pDirectSoundBuffer_)
+				p->pDirectSoundBuffer_->Stop();
 			delete p;
 		}
 	protected:

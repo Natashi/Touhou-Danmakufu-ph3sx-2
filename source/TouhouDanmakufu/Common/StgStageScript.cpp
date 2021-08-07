@@ -555,10 +555,6 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjCol_GetIntersectedCount", StgStageScript::Func_ObjCol_GetIntersectedCount, 1 },
 };
 static const std::vector<constant> stgStageConstant = {
-	//Screen sizes
-	//constant("SCREEN_WIDTH", 640),
-	//constant("SCREEN_HEIGHT", 480),
-
 	constant("TYPE_ALL", StgStageScript::TYPE_ALL),
 	constant("TYPE_SHOT", StgStageScript::TYPE_SHOT),
 	constant("TYPE_CHILD", StgStageScript::TYPE_CHILD),
@@ -725,14 +721,6 @@ StgStageScript::StgStageScript(StgStageController* stageController) : StgControl
 	typeScript_ = TYPE_STAGE;
 	_AddFunction(&stgStageFunction);
 	_AddConstant(&stgStageConstant);
-
-	{
-		const std::vector<constant> stgStageConstantsEx = {
-			constant("SCREEN_WIDTH", DirectGraphics::GetBase()->GetScreenWidth()),
-			constant("SCREEN_HEIGHT", DirectGraphics::GetBase()->GetScreenHeight()),
-		};
-		_AddConstant(&stgStageConstantsEx);
-	}
 
 	ref_count_ptr<StgStageInformation> info = stageController_->GetStageInformation();
 	mt_ = info->GetRandProvider();
