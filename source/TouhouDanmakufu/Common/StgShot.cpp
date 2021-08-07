@@ -1715,7 +1715,7 @@ StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObj
 	lastAngle_ = 0;
 }
 void StgLaserObject::_AddIntersectionRelativeTarget() {
-	if (delay_.time > 0 || frameFadeDelete_ >= 0) return;
+	if ((delay_.time > 0 && !bEnableMotionDelay_) || frameFadeDelete_ >= 0) return;
 	ClearIntersected();
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
@@ -1747,8 +1747,8 @@ StgLooseLaserObject::StgLooseLaserObject(StgStageController* stageController) : 
 }
 void StgLooseLaserObject::Work() {
 	if (frameWork_ == 0) {
-		posXE_ = posX_;
-		posYE_ = posY_;
+		posXE_ = posXO_ = posX_;
+		posYE_ = posYO_ = posY_;
 	}
 
 	if (bEnableMovement_) {
@@ -1774,7 +1774,7 @@ void StgLooseLaserObject::_Move() {
 
 	double angleZ = GetDirectionAngle();
 
-	if (delay_.time <= 0) {
+	if (delay_.time <= 0 || bEnableMotionDelay_) {
 		__m128 v1 = Vectorize::Sub(
 			Vectorize::SetF(posXE_, posYE_, length_, 0),
 			Vectorize::SetF(posX_, posY_, 0, 0));
@@ -1867,29 +1867,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 	StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
 	if (shotData == nullptr || delayData == nullptr) return;
 
-	StgShotRenderer* renderer = nullptr;
-	if (delay_.time > 0) {
-		BlendMode objDelayBlendType = GetSourceBlendType();
-		if (objDelayBlendType == MODE_BLEND_NONE) {
-			renderer = delayData->GetRenderer(MODE_BLEND_ADD_ARGB);
-		}
-		else {
-			renderer = delayData->GetRenderer(objDelayBlendType);
-		}
-	}
-	else {
-		BlendMode objBlendType = GetBlendType();
-		if (objBlendType == MODE_BLEND_NONE) {
-			renderer = shotData->GetRenderer(MODE_BLEND_ADD_ARGB);
-		}
-		else {
-			renderer = shotData->GetRenderer(objBlendType);
-		}
-	}
-
-	if (renderer == nullptr) return;
-
-	D3DXVECTOR2* textureSize = &shotData->GetTextureSize();
+	D3DXVECTOR2* textureSize = nullptr;
 
 	float scaleX = 1.0f;
 	float scaleY = 1.0f;
@@ -1919,6 +1897,20 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 
 	if (delay_.time > 0) {
+		textureSize = &delayData->GetTextureSize();
+
+		StgShotRenderer* renderer = nullptr;
+
+		BlendMode objDelayBlendType = GetSourceBlendType();
+		if (objDelayBlendType == MODE_BLEND_NONE) {
+			renderer = delayData->GetRenderer(MODE_BLEND_ADD_ARGB);
+		}
+		else {
+			renderer = delayData->GetRenderer(objDelayBlendType);
+		}
+
+		if (renderer == nullptr) return;
+
 		float expa = delay_.GetScale();
 		scaleX = expa;
 		scaleY = expa;
@@ -1926,13 +1918,11 @@ void StgLooseLaserObject::RenderOnShotManager() {
 		renderF = (delay_.spin != 0) ? D3DXVECTOR2(cosf(delay_.angle), sinf(delay_.angle)) : move_;
 
 		if (bEnableMotionDelay_) {
-			sposx = posXE_;
-			sposy = posYE_;
+			sposx = posXO_;
+			sposy = posYO_;
 		}
 
 		if (delay_.id >= 0) {
-			textureSize = &delayData->GetTextureSize();
-
 			StgShotData::AnimationData* anime = delayData->GetData(frameWork_);
 			rcSrc = anime->GetSource();
 			rcDest = *anime->GetDest();
@@ -1960,6 +1950,20 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 
 	if (delay_.time == 0 || bEnableMotionDelay_) {
+		textureSize = &shotData->GetTextureSize();
+
+		StgShotRenderer* renderer = nullptr;
+
+		BlendMode objBlendType = GetBlendType();
+		if (objBlendType == MODE_BLEND_NONE) {
+			renderer = shotData->GetRenderer(MODE_BLEND_ADD_ARGB);
+		}
+		else {
+			renderer = shotData->GetRenderer(objBlendType);
+		}
+
+		if (renderer == nullptr) return;
+
 		sposx = position_.x;
 		sposy = position_.y;
 		scaleX = scale_.x;
@@ -1971,6 +1975,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 		renderF = D3DXVECTOR2(dx, dy) / radius;
 
+		
 		StgShotData::AnimationData* anime = shotData->GetData(frameWork_);
 		rcSrc = anime->GetSource();
 
@@ -2022,7 +2027,7 @@ void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 			itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
 
-		if (itemManager->IsDefaultBonusItemEnable() && delay_.time == 0 && !flgPlayerCollision) {
+		if (itemManager->IsDefaultBonusItemEnable() && (delay_.time == 0 || bEnableMotionDelay_) && !flgPlayerCollision) {
 			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 				ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
 				int id = stageController_->GetMainObjectManager()->AddObject(obj);
@@ -2327,6 +2332,15 @@ void StgStraightLaserObject::RenderOnShotManager() {
 		}
 	}
 }
+void StgStraightLaserObject::_AddIntersectionRelativeTarget() {
+	if (delay_.time > 0 || frameFadeDelete_ >= 0) return;
+	ClearIntersected();
+
+	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
+	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listTarget = GetIntersectionTargetList();
+	for (auto& iTarget : listTarget)
+		intersectionManager->AddTarget(iTarget);
+}
 void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	auto stageScriptManager = stageController_->GetScriptManager();
@@ -2380,6 +2394,11 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 	pShotIntersectionTarget_ = nullptr;
 }
 void StgCurveLaserObject::Work() {
+	if (frameWork_ == 0) {
+		posXO_ = posX_;
+		posYO_ = posY_;
+	}
+
 	if (bEnableMovement_) {
 		_ProcessTransformAct();
 		_Move();
@@ -2547,11 +2566,11 @@ void StgCurveLaserObject::RenderOnShotManager() {
 	if (delayData != nullptr && delay_.time > 0) {
 		BlendMode objDelayBlendType = GetSourceBlendType();
 		if (objDelayBlendType == MODE_BLEND_NONE) {
-			renderer = shotData->GetRenderer(MODE_BLEND_ADD_ARGB);
+			renderer = delayData->GetRenderer(MODE_BLEND_ADD_ARGB);
 			shotBlendType = MODE_BLEND_ADD_ARGB;
 		}
 		else {
-			renderer = shotData->GetRenderer(objDelayBlendType);
+			renderer = delayData->GetRenderer(objDelayBlendType);
 		}
 		if (renderer == nullptr) return;
 
@@ -2571,8 +2590,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 
 		float expa = delay_.GetScale();
 
-		FLOAT sX = listPosition_.back().pos.x;
-		FLOAT sY = listPosition_.back().pos.y;
+		FLOAT sX = posXO_;
+		FLOAT sY = posYO_;
 		if (bRoundingPosition_) {
 			sX = roundf(sX);
 			sY = roundf(sY);
@@ -2586,8 +2605,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		}
 
 		VERTEX_TLX verts[4];
-		int* ptrSrc = reinterpret_cast<int*>(rcSrc);
-		int* ptrDst = reinterpret_cast<int*>(rcDest);
+		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
+		float* ptrDst = reinterpret_cast<float*>(rcDest);
 
 		D3DXVECTOR2 move = (delay_.spin != 0) ? D3DXVECTOR2(cosf(delay_.angle), sinf(delay_.angle)) : move_;
 
@@ -2692,7 +2711,7 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 			listScriptValue[1] = itemScript->CreateRealArrayValue(listPos, 2U);
 			itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
 		}
-		if (itemManager->IsDefaultBonusItemEnable() && delay_.time == 0 && !flgPlayerCollision) {
+		if (itemManager->IsDefaultBonusItemEnable() && (delay_.time == 0 || bEnableMotionDelay_) && !flgPlayerCollision) {
 			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 				ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
 				if (stageController_->GetMainObjectManager()->AddObject(obj) != DxScript::ID_INVALID) {
