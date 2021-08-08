@@ -2522,6 +2522,7 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 
 				for (size_t i = 0; i < sizeArray; ++i)
 					newCodes.pop_back();
+				arrayVal.make_unique();
 				newCodes.push_back(code(iSrcCode->line, command_kind::pc_push_value, arrayVal));
 				state->ip -= sizeArray;
 			}
