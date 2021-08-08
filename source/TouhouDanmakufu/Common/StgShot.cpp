@@ -1455,7 +1455,7 @@ void StgNormalShotObject::Work() {
 
 			double angleZ = bDelay ? delay_.angle : angle_.z;
 			if (StgShotData* shotData = _GetShotData()) {
-				if (!bFixedAngle_ && bDelay) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
+				if (!bFixedAngle_ && !bDelay) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
 			}
 			if (angleZ != lastAngle_) {
 				move_ = D3DXVECTOR2(cosf(angleZ), sinf(angleZ));
