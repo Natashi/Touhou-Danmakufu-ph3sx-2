@@ -66,7 +66,9 @@ namespace gstd {
 	//*******************************************************************
 	//ScriptClientBase
 	//*******************************************************************
+	class ScriptLoader;
 	class ScriptClientBase {
+		friend class ScriptLoader;
 		static script_type_manager* pTypeManager_;
 	public:
 		enum {
@@ -438,6 +440,42 @@ namespace gstd {
 		return value(type_arr, std::wstring());
 	}
 #pragma endregion ScriptClientBase_impl
+
+	//*******************************************************************
+	//ScriptLoader
+	//*******************************************************************
+	class ScriptLoader {
+	protected:
+		ScriptClientBase* script_;
+
+		std::wstring pathSource_;
+		std::vector<char> src_;
+		Encoding::Type encoding_;
+		size_t charSize_;
+
+		unique_ptr<Scanner> scanner_;
+
+		gstd::ref_count_ptr<ScriptFileLineMap> mapLine_;
+		std::set<std::wstring> setIncludedPath_;
+	protected:
+		void _RaiseError(int line, const std::wstring& err);
+		void _DumpRes();
+
+		void _ResetScanner(size_t iniReadPos);
+		void _AssertNewline();
+		bool _SkipToNextValidLine();
+
+		void _ParseInclude();
+		void _ParseIfElse();
+	public:
+		ScriptLoader(ScriptClientBase* script, const std::wstring& path, std::vector<char>& source);
+		~ScriptLoader();
+
+		void ParsePreprocessors();
+
+		std::vector<char>& GetResult() { return src_; }
+		gstd::ref_count_ptr<ScriptFileLineMap> GetLineMap() { return mapLine_; }
+	};
 
 	//*******************************************************************
 	//ScriptFileLineMap

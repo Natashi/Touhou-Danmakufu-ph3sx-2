@@ -1025,25 +1025,25 @@ const char* Token::Type_Str[] = {
 };
 std::wstring& Token::GetIdentifier() {
 	if (type_ != Type::TK_ID) {
-		throw gstd::wexception(L"Token::GetIdentifier:データのタイプが違います");
+		throw gstd::wexception(L"Token::GetIdentifier: Incorrect token type");
 	}
 	return element_;
 }
 std::wstring Token::GetString() {
 	if (type_ != Type::TK_STRING) {
-		throw gstd::wexception(L"Token::GetString:データのタイプが違います");
+		throw gstd::wexception(L"Token::GetString: Incorrect token type");
 	}
 	return element_.substr(1, element_.size() - 2);
 }
 int Token::GetInteger() {
 	if (type_ != Type::TK_INT) {
-		throw gstd::wexception(L"Token::GetInterger:データのタイプが違います");
+		throw gstd::wexception(L"Token::GetInterger: Incorrect token type");
 	}
 	return StringUtility::ToInteger(element_);
 }
 double Token::GetReal() {
 	if (type_ != Type::TK_REAL && type_ != Type::TK_INT) {
-		throw gstd::wexception(L"Token::GetReal:データのタイプが違います");
+		throw gstd::wexception(L"Token::GetReal: Incorrect token type");
 	}
 	return StringUtility::ToDouble(element_);
 }
