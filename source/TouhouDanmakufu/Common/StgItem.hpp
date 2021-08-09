@@ -278,6 +278,8 @@ public:
 	void SetIntersectionEnable(bool b) { bIntersectEnable_ = b; }
 	void SetIntersectionRadius(int r) { itemIntersectRadius_ = r * r; }
 
+	bool IsIntersectionEnable() { return bIntersectEnable_;  }
+
 	bool IsDefaultCollectionMovement() { return bDefaultCollectionMove_; }
 	void SetDefaultCollectionMovement(bool b) { bDefaultCollectionMove_ = b; }
 

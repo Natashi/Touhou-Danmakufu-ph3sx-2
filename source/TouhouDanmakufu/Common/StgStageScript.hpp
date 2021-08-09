@@ -464,6 +464,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjItem_SetAutoDelete);
 	DNH_FUNCAPI_DECL_(Func_ObjItem_SetIntersectionRadius);
 	DNH_FUNCAPI_DECL_(Func_ObjItem_SetIntersectionEnable);
+	DNH_FUNCAPI_DECL_(Func_ObjItem_GetIntersectionEnable);
 	DNH_FUNCAPI_DECL_(Func_ObjItem_SetDefaultCollectMovement);
 	DNH_FUNCAPI_DECL_(Func_ObjItem_SetPositionRounding);
 
