@@ -1835,6 +1835,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 		//color = ColorAccess::ApplyAlpha(color, alpha);
 		rcDest.Set(widthRender_ / 2 + 0.5f, 0.5f, -widthRender_ / 2 + 0.5f, radius + 0.5f);
+    }
 
 	VERTEX_TLX verts[4];
 	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
