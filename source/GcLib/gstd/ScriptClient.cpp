@@ -1734,7 +1734,7 @@ void ScriptLoader::_RaiseError(int line, const std::wstring& err) {
 	script_->_RaiseError(line, err);
 }
 void ScriptLoader::_DumpRes() {
-	//return;
+	return;
 
 	static int countTest = 0;
 	static std::wstring tPath = L"";
