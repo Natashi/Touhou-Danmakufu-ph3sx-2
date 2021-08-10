@@ -176,7 +176,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 			objPlayer->SetEnableStateEnd(false);
 
 		auto script = scriptManager_->LoadScript(pathPlayerScript, StgStageScript::TYPE_PLAYER);
-		_SetupReplayTargetCommonDataArea(script->GetScriptID());
+		_SetupReplayTargetCommonDataArea(script);
 
 		shared_ptr<StgStagePlayerScript> scriptPlayer =
 			std::dynamic_pointer_cast<StgStagePlayerScript>(script);
@@ -205,7 +205,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		const std::wstring& pathMainScript = infoMain->GetScriptPath();
 		if (pathMainScript.size() > 0) {
 			auto script = scriptManager_->LoadScript(pathMainScript, StgStageScript::TYPE_STAGE);
-			_SetupReplayTargetCommonDataArea(script->GetScriptID());
+			_SetupReplayTargetCommonDataArea(script);
 			scriptManager_->StartScript(script);
 		}
 	}
@@ -277,9 +277,8 @@ void StgStageController::CloseScene() {
 		replayStageData->SetLastScore(infoStage_->GetScore());
 	}
 }
-void StgStageController::_SetupReplayTargetCommonDataArea(int64_t idScript) {
-	shared_ptr<StgStageScript> script =
-		std::dynamic_pointer_cast<StgStageScript>(scriptManager_->GetScript(idScript));
+void StgStageController::_SetupReplayTargetCommonDataArea(shared_ptr<ManagedScript> pScript) {
+	auto script = std::dynamic_pointer_cast<StgStageScript>(pScript);
 	if (script == nullptr) return;
 
 	const gstd::value& res = script->RequestEvent(StgStageScript::EV_REQUEST_REPLAY_TARGET_COMMON_AREA);
