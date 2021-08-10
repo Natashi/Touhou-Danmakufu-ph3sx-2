@@ -272,6 +272,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjRender_SetColor", DxScript::Func_ObjRender_SetColor, 2 },		//Overloaded
 	{ "ObjRender_SetColorHSV", DxScript::Func_ObjRender_SetColorHSV, 4 },
 	{ "ObjRender_GetColor", DxScript::Func_ObjRender_GetColor, 1 },
+	{ "ObjRender_GetColorHex", DxScript::Func_ObjRender_GetColorHex, 1 },
 	{ "ObjRender_SetAlpha", DxScript::Func_ObjRender_SetAlpha, 2 },
 	{ "ObjRender_GetAlpha", DxScript::Func_ObjRender_GetAlpha, 1 },
 	{ "ObjRender_SetBlendType", DxScript::Func_ObjRender_SetBlendType, 2 },
@@ -334,6 +335,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjPrim_SetVertexColorHSV", DxScript::Func_ObjPrimitive_SetVertexColorHSV, 5 },
 	{ "ObjPrim_SetVertexAlpha", DxScript::Func_ObjPrimitive_SetVertexAlpha, 3 },
 	{ "ObjPrim_GetVertexColor", DxScript::Func_ObjPrimitive_GetVertexColor, 2 },
+	{ "ObjPrim_GetVertexColorHex", DxScript::Func_ObjPrimitive_GetVertexColorHex, 2 },
 	{ "ObjPrim_GetVertexAlpha", DxScript::Func_ObjPrimitive_GetVertexAlpha, 2 },
 	{ "ObjPrim_GetVertexPosition", DxScript::Func_ObjPrimitive_GetVertexPosition, 2 },
 	{ "ObjPrim_SetVertexIndex", DxScript::Func_ObjPrimitive_SetVertexIndex, 2 },
@@ -2753,9 +2755,18 @@ value DxScript::Func_ObjRender_GetColor(script_machine* machine, int argc, const
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) color = obj->color_;
 
-	byte listColor[4];
-	ColorAccess::ToByteArray(color, listColor);
-	return script->CreateIntArrayValue(listColor + 1, 3U);
+    byte listColor[4];
+    ColorAccess::ToByteArray(color, listColor);
+    return script->CreateIntArrayValue(listColor + 1, 3U);	
+}
+value DxScript::Func_ObjRender_GetColorHex(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	D3DCOLOR color = 0xffffffff;
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) color = obj->color_;
+
+	return script->CreateIntValue(color & 0xffffff);
 }
 value DxScript::Func_ObjRender_SetAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -3499,6 +3510,18 @@ value DxScript::Func_ObjPrimitive_GetVertexColor(script_machine* machine, int ar
 	byte listColor[4];
 	ColorAccess::ToByteArray(color, listColor);
 	return script->CreateIntArrayValue(listColor + 1, 3U);
+
+}
+value DxScript::Func_ObjPrimitive_GetVertexColorHex(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	int index = argv[1].as_int();
+
+	D3DCOLOR color = 0xffffffff;
+	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
+	if (obj) color = obj->GetVertexColor(index);
+
+	return script->CreateIntValue(color & 0xffffff);
 }
 value DxScript::Func_ObjPrimitive_GetVertexAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
