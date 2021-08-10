@@ -399,8 +399,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjEnemy_AddIntersectionCircleA", StgStageScript::Func_ObjEnemy_AddIntersectionCircleA, 4 },
 	{ "ObjEnemy_SetIntersectionCircleToShot", StgStageScript::Func_ObjEnemy_SetIntersectionCircleToShot, 4 },
 	{ "ObjEnemy_SetIntersectionCircleToPlayer", StgStageScript::Func_ObjEnemy_SetIntersectionCircleToPlayer, 4 },
-	{ "ObjEnemy_GetIntersectionCircleListToShot", StgStageScript::Func_ObjEnemy_GetIntersectionCircleToShot, 1 },
-	{ "ObjEnemy_GetIntersectionCircleListToPlayer", StgStageScript::Func_ObjEnemy_GetIntersectionCircleToPlayer, 1 },
+	{ "ObjEnemy_GetIntersectionCircleListToShot", StgStageScript::Func_ObjEnemy_GetIntersectionCircleListToShot, 1 },
+	{ "ObjEnemy_GetIntersectionCircleListToPlayer", StgStageScript::Func_ObjEnemy_GetIntersectionCircleListToPlayer, 1 },
 	{ "ObjEnemy_SetEnableIntersectionPositionFetching", StgStageScript::Func_ObjEnemy_SetEnableIntersectionPositionFetching, 2 },
 
 	//STG共通関数：敵ボスシーンオブジェクト操作
@@ -3007,7 +3007,7 @@ gstd::value StgStageScript::Func_ObjEnemy_SetIntersectionCircleToPlayer(gstd::sc
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_ObjEnemy_GetIntersectionCircleToShot(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_ObjEnemy_GetIntersectionCircleListToShot(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
 	std::vector<gstd::value> listRes;
@@ -3030,7 +3030,7 @@ gstd::value StgStageScript::Func_ObjEnemy_GetIntersectionCircleToShot(gstd::scri
 
 	return script->CreateValueArrayValue(listRes);
 }
-gstd::value StgStageScript::Func_ObjEnemy_GetIntersectionCircleToPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_ObjEnemy_GetIntersectionCircleListToPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
 	std::vector<gstd::value> listRes;
