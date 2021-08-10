@@ -497,6 +497,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjCrLaser_GetNodePosition", StgStageScript::Func_ObjCrLaser_GetNodePosition, 2 },
 	{ "ObjCrLaser_GetNodeAngle", StgStageScript::Func_ObjCrLaser_GetNodeAngle, 2 },
 	{ "ObjCrLaser_GetNodeColor", StgStageScript::Func_ObjCrLaser_GetNodeColor, 2 },
+	{ "ObjCrLaser_GetNodeColorHex", StgStageScript::Func_ObjCrLaser_GetNodeColorHex, 2 },
 	{ "ObjCrLaser_SetNode", StgStageScript::Func_ObjCrLaser_SetNode, 6 },
 	{ "ObjCrLaser_SetNodePosition", StgStageScript::Func_ObjCrLaser_SetNodePosition, 4 },
 	{ "ObjCrLaser_SetNodeAngle", StgStageScript::Func_ObjCrLaser_SetNodeAngle, 3 },
@@ -4330,6 +4331,21 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodeColor(gstd::script_machine* m
 	byte listColor[4];
 	ColorAccess::ToByteArray(color, listColor);
 	return script->CreateIntArrayValue(listColor, 3U);
+}
+gstd::value StgStageScript::Func_ObjCrLaser_GetNodeColorHex(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+
+	D3DCOLOR color = 0xffffffff;
+	int id = argv[0].as_int();
+	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
+			color = ptr->color;
+		}
+	}
+
+	return script->CreateIntValue(color & 0xffffff);
 }
 gstd::value StgStageScript::Func_ObjCrLaser_SetNode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;

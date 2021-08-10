@@ -2773,7 +2773,7 @@ value DxScript::Func_ObjRender_GetColorHex(script_machine* machine, int argc, co
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) color = obj->color_;
 
-	return script->CreateIntValue(color - 0xff000000); // Investigate better methods later
+	return script->CreateIntValue(color & 0xffffff);
 }
 value DxScript::Func_ObjRender_SetAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -3541,7 +3541,7 @@ value DxScript::Func_ObjPrimitive_GetVertexColorHex(script_machine* machine, int
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) color = obj->GetVertexColor(index);
 
-	return script->CreateIntValue(color - 0xff000000); // Ditto @ GetColor
+	return script->CreateIntValue(color & 0xffffff);
 }
 value DxScript::Func_ObjPrimitive_GetVertexAlpha(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
