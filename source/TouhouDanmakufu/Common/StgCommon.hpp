@@ -229,8 +229,8 @@ public:
 	virtual inline double GetSpeed() { return speed_; }
 	virtual inline double GetDirectionAngle() { return angDirection_; }
 
-	virtual double GetSpeedX() { return c_; }
-	virtual double GetSpeedY() { return s_; }
+	virtual double GetSpeedX() { return c_ * speed_; }
+	virtual double GetSpeedY() { return s_ * speed_; }
 };
 class StgMovePattern_Line_Speed : public StgMovePattern_Line {
 	friend class StgMoveObject;
