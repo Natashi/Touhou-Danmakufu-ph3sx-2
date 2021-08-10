@@ -522,6 +522,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjItem_SetAutoDelete", StgStageScript::Func_ObjItem_SetAutoDelete, 2 },
 	{ "ObjItem_SetIntersectionRadius", StgStageScript::Func_ObjItem_SetIntersectionRadius, 2 },
 	{ "ObjItem_SetIntersectionEnable", StgStageScript::Func_ObjItem_SetIntersectionEnable, 2 },
+	{ "ObjItem_GetIntersectionEnable", StgStageScript::Func_ObjItem_GetIntersectionEnable, 1 },
 	{ "ObjItem_SetDefaultCollectMovement", StgStageScript::Func_ObjItem_SetDefaultCollectMovement, 2 },
 	{ "ObjItem_SetPositionRounding", StgStageScript::Func_ObjItem_SetPositionRounding, 2 },
 
@@ -4595,6 +4596,15 @@ gstd::value StgStageScript::Func_ObjItem_SetIntersectionEnable(gstd::script_mach
 		obj->SetIntersectionEnable(bEnable);
 	}
 	return value();
+}
+gstd::value StgStageScript::Func_ObjItem_GetIntersectionEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
+	bool res = false;
+	if (obj)
+		res = obj->IsIntersectionEnable();
+	return script->CreateBooleanValue(res);
 }
 gstd::value StgStageScript::Func_ObjItem_SetDefaultCollectMovement(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
