@@ -375,6 +375,8 @@ void RenderObjectTLX::Render(const D3DXMATRIX& matTransform) {
 			}
 		}
 
+		RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
+
 		VertexBufferManager* vbManager = VertexBufferManager::GetBase();
 		FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
 		FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
@@ -400,20 +402,21 @@ void RenderObjectTLX::Render(const D3DXMATRIX& matTransform) {
 			if (shader_) {
 				effect = shader_->GetEffect();
 
-				if (bVertexShaderMode_) {
-					RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
+				if (shader_->LoadTechnique()) {
+					shader_->LoadParameter();
 
-					device->SetVertexDeclaration(shaderLib->GetVertexDeclarationTLX());
+					if (bVertexShaderMode_) {
+						device->SetVertexDeclaration(shaderLib->GetVertexDeclarationTLX());
 
-					D3DXHANDLE handle = nullptr;
-					if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
-						effect->SetMatrix(handle, &matTransform);
-					if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
-						effect->SetMatrix(handle, &graphics->GetViewPortMatrix());
+						D3DXHANDLE handle = nullptr;
+						if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
+							effect->SetMatrix(handle, &matTransform);
+						if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
+							effect->SetMatrix(handle, &graphics->GetViewPortMatrix());
+						}
 					}
 				}
-
-				shader_->LoadParameter();
+				
 				effect->Begin(&countPass, 0);
 			}
 			for (UINT iPass = 0; iPass < countPass; ++iPass) {
@@ -555,6 +558,8 @@ void RenderObjectLX::Render(const D3DXMATRIX& matTransform) {
 		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
 		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
 
+		RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
+
 		VertexBufferManager* vbManager = VertexBufferManager::GetBase();
 		FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferLX();
 		FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
@@ -579,35 +584,38 @@ void RenderObjectLX::Render(const D3DXMATRIX& matTransform) {
 		if (shader_ != nullptr) {
 			effect = shader_->GetEffect();
 
-			if (bVertexShaderMode_) {
-				VertexFogState* fogParam = graphics->GetFogState();
-				RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
-				auto camera = DirectGraphics::GetBase()->GetCamera();
+			if (shader_->LoadTechnique()) {
+				shader_->LoadParameter();
 
-				bool bFog = graphics->IsFogEnable();
-				graphics->SetFogEnable(false);
-				device->SetVertexDeclaration(shaderLib->GetVertexDeclarationLX());
+				if (bVertexShaderMode_) {
+					VertexFogState* fogParam = graphics->GetFogState();
 
-				D3DXHANDLE handle = nullptr;
-				if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
-					effect->SetMatrix(handle, &matTransform);
-				if (handle = effect->GetParameterBySemantic(nullptr, "VIEW"))
-					effect->SetMatrix(handle, &camera->GetViewMatrix());
-				if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION"))
-					effect->SetMatrix(handle, &camera->GetProjectionMatrix());
-				if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
-					effect->SetMatrix(handle, &camera->GetViewProjectionMatrix());
-				if (handle = effect->GetParameterBySemantic(nullptr, "FOGENABLE"))
-					effect->SetBool(handle, bFog);
-				if (bFog) {
-					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
-						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->color)), 3);
-					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
-						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->fogDist)), 2);
+					auto camera = DirectGraphics::GetBase()->GetCamera();
+
+					bool bFog = graphics->IsFogEnable();
+					graphics->SetFogEnable(false);
+					device->SetVertexDeclaration(shaderLib->GetVertexDeclarationLX());
+
+					D3DXHANDLE handle = nullptr;
+					if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
+						effect->SetMatrix(handle, &matTransform);
+					if (handle = effect->GetParameterBySemantic(nullptr, "VIEW"))
+						effect->SetMatrix(handle, &camera->GetViewMatrix());
+					if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION"))
+						effect->SetMatrix(handle, &camera->GetProjectionMatrix());
+					if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
+						effect->SetMatrix(handle, &camera->GetViewProjectionMatrix());
+					if (handle = effect->GetParameterBySemantic(nullptr, "FOGENABLE"))
+						effect->SetBool(handle, bFog);
+					if (bFog) {
+						if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
+							effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->color)), 3);
+						if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
+							effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->fogDist)), 2);
+					}
 				}
 			}
 
-			shader_->LoadParameter();
 			effect->Begin(&countPass, 0);
 		}
 		for (UINT iPass = 0; iPass < countPass; ++iPass) {
@@ -741,6 +749,8 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 		size_t countIndex = vertexIndices_.size();
 		size_t countPrim = _GetPrimitiveCount(bUseIndex ? countIndex : countVertex);
 
+		RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
+
 		VertexBufferManager* vbManager = VertexBufferManager::GetBase();
 		FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
 
@@ -761,35 +771,38 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 		if (shader_ != nullptr) {
 			effect = shader_->GetEffect();
 
-			if (bVertexShaderMode_) {
-				VertexFogState* fogParam = graphics->GetFogState();
-				RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
-				auto camera = graphics->GetCamera();
+			if (shader_->LoadTechnique()) {
+				shader_->LoadParameter();
 
-				bool bFog = graphics->IsFogEnable();
-				graphics->SetFogEnable(false);
-				device->SetVertexDeclaration(shaderLib->GetVertexDeclarationNX());
+				if (bVertexShaderMode_) {
+					VertexFogState* fogParam = graphics->GetFogState();
 
-				D3DXHANDLE handle = nullptr;
-				if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
-					effect->SetMatrix(handle, matTransform ? matTransform : &graphics->GetCamera()->GetIdentity());
-				if (handle = effect->GetParameterBySemantic(nullptr, "VIEW"))
-					effect->SetMatrix(handle, &camera->GetViewMatrix());
-				if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION"))
-					effect->SetMatrix(handle, &camera->GetProjectionMatrix());
-				if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
-					effect->SetMatrix(handle, &camera->GetViewProjectionMatrix());
-				if (handle = effect->GetParameterBySemantic(nullptr, "FOGENABLE"))
-					effect->SetBool(handle, bFog);
-				if (bFog) {
-					if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
-						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->color)), 3);
-					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
-						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->fogDist)), 2);
+					auto camera = graphics->GetCamera();
+
+					bool bFog = graphics->IsFogEnable();
+					graphics->SetFogEnable(false);
+					device->SetVertexDeclaration(shaderLib->GetVertexDeclarationNX());
+
+					D3DXHANDLE handle = nullptr;
+					if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
+						effect->SetMatrix(handle, matTransform ? matTransform : &graphics->GetCamera()->GetIdentity());
+					if (handle = effect->GetParameterBySemantic(nullptr, "VIEW"))
+						effect->SetMatrix(handle, &camera->GetViewMatrix());
+					if (handle = effect->GetParameterBySemantic(nullptr, "PROJECTION"))
+						effect->SetMatrix(handle, &camera->GetProjectionMatrix());
+					if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
+						effect->SetMatrix(handle, &camera->GetViewProjectionMatrix());
+					if (handle = effect->GetParameterBySemantic(nullptr, "FOGENABLE"))
+						effect->SetBool(handle, bFog);
+					if (bFog) {
+						if (handle = effect->GetParameterBySemantic(nullptr, "FOGCOLOR"))
+							effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->color)), 3);
+						if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
+							effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->fogDist)), 2);
+					}
 				}
 			}
 
-			shader_->LoadParameter();
 			effect->Begin(&countPass, 0);
 		}
 		for (UINT iPass = 0; iPass < countPass; ++iPass) {
@@ -993,6 +1006,8 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 		}
 
 		{
+			RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
+
 			VertexBufferManager* vbManager = VertexBufferManager::GetBase();
 			FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
 			FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
@@ -1014,24 +1029,25 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 			ID3DXEffect* effect = nullptr;
 			if (shader_ != nullptr) {
 				effect = shader_->GetEffect();
-				shader_->LoadParameter();
 
-				if (bVertexShaderMode_) {
-					RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
+				if (shader_->LoadTechnique()) {
+					shader_->LoadParameter();
 
-					device->SetVertexDeclaration(shaderLib->GetVertexDeclarationTLX());
+					if (bVertexShaderMode_) {
+						device->SetVertexDeclaration(shaderLib->GetVertexDeclarationTLX());
 
-					D3DXHANDLE handle = nullptr;
-					if (handle = effect->GetParameterBySemantic(nullptr, "WORLD")) {
-						if (bCloseVertexList_)
-							effect->SetMatrix(handle, &matWorld);
-						else if (bCamera)
-							effect->SetMatrix(handle, &camera->GetMatrix());
-						else
-							effect->SetMatrix(handle, &camera3D->GetIdentity());
-					}
-					if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
-						effect->SetMatrix(handle, &graphics->GetViewPortMatrix());
+						D3DXHANDLE handle = nullptr;
+						if (handle = effect->GetParameterBySemantic(nullptr, "WORLD")) {
+							if (bCloseVertexList_)
+								effect->SetMatrix(handle, &matWorld);
+							else if (bCamera)
+								effect->SetMatrix(handle, &camera->GetMatrix());
+							else
+								effect->SetMatrix(handle, &camera3D->GetIdentity());
+						}
+						if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
+							effect->SetMatrix(handle, &graphics->GetViewPortMatrix());
+						}
 					}
 				}
 
@@ -1415,7 +1431,6 @@ void ParticleRenderer2D::Render() {
 
 			if (shader_) {
 				effect = shader_->GetEffect();
-				shader_->LoadParameter();
 			}
 			else {
 				effect = shaderManager->GetInstancing2DShader();
@@ -1425,13 +1440,23 @@ void ParticleRenderer2D::Render() {
 
 			if (effect == nullptr) return;
 
-			{
+			auto _SetParam = [&]() {
 				D3DXHANDLE handle = nullptr;
 				if (handle = effect->GetParameterBySemantic(nullptr, "WORLDVIEWPROJ")) {
 					D3DXMATRIX mat;
 					D3DXMatrixMultiply(&mat, &camera->GetMatrix(), &graphics->GetViewPortMatrix());
 					effect->SetMatrix(handle, &mat);
 				}
+			};
+			
+			if (shader_) {
+				if (shader_->LoadTechnique()) {
+					shader_->LoadParameter();
+					_SetParam();
+				}
+			}
+			else {
+				_SetParam();
 			}
 
 			effect->Begin(&countPass, 0);
@@ -1508,7 +1533,6 @@ void ParticleRenderer3D::Render() {
 
 			if (shader_) {
 				effect = shader_->GetEffect();
-				shader_->LoadParameter();
 			}
 			else {
 				effect = shaderManager->GetInstancing3DShader();
@@ -1518,7 +1542,7 @@ void ParticleRenderer3D::Render() {
 
 			if (effect == nullptr) return;
 
-			{
+			auto _SetParam = [&]() {
 				VertexFogState* fogParam = graphics->GetFogState();
 
 				bool bFog = graphics->IsFogEnable();
@@ -1544,6 +1568,16 @@ void ParticleRenderer3D::Render() {
 					if (handle = effect->GetParameterBySemantic(nullptr, "FOGDIST"))
 						effect->SetFloatArray(handle, (FLOAT*)(&(fogParam->fogDist)), 2);
 				}
+			};
+
+			if (shader_) {
+				if (shader_->LoadTechnique()) {
+					shader_->LoadParameter();
+					_SetParam();
+				}
+			}
+			else {
+				_SetParam();
 			}
 
 			effect->Begin(&countPass, 0);
