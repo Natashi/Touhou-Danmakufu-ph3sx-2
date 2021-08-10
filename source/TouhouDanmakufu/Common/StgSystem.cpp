@@ -418,7 +418,9 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 			UINT cPass = 1;
 			if (shared_ptr<Shader> shader = objectManagerStage->GetShader(iPri)) {
 				effect = shader->GetEffect();
-				shader->LoadParameter();
+
+				if (shader->LoadTechnique())
+					shader->LoadParameter();
 				effect->Begin(&cPass, 0);
 			}
 
@@ -456,10 +458,13 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 
 		if (objectManagerPackage) {
 			ID3DXEffect* effect = nullptr;
+
 			UINT cPass = 1;
 			if (shared_ptr<Shader> shader = objectManagerPackage->GetShader(iPri)) {
 				effect = shader->GetEffect();
-				shader->LoadParameter();
+
+				if (shader->LoadTechnique())
+					shader->LoadParameter();
 				effect->Begin(&cPass, 0);
 			}
 

@@ -427,22 +427,6 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 
 	//--------------------------------------------------------------
 
-	auto _LoadRectList = [](Scanner& _scanner) {
-		std::vector<std::wstring> list = _scanner.GetArgumentList();
-
-		if (list.size() < 4)
-			throw wexception("Invalid argument list size (expected 4)");
-
-		DxRect<int> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
-			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
-
-		LONG width = rect.right - rect.left;
-		LONG height = rect.bottom - rect.top;
-		DxRect<int> rcDest(-width / 2, -height / 2, width / 2, height / 2);
-		if (width % 2 == 1) ++(rcDest.right);
-		if (height % 2 == 1) ++(rcDest.bottom);
-	};
-
 #define LAMBDA_SETI(m) [](Data* i, Scanner& s) { \
 						s.CheckType(s.Next(), Token::Type::TK_EQUAL); \
 						i->m = s.Next().GetInteger(); \
@@ -608,11 +592,9 @@ StgItemData::AnimationData* StgItemData::GetData(size_t frame) {
 	return &listAnime_[0];
 }
 DxRect<float> StgItemData::AnimationData::SetDestRect(DxRect<LONG>* src) {
-	LONG rw = src->GetWidth();
-	LONG rh = src->GetHeight();
-	float width = rw / 2.0f;
-	float height = rh / 2.0f;
-	return DxRect<float>(-width + 0.5f, -height + 0.5f, width + 0.5f, height + 0.5f);
+	float width = src->GetWidth() / 2.0f;
+	float height = src->GetHeight() / 2.0f;
+	return DxRect<float>(-width, -height, width, height);
 }
 
 //*******************************************************************
@@ -745,7 +727,7 @@ void StgItemObject::RenderOnItemManager() {
 			break;
 		}
 
-		DxRect<double> rcSrc;
+		DxRect<int> rcSrc;
 		switch (typeItem_) {
 		case ITEM_1UP:
 		case ITEM_1UP_S:
@@ -1087,7 +1069,7 @@ StgItemData* StgItemObject_User::_GetItemData() {
 	return res;
 }
 void StgItemObject_User::_SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z, float w) {
-	constexpr float bias = -0.5f;
+	constexpr float bias = 0.0f;
 	vertex.position.x = x + bias;
 	vertex.position.y = y + bias;
 	vertex.position.z = z;
