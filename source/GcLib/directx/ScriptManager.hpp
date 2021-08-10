@@ -52,7 +52,7 @@ namespace directx {
 		std::list<shared_ptr<ManagedScript>>& GetRunningScriptList() { return listScriptRun_; }
 		std::list<weak_ptr<ScriptManager>>& GetRelativeManagerList() { return listRelativeManager_; }
 
-		shared_ptr<ManagedScript> GetScript(int64_t id, bool bSearchRelative = false);
+		shared_ptr<ManagedScript> GetScript(int64_t id, bool bSearchInLoad, bool bSearchRelative);
 		void StartScript(int64_t id, bool bUnload = true);
 		void StartScript(shared_ptr<ManagedScript> id, bool bUnload = true);
 		void CloseScript(int64_t id);

@@ -67,28 +67,30 @@ void ScriptManager::Work(int targetType) {
 void ScriptManager::Render() {
 	//What?
 }
-shared_ptr<ManagedScript> ScriptManager::GetScript(int64_t id, bool bSearchRelative) {
+shared_ptr<ManagedScript> ScriptManager::GetScript(int64_t id, bool bSearchInLoad, bool bSearchRelative) {
 	shared_ptr<ManagedScript> res = nullptr;
 	{
 		Lock lock(lock_);
 
-		auto itr = mapScriptLoad_.find(id);
-		if (itr != mapScriptLoad_.end()) {
-			res = itr->second;
+		if (bSearchInLoad) {
+			auto itr = mapScriptLoad_.find(id);
+			if (itr != mapScriptLoad_.end()) {
+				res = itr->second;
+			}
 		}
-		else {
-			for (auto& pScriptRun : listScriptRun_) {
-				if (pScriptRun->GetScriptID() == id) {
+		if (res == nullptr) {
+			for (auto pScriptRun : listScriptRun_) {
+				if (pScriptRun && pScriptRun->GetScriptID() == id) {
 					res = pScriptRun;
 					goto get_script_res;
 				}
 			}
 
 			if (bSearchRelative) {
-				for (auto& pWeakManager : listRelativeManager_) {
+				for (auto pWeakManager : listRelativeManager_) {
 					LOCK_WEAK(pManager, pWeakManager) {
-						for (auto& pScript : pManager->listScriptRun_) {
-							if (pScript->GetScriptID() == id) {
+						for (auto pScript : pManager->listScriptRun_) {
+							if (pScript && pScript->GetScriptID() == id) {
 								res = pScript;
 								goto get_script_res;
 							}
@@ -97,8 +99,7 @@ shared_ptr<ManagedScript> ScriptManager::GetScript(int64_t id, bool bSearchRelat
 				}
 			}
 		}
-get_script_res:
-		;
+get_script_res:;
 	}
 	return res;
 }
@@ -171,6 +172,8 @@ void ScriptManager::CloseScript(int64_t id) {
 	}
 }
 void ScriptManager::CloseScript(shared_ptr<ManagedScript> id) {
+	if (id == nullptr) return;
+
 	id->SetEndScript();
 	id->bRunning_ = false;
 
@@ -189,7 +192,7 @@ void ScriptManager::CloseScriptOnType(int type) {
 	}
 }
 bool ScriptManager::IsCloseScript(int64_t id) {
-	shared_ptr<ManagedScript> script = GetScript(id);
+	shared_ptr<ManagedScript> script = GetScript(id, true, true);
 	bool res = script == nullptr || script->IsEndScript();
 	return res;
 }
@@ -327,7 +330,7 @@ void ScriptManager::RequestEventAll(int type, const gstd::value* listValue, size
 }
 gstd::value ScriptManager::GetScriptResult(int64_t idScript) {
 	gstd::value res;
-	shared_ptr<ManagedScript> script = GetScript(idScript);
+	shared_ptr<ManagedScript> script = GetScript(idScript, false, true);
 	if (script) {
 		res = script->GetResultValue();
 	}
@@ -572,7 +575,7 @@ gstd::value ManagedScript::Func_SetScriptArgument(script_machine* machine, int a
 	auto scriptManager = script->scriptManager_;
 
 	int64_t idScript = argv[0].as_int();
-	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, true);
+	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, true, true);
 	if (target) {
 		int index = argv[1].as_int();
 		target->SetArgumentValue(argv[2], index);
@@ -600,7 +603,7 @@ gstd::value ManagedScript::Func_NotifyEvent(script_machine* machine, int argc, c
 	gstd::value res;
 
 	int64_t idScript = argv[0].as_int();
-	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, true);
+	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, false, true);
 	if (target) {
 		//(script id, event type, ...)
 		int type = argv[1].as_int();
@@ -638,8 +641,9 @@ gstd::value ManagedScript::Func_PauseScript(script_machine* machine, int argc, c
 	if (idScript == script->GetScriptID())
 		script->RaiseError("A script is not allowed to pause itself.");
 
-	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, true);
-	if (target) target->bPaused_ = state;
+	shared_ptr<ManagedScript> target = scriptManager->GetScript(idScript, false, true);
+	if (target)
+		target->bPaused_ = state;
 
 	return value();
 }
@@ -650,7 +654,7 @@ gstd::value ManagedScript::Func_GetScriptStatus(script_machine* machine, int arg
 	int res = STATUS_INVALID;
 	int64_t idScript = argv[0].as_int();
 
-	shared_ptr<ManagedScript> pScript = scriptManager->GetScript(idScript, true);
+	shared_ptr<ManagedScript> pScript = scriptManager->GetScript(idScript, true, true);
 	if (pScript) {
 		if (pScript->bEndScript_)
 			res = STATUS_CLOSING;

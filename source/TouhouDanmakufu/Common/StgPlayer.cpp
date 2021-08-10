@@ -183,12 +183,10 @@ void StgPlayerObject::_Move() {
 
 	//Add and clip player position
 	{
-		__m128d v_pos = Vectorize::Add(Vectorize::Set(posX_, posY_), Vectorize::Set(sx, sy));
-		v_pos = Vectorize::Clamp(v_pos,
-			Vectorize::SetD(rcClip_.left, rcClip_.top),
-			Vectorize::SetD(rcClip_.right, rcClip_.bottom));
-		SetX(v_pos.m128d_f64[0]);
-		SetY(v_pos.m128d_f64[1]);
+		double px = posX_ + sx;
+		double py = posY_ + sy;
+		SetX(std::clamp<double>(px, rcClip_.left, rcClip_.right));
+		SetY(std::clamp<double>(py, rcClip_.top, rcClip_.bottom));
 	}
 }
 void StgPlayerObject::_AddIntersection() {

@@ -33,7 +33,7 @@ private:
 	StgItemManager* itemManager_;
 	StgIntersectionManager* intersectionManager_;
 
-	void _SetupReplayTargetCommonDataArea(int64_t idScript);
+	void _SetupReplayTargetCommonDataArea(shared_ptr<ManagedScript> pScript);
 public:
 	StgStageController(StgSystemController* systemController);
 	virtual ~StgStageController();

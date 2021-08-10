@@ -937,21 +937,6 @@ void StgShotObject::_DeleteInLife() {
 	_SendDeleteEvent(StgShotManager::BIT_EV_DELETE_IMMEDIATE);
 
 	auto objectManager = stageController_->GetMainObjectManager();
-	auto scriptManager = stageController_->GetScriptManager();
-
-	if (scriptManager != nullptr && typeOwner_ == StgShotObject::OWNER_PLAYER) {
-		float posX = GetPositionX();
-		float posY = GetPositionY();
-		LOCK_WEAK (scriptPlayer, scriptManager->GetPlayerScript()) {
-			float listPos[2] = { posX, posY };
-
-			value listScriptValue[3];
-			listScriptValue[0] = scriptPlayer->CreateIntValue(idObject_);
-			listScriptValue[1] = scriptPlayer->CreateRealArrayValue(listPos, 2U);
-			listScriptValue[2] = scriptPlayer->CreateIntValue(GetShotDataID());
-			scriptPlayer->RequestEvent(StgStagePlayerScript::EV_DELETE_SHOT_PLAYER, listScriptValue, 3);
-		}
-	}
 
 	objectManager->DeleteObject(this);
 }
@@ -1067,6 +1052,27 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 		//Don't reduce penetration with lasers
 		if (!bSpellResist_ && dynamic_cast<StgLaserObject*>(this) == nullptr) {
 			--life_;
+
+			if (life_ == 0) {
+				auto objectManager = stageController_->GetMainObjectManager();
+				auto scriptManager = stageController_->GetScriptManager();
+
+				if (scriptManager != nullptr && typeOwner_ == StgShotObject::OWNER_PLAYER) {
+					float posX = GetPositionX();
+					float posY = GetPositionY();
+					LOCK_WEAK(scriptPlayer, scriptManager->GetPlayerScript()) {
+						float listPos[2] = { posX, posY };
+
+						value listScriptValue[4];
+						listScriptValue[0] = scriptPlayer->CreateIntValue(idObject_);
+						listScriptValue[1] = scriptPlayer->CreateRealArrayValue(listPos, 2U);
+						listScriptValue[2] = scriptPlayer->CreateIntValue(GetShotDataID());
+						listScriptValue[3] = scriptPlayer->CreateIntValue(
+							obj.IsExists() ? obj->GetDxScriptObjectID() : DxScript::ID_INVALID);
+						scriptPlayer->RequestEvent(StgStagePlayerScript::EV_DELETE_SHOT_PLAYER, listScriptValue, 4);
+					}
+				}
+			}
 		}
 		break;
 	}

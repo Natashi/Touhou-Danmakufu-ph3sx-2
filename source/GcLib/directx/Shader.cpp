@@ -31,12 +31,35 @@ void ShaderData::RestoreDxResource() {
 //*******************************************************************
 //ShaderParameter
 //*******************************************************************
-ShaderParameter::ShaderParameter() {
+ShaderParameter::ShaderParameter(D3DXHANDLE handle) {
+	handle_ = handle;
 	type_ = ShaderParameterType::Unknown;
 	texture_ = nullptr;
 }
 ShaderParameter::~ShaderParameter() {
 }
+
+void ShaderParameter::SubmitData(ID3DXEffect* effect) {
+	if (effect == nullptr) return;
+	switch (type_) {
+	case ShaderParameterType::Float:
+		effect->SetFloat(handle_, *GetFloat());
+		break;
+	case ShaderParameterType::Texture:
+		if (texture_)
+			effect->SetTexture(handle_, texture_->GetD3DTexture());
+		else
+			effect->SetTexture(handle_, nullptr);
+		break;
+	case ShaderParameterType::FloatArray:
+	case ShaderParameterType::Vector:
+	case ShaderParameterType::Matrix:
+	case ShaderParameterType::MatrixArray:
+		effect->SetRawValue(handle_, value_.data(), 0, value_.size());
+		break;
+	}
+}
+
 void ShaderParameter::SetMatrix(D3DXMATRIX& matrix) {
 	type_ = ShaderParameterType::Matrix;
 
@@ -179,6 +202,27 @@ bool Shader::CreateFromData(shared_ptr<ShaderData> data) {
 	return res;
 }
 
+bool Shader::LoadTechnique() {
+	ID3DXEffect* effect = GetEffect();
+	if (effect == nullptr) return false;
+
+	D3DXHANDLE hTechnique = effect->GetTechniqueByName(technique_.c_str());
+
+	HRESULT hr = effect->SetTechnique(hTechnique);
+	if (FAILED(hr)) {
+		hr = effect->ValidateTechnique(hTechnique);
+		if (FAILED(hr)) {
+			const char* err = DXGetErrorStringA(hr);
+			const char* desc = DXGetErrorDescriptionA(hr);
+			std::string log = StringUtility::Format("Shader: Invalid technique. [%s]\r\n\t%s",
+				err, desc);
+			Logger::WriteTop(log);
+		}
+		return false;
+	}
+
+	return true;
+}
 bool Shader::LoadParameter() {
 	ID3DXEffect* effect = GetEffect();
 	if (effect == nullptr) return false;
@@ -186,69 +230,31 @@ bool Shader::LoadParameter() {
 	HRESULT hr = S_OK;
 
 	for (auto itrParam = mapParam_.begin(); itrParam != mapParam_.end(); ++itrParam) {
-		D3DXHANDLE name = itrParam->first.c_str();
+		D3DXHANDLE name = itrParam->first;
 		shared_ptr<ShaderParameter> param = itrParam->second;
 
-		switch (param->GetType()) {
-		case ShaderParameterType::Float:
-		{
-			FLOAT* flt = param->GetFloat();
-			hr = effect->SetFloat(name, *flt);
-			break;
-		}
-		case ShaderParameterType::FloatArray:
-		{
-			std::vector<byte>* raw = param->GetRaw();
-			hr = effect->SetFloatArray(name,
-				(FLOAT*)raw->data(), raw->size() / sizeof(FLOAT));
-			break;
-		}
-		case ShaderParameterType::Vector:
-		{
-			D3DXVECTOR4* vect = param->GetVector();
-			hr = effect->SetVector(name, vect);
-			break;
-		}
-		case ShaderParameterType::Matrix:
-		{
-			D3DXMATRIX* matrix = param->GetMatrix();
-			hr = effect->SetMatrix(name, matrix);
-			break;
-		}
-		case ShaderParameterType::MatrixArray:
-		{
-			std::vector<byte>* raw = param->GetRaw();
-			hr = effect->SetMatrixArray(name,
-				(D3DXMATRIX*)raw->data(), raw->size() / sizeof(D3DXMATRIX));
-			break;
-		}
-		case ShaderParameterType::Texture:
-		{
-			IDirect3DTexture9* pTex = param->GetTexture()->GetD3DTexture();
-			hr = effect->SetTexture(name, pTex);
-			break;
-		}
-		}
+		param->SubmitData(effect);
 	}
-
-	hr = effect->SetTechnique(technique_.c_str());
-	if (FAILED(hr)) return false;
 
 	return true;
 }
 shared_ptr<ShaderParameter> Shader::_GetParameter(const std::string& name, bool bCreate) {
-	auto itr = mapParam_.find(name);
-	bool bFind = itr != mapParam_.end();
-	if (!bFind && !bCreate) return nullptr;
+	D3DXHANDLE handle = data_->effect_->GetParameterByName(nullptr, name.c_str());
+	if (handle) {
+		auto itr = mapParam_.find(handle);
+		bool bFind = itr != mapParam_.end();
+		if (!bFind && !bCreate) return nullptr;
 
-	if (!bFind) {
-		shared_ptr<ShaderParameter> res(new ShaderParameter());
-		mapParam_[name] = res;
-		return res;
+		if (!bFind) {
+			shared_ptr<ShaderParameter> res(new ShaderParameter(handle));
+			mapParam_[handle] = res;
+			return res;
+		}
+		else {
+			return itr->second;
+		}
 	}
-	else {
-		return itr->second;
-	}
+	return nullptr;
 }
 
 bool Shader::SetTechnique(const std::string& name) {
@@ -257,32 +263,38 @@ bool Shader::SetTechnique(const std::string& name) {
 }
 bool Shader::SetMatrix(const std::string& name, D3DXMATRIX& matrix) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
-	param->SetMatrix(matrix);
+	if (param)
+		param->SetMatrix(matrix);
 	return true;
 }
 bool Shader::SetMatrixArray(const std::string& name, std::vector<D3DXMATRIX>& matrix) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
-	param->SetMatrixArray(matrix);
+	if (param)
+		param->SetMatrixArray(matrix);
 	return true;
 }
 bool Shader::SetVector(const std::string& name, D3DXVECTOR4& vector) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
-	param->SetVector(vector);
+	if (param)
+		param->SetVector(vector);
 	return true;
 }
 bool Shader::SetFloat(const std::string& name, FLOAT value) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
-	param->SetFloat(value);
+	if (param)
+		param->SetFloat(value);
 	return true;
 }
 bool Shader::SetFloatArray(const std::string& name, std::vector<FLOAT>& values) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
-	param->SetFloatArray(values);
+	if (param)
+		param->SetFloatArray(values);
 	return true;
 }
 bool Shader::SetTexture(const std::string& name, shared_ptr<Texture> texture) {
 	shared_ptr<ShaderParameter> param = _GetParameter(name, true);
-	param->SetTexture(texture);
+	if (param)
+		param->SetTexture(texture);
 	return true;
 }
 
@@ -381,6 +393,8 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 			path.c_str(), DXGetErrorStringW(hr), err.c_str());
 		Logger::WriteTop(log);
 		lastError_ = log;
+
+		ptr_release(data->effect_);
 	}
 	else {
 		std::wstring log = StringUtility::Format(L"ShaderManager: Shader loaded. [%s]", path.c_str());
@@ -426,6 +440,8 @@ bool ShaderManager::_CreateFromText(const std::string& source, shared_ptr<Shader
 			tStr.c_str(), DXGetErrorStringA(hr), err);
 		Logger::WriteTop(log);
 		lastError_ = StringUtility::ConvertMultiToWide(log);
+
+		ptr_release(data->effect_);
 	}
 	else {
 		std::wstring log = StringUtility::Format(L"ShaderManager: Shader loaded. [%s]", tStr.c_str());
@@ -455,11 +471,13 @@ bool ShaderManager::_CreateUnmanagedFromEffect(ID3DXEffect* effect, shared_ptr<S
 	bool res = true;
 	if (FAILED(hr)) {
 		res = false;
-		std::string err = DXGetErrorStringA(hr);
+		const char* err = DXGetErrorStringA(hr);
 		std::string log = StringUtility::Format("ShaderManager: Shader clone failed. [%s]\r\n\t%s", 
-			shaderID.c_str(), err.c_str());
+			shaderID.c_str(), err);
 		Logger::WriteTop(log);
 		lastError_ = StringUtility::ConvertMultiToWide(log);
+
+		ptr_release(data->effect_);
 	}
 	else {
 		std::string log = StringUtility::Format("ShaderManager: Shader cloned. [%s]", shaderID.c_str());

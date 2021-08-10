@@ -122,12 +122,17 @@ namespace directx {
 	//*******************************************************************
 	class ShaderParameter {
 	private:
+		D3DXHANDLE handle_;
 		ShaderParameterType type_;
 		std::vector<byte> value_;
 		shared_ptr<Texture> texture_;
 	public:
-		ShaderParameter();
+		ShaderParameter(D3DXHANDLE handle);
 		virtual ~ShaderParameter();
+
+		void SubmitData(ID3DXEffect* effect);
+
+		D3DXHANDLE GetHandle() { return handle_; }
 
 		ShaderParameterType GetType() { return type_; }
 		void SetMatrix(D3DXMATRIX& matrix);
@@ -159,7 +164,7 @@ namespace directx {
 		//IDirect3DPixelShader9* pPixelShader_;
 
 		std::string technique_;
-		std::map<std::string, shared_ptr<ShaderParameter>> mapParam_;
+		std::map<D3DXHANDLE, shared_ptr<ShaderParameter>> mapParam_;
 
 		ShaderData* _GetShaderData() { return data_.get(); }
 		shared_ptr<ShaderParameter> _GetParameter(const std::string& name, bool bCreate);
@@ -170,6 +175,7 @@ namespace directx {
 
 		void Release();
 
+		bool LoadTechnique();
 		bool LoadParameter();
 
 		shared_ptr<ShaderData> GetData() { return data_; }

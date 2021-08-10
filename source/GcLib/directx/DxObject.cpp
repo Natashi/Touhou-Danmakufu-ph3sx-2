@@ -1451,10 +1451,13 @@ void DxScriptObjectManager::RenderObject() {
 
 	for (size_t iPri = 0; iPri < listObjRender_.size(); ++iPri) {
 		ID3DXEffect* effect = nullptr;
+
 		UINT cPass = 1;
 		if (shared_ptr<Shader> shader = listShader_[iPri]) {
 			effect = shader->GetEffect();
-			shader->LoadParameter();
+
+			if (shader->LoadTechnique())
+				shader->LoadParameter();
 			effect->Begin(&cPass, 0);
 		}
 
