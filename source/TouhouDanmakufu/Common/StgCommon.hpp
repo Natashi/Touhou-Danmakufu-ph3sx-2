@@ -229,8 +229,8 @@ public:
 	virtual inline double GetSpeed() { return speed_; }
 	virtual inline double GetDirectionAngle() { return angDirection_; }
 
-	virtual double GetSpeedX() { return c_ * speed_; }
-	virtual double GetSpeedY() { return s_ * speed_; }
+	virtual double GetSpeedX() { return (speed_ * c_); }
+	virtual double GetSpeedY() { return (speed_ * s_); }
 };
 class StgMovePattern_Line_Speed : public StgMovePattern_Line {
 	friend class StgMoveObject;
@@ -245,7 +245,6 @@ public:
 	using lerp_func = Math::Lerp::funcLerp<double, double>;
 	using lerp_diff_func = Math::Lerp::funcLerpDiff<double>;
 protected:
-	double positionDiff_[2];
 	double speedRate_;
 	lerp_func moveLerpFunc;
 	lerp_diff_func diffLerpFunc;

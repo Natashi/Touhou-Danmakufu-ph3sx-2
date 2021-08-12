@@ -206,10 +206,9 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 	}
 
 	if (objRelative_) {
-		__m128d v1 = Vectorize::Sub(
-			Vectorize::Set(objRelative_->GetPositionX(), objRelative_->GetPositionY()),
-			Vectorize::Set(target_->GetPositionX(), target_->GetPositionY()));
-		newAngle += atan2(v1.m128d_f64[1], v1.m128d_f64[0]);
+		double dx = objRelative_->GetPositionX() - target_->GetPositionX();
+		double dy = objRelative_->GetPositionY() - target_->GetPositionY();
+		newAngle += atan2(dy, dx);
 	}
 	speed_ = newSpeed;
 	//angDirection_ = newAngle;
@@ -272,18 +271,13 @@ void StgMovePattern_XY::_Activate(StgMovePattern* _src) {
 	}
 	else if (_src->GetType() == TYPE_ANGLE) {
 		StgMovePattern_Angle* src = (StgMovePattern_Angle*)_src;
-		c_ = _src->GetSpeedX();
-		s_ = _src->GetSpeedY();
+		c_ = src->GetSpeedX() / src->speed_;
+		s_ = src->GetSpeedY() / src->speed_;
 		{
-			__m128d v1 = Vectorize::Set(c_, s_);
-			__m128d v2 = Vectorize::Mul(v1,
-				Vectorize::Replicate(src->acceleration_));
-			accelerationX_ = v2.m128d_f64[0];
-			accelerationY_ = v2.m128d_f64[1];
-			v2 = Vectorize::Mul(v1,
-				Vectorize::Replicate(src->maxSpeed_));
-			maxSpeedX_ = v2.m128d_f64[0];
-			maxSpeedY_ = v2.m128d_f64[1];
+			accelerationX_ = c_ * src->acceleration_;
+			accelerationY_ = s_ * src->acceleration_;
+			maxSpeedX_ = c_ * src->maxSpeed_;
+			maxSpeedY_ = s_ * src->maxSpeed_;
 		}
 	}
 
@@ -351,23 +345,21 @@ void StgMovePattern_Line_Speed::SetAtSpeed(double tx, double ty, double speed) {
 	targetPos_[0] = tx;
 	targetPos_[1] = ty;
 
-	__m128d v1 = Vectorize::Sub(Vectorize::Load(targetPos_), Vectorize::Load(iniPos_));
-	__m128d v2 = Vectorize::Mul(v1, v1);
-	double dist = sqrt(v2.m128d_f64[0] + v2.m128d_f64[1]);
+	double dx = targetPos_[0] - iniPos_[0];
+	double dy = targetPos_[1] - iniPos_[1];
+	double dist = hypot(dx, dy);
 
 	//speed_ = speed;
-	angDirection_ = atan2(v1.m128d_f64[1], v1.m128d_f64[0]);
+	angDirection_ = atan2(dy, dx);
 	maxFrame_ = std::floor(dist / speed + 0.001);
 	speed_ = dist / maxFrame_;	//Speed correction to reach the destination in integer frames
 
-	v1 = Vectorize::Mul(v1, Vectorize::Replicate(1.0 / dist));
-	c_ = v1.m128d_f64[0];
-	s_ = v1.m128d_f64[1];
+	c_ = dx / dist;
+	s_ = dy / dist;
 }
 
 StgMovePattern_Line_Frame::StgMovePattern_Line_Frame(StgMoveObject* target) : StgMovePattern_Line(target) {
 	typeLine_ = TYPE_FRAME;
-	memset(positionDiff_, 0x00, sizeof(iniPos_));
 	speedRate_ = 0.0;
 	moveLerpFunc = Math::Lerp::Linear<double, double>;
 	diffLerpFunc = Math::Lerp::DifferentialLinear<double>;
@@ -383,21 +375,17 @@ void StgMovePattern_Line_Frame::SetAtFrame(double tx, double ty, int frame, lerp
 
 	maxFrame_ = std::max(frame, 1);
 
-	__m128d v1 = Vectorize::Sub(Vectorize::Load(targetPos_), Vectorize::Load(iniPos_));
-	positionDiff_[0] = v1.m128d_f64[0];
-	positionDiff_[1] = v1.m128d_f64[1];
-
-	__m128d v2 = Vectorize::Mul(v1, v1);
-	double dist = sqrt(v2.m128d_f64[0] + v2.m128d_f64[1]);
+	double dx = targetPos_[0] - iniPos_[0];
+	double dy = targetPos_[1] - iniPos_[1];
+	double dist = hypot(dx, dy);
 
 	speedRate_ = dist / (double)frame;
 
 	speed_ = diffLerpFunc(0.0) * speedRate_;
-	angDirection_ = atan2(positionDiff_[1], positionDiff_[0]);
+	angDirection_ = atan2(dy, dx);
 
-	v1 = Vectorize::Mul(v1, Vectorize::Replicate(1.0 / dist));
-	c_ = v1.m128d_f64[0];
-	s_ = v1.m128d_f64[1];
+	c_ = dx / dist;
+	s_ = dy / dist;
 }
 void StgMovePattern_Line_Frame::Move() {
 	if (frameWork_ < maxFrame_) {
@@ -432,16 +420,15 @@ void StgMovePattern_Line_Weight::SetAtWeight(double tx, double ty, double weight
 	weight_ = weight;
 	maxSpeed_ = maxSpeed;
 
-	__m128d v1 = Vectorize::Sub(Vectorize::Load(targetPos_), Vectorize::Load(iniPos_));
-	__m128d v2 = Vectorize::Mul(v1, v1);
-	dist_ = sqrt(v2.m128d_f64[0] + v2.m128d_f64[1]);
+	double dx = targetPos_[0] - iniPos_[0];
+	double dy = targetPos_[1] - iniPos_[1];
+	dist_ = hypot(dx, dy);
 
 	speed_ = maxSpeed_;
-	angDirection_ = atan2(v1.m128d_f64[1], v1.m128d_f64[0]);
+	angDirection_ = atan2(dy, dx);
 
-	v1 = Vectorize::Mul(v1, Vectorize::Replicate(1.0 / dist_));
-	c_ = v1.m128d_f64[0];
-	s_ = v1.m128d_f64[1];
+	c_ = dx / dist_;
+	s_ = dy / dist_;
 }
 void StgMovePattern_Line_Weight::Move() {
 	if (dist_ < 0.1) {
