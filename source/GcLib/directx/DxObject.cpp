@@ -774,27 +774,40 @@ DxSoundObject::~DxSoundObject() {
 bool DxSoundObject::Load(const std::wstring& path) {
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
 
-	player_ = nullptr;
+	{
+		Lock lock(manager->GetLock());
 
-	//A very ugly hack
-	auto itrFind = mapCachedPlayers_.find(path);
-	bool bFound = itrFind != mapCachedPlayers_.end();
-	if (bFound) {
-		weak_ptr<SoundPlayer> pWeakPlayer = itrFind->second;
-		if (!pWeakPlayer.expired())
-			player_ = pWeakPlayer.lock();
-		else
-			mapCachedPlayers_.erase(itrFind);
-	}
-	
-	if (player_ == nullptr) {
 		shared_ptr<SoundSourceData> newSource = manager->GetSoundSource(path, true);
-		if (newSource)
-			player_ = manager->CreatePlayer(newSource);
-	}
+		bool bFoundCached = false;
 
-	if (player_ && !bFound)
-		mapCachedPlayers_[path] = player_;
+		//A very ugly hack
+		player_ = nullptr;
+		if (newSource) {
+			for (auto itr = mapCachedPlayers_.begin(); itr != mapCachedPlayers_.end();) {
+				SoundSourceData* pSource = itr->first;
+				weak_ptr<SoundPlayer> pWeakPlayer = itr->second;
+				if (pWeakPlayer.expired()) {
+					itr = mapCachedPlayers_.erase(itr);
+				}
+				else {
+					if (pSource == newSource.get()) {
+						player_ = pWeakPlayer.lock();
+						bFoundCached = true;
+						break;
+					}
+					++itr;
+				}
+			}
+		}
+
+		if (player_ == nullptr) {
+			player_ = manager->CreatePlayer(newSource);
+		}
+
+		if (player_ && !bFoundCached) {
+			mapCachedPlayers_[newSource.get()] = player_;
+		}
+	}
 	return player_ != nullptr;
 }
 void DxSoundObject::Play() {
