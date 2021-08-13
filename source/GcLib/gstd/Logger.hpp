@@ -170,34 +170,6 @@ namespace gstd {
 
 	class WindowLogger::InfoPanel : public WindowLogger::Panel, public Thread {
 	private:
-		class InfoCollector;
-		friend class InfoCollector;
-
-		enum {
-			ROW_INFO = 0,
-			ROW_DATA,
-		};
-
-		gstd::CriticalSection lock_;
-
-		WListView wndListView_;
-		InfoCollector* infoCollector_;
-	protected:
-		virtual void _Run();
-
-		virtual bool _AddedLogger(HWND hTab);
-	public:
-		InfoPanel();
-		~InfoPanel();
-
-		virtual void LocateParts();
-
-		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
-	};
-
-	class WindowLogger::InfoPanel::InfoCollector {
-	protected:
-		//CPU情報構造体
 		struct CpuInfo {
 			char venderID[13];
 			char name[49];
@@ -211,24 +183,41 @@ namespace gstd {
 			bool bAMD3DNowEnabled;
 			bool bSIMDEnabled;
 		};
+	private:
+		class InfoCollector;
+		friend class InfoCollector;
 
-		shared_ptr<WStatusBar> wndStatus_;
-		InfoPanel* wndInfo_;
+		enum {
+			ROW_INFO = 0,
+			ROW_DATA,
+		};
+
+		gstd::CriticalSection lock_;
+
+		WListView wndListView_;
 
 		CpuInfo infoCpu_;
 
 		HANDLE hProcess_;
 		HQUERY hQuery_;
 		HCOUNTER hCounter_;
+	protected:
+		virtual void _Run();
 
+		virtual bool _AddedLogger(HWND hTab);
+
+		void _InitializeHandle();
 		CpuInfo _GetCpuInformation();
 		double _GetCpuPerformance();
-	public:
-		InfoCollector(shared_ptr<WStatusBar> wndStatus, InfoPanel* wndInfo);
-		~InfoCollector();
 
-		void Initialize();
-		void Update();
+		void _SetRamInfo();
+	public:
+		InfoPanel();
+		~InfoPanel();
+
+		virtual void LocateParts();
+
+		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
 	};
 #endif
 }
