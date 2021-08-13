@@ -128,8 +128,8 @@ shared_ptr<SoundSourceData> DirectSoundManager::_CreateSoundSource(std::wstring 
 
 	shared_ptr<SoundSourceData> res;
 
+	path = PathProperty::GetUnique(path);
 	try {
-		path = PathProperty::GetUnique(path);
 		shared_ptr<FileReader> reader = fileManager->GetFileReader(path);
 		if (reader == nullptr || !reader->Open())
 			throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
@@ -191,6 +191,8 @@ shared_ptr<SoundSourceData> DirectSoundManager::_CreateSoundSource(std::wstring 
 		}
 
 		if (bSuccess) {
+			Lock lock(lock_);
+
 			mapSoundSource_[path] = res;
 			std::wstring str = StringUtility::Format(L"DirectSound: Audio loaded [%s]", path.c_str());
 			Logger::WriteTop(str);
@@ -203,7 +205,8 @@ shared_ptr<SoundSourceData> DirectSoundManager::_CreateSoundSource(std::wstring 
 	}
 	catch (gstd::wexception& e) {
 		res = nullptr;
-		std::wstring str = StringUtility::Format(L"DirectSound：Audio load failed [%s]\r\n\t%s", path.c_str(), e.what());
+		std::wstring str = StringUtility::Format(L"DirectSound：Audio load failed [%s]\r\n\t%s", 
+			path.c_str(), e.what());
 		Logger::WriteTop(str);
 	}
 	return res;
@@ -212,6 +215,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::CreatePlayer(shared_ptr<SoundSourceD
 	if (source == nullptr) return nullptr;
 
 	const std::wstring& path = source->path_;
+
 	shared_ptr<SoundPlayer> res;
 
 	try {
@@ -245,6 +249,8 @@ shared_ptr<SoundPlayer> DirectSoundManager::CreatePlayer(shared_ptr<SoundSourceD
 		}
 
 		if (bSuccess) {
+			Lock lock(lock_);
+
 			res->manager_ = this;
 
 			res->path_ = path;
@@ -252,19 +258,21 @@ shared_ptr<SoundPlayer> DirectSoundManager::CreatePlayer(shared_ptr<SoundSourceD
 
 			listManagedPlayer_.push_back(res);
 			/*
-			std::wstring str = StringUtility::Format(L"DirectSound: Sound player created [%s]", path.c_str());
+			std::wstring str = StringUtility::Format(L"DirectSound: Sound player created [%s]", pathReduce.c_str());
 			Logger::WriteTop(str);
 			*/
 		}
 		else {
 			res = nullptr;
-			std::wstring str = StringUtility::Format(L"DirectSound: Sound player create failed [%s]", path.c_str());
+			std::wstring str = StringUtility::Format(L"DirectSound: Sound player create failed [%s]",
+				path.c_str());
 			Logger::WriteTop(str);
 		}
 	}
 	catch (gstd::wexception& e) {
 		res = nullptr;
-		std::wstring str = StringUtility::Format(L"DirectSound：Sound player create failed [%s]\r\n\t%s", path.c_str(), e.what());
+		std::wstring str = StringUtility::Format(L"DirectSound：Sound player create failed [%s]\r\n\t%s", 
+			path.c_str(), e.what());
 		Logger::WriteTop(str);
 	}
 	return res;
@@ -376,7 +384,8 @@ void DirectSoundManager::SoundManageThread::_Arrange() {
 			bool bDelete = source.use_count() == 2;
 
 			if (bDelete) {
-				Logger::WriteTop(StringUtility::Format(L"DirectSound: Released data [%s]", source->path_.c_str()));
+				Logger::WriteTop(StringUtility::Format(L"DirectSound: Released data [%s]", 
+					source->path_.c_str()));
 				itrSource = mapSource->erase(itrSource);
 			}
 			else ++itrSource;
@@ -489,22 +498,19 @@ void SoundInfoPanel::Update(DirectSoundManager* soundManager) {
 		}
 	}
 
-	/*
 	{
-		Lock lock(soundManager->GetLock());
+		DSCAPS _sndCaps;
+		soundManager->GetDirectSound()->GetCaps(&_sndCaps);
 
-		IDirectSound8* directSound = soundManager->GetDirectSound();
-		directSound->GetCaps(const_cast<LPDSCAPS>(soundManager->GetDeviceCaps()));
-		UINT sndMem = soundManager->GetDeviceCaps()->dwFreeHwMemBytes / (1024U * 1024U);
+		UINT sndMemRemain = _sndCaps.dwFreeHwMemBytes / (1024U * 1024U);
+		UINT sndMemTotal = _sndCaps.dwTotalHwMemBytes / (1024U * 1024U);
 
-		WindowLogger* logger = WindowLogger::GetParent();
-		if (logger) {
-			ref_count_ptr<WStatusBar> statusBar = logger->GetStatusBar();
-			statusBar->SetText(0, L"Available Sound Memory");
-			statusBar->SetText(1, StringUtility::Format(L"%u MB", sndMem));
+		if (WindowLogger* logger = WindowLogger::GetParent()) {
+			shared_ptr<WStatusBar> statusBar = logger->GetStatusBar();
+			statusBar->SetText(0, L"Sound Memory");
+			statusBar->SetText(1, StringUtility::Format(L"%u/%u MB", sndMemRemain, sndMemTotal));
 		}
 	}
-	*/
 }
 //*******************************************************************
 //SoundDivision
@@ -921,12 +927,7 @@ bool SoundPlayer::IsPlaying() {
 	return false;
 }
 double SoundPlayer::GetVolumeRate() {
-	double res = 0;
-	{
-		Lock lock(lock_);
-		res = rateVolume_;
-	}
-	return res;
+	return rateVolume_;
 }
 bool SoundPlayer::SetVolumeRate(double rateVolume) {
 	{
@@ -954,6 +955,7 @@ bool SoundPlayer::SetVolumeRate(double rateVolume) {
 bool SoundPlayer::SetPanRate(double ratePan) {
 	{
 		Lock lock(lock_);
+
 		if (ratePan < -100) ratePan = -100.0;
 		else if (ratePan > 100) ratePan = 100.0;
 
@@ -1070,7 +1072,7 @@ void SoundStreamingPlayer::_CreateSoundEvent(WAVEFORMATEX& formatWave) {
 	HRESULT hrNotify = pDirectSoundBuffer_->QueryInterface(IID_IDirectSoundNotify, (LPVOID*)&pDirectSoundNotify_);
 	DSBPOSITIONNOTIFY pn[3];
 	for (size_t iEvent = 0; iEvent < 3; ++iEvent) {
-		hEvent_[iEvent] = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+		hEvent_[iEvent] = CreateEventW(nullptr, FALSE, FALSE, nullptr);
 		pn[iEvent].hEventNotify = hEvent_[iEvent];
 	}
 
@@ -1084,17 +1086,21 @@ void SoundStreamingPlayer::_CreateSoundEvent(WAVEFORMATEX& formatWave) {
 	}
 }
 void SoundStreamingPlayer::_CopyStream(int indexCopy) {
+	if (pDirectSoundBuffer_ == nullptr) return;
 	{
 		Lock lock(lock_);
+
 		LPVOID pMem1, pMem2;
 		DWORD dwSize1, dwSize2;
 
+		DWORD copyOffset = sizeCopy_ * indexCopy;
+
 		pDirectSoundBuffer_->GetCurrentPosition(&bufferPositionAtCopy_[indexCopy], nullptr);
 
-		HRESULT hr = pDirectSoundBuffer_->Lock(sizeCopy_ * indexCopy, sizeCopy_, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
+		HRESULT hr = pDirectSoundBuffer_->Lock(copyOffset, sizeCopy_, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
 		if (hr == DSERR_BUFFERLOST) {
 			hr = pDirectSoundBuffer_->Restore();
-			hr = pDirectSoundBuffer_->Lock(sizeCopy_ * indexCopy, sizeCopy_, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
+			hr = pDirectSoundBuffer_->Lock(copyOffset, sizeCopy_, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
 		}
 
 		if (FAILED(hr))
@@ -1108,7 +1114,7 @@ void SoundStreamingPlayer::_CopyStream(int indexCopy) {
 				}
 				goto lab_set_mem_zero;
 			}
-			else if (!bStreaming_ || IsPlaying()) {
+			else if (bStreaming_ && IsPlaying()) {
 				if (dwSize1 > 0) {
 					DWORD res = _CopyBuffer(pMem1, dwSize1);
 					lastStreamCopyPos_[indexCopy] = res;
@@ -1132,6 +1138,7 @@ lab_unlock_buf:
 	}
 }
 bool SoundStreamingPlayer::Play() {
+	if (pDirectSoundBuffer_ == nullptr) return false;
 	if (IsPlaying()) return true;
 
 	{
@@ -1150,13 +1157,12 @@ bool SoundStreamingPlayer::Play() {
 		}
 		playStyle_.timeStart_ = 0;
 
-		if (bStreaming_) {
-			::ResetEvent(hEvent_[0]);
-			::ResetEvent(hEvent_[1]);
-			::ResetEvent(hEvent_[2]);
+		for (size_t iEvent = 0; iEvent < 3; ++iEvent)
+			::ResetEvent(hEvent_[iEvent]);
 
+		if (bStreaming_) {
 			thread_->Start();
-			pDirectSoundBuffer_->Play(0, 0, DSBPLAY_LOOPING);//再生開始
+			pDirectSoundBuffer_->Play(0, 0, DSBPLAY_LOOPING);
 		}
 		else {
 			DWORD dwFlags = 0;
@@ -1184,11 +1190,10 @@ bool SoundStreamingPlayer::Stop() {
 }
 void SoundStreamingPlayer::ResetStreamForSeek() {
 	if (pDirectSoundBuffer_) {
-		pDirectSoundBuffer_->SetCurrentPosition(0);
 		_CopyStream(1);
-		//DWORD posCopy = lastStreamCopyPos_;
 		_CopyStream(0);
-		//lastStreamCopyPos_ = posCopy;
+
+		pDirectSoundBuffer_->SetCurrentPosition(0);
 	}
 }
 bool SoundStreamingPlayer::IsPlaying() {
@@ -1210,27 +1215,39 @@ DWORD SoundStreamingPlayer::GetCurrentPosition() {
 }
 
 //StreamingThread
+SoundStreamingPlayer::StreamingThread::StreamingThread(SoundStreamingPlayer* player) { 
+	_SetOuter(player); 
+}
 void SoundStreamingPlayer::StreamingThread::_Run() {
 	SoundStreamingPlayer* player = _GetOuter();
 
 	DWORD point = 0;
-	player->pDirectSoundBuffer_->GetCurrentPosition(&point, 0);
+	if (player->pDirectSoundBuffer_)
+		player->pDirectSoundBuffer_->GetCurrentPosition(&point, 0);
 	if (point == 0)
 		player->_CopyStream(0);
 
 	while (this->GetStatus() == RUN) {
 		DWORD num = WaitForMultipleObjects(3, player->hEvent_, FALSE, INFINITE);
-		if (num == WAIT_OBJECT_0)
-			player->_CopyStream(1);
-		else if (num == WAIT_OBJECT_0 + 1)
-			player->_CopyStream(0);
+
+		player->pDirectSoundBuffer_->GetCurrentPosition(&point, 0);
+		if (num == WAIT_OBJECT_0) {
+			if ((point - 0) < 4096)
+				player->_CopyStream(1);
+		}
+		else if (num == WAIT_OBJECT_0 + 1) {
+			if ((point - player->sizeCopy_) < 4096)
+				player->_CopyStream(0);
+		}
 		else if (num == WAIT_OBJECT_0 + 2)
 			break;
+
+		point = UINT_MAX;
 	}
 }
 void SoundStreamingPlayer::StreamingThread::Notify(size_t index) {
 	SoundStreamingPlayer* player = _GetOuter();
-	SetEvent(player->hEvent_[index]);
+	::SetEvent(player->hEvent_[index]);
 }
 
 //*******************************************************************
@@ -1245,59 +1262,67 @@ bool SoundPlayerWave::_CreateBuffer(shared_ptr<SoundSourceData> source) {
 	FileManager* fileManager = FileManager::GetBase();
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 
-	soundSource_ = source;
+	{
+		//Lock lock(soundManager->GetLock());
 
-	if (auto pSource = std::dynamic_pointer_cast<SoundSourceDataWave>(source)) {
-		shared_ptr<FileReader> reader = pSource->reader_;
+		soundSource_ = source;
 
-		try {
-			QWORD waveSize = pSource->audioSizeTotal_;
+		if (auto pSource = std::dynamic_pointer_cast<SoundSourceDataWave>(source)) {
+			shared_ptr<FileReader> reader = pSource->reader_;
 
-			DSBUFFERDESC desc;
-			ZeroMemory(&desc, sizeof(DSBUFFERDESC));
-			desc.dwSize = sizeof(DSBUFFERDESC);
-			desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
-				| DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCDEFER;
-			desc.dwBufferBytes = waveSize;
-			desc.lpwfxFormat = &pSource->formatWave_;
-			HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc,
-				(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
-			if (FAILED(hrBuffer))
-				throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
+			try {
+				DWORD waveSize = pSource->audioSizeTotal_;
 
-			{
-				LPVOID pMem1, pMem2;
-				DWORD dwSize1, dwSize2;
+				DSBUFFERDESC desc;
+				ZeroMemory(&desc, sizeof(DSBUFFERDESC));
+				desc.dwSize = sizeof(DSBUFFERDESC);
+				desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
+					| DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCSOFTWARE;
+				desc.dwBufferBytes = waveSize;
+				desc.lpwfxFormat = &pSource->formatWave_;
+				HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc,
+					(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
+				if (FAILED(hrBuffer))
+					throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
 
-				HRESULT hrLock = pDirectSoundBuffer_->Lock(0, waveSize, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
-				if (hrLock == DSERR_BUFFERLOST) {
-					hrLock = pDirectSoundBuffer_->Restore();
-					hrLock = pDirectSoundBuffer_->Lock(0, waveSize, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
+				if (pDirectSoundBuffer_) {
+					LPVOID pMem1, pMem2;
+					DWORD dwSize1, dwSize2;
+
+					HRESULT hrLock = pDirectSoundBuffer_->Lock(0, waveSize, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
+					if (hrLock == DSERR_BUFFERLOST) {
+						hrLock = pDirectSoundBuffer_->Restore();
+						hrLock = pDirectSoundBuffer_->Lock(0, waveSize, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
+					}
+					if (FAILED(hrLock))
+						throw gstd::wexception("IDirectSoundBuffer8::Lock failure");
+
+					reader->Seek(pSource->posWaveStart_);
+					if (dwSize1 > 0)
+						reader->Read(pMem1, dwSize1);
+					if (dwSize2 > 0)
+						reader->Read(pMem2, dwSize2);
+
+					pDirectSoundBuffer_->Unlock(pMem1, dwSize1, pMem2, dwSize2);
 				}
-				if (FAILED(hrLock))
-					throw gstd::wexception("IDirectSoundBuffer8::Lock failure");
-
-				reader->Seek(pSource->posWaveStart_);
-				reader->Read(pMem1, dwSize1);
-				if (dwSize2 != 0)
-					reader->Read(pMem2, dwSize2);
-				pDirectSoundBuffer_->Unlock(pMem1, dwSize1, pMem2, dwSize2);
+			}
+			catch (bool) {
+				return false;
+			}
+			catch (gstd::wexception& e) {
+				throw e;
 			}
 		}
-		catch (bool) {
-			return false;
-		}
-		catch (gstd::wexception& e) {
-			throw e;
-		}
+		else return false;
 	}
-	else return false;
 
 	return true;
 }
 bool SoundPlayerWave::Play() {
+	if (pDirectSoundBuffer_ == nullptr) return false;
 	{
 		Lock lock(lock_);
+
 		if (bFadeDelete_)
 			SetVolumeRate(100);
 		bFadeDelete_ = false;
@@ -1345,7 +1370,7 @@ bool SoundPlayerWave::Seek(double time) {
 	return Seek((DWORD)(time * soundSource_->formatWave_.nSamplesPerSec));
 }
 bool SoundPlayerWave::Seek(DWORD sample) {
-	if (soundSource_ == nullptr) return false;
+	if (soundSource_ == nullptr || pDirectSoundBuffer_ == nullptr) return false;
 	{
 		Lock lock(lock_);
 		pDirectSoundBuffer_->SetCurrentPosition(sample * soundSource_->formatWave_.nBlockAlign);
@@ -1361,35 +1386,51 @@ bool SoundStreamingPlayerWave::_CreateBuffer(shared_ptr<SoundSourceData> source)
 	FileManager* fileManager = FileManager::GetBase();
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 
-	soundSource_ = source;
+	{
+		//Lock lock(soundManager->GetLock());
 
-	if (auto pSource = std::dynamic_pointer_cast<SoundSourceDataWave>(source)) {
-		shared_ptr<FileReader> reader = pSource->reader_;
+		soundSource_ = source;
 
-		try {
-			DSBUFFERDESC desc;
-			ZeroMemory(&desc, sizeof(DSBUFFERDESC));
-			desc.dwSize = sizeof(DSBUFFERDESC);
-			desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
-				| DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2
-				| DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
-			desc.dwBufferBytes = 2 * pSource->formatWave_.nAvgBytesPerSec;
-			desc.lpwfxFormat = &pSource->formatWave_;
-			HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc,
-				(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
-			if (FAILED(hrBuffer))
-				throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
+		if (auto pSource = std::dynamic_pointer_cast<SoundSourceDataWave>(source)) {
+			shared_ptr<FileReader> reader = pSource->reader_;
 
-			_CreateSoundEvent(pSource->formatWave_);
+			try {
+				DWORD sizeBuffer = std::min(2 * pSource->formatWave_.nAvgBytesPerSec, (DWORD)pSource->audioSizeTotal_);
+
+				DSBUFFERDESC desc;
+				ZeroMemory(&desc, sizeof(DSBUFFERDESC));
+				desc.dwSize = sizeof(DSBUFFERDESC);
+				desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
+					| DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2
+					| DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
+				desc.dwBufferBytes = sizeBuffer;
+				desc.lpwfxFormat = &pSource->formatWave_;
+				HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc,
+					(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
+				if (FAILED(hrBuffer))
+					throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
+
+				sizeCopy_ = pSource->formatWave_.nAvgBytesPerSec;
+				lastReadPointer_ = pSource->posWaveStart_;
+
+				bStreaming_ = sizeBuffer != pSource->audioSizeTotal_;
+				if (!bStreaming_) {
+					sizeCopy_ = pSource->audioSizeTotal_;
+					_CopyStream(0);
+				}
+				else {
+					_CreateSoundEvent(pSource->formatWave_);
+				}
+			}
+			catch (bool) {
+				return false;
+			}
+			catch (gstd::wexception& e) {
+				throw e;
+			}
 		}
-		catch (bool) {
-			return false;
-		}
-		catch (gstd::wexception& e) {
-			throw e;
-		}
+		else return false;
 	}
-	else return false;
 
 	return true;
 }
@@ -1400,42 +1441,49 @@ DWORD SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	double loopStart = playStyle_.timeLoopStart_;
 	double loopEnd = playStyle_.timeLoopEnd_;
 
-	DWORD posLoopStart = source->posWaveStart_ + loopStart * source->formatWave_.nAvgBytesPerSec;
-	DWORD posLoopEnd = source->posWaveStart_ + loopEnd * source->formatWave_.nAvgBytesPerSec;
+	DWORD byteLoopStart = source->posWaveStart_ + loopStart * source->formatWave_.nAvgBytesPerSec;
+	DWORD byteLoopEnd = source->posWaveStart_ + loopEnd * source->formatWave_.nAvgBytesPerSec;
 	DWORD blockSize = source->formatWave_.nBlockAlign;
 
 	reader->Seek(lastReadPointer_);
+	DWORD resStreamPos = lastReadPointer_;
 
-	DWORD cPos = lastReadPointer_;
-	DWORD resStreamPos = cPos;
-
-	auto _ReadStreamWrapped = [&](DWORD readSize) {
-		DWORD sizeNext = dwSize - readSize;
-
-		reader->Read(pMem, readSize);
-
-		if (playStyle_.bLoop_) {
-			Seek(posLoopStart);
-			reader->Read((char*)pMem + readSize, sizeNext);
-		}
-		else {
-			memset((char*)pMem + readSize, 0, sizeNext);
-			_SetStreamOver();
-		}
+	DWORD totalWritten = 0;
+	auto _WriteBytes = [&](DWORD writeTargetSize) -> bool {
+		if (writeTargetSize == 0) return true;
+		DWORD written = reader->Read((char*)pMem + totalWritten, writeTargetSize);
+		return written != writeTargetSize;	//If (written < target), then the read contains the EOF
 	};
 
-	if (cPos + dwSize > source->posWaveEnd_) {				//This read will contain the EOF
-		DWORD sizeRemain = source->posWaveEnd_ - cPos;		//Size until the EOF
+	DWORD byteCurrentStart = lastReadPointer_;
+	while (totalWritten < dwSize) {
+		DWORD byteCurrent = byteCurrentStart + totalWritten;
 
-		_ReadStreamWrapped(sizeRemain);
-	}
-	else if (cPos + dwSize > posLoopEnd && loopEnd > 0) {	//This read will contain the looping point
-		DWORD sizeRemain = posLoopEnd - cPos;				//Size until the loop
+		DWORD remain = dwSize - totalWritten;
+		if (byteCurrent + remain > byteLoopEnd && byteLoopEnd > 0) {
+			//This read will contain the looping point
+			DWORD size1 = std::min(byteLoopEnd - byteCurrent, remain);
+			_WriteBytes(size1);
+		}
+		else {
+			bool bFileEnd = _WriteBytes(remain);
+			if (!bFileEnd)
+				continue;
+		}
 
-		_ReadStreamWrapped(sizeRemain);
-	}
-	else {
-		reader->Read(pMem, dwSize);
+		//Reset to loop start
+		{
+			remain = dwSize - totalWritten;
+			if (playStyle_.bLoop_) {
+				Seek(loopStart);
+				_WriteBytes(remain);
+			}
+			else {
+				memset((char*)pMem + totalWritten, 0, remain);
+				_SetStreamOver();
+				break;
+			}
+		}
 	}
 
 	lastReadPointer_ = reader->GetFilePointer();
@@ -1443,8 +1491,7 @@ DWORD SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 }
 bool SoundStreamingPlayerWave::Seek(double time) {
 	if (soundSource_ == nullptr) return false;
-	SoundSourceDataWave* source = (SoundSourceDataWave*)soundSource_.get();
-	return Seek((DWORD)(time * source->formatWave_.nSamplesPerSec));
+	return Seek((DWORD)(time * soundSource_->formatWave_.nSamplesPerSec));
 }
 bool SoundStreamingPlayerWave::Seek(DWORD sample) {
 	if (soundSource_ == nullptr) return false;
@@ -1468,46 +1515,51 @@ bool SoundStreamingPlayerOgg::_CreateBuffer(shared_ptr<SoundSourceData> source) 
 	FileManager* fileManager = FileManager::GetBase();
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 
-	soundSource_ = source;
+	{
+		//Lock lock(soundManager->GetLock());
 
-	if (auto pSource = std::dynamic_pointer_cast<SoundSourceDataOgg>(source)) {
-		shared_ptr<FileReader> reader = pSource->reader_;
+		soundSource_ = source;
 
-		try {
-			DWORD sizeBuffer = std::min(2 * pSource->formatWave_.nAvgBytesPerSec, (DWORD)pSource->audioSizeTotal_);
+		if (auto pSource = std::dynamic_pointer_cast<SoundSourceDataOgg>(source)) {
+			shared_ptr<FileReader> reader = pSource->reader_;
 
-			DSBUFFERDESC desc;
-			ZeroMemory(&desc, sizeof(DSBUFFERDESC));
-			desc.dwSize = sizeof(DSBUFFERDESC);
-			desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
-				| DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2
-				| DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
-			desc.dwBufferBytes = sizeBuffer;
-			desc.lpwfxFormat = &pSource->formatWave_;
-			HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc,
-				(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
-			if (FAILED(hrBuffer))
-				throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
+			try {
+				DWORD sizeBuffer = std::min(2 * pSource->formatWave_.nAvgBytesPerSec, (DWORD)pSource->audioSizeTotal_);
 
-			_CreateSoundEvent(pSource->formatWave_);
+				DSBUFFERDESC desc;
+				ZeroMemory(&desc, sizeof(DSBUFFERDESC));
+				desc.dwSize = sizeof(DSBUFFERDESC);
+				desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
+					| DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2
+					| DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
+				desc.dwBufferBytes = sizeBuffer;
+				desc.lpwfxFormat = &pSource->formatWave_;
+				HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc,
+					(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
+				if (FAILED(hrBuffer))
+					throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
 
-			bStreaming_ = sizeBuffer != pSource->audioSizeTotal_;
-			if (!bStreaming_) {
-				sizeCopy_ = pSource->audioSizeTotal_;
-				_CopyStream(0);
+				sizeCopy_ = pSource->formatWave_.nAvgBytesPerSec;
+				lastReadPointer_ = 0;
+
+				bStreaming_ = sizeBuffer != pSource->audioSizeTotal_;
+				if (!bStreaming_) {
+					sizeCopy_ = pSource->audioSizeTotal_;
+					_CopyStream(0);
+				}
+				else {
+					_CreateSoundEvent(pSource->formatWave_);
+				}
 			}
-			else {
-				ov_pcm_seek(&pSource->fileOgg_, 0);
+			catch (bool) {
+				return false;
+			}
+			catch (gstd::wexception& e) {
+				throw e;
 			}
 		}
-		catch (bool) {
-			return false;
-		}
-		catch (gstd::wexception& e) {
-			throw e;
-		}
+		else return false;
 	}
-	else return false;
 
 	return true;
 }
@@ -1529,46 +1581,50 @@ DWORD SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 
 	DWORD resStreamPos = lastReadPointer_ * bytePerSample;
 
-	auto _DecodeOgg = [&](DWORD writeOff, DWORD writeTargetSize, DWORD* pWritten) -> bool {
+	DWORD totalWritten = 0;
+	auto _DecodeOgg = [&](DWORD writeTargetSize) -> bool {
 		if (writeTargetSize == 0) return true;
 		DWORD written = 0;
 		while (written < writeTargetSize) {
 			DWORD _remain = writeTargetSize - written;
-			DWORD read = ov_read(pFileOgg, (char*)pMem + writeOff + written, _remain, 0, 2, 1, nullptr);
-			if (read == 0) {
-				*pWritten = written;
-				return false;	//EOF
-			}
-			written += read;
+			DWORD _write = ov_read(pFileOgg, (char*)pMem + totalWritten, _remain, 0, 2, 1, nullptr);
+			if (_write == 0)
+				return true;	//EOF
+			written += _write;
+			totalWritten += _write;
 		}
-		*pWritten = written;
-		return true;
+		return false;
 	};
 
-	DWORD pcmCurrent = ov_pcm_tell(pFileOgg);
-	DWORD byteCurrent = pcmCurrent * bytePerSample;
+	DWORD byteCurrentStart = ov_pcm_tell(pFileOgg) * bytePerSample;
+	while (totalWritten < dwSize) {
+		DWORD byteCurrent = byteCurrentStart + totalWritten;
 
-	bool bReadLoopEnd = byteCurrent + dwSize > byteLoopEnd && byteLoopEnd > 0;
-	bool bReadEof = byteCurrent + dwSize > source->audioSizeTotal_;
-	if (bReadLoopEnd || bReadEof) {
-		DWORD size1 = bReadLoopEnd ? (byteLoopEnd - byteCurrent) : dwSize;
-
-		DWORD written = 0;
-		bool bFileEnd = _DecodeOgg(0, size1, &written);
-
-		DWORD remain = dwSize - written;
-		if (playStyle_.bLoop_) {
-			Seek(loopStart);
-			bFileEnd = _DecodeOgg(written, remain, &written);
+		DWORD remain = dwSize - totalWritten;
+		if (byteCurrent + remain > byteLoopEnd && byteLoopEnd > 0) {
+			//This read will contain the looping point
+			DWORD size1 = std::min(byteLoopEnd - byteCurrent, remain);
+			_DecodeOgg(size1);
 		}
 		else {
-			memset((char*)pMem + written, 0, remain);
-			_SetStreamOver();
+			bool bFileEnd = _DecodeOgg(remain);
+			if (!bFileEnd)
+				continue;
 		}
-	}
-	else {
-		DWORD written = 0;
-		_DecodeOgg(0, dwSize, &written);
+
+		//Reset to loop start
+		{
+			remain = dwSize - totalWritten;
+			if (playStyle_.bLoop_) {
+				Seek(loopStart);
+				_DecodeOgg(remain);
+			}
+			else {
+				memset((char*)pMem + totalWritten, 0, remain);
+				_SetStreamOver();
+				break;
+			}
+		}
 	}
 
 	lastReadPointer_ = ov_pcm_tell(pFileOgg);
@@ -1576,13 +1632,7 @@ DWORD SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 }
 bool SoundStreamingPlayerOgg::Seek(double time) {
 	if (soundSource_ == nullptr) return false;
-	SoundSourceDataOgg* source = (SoundSourceDataOgg*)soundSource_.get();
-	{
-		Lock lock(lock_);
-		ov_time_seek(&source->fileOgg_, time);
-		lastReadPointer_ = time * source->formatWave_.nSamplesPerSec;
-	}
-	return true;
+	return Seek((DWORD)(time * soundSource_->formatWave_.nSamplesPerSec));
 }
 bool SoundStreamingPlayerOgg::Seek(DWORD sample) {
 	if (soundSource_ == nullptr) return false;
@@ -1607,45 +1657,51 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<SoundSourceData> source) 
 	FileManager* fileManager = FileManager::GetBase();
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 
-	soundSource_ = source;
+	{
+		//Lock lock(soundManager->GetLock());
 
-	if (auto pSource = std::dynamic_pointer_cast<SoundSourceDataMp3>(source)) {
-		shared_ptr<FileReader> reader = pSource->reader_;
+		soundSource_ = source;
 
-		try {
-			DWORD sizeBuffer = std::min(2 * pSource->formatWave_.nAvgBytesPerSec, (DWORD)pSource->audioSizeTotal_);
+		if (auto pSource = std::dynamic_pointer_cast<SoundSourceDataMp3>(source)) {
+			shared_ptr<FileReader> reader = pSource->reader_;
 
-			DSBUFFERDESC desc;
-			ZeroMemory(&desc, sizeof(DSBUFFERDESC));
-			desc.dwSize = sizeof(DSBUFFERDESC);
-			desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
-				| DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2
-				| DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
-			desc.dwBufferBytes = sizeBuffer;
-			desc.lpwfxFormat = &pSource->formatWave_;
-			HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc,
-				(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
-			if (FAILED(hrBuffer))
-				throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
+			try {
+				DWORD sizeBuffer = std::min(2 * pSource->formatWave_.nAvgBytesPerSec, (DWORD)pSource->audioSizeTotal_);
 
-			_CreateSoundEvent(pSource->formatWave_);
+				DSBUFFERDESC desc;
+				ZeroMemory(&desc, sizeof(DSBUFFERDESC));
+				desc.dwSize = sizeof(DSBUFFERDESC);
+				desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
+					| DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2
+					| DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
+				desc.dwBufferBytes = sizeBuffer;
+				desc.lpwfxFormat = &pSource->formatWave_;
+				HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc,
+					(LPDIRECTSOUNDBUFFER*)&pDirectSoundBuffer_, nullptr);
+				if (FAILED(hrBuffer))
+					throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
 
-			bStreaming_ = sizeBuffer != pSource->audioSizeTotal_;
-			if (!bStreaming_) {
-				sizeCopy_ = pSource->audioSizeTotal_;
-				_CopyStream(0);
+				sizeCopy_ = pSource->formatWave_.nAvgBytesPerSec;
+				lastReadPointer_ = pSource->posMp3DataStart_;
+
+				bStreaming_ = sizeBuffer != pSource->audioSizeTotal_;
+				if (!bStreaming_) {
+					sizeCopy_ = pSource->audioSizeTotal_;
+					_CopyStream(0);
+				}
+				else {
+					_CreateSoundEvent(pSource->formatWave_);
+				}
 			}
-
-			reader->Seek(pSource->posMp3DataStart_);
+			catch (bool) {
+				return false;
+			}
+			catch (gstd::wexception& e) {
+				throw e;
+			}
 		}
-		catch (bool) {
-			return false;
-		}
-		catch (gstd::wexception& e) {
-			throw e;
-		}
+		else return false;
 	}
-	else return false;
 
 	return true;
 }
@@ -1768,57 +1824,6 @@ DWORD SoundStreamingPlayerMp3::_DecodeAcmStream(char* pBuffer, DWORD size) {
 	HACMSTREAM hAcmStream = source->hAcmStream_;
 	ACMSTREAMHEADER* pAcmHeader = &source->acmStreamHeader_;
 
-	/*
-	size_t totalWritten = 0;
-	size_t prevBufferSize = bufDecode_.GetSize();
-	if (!bDiscard && prevBufferSize > targetSize) {
-		size_t excessSize = prevBufferSize - targetSize;
-		if (excessSize > 0) {
-			//The buffer has excess, unused data from the previous decode operation
-			totalWritten = excessSize;
-
-			ByteBuffer tmpBuffer;
-			tmpBuffer.SetSize(excessSize);
-			memcpy(tmpBuffer.GetPointer(), bufDecode_.GetPointer() + targetSize, excessSize);
-
-			//Move the excess data to the front of the new buffer
-			memcpy(bufDecode_.GetPointer(), tmpBuffer.GetPointer(), excessSize);
-		}
-		memset(bufDecode_.GetPointer(), 0, targetSize - excessSize);
-	}
-	bufDecode_.SetSize(targetSize);
-
-	bool res = false;
-	{
-		while (totalWritten < targetSize) {
-			size_t read = reader->Read(pAcmHeader->pbSrc, pAcmHeader->cbSrcLength);
-			if (read == 0)		//EOF from source
-				goto lab_error_exit;
-
-			size_t _remain = targetSize - totalWritten;
-
-			MMRESULT mmRes = acmStreamConvert(hAcmStream, pAcmHeader,
-				ACM_STREAMCONVERTF_BLOCKALIGN);
-			if (mmRes != 0)		//acmStreamConvert had an error
-				goto lab_error_exit;
-
-			size_t decodedSize = pAcmHeader->cbDstLengthUsed;
-			size_t copySize = std::min(_remain, decodedSize);
-
-			if (totalWritten + decodedSize >= bufDecode_.GetSize())
-				bufDecode_.SetSize(totalWritten + decodedSize);
-			memcpy((char*)bufDecode_.GetPointer() + totalWritten, pAcmHeader->pbDst, copySize);
-
-			totalWritten += decodedSize;
-		}
-		res = true;
-	}
-
-lab_error_exit:
-	*pWritten = totalWritten;
-	return res;
-	*/
-
 	DWORD sizeWrite = 0;
 	DWORD bufSize = bufDecode_.GetSize();
 	if (bufSize > 0) {
@@ -1861,8 +1866,7 @@ lab_error_exit:
 
 bool SoundStreamingPlayerMp3::Seek(double time) {
 	if (soundSource_ == nullptr) return false;
-	SoundSourceDataMp3* source = (SoundSourceDataMp3*)soundSource_.get();
-	return Seek((DWORD)(time * source->formatWave_.nSamplesPerSec));
+	return Seek((DWORD)(time * soundSource_->formatWave_.nSamplesPerSec));
 }
 bool SoundStreamingPlayerMp3::Seek(DWORD sample) {
 	if (soundSource_ == nullptr) return false;

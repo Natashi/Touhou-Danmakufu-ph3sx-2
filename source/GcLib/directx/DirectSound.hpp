@@ -351,7 +351,7 @@ namespace directx {
 	};
 	class SoundStreamingPlayer::StreamingThread : public gstd::Thread, public gstd::InnerClass<SoundStreamingPlayer> {
 	public:
-		StreamingThread(SoundStreamingPlayer* player) { _SetOuter(player); }
+		StreamingThread(SoundStreamingPlayer* player);
 
 		virtual void _Run();
 

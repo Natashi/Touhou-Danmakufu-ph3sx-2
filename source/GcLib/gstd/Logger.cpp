@@ -484,14 +484,22 @@ void WindowLogger::LogPanel::ClearText() {
 
 //WindowLogger::InfoPanel
 WindowLogger::InfoPanel::InfoPanel() {
-	infoCollector_ = new InfoCollector(WindowLogger::GetParent()->GetStatusBar(), this);
-	infoCollector_->Initialize();
+	hProcess_ = INVALID_HANDLE_VALUE;
+	hQuery_ = INVALID_HANDLE_VALUE;
+	hCounter_ = INVALID_HANDLE_VALUE;
+
+	_InitializeHandle();
+
 	Start();
 }
 WindowLogger::InfoPanel::~InfoPanel() {
 	Stop();
 	Join(500);
-	ptr_delete(infoCollector_);
+
+	if (hQuery_ != INVALID_HANDLE_VALUE)
+		PdhCloseQuery(&hQuery_);
+	//if (hProcess_ != INVALID_HANDLE_VALUE)
+	//	CloseHandle(&hProcess_);
 }
 bool WindowLogger::InfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
@@ -520,7 +528,7 @@ void WindowLogger::InfoPanel::SetInfo(int row, const std::wstring& textInfo, con
 }
 void WindowLogger::InfoPanel::_Run() {
 	while (this->GetStatus() == RUN) {
-		infoCollector_->Update();
+		_SetRamInfo();
 
 #if defined(DNH_PROJ_EXECUTOR)
 		if (WindowLogger* wLogger = WindowLogger::GetParent()) {
@@ -533,84 +541,38 @@ void WindowLogger::InfoPanel::_Run() {
 	}
 }
 
-//WindowLogger::InfoCollectThread
-WindowLogger::InfoPanel::InfoCollector::InfoCollector(shared_ptr<WStatusBar> wndStatus, InfoPanel* wndInfo) {
-	wndStatus_ = wndStatus;
-	wndInfo_ = wndInfo;
-	hProcess_ = INVALID_HANDLE_VALUE;
-	hQuery_ = INVALID_HANDLE_VALUE;
-	hCounter_ = INVALID_HANDLE_VALUE;
-}
-WindowLogger::InfoPanel::InfoCollector::~InfoCollector() {
-	if (hQuery_ != INVALID_HANDLE_VALUE)
-		PdhCloseQuery(&hQuery_);
-	//if (hProcess_ != INVALID_HANDLE_VALUE)
-	//	CloseHandle(&hProcess_);
-}
-void WindowLogger::InfoPanel::InfoCollector::Initialize() {
-	hProcess_ = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId());
-	PdhOpenQuery(nullptr, 0, &hQuery_);
-	PdhAddEnglishCounter(hQuery_, L"\\Processor(_Total)\\% Processor Time", 0, &hCounter_);
-	PdhCollectQueryData(hQuery_);
-}
-/*
-void WindowLogger::InfoPanel::InfoCollector::_Run() {
-	//TODO 無効なステータスバーにメッセージを
-	//     送るとき、固まる可能性あり。
-	//infoCpu_ = this->_GetCpuInformation();
-
-	while (this->GetStatus() == RUN) {
-		Update();
-		::Sleep(500);
-	}
-	
-	PROCESS_MEMORY_COUNTERS memoryCounter;
-	ZeroMemory(&memoryCounter, sizeof(PROCESS_MEMORY_COUNTERS));
-	DWORD dwProcessID = GetCurrentProcessId();
-	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE ,dwProcessID);
-	while(this->GetStatus() == RUN)
+void WindowLogger::InfoPanel::_SetRamInfo() {
+	if (!IsWindowVisible()) return;
 	{
-		GetProcessMemoryInfo(hProcess, &memoryCounter, sizeof(PROCESS_MEMORY_COUNTERS));
-		double pageFileUsage = memoryCounter.PagefileUsage / 1024. / 1024.;
-		std::string strMemory = StringUtility::Format("Memory [ %.2fMB ]", pageFileUsage);
-		if (this->GetStatus() == RUN) wndStatus_->SetText(STATUS_MEMORY, strMemory);
-
-		double cpuPerformance=this->_GetCpuPerformance();
-		CpuInfo &ci=this->infoCpu_;
-		std::string strCpu = StringUtility::Format("%s %s [ %4.2fMHz (%3d %%) type:%d family:%d model:%d stepping:%d ]",ci.venderID,ci.cpuName.c_str(),ci.clock/1000/1000,(int)cpuPerformance,ci.type,ci.family,ci.model,ci.stepping);
-		if (this->GetStatus() == RUN) wndStatus_->SetText(STATUS_CPU, strCpu);
-
-		::Sleep(500);
-	}
-	CloseHandle(hProcess);
-}
-*/
-void WindowLogger::InfoPanel::InfoCollector::Update() {
-	if (!wndInfo_->IsWindowVisible()) return;
-
-	{
-		Lock lock(wndInfo_->lock_);
+		Lock lock(lock_);
 
 		//Get RAM info
-		PROCESS_MEMORY_COUNTERS pmc;
-		GetProcessMemoryInfo(hProcess_, &pmc, sizeof(pmc));
-		SIZE_T ramUsageAsMB = pmc.WorkingSetSize / (1024U * 1024U);
-
 		MEMORYSTATUSEX mse;
 		mse.dwLength = sizeof(MEMORYSTATUSEX);
 		GlobalMemoryStatusEx(&mse);
-		SIZE_T ramTotalAsMB = mse.ullAvailPhys / (1024U * 1024U);
+		DWORD memTotalAsMB = mse.ullTotalVirtual / (1024U * 1024U);
+		DWORD memAvailAsMB = mse.ullAvailVirtual / (1024U * 1024U);
 
 		//Get CPU info
 		double cpuUsage = _GetCpuPerformance();
 
 		//Set text
-		wndStatus_->SetText(0, StringUtility::Format(L"Process RAM: %u/%u MB", ramUsageAsMB, ramTotalAsMB));
-		wndStatus_->SetText(1, StringUtility::Format(L"Process CPU: %.2f%%", cpuUsage));
+		if (WindowLogger* logger = WindowLogger::GetParent()) {
+			shared_ptr<WStatusBar> statusBar = logger->GetStatusBar();
+			statusBar->SetText(0, StringUtility::Format(L"Process RAM: %u/%u MB",
+				memTotalAsMB - memAvailAsMB, memTotalAsMB));
+			statusBar->SetText(1, StringUtility::Format(L"Process CPU: %.2f%%", cpuUsage));
+		}
 	}
 }
 
-double WindowLogger::InfoPanel::InfoCollector::_GetCpuPerformance() {
+void WindowLogger::InfoPanel::_InitializeHandle() {
+	hProcess_ = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId());
+	PdhOpenQueryW(nullptr, 0, &hQuery_);
+	PdhAddEnglishCounterW(hQuery_, L"\\Processor(_Total)\\% Processor Time", 0, &hCounter_);
+	PdhCollectQueryData(hQuery_);
+}
+double WindowLogger::InfoPanel::_GetCpuPerformance() {
 	PDH_FMT_COUNTERVALUE fmtValue;
 
 	PdhCollectQueryData(hQuery_);
@@ -618,7 +580,7 @@ double WindowLogger::InfoPanel::InfoCollector::_GetCpuPerformance() {
 
 	return fmtValue.doubleValue;
 }
-WindowLogger::InfoPanel::InfoCollector::CpuInfo WindowLogger::InfoPanel::InfoCollector::_GetCpuInformation() {
+WindowLogger::InfoPanel::CpuInfo WindowLogger::InfoPanel::_GetCpuInformation() {
 	int cpuid_supported;
 	char VenderID[13];
 	char name[17];
