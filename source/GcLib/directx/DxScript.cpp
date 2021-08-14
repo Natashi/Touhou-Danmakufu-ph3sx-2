@@ -1319,7 +1319,7 @@ value DxScript::Func_GetTextureHeight(script_machine* machine, int argc, const v
 gstd::value DxScript::Func_SetFogEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	bool bEnable = argv[0].as_boolean();
-	script->GetObjectManager()->SetFogParam(bEnable, 0, 0, 0);
+	DxScriptObjectManager::SetFogParam(bEnable, 0, 0, 0);
 	return value();
 }
 gstd::value DxScript::Func_SetFogParam(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1335,7 +1335,7 @@ gstd::value DxScript::Func_SetFogParam(gstd::script_machine* machine, int argc, 
 	else {
 		color = argv[2].as_int();
 	}
-	script->GetObjectManager()->SetFogParam(true, color, start, end);
+	DxScriptObjectManager::SetFogParam(true, color, start, end);
 
 	return value();
 }

@@ -663,6 +663,192 @@ void ByteOrder::Reverse(LPVOID buf, DWORD size) {
 	}
 }
 
+//*******************************************************************
+//PathProperty
+//*******************************************************************
+std::wstring PathProperty::GetFileDirectory(const std::wstring& path) {
+#ifdef __L_STD_FILESYSTEM
+	path_t p(path);
+	p = p.parent_path();
+	return p.wstring() + L'/';
+#else
+	wchar_t pDrive[_MAX_PATH];
+	wchar_t pDir[_MAX_PATH];
+	_wsplitpath_s(path.c_str(), pDrive, _MAX_PATH, pDir, _MAX_PATH, nullptr, 0, nullptr, 0);
+	return std::wstring(pDrive) + std::wstring(pDir);
+#endif
+}
+std::wstring PathProperty::GetDirectoryName(const std::wstring& path) {
+	//Returns the name of the topmost directory.
+#ifdef __L_STD_FILESYSTEM
+	std::wstring dirChain = ReplaceYenToSlash(path_t(path).parent_path());
+	std::vector<std::wstring> listDir = StringUtility::Split(dirChain, L"/");
+	return listDir.back();
+#else
+	std::wstring dir = GetFileDirectory(path);
+	dir = StringUtility::ReplaceAll(dir, L"\\", L"/");
+	std::vector<std::wstring> strs = StringUtility::Split(dir, L"/");
+	return strs[strs.size() - 1];
+#endif
+}
+std::wstring PathProperty::GetFileName(const std::wstring& path) {
+#ifdef __L_STD_FILESYSTEM
+	path_t p(path);
+	return p.filename();
+#else
+	wchar_t pFileName[_MAX_PATH];
+	wchar_t pExt[_MAX_PATH];
+	_wsplitpath_s(path.c_str(), nullptr, 0, nullptr, 0, pFileName, _MAX_PATH, pExt, _MAX_PATH);
+	return std::wstring(pFileName) + std::wstring(pExt);
+#endif
+}
+std::wstring PathProperty::GetDriveName(const std::wstring& path) {
+#ifdef __L_STD_FILESYSTEM
+	path_t p(path);
+	return (p.root_name() / p.root_directory());
+#else
+	wchar_t pDrive[_MAX_PATH];
+	_wsplitpath_s(path.c_str(), pDrive, _MAX_PATH, nullptr, 0, nullptr, 0, nullptr, 0);
+	return std::wstring(pDrive);
+#endif
+}
+std::wstring PathProperty::GetFileNameWithoutExtension(const std::wstring& path) {
+#ifdef __L_STD_FILESYSTEM
+	path_t p(path);
+	return p.stem();
+#else
+	wchar_t pFileName[_MAX_PATH];
+	_wsplitpath_s(path.c_str(), nullptr, 0, nullptr, 0, pFileName, _MAX_PATH, nullptr, 0);
+	return std::wstring(pFileName);
+#endif
+}
+
+std::wstring PathProperty::GetFileExtension(const std::wstring& path) {
+#ifdef __L_STD_FILESYSTEM
+	path_t p(path);
+	return p.extension();
+#else
+	wchar_t pExt[_MAX_PATH];
+	_wsplitpath_s(path.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, pExt, _MAX_PATH);
+	return std::wstring(pExt);
+#endif
+}
+const std::wstring& PathProperty::GetModuleName() {
+	static std::wstring moduleName;
+	if (moduleName.size() == 0) {
+		wchar_t modulePath[_MAX_PATH];
+		ZeroMemory(modulePath, sizeof(modulePath));
+		GetModuleFileName(NULL, modulePath, _MAX_PATH - 1);
+		moduleName = GetFileNameWithoutExtension(std::wstring(modulePath));
+	}
+	return moduleName;
+}
+const std::wstring& PathProperty::GetModuleDirectory() {
+#ifdef __L_STD_FILESYSTEM
+	static std::wstring moduleDir;
+	if (moduleDir.size() == 0) {
+		wchar_t modulePath[_MAX_PATH];
+		ZeroMemory(modulePath, sizeof(modulePath));
+		GetModuleFileName(NULL, modulePath, _MAX_PATH - 1);
+		moduleDir = ReplaceYenToSlash(stdfs::path(modulePath).parent_path());
+		moduleDir = GetUnique(moduleDir) + L"/";
+	}
+	return moduleDir;
+#else
+	wchar_t modulePath[_MAX_PATH];
+	ZeroMemory(modulePath, sizeof(modulePath));
+	GetModuleFileName(NULL, modulePath, _MAX_PATH - 1);
+	return GetFileDirectory(std::wstring(modulePath));
+#endif
+}
+std::wstring PathProperty::GetDirectoryWithoutModuleDirectory(const std::wstring& path) {
+	std::wstring res = GetFileDirectory(path);
+	const std::wstring& dirModule = GetModuleDirectory();
+	if (res.find(dirModule) != std::wstring::npos) {
+		res = res.substr(dirModule.size());
+	}
+	return res;
+}
+std::wstring PathProperty::GetPathWithoutModuleDirectory(const std::wstring& path) {
+	const std::wstring& dirModule = GetModuleDirectory();
+	std::wstring res = GetUnique(path);
+	if (res.find(dirModule) != std::wstring::npos) {
+		res = res.substr(dirModule.size());
+	}
+	return res;
+}
+std::wstring PathProperty::ReduceModuleDirectory(const std::wstring& path, std::wstring rep) {
+	const std::wstring& dirModule = GetModuleDirectory();
+	std::wstring res = GetUnique(path);
+	if (res.find(dirModule) != std::wstring::npos) {
+		res = res.substr(dirModule.size());
+		res = rep + res;
+	}
+	return res;
+}
+std::wstring PathProperty::GetRelativeDirectory(const std::wstring& from, const std::wstring& to) {
+#ifdef __L_STD_FILESYSTEM
+	std::error_code err;
+	path_t p = stdfs::relative(from, to, err);
+
+	std::wstring res;
+	if (err.value() != 0)
+		res = GetFileDirectory(p);
+#else
+	wchar_t path[_MAX_PATH];
+	BOOL b = PathRelativePathTo(path, from.c_str(), FILE_ATTRIBUTE_DIRECTORY, to.c_str(), FILE_ATTRIBUTE_DIRECTORY);
+
+	std::wstring res;
+	if (b) {
+		res = GetFileDirectory(path);
+	}
+#endif
+	return res;
+}
+std::wstring PathProperty::ExtendRelativeToFull(const std::wstring& dir, std::wstring path) {
+	path = ReplaceYenToSlash(path);
+	if (path.size() >= 2) {
+		if (memcmp(&path[0], L"./", sizeof(wchar_t) * 2U) == 0) {
+			path = path.substr(2);
+			path = dir + path;
+		}
+	}
+
+	std::wstring drive = GetDriveName(path);
+	if (drive.size() == 0) {
+		path = GetModuleDirectory() + path;
+	}
+
+	return path;
+}
+std::wstring PathProperty::ReplaceYenToSlash(const std::wstring& path) {
+	return StringUtility::ReplaceAll(path, L'\\', L'/');
+}
+std::wstring PathProperty::Canonicalize(const std::wstring& srcPath) {
+#ifdef __L_STD_FILESYSTEM
+	path_t p(srcPath);
+	std::wstring res = stdfs::weakly_canonical(p);
+#else
+	wchar_t destPath[_MAX_PATH];
+	PathCanonicalize(destPath, srcPath.c_str());
+	std::wstring res(destPath);
+#endif
+	return res;
+}
+std::wstring PathProperty::MakePreferred(const std::wstring& srcPath) {
+#ifdef __L_STD_FILESYSTEM
+	path_t p(srcPath);
+	std::wstring res = p.make_preferred();
+#else
+	std::wstring res = StringUtility::ReplaceAll(path, L"/", L"\\");
+#endif
+	return res;
+}
+std::wstring PathProperty::GetUnique(const std::wstring& srcPath) {
+	std::wstring p = Canonicalize(srcPath);
+	return ReplaceYenToSlash(p);
+}
+
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 //*******************************************************************
 //Scanner

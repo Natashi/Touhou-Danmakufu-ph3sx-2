@@ -34,6 +34,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	input->ClearKeyState();
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
+	/*
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	camera3D->Reset();
 	camera3D->SetPerspectiveWidth(384);
@@ -43,6 +44,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 	camera2D->Reset();
+	*/
 
 	ref_count_ptr<StgStageInformation> infoStage = startData->GetStageInformation();
 	ref_count_ptr<ReplayInformation::StageData> replayStageData = startData->GetStageReplayData();

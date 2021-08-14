@@ -1286,16 +1286,12 @@ DWORD DxBinaryFileObject::Write(LPVOID data, size_t size) {
 //****************************************************************************
 //DxScriptObjectManager
 //****************************************************************************
+DxScriptObjectManager::FogData DxScriptObjectManager::fogData_ = { false, 0xffffffff, 0, 0 };
 DxScriptObjectManager::DxScriptObjectManager() {
 	SetMaxObject(DEFAULT_CONTAINER_CAPACITY);
 	SetRenderBucketCapacity(101);
 
 	totalObjectCreateCount_ = 0U;
-
-	bFogEnable_ = false;
-	fogColor_ = D3DCOLOR_ARGB(255, 255, 255, 255);
-	fogStart_ = 0;
-	fogEnd_ = 0;
 }
 DxScriptObjectManager::~DxScriptObjectManager() {
 }
@@ -1460,7 +1456,7 @@ void DxScriptObjectManager::RenderObject() {
 	PrepareRenderObject();
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->SetVertexFog(bFogEnable_, fogColor_, fogStart_, fogEnd_);
+	graphics->SetVertexFog(fogData_.enable, fogData_.color, fogData_.start, fogData_.end);
 
 	for (size_t iPri = 0; iPri < listObjRender_.size(); ++iPri) {
 		ID3DXEffect* effect = nullptr;
@@ -1559,8 +1555,8 @@ shared_ptr<SoundPlayer> DxScriptObjectManager::GetReservedSound(shared_ptr<Sound
 }
 
 void DxScriptObjectManager::SetFogParam(bool bEnable, D3DCOLOR fogColor, float start, float end) {
-	bFogEnable_ = bEnable;
-	fogColor_ = fogColor;
-	fogStart_ = start;
-	fogEnd_ = end;
+	fogData_.enable = bEnable;
+	fogData_.color = fogColor;
+	fogData_.start = start;
+	fogData_.end = end;
 }
