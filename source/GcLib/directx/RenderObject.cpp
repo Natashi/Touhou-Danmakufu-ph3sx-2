@@ -538,7 +538,9 @@ void RenderObjectLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, co
 			angX, angY, angZ, matRelative_.get(), false);
 	}
 	else {
-		matWorld = *(matRelative_.get());
+		if (matRelative_ == nullptr)
+			D3DXMatrixIdentity(&matWorld);
+		else matWorld = *matRelative_;
 	}
 
 	RenderObjectLX::Render(matWorld);
