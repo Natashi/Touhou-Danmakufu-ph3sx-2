@@ -4345,7 +4345,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodeColorHex(gstd::script_machine
 		}
 	}
 
-	return script->CreateIntValue(color & 0xffffff);
+	return script->CreateIntValue(color);
 }
 gstd::value StgStageScript::Func_ObjCrLaser_SetNode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
