@@ -105,6 +105,8 @@ namespace directx {
 
 		void _ReleaseTextureData(const std::wstring& name);
 		void _ReleaseTextureData(std::map<std::wstring, shared_ptr<TextureData>>::iterator itr);
+
+		void __CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
 		bool _CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
 		bool _CreateRenderTarget(const std::wstring& name, size_t width = 0U, size_t height = 0U);
 	public:
