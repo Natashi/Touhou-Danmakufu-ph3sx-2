@@ -266,8 +266,8 @@ void StgSystemController::RenderScriptObject() {
 
 }
 void StgSystemController::RenderScriptObject(int priMin, int priMax) {
-	StgStageScriptObjectManager* objectManagerStage = nullptr;
-	DxScriptObjectManager* objectManagerPackage = nullptr;
+	StgStageScriptObjectManager* objManagerStage = nullptr;
+	DxScriptObjectManager* objManagerPackage = nullptr;
 
 	std::vector<DxScriptObjectManager::RenderList>* pRenderListStage = nullptr;
 	std::vector<DxScriptObjectManager::RenderList>* pRenderListPackage = nullptr;
@@ -282,14 +282,14 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	bool bValidStage = (scene == StgSystemInformation::SCENE_STG || !infoSystem_->IsPackageMode()) &&
 		stageController_ != nullptr && !bPause;
 	if (bValidStage) {
-		objectManagerStage = stageController_->GetMainObjectManager();
-		objectManagerStage->PrepareRenderObject();
-		pRenderListStage = objectManagerStage->GetRenderObjectListPointer();
+		objManagerStage = stageController_->GetMainObjectManager();
+		objManagerStage->PrepareRenderObject();
+		pRenderListStage = objManagerStage->GetRenderObjectListPointer();
 	}
 	if (infoSystem_->IsPackageMode()) {
-		objectManagerPackage = packageController_->GetMainObjectManager();
-		objectManagerPackage->PrepareRenderObject();
-		pRenderListPackage = objectManagerPackage->GetRenderObjectListPointer();
+		objManagerPackage = packageController_->GetMainObjectManager();
+		objManagerPackage->PrepareRenderObject();
+		pRenderListPackage = objManagerPackage->GetRenderObjectListPointer();
 	}
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -344,24 +344,10 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	focusPos.x -= stgWidth / 2;
 	focusPos.y -= stgHeight / 2;
 
-	bool bFogEnable = false;
-	D3DCOLOR fogColor = D3DCOLOR_ARGB(255, 255, 255, 255);
-	float fogStart = 0;
-	float fogEnd = 0;
-	if (objectManagerStage) {
-		bFogEnable = objectManagerStage->IsFogEnable();
-		fogColor = objectManagerStage->GetFogColor();
-		fogStart = objectManagerStage->GetFogStart();
-		fogEnd = objectManagerStage->GetFogEnd();
+	{
+		DxScriptObjectManager::FogData* pFog = DxScriptObjectManager::GetFogData();
+		graphics->SetVertexFog(pFog->enable, pFog->color, pFog->start, pFog->end);
 	}
-	else if (objectManagerPackage) {
-		bFogEnable = objectManagerPackage->IsFogEnable();
-		fogColor = objectManagerPackage->GetFogColor();
-		fogStart = objectManagerPackage->GetFogStart();
-		fogEnd = objectManagerPackage->GetFogEnd();
-	}
-
-	graphics->SetVertexFog(bFogEnable, fogColor, fogStart, fogEnd);
 
 	{
 		camera2D->SetEnable(false);
@@ -413,10 +399,10 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 			bClearZBufferFor2DCoordinate = false;
 		}
 
-		if (objectManagerStage != nullptr && !bPause) {
+		if (objManagerStage != nullptr && !bPause) {
 			ID3DXEffect* effect = nullptr;
 			UINT cPass = 1;
-			if (shared_ptr<Shader> shader = objectManagerStage->GetShader(iPri)) {
+			if (shared_ptr<Shader> shader = objManagerStage->GetShader(iPri)) {
 				effect = shader->GetEffect();
 
 				if (shader->LoadTechnique())
@@ -456,11 +442,10 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 			}
 		}
 
-		if (objectManagerPackage) {
+		if (objManagerPackage) {
 			ID3DXEffect* effect = nullptr;
-
 			UINT cPass = 1;
-			if (shared_ptr<Shader> shader = objectManagerPackage->GetShader(iPri)) {
+			if (shared_ptr<Shader> shader = objManagerPackage->GetShader(iPri)) {
 				effect = shader->GetEffect();
 
 				if (shader->LoadTechnique())
@@ -517,10 +502,11 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	camera3D->PopMatrixState();		//Just in case
 
 	//--------------------------------
-	if (objectManagerStage)
-		objectManagerStage->ClearRenderObject();
-	if (objectManagerPackage)
-		objectManagerPackage->ClearRenderObject();
+
+	if (objManagerStage)
+		objManagerStage->ClearRenderObject();
+	if (objManagerPackage)
+		objManagerPackage->ClearRenderObject();
 }
 bool StgSystemController::CheckMeshAndClearZBuffer(DxScriptRenderObject* obj) {
 	if (obj == nullptr) return false;

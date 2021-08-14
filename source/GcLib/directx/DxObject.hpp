@@ -652,10 +652,18 @@ namespace directx {
 			std::vector<ref_unsync_ptr<DxScriptObjectBase>>::const_iterator begin() { return list.cbegin(); }
 			std::vector<ref_unsync_ptr<DxScriptObjectBase>>::const_iterator end() { return begin() + size; }
 		};
+		struct FogData {
+			bool enable;
+			D3DCOLOR color;
+			float start;
+			float end;
+		};
 
 		enum : size_t {
 			DEFAULT_CONTAINER_CAPACITY = 16384U,
 		};
+	protected:
+		static FogData fogData_;
 	protected:
 		size_t totalObjectCreateCount_;
 		std::list<int> listUnusedIndex_;
@@ -664,11 +672,6 @@ namespace directx {
 		std::list<ref_unsync_ptr<DxScriptObjectBase>> listActiveObject_;
 
 		std::unordered_map<std::wstring, shared_ptr<SoundPlayer>> mapReservedSound_;
-
-		bool bFogEnable_;
-		D3DCOLOR fogColor_;
-		float fogStart_;
-		float fogEnd_;
 
 		std::vector<RenderList> listObjRender_;
 		std::vector<shared_ptr<Shader>> listShader_;
@@ -721,12 +724,13 @@ namespace directx {
 		void DeleteReservedSound(shared_ptr<SoundPlayer> player);
 		shared_ptr<SoundPlayer> GetReservedSound(shared_ptr<SoundPlayer> player);
 
-		void SetFogParam(bool bEnable, D3DCOLOR fogColor, float start, float end);
 		size_t GetTotalObjectCreateCount() { return totalObjectCreateCount_; }
 
-		bool IsFogEnable() { return bFogEnable_; }
-		D3DCOLOR GetFogColor() { return fogColor_; }
-		float GetFogStart() { return fogStart_; }
-		float GetFogEnd() { return fogEnd_; }
+		static void SetFogParam(bool bEnable, D3DCOLOR fogColor, float start, float end);
+		static FogData* GetFogData() { return &fogData_; }
+		static bool IsFogEnable() { return fogData_.enable; }
+		static D3DCOLOR GetFogColor() { return fogData_.color; }
+		static float GetFogStart() { return fogData_.start; }
+		static float GetFogEnd() { return fogData_.end; }
 	};
 }
