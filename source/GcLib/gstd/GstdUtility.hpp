@@ -418,6 +418,8 @@ namespace gstd {
 		//Returns the the path relative to the executable's directory.
 		static std::wstring GetPathWithoutModuleDirectory(const std::wstring& path);
 
+		//Replaces the executable's directory with the specified string
+		static std::wstring ReduceModuleDirectory(const std::wstring& path, std::wstring rep = L"../");
 
 		static std::wstring GetRelativeDirectory(const std::wstring& from, const std::wstring& to);
 		static std::wstring ExtendRelativeToFull(const std::wstring& dir, std::wstring path);

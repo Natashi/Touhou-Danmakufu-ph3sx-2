@@ -777,6 +777,15 @@ std::wstring PathProperty::GetPathWithoutModuleDirectory(const std::wstring& pat
 	}
 	return res;
 }
+std::wstring PathProperty::ReduceModuleDirectory(const std::wstring& path, std::wstring rep) {
+	const std::wstring& dirModule = GetModuleDirectory();
+	std::wstring res = GetUnique(path);
+	if (res.find(dirModule) != std::wstring::npos) {
+		res = res.substr(dirModule.size());
+		res = rep + res;
+	}
+	return res;
+}
 std::wstring PathProperty::GetRelativeDirectory(const std::wstring& from, const std::wstring& to) {
 #ifdef __L_STD_FILESYSTEM
 	std::error_code err;
