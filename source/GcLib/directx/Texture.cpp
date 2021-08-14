@@ -156,11 +156,11 @@ IDirect3DTexture9* Texture::GetD3DTexture() {
 			else if (timeGetTime() - timeOrg > 5000) {		//5-second timer
 				const std::wstring& path = data_->GetName();
 				Logger::WriteTop(StringUtility::Format(L"GetTexture timed out. (%s)", 
-					path.c_str()));
+					PathProperty::ReduceModuleDirectory(path).c_str()));
 				data_->bLoad_ = true;
 				break;
 			}
-			Sleep(20);
+			::Sleep(10);
 		}
 	}
 	return res;
@@ -295,7 +295,7 @@ void TextureManager::_ReleaseTextureData(const std::wstring& name) {
 			itr->second->bLoad_ = true;
 			mapTextureData_.erase(itr);
 			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", 
-				name.c_str()));
+				PathProperty::ReduceModuleDirectory(name).c_str()));
 		}
 	}
 }
@@ -308,7 +308,7 @@ void TextureManager::_ReleaseTextureData(std::map<std::wstring, shared_ptr<Textu
 			itr->second->bLoad_ = true;
 			mapTextureData_.erase(itr);
 			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", 
-				name.c_str()));
+				PathProperty::ReduceModuleDirectory(name).c_str()));
 		}
 	}
 }
@@ -338,7 +338,7 @@ void TextureManager::ReleaseDxResource() {
 					else {
 						std::wstring err = StringUtility::Format(L"TextureManager::ReleaseDxResource: "
 							"Failed to create temporary surface [%s]\r\n    %s: %s",
-							itrMap->first.c_str(), 
+							PathProperty::ReduceModuleDirectory(itrMap->first).c_str(), 
 							DXGetErrorString(hr), DXGetErrorDescription(hr));
 						Logger::WriteTop(err);
 
@@ -414,7 +414,7 @@ void TextureManager::RestoreDxResource() {
 			if (FAILED(hr)) {
 				std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: "
 					"Render target restoration failed [%s]\r\n    %s: %s",
-					data->name_.c_str(), 
+					PathProperty::ReduceModuleDirectory(data->name_).c_str(), 
 					DXGetErrorString(hr), DXGetErrorDescription(hr));
 				Logger::WriteTop(err);
 			}
@@ -467,16 +467,17 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 	bool res = true;
 	shared_ptr<TextureData> data;
 
+	std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 	try {
 		data.reset(new TextureData());
 		__CreateFromFile(data, path, genMipmap, flgNonPowerOfTwo);
 
 		Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. [%s]",
-			path.c_str()));
+			pathReduce.c_str()));
 	}
 	catch (wexception& e) {
 		std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture \"%s\"\r\n    %s", 
-			path.c_str(), e.what());
+			pathReduce.c_str(), e.what());
 		Logger::WriteTop(str);
 
 		res = false;
@@ -629,6 +630,8 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 			res = std::make_shared<Texture>();
 
 			if (!IsDataExists(path)) {
+				std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
+
 				shared_ptr<TextureData> data(new TextureData());
 
 				data->manager_ = this;
@@ -657,7 +660,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 					catch (wexception& e) {
 						std::wstring str = StringUtility::Format(
 							L"TextureManager(LT): Failed to load texture \"%s\"\r\n    %s", 
-							path.c_str(), e.what());
+							pathReduce.c_str(), e.what());
 						Logger::WriteTop(str);
 						data->bLoad_ = true;
 
@@ -694,16 +697,17 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 			return;
 		}
 
+		std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 		try {
 			__CreateFromFile(data, path, data->useMipMap_, data->useNonPowerOfTwo_);
 
 			data->bLoad_ = true;
 
-			Logger::WriteTop(StringUtility::Format(L"TextureManager(LT): Texture loaded. [%s]", path.c_str()));
+			Logger::WriteTop(StringUtility::Format(L"TextureManager(LT): Texture loaded. [%s]", pathReduce.c_str()));
 		}
 		catch (wexception& e) {
 			std::wstring str = StringUtility::Format(L"TextureManager(LT): Failed to load texture \"%s\"\r\n    %s",
-				path.c_str(), e.what());
+				pathReduce.c_str(), e.what());
 			Logger::WriteTop(str);
 			data->bLoad_ = true;
 			texture->data_ = nullptr;

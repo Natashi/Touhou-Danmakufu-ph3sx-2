@@ -129,6 +129,7 @@ shared_ptr<SoundSourceData> DirectSoundManager::_CreateSoundSource(std::wstring 
 	shared_ptr<SoundSourceData> res;
 
 	path = PathProperty::GetUnique(path);
+	std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 	try {
 		shared_ptr<FileReader> reader = fileManager->GetFileReader(path);
 		if (reader == nullptr || !reader->Open())
@@ -194,19 +195,19 @@ shared_ptr<SoundSourceData> DirectSoundManager::_CreateSoundSource(std::wstring 
 			Lock lock(lock_);
 
 			mapSoundSource_[path] = res;
-			std::wstring str = StringUtility::Format(L"DirectSound: Audio loaded [%s]", path.c_str());
+			std::wstring str = StringUtility::Format(L"DirectSound: Audio loaded [%s]", pathReduce.c_str());
 			Logger::WriteTop(str);
 		}
 		else {
 			res = nullptr;
-			std::wstring str = StringUtility::Format(L"DirectSound: Audio load failed [%s]", path.c_str());
+			std::wstring str = StringUtility::Format(L"DirectSound: Audio load failed [%s]", pathReduce.c_str());
 			Logger::WriteTop(str);
 		}
 	}
 	catch (gstd::wexception& e) {
 		res = nullptr;
-		std::wstring str = StringUtility::Format(L"DirectSound：Audio load failed [%s]\r\n\t%s", 
-			path.c_str(), e.what());
+		std::wstring str = StringUtility::Format(L"DirectSound: Audio load failed [%s]\r\n\t%s", 
+			pathReduce.c_str(), e.what());
 		Logger::WriteTop(str);
 	}
 	return res;
@@ -215,6 +216,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::CreatePlayer(shared_ptr<SoundSourceD
 	if (source == nullptr) return nullptr;
 
 	const std::wstring& path = source->path_;
+	std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
 	shared_ptr<SoundPlayer> res;
 
@@ -264,15 +266,15 @@ shared_ptr<SoundPlayer> DirectSoundManager::CreatePlayer(shared_ptr<SoundSourceD
 		}
 		else {
 			res = nullptr;
-			std::wstring str = StringUtility::Format(L"DirectSound: Sound player create failed [%s]",
-				path.c_str());
+			std::wstring str = StringUtility::Format(L"DirectSound: Sound player create failed [%s]", 
+				pathReduce.c_str());
 			Logger::WriteTop(str);
 		}
 	}
 	catch (gstd::wexception& e) {
 		res = nullptr;
-		std::wstring str = StringUtility::Format(L"DirectSound：Sound player create failed [%s]\r\n\t%s", 
-			path.c_str(), e.what());
+		std::wstring str = StringUtility::Format(L"DirectSound: Sound player create failed [%s]\r\n\t%s", 
+			pathReduce.c_str(), e.what());
 		Logger::WriteTop(str);
 	}
 	return res;
@@ -385,7 +387,7 @@ void DirectSoundManager::SoundManageThread::_Arrange() {
 
 			if (bDelete) {
 				Logger::WriteTop(StringUtility::Format(L"DirectSound: Released data [%s]", 
-					source->path_.c_str()));
+					PathProperty::ReduceModuleDirectory(source->path_).c_str()));
 				itrSource = mapSource->erase(itrSource);
 			}
 			else ++itrSource;
