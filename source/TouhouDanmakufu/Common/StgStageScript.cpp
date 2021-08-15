@@ -248,6 +248,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetMainStgScriptPath", StgStageScript::Func_GetMainStgScriptPath, 0 },
 	{ "GetMainStgScriptDirectory", StgStageScript::Func_GetMainStgScriptDirectory, 0 },
 	{ "SetStgFrame", StgStageScript::Func_SetStgFrame, 6 },
+	{ "SetStgFrame", StgStageScript::Func_SetStgFrame, 7 }, //Overloaded
 	{ "SetItemRenderPriorityI", StgStageScript::Func_SetItemRenderPriorityI, 1 },
 	{ "SetShotRenderPriorityI", StgStageScript::Func_SetShotRenderPriorityI, 1 },
 	{ "GetStgFrameRenderPriorityMinI", StgStageScript::Func_GetStgFrameRenderPriorityMinI, 0 },
@@ -803,6 +804,11 @@ gstd::value StgStageScript::Func_SetStgFrame(gstd::script_machine* machine, int 
 	stageInfo->SetStgFrameRect(rect);
 	stageInfo->SetStgFrameMinPriority(min);
 	stageInfo->SetStgFrameMaxPriority(max);
+
+	if (argc == 7) {
+		int cam = argv[6].as_int();
+		stageInfo->SetCameraFocusPermitPriority(cam);
+	}
 
 	return value();
 }
