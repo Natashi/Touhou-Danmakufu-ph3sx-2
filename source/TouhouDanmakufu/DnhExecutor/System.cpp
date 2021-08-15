@@ -13,12 +13,15 @@ SystemController::SystemController() {
 	transitionManager_ = new TransitionManager();
 	infoSystem_ = new SystemInformation();
 
-	//常駐タスク登録
-	ETaskManager* taskManager = ETaskManager::GetInstance();
-	shared_ptr<SystemResidentTask> task(new SystemResidentTask());
-	taskManager->AddTask(task);
-	taskManager->AddRenderFunction(TTaskFunction<SystemResidentTask>::Create(task,
-		&SystemResidentTask::RenderFps), SystemResidentTask::TASK_PRI_RENDER_FPS);
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
+	if (config && config->GetPackageScriptPath().size() == 0) {
+		//常駐タスク登録
+		ETaskManager* taskManager = ETaskManager::GetInstance();
+		shared_ptr<SystemResidentTask> task(new SystemResidentTask());
+		taskManager->AddTask(task);
+		taskManager->AddRenderFunction(TTaskFunction<SystemResidentTask>::Create(task,
+			&SystemResidentTask::RenderFps), SystemResidentTask::TASK_PRI_RENDER_FPS);
+	}
 }
 SystemController::~SystemController() {
 	transitionManager_ = nullptr;
@@ -135,7 +138,12 @@ void SceneManager::TransScriptSelectScene_Last() {
 	int type = SystemController::GetInstance()->GetSystemInformation()->GetLastSelectScriptSceneType();
 	TransScriptSelectScene(type);
 }
-void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay) {
+void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, 
+	ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay)
+{
+	EDirectSoundManager* soundManager = EDirectSoundManager::GetInstance();
+	soundManager->Clear();
+	
 	EDirectInput* input = EDirectInput::GetInstance();
 	input->ClearKeyState();
 
@@ -229,6 +237,9 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 
 }
 void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, bool bOnlyPackage) {
+	EDirectSoundManager* soundManager = EDirectSoundManager::GetInstance();
+	soundManager->Clear();
+
 	EDirectInput* input = EDirectInput::GetInstance();
 	input->ClearKeyState();
 
