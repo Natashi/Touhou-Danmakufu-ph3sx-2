@@ -1323,7 +1323,7 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 		LONG charWidth = ptrCharSize->x;
 		LONG charHeight = ptrCharSize->y;
 		DxRect<LONG> rcDest(xRender + xOffset, yRender + yOffset,
-			charWidth + xRender + xOffset, charHeight + yRender + yOffset) ;
+			charWidth + xRender + xOffset, charHeight + yRender + yOffset);
 		DxRect<LONG> rcSrc(0, 0, charWidth, charHeight);
 		spriteText->SetVertex(rcSrc, rcDest, colorVertex_);
 		objRender->AddRenderObject(shared_ptr<Sprite2D>(spriteText));
@@ -1433,16 +1433,18 @@ void DxTextRenderer::Render(DxText* dxText, shared_ptr<DxTextInfo> textInfo) {
 	}
 }
 bool DxTextRenderer::AddFontFromFile(const std::wstring& path) {
+	std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
+
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open())
-		throw gstd::wexception(L"AddFontFromFile: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
+		throw gstd::wexception(L"AddFontFromFile: " + ErrorUtility::GetFileNotFoundErrorMessage(pathReduce, true));
 
 	std::string source = reader->ReadAllString();
 
 	DWORD count = 0;
 	HANDLE hFont = ::AddFontMemResourceEx((LPVOID)source.c_str(), source.size(), nullptr, &count);
 
-	Logger::WriteTop(StringUtility::Format(L"AddFontFromFile: Font loaded. [%s]", path.c_str()));
+	Logger::WriteTop(StringUtility::Format(L"AddFontFromFile: Font loaded. [%s]", pathReduce.c_str()));
 	return hFont != 0;
 }
 

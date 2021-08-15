@@ -120,7 +120,8 @@ bool Texture::CreateFromFileInLoadThread(const std::wstring& path, bool genMipma
 
 	TextureManager* manager = TextureManager::GetBase();
 	shared_ptr<Texture> texture = manager->CreateFromFileInLoadThread(path, bLoadImageInfo, genMipmap, flgNonPowerOfTwo);
-	if (texture) data_ = texture->data_;
+	if (texture)
+		data_ = texture->data_;
 	return data_ != nullptr;
 }
 void Texture::SetTexture(IDirect3DTexture9* pTexture) {
@@ -154,12 +155,12 @@ IDirect3DTexture9* Texture::GetD3DTexture() {
 			}
 			else if (timeGetTime() - timeOrg > 5000) {		//5-second timer
 				const std::wstring& path = data_->GetName();
-				Logger::WriteTop(
-					StringUtility::Format(L"GetTexture timed out. (%s)", path.c_str()));
+				Logger::WriteTop(StringUtility::Format(L"GetTexture timed out. (%s)", 
+					PathProperty::ReduceModuleDirectory(path).c_str()));
 				data_->bLoad_ = true;
 				break;
 			}
-			Sleep(20);
+			::Sleep(10);
 		}
 	}
 	return res;
@@ -293,7 +294,8 @@ void TextureManager::_ReleaseTextureData(const std::wstring& name) {
 		if (itr != mapTextureData_.end()) {
 			itr->second->bLoad_ = true;
 			mapTextureData_.erase(itr);
-			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", name.c_str()));
+			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", 
+				PathProperty::ReduceModuleDirectory(name).c_str()));
 		}
 	}
 }
@@ -305,7 +307,8 @@ void TextureManager::_ReleaseTextureData(std::map<std::wstring, shared_ptr<Textu
 			const std::wstring& name = itr->second->name_;
 			itr->second->bLoad_ = true;
 			mapTextureData_.erase(itr);
-			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", name.c_str()));
+			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", 
+				PathProperty::ReduceModuleDirectory(name).c_str()));
 		}
 	}
 }
@@ -334,8 +337,9 @@ void TextureManager::ReleaseDxResource() {
 					}
 					else {
 						std::wstring err = StringUtility::Format(L"TextureManager::ReleaseDxResource: "
-							"Failed to create temporary surface [%s]\r\n\t%s: %s",
-							itrMap->first.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
+							"Failed to create temporary surface [%s]\r\n    %s: %s",
+							PathProperty::ReduceModuleDirectory(itrMap->first).c_str(), 
+							DXGetErrorString(hr), DXGetErrorDescription(hr));
 						Logger::WriteTop(err);
 
 						pSurfaceCopy->Release();
@@ -350,7 +354,7 @@ void TextureManager::ReleaseDxResource() {
 	}
 	else {
 		std::wstring err = StringUtility::Format(L"TextureManager::ReleaseDxResource: "
-			"D3D device abnormal. Render target surfaces cannot be saved.\r\n\t%s: %s",
+			"D3D device abnormal. Render target surfaces cannot be saved.\r\n    %s: %s",
 			DXGetErrorString(deviceHr), DXGetErrorDescription(deviceHr));
 		Logger::WriteTop(err);
 	}
@@ -383,7 +387,7 @@ void TextureManager::RestoreDxResource() {
 					if (FAILED(hr)) {
 						std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: (Depth)\n%s\n  %s",
 							DXGetErrorString(hr), DXGetErrorDescription(hr));
-						throw gstd::wexception(err);
+						throw wexception(err);
 					}
 				}
 
@@ -392,7 +396,7 @@ void TextureManager::RestoreDxResource() {
 				if (FAILED(hr)) {
 					std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: (Texture)\n%s\n  %s",
 						DXGetErrorString(hr), DXGetErrorDescription(hr));
-					throw gstd::wexception(err);
+					throw wexception(err);
 				}
 				data->pTexture_->GetSurfaceLevel(0, &data->lpRenderSurface_);
 			}
@@ -409,8 +413,9 @@ void TextureManager::RestoreDxResource() {
 			HRESULT hr = graphics->GetDevice()->UpdateSurface(surfaceSrc, nullptr, surfaceDst, nullptr);
 			if (FAILED(hr)) {
 				std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: "
-					"Render target restoration failed [%s]\r\n\t%s: %s",
-					data->name_.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
+					"Render target restoration failed [%s]\r\n    %s: %s",
+					PathProperty::ReduceModuleDirectory(data->name_).c_str(), 
+					DXGetErrorString(hr), DXGetErrorDescription(hr));
 				Logger::WriteTop(err);
 			}
 
@@ -420,77 +425,75 @@ void TextureManager::RestoreDxResource() {
 	}
 }
 
-bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo) {
-	if (IsDataExists(path)) {
-		return true;
-	}
+void TextureManager::__CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	
+	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+	if (reader == nullptr || !reader->Open())
+		throw wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
+	std::string source = reader->ReadAllString();
+
+	D3DFORMAT pixelFormat = graphics->GetConfigData().colorMode_ == ColorMode::COLOR_MODE_32BIT ?
+		D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
+
+	dst->useMipMap_ = genMipmap;
+	dst->useNonPowerOfTwo_ = flgNonPowerOfTwo;
+
+	HRESULT hr = D3DXCreateTextureFromFileInMemoryEx(DirectGraphics::GetBase()->GetDevice(),
+		source.c_str(), source.size(),
+		dst->useNonPowerOfTwo_ ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT,
+		dst->useNonPowerOfTwo_ ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT,
+		0, 0, pixelFormat, D3DPOOL_MANAGED, D3DX_FILTER_BOX, D3DX_DEFAULT, 0x00000000,
+		nullptr, nullptr, &(dst->pTexture_));
+	if (FAILED(hr))
+		throw wexception("D3DXCreateTextureFromFileInMemoryEx failure.");
+
+	if (dst->useMipMap_)
+		dst->pTexture_->GenerateMipSubLevels();
+
+	hr = D3DXGetImageInfoFromFileInMemory(source.c_str(), source.size(), &dst->infoImage_);
+	if (FAILED(hr))
+		throw wexception("D3DXGetImageInfoFromFileInMemory failure.");
+	dst->CalculateResourceSize();
+
+	dst->manager_ = this;
+	dst->name_ = path;
+	dst->type_ = TextureData::Type::TYPE_TEXTURE;
+}
+bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
+	bool res = true;
+	shared_ptr<TextureData> data;
+
+	std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 	try {
-		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-		if (reader == nullptr || !reader->Open())
-			throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
+		data.reset(new TextureData());
+		__CreateFromFile(data, path, genMipmap, flgNonPowerOfTwo);
 
-		std::string source = reader->ReadAllString();
-
-		//		D3DXIMAGE_INFO info;
-		//		D3DXGetImageInfoFromFileInMemory(buf.GetPointer(), size, &info);
-
-		/*
-		D3DCOLOR colorKey = D3DCOLOR_ARGB(255, 0, 0, 0);
-		if (path.find(L".bmp") == std::wstring::npos)
-			colorKey = 0;
-		*/
-		D3DCOLOR colorKey = 0x00000000;
-
-		D3DFORMAT pixelFormat = graphics->GetConfigData().colorMode_ == ColorMode::COLOR_MODE_32BIT ?
-			D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
-
-		shared_ptr<TextureData> data(new TextureData());
-		data->useMipMap_ = genMipmap;
-		data->useNonPowerOfTwo_ = flgNonPowerOfTwo;
-
-		HRESULT hr = D3DXCreateTextureFromFileInMemoryEx(DirectGraphics::GetBase()->GetDevice(),
-			source.c_str(), source.size(),
-			(data->useNonPowerOfTwo_) ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT,
-			(data->useNonPowerOfTwo_) ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT,
-			0, 0, pixelFormat, D3DPOOL_MANAGED, D3DX_FILTER_BOX, D3DX_DEFAULT, colorKey,
-			nullptr, nullptr, &data->pTexture_);
-		if (FAILED(hr)) {
-			throw gstd::wexception("D3DXCreateTextureFromFileInMemoryEx failure.");
-		}
-
-		if (data->useMipMap_) data->pTexture_->GenerateMipSubLevels();
-
-		mapTextureData_[path] = data;
-		data->manager_ = this;
-		data->name_ = path;
-		D3DXGetImageInfoFromFileInMemory(source.c_str(), source.size(), &data->infoImage_);
-
-		data->CalculateResourceSize();
-
-		Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. [%s]", path.c_str()));
+		Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. [%s]",
+			pathReduce.c_str()));
 	}
-	catch (gstd::wexception& e) {
-		std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture \"%s\"\r\n    %s", path.c_str(), e.what());
+	catch (wexception& e) {
+		std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture \"%s\"\r\n    %s", 
+			pathReduce.c_str(), e.what());
 		Logger::WriteTop(str);
-		return false;
+
+		res = false;
 	}
 
-	return true;
+	if (res) mapTextureData_[path] = data;
+	return res;
 }
 bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width, size_t height) {
-	if (IsDataExists(name)) {
-		return true;
-	}
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	IDirect3DDevice9* device = graphics->GetDevice();
 
 	bool res = true;
-	try {
-		shared_ptr<TextureData> data(new TextureData());
-		DirectGraphics* graphics = DirectGraphics::GetBase();
-		IDirect3DDevice9* device = graphics->GetDevice();
+	shared_ptr<TextureData> data;
 
+	try {
 		if (width == 0U) {
 			size_t screenWidth = graphics->GetScreenWidth();
 			width = 1U;
@@ -510,6 +513,8 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 			if (height > maxHeight) height = maxHeight;
 		}
 
+		data.reset(new TextureData());
+
 		D3DMULTISAMPLE_TYPE typeSample = graphics->GetMultiSampleType();
 		DWORD* qualitySample = graphics->GetMultiSampleQuality();
 
@@ -520,24 +525,28 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 
 		D3DFORMAT fmt = graphics->GetConfigData().colorMode_ == ColorMode::COLOR_MODE_32BIT ?
 			D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
+
 		hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT,
 			&data->pTexture_, nullptr);
-
 		if (FAILED(hr)) {
 			if (width > height) height = width;
 			else if (height > width) width = height;
 
 			hr = device->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
 				qualitySample ? qualitySample[1] : 0, FALSE, &data->lpRenderZ_, nullptr);
-			if (FAILED(hr)) throw false;
+			if (FAILED(hr))
+				throw wexception("CreateDepthStencilSurface failure.");
 
 			hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT,
 				&data->pTexture_, nullptr);
-			if (FAILED(hr)) throw false;
+			if (FAILED(hr))
+				throw wexception("CreateTexture failure.");
 		}
-		data->pTexture_->GetSurfaceLevel(0, &data->lpRenderSurface_);
 
-		mapTextureData_[name] = data;
+		hr = data->pTexture_->GetSurfaceLevel(0, &data->lpRenderSurface_);
+		if (FAILED(hr))
+			throw wexception("GetSurfaceLevel failure.");
+
 		data->manager_ = this;
 		data->name_ = name;
 		data->type_ = TextureData::Type::TYPE_RENDER_TARGET;
@@ -548,11 +557,13 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 
 		Logger::WriteTop(StringUtility::Format(L"TextureManager: Render target created. [%s]", name.c_str()));
 	}
-	catch (...) {
-		Logger::WriteTop(StringUtility::Format(L"TextureManager: Failed to create render target. [%s]", name.c_str()));
+	catch (wexception& e) {
+		Logger::WriteTop(StringUtility::Format(L"TextureManager: Failed to create render target \"%s\"\r\n    %s", 
+			name.c_str(), e.what()));
 		res = false;
 	}
 
+	if (res) mapTextureData_[name] = data;
 	return res;
 }
 shared_ptr<Texture> TextureManager::CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo) {
@@ -566,8 +577,12 @@ shared_ptr<Texture> TextureManager::CreateFromFile(const std::wstring& path, boo
 			res = itr->second;
 		}
 		else {
-			bool bSuccess = _CreateFromFile(path, genMipmap, flgNonPowerOfTwo);
-			if (bSuccess) {
+			bool bHasData = IsDataExists(path);
+			if (!bHasData) {
+				bHasData = _CreateFromFile(path, genMipmap, flgNonPowerOfTwo);
+			}
+			
+			if (bHasData) {
 				res = std::make_shared<Texture>();
 				res->data_ = mapTextureData_[path];
 			}
@@ -586,8 +601,12 @@ shared_ptr<Texture> TextureManager::CreateRenderTarget(const std::wstring& name,
 			res = itr->second;
 		}
 		else {
-			bool bSuccess = _CreateRenderTarget(name, width, height);
-			if (bSuccess) {
+			bool bHasData = IsDataExists(name);
+			if (!bHasData) {
+				bHasData = _CreateRenderTarget(name, width, height);
+			}
+
+			if (bHasData) {
 				res = std::make_shared<Texture>();
 				res->data_ = mapTextureData_[name];
 			}
@@ -595,8 +614,8 @@ shared_ptr<Texture> TextureManager::CreateRenderTarget(const std::wstring& name,
 	}
 	return res;
 }
-shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap,
-	bool flgNonPowerOfTwo, bool bLoadImageInfo) 
+shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstring& path, 
+	bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo) 
 {
 	//path = PathProperty::GetUnique(path);
 	shared_ptr<Texture> res;
@@ -608,57 +627,60 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 			res = itr->second;
 		}
 		else {
-			bool bLoadTarget = true;
 			res = std::make_shared<Texture>();
+
 			if (!IsDataExists(path)) {
+				std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
+
 				shared_ptr<TextureData> data(new TextureData());
-				mapTextureData_[path] = data;
+
 				data->manager_ = this;
 				data->name_ = path;
 				data->bLoad_ = false;
 				data->useMipMap_ = genMipmap;
 				data->useNonPowerOfTwo_ = flgNonPowerOfTwo;
+				data->type_ = TextureData::Type::TYPE_TEXTURE;
 
 				if (bLoadImageInfo) {
 					try {
 						shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 						if (reader == nullptr || !reader->Open())
-							throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
+							throw wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
 						std::string source = reader->ReadAllString();
 
 						D3DXIMAGE_INFO info;
 						HRESULT hr = D3DXGetImageInfoFromFileInMemory(source.c_str(), source.size(), &info);
 						if (FAILED(hr))
-							throw gstd::wexception("D3DXGetImageInfoFromFileInMemory failure.");
+							throw wexception("D3DXGetImageInfoFromFileInMemory failure.");
 
 						data->infoImage_ = info;
 						data->CalculateResourceSize();
 					}
-					catch (gstd::wexception& e) {
-						std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture (Load Thread) \"%s\"\r\n\t%s", 
-							path.c_str(), e.what());
+					catch (wexception& e) {
+						std::wstring str = StringUtility::Format(
+							L"TextureManager(LT): Failed to load texture \"%s\"\r\n    %s", 
+							pathReduce.c_str(), e.what());
 						Logger::WriteTop(str);
 						data->bLoad_ = true;
-						bLoadTarget = false;
+
+						return nullptr;
 					}
 				}
-			}
-			else bLoadTarget = false;
 
-			res->data_ = mapTextureData_[path];
-			if (bLoadTarget) {
-				shared_ptr<FileManager::LoadObject> source = res;
-				shared_ptr<FileManager::LoadThreadEvent> event(new FileManager::LoadThreadEvent(this, path, res));
-				FileManager::GetBase()->AddLoadThreadEvent(event);
+				res->data_ = data;
+				mapTextureData_[path] = data;
+				{
+					shared_ptr<FileManager::LoadObject> source = res;
+					shared_ptr<FileManager::LoadThreadEvent> event(new FileManager::LoadThreadEvent(this, path, res));
+					FileManager::GetBase()->AddLoadThreadEvent(event);
+				}
 			}
 		}
 	}
 	return res;
 }
 void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> event) {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-
 	const std::wstring& path = event->GetPath();
 	{
 		Lock lock(lock_);
@@ -675,46 +697,22 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 			return;
 		}
 
+		std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 		try {
-			shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-			if (reader == nullptr || !reader->Open())
-				throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
+			__CreateFromFile(data, path, data->useMipMap_, data->useNonPowerOfTwo_);
 
-			std::string source = reader->ReadAllString();
+			data->bLoad_ = true;
 
-			/*
-			D3DCOLOR colorKey = D3DCOLOR_ARGB(255, 0, 0, 0);
-			if (path.find(L".bmp") == std::wstring::npos)
-				colorKey = 0;
-			*/
-			D3DCOLOR colorKey = 0x00000000;
-
-			D3DFORMAT pixelFormat = graphics->GetConfigData().colorMode_ == ColorMode::COLOR_MODE_32BIT ?
-				D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
-
-			HRESULT hr = D3DXCreateTextureFromFileInMemoryEx(DirectGraphics::GetBase()->GetDevice(), 
-				source.c_str(), source.size(),
-				(data->useNonPowerOfTwo_) ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT, 
-				(data->useNonPowerOfTwo_) ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT, 
-				0, 0, pixelFormat, D3DPOOL_MANAGED, D3DX_FILTER_BOX, D3DX_DEFAULT, colorKey,
-				nullptr, nullptr, &data->pTexture_);
-			if (FAILED(hr)) {
-				throw gstd::wexception("D3DXCreateTextureFromFileInMemoryEx failure.");
-			}
-
-			if (data->useMipMap_) data->pTexture_->GenerateMipSubLevels();
-			D3DXGetImageInfoFromFileInMemory(source.c_str(), source.size(), &data->infoImage_);
-
-			data->CalculateResourceSize();
-
-			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture loaded. (Load Thread) \"%s\"", path.c_str()));
+			Logger::WriteTop(StringUtility::Format(L"TextureManager(LT): Texture loaded. [%s]", pathReduce.c_str()));
 		}
-		catch (gstd::wexception& e) {
-			std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture (Load Thread) \"%s\"\r\n\t%s",
-				path.c_str(), e.what());
+		catch (wexception& e) {
+			std::wstring str = StringUtility::Format(L"TextureManager(LT): Failed to load texture \"%s\"\r\n    %s",
+				pathReduce.c_str(), e.what());
 			Logger::WriteTop(str);
+			data->bLoad_ = true;
+			texture->data_ = nullptr;
+			mapTextureData_.erase(path);
 		}
-		data->bLoad_ = true;
 	}
 }
 
@@ -778,7 +776,7 @@ TextureInfoPanel::~TextureInfoPanel() {
 bool TextureInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
 
-	gstd::WListView::Style styleListView;
+	WListView::Style styleListView;
 	styleListView.SetStyle(WS_CHILD | WS_VISIBLE |
 		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
 	styleListView.SetStyleEx(WS_EX_CLIENTEDGE);
@@ -879,8 +877,6 @@ void TextureInfoPanel::Update(TextureManager* manager) {
 		UINT texMem = device->GetAvailableTextureMem() / (1024U * 1024U);
 
 		if (WindowLogger* logger = WindowLogger::GetParent()) {
-			Lock lock(manager->GetLock());
-
 			shared_ptr<WStatusBar> statusBar = logger->GetStatusBar();
 			statusBar->SetText(0, L"Available Video Memory");
 			statusBar->SetText(1, StringUtility::Format(L"%u MB", texMem));
