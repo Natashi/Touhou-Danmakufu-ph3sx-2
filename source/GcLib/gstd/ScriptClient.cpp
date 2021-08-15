@@ -116,6 +116,11 @@ static const std::vector<function> commonFunction = {
 	{ "acsch", ScriptClientBase::Func_AcscH, 1 },
 	{ "acoth", ScriptClientBase::Func_AcotH, 1 },
 
+	//Math functions: figurate numbers
+	{ "triangular", ScriptClientBase::Func_Triangular, 1 },
+	{ "tetrahedral", ScriptClientBase::Func_Tetrahedral, 1 },
+	{ "nsimplex", ScriptClientBase::Func_NSimplex, 2 },
+
 	//Math functions: Angles
 	{ "ToDegrees", ScriptClientBase::Func_ToDegrees, 1 },
 	{ "ToRadians", ScriptClientBase::Func_ToRadians, 1 },
@@ -864,6 +869,28 @@ value ScriptClientBase::Func_AcscH(script_machine* machine, int argc, const valu
 }
 value ScriptClientBase::Func_AcotH(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(atanh(1 / argv->as_real()));
+}
+
+value ScriptClientBase::Func_Triangular(script_machine* machine, int argc, const value* argv) {
+	double num = argv->as_real();
+	double val = num * (num + 1.0) / 2.0;
+	return CreateRealValue(val);
+}
+value ScriptClientBase::Func_Tetrahedral(script_machine* machine, int argc, const value* argv) {
+	double num = argv->as_real();
+	double val = num * (num + 1.0) * (num + 2.0) / 6.0;
+	return CreateRealValue(val);
+}
+value ScriptClientBase::Func_NSimplex(script_machine* machine, int argc, const value* argv) {
+	double num = argv[0].as_real();
+	int dim = argv[1].as_int();
+	double val = num;
+	double div = tgamma(dim + 1);
+
+	for (size_t i = 1; i < dim; ++i) val *= num + i;
+	val /= div;
+
+	return CreateRealValue(val);
 }
 
 value ScriptClientBase::Func_Exp(script_machine* machine, int argc, const value* argv) {
