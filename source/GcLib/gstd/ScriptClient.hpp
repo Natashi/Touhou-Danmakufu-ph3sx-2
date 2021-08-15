@@ -243,6 +243,10 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_AcscH);
 		DNH_FUNCAPI_DECL_(Func_AcotH);
 
+		DNH_FUNCAPI_DECL_(Func_Triangular);
+		DNH_FUNCAPI_DECL_(Func_Tetrahedral);
+		DNH_FUNCAPI_DECL_(Func_NSimplex);
+
 		DNH_FUNCAPI_DECL_(Func_Exp);
 		DNH_FUNCAPI_DECL_(Func_Sqrt);
 		DNH_FUNCAPI_DECL_(Func_Cbrt);
