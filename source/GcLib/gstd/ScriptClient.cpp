@@ -883,12 +883,16 @@ value ScriptClientBase::Func_Tetrahedral(script_machine* machine, int argc, cons
 }
 value ScriptClientBase::Func_NSimplex(script_machine* machine, int argc, const value* argv) {
 	double num = argv[0].as_real();
-	int dim = argv[1].as_int();
-	double val = num;
-	double div = tgamma(dim + 1);
+	double val = 0.0;
 
-	for (size_t i = 1; i < dim; ++i) val *= num + i;
-	val /= div;
+	if (num > 0) { // Anything <= 0 is treated as 0
+		val = 1.0;
+		int64_t dim = std::max(argv[1].as_int(), 0i64);
+		double div = tgamma(dim + 1);
+
+		for (size_t i = 0; i < dim; ++i) val *= num + i;
+		val /= div;
+	}
 
 	return CreateRealValue(val);
 }
