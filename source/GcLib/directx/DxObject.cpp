@@ -1289,7 +1289,7 @@ DWORD DxBinaryFileObject::Write(LPVOID data, size_t size) {
 DxScriptObjectManager::FogData DxScriptObjectManager::fogData_ = { false, 0xffffffff, 0, 0 };
 DxScriptObjectManager::DxScriptObjectManager() {
 	SetMaxObject(DEFAULT_CONTAINER_CAPACITY);
-	SetRenderBucketCapacity(256);
+	SetRenderBucketCapacity(128);
 
 	totalObjectCreateCount_ = 0U;
 }
