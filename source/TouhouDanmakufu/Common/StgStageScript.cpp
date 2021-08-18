@@ -634,6 +634,7 @@ static const std::vector<constant> stgStageConstant = {
 	constant("INFO_IS_SPELL", StgStageScript::INFO_IS_SPELL),
 	constant("INFO_IS_LAST_SPELL", StgStageScript::INFO_IS_LAST_SPELL),
 	constant("INFO_IS_DURABLE_SPELL", StgStageScript::INFO_IS_DURABLE_SPELL),
+	constant("INFO_IS_REQUIRE_ALL_DOWN", StgStageScript::INFO_IS_REQUIRE_ALL_DOWN),
 	constant("INFO_SPELL_SCORE", StgStageScript::INFO_SPELL_SCORE),
 	constant("INFO_REMAIN_STEP_COUNT", StgStageScript::INFO_REMAIN_STEP_COUNT),
 	constant("INFO_ACTIVE_STEP_LIFE_COUNT", StgStageScript::INFO_ACTIVE_STEP_LIFE_COUNT),
@@ -3132,6 +3133,7 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_GetInfo(gstd::script_machine*
 		case INFO_IS_SPELL:
 		case INFO_IS_LAST_SPELL:
 		case INFO_IS_DURABLE_SPELL:
+		case INFO_IS_REQUIRE_ALL_DOWN:
 		case INFO_IS_LAST_STEP:
 			return script->CreateBooleanValue(false);
 		case INFO_TIMER:
@@ -3171,6 +3173,12 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_GetInfo(gstd::script_machine*
 	{
 		bool res = false;
 		if (sceneData) res = sceneData->IsDurable();
+		return script->CreateBooleanValue(res);
+	}
+	case INFO_IS_REQUIRE_ALL_DOWN:
+	{
+		bool res = false;
+		if (sceneData) res = sceneData->IsRequireAllDown();
 		return script->CreateBooleanValue(res);
 	}
 	case INFO_TIMER:
