@@ -825,7 +825,7 @@ value ScriptClientBase::Func_RAcot(script_machine* machine, int argc, const valu
 
 value ScriptClientBase::Func_Cas(script_machine* machine, int argc, const value* argv) {
 	double scArray[2];
-	Math::DoSinCos(Math::RadianToDegree(argv->as_real()), scArray);
+	Math::DoSinCos(Math::DegreeToRadian(argv->as_real()), scArray);
 	return CreateRealValue(scArray[0] + scArray[1]);
 }
 value ScriptClientBase::Func_RCas(script_machine* machine, int argc, const value* argv) {
