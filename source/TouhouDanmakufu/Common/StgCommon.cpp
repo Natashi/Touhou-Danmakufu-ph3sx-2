@@ -271,13 +271,15 @@ void StgMovePattern_XY::_Activate(StgMovePattern* _src) {
 	}
 	else if (_src->GetType() == TYPE_ANGLE) {
 		StgMovePattern_Angle* src = (StgMovePattern_Angle*)_src;
-		c_ = src->GetSpeedX() / src->speed_;
-		s_ = src->GetSpeedY() / src->speed_;
+		c_ = src->GetSpeedX();
+		s_ = src->GetSpeedY();
 		{
-			accelerationX_ = c_ * src->acceleration_;
-			accelerationY_ = s_ * src->acceleration_;
-			maxSpeedX_ = c_ * src->maxSpeed_;
-			maxSpeedY_ = s_ * src->maxSpeed_;
+			double c = c_ / src->speed_;
+			double s = s_ / src->speed_;
+			accelerationX_ = c * src->acceleration_;
+			accelerationY_ = s * src->acceleration_;
+			maxSpeedX_ = c * src->maxSpeed_;
+			maxSpeedY_ = s * src->maxSpeed_;
 		}
 	}
 
