@@ -233,6 +233,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ColorARGBToHex);
 		DNH_FUNCAPI_DECL_(Func_ColorHexToARGB);
 		DNH_FUNCAPI_DECL_(Func_ColorRGBtoHSV);
+		DNH_FUNCAPI_DECL_(Func_ColorHexRGBtoHSV);
 		DNH_FUNCAPI_DECL_(Func_ColorHSVtoRGB);
 		DNH_FUNCAPI_DECL_(Func_ColorHSVtoHexRGB);
 
