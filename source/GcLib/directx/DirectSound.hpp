@@ -45,7 +45,7 @@ namespace directx {
 		IDirectSoundBuffer8* pDirectSoundPrimaryBuffer_;
 
 		gstd::CriticalSection lock_;
-		SoundManageThread* threadManage_;
+		std::unique_ptr<SoundManageThread> threadManage_;
 
 		std::list<shared_ptr<SoundPlayer>> listManagedPlayer_;
 		std::map<std::wstring, shared_ptr<SoundSourceData>> mapSoundSource_;
@@ -167,6 +167,7 @@ namespace directx {
 	public:
 		QWORD posWaveStart_;		//In bytes
 		QWORD posWaveEnd_;			//In bytes
+		gstd::ByteBuffer bufWaveData_;
 	public:
 		SoundSourceDataWave();
 

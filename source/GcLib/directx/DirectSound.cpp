@@ -25,7 +25,7 @@ DirectSoundManager::~DirectSoundManager() {
 
 	threadManage_->Stop();
 	threadManage_->Join();
-	delete threadManage_;
+	threadManage_ = nullptr;
 
 	for (auto itr = mapDivision_.begin(); itr != mapDivision_.end(); ++itr)
 		ptr_delete(itr->second);
@@ -81,8 +81,8 @@ bool DirectSoundManager::Initialize(HWND hWnd) {
 	}
 
 	//Sound manager thread, this thread runs even when the window is unfocused,
-	//and manages stuff like fade, deletion, and the LogWindow's Sound panel.
-	threadManage_ = new SoundManageThread(this);
+	//	and manages stuff like fade, deletion, and the LogWindow's Sound panel.
+	threadManage_.reset(new SoundManageThread(this));
 	threadManage_->Start();
 
 	Logger::WriteTop("DirectSound: Initialized.");
@@ -601,6 +601,13 @@ bool SoundSourceDataWave::Load(shared_ptr<gstd::FileReader> reader) {
 
 		posWaveStart_ = dataChunkOffset + sizeof(uint32_t);
 		posWaveEnd_ = posWaveStart_ + sizeChunk;
+
+		if (audioSizeTotal_ > 0 && audioSizeTotal_ <= 1024 * 1024) {
+			bufWaveData_.SetSize(audioSizeTotal_);
+
+			reader->Seek(posWaveStart_);
+			reader->Read(bufWaveData_.GetPointer(), audioSizeTotal_);
+		}
 	}
 	catch (bool) {
 		return false;
@@ -1090,7 +1097,7 @@ void SoundStreamingPlayer::_CreateSoundEvent(WAVEFORMATEX& formatWave) {
 void SoundStreamingPlayer::_CopyStream(int indexCopy) {
 	if (pDirectSoundBuffer_ == nullptr) return;
 	{
-		Lock lock(lock_);
+		//Lock lock(lock_);
 
 		LPVOID pMem1, pMem2;
 		DWORD dwSize1, dwSize2;
@@ -1098,6 +1105,9 @@ void SoundStreamingPlayer::_CopyStream(int indexCopy) {
 		DWORD copyOffset = sizeCopy_ * indexCopy;
 
 		pDirectSoundBuffer_->GetCurrentPosition(&bufferPositionAtCopy_[indexCopy], nullptr);
+
+		//Logger::WriteTop(StringUtility::Format("_CopyStream(%d): %u -> %u", indexCopy,
+		//	bufferPositionAtCopy_[indexCopy], copyOffset));
 
 		HRESULT hr = pDirectSoundBuffer_->Lock(copyOffset, sizeCopy_, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
 		if (hr == DSERR_BUFFERLOST) {
@@ -1202,6 +1212,8 @@ bool SoundStreamingPlayer::IsPlaying() {
 	return thread_->GetStatus() == Thread::RUN;
 }
 DWORD SoundStreamingPlayer::GetCurrentPosition() {
+	Lock lock(lock_);
+
 	DWORD currentReader = 0;
 	if (pDirectSoundBuffer_) {
 		HRESULT hr = pDirectSoundBuffer_->GetCurrentPosition(&currentReader, nullptr);
@@ -1231,7 +1243,7 @@ void SoundStreamingPlayer::StreamingThread::_Run() {
 
 	while (this->GetStatus() == RUN) {
 		DWORD num = WaitForMultipleObjects(3, player->hEvent_, FALSE, INFINITE);
-
+		
 		player->pDirectSoundBuffer_->GetCurrentPosition(&point, 0);
 		if (num == WAIT_OBJECT_0) {
 			if ((point - 0) < 4096)
@@ -1279,7 +1291,8 @@ bool SoundPlayerWave::_CreateBuffer(shared_ptr<SoundSourceData> source) {
 				ZeroMemory(&desc, sizeof(DSBUFFERDESC));
 				desc.dwSize = sizeof(DSBUFFERDESC);
 				desc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY
-					| DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCSOFTWARE;
+					| DSBCAPS_GETCURRENTPOSITION2 
+					| DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
 				desc.dwBufferBytes = waveSize;
 				desc.lpwfxFormat = &pSource->formatWave_;
 				HRESULT hrBuffer = soundManager->GetDirectSound()->CreateSoundBuffer(&desc,
@@ -1288,24 +1301,20 @@ bool SoundPlayerWave::_CreateBuffer(shared_ptr<SoundSourceData> source) {
 					throw gstd::wexception("IDirectSound8::CreateSoundBuffer failure");
 
 				if (pDirectSoundBuffer_) {
-					LPVOID pMem1, pMem2;
-					DWORD dwSize1, dwSize2;
+					LPVOID pMem;
+					DWORD dwSize;
 
-					HRESULT hrLock = pDirectSoundBuffer_->Lock(0, waveSize, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
+					HRESULT hrLock = pDirectSoundBuffer_->Lock(0, waveSize, &pMem, &dwSize, nullptr, nullptr, 0);
 					if (hrLock == DSERR_BUFFERLOST) {
 						hrLock = pDirectSoundBuffer_->Restore();
-						hrLock = pDirectSoundBuffer_->Lock(0, waveSize, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
+						hrLock = pDirectSoundBuffer_->Lock(0, waveSize, &pMem, &dwSize, nullptr, nullptr, 0);
 					}
 					if (FAILED(hrLock))
 						throw gstd::wexception("IDirectSoundBuffer8::Lock failure");
 
-					reader->Seek(pSource->posWaveStart_);
-					if (dwSize1 > 0)
-						reader->Read(pMem1, dwSize1);
-					if (dwSize2 > 0)
-						reader->Read(pMem2, dwSize2);
+					memcpy(pMem, pSource->bufWaveData_.GetPointer(), dwSize);
 
-					pDirectSoundBuffer_->Unlock(pMem1, dwSize1, pMem2, dwSize2);
+					pDirectSoundBuffer_->Unlock(pMem, dwSize, nullptr, 0);
 				}
 			}
 			catch (bool) {
@@ -1397,7 +1406,7 @@ bool SoundStreamingPlayerWave::_CreateBuffer(shared_ptr<SoundSourceData> source)
 			shared_ptr<FileReader> reader = pSource->reader_;
 
 			try {
-				DWORD sizeBuffer = std::min(2 * pSource->formatWave_.nAvgBytesPerSec, (DWORD)pSource->audioSizeTotal_);
+				DWORD sizeBuffer = 2U * pSource->formatWave_.nAvgBytesPerSec;
 
 				DSBUFFERDESC desc;
 				ZeroMemory(&desc, sizeof(DSBUFFERDESC));
@@ -1415,14 +1424,8 @@ bool SoundStreamingPlayerWave::_CreateBuffer(shared_ptr<SoundSourceData> source)
 				sizeCopy_ = pSource->formatWave_.nAvgBytesPerSec;
 				lastReadPointer_ = pSource->posWaveStart_;
 
-				bStreaming_ = sizeBuffer != pSource->audioSizeTotal_;
-				if (!bStreaming_) {
-					sizeCopy_ = pSource->audioSizeTotal_;
-					_CopyStream(0);
-				}
-				else {
-					_CreateSoundEvent(pSource->formatWave_);
-				}
+				bStreaming_ = true;
+				_CreateSoundEvent(pSource->formatWave_);
 			}
 			catch (bool) {
 				return false;
@@ -1454,6 +1457,7 @@ DWORD SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	auto _WriteBytes = [&](DWORD writeTargetSize) -> bool {
 		if (writeTargetSize == 0) return true;
 		DWORD written = reader->Read((char*)pMem + totalWritten, writeTargetSize);
+		totalWritten += written;
 		return written != writeTargetSize;	//If (written < target), then the read contains the EOF
 	};
 
@@ -1462,7 +1466,7 @@ DWORD SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		DWORD byteCurrent = byteCurrentStart + totalWritten;
 
 		DWORD remain = dwSize - totalWritten;
-		if (byteCurrent + remain > byteLoopEnd && byteLoopEnd > 0) {
+		if (playStyle_.bLoop_ && (byteCurrent + remain > byteLoopEnd && byteLoopEnd > 0)) {
 			//This read will contain the looping point
 			DWORD size1 = std::min(byteLoopEnd - byteCurrent, remain);
 			_WriteBytes(size1);
@@ -1603,7 +1607,7 @@ DWORD SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		DWORD byteCurrent = byteCurrentStart + totalWritten;
 
 		DWORD remain = dwSize - totalWritten;
-		if (byteCurrent + remain > byteLoopEnd && byteLoopEnd > 0) {
+		if (playStyle_.bLoop_ && (byteCurrent + remain > byteLoopEnd && byteLoopEnd > 0)) {
 			//This read will contain the looping point
 			DWORD size1 = std::min(byteLoopEnd - byteCurrent, remain);
 			_DecodeOgg(size1);
@@ -1769,7 +1773,7 @@ DWORD SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 		DWORD cSize = dwSize - sizeWriteTotal;
 		double cTime = (double)cSize / (double)bytePerSec;
 
-		if (timeCurrent_ + cTime > loopEnd && loopEnd > 0) {
+		if (playStyle_.bLoop_ && (timeCurrent_ + cTime > loopEnd && loopEnd > 0)) {
 			//ループ終端
 			double timeOver = timeCurrent_ + cTime - loopEnd;
 			double cTime1 = cTime - timeOver;
