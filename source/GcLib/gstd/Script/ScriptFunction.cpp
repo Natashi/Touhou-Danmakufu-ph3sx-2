@@ -988,6 +988,7 @@ namespace gstd {
 	}
 
 	bool __chk_concat(script_machine* machine, type_data* type_l, type_data* type_r) {
+		/*
 		if (type_l->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, type_l, "array concatenate");
 			return false;
@@ -996,8 +997,8 @@ namespace gstd {
 			_raise_error_unsupported(machine, type_r, "array concatenate");
 			return false;
 		}
-		//if (type_l != type_r && !(type_l->get_element() == nullptr || type_r->get_element() == nullptr)) {
-		if (!BaseFunction::__type_assign_check(type_l, type_r)) {
+		*/
+		if (type_l->get_kind() != type_data::tk_array || !BaseFunction::__type_assign_check(type_l, type_r)) {
 			std::string error = StringUtility::Format("Invalid value type for concatenate: %s ~ %s\r\n",
 				type_data::string_representation(type_l).c_str(),
 				type_data::string_representation(type_r).c_str());
@@ -1008,34 +1009,36 @@ namespace gstd {
 	}
 	value BaseFunction::concatenate(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, argv, argc);
-		__chk_concat(machine, argv[0].get_type(), argv[1].get_type());
+		if (__chk_concat(machine, argv[0].get_type(), argv[1].get_type())) {
+			value result = argv[0];
+			result.make_unique();
 
-		value result = argv[0];
-		result.make_unique();
+			value concat = argv[1];
+			if (concat.get_type() != result.get_type()) {
+				concat.make_unique();
+				BaseFunction::_value_cast(&concat, result.get_type());
+			}
+			result.concatenate(concat);
 
-		value concat = argv[1];
-		if (concat.get_type() != result.get_type()) {
-			concat.make_unique();
-			BaseFunction::_value_cast(&concat, result.get_type());
+			return result;
 		}
-		result.concatenate(concat);
-
-		return result;
+		else return value();
 	}
 	value BaseFunction::concatenate_direct(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, argv, argc);
-		__chk_concat(machine, argv[0].get_type(), argv[1].get_type());
+		if (__chk_concat(machine, argv[0].get_type(), argv[1].get_type())) {
+			value result = argv[0];
 
-		value result = argv[0];
+			value concat = argv[1];
+			if (concat.get_type() != result.get_type()) {
+				concat.make_unique();
+				BaseFunction::_value_cast(&concat, result.get_type());
+			}
+			result.concatenate(concat);
 
-		value concat = argv[1];
-		if (concat.get_type() != result.get_type()) {
-			concat.make_unique();
-			BaseFunction::_value_cast(&concat, result.get_type());
+			return result;
 		}
-		result.concatenate(concat);
-
-		return result;
+		else return value();
 	}
 
 	value BaseFunction::round(script_machine* machine, int argc, const value* argv) {
