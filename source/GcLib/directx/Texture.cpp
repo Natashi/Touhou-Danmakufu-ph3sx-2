@@ -427,10 +427,10 @@ void TextureManager::RestoreDxResource() {
 
 void TextureManager::__CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	
+
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open())
-		throw wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
+		throw wexception(ErrorUtility::GetFileNotFoundErrorMessage(PathProperty::ReduceModuleDirectory(path), true));
 
 	std::string source = reader->ReadAllString();
 
@@ -645,7 +645,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 					try {
 						shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 						if (reader == nullptr || !reader->Open())
-							throw wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
+							throw wexception(ErrorUtility::GetFileNotFoundErrorMessage(pathReduce, true));
 
 						std::string source = reader->ReadAllString();
 
