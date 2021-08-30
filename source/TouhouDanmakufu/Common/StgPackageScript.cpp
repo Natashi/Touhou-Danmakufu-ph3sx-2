@@ -76,6 +76,9 @@ static const std::vector<constant> stgPackageConstant = {
 StgPackageScript::StgPackageScript(StgPackageController* packageController) : StgControlScript(packageController->GetSystemController()) {
 	_AddFunction(&stgPackageFunction);
 	_AddConstant(&stgPackageConstant);
+	{
+		definedMacro_[L"SCRIPT_PACKAGE"] = L"";
+	}
 
 	typeScript_ = TYPE_PACKAGE_MAIN;
 	packageController_ = packageController;

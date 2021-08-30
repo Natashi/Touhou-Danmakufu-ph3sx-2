@@ -705,6 +705,9 @@ StgStageScript::StgStageScript(StgStageController* stageController) : StgControl
 	typeScript_ = TYPE_STAGE;
 	_AddFunction(&stgStageFunction);
 	_AddConstant(&stgStageConstant);
+	{
+		definedMacro_[L"SCRIPT_STAGE"] = L"";
+	}
 
 	ref_count_ptr<StgStageInformation> info = stageController_->GetStageInformation();
 	mt_ = info->GetRandProvider();
