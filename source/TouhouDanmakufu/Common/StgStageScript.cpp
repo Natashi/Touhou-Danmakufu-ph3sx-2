@@ -2013,8 +2013,8 @@ gstd::value StgStageScript::Func_CreateItemA1(gstd::script_machine* machine, int
 		int64_t score = argv[3].as_int();
 		D3DXVECTOR2 to = D3DXVECTOR2(posX, posY - 128);
 
-		obj->SetPositionX(posX);
-		obj->SetPositionY(posY);
+		obj->SetX(posX);
+		obj->SetY(posY);
 		obj->SetScore(score);
 		obj->SetToPosition(to);
 	}
@@ -2040,8 +2040,8 @@ gstd::value StgStageScript::Func_CreateItemA2(gstd::script_machine* machine, int
 		D3DXVECTOR2 to = D3DXVECTOR2(argv[3].as_real(), argv[4].as_real());
 		int64_t score = argv[5].as_int();
 
-		obj->SetPositionX(posX);
-		obj->SetPositionY(posY);
+		obj->SetX(posX);
+		obj->SetY(posY);
 		obj->SetScore(score);
 		obj->SetToPosition(to);
 	}
@@ -2068,8 +2068,8 @@ gstd::value StgStageScript::Func_CreateItemU1(gstd::script_machine* machine, int
 		int64_t score = argv[3].as_int();
 		D3DXVECTOR2 to = D3DXVECTOR2(posX, posY - 128);
 
-		obj->SetPositionX(posX);
-		obj->SetPositionY(posY);
+		obj->SetX(posX);
+		obj->SetY(posY);
 		obj->SetScore(score);
 		obj->SetToPosition(to);
 		obj->SetImageID(itemID);
@@ -2098,8 +2098,8 @@ gstd::value StgStageScript::Func_CreateItemU2(gstd::script_machine* machine, int
 		D3DXVECTOR2 to = D3DXVECTOR2(argv[3].as_real(), argv[4].as_real());
 		int64_t score = argv[5].as_int();
 
-		obj->SetPositionX(posX);
-		obj->SetPositionY(posY);
+		obj->SetX(posX);
+		obj->SetY(posY);
 		obj->SetScore(score);
 		obj->SetToPosition(to);
 		obj->SetImageID(itemID);
