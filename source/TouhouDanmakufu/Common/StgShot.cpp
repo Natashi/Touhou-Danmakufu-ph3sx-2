@@ -2206,7 +2206,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 		if (widthRender_ > 0) {
 			float _rWidth = fabs(widthRender_ / 2.0f) * scaleX_;
-			_rWidth = std::max(_rWidth, 0.5f);
+			_rWidth = std::max(_rWidth, 1.0f);
 			D3DXVECTOR4 rcDest(_rWidth + 0.5f, length_ + 0.5f, -_rWidth + 0.5f, 0.5f);
 
 			VERTEX_TLX verts[4];
