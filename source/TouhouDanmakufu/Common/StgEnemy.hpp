@@ -48,8 +48,14 @@ protected:
 	StgStageController* stageController_;
 
 	double life_;
+	double lifePrev_;
+	double lifeDelta_;
 	double rateDamageShot_;
 	double rateDamageSpell_;
+
+	double maximumDamage_;
+	double damageAccumFrame_;
+
 	size_t intersectedPlayerShotCount_;
 
 	bool bEnableGetIntersectionPositionFetch_;
@@ -73,14 +79,21 @@ public:
 	virtual void SetY(double y) { posY_ = y; DxScriptRenderObject::SetY(y); }
 
 	ref_unsync_ptr<StgEnemyObject> GetOwnObject();
+
 	double GetLife() { return life_; }
-	void SetLife(double life) { life_ = life; }
-	void AddLife(double inc) { life_ += inc; life_ = std::max(life_, 0.0); }
+	double GetLifeDelta() { return lifeDelta_; }
+	void SetLife(double life) { life_ = lifePrev_ = life; }
+	void AddLife(double inc);
+	void AddLife2(double inc);
+
 	void SetDamageRate(double rateShot, double rateSpell) { rateDamageShot_ = rateShot; rateDamageSpell_ = rateSpell; }
 	double GetShotDamageRate() { return rateDamageShot_; }
 	double GetSpellDamageRate() { return rateDamageSpell_; }
-	size_t GetIntersectedPlayerShotCount() { return intersectedPlayerShotCount_; }
 
+	void SetMaximumDamage(double dmg) { maximumDamage_ = dmg; }
+	double GetMaximumDamage() { return maximumDamage_; }
+
+	size_t GetIntersectedPlayerShotCount() { return intersectedPlayerShotCount_; }
 	void SetEnableGetIntersectionPosition(bool flg) { bEnableGetIntersectionPositionFetch_ = flg; }
 	bool GetEnableGetIntersectionPosition() { return bEnableGetIntersectionPositionFetch_; }
 
