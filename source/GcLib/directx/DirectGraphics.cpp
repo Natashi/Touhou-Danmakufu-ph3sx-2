@@ -597,6 +597,7 @@ void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 	if (previousBlendMode_ == BlendMode::RESET) {
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLOROP, D3DTOP_MODULATE);
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
 		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAARG2, D3DTA_CURRENT);
 		pDevice_->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE);
@@ -617,7 +618,6 @@ void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 
 	switch (mode) {
 	case MODE_BLEND_NONE:		//No blending
-		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		SETBLENDOP(D3DBLENDOP_ADD, FALSE);
 		SETBLENDARGS(D3DBLEND_ONE, D3DBLEND_ZERO, D3DBLEND_ONE, D3DBLEND_ZERO);
 		break;
@@ -628,7 +628,6 @@ void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 		SETBLENDARGS(D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
 	case MODE_BLEND_ADD_RGB:		//Add - Alpha
-		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_ONE, D3DBLEND_ONE, D3DBLEND_ONE, D3DBLEND_ONE);
 		break;
@@ -637,7 +636,6 @@ void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 		SETBLENDARGS(D3DBLEND_SRCALPHA, D3DBLEND_ONE, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
 	case MODE_BLEND_MULTIPLY:		//Multiply
-		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_ZERO, D3DBLEND_SRCCOLOR, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
@@ -646,7 +644,6 @@ void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 		SETBLENDARGS(D3DBLEND_SRCALPHA, D3DBLEND_ONE, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
 	case MODE_BLEND_SHADOW:			//Invert + Multiply
-		pDevice_->SetTextureStageState(stage, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_ZERO, D3DBLEND_INVSRCCOLOR, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
 		break;
