@@ -32,7 +32,7 @@ Preamble:
                 
             DON'T:
             
-                let xPos
+                let xPos;
                 let yPos;
                 const RUMIA_BOSS = 0, CIRNO_BOSS = 1;
             
