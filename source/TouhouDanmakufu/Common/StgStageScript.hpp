@@ -92,6 +92,8 @@ public:
 		INFO_DAMAGE_RATE_SHOT,
 		INFO_DAMAGE_RATE_SPELL,
 		INFO_SHOT_HIT_COUNT,
+		INFO_MAXIMUM_DAMAGE,
+		INFO_DAMAGE_PREVIOUS_FRAME,
 
 		//ObjEnemyBossScene_GetInfo
 		INFO_TIMER,
@@ -346,8 +348,10 @@ public:
 	static gstd::value Func_ObjEnemy_Regist(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_SetLife(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	template<bool CHECK_MAX_DMG>
 	static gstd::value Func_ObjEnemy_AddLife(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_SetDamageRate(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjEnemy_SetMaximumDamage(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_AddIntersectionCircleA(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_SetIntersectionCircleToShot(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_SetIntersectionCircleToPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv);

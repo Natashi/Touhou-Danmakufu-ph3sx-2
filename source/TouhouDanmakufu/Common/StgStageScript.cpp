@@ -404,8 +404,10 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjEnemy_Regist", StgStageScript::Func_ObjEnemy_Regist, 1 },
 	{ "ObjEnemy_GetInfo", StgStageScript::Func_ObjEnemy_GetInfo, 2 },
 	{ "ObjEnemy_SetLife", StgStageScript::Func_ObjEnemy_SetLife, 2 },
-	{ "ObjEnemy_AddLife", StgStageScript::Func_ObjEnemy_AddLife, 2 },
+	{ "ObjEnemy_AddLife", StgStageScript::Func_ObjEnemy_AddLife<false>, 2 },
+	{ "ObjEnemy_AddLifeEx", StgStageScript::Func_ObjEnemy_AddLife<true>, 2 },
 	{ "ObjEnemy_SetDamageRate", StgStageScript::Func_ObjEnemy_SetDamageRate, 3 },
+	{ "ObjEnemy_SetMaximumDamage", StgStageScript::Func_ObjEnemy_SetMaximumDamage, 2 },
 	{ "ObjEnemy_AddIntersectionCircleA", StgStageScript::Func_ObjEnemy_AddIntersectionCircleA, 4 },
 	{ "ObjEnemy_SetIntersectionCircleToShot", StgStageScript::Func_ObjEnemy_SetIntersectionCircleToShot, 4 },
 	{ "ObjEnemy_SetIntersectionCircleToPlayer", StgStageScript::Func_ObjEnemy_SetIntersectionCircleToPlayer, 4 },
@@ -642,11 +644,14 @@ static const std::vector<constant> stgStageConstant = {
 	constant("OBJ_SHOT_PATTERN", (int)TypeObject::ShotPattern),
 	constant("OBJ_ITEM", (int)TypeObject::Item),
 
-	//ObjEnemyBossScene_GetInfo info types
+	//ObjEnemy_GetInfo info types
 	constant("INFO_LIFE", StgStageScript::INFO_LIFE),
 	constant("INFO_DAMAGE_RATE_SHOT", StgStageScript::INFO_DAMAGE_RATE_SHOT),
 	constant("INFO_DAMAGE_RATE_SPELL", StgStageScript::INFO_DAMAGE_RATE_SPELL),
 	constant("INFO_SHOT_HIT_COUNT", StgStageScript::INFO_SHOT_HIT_COUNT),
+	constant("INFO_DAMAGE_PREVIOUS_FRAME", StgStageScript::INFO_DAMAGE_PREVIOUS_FRAME),
+
+	//ObjEnemyBossScene_GetInfo info types
 	constant("INFO_TIMER", StgStageScript::INFO_TIMER),
 	constant("INFO_TIMERF", StgStageScript::INFO_TIMERF),
 	constant("INFO_ORGTIMERF", StgStageScript::INFO_ORGTIMERF),
@@ -3089,6 +3094,8 @@ gstd::value StgStageScript::Func_ObjEnemy_GetInfo(gstd::script_machine* machine,
 		case INFO_DAMAGE_RATE_SHOT:
 		case INFO_DAMAGE_RATE_SPELL:
 		case INFO_SHOT_HIT_COUNT:
+		case INFO_DAMAGE_PREVIOUS_FRAME:
+		case INFO_MAXIMUM_DAMAGE:
 			return script->CreateRealValue(0);
 		}
 		return value();
@@ -3103,6 +3110,10 @@ gstd::value StgStageScript::Func_ObjEnemy_GetInfo(gstd::script_machine* machine,
 		return script->CreateRealValue(obj->GetSpellDamageRate());
 	case INFO_SHOT_HIT_COUNT:
 		return script->CreateRealValue(obj->GetIntersectedPlayerShotCount());
+	case INFO_DAMAGE_PREVIOUS_FRAME:
+		return script->CreateRealValue(obj->GetLifeDelta());
+	case INFO_MAXIMUM_DAMAGE:
+		return script->CreateRealValue(obj->GetMaximumDamage());
 	}
 
 	return value();
@@ -3117,13 +3128,17 @@ gstd::value StgStageScript::Func_ObjEnemy_SetLife(gstd::script_machine* machine,
 	}
 	return value();
 }
+template<bool CHECK_MAX_DMG>
 gstd::value StgStageScript::Func_ObjEnemy_AddLife(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	StgEnemyObject* obj = script->GetObjectPointerAs<StgEnemyObject>(id);
 	if (obj) {
 		double inc = argv[1].as_real();
-		obj->AddLife(inc);
+		if constexpr (CHECK_MAX_DMG)
+			obj->AddLife2(inc);
+		else
+			obj->AddLife(inc);
 	}
 	return value();
 }
@@ -3135,6 +3150,16 @@ gstd::value StgStageScript::Func_ObjEnemy_SetDamageRate(gstd::script_machine* ma
 		double rateShot = argv[1].as_real();
 		double rateSpell = argv[2].as_real();
 		obj->SetDamageRate(rateShot, rateSpell);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjEnemy_SetMaximumDamage(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	StgEnemyObject* obj = script->GetObjectPointerAs<StgEnemyObject>(id);
+	if (obj) {
+		double damage = argv[1].as_real();
+		obj->SetMaximumDamage(damage);
 	}
 	return value();
 }

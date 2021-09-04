@@ -120,13 +120,18 @@ StgEnemyObject::StgEnemyObject(StgStageController* stageController) : StgMoveObj
 	SetRenderPriorityI(40);
 
 	life_ = 0;
+	lifePrev_ = 0;
 	rateDamageShot_ = 100;
 	rateDamageSpell_ = 100;
+
+	maximumDamage_ = 256 * 256 * 256;
+	damageAccumFrame_ = 0;
+
 	intersectedPlayerShotCount_ = 0U;
 
 	bEnableGetIntersectionPositionFetch_ = true;
 }
-StgEnemyObject:: ~StgEnemyObject() {
+StgEnemyObject::~StgEnemyObject() {
 }
 void StgEnemyObject::Work() {
 	ClearIntersected();
@@ -134,6 +139,10 @@ void StgEnemyObject::Work() {
 
 	ptrIntersectionToShot_.clear();
 	ptrIntersectionToPlayer_.clear();
+
+	lifeDelta_ = lifePrev_ - life_;
+	lifePrev_ = life_;
+	damageAccumFrame_ = 0;
 
 	_Move();
 }
@@ -163,13 +172,22 @@ void StgEnemyObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersection
 				damage = spell->GetDamage() * rateDamageSpell_ / 100;
 		}
 	}
-	life_ = std::max(life_ - damage, 0.0);
+	AddLife2(-damage);
 }
 void StgEnemyObject::RegistIntersectionTarget() {
 	_AddRelativeIntersection();
 }
 ref_unsync_ptr<StgEnemyObject> StgEnemyObject::GetOwnObject() {
 	return ref_unsync_ptr<StgEnemyObject>::Cast(stageController_->GetMainRenderObject(idObject_));
+}
+void StgEnemyObject::AddLife(double inc) { 
+	life_ = std::max(life_ + inc, 0.0); 
+}
+void StgEnemyObject::AddLife2(double inc) {
+	if (damageAccumFrame_ - inc > maximumDamage_)
+		inc = -(maximumDamage_ - damageAccumFrame_);
+	damageAccumFrame_ -= inc;
+	AddLife(inc);
 }
 void StgEnemyObject::AddReferenceToShotIntersection(ref_unsync_ptr<StgIntersectionTarget> target) {
 	ptrIntersectionToShot_.push_back(target);
