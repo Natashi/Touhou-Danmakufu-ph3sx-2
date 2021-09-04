@@ -1256,12 +1256,8 @@ void StgMovePattern_Item::Move() {
 	}
 
 	if (typeMove_ != MOVE_NONE) {
-		__m128d v1 = Vectorize::MulAdd(
-			Vectorize::Replicate(speed_),
-			Vectorize::Set(c_, s_),
-			Vectorize::Set(px, py));
-		target_->SetPositionX(v1.m128d_f64[0]);
-		target_->SetPositionY(v1.m128d_f64[1]);
+		target_->SetPositionX(px + speed_ * c_);
+		target_->SetPositionY(py + speed_ * s_);
 	}
 
 	++frame_;
