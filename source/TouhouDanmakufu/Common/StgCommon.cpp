@@ -19,8 +19,8 @@ StgMoveObject::~StgMoveObject() {
 	pattern_ = nullptr;
 }
 void StgMoveObject::_Move() {
-	if (pattern_ == nullptr || !bEnableMovement_) return;
-
+	if (!bEnableMovement_) return;
+	
 	if (mapPattern_.size() > 0) {
 		auto itr = mapPattern_.begin();
 		while (framePattern_ >= itr->first) {
@@ -29,10 +29,14 @@ void StgMoveObject::_Move() {
 			itr = mapPattern_.erase(itr);
 			if (mapPattern_.size() == 0) break;
 		}
+		if (pattern_ == nullptr)
+			pattern_ = new StgMovePattern_Angle(this);
 	}
-
-	pattern_->Move();
-	++framePattern_;
+	if (pattern_ != nullptr) {
+		pattern_->Move();
+		++framePattern_;
+	}
+	
 }
 void StgMoveObject::_AttachReservedPattern(ref_unsync_ptr<StgMovePattern> pattern) {
 	if (pattern_ == nullptr)
