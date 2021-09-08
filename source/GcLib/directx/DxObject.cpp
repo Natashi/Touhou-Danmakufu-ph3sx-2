@@ -21,7 +21,7 @@ DxScriptObjectBase::DxScriptObjectBase() {
 	manager_ = nullptr;
 	idObject_ = DxScript::ID_INVALID;
 	idScript_ = ScriptClientBase::ID_SCRIPT_FREE;
-	typeObject_ = TypeObject::Invalid;
+	typeObject_ = TypeObject::Base;
 }
 DxScriptObjectBase::~DxScriptObjectBase() {
 	//if (manager_ != nullptr && idObject_ != DxScript::ID_INVALID)
