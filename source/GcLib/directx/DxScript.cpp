@@ -511,7 +511,6 @@ static const std::vector<constant> dxConstant = {
 	constant("OBJ_SOUND", (int)TypeObject::Sound),
 	constant("OBJ_FILE_TEXT", (int)TypeObject::FileText),
 	constant("OBJ_FILE_BINARY", (int)TypeObject::FileBinary),
-	constant("OBJ_BASE", (int)TypeObject::Base),
 
 	//ColorHexToARGB permutations
 	constant("COLOR_PERMUTE_ARGB", 0x31b),

@@ -481,7 +481,5 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjFileB_WriteLong);
 		DNH_FUNCAPI_DECL_(Func_ObjFileB_WriteFloat);
 		DNH_FUNCAPI_DECL_(Func_ObjFileB_WriteDouble);
-
-		
 	};
 }
