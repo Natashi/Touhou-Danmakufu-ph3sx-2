@@ -231,6 +231,7 @@ static const std::vector<function> dxFunction = {
 	{ "SetInvalidPositionReturn", DxScript::Func_SetInvalidPositionReturn, 2 },
 
 	//Base object functions
+	{ "Obj_Create", DxScript::Func_Obj_Create, 0 },
 	{ "Obj_Delete", DxScript::Func_Obj_Delete, 1 },
 	{ "Obj_IsDeleted", DxScript::Func_Obj_IsDeleted, 1 },
 	{ "Obj_IsExists", DxScript::Func_Obj_IsExists, 1 },
@@ -509,6 +510,7 @@ static const std::vector<constant> dxConstant = {
 	constant("OBJ_SOUND", (int)TypeObject::Sound),
 	constant("OBJ_FILE_TEXT", (int)TypeObject::FileText),
 	constant("OBJ_FILE_BINARY", (int)TypeObject::FileBinary),
+	constant("OBJ_BASE", (int)TypeObject::Base),
 
 	//ColorHexToARGB permutations
 	constant("COLOR_PERMUTE_ARGB", 0x31b),
@@ -2356,6 +2358,20 @@ value DxScript::Func_SetInvalidPositionReturn(script_machine* machine, int argc,
 }
 
 //Dx関数：オブジェクト操作(共通)
+value DxScript::Func_Obj_Create(gstd::script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	script->CheckRunInMainThread();
+
+	ref_unsync_ptr<DxScriptObjectBase> obj = new DxScriptObjectBase();
+
+	int id = ID_INVALID;
+	if (obj) {
+		obj->Initialize();
+		obj->manager_ = script->objManager_.get();
+		id = script->AddObject(obj);
+	}
+	return script->CreateIntValue(id);
+}
 value DxScript::Func_Obj_Delete(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	script->CheckRunInMainThread();

@@ -40,8 +40,8 @@ namespace directx {
 		
 		virtual void Initialize() {}
 		virtual void Work() {}
-		virtual void Render() = 0;
-		virtual void SetRenderState() = 0;
+		virtual void Render() {}
+		virtual void SetRenderState() {}
 		virtual void CleanUp() {}
 
 		virtual bool HasNormalRendering() { return false; }

@@ -241,6 +241,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_SetInvalidPositionReturn);
 
 		//Dx関数：オブジェクト操作(共通)
+		static gstd::value Func_Obj_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_Delete(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_IsDeleted(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_IsExists(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -480,5 +481,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjFileB_WriteLong);
 		DNH_FUNCAPI_DECL_(Func_ObjFileB_WriteFloat);
 		DNH_FUNCAPI_DECL_(Func_ObjFileB_WriteDouble);
+
+		
 	};
 }
