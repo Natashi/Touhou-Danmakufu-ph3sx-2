@@ -32,11 +32,10 @@ void StgMoveObject::_Move() {
 		if (pattern_ == nullptr)
 			pattern_ = new StgMovePattern_Angle(this);
 	}
-	if (pattern_ != nullptr) {
-		pattern_->Move();
-		++framePattern_;
-	}
-	
+	else if (pattern_ == nullptr) return;
+
+	pattern_->Move();
+	++framePattern_;
 }
 void StgMoveObject::_AttachReservedPattern(ref_unsync_ptr<StgMovePattern> pattern) {
 	if (pattern_ == nullptr)
