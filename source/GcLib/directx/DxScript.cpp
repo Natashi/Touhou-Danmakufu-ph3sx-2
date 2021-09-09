@@ -255,6 +255,9 @@ static const std::vector<function> dxFunction = {
 
 	{ "Obj_CopyValueTable", DxScript::Func_Obj_CopyValueTable, 3 },
 	{ "Obj_GetType", DxScript::Func_Obj_GetType, 1 },
+	{ "Obj_GetParentScriptID", DxScript::Func_Obj_GetParentScriptID, 1 },
+	{ "Obj_SetParentToCurrentScript", DxScript::Func_Obj_SetParentToCurrentScript, 1 },
+	{ "Obj_SetAutoDelete", DxScript::Func_Obj_SetAutoDelete, 2 },
 
 	//Render object functions
 	{ "ObjRender_SetX", DxScript::Func_ObjRender_SetX, 2 },
@@ -2638,7 +2641,36 @@ value DxScript::Func_Obj_GetType(script_machine* machine, int argc, const value*
 
 	return script->CreateIntValue((uint8_t)res);
 }
+value DxScript::Func_Obj_GetParentScriptID(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
 
+	int64_t res = (int64_t)ScriptClientBase::ID_SCRIPT_FREE;
+
+	DxScriptObjectBase* obj = script->GetObjectPointerAs<DxScriptObjectBase>(id);
+	if (obj) res = obj->GetScriptID();
+
+	return script->CreateIntValue(res);
+}
+value DxScript::Func_Obj_SetParentToCurrentScript(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+
+	DxScriptObjectBase* obj = script->GetObjectPointerAs<DxScriptObjectBase>(id);
+	if (obj) obj->idScript_ = script->GetScriptID();
+
+	return value();
+}
+value DxScript::Func_Obj_SetAutoDelete(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	bool del = argv[1].as_boolean();
+
+	DxScriptObjectBase* obj = script->GetObjectPointerAs<DxScriptObjectBase>(id);
+	if (obj) obj->SetDeleteWhenOrphaned(del);
+
+	return value();
+}
 
 //Dx関数：オブジェクト操作(RenderObject)
 value DxScript::Func_ObjRender_SetX(script_machine* machine, int argc, const value* argv) {

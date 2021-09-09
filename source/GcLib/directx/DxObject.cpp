@@ -18,6 +18,7 @@ DxScriptObjectBase::DxScriptObjectBase() {
 	priRender_ = 50;
 	bDeleted_ = false;
 	bActive_ = false;
+	bDeleteWhenOrphaned_ = true;
 	manager_ = nullptr;
 	idObject_ = DxScript::ID_INVALID;
 	idScript_ = ScriptClientBase::ID_SCRIPT_FREE;
@@ -1422,9 +1423,21 @@ void DxScriptObjectManager::DeleteObjectByScriptID(int64_t idScript) {
 
 	for (size_t iObj = 0; iObj < obj_.size(); ++iObj) {
 		if (obj_[iObj] == nullptr) continue;
-		if (obj_[iObj]->GetScriptID() != idScript) continue;
+		if (obj_[iObj]->GetScriptID() != idScript || !obj_[iObj]->IsDeleteWhenOrphaned()) continue;
 		DeleteObject(obj_[iObj]);
 	}
+}
+std::vector<int> DxScriptObjectManager::GetObjectByScriptID(int64_t idScript) {
+	std::vector<int> res;
+
+	if (idScript != ScriptClientBase::ID_SCRIPT_FREE) {
+		for (size_t iObj = 0; iObj < obj_.size(); ++iObj) {
+			if (obj_[iObj] == nullptr) continue;
+			if (obj_[iObj]->GetScriptID() != idScript) continue;
+			res.push_back(obj_[iObj]->idObject_);
+		}
+	}
+	return res;
 }
 
 shared_ptr<Shader> DxScriptObjectManager::GetShader(int index) {
