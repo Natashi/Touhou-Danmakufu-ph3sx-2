@@ -184,7 +184,7 @@ bool DxCharGlyph::Create(UINT code, const Font& winFont, const DxFont* dxFont) {
 							if (minAlphaEnableDist < widthBorder)
 								destAlpha = 255;
 							else if (minAlphaEnableDist == widthBorder)
-								destAlpha = count;
+								destAlpha = static_cast<short>(count);
 							else destAlpha = 0;
 
 							//color = ColorAccess::SetColorA(color, ColorAccess::GetColorA(colorBorder)*count/255);
