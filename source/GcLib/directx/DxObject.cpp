@@ -17,6 +17,7 @@ DxScriptObjectBase::DxScriptObjectBase() {
 	bVisible_ = true;
 	priRender_ = 50;
 	bDeleted_ = false;
+	bQueuedToDelete_ = false;
 	bActive_ = false;
 	bDeleteWhenOrphaned_ = true;
 	manager_ = nullptr;
@@ -1499,8 +1500,10 @@ void DxScriptObjectManager::RenderObject() {
 }
 void DxScriptObjectManager::CleanupObject() {
 	for (auto& obj : listActiveObject_) {
-		if (obj)
+		if (obj) {
 			obj->CleanUp();
+			if (obj->IsQueuedForDeletion()) DeleteObject(obj);
+		}
 	}
 }
 

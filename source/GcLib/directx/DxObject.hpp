@@ -29,6 +29,7 @@ namespace directx {
 		int priRender_;
 		bool bVisible_;
 		bool bDeleted_;
+		bool bQueuedToDelete_;
 		bool bActive_;
 		bool bDeleteWhenOrphaned_;
 
@@ -50,6 +51,8 @@ namespace directx {
 		int GetObjectID() { return idObject_; }
 		TypeObject GetObjectType() { return typeObject_; }
 		int64_t GetScriptID() { return idScript_; }
+		void QueueDelete() { bQueuedToDelete_ = true; }
+		bool IsQueuedForDeletion() { return bQueuedToDelete_; }
 		bool IsDeleted() { return bDeleted_; }
 		bool IsActive() { return bActive_; }
 		void SetActive(bool bActive) { bActive_ = bActive; }
