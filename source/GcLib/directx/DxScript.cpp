@@ -2676,7 +2676,7 @@ value DxScript::Func_Obj_SetAutoDelete(script_machine* machine, int argc, const 
 	bool del = argv[1].as_boolean();
 
 	DxScriptObjectBase* obj = script->GetObjectPointerAs<DxScriptObjectBase>(id);
-	if (obj) obj->SetDeleteWhenOrphaned(del);
+	if (obj) obj->SetAutoDeleteEnable(del);
 
 	return value();
 }
