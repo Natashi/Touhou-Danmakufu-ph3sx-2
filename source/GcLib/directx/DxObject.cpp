@@ -1428,6 +1428,15 @@ void DxScriptObjectManager::DeleteObjectByScriptID(int64_t idScript) {
 		DeleteObject(obj_[iObj]);
 	}
 }
+void DxScriptObjectManager::OrphanObjectByScriptID(int64_t idScript) {
+	if (idScript == ScriptClientBase::ID_SCRIPT_FREE) return;
+
+	for (size_t iObj = 0; iObj < obj_.size(); ++iObj) {
+		if (obj_[iObj] == nullptr) continue;
+		if (obj_[iObj]->GetScriptID() != idScript) continue;
+		obj_[iObj]->idScript_ = ScriptClientBase::ID_SCRIPT_FREE;
+	}
+}
 std::vector<int> DxScriptObjectManager::GetObjectByScriptID(int64_t idScript) {
 	std::vector<int> res;
 

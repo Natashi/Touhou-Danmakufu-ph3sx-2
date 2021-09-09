@@ -711,6 +711,7 @@ namespace directx {
 
 		void ClearObject();
 		void DeleteObjectByScriptID(int64_t idScript);
+		void OrphanObjectByScriptID(int64_t idScript);
 		std::vector<int> GetObjectByScriptID(int64_t idScript);
 
 		void AddRenderObject(ref_unsync_ptr<DxScriptObjectBase> obj);

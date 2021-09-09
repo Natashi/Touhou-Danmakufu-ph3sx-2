@@ -183,6 +183,8 @@ void ScriptManager::CloseScript(shared_ptr<ManagedScript> id) {
 
 	if (id->IsAutoDeleteObject())
 		id->GetObjectManager()->DeleteObjectByScriptID(id->GetScriptID());
+	
+	// id->GetObjectManager()->OrphanObjectByScriptID(id->GetScriptID());
 }
 void ScriptManager::CloseScriptOnType(int type) {
 	for (auto& pScript : listScriptRun_) {
