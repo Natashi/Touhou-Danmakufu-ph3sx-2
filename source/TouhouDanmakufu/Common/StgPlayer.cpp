@@ -143,6 +143,19 @@ void StgPlayerObject::Move() {
 	else {
 		SetSpeed(0);
 	}
+	//Just in case the player is the parent of anything
+	if (listChild_.size() > 0) {
+		auto iter = listChild_.begin();
+		while (iter != listChild_.end()) {
+			if (*iter == nullptr) {
+				iter = listChild_.erase(iter);
+			}
+			else {
+				_MoveChild(this, *iter);
+				++iter;
+			}
+		}
+	}
 }
 void StgPlayerObject::_Move() {
 	EDirectInput* input = EDirectInput::GetInstance();

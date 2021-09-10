@@ -399,6 +399,17 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjMove_SetProcessMovement", StgStageScript::Func_ObjMove_SetProcessMovement, 2 },
 	{ "ObjMove_GetProcessMovement", StgStageScript::Func_ObjMove_GetProcessMovement, 1 },
 
+	//From child object
+	{ "ObjMove_SetParentObject", StgStageScript::Func_ObjMove_SetParentObject, 2 },
+	{ "ObjMove_GetParentObject", StgStageScript::Func_ObjMove_GetParentObject, 1 },
+	{ "ObjMove_SetChildPosition", StgStageScript::Func_ObjMove_SetChildPosition, 3 },
+
+	//From parent object
+	{ "ObjMove_SetParentPositionOffset", StgStageScript::Func_ObjMove_SetParentPositionOffset, 3 },
+	{ "ObjMove_SetParentScale", StgStageScript::Func_ObjMove_SetParentScale, 3 },
+	{ "ObjMove_SetParentRotation", StgStageScript::Func_ObjMove_SetParentRotation, 2 },
+	{ "ObjMove_GetChildObjectList", StgStageScript::Func_ObjMove_GetChildObjectList, 1 },
+
 	//STG共通関数：敵オブジェクト操作
 	{ "ObjEnemy_Create", StgStageScript::Func_ObjEnemy_Create, 1 },
 	{ "ObjEnemy_Regist", StgStageScript::Func_ObjEnemy_Regist, 1 },
@@ -3035,6 +3046,91 @@ gstd::value StgStageScript::Func_ObjMove_GetProcessMovement(gstd::script_machine
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 	bool res = obj ? obj->IsEnableMovement() : true;
 	return script->CreateBooleanValue(res);
+}
+gstd::value StgStageScript::Func_ObjMove_SetParentObject(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	int idPar = argv[1].as_int();
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	StgMoveObject* objPar = script->GetObjectPointerAs<StgMoveObject>(idPar);
+
+	if (obj != nullptr) {
+		obj->SetParentObject(objPar); // If it's null, it'll be discarded later.
+		if (objPar != nullptr) { // I don't want to think about what would happen if two objects parented each other.
+			objPar->AddChildObject(obj);
+
+			// Initialize child position relative to parent
+			objPar->UpdateChildPosition(obj);
+		}
+	}
+	
+	return value();
+}
+gstd::value StgStageScript::Func_ObjMove_GetParentObject(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	int idPar = DxScript::ID_INVALID;
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	
+	if (obj)
+		idPar = dynamic_cast<DxScriptObjectBase*>(obj->GetParentObject())->GetObjectID();
+
+	return script->CreateIntValue(idPar);
+}
+gstd::value StgStageScript::Func_ObjMove_SetChildPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	double x = argv[1].as_real();
+	double y = argv[2].as_real();
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	if (obj)
+		obj->SetChildPosition(x, y);
+
+	return value();
+}
+gstd::value StgStageScript::Func_ObjMove_SetParentPositionOffset(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	double x = argv[1].as_real();
+	double y = argv[2].as_real();
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	if (obj)
+		obj->SetParentPositionOffset(x, y);
+
+	return value();
+}
+gstd::value StgStageScript::Func_ObjMove_SetParentScale(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	double x = argv[1].as_real();
+	double y = (argc == 3) ? argv[2].as_real() : x;
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	if (obj)
+		obj->SetParentScale(x, y);
+
+	return value();
+}
+gstd::value StgStageScript::Func_ObjMove_SetParentRotation(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	double z = argv[1].as_real();
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	if (obj)
+		obj->SetParentRotation(z);
+
+	return value();
+}
+gstd::value StgStageScript::Func_ObjMove_GetChildObjectList(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	std::vector<int> list;
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	if (obj) {
+		for (auto& iObj : obj->GetChildObjectList()) {
+			list.push_back(dynamic_cast<DxScriptObjectBase*>(iObj)->GetObjectID());
+		}
+	}
+	return script->CreateIntArrayValue(list);
 }
 
 //STG共通関数：敵オブジェクト操作

@@ -9,33 +9,103 @@
 StgMoveObject::StgMoveObject(StgStageController* stageController) {
 	posX_ = 0;
 	posY_ = 0;
+
 	framePattern_ = 0;
 	stageController_ = stageController;
 
 	pattern_ = nullptr;
 	bEnableMovement_ = true;
+
+	objParent_ = nullptr;
+	childOffX_ = 0;
+	childOffY_ = 0;
+	parentOffX_ = 0;
+	parentOffY_ = 0;
+	parentScaX_ = 1;
+	parentScaY_ = 1;
+	parentRotZ_ = 0;
 }
 StgMoveObject::~StgMoveObject() {
+	objParent_ = nullptr;
 	pattern_ = nullptr;
-}
-void StgMoveObject::_Move() {
-	if (!bEnableMovement_) return;
-	
-	if (mapPattern_.size() > 0) {
-		auto itr = mapPattern_.begin();
-		while (framePattern_ >= itr->first) {
-			for (auto& ipPattern : itr->second)
-				_AttachReservedPattern(ipPattern);
-			itr = mapPattern_.erase(itr);
-			if (mapPattern_.size() == 0) break;
+	if (listChild_.size() > 0) {
+		auto iter = listChild_.begin();
+		while (iter != listChild_.end()) {
+			if (*iter == nullptr) {
+				iter = listChild_.erase(iter);
+			}
+			else {
+				dynamic_cast<StgMoveObject*>(*iter)->objParent_ = nullptr; // Why is this needed?
+				++iter;
+			}
 		}
-		if (pattern_ == nullptr)
-			pattern_ = new StgMovePattern_Angle(this);
 	}
-	else if (pattern_ == nullptr) return;
+}
+void StgMoveObject::_Move() {	
+	if (bEnableMovement_ && objParent_ == nullptr) {
+		if (mapPattern_.size() > 0) {
+			auto itr = mapPattern_.begin();
+			while (framePattern_ >= itr->first) {
+				for (auto& ipPattern : itr->second)
+					_AttachReservedPattern(ipPattern);
+				itr = mapPattern_.erase(itr);
+				if (mapPattern_.size() == 0) break;
+			}
+			if (pattern_ == nullptr)
+				pattern_ = new StgMovePattern_Angle(this);
+		}
+		if (pattern_ != nullptr) {
+			pattern_->Move();
+			++framePattern_;
+		}
+	}
 
-	pattern_->Move();
-	++framePattern_;
+	if (listChild_.size() > 0) {
+		auto iter = listChild_.begin();
+		while (iter != listChild_.end()) {
+			if (*iter == nullptr) {
+				iter = listChild_.erase(iter);
+			}
+			else {
+				_MoveChild(this , *iter);
+				++iter;
+			}
+		}
+	}
+	
+
+}
+void StgMoveObject::_MoveChild(StgMoveObject* parent, StgMoveObject* child) {
+	double pX = parent->posX_ + parent->parentOffX_;
+	double pY = parent->posY_ + parent->parentOffY_;
+	double pScaX = parent->parentScaX_;
+	double pScaY = parent->parentScaY_;
+	double pRotZ = parent->parentRotZ_;
+
+	double cX = child->childOffX_;
+	double cY = child->childOffY_;
+
+	double sc[2];
+	Math::DoSinCos(Math::DegreeToRadian(pRotZ), sc);
+
+	
+	child->SetPositionX(pX + (sc[1] * cX - sc[0] * cY) * pScaX);
+	child->SetPositionY(pY + (sc[0] * cX + sc[1] * cY) * pScaY);
+
+	
+	// Yes, children can have children too.
+	if (child->listChild_.size() > 0) {
+		auto iter = child->listChild_.begin();
+		while (iter != child->listChild_.end()) {
+			if (*iter == nullptr) {
+				iter = child->listChild_.erase(iter);
+			}
+			else {
+				_MoveChild(child, *iter);
+				++iter;
+			}
+		}
+	}
 }
 void StgMoveObject::_AttachReservedPattern(ref_unsync_ptr<StgMovePattern> pattern) {
 	if (pattern_ == nullptr)
@@ -44,6 +114,16 @@ void StgMoveObject::_AttachReservedPattern(ref_unsync_ptr<StgMovePattern> patter
 	pattern->_Activate(pattern_.get());
 	pattern_ = pattern;
 }
+
+void StgMoveObject::SetParentRotation(double z) {
+	double diff = z - parentRotZ_;
+
+	for (auto& child : listChild_) {
+		if (child != nullptr) child->SetDirectionAngle(child->GetDirectionAngle() + Math::DegreeToRadian(diff));
+	}
+	parentRotZ_ = z;
+}
+
 void StgMoveObject::AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap) {
 	if (frameDelay == 0 && !bForceMap)
 		_AttachReservedPattern(pattern);
@@ -51,6 +131,24 @@ void StgMoveObject::AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pa
 		int frame = frameDelay + framePattern_;
 		mapPattern_[frame].push_back(pattern);
 	}
+}
+
+// Updates the child's offset based on the current transformation of the parent
+void StgMoveObject::UpdateChildPosition(StgMoveObject* child) {
+	double pX = posX_ + parentOffX_;
+	double pY = posY_ + parentOffY_;
+	double pScaX = parentScaX_;
+	double pScaY = parentScaY_;
+	double pRotZ = parentRotZ_;
+
+	double cX = child->posX_ - pX;
+	double cY = child->posY_ - pY;
+
+	double sc[2];
+	Math::DoSinCos(Math::DegreeToRadian(-pRotZ), sc);
+
+	child->childOffX_ = (sc[1] * cX - sc[0] * cY) / pScaX;
+	child->childOffY_ = (sc[0] * cX + sc[1] * cY) / pScaY;
 }
 double StgMoveObject::GetSpeed() {
 	if (pattern_ == nullptr) return 0;

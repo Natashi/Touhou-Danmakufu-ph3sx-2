@@ -343,6 +343,15 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetProcessMovement);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetProcessMovement);
 
+	DNH_FUNCAPI_DECL_(Func_ObjMove_SetParentObject);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_GetParentObject);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_SetChildPosition);
+
+	DNH_FUNCAPI_DECL_(Func_ObjMove_SetParentPositionOffset);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_SetParentScale);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_SetParentRotation);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_GetChildObjectList);
+
 	//STG共通関数：敵オブジェクト操作
 	static gstd::value Func_ObjEnemy_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_Regist(gstd::script_machine* machine, int argc, const gstd::value* argv);

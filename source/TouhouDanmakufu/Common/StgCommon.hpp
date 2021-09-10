@@ -20,6 +20,12 @@ class StgMovePattern;
 //*******************************************************************
 class StgMoveObject {
 	friend StgMovePattern;
+public:
+	enum {
+		ANGLE_FIXED,
+		ANGLE_RELATIVE,
+		ANGLE_FOLLOW
+	};
 private:
 	StgStageController* stageController_;
 protected:
@@ -30,9 +36,20 @@ protected:
 
 	bool bEnableMovement_;
 
+	StgMoveObject* objParent_;
+	double childOffX_;
+	double childOffY_;
+	double parentOffX_;
+	double parentOffY_;
+	double parentScaX_;
+	double parentScaY_;
+	double parentRotZ_;
+	std::vector<StgMoveObject*> listChild_;
+
 	int framePattern_;
 	std::map<int, std::list<ref_unsync_ptr<StgMovePattern>>> mapPattern_;
 	virtual void _Move();
+	void _MoveChild(StgMoveObject* parent, StgMoveObject* child);
 	void _AttachReservedPattern(ref_unsync_ptr<StgMovePattern> pattern);
 public:
 	StgMoveObject(StgStageController* stageController);
@@ -54,11 +71,25 @@ public:
 	void SetSpeedX(double speedX);
 	void SetSpeedY(double speedY);
 
+	void SetParentObject(StgMoveObject* obj) { objParent_ = obj; }
+	StgMoveObject* GetParentObject() { return objParent_; }
+	void SetChildPosition(float x, float y) { childOffX_ = x; childOffY_ = y; }
+
+	void SetParentPositionOffset(double x, double y) { parentOffX_ = x; parentOffY_ = y; }
+	void SetParentScale(double x, double y) { parentScaX_ = x; parentScaY_ = y; }
+	void SetParentRotation(double z); // Also updates child angles sooo
+
+	std::vector<StgMoveObject*>& GetChildObjectList() { return listChild_; }
+
 	ref_unsync_ptr<StgMovePattern> GetPattern() { return pattern_; }
 	void SetPattern(ref_unsync_ptr<StgMovePattern> pattern) {
 		pattern_ = pattern;
 	}
 	void AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap = false);
+	void AddChildObject(StgMoveObject* child) {
+		listChild_.push_back(child);
+	}
+	void UpdateChildPosition(StgMoveObject* child);
 };
 
 //*******************************************************************
