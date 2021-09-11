@@ -16,93 +16,51 @@ StgMoveObject::StgMoveObject(StgStageController* stageController) {
 	pattern_ = nullptr;
 	bEnableMovement_ = true;
 
-	objParent_ = nullptr;
-	childOffX_ = 0;
-	childOffY_ = 0;
-	parentOffX_ = 0;
-	parentOffY_ = 0;
-	parentScaX_ = 1;
-	parentScaY_ = 1;
-	parentRotZ_ = 0;
+	parent_ = nullptr;
+	offX_ = 0;
+	offY_ = 0;
 }
 StgMoveObject::~StgMoveObject() {
-	objParent_ = nullptr;
+	parent_ = nullptr;
 	pattern_ = nullptr;
-	if (listChild_.size() > 0) {
-		auto iter = listChild_.begin();
-		while (iter != listChild_.end()) {
-			if (*iter == nullptr) {
-				iter = listChild_.erase(iter);
-			}
-			else {
-				dynamic_cast<StgMoveObject*>(*iter)->objParent_ = nullptr; // Why is this needed?
-				++iter;
-			}
-		}
-	}
 }
 void StgMoveObject::_Move() {	
-	if (bEnableMovement_ && objParent_ == nullptr) {
-		if (mapPattern_.size() > 0) {
-			auto itr = mapPattern_.begin();
-			while (framePattern_ >= itr->first) {
-				for (auto& ipPattern : itr->second)
-					_AttachReservedPattern(ipPattern);
-				itr = mapPattern_.erase(itr);
-				if (mapPattern_.size() == 0) break;
-			}
-			if (pattern_ == nullptr)
-				pattern_ = new StgMovePattern_Angle(this);
+	if (!bEnableMovement_ || parent_ != nullptr) return;
+
+	if (mapPattern_.size() > 0) {
+		auto itr = mapPattern_.begin();
+		while (framePattern_ >= itr->first) {
+			for (auto& ipPattern : itr->second)
+				_AttachReservedPattern(ipPattern);
+			itr = mapPattern_.erase(itr);
+			if (mapPattern_.size() == 0) break;
 		}
-		if (pattern_ != nullptr) {
-			pattern_->Move();
-			++framePattern_;
-		}
+		if (pattern_ == nullptr)
+			pattern_ = new StgMovePattern_Angle(this);
+	}
+	if (pattern_ != nullptr) {
+		pattern_->Move();
+		++framePattern_;
 	}
 
-	if (listChild_.size() > 0) {
-		auto iter = listChild_.begin();
-		while (iter != listChild_.end()) {
-			if (*iter == nullptr) {
-				iter = listChild_.erase(iter);
-			}
-			else {
-				_MoveChild(this , *iter);
-				++iter;
-			}
-		}
-	}
-	
+	if (listOwnedParent_.size() > 0) {
+		for (auto& iPar : listOwnedParent_) {
+			iPar->SetPosition(posX_, posY_);
+			auto& list = iPar->listChild_;
+			if (list.size() > 0) {
+				auto iter = list.begin();
+				while (iter != list.end()) {
+					if ((*iter).get() == nullptr) {
+						iter = list.erase(iter);
+					}
+					else {
+						iPar->MoveChild((*iter).get());
+						if (iPar->typeAngle_ == StgMoveParent::ANGLE_FOLLOW)
+							(*iter)->SetDirectionAngle(GetDirectionAngle());
 
-}
-void StgMoveObject::_MoveChild(StgMoveObject* parent, StgMoveObject* child) {
-	double pX = parent->posX_ + parent->parentOffX_;
-	double pY = parent->posY_ + parent->parentOffY_;
-	double pScaX = parent->parentScaX_;
-	double pScaY = parent->parentScaY_;
-	double pRotZ = parent->parentRotZ_;
-
-	double cX = child->childOffX_;
-	double cY = child->childOffY_;
-
-	double sc[2];
-	Math::DoSinCos(Math::DegreeToRadian(pRotZ), sc);
-
-	
-	child->SetPositionX(pX + (sc[1] * cX - sc[0] * cY) * pScaX);
-	child->SetPositionY(pY + (sc[0] * cX + sc[1] * cY) * pScaY);
-
-	
-	// Yes, children can have children too.
-	if (child->listChild_.size() > 0) {
-		auto iter = child->listChild_.begin();
-		while (iter != child->listChild_.end()) {
-			if (*iter == nullptr) {
-				iter = child->listChild_.erase(iter);
-			}
-			else {
-				_MoveChild(child, *iter);
-				++iter;
+						++iter;
+					}
+				}
 			}
 		}
 	}
@@ -115,15 +73,6 @@ void StgMoveObject::_AttachReservedPattern(ref_unsync_ptr<StgMovePattern> patter
 	pattern_ = pattern;
 }
 
-void StgMoveObject::SetParentRotation(double z) {
-	double diff = z - parentRotZ_;
-
-	for (auto& child : listChild_) {
-		if (child != nullptr) child->SetDirectionAngle(child->GetDirectionAngle() + Math::DegreeToRadian(diff));
-	}
-	parentRotZ_ = z;
-}
-
 void StgMoveObject::AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap) {
 	if (frameDelay == 0 && !bForceMap)
 		_AttachReservedPattern(pattern);
@@ -133,23 +82,6 @@ void StgMoveObject::AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pa
 	}
 }
 
-// Updates the child's offset based on the current transformation of the parent
-void StgMoveObject::UpdateChildPosition(StgMoveObject* child) {
-	double pX = posX_ + parentOffX_;
-	double pY = posY_ + parentOffY_;
-	double pScaX = parentScaX_;
-	double pScaY = parentScaY_;
-	double pRotZ = parentRotZ_;
-
-	double cX = child->posX_ - pX;
-	double cY = child->posY_ - pY;
-
-	double sc[2];
-	Math::DoSinCos(Math::DegreeToRadian(-pRotZ), sc);
-
-	child->childOffX_ = (sc[1] * cX - sc[0] * cY) / pScaX;
-	child->childOffY_ = (sc[0] * cX + sc[1] * cY) / pScaY;
-}
 double StgMoveObject::GetSpeed() {
 	if (pattern_ == nullptr) return 0;
 	double res = pattern_->GetSpeed();
@@ -187,6 +119,186 @@ void StgMoveObject::SetSpeedY(double speedY) {
 	}
 	StgMovePattern_XY* pattern = dynamic_cast<StgMovePattern_XY*>(pattern_.get());
 	pattern->SetSpeedY(speedY);
+}
+
+//****************************************************************************
+//StgMoveParent
+//****************************************************************************
+StgMoveParent::StgMoveParent(StgStageController* stageController) {
+	typeObject_ = TypeObject::MoveParent;
+	stageController_ = stageController;
+
+	target_ = nullptr;
+	typeAngle_ = ANGLE_FIXED;
+	bAutoDelete_ = false;
+
+	posX_ = 0;
+	posY_ = 0;
+	offX_ = 0;
+	offY_ = 0;
+	scaX_ = 1;
+	scaY_ = 1;
+	rotZ_ = 0;
+}
+StgMoveParent::~StgMoveParent() {
+	for (auto& child : listChild_) {
+		if (child != nullptr) child->RemoveParent();
+	}
+	target_ = nullptr;
+}
+void StgMoveParent::Work() {
+	if (target_ != nullptr || bAutoDelete_) return;
+	
+	// If there's no target object, update the children here instead
+	SetPosition(0, 0);
+	if (listChild_.size() > 0) {
+		auto iter = listChild_.begin();
+		while (iter != listChild_.end()) {
+			if ((*iter).get() == nullptr) {
+				iter = listChild_.erase(iter);
+			}
+			else {
+				MoveChild((*iter).get());
+				++iter;
+			}
+		}
+	}
+}
+void StgMoveParent::CleanUp() {
+	if (target_ == nullptr && bAutoDelete_) {
+		auto objectManager = stageController_->GetMainObjectManager();
+		objectManager->DeleteObject(this);
+		return;
+	}
+
+	if (listChild_.size() > 0) {
+		auto iter = listChild_.begin();
+		while (iter != listChild_.end()) {
+			if ((*iter).get() == nullptr)
+				iter = listChild_.erase(iter);
+			else ++iter;
+		}
+	}
+
+	DxScriptObjectBase::CleanUp();
+}
+void StgMoveParent::SetParentObject(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> parent) {
+	if (target_ != nullptr) { // Remove reference from previous target object
+		auto& vec = target_->listOwnedParent_;
+		vec.erase(std::remove(vec.begin(), vec.end(), nullptr), vec.end());
+	}
+
+	if (parent != nullptr) {
+		parent->listOwnedParent_.push_back(self);
+		target_ = parent;
+	}
+	else {
+		target_ = nullptr;
+	}
+}
+void StgMoveParent::AddChild(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> child) {
+	// Parenting the player object is an astoundingly stupid idea.
+	if (dynamic_cast<StgPlayerObject*>(child.get()) != nullptr) return;
+	if (std::find(listChild_.begin(), listChild_.end(), child) != listChild_.end()) return;
+	if (child->parent_ != nullptr) { // Remove from previous parent
+		auto& vec = child->parent_->listChild_;
+		vec.erase(std::remove(vec.begin(), vec.end(), child), vec.end());
+	}
+	child->SetParent(self);
+	listChild_.push_back(child);
+	InitializeChildPosition(child.get());
+}
+void StgMoveParent::RemoveChildren() {
+	for (auto& child : listChild_) {
+		if (child != nullptr) child->RemoveParent();
+	}
+	listChild_.clear();
+}
+void StgMoveParent::SetTransformAngle(double z) {
+	if (typeAngle_ == ANGLE_ROTATE) {
+		for (auto& child : listChild_) {
+			if (child != nullptr) child->SetDirectionAngle(child->GetDirectionAngle() + Math::DegreeToRadian(z - rotZ_));
+		}
+	}
+	rotZ_ = z;
+}
+void StgMoveParent::MoveChild(StgMoveObject* child) {
+
+
+	double pX = posX_ + offX_;
+	double pY = posY_ + offY_;
+	double pScaX = scaX_;
+	double pScaY = scaY_;
+	double pRotZ = rotZ_;
+
+	double cX = child->offX_;
+	double cY = child->offY_;
+
+	double sc[2];
+	Math::DoSinCos(Math::DegreeToRadian(pRotZ), sc);
+
+	double x0 = child->GetPositionX();
+	double y0 = child->GetPositionY();
+
+	double x1 = pX + (sc[1] * cX - sc[0] * cY) * pScaX;
+	double y1 = pY + (sc[0] * cX + sc[1] * cY) * pScaY;
+
+	double x0r = x0 - pX + cX;
+	double x1r = x1 - pX + cX;
+	double y0r = y0 - pY + cY;
+	double y1r = y1 - pY + cY;
+
+	child->SetPositionX(x1);
+	child->SetPositionY(y1);
+
+	if (typeAngle_ == ANGLE_ABSOLUTE)
+		child->SetDirectionAngle(atan2(y1 - y0, x1 - x0));
+	else if (typeAngle_ == ANGLE_RELATIVE)
+		child->SetDirectionAngle(atan2(y1 - (y0 - pY), x1 - (x0 - pX)));
+	else if (typeAngle_ == ANGLE_OUTWARD)
+		child->SetDirectionAngle(atan2(y1 - pY, x1 - pX));
+	else if (typeAngle_ == ANGLE_INWARD)
+		child->SetDirectionAngle(atan2(pY - y1, pX - x1));
+
+	// Yes, children can have children too.
+	if (child->listOwnedParent_.size() > 0) {
+		for (auto& iPar : child->listOwnedParent_) {
+			iPar->SetPosition(child->posX_, child->posY_);
+			auto& list = iPar->listChild_;
+			if (list.size() > 0) {
+				auto iter = list.begin();
+				while (iter != list.end()) {
+					if ((*iter).get() == nullptr) {
+						iter = list.erase(iter);
+					}
+					else {
+						iPar->MoveChild((*iter).get());
+						if (iPar->typeAngle_ == ANGLE_FOLLOW)
+							(*iter)->SetDirectionAngle(child->GetDirectionAngle());
+
+						++iter;
+					}
+				}
+			}
+		}
+
+	}
+}
+void StgMoveParent::InitializeChildPosition(StgMoveObject* child) {
+	double pX = posX_ + offX_;
+	double pY = posY_ + offY_;
+	double pScaX = scaX_;
+	double pScaY = scaY_;
+	double pRotZ = rotZ_;
+
+	double cX = child->posX_ - pX;
+	double cY = child->posY_ - pY;
+
+	double sc[2];
+	Math::DoSinCos(Math::DegreeToRadian(-pRotZ), sc);
+
+	child->offX_ = (sc[1] * cX - sc[0] * cY) / pScaX;
+	child->offY_ = (sc[0] * cX + sc[1] * cY) / pScaY;
 }
 
 //****************************************************************************

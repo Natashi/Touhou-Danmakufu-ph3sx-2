@@ -127,6 +127,8 @@ namespace directx {
 
 		Item,
 
+		MoveParent,
+
 		Invalid = 0xff,
 	};
 

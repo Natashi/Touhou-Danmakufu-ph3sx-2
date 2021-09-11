@@ -14,18 +14,14 @@ class StgPackageController;
 class StgStageInformation;
 class StgSystemInformation;
 class StgMovePattern;
+class StgMoveParent;
 
 //*******************************************************************
 //StgMoveObject
 //*******************************************************************
 class StgMoveObject {
 	friend StgMovePattern;
-public:
-	enum {
-		ANGLE_FIXED,
-		ANGLE_RELATIVE,
-		ANGLE_FOLLOW
-	};
+	friend StgMoveParent;
 private:
 	StgStageController* stageController_;
 protected:
@@ -36,20 +32,14 @@ protected:
 
 	bool bEnableMovement_;
 
-	StgMoveObject* objParent_;
-	double childOffX_;
-	double childOffY_;
-	double parentOffX_;
-	double parentOffY_;
-	double parentScaX_;
-	double parentScaY_;
-	double parentRotZ_;
-	std::vector<StgMoveObject*> listChild_;
+	ref_unsync_weak_ptr<StgMoveParent> parent_;
+	double offX_;
+	double offY_;
+	std::vector<ref_unsync_weak_ptr<StgMoveParent>> listOwnedParent_;
 
 	int framePattern_;
 	std::map<int, std::list<ref_unsync_ptr<StgMovePattern>>> mapPattern_;
 	virtual void _Move();
-	void _MoveChild(StgMoveObject* parent, StgMoveObject* child);
 	void _AttachReservedPattern(ref_unsync_ptr<StgMovePattern> pattern);
 public:
 	StgMoveObject(StgStageController* stageController);
@@ -71,25 +61,75 @@ public:
 	void SetSpeedX(double speedX);
 	void SetSpeedY(double speedY);
 
-	void SetParentObject(StgMoveObject* obj) { objParent_ = obj; }
-	StgMoveObject* GetParentObject() { return objParent_; }
-	void SetChildPosition(float x, float y) { childOffX_ = x; childOffY_ = y; }
-
-	void SetParentPositionOffset(double x, double y) { parentOffX_ = x; parentOffY_ = y; }
-	void SetParentScale(double x, double y) { parentScaX_ = x; parentScaY_ = y; }
-	void SetParentRotation(double z); // Also updates child angles sooo
-
-	std::vector<StgMoveObject*>& GetChildObjectList() { return listChild_; }
+	void SetParent(ref_unsync_weak_ptr<StgMoveParent> parent) { parent_ = parent; }
+	ref_unsync_weak_ptr<StgMoveParent> GetParent() { return parent_; }
+	void RemoveParent() { parent_ = nullptr; }
+	void SetRelativePosition(float x, float y) { offX_ = x; offY_ = y; }
 
 	ref_unsync_ptr<StgMovePattern> GetPattern() { return pattern_; }
 	void SetPattern(ref_unsync_ptr<StgMovePattern> pattern) {
 		pattern_ = pattern;
 	}
 	void AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap = false);
-	void AddChildObject(StgMoveObject* child) {
-		listChild_.push_back(child);
-	}
-	void UpdateChildPosition(StgMoveObject* child);
+	
+
+};
+
+//*******************************************************************
+//StgMoveParent
+//*******************************************************************
+class StgMoveParent : public DxScriptObjectBase {
+	friend StgMoveObject;
+public:
+	enum {
+		ANGLE_FIXED,		// Don't change the angle at all
+		ANGLE_ROTATE,		// Increment angle only when transform angle is changed
+		ANGLE_FOLLOW,		// Match angle to that of the target move object (same as ANGLE_FIXED if no target is set)
+		ANGLE_ABSOLUTE,		// Get absolute angle from last position
+		ANGLE_RELATIVE,		// Get angle from last position relative to base point
+		ANGLE_OUTWARD,		// Face outwards from base point
+		ANGLE_INWARD,		// Face inwards from base point
+	};
+private:
+	StgStageController* stageController_;
+protected:
+	ref_unsync_weak_ptr<StgMoveObject> target_;
+	int typeAngle_;
+	bool bAutoDelete_;
+
+	double posX_;
+	double posY_;
+	double offX_;
+	double offY_;
+	double scaX_;
+	double scaY_;
+	double rotZ_;
+	std::vector<ref_unsync_weak_ptr<StgMoveObject>> listChild_;
+
+public:
+	StgMoveParent(StgStageController* stageController);
+	~StgMoveParent();
+
+	virtual void Work();
+	virtual void Render() {}
+	virtual void SetRenderState() {}
+	virtual void CleanUp();
+
+	void SetParentObject(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> parent);
+	void SetAutoDelete(bool enable) { bAutoDelete_ = enable; }
+	void AddChild(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> child);
+	std::vector<ref_unsync_weak_ptr<StgMoveObject>>& GetChildren() { return listChild_; }
+	void RemoveChildren();
+	
+	void SetPositionOffset(double x, double y) { offX_ = x; offY_ = y; }
+	void SetTransformScale(double x, double y) { scaX_ = x; scaY_ = y; }
+	void SetTransformAngle(double z);
+	void SetChildAngleMode(int type) { typeAngle_ = type; }
+	int GetChildAngleMode() { return typeAngle_;  }
+	
+	void SetPosition(double x, double y) { posX_ = x; posY_ = y; }
+	void InitializeChildPosition(StgMoveObject* child);
+	void MoveChild(StgMoveObject* child);
 };
 
 //*******************************************************************
