@@ -162,7 +162,7 @@ StgMoveParent::StgMoveParent(StgStageController* stageController) {
 	target_ = nullptr;
 	typeAngle_ = ANGLE_FIXED;
 	bAutoDelete_ = false;
-	bMoveChild_ = false;
+	bMoveChild_ = true;
 
 	posX_ = 0;
 	posY_ = 0;
