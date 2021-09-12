@@ -45,6 +45,8 @@ public:
 	StgMoveObject(StgStageController* stageController);
 	virtual ~StgMoveObject();
 
+	void Move();
+
 	void SetEnableMovement(bool b) { bEnableMovement_ = b; }
 	bool IsEnableMovement() { return bEnableMovement_; }
 
@@ -65,6 +67,7 @@ public:
 	ref_unsync_weak_ptr<StgMoveParent> GetParent() { return parent_; }
 	void RemoveParent() { parent_ = nullptr; }
 	void SetRelativePosition(float x, float y) { offX_ = x; offY_ = y; }
+	void UpdateRelativePosition();
 
 	ref_unsync_ptr<StgMovePattern> GetPattern() { return pattern_; }
 	void SetPattern(ref_unsync_ptr<StgMovePattern> pattern) {
@@ -96,6 +99,7 @@ protected:
 	ref_unsync_weak_ptr<StgMoveObject> target_;
 	int typeAngle_;
 	bool bAutoDelete_;
+	bool bMoveChild_;
 
 	double posX_;
 	double posY_;
@@ -126,9 +130,9 @@ public:
 	void SetTransformAngle(double z);
 	void SetChildAngleMode(int type) { typeAngle_ = type; }
 	int GetChildAngleMode() { return typeAngle_;  }
+	void SetChildMotionEnable(bool enable) { bMoveChild_ = enable; }
 	
 	void SetPosition(double x, double y) { posX_ = x; posY_ = y; }
-	void InitializeChildPosition(StgMoveObject* child);
 	void MoveChild(StgMoveObject* child);
 };
 

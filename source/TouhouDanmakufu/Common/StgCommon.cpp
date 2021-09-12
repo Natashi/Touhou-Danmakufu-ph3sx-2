@@ -24,9 +24,7 @@ StgMoveObject::~StgMoveObject() {
 	parent_ = nullptr;
 	pattern_ = nullptr;
 }
-void StgMoveObject::_Move() {	
-	if (!bEnableMovement_ || parent_ != nullptr) return;
-
+void StgMoveObject::Move() {
 	if (mapPattern_.size() > 0) {
 		auto itr = mapPattern_.begin();
 		while (framePattern_ >= itr->first) {
@@ -38,14 +36,18 @@ void StgMoveObject::_Move() {
 		if (pattern_ == nullptr)
 			pattern_ = new StgMovePattern_Angle(this);
 	}
-	if (pattern_ != nullptr) {
-		pattern_->Move();
-		++framePattern_;
-	}
+	if (pattern_ == nullptr) return;
+	pattern_->Move();
+	++framePattern_;
+}
+void StgMoveObject::_Move() {	
+	if (parent_ != nullptr) return;
+	if (bEnableMovement_) Move();
 
 	if (listOwnedParent_.size() > 0) {
 		for (auto& iPar : listOwnedParent_) {
 			iPar->SetPosition(posX_, posY_);
+			bool bMoveChild = iPar->bMoveChild_;
 			auto& list = iPar->listChild_;
 			if (list.size() > 0) {
 				auto iter = list.begin();
@@ -54,9 +56,16 @@ void StgMoveObject::_Move() {
 						iter = list.erase(iter);
 					}
 					else {
-						iPar->MoveChild((*iter).get());
+
 						if (iPar->typeAngle_ == StgMoveParent::ANGLE_FOLLOW)
 							(*iter)->SetDirectionAngle(GetDirectionAngle());
+
+						iPar->MoveChild((*iter).get());
+
+						if (bMoveChild) {
+							(*iter)->Move();
+							(*iter)->UpdateRelativePosition();
+						}
 
 						++iter;
 					}
@@ -120,6 +129,28 @@ void StgMoveObject::SetSpeedY(double speedY) {
 	StgMovePattern_XY* pattern = dynamic_cast<StgMovePattern_XY*>(pattern_.get());
 	pattern->SetSpeedY(speedY);
 }
+void StgMoveObject::UpdateRelativePosition() {
+	if (parent_ != nullptr) {
+		double pX = parent_->posX_ + parent_->offX_;
+		double pY = parent_->posY_ + parent_->offY_;
+		double pScaX = parent_->scaX_;
+		double pScaY = parent_->scaY_;
+		double pRotZ = parent_->rotZ_;
+
+		double cX = posX_ - pX;
+		double cY = posY_ - pY;
+
+		double sc[2];
+		Math::DoSinCos(Math::DegreeToRadian(-pRotZ), sc);
+
+		offX_ = (sc[1] * cX - sc[0] * cY) / pScaX;
+		offY_ = (sc[0] * cX + sc[1] * cY) / pScaY;
+	}
+	else {
+		offX_ = posX_;
+		offY_ = posY_;
+	}
+}
 
 //****************************************************************************
 //StgMoveParent
@@ -131,6 +162,7 @@ StgMoveParent::StgMoveParent(StgStageController* stageController) {
 	target_ = nullptr;
 	typeAngle_ = ANGLE_FIXED;
 	bAutoDelete_ = false;
+	bMoveChild_ = false;
 
 	posX_ = 0;
 	posY_ = 0;
@@ -189,6 +221,10 @@ void StgMoveParent::SetParentObject(ref_unsync_weak_ptr<StgMoveParent> self, ref
 	}
 
 	if (parent != nullptr) {
+		SetPosition(parent->posX_, parent->posY_);
+		for (auto& child : listChild_) {
+			if (child != nullptr) child->UpdateRelativePosition();
+		}
 		parent->listOwnedParent_.push_back(self);
 		target_ = parent;
 	}
@@ -206,7 +242,7 @@ void StgMoveParent::AddChild(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync
 	}
 	child->SetParent(self);
 	listChild_.push_back(child);
-	InitializeChildPosition(child.get());
+	child->UpdateRelativePosition();
 }
 void StgMoveParent::RemoveChildren() {
 	for (auto& child : listChild_) {
@@ -223,8 +259,6 @@ void StgMoveParent::SetTransformAngle(double z) {
 	rotZ_ = z;
 }
 void StgMoveParent::MoveChild(StgMoveObject* child) {
-
-
 	double pX = posX_ + offX_;
 	double pY = posY_ + offY_;
 	double pScaX = scaX_;
@@ -283,22 +317,6 @@ void StgMoveParent::MoveChild(StgMoveObject* child) {
 		}
 
 	}
-}
-void StgMoveParent::InitializeChildPosition(StgMoveObject* child) {
-	double pX = posX_ + offX_;
-	double pY = posY_ + offY_;
-	double pScaX = scaX_;
-	double pScaY = scaY_;
-	double pRotZ = rotZ_;
-
-	double cX = child->posX_ - pX;
-	double cY = child->posY_ - pY;
-
-	double sc[2];
-	Math::DoSinCos(Math::DegreeToRadian(-pRotZ), sc);
-
-	child->offX_ = (sc[1] * cX - sc[0] * cY) / pScaX;
-	child->offY_ = (sc[0] * cX + sc[1] * cY) / pScaY;
 }
 
 //****************************************************************************
