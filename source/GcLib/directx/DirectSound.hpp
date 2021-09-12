@@ -161,6 +161,7 @@ namespace directx {
 		SoundSourceData();
 		virtual ~SoundSourceData() {};
 
+		virtual void Release();
 		virtual bool Load(shared_ptr<gstd::FileReader> reader) = 0;
 	};
 	class SoundSourceDataWave : public SoundSourceData {
@@ -171,12 +172,13 @@ namespace directx {
 	public:
 		SoundSourceDataWave();
 
+		virtual void Release();
 		virtual bool Load(shared_ptr<gstd::FileReader> reader);
 	};
 	class SoundSourceDataOgg : public SoundSourceData {
 	public:
-		OggVorbis_File fileOgg_;
-		ov_callbacks oggCallBacks_;
+		static ov_callbacks oggCallBacks_;
+		OggVorbis_File* fileOgg_;
 	public:
 		static size_t _ReadOgg(void* ptr, size_t size, size_t nmemb, void* source);
 		static int _SeekOgg(void* source, ogg_int64_t offset, int whence);
@@ -186,6 +188,7 @@ namespace directx {
 		SoundSourceDataOgg();
 		~SoundSourceDataOgg();
 
+		virtual void Release();
 		virtual bool Load(shared_ptr<gstd::FileReader> reader);
 	};
 	class SoundSourceDataMp3 : public SoundSourceData {
@@ -201,6 +204,7 @@ namespace directx {
 		SoundSourceDataMp3();
 		~SoundSourceDataMp3();
 
+		virtual void Release();
 		virtual bool Load(shared_ptr<gstd::FileReader> reader);
 	};
 
