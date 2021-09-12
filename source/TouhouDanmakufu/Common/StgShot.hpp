@@ -489,8 +489,8 @@ public:
 //*******************************************************************
 class StgLooseLaserObject : public StgLaserObject {
 protected:
-	float posXE_;
-	float posYE_;
+	double posXE_;
+	double posYE_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();

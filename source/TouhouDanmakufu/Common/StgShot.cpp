@@ -453,7 +453,7 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 		if (list.size() < 4)
 			throw wexception("Invalid argument list size (expected 4)");
 
-		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]), 
+		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
 			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
 
 		StgShotData::AnimationData anime;
@@ -643,7 +643,7 @@ StgShotData::StgShotData(StgShotDataList* listShotData) {
 
 	delay_.rcSrc_ = DxRect<LONG>(-1, -1, -1, -1);
 	colorDelay_ = D3DCOLOR_ARGB(255, 255, 255, 255);
-	
+
 	totalAnimeFrame_ = 0;
 
 	angularVelocityMin_ = 0;
@@ -944,7 +944,7 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 	case StgIntersectionTarget::TYPE_PLAYER:
 	{
 		if (frameGrazeInvalid_ <= 0)
-			frameGrazeInvalid_ = frameGrazeInvalidStart_ > 0 ? 
+			frameGrazeInvalid_ = frameGrazeInvalidStart_ > 0 ?
 			frameGrazeInvalidStart_ : INT_MAX;
 		break;
 	}
@@ -1402,13 +1402,10 @@ std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgNormalShotObject::GetInter
 		float intersectMeanScale = (hitboxScale_.x + hitboxScale_.y) / 2.0f;
 
 		if (orgCircle->GetX() != 0 || orgCircle->GetY() != 0) {
-			__m128 v1 = Vectorize::Mul(
-				Vectorize::SetF(orgCircle->GetX(), orgCircle->GetY(), orgCircle->GetX(), orgCircle->GetY()),
-				Vectorize::Set(move_.x, move_.y, move_.y, move_.x));
-			float px = (v1.m128_f32[0] + v1.m128_f32[1]) * intersectMeanScale;
-			float py = (v1.m128_f32[2] - v1.m128_f32[3]) * intersectMeanScale;
-			circle.SetX(px + posX_);
-			circle.SetY(py + posY_);
+			float px = orgCircle->GetX() * move_.x + orgCircle->GetY() * move_.y;
+			float py = orgCircle->GetX() * move_.y - orgCircle->GetY() * move_.x;
+			circle.SetX(posX_ + px * intersectMeanScale);
+			circle.SetY(posY_ + py * intersectMeanScale);
 		}
 		else {
 			circle.SetX(posX_);
@@ -1658,11 +1655,8 @@ void StgLooseLaserObject::_Move() {
 	DxScriptRenderObject::SetY(posY_);
 
 	if (delay_.time <= 0) {
-		__m128 v1 = Vectorize::Sub(
-			Vectorize::SetF(posXE_, posYE_, length_, 0),
-			Vectorize::SetF(posX_, posY_, 0, 0));
-		v1 = Vectorize::Mul(v1, v1);
-		if ((v1.m128_f32[0] + v1.m128_f32[1]) > v1.m128_f32[2]) {
+		float dist = Math::HypotSq(posXE_ - posX_, posYE_ - posY_);
+		if (dist >= (length_ * length_)) {
 			float speed = GetSpeed();
 			posXE_ += speed * move_.x;
 			posYE_ += speed * move_.y;
@@ -1684,23 +1678,8 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 	LONG rcRight = rcStgFrame->GetWidth() + rcClipBase->right;
 	LONG rcBottom = rcStgFrame->GetHeight() + rcClipBase->bottom;
 
-	bool bDelete = false;
-
-#ifdef __L_MATH_VECTORIZE
-	__m128i rc_pos = Vectorize::SetI(posX_, posXE_, posY_, posYE_);
-	//SSE2
-	__m128i res = _mm_cmplt_epi32(rc_pos,
-		Vectorize::SetI(rcLeft, rcLeft, rcTop, rcTop));
-	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
-	if (!bDelete) {
-		res = _mm_cmpgt_epi32(rc_pos,
-			Vectorize::SetI(rcRight, rcRight, rcBottom, rcBottom));
-		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
-	}
-#else
-	bDelete = (posX_ < rcLeft && posXE_ < rcLeft) || (posX_ > rcRight && posXE_ > rcRight)
-		|| (posY_ < rcTop && posYE_ < rcTop) || (posY_ > rcBottom && posYE_ > rcBottom);
-#endif
+	bool bDelete = (posX_ < rcLeft&& posXE_ < rcLeft) || (posX_ > rcRight && posXE_ > rcRight)
+		|| (posY_ < rcTop&& posYE_ < rcTop) || (posY_ > rcBottom && posYE_ > rcBottom);
 
 	if (bDelete) {
 		auto objectManager = stageController_->GetMainObjectManager();
@@ -1721,10 +1700,10 @@ std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgLooseLaserObject::GetInter
 	float invLengthS = (1.0f - (1.0f - invalidLengthStart_) * hitboxScale_.y) * 0.5f;
 	float invLengthE = (1.0f - (1.0f - invalidLengthEnd_) * hitboxScale_.y) * 0.5f;
 
-	float lineXS = Math::Lerp::Linear((float)posX_, posXE_, invLengthS);
-	float lineYS = Math::Lerp::Linear((float)posY_, posYE_, invLengthS);
-	float lineXE = Math::Lerp::Linear(posXE_, (float)posX_, invLengthE);
-	float lineYE = Math::Lerp::Linear(posYE_, (float)posY_, invLengthE);
+	float lineXS = Math::Lerp::Linear(posX_, posXE_, invLengthS);
+	float lineYS = Math::Lerp::Linear(posY_, posYE_, invLengthS);
+	float lineXE = Math::Lerp::Linear(posXE_, posX_, invLengthE);
+	float lineYE = Math::Lerp::Linear(posYE_, posY_, invLengthE);
 
 	StgIntersectionTarget_Line* target = (StgIntersectionTarget_Line*)pShotIntersectionTarget_.get();
 	{
@@ -1838,7 +1817,7 @@ void StgLooseLaserObject::RenderOnShotManager() {
 
 		//color = ColorAccess::ApplyAlpha(color, alpha);
 		rcDest.Set(widthRender_ / 2.0f, 0, -widthRender_ / 2.0f, radius);
-    }
+	}
 
 	VERTEX_TLX verts[4];
 	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
@@ -1954,28 +1933,10 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 	LONG rcRight = rcStgFrame->GetWidth() + rcClipBase->right;
 	LONG rcBottom = rcStgFrame->GetHeight() + rcClipBase->bottom;
 
-	bool bDelete = false;
-
-#ifdef __L_MATH_VECTORIZE
-	__m128 v_pos = Vectorize::Set(posX_, posY_, 0.0f, 0.0f);
-	v_pos = Vectorize::MulAdd(Vectorize::SetF(length_, length_, 0.0f, 0.0f),
-		Vectorize::Set(move_.x, move_.y, 0.0f, 0.0f), v_pos);
-	__m128i rc_pos = Vectorize::SetI(posX_, v_pos.m128_f32[0], posY_, v_pos.m128_f32[1]);
-	//SSE2
-	__m128i res = _mm_cmplt_epi32(rc_pos,
-		Vectorize::SetI(rcLeft, rcLeft, rcTop, rcTop));
-	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
-	if (!bDelete) {
-		res = _mm_cmpgt_epi32(rc_pos,
-			Vectorize::SetI(rcRight, rcRight, rcBottom, rcBottom));
-		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
-	}
-#else
-	int posXE = posX_ + (int)(length_ * move_.x);
-	int posYE = posY_ + (int)(length_ * move_.y);
-	bDelete = (posX_ < rcLeft && posXE < rcLeft) || (posX_ > rcRight && posXE > rcRight)
-		|| (posY_ < rcTop && posYE < rcTop) || (posY_ > rcBottom && posYE > rcBottom);
-#endif
+	int posXE = posX_ + length_ * move_.x;
+	int posYE = posY_ + length_ * move_.y;
+	bool bDelete = (posX_ < rcLeft&& posXE < rcLeft) || (posX_ > rcRight && posXE > rcRight)
+		|| (posY_ < rcTop&& posYE < rcTop) || (posY_ > rcBottom && posYE > rcBottom);
 
 	if (bDelete) {
 		auto objectManager = stageController_->GetMainObjectManager();
@@ -2003,15 +1964,15 @@ std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgStraightLaserObject::GetIn
 		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
 
 	float length = length_ * hitboxScale_.y;
-	__m128 v1 = Vectorize::Mul(
-		Vectorize::SetF(length, length, invalidLengthStart_, invalidLengthEnd_),
-		Vectorize::Set(move_.x, move_.y, 0.5f, 0.5f));
-	float _posXE = posX_ + v1.m128_f32[0];
-	float _posYE = posY_ + v1.m128_f32[1];
-	float lineXS = Math::Lerp::Linear((float)posX_, _posXE, v1.m128_f32[2]);
-	float lineYS = Math::Lerp::Linear((float)posY_, _posYE, v1.m128_f32[2]);
-	float lineXE = Math::Lerp::Linear(_posXE, (float)posX_, v1.m128_f32[3]);
-	float lineYE = Math::Lerp::Linear(_posYE, (float)posY_, v1.m128_f32[3]);
+	double posXE = posX_ + length_ * move_.x;
+	double posYE = posY_ + length_ * move_.y;
+	float invLenHalfS = invalidLengthStart_ * 0.5f;
+	float invLenHalfE = invalidLengthEnd_ * 0.5f;
+
+	float lineXS = Math::Lerp::Linear(posX_, posXE, invLenHalfS);
+	float lineYS = Math::Lerp::Linear(posY_, posYE, invLenHalfS);
+	float lineXE = Math::Lerp::Linear(posXE, posX_, invLenHalfE);
+	float lineYE = Math::Lerp::Linear(posYE, posY_, invLenHalfE);
 
 	StgIntersectionTarget_Line* target = (StgIntersectionTarget_Line*)pShotIntersectionTarget_.get();
 	{
@@ -2901,8 +2862,8 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 			}
 			break;
 		}
-        case PATTERN_TYPE_LINE:
-        case PATTERN_TYPE_LINE_AIMED:
+		case PATTERN_TYPE_LINE:
+		case PATTERN_TYPE_LINE_AIMED:
 		{
 			double ini_angle = angleBase_;
 			double angle_off = angleArgument_ / 2;
@@ -2923,7 +2884,7 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 				double _sy = Math::Lerp::Linear(from_pos[1], to_pos[1], rate);
 				float sx = basePosX + fireRadiusOffset_ * _sx;
 				float sy = basePosY + fireRadiusOffset_ * _sy;
-				
+
 				double sa = atan2(_sy, _sx);
 				double _ss = hypot(_sx, _sy);
 
