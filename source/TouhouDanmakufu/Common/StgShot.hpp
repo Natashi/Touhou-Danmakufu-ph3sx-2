@@ -298,7 +298,8 @@ protected:
 	int frameGrazeInvalid_;
 	int frameGrazeInvalidStart_;
 	int frameFadeDelete_;
-
+	
+	bool bRequestedPlayerDeleteEvent_;
 	double damage_;
 	double life_;
 
@@ -334,6 +335,7 @@ protected:
 
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision) {}
 	virtual void _SendDeleteEvent(int bit);
+	void _RequestPlayerDeleteEvent(int hitObjectID);
 
 	std::list<StgPatternShotTransform> listTransformationShotAct_;
 	int timerTransform_;
@@ -604,8 +606,8 @@ public:
 		PATTERN_TYPE_SCATTER_ANGLE,
 		PATTERN_TYPE_SCATTER_SPEED,
 		PATTERN_TYPE_SCATTER,
-        PATTERN_TYPE_LINE,
-        PATTERN_TYPE_LINE_AIMED,
+		PATTERN_TYPE_LINE,
+		PATTERN_TYPE_LINE_AIMED,
 		PATTERN_TYPE_ROSE,
 		PATTERN_TYPE_ROSE_AIMED,
 

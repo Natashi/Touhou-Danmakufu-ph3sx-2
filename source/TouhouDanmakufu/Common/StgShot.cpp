@@ -365,7 +365,6 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 			}
 		}
 
-		//テクスチャ読み込み
 		if (pathImage.size() == 0) throw gstd::wexception("Shot texture must be set.");
 		std::wstring dir = PathProperty::GetFileDirectory(path);
 		pathImage = StringUtility::Replace(pathImage, L"./", dir);
@@ -773,8 +772,10 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	idShotData_ = 0;
 	SetBlendType(MODE_BLEND_NONE);
 
+	bRequestedPlayerDeleteEvent_ = false;
 	damage_ = 1;
 	life_ = 1;
+
 	bAutoDelete_ = true;
 	bEraseShot_ = false;
 	bSpellFactor_ = false;
@@ -831,11 +832,34 @@ void StgShotObject::_DeleteInLife() {
 	if (IsDeleted() || life_ > 0) return;
 
 	_SendDeleteEvent(StgShotManager::BIT_EV_DELETE_IMMEDIATE);
+	_RequestPlayerDeleteEvent(DxScript::ID_INVALID);
 
 	auto objectManager = stageController_->GetMainObjectManager();
-
 	objectManager->DeleteObject(this);
 }
+void StgShotObject::_RequestPlayerDeleteEvent(int hitObjectID) {	//A super ugly hack, but it'll do for now
+	if (bRequestedPlayerDeleteEvent_) return;
+	bRequestedPlayerDeleteEvent_ = true;
+
+	auto objectManager = stageController_->GetMainObjectManager();
+	auto scriptManager = stageController_->GetScriptManager();
+
+	if (scriptManager != nullptr && typeOwner_ == StgShotObject::OWNER_PLAYER) {
+		float posX = GetPositionX();
+		float posY = GetPositionY();
+		LOCK_WEAK(scriptPlayer, scriptManager->GetPlayerScript()) {
+			float listPos[2] = { posX, posY };
+
+			value listScriptValue[4];
+			listScriptValue[0] = scriptPlayer->CreateIntValue(idObject_);
+			listScriptValue[1] = scriptPlayer->CreateRealArrayValue(listPos, 2U);
+			listScriptValue[2] = scriptPlayer->CreateIntValue(GetShotDataID());
+			listScriptValue[3] = scriptPlayer->CreateIntValue(hitObjectID);
+			scriptPlayer->RequestEvent(StgStagePlayerScript::EV_DELETE_SHOT_PLAYER, listScriptValue, 4);
+		}
+	}
+}
+
 void StgShotObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 
@@ -952,26 +976,8 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 		//Don't reduce penetration with lasers
 		if (!bSpellResist_ && dynamic_cast<StgLaserObject*>(this) == nullptr) {
 			--life_;
-
 			if (life_ == 0) {
-				auto objectManager = stageController_->GetMainObjectManager();
-				auto scriptManager = stageController_->GetScriptManager();
-
-				if (scriptManager != nullptr && typeOwner_ == StgShotObject::OWNER_PLAYER) {
-					float posX = GetPositionX();
-					float posY = GetPositionY();
-					LOCK_WEAK(scriptPlayer, scriptManager->GetPlayerScript()) {
-						float listPos[2] = { posX, posY };
-
-						value listScriptValue[4];
-						listScriptValue[0] = scriptPlayer->CreateIntValue(idObject_);
-						listScriptValue[1] = scriptPlayer->CreateRealArrayValue(listPos, 2U);
-						listScriptValue[2] = scriptPlayer->CreateIntValue(GetShotDataID());
-						listScriptValue[3] = scriptPlayer->CreateIntValue(
-							obj.IsExists() ? obj->GetDxScriptObjectID() : DxScript::ID_INVALID);
-						scriptPlayer->RequestEvent(StgStagePlayerScript::EV_DELETE_SHOT_PLAYER, listScriptValue, 4);
-					}
-				}
+				_RequestPlayerDeleteEvent(obj.IsExists() ? obj->GetDxScriptObjectID() : DxScript::ID_INVALID);
 			}
 		}
 		break;
@@ -1683,11 +1689,11 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 #ifdef __L_MATH_VECTORIZE
 	__m128i rc_pos = Vectorize::SetI(posX_, posXE_, posY_, posYE_);
 	//SSE2
-	__m128i res = _mm_cmplt_epi32(rc_pos, 
+	__m128i res = _mm_cmplt_epi32(rc_pos,
 		Vectorize::SetI(rcLeft, rcLeft, rcTop, rcTop));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	if (!bDelete) {
-		res = _mm_cmpgt_epi32(rc_pos, 
+		res = _mm_cmpgt_epi32(rc_pos,
 			Vectorize::SetI(rcRight, rcRight, rcBottom, rcBottom));
 		bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	}
@@ -1956,7 +1962,7 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 		Vectorize::Set(move_.x, move_.y, 0.0f, 0.0f), v_pos);
 	__m128i rc_pos = Vectorize::SetI(posX_, v_pos.m128_f32[0], posY_, v_pos.m128_f32[1]);
 	//SSE2
-	__m128i res = _mm_cmplt_epi32(rc_pos, 
+	__m128i res = _mm_cmplt_epi32(rc_pos,
 		Vectorize::SetI(rcLeft, rcLeft, rcTop, rcTop));
 	bDelete = (res.m128i_i32[0] && res.m128i_i32[1]) || (res.m128i_i32[2] && res.m128i_i32[3]);
 	if (!bDelete) {
@@ -2894,37 +2900,37 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 			}
 			break;
 		}
-        case PATTERN_TYPE_LINE:
-        case PATTERN_TYPE_LINE_AIMED:
+		case PATTERN_TYPE_LINE:
+		case PATTERN_TYPE_LINE_AIMED:
 		{
 			float ini_angle = angleBase_;
-            float angle_off = (float)(angleArgument_ / 2U);
+			float angle_off = (float)(angleArgument_ / 2U);
 			if (objPlayer != nullptr && typePattern_ == PATTERN_TYPE_LINE_AIMED)
 				ini_angle += atan2f(objPlayer->GetY() - basePosY, objPlayer->GetX() - basePosX);
 
 			float from_ang = ini_angle + angle_off;
 			float to_ang = ini_angle - angle_off;
 
-            float from_pos[2] = { cosf(from_ang), sinf(from_ang) };
-            float to_pos[2] = { cosf(to_ang), sinf(to_ang) };
+			float from_pos[2] = { cosf(from_ang), sinf(from_ang) };
+			float to_pos[2] = { cosf(to_ang), sinf(to_ang) };
 
-            for (size_t iWay = 0U; iWay < shotWay_; ++iWay) {
-                //Will always be just a little short of a full 1, intentional.
-                float rate = shotWay_ > 1U ? iWay / ((float)shotWay_ - 1) : 0.5f;
+			for (size_t iWay = 0U; iWay < shotWay_; ++iWay) {
+				//Will always be just a little short of a full 1, intentional.
+				float rate = shotWay_ > 1U ? iWay / ((float)shotWay_ - 1) : 0.5f;
 
-                float _sx = Math::Lerp::Linear(from_pos[0], to_pos[0], rate);
-                float _sy = Math::Lerp::Linear(from_pos[1], to_pos[1], rate);
-                float sx = basePosX + fireRadiusOffset_ * _sx;
-                float sy = basePosY + fireRadiusOffset_ * _sy;
-                float sa = atan2f(_sy, _sx);
-                float _ss = hypotf(_sx, _sy);
-                for (size_t iStack = 0U; iStack < shotStack_; ++iStack) {
-                    float ss = speedBase_;
-                    if (shotStack_ > 1U) ss += (speedArgument_ - speedBase_) * (iStack / (float)(shotStack_ - 1U));
-                    __CreateShot(sx, sy, ss * _ss, sa);
-                }
-                
-            }
+				float _sx = Math::Lerp::Linear(from_pos[0], to_pos[0], rate);
+				float _sy = Math::Lerp::Linear(from_pos[1], to_pos[1], rate);
+				float sx = basePosX + fireRadiusOffset_ * _sx;
+				float sy = basePosY + fireRadiusOffset_ * _sy;
+				float sa = atan2f(_sy, _sx);
+				float _ss = hypotf(_sx, _sy);
+				for (size_t iStack = 0U; iStack < shotStack_; ++iStack) {
+					float ss = speedBase_;
+					if (shotStack_ > 1U) ss += (speedArgument_ - speedBase_) * (iStack / (float)(shotStack_ - 1U));
+					__CreateShot(sx, sy, ss * _ss, sa);
+				}
+
+			}
 			break;
 		}
 		case PATTERN_TYPE_ROSE:
