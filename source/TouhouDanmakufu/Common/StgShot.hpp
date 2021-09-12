@@ -606,8 +606,8 @@ public:
 		PATTERN_TYPE_SCATTER_ANGLE,
 		PATTERN_TYPE_SCATTER_SPEED,
 		PATTERN_TYPE_SCATTER,
-		PATTERN_TYPE_LINE,
-		PATTERN_TYPE_LINE_AIMED,
+        PATTERN_TYPE_LINE,
+        PATTERN_TYPE_LINE_AIMED,
 		PATTERN_TYPE_ROSE,
 		PATTERN_TYPE_ROSE_AIMED,
 
@@ -636,10 +636,10 @@ private:
 	float fireRadiusOffset_;
 	//-----------------------------------------------------------------
 
-	float speedBase_;
-	float speedArgument_;
-	float angleBase_;
-	float angleArgument_;
+	double speedBase_;
+	double speedArgument_;
+	double angleBase_;
+	double angleArgument_;
 
 	int delay_;
 	//bool delayMove_;
@@ -689,11 +689,11 @@ public:
 	}
 	void SetRadiusFromFirePoint(float r) { fireRadiusOffset_ = r; }
 
-	void SetSpeed(float base, float arg) {
+	void SetSpeed(double base, double arg) {
 		speedBase_ = base;
 		speedArgument_ = arg;
 	}
-	void SetAngle(float base, float arg) {
+	void SetAngle(double base, double arg) {
 		angleBase_ = base;
 		angleArgument_ = arg;
 	}
