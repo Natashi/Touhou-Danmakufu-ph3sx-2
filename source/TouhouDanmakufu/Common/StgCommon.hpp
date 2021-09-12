@@ -51,9 +51,13 @@ public:
 	bool IsEnableMovement() { return bEnableMovement_; }
 
 	double GetPositionX() { return posX_; }
-	void SetPositionX(double pos) { posX_ = pos; }
+	void SetPositionX(double pos) {
+		posX_ = pos;
+	}
 	double GetPositionY() { return posY_; }
-	void SetPositionY(double pos) { posY_ = pos; }
+	void SetPositionY(double pos) {
+		posY_ = pos;
+	}
 
 	double GetSpeed();
 	void SetSpeed(double speed);
@@ -74,8 +78,6 @@ public:
 		pattern_ = pattern;
 	}
 	void AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap = false);
-	
-
 };
 
 //*******************************************************************
@@ -93,13 +95,20 @@ public:
 		ANGLE_OUTWARD,		// Face outwards from base point
 		ANGLE_INWARD,		// Face inwards from base point
 	};
+	enum {
+		ORDER_ANGLE_SCALE,
+		ORDER_SCALE_ANGLE
+	};
 private:
 	StgStageController* stageController_;
 protected:
 	ref_unsync_weak_ptr<StgMoveObject> target_;
 	int typeAngle_;
+	int transOrder_;
 	bool bAutoDelete_;
 	bool bMoveChild_;
+	bool bRotateLaser_;
+	bool bUpdateRelative_;
 
 	double posX_;
 	double posY_;
@@ -125,15 +134,21 @@ public:
 	std::vector<ref_unsync_weak_ptr<StgMoveObject>>& GetChildren() { return listChild_; }
 	void RemoveChildren();
 	
-	void SetPositionOffset(double x, double y) { offX_ = x; offY_ = y; }
-	void SetTransformScale(double x, double y) { scaX_ = x; scaY_ = y; }
+	void SetPositionOffset(double x, double y);
+	void SetTransformScale(double x, double y);
 	void SetTransformAngle(double z);
 	void SetChildAngleMode(int type) { typeAngle_ = type; }
 	int GetChildAngleMode() { return typeAngle_;  }
 	void SetChildMotionEnable(bool enable) { bMoveChild_ = enable; }
+	void SetLaserRotationEnable(bool enable) { bRotateLaser_ = enable; }
+	void SetAutoUpdateRelativePosition(bool enable) { bUpdateRelative_ = enable; }
+	bool GetAutoUpdateRelativePosition() { return bUpdateRelative_; }
+	void SetTransformOrder(int order) { transOrder_ = order; }
 	
 	void SetPosition(double x, double y) { posX_ = x; posY_ = y; }
 	void MoveChild(StgMoveObject* child);
+
+	void UpdateChildren();
 };
 
 //*******************************************************************

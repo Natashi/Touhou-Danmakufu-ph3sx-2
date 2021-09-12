@@ -361,6 +361,9 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformAngle);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetChildAngleMode);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetChildMotionEnable);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetLaserRotationEnable);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetAutoUpdateRelativePosition);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformOrder);
 
 	//STG共通関数：敵オブジェクト操作
 	static gstd::value Func_ObjEnemy_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
