@@ -428,6 +428,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjText_SetMaxHeight", DxScript::Func_ObjText_SetMaxHeight, 2 },
 	{ "ObjText_SetLinePitch", DxScript::Func_ObjText_SetLinePitch, 2 },
 	{ "ObjText_SetSidePitch", DxScript::Func_ObjText_SetSidePitch, 2 },
+	{ "ObjText_SetFixedWidth", DxScript::Func_ObjText_SetFixedWidth, 2 },
 	{ "ObjText_SetVertexColor", DxScript::Func_ObjText_SetVertexColor, 5 },
 	{ "ObjText_SetVertexColor", DxScript::Func_ObjText_SetVertexColor, 2 },				//Overloaded
 	{ "ObjText_SetTransCenter", DxScript::Func_ObjText_SetTransCenter, 3 },
@@ -4310,6 +4311,16 @@ value DxScript::Func_ObjText_SetSidePitch(script_machine* machine, int argc, con
 	if (obj) {
 		float pitch = argv[1].as_real();
 		obj->SetSidePitch(pitch);
+	}
+	return value();
+}
+value DxScript::Func_ObjText_SetFixedWidth(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	DxScriptTextObject* obj = script->GetObjectPointerAs<DxScriptTextObject>(id);
+	if (obj) {
+		float width = argv[1].as_real();
+		obj->SetFixedWidth(width);
 	}
 	return value();
 }
