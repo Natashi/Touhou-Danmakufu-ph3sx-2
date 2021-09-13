@@ -347,25 +347,30 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetParent);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_RemoveParent);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetRelativePosition);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_UpdateRelativePosition);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetDistanceFromParent);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetAngleFromParent);
 
 	// Move parents
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_Create);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetParentObject);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetParentObject);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetAutoDelete);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_AddChild);
-	// DNH_FUNCAPI_DECL_(Func_ObjMoveParent_AddChildren);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetChildren);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_RemoveChildren);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetPositionOffset);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetPositionOffsetCircle);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformScale);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformScaleX);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformScaleY);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformAngle);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetTransformScaleX);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetTransformScaleY);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetTransformAngle);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetChildAngleMode);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetChildMotionEnable);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetLaserRotationEnable);
-	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetAutoUpdateRelativePosition);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformOrder);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_ApplyTransformation);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_ResetTransformation);
