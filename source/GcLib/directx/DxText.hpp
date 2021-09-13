@@ -355,8 +355,8 @@ namespace directx {
 		SIZE _GetTextSize(HDC hDC, wchar_t* pText);
 		shared_ptr<DxTextLine> _GetTextInfoSub(const std::wstring& text, DxText* dxText, DxTextInfo* textInfo,
 			shared_ptr<DxTextLine> textLine, HDC& hDC, LONG& totalWidth, LONG& totalHeight);
-		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, const POINT& pos, DxFont dxFont,
-			shared_ptr<DxTextLine> textLine);
+		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, DxText* pDxText, 
+			const POINT& pos, DxFont dxFont, shared_ptr<DxTextLine> textLine);
 		std::wstring _ReplaceRenderText(std::wstring text);
 	public:
 		DxTextRenderer();
@@ -395,6 +395,7 @@ namespace directx {
 		LONG heightMax_;
 		float sidePitch_;
 		float linePitch_;
+		float fixedWidth_;
 		DxRect<LONG> margin_;
 		TextAlignment alignmentHorizontal_;
 		TextAlignment alignmentVertical_;
@@ -450,6 +451,8 @@ namespace directx {
 		void SetSidePitch(float pitch) { sidePitch_ = pitch; }
 		float GetLinePitch() { return linePitch_; }
 		void SetLinePitch(float pitch) { linePitch_ = pitch; }
+		float GetFixedWidth() { return fixedWidth_; }
+		void SetFixedWidth(float width) { fixedWidth_ = width; }
 		DxRect<LONG>& GetMargin() { return margin_; }
 		void SetMargin(DxRect<LONG>& margin) { margin_ = margin; }
 		TextAlignment GetHorizontalAlignment() { return alignmentHorizontal_; }

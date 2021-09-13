@@ -497,6 +497,7 @@ namespace directx {
 		void SetMaxHeight(LONG height) { text_.SetMaxHeight(height); change_ = CHANGE_ALL; }
 		void SetLinePitch(float pitch) { text_.SetLinePitch(pitch); change_ = CHANGE_ALL; }
 		void SetSidePitch(float pitch) { text_.SetSidePitch(pitch); change_ = CHANGE_ALL; }
+		void SetFixedWidth(float width) { text_.SetFixedWidth(width); change_ = CHANGE_ALL; }
 		void SetHorizontalAlignment(TextAlignment value) { text_.SetHorizontalAlignment(value); change_ = CHANGE_ALL; }
 		void SetVerticalAlignment(TextAlignment value) { text_.SetVerticalAlignment(value); change_ = CHANGE_ALL; }
 		void SetPermitCamera(bool bPermit) { text_.SetPermitCamera(bPermit); }

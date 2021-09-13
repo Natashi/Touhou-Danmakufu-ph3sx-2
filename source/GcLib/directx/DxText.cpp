@@ -1249,8 +1249,8 @@ std::wstring DxTextRenderer::_ReplaceRenderText(std::wstring text) {
 	return text;
 }
 
-void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, const POINT& pos, DxFont dxFont,
-	shared_ptr<DxTextLine> textLine)
+void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, DxText* pDxText, 
+	const POINT & pos, DxFont dxFont, shared_ptr<DxTextLine> textLine)
 {
 	SetFont(dxFont.GetLogFont());
 
@@ -1328,8 +1328,12 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 		spriteText->SetVertex(rcSrc, rcDest, colorVertex_);
 		objRender->AddRenderObject(shared_ptr<Sprite2D>(spriteText));
 
-		//次の文字
-		xRender += dxChar->GetSize().x - dxFont.GetBorderWidth() + textLine->GetSidePitch();
+		LONG chrWidth = 0;
+		if (pDxText->GetFixedWidth() > 0)
+			chrWidth = pDxText->GetFixedWidth();
+		else
+			chrWidth = dxChar->GetSize().x - dxFont.GetBorderWidth();
+		xRender += chrWidth + textLine->GetSidePitch();
 	}
 }
 
@@ -1407,7 +1411,7 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 				heightTotal += textLine->height_ + linePitch;
 				if (heightTotal > heightMax) break;
 
-				_CreateRenderObject(objRender, pos, dxFont, textLine);
+				_CreateRenderObject(objRender, dxText, pos, dxFont, textLine);
 
 				pos.y += textLine->height_ + linePitch;
 			}
@@ -1478,6 +1482,7 @@ DxText::DxText() {
 	heightMax_ = INT_MAX;
 	sidePitch_ = 0;
 	linePitch_ = 4;
+	fixedWidth_ = 0;
 	alignmentHorizontal_ = TextAlignment::Left;
 	alignmentVertical_ = TextAlignment::Top;
 
@@ -1495,6 +1500,7 @@ void DxText::Copy(const DxText& src) {
 	heightMax_ = src.heightMax_;
 	sidePitch_ = src.sidePitch_;
 	linePitch_ = src.linePitch_;
+	fixedWidth_ = src.fixedWidth_;
 	margin_ = src.margin_;
 	alignmentHorizontal_ = src.alignmentHorizontal_;
 	alignmentVertical_ = src.alignmentVertical_;
