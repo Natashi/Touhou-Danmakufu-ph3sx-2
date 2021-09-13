@@ -719,19 +719,22 @@ void StgMovePattern_Line_Weight::SetAtWeight(double tx, double ty, double weight
 	s_ = dy / dist_;
 }
 void StgMovePattern_Line_Weight::Move() {
+	double tPos[2];
 	if (dist_ < 0.1) {
 		speed_ = 0;
+
+		tPos[0] = targetPos_[0];
+		tPos[1] = targetPos_[1];
 	}
 	else {
-		speed_ = dist_ / weight_;
-		if (speed_ > maxSpeed_)
-			speed_ = maxSpeed_;
-
-		target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
-		target_->SetPositionY(fma(speed_, s_, target_->GetPositionY()));
-
+		speed_ = std::min(dist_ / weight_, maxSpeed_);
 		dist_ -= speed_;
+
+		tPos[0] = fma(speed_, c_, target_->GetPositionX());
+		tPos[1] = fma(speed_, s_, target_->GetPositionY());
 	}
 
+	target_->SetPositionX(tPos[0]);
+	target_->SetPositionY(tPos[1]);
 	++frameWork_;
 }

@@ -530,9 +530,13 @@ SoundSourceData::SoundSourceData() {
 	path_ = L"";
 	pathHash_ = 0;
 
+	Release();
+}
+void SoundSourceData::Release() {
 	format_ = SoundFileFormat::Unknown;
 	ZeroMemory(&formatWave_, sizeof(WAVEFORMATEX));
 
+	reader_ = nullptr;
 	audioSizeTotal_ = 0;
 }
 
@@ -540,7 +544,16 @@ SoundSourceDataWave::SoundSourceDataWave() {
 	posWaveStart_ = 0;
 	posWaveEnd_ = 0;
 }
+void SoundSourceDataWave::Release() {
+	SoundSourceData::Release();
+
+	posWaveStart_ = 0;
+	posWaveEnd_ = 0;
+	bufWaveData_.Clear();
+}
 bool SoundSourceDataWave::Load(shared_ptr<gstd::FileReader> reader) {
+	Release();
+
 	reader_ = reader;
 	reader->SetFilePointerBegin();
 
@@ -619,27 +632,40 @@ bool SoundSourceDataWave::Load(shared_ptr<gstd::FileReader> reader) {
 	return true;
 }
 
+ov_callbacks SoundSourceDataOgg::oggCallBacks_ = {
+	SoundSourceDataOgg::_ReadOgg,
+	SoundSourceDataOgg::_SeekOgg,
+	SoundSourceDataOgg::_CloseOgg,
+	SoundSourceDataOgg::_TellOgg,
+};
 SoundSourceDataOgg::SoundSourceDataOgg() {
+	fileOgg_ = nullptr;
 }
 SoundSourceDataOgg::~SoundSourceDataOgg() {
-	ov_clear(&fileOgg_);
+	Release();
+}
+void SoundSourceDataOgg::Release() {
+	SoundSourceData::Release();
+
+	if (fileOgg_) {
+		ov_clear(fileOgg_);
+		ptr_delete(fileOgg_);
+	}
 }
 bool SoundSourceDataOgg::Load(shared_ptr<gstd::FileReader> reader) {
+	Release();
+
 	reader_ = reader;
 	reader->SetFilePointerBegin();
 
 	try {
-		oggCallBacks_.read_func = SoundSourceDataOgg::_ReadOgg;
-		oggCallBacks_.seek_func = SoundSourceDataOgg::_SeekOgg;
-		oggCallBacks_.close_func = SoundSourceDataOgg::_CloseOgg;
-		oggCallBacks_.tell_func = SoundSourceDataOgg::_TellOgg;
-
-		if (ov_open_callbacks((void*)this, &fileOgg_, nullptr, 0, oggCallBacks_) < 0)
+		fileOgg_ = new OggVorbis_File;
+		if (ov_open_callbacks((void*)this, fileOgg_, nullptr, 0, oggCallBacks_) < 0)
 			throw false;
 
-		vorbis_info* vi = ov_info(&fileOgg_, -1);
+		vorbis_info* vi = ov_info(fileOgg_, -1);
 		if (vi == nullptr) {
-			ov_clear(&fileOgg_);
+			ov_clear(fileOgg_);
 			throw false;
 		}
 
@@ -652,7 +678,7 @@ bool SoundSourceDataOgg::Load(shared_ptr<gstd::FileReader> reader) {
 		formatWave_.wBitsPerSample = 2 * 8;
 		formatWave_.cbSize = 0;
 
-		QWORD pcmTotal = ov_pcm_total(&fileOgg_, -1);
+		QWORD pcmTotal = ov_pcm_total(fileOgg_, -1);
 		audioSizeTotal_ = pcmTotal * formatWave_.nBlockAlign;
 	}
 	catch (bool) {
@@ -715,6 +741,11 @@ SoundSourceDataMp3::SoundSourceDataMp3() {
 	posMp3DataEnd_ = 0;
 }
 SoundSourceDataMp3::~SoundSourceDataMp3() {
+	Release();
+}
+void SoundSourceDataMp3::Release() {
+	SoundSourceData::Release();
+
 	if (hAcmStream_) {
 		acmStreamUnprepareHeader(hAcmStream_, &acmStreamHeader_, 0);
 		acmStreamClose(hAcmStream_, 0);
@@ -722,8 +753,17 @@ SoundSourceDataMp3::~SoundSourceDataMp3() {
 		ptr_delete_scalar(acmStreamHeader_.pbSrc);
 		ptr_delete_scalar(acmStreamHeader_.pbDst);
 	}
+	hAcmStream_ = nullptr;
+
+	ZeroMemory(&formatMp3_, sizeof(MPEGLAYER3WAVEFORMAT));
+	ZeroMemory(&acmStreamHeader_, sizeof(ACMSTREAMHEADER));
+
+	posMp3DataStart_ = 0;
+	posMp3DataEnd_ = 0;
 }
 bool SoundSourceDataMp3::Load(shared_ptr<gstd::FileReader> reader) {
+	Release();
+
 	reader_ = reader;
 	reader->SetFilePointerBegin();
 
@@ -1312,7 +1352,10 @@ bool SoundPlayerWave::_CreateBuffer(shared_ptr<SoundSourceData> source) {
 					if (FAILED(hrLock))
 						throw gstd::wexception("IDirectSoundBuffer8::Lock failure");
 
-					memcpy(pMem, pSource->bufWaveData_.GetPointer(), dwSize);
+					if (pSource->bufWaveData_.GetSize() > 0)
+						memcpy(pMem, pSource->bufWaveData_.GetPointer(), dwSize);
+					else
+						memset(pMem, 0, dwSize);
 
 					pDirectSoundBuffer_->Unlock(pMem, dwSize, nullptr, 0);
 				}
@@ -1441,58 +1484,64 @@ bool SoundStreamingPlayerWave::_CreateBuffer(shared_ptr<SoundSourceData> source)
 }
 DWORD SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	SoundSourceDataWave* source = (SoundSourceDataWave*)soundSource_.get();
-	auto& reader = source->reader_;
 
-	double loopStart = playStyle_.timeLoopStart_;
-	double loopEnd = playStyle_.timeLoopEnd_;
-
-	DWORD byteLoopStart = source->posWaveStart_ + loopStart * source->formatWave_.nAvgBytesPerSec;
-	DWORD byteLoopEnd = source->posWaveStart_ + loopEnd * source->formatWave_.nAvgBytesPerSec;
 	DWORD blockSize = source->formatWave_.nBlockAlign;
 
-	reader->Seek(lastReadPointer_);
 	DWORD resStreamPos = lastReadPointer_;
 
-	DWORD totalWritten = 0;
-	auto _WriteBytes = [&](DWORD writeTargetSize) -> bool {
-		if (writeTargetSize == 0) return true;
-		DWORD written = reader->Read((char*)pMem + totalWritten, writeTargetSize);
-		totalWritten += written;
-		return written != writeTargetSize;	//If (written < target), then the read contains the EOF
-	};
+	if (auto reader = source->reader_) {
+		double loopStart = playStyle_.timeLoopStart_;
+		double loopEnd = playStyle_.timeLoopEnd_;
+		DWORD byteLoopStart = source->posWaveStart_ + loopStart * source->formatWave_.nAvgBytesPerSec;
+		DWORD byteLoopEnd = source->posWaveStart_ + loopEnd * source->formatWave_.nAvgBytesPerSec;
 
-	DWORD byteCurrentStart = lastReadPointer_;
-	while (totalWritten < dwSize) {
-		DWORD byteCurrent = byteCurrentStart + totalWritten;
+		reader->Seek(lastReadPointer_);
 
-		DWORD remain = dwSize - totalWritten;
-		if (playStyle_.bLoop_ && (byteCurrent + remain > byteLoopEnd && byteLoopEnd > 0)) {
-			//This read will contain the looping point
-			DWORD size1 = std::min(byteLoopEnd - byteCurrent, remain);
-			_WriteBytes(size1);
-		}
-		else {
-			bool bFileEnd = _WriteBytes(remain);
-			if (!bFileEnd)
-				continue;
-		}
+		DWORD totalWritten = 0;
+		auto _WriteBytes = [&](DWORD writeTargetSize) -> bool {
+			if (writeTargetSize == 0) return true;
+			DWORD written = reader->Read((char*)pMem + totalWritten, writeTargetSize);
+			totalWritten += written;
+			return written != writeTargetSize;	//If (written < target), then the read contains the EOF
+		};
 
-		//Reset to loop start
-		{
-			remain = dwSize - totalWritten;
-			if (playStyle_.bLoop_) {
-				Seek(loopStart);
-				_WriteBytes(remain);
+		DWORD byteCurrentStart = lastReadPointer_;
+		while (totalWritten < dwSize) {
+			DWORD byteCurrent = byteCurrentStart + totalWritten;
+
+			DWORD remain = dwSize - totalWritten;
+			if (playStyle_.bLoop_ && (byteCurrent + remain > byteLoopEnd && byteLoopEnd > 0)) {
+				//This read will contain the looping point
+				DWORD size1 = std::min(byteLoopEnd - byteCurrent, remain);
+				_WriteBytes(size1);
 			}
 			else {
-				memset((char*)pMem + totalWritten, 0, remain);
-				_SetStreamOver();
-				break;
+				bool bFileEnd = _WriteBytes(remain);
+				if (!bFileEnd)
+					continue;
+			}
+
+			//Reset to loop start
+			{
+				remain = dwSize - totalWritten;
+				if (playStyle_.bLoop_) {
+					Seek(loopStart);
+					_WriteBytes(remain);
+				}
+				else {
+					memset((char*)pMem + totalWritten, 0, remain);
+					_SetStreamOver();
+					break;
+				}
 			}
 		}
+
+		lastReadPointer_ = reader->GetFilePointer();
+	}
+	else {
+		memset(pMem, 0, dwSize);
 	}
 
-	lastReadPointer_ = reader->GetFilePointer();
 	return resStreamPos;
 }
 bool SoundStreamingPlayerWave::Seek(double time) {
@@ -1571,69 +1620,73 @@ bool SoundStreamingPlayerOgg::_CreateBuffer(shared_ptr<SoundSourceData> source) 
 }
 DWORD SoundStreamingPlayerOgg::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	SoundSourceDataOgg* source = (SoundSourceDataOgg*)soundSource_.get();
-	auto& reader = source->reader_;
-	OggVorbis_File* pFileOgg = &source->fileOgg_;
-
+	
 	DWORD samplePerSec = source->formatWave_.nSamplesPerSec;
 	DWORD bytePerSample = source->formatWave_.nBlockAlign;
 	DWORD bytePerSec = source->formatWave_.nAvgBytesPerSec;
 
-	double loopStart = playStyle_.timeLoopStart_;
-	double loopEnd = playStyle_.timeLoopEnd_;
-	DWORD byteLoopStart = loopStart * bytePerSec;
-	DWORD byteLoopEnd = loopEnd * bytePerSec;
-
-	ov_pcm_seek(pFileOgg, lastReadPointer_);
-
 	DWORD resStreamPos = lastReadPointer_ * bytePerSample;
 
-	DWORD totalWritten = 0;
-	auto _DecodeOgg = [&](DWORD writeTargetSize) -> bool {
-		if (writeTargetSize == 0) return true;
-		DWORD written = 0;
-		while (written < writeTargetSize) {
-			DWORD _remain = writeTargetSize - written;
-			DWORD _write = ov_read(pFileOgg, (char*)pMem + totalWritten, _remain, 0, 2, 1, nullptr);
-			if (_write == 0)
-				return true;	//EOF
-			written += _write;
-			totalWritten += _write;
-		}
-		return false;
-	};
+	if (OggVorbis_File* pFileOgg = source->fileOgg_) {
+		double loopStart = playStyle_.timeLoopStart_;
+		double loopEnd = playStyle_.timeLoopEnd_;
+		DWORD byteLoopStart = loopStart * bytePerSec;
+		DWORD byteLoopEnd = loopEnd * bytePerSec;
 
-	DWORD byteCurrentStart = ov_pcm_tell(pFileOgg) * bytePerSample;
-	while (totalWritten < dwSize) {
-		DWORD byteCurrent = byteCurrentStart + totalWritten;
+		ov_pcm_seek(pFileOgg, lastReadPointer_);
 
-		DWORD remain = dwSize - totalWritten;
-		if (playStyle_.bLoop_ && (byteCurrent + remain > byteLoopEnd && byteLoopEnd > 0)) {
-			//This read will contain the looping point
-			DWORD size1 = std::min(byteLoopEnd - byteCurrent, remain);
-			_DecodeOgg(size1);
-		}
-		else {
-			bool bFileEnd = _DecodeOgg(remain);
-			if (!bFileEnd)
-				continue;
-		}
+		DWORD totalWritten = 0;
+		auto _DecodeOgg = [&](DWORD writeTargetSize) -> bool {
+			if (writeTargetSize == 0) return true;
+			DWORD written = 0;
+			while (written < writeTargetSize) {
+				DWORD _remain = writeTargetSize - written;
+				DWORD _write = ov_read(pFileOgg, (char*)pMem + totalWritten, _remain, 0, 2, 1, nullptr);
+				if (_write == 0)
+					return true;	//EOF
+				written += _write;
+				totalWritten += _write;
+			}
+			return false;
+		};
 
-		//Reset to loop start
-		{
-			remain = dwSize - totalWritten;
-			if (playStyle_.bLoop_) {
-				Seek(loopStart);
-				_DecodeOgg(remain);
+		DWORD byteCurrentStart = ov_pcm_tell(pFileOgg) * bytePerSample;
+		while (totalWritten < dwSize) {
+			DWORD byteCurrent = byteCurrentStart + totalWritten;
+
+			DWORD remain = dwSize - totalWritten;
+			if (playStyle_.bLoop_ && (byteCurrent + remain > byteLoopEnd && byteLoopEnd > 0)) {
+				//This read will contain the looping point
+				DWORD size1 = std::min(byteLoopEnd - byteCurrent, remain);
+				_DecodeOgg(size1);
 			}
 			else {
-				memset((char*)pMem + totalWritten, 0, remain);
-				_SetStreamOver();
-				break;
+				bool bFileEnd = _DecodeOgg(remain);
+				if (!bFileEnd)
+					continue;
+			}
+
+			//Reset to loop start
+			{
+				remain = dwSize - totalWritten;
+				if (playStyle_.bLoop_) {
+					Seek(loopStart);
+					_DecodeOgg(remain);
+				}
+				else {
+					memset((char*)pMem + totalWritten, 0, remain);
+					_SetStreamOver();
+					break;
+				}
 			}
 		}
-	}
 
-	lastReadPointer_ = ov_pcm_tell(pFileOgg);
+		lastReadPointer_ = ov_pcm_tell(pFileOgg);
+	}
+	else {
+		memset(pMem, 0, dwSize);
+	}
+	
 	return resStreamPos;
 }
 bool SoundStreamingPlayerOgg::Seek(double time) {
@@ -1645,7 +1698,7 @@ bool SoundStreamingPlayerOgg::Seek(DWORD sample) {
 	SoundSourceDataOgg* source = (SoundSourceDataOgg*)soundSource_.get();
 	{
 		Lock lock(lock_);
-		ov_pcm_seek(&source->fileOgg_, sample);
+		ov_pcm_seek(source->fileOgg_, sample);
 		lastReadPointer_ = sample;
 	}
 	return true;
@@ -1713,103 +1766,53 @@ bool SoundStreamingPlayerMp3::_CreateBuffer(shared_ptr<SoundSourceData> source) 
 }
 DWORD SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	SoundSourceDataMp3* source = (SoundSourceDataMp3*)soundSource_.get();
-	auto& reader = source->reader_;
-	HACMSTREAM hAcmStream = source->hAcmStream_;
-	ACMSTREAMHEADER* pAcmHeader = &source->acmStreamHeader_;
 
 	DWORD samplePerSec = source->formatWave_.nSamplesPerSec;
 	DWORD bytePerSample = source->formatWave_.nBlockAlign;
 	DWORD bytePerSec = source->formatWave_.nAvgBytesPerSec;
 
-	double loopStart = playStyle_.timeLoopStart_;
-	double loopEnd = playStyle_.timeLoopEnd_;
-	DWORD byteLoopStart = loopStart * bytePerSec;
-	DWORD byteLoopEnd = loopEnd * bytePerSec;
-
-	reader->Seek(lastReadPointer_);
-
 	DWORD resStreamPos = timeCurrent_ * bytePerSec;
 
-	/*
-	auto _WriteDecodedAcmStream = [&](DWORD writeOff, DWORD writeTargetSize, bool bDiscard, size_t* pWritten) -> bool {
-		if (writeTargetSize == 0) return true;
-		
-		bool decodeRes = _DecodeAcmStream(bDiscard, writeTargetSize, pWritten);
+	auto& reader = source->reader_;
+	HACMSTREAM hAcmStream = source->hAcmStream_;
+	ACMSTREAMHEADER* pAcmHeader = &source->acmStreamHeader_;
 
-		memcpy((char*)pMem + writeOff, bufDecode_.GetPointer(), writeTargetSize);
+	if (reader != nullptr && hAcmStream != nullptr) {
+		double loopStart = playStyle_.timeLoopStart_;
+		double loopEnd = playStyle_.timeLoopEnd_;
+		DWORD byteLoopStart = loopStart * bytePerSec;
+		DWORD byteLoopEnd = loopEnd * bytePerSec;
 
-		return decodeRes;
-	};
+		reader->Seek(lastReadPointer_);
 
-	uint64_t pcmCurrent = timeCurrent_ * samplePerSec;
-	uint64_t byteCurrent = pcmCurrent * bytePerSample;
+		DWORD sizeWriteTotal = 0;
+		while (sizeWriteTotal < dwSize) {
+			DWORD cSize = dwSize - sizeWriteTotal;
+			double cTime = (double)cSize / (double)bytePerSec;
 
-	bool bReadLoopEnd = byteCurrent + dwSize > byteLoopEnd && byteLoopEnd > 0;
-	bool bReadEof = byteCurrent + dwSize > source->audioSizeTotal_;
-	if (bReadLoopEnd || bReadEof) {
-		size_t size1 = bReadLoopEnd ? (byteLoopEnd - byteCurrent) : dwSize;
+			if (playStyle_.bLoop_ && (timeCurrent_ + cTime > loopEnd && loopEnd > 0)) {
+				//ループ終端
+				double timeOver = timeCurrent_ + cTime - loopEnd;
+				double cTime1 = cTime - timeOver;
+				DWORD cSize1 = cTime1 * bytePerSec;
 
-		size_t written = 0;
-		bool bFileEnd = _WriteDecodedAcmStream(0, size1, false, &written);
-
-		size_t remain = dwSize - written;
-		if (playStyle_.bLoop_) {
-			Seek(loopStart);
-			bFileEnd = _WriteDecodedAcmStream(written, remain, true, &written);
-		}
-		else {
-			memset((char*)pMem + written, 0, remain);
-			_SetStreamOver();
-		}
-	}
-	else {
-		size_t written = 0;
-		_WriteDecodedAcmStream(0, dwSize, false, &written);
-	}
-	*/
-
-	DWORD sizeWriteTotal = 0;
-	while (sizeWriteTotal < dwSize) {
-		DWORD cSize = dwSize - sizeWriteTotal;
-		double cTime = (double)cSize / (double)bytePerSec;
-
-		if (playStyle_.bLoop_ && (timeCurrent_ + cTime > loopEnd && loopEnd > 0)) {
-			//ループ終端
-			double timeOver = timeCurrent_ + cTime - loopEnd;
-			double cTime1 = cTime - timeOver;
-			DWORD cSize1 = cTime1 * bytePerSec;
-
-			bool bFileEnd = false;
-			DWORD size1Write = 0;
-			while (size1Write < cSize1) {
-				DWORD tSize = cSize1 - size1Write;
-				DWORD sw = _DecodeAcmStream((char*)pMem + sizeWriteTotal + size1Write, tSize);
-				if (sw == 0) {
-					bFileEnd = true;
-					break;
+				bool bFileEnd = false;
+				DWORD size1Write = 0;
+				while (size1Write < cSize1) {
+					DWORD tSize = cSize1 - size1Write;
+					DWORD sw = _DecodeAcmStream((char*)pMem + sizeWriteTotal + size1Write, tSize);
+					if (sw == 0) {
+						bFileEnd = true;
+						break;
+					}
+					size1Write += sw;
 				}
-				size1Write += sw;
-			}
 
-			if (!bFileEnd) {
-				sizeWriteTotal += size1Write;
-				timeCurrent_ += (double)size1Write / (double)bytePerSec;
-			}
+				if (!bFileEnd) {
+					sizeWriteTotal += size1Write;
+					timeCurrent_ += (double)size1Write / (double)bytePerSec;
+				}
 
-			if (playStyle_.bLoop_) {
-				Seek(loopStart);
-			}
-			else {
-				_SetStreamOver();
-				break;
-			}
-		}
-		else {
-			DWORD sizeWrite = _DecodeAcmStream((char*)pMem + sizeWriteTotal, cSize);
-			sizeWriteTotal += sizeWrite;
-			timeCurrent_ += (double)sizeWrite / (double)bytePerSec;
-
-			if (sizeWrite == 0) {//ファイル終点
 				if (playStyle_.bLoop_) {
 					Seek(loopStart);
 				}
@@ -1818,10 +1821,29 @@ DWORD SoundStreamingPlayerMp3::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 					break;
 				}
 			}
+			else {
+				DWORD sizeWrite = _DecodeAcmStream((char*)pMem + sizeWriteTotal, cSize);
+				sizeWriteTotal += sizeWrite;
+				timeCurrent_ += (double)sizeWrite / (double)bytePerSec;
+
+				if (sizeWrite == 0) {//ファイル終点
+					if (playStyle_.bLoop_) {
+						Seek(loopStart);
+					}
+					else {
+						_SetStreamOver();
+						break;
+					}
+				}
+			}
 		}
+
+		lastReadPointer_ = reader->GetFilePointer();
+	}
+	else {
+		memset(pMem, 0, dwSize);
 	}
 
-	lastReadPointer_ = reader->GetFilePointer();
 	return resStreamPos;
 }
 DWORD SoundStreamingPlayerMp3::_DecodeAcmStream(char* pBuffer, DWORD size) {

@@ -307,7 +307,8 @@ protected:
 	int frameGrazeInvalid_;
 	int frameGrazeInvalidStart_;
 	int frameFadeDelete_;
-
+	
+	bool bRequestedPlayerDeleteEvent_;
 	double damage_;
 	double life_;
 
@@ -343,6 +344,7 @@ protected:
 
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision) {}
 	virtual void _SendDeleteEvent(int bit);
+	void _RequestPlayerDeleteEvent(int hitObjectID);
 
 	std::list<StgPatternShotTransform> listTransformationShotAct_;
 	int timerTransform_;
@@ -505,8 +507,8 @@ public:
 //*******************************************************************
 class StgLooseLaserObject : public StgLaserObject {
 protected:
-	float posXE_;
-	float posYE_;
+	double posXE_;
+	double posYE_;
 
 	float posXO_;
 	float posYO_;
@@ -669,10 +671,10 @@ private:
 	float fireRadiusOffset_;
 	//-----------------------------------------------------------------
 
-	float speedBase_;
-	float speedArgument_;
-	float angleBase_;
-	float angleArgument_;
+	double speedBase_;
+	double speedArgument_;
+	double angleBase_;
+	double angleArgument_;
 
     float extra_;
 
@@ -724,11 +726,11 @@ public:
 	}
 	void SetRadiusFromFirePoint(float r) { fireRadiusOffset_ = r; }
 
-	void SetSpeed(float base, float arg) {
+	void SetSpeed(double base, double arg) {
 		speedBase_ = base;
 		speedArgument_ = arg;
 	}
-	void SetAngle(float base, float arg) {
+	void SetAngle(double base, double arg) {
 		angleBase_ = base;
 		angleArgument_ = arg;
 	}
