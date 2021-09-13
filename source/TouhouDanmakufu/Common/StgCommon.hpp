@@ -51,19 +51,17 @@ public:
 	bool IsEnableMovement() { return bEnableMovement_; }
 
 	double GetPositionX() { return posX_; }
-	void SetPositionX(double pos) {
-		posX_ = pos;
-	}
+	void SetPositionX(double pos) { posX_ = pos; }
 	double GetPositionY() { return posY_; }
-	void SetPositionY(double pos) {
-		posY_ = pos;
-	}
+	void SetPositionY(double pos) { posY_ = pos; }
 
 	double GetSpeed();
 	void SetSpeed(double speed);
 	double GetDirectionAngle();
 	void SetDirectionAngle(double angle);
 
+	double GetSpeedX();
+	double GetSpeedY();
 	void SetSpeedX(double speedX);
 	void SetSpeedY(double speedY);
 
@@ -144,8 +142,12 @@ public:
 	void SetAutoUpdateRelativePosition(bool enable) { bUpdateRelative_ = enable; }
 	bool GetAutoUpdateRelativePosition() { return bUpdateRelative_; }
 	void SetTransformOrder(int order) { transOrder_ = order; }
+	void ApplyTransformation();
+	void ResetTransformation() { scaX_ = 1; scaY_ = 1; rotZ_ = 0; }
 	
 	void SetPosition(double x, double y) { posX_ = x; posY_ = y; }
+	double GetX() { return posX_ + offX_; }
+	double GetY() { return posY_ + offY_; }
 	void MoveChild(StgMoveObject* child);
 
 	void UpdateChildren();
