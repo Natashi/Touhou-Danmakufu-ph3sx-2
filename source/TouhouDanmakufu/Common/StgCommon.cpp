@@ -314,9 +314,7 @@ void StgMoveParent::UpdateChildren() {
 	// This looks stupid but please have faith in me
 	double px0 = posX_;
 	double py0 = posY_;
-
 	SetPosition(target_ ? target_->posX_ : 0, target_ ? target_->posY_ : 0);
-
 	double px1 = posX_;
 	double py1 = posY_;
 
@@ -357,13 +355,20 @@ void StgMoveParent::UpdateChildren() {
 						x1 -= px1;
 						y1 -= py1;
 					}
+					
+					double x = x1 - x0;
+					double y = y1 - y0;
 
-					double dir = atan2(y1 - y0, x1 - x0);
-					child->SetDirectionAngle(dir);
-					if (bRotateLaser_) {
-						StgStraightLaserObject* laser = dynamic_cast<StgStraightLaserObject*>(child);
-						if (laser) laser->SetLaserAngle(dir);
+					// ?????
+					if (y != 0 || x != 0) {
+						double dir = atan2(y, x);
+						child->SetDirectionAngle(dir);
+						if (bRotateLaser_) {
+							StgStraightLaserObject* laser = dynamic_cast<StgStraightLaserObject*>(child);
+							if (laser) laser->SetLaserAngle(dir);
+						}
 					}
+					
 				}
 
 				++iter;
