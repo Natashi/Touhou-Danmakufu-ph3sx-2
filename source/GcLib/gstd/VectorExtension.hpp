@@ -230,7 +230,7 @@ namespace gstd {
 	}
 
 	template<byte SHUF>
-	__m128 Shuffle(const __m128& a, const __m128& b) {
+	__m128 Vectorize::Shuffle(const __m128& a, const __m128& b) {
 #ifndef __L_MATH_VECTORIZE
 #define _SELECT(x, ctrl) (x).m128_f32[(ctrl) & 4];
 		res.m128_f32[0] = _SELECT(a, shuf);
