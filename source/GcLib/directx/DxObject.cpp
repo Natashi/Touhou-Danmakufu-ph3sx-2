@@ -1509,10 +1509,8 @@ void DxScriptObjectManager::RenderObject() {
 }
 void DxScriptObjectManager::CleanupObject() {
 	for (auto& obj : listActiveObject_) {
-		if (obj) {
-			obj->CleanUp();
-			if (obj->IsQueuedForDeletion()) DeleteObject(obj);
-		}
+		if (obj) obj->CleanUp();
+		if (obj && obj->IsQueuedForDeletion()) DeleteObject(obj); // Double check just in case
 	}
 }
 

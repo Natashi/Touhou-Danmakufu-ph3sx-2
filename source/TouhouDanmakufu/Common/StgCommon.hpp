@@ -85,7 +85,7 @@ class StgMoveParent : public DxScriptObjectBase {
 	friend StgMoveObject;
 public:
 	enum {
-		ANGLE_FIXED,		// Don't change the angle at all
+		ANGLE_FIXED,		// Angle is untouched, only changed via move pattern if applicable
 		ANGLE_ROTATE,		// Increment angle only when transform angle is changed
 		ANGLE_FOLLOW,		// Match angle to that of the target move object (same as ANGLE_FIXED if no target is set)
 		ANGLE_ABSOLUTE,		// Get absolute angle from last position

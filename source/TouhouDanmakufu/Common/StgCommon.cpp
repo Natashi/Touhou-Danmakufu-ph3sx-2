@@ -189,7 +189,6 @@ void StgMoveParent::CleanUp() {
 		objectManager->DeleteObject(this);
 		return;
 	}
-
 	if (listChild_.size() > 0) {
 		auto iter = listChild_.begin();
 		while (iter != listChild_.end()) {
@@ -306,7 +305,7 @@ void StgMoveParent::MoveChild(StgMoveObject* child) {
 	// Yes, children can have children too.
 	if (child->listOwnedParent_.size() > 0) {
 		for (auto& iPar : child->listOwnedParent_) {
-			iPar->UpdateChildren();
+			if (iPar) iPar->UpdateChildren();
 		}
 	}
 }
@@ -338,7 +337,6 @@ void StgMoveParent::UpdateChildren() {
 				double x0 = child->posX_;
 				double y0 = child->posY_;
 				
-
 				MoveChild(child);
 				if (bMoveChild_) {
 					child->Move();
