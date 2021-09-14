@@ -46,7 +46,7 @@ void StgMoveObject::_Move() {
 
 	if (listOwnedParent_.size() > 0) {
 		for (auto& iPar : listOwnedParent_) {
-			iPar->UpdateChildren();
+			if (iPar) iPar->UpdateChildren();
 		}
 	}
 }
