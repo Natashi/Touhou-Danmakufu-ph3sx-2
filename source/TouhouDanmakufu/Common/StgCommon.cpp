@@ -252,6 +252,19 @@ void StgMoveParent::SetTransformAngle(double z) {
 	}
 	rotZ_ = z;
 }
+double StgMoveParent::GetRadiusAtAngle(double angle) {
+	double rad = 1;
+	if (scaX_ == scaY_) 
+		rad = scaX_;
+	else {
+		if (transOrder_ == ORDER_SCALE_ANGLE)
+			angle -= rotZ_;
+
+		angle = Math::DegreeToRadian(angle);
+		rad = (scaX_ * scaY_) / hypot(scaX_ * cos(angle), scaY_ * sin(angle));
+	}
+	return rad;
+}
 void StgMoveParent::ApplyTransformation() {
 	scaX_ = 1;
 	scaY_ = 1;

@@ -140,6 +140,7 @@ public:
 	double GetTransformScaleX() { return scaX_; }
 	double GetTransformScaleY() { return scaY_; }
 	double GetTransformAngle() { return rotZ_; }
+	double GetRadiusAtAngle(double angle);
 	void SetChildAngleMode(int type) { typeAngle_ = type; }
 	int GetChildAngleMode() { return typeAngle_;  }
 	void SetChildMotionEnable(bool enable) { bMoveChild_ = enable; }
