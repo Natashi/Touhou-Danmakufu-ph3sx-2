@@ -81,17 +81,18 @@ void StaticFpsController::Wait() {
 	DWORD timeCurrent = GetCpuTime();
 	DWORD timeDelta = timeCurrent - timePrevious_;
 
-	int frameAs1Sec = timeDelta * fpsTarget;
-	int time1Sec = CLOCKS_PER_SEC + timeError_;
+	int frameAs1Sec = timeDelta * fpsTarget - timeError_;
+	int time1Sec = CLOCKS_PER_SEC;
 	DWORD sleepTime = 0;
 	//timeError_ = 0;
 
 	if (frameAs1Sec < time1Sec) {
-		sleepTime = std::max((time1Sec - frameAs1Sec) / (int)fpsTarget, 0);
+		int secDelta = time1Sec - frameAs1Sec;
+		sleepTime = std::max(secDelta / (int)fpsTarget, 0);
 
 		if (bUseTimer_ || rateSkip_ != 0) {
 			_Sleep(sleepTime);
-			timeError_ = (time1Sec - frameAs1Sec) % (int)fpsTarget;
+			timeError_ = secDelta - sleepTime * fpsTarget;
 		}
 		if (timeError_ < 0) timeError_ = 0;
 	}
