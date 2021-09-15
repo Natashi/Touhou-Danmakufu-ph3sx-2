@@ -223,6 +223,7 @@ static const std::vector<function> dxFunction = {
 	{ "ColorHexToARGB", DxScript::Func_ColorHexToARGB, 1 },
 	{ "ColorHexToARGB", DxScript::Func_ColorHexToARGB, 2 },		//Overloaded
 	{ "ColorRGBtoHSV", DxScript::Func_ColorRGBtoHSV, 3 },
+	{ "ColorHexRGBtoHSV", DxScript::Func_ColorHexRGBtoHSV, 1 },
 	{ "ColorHSVtoRGB", DxScript::Func_ColorHSVtoRGB, 3 },
 	{ "ColorHSVtoHexRGB", DxScript::Func_ColorHSVtoHexRGB, 3 },
 
@@ -2303,6 +2304,15 @@ gstd::value DxScript::Func_ColorRGBtoHSV(gstd::script_machine* machine, int argc
 
 	D3DXVECTOR3 hsv;
 	ColorAccess::RGBtoHSV(hsv, cr, cg, cb);
+
+	return DxScript::CreateIntArrayValue(reinterpret_cast<FLOAT*>(&hsv), 3U);
+}
+gstd::value DxScript::Func_ColorHexRGBtoHSV(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	D3DCOLOR color = argv[0].as_int();
+
+	D3DXVECTOR3 hsv;
+	ColorAccess::RGBtoHSV(hsv, ColorAccess::GetColorR(color), 
+		ColorAccess::GetColorG(color), ColorAccess::GetColorB(color));
 
 	return DxScript::CreateIntArrayValue(reinterpret_cast<FLOAT*>(&hsv), 3U);
 }
