@@ -275,7 +275,7 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 	v3 = Vectorize::SetF(scale->x, scale->y, 0, 0);
 
 	v2 = Vectorize::Shuffle<_MM_SHUFFLE_R(0, 1, 1, 0)>(v2, v2);
-	v3 = Vectorize::Shuffle<_MM_SHUFFLE_R(0, 1, 1, 0)>(v3, v3);
+	v3 = Vectorize::Shuffle<_MM_SHUFFLE_R(0, 1, 0, 1)>(v3, v3);
 
 	v3 = Vectorize::Mul(v3, v2);
 
