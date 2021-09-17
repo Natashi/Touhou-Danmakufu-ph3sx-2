@@ -1062,6 +1062,13 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 			this->ChangeScreenMode();
 		return FALSE;
 	}
+	case WM_SYSCOMMAND:
+	{
+		if (wParam == SC_MAXIMIZE) {
+			ChangeScreenMode(SCREENMODE_FULLSCREEN);
+			return TRUE;
+		}
+	}
 	}
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
