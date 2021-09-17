@@ -323,9 +323,12 @@ StgItemDataList::~StgItemDataList() {
 bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 	if (!bReload && listReadPath_.find(path) != listReadPath_.end()) return true;
 
+	std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
+
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open()) 
-		throw gstd::wexception(L"AddItemDataList: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
+		throw gstd::wexception(L"AddItemDataList: " + ErrorUtility::GetFileNotFoundErrorMessage(pathReduce, true));
+
 	std::string source = reader->ReadAllString();
 
 	bool res = false;
@@ -397,16 +400,18 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 		}
 
 		listReadPath_.insert(path);
-		Logger::WriteTop(StringUtility::Format(L"Loaded item data: %s", path.c_str()));
+		Logger::WriteTop(StringUtility::Format(L"Loaded item data: %s", pathReduce.c_str()));
 		res = true;
 	}
 	catch (gstd::wexception& e) {
-		std::wstring log = StringUtility::Format(L"Failed to load item data: [Line=%d] (%s)", scanner.GetCurrentLine(), e.what());
+		std::wstring log = StringUtility::Format(L"Failed to load item data: %s\r\n\t[Line=%d] (%s)",
+			pathReduce.c_str(), scanner.GetCurrentLine(), e.what());
 		Logger::WriteTop(log);
 		res = false;
 	}
 	catch (...) {
-		std::wstring log = StringUtility::Format(L"Failed to load item data: [Line=%d] (Unknown error.)", scanner.GetCurrentLine());
+		std::wstring log = StringUtility::Format(L"Failed to load item data: %s\r\n\t[Line=%d] (Unknown error.)",
+			pathReduce.c_str(), scanner.GetCurrentLine());
 		Logger::WriteTop(log);
 		res = false;
 	}

@@ -309,9 +309,12 @@ StgShotDataList::~StgShotDataList() {
 bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 	if (!bReload && listReadPath_.find(path) != listReadPath_.end()) return true;
 
+	std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
+
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open())
-		throw gstd::wexception(L"AddShotDataList: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
+		throw gstd::wexception(L"AddShotDataList: " + ErrorUtility::GetFileNotFoundErrorMessage(pathReduce, true));
+
 	std::string source = reader->ReadAllString();
 
 	bool res = false;
@@ -413,16 +416,18 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 		}
 
 		listReadPath_.insert(path);
-		Logger::WriteTop(StringUtility::Format(L"Loaded shot data: %s", path.c_str()));
+		Logger::WriteTop(StringUtility::Format(L"Loaded shot data: %s", pathReduce.c_str()));
 		res = true;
 	}
 	catch (gstd::wexception& e) {
-		std::wstring log = StringUtility::Format(L"Failed to load shot data: [Line=%d] (%s)", scanner.GetCurrentLine(), e.what());
+		std::wstring log = StringUtility::Format(L"Failed to load shot data: %s\r\n\t[Line=%d] (%s)", 
+			pathReduce.c_str(), scanner.GetCurrentLine(), e.what());
 		Logger::WriteTop(log);
 		res = false;
 	}
 	catch (...) {
-		std::string log = StringUtility::Format("Failed to load shot data: [Line=%d] (Unknown error.)", scanner.GetCurrentLine());
+		std::string log = StringUtility::Format("Failed to load shot data: %s\r\n\t[Line=%d] (Unknown error.)",
+			pathReduce.c_str(), scanner.GetCurrentLine());
 		Logger::WriteTop(log);
 		res = false;
 	}
@@ -1619,8 +1624,9 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listTarget = GetIntersectionTargetList();
-	for (auto& iTarget : listTarget)
+	for (auto& iTarget : listTarget) {
 		intersectionManager->AddTarget(iTarget);
+	}
 }
 
 //****************************************************************************
@@ -2537,7 +2543,6 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 		}
 	}
 }
-
 
 //****************************************************************************
 //StgPatternShotObjectGenerator (ECL-style bullets firing)
