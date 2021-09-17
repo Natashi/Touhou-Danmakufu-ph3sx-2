@@ -240,14 +240,17 @@ static const std::vector<function> dxFunction = {
 	{ "Obj_SetRenderPriorityI", DxScript::Func_Obj_SetRenderPriorityI, 2 },
 	{ "Obj_GetRenderPriority", DxScript::Func_Obj_GetRenderPriority, 1 },
 	{ "Obj_GetRenderPriorityI", DxScript::Func_Obj_GetRenderPriorityI, 1 },
+
 	{ "Obj_GetValue", DxScript::Func_Obj_GetValue, 2 },
-	{ "Obj_GetValueD", DxScript::Func_Obj_GetValueD, 3 },
+	{ "Obj_GetValue", DxScript::Func_Obj_GetValue, 3 },
+	{ "Obj_GetValueD", DxScript::Func_Obj_GetValue, 3 },
 	{ "Obj_SetValue", DxScript::Func_Obj_SetValue, 3 },
 	{ "Obj_DeleteValue", DxScript::Func_Obj_DeleteValue, 2 },
 	{ "Obj_IsValueExists", DxScript::Func_Obj_IsValueExists, 2 },
 
 	{ "Obj_GetValueI", DxScript::Func_Obj_GetValueI, 2 },
-	{ "Obj_GetValueDI", DxScript::Func_Obj_GetValueDI, 3 },
+	{ "Obj_GetValueI", DxScript::Func_Obj_GetValueI, 3 },
+	{ "Obj_GetValueDI", DxScript::Func_Obj_GetValueI, 3 },
 	{ "Obj_SetValueI", DxScript::Func_Obj_SetValueI, 3 },
 	{ "Obj_DeleteValueI", DxScript::Func_Obj_DeleteValueI, 2 },
 	{ "Obj_IsValueExistsI", DxScript::Func_Obj_IsValueExistsI, 2 },
@@ -2439,24 +2442,14 @@ gstd::value DxScript::Func_Obj_GetValue(gstd::script_machine* machine, int argc,
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	std::wstring key = argv[1].as_string();
+	gstd::value def = argc >= 3 ? argv[2] : value();
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		auto itr = obj->mapObjectValue_.find(DxScriptObjectBase::GetKeyHash(key));
-		if (itr != obj->mapObjectValue_.end()) return itr->second;
-	}
-	return value();
-}
-gstd::value DxScript::Func_Obj_GetValueD(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	std::wstring key = argv[1].as_string();
-	gstd::value def = argv[2];
-
-	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj) {
-		auto itr = obj->mapObjectValue_.find(DxScriptObjectBase::GetKeyHash(key));
-		if (itr != obj->mapObjectValue_.end()) return itr->second;
+		auto pValueMap = obj->GetValueMap();
+		auto itr = pValueMap->find(key);
+		if (itr != pValueMap->end())
+			return itr->second;
 	}
 	return def;
 }
@@ -2467,7 +2460,10 @@ gstd::value DxScript::Func_Obj_SetValue(gstd::script_machine* machine, int argc,
 	gstd::value val = argv[2];
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj) obj->SetObjectValue(key, val);
+	if (obj) {
+		auto pValueMap = obj->GetValueMap();
+		(*pValueMap)[key] = val;
+	}
 
 	return value();
 }
@@ -2477,7 +2473,10 @@ gstd::value DxScript::Func_Obj_DeleteValue(gstd::script_machine* machine, int ar
 	std::wstring key = argv[1].as_string();
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj) obj->DeleteObjectValue(key);
+	if (obj) {
+		auto pValueMap = obj->GetValueMap();
+		pValueMap->erase(key);
+	}
 
 	return value();
 }
@@ -2489,7 +2488,10 @@ gstd::value DxScript::Func_Obj_IsValueExists(gstd::script_machine* machine, int 
 	bool res = false;
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj) res = obj->IsObjectValueExists(key);
+	if (obj) {
+		auto pValueMap = obj->GetValueMap();
+		res = pValueMap->find(key) != pValueMap->end();
+	}
 
 	return script->CreateBooleanValue(res);
 }
@@ -2497,37 +2499,28 @@ gstd::value DxScript::Func_Obj_IsValueExists(gstd::script_machine* machine, int 
 gstd::value DxScript::Func_Obj_GetValueI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	int64_t keyInt = argv[1].as_int();
+	int64_t key = argv[1].as_int();
+	gstd::value def = argc >= 3 ? argv[2] : value();
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		auto itr = obj->mapObjectValue_.find(DxScriptObjectBase::GetKeyHashI64(keyInt));
-		if (itr != obj->mapObjectValue_.end()) return itr->second;
-	}
-	return value();
-}
-gstd::value DxScript::Func_Obj_GetValueDI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	int64_t keyInt = argv[1].as_int();
-	gstd::value def = argv[2];
-
-	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj) {
-		auto itr = obj->mapObjectValue_.find(DxScriptObjectBase::GetKeyHashI64(keyInt));
-		if (itr != obj->mapObjectValue_.end()) return itr->second;
+		auto pValueMap = obj->GetValueMapI();
+		auto itr = pValueMap->find(key);
+		if (itr != pValueMap->end())
+			return itr->second;
 	}
 	return def;
 }
 gstd::value DxScript::Func_Obj_SetValueI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	int64_t keyInt = argv[1].as_int();
+	int64_t key = argv[1].as_int();
 	gstd::value val = argv[2];
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		obj->SetObjectValue(DxScriptObjectBase::GetKeyHashI64(keyInt), val);
+		auto pValueMap = obj->GetValueMapI();
+		(*pValueMap)[key] = val;
 	}
 
 	return value();
@@ -2535,11 +2528,12 @@ gstd::value DxScript::Func_Obj_SetValueI(gstd::script_machine* machine, int argc
 gstd::value DxScript::Func_Obj_DeleteValueI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	int64_t keyInt = argv[1].as_int();
+	int64_t key = argv[1].as_int();
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		obj->DeleteObjectValue(DxScriptObjectBase::GetKeyHashI64(keyInt));
+		auto pValueMap = obj->GetValueMapI();
+		pValueMap->erase(key);
 	}
 
 	return value();
@@ -2547,13 +2541,14 @@ gstd::value DxScript::Func_Obj_DeleteValueI(gstd::script_machine* machine, int a
 gstd::value DxScript::Func_Obj_IsValueExistsI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	double keyDbl = argv[1].as_real();
+	int64_t key = argv[1].as_real();
 
 	bool res = false;
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		res = obj->IsObjectValueExists(DxScriptObjectBase::GetKeyHashI64(keyDbl));
+		auto pValueMap = obj->GetValueMapI();
+		res = pValueMap->find(key) != pValueMap->end();
 	}
 
 	return script->CreateBooleanValue(res);
@@ -2716,7 +2711,7 @@ value DxScript::Func_ObjRender_SetScaleXYZ(script_machine* machine, int argc, co
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
-		if (argc == 4) {
+		if (argc > 2) {
 			obj->SetScaleX(argv[1].as_real());
 			obj->SetScaleY(argv[2].as_real());
 			obj->SetScaleZ(argv[3].as_real());

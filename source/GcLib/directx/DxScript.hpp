@@ -251,12 +251,10 @@ namespace directx {
 		static gstd::value Func_Obj_GetRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_GetRenderPriorityI(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_GetValue(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_Obj_GetValueD(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_SetValue(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_DeleteValue(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_IsValueExists(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_Obj_GetValueI);
-		DNH_FUNCAPI_DECL_(Func_Obj_GetValueDI);
 		DNH_FUNCAPI_DECL_(Func_Obj_SetValueI);
 		DNH_FUNCAPI_DECL_(Func_Obj_DeleteValueI);
 		DNH_FUNCAPI_DECL_(Func_Obj_IsValueExistsI);
