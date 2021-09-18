@@ -67,9 +67,12 @@ public:
 
 	void SetParent(ref_unsync_weak_ptr<StgMoveParent> parent) { parent_ = parent; }
 	ref_unsync_weak_ptr<StgMoveParent> GetParent() { return parent_; }
+	std::vector<ref_unsync_weak_ptr<StgMoveParent>>& GetOwnedParentList() { return listOwnedParent_; }
 	void RemoveParent() { parent_ = nullptr; }
 	void SetRelativePosition(float x, float y) { offX_ = x; offY_ = y; }
 	void UpdateRelativePosition();
+	double GetDistanceFromParent();
+	double GetAngleFromParent();
 
 	ref_unsync_ptr<StgMovePattern> GetPattern() { return pattern_; }
 	void SetPattern(ref_unsync_ptr<StgMovePattern> pattern) {
@@ -114,6 +117,8 @@ protected:
 	double scaX_;
 	double scaY_;
 	double rotZ_;
+	double lastX_;
+	double lastY_;
 	std::vector<ref_unsync_weak_ptr<StgMoveObject>> listChild_;
 
 public:
@@ -148,8 +153,10 @@ public:
 	void SetTransformOrder(int order) { transOrder_ = order; }
 	void ApplyTransformation();
 	void ResetTransformation() { scaX_ = 1; scaY_ = 1; rotZ_ = 0; }
-	
-	inline void SetPosition(double x, double y) { posX_ = x; posY_ = y; }
+	inline void UpdatePosition() {
+		posX_ = target_ ? target_->posX_ : 0;
+		posY_ = target_ ? target_->posY_ : 0;
+	}
 	inline double GetX() { return posX_ + offX_; }
 	inline double GetY() { return posY_ + offY_; }
 	void MoveChild(StgMoveObject* child);

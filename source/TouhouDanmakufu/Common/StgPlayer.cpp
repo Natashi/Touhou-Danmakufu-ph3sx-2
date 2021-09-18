@@ -143,26 +143,11 @@ void StgPlayerObject::Move() {
 	else {
 		SetSpeed(0);
 	}
+
 	//Just in case the player is the parent of anything
 	if (listOwnedParent_.size() > 0) {
 		for (auto& iPar : listOwnedParent_) {
-			iPar->SetPosition(posX_, posY_);
-			auto& list = iPar->GetChildren();
-			if (list.size() > 0) {
-				auto iter = list.begin();
-				while (iter != list.end()) {
-					if ((*iter).get() == nullptr) {
-						iter = list.erase(iter);
-					}
-					else {
-						iPar->MoveChild((*iter).get());
-						if (iPar->GetChildAngleMode() == StgMoveParent::ANGLE_FOLLOW)
-							(*iter)->SetDirectionAngle(GetDirectionAngle());
-
-						++iter;
-					}
-				}
-			}
+			if (iPar) iPar->UpdateChildren();
 		}
 	}
 }

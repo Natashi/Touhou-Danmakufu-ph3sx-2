@@ -23,6 +23,16 @@ StgMoveObject::StgMoveObject(StgStageController* stageController) {
 StgMoveObject::~StgMoveObject() {
 	parent_ = nullptr;
 	pattern_ = nullptr;
+
+	if (listOwnedParent_.size() > 0) {
+		for (auto& iPar : listOwnedParent_) {
+			if (iPar && !iPar->bAutoDelete_) {
+				// If parent exists and is not set to auto-delete, remove target
+				iPar->target_ = nullptr;
+				iPar->UpdatePosition();
+			}
+		}
+	}
 }
 void StgMoveObject::Move() {
 	if (mapPattern_.size() > 0) {
@@ -41,7 +51,7 @@ void StgMoveObject::Move() {
 	++framePattern_;
 }
 void StgMoveObject::_Move() {	
-	if (parent_ != nullptr) return; // Objects with parents cannot move without parental supervision
+	if (parent_) return; // Objects with parents cannot move without parental supervision
 	if (bEnableMovement_) Move();
 
 	if (listOwnedParent_.size() > 0) {
@@ -145,6 +155,34 @@ void StgMoveObject::UpdateRelativePosition() { // Optimize later I guess?
 		offY_ = posY_;
 	}
 }
+double StgMoveObject::GetDistanceFromParent() {
+	double x0 = 0, y0 = 0;
+	double x1 = posX_;
+	double y1 = posY_;
+	if (auto& par = parent_) {
+		x0 = par->offX_;
+		y0 = par->offY_;
+		if (auto& tar = par->target_) {
+			x0 += tar->posX_;
+			y0 += tar->posY_;
+		}
+	}
+	return hypot(x1 - x0, y1 - y0);
+}
+double StgMoveObject::GetAngleFromParent() {
+	double x0 = 0, y0 = 0;
+	double x1 = posX_;
+	double y1 = posY_;
+	if (auto& par = parent_) {
+		x0 = par->offX_;
+		y0 = par->offY_;
+		if (auto& tar = par->target_) {
+			x0 += tar->posX_;
+			y0 += tar->posY_;
+		}
+	}
+	return Math::NormalizeAngleDeg(Math::RadianToDegree(atan2(y1 - y0, x1 - x0)));
+}
 
 //****************************************************************************
 //StgMoveParent
@@ -207,18 +245,17 @@ void StgMoveParent::SetParentObject(ref_unsync_weak_ptr<StgMoveParent> self, ref
 	}
 
 	if (parent != nullptr) { // Add reference to target object's "owned parents" list
-		SetPosition(parent->posX_, parent->posY_);
 		parent->listOwnedParent_.push_back(self);
 		target_ = parent;
 	}
 	else {
-		SetPosition(0, 0);
 		target_ = nullptr;
 	}
+	UpdatePosition();
 }
 void StgMoveParent::AddChild(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> child) {
 	// Parenting the player object is an astoundingly stupid idea.
-	if (dynamic_cast<StgPlayerObject*>(child.get()) != nullptr) return;
+	if (dynamic_cast<StgPlayerObject*>(child.get())) return;
 	if (std::find(listChild_.begin(), listChild_.end(), child) != listChild_.end()) return; // Exit if child is already added
 	if (child->parent_ != nullptr) { // Remove from previous parent
 		auto& vec = child->parent_->listChild_;
@@ -326,7 +363,7 @@ void StgMoveParent::UpdateChildren() {
 	// This looks stupid but please have faith in me
 	double px0 = posX_;
 	double py0 = posY_;
-	SetPosition(target_ ? target_->posX_ : 0, target_ ? target_->posY_ : 0);
+	UpdatePosition();
 	double px1 = posX_;
 	double py1 = posY_;
 
@@ -370,8 +407,8 @@ void StgMoveParent::UpdateChildren() {
 					double x = x1 - x0;
 					double y = y1 - y0;
 
-					// ?????
-					if (y != 0 || x != 0) {
+					// This is to prevent, uh, angular seizures
+					if (hypot(x, y) > 0.0001) {
 						double dir = atan2(y, x);
 						child->SetDirectionAngle(dir);
 						if (bRotateLaser_) {
@@ -379,7 +416,6 @@ void StgMoveParent::UpdateChildren() {
 							if (laser) laser->SetLaserAngle(dir);
 						}
 					}
-					
 				}
 
 				++iter;

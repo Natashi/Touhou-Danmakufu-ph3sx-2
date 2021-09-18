@@ -3134,16 +3134,8 @@ gstd::value StgStageScript::Func_ObjMove_GetDistanceFromParent(gstd::script_mach
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 
 	double dist = 0;
-	if (obj) {
-		double x0 = 0, y0 = 0;
-		double x1 = obj->GetPositionX();
-		double y1 = obj->GetPositionY();
-		if (auto& objParent = obj->GetParent()) {
-			x0 = objParent->GetX();
-			y0 = objParent->GetY();
-		}
-		dist = hypot(x1 - x0, y1 - y0);
-	}
+	if (obj)
+		dist = obj->GetDistanceFromParent();
 
 	return script->CreateRealValue(dist);
 }
@@ -3153,16 +3145,8 @@ gstd::value StgStageScript::Func_ObjMove_GetAngleFromParent(gstd::script_machine
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 
 	double angle = 0;
-	if (obj) {
-		double x0 = 0, y0 = 0;
-		double x1 = obj->GetPositionX();
-		double y1 = obj->GetPositionY();
-		if (auto& objParent = obj->GetParent()) {
-			x0 = objParent->GetX();
-			y0 = objParent->GetY();
-		}
-		angle = Math::NormalizeAngleDeg(Math::RadianToDegree(atan2(y1 - y0, x1 - x0)));
-	}
+	if (obj)
+		angle = obj->GetAngleFromParent();
 
 	return script->CreateRealValue(angle);
 }
