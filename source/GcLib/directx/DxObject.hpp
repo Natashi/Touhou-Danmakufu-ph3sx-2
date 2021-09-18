@@ -33,7 +33,8 @@ namespace directx {
 		bool bActive_;
 		bool bAutoDeleteEnable_;
 
-		std::unordered_map<size_t, gstd::value> mapObjectValue_;
+		std::unordered_map<std::wstring, gstd::value> mapObjectValue_;
+		std::unordered_map<int64_t, gstd::value> mapObjectValueI_;
 	public:
 		DxScriptObjectBase();
 		virtual ~DxScriptObjectBase();
@@ -65,23 +66,8 @@ namespace directx {
 		void SetAutoDeleteEnable(bool del) { bAutoDeleteEnable_ = del; }
 		bool IsAutoDeleteEnable() { return bAutoDeleteEnable_; }
 
-		bool IsObjectValueExists(size_t hash) { return mapObjectValue_.find(hash) != mapObjectValue_.end(); }
-		gstd::value GetObjectValue(size_t hash) { return mapObjectValue_[hash]; }
-		void SetObjectValue(size_t hash, gstd::value val) { mapObjectValue_[hash] = val; }
-		void DeleteObjectValue(size_t hash) { mapObjectValue_.erase(hash); }
-
-		template<typename T>
-		static inline const size_t GetKeyHash(const T& hash) {
-			return std::hash<T>{}(hash);
-		}
-		static inline const size_t GetKeyHashI64(int64_t key) {
-			return ((size_t)(key >> 32) ^ 0xe45f6701) + (size_t)(key & 0xffffffff);
-		}
-
-		bool IsObjectValueExists(const std::wstring& key) { return IsObjectValueExists(GetKeyHash(key)); }
-		gstd::value GetObjectValue(const std::wstring& key) { return GetObjectValue(GetKeyHash(key)); }
-		void SetObjectValue(const std::wstring& key, gstd::value val) { SetObjectValue(GetKeyHash(key), val); }
-		void DeleteObjectValue(const std::wstring& key) { DeleteObjectValue(GetKeyHash(key)); }
+		std::unordered_map<std::wstring, gstd::value>* GetValueMap() { return &mapObjectValue_; }
+		std::unordered_map<int64_t, gstd::value>* GetValueMapI() { return &mapObjectValueI_; }
 	};
 
 	//****************************************************************************

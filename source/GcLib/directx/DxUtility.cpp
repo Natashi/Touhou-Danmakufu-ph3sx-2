@@ -174,26 +174,7 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	float sz = angleZ.y;
 	float sx_sy = sx * sy;
 	float sx_cy = sx * cy;
-	//I am unable to make a vectorized code that performs better than the unvectorized code
-	/*
-	__m128 v1 = Vectorize::Mul(Vectorize::Set(cy, sx_sy, cx, sy), Vectorize::Set(cz, sz, sz, cz));
-	__m128 v2 = Vectorize::Mul(Vectorize::Set(sx_cy, cy, sx_sy, cx), Vectorize::Set(sz, sz, cz, cz));
-	__m128 v3 = Vectorize::Mul(Vectorize::Set(sy, sx_cy, cx, cx), Vectorize::Set(sz, cz, sy, cy));
-
-	mat->_12 = -v1.m128_f32[2];
-	mat->_22 = v2.m128_f32[3];
-	mat->_31 = -v3.m128_f32[2];
-	mat->_32 = sx;
-	mat->_33 = v3.m128_f32[3];
-
-	v1 = Vectorize::AddSub(
-		Vectorize::Set(v1.m128_f32[0], v1.m128_f32[3], v3.m128_f32[0], v2.m128_f32[1]),
-		Vectorize::Set(v1.m128_f32[1], v2.m128_f32[0], v3.m128_f32[1], v2.m128_f32[2]));
-	mat->_11 = v1.m128_f32[0];
-	mat->_13 = v1.m128_f32[1];
-	mat->_21 = v1.m128_f32[3];
-	mat->_23 = v1.m128_f32[2];
-	*/
+	
 	mat->_11 = cy * cz - sx_sy * sz;
 	mat->_12 = -cx * sz;
 	mat->_13 = sy * cz + sx_cy * sz;
@@ -205,25 +186,24 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	mat->_33 = cx * cy;
 }
 void DxMath::MatrixApplyScaling(D3DXMATRIX* mat, const D3DXVECTOR3& scale) {
-	//Vectorized / Unvectorized -> ~0.46 (x2.17 times)
 #ifdef __L_MATH_VECTORIZE
-	__m128 v_mat = Vectorize::Mul(
-		Vectorize::Set(mat->_11, mat->_12, mat->_13, mat->_21),
-		Vectorize::Set(scale.x, scale.x, scale.x, scale.y));
-	mat->_11 = v_mat.m128_f32[0];
-	mat->_12 = v_mat.m128_f32[1];
-	mat->_13 = v_mat.m128_f32[2];
-	mat->_21 = v_mat.m128_f32[3];
+	__m128 v1 = Vectorize::SetF(scale.x, scale.y, scale.z, 1);
+	__m128 v2, v3;
 
-	v_mat = Vectorize::Mul(
-		Vectorize::Set(mat->_22, mat->_23, mat->_31, mat->_32),
-		Vectorize::Set(scale.y, scale.y, scale.z, scale.z));
-	mat->_22 = v_mat.m128_f32[0];
-	mat->_23 = v_mat.m128_f32[1];
-	mat->_31 = v_mat.m128_f32[2];
-	mat->_32 = v_mat.m128_f32[3];
+	v2 = Vectorize::Shuffle<_MM_SHUFFLE_R(0, 0, 0, 3)>(v1, v1);
+	v3 = Vectorize::Load(mat->m[0]);
+	v3 = Vectorize::Mul(v3, v2);
+	_mm_storeu_ps(mat->m[0], v3);
 
-	mat->_33 = mat->_33 * scale.z;
+	v2 = Vectorize::Shuffle<_MM_SHUFFLE_R(1, 1, 1, 3)>(v1, v1);
+	v3 = Vectorize::Load(mat->m[1]);
+	v3 = Vectorize::Mul(v3, v2);
+	_mm_storeu_ps(mat->m[1], v3);
+
+	v2 = Vectorize::Shuffle<_MM_SHUFFLE_R(2, 2, 2, 3)>(v1, v1);
+	v3 = Vectorize::Load(mat->m[2]);
+	v3 = Vectorize::Mul(v3, v2);
+	_mm_storeu_ps(mat->m[2], v3);
 #else
 	mat->_11 *= scale.x;
 	mat->_12 *= scale.x;
@@ -246,27 +226,6 @@ D3DXVECTOR4 DxMath::RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, 
 	float sy = angY->y;
 	float cz = angZ->x;
 	float sz = angZ->y;
-#ifdef __L_MATH_VECTORIZE
-	if (angZ) {
-		__m128 v_res = Vectorize::Mul(Vectorize::Set(vx, vy, vx, vy), Vectorize::Set(cz, sz, sz, cz));
-		vec.x = v_res.m128_f32[0] - v_res.m128_f32[1];
-		vec.y = v_res.m128_f32[2] + v_res.m128_f32[3];
-		vx = vec.x;
-		vy = vec.y;
-	}
-	if (angX) {
-		__m128 v_res = Vectorize::Mul(Vectorize::Set(vy, vz, vy, vz), Vectorize::Set(cx, sx, sx, cx));
-		vec.y = v_res.m128_f32[0] - v_res.m128_f32[1];
-		vec.z = v_res.m128_f32[2] + v_res.m128_f32[3];
-		vy = vec.y;
-		vz = vec.z;
-	}
-	if (angY) {
-		__m128 v_res = Vectorize::Mul(Vectorize::Set(vz, vx, vz, vx), Vectorize::Set(sy, cy, cy, sy));
-		vec.x = v_res.m128_f32[0] + v_res.m128_f32[1];
-		vec.z = v_res.m128_f32[2] - v_res.m128_f32[3];
-	}
-#else
 	if (angZ) {
 		vec.x = vx * cz - vy * sz;
 		vec.y = vx * sz + vy * cz;
@@ -283,7 +242,6 @@ D3DXVECTOR4 DxMath::RotatePosFromXYZFactor(D3DXVECTOR4& vec, D3DXVECTOR2* angX, 
 		vec.x = vz * sy + vx * cy;
 		vec.z = vz * cy - vx * sy;
 	}
-#endif
 	return vec;
 }
 void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVECTOR2* angle,
@@ -292,38 +250,58 @@ void DxMath::TransformVertex2D(VERTEX_TLX(&vert)[4], D3DXVECTOR2* scale, D3DXVEC
 	//Vectorized / Unvectorized -> ~0.35 (x2.86 times)
 #ifdef __L_MATH_VECTORIZE
 	__m128 v1, v2, v3;
+	float tmp[4];
+
+	__m128 vPos = Vectorize::SetF(position->x, position->y, 0, 0);
+	vPos = Vectorize::Shuffle<_MM_SHUFFLE_R(0, 1, 0, 1)>(vPos, vPos);
 
 	//Divide the UVs, textureSize should already be inverted
-	{
-		v3 = Vectorize::Set(textureSize->x, textureSize->y, textureSize->x, textureSize->y);
-		for (size_t i = 0; i < 4; i += 2) {		//2 vertices at a time
-			v1 = Vectorize::Mul(
-				Vectorize::Set(vert[i].texcoord.x, vert[i].texcoord.y, vert[i + 1].texcoord.x, vert[i + 1].texcoord.y), v3);
-			memcpy(&(vert[i + 0].texcoord), &v1.m128_f32[0], sizeof(D3DXVECTOR2));
-			memcpy(&(vert[i + 1].texcoord), &v1.m128_f32[2], sizeof(D3DXVECTOR2));
-		}
+	v3 = Vectorize::SetF(textureSize->x, textureSize->y, 0, 0);
+	v3 = Vectorize::Shuffle<_MM_SHUFFLE_R(0, 1, 0, 1)>(v3, v3);
+
+	for (size_t i = 0; i < 4; i += 2) {		//2 vertices at a time
+		v1 = Vectorize::SetF(vert[i].texcoord.x, vert[i].texcoord.y, 
+			vert[i + 1].texcoord.x, vert[i + 1].texcoord.y);
+		v1 = Vectorize::Mul(v1, v3);
+		_mm_storeu_ps(tmp, v1);
+
+		memcpy(&(vert[i + 0].texcoord), &tmp[0], sizeof(D3DXVECTOR2));
+		memcpy(&(vert[i + 1].texcoord), &tmp[2], sizeof(D3DXVECTOR2));
 	}
 
 	//Initialize rotation factor and then scale
-	v3 = Vectorize::Mul(
-		Vectorize::Set(angle->x, angle->y, angle->y, angle->x),
-		Vectorize::Set(scale->x, scale->y, scale->x, scale->y));
+
+	v2 = Vectorize::SetF(angle->x, angle->y, 0, 0);
+	v3 = Vectorize::SetF(scale->x, scale->y, 0, 0);
+
+	v2 = Vectorize::Shuffle<_MM_SHUFFLE_R(0, 1, 1, 0)>(v2, v2);
+	v3 = Vectorize::Shuffle<_MM_SHUFFLE_R(0, 1, 0, 1)>(v3, v3);
+
+	v3 = Vectorize::Mul(v3, v2);
+
 	for (size_t i = 0; i < 4; i += 2) {			//2 vertices at a time
 		//Rotate
-		v1 = Vectorize::Mul(Vectorize::Set(vert[i + 0].position.x, vert[i + 0].position.y,
-			vert[i + 0].position.x, vert[i + 0].position.y), v3);
-		v2 = Vectorize::Mul(Vectorize::Set(vert[i + 1].position.x, vert[i + 1].position.y,
-			vert[i + 1].position.x, vert[i + 1].position.y), v3);
+
+		v2 = Vectorize::SetF(vert[i + 0].position.x, vert[i + 0].position.y, 
+			vert[i + 1].position.x, vert[i + 1].position.y);
+
+		v1 = Vectorize::Shuffle<_MM_SHUFFLE_R(0, 1, 0, 1)>(v2, v2);
+		v1 = Vectorize::Mul(v1, v3);
+
+		v2 = Vectorize::Shuffle<_MM_SHUFFLE_R(2, 3, 2, 3)>(v2, v2);
+		v2 = Vectorize::Mul(v2, v3);
+
 		v1 = Vectorize::AddSub(
-			Vectorize::Set(v1.m128_f32[0], v1.m128_f32[2], v2.m128_f32[0], v2.m128_f32[2]), 
-			Vectorize::Set(v1.m128_f32[1], v1.m128_f32[3], v2.m128_f32[1], v2.m128_f32[3]));
+			Vectorize::Shuffle<_MM_SHUFFLE_R(0, 2, 0, 2)>(v1, v2),
+			Vectorize::Shuffle<_MM_SHUFFLE_R(1, 3, 1, 3)>(v1, v2));
 
 		//Translate
-		v2 = Vectorize::Add(v1, 
-			Vectorize::Set(position->x, position->y, position->x, position->y));
 
-		memcpy(&(vert[i + 0].position), &v2.m128_f32[0], sizeof(D3DXVECTOR2));
-		memcpy(&(vert[i + 1].position), &v2.m128_f32[2], sizeof(D3DXVECTOR2));
+		v1 = Vectorize::Add(v1, vPos);
+		_mm_storeu_ps(tmp, v1);
+
+		memcpy(&(vert[i + 0].position), &tmp[0], sizeof(D3DXVECTOR2));
+		memcpy(&(vert[i + 1].position), &tmp[2], sizeof(D3DXVECTOR2));
 	}
 #else
 	vert[0].texcoord.x *= textureSize->x;

@@ -115,18 +115,12 @@ void ScriptManager::StartScript(int64_t id, bool bUnload) {
 	}
 }
 void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) {
-	/*
-	if (!script->IsBeginLoad()) {
-		throw wexception(StringUtility::Format(L"ScriptManager: Script isn't loaded [%s]",
-			script->GetPath().c_str()));
-	}
-	*/
 	if (!script->IsLoad()) {
 		DWORD count = 0;
 		while (!script->IsLoad()) {
 			if (count % 100 == 0) {
 				Logger::WriteTop(StringUtility::Format(L"ScriptManager: Script is still loading... [%s]",
-					script->GetPath().c_str()));
+					PathProperty::ReduceModuleDirectory(script->GetPath()).c_str()));
 			}
 			::Sleep(10);
 			++count;
@@ -140,7 +134,7 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) 
 			if (iScript->GetScriptID() == script->GetScriptID()) {
 				Logger::WriteTop(StringUtility::Format(
 					L"ScriptManager: Cannot run multiple instances of the same loaded script simultaneously. [%s]\r\n",
-					script->GetPath().c_str()));
+					PathProperty::ReduceModuleDirectory(script->GetPath()).c_str()));
 				return;
 			}
 		}

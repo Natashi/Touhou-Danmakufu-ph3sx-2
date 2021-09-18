@@ -366,7 +366,8 @@ void SystemInformation::_SearchFreePlayerScript(const std::wstring& dir) {
 	listFreePlayer_ = ScriptInformation::FindPlayerScriptInformationList(dir);
 	for (ref_count_ptr<ScriptInformation> info : listFreePlayer_) {
 		const std::wstring& path = info->GetScriptPath();
-		std::wstring log = StringUtility::Format(L"Found free player script: [%s]", path.c_str());
+		std::wstring log = StringUtility::Format(L"Found free player script: [%s]", 
+			PathProperty::ReduceModuleDirectory(path).c_str());
 		ELogger::WriteTop(log);
 	}
 }
