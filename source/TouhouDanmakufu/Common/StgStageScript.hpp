@@ -368,9 +368,10 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetTransformScaleX);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetTransformScaleY);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetTransformAngle);
-	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetRadiusAtAngle);
+	// DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetRadiusAtAngle);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetChildAngleMode);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetChildMotionEnable);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetChildMotionTransformEnable);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetLaserRotationEnable);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformOrder);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_ApplyTransformation);

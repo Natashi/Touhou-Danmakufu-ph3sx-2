@@ -29,6 +29,7 @@ protected:
 	double posY_;
 
 	ref_unsync_ptr<StgMovePattern> pattern_;
+	ref_unsync_ptr<StgMovePattern> patternBak_;
 
 	bool bEnableMovement_;
 
@@ -109,6 +110,7 @@ protected:
 	bool bAutoDelete_;
 	bool bMoveChild_;
 	bool bRotateLaser_;
+	bool bTransformMove_;
 
 	double posX_;
 	double posY_;
@@ -138,18 +140,19 @@ public:
 	void RemoveChildren();
 	
 	void SetPositionOffset(double x, double y) { offX_ = x; offY_ = y; }
-	void SetTransformScale(double x, double y) { scaX_ = unzero(x); scaY_ = unzero(y); }
-	void SetTransformScaleX(double x) { scaX_ = unzero(x); }
-	void SetTransformScaleY(double y) { scaY_ = unzero(y); }
+	void SetTransformScale(double x, double y) { scaX_ = Unzero(x); scaY_ = Unzero(y); }
+	void SetTransformScaleX(double x) { scaX_ = Unzero(x); }
+	void SetTransformScaleY(double y) { scaY_ = Unzero(y); }
 	void SetTransformAngle(double z);
 	double GetTransformScaleX() { return scaX_; }
 	double GetTransformScaleY() { return scaY_; }
 	double GetTransformAngle() { return rotZ_; }
-	double GetRadiusAtAngle(double angle);
+	// double GetRadiusAtAngle(double angle);
 	void SetChildAngleMode(int type) { typeAngle_ = type; }
 	int GetChildAngleMode() { return typeAngle_;  }
 	void SetChildMotionEnable(bool enable) { bMoveChild_ = enable; }
 	void SetLaserRotationEnable(bool enable) { bRotateLaser_ = enable; }
+	void SetChildMotionTransformEnable(bool enable) { bTransformMove_ = enable;  }
 	void SetTransformOrder(int order) { transOrder_ = order; }
 	void ApplyTransformation();
 	void ResetTransformation() { scaX_ = 1; scaY_ = 1; rotZ_ = 0; }
@@ -163,7 +166,7 @@ public:
 
 	void UpdateChildren();
 
-	static inline double unzero(double s) {
+	static inline double Unzero(double s) {
 		return (s >= 0) ? std::max(s, 0.00001) : std::min(s, -0.00001);
 	}
 };

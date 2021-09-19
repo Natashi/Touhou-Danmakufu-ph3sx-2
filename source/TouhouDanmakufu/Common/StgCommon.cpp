@@ -289,6 +289,7 @@ void StgMoveParent::SetTransformAngle(double z) {
 	}
 	rotZ_ = z;
 }
+/*
 double StgMoveParent::GetRadiusAtAngle(double angle) {
 	double rad = 1;
 	if (scaX_ == scaY_) 
@@ -302,6 +303,7 @@ double StgMoveParent::GetRadiusAtAngle(double angle) {
 	}
 	return rad;
 }
+*/
 void StgMoveParent::ApplyTransformation() {
 	scaX_ = 1;
 	scaY_ = 1;

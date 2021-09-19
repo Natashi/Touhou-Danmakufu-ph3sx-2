@@ -425,7 +425,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjMoveParent_GetTransformScaleX", StgStageScript::Func_ObjMoveParent_GetTransformScaleX, 1 },
 	{ "ObjMoveParent_GetTransformScaleY", StgStageScript::Func_ObjMoveParent_GetTransformScaleY, 1 },
 	{ "ObjMoveParent_GetTransformAngle", StgStageScript::Func_ObjMoveParent_GetTransformAngle , 1 },
-	{ "ObjMoveParent_GetRadiusAtAngle", StgStageScript::Func_ObjMoveParent_GetRadiusAtAngle , 2 },
+	// { "ObjMoveParent_GetRadiusAtAngle", StgStageScript::Func_ObjMoveParent_GetRadiusAtAngle , 2 },
 	{ "ObjMoveParent_SetChildAngleMode", StgStageScript::Func_ObjMoveParent_SetChildAngleMode, 2 },
 	{ "ObjMoveParent_SetChildMotionEnable", StgStageScript::Func_ObjMoveParent_SetChildMotionEnable, 2 },
 	{ "ObjMoveParent_SetLaserRotationEnable", StgStageScript::Func_ObjMoveParent_SetLaserRotationEnable, 2 },
@@ -3333,6 +3333,7 @@ gstd::value StgStageScript::Func_ObjMoveParent_GetTransformAngle(gstd::script_ma
 
 	return script->CreateRealValue(z);
 }
+/*
 gstd::value StgStageScript::Func_ObjMoveParent_GetRadiusAtAngle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
@@ -3344,6 +3345,7 @@ gstd::value StgStageScript::Func_ObjMoveParent_GetRadiusAtAngle(gstd::script_mac
 
 	return script->CreateRealValue(rad);
 }
+*/
 gstd::value StgStageScript::Func_ObjMoveParent_SetChildAngleMode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
