@@ -529,6 +529,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjStLaser_SetPermitExpand", StgStageScript::Func_ObjStLaser_SetPermitExpand, 2 },
 	{ "ObjStLaser_GetPermitExpand", StgStageScript::Func_ObjStLaser_GetPermitExpand, 1 },
 	{ "ObjCrLaser_SetTipDecrement", StgStageScript::Func_ObjCrLaser_SetTipDecrement, 2 },
+	{ "ObjCrLaser_SetMappingMode", StgStageScript::Func_ObjCrLaser_SetMappingMode, 2 },
 	{ "ObjCrLaser_GetNodePointer", StgStageScript::Func_ObjCrLaser_GetNodePointer, 2 },
 	{ "ObjCrLaser_GetNodePointerList", StgStageScript::Func_ObjCrLaser_GetNodePointerList, 1 },
 	{ "ObjCrLaser_GetNodePosition", StgStageScript::Func_ObjCrLaser_GetNodePosition, 2 },
@@ -769,6 +770,9 @@ static const std::vector<constant> stgStageConstant = {
 	constant("ORDER_ANGLE_SCALE", StgMoveParent::ORDER_ANGLE_SCALE),
 	constant("ORDER_SCALE_ANGLE", StgMoveParent::ORDER_SCALE_ANGLE),
 	
+	//Curve laser UV mapping modes
+	constant("MAP_NORMAL", StgCurveLaserObject::MAP_NORMAL),
+	constant("MAP_CAPPED", StgCurveLaserObject::MAP_CAPPED),
 };
 
 StgStageScript::StgStageScript(StgStageController* stageController) : StgControlScript(stageController->GetSystemController()) {
@@ -4661,6 +4665,16 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetTipDecrement(gstd::script_machine
 		float dec = argv[1].as_real();
 		//dec = std::clamp(dec, 0.0f, 1.0f);
 		obj->SetTipDecrement(dec);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjCrLaser_SetMappingMode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
+	if (obj) {
+		int mode = argv[1].as_int();
+		obj->SetMappingMode(mode);
 	}
 	return value();
 }
