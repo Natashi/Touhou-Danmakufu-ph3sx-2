@@ -562,9 +562,16 @@ public:
 		D3DXVECTOR2 vertOff[2];
 		D3DCOLOR color;
 	};
+	enum {
+		MAP_NORMAL,
+		MAP_CAPPED
+	};
 protected:
 	std::list<LaserNode> listPosition_;
 	float tipDecrement_;
+	float posXO_;
+	float posYO_;
+	int mapMode_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
@@ -579,6 +586,7 @@ public:
 	}
 	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
+	void SetMappingMode(int mode) { mapMode_ = mode;  }
 
 	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, D3DCOLOR col = 0xffffffff);
 	bool GetNode(size_t indexNode, std::list<LaserNode>::iterator& res);
