@@ -2400,21 +2400,22 @@ void StgCurveLaserObject::_Move() {
 		}
 		D3DXVECTOR2 newNodePos(posX_, posY_);
 		D3DXVECTOR2 newNodeVertF(-move_.y, move_.x);	//90 degrees rotation
-		PushNode(CreateNode(newNodePos, newNodeVertF));
+		PushNode(CreateNode(newNodePos, newNodeVertF, widthRender_));
 	}
 }
 
-StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, D3DCOLOR col) {
+StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, int width, D3DCOLOR col) {
 	LaserNode node;
 	node.pos = pos;
 	{
-		float wRender = widthRender_ / 2.0f;
+		float wRender = width / 2.0f;
 
 		float nx = wRender * rFac.x;
 		float ny = wRender * rFac.y;
 		node.vertOff[0] = { nx, ny };
 		node.vertOff[1] = { -nx, -ny };
 	}
+	node.width = width;
 	node.color = col;
 	return node;
 }

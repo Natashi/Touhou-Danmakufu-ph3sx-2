@@ -491,13 +491,14 @@ public:
 	void SetLength(int length) { length_ = length; lengthF_ = (float)length; }
 	int GetRenderWidth() { return widthRender_; }
 	void SetRenderWidth(int width) {
+		width = std::max(width, 0);
 		widthRender_ = width;
 		if (widthIntersection_ < 0) widthIntersection_ = width / 4;
 	}
 	void SetExtendRate(float rate) { extendRate_ = rate; }
 	void SetMaxLength(int max) { maxLength_ = max; }
 	int GetIntersectionWidth() { return widthIntersection_; }
-	void SetIntersectionWidth(int width) { widthIntersection_ = width; }
+	void SetIntersectionWidth(int width) { widthIntersection_ = std::max(width, 0); }
 	void SetInvalidLength(float start, float end) { invalidLengthStart_ = start; invalidLengthEnd_ = end; }
 	void SetItemDistance(float dist) { itemDistance_ = std::max(dist, 0.1f); }
 };
@@ -593,6 +594,7 @@ public:
 	struct LaserNode {
 		D3DXVECTOR2 pos;
 		D3DXVECTOR2 vertOff[2];
+		int width;
 		D3DCOLOR color;
 	};
 	enum {
@@ -621,7 +623,7 @@ public:
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
 	void SetTipCapping(bool enable) { bCap_ = enable; }
 
-	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, D3DCOLOR col = 0xffffffff);
+	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, int width, D3DCOLOR col = 0xffffffff);
 	bool GetNode(size_t indexNode, std::list<LaserNode>::iterator& res);
 	void GetNodePointerList(std::vector<LaserNode*>* listRes);
 	std::list<LaserNode>::iterator PushNode(const LaserNode& node);
