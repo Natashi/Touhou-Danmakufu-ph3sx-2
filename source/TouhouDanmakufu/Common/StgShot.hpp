@@ -571,7 +571,7 @@ protected:
 	float tipDecrement_;
 	float posXO_;
 	float posYO_;
-	int mapMode_;
+	bool bCap_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
@@ -586,7 +586,7 @@ public:
 	}
 	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
-	void SetMappingMode(int mode) { mapMode_ = mode;  }
+	void SetTipCapping(bool enable) { bCap_ = enable; }
 
 	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, D3DCOLOR col = 0xffffffff);
 	bool GetNode(size_t indexNode, std::list<LaserNode>::iterator& res);
