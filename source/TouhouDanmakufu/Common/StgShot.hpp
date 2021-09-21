@@ -561,7 +561,6 @@ public:
 	struct LaserNode {
 		D3DXVECTOR2 pos;
 		D3DXVECTOR2 vertOff[2];
-		int width;
 		D3DCOLOR color;
 	};
 	enum {

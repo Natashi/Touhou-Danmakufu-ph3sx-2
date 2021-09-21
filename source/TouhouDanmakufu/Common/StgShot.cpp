@@ -2247,7 +2247,6 @@ StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2
 		node.vertOff[0] = { nx, ny };
 		node.vertOff[1] = { -nx, -ny };
 	}
-	node.width = width;
 	node.color = col;
 	return node;
 }
@@ -2486,6 +2485,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				auto itrNext = std::next(itr);
 				D3DXVECTOR2* pos = &itr->pos;
 				D3DXVECTOR2* posNext = &itrNext->pos;
+				// D3DXVECTOR2* off = &itr->vertOff[0];
+				// float wid = std::max(hypotf(off->x, off->y) * 2, 1.0f);
 				float incDist = hypotf(posNext->x - pos->x, posNext->y - pos->y) * rcHeigh / renWid;
 
 				float& ref = arrInc[iPos];

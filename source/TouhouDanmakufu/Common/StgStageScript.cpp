@@ -482,6 +482,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjCrLaser_GetNodePointerList", StgStageScript::Func_ObjCrLaser_GetNodePointerList, 1 },
 	{ "ObjCrLaser_GetNodePosition", StgStageScript::Func_ObjCrLaser_GetNodePosition, 2 },
 	{ "ObjCrLaser_GetNodeAngle", StgStageScript::Func_ObjCrLaser_GetNodeAngle, 2 },
+	{ "ObjCrLaser_GetNodeRenderWidth", StgStageScript::Func_ObjCrLaser_GetNodeRenderWidth, 2 },
 	{ "ObjCrLaser_GetNodeColor", StgStageScript::Func_ObjCrLaser_GetNodeColor, 2 },
 	{ "ObjCrLaser_GetNodeColorHex", StgStageScript::Func_ObjCrLaser_GetNodeColorHex, 2 },
 	{ "ObjCrLaser_SetNode", StgStageScript::Func_ObjCrLaser_SetNode, 6 },
@@ -4104,6 +4105,21 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodeAngle(gstd::script_machine* m
 	}
 	return script->CreateRealValue(angle);
 }
+gstd::value StgStageScript::Func_ObjCrLaser_GetNodeRenderWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+
+	double width = 0.0;
+	int id = argv[0].as_int();
+	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
+			D3DXVECTOR2& vec = ptr->vertOff[0];
+			width = hypot(vec.x, vec.y) * 2;
+		}
+	}
+	return script->CreateRealValue(width);
+}
 gstd::value StgStageScript::Func_ObjCrLaser_GetNodeColor(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
@@ -4196,12 +4212,12 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetNodeRenderWidth(gstd::script_mach
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
 		if (ptr) {
 			int width = std::max(argv[2].as_int(), 1i64);
-			float oldWidth = ptr->width * 0.5f;
-
-			D3DXVECTOR2 oldMove = ptr->vertOff[0];
-			D3DXVECTOR2 newMove;
-			newMove[0] = oldMove[0] / oldWidth;
-			newMove[1] = oldMove[1] / oldWidth;
+			D3DXVECTOR2& oldMove = ptr->vertOff[0];
+			float oldWidth = hypotf(oldMove.x, oldMove.y);
+			
+			D3DXVECTOR2 newMove(oldMove);
+			newMove[0] /= oldWidth;
+			newMove[1] /= oldWidth;
 
 			StgCurveLaserObject::LaserNode node = obj->CreateNode(ptr->pos, newMove, width, ptr->color);
 			*ptr = node;
