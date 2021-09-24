@@ -2362,6 +2362,7 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 	itemDistance_ = 6.0f;
 
 	bCap_ = false;
+	bSmoothAngle_ = false;
 
 	pShotIntersectionTarget_ = nullptr;
 }
@@ -2685,7 +2686,26 @@ void StgCurveLaserObject::RenderOnShotManager() {
 			std::fill(arrInc.begin(), arrInc.end(), rcInc);
 
 		size_t iPos = 0U;
+		int range = 2;
 		for (auto itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
+			D3DXVECTOR2 pos = itr->pos;
+			D3DXVECTOR2 vertOff[2]{ itr->vertOff[0], itr->vertOff[1] };
+
+			if (bSmoothAngle_ && countPos > 1 && iPos > 1 && iPos < countPos - 2) {
+				auto itrNext = listPosition_.begin();
+				auto itrPrev = listPosition_.begin();
+				std::advance(itrNext, std::clamp((int)iPos + range, 0, (int)countPos - 1));
+				std::advance(itrPrev, std::clamp((int)iPos - range, 0, (int)countPos - 1));
+				D3DXVECTOR2* posNext = &itrNext->pos;
+				D3DXVECTOR2* posPrev = &itrPrev->pos;
+
+				float arc = atan2f(posNext->y - posPrev->y, posNext->x - posPrev->x);
+
+				D3DXVECTOR2 vecNew(sinf(arc) * widthRender_ / 2.0f, -cosf(arc) * widthRender_ / 2.0f);
+				vertOff[0] = vecNew;
+				vertOff[1] = -vecNew;
+			}
+
 			float nodeAlpha = baseAlpha;
 			if (iPos > halfPos)
 				nodeAlpha = Math::Lerp::Linear(baseAlpha, tipAlpha, (iPos - halfPos + 1) / (float)halfPos);
@@ -2705,8 +2725,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				VERTEX_TLX vt;
 
 				_SetVertexUV(vt, ptrSrc[(iVert & 1) << 1] * texSizeInv.x, rectV);
-				_SetVertexPosition(vt, itr->pos.x + itr->vertOff[iVert].x,
-					itr->pos.y + itr->vertOff[iVert].y, position_.z);
+				_SetVertexPosition(vt, pos.x + vertOff[iVert].x,
+					pos.y + vertOff[iVert].y, position_.z);
 				_SetVertexColorARGB(vt, thisColor);
 
 				verts[iVert] = vt;
