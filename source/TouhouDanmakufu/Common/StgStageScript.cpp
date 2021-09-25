@@ -4195,10 +4195,13 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetNodeAngle(gstd::script_machine* m
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
 		if (ptr) {
+			D3DXVECTOR2& vec = ptr->vertOff[0];
+			float width = hypot(vec.x, vec.y) * 2;
+
 			float angle = Math::DegreeToRadian(argv[2].as_real());
 			D3DXVECTOR2 rMove = D3DXVECTOR2(-sinf(angle), cosf(angle));
 
-			StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(0, 0), rMove, 0);
+			StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(0, 0), rMove, width, 0);
 			memcpy(ptr->vertOff, node.vertOff, sizeof(D3DXVECTOR2) * 2U);
 		}
 	}
