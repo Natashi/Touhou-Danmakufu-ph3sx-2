@@ -282,10 +282,12 @@ namespace gstd {
 			pos[1] = oy + y;
 		}
 
-		static inline size_t FloorBase(size_t val, size_t base) {
+		template<typename T>
+		static inline T FloorBase(T val, T base) {
 			return (val % base != 0) ? ((val / base) * base) : val;
 		}
-		static inline size_t CeilBase(size_t val, size_t base) {
+		template<typename T>
+		static inline T CeilBase(T val, T base) {
 			return (val % base != 0) ? ((val / base) * base + base) : val;
 		}
 
