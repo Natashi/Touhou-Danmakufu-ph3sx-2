@@ -2438,7 +2438,7 @@ void StgCurveLaserObject::GetNodePointerList(std::vector<LaserNode*>* listRes) {
 }
 std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::PushNode(const LaserNode& node) {
 	listPosition_.push_front(node);
-	if (listPosition_.size() > length_)
+	while (listPosition_.size() > length_)
 		listPosition_.pop_back();
 	return listPosition_.begin();
 }
