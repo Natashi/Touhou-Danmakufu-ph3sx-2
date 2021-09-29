@@ -419,6 +419,7 @@ namespace directx {
 		static gstd::value Func_ObjText_SetAutoTransCenter(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjText_SetHorizontalAlignment(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjText_SetSyntacticAnalysis(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_ObjText_GetText(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjText_GetTextLength(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjText_GetTextLengthCU(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjText_GetTextLengthCUL(gstd::script_machine* machine, int argc, const gstd::value* argv);

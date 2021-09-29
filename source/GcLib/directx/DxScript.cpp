@@ -438,6 +438,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjText_SetAutoTransCenter", DxScript::Func_ObjText_SetAutoTransCenter, 2 },
 	{ "ObjText_SetHorizontalAlignment", DxScript::Func_ObjText_SetHorizontalAlignment, 2 },
 	{ "ObjText_SetSyntacticAnalysis", DxScript::Func_ObjText_SetSyntacticAnalysis, 2 },
+	{ "ObjText_GetText", DxScript::Func_ObjText_GetText, 1 },
 	{ "ObjText_GetTextLength", DxScript::Func_ObjText_GetTextLength, 1 },
 	{ "ObjText_GetTextLengthCU", DxScript::Func_ObjText_GetTextLengthCU, 1 },
 	{ "ObjText_GetTextLengthCUL", DxScript::Func_ObjText_GetTextLengthCUL, 1 },
@@ -4369,6 +4370,16 @@ gstd::value DxScript::Func_ObjText_SetSyntacticAnalysis(gstd::script_machine* ma
 	if (obj)
 		obj->SetSyntacticAnalysis(argv[1].as_boolean());
 	return value();
+}
+value DxScript::Func_ObjText_GetText(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	std::wstring res = L"";
+	DxScriptTextObject* obj = script->GetObjectPointerAs<DxScriptTextObject>(id);
+	if (obj) {
+		res = obj->GetText();
+	}
+	return script->CreateStringValue(res);
 }
 value DxScript::Func_ObjText_GetTextLength(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
