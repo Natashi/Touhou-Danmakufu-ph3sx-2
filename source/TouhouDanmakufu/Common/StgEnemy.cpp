@@ -69,41 +69,40 @@ void StgEnemyManager::LoadBossSceneScriptsInThread(std::vector<shared_ptr<StgEne
 }
 void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> event) {
 	shared_ptr<_ListBossSceneData> pListData = std::dynamic_pointer_cast<_ListBossSceneData>(event->GetSource());
-	if (pListData == nullptr) return;
+	if (pListData == nullptr || pListData->ptr == nullptr) return;
 
 	{
-		Lock lock(lock_);
-
-		auto scriptManager = stageController_->GetScriptManager();
+		weak_ptr<StgStageScriptManager> scriptManagerWeak = stageController_->GetScriptManagerRef();
 		StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
 
-		for (auto itrData = pListData->ptr->begin(); itrData != pListData->ptr->end(); ++itrData) {
-			shared_ptr<StgEnemyBossSceneData> pData = *itrData;
-			if (pData->bLoad_) return;
+		for (size_t i = 0; i < pListData->ptr->size(); ++i) {
+			shared_ptr<StgEnemyBossSceneData> pData = pListData->ptr->at(i);
+			if (pData == nullptr || pData->bLoad_) continue;
 
-			try {
-				auto script = scriptManager->LoadScript(pData->GetPath(), StgStageScript::TYPE_STAGE);
-				if (script == nullptr)
-					throw gstd::wexception(StringUtility::Format(L"Cannot load script: %s", pData->GetPath().c_str()));
-				pData->SetScriptPointer(script);
+			LOCK_WEAK(pManager, scriptManagerWeak) {
+				try {
+					auto script = pManager->LoadScript(pData->GetPath(), StgStageScript::TYPE_STAGE);
+					if (script == nullptr)
+						throw gstd::wexception(StringUtility::Format(L"Cannot load script: %s", pData->GetPath().c_str()));
+					pData->SetScriptPointer(script);
 
-				/*
-				{
-					StaticLock lock2 = StaticLock();
-					pData->LoadSceneEvents(stageController_);
+					pData->bLoad_ = true;
 				}
-				*/
+				catch (gstd::wexception& e) {
+					Logger::WriteTop(e.what());
 
-				pData->bLoad_ = true;
+					pData->SetScriptPointer(weak_ptr<ManagedScript>());
+					pData->bLoad_ = true;
+
+					pManager->SetError(e.what());
+
+					break;
+				}
 			}
-			catch (gstd::wexception& e) {
-				Logger::WriteTop(e.what());
-
-				pData->SetScriptPointer(weak_ptr<ManagedScript>());
-				pData->bLoad_ = true;
-
-				scriptManager->SetError(e.what());
-
+			else {
+				for (auto& iData : *(pListData->ptr)) {
+					if (iData) iData->bLoad_ = true;
+				}
 				break;
 			}
 		}
