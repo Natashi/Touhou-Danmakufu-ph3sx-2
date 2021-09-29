@@ -185,6 +185,7 @@
 #if (!defined(__L_ENGINE_LEGACY))
 
 #define __L_MATH_VECTORIZE
+#define __L_USE_HWINSTANCING
 
 #endif
 

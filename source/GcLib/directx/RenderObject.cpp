@@ -1421,9 +1421,11 @@ void ParticleRenderer2D::Render() {
 		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationInstancedTLX());
 
 		device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
+#ifdef __L_USE_HWINSTANCING
 		device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | countRenderInstance);
 		device->SetStreamSource(1, instanceBuffer->GetBuffer(), 0, sizeof(VERTEX_INSTANCE));
 		device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA | 1U);
+#endif
 
 		device->SetIndices(indexBuffer->GetBuffer());
 
@@ -1464,14 +1466,26 @@ void ParticleRenderer2D::Render() {
 			effect->Begin(&countPass, 0);
 			for (UINT iPass = 0; iPass < countPass; ++iPass) {
 				effect->BeginPass(iPass);
+
+#ifdef __L_USE_HWINSTANCING
 				device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
+#else
+				for (UINT nInst = 0; nInst < countRenderInstance; ++nInst) {
+					device->SetStreamSource(1, instanceBuffer->GetBuffer(), 
+						nInst * sizeof(VERTEX_INSTANCE), 0);
+					device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
+				}
+#endif
+
 				effect->EndPass();
 			}
 			effect->End();
 		}
 
-		device->SetStreamSourceFreq(0, 0);
-		device->SetStreamSourceFreq(1, 0);
+#ifdef __L_USE_HWINSTANCING
+		device->SetStreamSourceFreq(0, 1);
+		device->SetStreamSourceFreq(1, 1);
+#endif
 	}
 }
 ParticleRenderer3D::ParticleRenderer3D() {
@@ -1520,14 +1534,16 @@ void ParticleRenderer3D::Render() {
 			indexBuffer->UpdateBuffer(&lockParam);
 		}
 
+		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationInstancedLX());
+
 		device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_LX));
+#ifdef __L_USE_HWINSTANCING
 		device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | countRenderInstance);
 		device->SetStreamSource(1, instanceBuffer->GetBuffer(), 0, sizeof(VERTEX_INSTANCE));
 		device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA | 1U);
+#endif
 
 		device->SetIndices(indexBuffer->GetBuffer());
-
-		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationInstancedLX());
 
 		{
 			UINT countPass = 1;
@@ -1585,14 +1601,26 @@ void ParticleRenderer3D::Render() {
 			effect->Begin(&countPass, 0);
 			for (UINT iPass = 0; iPass < countPass; ++iPass) {
 				effect->BeginPass(iPass);
+
+#ifdef __L_USE_HWINSTANCING
 				device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
+#else
+				for (UINT nInst = 0; nInst < countRenderInstance; ++nInst) {
+					device->SetStreamSource(1, instanceBuffer->GetBuffer(),
+						nInst * sizeof(VERTEX_INSTANCE), 0);
+					device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
+				}
+#endif
+
 				effect->EndPass();
 			}
 			effect->End();
 		}
 
+#ifdef __L_USE_HWINSTANCING
 		device->SetStreamSourceFreq(0, 1);
 		device->SetStreamSourceFreq(1, 1);
+#endif
 	}
 }
 
