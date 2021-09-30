@@ -1766,15 +1766,16 @@ void StgLooseLaserObject::Work() {
 			--(delay_.time);
 			delay_.angle += delay_.spin;
 		}
-		else _ExtendLength();
 	}
 
 	_CommonWorkTask();
 	//	_AddIntersectionRelativeTarget();
 }
 void StgLooseLaserObject::_Move() {
-	if (delay_.time == 0 || bEnableMotionDelay_)
+	if (delay_.time == 0 || bEnableMotionDelay_) {
 		StgMoveObject::_Move();
+		_ExtendLength();
+	}
 	DxScriptRenderObject::SetX(posX_);
 	DxScriptRenderObject::SetY(posY_);
 
@@ -2379,16 +2380,17 @@ void StgCurveLaserObject::Work() {
 		if (delay_.time > 0) {
 			--(delay_.time);
 			delay_.angle += delay_.spin;
-		}
-		// else _ExtendLength();
+		}	
 	}
 
 	_CommonWorkTask();
 	//	_AddIntersectionRelativeTarget();
 }
 void StgCurveLaserObject::_Move() {
-	if (delay_.time == 0 || bEnableMotionDelay_)
+	if (delay_.time == 0 || bEnableMotionDelay_) {
 		StgMoveObject::_Move();
+		_ExtendLength();
+	}
 	DxScriptRenderObject::SetX(posX_);
 	DxScriptRenderObject::SetY(posY_);
 
