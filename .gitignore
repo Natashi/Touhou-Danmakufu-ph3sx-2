@@ -282,4 +282,5 @@ __pycache__/
 /source/ext/steam_api/
 /library/steam_api.lib
 /source/Steam/
-/DnhExecutor/Release_vectorless
+/DnhExecutor/Release_legacy
+/source/GcLib/gstd/ArchiveEncryption.hpp
