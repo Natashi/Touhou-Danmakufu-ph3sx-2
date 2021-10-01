@@ -2797,8 +2797,10 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 //****************************************************************************
 //StgPatternShotObjectGenerator (ECL-style bullets firing)
 //****************************************************************************
-StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
+StgPatternShotObjectGenerator::StgPatternShotObjectGenerator(StgStageController* stageController) {
+	stageController_ = stageController;
 	typeObject_ = TypeObject::ShotPattern;
+	bAutoDelete_ = false;
 
 	idShotData_ = -1;
 	typeOwner_ = StgShotObject::OWNER_ENEMY;
@@ -2831,9 +2833,17 @@ StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
 StgPatternShotObjectGenerator::~StgPatternShotObjectGenerator() {
 }
 
+void StgPatternShotObjectGenerator::CleanUp() {
+	if (parent_ == nullptr && bAutoDelete_) {
+		auto objectManager = stageController_->GetMainObjectManager();
+		objectManager->DeleteObject(this);
+	}
+}
+
 void StgPatternShotObjectGenerator::CopyFrom(StgPatternShotObjectGenerator* other) {
 	parent_ = other->parent_;
 	listTransformation_ = other->listTransformation_;
+	bAutoDelete_ = other->bAutoDelete_;
 
 	idShotData_ = other->idShotData_;
 	//typeOwner_ = other->typeOwner_;

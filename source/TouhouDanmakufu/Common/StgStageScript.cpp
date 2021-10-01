@@ -551,6 +551,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjPatternShot_Fire", StgStageScript::Func_ObjPatternShot_Fire, 1 },
 	{ "ObjPatternShot_FireReturn", StgStageScript::Func_ObjPatternShot_FireReturn, 1 },
 	{ "ObjPatternShot_SetParentObject", StgStageScript::Func_ObjPatternShot_SetParentObject, 2 },
+	{ "ObjPatternShot_SetAutoDelete", StgStageScript::Func_ObjPatternShot_SetAutoDelete, 2 },
 	{ "ObjPatternShot_SetPatternType", StgStageScript::Func_ObjPatternShot_SetPatternType, 2 },
 	{ "ObjPatternShot_SetShotType", StgStageScript::Func_ObjPatternShot_SetShotType, 2 },
 	{ "ObjPatternShot_SetInitialBlendMode", StgStageScript::Func_ObjPatternShot_SetInitialBlendMode, 2 },
@@ -4913,7 +4914,7 @@ gstd::value StgStageScript::Func_ObjPatternShot_Create(gstd::script_machine* mac
 	int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 		StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
-	ref_unsync_ptr<StgPatternShotObjectGenerator> obj = new StgPatternShotObjectGenerator();
+	ref_unsync_ptr<StgPatternShotObjectGenerator> obj = new StgPatternShotObjectGenerator(stageController);
 	obj->SetTypeOwner(typeOwner);
 
 	int id = script->AddObject(obj);
@@ -4953,6 +4954,18 @@ gstd::value StgStageScript::Func_ObjPatternShot_SetParentObject(gstd::script_mac
 		ref_unsync_ptr<StgMoveObject> objParent = ref_unsync_ptr<StgMoveObject>::Cast(script->GetObject(idParent));
 		if (objParent)
 			obj->SetParent(objParent);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjPatternShot_SetAutoDelete(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	int id = argv[0].as_int();
+	StgPatternShotObjectGenerator* obj = script->GetObjectPointerAs<StgPatternShotObjectGenerator>(id);
+	if (obj) {
+		bool enable = argv[1].as_boolean();
+		obj->SetAutoDelete(enable);
 	}
 	return value();
 }

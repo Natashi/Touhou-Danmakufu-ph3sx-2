@@ -491,6 +491,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_Fire);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_FireReturn);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetParentObject);
+	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetAutoDelete);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetPatternType);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetShotType);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetInitialBlendMode);

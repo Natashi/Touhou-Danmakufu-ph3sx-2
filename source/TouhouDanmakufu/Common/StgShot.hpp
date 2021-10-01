@@ -658,7 +658,9 @@ public:
 		BASEPOINT_RESET = -256 * 256,
 	};
 private:
+	StgStageController* stageController_;
 	ref_unsync_weak_ptr<StgMoveObject> parent_;
+	bool bAutoDelete_;
 
 	int idShotData_;
 	int typeOwner_;
@@ -695,11 +697,12 @@ private:
 
 	std::vector<StgPatternShotTransform> listTransformation_;
 public:
-	StgPatternShotObjectGenerator();
+	StgPatternShotObjectGenerator(StgStageController* stageController);
 	~StgPatternShotObjectGenerator();
 
 	virtual void Render() {}
 	virtual void SetRenderState() {}
+	virtual void CleanUp();
 
 	void CopyFrom(ref_unsync_ptr<StgPatternShotObjectGenerator> other) {
 		StgPatternShotObjectGenerator::CopyFrom(other.get());
@@ -711,6 +714,7 @@ public:
 	void ClearTransformation() { listTransformation_.clear(); }
 
 	void SetParent(ref_unsync_ptr<StgMoveObject> obj) { parent_ = obj; }
+	void SetAutoDelete(bool enable) { bAutoDelete_ = enable; }
 
 	void FireSet(void* scriptData, StgStageController* controller, std::vector<int>* idVector);
 
