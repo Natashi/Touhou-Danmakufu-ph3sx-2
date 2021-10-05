@@ -64,8 +64,8 @@ namespace directx {
 		//gstd::Lock lock(pManager_->GetLock());
 		this->Release();
 		sizeInBytes_ = size_ * stride_;
-		return pDevice_->CreateVertexBuffer(sizeInBytes_, D3DUSAGE_DYNAMIC, fvf_,
-			D3DPOOL_DEFAULT, &buffer_, nullptr);
+		return pDevice_->CreateVertexBuffer(sizeInBytes_, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 
+			fvf_, D3DPOOL_DEFAULT, &buffer_, nullptr);
 	}
 	FixedIndexBuffer::FixedIndexBuffer(IDirect3DDevice9* device) : BufferBase(device) {
 		pDevice_ = device;
@@ -82,7 +82,7 @@ namespace directx {
 		//gstd::Lock lock(pManager_->GetLock());
 		this->Release();
 		sizeInBytes_ = size_ * stride_;
-		return pDevice_->CreateIndexBuffer(sizeInBytes_, D3DUSAGE_DYNAMIC,
+		return pDevice_->CreateIndexBuffer(sizeInBytes_, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,
 			format_, D3DPOOL_DEFAULT, &buffer_, nullptr);
 	}
 
@@ -108,8 +108,8 @@ namespace directx {
 		//gstd::Lock lock(pManager_->GetLock());
 		this->Release();
 		sizeInBytes_ = size_ * stride_;
-		return pDevice_->CreateVertexBuffer(sizeInBytes_, D3DUSAGE_DYNAMIC, fvf_,
-			D3DPOOL_DEFAULT, &buffer_, nullptr);
+		return pDevice_->CreateVertexBuffer(sizeInBytes_, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 
+			fvf_, D3DPOOL_DEFAULT, &buffer_, nullptr);
 	}
 	void GrowableVertexBuffer::Expand(size_t newSize) {
 		if (size_ >= newSize) return;
@@ -131,7 +131,7 @@ namespace directx {
 		//gstd::Lock lock(pManager_->GetLock());
 		this->Release();
 		sizeInBytes_ = size_ * stride_;
-		return pDevice_->CreateIndexBuffer(sizeInBytes_, D3DUSAGE_DYNAMIC,
+		return pDevice_->CreateIndexBuffer(sizeInBytes_, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY,
 			format_, D3DPOOL_DEFAULT, &buffer_, nullptr);
 	}
 	void GrowableIndexBuffer::Expand(size_t newSize) {

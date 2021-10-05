@@ -1421,9 +1421,11 @@ void ParticleRenderer2D::Render() {
 		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationInstancedTLX());
 
 		device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
+#ifdef __L_USE_HWINSTANCING
 		device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | countRenderInstance);
 		device->SetStreamSource(1, instanceBuffer->GetBuffer(), 0, sizeof(VERTEX_INSTANCE));
 		device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA | 1U);
+#endif
 
 		device->SetIndices(indexBuffer->GetBuffer());
 
@@ -1464,14 +1466,26 @@ void ParticleRenderer2D::Render() {
 			effect->Begin(&countPass, 0);
 			for (UINT iPass = 0; iPass < countPass; ++iPass) {
 				effect->BeginPass(iPass);
+
+#ifdef __L_USE_HWINSTANCING
 				device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
+#else
+				for (UINT nInst = 0; nInst < countRenderInstance; ++nInst) {
+					device->SetStreamSource(1, instanceBuffer->GetBuffer(), 
+						nInst * sizeof(VERTEX_INSTANCE), 0);
+					device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
+				}
+#endif
+
 				effect->EndPass();
 			}
 			effect->End();
 		}
 
-		device->SetStreamSourceFreq(0, 0);
-		device->SetStreamSourceFreq(1, 0);
+#ifdef __L_USE_HWINSTANCING
+		device->SetStreamSourceFreq(0, 1);
+		device->SetStreamSourceFreq(1, 1);
+#endif
 	}
 }
 ParticleRenderer3D::ParticleRenderer3D() {
@@ -1520,14 +1534,16 @@ void ParticleRenderer3D::Render() {
 			indexBuffer->UpdateBuffer(&lockParam);
 		}
 
+		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationInstancedLX());
+
 		device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_LX));
+#ifdef __L_USE_HWINSTANCING
 		device->SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | countRenderInstance);
 		device->SetStreamSource(1, instanceBuffer->GetBuffer(), 0, sizeof(VERTEX_INSTANCE));
 		device->SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA | 1U);
+#endif
 
 		device->SetIndices(indexBuffer->GetBuffer());
-
-		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationInstancedLX());
 
 		{
 			UINT countPass = 1;
@@ -1585,14 +1601,26 @@ void ParticleRenderer3D::Render() {
 			effect->Begin(&countPass, 0);
 			for (UINT iPass = 0; iPass < countPass; ++iPass) {
 				effect->BeginPass(iPass);
+
+#ifdef __L_USE_HWINSTANCING
 				device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
+#else
+				for (UINT nInst = 0; nInst < countRenderInstance; ++nInst) {
+					device->SetStreamSource(1, instanceBuffer->GetBuffer(),
+						nInst * sizeof(VERTEX_INSTANCE), 0);
+					device->DrawIndexedPrimitive(typePrimitive_, 0, 0, countVertex, 0, countPrim);
+				}
+#endif
+
 				effect->EndPass();
 			}
 			effect->End();
 		}
 
-		device->SetStreamSourceFreq(0, 0);
-		device->SetStreamSourceFreq(1, 0);
+#ifdef __L_USE_HWINSTANCING
+		device->SetStreamSourceFreq(0, 1);
+		device->SetStreamSourceFreq(1, 1);
+#endif
 	}
 }
 
@@ -1637,9 +1665,10 @@ void DxMesh::Release() {
 }
 bool DxMesh::CreateFromFile(const std::wstring& path) {
 	try {
-		//path = PathProperty::GetUnique(path);
 		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-		if (reader == nullptr) throw gstd::wexception("File not found.");
+		if (reader == nullptr || !reader->Open())
+			throw wexception(ErrorUtility::GetFileNotFoundErrorMessage(PathProperty::ReduceModuleDirectory(path), true));
+
 		return CreateFromFileReader(reader);
 	}
 	catch (gstd::wexception& e) {
@@ -1715,7 +1744,8 @@ void DxMeshManager::_ReleaseMeshData(const std::wstring& name) {
 		auto itr = mapMeshData_.find(name);
 		if (itr != mapMeshData_.end()) {
 			mapMeshData_.erase(itr);
-			Logger::WriteTop(StringUtility::Format(L"DxMeshManager: Mesh released. [%s]", name.c_str()));
+			Logger::WriteTop(StringUtility::Format(L"DxMeshManager: Mesh released. [%s]", 
+				PathProperty::ReduceModuleDirectory(name).c_str()));
 		}
 	}
 }
@@ -1789,16 +1819,18 @@ void DxMeshManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> 
 		shared_ptr<DxMeshData> data = mesh->data_;
 		if (data->bLoad_) return;
 
+		std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
+
 		bool res = false;
 		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-		if (reader != nullptr && reader->Open()) {
+		if (reader != nullptr && reader->Open())
 			res = data->CreateFromFileReader(reader);
-		}
+
 		if (res) {
-			Logger::WriteTop(StringUtility::Format(L"Mesh loaded.(LT) [%s]", path.c_str()));
+			Logger::WriteTop(StringUtility::Format(L"DxMeshManager(LT): Mesh loaded. [%s]", pathReduce.c_str()));
 		}
 		else {
-			Logger::WriteTop(StringUtility::Format(L"Failed to load mesh.(LT) [%s]", path.c_str()));
+			Logger::WriteTop(StringUtility::Format(L"DxMeshManager(LT): Failed to load mesh \"%s\"", pathReduce.c_str()));
 		}
 		data->bLoad_ = true;
 	}
@@ -1823,8 +1855,8 @@ bool DxMeshInfoPanel::_AddedLogger(HWND hTab) {
 	wndListView_.Create(hWnd_, styleListView);
 
 	wndListView_.AddColumn(64, ROW_ADDRESS, L"Address");
-	wndListView_.AddColumn(96, ROW_NAME, L"Name");
-	wndListView_.AddColumn(48, ROW_FULLNAME, L"FullName");
+	wndListView_.AddColumn(128, ROW_NAME, L"Name");
+	wndListView_.AddColumn(128, ROW_FULLNAME, L"FullName");
 	wndListView_.AddColumn(32, ROW_COUNT_REFFRENCE, L"Ref");
 
 	Start();
@@ -1878,8 +1910,10 @@ void DxMeshInfoPanel::Update(DxMeshManager* manager) {
 
 	for (int iRow = 0; iRow < wndListView_.GetRowCount();) {
 		std::wstring key = wndListView_.GetText(iRow, ROW_ADDRESS);
-		if (setKey.find(key) != setKey.end())++iRow;
-		else wndListView_.DeleteRow(iRow);
+		if (setKey.find(key) != setKey.end())
+			++iRow;
+		else
+			wndListView_.DeleteRow(iRow);
 	}
 }
 

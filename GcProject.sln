@@ -12,24 +12,24 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
-		Release (No vectorization)|x86 = Release (No vectorization)|x86
+		Release (Legacy)|x86 = Release (Legacy)|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Debug|x86.ActiveCfg = Debug|Win32
-		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Release (No vectorization)|x86.ActiveCfg = Release (No vectorization)|Win32
-		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Release (No vectorization)|x86.Build.0 = Release (No vectorization)|Win32
+		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Release (Legacy)|x86.ActiveCfg = Release (Legacy)|Win32
+		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Release (Legacy)|x86.Build.0 = Release (Legacy)|Win32
 		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Release|x86.ActiveCfg = Release|Win32
 		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Release|x86.Build.0 = Release|Win32
 		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Debug|x86.ActiveCfg = Debug|Win32
 		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Debug|x86.Build.0 = Debug|Win32
-		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Release (No vectorization)|x86.ActiveCfg = Release (No vectorization)|Win32
-		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Release (No vectorization)|x86.Build.0 = Release (No vectorization)|Win32
+		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Release (Legacy)|x86.ActiveCfg = Release (Legacy)|Win32
+		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Release (Legacy)|x86.Build.0 = Release (Legacy)|Win32
 		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Release|x86.ActiveCfg = Release|Win32
 		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Release|x86.Build.0 = Release|Win32
 		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Debug|x86.ActiveCfg = Debug|Win32
-		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Release (No vectorization)|x86.ActiveCfg = Release (No vectorization)|Win32
-		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Release (No vectorization)|x86.Build.0 = Release (No vectorization)|Win32
+		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Release (Legacy)|x86.ActiveCfg = Release (Legacy)|Win32
+		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Release (Legacy)|x86.Build.0 = Release (Legacy)|Win32
 		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Release|x86.ActiveCfg = Release|Win32
 		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
