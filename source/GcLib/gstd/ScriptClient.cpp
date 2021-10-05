@@ -197,6 +197,7 @@ static const std::vector<function> commonFunction = {
 	{ "ator", ScriptClientBase::Func_AtoR, 1 },
 	{ "TrimString", ScriptClientBase::Func_TrimString, 1 },
 	{ "SplitString", ScriptClientBase::Func_SplitString, 2 },
+	{ "SplitString2", ScriptClientBase::Func_SplitString2, 2 },
 
 	{ "RegexMatch", ScriptClientBase::Func_RegexMatch, 2 },
 	{ "RegexMatchRepeated", ScriptClientBase::Func_RegexMatchRepeated, 2 },
@@ -1649,6 +1650,11 @@ value ScriptClientBase::Func_TrimString(script_machine* machine, int argc, const
 value ScriptClientBase::Func_SplitString(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	std::vector<std::wstring> list = StringUtility::Split(argv[0].as_string(), argv[1].as_string());
+	return script->CreateStringArrayValue(list);
+}
+value ScriptClientBase::Func_SplitString2(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	std::vector<std::wstring> list = StringUtility::SplitPattern(argv[0].as_string(), argv[1].as_string());
 	return script->CreateStringArrayValue(list);
 }
 

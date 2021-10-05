@@ -233,8 +233,10 @@ int64_t value::as_int() const {
 	if (!has_data()) return 0i64;
 	if (kind == type_data::tk_int)
 		return int_value;
-	if (kind == type_data::tk_real)
-		return (int64_t)(real_value + (real_value > 0 ? 0.01 : -0.01));
+	if (kind == type_data::tk_real) {
+		constexpr double EPSILON = 0.000001;
+		return (int64_t)(real_value + (real_value > 0 ? EPSILON : -EPSILON));
+	}
 	if (kind == type_data::tk_char)
 		return (int64_t)char_value;
 	if (kind == type_data::tk_boolean)

@@ -4877,9 +4877,9 @@ gstd::value DxScript::Func_ObjFileT_SplitLineText(gstd::script_machine* machine,
 	if (obj == nullptr) return script->CreateStringArrayValue(std::vector<std::wstring>());
 
 	int pos = argv[1].as_int();
-	std::wstring delim = argv[2].as_string();
+	std::wstring pattern = argv[2].as_string();
 	std::wstring line = obj->GetLineAsWString(pos);
-	std::vector<std::wstring> list = StringUtility::Split(line, delim);
+	std::vector<std::wstring> list = StringUtility::SplitPattern(line, pattern);
 
 	return script->CreateStringArrayValue(list);
 }
