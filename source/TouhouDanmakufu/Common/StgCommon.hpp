@@ -69,7 +69,7 @@ public:
 	void SetParent(ref_unsync_weak_ptr<StgMoveParent> parent) { parent_ = parent; }
 	ref_unsync_weak_ptr<StgMoveParent> GetParent() { return parent_; }
 	std::vector<ref_unsync_weak_ptr<StgMoveParent>>& GetOwnedParentList() { return listOwnedParent_; }
-	void RemoveParent() { parent_ = nullptr; }
+	void RemoveParent(ref_unsync_weak_ptr<StgMoveObject> self);
 	void SetRelativePosition(float x, float y) { offX_ = x; offY_ = y; }
 	void UpdateRelativePosition();
 	double GetDistanceFromParent();

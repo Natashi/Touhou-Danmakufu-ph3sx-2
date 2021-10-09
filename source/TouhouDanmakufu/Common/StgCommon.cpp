@@ -125,6 +125,15 @@ void StgMoveObject::SetSpeedY(double speedY) {
 	StgMovePattern_XY* pattern = dynamic_cast<StgMovePattern_XY*>(pattern_.get());
 	pattern->SetSpeedY(speedY);
 }
+void StgMoveObject::RemoveParent(ref_unsync_weak_ptr<StgMoveObject> self) {
+	if (parent_) {
+		auto& vec = parent_->listChild_;
+		vec.erase(std::remove(vec.begin(), vec.end(), self), vec.end());
+		parent_ = nullptr;
+		offX_ = posX_;
+		offY_ = posY_;
+	}
+}
 void StgMoveObject::UpdateRelativePosition() { // Optimize later I guess?
 	if (parent_) {
 		// If parent exists, reverse its transformation
@@ -208,10 +217,8 @@ StgMoveParent::StgMoveParent(StgStageController* stageController) {
 }
 StgMoveParent::~StgMoveParent() {
 	for (auto& child : listChild_) {
-		if (child) {
-			child->RemoveParent();
-			child->UpdateRelativePosition();
-		}
+		if (child)
+			child->RemoveParent(child);
 	}
 	target_ = nullptr;
 }
@@ -267,10 +274,8 @@ void StgMoveParent::AddChild(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync
 }
 void StgMoveParent::RemoveChildren() {
 	for (auto& child : listChild_) {
-		if (child) {
-			child->RemoveParent();
-			child->UpdateRelativePosition();
-		}
+		if (child)
+			child->RemoveParent(child);
 	}
 	listChild_.clear();
 }

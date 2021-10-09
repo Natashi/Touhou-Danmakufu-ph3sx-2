@@ -3108,9 +3108,9 @@ gstd::value StgStageScript::Func_ObjMove_GetParent(gstd::script_machine* machine
 gstd::value StgStageScript::Func_ObjMove_RemoveParent(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
-	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	ref_unsync_ptr<StgMoveObject> obj = ref_unsync_ptr<StgMoveObject>::Cast(script->GetObject(id));
 	if (obj)
-		obj->RemoveParent();
+		obj->RemoveParent(obj);
 
 	return value();
 }
