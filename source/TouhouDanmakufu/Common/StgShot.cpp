@@ -1735,7 +1735,7 @@ void StgLaserObject::_ExtendLength() {
 
 		if (extendRate_ > 0)
 			lengthF_ = std::min(lengthF_, (float)maxLength_);
-		if (extendRate_ < 0)
+		else
 			lengthF_ = std::max(lengthF_, (float)maxLength_);
 
 		length_ = (int)lengthF_;

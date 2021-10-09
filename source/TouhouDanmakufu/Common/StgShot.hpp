@@ -572,7 +572,9 @@ public:
 	void SetEndGraphic(int gr) { idImageEnd_ = gr; }
 	void SetEndPosition(float x, float y) {
 		SetLength(hypotf(x - position_.x, y - position_.y));
-		SetLaserAngle(atan2f(y - position_.y, x - position_.x));
+		extendRate_ = 0;
+		maxLength_ = 0;
+		angLaser_ = atan2f(y - position_.y, x - position_.x);
 	}
 	
 	D3DXVECTOR2 GetEndPosition() {
