@@ -1,11 +1,9 @@
 #pragma once
 
 #include "../GcLib/pch.h"
-#include "../GcLib/gstd/GstdLib.hpp"
+#include "../GcLib/GcLib.hpp"
 
 #include "resource.h"
-
-#include <set>
 
 using namespace gstd;
 

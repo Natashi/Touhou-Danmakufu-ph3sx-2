@@ -29,7 +29,7 @@ namespace directx {
 		IDirect3DTexture9* pTexture_;
 		D3DXIMAGE_INFO infoImage_;
 		std::wstring name_;
-		volatile bool bLoad_;
+		volatile bool bReady_;
 
 		bool useMipMap_;
 		bool useNonPowerOfTwo_;
@@ -80,7 +80,7 @@ namespace directx {
 
 		UINT GetWidth();
 		UINT GetHeight();
-		bool IsLoad() { return data_ != nullptr && data_->bLoad_; }
+		bool IsLoad() { return data_ != nullptr && data_->bReady_; }
 
 		static size_t GetFormatBPP(D3DFORMAT format);
 	};

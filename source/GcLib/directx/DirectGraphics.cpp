@@ -16,15 +16,22 @@ using namespace directx;
 //*******************************************************************
 DirectGraphicsConfig::DirectGraphicsConfig() {
 	bShowWindow_ = true;
+	bShowCursor_ = true;
+
+	bWindowed_ = true;
+	bBorderlessFullscreen_ = true;
+
 	sizeScreen_ = { 640, 480 };
 	sizeScreenDisplay_ = { 640, 480 };
-	bWindowed_ = true;
-	bUseRef_ = false;
+	bUseDynamicScaling_ = false;
+
 	colorMode_ = COLOR_MODE_32BIT;
+	typeMultiSample_ = D3DMULTISAMPLE_NONE;
+	
+	bUseRef_ = false;
 	bUseTripleBuffer_ = true;
 	bVSync_ = false;
-	bBorderlessFullscreen_ = true;
-	typeMultiSample_ = D3DMULTISAMPLE_NONE;
+	
 	bCheckDeviceCaps_ = true;
 }
 

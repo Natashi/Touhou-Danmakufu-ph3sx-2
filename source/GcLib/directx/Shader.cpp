@@ -12,6 +12,7 @@ using namespace directx;
 ShaderData::ShaderData() {
 	manager_ = nullptr;
 	effect_ = nullptr;
+	pIncludeCallback_ = nullptr;
 	bLoad_ = false;
 	bText_ = false;
 }
@@ -369,9 +370,11 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 
 		std::string source = reader->ReadAllString();
 
+		dest->pIncludeCallback_.reset(new ShaderIncludeCallback(PathProperty::GetFileDirectory(path)));
+
 		ID3DXBuffer* pErr = nullptr;
 		HRESULT hr = D3DXCreateEffect(graphics->GetDevice(), source.c_str(), source.size(),
-			nullptr, nullptr, 0, nullptr, &dest->effect_, &pErr);
+			nullptr, dest->pIncludeCallback_.get(), 0, nullptr, &dest->effect_, &pErr);
 
 		if (FAILED(hr)) {
 			std::wstring compileError = L"unknown error";
@@ -381,6 +384,7 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 			}
 
 			ptr_release(dest->effect_);
+			dest->pIncludeCallback_ = nullptr;
 
 			std::wstring err = StringUtility::Format(L"%s\r\n\t%s",
 				DXGetErrorStringW(hr), compileError.c_str());
@@ -614,6 +618,61 @@ shared_ptr<Shader> ShaderManager::CreateFromFileInLoadThread(const std::wstring&
 	return false;
 }
 void ShaderManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event) {
+}
+
+//*******************************************************************
+//ShaderIncludeCallback
+//*******************************************************************
+ShaderIncludeCallback::ShaderIncludeCallback(const std::wstring& localDir) {
+	includeLocalDir_ = PathProperty::ReplaceYenToSlash(localDir);
+	if (includeLocalDir_.back() != '/')
+		includeLocalDir_ += '/';
+}
+ShaderIncludeCallback::~ShaderIncludeCallback() {
+}
+
+HRESULT __stdcall ShaderIncludeCallback::Open(D3DXINCLUDE_TYPE type, LPCSTR pFileName, LPCVOID pParentData,
+	LPCVOID* ppData, UINT* pBytes)
+{
+	std::wstring sPath = StringUtility::ConvertMultiToWide(pFileName);
+	sPath = PathProperty::ReplaceYenToSlash(sPath);
+
+	if (!sPath._Starts_with(L"./"))
+		sPath = L"./" + sPath;
+
+	if (type == D3DXINC_LOCAL) {
+		sPath = includeLocalDir_ + sPath.substr(2);
+	}
+	else {
+		sPath = PathProperty::GetModuleDirectory() + sPath.substr(2);
+	}
+	sPath = PathProperty::GetUnique(sPath);
+
+	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(sPath);
+	if (reader == nullptr || !reader->Open()) {
+		std::wstring error = StringUtility::Format(
+			L"Shader Compiler: Include file is not found. [%s]\r\n", sPath.c_str());
+		Logger::WriteTop(error);
+		return E_FAIL;
+	}
+
+	buffer_.resize(reader->GetFileSize());
+	if (buffer_.size() > 0) {
+		reader->Read(buffer_.data(), reader->GetFileSize());
+
+		*ppData = buffer_.data();
+		*pBytes = buffer_.size();
+	}
+	else {
+		*ppData = nullptr;
+		*pBytes = 0;
+	}
+
+	return S_OK;
+}
+HRESULT __stdcall ShaderIncludeCallback::Close(LPCVOID pData) {
+	buffer_.clear();
+	return S_OK;
 }
 
 //****************************************************************************
