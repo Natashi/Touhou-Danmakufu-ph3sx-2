@@ -430,12 +430,11 @@ DnhConfiguration::DnhConfiguration() {
 
 	pathExeLaunch_ = DNH_EXE_NAME;
 
-	//キー登録
 	padIndex_ = 0;
-	mapKey_[EDirectInput::KEY_LEFT] = new VirtualKey(DIK_LEFT, 0, 0);//キーボード「←」とジョイパッド「←」を登録
-	mapKey_[EDirectInput::KEY_RIGHT] = new VirtualKey(DIK_RIGHT, 0, 1);//キーボード「→」とジョイパッド「→」を登録
-	mapKey_[EDirectInput::KEY_UP] = new VirtualKey(DIK_UP, 0, 2);//キーボード「↑」とジョイパッド「↑」を登録
-	mapKey_[EDirectInput::KEY_DOWN] = new VirtualKey(DIK_DOWN, 0, 3);	//キーボード「↓」とジョイパッド「↓」を登録
+	mapKey_[EDirectInput::KEY_LEFT] = new VirtualKey(DIK_LEFT, 0, 0);
+	mapKey_[EDirectInput::KEY_RIGHT] = new VirtualKey(DIK_RIGHT, 0, 1);
+	mapKey_[EDirectInput::KEY_UP] = new VirtualKey(DIK_UP, 0, 2);
+	mapKey_[EDirectInput::KEY_DOWN] = new VirtualKey(DIK_DOWN, 0, 3);
 
 	mapKey_[EDirectInput::KEY_OK] = new VirtualKey(DIK_Z, 0, 5);
 	mapKey_[EDirectInput::KEY_CANCEL] = new VirtualKey(DIK_X, 0, 6);
