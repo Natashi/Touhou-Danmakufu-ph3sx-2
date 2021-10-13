@@ -206,7 +206,7 @@ void WLabel::Create(HWND hWndParent) {
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
 		hInst, nullptr);
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 LRESULT WLabel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
@@ -256,7 +256,7 @@ void WButton::Create(HWND hWndParent) {
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
 		hInst, nullptr);
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 void WButton::Create(HWND hWndParent, WButton::Style& style) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
@@ -268,13 +268,13 @@ void WButton::Create(HWND hWndParent, WButton::Style& style) {
 		hInst, nullptr);
 
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 void WButton::SetText(const std::wstring& text) {
 	::SetWindowText(hWnd_, text.c_str());
 }
 bool WButton::IsChecked() {
-	bool bCheck = SendMessage(hWnd_, BM_GETCHECK, 0, 0) == BST_CHECKED;
+	bool bCheck = ::SendMessageW(hWnd_, BM_GETCHECK, 0, 0) == BST_CHECKED;
 	return bCheck;
 }
 
@@ -289,7 +289,7 @@ void WGroupBox::Create(HWND hWndParent) {
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
 		hInst, nullptr);
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 
 void WGroupBox::SetText(const std::wstring& text) {
@@ -310,7 +310,7 @@ void WEditBox::Create(HWND hWndParent, WEditBox::Style& style) {
 		hInst, nullptr);
 
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 void WEditBox::SetText(const std::wstring& text) {
 	if (text == GetText()) return;
@@ -345,36 +345,36 @@ void WListBox::Create(HWND hWndParent, WListBox::Style& style) {
 		hInst, nullptr);
 
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 void WListBox::Clear() {
-	SendMessage(hWnd_, LB_RESETCONTENT, 0, 0);
+	::SendMessageW(hWnd_, LB_RESETCONTENT, 0, 0);
 }
 int WListBox::GetCount() {
-	int res = (int)SendMessage(hWnd_, LB_GETCOUNT, 0, 0);
+	int res = (int)::SendMessageW(hWnd_, LB_GETCOUNT, 0, 0);
 	return res;
 }
 void WListBox::SetSelectedIndex(int index) {
-	SendMessage(hWnd_, LB_SETCURSEL, index, 0);
+	::SendMessageW(hWnd_, LB_SETCURSEL, index, 0);
 }
 int WListBox::GetSelectedIndex() {
-	int res = (int)SendMessage(hWnd_, LB_GETCURSEL, 0, 0);
+	int res = (int)::SendMessageW(hWnd_, LB_GETCURSEL, 0, 0);
 	return res;
 }
 void WListBox::AddString(const std::wstring& str) {
-	SendMessage(hWnd_, LB_ADDSTRING, 0, (LPARAM)str.c_str());
+	::SendMessageW(hWnd_, LB_ADDSTRING, 0, (LPARAM)str.c_str());
 }
 void WListBox::InsertString(int index, const std::wstring& str) {
-	SendMessage(hWnd_, LB_INSERTSTRING, index, (LPARAM)str.c_str());
+	::SendMessageW(hWnd_, LB_INSERTSTRING, index, (LPARAM)str.c_str());
 }
 void WListBox::DeleteString(int index) {
-	SendMessage(hWnd_, LB_DELETESTRING, index, 0);
+	::SendMessageW(hWnd_, LB_DELETESTRING, index, 0);
 }
 std::wstring WListBox::GetText(int index) {
 	std::wstring res;
-	int length = (int)SendMessage(hWnd_, LB_GETTEXTLEN, index, 0);
+	int length = (int)::SendMessageW(hWnd_, LB_GETTEXTLEN, index, 0);
 	res.resize(length);
-	SendMessage(hWnd_, LB_GETTEXT, index, (LPARAM)&res[0]);
+	::SendMessageW(hWnd_, LB_GETTEXT, index, (LPARAM)&res[0]);
 	return res;
 }
 
@@ -391,41 +391,40 @@ void WComboBox::Create(HWND hWndParent, WComboBox::Style& style) {
 		hInst, nullptr);
 
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 
 void WComboBox::SetItemHeight(int height) {
-	::SendMessage(hWnd_, CB_SETITEMHEIGHT, height, (LPARAM)0);
+	::SendMessageW(hWnd_, CB_SETITEMHEIGHT, height, (LPARAM)0);
 }
 void WComboBox::SetDropDownListWidth(int width) {
-	::SendMessage(hWnd_, CB_SETDROPPEDWIDTH, width, (LPARAM)0);
+	::SendMessageW(hWnd_, CB_SETDROPPEDWIDTH, width, (LPARAM)0);
 }
 void WComboBox::Clear() {
-	while (GetCount() != 0) {
-		::SendMessage(hWnd_, CB_DELETESTRING, 0, 0);
-	}
+	while (GetCount() != 0)
+		::SendMessageW(hWnd_, CB_DELETESTRING, 0, 0);
 }
 int WComboBox::GetCount() {
-	return ::SendMessage(hWnd_, CB_GETCOUNT, 0, 0);
+	return ::SendMessageW(hWnd_, CB_GETCOUNT, 0, 0);
 }
 void WComboBox::SetSelectedIndex(int index) {
-	::SendMessage(hWnd_, CB_SETCURSEL, index, 0);
+	::SendMessageW(hWnd_, CB_SETCURSEL, index, 0);
 }
 int WComboBox::GetSelectedIndex() {
-	return ::SendMessage(hWnd_, CB_GETCURSEL, 0, 0);
+	return ::SendMessageW(hWnd_, CB_GETCURSEL, 0, 0);
 }
 std::wstring WComboBox::GetSelectedText() {
 	std::wstring str;
 	str.resize(1024);
 	int index = GetSelectedIndex();
-	::SendMessage(hWnd_, CB_GETLBTEXT, index, (LPARAM)str.data());
+	::SendMessageW(hWnd_, CB_GETLBTEXT, index, (LPARAM)str.data());
 	return str;
 }
 void WComboBox::AddString(const std::wstring& str) {
-	::SendMessage(hWnd_, CB_ADDSTRING, 0, (LPARAM)str.c_str());
+	::SendMessageW(hWnd_, CB_ADDSTRING, 0, (LPARAM)str.c_str());
 }
 void WComboBox::InsertString(int index, const std::wstring& str) {
-	SendMessage(hWnd_, CB_INSERTSTRING, index, (LPARAM)str.c_str());
+	::SendMessageW(hWnd_, CB_INSERTSTRING, index, (LPARAM)str.c_str());
 }
 //****************************************************************************
 //WListView
@@ -445,7 +444,7 @@ void WListView::Create(HWND hWndParent, Style& style) {
 	ListView_SetExtendedListViewStyle(hWnd_, styleListViewEx);
 
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 void WListView::Clear() {
 	ListView_DeleteAllItems(hWnd_);
@@ -580,7 +579,7 @@ void WTreeView::Create(HWND hWndParent, Style& style) {
 		0, 0, 0, 0,
 		hWndParent, (HMENU)GetWindowId(), hInst, nullptr);
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 void WTreeView::CreateRootItem(ItemStyle& style) {
 	this->Clear();
@@ -685,8 +684,8 @@ void WTabControll::Create(HWND hWndParent) {
 		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
 		hInst, nullptr);
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
-	::SetClassLong(hWnd_, GCL_STYLE, 0);
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SetClassLongW(hWnd_, GCL_STYLE, 0);
 }
 LRESULT WTabControll::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
@@ -706,7 +705,7 @@ void WTabControll::AddTab(const std::wstring& text, shared_ptr<WPanel> panel) {
 	TC_ITEM item;
 	item.mask = TCIF_TEXT;
 	item.pszText = const_cast<wchar_t*>(text.c_str());
-	SendMessage(hWnd_, TCM_INSERTITEM, (WPARAM)vectPanel_.size(), (LPARAM)&item);
+	::SendMessageW(hWnd_, TCM_INSERTITEM, (WPARAM)vectPanel_.size(), (LPARAM)&item);
 
 	vectPanel_.push_back(panel);
 }
@@ -740,16 +739,16 @@ void WTabControll::LocateParts() {
 void WStatusBar::Create(HWND hWndParent) {
 	hWnd_ = CreateStatusWindow(WS_CHILD | WS_VISIBLE | CCS_BOTTOM | SBARS_SIZEGRIP, nullptr, hWndParent, NULL);
 	this->Attach(hWnd_);
-	::SendMessage(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 void WStatusBar::SetPartsSize(std::vector<int>& parts) {
-	::SendMessage(hWnd_, SB_SETPARTS, (WPARAM)parts.size(), (LPARAM)(LPINT)&parts[0]);
+	::SendMessageW(hWnd_, SB_SETPARTS, (WPARAM)parts.size(), (LPARAM)(LPINT)&parts[0]);
 }
 void WStatusBar::SetText(int pos, const std::wstring& text) {
-	::SendMessage(hWnd_, SB_SETTEXT, 0 | pos, (WPARAM)(wchar_t*)text.c_str());
+	::SendMessageW(hWnd_, SB_SETTEXT, 0 | pos, (WPARAM)(wchar_t*)text.c_str());
 }
 void WStatusBar::SetBounds(WPARAM wParam, LPARAM lParam) {
-	::SendMessage(hWnd_, WM_SIZE, wParam, lParam);
+	::SendMessageW(hWnd_, WM_SIZE, wParam, lParam);
 }
 
 //****************************************************************************
@@ -799,8 +798,7 @@ LRESULT WSplitter::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 				else if (ratioY_ >= 0.95f) ratioY_ = 0.95f;
 			}
 
-			SendMessage(hWndParent, WM_SIZE, 0,
-				MAKELPARAM(rect.right, rect.bottom));
+			::SendMessageW(hWndParent, WM_SIZE, 0, MAKELPARAM(rect.right, rect.bottom));
 		}
 		break;
 	}
@@ -852,6 +850,51 @@ LRESULT WSplitter::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
 
+//****************************************************************************
+//WProgressBar
+//****************************************************************************
+void WProgressBar::Create(HWND hWndParent) {
+	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
+	hWnd_ = ::CreateWindowEx(
+		0, PROGRESS_CLASS, nullptr,
+		WS_CHILD | WS_VISIBLE | PBS_SMOOTH,
+		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
+		hInst, nullptr);
+	this->Attach(hWnd_);
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+
+	::SendMessageW(hWnd_, PBM_SETSTEP, 1, 0);
+}
+
+void WProgressBar::SetColor(DWORD colorBar, DWORD colorBackground) {
+	::SendMessageW(hWnd_, PBM_SETBARCOLOR, 0, colorBar);
+	::SendMessageW(hWnd_, PBM_SETBKCOLOR, 0, colorBackground);
+}
+void WProgressBar::SetMarquee(bool bToggle, int interval) {
+	::SendMessageW(hWnd_, PBM_SETMARQUEE, bToggle, interval);
+}
+
+void WProgressBar::SetRange(int range) {
+	::SendMessageW(hWnd_, PBM_SETRANGE32, 0, range);
+}
+
+void WProgressBar::AddStep(int stepCount) {
+	for (int i = 0; i < stepCount; ++i)
+		::SendMessageW(hWnd_, PBM_STEPIT, 0, 0);
+}
+void WProgressBar::SetStep(int step) {
+	::SendMessageW(hWnd_, PBM_SETSTEP, 1, 0);
+}
+void WProgressBar::SetPos(int pos) {
+	::SendMessageW(hWnd_, PBM_SETPOS, pos, 0);
+}
+int WProgressBar::GetPos() {
+	return ::SendMessageW(hWnd_, PBM_GETPOS, 0, 0);
+}
+
+LRESULT WProgressBar::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
+}
 
 //****************************************************************************
 //WindowUtility
