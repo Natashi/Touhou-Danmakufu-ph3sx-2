@@ -2598,6 +2598,25 @@ gstd::value DxScript::Func_Obj_CopyValueTable(gstd::script_machine* machine, int
 	return script->CreateIntValue(countValue);
 }
 
+gstd::value DxScript::Func_Obj_GetValueCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	int64_t res = 0;
+	DxScriptObjectBase* obj = script->GetObjectPointer(id);
+	if (obj)
+		res = obj->GetValueMap()->size();
+	return script->CreateIntValue(res);
+}
+gstd::value DxScript::Func_Obj_GetValueCountI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	int64_t res = 0;
+	DxScriptObjectBase* obj = script->GetObjectPointer(id);
+	if (obj)
+		res = obj->GetValueMapI()->size();
+	return script->CreateIntValue(res);
+}
+
 value DxScript::Func_Obj_GetType(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
