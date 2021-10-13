@@ -19,6 +19,7 @@ private:
 	WButton buttonDecompile_;
 	WListView wndListFile_;
 	WStatusBar wndStatus_;
+	WProgressBar wndProgressBar_;
 
 	std::wstring pathArchive_;
 	std::set<std::wstring> listFile_;
@@ -42,5 +43,6 @@ private:
 public:
 	MainWindow();
 	~MainWindow();
+
 	bool Initialize();
 };

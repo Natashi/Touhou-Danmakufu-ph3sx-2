@@ -58,6 +58,8 @@ namespace gstd {
 	//*******************************************************************
 	//FileArchiver
 	//*******************************************************************
+	class WStatusBar;
+	class WProgressBar;
 	class FileArchiver {
 	private:
 		std::list<shared_ptr<ArchiveFileEntry>> listEntry_;
@@ -66,7 +68,7 @@ namespace gstd {
 		virtual ~FileArchiver();
 
 		void AddEntry(shared_ptr<ArchiveFileEntry> entry) { listEntry_.push_back(entry); }
-		bool CreateArchiveFile(const std::wstring& path);
+		bool CreateArchiveFile(const std::wstring& path, WStatusBar* pStatus, WProgressBar* pProgress);
 
 		bool EncryptArchive(std::fstream& inSrc, const std::wstring& pathOut, ArchiveFileHeader* header, 
 			byte keyBase, byte keyStep);
