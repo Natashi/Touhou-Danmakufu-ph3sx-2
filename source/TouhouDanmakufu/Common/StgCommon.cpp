@@ -125,10 +125,13 @@ void StgMoveObject::SetSpeedY(double speedY) {
 	StgMovePattern_XY* pattern = dynamic_cast<StgMovePattern_XY*>(pattern_.get());
 	pattern->SetSpeedY(speedY);
 }
-void StgMoveObject::RemoveParent(ref_unsync_weak_ptr<StgMoveObject> self) {
+void StgMoveObject::RemoveParent(ref_unsync_weak_ptr<StgMoveObject> self, bool bErase) {
 	if (parent_) {
-		auto& vec = parent_->listChild_;
-		vec.erase(std::remove(vec.begin(), vec.end(), self), vec.end());
+		if (bErase) {
+			auto& vec = parent_->listChild_;
+			vec.erase(std::remove(vec.begin(), vec.end(), self), vec.end());
+		}
+
 		parent_ = nullptr;
 		offX_ = posX_;
 		offY_ = posY_;
@@ -216,9 +219,15 @@ StgMoveParent::StgMoveParent(StgStageController* stageController) {
 	rotZ_ = 0;
 }
 StgMoveParent::~StgMoveParent() {
-	for (auto& child : listChild_) {
-		if (child)
-			child->RemoveParent(child);
+	if (listChild_.size() > 0) {
+		auto iter = listChild_.begin();
+		while (iter != listChild_.end()) {
+			auto& child = *iter;
+			if (child)
+				child->RemoveParent(child, false);
+
+			iter = listChild_.erase(iter);
+		}
 	}
 	target_ = nullptr;
 }
@@ -237,9 +246,11 @@ void StgMoveParent::CleanUp() {
 	if (listChild_.size() > 0) {
 		auto iter = listChild_.begin();
 		while (iter != listChild_.end()) {
-			if ((*iter).get() == nullptr)
+			auto& child = *iter;
+			if (child == nullptr)
 				iter = listChild_.erase(iter);
-			else ++iter;
+			else
+				++iter;
 		}
 	}
 }
@@ -273,11 +284,16 @@ void StgMoveParent::AddChild(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync
 	child->UpdateRelativePosition(); // Children's relative positions are initialized relative to the parent
 }
 void StgMoveParent::RemoveChildren() {
-	for (auto& child : listChild_) {
-		if (child)
-			child->RemoveParent(child);
+	if (listChild_.size() > 0) {
+		auto iter = listChild_.begin();
+		while (iter != listChild_.end()) {
+			auto& child = *iter;
+			if (child)
+				child->RemoveParent(child, false);
+
+			iter = listChild_.erase(iter);
+		}
 	}
-	listChild_.clear();
 }
 void StgMoveParent::SetTransformAngle(double z) {
 	if (typeAngle_ == ANGLE_ROTATE) {
