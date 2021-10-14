@@ -806,7 +806,7 @@ gstd::value StgStageScript::Func_SetStgFrame(gstd::script_machine* machine, int 
 	stageInfo->SetStgFrameMaxPriority(max);
 
 	if (argc == 7) {
-		int cam = argv[6].as_int();
+		int cam = argv[6].as_int() - 1;
 		stageInfo->SetCameraFocusPermitPriority(cam);
 	}
 
