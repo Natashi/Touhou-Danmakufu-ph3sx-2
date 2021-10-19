@@ -521,8 +521,7 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 			circle.SetX(StringUtility::ToDouble(list[1]));
 			circle.SetY(StringUtility::ToDouble(list[2]));
 		}
-		if (i->shotData->listCol_.empty())
-			i->shotData->listCol_.push_back(circle);
+		i->shotData->listCol_.push_back(circle);
 	};
 	auto funcSetAngularVel = [](Data* i, Scanner& s) {
 		s.CheckType(s.Next(), Token::Type::TK_EQUAL);
