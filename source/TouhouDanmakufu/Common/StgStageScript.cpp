@@ -1957,19 +1957,22 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			return script->CreateIntValue(shotData->GetRenderType());
 		case INFO_COLLISION:
 		{
-			float radius = 0;
-			DxCircle* listCircle = shotData->GetIntersectionCircleList();
-			if (listCircle->GetR() > 0) {
-				radius = listCircle->GetR();
-			}
+			auto& listCircle = shotData->GetIntersectionCircleList();
+			float radius = listCircle.size() > 0 ? listCircle[0].GetR() : 0;
 			return script->CreateRealValue(radius);
 		}
 		case INFO_COLLISION_LIST:
 		{
-			DxCircle* listCircle = shotData->GetIntersectionCircleList();
+			auto& listCircle = shotData->GetIntersectionCircleList();
+
 			std::vector<gstd::value> listValue;
-			float list[3] = { listCircle->GetR(), listCircle->GetX(), listCircle->GetY() };
-			listValue.push_back(script->CreateRealArrayValue(list, 3U));
+			float listData[3];
+			for (auto& iCircle : listCircle) {
+				listData[0] = iCircle.GetR();
+				listData[1] = iCircle.GetX();
+				listData[2] = iCircle.GetY();
+				listValue.push_back(script->CreateRealArrayValue(listData, 3U));
+			}
 			return script->CreateValueArrayValue(listValue);
 		}
 		case INFO_IS_FIXED_ANGLE:
@@ -2282,13 +2285,15 @@ gstd::value StgStageScript::Func_IsIntersected_Obj_Obj(gstd::script_machine* mac
 	StgIntersectionObject* obj2 = script->GetObjectPointerAs<StgIntersectionObject>(id2);
 	if (obj2 == nullptr) return script->CreateBooleanValue(false);
 
-	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listTarget1 = obj1->GetIntersectionTargetList();
-	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listTarget2 = obj2->GetIntersectionTargetList();
+	StgIntersectionObject::IntersectionListType listTarget1 = obj1->GetIntersectionTargetList();
+	StgIntersectionObject::IntersectionListType listTarget2 = obj2->GetIntersectionTargetList();
 
 	bool res = false;
 	for (auto& target1 : listTarget1) {
+		if (!target1.first) continue;
 		for (auto& target2 : listTarget2) {
-			res = StgIntersectionManager::IsIntersected(target1.get(), target2.get());
+			if (!target1.first) continue;
+			res = StgIntersectionManager::IsIntersected(target1.second.get(), target2.second.get());
 			if (res && PARTIAL) goto chk_skip;
 		}
 	}

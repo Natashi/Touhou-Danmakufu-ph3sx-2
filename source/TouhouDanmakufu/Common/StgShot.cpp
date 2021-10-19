@@ -521,7 +521,8 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 			circle.SetX(StringUtility::ToDouble(list[1]));
 			circle.SetY(StringUtility::ToDouble(list[2]));
 		}
-		i->shotData->listCol_ = circle;
+		if (i->shotData->listCol_.empty())
+			i->shotData->listCol_.push_back(circle);
 	};
 	auto funcSetAngularVel = [](Data* i, Scanner& s) {
 		s.CheckType(s.Next(), Token::Type::TK_EQUAL);
@@ -580,20 +581,17 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 	}
 
 	if (data.id >= 0) {
-		if (data.shotData->listCol_.GetR() <= 0) {
+		if (data.shotData->listCol_.size() == 0) {
 			float r = 0;
 			if (data.shotData->listAnime_.size() > 0) {
 				DxRect<LONG>& rect = data.shotData->listAnime_[0].rcSrc_;
-				int rx = abs(rect.right - rect.left);
-				int ry = abs(rect.bottom - rect.top);
-				r = std::min(rx, ry) / 3.0f - 3.0f;
+				r = std::min(abs(rect.GetWidth()), abs(rect.GetHeight())) / 3.0f - 3.0f;
 			}
-			DxCircle circle(0, 0, std::max(r, 2.0f));
-			data.shotData->listCol_ = circle;
+			data.shotData->listCol_.push_back(DxCircle(0, 0, r));
 		}
+
 		if (listData.size() <= data.id)
 			listData.resize(data.id + 1);
-
 		listData[data.id] = data.shotData;
 	}
 }
@@ -796,7 +794,6 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 
 	typeOwner_ = OWNER_ENEMY;
 
-	pShotIntersectionTarget_ = nullptr;
 	bUserIntersectionMode_ = false;
 	bIntersectionEnable_ = true;
 	bChangeItemEnable_ = true;
@@ -1347,12 +1344,8 @@ StgNormalShotObject::StgNormalShotObject(StgStageController* stageController) : 
 
 	move_ = D3DXVECTOR2(1, 0);
 	lastAngle_ = 0;
-
-	pShotIntersectionTarget_ = new StgIntersectionTarget_Circle();
-	listIntersectionTarget_.push_back(pShotIntersectionTarget_);
 }
 StgNormalShotObject::~StgNormalShotObject() {
-
 }
 void StgNormalShotObject::Work() {
 	if (bEnableMovement_) {
@@ -1379,53 +1372,85 @@ void StgNormalShotObject::Work() {
 }
 
 void StgNormalShotObject::_AddIntersectionRelativeTarget() {
-	if (IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0) return;
-	ClearIntersected();
-
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
-	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listTarget = GetIntersectionTargetList();
-	for (auto& iTarget : listTarget) {
-		intersectionManager->AddTarget(iTarget);
-	}
 
-	//RegistIntersectionRelativeTarget(intersectionManager);
-}
-std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgNormalShotObject::GetIntersectionTargetList() {
 	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
-		|| (bUserIntersectionMode_ || !bIntersectionEnable_) || pOwnReference_.expired())
-		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
+		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
+		|| pOwnReference_.expired())
+		return;
 
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr)
-		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
+		return;
 
-	DxCircle* orgCircle = shotData->GetIntersectionCircleList();
-	StgIntersectionTarget_Circle* target = (StgIntersectionTarget_Circle*)pShotIntersectionTarget_.get();
-	{
-		DxCircle& circle = target->GetCircle();
+	ClearIntersected();
+	bool res = GetIntersectionTargetList_NoVector(shotData);
+	if (res) {
+		for (auto& iTarget : listIntersectionTarget_) {
+			if (iTarget.first && iTarget.second != nullptr)
+				intersectionManager->AddTarget(iTarget.second);
+		}
+	}
+}
+StgIntersectionObject::IntersectionListType StgNormalShotObject::GetIntersectionTargetList() {
+	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
+		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
+		|| pOwnReference_.expired())
+		return IntersectionListType();
 
-		float intersectMeanScale = (hitboxScale_.x + hitboxScale_.y) / 2.0f;
+	StgShotData* shotData = _GetShotData();
+	if (shotData == nullptr)
+		return IntersectionListType();
 
-		if (orgCircle->GetX() != 0 || orgCircle->GetY() != 0) {
-			float px = orgCircle->GetX() * move_.x + orgCircle->GetY() * move_.y;
-			float py = orgCircle->GetX() * move_.y - orgCircle->GetY() * move_.x;
-			circle.SetX(posX_ + px * intersectMeanScale);
-			circle.SetY(posY_ + py * intersectMeanScale);
+	bool res = GetIntersectionTargetList_NoVector(shotData);
+	if (res) return listIntersectionTarget_;
+
+	return IntersectionListType();
+}
+bool StgNormalShotObject::GetIntersectionTargetList_NoVector(StgShotData* shotData) {
+	float intersectionScale = (hitboxScale_.x + hitboxScale_.y) / 2.0f;
+	if (abs(intersectionScale) < 0.01f)
+		return false;
+
+	auto& listCircle = shotData->GetIntersectionCircleList();
+	if (listIntersectionTarget_.size() < listCircle.size())
+		listIntersectionTarget_.resize(listCircle.size(), CreateEmptyIntersection());
+	for (auto& i : listIntersectionTarget_) i.first = false;
+
+	for (size_t i = 0; i < listCircle.size(); ++i) {
+		IntersectionPairType* pPair = &listIntersectionTarget_[i];
+
+		StgIntersectionTarget_Circle* pTarget = (StgIntersectionTarget_Circle*)(pPair->second.get());
+		if (pTarget == nullptr) {
+			pTarget = new StgIntersectionTarget_Circle();
+			pPair->second = pTarget;
+		}
+		
+		DxCircle* pSrcCircle = &listCircle[i];
+		DxCircle* pDstCircle = &pTarget->GetCircle();
+		if (pSrcCircle->GetR() <= 0)
+			continue;
+		pPair->first = true;
+
+		if (pSrcCircle->GetX() != 0 || pSrcCircle->GetY() != 0) {
+			float px = pSrcCircle->GetX() * move_.x + pSrcCircle->GetY() * move_.y;
+			float py = pSrcCircle->GetX() * move_.y - pSrcCircle->GetY() * move_.x;
+			pDstCircle->SetX(posX_ + px * intersectionScale);
+			pDstCircle->SetY(posY_ + py * intersectionScale);
 		}
 		else {
-			circle.SetX(posX_);
-			circle.SetY(posY_);
+			pDstCircle->SetX(posX_);
+			pDstCircle->SetY(posY_);
 		}
-		circle.SetR(orgCircle->GetR() * intersectMeanScale);
+		pDstCircle->SetR(pSrcCircle->GetR() * intersectionScale);
 
-		target->SetTargetType(typeOwner_ == OWNER_PLAYER ?
+		pTarget->SetTargetType(typeOwner_ == OWNER_PLAYER ?
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
-		target->SetObject(pOwnReference_);
-		target->SetIntersectionSpace();
-
-		listIntersectionTarget_[0] = pShotIntersectionTarget_;
+		pTarget->SetObject(pOwnReference_);
+		pTarget->SetIntersectionSpace();
 	}
-	return listIntersectionTarget_;
+
+	return true;
 }
 
 void StgNormalShotObject::RenderOnShotManager() {
@@ -1619,13 +1644,25 @@ StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObj
 	lastAngle_ = 0;
 }
 void StgLaserObject::_AddIntersectionRelativeTarget() {
-	if (delay_.time > 0 || frameFadeDelete_ >= 0) return;
+	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
+
+	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
+		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
+		|| pOwnReference_.expired() || widthIntersection_ <= 0)
+		return;
+
+	StgShotData* shotData = _GetShotData();
+	if (shotData == nullptr)
+		return;
+
 	ClearIntersected();
 
-	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
-	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listTarget = GetIntersectionTargetList();
-	for (auto& iTarget : listTarget) {
-		intersectionManager->AddTarget(iTarget);
+	bool res = GetIntersectionTargetList_NoVector(shotData);
+	if (res) {
+		for (auto& iTarget : listIntersectionTarget_) {
+			if (iTarget.first && iTarget.second != nullptr)
+				intersectionManager->AddTarget(iTarget.second);
+		}
 	}
 }
 
@@ -1635,8 +1672,7 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 StgLooseLaserObject::StgLooseLaserObject(StgStageController* stageController) : StgLaserObject(stageController) {
 	typeObject_ = TypeObject::LooseLaser;
 
-	pShotIntersectionTarget_ = new StgIntersectionTarget_Line();
-	listIntersectionTarget_.push_back(pShotIntersectionTarget_);
+	listIntersectionTarget_.push_back(CreateEmptyIntersection());
 }
 void StgLooseLaserObject::Work() {
 	if (frameWork_ == 0) {
@@ -1693,15 +1729,9 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 	}
 }
 
-std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgLooseLaserObject::GetIntersectionTargetList() {
-	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
-		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
-		|| (pOwnReference_.expired() || widthIntersection_ == 0))
-		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
-
-	StgShotData* shotData = _GetShotData();
-	if (shotData == nullptr)
-		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
+bool StgLooseLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotData) {
+	if (abs(hitboxScale_.x) < 0.01f)
+		return false;
 
 	float invLengthS = (1.0f - (1.0f - invalidLengthStart_) * hitboxScale_.y) * 0.5f;
 	float invLengthE = (1.0f - (1.0f - invalidLengthEnd_) * hitboxScale_.y) * 0.5f;
@@ -1711,19 +1741,26 @@ std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgLooseLaserObject::GetInter
 	float lineXE = Math::Lerp::Linear(posXE_, posX_, invLengthE);
 	float lineYE = Math::Lerp::Linear(posYE_, posY_, invLengthE);
 
-	StgIntersectionTarget_Line* target = (StgIntersectionTarget_Line*)pShotIntersectionTarget_.get();
 	{
-		DxWidthLine& line = target->GetLine();
-		line = DxWidthLine(lineXS, lineYS, lineXE, lineYE, widthIntersection_ * hitboxScale_.x);
+		IntersectionPairType* pPair = &listIntersectionTarget_[0];
 
-		target->SetTargetType(typeOwner_ == OWNER_PLAYER ?
+		StgIntersectionTarget_Line* pTarget = (StgIntersectionTarget_Line*)(pPair->second.get());
+		if (pTarget == nullptr) {
+			pTarget = new StgIntersectionTarget_Line();
+			pPair->second = pTarget;
+		}
+		pPair->first = true;
+
+		DxWidthLine* pDstLine = &pTarget->GetLine();
+		*pDstLine = DxWidthLine(lineXS, lineYS, lineXE, lineYE, widthIntersection_ * hitboxScale_.x);
+
+		pTarget->SetTargetType(typeOwner_ == OWNER_PLAYER ?
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
-		target->SetObject(pOwnReference_);
-		target->SetIntersectionSpace();
-
-		listIntersectionTarget_[0] = pShotIntersectionTarget_;
+		pTarget->SetObject(pOwnReference_);
+		pTarget->SetIntersectionSpace();
 	}
-	return listIntersectionTarget_;
+
+	return true;
 }
 
 void StgLooseLaserObject::RenderOnShotManager() {
@@ -1905,8 +1942,7 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 
 	move_ = D3DXVECTOR2(1, 0);
 
-	pShotIntersectionTarget_ = new StgIntersectionTarget_Line();
-	listIntersectionTarget_.push_back(pShotIntersectionTarget_);
+	listIntersectionTarget_.push_back(CreateEmptyIntersection());
 }
 void StgStraightLaserObject::Work() {
 	if (bEnableMovement_) {
@@ -1956,22 +1992,16 @@ void StgStraightLaserObject::_DeleteInAutoDeleteFrame() {
 		SetFadeDelete();
 	else --frameAutoDelete_;
 }
-std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgStraightLaserObject::GetIntersectionTargetList() {
-	std::vector<ref_unsync_ptr<StgIntersectionTarget>> res;
-
-	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
-		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
-		|| (pOwnReference_.expired() || widthIntersection_ == 0)
-		|| (scaleX_ < 1.0 && typeOwner_ != OWNER_PLAYER))
-		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
-
-	StgShotData* shotData = _GetShotData();
-	if (shotData == nullptr)
-		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
+bool StgStraightLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotData) {
+	if (scaleX_ < 1 && typeOwner_ != OWNER_PLAYER)
+		return false;
 
 	float length = length_ * hitboxScale_.y;
-	double posXE = posX_ + length_ * move_.x;
-	double posYE = posY_ + length_ * move_.y;
+	if (abs(hitboxScale_.x) < 0.01f || abs(length) < 0.01f)
+		return false;
+	
+	double posXE = posX_ + length * move_.x;
+	double posYE = posY_ + length * move_.y;
 	float invLenHalfS = invalidLengthStart_ * 0.5f;
 	float invLenHalfE = invalidLengthEnd_ * 0.5f;
 
@@ -1980,19 +2010,26 @@ std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgStraightLaserObject::GetIn
 	float lineXE = Math::Lerp::Linear(posXE, posX_, invLenHalfE);
 	float lineYE = Math::Lerp::Linear(posYE, posY_, invLenHalfE);
 
-	StgIntersectionTarget_Line* target = (StgIntersectionTarget_Line*)pShotIntersectionTarget_.get();
 	{
-		DxWidthLine& line = target->GetLine();
-		line = DxWidthLine(lineXS, lineYS, lineXE, lineYE, widthIntersection_ * hitboxScale_.x);
+		IntersectionPairType* pPair = &listIntersectionTarget_[0];
 
-		target->SetTargetType(typeOwner_ == OWNER_PLAYER ?
+		StgIntersectionTarget_Line* pTarget = (StgIntersectionTarget_Line*)(pPair->second.get());
+		if (pTarget == nullptr) {
+			pTarget = new StgIntersectionTarget_Line();
+			pPair->second = pTarget;
+		}
+		pPair->first = true;
+
+		DxWidthLine* pDstLine = &pTarget->GetLine();
+		*pDstLine = DxWidthLine(lineXS, lineYS, lineXE, lineYE, widthIntersection_ * hitboxScale_.x);
+
+		pTarget->SetTargetType(typeOwner_ == OWNER_PLAYER ?
 			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
-		target->SetObject(pOwnReference_);
-		target->SetIntersectionSpace();
-
-		listIntersectionTarget_[0] = pShotIntersectionTarget_;
+		pTarget->SetObject(pOwnReference_);
+		pTarget->SetIntersectionSpace();
 	}
-	return listIntersectionTarget_;
+
+	return true;
 }
 void StgStraightLaserObject::RenderOnShotManager() {
 	if (!IsVisible()) return;
@@ -2203,8 +2240,6 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 	invalidLengthEnd_ = 0.02f;
 
 	itemDistance_ = 6.0f;
-
-	pShotIntersectionTarget_ = nullptr;
 }
 void StgCurveLaserObject::Work() {
 	if (bEnableMovement_) {
@@ -2298,61 +2333,58 @@ void StgCurveLaserObject::_DeleteInAutoClip() {
 		objectManager->DeleteObject(this);
 	}
 }
-std::vector<ref_unsync_ptr<StgIntersectionTarget>> StgCurveLaserObject::GetIntersectionTargetList() {
-	if ((IsDeleted() || delay_.time > 0 || frameFadeDelete_ >= 0)
-		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
-		|| (pOwnReference_.expired() || widthIntersection_ == 0))
-		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
-
-	StgShotData* shotData = _GetShotData();
-	if (shotData == nullptr)
-		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
+bool StgCurveLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotData) {
+	if (abs(hitboxScale_.x) < 0.01f || abs(hitboxScale_.y) < 0.01f)
+		return false;
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 
 	size_t countPos = listPosition_.size();
 	size_t countIntersection = countPos > 0U ? countPos - 1U : 0U;
 
-	if (countIntersection > 0U) {
-		float iLengthS = invalidLengthStart_ * 0.5f;
-		float iLengthE = 0.5f + (1.0f - invalidLengthEnd_) * 0.5f;
-		int posInvalidS = (int)(countPos * iLengthS);
-		int posInvalidE = (int)(countPos * iLengthE);
-		float iWidth = widthIntersection_ * hitboxScale_.x;
+	if (countIntersection == 0)
+		return false;
 
-		listIntersectionTarget_.resize(countIntersection, nullptr);
-		//std::fill(listIntersectionTarget_.begin(), listIntersectionTarget_.end(), nullptr);
+	if (listIntersectionTarget_.size() < countIntersection)
+		listIntersectionTarget_.resize(countIntersection, CreateEmptyIntersection());
+	for (auto& i : listIntersectionTarget_) i.first = false;
 
-		std::list<LaserNode>::iterator itr = listPosition_.begin();
-		for (size_t iPos = 0; iPos < countIntersection; ++iPos, ++itr) {
-			ref_unsync_ptr<StgIntersectionTarget>& target = listIntersectionTarget_[iPos];
-			if ((int)iPos < posInvalidS || (int)iPos > posInvalidE) {
-				if (target)
-					target->SetIntersectionSpace(DxRect<LONG>());
-				continue;
-			}
+	float iLengthS = invalidLengthStart_ * 0.5f;
+	float iLengthE = 0.5f + (1.0f - invalidLengthEnd_) * 0.5f;
+	int posInvalidS = (int)(countPos * iLengthS);
+	int posInvalidE = (int)(countPos * iLengthE);
+	float iWidth = widthIntersection_ * hitboxScale_.x;
 
-			std::list<LaserNode>::iterator itrNext = std::next(itr);
-			D3DXVECTOR2* nodeS = &itr->pos;
-			D3DXVECTOR2* nodeE = &itrNext->pos;
+	std::list<LaserNode>::iterator itr = listPosition_.begin();
+	for (size_t iPos = 0; iPos < countIntersection; ++iPos, ++itr) {
+		IntersectionPairType* pPair = &listIntersectionTarget_[iPos];
 
-			if (target == nullptr) {
-				target = new StgIntersectionTarget_Line();
-			}
-			{
-				StgIntersectionTarget_Line* pTarget = (StgIntersectionTarget_Line*)target.get();
-				DxWidthLine& line = pTarget->GetLine();
-				line = DxWidthLine(nodeS->x, nodeS->y, nodeE->x, nodeE->y, iWidth);
-
-				pTarget->SetTargetType(typeOwner_ == OWNER_PLAYER ?
-					StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
-				target->SetObject(pOwnReference_);
-				pTarget->SetIntersectionSpace();
-			}
+		if ((int)iPos < posInvalidS || (int)iPos > posInvalidE) {
+			pPair->first = false;
+			continue;
 		}
+
+		StgIntersectionTarget_Line* pTarget = (StgIntersectionTarget_Line*)(pPair->second.get());
+		if (pTarget == nullptr) {
+			pTarget = new StgIntersectionTarget_Line();
+			pPair->second = pTarget;
+		}
+		pPair->first = true;
+
+		std::list<LaserNode>::iterator itrNext = std::next(itr);
+		D3DXVECTOR2* nodeS = &itr->pos;
+		D3DXVECTOR2* nodeE = &itrNext->pos;
+
+		DxWidthLine* pDstLine = &pTarget->GetLine();
+		*pDstLine = DxWidthLine(nodeS->x, nodeS->y, nodeE->x, nodeE->y, iWidth);
+
+		pTarget->SetTargetType(typeOwner_ == OWNER_PLAYER ?
+			StgIntersectionTarget::TYPE_PLAYER_SHOT : StgIntersectionTarget::TYPE_ENEMY_SHOT);
+		pTarget->SetObject(pOwnReference_);
+		pTarget->SetIntersectionSpace();
 	}
 
-	return listIntersectionTarget_;
+	return true;
 }
 
 void StgCurveLaserObject::RenderOnShotManager() {
