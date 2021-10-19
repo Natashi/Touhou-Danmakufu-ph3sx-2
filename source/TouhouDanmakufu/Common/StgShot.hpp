@@ -145,7 +145,7 @@ private:
 	std::vector<AnimationData> listAnime_;
 	size_t totalAnimeFrame_;
 
-	DxCircle listCol_;
+	std::vector<DxCircle> listCol_;
 
 	double angularVelocityMin_;
 	double angularVelocityMax_;
@@ -169,7 +169,7 @@ public:
 	AnimationData* GetData(size_t frame);
 	size_t GetFrameCount() { return listAnime_.size(); }
 
-	DxCircle* GetIntersectionCircleList() { return &listCol_; }
+	std::vector<DxCircle>& GetIntersectionCircleList() { return listCol_; }
 
 	double GetAngularVelocityMin() { return angularVelocityMin_; }
 	double GetAngularVelocityMax() { return angularVelocityMax_; }
@@ -241,7 +241,7 @@ public:
 		FRAME_FADEDELETE = 30,
 		FRAME_FADEDELETE_LASER = 30,
 	};
-
+public:
 	struct DelayParameter {
 		using lerp_func = Math::Lerp::funcLerp<float, float>;
 		enum {
@@ -318,8 +318,7 @@ protected:
 	bool bSpellResist_;
 	int frameAutoDelete_;
 	
-	ref_unsync_ptr<StgIntersectionTarget> pShotIntersectionTarget_;
-	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listIntersectionTarget_;
+	IntersectionListType listIntersectionTarget_;
 	bool bUserIntersectionMode_;
 	bool bIntersectionEnable_;
 	bool bChangeItemEnable_;
@@ -451,14 +450,14 @@ public:
 	virtual void ClearShotObject() {
 		ClearIntersectionRelativeTarget();
 	}
-
 	virtual void RegistIntersectionTarget() {
-		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
+		if (!bUserIntersectionMode_)
+			_AddIntersectionRelativeTarget();
 	}
+	virtual IntersectionListType GetIntersectionTargetList();
+	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
 
-	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	virtual void SetShotDataID(int id);
-
 	void SetGraphicAngularVelocity(double agv) { angularVelocity_ = agv; }
 	void SetFixedAngle(bool fix) { bFixedAngle_ = fix; }
 };
@@ -486,6 +485,11 @@ public:
 	virtual void ClearShotObject() {
 		ClearIntersectionRelativeTarget();
 	}
+	virtual void RegistIntersectionTarget() {
+		if (!bUserIntersectionMode_)
+			_AddIntersectionRelativeTarget();
+	}
+	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData) { return false; }
 
 	int GetLength() { return length_; }
 	void SetLength(int length) { length_ = length; lengthF_ = (float)length; }
@@ -523,10 +527,8 @@ public:
 	virtual void Work();
 	virtual void RenderOnShotManager();
 
-	virtual void RegistIntersectionTarget() {
-		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
-	}
-	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
+	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
+
 	virtual void SetX(float x) { StgShotObject::SetX(x); posXE_ = x; }
 	virtual void SetY(float y) { StgShotObject::SetY(y); posYE_ = y; }
 };
@@ -550,17 +552,14 @@ protected:
 	bool bLaserExpand_;
 
 	virtual void _DeleteInAutoClip();
-	virtual void _AddIntersectionRelativeTarget();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
 public:
 	StgStraightLaserObject(StgStageController* stageController);
 
 	virtual void Work();
 	virtual void RenderOnShotManager();
-	virtual void RegistIntersectionTarget() {
-		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
-	}
-	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
+
+	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
 
 	double GetLaserAngle() { return angLaser_; }
 	void SetLaserAngle(double angle) { angLaser_ = angle; }
@@ -618,10 +617,9 @@ public:
 
 	virtual void Work();
 	virtual void RenderOnShotManager();
-	virtual void RegistIntersectionTarget() {
-		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
-	}
-	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
+
+	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
+
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
 	void SetTipCapping(bool enable) { bCap_ = enable; }
 	void SetAngleSmoothing(bool enable) { bSmoothAngle_ = enable; }

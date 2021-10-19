@@ -15,6 +15,7 @@
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+[Rr]elease_legacy/
 x64/
 x86/
 bld/
@@ -263,24 +264,29 @@ __pycache__/
 # Other files
 
 # Compiled Binaries & Script Files
-/bin_ext
-/bin_th_dnh
+/bin_ext/*
+/bin_th_dnh/*
+!/bin_ext/FileArchiver_readme.txt
+!/bin_th_dnh/resource/
+!/bin_th_dnh/license.txt
+!/bin_th_dnh/readme.txt
 
 # libogg & libvorbis
-/source/ext/ogg/
-/source/ext/vorbis/
+/source/ext/ogg/*
+/source/ext/vorbis/*
 /library/ogg_static.lib
 /library/vorbis_static.lib
 /library/vorbisfile_static.lib
 
 # zlib
-/source/ext/zlib/
+/source/ext/zlib/*
 /library/zlibstatic.lib
 /library/zlibdynamic.lib
 
-# Steam API & Code (Will be developed on after 1.10a release)
-/source/ext/steam_api/
+# Steam API
+/source/ext/steam_api/*
+/source/Steam/*
 /library/steam_api.lib
-/source/Steam/
-/DnhExecutor/Release_legacy
+
+# code
 /source/GcLib/gstd/ArchiveEncryption.hpp
