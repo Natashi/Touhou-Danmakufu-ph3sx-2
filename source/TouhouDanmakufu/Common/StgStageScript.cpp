@@ -3490,7 +3490,7 @@ gstd::value StgStageScript::Func_ObjShot_SetSourceBlendType(gstd::script_machine
 	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
 	if (obj) {
 		int typeBlend = argv[1].as_int();
-		obj->SetSourceBlendType((BlendMode)typeBlend);
+		obj->SetDelayBlendType((BlendMode)typeBlend);
 	}
 	return value();
 }

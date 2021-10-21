@@ -254,8 +254,7 @@ public:
 		D3DXVECTOR3 alpha;	//[end, start, factor]
 		D3DCOLOR colorRep;
 		bool colorMix;
-		float spin;
-		float angle;
+		D3DXVECTOR2 angle;	//[angle, spin]
 
 		uint8_t type;		//0 = default danmakufu, 1 = ZUN-like
 		lerp_func scaleLerpFunc;	//Scale interpolation
@@ -267,8 +266,7 @@ public:
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
 			alphaLerpFunc = Math::Lerp::Linear<float, float>;
 			colorRep = 0x00000000;
-			spin = 0;
-			angle = 0;
+			angle = D3DXVECTOR2(0, 0);
 		}
 		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(MODE_BLEND_NONE), type(0), colorMix(false) {
 			scale = D3DXVECTOR3(sMin, sMax, rate);
@@ -276,8 +274,7 @@ public:
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
 			alphaLerpFunc = Math::Lerp::Linear<float, float>;
 			colorRep = 0x00000000;
-			spin = 0;
-			angle = 0;
+			angle = D3DXVECTOR2(0, 0);
 		}
 		DelayParameter& operator=(const DelayParameter& source) = default;
 
@@ -327,9 +324,9 @@ protected:
 	StgShotData* _GetShotData() { return _GetShotData(idShotData_); }
 	StgShotData* _GetShotData(int id);
 
-	void _SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z = 1.0f, float w = 1.0f);
-	void _SetVertexUV(VERTEX_TLX& vertex, float u, float v);
-	void _SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color);
+	void _SetVertexPosition(VERTEX_TLX* vertex, float x, float y, float z = 1.0f, float w = 1.0f);
+	void _SetVertexUV(VERTEX_TLX* vertex, float u, float v);
+	void _SetVertexColorARGB(VERTEX_TLX* vertex, D3DCOLOR color);
 
 	virtual void _DeleteInLife();
 	virtual void _DeleteInAutoClip();
@@ -388,11 +385,12 @@ public:
 	void SetDelay(int delay) { delay_.time = delay; }
 	int GetShotDataDelayID() { return delay_.id; }
 	void SetShotDataDelayID(int id) { delay_.id = id; }
-	BlendMode GetSourceBlendType() { return delay_.blend; }
-	void SetSourceBlendType(BlendMode type) { delay_.blend = type; }
+	BlendMode GetDelayBlendType() { return delay_.blend; }
+	void SetDelayBlendType(BlendMode type) { delay_.blend = type; }
 	DelayParameter* GetDelayParameter() { return &delay_; }
 	void SetDelayParameter(DelayParameter& param) { delay_ = param; }
-	void SetDelayAngularVelocity(float av) { delay_.spin = av; }
+	void SetEnableDelayMotion(bool b) { bEnableMotionDelay_ = b; }
+	void SetDelayAngularVelocity(float av) { delay_.angle.y = av; }
 
 	double GetLife() { return life_; }
 	void SetLife(double life) { life_ = life; }
@@ -414,7 +412,6 @@ public:
 	bool IsIntersectionEnable() { return bIntersectionEnable_; }
 	void SetItemChangeEnable(bool b) { bChangeItemEnable_ = b; }
 
-	void SetEnableDelayMotion(bool b) { bEnableMotionDelay_ = b; }
 	void SetPositionRounding(bool b) { bRoundingPosition_ = b; }
 
 	void SetHitboxScale(D3DXVECTOR2& sc) { hitboxScale_ = sc; }
@@ -492,7 +489,9 @@ public:
 	}
 	int GetIntersectionWidth() { return widthIntersection_; }
 	void SetIntersectionWidth(int width) { widthIntersection_ = width; }
+
 	void SetInvalidLength(float start, float end) { invalidLengthStart_ = start; invalidLengthEnd_ = end; }
+
 	void SetItemDistance(float dist) { itemDistance_ = std::max(dist, 0.1f); }
 };
 
@@ -504,8 +503,7 @@ protected:
 	double posXE_;
 	double posYE_;
 
-	float posXO_;
-	float posYO_;
+	D3DXVECTOR2 posOrigin_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
@@ -558,7 +556,7 @@ public:
 	void SetEndEnable(bool bEnable) { bUseEnd_ = bEnable; }
 	void SetEndGraphic(int gr) { idImageEnd_ = gr; }
 
-	void SetSourceEndScale(D3DXVECTOR2& s) { delaySize_ = s; }
+	void SetSourceEndScale(const D3DXVECTOR2& s) { delaySize_ = s; }
 
 	void SetLaserExpand(bool b) { bLaserExpand_ = b; }
 	bool GetLaserExpand() { return bLaserExpand_; }
@@ -577,8 +575,8 @@ public:
 protected:
 	std::list<LaserNode> listPosition_;
 	float tipDecrement_;
-	float posXO_;
-	float posYO_;
+
+	D3DXVECTOR2 posOrigin_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
