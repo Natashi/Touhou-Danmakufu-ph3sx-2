@@ -1450,9 +1450,7 @@ void StgNormalShotObject::Work() {
 
 		{
 			angle_.z += angularVelocity_;
-
 			bool bDelay = delay_.time > 0 && delay_.spin != 0;
-
 			double angleZ = bDelay ? delay_.angle : angle_.z;
 			if (StgShotData* shotData = _GetShotData()) {
 				if (!bFixedAngle_ && !bDelay) angleZ += GetDirectionAngle() + Math::DegreeToRadian(90);
@@ -1746,7 +1744,7 @@ StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObj
 void StgLaserObject::_AddIntersectionRelativeTarget() {
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 
-	if ((IsDeleted() || delay_.time > 0 && !bEnableMotionDelay_ || frameFadeDelete_ >= 0)
+	if ((IsDeleted() || (delay_.time > 0 && !bEnableMotionDelay_) || frameFadeDelete_ >= 0)
 		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
 		|| pOwnReference_.expired() || widthIntersection_ <= 0)
 		return;
@@ -2406,7 +2404,7 @@ void StgCurveLaserObject::Work() {
 		if (delay_.time > 0) {
 			--(delay_.time);
 			delay_.angle += delay_.spin;
-		}	
+		}
 	}
 
 	_CommonWorkTask();
