@@ -54,9 +54,12 @@ namespace gstd {
 
 	class script_engine {
 	public:
-		script_engine(const std::string& source, std::vector<function>* list_func, std::vector<constant>* list_const);
+		script_engine(const std::wstring& source, std::vector<function>* list_func, std::vector<constant>* list_const);
 		script_engine(const std::vector<char>& source, std::vector<function>* list_func, std::vector<constant>* list_const);
+		script_engine(const wchar_t* source, const wchar_t* end, std::vector<function>* list_func, std::vector<constant>* list_const);
 		virtual ~script_engine();
+
+		void init(const wchar_t* source, const wchar_t* end, std::vector<function>* list_func, std::vector<constant>* list_const);
 
 		script_engine& operator=(const script_engine& source) = default;
 

@@ -4,38 +4,28 @@
 
 using namespace gstd;
 
-script_scanner::script_scanner(const char* source, const char* end) : current(source), line(1) {
-	encoding = Encoding::UTF8;
+script_scanner::script_scanner(const wchar_t* source, const wchar_t* end) : current(source), line(1) {
 	current = source;
 	endPoint = end;
 	line = 1;
-	
-	encoding = Encoding::Detect(source, (size_t)(end - source));
-	bytePerChar = Encoding::GetCharSize(encoding);
 
-	current += Encoding::GetBomSize(encoding);
-
+	next_char();	//Skip BOM
 	advance();
 }
 script_scanner::script_scanner(const script_scanner& source) {
-	encoding = source.encoding;
-	bytePerChar = source.bytePerChar;
-	current = source.current;
-	endPoint = source.endPoint;
-	next = source.next;
-	token_list = source.token_list;
-	word = source.word;
-	line = source.line;
+	copy_state(&source);
 }
 
-void script_scanner::copy_state(script_scanner* src) {
-	encoding = src->encoding;
-	bytePerChar = src->bytePerChar;
+void script_scanner::copy_state(const script_scanner* src) {
 	current = src->current;
 	endPoint = src->endPoint;
 	next = src->next;
+
+	prev_ptr_list = src->prev_ptr_list;
 	token_list = src->token_list;
+
 	word = src->word;
+	int_value = src->int_value;
 	real_value = src->real_value;
 	char_value = src->char_value;
 	string_value = src->string_value;
@@ -43,15 +33,15 @@ void script_scanner::copy_state(script_scanner* src) {
 }
 
 wchar_t script_scanner::current_char() {
-	return Encoding::BytesToWChar(current, encoding);
+	return *current;
 }
 wchar_t script_scanner::peek_next_char(int index) {
-	const char* pos = current + index * bytePerChar;
+	const wchar_t* pos = current + index;
 	if (pos >= endPoint) return L'\0';
-	return Encoding::BytesToWChar(pos, encoding);
+	return *pos;
 }
 wchar_t script_scanner::next_char() {
-	current += bytePerChar;
+	current += 1;
 	return current_char();
 }
 
@@ -103,15 +93,6 @@ void script_scanner::skip() {
 			//++line;
 			ch2 = peek_next_char(1);
 		}
-	}
-}
-
-void script_scanner::AddLog(wchar_t* data) {
-	{
-		wchar_t* pStart = (wchar_t*)current;
-		wchar_t* pEnd = (wchar_t*)(current + std::min(16, endPoint - current));
-		std::wstring wstr = std::wstring(pStart, pEnd);
-		//Logger::WriteTop(StringUtility::Format(L"%s current=%d, endPoint=%d, val=%d, ch=%s", data, pStart, endPoint, (wchar_t)*current, wstr.c_str()));
 	}
 }
 
@@ -332,17 +313,17 @@ void script_scanner::advance() {
 
 		{
 			ch = next_char();
-			const char* pBeg = current;
+			const wchar_t* pBeg = current;
 			while (true) {
 				if (ch == L'\n') ++line;			//For multiple-lined strings
 				else if (ch == L'\\') next_char();	//Skip escaped characters
 				else if (ch == enclosing) break;
 				ch = next_char();
 			}
-			const char* pEnd = current;
+			const wchar_t* pEnd = current;
 
 			next_char();
-			string_value = Encoding::BytesToWString(pBeg, pEnd, encoding);
+			string_value = std::wstring(pBeg, pEnd);
 			string_value = StringUtility::ParseStringWithEscape(string_value);
 		}
 
@@ -454,11 +435,13 @@ void script_scanner::advance() {
 			break;
 		}
 		else if (std::iswalpha(ch) || ch == L'_') {
-			word = "";
+			std::wstring tmp = L"";
 			do {
-				word += (char)ch;
+				tmp += ch;
 				ch = next_char();
 			} while (std::iswalpha(ch) || ch == '_' || std::iswdigit(ch));
+
+			word = StringUtility::ConvertWideToMulti(tmp);
 
 			auto itr = token_map.find(word);
 			if (itr != token_map.end())
