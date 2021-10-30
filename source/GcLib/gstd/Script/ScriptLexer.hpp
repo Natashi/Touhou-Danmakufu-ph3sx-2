@@ -61,10 +61,8 @@ namespace gstd {
 	class script_scanner {
 		static std::unordered_map<std::string, token_kind> token_map;
 
-		Encoding::Type encoding;
-		size_t bytePerChar;
-		const char* current;
-		const char* endPoint;
+		const wchar_t* current;
+		const wchar_t* endPoint;
 
 		wchar_t current_char();
 		wchar_t peek_next_char(int index);
@@ -81,7 +79,7 @@ namespace gstd {
 	public:
 		token_kind next;
 
-		std::list<const char*> prev_ptr_list;
+		std::list<const wchar_t*> prev_ptr_list;
 		std::list<token_kind> token_list;
 
 		std::string word;
@@ -91,19 +89,17 @@ namespace gstd {
 		std::wstring string_value;
 		int line;
 
-		script_scanner(const char* source, const char* end);
+		script_scanner(const wchar_t* source, const wchar_t* end);
 		script_scanner(const script_scanner& source);
 
-		void copy_state(script_scanner* src);
+		void copy_state(const script_scanner* src);
 
-		const char* get() { return current; }
-		inline std::wstring tostr(const char* b, const char* e) {
-			return Encoding::BytesToWString(b, e, encoding);
+		const wchar_t* get() { return current; }
+		inline std::wstring ToStr(const wchar_t* b, const wchar_t* e) {
+			return std::wstring(b, e);
 		}
 
 		void skip();
 		void advance();
-
-		void AddLog(wchar_t* data);
 	};
 }

@@ -2366,6 +2366,7 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 
 	itemDistance_ = 6.0f;
 
+	bCap_ = false;
 	posOrigin_ = D3DXVECTOR2(0, 0);
 
 	bCap_ = false;

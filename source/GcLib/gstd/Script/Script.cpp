@@ -54,49 +54,38 @@ type_data* script_type_manager::get_array_type(type_data* element) {
 
 /* script_engine */
 
-script_engine::script_engine(const std::string& source, std::vector<function>* list_func, std::vector<constant>* list_const) {
-	main_block = new_block(1, block_kind::bk_normal);
-
-	const char* end = &source[0] + source.size();
-	script_scanner s(source.c_str(), end);
-	parser p(this, &s);
-
-	if (list_func) p.load_functions(list_func);
-	if (list_const) p.load_constants(list_const);
-	p.begin_parse();
-
-	events = p.events;
-
-	error = p.error;
-	error_message = p.error_message;
-	error_line = p.error_line;
+script_engine::script_engine(const std::wstring& source, std::vector<function>* list_func, std::vector<constant>* list_const) {
+	init(source.data(), source.data() + source.size(), list_func, list_const);
 }
-
 script_engine::script_engine(const std::vector<char>& source, std::vector<function>* list_func, std::vector<constant>* list_const) {
-	main_block = new_block(1, block_kind::bk_normal);
-
-	if (false) {
-		wchar_t* pStart = (wchar_t*)&source[0];
-		wchar_t* pEnd = (wchar_t*)(&source[0] + std::min(source.size(), 64U));
-		std::wstring str = std::wstring(pStart, pEnd);
-		//Logger::WriteTop(str);
-	}
-	const char* end = &source[0] + source.size();
-	script_scanner s(&source[0], end);
-	parser p(this, &s);
-
-	if (list_func) p.load_functions(list_func);
-	if (list_const) p.load_constants(list_const);
-	p.begin_parse();
-
-	events = p.events;
-
-	error = p.error;
-	error_message = p.error_message;
-	error_line = p.error_line;
+	const char* begin = source.data();
+	const char* end = begin + source.size();
+	init((wchar_t*)begin, (wchar_t*)end, list_func, list_const);
+}
+script_engine::script_engine(const wchar_t* source, const wchar_t* end, std::vector<function>* list_func, std::vector<constant>* list_const) {
+	init(source, end, list_func, list_const);
 }
 script_engine::~script_engine() {
 	blocks.clear();
+}
+
+void script_engine::init(const wchar_t* source, const wchar_t* end, std::vector<function>* list_func, std::vector<constant>* list_const) {
+	main_block = new_block(1, block_kind::bk_normal);
+
+	data = nullptr;
+
+	script_scanner s(source, end);
+	parser p(this, &s);
+
+	if (list_func) p.load_functions(list_func);
+	if (list_const) p.load_constants(list_const);
+	p.begin_parse();
+
+	events = p.events;
+
+	error = p.error;
+	error_message = p.error_message;
+	error_line = p.error_line;
 }
 
 script_block* script_engine::new_block(int level, block_kind kind) {

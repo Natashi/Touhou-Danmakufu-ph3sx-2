@@ -454,8 +454,8 @@ parser::arg_data parser::parse_variable_decl(parser_state_t* state, bool bParame
 
 	//parser_assert(state, state->next() == token_kind::tk_word, "Variable name is required.\r\n");
 	if (state->next() != token_kind::tk_word) {
-		const char* prevPtr = *std::next(state->lex->prev_ptr_list.begin());
-		std::wstring tokStr = state->lex->tostr(prevPtr, state->lex->get());
+		const wchar_t* prevPtr = *std::next(state->lex->prev_ptr_list.begin());
+		std::wstring tokStr = state->lex->ToStr(prevPtr, state->lex->get());
 		tokStr = StringUtility::Trim(tokStr);
 		std::wstring err = StringUtility::Format(
 			L"\"%s\" cannot be used to declare a %s name.\r\n",
