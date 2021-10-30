@@ -430,10 +430,10 @@ std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 	size_t size = std::min(DISP_MAX, (size_t)(pEnd - pStr));
 	return Encoding::BytesToWString(pStr, size, encoding);
 }
-std::vector<char> ScriptClientBase::_ParsePreprocessors(std::vector<char>& source) {
+std::vector<char> ScriptClientBase::_ParseScriptSource(std::vector<char>& source) {
 	ScriptLoader scriptLoader(this, engine_->GetPath(), source);
 
-	scriptLoader.ParsePreprocessors();
+	scriptLoader.Parse();
 	engine_->SetScriptFileLineMap(scriptLoader.GetLineMap());
 
 	return scriptLoader.GetResult();
@@ -480,7 +480,7 @@ void ScriptClientBase::SetSource(std::vector<char>& source) {
 }
 void ScriptClientBase::Compile() {
 	if (engine_->GetEngine() == nullptr) {
-		std::vector<char> source = _ParsePreprocessors(engine_->GetSource());
+		std::vector<char> source = _ParseScriptSource(engine_->GetSource());
 		engine_->SetSource(source);
 
 		bool bCreateSuccess = _CreateEngine();
@@ -2542,7 +2542,7 @@ bool ScriptLoader::_SkipToNextValidLine() {
 	return tok->GetType() != Token::Type::TK_EOF;
 }
 
-void ScriptLoader::ParsePreprocessors() {
+void ScriptLoader::Parse() {
 	try {
 		scanner_->Next();
 		_ParseIfElse();
@@ -2551,6 +2551,8 @@ void ScriptLoader::ParsePreprocessors() {
 		_ResetScanner(0);
 		scanner_->Next();
 		_ParseInclude();
+
+		_ConvertToEncoding(Encoding::UTF16LE);
 
 		if (false) {
 			std::wstring pathTest = PathProperty::GetModuleDirectory() +
@@ -2663,7 +2665,7 @@ void ScriptLoader::_ParseInclude() {
 										if (countMbRes == 0) {
 											std::wstring error = StringUtility::Format(L"Error reading include file. "
 												"(%s -> UTF-8) [%s]\r\n",
-												includeEncoding == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
+												Encoding::WStringRepresentation(includeEncoding), wPath.c_str());
 											_RaiseError(scanner_->GetCurrentLine(), error);
 										}
 
@@ -2690,7 +2692,7 @@ void ScriptLoader::_ParseInclude() {
 										if (countWRes == 0) {
 											std::wstring error = StringUtility::Format(L"Error reading include file. "
 												"(UTF-8 -> %s) [%s]\r\n",
-												encoding_ == Encoding::UTF16LE ? L"UTF-16 LE" : L"UTF-16 BE", wPath.c_str());
+												Encoding::WStringRepresentation(encoding_), wPath.c_str());
 											_RaiseError(scanner_->GetCurrentLine(), error);
 										}
 
@@ -2850,6 +2852,91 @@ void ScriptLoader::_ParseIfElse() {
 		}
 		if (!_SkipToNextValidLine()) break;
 	}
+}
+
+void ScriptLoader::_ConvertToEncoding(Encoding::Type targetEncoding) {
+	if (encoding_ == targetEncoding) return;
+
+	size_t orgCharSize = Encoding::GetCharSize(encoding_);
+	size_t newCharSize = Encoding::GetCharSize(targetEncoding);
+	size_t orgBomSize = Encoding::GetBomSize(encoding_);
+	size_t newBomSize = Encoding::GetBomSize(targetEncoding);
+
+	std::vector<char> newSource;
+	if (newBomSize > 0) {
+		newSource.resize(newBomSize);
+		memcpy(newSource.data(), Encoding::GetBom(targetEncoding), newBomSize);
+	}
+	
+	if (orgCharSize == 2 && newCharSize == 1) {
+		//From UTF16(LE/BE) to UTF8(BOM)
+
+		//Skip src BOM
+		std::vector<char> tmpWch(src_.begin() + orgBomSize, src_.end());
+		if (encoding_ == Encoding::UTF16BE) {
+			//Src is UTF16BE, swap bytes
+			for (auto wItr = tmpWch.begin(); wItr != tmpWch.end(); wItr += 2) {
+				std::swap(*wItr, *(wItr + 1));
+			}
+		}
+
+		std::vector<char> placement;
+		size_t countRes = StringUtility::ConvertWideToMulti((wchar_t*)tmpWch.data(),
+			tmpWch.size(), placement, CP_UTF8);
+		if (countRes == 0) {
+			std::wstring error = StringUtility::Format(L"Error converting script encoding. "
+				"(%s -> %s) [%s]\r\n",
+				Encoding::WStringRepresentation(encoding_), 
+				Encoding::WStringRepresentation(targetEncoding), pathSource_.c_str());
+			_RaiseError(0, error);
+		}
+
+		newSource.insert(newSource.end(), placement.begin(), placement.end());
+	}
+	else if (orgCharSize == 1 && newCharSize == 2) {
+		//From UTF8(BOM) to UTF16(LE/BE)
+
+		//Skip src BOM
+		std::vector<char> tmpCh(src_.begin() + orgBomSize, src_.end());
+
+		std::vector<char> placement;
+		size_t countRes = StringUtility::ConvertMultiToWide(tmpCh.data(),
+			tmpCh.size(), placement, CP_UTF8);
+		if (countRes == 0) {
+			std::wstring error = StringUtility::Format(L"Error converting script encoding. "
+				"(%s -> %s) [%s]\r\n",
+				Encoding::WStringRepresentation(encoding_),
+				Encoding::WStringRepresentation(targetEncoding), pathSource_.c_str());
+			_RaiseError(0, error);
+		}
+
+		if (targetEncoding == Encoding::UTF16BE) {
+			//Dest is UTF16BE, swap bytes
+			for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
+				std::swap(*wItr, *(wItr + 1));
+			}
+		}
+		newSource.insert(newSource.end(), placement.begin(), placement.end());
+	}
+	else {
+		//From UTF8(BOM) to UTF8(BOM) or UTF16(LE/BE) to UTF16(LE/BE)
+
+		std::vector<char> placement(src_.begin() + orgBomSize, src_.end());
+		if ((encoding_ == Encoding::UTF16LE && targetEncoding == Encoding::UTF16BE)
+			|| (encoding_ == Encoding::UTF16BE && targetEncoding == Encoding::UTF16LE)) 
+		{
+			//Swap byte order
+			for (auto wItr = placement.begin(); wItr != placement.end(); wItr += 2) {
+				std::swap(*wItr, *(wItr + 1));
+			}
+		}
+
+		newSource.insert(newSource.end(), placement.begin(), placement.end());
+	}
+
+	src_ = newSource;
+	encoding_ = targetEncoding;
+	charSize_ = newCharSize;
 }
 
 //****************************************************************************

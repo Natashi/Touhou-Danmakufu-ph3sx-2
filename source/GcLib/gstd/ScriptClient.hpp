@@ -108,7 +108,7 @@ namespace gstd {
 		void _RaiseError(int line, const std::wstring& message);
 		std::wstring _GetErrorLineSource(int line);
 
-		virtual std::vector<char> _ParsePreprocessors(std::vector<char>& source);
+		virtual std::vector<char> _ParseScriptSource(std::vector<char>& source);
 		virtual bool _CreateEngine();
 
 		std::wstring _ExtendPath(std::wstring path);
@@ -479,11 +479,13 @@ namespace gstd {
 
 		void _ParseInclude();
 		void _ParseIfElse();
+
+		void _ConvertToEncoding(Encoding::Type targetEncoding);
 	public:
 		ScriptLoader(ScriptClientBase* script, const std::wstring& path, std::vector<char>& source);
 		~ScriptLoader();
 
-		void ParsePreprocessors();
+		void Parse();
 
 		std::vector<char>& GetResult() { return src_; }
 		gstd::ref_count_ptr<ScriptFileLineMap> GetLineMap() { return mapLine_; }
