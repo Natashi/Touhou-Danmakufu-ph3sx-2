@@ -40,6 +40,7 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 //DirectGraphics
 //*******************************************************************
 DirectGraphics* DirectGraphics::thisBase_ = nullptr;
+float DirectGraphics::g_dxCoordsMul_ = 1.0f;
 DirectGraphics::DirectGraphics() {
 	pDirect3D_ = nullptr;
 	pDevice_ = nullptr;
@@ -50,6 +51,9 @@ DirectGraphics::DirectGraphics() {
 
 	camera_ = new DxCamera();
 	camera2D_ = new DxCamera2D();
+
+	defaultRenderTargetSize_[0] = 1024;
+	defaultRenderTargetSize_[1] = 512;
 	
 	stateFog_.bEnable = true;
 	stateFog_.color = D3DXVECTOR4(0, 0, 0, 0);
@@ -111,7 +115,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		float coordRateX = dxBackBufferW / (float)config.sizeScreen_.x;
 		float coordRateY = dxBackBufferH / (float)config.sizeScreen_.y;
 
-		G_DX_COORDS_MUL = std::min(coordRateX, coordRateY);
+		g_dxCoordsMul_ = std::min(coordRateX, coordRateY);
 	}
 
 	//Fullscreen mode settings
@@ -472,7 +476,7 @@ void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
 			D3DXMatrixLookAtLH(&viewMat, (D3DXVECTOR3*)&viewFrom, &D3DXVECTOR3(0, 0, 0), &D3DXVECTOR3(0, 1, 0));
 
 			D3DXMatrixPerspectiveFovLH(&persMat, D3DXToRadian(45.0),
-				config_.sizeScreen_.x / (float)config_.sizeScreen_.y, 10.0f, 2000.0f);
+				GetRenderScreenWidth() / (float)GetRenderScreenHeight(), 10.0f, 2000.0f);
 
 			viewMat = viewMat * persMat;
 
@@ -501,6 +505,7 @@ void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
 
 	SetTextureFilter(D3DTEXF_LINEAR, D3DTEXF_LINEAR, D3DTEXF_NONE);
 
+	UpdateDefaultRenderTargetSize();
 	ResetViewPort();
 }
 void DirectGraphics::AddDirectGraphicsListener(DirectGraphicsListener* listener) {
@@ -800,19 +805,15 @@ void DirectGraphics::SetViewPort(int x, int y, int width, int height) {
 	}
 }
 void DirectGraphics::ResetViewPort() {
-	SetViewPort(0, 0, GetScreenWidth(), GetScreenHeight());
+	SetViewPort(0, 0, GetRenderScreenWidth(), GetRenderScreenHeight());
 }
-LONG DirectGraphics::GetScreenWidth() {
-	return config_.sizeScreen_.x;
-}
-LONG DirectGraphics::GetScreenHeight() {
-	return config_.sizeScreen_.y;
-}
+
 double DirectGraphics::GetScreenWidthRatio() {
 	RECT rect;
 	::GetWindowRect(hAttachedWindow_, &rect);
-	double widthWindow = (double)rect.right - (double)rect.left;
-	double widthView = config_.sizeScreen_.x;
+
+	double widthWindow = rect.right - rect.left;
+	double widthView = GetRenderScreenWidth();
 
 	/*
 	DWORD style = ::GetWindowLong(hAttachedWindow_, GWL_STYLE);
@@ -826,8 +827,9 @@ double DirectGraphics::GetScreenWidthRatio() {
 double DirectGraphics::GetScreenHeightRatio() {
 	RECT rect;
 	::GetWindowRect(hAttachedWindow_, &rect);
-	double heightWindow = (double)rect.bottom - (double)rect.top;
-	double heightView = config_.sizeScreen_.y;
+
+	double heightWindow = rect.bottom - rect.top;
+	double heightView = GetRenderScreenHeight();
 
 	/*
 	DWORD style = ::GetWindowLong(hAttachedWindow_, GWL_STYLE);
@@ -862,12 +864,35 @@ DxRect<LONG> DirectGraphics::ClientSizeToWindowSize(const DxRect<LONG>& rc, Scre
 }
 
 void DirectGraphics::SaveBackSurfaceToFile(const std::wstring& path) {
-	DxRect<LONG> rect(0, 0, config_.sizeScreen_.x, config_.sizeScreen_.y);
+	DxRect<LONG> rect(0, 0, GetRenderScreenWidth(), GetRenderScreenHeight());
 	LPDIRECT3DSURFACE9 pBackSurface = nullptr;
 	pDevice_->GetRenderTarget(0, &pBackSurface);
 	D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
 		pBackSurface, nullptr, (RECT*)&rect);
 	pBackSurface->Release();
+}
+
+void DirectGraphics::UpdateDefaultRenderTargetSize() {
+	size_t baseW = 0;
+	size_t baseH = 0;
+	if (!config_.bUseDynamicScaling_) {
+		baseW = GetScreenWidth();
+		baseH = GetScreenHeight();
+	}
+	else {
+		baseW = config_.sizeScreenDisplay_.x;
+		baseH = config_.sizeScreenDisplay_.y;
+	}
+
+	size_t width = 1U;
+	while (width <= baseW)
+		width = width << 1;
+	size_t height = 1U;
+	while (height <= baseH)
+		height = height << 1;
+
+	defaultRenderTargetSize_[0] = width;
+	defaultRenderTargetSize_[1] = height;
 }
 
 //*******************************************************************

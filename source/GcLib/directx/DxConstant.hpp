@@ -8,5 +8,3 @@
 #if defined(DNH_PROJ_EXECUTOR)
 #include "Vertex.hpp"
 #endif
-
-static float G_DX_COORDS_MUL = 1.0f;
