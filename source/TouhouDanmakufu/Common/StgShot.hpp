@@ -603,7 +603,6 @@ protected:
 	float tipDecrement_;
 	float posXO_;
 	float posYO_;
-	bool bCap_;
 
 	D3DXVECTOR2 posOrigin_;
 	bool bCap_;

@@ -4695,16 +4695,6 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetAngleSmoothing(gstd::script_machi
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_ObjCrLaser_SetTipCapping(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	int id = argv[0].as_int();
-	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
-	if (obj) {
-		bool enable = argv[1].as_boolean();
-		obj->SetTipCapping(enable);
-	}
-	return value();
-}
 gstd::value StgStageScript::Func_ObjCrLaser_GetNodePointer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
