@@ -2263,6 +2263,7 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 
 	itemDistance_ = 6.0f;
 
+	bCap_ = false;
 	posOrigin_ = D3DXVECTOR2(0, 0);
 }
 void StgCurveLaserObject::Work() {
@@ -2299,15 +2300,15 @@ void StgCurveLaserObject::_Move() {
 
 		D3DXVECTOR2 newNodePos(posX_, posY_);
 		D3DXVECTOR2 newNodeVertF(-move_.y, move_.x);	//90 degrees rotation
-		PushNode(CreateNode(newNodePos, newNodeVertF));
+		PushNode(CreateNode(newNodePos, newNodeVertF, widthRender_));
 	}
 }
 
-StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, D3DCOLOR col) {
+StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, int width, D3DCOLOR col) {
 	LaserNode node;
 	node.pos = pos;
 	{
-		float wRender = widthRender_ / 2.0f;
+		float wRender = width / 2.0f;
 
 		float nx = wRender * rFac.x;
 		float ny = wRender * rFac.y;
@@ -2336,7 +2337,7 @@ void StgCurveLaserObject::GetNodePointerList(std::vector<LaserNode*>* listRes) {
 }
 std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::PushNode(const LaserNode& node) {
 	listPosition_.push_front(node);
-	if (listPosition_.size() > length_)
+	while (listPosition_.size() > length_)
 		listPosition_.pop_back();
 	return listPosition_.begin();
 }
@@ -2520,10 +2521,65 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		D3DXVECTOR2 texSizeInv = D3DXVECTOR2(1.0f / textureSize->x, 1.0f / textureSize->y);
 
 		DxRect<LONG>* rcSrcOrg = anime->GetSource();
-		float rcInc = ((rcSrcOrg->bottom - rcSrcOrg->top) / (float)countRect) * texSizeInv.y;
+
+		float rcLen = rcSrcOrg->bottom - rcSrcOrg->top;
+		float rcLenH = rcLen * 0.5f;
+
+		float renWid = std::max((float)widthRender_, 0.001f);
+
+		float rcInc = (rcLen / (float)countRect) * texSizeInv.y;
+
+		float rcHeigh = rcLen * texSizeInv.y;
+		float rcMidPt = rcLenH * texSizeInv.y;
+			
 		float rectV = rcSrcOrg->top * texSizeInv.y;
 
 		LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrcOrg);
+
+		std::vector<float> arrInc(countPos);
+
+		bool bCappable = false;
+		if (bCap_) {
+			// :WHAT:
+
+			size_t i = 0;
+			size_t iPos = 0;
+			float remLen = rcMidPt;
+
+			auto tryCap = [&](auto itr) -> bool {
+				if (i > halfPos) // Auto-fails if cap crosses the half-way point
+					return false;
+
+				auto itrNext = std::next(itr);
+				D3DXVECTOR2* pos = &itr->pos;
+				D3DXVECTOR2* posNext = &itrNext->pos;
+				// D3DXVECTOR2* off = &itr->vertOff[0];
+				// float wid = std::max(hypotf(off->x, off->y) * 2, 1.0f);
+				float incDist = hypotf(posNext->x - pos->x, posNext->y - pos->y) * rcHeigh / renWid;
+
+				float& ref = arrInc[iPos];
+				if (ref == 0) // Fails if element was already written to
+					ref = std::min(incDist, remLen);
+				else
+					return false;
+					
+				remLen -= incDist;
+				return true;
+			};
+
+			bCappable = true;
+			for (auto itr = listPosition_.begin(); remLen > 0 && itr != --listPosition_.end() && bCappable; ++itr, ++i, ++iPos)
+				bCappable = tryCap(itr);
+
+			i = 0;
+			iPos = countPos - 2; // Ends straight up do not work otherwise?
+			remLen = rcMidPt;
+			for (auto itr = listPosition_.rbegin(); remLen > 0 && itr != --listPosition_.rend() && bCappable; ++itr, ++i, --iPos)
+				bCappable = tryCap(itr);
+		}
+
+		if (!bCappable) // If capping fails (or is disabled), just use the regular increment
+			std::fill(arrInc.begin(), arrInc.end(), rcInc);
 
 		size_t iPos = 0U;
 		for (auto itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
@@ -2552,7 +2608,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 			}
 			renderer->AddSquareVertex_CurveLaser(verts, std::next(itr) != listPosition_.end());
 
-			rectV += rcInc;
+			rectV += arrInc[iPos];
 		}
 	}
 }

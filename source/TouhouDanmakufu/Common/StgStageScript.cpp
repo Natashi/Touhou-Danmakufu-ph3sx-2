@@ -480,17 +480,22 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjStLaser_SetPermitExpand", StgStageScript::Func_ObjStLaser_SetPermitExpand, 2 },
 	{ "ObjStLaser_GetPermitExpand", StgStageScript::Func_ObjStLaser_GetPermitExpand, 1 },
 	{ "ObjCrLaser_SetTipDecrement", StgStageScript::Func_ObjCrLaser_SetTipDecrement, 2 },
+	{ "ObjCrLaser_SetTipCapping", StgStageScript::Func_ObjCrLaser_SetTipCapping, 2 },
 	{ "ObjCrLaser_GetNodePointer", StgStageScript::Func_ObjCrLaser_GetNodePointer, 2 },
 	{ "ObjCrLaser_GetNodePointerList", StgStageScript::Func_ObjCrLaser_GetNodePointerList, 1 },
 	{ "ObjCrLaser_GetNodePosition", StgStageScript::Func_ObjCrLaser_GetNodePosition, 2 },
 	{ "ObjCrLaser_GetNodeAngle", StgStageScript::Func_ObjCrLaser_GetNodeAngle, 2 },
+	{ "ObjCrLaser_GetNodeRenderWidth", StgStageScript::Func_ObjCrLaser_GetNodeRenderWidth, 2 },
 	{ "ObjCrLaser_GetNodeColor", StgStageScript::Func_ObjCrLaser_GetNodeColor, 2 },
 	{ "ObjCrLaser_GetNodeColorHex", StgStageScript::Func_ObjCrLaser_GetNodeColorHex, 2 },
 	{ "ObjCrLaser_SetNode", StgStageScript::Func_ObjCrLaser_SetNode, 6 },
+	{ "ObjCrLaser_SetNode", StgStageScript::Func_ObjCrLaser_SetNode, 7 }, // Overloaded
 	{ "ObjCrLaser_SetNodePosition", StgStageScript::Func_ObjCrLaser_SetNodePosition, 4 },
 	{ "ObjCrLaser_SetNodeAngle", StgStageScript::Func_ObjCrLaser_SetNodeAngle, 3 },
+	{ "ObjCrLaser_SetNodeRenderWidth", StgStageScript::Func_ObjCrLaser_SetNodeRenderWidth, 3 },
 	{ "ObjCrLaser_SetNodeColor", StgStageScript::Func_ObjCrLaser_SetNodeColor, 3 },
 	{ "ObjCrLaser_AddNode", StgStageScript::Func_ObjCrLaser_AddNode, 5 },
+	{ "ObjCrLaser_AddNode", StgStageScript::Func_ObjCrLaser_AddNode, 6 }, // Overloaded
 
 	{ "ObjPatternShot_Create", StgStageScript::Func_ObjPatternShot_Create, 0 },
 	{ "ObjPatternShot_Fire", StgStageScript::Func_ObjPatternShot_Fire, 1 },
@@ -4060,6 +4065,16 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetTipDecrement(gstd::script_machine
 	}
 	return value();
 }
+gstd::value StgStageScript::Func_ObjCrLaser_SetTipCapping(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
+	if (obj) {
+		bool enable = argv[1].as_boolean();
+		obj->SetTipCapping(enable);
+	}
+	return value();
+}
 gstd::value StgStageScript::Func_ObjCrLaser_GetNodePointer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
@@ -4121,6 +4136,21 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodeAngle(gstd::script_machine* m
 	}
 	return script->CreateRealValue(angle);
 }
+gstd::value StgStageScript::Func_ObjCrLaser_GetNodeRenderWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+
+	double width = 0.0;
+	int id = argv[0].as_int();
+	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
+			D3DXVECTOR2& vec = ptr->vertOff[0];
+			width = hypot(vec.x, vec.y) * 2;
+		}
+	}
+	return script->CreateRealValue(width);
+}
 gstd::value StgStageScript::Func_ObjCrLaser_GetNodeColor(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 
@@ -4165,9 +4195,11 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetNode(gstd::script_machine* machin
 			float angle = Math::DegreeToRadian(argv[4].as_real());
 			D3DCOLOR color = argv[5].as_int();
 
+			int width = (argc == 7) ? argv[6].as_int() : obj->GetRenderWidth();
+
 			D3DXVECTOR2 rMove = D3DXVECTOR2(-sinf(angle), cosf(angle));
 
-			StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(x, y), rMove, color);
+			StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(x, y), rMove, width, color);
 			*ptr = node;
 		}
 	}
@@ -4194,11 +4226,35 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetNodeAngle(gstd::script_machine* m
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
 		if (ptr) {
+			D3DXVECTOR2& vec = ptr->vertOff[0];
+			float width = hypot(vec.x, vec.y) * 2;
+
 			float angle = Math::DegreeToRadian(argv[2].as_real());
 			D3DXVECTOR2 rMove = D3DXVECTOR2(-sinf(angle), cosf(angle));
 
-			StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(0, 0), rMove);
+			StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(0, 0), rMove, width, 0);
 			memcpy(ptr->vertOff, node.vertOff, sizeof(D3DXVECTOR2) * 2U);
+		}
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjCrLaser_SetNodeRenderWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
+	if (obj) {
+		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
+		if (ptr) {
+			int width = std::max(argv[2].as_int(), 1i64);
+			D3DXVECTOR2& oldMove = ptr->vertOff[0];
+			float oldWidth = hypotf(oldMove.x, oldMove.y);
+			
+			D3DXVECTOR2 newMove(oldMove);
+			newMove[0] /= oldWidth;
+			newMove[1] /= oldWidth;
+
+			StgCurveLaserObject::LaserNode node = obj->CreateNode(ptr->pos, newMove, width, ptr->color);
+			*ptr = node;
 		}
 	}
 	return value();
@@ -4226,9 +4282,11 @@ gstd::value StgStageScript::Func_ObjCrLaser_AddNode(gstd::script_machine* machin
 		float angle = Math::DegreeToRadian(argv[3].as_real());
 		D3DCOLOR color = argv[4].as_int();
 
+		int width = (argc == 6) ? argv[5].as_int() : obj->GetRenderWidth();
+
 		D3DXVECTOR2 rMove = D3DXVECTOR2(-sinf(angle), cosf(angle));
 
-		StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(x, y), rMove, color);
+		StgCurveLaserObject::LaserNode node = obj->CreateNode(D3DXVECTOR2(x, y), rMove, width, color);
 		obj->PushNode(node);
 	}
 	return value();
