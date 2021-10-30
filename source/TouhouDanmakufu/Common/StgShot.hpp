@@ -143,7 +143,7 @@ private:
 	std::vector<AnimationData> listAnime_;
 	size_t totalAnimeFrame_;
 
-	DxCircle listCol_;
+	std::vector<DxCircle> listCol_;
 
 	double angularVelocityMin_;
 	double angularVelocityMax_;
@@ -167,7 +167,7 @@ public:
 	AnimationData* GetData(size_t frame);
 	size_t GetFrameCount() { return listAnime_.size(); }
 
-	DxCircle* GetIntersectionCircleList() { return &listCol_; }
+	std::vector<DxCircle>& GetIntersectionCircleList() { return listCol_; }
 
 	double GetAngularVelocityMin() { return angularVelocityMin_; }
 	double GetAngularVelocityMax() { return angularVelocityMax_; }
@@ -239,7 +239,7 @@ public:
 		FRAME_FADEDELETE = 30,
 		FRAME_FADEDELETE_LASER = 30,
 	};
-
+public:
 	struct DelayParameter {
 		using lerp_func = Math::Lerp::funcLerp<float, float>;
 		enum {
@@ -254,6 +254,7 @@ public:
 		D3DXVECTOR3 alpha;	//[end, start, factor]
 		D3DCOLOR colorRep;
 		bool colorMix;
+		D3DXVECTOR2 angle;	//[angle, spin]
 
 		uint8_t type;		//0 = default danmakufu, 1 = ZUN-like
 		lerp_func scaleLerpFunc;	//Scale interpolation
@@ -265,6 +266,7 @@ public:
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
 			alphaLerpFunc = Math::Lerp::Linear<float, float>;
 			colorRep = 0x00000000;
+			angle = D3DXVECTOR2(0, 0);
 		}
 		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(MODE_BLEND_NONE), type(0), colorMix(false) {
 			scale = D3DXVECTOR3(sMin, sMax, rate);
@@ -272,12 +274,14 @@ public:
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
 			alphaLerpFunc = Math::Lerp::Linear<float, float>;
 			colorRep = 0x00000000;
+			angle = D3DXVECTOR2(0, 0);
 		}
 		DelayParameter& operator=(const DelayParameter& source) = default;
 
 		inline float GetScale() { return _CalculateValue(&scale, scaleLerpFunc); }
 		inline float GetAlpha() { return _CalculateValue(&alpha, alphaLerpFunc); }
 		float _CalculateValue(D3DXVECTOR3* param, lerp_func func);
+
 	};
 protected:
 	StgStageController* stageController_;
@@ -309,8 +313,7 @@ protected:
 	bool bSpellResist_;
 	int frameAutoDelete_;
 	
-	ref_unsync_ptr<StgIntersectionTarget> pShotIntersectionTarget_;
-	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listIntersectionTarget_;
+	IntersectionListType listIntersectionTarget_;
 	bool bUserIntersectionMode_;
 	bool bIntersectionEnable_;
 	bool bChangeItemEnable_;
@@ -321,9 +324,9 @@ protected:
 	StgShotData* _GetShotData() { return _GetShotData(idShotData_); }
 	StgShotData* _GetShotData(int id);
 
-	void _SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z = 1.0f, float w = 1.0f);
-	void _SetVertexUV(VERTEX_TLX& vertex, float u, float v);
-	void _SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color);
+	void _SetVertexPosition(VERTEX_TLX* vertex, float x, float y, float z = 1.0f, float w = 1.0f);
+	void _SetVertexUV(VERTEX_TLX* vertex, float u, float v);
+	void _SetVertexColorARGB(VERTEX_TLX* vertex, D3DCOLOR color);
 
 	virtual void _DeleteInLife();
 	virtual void _DeleteInAutoClip();
@@ -382,10 +385,12 @@ public:
 	void SetDelay(int delay) { delay_.time = delay; }
 	int GetShotDataDelayID() { return delay_.id; }
 	void SetShotDataDelayID(int id) { delay_.id = id; }
-	BlendMode GetSourceBlendType() { return delay_.blend; }
-	void SetSourceBlendType(BlendMode type) { delay_.blend = type; }
+	BlendMode GetDelayBlendType() { return delay_.blend; }
+	void SetDelayBlendType(BlendMode type) { delay_.blend = type; }
 	DelayParameter* GetDelayParameter() { return &delay_; }
 	void SetDelayParameter(DelayParameter& param) { delay_ = param; }
+	void SetEnableDelayMotion(bool b) { bEnableMotionDelay_ = b; }
+	void SetDelayAngularVelocity(float av) { delay_.angle.y = av; }
 
 	double GetLife() { return life_; }
 	void SetLife(double life) { life_ = life; }
@@ -407,7 +412,6 @@ public:
 	bool IsIntersectionEnable() { return bIntersectionEnable_; }
 	void SetItemChangeEnable(bool b) { bChangeItemEnable_ = b; }
 
-	void SetEnableDelayMotion(bool b) { bEnableMotionDelay_ = b; }
 	void SetPositionRounding(bool b) { bRoundingPosition_ = b; }
 
 	void SetHitboxScale(D3DXVECTOR2& sc) { hitboxScale_ = sc; }
@@ -427,6 +431,7 @@ class StgNormalShotObject : public StgShotObject {
 	friend class StgShotObject;
 protected:
 	double angularVelocity_;
+	bool bFixedAngle_;
 
 	void _AddIntersectionRelativeTarget();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
@@ -440,15 +445,16 @@ public:
 	virtual void ClearShotObject() {
 		ClearIntersectionRelativeTarget();
 	}
-
 	virtual void RegistIntersectionTarget() {
-		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
+		if (!bUserIntersectionMode_)
+			_AddIntersectionRelativeTarget();
 	}
+	virtual IntersectionListType GetIntersectionTargetList();
+	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
 
-	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
 	virtual void SetShotDataID(int id);
-
 	void SetGraphicAngularVelocity(double agv) { angularVelocity_ = agv; }
+	void SetFixedAngle(bool fix) { bFixedAngle_ = fix; }
 };
 
 //*******************************************************************
@@ -470,6 +476,11 @@ public:
 	virtual void ClearShotObject() {
 		ClearIntersectionRelativeTarget();
 	}
+	virtual void RegistIntersectionTarget() {
+		if (!bUserIntersectionMode_)
+			_AddIntersectionRelativeTarget();
+	}
+	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData) { return false; }
 
 	int GetLength() { return length_; }
 	void SetLength(int length) { length_ = length; }
@@ -481,7 +492,9 @@ public:
 	}
 	int GetIntersectionWidth() { return widthIntersection_; }
 	void SetIntersectionWidth(int width) { widthIntersection_ = std::max(width, 0); }
+
 	void SetInvalidLength(float start, float end) { invalidLengthStart_ = start; invalidLengthEnd_ = end; }
+
 	void SetItemDistance(float dist) { itemDistance_ = std::max(dist, 0.1f); }
 };
 
@@ -493,6 +506,8 @@ protected:
 	double posXE_;
 	double posYE_;
 
+	D3DXVECTOR2 posOrigin_;
+
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
@@ -502,10 +517,8 @@ public:
 	virtual void Work();
 	virtual void RenderOnShotManager();
 
-	virtual void RegistIntersectionTarget() {
-		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
-	}
-	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
+	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
+
 	virtual void SetX(float x) { StgShotObject::SetX(x); posXE_ = x; }
 	virtual void SetY(float y) { StgShotObject::SetY(y); posYE_ = y; }
 };
@@ -524,6 +537,7 @@ protected:
 	D3DXVECTOR2 delaySize_;
 
 	float scaleX_;
+
 	bool bLaserExpand_;
 
 	virtual void _DeleteInAutoClip();
@@ -534,10 +548,8 @@ public:
 
 	virtual void Work();
 	virtual void RenderOnShotManager();
-	virtual void RegistIntersectionTarget() {
-		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
-	}
-	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
+
+	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
 
 	double GetLaserAngle() { return angLaser_; }
 	void SetLaserAngle(double angle) { angLaser_ = angle; }
@@ -547,7 +559,7 @@ public:
 	void SetEndEnable(bool bEnable) { bUseEnd_ = bEnable; }
 	void SetEndGraphic(int gr) { idImageEnd_ = gr; }
 
-	void SetSourceEndScale(D3DXVECTOR2& s) { delaySize_ = s; }
+	void SetSourceEndScale(const D3DXVECTOR2& s) { delaySize_ = s; }
 
 	void SetLaserExpand(bool b) { bLaserExpand_ = b; }
 	bool GetLaserExpand() { return bLaserExpand_; }
@@ -574,6 +586,8 @@ protected:
 	float posYO_;
 	bool bCap_;
 
+	D3DXVECTOR2 posOrigin_;
+
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
 	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
@@ -582,10 +596,9 @@ public:
 
 	virtual void Work();
 	virtual void RenderOnShotManager();
-	virtual void RegistIntersectionTarget() {
-		if (!bUserIntersectionMode_) _AddIntersectionRelativeTarget();
-	}
-	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList();
+
+	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
+
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
 	void SetTipCapping(bool enable) { bCap_ = enable; }
 

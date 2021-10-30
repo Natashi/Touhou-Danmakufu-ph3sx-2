@@ -190,6 +190,12 @@ public:
 };
 
 class StgIntersectionObject {
+public:
+	using IntersectionPairType = std::pair<bool, ref_unsync_ptr<StgIntersectionTarget>>;
+	using IntersectionListType = std::vector<IntersectionPairType>;
+	static IntersectionPairType CreateEmptyIntersection() {
+		return std::make_pair<bool, ref_unsync_ptr<StgIntersectionTarget>>(false, nullptr);
+	}
 private:
 	struct IntersectionRelativeTarget {
 		DxShapeBase* orgShape;
@@ -228,8 +234,8 @@ public:
 
 	int GetDxScriptObjectID();
 
-	virtual std::vector<ref_unsync_ptr<StgIntersectionTarget>> GetIntersectionTargetList() {
-		return std::vector<ref_unsync_ptr<StgIntersectionTarget>>();
+	virtual IntersectionListType GetIntersectionTargetList() {
+		return IntersectionListType();
 	}
 };
 

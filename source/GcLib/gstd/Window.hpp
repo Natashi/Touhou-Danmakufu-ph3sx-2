@@ -386,6 +386,26 @@ namespace gstd {
 	};
 
 	//****************************************************************************
+	//WProgressBar
+	//****************************************************************************
+	class WProgressBar : public WindowBase {
+	protected:
+		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	public:
+		void Create(HWND hWndParent);
+
+		void SetColor(DWORD colorBar, DWORD colorBackground);
+		void SetMarquee(bool bToggle, int interval);
+
+		void SetRange(int range);
+
+		void AddStep(int stepCount = 1);
+		void SetStep(int step);
+		void SetPos(int pos);
+		int GetPos();
+	};
+
+	//****************************************************************************
 	//WindowUtility
 	//****************************************************************************
 	class WindowUtility {

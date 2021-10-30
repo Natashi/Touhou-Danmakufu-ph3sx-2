@@ -57,8 +57,19 @@ FileArchiver::~FileArchiver() {
 
 //-------------------------------------------------------------------------------------------------------------
 
-bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
+bool FileArchiver::CreateArchiveFile(const std::wstring& path, WStatusBar* pStatus, WProgressBar* pProgress) {
 	bool res = true;
+
+	if (pStatus)
+		pStatus->SetText(0, L"");
+	if (pProgress) {
+		pProgress->SetRange(1000);
+		pProgress->SetStep(1);
+		pProgress->SetPos(0);
+	}
+
+	if (pStatus)
+		pStatus->SetText(0, L"Writing header");
 
 	uint8_t headerKeyBase = 0;
 	uint8_t headerKeyStep = 0;
@@ -80,16 +91,26 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 
 	fileArchive.write((char*)&header, sizeof(ArchiveFileHeader));
 
+	if (pProgress)
+		pProgress->SetPos(100);
+	float progressStep = (750 - 100) / (float)listEntry_.size();
+
 	std::streampos sDataBegin = fileArchive.tellp();
 
+	size_t iEntry = 0;
 	//Write the files and record their information.
-	for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr) {
+	for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr, ++iEntry) {
 		shared_ptr<ArchiveFileEntry> entry = *itr;
+
+		if (pStatus) {
+			std::wstring name = entry->directory + PathProperty::GetFileName(entry->name);
+			pStatus->SetText(0, StringUtility::Format(L"Archiving [%s]", name.c_str()));
+		}
 
 		std::ifstream file;
 		file.open(entry->name, std::ios::binary);
 		if (!file.is_open())
-			throw gstd::wexception(StringUtility::Format(L"Cannot open file for reading. [%s]", (entry->name).c_str()).c_str());
+			throw gstd::wexception(StringUtility::Format(L"Cannot open file for reading. [%s]", entry->name.c_str()));
 
 		file.seekg(0, std::ios::end);
 		entry->sizeFull = file.tellg();
@@ -111,7 +132,7 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 
 		if (entry->sizeFull > 0) {
 			//Small files actually get bigger upon compression.
-			if (entry->sizeFull < 0x80) entry->compressionType = ArchiveFileEntry::CT_NONE;
+			if (entry->sizeFull < 0x100) entry->compressionType = ArchiveFileEntry::CT_NONE;
 
 			switch (entry->compressionType) {
 			case ArchiveFileEntry::CT_NONE:
@@ -130,11 +151,17 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 		}
 
 		file.close();
+
+		if (pProgress)
+			pProgress->SetPos(100 + progressStep * iEntry);
 	}
 
 	std::streampos sOffsetInfoBegin = fileArchive.tellp();
-
 	fileArchive.flush();
+
+	if (pStatus)
+		pStatus->SetText(0, L"Writing entries info");
+	progressStep = (950 - 750) / (float)listEntry_.size();
 
 	//Write the info header at the end, always compressed.
 	{
@@ -143,7 +170,8 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 		std::stringstream buf;
 		size_t totalSize = 0U;
 
-		for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr) {
+		iEntry = 0;
+		for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr, ++iEntry) {
 			shared_ptr<ArchiveFileEntry> entry = *itr;
 
 			std::wstring name = entry->name;
@@ -155,6 +183,9 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 
 			entry->name = name;
 			totalSize += sz + sizeof(uint32_t);
+
+			if (pProgress)
+				pProgress->SetPos(750 + progressStep * iEntry);
 		}
 
 		size_t countByte = totalSize;
@@ -167,6 +198,11 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 		//header.headerSize = totalSize;
 		header.headerOffset = sOffsetInfoBegin;
 	}
+
+	if (pStatus)
+		pStatus->SetText(0, L"Encrypting archive");
+	if (pProgress)
+		pProgress->SetPos(950);
 
 	fileArchive.seekp(ArchiveFileHeader::MAGIC_LENGTH + 4);
 	fileArchive.write((char*)&header.headerOffset, sizeof(uint32_t));
@@ -201,6 +237,11 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path) {
 	fileArchive.close();
 
 	DeleteFileW(pathTmp.c_str());
+
+	if (pStatus)
+		pStatus->SetText(0, L"Done");
+	if (pProgress)
+		pProgress->SetPos(1000);
 
 	return res;
 }

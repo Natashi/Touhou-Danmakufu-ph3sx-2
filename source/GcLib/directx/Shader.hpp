@@ -10,6 +10,7 @@ namespace directx {
 	class ShaderManager;
 	class Shader;
 	class ShaderData;
+	class ShaderIncludeCallback;
 	class ShaderInfoPanel;
 
 	//*******************************************************************
@@ -22,6 +23,7 @@ namespace directx {
 	private:
 		ShaderManager* manager_;
 		ID3DXEffect* effect_;
+		std::unique_ptr<ShaderIncludeCallback> pIncludeCallback_;
 		std::wstring name_;
 		bool bLoad_;
 		bool bText_;
@@ -194,5 +196,20 @@ namespace directx {
 		bool SetFloat(const std::string& name, FLOAT value);
 		bool SetFloatArray(const std::string& name, std::vector<FLOAT>& values);
 		bool SetTexture(const std::string& name, shared_ptr<Texture> texture);
+	};
+
+	//*******************************************************************
+	//ShaderIncludeCallback
+	//*******************************************************************
+	class ShaderIncludeCallback : public ID3DXInclude {
+	private:
+		std::wstring includeLocalDir_;
+		std::vector<char> buffer_;
+	public:
+		ShaderIncludeCallback(const std::wstring& localDir);
+		virtual ~ShaderIncludeCallback();
+
+		HRESULT __stdcall Open(D3DXINCLUDE_TYPE type, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes);
+		HRESULT __stdcall Close(LPCVOID pData);
 	};
 }

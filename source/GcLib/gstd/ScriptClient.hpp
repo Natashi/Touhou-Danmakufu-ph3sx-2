@@ -181,6 +181,13 @@ namespace gstd {
 		static value Func_GetScriptArgumentCount(script_machine* machine, int argc, const value* argv);
 		static value Func_SetScriptResult(script_machine* machine, int argc, const value* argv);
 
+		//Floating point functions
+		DNH_FUNCAPI_DECL_(Float_Classify);
+		DNH_FUNCAPI_DECL_(Float_IsNan);
+		DNH_FUNCAPI_DECL_(Float_IsInf);
+		DNH_FUNCAPI_DECL_(Float_GetSign);
+		DNH_FUNCAPI_DECL_(Float_CopySign);
+
 		//Maths functions
 		static value Func_Min(script_machine* machine, int argc, const value* argv);
 		static value Func_Max(script_machine* machine, int argc, const value* argv);
@@ -271,6 +278,7 @@ namespace gstd {
 		static value Func_AtoR(script_machine* machine, int argc, const value* argv);
 		static value Func_TrimString(script_machine* machine, int argc, const value* argv);
 		static value Func_SplitString(script_machine* machine, int argc, const value* argv);
+		DNH_FUNCAPI_DECL_(Func_SplitString2);
 
 		//String manipulations; regular expressions
 		DNH_FUNCAPI_DECL_(Func_RegexMatch);

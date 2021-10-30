@@ -11,10 +11,12 @@ using namespace directx;
 //****************************************************************************
 TextureData::TextureData() {
 	manager_ = nullptr;
+
 	pTexture_ = nullptr;
 	lpRenderSurface_ = nullptr;
 	lpRenderZ_ = nullptr;
-	bLoad_ = true;
+
+	bReady_ = true;
 
 	useMipMap_ = false;
 	useNonPowerOfTwo_ = false;
@@ -149,15 +151,14 @@ IDirect3DTexture9* Texture::GetD3DTexture() {
 
 		DWORD timeOrg = timeGetTime();
 		while (true) {
-			if (data_->bLoad_) {
+			if (data_->bReady_) {
 				res = data_->pTexture_;
 				break;
 			}
-			else if (timeGetTime() - timeOrg > 5000) {		//5-second timer
+			else if (timeGetTime() - timeOrg > 200) {		//0.2 second timer
 				const std::wstring& path = data_->GetName();
 				Logger::WriteTop(StringUtility::Format(L"GetTexture timed out. (%s)", 
 					PathProperty::ReduceModuleDirectory(path).c_str()));
-				data_->bLoad_ = true;
 				break;
 			}
 			::Sleep(10);
@@ -292,7 +293,7 @@ void TextureManager::_ReleaseTextureData(const std::wstring& name) {
 
 		auto itr = mapTextureData_.find(name);
 		if (itr != mapTextureData_.end()) {
-			itr->second->bLoad_ = true;
+			itr->second->bReady_ = true;
 			mapTextureData_.erase(itr);
 			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", 
 				PathProperty::ReduceModuleDirectory(name).c_str()));
@@ -305,7 +306,7 @@ void TextureManager::_ReleaseTextureData(std::map<std::wstring, shared_ptr<Textu
 
 		if (itr != mapTextureData_.end()) {
 			const std::wstring& name = itr->second->name_;
-			itr->second->bLoad_ = true;
+			itr->second->bReady_ = true;
 			mapTextureData_.erase(itr);
 			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", 
 				PathProperty::ReduceModuleDirectory(name).c_str()));
@@ -636,7 +637,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 
 				data->manager_ = this;
 				data->name_ = path;
-				data->bLoad_ = false;
+				data->bReady_ = false;
 				data->useMipMap_ = genMipmap;
 				data->useNonPowerOfTwo_ = flgNonPowerOfTwo;
 				data->type_ = TextureData::Type::TYPE_TEXTURE;
@@ -662,7 +663,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 							L"TextureManager(LT): Failed to load texture \"%s\"\r\n    %s", 
 							pathReduce.c_str(), e.what());
 						Logger::WriteTop(str);
-						data->bLoad_ = true;
+						data->bReady_ = true;
 
 						return nullptr;
 					}
@@ -689,11 +690,11 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 		if (texture == nullptr) return;
 
 		shared_ptr<TextureData> data = texture->data_;
-		if (data == nullptr || data->bLoad_) return;
+		if (data == nullptr || data->bReady_) return;
 
 		long countRef = data.use_count();
 		if (countRef <= 2) {
-			data->bLoad_ = true;
+			data->bReady_ = true;
 			return;
 		}
 
@@ -701,7 +702,7 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 		try {
 			__CreateFromFile(data, path, data->useMipMap_, data->useNonPowerOfTwo_);
 
-			data->bLoad_ = true;
+			data->bReady_ = true;
 
 			Logger::WriteTop(StringUtility::Format(L"TextureManager(LT): Texture loaded. [%s]", pathReduce.c_str()));
 		}
@@ -709,7 +710,7 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 			std::wstring str = StringUtility::Format(L"TextureManager(LT): Failed to load texture \"%s\"\r\n    %s",
 				pathReduce.c_str(), e.what());
 			Logger::WriteTop(str);
-			data->bLoad_ = true;
+			data->bReady_ = true;
 			texture->data_ = nullptr;
 			mapTextureData_.erase(path);
 		}

@@ -123,8 +123,13 @@ namespace gstd {
 
 		//----------------------------------------------------------------
 
+		template<class T_STR>
+		static void Split(const T_STR& str, const T_STR& delim, std::vector<T_STR>& res);
+		template<class T_STR>
+		static void SplitPattern(const T_STR& str, const T_STR& pattern, std::vector<T_STR>& res);
+
 		static std::vector<std::string> Split(const std::string& str, const std::string& delim);
-		static void Split(const std::string& str, const std::string& delim, std::vector<std::string>& res);
+		static std::vector<std::string> SplitPattern(const std::string& str, const std::string& pattern);
 		static std::string Format(const char* str, ...);
 		static std::string Format(const char* str, va_list va);
 
@@ -144,6 +149,7 @@ namespace gstd {
 		//----------------------------------------------------------------
 
 		static std::vector<std::wstring> Split(const std::wstring& str, const std::wstring& delim);
+		static std::vector<std::wstring> SplitPattern(const std::wstring& str, const std::wstring& pattern);
 		static void Split(const std::wstring& str, const std::wstring& delim, std::vector<std::wstring>& res);
 		static std::wstring Format(const wchar_t* str, ...);
 		static std::wstring Format(const wchar_t* str, va_list va);
@@ -282,10 +288,12 @@ namespace gstd {
 			pos[1] = oy + y;
 		}
 
-		static inline size_t FloorBase(size_t val, size_t base) {
+		template<typename T>
+		static inline T FloorBase(T val, T base) {
 			return (val % base != 0) ? ((val / base) * base) : val;
 		}
-		static inline size_t CeilBase(size_t val, size_t base) {
+		template<typename T>
+		static inline T CeilBase(T val, T base) {
 			return (val % base != 0) ? ((val / base) * base + base) : val;
 		}
 

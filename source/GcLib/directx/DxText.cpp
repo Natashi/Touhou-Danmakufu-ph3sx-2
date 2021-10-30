@@ -60,7 +60,7 @@ bool DxCharGlyph::Create(UINT code, const Font& winFont, const DxFont* dxFont) {
 	static constexpr const MAT2 mat = { { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 1 } };
 	DWORD size = ::GetGlyphOutline(hDC, code, uFormat, &glpMet_, 0, nullptr, &mat);
 
-	UINT iBmp_w = Math::CeilBase(glpMet_.gmBlackBoxX, 4);
+	UINT iBmp_w = Math::CeilBase<UINT>(glpMet_.gmBlackBoxX, 4);
 	UINT iBmp_h = glpMet_.gmBlackBoxY;
 
 	size_.x = glpMet_.gmCellIncX + widthBorder * 2;

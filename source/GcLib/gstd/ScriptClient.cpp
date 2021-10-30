@@ -54,6 +54,13 @@ static const std::vector<function> commonFunction = {
 	{ "GetScriptArgumentCount", ScriptClientBase::Func_GetScriptArgumentCount, 0 },
 	{ "SetScriptResult", ScriptClientBase::Func_SetScriptResult, 1 },
 
+	//Floating point functions
+	{ "Float_Classify", ScriptClientBase::Float_Classify, 1 },
+	{ "Float_IsNan", ScriptClientBase::Float_IsNan, 1 },
+	{ "Float_IsInf", ScriptClientBase::Float_IsInf, 1 },
+	{ "Float_GetSign", ScriptClientBase::Float_GetSign, 1 },
+	{ "Float_CopySign", ScriptClientBase::Float_CopySign, 2 },
+
 	//Math functions
 	{ "min", ScriptClientBase::Func_Min, 2 },
 	{ "max", ScriptClientBase::Func_Max, 2 },
@@ -148,6 +155,7 @@ static const std::vector<function> commonFunction = {
 	{ "ator", ScriptClientBase::Func_AtoR, 1 },
 	{ "TrimString", ScriptClientBase::Func_TrimString, 1 },
 	{ "SplitString", ScriptClientBase::Func_SplitString, 2 },
+	{ "SplitString2", ScriptClientBase::Func_SplitString2, 2 },
 
 	{ "RegexMatch", ScriptClientBase::Func_RegexMatch, 2 },
 	{ "RegexMatchRepeated", ScriptClientBase::Func_RegexMatchRepeated, 2 },
@@ -210,6 +218,16 @@ static const std::vector<function> commonFunction = {
 };
 static const std::vector<constant> commonConstant = {
 	constant("NULL", 0i64),
+
+	constant("INF", INFINITY),
+	constant("NAN", NAN),
+
+	//Types for Float_Classify
+	constant("FLOAT_TYPE_SUBNORMAL", FP_SUBNORMAL),
+	constant("FLOAT_TYPE_NORMAL", FP_NORMAL),
+	constant("FLOAT_TYPE_ZERO", FP_ZERO),
+	constant("FLOAT_TYPE_INFINITY", FP_INFINITE),
+	constant("FLOAT_TYPE_NAN", FP_NAN),
 
 	//Types for typeof and ftypeof
 	constant("VAR_INT", type_data::tk_int),
@@ -605,7 +623,30 @@ value ScriptClientBase::Func_SetScriptResult(script_machine* machine, int argc, 
 	return value();
 }
 
-//組み込み関数：数学系
+//Floating point functions
+value ScriptClientBase::Float_Classify(script_machine* machine, int argc, const value* argv) {
+	double f = argv[0].as_real();
+	return CreateIntValue(std::fpclassify(f));
+}
+value ScriptClientBase::Float_IsNan(script_machine* machine, int argc, const value* argv) {
+	double f = argv[0].as_real();
+	return CreateBooleanValue(std::isnan(f));
+}
+value ScriptClientBase::Float_IsInf(script_machine* machine, int argc, const value* argv) {
+	double f = argv[0].as_real();
+	return CreateBooleanValue(std::isinf(f));
+}
+value ScriptClientBase::Float_GetSign(script_machine* machine, int argc, const value* argv) {
+	double f = argv[0].as_real();
+	return CreateRealValue(std::signbit(f) ? -1.0 : 1.0);
+}
+value ScriptClientBase::Float_CopySign(script_machine* machine, int argc, const value* argv) {
+	double src = argv[0].as_real();
+	double dst = argv[1].as_real();
+	return CreateRealValue(std::copysign(src, dst));
+}
+
+//Maths functions
 value ScriptClientBase::Func_Min(script_machine* machine, int argc, const value* argv) {
 	double v1 = argv[0].as_real();
 	double v2 = argv[1].as_real();
@@ -1207,6 +1248,11 @@ value ScriptClientBase::Func_TrimString(script_machine* machine, int argc, const
 value ScriptClientBase::Func_SplitString(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	std::vector<std::wstring> list = StringUtility::Split(argv[0].as_string(), argv[1].as_string());
+	return script->CreateStringArrayValue(list);
+}
+value ScriptClientBase::Func_SplitString2(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	std::vector<std::wstring> list = StringUtility::SplitPattern(argv[0].as_string(), argv[1].as_string());
 	return script->CreateStringArrayValue(list);
 }
 

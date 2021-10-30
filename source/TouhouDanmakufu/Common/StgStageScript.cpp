@@ -248,6 +248,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetMainStgScriptPath", StgStageScript::Func_GetMainStgScriptPath, 0 },
 	{ "GetMainStgScriptDirectory", StgStageScript::Func_GetMainStgScriptDirectory, 0 },
 	{ "SetStgFrame", StgStageScript::Func_SetStgFrame, 6 },
+	{ "SetStgFrame", StgStageScript::Func_SetStgFrame, 7 }, //Overloaded
 	{ "SetItemRenderPriorityI", StgStageScript::Func_SetItemRenderPriorityI, 1 },
 	{ "SetShotRenderPriorityI", StgStageScript::Func_SetShotRenderPriorityI, 1 },
 	{ "GetStgFrameRenderPriorityMinI", StgStageScript::Func_GetStgFrameRenderPriorityMinI, 0 },
@@ -458,7 +459,9 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjShot_SetGrazeInvalidFrame", StgStageScript::Func_ObjShot_SetGrazeInvalidFrame, 2 },
 	{ "ObjShot_SetGrazeFrame", StgStageScript::Func_ObjShot_SetGrazeFrame, 2 },
 	{ "ObjShot_IsValidGraze", StgStageScript::Func_ObjShot_IsValidGraze, 1 },
+	{ "ObjShot_SetFixedAngle", StgStageScript::Func_ObjShot_SetFixedAngle, 2 },
 	{ "ObjShot_SetSpinAngularVelocity", StgStageScript::Func_ObjShot_SetSpinAngularVelocity, 2 },
+	{ "ObjShot_SetDelayAngularVelocity", StgStageScript::Func_ObjShot_SetDelayAngularVelocity, 2 },
 
 	{ "ObjLaser_SetLength", StgStageScript::Func_ObjLaser_SetLength, 2 },
 	{ "ObjLaser_SetRenderWidth", StgStageScript::Func_ObjLaser_SetRenderWidth, 2 },
@@ -817,6 +820,11 @@ gstd::value StgStageScript::Func_SetStgFrame(gstd::script_machine* machine, int 
 	stageInfo->SetStgFrameRect(rect);
 	stageInfo->SetStgFrameMinPriority(min);
 	stageInfo->SetStgFrameMaxPriority(max);
+
+	if (argc == 7) {
+		int cam = argv[6].as_int() - 1;
+		stageInfo->SetCameraFocusPermitPriority(cam);
+	}
 
 	return value();
 }
@@ -1962,19 +1970,22 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			return script->CreateIntValue(shotData->GetRenderType());
 		case INFO_COLLISION:
 		{
-			float radius = 0;
-			DxCircle* listCircle = shotData->GetIntersectionCircleList();
-			if (listCircle->GetR() > 0) {
-				radius = listCircle->GetR();
-			}
+			auto& listCircle = shotData->GetIntersectionCircleList();
+			float radius = listCircle.size() > 0 ? listCircle[0].GetR() : 0;
 			return script->CreateRealValue(radius);
 		}
 		case INFO_COLLISION_LIST:
 		{
-			DxCircle* listCircle = shotData->GetIntersectionCircleList();
+			auto& listCircle = shotData->GetIntersectionCircleList();
+
 			std::vector<gstd::value> listValue;
-			float list[3] = { listCircle->GetR(), listCircle->GetX(), listCircle->GetY() };
-			listValue.push_back(script->CreateRealArrayValue(list, 3U));
+			float listData[3];
+			for (auto& iCircle : listCircle) {
+				listData[0] = iCircle.GetR();
+				listData[1] = iCircle.GetX();
+				listData[2] = iCircle.GetY();
+				listValue.push_back(script->CreateRealArrayValue(listData, 3U));
+			}
 			return script->CreateValueArrayValue(listValue);
 		}
 		case INFO_IS_FIXED_ANGLE:
@@ -2287,13 +2298,15 @@ gstd::value StgStageScript::Func_IsIntersected_Obj_Obj(gstd::script_machine* mac
 	StgIntersectionObject* obj2 = script->GetObjectPointerAs<StgIntersectionObject>(id2);
 	if (obj2 == nullptr) return script->CreateBooleanValue(false);
 
-	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listTarget1 = obj1->GetIntersectionTargetList();
-	std::vector<ref_unsync_ptr<StgIntersectionTarget>> listTarget2 = obj2->GetIntersectionTargetList();
+	StgIntersectionObject::IntersectionListType listTarget1 = obj1->GetIntersectionTargetList();
+	StgIntersectionObject::IntersectionListType listTarget2 = obj2->GetIntersectionTargetList();
 
 	bool res = false;
 	for (auto& target1 : listTarget1) {
+		if (!target1.first) continue;
 		for (auto& target2 : listTarget2) {
-			res = StgIntersectionManager::IsIntersected(target1.get(), target2.get());
+			if (!target1.first) continue;
+			res = StgIntersectionManager::IsIntersected(target1.second.get(), target2.second.get());
 			if (res && PARTIAL) goto chk_skip;
 		}
 	}
@@ -3483,7 +3496,7 @@ gstd::value StgStageScript::Func_ObjShot_SetSourceBlendType(gstd::script_machine
 	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
 	if (obj) {
 		int typeBlend = argv[1].as_int();
-		obj->SetSourceBlendType((BlendMode)typeBlend);
+		obj->SetDelayBlendType((BlendMode)typeBlend);
 	}
 	return value();
 }
@@ -3863,12 +3876,30 @@ gstd::value StgStageScript::Func_ObjShot_IsValidGraze(gstd::script_machine* mach
 
 	return script->CreateBooleanValue(res);
 }
+gstd::value StgStageScript::Func_ObjShot_SetFixedAngle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	if (StgNormalShotObject* obj = dynamic_cast<StgNormalShotObject*>(script->GetObjectPointer(id))) {
+		bool bFix = argv[1].as_boolean();
+		obj->SetFixedAngle(bFix);
+	}
+	return value();
+}
 gstd::value StgStageScript::Func_ObjShot_SetSpinAngularVelocity(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
 	if (StgNormalShotObject* obj = dynamic_cast<StgNormalShotObject*>(script->GetObjectPointer(id))) {
 		double spin = argv[1].as_real();
 		obj->SetGraphicAngularVelocity(Math::DegreeToRadian(spin));
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_SetDelayAngularVelocity(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	if (StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id))) {
+		double wvel = argv[1].as_real();
+		obj->SetDelayAngularVelocity(Math::DegreeToRadian(wvel));
 	}
 	return value();
 }
@@ -4150,7 +4181,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodeColorHex(gstd::script_machine
 		}
 	}
 
-	return script->CreateIntValue(color & 0xffffff);
+	return script->CreateIntValue(color);
 }
 gstd::value StgStageScript::Func_ObjCrLaser_SetNode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;

@@ -425,6 +425,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjText_SetAutoTransCenter", DxScript::Func_ObjText_SetAutoTransCenter, 2 },
 	{ "ObjText_SetHorizontalAlignment", DxScript::Func_ObjText_SetHorizontalAlignment, 2 },
 	{ "ObjText_SetSyntacticAnalysis", DxScript::Func_ObjText_SetSyntacticAnalysis, 2 },
+	{ "ObjText_GetText", DxScript::Func_ObjText_GetText, 1 },
 	{ "ObjText_GetTextLength", DxScript::Func_ObjText_GetTextLength, 1 },
 	{ "ObjText_GetTextLengthCU", DxScript::Func_ObjText_GetTextLengthCU, 1 },
 	{ "ObjText_GetTextLengthCUL", DxScript::Func_ObjText_GetTextLengthCUL, 1 },
@@ -2598,6 +2599,25 @@ gstd::value DxScript::Func_Obj_CopyValueTable(gstd::script_machine* machine, int
 	return script->CreateIntValue(countValue);
 }
 
+gstd::value DxScript::Func_Obj_GetValueCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	int64_t res = 0;
+	DxScriptObjectBase* obj = script->GetObjectPointer(id);
+	if (obj)
+		res = obj->GetValueMap()->size();
+	return script->CreateIntValue(res);
+}
+gstd::value DxScript::Func_Obj_GetValueCountI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	int64_t res = 0;
+	DxScriptObjectBase* obj = script->GetObjectPointer(id);
+	if (obj)
+		res = obj->GetValueMapI()->size();
+	return script->CreateIntValue(res);
+}
+
 value DxScript::Func_Obj_GetType(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
@@ -4267,6 +4287,16 @@ gstd::value DxScript::Func_ObjText_SetSyntacticAnalysis(gstd::script_machine* ma
 		obj->SetSyntacticAnalysis(argv[1].as_boolean());
 	return value();
 }
+value DxScript::Func_ObjText_GetText(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	std::wstring res = L"";
+	DxScriptTextObject* obj = script->GetObjectPointerAs<DxScriptTextObject>(id);
+	if (obj) {
+		res = obj->GetText();
+	}
+	return script->CreateStringValue(res);
+}
 value DxScript::Func_ObjText_GetTextLength(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
@@ -4763,9 +4793,9 @@ gstd::value DxScript::Func_ObjFileT_SplitLineText(gstd::script_machine* machine,
 	if (obj == nullptr) return script->CreateStringArrayValue(std::vector<std::wstring>());
 
 	int pos = argv[1].as_int();
-	std::wstring delim = argv[2].as_string();
+	std::wstring pattern = argv[2].as_string();
 	std::wstring line = obj->GetLineAsWString(pos);
-	std::vector<std::wstring> list = StringUtility::Split(line, delim);
+	std::vector<std::wstring> list = StringUtility::SplitPattern(line, pattern);
 
 	return script->CreateStringArrayValue(list);
 }

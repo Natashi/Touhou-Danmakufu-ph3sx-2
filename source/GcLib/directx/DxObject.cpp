@@ -1385,14 +1385,15 @@ DxScriptObjectBase* DxScriptObjectManager::GetObjectPointer(int id) {
 void DxScriptObjectManager::DeleteObject(int id) {
 	if (id < 0 || id >= obj_.size()) return;
 
-	ref_unsync_ptr<DxScriptObjectBase> ptr = obj_[id];	//Copy
-	if (ptr == nullptr) return;
+	ref_unsync_ptr<DxScriptObjectBase> pObj = obj_[id];
+	if (pObj == nullptr) return;
 
-	ptr->bDeleted_ = true;
+	pObj->bDeleted_ = true;
+	if (pObj->manager_)
+		pObj->manager_->listUnusedIndex_.push_back(id);
+
 	obj_[id] = nullptr;
-
-	if (ptr->manager_)
-		ptr->manager_->listUnusedIndex_.push_back(id);
+	pObj->idObject_ = DxScript::ID_INVALID;
 }
 void DxScriptObjectManager::DeleteObject(ref_unsync_ptr<DxScriptObjectBase> obj) {
 	DxScriptObjectManager::DeleteObject(obj.get());
@@ -1400,13 +1401,7 @@ void DxScriptObjectManager::DeleteObject(ref_unsync_ptr<DxScriptObjectBase> obj)
 void DxScriptObjectManager::DeleteObject(DxScriptObjectBase* obj) {
 	if (obj == nullptr) return;
 
-	obj->bDeleted_ = true;
-	obj_[obj->GetObjectID()] = nullptr;
-
-	if (obj->manager_)
-		obj->manager_->listUnusedIndex_.push_back(obj->GetObjectID());
-
-	obj->idObject_ = DxScript::ID_INVALID;
+	DeleteObject(obj->idObject_);
 }
 void DxScriptObjectManager::ClearObject() {
 	std::fill(obj_.begin(), obj_.end(), nullptr);

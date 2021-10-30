@@ -57,6 +57,12 @@ bool MainWindow::Initialize() {
 	std::vector<int> sizeStatus;
 	sizeStatus.push_back(1600);
 	wndStatus_.SetPartsSize(sizeStatus);
+	wndStatus_.SetText(0, L"");
+
+	//Progress bar
+	wndProgressBar_.Create(hWnd_);
+	wndProgressBar_.SetColor(CLR_DEFAULT, CLR_DEFAULT);
+	wndProgressBar_.SetWindowVisible(false);
 
 	//設定読み込み
 	_LoadEnvironment();
@@ -116,7 +122,7 @@ LRESULT MainWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 
 		case ID_MENUITEM_VERSION:
 		{
-			std::wstring version = WINDOW_TITLE;
+			std::wstring version = WINDOW_TITLE + L" " + DNH_VERSION;
 			::MessageBox(hWnd_, version.c_str(), L"Version", MB_OK);
 			break;
 		}
@@ -172,6 +178,8 @@ LRESULT MainWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 			0, 0, SWP_NOSIZE);
 
 		wndStatus_.SetBounds(wParam, lParam);
+		wndProgressBar_.SetBounds(leftList, wHeight - 54 + 6,
+			std::max(8, wWidth - 148 - leftList - 16), 12);
 
 		break;
 	}
@@ -352,15 +360,20 @@ void MainWindow::_StartArchive() {
 	ofn.lpstrFilter = L"All files (*.*)\0*.*\0.dat archive(*.dat)\0*.dat\0";
 	ofn.lpstrTitle = L"Creating an archive file.";
 	if (GetSaveFileName(&ofn)) {
-		EnableWindow(GetDlgItem(hWnd_, IDC_BUTTON_ADD), FALSE);
-		EnableWindow(GetDlgItem(hWnd_, IDC_BUTTON_DELETE), FALSE);
-		EnableWindow(GetDlgItem(hWnd_, IDC_BUTTON_CLEAR), FALSE);
-		EnableWindow(GetDlgItem(hWnd_, IDC_BUTTON_ARCHIVE), FALSE);
+		::EnableWindow(hWnd_, TRUE);
+		::EnableWindow(::GetDlgItem(hWnd_, IDC_BUTTON_ADD), FALSE);
+		::EnableWindow(::GetDlgItem(hWnd_, IDC_BUTTON_DELETE), FALSE);
+		::EnableWindow(::GetDlgItem(hWnd_, IDC_BUTTON_CLEAR), FALSE);
+		::EnableWindow(::GetDlgItem(hWnd_, IDC_BUTTON_ARCHIVE), FALSE);
 		wndListFile_.SetWindowEnable(false);
+		wndProgressBar_.SetWindowVisible(true);
 
-		HMENU hMenu = GetMenu(hWnd_);
-		HMENU hSubMenu = GetSubMenu(hMenu, 0);
-		EnableMenuItem(hSubMenu, ID_MENUITEM_ADD, MF_GRAYED);
+		HMENU hMenu = ::GetMenu(hWnd_);
+		HMENU hSubMenu = ::GetSubMenu(hMenu, 0);
+		::EnableMenuItem(hSubMenu, ID_MENUITEM_ADD, MF_GRAYED);
+
+		::SetFocus(hWnd_);
+		::SetActiveWindow(hWnd_);
 
 		pathArchive_ = path;
 		Start();
@@ -371,16 +384,18 @@ void MainWindow::_Run() {
 	//アーカイブ実行
 	_Archive();
 
-	EnableWindow(GetDlgItem(hWnd_, IDC_EDIT_OPTION), TRUE);
-	EnableWindow(GetDlgItem(hWnd_, IDC_BUTTON_ADD), TRUE);
-	EnableWindow(GetDlgItem(hWnd_, IDC_BUTTON_DELETE), TRUE);
-	EnableWindow(GetDlgItem(hWnd_, IDC_BUTTON_CLEAR), TRUE);
-	EnableWindow(GetDlgItem(hWnd_, IDC_BUTTON_ARCHIVE), TRUE);
+	::EnableWindow(::GetDlgItem(hWnd_, IDC_EDIT_OPTION), TRUE);
+	::EnableWindow(::GetDlgItem(hWnd_, IDC_BUTTON_ADD), TRUE);
+	::EnableWindow(::GetDlgItem(hWnd_, IDC_BUTTON_DELETE), TRUE);
+	::EnableWindow(::GetDlgItem(hWnd_, IDC_BUTTON_CLEAR), TRUE);
+	::EnableWindow(::GetDlgItem(hWnd_, IDC_BUTTON_ARCHIVE), TRUE);
 	wndListFile_.SetWindowEnable(true);
+	wndStatus_.SetText(0, L"");
+	wndProgressBar_.SetWindowVisible(false);
 
-	HMENU hMenu = GetMenu(hWnd_);
-	HMENU hSubMenu = GetSubMenu(hMenu, 0);
-	EnableMenuItem(hSubMenu, ID_MENUITEM_ADD, MF_ENABLED);
+	HMENU hMenu = ::GetMenu(hWnd_);
+	HMENU hSubMenu = ::GetSubMenu(hMenu, 0);
+	::EnableMenuItem(hSubMenu, ID_MENUITEM_ADD, MF_ENABLED);
 }
 void MainWindow::_Archive() {
 	std::set<std::wstring> listUnArchiveExt;
@@ -419,7 +434,7 @@ void MainWindow::_Archive() {
 	}
 
 	try {
-		writer.CreateArchiveFile(pathArchive_);
+		writer.CreateArchiveFile(pathArchive_, &wndStatus_, &wndProgressBar_);
 
 		std::wstring log = StringUtility::Format(L"Archive creation successful.\n [%s]", pathArchive_.c_str());
 		Logger::WriteTop(log);

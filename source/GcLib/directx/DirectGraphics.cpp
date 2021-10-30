@@ -16,15 +16,22 @@ using namespace directx;
 //*******************************************************************
 DirectGraphicsConfig::DirectGraphicsConfig() {
 	bShowWindow_ = true;
+	bShowCursor_ = true;
+
+	bWindowed_ = true;
+	bBorderlessFullscreen_ = true;
+
 	sizeScreen_ = { 640, 480 };
 	sizeScreenDisplay_ = { 640, 480 };
-	bWindowed_ = true;
-	bUseRef_ = false;
+	bUseDynamicScaling_ = false;
+
 	colorMode_ = COLOR_MODE_32BIT;
+	typeMultiSample_ = D3DMULTISAMPLE_NONE;
+	
+	bUseRef_ = false;
 	bUseTripleBuffer_ = true;
 	bVSync_ = false;
-	bBorderlessFullscreen_ = true;
-	typeMultiSample_ = D3DMULTISAMPLE_NONE;
+	
 	bCheckDeviceCaps_ = true;
 }
 
@@ -421,27 +428,34 @@ void DirectGraphics::_RestoreDxResource() {
 }
 bool DirectGraphics::_Restore() {
 	//The device was lost, wait until it's able to be restored
-	HRESULT hr = pDevice_->TestCooperativeLevel();
-	if (hr == D3DERR_DEVICENOTRESET) {					//The device is now able to be restored
-		::InvalidateRect(hAttachedWindow_, nullptr, false);
+	deviceStatus_ = pDevice_->TestCooperativeLevel();
+	if (deviceStatus_ == D3D_OK) {
+		return true;
+	}
+	else {
+		while ((deviceStatus_ = pDevice_->TestCooperativeLevel()) == D3DERR_DEVICELOST)
+			::Sleep(50);
 
-		_ReleaseDxResource();
+		if (deviceStatus_ == D3DERR_DEVICENOTRESET) {	//The device is now able to be restored
+			::InvalidateRect(hAttachedWindow_, nullptr, false);
 
-		hr = pDevice_->Reset(modeScreen_ == SCREENMODE_FULLSCREEN ? &d3dppFull_ : &d3dppWin_);
-		if (SUCCEEDED(hr)) {
-			deviceStatus_ = hr;
-			_RestoreDxResource();
-			Logger::WriteTop("_Restore: IDirect3DDevice restored.");
-			return true;
+			_ReleaseDxResource();
+
+			deviceStatus_ = pDevice_->Reset(modeScreen_ == SCREENMODE_FULLSCREEN ? &d3dppFull_ : &d3dppWin_);
+			if (SUCCEEDED(deviceStatus_)) {
+				_RestoreDxResource();
+				Logger::WriteTop("_Restore: IDirect3DDevice restored.");
+				return true;
+			}
 		}
+		if (FAILED(deviceStatus_)) {					//Something went terribly wrong
+			std::wstring err = StringUtility::Format(L"_Restore: Unexpected failure [%s; %s]",
+				DXGetErrorString(deviceStatus_), DXGetErrorDescription(deviceStatus_));
+			Logger::WriteTop(err);
+			throw gstd::wexception(err);
+		}
+		return false;
 	}
-	else if (hr != D3DERR_DEVICELOST && FAILED(hr)) {	//Something went terribly wrong
-		std::wstring err = StringUtility::Format(L"_Restore: Unexpected failure [%s; %s]",
-			DXGetErrorString(hr), DXGetErrorDescription(hr));
-		Logger::WriteTop(err);
-		throw gstd::wexception(err);
-	}
-	return false;
 }
 void DirectGraphics::_InitializeDeviceState(bool bResetCamera) {
 	if (bResetCamera) {
