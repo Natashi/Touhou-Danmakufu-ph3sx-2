@@ -73,9 +73,6 @@ namespace gstd {
 	//================================================================
 	//Encoding
 	class Encoding {
-		//http://msdn.microsoft.com/ja-jp/library/system.text.encoding(v=vs.110).aspx
-		//babel
-		//http://d.hatena.ne.jp/A7M/20100801/1280629387
 	public:
 		typedef enum : int8_t {
 			UNKNOWN = -1,
@@ -92,7 +89,11 @@ namespace gstd {
 		static Type Detect(const char* data, size_t dataSize);
 		static size_t GetBomSize(const char* data, size_t dataSize);
 		static size_t GetBomSize(Type encoding);
+		static const byte* GetBom(Type encoding);
 		static size_t GetCharSize(Type encoding);
+
+		static const char* StringRepresentation(Type encoding);
+		static const wchar_t* WStringRepresentation(Type encoding);
 
 		static size_t GetMultibyteSize(const char* data);
 		static wchar_t BytesToWChar(const char* data, Type encoding);
@@ -150,7 +151,6 @@ namespace gstd {
 
 		static std::vector<std::wstring> Split(const std::wstring& str, const std::wstring& delim);
 		static std::vector<std::wstring> SplitPattern(const std::wstring& str, const std::wstring& pattern);
-		static void Split(const std::wstring& str, const std::wstring& delim, std::vector<std::wstring>& res);
 		static std::wstring Format(const wchar_t* str, ...);
 		static std::wstring Format(const wchar_t* str, va_list va);
 		static std::wstring FormatToWide(const char* str, ...);

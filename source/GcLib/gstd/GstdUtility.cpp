@@ -117,6 +117,17 @@ size_t Encoding::GetBomSize(Type encoding) {
 	}
 	return 0U;
 }
+const byte* Encoding::GetBom(Type encoding) {
+	switch (encoding) {
+	case Type::UTF16LE:
+		return BOM_UTF16LE;
+	case Type::UTF16BE:
+		return BOM_UTF16BE;
+	case Type::UTF8BOM:
+		return BOM_UTF8;
+	}
+	return nullptr;
+}
 size_t Encoding::GetCharSize(Type encoding) {
 	switch (encoding) {
 	case Type::UTF16LE:
@@ -124,6 +135,28 @@ size_t Encoding::GetCharSize(Type encoding) {
 		return 2U;
 	}
 	return 1U;
+}
+const char* Encoding::StringRepresentation(Type encoding) {
+	switch (encoding) {
+	case Type::UTF16LE:
+		return "UTF-16 LE";
+	case Type::UTF16BE:
+		return "UTF-16 BE";
+	case Type::UTF8BOM:
+		return "UTF-8-BOM";
+	}
+	return "UTF-8";
+}
+const wchar_t* Encoding::WStringRepresentation(Type encoding) {
+	switch (encoding) {
+	case Type::UTF16LE:
+		return L"UTF-16 LE";
+	case Type::UTF16BE:
+		return L"UTF-16 BE";
+	case Type::UTF8BOM:
+		return L"UTF-8-BOM";
+	}
+	return L"UTF-8";
 }
 size_t Encoding::GetMultibyteSize(const char* data) {
 	const char* begin = data;
