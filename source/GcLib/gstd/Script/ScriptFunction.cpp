@@ -755,8 +755,7 @@ namespace gstd {
 		size_t newSize = argv[1].as_int();
 		type_data* newType = val->get_type();
 
-		value res = *val;
-		res.make_unique();
+		value res;
 		if (newSize != oldSize) {
 			std::vector<value> arrVal(newSize);
 
@@ -1003,68 +1002,57 @@ namespace gstd {
 		return value(script_type_manager::get_boolean_type(), res);
 	}
 
-	DNH_FUNCAPI_DEF_(BaseFunction::replace) {
+	value BaseFunction::replace(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, argv, argc);
 
 		const value* val = &argv[0];
 		type_data* valType = val->get_type();
 
 		if (valType->get_kind() != type_data::tk_array) {
-			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "replace");
+			_raise_error_unsupported(machine, argv->get_type(), "replace");
 			return value();
 		}
 
-
 		size_t size = val->length_as_array();
 
-		value from = argv[1];
-		value to = argv[2];
+		value replaceFrom = argv[1];
+		value replaceTo = argv[2];
 
-		type_data* addType = to.get_type();
+		type_data* addType = replaceTo.get_type();
 		type_data* elemType = valType->get_element();
 
 		_append_check(machine, valType, addType);
-
 		if (addType != elemType)
-			BaseFunction::_value_cast(&to, elemType);
+			BaseFunction::_value_cast(&replaceTo, elemType);
 
-		value res = *val;
-		res.make_unique();
-
-		std::vector<value> arrVal(size);
-
-		// Populate source array
-		for (size_t i = 0; i < size; ++i)
-			arrVal[i] = val->index_as_array(i);
+		std::vector<value> arrVal = *val->as_array_ptr();
 
 		for (size_t i = 0; i < size; ++i) {
-			value args[2] = { arrVal[i], from };
+			value args[2] = { arrVal[i], replaceFrom };
 			if (compare(machine, 2, args).as_int() == 0) {
-				arrVal[i] = to;
+				arrVal[i] = replaceTo;
 			}
 		}
 
+		value res;
 		res.reset(valType, arrVal);
+		res.make_unique();
 		return res;
 	}
 
-	DNH_FUNCAPI_DEF_(BaseFunction::remove) {
+	value BaseFunction::remove(script_machine* machine, int argc, const value* argv) {
 		_null_check(machine, argv, argc);
 
 		const value* val = &argv[0];
 		type_data* valType = val->get_type();
 
 		if (valType->get_kind() != type_data::tk_array) {
-			BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "remove");
+			_raise_error_unsupported(machine, argv->get_type(), "remove");
 			return value();
 		}
 
 		size_t size = val->length_as_array();
-
 		size_t count = argc - 1;
-
-		value res = *val;
-		res.make_unique();
 
 		std::vector<value> arrVal(size);
 
@@ -1084,17 +1072,22 @@ namespace gstd {
 			}
 		}
 
+		value res;
 		res.reset(valType, arrVal);
+		res.make_unique();
 		return res;
 	}
 
 	const value* BaseFunction::index(script_machine* machine, int argc, value* arr, value* indexer) {
 		_null_check(machine, arr, 1);
+
 		int index = indexer->as_int();
 		size_t length = arr->length_as_array();
+
 		if (index < 0) index += length;
 		if (!_index_check(machine, arr->get_type(), length, index))
 			return nullptr;
+
 		return &arr->index_as_array(index);
 	}
 
@@ -1193,7 +1186,6 @@ namespace gstd {
 			}
 		}
 
-		value result;
 		std::vector<value> resArr;
 		resArr.resize(length + 1U);
 		{
@@ -1206,6 +1198,8 @@ namespace gstd {
 				resArr[iArr++] = argv[0].index_as_array(i);
 			}
 		}
+
+		value result;
 		result.reset(arrType, resArr);
 		result.make_unique();
 		_value_cast(&result, arrType);
@@ -1231,7 +1225,6 @@ namespace gstd {
 			return value();
 		}
 
-		value result;
 		std::vector<value> resArr;
 		resArr.resize(length - 1U);
 		{
@@ -1243,6 +1236,8 @@ namespace gstd {
 				resArr[iArr++] = argv[0].index_as_array(i);
 			}
 		}
+
+		value result;
 		result.reset(argv[0].get_type(), resArr);
 		result.make_unique();
 		return result;
