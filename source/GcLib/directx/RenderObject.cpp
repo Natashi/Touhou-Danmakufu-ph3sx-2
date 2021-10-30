@@ -92,6 +92,7 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 
 	bool bScale = scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f;
 	bool bPos = position.x != 0.0f || position.y != 0.0f || position.z != 0.0f;
+
 	if (bScale || bPos) {
 		if (bScale) {
 			DxMath::MatrixApplyScaling(&mat, scale);
@@ -153,10 +154,13 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 
 		D3DXMatrixRotationYawPitchRoll(&matSRT, angle.y, angle.x, angle.z);
 
-		if (scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f) {
+		bool bScale = scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f;
+		bool bPos = position.x != 0.0f || position.y != 0.0f || position.z != 0.0f;
+
+		if (bScale) {
 			DxMath::MatrixApplyScaling(&matSRT, scale);
 		}
-		if (position.x != 0.0f || position.y != 0.0f || position.z != 0.0f) {
+		if (bPos) {
 			matSRT._41 = position.x;
 			matSRT._42 = position.y;
 			matSRT._43 = position.z;
@@ -212,14 +216,17 @@ D3DXMATRIX RenderObject::CreateWorldMatrixSprite3D(const D3DXVECTOR3& position, 
 
 	DxMath::ConstructRotationMatrix(&mat, angleX, angleY, angleZ);
 
-	if (scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f) {
+	bool bScale = scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f;
+	bool bPos = position.x != 0.0f || position.y != 0.0f || position.z != 0.0f;
+
+	if (bScale) {
 		DxMath::MatrixApplyScaling(&mat, scale);
 	}
 	if (bBillboard) {
 		DirectGraphics* graph = DirectGraphics::GetBase();
 		D3DXMatrixMultiply(&mat, &mat, &graph->GetCamera()->GetViewTransposedMatrix());
 	}
-	if (position.x != 0.0f || position.y != 0.0f || position.z != 0.0f) {
+	if (bPos) {
 		D3DXMATRIX matTrans;
 		D3DXMatrixTranslation(&matTrans, position.x, position.y, position.z);
 		D3DXMatrixMultiply(&mat, &mat, &matTrans);

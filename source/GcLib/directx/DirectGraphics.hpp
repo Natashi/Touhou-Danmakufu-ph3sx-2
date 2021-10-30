@@ -44,6 +44,8 @@ namespace directx {
 #if defined(DNH_PROJ_EXECUTOR)
 	class DirectGraphics {
 		static DirectGraphics* thisBase_;
+	public:
+		static float g_dxCoordsMul_;
 	protected:
 		IDirect3D9* pDirect3D_;
 		IDirect3DDevice9* pDevice_;
@@ -71,9 +73,10 @@ namespace directx {
 
 		gstd::ref_count_ptr<DxCamera> camera_;
 		gstd::ref_count_ptr<DxCamera2D> camera2D_;
-		shared_ptr<Texture> textureTarget_;
-
 		D3DXMATRIX matViewPort_;
+
+		shared_ptr<Texture> textureTarget_;
+		UINT defaultRenderTargetSize_[2];
 
 		VertexBufferManager* bufferManager_;
 
@@ -112,10 +115,12 @@ namespace directx {
 
 		void BeginScene(bool bMainRender = true, bool bClear = true);
 		void EndScene(bool bPresent = true);
+
 		void ClearRenderTarget();
 		void ClearRenderTarget(DxRect<LONG>* rect);
 		void SetRenderTarget(shared_ptr<Texture> texture, bool bResetState = true);
 		shared_ptr<Texture> GetRenderTarget() { return textureTarget_; }
+		UINT* GetDefaultRenderTargetSize() { return defaultRenderTargetSize_; }
 
 		//Render states
 		void SetLightingEnable(bool bEnable);
@@ -153,8 +158,15 @@ namespace directx {
 		void ResetViewPort();
 		const D3DXMATRIX& GetViewPortMatrix() { return matViewPort_; }
 
-		LONG GetScreenWidth();
-		LONG GetScreenHeight();
+		size_t GetScreenWidth() { return config_.sizeScreen_.x; }
+		size_t GetScreenHeight() { return config_.sizeScreen_.y; }
+		size_t GetRenderScreenWidth() {
+			return config_.bUseDynamicScaling_ ? config_.sizeScreenDisplay_.x : config_.sizeScreen_.x;
+		}
+		size_t GetRenderScreenHeight() {
+			return config_.bUseDynamicScaling_ ? config_.sizeScreenDisplay_.y : config_.sizeScreen_.y;
+		}
+
 		double GetScreenWidthRatio();
 		double GetScreenHeightRatio();
 		POINT GetMousePosition();
@@ -164,6 +176,8 @@ namespace directx {
 		gstd::ref_count_ptr<DxCamera2D> GetCamera2D() { return camera2D_; }
 
 		void SaveBackSurfaceToFile(const std::wstring& path);
+
+		void UpdateDefaultRenderTargetSize();
 	};
 
 	//*******************************************************************
