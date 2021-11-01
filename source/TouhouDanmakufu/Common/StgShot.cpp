@@ -2095,6 +2095,7 @@ void StgStraightLaserObject::Work() {
 	if (bEnableMovement_) {
 		_ProcessTransformAct();
 		_Move();
+		_ExtendLength();
 		
 		if (angVelLaser_ != 0) angLaser_ += angVelLaser_;
 		
