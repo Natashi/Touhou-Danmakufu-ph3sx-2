@@ -260,8 +260,8 @@ static const std::vector<function> dxFunction = {
 	{ "Obj_CopyValueTable", DxScript::Func_Obj_CopyValueTable, 3 },
 	{ "Obj_GetType", DxScript::Func_Obj_GetType, 1 },
 	{ "Obj_GetParentScriptID", DxScript::Func_Obj_GetParentScriptID, 1 },
-	{ "Obj_Reparent", DxScript::Func_Obj_Reparent, 1 },
-	{ "Obj_Reparent", DxScript::Func_Obj_Reparent, 2 }, //Overloaded
+	{ "Obj_SetNewParentScript", DxScript::Func_Obj_SetNewParentScript, 1 },
+	{ "Obj_SetNewParentScript", DxScript::Func_Obj_SetNewParentScript, 2 }, //Overloaded
 	{ "Obj_SetAutoDelete", DxScript::Func_Obj_SetAutoDelete, 2 },
 
 	//Render object functions
@@ -2685,7 +2685,7 @@ value DxScript::Func_Obj_GetParentScriptID(script_machine* machine, int argc, co
 
 	return script->CreateIntValue(res);
 }
-value DxScript::Func_Obj_Reparent(script_machine* machine, int argc, const value* argv) {
+value DxScript::Func_Obj_SetNewParentScript(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	int64_t idScript = script->GetScriptID();
