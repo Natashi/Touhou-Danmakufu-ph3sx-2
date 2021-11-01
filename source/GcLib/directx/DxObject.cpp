@@ -20,6 +20,7 @@ DxScriptObjectBase::DxScriptObjectBase() {
 	bQueuedToDelete_ = false;
 	bActive_ = false;
 	bAutoDeleteEnable_ = true;
+	frameExist_ = 0;
 	manager_ = nullptr;
 	idObject_ = DxScript::ID_INVALID;
 	idScript_ = ScriptClientBase::ID_SCRIPT_FREE;
@@ -1459,6 +1460,7 @@ void DxScriptObjectManager::WorkObject() {
 			continue;
 		}
 		obj->Work();
+		++obj->frameExist_;
 		++itr;
 	}
 

@@ -32,6 +32,7 @@ protected:
 	ref_unsync_ptr<StgMovePattern> patternBak_;
 
 	bool bEnableMovement_;
+	int frameMove_;
 
 	ref_unsync_weak_ptr<StgMoveParent> parent_;
 	double offX_;
@@ -80,6 +81,8 @@ public:
 		pattern_ = pattern;
 	}
 	void AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap = false);
+
+	int GetMoveFrame() { return frameMove_; }
 };
 
 //*******************************************************************

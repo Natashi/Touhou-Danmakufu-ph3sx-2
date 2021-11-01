@@ -258,6 +258,7 @@ static const std::vector<function> dxFunction = {
 	{ "Obj_IsValueExistsI", DxScript::Func_Obj_IsValueExistsI, 2 },
 
 	{ "Obj_CopyValueTable", DxScript::Func_Obj_CopyValueTable, 3 },
+	{ "Obj_GetExistFrame", DxScript::Func_Obj_GetExistFrame, 1 },
 	{ "Obj_GetType", DxScript::Func_Obj_GetType, 1 },
 	{ "Obj_GetParentScriptID", DxScript::Func_Obj_GetParentScriptID, 1 },
 	{ "Obj_SetNewParentScript", DxScript::Func_Obj_SetNewParentScript, 1 },
@@ -2660,6 +2661,14 @@ gstd::value DxScript::Func_Obj_GetValueCountI(gstd::script_machine* machine, int
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj)
 		res = obj->GetValueMapI()->size();
+	return script->CreateIntValue(res);
+}
+
+gstd::value DxScript::Func_Obj_GetExistFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	DxScriptObjectBase* obj = script->GetObjectPointer(id);
+	int res = obj ? obj->GetExistFrame() : 0;
 	return script->CreateIntValue(res);
 }
 

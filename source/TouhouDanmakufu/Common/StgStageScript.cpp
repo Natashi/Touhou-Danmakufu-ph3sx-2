@@ -398,6 +398,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjMove_SetSpeedXY", StgStageScript::Func_ObjMove_SetSpeedXY, 3 },
 	{ "ObjMove_SetProcessMovement", StgStageScript::Func_ObjMove_SetProcessMovement, 2 },
 	{ "ObjMove_GetProcessMovement", StgStageScript::Func_ObjMove_GetProcessMovement, 1 },
+	{ "ObjMove_GetMoveFrame", StgStageScript::Func_ObjMove_GetMoveFrame, 1 },
 	
 	// Move object + move parent
 	{ "ObjMove_GetParent", StgStageScript::Func_ObjMove_GetParent, 1 },
@@ -3093,6 +3094,13 @@ gstd::value StgStageScript::Func_ObjMove_GetProcessMovement(gstd::script_machine
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 	bool res = obj ? obj->IsEnableMovement() : true;
 	return script->CreateBooleanValue(res);
+}
+gstd::value StgStageScript::Func_ObjMove_GetMoveFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	int res = obj ? obj->GetMoveFrame() : 0;
+	return script->CreateIntValue(res);
 }
 
 // Move object + move parent

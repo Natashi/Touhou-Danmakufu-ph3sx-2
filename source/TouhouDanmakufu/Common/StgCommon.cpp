@@ -15,6 +15,7 @@ StgMoveObject::StgMoveObject(StgStageController* stageController) {
 
 	pattern_ = nullptr;
 	bEnableMovement_ = true;
+	frameMove_ = 0;
 
 	parent_ = nullptr;
 	offX_ = 0;
@@ -35,6 +36,7 @@ StgMoveObject::~StgMoveObject() {
 	}
 }
 void StgMoveObject::Move() {
+	++frameMove_;
 	if (mapPattern_.size() > 0) {
 		auto itr = mapPattern_.begin();
 		while (framePattern_ >= itr->first) {

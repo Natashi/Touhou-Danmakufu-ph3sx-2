@@ -342,6 +342,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetSpeedXY);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetProcessMovement);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetProcessMovement);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_GetMoveFrame);
 
 	// Move object + move parent
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetParent);
