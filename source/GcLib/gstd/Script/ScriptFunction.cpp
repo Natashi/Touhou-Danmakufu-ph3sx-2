@@ -946,9 +946,9 @@ namespace gstd {
 		};
 
 		if (bRev)
-			for (size_t i = length - 1; !check(i) && i > 0; --i);
+			for (size_t i = length - 1; i > 0 && !check(i); --i);
 		else
-			for (size_t i = 0; !check(i) && i < length - 1; ++i);
+			for (size_t i = 0; i < length - 1 && !check(i); ++i);
 
 		return value(script_type_manager::get_int_type(), res);
 	}
