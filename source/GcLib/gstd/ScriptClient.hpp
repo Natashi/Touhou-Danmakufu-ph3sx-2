@@ -325,6 +325,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_StringFormat);
 		static value Func_AtoI(script_machine* machine, int argc, const value* argv);
 		static value Func_AtoR(script_machine* machine, int argc, const value* argv);
+		static value Func_ToUpper(script_machine* machine, int argc, const value* argv);
+		static value Func_ToLower(script_machine* machine, int argc, const value* argv);
 		static value Func_TrimString(script_machine* machine, int argc, const value* argv);
 		static value Func_SplitString(script_machine* machine, int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(Func_SplitString2);

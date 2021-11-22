@@ -9,6 +9,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	HWND handleWindow = nullptr;
 
 	try {
+		std::locale::global(std::locale("")); // Is this allowed?
+		
 		gstd::SystemUtility::TestCpuSupportSIMD();
 
 		DnhConfiguration* config = DnhConfiguration::CreateInstance();

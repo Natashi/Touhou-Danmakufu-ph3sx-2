@@ -202,6 +202,8 @@ static const std::vector<function> commonFunction = {
 	{ "StringFormat", ScriptClientBase::Func_StringFormat, -4 },	//2 fixed + ... -> 3 minimum
 	{ "atoi", ScriptClientBase::Func_AtoI, 1 },
 	{ "ator", ScriptClientBase::Func_AtoR, 1 },
+	{ "ToUpper", ScriptClientBase::Func_ToUpper, 1 },
+	{ "ToLower", ScriptClientBase::Func_ToLower, 1 },
 	{ "TrimString", ScriptClientBase::Func_TrimString, 1 },
 	{ "SplitString", ScriptClientBase::Func_SplitString, 2 },
 	{ "SplitString2", ScriptClientBase::Func_SplitString2, 2 },
@@ -1682,6 +1684,16 @@ value ScriptClientBase::Func_AtoR(script_machine* machine, int argc, const value
 	std::wstring str = argv->as_string();
 	double num = StringUtility::ToDouble(str);
 	return CreateRealValue(num);
+}
+value ScriptClientBase::Func_ToUpper(script_machine* machine, int argc, const value* argv) {
+	std::wstring str = argv->as_string();
+	for (auto& ch : str) ch = towupper(ch);
+	return CreateStringValue(str);
+}
+value ScriptClientBase::Func_ToLower(script_machine* machine, int argc, const value* argv) {
+	std::wstring str = argv->as_string();
+	for (auto& ch : str) ch = towlower(ch);
+	return CreateStringValue(str);
 }
 value ScriptClientBase::Func_TrimString(script_machine* machine, int argc, const value* argv) {
 	std::wstring res = StringUtility::Trim(argv->as_string());
