@@ -925,14 +925,31 @@ namespace gstd {
 		const value& val = argv[1];
 		size_t length = arr->length_as_array();
 
+		int64_t target = 0;
+		if (argc == 3) target = argv[2].as_int();
+
+		bool bRev = target < 0;
+
 		int64_t res = -1;
-		for (size_t i = 0; i < length; ++i) {
-			value args[2] = { arr->index_as_array(i), val };
+		size_t hits = 0;
+		size_t maxHit = bRev ? -target - 1 : target;
+
+		auto check = [&](size_t ind) -> bool {
+			value args[2] = { arr->index_as_array(ind), val };
 			if (compare(machine, 2, args).as_int() == 0) {
-				res = i;
-				break;
+				if (hits == maxHit)
+					res = ind;
+				else
+					++hits;
 			}
-		}
+			return res != -1;
+		};
+
+		if (bRev)
+			for (size_t i = length - 1; !check(i) && i > 0; --i);
+		else
+			for (size_t i = 0; !check(i) && i < length - 1; ++i);
+
 		return value(script_type_manager::get_int_type(), res);
 	}
 

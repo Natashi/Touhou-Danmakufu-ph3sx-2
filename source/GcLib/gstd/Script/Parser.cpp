@@ -160,6 +160,7 @@ static const std::vector<function> base_operations = {
 
 	{ "contains", BaseFunction::contains, 2 },
 	{ "indexof", BaseFunction::indexof, 2 },
+	{ "indexof", BaseFunction::indexof, 3 },	//Overloaded
 	{ "matches", BaseFunction::matches, 2 },
 	{ "all", BaseFunction::all, 1 },
 	{ "any", BaseFunction::any, 1 },
