@@ -202,8 +202,13 @@ static const std::vector<function> commonFunction = {
 	{ "StringFormat", ScriptClientBase::Func_StringFormat, -4 },	//2 fixed + ... -> 3 minimum
 	{ "atoi", ScriptClientBase::Func_AtoI, 1 },
 	{ "ator", ScriptClientBase::Func_AtoR, 1 },
-	{ "ToUpper", ScriptClientBase::Func_ToUpper, 1 },
-	{ "ToLower", ScriptClientBase::Func_ToLower, 1 },
+	{ "ToUpper", ScriptClientBase::Func_RecaseString<towupper>, 1 },
+	{ "ToLower", ScriptClientBase::Func_RecaseString<towlower>, 1 },
+	{ "IsUpper", ScriptClientBase::Func_ClassifyString<iswupper>, 1 },
+	{ "IsLower", ScriptClientBase::Func_ClassifyString<iswlower>, 1 },
+	{ "IsAlpha", ScriptClientBase::Func_ClassifyString<iswalpha>, 1 },
+	{ "IsAlnum", ScriptClientBase::Func_ClassifyString<iswalnum>, 1 },
+	{ "IsAscii", ScriptClientBase::Func_ClassifyString<iswascii>, 1 },
 	{ "TrimString", ScriptClientBase::Func_TrimString, 1 },
 	{ "SplitString", ScriptClientBase::Func_SplitString, 2 },
 	{ "SplitString2", ScriptClientBase::Func_SplitString2, 2 },
@@ -1685,29 +1690,37 @@ value ScriptClientBase::Func_AtoR(script_machine* machine, int argc, const value
 	double num = StringUtility::ToDouble(str);
 	return CreateRealValue(num);
 }
-value ScriptClientBase::Func_ToUpper(script_machine* machine, int argc, const value* argv) {
+template<wint_t (*func)(wint_t)>
+value ScriptClientBase::Func_RecaseString(script_machine* machine, int argc, const value* argv) {
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array) {
 		std::wstring str = argv->as_string();
-		for (auto& ch : str) ch = towupper(ch);
+		for (auto& ch : str) ch = func(ch);
 		return CreateStringValue(str);
 	}
 	else {
 		wchar_t ch = argv->as_char();
-		return CreateCharValue(towupper(ch));
+		return CreateCharValue(func(ch));
 	}
-	
 }
-value ScriptClientBase::Func_ToLower(script_machine* machine, int argc, const value* argv) {
+template<int (*func)(wint_t)>
+value ScriptClientBase::Func_ClassifyString(script_machine* machine, int argc, const value* argv) {
+	bool res = true;
 	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array) {
 		std::wstring str = argv->as_string();
-		for (auto& ch : str) ch = towlower(ch);
-		return CreateStringValue(str);
+		for (auto& ch : str) {
+			if (!func(ch)) {
+				res = false;
+				break;
+			}
+		}
 	}
 	else {
 		wchar_t ch = argv->as_char();
-		return CreateCharValue(towlower(ch));
+		res = func(ch);
 	}
+	return CreateBooleanValue(res);
 }
+
 value ScriptClientBase::Func_TrimString(script_machine* machine, int argc, const value* argv) {
 	std::wstring res = StringUtility::Trim(argv->as_string());
 	return CreateStringValue(res);
