@@ -1686,14 +1686,27 @@ value ScriptClientBase::Func_AtoR(script_machine* machine, int argc, const value
 	return CreateRealValue(num);
 }
 value ScriptClientBase::Func_ToUpper(script_machine* machine, int argc, const value* argv) {
-	std::wstring str = argv->as_string();
-	for (auto& ch : str) ch = towupper(ch);
-	return CreateStringValue(str);
+	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array) {
+		std::wstring str = argv->as_string();
+		for (auto& ch : str) ch = towupper(ch);
+		return CreateStringValue(str);
+	}
+	else {
+		wchar_t ch = argv->as_char();
+		return CreateCharValue(towupper(ch));
+	}
+	
 }
 value ScriptClientBase::Func_ToLower(script_machine* machine, int argc, const value* argv) {
-	std::wstring str = argv->as_string();
-	for (auto& ch : str) ch = towlower(ch);
-	return CreateStringValue(str);
+	if (argv->get_type()->get_kind() == type_data::type_kind::tk_array) {
+		std::wstring str = argv->as_string();
+		for (auto& ch : str) ch = towlower(ch);
+		return CreateStringValue(str);
+	}
+	else {
+		wchar_t ch = argv->as_char();
+		return CreateCharValue(towlower(ch));
+	}
 }
 value ScriptClientBase::Func_TrimString(script_machine* machine, int argc, const value* argv) {
 	std::wstring res = StringUtility::Trim(argv->as_string());
