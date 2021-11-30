@@ -314,6 +314,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjShader_Create", DxScript::Func_ObjShader_Create, 0 },
 	{ "ObjShader_SetShaderF", DxScript::Func_ObjShader_SetShaderF, 2 },
 	{ "ObjShader_SetShaderO", DxScript::Func_ObjShader_SetShaderO, 2 },
+	{ "ObjShader_SetShaderT", DxScript::Func_ObjShader_SetShaderT, 3 },
 	{ "ObjShader_ResetShader", DxScript::Func_ObjShader_ResetShader, 1 },
 	{ "ObjShader_SetTechnique", DxScript::Func_ObjShader_SetTechnique, 2 },
 	{ "ObjShader_SetMatrix", DxScript::Func_ObjShader_SetMatrix, 3 },
@@ -3153,8 +3154,10 @@ gstd::value DxScript::Func_ObjShader_Create(gstd::script_machine* machine, int a
 }
 gstd::value DxScript::Func_ObjShader_SetShaderF(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
+
 	int id = argv[0].as_int();
 	bool res = false;
+
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
 		std::wstring path = argv[1].as_string();
@@ -3184,9 +3187,10 @@ gstd::value DxScript::Func_ObjShader_SetShaderF(gstd::script_machine* machine, i
 }
 gstd::value DxScript::Func_ObjShader_SetShaderO(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	bool res = false;
 
+	bool res = false;
 	int id1 = argv[0].as_int();
+
 	DxScriptRenderObject* obj1 = script->GetObjectPointerAs<DxScriptRenderObject>(id1);
 	if (obj1) {
 		int id2 = argv[1].as_int();
@@ -3198,6 +3202,30 @@ gstd::value DxScript::Func_ObjShader_SetShaderO(gstd::script_machine* machine, i
 				res = true;
 			}
 		}
+	}
+	return script->CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_ObjShader_SetShaderT(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	bool res = false;
+	int id = argv[0].as_int();
+
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		std::wstring name = argv[1].as_string();
+		std::string shaderSource = StringUtility::ConvertWideToMulti(argv[2].as_string());
+
+		ShaderManager* manager = ShaderManager::GetBase();
+
+		shared_ptr<Shader> shader = manager->CreateFromText(name, shaderSource);
+		if (shader == nullptr) {
+			const std::wstring& error = manager->GetLastError();
+			script->RaiseError(error);
+		}
+
+		obj->SetShader(shader);
+		res = shader != nullptr;
 	}
 	return script->CreateBooleanValue(res);
 }

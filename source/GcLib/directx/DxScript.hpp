@@ -317,6 +317,7 @@ namespace directx {
 		static gstd::value Func_ObjShader_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_SetShaderF(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_SetShaderO(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_ObjShader_SetShaderT(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_ResetShader(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_SetTechnique(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_SetMatrix(gstd::script_machine* machine, int argc, const gstd::value* argv);
