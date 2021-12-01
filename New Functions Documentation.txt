@@ -1,4 +1,5 @@
 ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
+	"T": Any type
 
 ---------------------------------------------->	[Base Script] <----------------------------------------------
 
@@ -10,7 +11,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	wait
 		Arguments:
-			1) frame
+			1) (int) frame
 		Description:
 			Pauses the execution for the given amount of frames.
 			
@@ -18,7 +19,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	typeof
 		Arguments:
-			1) (any) value
+			1) (T) value
 		Returns:
 			(int) type
 		Description:
@@ -33,7 +34,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ftypeof
 		Arguments:
-			1) (any) value
+			1) (T) value
 		Returns:
 			(int) type
 		Description:
@@ -48,21 +49,21 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 	resize
 		Arguments:
-			1) (any[]) array
+			1) (T[]) array
 			2) (int) new size
 		Returns:
-			(any[]) result
+			(T[]) result
 		Description:
 			Resizes the given array.
 			The array must not be a null array.
 			
 	resize (Overload)
 		Arguments:
-			1) (any[]) array
+			1) (T[]) array
 			2) (int) new size
-			3) (any) fill value
+			3) (T) fill value
 		Returns:
-			(any[]) result
+			(T[]) result
 		Description:
 			Overloaded with 3 arguments.
 		
@@ -73,28 +74,48 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	insert
 		Arguments:
-			1) (any[]) array
+			1) (T[]) array
 			2) (int) insert position
-			3) (any) value
+			3) (T) value
 		Returns:
-			(any[]) result
+			(T[]) result
 		Description:
 			Inserts the given value into the given position of the array.
+			Insertion method is "insert-before".
 			
 	contains
 		Arguments:
-			1) (any[]) array
-			2) (any) value
+			1) (T[]) array
+			2) (T) value
 		Returns:
 			(bool) result
 		Description:
 			Checks if the given value is present as an element of the given array.
-			
+	
+	replace
+		Arguments:
+			1) (T[]) array
+			2) (T) replace from
+			2) (T) replace to
+		Returns:
+			(T[]) result
+		Description:
+			Replaces all occurences of the given element with the other in the array.
+	
+	remove
+		Arguments:
+			1) (T[]) array
+			2) (T) value
+		Returns:
+			(T[]) result
+		Description:
+			Removes all occurences of the given element in the array.
+	
 	--------------------------------> Type Casting <--------------------------------
 	
 	as_int
 		Arguments:
-			1) (any) value
+			1) (T) value
 		Returns:
 			(int) result
 		Description:
@@ -102,7 +123,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 	as_real
 		Arguments:
-			1) (any) value
+			1) (T) value
 		Returns:
 			(real) result
 		Description:
@@ -110,7 +131,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	as_bool
 		Arguments:
-			1) (any) value
+			1) (T) value
 		Returns:
 			(bool) result
 		Description:
@@ -118,7 +139,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	as_char
 		Arguments:
-			1) (any) value
+			1) (T) value
 		Returns:
 			(char) result
 		Description:
@@ -126,7 +147,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	as_int_array
 		Arguments:
-			1) (any[]) array
+			1) (T[]) array
 		Returns:
 			(int[]) result
 		Description:
@@ -139,7 +160,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	as_real_array
 		Arguments:
-			1) (any[]) array
+			1) (T[]) array
 		Returns:
 			(real[]) result
 		Description:
@@ -149,7 +170,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	as_bool_array
 		Arguments:
-			1) (any[]) array
+			1) (T[]) array
 		Returns:
 			(bool[]) result
 		Description:
@@ -159,7 +180,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	as_char_array
 		Arguments:
-			1) (any[]) array
+			1) (T[]) array
 		Returns:
 			(char[]) result
 		Description:
@@ -170,10 +191,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	as_x_array
 		Arguments:
-			1) (any[]) array
+			1) (T[]) array
 			2) (const) type
 		Returns:
-			(int[]/real[]/bool[]/char[]) result
+			(T[]) result
 		Description:
 			Casts array elements to the given type, then returns the result.
 			
@@ -239,129 +260,6 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			(int) result
 		Description:
 			Performs a bitwise right shift operation.
-			
-	--------------------------------> Trigonometry and Angular Maths <--------------------------------
-
-	sincos
-		Arguments:
-			1) angle
-		Returns:
-			(real[2]) [sin(angle), cos(angle)]
-
-	rsin
-		Arguments:
-			1) angle
-		Returns:
-			(real) result
-		Description:
-			sin() for radians input.
-
-	rcos
-		Arguments:
-			1) angle (radians)
-		Returns:
-			(real) result
-		Description:
-			cos() for radians input.
-
-	rtan
-		Arguments:
-			1) angle (radians)
-		Returns:
-			(real) result
-		Description:
-			tan() for radians input.
-
-	rsincos
-		Arguments:
-			1) angle (radians)
-		Returns:
-			(real[2]) result
-		Description:
-			sincos() for radians input.
-
-	rasin
-		Arguments:
-			1) value
-		Returns:
-			(real) result
-		Description:
-			asin() for radians output.
-
-	racos
-		Arguments:
-			1) value
-		Returns:
-			(real) result
-		Description:
-			acos() for radians output.
-
-	ratan
-		Arguments:
-			1) y
-			2) x
-		Returns:
-			(real) result
-		Description:
-			atan() for radians output.
-
-	ratan2
-		Arguments:
-			1) value
-		Returns:
-			(real) result
-		Description:
-			atan2() for radians output.
-			
-	ToDegrees
-		Arguments:
-			1) angle
-		Returns:
-			(real) result
-		Description:
-			Converts the given angle to degrees.
-
-	ToRadians
-		Arguments:
-			1) angle
-		Returns:
-			(real) result
-		Description:
-			Converts the given angle to radians.
-
-	NormalizeAngle
-		Arguments:
-			1) angle (degrees)
-		Returns:
-			(real) result
-		Description:
-			Normalizes the given angle. (Range = [0, 360))
-			
-	NormalizeAngleR
-		Arguments:
-			1) angle (radians)
-		Returns:
-			(real) result
-		Description:
-			Normalizes the given angle. (Range = [0, 2pi))
-
-	AngularDistance
-		Arguments:
-			1) angle from (degrees)
-			1) angle to (degrees)
-		Returns:
-			(real) result
-		Description:
-			Calculates the shortest angular distance between the given angles. (Range = [-180, 180))
-			
-	AngularDistanceR
-		Arguments:
-			1) angle from (radians)
-			1) angle to (radians)
-		Returns:
-			(real) result
-		Description:
-			Calculates the shortest angular distance between the given angles. (Range = [-pi, pi))
 			
 	--------------------------------> Maths <--------------------------------
 	
@@ -510,38 +408,147 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Returns angle (in radians) between the given two points.
 			
 			rdottheta(x1, y1, x2, y2) = ratan2(y2 - y1, x2 - x1)
-			
-	Rotate2D
+	
+	--------------------------------> Trigonometry and Angular Maths <--------------------------------
+
+	sincos
 		Arguments:
-			1) x
-			2) y
-			3) angle
+			1) angle
 		Returns:
-			(real[2]) rotated position [x, y]
-		Description:
-			Rotates the given (x, y) point around the origin.
-			
-			Direct formula is:
-				x = x * cos(angle) - y * sin(angle)
-				y = x * sin(angle) + y * cos(angle)
-				
-	Rotate3D
+			(real[2]) [sin(angle), cos(angle)]
+
+	rsin
 		Arguments:
-			1) x
-			2) y
-			3) z
-			4) X angle
-			5) Y angle
-			6) Z angle
+			1) angle
 		Returns:
-			(real[3]) rotated position [x, y, z]
+			(real) result
 		Description:
-			Rotates the given (x, y, z) point around the origin with the given Euler angles.
+			sin() for radians input.
+
+	rcos
+		Arguments:
+			1) angle (radians)
+		Returns:
+			(real) result
+		Description:
+			cos() for radians input.
+
+	rtan
+		Arguments:
+			1) angle (radians)
+		Returns:
+			(real) result
+		Description:
+			tan() for radians input.
+
+	rsincos
+		Arguments:
+			1) angle (radians)
+		Returns:
+			(real[2]) result
+		Description:
+			sincos() for radians input.
+
+	rasin
+		Arguments:
+			1) value
+		Returns:
+			(real) result
+		Description:
+			asin() for radians output.
+
+	racos
+		Arguments:
+			1) value
+		Returns:
+			(real) result
+		Description:
+			acos() for radians output.
+
+	ratan
+		Arguments:
+			1) y
+			2) x
+		Returns:
+			(real) result
+		Description:
+			atan() for radians output.
+
+	ratan2
+		Arguments:
+			1) value
+		Returns:
+			(real) result
+		Description:
+			atan2() for radians output.
 			
-			Direct formula is:
-				x = x * (cos(angY) * cos(angZ) - sin(angX) * sin(angY) * sin(angZ)) + y * (-cos(angX) * sin(angZ)) + z * (sin(angY) * cos(angZ) + sin(angX) * cos(angY) * sin(angZ))
-				y = x * (cos(angY) * sin(angZ) + sin(angX) * sin(angY) * cos(angZ)) + y * (cos(angX) * cos(angZ)) + z * (sin(angY) * sin(angZ) - sin(angX) * cos(angY) * cos(angZ))
-				z = x * (-cos(angX) * sin(angY)) + y * (sin(angX)) + z * (cos(angX) * cos(angY))
+	ToDegrees
+		Arguments:
+			1) angle
+		Returns:
+			(real) result
+		Description:
+			Converts the given angle to degrees.
+
+	ToRadians
+		Arguments:
+			1) angle
+		Returns:
+			(real) result
+		Description:
+			Converts the given angle to radians.
+
+	NormalizeAngle
+		Arguments:
+			1) angle (degrees)
+		Returns:
+			(real) result
+		Description:
+			Normalizes the given angle. (Range = [0, 360))
+			
+	NormalizeAngleR
+		Arguments:
+			1) angle (radians)
+		Returns:
+			(real) result
+		Description:
+			Normalizes the given angle. (Range = [0, 2pi))
+
+	AngularDistance
+		Arguments:
+			1) angle from (degrees)
+			2) angle to (degrees)
+		Returns:
+			(real) result
+		Description:
+			Calculates the shortest angular distance between the given angles. (Range = [-180, 180))
+			
+	AngularDistanceR
+		Arguments:
+			1) angle from (radians)
+			2) angle to (radians)
+		Returns:
+			(real) result
+		Description:
+			Calculates the shortest angular distance between the given angles. (Range = [-pi, pi))
+	
+	ReflectAngle
+		Arguments:
+			1) ray angle (degrees)
+			2) surface angle (degrees)
+		Returns:
+			(real) result
+		Description:
+			Calculates the given ray's angle of reflection upon a surface of the given angle. (Range = [0, 360))
+			
+	ReflectAngleR
+		Arguments:
+			1) ray angle (radians)
+			2) surface angle (radians)
+		Returns:
+			(real) result
+		Description:
+			Calculates the given ray's angle of reflection upon a surface of the given angle. (Range = [0, 2pi))
 				
 	--------------------------------> Constants <--------------------------------
 		
@@ -791,14 +798,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	rand_int
 		Arguments:
-			1) min
-			2) max
+			1) (int) min
+			2) (int) max
 		Returns:
 			(int) random integer
 		Description:
 			Returns a random integer within the range [a, b].
 			
-			rand_int(a, b) = as_int(rand(as_int(a), as_int(b) + 0.99999))
+			rand_int(a, b) = as_int(rand(a, b + 0.99999))
 
 	prand
 		Arguments:
@@ -811,8 +818,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	prand_int
 		Arguments:
-			1) min
-			2) max
+			1) (int) min
+			2) (int) max
 		Returns:
 			(int) random integer
 		Description:
@@ -843,14 +850,111 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	reset_count_prand
 		Description:
 			Sets the prand count to 0.
+	
+	--------------------------------> Rotation Maths <--------------------------------
+	
+	Rotate2D
+		Arguments:
+			1) x
+			2) y
+			3) angle
+		Returns:
+			(real[2]) rotated position [x, y]
+		Description:
+			Rotates the given (x, y) point around the origin (0, 0).
+			
+			Direct formula is:
+				x = x * cos(angle) - y * sin(angle)
+				y = x * sin(angle) + y * cos(angle)
+	
+	Rotate2D (overload)
+		Arguments:
+			1) x
+			2) y
+			3) angle
+			4) origin x
+			5) origin y
+		Returns:
+			(real[2]) rotated position [x, y]
+		Description:
+			Overloaded with 5 arguments.
+		
+			Rotates the given (x, y) point around the given origin.
+			
+			Direct formula is:
+				_x = x - ox
+				_y = y - oy
+				x = ox + (_x * cos(angle) - _y * sin(angle))
+				y = oy + (_x * sin(angle) + _y * cos(angle))
+	
+	Rotate3D
+		Arguments:
+			1) x
+			2) y
+			3) z
+			4) X angle
+			5) Y angle
+			6) Z angle
+		Returns:
+			(real[3]) rotated position [x, y, z]
+		Description:
+			Rotates the given (x, y, z) point around the origin (0, 0) with the given Euler angles.
+			
+			Direct formula is:
+				x = x * (cos(angY) * cos(angZ) - sin(angX) * sin(angY) * sin(angZ)) + y * (-cos(angX) * sin(angZ)) + z * (sin(angY) * cos(angZ) + sin(angX) * cos(angY) * sin(angZ))
+				y = x * (cos(angY) * sin(angZ) + sin(angX) * sin(angY) * cos(angZ)) + y * (cos(angX) * cos(angZ)) + z * (sin(angY) * sin(angZ) - sin(angX) * cos(angY) * cos(angZ))
+				z = x * (-cos(angX) * sin(angY)) + y * (sin(angX)) + z * (cos(angX) * cos(angY))
+				
+	Rotate3D (overload)
+		Arguments:
+			1) x
+			2) y
+			3) z
+			4) X angle
+			5) Y angle
+			6) Z angle
+			7) origin x
+			8) origin y
+			9) origin z
+		Returns:
+			(real[3]) rotated position [x, y, z]
+		Description:
+			Rotates the given (x, y, z) point around the given origin with the given Euler angles.
+			
+			Direct formula is:
+				_x = x - ox
+				_y = y - oy
+				_z = z - oz
+				x = ox + (_x * (cos(angY) * cos(angZ) - sin(angX) * sin(angY) * sin(angZ)) + _y * (-cos(angX) * sin(angZ)) + _z * (sin(angY) * cos(angZ) + sin(angX) * cos(angY) * sin(angZ)))
+				y = oy + (_x * (cos(angY) * sin(angZ) + sin(angX) * sin(angY) * cos(angZ)) + _y * (cos(angX) * cos(angZ)) + _z * (sin(angY) * sin(angZ) - sin(angX) * cos(angY) * cos(angZ)))
+				z = oz + (_x * (-cos(angX) * sin(angY)) + _y * (sin(angX)) + _z * (cos(angX) * cos(angY)))
 			
 	--------------------------------> String <--------------------------------
+	
+	SplitString2
+		Arguments:
+			1) (string) source string
+			2) (string) pattern
+		Returns:
+			(string[]) split result
+		Description:
+			Splits the string at the given pattern.
+			
+			Examples:
+				SplitString2("ab3cd3ef3g", "3");
+				//Result: ["ab", "cd", "ef", "g"]
+				
+				SplitString2("1b23abc45a6abc789c", "abc");
+				//Result: ["1b23", "45a6", "789c"]
+				
+				SplitString("1b23abc45a6abc789c", "abc");
+				//Result: ["1", "23", "", "", "45", "6", "", "", "789", ""]
 	
 	StringFormat
 		Arguments:
 			1) (string) source string
 			2) (string) argument types
-			3+) (any) format arguments...
+			3+) (T) format arguments...
 		Returns:
 			(string) formatted string
 		Description:
@@ -859,7 +963,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			The number of format arguments must match the number of argument types.
 			
 			Make sure that the amount of format arguments match the formatting tokens in the source string,
-				the game may crash if the formatting tokens count exceeds the format arguments count.
+				the game may crash if the formatting token count exceeds the format argument count.
 			
 			Available argument types:
 				- d:	Argument is passed a 32-bit integer (int).
@@ -1034,7 +1138,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	WriteLog
 		Arguments:
-			1+) (any) value...
+			1+) (T) value...
 		Description:
 			Change.
 			
@@ -1083,7 +1187,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (string) key
 		Returns:
-			(any) stored value
+			(T) stored value
 		Description:
 			Overloaded with 1 argument.
 			
@@ -1095,7 +1199,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (string) area
 			2) (string) key
 		Returns:
-			(any) stored value
+			(T) stored value
 		Description:
 			Overloaded with 2 arguments.
 			
@@ -1112,9 +1216,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	LoadCommonDataValuePointer
 		Arguments:
 			1) (string) key
-			2) (any) initial value
+			2) (T) initial value
 		Returns:
-			(int) value pointer
+			(pointer) value pointer
 		Description:
 			Obtains a value pointer to the common data value in the default area.
 			
@@ -1124,7 +1228,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (string) key
 		Returns:
-			(int) value pointer
+			(pointer) value pointer
 		Description:
 			Overloaded with 1 argument.
 		
@@ -1136,9 +1240,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (string) area
 			2) (string) key
-			3) (any) initial value
+			3) (T) initial value
 		Returns:
-			(int) value pointer
+			(pointer) value pointer
 		Description:
 			Obtains a value pointer to the common data value in the given area.
 			
@@ -1149,7 +1253,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (string) area
 			2) (string) key
 		Returns:
-			(int) value pointer
+			(pointer) value pointer
 		Description:
 			Overloaded with 1 argument.
 		
@@ -1159,7 +1263,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	IsValidCommonDataValuePointer
 		Arguments:
-			1) (int) value pointer
+			1) (pointer) value pointer
 		Returns:
 			(bool) valid
 		Description:
@@ -1167,8 +1271,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	SetCommonDataPtr
 		Arguments:
-			1) (int) value pointer
-			2) (any) value
+			1) (pointer) value pointer
+			2) (T) value
 		Description:
 			SetCommonData/SetAreaCommonData using pointers.
 			
@@ -1178,10 +1282,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	GetCommonDataPtr
 		Arguments:
-			1) (int) value pointer
-			2) (any) default value
+			1) (pointer) value pointer
+			2) (T) default value
 		Returns:
-			(any) stored value
+			(T) stored value
 		Description:
 			GetCommonData/GetAreaCommonData using pointers.
 			
@@ -1191,9 +1295,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	GetCommonDataPtr (Overload)
 		Arguments:
-			1) (int) value pointer
+			1) (pointer) value pointer
 		Returns:
-			(any) stored value
+			(T) stored value
 		Description:
 			Overloaded with 1 argument.
 		
@@ -1262,10 +1366,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	SaveSnapShotA3
 		Arguments:
 			1) (string) path
-			2) rectangle left
-			3) rectangle top
-			4) rectangle right
-			5) rectangle bottom
+			2) (int) rect left
+			3) (int) rect top
+			4) (int) rect right
+			5) (int) rect bottom
 			6) (const) format
 		Returns:
 			(bool) result
@@ -1347,9 +1451,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (int) script ID
 			2) (int) event type
-			3+) (any) arguments...
+			3+) (T) arguments...
 		Returns:
-			(any) event result
+			(T) event result
 		Description:
 			Change.
 			
@@ -1360,9 +1464,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	NotifyEventOwn
 		Arguments:
 			1) (int) event type
-			2+) (any) arguments...
+			2+) (T) arguments...
 		Returns:
-			(any) event result
+			(T) event result
 		Description:
 			NotifyEvent's the script in which it was called.
 			
@@ -1373,7 +1477,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	NotifyEventAll
 		Arguments:
 			1) (int) event type
-			2+) (any) arguments...
+			2+) (T) arguments...
 		Description:
 			Change.
 			NotifyEvent's all actively running scripts.
@@ -1381,7 +1485,112 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			It is possible to pass as many event arguments as you want.
 			
 			*Scripts paused with PauseScript will still be able to run events.
-				
+	
+	--------------------------------> Matrix <--------------------------------
+	
+	A "matrix" here is a 16-member array representing a 4x4 matrix arranged row-by-row.
+		Ex: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] (The identity matrix)
+	A "vector" here is a real value array of the specified size.
+		Ex: [3, 4, 5] 		-> VECTOR3
+			[5, 5, 0, 2]	-> VECTOR4
+
+	MatrixIdentity
+		Returns:
+			(matrix) the identity matrix
+		Description:
+			Contructs an identity matrix.
+
+	MatrixInverse
+		Arguments:
+			1) (matrix) matrix
+		Returns:
+			(matrix) result
+		Description:
+			Inverses the given matrix.
+
+	MatrixAdd
+		Arguments:
+			1) (matrix) matrix1
+			2) (matrix) matrix2
+		Returns:
+			(matrix) result
+		Description:
+			Adds two matrices together.
+			Note: Directly using the "+" operator also works.
+
+	MatrixSubtract
+		Arguments:
+			1) (matrix) matrix1
+			2) (matrix) matrix2
+		Returns:
+			(matrix) result
+		Description:
+			Subtracts two matrices.
+			Note: Directly using the "-" operator also works.
+			
+	MatrixMultiply
+		Arguments:
+			1) (matrix) matrix1
+			2) (matrix) matrix2
+		Returns:
+			(matrix) result
+		Description:
+			Multiplies two matrices together.
+			
+	MatrixDivide
+		Arguments:
+			1) (matrix) matrix1
+			2) (matrix) matrix2
+		Returns:
+			(matrix) result
+		Description:
+			Divides two matrices.
+
+	MatrixTranspose
+		Arguments:
+			1) (matrix) matrix
+		Returns:
+			(matrix) result
+		Description:
+			Transposes the given matrix.
+			
+	MatrixDeterminant
+		Arguments:
+			1) (matrix) matrix
+		Returns:
+			(real) result
+		Description:
+			Calculates the determinant of the given matrix.
+
+	MatrixLookAtLH
+		Arguments:
+			1) (VECTOR3) eye vector
+			2) (VECTOR3) destination vector
+			3) (VECTOR3) orientation vector
+		Returns:
+			(matrix) result
+		Description:
+			Constructs a left-handed look-at matrix.
+
+	MatrixLookAtRH
+		Arguments:
+			1) (VECTOR3) eye vector
+			2) (VECTOR3) destination vector
+			3) (VECTOR3) orientation vector
+		Returns:
+			(matrix) result
+		Description:
+			Constructs a right-handed look-at matrix.
+			
+	MatrixTransformVector
+		Arguments:
+			1) (VECTOR3) position
+			2) (matrix) transformation matrix
+		Returns:
+			(VECTOR4) result
+		Description:
+			Transforms the given (x, y, z, 1) point with the given matrix.
+	
 	--------------------------------> Screen Status <--------------------------------
 	
 	GetMonitorWidth
@@ -1427,116 +1636,11 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Returns whether or not the game is in fullscreen mode.
 			Both pseudo and true fullscreen modes register as true.
 	
-	--------------------------------> Matrix <--------------------------------
-	
-	A "matrix" here is a 16-member array representing a 4x4 matrix arranged row-by-row.
-		Ex: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] (The identity matrix)
-	A "vector" here is a real value array of the specified size.
-		Ex: [3, 4, 5] 		-> VECTOR3
-			[5, 5, 0, 2]	-> VECTOR4
-
-	MatrixIdentity
-		Returns:
-			(matrix) the identity matrix
-		Description:
-			Contructs an identity matrix.
-
-	MatrixInverse
-		Arguments:
-			1) matrix
-		Returns:
-			(matrix) result
-		Description:
-			Inverses the given matrix.
-
-	MatrixAdd
-		Arguments:
-			1) matrix1
-			2) matrix2
-		Returns:
-			(matrix) result
-		Description:
-			Adds two matrices together.
-			Note: Directly using the "+" operator also works.
-
-	MatrixSubtract
-		Arguments:
-			1) matrix1
-			2) matrix2
-		Returns:
-			(matrix) result
-		Description:
-			Subtracts two matrices.
-			Note: Directly using the "-" operator also works.
-			
-	MatrixMultiply
-		Arguments:
-			1) matrix1
-			2) matrix2
-		Returns:
-			(matrix) result
-		Description:
-			Multiplies two matrices together.
-			
-	MatrixDivide
-		Arguments:
-			1) matrix1
-			2) matrix2
-		Returns:
-			(matrix) result
-		Description:
-			Divides two matrices.
-
-	MatrixTranspose
-		Arguments:
-			1) matrix
-		Returns:
-			(matrix) result
-		Description:
-			Transposes the given matrix.
-			
-	MatrixDeterminant
-		Arguments:
-			1) matrix
-		Returns:
-			(real) result
-		Description:
-			Calculates the determinant of the given matrix.
-
-	MatrixLookAtLH
-		Arguments:
-			1) (VECTOR3) eye vector
-			2) (VECTOR3) destination vector
-			3) (VECTOR3) orientation vector
-		Returns:
-			(matrix) result
-		Description:
-			Constructs a left-handed look-at matrix.
-
-	MatrixLookAtRH
-		Arguments:
-			1) (VECTOR3) eye vector
-			2) (VECTOR3) destination vector
-			3) (VECTOR3) orientation vector
-		Returns:
-			(matrix) result
-		Description:
-			Constructs a right-handed look-at matrix.
-			
-	MatrixTransformVector
-		Arguments:
-			1) (VECTOR3) position
-			2) (matrix) transformation matrix
-		Returns:
-			(VECTOR4) result
-		Description:
-			Transforms the given (x, y, z, 1) point with the given matrix.
-			
 	--------------------------------> Sound <--------------------------------
 	
 	SetSoundDivisionVolumeRate
 		Arguments:
-			1) division
+			1) (const) division
 			2) rate
 		Description:
 			Sets the volume rate of the given sound division.
@@ -1544,7 +1648,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	GetSoundDivisionVolumeRate
 		Arguments:
-			1) division
+			1) (const) division
 		Returns:
 			(real) volume rate
 		Description:
@@ -1611,8 +1715,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	CreateRenderTargetEx
 		Arguments:
 			1) (string) name
-			2) width
-			3) height
+			2) (int) width
+			3) (int) height
 		Returns:
 			(bool) creation result
 		Description:
@@ -1636,10 +1740,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ClearRenderTargetA2
 		Arguments:
 			1) (string) name
-			2) clear color red
-			3) clear color green
-			4) clear color blue
-			5) clear color alpha
+			2) (int) clear color red
+			3) (int) clear color green
+			4) (int) clear color blue
+			5) (int) clear color alpha
 		Returns:
 			(bool) clear result
 		Description:
@@ -1650,14 +1754,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ClearRenderTargetA3
 		Arguments:
 			1) (string) name
-			2) clear color red
-			3) clear color green
-			4) clear color blue
-			5) clear color alpha
-			6) rectangle left
-			7) rectangle top
-			8) rectangle right
-			9) rectangle bottom
+			2) (int) clear color red
+			3) (int) clear color green
+			4) (int) clear color blue
+			5) (int) clear color alpha
+			6) (int) rect left
+			7) (int) rect top
+			8) (int) rect right
+			9) (int) rect bottom
 		Returns:
 			(bool) clear result
 		Description:
@@ -1669,10 +1773,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (string) name
 			2) (string) path
-			3) rectangle left
-			4) rectangle top
-			5) rectangle right
-			6) rectangle bottom
+			3) (int) rect left
+			4) (int) rect top
+			5) (int) rect right
+			6) (int) rect bottom
 			7) (const) format
 		Returns:
 			(bool) save result
@@ -1704,7 +1808,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) fog start
 			2) fog end
-			3) fog color
+			3) (int) fog hex color
 		Description:
 			Overloaded with 3 arguments.
 				
@@ -1764,6 +1868,84 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	--------------------------------> Intersection <--------------------------------
 	
+	IsIntersected_Point_Polygon
+		Arguments:
+			1) point - x
+			2) point - y
+			3) (real[2][]) polygon vertices
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given point intersects with the polygon.
+			
+			The polygon can be convex, concave, or complex (self-intersecting).
+			
+	IsIntersected_Point_Circle
+		Arguments:
+			1) point  - x
+			2) point  - y
+			3) circle - x
+			4) circle - y
+			5) circle - radius
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given point intersects with the circle.
+			
+	IsIntersected_Point_Ellipse
+		Arguments:
+			1) point   - x
+			2) point   - y
+			3) ellipse - x
+			4) ellipse - y
+			5) ellipse - x radius
+			6) ellipse - y radius
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given point intersects with the ellipse.
+			
+	IsIntersected_Point_Line
+		Arguments:
+			1) point - x
+			2) point - y
+			3) line - start x
+			4) line - start y
+			5) line - end x
+			6) line - end y
+			7) line - width
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given point intersects with the line.
+			
+	IsIntersected_Point_RegularPolygon
+		Arguments:
+			1) point   - x
+			2) point   - y
+			3) polygon - x
+			4) polygon - y
+			5) polygon - radius
+			6) (int) polygon - edge count
+			7) polygon - angle (degrees)
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given point intersects with the regular polygon.
+			
+	IsIntersected_Circle_Polygon
+		Arguments:
+			1) circle - x
+			2) circle - y
+			3) circle - radius
+			4) (real[2][]) polygon vertices
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given circle intersects with the polygon.
+			
+			The polygon can be convex, concave, or complex (self-intersecting).
+			
 	IsIntersected_Circle_Circle
 		Arguments:
 			1) circle 1 - x
@@ -1775,79 +1957,165 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(bool) intersection
 		Description:
-			Now usable in scripts of all types.
-			
 			Returns true if the given circles intersect.
 			
-	IsIntersected_Line_Circle
+	IsIntersected_Circle_Ellipse
+		Arguments:
+			1) circle  - x
+			2) circle  - y
+			3) circle  - radius
+			4) ellipse - x
+			5) ellipse - y
+			6) ellipse - x radius
+			7) ellipse - y radius
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given circle intersects with the ellipse.
+			
+	IsIntersected_Circle_RegularPolygon
+		Arguments:
+			1) circle  - x
+			2) circle  - y
+			3) circle  - radius
+			4) polygon - x
+			5) polygon - y
+			6) polygon - radius
+			7) (int) polygon - edge count
+			8) polygon - angle (degrees)
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given circle intersects with the regular polygon.
+	
+	IsIntersected_Line_Polygon
 		Arguments:
 			1) line - start x
 			2) line - start y
 			3) line - end x
 			4) line - end y
 			5) line - width
+			6) (real[2][]) polygon vertices
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given line intersects with the polygon.
+			
+			The polygon can be convex, concave, or complex (self-intersecting).
+			
+	IsIntersected_Line_Circle
+		Arguments:
+			1) line   - start x
+			2) line   - start y
+			3) line   - end x
+			4) line   - end y
+			5) line   - width
 			6) circle - x
 			7) circle - y
 			8) circle - radius
 		Returns:
 			(bool) intersection
 		Description:
-			Now usable in scripts of all types.
+			Returns true if the given line intersects with the circle.
+			
+	IsIntersected_Line_Ellipse
+		Arguments:
+			1) line    - start x
+			2) line    - start y
+			3) line    - end x
+			4) line    - end y
+			5) line    - width
+			6) ellipse - x
+			7) ellipse - y
+			8) ellipse - x radius
+			9) ellipse - y radius
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given line intersects with the ellipse.
 			
 	IsIntersected_Line_Line
 		Arguments:
-			1) line 1 - start x
-			2) line 1 - start y
-			3) line 1 - end x
-			4) line 1 - end y
-			5) line 1 - width
-			6) line 2 - start x
-			7) line 2 - start y
-			8) line 2 - end x
-			9) line 2 - end y
+			1)  line 1 - start x
+			2)  line 1 - start y
+			3)  line 1 - end x
+			4)  line 1 - end y
+			5)  line 1 - width
+			6)  line 2 - start x
+			7)  line 2 - start y
+			8)  line 2 - end x
+			9)  line 2 - end y
 			10) line 2 - width
 		Returns:
 			(bool) intersection
 		Description:
-			Returns true if the given line segments intersect.
+			Returns true if the given lines intersect.
 			
-	IsIntersected_Circle_RegularPolygon
+	IsIntersected_Line_RegularPolygon
 		Arguments:
-			1) circle - x
-			2) circle - y
-			3) circle - radius
-			4) polygon - x
-			5) polygon - y
-			6) polygon - radius to edge
-			7) polygon - edge count
-			8) polygon - angle
+			1)  line    - start x
+			2)  line    - start y
+			3)  line    - end x
+			4)  line    - end y
+			5)  line    - width
+			6)  polygon - x
+			7)  polygon - y
+			8)  polygon - radius
+			9)  (int) polygon - edge count
+			10) polygon - angle (degrees)
 		Returns:
 			(bool) intersection
 		Description:
-			Returns true if the given circle and polygon intersect.
+			Returns true if the given line intersects with the regular polygon.
 			
-	IsIntersected_Circle_Ellipse
+	IsIntersected_Polygon_Polygon
 		Arguments:
-			1) circle - x
-			2) circle - y
-			3) circle - radius
-			4) ellipse - x
-			5) ellipse - y
-			6) ellipse - horizontal axis half-length
-			7) ellipse - vertical axis half-length
+			1) (real[2][]) polygon 1 vertices
+			2) (real[2][]) polygon 2 vertices
 		Returns:
 			(bool) intersection
 		Description:
-			Returns true if the given circle and ellipse intersect.
+			Returns true if the given polygons intersect.
+			
+			The polygons can be convex, concave, or complex (self-intersecting).
+			
+	IsIntersected_Polygon_Ellipse
+		Arguments:
+			1) (real[2][]) polygon vertices
+			2) ellipse - x
+			3) ellipse - y
+			4) ellipse - x radius
+			5) ellipse - y radius
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given polygon intersects with the ellipse.
+			
+			The polygon can be convex, concave, or complex (self-intersecting).
+			
+	IsIntersected_Polygon_RegularPolygon
+		Arguments:
+			1) (real[2][]) polygon 1 vertices
+			2) polygon 2 - x
+			3) polygon 2 - y
+			4) polygon 2 - radius
+			5) (int) polygon 2 - edge count
+			6) polygon 2 - angle (degrees)
+		Returns:
+			(bool) intersection
+		Description:
+			Returns true if the given polygon intersects with the regular polygon.
+			
+			The polygon can be convex, concave, or complex (self-intersecting).
 			
 	--------------------------------> Color Utility <--------------------------------
 	
 	ColorARGBToHex
 		Arguments:
-			1) alpha
-			2) red
-			3) green
-			4) blue
+			1) (int) alpha
+			2) (int) red
+			3) (int) green
+			4) (int) blue
 		Returns:
 			(int) hex color
 		Description:
@@ -1862,7 +2130,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 	ColorARGBToHex (Overload)
 		Arguments:
-			1) (real[4]) color
+			1) (int[4]) color
 		Returns:
 			(int) hex color
 		Description:
@@ -1872,7 +2140,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 	ColorHexToARGB
 		Arguments:
-			1) hex color
+			1) (int) hex color
 		Returns:
 			(int[4]) ARGB color
 		Description:
@@ -1887,8 +2155,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 	ColorHexToARGB (Overload)
 		Arguments:
-			1) hex color
-			2) control
+			1) (int) hex color
+			2) (int) control
 		Returns:
 			(int[]) color array
 		Description:
@@ -1947,19 +2215,27 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ColorRGBtoHSV
 		Arguments:
-			1) red
-			2) green
-			3) blue
+			1) (int) red
+			2) (int) green
+			3) (int) blue
 		Returns:
 			(int[3]) color array
 		Description:
 			Returns the given RGB color as a HSV color array.
+	
+	ColorHexRGBtoHSV
+		Arguments:
+			1) (int) hex color
+		Returns:
+			(int[3]) color array
+		Description:
+			Returns the given XRGB hexadecimal color as a HSV color array.
 			
 	ColorHSVtoRGB
 		Arguments:
-			1) hue
-			2) saturation
-			3) value
+			1) (int) hue
+			2) (int) saturation
+			3) (int) value
 		Returns:
 			(int[3]) color array
 		Description:
@@ -1967,9 +2243,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ColorHSVtoHexRGB
 		Arguments:
-			1) hue
-			2) saturation
-			3) value
+			1) (int) hue
+			2) (int) saturation
+			3) (int) value
 		Returns:
 			(int) hex color
 		Description:
@@ -1988,8 +2264,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	GetObjectDistance
 		Arguments:
-			1) object 1 ID
-			2) object 2 ID
+			1) (int) object 1 ID
+			2) (int) object 2 ID
 		Returns:
 			(real) distance
 		Description:
@@ -1999,8 +2275,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	GetObjectDistanceSq
 		Arguments:
-			1) object 1 ID
-			2) object 2 ID
+			1) (int) object 1 ID
+			2) (int) object 2 ID
 		Returns:
 			(real) distance
 		Description:
@@ -2010,8 +2286,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	GetObjectDeltaAngle
 		Arguments:
-			1) object 1 ID
-			2) object 2 ID
+			1) (int) object 1 ID
+			2) (int) object 2 ID
 		Returns:
 			(real) angle
 		Description:
@@ -2021,56 +2297,72 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	Obj_GetValueI
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (int) key
 		Returns:
-			(any) value
+			(T) value
 		Description:
-			Obj_GetValue with real value key.
+			Obj_GetValue with int value key.
 
 	Obj_GetValueDI
 		Arguments:
-			1) object ID
-			2) key
+			1) (int) object ID
+			2) (int) key
 			3) default
 		Returns:
-			(any) value
+			(T) value
 		Description:
-			Obj_GetValueD with real value key.
+			Obj_GetValueD with int value key.
 
 	Obj_SetValueI
 		Arguments:
-			1) object ID
-			2) key
+			1) (int) object ID
+			2) (int) key
 			3) value
 		Returns:
-			(any) value
+			(T) value
 		Description:
-			Obj_SetValue with real value key.
+			Obj_SetValue with int value key.
 
 	Obj_DeleteValueI
 		Arguments:
-			1) object ID
-			2) key
+			1) (int) object ID
+			2) (int) key
 		Returns:
-			(any) value
+			(T) value
 		Description:
-			Obj_DeleteValue with real value key.
+			Obj_DeleteValue with int value key.
 
 	Obj_IsValueExistsI
 		Arguments:
-			1) object ID
-			2) key
+			1) (int) object ID
+			2) (int) key
 		Returns:
-			(any) value
+			(T) value
 		Description:
-			Obj_IsValueExists with real value key.
-			
+			Obj_IsValueExists with int value key.
+	
+	Obj_GetValueCount
+		Arguments:
+			1) (int) object ID
+		Returns:
+			(int) count
+		Description:
+			Returns the number of stored values in the object's string-indexed value table.
+	
+	Obj_GetValueCountI
+		Arguments:
+			1) (int) object ID
+		Returns:
+			(int) count
+		Description:
+			Returns the number of stored values in the object's int-indexed value table.
+	
 	Obj_CopyValueTable
 		Arguments:
-			1) destination object ID
-			2) source object ID
-			3) mode
+			1) (int) destination object ID
+			2) (int) source object ID
+			3) (int) mode
 		Returns:
 			(int) source object's object value amount
 		Description:
@@ -2095,7 +2387,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		
 		ObjRender_SetScaleXYZ (Overload)
 			Arguments:
-				1) object ID
+				1) (int) object ID
 				2) scale
 			Description:
 				Overloaded with 2 arguments.
@@ -2104,51 +2396,59 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 				Example:
 					ObjRender_SetScaleXYZ(obj, 2); 	//-> ObjRender_SetScaleXYZ(obj, 2, 2, 2);
-	
+		
 		[---------------------------> Color & Alpha <---------------------------]
-	
+		
 		ObjRender_SetColor (Overload)
 			Arguments:
-				1) object ID
-				2) color
+				1) (int) object ID
+				2) (int) hex color
 			Description:
 				Overloaded with 2 arguments.
 				
-				Sets the object's RGB color as an XRGB hexadecimal color value.
+				Sets the object's color as an XRGB hexadecimal color value.
 				
 				Example:
 					ObjRender_SetColor(obj, 0xFF7B32); 	//-> ObjRender_SetColor(obj, 255, 123, 50);
-					
+		
 		ObjRender_SetColorHSV
 			Arguments:
-				1) object ID
-				2) color hue
-				3) color saturation
-				4) color value
+				1) (int) object ID
+				2) (int) color hue
+				3) (int) color saturation
+				4) (int) color value
 			Description:
 				Sets the object's RGB color as a HSV color.
 		
 		ObjRender_GetColor
 			Arguments:
-				1) object ID
+				1) (int) object ID
 			Returns:
 				(int[3]) color
 			Description:
 				Returns an [r, g, b] array of the object's color.
-				
+		
+		ObjRender_GetColorHex
+			Arguments:
+				1) (int) object ID
+			Returns:
+				(int) hex color
+			Description:
+				Returns the object's color an XRGB hexadecimal color value.
+		
 		ObjRender_GetAlpha
 			Arguments:
-				1) object ID
+				1) (int) object ID
 			Returns:
 				(int) alpha
 			Description:
 				Returns the object's alpha value.
-					
+		
 		[---------------------------> Texture Filtering <---------------------------]
 			
 		ObjRender_SetTextureFilterMin
 			Arguments:
-				1) object ID
+				1) (int) object ID
 				2) (const) mode
 			Description:
 				Sets the minification filtering mode for the render object.
@@ -2163,7 +2463,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 		ObjRender_SetTextureFilterMag
 			Arguments:
-				1) object ID
+				1) (int) object ID
 				2) (const) mode
 			Description:
 				Sets the magnification filtering mode for the render object.
@@ -2172,7 +2472,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 		ObjRender_SetTextureFilterMip
 			Arguments:
-				1) object ID
+				1) (int) object ID
 				2) (const) mode
 			Description:
 				Sets the mipmap filtering mode for the render object.
@@ -2183,7 +2483,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 		ObjRender_SetVertexShaderRenderingMode
 			Arguments:
-				1) object ID
+				1) (int) object ID
 				2) (bool) use vertex shader mode
 			Description:
 				Sets whether the render object will be rendered with support for vertex shaders.
@@ -2194,20 +2494,20 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 		ObjRender_SetEnableDefaultTransformMatrix
 			Arguments:
-				1) object ID
+				1) (int) object ID
 				2) (bool) enable
 			Description:
 				Sets whether the render object will calculate its transformation matrix.
 				Default is true.
 				
-				The transformation matrix contains the object's scale, angle, and position data.
-				If set to false, a transformation matrix will not be created by the engine, resulting in some performance boost.
+				The transformation matrix contains the object's scale, angle, and position data, along with the 2D camera matrix.
+				If set to false, the transformation matrix will only contain the 2D camera matrix.
 				
 		[---------------------------> Lighting <---------------------------]
 		
 		ObjRender_SetLightingEnable
 			Arguments:
-				1) object ID
+				1) (int) object ID
 				2) (bool) lighting enable
 				2) (bool) specular lighting enable
 			Description:
@@ -2220,10 +2520,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 		ObjRender_SetLightingDiffuseColor
 			Arguments:
-				1) object ID
-				2) r
-				3) g
-				4) b
+				1) (int) object ID
+				2) (int) r
+				3) (int) g
+				4) (int) b
 			Description:
 				Sets the diffuse color of the lighting.
 				
@@ -2231,8 +2531,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 		ObjRender_SetLightingDiffuseColor (Overload)
 			Arguments:
-				1) object ID
-				2) color
+				1) (int) object ID
+				2) (int) hex color
 			Description:
 				Overloaded with 2 arguments.
 				
@@ -2240,10 +2540,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 		ObjRender_SetLightingSpecularColor
 			Arguments:
-				1) object ID
-				2) r
-				3) g
-				4) b
+				1) (int) object ID
+				2) (int) r
+				3) (int) g
+				4) (int) b
 			Description:
 				Sets the specular color of the lighting.
 				
@@ -2251,8 +2551,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 		ObjRender_SetLightingSpecularColor (Overload)
 			Arguments:
-				1) object ID
-				2) color
+				1) (int) object ID
+				2) (int) hex color
 			Description:
 				Overloaded with 2 arguments.
 				
@@ -2260,10 +2560,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 		ObjRender_SetLightingAmbientColor
 			Arguments:
-				1) object ID
-				2) r
-				3) g
-				4) b
+				1) (int) object ID
+				2) (int) r
+				3) (int) g
+				4) (int) b
 			Description:
 				Sets the ambient color of the lighting.
 				
@@ -2271,8 +2571,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 		ObjRender_SetLightingAmbientColor (Overload)
 			Arguments:
-				1) object ID
-				2) color
+				1) (int) object ID
+				2) (int) hex color
 			Description:
 				Overloaded with 2 arguments.
 				
@@ -2280,7 +2580,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 		ObjRender_SetLightingDirection
 			Arguments:
-				1) object ID
+				1) (int) object ID
 				2) x component
 				3) y component
 				4) z component
@@ -2294,7 +2594,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjPrim_GetTexture
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(string) texture name
 		Description:
@@ -2302,9 +2602,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjPrim_SetVertexColor (Overload)
 		Arguments:
-			1) object ID
-			2) vertex index
-			3) color
+			1) (int) object ID
+			2) (int) vertex index
+			3) (int) hex color
 		Description:
 			Overloaded with 3 arguments.
 		
@@ -2312,8 +2612,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjPrim_SetVertexColorHSV
 		Arguments:
-			1) object ID
-			2) vertex index
+			1) (int) object ID
+			2) (int) vertex index
 			3) color hue
 			4) color saturation
 			5) color value
@@ -2322,17 +2622,26 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjPrim_GetVertexColor
 		Arguments:
-			1) object ID
-			2) vertex index
+			1) (int) object ID
+			2) (int) vertex index
 		Returns:
 			(int[3]) color
 		Description:
 			Returns the vertex color as an [r, g, b] array.
+	
+	ObjPrim_GetVertexColorHex
+		Arguments:
+			1) (int) object ID
+			2) (int) vertex index
+		Returns:
+			(int) hex color
+		Description:
+			Returns the vertex color as an XRGB hexadecimal color value.
 			
 	ObjPrim_GetVertexAlpha
 		Arguments:
-			1) object ID
-			2) vertex index
+			1) (int) object ID
+			2) (int) vertex index
 		Returns:
 			(int) alpha
 		Description:
@@ -2340,8 +2649,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjPrim_SetVertexIndex
 		Arguments:
-			1) object ID
-			2) (real array) indices
+			1) (int) object ID
+			2) (int[]) indices
 		Description:
 			Sets vertex indices to the primitive object. 
 			Required for particle list objects.
@@ -2359,7 +2668,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjSpriteList2D_SetAutoClearVertexCount
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) clear
 		Description:
 			Sets whether the 2D sprite list object will clear its vertices upon rendering.
@@ -2379,7 +2688,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjParticleList_SetPosition
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) X position
 			3) Y position
 			4) Z position
@@ -2388,28 +2697,28 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjParticleList_SetScaleX
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) X scale
 		Description:
 			Sets the instance X scale data.
 
 	ObjParticleList_SetScaleY
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) Y scale
 		Description:
 			Sets the instance Y scale data.
 
 	ObjParticleList_SetScaleZ
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) Z scale
 		Description:
 			Sets the instance Z scale data.
 
 	ObjParticleList_SetScale
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) X scale
 			3) Y scale
 			4) Z scale
@@ -2418,7 +2727,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjParticleList_SetScale (Overload)
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) scale
 		Description:
 			Overloaded with 2 arguments.
@@ -2429,28 +2738,28 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjParticleList_SetAngleX
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) X angle
 		Description:
 			Sets the instance X angle data.
 
 	ObjParticleList_SetAngleY
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) Y angle
 		Description:
 			Sets the instance Y angle data.
 
 	ObjParticleList_SetAngleZ
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) Z angle
 		Description:
 			Sets the instance Z angle data.
 
 	ObjParticleList_SetAngleXYZ
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) X angle
 			3) Y angle
 			3) Z angle
@@ -2459,17 +2768,17 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjParticleList_SetColor
 		Arguments:
-			1) object ID
-			2) color red
-			3) color green
-			4) color blue
+			1) (int) object ID
+			2) (int) red
+			3) (int) green
+			4) (int) blue
 		Description:
 			Sets the instance RGB color data.
 			
 	ObjParticleList_SetColor (Overload)
 		Arguments:
-			1) object ID
-			2) color
+			1) (int) object ID
+			2) (int) hex color
 		Description:
 			Overloaded with 2 arguments.
 		
@@ -2477,14 +2786,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjParticleList_SetAlpha
 		Arguments:
-			1) object ID
-			2) alpha
+			1) (int) object ID
+			2) (int) alpha
 		Description:
 			Sets the instance alpha data.
 
 	ObjParticleList_SetExtraData
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) data 1
 			2) data 2
 			2) data 3
@@ -2494,13 +2803,13 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjParticleList_AddInstance
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Description:
 			Submits the current data to the next instance.
 
 	ObjParticleList_ClearInstance
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Description:
 			Clears all previously submitted instance data of the current frame.
 			
@@ -2508,8 +2817,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjMesh_SetColor (Overload)
 		Arguments:
-			1) object ID
-			2) color
+			1) (int) object ID
+			2) (int) hex color
 		Description:
 			Overloaded with 2 arguments.
 		
@@ -2517,10 +2826,27 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	--------------------------------> Text Object Functions <--------------------------------
 	
+	ObjText_GetText
+		Arguments:
+			1) (int) object ID
+		Returns:
+			(string) text
+		Description:
+			Returns the text of the text object.
+	
+	ObjText_SetFixedWidth
+		Arguments:
+			1) (int) object ID
+			2) (int) width
+		Description:
+			Activates and sets the width of monospacing mode for the text object.
+			
+			If width is <= 0, the spacing mode returns to regular dynamic spacing.
+	
 	ObjText_SetFontWeight
 		Arguments:
-			1) object ID
-			2) weight
+			1) (int) object ID
+			2) (int) weight
 		Description:
 			Sets the font weight for the following text object.
 			
@@ -2531,8 +2857,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjText_SetFontCharacterSet
 		Arguments:
-			1) object ID
-			2) charset
+			1) (int) object ID
+			2) (int) charset
 		Description:
 			Sets the charset for the following text object.
 			
@@ -2558,8 +2884,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjText_SetFontColorTop (Overload)
 		Arguments:
-			1) object ID
-			2) color
+			1) (int) object ID
+			2) (int) hex color
 		Description:
 			Overloaded with 2 arguments.
 		
@@ -2567,8 +2893,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjText_SetFontColorBottom (Overload)
 		Arguments:
-			1) object ID
-			2) color
+			1) (int) object ID
+			2) (int) hex color
 		Description:
 			Overloaded with 2 arguments.
 		
@@ -2576,8 +2902,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjText_SetFontBorderColor (Overload)
 		Arguments:
-			1) object ID
-			2) color
+			1) (int) object ID
+			2) (int) hex color
 		Description:
 			Overloaded with 2 arguments.
 		
@@ -2585,8 +2911,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjText_SetVertexColor (Overload)
 		Arguments:
-			1) object ID
-			2) color
+			1) (int) object ID
+			2) (int) hex color
 		Description:
 			Overloaded with 2 arguments.
 		
@@ -2596,7 +2922,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjSound_SetResumeEnable
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) resume enable
 		Description:
 			Formerly ObjSound_SetRestartEnable.
@@ -2606,21 +2932,21 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjSound_Seek
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) time
 		Description:
 			Seeks to the specified time in the audio.
 
 	ObjSound_SeekSampleCount
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (int) sample
 		Description:
 			Seeks to the specified sample in the audio.
 			
 	ObjSound_SetFrequency
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (int) frequency
 		Description:
 			Sets the frequency of the audio in sample rate.
@@ -2630,7 +2956,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjSound_GetInfo
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (const) type
 		Returns:
 			[varies]
@@ -2670,7 +2996,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjFileT_SetLineText
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (int) line number
 			3) (string) new text
 		Description:
@@ -2682,7 +3008,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjFileB_GetLastRead
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(int) result
 		Description:
@@ -2692,7 +3018,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjFileB_ReadBoolean
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(bool) result
 		Description:
@@ -2704,7 +3030,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_ReadByte
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(int) result
 		Description:
@@ -2716,7 +3042,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_ReadShort
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(int) result
 		Description:
@@ -2728,7 +3054,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_ReadInteger
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(int) result
 		Description:
@@ -2740,7 +3066,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_ReadLong
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(int) result
 		Description:
@@ -2752,7 +3078,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_ReadFloat
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(real) result
 		Description:
@@ -2764,7 +3090,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_ReadDouble
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(real) result
 		Description:
@@ -2776,7 +3102,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjFileB_WriteBoolean
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) value
 		Returns:
 			(int) bytes written
@@ -2786,7 +3112,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_WriteByte
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (int) value
 		Returns:
 			(int) bytes written
@@ -2796,7 +3122,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_WriteShort
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (int) value
 		Returns:
 			(int) bytes written
@@ -2806,7 +3132,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_WriteInteger
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (int) value
 		Returns:
 			(int) bytes written
@@ -2816,7 +3142,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_WriteLong
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (int) value
 		Returns:
 			(int) bytes written
@@ -2826,7 +3152,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_WriteFloat
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) value
 		Returns:
 			(int) bytes written
@@ -2836,7 +3162,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjFileB_WriteDouble
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) value
 		Returns:
 			(int) bytes written
@@ -2847,6 +3173,20 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 ---------------------------------------------->	[Stage Script] <----------------------------------------------
 
 	-------------------------------->  Basic Stage Functions <--------------------------------
+	
+	SetStgFrame (Overload)
+		Arguments:
+			1) (int) frame left
+			2) (int) frame top
+			3) (int) frame right
+			4) (int) frame bottom
+			5) (int) STG frame render priority - starting (inclusive)
+			6) (int) STG frame render priority - ending (exclusive)
+			7) (int) 2D camera render priority
+		Description:
+			Overloaded with 7 arguments.
+			
+			Additional ability to change the render priority of the 2D camera. 
 	
 	SetIntersectionVisualization
 		Arguments:
@@ -2877,7 +3217,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	SetPlayerItemScope
 		Arguments:
-			1) value
+			1) (int) value
 		Description:
 			Sets the player's item collection scope radius.
 			Effect equivalent to CollectItemsInCircle.
@@ -2926,6 +3266,19 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Use REBIRTH_DEFAULT in either position to reset it to its default value.
 			
 	--------------------------------> Shot Functions <--------------------------------
+	
+	GetAllShotID
+		Arguments:
+			1) (const) type
+		Returns:
+			(int[]) shot object IDs
+		Description:
+			Returns an array of all shot object IDs of the given type.
+			
+			Available types:
+				TARGET_ALL
+				TARGET_PLAYER
+				TARGET_ENEMY
 	
 	GetShotDataInfoA1
 		Returns:
@@ -2977,8 +3330,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	IsIntersected_Obj_Obj
 		Arguments:
-			1) object ID 1
-			2) object ID 2
+			1) (int) object ID 1
+			2) (int) object ID 2
 		Returns:
 			(bool) intersection
 		Description:
@@ -2986,8 +3339,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	IsIntersected_Obj_Obj_All
 		Arguments:
-			1) object ID 1
-			2) object ID 2
+			1) (int) object ID 1
+			2) (int) object ID 2
 		Returns:
 			(bool) intersection
 		Description:
@@ -3007,10 +3360,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjMove_SetDestAtFrame (Overload)
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) target x
 			3) target y
-			4) frame
+			4) (int) frame
 			5) (const) interpolation mode
 		Description:
 			Overloaded with 5 arguments.
@@ -3031,7 +3384,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjMove_GetSpeedX
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(real) x speed
 		Description:
@@ -3040,7 +3393,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjMove_GetSpeedY
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(real) y speed
 		Description:
@@ -3049,7 +3402,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjMove_SetSpeedX
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) speed
 		Description:
 			Sets the move object's X speed.
@@ -3057,7 +3410,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjMove_SetSpeedY
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) speed
 		Description:
 			Sets the move object's Y speed.
@@ -3065,7 +3418,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjMove_SetSpeedXY
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) x speed
 			2) y speed
 		Description:
@@ -3074,7 +3427,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjMove_SetProcessMovement
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) enable
 		Description:
 			Sets whether the object will be allowed to execute movement-related routines.
@@ -3083,7 +3436,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjMove_GetProcessMovement
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(bool) result
 		Description:
@@ -3091,9 +3444,33 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	--------------------------------> Enemy Object Functions <--------------------------------
 	
+	ObjEnemy_GetInfo
+		Description:
+			Addition.
+				
+			INFO_DAMAGE_PREVIOUS_FRAME:
+				Returns the amount of damage the enemy received in the previous frame.
+	
+	ObjEnemy_SetMaximumDamage
+		Arguments:
+			1) (int) object ID
+			2) maximum damage
+		Description:
+			Sets the maximum amount of damage that the enemy object can receive through normal means in a single frame.
+	
+	ObjEnemy_AddLifeEx
+		Arguments:
+			1) (int) object ID
+			2) life
+		Description:
+			Adds life to the enemy object with respect to the enemy object's maximum damage.
+			
+			Negative value (damaging) will count towards the maximum damage as if getting hit by a player shot.
+			Positive value (healing) will reduce the damage count and allow more damage to be dealt in the frame equal to how much the healing was.
+	
 	ObjEnemy_GetIntersectionCircleListToShot
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(real[3][]) intersection circles
 		Description:
@@ -3102,7 +3479,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjEnemy_GetIntersectionCircleListToPlayer
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(real[3][]) intersection circles
 		Description:
@@ -3111,7 +3488,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjEnemy_SetEnableIntersectionPositionFetching
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) enable
 		Description:
 			If set to false, the following functions will not include the specified enemy object's hitboxes.
@@ -3122,9 +3499,16 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	--------------------------------> Enemy Boss Scene Object Functions <--------------------------------
 	
+	ObjEnemyBossScene_GetInfo
+		Description:
+			Addition.
+				
+			INFO_IS_REQUIRE_ALL_DOWN:
+				Returns if EV_REQUEST_REQUIRE_ALL_DOWN was set to true.
+	
 	ObjEnemyBossScene_EndSpell
 		Arguments:
-			1) boss scene object ID
+			1) (int) boss scene object ID
 		Description:
 			Marks the current single as being not-a-spell.
 			
@@ -3132,7 +3516,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjEnemyBossScene_SetUnloadCache
 		Arguments:
-			1) boss scene object ID
+			1) (int) boss scene object ID
 			2) (bool) unload
 		Description:
 			If set to true, will unload all added scripts from the script source cache upon boss scene end or object deletion.
@@ -3141,7 +3525,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjShot_SetOwnerType
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (const) type
 		Description:
 			Sets the shot object's owner type.
@@ -3152,7 +3536,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjShot_GetIntersectionEnable
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(bool) intersection enable
 		Description:
@@ -3160,7 +3544,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjShot_SetIntersectionScaleX
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) scale
 		Description:
 			Sets the shot object's X hitbox scale.
@@ -3168,7 +3552,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjShot_SetIntersectionScaleY
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) scale
 		Description:
 			Sets the shot object's Y hitbox scale.
@@ -3176,7 +3560,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjShot_SetIntersectionScaleXY
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) X scale
 			3) Y scale
 		Description:
@@ -3187,7 +3571,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjShot_SetPositionRounding
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) enable
 		Description:
 			If set to true, will cause the shot object to only render in non-floating point coordinates.
@@ -3195,7 +3579,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjShot_SetDelayMotionEnable
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) enable
 		Description:
 			If set to true, will enable the shot object to move in its delay period.
@@ -3204,15 +3588,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjShot_SetDelayGraphic
 		Arguments:
-			1) object ID
-			2) image ID
+			1) (int) object ID
+			2) (int) image ID
 		Description:
 			Sets the image ID of the shot object's delay cloud.
 			A negative value will reset the delay cloud graphic to default.
 			
 	ObjShot_SetDelayScaleParameter
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) parameter 1 (Designated "S0")
 			3) parameter 2 (Designated "S1")
 			4) parameter 3 (Designated "S2")
@@ -3226,7 +3610,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjShot_SetDelayAlphaParameter
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) parameter 1 (Designated "A0")
 			3) parameter 2 (Designated "A1")
 			4) parameter 3 (Designated "A2")
@@ -3241,7 +3625,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjShot_SetDelayMode
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (const) delay mode
 			3) (const) scale interpolation mode
 			4) (const) alpha interpolation mode
@@ -3267,8 +3651,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 					
 	ObjShot_SetDelayColor
 		Arguments:
-			1) object ID
-			2) color
+			1) (int) object ID
+			2) (int) hex color
 		Description:
 			Sets the color of the shot object's delay cloud as an ARGB hexadecimal color value.
 			
@@ -3276,15 +3660,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 					
 	ObjShot_SetDelayColoringEnable
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) enable
 		Description:
 			When set to true, enables the object color to affect the shot object's delay cloud.
 					
 	ObjShot_SetGrazeInvalidFrame
 		Arguments:
-			1) object ID
-			2) frame
+			1) (int) object ID
+			2) (int) frame
 		Description:
 			Sets the shot object's graze invalid frame.
 			For lasers, the default value is 20.
@@ -3292,8 +3676,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjShot_SetGrazeFrame
 		Arguments:
-			1) object ID
-			2) frame
+			1) (int) object ID
+			2) (int) frame
 		Description:
 			Sets the shot object's graze frame.
 			
@@ -3302,7 +3686,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjShot_IsValidGraze
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(bool) graze validity
 		Description:
@@ -3310,7 +3694,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjShot_SetSpinAngularVelocity
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) spin angular velocity
 		Description:
 			Sets the Z angle spin speed of the shot graphic.
@@ -3326,15 +3710,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjStLaser_SetEnd
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) set
 		Description:
 			Sets whether a delay cloud will appear at the end of the straight laser object.
 			
 	ObjStLaser_SetEndGraphic
 		Arguments:
-			1) object ID
-			2) graphic ID
+			1) (int) object ID
+			2) (int) graphic ID
 		Description:
 			Sets the shot image ID of the straight laser object "end" delay cloud.
 			
@@ -3342,7 +3726,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjStLaser_SetDelayScale
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) source scale multiplier
 			3) end scale multiplier
 		Description:
@@ -3351,7 +3735,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjStLaser_SetPermitExpand
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) enable
 		Description:
 			Sets whether the straight laser will expand after the delay period.
@@ -3359,20 +3743,29 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjStLaser_GetPermitExpand
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(bool) permit expand
 		Description:
 			Returns whether the straight laser is permitted to expand after the delay period.
 			
 	--------------------------------> Curvy Laser Object Functions <--------------------------------
+	
+	ObjCrLaser_SetTipCapping
+		Arguments:
+			1) (int) object ID
+			2) (bool) enable
+		Description:
+			Sets whether the curvy laser will attempt to keep its graphic's tips proportional to the upper and lower halves of its sprite.
 			
+			The exact middle of the sprite will be stretched along the laser's body between the tips. Can be used to emulate PC-98-styled "cheeto lasers".
+	
 	ObjCrLaser_GetNodePointer
 		Arguments:
-			1) object ID
-			2) node index
+			1) (int) object ID
+			2) (int) node index
 		Returns:
-			(int) node pointer
+			(pointer) node pointer
 		Description:
 			Returns the pointer value of the specified node index.
 			The pointer is used in other node-related functions.
@@ -3384,9 +3777,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjCrLaser_GetNodePointerList
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
-			(int[]) node pointers
+			(pointer[]) node pointers
 		Description:
 			Returns a list of node pointers of the curvy laser object.
 			The pointers are used in other node-related functions.
@@ -3396,8 +3789,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjCrLaser_GetNodePosition
 		Arguments:
-			1) object ID
-			2) node pointer
+			1) (int) object ID
+			2) (pointer) node pointer
 		Returns:
 			(real[2]) node position
 		Description:
@@ -3407,43 +3800,79 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjCrLaser_GetNodeAngle
 		Arguments:
-			1) object ID
-			2) node pointer
+			1) (int) object ID
+			2) (pointer) node pointer
 		Returns:
 			(real) node angle
 		Description:
 			Returns the facing angle of the specified node.
 			
 			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
+	
+	ObjCrLaser_GetNodeRenderWidth
+		Arguments:
+			1) (int) object ID
+			2) (pointer) node pointer
+		Returns:
+			(real) node width
+		Description:
+			Returns the render width of the specified node.
 			
+			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
+	
 	ObjCrLaser_GetNodeColor
 		Arguments:
-			1) object ID
-			2) node pointer
+			1) (int) object ID
+			2) (pointer) node pointer
 		Returns:
 			(int[4]) node color
 		Description:
 			Returns the [a, r, g, b] color array of the specified node.
 			
 			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
+	
+	ObjCrLaser_GetNodeColorHex
+		Arguments:
+			1) (int) object ID
+			2) (pointer) node pointer
+		Returns:
+			(int) hex color
+		Description:
+			Returns the ARGB hexadecimal color value of the specified node.
 			
+			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
+	
 	ObjCrLaser_SetNode
 		Arguments:
-			1) object ID
-			2) node pointer
+			1) (int) object ID
+			2) (pointer) node pointer
 			3) node X
 			4) node Y
 			5) node angle
-			6) node color
+			6) (int) node hex color
 		Description:
 			Sets the position, angle, and color of the specified node.
 			
 			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
+	
+	ObjCrLaser_SetNode (Overload)
+		Arguments:
+			1) (int) object ID
+			2) (pointer) node pointer
+			3) node X
+			4) node Y
+			5) node angle
+			6) (int) node hex color
+			7) (int) node width
+		Description:
+			Overloaded with 7 arguments.
 			
+			Additional ability to set node render width.
+	
 	ObjCrLaser_SetNodePosition
 		Arguments:
-			1) object ID
-			2) node pointer
+			1) (int) object ID
+			2) (pointer) node pointer
 			3) node X
 			4) node Y
 		Description:
@@ -3453,34 +3882,55 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjCrLaser_SetNodeAngle
 		Arguments:
-			1) object ID
-			2) node pointer
+			1) (int) object ID
+			2) (pointer) node pointer
 			3) node angle
 		Description:
 			Sets the angle of the specified node.
 			
 			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
-			
-	ObjCrLaser_SetNodeColor
+	
+	ObjCrLaser_SetNodeRenderWidth
 		Arguments:
-			1) object ID
-			2) node pointer
-			3) node color
+			1) (int) object ID
+			2) (pointer) node pointer
 		Description:
-			Sets the color of the specified node.
-			The color may be constructed with ColorARGBtoHex.
+			Sets the render width of the specified node.
 			
 			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
+	
+	ObjCrLaser_SetNodeColor
+		Arguments:
+			1) (int) object ID
+			2) (pointer) node pointer
+			3) (int) node hex color
+		Description:
+			Sets the color of the specified node as an ARGB hexadecimal color value.
 			
+			The node pointer is obtained with ObjCrLaser_GetNodePointer[List], do NOT pass in any other values.
+	
 	ObjCrLaser_AddNode
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) node X
 			3) node Y
 			4) node angle
-			5) color
+			5) (int) node hex color
 		Description:
 			Adds a laser node at the end of the curvy laser with the specified position, angle, and color.
+	
+	ObjCrLaser_AddNode (Overload)
+		Arguments:
+			1) (int) object ID
+			2) node X
+			3) node Y
+			4) node angle
+			5) (int) node hex color
+			6) (int) node width
+		Description:
+			Overloaded with 6 arguments.
+			
+			Additional ability to specify node render width.
 	
 	--------------------------------> Shot Pattern Object Functions <--------------------------------
 	
@@ -3492,26 +3942,28 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjPatternShot_Fire
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Description:
 			Fires the shot pattern defined by the given shot pattern object.
 
 	ObjPatternShot_FireReturn
 		Arguments:
-			1) object ID
+			1) (int) object ID
+		Returns:
+			(int[]) shot IDs
 		Description:
 			Fires the shot pattern defined by the given shot pattern object and returns the IDs of the created shots in an array.
 
 	ObjPatternShot_SetParentObject
 		Arguments:
-			1) object ID
-			2) parent object ID
+			1) (int) object ID
+			2) (int) parent object ID
 		Description:
 			Sets the parent object of the given shot pattern object.
 
 	ObjPatternShot_SetPatternType
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (const) type
 		Description:
 			Sets the firing pattern of the given shot pattern object.
@@ -3544,7 +3996,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjPatternShot_SetShotType
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (const) type
 		Description:
 			Sets the shot type of the given shot pattern object.
@@ -3555,7 +4007,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 	ObjPatternShot_SetInitialBlendMode
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (const) blend type
 		Description:
 			Sets the initial blend type of the shots.
@@ -3563,15 +4015,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjPatternShot_SetShotCount
 		Arguments:
-			1) object ID
-			2) way
-			3) stack
+			1) (int) object ID
+			2) (int) way
+			3) (int) stack
 		Description:
 			Sets the shot way and shot stack of the given shot pattern object.
 
 	ObjPatternShot_SetSpeed
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) base speed
 			3) speed argument
 		Description:
@@ -3579,7 +4031,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjPatternShot_SetAngle
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) base angle
 			3) angle argument
 		Description:
@@ -3587,7 +4039,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjPatternShot_SetBasePoint
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) X position
 			3) Y position
 		Description:
@@ -3598,7 +4050,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjPatternShot_SetBasePointOffset
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) X offset
 			3) Y offset
 		Description:
@@ -3606,7 +4058,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjPatternShot_SetBasePointOffsetCircle
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) angle
 			3) radius
 		Description:
@@ -3616,28 +4068,28 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjPatternShot_SetShootRadius
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) radius
 		Description:
 			Causes the shots to be fired a certain radius away from their base points.
 
 	ObjPatternShot_SetDelay
 		Arguments:
-			1) object ID
-			2) delay
+			1) (int) object ID
+			2) (int) delay
 		Description:
 			Sets the shot delay of the given shot pattern object.
 
 	ObjPatternShot_SetGraphic
 		Arguments:
-			1) object ID
-			2) graphic
+			1) (int) object ID
+			2) (int) graphic
 		Description:
 			Sets the shot image ID of the given shot pattern object.
 
 	ObjPatternShot_SetLaserParameter
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) width
 			3) length
 		Description:
@@ -3646,14 +4098,14 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 
 	ObjPatternShot_CopySettings
 		Arguments:
-			1) destination object ID
-			2) source object ID
+			1) (int) destination object ID
+			2) (int) source object ID
 		Description:
 			Copies the settings of a shot pattern object to another.
 			
 	ObjPatternShot_AddTransform
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (const) transform type
 			3+) transform arguments...
 		Description:
@@ -3702,7 +4154,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 						
 	ObjPatternShot_SetTransform
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (int) transform index
 			3) (const) transform type
 			4+) transform arguments...
@@ -3713,8 +4165,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjCol_GetListOfIntersectedShotID
 		Arguments:
-			1) object ID
-			2) shot owner type
+			1) (int) object ID
+			2) (const) shot owner type
 		Returns:
 			(int[]) intersected shot IDs
 		Description:
@@ -3728,7 +4180,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjItem_GetInfo
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (const) info type
 		Returns:
 			[varies]
@@ -3744,7 +4196,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	ObjItem_SetMoveToPlayer
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) move to player
 		Description:
 			Causes the item object to start or stop moving to the player.
@@ -3754,7 +4206,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjItem_IsMoveToPlayer
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Returns:
 			(bool) result
 		Description:
@@ -3762,7 +4214,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjItem_Collect
 		Arguments:
-			1) object ID
+			1) (int) object ID
 		Description:
 			Causes the item object to be instantly collected.
 			
@@ -3770,7 +4222,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjItem_SetAutoDelete
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) auto delete
 		Description:
 			Sets whether the item will be subject to the auto-deletion clip.
@@ -3779,21 +4231,29 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjItem_SetIntersectionRadius
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (int) radius
 		Description:
 			Sets the item object's player intersection radius.
 			
 	ObjItem_SetIntersectionEnable
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) enable
 		Description:
 			Sets whether the item object is allowed to directly intersect with the player.
+	
+	ObjItem_GetIntersectionEnable
+		Arguments:
+			1) (int) object ID
+		Returns:
+			(bool) enable
+		Description:
+			Returns whether the item object has intersection enabled.
 			
 	ObjItem_SetDefaultCollectMovement
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) enable
 		Description:
 			Sets whether the item object will use the built-in autocollection behaviour.
@@ -3802,7 +4262,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 	ObjItem_SetPositionRounding
 		Arguments:
-			1) object ID
+			1) (int) object ID
 			2) (bool) enable
 		Description:
 			If set to true, will cause the item object to only render in non-floating point coordinates.
@@ -3877,9 +4337,11 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	--------------------------------> Events <--------------------------------
 			
 		EV_DELETE_SHOT_PLAYER is notified to the player script when a player shot is deleted upon collision with an enemy intersection.
-			ObjShot_SetPenetration(obj, 0) can also be used to forcibly activate the event.
+			ObjShot_SetPenetration(obj, 0) can also be used to manually activate the event.
 		
 			Event arguments:
 				1) (int) shot object ID
 				2) (real[2]) position
 				3) (int) shot graphic ID
+				4) (int) object ID that the shot collided with
+					- Will be ID_INVALID in case of manual activation.

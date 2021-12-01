@@ -333,6 +333,7 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	LONG stgWidth = rcStgFrame->right - rcStgFrame->left;
 	LONG stgHeight = rcStgFrame->bottom - rcStgFrame->top;
 	POINT stgCenter = { rcStgFrame->left + stgWidth / 2, rcStgFrame->top + stgHeight / 2 };
+
 	int priMinStgFrame = stageInfo->GetStgFrameMinPriority();
 	int priMaxStgFrame = stageInfo->GetStgFrameMaxPriority();
 	int priShot = stageInfo->GetShotObjectPriority();

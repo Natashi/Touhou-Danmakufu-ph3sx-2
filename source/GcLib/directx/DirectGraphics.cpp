@@ -115,7 +115,8 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		float coordRateX = dxBackBufferW / (float)config.sizeScreen_.x;
 		float coordRateY = dxBackBufferH / (float)config.sizeScreen_.y;
 
-		g_dxCoordsMul_ = std::min(coordRateX, coordRateY);
+		//g_dxCoordsMul_ = std::min(coordRateX, coordRateY);
+		g_dxCoordsMul_ = 1.0f;
 	}
 
 	//Fullscreen mode settings
@@ -1389,8 +1390,8 @@ DxCamera2D::DxCamera2D() {
 DxCamera2D::~DxCamera2D() {}
 void DxCamera2D::Reset() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	LONG width = graphics->GetScreenWidth();
-	LONG height = graphics->GetScreenHeight();
+	LONG width = graphics->GetRenderScreenWidth();
+	LONG height = graphics->GetRenderScreenHeight();
 	if (posReset_ == nullptr) {
 		pos_.x = width / 2;
 		pos_.y = height / 2;

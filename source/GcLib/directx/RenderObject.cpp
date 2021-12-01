@@ -79,6 +79,24 @@ size_t RenderObject::_GetPrimitiveCount(size_t count) {
 	return 0U;
 }
 
+void RenderObject::SetPosition(float x, float y, float z) {
+	position_ = D3DXVECTOR3(x, y, z);
+	D3DXVec3Scale(&position_, &position_, DirectGraphics::g_dxCoordsMul_);
+}
+void RenderObject::SetX(float x) {
+	position_.x = x * DirectGraphics::g_dxCoordsMul_;
+}
+void RenderObject::SetY(float y) {
+	position_.y = y * DirectGraphics::g_dxCoordsMul_;
+}
+void RenderObject::SetZ(float z) {
+	position_.z = z * DirectGraphics::g_dxCoordsMul_;
+}
+void RenderObject::SetScaleXYZ(float sx, float sy, float sz) {
+	scale_ = D3DXVECTOR3(sx, sy, sz);
+	D3DXVec3Scale(&scale_, &scale_, DirectGraphics::g_dxCoordsMul_);
+}
+
 //---------------------------------------------------------------------
 
 D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
@@ -470,6 +488,9 @@ void RenderObjectTLX::SetVertexPosition(size_t index, float x, float y, float z,
 	VERTEX_TLX* vertex = GetVertex(index);
 	if (vertex == nullptr) return;
 
+	x *= DirectGraphics::g_dxCoordsMul_;
+	y *= DirectGraphics::g_dxCoordsMul_;
+
 	constexpr float bias = -0.5f;
 	vertex->position.x = x + bias;
 	vertex->position.y = y + bias;
@@ -670,6 +691,9 @@ void RenderObjectLX::SetVertexPosition(size_t index, float x, float y, float z) 
 	VERTEX_LX* vertex = GetVertex(index);
 	if (vertex == nullptr) return;
 
+	x *= DirectGraphics::g_dxCoordsMul_;
+	y *= DirectGraphics::g_dxCoordsMul_;
+
 	constexpr float bias = -0.5f;
 	vertex->position.x = x + bias;
 	vertex->position.y = y + bias;
@@ -845,6 +869,9 @@ void RenderObjectNX::SetVertexPosition(size_t index, float x, float y, float z) 
 	VERTEX_NX* vertex = GetVertex(index);
 	if (vertex == nullptr) return;
 
+	x *= DirectGraphics::g_dxCoordsMul_;
+	y *= DirectGraphics::g_dxCoordsMul_;
+
 	constexpr float bias = -0.5f;
 	vertex->position.x = x + bias;
 	vertex->position.y = y + bias;
@@ -902,10 +929,13 @@ void Sprite2D::SetSourceRect(const DxRect<int>& rcSrc) {
 	SetVertexUV(3, rcSrc.right / width, rcSrc.bottom / height);
 }
 void Sprite2D::SetDestinationRect(const DxRect<double>& rcDest) {
-	SetVertexPosition(0, rcDest.left, rcDest.top);
-	SetVertexPosition(1, rcDest.right, rcDest.top);
-	SetVertexPosition(2, rcDest.left, rcDest.bottom);
-	SetVertexPosition(3, rcDest.right, rcDest.bottom);
+	D3DXVECTOR4 pos = D3DXVECTOR4(rcDest.left, rcDest.top, rcDest.right, rcDest.bottom);
+	//D3DXVec4Scale(&pos, &pos, DirectGraphics::g_dxCoordsMul_);
+
+	SetVertexPosition(0, pos.x, pos.y);
+	SetVertexPosition(1, pos.z, pos.y);
+	SetVertexPosition(2, pos.x, pos.w);
+	SetVertexPosition(3, pos.z, pos.w);
 }
 void Sprite2D::SetVertex(const DxRect<int>& rcSrc, const DxRect<double>& rcDest, D3DCOLOR color) {
 	SetSourceRect(rcSrc);
@@ -1127,10 +1157,13 @@ void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 		D3DXVECTOR4 vPos;
 
 		constexpr float bias = -0.5f;
-		vPos.x = (float)ptrDst[(iVert & 0b1) << 1] + bias;
-		vPos.y = (float)ptrDst[iVert | 0b1] + bias;
+		vPos.x = (float)ptrDst[(iVert & 0b1) << 1];
+		vPos.y = (float)ptrDst[iVert | 0b1];
 		vPos.z = 1.0f;
 		vPos.w = 1.0f;
+
+		vPos.x = vPos.x * DirectGraphics::g_dxCoordsMul_ + bias;
+		vPos.y = vPos.y * DirectGraphics::g_dxCoordsMul_ + bias;
 
 		D3DXVec3TransformCoord((D3DXVECTOR3*)&vPos, (D3DXVECTOR3*)&vPos, &matWorld);
 		vt.position = vPos;
@@ -1203,10 +1236,13 @@ void Sprite3D::SetSourceRect(const DxRect<int>& rcSrc) {
 	SetVertexUV(3, rcSrc.right / width, rcSrc.bottom / height);
 }
 void Sprite3D::SetDestinationRect(const DxRect<double>& rcDest) {
-	SetVertexPosition(0, rcDest.left, rcDest.top, 0);
-	SetVertexPosition(1, rcDest.left, rcDest.bottom, 0);
-	SetVertexPosition(2, rcDest.right, rcDest.top, 0);
-	SetVertexPosition(3, rcDest.right, rcDest.bottom, 0);
+	D3DXVECTOR4 pos = D3DXVECTOR4(rcDest.left, rcDest.top, rcDest.right, rcDest.bottom);
+	//D3DXVec4Scale(&pos, &pos, DirectGraphics::g_dxCoordsMul_);
+
+	SetVertexPosition(0, pos.x, pos.y, 0);
+	SetVertexPosition(1, pos.x, pos.w, 0);
+	SetVertexPosition(2, pos.z, pos.y, 0);
+	SetVertexPosition(3, pos.z, pos.w, 0);
 }
 void Sprite3D::SetVertex(const DxRect<int>& rcSrc, const DxRect<double>& rcDest, D3DCOLOR color) {
 	SetSourceRect(rcSrc);
@@ -1369,9 +1405,18 @@ void ParticleRendererBase::SetInstanceAlpha(int alpha) {
 	ColorAccess::ClampColor(alpha);
 	SetInstanceColor((instColor_ & 0x00ffffff) | ((byte)alpha << 24));
 }
+
+void ParticleRendererBase::SetInstancePosition(const D3DXVECTOR3& pos) {
+	instPosition_ = pos;
+	D3DXVec3Scale(&instPosition_, &instPosition_, DirectGraphics::g_dxCoordsMul_);
+}
+void ParticleRendererBase::SetInstanceScale(const D3DXVECTOR3& scale) {
+	instScale_ = scale;
+	D3DXVec3Scale(&instScale_, &instScale_, DirectGraphics::g_dxCoordsMul_);
+}
 void ParticleRendererBase::SetInstanceScaleSingle(size_t index, float sc) {
 	float* pVec = (float*)&instScale_;
-	pVec[index] = sc;
+	pVec[index] = sc * DirectGraphics::g_dxCoordsMul_;
 }
 void ParticleRendererBase::SetInstanceAngleSingle(size_t index, float ang) {
 	float* pVec = (float*)&instAngle_;
@@ -1649,6 +1694,25 @@ DxMesh::DxMesh() {
 DxMesh::~DxMesh() {
 	Release();
 }
+
+void DxMesh::SetPosition(float x, float y, float z) {
+	position_ = D3DXVECTOR3(x, y, z);
+	D3DXVec3Scale(&position_, &position_, DirectGraphics::g_dxCoordsMul_);
+}
+void DxMesh::SetX(float x) {
+	position_.x = x * DirectGraphics::g_dxCoordsMul_;
+}
+void DxMesh::SetY(float y) {
+	position_.y = y * DirectGraphics::g_dxCoordsMul_;
+}
+void DxMesh::SetZ(float z) {
+	position_.z = z * DirectGraphics::g_dxCoordsMul_;
+}
+void DxMesh::SetScaleXYZ(float sx, float sy, float sz) {
+	scale_ = D3DXVECTOR3(sx, sy, sz);
+	D3DXVec3Scale(&scale_, &scale_, DirectGraphics::g_dxCoordsMul_);
+}
+
 shared_ptr<DxMeshData> DxMesh::_GetFromManager(const std::wstring& name) {
 	return DxMeshManager::GetBase()->_GetMeshData(name);
 }

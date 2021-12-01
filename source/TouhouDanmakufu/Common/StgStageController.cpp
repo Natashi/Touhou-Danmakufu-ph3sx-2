@@ -491,10 +491,14 @@ StgStageInformation::StgStageInformation() {
 StgStageInformation::~StgStageInformation() {}
 void StgStageInformation::SetStgFrameRect(const DxRect<LONG>& rect, bool bUpdateFocusResetValue) {
 	rcStgFrame_ = rect;
+	rcStgFrame_.left *= DirectGraphics::g_dxCoordsMul_;
+	rcStgFrame_.right *= DirectGraphics::g_dxCoordsMul_;
+	rcStgFrame_.top *= DirectGraphics::g_dxCoordsMul_;
+	rcStgFrame_.bottom *= DirectGraphics::g_dxCoordsMul_;
 
 	ref_count_ptr<D3DXVECTOR2> pos = new D3DXVECTOR2;
-	pos->x = (rect.right - rect.left) / 2.0f;
-	pos->y = (rect.bottom - rect.top) / 2.0f;
+	pos->x = (rcStgFrame_.right - rcStgFrame_.left) / 2.0f;
+	pos->y = (rcStgFrame_.bottom - rcStgFrame_.top) / 2.0f;
 
 	if (bUpdateFocusResetValue) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();

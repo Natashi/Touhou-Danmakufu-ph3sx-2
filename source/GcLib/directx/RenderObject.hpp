@@ -103,15 +103,18 @@ namespace directx {
 		virtual size_t GetVertexCount() { return vertex_.size() / strideVertexStreamZero_; }
 		void SetVertexIndices(const std::vector<uint16_t>& indices) { vertexIndices_ = indices; }
 
-		void SetPosition(const D3DXVECTOR3& pos) { position_ = pos; }
-		void SetPosition(float x, float y, float z) { position_.x = x; position_.y = y; position_.z = z; }
-		void SetX(float x) { position_.x = x; }
-		void SetY(float y) { position_.y = y; }
-		void SetZ(float z) { position_.z = z; }
+		void SetPosition(const D3DXVECTOR3& pos) { SetPosition(pos.x, pos.y, pos.z); }
+		void SetPosition(float x, float y, float z);
+		void SetX(float x);
+		void SetY(float y);
+		void SetZ(float z);
+
 		void SetAngle(const D3DXVECTOR3& angle) { angle_ = angle; }
 		void SetAngleXYZ(float angx = 0.0f, float angy = 0.0f, float angz = 0.0f) { angle_.x = angx; angle_.y = angy; angle_.z = angz; }
-		void SetScale(const D3DXVECTOR3& scale) { scale_ = scale; }
-		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f) { scale_.x = sx; scale_.y = sy; scale_.z = sz; }
+
+		void SetScale(const D3DXVECTOR3& scale) { SetScaleXYZ(scale.x, scale.y, scale.z); }
+		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f);
+
 		void SetTexture(shared_ptr<Texture> texture) { texture_ = texture; }
 
 		bool IsCoordinate2D() { return bCoordinate2D_; }
@@ -361,11 +364,11 @@ namespace directx {
 		void SetInstanceAlpha(int alpha);
 
 		void SetInstancePosition(float x, float y, float z) { SetInstancePosition(D3DXVECTOR3(x, y, z)); }
-		void SetInstancePosition(const D3DXVECTOR3& pos) { instPosition_ = pos; }
+		void SetInstancePosition(const D3DXVECTOR3& pos);
 
 		void SetInstanceScaleSingle(size_t index, float sc);
 		void SetInstanceScale(float x, float y, float z) { SetInstanceScale(D3DXVECTOR3(x, y, z)); }
-		void SetInstanceScale(const D3DXVECTOR3& scale) { instScale_ = scale; }
+		void SetInstanceScale(const D3DXVECTOR3& scale);
 
 		void SetInstanceAngleSingle(size_t index, float ang);
 		void SetInstanceAngle(float x, float y, float z) { SetInstanceAngle(D3DXVECTOR3(x, y, z)); }
@@ -468,15 +471,17 @@ namespace directx {
 		virtual inline void Render(const std::wstring& nameAnime, int time,
 			const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) { Render(angX, angY, angZ); }
 
-		void SetPosition(const D3DXVECTOR3& pos) { position_ = pos; }
-		void SetPosition(float x, float y, float z) { position_.x = x; position_.y = y; position_.z = z; }
-		void SetX(float x) { position_.x = x; }
-		void SetY(float y) { position_.y = y; }
-		void SetZ(float z) { position_.z = z; }
+		void SetPosition(const D3DXVECTOR3& pos) { SetPosition(pos.x, pos.y, pos.z); }
+		void SetPosition(float x, float y, float z);
+		void SetX(float x);
+		void SetY(float y);
+		void SetZ(float z);
+
 		void SetAngle(const D3DXVECTOR3& angle) { angle_ = angle; }
 		void SetAngleXYZ(float angx = 0.0f, float angy = 0.0f, float angz = 0.0f) { angle_.x = angx; angle_.y = angy; angle_.z = angz; }
-		void SetScale(const D3DXVECTOR3& scale) { scale_ = scale; }
-		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f) { scale_.x = sx; scale_.y = sy; scale_.z = sz; }
+
+		void SetScale(const D3DXVECTOR3& scale) { SetScaleXYZ(scale.x, scale.y, scale.z); }
+		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f);
 		
 		void SetColor(D3DCOLOR color) { color_ = color; }
 		inline void SetColorRGB(D3DCOLOR color) {
