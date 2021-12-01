@@ -48,7 +48,7 @@
 				- real
 			All three keywords had the same effect on the declaration.
 			
-			However, with update 1.22a, the scripting language has gone through a considerable amount of changes as follows:
+			However, with version 1.30a, the scripting language has gone through a considerable amount of changes as follows:
 				- You may now explicitly state the type of the variable you are declaring.
 					
 					Example:

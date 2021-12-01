@@ -1,5 +1,104 @@
 A mostly-complete history log of engine updates can be found here.
 
+1.31a
+	Changes:
+		- Replaced the default script select backgrounds with a radder version. (Thanks to Naudiz)
+		- Renamed GetShotIdAll to GetAllEnemyID.
+		- Changed the text representation of script value types in error messages.
+			- "real-array-array" -> "real[][]"
+		- Script matrix functions can now take in a 4x4 array instead of only a 1x16 array previously.
+			- The element type is also no longer limited to real.
+		- Made setting ObjRender_SetEnableDefaultTransformMatrix to false still load the camera matrix.
+		- Allowed multiple ObjSounds to independently stream the same sound file.
+		- Shortened the module directory in Log messages of the LogWindow to "../".
+		- Removed the behaviour where the 2D and 3D camera resets upon transitioning from the package scene to the stage scene.
+		- Fog data is no longer split between package-level and stage-level scripts.
+		- The default FPS counter no longer briefly appears when starting with package.script.main.
+		- Maximizing the window now triggers fullscreen mode.
+		- Objects now have separate tables each for string-indexed and int-indexed.
+		- Improved support for particle list objects for older PCs.
+		- Made it so that curvy lasers can be shortened. (Thanks to Naudiz)
+		- ObjFileT_SplitLineText now splits from pattern rather than from a list of delimiters.
+		- Reduced the float truncation epsilon. (0.01 -> 0.000001)
+		- #include in shader source files now behaves like regular script includes.
+		- Normal shot objects can now have multiple hitboxes again.
+		- Change loose and curvy lasers behaviour when delay motion is enabled. (Thanks to Naudiz)
+	Additions:
+		- Added missing function documentation for GetAllEnemyID.
+		- Added an overload each for Rotate2D and Rotate3D, taking in the rotation origin point.
+		- Expanded the variety of intersection-checking functions:
+			- IsIntersected_Point_Polygon
+			- IsIntersected_Point_Circle
+			- IsIntersected_Point_Ellipse
+			- IsIntersected_Point_Line
+			- IsIntersected_Point_RegularPolygon
+			- IsIntersected_Circle_Polygon
+			- IsIntersected_Circle_Circle
+			- IsIntersected_Circle_Ellipse
+			- IsIntersected_Circle_RegularPolygon
+			- IsIntersected_Line_Polygon
+			- IsIntersected_Line_Circle
+			- IsIntersected_Line_Ellipse
+			- IsIntersected_Line_Line
+			- IsIntersected_Line_RegularPolygon
+			- IsIntersected_Polygon_Polygon
+			- IsIntersected_Polygon_Ellipse
+			- IsIntersected_Polygon_RegularPolygon
+		- Added ReflectAngle and ReflectAngleR. (Thanks to Naudiz)
+		- Added Python-style reverse indexing of arrays. (Thanks to Naudiz)
+			- See "New Scripting Features".
+			- arr[-n] is equivalent to arr[length(arr) - n]
+			- Also works in erase and insert.
+		- Added replace and remove. (Thanks to Naudiz)
+		- #ifdef, #ifndef, #else, and #endif preprocessor directives for scripts.
+			- Several script macros were added:
+				- _DNH_PH3SX_
+				- SCRIPT_PACKAGE (defined in package-level scripts)
+				- SCRIPT_STAGE (defined in stage-level scripts)
+			- #define is not yet supported.
+		- Added ObjItem_GetIntersectionEnable. (Thanks to Naudiz)
+		- Added ObjRender_GetColorHex, ObjPrim_GetVertexColorHex, and ObjCrLaser_GetNodeColorHex. (Thanks to Naudiz)
+		- Added ColorHexRGBtoHSV.
+		- Added another event argument to EV_DELETE_SHOT_PLAYER.
+		- Added a "Sound Memory" display to the Sound tab of the LogWindow.
+		- Added INFO_IS_REQUIRE_ALL_DOWN to ObjEnemyBossScene_GetInfo. (Thanks to Naudiz)
+		- Added ObjEnemy_SetMaximumDamage and ObjEnemy_AddLifeEx.
+		- Added INFO_DAMAGE_PREVIOUS_FRAME to ObjEnemy_GetInfo.
+		- Added ObjText_SetFixedWidth.
+		- Added ObjText_GetText. (Thanks to Naudiz)
+		- Added ObjCrLaser_SetTipCapping, ObjCrLaser_GetNodeRenderWidth, and ObjCrLaser_SetNodeRenderWidth. (Thanks to Naudiz)
+		- Added overloads to ObjCrLaser_SetNode and ObjCrLaser_AddNode. (Thanks to Naudiz)
+		- Added ObjShot_SetFixedAngle and ObjShot_SetDelayAngularVelocity. (Thanks to Naudiz)
+		- Added SplitString2.
+		- Added Obj_GetValueCount and Obj_GetValueCountI.
+		- Added a progress bar to the FileArchiver.
+		- Added an overload to SetStgFrame. (Thanks to Naudiz)
+	Bug fixes:
+		- Fixed incorrect documentation of IsIntersected_Circle_RegularPolygon.
+		- Fixed the Y shot intersection scale not functioning properly on loose lasers.
+		- Fixed the engine crashing upon trying to parse an excess comma in function parameter lists.
+		- Fixed type-checking bugs with array-index-assignment operations.
+		- Fixed an issue where the parser would indefinitely hang upon trying to parse an ill-formed for-loop.
+		- Fixed a bug where .wav files over 1MB large would get cut off at the end.
+		- Fixed a bug where multiple streaming ObjSounds playing the same file would not function correctly.
+		- Fixed ObjSound_IsPlaying returning false if called in the same frame of ObjSound_Play.
+		- Fixed a bug where shot objects colliding with the player gets deleted before EV_HIT is notified.
+		- Fixed GetShotIdInCircleA1 incorrectly returning player shot IDs instead of enemy shot IDs.
+		- Fixed ObjShot_Regist in a player script returning null if IsPermitPlayerShot is true.
+		- Fixed a bug where the shot object colliding with the player is deleted before the notification of EV_HIT.
+		- Fixed off-centered shot and item graphics.
+		- Fixed the game crashing upon trying to parse an ill-formed argument list in user shot/item data files.
+		- Fixed a bug where 3D render objects drawn below the min STG frame render priority would get abnormally stretched out.
+		- Fixed ObjMove_GetSpeedX/Y returning incorrect values for ObjMove_SetDestAtXXX functions.
+		- Fixed the game crashing when setting ObjRender_SetEnableDefaultTransformMatrix to false for 3D objects.
+		- Fixed incorrect conversion of A-movement to B-movement for ObjMove.
+		- Fixed CreateItemU1/2 causing the created item to render at (0, 0) for a single frame. (Thanks to Naudiz)
+		- Fixed ObjMove_AddPatternXX not working on move objects that do not have an existing movement pattern. (Thanks to Naudiz)
+		- Fixed a rare bug with array initialization.
+		- Fixed a bug where ObjShot_SetPenetration(obj, 0) would not notify EV_DELETE_SHOT_PLAYER.
+		- Fixed a rare crash during enemy boss scene loading.
+		- Fixed a rare crash with script object deletion.
+
 1.30a:
 	Changes:
 		- Greatly improved the speed of the script code interpreter.
