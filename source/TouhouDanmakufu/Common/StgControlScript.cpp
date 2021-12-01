@@ -80,6 +80,8 @@ static const std::vector<function> stgControlFunction = {
 	{ "IsEngineFastMode", StgControlScript::Func_IsEngineFastMode, 0 },
 	{ "GetConfigWindowSizeIndex", StgControlScript::Func_GetConfigWindowSizeIndex, 0 },
 	{ "GetConfigWindowSizeList", StgControlScript::Func_GetConfigWindowSizeList, 0 },
+	{ "GetConfigVirtualKeyCode", StgControlScript::Func_GetConfigVirtualKeyCode, 1 },
+	{ "GetConfigVirtualKeyPadButton", StgControlScript::Func_GetConfigVirtualKeyPadButton, 1 },
 
 	//STG共通関数：描画関連
 	{ "ClearInvalidRenderPriority", StgControlScript::Func_ClearInvalidRenderPriority, 0 },
@@ -616,6 +618,19 @@ gstd::value StgControlScript::Func_GetConfigWindowSizeList(script_machine* machi
 	}
 	return script->CreateValueArrayValue(resListSizes);
 }
+gstd::value StgControlScript::Func_GetConfigVirtualKeyCode(script_machine* machine, int argc, const value* argv) {
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
+	int vk = argv->as_int();
+	int16_t index = config->mapKey_[vk]->GetKeyCode();
+	return StgControlScript::CreateIntValue(index);
+}
+gstd::value StgControlScript::Func_GetConfigVirtualKeyPadButton(script_machine* machine, int argc, const value* argv) {
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
+	int vk = argv->as_int();
+	int16_t index = config->mapKey_[vk]->GetPadButton();
+	return StgControlScript::CreateIntValue(index);
+}
+
 
 //STG共通関数：描画関連
 gstd::value StgControlScript::Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv) {
