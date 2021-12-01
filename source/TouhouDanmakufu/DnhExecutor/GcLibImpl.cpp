@@ -48,6 +48,8 @@ bool EApplication::_Initialize() {
 	HWND hWndDisplay = graphics->GetParentHWND();
 	ErrorDialog::SetParentWindowHandle(hWndDisplay);
 
+	config->windowTitle_ = appName;
+
 	ETextureManager* textureManager = ETextureManager::CreateInstance();
 	textureManager->Initialize();
 

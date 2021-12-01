@@ -2,6 +2,7 @@
 
 #include "StgControlScript.hpp"
 #include "StgSystem.hpp"
+#include "../DnhExecutor/GcLibImpl.hpp"
 
 //*******************************************************************
 //StgControlScriptManager
@@ -82,6 +83,8 @@ static const std::vector<function> stgControlFunction = {
 	{ "GetConfigWindowSizeList", StgControlScript::Func_GetConfigWindowSizeList, 0 },
 	{ "GetConfigVirtualKeyCode", StgControlScript::Func_GetConfigVirtualKeyCode, 1 },
 	{ "GetConfigVirtualKeyPadButton", StgControlScript::Func_GetConfigVirtualKeyPadButton, 1 },
+	{ "SetWindowTitle", StgControlScript::Func_SetWindowTitle, 1 },
+	{ "ResetWindowTitle", StgControlScript::Func_ResetWindowTitle, 0 },
 
 	//STG共通関数：描画関連
 	{ "ClearInvalidRenderPriority", StgControlScript::Func_ClearInvalidRenderPriority, 0 },
@@ -629,6 +632,21 @@ gstd::value StgControlScript::Func_GetConfigVirtualKeyPadButton(script_machine* 
 	int vk = argv->as_int();
 	int16_t index = config->mapKey_[vk]->GetPadButton();
 	return StgControlScript::CreateIntValue(index);
+}
+gstd::value StgControlScript::Func_SetWindowTitle(script_machine* machine, int argc, const value* argv) {
+	EDirectGraphics* window = EDirectGraphics::GetInstance();
+	std::wstring title = argv->as_string();
+	HWND hWndDisplay = window->GetParentHWND();
+	::SetWindowText(hWndDisplay, title.c_str());
+	return value();
+}
+gstd::value StgControlScript::Func_ResetWindowTitle(script_machine* machine, int argc, const value* argv) {
+	EDirectGraphics* window = EDirectGraphics::GetInstance();
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
+	std::wstring title = config->windowTitle_;
+	HWND hWndDisplay = window->GetParentHWND();
+	::SetWindowText(hWndDisplay, title.c_str());
+	return value();
 }
 
 
