@@ -2,6 +2,7 @@ A mostly-complete history log of engine updates can be found here.
 
 1.31a
 	Changes:
+		- This version breaks replay, common data, and .dat archive backwards compatibility.
 		- Replaced the default script select backgrounds with a radder version. (Thanks to Naudiz)
 		- Renamed GetShotIdAll to GetAllEnemyID.
 		- Changed the text representation of script value types in error messages.
