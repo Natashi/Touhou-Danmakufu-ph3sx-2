@@ -421,6 +421,9 @@
     <ClInclude Include="source\GcLib\directx\DxTypes.hpp">
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\GstdConstant.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="source\TouhouDanmakufu\DnhExecutor\DnhExecuter.rc">
