@@ -108,7 +108,7 @@ public:
 	StgShotRenderer* GetRenderer(int index, int typeRender) { return listRenderer_[typeRender][index]; }
 	std::vector<StgShotRenderer*>& GetRendererList(int typeRender) { return listRenderer_[typeRender]; }
 
-	StgShotData* GetData(int id) { return (id >= 0 && id < listData_.size()) ? listData_[id] : NULL; }
+	StgShotData* GetData(int id) { return (id >= 0 && id < listData_.size()) ? listData_[id] : nullptr; }
 
 	bool AddShotDataList(const std::wstring& path, bool bReload);
 };
@@ -480,6 +480,8 @@ public:
 		if (!bUserIntersectionMode_)
 			_AddIntersectionRelativeTarget();
 	}
+
+	virtual IntersectionListType GetIntersectionTargetList();
 	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData) { return false; }
 
 	int GetLength() { return length_; }

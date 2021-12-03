@@ -1677,6 +1677,21 @@ void StgLaserObject::_AddIntersectionRelativeTarget() {
 		}
 	}
 }
+StgIntersectionObject::IntersectionListType StgLaserObject::GetIntersectionTargetList() {
+	if ((IsDeleted() || (delay_.time > 0 && !bEnableMotionDelay_) || frameFadeDelete_ >= 0)
+		|| (bUserIntersectionMode_ || !bIntersectionEnable_)
+		|| pOwnReference_.expired() || widthIntersection_ <= 0)
+		return IntersectionListType();
+
+	StgShotData* shotData = _GetShotData();
+	if (shotData == nullptr)
+		return IntersectionListType();
+
+	bool res = GetIntersectionTargetList_NoVector(shotData);
+	if (res) return listIntersectionTarget_;
+
+	return IntersectionListType();
+}
 
 //****************************************************************************
 //StgLooseLaserObject(射出型レーザー)
