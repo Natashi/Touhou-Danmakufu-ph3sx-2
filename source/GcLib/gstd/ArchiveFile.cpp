@@ -84,6 +84,7 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path, WStatusBar* pStat
 
 	ArchiveFileHeader header;
 	memcpy(header.magic, ArchiveEncryption::HEADER_ARCHIVEFILE, ArchiveFileHeader::MAGIC_LENGTH);
+	header.version = GAME_VERSION_NUM;
 	header.entryCount = listEntry_.size();
 	//header.headerCompressed = true;
 	header.headerOffset = 0U;
@@ -349,6 +350,8 @@ bool ArchiveFile::Open() {
 		ArchiveEncryption::ShiftBlock((byte*)&header, sizeof(ArchiveFileHeader), keyBase_, keyStep_);
 
 		if (memcmp(header.magic, ArchiveEncryption::HEADER_ARCHIVEFILE, ArchiveFileHeader::MAGIC_LENGTH) != 0) 
+			throw gstd::wexception();
+		if (!VersionUtility::IsDataBackwardsCompatible(GAME_VERSION_NUM, header.version))
 			throw gstd::wexception();
 
 		uint32_t headerSizeTrue = 0U;

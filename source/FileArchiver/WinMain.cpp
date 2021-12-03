@@ -26,11 +26,11 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
 			app->_Finalize();
 		}
 	}
-	catch(std::exception& e) {
+	catch (std::exception& e) {
 		std::wstring error = StringUtility::ConvertMultiToWide(e.what());
 		Logger::WriteTop(error);
 	}
-	catch(gstd::wexception& e) {
+	catch (gstd::wexception& e) {
 		Logger::WriteTop(e.what());
 	}
 

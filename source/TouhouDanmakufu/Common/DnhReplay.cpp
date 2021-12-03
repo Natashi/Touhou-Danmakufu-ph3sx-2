@@ -331,6 +331,7 @@ void ReplayInformationManager::UpdateInformationList(std::wstring pathScript) {
 
 		std::wstring strKey = fileName.substr(fileNameHead.size());
 		strKey = PathProperty::GetFileNameWithoutExtension(strKey);
+
 		int index = StringUtility::ToInteger(strKey);
 		if (index > 0) {
 			strKey = StringUtility::Format(L"%d", index);

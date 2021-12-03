@@ -2521,25 +2521,60 @@ gstd::value StgStageScript::Func_IsIntersected_Obj_Obj(gstd::script_machine* mac
 	int id2 = argv[1].as_int();
 
 	StgIntersectionObject* obj1 = script->GetObjectPointerAs<StgIntersectionObject>(id1);
-	if (obj1 == nullptr) return script->CreateBooleanValue(false);
-
 	StgIntersectionObject* obj2 = script->GetObjectPointerAs<StgIntersectionObject>(id2);
-	if (obj2 == nullptr) return script->CreateBooleanValue(false);
+	if (obj1 == nullptr || obj2 == nullptr)
+		return script->CreateBooleanValue(false);
 
 	StgIntersectionObject::IntersectionListType listTarget1 = obj1->GetIntersectionTargetList();
 	StgIntersectionObject::IntersectionListType listTarget2 = obj2->GetIntersectionTargetList();
 
 	bool res = false;
-	for (auto& target1 : listTarget1) {
-		if (!target1.first) continue;
-		for (auto& target2 : listTarget2) {
+	if constexpr (PARTIAL) {
+		//Partial mode, one intersection is enough
+
+		for (auto& target1 : listTarget1) {
 			if (!target1.first) continue;
-			res = StgIntersectionManager::IsIntersected(target1.second.get(), target2.second.get());
-			if (res && PARTIAL) goto chk_skip;
+			for (auto& target2 : listTarget2) {
+				if (!target2.first) continue;
+				if (StgIntersectionManager::IsIntersected(target1.second.get(), target2.second.get())) {
+					res = true;
+					goto lab_return;
+				}
+			}
 		}
 	}
+	else {
+		//All mode, all hitboxes of target1 and target2 be intersected at least once
 
-chk_skip:
+		std::vector<std::pair<bool, ref_unsync_ptr<StgIntersectionTarget>>> intersectObj1, intersectObj2;
+		
+		for (size_t i = 0; i < listTarget1.size(); ++i) {
+			if (listTarget1[i].first)
+				intersectObj1.push_back(std::make_pair(false, listTarget1[i].second));
+		}
+		for (size_t i = 0; i < listTarget2.size(); ++i) {
+			if (listTarget2[i].first)
+				intersectObj2.push_back(std::make_pair(false, listTarget2[i].second));
+		}
+
+		for (auto& target1 : intersectObj1) {
+			for (auto& target2 : intersectObj2) {
+				if (target2.first) continue;
+				if (StgIntersectionManager::IsIntersected(target1.second.get(), target2.second.get())) {
+					target1.first = true;
+					target2.first = true;
+				}
+			}
+		}
+
+		for (auto& target : intersectObj1)
+			if (!target.first) goto lab_return;
+		for (auto& target : intersectObj2)
+			if (!target.first) goto lab_return;
+		res = true;
+	}
+
+lab_return:
 	return script->CreateBooleanValue(res);
 }
 

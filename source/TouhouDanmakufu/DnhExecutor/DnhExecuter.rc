@@ -13,13 +13,14 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// ���{�� resources
 
+/*
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
 #ifdef _WIN32
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 #pragma code_page(932)
 #endif //_WIN32
+*/
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -56,13 +57,37 @@ END
 // remains consistent on all systems.
 
 IDI_ICON                ICON    DISCARDABLE     "th_dnh_sx-z.ico"
-//IDI_ICON                ICON    DISCARDABLE     "th_sp_icon.ico"
-//IDI_ICON                ICON    DISCARDABLE     "th_tcl_icon.ico"
 
-#endif    // ���{�� resources
 /////////////////////////////////////////////////////////////////////////////
 
 
+/////////////////////////////////////////////////////////////////////////////
+// Fancy Shit
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION       1, 3, 1, 0
+PRODUCTVERSION    1, 3, 1, 0
+{
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904b0"
+        {
+            VALUE "CompanyName",        "ph3sx\0"
+			VALUE "FileDescription", 	"Touhou Danmakufu ph3sx\0"
+			VALUE "FileVersion",     	"1.31a"
+            VALUE "ProductName",        "Touhou Danmakufu ph3sx\0"
+            VALUE "ProductVersion",     "1.31a\0"
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 0x409, 1200
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+//#endif
 
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

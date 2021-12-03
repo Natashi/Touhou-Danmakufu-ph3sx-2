@@ -5,6 +5,8 @@
 #include "SmartPointer.hpp"
 #include "VectorExtension.hpp"
 
+#include "GstdConstant.hpp"
+
 namespace gstd {
 	//================================================================
 	//DebugUtility
@@ -53,20 +55,20 @@ namespace gstd {
 	class VersionUtility {
 	public:
 		static inline uint64_t ExtractMajor(uint64_t target) {
-			return (target >> 48) & 0xffff;
+			return (target >> 40) & 0xfff;
+		}
+		static inline uint64_t ExtractSubmajor(uint64_t target) {
+			return (target >> 24) & 0xffff;
 		}
 		static inline uint64_t ExtractMinor(uint64_t target) {
-			return (target >> 32) & 0xffff;
-		}
-		static inline uint64_t ExtractMicro(uint64_t target) {
-			return (target >> 16) & 0xffff;
+			return (target >> 8) & 0xffff;
 		}
 		static inline uint64_t ExtractRevision(uint64_t target) {
-			return target & 0xffff;
+			return target & 0xff;
 		}
-		//Should ensure compatibility if version's [reserved], [major], and [minor] match target's
+		//Should ensure compatibility if reserved, major, and submajor match target's
 		static inline const bool IsDataBackwardsCompatible(uint64_t target, uint64_t version) {
-			return ((version ^ target) >> 16) == 0;
+			return (version >> 24) == (target >> 24);
 		}
 	};
 

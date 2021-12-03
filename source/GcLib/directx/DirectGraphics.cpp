@@ -101,7 +101,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 
 	D3DDEVTYPE deviceType = config.bUseRef_ ? D3DDEVTYPE_REF : D3DDEVTYPE_HAL;
 	deviceCaps_ = deviceType == D3DDEVTYPE_REF ? capsRef : capsHal;
-	if (config.bCheckDeviceCaps_)
+	if (config.bCheckDeviceCaps_ && !config.bUseRef_)
 		_VerifyDeviceCaps();
 
 	bool bDeviceVSyncAvailable = (deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_ONE) != 0;

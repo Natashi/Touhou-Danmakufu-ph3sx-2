@@ -2,6 +2,8 @@
 
 #include "../pch.h"
 
+#include "GstdConstant.hpp"
+
 #include "GstdUtility.hpp"
 
 #include "File.hpp"
