@@ -2373,6 +2373,19 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				1 - Value will be overwritten in case of key conflicts.
 				2 - Value will not be overwritten in case of key conflicts.
 	
+	--------------------------------> Shader Object Functions <--------------------------------
+	
+	ObjShader_SetShaderT
+		Arguments:
+			1) (int) object ID
+			2) (string) shader name
+			2) (string) shader source
+		Returns:
+			(bool) success
+		Description:
+			Compiles a shader from the given string. Returns whether the operation was successful.
+			Shader name should be unique.
+	
 	--------------------------------> Render Object Functions <--------------------------------
 	
 		[---------------------------> Blending <---------------------------]

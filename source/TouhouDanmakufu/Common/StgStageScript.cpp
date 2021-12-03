@@ -2559,7 +2559,7 @@ gstd::value StgStageScript::Func_IsIntersected_Obj_Obj(gstd::script_machine* mac
 
 		for (auto& target1 : intersectObj1) {
 			for (auto& target2 : intersectObj2) {
-				if (target2.first) continue;
+				if (target1.first && target2.first) continue;
 				if (StgIntersectionManager::IsIntersected(target1.second.get(), target2.second.get())) {
 					target1.first = true;
 					target2.first = true;
