@@ -131,6 +131,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_GetConfigVirtualKeyPadButton);
 	DNH_FUNCAPI_DECL_(Func_SetWindowTitle);
 	DNH_FUNCAPI_DECL_(Func_ResetWindowTitle);
+	DNH_FUNCAPI_DECL_(Func_GetDefaultWindowTitle);
 
 	//STG制御共通関数：描画関連
 	static gstd::value Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv);

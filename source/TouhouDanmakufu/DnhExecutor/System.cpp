@@ -58,6 +58,12 @@ void SystemController::ShowErrorDialog(const std::wstring& msg) {
 	ErrorDialog dialog(hParent);
 	dialog.ShowModal(msg);
 }
+void SystemController::ResetWindowTitle() {
+	EDirectGraphics* window = EDirectGraphics::GetInstance();
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
+	std::wstring& title = config->windowTitle_;
+	::SetWindowText(window->GetParentHWND(), title.c_str());
+}
 
 //*******************************************************************
 //SceneManager
