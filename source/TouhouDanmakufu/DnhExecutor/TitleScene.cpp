@@ -37,7 +37,7 @@ TitleScene::TitleScene() {
 	};
 	for (int iItem = 0; iItem < ITEM_COUNT; iItem++) {
 		int x = 48 + iItem * 6 + 12 * pow((double)-1, (int)(iItem - 1));
-		int y = 154 + iItem * 40;
+		int y = -320 + screenHeight + iItem * 40;
 		AddMenuItem(new TitleSceneMenuItem(strText[iItem], strDescription[iItem], x, y, iItem));
 	}
 
