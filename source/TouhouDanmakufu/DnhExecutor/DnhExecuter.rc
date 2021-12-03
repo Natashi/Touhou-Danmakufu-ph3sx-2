@@ -72,10 +72,10 @@ PRODUCTVERSION    1, 3, 1, 0
     {
         BLOCK "040904b0"
         {
-            VALUE "CompanyName",        "ph3sx\0"
-			VALUE "FileDescription", 	"Touhou Danmakufu ph3sx\0"
+            VALUE "CompanyName",        "DOGSDAY\0"
+			VALUE "FileDescription", 	"Touhou Danmakufu ph3sx-zlabel\0"
 			VALUE "FileVersion",     	"1.31a"
-            VALUE "ProductName",        "Touhou Danmakufu ph3sx\0"
+            VALUE "ProductName",        "Touhou Danmakufu ph3sx-zlabel\0"
             VALUE "ProductVersion",     "1.31a\0"
         }
     }
