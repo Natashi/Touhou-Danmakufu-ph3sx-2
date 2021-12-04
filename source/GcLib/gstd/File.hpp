@@ -227,6 +227,7 @@ namespace gstd {
 		virtual ~FileManager();
 
 		static FileManager* GetBase() { return thisBase_; }
+		shared_ptr<LoadThread> GetLoadThread() { return threadLoad_;  }
 
 		virtual bool Initialize();
 

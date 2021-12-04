@@ -124,6 +124,7 @@ namespace directx {
 		static gstd::value Func_LoadTextureInLoadThread(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_LoadTextureEx);
 		DNH_FUNCAPI_DECL_(Func_LoadTextureInLoadThreadEx);
+		DNH_FUNCAPI_DECL_(Func_IsLoadThreadInUse);
 		static gstd::value Func_RemoveTexture(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetTextureWidth(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetTextureHeight(gstd::script_machine* machine, int argc, const gstd::value* argv);
