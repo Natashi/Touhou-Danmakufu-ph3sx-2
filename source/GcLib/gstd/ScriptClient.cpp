@@ -1808,12 +1808,10 @@ value ScriptClientBase::Func_DigitToArray(script_machine* machine, int argc, con
 }
 value ScriptClientBase::Func_GetDigitCount(script_machine* machine, int argc, const value* argv) {
 	int64_t input = argv[0].as_int();
-	size_t res = 0;
 
-	for (size_t i = 0; input != 0; ++i) {
-		res++;
-		input /= 10;
-	}
+	input = std::max(std::abs(input), 1i64);
+
+	size_t res = (size_t)log10(input) + 1;
 
 	return CreateIntValue(res);
 }
