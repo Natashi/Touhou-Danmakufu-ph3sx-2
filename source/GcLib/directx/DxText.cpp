@@ -188,7 +188,7 @@ bool DxCharGlyph::Create(UINT code, const Font& winFont, const DxFont* dxFont) {
 							else destAlpha = 0;
 
 							//color = ColorAccess::SetColorA(color, ColorAccess::GetColorA(colorBorder)*count/255);
-							byte c_a = ColorAccess::ClampColorRet(colorBorder[0] * destAlpha / 255);
+							byte c_a = (byte)ColorAccess::ClampColorRet(colorBorder[0] * destAlpha / 255);
 							color = D3DCOLOR_ARGB(c_a, colorBorder[1], colorBorder[2], colorBorder[3]);
 						}
 						else {				//Generate internal borders + smooth outlines
@@ -747,7 +747,7 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text,
 	LONG widthBorder = dxFont.GetBorderType() != TextBorderType::None ? dxFont.GetBorderWidth() : 0L;
 	textLine->SetSidePitch(sidePitch);
 
-	if (widthMax < dxText->GetFontSize())
+	if (widthMax > 0 && widthMax < dxText->GetFontSize())
 		return nullptr;
 
 	const std::wstring strFirstForbid = L"」、。";
@@ -780,11 +780,11 @@ shared_ptr<DxTextLine> DxTextRenderer::_GetTextInfoSub(const std::wstring& text,
 		SIZE size = _GetTextSize(hDC, pText);
 		LONG lw = size.cx + widthBorder + sidePitch;
 		LONG lh = size.cy;
-		if (totalHeight + size.cy > heightMax) {
+		if (heightMax > 0 && totalHeight + size.cy > heightMax) {
 			textLine = nullptr;
 			break;
 		}
-		if (textLine->width_ + lw + sizeNext.cx >= widthMax) {
+		if (widthMax > 0 && textLine->width_ + lw + sizeNext.cx >= widthMax) {
 			//改行
 			totalWidth = std::max(totalWidth, textLine->width_);
 			totalHeight += textLine->height_ + linePitch;
@@ -1425,7 +1425,7 @@ shared_ptr<DxTextRenderObject> DxTextRenderer::CreateRenderObject(DxText* dxText
 				}
 
 				heightTotal += textLine->height_ + linePitch;
-				if (heightTotal > heightMax) break;
+				if (heightMax > 0 && heightTotal > heightMax) break;
 
 				_CreateRenderObject(objRender, dxText, pos, dxFont, textLine);
 
@@ -1494,8 +1494,8 @@ DxText::DxText() {
 
 	pos_.x = 0;
 	pos_.y = 0;
-	widthMax_ = INT_MAX;
-	heightMax_ = INT_MAX;
+	widthMax_ = 0;
+	heightMax_ = 0;
 	sidePitch_ = 0;
 	linePitch_ = 4;
 	fixedWidth_ = 0;
