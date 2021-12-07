@@ -101,7 +101,7 @@ static const std::vector<function> dxFunction = {
 	{ "LoadTextureEx", DxScript::Func_LoadTextureEx, 3 },
 	{ "LoadTextureInLoadThread", DxScript::Func_LoadTextureInLoadThread, 1 },
 	{ "LoadTextureInLoadThreadEx", DxScript::Func_LoadTextureInLoadThreadEx, 3 },
-	{ "IsLoadThreadInUse", DxScript::Func_IsLoadThreadInUse, 0 },
+	{ "IsLoadThreadLoading", DxScript::Func_IsLoadThreadLoading, 0 },
 	{ "RemoveTexture", DxScript::Func_RemoveTexture, 1 },
 	{ "GetTextureWidth", DxScript::Func_GetTextureWidth, 1 },
 	{ "GetTextureHeight", DxScript::Func_GetTextureHeight, 1 },
@@ -1301,7 +1301,7 @@ value DxScript::Func_LoadTextureInLoadThreadEx(script_machine* machine, int argc
 	}
 	return script->CreateBooleanValue(res);
 }
-value DxScript::Func_IsLoadThreadInUse(script_machine* machine, int argc, const value* argv) {
+value DxScript::Func_IsLoadThreadLoading(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
 	shared_ptr<FileManager::LoadThread> thread = FileManager::GetBase()->GetLoadThread();
