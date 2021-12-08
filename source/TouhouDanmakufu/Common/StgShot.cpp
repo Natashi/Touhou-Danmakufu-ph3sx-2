@@ -2118,14 +2118,12 @@ void StgStraightLaserObject::Work() {
 		
 		if (angVelLaser_ != 0) angLaser_ += angVelLaser_;
 		
-		if (delay_.time > 0) {
+		if (delay_.time > 0)
 			--(delay_.time);
-			delay_.angle.x += delay_.angle.y;
-		}
-		else {
-			if (bLaserExpand_)
-				scaleX_ = std::min(1.0f, scaleX_ + 0.1f);
-		}
+		else if (bLaserExpand_)
+			scaleX_ = std::min(1.0f, scaleX_ + 0.1f);
+		
+		delay_.angle.x += delay_.angle.y;
 
 		if (lastAngle_ != angLaser_) {
 			lastAngle_ = angLaser_;
