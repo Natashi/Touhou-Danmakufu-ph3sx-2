@@ -80,8 +80,7 @@ static const std::vector<function> stgControlFunction = {
 	{ "IsEngineFastMode", StgControlScript::Func_IsEngineFastMode, 0 },
 	{ "GetConfigWindowSizeIndex", StgControlScript::Func_GetConfigWindowSizeIndex, 0 },
 	{ "GetConfigWindowSizeList", StgControlScript::Func_GetConfigWindowSizeList, 0 },
-	{ "GetConfigVirtualKeyCode", StgControlScript::Func_GetConfigVirtualKeyCode, 1 },
-	{ "GetConfigVirtualKeyPadButton", StgControlScript::Func_GetConfigVirtualKeyPadButton, 1 },
+	{ "GetConfigVirtualKeyMapping", StgControlScript::Func_GetConfigVirtualKeyMapping, 1 },
 
 	//STG共通関数：描画関連
 	{ "ClearInvalidRenderPriority", StgControlScript::Func_ClearInvalidRenderPriority, 0 },
@@ -618,19 +617,20 @@ gstd::value StgControlScript::Func_GetConfigWindowSizeList(script_machine* machi
 	}
 	return script->CreateValueArrayValue(resListSizes);
 }
-gstd::value StgControlScript::Func_GetConfigVirtualKeyCode(script_machine* machine, int argc, const value* argv) {
+gstd::value StgControlScript::Func_GetConfigVirtualKeyMapping(script_machine* machine, int argc, const value* argv) {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
-	int vk = argv->as_int();
-	int16_t index = config->mapKey_[vk]->GetKeyCode();
-	return StgControlScript::CreateIntValue(index);
-}
-gstd::value StgControlScript::Func_GetConfigVirtualKeyPadButton(script_machine* machine, int argc, const value* argv) {
-	DnhConfiguration* config = DnhConfiguration::GetInstance();
-	int vk = argv->as_int();
-	int16_t index = config->mapKey_[vk]->GetPadButton();
-	return StgControlScript::CreateIntValue(index);
-}
+	int16_t vk = (int16_t)argv->as_int();
 
+	int16_t key_pad[2] = { EDirectInput::KEY_INVALID, EDirectInput::KEY_INVALID };
+
+	auto itr = config->mapKey_.find(vk);
+	if (itr != config->mapKey_.end()) {
+		key_pad[0] = itr->second->GetKeyCode();
+		key_pad[1] = itr->second->GetPadButton();
+	}
+
+	return StgControlScript::CreateIntArrayValue(key_pad, 2U);
+}
 
 //STG共通関数：描画関連
 gstd::value StgControlScript::Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv) {

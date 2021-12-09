@@ -127,8 +127,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_IsEngineFastMode);
 	DNH_FUNCAPI_DECL_(Func_GetConfigWindowSizeIndex);
 	DNH_FUNCAPI_DECL_(Func_GetConfigWindowSizeList);
-	DNH_FUNCAPI_DECL_(Func_GetConfigVirtualKeyCode);
-	DNH_FUNCAPI_DECL_(Func_GetConfigVirtualKeyPadButton);
+	DNH_FUNCAPI_DECL_(Func_GetConfigVirtualKeyMapping);
 
 	//STG制御共通関数：描画関連
 	static gstd::value Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv);
