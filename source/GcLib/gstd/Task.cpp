@@ -322,11 +322,11 @@ bool TaskInfoPanel::_AddedLogger(HWND hTab) {
 	styleListView.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	wndListView_.Create(hWnd_, styleListView);
 	wndListView_.AddColumn(64, ROW_FUNC_ADDRESS, L"Address");
-	wndListView_.AddColumn(32, ROW_FUNC_CLASS, L"Class");
+	wndListView_.AddColumn(280, ROW_FUNC_CLASS, L"Class");
 	wndListView_.AddColumn(32, ROW_FUNC_ID, L"ID");
-	wndListView_.AddColumn(32, ROW_FUNC_DIVISION, L"Division");
-	wndListView_.AddColumn(32, ROW_FUNC_PRIORITY, L"Priority");
-	wndListView_.AddColumn(32, ROW_FUNC_ENABLE, L"Enable");
+	wndListView_.AddColumn(52, ROW_FUNC_DIVISION, L"Division");
+	wndListView_.AddColumn(48, ROW_FUNC_PRIORITY, L"Priority");
+	wndListView_.AddColumn(48, ROW_FUNC_ENABLE, L"Enable");
 	wndListView_.AddColumn(256, ROW_FUNC_INFO, L"Info");
 
 	wndSplitter_.Create(hWnd_, WSplitter::TYPE_HORIZONTAL);
