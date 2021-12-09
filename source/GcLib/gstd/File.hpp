@@ -281,6 +281,15 @@ namespace gstd {
 	public:
 		virtual ~LoadThreadListener() {}
 		virtual void CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> event) = 0;
+
+		virtual void CancelLoad() {}
+		virtual bool CancelLoadComplete() { return true; }
+
+		inline void WaitForCancel() {
+			this->CancelLoad();
+			while (!this->CancelLoadComplete())
+				::Sleep(10);
+		}
 	};
 
 	class FileManager::LoadThreadEvent {

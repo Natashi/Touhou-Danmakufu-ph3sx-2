@@ -622,7 +622,7 @@ void FileManager::RemoveLoadThreadListener(FileManager::LoadThreadListener* list
 }
 void FileManager::WaitForThreadLoadComplete() {
 	while (!threadLoad_->IsThreadLoadComplete())
-		Sleep(1);
+		::Sleep(1);
 }
 
 //FileManager::LoadThread
@@ -633,19 +633,15 @@ void FileManager::LoadThread::_Run() {
 		signal_.Wait(10);
 
 		while (this->GetStatus() == RUN) {
-			//Logger::WriteTop(StringUtility::Format("ロードイベント取り出し開始"));
 			shared_ptr<FileManager::LoadThreadEvent> event = nullptr;
 			{
 				Lock lock(lockEvent_);
+
 				if (listEvent_.size() == 0) break;
 				event = listEvent_.front();
-				//listPath_.erase(event->GetPath());
 				listEvent_.pop_front();
 			}
-			//Logger::WriteTop(StringUtility::Format("ロードイベント取り出し完了：%s", event->GetPath().c_str()));
-
-			//Logger::WriteTop(StringUtility::Format("ロード開始：%s", event->GetPath().c_str()));
-			{
+			if (event) {
 				Lock lock(lockListener_);
 
 				for (auto itr = listListener_.begin(); itr != listListener_.end(); itr++) {
@@ -654,10 +650,8 @@ void FileManager::LoadThread::_Run() {
 						listener->CallFromLoadThread(event);
 				}
 			}
-			//Logger::WriteTop(StringUtility::Format("ロード完了：%s", event->GetPath().c_str()));
-
 		}
-		Sleep(1);//TODO なぜか待機入れると落ちづらい？
+		::Sleep(10);
 	}
 
 	{
