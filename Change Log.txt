@@ -74,6 +74,7 @@ A mostly-complete history log of engine updates can be found here.
 		- Added Obj_GetValueCount and Obj_GetValueCountI.
 		- Added a progress bar to the FileArchiver.
 		- Added an overload to SetStgFrame. (Thanks to Naudiz)
+		- Added GetConfigVirtualKeyMapping and GetVirtualKeyMapping. (Thanks to Naudiz)
 	Bug fixes:
 		- Fixed incorrect documentation of IsIntersected_Circle_RegularPolygon.
 		- Fixed the Y shot intersection scale not functioning properly on loose lasers.
@@ -98,6 +99,7 @@ A mostly-complete history log of engine updates can be found here.
 		- Fixed a rare bug with array initialization.
 		- Fixed a bug where ObjShot_SetPenetration(obj, 0) would not notify EV_DELETE_SHOT_PLAYER.
 		- Fixed a rare crash during enemy boss scene loading.
+		- Fixed a bug where the game would freeze when trying to restart the stage scene in a package script while an enemy boss scene hasn't finished loading.
 		- Fixed a rare crash with script object deletion.
 
 1.30a:

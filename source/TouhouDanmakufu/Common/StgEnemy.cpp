@@ -55,16 +55,20 @@ ref_unsync_ptr<StgEnemyBossSceneObject> StgEnemyManager::GetBossSceneObject() {
 
 class _ListBossSceneData : public FileManager::LoadObject {
 public:
+	std::vector<weak_ptr<StgEnemyBossSceneData>> listData;
+	size_t cData;
+public:
 	_ListBossSceneData(std::vector<shared_ptr<StgEnemyBossSceneData>>* listStepData) {
-		ptr = listStepData;
+		cData = listStepData->size();
+		listData.resize(cData);
+		for (size_t i = 0; i < cData; ++i)
+			listData[i] = listStepData->at(i);
 	}
-
-	std::vector<shared_ptr<StgEnemyBossSceneData>>* ptr;
 };
 void StgEnemyManager::LoadBossSceneScriptsInThread(std::vector<shared_ptr<StgEnemyBossSceneData>>* listStepData) {
 	Lock lock(lock_);
 	{
-		shared_ptr<_ListBossSceneData> pListData;
+		shared_ptr<FileManager::LoadObject> pListData;
 		pListData.reset(new _ListBossSceneData(listStepData));
 
 		shared_ptr<FileManager::LoadThreadEvent> event(new FileManager::LoadThreadEvent(this, L"", pListData));
@@ -73,7 +77,7 @@ void StgEnemyManager::LoadBossSceneScriptsInThread(std::vector<shared_ptr<StgEne
 }
 void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> event) {
 	shared_ptr<_ListBossSceneData> pListData = std::dynamic_pointer_cast<_ListBossSceneData>(event->GetSource());
-	if (pListData == nullptr || pListData->ptr == nullptr) return;
+	if (pListData == nullptr) return;
 
 	++countLoad_;
 
@@ -81,8 +85,8 @@ void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent
 		weak_ptr<StgStageScriptManager> scriptManagerWeak = stageController_->GetScriptManagerRef();
 		StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
 
-		for (size_t i = 0; i < pListData->ptr->size(); ++i) {
-			shared_ptr<StgEnemyBossSceneData> pData = pListData->ptr->at(i);
+		for (size_t i = 0; i < pListData->cData; ++i) {
+			shared_ptr<StgEnemyBossSceneData> pData = pListData->listData[i].lock();
 			if (pData == nullptr || pData->bLoad_) continue;
 
 			if (!bLoadThreadCancel_) {
@@ -111,8 +115,8 @@ void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent
 			
 lab_cancel_all:
 			//Cancels loading of all remaining scripts
-			for (size_t j = 0; j < pListData->ptr->size(); ++j) {
-				if (auto pData_ = pListData->ptr->at(i)) {
+			for (size_t j = 0; j < pListData->cData; ++j) {
+				if (auto pData_ = pListData->listData[i].lock()) {
 					pData_->bLoad_ = true;
 				}
 			}

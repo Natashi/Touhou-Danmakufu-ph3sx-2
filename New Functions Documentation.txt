@@ -1328,6 +1328,16 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns an array of the window sizes specified in th_dnh.def.
 	
+	GetConfigVirtualKeyMapping
+		Arguments:
+			1) (int) virtual key
+		Returns:
+			(int[2]) keys mapping
+		Description:
+			Returns the key mapping [keyboard, pad] as set in the config.
+			
+			Mappings will not change if keys are reassigned in-game.
+	
 	GetLastFrameUpdateSpeed
 		Returns:
 			(int) milliseconds
@@ -1653,6 +1663,16 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			(real) volume rate
 		Description:
 			Returns the volume rate of the given sound division.
+	
+	--------------------------------> Input <--------------------------------
+	
+	GetVirtualKeyMapping
+		Arguments:
+			1) (int) virtual key
+		Returns:
+			(int[2]) keys mapping
+		Description:
+			Returns the current key mapping [keyboard, pad].
 	
 	--------------------------------> Resource Loading <--------------------------------
 	
