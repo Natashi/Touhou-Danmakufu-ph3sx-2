@@ -243,7 +243,8 @@ int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedS
 	script->bLoad_ = true;
 	script->bRunning_ = false;
 	{
-		Lock lock(lock_);
+		//Lock lock(lock_);
+		StaticLock lock = StaticLock();
 		mapScriptLoad_[res] = script;
 	}
 
