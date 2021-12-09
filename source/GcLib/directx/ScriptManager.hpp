@@ -19,6 +19,9 @@ namespace directx {
 		static std::atomic<int64_t> idScript_;
 
 		gstd::CriticalSection lock_;
+
+		std::atomic_bool bCancelLoad_;
+		std::atomic_int nActiveScriptLoad_;
 		
 		bool bHasCloseScriptWork_;
 
@@ -34,6 +37,9 @@ namespace directx {
 	public:
 		ScriptManager();
 		virtual ~ScriptManager();
+
+		virtual void CancelLoad() { bCancelLoad_ = true; }
+		virtual bool CancelLoadComplete() { return nActiveScriptLoad_ <= 0; }
 
 		virtual void Work();
 		virtual void Work(int targetType);
@@ -70,12 +76,16 @@ namespace directx {
 		int64_t LoadScriptInThread(const std::wstring& path, shared_ptr<ManagedScript> script);
 		shared_ptr<ManagedScript> LoadScriptInThread(const std::wstring& path, int type);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
+
 		void UnloadScript(int64_t id);
 		void UnloadScript(shared_ptr<ManagedScript> script);
 
 		virtual shared_ptr<ManagedScript> Create(int type) = 0;
+
 		virtual void RequestEventAll(int type, const gstd::value* listValue = nullptr, size_t countArgument = 0);
+
 		gstd::value GetScriptResult(int64_t idScript);
+
 		void AddRelativeScriptManager(weak_ptr<ScriptManager> manager) { listRelativeManager_.push_back(manager); }
 		static void AddRelativeScriptManagerMutual(weak_ptr<ScriptManager> manager1, weak_ptr<ScriptManager> manager2);
 	};
@@ -106,16 +116,16 @@ namespace directx {
 	protected:
 		ScriptManager* scriptManager_;
 
-		volatile bool bBeginLoad_;
-		volatile bool bLoad_;
+		std::atomic_bool bBeginLoad_;
+		std::atomic_bool bLoad_;
 
 		int typeScript_;
 		shared_ptr<ManagedScriptParameter> scriptParam_;
 		
 		bool bEndScript_;
 		bool bAutoDeleteObject_;
-		bool bRunning_;
-		bool bPaused_;
+		std::atomic_bool bRunning_;
+		std::atomic_bool bPaused_;
 
 		uint64_t runTime_;
 

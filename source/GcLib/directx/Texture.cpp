@@ -621,7 +621,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 	//path = PathProperty::GetUnique(path);
 	shared_ptr<Texture> res;
 	{
-		Lock lock(lock_);
+		//Lock lock(lock_);
 
 		auto itr = mapTexture_.find(path);
 		if (itr != mapTexture_.end()) {
@@ -684,7 +684,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> event) {
 	const std::wstring& path = event->GetPath();
 	{
-		Lock lock(lock_);
+		//Lock lock(lock_);
 
 		shared_ptr<Texture> texture = std::dynamic_pointer_cast<Texture>(event->GetSource());
 		if (texture == nullptr) return;

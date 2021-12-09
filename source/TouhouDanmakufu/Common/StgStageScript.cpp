@@ -3183,13 +3183,14 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_Regist(gstd::script_machine* 
 gstd::value StgStageScript::Func_ObjEnemyBossScene_Add(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	StgEnemyBossSceneObject* obj = script->GetObjectPointerAs<StgEnemyBossSceneObject>(id);
+	auto obj = ref_unsync_ptr<StgEnemyBossSceneObject>::Cast(script->GetObject(id));
 	if (obj) {
 		int step = argv[1].as_int();
 		std::wstring path = argv[2].as_string();
 		path = PathProperty::GetUnique(path);
 
 		shared_ptr<StgEnemyBossSceneData> data(new StgEnemyBossSceneData());
+		data->SetParent(obj);
 		data->SetPath(path);
 		obj->AddData(step, data);
 	}

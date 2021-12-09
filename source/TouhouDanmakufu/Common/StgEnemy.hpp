@@ -14,6 +14,8 @@ class StgEnemyBossSceneData;
 class StgEnemyManager : public FileManager::LoadThreadListener {
 private:
 	CriticalSection lock_;
+	std::atomic_bool bLoadThreadCancel_;
+	std::atomic_int countLoad_;
 
 	StgStageController* stageController_;
 
@@ -23,6 +25,9 @@ private:
 public:
 	StgEnemyManager(StgStageController* stageController);
 	virtual ~StgEnemyManager();
+
+	virtual void CancelLoad() { bLoadThreadCancel_ = true; }
+	virtual bool CancelLoadComplete() { return countLoad_ <= 0; }
 
 	CriticalSection& GetLock() { return lock_; }
 
@@ -166,6 +171,8 @@ private:
 	std::wstring path_;
 	weak_ptr<ManagedScript> ptrScript_;
 
+	ref_unsync_weak_ptr<StgEnemyBossSceneObject> objBossSceneParent_;
+
 	std::vector<double> listLife_;
 	std::vector<ref_unsync_ptr<StgEnemyBossObject>> listEnemyObject_;
 	int countCreate_;			//The maximum amount of bosses allowed in listEnemyObject_
@@ -192,6 +199,8 @@ public:
 
 	std::wstring& GetPath() { return path_; }
 	void SetPath(const std::wstring& path) { path_ = path; }
+
+	void SetParent(ref_unsync_ptr<StgEnemyBossSceneObject> parent) { objBossSceneParent_ = parent; }
 
 	weak_ptr<ManagedScript> GetScriptPointer() { return ptrScript_; }
 	void SetScriptPointer(weak_ptr<ManagedScript> id) { ptrScript_ = id; }
