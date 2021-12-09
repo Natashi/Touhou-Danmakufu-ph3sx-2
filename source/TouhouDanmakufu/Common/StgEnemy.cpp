@@ -7,6 +7,9 @@
 //StgEnemyManager
 //*******************************************************************
 StgEnemyManager::StgEnemyManager(StgStageController* stageController) {
+	bLoadThreadCancel_ = false;
+	countLoad_ = 0;
+
 	stageController_ = stageController;
 
 	FileManager::GetBase()->AddLoadThreadListener(this);
@@ -17,6 +20,7 @@ StgEnemyManager::~StgEnemyManager() {
 			obj->ClearEnemyObject();
 	}
 
+	this->WaitForCancel();
 	FileManager::GetBase()->RemoveLoadThreadListener(this);
 }
 void StgEnemyManager::Work() {
@@ -71,6 +75,8 @@ void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent
 	shared_ptr<_ListBossSceneData> pListData = std::dynamic_pointer_cast<_ListBossSceneData>(event->GetSource());
 	if (pListData == nullptr || pListData->ptr == nullptr) return;
 
+	++countLoad_;
+
 	{
 		weak_ptr<StgStageScriptManager> scriptManagerWeak = stageController_->GetScriptManagerRef();
 		StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
@@ -79,34 +85,42 @@ void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent
 			shared_ptr<StgEnemyBossSceneData> pData = pListData->ptr->at(i);
 			if (pData == nullptr || pData->bLoad_) continue;
 
-			LOCK_WEAK(pManager, scriptManagerWeak) {
-				try {
-					auto script = pManager->LoadScript(pData->GetPath(), StgStageScript::TYPE_STAGE);
-					if (script == nullptr)
-						throw gstd::wexception(StringUtility::Format(L"Cannot load script: %s", pData->GetPath().c_str()));
-					pData->SetScriptPointer(script);
+			if (!bLoadThreadCancel_) {
+				auto pManager = scriptManagerWeak.lock();
+				if (pManager && pData->objBossSceneParent_.IsExists()) {
+					try {
+						auto script = pManager->LoadScript(pData->GetPath(), StgStageScript::TYPE_STAGE);
+						if (script == nullptr)
+							throw gstd::wexception(StringUtility::Format(L"Cannot load script: %s", pData->GetPath().c_str()));
 
-					pData->bLoad_ = true;
-				}
-				catch (gstd::wexception& e) {
-					Logger::WriteTop(e.what());
+						pData->SetScriptPointer(script);
+						pData->bLoad_ = true;
+					}
+					catch (gstd::wexception& e) {
+						Logger::WriteTop(e.what());
+						pManager->SetError(e.what());
 
-					pData->SetScriptPointer(weak_ptr<ManagedScript>());
-					pData->bLoad_ = true;
+						pData->SetScriptPointer(weak_ptr<ManagedScript>());
+						pData->bLoad_ = true;
 
-					pManager->SetError(e.what());
-
-					break;
+						goto lab_cancel_all;
+					}
+					continue;
 				}
 			}
-			else {
-				for (auto& iData : *(pListData->ptr)) {
-					if (iData) iData->bLoad_ = true;
+			
+lab_cancel_all:
+			//Cancels loading of all remaining scripts
+			for (size_t j = 0; j < pListData->ptr->size(); ++j) {
+				if (auto pData_ = pListData->ptr->at(i)) {
+					pData_->bLoad_ = true;
 				}
-				break;
 			}
+			break;
 		}
 	}
+
+	--countLoad_;
 }
 
 //*******************************************************************

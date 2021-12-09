@@ -127,8 +127,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_IsEngineFastMode);
 	DNH_FUNCAPI_DECL_(Func_GetConfigWindowSizeIndex);
 	DNH_FUNCAPI_DECL_(Func_GetConfigWindowSizeList);
-	DNH_FUNCAPI_DECL_(Func_GetConfigVirtualKeyCode);
-	DNH_FUNCAPI_DECL_(Func_GetConfigVirtualKeyPadButton);
+	DNH_FUNCAPI_DECL_(Func_GetConfigVirtualKeyMapping);
 	DNH_FUNCAPI_DECL_(Func_SetWindowTitle);
 	DNH_FUNCAPI_DECL_(Func_ResetWindowTitle);
 	DNH_FUNCAPI_DECL_(Func_GetDefaultWindowTitle);

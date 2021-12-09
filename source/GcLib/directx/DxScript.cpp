@@ -87,6 +87,7 @@ static const std::vector<function> dxFunction = {
 	{ "GetMouseState", DxScript::Func_GetMouseState, 1 },
 	{ "GetVirtualKeyState", DxScript::Func_GetVirtualKeyState, 1 },
 	{ "SetVirtualKeyState", DxScript::Func_SetVirtualKeyState, 2 },
+	{ "GetVirtualKeyMapping", DxScript::Func_GetVirtualKeyMapping, 1 },
 
 	//Graphics functions
 	{ "GetMonitorWidth", DxScript::Func_GetMonitorWidth, 0 },
@@ -1179,6 +1180,21 @@ gstd::value DxScript::Func_SetVirtualKeyState(gstd::script_machine* machine, int
 	}
 	return value();
 }
+gstd::value DxScript::Func_GetVirtualKeyMapping(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	int16_t key_pad[2] = { -1, -1 };
+
+	VirtualKeyManager* input = dynamic_cast<VirtualKeyManager*>(DirectInput::GetBase());
+	if (input) {
+		int16_t key = (int16_t)argv[0].as_int();
+		if (auto pKey = input->GetVirtualKey(key)) {
+			key_pad[0] = pKey->GetKeyCode();
+			key_pad[1] = pKey->GetPadButton();
+		}
+	}
+
+	return DxScript::CreateIntArrayValue(key_pad, 2U);
+}
+
 //Dx関数：描画系
 gstd::value DxScript::Func_GetMonitorWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	LONG res = ::GetSystemMetrics(SM_CXSCREEN);

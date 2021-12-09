@@ -108,6 +108,7 @@ namespace directx {
 		static gstd::value Func_GetMouseState(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetVirtualKeyState(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetVirtualKeyState(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_GetVirtualKeyMapping(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
 		//Dx関数：描画系
 		DNH_FUNCAPI_DECL_(Func_GetMonitorWidth);

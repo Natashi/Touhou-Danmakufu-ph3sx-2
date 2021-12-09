@@ -12,13 +12,16 @@ std::atomic<int64_t> ScriptManager::idScript_ = 0;
 ScriptManager::ScriptManager() {
 	mainThreadID_ = GetCurrentThreadId();
 
+	bCancelLoad_ = false;
+	nActiveScriptLoad_ = 0;
+
 	bHasCloseScriptWork_ = false;
 
 	FileManager::GetBase()->AddLoadThreadListener(this);
 }
 ScriptManager::~ScriptManager() {
+	this->WaitForCancel();
 	FileManager::GetBase()->RemoveLoadThreadListener(this);
-	FileManager::GetBase()->WaitForThreadLoadComplete();
 }
 
 void ScriptManager::Work() {
@@ -227,12 +230,10 @@ void ScriptManager::OrphanAllScripts() {
 }
 
 int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script) {
+	++nActiveScriptLoad_;
 	int64_t res = script->GetScriptID();
 
-	{
-		StaticLock lock = StaticLock();
-		script->bBeginLoad_ = true;
-	}
+	script->bBeginLoad_ = true;
 
 	script->SetSourceFromFile(path);
 	script->Compile();
@@ -241,14 +242,14 @@ int64_t ScriptManager::_LoadScript(const std::wstring& path, shared_ptr<ManagedS
 	if (script->IsEventExists("Loading", itrEvent))
 		script->Run(itrEvent);
 
+	script->bLoad_ = true;
+	script->bRunning_ = false;
 	{
-		//Lock lock(lock_);		//Using this seems to hang the lock indefinitely, what???????
-		StaticLock lock = StaticLock();
-		script->bLoad_ = true;
-		script->bRunning_ = false;
+		Lock lock(lock_);
 		mapScriptLoad_[res] = script;
 	}
 
+	--nActiveScriptLoad_;
 	return res;
 }
 int64_t ScriptManager::LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script) {
@@ -263,7 +264,7 @@ shared_ptr<ManagedScript> ScriptManager::LoadScript(const std::wstring& path, in
 int64_t ScriptManager::LoadScriptInThread(const std::wstring& path, shared_ptr<ManagedScript> script) {
 	int64_t res = 0;
 	{
-		StaticLock lock = StaticLock();		//???????
+		Lock lock(lock_);
 
 		script->SetPath(path);
 
@@ -285,6 +286,11 @@ void ScriptManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadE
 
 	shared_ptr<ManagedScript> script = std::dynamic_pointer_cast<ManagedScript>(event->GetSource());
 	if (script == nullptr || script->IsLoad()) return;
+
+	if (bCancelLoad_) {
+		script->bLoad_ = true;
+		return;
+	}
 
 	try {
 		_LoadScript(path, script);
