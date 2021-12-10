@@ -382,9 +382,9 @@ static const std::vector<function> managedScriptFunction = {
 	{ "GetAllObjectIdInScript", ManagedScript::Func_GetAllObjectIdInScript, 1 }, //Overloaded
 	{ "GetAllObjectIdInPool", ManagedScript::Func_GetAllObjectIdInPool, 0 },
 
-	{ "NotifyEvent", ManagedScript::Func_NotifyEvent, -4 },			//2 fixed + ... -> 3 minimum
-	{ "NotifyEventOwn", ManagedScript::Func_NotifyEventOwn, -3 },	//1 fixed + ... -> 2 minimum
-	{ "NotifyEventAll", ManagedScript::Func_NotifyEventAll, -3 },	//1 fixed + ... -> 2 minimum
+	{ "NotifyEvent", ManagedScript::Func_NotifyEvent, -3 },			//2 fixed + ... -> 3 minimum
+	{ "NotifyEventOwn", ManagedScript::Func_NotifyEventOwn, -2 },	//1 fixed + ... -> 2 minimum
+	{ "NotifyEventAll", ManagedScript::Func_NotifyEventAll, -2 },	//1 fixed + ... -> 2 minimum
 	{ "PauseScript", ManagedScript::Func_PauseScript, 2 },
 
 	{ "GetScriptStatus", ManagedScript::Func_GetScriptStatus, 1 },
