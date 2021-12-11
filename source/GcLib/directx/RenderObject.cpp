@@ -1930,6 +1930,7 @@ bool DxMeshInfoPanel::_AddedLogger(HWND hTab) {
 	wndListView_.AddColumn(128, ROW_FULLNAME, L"FullName");
 	wndListView_.AddColumn(32, ROW_COUNT_REFFRENCE, L"Ref");
 
+	SetWindowVisible(false);
 	Start();
 
 	return true;
