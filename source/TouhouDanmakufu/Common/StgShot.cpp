@@ -2426,26 +2426,26 @@ void StgCurveLaserObject::_Move() {
 
 		D3DXVECTOR2 newNodePos(posX_, posY_);
 		D3DXVECTOR2 newNodeVertF(-move_.y, move_.x);	//90 degrees rotation
-		PushNode(CreateNode(newNodePos, newNodeVertF, widthRender_));
+		PushNode(CreateNode(newNodePos, newNodeVertF, 1.0f));
 	}
 }
 
-StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, int width, D3DCOLOR col) {
+StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, float widthMul, D3DCOLOR col) {
 	LaserNode node;
+	node.parent = this;
 	node.pos = pos;
 	{
-		float wRender = width / 2.0f;
-
-		float nx = wRender * rFac.x;
-		float ny = wRender * rFac.y;
+		float nx = rFac.x;
+		float ny = rFac.y;
 		node.vertOff[0] = { nx, ny };
 		node.vertOff[1] = { -nx, -ny };
 	}
+	node.widthMul = widthMul;
 	node.color = col;
 	return node;
 }
 bool StgCurveLaserObject::GetNode(size_t indexNode, std::list<LaserNode>::iterator& res) {
-	//I wish there was a better way to do this.
+	//Search from whichever end is closer to the target node index
 	size_t listSizeMax = listPosition_.size();
 	if (indexNode >= listSizeMax) res = listPosition_.end();
 	if (indexNode < listSizeMax / 2U)
@@ -2651,8 +2651,6 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		float rcLen = rcSrcOrg->bottom - rcSrcOrg->top;
 		float rcLenH = rcLen * 0.5f;
 
-		float renWid = std::max((float)widthRender_, 0.001f);
-
 		float rcInc = (rcLen / (float)countRect) * texSizeInv.y;
 
 		float rcHeigh = rcLen * texSizeInv.y;
@@ -2681,7 +2679,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				D3DXVECTOR2* posNext = &itrNext->pos;
 				// D3DXVECTOR2* off = &itr->vertOff[0];
 				// float wid = std::max(hypotf(off->x, off->y) * 2, 1.0f);
-				float incDist = hypotf(posNext->x - pos->x, posNext->y - pos->y) * rcHeigh / renWid;
+				float incDist = hypotf(posNext->x - pos->x, posNext->y - pos->y) * rcHeigh / widthRender_;
 
 				float& ref = arrInc[iPos];
 				if (ref == 0) // Fails if element was already written to
@@ -2735,6 +2733,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				nodeAlpha = Math::Lerp::Linear(tipAlpha, baseAlpha, iPos / (halfPos - 1.0f));
 			nodeAlpha = std::max(0.0f, nodeAlpha);
 
+			float renderWd = std::max(widthRender_ * itr->widthMul, 0.5f);
+
 			D3DCOLOR thisColor = color_;
 			{
 				byte alpha = ColorAccess::ClampColorRet(nodeAlpha * alphaRateShot);
@@ -2747,8 +2747,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				VERTEX_TLX* pv = &verts[iVert];
 
 				_SetVertexUV(pv, ptrSrc[(iVert & 1) << 1] * texSizeInv.x, rectV);
-				_SetVertexPosition(pv, itr->pos.x + itr->vertOff[iVert].x,
-					itr->pos.y + itr->vertOff[iVert].y, position_.z);
+				_SetVertexPosition(pv, itr->pos.x + itr->vertOff[iVert].x * renderWd,
+					itr->pos.y + itr->vertOff[iVert].y * renderWd, position_.z);
 				_SetVertexColorARGB(pv, thisColor);
 			}
 			renderer->AddSquareVertex_CurveLaser(verts, std::next(itr) != listPosition_.end());

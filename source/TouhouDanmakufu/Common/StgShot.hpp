@@ -13,9 +13,6 @@ class StgShotObject;
 //StgShotManager
 //*******************************************************************
 class StgShotManager {
-	//uint16_t RTARGET_VERT_INDICES[6];
-	//size_t vertRTw;
-	//size_t vertRTh;
 	friend class StgShotRenderer;
 public:
 	enum {
@@ -592,9 +589,11 @@ public:
 class StgCurveLaserObject : public StgLaserObject {
 public:
 	struct LaserNode {
+		StgCurveLaserObject* parent;
 		D3DXVECTOR2 pos;
 		D3DXVECTOR2 vertOff[2];
 		D3DCOLOR color;
+		float widthMul = 1.0f;
 	};
 	enum {
 		MAP_NORMAL,
@@ -602,6 +601,10 @@ public:
 	};
 protected:
 	std::list<LaserNode> listPosition_;
+
+	float posXO_;
+	float posYO_;
+
 	float tipDecrement_;
 
 	D3DXVECTOR2 posOrigin_;
@@ -623,7 +626,7 @@ public:
 	void SetTipCapping(bool enable) { bCap_ = enable; }
 	void SetAngleSmoothing(bool enable) { bSmoothAngle_ = enable; }
 
-	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, int width, D3DCOLOR col = 0xffffffff);
+	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, float widthMul, D3DCOLOR col = 0xffffffff);
 	bool GetNode(size_t indexNode, std::list<LaserNode>::iterator& res);
 	void GetNodePointerList(std::vector<LaserNode*>* listRes);
 	std::list<LaserNode>::iterator PushNode(const LaserNode& node);

@@ -478,13 +478,13 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_GetNodePointerList);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_GetNodePosition);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_GetNodeAngle);
-	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_GetNodeRenderWidth);
+	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_GetNodeWidthScale);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_GetNodeColor);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_GetNodeColorHex);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetNode);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetNodePosition);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetNodeAngle);
-	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetNodeRenderWidth);
+	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetNodeWidthScale);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetNodeColor);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_AddNode);
 
