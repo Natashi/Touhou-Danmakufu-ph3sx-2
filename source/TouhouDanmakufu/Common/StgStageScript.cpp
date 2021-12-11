@@ -4150,7 +4150,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodePosition(gstd::script_machine
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
-		if (ptr) {
+		if (ptr && ptr->parent == obj) {
 			res[0] = ptr->pos.x;
 			res[1] = ptr->pos.y;
 		}
@@ -4165,7 +4165,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodeAngle(gstd::script_machine* m
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
-		if (ptr) {
+		if (ptr && ptr->parent == obj) {
 			D3DXVECTOR2& vec = ptr->vertOff[0];
 			angle = Math::RadianToDegree(atan2(vec.y, vec.x)) + 90.0;
 		}
@@ -4180,7 +4180,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodeWidthScale(gstd::script_machi
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
-		if (ptr) {
+		if (ptr && ptr->parent == obj) {
 			width = ptr->widthMul;
 		}
 	}
@@ -4194,7 +4194,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodeColor(gstd::script_machine* m
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
-		if (ptr) {
+		if (ptr && ptr->parent == obj) {
 			color = ptr->color;
 		}
 	}
@@ -4211,7 +4211,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_GetNodeColorHex(gstd::script_machine
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
-		if (ptr) {
+		if (ptr && ptr->parent == obj) {
 			color = ptr->color;
 		}
 	}
@@ -4224,7 +4224,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetNode(gstd::script_machine* machin
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
-		if (ptr) {
+		if (ptr && ptr->parent == obj) {
 			float x = argv[2].as_real();
 			float y = argv[3].as_real();
 			float angle = Math::DegreeToRadian(argv[4].as_real());
@@ -4246,7 +4246,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetNodePosition(gstd::script_machine
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
-		if (ptr) {
+		if (ptr && ptr->parent == obj) {
 			float x = argv[2].as_real();
 			float y = argv[3].as_real();
 			ptr->pos = D3DXVECTOR2(x, y);
@@ -4260,7 +4260,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetNodeAngle(gstd::script_machine* m
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
-		if (ptr) {
+		if (ptr && ptr->parent == obj) {
 			float angle = Math::DegreeToRadian(argv[2].as_real());
 			D3DXVECTOR2 rMove = D3DXVECTOR2(-sinf(angle), cosf(angle));
 
@@ -4276,7 +4276,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetNodeWidthScale(gstd::script_machi
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
-		if (ptr) {
+		if (ptr && ptr->parent == obj) {
 			float width = argv[2].as_real();
 			ptr->widthMul = width;
 		}
@@ -4289,7 +4289,7 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetNodeColor(gstd::script_machine* m
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		StgCurveLaserObject::LaserNode* ptr = (StgCurveLaserObject::LaserNode*)argv[1].as_int();
-		if (ptr) {
+		if (ptr && ptr->parent == obj) {
 			D3DCOLOR color = argv[2].as_int();
 			ptr->color = color;
 		}

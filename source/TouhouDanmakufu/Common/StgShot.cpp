@@ -2323,6 +2323,7 @@ void StgCurveLaserObject::_Move() {
 
 StgCurveLaserObject::LaserNode StgCurveLaserObject::CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, float widthMul, D3DCOLOR col) {
 	LaserNode node;
+	node.parent = this;
 	node.pos = pos;
 	{
 		float nx = rFac.x;

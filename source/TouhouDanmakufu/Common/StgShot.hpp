@@ -570,6 +570,7 @@ public:
 class StgCurveLaserObject : public StgLaserObject {
 public:
 	struct LaserNode {
+		StgCurveLaserObject* parent;
 		D3DXVECTOR2 pos;
 		D3DXVECTOR2 vertOff[2];
 		D3DCOLOR color;
