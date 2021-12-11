@@ -1,5 +1,10 @@
 A mostly-complete history log of engine updates can be found here.
 
+1.31b
+	Bug fixes:
+		- Fixed a bug where the game would freeze when compiling a script with a syntax error.
+		- Fixed a minor visual bug where the LogWindow's sub-info fields would all try to display over each other on initialization.
+
 1.31a
 	Changes:
 		- This version breaks replay, common data, and .dat archive backwards compatibility.

@@ -696,6 +696,7 @@ bool ShaderInfoPanel::_AddedLogger(HWND hTab) {
 	wndListView_.AddColumn(72, ROW_PARAMETERS, L"Parameters");
 	wndListView_.AddColumn(72, ROW_TECHNIQUES, L"Techniques");
 
+	SetWindowVisible(false);
 	Start();
 
 	return true;

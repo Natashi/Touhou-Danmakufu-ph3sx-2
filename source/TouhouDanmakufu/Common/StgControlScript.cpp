@@ -1207,6 +1207,7 @@ bool ScriptInfoPanel::_AddedLogger(HWND hTab) {
 	wndSplitter2_.Create(hWnd_, WSplitter::TYPE_VERTICAL);
 	wndSplitter2_.SetRatioX(0.45f);
 
+	SetWindowVisible(false);
 	Start();
 
 	return true;

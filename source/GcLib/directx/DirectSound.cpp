@@ -441,6 +441,8 @@ bool SoundInfoPanel::_AddedLogger(HWND hTab) {
 	wndListView_.AddColumn(128, ROW_FULLPATH, L"Path");
 	wndListView_.AddColumn(48, ROW_COUNT_REFFRENCE, L"Uses");
 
+	SetWindowVisible(false);
+
 	return true;
 }
 void SoundInfoPanel::LocateParts() {

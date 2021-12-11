@@ -20,7 +20,7 @@ ScriptManager::ScriptManager() {
 	FileManager::GetBase()->AddLoadThreadListener(this);
 }
 ScriptManager::~ScriptManager() {
-	this->WaitForCancel();
+	//this->WaitForCancel();
 	FileManager::GetBase()->RemoveLoadThreadListener(this);
 }
 

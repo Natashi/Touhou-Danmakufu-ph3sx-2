@@ -792,8 +792,9 @@ bool TextureInfoPanel::_AddedLogger(HWND hTab) {
 	wndListView_.AddColumn(48, ROW_HEIGHT_IMAGE, L"Height");
 	wndListView_.AddColumn(60, ROW_SIZE, L"Size");
 
+	SetWindowVisible(false);
 	Start();
-
+	
 	return true;
 }
 void TextureInfoPanel::LocateParts() {

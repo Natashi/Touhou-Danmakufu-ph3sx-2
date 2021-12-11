@@ -332,6 +332,8 @@ bool TaskInfoPanel::_AddedLogger(HWND hTab) {
 	wndSplitter_.Create(hWnd_, WSplitter::TYPE_HORIZONTAL);
 	wndSplitter_.SetRatioY(0.25f);
 
+	SetWindowVisible(false);
+
 	return true;
 }
 void TaskInfoPanel::LocateParts() {

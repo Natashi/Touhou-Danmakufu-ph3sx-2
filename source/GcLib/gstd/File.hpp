@@ -289,7 +289,7 @@ namespace gstd {
 		inline void WaitForCancel() {
 			this->CancelLoad();
 			while (!this->CancelLoadComplete())
-				::Sleep(10);
+				::Sleep(1);
 		}
 	};
 
