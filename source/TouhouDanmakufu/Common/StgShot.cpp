@@ -2733,7 +2733,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				nodeAlpha = Math::Lerp::Linear(tipAlpha, baseAlpha, iPos / (halfPos - 1.0f));
 			nodeAlpha = std::max(0.0f, nodeAlpha);
 
-			float renderWd = std::max(widthRender_ * itr->widthMul, 0.5f);
+			float renderWd = std::max(widthRender_ * itr->widthMul / 2.0f, 0.5f);
 
 			D3DCOLOR thisColor = color_;
 			{
