@@ -136,7 +136,7 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
 	{ "Interpolate_X", ScriptClientBase::Func_Interpolate_X, 4 },
 	{ "Interpolate_X_PackedInt", ScriptClientBase::Func_Interpolate_X_Packed, 4 },
-    { "Interpolate_Array", ScriptClientBase::Func_Interpolate_Array, 3 },
+    { "Interpolate_X_Array", ScriptClientBase::Func_Interpolate_X_Array, 3 },
 
 	//Rotation
 	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 3 },
@@ -1005,7 +1005,7 @@ value ScriptClientBase::Func_Interpolate_X_Packed(script_machine* machine, int a
 	return CreateIntValue(res);
 }
 // :souperdying:
-value ScriptClientBase::Func_Interpolate_Array(script_machine* machine, int argc, const value* argv) { 
+value ScriptClientBase::Func_Interpolate_X_Array(script_machine* machine, int argc, const value* argv) { 
 	double x = argv[1].as_real();
 
 	size_t len = argv[0].length_as_array();
