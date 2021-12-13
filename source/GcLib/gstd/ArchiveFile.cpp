@@ -205,7 +205,7 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& path, WStatusBar* pStat
 	if (pProgress)
 		pProgress->SetPos(950);
 
-	fileArchive.seekp(ArchiveFileHeader::MAGIC_LENGTH + 4);
+	fileArchive.seekp(offsetof(ArchiveFileHeader, headerOffset));
 	fileArchive.write((char*)&header.headerOffset, sizeof(uint32_t));
 	fileArchive.write((char*)&header.headerSize, sizeof(uint32_t));
 
