@@ -2707,21 +2707,34 @@ void StgCurveLaserObject::RenderOnShotManager() {
 
 		size_t iPos = 0U;
 		int range = 2;
+		bool bCircular = false; // For cases where it would be ideal for the first node to connect to the last
 		for (auto itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
 			D3DXVECTOR2 pos = itr->pos;
 			D3DXVECTOR2 vertOff[2]{ itr->vertOff[0], itr->vertOff[1] };
 
-			if (bSmoothAngle_ && countPos > 1 && iPos > 1 && iPos < countPos - 2) {
+			if (bSmoothAngle_ && countPos > 1) {
+				if (iPos == 0) {
+					auto itrLast = listPosition_.end();
+					--itrLast;
+					bCircular = pos == itrLast->pos;
+				}
 				auto itrNext = listPosition_.begin();
 				auto itrPrev = listPosition_.begin();
-				std::advance(itrNext, std::clamp((int)iPos + range, 0, (int)countPos - 1));
-				std::advance(itrPrev, std::clamp((int)iPos - range, 0, (int)countPos - 1));
+				if (bCircular) {
+					std::advance(itrNext, (iPos + range) % (countPos - 1));
+					std::advance(itrPrev, (iPos - range + countPos - 1) % (countPos - 1));
+				}
+				else {
+					std::advance(itrNext, std::clamp((int)iPos + range, 0, (int)countPos - 1));
+					std::advance(itrPrev, std::clamp((int)iPos - range, 0, (int)countPos - 1));
+				}
+				
 				D3DXVECTOR2* posNext = &itrNext->pos;
 				D3DXVECTOR2* posPrev = &itrPrev->pos;
 
 				float arc = atan2f(posNext->y - posPrev->y, posNext->x - posPrev->x);
 
-				D3DXVECTOR2 vecNew(sinf(arc) * widthRender_ / 2.0f, -cosf(arc) * widthRender_ / 2.0f);
+				D3DXVECTOR2 vecNew(-sinf(arc), cosf(arc));
 				vertOff[0] = vecNew;
 				vertOff[1] = -vecNew;
 			}
@@ -2747,8 +2760,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				VERTEX_TLX* pv = &verts[iVert];
 
 				_SetVertexUV(pv, ptrSrc[(iVert & 1) << 1] * texSizeInv.x, rectV);
-				_SetVertexPosition(pv, itr->pos.x + itr->vertOff[iVert].x * renderWd,
-					itr->pos.y + itr->vertOff[iVert].y * renderWd, position_.z);
+				_SetVertexPosition(pv, itr->pos.x + vertOff[iVert].x * renderWd,
+					itr->pos.y + vertOff[iVert].y * renderWd, position_.z);
 				_SetVertexColorARGB(pv, thisColor);
 			}
 			renderer->AddSquareVertex_CurveLaser(verts, std::next(itr) != listPosition_.end());
