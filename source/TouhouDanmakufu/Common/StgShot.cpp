@@ -292,7 +292,7 @@ std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, int cx, int cy
 
 		bool bInCircle = radius == nullptr;
 		if (!bInCircle) {
-			bool bPassAABB = (sx > rect_x1 && sy > rect_y1) && (sx < rect_x2&& sy < rect_y2);
+			bool bPassAABB = (sx > rect_x1 && sy > rect_y1) && (sx < rect_x2 && sy < rect_y2);
 			bInCircle = bPassAABB && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr;
 		}
 		if (bInCircle)
