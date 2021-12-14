@@ -609,7 +609,7 @@ protected:
 
 	D3DXVECTOR2 posOrigin_;
 	bool bCap_;
-	bool bSmoothAngle_;
+	int smooth_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
@@ -624,7 +624,7 @@ public:
 
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
 	void SetTipCapping(bool enable) { bCap_ = enable; }
-	void SetAngleSmoothing(bool enable) { bSmoothAngle_ = enable; }
+	void SetAngleSmoothness(int amount) { smooth_ = amount; }
 
 	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, float widthMul, D3DCOLOR col = 0xffffffff);
 	bool GetNode(size_t indexNode, std::list<LaserNode>::iterator& res);
