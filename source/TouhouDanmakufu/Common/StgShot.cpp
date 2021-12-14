@@ -2388,7 +2388,7 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 	posOrigin_ = D3DXVECTOR2(0, 0);
 
 	bCap_ = false;
-	bSmoothAngle_ = false;
+	smooth_ = 0;
 }
 void StgCurveLaserObject::Work() {
 	if (frameWork_ == 0) {
@@ -2706,13 +2706,16 @@ void StgCurveLaserObject::RenderOnShotManager() {
 			std::fill(arrInc.begin(), arrInc.end(), rcInc);
 
 		size_t iPos = 0U;
-		int range = 2;
+
+		// Smoothing stuff
+		int range = smooth_;
 		bool bCircular = false; // For cases where it would be ideal for the first node to connect to the last
+
 		for (auto itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
 			D3DXVECTOR2 pos = itr->pos;
 			D3DXVECTOR2 vertOff[2]{ itr->vertOff[0], itr->vertOff[1] };
 
-			if (bSmoothAngle_ && countPos > 1) {
+			if (smooth_ > 0 && countPos > 1) {
 				if (iPos == 0) {
 					auto itrLast = listPosition_.end();
 					--itrLast;

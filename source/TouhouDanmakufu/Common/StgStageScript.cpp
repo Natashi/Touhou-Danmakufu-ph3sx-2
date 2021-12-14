@@ -530,7 +530,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjStLaser_GetPermitExpand", StgStageScript::Func_ObjStLaser_GetPermitExpand, 1 },
 	{ "ObjCrLaser_SetTipDecrement", StgStageScript::Func_ObjCrLaser_SetTipDecrement, 2 },
 	{ "ObjCrLaser_SetTipCapping", StgStageScript::Func_ObjCrLaser_SetTipCapping, 2 },
-	{ "ObjCrLaser_SetAngleSmoothing", StgStageScript::Func_ObjCrLaser_SetAngleSmoothing, 2 },
+	{ "ObjCrLaser_SetAngleSmoothness", StgStageScript::Func_ObjCrLaser_SetAngleSmoothness, 2 },
 	{ "ObjCrLaser_GetNodePointer", StgStageScript::Func_ObjCrLaser_GetNodePointer, 2 },
 	{ "ObjCrLaser_GetNodePointerList", StgStageScript::Func_ObjCrLaser_GetNodePointerList, 1 },
 	{ "ObjCrLaser_GetNodePosition", StgStageScript::Func_ObjCrLaser_GetNodePosition, 2 },
@@ -4667,13 +4667,13 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetTipCapping(gstd::script_machine* 
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_ObjCrLaser_SetAngleSmoothing(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_ObjCrLaser_SetAngleSmoothness(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
-		bool enable = argv[1].as_boolean();
-		obj->SetAngleSmoothing(enable);
+		int amount = argv[1].as_int();
+		obj->SetAngleSmoothness(amount);
 	}
 	return value();
 }
