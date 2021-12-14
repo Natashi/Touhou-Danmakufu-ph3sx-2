@@ -135,8 +135,7 @@ void StgMoveObject::RemoveParent(ref_unsync_weak_ptr<StgMoveObject> self, bool b
 		}
 
 		parent_ = nullptr;
-		offX_ = posX_;
-		offY_ = posY_;
+		UpdateRelativePosition();
 	}
 }
 void StgMoveObject::UpdateRelativePosition() { // Optimize later I guess?

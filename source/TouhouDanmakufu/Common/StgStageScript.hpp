@@ -348,7 +348,6 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetParent);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_RemoveParent);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetRelativePosition);
-	DNH_FUNCAPI_DECL_(Func_ObjMove_UpdateRelativePosition);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetDistanceFromParent);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetAngleFromParent);
 

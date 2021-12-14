@@ -404,7 +404,6 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjMove_GetParent", StgStageScript::Func_ObjMove_GetParent, 1 },
 	{ "ObjMove_RemoveParent", StgStageScript::Func_ObjMove_RemoveParent, 1 },
 	{ "ObjMove_SetRelativePosition", StgStageScript::Func_ObjMove_SetRelativePosition, 3 },
-	{ "ObjMove_UpdateRelativePosition", StgStageScript::Func_ObjMove_UpdateRelativePosition, 1 },
 	{ "ObjMove_GetDistanceFromParent", StgStageScript::Func_ObjMove_GetDistanceFromParent, 1 },
 	{ "ObjMove_GetAngleFromParent", StgStageScript::Func_ObjMove_GetAngleFromParent, 1 },
 
@@ -2587,6 +2586,7 @@ gstd::value StgStageScript::Func_ObjMove_SetX(gstd::script_machine* machine, int
 	if (obj) {
 		double pos = argv[1].as_real();
 		obj->SetPositionX(pos);
+		obj->UpdateRelativePosition();
 
 		DxScriptRenderObject* objR = dynamic_cast<DxScriptRenderObject*>(obj);
 		if (objR)
@@ -2601,6 +2601,7 @@ gstd::value StgStageScript::Func_ObjMove_SetY(gstd::script_machine* machine, int
 	if (obj) {
 		double pos = argv[1].as_real();
 		obj->SetPositionY(pos);
+		obj->UpdateRelativePosition();
 
 		DxScriptRenderObject* objR = dynamic_cast<DxScriptRenderObject*>(obj);
 		if (objR)
@@ -2617,6 +2618,7 @@ gstd::value StgStageScript::Func_ObjMove_SetPosition(gstd::script_machine* machi
 		double posY = argv[2].as_real();
 		obj->SetPositionX(posX);
 		obj->SetPositionY(posY);
+		obj->UpdateRelativePosition();
 
 		DxScriptRenderObject* objR = dynamic_cast<DxScriptRenderObject*>(obj);
 		if (objR) {
@@ -3170,15 +3172,6 @@ gstd::value StgStageScript::Func_ObjMove_SetRelativePosition(gstd::script_machin
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 	if (obj)
 		obj->SetRelativePosition(x, y);
-
-	return value();
-}
-gstd::value StgStageScript::Func_ObjMove_UpdateRelativePosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	int id = argv[0].as_int();
-	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
-	if (obj)
-		obj->UpdateRelativePosition();
 
 	return value();
 }
