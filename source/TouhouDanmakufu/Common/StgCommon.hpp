@@ -122,6 +122,7 @@ protected:
 	double scaX_;
 	double scaY_;
 	double rotZ_;
+	double wvlZ_;
 	double lastX_;
 	double lastY_;
 	std::vector<ref_unsync_weak_ptr<StgMoveObject>> listChild_;
@@ -147,9 +148,11 @@ public:
 	void SetTransformScaleX(double x) { scaX_ = Unzero(x); }
 	void SetTransformScaleY(double y) { scaY_ = Unzero(y); }
 	void SetTransformAngle(double z);
+	void SetTransformAngularVelocity(double w) { wvlZ_ = w; }
 	double GetTransformScaleX() { return scaX_; }
 	double GetTransformScaleY() { return scaY_; }
 	double GetTransformAngle() { return rotZ_; }
+	double GetTransformAngularVelocity() { return wvlZ_; }
 	// double GetRadiusAtAngle(double angle);
 	void SetChildAngleMode(int type) { typeAngle_ = type; }
 	int GetChildAngleMode() { return typeAngle_;  }
