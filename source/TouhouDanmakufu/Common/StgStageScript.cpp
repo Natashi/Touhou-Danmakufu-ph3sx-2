@@ -320,10 +320,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "DeleteShotInCircle", StgStageScript::Func_DeleteShotInCircle, 5 },
 	{ "DeleteShotInRegularPolygon", StgStageScript::Func_DeleteShotInRegularPolygon, 7 },
 	{ "CreateShotA1", StgStageScript::Func_CreateShotA1, 6 },
-	{ "CreateShotPA1", StgStageScript::Func_CreateShotPA1, 8 },
 	{ "CreateShotA2", StgStageScript::Func_CreateShotA2, 8 }, //Deprecated, exists for compatibility
 	{ "CreateShotA2", StgStageScript::Func_CreateShotA2, 9 },
-	{ "CreateShotPA2", StgStageScript::Func_CreateShotPA2, 11 },
 	{ "CreateShotOA1", StgStageScript::Func_CreateShotOA1, 5 },
 	{ "CreateShotB1", StgStageScript::Func_CreateShotB1, 6 },
 	{ "CreateShotB2", StgStageScript::Func_CreateShotB2, 10 },
@@ -1591,39 +1589,6 @@ gstd::value StgStageScript::Func_CreateShotA1(gstd::script_machine* machine, int
 	}
 	return script->CreateIntValue(id);
 }
-gstd::value StgStageScript::Func_CreateShotPA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-
-	int id = ID_INVALID;
-	if (stageController->GetShotManager()->GetShotCountAll() < StgShotManager::SHOT_MAX) {
-		ref_unsync_ptr<StgNormalShotObject> obj = new StgNormalShotObject(stageController);
-		id = script->AddObject(obj);
-		if (id != ID_INVALID) {
-			stageController->GetShotManager()->AddShot(obj);
-
-			double posX = argv[0].as_real();
-			double posY = argv[1].as_real();
-            double mag = argv[2].as_real();
-            double dir = Math::DegreeToRadian(argv[3].as_real());
-			double speed = argv[4].as_real();
-			double angle = Math::DegreeToRadian(argv[5].as_real());
-			int idShot = argv[6].as_int();
-			int delay = argv[7].as_int();
-			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
-				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
-
-			obj->SetX(posX + mag * cos(dir));
-			obj->SetY(posY + mag * sin(dir));
-			obj->SetSpeed(speed);
-			obj->SetDirectionAngle(argv[5].as_int() == StgMovePattern::NO_CHANGE ? dir : angle);
-			obj->SetShotDataID(idShot);
-			obj->SetDelay(delay);
-			obj->SetOwnerType(typeOwner);
-		}
-	}
-	return script->CreateIntValue(id);
-}
 gstd::value StgStageScript::Func_CreateShotA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
@@ -1661,48 +1626,6 @@ gstd::value StgStageScript::Func_CreateShotA2(gstd::script_machine* machine, int
 			StgMovePattern_Angle* pattern = dynamic_cast<StgMovePattern_Angle*>(objMove->GetPattern().get());
 			pattern->SetAcceleration(accele);
             if (!old) pattern->SetAngularVelocity(wvel);
-			pattern->SetMaxSpeed(maxSpeed);
-		}
-	}
-	return script->CreateIntValue(id);
-}
-gstd::value StgStageScript::Func_CreateShotPA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-
-	int id = ID_INVALID;
-	if (stageController->GetShotManager()->GetShotCountAll() < StgShotManager::SHOT_MAX) {
-		ref_unsync_ptr<StgNormalShotObject> obj = new StgNormalShotObject(stageController);
-		id = script->AddObject(obj);
-		if (id != ID_INVALID) {
-			stageController->GetShotManager()->AddShot(obj);
-
-			double posX = argv[0].as_real();
-			double posY = argv[1].as_real();
-            double mag = argv[2].as_real();
-            double dir = Math::DegreeToRadian(argv[3].as_real());
-			double speed = argv[4].as_real();
-			double angle = Math::DegreeToRadian(argv[5].as_real());
-			double accele = argv[6].as_real();
-			double wvel = Math::DegreeToRadian(argv[7].as_real());
-			double maxSpeed = argv[8].as_real();
-			int idShot = argv[9].as_int();
-			int delay = argv[10].as_int();
-			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
-				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
-
-			obj->SetX(posX + mag * cos(dir));
-			obj->SetY(posY + mag * sin(dir));
-			obj->SetSpeed(speed);
-			obj->SetDirectionAngle(argv[5].as_int() == StgMovePattern::NO_CHANGE ? dir : angle);
-			obj->SetShotDataID(idShot);
-			obj->SetDelay(delay);
-			obj->SetOwnerType(typeOwner);
-
-			StgMoveObject* objMove = (StgMoveObject*)obj.get();
-			StgMovePattern_Angle* pattern = dynamic_cast<StgMovePattern_Angle*>(objMove->GetPattern().get());
-			pattern->SetAcceleration(accele);
-			pattern->SetAngularVelocity(wvel);
 			pattern->SetMaxSpeed(maxSpeed);
 		}
 	}
