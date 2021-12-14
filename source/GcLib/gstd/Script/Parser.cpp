@@ -146,6 +146,8 @@ static const std::vector<function> base_operations = {
 	{ "as_char_array", BaseFunction::cast_char_array, 1 },
 	{ "as_x_array", BaseFunction::cast_x_array, 2 },
 
+	{ "generate", BaseFunction::generate, 2 },
+
 	//{ "length", BaseFunction::length, 1 },
 	{ "resize", BaseFunction::resize, 2 },
 	{ "resize", BaseFunction::resize, 3 },	//Overloaded
