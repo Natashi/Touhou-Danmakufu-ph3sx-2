@@ -66,7 +66,7 @@ public:
 	void CollectItemsInCircle(const DxCircle& circle);
 	void CancelCollectItems();
 
-	std::vector<int> GetItemIdInCircle(int cx, int cy, int radius, int* itemType);
+	std::vector<int> GetItemIdInCircle(int cx, int cy, int* radius, int* itemType);
 
 	bool IsDefaultBonusItemEnable() { return bDefaultBonusItemEnable_; }
 	void SetDefaultBonusItemEnable(bool bEnable) { bDefaultBonusItemEnable_ = bEnable; }

@@ -287,15 +287,29 @@ void StgItemManager::CancelCollectItems() {
 	bCancelToPlayer_ = true;
 }
 
-std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, int radius, int* itemType) {
-	int rr = radius * radius;
+std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, int* radius, int* itemType) {
+	int r = radius ? *radius : 0;
+	int rr = r * r;
+
+	int rect_x1 = cx - r;
+	int rect_y1 = cy - r;
+	int rect_x2 = cx + r;
+	int rect_y2 = cy + r;
 
 	std::vector<int> res;
 	for (ref_unsync_ptr<StgItemObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
 		if (itemType != nullptr && (*itemType != obj->GetItemType())) continue;
 
-		if (Math::HypotSq<int>(cx - obj->GetPositionX(), cy - obj->GetPositionY()) <= rr)
+		int sx = obj->GetPositionX();
+		int sy = obj->GetPositionY();
+
+		bool bInCircle = radius == nullptr;
+		if (!bInCircle) {
+			bool bPassAABB = (sx > rect_x1 && sy > rect_y1) && (sx < rect_x2 && sy < rect_y2);
+			bInCircle = bPassAABB && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr;
+		}
+		if (bInCircle)
 			res.push_back(obj->GetObjectID());
 	}
 

@@ -312,6 +312,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetEnemyIntersectionPosition", StgStageScript::Func_GetEnemyIntersectionPosition, 3 },
 	{ "GetEnemyIntersectionPositionByIdA1", StgStageScript::Func_GetEnemyIntersectionPositionByIdA1, 1 },
 	{ "GetEnemyIntersectionPositionByIdA2", StgStageScript::Func_GetEnemyIntersectionPositionByIdA2, 3 },
+	{ "SetEnemyAutoDeleteClip", StgStageScript::Func_SetEnemyAutoDeleteClip, 4 },
 	{ "LoadEnemyShotData", StgStageScript::Func_LoadEnemyShotData, 1 },
 	{ "ReloadEnemyShotData", StgStageScript::Func_ReloadEnemyShotData, 1 },
 
@@ -354,6 +355,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "SetDefaultBonusItemEnable", StgStageScript::Func_SetDefaultBonusItemEnable, 1 },
 	{ "LoadItemData", StgStageScript::Func_LoadItemData, 1 },
 	{ "ReloadItemData", StgStageScript::Func_ReloadItemData, 1 },
+	{ "GetAllItemID", StgStageScript::Func_GetAllItemID, 0 },
 	{ "GetItemIdInCircleA1", StgStageScript::Func_GetItemIdInCircleA1, 3 },
 	{ "GetItemIdInCircleA2", StgStageScript::Func_GetItemIdInCircleA2, 4 },
 	{ "SetItemAutoDeleteClip", StgStageScript::Func_SetItemAutoDeleteClip, 4 },
@@ -436,6 +438,7 @@ static const std::vector<function> stgStageFunction = {
 	//STG共通関数：敵オブジェクト操作
 	{ "ObjEnemy_Create", StgStageScript::Func_ObjEnemy_Create, 1 },
 	{ "ObjEnemy_Regist", StgStageScript::Func_ObjEnemy_Regist, 1 },
+	{ "ObjEnemy_SetAutoDelete", StgStageScript::Func_ObjEnemy_SetAutoDelete, 2 },
 	{ "ObjEnemy_GetInfo", StgStageScript::Func_ObjEnemy_GetInfo, 2 },
 	{ "ObjEnemy_SetLife", StgStageScript::Func_ObjEnemy_SetLife, 2 },
 	{ "ObjEnemy_AddLife", StgStageScript::Func_ObjEnemy_AddLife<false>, 2 },
@@ -1457,6 +1460,17 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA2(gstd::script
 	return script->CreateValueArrayValue(listV);
 }
 
+gstd::value StgStageScript::Func_SetEnemyAutoDeleteClip(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	DxRect<LONG> rect(-argv[0].as_int(), -argv[1].as_int(),
+		argv[2].as_int(), argv[3].as_int());
+	stageController->GetEnemyManager()->SetEnemyDeleteClip(rect);
+
+	return value();
+}
+
 gstd::value StgStageScript::Func_LoadEnemyShotData(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
@@ -2372,6 +2386,13 @@ gstd::value StgStageScript::Func_ReloadItemData(gstd::script_machine* machine, i
 	bool res = itemManager->LoadItemData(path, true);
 	return script->CreateBooleanValue(res);
 }
+gstd::value StgStageScript::Func_GetAllItemID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
+
+	std::vector<int> listID = itemManager->GetItemIdInCircle(0, 0, nullptr, nullptr);
+	return script->CreateIntArrayValue(listID);
+}
 gstd::value StgStageScript::Func_GetItemIdInCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgItemManager* itemManager = script->stageController_->GetItemManager();
@@ -2380,7 +2401,7 @@ gstd::value StgStageScript::Func_GetItemIdInCircleA1(gstd::script_machine* machi
 	int py = argv[1].as_real();
 	int radius = argv[2].as_real();
 
-	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, radius, nullptr);
+	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, &radius, nullptr);
 	return script->CreateIntArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetItemIdInCircleA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -2392,7 +2413,7 @@ gstd::value StgStageScript::Func_GetItemIdInCircleA2(gstd::script_machine* machi
 	int radius = argv[2].as_real();
 	int type = argv[3].as_int();
 
-	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, radius, &type);
+	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, &radius, &type);
 	return script->CreateIntArrayValue(listID);
 }
 gstd::value StgStageScript::Func_SetItemAutoDeleteClip(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -3440,6 +3461,16 @@ gstd::value StgStageScript::Func_ObjEnemy_Regist(gstd::script_machine* machine, 
 		script->ActivateObject(objEnemy->GetObjectID(), true);
 	}
 
+	return value();
+}
+gstd::value StgStageScript::Func_ObjEnemy_SetAutoDelete(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgEnemyObject* obj = script->GetObjectPointerAs<StgEnemyObject>(id);
+	if (obj) {
+		bool bAutoDelete = argv[1].as_boolean();
+		obj->SetAutoDelete(bAutoDelete);
+	}
 	return value();
 }
 gstd::value StgStageScript::Func_ObjEnemy_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
