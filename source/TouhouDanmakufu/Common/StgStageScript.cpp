@@ -312,6 +312,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetEnemyIntersectionPosition", StgStageScript::Func_GetEnemyIntersectionPosition, 3 },
 	{ "GetEnemyIntersectionPositionByIdA1", StgStageScript::Func_GetEnemyIntersectionPositionByIdA1, 1 },
 	{ "GetEnemyIntersectionPositionByIdA2", StgStageScript::Func_GetEnemyIntersectionPositionByIdA2, 3 },
+	{ "SetEnemyAutoDeleteClip", StgStageScript::Func_SetEnemyAutoDeleteClip, 4 },
 	{ "LoadEnemyShotData", StgStageScript::Func_LoadEnemyShotData, 1 },
 	{ "ReloadEnemyShotData", StgStageScript::Func_ReloadEnemyShotData, 1 },
 
@@ -437,6 +438,7 @@ static const std::vector<function> stgStageFunction = {
 	//STG共通関数：敵オブジェクト操作
 	{ "ObjEnemy_Create", StgStageScript::Func_ObjEnemy_Create, 1 },
 	{ "ObjEnemy_Regist", StgStageScript::Func_ObjEnemy_Regist, 1 },
+	{ "ObjEnemy_SetAutoDelete", StgStageScript::Func_ObjEnemy_SetAutoDelete, 2 },
 	{ "ObjEnemy_GetInfo", StgStageScript::Func_ObjEnemy_GetInfo, 2 },
 	{ "ObjEnemy_SetLife", StgStageScript::Func_ObjEnemy_SetLife, 2 },
 	{ "ObjEnemy_AddLife", StgStageScript::Func_ObjEnemy_AddLife<false>, 2 },
@@ -1456,6 +1458,17 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA2(gstd::script
 	}
 
 	return script->CreateValueArrayValue(listV);
+}
+
+gstd::value StgStageScript::Func_SetEnemyAutoDeleteClip(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	DxRect<LONG> rect(-argv[0].as_int(), -argv[1].as_int(),
+		argv[2].as_int(), argv[3].as_int());
+	stageController->GetEnemyManager()->SetEnemyDeleteClip(rect);
+
+	return value();
 }
 
 gstd::value StgStageScript::Func_LoadEnemyShotData(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -3448,6 +3461,16 @@ gstd::value StgStageScript::Func_ObjEnemy_Regist(gstd::script_machine* machine, 
 		script->ActivateObject(objEnemy->GetObjectID(), true);
 	}
 
+	return value();
+}
+gstd::value StgStageScript::Func_ObjEnemy_SetAutoDelete(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgEnemyObject* obj = script->GetObjectPointerAs<StgEnemyObject>(id);
+	if (obj) {
+		bool bAutoDelete = argv[1].as_boolean();
+		obj->SetAutoDelete(bAutoDelete);
+	}
 	return value();
 }
 gstd::value StgStageScript::Func_ObjEnemy_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {

@@ -257,6 +257,7 @@ public:
 	static gstd::value Func_GetEnemyIntersectionPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetEnemyIntersectionPositionByIdA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetEnemyIntersectionPositionByIdA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_SetEnemyAutoDeleteClip(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_LoadEnemyShotData(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ReloadEnemyShotData(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
@@ -381,6 +382,7 @@ public:
 	//STG共通関数：敵オブジェクト操作
 	static gstd::value Func_ObjEnemy_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_Regist(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjEnemy_SetAutoDelete(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_SetLife(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	template<bool CHECK_MAX_DMG>
