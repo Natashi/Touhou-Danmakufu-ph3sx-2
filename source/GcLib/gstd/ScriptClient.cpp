@@ -840,21 +840,23 @@ static value _ScriptValueLerp(script_machine* machine, const value* v1, const va
 	if (v1->get_type()->get_kind() == type_data::type_kind::tk_array 
 		&& v2->get_type()->get_kind() == type_data::type_kind::tk_array)
 	{
+		value res;
 		if (v1->length_as_array() != v2->length_as_array()) {
 			std::string err = StringUtility::Format("Sizes must be the same when interpolating arrays. (%u and %u)",
 				v1->length_as_array(), v2->length_as_array());
 			machine->raise_error(err);
 		}
+		else {
+			std::vector<value> resArr;
+			resArr.resize(v1->length_as_array());
+			for (size_t i = 0; i < v1->length_as_array(); ++i) {
+				const value* a1 = &v1->index_as_array(i);
+				resArr[i] = _ScriptValueLerp(machine, a1, &v2->index_as_array(i), vx, lerpFunc);
+			}
 
-		std::vector<value> resArr;
-		resArr.resize(v1->length_as_array());
-		for (size_t i = 0; i < v1->length_as_array(); ++i) {
-			const value* a1 = &v1->index_as_array(i);
-			resArr[i] = _ScriptValueLerp(machine, a1, &v2->index_as_array(i), vx, lerpFunc);
+			res.reset(v1->get_type(), resArr);
 		}
-
-		value res;
-		res.reset(v1->get_type(), resArr);
+		
 		return res;
 	}
 	else {
