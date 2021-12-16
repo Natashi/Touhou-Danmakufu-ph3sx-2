@@ -368,6 +368,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjMove_SetAcceleration", StgStageScript::Func_ObjMove_SetAcceleration, 2 },
 	{ "ObjMove_SetMaxSpeed", StgStageScript::Func_ObjMove_SetMaxSpeed, 2 },
 	{ "ObjMove_SetAngularVelocity", StgStageScript::Func_ObjMove_SetAngularVelocity, 2 },
+	{ "ObjMove_SetAngularAcceleration", StgStageScript::Func_ObjMove_SetAngularAcceleration, 2 },
+	{ "ObjMove_SetAngularMaxVelocity", StgStageScript::Func_ObjMove_SetAngularMaxVelocity, 2 },
 	{ "ObjMove_SetDestAtSpeed", StgStageScript::Func_ObjMove_SetDestAtSpeed, 4 },
 	{ "ObjMove_SetDestAtFrame", StgStageScript::Func_ObjMove_SetDestAtFrame, 4 },
 	{ "ObjMove_SetDestAtFrame", StgStageScript::Func_ObjMove_SetDestAtFrame, 5 },	//Overloaded
@@ -376,6 +378,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjMove_AddPatternA2", StgStageScript::Func_ObjMove_AddPatternA2, 7 },
 	{ "ObjMove_AddPatternA3", StgStageScript::Func_ObjMove_AddPatternA3, 8 },
 	{ "ObjMove_AddPatternA4", StgStageScript::Func_ObjMove_AddPatternA4, 9 },
+	{ "ObjMove_AddPatternA5", StgStageScript::Func_ObjMove_AddPatternA5, 9 },
 	{ "ObjMove_AddPatternB1", StgStageScript::Func_ObjMove_AddPatternB1, 4 },
 	{ "ObjMove_AddPatternB2", StgStageScript::Func_ObjMove_AddPatternB2, 8 },
 	{ "ObjMove_AddPatternB3", StgStageScript::Func_ObjMove_AddPatternB3, 9 },
@@ -395,6 +398,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjEnemy_Create", StgStageScript::Func_ObjEnemy_Create, 1 },
 	{ "ObjEnemy_Regist", StgStageScript::Func_ObjEnemy_Regist, 1 },
 	{ "ObjEnemy_SetAutoDelete", StgStageScript::Func_ObjEnemy_SetAutoDelete, 2 },
+	{ "ObjEnemy_SetDeleteFrame", StgStageScript::Func_ObjEnemy_SetDeleteFrame, 2 },
 	{ "ObjEnemy_GetInfo", StgStageScript::Func_ObjEnemy_GetInfo, 2 },
 	{ "ObjEnemy_SetLife", StgStageScript::Func_ObjEnemy_SetLife, 2 },
 	{ "ObjEnemy_AddLife", StgStageScript::Func_ObjEnemy_AddLife<false>, 2 },
@@ -2513,6 +2517,38 @@ gstd::value StgStageScript::Func_ObjMove_SetMaxSpeed(gstd::script_machine* machi
 	}
 	return value();
 }
+gstd::value StgStageScript::Func_ObjMove_SetAngularAcceleration(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	if (obj) {
+		ref_unsync_ptr<StgMovePattern_Angle> pattern = obj->GetPattern();
+		if (pattern == nullptr) {
+			pattern = new StgMovePattern_Angle(obj);
+			obj->SetPattern(pattern);
+		}
+
+		double param = argv[1].as_real();
+		pattern->SetAngularAcceleration(Math::DegreeToRadian(param));
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjMove_SetAngularMaxVelocity(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	if (obj) {
+		ref_unsync_ptr<StgMovePattern_Angle> pattern = obj->GetPattern();
+		if (pattern == nullptr) {
+			pattern = new StgMovePattern_Angle(obj);
+			obj->SetPattern(pattern);
+		}
+
+		double param = argv[1].as_real();
+		pattern->SetAngularMaxVelocity(Math::DegreeToRadian(param));
+	}
+	return value();
+}
 
 gstd::value StgStageScript::Func_ObjMove_SetDestAtSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -2668,6 +2704,34 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA4(gstd::script_machine* mach
 			pattern->SetShotDataID(idShot);
 		if (idRelative != StgMovePattern::NO_CHANGE)
 			pattern->SetRelativeObject(idRelative);
+
+		obj->AddPattern(frame, pattern);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjMove_AddPatternA5(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	if (obj) {
+		int frame = argv[1].as_int();
+		double speed = argv[2].as_real();
+		double angle = argv[3].as_real();
+		double accel = argv[4].as_real();
+		double agvel = argv[5].as_real();
+		double maxsp = argv[6].as_real();
+		double agacc = argv[7].as_real();
+		double agmax = argv[8].as_real();
+
+		ref_unsync_ptr<StgMovePattern_Angle> pattern = new StgMovePattern_Angle(obj);
+
+		ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
+		ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
+		ADD_CMD(StgMovePattern_Angle::SET_ACCEL, accel);
+		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
+		ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
+		ADD_CMD2(StgMovePattern_Angle::SET_AGACC, agacc, Math::DegreeToRadian(agacc));
+		ADD_CMD2(StgMovePattern_Angle::SET_AGMAX, agmax, Math::DegreeToRadian(agmax));
 
 		obj->AddPattern(frame, pattern);
 	}
@@ -2957,6 +3021,16 @@ gstd::value StgStageScript::Func_ObjEnemy_SetAutoDelete(gstd::script_machine* ma
 	if (obj) {
 		bool bAutoDelete = argv[1].as_boolean();
 		obj->SetAutoDelete(bAutoDelete);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjEnemy_SetDeleteFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgEnemyObject* obj = script->GetObjectPointerAs<StgEnemyObject>(id);
+	if (obj) {
+		int frame = argv[1].as_int();
+		obj->SetAutoDeleteFrame(frame);
 	}
 	return value();
 }

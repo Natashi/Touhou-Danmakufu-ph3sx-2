@@ -122,11 +122,15 @@ public:
 		SET_AGVEL,
 		SET_SPMAX,
 		SET_SPMAX2,
+		SET_AGACC,
+		SET_AGMAX,
 		ADD_SPEED,
 		ADD_ANGLE,
 		ADD_ACCEL,
 		ADD_AGVEL,
 		ADD_SPMAX,
+		ADD_AGACC,
+		ADD_AGMAX
 	};
 protected:
 	double speed_;
@@ -134,6 +138,8 @@ protected:
 	double acceleration_;
 	double maxSpeed_;
 	double angularVelocity_;
+	double angularAcceleration_;
+	double angularMaxVelocity_;
 
 	ref_unsync_weak_ptr<StgMoveObject> objRelative_;
 
@@ -150,6 +156,8 @@ public:
 	void SetAcceleration(double accel) { acceleration_ = accel; }
 	void SetMaxSpeed(double max) { maxSpeed_ = max; }
 	void SetAngularVelocity(double av) { angularVelocity_ = av; }
+	void SetAngularAcceleration(double aa) { angularAcceleration_ = aa; }
+	void SetAngularMaxVelocity(double am) { angularMaxVelocity_ = am; }
 
 	void SetRelativeObject(ref_unsync_weak_ptr<StgMoveObject> obj) { objRelative_ = obj; }
 	void SetRelativeObject(int id) { objRelative_ = _GetMoveObject(id); }
