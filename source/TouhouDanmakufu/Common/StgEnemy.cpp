@@ -149,6 +149,8 @@ StgEnemyObject::StgEnemyObject(StgStageController* stageController) : StgMoveObj
 	intersectedPlayerShotCount_ = 0U;
 
 	bAutoDelete_ = false;
+	frameAutoDelete_ = INT_MAX;
+
 	bEnableGetIntersectionPositionFetch_ = true;
 }
 StgEnemyObject::~StgEnemyObject() {
@@ -167,6 +169,7 @@ void StgEnemyObject::Work() {
 	_Move();
 
 	_DeleteInAutoClip();
+	_DeleteInAutoDeleteFrame();
 }
 void StgEnemyObject::_DeleteInAutoClip() {
 	if (!bAutoDelete_) return;
@@ -180,6 +183,13 @@ void StgEnemyObject::_DeleteInAutoClip() {
 	if (!bDelete) return;
 
 	stageController_->GetMainObjectManager()->DeleteObject(this);
+}
+void StgEnemyObject::_DeleteInAutoDeleteFrame() {
+	if (IsDeleted()) return;
+
+	if (frameAutoDelete_ <= 0)
+		stageController_->GetMainObjectManager()->DeleteObject(this);
+	else --frameAutoDelete_;
 }
 void StgEnemyObject::_Move() {
 	StgMoveObject::_Move();

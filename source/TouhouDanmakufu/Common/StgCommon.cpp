@@ -393,8 +393,7 @@ void StgMoveParent::UpdateChildren() {
 	double py1 = posY_;
 
 	// Update angular velocity
-	rotZ_ = Math::NormalizeAngleDeg(rotZ_ + wvlZ_);
-	SetTransformAngle(rotZ_);
+	SetTransformAngle(Math::NormalizeAngleDeg(rotZ_ + wvlZ_));
 
 	auto& list = listChild_;
 	if (listChild_.size() > 0) {
@@ -481,6 +480,8 @@ StgMovePattern_Angle::StgMovePattern_Angle(StgMoveObject* target) : StgMovePatte
 	acceleration_ = 0;
 	maxSpeed_ = 0;
 	angularVelocity_ = 0;
+	angularAcceleration_ = 0;
+	angularMaxVelocity_ = 0;
 	objRelative_ = ref_unsync_weak_ptr<StgMoveObject>();
 }
 void StgMovePattern_Angle::Move() {
@@ -492,6 +493,13 @@ void StgMovePattern_Angle::Move() {
 			speed_ = std::min(speed_, maxSpeed_);
 		if (acceleration_ < 0)
 			speed_ = std::max(speed_, maxSpeed_);
+	}
+	if (angularAcceleration_ != 0) {
+		angularVelocity_ += angularAcceleration_;
+		if (angularAcceleration_ > 0)
+			angularVelocity_ = std::min(angularVelocity_, angularMaxVelocity_);
+		if (angularAcceleration_ < 0)
+			angularVelocity_ = std::max(angularVelocity_, angularMaxVelocity_);
 	}
 	if (angularVelocity_ != 0) {
 		SetDirectionAngle(angle + angularVelocity_);
@@ -508,6 +516,8 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 	double newAccel = 0;
 	double newAgVel = 0;
 	double newMaxSp = 0;
+	double newAgAcc = 0;
+	double newAgMax = 0;
 	if (_src->GetType() == TYPE_ANGLE) {
 		StgMovePattern_Angle* src = (StgMovePattern_Angle*)_src;
 		newSpeed = src->speed_;
@@ -515,6 +525,8 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 		newAccel = src->acceleration_;
 		newAgVel = src->angularVelocity_;
 		newMaxSp = src->maxSpeed_;
+		newAgAcc = src->angularAcceleration_;
+		newAgMax = src->angularMaxVelocity_;
 	}
 	else if (_src->GetType() == TYPE_XY) {
 		StgMovePattern_XY* src = (StgMovePattern_XY*)_src;
@@ -532,6 +544,8 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 			newAccel = 0;
 			newAgVel = 0;
 			newMaxSp = 0;
+			newAgAcc = 0;
+			newAgMax = 0;
 			break;
 		case SET_SPEED:
 			newSpeed = arg;
@@ -552,6 +566,12 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 			newMaxSp = arg;
 			bMaxSpeed2 = true;
 			break;
+		case SET_AGACC:
+			newAgAcc = arg;
+			break;
+		case SET_AGMAX:
+			newAgMax = arg;
+			break;
 		case ADD_SPEED:
 			newSpeed += arg;
 			break;
@@ -567,6 +587,12 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 		case ADD_SPMAX:
 			newMaxSp += arg;
 			break;
+		case ADD_AGACC:
+			newAgAcc += arg;
+			break;
+		case ADD_AGMAX:
+			newAgMax += arg;
+			break;
 		}
 	}
 
@@ -581,6 +607,8 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 	acceleration_ = newAccel;
 	angularVelocity_ = newAgVel;
 	maxSpeed_ = newMaxSp + (bMaxSpeed2 ? speed_ : 0);
+	angularAcceleration_ = newAgAcc;
+	angularMaxVelocity_ = newAgMax;
 }
 void StgMovePattern_Angle::SetDirectionAngle(double angle) {
 	if (angle != StgMovePattern::NO_CHANGE) {
