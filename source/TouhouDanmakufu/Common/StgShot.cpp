@@ -2876,6 +2876,7 @@ void StgPatternShotObjectGenerator::CleanUp() {
 
 void StgPatternShotObjectGenerator::CopyFrom(StgPatternShotObjectGenerator* other) {
 	parent_ = other->parent_;
+	shotParent_ = other->shotParent_;
 	listTransformation_ = other->listTransformation_;
 	bAutoDelete_ = other->bAutoDelete_;
 
@@ -2987,6 +2988,8 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 		shotManager->AddShot(objShot);
 
 		if (idVector) idVector->push_back(idRes);
+
+		if (shotParent_) shotParent_->AddChild(shotParent_, objShot);
 		return true;
 	};
 
