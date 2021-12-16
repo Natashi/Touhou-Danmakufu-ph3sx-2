@@ -208,6 +208,7 @@ StgMoveParent::StgMoveParent(StgStageController* stageController) {
 	typeAngle_ = ANGLE_FIXED;
 	transOrder_ = ORDER_ANGLE_SCALE;
 	bAutoDelete_ = false;
+	bAutoDeleteChildren_ = false;
 	bMoveChild_ = true;
 	bRotateLaser_ = false;
 
@@ -219,6 +220,8 @@ StgMoveParent::StgMoveParent(StgStageController* stageController) {
 	scaY_ = 1;
 	rotZ_ = 0;
 	wvlZ_ = 0;
+	accZ_ = 0;
+	maxZ_ = 0;
 }
 StgMoveParent::~StgMoveParent() {
 	if (listChild_.size() > 0) {
@@ -240,10 +243,21 @@ void StgMoveParent::Work() {
 	UpdateChildren();
 }
 void StgMoveParent::CleanUp() {
-	if (target_ == nullptr && bAutoDelete_) {
-		auto objectManager = stageController_->GetMainObjectManager();
-		objectManager->DeleteObject(this);
-		return;
+	if (target_ == nullptr) {
+		if (bAutoDeleteChildren_) {
+			auto objectManager = stageController_->GetMainObjectManager();
+			for (auto& iChild : listChild_) {
+				if (iChild) {
+					int childID = dynamic_cast<DxScriptObjectBase*>(iChild.get())->GetObjectID();
+					objectManager->DeleteObject(childID);
+				}
+			}
+		}
+		if (bAutoDelete_) {
+			auto objectManager = stageController_->GetMainObjectManager();
+			objectManager->DeleteObject(this);
+			return;
+		}
 	}
 	if (listChild_.size() > 0) {
 		auto iter = listChild_.begin();
@@ -384,6 +398,22 @@ void StgMoveParent::MoveChild(StgMoveObject* child) {
 		}
 	}
 }
+
+void StgMoveParent::UpdatePosition() {
+	posX_ = target_ ? target_->posX_ : 0;
+	posY_ = target_ ? target_->posY_ : 0;
+
+	if (accZ_ != 0) {
+		wvlZ_ += accZ_;
+		if (accZ_ > 0)
+			wvlZ_ = std::min(wvlZ_, maxZ_);
+		if (accZ_ < 0)
+			wvlZ_ = std::max(wvlZ_, maxZ_);
+	}
+	if (wvlZ_ != 0) {
+		rotZ_ = Math::NormalizeAngleDeg(rotZ_ + wvlZ_);
+	}
+}
 void StgMoveParent::UpdateChildren() {
 	// This looks stupid but please have faith in me
 	double px0 = posX_;
@@ -391,9 +421,6 @@ void StgMoveParent::UpdateChildren() {
 	UpdatePosition();
 	double px1 = posX_;
 	double py1 = posY_;
-
-	// Update angular velocity
-	SetTransformAngle(Math::NormalizeAngleDeg(rotZ_ + wvlZ_));
 
 	auto& list = listChild_;
 	if (listChild_.size() > 0) {

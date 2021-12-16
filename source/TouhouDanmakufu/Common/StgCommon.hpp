@@ -111,6 +111,7 @@ protected:
 	int typeAngle_;
 	int transOrder_;
 	bool bAutoDelete_;
+	bool bAutoDeleteChildren_;
 	bool bMoveChild_;
 	bool bRotateLaser_;
 	bool bTransformMove_;
@@ -123,6 +124,8 @@ protected:
 	double scaY_;
 	double rotZ_;
 	double wvlZ_;
+	double accZ_;
+	double maxZ_;
 	double lastX_;
 	double lastY_;
 	std::vector<ref_unsync_weak_ptr<StgMoveObject>> listChild_;
@@ -139,6 +142,7 @@ public:
 	void SetParentObject(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> parent);
 	ref_unsync_weak_ptr<StgMoveParent> GetParentObject() { return target_;  }
 	void SetAutoDelete(bool enable) { bAutoDelete_ = enable; }
+	void SetAutoDeleteChildren(bool enable) { bAutoDeleteChildren_ = enable; }
 	void AddChild(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> child);
 	std::vector<ref_unsync_weak_ptr<StgMoveObject>>& GetChildren() { return listChild_; }
 	void RemoveChildren();
@@ -148,11 +152,12 @@ public:
 	void SetTransformScaleX(double x) { scaX_ = Unzero(x); }
 	void SetTransformScaleY(double y) { scaY_ = Unzero(y); }
 	void SetTransformAngle(double z);
-	void SetTransformAngularVelocity(double w) { wvlZ_ = w; }
+	void SetTransformAngularVelocity(double wv) { wvlZ_ = wv; }
+	void SetTransformAngularAcceleration(double wa) { accZ_ = wa; }
+	void SetTransformAngularMaxVelocity(double wm) { maxZ_ = wm; }
 	double GetTransformScaleX() { return scaX_; }
 	double GetTransformScaleY() { return scaY_; }
 	double GetTransformAngle() { return rotZ_; }
-	double GetTransformAngularVelocity() { return wvlZ_; }
 	// double GetRadiusAtAngle(double angle);
 	void SetChildAngleMode(int type) { typeAngle_ = type; }
 	int GetChildAngleMode() { return typeAngle_;  }
@@ -162,14 +167,11 @@ public:
 	void SetTransformOrder(int order) { transOrder_ = order; }
 	void ApplyTransformation();
 	void ResetTransformation() { scaX_ = 1; scaY_ = 1; rotZ_ = 0; }
-	inline void UpdatePosition() {
-		posX_ = target_ ? target_->posX_ : 0;
-		posY_ = target_ ? target_->posY_ : 0;
-	}
 	inline double GetX() { return posX_ + offX_; }
 	inline double GetY() { return posY_ + offY_; }
 	void MoveChild(StgMoveObject* child);
 
+	void UpdatePosition();
 	void UpdateChildren();
 
 	static inline double Unzero(double s) {

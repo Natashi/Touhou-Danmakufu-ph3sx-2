@@ -359,6 +359,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetParentObject);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetParentObject);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetAutoDelete);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetAutoDeleteChildren);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_AddChild);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetChildren);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_RemoveChildren);
@@ -369,10 +370,11 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformScaleY);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformAngle);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformAngularVelocity);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformAngularAcceleration);
+	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetTransformAngularMaxVelocity);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetTransformScaleX);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetTransformScaleY);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetTransformAngle);
-	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetTransformAngularVelocity);
 	// DNH_FUNCAPI_DECL_(Func_ObjMoveParent_GetRadiusAtAngle);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetChildAngleMode);
 	DNH_FUNCAPI_DECL_(Func_ObjMoveParent_SetChildMotionEnable);
