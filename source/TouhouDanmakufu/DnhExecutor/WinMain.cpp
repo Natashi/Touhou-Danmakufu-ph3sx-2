@@ -9,7 +9,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	HWND handleWindow = nullptr;
 
 	try {
-		std::locale::global(std::locale("")); // Is this allowed?
+		std::setlocale(LC_ALL, "");
+		std::setlocale(LC_NUMERIC, "C");
 		
 		gstd::SystemUtility::TestCpuSupportSIMD();
 
