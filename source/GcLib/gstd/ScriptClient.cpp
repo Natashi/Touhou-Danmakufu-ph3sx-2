@@ -1425,30 +1425,31 @@ value ScriptClientBase::Func_Interpolate_X_Packed(script_machine* machine, int a
 	return CreateIntValue(res);
 }
 // :souperdying:
-value ScriptClientBase::Func_Interpolate_X_Array(script_machine* machine, int argc, const value* argv) { 
+value ScriptClientBase::Func_Interpolate_X_Array(script_machine* machine, int argc, const value* argv) {
+	BaseFunction::_null_check(machine, argv, argc);
+
+	const value* val = &argv[0];
+	type_data* valType = val->get_type();
+
+	if (valType->get_kind() != type_data::tk_array || val->length_as_array() == 0) {
+		BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "Interpolate_X_Array");
+		return value();
+	}
+
+	std::vector<value> arr = *(val->as_array_ptr());
 	double x = argv[1].as_real();
 
-	size_t len = argv[0].length_as_array();
-	int from = (int)floor(x);
+	size_t len = arr.size();
 
-	while (from < 0) {
-		x += len;
-		from += len;
-	}
-	while (from >= len) {
-		x -= len;
-		from -= len;
-	}
-	
-
-	int to = from + 1;
-	if (to >= len) to -= len;
-	double x2 = x - from;
+	x = fmod(fmod(x, len) + len, len);
+	int from = floor(x);
+	int to = (from + 1) % len;
+	x -= from;
 
     Math::Lerp::Type type = (Math::Lerp::Type)argv[2].as_int();
 	auto lerpFunc =  Math::Lerp::GetFunc<double, double>(type);
 
-	return ScriptClientBase::CreateRealValue(lerpFunc(argv[0].index_as_array(from).as_real(), argv[0].index_as_array(to).as_real(), x2));
+	return _ScriptValueLerp(machine, &arr[from], &arr[to], x, lerpFunc);
 }
 
 value ScriptClientBase::Func_Rotate2D(script_machine* machine, int argc, const value* argv) {
