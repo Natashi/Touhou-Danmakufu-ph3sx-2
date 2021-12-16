@@ -69,12 +69,15 @@ protected:
 	size_t intersectedPlayerShotCount_;
 
 	bool bAutoDelete_;
+	int frameAutoDelete_;
+
 	bool bEnableGetIntersectionPositionFetch_;
 
 	std::vector<ref_unsync_weak_ptr<StgIntersectionTarget>> ptrIntersectionToShot_;
 	std::vector<ref_unsync_weak_ptr<StgIntersectionTarget>> ptrIntersectionToPlayer_;
 
 	void _DeleteInAutoClip();
+	void _DeleteInAutoDeleteFrame();
 	virtual void _Move();
 	virtual void _AddRelativeIntersection();
 public:
@@ -93,6 +96,7 @@ public:
 	ref_unsync_ptr<StgEnemyObject> GetOwnObject();
 
 	void SetAutoDelete(bool b) { bAutoDelete_ = b; }
+	void SetAutoDeleteFrame(int frame) { frameAutoDelete_ = frame; }
 
 	double GetLife() { return life_; }
 	double GetLifeDelta() { return lifeDelta_; }
