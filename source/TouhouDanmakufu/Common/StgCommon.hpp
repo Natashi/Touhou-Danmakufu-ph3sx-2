@@ -114,7 +114,7 @@ protected:
 	bool bAutoDeleteChildren_;
 	bool bMoveChild_;
 	bool bRotateLaser_;
-	bool bTransformMove_;
+	// bool bTransformMove_;
 
 	double posX_;
 	double posY_;
@@ -163,7 +163,7 @@ public:
 	int GetChildAngleMode() { return typeAngle_;  }
 	void SetChildMotionEnable(bool enable) { bMoveChild_ = enable; }
 	void SetLaserRotationEnable(bool enable) { bRotateLaser_ = enable; }
-	void SetChildMotionTransformEnable(bool enable) { bTransformMove_ = enable;  }
+	// void SetChildMotionTransformEnable(bool enable) { bTransformMove_ = enable;  }
 	void SetTransformOrder(int order) { transOrder_ = order; }
 	void ApplyTransformation();
 	void ResetTransformation() { scaX_ = 1; scaY_ = 1; rotZ_ = 0; }
