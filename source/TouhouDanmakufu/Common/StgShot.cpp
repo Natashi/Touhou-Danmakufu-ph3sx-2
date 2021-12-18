@@ -987,10 +987,25 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 		break;
 	}
 	case StgIntersectionTarget::TYPE_ENEMY:
+	{
+		//Don't reduce penetration with lasers
+		if (!bSpellResist_ && dynamic_cast<StgLaserObject*>(this) == nullptr) {
+			bool bHit = listHitEnemy_.size() == 0 || std::find_if(listHitEnemy_.begin(), listHitEnemy_.end(),
+				[&obj](const std::pair<ref_unsync_weak_ptr<StgEnemyObject>, int>& element) { return element.first == obj; }) == listHitEnemy_.end();
+
+			if (bHit) {
+				--life_;
+				if (life_ == 0) {
+					_RequestPlayerDeleteEvent(obj.IsExists() ? obj->GetDxScriptObjectID() : DxScript::ID_INVALID);
+				}
+			}
+		}
+		break;
+	}
 	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 	{
 		//Don't reduce penetration with lasers
-		if (!bSpellResist_ && dynamic_cast<StgLaserObject*>(this) == nullptr && (otherType == StgIntersectionTarget::TYPE_ENEMY || bPenetrateShot_)) {
+		if (!bSpellResist_ && dynamic_cast<StgLaserObject*>(this) == nullptr && bPenetrateShot_) {
 			--life_;
 			if (life_ == 0) {
 				_RequestPlayerDeleteEvent(obj.IsExists() ? obj->GetDxScriptObjectID() : DxScript::ID_INVALID);
