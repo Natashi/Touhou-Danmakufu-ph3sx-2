@@ -172,11 +172,11 @@ static const std::vector<function> commonFunction = {
 	{ "reset_count_prand", ScriptClientBase::Func_ResetRandEffCount, 0 },
 
 	//Interpolation
-	{ "Interpolate_Linear", ScriptClientBase::Func_Interpolate_Linear, 3 },
-	{ "Interpolate_Smooth", ScriptClientBase::Func_Interpolate_Smooth, 3 },
-	{ "Interpolate_Smoother", ScriptClientBase::Func_Interpolate_Smoother, 3 },
-	{ "Interpolate_Accelerate", ScriptClientBase::Func_Interpolate_Accelerate, 3 },
-	{ "Interpolate_Decelerate", ScriptClientBase::Func_Interpolate_Decelerate, 3 },
+	{ "Interpolate_Linear", ScriptClientBase::Func_Interpolate<Math::Lerp::Linear>, 3 },
+	{ "Interpolate_Smooth", ScriptClientBase::Func_Interpolate<Math::Lerp::Smooth>, 3 },
+	{ "Interpolate_Smoother", ScriptClientBase::Func_Interpolate<Math::Lerp::Smoother>, 3 },
+	{ "Interpolate_Accelerate", ScriptClientBase::Func_Interpolate<Math::Lerp::Accelerate>, 3 },
+	{ "Interpolate_Decelerate", ScriptClientBase::Func_Interpolate<Math::Lerp::Decelerate>, 3 },
 	{ "Interpolate_Modulate", ScriptClientBase::Func_Interpolate_Modulate, 4 },
 	{ "Interpolate_Overshoot", ScriptClientBase::Func_Interpolate_Overshoot, 4 },
 	{ "Interpolate_QuadraticBezier", ScriptClientBase::Func_Interpolate_QuadraticBezier, 4 },
@@ -1286,25 +1286,10 @@ static value _ScriptValueLerp(script_machine* machine, const value* v1, const va
 		return ScriptClientBase::CreateRealValue(lerpFunc(v1->as_real(), v2->as_real(), vx));
 	}
 }
-value ScriptClientBase::Func_Interpolate_Linear(script_machine* machine, int argc, const value* argv) {
+template<double (*func)(double, double, double)>
+value ScriptClientBase::Func_Interpolate(script_machine* machine, int argc, const value* argv) {
 	double x = argv[2].as_real();
-	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, Math::Lerp::Linear);
-}
-value ScriptClientBase::Func_Interpolate_Smooth(script_machine* machine, int argc, const value* argv) {
-	double x = argv[2].as_real();
-	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, Math::Lerp::Smooth);
-}
-value ScriptClientBase::Func_Interpolate_Smoother(script_machine* machine, int argc, const value* argv) {
-	double x = argv[2].as_real();
-	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, Math::Lerp::Smoother);
-}
-value ScriptClientBase::Func_Interpolate_Accelerate(script_machine* machine, int argc, const value* argv) {
-	double x = argv[2].as_real();
-	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, Math::Lerp::Accelerate);
-}
-value ScriptClientBase::Func_Interpolate_Decelerate(script_machine* machine, int argc, const value* argv) {
-	double x = argv[2].as_real();
-	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, Math::Lerp::Decelerate);
+	return _ScriptValueLerp(machine, &argv[0], &argv[1], x, func);
 }
 value ScriptClientBase::Func_Interpolate_Modulate(script_machine* machine, int argc, const value* argv) {
 	double a = argv[0].as_real();
