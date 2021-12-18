@@ -1004,7 +1004,7 @@ void StgShotObject::_CommonWorkTask() {
 		auto& itr = listHitEnemy_.begin();
 		while (itr != listHitEnemy_.end()) {
 			--itr->second;
-			if (itr->second <= 0)
+			if (itr->second == 0)
 				itr = listHitEnemy_.erase(itr);
 			else
 				++itr;
@@ -1079,32 +1079,23 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 	}
 	case StgIntersectionTarget::TYPE_ENEMY:
 	{
-		//Don't reduce penetration with lasers
-		if (!bSpellResist_ && dynamic_cast<StgLaserObject*>(this) == nullptr) {
+		if (!bSpellResist_) {
 			bool bHit = listHitEnemy_.size() == 0 || std::find_if(listHitEnemy_.begin(), listHitEnemy_.end(),
 				[&obj](const std::pair<ref_unsync_weak_ptr<StgEnemyObject>, int>& element) { return element.first == obj; }) == listHitEnemy_.end();
 
-			if (bHit) {
-				--life_;
-				if (life_ == 0) {
-					_RequestPlayerDeleteEvent(obj.IsExists() ? obj->GetDxScriptObjectID() : DxScript::ID_INVALID);
-				}
-			}
+			if (bHit) --life_;
 		}
 		break;
 	}
 	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 	{
-		//Don't reduce penetration with lasers
-		if (!bSpellResist_ && dynamic_cast<StgLaserObject*>(this) == nullptr && bPenetrateShot_) {
-			--life_;
-			if (life_ == 0) {
-				_RequestPlayerDeleteEvent(obj.IsExists() ? obj->GetDxScriptObjectID() : DxScript::ID_INVALID);
-			}
-		}
+		if (!bSpellResist_ && bPenetrateShot_) --life_;
 		break;
 	}
 	}
+
+	if (life_ == 0)
+		_RequestPlayerDeleteEvent(obj.IsExists() ? obj->GetDxScriptObjectID() : DxScript::ID_INVALID);
 }
 StgShotData* StgShotObject::_GetShotData(int id) {
 	StgShotData* res = nullptr;
