@@ -59,14 +59,15 @@ namespace gstd {
 	static inline const bool _is_force_convert_real(type_data* type) {
 		return type->get_kind() & (type_data::tk_real | type_data::tk_array);
 	}
-	static const void _raise_error_unsupported(script_machine* machine, type_data* type, const std::string& op_name) {
+
+	//-------------------------------------------------------------------------------------------
+
+	const void BaseFunction::_raise_error_unsupported(script_machine* machine, type_data* type, const std::string& op_name) {
 		std::string error = StringUtility::Format("This value type does not support the %s operation: %s\r\n",
 			op_name.c_str(), type_data::string_representation(type).c_str());
 		if (machine) machine->raise_error(error);
 		else throw error;
 	}
-
-	//-------------------------------------------------------------------------------------------
 
 	type_data::type_kind BaseFunction::_type_test_promotion(type_data* type_l, type_data* type_r) {
 		uint8_t kind_l = type_l->get_kind();
