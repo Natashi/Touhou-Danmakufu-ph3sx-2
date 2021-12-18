@@ -403,6 +403,8 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetGrazeInvalidFrame);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetGrazeFrame);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_IsValidGraze);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetPenetrateShotEnable);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetEnemyIntersectionInvalidFrame);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetFixedAngle);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetSpinAngularVelocity);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayAngularVelocity);
