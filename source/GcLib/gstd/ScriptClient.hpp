@@ -249,11 +249,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_ReflectAngleR);
 
 		//Math functions; interpolation
-		DNH_FUNCAPI_DECL_(Func_Interpolate_Linear);
-		DNH_FUNCAPI_DECL_(Func_Interpolate_Smooth);
-		DNH_FUNCAPI_DECL_(Func_Interpolate_Smoother);
-		DNH_FUNCAPI_DECL_(Func_Interpolate_Accelerate);
-		DNH_FUNCAPI_DECL_(Func_Interpolate_Decelerate);
+		template<double (*func)(double, double, double)>
+		DNH_FUNCAPI_DECL_(Func_Interpolate);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Modulate);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_Overshoot);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_QuadraticBezier);
