@@ -511,6 +511,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjShot_SetGrazeInvalidFrame", StgStageScript::Func_ObjShot_SetGrazeInvalidFrame, 2 },
 	{ "ObjShot_SetGrazeFrame", StgStageScript::Func_ObjShot_SetGrazeFrame, 2 },
 	{ "ObjShot_IsValidGraze", StgStageScript::Func_ObjShot_IsValidGraze, 1 },
+	{ "ObjShot_SetPenetrateShotEnable", StgStageScript::Func_ObjShot_SetPenetrateShotEnable, 2 },
+	{ "ObjShot_SetEnemyIntersectionInvalidFrame", StgStageScript::Func_ObjShot_SetEnemyIntersectionInvalidFrame, 2 },
 	{ "ObjShot_SetFixedAngle", StgStageScript::Func_ObjShot_SetFixedAngle, 2 },
 	{ "ObjShot_SetSpinAngularVelocity", StgStageScript::Func_ObjShot_SetSpinAngularVelocity, 2 },
 	{ "ObjShot_SetDelayAngularVelocity", StgStageScript::Func_ObjShot_SetDelayAngularVelocity, 2 },
@@ -4544,6 +4546,24 @@ gstd::value StgStageScript::Func_ObjShot_IsValidGraze(gstd::script_machine* mach
 		res = obj->IsValidGraze();
 
 	return script->CreateBooleanValue(res);
+}
+gstd::value StgStageScript::Func_ObjShot_SetPenetrateShotEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	if (StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id))) {
+		bool enable = argv[1].as_boolean();
+		obj->SetPenetrateShotEnable(enable);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_SetEnemyIntersectionInvalidFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	if (StgShotObject* obj = dynamic_cast<StgShotObject*>(script->GetObjectPointer(id))) {
+		int frame = argv[1].as_int();
+		obj->SetEnemyIntersectionInvalidFrame(frame);
+	}
+	return value();
 }
 gstd::value StgStageScript::Func_ObjShot_SetFixedAngle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;

@@ -883,6 +883,9 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 	frameGrazeInvalid_ = 0;
 	frameGrazeInvalidStart_ = -1;
 
+	bPenetrateShot_ = true;
+	frameEnemyHitInvalid_ = 0;
+
 	frameFadeDelete_ = -1;
 	frameAutoDelete_ = INT_MAX;
 
@@ -996,6 +999,18 @@ void StgShotObject::_CommonWorkTask() {
 		_DeleteInFadeDelete();
 	}
 	--frameGrazeInvalid_;
+
+	if (listHitEnemy_.size() > 0) {
+		auto& itr = listHitEnemy_.begin();
+		while (itr != listHitEnemy_.end()) {
+			--itr->second;
+			if (itr->second <= 0)
+				itr = listHitEnemy_.erase(itr);
+			else
+				++itr;
+		}
+	}
+
 }
 void StgShotObject::_SendDeleteEvent(int bit) {
 	if (typeOwner_ != OWNER_ENEMY) return;
@@ -1066,7 +1081,7 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 	{
 		//Don't reduce penetration with lasers
-		if (!bSpellResist_ && dynamic_cast<StgLaserObject*>(this) == nullptr) {
+		if (!bSpellResist_ && dynamic_cast<StgLaserObject*>(this) == nullptr && (otherType == StgIntersectionTarget::TYPE_ENEMY || bPenetrateShot_)) {
 			--life_;
 			if (life_ == 0) {
 				_RequestPlayerDeleteEvent(obj.IsExists() ? obj->GetDxScriptObjectID() : DxScript::ID_INVALID);
