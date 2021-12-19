@@ -723,12 +723,14 @@ static const std::vector<constant> stgStageConstant = {
 	constant("TARGET_ENEMY", StgStageScript::TARGET_ENEMY),
 	constant("TARGET_PLAYER", StgStageScript::TARGET_PLAYER),
 
-	//AddPattern constants
+	//Movement types
 	constant("MOVE_OTHER", StgMovePattern::TYPE_OTHER),
 	constant("MOVE_ANGLE", StgMovePattern::TYPE_ANGLE),
 	constant("MOVE_XY", StgMovePattern::TYPE_XY),
 	constant("MOVE_XY_ANGLE", StgMovePattern::TYPE_XY_ANG),
-	constant("MOVE_LINE", StgMovePattern::TYPE_XY_ANG),
+	constant("MOVE_LINE", StgMovePattern::TYPE_LINE),
+
+	//AddPattern constants
 	constant("TOPLAYER_CHANGE", StgMovePattern::TOPLAYER_CHANGE),
 	constant("NO_CHANGE", StgMovePattern::NO_CHANGE),
 };
