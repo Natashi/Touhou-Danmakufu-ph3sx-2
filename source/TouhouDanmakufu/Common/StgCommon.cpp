@@ -174,6 +174,13 @@ void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
 		newAccel = hypot(src->GetAccelerationX(), src->GetAccelerationY());
 		newMaxSp = hypot(src->GetMaxSpeedX(), src->GetMaxSpeedY());
 	}
+	else if (_src->GetType() == TYPE_XY_ANG) {
+		StgMovePattern_XY_Angle* src = (StgMovePattern_XY_Angle*)_src;
+		newSpeed = src->GetSpeed();
+		newAngle = src->GetDirectionAngle();
+		newAccel = hypot(src->GetAccelerationX(), src->GetAccelerationY());
+		newMaxSp = hypot(src->GetMaxSpeedX(), src->GetMaxSpeedY());
+	}
 
 	bool bMaxSpeed2 = false;
 	for (auto& pairCmd : listCommand_) {
@@ -267,8 +274,8 @@ StgMovePattern_XY::StgMovePattern_XY(StgMoveObject* target) : StgMovePattern(tar
 	s_ = 0;
 	accelerationX_ = 0;
 	accelerationY_ = 0;
-	maxSpeedX_ = INT_MAX;
-	maxSpeedY_ = INT_MAX;
+	maxSpeedX_ = 0;
+	maxSpeedY_ = 0;
 }
 void StgMovePattern_XY::Move() {
 	if (accelerationX_ != 0) {
@@ -314,6 +321,25 @@ void StgMovePattern_XY::_Activate(StgMovePattern* _src) {
 			maxSpeedY_ = s * src->maxSpeed_;
 		}
 	}
+	if (_src->GetType() == TYPE_XY_ANG) {
+		StgMovePattern_XY_Angle* src = (StgMovePattern_XY_Angle*)_src;
+		double sc[2];
+		Math::DoSinCos(src->angOff_, sc);
+
+		double c = src->c_;
+		double s = src->s_;
+		double ax = src->accelerationX_;
+		double ay = src->accelerationY_;
+		double mx = src->maxSpeedX_;
+		double my = src->maxSpeedY_;
+
+		c_ = c * sc[1] - s * sc[0];
+		s_ = c * sc[0] + s * sc[1];
+		accelerationX_ = ax * sc[1] - ay * sc[0];
+		accelerationY_ = ax * sc[0] + ay * sc[1];
+		maxSpeedX_ = mx * sc[1] - my * sc[0];
+		maxSpeedY_ = mx * sc[0] + my * sc[1];
+	}
 
 	for (auto& pairCmd : listCommand_) {
 		double& arg = pairCmd.second;
@@ -341,6 +367,141 @@ void StgMovePattern_XY::_Activate(StgMovePattern* _src) {
 			break;
 		case SET_M_Y:
 			maxSpeedY_ = arg;
+			break;
+		}
+	}
+}
+
+//****************************************************************************
+//StgMovePattern_XY_Angle
+//****************************************************************************
+StgMovePattern_XY_Angle::StgMovePattern_XY_Angle(StgMoveObject* target) : StgMovePattern(target) {
+	typeMove_ = TYPE_XY_ANG;
+	c_ = 0;
+	s_ = 0;
+	accelerationX_ = 0;
+	accelerationY_ = 0;
+	maxSpeedX_ = 0;
+	maxSpeedY_ = 0;
+	angOff_ = 0;
+	angOffVelocity_ = 0;
+	angOffAcceleration_ = 0;
+	angOffMaxVelocity_ = 0;
+}
+void StgMovePattern_XY_Angle::Move() {
+	if (accelerationX_ != 0) {
+		c_ += accelerationX_;
+		if (accelerationX_ > 0)
+			c_ = std::min(c_, maxSpeedX_);
+		if (accelerationX_ < 0)
+			c_ = std::max(c_, maxSpeedX_);
+	}
+	if (accelerationY_ != 0) {
+		s_ += accelerationY_;
+		if (accelerationY_ > 0)
+			s_ = std::min(s_, maxSpeedY_);
+		if (accelerationY_ < 0)
+			s_ = std::max(s_, maxSpeedY_);
+	}
+	if (angOffVelocity_ != 0) {
+		angOff_ += angOffVelocity_;
+	}
+
+	double sc[2];
+	Math::DoSinCos(angOff_, sc);
+
+	target_->SetPositionX(target_->GetPositionX() + c_ * sc[1] - s_ * sc[0]);
+	target_->SetPositionY(target_->GetPositionY() + c_ * sc[0] + s_ * sc[1]);
+
+	++frameWork_;
+}
+void StgMovePattern_XY_Angle::_Activate(StgMovePattern* _src) {
+	if (_src->GetType() == TYPE_XY) {
+		StgMovePattern_XY* src = (StgMovePattern_XY*)_src;
+		c_ = src->c_;
+		s_ = src->s_;
+		accelerationX_ = src->accelerationX_;
+		accelerationY_ = src->accelerationY_;
+		maxSpeedX_ = src->maxSpeedX_;
+		maxSpeedY_ = src->maxSpeedY_;
+		angOff_ = 0;
+		angOffVelocity_ = 0;
+		angOffAcceleration_ = 0;
+		angOffMaxVelocity_ = 0;
+	}
+	else if (_src->GetType() == TYPE_ANGLE) {
+		StgMovePattern_Angle* src = (StgMovePattern_Angle*)_src;
+		c_ = src->GetSpeedX();
+		s_ = src->GetSpeedY();
+		{
+			double c = c_ / src->speed_;
+			double s = s_ / src->speed_;
+			accelerationX_ = c * src->acceleration_;
+			accelerationY_ = s * src->acceleration_;
+			maxSpeedX_ = c * src->maxSpeed_;
+			maxSpeedY_ = s * src->maxSpeed_;
+			angOff_ = 0;
+			angOffVelocity_ = 0;
+			angOffAcceleration_ = 0;
+			angOffMaxVelocity_ = 0;
+		}
+	}
+	if (_src->GetType() == TYPE_XY_ANG) {
+		StgMovePattern_XY_Angle* src = (StgMovePattern_XY_Angle*)_src;
+		c_ = src->c_;
+		s_ = src->s_;
+		accelerationX_ = src->accelerationX_;
+		accelerationY_ = src->accelerationY_;
+		maxSpeedX_ = src->maxSpeedX_;
+		maxSpeedY_ = src->maxSpeedY_;
+		angOff_ = src->angOff_;
+		angOffVelocity_ = src->angOffVelocity_;
+		angOffAcceleration_ = src->angOffAcceleration_;
+		angOffMaxVelocity_ = src->angOffMaxVelocity_;
+	}
+
+	for (auto& pairCmd : listCommand_) {
+		double& arg = pairCmd.second;
+		switch (pairCmd.first) {
+		case SET_ZERO:
+			accelerationX_ = 0;
+			accelerationY_ = 0;
+			maxSpeedX_ = 0;
+			maxSpeedY_ = 0;
+			angOff_ = 0;
+			angOffVelocity_ = 0;
+			angOffAcceleration_ = 0;
+			angOffMaxVelocity_ = 0;
+			break;
+		case SET_S_X:
+			c_ = arg;
+			break;
+		case SET_S_Y:
+			s_ = arg;
+			break;
+		case SET_A_X:
+			accelerationX_ = arg;
+			break;
+		case SET_A_Y:
+			accelerationY_ = arg;
+			break;
+		case SET_M_X:
+			maxSpeedX_ = arg;
+			break;
+		case SET_M_Y:
+			maxSpeedY_ = arg;
+			break;
+		case SET_ANGLE:
+			angOff_ = arg;
+			break;
+		case SET_AGVEL:
+			angOffVelocity_ = arg;
+			break;
+		case SET_AGACC:
+			angOffAcceleration_ = arg;
+			break;
+		case SET_AGMAX:
+			angOffMaxVelocity_ = arg;
 			break;
 		}
 	}
