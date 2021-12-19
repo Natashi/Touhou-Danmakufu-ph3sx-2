@@ -388,6 +388,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjMove_AddPatternC1", StgStageScript::Func_ObjMove_AddPatternC1, 5 },
 	{ "ObjMove_AddPatternC2", StgStageScript::Func_ObjMove_AddPatternC2, 10 },
 	{ "ObjMove_AddPatternC3", StgStageScript::Func_ObjMove_AddPatternC3, 11 },
+	{ "ObjMove_AddPatternC4", StgStageScript::Func_ObjMove_AddPatternC4, 12 },
 	{ "ObjMove_GetX", StgStageScript::Func_ObjMove_GetX, 1 },
 	{ "ObjMove_GetY", StgStageScript::Func_ObjMove_GetY, 1 },
 	{ "ObjMove_GetSpeed", StgStageScript::Func_ObjMove_GetSpeed, 1 },
@@ -3030,6 +3031,40 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternC3(gstd::script_machine* mach
 
 		if (idShot != StgMovePattern::NO_CHANGE)
 			pattern->SetShotDataID(idShot);
+
+		obj->AddPattern(frame, pattern);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjMove_AddPatternC4(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
+	if (obj) {
+		int frame = argv[1].as_int();
+		double speedX = argv[2].as_real();
+		double speedY = argv[3].as_real();
+		double accelX = argv[4].as_real();
+		double accelY = argv[5].as_real();
+		double maxspX = argv[6].as_real();
+		double maxspY = argv[7].as_real();
+		double angOff = argv[8].as_real();
+		double angVel = argv[9].as_real();
+		double angAcc = argv[10].as_real();
+		double angMax = argv[11].as_real();
+
+		ref_unsync_ptr<StgMovePattern_XY_Angle> pattern = new StgMovePattern_XY_Angle(obj);
+
+		ADD_CMD(StgMovePattern_XY_Angle::SET_S_X, speedX);
+		ADD_CMD(StgMovePattern_XY_Angle::SET_S_Y, speedY);
+		ADD_CMD(StgMovePattern_XY_Angle::SET_A_X, accelX);
+		ADD_CMD(StgMovePattern_XY_Angle::SET_A_Y, accelY);
+		ADD_CMD(StgMovePattern_XY_Angle::SET_M_X, maxspX);
+		ADD_CMD(StgMovePattern_XY_Angle::SET_M_Y, maxspY);
+		ADD_CMD2(StgMovePattern_XY_Angle::SET_ANGLE, angOff, Math::DegreeToRadian(angOff));
+		ADD_CMD2(StgMovePattern_XY_Angle::SET_AGVEL, angVel, Math::DegreeToRadian(angVel));
+		ADD_CMD2(StgMovePattern_XY_Angle::SET_AGACC, angAcc, Math::DegreeToRadian(angAcc));
+		ADD_CMD2(StgMovePattern_XY_Angle::SET_AGMAX, angMax, Math::DegreeToRadian(angMax));
 
 		obj->AddPattern(frame, pattern);
 	}

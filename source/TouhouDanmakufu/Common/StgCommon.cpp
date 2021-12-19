@@ -403,6 +403,13 @@ void StgMovePattern_XY_Angle::Move() {
 		if (accelerationY_ < 0)
 			s_ = std::max(s_, maxSpeedY_);
 	}
+	if (angOffAcceleration_ != 0) {
+		angOffVelocity_ += angOffAcceleration_;
+		if (angOffAcceleration_ > 0)
+			angOffVelocity_ = std::min(angOffVelocity_, angOffMaxVelocity_);
+		if (angOffAcceleration_ < 0)
+			angOffVelocity_ = std::max(angOffVelocity_, angOffMaxVelocity_);
+	}
 	if (angOffVelocity_ != 0) {
 		angOff_ += angOffVelocity_;
 	}
