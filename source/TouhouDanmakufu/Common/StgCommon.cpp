@@ -138,7 +138,7 @@ void StgMoveObject::RemoveParent(ref_unsync_weak_ptr<StgMoveObject> self, bool b
 		UpdateRelativePosition();
 	}
 }
-void StgMoveObject::UpdateRelativePosition() { // Optimize later I guess?
+void StgMoveObject::UpdateRelativePosition(bool bUseTrans) { // Optimize later I guess?
 	if (parent_) {
 		// If parent exists, reverse its transformation
 		double pX = parent_->posX_ + parent_->offX_;
@@ -150,16 +150,25 @@ void StgMoveObject::UpdateRelativePosition() { // Optimize later I guess?
 		double cX = posX_ - pX;
 		double cY = posY_ - pY;
 
-		double sc[2]{ 0, 1 };
-		if (pRotZ != 0) Math::DoSinCos(Math::DegreeToRadian(-pRotZ), sc);
+		if (bUseTrans) {
+			double sc[2]{ 0, 1 };
+			if (pRotZ != 0) Math::DoSinCos(-pRotZ, sc);
 
-		if (pScaX != pScaY && parent_->transOrder_ == StgMoveParent::ORDER_SCALE_ANGLE) {
-			offX_ = sc[1] * cX / pScaX - sc[0] * cY / pScaY;
-			offY_ = sc[0] * cX / pScaX + sc[1] * cY / pScaY;
+			if (pScaX == 0) pScaX = 0.000001;
+			if (pScaY == 0) pScaY = 0.000001;
+
+			if (pScaX != pScaY && parent_->transOrder_ == StgMoveParent::ORDER_SCALE_ANGLE) {
+				offX_ = sc[1] * cX / pScaX - sc[0] * cY / pScaY;
+				offY_ = sc[0] * cX / pScaX + sc[1] * cY / pScaY;
+			}
+			else {
+				offX_ = (sc[1] * cX - sc[0] * cY) / pScaX;
+				offY_ = (sc[0] * cX + sc[1] * cY) / pScaY;
+			}
 		}
 		else {
-			offX_ = (sc[1] * cX - sc[0] * cY) / pScaX;
-			offY_ = (sc[0] * cX + sc[1] * cY) / pScaY;
+			offX_ = cX;
+			offY_ = cY;
 		}
 	}
 	else {
@@ -210,6 +219,7 @@ StgMoveParent::StgMoveParent(StgStageController* stageController) {
 	bAutoDelete_ = false;
 	bAutoDeleteChildren_ = false;
 	bMoveChild_ = true;
+	bTransNewChild_ = false;
 	bRotateLaser_ = false;
 
 	posX_ = 0;
@@ -270,6 +280,26 @@ void StgMoveParent::CleanUp() {
 		}
 	}
 }
+void StgMoveParent::CopyFrom(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveParent> other) {
+	SetParentObject(self, other->target_);
+	SetTransformAngle(other->rotZ_);
+
+	typeAngle_ = other->typeAngle_;
+	transOrder_ = other->transOrder_;
+	bAutoDelete_ = other->bAutoDelete_;
+	bAutoDeleteChildren_ = other->bAutoDeleteChildren_;
+	bMoveChild_ = other->bMoveChild_;
+	bTransNewChild_ = other->bTransNewChild_;
+	bRotateLaser_ = other->bRotateLaser_;
+
+	offX_ = other->offX_;
+	offY_ = other->offY_;
+	scaX_ = other->scaX_;
+	scaY_ = other->scaY_;
+	wvlZ_ = other->wvlZ_;
+	accZ_ = other->accZ_;
+	maxZ_ = other->maxZ_;
+}
 void StgMoveParent::SetParentObject(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> parent) {
 	if (target_ == parent) return; // Exit if target is the same
 
@@ -282,9 +312,9 @@ void StgMoveParent::SetParentObject(ref_unsync_weak_ptr<StgMoveParent> self, ref
 		parent->listOwnedParent_.push_back(self);
 		target_ = parent;
 	}
-	else {
+	else
 		target_ = nullptr;
-	}
+
 	UpdatePosition();
 }
 void StgMoveParent::AddChild(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> child) {
@@ -297,7 +327,18 @@ void StgMoveParent::AddChild(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync
 	}
 	child->SetParent(self);
 	listChild_.push_back(child);
-	child->UpdateRelativePosition(); // Children's relative positions are initialized relative to the parent
+
+	if (bTransNewChild_) {
+		child->UpdateRelativePosition(false);
+		if (typeAngle_ == ANGLE_ROTATE) {
+			child->SetDirectionAngle(child->GetDirectionAngle() + rotZ_);
+			if (bRotateLaser_) {
+				StgStraightLaserObject* laser = dynamic_cast<StgStraightLaserObject*>(child.get());
+				if (laser) laser->SetLaserAngle(laser->GetLaserAngle() + rotZ_);
+			}
+		}
+	} else child->UpdateRelativePosition();
+
 }
 void StgMoveParent::RemoveChildren() {
 	if (listChild_.size() > 0) {
@@ -311,9 +352,38 @@ void StgMoveParent::RemoveChildren() {
 		}
 	}
 }
+void StgMoveParent::TransferChildren(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveParent> target) {
+	if (listChild_.size() > 0) {
+		auto iter = listChild_.begin();
+		while (iter != listChild_.end()) {
+			auto& child = *iter;
+			if (child)
+				target->AddChild(target, child); // Should erase the element from the list already
+		}
+	}
+}
+void StgMoveParent::SwapChildren(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveParent> target) {
+	std::vector<ref_unsync_weak_ptr<StgMoveObject>> arrList[]{ self->listChild_, target->listChild_ };
+	ref_unsync_weak_ptr<StgMoveParent> arrPar[]{ target, self };
+	
+	for (int i = 0; i < 2; ++i) {
+		auto& list = arrList[i];
+		auto& par = arrPar[i];
+		if (list.size() > 0) {
+			auto iter = list.begin();
+			while (iter != list.end()) {
+				auto& child = *iter;
+				if (child)
+					par->AddChild(par, child);
+
+				iter = list.erase(iter);
+			}
+		}
+	}
+}
 void StgMoveParent::SetTransformAngle(double z) {
 	if (typeAngle_ == ANGLE_ROTATE) {
-		double diff = Math::DegreeToRadian(z - rotZ_);
+		double diff = z - rotZ_;
 		for (auto& child : listChild_) {
 			if (child) {
 				child->SetDirectionAngle(child->GetDirectionAngle() + diff);
@@ -324,23 +394,8 @@ void StgMoveParent::SetTransformAngle(double z) {
 			}
 		}
 	}
-	rotZ_ = z;
+	rotZ_ = Math::NormalizeAngleRad(z);
 }
-/*
-double StgMoveParent::GetRadiusAtAngle(double angle) {
-	double rad = 1;
-	if (scaX_ == scaY_) 
-		rad = scaX_;
-	else {
-		if (transOrder_ == ORDER_SCALE_ANGLE)
-			angle -= rotZ_;
-
-		angle = Math::DegreeToRadian(angle);
-		rad = (scaX_ * scaY_) / hypot(scaX_ * cos(angle), scaY_ * sin(angle));
-	}
-	return rad;
-}
-*/
 void StgMoveParent::ApplyTransformation() {
 	scaX_ = 1;
 	scaY_ = 1;
@@ -360,7 +415,7 @@ void StgMoveParent::MoveChild(StgMoveObject* child) {
 	double cY = child->offY_;
 
 	double sc[2]{ 0, 1 };
-	if (pRotZ != 0) Math::DoSinCos(Math::DegreeToRadian(pRotZ), sc);
+	if (pRotZ != 0) Math::DoSinCos(pRotZ, sc);
 
 	double x1 = pX;
 	double y1 = pY;
@@ -411,7 +466,7 @@ void StgMoveParent::UpdatePosition() {
 			wvlZ_ = std::max(wvlZ_, maxZ_);
 	}
 	if (wvlZ_ != 0) {
-		rotZ_ = Math::NormalizeAngleDeg(rotZ_ + wvlZ_);
+		SetTransformAngle(rotZ_ + wvlZ_);
 	}
 }
 void StgMoveParent::UpdateChildren() {

@@ -29,7 +29,7 @@ protected:
 	double posY_;
 
 	ref_unsync_ptr<StgMovePattern> pattern_;
-	ref_unsync_ptr<StgMovePattern> patternBak_;
+	// ref_unsync_ptr<StgMovePattern> patternBak_;
 
 	bool bEnableMovement_;
 	int frameMove_;
@@ -72,7 +72,7 @@ public:
 	std::vector<ref_unsync_weak_ptr<StgMoveParent>>& GetOwnedParentList() { return listOwnedParent_; }
 	void RemoveParent(ref_unsync_weak_ptr<StgMoveObject> self, bool bErase = true);
 	void SetRelativePosition(float x, float y) { offX_ = x; offY_ = y; }
-	void UpdateRelativePosition();
+	void UpdateRelativePosition(bool bUseTrans = true);
 	double GetDistanceFromParent();
 	double GetAngleFromParent();
 
@@ -113,6 +113,7 @@ protected:
 	bool bAutoDelete_;
 	bool bAutoDeleteChildren_;
 	bool bMoveChild_;
+	bool bTransNewChild_;
 	bool bRotateLaser_;
 	// bool bTransformMove_;
 
@@ -139,6 +140,8 @@ public:
 	virtual void SetRenderState() {}
 	virtual void CleanUp();
 
+	void CopyFrom(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveParent> other);
+
 	void SetParentObject(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> parent);
 	ref_unsync_weak_ptr<StgMoveParent> GetParentObject() { return target_;  }
 	void SetAutoDelete(bool enable) { bAutoDelete_ = enable; }
@@ -146,11 +149,13 @@ public:
 	void AddChild(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveObject> child);
 	std::vector<ref_unsync_weak_ptr<StgMoveObject>>& GetChildren() { return listChild_; }
 	void RemoveChildren();
+	void TransferChildren(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveParent> target);
+	void SwapChildren(ref_unsync_weak_ptr<StgMoveParent> self, ref_unsync_weak_ptr<StgMoveParent> target);
 	
 	void SetPositionOffset(double x, double y) { offX_ = x; offY_ = y; }
-	void SetTransformScale(double x, double y) { scaX_ = Unzero(x); scaY_ = Unzero(y); }
-	void SetTransformScaleX(double x) { scaX_ = Unzero(x); }
-	void SetTransformScaleY(double y) { scaY_ = Unzero(y); }
+	void SetTransformScale(double x, double y) { scaX_ = x; scaY_ = y; }
+	void SetTransformScaleX(double x) { scaX_ = x; }
+	void SetTransformScaleY(double y) { scaY_ = y; }
 	void SetTransformAngle(double z);
 	void SetTransformAngularVelocity(double wv) { wvlZ_ = wv; }
 	void SetTransformAngularAcceleration(double wa) { accZ_ = wa; }
@@ -158,11 +163,11 @@ public:
 	double GetTransformScaleX() { return scaX_; }
 	double GetTransformScaleY() { return scaY_; }
 	double GetTransformAngle() { return rotZ_; }
-	// double GetRadiusAtAngle(double angle);
 	void SetChildAngleMode(int type) { typeAngle_ = type; }
 	int GetChildAngleMode() { return typeAngle_;  }
 	void SetChildMotionEnable(bool enable) { bMoveChild_ = enable; }
 	void SetLaserRotationEnable(bool enable) { bRotateLaser_ = enable; }
+	void SetChildAdditionTransformEnable(bool enable) { bTransNewChild_ = enable; }
 	// void SetChildMotionTransformEnable(bool enable) { bTransformMove_ = enable;  }
 	void SetTransformOrder(int order) { transOrder_ = order; }
 	void ApplyTransformation();
@@ -173,10 +178,6 @@ public:
 
 	void UpdatePosition();
 	void UpdateChildren();
-
-	static inline double Unzero(double s) {
-		return (s >= 0) ? std::max(s, 0.00001) : std::min(s, -0.00001);
-	}
 };
 
 //*******************************************************************
