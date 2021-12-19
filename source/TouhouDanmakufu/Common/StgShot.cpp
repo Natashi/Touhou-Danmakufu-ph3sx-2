@@ -1429,6 +1429,56 @@ void StgShotObject::_ProcessTransformAct() {
 			AddPattern(time, pattern, true);
 			break;
 		}
+		case StgPatternShotTransform::TRANSFORM_ADDPATTERN_C1:
+		{
+			int time = transform.param[0];
+
+			double speedX = transform.param[1];
+			double speedY = transform.param[2];
+			double angOff = transform.param[3];
+
+			ref_unsync_ptr<StgMovePattern_XY_Angle> pattern = new StgMovePattern_XY_Angle(this);
+			pattern->AddCommand(std::make_pair(StgMovePattern_XY_Angle::SET_ZERO, 0));
+
+			ADD_CMD(StgMovePattern_XY_Angle::SET_S_X, speedX);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_S_Y, speedY);
+			ADD_CMD2(StgMovePattern_XY_Angle::SET_ANGLE, angOff, Math::DegreeToRadian(angOff));
+
+			AddPattern(time, pattern, true);
+			break;
+		}
+		case StgPatternShotTransform::TRANSFORM_ADDPATTERN_C2:
+		{
+			int time = transform.param[0];
+
+			double speedX = transform.param[1];
+			double speedY = transform.param[2];
+			double accelX = transform.param[3];
+			double accelY = transform.param[4];
+			double maxspX = transform.param[5];
+			double maxspY = transform.param[6];
+			double angOff = transform.param[7];
+			double angVel = transform.param[8];
+
+			int shotID = transform.param[9];
+
+			ref_unsync_ptr<StgMovePattern_XY_Angle> pattern = new StgMovePattern_XY_Angle(this);
+
+			ADD_CMD(StgMovePattern_XY_Angle::SET_S_X, speedX);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_S_Y, speedY);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_A_X, accelX);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_A_Y, accelY);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_M_X, maxspX);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_M_Y, maxspY);
+			ADD_CMD2(StgMovePattern_XY_Angle::SET_ANGLE, angOff, Math::DegreeToRadian(angOff));
+			ADD_CMD2(StgMovePattern_XY_Angle::SET_AGVEL, angVel, Math::DegreeToRadian(angVel));
+
+			if (shotID != StgMovePattern::NO_CHANGE)
+				pattern->SetShotDataID(shotID);
+
+			AddPattern(time, pattern, true);
+			break;
+		}
 #undef ADD_CMD
 #undef ADD_CMD2
 		default:

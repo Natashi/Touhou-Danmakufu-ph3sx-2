@@ -271,6 +271,9 @@ public:
 	static gstd::value Func_CreateShotB1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateShotB2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateShotOB1(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_CreateShotC1(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_CreateShotC2(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_CreateShotOC1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateLooseLaserA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateStraightLaserA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateCurveLaserA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -333,6 +336,9 @@ public:
 	static gstd::value Func_ObjMove_AddPatternB1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_AddPatternB2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_AddPatternB3(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternC1(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternC2(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternC3(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -346,6 +352,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetProcessMovement);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetProcessMovement);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetMoveFrame);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_GetMovementType);
 
 	// Move object + move parent
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetParent);
