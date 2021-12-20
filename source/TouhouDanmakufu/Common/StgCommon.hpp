@@ -376,6 +376,11 @@ public:
 	virtual double GetSpeedY() { return c_ * sin(angOff_) + s_ * cos(angOff_); }
 	void SetSpeedX(double value) { c_ = value; }
 	void SetSpeedY(double value) { s_ = value; }
+	void SetSpeedXY(double x, double y) { // For proper de-rotation
+		double c = cos(-angOff_), s = sin(-angOff_);
+		c_ = x * c - y * s;
+		s_ = x * s + y * c;
+	}
 	void SetAccelerationX(double value) { accelerationX_ = value; }
 	void SetAccelerationY(double value) { accelerationY_ = value; }
 	void SetMaxSpeedX(double value) { maxSpeedX_ = value; }
