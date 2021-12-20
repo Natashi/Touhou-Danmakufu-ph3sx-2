@@ -399,6 +399,17 @@ public:
 
 class StgMovePattern_Line : public StgMovePattern {
 	friend class StgMoveObject;
+
+public:
+	enum : int8_t {
+		SET_DX,
+		SET_DY,
+		SET_SP,
+		SET_FR,
+		SET_WG,
+		SET_MS,
+		SET_LP,
+	};
 protected:
 	enum {
 		TYPE_SPEED,
@@ -414,6 +425,8 @@ protected:
 	
 	double iniPos_[2];
 	double targetPos_[2];
+
+	virtual void _Activate(StgMovePattern* src);
 public:
 	StgMovePattern_Line(StgMoveObject* target);
 
