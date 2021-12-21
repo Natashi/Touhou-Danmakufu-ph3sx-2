@@ -136,6 +136,7 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
 	{ "Interpolate_X", ScriptClientBase::Func_Interpolate_X, 4 },
 	{ "Interpolate_X_PackedInt", ScriptClientBase::Func_Interpolate_X_Packed, 4 },
+    { "Interpolate_X_Array", ScriptClientBase::Func_Interpolate_X_Array, 3 },
 
 	//Rotation
 	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 3 },
@@ -1002,6 +1003,33 @@ value ScriptClientBase::Func_Interpolate_X_Packed(script_machine* machine, int a
 		res |= tmp << i;
 	}
 	return CreateIntValue(res);
+}
+// :souperdying:
+value ScriptClientBase::Func_Interpolate_X_Array(script_machine* machine, int argc, const value* argv) {
+	BaseFunction::_null_check(machine, argv, argc);
+
+	const value* val = &argv[0];
+	type_data* valType = val->get_type();
+
+	if (valType->get_kind() != type_data::tk_array || val->length_as_array() == 0) {
+		BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "Interpolate_X_Array");
+		return value();
+	}
+
+	std::vector<value> arr = *(val->as_array_ptr());
+	double x = argv[1].as_real();
+
+	size_t len = arr.size();
+
+	x = fmod(fmod(x, len) + len, len);
+	int from = floor(x);
+	int to = (from + 1) % len;
+	x -= from;
+
+    Math::Lerp::Type type = (Math::Lerp::Type)argv[2].as_int();
+	auto lerpFunc =  Math::Lerp::GetFunc<double, double>(type);
+
+	return _ScriptValueLerp(machine, &arr[from], &arr[to], x, lerpFunc);
 }
 
 value ScriptClientBase::Func_Rotate2D(script_machine* machine, int argc, const value* argv) {
