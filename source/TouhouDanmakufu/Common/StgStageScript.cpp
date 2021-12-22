@@ -2360,9 +2360,9 @@ gstd::value StgStageScript::Func_ObjMove_SetX(gstd::script_machine* machine, int
 		double pos = argv[1].as_real();
 		obj->SetPositionX(pos);
 
-		DxScriptRenderObject* objR = dynamic_cast<DxScriptRenderObject*>(obj);
-		if (objR)
+		if (DxScriptRenderObject* objR = dynamic_cast<DxScriptRenderObject*>(obj)) {
 			objR->SetX(pos);
+		}
 	}
 	return value();
 }
@@ -2374,9 +2374,9 @@ gstd::value StgStageScript::Func_ObjMove_SetY(gstd::script_machine* machine, int
 		double pos = argv[1].as_real();
 		obj->SetPositionY(pos);
 
-		DxScriptRenderObject* objR = dynamic_cast<DxScriptRenderObject*>(obj);
-		if (objR)
+		if (DxScriptRenderObject* objR = dynamic_cast<DxScriptRenderObject*>(obj)) {
 			objR->SetY(pos);
+		}
 	}
 	return value();
 }
@@ -2390,8 +2390,7 @@ gstd::value StgStageScript::Func_ObjMove_SetPosition(gstd::script_machine* machi
 		obj->SetPositionX(posX);
 		obj->SetPositionY(posY);
 
-		DxScriptRenderObject* objR = dynamic_cast<DxScriptRenderObject*>(obj);
-		if (objR) {
+		if (DxScriptRenderObject* objR = dynamic_cast<DxScriptRenderObject*>(obj)) {
 			objR->SetX(posX);
 			objR->SetY(posY);
 		}
@@ -2640,8 +2639,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA4(gstd::script_machine* mach
 		double accel = argv[4].as_real();
 		double agvel = argv[5].as_real();
 		double maxsp = argv[6].as_real();
-		int idRelative = argv[7].as_int();
-		int idShot = argv[8].as_int();
+		int idGraphic = argv[7].as_int();
+		int idRelative = argv[8].as_int();
 
 		ref_unsync_ptr<StgMovePattern_Angle> pattern = new StgMovePattern_Angle(obj);
 
@@ -2651,8 +2650,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA4(gstd::script_machine* mach
 		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 		ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
 
-		if (idShot != StgMovePattern::NO_CHANGE)
-			pattern->SetShotDataID(idShot);
+		if (idGraphic != StgMovePattern::NO_CHANGE)
+			pattern->SetShotDataID(idGraphic);
 		if (idRelative != StgMovePattern::NO_CHANGE)
 			pattern->SetRelativeObject(idRelative);
 
@@ -2717,7 +2716,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB3(gstd::script_machine* mach
 		double accelY = argv[5].as_real();
 		double maxspX = argv[6].as_real();
 		double maxspY = argv[7].as_real();
-		int idShot = argv[8].as_int();
+		int idGraphic = argv[8].as_int();
 
 		ref_unsync_ptr<StgMovePattern_XY> pattern = new StgMovePattern_XY(obj);
 
@@ -2728,8 +2727,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB3(gstd::script_machine* mach
 		ADD_CMD(StgMovePattern_XY::SET_M_X, maxspX);
 		ADD_CMD(StgMovePattern_XY::SET_M_Y, maxspY);
 
-		if (idShot != StgMovePattern::NO_CHANGE)
-			pattern->SetShotDataID(idShot);
+		if (idGraphic != StgMovePattern::NO_CHANGE)
+			pattern->SetShotDataID(idGraphic);
 
 		obj->AddPattern(frame, pattern);
 	}
