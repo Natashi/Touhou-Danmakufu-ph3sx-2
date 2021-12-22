@@ -871,7 +871,7 @@ void StgMovePattern_XY_Angle::Move() {
 
 	++frameWork_;
 }
-void StgMovePattern_XY_Angle::_Activate(StgMovePattern* _src) {
+void StgMovePattern_XY_Angle::Activate(StgMovePattern* _src) {
 	if (_src->GetType() == TYPE_XY) {
 		StgMovePattern_XY* src = (StgMovePattern_XY*)_src;
 		c_ = src->c_;
@@ -990,7 +990,7 @@ void StgMovePattern_Line::Move() {
 
 	++frameWork_;
 }
-void StgMovePattern_Line::_Activate(StgMovePattern* src) {
+void StgMovePattern_Line::Activate(StgMovePattern* src) {
 	double tx = 0, ty = 0;
 
 	for (auto& [cmd, arg] : listCommand_) {
