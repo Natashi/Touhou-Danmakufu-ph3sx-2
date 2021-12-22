@@ -22,6 +22,8 @@ private:
 	std::list<ref_unsync_ptr<StgEnemyObject>> listEnemy_;
 
 	ref_unsync_ptr<StgEnemyBossSceneObject> objBossScene_;
+protected:
+	DxRect<LONG> rcDeleteClip_;
 public:
 	StgEnemyManager(StgStageController* stageController);
 	virtual ~StgEnemyManager();
@@ -36,6 +38,9 @@ public:
 
 	void AddEnemy(ref_unsync_ptr<StgEnemyObject> obj) { listEnemy_.push_back(obj); }
 	size_t GetEnemyCount() { return listEnemy_.size(); }
+
+	void SetEnemyDeleteClip(const DxRect<LONG>& clip) { rcDeleteClip_ = clip; }
+	DxRect<LONG>* GetEnemyDeleteClip() { return &rcDeleteClip_; }
 
 	void SetBossSceneObject(ref_unsync_ptr<StgEnemyBossSceneObject> obj);
 	ref_unsync_ptr<StgEnemyBossSceneObject> GetBossSceneObject();
@@ -63,11 +68,16 @@ protected:
 
 	size_t intersectedPlayerShotCount_;
 
+	bool bAutoDelete_;
+	int frameAutoDelete_;
+
 	bool bEnableGetIntersectionPositionFetch_;
 
 	std::vector<ref_unsync_weak_ptr<StgIntersectionTarget>> ptrIntersectionToShot_;
 	std::vector<ref_unsync_weak_ptr<StgIntersectionTarget>> ptrIntersectionToPlayer_;
 
+	void _DeleteInAutoClip();
+	void _DeleteInAutoDeleteFrame();
 	virtual void _Move();
 	virtual void _AddRelativeIntersection();
 public:
@@ -84,6 +94,9 @@ public:
 	virtual void SetY(double y) { posY_ = y; DxScriptRenderObject::SetY(y); }
 
 	ref_unsync_ptr<StgEnemyObject> GetOwnObject();
+
+	void SetAutoDelete(bool b) { bAutoDelete_ = b; }
+	void SetAutoDeleteFrame(int frame) { frameAutoDelete_ = frame; }
 
 	double GetLife() { return life_; }
 	double GetLifeDelta() { return lifeDelta_; }

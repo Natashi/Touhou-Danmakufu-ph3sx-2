@@ -255,6 +255,7 @@ public:
 	static gstd::value Func_GetEnemyIntersectionPosition(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetEnemyIntersectionPositionByIdA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetEnemyIntersectionPositionByIdA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_SetEnemyAutoDeleteClip(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_LoadEnemyShotData(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ReloadEnemyShotData(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
@@ -267,6 +268,9 @@ public:
 	static gstd::value Func_CreateShotB1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateShotB2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateShotOB1(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_CreateShotC1(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_CreateShotC2(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_CreateShotOC1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateLooseLaserA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateStraightLaserA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CreateCurveLaserA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -313,6 +317,8 @@ public:
 	static gstd::value Func_ObjMove_SetAcceleration(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_SetMaxSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_SetAngularVelocity(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_SetAngularAcceleration(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_SetAngularMaxVelocity(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_SetDestAtSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_SetDestAtFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_SetDestAtWeight(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -320,9 +326,17 @@ public:
 	static gstd::value Func_ObjMove_AddPatternA2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_AddPatternA3(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_AddPatternA4(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternA5(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_AddPatternB1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_AddPatternB2(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_AddPatternB3(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternC1(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternC2(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternC3(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternC4(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternD1(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternD2(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjMove_AddPatternD3(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetX(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetY(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjMove_GetSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv);
@@ -334,11 +348,14 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetSpeedXY);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetProcessMovement);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetProcessMovement);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_GetMovementType);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_CancelMovement);
 
 	//STG共通関数：敵オブジェクト操作
 	static gstd::value Func_ObjEnemy_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_Regist(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjEnemy_SetAutoDelete(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjEnemy_SetDeleteFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_GetInfo(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjEnemy_SetLife(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	template<bool CHECK_MAX_DMG>
