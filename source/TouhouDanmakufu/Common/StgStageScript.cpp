@@ -318,7 +318,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "DeleteShotAll", StgStageScript::Func_DeleteShotAll, 2 },
 	{ "DeleteShotInCircle", StgStageScript::Func_DeleteShotInCircle, 5 },
 	{ "CreateShotA1", StgStageScript::Func_CreateShotA1, 6 },
-	{ "CreateShotA2", StgStageScript::Func_CreateShotA2, 8 },
+	{ "CreateShotA2", StgStageScript::Func_CreateShotA2, 8 }, //Deprecated, exists for compatibility
+	{ "CreateShotA2", StgStageScript::Func_CreateShotA2, 9 },
 	{ "CreateShotOA1", StgStageScript::Func_CreateShotOA1, 5 },
 	{ "CreateShotB1", StgStageScript::Func_CreateShotB1, 6 },
 	{ "CreateShotB2", StgStageScript::Func_CreateShotB2, 10 },
@@ -1530,14 +1531,16 @@ gstd::value StgStageScript::Func_CreateShotA2(gstd::script_machine* machine, int
 		if (id != ID_INVALID) {
 			stageController->GetShotManager()->AddShot(obj);
 
+			bool bW = (argc == 9);
+
 			double posX = argv[0].as_real();
 			double posY = argv[1].as_real();
 			double speed = argv[2].as_real();
 			double angle = argv[3].as_real();
 			double accele = argv[4].as_real();
-			double maxSpeed = argv[5].as_real();
-			int idShot = argv[6].as_int();
-			int delay = argv[7].as_int();
+			double maxSpeed = argv[5 + bW].as_real();
+			int idShot = argv[6 + bW].as_int();
+			int delay = argv[7 + bW].as_int();
 			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
 
@@ -1552,6 +1555,10 @@ gstd::value StgStageScript::Func_CreateShotA2(gstd::script_machine* machine, int
 			StgMoveObject* objMove = (StgMoveObject*)obj.get();
 			StgMovePattern_Angle* pattern = dynamic_cast<StgMovePattern_Angle*>(objMove->GetPattern().get());
 			pattern->SetAcceleration(accele);
+			if (bW) {
+				double wvel = argv[5].as_real();
+				pattern->SetAngularVelocity(Math::DegreeToRadian(wvel));
+			}
 			pattern->SetMaxSpeed(maxSpeed);
 		}
 	}
