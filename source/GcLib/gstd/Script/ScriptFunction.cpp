@@ -69,7 +69,6 @@ namespace gstd {
 		else throw error;
 	}
 
-	
 	type_data::type_kind BaseFunction::_type_test_promotion(type_data* type_l, type_data* type_r) {
 		uint8_t kind_l = type_l->get_kind();
 		uint8_t kind_r = type_r->get_kind();

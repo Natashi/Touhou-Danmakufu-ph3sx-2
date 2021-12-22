@@ -283,6 +283,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_ChooseEff);
 		DNH_FUNCAPI_DECL_(Func_Shuffle);
 		DNH_FUNCAPI_DECL_(Func_ShuffleEff);
+		DNH_FUNCAPI_DECL_(Func_RandEffSet);
 		DNH_FUNCAPI_DECL_(Func_GetRandCount);
 		DNH_FUNCAPI_DECL_(Func_GetRandEffCount);
 		DNH_FUNCAPI_DECL_(Func_ResetRandCount);
