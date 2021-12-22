@@ -233,6 +233,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_RandI);
 		DNH_FUNCAPI_DECL_(Func_RandEff);
 		DNH_FUNCAPI_DECL_(Func_RandEffI);
+		DNH_FUNCAPI_DECL_(Func_RandEffSet);
 		DNH_FUNCAPI_DECL_(Func_GetRandCount);
 		DNH_FUNCAPI_DECL_(Func_GetRandEffCount);
 		DNH_FUNCAPI_DECL_(Func_ResetRandCount);
