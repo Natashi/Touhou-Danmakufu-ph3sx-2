@@ -118,6 +118,7 @@ static const std::vector<function> commonFunction = {
 	{ "rand_int", ScriptClientBase::Func_RandI, 2 },
 	{ "prand", ScriptClientBase::Func_RandEff, 2 },
 	{ "prand_int", ScriptClientBase::Func_RandEffI, 2 },
+	{ "psrand", ScriptClientBase::Func_RandEffSet, 1 },
 	{ "count_rand", ScriptClientBase::Func_GetRandCount, 0 },
 	{ "count_prand", ScriptClientBase::Func_GetRandEffCount, 0 },
 	{ "reset_count_rand", ScriptClientBase::Func_ResetRandCount, 0 },
@@ -818,6 +819,13 @@ value ScriptClientBase::Func_RandEffI(script_machine* machine, int argc, const v
 	double min = argv[0].as_int();
 	double max = argv[1].as_int() + 0.9999999;
 	return script->CreateIntValue(script->mtEffect_->GetReal(min, max));
+}
+value ScriptClientBase::Func_RandEffSet(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	int64_t seed = argv[0].as_int();
+	uint32_t prseed = (uint32_t)(seed >> 32) ^ (uint32_t)(seed & 0xffffffff);
+	script->mtEffect_->Initialize(prseed);
+	return value();
 }
 value ScriptClientBase::Func_GetRandCount(script_machine* machine, int argc, const value* argv) {
 	return CreateIntValue(randCalls_);
