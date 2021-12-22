@@ -138,6 +138,7 @@
 #include <locale>
 #include <string>
 
+#include <array>
 #include <list>
 #include <vector>
 #include <set>
