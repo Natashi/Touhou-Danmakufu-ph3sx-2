@@ -91,11 +91,11 @@ protected:
 
 	StgStageController* _GetStageController() { return target_->stageController_; }
 	ref_unsync_ptr<StgMoveObject> _GetMoveObject(int id);
-	virtual void _Activate(StgMovePattern* src) {}
 public:
 	StgMovePattern(StgMoveObject* target);
 	virtual ~StgMovePattern() {}
 
+	virtual void Activate(StgMovePattern* src) {}
 	virtual void Move() = 0;
 
 	void AddCommand(std::pair<uint8_t, double> cmd) { listCommand_.push_back(cmd); }
@@ -136,10 +136,10 @@ protected:
 	double angularVelocity_;
 
 	ref_unsync_weak_ptr<StgMoveObject> objRelative_;
-
-	virtual void _Activate(StgMovePattern* src);
 public:
 	StgMovePattern_Angle(StgMoveObject* target);
+
+	virtual void Activate(StgMovePattern* src);
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return speed_; }
@@ -179,11 +179,10 @@ protected:
 	double accelerationY_;
 	double maxSpeedX_;
 	double maxSpeedY_;
-
-	virtual void _Activate(StgMovePattern* src);
 public:
 	StgMovePattern_XY(StgMoveObject* target);
 
+	virtual void Activate(StgMovePattern* src);
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return hypot(c_, s_); }
@@ -224,6 +223,7 @@ protected:
 public:
 	StgMovePattern_Line(StgMoveObject* target);
 
+	virtual void Activate(StgMovePattern* src) {}
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return speed_; }

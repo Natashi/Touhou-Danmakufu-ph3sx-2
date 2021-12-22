@@ -41,7 +41,7 @@ void StgMoveObject::_AttachReservedPattern(ref_unsync_ptr<StgMovePattern> patter
 	if (pattern_ == nullptr)
 		pattern_ = new StgMovePattern_Angle(this);
 
-	pattern->_Activate(pattern_.get());
+	pattern->Activate(pattern_.get());
 	pattern_ = pattern;
 }
 void StgMoveObject::AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap) {
@@ -140,7 +140,7 @@ void StgMovePattern_Angle::Move() {
 
 	++frameWork_;
 }
-void StgMovePattern_Angle::_Activate(StgMovePattern* _src) {
+void StgMovePattern_Angle::Activate(StgMovePattern* _src) {
 	double newSpeed = 0;
 	double newAngle = 0;
 	double newAccel = 0;
@@ -262,7 +262,7 @@ void StgMovePattern_XY::Move() {
 
 	++frameWork_;
 }
-void StgMovePattern_XY::_Activate(StgMovePattern* _src) {
+void StgMovePattern_XY::Activate(StgMovePattern* _src) {
 	if (_src->GetType() == TYPE_XY) {
 		StgMovePattern_XY* src = (StgMovePattern_XY*)_src;
 		c_ = src->c_;
