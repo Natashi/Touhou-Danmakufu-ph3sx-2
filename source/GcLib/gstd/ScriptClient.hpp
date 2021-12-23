@@ -265,6 +265,8 @@ namespace gstd {
 
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Packed);
+		template<bool USE_RAD>
+		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Angle);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Array);
 
 		//Math functions; rotation
