@@ -185,6 +185,8 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
 	{ "Interpolate_X", ScriptClientBase::Func_Interpolate_X, 4 },
 	{ "Interpolate_X_PackedInt", ScriptClientBase::Func_Interpolate_X_Packed, 4 },
+	{ "Interpolate_X_Angle", ScriptClientBase::Func_Interpolate_X_Angle<false>, 4 },
+	{ "Interpolate_X_AngleR", ScriptClientBase::Func_Interpolate_X_Angle<true>, 4 },
     { "Interpolate_X_Array", ScriptClientBase::Func_Interpolate_X_Array, 3 },
 
 	//Rotation
@@ -1418,6 +1420,21 @@ value ScriptClientBase::Func_Interpolate_X_Packed(script_machine* machine, int a
 		res |= tmp << i;
 	}
 	return CreateIntValue(res);
+}
+template<bool USE_RAD>
+value ScriptClientBase::Func_Interpolate_X_Angle(script_machine* machine, int argc, const value* argv) {
+	double a = argv[0].as_real();
+	double b = argv[1].as_real();
+	double x = argv[2].as_real();
+
+	Math::Lerp::Type type = (Math::Lerp::Type)argv[3].as_int();
+	auto funcLerp = Math::Lerp::GetFunc<double, double>(type);
+	auto funcDiff = USE_RAD ? Math::AngleDifferenceRad : Math::AngleDifferenceDeg;
+	auto funcNorm = USE_RAD ? Math::NormalizeAngleRad : Math::NormalizeAngleDeg;
+
+	b = a + funcDiff(a, b);
+
+	return CreateRealValue(funcNorm(funcLerp(a, b, x)));
 }
 // :souperdying:
 value ScriptClientBase::Func_Interpolate_X_Array(script_machine* machine, int argc, const value* argv) {
