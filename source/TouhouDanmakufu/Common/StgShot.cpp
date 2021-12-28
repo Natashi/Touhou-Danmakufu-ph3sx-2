@@ -2456,10 +2456,11 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 	itemDistance_ = 6.0f;
 
 	bCap_ = false;
-	posOrigin_ = D3DXVECTOR2(0, 0);
-
-	bCap_ = false;
+	bConnect_ = false;
+	bLockPath_ = false;
 	smooth_ = 0;
+
+	posOrigin_ = D3DXVECTOR2(0, 0);
 }
 void StgCurveLaserObject::Work() {
 	if (frameWork_ == 0) {
@@ -2478,6 +2479,7 @@ void StgCurveLaserObject::Work() {
 	}
 
 	_CommonWorkTask();
+	if (bConnect_) _UpdateConnectedPositionList();
 	//	_AddIntersectionRelativeTarget();
 }
 void StgCurveLaserObject::_Move() {
@@ -2488,7 +2490,14 @@ void StgCurveLaserObject::_Move() {
 	DxScriptRenderObject::SetX(posX_);
 	DxScriptRenderObject::SetY(posY_);
 
-	{
+	
+	if (bLockPath_) {
+		D3DXVECTOR2 vec = D3DXVECTOR2(GetSpeedX(), GetSpeedY());
+		for (LaserNode& iNode : listPosition_) {
+			iNode.pos += vec;
+		}
+	}
+	else {
 		double angleZ = GetDirectionAngle();
 		if (lastAngle_ != angleZ) {
 			lastAngle_ = angleZ;
@@ -2534,9 +2543,18 @@ void StgCurveLaserObject::GetNodePointerList(std::vector<LaserNode*>* listRes) {
 }
 std::list<StgCurveLaserObject::LaserNode>::iterator StgCurveLaserObject::PushNode(const LaserNode& node) {
 	listPosition_.push_front(node);
+
 	while (listPosition_.size() > length_)
 		listPosition_.pop_back();
+
 	return listPosition_.begin();
+}
+
+void StgCurveLaserObject::_UpdateConnectedPositionList() {
+	if (!listPosition_.empty()) {
+		listPositionC_ = listPosition_;
+		listPositionC_.push_back(listPosition_.front());
+	}
 }
 
 void StgCurveLaserObject::_DeleteInAutoClip() {
@@ -2570,7 +2588,9 @@ bool StgCurveLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 
-	size_t countPos = listPosition_.size();
+	auto& listPos = bConnect_ ? listPositionC_ : listPosition_;
+
+	size_t countPos = listPos.size();
 	size_t countIntersection = countPos > 0U ? countPos - 1U : 0U;
 
 	if (countIntersection == 0)
@@ -2586,7 +2606,7 @@ bool StgCurveLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 	int posInvalidE = (int)(countPos * iLengthE);
 	float iWidth = widthIntersection_ * hitboxScale_.x;
 
-	std::list<LaserNode>::iterator itr = listPosition_.begin();
+	std::list<LaserNode>::iterator itr = listPos.begin();
 	for (size_t iPos = 0; iPos < countIntersection; ++iPos, ++itr) {
 		IntersectionPairType* pPair = &listIntersectionTarget_[iPos];
 
@@ -2705,7 +2725,9 @@ void StgCurveLaserObject::RenderOnShotManager() {
 
 		//---------------------------------------------------
 
-		size_t countPos = listPosition_.size();
+		auto& listPos = bConnect_ ? listPositionC_ : listPosition_;
+		
+		size_t countPos = listPos.size();
 		size_t countRect = countPos - 1U;
 		size_t halfPos = countRect / 2U;
 
@@ -2763,13 +2785,13 @@ void StgCurveLaserObject::RenderOnShotManager() {
 			};
 
 			bCappable = true;
-			for (auto itr = listPosition_.begin(); remLen > 0 && itr != --listPosition_.end() && bCappable; ++itr, ++i, ++iPos)
+			for (auto itr = listPos.begin(); remLen > 0 && itr != --listPos.end() && bCappable; ++itr, ++i, ++iPos)
 				bCappable = tryCap(itr);
 
 			i = 0;
 			iPos = countPos - 2; // Ends straight up do not work otherwise?
 			remLen = rcMidPt;
-			for (auto itr = listPosition_.rbegin(); remLen > 0 && itr != --listPosition_.rend() && bCappable; ++itr, ++i, --iPos)
+			for (auto itr = listPos.rbegin(); remLen > 0 && itr != --listPos.rend() && bCappable; ++itr, ++i, --iPos)
 				bCappable = tryCap(itr);
 		}
 
@@ -2777,30 +2799,22 @@ void StgCurveLaserObject::RenderOnShotManager() {
 			std::fill(arrInc.begin(), arrInc.end(), rcInc);
 
 		size_t iPos = 0U;
+		
 
-		// Smoothing stuff
-		int range = smooth_;
-		bool bCircular = false; // For cases where it would be ideal for the first node to connect to the last
-
-		for (auto itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
+		for (auto itr = listPos.begin(); itr != listPos.end(); ++itr, ++iPos) {
 			D3DXVECTOR2 pos = itr->pos;
 			D3DXVECTOR2 vertOff[2]{ itr->vertOff[0], itr->vertOff[1] };
 
 			if (smooth_ > 0 && countPos > 1) {
-				if (iPos == 0) {
-					auto itrLast = listPosition_.end();
-					--itrLast;
-					bCircular = pos == itrLast->pos;
-				}
-				auto itrNext = listPosition_.begin();
-				auto itrPrev = listPosition_.begin();
-				if (bCircular) {
-					std::advance(itrNext, (iPos + range) % (countPos - 1));
-					std::advance(itrPrev, (iPos - range + countPos - 1) % (countPos - 1));
+				auto itrNext = listPos.begin();
+				auto itrPrev = listPos.begin();
+				if (bConnect_) {
+					std::advance(itrNext, (iPos + smooth_) % (countPos - 1));
+					std::advance(itrPrev, (iPos - smooth_ + countPos - 1) % (countPos - 1));
 				}
 				else {
-					std::advance(itrNext, std::clamp((int)iPos + range, 0, (int)countPos - 1));
-					std::advance(itrPrev, std::clamp((int)iPos - range, 0, (int)countPos - 1));
+					std::advance(itrNext, std::clamp((int)iPos + smooth_, 0, (int)countPos - 1));
+					std::advance(itrPrev, std::clamp((int)iPos - smooth_, 0, (int)countPos - 1));
 				}
 				
 				D3DXVECTOR2* posNext = &itrNext->pos;
@@ -2838,7 +2852,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 					itr->pos.y + vertOff[iVert].y * renderWd, position_.z);
 				_SetVertexColorARGB(pv, thisColor);
 			}
-			renderer->AddSquareVertex_CurveLaser(verts, std::next(itr) != listPosition_.end());
+			renderer->AddSquareVertex_CurveLaser(verts, std::next(itr) != listPos.end());
 
 			rectV += arrInc[iPos];
 		}
@@ -2879,9 +2893,10 @@ void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
 	};
 
 	float lengthAcc = 0.0;
-	for (std::list<LaserNode>::iterator itr = listPosition_.begin(); itr != listPosition_.end(); itr++) {
+	auto& listPos = bConnect_ ? listPositionC_ : listPosition_;
+	for (std::list<LaserNode>::iterator itr = listPos.begin(); itr != listPos.end(); itr++) {
 		std::list<LaserNode>::iterator itrNext = std::next(itr);
-		if (itrNext == listPosition_.end()) break;
+		if (itrNext == listPos.end()) break;
 
 		D3DXVECTOR2* pos = &itr->pos;
 		D3DXVECTOR2* posNext = &itrNext->pos;
