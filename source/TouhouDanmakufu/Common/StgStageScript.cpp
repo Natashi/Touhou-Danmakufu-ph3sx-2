@@ -559,7 +559,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjCrLaser_SetTipCapping", StgStageScript::Func_ObjCrLaser_SetTipCapping, 2 },
 	{ "ObjCrLaser_SetAngleSmoothness", StgStageScript::Func_ObjCrLaser_SetAngleSmoothness, 2 },
 	{ "ObjCrLaser_SetTipConnecting", StgStageScript::Func_ObjCrLaser_SetTipConnecting, 2 },
-	{ "ObjCrLaser_SetLockPath", StgStageScript::Func_ObjCrLaser_SetLockPath, 2 },
+	{ "ObjCrLaser_SetUniformMotionEnable", StgStageScript::Func_ObjCrLaser_SetUniformMotionEnable, 2 },
 	{ "ObjCrLaser_GetNodePointer", StgStageScript::Func_ObjCrLaser_GetNodePointer, 2 },
 	{ "ObjCrLaser_GetNodePointerList", StgStageScript::Func_ObjCrLaser_GetNodePointerList, 1 },
 	{ "ObjCrLaser_GetNodePosition", StgStageScript::Func_ObjCrLaser_GetNodePosition, 2 },
@@ -5315,13 +5315,13 @@ gstd::value StgStageScript::Func_ObjCrLaser_SetAngleSmoothness(gstd::script_mach
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_ObjCrLaser_SetLockPath(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_ObjCrLaser_SetUniformMotionEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
 	StgCurveLaserObject* obj = script->GetObjectPointerAs<StgCurveLaserObject>(id);
 	if (obj) {
 		bool enable = argv[1].as_boolean();
-		obj->SetPathLockEnable(enable);
+		obj->SetUniformMotionEnable(enable);
 	}
 	return value();
 }

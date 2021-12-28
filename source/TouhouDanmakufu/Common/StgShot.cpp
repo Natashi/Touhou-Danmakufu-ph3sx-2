@@ -2457,7 +2457,7 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 
 	bCap_ = false;
 	bConnect_ = false;
-	bLockPath_ = false;
+	bUniformMove_ = false;
 	smooth_ = 0;
 
 	posOrigin_ = D3DXVECTOR2(0, 0);
@@ -2491,7 +2491,7 @@ void StgCurveLaserObject::_Move() {
 	DxScriptRenderObject::SetY(posY_);
 
 	
-	if (bLockPath_) {
+	if (bUniformMove_) {
 		D3DXVECTOR2 vec = D3DXVECTOR2(GetSpeedX(), GetSpeedY());
 		for (LaserNode& iNode : listPosition_) {
 			iNode.pos += vec;

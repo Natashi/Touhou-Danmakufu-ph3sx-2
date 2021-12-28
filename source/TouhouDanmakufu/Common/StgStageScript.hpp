@@ -500,7 +500,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetTipCapping);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetAngleSmoothness);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetTipConnecting);
-	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetLockPath);
+	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_SetUniformMotionEnable);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_GetNodePointer);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_GetNodePointerList);
 	DNH_FUNCAPI_DECL_(Func_ObjCrLaser_GetNodePosition);

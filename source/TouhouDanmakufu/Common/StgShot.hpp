@@ -624,8 +624,11 @@ protected:
 	D3DXVECTOR2 posOrigin_;
 	bool bCap_;
 	bool bConnect_;
-	bool bLockPath_;
+	bool bUniformMove_;
 	int smooth_;
+
+	double angLaser_;
+	double angVelLaser_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
@@ -642,7 +645,7 @@ public:
 	void SetTipDecrement(float dec) { tipDecrement_ = dec; }
 	void SetTipCapping(bool enable) { bCap_ = enable; }
 	void SetTipConnecting(bool enable) { bConnect_ = enable; }
-	void SetPathLockEnable(bool enable) { bLockPath_ = enable; }
+	void SetUniformMotionEnable(bool enable) { bUniformMove_ = enable; }
 	void SetAngleSmoothness(int amount) { smooth_ = amount; }
 
 	LaserNode CreateNode(const D3DXVECTOR2& pos, const D3DXVECTOR2& rFac, float widthMul, D3DCOLOR col = 0xffffffff);
