@@ -1,12 +1,38 @@
-Missing libraries:
+Download and compile the following libraries. Put the resulting .lib's into this folder.
+In case the compilation spits out a .lib of different name than what's listed below, simply rename it.
+
+ALL LIBRARIES ARE TO BE COMPILED FOR X86/WIN32
+
 	[zlib 1.2.11] 		-> https://www.zlib.net/
-		zlibstatic.lib or zlibdynamic.lib (with zlib.dll)
-			- Release configuration
+		
+		zlibstatic.lib
+			
+			- Generate a .sln with CMake.
+			- Add a preprocessor definition for "ZLIB_WINAPI".
+			- Release configuration (zlib.sln -> zlibstatic)
+		
+		OR
+		
+		zlibdynamic.lib (with zlib.dll)
+			
+			- Generate a .sln with CMake.
+			- Add a preprocessor definition for "ZLIB_WINAPI".
+			- Release configuration (zlib.sln -> zlib)
+			
+			- When compiling ph3sx, uncomment the relevant "#pragma comment(lib, ...)" in pch.h
+		
 	[libogg 1.3.4]		-> https://xiph.org/
+		
 		ogg_static.lib
-			- Release configuration
+			
+			- Release configuration (win32/VS2015/libogg.sln -> libogg)
+		
 	[libvorbis 1.3.6]	-> https://xiph.org/
+		
 		vorbis_static.lib
-			- Release configuration
+			
+			- Release configuration (win32/VS2010/vorbis_static.sln -> libvorbis_static)
+			
 		vorbisfile_static.lib
-			- Release configuration
+			
+			- Release configuration (win32/VS2010/vorbis_static.sln -> libvorbisfile)
