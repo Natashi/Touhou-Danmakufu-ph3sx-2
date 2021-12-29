@@ -242,11 +242,10 @@ protected:
 	double angOffAcceleration_;
 	double angOffMaxVelocity_;
 
-
-	virtual void _Activate(StgMovePattern* src);
 public:
 	StgMovePattern_XY_Angle(StgMoveObject* target);
 
+	virtual void Activate(StgMovePattern* src);
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return hypot(c_, s_); }
@@ -306,11 +305,10 @@ protected:
 	double iniPos_[2];
 	double targetPos_[2];
 
-	virtual void _Activate(StgMovePattern* src);
 public:
 	StgMovePattern_Line(StgMoveObject* target);
 
-	virtual void Activate(StgMovePattern* src) {}
+	virtual void Activate(StgMovePattern* src);
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return speed_; }
