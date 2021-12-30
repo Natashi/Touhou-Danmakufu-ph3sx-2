@@ -1,10 +1,35 @@
-Missing header files:
+Download these libraries and put the listed header files into the folders described below.
+
 	[zlib 1.2.11] 		-> https://www.zlib.net/
+		
 		zlib/zconf.h
 		zlib/zlib.h
+		
 	[libogg 1.3.4]		-> https://xiph.org/
+		
 		ogg/ogg.h
 		ogg/os_types.h
+		
 	[libvorbis 1.3.6]	-> https://xiph.org/
+		
 		vorbis/codec.h
 		vorbis/vorbisfile.h
+
+
+Complete folder structure should look like this:
+
+	/ext
+	|
+	|	.Information.txt
+	|
+	|---/zlib
+	|	|	zconf.h
+	|	|	zlib.h
+	|
+	|---/ogg
+	|	|	ogg.h
+	|	|	os_types.h
+	|
+	|---/vorbis
+	|	|	codec.h
+	|	|	vorbisfile.h

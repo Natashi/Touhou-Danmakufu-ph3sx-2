@@ -296,6 +296,8 @@ namespace gstd {
 			pos[0] -= ox;
 			pos[1] -= oy;
 			Rotate2D(pos, sc[0], sc[1]);
+			pos[0] += ox;
+			pos[1] += oy;
 		}
 		static inline void Rotate2D(DVec2& pos, DVec2& sc) {
 			Rotate2D(pos, sc[0], sc[1]);
