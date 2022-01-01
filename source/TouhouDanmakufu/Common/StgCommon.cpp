@@ -20,7 +20,7 @@ StgMoveObject::~StgMoveObject() {
 }
 void StgMoveObject::_Move() {
 	if (!bEnableMovement_) return;
-	
+
 	if (mapPattern_.size() > 0) {
 		auto itr = mapPattern_.begin();
 		while (framePattern_ >= itr->first) {
@@ -104,6 +104,13 @@ ref_unsync_ptr<StgMoveObject> StgMovePattern::_GetMoveObject(int id) {
 	if (base == nullptr || base->IsDeleted()) return nullptr;
 
 	return ref_unsync_ptr<StgMoveObject>::Cast(base);
+}
+void StgMovePattern::_RegisterShotDataID() {
+	if (target_ == nullptr || idShotData_ == NO_CHANGE) return;
+
+	if (auto pObjShot = dynamic_cast<StgShotObject*>(target_)) {
+		pObjShot->SetShotDataID(idShotData_);
+	}
 }
 
 //****************************************************************************
@@ -250,6 +257,8 @@ void StgMovePattern_Angle::Activate(StgMovePattern* _src) {
 	SetDirectionAngle(angDirection_);
 	if (bMaxSpeed2)
 		maxSpeed_ += speed_;
+
+	_RegisterShotDataID();
 }
 void StgMovePattern_Angle::SetDirectionAngle(double angle) {
 	if (angle != StgMovePattern::NO_CHANGE) {
@@ -369,6 +378,8 @@ void StgMovePattern_XY::Activate(StgMovePattern* _src) {
 			break;
 		}
 	}
+
+	_RegisterShotDataID();
 }
 
 //****************************************************************************
@@ -517,6 +528,8 @@ void StgMovePattern_XY_Angle::Activate(StgMovePattern* _src) {
 			break;
 		}
 	}
+
+	_RegisterShotDataID();
 }
 
 //****************************************************************************
@@ -593,6 +606,8 @@ void StgMovePattern_Line::Activate(StgMovePattern* src) {
 		}
 		patternW->SetAtWeight(tx, ty, weight, maxSpeed);
 	}
+
+	_RegisterShotDataID();
 }
 
 StgMovePattern_Line_Speed::StgMovePattern_Line_Speed(StgMoveObject* target) : StgMovePattern_Line(target) {
