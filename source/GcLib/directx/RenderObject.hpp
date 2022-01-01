@@ -358,6 +358,9 @@ namespace directx {
 		void AddInstance();
 		void ClearInstance();
 
+		void SetAutoClearInstance(bool clear) { autoClearInstance_ = clear; }
+		bool GetAutoClearInstance() { return autoClearInstance_; }
+
 		void SetInstanceColor(D3DCOLOR color) { instColor_ = color; }
 		void SetInstanceColorRGB(int r, int g, int b);
 		void SetInstanceColorRGB(D3DCOLOR color);
@@ -383,6 +386,7 @@ namespace directx {
 		size_t countInstance_;
 		size_t countInstancePrev_;
 		std::vector<VERTEX_INSTANCE> instanceData_;
+		bool autoClearInstance_;
 		
 		D3DCOLOR instColor_;
 		D3DXVECTOR3 instPosition_;

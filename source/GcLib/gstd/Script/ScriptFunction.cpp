@@ -311,6 +311,7 @@ namespace gstd {
 			if (val == nullptr || !val->has_data()) {
 				std::string error = StringUtility::Format("Unsupported operation: value is null\r\n");
 				if (machine) machine->raise_error(error);
+				else throw error;
 				return false;
 			}
 		}

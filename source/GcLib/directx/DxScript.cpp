@@ -402,6 +402,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjParticleList_SetExtraData", DxScript::Func_ObjParticleList_SetExtraData, 4 },
 	{ "ObjParticleList_AddInstance", DxScript::Func_ObjParticleList_AddInstance, 1 },
 	{ "ObjParticleList_ClearInstance", DxScript::Func_ObjParticleList_ClearInstance, 1 },
+	{ "ObjParticleList_SetAutoClearInstance", DxScript::Func_ObjParticleList_SetAutoClearInstance, 2 },
 
 	//Mesh object functions
 	{ "ObjMesh_Create", DxScript::Func_ObjMesh_Create, 0 },
@@ -4068,6 +4069,18 @@ value DxScript::Func_ObjParticleList_ClearInstance(script_machine* machine, int 
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
 		if (objParticle)
 			objParticle->ClearInstance();
+	}
+	return value();
+}
+value DxScript::Func_ObjParticleList_SetAutoClearInstance(script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+
+	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
+	if (obj) {
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		if (objParticle)
+			objParticle->SetAutoClearInstance(argv[1].as_boolean());
 	}
 	return value();
 }

@@ -1366,6 +1366,7 @@ void TrajectoryObject3D::AddPoint(const D3DXMATRIX& mat) {
 ParticleRendererBase::ParticleRendererBase() {
 	countInstance_ = 0U;
 	countInstancePrev_ = 0U;
+	autoClearInstance_ = true;
 	instColor_ = 0xffffffff;
 	instPosition_ = D3DXVECTOR3(0, 0, 0);
 	instScale_ = D3DXVECTOR3(1, 1, 1);
