@@ -2689,15 +2689,25 @@ gstd::value StgStageScript::Func_ObjMove_SetAngularVelocity(gstd::script_machine
 	int id = argv[0].as_int();
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 	if (obj) {
+		double ang = Math::DegreeToRadian(argv[1].as_real());
+
 		ref_unsync_ptr<StgMovePattern> pattern = obj->GetPattern();
-		if (pattern == nullptr || pattern->GetType() != StgMovePattern::TYPE_ANGLE) {
-			pattern = new StgMovePattern_Angle(obj);
-			obj->AddPattern(0, pattern);
+		if (pattern) {
+			switch (pattern->GetType()) {
+			case StgMovePattern::TYPE_ANGLE:
+				goto lab_set;
+			case StgMovePattern::TYPE_XY_ANG:
+				((StgMovePattern_XY_Angle*)pattern.get())->SetAngularVelocity(ang);
+				goto lab_return;
+			}
 		}
 
-		double ang = argv[1].as_real();
-		((StgMovePattern_Angle*)pattern.get())->SetAngularVelocity(Math::DegreeToRadian(ang));
+		pattern = new StgMovePattern_Angle(obj);
+		obj->AddPattern(0, pattern);
+lab_set:
+		((StgMovePattern_Angle*)pattern.get())->SetAngularVelocity(ang);
 	}
+lab_return:
 	return value();
 }
 gstd::value StgStageScript::Func_ObjMove_SetMaxSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
