@@ -391,7 +391,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjMove_AddPatternC3", StgStageScript::Func_ObjMove_AddPatternC3, 11 },
 	{ "ObjMove_AddPatternC4", StgStageScript::Func_ObjMove_AddPatternC4, 12 },
 	{ "ObjMove_AddPatternD1", StgStageScript::Func_ObjMove_AddPatternD1, 5 },
-	{ "ObjMove_AddPatternD2", StgStageScript::Func_ObjMove_AddPatternD2, 5 }, //Overloaded
+	{ "ObjMove_AddPatternD2", StgStageScript::Func_ObjMove_AddPatternD2, 5 },
 	{ "ObjMove_AddPatternD2", StgStageScript::Func_ObjMove_AddPatternD2, 6 }, //Overloaded
 	{ "ObjMove_AddPatternD3", StgStageScript::Func_ObjMove_AddPatternD3, 6 },
 	{ "ObjMove_GetX", StgStageScript::Func_ObjMove_GetX, 1 },
@@ -2689,22 +2689,13 @@ gstd::value StgStageScript::Func_ObjMove_SetAngularVelocity(gstd::script_machine
 	int id = argv[0].as_int();
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 	if (obj) {
-		double ang = argv[1].as_real();
-
 		ref_unsync_ptr<StgMovePattern> pattern = obj->GetPattern();
-		
-		if (pattern == nullptr) {
+		if (pattern == nullptr || pattern->GetType() != StgMovePattern::TYPE_ANGLE) {
 			pattern = new StgMovePattern_Angle(obj);
 			obj->AddPattern(0, pattern);
 		}
-		else if (pattern->GetType() != StgMovePattern::TYPE_ANGLE) {
-			ref_unsync_ptr<StgMovePattern_Angle> newPattern = new StgMovePattern_Angle(obj);
-			newPattern->Activate(pattern.get());
 
-			obj->SetPattern(newPattern);
-			pattern = newPattern;
-		}
-
+		double ang = argv[1].as_real();
 		((StgMovePattern_Angle*)pattern.get())->SetAngularVelocity(Math::DegreeToRadian(ang));
 	}
 	return value();
@@ -2758,14 +2749,14 @@ gstd::value StgStageScript::Func_ObjMove_SetAngularAcceleration(gstd::script_mac
 	int id = argv[0].as_int();
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 	if (obj) {
-		ref_unsync_ptr<StgMovePattern_Angle> pattern = obj->GetPattern();
+		ref_unsync_ptr<StgMovePattern> pattern = obj->GetPattern();
 		if (pattern == nullptr || pattern->GetType() != StgMovePattern::TYPE_ANGLE) {
 			pattern = new StgMovePattern_Angle(obj);
 			obj->AddPattern(0, pattern);
 		}
 
 		double param = argv[1].as_real();
-		pattern->SetAngularAcceleration(Math::DegreeToRadian(param));
+		((StgMovePattern_Angle*)pattern.get())->SetAngularAcceleration(Math::DegreeToRadian(param));
 	}
 	return value();
 }
@@ -2774,14 +2765,14 @@ gstd::value StgStageScript::Func_ObjMove_SetAngularMaxVelocity(gstd::script_mach
 	int id = argv[0].as_int();
 	StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id);
 	if (obj) {
-		ref_unsync_ptr<StgMovePattern_Angle> pattern = obj->GetPattern();
+		ref_unsync_ptr<StgMovePattern> pattern = obj->GetPattern();
 		if (pattern == nullptr || pattern->GetType() != StgMovePattern::TYPE_ANGLE) {
 			pattern = new StgMovePattern_Angle(obj);
 			obj->AddPattern(0, pattern);
 		}
 
 		double param = argv[1].as_real();
-		pattern->SetAngularMaxVelocity(Math::DegreeToRadian(param));
+		((StgMovePattern_Angle*)pattern.get())->SetAngularMaxVelocity(Math::DegreeToRadian(param));
 	}
 	return value();
 }
