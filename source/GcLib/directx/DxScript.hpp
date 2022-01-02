@@ -394,6 +394,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjParticleList_SetExtraData);
 		DNH_FUNCAPI_DECL_(Func_ObjParticleList_AddInstance);
 		DNH_FUNCAPI_DECL_(Func_ObjParticleList_ClearInstance);
+		DNH_FUNCAPI_DECL_(Func_ObjParticleList_SetAutoClearInstance);
 
 		//Dx関数：オブジェクト操作(DxMesh)
 		static gstd::value Func_ObjMesh_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);
