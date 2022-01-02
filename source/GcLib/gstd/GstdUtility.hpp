@@ -415,6 +415,54 @@ namespace gstd {
 				return DifferentialLinear<T>;
 			}
 		};
+
+		class Kinematic {
+		public:
+			template<typename T>
+			static inline T U_VAD(T v, T a, T d) { return sqrt(v * v - 2 * a * d); }
+			template<typename T>
+			static inline T U_VAT(T v, T a, T t) { return v - a * t; }
+			template<typename T>
+			static inline T U_VDT(T v, T d, T t) { return 2 * d / t - v; }
+			template<typename T>
+			static inline T U_ADT(T a, T d, T t) { return d / t - a * t / 2; }
+
+			template<typename T>
+			static inline T V_UAD(T u, T a, T d) { return sqrt(u * u + 2 * a * d); }
+			template<typename T>
+			static inline T V_UAT(T u, T a, T t) { return u + a * t; }
+			template<typename T>
+			static inline T V_UDT(T u, T d, T t) { return 2 * d / t - u; }
+			template<typename T>
+			static inline T V_ADT(T a, T d, T t) { return d / t + a * t / 2; }
+
+			template<typename T>
+			static inline T A_UVD(T u, T v, T d) { return (v * v - u * u) / (2 * d); }
+			template<typename T>
+			static inline T A_UVT(T u, T v, T t) { return (v - u) / t; }
+			template<typename T>
+			static inline T A_UDT(T u, T d, T t) { return 2 * (d - u * t) / (t * t); }
+			template<typename T>
+			static inline T A_VDT(T v, T d, T t) { return 2 * (v * t - d) / (t * t); }
+
+			template<typename T>
+			static inline T D_UVA(T u, T v, T a) { return (v * v - u * u) / (2 * a); }
+			template<typename T>
+			static inline T D_UVT(T u, T v, T t) { return t / 2 * (u + v); }
+			template<typename T>
+			static inline T D_UAT(T u, T a, T t) { return u * t + a * t * t / 2; }
+			template<typename T>
+			static inline T D_VAT(T v, T a, T t) { return v * t - a * t * t / 2; }
+
+			template<typename T>
+			static inline T T_UVA(T u, T v, T a) { return (v - u) / a; }
+			template<typename T>
+			static inline T T_UVD(T u, T v, T d) { return 2 * d / (u + v); }
+			template<typename T>
+			static inline T T_UAD(T u, T a, T d) { return (-u + sqrt(u * u + 2 * a * d)) / a; }
+			template<typename T>
+			static inline T T_VAD(T v, T a, T d) { return (v - sqrt(v * v - 2 * a * d)) / a; }
+		};
 	};
 #endif
 

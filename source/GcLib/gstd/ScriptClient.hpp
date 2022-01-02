@@ -312,6 +312,10 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Angle);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Array);
 
+		//Math functions; kinematics
+		template<double (*funcKinematic)(double, double, double)>
+		DNH_FUNCAPI_DECL_(Func_Kinematic);
+
 		//Math functions; rotation
 		DNH_FUNCAPI_DECL_(Func_Rotate2D);
 		DNH_FUNCAPI_DECL_(Func_Rotate3D);
