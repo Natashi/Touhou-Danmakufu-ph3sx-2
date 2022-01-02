@@ -919,13 +919,6 @@ void StgShotObject::_Move() {
 		StgMoveObject::_Move();
 	SetX(posX_);
 	SetY(posY_);
-
-	if (pattern_) {
-		int idShot = pattern_->GetShotDataID();
-		if (idShot != StgMovePattern::NO_CHANGE) {
-			SetShotDataID(idShot);
-		}
-	}
 }
 void StgShotObject::_DeleteInLife() {
 	if (IsDeleted() || life_ > 0) return;
