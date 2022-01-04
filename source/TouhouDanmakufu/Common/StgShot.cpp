@@ -1258,10 +1258,8 @@ void StgShotObject::_ProcessTransformAct() {
 			ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 			ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
 
-			if (shotID != StgMovePattern::NO_CHANGE)
-				pattern->SetShotDataID(shotID);
-			if (relativeObj != DxScript::ID_INVALID)
-				pattern->SetRelativeObject(relativeObj);
+			pattern->SetShotDataID(shotID);
+			pattern->SetRelativeObject(relativeObj);
 
 			AddPattern(time, pattern, true);
 			break;
@@ -1304,8 +1302,7 @@ void StgShotObject::_ProcessTransformAct() {
 			ADD_CMD(StgMovePattern_XY::SET_M_X, maxspX);
 			ADD_CMD(StgMovePattern_XY::SET_M_Y, maxspY);
 
-			if (shotID != StgMovePattern::NO_CHANGE)
-				pattern->SetShotDataID(shotID);
+			pattern->SetShotDataID(shotID);
 
 			AddPattern(time, pattern, true);
 			break;
@@ -1354,8 +1351,7 @@ void StgShotObject::_ProcessTransformAct() {
 			ADD_CMD2(StgMovePattern_XY_Angle::SET_ANGLE, angOff, Math::DegreeToRadian(angOff));
 			ADD_CMD2(StgMovePattern_XY_Angle::SET_AGVEL, angVel, Math::DegreeToRadian(angVel));
 
-			if (shotID != StgMovePattern::NO_CHANGE)
-				pattern->SetShotDataID(shotID);
+			pattern->SetShotDataID(shotID);
 
 			AddPattern(time, pattern, true);
 			break;
