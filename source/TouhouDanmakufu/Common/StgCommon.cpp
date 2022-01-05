@@ -543,6 +543,8 @@ StgMovePattern::StgMovePattern(StgMoveObject* target) {
 	s_ = 0;
 }
 ref_unsync_ptr<StgMoveObject> StgMovePattern::_GetMoveObject(int id) {
+	if (id == DxScript::ID_INVALID) return nullptr;
+
 	ref_unsync_ptr<DxScriptObjectBase> base = _GetStageController()->GetMainRenderObject(id);
 	if (base == nullptr || base->IsDeleted()) return nullptr;
 

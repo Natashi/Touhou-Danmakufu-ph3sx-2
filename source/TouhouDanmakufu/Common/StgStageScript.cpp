@@ -3105,10 +3105,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA4(gstd::script_machine* mach
 		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 		ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
 
-		if (idGraphic != StgMovePattern::NO_CHANGE)
-			pattern->SetShotDataID(idGraphic);
-		if (idRelative != StgMovePattern::NO_CHANGE)
-			pattern->SetRelativeObject(idRelative);
+		pattern->SetShotDataID(idGraphic);
+		pattern->SetRelativeObject(idRelative);
 
 		obj->AddPattern(frame, pattern);
 	}
@@ -3210,8 +3208,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternB3(gstd::script_machine* mach
 		ADD_CMD(StgMovePattern_XY::SET_M_X, maxspX);
 		ADD_CMD(StgMovePattern_XY::SET_M_Y, maxspY);
 
-		if (idGraphic != StgMovePattern::NO_CHANGE)
-			pattern->SetShotDataID(idGraphic);
+		pattern->SetShotDataID(idGraphic);
 
 		obj->AddPattern(frame, pattern);
 	}
@@ -3295,8 +3292,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternC3(gstd::script_machine* mach
 		ADD_CMD2(StgMovePattern_XY_Angle::SET_ANGLE, angOff, Math::DegreeToRadian(angOff));
 		ADD_CMD2(StgMovePattern_XY_Angle::SET_AGVEL, angVel, Math::DegreeToRadian(angVel));
 
-		if (idShot != StgMovePattern::NO_CHANGE)
-			pattern->SetShotDataID(idShot);
+		pattern->SetShotDataID(idShot);
 
 		obj->AddPattern(frame, pattern);
 	}
