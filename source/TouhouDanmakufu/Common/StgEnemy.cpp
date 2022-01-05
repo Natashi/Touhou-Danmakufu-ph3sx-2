@@ -566,7 +566,7 @@ void StgEnemyBossSceneData::LoadSceneEvents(StgStageController* stageController)
 		if (vLife.has_data()) {
 			if (script->IsArrayValue(vLife)) {
 				for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
-					double life = vLife.index_as_array(iLife).as_real();
+					double life = vLife[iLife].as_real();
 					listLife.push_back(life);
 				}
 			}

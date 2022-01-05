@@ -819,12 +819,12 @@ D3DXMATRIX _script_unpack_matrix(script_machine* machine, const value& v) {
 			if (typeElemElem == nullptr)
 				goto lab_type_invalid;
 
-			const value& subArray = v.index_as_array(i);
+			const value& subArray = v[i];
 			if (subArray.length_as_array() != 4U)
 				goto lab_size_invalid;
 
 			for (size_t j = 0; j < 4; ++i)
-				ptrMat[i * 4 + j] = subArray.index_as_array(j).as_real();
+				ptrMat[i * 4 + j] = subArray[j].as_real();
 		}
 	}
 	else {
@@ -832,7 +832,7 @@ D3DXMATRIX _script_unpack_matrix(script_machine* machine, const value& v) {
 			goto lab_size_invalid;
 
 		for (size_t i = 0; i < 16; ++i)
-			ptrMat[i] = v.index_as_array(i).as_real();
+			ptrMat[i] = v[i].as_real();
 	}
 	
 	goto lab_return;
@@ -861,9 +861,9 @@ D3DXVECTOR3 _script_unpack_vector3(script_machine* machine, const value& v) {
 		goto lab_size_invalid;
 
 	res = D3DXVECTOR3(
-		(FLOAT)v.index_as_array(0).as_real(), 
-		(FLOAT)v.index_as_array(1).as_real(), 
-		(FLOAT)v.index_as_array(2).as_real());
+		(FLOAT)v[0].as_real(), 
+		(FLOAT)v[1].as_real(), 
+		(FLOAT)v[2].as_real());
 
 	goto lab_return;
 lab_size_invalid:
@@ -2130,14 +2130,14 @@ static std::vector<DxPoint> _script_value_to_dxpolygon(script_machine* machine, 
 
 	res.resize(v->length_as_array());
 	for (size_t i = 0; i < res.size(); ++i) {
-		const value& subArray = v->index_as_array(i);
+		const value& subArray = (*v)[i];
 
 		type_data* typeElemElem = typeElem->get_element();
 		if (typeElemElem == nullptr || subArray.length_as_array() != 2U)
 			goto lab_value_invalid;
 
-		res[i] = DxPoint(subArray.index_as_array(0).as_real(), 
-			subArray.index_as_array(1).as_real());
+		res[i] = DxPoint(subArray[0].as_real(), 
+			subArray[1].as_real());
 	}
 
 	goto lab_return;
@@ -2303,10 +2303,10 @@ gstd::value DxScript::Func_ColorARGBToHex(gstd::script_machine* machine, int arg
 		const value& val = argv[0];
 		if (DxScript::IsArrayValue(const_cast<value&>(val))) {
 			if (val.length_as_array() >= 4) {
-				ca = val.index_as_array(0).as_int();
-				cr = val.index_as_array(1).as_int();
-				cg = val.index_as_array(2).as_int();
-				cb = val.index_as_array(3).as_int();
+				ca = val[0].as_int();
+				cr = val[1].as_int();
+				cg = val[2].as_int();
+				cb = val[3].as_int();
 			}
 		}
 	}
@@ -3290,7 +3290,7 @@ gstd::value DxScript::Func_ObjShader_SetMatrix(gstd::script_machine* machine, in
 					D3DXMATRIX matrix;
 					FLOAT* ptrMat = &matrix._11;
 					for (size_t i = 0; i < 16; ++i) {
-						const value& arrayValue = sMatrix.index_as_array(i);
+						const value& arrayValue = sMatrix[i];
 						ptrMat[i] = (FLOAT)arrayValue.as_real();
 					}
 					shader->SetMatrix(name, matrix);
@@ -3315,12 +3315,12 @@ gstd::value DxScript::Func_ObjShader_SetMatrixArray(gstd::script_machine* machin
 			if (array.get_type() == type_matrix_array) {
 				std::vector<D3DXMATRIX> listMatrix;
 				for (size_t iArray = 0; iArray < array.length_as_array(); ++iArray) {
-					const value& sMatrix = array.index_as_array(iArray);
+					const value& sMatrix = array[iArray];
 					if (sMatrix.length_as_array() == 16) {
 						D3DXMATRIX matrix;
 						FLOAT* ptrMat = &matrix._11;
 						for (size_t i = 0; i < 16; ++i) {
-							const value& arrayValue = sMatrix.index_as_array(i);
+							const value& arrayValue = sMatrix[i];
 							ptrMat[i] = (FLOAT)arrayValue.as_real();
 						}
 						listMatrix.push_back(matrix);
@@ -3378,7 +3378,7 @@ gstd::value DxScript::Func_ObjShader_SetFloatArray(gstd::script_machine* machine
 			if (array.get_type() == type_array) {
 				std::vector<FLOAT> listFloat;
 				for (size_t iArray = 0; iArray < array.length_as_array(); ++iArray) {
-					const value& aValue = array.index_as_array(iArray);
+					const value& aValue = array[iArray];
 					listFloat.push_back((FLOAT)aValue.as_real());
 				}
 				shader->SetFloatArray(name, listFloat);
@@ -3644,7 +3644,7 @@ value DxScript::Func_ObjPrimitive_SetVertexIndex(script_machine* machine, int ar
 		std::vector<uint16_t> vecIndex;
 		vecIndex.resize(valArr.length_as_array());
 		for (size_t i = 0; i < valArr.length_as_array(); ++i) {
-			vecIndex[i] = (uint16_t)valArr.index_as_array(i).as_int();
+			vecIndex[i] = (uint16_t)valArr[i].as_int();
 		}
 		obj->GetObjectPointer()->SetVertexIndices(vecIndex);
 	}

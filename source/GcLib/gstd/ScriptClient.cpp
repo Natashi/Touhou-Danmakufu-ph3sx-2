@@ -496,7 +496,7 @@ void ScriptClientBase::SetArgumentValue(value v, int index) {
 	listValueArg_[index] = v;
 }
 
-value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
+value ScriptClientBase::CreateStringArrayValue(const std::vector<std::string>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
 	type_data* type_arr = typeManager->get_array_type(typeManager->get_string_type());
 
@@ -515,7 +515,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
 
 	return value(type_arr, std::wstring());
 }
-value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) {
+value ScriptClientBase::CreateStringArrayValue(const std::vector<std::wstring>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
 	type_data* type_arr = typeManager->get_array_type(typeManager->get_string_type());
 
@@ -534,7 +534,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) 
 
 	return value(type_arr, std::wstring());
 }
-value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
+value ScriptClientBase::CreateValueArrayValue(const std::vector<value>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
 
 	if (list.size() > 0) {
@@ -859,8 +859,9 @@ static value _ScriptValueLerp(script_machine* machine, const value* v1, const va
 			std::vector<value> resArr;
 			resArr.resize(v1->length_as_array());
 			for (size_t i = 0; i < v1->length_as_array(); ++i) {
-				const value* a1 = &v1->index_as_array(i);
-				resArr[i] = _ScriptValueLerp(machine, a1, &v2->index_as_array(i), vx, lerpFunc);
+				const value* a1 = &(*v1)[i];
+				const value* a2 = &(*v2)[i];
+				resArr[i] = _ScriptValueLerp(machine, a1, a2, vx, lerpFunc);
 			}
 
 			res.reset(v1->get_type(), resArr);
@@ -2604,7 +2605,7 @@ void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, const gstd::value&
 		uint32_t arrayLength = comValue.length_as_array();
 		buffer.WriteValue(arrayLength);
 		for (size_t iArray = 0; iArray < arrayLength; iArray++) {
-			const value& arrayValue = comValue.index_as_array(iArray);
+			const value& arrayValue = comValue[iArray];
 			_WriteRecord(buffer, arrayValue);
 		}
 		break;
