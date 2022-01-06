@@ -4104,7 +4104,8 @@ gstd::value StgStageScript::Func_ObjShot_ToItem(gstd::script_machine* machine, i
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
 	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
-	if (obj) obj->ConvertToItem(false);
+	if (obj)
+		obj->ConvertToItem();
 	return value();
 }
 gstd::value StgStageScript::Func_ObjShot_SetIntersectionCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
