@@ -515,6 +515,7 @@ public:
 	void SetInvalidLength(float start, float end) { invalidLengthStart_ = start; invalidLengthEnd_ = end; }
 
 	void SetItemDistance(float dist) { itemDistance_ = std::max(dist, 0.1f); }
+	float GetItemDistance() { return itemDistance_; }
 };
 
 //*******************************************************************

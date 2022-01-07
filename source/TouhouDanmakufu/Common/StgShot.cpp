@@ -211,13 +211,19 @@ size_t StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner,
 			bInCircle = bPassAABB && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr;
 		}
 		if (bInCircle) {
+			if (obj->GetObjectType() == TypeObject::Shot)
+				++res;
+			else {
+				StgLaserObject* laser = dynamic_cast<StgLaserObject*>(obj.get());
+				res += floor(laser->GetLength() / laser->GetItemDistance());
+			}
+
 			if (typeTo == TO_TYPE_IMMEDIATE)
 				obj->DeleteImmediate();
 			else if (typeTo == TO_TYPE_FADE)
 				obj->SetFadeDelete();
 			else if (typeTo == TO_TYPE_ITEM)
 				obj->ConvertToItem(false);
-			++res;
 		}
 	}
 
@@ -260,13 +266,19 @@ size_t StgShotManager::DeleteInRegularPolygon(int typeDelete, int typeTo, int ty
 			}
 		}
 		if (bInPolygon) {
+			if (obj->GetObjectType() == TypeObject::Shot)
+				++res;
+			else {
+				StgLaserObject* laser = dynamic_cast<StgLaserObject*>(obj.get());
+				res += floor(laser->GetLength() / laser->GetItemDistance());
+			}
+
 			if (typeTo == TO_TYPE_IMMEDIATE)
 				obj->DeleteImmediate();
 			else if (typeTo == TO_TYPE_FADE)
 				obj->SetFadeDelete();
 			else if (typeTo == TO_TYPE_ITEM)
 				obj->ConvertToItem(false);
-			++res;
 		}
 	}
 
