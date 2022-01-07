@@ -14,7 +14,6 @@ StgStageScriptManager::StgStageScriptManager(StgStageController* stageController
 	objManager_ = stageController_->GetMainObjectManagerRef();
 	idPlayerScript_ = ID_INVALID;
 	idItemScript_ = ID_INVALID;
-	idShotScript_ = ID_INVALID;
 }
 StgStageScriptManager::~StgStageScriptManager() {
 }
@@ -40,9 +39,6 @@ shared_ptr<ManagedScript> StgStageScriptManager::Create(int type) {
 	case StgStageScript::TYPE_ITEM:
 		res = std::make_shared<StgStageItemScript>(stageController_);
 		break;
-	case StgStageScript::TYPE_SHOT:
-		res = std::make_shared<StgStageShotScript>(stageController_);
-		break;
 	case StgStageScript::TYPE_PLAYER:
 		res = std::make_shared<StgStagePlayerScript>(stageController_);
 		break;
@@ -60,11 +56,6 @@ void StgStageScriptManager::SetItemScript(weak_ptr<ManagedScript> id) {
 	ptrItemScript_ = id;
 	LOCK_WEAK(pScript, id) idItemScript_ = pScript->GetScriptID();
 }
-void StgStageScriptManager::SetShotScript(weak_ptr<ManagedScript> id) {
-	ptrShotScript_ = id;
-	LOCK_WEAK(pScript, id) idShotScript_ = pScript->GetScriptID();
-}
-
 
 //*******************************************************************
 //StgStageScriptObjectManager
@@ -343,7 +334,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetShotCount", StgStageScript::Func_GetShotCount, 1 },
 	{ "SetShotAutoDeleteClip", StgStageScript::Func_SetShotAutoDeleteClip, 4 },
 	{ "GetShotDataInfoA1", StgStageScript::Func_GetShotDataInfoA1, 3 },
-	{ "StartShotScript", StgStageScript::Func_StartShotScript, 1 },
+	{ "SetShotDeleteEventEnable", StgStageScript::Func_SetShotDeleteEventEnable, 2 },
 
 	//STG共通関数：アイテム
 	{ "CreateItemA1", StgStageScript::Func_CreateItemA1, 4 },
@@ -2321,21 +2312,16 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 
 	return gstd::value();
 }
-gstd::value StgStageScript::Func_StartShotScript(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_SetShotDeleteEventEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
+
+	int type = argv[0].as_int();
+	bool bEnable = argv[1].as_boolean();
+
 	StgStageController* stageController = script->stageController_;
-	auto scriptManager = stageController->GetScriptManager();
+	StgShotManager* shotManager = stageController->GetShotManager();
+	shotManager->SetDeleteEventEnableByType(type, bEnable);
 
-	if (scriptManager->GetShotScriptID() != StgControlScriptManager::ID_INVALID)
-		script->RaiseError(L"A shot script was already started.");
-
-	std::wstring path = argv[0].as_string();
-	path = PathProperty::GetUnique(path);
-
-	int type = script->GetScriptType();
-	shared_ptr<ManagedScript> idScript = scriptManager->LoadScript(path, StgStageScript::TYPE_SHOT);
-	scriptManager->StartScript(idScript);
-	scriptManager->SetShotScript(idScript);
 	return value();
 }
 
@@ -4692,7 +4678,8 @@ gstd::value StgStageScript::Func_ObjShot_ToItem(gstd::script_machine* machine, i
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
 	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
-	if (obj) obj->ConvertToItem(false);
+	if (obj)
+		obj->ConvertToItem();
 	return value();
 }
 gstd::value StgStageScript::Func_ObjShot_SetIntersectionCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -6181,37 +6168,6 @@ StgStageItemScript::StgStageItemScript(StgStageController* stageController) : St
 	_AddConstant(&stgItemConstant);
 }
 StgStageItemScript::~StgStageItemScript() {}
-
-//*******************************************************************
-//StgStageShotScript
-//*******************************************************************
-static const std::vector<function> stgShotFunction = {
-	{ "SetShotDeleteEventEnable", StgStageShotScript::Func_SetShotDeleteEventEnable, 2 },
-};
-static const std::vector<constant> stgShotConstant = {
-	//定数
-	constant("EV_DELETE_SHOT_IMMEDIATE", StgStageScript::EV_DELETE_SHOT_IMMEDIATE),
-	constant("EV_DELETE_SHOT_TO_ITEM", StgStageScript::EV_DELETE_SHOT_TO_ITEM),
-	constant("EV_DELETE_SHOT_FADE", StgStageScript::EV_DELETE_SHOT_FADE),
-};
-StgStageShotScript::StgStageShotScript(StgStageController* stageController) : StgStageScript(stageController) {
-	typeScript_ = TYPE_SHOT;
-	_AddFunction(&stgShotFunction);
-	_AddConstant(&stgShotConstant);
-}
-StgStageShotScript::~StgStageShotScript() {}
-
-gstd::value StgStageShotScript::Func_SetShotDeleteEventEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageShotScript* script = (StgStageShotScript*)machine->data;
-	int type = argv[0].as_int();
-	bool bEnable = argv[1].as_boolean();
-
-	StgStageController* stageController = script->stageController_;
-	StgShotManager* shotManager = stageController->GetShotManager();
-	shotManager->SetDeleteEventEnableByType(type, bEnable);
-
-	return value();
-}
 
 //*******************************************************************
 //StgPlayerScript

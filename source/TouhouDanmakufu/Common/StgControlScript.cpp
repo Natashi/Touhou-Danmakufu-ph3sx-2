@@ -779,6 +779,8 @@ gstd::value StgControlScript::Func_SaveSnapShotA1(gstd::script_machine* machine,
 	std::wstring path = argv[0].as_string();
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
+
+	/*
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 
 	graphics->SetRenderTarget(texture, false);
@@ -786,12 +788,13 @@ gstd::value StgControlScript::Func_SaveSnapShotA1(gstd::script_machine* machine,
 	systemController->RenderScriptObject(0, 100);
 	graphics->EndScene(false);
 	graphics->SetRenderTarget(nullptr, false);
+	*/
 
 	//Create the directory (if it doesn't exist)
 	std::wstring dir = PathProperty::GetFileDirectory(path);
 	File::CreateFileDirectory(dir);
 
-	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
+	IDirect3DSurface9* pSurface = graphics->GetBaseSurface();
 	DxRect<LONG> rect(0, 0, graphics->GetScreenWidth(), graphics->GetScreenHeight());
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
 		pSurface, nullptr, (RECT*)&rect);
@@ -807,6 +810,7 @@ gstd::value StgControlScript::Func_SaveSnapShotA2(gstd::script_machine* machine,
 		argv[3].as_int(), argv[4].as_int());
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
+	/*
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 
 	graphics->SetRenderTarget(texture, false);
@@ -814,12 +818,13 @@ gstd::value StgControlScript::Func_SaveSnapShotA2(gstd::script_machine* machine,
 	systemController->RenderScriptObject(0, 100);
 	graphics->EndScene(false);
 	graphics->SetRenderTarget(nullptr, false);
+	*/
 
 	//Create the directory (if it doesn't exist)
 	std::wstring dir = PathProperty::GetFileDirectory(path);
 	File::CreateFileDirectory(dir);
 
-	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
+	IDirect3DSurface9* pSurface = graphics->GetBaseSurface();
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
 		pSurface, nullptr, (RECT*)&rect);
 	return script->CreateBooleanValue(SUCCEEDED(hr));
@@ -840,6 +845,7 @@ gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine,
 		imgFormat = D3DXIFF_PPM;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
+	/*
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 
 	graphics->SetRenderTarget(texture, false);
@@ -847,12 +853,13 @@ gstd::value StgControlScript::Func_SaveSnapShotA3(gstd::script_machine* machine,
 	systemController->RenderScriptObject(0, 100);
 	graphics->EndScene(false);
 	graphics->SetRenderTarget(nullptr, false);
+	*/
 
 	//Create the directory (if it doesn't exist)
 	std::wstring dir = PathProperty::GetFileDirectory(path);
 	File::CreateFileDirectory(dir);
 
-	IDirect3DSurface9* pSurface = texture->GetD3DSurface();
+	IDirect3DSurface9* pSurface = graphics->GetBaseSurface();
 	HRESULT hr = D3DXSaveSurfaceToFile(path.c_str(), (D3DXIMAGE_FILEFORMAT)imgFormat,
 		pSurface, nullptr, (RECT*)&rect);
 	return script->CreateBooleanValue(SUCCEEDED(hr));
