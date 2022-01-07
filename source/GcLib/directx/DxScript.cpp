@@ -360,12 +360,16 @@ static const std::vector<function> dxFunction = {
 
 	//2D sprite object functions
 	{ "ObjSprite2D_SetSourceRect", DxScript::Func_ObjSprite2D_SetSourceRect, 5 },
+	{ "ObjSprite2D_SetSourceRect", DxScript::Func_ObjSprite2D_SetSourceRect, 2 },	//Overloaded
 	{ "ObjSprite2D_SetDestRect", DxScript::Func_ObjSprite2D_SetDestRect, 5 },
+	{ "ObjSprite2D_SetDestRect", DxScript::Func_ObjSprite2D_SetDestRect, 2 },		//Overloaded
 	{ "ObjSprite2D_SetDestCenter", DxScript::Func_ObjSprite2D_SetDestCenter, 1 },
 
 	//2D sprite list object functions
 	{ "ObjSpriteList2D_SetSourceRect", DxScript::Func_ObjSpriteList2D_SetSourceRect, 5 },
+	{ "ObjSpriteList2D_SetSourceRect", DxScript::Func_ObjSpriteList2D_SetSourceRect, 2 },	//Overloaded
 	{ "ObjSpriteList2D_SetDestRect", DxScript::Func_ObjSpriteList2D_SetDestRect, 5 },
+	{ "ObjSpriteList2D_SetDestRect", DxScript::Func_ObjSpriteList2D_SetDestRect, 2 },		//Overloaded
 	{ "ObjSpriteList2D_SetDestCenter", DxScript::Func_ObjSpriteList2D_SetDestCenter, 1 },
 	{ "ObjSpriteList2D_AddVertex", DxScript::Func_ObjSpriteList2D_AddVertex, 1 },
 	{ "ObjSpriteList2D_CloseVertex", DxScript::Func_ObjSpriteList2D_CloseVertex, 1 },
@@ -374,8 +378,11 @@ static const std::vector<function> dxFunction = {
 
 	//3D sprite object functions
 	{ "ObjSprite3D_SetSourceRect", DxScript::Func_ObjSprite3D_SetSourceRect, 5 },
+	{ "ObjSprite3D_SetSourceRect", DxScript::Func_ObjSprite3D_SetSourceRect, 2 },	//Overloaded
 	{ "ObjSprite3D_SetDestRect", DxScript::Func_ObjSprite3D_SetDestRect, 5 },
+	{ "ObjSprite3D_SetDestRect", DxScript::Func_ObjSprite3D_SetDestRect, 2 },		//Overloaded
 	{ "ObjSprite3D_SetSourceDestRect", DxScript::Func_ObjSprite3D_SetSourceDestRect, 5 },
+	{ "ObjSprite3D_SetSourceDestRect", DxScript::Func_ObjSprite3D_SetSourceDestRect, 2 },	//Overloaded
 	{ "ObjSprite3D_SetBillboard", DxScript::Func_ObjSprite3D_SetBillboard, 2 },
 
 	//2D trajectory object functions (what)
@@ -3744,14 +3751,33 @@ value DxScript::Func_ObjPrimitive_SetVertexIndex(script_machine* machine, int ar
 	return value();
 }
 
+static inline bool _script_check_array(script_machine* machine, const value& v, size_t size) {
+	if (!v.has_data() || v.get_type()->get_kind() != type_data::tk_array || v.length_as_array() != size) {
+		std::string err = StringUtility::Format("Incorrect value type. (Expected array of size %d)", size);
+		machine->raise_error(err);
+		return false;
+	}
+	return true;
+}
+
 //Dx関数：オブジェクト操作(Sprite2D)
 value DxScript::Func_ObjSprite2D_SetSourceRect(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	DxScriptSpriteObject2D* obj = script->GetObjectPointerAs<DxScriptSpriteObject2D>(id);
 	if (obj) {
-		DxRect<int> rcSrc(argv[1].as_int(), argv[2].as_int(),
-			argv[3].as_int(), argv[4].as_int());
+		DxRect<int> rcSrc;
+		if (argc == 5) {
+			rcSrc = DxRect<int>(argv[1].as_int(), argv[2].as_int(),
+				argv[3].as_int(), argv[4].as_int());
+		}
+		else {
+			const value& v = argv[1];
+			if (_script_check_array(machine, v, 4)) {
+				rcSrc = DxRect<int>(v[0].as_int(), v[1].as_int(),
+					v[2].as_int(), v[3].as_int());
+			}
+		}
 		obj->GetSpritePointer()->SetSourceRect(rcSrc);
 	}
 	return value();
@@ -3761,8 +3787,18 @@ value DxScript::Func_ObjSprite2D_SetDestRect(script_machine* machine, int argc, 
 	int id = argv[0].as_int();
 	DxScriptSpriteObject2D* obj = script->GetObjectPointerAs<DxScriptSpriteObject2D>(id);
 	if (obj) {
-		DxRect<double> rcDest(argv[1].as_real(), argv[2].as_real(),
-			argv[3].as_real(), argv[4].as_real());
+		DxRect<double> rcDest;
+		if (argc == 5) {
+			rcDest = DxRect<double>(argv[1].as_real(), argv[2].as_real(),
+				argv[3].as_real(), argv[4].as_real());
+		}
+		else {
+			const value& v = argv[1];
+			if (_script_check_array(machine, v, 4)) {
+				rcDest = DxRect<double>(v[0].as_real(), v[1].as_real(),
+					v[2].as_real(), v[3].as_real());
+			}
+		}
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
 	}
 	return value();
@@ -3782,8 +3818,18 @@ gstd::value DxScript::Func_ObjSpriteList2D_SetSourceRect(gstd::script_machine* m
 	int id = argv[0].as_int();
 	DxScriptSpriteListObject2D* obj = script->GetObjectPointerAs<DxScriptSpriteListObject2D>(id);
 	if (obj) {
-		DxRect<int> rcSrc(argv[1].as_int(), argv[2].as_int(),
-			argv[3].as_int(), argv[4].as_int());
+		DxRect<int> rcSrc;
+		if (argc == 5) {
+			rcSrc = DxRect<int>(argv[1].as_int(), argv[2].as_int(),
+				argv[3].as_int(), argv[4].as_int());
+		}
+		else {
+			const value& v = argv[1];
+			if (_script_check_array(machine, v, 4)) {
+				rcSrc = DxRect<int>(v[0].as_int(), v[1].as_int(),
+					v[2].as_int(), v[3].as_int());
+			}
+		}
 		obj->GetSpritePointer()->SetSourceRect(rcSrc);
 	}
 	return value();
@@ -3793,8 +3839,18 @@ gstd::value DxScript::Func_ObjSpriteList2D_SetDestRect(gstd::script_machine* mac
 	int id = argv[0].as_int();
 	DxScriptSpriteListObject2D* obj = script->GetObjectPointerAs<DxScriptSpriteListObject2D>(id);
 	if (obj) {
-		DxRect<double> rcDest(argv[1].as_real(), argv[2].as_real(),
-			argv[3].as_real(), argv[4].as_real());
+		DxRect<double> rcDest;
+		if (argc == 5) {
+			rcDest = DxRect<double>(argv[1].as_real(), argv[2].as_real(),
+				argv[3].as_real(), argv[4].as_real());
+		}
+		else {
+			const value& v = argv[1];
+			if (_script_check_array(machine, v, 4)) {
+				rcDest = DxRect<double>(v[0].as_real(), v[1].as_real(),
+					v[2].as_real(), v[3].as_real());
+			}
+		}
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
 	}
 	return value();
@@ -3846,8 +3902,18 @@ value DxScript::Func_ObjSprite3D_SetSourceRect(script_machine* machine, int argc
 	int id = argv[0].as_int();
 	DxScriptSpriteObject3D* obj = script->GetObjectPointerAs<DxScriptSpriteObject3D>(id);
 	if (obj) {
-		DxRect<int> rcSrc(argv[1].as_int(), argv[2].as_int(),
-			argv[3].as_int(), argv[4].as_int());
+		DxRect<int> rcSrc;
+		if (argc == 5) {
+			rcSrc = DxRect<int>(argv[1].as_int(), argv[2].as_int(),
+				argv[3].as_int(), argv[4].as_int());
+		}
+		else {
+			const value& v = argv[1];
+			if (_script_check_array(machine, v, 4)) {
+				rcSrc = DxRect<int>(v[0].as_int(), v[1].as_int(),
+					v[2].as_int(), v[3].as_int());
+			}
+		}
 		obj->GetSpritePointer()->SetSourceRect(rcSrc);
 	}
 	return value();
@@ -3857,8 +3923,18 @@ value DxScript::Func_ObjSprite3D_SetDestRect(script_machine* machine, int argc, 
 	int id = argv[0].as_int();
 	DxScriptSpriteObject3D* obj = script->GetObjectPointerAs<DxScriptSpriteObject3D>(id);
 	if (obj) {
-		DxRect<double> rcDest(argv[1].as_real(), argv[2].as_real(),
-			argv[3].as_real(), argv[4].as_real());
+		DxRect<double> rcDest;
+		if (argc == 5) {
+			rcDest = DxRect<double>(argv[1].as_real(), argv[2].as_real(),
+				argv[3].as_real(), argv[4].as_real());
+		}
+		else {
+			const value& v = argv[1];
+			if (_script_check_array(machine, v, 4)) {
+				rcDest = DxRect<double>(v[0].as_real(), v[1].as_real(),
+					v[2].as_real(), v[3].as_real());
+			}
+		}
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
 	}
 	return value();
@@ -3868,8 +3944,18 @@ value DxScript::Func_ObjSprite3D_SetSourceDestRect(script_machine* machine, int 
 	int id = argv[0].as_int();
 	DxScriptSpriteObject3D* obj = script->GetObjectPointerAs<DxScriptSpriteObject3D>(id);
 	if (obj) {
-		DxRect<double> rect(argv[1].as_real(), argv[2].as_real(),
-			argv[3].as_real(), argv[4].as_real());
+		DxRect<double> rect;
+		if (argc == 5) {
+			rect = DxRect<double>(argv[1].as_real(), argv[2].as_real(),
+				argv[3].as_real(), argv[4].as_real());
+		}
+		else {
+			const value& v = argv[1];
+			if (_script_check_array(machine, v, 4)) {
+				rect = DxRect<double>(v[0].as_real(), v[1].as_real(),
+					v[2].as_real(), v[3].as_real());
+			}
+		}
 		obj->GetSpritePointer()->SetSourceDestRect(rect);
 	}
 	return value();

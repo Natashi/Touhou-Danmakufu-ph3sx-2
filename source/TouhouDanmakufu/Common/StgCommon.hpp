@@ -211,6 +211,7 @@ protected:
 
 	StgStageController* _GetStageController() { return target_->stageController_; }
 	ref_unsync_ptr<StgMoveObject> _GetMoveObject(int id);
+	void _RegisterShotDataID();
 public:
 	StgMovePattern(StgMoveObject* target);
 	virtual ~StgMovePattern() {}

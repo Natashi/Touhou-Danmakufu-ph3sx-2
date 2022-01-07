@@ -98,6 +98,8 @@ namespace gstd {
 		std::vector<value>::iterator array_get_begin() const;
 		std::vector<value>::iterator array_get_end() const;
 
+		const value& operator[](size_t i) const { return index_as_array(i); }
+
 		//--------------------------------------------------------------------------
 
 		int64_t as_int() const;
