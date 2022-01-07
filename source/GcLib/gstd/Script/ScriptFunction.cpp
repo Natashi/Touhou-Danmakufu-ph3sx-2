@@ -180,17 +180,17 @@ namespace gstd {
 			size_t ct_op = std::min(v_right->length_as_array(), ct_left);
 			value v[2];
 			for (size_t i = 0; i < ct_op; ++i) {
-				v[0] = v_left->index_as_array(i);
-				v[1] = v_right->index_as_array(i);
+				v[0] = (*v_left)[i];
+				v[1] = (*v_right)[i];
 				resArr[i] = func(2, v);
 			}
-			for (size_t i = ct_op; i < ct_left; ++i) resArr[i] = v_left->index_as_array(i);
+			for (size_t i = ct_op; i < ct_left; ++i) resArr[i] = (*v_left)[i];
 		}
 		else {
 			value v[2];
 			v[1] = *v_right;
 			for (size_t i = 0; i < ct_left; ++i) {
-				v[0] = v_left->index_as_array(i);
+				v[0] = (*v_left)[i];
 				resArr[i] = func(2, v);
 			}
 		}
@@ -379,7 +379,7 @@ namespace gstd {
 		type_data* elemType = nullptr;
 
 		for (size_t i = 0; i < arrVal.size(); ++i) {
-			value nv = val->index_as_array(i);
+			value nv = (*val)[i];
 			if (nv.get_type()->get_kind() == type_data::tk_array) {
 				type_data* nextElemType = __cast_array(machine, rootType, &nv, setType);
 				if (elemType == nullptr)
@@ -551,7 +551,7 @@ namespace gstd {
 			std::vector<value> resArr;
 			resArr.resize(argv->length_as_array());
 			for (size_t i = 0; i < argv->length_as_array(); ++i) {
-				resArr[i] = _script_negative(1, &argv->index_as_array(i));
+				resArr[i] = _script_negative(1, &(*argv)[i]);
 			}
 			result.reset(argv->get_type(), resArr);
 			return result;
@@ -628,8 +628,8 @@ namespace gstd {
 					else {
 						value v[2];
 						for (size_t i = 0; i < sr; ++i) {
-							v[0] = argv[0].index_as_array(i);
-							v[1] = argv[1].index_as_array(i);
+							v[0] = argv[0][i];
+							v[1] = argv[1][i];
 							r = _script_compare(2, v).as_real();
 							if (r != 0)
 								break;
@@ -692,7 +692,7 @@ namespace gstd {
 			std::vector<value> resArr;
 			resArr.resize(argv->length_as_array());
 			for (size_t i = 0; i < argv->length_as_array(); ++i) {
-				resArr[i] = predecessor(machine, 1, &(argv->index_as_array(i)));
+				resArr[i] = predecessor(machine, 1, &(*argv)[i]);
 			}
 			result.reset(argv->get_type(), resArr);
 			return result;
@@ -722,7 +722,7 @@ namespace gstd {
 			std::vector<value> resArr;
 			resArr.resize(argv->length_as_array());
 			for (size_t i = 0; i < argv->length_as_array(); ++i) {
-				resArr[i] = successor(machine, 1, &(argv->index_as_array(i)));
+				resArr[i] = successor(machine, 1, &(*argv)[i]);
 			}
 			result.reset(argv->get_type(), resArr);
 			return result;
@@ -774,7 +774,7 @@ namespace gstd {
 			std::vector<value> arrVal(newSize);
 
 			for (size_t i = 0; i < oldSize && i < newSize; ++i)
-				arrVal[i] = val->index_as_array(i);
+				arrVal[i] = (*val)[i];
 			if (newSize > oldSize) {
 				value fill;
 				if (argc == 3) {	//Has fill value
@@ -916,7 +916,7 @@ namespace gstd {
 
 		bool res = false;
 		for (size_t i = 0; i < length; ++i) {
-			value args[2] = { arr->index_as_array(i), val };
+			value args[2] = { (*arr)[i], val };
 			if (compare(machine, 2, args).as_int() == 0) {
 				res = true;
 				break;
@@ -1089,7 +1089,7 @@ namespace gstd {
 
 		// Populate source array
 		for (size_t i = 0; i < size; ++i)
-			arrVal[i] = val->index_as_array(i);
+			arrVal[i] = (*val)[i];
 
 		for (size_t i = 0; i < size; ++i) {
 			for (size_t j = 1; j <= count; ++j) {
@@ -1119,7 +1119,7 @@ namespace gstd {
 		if (!_index_check(machine, arr->get_type(), length, index))
 			return nullptr;
 
-		return &arr->index_as_array(index);
+		return &(*arr)[index];
 	}
 
 	value BaseFunction::slice(script_machine* machine, int argc, const value* argv) {
@@ -1153,7 +1153,7 @@ namespace gstd {
 
 				resArr.resize(index_2 - index_1);
 				for (size_t i = 0, j = index_1; i < resArr.size(); ++i, ++j) {
-					const value& v = argv[0].index_as_array(j);
+					const value& v = argv[0][j];
 					resArr[i] = v;
 				}
 			}
@@ -1163,7 +1163,7 @@ namespace gstd {
 
 				resArr.resize(index_1 - index_2);
 				for (size_t i = 0, j = index_1 - 1; i < resArr.size(); ++i, --j) {
-					const value& v = argv[0].index_as_array(j);
+					const value& v = argv[0][j];
 					resArr[i] = v;
 				}
 			}
@@ -1222,11 +1222,11 @@ namespace gstd {
 		{
 			size_t iArr = 0;
 			for (size_t i = 0; i < insertPos; ++i) {
-				resArr[iArr++] = argv[0].index_as_array(i);
+				resArr[iArr++] = argv[0][i];
 			}
 			resArr[iArr++] = insertVal;
 			for (size_t i = insertPos; i < length; ++i) {
-				resArr[iArr++] = argv[0].index_as_array(i);
+				resArr[iArr++] = argv[0][i];
 			}
 		}
 
@@ -1261,10 +1261,10 @@ namespace gstd {
 		{
 			size_t iArr = 0;
 			for (size_t i = 0; i < index_1; ++i) {
-				resArr[iArr++] = argv[0].index_as_array(i);
+				resArr[iArr++] = argv[0][i];
 			}
 			for (size_t i = index_1 + 1; i < length; ++i) {
-				resArr[iArr++] = argv[0].index_as_array(i);
+				resArr[iArr++] = argv[0][i];
 			}
 		}
 

@@ -303,7 +303,7 @@ void StgPlayerObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectio
 
 				if (enableDeleteShotOnHit_ && !objShot->IsSpellResist() &&
 					objShot->GetObjectType() == TypeObject::Shot)
-					objShot->ConvertToItem(true);
+					objShot->DeleteImmediate();
 			}
 		}
 		else {
