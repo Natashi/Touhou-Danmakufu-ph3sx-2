@@ -297,7 +297,7 @@ void StgStageController::_SetupReplayTargetCommonDataArea(shared_ptr<ManagedScri
 	std::set<std::string> listArea;
 	
 	for (size_t iArray = 0; iArray < res.length_as_array(); ++iArray) {
-		const value& arrayValue = res.index_as_array(iArray);
+		const value& arrayValue = res[iArray];
 		std::string area = StringUtility::ConvertWideToMulti(arrayValue.as_string());
 		listArea.insert(area);
 	}

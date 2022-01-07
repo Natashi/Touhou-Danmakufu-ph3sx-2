@@ -28,6 +28,10 @@ StgShotManager::StgShotManager(StgStageController* stageController) {
 		for (auto& iLayer : listRenderQueue_)
 			iLayer.second.resize(32);
 	}
+
+	SetDeleteEventEnableByType(StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE, true);
+	SetDeleteEventEnableByType(StgStageItemScript::EV_DELETE_SHOT_FADE, true);
+	SetDeleteEventEnableByType(StgStageItemScript::EV_DELETE_SHOT_TO_ITEM, true);
 }
 StgShotManager::~StgShotManager() {
 	for (ref_unsync_ptr<StgShotObject>& obj : listObj_) {
@@ -214,7 +218,7 @@ void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, i
 			else if (typeTo == TO_TYPE_FADE)
 				obj->SetFadeDelete();
 			else if (typeTo == TO_TYPE_ITEM)
-				obj->ConvertToItem(false);
+				obj->ConvertToItem();
 		}
 	}
 }
@@ -262,13 +266,13 @@ size_t StgShotManager::GetShotCount(int typeOwner) {
 void StgShotManager::SetDeleteEventEnableByType(int type, bool bEnable) {
 	int bit = 0;
 	switch (type) {
-	case StgStageShotScript::EV_DELETE_SHOT_IMMEDIATE:
+	case StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE:
 		bit = StgShotManager::BIT_EV_DELETE_IMMEDIATE;
 		break;
-	case StgStageShotScript::EV_DELETE_SHOT_TO_ITEM:
+	case StgStageItemScript::EV_DELETE_SHOT_TO_ITEM:
 		bit = StgShotManager::BIT_EV_DELETE_TO_ITEM;
 		break;
-	case StgStageShotScript::EV_DELETE_SHOT_FADE:
+	case StgStageItemScript::EV_DELETE_SHOT_FADE:
 		bit = StgShotManager::BIT_EV_DELETE_FADE;
 		break;
 	}
@@ -824,13 +828,6 @@ void StgShotObject::_Move() {
 		StgMoveObject::_Move();
 	SetX(posX_);
 	SetY(posY_);
-
-	if (pattern_) {
-		int idShot = pattern_->GetShotDataID();
-		if (idShot != StgMovePattern::NO_CHANGE) {
-			SetShotDataID(idShot);
-		}
-	}
 }
 void StgShotObject::_DeleteInLife() {
 	if (IsDeleted() || life_ > 0) return;
@@ -921,36 +918,6 @@ void StgShotObject::_CommonWorkTask() {
 	}
 
 }
-void StgShotObject::_SendDeleteEvent(int bit) {
-	if (typeOwner_ != OWNER_ENEMY) return;
-
-	StgShotManager* shotManager = stageController_->GetShotManager();
-	if (!shotManager->IsDeleteEventEnable(bit)) return;
-
-	LOCK_WEAK(scriptShot, stageController_->GetScriptManager()->GetShotScript()) {
-		double listPos[2] = { GetPositionX(), GetPositionY() };
-
-		int typeEvent = 0;
-		switch (bit) {
-		case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
-			typeEvent = StgStageShotScript::EV_DELETE_SHOT_IMMEDIATE;
-			break;
-		case StgShotManager::BIT_EV_DELETE_TO_ITEM:
-			typeEvent = StgStageShotScript::EV_DELETE_SHOT_TO_ITEM;
-			break;
-		case StgShotManager::BIT_EV_DELETE_FADE:
-			typeEvent = StgStageShotScript::EV_DELETE_SHOT_FADE;
-			break;
-		}
-
-		value listScriptValue[4];
-		listScriptValue[0] = ManagedScript::CreateIntValue(idObject_);
-		listScriptValue[1] = ManagedScript::CreateRealArrayValue(listPos, 2U);
-		listScriptValue[2] = ManagedScript::CreateBooleanValue(false);
-		listScriptValue[3] = ManagedScript::CreateIntValue(GetShotDataID());
-		scriptShot->RequestEvent(typeEvent, listScriptValue, 4);
-	}
-}
 
 void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	ref_unsync_weak_ptr<StgIntersectionObject> obj = otherTarget->GetObject();
@@ -970,7 +937,7 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 			if (StgShotObject* shot = dynamic_cast<StgShotObject*>(obj.get())) {
 				bool bEraseShot = shot->IsEraseShot();
 				if (bEraseShot && !bSpellResist_)
-					ConvertToItem(false);
+					ConvertToItem();
 			}
 		}
 		break;
@@ -981,7 +948,7 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 			if (StgPlayerSpellObject* spell = dynamic_cast<StgPlayerSpellObject*>(obj.get())) {
 				bool bEraseShot = spell->IsEraseShot();
 				if (bEraseShot && !bSpellResist_)
-					ConvertToItem(false);
+					ConvertToItem();
 			}
 		}
 		break;
@@ -1043,13 +1010,11 @@ void StgShotObject::SetColor(int r, int g, int b) {
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 }
 
-void StgShotObject::ConvertToItem(bool flgPlayerCollision) {
+void StgShotObject::ConvertToItem() {
 	if (IsDeleted()) return;
 
-	if (bChangeItemEnable_) {
-		_ConvertToItemAndSendEvent(flgPlayerCollision);
-		_SendDeleteEvent(StgShotManager::BIT_EV_DELETE_TO_ITEM);
-	}
+	_SendDeleteEvent(bChangeItemEnable_ ? StgShotManager::BIT_EV_DELETE_TO_ITEM 
+		: StgShotManager::BIT_EV_DELETE_IMMEDIATE);
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	objectManager->DeleteObject(this);
@@ -1286,10 +1251,8 @@ void StgShotObject::_ProcessTransformAct() {
 			ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 			ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
 
-			if (shotID != StgMovePattern::NO_CHANGE)
-				pattern->SetShotDataID(shotID);
-			if (relativeObj != DxScript::ID_INVALID)
-				pattern->SetRelativeObject(relativeObj);
+			pattern->SetShotDataID(shotID);
+			pattern->SetRelativeObject(relativeObj);
 
 			AddPattern(time, pattern, true);
 			break;
@@ -1332,8 +1295,56 @@ void StgShotObject::_ProcessTransformAct() {
 			ADD_CMD(StgMovePattern_XY::SET_M_X, maxspX);
 			ADD_CMD(StgMovePattern_XY::SET_M_Y, maxspY);
 
-			if (shotID != StgMovePattern::NO_CHANGE)
-				pattern->SetShotDataID(shotID);
+			pattern->SetShotDataID(shotID);
+
+			AddPattern(time, pattern, true);
+			break;
+		}
+		case StgPatternShotTransform::TRANSFORM_ADDPATTERN_C1:
+		{
+			int time = transform.param[0];
+
+			double speedX = transform.param[1];
+			double speedY = transform.param[2];
+			double angOff = transform.param[3];
+
+			ref_unsync_ptr<StgMovePattern_XY_Angle> pattern = new StgMovePattern_XY_Angle(this);
+			pattern->AddCommand(std::make_pair(StgMovePattern_XY_Angle::SET_ZERO, 0));
+
+			ADD_CMD(StgMovePattern_XY_Angle::SET_S_X, speedX);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_S_Y, speedY);
+			ADD_CMD2(StgMovePattern_XY_Angle::SET_ANGLE, angOff, Math::DegreeToRadian(angOff));
+
+			AddPattern(time, pattern, true);
+			break;
+		}
+		case StgPatternShotTransform::TRANSFORM_ADDPATTERN_C2:
+		{
+			int time = transform.param[0];
+
+			double speedX = transform.param[1];
+			double speedY = transform.param[2];
+			double accelX = transform.param[3];
+			double accelY = transform.param[4];
+			double maxspX = transform.param[5];
+			double maxspY = transform.param[6];
+			double angOff = transform.param[7];
+			double angVel = transform.param[8];
+
+			int shotID = transform.param[9];
+
+			ref_unsync_ptr<StgMovePattern_XY_Angle> pattern = new StgMovePattern_XY_Angle(this);
+
+			ADD_CMD(StgMovePattern_XY_Angle::SET_S_X, speedX);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_S_Y, speedY);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_A_X, accelX);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_A_Y, accelY);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_M_X, maxspX);
+			ADD_CMD(StgMovePattern_XY_Angle::SET_M_Y, maxspY);
+			ADD_CMD2(StgMovePattern_XY_Angle::SET_ANGLE, angOff, Math::DegreeToRadian(angOff));
+			ADD_CMD2(StgMovePattern_XY_Angle::SET_AGVEL, angVel, Math::DegreeToRadian(angVel));
+
+			pattern->SetShotDataID(shotID);
 
 			AddPattern(time, pattern, true);
 			break;
@@ -1604,36 +1615,54 @@ void StgNormalShotObject::RenderOnShotManager() {
 	renderer->AddSquareVertex(verts);
 }
 
-void StgNormalShotObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
-	StgItemManager* itemManager = stageController_->GetItemManager();
+void StgNormalShotObject::_SendDeleteEvent(int type) {
+	if (typeOwner_ != OWNER_ENEMY) return;
+
 	auto stageScriptManager = stageController_->GetScriptManager();
+	auto objectManager = stageController_->GetMainObjectManager();
 
-	float posX = GetPositionX();
-	float posY = GetPositionY();
+	StgShotManager* shotManager = stageController_->GetShotManager();
+	StgItemManager* itemManager = stageController_->GetItemManager();
+
+	if (!shotManager->IsDeleteEventEnable(type)) return;
+
 	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
-		float listPos[2] = { posX, posY };
+		int typeEvent = 0;
+		switch (type) {
+		case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE;
+			break;
+		case StgShotManager::BIT_EV_DELETE_TO_ITEM:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_TO_ITEM;
+			break;
+		case StgShotManager::BIT_EV_DELETE_FADE:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_FADE;
+			break;
+		}
 
-		gstd::value listScriptValue[4];
-		listScriptValue[0] = itemScript->CreateIntValue(idObject_);
-		listScriptValue[1] = itemScript->CreateRealArrayValue(listPos, 2U);
-		listScriptValue[2] = itemScript->CreateBooleanValue(flgPlayerCollision);
-		listScriptValue[3] = itemScript->CreateIntValue(GetShotDataID());
-		itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
-	}
+		Math::DVec2 pos{ GetPositionX(), GetPositionY() };
 
-	if (itemManager->IsDefaultBonusItemEnable() && !flgPlayerCollision) {
-		if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
-			ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
-			auto objectManager = stageController_->GetMainObjectManager();
-			int id = objectManager->AddObject(obj);
-			if (id != DxScript::ID_INVALID) {
-				itemManager->AddItem(obj);
-				obj->SetPositionX(posX);
-				obj->SetPositionY(posY);
+		gstd::value listScriptValue[3];
+		listScriptValue[0] = DxScript::CreateIntValue(idObject_);
+		listScriptValue[1] = DxScript::CreateRealArrayValue(pos);
+		listScriptValue[2] = DxScript::CreateIntValue(GetShotDataID());
+		itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+
+		if (typeEvent == StgStageItemScript::EV_DELETE_SHOT_TO_ITEM && itemManager->IsDefaultBonusItemEnable()) {
+			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
+				ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
+					
+				int id = objectManager->AddObject(obj);
+				if (id != DxScript::ID_INVALID) {
+					itemManager->AddItem(obj);
+					obj->SetPositionX(pos[0]);
+					obj->SetPositionY(pos[1]);
+				}
 			}
 		}
 	}
 }
+
 void StgNormalShotObject::SetShotDataID(int id) {
 	StgShotData* oldData = _GetShotData();
 	StgShotObject::SetShotDataID(id);
@@ -1955,45 +1984,62 @@ void StgLooseLaserObject::RenderOnShotManager() {
 		_LoadVerts(renderer);
 	}
 }
-void StgLooseLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
-	StgItemManager* itemManager = stageController_->GetItemManager();
+void StgLooseLaserObject::_SendDeleteEvent(int type) {
+	if (typeOwner_ != OWNER_ENEMY) return;
+
 	auto stageScriptManager = stageController_->GetScriptManager();
+	auto objectManager = stageController_->GetMainObjectManager();
 
-	shared_ptr<ManagedScript> itemScript = stageScriptManager->GetItemScript().lock();
+	StgShotManager* shotManager = stageController_->GetShotManager();
+	StgItemManager* itemManager = stageController_->GetItemManager();
 
-	int ex = GetPositionX();
-	int ey = GetPositionY();
+	if (!shotManager->IsDeleteEventEnable(type)) return;
 
-	float dx = posXE_ - posX_;
-	float dy = posYE_ - posY_;
-	float length = hypotf(dx, dy);
-
-	float listPos[2];
-	gstd::value listScriptValue[4];
-
-	for (float itemPos = 0; itemPos < length; itemPos += itemDistance_) {
-		float posX = ex - itemPos * move_.x;
-		float posY = ey - itemPos * move_.y;
-
-		if (itemScript) {
-			listPos[0] = posX;
-			listPos[1] = posY;
-
-			listScriptValue[0] = itemScript->CreateIntValue(idObject_);
-			listScriptValue[1] = itemScript->CreateRealArrayValue(listPos, 2U);
-			listScriptValue[2] = itemScript->CreateBooleanValue(flgPlayerCollision);
-			listScriptValue[3] = itemScript->CreateIntValue(GetShotDataID());
-			itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
+	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
+		int typeEvent = 0;
+		switch (type) {
+		case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE;
+			break;
+		case StgShotManager::BIT_EV_DELETE_TO_ITEM:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_TO_ITEM;
+			break;
+		case StgShotManager::BIT_EV_DELETE_FADE:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_FADE;
+			break;
 		}
 
-		if (itemManager->IsDefaultBonusItemEnable() && (delay_.time == 0 || bEnableMotionDelay_) && !flgPlayerCollision) {
-			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
-				ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
-				int id = stageController_->GetMainObjectManager()->AddObject(obj);
-				if (id != DxScript::ID_INVALID) {
-					itemManager->AddItem(obj);
-					obj->SetPositionX(posX);
-					obj->SetPositionY(posY);
+		double ex = GetPositionX();
+		double ey = GetPositionY();
+
+		double dx = posXE_ - posX_;
+		double dy = posYE_ - posY_;
+		double length = hypot(dx, dy);
+
+		Math::DVec2 pos;
+		gstd::value listScriptValue[3];
+
+		for (double itemPos = 0; itemPos < length; itemPos += itemDistance_) {
+			pos = { ex - itemPos * move_.x, ey - itemPos * move_.y };
+
+			gstd::value listScriptValue[3];
+			listScriptValue[0] = DxScript::CreateIntValue(idObject_);
+			listScriptValue[1] = DxScript::CreateRealArrayValue(pos);
+			listScriptValue[2] = DxScript::CreateIntValue(GetShotDataID());
+			itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+
+			if (delay_.time == 0 || bEnableMotionDelay_) {
+				if (typeEvent == StgStageItemScript::EV_DELETE_SHOT_TO_ITEM && itemManager->IsDefaultBonusItemEnable()) {
+					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
+						ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
+
+						int id = objectManager->AddObject(obj);
+						if (id != DxScript::ID_INVALID) {
+							itemManager->AddItem(obj);
+							obj->SetPositionX(pos[0]);
+							obj->SetPositionY(pos[1]);
+						}
+					}
 				}
 			}
 		}
@@ -2251,38 +2297,55 @@ void StgStraightLaserObject::RenderOnShotManager() {
 		}
 	}
 }
-void StgStraightLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
-	StgItemManager* itemManager = stageController_->GetItemManager();
+void StgStraightLaserObject::_SendDeleteEvent(int type) {
+	if (typeOwner_ != OWNER_ENEMY) return;
+
 	auto stageScriptManager = stageController_->GetScriptManager();
+	auto objectManager = stageController_->GetMainObjectManager();
 
-	shared_ptr<ManagedScript> itemScript = stageScriptManager->GetItemScript().lock();
+	StgShotManager* shotManager = stageController_->GetShotManager();
+	StgItemManager* itemManager = stageController_->GetItemManager();
 
-	float listPos[2];
-	gstd::value listScriptValue[4];
+	if (!shotManager->IsDeleteEventEnable(type)) return;
 
-	for (float itemPos = 0; itemPos < (float)length_; itemPos += itemDistance_) {
-		float itemX = posX_ + itemPos * move_.x;
-		float itemY = posY_ + itemPos * move_.y;
-
-		if (itemScript) {
-			listPos[0] = itemX;
-			listPos[1] = itemY;
-
-			listScriptValue[0] = itemScript->CreateIntValue(idObject_);
-			listScriptValue[1] = itemScript->CreateRealArrayValue(listPos, 2U);
-			listScriptValue[2] = itemScript->CreateBooleanValue(flgPlayerCollision);
-			listScriptValue[3] = itemScript->CreateIntValue(GetShotDataID());
-			itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
+	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
+		int typeEvent = 0;
+		switch (type) {
+		case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE;
+			break;
+		case StgShotManager::BIT_EV_DELETE_TO_ITEM:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_TO_ITEM;
+			break;
+		case StgShotManager::BIT_EV_DELETE_FADE:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_FADE;
+			break;
 		}
 
-		if (itemManager->IsDefaultBonusItemEnable() && delay_.time == 0 && !flgPlayerCollision) {
-			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
-				ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
-				int id = stageController_->GetMainObjectManager()->AddObject(obj);
-				if (id != DxScript::ID_INVALID) {
-					itemManager->AddItem(obj);
-					obj->SetPositionX(itemX);
-					obj->SetPositionY(itemY);
+		Math::DVec2 pos;
+		gstd::value listScriptValue[3];
+
+		for (double itemPos = 0; itemPos < length_; itemPos += itemDistance_) {
+			pos = { posX_ + itemPos * move_.x, posY_ + itemPos * move_.y };
+
+			gstd::value listScriptValue[3];
+			listScriptValue[0] = DxScript::CreateIntValue(idObject_);
+			listScriptValue[1] = DxScript::CreateRealArrayValue(pos);
+			listScriptValue[2] = DxScript::CreateIntValue(GetShotDataID());
+			itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+
+			if (delay_.time == 0) {
+				if (typeEvent == StgStageItemScript::EV_DELETE_SHOT_TO_ITEM && itemManager->IsDefaultBonusItemEnable()) {
+					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
+						ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
+
+						int id = objectManager->AddObject(obj);
+						if (id != DxScript::ID_INVALID) {
+							itemManager->AddItem(obj);
+							obj->SetPositionX(pos[0]);
+							obj->SetPositionY(pos[1]);
+						}
+					}
 				}
 			}
 		}
@@ -2650,57 +2713,75 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		}
 	}
 }
-void StgCurveLaserObject::_ConvertToItemAndSendEvent(bool flgPlayerCollision) {
-	StgItemManager* itemManager = stageController_->GetItemManager();
+void StgCurveLaserObject::_SendDeleteEvent(int type) {
+	if (typeOwner_ != OWNER_ENEMY) return;
+
 	auto stageScriptManager = stageController_->GetScriptManager();
+	auto objectManager = stageController_->GetMainObjectManager();
 
-	shared_ptr<ManagedScript> itemScript = stageScriptManager->GetItemScript().lock();
+	StgShotManager* shotManager = stageController_->GetShotManager();
+	StgItemManager* itemManager = stageController_->GetItemManager();
 
-	gstd::value listScriptValue[4];
-	if (itemScript) {
-		listScriptValue[0] = itemScript->CreateIntValue(idObject_);
-		listScriptValue[2] = itemScript->CreateBooleanValue(flgPlayerCollision);
-		listScriptValue[3] = itemScript->CreateIntValue(GetShotDataID());
-	}
+	if (!shotManager->IsDeleteEventEnable(type)) return;
 
-	size_t countToItem = 0U;
-
-	auto RequestItem = [&](float ix, float iy) {
-		if (itemScript) {
-			float listPos[2] = { ix, iy };
-			listScriptValue[1] = itemScript->CreateRealArrayValue(listPos, 2U);
-			itemScript->RequestEvent(StgStageScript::EV_DELETE_SHOT_TO_ITEM, listScriptValue, 4);
+	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
+		int typeEvent = 0;
+		switch (type) {
+		case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE;
+			break;
+		case StgShotManager::BIT_EV_DELETE_TO_ITEM:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_TO_ITEM;
+			break;
+		case StgShotManager::BIT_EV_DELETE_FADE:
+			typeEvent = StgStageItemScript::EV_DELETE_SHOT_FADE;
+			break;
 		}
-		if (itemManager->IsDefaultBonusItemEnable() && (delay_.time == 0 || bEnableMotionDelay_) && !flgPlayerCollision) {
-			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
-				ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
-				if (stageController_->GetMainObjectManager()->AddObject(obj) != DxScript::ID_INVALID) {
-					itemManager->AddItem(obj);
-					obj->SetPositionX(ix);
-					obj->SetPositionY(iy);
+
+		gstd::value listScriptValue[3];
+		listScriptValue[0] = DxScript::CreateIntValue(idObject_);
+		listScriptValue[2] = DxScript::CreateIntValue(GetShotDataID());
+
+		size_t countToItem = 0U;
+		auto _RequestItem = [&](double ix, double iy) {
+			listScriptValue[1] = itemScript->CreateRealArrayValue(Math::DVec2{ ix, iy });
+			itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+
+			if (delay_.time == 0 || bEnableMotionDelay_) {
+				if (typeEvent == StgStageItemScript::EV_DELETE_SHOT_TO_ITEM && itemManager->IsDefaultBonusItemEnable()) {
+					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
+						ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
+
+						int id = objectManager->AddObject(obj);
+						if (id != DxScript::ID_INVALID) {
+							itemManager->AddItem(obj);
+							obj->SetPositionX(ix);
+							obj->SetPositionY(iy);
+						}
+					}
 				}
 			}
-		}
-		++countToItem;
-	};
+			++countToItem;
+		};
 
-	float lengthAcc = 0.0;
-	for (std::list<LaserNode>::iterator itr = listPosition_.begin(); itr != listPosition_.end(); itr++) {
-		std::list<LaserNode>::iterator itrNext = std::next(itr);
-		if (itrNext == listPosition_.end()) break;
+		float lengthAcc = 0.0;
+		for (std::list<LaserNode>::iterator itr = listPosition_.begin(); itr != listPosition_.end(); itr++) {
+			std::list<LaserNode>::iterator itrNext = std::next(itr);
+			if (itrNext == listPosition_.end()) break;
 
-		D3DXVECTOR2* pos = &itr->pos;
-		D3DXVECTOR2* posNext = &itrNext->pos;
-		float nodeDist = hypotf(posNext->x - pos->x, posNext->y - pos->y);
-		lengthAcc += nodeDist;
+			D3DXVECTOR2* pos = &itr->pos;
+			D3DXVECTOR2* posNext = &itrNext->pos;
+			float nodeDist = hypotf(posNext->x - pos->x, posNext->y - pos->y);
+			lengthAcc += nodeDist;
 
-		float createDist = 0U;
-		while (lengthAcc >= itemDistance_) {
-			float lerpMul = (itemDistance_ >= nodeDist) ? 0.0 : (createDist / nodeDist);
-			RequestItem(Math::Lerp::Linear(pos->x, posNext->x, lerpMul),
-				Math::Lerp::Linear(pos->y, posNext->y, lerpMul));
-			createDist += itemDistance_;
-			lengthAcc -= itemDistance_;
+			float createDist = 0U;
+			while (lengthAcc >= itemDistance_) {
+				float lerpMul = (itemDistance_ >= nodeDist) ? 0.0 : (createDist / nodeDist);
+				_RequestItem(Math::Lerp::Linear(pos->x, posNext->x, lerpMul),
+					Math::Lerp::Linear(pos->y, posNext->y, lerpMul));
+				createDist += itemDistance_;
+				lengthAcc -= itemDistance_;
+			}
 		}
 	}
 }

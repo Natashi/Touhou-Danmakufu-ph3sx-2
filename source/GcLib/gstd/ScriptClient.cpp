@@ -118,6 +118,7 @@ static const std::vector<function> commonFunction = {
 	{ "rand_int", ScriptClientBase::Func_RandI, 2 },
 	{ "prand", ScriptClientBase::Func_RandEff, 2 },
 	{ "prand_int", ScriptClientBase::Func_RandEffI, 2 },
+	{ "psrand", ScriptClientBase::Func_RandEffSet, 1 },
 	{ "count_rand", ScriptClientBase::Func_GetRandCount, 0 },
 	{ "count_prand", ScriptClientBase::Func_GetRandEffCount, 0 },
 	{ "reset_count_rand", ScriptClientBase::Func_ResetRandCount, 0 },
@@ -136,6 +137,7 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
 	{ "Interpolate_X", ScriptClientBase::Func_Interpolate_X, 4 },
 	{ "Interpolate_X_PackedInt", ScriptClientBase::Func_Interpolate_X_Packed, 4 },
+    { "Interpolate_X_Array", ScriptClientBase::Func_Interpolate_X_Array, 3 },
 
 	//Rotation
 	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 3 },
@@ -494,7 +496,7 @@ void ScriptClientBase::SetArgumentValue(value v, int index) {
 	listValueArg_[index] = v;
 }
 
-value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
+value ScriptClientBase::CreateStringArrayValue(const std::vector<std::string>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
 	type_data* type_arr = typeManager->get_array_type(typeManager->get_string_type());
 
@@ -513,7 +515,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::string>& list) {
 
 	return value(type_arr, std::wstring());
 }
-value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) {
+value ScriptClientBase::CreateStringArrayValue(const std::vector<std::wstring>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
 	type_data* type_arr = typeManager->get_array_type(typeManager->get_string_type());
 
@@ -532,7 +534,7 @@ value ScriptClientBase::CreateStringArrayValue(std::vector<std::wstring>& list) 
 
 	return value(type_arr, std::wstring());
 }
-value ScriptClientBase::CreateValueArrayValue(std::vector<value>& list) {
+value ScriptClientBase::CreateValueArrayValue(const std::vector<value>& list) {
 	script_type_manager* typeManager = script_type_manager::get_instance();
 
 	if (list.size() > 0) {
@@ -819,6 +821,13 @@ value ScriptClientBase::Func_RandEffI(script_machine* machine, int argc, const v
 	double max = argv[1].as_int() + 0.9999999;
 	return script->CreateIntValue(script->mtEffect_->GetReal(min, max));
 }
+value ScriptClientBase::Func_RandEffSet(script_machine* machine, int argc, const value* argv) {
+	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
+	int64_t seed = argv[0].as_int();
+	uint32_t prseed = (uint32_t)(seed >> 32) ^ (uint32_t)(seed & 0xffffffff);
+	script->mtEffect_->Initialize(prseed);
+	return value();
+}
 value ScriptClientBase::Func_GetRandCount(script_machine* machine, int argc, const value* argv) {
 	return CreateIntValue(randCalls_);
 }
@@ -850,8 +859,9 @@ static value _ScriptValueLerp(script_machine* machine, const value* v1, const va
 			std::vector<value> resArr;
 			resArr.resize(v1->length_as_array());
 			for (size_t i = 0; i < v1->length_as_array(); ++i) {
-				const value* a1 = &v1->index_as_array(i);
-				resArr[i] = _ScriptValueLerp(machine, a1, &v2->index_as_array(i), vx, lerpFunc);
+				const value* a1 = &(*v1)[i];
+				const value* a2 = &(*v2)[i];
+				resArr[i] = _ScriptValueLerp(machine, a1, a2, vx, lerpFunc);
 			}
 
 			res.reset(v1->get_type(), resArr);
@@ -987,6 +997,33 @@ value ScriptClientBase::Func_Interpolate_X_Packed(script_machine* machine, int a
 		res |= tmp << i;
 	}
 	return CreateIntValue(res);
+}
+// :souperdying:
+value ScriptClientBase::Func_Interpolate_X_Array(script_machine* machine, int argc, const value* argv) {
+	BaseFunction::_null_check(machine, argv, argc);
+
+	const value* val = &argv[0];
+	type_data* valType = val->get_type();
+
+	if (valType->get_kind() != type_data::tk_array || val->length_as_array() == 0) {
+		BaseFunction::_raise_error_unsupported(machine, argv->get_type(), "Interpolate_X_Array");
+		return value();
+	}
+
+	std::vector<value> arr = *(val->as_array_ptr());
+	double x = argv[1].as_real();
+
+	size_t len = arr.size();
+
+	x = fmod(fmod(x, len) + len, len);
+	int from = floor(x);
+	int to = (from + 1) % len;
+	x -= from;
+
+    Math::Lerp::Type type = (Math::Lerp::Type)argv[2].as_int();
+	auto lerpFunc =  Math::Lerp::GetFunc<double, double>(type);
+
+	return _ScriptValueLerp(machine, &arr[from], &arr[to], x, lerpFunc);
 }
 
 value ScriptClientBase::Func_Rotate2D(script_machine* machine, int argc, const value* argv) {
@@ -2553,7 +2590,7 @@ void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, const gstd::value&
 		uint32_t arrayLength = comValue.length_as_array();
 		buffer.WriteValue(arrayLength);
 		for (size_t iArray = 0; iArray < arrayLength; iArray++) {
-			const value& arrayValue = comValue.index_as_array(iArray);
+			const value& arrayValue = comValue[iArray];
 			_WriteRecord(buffer, arrayValue);
 		}
 		break;

@@ -338,8 +338,7 @@ protected:
 
 	virtual void _Move();
 
-	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision) {}
-	virtual void _SendDeleteEvent(int bit);
+	virtual void _SendDeleteEvent(int type) {}
 	void _RequestPlayerDeleteEvent(int hitObjectID);
 
 	std::list<StgPatternShotTransform> listTransformationShotAct_;
@@ -356,6 +355,9 @@ public:
 	virtual void Render() {}
 	virtual void Activate() {}
 	virtual void RenderOnShotManager() {}
+
+	virtual void DeleteImmediate();
+	virtual void ConvertToItem();
 
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 	virtual void ClearShotObject() { ClearIntersectionRelativeTarget(); }
@@ -429,9 +431,6 @@ public:
 	void SetHitboxScaleY(float y) { hitboxScale_.y = y; }
 	float GetHitboxScaleX() { return hitboxScale_.x; }
 	float GetHitboxScaleY() { return hitboxScale_.y; }
-
-	virtual void DeleteImmediate();
-	virtual void ConvertToItem(bool flgPlayerCollision);
 };
 
 //*******************************************************************
@@ -444,7 +443,7 @@ protected:
 	bool bFixedAngle_;
 
 	void _AddIntersectionRelativeTarget();
-	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
+	virtual void _SendDeleteEvent(int type);
 public:
 	StgNormalShotObject(StgStageController* stageController);
 	virtual ~StgNormalShotObject();
@@ -522,7 +521,7 @@ protected:
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
-	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
+	virtual void _SendDeleteEvent(int type);
 public:
 	StgLooseLaserObject(StgStageController* stageController);
 
@@ -554,7 +553,7 @@ protected:
 
 	virtual void _DeleteInAutoClip();
 	virtual void _DeleteInAutoDeleteFrame();
-	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
+	virtual void _SendDeleteEvent(int type);
 public:
 	StgStraightLaserObject(StgStageController* stageController);
 
@@ -606,7 +605,7 @@ protected:
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
-	virtual void _ConvertToItemAndSendEvent(bool flgPlayerCollision);
+	virtual void _SendDeleteEvent(int type);
 public:
 	StgCurveLaserObject(StgStageController* stageController);
 
@@ -756,6 +755,8 @@ struct StgPatternShotTransform {
 		TRANSFORM_ADDPATTERN_A2,
 		TRANSFORM_ADDPATTERN_B1,
 		TRANSFORM_ADDPATTERN_B2,
+		TRANSFORM_ADDPATTERN_C1,
+		TRANSFORM_ADDPATTERN_C2,
 		//TRANSFORM_,
 	};
 	uint8_t act = 0xff;

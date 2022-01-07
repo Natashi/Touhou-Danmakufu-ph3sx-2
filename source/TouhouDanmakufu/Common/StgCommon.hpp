@@ -71,6 +71,7 @@ public:
 		TYPE_OTHER,
 		TYPE_ANGLE,
 		TYPE_XY,
+		TYPE_XY_ANG,
 		TYPE_LINE,
 
 		NO_CHANGE = -0x1000000,
@@ -91,11 +92,12 @@ protected:
 
 	StgStageController* _GetStageController() { return target_->stageController_; }
 	ref_unsync_ptr<StgMoveObject> _GetMoveObject(int id);
-	virtual void _Activate(StgMovePattern* src) {}
+	void _RegisterShotDataID();
 public:
 	StgMovePattern(StgMoveObject* target);
 	virtual ~StgMovePattern() {}
 
+	virtual void Activate(StgMovePattern* src) {}
 	virtual void Move() = 0;
 
 	void AddCommand(std::pair<uint8_t, double> cmd) { listCommand_.push_back(cmd); }
@@ -111,9 +113,11 @@ public:
 };
 
 class StgMovePattern_XY;
+class StgMovePattern_XY_Angle;
 class StgMovePattern_Angle : public StgMovePattern {
 	friend class StgMoveObject;
 	friend class StgMovePattern_XY;
+	friend class StgMovePattern_XY_Angle;
 public:
 	enum : int8_t {
 		SET_SPEED,
@@ -122,11 +126,15 @@ public:
 		SET_AGVEL,
 		SET_SPMAX,
 		SET_SPMAX2,
+		SET_AGACC,
+		SET_AGMAX,
 		ADD_SPEED,
 		ADD_ANGLE,
 		ADD_ACCEL,
 		ADD_AGVEL,
 		ADD_SPMAX,
+		ADD_AGACC,
+		ADD_AGMAX
 	};
 protected:
 	double speed_;
@@ -134,12 +142,14 @@ protected:
 	double acceleration_;
 	double maxSpeed_;
 	double angularVelocity_;
+	double angularAcceleration_;
+	double angularMaxVelocity_;
 
 	ref_unsync_weak_ptr<StgMoveObject> objRelative_;
-
-	virtual void _Activate(StgMovePattern* src);
 public:
 	StgMovePattern_Angle(StgMoveObject* target);
+
+	virtual void Activate(StgMovePattern* src);
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return speed_; }
@@ -150,6 +160,8 @@ public:
 	void SetAcceleration(double accel) { acceleration_ = accel; }
 	void SetMaxSpeed(double max) { maxSpeed_ = max; }
 	void SetAngularVelocity(double av) { angularVelocity_ = av; }
+	void SetAngularAcceleration(double aa) { angularAcceleration_ = aa; }
+	void SetAngularMaxVelocity(double am) { angularMaxVelocity_ = am; }
 
 	void SetRelativeObject(ref_unsync_weak_ptr<StgMoveObject> obj) { objRelative_ = obj; }
 	void SetRelativeObject(int id) { objRelative_ = _GetMoveObject(id); }
@@ -165,6 +177,7 @@ public:
 class StgMovePattern_XY : public StgMovePattern {
 	friend class StgMoveObject;
 	friend class StgMovePattern_Angle;
+	friend class StgMovePattern_XY_Angle;
 public:
 	enum : int8_t {
 		SET_S_X,
@@ -179,11 +192,10 @@ protected:
 	double accelerationY_;
 	double maxSpeedX_;
 	double maxSpeedY_;
-
-	virtual void _Activate(StgMovePattern* src);
 public:
 	StgMovePattern_XY(StgMoveObject* target);
 
+	virtual void Activate(StgMovePattern* src);
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return hypot(c_, s_); }
@@ -204,8 +216,80 @@ public:
 	double GetMaxSpeedY() { return maxSpeedY_; }
 };
 
+class StgMovePattern_XY_Angle : public StgMovePattern {
+	friend class StgMoveObject;
+	friend class StgMovePattern_Angle;
+	friend class StgMovePattern_XY;
+public:
+	enum : int8_t {
+		SET_S_X,
+		SET_S_Y,
+		SET_A_X,
+		SET_A_Y,
+		SET_M_X,
+		SET_M_Y,
+		SET_ANGLE,
+		SET_AGVEL,
+		SET_AGACC,
+		SET_AGMAX,
+	};
+protected:
+	double accelerationX_;
+	double accelerationY_;
+	double maxSpeedX_;
+	double maxSpeedY_;
+	double angOff_;
+	double angOffVelocity_;
+	double angOffAcceleration_;
+	double angOffMaxVelocity_;
+
+public:
+	StgMovePattern_XY_Angle(StgMoveObject* target);
+
+	virtual void Activate(StgMovePattern* src);
+	virtual void Move();
+
+	virtual inline double GetSpeed() { return hypot(c_, s_); }
+	virtual inline double GetDirectionAngle() { return atan2(s_, c_) + angOff_; }
+
+	virtual double GetSpeedX() { return c_ * cos(angOff_) - s_ * sin(angOff_); }
+	virtual double GetSpeedY() { return c_ * sin(angOff_) + s_ * cos(angOff_); }
+	void SetSpeedX(double value) { c_ = value; }
+	void SetSpeedY(double value) { s_ = value; }
+	void SetSpeedXY(double x, double y) { // For proper de-rotation
+		double c = cos(-angOff_), s = sin(-angOff_);
+		c_ = x * c - y * s;
+		s_ = x * s + y * c;
+	}
+	void SetAccelerationX(double value) { accelerationX_ = value; }
+	void SetAccelerationY(double value) { accelerationY_ = value; }
+	void SetMaxSpeedX(double value) { maxSpeedX_ = value; }
+	void SetMaxSpeedY(double value) { maxSpeedY_ = value; }
+
+	double GetAccelerationX() { return accelerationX_; }
+	double GetAccelerationY() { return accelerationY_; }
+	double GetMaxSpeedX() { return maxSpeedX_; }
+	double GetMaxSpeedY() { return maxSpeedY_; }
+
+	void SetAngleOffset(double ao) { angOff_ = ao;  }
+	void SetAngularVelocity(double av) { angOffVelocity_ = av; }
+	void SetAngularAcceleration(double aa) { angOffAcceleration_ = aa; }
+	void SetAngularMaxVelocity(double am) { angOffMaxVelocity_ = am; }
+};
+
 class StgMovePattern_Line : public StgMovePattern {
 	friend class StgMoveObject;
+
+public:
+	enum : int8_t {
+		SET_DX,
+		SET_DY,
+		SET_SP,
+		SET_FR,
+		SET_WG,
+		SET_MS,
+		SET_LP,
+	};
 protected:
 	enum {
 		TYPE_SPEED,
@@ -221,9 +305,11 @@ protected:
 	
 	double iniPos_[2];
 	double targetPos_[2];
+
 public:
 	StgMovePattern_Line(StgMoveObject* target);
 
+	virtual void Activate(StgMovePattern* src);
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return speed_; }

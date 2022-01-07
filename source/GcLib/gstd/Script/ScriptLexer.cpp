@@ -88,7 +88,7 @@ void script_scanner::skip() {
 			bReskip = true;
 			while (true) {
 				ch1 = next_char();
-				if (ch1 == L'\n') break;
+				if (ch1 == L'\n' || ch1 == L'\0') break;
 			}
 			//++line;
 			ch2 = peek_next_char(1);

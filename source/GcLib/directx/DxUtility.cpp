@@ -178,12 +178,18 @@ void DxMath::ConstructRotationMatrix(D3DXMATRIX* mat, const D3DXVECTOR2& angleX,
 	mat->_11 = cy * cz - sx_sy * sz;
 	mat->_12 = -cx * sz;
 	mat->_13 = sy * cz + sx_cy * sz;
+	mat->_14 = 0.0f;
 	mat->_21 = cy * sz + sx_sy * cz;
 	mat->_22 = cx * cz;
 	mat->_23 = sy * sz - sx_cy * cz;
+	mat->_24 = 0.0f;
 	mat->_31 = -cx * sy;
 	mat->_32 = sx;
 	mat->_33 = cx * cy;
+	mat->_41 = 0.0f;
+	mat->_42 = 0.0f;
+	mat->_43 = 0.0f;
+	mat->_44 = 1.0f;
 }
 void DxMath::MatrixApplyScaling(D3DXMATRIX* mat, const D3DXVECTOR3& scale) {
 #ifdef __L_MATH_VECTORIZE

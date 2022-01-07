@@ -170,7 +170,7 @@ bool DxIntersect::Point_LineW(const DxPoint* pos, const DxWidthLine* line) {
 	return Point_Polygon(pos, &verts);
 }
 bool DxIntersect::Point_RegularPolygon(const DxPoint* pos, const DxRegularPolygon* polygon) {
-	double cpos[2] = { pos->GetX(), pos->GetY() };
+	Math::DVec2 cpos{ pos->GetX(), pos->GetY() };
 	if (polygon->GetAngle() != 0.0f) {
 		Math::Rotate2D(cpos, -polygon->GetAngle(), polygon->GetX(), polygon->GetY());
 	}

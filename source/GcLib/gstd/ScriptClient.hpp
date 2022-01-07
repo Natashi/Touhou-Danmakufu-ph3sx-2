@@ -156,13 +156,15 @@ namespace gstd {
 		static inline value CreateBooleanValue(bool b);
 		static inline value CreateStringValue(const std::wstring& s);
 		static inline value CreateStringValue(const std::string& s);
-		template<typename T> static inline value CreateRealArrayValue(std::vector<T>& list);
-		template<typename T> static value CreateRealArrayValue(T* ptrList, size_t count);
-		template<typename T> static inline value CreateIntArrayValue(std::vector<T>& list);
-		template<typename T> static value CreateIntArrayValue(T* ptrList, size_t count);
-		static value CreateStringArrayValue(std::vector<std::string>& list);
-		static value CreateStringArrayValue(std::vector<std::wstring>& list);
-		value CreateValueArrayValue(std::vector<value>& list);
+		template<typename T> static inline value CreateRealArrayValue(const std::vector<T>& list);
+		template<typename T> static value CreateRealArrayValue(const T* ptrList, size_t count);
+		template<size_t N> static inline value CreateRealArrayValue(const Math::DVec<N>& arr);
+		template<typename T> static inline value CreateIntArrayValue(const std::vector<T>& list);
+		template<typename T> static value CreateIntArrayValue(const T* ptrList, size_t count);
+		static value CreateStringArrayValue(const std::vector<std::string>& list);
+		static value CreateStringArrayValue(const std::vector<std::wstring>& list);
+		value CreateValueArrayValue(const std::vector<value>& list);
+
 		static bool IsRealValue(value& v);
 		static bool IsIntValue(value& v);
 		static bool IsBooleanValue(value& v);
@@ -233,6 +235,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_RandI);
 		DNH_FUNCAPI_DECL_(Func_RandEff);
 		DNH_FUNCAPI_DECL_(Func_RandEffI);
+		DNH_FUNCAPI_DECL_(Func_RandEffSet);
 		DNH_FUNCAPI_DECL_(Func_GetRandCount);
 		DNH_FUNCAPI_DECL_(Func_GetRandEffCount);
 		DNH_FUNCAPI_DECL_(Func_ResetRandCount);
@@ -259,6 +262,7 @@ namespace gstd {
 
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Packed);
+		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Array);
 
 		//Math functions; rotation
 		DNH_FUNCAPI_DECL_(Func_Rotate2D);
@@ -331,6 +335,7 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_SetCommonDataPtr);
 		DNH_FUNCAPI_DECL_(Func_GetCommonDataPtr);
 	};
+
 #pragma region ScriptClientBase_impl
 	value ScriptClientBase::CreateRealValue(double r) {
 		return value(script_type_manager::get_real_type(), r);
@@ -347,14 +352,12 @@ namespace gstd {
 	value ScriptClientBase::CreateStringValue(const std::string& s) {
 		return CreateStringValue(StringUtility::ConvertMultiToWide(s));
 	}
-	template<typename T> value ScriptClientBase::CreateRealArrayValue(std::vector<T>& list) {
+
+	template<typename T> value ScriptClientBase::CreateRealArrayValue(const std::vector<T>& list) {
 		return CreateRealArrayValue(list.data(), list.size());
 	}
-	template<typename T> value ScriptClientBase::CreateIntArrayValue(std::vector<T>& list) {
-		return CreateIntArrayValue(list.data(), list.size());
-	}
 	template<typename T>
-	value ScriptClientBase::CreateRealArrayValue(T* ptrList, size_t count) {
+	value ScriptClientBase::CreateRealArrayValue(const T* ptrList, size_t count) {
 		type_data* type_real = script_type_manager::get_real_type();
 		type_data* type_arr = script_type_manager::get_real_array_type();
 		if (ptrList && count > 0) {
@@ -370,8 +373,16 @@ namespace gstd {
 		}
 		return value(type_arr, std::wstring());
 	}
+	template<size_t N>
+	value ScriptClientBase::CreateRealArrayValue(const Math::DVec<N>& arr) {
+		return CreateRealArrayValue((double*)arr.data(), N);
+	}
+
+	template<typename T> value ScriptClientBase::CreateIntArrayValue(const std::vector<T>& list) {
+		return CreateIntArrayValue(list.data(), list.size());
+	}
 	template<typename T>
-	value ScriptClientBase::CreateIntArrayValue(T* ptrList, size_t count) {
+	value ScriptClientBase::CreateIntArrayValue(const T* ptrList, size_t count) {
 		type_data* type_int = script_type_manager::get_int_type();
 		type_data* type_arr = script_type_manager::get_int_array_type();
 		if (ptrList && count > 0) {

@@ -12,6 +12,8 @@ StgEnemyManager::StgEnemyManager(StgStageController* stageController) {
 
 	stageController_ = stageController;
 
+	rcDeleteClip_ = DxRect<LONG>(-64, -64, 64, 64);
+
 	FileManager::GetBase()->AddLoadThreadListener(this);
 }
 StgEnemyManager::~StgEnemyManager() {
@@ -146,6 +148,9 @@ StgEnemyObject::StgEnemyObject(StgStageController* stageController) : StgMoveObj
 
 	intersectedPlayerShotCount_ = 0U;
 
+	bAutoDelete_ = false;
+	frameAutoDelete_ = INT_MAX;
+
 	bEnableGetIntersectionPositionFetch_ = true;
 }
 StgEnemyObject::~StgEnemyObject() {
@@ -162,6 +167,29 @@ void StgEnemyObject::Work() {
 	damageAccumFrame_ = 0;
 
 	_Move();
+
+	_DeleteInAutoClip();
+	_DeleteInAutoDeleteFrame();
+}
+void StgEnemyObject::_DeleteInAutoClip() {
+	if (!bAutoDelete_) return;
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+
+	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
+	DxRect<LONG>* const rcClipBase = stageController_->GetEnemyManager()->GetEnemyDeleteClip();
+
+	bool bDelete = ((LONG)posX_ < rcClipBase->left) || ((LONG)posX_ > rcStgFrame->GetWidth() + rcClipBase->right)
+		|| ((LONG)posY_ > rcStgFrame->GetHeight() + rcClipBase->bottom);
+	if (!bDelete) return;
+
+	stageController_->GetMainObjectManager()->DeleteObject(this);
+}
+void StgEnemyObject::_DeleteInAutoDeleteFrame() {
+	if (IsDeleted()) return;
+
+	if (frameAutoDelete_ <= 0)
+		stageController_->GetMainObjectManager()->DeleteObject(this);
+	else --frameAutoDelete_;
 }
 void StgEnemyObject::_Move() {
 	StgMoveObject::_Move();
@@ -554,7 +582,7 @@ void StgEnemyBossSceneData::LoadSceneEvents(StgStageController* stageController)
 		if (vLife.has_data()) {
 			if (script->IsArrayValue(vLife)) {
 				for (size_t iLife = 0; iLife < vLife.length_as_array(); ++iLife) {
-					double life = vLife.index_as_array(iLife).as_real();
+					double life = vLife[iLife].as_real();
 					listLife.push_back(life);
 				}
 			}

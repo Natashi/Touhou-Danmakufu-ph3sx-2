@@ -239,6 +239,10 @@ namespace gstd {
 	constexpr double GM_1_PHI = 1.0 / GM_PHI;				//The other golden ratio
 	class Math {
 	public:
+		template<size_t S> using DVec = std::array<double, S>;
+		using DVec2 = DVec<2>;
+		using DVec3 = DVec<3>;
+	public:
 		static void InitializeFPU() {
 			_asm { 
 				finit 
@@ -270,6 +274,9 @@ namespace gstd {
 			return (x * x + y * y);
 		}
 
+		static inline void DoSinCos(double angle, DVec2& res) {
+			DoSinCos(angle, (double*)res.data());
+		}
 		static inline void DoSinCos(double angle, double* pRes) {
 			_asm {
 				mov esi, DWORD PTR[pRes]	//Load pRes into esi
@@ -279,15 +286,33 @@ namespace gstd {
 				fstp QWORD PTR[esi]			//Pop sin
 			};
 		}
+
+		static inline void Rotate2D(DVec2& pos, double ang, double ox, double oy) {
+			Rotate2D((double*)pos.data(), ang, ox, oy);
+		}
 		static inline void Rotate2D(double* pos, double ang, double ox, double oy) {
-			double sc[2];
+			Math::DVec2 sc;
 			DoSinCos(ang, sc);
 			pos[0] -= ox;
 			pos[1] -= oy;
-			double x = pos[0] * sc[1] - pos[1] * sc[0];
-			double y = pos[0] * sc[0] + pos[1] * sc[1];
-			pos[0] = ox + x;
-			pos[1] = oy + y;
+			Rotate2D(pos, sc[0], sc[1]);
+			pos[0] += ox;
+			pos[1] += oy;
+		}
+		static inline void Rotate2D(DVec2& pos, DVec2& sc) {
+			Rotate2D(pos, sc[0], sc[1]);
+		}
+		static inline void Rotate2D(double* pos, DVec2& sc) {
+			Rotate2D(pos, sc[0], sc[1]);
+		}
+		static inline void Rotate2D(DVec2& pos, double s, double c) {
+			Rotate2D((double*)pos.data(), c, s);
+		}
+		static inline void Rotate2D(double* pos, double s, double c) {
+			double x = pos[0] * c - pos[1] * s;
+			double y = pos[0] * s + pos[1] * c;
+			pos[0] = x;
+			pos[1] = y;
 		}
 
 		template<typename T>
