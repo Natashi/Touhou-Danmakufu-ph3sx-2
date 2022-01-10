@@ -1,0 +1,33 @@
+//èëÇ´ä∑Ç¶Ç»Ç¢Ç≈Ç≠ÇæÇ≥Ç¢ÅB
+
+@Initialize
+{
+	TEnemy();
+}
+
+@MainLoop
+{
+	yield;
+}
+
+@Finalize
+{
+}
+
+task TEnemy
+{
+	let path = GetMainStgScriptPath();
+	let idScript = LoadScript(path);
+	StartScript(idScript);
+
+	while(!IsCloseScript(idScript) && GetPlayerState() != STATE_END)
+	{
+		yield;
+	}
+
+	loop(300){yield;}
+
+	CloseStgScene();
+}
+
+
