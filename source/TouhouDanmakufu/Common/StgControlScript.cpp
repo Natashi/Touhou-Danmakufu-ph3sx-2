@@ -3,6 +3,8 @@
 #include "StgControlScript.hpp"
 #include "StgSystem.hpp"
 
+#include "../DnhExecutor/GcLibImpl.hpp"
+
 //*******************************************************************
 //StgControlScriptManager
 //*******************************************************************
@@ -630,6 +632,18 @@ gstd::value StgControlScript::Func_GetConfigVirtualKeyMapping(script_machine* ma
 	}
 
 	return StgControlScript::CreateIntArrayValue(key_pad, 2U);
+}
+gstd::value StgControlScript::Func_GetConfigWindowTitle(script_machine* machine, int argc, const value* argv) {
+	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
+	return StgControlScript::CreateStringValue(graphics->GetDefaultWindowTitle());
+}
+gstd::value StgControlScript::Func_SetWindowTitle(script_machine* machine, int argc, const value* argv) {
+	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
+
+	std::wstring title = argv[0].as_string();
+	graphics->SetWindowTitle(title);
+
+	return value();
 }
 
 //STG共通関数：描画関連

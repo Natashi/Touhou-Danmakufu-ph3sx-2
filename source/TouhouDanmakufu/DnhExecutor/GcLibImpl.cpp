@@ -208,10 +208,12 @@ bool EApplication::_Finalize() {
 //EDirectGraphics
 //*******************************************************************
 EDirectGraphics::EDirectGraphics() {
-
+	defaultWindowTitle_ = L"";
 }
 EDirectGraphics::~EDirectGraphics() {}
 bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
+	defaultWindowTitle_ = windowTitle;
+
 	DnhConfiguration* dnhConfig = DnhConfiguration::GetInstance();
 	LONG screenWidth = dnhConfig->GetScreenWidth();		//From th_dnh.def
 	LONG screenHeight = dnhConfig->GetScreenHeight();	//From th_dnh.def
@@ -290,9 +292,10 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 		HWND hWndDisplay = GetParentHWND();
 		HICON winIcon = ::LoadIconW(Application::GetApplicationHandle(), MAKEINTRESOURCE(IDI_ICON));
 
-		::SetWindowText(hWndDisplay, windowTitle.c_str());
 		::SetClassLong(hWndDisplay, GCL_HICON, (LONG)winIcon);
 		WindowLogger::InsertOpenCommandInSystemMenu(hWndDisplay);
+
+		SetWindowTitle(windowTitle);
 
 		ChangeScreenMode(screenMode, false);
 		SetWindowVisible(true);
@@ -317,4 +320,10 @@ LRESULT EDirectGraphics::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, L
 	}
 	}
 	return DirectGraphicsPrimaryWindow::_WindowProcedure(hWnd, uMsg, wParam, lParam);
+}
+
+void EDirectGraphics::SetWindowTitle(const std::wstring& title) {
+	HWND hWndDisplay = GetParentHWND();
+	::SetWindowText(hWndDisplay, (title.size() > 0) 
+		? title.c_str() : defaultWindowTitle_.c_str());
 }
