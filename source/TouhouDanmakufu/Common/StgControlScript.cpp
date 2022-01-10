@@ -2,6 +2,9 @@
 
 #include "StgControlScript.hpp"
 #include "StgSystem.hpp"
+#include "../DnhExecutor/GcLibImpl.hpp"
+
+#include "../DnhExecutor/GcLibImpl.hpp"
 
 //*******************************************************************
 //StgControlScriptManager
@@ -81,6 +84,9 @@ static const std::vector<function> stgControlFunction = {
 	{ "GetConfigWindowSizeIndex", StgControlScript::Func_GetConfigWindowSizeIndex, 0 },
 	{ "GetConfigWindowSizeList", StgControlScript::Func_GetConfigWindowSizeList, 0 },
 	{ "GetConfigVirtualKeyMapping", StgControlScript::Func_GetConfigVirtualKeyMapping, 1 },
+	{ "SetWindowTitle", StgControlScript::Func_SetWindowTitle, 1 },
+	{ "ResetWindowTitle", StgControlScript::Func_ResetWindowTitle, 0 },
+	{ "GetDefaultWindowTitle", StgControlScript::Func_GetDefaultWindowTitle, 0 },
 
 	//STG共通関数：描画関連
 	{ "ClearInvalidRenderPriority", StgControlScript::Func_ClearInvalidRenderPriority, 0 },
@@ -630,6 +636,18 @@ gstd::value StgControlScript::Func_GetConfigVirtualKeyMapping(script_machine* ma
 	}
 
 	return StgControlScript::CreateIntArrayValue(key_pad, 2U);
+}
+gstd::value StgControlScript::Func_GetConfigWindowTitle(script_machine* machine, int argc, const value* argv) {
+	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
+	return StgControlScript::CreateStringValue(graphics->GetDefaultWindowTitle());
+}
+gstd::value StgControlScript::Func_SetWindowTitle(script_machine* machine, int argc, const value* argv) {
+	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
+
+	std::wstring title = argv[0].as_string();
+	graphics->SetWindowTitle(title);
+
+	return value();
 }
 
 //STG共通関数：描画関連

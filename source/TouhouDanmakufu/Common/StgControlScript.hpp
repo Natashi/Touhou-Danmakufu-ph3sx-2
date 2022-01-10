@@ -128,6 +128,8 @@ public:
 	DNH_FUNCAPI_DECL_(Func_GetConfigWindowSizeIndex);
 	DNH_FUNCAPI_DECL_(Func_GetConfigWindowSizeList);
 	DNH_FUNCAPI_DECL_(Func_GetConfigVirtualKeyMapping);
+	DNH_FUNCAPI_DECL_(Func_GetConfigWindowTitle);
+	DNH_FUNCAPI_DECL_(Func_SetWindowTitle);
 
 	//STG制御共通関数：描画関連
 	static gstd::value Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv);

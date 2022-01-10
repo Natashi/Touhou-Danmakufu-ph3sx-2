@@ -1,5 +1,67 @@
 A mostly-complete history log of engine updates can be found here.
 
+1.31c
+	Changes:
+		- Changed how setting curvy laser node widths work. Instead of directly setting the width, the functions will set the nodes' width scales.
+			- Renamed ObjCrLaser_SetNodeWidth to ObjCrLaser_SetNodeWidthScale.
+			- Renamed ObjCrLaser_GetNodeWidth to ObjCrLaser_GetNodeWidthScale.
+		- Improved cross-compatibility between different movement types of the following functions:
+			- ObjMove_SetSpeed
+			- ObjMove_SetAngle
+			- ObjMove_SetAcceleration
+			- ObjMove_SetMaxSpeed
+			- ObjMove_SetAngularVelocity
+		- Swapped the "shot graphic ID" and "target ID" arguments in ObjMove_AddPatternA4.
+		- Completely removed shot scripts.
+			- Moved SetShotDeleteEventEnable to the stage script.
+				- Default values for all three delete events are true.
+			- Furthermore, fixed EV_DELETE_SHOT_IMMEDIATE and EV_DELETE_SHOT_FADE not being notified properly.
+			- Restructed event arguments of EV_DELETE_SHOT_TO_ITEM.
+				- The third event argument; "player collision", has been removed.
+					- Collision with the player will now trigger EV_DELETE_SHOT_IMMEDIATE instead of EV_DELETE_SHOT_TO_ITEM.
+	Additions:
+		- Added Interpolate_Array and Interpolate_X_Array. (Thanks to Naudiz)
+		- Added SetEnemyAutoDeleteClip, ObjEnemy_SetAutoDelete, and ObjEnemy_SetDeleteFrame. (Thanks to NicholasLogan)
+		- Added ObjMove_SetAngularAcceleration, ObjMove_SetAngularMaxVelocity, and ObjMove_AddPatternA5. (Thanks to NicholasLogan)
+		- Added an overload to CreateShotA2. (Thanks to Naudiz)
+		- Added ObjMove_GetMovementType. (Thanks to Naudiz)
+			- Added constants:
+				- MOVE_OTHER
+				- MOVE_ANGLE
+				- MOVE_XY
+				- MOVE_XY_ANGLE
+				- MOVE_LINE
+		- Added the C-movement type for ObjMove. (Thanks to Naudiz)
+			- CreateShotC1
+			- CreateShotC2
+			- CreateShotOC1
+			- ObjMove_AddPatternC1
+			- ObjMove_AddPatternC2
+			- ObjMove_AddPatternC3
+		- Added AddPattern functions for line-movement. (Thanks to Naudiz)
+			- ObjMove_AddPatternD1 (AddPattern version of ObjMove_SetDestAtSpeed)
+			- ObjMove_AddPatternD2 (AddPattern version of ObjMove_SetDestAtFrame)
+			- ObjMove_AddPatternD3 (AddPattern version of ObjMove_SetDestAtWeight)
+		- Added ObjMove_CancelMovement.
+		- Added new transformations to pattern shot objects. (Thanks to Naudiz)
+			- TRANSFORM_ADDPATTERN_C1
+			- TRANSFORM_ADDPATTERN_C2
+		- Added psrand.
+		- Added array overloads to the following functions:
+			- ObjSprite2D_SetSourceRect
+			- ObjSprite2D_SetDestRect
+			- ObjSpriteList2D_SetSourceRect
+			- ObjSpriteList2D_SetDestRect
+			- ObjSprite3D_SetSourceRect
+			- ObjSprite3D_SetDestRect
+			- ObjSprite3D_SetSourceDestRect
+	Bug fixes:
+		- Fixed .dat archives not working.
+		- Fixed incorrect null checks, resulting in the game crashing when trying to operate on a null value.
+			- For example, using Obj_GetValue on a non-existent key will yield a null value.
+		- Fixed a crash bug which may sometimes happen when trying to parse a script file that ends with a line comment.
+		- Fixed ObjMove_AddPatternXX's shot graphic change not working with loose and curvy lasers.
+
 1.31b
 	Bug fixes:
 		- Fixed a bug where the game would freeze when compiling a script with a syntax error.
