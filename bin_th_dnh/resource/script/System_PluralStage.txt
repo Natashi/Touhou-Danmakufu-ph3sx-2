@@ -1,4 +1,5 @@
 //‘‚«Š·‚¦‚È‚¢‚Å‚­‚¾‚³‚¢B
+//Do not modify.
 
 @Initialize
 {
