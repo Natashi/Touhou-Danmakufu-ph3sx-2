@@ -84,9 +84,8 @@ static const std::vector<function> stgControlFunction = {
 	{ "GetConfigWindowSizeIndex", StgControlScript::Func_GetConfigWindowSizeIndex, 0 },
 	{ "GetConfigWindowSizeList", StgControlScript::Func_GetConfigWindowSizeList, 0 },
 	{ "GetConfigVirtualKeyMapping", StgControlScript::Func_GetConfigVirtualKeyMapping, 1 },
+	{ "GetConfigWindowTitle", StgControlScript::Func_GetConfigWindowTitle, 0 },
 	{ "SetWindowTitle", StgControlScript::Func_SetWindowTitle, 1 },
-	{ "ResetWindowTitle", StgControlScript::Func_ResetWindowTitle, 0 },
-	{ "GetDefaultWindowTitle", StgControlScript::Func_GetDefaultWindowTitle, 0 },
 
 	//STG共通関数：描画関連
 	{ "ClearInvalidRenderPriority", StgControlScript::Func_ClearInvalidRenderPriority, 0 },
