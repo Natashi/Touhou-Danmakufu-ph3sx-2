@@ -2200,7 +2200,7 @@ void StgStraightLaserObject::RenderOnShotManager() {
 
 		if (widthRender_ > 0) {
 			float _rWidth = fabs(widthRender_ / 2.0f) * scaleX_;
-			_rWidth = std::max(_rWidth, 0.5f);
+			_rWidth = std::max(_rWidth, 1.0f);
 			D3DXVECTOR4 rcDest(_rWidth, length_, -_rWidth, 0);
 
 			VERTEX_TLX verts[4];
@@ -2689,7 +2689,7 @@ void StgCurveLaserObject::RenderOnShotManager() {
 				nodeAlpha = Math::Lerp::Linear(tipAlpha, baseAlpha, iPos / (halfPos - 1.0f));
 			nodeAlpha = std::max(0.0f, nodeAlpha);
 
-			float renderWd = std::max(widthRender_ * itr->widthMul / 2.0f, 0.5f);
+			float renderWd = std::max(widthRender_ * itr->widthMul / 2.0f, 1.0f);
 
 			D3DCOLOR thisColor = color_;
 			{
