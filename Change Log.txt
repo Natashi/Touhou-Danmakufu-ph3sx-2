@@ -91,6 +91,7 @@ A mostly-complete history log of engine updates can be found here.
 		- #include in shader source files now behaves like regular script includes.
 		- Normal shot objects can now have multiple hitboxes again.
 		- Change loose and curvy lasers behaviour when delay motion is enabled. (Thanks to Naudiz)
+		- Text objects can now be centered around their object positions. No need to use ObjText_SetMaxWidth for that anymore. (Thanks to Naudiz)
 	Additions:
 		- Added missing function documentation for GetAllEnemyID.
 		- Added an overload each for Rotate2D and Rotate3D, taking in the rotation origin point.
@@ -134,6 +135,7 @@ A mostly-complete history log of engine updates can be found here.
 		- Added INFO_DAMAGE_PREVIOUS_FRAME to ObjEnemy_GetInfo.
 		- Added ObjText_SetFixedWidth.
 		- Added ObjText_GetText. (Thanks to Naudiz)
+		- Added ObjText_SetVerticalAlignment. (Thanks to Naudiz)
 		- Added ObjCrLaser_SetTipCapping, ObjCrLaser_GetNodeRenderWidth, and ObjCrLaser_SetNodeRenderWidth. (Thanks to Naudiz)
 		- Added overloads to ObjCrLaser_SetNode and ObjCrLaser_AddNode. (Thanks to Naudiz)
 		- Added ObjShot_SetFixedAngle and ObjShot_SetDelayAngularVelocity. (Thanks to Naudiz)
