@@ -209,23 +209,16 @@ void StgEnemyObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersection
 		if (otherTarget->GetTargetType() == StgIntersectionTarget::TYPE_PLAYER_SHOT) {
 			if (StgShotObject* shot = dynamic_cast<StgShotObject*>(ptrObj.get())) {
 				ref_unsync_weak_ptr<StgEnemyObject> self = ownTarget->GetObject();
-				auto& list = shot->GetEnemyIntersectionInvalidFramePairList();
-				bool bHit = list.size() == 0 || std::find_if(list.begin(), list.end(),
-					[&self](const std::pair<ref_unsync_weak_ptr<StgEnemyObject>, int>& element) { return element.first == self; }) == list.end();
 
-				if (bHit) {
+				//Register intersection only if the enemy is off hit cooldown
+				if (!shot->CheckEnemyHitCooldownExists(self)) {
 					damage = shot->GetDamage() * (shot->IsSpellFactor() ? rateDamageSpell_ : rateDamageShot_) / 100.0;
 					++intersectedPlayerShotCount_;
 
-					int frame = shot->GetEnemyIntersectionInvalidFrame();
-
-					if (frame > 0) {
-						auto pair = std::make_pair(self, frame);
-						auto& list = shot->GetEnemyIntersectionInvalidFramePairList();
-						list.push_back(pair);
-					}
+					uint32_t frame = shot->GetEnemyIntersectionInvalidFrame();
+					if (frame > 0)
+						shot->AddEnemyHitCooldown(self, frame);
 				}
-				
 			}
 		}
 		else if (otherTarget->GetTargetType() == StgIntersectionTarget::TYPE_PLAYER_SPELL) {

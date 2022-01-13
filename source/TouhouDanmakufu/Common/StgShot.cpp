@@ -911,17 +911,13 @@ void StgShotObject::_CommonWorkTask() {
 	}
 	--frameGrazeInvalid_;
 
-	if (listHitEnemy_.size() > 0) {
-		auto& itr = listHitEnemy_.begin();
-		while (itr != listHitEnemy_.end()) {
-			--itr->second;
-			if (itr->second == 0)
-				itr = listHitEnemy_.erase(itr);
-			else
-				++itr;
-		}
-	}
+	//----------------------------------------------------------
 
+	for (auto itr = mapEnemyHitCooldown_.begin(); itr != mapEnemyHitCooldown_.end();) {
+		if (itr->first.expired() || (--(itr->second) == 0))
+			itr = mapEnemyHitCooldown_.erase(itr);
+		else ++itr;
+	}
 }
 
 void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
@@ -961,16 +957,16 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 	case StgIntersectionTarget::TYPE_ENEMY:
 	{
 		if (!bSpellResist_) {
-			bool bHit = listHitEnemy_.size() == 0 || std::find_if(listHitEnemy_.begin(), listHitEnemy_.end(),
-				[&obj](const std::pair<ref_unsync_weak_ptr<StgEnemyObject>, int>& element) { return element.first == obj; }) == listHitEnemy_.end();
-
-			if (bHit) --life_;
+			//Register intersection only if the enemy is off hit cooldown
+			if (!CheckEnemyHitCooldownExists(ref_unsync_weak_ptr<StgEnemyObject>::Cast(obj)))
+				--life_;
 		}
 		break;
 	}
 	case StgIntersectionTarget::TYPE_ENEMY_SHOT:
 	{
-		if (!bSpellResist_ && bPenetrateShot_) --life_;
+		if (!bSpellResist_ && bPenetrateShot_)
+			--life_;
 		break;
 	}
 	}

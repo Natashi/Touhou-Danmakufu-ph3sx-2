@@ -312,8 +312,15 @@ protected:
 
 	bool bPenetrateShot_; // Translation: Does The Shot Lose Penetration Points Upon Colliding With Another Shot And Not An Enemy
 
-	int frameEnemyHitInvalid_;
-	std::list<std::pair<ref_unsync_weak_ptr<StgEnemyObject>, int>> listHitEnemy_;
+private:
+	struct _WeakPtrHasher {
+		std::size_t operator()(const ref_unsync_weak_ptr<StgEnemyObject>& k) const {
+			return std::hash<StgEnemyObject*>{}(k.get());
+		}
+	};
+public:
+	uint32_t frameEnemyHitInvalid_;
+	std::unordered_map<ref_unsync_weak_ptr<StgEnemyObject>, uint32_t, _WeakPtrHasher> mapEnemyHitCooldown_;
 	
 	bool bRequestedPlayerDeleteEvent_;
 	double damage_;
@@ -399,10 +406,16 @@ public:
 	void SetPenetrateShotEnable(bool enable) { bPenetrateShot_ = enable; }
 	bool GetPenetrateShotEnable() { return bPenetrateShot_; }
 
-	void SetEnemyIntersectionInvalidFrame(int frame) { frameEnemyHitInvalid_ = frame; }
-	int GetEnemyIntersectionInvalidFrame() { return frameEnemyHitInvalid_;  }
+	void SetEnemyIntersectionInvalidFrame(uint32_t frame) { frameEnemyHitInvalid_ = frame; }
+	uint32_t GetEnemyIntersectionInvalidFrame() { return frameEnemyHitInvalid_;  }
 
-	std::list<std::pair<ref_unsync_weak_ptr<StgEnemyObject>, int>>& GetEnemyIntersectionInvalidFramePairList() { return listHitEnemy_;  }
+	//Returns true if obj is on hit cooldown
+	bool CheckEnemyHitCooldownExists(ref_unsync_weak_ptr<StgEnemyObject> obj) {
+		return mapEnemyHitCooldown_.find(obj) != mapEnemyHitCooldown_.end();
+	}
+	void AddEnemyHitCooldown(ref_unsync_weak_ptr<StgEnemyObject> obj, uint32_t time) {
+		mapEnemyHitCooldown_[obj] = time;
+	}
 
 	int GetDelay() { return delay_.time; }
 	void SetDelay(int delay) { delay_.time = delay; }
