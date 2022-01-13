@@ -46,6 +46,10 @@ protected:
 
 	DxRect<LONG> rcDeleteClip_;
 
+	D3DTEXTUREFILTERTYPE filterMin_;
+	D3DTEXTUREFILTERTYPE filterMag_;
+	D3DTEXTUREFILTERTYPE filterMip_;
+
 	ID3DXEffect* effectLayer_;
 	D3DXHANDLE handleEffectWorld_;
 public:
@@ -68,6 +72,12 @@ public:
 
 	void SetShotDeleteClip(const DxRect<LONG>& clip) { rcDeleteClip_ = clip; }
 	DxRect<LONG>* GetShotDeleteClip() { return &rcDeleteClip_; }
+
+	void SetTextureFilter(D3DTEXTUREFILTERTYPE min, D3DTEXTUREFILTERTYPE mag, D3DTEXTUREFILTERTYPE mip) {
+		filterMin_ = min;
+		filterMag_ = mag;
+		filterMip_ = mip;
+	}
 
 	void DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius);
 	std::vector<int> GetShotIdInCircle(int typeOwner, int cx, int cy, int* radius);
@@ -322,6 +332,7 @@ protected:
 
 	bool bEnableMotionDelay_;
 	bool bRoundingPosition_;
+	double roundingAngle_;
 
 	StgShotData* _GetShotData() { return _GetShotData(idShotData_); }
 	StgShotData* _GetShotData(int id);
@@ -425,6 +436,7 @@ public:
 	void SetItemChangeEnable(bool b) { bChangeItemEnable_ = b; }
 
 	void SetPositionRounding(bool b) { bRoundingPosition_ = b; }
+	void SetAngleRounding(double a) { roundingAngle_ = a; }
 
 	void SetHitboxScale(D3DXVECTOR2& sc) { hitboxScale_ = sc; }
 	void SetHitboxScaleX(float x) { hitboxScale_.x = x; }

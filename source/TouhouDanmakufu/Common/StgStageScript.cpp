@@ -248,6 +248,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetShotRenderPriorityI", StgStageScript::Func_GetShotRenderPriorityI, 0 },
 	{ "GetPlayerRenderPriorityI", StgStageScript::Func_GetPlayerRenderPriorityI, 0 },
 	{ "GetCameraFocusPermitPriorityI", StgStageScript::Func_GetCameraFocusPermitPriorityI, 0 },
+	{ "SetItemTextureFilter", StgStageScript::Func_SetItemTextureFilter, 3 },
+	{ "SetShotTextureFilter", StgStageScript::Func_SetShotTextureFilter, 3 },
 	{ "CloseStgScene", StgStageScript::Func_CloseStgScene, 0 },
 	{ "GetReplayFps", StgStageScript::Func_GetReplayFps, 0 },
 	{ "SetIntersectionVisualization", StgStageScript::Func_SetIntersectionVisualization, 1 },
@@ -460,6 +462,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjShot_SetIntersectionScaleY", StgStageScript::Func_ObjShot_SetIntersectionScaleY, 2 },
 	{ "ObjShot_SetIntersectionScaleXY", StgStageScript::Func_ObjShot_SetIntersectionScaleXY, 3 },
 	{ "ObjShot_SetPositionRounding", StgStageScript::Func_ObjShot_SetPositionRounding, 2 },
+	{ "ObjShot_SetAngleRounding", StgStageScript::Func_ObjShot_SetAngleRounding, 2 },
 	{ "ObjShot_SetDelayMotionEnable", StgStageScript::Func_ObjShot_SetDelayMotionEnable, 2 },
 	{ "ObjShot_SetDelayGraphic", StgStageScript::Func_ObjShot_SetDelayGraphic, 2 },
 	{ "ObjShot_SetDelayScaleParameter", StgStageScript::Func_ObjShot_SetDelayScaleParameter, 4 },
@@ -912,6 +915,32 @@ gstd::value StgStageScript::Func_GetCameraFocusPermitPriorityI(gstd::script_mach
 	StgStageController* stageController = script->stageController_;
 	int res = stageController->GetStageInformation()->GetCameraFocusPermitPriority();
 	return script->CreateIntValue(res);
+}
+gstd::value StgStageScript::Func_SetItemTextureFilter(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+	StgItemManager* itemManager = stageController->GetItemManager();
+
+	int typeMin = std::clamp((int)argv[0].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+	int typeMag = std::clamp((int)argv[1].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+	int typeMip = std::clamp((int)argv[2].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+
+	itemManager->SetTextureFilter((D3DTEXTUREFILTERTYPE)typeMin, (D3DTEXTUREFILTERTYPE)typeMag, (D3DTEXTUREFILTERTYPE)typeMip);
+
+	return value();
+}
+gstd::value StgStageScript::Func_SetShotTextureFilter(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+	StgShotManager* shotManager = stageController->GetShotManager();
+
+	int typeMin = std::clamp((int)argv[0].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+	int typeMag = std::clamp((int)argv[1].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+	int typeMip = std::clamp((int)argv[2].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+
+	shotManager->SetTextureFilter((D3DTEXTUREFILTERTYPE)typeMin, (D3DTEXTUREFILTERTYPE)typeMag, (D3DTEXTUREFILTERTYPE)typeMip);
+
+	return value();
 }
 
 gstd::value StgStageScript::Func_CloseStgScene(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -4328,6 +4357,15 @@ gstd::value StgStageScript::Func_ObjShot_SetPositionRounding(gstd::script_machin
 	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
 	if (obj) 
 		obj->SetPositionRounding(argv[1].as_boolean());
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_SetAngleRounding(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+	int id = argv[0].as_int();
+	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
+	if (obj)
+		obj->SetAngleRounding(Math::DegreeToRadian(argv[1].as_real()));
 	return value();
 }
 gstd::value StgStageScript::Func_ObjShot_SetDelayMotionEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
