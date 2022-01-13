@@ -1110,7 +1110,6 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 					auto __FuncSetColor_P = [](DxTextScanner& scan, std::vector<wchar_t>::iterator before, D3DCOLOR* dst) {
 						scan.SetCurrentPointer(before);
-						/*
 						if (scan.GetToken().GetType() == DxTextToken::Type::TK_OPENP) {
 							std::vector<std::wstring> list = GetScannerStringArgumentList(scan, before);
 							if (list.size() >= 3) {
@@ -1124,14 +1123,6 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 							std::wstring colorStr = scan.GetToken().GetElement();
 							uint32_t color = std::wcstoul(colorStr.c_str(), nullptr, 16);
 							*dst = ((*dst) & 0xff000000) | (color & 0x00ffffff);
-						}
-						*/
-						std::vector<std::wstring> list = GetScannerStringArgumentList(scan, before);
-						if (list.size() >= 3) {
-							byte r = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[0]));
-							byte g = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[1]));
-							byte b = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[2]));
-							*dst = ((*dst) & 0xff000000) | (D3DCOLOR_XRGB(r, g, b) & 0x00ffffff);
 						}
 					};
 					INIT_LAMBDA2(_FuncSetColor_P_B) {
