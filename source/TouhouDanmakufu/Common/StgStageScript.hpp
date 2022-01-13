@@ -185,6 +185,8 @@ public:
 	static gstd::value Func_GetShotRenderPriorityI(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetPlayerRenderPriorityI(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetCameraFocusPermitPriorityI(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_SetItemTextureFilter(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_SetShotTextureFilter(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_CloseStgScene(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetReplayFps(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_SetIntersectionVisualization);
@@ -406,6 +408,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetIntersectionScaleY);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetIntersectionScaleXY);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetPositionRounding);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetAngleRounding);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayMotionEnable);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayGraphic);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayScaleParameter);

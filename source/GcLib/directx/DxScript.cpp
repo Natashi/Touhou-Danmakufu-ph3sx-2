@@ -300,6 +300,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjRender_SetTextureFilterMin", DxScript::Func_ObjRender_SetTextureFilterMin, 2 },
 	{ "ObjRender_SetTextureFilterMag", DxScript::Func_ObjRender_SetTextureFilterMag, 2 },
 	{ "ObjRender_SetTextureFilterMip", DxScript::Func_ObjRender_SetTextureFilterMip, 2 },
+	{ "ObjRender_SetTextureFilter", DxScript::Func_ObjRender_SetTextureFilter, 4 },
 	{ "ObjRender_SetVertexShaderRenderingMode", DxScript::Func_ObjRender_SetVertexShaderRenderingMode, 2 },
 	{ "ObjRender_SetEnableDefaultTransformMatrix", DxScript::Func_ObjRender_SetEnableDefaultTransformMatrix, 2 },
 	{ "ObjRender_SetLightingEnable", DxScript::Func_ObjRender_SetLightingEnable, 3 },
@@ -3042,6 +3043,23 @@ value DxScript::Func_ObjRender_SetTextureFilterMip(gstd::script_machine* machine
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		obj->filterMip_ = (D3DTEXTUREFILTERTYPE)type;
+
+	return value();
+}
+value DxScript::Func_ObjRender_SetTextureFilter(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	int typeMin = std::clamp((int)argv[1].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+	int typeMag = std::clamp((int)argv[2].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+	int typeMip = std::clamp((int)argv[3].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		obj->filterMin_ = (D3DTEXTUREFILTERTYPE)typeMin;
+		obj->filterMag_ = (D3DTEXTUREFILTERTYPE)typeMag;
+		obj->filterMip_ = (D3DTEXTUREFILTERTYPE)typeMip;
+	}
+		
 
 	return value();
 }

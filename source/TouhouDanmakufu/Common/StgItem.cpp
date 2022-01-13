@@ -28,6 +28,10 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 
 	rcDeleteClip_ = DxRect<LONG>(-64, 0, 64, 64);
 
+	filterMin_ = D3DTEXF_LINEAR;
+	filterMag_ = D3DTEXF_LINEAR;
+	filterMip_ = D3DTEXF_NONE;
+
 	bCancelToPlayer_ = false;
 	bAllItemToPlayer_ = false;
 	bDefaultBonusItemEnable_ = true;
@@ -162,7 +166,7 @@ void StgItemManager::Render(int targetPriority) {
 	graphics->SetZWriteEnable(false);
 	graphics->SetCullingMode(D3DCULL_NONE);
 	graphics->SetLightingEnable(false);
-	graphics->SetTextureFilter(D3DTEXF_LINEAR, D3DTEXF_LINEAR, D3DTEXF_NONE);
+	graphics->SetTextureFilter(filterMin_, filterMag_, filterMip_);
 
 	DWORD bEnableFog = FALSE;
 	device->GetRenderState(D3DRS_FOGENABLE, &bEnableFog);

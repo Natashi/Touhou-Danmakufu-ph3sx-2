@@ -17,6 +17,10 @@ StgShotManager::StgShotManager(StgStageController* stageController) {
 
 	rcDeleteClip_ = DxRect<LONG>(-64, -64, 64, 64);
 
+	filterMin_ = D3DTEXF_LINEAR;
+	filterMag_ = D3DTEXF_LINEAR;
+	filterMip_ = D3DTEXF_NONE;
+
 	{
 		RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
 		effectLayer_ = shaderManager_->GetRender2DShader();
@@ -68,7 +72,7 @@ void StgShotManager::Render(int targetPriority) {
 	graphics->SetZWriteEnable(false);
 	graphics->SetCullingMode(D3DCULL_NONE);
 	graphics->SetLightingEnable(false);
-	graphics->SetTextureFilter(D3DTEXF_LINEAR, D3DTEXF_LINEAR, D3DTEXF_NONE);
+	graphics->SetTextureFilter(filterMin_, filterMag_, filterMip_);
 
 	DWORD bEnableFog = FALSE;
 	device->GetRenderState(D3DRS_FOGENABLE, &bEnableFog);
@@ -803,6 +807,7 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 
 	bEnableMotionDelay_ = false;
 	bRoundingPosition_ = false;
+	roundingAngle_ = 0;
 
 	hitboxScale_ = D3DXVECTOR2(1.0f, 1.0f);
 
@@ -1383,7 +1388,8 @@ void StgNormalShotObject::Work() {
 			}
 
 			if (angleZ != lastAngle_) {
-				move_ = D3DXVECTOR2(cosf(angleZ), sinf(angleZ));
+				double ang = (roundingAngle_ > 0) ? round(angleZ / roundingAngle_) * roundingAngle_ : angleZ;
+				move_ = D3DXVECTOR2(cosf(ang), sinf(ang));
 				lastAngle_ = angleZ;
 			}
 		}

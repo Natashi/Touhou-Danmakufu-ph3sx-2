@@ -28,6 +28,10 @@ class StgItemManager {
 
 	DxRect<LONG> rcDeleteClip_;
 
+	D3DTEXTUREFILTERTYPE filterMin_;
+	D3DTEXTUREFILTERTYPE filterMag_;
+	D3DTEXTUREFILTERTYPE filterMip_;
+
 	bool bAllItemToPlayer_;
 	bool bCancelToPlayer_;
 	bool bDefaultBonusItemEnable_;
@@ -61,6 +65,12 @@ public:
 
 	void SetItemDeleteClip(const DxRect<LONG>& clip) { rcDeleteClip_ = clip; }
 	DxRect<LONG>* GetItemDeleteClip() { return &rcDeleteClip_; }
+
+	void SetTextureFilter(D3DTEXTUREFILTERTYPE min, D3DTEXTUREFILTERTYPE mag, D3DTEXTUREFILTERTYPE mip) {
+		filterMin_ = min;
+		filterMag_ = mag;
+		filterMip_ = mip;
+	}
 
 	void CollectItemsAll();
 	void CollectItemsInCircle(const DxCircle& circle);
