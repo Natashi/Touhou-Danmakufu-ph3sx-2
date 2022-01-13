@@ -288,20 +288,18 @@ void StgPlayerObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectio
 	{
 		auto objShot = dynamic_cast<StgShotObject*>(wObj.get());
 		if (!tPlayer->IsGraze()) {
-			int hitID = DxScript::ID_INVALID;
-			if (objShot) {
-				hitID = objShot->GetObjectID();
-				KillSelf(hitID);
+			int hitID = objShot ? objShot->GetObjectID() : DxScript::ID_INVALID;
+			KillSelf(hitID);
 
+			if (objShot) {
 				if (enableDeleteShotOnHit_ && !objShot->IsSpellResist() &&
 					objShot->GetObjectType() == TypeObject::Shot)
 					objShot->DeleteImmediate();
 			}
 		}
-		else {
-			if (objShot) {
-				if (objShot->IsValidGraze() && (enableGrazeInvincible_ || frameInvincibility_ <= 0))
-					listGrazedShot_.push_back(wObj);
+		else if (enableGrazeInvincible_ || frameInvincibility_ <= 0) {
+			if (objShot != nullptr && objShot->IsValidGraze()) {
+				listGrazedShot_.push_back(wObj);
 			}
 		}
 		break;
