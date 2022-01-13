@@ -95,12 +95,12 @@ static const std::vector<function> commonFunction = {
 	//Math functions: Angles
 	{ "ToDegrees", ScriptClientBase::Func_ToDegrees, 1 },
 	{ "ToRadians", ScriptClientBase::Func_ToRadians, 1 },
-	{ "NormalizeAngle", ScriptClientBase::Func_NormalizeAngle, 1 },
-	{ "NormalizeAngleR", ScriptClientBase::Func_NormalizeAngleR, 1 },
-	{ "AngularDistance", ScriptClientBase::Func_AngularDistance, 2 },
-	{ "AngularDistanceR", ScriptClientBase::Func_AngularDistanceR, 2 },
-	{ "ReflectAngle", ScriptClientBase::Func_ReflectAngle, 2 },
-	{ "ReflectAngleR", ScriptClientBase::Func_ReflectAngleR, 2 },
+	{ "NormalizeAngle", ScriptClientBase::Func_NormalizeAngle<false>, 1 },
+	{ "NormalizeAngleR", ScriptClientBase::Func_NormalizeAngle<true>, 1 },
+	{ "AngularDistance", ScriptClientBase::Func_AngularDistance<false>, 2 },
+	{ "AngularDistanceR", ScriptClientBase::Func_AngularDistance<true>, 2 },
+	{ "ReflectAngle", ScriptClientBase::Func_ReflectAngle<false>, 2 },
+	{ "ReflectAngleR", ScriptClientBase::Func_ReflectAngle<true>, 2 },
 
 	//Math functions: Extra
 	{ "exp", ScriptClientBase::Func_Exp, 1 },
@@ -110,8 +110,8 @@ static const std::vector<function> commonFunction = {
 	{ "hypot", ScriptClientBase::Func_Hypot, 2 },
 	{ "distance", ScriptClientBase::Func_Distance, 4 },
 	{ "distancesq", ScriptClientBase::Func_DistanceSq, 4 },
-	{ "dottheta", ScriptClientBase::Func_GapAngle, 4 },
-	{ "rdottheta", ScriptClientBase::Func_RGapAngle, 4 },
+	{ "dottheta", ScriptClientBase::Func_GapAngle<false>, 4 },
+	{ "rdottheta", ScriptClientBase::Func_GapAngle<true>, 4 },
 
 	//Random
 	{ "rand", ScriptClientBase::Func_Rand, 2 },
@@ -137,6 +137,8 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_Hermite", ScriptClientBase::Func_Interpolate_Hermite, 9 },
 	{ "Interpolate_X", ScriptClientBase::Func_Interpolate_X, 4 },
 	{ "Interpolate_X_PackedInt", ScriptClientBase::Func_Interpolate_X_Packed, 4 },
+	{ "Interpolate_X_Angle", ScriptClientBase::Func_Interpolate_X_Angle<false>, 4 },
+	{ "Interpolate_X_AngleR", ScriptClientBase::Func_Interpolate_X_Angle<true>, 4 },
     { "Interpolate_X_Array", ScriptClientBase::Func_Interpolate_X_Array, 3 },
 
 	//Rotation
@@ -777,17 +779,12 @@ value ScriptClientBase::Func_DistanceSq(script_machine* machine, int argc, const
 	double dy = argv[3].as_real() - argv[1].as_real();
 	return CreateRealValue(Math::HypotSq<double>(dx, dy));
 }
+template<bool USE_RAD>
 value ScriptClientBase::Func_GapAngle(script_machine* machine, int argc, const value* argv) {
 	double dx = argv[2].as_real() - argv[0].as_real();
 	double dy = argv[3].as_real() - argv[1].as_real();
 	double res = atan2(dy, dx);
-	return CreateRealValue(Math::RadianToDegree(res));
-}
-value ScriptClientBase::Func_RGapAngle(script_machine* machine, int argc, const value* argv) {
-	double dx = argv[2].as_real() - argv[0].as_real();
-	double dy = argv[3].as_real() - argv[1].as_real();
-	double res = atan2(dy, dx);
-	return CreateRealValue(res);
+	return CreateRealValue(USE_RAD ? res : Math::RadianToDegree(res));
 }
 
 value ScriptClientBase::Func_Rand(script_machine* machine, int argc, const value* argv) {
@@ -997,6 +994,21 @@ value ScriptClientBase::Func_Interpolate_X_Packed(script_machine* machine, int a
 		res |= tmp << i;
 	}
 	return CreateIntValue(res);
+}
+template<bool USE_RAD>
+value ScriptClientBase::Func_Interpolate_X_Angle(script_machine* machine, int argc, const value* argv) {
+	double a = argv[0].as_real();
+	double b = argv[1].as_real();
+	double x = argv[2].as_real();
+
+	Math::Lerp::Type type = (Math::Lerp::Type)argv[3].as_int();
+	auto funcLerp = Math::Lerp::GetFunc<double, double>(type);
+	auto funcDiff = USE_RAD ? Math::AngleDifferenceRad : Math::AngleDifferenceDeg;
+	auto funcNorm = USE_RAD ? Math::NormalizeAngleRad : Math::NormalizeAngleDeg;
+
+	b = a + funcDiff(a, b);
+
+	return CreateRealValue(funcNorm(funcLerp(a, b, x)));
 }
 // :souperdying:
 value ScriptClientBase::Func_Interpolate_X_Array(script_machine* machine, int argc, const value* argv) {
@@ -1334,39 +1346,25 @@ value ScriptClientBase::Func_ToDegrees(script_machine* machine, int argc, const 
 value ScriptClientBase::Func_ToRadians(script_machine* machine, int argc, const value* argv) {
 	return CreateRealValue(Math::DegreeToRadian(argv->as_real()));
 }
+template<bool USE_RAD>
 value ScriptClientBase::Func_NormalizeAngle(script_machine* machine, int argc, const value* argv) {
 	double ang = argv->as_real();
-	return CreateRealValue(Math::NormalizeAngleDeg(ang));
+	auto func = USE_RAD ? Math::NormalizeAngleRad : Math::NormalizeAngleDeg;
+	return CreateRealValue(func(ang));
 }
-value ScriptClientBase::Func_NormalizeAngleR(script_machine* machine, int argc, const value* argv) {
-	double ang = argv->as_real();
-	return CreateRealValue(Math::NormalizeAngleRad(ang));
-}
+template<bool USE_RAD>
 value ScriptClientBase::Func_AngularDistance(script_machine* machine, int argc, const value* argv) {
 	double angFrom = argv[0].as_real();
 	double angTo = argv[1].as_real();
-	double dist = Math::NormalizeAngleDeg(angTo - angFrom);
-	if (dist > 180.0) dist -= 360.0;
-	return CreateRealValue(dist);
+	auto func = USE_RAD ? Math::AngleDifferenceRad : Math::AngleDifferenceDeg;
+	return CreateRealValue(func(angFrom, angTo));
 }
-value ScriptClientBase::Func_AngularDistanceR(script_machine* machine, int argc, const value* argv) {
-	double angFrom = argv[0].as_real();
-	double angTo = argv[1].as_real();
-	double dist = Math::NormalizeAngleRad(angTo - angFrom);
-	if (dist > GM_PI) dist -= GM_PI_X2;
-	return CreateRealValue(dist);
-}
+template<bool USE_RAD>
 value ScriptClientBase::Func_ReflectAngle(script_machine* machine, int argc, const value* argv) {
 	double angRay = argv[0].as_real();
 	double angSurf = argv[1].as_real();
-	double angRef = Math::NormalizeAngleDeg(2 * angSurf - angRay);
-	return CreateRealValue(angRef);
-}
-value ScriptClientBase::Func_ReflectAngleR(script_machine* machine, int argc, const value* argv) {
-	double angRay = argv[0].as_real();
-	double angSurf = argv[1].as_real();
-	double angRef = Math::NormalizeAngleRad(2 * angSurf - angRay);
-	return CreateRealValue(angRef);
+	auto func = USE_RAD ? Math::NormalizeAngleRad : Math::NormalizeAngleDeg;
+	return CreateRealValue(func(2 * angSurf - angRay));
 }
 
 //共通関数：パス関連

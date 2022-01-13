@@ -227,8 +227,8 @@ namespace gstd {
 		DNH_FUNCAPI_DECL_(Func_Hypot);
 		DNH_FUNCAPI_DECL_(Func_Distance);
 		DNH_FUNCAPI_DECL_(Func_DistanceSq);
+		template<bool USE_RAD>
 		DNH_FUNCAPI_DECL_(Func_GapAngle);
-		DNH_FUNCAPI_DECL_(Func_RGapAngle);
 
 		//Math functions; random
 		static value Func_Rand(script_machine* machine, int argc, const value* argv);
@@ -244,12 +244,12 @@ namespace gstd {
 		//Math functions; angle helper
 		DNH_FUNCAPI_DECL_(Func_ToDegrees);
 		DNH_FUNCAPI_DECL_(Func_ToRadians);
+		template<bool USE_RAD>
 		DNH_FUNCAPI_DECL_(Func_NormalizeAngle);
-		DNH_FUNCAPI_DECL_(Func_NormalizeAngleR);
+		template<bool USE_RAD>
 		DNH_FUNCAPI_DECL_(Func_AngularDistance);
-		DNH_FUNCAPI_DECL_(Func_AngularDistanceR);
+		template<bool USE_RAD>
 		DNH_FUNCAPI_DECL_(Func_ReflectAngle);
-		DNH_FUNCAPI_DECL_(Func_ReflectAngleR);
 
 		//Math functions; interpolation
 		template<double (*func)(double, double, double)>
@@ -262,6 +262,8 @@ namespace gstd {
 
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Packed);
+		template<bool USE_RAD>
+		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Angle);
 		DNH_FUNCAPI_DECL_(Func_Interpolate_X_Array);
 
 		//Math functions; rotation
