@@ -308,7 +308,7 @@ namespace gstd {
 			return IsExists() ? get() == p : (p == nullptr);
 		}
 		const bool operator==(const _MyType& p) const {
-			return IsExists() ? get() == p.get() : (p.get() == nullptr);
+			return IsExists() ? (get() == p.get()) : (p.get() == nullptr);
 		}
 		template<class U, bool _ATO> bool operator==(ref_count_ptr<U, _ATO>& p) const {
 			return IsExists() ? (get() == (T*)p.get()) : (p.get() == nullptr);
@@ -318,10 +318,10 @@ namespace gstd {
 			return IsExists();
 		}
 		const bool operator!=(const T* p) const {
-			return IsExists() ? get() != p : (p != nullptr);
+			return IsExists() ? (get() != p) : (p != nullptr);
 		}
 		const bool operator!=(const _MyType& p) const {
-			return IsExists() ? get() != p.get() : (p.get() != nullptr);
+			return IsExists() ? (get() != p.get()) : (p.get() != nullptr);
 		}
 		template<class U, bool _ATO> bool operator!=(ref_count_ptr<U, _ATO>& p) const {
 			return IsExists() ? (get() != (T*)p.get()) : (p.get() != nullptr);
