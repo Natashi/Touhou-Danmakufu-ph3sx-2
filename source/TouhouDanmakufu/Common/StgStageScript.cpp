@@ -248,8 +248,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetShotRenderPriorityI", StgStageScript::Func_GetShotRenderPriorityI, 0 },
 	{ "GetPlayerRenderPriorityI", StgStageScript::Func_GetPlayerRenderPriorityI, 0 },
 	{ "GetCameraFocusPermitPriorityI", StgStageScript::Func_GetCameraFocusPermitPriorityI, 0 },
-	{ "SetItemTextureFilter", StgStageScript::Func_SetItemTextureFilter, 3 },
-	{ "SetShotTextureFilter", StgStageScript::Func_SetShotTextureFilter, 3 },
+	
 	{ "CloseStgScene", StgStageScript::Func_CloseStgScene, 0 },
 	{ "GetReplayFps", StgStageScript::Func_GetReplayFps, 0 },
 	{ "SetIntersectionVisualization", StgStageScript::Func_SetIntersectionVisualization, 1 },
@@ -332,6 +331,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "SetShotAutoDeleteClip", StgStageScript::Func_SetShotAutoDeleteClip, 4 },
 	{ "GetShotDataInfoA1", StgStageScript::Func_GetShotDataInfoA1, 3 },
 	{ "SetShotDeleteEventEnable", StgStageScript::Func_SetShotDeleteEventEnable, 2 },
+	{ "SetShotTextureFilter", StgStageScript::Func_SetShotTextureFilter, 3 },
 
 	//STG共通関数：アイテム
 	{ "CreateItemA1", StgStageScript::Func_CreateItemA1, 4 },
@@ -349,6 +349,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetItemIdInCircleA1", StgStageScript::Func_GetItemIdInCircleA1, 3 },
 	{ "GetItemIdInCircleA2", StgStageScript::Func_GetItemIdInCircleA2, 4 },
 	{ "SetItemAutoDeleteClip", StgStageScript::Func_SetItemAutoDeleteClip, 4 },
+	{ "SetItemTextureFilter", StgStageScript::Func_SetItemTextureFilter, 3 },
 
 	//STG共通関数：その他
 	{ "StartSlow", StgStageScript::Func_StartSlow, 2 },
@@ -915,32 +916,6 @@ gstd::value StgStageScript::Func_GetCameraFocusPermitPriorityI(gstd::script_mach
 	StgStageController* stageController = script->stageController_;
 	int res = stageController->GetStageInformation()->GetCameraFocusPermitPriority();
 	return script->CreateIntValue(res);
-}
-gstd::value StgStageScript::Func_SetItemTextureFilter(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-	StgItemManager* itemManager = stageController->GetItemManager();
-
-	int typeMin = std::clamp((int)argv[0].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
-	int typeMag = std::clamp((int)argv[1].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
-	int typeMip = std::clamp((int)argv[2].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
-
-	itemManager->SetTextureFilter((D3DTEXTUREFILTERTYPE)typeMin, (D3DTEXTUREFILTERTYPE)typeMag, (D3DTEXTUREFILTERTYPE)typeMip);
-
-	return value();
-}
-gstd::value StgStageScript::Func_SetShotTextureFilter(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStageScript* script = (StgStageScript*)machine->data;
-	StgStageController* stageController = script->stageController_;
-	StgShotManager* shotManager = stageController->GetShotManager();
-
-	int typeMin = std::clamp((int)argv[0].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
-	int typeMag = std::clamp((int)argv[1].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
-	int typeMip = std::clamp((int)argv[2].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
-
-	shotManager->SetTextureFilter((D3DTEXTUREFILTERTYPE)typeMin, (D3DTEXTUREFILTERTYPE)typeMag, (D3DTEXTUREFILTERTYPE)typeMip);
-
-	return value();
 }
 
 gstd::value StgStageScript::Func_CloseStgScene(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -2197,6 +2172,19 @@ gstd::value StgStageScript::Func_SetShotDeleteEventEnable(gstd::script_machine* 
 
 	return value();
 }
+gstd::value StgStageScript::Func_SetShotTextureFilter(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+	StgShotManager* shotManager = stageController->GetShotManager();
+
+	int typeMin = std::clamp((int)argv[0].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+	int typeMag = std::clamp((int)argv[1].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+	int typeMip = std::clamp((int)argv[2].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+
+	shotManager->SetTextureFilter((D3DTEXTUREFILTERTYPE)typeMin, (D3DTEXTUREFILTERTYPE)typeMag, (D3DTEXTUREFILTERTYPE)typeMip);
+
+	return value();
+}
 
 //STG共通関数：アイテム
 gstd::value StgStageScript::Func_CreateItemA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -2435,6 +2423,19 @@ gstd::value StgStageScript::Func_SetItemAutoDeleteClip(gstd::script_machine* mac
 	DxRect<LONG> rect(-argv[0].as_int(), -argv[1].as_int(),
 		argv[2].as_int(), argv[3].as_int());
 	stageController->GetItemManager()->SetItemDeleteClip(rect);
+
+	return value();
+}
+gstd::value StgStageScript::Func_SetItemTextureFilter(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+	StgItemManager* itemManager = stageController->GetItemManager();
+
+	int typeMin = std::clamp((int)argv[0].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+	int typeMag = std::clamp((int)argv[1].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+	int typeMip = std::clamp((int)argv[2].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
+
+	itemManager->SetTextureFilter((D3DTEXTUREFILTERTYPE)typeMin, (D3DTEXTUREFILTERTYPE)typeMag, (D3DTEXTUREFILTERTYPE)typeMip);
 
 	return value();
 }
