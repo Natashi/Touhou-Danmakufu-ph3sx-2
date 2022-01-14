@@ -423,6 +423,8 @@ DnhConfiguration::DnhConfiguration() {
 	windowSizeList_ = { { 640, 480 }, { 800, 600 }, { 960, 720 }, { 1280, 960 } };
 	sizeWindow_ = 0;
 
+	bProcessUnfocused_ = false;
+
 	bVSync_ = true;
 	referenceRasterizer_ = false;
 	bPseudoFullscreen_ = true;
@@ -481,8 +483,13 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 	fastModeSpeed_ = std::clamp(fastModeSpeed_, 1, 50);
 
 	{
-		std::wstring str = prop.GetString(L"dynamic.scaling", L"false");
+		std::wstring str;
+		
+		str = prop.GetString(L"dynamic.scaling", L"false");
 		bDynamicScaling_ = str == L"true" ? true : StringUtility::ToInteger(str);
+
+		str = prop.GetString(L"unfocused.processing", L"false");
+		bProcessUnfocused_ = str == L"true" ? true : StringUtility::ToInteger(str);
 	}
 
 	{

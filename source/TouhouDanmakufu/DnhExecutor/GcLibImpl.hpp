@@ -13,6 +13,7 @@ class EApplication : public Singleton<EApplication>, public Application {
 	friend Singleton<EApplication>;
 protected:
 	EDirectGraphics* ptrGraphics;
+	bool bFocused_;
 public:
 	EApplication();
 	~EApplication();
@@ -20,6 +21,8 @@ public:
 	bool _Initialize();
 	bool _Loop();
 	bool _Finalize();
+
+	bool IsFocused() { return bFocused_;  }
 
 	EDirectGraphics* GetPtrGraphics() { return ptrGraphics; }
 };

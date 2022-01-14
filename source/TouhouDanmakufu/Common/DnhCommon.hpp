@@ -151,6 +151,7 @@ public:
 	std::vector<POINT> windowSizeList_;
 	size_t sizeWindow_;
 	bool bDynamicScaling_;
+	bool bProcessUnfocused_;
 
 	int fastModeSpeed_;
 

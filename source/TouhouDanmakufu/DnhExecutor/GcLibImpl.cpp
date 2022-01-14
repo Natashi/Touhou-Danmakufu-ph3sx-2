@@ -9,6 +9,7 @@
 //*******************************************************************
 EApplication::EApplication() {
 	ptrGraphics = nullptr;
+	bFocused_ = false;
 }
 EApplication::~EApplication() {
 
@@ -110,18 +111,30 @@ bool EApplication::_Loop() {
 	ETaskManager* taskManager = ETaskManager::GetInstance();
 	EFpsController* fpsController = EFpsController::GetInstance();
 	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
 
 	HWND hWndFocused = ::GetForegroundWindow();
 	HWND hWndGraphics = graphics->GetWindowHandle();
 	HWND hWndLogger = ELogger::GetInstance()->GetWindowHandle();
-	if (hWndFocused != hWndGraphics && hWndFocused != hWndLogger) {
+
+	bool bCurFocus = hWndFocused == hWndGraphics || hWndFocused == hWndLogger;
+
+	EDirectInput* input = EDirectInput::GetInstance();
+	
+	if (bFocused_ != bCurFocus) {
+		if (!bCurFocus)
+			input->ClearKeyState();
+		bFocused_ = bCurFocus;
+	}
+	if (bCurFocus)
+		input->Update();
+	
+	if (!config->bProcessUnfocused_ && !bCurFocus) {
 		//Pause main thread when the window isn't focused
 		::Sleep(10);
 		return true;
 	}
-
-	EDirectInput* input = EDirectInput::GetInstance();
-	input->Update();
+		
 	if (input->GetKeyState(DIK_LCONTROL) == KEY_HOLD &&
 		input->GetKeyState(DIK_LSHIFT) == KEY_HOLD &&
 		input->GetKeyState(DIK_R) == KEY_PUSH) 
