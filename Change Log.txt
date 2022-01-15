@@ -19,11 +19,16 @@ A mostly-complete history log of engine updates can be found here.
 			- Restructed event arguments of EV_DELETE_SHOT_TO_ITEM.
 				- The third event argument; "player collision", has been removed.
 					- Collision with the player will now trigger EV_DELETE_SHOT_IMMEDIATE instead of EV_DELETE_SHOT_TO_ITEM.
+		- Increased the minimum width for straight and curve lasers, primarily for delay visibility purposes. (Thanks to Naudiz)
+		- Allowed lasers to lose penetration (life) points. (Thanks to Naudiz)
+			- Like with any shot object, this will only occur when a laser lacks spell resistance (which it has by default).
 	Additions:
-		- Added Interpolate_Array and Interpolate_X_Array. (Thanks to Naudiz)
+		- Added Interpolate_X_Array, Interpolate_X_Angle, and Interpolate_X_AngleR. (Thanks to Naudiz)
+		- Added ObjShot_SetEnemyIntersectionInvalidFrame and ObjShot_SetPenetrateShotEnable. (Thanks to Naudiz)
+		- Added SetShotTextureFilter, SetItemTextureFilter, ObjRender_SetTextureFilter, and ObjShot_SetAngleRounding. (Thanks to Naudiz)
 		- Added SetEnemyAutoDeleteClip, ObjEnemy_SetAutoDelete, and ObjEnemy_SetDeleteFrame. (Thanks to NicholasLogan)
 		- Added ObjMove_SetAngularAcceleration, ObjMove_SetAngularMaxVelocity, and ObjMove_AddPatternA5. (Thanks to NicholasLogan)
-		- Added an overload to CreateShotA2. (Thanks to Naudiz)
+		- Added an overload to CreateShotA2, adding an angular velocity argument in between the acceleration and max speed ones. (Thanks to Naudiz)
 		- Added ObjMove_GetMovementType. (Thanks to Naudiz)
 			- Added constants:
 				- MOVE_OTHER
@@ -55,12 +60,15 @@ A mostly-complete history log of engine updates can be found here.
 			- ObjSprite3D_SetSourceRect
 			- ObjSprite3D_SetDestRect
 			- ObjSprite3D_SetSourceDestRect
+		- Added support for hexadecimal numbers in text color tags.
+			- "[f tc=ffffff]" is equivalent to "[f tc=(255,255,255)]".
 	Bug fixes:
 		- Fixed .dat archives not working.
 		- Fixed incorrect null checks, resulting in the game crashing when trying to operate on a null value.
 			- For example, using Obj_GetValue on a non-existent key will yield a null value.
 		- Fixed a crash bug which may sometimes happen when trying to parse a script file that ends with a line comment.
 		- Fixed ObjMove_AddPatternXX's shot graphic change not working with loose and curvy lasers.
+		- Fixed SetShotIntersectionCircle/Line not working properly.
 
 1.31b
 	Bug fixes:
