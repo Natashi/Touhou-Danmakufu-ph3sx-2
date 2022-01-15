@@ -335,7 +335,7 @@ void StgStageController::Work() {
 
 	bool bCurrentPause = infoStage_->IsPause();
 
-	if (!EApplication::GetInstance()->IsFocused() && !infoStage_->IsReplay()) {
+	if (!Application::GetBase()->IsFocused() && !infoStage_->IsReplay()) {
 		if (!bCurrentPause)
 			input->GetVirtualKey(EDirectInput::KEY_PAUSE)->SetKeyState(KEY_PUSH);
 		else

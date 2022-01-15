@@ -97,6 +97,7 @@ static const std::vector<function> dxFunction = {
 	{ "GetWindowedWidth", DxScript::Func_GetWindowedWidth, 0 },
 	{ "GetWindowedHeight", DxScript::Func_GetWindowedHeight, 0 },
 	{ "IsFullscreenMode", DxScript::Func_IsFullscreenMode, 0 },
+	{ "IsWindowFocused", DxScript::Func_IsWindowFocused, 0 },
 
 	{ "LoadTexture", DxScript::Func_LoadTexture, 1 },
 	{ "LoadTextureEx", DxScript::Func_LoadTextureEx, 3 },
@@ -1219,6 +1220,11 @@ gstd::value DxScript::Func_GetWindowedHeight(gstd::script_machine* machine, int 
 gstd::value DxScript::Func_IsFullscreenMode(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	bool res = graphics->GetScreenMode() == ScreenMode::SCREENMODE_FULLSCREEN;
+	return DxScript::CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_IsWindowFocused(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	Application* app = Application::GetBase();
+	bool res = app->IsFocused();
 	return DxScript::CreateBooleanValue(res);
 }
 value DxScript::Func_GetCoordinateScalingFactor(gstd::script_machine* machine, int argc, const value* argv) {

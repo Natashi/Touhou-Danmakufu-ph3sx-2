@@ -118,6 +118,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_GetWindowedWidth);
 		DNH_FUNCAPI_DECL_(Func_GetWindowedHeight);
 		DNH_FUNCAPI_DECL_(Func_IsFullscreenMode);
+		DNH_FUNCAPI_DECL_(Func_IsWindowFocused);
 		DNH_FUNCAPI_DECL_(Func_GetCoordinateScalingFactor);
 		DNH_FUNCAPI_DECL_(Func_SetCoordinateScalingFactor);
 

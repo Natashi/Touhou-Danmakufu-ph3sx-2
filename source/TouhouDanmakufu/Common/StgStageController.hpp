@@ -10,7 +10,6 @@
 #include "StgItem.hpp"
 #include "StgIntersection.hpp"
 #include "StgUserExtendScene.hpp"
-#include "./../DnhExecutor/GcLibImpl.hpp"
 
 class StgStageInformation;
 class StgStageStartData;

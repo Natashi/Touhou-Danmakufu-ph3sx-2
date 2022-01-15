@@ -14,6 +14,7 @@ namespace gstd {
 	protected:
 		bool bAppRun_;
 		bool bAppActive_;
+		bool bFocused_;
 		HINSTANCE hAppInstance_;
 		
 		Application();
@@ -32,6 +33,8 @@ namespace gstd {
 		void SetActive(bool b) { this->bAppActive_ = b; }
 		bool IsRun() { return bAppRun_; }
 		void End() { bAppRun_ = false; }
+
+		bool IsFocused() { return bFocused_; }
 
 		static HINSTANCE GetApplicationHandle() { return ::GetModuleHandle(NULL); }
 	};
