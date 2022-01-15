@@ -37,7 +37,6 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 			std::wstring pathImage = L"";
 			std::wstring pathSystem = DEFAULT;
 			std::wstring pathBackground = DEFAULT;
-			std::wstring pathBGM = DEFAULT;
 			std::vector<std::wstring> listPlayer;
 			std::wstring replayName = L"";
 		} info;
@@ -102,7 +101,6 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 						{ L"Image", LAMBDA_GETSTR(pathImage) },
 						{ L"System", LAMBDA_GETSTR(pathSystem) },
 						{ L"Background", LAMBDA_GETSTR(pathBackground) },
-						{ L"BGM", LAMBDA_GETSTR(pathBGM) },
 						{ L"Player", [](Info* i, Scanner& sc) { i->listPlayer = _GetStringList(sc); } },
 						{ L"ReplayName", LAMBDA_GETSTR(replayName) },
 					};
@@ -141,7 +139,6 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 			res->SetImagePath(info.pathImage);
 			res->SetSystemPath(info.pathSystem);
 			res->SetBackgroundPath(info.pathBackground);
-			res->SetBgmPath(info.pathBGM);
 			res->SetPlayerList(info.listPlayer);
 			res->SetReplayName(info.replayName);
 		}

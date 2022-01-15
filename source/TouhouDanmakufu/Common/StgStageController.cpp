@@ -228,25 +228,6 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		}
 	}
 
-	{
-		std::wstring pathBGM = infoMain->GetBgmPath();
-		if (pathBGM == ScriptInformation::DEFAULT)
-			pathBGM = L"";
-		if (pathBGM.size() > 0) {
-			pathBGM = EPathProperty::ExtendRelativeToFull(dirInfo, pathBGM);
-			ELogger::WriteTop(StringUtility::Format(L"BGM: [%s]", 
-				PathProperty::ReduceModuleDirectory(pathBGM).c_str()));
-			shared_ptr<SoundPlayer> player = DirectSoundManager::GetBase()->GetPlayer(pathBGM);
-			if (player) {
-				player->SetAutoDelete(true);
-				player->SetSoundDivision(SoundDivision::DIVISION_BGM);
-
-				player->GetPlayStyle()->bLoop_ = true;
-				player->Play();
-			}
-		}
-	}
-
 	if (!infoStage_->IsReplay()) {
 		ref_unsync_ptr<StgPlayerObject> objPlayer = GetPlayerObject();
 		if (objPlayer) {
