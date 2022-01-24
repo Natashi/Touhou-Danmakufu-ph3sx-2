@@ -170,6 +170,8 @@ public:
 	LONG screenWidth_;
 	LONG screenHeight_;
 
+	bool bEnableUnfocusedProcessing_;
+
 	bool _LoadDefinitionFile();
 public:
 	DnhConfiguration();
@@ -216,5 +218,8 @@ public:
 	std::wstring& GetWindowTitle() { return windowTitle_; }
 	LONG GetScreenWidth() { return screenWidth_; }
 	LONG GetScreenHeight() { return screenHeight_; }
+
+	bool IsEnableUnfocusedProcessing() { return bEnableUnfocusedProcessing_; }
+	void SetEnableUnfocusedProcessing(bool b) { bEnableUnfocusedProcessing_ = b; }
 };
 #endif

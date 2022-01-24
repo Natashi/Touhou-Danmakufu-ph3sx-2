@@ -451,6 +451,7 @@ DnhConfiguration::DnhConfiguration() {
 	screenHeight_ = 480;
 
 	bDynamicScaling_ = false;
+	bEnableUnfocusedProcessing_ = false;
 
 	LoadConfigFile();
 	_LoadDefinitionFile();
@@ -486,6 +487,9 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 	{
 		std::wstring str = prop.GetString(L"dynamic.scaling", L"false");
 		bDynamicScaling_ = str == L"true" ? true : StringUtility::ToInteger(str);
+
+		str = prop.GetString(L"unfocused.processing", L"false");
+		bEnableUnfocusedProcessing_ = str == L"true" ? true : StringUtility::ToInteger(str);
 	}
 
 	{

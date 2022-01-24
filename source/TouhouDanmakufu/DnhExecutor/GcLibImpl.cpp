@@ -109,19 +109,29 @@ bool EApplication::_Loop() {
 	ELogger* logger = ELogger::GetInstance();
 	ETaskManager* taskManager = ETaskManager::GetInstance();
 	EFpsController* fpsController = EFpsController::GetInstance();
+	EDirectInput* input = EDirectInput::GetInstance();
 	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
 
 	HWND hWndFocused = ::GetForegroundWindow();
 	HWND hWndGraphics = graphics->GetWindowHandle();
-	HWND hWndLogger = ELogger::GetInstance()->GetWindowHandle();
-	if (hWndFocused != hWndGraphics && hWndFocused != hWndLogger) {
-		//Pause main thread when the window isn't focused
-		::Sleep(10);
-		return true;
+	HWND hWndLogger = logger->GetWindowHandle();
+
+	bWindowFocused_ = hWndFocused == hWndGraphics || hWndFocused == hWndLogger;
+	if (!config->IsEnableUnfocusedProcessing()) {
+		if (!bWindowFocused_) {
+			//Pause main thread when the window isn't focused
+			::Sleep(10);
+			return true;
+		}
+		input->Update();
+	}
+	else {
+		if (bWindowFocused_)
+			input->Update();
+		else input->ClearKeyState();
 	}
 
-	EDirectInput* input = EDirectInput::GetInstance();
-	input->Update();
 	if (input->GetKeyState(DIK_LCONTROL) == KEY_HOLD &&
 		input->GetKeyState(DIK_LSHIFT) == KEY_HOLD &&
 		input->GetKeyState(DIK_R) == KEY_PUSH) 
@@ -200,9 +210,6 @@ bool EApplication::_Finalize() {
 	Logger::WriteTop("Application finalized.");
 	return true;
 }
-
-
-
 
 //*******************************************************************
 //EDirectGraphics

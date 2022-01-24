@@ -13,6 +13,7 @@ class EApplication : public Singleton<EApplication>, public Application {
 	friend Singleton<EApplication>;
 protected:
 	EDirectGraphics* ptrGraphics;
+	bool bWindowFocused_;
 public:
 	EApplication();
 	~EApplication();
@@ -22,6 +23,7 @@ public:
 	bool _Finalize();
 
 	EDirectGraphics* GetPtrGraphics() { return ptrGraphics; }
+	bool IsWindowFocused() { return bWindowFocused_; }
 };
 
 //*******************************************************************
