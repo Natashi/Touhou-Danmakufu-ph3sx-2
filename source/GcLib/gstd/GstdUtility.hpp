@@ -542,7 +542,7 @@ namespace gstd {
 		}
 		static T* GetInstance() {
 			T*& p = _This();
-			if (p == nullptr) throw gstd::wexception("Instance uninitialized.");
+			//if (p == nullptr) throw gstd::wexception("Instance uninitialized.");
 			return p;
 		}
 		static void DeleteInstance() {
