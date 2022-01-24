@@ -171,6 +171,7 @@ static const std::vector<function> commonFunction = {
 	{ "GetFilePathList", ScriptClientBase::Func_GetFilePathList, 1 },
 	{ "GetDirectoryList", ScriptClientBase::Func_GetDirectoryList, 1 },
 
+	{ "GetWorkingDirectory", ScriptClientBase::Func_GetWorkingDirectory, 0 },
 	{ "GetModuleName", ScriptClientBase::Func_GetModuleName, 0 },
 	{ "GetModuleDirectory", ScriptClientBase::Func_GetModuleDirectory, 0 },
 	{ "GetFileDirectory", ScriptClientBase::Func_GetFileDirectory, 1 },
@@ -1395,6 +1396,12 @@ value ScriptClientBase::Func_GetDirectoryList(script_machine* machine, int argc,
 }
 
 //Path utility
+value ScriptClientBase::Func_GetWorkingDirectory(script_machine* machine, int argc, const value* argv) {
+	wchar_t dir[_MAX_PATH];
+	ZeroMemory(dir, sizeof(dir));
+	::GetCurrentDirectoryW(_MAX_PATH, dir);
+	return ScriptClientBase::CreateStringValue(std::wstring(dir));
+}
 value ScriptClientBase::Func_GetModuleName(script_machine* machine, int argc, const value* argv) {
 	const std::wstring& res = PathProperty::GetModuleName();
 	return ScriptClientBase::CreateStringValue(res);

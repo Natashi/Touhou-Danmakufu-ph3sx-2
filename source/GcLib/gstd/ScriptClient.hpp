@@ -294,6 +294,7 @@ namespace gstd {
 		static value Func_GetFilePathList(script_machine* machine, int argc, const value* argv);
 		static value Func_GetDirectoryList(script_machine* machine, int argc, const value* argv);
 
+		DNH_FUNCAPI_DECL_(Func_GetWorkingDirectory);
 		DNH_FUNCAPI_DECL_(Func_GetModuleName);
 		DNH_FUNCAPI_DECL_(Func_GetModuleDirectory);
 		DNH_FUNCAPI_DECL_(Func_GetFileDirectory);
