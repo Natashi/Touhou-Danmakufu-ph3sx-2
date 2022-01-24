@@ -2,7 +2,6 @@
 
 #include "StgControlScript.hpp"
 #include "StgSystem.hpp"
-#include "../DnhExecutor/GcLibImpl.hpp"
 
 #include "../DnhExecutor/GcLibImpl.hpp"
 
@@ -86,6 +85,8 @@ static const std::vector<function> stgControlFunction = {
 	{ "GetConfigVirtualKeyMapping", StgControlScript::Func_GetConfigVirtualKeyMapping, 1 },
 	{ "GetConfigWindowTitle", StgControlScript::Func_GetConfigWindowTitle, 0 },
 	{ "SetWindowTitle", StgControlScript::Func_SetWindowTitle, 1 },
+	{ "SetEnableUnfocusedProcessing", StgControlScript::Func_SetEnableUnfocusedProcessing, 1 },
+	{ "IsWindowFocused", StgControlScript::Func_IsWindowFocused, 0 },
 
 	//STG共通関数：描画関連
 	{ "ClearInvalidRenderPriority", StgControlScript::Func_ClearInvalidRenderPriority, 0 },
@@ -648,12 +649,24 @@ gstd::value StgControlScript::Func_SetWindowTitle(script_machine* machine, int a
 
 	return value();
 }
+gstd::value StgControlScript::Func_SetEnableUnfocusedProcessing(script_machine* machine, int argc, const value* argv) {
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
+
+	bool enable = argv[0].as_boolean();
+	config->SetEnableUnfocusedProcessing(enable);
+
+	return value();
+}
+value StgControlScript::Func_IsWindowFocused(gstd::script_machine* machine, int argc, const value* argv) {
+	return StgControlScript::CreateBooleanValue(EApplication::GetInstance()->IsWindowFocused());
+}
 
 //STG共通関数：描画関連
 gstd::value StgControlScript::Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	StgSystemController* systemController = script->systemController_;
 	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+
 	infoSystem->SetInvalidRenderPriority(-1, -1);
 
 	return value();
@@ -672,9 +685,9 @@ gstd::value StgControlScript::Func_SetInvalidRenderPriorityA1(gstd::script_machi
 
 gstd::value StgControlScript::Func_GetReservedRenderTargetName(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
+	ETextureManager* textureManager = ETextureManager::GetInstance();
 
 	int index = argv[0].as_int();
-	ETextureManager* textureManager = ETextureManager::GetInstance();
 	std::wstring name = textureManager->GetReservedRenderTargetName(index);
 
 	return script->CreateStringValue(name);

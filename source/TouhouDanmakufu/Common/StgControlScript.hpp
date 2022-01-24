@@ -45,6 +45,9 @@ public:
 		EV_USER_PLAYER = 4000000,
 		EV_USER_PACKAGE = 5000000,
 
+		EV_APP_LOSE_FOCUS = 10000,
+		EV_APP_RESTORE_FOCUS,
+
 		TYPE_SCRIPT_ALL = -1,
 		TYPE_SCRIPT_PLAYER = ScriptInformation::TYPE_PLAYER,
 		TYPE_SCRIPT_SINGLE = ScriptInformation::TYPE_SINGLE,
@@ -130,6 +133,8 @@ public:
 	DNH_FUNCAPI_DECL_(Func_GetConfigVirtualKeyMapping);
 	DNH_FUNCAPI_DECL_(Func_GetConfigWindowTitle);
 	DNH_FUNCAPI_DECL_(Func_SetWindowTitle);
+	DNH_FUNCAPI_DECL_(Func_SetEnableUnfocusedProcessing);
+	DNH_FUNCAPI_DECL_(Func_IsWindowFocused);
 
 	//STG制御共通関数：描画関連
 	static gstd::value Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv);
