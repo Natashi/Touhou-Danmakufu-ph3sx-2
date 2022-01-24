@@ -132,6 +132,9 @@ static const std::vector<constant> stgControlConstant = {
 	constant("EV_USER_PLAYER", StgControlScript::EV_USER_PLAYER),
 	constant("EV_USER_PACKAGE", StgControlScript::EV_USER_PACKAGE),
 
+	constant("EV_APP_LOSE_FOCUS", StgControlScript::EV_APP_LOSE_FOCUS),
+	constant("EV_APP_RESTORE_FOCUS", StgControlScript::EV_APP_RESTORE_FOCUS),
+
 	//GetScriptInfoA1 script types
 	constant("TYPE_SCRIPT_ALL", StgControlScript::TYPE_SCRIPT_ALL),
 	constant("TYPE_SCRIPT_PLAYER", StgControlScript::TYPE_SCRIPT_PLAYER),

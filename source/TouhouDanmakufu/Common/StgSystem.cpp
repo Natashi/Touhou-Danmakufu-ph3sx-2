@@ -6,6 +6,8 @@
 #include "StgStageScript.hpp"
 #include "StgPlayer.hpp"
 
+#include "../DnhExecutor/GcLibImpl.hpp"
+
 //****************************************************************************
 //StgSystemController
 //****************************************************************************
@@ -13,6 +15,7 @@ StgSystemController* StgSystemController::base_ = nullptr;
 StgSystemController::StgSystemController() {
 	stageController_ = nullptr;
 	packageController_ = nullptr;
+	bPrevWindowFocused_ = true;
 }
 StgSystemController::~StgSystemController() {
 	if (scriptEngineCache_)
@@ -524,6 +527,29 @@ bool StgSystemController::CheckMeshAndClearZBuffer(DxScriptRenderObject* obj) {
 }
 
 void StgSystemController::_ControlScene() {
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
+	if (config->IsEnableUnfocusedProcessing()) {
+		bool bNowWindowFocused = EApplication::GetInstance()->IsWindowFocused();
+
+		if (bPrevWindowFocused_ != bNowWindowFocused) {
+			ScriptManager* scriptManager = nullptr;
+			if (packageController_)
+				scriptManager = packageController_->GetScriptManager();
+			else scriptManager = stageController_->GetScriptManager();
+
+			if (!bNowWindowFocused) {
+				//Focus lost
+				scriptManager->RequestEventAll(StgStageScript::EV_APP_LOSE_FOCUS);
+			}
+			else {
+				//Focus restored
+				scriptManager->RequestEventAll(StgStageScript::EV_APP_RESTORE_FOCUS);
+			}
+		}
+
+		bPrevWindowFocused_ = bNowWindowFocused;
+	}
+
 	if (infoSystem_->IsPackageMode()) {
 		packageController_->Work();
 

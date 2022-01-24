@@ -37,6 +37,8 @@ protected:
 
 	ref_count_ptr<StgControlScriptInformation> infoControlScript_;
 
+	bool bPrevWindowFocused_;
+
 	virtual void DoEnd() = 0;
 	virtual void DoRetry() = 0;
 	void _ControlScene();
