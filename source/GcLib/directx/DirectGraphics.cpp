@@ -119,39 +119,49 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		g_dxCoordsMul_ = 1.0f;
 	}
 
-	//Fullscreen mode settings
-	ZeroMemory(&d3dppFull_, sizeof(D3DPRESENT_PARAMETERS));
-	d3dppFull_.hDeviceWindow = hWnd;
-	d3dppFull_.BackBufferWidth = dxBackBufferW;
-	d3dppFull_.BackBufferHeight = dxBackBufferH;
-	d3dppFull_.Windowed = FALSE;
-	d3dppFull_.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	d3dppFull_.BackBufferFormat = config.colorMode_ == ColorMode::COLOR_MODE_16BIT ? 
-		D3DFMT_R5G6B5 : D3DFMT_X8R8G8B8;
-	d3dppFull_.BackBufferCount = 1;
-	d3dppFull_.EnableAutoDepthStencil = TRUE;
-	d3dppFull_.AutoDepthStencilFormat = D3DFMT_D16;
-	d3dppFull_.MultiSampleType = D3DMULTISAMPLE_NONE;
-	d3dppFull_.PresentationInterval = (bDeviceVSyncAvailable && config.bVSync_) 
-		? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
-	d3dppFull_.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
+	{
+		//Fullscreen mode settings
 
-	//Windowed mode settings
-	D3DDISPLAYMODE dmode;
-	HRESULT hrAdapt = pDirect3D_->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &dmode);
-	ZeroMemory(&d3dppWin_, sizeof(D3DPRESENT_PARAMETERS));
-	d3dppWin_.BackBufferWidth = dxBackBufferW;
-	d3dppWin_.BackBufferHeight = dxBackBufferH;
-	d3dppWin_.Windowed = TRUE;
-	d3dppWin_.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	d3dppWin_.BackBufferFormat = D3DFMT_UNKNOWN;
-	d3dppWin_.hDeviceWindow = hWnd;
-	d3dppWin_.BackBufferCount = 1;
-	d3dppWin_.EnableAutoDepthStencil = TRUE;
-	d3dppWin_.AutoDepthStencilFormat = D3DFMT_D16;
-	d3dppWin_.MultiSampleType = D3DMULTISAMPLE_NONE;
-	d3dppWin_.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
-	d3dppWin_.FullScreen_RefreshRateInHz = 0;
+		RECT rcMonitor;
+		::GetWindowRect(::GetDesktopWindow(), &rcMonitor);
+
+		ZeroMemory(&d3dppFull_, sizeof(D3DPRESENT_PARAMETERS));
+		d3dppFull_.hDeviceWindow = hWnd;
+		d3dppFull_.BackBufferWidth = dxBackBufferW;
+		d3dppFull_.BackBufferHeight = dxBackBufferH;
+		d3dppFull_.Windowed = FALSE;
+		d3dppFull_.SwapEffect = D3DSWAPEFFECT_DISCARD;
+		d3dppFull_.BackBufferFormat = config.colorMode_ == ColorMode::COLOR_MODE_16BIT ?
+			D3DFMT_R5G6B5 : D3DFMT_X8R8G8B8;
+		d3dppFull_.BackBufferCount = 1;
+		d3dppFull_.EnableAutoDepthStencil = TRUE;
+		d3dppFull_.AutoDepthStencilFormat = D3DFMT_D16;
+		d3dppFull_.MultiSampleType = D3DMULTISAMPLE_NONE;
+		d3dppFull_.PresentationInterval = (bDeviceVSyncAvailable && config.bVSync_)
+			? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+		d3dppFull_.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
+	}
+
+	{
+		//Windowed mode settings
+
+		D3DDISPLAYMODE dmode;
+		HRESULT hrAdapt = pDirect3D_->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &dmode);
+
+		ZeroMemory(&d3dppWin_, sizeof(D3DPRESENT_PARAMETERS));
+		d3dppWin_.hDeviceWindow = hWnd;
+		d3dppWin_.BackBufferWidth = dxBackBufferW;
+		d3dppWin_.BackBufferHeight = dxBackBufferH;
+		d3dppWin_.Windowed = TRUE;
+		d3dppWin_.SwapEffect = D3DSWAPEFFECT_DISCARD;
+		d3dppWin_.BackBufferFormat = D3DFMT_UNKNOWN;
+		d3dppWin_.BackBufferCount = 1;
+		d3dppWin_.EnableAutoDepthStencil = TRUE;
+		d3dppWin_.AutoDepthStencilFormat = D3DFMT_D16;
+		d3dppWin_.MultiSampleType = D3DMULTISAMPLE_NONE;
+		d3dppWin_.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+		d3dppWin_.FullScreen_RefreshRateInHz = 0;
+	}
 
 	if (!config.bWindowed_) {	//Start in fullscreen Mode
 		::SetWindowLong(hWnd, GWL_STYLE, wndStyleFull_);
@@ -431,10 +441,13 @@ void DirectGraphics::_RestoreDxResource() {
 
 	_InitializeDeviceState(true);
 }
+
+static int g_restoreFailCount = 0;
 bool DirectGraphics::_Restore() {
 	//The device was lost, wait until it's able to be restored
 	deviceStatus_ = pDevice_->TestCooperativeLevel();
 	if (deviceStatus_ == D3D_OK) {
+		g_restoreFailCount = 0;
 		return true;
 	}
 	else {
@@ -450,14 +463,25 @@ bool DirectGraphics::_Restore() {
 			if (SUCCEEDED(deviceStatus_)) {
 				_RestoreDxResource();
 				Logger::WriteTop("_Restore: IDirect3DDevice restored.");
+				g_restoreFailCount = 0;
 				return true;
 			}
 		}
-		if (FAILED(deviceStatus_)) {					//Something went terribly wrong
-			std::wstring err = StringUtility::Format(L"_Restore: Unexpected failure [%s; %s]",
-				DXGetErrorString(deviceStatus_), DXGetErrorDescription(deviceStatus_));
-			Logger::WriteTop(err);
-			throw gstd::wexception(err);
+		if (FAILED(deviceStatus_)) {					//Something went wrong
+			++g_restoreFailCount;
+			if (g_restoreFailCount >= 60) {
+				g_restoreFailCount = 0;
+
+				std::wstring err = StringUtility::Format(L"_Restore: Failed to restore the Direct3D device; %s\r\n\t%s",
+					DXGetErrorString(deviceStatus_), DXGetErrorDescription(deviceStatus_));
+				Logger::WriteTop(err);
+				throw gstd::wexception(err);
+			}
+			else {
+				std::wstring err = StringUtility::Format(L"_Restore: Attempt failed; %s\r\n\t%s",
+					DXGetErrorString(deviceStatus_), DXGetErrorDescription(deviceStatus_));
+				Logger::WriteTop(err);
+			}
 		}
 		return false;
 	}
@@ -928,7 +952,6 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 	HINSTANCE hInst = ::GetModuleHandle(nullptr);
 	lpCursor_ = LoadCursor(nullptr, IDC_ARROW);
 	{
-		std::wstring nameClass = L"DirectGraphicsPrimaryWindow";
 		WNDCLASSEX wcex;
 		ZeroMemory(&wcex, sizeof(wcex));
 		wcex.cbSize = sizeof(WNDCLASSEX);
@@ -939,7 +962,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		wcex.hCursor = lpCursor_;
 		wcex.hbrBackground = (HBRUSH)::GetStockObject(BLACK_BRUSH);
 		wcex.lpszMenuName = nullptr;
-		wcex.lpszClassName = nameClass.c_str();
+		wcex.lpszClassName = L"DirectGraphicsPrimaryWindow";
 		wcex.hIconSm = nullptr;
 		::RegisterClassEx(&wcex);
 
@@ -951,11 +974,9 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		hWndParent_ = hWnd_;
 	}
 
-
 	if (config.bBorderlessFullscreen_) {
 		//Create a child window to handle contents (parent window handles black bars)
 
-		std::wstring nameClass = L"DirectGraphicsPrimaryWindow.Child";
 		WNDCLASSEX wcex;
 		ZeroMemory(&wcex, sizeof(wcex));
 		wcex.cbSize = sizeof(WNDCLASSEX);
@@ -964,7 +985,7 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		wcex.hInstance = hInst;
 		wcex.hCursor = lpCursor_;
 		wcex.hbrBackground = (HBRUSH)::GetStockObject(BLACK_BRUSH);
-		wcex.lpszClassName = nameClass.c_str();
+		wcex.lpszClassName = L"DirectGraphicsPrimaryWindow.Child";
 		::RegisterClassEx(&wcex);
 
 		LONG screenWidth = config.sizeScreen_.x; //+ ::GetSystemMetrics(SM_CXEDGE) + 10;
@@ -1194,8 +1215,10 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 		else {		//To fullscreen
 			RECT rect;
 			GetWindowRect(GetDesktopWindow(), &rect);
+
 			::SetWindowLong(hWnd_, GWL_STYLE, wndStyleFull_);
 			::ShowWindow(hWnd_, SW_SHOW);
+
 			::MoveWindow(hWnd_, 0, 0, rect.right, rect.bottom, TRUE);
 
 			//Causes fullscreen to prevent Windows drifting off to Dreamland Drama
