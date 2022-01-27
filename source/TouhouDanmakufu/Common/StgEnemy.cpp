@@ -208,16 +208,16 @@ void StgEnemyObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersection
 	if (auto ptrObj = otherTarget->GetObject()) {
 		if (otherTarget->GetTargetType() == StgIntersectionTarget::TYPE_PLAYER_SHOT) {
 			if (StgShotObject* shot = dynamic_cast<StgShotObject*>(ptrObj.get())) {
-				ref_unsync_weak_ptr<StgEnemyObject> self = ownTarget->GetObject();
+				if (ref_unsync_weak_ptr<StgEnemyObject> self = ownTarget->GetObject()) {
+					//Register intersection only if the enemy is off hit cooldown
+					if (!shot->CheckEnemyHitCooldownExists(self)) {
+						damage = shot->GetDamage() * (shot->IsSpellFactor() ? rateDamageSpell_ : rateDamageShot_) / 100.0;
+						++intersectedPlayerShotCount_;
 
-				//Register intersection only if the enemy is off hit cooldown
-				if (!shot->CheckEnemyHitCooldownExists(self)) {
-					damage = shot->GetDamage() * (shot->IsSpellFactor() ? rateDamageSpell_ : rateDamageShot_) / 100.0;
-					++intersectedPlayerShotCount_;
-
-					uint32_t frame = shot->GetEnemyIntersectionInvalidFrame();
-					if (frame > 0)
-						shot->AddEnemyHitCooldown(self, frame);
+						uint32_t frame = shot->GetEnemyIntersectionInvalidFrame();
+						if (frame > 0)
+							shot->AddEnemyHitCooldown(self, frame);
+					}
 				}
 			}
 		}

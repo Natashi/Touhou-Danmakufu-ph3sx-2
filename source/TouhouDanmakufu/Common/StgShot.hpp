@@ -410,12 +410,8 @@ public:
 	uint32_t GetEnemyIntersectionInvalidFrame() { return frameEnemyHitInvalid_;  }
 
 	//Returns true if obj is on hit cooldown
-	bool CheckEnemyHitCooldownExists(ref_unsync_weak_ptr<StgEnemyObject> obj) {
-		return mapEnemyHitCooldown_.find(obj) != mapEnemyHitCooldown_.end();
-	}
-	void AddEnemyHitCooldown(ref_unsync_weak_ptr<StgEnemyObject> obj, uint32_t time) {
-		mapEnemyHitCooldown_[obj] = time;
-	}
+	bool CheckEnemyHitCooldownExists(ref_unsync_weak_ptr<StgEnemyObject> obj);
+	void AddEnemyHitCooldown(ref_unsync_weak_ptr<StgEnemyObject> obj, uint32_t time);
 
 	int GetDelay() { return delay_.time; }
 	void SetDelay(int delay) { delay_.time = delay; }

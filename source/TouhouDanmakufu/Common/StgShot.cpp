@@ -914,9 +914,19 @@ void StgShotObject::_CommonWorkTask() {
 	//----------------------------------------------------------
 
 	for (auto itr = mapEnemyHitCooldown_.begin(); itr != mapEnemyHitCooldown_.end();) {
-		if (itr->first.expired() || (--(itr->second) == 0))
+		if (itr->first.expired() || itr->first->IsDeleted() || (--(itr->second) == 0))
 			itr = mapEnemyHitCooldown_.erase(itr);
 		else ++itr;
+	}
+}
+
+bool StgShotObject::CheckEnemyHitCooldownExists(ref_unsync_weak_ptr<StgEnemyObject> obj) {
+	if (mapEnemyHitCooldown_.empty()) return false;
+	return mapEnemyHitCooldown_.find(obj) != mapEnemyHitCooldown_.end();
+}
+void StgShotObject::AddEnemyHitCooldown(ref_unsync_weak_ptr<StgEnemyObject> obj, uint32_t time) {
+	if (obj) {
+		mapEnemyHitCooldown_[obj] = time;
 	}
 }
 
