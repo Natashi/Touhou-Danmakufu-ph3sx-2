@@ -225,6 +225,14 @@ public:
 		CANCEL_ALL,
 		CANCEL_SINGLE,
 	};
+	enum {
+		FLAG_MOVETOPL_NONE				= 0x0,
+		FLAG_MOVETOPL_PLAYER_SCOPE		= 0x1,
+		FLAG_MOVETOPL_COLLECT_ALL		= 0x2,
+		FLAG_MOVETOPL_POC_LINE			= 0x4,
+		FLAG_MOVETOPL_COLLECT_CIRCLE	= 0x8,
+		FLAG_MOVETOPL_ALL				= 0x1 | 0x2 | 0x4 | 0x8,
+	};
 protected:
 	StgStageController* stageController_;
 	int typeItem_;
@@ -234,8 +242,8 @@ protected:
 
 	int64_t score_;
 
-	bool bMoveToPlayer_;		//Is the item supposed to be homing in on the player?
-	bool bPermitMoveToPlayer_;	//Can the item home in on the player?
+	bool bMoveToPlayer_;		//Is the item supposed to be homing in on the player right now?
+	int moveToPlayerFlags_;		//MoveToPlayer permissions
 
 	bool bDefaultScoreText_;
 
@@ -279,8 +287,8 @@ public:
 
 	bool IsMoveToPlayer() { return bMoveToPlayer_; }
 	void SetMoveToPlayer(bool b) { bMoveToPlayer_ = b; }
-	bool IsPermitMoveToPlayer() { return bPermitMoveToPlayer_; }
-	void SetPermitMoveToPlayer(bool bPermit) { bPermitMoveToPlayer_ = bPermit; }
+	bool GetMoveToPlayerEnableFlags() { return moveToPlayerFlags_; }
+	void SetMoveToPlayerEnableFlags(int moveFlags) { moveToPlayerFlags_ = moveFlags; }
 
 	void SetDefaultScoreText(bool b) { bDefaultScoreText_ = b; }
 

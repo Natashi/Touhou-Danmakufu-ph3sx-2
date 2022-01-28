@@ -73,74 +73,69 @@ void StgItemManager::Work() {
 			float ix = obj->GetPositionX();
 			float iy = obj->GetPositionY();
 
-			if (objPlayer->GetState() == StgPlayerObject::STATE_NORMAL) {
-				bool bMoveToPlayer = false;
-
+			if (objPlayer->GetState() != StgPlayerObject::STATE_NORMAL) {
+				obj->SetMoveToPlayer(false);
+				obj->NotifyItemCancelEvent(StgItemObject::CANCEL_PLAYER_DOWN);
+			}
+			else {
 				float dx = px - ix;
 				float dy = py - iy;
-
-				//if (obj->GetItemType() == StgItemObject::ITEM_SCORE && obj->GetFrameWork() > 60 * 15)
-				//	obj->Intersect(nullptr, nullptr);
+				int radius = dx * dx + dy * dy;
 
 				int typeCollect = StgItemObject::COLLECT_PLAYER_SCOPE;
 				uint64_t collectParam = 0;
 
-				{
-					int radius = dx * dx + dy * dy;
-					if (obj->bIntersectEnable_ && radius <= obj->itemIntersectRadius_) {
-						obj->Intersect(nullptr, nullptr);
-						goto lab_next_item;
-					}
-					else if (radius <= pr) {
-						typeCollect = StgItemObject::COLLECT_PLAYER_SCOPE;
-						collectParam = (uint64_t)objPlayer->GetItemIntersectionRadius();
-						bMoveToPlayer = true;
-					}
+				if (obj->bIntersectEnable_ && radius <= obj->itemIntersectRadius_) {
+					obj->Intersect(nullptr, nullptr);
+					goto lab_next_item;
 				}
+
+				int moveToPlayerFlags = obj->GetMoveToPlayerEnableFlags();
 
 				if (bCancelToPlayer_ && obj->IsMoveToPlayer()) {
 					obj->SetMoveToPlayer(false);
 					obj->NotifyItemCancelEvent(StgItemObject::CANCEL_ALL);
 				}
-				else if (obj->IsPermitMoveToPlayer() && !obj->IsMoveToPlayer()) {
-					if (bMoveToPlayer)
-						goto lab_move_to_player;
-
-					if (bAllItemToPlayer_) {
-						typeCollect = StgItemObject::COLLECT_ALL;
-						bMoveToPlayer = true;
+				else if (moveToPlayerFlags != 0 && !obj->IsMoveToPlayer()) {
+					//Player item scope collection
+					if ((radius <= pr) && (moveToPlayerFlags & StgItemObject::FLAG_MOVETOPL_PLAYER_SCOPE)) {
+						typeCollect = StgItemObject::COLLECT_PLAYER_SCOPE;
+						collectParam = (uint64_t)objPlayer->GetItemIntersectionRadius();
 						goto lab_move_to_player;
 					}
 
-					if (pAutoItemCollectY >= 0) {
+					//CollectAllItems collection
+					if (bAllItemToPlayer_ && (moveToPlayerFlags & StgItemObject::FLAG_MOVETOPL_COLLECT_ALL)) {
+						typeCollect = StgItemObject::COLLECT_ALL;
+						goto lab_move_to_player;
+					}
+
+					//POC collection
+					if ((pAutoItemCollectY >= 0) && (moveToPlayerFlags & StgItemObject::FLAG_MOVETOPL_POC_LINE)) {
 						if (!obj->IsMoveToPlayer() && py <= pAutoItemCollectY) {
 							typeCollect = StgItemObject::COLLECT_PLAYER_LINE;
 							collectParam = (uint64_t)pAutoItemCollectY;
-							bMoveToPlayer = true;
 							goto lab_move_to_player;
 						}
 					}
 
-					for (DxCircle& circle : listCircleToPlayer_) {
-						float rr = circle.GetR() * circle.GetR();
-						if (Math::HypotSq(ix - circle.GetX(), iy - circle.GetY()) <= rr) {
-							typeCollect = StgItemObject::COLLECT_IN_CIRCLE;
-							collectParam = (uint64_t)circle.GetR();
-							bMoveToPlayer = true;
-							goto lab_move_to_player;
+					//CollectItemsInCircle collection
+					if (moveToPlayerFlags & StgItemObject::FLAG_MOVETOPL_COLLECT_CIRCLE) {
+						for (DxCircle& circle : listCircleToPlayer_) {
+							float rr = circle.GetR() * circle.GetR();
+							if (Math::HypotSq(ix - circle.GetX(), iy - circle.GetY()) <= rr) {
+								typeCollect = StgItemObject::COLLECT_IN_CIRCLE;
+								collectParam = (uint64_t)circle.GetR();
+								goto lab_move_to_player;
+							}
 						}
 					}
 
-					if (bMoveToPlayer) {
+					goto lab_next_item;
 lab_move_to_player:
-						obj->SetMoveToPlayer(true);
-						obj->NotifyItemCollectEvent(typeCollect, collectParam);
-					}
+					obj->SetMoveToPlayer(true);
+					obj->NotifyItemCollectEvent(typeCollect, collectParam);
 				}
-			}
-			else if (obj->IsMoveToPlayer()) {
-				obj->SetMoveToPlayer(false);
-				obj->NotifyItemCancelEvent(StgItemObject::CANCEL_PLAYER_DOWN);
 			}
 
 lab_next_item:
@@ -670,7 +665,7 @@ StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObjec
 	score_ = 0;
 
 	bMoveToPlayer_ = false;
-	bPermitMoveToPlayer_ = true;
+	moveToPlayerFlags_ = FLAG_MOVETOPL_ALL;
 
 	bDefaultScoreText_ = true;
 
@@ -1031,7 +1026,7 @@ StgItemObject_Score::StgItemObject_Score(StgStageController* stageController) : 
 	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
 		move->SetItemMoveType(StgMovePattern_Item::MOVE_SCORE);
 
-	bPermitMoveToPlayer_ = false;
+	moveToPlayerFlags_ = FLAG_MOVETOPL_ALL;
 
 	frameDelete_ = 0;
 }

@@ -541,7 +541,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjItem_Regist", StgStageScript::Func_ObjItem_Regist, 1 },
 	{ "ObjItem_SetItemID", StgStageScript::Func_ObjItem_SetItemID, 2 },
 	{ "ObjItem_SetRenderScoreEnable", StgStageScript::Func_ObjItem_SetRenderScoreEnable, 2 },
-	{ "ObjItem_SetAutoCollectEnable", StgStageScript::Func_ObjItem_SetAutoCollectEnable, 2 },
+	{ "ObjItem_SetAutoCollectEnableFlags", StgStageScript::Func_ObjItem_SetAutoCollectEnableFlags, 2 },
 	{ "ObjItem_SetDefinedMovePatternA1", StgStageScript::Func_ObjItem_SetDefinedMovePatternA1, 2 },
 	{ "ObjItem_GetInfo", StgStageScript::Func_ObjItem_GetInfo, 2 },
 	{ "ObjItem_SetMoveToPlayer", StgStageScript::Func_ObjItem_SetMoveToPlayer, 2 },
@@ -632,6 +632,13 @@ static const std::vector<constant> stgStageConstant = {
 	constant("ITEM_POINT", StgItemObject::ITEM_POINT),
 	constant("ITEM_POINT_S", StgItemObject::ITEM_POINT_S),
 	constant("ITEM_USER", StgItemObject::ITEM_USER),
+
+	//Item autocollect flags
+	constant("ITEM_AUTOCOLLECT_PLAYER_SCOPE", StgItemObject::FLAG_MOVETOPL_PLAYER_SCOPE),
+	constant("ITEM_AUTOCOLLECT_COLLECT_ALL", StgItemObject::FLAG_MOVETOPL_COLLECT_ALL),
+	constant("ITEM_AUTOCOLLECT_POC_LINE", StgItemObject::FLAG_MOVETOPL_POC_LINE),
+	constant("ITEM_AUTOCOLLECT_COLLECT_CIRCLE", StgItemObject::FLAG_MOVETOPL_COLLECT_CIRCLE),
+	constant("ITEM_AUTOCOLLECT_ALL", StgItemObject::FLAG_MOVETOPL_ALL),
 
 	//Item move types
 	constant("ITEM_MOVE_DOWN", StgMovePattern_Item::MOVE_DOWN),
@@ -5232,13 +5239,13 @@ gstd::value StgStageScript::Func_ObjItem_SetRenderScoreEnable(gstd::script_machi
 	}
 	return value();
 }
-gstd::value StgStageScript::Func_ObjItem_SetAutoCollectEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgStageScript::Func_ObjItem_SetAutoCollectEnableFlags(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
 	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
 	if (obj) {
-		bool bEnable = argv[1].as_boolean();
-		obj->SetPermitMoveToPlayer(bEnable);
+		int flags = argv[1].as_int();
+		obj->SetMoveToPlayerEnableFlags(flags);
 	}
 	return value();
 }

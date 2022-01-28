@@ -484,7 +484,7 @@ public:
 	static gstd::value Func_ObjItem_Regist(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjItem_SetItemID(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjItem_SetRenderScoreEnable(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_ObjItem_SetAutoCollectEnable(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	static gstd::value Func_ObjItem_SetAutoCollectEnableFlags(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjItem_SetDefinedMovePatternA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_ObjItem_GetInfo);
 	DNH_FUNCAPI_DECL_(Func_ObjItem_SetMoveToPlayer);
