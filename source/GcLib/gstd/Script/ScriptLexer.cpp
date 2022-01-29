@@ -406,13 +406,29 @@ void script_scanner::advance() {
 					} while (std::iswdigit(ch) || ch == '_');
 				}
 
-				//real_value = std::strtod(strNum.c_str(), nullptr);
-				//int_value = real_value;
+				ch2 = peek_next_char(1);
+				if ((ch == L'e' || ch == L'E') && (std::iswdigit(ch2) || ch2 == L'-')) {
+					//Parse E
+					strNum += ch;
+					ch = next_char();
+
+					//Parse -, if exists
+					if (ch == L'-') {
+						strNum += ch;
+						ch = next_char();
+					}
+
+					do {
+						strNum += ch;
+						ch = next_char();
+					} while (std::iswdigit(ch));
+				}
+
 				next = token_kind::tk_real;
 			}
 
-			{
-				wchar_t suffix = std::towlower(ch);
+			wchar_t suffix = std::towlower(ch);
+			if (iswalpha(suffix)) {
 				if (suffix == L'i') {
 					next = token_kind::tk_int;
 					ch = next_char();
@@ -421,6 +437,7 @@ void script_scanner::advance() {
 					next = token_kind::tk_real;
 					ch = next_char();
 				}
+				else scanner_assert(false, "Invalid number suffix.");
 			}
 
 			if (!bBaseLiteral) {
