@@ -1224,11 +1224,6 @@ gstd::value DxScript::Func_IsFullscreenMode(gstd::script_machine* machine, int a
 value DxScript::Func_GetCoordinateScalingFactor(gstd::script_machine* machine, int argc, const value* argv) {
 	return DxScript::CreateRealValue(DirectGraphics::g_dxCoordsMul_);
 }
-value DxScript::Func_SetCoordinateScalingFactor(gstd::script_machine* machine, int argc, const value* argv) {
-	if (DirectGraphics::GetBase()->GetConfigData().bUseDynamicScaling_)
-		DirectGraphics::g_dxCoordsMul_ = argv[0].as_real();
-	return value();
-}
 
 value DxScript::Func_LoadTexture(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;

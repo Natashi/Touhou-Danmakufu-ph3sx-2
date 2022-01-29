@@ -119,7 +119,6 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_GetWindowedHeight);
 		DNH_FUNCAPI_DECL_(Func_IsFullscreenMode);
 		DNH_FUNCAPI_DECL_(Func_GetCoordinateScalingFactor);
-		DNH_FUNCAPI_DECL_(Func_SetCoordinateScalingFactor);
 
 		static gstd::value Func_LoadTexture(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_LoadTextureInLoadThread(gstd::script_machine* machine, int argc, const gstd::value* argv);
