@@ -19,7 +19,6 @@ StgShotManager::StgShotManager(StgStageController* stageController) {
 
 	filterMin_ = D3DTEXF_LINEAR;
 	filterMag_ = D3DTEXF_LINEAR;
-	filterMip_ = D3DTEXF_NONE;
 
 	{
 		RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
@@ -72,7 +71,7 @@ void StgShotManager::Render(int targetPriority) {
 	graphics->SetZWriteEnable(false);
 	graphics->SetCullingMode(D3DCULL_NONE);
 	graphics->SetLightingEnable(false);
-	graphics->SetTextureFilter(filterMin_, filterMag_, filterMip_);
+	graphics->SetTextureFilter(filterMin_, filterMag_, D3DTEXF_NONE);
 
 	DWORD bEnableFog = FALSE;
 	device->GetRenderState(D3DRS_FOGENABLE, &bEnableFog);

@@ -48,7 +48,6 @@ protected:
 
 	D3DTEXTUREFILTERTYPE filterMin_;
 	D3DTEXTUREFILTERTYPE filterMag_;
-	D3DTEXTUREFILTERTYPE filterMip_;
 
 	ID3DXEffect* effectLayer_;
 	D3DXHANDLE handleEffectWorld_;
@@ -73,10 +72,9 @@ public:
 	void SetShotDeleteClip(const DxRect<LONG>& clip) { rcDeleteClip_ = clip; }
 	DxRect<LONG>* GetShotDeleteClip() { return &rcDeleteClip_; }
 
-	void SetTextureFilter(D3DTEXTUREFILTERTYPE min, D3DTEXTUREFILTERTYPE mag, D3DTEXTUREFILTERTYPE mip) {
+	void SetTextureFilter(D3DTEXTUREFILTERTYPE min, D3DTEXTUREFILTERTYPE mag) {
 		filterMin_ = min;
 		filterMag_ = mag;
-		filterMip_ = mip;
 	}
 
 	void DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius);

@@ -331,7 +331,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "SetShotAutoDeleteClip", StgStageScript::Func_SetShotAutoDeleteClip, 4 },
 	{ "GetShotDataInfoA1", StgStageScript::Func_GetShotDataInfoA1, 3 },
 	{ "SetShotDeleteEventEnable", StgStageScript::Func_SetShotDeleteEventEnable, 2 },
-	{ "SetShotTextureFilter", StgStageScript::Func_SetShotTextureFilter, 3 },
+	{ "SetShotTextureFilter", StgStageScript::Func_SetShotTextureFilter, 2 },
 
 	//STG共通関数：アイテム
 	{ "CreateItemA1", StgStageScript::Func_CreateItemA1, 4 },
@@ -349,7 +349,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetItemIdInCircleA1", StgStageScript::Func_GetItemIdInCircleA1, 3 },
 	{ "GetItemIdInCircleA2", StgStageScript::Func_GetItemIdInCircleA2, 4 },
 	{ "SetItemAutoDeleteClip", StgStageScript::Func_SetItemAutoDeleteClip, 4 },
-	{ "SetItemTextureFilter", StgStageScript::Func_SetItemTextureFilter, 3 },
+	{ "SetItemTextureFilter", StgStageScript::Func_SetItemTextureFilter, 2 },
 
 	//STG共通関数：その他
 	{ "StartSlow", StgStageScript::Func_StartSlow, 2 },
@@ -2186,9 +2186,8 @@ gstd::value StgStageScript::Func_SetShotTextureFilter(gstd::script_machine* mach
 
 	int typeMin = std::clamp((int)argv[0].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
 	int typeMag = std::clamp((int)argv[1].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
-	int typeMip = std::clamp((int)argv[2].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
 
-	shotManager->SetTextureFilter((D3DTEXTUREFILTERTYPE)typeMin, (D3DTEXTUREFILTERTYPE)typeMag, (D3DTEXTUREFILTERTYPE)typeMip);
+	shotManager->SetTextureFilter((D3DTEXTUREFILTERTYPE)typeMin, (D3DTEXTUREFILTERTYPE)typeMag);
 
 	return value();
 }
@@ -2440,9 +2439,8 @@ gstd::value StgStageScript::Func_SetItemTextureFilter(gstd::script_machine* mach
 
 	int typeMin = std::clamp((int)argv[0].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
 	int typeMag = std::clamp((int)argv[1].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
-	int typeMip = std::clamp((int)argv[2].as_int(), (int)D3DTEXF_NONE, (int)D3DTEXF_ANISOTROPIC);
 
-	itemManager->SetTextureFilter((D3DTEXTUREFILTERTYPE)typeMin, (D3DTEXTUREFILTERTYPE)typeMag, (D3DTEXTUREFILTERTYPE)typeMip);
+	itemManager->SetTextureFilter((D3DTEXTUREFILTERTYPE)typeMin, (D3DTEXTUREFILTERTYPE)typeMag);
 
 	return value();
 }
