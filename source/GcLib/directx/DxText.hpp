@@ -138,33 +138,32 @@ namespace directx {
 	class DxTextToken {
 		friend DxTextScanner;
 	public:
-		enum Type : uint8_t {
-			TK_UNKNOWN, TK_EOF, TK_NEWLINE,
-			TK_ID,
-			TK_INT, TK_REAL, TK_STRING,
+		enum class Type : uint8_t {
+			Unknown, Eof, Newline,
 
-			TK_OPENP, TK_CLOSEP, TK_OPENB, TK_CLOSEB, TK_OPENC, TK_CLOSEC,
-			TK_SHARP,
+			Identifier,
+			Int, Hex, Real, String,
 
-			TK_COMMA, TK_EQUAL,
-			TK_ASTERISK, TK_SLASH, TK_COLON, TK_SEMICOLON, TK_TILDE, TK_EXCLAMATION,
-			TK_PLUS, TK_MINUS,
-			TK_LESS, TK_GREATER,
+			OpenP, CloseP, OpenB, CloseB, OpenC, CloseC,
+			Sharp,
 
-			TK_TEXT,
+			Comma, Equal,
+			Colon, Semicolon,
+
+			Text,
 		};
 	protected:
 		Type type_;
 		std::wstring element_;
 	public:
-		DxTextToken() { type_ = TK_UNKNOWN; }
+		DxTextToken() { type_ = Type::Unknown; }
 		DxTextToken(Type type, const std::wstring& element) { type_ = type; element_ = element; }
-
 		virtual ~DxTextToken() {}
+
 		Type GetType() { return type_; }
 		std::wstring& GetElement() { return element_; }
 
-		int GetInteger();
+		int64_t GetInteger();
 		double GetReal();
 		bool GetBoolean();
 		std::wstring GetString();
@@ -172,16 +171,23 @@ namespace directx {
 	};
 
 	class DxTextScanner {
+	public:
+		using TkType = DxTextToken::Type;
 	protected:
 		int line_;
 		std::vector<wchar_t> buffer_;
 		std::vector<wchar_t>::iterator pointer_;
+		std::vector<wchar_t>::iterator end_;
 		DxTextToken token_;
 		bool bTagScan_;
 
+		bool _CheckEnd();
 		wchar_t _NextChar();
+		wchar_t _PeekNextChar(int index);
+
 		virtual void _SkipSpace();
 		virtual void _RaiseError(const std::wstring& str);
+
 		bool _IsTextStartSign();
 		bool _IsTextScan();
 	public:
@@ -192,8 +198,9 @@ namespace directx {
 
 		DxTextToken& GetToken();
 		DxTextToken& Next();
+
 		bool HasNext();
-		void CheckType(DxTextToken& tok, int type);
+		void CheckType(DxTextToken& tok, TkType type);
 		void CheckIdentifer(DxTextToken& tok, const std::wstring& id);
 		int GetCurrentLine();
 		int SearchCurrentLine();

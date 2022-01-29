@@ -319,8 +319,8 @@ void DxCharCache::AddChar(DxCharCacheKey& key, shared_ptr<DxCharGlyph> value) {
 //*******************************************************************
 //DxTextScanner
 //*******************************************************************
-static const DxTextToken::Type TOKEN_TAG_START = DxTextToken::Type::TK_OPENB;
-static const DxTextToken::Type TOKEN_TAG_END = DxTextToken::Type::TK_CLOSEB;
+static const DxTextToken::Type TOKEN_TAG_START = DxTextToken::Type::OpenB;
+static const DxTextToken::Type TOKEN_TAG_END = DxTextToken::Type::CloseB;
 static const std::wstring TAG_START = L"[";
 static const std::wstring TAG_END = L"]";
 static const std::wstring TAG_NEW_LINE = L"r";
@@ -349,6 +349,7 @@ DxTextScanner::DxTextScanner(const std::wstring& str) {
 DxTextScanner::DxTextScanner(std::vector<wchar_t>& buf) {
 	buffer_ = buf;
 	pointer_ = buffer_.begin();
+	end_ = buffer_.end();
 
 	line_ = 1;
 	bTagScan_ = false;
@@ -357,22 +358,35 @@ DxTextScanner::~DxTextScanner() {
 
 }
 
-wchar_t DxTextScanner::_NextChar() {
-	if (HasNext() == false) {
+bool DxTextScanner::_CheckEnd() {
+	if (!HasNext()) {
 		std::wstring source;
-		source.resize(buffer_.size());
+		source.resize(std::min(buffer_.size(), 512U));
 		memcpy(&source[0], &buffer_[0], source.size() * sizeof(wchar_t));
-		std::wstring log = StringUtility::Format(L"_NextChar(Text): Unexpected end-of-file while parsing text. -> %s", 
+		std::wstring log = StringUtility::Format(
+			L"_NextChar(Text): Unexpected end-of-file while parsing text. -> %s",
 			source.c_str());
 		_RaiseError(log);
+		return true;
 	}
+	return false;
+}
+wchar_t DxTextScanner::_NextChar() {
+	_CheckEnd();
 
-	pointer_++;
-
+	++pointer_;
 	if (*pointer_ == L'\n')
-		line_++;
+		++line_;
+	
 	return *pointer_;
 }
+wchar_t DxTextScanner::_PeekNextChar(int index) {
+	auto itr = pointer_ + index;
+	if (itr >= end_)
+		return L'\0';
+	return *itr;
+}
+
 void DxTextScanner::_SkipSpace() {
 	wchar_t ch = *pointer_;
 	while (true) {
@@ -408,23 +422,16 @@ DxTextToken& DxTextScanner::GetToken() {
 	return token_;
 }
 DxTextToken& DxTextScanner::Next() {
-	if (!HasNext()) {
-		std::wstring source;
-		source.resize(buffer_.size());
-		memcpy(&source[0], &buffer_[0], source.size() * sizeof(wchar_t));
-		std::wstring log = StringUtility::Format(L"Next(Text): Unexpected end-of-file -> %s", source.c_str());
-		_RaiseError(log);
-	}
-
+	_CheckEnd();
 	//_SkipComment();
 
 	wchar_t ch = *pointer_;
 	if (ch == L'\0') {
-		token_ = DxTextToken(DxTextToken::Type::TK_EOF, L"\0");
+		token_ = DxTextToken(TkType::Eof, L"\0");
 		return token_;
 	}
 
-	DxTextToken::Type type = DxTextToken::Type::TK_UNKNOWN;
+	TkType type = TkType::Unknown;
 	std::vector<wchar_t>::iterator posStart = pointer_;
 
 	if (_IsTextStartSign()) {	//Regular text
@@ -435,32 +442,27 @@ DxTextToken& DxTextScanner::Next() {
 
 		ch = *pointer_;
 
-		type = DxTextToken::Type::TK_TEXT;
+		type = TkType::Text;
 		std::wstring text = std::wstring(posStart, pointer_);
 		//text = StringUtility::ParseStringWithEscape(text);
 		token_ = DxTextToken(type, text);
 	}
 	else {						//Text tag contents
 		switch (ch) {
-		case L'\0': type = DxTextToken::Type::TK_EOF; break;
+		case L'\0': type = TkType::Eof; break;
 
-		case L',': _NextChar(); type = DxTextToken::Type::TK_COMMA;  break;
-		case L'=': _NextChar(); type = DxTextToken::Type::TK_EQUAL;  break;
-		case L'(': _NextChar(); type = DxTextToken::Type::TK_OPENP; break;
-		case L')': _NextChar(); type = DxTextToken::Type::TK_CLOSEP; break;
-		case L'[': _NextChar(); type = DxTextToken::Type::TK_OPENB; break;
-		case L']': _NextChar(); type = DxTextToken::Type::TK_CLOSEB; break;
-		case L'{': _NextChar(); type = DxTextToken::Type::TK_OPENC; break;
-		case L'}': _NextChar(); type = DxTextToken::Type::TK_CLOSEC; break;
-		case L'*': _NextChar(); type = DxTextToken::Type::TK_ASTERISK; break;
-		case L'/': _NextChar(); type = DxTextToken::Type::TK_SLASH; break;
-		case L':': _NextChar(); type = DxTextToken::Type::TK_COLON; break;
-		case L';': _NextChar(); type = DxTextToken::Type::TK_SEMICOLON; break;
-		case L'~': _NextChar(); type = DxTextToken::Type::TK_TILDE; break;
-		case L'!': _NextChar(); type = DxTextToken::Type::TK_EXCLAMATION; break;
-		case L'#': _NextChar(); type = DxTextToken::Type::TK_SHARP; break;
-		case L'<': _NextChar(); type = DxTextToken::Type::TK_LESS; break;
-		case L'>': _NextChar(); type = DxTextToken::Type::TK_GREATER; break;
+#define DEF_CASE(_ch, _tok) case _ch: _NextChar(); type = _tok; break;
+			DEF_CASE(L'(', TkType::OpenP);
+			DEF_CASE(L')', TkType::CloseP);
+			DEF_CASE(L'[', TkType::OpenB);
+			DEF_CASE(L']', TkType::CloseB);
+			DEF_CASE(L'{', TkType::OpenC);
+			DEF_CASE(L'}', TkType::CloseC);
+			DEF_CASE(L',', TkType::Comma);
+			DEF_CASE(L'=', TkType::Equal);
+			DEF_CASE(L':', TkType::Colon);
+			DEF_CASE(L';', TkType::Semicolon);
+#undef DEF_CASE
 
 		case L'\"':
 		{
@@ -474,7 +476,7 @@ DxTextToken& DxTextScanner::Next() {
 				_NextChar();
 			else 
 				_RaiseError(L"Next(Text): Unexpected end-of-file while parsing string.");
-			type = DxTextToken::Type::TK_STRING;
+			type = TkType::String;
 			break;
 		}
 
@@ -483,51 +485,49 @@ DxTextToken& DxTextScanner::Next() {
 		case L'\n':
 			//Skip other successive newlines
 			while (ch == L'\r' || ch == L'\n') ch = _NextChar();
-			type = DxTextToken::Type::TK_NEWLINE;
+			type = TkType::Newline;
 			break;
-
-		case L'+':
-		case L'-':
-		{
-			if (ch == L'+') {
-				ch = _NextChar();
-				type = DxTextToken::Type::TK_PLUS;
-			}
-			else if (ch == L'-') {
-				ch = _NextChar();
-				type = DxTextToken::Type::TK_MINUS;
-			}
-			if (!iswdigit(ch)) break;
-		}
 
 		default:
 		{
 			if (iswdigit(ch)) {
-				while (iswdigit(ch)) ch = _NextChar();
-				type = DxTextToken::Type::TK_INT;
+				wchar_t firstNum = ch;
+				ch = _NextChar();
 
-				if (ch == L'.') {
-					//Int -> Real
+				if (firstNum == '0' && ch == 'x') {
+					type = TkType::Hex;
+
 					ch = _NextChar();
-					while (iswdigit(ch)) ch = _NextChar();
-					type = DxTextToken::Type::TK_REAL;
+					while (iswxdigit(ch)) ch = _NextChar();
 				}
+				else {
+					type = TkType::Int;
 
-				if (ch == L'E' || ch == L'e') {
-					//Exponent format
-					ch = _NextChar();
-					while (iswdigit(ch) || ch == L'-') ch = _NextChar();
-					type = DxTextToken::Type::TK_REAL;
+					while (iswdigit(ch)) ch = _NextChar();
+
+					if (ch == L'.') {
+						//Int -> Real
+						ch = _NextChar();
+						while (iswdigit(ch)) ch = _NextChar();
+						type = TkType::Real;
+					}
+					if (towlower(ch) == L'e') {
+						//Exponent format
+						ch = _NextChar();
+						if (ch == L'-') ch = _NextChar();
+						while (iswdigit(ch)) ch = _NextChar();
+						type = TkType::Real;
+					}
 				}
 			}
 			else if (iswalpha(ch) || ch == L'_') {
 				while (iswalpha(ch) || iswdigit(ch) || ch == L'_')
 					ch = _NextChar();
-				type = DxTextToken::Type::TK_ID;
+				type = TkType::Identifier;
 			}
 			else {
 				_NextChar();
-				type = DxTextToken::Type::TK_UNKNOWN;
+				type = TkType::Unknown;
 			}
 			break;
 		}
@@ -538,7 +538,7 @@ DxTextToken& DxTextScanner::Next() {
 
 		{
 			std::wstring wstr = std::wstring(posStart, pointer_);
-			if (type == DxTextToken::Type::TK_STRING)
+			if (type == TkType::String)
 				wstr = StringUtility::ParseStringWithEscape(wstr);
 			token_ = DxTextToken(type, wstr);
 		}
@@ -547,16 +547,16 @@ DxTextToken& DxTextScanner::Next() {
 	return token_;
 }
 bool DxTextScanner::HasNext() {
-	return pointer_ != buffer_.end() && *pointer_ != L'\0' && token_.GetType() != DxTextToken::Type::TK_EOF;
+	return pointer_ != buffer_.end() && *pointer_ != L'\0' && token_.GetType() != TkType::Eof;
 }
-void DxTextScanner::CheckType(DxTextToken& tok, int type) {
+void DxTextScanner::CheckType(DxTextToken& tok, TkType type) {
 	if (tok.type_ != type) {
 		std::wstring str = StringUtility::Format(L"CheckType error[%s]:", tok.element_.c_str());
 		_RaiseError(str);
 	}
 }
 void DxTextScanner::CheckIdentifer(DxTextToken& tok, const std::wstring& id) {
-	if (tok.type_ != DxTextToken::Type::TK_ID || tok.GetIdentifier() != id) {
+	if (tok.type_ != TkType::Identifier || tok.GetIdentifier() != id) {
 		std::wstring str = StringUtility::Format(L"CheckID error[%s]:", tok.element_.c_str());
 		_RaiseError(str);
 	}
@@ -590,41 +590,33 @@ int DxTextScanner::GetCurrentPosition() {
 
 //DxTextToken
 std::wstring& DxTextToken::GetIdentifier() {
-	if (type_ != TK_ID) {
-		throw gstd::wexception(L"DxTextToken::GetIdentifier:データのタイプが違います");
-	}
+	if (type_ != Type::Identifier)
+		throw gstd::wexception(L"DxTextToken: Invalid type; expected type \"Identifier\"");
 	return element_;
 }
 std::wstring DxTextToken::GetString() {
-	if (type_ != TK_STRING) {
-		throw gstd::wexception(L"DxTextToken::GetString:データのタイプが違います");
-	}
+	if (type_ != Type::String)
+		throw gstd::wexception(L"DxTextToken: Invalid type; expected type \"Identifier\"");
 	return element_.substr(1, element_.size() - 2);
 }
-int DxTextToken::GetInteger() {
-	if (type_ != TK_INT) {
-		throw gstd::wexception(L"DxTextToken::GetInterger:データのタイプが違います");
+int64_t DxTextToken::GetInteger() {
+	switch (type_) {
+	case Type::Int:
+		return StringUtility::ToInteger(element_);
+	case Type::Hex:
+		return wcstoll(element_.c_str(), nullptr, 16);
 	}
-	int res = StringUtility::ToInteger(element_);
-	return res;
+	throw gstd::wexception(L"DxTextToken: Invalid type; expected type \"Identifier\"");
 }
 double DxTextToken::GetReal() {
-	if (type_ != TK_REAL && type_ != TK_INT) {
-		throw gstd::wexception(L"DxTextToken::GetReal:データのタイプが違います");
-	}
-
-	double res = StringUtility::ToDouble(element_);
-	return res;
+	if (type_ != Type::Real && type_ != Type::Int)
+		throw gstd::wexception(L"DxTextToken: Invalid type; expected type \"Identifier\"");
+	return StringUtility::ToDouble(element_);
 }
 bool DxTextToken::GetBoolean() {
-	bool res = false;
-	if (type_ == TK_REAL || type_ == TK_INT) {
-		res = GetReal() == 1;
-	}
-	else {
-		res = element_ == L"true";
-	}
-	return res;
+	if (type_ == Type::Real || type_ == Type::Int)
+		return GetReal() == 1;
+	return element_ == L"true";
 }
 
 //*******************************************************************
@@ -818,14 +810,14 @@ std::vector<std::wstring> GetScannerStringArgumentList(DxTextScanner& scan, std:
 		tmp = L"";
 	};
 
-	if (tok.GetType() == DxTextToken::Type::TK_OPENP) {
+	if (tok.GetType() == DxTextToken::Type::OpenP) {
 		while (true) {
 			tok = scan.Next();
 
 			DxTextToken::Type type = tok.GetType();
-			if (type == DxTextToken::Type::TK_CLOSEP || type == DxTextToken::Type::TK_COMMA) {
+			if (type == DxTextToken::Type::CloseP || type == DxTextToken::Type::Comma) {
 				_AddStr();
-				if (type == DxTextToken::Type::TK_CLOSEP)
+				if (type == DxTextToken::Type::CloseP)
 					break;
 			}
 			else tmp += tok.GetElement();
@@ -896,7 +888,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 			DxTextToken& tok = scan.Next();
 			DxTextToken::Type typeToken = tok.GetType();
-			if (typeToken == DxTextToken::Type::TK_TEXT) {
+			if (typeToken == DxTextToken::Type::Text) {
 				std::wstring text = tok.GetElement();
 				text = _ReplaceRenderText(text);
 				if (text.size() == 0 || text == L"") continue;
@@ -973,7 +965,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 						auto itrFind = mapFunc.find(str);
 						if (itrFind != mapFunc.end()) {
-							scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL);
+							scan.CheckType(scan.Next(), DxTextToken::Type::Equal);
 							itrFind->second(&data, scan);
 						}
 					}
@@ -1040,7 +1032,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 					
 
-#define CHK_EQ scan.CheckType(scan.Next(), DxTextToken::Type::TK_EQUAL); \
+#define CHK_EQ scan.CheckType(scan.Next(), DxTextToken::Type::Equal); \
 					auto pointerBefore = scan.GetCurrentPointer(); \
 					DxTextToken& arg = scan.Next();
 #define INIT_LAMBDA(_name) auto _name = [](Data* i, DxTextScanner& scan)
@@ -1110,7 +1102,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 
 					auto __FuncSetColor_P = [](DxTextScanner& scan, std::vector<wchar_t>::iterator before, D3DCOLOR* dst) {
 						scan.SetCurrentPointer(before);
-						if (scan.GetToken().GetType() == DxTextToken::Type::TK_OPENP) {
+						if (scan.GetToken().GetType() == DxTextToken::Type::OpenP) {
 							std::vector<std::wstring> list = GetScannerStringArgumentList(scan, before);
 							if (list.size() >= 3) {
 								byte r = ColorAccess::ClampColorRet(StringUtility::ToInteger(list[0]));
@@ -1120,8 +1112,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 							}
 						}
 						else {
-							std::wstring colorStr = scan.GetToken().GetElement();
-							uint32_t color = std::wcstoul(colorStr.c_str(), nullptr, 16);
+							uint32_t color = scan.GetToken().GetInteger();
 							*dst = ((*dst) & 0xff000000) | (color & 0x00ffffff);
 						}
 					};
