@@ -285,7 +285,7 @@ public:
 
 	bool IsMoveToPlayer() { return bMoveToPlayer_; }
 	void SetMoveToPlayer(bool b) { bMoveToPlayer_ = b; }
-	bool GetMoveToPlayerEnableFlags() { return moveToPlayerFlags_; }
+	int GetMoveToPlayerEnableFlags() { return moveToPlayerFlags_; }
 	void SetMoveToPlayerEnableFlags(int moveFlags) { moveToPlayerFlags_ = moveFlags; }
 
 	void SetDefaultScoreText(bool b) { bDefaultScoreText_ = b; }
