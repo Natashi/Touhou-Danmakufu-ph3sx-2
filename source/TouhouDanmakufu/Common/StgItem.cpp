@@ -73,8 +73,10 @@ void StgItemManager::Work() {
 			float iy = obj->GetPositionY();
 
 			if (objPlayer->GetState() != StgPlayerObject::STATE_NORMAL) {
-				obj->SetMoveToPlayer(false);
-				obj->NotifyItemCancelEvent(StgItemObject::CANCEL_PLAYER_DOWN);
+				if (obj->IsMoveToPlayer()) {
+					obj->SetMoveToPlayer(false);
+					obj->NotifyItemCancelEvent(StgItemObject::CANCEL_PLAYER_DOWN);
+				}
 			}
 			else {
 				float dx = px - ix;
