@@ -490,7 +490,11 @@ DxTextToken& DxTextScanner::Next() {
 
 		default:
 		{
-			if (iswdigit(ch)) {
+			wchar_t ch2 = _PeekNextChar(1);
+			if (iswdigit(ch) || (ch == L'-' && iswdigit(ch2))) {
+				if (ch == L'-')
+					ch = _NextChar();
+
 				wchar_t firstNum = ch;
 				ch = _NextChar();
 
@@ -551,13 +555,14 @@ bool DxTextScanner::HasNext() {
 }
 void DxTextScanner::CheckType(DxTextToken& tok, TkType type) {
 	if (tok.type_ != type) {
-		std::wstring str = StringUtility::Format(L"CheckType error[%s]:", tok.element_.c_str());
+		std::wstring str = StringUtility::Format(L"DxTextScanner; Invalid type -> \"%s\"", tok.element_.c_str());
 		_RaiseError(str);
 	}
 }
 void DxTextScanner::CheckIdentifer(DxTextToken& tok, const std::wstring& id) {
 	if (tok.type_ != TkType::Identifier || tok.GetIdentifier() != id) {
-		std::wstring str = StringUtility::Format(L"CheckID error[%s]:", tok.element_.c_str());
+		std::wstring str = StringUtility::Format(L"DxTextScanner; Invalid identifier, expected \"%s\" -> \"%s\"", 
+			id.c_str(), tok.element_.c_str());
 		_RaiseError(str);
 	}
 }
@@ -590,13 +595,19 @@ int DxTextScanner::GetCurrentPosition() {
 
 //DxTextToken
 std::wstring& DxTextToken::GetIdentifier() {
-	if (type_ != Type::Identifier)
-		throw gstd::wexception(L"DxTextToken: Invalid type; expected type \"Identifier\"");
+	if (type_ != Type::Identifier) {
+		std::wstring err = StringUtility::Format(L"DxTextToken: Invalid type; expected type \"%s\" -> \"%s\"", 
+			L"Identifier", element_.c_str());
+		throw err;
+	}
 	return element_;
 }
 std::wstring DxTextToken::GetString() {
-	if (type_ != Type::String)
-		throw gstd::wexception(L"DxTextToken: Invalid type; expected type \"Identifier\"");
+	if (type_ != Type::String) {
+		std::wstring err = StringUtility::Format(L"DxTextToken: Invalid type; expected type \"%s\" -> \"%s\"",
+			L"String", element_.c_str());
+		throw err;
+	}
 	return element_.substr(1, element_.size() - 2);
 }
 int64_t DxTextToken::GetInteger() {
@@ -606,11 +617,16 @@ int64_t DxTextToken::GetInteger() {
 	case Type::Hex:
 		return wcstoll(element_.c_str(), nullptr, 16);
 	}
-	throw gstd::wexception(L"DxTextToken: Invalid type; expected type \"Identifier\"");
+	std::wstring err = StringUtility::Format(L"DxTextToken: Invalid type; expected type \"%s\" -> \"%s\"",
+		L"Integer", element_.c_str());
+	throw err;
 }
 double DxTextToken::GetReal() {
-	if (type_ != Type::Real && type_ != Type::Int)
-		throw gstd::wexception(L"DxTextToken: Invalid type; expected type \"Identifier\"");
+	if (type_ != Type::Real && type_ != Type::Int) {
+		std::wstring err = StringUtility::Format(L"DxTextToken: Invalid type; expected type \"%s\" -> \"%s\"",
+			L"Real", element_.c_str());
+		throw err;
+	}
 	return StringUtility::ToDouble(element_);
 }
 bool DxTextToken::GetBoolean() {
