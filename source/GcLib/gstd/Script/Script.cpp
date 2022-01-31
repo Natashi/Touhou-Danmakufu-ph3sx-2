@@ -15,7 +15,7 @@ script_type_manager::script_type_manager() {
 
 	null_type = deref_itr(types.insert(type_data(type_data::tk_null)).first);
 	int_type = deref_itr(types.insert(type_data(type_data::tk_int)).first);
-	real_type = deref_itr(types.insert(type_data(type_data::tk_real)).first);
+	float_type = deref_itr(types.insert(type_data(type_data::tk_float)).first);
 	char_type = deref_itr(types.insert(type_data(type_data::tk_char)).first);
 	boolean_type = deref_itr(types.insert(type_data(type_data::tk_boolean)).first);
 	ptr_type = deref_itr(types.insert(type_data(type_data::tk_pointer)).first);
@@ -26,8 +26,8 @@ script_type_manager::script_type_manager() {
 		char_type)).first);		//Char array (string)
 	int_array_type = deref_itr(types.insert(type_data(type_data::tk_array,
 		int_type)).first);		//Int array
-	real_array_type = deref_itr(types.insert(type_data(type_data::tk_array,
-		real_type)).first);		//Real array
+	float_array_type = deref_itr(types.insert(type_data(type_data::tk_array,
+		float_type)).first);	//Real array
 
 	//Bool array
 	types.insert(type_data(type_data::tk_array, boolean_type));

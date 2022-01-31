@@ -8,7 +8,7 @@ namespace gstd {
 		typedef enum : uint8_t {
 			tk_null = 0x00,
 			tk_int = 0x01,
-			tk_real = 0x02,
+			tk_float = 0x02,
 			tk_char = 0x04,
 			tk_boolean = 0x08,
 			tk_array = 0x10,
@@ -39,7 +39,7 @@ namespace gstd {
 
 		union {
 			struct {
-				double real_value;
+				double float_value;
 				wchar_t char_value;
 				bool boolean_value;
 				int64_t int_value;
@@ -103,7 +103,7 @@ namespace gstd {
 		//--------------------------------------------------------------------------
 
 		int64_t as_int() const;
-		double as_real() const;
+		double as_float() const;
 		wchar_t as_char() const;
 		bool as_boolean() const;
 		value* as_ptr() const { return ptr_value; }

@@ -825,7 +825,7 @@ D3DXMATRIX _script_unpack_matrix(script_machine* machine, const value& v) {
 				goto lab_size_invalid;
 
 			for (size_t j = 0; j < 4; ++i)
-				ptrMat[i * 4 + j] = subArray[j].as_real();
+				ptrMat[i * 4 + j] = subArray[j].as_float();
 		}
 	}
 	else {
@@ -833,7 +833,7 @@ D3DXMATRIX _script_unpack_matrix(script_machine* machine, const value& v) {
 			goto lab_size_invalid;
 
 		for (size_t i = 0; i < 16; ++i)
-			ptrMat[i] = v[i].as_real();
+			ptrMat[i] = v[i].as_float();
 	}
 	
 	goto lab_return;
@@ -862,9 +862,9 @@ D3DXVECTOR3 _script_unpack_vector3(script_machine* machine, const value& v) {
 		goto lab_size_invalid;
 
 	res = D3DXVECTOR3(
-		(FLOAT)v[0].as_real(), 
-		(FLOAT)v[1].as_real(), 
-		(FLOAT)v[2].as_real());
+		(FLOAT)v[0].as_float(), 
+		(FLOAT)v[1].as_float(), 
+		(FLOAT)v[2].as_float());
 
 	goto lab_return;
 lab_size_invalid:
@@ -888,7 +888,7 @@ gstd::value DxScript::Func_MatrixIdentity(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
 
-	return script->CreateRealArrayValue((FLOAT*)&mat, 16U);
+	return script->CreateFloatArrayValue((FLOAT*)&mat, 16U);
 }
 gstd::value DxScript::Func_MatrixInverse(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -896,7 +896,7 @@ gstd::value DxScript::Func_MatrixInverse(gstd::script_machine* machine, int argc
 	D3DXMATRIX mat = _script_unpack_matrix(machine, argv[0]);
 	D3DXMatrixInverse(&mat, nullptr, &mat);
 
-	return script->CreateRealArrayValue((FLOAT*)&mat, 16U);
+	return script->CreateFloatArrayValue((FLOAT*)&mat, 16U);
 }
 gstd::value DxScript::Func_MatrixAdd(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -905,7 +905,7 @@ gstd::value DxScript::Func_MatrixAdd(gstd::script_machine* machine, int argc, co
 	D3DXMATRIX mat2 = _script_unpack_matrix(machine, argv[1]);
 	mat1 += mat2;
 
-	return script->CreateRealArrayValue((FLOAT*)&mat1, 16U);
+	return script->CreateFloatArrayValue((FLOAT*)&mat1, 16U);
 }
 gstd::value DxScript::Func_MatrixSubtract(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -914,7 +914,7 @@ gstd::value DxScript::Func_MatrixSubtract(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat2 = _script_unpack_matrix(machine, argv[1]);
 	mat1 -= mat2;
 
-	return script->CreateRealArrayValue((FLOAT*)&mat1, 16U);
+	return script->CreateFloatArrayValue((FLOAT*)&mat1, 16U);
 }
 gstd::value DxScript::Func_MatrixMultiply(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -923,7 +923,7 @@ gstd::value DxScript::Func_MatrixMultiply(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat2 = _script_unpack_matrix(machine, argv[1]);
 	D3DXMatrixMultiply(&mat1, &mat1, &mat2);
 
-	return script->CreateRealArrayValue((FLOAT*)&mat1, 16U);
+	return script->CreateFloatArrayValue((FLOAT*)&mat1, 16U);
 }
 gstd::value DxScript::Func_MatrixDivide(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -933,7 +933,7 @@ gstd::value DxScript::Func_MatrixDivide(gstd::script_machine* machine, int argc,
 	D3DXMatrixInverse(&mat2, nullptr, &mat2);
 	D3DXMatrixMultiply(&mat1, &mat1, &mat2);
 
-	return script->CreateRealArrayValue((FLOAT*)&mat1, 16U);
+	return script->CreateFloatArrayValue((FLOAT*)&mat1, 16U);
 }
 gstd::value DxScript::Func_MatrixTranspose(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -941,14 +941,14 @@ gstd::value DxScript::Func_MatrixTranspose(gstd::script_machine* machine, int ar
 	D3DXMATRIX mat = _script_unpack_matrix(machine, argv[0]);
 	D3DXMatrixTranspose(&mat, &mat);
 
-	return script->CreateRealArrayValue((FLOAT*)&mat, 16U);
+	return script->CreateFloatArrayValue((FLOAT*)&mat, 16U);
 }
 gstd::value DxScript::Func_MatrixDeterminant(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
 	D3DXMATRIX mat = _script_unpack_matrix(machine, argv[0]);
 
-	return script->CreateRealValue(D3DXMatrixDeterminant(&mat));
+	return script->CreateFloatValue(D3DXMatrixDeterminant(&mat));
 }
 gstd::value DxScript::Func_MatrixLookatLH(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -960,7 +960,7 @@ gstd::value DxScript::Func_MatrixLookatLH(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtLH(&mat, &eye, &dest, &up);
 
-	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&mat), 16U);
+	return script->CreateFloatArrayValue(reinterpret_cast<FLOAT*>(&mat), 16U);
 }
 gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -972,7 +972,7 @@ gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtRH(&mat, &eye, &dest, &up);
 
-	return script->CreateRealArrayValue(reinterpret_cast<FLOAT*>(&mat), 16U);
+	return script->CreateFloatArrayValue(reinterpret_cast<FLOAT*>(&mat), 16U);
 }
 gstd::value DxScript::Func_MatrixTransformVector(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -983,7 +983,7 @@ gstd::value DxScript::Func_MatrixTransformVector(gstd::script_machine* machine, 
 	D3DXVECTOR4 out;
 	D3DXVec3Transform(&out, &vect, &mat);
 
-	return script->CreateRealArrayValue((FLOAT*)&out, 4U);
+	return script->CreateFloatArrayValue((FLOAT*)&out, 4U);
 }
 
 //Dx関数：システム系系
@@ -1049,8 +1049,8 @@ value DxScript::Func_PlayBGM(script_machine* machine, int argc, const value* arg
 		player->SetAutoDelete(true);
 		player->SetSoundDivision(SoundDivision::DIVISION_BGM);
 
-		double loopStart = argv[1].as_real();
-		double loopEnd = argv[2].as_real();
+		double loopStart = argv[1].as_float();
+		double loopEnd = argv[2].as_float();
 
 		SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
 		pStyle->bLoop_ = true;
@@ -1105,7 +1105,7 @@ value DxScript::Func_SetSoundDivisionVolumeRate(script_machine* machine, int arg
 	auto division = manager->GetSoundDivision(idDivision);
 
 	if (division) {
-		double volume = argv[1].as_real();
+		double volume = argv[1].as_float();
 		division->SetVolumeRate(volume);
 	}
 
@@ -1122,7 +1122,7 @@ value DxScript::Func_GetSoundDivisionVolumeRate(script_machine* machine, int arg
 	if (division)
 		res = division->GetVolumeRate();
 
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 
 //Dx関数：キー系
@@ -1135,21 +1135,21 @@ gstd::value DxScript::Func_GetKeyState(gstd::script_machine* machine, int argc, 
 gstd::value DxScript::Func_GetMouseX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG res = graphics->GetMousePosition().x;
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 gstd::value DxScript::Func_GetMouseY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG res = graphics->GetMousePosition().y;
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 gstd::value DxScript::Func_GetMouseMoveZ(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectInput* input = DirectInput::GetBase();
 	LONG res = input->GetMouseMoveZ();
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 gstd::value DxScript::Func_GetMouseState(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectInput* input = DirectInput::GetBase();
-	DIKeyState res = input->GetMouseState(argv[0].as_real());
+	DIKeyState res = input->GetMouseState(argv[0].as_float());
 	return DxScript::CreateIntValue(res);
 }
 gstd::value DxScript::Func_GetVirtualKeyState(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1165,7 +1165,7 @@ gstd::value DxScript::Func_SetVirtualKeyState(gstd::script_machine* machine, int
 	VirtualKeyManager* input = dynamic_cast<VirtualKeyManager*>(DirectInput::GetBase());
 	if (input) {
 		int16_t key = (int16_t)argv[0].as_int();
-		DIKeyState state = (DIKeyState)(argv[1].as_real());
+		DIKeyState state = (DIKeyState)(argv[1].as_float());
 		ref_count_ptr<VirtualKey> vkey = input->GetVirtualKey(key);
 		if (vkey)
 			vkey->SetKeyState(state);
@@ -1222,7 +1222,7 @@ gstd::value DxScript::Func_IsFullscreenMode(gstd::script_machine* machine, int a
 	return DxScript::CreateBooleanValue(res);
 }
 value DxScript::Func_GetCoordinateScalingFactor(gstd::script_machine* machine, int argc, const value* argv) {
-	return DxScript::CreateRealValue(DirectGraphics::g_dxCoordsMul_);
+	return DxScript::CreateFloatValue(DirectGraphics::g_dxCoordsMul_);
 }
 
 value DxScript::Func_LoadTexture(script_machine* machine, int argc, const value* argv) {
@@ -1328,7 +1328,7 @@ value DxScript::Func_GetTextureWidth(script_machine* machine, int argc, const va
 		res = imageInfo->Width;
 	}
 
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 value DxScript::Func_GetTextureHeight(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -1343,7 +1343,7 @@ value DxScript::Func_GetTextureHeight(script_machine* machine, int argc, const v
 		res = imageInfo->Height;
 	}
 
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 gstd::value DxScript::Func_SetFogEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -1353,8 +1353,8 @@ gstd::value DxScript::Func_SetFogEnable(gstd::script_machine* machine, int argc,
 }
 gstd::value DxScript::Func_SetFogParam(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	float start = argv[0].as_real();
-	float end = argv[1].as_real();
+	float start = argv[0].as_float();
+	float end = argv[1].as_float();
 
 	D3DCOLOR color = 0xffffffff;
 	if (argc > 3) {
@@ -1388,8 +1388,8 @@ gstd::value DxScript::Func_CreateRenderTargetEx(gstd::script_machine* machine, i
 	DxScript* script = (DxScript*)machine->data;
 	bool res = false;
 	std::wstring name = argv[0].as_string();
-	double width = argv[1].as_real();
-	double height = argv[2].as_real();
+	double width = argv[1].as_float();
+	double height = argv[2].as_float();
 
 	if (width > 0 && height > 0) {
 		auto& mapTexture = script->pResouceCache_->mapTexture;
@@ -1713,8 +1713,8 @@ gstd::value DxScript::Func_SetShader(gstd::script_machine* machine, int argc, co
 	if (obj) {
 		shared_ptr<Shader> shader = obj->GetShader();
 
-		double min = argv[1].as_real();
-		double max = argv[2].as_real();
+		double min = argv[1].as_float();
+		double max = argv[2].as_float();
 		auto objectManager = script->GetObjectManager();
 		int size = objectManager->GetRenderBucketCapacity();
 
@@ -1740,8 +1740,8 @@ gstd::value DxScript::Func_SetShaderI(gstd::script_machine* machine, int argc, c
 gstd::value DxScript::Func_ResetShader(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	double min = argv[0].as_real();
-	double max = argv[1].as_real();
+	double min = argv[0].as_float();
+	double max = argv[1].as_float();
 	auto objectManager = script->GetObjectManager();
 	int size = objectManager->GetRenderBucketCapacity();
 
@@ -1765,72 +1765,72 @@ gstd::value DxScript::Func_ResetShaderI(gstd::script_machine* machine, int argc,
 value DxScript::Func_SetCameraFocusX(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetFocusX(argv[0].as_real());
+	camera->SetFocusX(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusY(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetFocusY(argv[0].as_real());
+	camera->SetFocusY(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusZ(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetFocusZ(argv[0].as_real());
+	camera->SetFocusZ(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusXYZ(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetFocusX(argv[0].as_real());
-	camera->SetFocusY(argv[1].as_real());
-	camera->SetFocusZ(argv[2].as_real());
+	camera->SetFocusX(argv[0].as_float());
+	camera->SetFocusY(argv[1].as_float());
+	camera->SetFocusZ(argv[2].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraRadius(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetRadius(argv[0].as_real());
+	camera->SetRadius(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraAzimuthAngle(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetAzimuthAngle(Math::DegreeToRadian(argv[0].as_real()));
+	camera->SetAzimuthAngle(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraElevationAngle(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetElevationAngle(Math::DegreeToRadian(argv[0].as_real()));
+	camera->SetElevationAngle(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraYaw(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetYaw(Math::DegreeToRadian(argv[0].as_real()));
+	camera->SetYaw(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraPitch(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetPitch(Math::DegreeToRadian(argv[0].as_real()));
+	camera->SetPitch(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraRoll(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetRoll(Math::DegreeToRadian(argv[0].as_real()));
+	camera->SetRoll(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
@@ -1844,122 +1844,122 @@ value DxScript::Func_SetCameraMode(script_machine* machine, int argc, const valu
 value DxScript::Func_SetCameraPosLookAt(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	camera->SetCameraLookAtVector(D3DXVECTOR3(argv[0].as_real(), argv[1].as_real(), argv[2].as_real()));
+	camera->SetCameraLookAtVector(D3DXVECTOR3(argv[0].as_float(), argv[1].as_float(), argv[2].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_GetCameraX(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetCameraPosition().x;
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 value DxScript::Func_GetCameraY(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetCameraPosition().y;
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 value DxScript::Func_GetCameraZ(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetCameraPosition().z;
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 value DxScript::Func_GetCameraFocusX(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetFocusPosition().x;
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 value DxScript::Func_GetCameraFocusY(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetFocusPosition().y;
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 value DxScript::Func_GetCameraFocusZ(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetFocusPosition().z;
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 value DxScript::Func_GetCameraRadius(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetRadius();
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 value DxScript::Func_GetCameraAzimuthAngle(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetAzimuthAngle();
-	return DxScript::CreateRealValue(Math::RadianToDegree(res));
+	return DxScript::CreateFloatValue(Math::RadianToDegree(res));
 }
 value DxScript::Func_GetCameraElevationAngle(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetElevationAngle();
-	return DxScript::CreateRealValue(Math::RadianToDegree(res));
+	return DxScript::CreateFloatValue(Math::RadianToDegree(res));
 }
 value DxScript::Func_GetCameraYaw(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetYaw();
-	return DxScript::CreateRealValue(Math::RadianToDegree(res));
+	return DxScript::CreateFloatValue(Math::RadianToDegree(res));
 }
 value DxScript::Func_GetCameraPitch(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetPitch();
-	return DxScript::CreateRealValue(Math::RadianToDegree(res));
+	return DxScript::CreateFloatValue(Math::RadianToDegree(res));
 }
 value DxScript::Func_GetCameraRoll(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera()->GetRoll();
-	return DxScript::CreateRealValue(Math::RadianToDegree(res));
+	return DxScript::CreateFloatValue(Math::RadianToDegree(res));
 }
 value DxScript::Func_SetCameraPerspectiveClip(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	auto camera = graphics->GetCamera();
-	camera->SetPerspectiveClip(argv[0].as_real(), argv[1].as_real());
+	camera->SetPerspectiveClip(argv[0].as_float(), argv[1].as_float());
 	camera->thisProjectionChanged_ = true;
 	return value();
 }
 value DxScript::Func_GetCameraViewMatrix(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	const D3DXMATRIX* matView = &graphics->GetCamera()->GetViewMatrix();
-	return DxScript::CreateRealArrayValue(reinterpret_cast<const FLOAT*>(matView), 16U);
+	return DxScript::CreateFloatArrayValue(reinterpret_cast<const FLOAT*>(matView), 16U);
 }
 value DxScript::Func_GetCameraProjectionMatrix(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	const D3DXMATRIX* matProj = &graphics->GetCamera()->GetProjectionMatrix();
-	return DxScript::CreateRealArrayValue(reinterpret_cast<const FLOAT*>(matProj), 16U);
+	return DxScript::CreateFloatArrayValue(reinterpret_cast<const FLOAT*>(matProj), 16U);
 }
 value DxScript::Func_GetCameraViewProjectionMatrix(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	const D3DXMATRIX* matViewProj = &graphics->GetCamera()->GetViewProjectionMatrix();
-	return DxScript::CreateRealArrayValue(reinterpret_cast<const FLOAT*>(matViewProj), 16U);
+	return DxScript::CreateFloatArrayValue(reinterpret_cast<const FLOAT*>(matViewProj), 16U);
 }
 
 //Dx関数：カメラ2D
 gstd::value DxScript::Func_Set2DCameraFocusX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetFocusX(argv[0].as_real());
+	graphics->GetCamera2D()->SetFocusX(argv[0].as_float());
 	return gstd::value();
 }
 gstd::value DxScript::Func_Set2DCameraFocusY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetFocusY(argv[0].as_real());
+	graphics->GetCamera2D()->SetFocusY(argv[0].as_float());
 	return gstd::value();
 }
 gstd::value DxScript::Func_Set2DCameraAngleZ(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetAngleZ(Math::DegreeToRadian(argv[0].as_real()));
+	graphics->GetCamera2D()->SetAngleZ(Math::DegreeToRadian(argv[0].as_float()));
 	return gstd::value();
 }
 gstd::value DxScript::Func_Set2DCameraRatio(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetRatio(argv[0].as_real());
+	graphics->GetCamera2D()->SetRatio(argv[0].as_float());
 	return gstd::value();
 }
 gstd::value DxScript::Func_Set2DCameraRatioX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetRatioX(argv[0].as_real());
+	graphics->GetCamera2D()->SetRatioX(argv[0].as_float());
 	return gstd::value();
 }
 gstd::value DxScript::Func_Set2DCameraRatioY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->GetCamera2D()->SetRatioY(argv[0].as_real());
+	graphics->GetCamera2D()->SetRatioY(argv[0].as_float());
 	return gstd::value();
 }
 gstd::value DxScript::Func_Reset2DCamera(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -1970,32 +1970,32 @@ gstd::value DxScript::Func_Reset2DCamera(gstd::script_machine* machine, int argc
 gstd::value DxScript::Func_Get2DCameraX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera2D()->GetFocusX();
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 gstd::value DxScript::Func_Get2DCameraY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	float res = graphics->GetCamera2D()->GetFocusY();
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 gstd::value DxScript::Func_Get2DCameraAngleZ(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	double res = graphics->GetCamera2D()->GetAngleZ();
-	return DxScript::CreateRealValue(Math::RadianToDegree(res));
+	return DxScript::CreateFloatValue(Math::RadianToDegree(res));
 }
 gstd::value DxScript::Func_Get2DCameraRatio(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	double res = graphics->GetCamera2D()->GetRatio();
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 gstd::value DxScript::Func_Get2DCameraRatioX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	double res = graphics->GetCamera2D()->GetRatioX();
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 gstd::value DxScript::Func_Get2DCameraRatioY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	double res = graphics->GetCamera2D()->GetRatioY();
-	return DxScript::CreateRealValue(res);
+	return DxScript::CreateFloatValue(res);
 }
 
 //Dx関数：その他
@@ -2030,7 +2030,7 @@ gstd::value DxScript::Func_GetObjectDistance(gstd::script_machine* machine, int 
 			}
 		}
 	}
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 gstd::value DxScript::Func_GetObjectDistanceSq(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2052,7 +2052,7 @@ gstd::value DxScript::Func_GetObjectDistanceSq(gstd::script_machine* machine, in
 			}
 		}
 	}
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 gstd::value DxScript::Func_GetObjectDeltaAngle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2076,7 +2076,7 @@ gstd::value DxScript::Func_GetObjectDeltaAngle(gstd::script_machine* machine, in
 			}
 		}
 	}
-	return script->CreateRealValue(Math::RadianToDegree(res));
+	return script->CreateFloatValue(Math::RadianToDegree(res));
 }
 gstd::value DxScript::Func_GetObject2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2094,14 +2094,14 @@ gstd::value DxScript::Func_GetObject2dPosition(gstd::script_machine* machine, in
 		listRes[1] = point.y;
 	}
 
-	return script->CreateRealArrayValue(listRes, 2U);
+	return script->CreateFloatArrayValue(listRes, 2U);
 }
 gstd::value DxScript::Func_Get2dPosition(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	float px = argv[0].as_real();
-	float py = argv[1].as_real();
-	float pz = argv[2].as_real();
+	float px = argv[0].as_float();
+	float py = argv[1].as_float();
+	float pz = argv[2].as_float();
 	D3DXVECTOR3 pos(px, py, pz);
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -2110,7 +2110,7 @@ gstd::value DxScript::Func_Get2dPosition(gstd::script_machine* machine, int argc
 	D3DXVECTOR2 point = camera->TransformCoordinateTo2D(pos);
 	float listRes[2] = { point.x, point.y };
 
-	return script->CreateRealArrayValue(listRes, 2U);
+	return script->CreateFloatArrayValue(listRes, 2U);
 }
 
 //Intersection
@@ -2132,8 +2132,8 @@ static std::vector<DxPoint> _script_value_to_dxpolygon(script_machine* machine, 
 		if (typeElemElem == nullptr || subArray.length_as_array() != 2U)
 			goto lab_value_invalid;
 
-		res[i] = DxPoint(subArray[0].as_real(), 
-			subArray[1].as_real());
+		res[i] = DxPoint(subArray[0].as_float(), 
+			subArray[1].as_float());
 	}
 
 	goto lab_return;
@@ -2146,114 +2146,114 @@ lab_return:
 	return res;
 }
 gstd::value DxScript::Func_IsIntersected_Point_Polygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxPoint point(argv[0].as_real(), argv[1].as_real());
+	DxPoint point(argv[0].as_float(), argv[1].as_float());
 	std::vector<DxPoint> polygon = _script_value_to_dxpolygon(machine, &argv[2]);
 
 	bool res = DxIntersect::Point_Polygon(&point, &polygon);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Point_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxPoint point(argv[0].as_real(), argv[1].as_real());
-	DxCircle circle(argv[2].as_real(), argv[3].as_real(), argv[4].as_real());
+	DxPoint point(argv[0].as_float(), argv[1].as_float());
+	DxCircle circle(argv[2].as_float(), argv[3].as_float(), argv[4].as_float());
 
 	bool res = DxIntersect::Point_Circle(&point, &circle);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Point_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxPoint point(argv[0].as_real(), argv[1].as_real());
-	DxEllipse ellipse(argv[2].as_real(), argv[3].as_real(), 
-		argv[4].as_real(), argv[5].as_real());
+	DxPoint point(argv[0].as_float(), argv[1].as_float());
+	DxEllipse ellipse(argv[2].as_float(), argv[3].as_float(), 
+		argv[4].as_float(), argv[5].as_float());
 
 	bool res = DxIntersect::Point_Ellipse(&point, &ellipse);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Point_Line(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxPoint point(argv[0].as_real(), argv[1].as_real());
-	DxWidthLine line(argv[2].as_real(), argv[3].as_real(), argv[4].as_real(),
-		argv[5].as_real(), argv[6].as_real());
+	DxPoint point(argv[0].as_float(), argv[1].as_float());
+	DxWidthLine line(argv[2].as_float(), argv[3].as_float(), argv[4].as_float(),
+		argv[5].as_float(), argv[6].as_float());
 
 	bool res = DxIntersect::Point_LineW(&point, &line);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Point_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxPoint point(argv[0].as_real(), argv[1].as_real());
-	DxRegularPolygon rPolygon(argv[2].as_real(), argv[3].as_real(), 
-		argv[4].as_real(), argv[5].as_int(), Math::DegreeToRadian(argv[6].as_real()));
+	DxPoint point(argv[0].as_float(), argv[1].as_float());
+	DxRegularPolygon rPolygon(argv[2].as_float(), argv[3].as_float(), 
+		argv[4].as_float(), argv[5].as_int(), Math::DegreeToRadian(argv[6].as_float()));
 
 	bool res = DxIntersect::Point_RegularPolygon(&point, &rPolygon);
 	return DxScript::CreateBooleanValue(res);
 }
 
 gstd::value DxScript::Func_IsIntersected_Circle_Polygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxCircle circle(argv[0].as_real(), argv[1].as_real(), argv[2].as_real());
+	DxCircle circle(argv[0].as_float(), argv[1].as_float(), argv[2].as_float());
 	std::vector<DxPoint> polygon = _script_value_to_dxpolygon(machine, &argv[3]);
 
 	bool res = DxIntersect::Circle_Polygon(&circle, &polygon);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Circle_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxCircle circle1(argv[0].as_real(), argv[1].as_real(), argv[2].as_real());
-	DxCircle circle2(argv[3].as_real(), argv[4].as_real(), argv[5].as_real());
+	DxCircle circle1(argv[0].as_float(), argv[1].as_float(), argv[2].as_float());
+	DxCircle circle2(argv[3].as_float(), argv[4].as_float(), argv[5].as_float());
 
 	bool res = DxIntersect::Circle_Circle(&circle1, &circle2);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Circle_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxCircle circle(argv[0].as_real(), argv[1].as_real(), argv[2].as_real());
-	DxEllipse ellipse(argv[3].as_real(), argv[4].as_real(),
-		argv[5].as_real(), argv[6].as_real());
+	DxCircle circle(argv[0].as_float(), argv[1].as_float(), argv[2].as_float());
+	DxEllipse ellipse(argv[3].as_float(), argv[4].as_float(),
+		argv[5].as_float(), argv[6].as_float());
 
 	bool res = DxIntersect::Circle_Ellipse(&circle, &ellipse);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Circle_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxCircle circle(argv[0].as_real(), argv[1].as_real(), argv[2].as_real());
-	DxRegularPolygon rPolygon(argv[3].as_real(), argv[4].as_real(), 
-		argv[5].as_real(), argv[6].as_int(), Math::DegreeToRadian(argv[7].as_real()));
+	DxCircle circle(argv[0].as_float(), argv[1].as_float(), argv[2].as_float());
+	DxRegularPolygon rPolygon(argv[3].as_float(), argv[4].as_float(), 
+		argv[5].as_float(), argv[6].as_int(), Math::DegreeToRadian(argv[7].as_float()));
 
 	bool res = DxIntersect::Circle_RegularPolygon(&circle, &rPolygon);
 	return DxScript::CreateBooleanValue(res);
 }
 
 gstd::value DxScript::Func_IsIntersected_Line_Polygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxWidthLine line(argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
-		argv[3].as_real(), argv[4].as_real());
+	DxWidthLine line(argv[0].as_float(), argv[1].as_float(), argv[2].as_float(),
+		argv[3].as_float(), argv[4].as_float());
 	std::vector<DxPoint> polygon = _script_value_to_dxpolygon(machine, &argv[5]);
 
 	bool res = DxIntersect::LineW_Polygon(&line, &polygon);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Line_Circle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxWidthLine line(argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
-		argv[3].as_real(), argv[4].as_real());
-	DxCircle circle(argv[5].as_real(), argv[6].as_real(), argv[7].as_real());
+	DxWidthLine line(argv[0].as_float(), argv[1].as_float(), argv[2].as_float(),
+		argv[3].as_float(), argv[4].as_float());
+	DxCircle circle(argv[5].as_float(), argv[6].as_float(), argv[7].as_float());
 
 	bool res = DxIntersect::Line_Circle(&line, &circle);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Line_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxWidthLine line(argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
-		argv[3].as_real(), argv[4].as_real());
-	DxEllipse ellipse(argv[5].as_real(), argv[6].as_real(),
-		argv[7].as_real(), argv[8].as_real());
+	DxWidthLine line(argv[0].as_float(), argv[1].as_float(), argv[2].as_float(),
+		argv[3].as_float(), argv[4].as_float());
+	DxEllipse ellipse(argv[5].as_float(), argv[6].as_float(),
+		argv[7].as_float(), argv[8].as_float());
 
 	bool res = DxIntersect::Line_Ellipse(&line, &ellipse);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Line_Line(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxWidthLine line1(argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
-		argv[3].as_real(), argv[4].as_real());
-	DxWidthLine line2(argv[5].as_real(), argv[6].as_real(), argv[7].as_real(),
-		argv[8].as_real(), argv[9].as_real());
+	DxWidthLine line1(argv[0].as_float(), argv[1].as_float(), argv[2].as_float(),
+		argv[3].as_float(), argv[4].as_float());
+	DxWidthLine line2(argv[5].as_float(), argv[6].as_float(), argv[7].as_float(),
+		argv[8].as_float(), argv[9].as_float());
 
 	bool res = DxIntersect::LineW_LineW(&line1, &line2);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Line_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxWidthLine line(argv[0].as_real(), argv[1].as_real(), argv[2].as_real(),
-		argv[3].as_real(), argv[4].as_real());
-	DxRegularPolygon rPolygon(argv[5].as_real(), argv[6].as_real(),
-		argv[7].as_real(), argv[8].as_int(), Math::DegreeToRadian(argv[9].as_real()));
+	DxWidthLine line(argv[0].as_float(), argv[1].as_float(), argv[2].as_float(),
+		argv[3].as_float(), argv[4].as_float());
+	DxRegularPolygon rPolygon(argv[5].as_float(), argv[6].as_float(),
+		argv[7].as_float(), argv[8].as_int(), Math::DegreeToRadian(argv[9].as_float()));
 
 	bool res = DxIntersect::LineW_RegularPolygon(&line, &rPolygon);
 	return DxScript::CreateBooleanValue(res);
@@ -2268,16 +2268,16 @@ gstd::value DxScript::Func_IsIntersected_Polygon_Polygon(gstd::script_machine* m
 }
 gstd::value DxScript::Func_IsIntersected_Polygon_Ellipse(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	std::vector<DxPoint> polygon = _script_value_to_dxpolygon(machine, &argv[0]);
-	DxEllipse ellipse(argv[1].as_real(), argv[2].as_real(),
-		argv[3].as_real(), argv[4].as_real());
+	DxEllipse ellipse(argv[1].as_float(), argv[2].as_float(),
+		argv[3].as_float(), argv[4].as_float());
 
 	bool res = DxIntersect::Polygon_Ellipse(&polygon, &ellipse);
 	return DxScript::CreateBooleanValue(res);
 }
 gstd::value DxScript::Func_IsIntersected_Polygon_RegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	std::vector<DxPoint> polygon = _script_value_to_dxpolygon(machine, &argv[0]);
-	DxRegularPolygon rPolygon(argv[1].as_real(), argv[2].as_real(),
-		argv[3].as_real(), argv[4].as_int(), Math::DegreeToRadian(argv[5].as_real()));
+	DxRegularPolygon rPolygon(argv[1].as_float(), argv[2].as_float(),
+		argv[3].as_float(), argv[4].as_int(), Math::DegreeToRadian(argv[5].as_float()));
 
 	bool res = DxIntersect::Polygon_RegularPolygon(&polygon, &rPolygon);
 	return DxScript::CreateBooleanValue(res);
@@ -2375,9 +2375,9 @@ gstd::value DxScript::Func_ColorHSVtoHexRGB(gstd::script_machine* machine, int a
 
 //Other stuff
 value DxScript::Func_SetInvalidPositionReturn(script_machine* machine, int argc, const value* argv) {
-	DxScript::g_posInvalidX_ = argv[0].as_real();
-	DxScript::g_posInvalidY_ = argv[1].as_real();
-	//DxScript::g_posInvalidZ_ = argv[2].as_real();
+	DxScript::g_posInvalidX_ = argv[0].as_float();
+	DxScript::g_posInvalidY_ = argv[1].as_float();
+	//DxScript::g_posInvalidZ_ = argv[2].as_float();
 	return value();
 }
 
@@ -2423,7 +2423,7 @@ value DxScript::Func_Obj_SetRenderPriority(script_machine* machine, int argc, co
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
 		size_t maxPri = script->GetObjectManager()->GetRenderBucketCapacity() - 1U;
-		double pri = argv[1].as_real();
+		double pri = argv[1].as_float();
 
 		if (pri < 0) pri = 0;
 		else if (pri > 1) pri = 1;
@@ -2456,7 +2456,7 @@ gstd::value DxScript::Func_Obj_GetRenderPriority(gstd::script_machine* machine, 
 	if (obj)
 		res = obj->GetRenderPriorityI() / (double)(script->GetObjectManager()->GetRenderBucketCapacity() - 1U);
 
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 gstd::value DxScript::Func_Obj_GetRenderPriorityI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	double res = 0;
@@ -2466,7 +2466,7 @@ gstd::value DxScript::Func_Obj_GetRenderPriorityI(gstd::script_machine* machine,
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) res = obj->GetRenderPriorityI();
 
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 
 gstd::value DxScript::Func_Obj_GetValue(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -2572,7 +2572,7 @@ gstd::value DxScript::Func_Obj_DeleteValueI(gstd::script_machine* machine, int a
 gstd::value DxScript::Func_Obj_IsValueExistsI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	int64_t key = argv[1].as_real();
+	int64_t key = argv[1].as_float();
 
 	bool res = false;
 
@@ -2667,7 +2667,7 @@ value DxScript::Func_ObjRender_SetX(script_machine* machine, int argc, const val
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
-		obj->SetX(argv[1].as_real());
+		obj->SetX(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjRender_SetY(script_machine* machine, int argc, const value* argv) {
@@ -2675,7 +2675,7 @@ value DxScript::Func_ObjRender_SetY(script_machine* machine, int argc, const val
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
-		obj->SetY(argv[1].as_real());
+		obj->SetY(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjRender_SetZ(script_machine* machine, int argc, const value* argv) {
@@ -2683,7 +2683,7 @@ value DxScript::Func_ObjRender_SetZ(script_machine* machine, int argc, const val
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
-		obj->SetZ(argv[1].as_real());
+		obj->SetZ(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjRender_SetPosition(script_machine* machine, int argc, const value* argv) {
@@ -2691,9 +2691,9 @@ value DxScript::Func_ObjRender_SetPosition(script_machine* machine, int argc, co
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
-		obj->SetX(argv[1].as_real());
-		obj->SetY(argv[2].as_real());
-		obj->SetZ(argv[3].as_real());
+		obj->SetX(argv[1].as_float());
+		obj->SetY(argv[2].as_float());
+		obj->SetZ(argv[3].as_float());
 	}
 	return value();
 }
@@ -2702,7 +2702,7 @@ value DxScript::Func_ObjRender_SetAngleX(script_machine* machine, int argc, cons
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
-		obj->SetAngleX(argv[1].as_real());
+		obj->SetAngleX(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjRender_SetAngleY(script_machine* machine, int argc, const value* argv) {
@@ -2710,7 +2710,7 @@ value DxScript::Func_ObjRender_SetAngleY(script_machine* machine, int argc, cons
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
-		obj->SetAngleY(argv[1].as_real());
+		obj->SetAngleY(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjRender_SetAngleZ(script_machine* machine, int argc, const value* argv) {
@@ -2718,7 +2718,7 @@ value DxScript::Func_ObjRender_SetAngleZ(script_machine* machine, int argc, cons
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
-		obj->SetAngleZ(argv[1].as_real());
+		obj->SetAngleZ(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjRender_SetAngleXYZ(script_machine* machine, int argc, const value* argv) {
@@ -2726,9 +2726,9 @@ value DxScript::Func_ObjRender_SetAngleXYZ(script_machine* machine, int argc, co
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
-		obj->SetAngleX(argv[1].as_real());
-		obj->SetAngleY(argv[2].as_real());
-		obj->SetAngleZ(argv[3].as_real());
+		obj->SetAngleX(argv[1].as_float());
+		obj->SetAngleY(argv[2].as_float());
+		obj->SetAngleZ(argv[3].as_float());
 	}
 	return value();
 }
@@ -2737,7 +2737,7 @@ value DxScript::Func_ObjRender_SetScaleX(script_machine* machine, int argc, cons
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
-		obj->SetScaleX(argv[1].as_real());
+		obj->SetScaleX(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjRender_SetScaleY(script_machine* machine, int argc, const value* argv) {
@@ -2745,7 +2745,7 @@ value DxScript::Func_ObjRender_SetScaleY(script_machine* machine, int argc, cons
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
-		obj->SetScaleY(argv[1].as_real());
+		obj->SetScaleY(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjRender_SetScaleZ(script_machine* machine, int argc, const value* argv) {
@@ -2753,7 +2753,7 @@ value DxScript::Func_ObjRender_SetScaleZ(script_machine* machine, int argc, cons
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
-		obj->SetScaleZ(argv[1].as_real());
+		obj->SetScaleZ(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjRender_SetScaleXYZ(script_machine* machine, int argc, const value* argv) {
@@ -2762,12 +2762,12 @@ value DxScript::Func_ObjRender_SetScaleXYZ(script_machine* machine, int argc, co
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
 		if (argc > 2) {
-			obj->SetScaleX(argv[1].as_real());
-			obj->SetScaleY(argv[2].as_real());
-			obj->SetScaleZ(argv[3].as_real());
+			obj->SetScaleX(argv[1].as_float());
+			obj->SetScaleY(argv[2].as_float());
+			obj->SetScaleZ(argv[3].as_float());
 		}
 		else {
-			float scale = argv[1].as_real();
+			float scale = argv[1].as_float();
 			obj->SetScaleX(scale);
 			obj->SetScaleY(scale);
 			obj->SetScaleZ(scale);
@@ -2839,14 +2839,14 @@ value DxScript::Func_ObjRender_GetAlpha(script_machine* machine, int argc, const
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		res = ColorAccess::GetColorA(obj->color_);
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 value DxScript::Func_ObjRender_SetBlendType(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
-		obj->SetBlendType((BlendMode)argv[1].as_real());
+		obj->SetBlendType((BlendMode)argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjRender_GetX(script_machine* machine, int argc, const value* argv) {
@@ -2856,7 +2856,7 @@ value DxScript::Func_ObjRender_GetX(script_machine* machine, int argc, const val
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		res = obj->position_.x;
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 value DxScript::Func_ObjRender_GetY(script_machine* machine, int argc, const value* argv) {
 	FLOAT res = DxScript::g_posInvalidY_;
@@ -2865,7 +2865,7 @@ value DxScript::Func_ObjRender_GetY(script_machine* machine, int argc, const val
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		res = obj->position_.y;
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 value DxScript::Func_ObjRender_GetZ(script_machine* machine, int argc, const value* argv) {
 	FLOAT res = DxScript::g_posInvalidZ_;
@@ -2874,7 +2874,7 @@ value DxScript::Func_ObjRender_GetZ(script_machine* machine, int argc, const val
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		res = obj->position_.z;
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 gstd::value DxScript::Func_ObjRender_GetAngleX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	FLOAT res = 0;
@@ -2883,7 +2883,7 @@ gstd::value DxScript::Func_ObjRender_GetAngleX(gstd::script_machine* machine, in
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		res = obj->angle_.x;
-	return script->CreateRealValue(Math::RadianToDegree(res));
+	return script->CreateFloatValue(Math::RadianToDegree(res));
 }
 gstd::value DxScript::Func_ObjRender_GetAngleY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	FLOAT res = 0;
@@ -2892,7 +2892,7 @@ gstd::value DxScript::Func_ObjRender_GetAngleY(gstd::script_machine* machine, in
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		res = obj->angle_.y;
-	return script->CreateRealValue(Math::RadianToDegree(res));
+	return script->CreateFloatValue(Math::RadianToDegree(res));
 }
 gstd::value DxScript::Func_ObjRender_GetAngleZ(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	FLOAT res = 0;
@@ -2901,7 +2901,7 @@ gstd::value DxScript::Func_ObjRender_GetAngleZ(gstd::script_machine* machine, in
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		res = obj->angle_.z;
-	return script->CreateRealValue(Math::RadianToDegree(res));
+	return script->CreateFloatValue(Math::RadianToDegree(res));
 }
 gstd::value DxScript::Func_ObjRender_GetScaleX(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	FLOAT res = 0;
@@ -2910,7 +2910,7 @@ gstd::value DxScript::Func_ObjRender_GetScaleX(gstd::script_machine* machine, in
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		res = obj->scale_.x;
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 gstd::value DxScript::Func_ObjRender_GetScaleY(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	FLOAT res = 0;
@@ -2919,7 +2919,7 @@ gstd::value DxScript::Func_ObjRender_GetScaleY(gstd::script_machine* machine, in
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		res = obj->scale_.y;
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 gstd::value DxScript::Func_ObjRender_GetScaleZ(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	FLOAT res = 0;
@@ -2928,7 +2928,7 @@ gstd::value DxScript::Func_ObjRender_GetScaleZ(gstd::script_machine* machine, in
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj)
 		res = obj->scale_.z;
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 
 value DxScript::Func_ObjRender_SetZWrite(script_machine* machine, int argc, const value* argv) {
@@ -3101,9 +3101,9 @@ value DxScript::Func_ObjRender_SetLightingDiffuseColor(gstd::script_machine* mac
 		if (auto objLight = obj->GetLightPointer()) {
 			D3DCOLORVALUE color = { 1.0f, 1.0f, 1.0f, 0.0f };
 			if (argc == 4) {
-				color.r = (float)argv[1].as_real() / 255.0f;
-				color.g = (float)argv[2].as_real() / 255.0f;
-				color.b = (float)argv[3].as_real() / 255.0f;
+				color.r = (float)argv[1].as_float() / 255.0f;
+				color.g = (float)argv[2].as_float() / 255.0f;
+				color.b = (float)argv[3].as_float() / 255.0f;
 			}
 			else {
 				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int(), ColorAccess::PERMUTE_RGBA);
@@ -3124,9 +3124,9 @@ value DxScript::Func_ObjRender_SetLightingSpecularColor(gstd::script_machine* ma
 		if (auto objLight = obj->GetLightPointer()) {
 			D3DCOLORVALUE color = { 1.0f, 1.0f, 1.0f, 0.0f };
 			if (argc == 4) {
-				color.r = (float)argv[1].as_real() / 255.0f;
-				color.g = (float)argv[2].as_real() / 255.0f;
-				color.b = (float)argv[3].as_real() / 255.0f;
+				color.r = (float)argv[1].as_float() / 255.0f;
+				color.g = (float)argv[2].as_float() / 255.0f;
+				color.b = (float)argv[3].as_float() / 255.0f;
 			}
 			else {
 				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int(), ColorAccess::PERMUTE_RGBA);
@@ -3147,9 +3147,9 @@ value DxScript::Func_ObjRender_SetLightingAmbientColor(gstd::script_machine* mac
 		if (auto objLight = obj->GetLightPointer()) {
 			D3DCOLORVALUE color = { 1.0f, 1.0f, 1.0f, 0.0f };
 			if (argc == 4) {
-				color.r = (float)argv[1].as_real() / 255.0f;
-				color.g = (float)argv[2].as_real() / 255.0f;
-				color.b = (float)argv[3].as_real() / 255.0f;
+				color.r = (float)argv[1].as_float() / 255.0f;
+				color.g = (float)argv[2].as_float() / 255.0f;
+				color.b = (float)argv[3].as_float() / 255.0f;
 			}
 			else {
 				D3DXVECTOR4 colorNorm = ColorAccess::ToVec4Normalized((D3DCOLOR)argv[1].as_int(), ColorAccess::PERMUTE_RGBA);
@@ -3168,7 +3168,7 @@ value DxScript::Func_ObjRender_SetLightingDirection(gstd::script_machine* machin
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
 		if (auto objLight = obj->GetLightPointer())
-			objLight->SetDirection(D3DXVECTOR3(argv[1].as_real(), argv[2].as_real(), argv[3].as_real()));
+			objLight->SetDirection(D3DXVECTOR3(argv[1].as_float(), argv[2].as_float(), argv[3].as_float()));
 	}
 
 	return value();
@@ -3297,14 +3297,14 @@ gstd::value DxScript::Func_ObjShader_SetMatrix(gstd::script_machine* machine, in
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
 			const gstd::value& sMatrix = argv[2];
 
-			type_data* type_matrix = script_type_manager::get_real_array_type();
+			type_data* type_matrix = script_type_manager::get_float_array_type();
 			if (sMatrix.get_type() == type_matrix) {
 				if (sMatrix.length_as_array() == 16) {
 					D3DXMATRIX matrix;
 					FLOAT* ptrMat = &matrix._11;
 					for (size_t i = 0; i < 16; ++i) {
 						const value& arrayValue = sMatrix[i];
-						ptrMat[i] = (FLOAT)arrayValue.as_real();
+						ptrMat[i] = (FLOAT)arrayValue.as_float();
 					}
 					shader->SetMatrix(name, matrix);
 				}
@@ -3323,7 +3323,7 @@ gstd::value DxScript::Func_ObjShader_SetMatrixArray(gstd::script_machine* machin
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
 			const gstd::value& array = argv[2];
 			
-			type_data* type_matrix = script_type_manager::get_real_array_type();
+			type_data* type_matrix = script_type_manager::get_float_array_type();
 			type_data* type_matrix_array = script_type_manager::get_instance()->get_array_type(type_matrix);
 			if (array.get_type() == type_matrix_array) {
 				std::vector<D3DXMATRIX> listMatrix;
@@ -3334,7 +3334,7 @@ gstd::value DxScript::Func_ObjShader_SetMatrixArray(gstd::script_machine* machin
 						FLOAT* ptrMat = &matrix._11;
 						for (size_t i = 0; i < 16; ++i) {
 							const value& arrayValue = sMatrix[i];
-							ptrMat[i] = (FLOAT)arrayValue.as_real();
+							ptrMat[i] = (FLOAT)arrayValue.as_float();
 						}
 						listMatrix.push_back(matrix);
 					}
@@ -3354,10 +3354,10 @@ gstd::value DxScript::Func_ObjShader_SetVector(gstd::script_machine* machine, in
 		if (shader) {
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
 			D3DXVECTOR4 vect4;
-			vect4.x = (FLOAT)argv[2].as_real();
-			vect4.y = (FLOAT)argv[3].as_real();
-			vect4.z = (FLOAT)argv[4].as_real();
-			vect4.w = (FLOAT)argv[5].as_real();
+			vect4.x = (FLOAT)argv[2].as_float();
+			vect4.y = (FLOAT)argv[3].as_float();
+			vect4.z = (FLOAT)argv[4].as_float();
+			vect4.w = (FLOAT)argv[5].as_float();
 
 			shader->SetVector(name, vect4);
 		}
@@ -3372,7 +3372,7 @@ gstd::value DxScript::Func_ObjShader_SetFloat(gstd::script_machine* machine, int
 		shared_ptr<Shader> shader = obj->GetShader();
 		if (shader) {
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
-			shader->SetFloat(name, (FLOAT)argv[2].as_real());
+			shader->SetFloat(name, (FLOAT)argv[2].as_float());
 		}
 	}
 	return value();
@@ -3387,12 +3387,12 @@ gstd::value DxScript::Func_ObjShader_SetFloatArray(gstd::script_machine* machine
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
 			const gstd::value& array = argv[2];
 
-			type_data* type_array = script_type_manager::get_real_array_type();
+			type_data* type_array = script_type_manager::get_float_array_type();
 			if (array.get_type() == type_array) {
 				std::vector<FLOAT> listFloat;
 				for (size_t iArray = 0; iArray < array.length_as_array(); ++iArray) {
 					const value& aValue = array[iArray];
-					listFloat.push_back((FLOAT)aValue.as_real());
+					listFloat.push_back((FLOAT)aValue.as_float());
 				}
 				shader->SetFloatArray(name, listFloat);
 			}
@@ -3536,7 +3536,7 @@ value DxScript::Func_ObjPrimitive_SetVertexPosition(script_machine* machine, int
 	int id = argv[0].as_int();
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj)
-		obj->SetVertexPosition(argv[1].as_int(), argv[2].as_real(), argv[3].as_real(), argv[4].as_real());
+		obj->SetVertexPosition(argv[1].as_int(), argv[2].as_float(), argv[3].as_float(), argv[4].as_float());
 	return value();
 }
 value DxScript::Func_ObjPrimitive_SetVertexUV(script_machine* machine, int argc, const value* argv) {
@@ -3544,7 +3544,7 @@ value DxScript::Func_ObjPrimitive_SetVertexUV(script_machine* machine, int argc,
 	int id = argv[0].as_int();
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj)
-		obj->SetVertexUV(argv[1].as_int(), argv[2].as_real(), argv[3].as_real());
+		obj->SetVertexUV(argv[1].as_int(), argv[2].as_float(), argv[3].as_float());
 	return value();
 }
 gstd::value DxScript::Func_ObjPrimitive_SetVertexUVT(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -3556,7 +3556,7 @@ gstd::value DxScript::Func_ObjPrimitive_SetVertexUVT(gstd::script_machine* machi
 		if (texture) {
 			float width = texture->GetWidth();
 			float height = texture->GetHeight();
-			obj->SetVertexUV(argv[1].as_int(), (float)argv[2].as_real() / width, (float)argv[3].as_real() / height);
+			obj->SetVertexUV(argv[1].as_int(), (float)argv[2].as_float() / width, (float)argv[3].as_float() / height);
 		}
 	}
 	return value();
@@ -3632,7 +3632,7 @@ value DxScript::Func_ObjPrimitive_GetVertexAlpha(script_machine* machine, int ar
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) color = obj->GetVertexColor(index);
 
-	return script->CreateRealValue(ColorAccess::GetColorA(color));
+	return script->CreateFloatValue(ColorAccess::GetColorA(color));
 }
 value DxScript::Func_ObjPrimitive_GetVertexPosition(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -3645,7 +3645,7 @@ value DxScript::Func_ObjPrimitive_GetVertexPosition(script_machine* machine, int
 	if (obj)
 		pos = obj->GetVertexPosition(index);
 
-	return script->CreateRealArrayValue(reinterpret_cast<float*>(&pos), 3U);
+	return script->CreateFloatArrayValue(reinterpret_cast<float*>(&pos), 3U);
 }
 value DxScript::Func_ObjPrimitive_SetVertexIndex(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -3702,14 +3702,14 @@ value DxScript::Func_ObjSprite2D_SetDestRect(script_machine* machine, int argc, 
 	if (obj) {
 		DxRect<double> rcDest;
 		if (argc == 5) {
-			rcDest = DxRect<double>(argv[1].as_real(), argv[2].as_real(),
-				argv[3].as_real(), argv[4].as_real());
+			rcDest = DxRect<double>(argv[1].as_float(), argv[2].as_float(),
+				argv[3].as_float(), argv[4].as_float());
 		}
 		else {
 			const value& v = argv[1];
 			if (_script_check_array(machine, v, 4)) {
-				rcDest = DxRect<double>(v[0].as_real(), v[1].as_real(),
-					v[2].as_real(), v[3].as_real());
+				rcDest = DxRect<double>(v[0].as_float(), v[1].as_float(),
+					v[2].as_float(), v[3].as_float());
 			}
 		}
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
@@ -3754,14 +3754,14 @@ gstd::value DxScript::Func_ObjSpriteList2D_SetDestRect(gstd::script_machine* mac
 	if (obj) {
 		DxRect<double> rcDest;
 		if (argc == 5) {
-			rcDest = DxRect<double>(argv[1].as_real(), argv[2].as_real(),
-				argv[3].as_real(), argv[4].as_real());
+			rcDest = DxRect<double>(argv[1].as_float(), argv[2].as_float(),
+				argv[3].as_float(), argv[4].as_float());
 		}
 		else {
 			const value& v = argv[1];
 			if (_script_check_array(machine, v, 4)) {
-				rcDest = DxRect<double>(v[0].as_real(), v[1].as_real(),
-					v[2].as_real(), v[3].as_real());
+				rcDest = DxRect<double>(v[0].as_float(), v[1].as_float(),
+					v[2].as_float(), v[3].as_float());
 			}
 		}
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
@@ -3838,14 +3838,14 @@ value DxScript::Func_ObjSprite3D_SetDestRect(script_machine* machine, int argc, 
 	if (obj) {
 		DxRect<double> rcDest;
 		if (argc == 5) {
-			rcDest = DxRect<double>(argv[1].as_real(), argv[2].as_real(),
-				argv[3].as_real(), argv[4].as_real());
+			rcDest = DxRect<double>(argv[1].as_float(), argv[2].as_float(),
+				argv[3].as_float(), argv[4].as_float());
 		}
 		else {
 			const value& v = argv[1];
 			if (_script_check_array(machine, v, 4)) {
-				rcDest = DxRect<double>(v[0].as_real(), v[1].as_real(),
-					v[2].as_real(), v[3].as_real());
+				rcDest = DxRect<double>(v[0].as_float(), v[1].as_float(),
+					v[2].as_float(), v[3].as_float());
 			}
 		}
 		obj->GetSpritePointer()->SetDestinationRect(rcDest);
@@ -3859,14 +3859,14 @@ value DxScript::Func_ObjSprite3D_SetSourceDestRect(script_machine* machine, int 
 	if (obj) {
 		DxRect<double> rect;
 		if (argc == 5) {
-			rect = DxRect<double>(argv[1].as_real(), argv[2].as_real(),
-				argv[3].as_real(), argv[4].as_real());
+			rect = DxRect<double>(argv[1].as_float(), argv[2].as_float(),
+				argv[3].as_float(), argv[4].as_float());
 		}
 		else {
 			const value& v = argv[1];
 			if (_script_check_array(machine, v, 4)) {
-				rect = DxRect<double>(v[0].as_real(), v[1].as_real(),
-					v[2].as_real(), v[3].as_real());
+				rect = DxRect<double>(v[0].as_float(), v[1].as_float(),
+					v[2].as_float(), v[3].as_float());
 			}
 		}
 		obj->GetSpritePointer()->SetSourceDestRect(rect);
@@ -3889,8 +3889,8 @@ value DxScript::Func_ObjTrajectory3D_SetInitialPoint(script_machine* machine, in
 	int id = argv[0].as_int();
 	DxScriptTrajectoryObject3D* obj = script->GetObjectPointerAs<DxScriptTrajectoryObject3D>(id);
 	if (obj) {
-		D3DXVECTOR3 pos1(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
-		D3DXVECTOR3 pos2(argv[4].as_real(), argv[5].as_real(), argv[6].as_real());
+		D3DXVECTOR3 pos1(argv[1].as_float(), argv[2].as_float(), argv[3].as_float());
+		D3DXVECTOR3 pos2(argv[4].as_float(), argv[5].as_float(), argv[6].as_float());
 		obj->GetObjectPointer()->SetInitialLine(pos1, pos2);
 	}
 	return value();
@@ -3900,7 +3900,7 @@ value DxScript::Func_ObjTrajectory3D_SetAlphaVariation(script_machine* machine, 
 	int id = argv[0].as_int();
 	DxScriptTrajectoryObject3D* obj = script->GetObjectPointerAs<DxScriptTrajectoryObject3D>(id);
 	if (obj)
-		obj->GetObjectPointer()->SetAlphaVariation(argv[1].as_real());
+		obj->GetObjectPointer()->SetAlphaVariation(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjTrajectory3D_SetComplementCount(script_machine* machine, int argc, const value* argv) {
@@ -3942,7 +3942,7 @@ value DxScript::Func_ObjParticleList_SetPosition(script_machine* machine, int ar
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
 		if (objParticle)
-			objParticle->SetInstancePosition(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+			objParticle->SetInstancePosition(argv[1].as_float(), argv[2].as_float(), argv[3].as_float());
 	}
 	return value();
 }
@@ -3955,7 +3955,7 @@ value DxScript::Func_ObjParticleList_SetScaleSingle(script_machine* machine, int
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
 		if (objParticle)
-			objParticle->SetInstanceScaleSingle(ID, argv[1].as_real());
+			objParticle->SetInstanceScaleSingle(ID, argv[1].as_float());
 	}
 	return value();
 }
@@ -3968,9 +3968,9 @@ value DxScript::Func_ObjParticleList_SetScaleXYZ(script_machine* machine, int ar
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
 		if (objParticle) {
 			if (argc == 4)
-				objParticle->SetInstanceScale(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+				objParticle->SetInstanceScale(argv[1].as_float(), argv[2].as_float(), argv[3].as_float());
 			else {
-				float scale = argv[1].as_real();
+				float scale = argv[1].as_float();
 				objParticle->SetInstanceScale(scale, scale, scale);
 			}
 		}
@@ -3987,7 +3987,7 @@ value DxScript::Func_ObjParticleList_SetAngleSingle(script_machine* machine, int
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
 		if (objParticle)
-			objParticle->SetInstanceAngleSingle(ID, argv[1].as_real());
+			objParticle->SetInstanceAngleSingle(ID, argv[1].as_float());
 	}
 	return value();
 }
@@ -3999,7 +3999,7 @@ value DxScript::Func_ObjParticleList_SetAngle(script_machine* machine, int argc,
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
 		if (objParticle)
-			objParticle->SetInstanceAngle(argv[1].as_real(), argv[2].as_real(), argv[3].as_real());
+			objParticle->SetInstanceAngle(argv[1].as_float(), argv[2].as_float(), argv[3].as_float());
 	}
 	return value();
 }
@@ -4043,7 +4043,7 @@ value DxScript::Func_ObjParticleList_SetExtraData(script_machine* machine, int a
 	if (obj) {
 		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
 		if (objParticle)
-			objParticle->SetInstanceUserData(D3DXVECTOR3(argv[1].as_real(), argv[2].as_real(), argv[3].as_real()));
+			objParticle->SetInstanceUserData(D3DXVECTOR3(argv[1].as_float(), argv[2].as_float(), argv[3].as_float()));
 	}
 	return value();
 }
@@ -4362,7 +4362,7 @@ value DxScript::Func_ObjText_SetLinePitch(script_machine* machine, int argc, con
 	int id = argv[0].as_int();
 	DxScriptTextObject* obj = script->GetObjectPointerAs<DxScriptTextObject>(id);
 	if (obj) {
-		float pitch = argv[1].as_real();
+		float pitch = argv[1].as_float();
 		obj->SetLinePitch(pitch);
 	}
 	return value();
@@ -4372,7 +4372,7 @@ value DxScript::Func_ObjText_SetSidePitch(script_machine* machine, int argc, con
 	int id = argv[0].as_int();
 	DxScriptTextObject* obj = script->GetObjectPointerAs<DxScriptTextObject>(id);
 	if (obj) {
-		float pitch = argv[1].as_real();
+		float pitch = argv[1].as_float();
 		obj->SetSidePitch(pitch);
 	}
 	return value();
@@ -4382,7 +4382,7 @@ value DxScript::Func_ObjText_SetFixedWidth(script_machine* machine, int argc, co
 	int id = argv[0].as_int();
 	DxScriptTextObject* obj = script->GetObjectPointerAs<DxScriptTextObject>(id);
 	if (obj) {
-		float width = argv[1].as_real();
+		float width = argv[1].as_float();
 		obj->SetFixedWidth(width);
 	}
 	return value();
@@ -4408,8 +4408,8 @@ gstd::value DxScript::Func_ObjText_SetTransCenter(gstd::script_machine* machine,
 	int id = argv[0].as_int();
 	DxScriptTextObject* obj = script->GetObjectPointerAs<DxScriptTextObject>(id);
 	if (obj) {
-		float centerX = argv[1].as_real();
-		float centerY = argv[2].as_real();
+		float centerX = argv[1].as_float();
+		float centerY = argv[2].as_float();
 		obj->center_ = D3DXVECTOR2(centerX, centerY);
 	}
 	return value();
@@ -4501,7 +4501,7 @@ value DxScript::Func_ObjText_GetTotalWidth(script_machine* machine, int argc, co
 	DxScriptTextObject* obj = script->GetObjectPointerAs<DxScriptTextObject>(id);
 	if (obj)
 		res = obj->GetTotalWidth();
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 value DxScript::Func_ObjText_GetTotalHeight(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -4510,7 +4510,7 @@ value DxScript::Func_ObjText_GetTotalHeight(script_machine* machine, int argc, c
 	DxScriptTextObject* obj = script->GetObjectPointerAs<DxScriptTextObject>(id);
 	if (obj)
 		res = obj->GetTotalHeight();
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 
 //Dx関数：音声操作(DxSoundObject)
@@ -4569,7 +4569,7 @@ gstd::value DxScript::Func_ObjSound_SetVolumeRate(gstd::script_machine* machine,
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player)
-			player->SetVolumeRate(argv[1].as_real());
+			player->SetVolumeRate(argv[1].as_float());
 	}
 	return value();
 }
@@ -4580,7 +4580,7 @@ gstd::value DxScript::Func_ObjSound_SetPanRate(gstd::script_machine* machine, in
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player)
-			player->SetPanRate(argv[1].as_real());
+			player->SetPanRate(argv[1].as_float());
 	}
 	return value();
 }
@@ -4591,7 +4591,7 @@ gstd::value DxScript::Func_ObjSound_SetFade(gstd::script_machine* machine, int a
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player)
-			player->SetFade(argv[1].as_real());
+			player->SetFade(argv[1].as_float());
 	}
 	return value();
 }
@@ -4616,8 +4616,8 @@ gstd::value DxScript::Func_ObjSound_SetLoopTime(gstd::script_machine* machine, i
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
 			SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
-			pStyle->timeLoopStart_ = argv[1].as_real();
-			pStyle->timeLoopEnd_ = argv[2].as_real();
+			pStyle->timeLoopStart_ = argv[1].as_float();
+			pStyle->timeLoopEnd_ = argv[2].as_float();
 		}
 	}
 	return value();
@@ -4632,8 +4632,8 @@ gstd::value DxScript::Func_ObjSound_SetLoopSampleCount(gstd::script_machine* mac
 			if (auto soundSource = player->GetSoundSource()) {
 				WAVEFORMATEX* fmt = &soundSource->formatWave_;
 
-				double startTime = argv[1].as_real() / (double)fmt->nSamplesPerSec;
-				double endTime = argv[2].as_real() / (double)fmt->nSamplesPerSec;;
+				double startTime = argv[1].as_float() / (double)fmt->nSamplesPerSec;
+				double endTime = argv[2].as_float() / (double)fmt->nSamplesPerSec;;
 
 				SoundPlayer::PlayStyle* pStyle = player->GetPlayStyle();
 				pStyle->timeLoopStart_ = startTime;
@@ -4650,7 +4650,7 @@ gstd::value DxScript::Func_ObjSound_Seek(gstd::script_machine* machine, int argc
 	if (obj) {
 		shared_ptr<SoundPlayer> player = obj->GetPlayer();
 		if (player) {
-			double time = argv[1].as_real();
+			double time = argv[1].as_float();
 			if (player->IsPlaying()) {
 				player->Seek(time);
 				player->ResetStreamForSeek();
@@ -4740,7 +4740,7 @@ gstd::value DxScript::Func_ObjSound_GetVolumeRate(gstd::script_machine* machine,
 		if (player)
 			rate = player->GetVolumeRate();
 	}
-	return script->CreateRealValue(rate);
+	return script->CreateFloatValue(rate);
 }
 /*
 gstd::value DxScript::Func_ObjSound_DebugGetCopyPos(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -4753,10 +4753,10 @@ gstd::value DxScript::Func_ObjSound_DebugGetCopyPos(gstd::script_machine* machin
 			size_t* ptr = streaming->DbgGetStreamCopyPos();
 			size_t bps = player->GetWaveFormat()->nBlockAlign;
 			std::vector<size_t> listSize = { ptr[0] / bps, ptr[1] / bps };
-			return script->CreateRealArrayValue(listSize);
+			return script->CreateFloatArrayValue(listSize);
 		}
 	}
-	return script->CreateRealArrayValue((int*)nullptr, 0U);
+	return script->CreateFloatArrayValue((int*)nullptr, 0U);
 }
 */
 gstd::value DxScript::Func_ObjSound_SetFrequency(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -5117,7 +5117,7 @@ gstd::value DxScript::Func_ObjFileB_ReadFloat(gstd::script_machine* machine, int
 			ByteOrder::Reverse(&res, sizeof(res));
 	}
 
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_ReadDouble(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -5131,7 +5131,7 @@ gstd::value DxScript::Func_ObjFileB_ReadDouble(gstd::script_machine* machine, in
 			ByteOrder::Reverse(&res, sizeof(res));
 	}
 
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_ReadString(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -5140,7 +5140,7 @@ gstd::value DxScript::Func_ObjFileB_ReadString(gstd::script_machine* machine, in
 
 	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
 	if (obj) {
-		size_t readSize = (size_t)argv[1].as_real();
+		size_t readSize = (size_t)argv[1].as_float();
 
 		std::vector<byte> data(readSize);
 		obj->Read(&data[0], readSize);
@@ -5249,11 +5249,11 @@ gstd::value DxScript::Func_ObjFileB_WriteFloat(gstd::script_machine* machine, in
 
 	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
 	if (obj) {
-		float data = argv[1].as_real();
+		float data = argv[1].as_float();
 		res = obj->Write(&data, sizeof(float));
 	}
 
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }
 gstd::value DxScript::Func_ObjFileB_WriteDouble(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -5262,9 +5262,9 @@ gstd::value DxScript::Func_ObjFileB_WriteDouble(gstd::script_machine* machine, i
 
 	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
 	if (obj) {
-		double data = argv[1].as_real();
+		double data = argv[1].as_float();
 		res = obj->Write(&data, sizeof(double));
 	}
 
-	return script->CreateRealValue(res);
+	return script->CreateFloatValue(res);
 }

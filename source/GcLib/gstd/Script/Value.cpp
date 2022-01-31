@@ -12,8 +12,8 @@ std::string type_data::string_representation(type_data* data) {
 		return "null";
 	case type_kind::tk_int:
 		return "int";
-	case type_kind::tk_real:
-		return "real";
+	case type_kind::tk_float:
+		return "float";
 	case type_kind::tk_char:
 		return "char";
 	case type_kind::tk_boolean:
@@ -109,9 +109,9 @@ value* value::set(type_data* t, int64_t v) {
 	return this;
 }
 value* value::set(type_data* t, double v) {
-	kind = type_data::tk_real;
+	kind = type_data::tk_float;
 	type = t;
-	new (&real_value) auto(v);
+	new (&float_value) auto(v);
 	return this;
 }
 value* value::set(type_data* t, wchar_t v) {
@@ -161,8 +161,8 @@ value& value::operator=(const value& source) {
 	if (type) {
 		if (kind == type_data::tk_int)
 			this->set(source.type, source.int_value);
-		else if (kind == type_data::tk_real)
-			this->set(source.type, source.real_value);
+		else if (kind == type_data::tk_float)
+			this->set(source.type, source.float_value);
 		else if (kind == type_data::tk_char)
 			this->set(source.type, source.char_value);
 		else if (kind == type_data::tk_boolean)
@@ -233,9 +233,9 @@ int64_t value::as_int() const {
 	if (!has_data()) return 0i64;
 	if (kind == type_data::tk_int)
 		return int_value;
-	if (kind == type_data::tk_real) {
+	if (kind == type_data::tk_float) {
 		constexpr double EPSILON = 0.000001;
-		return (int64_t)(real_value + (real_value > 0 ? EPSILON : -EPSILON));
+		return (int64_t)(float_value + (float_value > 0 ? EPSILON : -EPSILON));
 	}
 	if (kind == type_data::tk_char)
 		return (int64_t)char_value;
@@ -256,10 +256,10 @@ int64_t value::as_int() const {
 	}
 	return 0i64;
 }
-double value::as_real() const {
+double value::as_float() const {
 	if (!has_data()) return 0.0;
-	if (kind == type_data::tk_real)
-		return real_value;
+	if (kind == type_data::tk_float)
+		return float_value;
 	if (kind == type_data::tk_int)
 		return (double)int_value;
 	if (kind == type_data::tk_char)
@@ -287,8 +287,8 @@ wchar_t value::as_char() const {
 		return char_value;
 	if (kind == type_data::tk_int)
 		return (wchar_t)int_value;
-	if (kind == type_data::tk_real)
-		return (wchar_t)real_value;
+	if (kind == type_data::tk_float)
+		return (wchar_t)float_value;
 	if (kind == type_data::tk_boolean)
 		return boolean_value ? L'1' : L'0';
 	if (kind == type_data::tk_pointer)
@@ -303,8 +303,8 @@ bool value::as_boolean() const {
 		return boolean_value;
 	if (kind == type_data::tk_int)
 		return (int_value != 0);
-	if (kind == type_data::tk_real)
-		return (real_value != 0.0);
+	if (kind == type_data::tk_float)
+		return (float_value != 0.0);
 	if (kind == type_data::tk_char)
 		return (char_value != L'\0');
 	if (kind == type_data::tk_pointer)
@@ -315,8 +315,8 @@ bool value::as_boolean() const {
 }
 std::wstring value::as_string() const {
 	if (!has_data()) return L"(NULL)";
-	if (kind == type_data::tk_real)
-		return std::to_wstring(real_value);
+	if (kind == type_data::tk_float)
+		return std::to_wstring(float_value);
 	if (kind == type_data::tk_int)
 		return std::to_wstring(int_value);
 	if (kind == type_data::tk_boolean)

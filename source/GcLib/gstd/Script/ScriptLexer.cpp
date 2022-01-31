@@ -26,7 +26,7 @@ void script_scanner::copy_state(const script_scanner* src) {
 
 	word = src->word;
 	int_value = src->int_value;
-	real_value = src->real_value;
+	float_value = src->float_value;
 	char_value = src->char_value;
 	string_value = src->string_value;
 	line = src->line;
@@ -335,9 +335,9 @@ void script_scanner::advance() {
 	}
 	default:
 		if (std::iswdigit(ch)) {
-			next = token_kind::tk_real;
+			next = token_kind::tk_float;
 			int_value = 0;
-			real_value = 0;
+			float_value = 0.0;
 
 			bool bBaseLiteral = false;
 			std::string strNum = "";
@@ -385,7 +385,7 @@ void script_scanner::advance() {
 				}
 
 				int_value = (int64_t&)result;
-				real_value = result;
+				float_value = result;
 				next = token_kind::tk_int;
 			}
 			else {
@@ -424,7 +424,7 @@ void script_scanner::advance() {
 					} while (std::iswdigit(ch));
 				}
 
-				next = token_kind::tk_real;
+				next = token_kind::tk_float;
 			}
 
 			wchar_t suffix = std::towlower(ch);
@@ -433,8 +433,8 @@ void script_scanner::advance() {
 					next = token_kind::tk_int;
 					ch = next_char();
 				}
-				else if (suffix == L'r') {
-					next = token_kind::tk_real;
+				else if (suffix == L'f') {
+					next = token_kind::tk_float;
 					ch = next_char();
 				}
 				else scanner_assert(false, "Invalid number suffix.");
@@ -445,7 +445,7 @@ void script_scanner::advance() {
 					int_value = std::strtoll(strNum.c_str(), nullptr, 10);
 				}
 				else {
-					real_value = std::strtod(strNum.c_str(), nullptr);
+					float_value = std::strtod(strNum.c_str(), nullptr);
 				}
 			}
 
@@ -484,7 +484,7 @@ std::unordered_map<std::string, token_kind> script_scanner::token_map = {
 	{ "let", token_kind::tk_decl_auto },
 	{ "var", token_kind::tk_decl_auto },
 	{ "void", token_kind::tk_decl_void },
-	{ "real", token_kind::tk_decl_real },
+	{ "float", token_kind::tk_decl_float },
 	{ "int", token_kind::tk_decl_int },
 	{ "char", token_kind::tk_decl_char },
 	{ "string", token_kind::tk_decl_string },
@@ -494,7 +494,7 @@ std::unordered_map<std::string, token_kind> script_scanner::token_map = {
 	{ "ref", token_kind::tk_decl_mod_ref },
 
 	{ "as_int", token_kind::tk_cast_int },
-	{ "as_real", token_kind::tk_cast_real },
+	{ "as_float", token_kind::tk_cast_float },
 	{ "as_char", token_kind::tk_cast_char },
 	{ "as_bool", token_kind::tk_cast_bool },
 	{ "as_string", token_kind::tk_cast_string },

@@ -889,7 +889,7 @@ void StgItemObject::NotifyItemCollectEvent(int type, uint64_t eventParam) {
 		eventArg[0] = DxScript::CreateIntValue(idObject_);
 		eventArg[1] = DxScript::CreateIntValue(typeItem_);
 		eventArg[2] = DxScript::CreateIntValue(type);
-		eventArg[3] = DxScript::CreateRealValue(eventParam);
+		eventArg[3] = DxScript::CreateFloatValue(eventParam);
 
 		itemScript->RequestEvent(StgStageItemScript::EV_COLLECT_ITEM, eventArg, 4U);
 	}

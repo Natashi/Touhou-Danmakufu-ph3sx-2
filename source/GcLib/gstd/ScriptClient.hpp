@@ -151,27 +151,27 @@ namespace gstd {
 		void SetArgumentValue(value v, int index = 0);
 		value GetResultValue() { return valueRes_; }
 
-		static inline value CreateRealValue(double r);
+		static inline value CreateFloatValue(double r);
 		static inline value CreateIntValue(int64_t r);
 		static inline value CreateBooleanValue(bool b);
 		static inline value CreateStringValue(const std::wstring& s);
 		static inline value CreateStringValue(const std::string& s);
-		template<typename T> static inline value CreateRealArrayValue(const std::vector<T>& list);
-		template<typename T> static value CreateRealArrayValue(const T* ptrList, size_t count);
-		template<size_t N> static inline value CreateRealArrayValue(const Math::DVec<N>& arr);
+		template<typename T> static inline value CreateFloatArrayValue(const std::vector<T>& list);
+		template<typename T> static value CreateFloatArrayValue(const T* ptrList, size_t count);
+		template<size_t N> static inline value CreateFloatArrayValue(const Math::DVec<N>& arr);
 		template<typename T> static inline value CreateIntArrayValue(const std::vector<T>& list);
 		template<typename T> static value CreateIntArrayValue(const T* ptrList, size_t count);
 		static value CreateStringArrayValue(const std::vector<std::string>& list);
 		static value CreateStringArrayValue(const std::vector<std::wstring>& list);
 		value CreateValueArrayValue(const std::vector<value>& list);
 
-		static bool IsRealValue(value& v);
+		static bool IsFloatValue(value& v);
 		static bool IsIntValue(value& v);
 		static bool IsBooleanValue(value& v);
 		static bool IsStringValue(value& v);
 		static bool IsArrayValue(value& v);
 		static bool IsArrayValue(value& v, type_data* element);
-		static bool IsRealArrayValue(value& v);
+		static bool IsFloatArrayValue(value& v);
 		static bool IsIntArrayValue(value& v);
 
 		void CheckRunInMainThread();
@@ -340,8 +340,8 @@ namespace gstd {
 	};
 
 #pragma region ScriptClientBase_impl
-	value ScriptClientBase::CreateRealValue(double r) {
-		return value(script_type_manager::get_real_type(), r);
+	value ScriptClientBase::CreateFloatValue(double r) {
+		return value(script_type_manager::get_float_type(), r);
 	}
 	value ScriptClientBase::CreateIntValue(int64_t r) {
 		return value(script_type_manager::get_int_type(), r);
@@ -356,18 +356,18 @@ namespace gstd {
 		return CreateStringValue(StringUtility::ConvertMultiToWide(s));
 	}
 
-	template<typename T> value ScriptClientBase::CreateRealArrayValue(const std::vector<T>& list) {
-		return CreateRealArrayValue(list.data(), list.size());
+	template<typename T> value ScriptClientBase::CreateFloatArrayValue(const std::vector<T>& list) {
+		return CreateFloatArrayValue(list.data(), list.size());
 	}
 	template<typename T>
-	value ScriptClientBase::CreateRealArrayValue(const T* ptrList, size_t count) {
-		type_data* type_real = script_type_manager::get_real_type();
-		type_data* type_arr = script_type_manager::get_real_array_type();
+	value ScriptClientBase::CreateFloatArrayValue(const T* ptrList, size_t count) {
+		type_data* type_float = script_type_manager::get_float_type();
+		type_data* type_arr = script_type_manager::get_float_array_type();
 		if (ptrList && count > 0) {
 			std::vector<value> res_arr;
 			res_arr.resize(count);
 			for (size_t iVal = 0U; iVal < count; ++iVal) {
-				res_arr[iVal] = value(type_real, (double)(ptrList[iVal]));
+				res_arr[iVal] = value(type_float, (double)(ptrList[iVal]));
 			}
 
 			value res;
@@ -377,8 +377,8 @@ namespace gstd {
 		return value(type_arr, std::wstring());
 	}
 	template<size_t N>
-	value ScriptClientBase::CreateRealArrayValue(const Math::DVec<N>& arr) {
-		return CreateRealArrayValue((double*)arr.data(), N);
+	value ScriptClientBase::CreateFloatArrayValue(const Math::DVec<N>& arr) {
+		return CreateFloatArrayValue((double*)arr.data(), N);
 	}
 
 	template<typename T> value ScriptClientBase::CreateIntArrayValue(const std::vector<T>& list) {

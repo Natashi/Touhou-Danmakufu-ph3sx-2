@@ -24,7 +24,7 @@ namespace gstd {
 	enum class token_kind : uint8_t {
 		tk_end, tk_invalid,
 
-		tk_word, tk_int, tk_real, tk_char, tk_string,
+		tk_word, tk_int, tk_float, tk_char, tk_string,
 		tk_open_par, tk_close_par, tk_open_bra, tk_close_bra, tk_open_cur, tk_close_cur,
 
 		tk_open_abs, tk_close_abs, tk_comma, tk_semicolon, tk_colon, tk_query, tk_tilde, tk_assign,
@@ -41,11 +41,11 @@ namespace gstd {
 		tk_inc, tk_dec, tk_range, tk_args_variadic,
 
 		tk_decl_auto, tk_decl_void,
-		tk_decl_int, tk_decl_real, tk_decl_char, tk_decl_bool, tk_decl_string,
+		tk_decl_int, tk_decl_float, tk_decl_char, tk_decl_bool, tk_decl_string,
 
 		tk_decl_mod_const, tk_decl_mod_ref,
 
-		tk_cast_int, tk_cast_real, tk_cast_char, tk_cast_bool, tk_cast_string,
+		tk_cast_int, tk_cast_float, tk_cast_char, tk_cast_bool, tk_cast_string,
 
 		tk_LENGTH, 
 
@@ -84,7 +84,7 @@ namespace gstd {
 
 		std::string word;
 		int64_t int_value;
-		double real_value;
+		double float_value;
 		wchar_t char_value;
 		std::wstring string_value;
 		int line;

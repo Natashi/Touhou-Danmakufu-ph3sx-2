@@ -137,7 +137,7 @@ static const std::vector<function> base_operations = {
 	{ "power", BaseFunction::power, 2 },
 
 	{ "as_int_array", BaseFunction::cast_int_array, 1 },
-	{ "as_real_array", BaseFunction::cast_real_array, 1 },
+	{ "as_float_array", BaseFunction::cast_float_array, 1 },
 	{ "as_bool_array", BaseFunction::cast_bool_array, 1 },
 	{ "as_char_array", BaseFunction::cast_char_array, 1 },
 	{ "as_x_array", BaseFunction::cast_x_array, 2 },
@@ -244,8 +244,8 @@ void parser::load_constants(std::vector<constant>* list_const) {
 		case type_data::tk_int:
 			const_value.reset(script_type_manager::get_int_type(), (int64_t&)pConst->data);
 			break;
-		case type_data::tk_real:
-			const_value.reset(script_type_manager::get_real_type(), (double&)pConst->data);
+		case type_data::tk_float:
+			const_value.reset(script_type_manager::get_float_type(), (double&)pConst->data);
 			break;
 		case type_data::tk_char:
 			const_value.reset(script_type_manager::get_char_type(), (wchar_t&)pConst->data);
@@ -414,8 +414,8 @@ type_data* _token_kind_to_type_data(token_kind token) {
 	switch (token) {
 	case token_kind::tk_decl_int:
 		return script_type_manager::get_int_type();
-	case token_kind::tk_decl_real:
-		return script_type_manager::get_real_type();
+	case token_kind::tk_decl_float:
+		return script_type_manager::get_float_type();
 	case token_kind::tk_decl_char:
 		return script_type_manager::get_char_type();
 	case token_kind::tk_decl_bool:
@@ -668,7 +668,7 @@ int parser::scan_current_scope(parser_state_t* state, int level, int initVar, co
 			break;
 
 			case token_kind::tk_decl_mod_const:
-			case token_kind::tk_decl_real:
+			case token_kind::tk_decl_float:
 			case token_kind::tk_decl_int:
 			case token_kind::tk_decl_char:
 			case token_kind::tk_decl_bool:
@@ -778,9 +778,9 @@ void parser::parse_clause(script_block* block, parser_state_t* state) {
 			value(script_type_manager::get_int_type(), state->lex->int_value)));
 		state->advance();
 		return;
-	case token_kind::tk_real:
+	case token_kind::tk_float:
 		state->AddCode(block, code(command_kind::pc_push_value,
-			value(script_type_manager::get_real_type(), state->lex->real_value)));
+			value(script_type_manager::get_float_type(), state->lex->float_value)));
 		state->advance();
 		return;
 	case token_kind::tk_char:
@@ -862,7 +862,7 @@ continue_as_variadic:
 		return;
 	}
 	case token_kind::tk_cast_int:
-	case token_kind::tk_cast_real:
+	case token_kind::tk_cast_float:
 	case token_kind::tk_cast_char:
 	case token_kind::tk_cast_bool:
 	case token_kind::tk_cast_string:
@@ -872,8 +872,8 @@ continue_as_variadic:
 		case token_kind::tk_cast_int:
 			target = script_type_manager::get_int_type();
 			break;
-		case token_kind::tk_cast_real:
-			target = script_type_manager::get_real_type();
+		case token_kind::tk_cast_float:
+			target = script_type_manager::get_float_type();
 			break;
 		case token_kind::tk_cast_char:
 			target = script_type_manager::get_char_type();
@@ -1357,7 +1357,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 
 		break;
 	}
-	case token_kind::tk_decl_real:
+	case token_kind::tk_decl_float:
 	case token_kind::tk_decl_int:
 	case token_kind::tk_decl_char:
 	case token_kind::tk_decl_bool:

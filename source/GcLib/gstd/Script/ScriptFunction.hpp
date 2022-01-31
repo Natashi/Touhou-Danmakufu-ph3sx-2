@@ -33,7 +33,7 @@ namespace gstd {
 
 		constant(const char* name_, int d_int) : constant(name_, (int64_t)d_int) {};
 		constant(const char* name_, int64_t d_int);
-		constant(const char* name_, double d_real);
+		constant(const char* name_, double d_float);
 		constant(const char* name_, wchar_t d_char);
 		constant(const char* name_, bool d_bool);
 	};
@@ -78,7 +78,7 @@ namespace gstd {
 
 		static value _cast_array(script_machine* machine, const value* argv, type_data::type_kind target);
 		DNH_FUNCAPI_DECL_(cast_int_array);
-		DNH_FUNCAPI_DECL_(cast_real_array);
+		DNH_FUNCAPI_DECL_(cast_float_array);
 		DNH_FUNCAPI_DECL_(cast_bool_array);
 		DNH_FUNCAPI_DECL_(cast_char_array);
 		DNH_FUNCAPI_DECL_(cast_x_array);

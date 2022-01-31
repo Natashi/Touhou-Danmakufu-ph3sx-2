@@ -368,7 +368,7 @@ namespace gstd {
 		switch (tk) {
 		case token_kind::tk_decl_auto:
 		case token_kind::tk_decl_void:
-		case token_kind::tk_decl_real:
+		case token_kind::tk_decl_float:
 		case token_kind::tk_decl_int:
 		case token_kind::tk_decl_char:
 		case token_kind::tk_decl_bool:

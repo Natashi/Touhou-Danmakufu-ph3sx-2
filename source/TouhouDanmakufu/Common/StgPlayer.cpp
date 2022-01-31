@@ -255,7 +255,7 @@ void StgPlayerObject::SendGrazeEvent() {
 			StgShotObject* objShot = dynamic_cast<StgShotObject*>(wObj.get());
 			if (!objShot->IsDeleted()) {
 				double listShotPos[2] = { objShot->GetPositionX(), objShot->GetPositionY() };
-				listValPos.push_back(script_->CreateRealArrayValue(listShotPos, 2U));
+				listValPos.push_back(script_->CreateFloatArrayValue(listShotPos, 2U));
 
 				listShotID.push_back(objShot->GetObjectID());
 
