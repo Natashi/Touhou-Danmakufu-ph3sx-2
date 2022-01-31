@@ -42,6 +42,8 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 DirectGraphics* DirectGraphics::thisBase_ = nullptr;
 float DirectGraphics::g_dxCoordsMul_ = 1.0f;
 DirectGraphics::DirectGraphics() {
+	ZeroMemory(&dxModules_, sizeof(dxModules_));
+
 	pDirect3D_ = nullptr;
 	pDevice_ = nullptr;
 	pBackSurf_ = nullptr;
@@ -78,14 +80,50 @@ DirectGraphics::~DirectGraphics() {
 		delete itrSample.second.second;
 	}
 
+	_FreeModules();
+
 	thisBase_ = nullptr;
 	Logger::WriteTop("DirectGraphics: Finalized.");
 }
+
+void DirectGraphics::_LoadModules() {
+	HANDLE hCurrentProcess = ::GetCurrentProcess();
+
+	auto _LoadModule = [](const std::wstring& name, HMODULE* hDest, bool bThrowErr = true) -> bool {
+		*hDest = ::LoadLibraryW(name.c_str());
+		if (*hDest == nullptr && bThrowErr)
+			throw gstd::wexception(L"Failed to load module: " + name);
+		return *hDest != nullptr;
+	};
+
+	_LoadModule(L"d3d9.dll", &dxModules_.hLibrary_d3d9);
+	_LoadModule(L"d3dx9_43.dll", &dxModules_.hLibrary_d3dx9);
+	_LoadModule(L"d3dcompiler_43.dll", &dxModules_.hLibrary_d3dcompiler);
+	_LoadModule(L"dsound.dll", &dxModules_.hLibrary_dsound);
+	_LoadModule(L"dinput8.dll", &dxModules_.hLibrary_dinput8);
+}
+void DirectGraphics::_FreeModules() {
+	auto _Free = [](HMODULE* pModule) {
+		if (*pModule) {
+			::FreeLibrary(*pModule);
+			*pModule = nullptr;
+		}
+	};
+
+	_Free(&dxModules_.hLibrary_d3d9);
+	_Free(&dxModules_.hLibrary_d3dx9);
+	_Free(&dxModules_.hLibrary_d3dcompiler);
+	_Free(&dxModules_.hLibrary_dinput8);
+	_Free(&dxModules_.hLibrary_dsound);
+}
+
 bool DirectGraphics::Initialize(HWND hWnd) {
 	return this->Initialize(hWnd, config_);
 }
 bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	if (thisBase_) return false;
+
+	_LoadModules();
 
 	Logger::WriteTop("DirectGraphics: Initialize.");
 	pDirect3D_ = Direct3DCreate9(D3D_SDK_VERSION);
@@ -122,9 +160,6 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	{
 		//Fullscreen mode settings
 
-		RECT rcMonitor;
-		::GetWindowRect(::GetDesktopWindow(), &rcMonitor);
-
 		ZeroMemory(&d3dppFull_, sizeof(D3DPRESENT_PARAMETERS));
 		d3dppFull_.hDeviceWindow = hWnd;
 		d3dppFull_.BackBufferWidth = dxBackBufferW;
@@ -144,10 +179,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 
 	{
 		//Windowed mode settings
-
-		D3DDISPLAYMODE dmode;
-		HRESULT hrAdapt = pDirect3D_->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &dmode);
-
+		
 		ZeroMemory(&d3dppWin_, sizeof(D3DPRESENT_PARAMETERS));
 		d3dppWin_.hDeviceWindow = hWnd;
 		d3dppWin_.BackBufferWidth = dxBackBufferW;
