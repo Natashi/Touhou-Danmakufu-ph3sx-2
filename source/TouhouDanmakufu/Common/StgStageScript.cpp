@@ -392,7 +392,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjMove_AddPatternC1", StgStageScript::Func_ObjMove_AddPatternC1, 5 },
 	{ "ObjMove_AddPatternC2", StgStageScript::Func_ObjMove_AddPatternC2, 10 },
 	{ "ObjMove_AddPatternC3", StgStageScript::Func_ObjMove_AddPatternC3, 11 },
-	{ "ObjMove_AddPatternC4", StgStageScript::Func_ObjMove_AddPatternC4, 12 },
+	{ "ObjMove_AddPatternC4", StgStageScript::Func_ObjMove_AddPatternC4, 13 },
 	{ "ObjMove_AddPatternD1", StgStageScript::Func_ObjMove_AddPatternD1, 5 },
 	{ "ObjMove_AddPatternD2", StgStageScript::Func_ObjMove_AddPatternD2, 5 },
 	{ "ObjMove_AddPatternD2", StgStageScript::Func_ObjMove_AddPatternD2, 6 }, //Overloaded
@@ -3375,6 +3375,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternC4(gstd::script_machine* mach
 		double angVel = argv[9].as_float();
 		double angAcc = argv[10].as_float();
 		double angMax = argv[11].as_float();
+		int idShot = argv[12].as_int();
 
 		ref_unsync_ptr<StgMovePattern_XY_Angle> pattern = new StgMovePattern_XY_Angle(obj);
 
@@ -3388,6 +3389,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternC4(gstd::script_machine* mach
 		ADD_CMD2(StgMovePattern_XY_Angle::SET_AGVEL, angVel, Math::DegreeToRadian(angVel));
 		ADD_CMD2(StgMovePattern_XY_Angle::SET_AGACC, angAcc, Math::DegreeToRadian(angAcc));
 		ADD_CMD2(StgMovePattern_XY_Angle::SET_AGMAX, angMax, Math::DegreeToRadian(angMax));
+
+		pattern->SetShotDataID(idShot);
 
 		obj->AddPattern(frame, pattern);
 	}
