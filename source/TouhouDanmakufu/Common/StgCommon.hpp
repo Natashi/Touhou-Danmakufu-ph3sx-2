@@ -68,11 +68,13 @@ class StgMovePattern {
 	friend StgMoveObject;
 public:
 	enum {
+		TYPE_OTHER = -1,
 		TYPE_NONE,
 		TYPE_ANGLE,
 		TYPE_XY,
 		TYPE_XY_ANG,
 		TYPE_LINE,
+		
 
 		NO_CHANGE = -0x1000000,
 		TOPLAYER_CHANGE = 0x1000000,
