@@ -172,7 +172,7 @@ void StgEnemyObject::Work() {
 	_DeleteInAutoDeleteFrame();
 }
 void StgEnemyObject::_DeleteInAutoClip() {
-	if (!bAutoDelete_) return;
+	if (!bAutoDelete_ || IsDeleted()) return;
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
 	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
