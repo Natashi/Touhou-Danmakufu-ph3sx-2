@@ -735,7 +735,7 @@ static const std::vector<constant> stgStageConstant = {
 	constant("TARGET_PLAYER", StgStageScript::TARGET_PLAYER),
 
 	//Movement types
-	constant("MOVE_OTHER", StgMovePattern::TYPE_OTHER),
+	constant("MOVE_NONE", StgMovePattern::TYPE_NONE),
 	constant("MOVE_ANGLE", StgMovePattern::TYPE_ANGLE),
 	constant("MOVE_XY", StgMovePattern::TYPE_XY),
 	constant("MOVE_XY_ANGLE", StgMovePattern::TYPE_XY_ANG),
@@ -3415,7 +3415,7 @@ gstd::value StgStageScript::Func_ObjMove_GetProcessMovement(gstd::script_machine
 gstd::value StgStageScript::Func_ObjMove_GetMovementType(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	int id = argv[0].as_int();
-	int res = StgMovePattern::TYPE_OTHER;
+	int res = StgMovePattern::TYPE_NONE;
 	if (StgMoveObject* obj = script->GetObjectPointerAs<StgMoveObject>(id)) {
 		if (ref_unsync_ptr<StgMovePattern> objP = obj->GetPattern()) {
 			res = objP->GetType();

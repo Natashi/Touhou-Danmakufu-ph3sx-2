@@ -68,7 +68,7 @@ class StgMovePattern {
 	friend StgMoveObject;
 public:
 	enum {
-		TYPE_OTHER,
+		TYPE_NONE,
 		TYPE_ANGLE,
 		TYPE_XY,
 		TYPE_XY_ANG,
