@@ -1,7 +1,33 @@
-ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
+ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 	"T": Any type
 
 ---------------------------------------------->	[Base Script] <----------------------------------------------
+	
+	--------------------------------> New Constants <--------------------------------
+		
+		M_PI        = pi                ; 3.14159265358979323846
+		M_PI_2      = M_PI / 2          ; 1.57079632679489661923
+		M_PI_4      = M_PI / 4          ; 0.78539816339744830962
+		M_PI_X2     = M_PI * 2          ; 6.28318530717958647693
+		M_PI_X4     = M_PI * 4          ; 12.5663706143591729539
+		M_1_PI      = 1 / M_PI          ; 0.31830988618379067154
+		M_2_PI      = 2 / M_PI          ; 0.63661977236758134308
+		M_SQRTPI    = sqrt(M_PI)        ; 1.772453850905516027298
+		M_1_SQRTPI  = 1 / sqrt(M_PI)    ; 0.56418958354775628695
+		M_2_SQRTPI  = 2 / sqrt(M_PI)    ; 1.128379167095512573896
+		M_SQRT2     = sqrt(2)           ; 1.4142135623730950488
+		M_SQRT2_2   = sqrt(2) / 2       ; 0.7071067811865475244
+		M_SQRT2_X2  = sqrt(2) * 2       ; 2.8284271247461900976
+		M_E         = e                 ; 2.71828182845904523536
+		M_LOG2E     = log2(e)           ; 1.44269504088896340736
+		M_LOG10E    = log10(e)          ; 0.43429448190325182765
+		M_LN2       = ln(2)             ; 0.69314718055994530942
+		M_LN10      = ln(10)            ; 2.30258509299404568402
+		M_PHI       = (1 + sqrt(5)) / 2 ; 1.61803398874989484821
+		M_1_PHI     = 1 / M_PHI         ; 0.6180339887498948482
+		
+		INF			= infinity float
+		NAN			= NaN float
 	
 	--------------------------------> Basic Operations <--------------------------------
 	
@@ -27,7 +53,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			Example:
 				-60i        -> VAR_INT
-				920         -> VAR_REAL
+				920         -> VAR_FLOAT
 				false       -> VAR_BOOL
 				"str"       -> VAR_STRING
 				[8, 0, 2]   -> VAR_ARRAY
@@ -41,10 +67,10 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Returns the root type of the given value.
 			
 			Example:
-				920         -> VAR_REAL
+				920         -> VAR_FLOAT
 				false       -> VAR_BOOL
 				"str"       -> VAR_CHAR
-				[8, 0, 2]   -> VAR_REAL
+				[8, 0, 2]   -> VAR_FLOAT
 				[[["a"]]]   -> VAR_CHAR
 	
 	resize
@@ -121,13 +147,13 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the given value casted to an int value.
 	
-	as_real
+	as_float
 		Arguments:
 			1) (T) value
 		Returns:
-			(real) result
+			(float) result
 		Description:
-			Returns the given value casted to a real value.
+			Returns the given value casted to a float value.
 	
 	as_bool
 		Arguments:
@@ -151,20 +177,20 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(int[]) result
 		Description:
-			Casts array elements to int, then returns the result.
+			Casts array elements to ints, then returns the result.
 			
 			Casting is recursive.
 			
 			Example:
 				as_int_array([[true, true], [false, true]]);	//-> [[1, 1], [0, 1]]
 	
-	as_real_array
+	as_float_array
 		Arguments:
 			1) (T[]) array
 		Returns:
-			(real[]) result
+			(float[]) result
 		Description:
-			Casts array elements to real, then returns the result.
+			Casts array elements to floats, then returns the result.
 			
 			Casting is recursive.
 	
@@ -174,7 +200,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(bool[]) result
 		Description:
-			Casts array elements to bool, then returns the result.
+			Casts array elements to bools, then returns the result.
 			
 			Casting is recursive.
 	
@@ -184,7 +210,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Returns:
 			(char[]) result
 		Description:
-			Casts array elements to char, then returns the result.
+			Casts array elements to chars, then returns the result.
 			
 			Casting is recursive.
 			Not an alias of ToString.
@@ -200,7 +226,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			Supported types:
 				VAR_INT
-				VAR_REAL
+				VAR_FLOAT
 				VAR_BOOL
 				VAR_CHAR
 				
@@ -261,6 +287,56 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Performs a bitwise right shift operation.
 			
+	--------------------------------> Float Utilities <--------------------------------
+	
+	Float_Classify
+		Arguments:
+			1) x
+		Returns:
+			(const) result
+		Description:
+			Classifies the given float value.
+			
+			Possible return values:
+				- FLOAT_TYPE_ZERO           ; Value is either +0 or -0.
+				- FLOAT_TYPE_NORMAL         ; Value is a normal float.
+				- FLOAT_TYPE_SUBNORMAL      ; Value is a subnormal float. (https://en.wikipedia.org/wiki/Subnormal_number)
+				- FLOAT_TYPE_INFINITY	    ; Value is either +infinity or -infinity.
+				- FLOAT_TYPE_NAN		    ; Value is not-a-number.
+	
+	Float_IsNan
+		Arguments:
+			1) x
+		Returns:
+			(bool) result
+		Description:
+			Returns true if the given float is NaN.
+	
+	Float_IsInf
+		Arguments:
+			1) x
+		Returns:
+			(bool) result
+		Description:
+			Returns true if the given float is +infinity or -infinity.
+	
+	Float_GetSign
+		Arguments:
+			1) x
+		Returns:
+			(float) sign
+		Description:
+			Returns +1.0 if the given float is positive, and -1.0 if the given float is negative.
+	
+	Float_CopySign
+		Arguments:
+			1) x
+			2) y
+		Returns:
+			(float) result
+		Description:
+			Copies the sign of x to y, and returns the result.
+	
 	--------------------------------> Maths <--------------------------------
 	
 	clamp
@@ -269,7 +345,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) lower bound
 			3) upper bound
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns x clamped between the specified range.
 	
@@ -277,7 +353,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) x
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns base-2 logarithm of x.
 	
@@ -286,7 +362,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) x
 			2) base
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns base-n logarithm of x.
 	
@@ -294,7 +370,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) x
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns the error function value of x.
 			
@@ -304,7 +380,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) x
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns the gamma function value of x.
 			
@@ -314,7 +390,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) value
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns e (Euler's number) raised to the power of x.
 	
@@ -322,7 +398,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) x
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns the square root of x.
 			Much faster than pow(x, 0.5).
@@ -331,7 +407,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) x
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns the cube root of x.
 			Equivalent to (x ^ (1/3)).
@@ -341,7 +417,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) x
 			2) root
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns the nth root of x.
 			Equivalent to pow(x, 1 / root).
@@ -351,7 +427,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) a
 			2) b
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns the hypotenuse of the triangle formed by the two given values.
 			
@@ -364,7 +440,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) x2
 			4) y2
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns distance between the given two points.
 			
@@ -377,7 +453,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) x2
 			4) y2
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns square of the distance between the given two points.
 			
@@ -390,7 +466,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) x2
 			4) y2
 		Returns:
-			(real) result (degrees)
+			(float) result (degrees)
 		Description:
 			Returns angle (in degrees) between the given two points.
 			
@@ -403,7 +479,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) x2
 			4) y2
 		Returns:
-			(real) result (radians)
+			(float) result (radians)
 		Description:
 			Returns angle (in radians) between the given two points.
 			
@@ -415,13 +491,13 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) angle
 		Returns:
-			(real[2]) [sin(angle), cos(angle)]
+			(float[2]) [sin(angle), cos(angle)]
 	
 	rsin
 		Arguments:
 			1) angle
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			sin() for radians input.
 	
@@ -429,7 +505,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) angle (radians)
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			cos() for radians input.
 	
@@ -437,7 +513,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) angle (radians)
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			tan() for radians input.
 	
@@ -445,7 +521,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) angle (radians)
 		Returns:
-			(real[2]) result
+			(float[2]) result
 		Description:
 			sincos() for radians input.
 	
@@ -453,7 +529,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) value
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			asin() for radians output.
 	
@@ -461,7 +537,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) value
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			acos() for radians output.
 	
@@ -470,7 +546,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) y
 			2) x
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			atan() for radians output.
 	
@@ -478,7 +554,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) value
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			atan2() for radians output.
 			
@@ -486,7 +562,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) angle
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Converts the given angle to degrees.
 	
@@ -494,7 +570,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) angle
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Converts the given angle to radians.
 	
@@ -502,7 +578,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) angle (degrees)
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Normalizes the given angle. (Range = [0, 360))
 			
@@ -510,7 +586,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) angle (radians)
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Normalizes the given angle. (Range = [0, 2pi))
 	
@@ -519,7 +595,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) angle from (degrees)
 			2) angle to (degrees)
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Calculates the shortest angular distance between the given angles. (Range = [-180, 180))
 	
@@ -528,7 +604,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) angle from (radians)
 			2) angle to (radians)
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Calculates the shortest angular distance between the given angles. (Range = [-pi, pi))
 	
@@ -537,7 +613,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) ray angle (degrees)
 			2) surface angle (degrees)
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Calculates the given ray's angle of reflection upon a surface of the given angle. (Range = [0, 360))
 	
@@ -546,32 +622,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) ray angle (radians)
 			2) surface angle (radians)
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Calculates the given ray's angle of reflection upon a surface of the given angle. (Range = [0, 2pi))
-	
-	--------------------------------> Constants <--------------------------------
-		
-		M_PI        = pi                ; 3.14159265358979323846
-		M_PI_2      = M_PI / 2          ; 1.57079632679489661923
-		M_PI_4      = M_PI / 4          ; 0.78539816339744830962
-		M_PI_X2     = M_PI * 2          ; 6.28318530717958647693
-		M_PI_X4     = M_PI * 4          ; 12.5663706143591729539
-		M_1_PI      = 1 / M_PI          ; 0.31830988618379067154
-		M_2_PI      = 2 / M_PI          ; 0.63661977236758134308
-		M_SQRTPI    = sqrt(M_PI)        ; 1.772453850905516027298
-		M_1_SQRTPI  = 1 / sqrt(M_PI)    ; 0.56418958354775628695
-		M_2_SQRTPI  = 2 / sqrt(M_PI)    ; 1.128379167095512573896
-		M_SQRT2     = sqrt(2)           ; 1.4142135623730950488
-		M_SQRT2_2   = sqrt(2) / 2       ; 0.7071067811865475244
-		M_SQRT2_X2  = sqrt(2) * 2       ; 2.8284271247461900976
-		M_E         = e                 ; 2.71828182845904523536
-		M_LOG2E     = log2(e)           ; 1.44269504088896340736
-		M_LOG10E    = log10(e)          ; 0.43429448190325182765
-		M_LN2       = ln(2)             ; 0.69314718055994530942
-		M_LN10      = ln(10)            ; 2.30258509299404568402
-		M_PHI       = (1 + sqrt(5)) / 2 ; 1.61803398874989484821
-		M_1_PHI     = 1 / M_PHI         ; 0.6180339887498948482
 		
 	--------------------------------> Interpolation <--------------------------------
 	
@@ -586,9 +639,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) x
 		Returns:
 			IF a, b are not arrays
-				(real) result
+				(float) result
 			ELSE
-				(real[]) result array
+				(float[]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is linear.
@@ -604,9 +657,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) x
 		Returns:
 			IF a, b are not arrays
-				(real) result
+				(float) result
 			ELSE
-				(real[]) result array
+				(float[]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is first-order smoothstep curve.
@@ -622,9 +675,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) x
 		Returns:
 			IF a, b are not arrays
-				(real) result
+				(float) result
 			ELSE
-				(real[]) result array
+				(float[]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is second-order smoothstep curve.
@@ -640,9 +693,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) x
 		Returns:
 			IF a, b are not arrays
-				(real) result
+				(float) result
 			ELSE
-				(real[]) result array
+				(float[]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is parabolic.
@@ -658,9 +711,9 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) x
 		Returns:
 			IF a, b are not arrays
-				(real) result
+				(float) result
 			ELSE
-				(real[]) result array
+				(float[]) result array
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is inverse parabolic.
@@ -676,7 +729,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) c
 			4) x
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is sine.
@@ -690,7 +743,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) c
 			4) x
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Returns the result of interpolation between a and b, using x as the interpolation value.
 			Interpolation method is half sine.
@@ -704,7 +757,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) c
 			4) x
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Calculates a coordinate component of a quadratic Bezier curve.
 				Direct formula is ((a * (1 - x)^2) + (2 * c * x * (1 - x)) + (b * x^2))
@@ -718,7 +771,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			4) c2
 			5) x
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Calculates a coordinate component of a cubic Bezier curve.
 				Direct formula is ((a * (1 - x)^3) + (3 * c1 * x * (1 - x)^2) + (3 * c2 * x^2 * (1 - x)) + (b * x^3))
@@ -736,7 +789,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			6) ending point tangent vector angle (degrees)
 			9) x
 		Returns:
-			(real[2]) [x, y]
+			(float[2]) [x, y]
 		Description:
 			Calculates the position along the given cubic Hermite spline curve.
 			
@@ -747,12 +800,12 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) a
 			2) b
 			3) x
-			4) (int) type
+			4) (int) interpolation type
 		Returns:
 			IF a, b are not arrays
-				(real) result
+				(float) result
 			ELSE
-				(real[]) result array
+				(float[]) result array
 		Description:
 			Interpolates between a and b using x with the given interpolation type.
 			
@@ -773,26 +826,62 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (int) a
 			2) (int) b
 			3) x
-			4) (int) type
+			4) (int) interpolation type
 		Returns:
 			(int[]) result array
 		Description:
 			Divides a and b (both 8-byte ints) into eight 1-byte chunks, performs interpolation on each pair, and recombines them to return the result.
 			
-			Available interpolation types:
-				LERP_LINEAR:
-					Interpolate_Linear
-				LERP_SMOOTH:
-					Interpolate_Smooth
-				LERP_SMOOTHER:
-					Interpolate_Smoother
-				LERP_ACCELERATE:
-					Interpolate_Accelerate
-				LERP_DECELERATE:
-					Interpolate_Decelerate
-					
 			Example:
 				Interpolate_X_PackedInt(0x37ff4040, 0xaa001010, 0.5, LERP_LINEAR);		//result = 0x707f2828
+	
+	Interpolate_X_Angle
+		Arguments:
+			1) a (degrees)
+			2) b (degrees)
+			3) x
+			4) (int) interpolation type
+		Returns:
+			(float) angle (degrees)
+		Description:
+			Interpolates between angles a and b using x with the given interpolation type.
+			
+			Equivalent to:
+				NormalizeAngle(a + Interpolate_X(0, AngularDistance(a, b), x, type));
+	
+	Interpolate_X_AngleR
+		Arguments:
+			1) a (radians)
+			2) b (radians)
+			3) x
+			4) (int) interpolation type
+		Returns:
+			(float) angle (radians)
+		Description:
+			Interpolates between angles a and b using x with the given interpolation type.
+			
+			Equivalent to:
+				NormalizeAngleR(a + Interpolate_X(0, AngularDistanceR(a, b), x, type));
+	
+	Interpolate_X_Array
+		Arguments:
+			1) (T[]) values
+			2) x
+			3) (int) interpolation type
+		Returns:
+			(float) result
+		Description:
+			Interpolates between multiple elements of the array.
+			
+			Examples:
+				Interpolate_X_Array([a, b, c, d], 0.2, LERP_LINEAR);
+					= Interpolate_X(a, b, 0.2, LERP_LINEAR);
+				
+				Interpolate_X_Array([a, b, c, d], 1.5, LERP_LINEAR);
+					= Interpolate_X(b, c, 0.5, LERP_LINEAR);
+				
+				Interpolate_X_Array([a, b, c, d], 2.9, LERP_LINEAR);
+					= Interpolate_X(c, d, 0.9, LERP_LINEAR);
 	
 	--------------------------------> Random <--------------------------------
 	
@@ -812,7 +901,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) min
 			2) max
 		Returns:
-			(real) random value
+			(float) random value
 		Description:
 			Exactly like rand(), but the seed of which doesn't get saved to replays, and does not affect the state of rand().
 	
@@ -865,7 +954,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) y
 			3) angle
 		Returns:
-			(real[2]) rotated position [x, y]
+			(float[2]) rotated position [x, y]
 		Description:
 			Rotates the given (x, y) point around the origin (0, 0).
 			
@@ -881,7 +970,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			4) origin x
 			5) origin y
 		Returns:
-			(real[2]) rotated position [x, y]
+			(float[2]) rotated position [x, y]
 		Description:
 			Overloaded with 5 arguments.
 		
@@ -902,7 +991,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			5) Y angle
 			6) Z angle
 		Returns:
-			(real[3]) rotated position [x, y, z]
+			(float[3]) rotated position [x, y, z]
 		Description:
 			Rotates the given (x, y, z) point around the origin (0, 0) with the given Euler angles.
 			
@@ -923,7 +1012,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			8) origin y
 			9) origin z
 		Returns:
-			(real[3]) rotated position [x, y, z]
+			(float[3]) rotated position [x, y, z]
 		Description:
 			Rotates the given (x, y, z) point around the given origin with the given Euler angles.
 			
@@ -1344,6 +1433,26 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			Mappings will not change if keys are reassigned in-game.
 	
+	GetConfigWindowTitle
+		Returns:
+			(string) window title
+		Description:
+			Returns the engine's default window title, or the one specified in th_dnh.def if it exists.
+	
+	SetWindowTitle
+		Arguments:
+			1) (string) window title
+		Description:
+			Sets the window title.
+			
+			Passing in an empty string will reset the window title to the default.
+	
+	SetEnableUnfocusedProcessing
+		Arguments:
+			1) (bool) enables
+		Description:
+			Enables or disables unfocused processing.
+	
 	GetLastFrameUpdateSpeed
 		Returns:
 			(int) milliseconds
@@ -1355,6 +1464,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			(int) milliseconds
 		Description:
 			Returns the time the engine took to render the previous frame in milliseconds.
+	
+	--------------------------------> Archive <--------------------------------
 	
 	AddArchiveFile (Overload)
 		Arguments:
@@ -1506,7 +1617,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	A "matrix" here is a 16-member array representing a 4x4 matrix arranged row-by-row.
 		Ex: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] (The identity matrix)
-	A "vector" here is a real value array of the specified size.
+	A "vector" here is a float value array of the specified size.
 		Ex: [3, 4, 5] 		-> VECTOR3
 			[5, 5, 0, 2]	-> VECTOR4
 	
@@ -1574,7 +1685,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (matrix) matrix
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Calculates the determinant of the given matrix.
 	
@@ -1666,7 +1777,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (const) division
 		Returns:
-			(real) volume rate
+			(float) volume rate
 		Description:
 			Returns the volume rate of the given sound division.
 	
@@ -1898,7 +2009,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) point - x
 			2) point - y
-			3) (real[2][]) polygon vertices
+			3) (float[2][]) polygon vertices
 		Returns:
 			(bool) intersection
 		Description:
@@ -1964,7 +2075,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) circle - x
 			2) circle - y
 			3) circle - radius
-			4) (real[2][]) polygon vertices
+			4) (float[2][]) polygon vertices
 		Returns:
 			(bool) intersection
 		Description:
@@ -2021,7 +2132,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			3) line - end x
 			4) line - end y
 			5) line - width
-			6) (real[2][]) polygon vertices
+			6) (float[2][]) polygon vertices
 		Returns:
 			(bool) intersection
 		Description:
@@ -2096,8 +2207,8 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	IsIntersected_Polygon_Polygon
 		Arguments:
-			1) (real[2][]) polygon 1 vertices
-			2) (real[2][]) polygon 2 vertices
+			1) (float[2][]) polygon 1 vertices
+			2) (float[2][]) polygon 2 vertices
 		Returns:
 			(bool) intersection
 		Description:
@@ -2107,7 +2218,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	IsIntersected_Polygon_Ellipse
 		Arguments:
-			1) (real[2][]) polygon vertices
+			1) (float[2][]) polygon vertices
 			2) ellipse - x
 			3) ellipse - y
 			4) ellipse - x radius
@@ -2121,7 +2232,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	IsIntersected_Polygon_RegularPolygon
 		Arguments:
-			1) (real[2][]) polygon 1 vertices
+			1) (float[2][]) polygon 1 vertices
 			2) polygon 2 - x
 			3) polygon 2 - y
 			4) polygon 2 - radius
@@ -2293,7 +2404,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (int) object 1 ID
 			2) (int) object 2 ID
 		Returns:
-			(real) distance
+			(float) distance
 		Description:
 			Change.
 			
@@ -2304,7 +2415,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (int) object 1 ID
 			2) (int) object 2 ID
 		Returns:
-			(real) distance
+			(float) distance
 		Description:
 			Returns the square of the distance between two objects.
 			
@@ -2315,7 +2426,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (int) object 1 ID
 			2) (int) object 2 ID
 		Returns:
-			(real) angle
+			(float) angle
 		Description:
 			Returns the angle between two objects.
 			
@@ -2518,6 +2629,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				
 				Default is FILTER_NONE.
 		
+		ObjRender_SetTextureFilter
+			Arguments:
+				1) (int) object ID
+				2) (const) filter min
+				3) (const) filter mag
+				4) (const) filter mip
+			Description:
+				Fused ObjRender_SetTextureFilterMin+Mag+Mip.
+		
 		[---------------------------> Vertex Shader <---------------------------]
 		
 		ObjRender_SetVertexShaderRenderingMode
@@ -2703,7 +2823,45 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				ObjPrim_SetVertexPosition(obj, 3, 32, 32);
 				ObjPrim_SetVertexIndex(obj, [0, 1, 2, 1, 2, 3]);
 	
+	--------------------------------> 2D Sprite Object Functions <--------------------------------
+	
+	ObjSprite2D_SetSourceRect (overload)
+		Arguments:
+			1) (int) object ID
+			2) (int[4]) rect
+		Description:
+			Overloaded with 2 arguments.
+			
+			ObjSprite2D_SetSourceRect(obj, rect[0], rect[1], rect[2], rect[3]);
+	
+	ObjSprite2D_SetDestRect (overload)
+		Arguments:
+			1) (int) object ID
+			2) (float[4]) rect
+		Description:
+			Overloaded with 2 arguments.
+			
+			ObjSprite2D_SetDestRect(obj, rect[0], rect[1], rect[2], rect[3]);
+	
 	--------------------------------> 2D Sprite List Object Functions <--------------------------------
+	
+	ObjSpriteList2D_SetSourceRect (overload)
+		Arguments:
+			1) (int) object ID
+			2) (int[4]) rect
+		Description:
+			Overloaded with 2 arguments.
+			
+			ObjSpriteList2D_SetSourceRect(obj, rect[0], rect[1], rect[2], rect[3]);
+	
+	ObjSpriteList2D_SetDestRect (overload)
+		Arguments:
+			1) (int) object ID
+			2) (float[4]) rect
+		Description:
+			Overloaded with 2 arguments.
+			
+			ObjSpriteList2D_SetDestRect(obj, rect[0], rect[1], rect[2], rect[3]);
 	
 	ObjSpriteList2D_SetAutoClearVertexCount
 		Arguments:
@@ -2711,6 +2869,35 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) (bool) clear
 		Description:
 			Sets whether the 2D sprite list object will clear its vertices upon rendering.
+	
+	--------------------------------> 3D Sprite Object Functions <--------------------------------
+	
+	ObjSprite3D_SetSourceRect (overload)
+		Arguments:
+			1) (int) object ID
+			2) (int[4]) rect
+		Description:
+			Overloaded with 2 arguments.
+			
+			ObjSprite3D_SetSourceRect(obj, rect[0], rect[1], rect[2], rect[3]);
+	
+	ObjSprite3D_SetDestRect (overload)
+		Arguments:
+			1) (int) object ID
+			2) (float[4]) rect
+		Description:
+			Overloaded with 2 arguments.
+			
+			ObjSprite3D_SetDestRect(obj, rect[0], rect[1], rect[2], rect[3]);
+	
+	ObjSprite3D_SetSourceDestRect (overload)
+		Arguments:
+			1) (int) object ID
+			2) (float[4]) rect
+		Description:
+			Overloaded with 2 arguments.
+			
+			ObjSprite3D_SetSourceDestRect(obj, rect[0], rect[1], rect[2], rect[3]);
 	
 	--------------------------------> Particle List Object Functions <--------------------------------
 	
@@ -3119,7 +3306,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (int) object ID
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Change.
 			No longer throws an error upon attempting to read past the end-of-file.
@@ -3131,7 +3318,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (int) object ID
 		Returns:
-			(real) result
+			(float) result
 		Description:
 			Change.
 			No longer throws an error upon attempting to read past the end-of-file.
@@ -3250,7 +3437,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	GetPlayerAutoItemCollectLine
 		Returns:
-			(real) position
+			(float) position
 		Description:
 			Returns the position of the player's item autocollection line.
 	
@@ -3263,7 +3450,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	
 	GetPlayerItemScope
 		Returns:
-			(real) scope size
+			(float) scope size
 		Description:
 			Gets the player's item collection scope radius.
 	
@@ -3304,7 +3491,91 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Sets the respawn point of the player.
 			Use REBIRTH_DEFAULT in either position to reset it to its default value.
 	
+	--------------------------------> Enemy Functions <--------------------------------
+	
+	SetEnemyAutoDeleteClip
+		Arguments:
+			1) (int) left
+			2) (int) top
+			3) (int) right
+			4) (int) bottom
+		Description:
+			Sets the margin that enemy objects are allowed to traverse past the edges of the STG field before getting automatically deleted.
+			
+			Basically, SetShotAutoDeleteClip for enemies.
+	
 	--------------------------------> Shot Functions <--------------------------------
+	
+	CreateShotA2 (overload)
+		Arguments:
+			1) x
+			2) y
+			3) speed
+			4) angle
+			5) acceleration
+			6) max speed
+			7) angular velocity
+			8) (int) shot graphic ID
+			9) (int) delay
+		Returns:
+			(int) object ID
+		Description:
+			Overloaded with 9 arguments.
+			
+			CreateShotA2 with an additional argument for angular velocity.
+	
+	CreateShotC1
+		Arguments:
+			1) position x
+			2) position y
+			3) x speed
+			4) y speed
+			5) angular offset
+			6) (int) shot graphic ID
+			7) (int) delay
+		Returns:
+			(int) object ID
+		Description:
+			Creates a shot object using the C-movement mode and returns its object ID.
+			
+			C-movement pattern:
+				The C-movement pattern is essentially B-movement with a twist.
+				There is an additional "angle offset" property which acts as a rotation vector for the X and Y speeds.
+				
+				To be precise:
+					realSpeedXY = Rotate2D(speedX, speedY, angleOffset);
+	
+	CreateShotC2
+		Arguments:
+			1)  position x
+			2)  position y
+			3)  x speed
+			4)  y speed
+			5)  x acceleration
+			6)  y acceleration
+			7)  x max speed
+			8)  y max speed
+			9)  angle offset
+			10) angle offset acceleration
+			11) (int) shot graphic ID
+			12) (int) delay
+		Returns:
+			(int) object ID
+		Description:
+			Creates a shot object using the C-movement mode and returns its object ID.
+	
+	CreateShotOC1
+		Arguments:
+			1) (int) parent object
+			2) x speed
+			3) y speed
+			4) angular offset
+			5) (int) shot graphic ID
+			6) (int) delay
+		Returns:
+			(int) object ID
+		Description:
+			Creates a shot object using the C-movement mode on the position of the parent object and returns its object ID.
 	
 	GetAllShotID
 		Arguments:
@@ -3331,14 +3602,23 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			INFO_PATH           - Returns the image path of the given shot graphic ID.
 			INFO_IS_FIXED_ANGLE - Returns whether the given shot graphic ID has had fixed_angle enabled.
 	
+	SetShotTextureFilter
+		Arguments:
+			1) (const) filter min
+			2) (const) filter mag
+		Description:
+			Sets the min and mag texture filtering modes for rendering shot objects.
+			
+			The default filtering modes are FILTER_LINEAR and FILTER_LINEAR.
+	
 	--------------------------------> Item Functions <--------------------------------
 	
 	SetItemAutoDeleteClip
 		Arguments:
-			1) left
-			2) top
-			3) right
-			4) bottom
+			1) (int) left
+			2) (int) top
+			3) (int) right
+			4) (int) bottom
 		Description:
 			Sets the margin that item objects are allowed to traverse past the edges of the STG field before getting automatically deleted.
 			
@@ -3365,6 +3645,15 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns the object ID of all item objects of the specified type within the specified circle.
 	
+	SetItemTextureFilter
+		Arguments:
+			1) (const) filter min
+			2) (const) filter mag
+		Description:
+			Sets the min and mag texture filtering modes for rendering item objects.
+			
+			The default filtering modes are FILTER_LINEAR and FILTER_LINEAR.
+	
 	--------------------------------> Intersection Functions <--------------------------------
 	
 	IsIntersected_Obj_Obj
@@ -3390,12 +3679,94 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 	ObjMove_SetSpeed
 		Description:
 			Addition.
-			Also works on B-pattern objects.
+			
+			Also works on B-pattern and C-pattern movements.
 	
 	ObjMove_SetAngle
 		Description:
 			Addition.
-			Also works on B-pattern objects.
+			
+			Also works on B-pattern and C-pattern movements.
+	
+	ObjMove_SetAcceleration
+		Description:
+			Addition.
+			
+			Also works on B-pattern and C-pattern movements.
+	
+	ObjMove_SetMaxSpeed
+		Description:
+			Addition.
+			
+			Also works on B-pattern and C-pattern movements.
+	
+	ObjMove_SetAngularVelocity
+		Description:
+			Addition.
+			
+			Also works on C-pattern movement.
+	
+	ObjMove_SetAngularAcceleration
+		Arguments:
+			1) (int) object ID
+			2) angular acceleration
+		Description:
+			Sets the move object's angular acceleration.
+			
+			Works on A-pattern and C-pattern movements.
+	
+	ObjMove_SetAngularMaxVelocity
+		Arguments:
+			1) (int) object ID
+			2) angular max velocity
+		Description:
+			Sets the move object's angular max velocity.
+			
+			Works on A-pattern and C-pattern movements.
+	
+	ObjMove_SetSpeedX
+		Arguments:
+			1) (int) object ID
+			2) speed
+		Description:
+			Sets the move object's X speed.
+			
+			Works on A-pattern, B-pattern, and C-pattern movements.
+	
+	ObjMove_SetSpeedY
+		Arguments:
+			1) (int) object ID
+			2) speed
+		Description:
+			Sets the move object's Y speed.
+			
+			Works on A-pattern, B-pattern, and C-pattern movements.
+	
+	ObjMove_SetSpeedXY
+		Arguments:
+			1) (int) object ID
+			2) x speed
+			2) y speed
+		Description:
+			Sets the move object's X and Y speeds.
+			
+			Works on A-pattern, B-pattern, and C-pattern movements.
+	
+	ObjMove_GetSpeedX
+		Arguments:
+			1) (int) object ID
+		Returns:
+			(float) x speed
+		Description:
+			Gets the move object's X speed.
+	
+	ObjMove_GetSpeedY
+		Arguments:
+			1) (int) object ID
+		Returns:
+			(float) y speed
+		Description:
+			Gets the move object's Y speed.
 	
 	ObjMove_SetDestAtFrame (Overload)
 		Arguments:
@@ -3421,48 +3792,121 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				LERP_DECELERATE:
 					Decelerating interpolation.
 	
-	ObjMove_GetSpeedX
+	ObjMove_AddPatternA5
 		Arguments:
 			1) (int) object ID
-		Returns:
-			(real) x speed
+			2) (int) frame
+			3) speed
+			4) angle
+			5) acceleration
+			6) angular velocity
+			7) max speed
+			8) angular acceleration
+			9) angular max velocity
 		Description:
-			Gets the move object's X speed.
-			Also works for objects using the "angle" move mode.
+			Self-explanatory.
 	
-	ObjMove_GetSpeedY
+	ObjMove_AddPatternC1
 		Arguments:
 			1) (int) object ID
-		Returns:
-			(real) y speed
+			2) (int) frame
+			3) x speed
+			4) y speed
+			5) angle offset
 		Description:
-			Gets the move object's Y speed.
-			Also works for objects using the "angle" move mode.
+			Adds a C-movement pattern to the object that will activate after the specified frames after the function call.
 	
-	ObjMove_SetSpeedX
+	ObjMove_AddPatternC2
 		Arguments:
-			1) (int) object ID
-			2) speed
+			1)  (int) object ID
+			2)  (int) frame
+			3)  x speed
+			4)  y speed
+			5)  x acceleration
+			6)  y acceleration
+			7)  x max speed
+			8)  y max speed
+			10) angle offset
+			11) angle offset acceleration
 		Description:
-			Sets the move object's X speed.
-			Also works for objects using the "angle" move mode.
+			Self-explanatory.
 	
-	ObjMove_SetSpeedY
+	ObjMove_AddPatternC3
 		Arguments:
-			1) (int) object ID
-			2) speed
+			1)  (int) object ID
+			2)  (int) frame
+			3)  x speed
+			4)  y speed
+			5)  x acceleration
+			6)  y acceleration
+			7)  x max speed
+			8)  y max speed
+			10) angle offset
+			11) angle offset acceleration
+			12) (int) shot graphic ID
 		Description:
-			Sets the move object's Y speed.
-			Also works for objects using the "angle" move mode.
+			Self-explanatory.
 	
-	ObjMove_SetSpeedXY
+	ObjMove_AddPatternC4
+		Arguments:
+			1)  (int) object ID
+			2)  (int) frame
+			3)  x speed
+			4)  y speed
+			5)  x acceleration
+			6)  y acceleration
+			7)  x max speed
+			8)  y max speed
+			10) angle offset
+			11) angle offset acceleration
+			12) angle offset max speed
+			13) (int) shot graphic ID
+		Description:
+			Self-explanatory.
+	
+	ObjMove_AddPatternD1
 		Arguments:
 			1) (int) object ID
-			2) x speed
-			2) y speed
+			2) (int) frame
+			3) target x
+			4) target y
+			5) speed
 		Description:
-			Sets the move object's X and Y speeds.
-			Also works for objects using the "angle" move mode.
+			An AddPattern version of ObjMove_SetDestAtSpeed.
+	
+	ObjMove_AddPatternD2
+		Arguments:
+			1) (int) object ID
+			2) (int) frame
+			3) target x
+			4) target y
+			5) (int) frame duration
+		Description:
+			An AddPattern version of ObjMove_SetDestAtFrame.
+	
+	ObjMove_AddPatternD2 (overload)
+		Arguments:
+			1) (int) object ID
+			2) (int) frame
+			3) target x
+			4) target y
+			5) (int) frame duration
+			6) (const) interpolation mode
+		Description:
+			Overloaded with 6 arguments.
+			
+			An AddPattern version of ObjMove_SetDestAtFrame.
+	
+	ObjMove_AddPatternD3
+		Arguments:
+			1) (int) object ID
+			2) (int) frame
+			3) target x
+			4) target y
+			5) weight
+			6) max speed
+		Description:
+			An AddPattern version of ObjMove_SetDestAtWeight.
 	
 	ObjMove_SetProcessMovement
 		Arguments:
@@ -3481,6 +3925,28 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Returns true if the object is allowed to execute movement-related routines.
 	
+	ObjMove_GetMovementType
+		Arguments:
+			1) (int) object ID
+		Returns:
+			(const) movement type
+		Description:
+			Returns the current movement type of the move object.
+			
+			Possible return values:
+				MOVE_NONE		; The object doesn't have an active movement function. (May be caused by ObjMove_CancelMovement.)
+				MOVE_ANGLE		; A-pattern movement. (Angle)
+				MOVE_XY			; B-pattern movement. (XY)
+				MOVE_XY_ANGLE	; C-pattern movement. (XY-Angle)
+				MOVE_LINE		; D-pattern movement. (Line, ObjMove_SetDestAtXXX)
+				MOVE_OTHER		; Other movements.
+	
+	ObjMove_CancelMovement
+		Arguments:
+			1) (int) object ID
+		Description:
+			Cancels the object's current movement routine.
+	
 	--------------------------------> Enemy Object Functions <--------------------------------
 	
 	ObjEnemy_GetInfo
@@ -3490,12 +3956,23 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			INFO_DAMAGE_PREVIOUS_FRAME:
 				Returns the amount of damage the enemy received in the previous frame.
 	
-	ObjEnemy_SetMaximumDamage
+	ObjEnemy_SetAutoDelete
 		Arguments:
 			1) (int) object ID
-			2) maximum damage
+			2) (bool) auto delete
 		Description:
-			Sets the maximum amount of damage that the enemy object can receive through normal means in a single frame.
+			ObjShot_SetAutoDelete, but for enemy objects.
+			
+			See: SetEnemyAutoDeleteClip
+			
+			Default value is false.
+	
+	ObjEnemy_SetDeleteFrame
+		Arguments:
+			1) (int) object ID
+			2) (int) frame
+		Description:
+			ObjShot_SetDeleteFrame, but for enemy objects.
 	
 	ObjEnemy_AddLifeEx
 		Arguments:
@@ -3507,11 +3984,20 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			Negative value (damaging) will count towards the maximum damage as if getting hit by a player shot.
 			Positive value (healing) will reduce the damage count and allow more damage to be dealt in the frame equal to how much the healing was.
 	
+	ObjEnemy_SetMaximumDamage
+		Arguments:
+			1) (int) object ID
+			2) maximum damage
+		Description:
+			Sets the maximum amount of damage that the enemy object can receive through normal means in a single frame.
+			
+			Default value is, for all intents and purposes, infinity.
+	
 	ObjEnemy_GetIntersectionCircleListToShot
 		Arguments:
 			1) (int) object ID
 		Returns:
-			(real[3][]) intersection circles
+			(float[3][]) intersection circles
 		Description:
 			Returns an array of arrays of the enemy object's intersection circle to player shot.
 			e.g. [[x1, y1, radius1], [x2, y2, radius2], ...]
@@ -3520,7 +4006,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (int) object ID
 		Returns:
-			(real[3][]) intersection circles
+			(float[3][]) intersection circles
 		Description:
 			Returns an array of arrays of the enemy object's intersection circle to player hitbox.
 			e.g. [[x1, y1, radius1], [x2, y2, radius2], ...]
@@ -3614,7 +4100,18 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			2) (bool) enable
 		Description:
 			If set to true, will cause the shot object to only render in non-floating point coordinates.
-			See: Official Touhou games.
+			
+			See: Official Touhou games
+	
+	ObjShot_SetAngleRounding
+		Arguments:
+			1) (int) object ID
+			2) snap angle
+		Description:
+			Causes the shot render angle to be rounded to the nearest multiple of the given angle.
+			If the angle is <= 0, angle rounding will be disabled.
+			
+			See: PC-98 Touhou games
 	
 	ObjShot_SetDelayMotionEnable
 		Arguments:
@@ -3832,7 +4329,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (int) object ID
 			2) (pointer) node pointer
 		Returns:
-			(real[2]) node position
+			(float[2]) node position
 		Description:
 			Returns the [x, y] position array of the specified node.
 			
@@ -3843,7 +4340,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (int) object ID
 			2) (pointer) node pointer
 		Returns:
-			(real) node angle
+			(float) node angle
 		Description:
 			Returns the facing angle of the specified node.
 			
@@ -3854,7 +4351,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			1) (int) object ID
 			2) (pointer) node pointer
 		Returns:
-			(real) node width
+			(float) node width
 		Description:
 			Returns the render width scale of the specified node.
 			
@@ -4152,46 +4649,50 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 		Description:
 			Adds a transformation to the shot pattern object.
 			
-			Transforms arguments will be designated, in order: [arg1], [arg2], [arg3], etc...
+			Transforms arguments will be designated, in order: [arg0], [arg1], [arg2], etc...
 			
 			Available transformations are:
 				TRANSFORM_WAIT 				(argc = 1)
-					- Delays the next transformation for [arg1] frames.
+					- Delays the next transformation for [arg0] frames.
 				TRANSFORM_ADD_SPEED_ANGLE 	(argc = 4)
-					- Waits for [arg2] frames. (Does not delay the next transformation)
-					- For [arg1] frames, sets acceleration to [arg3].
-					- For [arg1] frames, sets angular velocity to [arg4].
+					- Waits for [arg1] frames. (Does not delay the next transformation)
+					- For [arg0] frames, sets acceleration to [arg2].
+					- For [arg0] frames, sets angular velocity to [arg3].
 				TRANSFORM_ANGULAR_MOVE 		(argc = 3)
-					- For [arg1] frames, sets angular velocity to [arg2].
-					- Sets shot graphic "spin" to [arg3].
+					- For [arg0] frames, sets angular velocity to [arg1].
+					- Sets shot graphic "spin" to [arg2].
 				TRANSFORM_N_DECEL_CHANGE 	(argc = 5)
-					- For [arg2] times, decelerates/accelerates the shot to a complete halt in [arg1] frames. (See: Aunn's first spell)
-					- Movement will then change depending on [arg3].
-						- 0: Changes the movement angle to [arg5].
-						- 1: Increments the movement angle by [arg5].
-						- 2: Aims to the player with an added randomness factor of -[arg5] to [arg5].
-						- 3: Aims to the player with an increment of [arg5].
+					- For [arg1] times, decelerates/accelerates the shot to a complete halt in [arg0] frames. (See: Aunn's first spell)
+					- Movement will then change depending on [arg2].
+						- 0: Changes the movement angle to [arg4].
+						- 1: Increments the movement angle by [arg4].
+						- 2: Aims to the player with an added randomness factor of -[arg4] to [arg4].
+						- 3: Aims to the player with an increment of [arg4].
 						- 4: Angle becomes random.
 						- 5, other: No angle change.
-					- All modes sets the speed to [arg4].
-					- Delay the next transformation by ([arg1] * [arg2]) frames.
+					- All modes sets the speed to [arg3].
+					- Delay the next transformation by ([arg0] * [arg1]) frames.
 				TRANSFORM_GRAPHIC_CHANGE 	(argc = 1)
-					- Changes the shot graphic to [arg1].
+					- Changes the shot graphic to [arg0].
 				TRANSFORM_BLEND_CHANGE 		(argc = 1)
-					- Changes the shot blend type to [arg1].
+					- Changes the shot blend type to [arg0].
 				TRANSFORM_TO_SPEED_ANGLE 	(argc = 3)
-					- Gradually changes the shot's speed to [arg2] in [arg1] frames.
-					- Gradually changes the shot's angle to [arg3] in [arg1] frames.
+					- Gradually changes the shot's speed to [arg1] in [arg0] frames.
+					- Gradually changes the shot's angle to [arg2] in [arg0] frames.
 						- Using TOPLAYER_CHANGE will aim the shot to the player object.
-					- NO_CHANGE can be used for [arg2] and [arg3].
+					- NO_CHANGE can be used for [arg1] and [arg2].
 				TRANSFORM_ADDPATTERN_A1 	(argc = 3)
-					- Applies [ObjMove_AddPatternA1(obj, [arg1], [arg2], [arg3])]
+					- Applies [ObjMove_AddPatternA1(obj, [arg0], [arg1], [arg2])]
 				TRANSFORM_ADDPATTERN_A2 	(argc = 8)
-					- Applies [ObjMove_AddPatternA4(obj, [arg1], [arg2], [arg3], [arg4], [arg5], [arg6], [arg7], [arg8])]
+					- Applies [ObjMove_AddPatternA4(obj, [arg0], [arg1], [arg2], [arg3], [arg4], [arg5], [arg6], [arg7])]
 				TRANSFORM_ADDPATTERN_B1 	(argc = 3)
-					- Applies [ObjMove_AddPatternB1(obj, [arg1], [arg2], [arg3])]
+					- Applies [ObjMove_AddPatternB1(obj, [arg0], [arg1], [arg2])]
 				TRANSFORM_ADDPATTERN_B2 	(argc = 8)
-					- Applies [ObjMove_AddPatternB3(obj, [arg1], [arg2], [arg3], [arg4], [arg5], [arg6], [arg7], [arg8])]
+					- Applies [ObjMove_AddPatternB3(obj, [arg0], [arg1], [arg2], [arg3], [arg4], [arg5], [arg6], [arg7])]
+				TRANSFORM_ADDPATTERN_C1 	(argc = 3)
+					- Applies [ObjMove_AddPatternC1(obj, [arg0], [arg1], [arg2])]
+				TRANSFORM_ADDPATTERN_C2 	(argc = 10)
+					- Applies [ObjMove_AddPatternC3(obj, [arg0], [arg1], [arg2], [arg3], [arg4], [arg5], [arg6], [arg7], [arg8], [arg9])]
 	
 	ObjPatternShot_SetTransform
 		Arguments:
@@ -4218,6 +4719,24 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 				OWNER_ENEMY
 	
 	-------------------------------->  Item Object Functions <--------------------------------
+	
+	ObjItem_SetAutoCollectEnableFlags
+		Arguments:
+			1) (int) object ID
+			2) (int) flags
+		Description:
+			Sets the autocollection enable flags of the item object.
+			Autocollection enable flags dictate which autocollection types will affect the item object.
+			
+			Available flags:
+				ITEM_AUTOCOLLECT_PLAYER_SCOPE
+				ITEM_AUTOCOLLECT_COLLECT_ALL
+				ITEM_AUTOCOLLECT_POC_LINE
+				ITEM_AUTOCOLLECT_COLLECT_CIRCLE
+				ITEM_AUTOCOLLECT_ALL
+			
+			Flags can be combined with bitwise OR.
+			Using 0 will cause the item object to be impervious to all autocollection types.
 	
 	ObjItem_GetInfo
 		Arguments:
@@ -4319,7 +4838,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			Event arguments:
 				1) (int) shot object ID
-				2) (real[]) position [x, y]
+				2) (float[]) position [x, y]
 				3) (bool) collided with player
 					If true, the shot was deleted from coliision with a player hitbox.
 				4) (int) shot image ID
@@ -4339,7 +4858,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 					2 - Via CollectItemsInCircle
 					3 - Via CollectAllItems
 					4 - Via ObjItem_SetMoveToPlayer
-				4) (real) collection info
+				4) (float) collection info
 					Varies with collection type:
 						Type 0 -> Player item scope radius
 						Type 1 -> Player autocollection line position
@@ -4382,7 +4901,7 @@ ALL ARGUMENTS ARE REAL NUMBERS UNLESS STATED OTHERWISE
 			
 			Event arguments:
 				1) (int) shot object ID
-				2) (real[2]) position
+				2) (float[2]) position
 				3) (int) shot graphic ID
 				4) (int) object ID that the shot collided with
 					- Will be ID_INVALID in case of manual activation.

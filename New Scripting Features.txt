@@ -12,20 +12,19 @@
 			
 		- Suffix
 			
-			- "r" / "R"
-				Forces a number literal to a real number type.
+			- "f" / "F"
+				Forces a number literal to a float type.
 			- "i" / "I"
 				Forces a number literal to an integer type.
 				
 			Example:
 				WriteLog(5);        //5.000000
-				WriteLog(5r);       //5.000000
+				WriteLog(5f);       //5.000000
 				WriteLog(5i);       //5
 				WriteLog(0x5f);     //95
-				WriteLog(0x5fr);    //95.000000
 				WriteLog(0x5fi);    //95
 				WriteLog(7.76);     //7.760000
-				WriteLog(7.76r);    //7.760000
+				WriteLog(7.76f);    //7.760000
 				WriteLog(7.76i);    //7
 				
 		- Digit separator
@@ -49,11 +48,13 @@
 			All three keywords had the same effect on the declaration.
 			
 			However, with version 1.30a, the scripting language has gone through a considerable amount of changes as follows:
+				- "real" has been renamed to "float". (1.32a)
+				
 				- You may now explicitly state the type of the variable you are declaring.
 					
 					Example:
 						int a = 700;            //typeof(a) == VAR_INT
-						real b = 56.243;        //typeof(b) == VAR_REAL
+						float b = 56.243;       //typeof(b) == VAR_FLOAT
 						char c = '0';           //typeof(c) == VAR_CHAR
 						bool d = false;         //typeof(d) == VAR_BOOL
 						string e = "aubergine"; //typeof(e) == VAR_STRING
@@ -63,7 +64,7 @@
 					
 					Example:
 						let a = 700i;           //typeof(a) == VAR_INT
-						let b = 56.243;         //typeof(b) == VAR_REAL
+						let b = 56.243;         //typeof(b) == VAR_FLOAT
 						let c = '0';            //typeof(c) == VAR_CHAR
 						let d = false;          //typeof(d) == VAR_BOOL
 						let e = "aubergine";    //typeof(e) == VAR_STRING
@@ -78,7 +79,7 @@
 			Example:
 				int a, b = 7, c = 100, d;       //All will be of type "int"
 				const bool e = true, f = true;  //All will be of type "const bool"
-				let g = 56, h = true, i = 6i;   //g will be "real", h will be "bool", and i will be "int"
+				let g = 56, h = true, i = 6i;   //g will be "float", h will be "bool", and i will be "int"
 				bool[][][] j, k;                //All will be of type "bool[][][]" (3D bool array)
 				
 		- Using "const"
@@ -105,7 +106,7 @@
 			ph3sx script type  |  internal C type  |  size in bytes  |
 			----------------------------------------------------------
 			int                |  int64_t          |  8              |
-			real               |  double           |  8              |
+			float              |  double           |  8              |
 			bool               |  bool             |  1              |
 			char               |  wchar_t          |  2              |
 			
@@ -353,7 +354,7 @@
 						
 					//-----------------------------------------------
 						
-					for each (real i in arr)
+					for each (float i in arr)
 						WriteLog(i);
 						
 					Will result in the following output:
@@ -428,8 +429,8 @@
 							
 							for each ((i, itr) in array) { /*...*/ }
 							for each ((int i, itr) in array) { /*...*/ }
-							for each (i, real itr in array) { /*...*/ }
-							for each ((real i, string itr) in array) { /*...*/ }
+							for each (i, float itr in array) { /*...*/ }
+							for each ((float i, string itr) in array) { /*...*/ }
 							
 					- You may use a colon(:) in place of the keyword "in"
 						
@@ -466,7 +467,7 @@
 			
 			Example:
 				
-				function Func(int a, real b, const string[] c) {}
+				function Func(int a, float b, const string[] c) {}
 				
 		- Function return type
 			
