@@ -1536,18 +1536,29 @@ gstd::value StgStageScript::Func_CreateShotA2(gstd::script_machine* machine, int
 		if (id != ID_INVALID) {
 			stageController->GetShotManager()->AddShot(obj);
 
-			bool bW = (argc == 9);
+			bool bHasAngV = argc == 9;
 
 			double posX = argv[0].as_float();
 			double posY = argv[1].as_float();
 			double speed = argv[2].as_float();
 			double angle = argv[3].as_float();
-			double accele = argv[4].as_float();
-			double maxSpeed = argv[5 + bW].as_float();
-			int idShot = argv[6 + bW].as_int();
-			int delay = argv[7 + bW].as_int();
+			double accel = argv[4].as_float();
+			double maxSpeed = argv[5].as_float();
+			
 			int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 				StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
+
+			double angV;
+			int idShot, delay;
+			if (bHasAngV) {
+				angV = argv[6].as_float();
+				idShot = argv[7].as_int();
+				delay = argv[8].as_int();
+			}
+			else {
+				idShot = argv[6].as_int();
+				delay = argv[7].as_int();
+			}
 
 			obj->SetX(posX);
 			obj->SetY(posY);
@@ -1557,14 +1568,12 @@ gstd::value StgStageScript::Func_CreateShotA2(gstd::script_machine* machine, int
 			obj->SetDelay(delay);
 			obj->SetOwnerType(typeOwner);
 
-			StgMoveObject* objMove = (StgMoveObject*)obj.get();
-			StgMovePattern_Angle* pattern = dynamic_cast<StgMovePattern_Angle*>(objMove->GetPattern().get());
-			pattern->SetAcceleration(accele);
-			if (bW) {
-				double wvel = argv[5].as_float();
-				pattern->SetAngularVelocity(Math::DegreeToRadian(wvel));
+			if (auto pattern = dynamic_cast<StgMovePattern_Angle*>(obj->GetPattern().get())) {
+				pattern->SetAcceleration(accel);
+				if (bHasAngV)
+					pattern->SetAngularVelocity(Math::DegreeToRadian(angV));
+				pattern->SetMaxSpeed(maxSpeed);
 			}
-			pattern->SetMaxSpeed(maxSpeed);
 		}
 	}
 	return script->CreateIntValue(id);
@@ -3103,16 +3112,16 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA2(gstd::script_machine* mach
 		double speed = argv[2].as_float();
 		double angle = argv[3].as_float();
 		double accel = argv[4].as_float();
-		double agvel = argv[5].as_float();
-		double maxsp = argv[6].as_float();
+		double maxsp = argv[5].as_float();
+		double agvel = argv[6].as_float();
 
 		ref_unsync_ptr<StgMovePattern_Angle> pattern = new StgMovePattern_Angle(obj);
 
 		ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
 		ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
 		ADD_CMD(StgMovePattern_Angle::SET_ACCEL, accel);
-		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 		ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
+		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 
 		obj->AddPattern(frame, pattern);
 	}
@@ -3127,8 +3136,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA3(gstd::script_machine* mach
 		double speed = argv[2].as_float();
 		double angle = argv[3].as_float();
 		double accel = argv[4].as_float();
-		double agvel = argv[5].as_float();
-		double maxsp = argv[6].as_float();
+		double maxsp = argv[5].as_float();
+		double agvel = argv[6].as_float();
 		int idShot = argv[7].as_int();
 
 		ref_unsync_ptr<StgMovePattern_Angle> pattern = new StgMovePattern_Angle(obj);
@@ -3136,8 +3145,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA3(gstd::script_machine* mach
 		ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
 		ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
 		ADD_CMD(StgMovePattern_Angle::SET_ACCEL, accel);
-		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 		ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
+		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 
 		pattern->SetShotDataID(idShot);
 		obj->AddPattern(frame, pattern);
@@ -3153,8 +3162,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA4(gstd::script_machine* mach
 		double speed = argv[2].as_float();
 		double angle = argv[3].as_float();
 		double accel = argv[4].as_float();
-		double agvel = argv[5].as_float();
-		double maxsp = argv[6].as_float();
+		double maxsp = argv[5].as_float();
+		double agvel = argv[6].as_float();
 		int idGraphic = argv[7].as_int();
 		int idRelative = argv[8].as_int();
 
@@ -3163,8 +3172,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA4(gstd::script_machine* mach
 		ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
 		ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
 		ADD_CMD(StgMovePattern_Angle::SET_ACCEL, accel);
-		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 		ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
+		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 
 		pattern->SetShotDataID(idGraphic);
 		pattern->SetRelativeObject(idRelative);
@@ -3182,8 +3191,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA5(gstd::script_machine* mach
 		double speed = argv[2].as_float();
 		double angle = argv[3].as_float();
 		double accel = argv[4].as_float();
-		double agvel = argv[5].as_float();
-		double maxsp = argv[6].as_float();
+		double maxsp = argv[5].as_float();
+		double agvel = argv[6].as_float();
 		double agacc = argv[7].as_float();
 		double agmax = argv[8].as_float();
 
@@ -3192,8 +3201,8 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternA5(gstd::script_machine* mach
 		ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
 		ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
 		ADD_CMD(StgMovePattern_Angle::SET_ACCEL, accel);
-		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 		ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
+		ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 		ADD_CMD2(StgMovePattern_Angle::SET_AGACC, agacc, Math::DegreeToRadian(agacc));
 		ADD_CMD2(StgMovePattern_Angle::SET_AGMAX, agmax, Math::DegreeToRadian(agmax));
 
@@ -3426,8 +3435,7 @@ gstd::value StgStageScript::Func_ObjMove_AddPatternD2(gstd::script_machine* mach
 		double ty = argv[3].as_float();
 		// These are only doubles so they can fit in the command list
 		double frameEnd = argv[4].as_float();
-		double lerpMode = (argc == 6) ? argv[5].as_float() : 0;
-
+		double lerpMode = (argc == 6) ? argv[5].as_float() : Math::Lerp::LINEAR;
 
 		ref_unsync_ptr<StgMovePattern_Line_Frame> pattern = new StgMovePattern_Line_Frame(obj);
 

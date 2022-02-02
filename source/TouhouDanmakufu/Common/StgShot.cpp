@@ -1247,8 +1247,8 @@ void StgShotObject::_ProcessTransformAct() {
 			double angle = transform.param[2];
 
 			double accel = transform.param[3];
-			double agvel = transform.param[4];
-			double maxsp = transform.param[5];
+			double maxsp = transform.param[4];
+			double agvel = transform.param[5];
 
 			int shotID = transform.param[6];
 			int relativeObj = transform.param[7];
@@ -1258,8 +1258,8 @@ void StgShotObject::_ProcessTransformAct() {
 			ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
 			ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
 			ADD_CMD(StgMovePattern_Angle::SET_ACCEL, accel);
-			ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 			ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
+			ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
 
 			pattern->SetShotDataID(shotID);
 			pattern->SetRelativeObject(relativeObj);
