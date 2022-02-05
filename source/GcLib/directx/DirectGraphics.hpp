@@ -192,6 +192,8 @@ namespace directx {
 		void UpdateDefaultRenderTargetSize();
 	};
 
+	//-----------------------------------------------------------------------------------------------
+
 	//*******************************************************************
 	//DirectGraphicsPrimaryWindow
 	//*******************************************************************
@@ -204,11 +206,18 @@ namespace directx {
 		HWND hWndContent_;
 
 		ScreenMode newScreenMode_;
+
+		bool bWindowMoveEnable_;
+		POINT cPosOffset_;
 	protected:
 		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		
 		void _PauseDrawing();
 		void _RestartDrawing();
+
+		void _StartWindowMove(LPARAM lParam);
+		void _StopWindowMove();
+		void _WindowMove();
 	public:
 		DirectGraphicsPrimaryWindow();
 		~DirectGraphicsPrimaryWindow();
