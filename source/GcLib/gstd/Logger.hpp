@@ -128,6 +128,8 @@ namespace gstd {
 		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
 		bool AddPanel(shared_ptr<Panel> panel, const std::wstring& name);
 
+		shared_ptr<InfoPanel> GetInfoPanel() { return wndInfoPanel_; }
+
 		int GetState() { return windowState_; }
 
 		void ShowLogWindow();
@@ -152,6 +154,9 @@ namespace gstd {
 
 		virtual void _ReadRecord(RecordBuffer& record) {}
 		virtual void _WriteRecord(RecordBuffer& record) {}
+	public:
+		virtual void PanelInitialize() {}
+		virtual void PanelUpdate() {}
 	};
 
 	class WindowLogger::LogPanel : public WindowLogger::Panel {
@@ -168,7 +173,7 @@ namespace gstd {
 		void ClearText();
 	};
 
-	class WindowLogger::InfoPanel : public WindowLogger::Panel, public Thread {
+	class WindowLogger::InfoPanel : public WindowLogger::Panel {
 	private:
 		struct CpuInfo {
 			char venderID[13];
@@ -202,8 +207,6 @@ namespace gstd {
 		HQUERY hQuery_;
 		HCOUNTER hCounter_;
 	protected:
-		virtual void _Run();
-
 		virtual bool _AddedLogger(HWND hTab);
 
 		void _InitializeHandle();
@@ -218,6 +221,8 @@ namespace gstd {
 		virtual void LocateParts();
 
 		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
+
+		virtual void PanelUpdate();
 	};
 #endif
 }

@@ -673,11 +673,8 @@ HRESULT __stdcall ShaderIncludeCallback::Close(LPCVOID pData) {
 //TextureInfoPanel
 //****************************************************************************
 ShaderInfoPanel::ShaderInfoPanel() {
-	timeUpdateInterval_ = 1000;
 }
 ShaderInfoPanel::~ShaderInfoPanel() {
-	Stop();
-	Join(1000);
 }
 bool ShaderInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
@@ -697,7 +694,7 @@ bool ShaderInfoPanel::_AddedLogger(HWND hTab) {
 	wndListView_.AddColumn(72, ROW_TECHNIQUES, L"Techniques");
 
 	SetWindowVisible(false);
-	Start();
+	PanelInitialize();
 
 	return true;
 }
@@ -709,13 +706,10 @@ void ShaderInfoPanel::LocateParts() {
 
 	wndListView_.SetBounds(wx, wy, wWidth, wHeight);
 }
-void ShaderInfoPanel::_Run() {
-	while (GetStatus() == RUN) {
-		Update(ShaderManager::GetBase());
-		Sleep(timeUpdateInterval_);
-	}
-}
-void ShaderInfoPanel::Update(ShaderManager* manager) {
+void ShaderInfoPanel::PanelUpdate() {
+	ShaderManager* manager = ShaderManager::GetBase();
+	if (manager == nullptr) return;
+
 	if (!IsWindowVisible()) return;
 
 	struct ShaderDisplay {

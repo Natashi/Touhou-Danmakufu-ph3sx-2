@@ -52,7 +52,10 @@ std::wstring EPathProperty::GetCommonDataPath(const std::wstring& scriptPath, co
 //ELogger
 //*******************************************************************
 ELogger::ELogger() {
-
+}
+ELogger::~ELogger() {
+	Stop();
+	Join(1000);
 }
 void ELogger::Initialize(bool bFile, bool bWindow) {
 	if (bFile) {
@@ -65,9 +68,52 @@ void ELogger::Initialize(bool bFile, bool bWindow) {
 	WindowLogger::Initialize(bWindow);
 
 	panelCommonData_.reset(new gstd::ScriptCommonDataInfoPanel());
+
+	Start();
 }
 void ELogger::UpdateCommonDataInfoPanel() {
 	panelCommonData_->Update();
+}
+void ELogger::_Run() {
+	time_ = timeGetTime();
+
+	while (GetStatus() == RUN) {
+		DWORD currentTime = timeGetTime();
+		DWORD timeDelta = currentTime - time_;
+
+		for (PanelData& iPanel : listPanel_) {
+			bool bUpdate = false;
+
+			bool bNowVisible = iPanel.panel->IsWindowVisible();
+			if (bNowVisible && !iPanel.bPrevVisible)
+				bUpdate = true;
+
+			iPanel.timer += timeDelta;
+			if (iPanel.timer >= iPanel.updateFreq) {
+				iPanel.timer -= iPanel.updateFreq;
+				bUpdate = true;
+			}
+
+			if (bUpdate) iPanel.panel->PanelUpdate();
+
+			iPanel.bPrevVisible = bNowVisible;
+		}
+
+		time_ = currentTime;
+		::Sleep(1);
+	}
+}
+bool ELogger::EAddPanel(shared_ptr<Panel> panel, const std::wstring& name, DWORD updateFreq) {
+	if (!this->AddPanel(panel, name)) return false;
+
+	PanelData data;
+	data.panel = panel;
+	data.updateFreq = updateFreq;
+	data.timer = 0;
+	data.bPrevVisible = false;
+	listPanel_.push_back(data);
+
+	return true;
 }
 
 //*******************************************************************

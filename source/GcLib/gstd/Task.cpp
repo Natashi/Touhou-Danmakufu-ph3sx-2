@@ -300,7 +300,7 @@ void TaskManager::SetFunctionEnable(bool bEnable, const std::type_info& info, in
 TaskInfoPanel::TaskInfoPanel() {
 	addressLastFindManager_ = 0;
 	timeLastUpdate_ = 0;
-	timeUpdateInterval_ = 500;
+	timeUpdateInterval_ = 2000;
 }
 bool TaskInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
@@ -351,6 +351,7 @@ void TaskInfoPanel::LocateParts() {
 }
 void TaskInfoPanel::Update(TaskManager* taskManager) {
 	if (!IsWindowVisible()) return;
+
 	int time = timeGetTime();
 	if (abs(time - timeLastUpdate_) < timeUpdateInterval_) return;
 	timeLastUpdate_ = time;

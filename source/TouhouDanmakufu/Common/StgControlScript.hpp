@@ -175,10 +175,8 @@ public:
 //*******************************************************************
 //ScriptInfoPanel
 //*******************************************************************
-class ScriptInfoPanel : public WindowLogger::Panel, public gstd::Thread {
+class ScriptInfoPanel : public WindowLogger::Panel {
 protected:
-	int timeUpdateInterval_;
-
 	gstd::CriticalSection lock_;
 
 	WButton buttonTerminateAllScript_;
@@ -192,10 +190,8 @@ protected:
 
 	std::list<weak_ptr<ManagedScript>> listScript_;
 
-	virtual void _Run();
-
 	virtual bool _AddedLogger(HWND hTab);
-	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);//オーバーライド用プロシージャ
+	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void _TerminateScriptAll();
 
@@ -205,6 +201,6 @@ public:
 	~ScriptInfoPanel();
 
 	virtual void LocateParts();
-
-	virtual void Update(StgSystemController* systemController);
+	virtual void PanelUpdate();
+	void Update(StgSystemController* systemController);
 };

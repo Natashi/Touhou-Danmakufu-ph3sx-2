@@ -69,31 +69,38 @@ bool EApplication::_Initialize() {
 	ETaskManager* taskManager = ETaskManager::CreateInstance();
 	taskManager->Initialize();
 
-	shared_ptr<gstd::TaskInfoPanel> panelTask(new gstd::TaskInfoPanel());
-	bool bAddTaskPanel = logger->AddPanel(panelTask, L"Thread");
-	if (bAddTaskPanel) taskManager->SetInfoPanel(panelTask);
+	{
+		logger->EAddPanel(logger->GetInfoPanel(), L"Info", 500);
 
-	shared_ptr<directx::TextureInfoPanel> panelTexture(new directx::TextureInfoPanel());
-	bool bTexturePanel = logger->AddPanel(panelTexture, L"Texture");
-	if (bTexturePanel) textureManager->SetInfoPanel(panelTexture);
+		shared_ptr<gstd::TaskInfoPanel> panelTask(new gstd::TaskInfoPanel());
+		//Updated in TaskManager
+		if (logger->AddPanel(panelTask, L"Thread"))
+			taskManager->SetInfoPanel(panelTask);
 
-	shared_ptr<directx::ShaderInfoPanel> panelShader(new directx::ShaderInfoPanel());
-	bool bShaderPanel = logger->AddPanel(panelShader, L"Shader");
-	if (bShaderPanel) shaderManager->SetInfoPanel(panelShader);
+		shared_ptr<directx::TextureInfoPanel> panelTexture(new directx::TextureInfoPanel());
+		if (logger->EAddPanel(panelTexture, L"Texture", 500))
+			textureManager->SetInfoPanel(panelTexture);
 
-	shared_ptr<directx::DxMeshInfoPanel> panelMesh(new directx::DxMeshInfoPanel());
-	bool bMeshPanel = logger->AddPanel(panelMesh, L"Mesh");
-	if (bMeshPanel) meshManager->SetInfoPanel(panelMesh);
+		shared_ptr<directx::ShaderInfoPanel> panelShader(new directx::ShaderInfoPanel());
+		if (logger->EAddPanel(panelShader, L"Shader", 1000))
+			shaderManager->SetInfoPanel(panelShader);
 
-	shared_ptr<directx::SoundInfoPanel> panelSound(new directx::SoundInfoPanel());
-	bool bSoundPanel = logger->AddPanel(panelSound, L"Sound");
-	if (bSoundPanel) soundManager->SetInfoPanel(panelSound);
+		shared_ptr<directx::DxMeshInfoPanel> panelMesh(new directx::DxMeshInfoPanel());
+		if (logger->EAddPanel(panelMesh, L"Mesh", 1000))
+			meshManager->SetInfoPanel(panelMesh);
 
-	shared_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData = logger->GetScriptCommonDataInfoPanel();
-	logger->AddPanel(panelCommonData, L"Common Data");
+		shared_ptr<directx::SoundInfoPanel> panelSound(new directx::SoundInfoPanel());
+		//Updated in DirectSoundManager
+		if (logger->AddPanel(panelSound, L"Sound"))
+			soundManager->SetInfoPanel(panelSound);
 
-	shared_ptr<ScriptInfoPanel> panelScript(new ScriptInfoPanel());
-	logger->AddPanel(panelScript, L"Script");
+		shared_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData = logger->GetScriptCommonDataInfoPanel();
+		//Updated in StgSystem
+		logger->AddPanel(panelCommonData, L"Common Data");
+
+		shared_ptr<ScriptInfoPanel> panelScript(new ScriptInfoPanel());
+		logger->EAddPanel(panelScript, L"Script", 250);
+	}
 
 	logger->LoadState();
 	logger->SetWindowVisible(config->IsLogWindow());

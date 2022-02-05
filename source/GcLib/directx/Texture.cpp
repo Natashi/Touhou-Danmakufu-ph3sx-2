@@ -768,11 +768,8 @@ std::map<std::wstring, shared_ptr<TextureData>>::iterator TextureManager::IsData
 //TextureInfoPanel
 //****************************************************************************
 TextureInfoPanel::TextureInfoPanel() {
-	timeUpdateInterval_ = 1000;
 }
 TextureInfoPanel::~TextureInfoPanel() {
-	Stop();
-	Join(1000);
 }
 bool TextureInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
@@ -793,7 +790,7 @@ bool TextureInfoPanel::_AddedLogger(HWND hTab) {
 	wndListView_.AddColumn(60, ROW_SIZE, L"Size");
 
 	SetWindowVisible(false);
-	Start();
+	PanelInitialize();
 	
 	return true;
 }
@@ -805,15 +802,10 @@ void TextureInfoPanel::LocateParts() {
 
 	wndListView_.SetBounds(wx, wy, wWidth, wHeight);
 }
-void TextureInfoPanel::_Run() {
-	while (GetStatus() == RUN) {
-		TextureManager* manager = TextureManager::GetBase();
-		if (manager)
-			Update(manager);
-		Sleep(timeUpdateInterval_);
-	}
-}
-void TextureInfoPanel::Update(TextureManager* manager) {
+void TextureInfoPanel::PanelUpdate() {
+	TextureManager* manager = TextureManager::GetBase();
+	if (manager == nullptr) return;
+
 	if (!IsWindowVisible()) return;
 
 	struct TextureDisplay {

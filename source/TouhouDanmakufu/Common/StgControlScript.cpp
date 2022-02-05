@@ -1170,11 +1170,8 @@ gstd::value StgControlScript::Func_SaveReplay(gstd::script_machine* machine, int
 //ScriptInfoPanel
 //*******************************************************************
 ScriptInfoPanel::ScriptInfoPanel() {
-	timeUpdateInterval_ = 500;
 }
 ScriptInfoPanel::~ScriptInfoPanel() {
-	Stop();
-	Join(1000);
 }
 bool ScriptInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
@@ -1220,7 +1217,7 @@ bool ScriptInfoPanel::_AddedLogger(HWND hTab) {
 	wndSplitter2_.SetRatioX(0.45f);
 
 	SetWindowVisible(false);
-	Start();
+	PanelInitialize();
 
 	return true;
 }
@@ -1263,26 +1260,6 @@ void ScriptInfoPanel::LocateParts() {
 	int hScriptList = wHeight - yScriptList;
 
 	wndScript_.SetBounds(wx, yScriptList, wWidth, hScriptList);
-}
-
-void ScriptInfoPanel::_Run() {
-	while (GetStatus() == RUN) {
-		ETaskManager* taskManager = ETaskManager::GetInstance();
-		if (taskManager) {
-			bool bSystemAvailable = false;
-			std::list<shared_ptr<TaskBase>>& listTask = taskManager->GetTaskList();
-			for (auto itr = listTask.begin(); itr != listTask.end(); ++itr) {
-				StgSystemController* systemController = dynamic_cast<StgSystemController*>(itr->get());
-				if (systemController) {
-					Update(systemController);
-					bSystemAvailable = true;
-				}
-			}
-			if (!bSystemAvailable)
-				Update(nullptr);
-		}
-		Sleep(timeUpdateInterval_);
-	}
 }
 
 void ScriptInfoPanel::_TerminateScriptAll() {
@@ -1330,9 +1307,25 @@ const wchar_t* ScriptInfoPanel::GetScriptTypeName(ManagedScript* script) {
 	return L"Unknown";
 }
 
-void ScriptInfoPanel::Update(StgSystemController* systemController) {
+void ScriptInfoPanel::PanelUpdate() {
 	if (!IsWindowVisible()) return;
 
+	ETaskManager* taskManager = ETaskManager::GetInstance();
+	if (taskManager) {
+		bool bSystemAvailable = false;
+		std::list<shared_ptr<TaskBase>>& listTask = taskManager->GetTaskList();
+		for (auto itr = listTask.begin(); itr != listTask.end(); ++itr) {
+			StgSystemController* systemController = dynamic_cast<StgSystemController*>(itr->get());
+			if (systemController) {
+				Update(systemController);
+				bSystemAvailable = true;
+			}
+		}
+		if (!bSystemAvailable)
+			Update(nullptr);
+	}
+}
+void ScriptInfoPanel::Update(StgSystemController* systemController) {
 	std::vector<ScriptManager*> vecScriptManager;
 	std::list<weak_ptr<ScriptManager>> listScriptManager;
 	if (systemController)

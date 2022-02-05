@@ -143,7 +143,7 @@ namespace directx {
 	//****************************************************************************
 	//TextureInfoPanel
 	//****************************************************************************
-	class TextureInfoPanel : public gstd::WindowLogger::Panel, public gstd::Thread {
+	class TextureInfoPanel : public gstd::WindowLogger::Panel {
 	protected:
 		enum {
 			ROW_ADDRESS,
@@ -154,16 +154,14 @@ namespace directx {
 			ROW_HEIGHT_IMAGE,
 			ROW_SIZE,
 		};
-		int timeUpdateInterval_;
 		gstd::WListView wndListView_;
 
 		virtual bool _AddedLogger(HWND hTab);
-		void _Run();
 	public:
 		TextureInfoPanel();
 		~TextureInfoPanel();
 
 		virtual void LocateParts();
-		virtual void Update(TextureManager* manager);
+		virtual void PanelUpdate();
 	};
 }

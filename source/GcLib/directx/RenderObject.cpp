@@ -1909,11 +1909,8 @@ void DxMeshManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> 
 
 //DxMeshInfoPanel
 DxMeshInfoPanel::DxMeshInfoPanel() {
-	timeUpdateInterval_ = 500;
 }
 DxMeshInfoPanel::~DxMeshInfoPanel() {
-	Stop();
-	Join(1000);
 }
 bool DxMeshInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
@@ -1931,7 +1928,7 @@ bool DxMeshInfoPanel::_AddedLogger(HWND hTab) {
 	wndListView_.AddColumn(32, ROW_COUNT_REFFRENCE, L"Ref");
 
 	SetWindowVisible(false);
-	Start();
+	PanelInitialize();
 
 	return true;
 }
@@ -1943,16 +1940,12 @@ void DxMeshInfoPanel::LocateParts() {
 
 	wndListView_.SetBounds(wx, wy, wWidth, wHeight);
 }
-void DxMeshInfoPanel::_Run() {
-	while (GetStatus() == RUN) {
-		DxMeshManager* manager = DxMeshManager::GetBase();
-		if (manager)
-			Update(manager);
-		Sleep(timeUpdateInterval_);
-	}
-}
-void DxMeshInfoPanel::Update(DxMeshManager* manager) {
+void DxMeshInfoPanel::PanelUpdate() {
+	DxMeshManager* manager = DxMeshManager::GetBase();
+	if (manager == nullptr) return;
+
 	if (!IsWindowVisible()) return;
+
 	std::set<std::wstring> setKey;
 	std::map<std::wstring, shared_ptr<DxMeshData>>& mapData = manager->mapMeshData_;
 	std::map<std::wstring, shared_ptr<DxMeshData>>::iterator itrMap;

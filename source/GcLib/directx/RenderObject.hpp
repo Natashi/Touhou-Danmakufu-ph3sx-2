@@ -551,7 +551,7 @@ namespace directx {
 		void SetInfoPanel(shared_ptr<DxMeshInfoPanel> panel) { panelInfo_ = panel; }
 	};
 
-	class DxMeshInfoPanel : public gstd::WindowLogger::Panel, public gstd::Thread {
+	class DxMeshInfoPanel : public gstd::WindowLogger::Panel {
 	protected:
 		enum {
 			ROW_ADDRESS,
@@ -559,15 +559,14 @@ namespace directx {
 			ROW_FULLNAME,
 			ROW_COUNT_REFFRENCE,
 		};
-		int timeUpdateInterval_;
 		gstd::WListView wndListView_;
+
 		virtual bool _AddedLogger(HWND hTab);
-		void _Run();
 	public:
 		DxMeshInfoPanel();
 		~DxMeshInfoPanel();
 
 		virtual void LocateParts();
-		virtual void Update(DxMeshManager* manager);
+		virtual void PanelUpdate();
 	};
 }
