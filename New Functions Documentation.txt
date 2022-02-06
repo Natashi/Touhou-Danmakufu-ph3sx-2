@@ -1026,6 +1026,22 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 	
 	--------------------------------> String <--------------------------------
 	
+	atoi (overload)
+		Arguments:
+			1) (string) value
+			2) (int) base
+		Returns:
+			(int) value
+		Description:
+			Overloaded with 2 arguments.
+			
+			Converts the string into an integer with the specified base.
+			
+			Examples:
+				atoi("3511", 10);		//3511
+				atoi("3511", 16);		//13585
+				atoi("0x7f3", 16);		//2035
+	
 	SplitString2
 		Arguments:
 			1) (string) source string
@@ -1464,6 +1480,26 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			(int) milliseconds
 		Description:
 			Returns the time the engine took to render the previous frame in milliseconds.
+	
+	--------------------------------> Stage Information <--------------------------------
+	
+	SetScore
+		Arguments:
+			1) (int) score
+		Description:
+			Sets the score value.
+	
+	SetGraze
+		Arguments:
+			1) (int) graze
+		Description:
+			Sets the graze count.
+	
+	SetPoint
+		Arguments:
+			1) (int) point
+		Description:
+			Sets the default point item value.
 	
 	--------------------------------> Archive <--------------------------------
 	
