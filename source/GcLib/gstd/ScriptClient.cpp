@@ -156,6 +156,7 @@ static const std::vector<function> commonFunction = {
 	{ "vtos", ScriptClientBase::Func_VtoS, 2 },
 	{ "StringFormat", ScriptClientBase::Func_StringFormat, -4 },	//2 fixed + ... -> 3 minimum
 	{ "atoi", ScriptClientBase::Func_AtoI, 1 },
+	{ "atoi", ScriptClientBase::Func_AtoI, 2 },		//Overloaded
 	{ "ator", ScriptClientBase::Func_AtoR, 1 },
 	{ "TrimString", ScriptClientBase::Func_TrimString, 1 },
 	{ "SplitString", ScriptClientBase::Func_SplitString, 2 },
@@ -1269,8 +1270,9 @@ value ScriptClientBase::Func_StringFormat(script_machine* machine, int argc, con
 	return CreateStringValue(res);
 }
 value ScriptClientBase::Func_AtoI(script_machine* machine, int argc, const value* argv) {
-	std::wstring str = argv->as_string();
-	int64_t num = wcstoll(str.c_str(), nullptr, 10);
+	std::wstring str = argv[0].as_string();
+	int radix = argc > 1 ? argv[1].as_int() : 10;
+	int64_t num = wcstoll(str.c_str(), nullptr, radix);
 	return CreateIntValue(num);
 }
 value ScriptClientBase::Func_AtoR(script_machine* machine, int argc, const value* argv) {
