@@ -98,12 +98,10 @@ public:
 	static gstd::value Func_SetSkipModeKey(gstd::script_machine* machine, int argc, const gstd::value* argv);
 
 	//STG制御共通関数：システム関連
-	static gstd::value Func_GetScore(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_AddScore(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_GetGraze(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_AddGraze(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_GetPoint(gstd::script_machine* machine, int argc, const gstd::value* argv);
-	static gstd::value Func_AddPoint(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	template<int64_t(StgStageInformation::* Func)()>
+	DNH_FUNCAPI_DECL_(Func_StgStageInformation_int64_void);
+	template<void(StgStageInformation::* Func)(int64_t)>
+	DNH_FUNCAPI_DECL_(Func_StgStageInformation_void_int64);
 
 	static gstd::value Func_IsReplay(gstd::script_machine* machine, int argc, const gstd::value* argv);
 

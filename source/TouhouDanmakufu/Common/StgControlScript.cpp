@@ -49,12 +49,15 @@ static const std::vector<function> stgControlFunction = {
 	{ "SetSkipModeKey", StgControlScript::Func_SetSkipModeKey, 1 },
 
 	//STG制御共通関数：システム関連
-	{ "GetScore", StgControlScript::Func_GetScore, 0 },
-	{ "AddScore", StgControlScript::Func_AddScore, 1 },
-	{ "GetGraze", StgControlScript::Func_GetGraze, 0 },
-	{ "AddGraze", StgControlScript::Func_AddGraze, 1 },
-	{ "GetPoint", StgControlScript::Func_GetPoint, 0 },
-	{ "AddPoint", StgControlScript::Func_AddPoint, 1 },
+	{ "GetScore", StgControlScript::Func_StgStageInformation_int64_void<&StgStageInformation::GetScore>, 0 },
+	{ "SetScore", StgControlScript::Func_StgStageInformation_void_int64<&StgStageInformation::SetScore>, 1 },
+	{ "AddScore", StgControlScript::Func_StgStageInformation_void_int64<&StgStageInformation::AddScore>, 1 },
+	{ "GetGraze", StgControlScript::Func_StgStageInformation_int64_void<&StgStageInformation::GetGraze>, 0 },
+	{ "SetGraze", StgControlScript::Func_StgStageInformation_void_int64<&StgStageInformation::SetGraze>, 1 },
+	{ "AddGraze", StgControlScript::Func_StgStageInformation_void_int64<&StgStageInformation::AddGraze>, 1 },
+	{ "GetPoint", StgControlScript::Func_StgStageInformation_int64_void<&StgStageInformation::GetPoint>, 0 },
+	{ "SetPoint", StgControlScript::Func_StgStageInformation_void_int64<&StgStageInformation::SetPoint>, 1 },
+	{ "AddPoint", StgControlScript::Func_StgStageInformation_void_int64<&StgStageInformation::AddGraze>, 1 },
 
 	{ "IsReplay", StgControlScript::Func_IsReplay, 0 },
 
@@ -319,66 +322,34 @@ gstd::value StgControlScript::Func_SetSkipModeKey(gstd::script_machine* machine,
 }
 
 //STG制御共通関数：システム関連
-gstd::value StgControlScript::Func_GetScore(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+template<int64_t(StgStageInformation::* Func)()>
+gstd::value StgControlScript::Func_StgStageInformation_int64_void(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 
 	int64_t res = 0;
 
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController)
-		res = stageController->GetStageInformation()->GetScore();
+	if (stageController) {
+		auto stgInfo = stageController->GetStageInformation().get();
+		res = (stgInfo->*Func)();
+	}
 
 	return script->CreateIntValue(res);
 }
-gstd::value StgControlScript::Func_AddScore(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+template<void(StgStageInformation::* Func)(int64_t)>
+gstd::value StgControlScript::Func_StgStageInformation_void_int64(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
+
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
 	if (stageController) {
 		int64_t inc = argv[0].as_int();
-		stageController->GetStageInformation()->AddScore(inc);
+		auto stgInfo = stageController->GetStageInformation().get();
+		(stgInfo->*Func)(inc);
 	}
+
 	return value();
 }
-gstd::value StgControlScript::Func_GetGraze(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgControlScript* script = (StgControlScript*)machine->data;
 
-	int64_t res = 0;
-
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController)
-		res = stageController->GetStageInformation()->GetGraze();
-
-	return script->CreateIntValue(res);
-}
-gstd::value StgControlScript::Func_AddGraze(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController) {
-		int64_t inc = argv[0].as_int();
-		stageController->GetStageInformation()->AddGraze(inc);
-	}
-	return value();
-}
-gstd::value StgControlScript::Func_GetPoint(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgControlScript* script = (StgControlScript*)machine->data;
-
-	int64_t res = 0;
-
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController)
-		res = stageController->GetStageInformation()->GetPoint();
-
-	return script->CreateIntValue(res);
-}
-gstd::value StgControlScript::Func_AddPoint(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
-	if (stageController) {
-		int64_t inc = argv[0].as_int();
-		stageController->GetStageInformation()->AddPoint(inc);
-	}
-	return value();
-}
 gstd::value StgControlScript::Func_IsReplay(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 
