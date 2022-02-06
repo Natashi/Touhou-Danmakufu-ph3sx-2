@@ -13,7 +13,7 @@ Preamble:
     
         Note:
 
-            Variables and constants SHOULD be declared with explicit type keywords (real, int, bool, char, string, etc.), unless the type is unknown,
+            Variables and constants SHOULD be declared with explicit type keywords (float, int, bool, char, string, etc.), unless the type is unknown,
             in which case either "let" or "var" is used. These keywords are interchangeable, but the scripter MUST decide on one to use consistently.
             
             Variables MUST be written using camelCase*, while constants MUST use SCREAMING_SNAKE_CASE.
@@ -26,7 +26,7 @@ Preamble:
             
             DO:
             
-                real posX, posY;
+                float posX, posY;
                 const int BOSS_RUMIA = 0;
                 const int BOSS_CIRNO = 1;
                 
@@ -45,7 +45,7 @@ Preamble:
             
                 function<void> DoSomething()
                 {
-                    real posX, posY;
+                    float posX, posY;
                     // ...
                 }
             
@@ -74,7 +74,7 @@ Preamble:
             
             EXAMPLE:
             
-                function<void> DoSomethingElse(int foo_, real bar_)
+                function<void> DoSomethingElse(int foo_, float bar_)
                 {
                     // ...
                 }
@@ -112,7 +112,7 @@ Preamble:
         1.1.5: Constants
         
             As mentioned previously, constants MUST use SCREAMING_SNAKE_CASE. All constants SHOULD be defined in a dedicated constant library.
-            Numeric constants SHOULD be integers instead of real numbers (denoted in decimal literals by appending the character "i" at the end,
+            Numeric constants SHOULD be integers instead of float numbers (denoted in decimal literals by appending the character "i" at the end,
             but this is not necessary if the constant type is explicitly defined).
             
             
@@ -147,7 +147,7 @@ Preamble:
                     // ...
                 }
                 
-                function<void> SetSomething(int foo_, real bar_)
+                function<void> SetSomething(int foo_, float bar_)
                 {
                     // ...
                 }
@@ -174,7 +174,7 @@ Preamble:
                     // ...
                 }
                 
-                function<void> DoSomethingElse(bool foo_, real bar_)
+                function<void> DoSomethingElse(bool foo_, float bar_)
                 {
                     DoSomething();
                     // ...
@@ -246,12 +246,12 @@ Preamble:
         
         DO:
         
-            real someNum = 6 * 9 + 4 / 20 - 6 % 66;
+            float someNum = 6 * 9 + 4 / 20 - 6 % 66;
             someNum++;
         
         DON'T:
         
-            real someNum = 6*9+4/20-6%66;
+            float someNum = 6*9+4/20-6%66;
             someNum ++;
         
         // NAZ: I will send you to the Shadow Realm if you don't put spaces in between your operators like in the "DON'T" example. It's entirely unreadable for me.
@@ -282,6 +282,8 @@ Preamble:
         The opening and closing braces of a function, task, or subroutine block MUST go on their own lines, and all lines in between them MUST be indented.
         There MUST also be an empty line following each closing brace.
         The same rules also apply to @Initialize, @MainLoop, @Event, @Finalize, and @Loading.
+		
+		// Natashi: I don't like placing opening curly braces on newlines. *turns half of your body into pizza dough*
         
         Function, task, and subroutine invocations MUST NOT include a space between the identifier and parentheses, if applicable.
         Like parameters, arguments MUST be separated by whitespace, i.e. after each comma.
@@ -306,7 +308,7 @@ Preamble:
                 // ...
             }
             
-            function<void> DoSomething(bool foo_, int bar_, real baz_, char qux_, string quux_)
+            function<void> DoSomething(bool foo_, int bar_, float baz_, char qux_, string quux_)
             {
                 // ...
             }
@@ -542,7 +544,7 @@ Preamble:
         
             task _Main()
             {
-                real dir;
+                float dir;
                 
                 loop {
                     dir = rand(0, 360);
@@ -552,9 +554,9 @@ Preamble:
                 }
             }
             
-            task _Fire(real dir_)
+            task _Fire(float dir_)
             {
-                real speed = 1;
+                float speed = 1;
                 
                 loop (5) {
                     Shoot(speed, dir_);
@@ -563,7 +565,7 @@ Preamble:
                 }
             }
             
-            function<void> Shoot(real speed_, real dir_)
+            function<void> Shoot(float speed_, float dir_)
             {
                 int obj = CreateShotA1(someX, someY, speed_, dir_, someID, 15);
                 ObjShot_SetDeleteFrame(obj, 180);
@@ -573,7 +575,7 @@ Preamble:
         
             task _Main()
             {
-                real dir;
+                float dir;
                 
                 loop {
                     dir = rand(0, 360);
@@ -583,7 +585,7 @@ Preamble:
                 
                 task _Fire()
                 {
-                    real speed = 1;
+                    float speed = 1;
                     
                     loop (5) {
                         Shoot_;
