@@ -3828,17 +3828,64 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 				LERP_DECELERATE:
 					Decelerating interpolation.
 	
-	ObjMove_AddPatternA5
+	ObjMove_AddPatternA2
 		Arguments:
 			1) (int) object ID
 			2) (int) frame
 			3) speed
 			4) angle
 			5) acceleration
-			6) angular velocity
-			7) max speed
-			8) angular acceleration
-			9) angular max velocity
+			6) max speed
+			7) angular velocity
+		Description:
+			Change.
+			
+			Swapped max speed and angular velocity.
+	
+	ObjMove_AddPatternA3
+		Arguments:
+			1) (int) object ID
+			2) (int) frame
+			3) speed
+			4) angle
+			5) acceleration
+			6) max speed
+			7) angular velocity
+			8) (int) shot graphic ID
+		Description:
+			Change.
+			
+			Swapped max speed and angular velocity.
+	
+	ObjMove_AddPatternA4
+		Arguments:
+			1) (int) object ID
+			2) (int) frame
+			3) speed
+			4) angle
+			5) acceleration
+			6) max speed
+			7) angular velocity
+			8) (int) shot graphic ID
+			9) (int) relative object ID
+		Description:
+			Change.
+			
+			Swapped max speed and angular velocity.
+	
+	ObjMove_AddPatternA5
+		Arguments:
+			1)  (int) object ID
+			2)  (int) frame
+			3)  speed
+			4)  angle
+			5)  acceleration
+			6)  max speed
+			7)  angular velocity
+			8)  angular acceleration
+			9)  angular max velocity
+			10) (int) shot graphic ID
+			11) (int) relative object ID
 		Description:
 			Self-explanatory.
 	
