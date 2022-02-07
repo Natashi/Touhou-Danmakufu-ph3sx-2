@@ -1164,6 +1164,16 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			Returns an array of all filepaths stored inside the specified archive.
 			The archive must have already been loaded with AddArchiveFile, otherwise an empty array will be returned.
 	
+	GetWorkingDirectory
+		Returns:
+			(string) working directory
+		Description:
+			Returns the working directory of the engine.
+			
+			The working directory is the directory in which the engine is operating in,
+				and will always be in the same directory as the exe's if the engine was started normally.
+			But there are some cases where the working directory won't necessary be the same as the exe's, such as when the game is started via Steam.
+	
 	GetModuleName
 		Returns:
 			(string) module name
