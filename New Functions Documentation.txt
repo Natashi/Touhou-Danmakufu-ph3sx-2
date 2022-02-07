@@ -3920,7 +3920,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			7)  x max speed
 			8)  y max speed
 			10) angle offset
-			11) angle offset acceleration
+			11) angle offset velocity
 		Description:
 			Self-explanatory.
 	
@@ -3935,7 +3935,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			7)  x max speed
 			8)  y max speed
 			10) angle offset
-			11) angle offset acceleration
+			11) angle offset velocity
 			12) (int) shot graphic ID
 		Description:
 			Self-explanatory.
@@ -3950,7 +3950,8 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			6)  y acceleration
 			7)  x max speed
 			8)  y max speed
-			10) angle offset
+			9)  angle offset
+			10) angle offset velocity
 			11) angle offset acceleration
 			12) angle offset max speed
 			13) (int) shot graphic ID
@@ -4297,9 +4298,11 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 	ObjShot_SetGrazeInvalidFrame
 		Arguments:
 			1) (int) object ID
-			2) (int) frame
+			2) (int) cooldown frame
 		Description:
-			Sets the shot object's graze invalid frame.
+			Sets the shot object's graze cooldown frame.
+			After being grazed, the shot will be put on graze cooldown, wherein it cannot be grazed for the duration.
+			
 			For lasers, the default value is 20.
 			For normal shots, the default value is 2147483647.
 	
@@ -4321,13 +4324,54 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 		Description:
 			Returns whether the shot object is currently able to be grazed.
 	
+	ObjShot_SetPenetrateShotEnable
+		Arguments:
+			1) (int) object ID
+			2) (bool) enable
+		Description:
+			If set to false, the shot will not lose penetration upon collision with an enemy hitbox.
+			
+			Default is true.
+	
+	ObjShot_SetEnemyIntersectionInvalidFrame
+		Arguments:
+			1) (int) object ID
+			2) (int) cooldown
+		Description:
+			Sets the enemy intersection cooldown duration in frames for the shot object.
+			
+			Intersection with an enemy will add the enemy to the shot's cooldown list.
+			The shot will not be able to intersect enemy objects still on hit cooldown.
+			
+			Cooldown is maintained by the shot, not the enemy.
+			Shot A intersecting and putting an enemy on cooldown will not stop Shot B from registering intersection with the same enemy.
+	
+	ObjShot_SetFixedAngle
+		Arguments:
+			1) (int) object ID
+			2) (bool) fixed angle
+		Description:
+			If set to true, the shot will not visually rotate along its movement angle.
+			
+			The default value is specified in the graphic's shot data as "fixed_angle", this function allows you to override that value.
+	
 	ObjShot_SetSpinAngularVelocity
 		Arguments:
 			1) (int) object ID
 			2) spin angular velocity
 		Description:
 			Sets the Z angle spin speed of the shot graphic.
+			
 			The default spin speed is specified in the graphic's shot data as "angular_velocity", this function allows you to override that value.
+	
+	ObjShot_SetDelayAngularVelocity
+		Arguments:
+			1) (int) object ID
+			2) delay angular velocity
+		Description:
+			Sets the Z angle spin speed of the shot's delay cloud.
+			
+			The default delay spin speed is 0.
 	
 	--------------------------------> Straight Laser Object Functions <--------------------------------
 	
