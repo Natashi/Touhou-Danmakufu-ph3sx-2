@@ -42,6 +42,8 @@ StgIntersectionManager::StgIntersectionManager() {
 			countLineVertex_ = 0U;
 			bRenderIntersection_ = false;
 
+			visualizerRenderPri_ = 79;
+
 			{
 				ParticleRenderer2D* objParticleCircle = objIntersectionVisualizerCircle_->GetParticlePointer();
 
@@ -176,6 +178,7 @@ void StgIntersectionManager::Work() {
 }
 void StgIntersectionManager::RenderVisualizer() {
 	if (!bRenderIntersection_) return;
+
 	if (countCircleInstance_ > 0U)
 		objIntersectionVisualizerCircle_->Render();
 	if (countLineVertex_ > 0U)
@@ -474,7 +477,7 @@ std::vector<StgIntersectionSpace::TargetCheckListPair>* StgIntersectionSpace::Cr
 	CriticalSection& criticalSection = manager->GetLock();
 	std::atomic_uint count = 0;
 
-	if (manager->IsRenderIntersection()) {
+	if (manager->IsEnableVisualizer()) {
 		/*
 		ParallelFor(pListTargetA->size(), [&](size_t i) {
 			manager->AddVisualization(pListTargetA->at(i));

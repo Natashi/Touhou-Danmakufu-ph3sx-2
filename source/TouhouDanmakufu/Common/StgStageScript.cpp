@@ -252,6 +252,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "CloseStgScene", StgStageScript::Func_CloseStgScene, 0 },
 	{ "GetReplayFps", StgStageScript::Func_GetReplayFps, 0 },
 	{ "SetIntersectionVisualization", StgStageScript::Func_SetIntersectionVisualization, 1 },
+	{ "SetIntersectionVisualizationRenderPriority", StgStageScript::Func_SetIntersectionVisualizationRenderPriority, 1 },
 
 	//STG共通関数：自機
 	{ "GetPlayerObjectID", StgStageScript::Func_GetPlayerObjectID, 0 },
@@ -956,7 +957,18 @@ gstd::value StgStageScript::Func_SetIntersectionVisualization(gstd::script_machi
 	
 	StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
 	if (intersectionManager) {
-		intersectionManager->SetRenderIntersection(argv[0].as_boolean());
+		intersectionManager->SetEnableVisualizer(argv[0].as_boolean());
+	}
+
+	return value();
+}
+gstd::value StgStageScript::Func_SetIntersectionVisualizationRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	StgIntersectionManager* intersectionManager = stageController->GetIntersectionManager();
+	if (intersectionManager) {
+		intersectionManager->SetVisualizerRenderPriority(argv[0].as_int());
 	}
 
 	return value();
@@ -2891,7 +2903,8 @@ gstd::value StgStageScript::Func_ObjMove_SetSpeedX(gstd::script_machine* machine
 				StgMovePattern_Angle* patternAng = (StgMovePattern_Angle*)pattern.get();
 				double sx = speed;
 				double sy = pattern->GetSpeedY();
-				patternAng->SetDirectionAngle(atan2(sy, sx));
+				double ang = atan2(sy, sx);
+				patternAng->SetDirectionAngle(ang);
 				patternAng->SetSpeed(hypot(sx, sy));
 				goto lab_return;
 			}
@@ -2944,7 +2957,8 @@ gstd::value StgStageScript::Func_ObjMove_SetSpeedY(gstd::script_machine* machine
 				StgMovePattern_Angle* patternAng = (StgMovePattern_Angle*)pattern.get();
 				double sx = pattern->GetSpeedX();
 				double sy = speed;
-				patternAng->SetDirectionAngle(atan2(sy, sx));
+				double ang = atan2(sy, sx);
+				patternAng->SetDirectionAngle(ang);
 				patternAng->SetSpeed(hypot(sx, sy));
 				goto lab_return;
 			}
@@ -2996,7 +3010,8 @@ gstd::value StgStageScript::Func_ObjMove_SetSpeedXY(gstd::script_machine* machin
 			case StgMovePattern::TYPE_ANGLE:
 			{
 				StgMovePattern_Angle* patternAng = (StgMovePattern_Angle*)pattern.get();
-				patternAng->SetDirectionAngle(atan2(speedY, speedX));
+				double ang = atan2(speedY, speedX);
+				patternAng->SetDirectionAngle(ang);
 				patternAng->SetSpeed(hypot(speedX, speedY));
 				goto lab_return;
 			}

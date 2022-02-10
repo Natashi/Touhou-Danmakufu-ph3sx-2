@@ -140,6 +140,8 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	intersectionManager_ = new StgIntersectionManager();
 	pauseManager_ = new StgPauseScene(systemController_);
 
+	intersectionManager_->SetVisualizerRenderPriority(infoStage->GetCameraFocusPermitPriority() - 1);
+
 	//It's a package script, link its manager with the stage's
 	if (StgPackageController* packageController = systemController_->GetPackageController()) {
 		shared_ptr<ScriptManager> packageScriptManager = std::dynamic_pointer_cast<ScriptManager>(packageController->GetScriptManagerRef());

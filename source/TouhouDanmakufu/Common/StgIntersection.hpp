@@ -116,8 +116,9 @@ private:
 	ref_unsync_ptr<DxScriptPrimitiveObject2D> objIntersectionVisualizerLine_;
 	size_t countCircleInstance_;
 	size_t countLineVertex_;
-	bool bRenderIntersection_;
 
+	bool bRenderIntersection_;
+	int visualizerRenderPri_;
 	shared_ptr<Shader> shaderVisualizerCircle_;
 	shared_ptr<Shader> shaderVisualizerLine_;
 
@@ -129,8 +130,10 @@ public:
 	void Work();
 	void RenderVisualizer();
 
-	void SetRenderIntersection(bool b) { bRenderIntersection_ = b; }
-	bool IsRenderIntersection() { return bRenderIntersection_; }
+	void SetEnableVisualizer(bool b) { bRenderIntersection_ = b; }
+	bool IsEnableVisualizer() { return bRenderIntersection_; }
+	void SetVisualizerRenderPriority(int pri) { visualizerRenderPri_ = pri; }
+	int GetVisualizerRenderPriority() { return visualizerRenderPri_; }
 
 	void AddTarget(ref_unsync_ptr<StgIntersectionTarget> target);
 	void AddEnemyTargetToShot(ref_unsync_ptr<StgIntersectionTarget> target);

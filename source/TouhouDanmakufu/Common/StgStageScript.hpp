@@ -188,6 +188,7 @@ public:
 	static gstd::value Func_CloseStgScene(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_GetReplayFps(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_SetIntersectionVisualization);
+	DNH_FUNCAPI_DECL_(Func_SetIntersectionVisualizationRenderPriority);
 
 	//STG共通関数：自機
 	static gstd::value Func_GetPlayerObjectID(gstd::script_machine* machine, int argc, const gstd::value* argv);

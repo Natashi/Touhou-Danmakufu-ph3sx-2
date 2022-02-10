@@ -441,8 +441,11 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 			if (effect) effect->End();
 
 			//Intersection visualizer
-			if (iPri == priMaxStgFrame - 1 /*&& graphics->IsMainRenderLoop()*/) {
-				stageController_->GetIntersectionManager()->RenderVisualizer();
+			{
+				StgIntersectionManager* itscMgr = stageController_->GetIntersectionManager();
+				if (iPri == itscMgr->GetVisualizerRenderPriority() && graphics->IsMainRenderLoop()) {
+					itscMgr->RenderVisualizer();
+				}
 			}
 		}
 
