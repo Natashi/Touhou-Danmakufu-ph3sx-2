@@ -57,7 +57,7 @@ static const std::vector<function> stgControlFunction = {
 	{ "AddGraze", StgControlScript::Func_StgStageInformation_void_int64<&StgStageInformation::AddGraze>, 1 },
 	{ "GetPoint", StgControlScript::Func_StgStageInformation_int64_void<&StgStageInformation::GetPoint>, 0 },
 	{ "SetPoint", StgControlScript::Func_StgStageInformation_void_int64<&StgStageInformation::SetPoint>, 1 },
-	{ "AddPoint", StgControlScript::Func_StgStageInformation_void_int64<&StgStageInformation::AddGraze>, 1 },
+	{ "AddPoint", StgControlScript::Func_StgStageInformation_void_int64<&StgStageInformation::AddPoint>, 1 },
 
 	{ "IsReplay", StgControlScript::Func_IsReplay, 0 },
 
