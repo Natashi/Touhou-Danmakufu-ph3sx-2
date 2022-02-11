@@ -4,7 +4,7 @@ A modified version of Touhou Danmakufu ph3 geared towards optimization and avail
 DnhViewer is not provided nor supported.
 
 Not guaranteed to not randomly crash. Report crashes and bugs [in the "Issues" page](https://github.com/Natashi/Touhou-Danmakufu-ph3sx-2/issues), or [the ph3sx Discord server](https://discord.gg/f9KFujKGEx).<br>
-Not fully backwards-compatible with vanilla ph3. Replays files, saved commmon data files, and .dat archives for vanilla ph3 can't be used for ph3sx, and vice versa.
+Not fully backwards-compatible with vanilla ph3. Replays files, saved common data files, and .dat archives for vanilla ph3 can't be used for ph3sx, and vice versa.
 
 Originally made to be used for Sapphire Panlogism and Treasure Castle Labyrinth.
 
