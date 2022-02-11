@@ -28,5 +28,7 @@ Originally made to be used for Sapphire Panlogism and Treasure Castle Labyrinth.
   - WishMaker's Danmakufu ph3.5 Woo Edition. Offers performance boost while being backwards compatible with vanilla ph3.
 - <https://github.com/nazjun/Touhou-Danmakufu-ph3sx-zlabel>
   - A fork of ph3sx maintained by [Naudiz](https://github.com/nazjun) and [NicholasLogan](https://github.com/NicholasLogan).
+- <https://github.com/Demonese/Touhou-Danmakufu-ph3sx-cmake>
+  - A CMake build system for ph3sx created by [Demonese](https://github.com/Demonese), for automating the acquisition of required libraries and the generation of project files for other build systems than VS2019.
 
-*Note: The "-2" part in "ph3sx-2" doesn't mean anything, just that this current repo is actually a re-upload of the original ph3sx repo that had to be privated for security reasons.*
+*Note: The "-2" part in "ph3sx-2" doesn't mean anything, just that this current repo is actually a re-upload of the original ph3sx repo that I had to make private for security reasons.*
