@@ -1675,24 +1675,29 @@ void StgNormalShotObject::_SendDeleteEvent(int type) {
 }
 
 void StgNormalShotObject::SetShotDataID(int id) {
+	bool bPreserveSpin = id < 0;	//If id is negative, preserve angle and spin
+
 	StgShotData* oldData = _GetShotData();
-	StgShotObject::SetShotDataID(id);
+	StgShotObject::SetShotDataID(abs(id));
 
 	StgShotData* shotData = _GetShotData();
 	if (shotData != nullptr && oldData != shotData) {
-		if (angularVelocity_ != 0) {
-			angularVelocity_ = 0;
-			angle_.z = 0;
-		}
+		double newSpin = 0;
 
 		double avMin = shotData->GetAngularVelocityMin();
 		double avMax = shotData->GetAngularVelocityMax();
-		bFixedAngle_ = shotData->IsFixedAngle();
-		if (avMin != 0 || avMax != 0) {
+		if (avMin != avMax) {
 			ref_count_ptr<StgStageInformation> stageInfo = stageController_->GetStageInformation();
 			shared_ptr<RandProvider> rand = stageInfo->GetRandProvider();
-			angularVelocity_ = rand->GetReal(avMin, avMax);
+			newSpin = rand->GetReal(avMin, avMax);
 		}
+		else newSpin = avMin;
+
+		if (!bPreserveSpin) {
+			angularVelocity_ = newSpin;
+			angle_.z = 0;
+		}
+		bFixedAngle_ = shotData->IsFixedAngle();
 	}
 }
 
