@@ -201,7 +201,7 @@ public:
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return hypot(c_, s_); }
-	virtual inline double GetDirectionAngle() { return atan2(s_, c_); }
+	virtual inline double GetDirectionAngle() { return (c_ != 0 && s_ != 0) ? atan2(s_, c_) : 0; }
 
 	virtual double GetSpeedX() { return c_; }
 	virtual double GetSpeedY() { return s_; }
@@ -216,6 +216,8 @@ public:
 	double GetAccelerationY() { return accelerationY_; }
 	double GetMaxSpeedX() { return maxSpeedX_; }
 	double GetMaxSpeedY() { return maxSpeedY_; }
+
+	static double GetDirectionSignRelative(double baseAngle, double sx, double sy);
 };
 
 class StgMovePattern_XY_Angle : public StgMovePattern {

@@ -172,17 +172,25 @@ void StgMovePattern_Angle::Activate(StgMovePattern* _src) {
 		}
 		else if (_src->GetType() == TYPE_XY) {
 			StgMovePattern_XY* src = (StgMovePattern_XY*)_src;
-			speed_ = src->GetSpeed();
 			angDirection_ = src->GetDirectionAngle();
-			acceleration_ = hypot(src->GetAccelerationX(), src->GetAccelerationY());
-			maxSpeed_ = hypot(src->GetMaxSpeedX(), src->GetMaxSpeedY());
+
+			speed_ = src->GetSpeed();
+
+			double _ax = src->GetAccelerationX(), _ay = src->GetAccelerationY();
+			double _mx = src->GetMaxSpeedX(), _my = src->GetMaxSpeedY();
+			acceleration_ = hypot(_ax, _ay) * StgMovePattern_XY::GetDirectionSignRelative(angDirection_, _ax, _ay);
+			maxSpeed_ = hypot(_mx, _my) * StgMovePattern_XY::GetDirectionSignRelative(angDirection_, _mx, _my);
 		}
 		else if (_src->GetType() == TYPE_XY_ANG) {
 			StgMovePattern_XY_Angle* src = (StgMovePattern_XY_Angle*)_src;
-			speed_ = src->GetSpeed();
 			angDirection_ = src->GetDirectionAngle();
-			acceleration_ = hypot(src->GetAccelerationX(), src->GetAccelerationY());
-			maxSpeed_ = hypot(src->GetMaxSpeedX(), src->GetMaxSpeedY());
+
+			speed_ = src->GetSpeed();
+
+			double _ax = src->GetAccelerationX(), _ay = src->GetAccelerationY();
+			double _mx = src->GetMaxSpeedX(), _my = src->GetMaxSpeedY();
+			acceleration_ = hypot(_ax, _ay) * StgMovePattern_XY::GetDirectionSignRelative(angDirection_, _ax, _ay);
+			maxSpeed_ = hypot(_mx, _my) * StgMovePattern_XY::GetDirectionSignRelative(angDirection_, _mx, _my);
 		}
 		else if (_src->GetType() == TYPE_LINE) {
 			StgMovePattern_Line* src = dynamic_cast<StgMovePattern_Line*>(_src);
@@ -382,6 +390,12 @@ void StgMovePattern_XY::Activate(StgMovePattern* _src) {
 	}
 
 	_RegisterShotDataID();
+}
+
+double StgMovePattern_XY::GetDirectionSignRelative(double baseAngle, double sx, double sy) {
+	double ang2 = (sx != 0 && sy != 0) ? atan2(sy, sx) : 0;;
+	double angDist = Math::AngleDifferenceRad(baseAngle, ang2);
+	return cos(angDist) > 0 ? 1 : -1;
 }
 
 //****************************************************************************
