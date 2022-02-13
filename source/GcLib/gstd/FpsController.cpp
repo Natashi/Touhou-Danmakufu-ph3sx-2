@@ -92,14 +92,12 @@ void StaticFpsController::Wait() {
 
 		if (bUseTimer_ || rateSkip_ != 0) {
 			_Sleep(sleepTime);
-			timeError_ = secDelta - sleepTime * fpsTarget;
+			timeError_ = std::max<int>(secDelta % fpsTarget, 0);
 		}
-		if (timeError_ < 0) timeError_ = 0;
 	}
 
 	if (timeDelta > 0)
-		listFps_.push_back(timeCurrent - timePrevious_ + ceil(sleepTime));
-	timePrevious_ = GetCpuTime();
+		listFps_.push_back(timeDelta + floor(sleepTime));
 
 	if (timeCurrent - timeCurrentFpsUpdate_ >= 500) {
 		if (listFps_.size() > 0) {
@@ -107,7 +105,7 @@ void StaticFpsController::Wait() {
 			for (DWORD iFps : listFps_)
 				tFpsCurrent += iFps;
 
-			fpsCurrent_ = 1000.0f / (tFpsCurrent / (float)listFps_.size());
+			fpsCurrent_ = 1000 / (tFpsCurrent / (float)listFps_.size());
 			listFps_.clear();
 		}
 		else fpsCurrent_ = 0;
@@ -120,6 +118,8 @@ void StaticFpsController::Wait() {
 	if (bFastMode_) rateSkip = fastModeFpsRate_ / 60U;
 	countSkip_ %= (rateSkip + 1);
 	bCriticalFrame_ = false;
+
+	timePrevious_ = GetCpuTime();
 }
 bool StaticFpsController::IsSkip() {
 	size_t rateSkip = rateSkip_;
