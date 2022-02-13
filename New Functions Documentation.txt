@@ -3473,6 +3473,14 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 				Yellow  : Enemy hitbox+killbox
 				Red     : Enemy shot
 	
+	SetIntersectionVisualizationRenderPriority
+		Arguments:
+			1) (int) render priority
+		Description:
+			Sets the render priority of hitbox visualizations.
+			
+			Default value is 68. (GetCameraFocusPermitPriorityI() - 1)
+	
 	--------------------------------> Player Functions <--------------------------------
 	
 	GetPlayerScriptID
@@ -3838,7 +3846,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 				LERP_DECELERATE:
 					Decelerating interpolation.
 	
-	ObjMove_AddPatternA2
+	ObjMove_AddPatternA2 (overload)
 		Arguments:
 			1) (int) object ID
 			2) (int) frame
@@ -3848,9 +3856,9 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			6) max speed
 			7) angular velocity
 		Description:
-			Change.
+			Overloaded with 7 arguments.
 			
-			Swapped max speed and angular velocity.
+			Additional ability to specify angular velocity.
 	
 	ObjMove_AddPatternA3
 		Arguments:
@@ -4329,7 +4337,8 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			1) (int) object ID
 			2) (bool) enable
 		Description:
-			If set to false, the shot will not lose penetration upon collision with an enemy hitbox.
+			If set to false, the shot will not lose penetration upon collision with another enemy shot.
+			Intended to be used with players shots, in tandem with ObjShot_SetEraseShot.
 			
 			Default is true.
 	

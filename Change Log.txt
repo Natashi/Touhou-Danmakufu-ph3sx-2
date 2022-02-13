@@ -1,5 +1,26 @@
 A mostly-complete history log of engine updates can be found here.
 
+1.32b
+	Changes:
+		- All functions and actions that change a shot's graphic ID has an additional feature:
+			- The actual graphic ID will be the absolute value of the value received.
+			- If the value received was negative, the graphic change operation will preserve the shot's previous spin angular velocity and Z-angle.
+			- Affected functions and actions:
+				- ObjShot_SetGraphic
+				- ObjMove_AddPatternA3
+				- ObjMove_AddPatternA4
+				- ObjMove_AddPatternB3
+				- ObjMove_AddPatternC3
+				- ObjMove_AddPatternC4
+				- TRANSFORM_GRAPHIC_CHANGE
+	Additions:
+		- Added an instruction on how to get ph3sx to work with Wine. (Check readme.txt)
+		- Added SetIntersectionVisualizationRenderPriority.
+	Bug fixes:
+		- Fixed incorrect documentation for some functions.
+		- Fixed AddPoint not working correctly.
+		- Fixed some issues with acceleration and max speed when converting from B-movement to A-movement or C-movement with AddPattern.
+
 1.32a
 	Changes:
 		- Renamed "real" to "float".
@@ -20,7 +41,6 @@ A mostly-complete history log of engine updates can be found here.
 			- ObjMove_SetAngularVelocity
 		- Swapped the "shot graphic ID" and "target ID" arguments in ObjMove_AddPatternA4.
 		- Swapped the "max speed" and "angular velocity" arguments of the following functions:
-			- CreateShotA2
 			- ObjMove_AddPatternA2
 			- ObjMove_AddPatternA3
 			- ObjMove_AddPatternA4
