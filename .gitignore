@@ -283,6 +283,9 @@ __pycache__/
 /library/zlibstatic.lib
 /library/zlibdynamic.lib
 
+# kissfft
+/source/ext/kissfft/*
+
 # Steam API
 /source/ext/steam_api/*
 /source/Steam/*
