@@ -866,22 +866,32 @@ continue_as_variadic:
 	case token_kind::tk_cast_char:
 	case token_kind::tk_cast_bool:
 	case token_kind::tk_cast_string:
+	case token_kind::tk_decl_int:
+	case token_kind::tk_decl_float:
+	case token_kind::tk_decl_char:
+	case token_kind::tk_decl_bool:
+	case token_kind::tk_decl_string:
 	{
 		type_data* target = nullptr;
 		switch (state->next()) {
 		case token_kind::tk_cast_int:
+		case token_kind::tk_decl_int:
 			target = script_type_manager::get_int_type();
 			break;
 		case token_kind::tk_cast_float:
+		case token_kind::tk_decl_float:
 			target = script_type_manager::get_float_type();
 			break;
 		case token_kind::tk_cast_char:
+		case token_kind::tk_decl_char:
 			target = script_type_manager::get_char_type();
 			break;
 		case token_kind::tk_cast_bool:
+		case token_kind::tk_decl_bool:
 			target = script_type_manager::get_boolean_type();
 			break;
 		case token_kind::tk_cast_string:
+		case token_kind::tk_decl_string:
 			target = script_type_manager::get_string_type();
 			break;
 		}
