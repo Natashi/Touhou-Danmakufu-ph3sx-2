@@ -4,17 +4,20 @@ Download these libraries and put the listed header files into the folders descri
 		
 		zlib/zconf.h
 		zlib/zlib.h
-		
+	
 	[libogg 1.3.4]		-> https://xiph.org/
 		
 		ogg/ogg.h
 		ogg/os_types.h
-		
+	
 	[libvorbis 1.3.6]	-> https://xiph.org/
 		
 		vorbis/codec.h
 		vorbis/vorbisfile.h
-
+	
+	[kissfft 130]		-> https://sourceforge.net/projects/kissfft/files/kissfft/
+		
+		kissfft/kissfft.hh
 
 Complete folder structure should look like this:
 
@@ -33,3 +36,6 @@ Complete folder structure should look like this:
 	|---/vorbis
 	|	|	codec.h
 	|	|	vorbisfile.h
+	|
+	|---/kissfft
+	|	|	kissfft.hh

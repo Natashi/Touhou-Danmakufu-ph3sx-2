@@ -1,3 +1,5 @@
+MIT License
+
 Copyright 2020-2022 Natashi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), 
@@ -13,7 +15,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 ------------------------------------
 
 https://github.com/Natashi/Touhou-Danmakufu-ph3sx-2
-		
+
 Natashi
 - Discord:  https://discord.gg/f9KFujKGEx
 - GitHub:   https://github.com/Natashi
