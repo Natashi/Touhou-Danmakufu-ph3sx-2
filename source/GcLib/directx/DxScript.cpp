@@ -463,6 +463,7 @@ static const std::vector<function> dxFunction = {
 	//{ "ObjSound_DebugGetCopyPos", DxScript::Func_ObjSound_DebugGetCopyPos, 1 },
 	{ "ObjSound_SetFrequency", DxScript::Func_ObjSound_SetFrequency, 2 },
 	{ "ObjSound_GetInfo", DxScript::Func_ObjSound_GetInfo, 2 },
+	{ "ObjSound_GetSamplesFFT", DxScript::Func_ObjSound_GetSamplesFFT, 4 },
 
 	//File object functions
 	{ "ObjFile_Create", DxScript::Func_ObjFile_Create, 1 },
@@ -4827,6 +4828,30 @@ gstd::value DxScript::Func_ObjSound_GetInfo(gstd::script_machine* machine, int a
 	}
 
 	return value();
+}
+gstd::value DxScript::Func_ObjSound_GetSamplesFFT(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	int id = argv[0].as_int();
+	DWORD durationMs = argv[1].as_int();
+	size_t resolution = argv[2].as_int();
+	bool bAutoLog = argv[3].as_boolean();
+
+	value res;
+	std::vector<double> fftResult;
+	fftResult.resize(resolution, 0);
+	
+	if (resolution > 0) {
+		DxSoundObject* obj = script->GetObjectPointerAs<DxSoundObject>(id);
+		if (obj) {
+			shared_ptr<SoundPlayer> player = obj->GetPlayer();
+			if (player) {
+				player->GetSamplesFFT(durationMs, resolution, bAutoLog, fftResult);
+			}
+		}
+	}
+
+	return script->CreateFloatArrayValue(fftResult);
 }
 
 //Dx関数：ファイル操作(DxFileObject)

@@ -2,6 +2,8 @@
 
 #include "DirectSound.hpp"
 
+#include <kissfft/kissfft.hh>
+
 using namespace gstd;
 using namespace directx;
 
@@ -1092,6 +1094,142 @@ void SoundPlayer::SetFrequency(DWORD freq) {
 	}
 }
 
+void SoundPlayer::_LoadSamples(byte* pWaveData, size_t nSamples, double* pRes) {
+	DWORD sampleRate = soundSource_->formatWave_.nSamplesPerSec;
+	DWORD bytePerSample = soundSource_->formatWave_.wBitsPerSample / 8U;
+	DWORD nBlockAlign = soundSource_->formatWave_.nBlockAlign;
+	DWORD nChannels = soundSource_->formatWave_.nChannels;
+	DWORD bytePerPCM = bytePerSample / nChannels;
+
+	const DWORD STHRESHOLD = 1U << (nBlockAlign / nChannels * 8 - 1);
+
+	if (nChannels == 1) {
+		for (size_t i = 0; i < nSamples; ++i) {
+			byte* pData = (byte*)pWaveData + (i * nBlockAlign);
+
+			int64_t val = 0;
+			for (size_t j = 0; j < nBlockAlign; ++j) {
+				val += pData[j] << (j * 8);
+			}
+			if (val > STHRESHOLD - 1) {
+				val -= STHRESHOLD * 2;
+			}
+
+			pRes[i] = val / (double)STHRESHOLD;
+		}
+	}
+	else if (nChannels == 2) {
+		for (size_t i = 0; i < nSamples; ++i) {
+			byte* pData = (byte*)pWaveData + (i * nBlockAlign);
+
+			int64_t val = 0;
+			int c = 0;
+			for (size_t j = 0; j < nChannels; ++j) {
+				val ^= pData[j] << (c * 8);
+				++c;
+			}
+			if (val > STHRESHOLD - 1) {
+				val -= STHRESHOLD * 2;
+			}
+
+			pRes[i] = val / (double)STHRESHOLD;
+		}
+	}
+	else {
+		for (size_t i = 0; i < nSamples; ++i) {
+			pRes[i] = 0;
+		}
+	}
+}
+void SoundPlayer::_DoFFT(const std::vector<double>& bufIn, std::vector<double>& bufOut, double multiplier, bool bAutoLog) {
+	size_t cSamples = bufIn.size();
+	size_t nResolution = bufOut.size();
+
+	//Pad the input size to the next power of 2
+	/*
+	size_t cSamplesP2 = 1;
+	while (cSamplesP2 < cSamples)
+		cSamplesP2 = cSamplesP2 << 1;
+	*/
+	size_t cSamplesP2 = pow(2, round(log2(cSamples)));
+	size_t fillSize = std::min(cSamples, cSamplesP2);
+
+	kissfft<double> fft(fillSize, true);
+
+	std::vector<std::complex<double>> ffin(cSamplesP2, std::complex<double>(0, 0));
+	std::vector<std::complex<double>> ffout(cSamplesP2);
+	
+	for (size_t i = 0; i < fillSize; ++i) {
+		//Apply the Hann window function
+		double window = 0.54 * (1 - cos(2 * GM_PI * i / (fillSize - 1)));
+		window *= multiplier;
+		ffin[i] = std::complex<double>(bufIn[i] * window, 0);
+	}
+
+	fft.transform(ffin.data(), ffout.data());
+
+	double avgPower = ffout[0].real();
+
+	size_t halfSamp = cSamplesP2 / 2;
+	for (size_t i = 1; i < halfSamp; ++i) {
+		double norm = std::norm(ffout[i]);
+		ffout[i - 1] = { log(norm + 1), 0 };
+	}
+
+	size_t len = halfSamp - 1;
+	for (size_t i = 0; i < nResolution; ++i) {
+		double pos = i / (double)nResolution;
+		if (bAutoLog) {
+			//inverse function of [log10(1 + 99 * pos) / 2]
+			constexpr double LOG_F = 1.69460519893;
+			pos = 2 * (pow(10, LOG_F * pos) - 1) / 99;
+		}
+		pos *= len;
+
+		size_t from = floor(pos);
+		size_t to = std::min<size_t>(from + 1, len);
+
+		double val = Math::Lerp::Smooth(ffout[from].real(), ffout[to].real(), pos - from);
+		bufOut[i] = val;
+	}
+}
+bool SoundPlayer::GetSamplesFFT(DWORD durationMs, size_t resolution, bool bAutoLog, std::vector<double>& res) {
+	res.resize(resolution, 0);
+
+	if (durationMs > 0 && pDirectSoundBuffer_ && IsPlaying()) {
+		DWORD sampleRate = soundSource_->formatWave_.nSamplesPerSec;
+		DWORD bytePerSample = soundSource_->formatWave_.wBitsPerSample / 8U;
+		DWORD nChannels = soundSource_->formatWave_.nChannels;
+
+		DWORD samplesNeeded = durationMs * sampleRate / 1000U;
+		if (samplesNeeded > sampleRate / 4 || samplesNeeded < 32) return false;
+
+		DWORD cAudioPos = GetCurrentPosition();
+		DWORD cAudioPosMax = soundSource_->audioSizeTotal_;
+		DWORD sizeLock = std::min(cAudioPosMax - cAudioPos, samplesNeeded * bytePerSample);
+
+		std::vector<double> samples;
+
+		void* pMem;
+		DWORD dwSize;
+		HRESULT hr = pDirectSoundBuffer_->Lock(cAudioPos, sizeLock, &pMem, &dwSize, nullptr, nullptr, 0);
+		if (SUCCEEDED(hr)) {
+			samples.resize(samplesNeeded);
+
+			_LoadSamples((byte*)pMem, samplesNeeded, samples.data());
+
+			pDirectSoundBuffer_->Unlock(pMem, dwSize, nullptr, 0);
+		}
+		else return false;
+		
+		_DoFFT(samples, res, GetVolumeRate() / 100, bAutoLog);
+
+		return true;
+	}
+
+	return false;
+}
+
 //*******************************************************************
 //SoundStreamingPlayer
 //*******************************************************************
@@ -1238,7 +1376,8 @@ bool SoundStreamingPlayer::Stop() {
 		if (pDirectSoundBuffer_)
 			pDirectSoundBuffer_->Stop();
 
-		thread_->Stop();
+		if (!thread_->IsStop())
+			thread_->Stop();
 	}
 	return true;
 }
@@ -1268,6 +1407,50 @@ DWORD SoundStreamingPlayer::GetCurrentPosition() {
 		return p0 + currentReader;
 	else
 		return p1 + currentReader - bufferPositionAtCopy_[0];
+}
+
+bool SoundStreamingPlayer::GetSamplesFFT(DWORD durationMs, size_t resolution, bool bAutoLog, std::vector<double>& res) {
+	res.resize(resolution, 0);
+
+	if (durationMs > 0 && pDirectSoundBuffer_ && IsPlaying()) {
+		DWORD sampleRate = soundSource_->formatWave_.nSamplesPerSec;
+		DWORD bytePerSample = soundSource_->formatWave_.wBitsPerSample / 8U;
+		DWORD nChannels = soundSource_->formatWave_.nChannels;
+
+		DWORD samplesNeeded = durationMs * sampleRate / 1000U;
+		if (samplesNeeded > sampleRate / 4 || samplesNeeded < 32) return false;
+
+		DWORD sizeLock = samplesNeeded * bytePerSample;
+
+		DWORD currentPos = 0;
+		if (pDirectSoundBuffer_) {
+			HRESULT hr = pDirectSoundBuffer_->GetCurrentPosition(&currentPos, nullptr);
+			if (FAILED(hr)) currentPos = 0;
+		}
+
+		std::vector<double> samples;
+
+		void* pMem1, *pMem2;
+		DWORD dwSize1, dwSize2;
+		HRESULT hr = pDirectSoundBuffer_->Lock(currentPos, sizeLock, &pMem1, &dwSize1, &pMem2, &dwSize2, 0);
+		if (SUCCEEDED(hr)) {
+			samples.resize(samplesNeeded);
+
+			DWORD sampSize1 = dwSize1 / bytePerSample;
+			_LoadSamples((byte*)pMem1, sampSize1, samples.data());
+			if (dwSize2 > 0)
+				_LoadSamples((byte*)pMem2, dwSize2 / bytePerSample, samples.data() + sampSize1);
+
+			pDirectSoundBuffer_->Unlock(pMem1, dwSize1, pMem2, dwSize2);
+		}
+		else return false;
+
+		_DoFFT(samples, res, GetVolumeRate() / 100, bAutoLog);
+
+		return true;
+	}
+
+	return false;
 }
 
 //StreamingThread

@@ -240,8 +240,7 @@ namespace directx {
 		};
 
 		static void PtrDelete(SoundPlayer* p) {
-			if (p->pDirectSoundBuffer_)
-				p->pDirectSoundBuffer_->Stop();
+			p->~SoundPlayer();
 			delete p;
 		}
 	protected:
@@ -270,6 +269,9 @@ namespace directx {
 
 		virtual bool _CreateBuffer(shared_ptr<SoundSourceData> source) = 0;
 		static LONG _GetVolumeAsDirectSoundDecibel(float rate);
+
+		void _LoadSamples(byte* pWaveData, size_t pSize, double* pRes);
+		void _DoFFT(const std::vector<double>& bufIn, std::vector<double>& bufOut, double multiplier, bool bAutoLog);
 	public:
 		SoundPlayer();
 		virtual ~SoundPlayer();
@@ -311,6 +313,8 @@ namespace directx {
 		virtual DWORD GetCurrentPosition();
 
 		void SetFrequency(DWORD freq);
+
+		virtual bool GetSamplesFFT(DWORD durationMs, size_t resolution, bool bAutoLog, std::vector<double>& res);
 	};
 
 	//*******************************************************************
@@ -353,6 +357,8 @@ namespace directx {
 
 		virtual DWORD GetCurrentPosition();
 		DWORD* DbgGetStreamCopyPos() { return lastStreamCopyPos_; }
+
+		virtual bool GetSamplesFFT(DWORD durationMs, size_t resolution, bool bAutoLog, std::vector<double>& res);
 	};
 	class SoundStreamingPlayer::StreamingThread : public gstd::Thread, public gstd::InnerClass<SoundStreamingPlayer> {
 	public:
