@@ -18,6 +18,7 @@ Download these libraries and put the listed header files into the folders descri
 	[kissfft 130]		-> https://sourceforge.net/projects/kissfft/files/kissfft/
 		
 		kissfft/kissfft.hh
+			** Go to line 267, and change it to `std::vector<cpx_type> scratchbuf(p);`
 
 Complete folder structure should look like this:
 
