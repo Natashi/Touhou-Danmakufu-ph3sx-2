@@ -1145,13 +1145,14 @@ void SoundPlayer::_DoFFT(const std::vector<double>& bufIn, std::vector<double>& 
 	size_t cSamples = bufIn.size();
 	size_t nResolution = bufOut.size();
 
-	//Pad the input size to the next power of 2
-	/*
-	size_t cSamplesP2 = 1;
-	while (cSamplesP2 < cSamples)
-		cSamplesP2 = cSamplesP2 << 1;
-	*/
-	size_t cSamplesP2 = pow(2, round(log2(cSamples)));
+	size_t cSamplesP2 = 0;
+	{
+		size_t nextPow2 = pow(2, ceil(log2(cSamples)));
+		size_t prevPow2 = nextPow2 >> 1;
+
+		//Round to the nearest power of two
+		cSamplesP2 = ((nextPow2 - cSamples) < (cSamples - prevPow2)) ? nextPow2 : prevPow2;
+	}
 	size_t fillSize = std::min(cSamples, cSamplesP2);
 
 	kissfft<double> fft(fillSize, true);
@@ -1162,7 +1163,7 @@ void SoundPlayer::_DoFFT(const std::vector<double>& bufIn, std::vector<double>& 
 	for (size_t i = 0; i < fillSize; ++i) {
 		//Apply the Hann window function
 		double window = 0.54 * (1 - cos(2 * GM_PI * i / (fillSize - 1)));
-		window *= multiplier;
+		//window *= multiplier;
 		ffin[i] = std::complex<double>(bufIn[i] * window, 0);
 	}
 
@@ -1170,7 +1171,7 @@ void SoundPlayer::_DoFFT(const std::vector<double>& bufIn, std::vector<double>& 
 
 	double avgPower = ffout[0].real();
 
-	size_t halfSamp = cSamplesP2 / 2;
+	size_t halfSamp = std::min(cSamplesP2, cSamples) / 2;
 	for (size_t i = 1; i < halfSamp; ++i) {
 		double norm = std::norm(ffout[i]);
 		ffout[i - 1] = { log(norm + 1), 0 };
@@ -1202,7 +1203,7 @@ bool SoundPlayer::GetSamplesFFT(DWORD durationMs, size_t resolution, bool bAutoL
 		DWORD nChannels = soundSource_->formatWave_.nChannels;
 
 		DWORD samplesNeeded = durationMs * sampleRate / 1000U;
-		if (samplesNeeded > sampleRate / 4 || samplesNeeded < 32) return false;
+		samplesNeeded = std::clamp<DWORD>(samplesNeeded, 32, sampleRate / 4);
 
 		DWORD cAudioPos = GetCurrentPosition();
 		DWORD cAudioPosMax = soundSource_->audioSizeTotal_;
@@ -1418,7 +1419,7 @@ bool SoundStreamingPlayer::GetSamplesFFT(DWORD durationMs, size_t resolution, bo
 		DWORD nChannels = soundSource_->formatWave_.nChannels;
 
 		DWORD samplesNeeded = durationMs * sampleRate / 1000U;
-		if (samplesNeeded > sampleRate / 4 || samplesNeeded < 32) return false;
+		samplesNeeded = std::clamp<DWORD>(samplesNeeded, 32, sampleRate / 4);
 
 		DWORD sizeLock = samplesNeeded * bytePerSample;
 
