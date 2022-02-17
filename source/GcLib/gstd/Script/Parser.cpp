@@ -136,6 +136,8 @@ static const std::vector<function> base_operations = {
 	{ "modc", BaseFunction::modc, 2 },
 	{ "power", BaseFunction::power, 2 },
 
+	{ "as_x", BaseFunction::cast_x, 2 },
+
 	{ "as_int_array", BaseFunction::cast_int_array, 1 },
 	{ "as_float_array", BaseFunction::cast_float_array, 1 },
 	{ "as_bool_array", BaseFunction::cast_bool_array, 1 },

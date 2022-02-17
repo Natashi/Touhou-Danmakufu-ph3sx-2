@@ -372,6 +372,27 @@ namespace gstd {
 
 	//-------------------------------------------------------------------------------------------
 
+	value BaseFunction::cast_x(script_machine* machine, int argc, const value* argv) {
+		const value& src = argv[0];
+		int type = argv[1].as_int();
+
+		switch (type) {
+		case type_data::tk_int:
+			return value(script_type_manager::get_int_type(), src.as_int());
+		case type_data::tk_float:
+			return value(script_type_manager::get_float_type(), src.as_float());
+		case type_data::tk_char:
+			return value(script_type_manager::get_char_type(), src.as_char());
+		case type_data::tk_boolean:
+			return value(script_type_manager::get_boolean_type(), src.as_boolean());
+		case type_data::tk_string:
+			return value(script_type_manager::get_string_type(), src.as_string());
+		}
+
+		machine->raise_error("Invalid type for type casting.\r\n");
+		return value();
+	}
+
 	type_data* __cast_array(script_machine* machine, type_data* rootType, value* val, type_data* setType) {
 		std::vector<value> arrVal(val->length_as_array());
 
@@ -397,6 +418,8 @@ namespace gstd {
 		return arrayType;
 	}
 	value BaseFunction::_cast_array(script_machine* machine, const value* argv, type_data::type_kind target) {
+		_null_check(machine, argv, 1);
+
 		type_data* arg0_type = argv->get_type();
 		if (arg0_type == nullptr || arg0_type->get_kind() != type_data::tk_array) {
 			_raise_error_unsupported(machine, arg0_type, "array cast");
@@ -428,8 +451,6 @@ namespace gstd {
 		//return value(script_type_manager::get_string_type(), argv->as_string());
 	}
 	value BaseFunction::cast_x_array(script_machine* machine, int argc, const value* argv) {
-		_null_check(nullptr, argv, argc);
-
 		type_data::type_kind targetKind = (type_data::type_kind)argv[1].as_int();
 		switch (targetKind) {
 		case type_data::tk_int:

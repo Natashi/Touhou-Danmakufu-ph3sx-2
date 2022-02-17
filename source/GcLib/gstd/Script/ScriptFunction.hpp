@@ -76,6 +76,8 @@ namespace gstd {
 
 		//---------------------------------------------------------------------
 
+		DNH_FUNCAPI_DECL_(cast_x);
+
 		static value _cast_array(script_machine* machine, const value* argv, type_data::type_kind target);
 		DNH_FUNCAPI_DECL_(cast_int_array);
 		DNH_FUNCAPI_DECL_(cast_float_array);
