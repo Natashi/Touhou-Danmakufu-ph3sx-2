@@ -238,11 +238,6 @@ namespace directx {
 			INFO_LENGTH,
 			INFO_LENGTH_SAMPLE,
 		};
-
-		static void PtrDelete(SoundPlayer* p) {
-			p->~SoundPlayer();
-			delete p;
-		}
 	protected:
 		DirectSoundManager* manager_;
 		gstd::CriticalSection lock_;
@@ -326,7 +321,7 @@ namespace directx {
 	protected:
 		HANDLE hEvent_[3];
 		IDirectSoundNotify* pDirectSoundNotify_;
-		StreamingThread* thread_;
+		unique_ptr<StreamingThread> thread_;
 
 		bool bStreaming_;
 		bool bStreamOver_;

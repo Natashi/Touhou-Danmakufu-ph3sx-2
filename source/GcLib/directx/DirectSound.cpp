@@ -229,18 +229,18 @@ shared_ptr<SoundPlayer> DirectSoundManager::CreatePlayer(shared_ptr<SoundSourceD
 			if (source->audioSizeTotal_ < 1024 * 1024) {
 				//The audio is small enough (<1MB), just load the entire thing into memory
 				//Max: ~23.78sec at 44100hz
-				res = std::shared_ptr<SoundPlayerWave>(new SoundPlayerWave(), SoundPlayer::PtrDelete);
+				res = std::shared_ptr<SoundPlayerWave>(new SoundPlayerWave());
 			}
 			else {
-				//File too bigg uwu owo, pleasm be gentwe and take it easwy owo *blushes*
-				res = std::shared_ptr<SoundStreamingPlayerWave>(new SoundStreamingPlayerWave(), SoundPlayer::PtrDelete);
+				//File too bigg uwu owo, pweasm be gentwe and take it in swowwy owo *blushes*
+				res = std::shared_ptr<SoundStreamingPlayerWave>(new SoundStreamingPlayerWave());
 			}
 			break;
 		case SoundFileFormat::Ogg:
-			res = std::shared_ptr<SoundStreamingPlayerOgg>(new SoundStreamingPlayerOgg(), SoundPlayer::PtrDelete);
+			res = std::shared_ptr<SoundStreamingPlayerOgg>(new SoundStreamingPlayerOgg());
 			break;
 		case SoundFileFormat::Mp3:
-			res = std::shared_ptr<SoundStreamingPlayerMp3>(new SoundStreamingPlayerMp3(), SoundPlayer::PtrDelete);
+			res = std::shared_ptr<SoundStreamingPlayerMp3>(new SoundStreamingPlayerMp3());
 			break;
 		}
 
@@ -1101,6 +1101,8 @@ void SoundPlayer::_LoadSamples(byte* pWaveData, size_t nSamples, double* pRes) {
 	DWORD nChannels = soundSource_->formatWave_.nChannels;
 	DWORD bytePerPCM = bytePerSample / nChannels;
 
+	//I totally didn't copy these from LuaSTG!! what are you even talking about?!
+
 	const DWORD STHRESHOLD = 1U << (nBlockAlign / nChannels * 8 - 1);
 
 	if (nChannels == 1) {
@@ -1237,7 +1239,7 @@ bool SoundPlayer::GetSamplesFFT(DWORD durationMs, size_t resolution, bool bAutoL
 SoundStreamingPlayer::SoundStreamingPlayer() {
 	pDirectSoundNotify_ = nullptr;
 	ZeroMemory(hEvent_, sizeof(HANDLE) * 3);
-	thread_ = new StreamingThread(this);
+	thread_.reset(new StreamingThread(this));
 
 	bStreaming_ = true;
 	bStreamOver_ = false;
@@ -1254,7 +1256,6 @@ SoundStreamingPlayer::~SoundStreamingPlayer() {
 	for (size_t iEvent = 0; iEvent < 3; ++iEvent)
 		::CloseHandle(hEvent_[iEvent]);
 	ptr_release(pDirectSoundNotify_);
-	delete thread_;
 }
 void SoundStreamingPlayer::_CreateSoundEvent(WAVEFORMATEX& formatWave) {
 	sizeCopy_ = formatWave.nAvgBytesPerSec;
