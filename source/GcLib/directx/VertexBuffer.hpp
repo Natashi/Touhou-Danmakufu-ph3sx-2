@@ -56,7 +56,7 @@ namespace directx {
 
 		HRESULT UpdateBuffer(BufferLockParameter* pLock);
 
-		virtual HRESULT Create() = 0;
+		virtual HRESULT Create(DWORD usage, D3DPOOL pool) = 0;
 
 		T* GetBuffer() { return buffer_; }
 		size_t GetSize() { return size_; }
@@ -75,7 +75,7 @@ namespace directx {
 		virtual ~FixedVertexBuffer();
 
 		virtual void Setup(size_t iniSize, size_t stride, DWORD fvf);
-		virtual HRESULT Create();
+		virtual HRESULT Create(DWORD usage = D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DPOOL pool = D3DPOOL_DEFAULT);
 	private:
 		DWORD fvf_;
 	};
@@ -85,7 +85,7 @@ namespace directx {
 		virtual ~FixedIndexBuffer();
 
 		virtual void Setup(size_t iniSize, size_t stride, D3DFORMAT format);
-		virtual HRESULT Create();
+		virtual HRESULT Create(DWORD usage = D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DPOOL pool = D3DPOOL_DEFAULT);
 	private:
 		D3DFORMAT format_;
 	};
@@ -96,7 +96,7 @@ namespace directx {
 		GrowableBuffer(IDirect3DDevice9* device);
 		virtual ~GrowableBuffer();
 
-		virtual HRESULT Create() = 0;
+		virtual HRESULT Create(DWORD usage, D3DPOOL pool) = 0;
 		virtual void Expand(size_t newSize) = 0;
 	};
 
@@ -106,7 +106,7 @@ namespace directx {
 		virtual ~GrowableVertexBuffer();
 
 		virtual void Setup(size_t iniSize, size_t stride, DWORD fvf);
-		virtual HRESULT Create();
+		virtual HRESULT Create(DWORD usage = D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DPOOL pool = D3DPOOL_DEFAULT);
 		virtual void Expand(size_t newSize);
 	private:
 		DWORD fvf_;
@@ -117,7 +117,7 @@ namespace directx {
 		virtual ~GrowableIndexBuffer();
 
 		virtual void Setup(size_t iniSize, size_t stride, D3DFORMAT format);
-		virtual HRESULT Create();
+		virtual HRESULT Create(DWORD usage = D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DPOOL pool = D3DPOOL_DEFAULT);
 		virtual void Expand(size_t newSize);
 	private:
 		D3DFORMAT format_;
