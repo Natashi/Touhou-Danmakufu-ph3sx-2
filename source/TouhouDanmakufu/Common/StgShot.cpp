@@ -1046,8 +1046,7 @@ void StgShotObject::_ProcessTransformAct() {
 			double agvel = transform.param[1];
 			double spin = transform.param[2];
 
-			StgNormalShotObject* shot = (StgNormalShotObject*)this;
-			if (shot)
+			if (StgNormalShotObject* shot = dynamic_cast<StgNormalShotObject*>(this))
 				shot->angularVelocity_ = Math::DegreeToRadian(spin);
 
 			{
