@@ -273,7 +273,7 @@ static const std::vector<constant> commonConstant = {
 	constant("M_1_PHI", GM_1_PHI),
 };
 
-script_type_manager* ScriptClientBase::pTypeManager_ = new script_type_manager();
+unique_ptr<script_type_manager> ScriptClientBase::pTypeManager_ = unique_ptr<script_type_manager>(new script_type_manager());
 uint64_t ScriptClientBase::randCalls_ = 0;
 uint64_t ScriptClientBase::prandCalls_ = 0;
 ScriptClientBase::ScriptClientBase() {

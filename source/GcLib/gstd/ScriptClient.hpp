@@ -69,7 +69,7 @@ namespace gstd {
 	class ScriptLoader;
 	class ScriptClientBase {
 		friend class ScriptLoader;
-		static script_type_manager* pTypeManager_;
+		static unique_ptr<script_type_manager> pTypeManager_;
 	public:
 		enum {
 			ID_SCRIPT_FREE = -1,
@@ -116,7 +116,7 @@ namespace gstd {
 		ScriptClientBase();
 		virtual ~ScriptClientBase();
 
-		static script_type_manager* GetDefaultScriptTypeManager() { return pTypeManager_; }
+		static script_type_manager* GetDefaultScriptTypeManager() { return pTypeManager_.get(); }
 
 		void SetScriptEngineCache(ref_count_ptr<ScriptEngineCache>& cache) { cache_ = cache; }
 		ref_count_ptr<ScriptEngineCache> GetScriptEngineCache() { return cache_; }
