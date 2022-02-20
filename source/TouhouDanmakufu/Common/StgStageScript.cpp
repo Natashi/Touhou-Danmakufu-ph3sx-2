@@ -2147,10 +2147,10 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		case INFO_EXISTS:
 			return script->CreateBooleanValue(true);
 		case INFO_PATH:
-			return script->CreateStringValue(shotData->GetTexture()->GetName());
+			return script->CreateStringValue(shotData->GetShotDataList()->GetTexture()->GetName());
 		case INFO_RECT:
 		{
-			DxRect<LONG>* rect = shotData->GetData(0)->GetSource();
+			DxRect<LONG>* rect = shotData->GetData(0)->GetSourceRect();
 			return script->CreateIntArrayValue(reinterpret_cast<LONG*>(rect), 4U);
 		}
 		case INFO_DELAY_COLOR:

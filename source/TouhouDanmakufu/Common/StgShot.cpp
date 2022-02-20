@@ -22,14 +22,17 @@ StgShotManager::StgShotManager(StgStageController* stageController) {
 
 	{
 		RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
-		effectLayer_ = shaderManager_->GetRender2DShader();
-		handleEffectWorld_ = effectLayer_->GetParameterBySemantic(nullptr, "WORLD");
+		effectShot_ = shaderManager_->GetRender2DShader();
 	}
 	{
-		auto objectManager = stageController_->GetMainObjectManager();
-		listRenderQueue_.resize(objectManager->GetRenderBucketCapacity());
-		for (auto& iLayer : listRenderQueue_)
-			iLayer.second.resize(32);
+		size_t renderPriMax = stageController_->GetMainObjectManager()->GetRenderBucketCapacity();
+
+		listRenderQueuePlayer_.resize(renderPriMax);
+		listRenderQueueEnemy_.resize(renderPriMax);
+		for (size_t i = 0; i < renderPriMax; ++i) {
+			listRenderQueuePlayer_[i].listShot.resize(32);
+			listRenderQueueEnemy_[i].listShot.resize(32);
+		}
 	}
 
 	SetDeleteEventEnableByType(StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE, true);
@@ -58,11 +61,23 @@ void StgShotManager::Work() {
 		else ++itr;
 	}
 }
-void StgShotManager::Render(int targetPriority) {
-	if (targetPriority < 0 || targetPriority >= listRenderQueue_.size()) return;
 
-	auto& renderQueueLayer = listRenderQueue_[targetPriority];
-	if (renderQueueLayer.first == 0) return;
+std::array<BlendMode, StgShotManager::BLEND_COUNT> StgShotManager::blendTypeRenderOrder = {
+	MODE_BLEND_ADD_ARGB,
+	MODE_BLEND_ADD_RGB,
+	MODE_BLEND_SHADOW,
+	MODE_BLEND_MULTIPLY,
+	MODE_BLEND_SUBTRACT,
+	MODE_BLEND_INV_DESTRGB,
+	MODE_BLEND_ALPHA,
+	MODE_BLEND_ALPHA_INV,
+};
+void StgShotManager::Render(int targetPriority) {
+	if (targetPriority < 0 || targetPriority >= listRenderQueueEnemy_.size()) return;
+
+	const RenderQueue& renderQueuePlayer = listRenderQueuePlayer_[targetPriority];
+	const RenderQueue& renderQueueEnemy = listRenderQueueEnemy_[targetPriority];
+	if (renderQueuePlayer.count == 0 && renderQueueEnemy.count == 0) return;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
@@ -81,85 +96,32 @@ void StgShotManager::Render(int targetPriority) {
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 
-	{
-		D3DXMATRIX matProj;
-		D3DXMatrixMultiply(&matProj, &camera2D->GetMatrix(), &graphics->GetViewPortMatrix());
-		effectLayer_->SetMatrix(handleEffectWorld_, &matProj);
-	}
-
-	for (size_t i = 0; i < renderQueueLayer.first; ++i) {
-		renderQueueLayer.second[i]->RenderOnShotManager();
-	}
-
-	size_t countBlendType = StgShotDataList::RENDER_TYPE_COUNT;
-	BlendMode blendMode[] =
-	{
-		MODE_BLEND_ADD_ARGB,
-		MODE_BLEND_ADD_RGB,
-		MODE_BLEND_SHADOW,
-		MODE_BLEND_MULTIPLY,
-		MODE_BLEND_SUBTRACT,
-		MODE_BLEND_INV_DESTRGB,
-		MODE_BLEND_ALPHA,
-		MODE_BLEND_ALPHA_INV,
-	};
+	D3DXMatrixMultiply(&matProj_, &camera2D->GetMatrix(), &graphics->GetViewPortMatrix());
 
 	RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
-	VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 
 	device->SetFVF(VERTEX_TLX::fvf);
 	device->SetVertexDeclaration(shaderManager->GetVertexDeclarationTLX());
 
-	device->SetStreamSource(0, bufferManager->GetGrowableVertexBuffer()->GetBuffer(), 0, sizeof(VERTEX_TLX));
-	device->SetIndices(bufferManager->GetGrowableIndexBuffer()->GetBuffer());
+	auto _RenderFromMatrix = [&](const RenderQueue& renderQueue) {
+		if (renderQueue.count == 0) return;
 
-	//Should I regroup these as texture->blend? I'll consider it later, I guess
-	{
-		UINT cPass = 1U;
+		for (size_t iBlend = 0; iBlend < blendTypeRenderOrder.size(); ++iBlend) {
+			BlendMode blend = blendTypeRenderOrder[iBlend];
 
-		//Always renders enemy shots above player shots, completely obliterates TAΣ's wet dream.
-		for (size_t iBlend = 0; iBlend < countBlendType; ++iBlend) {
-			bool hasPolygon = false;
-			std::vector<StgShotRenderer*>& listPlayer = listPlayerShotData_->GetRendererList(blendMode[iBlend] - 1);
+			graphics->SetBlendMode(blend);
+			effectShot_->SetTechnique(blend == MODE_BLEND_ALPHA_INV ? "RenderInv" : "Render");
 
-			//In an attempt to minimize D3D calls in SetBlendMode.
-			for (auto itr = listPlayer.begin(); itr != listPlayer.end() && !hasPolygon; ++itr)
-				hasPolygon = (*itr)->countRenderIndex_ >= 3U;
-			if (!hasPolygon) continue;
-
-			graphics->SetBlendMode(blendMode[iBlend]);
-			effectLayer_->SetTechnique(blendMode[iBlend] == MODE_BLEND_ALPHA_INV ? "RenderInv" : "Render");
-
-			effectLayer_->Begin(&cPass, 0);
-			if (cPass >= 1) {
-				effectLayer_->BeginPass(0);
-				for (auto itrRender = listPlayer.begin(); itrRender != listPlayer.end(); ++itrRender)
-					(*itrRender)->Render(this);
-				effectLayer_->EndPass();
+			for (size_t i = 0; i < renderQueue.count; ++i) {
+				StgShotObject* pShot = renderQueue.listShot[i];
+				pShot->Render(this, blend);
 			}
-			effectLayer_->End();
 		}
-		for (size_t iBlend = 0; iBlend < countBlendType; ++iBlend) {
-			bool hasPolygon = false;
-			std::vector<StgShotRenderer*>& listEnemy = listEnemyShotData_->GetRendererList(blendMode[iBlend] - 1);
+	};
 
-			for (auto itr = listEnemy.begin(); itr != listEnemy.end() && !hasPolygon; ++itr)
-				hasPolygon = (*itr)->countRenderIndex_ >= 3U;
-			if (!hasPolygon) continue;
-
-			graphics->SetBlendMode(blendMode[iBlend]);
-			effectLayer_->SetTechnique(blendMode[iBlend] == MODE_BLEND_ALPHA_INV ? "RenderInv" : "Render");
-
-			effectLayer_->Begin(&cPass, 0);
-			if (cPass >= 1) {
-				effectLayer_->BeginPass(0);
-				for (auto itrRender = listEnemy.begin(); itrRender != listEnemy.end(); ++itrRender)
-					(*itrRender)->Render(this);
-				effectLayer_->EndPass();
-			}
-			effectLayer_->End();
-		}
-	}
+	//Always renders enemy shots above player shots, completely obliterates TAΣ's wet dream.
+	_RenderFromMatrix(renderQueuePlayer);
+	_RenderFromMatrix(renderQueueEnemy);
 
 	device->SetVertexDeclaration(nullptr);
 	device->SetIndices(nullptr);
@@ -168,15 +130,20 @@ void StgShotManager::Render(int targetPriority) {
 		graphics->SetFogEnable(true);
 }
 void StgShotManager::LoadRenderQueue() {
-	for (auto& iLayer : listRenderQueue_)
-		iLayer.first = 0;
+	for (size_t i = 0; i < listRenderQueuePlayer_.size(); ++i) {
+		listRenderQueuePlayer_[i].count = 0;
+		listRenderQueueEnemy_[i].count = 0;
+	}
 
 	for (ref_unsync_ptr<StgShotObject>& obj : listObj_) {
 		if (obj->IsDeleted() || !obj->IsActive()) continue;
-		auto& iQueue = listRenderQueue_[obj->GetRenderPriorityI()];
-		while (iQueue.first >= iQueue.second.size())
-			iQueue.second.resize(iQueue.second.size() * 2);
-		iQueue.second[(iQueue.first)++] = obj.get();
+
+		auto& [count, listShot] = (obj->GetOwnerType() == StgShotObject::OWNER_PLAYER ?
+			listRenderQueuePlayer_ : listRenderQueueEnemy_)[obj->GetRenderPriorityI()];
+
+		while (count >= listShot.size())
+			listShot.resize(listShot.size() * 2);
+		listShot[count++] = obj.get();
 	}
 }
 
@@ -298,20 +265,18 @@ bool StgShotManager::LoadEnemyShotData(const std::wstring& path, bool bReload) {
 //StgShotDataList
 //****************************************************************************
 StgShotDataList::StgShotDataList() {
-	listRenderer_.resize(RENDER_TYPE_COUNT);
+	delayData_ = nullptr;
+
 	defaultDelayColor_ = 0xffffffff;	//Solid white
 }
 StgShotDataList::~StgShotDataList() {
-	for (std::vector<StgShotRenderer*>& renderList : listRenderer_) {
-		for (StgShotRenderer*& renderer : renderList)
-			ptr_delete(renderer);
-		renderList.clear();
-	}
-	listRenderer_.clear();
-
 	for (StgShotData*& shotData : listData_)
 		ptr_delete(shotData);
 	listData_.clear();
+
+	for (auto& pBufferContainer : listVertexBuffer_)
+		ptr_delete(pBufferContainer);
+	listVertexBuffer_.clear();
 }
 bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 	if (!bReload && listReadPath_.find(path) != listReadPath_.end()) return true;
@@ -327,11 +292,10 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 	bool res = false;
 	Scanner scanner(source);
 	try {
-		std::vector<StgShotData*> listData;
+		std::vector<StgShotData*> listData(1);
 		std::wstring pathImage = L"";
 
 		DxRect<LONG> rcDelay(-1, -1, -1, -1);
-		DxRect<float> rcDelayDest(-1, -1, -1, -1);
 
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
@@ -368,7 +332,6 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 
 					rcDelay = DxRect<LONG>(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
 						StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
-					rcDelayDest = StgShotData::AnimationData::SetDestRect(&rcDelay);
 				}
 				if (scanner.HasNext())
 					tok = scanner.Next();
@@ -384,42 +347,133 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 		bool bTexture = texture->CreateFromFile(pathImage, false, false);
 		if (!bTexture) throw gstd::wexception("The specified shot texture cannot be found.");
 
-		int textureIndex = -1;
-		for (int iTexture = 0; iTexture < listTexture_.size(); iTexture++) {
-			shared_ptr<Texture> tSearch = listTexture_[iTexture];
-			if (tSearch->GetName() == texture->GetName()) {
-				textureIndex = iTexture;
-				break;
-			}
-		}
-		if (textureIndex < 0) {
-			textureIndex = listTexture_.size();
-			listTexture_.push_back(texture);
-			for (size_t iRender = 0; iRender < listRenderer_.size(); ++iRender) {
-				StgShotRenderer* render = new StgShotRenderer();
-				render->SetTexture(texture);
-				listRenderer_[iRender].push_back(render);
-			}
-		}
+		texture_ = texture;
+		textureSize_.x = texture->GetWidth();
+		textureSize_.y = texture->GetHeight();
 
-		if (listData_.size() < listData.size())
-			listData_.resize(listData.size());
-		for (size_t iData = 0; iData < listData.size(); iData++) {
-			StgShotData* data = listData[iData];
-			if (data == nullptr) continue;
+		for (auto& pBufferContainer : listVertexBuffer_)
+			ptr_delete(pBufferContainer);
+		listVertexBuffer_.clear();
 
-			data->indexTexture_ = textureIndex;
+		size_t countFrame = 1;
+		{
+			if (listData_.size() < listData.size() + 1)
+				listData_.resize(listData.size() + 1);
+
+			//Place delay data at index 0
 			{
-				shared_ptr<Texture>& texture = listTexture_[data->indexTexture_];
-				data->textureSize_.x = texture->GetWidth();
-				data->textureSize_.y = texture->GetHeight();
+				if (delayData_ == nullptr)
+					delayData_ = new StgShotData(this);
+
+				StgShotDataFrame delayFrame;
+				delayFrame.listShotData_ = this;
+				delayFrame.vertexBufferIndex_ = 0;
+				delayFrame.vertexOffset_ = 0;
+				delayFrame.srcRect_ = rcDelay;
+				delayFrame.frame_ = 0;
+
+				delayData_->listAnime_.clear();
+				delayData_->listAnime_.push_back(delayFrame);
+
+				listData_[0] = delayData_;
 			}
 
-			if (data->delay_.rcSrc_.left < 0) {
-				data->delay_.rcSrc_ = rcDelay;
-				data->delay_.rcDst_ = rcDelayDest;
+			size_t iDataPut = 1;
+			for (size_t iData = 0; iData < listData.size(); ++iData) {
+				StgShotData* data = listData[iData];
+				if (data == nullptr) continue;
+				countFrame += data->GetFrameCount();
+				listData_[iDataPut++] = data;
 			}
-			listData_[iData] = data;
+		}
+
+		{
+			DirectGraphics* graphics = DirectGraphics::GetBase();
+			IDirect3DDevice9* device = graphics->GetDevice();
+
+			size_t iData = 0, iBuffer = 0;
+			while (countFrame > 0) {
+				StgShotVertexBuffer* vertexBufferContainer = new StgShotVertexBuffer();
+				//vertexBufferContainer->texture_ = texture;
+
+				size_t thisCountFrame = std::min<size_t>(countFrame, StgShotVertexBuffer::MAX_DATA);
+
+				vertexBufferContainer->pVertexBuffer_ = new FixedVertexBuffer(device);
+
+				FixedVertexBuffer * pBufferObj = vertexBufferContainer->pVertexBuffer_;
+				pBufferObj->Setup(thisCountFrame * 4, StgShotVertexBuffer::STRIDE, VERTEX_TLX::fvf);
+
+				HRESULT hr = pBufferObj->Create(0, D3DPOOL_MANAGED);
+				if (FAILED(hr)) {
+					pBufferObj->Release();
+
+					std::wstring err = StringUtility::Format(L"AddShotDataList::Failed to load shot data buffer: "
+						"\t\r\n%s: %s",
+						DXGetErrorString(hr), DXGetErrorDescription(hr));
+					throw gstd::wexception(err);
+				}
+
+				size_t countBufferBytes = pBufferObj->GetSizeInBytes();
+
+				std::vector<VERTEX_TLX> bufferVertex(4 * thisCountFrame);
+				size_t iVertex = 0;
+
+				VERTEX_TLX verts[4];
+
+				for (size_t i = 0; i < thisCountFrame; ++i, ++iData) {
+					StgShotData* data = listData_[iData];
+					if (data == nullptr) continue;
+
+					for (size_t iAnim = 0; iAnim < data->GetFrameCount(); ++iAnim) {
+						StgShotDataFrame* pFrame = &data->listAnime_[iAnim];
+						pFrame->listShotData_ = this;
+
+						LONG* ptrSrc = reinterpret_cast<LONG*>(&pFrame->srcRect_);
+						auto rcDst = StgShotDataFrame::LoadDestRect(&pFrame->srcRect_);
+						float* ptrDst = reinterpret_cast<float*>(&rcDst);
+
+						for (size_t iVert = 0; iVert < 4; ++iVert) {
+							VERTEX_TLX* pv = &verts[iVert];
+
+							//((iVert & 1) << 1)
+							//   0 -> 0
+							//   1 -> 2
+							//   2 -> 0
+							//   3 -> 2
+							//(iVert | 1)
+							//   0 -> 1
+							//   1 -> 1
+							//   2 -> 3
+							//   3 -> 3
+
+							StgShotObject::_SetVertexUV(pv,
+								ptrSrc[(iVert & 1) << 1] / textureSize_.x, ptrSrc[iVert | 1] / textureSize_.y);
+							StgShotObject::_SetVertexPosition(pv, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1], 0);
+							StgShotObject::_SetVertexColorARGB(pv, 0xffffffff);
+						}
+
+						pFrame->vertexBufferIndex_ = iBuffer;
+						pFrame->vertexOffset_ = iVertex;
+
+						for (size_t j = 0; j < 4; ++j)
+							bufferVertex[iVertex + j] = verts[j];
+						iVertex += 4;
+					}
+				}
+
+				{
+					BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
+
+					lockParam.SetSource(bufferVertex, pBufferObj->GetSize(), sizeof(VERTEX_TLX));
+					hr = pBufferObj->UpdateBuffer(&lockParam);
+				}
+
+				vertexBufferContainer->countData_ = thisCountFrame;
+				listVertexBuffer_.push_back(vertexBufferContainer);
+				++iBuffer;
+
+				countFrame -= thisCountFrame;
+			}
 		}
 
 		listReadPath_.insert(path);
@@ -468,25 +522,12 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
 			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
 
-		StgShotData::AnimationData anime;
-		anime.rcSrc_ = rect;
-		anime.rcDst_ = StgShotData::AnimationData::SetDestRect(&rect);
+		StgShotDataFrame anime;
+		anime.srcRect_ = rect;
 
 		i->shotData->listAnime_.resize(1);
 		i->shotData->listAnime_[0] = anime;
 		i->shotData->totalAnimeFrame_ = 1;
-	};
-	auto funcSetDelayRect = [](Data* i, Scanner& s) {
-		std::vector<std::wstring> list = s.GetArgumentList();
-
-		if (list.size() < 4)
-			throw wexception("Invalid argument list size (expected 4)");
-
-		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
-			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
-
-		i->shotData->delay_.rcSrc_ = rect;
-		i->shotData->delay_.rcDst_ = StgShotData::AnimationData::SetDestRect(&rect);
 	};
 	auto funcSetDelayColor = [](Data* i, Scanner& s) {
 		std::vector<std::wstring> list = s.GetArgumentList();
@@ -555,7 +596,6 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 	static const std::unordered_map<std::wstring, std::function<void(Data*, Scanner&)>> mapFunc = {
 		{ L"id", LAMBDA_SETV(id, GetInteger) },
 		{ L"rect", funcSetRect },
-		{ L"delay_rect", funcSetDelayRect },
 		{ L"delay_color", funcSetDelayColor },
 		{ L"collision", funcSetCollision },
 		{ L"render", LAMBDA_SETBLEND(typeRender_) },
@@ -590,7 +630,7 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 		if (data.shotData->listCol_.size() == 0) {
 			float r = 0;
 			if (data.shotData->listAnime_.size() > 0) {
-				DxRect<LONG>& rect = data.shotData->listAnime_[0].rcSrc_;
+				DxRect<LONG>& rect = data.shotData->listAnime_[0].srcRect_;
 				r = std::min(abs(rect.GetWidth()), abs(rect.GetHeight())) / 3.0f - 3.0f;
 			}
 			data.shotData->listCol_.push_back(DxCircle(0, 0, r));
@@ -624,10 +664,9 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 				DxRect<LONG> rcSrc(StringUtility::ToInteger(list[1]), StringUtility::ToInteger(list[2]),
 					StringUtility::ToInteger(list[3]), StringUtility::ToInteger(list[4]));
 
-				StgShotData::AnimationData anime;
+				StgShotDataFrame anime;
 				anime.frame_ = frame;
-				anime.rcSrc_ = rcSrc;
-				anime.rcDst_ = StgShotData::AnimationData::SetDestRect(&rcSrc);
+				anime.srcRect_ = rcSrc;
 
 				shotData->listAnime_.push_back(anime);
 				shotData->totalAnimeFrame_ += frame;
@@ -637,20 +676,30 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 }
 
 //*******************************************************************
+//StgShotDataFrame
+//*******************************************************************
+StgShotDataFrame::StgShotDataFrame() {
+	listShotData_ = nullptr;
+	vertexBufferIndex_ = -1;
+	vertexOffset_ = 0;
+	frame_ = 0;
+}
+DxRect<float> StgShotDataFrame::LoadDestRect(DxRect<LONG>* src) {
+	float width = src->GetWidth() / 2.0f;
+	float height = src->GetHeight() / 2.0f;
+	return DxRect<float>(-width, -height, width, height);
+}
+
+//*******************************************************************
 //StgShotData
 //*******************************************************************
 StgShotData::StgShotData(StgShotDataList* listShotData) {
 	listShotData_ = listShotData;
 
-	indexTexture_ = -1;
-	textureSize_ = D3DXVECTOR2(0, 0);
-
 	typeRender_ = MODE_BLEND_ALPHA;
 	typeDelayRender_ = MODE_BLEND_ADD_ARGB;
 
 	alpha_ = 255;
-
-	delay_.rcSrc_ = DxRect<LONG>(-1, -1, -1, -1);
 	colorDelay_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 
 	totalAnimeFrame_ = 0;
@@ -661,13 +710,8 @@ StgShotData::StgShotData(StgShotDataList* listShotData) {
 }
 StgShotData::~StgShotData() {
 }
-StgShotRenderer* StgShotData::GetRenderer(BlendMode blendType) {
-	if (blendType < MODE_BLEND_ALPHA || blendType > MODE_BLEND_ALPHA_INV)
-		return listShotData_->GetRenderer(indexTexture_, 0);
-	return listShotData_->GetRenderer(indexTexture_, blendType - 1);
-}
 
-StgShotData::AnimationData* StgShotData::GetData(size_t frame) {
+StgShotDataFrame* StgShotData::GetData(size_t frame) {
 	if (totalAnimeFrame_ <= 1U)
 		return &listAnime_[0];
 
@@ -681,92 +725,16 @@ StgShotData::AnimationData* StgShotData::GetData(size_t frame) {
 	}
 	return &listAnime_[0];
 }
-DxRect<float> StgShotData::AnimationData::SetDestRect(DxRect<LONG>* src) {
-	float width = src->GetWidth() / 2.0f;
-	float height = src->GetHeight() / 2.0f;
-	return DxRect<float>(-width, -height, width, height);
-}
 
 //****************************************************************************
-//StgShotRenderer
+//StgShotVertexBuffer
 //****************************************************************************
-StgShotRenderer::StgShotRenderer() {
-	countRenderVertex_ = 0U;
-	countMaxVertex_ = 8192U;
-	countRenderIndex_ = 0U;
-	countMaxIndex_ = 16384U;
-
-	SetVertexCount(countMaxVertex_);
-	vecIndex_.resize(countMaxIndex_);
+StgShotVertexBuffer::StgShotVertexBuffer() {
+	pVertexBuffer_ = nullptr;
+	countData_ = 0;
 }
-StgShotRenderer::~StgShotRenderer() {
-
-}
-void StgShotRenderer::Render(StgShotManager* manager) {
-	if (countRenderIndex_ < 3) return;
-
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	IDirect3DDevice9* device = graphics->GetDevice();
-	IDirect3DTexture9* pTexture = texture_ ? texture_->GetD3DTexture() : nullptr;
-	device->SetTexture(0, pTexture);
-	//device->SetTexture(1, pTexture);
-
-	VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
-
-	GrowableVertexBuffer* vertexBuffer = bufferManager->GetGrowableVertexBuffer();
-	GrowableIndexBuffer* indexBuffer = bufferManager->GetGrowableIndexBuffer();
-	vertexBuffer->Expand(countMaxVertex_);
-	indexBuffer->Expand(countMaxIndex_);
-
-	{
-		BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
-
-		lockParam.SetSource(vertex_, countRenderVertex_, sizeof(VERTEX_TLX));
-		vertexBuffer->UpdateBuffer(&lockParam);
-
-		lockParam.SetSource(vecIndex_, countRenderIndex_, sizeof(uint32_t));
-		indexBuffer->UpdateBuffer(&lockParam);
-	}
-
-	device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
-	device->SetIndices(indexBuffer->GetBuffer());
-
-	device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, countRenderVertex_, 0, countRenderIndex_ / 3U);
-
-	countRenderVertex_ = 0U;
-	countRenderIndex_ = 0U;
-}
-void StgShotRenderer::AddSquareVertex(VERTEX_TLX* listVertex) {
-	TryExpandVertex(countRenderVertex_ + 4U);
-	memcpy((VERTEX_TLX*)vertex_.data() + countRenderVertex_, listVertex, strideVertexStreamZero_ * 4U);
-
-	TryExpandIndex(countRenderIndex_ + 6U);
-	vecIndex_[countRenderIndex_ + 0] = countRenderVertex_ + 0;
-	vecIndex_[countRenderIndex_ + 1] = countRenderVertex_ + 2;
-	vecIndex_[countRenderIndex_ + 2] = countRenderVertex_ + 1;
-	vecIndex_[countRenderIndex_ + 3] = countRenderVertex_ + 1;
-	vecIndex_[countRenderIndex_ + 4] = countRenderVertex_ + 2;
-	vecIndex_[countRenderIndex_ + 5] = countRenderVertex_ + 3;
-
-	countRenderVertex_ += 4U;
-	countRenderIndex_ += 6U;
-}
-void StgShotRenderer::AddSquareVertex_CurveLaser(VERTEX_TLX* listVertex, bool bAddIndex) {
-	TryExpandVertex(countRenderVertex_ + 2U);
-	memcpy((VERTEX_TLX*)vertex_.data() + countRenderVertex_, listVertex, strideVertexStreamZero_ * 2U);
-
-	if (bAddIndex) {
-		TryExpandIndex(countRenderIndex_ + 6U);
-		vecIndex_[countRenderIndex_ + 0] = countRenderVertex_ + 0;
-		vecIndex_[countRenderIndex_ + 1] = countRenderVertex_ + 2;
-		vecIndex_[countRenderIndex_ + 2] = countRenderVertex_ + 1;
-		vecIndex_[countRenderIndex_ + 3] = countRenderVertex_ + 1;
-		vecIndex_[countRenderIndex_ + 4] = countRenderVertex_ + 2;
-		vecIndex_[countRenderIndex_ + 5] = countRenderVertex_ + 3;
-		countRenderIndex_ += 6U;
-	}
-
-	countRenderVertex_ += 2U;
+StgShotVertexBuffer::~StgShotVertexBuffer() {
+	ptr_release(pVertexBuffer_);
 }
 
 //****************************************************************************
@@ -1506,6 +1474,126 @@ bool StgNormalShotObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 	return true;
 }
 
+void StgNormalShotObject::Render(StgShotManager* shotManager, BlendMode targetBlend) {
+	if (!IsVisible()) return;
+
+	StgShotData* shotData = _GetShotData();
+	StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
+
+	BlendMode objBlendType;
+	if (delay_.time > 0) {
+		if (delayData == nullptr) return;
+
+		BlendMode blendType = GetDelayBlendType();
+		objBlendType = blendType == MODE_BLEND_NONE ? shotData->GetDelayRenderType() : blendType;
+	}
+	else {
+		if (shotData == nullptr) return;
+
+		BlendMode blendType = GetBlendType();
+		objBlendType = blendType == MODE_BLEND_NONE ? shotData->GetRenderType() : blendType;
+	}
+	if (objBlendType != targetBlend) return;
+
+	FLOAT sposx = position_.x;
+	FLOAT sposy = position_.y;
+	if (bRoundingPosition_) {
+		sposx = roundf(sposx);
+		sposy = roundf(sposy);
+	}
+
+	float scaleX = 1.0f;
+	float scaleY = 1.0f;
+	D3DCOLOR color;
+
+	StgShotDataFrame* shotFrame = nullptr;
+
+	if (delay_.time > 0) {
+		shotFrame = delay_.id >= 0 ? delayData->GetData(frameWork_) : delayData->GetDelayData()->GetData(0);
+
+		float sc = delay_.GetScale();
+		scaleX = scaleY = delay_.GetScale();
+
+		color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
+		if (delay_.colorMix) ColorAccess::MultiplyColor(color, color_);
+		{
+			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * delay_.GetAlpha());
+			color = (color & 0x00ffffff) | (alpha << 24);
+		}
+	}
+	else {
+		scaleX = scale_.x;
+		scaleY = scale_.y;
+		color = color_;
+
+		shotFrame = shotData->GetData(frameWork_);
+
+		float alphaRate = shotData->GetAlpha() / 255.0f;
+		if (frameFadeDelete_ >= 0) alphaRate *= (float)frameFadeDelete_ / FRAME_FADEDELETE;
+		{
+			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * alphaRate);
+			color = (color & 0x00ffffff) | (alpha << 24);
+		}
+	}
+
+	if (shotFrame == nullptr) return;
+
+	StgShotVertexBuffer* pVB = shotFrame->GetVertexBuffer();
+	DWORD vertexOffset = shotFrame->vertexOffset_;
+
+	if (pVB) {
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+		IDirect3DDevice9* device = graphics->GetDevice();
+
+		shared_ptr<Texture>& texture = shotFrame->GetTexture();
+
+		device->SetTexture(0, texture ? texture->GetD3DTexture() : nullptr);
+		device->SetStreamSource(0, pVB->GetD3DBuffer(), vertexOffset * sizeof(VERTEX_TLX), sizeof(VERTEX_TLX));
+
+		{
+			ID3DXEffect* effect = shotManager->GetShotEffect();
+
+			if (shader_) {
+				effect = shader_->GetEffect();
+				if (shader_->LoadTechnique()) {
+					shader_->LoadParameter();
+				}
+			}
+
+			D3DXHANDLE handle = nullptr;
+			if (handle = effect->GetParameterBySemantic(nullptr, "WORLD")) {
+				D3DXMATRIX matTransform(
+					scaleX * move_.x, scaleY * move_.y, 0, 0,
+					scaleX * -move_.y, scaleY * move_.x, 0, 0,
+					0, 0, 1, 0,
+					sposx, sposy, 0, 1
+				);
+				effect->SetMatrix(handle, &matTransform);
+			}
+			if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
+				effect->SetMatrix(handle, shotManager->GetShotProjectionMatrix());
+			}
+			if (handle = effect->GetParameterBySemantic(nullptr, "ICOLOR")) {
+				//To normalized RGBA vector
+				D3DXVECTOR4 vColor = ColorAccess::ToVec4Normalized(color, ColorAccess::PERMUTE_RGBA);
+				effect->SetVector(handle, &vColor);
+			}
+
+			UINT countPass = 1;
+
+			effect->Begin(&countPass, 0);
+			for (UINT iPass = 0; iPass < countPass; ++iPass) {
+				effect->BeginPass(iPass);
+
+				device->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+
+				effect->EndPass();
+			}
+			effect->End();
+		}
+	}
+}
+/*
 void StgNormalShotObject::RenderOnShotManager() {
 	if (!IsVisible()) return;
 
@@ -1625,6 +1713,7 @@ void StgNormalShotObject::RenderOnShotManager() {
 
 	renderer->AddSquareVertex(verts);
 }
+*/
 
 void StgNormalShotObject::_SendDeleteEvent(int type) {
 	if (typeOwner_ != OWNER_ENEMY) return;
@@ -1864,6 +1953,8 @@ bool StgLooseLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 	return true;
 }
 
+void StgLooseLaserObject::Render(StgShotManager* shotManager, BlendMode targetBlend) {}
+/*
 void StgLooseLaserObject::RenderOnShotManager() {
 	if (!IsVisible()) return;
 
@@ -2000,6 +2091,8 @@ void StgLooseLaserObject::RenderOnShotManager() {
 		_LoadVerts(renderer);
 	}
 }
+*/
+
 void StgLooseLaserObject::_SendDeleteEvent(int type) {
 	if (typeOwner_ != OWNER_ENEMY) return;
 
@@ -2173,6 +2266,9 @@ bool StgStraightLaserObject::GetIntersectionTargetList_NoVector(StgShotData* sho
 
 	return true;
 }
+
+void StgStraightLaserObject::Render(StgShotManager* shotManager, BlendMode targetBlend) {}
+/*
 void StgStraightLaserObject::RenderOnShotManager() {
 	if (!IsVisible()) return;
 
@@ -2313,6 +2409,8 @@ void StgStraightLaserObject::RenderOnShotManager() {
 		}
 	}
 }
+*/
+
 void StgStraightLaserObject::_SendDeleteEvent(int type) {
 	if (typeOwner_ != OWNER_ENEMY) return;
 
@@ -2538,6 +2636,8 @@ bool StgCurveLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 	return true;
 }
 
+void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBlend) {}
+/*
 void StgCurveLaserObject::RenderOnShotManager() {
 	if (!IsVisible()) return;
 
@@ -2729,6 +2829,8 @@ void StgCurveLaserObject::RenderOnShotManager() {
 		}
 	}
 }
+*/
+
 void StgCurveLaserObject::_SendDeleteEvent(int type) {
 	if (typeOwner_ != OWNER_ENEMY) return;
 

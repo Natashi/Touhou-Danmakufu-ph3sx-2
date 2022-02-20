@@ -156,8 +156,8 @@ D3DXVECTOR4 ColorAccess::ToVec4(const D3DCOLOR& color, uint8_t permute) {
 D3DXVECTOR4 ColorAccess::ToVec4Normalized(const D3DCOLOR& color, uint8_t permute) {
 	__m128 argb = Vectorize::Load(ToVec4(color, permute));
 	__m128 nor = Vectorize::Replicate(1.0f / 255.0f);
-	nor = Vectorize::Mul(argb, nor);
-	return (D3DXVECTOR4&)nor;
+	argb = Vectorize::Mul(argb, nor);
+	return (D3DXVECTOR4&)argb;
 }
 
 //*******************************************************************

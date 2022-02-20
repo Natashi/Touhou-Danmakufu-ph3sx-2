@@ -10,6 +10,8 @@ namespace directx {
 	const std::string ShaderSource::sourceRender2D_ =
 		"sampler samp0_ : register(s0);"
 		"float4x4 g_mWorld : WORLD : register(c0);"
+		"float4x4 g_mViewProj : VIEWPROJECTION : register(c4);"
+		"float4 g_vColor : ICOLOR : register(c9);"
 
 		"struct VS_INPUT {"
 			"float4 position : POSITION;"
@@ -27,30 +29,24 @@ namespace directx {
 
 		"VS_OUTPUT mainVS(VS_INPUT inVs) {"
 			"VS_OUTPUT outVs;"
-
-			"outVs.diffuse = inVs.diffuse;"
+			
+			"outVs.diffuse = inVs.diffuse * g_vColor;"
 			"outVs.texCoord = inVs.texCoord;"
 			"outVs.position = mul(inVs.position, g_mWorld);"
+			"outVs.position = mul(outVs.position, g_mViewProj);"
 			"outVs.position.z = 1.0f;"
 
 			"return outVs;"
 		"}"
 
-		"PS_OUTPUT mainPS(VS_OUTPUT inPs) {"
-			"PS_OUTPUT outPs;"
-
-			"outPs.color = tex2D(samp0_, inPs.texCoord) * inPs.diffuse;"
-
-			"return outPs;"
+		"float4 mainPS(VS_OUTPUT inPs) : COLOR0 {"
+			"return tex2D(samp0_, inPs.texCoord) * inPs.diffuse;"
 		"}"
-		"PS_OUTPUT mainPS_inv(VS_OUTPUT inPs) {"
-			"PS_OUTPUT outPs;"
-
+		"float4 mainPS_inv(VS_OUTPUT inPs) : COLOR0 {"
 			"float4 color = tex2D(samp0_, inPs.texCoord);"
 			"color.rgb = 1.0f - color.rgb;"
-			"outPs.color = color * inPs.diffuse;"
 
-			"return outPs;"
+			"return color * inPs.diffuse;"
 		"}"
 
 		"technique Render {"
