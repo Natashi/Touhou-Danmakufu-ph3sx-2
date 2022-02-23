@@ -121,6 +121,7 @@ public:
 	virtual ~StgShotDataList();
 
 	shared_ptr<Texture> GetTexture() { return texture_; }
+	IDirect3DTexture9* GetD3DTexture() { return texture_->GetD3DTexture(); }
 	D3DXVECTOR2& GetTextureSize() { return textureSize_; }
 
 	StgShotVertexBuffer* GetVertexBuffer(int indexVB) { return listVertexBuffer_[indexVB]; }
@@ -178,17 +179,20 @@ struct StgShotDataFrame {
 	int vertexBufferIndex_;
 	DWORD vertexOffset_;
 
-	DxRect<LONG> srcRect_;
+	DxRect<LONG> rcSrc_;
+	DxRect<float> rcDst_;
 
 	size_t frame_;
 public:
 	StgShotDataFrame();
 
-	DxRect<LONG>* GetSourceRect() { return &srcRect_; }
+	DxRect<LONG>* GetSourceRect() { return &rcSrc_; }
+	DxRect<float>* GetDestRect() { return &rcDst_; }
 	StgShotVertexBuffer* GetVertexBuffer() {
 		return vertexBufferIndex_ >= 0 ? listShotData_->GetVertexBuffer(vertexBufferIndex_) : nullptr;
 	}
 	shared_ptr<Texture> GetTexture() { return listShotData_->GetTexture(); }
+	IDirect3DTexture9* GetD3DTexture() { return listShotData_->GetD3DTexture(); }
 
 	static DxRect<float> LoadDestRect(DxRect<LONG>* src);
 };
@@ -478,9 +482,14 @@ public:
 class StgLaserObject : public StgShotObject {
 protected:
 	int length_;
-	int widthRender_;		//Edge-to-edge
+
+	//Edge-to-edge
+	int widthRender_;
 	int widthIntersection_;
+
+	//[0.0, 1.0] from laser head to middle
 	float invalidLengthStart_;
+	//[0.0, 1.0] from laser tail to middle
 	float invalidLengthEnd_;
 	float itemDistance_;
 
@@ -516,14 +525,14 @@ public:
 };
 
 //*******************************************************************
-//StgLooseLaserObject(射出型レーザー)
+//StgLooseLaserObject
 //*******************************************************************
 class StgLooseLaserObject : public StgLaserObject {
 protected:
-	double posXE_;
-	double posYE_;
-
+	Math::DVec2 posTail_;
 	D3DXVECTOR2 posOrigin_;
+
+	double currentLength_;
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
@@ -536,12 +545,12 @@ public:
 
 	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
 
-	virtual void SetX(float x) { StgShotObject::SetX(x); posXE_ = x; }
-	virtual void SetY(float y) { StgShotObject::SetY(y); posYE_ = y; }
+	virtual void SetX(float x) { StgShotObject::SetX(x); posTail_[0] = x; }
+	virtual void SetY(float y) { StgShotObject::SetY(y); posTail_[1] = y; }
 };
 
 //*******************************************************************
-//StgStraightLaserObject(設置型レーザー)
+//StgStraightLaserObject (as opposed to StgGayLaserObject)
 //*******************************************************************
 class StgStraightLaserObject : public StgLaserObject {
 protected:
@@ -583,7 +592,7 @@ public:
 };
 
 //*******************************************************************
-//StgCurveLaserObject(曲がる型レーザー)
+//StgCurveLaserObject (curvy lasers)
 //*******************************************************************
 class StgCurveLaserObject : public StgLaserObject {
 public:
@@ -600,6 +609,8 @@ public:
 	};
 protected:
 	std::list<LaserNode> listPosition_;
+	std::vector<VERTEX_TLX> vertexData_;
+	std::vector<float> listRectIncrement_;
 
 	float posXO_;
 	float posYO_;
