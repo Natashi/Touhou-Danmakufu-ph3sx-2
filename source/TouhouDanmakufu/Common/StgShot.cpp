@@ -2823,6 +2823,14 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 			objShot = ptrShot;
 			break;
 		}
+		case TypeObject::StraightLaser:
+		{
+			ref_unsync_ptr<StgStraightLaserObject> ptrShot = new StgStraightLaserObject(controller);
+			ptrShot->SetLength(laserLength_);
+			ptrShot->SetRenderWidth(laserWidth_);
+			objShot = ptrShot;
+			break;
+		}
 		case TypeObject::CurveLaser:
 		{
 			ref_unsync_ptr<StgCurveLaserObject> ptrShot = new StgCurveLaserObject(controller);
