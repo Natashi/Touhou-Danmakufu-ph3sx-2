@@ -89,7 +89,6 @@ namespace directx {
 		bool bEnableMatrix_;
 
 		gstd::ref_count_weak_ptr<DxScriptRenderObject, false> objRelative_;
-		std::wstring nameRelativeBone_;
 	public:
 		DxScriptRenderObject();
 
@@ -131,9 +130,8 @@ namespace directx {
 		virtual shared_ptr<Shader> GetShader() { return nullptr; }
 		virtual void SetShader(shared_ptr<Shader> shader) {}
 
-		void SetRelativeObject(gstd::ref_count_weak_ptr<DxScriptRenderObject, false> id, const std::wstring& bone) {
+		void SetRelativeObject(gstd::ref_count_weak_ptr<DxScriptRenderObject, false> id) {
 			objRelative_ = id;
-			nameRelativeBone_ = bone;
 		}
 	};
 

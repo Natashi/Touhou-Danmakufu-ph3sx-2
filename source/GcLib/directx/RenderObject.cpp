@@ -60,10 +60,10 @@ RenderObject::RenderObject() {
 RenderObject::~RenderObject() {
 }
 size_t RenderObject::_GetPrimitiveCount() {
-	return _GetPrimitiveCount(GetVertexCount());
+	return _GetPrimitiveCount(typePrimitive_, GetVertexCount());
 }
-size_t RenderObject::_GetPrimitiveCount(size_t count) {
-	switch (typePrimitive_) {
+size_t RenderObject::_GetPrimitiveCount(D3DPRIMITIVETYPE typePrim, size_t count) {
+	switch (typePrim) {
 	case D3DPT_POINTLIST:
 		return count;
 	case D3DPT_LINELIST:

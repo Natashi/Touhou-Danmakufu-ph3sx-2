@@ -295,7 +295,7 @@ static const std::vector<function> dxFunction = {
 	{ "ObjRender_SetZTest", DxScript::Func_ObjRender_SetZTest, 2 },
 	{ "ObjRender_SetFogEnable", DxScript::Func_ObjRender_SetFogEnable, 2 },
 	{ "ObjRender_SetCullingMode", DxScript::Func_ObjRender_SetCullingMode, 2 },
-	{ "ObjRender_SetRelativeObject", DxScript::Func_ObjRender_SetRelativeObject, 3 },
+	{ "ObjRender_SetRelativeObject", DxScript::Func_ObjRender_SetRelativeObject, 2 },
 	{ "ObjRender_SetPermitCamera", DxScript::Func_ObjRender_SetPermitCamera, 2 },
 	{ "ObjRender_SetTextureFilterMin", DxScript::Func_ObjRender_SetTextureFilterMin, 2 },
 	{ "ObjRender_SetTextureFilterMag", DxScript::Func_ObjRender_SetTextureFilterMag, 2 },
@@ -2970,10 +2970,9 @@ value DxScript::Func_ObjRender_SetRelativeObject(script_machine* machine, int ar
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
 		int idRelative = argv[1].as_int();
-		std::wstring nameBone = argv[2].as_string();
 		auto objRelative = ref_unsync_ptr<DxScriptRenderObject>::Cast(script->GetObject(idRelative));
 		if (objRelative)
-			obj->SetRelativeObject(objRelative, nameBone);
+			obj->SetRelativeObject(objRelative);
 	}
 	return value();
 }

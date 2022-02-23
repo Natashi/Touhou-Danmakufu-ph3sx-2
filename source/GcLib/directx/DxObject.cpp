@@ -302,7 +302,7 @@ void DxScriptPrimitiveObject3D::SetRenderState() {
 		const std::wstring& nameAnime = objMesh->GetAnimeName();
 		shared_ptr<DxMesh> mesh = objMesh->GetMesh();
 		shared_ptr<D3DXMATRIX> mat = std::make_shared<D3DXMATRIX>();
-		*mat = mesh->GetAnimationMatrix(nameAnime, frameAnime, nameRelativeBone_);
+		*mat = mesh->GetAnimationMatrix(nameAnime, frameAnime);
 		objRender_->SetRalativeMatrix(mat);
 	}
 
@@ -403,7 +403,7 @@ void DxScriptTrajectoryObject3D::Work() {
 			int frameAnime = objMesh->GetAnimeFrame();
 			const std::wstring& nameAnime = objMesh->GetAnimeName();
 			shared_ptr<DxMesh> mesh = objMesh->GetMesh();
-			D3DXMATRIX matAnime = mesh->GetAnimationMatrix(nameAnime, frameAnime, nameRelativeBone_);
+			D3DXMATRIX matAnime = mesh->GetAnimationMatrix(nameAnime, frameAnime);
 
 			TrajectoryObject3D* objRender = GetObjectPointer();
 			objRender->AddPoint(matAnime);

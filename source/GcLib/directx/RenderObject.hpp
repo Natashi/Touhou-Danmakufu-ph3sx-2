@@ -72,7 +72,8 @@ namespace directx {
 		shared_ptr<Texture> GetTexture() { return texture_; }
 
 		size_t _GetPrimitiveCount();
-		size_t _GetPrimitiveCount(size_t count);
+		size_t _GetPrimitiveCount(size_t count) { return  _GetPrimitiveCount(typePrimitive_, count); }
+		static size_t _GetPrimitiveCount(D3DPRIMITIVETYPE typePrim, size_t count);
 
 		void SetRalativeMatrix(shared_ptr<D3DXMATRIX>& mat) { matRelative_ = mat; }
 
@@ -501,7 +502,7 @@ namespace directx {
 		void SetDxObjectReference(DxScriptRenderObject* obj) { dxObjParent_ = obj; }
 
 		//gstd::ref_count_ptr<RenderBlocks> CreateRenderBlocks() { return nullptr; }
-		virtual D3DXMATRIX GetAnimationMatrix(const std::wstring& nameAnime, double time, const std::wstring& nameBone) {
+		virtual D3DXMATRIX GetAnimationMatrix(const std::wstring& nameAnime, double time) {
 			D3DXMATRIX mat; 
 			D3DXMatrixIdentity(&mat); 
 			return mat; 
