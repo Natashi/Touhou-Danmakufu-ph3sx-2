@@ -325,6 +325,13 @@ static const std::vector<function> dxFunction = {
 	{ "ObjShader_SetFloat", DxScript::Func_ObjShader_SetFloat, 3 },
 	{ "ObjShader_SetFloatArray", DxScript::Func_ObjShader_SetFloatArray, 3 },
 	{ "ObjShader_SetTexture", DxScript::Func_ObjShader_SetTexture, 3 },
+	{ "ObjShader_ValidateTechnique", DxScript::Func_ObjShader_ValidateTechnique, 2 },
+	{ "ObjShader_GetMatrix", DxScript::Func_ObjShader_GetMatrix, 2 },
+	{ "ObjShader_GetMatrixArray", DxScript::Func_ObjShader_GetMatrixArray, 2 },
+	{ "ObjShader_GetVector", DxScript::Func_ObjShader_GetVector, 2 },
+	{ "ObjShader_GetFloat", DxScript::Func_ObjShader_GetFloat, 2 },
+	{ "ObjShader_GetFloatArray", DxScript::Func_ObjShader_GetFloatArray, 2 },
+	{ "ObjShader_GetTexture", DxScript::Func_ObjShader_GetTexture, 2 },
 
 	//Primitive object functions
 	{ "ObjPrim_Create", DxScript::Func_ObjPrimitive_Create, 1 },
@@ -3425,6 +3432,139 @@ gstd::value DxScript::Func_ObjShader_SetTexture(gstd::script_machine* machine, i
 		}
 	}
 	return value();
+}
+
+gstd::value DxScript::Func_ObjShader_ValidateTechnique(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	bool res = false;
+
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		if (shared_ptr<Shader> shader = obj->GetShader()) {
+			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
+			res = shader->ValidateTechnique(name);
+		}
+	}
+
+	return script->CreateBooleanValue(res);
+}
+gstd::value DxScript::Func_ObjShader_GetMatrix(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	D3DXMATRIX res;
+	D3DXMatrixIdentity(&res);
+
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		if (shared_ptr<Shader> shader = obj->GetShader()) {
+			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
+			shader->GetMatrix(name, &res);
+		}
+	}
+
+	return script->CreateFloatArrayValue((FLOAT*)&res, 16);
+}
+gstd::value DxScript::Func_ObjShader_GetMatrixArray(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	std::vector<value> res;
+
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		if (shared_ptr<Shader> shader = obj->GetShader()) {
+			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
+
+			std::vector<D3DXMATRIX> listMat;
+			FLOAT mat[16];
+			D3DXMatrixIdentity((D3DXMATRIX*)mat);
+
+			if (shader->GetMatrixArray(name, &listMat)) {
+				res.resize(listMat.size());
+
+				for (int iMat = 0; iMat < listMat.size(); ++iMat) {
+					FLOAT* pMat = (FLOAT*)&listMat[iMat];
+					for (int i = 0; i < 16; ++i)
+						mat[i] = pMat[i];
+
+					res[iMat] = script->CreateFloatArrayValue(mat, 16);
+				}
+			}
+		}
+	}
+
+	return script->CreateValueArrayValue(res);
+}
+gstd::value DxScript::Func_ObjShader_GetVector(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	D3DXVECTOR4 res(0, 0, 0, 0);
+
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		if (shared_ptr<Shader> shader = obj->GetShader()) {
+			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
+			shader->GetVector(name, &res);
+		}
+	}
+
+	return script->CreateFloatArrayValue((FLOAT*)&res, 4);
+}
+gstd::value DxScript::Func_ObjShader_GetFloat(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	FLOAT res = 0;
+
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		if (shared_ptr<Shader> shader = obj->GetShader()) {
+			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
+			shader->GetFloat(name, &res);
+		}
+	}
+
+	return script->CreateFloatValue(res);
+}
+gstd::value DxScript::Func_ObjShader_GetFloatArray(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	std::vector<FLOAT> res;
+
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		if (shared_ptr<Shader> shader = obj->GetShader()) {
+			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
+			shader->GetFloatArray(name, &res);
+		}
+	}
+
+	return script->CreateFloatArrayValue(res);
+}
+gstd::value DxScript::Func_ObjShader_GetTexture(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	std::wstring res;
+
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		if (shared_ptr<Shader> shader = obj->GetShader()) {
+			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
+
+			shared_ptr<Texture> texture;
+			if (shader->GetTexture(name, &texture)) {
+				res = texture ? texture->GetName() : L"";
+			}
+		}
+	}
+
+	return script->CreateStringValue(res);
 }
 
 //Dx関数：オブジェクト操作(PrimitiveObject)
