@@ -263,6 +263,9 @@ __pycache__/
 
 # Other files
 
+# Code Backups
+/.bk/
+
 # Compiled Binaries & Script Files
 /bin_ext/*
 /bin_th_dnh/*

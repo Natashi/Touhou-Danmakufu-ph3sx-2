@@ -132,6 +132,12 @@
       <AdditionalOptions>/NODEFAULTLIB:"libcmt.lib" %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy /e/h/y/i "$(ProjectDir)source/FileArchiver" "$(ProjectDir).bk/FileArchiver"
+xcopy /e/h/y/i "$(ProjectDir)source/GcLib" "$(ProjectDir).bk/GcLib"
+xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDanmakufu"</Command>
+      <Message>I'm not fucking losing my progress to Visual Studio's bullshit again</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">
     <ClCompile>
@@ -181,6 +187,12 @@
       <AdditionalOptions>/NODEFAULTLIB:"libcmt.lib" %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy /e/h/y/i "$(ProjectDir)source/FileArchiver" "$(ProjectDir).bk/FileArchiver"
+xcopy /e/h/y/i "$(ProjectDir)source/GcLib" "$(ProjectDir).bk/GcLib"
+xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDanmakufu"</Command>
+      <Message>I'm not fucking losing my progress to Visual Studio's bullshit again</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -238,6 +250,12 @@
       <AdditionalOptions>/NODEFAULTLIB:libcmt.lib  /NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy /e/h/y/i "$(ProjectDir)source/FileArchiver" "$(ProjectDir).bk/FileArchiver"
+xcopy /e/h/y/i "$(ProjectDir)source/GcLib" "$(ProjectDir).bk/GcLib"
+xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDanmakufu"</Command>
+      <Message>I'm not fucking losing my progress to Visual Studio's bullshit again</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\GcLib\directx\DirectGraphics.cpp" />
