@@ -55,7 +55,7 @@ namespace directx {
 		std::map<std::wstring, shared_ptr<ShaderData>> mapShaderData_;
 		std::wstring lastError_;
 
-		RenderShaderLibrary* renderManager_;
+		unique_ptr<RenderShaderLibrary> renderManager_;
 
 		void _ReleaseShaderData(const std::wstring& name);
 		void _ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderData>>::iterator itr);
@@ -73,7 +73,7 @@ namespace directx {
 		gstd::CriticalSection& GetLock() { return lock_; }
 		void Clear();
 
-		RenderShaderLibrary* GetRenderLib() { return renderManager_; }
+		RenderShaderLibrary* GetRenderLib() { return renderManager_.get(); }
 
 		virtual void ReleaseDxResource();
 		virtual void RestoreDxResource();
@@ -133,19 +133,20 @@ namespace directx {
 		void SubmitData(ID3DXEffect* effect);
 
 		D3DXHANDLE GetHandle() { return handle_; }
-
 		ShaderParameterType GetType() { return type_; }
-		void SetMatrix(D3DXMATRIX& matrix);
-		inline D3DXMATRIX* GetMatrix();
-		void SetMatrixArray(std::vector<D3DXMATRIX>& matrix);
-		std::vector<D3DXMATRIX> GetMatrixArray();
-		void SetVector(D3DXVECTOR4& vector);
-		inline D3DXVECTOR4* GetVector();
-		void SetFloat(FLOAT value);
-		inline FLOAT* GetFloat();
-		void SetFloatArray(std::vector<FLOAT>& values);
-		std::vector<FLOAT> GetFloatArray();
+
+		void SetMatrix(const D3DXMATRIX& matrix);
+		void SetMatrixArray(const std::vector<D3DXMATRIX>& matrix);
+		void SetVector(const D3DXVECTOR4& vector);
+		void SetFloat(const FLOAT value);
+		void SetFloatArray(const std::vector<FLOAT>& values);
 		void SetTexture(shared_ptr<Texture> texture);
+
+		inline D3DXMATRIX* GetMatrix();
+		std::vector<D3DXMATRIX> GetMatrixArray();
+		inline D3DXVECTOR4* GetVector();
+		inline FLOAT* GetFloat();
+		std::vector<FLOAT> GetFloatArray();
 		inline shared_ptr<Texture> GetTexture();
 
 		inline std::vector<byte>* GetRaw() { return &value_; }
@@ -164,10 +165,10 @@ namespace directx {
 		//IDirect3DPixelShader9* pPixelShader_;
 
 		std::string technique_;
-		std::map<D3DXHANDLE, shared_ptr<ShaderParameter>> mapParam_;
+		std::map<D3DXHANDLE, ShaderParameter> mapParam_;
 
 		ShaderData* _GetShaderData() { return data_.get(); }
-		shared_ptr<ShaderParameter> _GetParameter(const std::string& name, bool bCreate);
+		ShaderParameter* _GetParameter(const std::string& name, bool bCreate);
 	public:
 		Shader();
 		Shader(Shader* shader);
@@ -188,12 +189,20 @@ namespace directx {
 		bool IsLoad() { return data_ != nullptr && data_->bLoad_; }
 
 		bool SetTechnique(const std::string& name);
-		bool SetMatrix(const std::string& name, D3DXMATRIX& matrix);
-		bool SetMatrixArray(const std::string& name, std::vector<D3DXMATRIX>& matrix);
-		bool SetVector(const std::string& name, D3DXVECTOR4& vector);
-		bool SetFloat(const std::string& name, FLOAT value);
-		bool SetFloatArray(const std::string& name, std::vector<FLOAT>& values);
+		bool SetMatrix(const std::string& name, const D3DXMATRIX& matrix);
+		bool SetMatrixArray(const std::string& name, const std::vector<D3DXMATRIX>& matrix);
+		bool SetVector(const std::string& name, const D3DXVECTOR4& vector);
+		bool SetFloat(const std::string& name, const FLOAT value);
+		bool SetFloatArray(const std::string& name, const std::vector<FLOAT>& values);
 		bool SetTexture(const std::string& name, shared_ptr<Texture> texture);
+
+		bool ValidateTechnique(const std::string& name);
+		bool GetMatrix(const std::string& name, D3DXMATRIX* matrix);
+		bool GetMatrixArray(const std::string& name, std::vector<D3DXMATRIX>* matrix);
+		bool GetVector(const std::string& name, D3DXVECTOR4* vector);
+		bool GetFloat(const std::string& name, FLOAT* value);
+		bool GetFloatArray(const std::string& name, std::vector<FLOAT>* values);
+		bool GetTexture(const std::string& name, shared_ptr<Texture>* texture);
 	};
 
 	//*******************************************************************
