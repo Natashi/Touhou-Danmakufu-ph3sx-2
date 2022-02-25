@@ -2150,7 +2150,7 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 			return script->CreateStringValue(shotData->GetShotDataList()->GetTexture()->GetName());
 		case INFO_RECT:
 		{
-			DxRect<LONG>* rect = shotData->GetData(0)->GetSourceRect();
+			DxRect<LONG>* rect = shotData->GetFrame(0)->GetSourceRect();
 			return script->CreateIntArrayValue(reinterpret_cast<LONG*>(rect), 4U);
 		}
 		case INFO_DELAY_COLOR:

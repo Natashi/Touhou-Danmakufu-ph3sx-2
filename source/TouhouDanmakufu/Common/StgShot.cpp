@@ -12,8 +12,8 @@
 StgShotManager::StgShotManager(StgStageController* stageController) {
 	stageController_ = stageController;
 
-	listPlayerShotData_ = new StgShotDataList();
-	listEnemyShotData_ = new StgShotDataList();
+	listPlayerShotData_.reset(new StgShotDataList());
+	listEnemyShotData_.reset(new StgShotDataList());
 
 	rcDeleteClip_ = DxRect<LONG>(-64, -64, 64, 64);
 
@@ -44,9 +44,6 @@ StgShotManager::~StgShotManager() {
 		if (obj)
 			obj->ClearShotObject();
 	}
-
-	ptr_delete(listPlayerShotData_);
-	ptr_delete(listEnemyShotData_);
 }
 void StgShotManager::Work() {
 	for (auto itr = listObj_.begin(); itr != listObj_.end(); ) {
@@ -107,7 +104,7 @@ void StgShotManager::Render(int targetPriority) {
 		effectShot_->SetMatrix(handle, &matProj_);
 	}
 
-	auto _RenderFromMatrix = [&](const RenderQueue& renderQueue) {
+	auto _RenderQueue = [&](const RenderQueue& renderQueue) {
 		if (renderQueue.count == 0) return;
 
 		for (size_t iBlend = 0; iBlend < blendTypeRenderOrder.size(); ++iBlend) {
@@ -124,8 +121,8 @@ void StgShotManager::Render(int targetPriority) {
 	};
 
 	//Always renders enemy shots above player shots, completely obliterates TAΣ's wet dream.
-	_RenderFromMatrix(renderQueuePlayer);
-	_RenderFromMatrix(renderQueueEnemy);
+	_RenderQueue(renderQueuePlayer);
+	_RenderQueue(renderQueueEnemy);
 
 	device->SetVertexDeclaration(nullptr);
 	device->SetIndices(nullptr);
@@ -254,18 +251,94 @@ bool StgShotManager::LoadEnemyShotData(const std::wstring& path, bool bReload) {
 //StgShotDataList
 //****************************************************************************
 StgShotDataList::StgShotDataList() {
-	delayData_ = nullptr;
-
+	defaultDelayData_ = -1;
 	defaultDelayColor_ = 0xffffffff;	//Solid white
 }
 StgShotDataList::~StgShotDataList() {
-	for (StgShotData*& shotData : listData_)
-		ptr_delete(shotData);
 	listData_.clear();
-
-	for (auto& pBufferContainer : listVertexBuffer_)
-		ptr_delete(pBufferContainer);
 	listVertexBuffer_.clear();
+}
+void StgShotDataList::_LoadVertexBuffers(size_t countFrame) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	IDirect3DDevice9* device = graphics->GetDevice();
+
+	size_t oldVertexBufferListSize = listVertexBuffer_.size();
+
+	size_t iData = 0, iBuffer = 0;
+	while (countFrame > 0) {
+		size_t thisCountFrame = std::min<size_t>(countFrame, StgShotVertexBufferContainer::MAX_DATA);
+
+		std::vector<VERTEX_TLX> bufferVertex(4 * thisCountFrame);
+		size_t iVertex = 0;
+
+		VERTEX_TLX verts[4];
+		for (size_t i = 0; i < thisCountFrame; ++i, ++iData) {
+			StgShotData* data = listData_[iData].get();
+			if (data == nullptr) continue;
+
+			for (size_t iAnim = 0; iAnim < data->GetFrameCount(); ++iAnim) {
+				StgShotDataFrame* pFrame = &data->listAnime_[iAnim];
+				pFrame->listShotData_ = this;
+
+				LONG* ptrSrc = reinterpret_cast<LONG*>(&pFrame->rcSrc_);
+				float* ptrDst = reinterpret_cast<float*>(&pFrame->rcDst_);
+
+				for (size_t iVert = 0; iVert < 4; ++iVert) {
+					VERTEX_TLX* pv = &verts[iVert];
+
+					//((iVert & 1) << 1)
+					//   0 -> 0
+					//   1 -> 2
+					//   2 -> 0
+					//   3 -> 2
+					//(iVert | 1)
+					//   0 -> 1
+					//   1 -> 1
+					//   2 -> 3
+					//   3 -> 3
+
+					StgShotObject::_SetVertexUV(pv,
+						ptrSrc[(iVert & 1) << 1] / textureSize_.x, ptrSrc[iVert | 1] / textureSize_.y);
+					StgShotObject::_SetVertexPosition(pv, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1], 0);
+					StgShotObject::_SetVertexColorARGB(pv, 0xffffffff);
+				}
+
+				pFrame->vertexBufferIndex_ = iBuffer;
+				pFrame->vertexOffset_ = iVertex;
+
+				for (size_t j = 0; j < 4; ++j)
+					bufferVertex[iVertex + j] = verts[j];
+				iVertex += 4;
+			}
+		}
+
+		//Cache previously loaded containers so we won't have to reallocate
+		//	everything every time a new shot data is loaded
+		StgShotVertexBufferContainer* pVertexBufferContainer = nullptr;
+		if (iBuffer >= oldVertexBufferListSize) {
+			listVertexBuffer_.push_back(unique_ptr<StgShotVertexBufferContainer>(
+				new StgShotVertexBufferContainer()));
+			
+			pVertexBufferContainer = listVertexBuffer_.back().get();
+		}
+		else {
+			pVertexBufferContainer = listVertexBuffer_[iBuffer].get();
+		}
+
+		HRESULT hr = pVertexBufferContainer->LoadData(bufferVertex, thisCountFrame);
+		if (FAILED(hr)) {
+			std::wstring err = StringUtility::Format(L"AddShotDataList::Failed to load shot data buffer: "
+				"\t\r\n%s: %s",
+				DXGetErrorString(hr), DXGetErrorDescription(hr));
+			throw gstd::wexception(err);
+		}
+
+		++iBuffer;
+		countFrame -= thisCountFrame;
+	}
+
+	if (listVertexBuffer_.size() > oldVertexBufferListSize)
+		listVertexBuffer_.resize(iBuffer);
 }
 bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 	if (!bReload && listReadPath_.find(path) != listReadPath_.end()) return true;
@@ -281,10 +354,8 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 	bool res = false;
 	Scanner scanner(source);
 	try {
-		std::vector<StgShotData*> listData(1);
+		std::vector<unique_ptr<StgShotData>> listData(0);
 		std::wstring pathImage = L"";
-
-		DxRect<LONG> rcDelay(-1, -1, -1, -1);
 
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
@@ -299,6 +370,10 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 					scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
 					pathImage = scanner.Next().GetString();
 				}
+				else if (element == L"delay_id") {
+					scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
+					defaultDelayData_ = scanner.Next().GetInteger();
+				}
 				else if (element == L"delay_color") {
 					std::vector<std::wstring> list = scanner.GetArgumentList();
 
@@ -310,18 +385,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 						StringUtility::ToInteger(list[1]),
 						StringUtility::ToInteger(list[2]));
 				}
-				else if (element == L"delay_rect") {
-					std::vector<std::wstring> list = scanner.GetArgumentList();
-
-					if (list.size() < 4)
-						throw wexception("Invalid argument list size (expected 4)");
-
-					DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
-						StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
-
-					rcDelay = DxRect<LONG>(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
-						StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
-				}
+				
 				if (scanner.HasNext())
 					tok = scanner.Next();
 			}
@@ -340,130 +404,33 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 		textureSize_.x = texture->GetWidth();
 		textureSize_.y = texture->GetHeight();
 
-		for (auto& pBufferContainer : listVertexBuffer_)
-			ptr_delete(pBufferContainer);
-		listVertexBuffer_.clear();
-
-		size_t countFrame = 1;
+		size_t countFrame = 0;
 		{
-			if (listData_.size() < listData.size() + 1)
-				listData_.resize(listData.size() + 1);
+			if (listData_.size() < listData.size())
+				listData_.resize(listData.size());
 
-			//Place delay data at index 0
-			{
-				if (delayData_ == nullptr)
-					delayData_ = new StgShotData(this);
-
-				StgShotDataFrame delayFrame;
-				delayFrame.listShotData_ = this;
-				delayFrame.vertexBufferIndex_ = 0;
-				delayFrame.vertexOffset_ = 0;
-				delayFrame.rcSrc_ = rcDelay;
-				delayFrame.rcDst_ = StgShotDataFrame::LoadDestRect(&rcDelay);
-				delayFrame.frame_ = 0;
-
-				delayData_->listAnime_.clear();
-				delayData_->listAnime_.push_back(delayFrame);
-
-				listData_[0] = delayData_;
-			}
-
-			size_t iDataPut = 1;
 			for (size_t iData = 0; iData < listData.size(); ++iData) {
-				StgShotData* data = listData[iData];
+				unique_ptr<StgShotData>& data = listData[iData];
 				if (data == nullptr) continue;
+
 				countFrame += data->GetFrameCount();
-				listData_[iDataPut++] = data;
+				listData_[iData] = std::move(data);		//Moves unique_ptr object, do not use listData after this point
+			}
+
+			//Replace placeholder data ids with actual pointers
+			for (size_t iData = 0; iData < listData_.size(); ++iData) {
+				StgShotData* data = listData_[iData].get();
+				if (data == nullptr) continue;
+
+				int idDelay = (int&)data->dataDelay_;
+				StgShotData* pDelay = GetData(idDelay < 0 ? defaultDelayData_ : idDelay);
+				if (pDelay == nullptr)
+					pDelay = GetData(defaultDelayData_);
+				data->dataDelay_ = pDelay;
 			}
 		}
 
-		{
-			DirectGraphics* graphics = DirectGraphics::GetBase();
-			IDirect3DDevice9* device = graphics->GetDevice();
-
-			size_t iData = 0, iBuffer = 0;
-			while (countFrame > 0) {
-				StgShotVertexBuffer* vertexBufferContainer = new StgShotVertexBuffer();
-				//vertexBufferContainer->texture_ = texture;
-
-				size_t thisCountFrame = std::min<size_t>(countFrame, StgShotVertexBuffer::MAX_DATA);
-
-				vertexBufferContainer->pVertexBuffer_ = new FixedVertexBuffer(device);
-
-				FixedVertexBuffer* pBufferObj = vertexBufferContainer->pVertexBuffer_;
-				pBufferObj->Setup(thisCountFrame * 4, StgShotVertexBuffer::STRIDE, VERTEX_TLX::fvf);
-
-				HRESULT hr = pBufferObj->Create(0, D3DPOOL_MANAGED);
-				if (FAILED(hr)) {
-					pBufferObj->Release();
-
-					std::wstring err = StringUtility::Format(L"AddShotDataList::Failed to load shot data buffer: "
-						"\t\r\n%s: %s",
-						DXGetErrorString(hr), DXGetErrorDescription(hr));
-					throw gstd::wexception(err);
-				}
-
-				size_t countBufferBytes = pBufferObj->GetSizeInBytes();
-
-				std::vector<VERTEX_TLX> bufferVertex(4 * thisCountFrame);
-				size_t iVertex = 0;
-
-				VERTEX_TLX verts[4];
-
-				for (size_t i = 0; i < thisCountFrame; ++i, ++iData) {
-					StgShotData* data = listData_[iData];
-					if (data == nullptr) continue;
-
-					for (size_t iAnim = 0; iAnim < data->GetFrameCount(); ++iAnim) {
-						StgShotDataFrame* pFrame = &data->listAnime_[iAnim];
-						pFrame->listShotData_ = this;
-
-						LONG* ptrSrc = reinterpret_cast<LONG*>(&pFrame->rcSrc_);
-						float* ptrDst = reinterpret_cast<float*>(&pFrame->rcDst_);
-
-						for (size_t iVert = 0; iVert < 4; ++iVert) {
-							VERTEX_TLX* pv = &verts[iVert];
-
-							//((iVert & 1) << 1)
-							//   0 -> 0
-							//   1 -> 2
-							//   2 -> 0
-							//   3 -> 2
-							//(iVert | 1)
-							//   0 -> 1
-							//   1 -> 1
-							//   2 -> 3
-							//   3 -> 3
-
-							StgShotObject::_SetVertexUV(pv,
-								ptrSrc[(iVert & 1) << 1] / textureSize_.x, ptrSrc[iVert | 1] / textureSize_.y);
-							StgShotObject::_SetVertexPosition(pv, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1], 0);
-							StgShotObject::_SetVertexColorARGB(pv, 0xffffffff);
-						}
-
-						pFrame->vertexBufferIndex_ = iBuffer;
-						pFrame->vertexOffset_ = iVertex;
-
-						for (size_t j = 0; j < 4; ++j)
-							bufferVertex[iVertex + j] = verts[j];
-						iVertex += 4;
-					}
-				}
-
-				{
-					BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
-
-					lockParam.SetSource(bufferVertex, pBufferObj->GetSize(), sizeof(VERTEX_TLX));
-					hr = pBufferObj->UpdateBuffer(&lockParam);
-				}
-
-				vertexBufferContainer->countData_ = thisCountFrame;
-				listVertexBuffer_.push_back(vertexBufferContainer);
-				++iBuffer;
-
-				countFrame -= thisCountFrame;
-			}
-		}
+		_LoadVertexBuffers(countFrame);
 
 		listReadPath_.insert(path);
 		Logger::WriteTop(StringUtility::Format(L"Loaded shot data: %s", pathReduce.c_str()));
@@ -484,7 +451,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 
 	return res;
 }
-void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& scanner) {
+void StgShotDataList::_ScanShot(std::vector<unique_ptr<StgShotData>>& listData, Scanner& scanner) {
 	Token& tok = scanner.Next();
 	if (tok.GetType() == Token::Type::TK_NEWLINE) tok = scanner.Next();
 	scanner.CheckType(tok, Token::Type::TK_OPENC);
@@ -518,6 +485,10 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 		i->shotData->listAnime_.resize(1);
 		i->shotData->listAnime_[0] = anime;
 		i->shotData->totalAnimeFrame_ = 1;
+	};
+	auto funcSetDelayID = [](Data* i, Scanner& s) {
+		s.CheckType(s.Next(), Token::Type::TK_EQUAL);
+		i->shotData->dataDelay_ = (StgShotData*)s.Next().GetInteger();
 	};
 	auto funcSetDelayColor = [](Data* i, Scanner& s) {
 		std::vector<std::wstring> list = s.GetArgumentList();
@@ -586,6 +557,7 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 	static const std::unordered_map<std::wstring, std::function<void(Data*, Scanner&)>> mapFunc = {
 		{ L"id", LAMBDA_SETV(id, GetInteger) },
 		{ L"rect", funcSetRect },
+		{ L"delay_id", funcSetDelayID },
 		{ L"delay_color", funcSetDelayColor },
 		{ L"collision", funcSetCollision },
 		{ L"render", LAMBDA_SETBLEND(typeRender_) },
@@ -628,7 +600,7 @@ void StgShotDataList::_ScanShot(std::vector<StgShotData*>& listData, Scanner& sc
 
 		if (listData.size() <= data.id)
 			listData.resize(data.id + 1);
-		listData[data.id] = data.shotData;
+		listData[data.id].reset(data.shotData);
 	}
 }
 void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
@@ -691,6 +663,7 @@ StgShotData::StgShotData(StgShotDataList* listShotData) {
 	typeDelayRender_ = MODE_BLEND_ADD_ARGB;
 
 	alpha_ = 255;
+	dataDelay_ = (StgShotData*)-1;
 	colorDelay_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 
 	totalAnimeFrame_ = 0;
@@ -702,7 +675,7 @@ StgShotData::StgShotData(StgShotDataList* listShotData) {
 StgShotData::~StgShotData() {
 }
 
-StgShotDataFrame* StgShotData::GetData(size_t frame) {
+StgShotDataFrame* StgShotData::GetFrame(size_t frame) {
 	if (totalAnimeFrame_ <= 1U)
 		return &listAnime_[0];
 
@@ -718,14 +691,38 @@ StgShotDataFrame* StgShotData::GetData(size_t frame) {
 }
 
 //****************************************************************************
-//StgShotVertexBuffer
+//StgShotVertexBufferContainer
 //****************************************************************************
-StgShotVertexBuffer::StgShotVertexBuffer() {
+StgShotVertexBufferContainer::StgShotVertexBufferContainer() {
 	pVertexBuffer_ = nullptr;
 	countData_ = 0;
 }
-StgShotVertexBuffer::~StgShotVertexBuffer() {
+StgShotVertexBufferContainer::~StgShotVertexBufferContainer() {
 	ptr_release(pVertexBuffer_);
+}
+
+HRESULT StgShotVertexBufferContainer::LoadData(const std::vector<VERTEX_TLX>& data, size_t countFrame) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	IDirect3DDevice9* device = graphics->GetDevice();
+
+	if (pVertexBuffer_ == nullptr) {
+		pVertexBuffer_ = new FixedVertexBuffer(device);
+		pVertexBuffer_->Setup(data.size(), StgShotVertexBufferContainer::STRIDE, VERTEX_TLX::fvf);
+
+		HRESULT hr = pVertexBuffer_->Create(0, D3DPOOL_MANAGED);
+		if (FAILED(hr)) {
+			ptr_release(pVertexBuffer_);
+			return hr;
+		}
+	}
+
+	BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
+	lockParam.SetSource(const_cast<std::vector<VERTEX_TLX>&>(data), pVertexBuffer_->GetSize(), sizeof(VERTEX_TLX));
+
+	HRESULT hr = pVertexBuffer_->UpdateBuffer(&lockParam);
+	countData_ = countFrame;
+
+	return hr;
 }
 
 //****************************************************************************
@@ -1469,7 +1466,7 @@ static void _DefaultShotRender(StgShotManager* shotManager, StgShotDataFrame* sh
 	const D3DXMATRIX& matWorld, D3DCOLOR color, shared_ptr<Shader> shader) {
 	if (shotFrame == nullptr) return;
 
-	StgShotVertexBuffer* pVB = shotFrame->GetVertexBuffer();
+	StgShotVertexBufferContainer* pVB = shotFrame->GetVertexBuffer();
 	DWORD vertexOffset = shotFrame->vertexOffset_;
 
 	if (pVB) {
@@ -1551,7 +1548,8 @@ void StgNormalShotObject::Render(StgShotManager* shotManager, BlendMode targetBl
 	D3DCOLOR color;
 
 	if (delay_.time > 0) {
-		shotFrame = delay_.id >= 0 ? delayData->GetData(frameWork_) : delayData->GetDelayData()->GetData(0);
+		shotFrame = delay_.id >= 0 ? delayData->GetFrame(frameWork_) 
+			: delayData->GetDelayFrame(frameWork_);
 		if (shotFrame) {
 			scaleX = scaleY = delay_.GetScale();
 
@@ -1568,7 +1566,7 @@ void StgNormalShotObject::Render(StgShotManager* shotManager, BlendMode targetBl
 		scaleY = scale_.y;
 		color = color_;
 
-		shotFrame = shotData->GetData(frameWork_);
+		shotFrame = shotData->GetFrame(frameWork_);
 		if (shotFrame) {
 			float alphaRate = shotData->GetAlpha() / 255.0f;
 			if (frameFadeDelete_ >= 0)
@@ -1850,7 +1848,8 @@ void StgLooseLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 		if (objBlendType == targetBlend) {
 			StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
 
-			shotFrame = delay_.id >= 0 ? delayData->GetData(frameWork_) : delayData->GetDelayData()->GetData(0);
+			shotFrame = delay_.id >= 0 ? delayData->GetFrame(frameWork_) 
+				: delayData->GetDelayFrame(frameWork_);
 			if (shotFrame) {
 				rPos = bEnableMotionDelay_ ? posOrigin_ : D3DXVECTOR2(position_);
 				if (bRoundingPosition_) {
@@ -1884,7 +1883,7 @@ void StgLooseLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 		objBlendType = objBlendType == MODE_BLEND_NONE ? MODE_BLEND_ADD_ARGB : objBlendType;
 
 		if (objBlendType == targetBlend) {
-			shotFrame = shotData->GetData(frameWork_);
+			shotFrame = shotData->GetFrame(frameWork_);
 			if (shotFrame) {
 				float dx = posTail_[0] - posX_;
 				float dy = posTail_[1] - posY_;
@@ -2102,7 +2101,7 @@ void StgStraightLaserObject::Render(StgShotManager* shotManager, BlendMode targe
 		objBlendType = objBlendType == MODE_BLEND_NONE ? MODE_BLEND_ADD_ARGB : objBlendType;
 
 		if (objBlendType == targetBlend) {
-			StgShotDataFrame* shotFrame = shotData->GetData(frameWork_);
+			StgShotDataFrame* shotFrame = shotData->GetFrame(frameWork_);
 			if (shotFrame) {
 				D3DXVECTOR2 rAngle(move_.y, -move_.x);
 
@@ -2158,19 +2157,22 @@ void StgStraightLaserObject::Render(StgShotManager* shotManager, BlendMode targe
 				delaySize *= delaySizeBase;
 
 				StgShotData* delayData = delayID >= 0 ? _GetShotData(delayID) : shotData;
-				StgShotDataFrame* delayFrame = delayID >= 0 ? delayData->GetData(frameWork_) : delayData->GetDelayData()->GetData(0);
+				StgShotDataFrame* delayFrame = delayID >= 0 ? delayData->GetFrame(frameWork_) 
+					: delayData->GetDelayFrame(frameWork_);
 
-				D3DXVECTOR2 rAngle = (delay_.angle.y != 0) ? D3DXVECTOR2(cosf(delay_.angle.x), sinf(delay_.angle.x)) : move_;
-				float rScaleX = delaySize / delayFrame->GetDestRect()->GetWidth();
-				float rScaleY = delaySize / delayFrame->GetDestRect()->GetHeight();
+				if (delayFrame) {
+					D3DXVECTOR2 rAngle = (delay_.angle.y != 0) ? D3DXVECTOR2(cosf(delay_.angle.x), sinf(delay_.angle.x)) : move_;
+					float rScaleX = delaySize / delayFrame->GetDestRect()->GetWidth();
+					float rScaleY = delaySize / delayFrame->GetDestRect()->GetHeight();
 
-				D3DXMATRIX matTransform(
-					rScaleX * rAngle.x, rScaleX * rAngle.y, 0, 0,
-					rScaleY * -rAngle.y, rScaleY * rAngle.x, 0, 0,
-					0, 0, 1, 0,
-					delayPos.x, delayPos.y, 0, 1
-				);
-				_DefaultShotRender(shotManager, delayFrame, matTransform, rColor, shader_);
+					D3DXMATRIX matTransform(
+						rScaleX * rAngle.x, rScaleX * rAngle.y, 0, 0,
+						rScaleY * -rAngle.y, rScaleY * rAngle.x, 0, 0,
+						0, 0, 1, 0,
+						delayPos.x, delayPos.y, 0, 1
+					);
+					_DefaultShotRender(shotManager, delayFrame, matTransform, rColor, shader_);
+				}
 			};
 
 			if (bUseSouce_) {
@@ -2423,7 +2425,8 @@ void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 		if (objBlendType == targetBlend) {
 			StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
 
-			shotFrame = delay_.id >= 0 ? delayData->GetData(frameWork_) : delayData->GetDelayData()->GetData(0);
+			shotFrame = delay_.id >= 0 ? delayData->GetFrame(frameWork_) 
+				: delayData->GetDelayFrame(frameWork_);
 			if (shotFrame) {
 				D3DXVECTOR2 rScale;
 				D3DXVECTOR2 rAngle;		//[cos, sin]
@@ -2461,7 +2464,7 @@ void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 		objBlendType = objBlendType == MODE_BLEND_NONE ? MODE_BLEND_ADD_ARGB : objBlendType;
 
 		if (objBlendType == targetBlend) {
-			StgShotDataFrame* shotFrame = shotData->GetData(frameWork_);
+			StgShotDataFrame* shotFrame = shotData->GetFrame(frameWork_);
 			if (shotFrame) {
 				size_t countPos = listPosition_.size();
 				size_t countRect = countPos - 1U;
