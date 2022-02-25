@@ -124,7 +124,7 @@ bool script_machine::has_event(const std::string& event_name, std::map<std::stri
 }
 int script_machine::get_current_line() {
 	ref_unsync_ptr<environment>& current = *current_thread_index;
-	return (current->sub->codes[current->ip]).line;
+	return (current->sub->codes[current->ip]).GetLine();
 }
 
 void script_machine::reset() {
@@ -246,10 +246,12 @@ void script_machine::run_code() {
 				script_value_vector& variables = current->variables;
 
 				code* c = &(current->sub->codes[current->ip]);
-				error_line = c->line;
+				error_line = c->GetLine();
 				++(current->ip);
 
-				switch (c->command) {
+				command_kind opc = c->GetOp();
+
+				switch (opc) {
 				case command_kind::pc_wait:
 				{
 					value* t = &stack.back();
@@ -288,7 +290,7 @@ void script_machine::run_code() {
 					value* var = find_variable_symbol<false>(current, c, c->arg0, c->arg1);
 					if (var == nullptr) break;
 
-					if (c->command == command_kind::pc_push_variable)
+					if (opc == command_kind::pc_push_variable)
 						stack.push_back(*var);
 					else
 						stack.push_back(value(script_type_manager::get_ptr_type(), var));
@@ -341,7 +343,7 @@ void script_machine::run_code() {
 				case command_kind::pc_jump_if_not:
 				{
 					value* top = &stack.back();
-					bool bJE = c->command == command_kind::pc_jump_if;
+					bool bJE = opc == command_kind::pc_jump_if;
 					if ((bJE && top->as_boolean()) || (!bJE && !top->as_boolean()))
 						current->ip = c->arg0;
 					stack.pop_back();
@@ -351,7 +353,7 @@ void script_machine::run_code() {
 				case command_kind::pc_jump_if_not_nopop:
 				{
 					value* top = &stack.back();
-					bool bJE = c->command == command_kind::pc_jump_if_nopop;
+					bool bJE = opc == command_kind::pc_jump_if_nopop;
 					if ((bJE && top->as_boolean()) || (!bJE && !top->as_boolean()))
 						current->ip = c->arg0;
 					break;
@@ -360,7 +362,7 @@ void script_machine::run_code() {
 				case command_kind::pc_copy_assign:
 				case command_kind::pc_ref_assign:
 				{
-					if (c->command == command_kind::pc_copy_assign) {
+					if (opc == command_kind::pc_copy_assign) {
 						value* dest = find_variable_symbol<true>(current, c, c->arg0, c->arg1);
 						value* src = &stack.back();
 
@@ -441,7 +443,7 @@ void script_machine::run_code() {
 							stack.pop_back(c->arg1);
 
 							//Return value
-							if (c->command == command_kind::pc_call_and_push_result)
+							if (opc == command_kind::pc_call_and_push_result)
 								stack.push_back(ret);
 						}
 					}
@@ -460,7 +462,7 @@ void script_machine::run_code() {
 					else {
 						//User-defined functions or internal blocks
 						ref_unsync_ptr<environment> e = new environment(*current_thread_index, sub);
-						e->has_result = c->command == command_kind::pc_call_and_push_result;
+						e->has_result = opc == command_kind::pc_call_and_push_result;
 						*current_thread_index = e;
 
 						//Pass the arguments
@@ -483,7 +485,7 @@ void script_machine::run_code() {
 					value* t = &stack.back();
 					int r = t->as_int();
 					bool b = false;
-					switch (c->command) {
+					switch (opc) {
 					case command_kind::pc_compare_e:
 						b = r == 0;
 						break;
@@ -514,15 +516,7 @@ void script_machine::run_code() {
 					value* cmp_arg = &stack.back() - 1;
 					value cmp_res = BaseFunction::compare(this, 2, cmp_arg);
 
-					/*
-					{
-						std::wstring str = c->command == command_kind::pc_compare_and_loop_ascent ? L"Asc: " : L"Dsc: ";
-						str += cmp_arg->as_string() + L" " + (cmp_arg + 1)->as_string();
-						Logger::WriteTop(str);
-					}
-					*/
-
-					bool bSkip = c->command == command_kind::pc_loop_ascent ?
+					bool bSkip = opc == command_kind::pc_loop_ascent ?
 						(cmp_res.as_int() <= 0) : (cmp_res.as_int() >= 0);
 					stack.push_back(value(script_type_manager::get_boolean_type(), bSkip));
 
@@ -595,21 +589,25 @@ void script_machine::run_code() {
 					break;
 				}
 
+#define ARG1_GET_LEVEL(_PK) (uint32_t)(((uint32_t)(_PK) & 0xfff00000) >> 20)
+#define ARG1_GET_VAR(_PK)	(uint32_t)(((uint32_t)(_PK) & 0x000fffff))
+
 				//----------------------------------Inline operations----------------------------------
 				case command_kind::pc_inline_inc:
 				case command_kind::pc_inline_dec:
 				{
 					if (c->arg0) {
-						value* var = find_variable_symbol<false>(current, c, c->arg1, c->arg2);
+						value* var = find_variable_symbol<false>(current, c, 
+							ARG1_GET_LEVEL(c->arg1), ARG1_GET_VAR(c->arg1));
 						if (var == nullptr) break;
-						value res = (c->command == command_kind::pc_inline_inc) ?
+						value res = (opc == command_kind::pc_inline_inc) ?
 							BaseFunction::successor(this, 1, var) : BaseFunction::predecessor(this, 1, var);
 						*var = res;
 					}
 					else {
 						value* var = stack.back().as_ptr();
 						if (!var->has_data()) break;
-						value res = (c->command == command_kind::pc_inline_inc) ?
+						value res = (opc == command_kind::pc_inline_inc) ?
 							BaseFunction::successor(this, 1, var) : BaseFunction::predecessor(this, 1, var);
 						*var = res;
 						if (c->arg1)
@@ -643,11 +641,12 @@ void script_machine::run_code() {
 
 					value res;
 					if (c->arg0) {
-						value* dest = find_variable_symbol<false>(current, c, c->arg1, c->arg2);
+						value* dest = find_variable_symbol<false>(current, c, 
+							ARG1_GET_LEVEL(c->arg1), ARG1_GET_VAR(c->arg1));
 						if (dest == nullptr) break;
 
 						value arg[2] = { *dest, stack.back() };
-						PerformFunction(&res, c->command, arg);
+						PerformFunction(&res, opc, arg);
 
 						BaseFunction::_value_cast(&res, dest->get_type());
 						*dest = res;
@@ -659,7 +658,7 @@ void script_machine::run_code() {
 						value& pDest = *(pArg->as_ptr());
 
 						value arg[2] = { pDest, pArg[1] };
-						PerformFunction(&res, c->command, arg);
+						PerformFunction(&res, opc, arg);
 
 						BaseFunction::_value_cast(&res, pDest.get_type());
 						pDest = res;
@@ -671,7 +670,8 @@ void script_machine::run_code() {
 				case command_kind::pc_inline_cat_asi:
 				{
 					if (c->arg0) {
-						value* dest = find_variable_symbol<false>(current, c, c->arg1, c->arg2);
+						value* dest = find_variable_symbol<false>(current, c, 
+							ARG1_GET_LEVEL(c->arg1), ARG1_GET_VAR(c->arg1));
 						if (dest == nullptr) break;
 
 						value arg[2] = { *dest, stack.back() };
@@ -697,7 +697,7 @@ void script_machine::run_code() {
 					value* arg = &stack.back();
 
 #define DEF_CASE(cmd, fn) case cmd: res = BaseFunction::fn(this, 1, arg); break;
-					switch (c->command) {
+					switch (opc) {
 						DEF_CASE(command_kind::pc_inline_neg, negative);
 						DEF_CASE(command_kind::pc_inline_not, not_);
 						DEF_CASE(command_kind::pc_inline_abs, absolute);
@@ -722,7 +722,7 @@ void script_machine::run_code() {
 					value* args = &stack.back() - 1;
 
 #define DEF_CASE(cmd, fn) case cmd: res = BaseFunction::fn(this, 2, args); break;
-					switch (c->command) {
+					switch (opc) {
 						DEF_CASE(command_kind::pc_inline_add, add);
 						DEF_CASE(command_kind::pc_inline_sub, subtract);
 						DEF_CASE(command_kind::pc_inline_mul, multiply);
@@ -753,7 +753,7 @@ void script_machine::run_code() {
 					int cmp_r = cmp_res.as_int();
 
 #define DEF_CASE(cmd, expr) case cmd: cmp_res.reset(script_type_manager::get_boolean_type(), expr); break;
-					switch (c->command) {
+					switch (opc) {
 						DEF_CASE(command_kind::pc_inline_cmp_e, cmp_r == 0);
 						DEF_CASE(command_kind::pc_inline_cmp_g, cmp_r > 0);
 						DEF_CASE(command_kind::pc_inline_cmp_ge, cmp_r >= 0);
@@ -775,7 +775,7 @@ void script_machine::run_code() {
 					value* var2 = &stack.back();
 					value* var1 = var2 - 1;
 
-					bool b = c->command == command_kind::pc_inline_logic_and ?
+					bool b = opc == command_kind::pc_inline_logic_and ?
 						(var1->as_boolean() && var2->as_boolean()) : (var1->as_boolean() || var2->as_boolean());
 					value res(script_type_manager::get_boolean_type(), b);
 
@@ -839,6 +839,9 @@ void script_machine::run_code() {
 				}
 				}
 			}
+
+#undef ARG1_GET_LEVEL
+#undef ARG1_GET_VAR
 		}
 	}
 	catch (std::bad_alloc& e) {
