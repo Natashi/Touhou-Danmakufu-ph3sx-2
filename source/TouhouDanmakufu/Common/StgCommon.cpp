@@ -41,11 +41,11 @@ void StgMoveObject::_AttachReservedPattern(ref_unsync_ptr<StgMovePattern> patter
 	pattern->Activate(pattern_.get());
 	pattern_ = pattern;
 }
-void StgMoveObject::AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap) {
+void StgMoveObject::AddPattern(uint32_t frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap) {
 	if (frameDelay == 0 && !bForceMap)
 		_AttachReservedPattern(pattern);
 	else {
-		int frame = frameDelay + framePattern_;
+		uint32_t frame = frameDelay + framePattern_;
 		mapPattern_[frame].push_back(pattern);
 	}
 }
@@ -593,12 +593,12 @@ void StgMovePattern_Line::Activate(StgMovePattern* src) {
 		patternS->SetAtSpeed(tx, ty, speed);
 	}
 	else if (auto patternF = dynamic_cast<StgMovePattern_Line_Frame*>(this)) {
-		int frame = 0;
+		uint32_t frame = 0;
 		Math::Lerp::Type lerpMode = Math::Lerp::LINEAR;
 		for (auto& [cmd, arg] : listCommand_) {
 			switch (cmd) {
 			case SET_FR:
-				frame = (int)arg;
+				frame = (uint32_t)arg;
 				break;
 			case SET_LP:
 				lerpMode = (Math::Lerp::Type)arg;
@@ -654,7 +654,7 @@ StgMovePattern_Line_Frame::StgMovePattern_Line_Frame(StgMoveObject* target) : St
 	moveLerpFunc = Math::Lerp::Linear<double, double>;
 	diffLerpFunc = Math::Lerp::DifferentialLinear<double>;
 }
-void StgMovePattern_Line_Frame::SetAtFrame(double tx, double ty, int frame, lerp_func lerpFunc, lerp_diff_func diffFunc) {
+void StgMovePattern_Line_Frame::SetAtFrame(double tx, double ty, uint32_t frame, lerp_func lerpFunc, lerp_diff_func diffFunc) {
 	iniPos_[0] = target_->GetPositionX();
 	iniPos_[1] = target_->GetPositionY();
 	targetPos_[0] = tx;
@@ -663,7 +663,7 @@ void StgMovePattern_Line_Frame::SetAtFrame(double tx, double ty, int frame, lerp
 	moveLerpFunc = lerpFunc;
 	diffLerpFunc = diffFunc;
 
-	maxFrame_ = std::max(frame, 1);
+	maxFrame_ = std::max(frame, 1U);
 
 	double dx = targetPos_[0] - iniPos_[0];
 	double dy = targetPos_[1] - iniPos_[1];

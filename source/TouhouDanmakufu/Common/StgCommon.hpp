@@ -30,8 +30,9 @@ protected:
 
 	bool bEnableMovement_;
 
-	int framePattern_;
-	std::map<int, std::list<ref_unsync_ptr<StgMovePattern>>> mapPattern_;
+	uint32_t framePattern_;
+	std::map<uint32_t, std::list<ref_unsync_ptr<StgMovePattern>>> mapPattern_;
+
 	virtual void _Move();
 	void _AttachReservedPattern(ref_unsync_ptr<StgMovePattern> pattern);
 public:
@@ -58,7 +59,7 @@ public:
 	void SetPattern(ref_unsync_ptr<StgMovePattern> pattern) {
 		pattern_ = pattern;
 	}
-	void AddPattern(int frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap = false);
+	void AddPattern(uint32_t frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap = false);
 };
 
 //*******************************************************************
@@ -84,7 +85,7 @@ protected:
 	int typeMove_;
 	StgMoveObject* target_;
 
-	int frameWork_;
+	uint32_t frameWork_;
 	int idShotData_;
 
 	double c_;
@@ -246,7 +247,6 @@ protected:
 	double angOffVelocity_;
 	double angOffAcceleration_;
 	double angOffMaxVelocity_;
-
 public:
 	StgMovePattern_XY_Angle(StgMoveObject* target);
 
@@ -303,13 +303,12 @@ protected:
 	};
 
 	int typeLine_;
-	int maxFrame_;
+	uint32_t maxFrame_;
 	double speed_;
 	double angDirection_;
 	
 	double iniPos_[2];
 	double targetPos_[2];
-
 public:
 	StgMovePattern_Line(StgMoveObject* target);
 
@@ -343,7 +342,7 @@ public:
 
 	virtual void Move();
 
-	void SetAtFrame(double tx, double ty, int frame, lerp_func lerpFunc, lerp_diff_func diffFunc);
+	void SetAtFrame(double tx, double ty, uint32_t frame, lerp_func lerpFunc, lerp_diff_func diffFunc);
 };
 class StgMovePattern_Line_Weight : public StgMovePattern_Line {
 	friend class StgMoveObject;
