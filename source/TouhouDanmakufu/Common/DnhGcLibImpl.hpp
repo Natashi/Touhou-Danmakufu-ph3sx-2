@@ -66,14 +66,15 @@ public:
 
 	void SetFps(int fps) { controller_->SetFps(fps); }
 	int GetFps() { return controller_->GetFps(); }
-	void SetTimerEnable(bool b) { controller_->SetTimerEnable(b); }
 
-	void Wait() { controller_->Wait(); }
-	bool IsSkip() { return controller_->IsSkip(); }
+	std::array<bool, 2> Advance() { return controller_->Advance(); }
+
 	void SetCriticalFrame() { controller_->SetCriticalFrame(); }
+
 	float GetCurrentFps() { return controller_->GetCurrentFps(); }
 	float GetCurrentWorkFps() { return controller_->GetCurrentWorkFps(); }
 	float GetCurrentRenderFps() { return controller_->GetCurrentRenderFps(); }
+
 	bool IsFastMode() { return controller_->IsFastMode(); }
 	void SetFastMode(bool b) { controller_->SetFastMode(b); }
 	void SetFastModeRate(size_t rate) { controller_->SetFastModeRate(rate); }

@@ -11,32 +11,34 @@ namespace gstd {
 	//*******************************************************************
 	class FpsController {
 	protected:
-		DWORD fps_;			//設定されているFPS
-		bool bUseTimer_;	//タイマー制御
+		DWORD fps_;
+
 		bool bCriticalFrame_;
 		bool bFastMode_;
 
 		size_t fastModeFpsRate_;
 
 		std::list<ref_count_weak_ptr<FpsControlObject>> listFpsControlObject_;
-
-		inline void _Sleep(DWORD msec);
 	public:
 		FpsController();
 		virtual ~FpsController();
 
-		static DWORD GetCpuTime();
+		static stdch::steady_clock::time_point GetCpuTime();
 
 		virtual void SetFps(DWORD fps) { fps_ = fps; }
 		virtual DWORD GetFps() { return fps_; }
-		virtual void SetTimerEnable(bool b) { bUseTimer_ = b; }
 
-		virtual void Wait() = 0;
-		virtual bool IsSkip() { return false; }
+		virtual std::array<bool, 2> Advance() = 0;
+
+		virtual bool IsRenderFrame() { return false; }
+		virtual bool IsUpdateFrame() { return false; }
+
 		virtual void SetCriticalFrame() { bCriticalFrame_ = true; }
+
 		virtual float GetCurrentFps() = 0;
 		virtual float GetCurrentWorkFps() { return GetCurrentFps(); }
 		virtual float GetCurrentRenderFps() { return GetCurrentFps(); }
+
 		bool IsFastMode() { return bFastMode_; }
 		void SetFastMode(bool b) { bFastMode_ = b; }
 
@@ -54,56 +56,63 @@ namespace gstd {
 	//*******************************************************************
 	class StaticFpsController : public FpsController {
 	protected:
-		float fpsCurrent_;		//現在のFPS
-		DWORD timePrevious_;			//前回Waitしたときの時間
-		int timeError_;				//持ち越し時間(誤差)
-		DWORD timeCurrentFpsUpdate_;	//1秒を測定するための時間保持
-		size_t rateSkip_;		//描画スキップ数
-		size_t countSkip_;		//描画スキップカウント
-		std::list<DWORD> listFps_;	//1秒ごとに現在fpsを計算するためにfpsを保持
+		float fpsCurrent_;
+
+		size_t rateSkip_;
+		size_t countSkip_;
+
+		stdch::steady_clock::time_point timePrevious_;
+		stdch::steady_clock::time_point timePreviousRender_;
+		stdch::nanoseconds timeAccum_;
+
+		stdch::steady_clock::time_point timePreviousFpsUpdate_;
+		std::list<double> listFps_;
 	public:
 		StaticFpsController();
 		~StaticFpsController();
 
-		virtual void Wait();
-		virtual bool IsSkip();
-		virtual void SetCriticalFrame() { bCriticalFrame_ = true; timeError_ = 0; countSkip_ = 0; }
+		virtual std::array<bool, 2> Advance();
+
+		virtual void SetCriticalFrame();
 
 		void SetSkipRate(size_t value) {
 			rateSkip_ = value;
 			countSkip_ = 0;
 		}
-		virtual float GetCurrentFps() { return (fpsCurrent_ / (rateSkip_ + 1)); }
+		virtual float GetCurrentFps() { return fpsCurrent_; }
 		virtual float GetCurrentWorkFps() { return fpsCurrent_; }
 		virtual float GetCurrentRenderFps() { return GetCurrentFps(); }
 	};
 
 	//*******************************************************************
-	//AutoSkipFpsController
+	//VariableFpsController
 	//*******************************************************************
-	class AutoSkipFpsController : public FpsController {
+	class VariableFpsController : public FpsController {
 	protected:
-		float fpsCurrentWork_;		//実際のfps
-		float fpsCurrentRender_;	//実際のfps
-		DWORD timePrevious_;			//前回Waitしたときの時間
-		DWORD timePreviousWork_;
-		DWORD timePreviousRender_;
-		int timeError_;				//持ち越し時間(誤差)
-		DWORD timeCurrentFpsUpdate_;	//1秒を測定するための時間保持
-		std::list<DWORD> listFpsWork_;
-		std::list<DWORD> listFpsRender_;
-		int countSkip_;			//連続描画スキップ数
-		DWORD countSkipMax_;		//最大連続描画スキップ数
-	public:
-		AutoSkipFpsController();
-		~AutoSkipFpsController();
+		float fpsCurrentUpdate_;
+		float fpsCurrentRender_;
+		bool bFrameRendered_;
 
-		virtual void Wait();
-		virtual bool IsSkip() { return countSkip_ > 0; }
-		virtual void SetCriticalFrame() { bCriticalFrame_ = true; timeError_ = 0; countSkip_ = 0; }
+		stdch::steady_clock::time_point timePrevious_;
+		stdch::steady_clock::time_point timePreviousUpdate_;
+		stdch::steady_clock::time_point timePreviousRender_;
+
+		stdch::nanoseconds timeAccumUpdate_;
+		stdch::nanoseconds timeAccumRender_;
+
+		stdch::steady_clock::time_point timePreviousFpsUpdate_;
+		std::list<double> listFpsUpdate_;
+		std::list<double> listFpsRender_;
+	public:
+		VariableFpsController();
+		~VariableFpsController();
+
+		virtual std::array<bool, 2> Advance();
+
+		virtual void SetCriticalFrame();
 
 		virtual float GetCurrentFps() { return GetCurrentWorkFps(); }
-		float GetCurrentWorkFps() { return fpsCurrentWork_; };
+		float GetCurrentWorkFps() { return fpsCurrentUpdate_; };
 		float GetCurrentRenderFps() { return fpsCurrentRender_; };
 	};
 

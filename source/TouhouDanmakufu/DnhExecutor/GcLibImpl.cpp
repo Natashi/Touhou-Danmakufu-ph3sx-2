@@ -125,35 +125,71 @@ bool EApplication::_Loop() {
 	HWND hWndLogger = logger->GetWindowHandle();
 
 	bWindowFocused_ = hWndFocused == hWndGraphics || hWndFocused == hWndLogger;
+	bool bInputEnable = false;
 	if (!config->IsEnableUnfocusedProcessing()) {
 		if (!bWindowFocused_) {
 			//Pause main thread when the window isn't focused
 			::Sleep(10);
 			return true;
 		}
-		input->Update();
+		bInputEnable = true;
 	}
 	else {
-		if (bWindowFocused_)
-			input->Update();
-		else input->ClearKeyState();
-	}
-
-	if (input->GetKeyState(DIK_LCONTROL) == KEY_HOLD &&
-		input->GetKeyState(DIK_LSHIFT) == KEY_HOLD &&
-		input->GetKeyState(DIK_R) == KEY_PUSH) 
-	{
-		SystemController* systemController = SystemController::CreateInstance();
-		systemController->Reset();
+		bInputEnable = bWindowFocused_;
 	}
 
 	{
-		static uint32_t loopCount = 0;
+		static uint32_t count = 0;
 
-		taskManager->CallWorkFunction();
-		taskManager->SetWorkTime(taskManager->GetTimeSpentOnLastFuncCall());
+		auto& [bRenderFrame, bUpdateFrame] = fpsController->Advance();
 
-		if (!fpsController->IsSkip()) {
+		if (bUpdateFrame) {
+			{
+				if (bInputEnable)
+					input->Update();
+				else input->ClearKeyState();
+
+				if (input->GetKeyState(DIK_LCONTROL) == KEY_HOLD &&
+					input->GetKeyState(DIK_LSHIFT) == KEY_HOLD &&
+					input->GetKeyState(DIK_R) == KEY_PUSH)
+				{
+					SystemController* systemController = SystemController::CreateInstance();
+					systemController->Reset();
+				}
+			}
+
+			taskManager->CallWorkFunction();
+			taskManager->SetWorkTime(taskManager->GetTimeSpentOnLastFuncCall());
+
+			if (logger->IsWindowVisible()) {
+				std::wstring fps = StringUtility::Format(L"Logic: %.2ffps, Render: %.2ffps",
+					fpsController->GetCurrentWorkFps(),
+					fpsController->GetCurrentRenderFps());
+				logger->SetInfo(0, L"Fps", fps);
+
+				const POINT& screenSize = graphics->GetConfigData().sizeScreen_;
+				const POINT& screenSizeWindowed = graphics->GetConfigData().sizeScreenDisplay_;
+				//int widthScreen = widthConfig * graphics->GetScreenWidthRatio();
+				//int heightScreen = heightConfig * graphics->GetScreenHeightRatio();
+				std::wstring screenInfo = StringUtility::Format(L"Width: %d/%d, Height: %d/%d",
+					screenSizeWindowed.x, screenSize.x,
+					screenSizeWindowed.y, screenSize.y);
+				logger->SetInfo(1, L"Screen", screenInfo);
+
+				logger->SetInfo(2, L"Font cache",
+					StringUtility::Format(L"%d", EDxTextRenderer::GetInstance()->GetCacheCount()));
+			}
+
+			if (count % 120 == 0) {
+				taskManager->ArrangeTask();
+			}
+			if (count % 10 == 0 && config->GetFpsType() == DnhConfiguration::FPS_VARIABLE) {
+				fpsController->SetCriticalFrame();
+			}
+			++count;
+		}
+
+		if (bRenderFrame) {
 			graphics->BeginScene();
 
 			taskManager->CallRenderFunction();
@@ -161,29 +197,6 @@ bool EApplication::_Loop() {
 
 			graphics->EndScene();
 		}
-
-		if ((++loopCount) % 30 == 0)
-			taskManager->ArrangeTask();
-		fpsController->Wait();
-	}
-
-	if (logger->IsWindowVisible()) {
-		std::wstring fps = StringUtility::Format(L"Work: %.2ffps, Draw: %.2ffps",
-			fpsController->GetCurrentWorkFps(),
-			fpsController->GetCurrentRenderFps());
-		logger->SetInfo(0, L"Fps", fps);
-
-		const POINT& screenSize = graphics->GetConfigData().sizeScreen_;
-		const POINT& screenSizeWindowed = graphics->GetConfigData().sizeScreenDisplay_;
-		//int widthScreen = widthConfig * graphics->GetScreenWidthRatio();
-		//int heightScreen = heightConfig * graphics->GetScreenHeightRatio();
-		std::wstring screenInfo = StringUtility::Format(L"Width: %d/%d, Height: %d/%d",
-			screenSizeWindowed.x, screenSize.x,
-			screenSizeWindowed.y, screenSize.y);
-		logger->SetInfo(1, L"Screen", screenInfo);
-
-		logger->SetInfo(2, L"Font cache",
-			StringUtility::Format(L"%d", EDxTextRenderer::GetInstance()->GetCacheCount()));
 	}
 
 	{

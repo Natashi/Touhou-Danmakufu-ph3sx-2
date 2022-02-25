@@ -412,7 +412,7 @@ void SystemResidentTask::RenderFps() {
 	graphics->SetFogEnable(false);
 
 	EFpsController* fpsController = EFpsController::GetInstance();
-	float fps = fpsController->GetCurrentWorkFps();
+	float fps = fpsController->GetCurrentRenderFps();
 	textFps_.SetText(StringUtility::Format(L"%.2ffps", fps));
 	textFps_.Render();
 }

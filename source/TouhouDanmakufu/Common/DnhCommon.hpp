@@ -137,7 +137,7 @@ public:
 		FPS_NORMAL = 0,	// 1/1
 		FPS_1_2,		// 1/2
 		FPS_1_3,		// 1/3
-		FPS_AUTO,
+		FPS_VARIABLE,
 	};
 public:
 	ScreenMode modeScreen_;
