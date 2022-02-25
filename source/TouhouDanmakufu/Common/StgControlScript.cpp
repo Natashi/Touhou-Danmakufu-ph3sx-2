@@ -65,7 +65,9 @@ static const std::vector<function> stgControlFunction = {
 	{ "AddArchiveFile", StgControlScript::Func_AddArchiveFile, 2 },		//Overloaded
 	{ "GetArchiveFilePathList", StgControlScript::Func_GetArchiveFilePathList, 2 },
 
-	{ "GetCurrentFps", StgControlScript::Func_GetCurrentFps, 0 },
+	{ "GetCurrentFps", StgControlScript::Func_GetCurrentRenderFps, 0 },
+	{ "GetCurrentUpdateFps", StgControlScript::Func_GetCurrentUpdateFps, 0 },
+	{ "GetCurrentRenderFps", StgControlScript::Func_GetCurrentRenderFps, 0 },
 	{ "GetLastFrameUpdateSpeed", StgControlScript::Func_GetLastFrameUpdateSpeed, 0 },
 	{ "GetLastFrameRenderSpeed", StgControlScript::Func_GetLastFrameRenderSpeed, 0 },
 	{ "GetStageTime", StgControlScript::Func_GetStageTime, 0 },
@@ -390,9 +392,13 @@ gstd::value StgControlScript::Func_GetArchiveFilePathList(gstd::script_machine* 
 
 	return StgControlScript::CreateStringArrayValue(pathList);
 }
-gstd::value StgControlScript::Func_GetCurrentFps(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+gstd::value StgControlScript::Func_GetCurrentUpdateFps(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	EFpsController* fpsController = EFpsController::GetInstance();
 	return StgControlScript::CreateFloatValue(fpsController->GetCurrentWorkFps());
+}
+gstd::value StgControlScript::Func_GetCurrentRenderFps(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	EFpsController* fpsController = EFpsController::GetInstance();
+	return StgControlScript::CreateFloatValue(fpsController->GetCurrentRenderFps());
 }
 gstd::value StgControlScript::Func_GetLastFrameUpdateSpeed(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	ETaskManager* taskManager = ETaskManager::GetInstance();

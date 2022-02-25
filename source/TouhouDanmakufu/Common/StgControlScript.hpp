@@ -108,7 +108,8 @@ public:
 	static gstd::value Func_AddArchiveFile(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	DNH_FUNCAPI_DECL_(Func_GetArchiveFilePathList);
 
-	static gstd::value Func_GetCurrentFps(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_GetCurrentUpdateFps);
+	DNH_FUNCAPI_DECL_(Func_GetCurrentRenderFps);
 	DNH_FUNCAPI_DECL_(Func_GetLastFrameUpdateSpeed);
 	DNH_FUNCAPI_DECL_(Func_GetLastFrameRenderSpeed);
 	static gstd::value Func_GetStageTime(gstd::script_machine* machine, int argc, const gstd::value* argv);
