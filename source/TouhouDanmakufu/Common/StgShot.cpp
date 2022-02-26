@@ -258,9 +258,12 @@ StgShotDataList::~StgShotDataList() {
 	listData_.clear();
 	listVertexBuffer_.clear();
 }
-void StgShotDataList::_LoadVertexBuffers(size_t countFrame) {
+void StgShotDataList::_LoadVertexBuffers(shared_ptr<Texture> texture, size_t countFrame) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
+
+	float texW = texture->GetWidth();
+	float texH = texture->GetHeight();
 
 	size_t oldVertexBufferListSize = listVertexBuffer_.size();
 
@@ -298,7 +301,7 @@ void StgShotDataList::_LoadVertexBuffers(size_t countFrame) {
 					//   3 -> 3
 
 					StgShotObject::_SetVertexUV(pv,
-						ptrSrc[(iVert & 1) << 1] / textureSize_.x, ptrSrc[iVert | 1] / textureSize_.y);
+						ptrSrc[(iVert & 1) << 1] / texW, ptrSrc[iVert | 1] / texH);
 					StgShotObject::_SetVertexPosition(pv, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1], 0);
 					StgShotObject::_SetVertexColorARGB(pv, 0xffffffff);
 				}
@@ -400,10 +403,6 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 		bool bTexture = texture->CreateFromFile(pathImage, false, false);
 		if (!bTexture) throw gstd::wexception("The specified shot texture cannot be found.");
 
-		texture_ = texture;
-		textureSize_.x = texture->GetWidth();
-		textureSize_.y = texture->GetHeight();
-
 		size_t countFrame = 0;
 		{
 			if (listData_.size() < listData.size())
@@ -412,6 +411,8 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 			for (size_t iData = 0; iData < listData.size(); ++iData) {
 				unique_ptr<StgShotData>& data = listData[iData];
 				if (data == nullptr) continue;
+
+				data->texture_ = texture;
 
 				countFrame += data->GetFrameCount();
 				listData_[iData] = std::move(data);		//Moves unique_ptr object, do not use listData after this point
@@ -430,7 +431,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 			}
 		}
 
-		_LoadVertexBuffers(countFrame);
+		_LoadVertexBuffers(texture, countFrame);
 
 		listReadPath_.insert(path);
 		Logger::WriteTop(StringUtility::Format(L"Loaded shot data: %s", pathReduce.c_str()));
@@ -1435,7 +1436,7 @@ bool StgNormalShotObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 			pPair->second = pTarget;
 		}
 
-		DxCircle* pSrcCircle = &listCircle[i];
+		const DxCircle* pSrcCircle = &listCircle[i];
 		DxCircle* pDstCircle = &pTarget->GetCircle();
 		if (pSrcCircle->GetR() <= 0)
 			continue;
@@ -1462,8 +1463,9 @@ bool StgNormalShotObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 	return true;
 }
 
-static void _DefaultShotRender(StgShotManager* shotManager, StgShotDataFrame* shotFrame,
-	const D3DXMATRIX& matWorld, D3DCOLOR color, shared_ptr<Shader> shader) {
+static void _DefaultShotRender(StgShotManager* shotManager, StgShotData* shotData,
+	StgShotDataFrame* shotFrame, const D3DXMATRIX& matWorld, D3DCOLOR color, shared_ptr<Shader> shader)
+{
 	if (shotFrame == nullptr) return;
 
 	StgShotVertexBufferContainer* pVB = shotFrame->GetVertexBuffer();
@@ -1473,7 +1475,7 @@ static void _DefaultShotRender(StgShotManager* shotManager, StgShotDataFrame* sh
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		IDirect3DDevice9* device = graphics->GetDevice();
 
-		device->SetTexture(0, shotFrame->GetD3DTexture());
+		device->SetTexture(0, shotData->GetD3DTexture());
 		device->SetStreamSource(0, pVB->GetD3DBuffer(), vertexOffset * sizeof(VERTEX_TLX), sizeof(VERTEX_TLX));
 
 		{
@@ -1521,6 +1523,8 @@ void StgNormalShotObject::Render(StgShotManager* shotManager, BlendMode targetBl
 	StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
 	StgShotDataFrame* shotFrame = nullptr;
 
+	if (shotData == nullptr) return;
+
 	BlendMode objBlendType;
 	if (delay_.time > 0) {
 		if (delayData == nullptr) return;
@@ -1529,8 +1533,6 @@ void StgNormalShotObject::Render(StgShotManager* shotManager, BlendMode targetBl
 		objBlendType = objBlendType == MODE_BLEND_NONE ? shotData->GetDelayRenderType() : objBlendType;
 	}
 	else {
-		if (shotData == nullptr) return;
-
 		objBlendType = GetBlendType();
 		objBlendType = objBlendType == MODE_BLEND_NONE ? shotData->GetRenderType() : objBlendType;
 	}
@@ -1547,9 +1549,11 @@ void StgNormalShotObject::Render(StgShotManager* shotManager, BlendMode targetBl
 	float scaleY = 1.0f;
 	D3DCOLOR color;
 
+	StgShotData* targetData = nullptr;
 	if (delay_.time > 0) {
-		shotFrame = delay_.id >= 0 ? delayData->GetFrame(frameWork_) 
-			: delayData->GetDelayFrame(frameWork_);
+		targetData = delayData;
+		shotFrame = delay_.id >= 0 ? targetData->GetFrame(frameWork_)
+			: targetData->GetDelayFrame(frameWork_);
 		if (shotFrame) {
 			scaleX = scaleY = delay_.GetScale();
 
@@ -1566,9 +1570,10 @@ void StgNormalShotObject::Render(StgShotManager* shotManager, BlendMode targetBl
 		scaleY = scale_.y;
 		color = color_;
 
-		shotFrame = shotData->GetFrame(frameWork_);
+		targetData = shotData;
+		shotFrame = targetData->GetFrame(frameWork_);
 		if (shotFrame) {
-			float alphaRate = shotData->GetAlpha() / 255.0f;
+			float alphaRate = targetData->GetAlpha() / 255.0f;
 			if (frameFadeDelete_ >= 0)
 				alphaRate *= std::clamp<float>((float)frameFadeDelete_ / FRAME_FADEDELETE, 0, 1);
 			{
@@ -1580,16 +1585,14 @@ void StgNormalShotObject::Render(StgShotManager* shotManager, BlendMode targetBl
 
 	//if (bIntersected_) color = D3DCOLOR_ARGB(255, 255, 0, 0);
 
-	if (shotFrame == nullptr) return;
-
-	{
+	if (shotFrame) {
 		D3DXMATRIX matTransform(
 			scaleX * move_.x, scaleX * move_.y, 0, 0,
 			scaleY * -move_.y, scaleY * move_.x, 0, 0,
 			0, 0, 1, 0,
 			sposx, sposy, 0, 1
 		);
-		_DefaultShotRender(shotManager, shotFrame, matTransform, color, shader_);
+		_DefaultShotRender(shotManager, targetData, shotFrame, matTransform, color, shader_);
 	}
 }
 
@@ -1835,6 +1838,8 @@ void StgLooseLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 	StgShotData* shotData = _GetShotData();
 	StgShotDataFrame* shotFrame = nullptr;
 
+	if (shotData == nullptr) return;
+
 	D3DXVECTOR2 rPos;
 	D3DXVECTOR2 rScale;
 	D3DXVECTOR2 rAngle;		//[cos, sin]
@@ -1847,32 +1852,33 @@ void StgLooseLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 
 		if (objBlendType == targetBlend) {
 			StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
+			if (delayData) {
+				shotFrame = delay_.id >= 0 ? delayData->GetFrame(frameWork_)
+					: delayData->GetDelayFrame(frameWork_);
+				if (shotFrame) {
+					rPos = bEnableMotionDelay_ ? posOrigin_ : D3DXVECTOR2(position_);
+					if (bRoundingPosition_) {
+						rPos.x = roundf(rPos.x);
+						rPos.y = roundf(rPos.y);
+					}
+					rScale.x = rScale.y = delay_.GetScale();
+					rAngle = (delay_.angle.y != 0) ? D3DXVECTOR2(cosf(delay_.angle.x), sinf(delay_.angle.x)) : move_;
 
-			shotFrame = delay_.id >= 0 ? delayData->GetFrame(frameWork_) 
-				: delayData->GetDelayFrame(frameWork_);
-			if (shotFrame) {
-				rPos = bEnableMotionDelay_ ? posOrigin_ : D3DXVECTOR2(position_);
-				if (bRoundingPosition_) {
-					rPos.x = roundf(rPos.x);
-					rPos.y = roundf(rPos.y);
+					rColor = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
+					if (delay_.colorMix) ColorAccess::MultiplyColor(rColor, color_);
+					{
+						byte alpha = ColorAccess::ClampColorRet(((rColor >> 24) & 0xff) * delay_.GetAlpha());
+						rColor = (rColor & 0x00ffffff) | (alpha << 24);
+					}
+
+					D3DXMATRIX matTransform(
+						rScale.x * rAngle.x, rScale.x * rAngle.y, 0, 0,
+						rScale.y * -rAngle.y, rScale.y * rAngle.x, 0, 0,
+						0, 0, 1, 0,
+						rPos.x, rPos.y, 0, 1
+					);
+					_DefaultShotRender(shotManager, delayData, shotFrame, matTransform, rColor, shader_);
 				}
-				rScale.x = rScale.y = delay_.GetScale();
-				rAngle = (delay_.angle.y != 0) ? D3DXVECTOR2(cosf(delay_.angle.x), sinf(delay_.angle.x)) : move_;
-
-				rColor = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
-				if (delay_.colorMix) ColorAccess::MultiplyColor(rColor, color_);
-				{
-					byte alpha = ColorAccess::ClampColorRet(((rColor >> 24) & 0xff) * delay_.GetAlpha());
-					rColor = (rColor & 0x00ffffff) | (alpha << 24);
-				}
-
-				D3DXMATRIX matTransform(
-					rScale.x * rAngle.x, rScale.x * rAngle.y, 0, 0,
-					rScale.y * -rAngle.y, rScale.y * rAngle.x, 0, 0,
-					0, 0, 1, 0,
-					rPos.x, rPos.y, 0, 1
-				);
-				_DefaultShotRender(shotManager, shotFrame, matTransform, rColor, shader_);
 			}
 		}
 	}
@@ -1916,7 +1922,7 @@ void StgLooseLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 						0, 0, 1, 0,
 						rPos.x, rPos.y, 0, 1
 					);
-					_DefaultShotRender(shotManager, shotFrame, matTransform, rColor, shader_);
+					_DefaultShotRender(shotManager, shotData, shotFrame, matTransform, rColor, shader_);
 				}
 			}
 		}
@@ -2095,6 +2101,8 @@ void StgStraightLaserObject::Render(StgShotManager* shotManager, BlendMode targe
 	StgShotData* shotData = _GetShotData();
 	D3DCOLOR rColor;
 
+	if (shotData == nullptr) return;
+
 	//Render laser
 	{
 		BlendMode objBlendType = GetBlendType();
@@ -2133,7 +2141,7 @@ void StgStraightLaserObject::Render(StgShotManager* shotManager, BlendMode targe
 					0, 0, 1, 0,
 					rPos.x, rPos.y, 0, 1
 				);
-				_DefaultShotRender(shotManager, shotFrame, matTransform, rColor, shader_);
+				_DefaultShotRender(shotManager, shotData, shotFrame, matTransform, rColor, shader_);
 			}
 		}
 	}
@@ -2156,9 +2164,18 @@ void StgStraightLaserObject::Render(StgShotManager* shotManager, BlendMode targe
 				}
 				delaySize *= delaySizeBase;
 
-				StgShotData* delayData = delayID >= 0 ? _GetShotData(delayID) : shotData;
-				StgShotDataFrame* delayFrame = delayID >= 0 ? delayData->GetFrame(frameWork_) 
-					: delayData->GetDelayFrame(frameWork_);
+				StgShotData* delayData = nullptr;
+				StgShotDataFrame* delayFrame = nullptr;
+				if (delayID < 0) {
+					delayData = shotData;
+					if (delayData)
+						delayFrame = delayData->GetDelayFrame(frameWork_);
+				}
+				else {
+					delayData = _GetShotData(delayID);
+					if (delayData)
+						delayData->GetFrame(frameWork_);
+				}
 
 				if (delayFrame) {
 					D3DXVECTOR2 rAngle = (delay_.angle.y != 0) ? D3DXVECTOR2(cosf(delay_.angle.x), sinf(delay_.angle.x)) : move_;
@@ -2171,7 +2188,7 @@ void StgStraightLaserObject::Render(StgShotManager* shotManager, BlendMode targe
 						0, 0, 1, 0,
 						delayPos.x, delayPos.y, 0, 1
 					);
-					_DefaultShotRender(shotManager, delayFrame, matTransform, rColor, shader_);
+					_DefaultShotRender(shotManager, delayData, delayFrame, matTransform, rColor, shader_);
 				}
 			};
 
@@ -2417,6 +2434,8 @@ void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 	StgShotData* shotData = _GetShotData();
 	StgShotDataFrame* shotFrame = nullptr;
 
+	if (shotData == nullptr) return;
+
 	//Render delay
 	if (delay_.time > 0) {
 		BlendMode objBlendType = GetDelayBlendType();
@@ -2424,36 +2443,37 @@ void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 
 		if (objBlendType == targetBlend) {
 			StgShotData* delayData = delay_.id >= 0 ? _GetShotData(delay_.id) : shotData;
+			if (delayData) {
+				shotFrame = delay_.id >= 0 ? delayData->GetFrame(frameWork_)
+					: delayData->GetDelayFrame(frameWork_);
+				if (shotFrame) {
+					D3DXVECTOR2 rScale;
+					D3DXVECTOR2 rAngle;		//[cos, sin]
+					D3DCOLOR rColor;
 
-			shotFrame = delay_.id >= 0 ? delayData->GetFrame(frameWork_) 
-				: delayData->GetDelayFrame(frameWork_);
-			if (shotFrame) {
-				D3DXVECTOR2 rScale;
-				D3DXVECTOR2 rAngle;		//[cos, sin]
-				D3DCOLOR rColor;
+					D3DXVECTOR2 rPos = bEnableMotionDelay_ ? posOrigin_ : D3DXVECTOR2(position_);
+					if (bRoundingPosition_) {
+						rPos.x = roundf(rPos.x);
+						rPos.y = roundf(rPos.y);
+					}
+					rScale.x = rScale.y = delay_.GetScale();
+					rAngle = (delay_.angle.y != 0) ? D3DXVECTOR2(cosf(delay_.angle.x), sinf(delay_.angle.x)) : move_;
 
-				D3DXVECTOR2 rPos = bEnableMotionDelay_ ? posOrigin_ : D3DXVECTOR2(position_);
-				if (bRoundingPosition_) {
-					rPos.x = roundf(rPos.x);
-					rPos.y = roundf(rPos.y);
+					rColor = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
+					if (delay_.colorMix) ColorAccess::MultiplyColor(rColor, color_);
+					{
+						byte alpha = ColorAccess::ClampColorRet(((rColor >> 24) & 0xff) * delay_.GetAlpha());
+						rColor = (rColor & 0x00ffffff) | (alpha << 24);
+					}
+
+					D3DXMATRIX matTransform(
+						rScale.x * rAngle.x, rScale.x * rAngle.y, 0, 0,
+						rScale.y * -rAngle.y, rScale.y * rAngle.x, 0, 0,
+						0, 0, 1, 0,
+						rPos.x, rPos.y, 0, 1
+					);
+					_DefaultShotRender(shotManager, delayData, shotFrame, matTransform, rColor, shader_);
 				}
-				rScale.x = rScale.y = delay_.GetScale();
-				rAngle = (delay_.angle.y != 0) ? D3DXVECTOR2(cosf(delay_.angle.x), sinf(delay_.angle.x)) : move_;
-
-				rColor = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
-				if (delay_.colorMix) ColorAccess::MultiplyColor(rColor, color_);
-				{
-					byte alpha = ColorAccess::ClampColorRet(((rColor >> 24) & 0xff) * delay_.GetAlpha());
-					rColor = (rColor & 0x00ffffff) | (alpha << 24);
-				}
-
-				D3DXMATRIX matTransform(
-					rScale.x * rAngle.x, rScale.x * rAngle.y, 0, 0,
-					rScale.y * -rAngle.y, rScale.y * rAngle.x, 0, 0,
-					0, 0, 1, 0,
-					rPos.x, rPos.y, 0, 1
-				);
-				_DefaultShotRender(shotManager, shotFrame, matTransform, rColor, shader_);
 			}
 		}
 	}
@@ -2470,8 +2490,8 @@ void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 				size_t countRect = countPos - 1U;
 				size_t halfPos = countRect / 2U;
 
-				const D3DXVECTOR2* textureSize = &shotData->GetShotDataList()->GetTextureSize();
-				D3DXVECTOR2 texSizeInv = D3DXVECTOR2(1.0f / textureSize->x, 1.0f / textureSize->y);
+				D3DXVECTOR2 texSizeInv = D3DXVECTOR2(1.0f / shotData->GetTexture()->GetWidth(), 
+					1.0f / shotData->GetTexture()->GetHeight());
 
 				const DxRect<LONG>* rcSrcOrg = shotFrame->GetSourceRect();
 				const LONG* ptrSrc = reinterpret_cast<const LONG*>(rcSrcOrg);
@@ -2582,7 +2602,7 @@ void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 					VertexBufferManager* vbManager = VertexBufferManager::GetBase();
 					FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
 
-					device->SetTexture(0, shotFrame->GetD3DTexture());
+					device->SetTexture(0, shotData->GetD3DTexture());
 
 					size_t countVert = vertexData_.size();
 					size_t countPrim = RenderObject::_GetPrimitiveCount(D3DPT_TRIANGLESTRIP, countVert);
