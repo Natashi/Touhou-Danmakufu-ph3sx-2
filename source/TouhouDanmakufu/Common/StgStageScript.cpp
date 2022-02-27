@@ -2147,7 +2147,7 @@ gstd::value StgStageScript::Func_GetShotDataInfoA1(gstd::script_machine* machine
 		case INFO_EXISTS:
 			return script->CreateBooleanValue(true);
 		case INFO_PATH:
-			return script->CreateStringValue(shotData->GetShotDataList()->GetTexture()->GetName());
+			return script->CreateStringValue(shotData->GetFrame(0)->GetVertexBufferContainer()->GetTexture()->GetName());
 		case INFO_RECT:
 		{
 			DxRect<LONG>* rect = shotData->GetFrame(0)->GetSourceRect();
