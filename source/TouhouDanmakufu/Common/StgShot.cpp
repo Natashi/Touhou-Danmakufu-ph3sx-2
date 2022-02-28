@@ -941,13 +941,10 @@ void StgShotObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionT
 		_RequestPlayerDeleteEvent(obj.IsExists() ? obj->GetDxScriptObjectID() : DxScript::ID_INVALID);
 }
 StgShotData* StgShotObject::_GetShotData(int id) {
-	StgShotData* res = nullptr;
 	StgShotManager* shotManager = stageController_->GetShotManager();
 	StgShotDataList* dataList = (typeOwner_ == OWNER_PLAYER) ?
 		shotManager->GetPlayerShotDataList() : shotManager->GetEnemyShotDataList();
-
-	if (dataList) res = dataList->GetData(id);
-	return res;
+	return dataList ? dataList->GetData(id) : nullptr;
 }
 
 void StgShotObject::_SetVertexPosition(VERTEX_TLX* vertex, float x, float y, float z, float w) {

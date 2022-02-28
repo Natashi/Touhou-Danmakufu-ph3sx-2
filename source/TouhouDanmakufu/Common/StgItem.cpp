@@ -1112,15 +1112,9 @@ void StgItemObject_User::SetImageID(int id) {
 	}
 }
 StgItemData* StgItemObject_User::_GetItemData() {
-	StgItemData* res = nullptr;
 	StgItemManager* itemManager = stageController_->GetItemManager();
 	StgItemDataList* dataList = itemManager->GetItemDataList();
-
-	if (dataList) {
-		res = dataList->GetData(idImage_);
-	}
-
-	return res;
+	return dataList ? dataList->GetData(idImage_) : nullptr;
 }
 
 void StgItemObject_User::Work() {
@@ -1143,6 +1137,8 @@ void StgItemObject_User::Render(BlendMode targetBlend) {
 
 	{
 		StgItemDataFrame* itemFrame = itemData->GetFrame(frameWork_);
+		StgItemData* outData = itemData->GetOutData();
+
 		DxRect<LONG>* rcSrc = itemFrame->GetSourceRect();
 
 		bool bOutY = false;
@@ -1170,7 +1166,7 @@ void StgItemObject_User::Render(BlendMode targetBlend) {
 			rColor = (rColor & 0x00ffffff) | (alpha << 24);
 		}
 
-		StgItemDataFrame* targetFrame = bOutY ? itemData->GetOutData()->GetFrame(0) : itemFrame;
+		StgItemDataFrame* targetFrame = bOutY ? (outData ? outData->GetFrame(0) : nullptr) : itemFrame;
 		if (targetFrame) {
 			StgShotVertexBufferContainer* pVB = targetFrame->GetVertexBufferContainer();
 			DWORD vertexOffset = targetFrame->vertexOffset_;

@@ -343,7 +343,7 @@ class StgItemObject_User : public StgItemObject {
 	int frameWork_;
 	int idImage_;
 
-	StgItemData* _GetItemData();
+	inline StgItemData* _GetItemData();
 public:
 	StgItemObject_User(StgStageController* stageController);
 
