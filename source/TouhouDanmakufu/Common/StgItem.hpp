@@ -4,25 +4,41 @@
 
 #include "StgCommon.hpp"
 #include "StgIntersection.hpp"
+//#include "StgShot.hpp"
+
+class StgShotVertexBufferContainer;
 
 class StgItemDataList;
-class StgItemObject;
 class StgItemData;
-class StgItemRenderer;
+struct StgItemDataFrame;
+class StgItemObject;
 //*******************************************************************
 //StgItemManager
 //*******************************************************************
 class StgItemManager {
 	friend class StgItemRenderer;
+public:
+	enum {
+		ITEM_MAX = 10000,
 
+		BLEND_COUNT = 8,
+	};
+protected:
+	static std::array<BlendMode, BLEND_COUNT> blendTypeRenderOrder;
+	struct RenderQueue {
+		size_t count;
+		std::vector<StgItemObject*> listItem;
+	};
+protected:
 	StgStageController* stageController_;
 
-	SpriteList2D* listSpriteItem_;
-	SpriteList2D* listSpriteDigit_;
-	StgItemDataList* listItemData_;
+	unique_ptr<SpriteList2D> listSpriteItem_;
+	unique_ptr<SpriteList2D> listSpriteDigit_;
+
+	unique_ptr<StgItemDataList> listItemData_;
 
 	std::list<ref_unsync_ptr<StgItemObject>> listObj_;
-	std::vector<std::pair<size_t, std::vector<StgItemObject*>>> listRenderQueue_;
+	std::vector<RenderQueue> listRenderQueue_;		//one for each render pri
 
 	std::list<DxCircle> listCircleToPlayer_;
 
@@ -35,12 +51,8 @@ class StgItemManager {
 	bool bCancelToPlayer_;
 	bool bDefaultBonusItemEnable_;
 
-	ID3DXEffect* effectLayer_;
-	D3DXHANDLE handleEffectWorld_;
-public:
-	enum {
-		ITEM_MAX = 8192 + 1024 + 256,
-	};
+	ID3DXEffect* effectItem_;
+	D3DXMATRIX matProj_;
 public:
 	StgItemManager(StgStageController* stageController);
 	virtual ~StgItemManager();
@@ -54,10 +66,14 @@ public:
 	}
 	size_t GetItemCount() { return listObj_.size(); }
 
-	SpriteList2D* GetItemRenderer() { return listSpriteItem_; }
-	SpriteList2D* GetDigitRenderer() { return listSpriteDigit_; }
+	ID3DXEffect* GetEffect() { return effectItem_; }
+	D3DXMATRIX* GetProjectionMatrix() { return &matProj_; }
 
-	StgItemDataList* GetItemDataList() { return listItemData_; }
+	SpriteList2D* GetItemRenderer() { return listSpriteItem_.get(); }
+	SpriteList2D* GetDigitRenderer() { return listSpriteDigit_.get(); }
+
+	StgItemDataList* GetItemDataList() { return listItemData_.get(); }
+
 	bool LoadItemData(const std::wstring& path, bool bReload = false);
 
 	ref_unsync_ptr<StgItemObject> CreateItem(int type);
@@ -85,117 +101,83 @@ public:
 //*******************************************************************
 class StgItemDataList {
 public:
-	enum {
-		RENDER_TYPE_COUNT = 3,
-	};
+	//Repurpose StgShotVertexBufferContainer for this, since it'd have been the same code anyway
+	using VBContainerList = std::list<unique_ptr<StgShotVertexBufferContainer>>;
 private:
-	std::set<std::wstring> listReadPath_;
-	std::vector<shared_ptr<Texture>> listTexture_;
-	std::vector<std::vector<StgItemRenderer*>> listRenderer_;
-	std::vector<StgItemData*> listData_;
+	std::map<std::wstring, VBContainerList> mapVertexBuffer_;	//<shot data file, vb list>
+	std::vector<unique_ptr<StgItemData>> listData_;
 
-	void _ScanItem(std::vector<StgItemData*>& listData, Scanner& scanner);
+	void _ScanItem(std::map<int, unique_ptr<StgItemData>>& mapData, Scanner& scanner);
 	static void _ScanAnimation(StgItemData* itemData, Scanner& scanner);
+
+	void _LoadVertexBuffers(std::map<std::wstring, VBContainerList>::iterator placement,
+		shared_ptr<Texture> texture, std::vector<StgItemData*>& listAddData);
 public:
 	StgItemDataList();
 	virtual ~StgItemDataList();
 
-	size_t GetTextureCount() { return listTexture_.size(); }
-	shared_ptr<Texture> GetTexture(size_t index) { return listTexture_[index]; }
-	StgItemRenderer* GetRenderer(size_t index, size_t typeRender) { return listRenderer_[typeRender][index]; }
-	std::vector<StgItemRenderer*>& GetRendererList(size_t typeRender) { return listRenderer_[typeRender]; }
-
-	StgItemData* GetData(int id) { return (id >= 0 && id < listData_.size()) ? listData_[id] : nullptr; }
+	StgItemData* GetData(int id) { return (id >= 0 && id < listData_.size()) ? listData_[id].get() : nullptr; }
 
 	bool AddItemDataList(const std::wstring& path, bool bReload);
 };
 
+//*******************************************************************
+//StgItemData
+//*******************************************************************
 class StgItemData {
 	friend StgItemDataList;
-public:
-	struct AnimationData {
-		DxRect<LONG> rcSrc_;
-		DxRect<float> rcDst_;
-		size_t frame_;
-
-		DxRect<LONG>* GetSource() { return &rcSrc_; }
-		DxRect<float>* GetDest() { return &rcDst_; }
-
-		static DxRect<float> SetDestRect(DxRect<LONG>* src);
-	};
 private:
 	StgItemDataList* listItemData_;
-
-	int indexTexture_;
-	D3DXVECTOR2 textureSize_;
 
 	int typeItem_;
 	BlendMode typeRender_;
 
 	int alpha_;
 
-	AnimationData out_;
+	unique_ptr<StgItemData> dataOut_;
 
-	std::vector<AnimationData> listAnime_;
-	size_t totalAnimeFrame_;
+	std::vector<StgItemDataFrame> listFrame_;
+	size_t totalFrame_;
 public:
 	StgItemData(StgItemDataList* listItemData);
 	virtual ~StgItemData();
-
-	int GetTextureIndex() { return indexTexture_; }
-	D3DXVECTOR2& GetTextureSize() { return textureSize_; }
 
 	int GetItemType() { return typeItem_; }
 	BlendMode GetRenderType() { return typeRender_; }
 
 	int GetAlpha() { return alpha_; }
 	
-	DxRect<LONG>* GetOutRect() { return &out_.rcSrc_; }
-	DxRect<float>* GetOutDest() { return &out_.rcDst_; }
+	StgItemData* GetOutData() { return dataOut_.get(); }
 
-	AnimationData* GetData(size_t frame);
-	size_t GetFrameCount() { return listAnime_.size(); }
-
-	shared_ptr<Texture> GetTexture() { return listItemData_->GetTexture(indexTexture_); }
-	StgItemRenderer* GetRenderer() { return GetRenderer(typeRender_); }
-	StgItemRenderer* GetRenderer(BlendMode type);
+	StgItemDataFrame* GetFrame(size_t frame);
+	size_t GetFrameCount() { return listFrame_.size(); }
 };
+struct StgItemDataFrame {
+	StgItemDataList* listItemData_;
 
-//*******************************************************************
-//StgItemRenderer
-//*******************************************************************
-class StgItemRenderer : public RenderObjectTLX {
-	friend class StgItemManager;
+	StgShotVertexBufferContainer* pVertexBuffer_;
+	DWORD vertexOffset_;
 
-	size_t countRenderVertex_;
-	size_t countMaxVertex_;
+	DxRect<LONG> rcSrc_;
+	DxRect<float> rcDst_;
+
+	size_t frame_;
 public:
-	StgItemRenderer();
-	~StgItemRenderer();
-	
-	virtual void Render(StgItemManager* manager);
-	void AddVertex(VERTEX_TLX& vertex);
-	void AddSquareVertex(VERTEX_TLX* listVertex) {
-		AddVertex(listVertex[0]);
-		AddVertex(listVertex[2]);
-		AddVertex(listVertex[1]);
-		AddVertex(listVertex[1]);
-		AddVertex(listVertex[2]);
-		AddVertex(listVertex[3]);
+	StgItemDataFrame();
+
+	DxRect<LONG>* GetSourceRect() { return &rcSrc_; }
+	DxRect<float>* GetDestRect() { return &rcDst_; }
+	StgShotVertexBufferContainer* GetVertexBufferContainer() {
+		return pVertexBuffer_;
 	}
 
-	virtual size_t GetVertexCount() {
-		return std::min(countRenderVertex_, vertex_.size() / strideVertexStreamZero_);
-	}
-	virtual void SetVertexCount(size_t count) {
-		vertex_.resize(count * strideVertexStreamZero_);
-	}
+	static DxRect<float> LoadDestRect(DxRect<LONG>* src);
 };
 
 //*******************************************************************
 //StgItemObject
 //*******************************************************************
-class StgItemObject : public DxScriptRenderObject, public StgMoveObject, public StgIntersectionObject {
+class StgItemObject : public DxScriptShaderObject, public StgMoveObject, public StgIntersectionObject {
 	friend class StgItemManager;
 public:
 	enum {
@@ -262,10 +244,12 @@ public:
 	virtual bool HasNormalRendering() { return false; }
 
 	virtual void Work();
-	virtual void Render() {}
-	virtual void RenderOnItemManager();
-	virtual void SetRenderState() {}
 	virtual void Activate() {}
+	
+	virtual void SetRenderState() {}
+	virtual void Render() {};
+	virtual void Render(BlendMode targetBlend) {};
+	virtual void RenderOnItemManager();
 
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) = 0;
 
@@ -346,10 +330,10 @@ public:
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 };
 
-class StgItemObject_Score : public StgItemObject {
+class StgItemObject_ScoreText : public StgItemObject {
 	int frameDelete_;
 public:
-	StgItemObject_Score(StgStageController* stageController);
+	StgItemObject_ScoreText(StgStageController* stageController);
 	
 	virtual void Work();
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
@@ -360,14 +344,13 @@ class StgItemObject_User : public StgItemObject {
 	int idImage_;
 
 	StgItemData* _GetItemData();
-	void _SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z = 1.0f, float w = 1.0f);
-	void _SetVertexUV(VERTEX_TLX& vertex, float u, float v);
-	void _SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color);
 public:
 	StgItemObject_User(StgStageController* stageController);
 
 	virtual void Work();
-	virtual void RenderOnItemManager();
+
+	virtual void Render(BlendMode targetBlend);
+	virtual void RenderOnItemManager() {};
 
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 

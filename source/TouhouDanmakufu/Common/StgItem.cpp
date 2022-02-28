@@ -10,21 +10,27 @@
 //*******************************************************************
 StgItemManager::StgItemManager(StgStageController* stageController) {
 	stageController_ = stageController;
-	listItemData_ = new StgItemDataList();
+
+	listItemData_ = std::make_unique<StgItemDataList>();
 
 	const std::wstring& dir = EPathProperty::GetSystemImageDirectory();
 
-	listSpriteItem_ = new SpriteList2D();
-	std::wstring pathItem = PathProperty::GetUnique(dir + L"System_Stg_Item.png");
-	shared_ptr<Texture> textureItem(new Texture());
-	textureItem->CreateFromFile(pathItem, false, false);
-	listSpriteItem_->SetTexture(textureItem);
+	{
+		listSpriteItem_.reset(new SpriteList2D());
 
-	listSpriteDigit_ = new SpriteList2D();
-	std::wstring pathDigit = PathProperty::GetUnique(dir + L"System_Stg_Digit.png");
-	shared_ptr<Texture> textureDigit(new Texture());
-	textureDigit->CreateFromFile(pathDigit, false, false);
-	listSpriteDigit_->SetTexture(textureDigit);
+		std::wstring pathItem = PathProperty::GetUnique(dir + L"System_Stg_Item.png");
+		shared_ptr<Texture> textureItem(new Texture());
+		textureItem->CreateFromFile(pathItem, false, false);
+		listSpriteItem_->SetTexture(textureItem);
+	}
+	{
+		listSpriteDigit_.reset(new SpriteList2D());
+
+		std::wstring pathDigit = PathProperty::GetUnique(dir + L"System_Stg_Digit.png");
+		shared_ptr<Texture> textureDigit(new Texture());
+		textureDigit->CreateFromFile(pathDigit, false, false);
+		listSpriteDigit_->SetTexture(textureDigit);
+	}
 
 	rcDeleteClip_ = DxRect<LONG>(-64, 0, 64, 64);
 
@@ -37,20 +43,18 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 
 	{
 		RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
-		effectLayer_ = shaderManager_->GetRender2DShader();
-		handleEffectWorld_ = effectLayer_->GetParameterBySemantic(nullptr, "WORLD");
+		effectItem_ = shaderManager_->GetRender2DShader();
 	}
 	{
-		auto objectManager = stageController_->GetMainObjectManager();
-		listRenderQueue_.resize(objectManager->GetRenderBucketCapacity());
-		for (auto& iLayer : listRenderQueue_)
-			iLayer.second.resize(32);
+		size_t renderPriMax = stageController_->GetMainObjectManager()->GetRenderBucketCapacity();
+
+		listRenderQueue_.resize(renderPriMax);
+		for (size_t i = 0; i < renderPriMax; ++i) {
+			listRenderQueue_[i].listItem.resize(32);
+		}
 	}
 }
 StgItemManager::~StgItemManager() {
-	ptr_delete(listSpriteItem_);
-	ptr_delete(listSpriteDigit_);
-	ptr_delete(listItemData_);
 }
 void StgItemManager::Work() {
 	ref_unsync_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
@@ -149,14 +153,26 @@ lab_next_item:
 	bAllItemToPlayer_ = false;
 	bCancelToPlayer_ = false;
 }
+
+std::array<BlendMode, StgItemManager::BLEND_COUNT> StgItemManager::blendTypeRenderOrder = {
+	MODE_BLEND_ADD_ARGB,
+	MODE_BLEND_ADD_RGB,
+	MODE_BLEND_SHADOW,
+	MODE_BLEND_MULTIPLY,
+	MODE_BLEND_SUBTRACT,
+	MODE_BLEND_INV_DESTRGB,
+	MODE_BLEND_ALPHA,
+	MODE_BLEND_ALPHA_INV,
+};
 void StgItemManager::Render(int targetPriority) {
 	if (targetPriority < 0 || targetPriority >= listRenderQueue_.size()) return;
 
-	auto& renderQueueLayer = listRenderQueue_[targetPriority];
-	if (renderQueueLayer.first == 0) return;
+	const RenderQueue& renderQueue = listRenderQueue_[targetPriority];
+	if (renderQueue.count == 0) return;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
+	RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
 	graphics->SetZBufferEnable(false);
 	graphics->SetZWriteEnable(false);
@@ -172,78 +188,64 @@ void StgItemManager::Render(int targetPriority) {
 	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 
+	D3DXMatrixMultiply(&matProj_, &camera2D->GetMatrix(), &graphics->GetViewPortMatrix());
+
+	//Render default items and score texts
 	{
-		D3DXMATRIX matProj;
-		D3DXMatrixMultiply(&matProj, &camera2D->GetMatrix(), &graphics->GetViewPortMatrix());
-		effectLayer_->SetMatrix(handleEffectWorld_, &matProj);
-	}
+		for (size_t i = 0; i < renderQueue.count; ++i) {
+			StgItemObject* pItem = renderQueue.listItem[i];
+			pItem->RenderOnItemManager();
+		}
 
-	for (size_t i = 0; i < renderQueueLayer.first; ++i) {
-		renderQueueLayer.second[i]->RenderOnItemManager();
-	}
-
-	RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
-	VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
-
-	device->SetFVF(VERTEX_TLX::fvf);
-
-	size_t countBlendType = StgItemDataList::RENDER_TYPE_COUNT;
-	BlendMode blendMode[] = { 
-		MODE_BLEND_ADD_ARGB, 
-		MODE_BLEND_ADD_RGB, 
-		MODE_BLEND_ALPHA 
-	};
-
-	{
 		graphics->SetBlendMode(MODE_BLEND_ADD_ARGB);
 		listSpriteDigit_->Render();
 		listSpriteDigit_->ClearVertexCount();
+
 		graphics->SetBlendMode(MODE_BLEND_ALPHA);
 		listSpriteItem_->Render();
 		listSpriteItem_->ClearVertexCount();
-
-		device->SetVertexDeclaration(shaderManager->GetVertexDeclarationTLX());
-		device->SetStreamSource(0, bufferManager->GetGrowableVertexBuffer()->GetBuffer(), 0, sizeof(VERTEX_TLX));
-
-		effectLayer_->SetTechnique("Render");
-
-		UINT cPass = 1U;
-		effectLayer_->Begin(&cPass, 0);
-		if (cPass >= 1) {
-			for (size_t iBlend = 0; iBlend < countBlendType; iBlend++) {
-				bool hasPolygon = false;
-				std::vector<StgItemRenderer*>& listRenderer = listItemData_->GetRendererList(blendMode[iBlend] - 1);
-
-				for (auto itr = listRenderer.begin(); itr != listRenderer.end() && !hasPolygon; ++itr)
-					hasPolygon = (*itr)->countRenderVertex_ >= 3U;
-				if (!hasPolygon) continue;
-
-				graphics->SetBlendMode(blendMode[iBlend]);
-
-				effectLayer_->BeginPass(0);
-				for (auto itrRender = listRenderer.begin(); itrRender != listRenderer.end(); ++itrRender)
-					(*itrRender)->Render(this);
-				effectLayer_->EndPass();
-			}
-		}
-		effectLayer_->End();
-
-		device->SetVertexDeclaration(nullptr);
 	}
+
+	device->SetFVF(VERTEX_TLX::fvf);
+	device->SetVertexDeclaration(shaderManager->GetVertexDeclarationTLX());
+
+	if (D3DXHANDLE handle = effectItem_->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
+		effectItem_->SetMatrix(handle, &matProj_);
+	}
+
+	for (size_t iBlend = 0; iBlend < blendTypeRenderOrder.size(); ++iBlend) {
+		BlendMode blend = blendTypeRenderOrder[iBlend];
+
+		graphics->SetBlendMode(blend);
+		effectItem_->SetTechnique(blend == MODE_BLEND_ALPHA_INV ? "RenderInv" : "Render");
+
+		for (size_t i = 0; i < renderQueue.count; ++i) {
+			StgItemObject* pItem = renderQueue.listItem[i];
+			pItem->Render(blend);	//Render custom items
+		}
+	}
+
+	device->SetVertexShader(nullptr);
+	device->SetPixelShader(nullptr);
+	device->SetVertexDeclaration(nullptr);
+	device->SetIndices(nullptr);
 
 	if (bEnableFog)
 		graphics->SetFogEnable(true);
 }
 void StgItemManager::LoadRenderQueue() {
-	for (auto& iLayer : listRenderQueue_)
-		iLayer.first = 0;
+	for (size_t i = 0; i < listRenderQueue_.size(); ++i) {
+		listRenderQueue_[i].count = 0;
+	}
 
 	for (ref_unsync_ptr<StgItemObject>& obj : listObj_) {
-		if (obj->IsDeleted() || !obj->IsActive()) continue;
-		auto& iQueue = listRenderQueue_[obj->GetRenderPriorityI()];
-		while (iQueue.first >= iQueue.second.size())
-			iQueue.second.resize(iQueue.second.size() * 2);
-		iQueue.second[(iQueue.first)++] = obj.get();
+		if (obj->IsDeleted() || !obj->IsActive() || !obj->IsVisible()) continue;
+
+		auto& [count, listItem] = listRenderQueue_[obj->GetRenderPriorityI()];
+
+		while (count >= listItem.size())
+			listItem.resize(listItem.size() * 2);
+		listItem[count++] = obj.get();
 	}
 }
 
@@ -306,22 +308,88 @@ std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, int radius, i
 //StgItemDataList
 //*******************************************************************
 StgItemDataList::StgItemDataList() {
-	listRenderer_.resize(RENDER_TYPE_COUNT);
 }
 StgItemDataList::~StgItemDataList() {
-	for (std::vector<StgItemRenderer*>& renderList : listRenderer_) {
-		for (StgItemRenderer*& renderer : renderList)
-			ptr_delete(renderer);
-		renderList.clear();
-	}
-	listRenderer_.clear();
+}
+void StgItemDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>::iterator placement,
+	shared_ptr<Texture> texture, std::vector<StgItemData*>& listAddData)
+{
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	IDirect3DDevice9* device = graphics->GetDevice();
 
-	for (StgItemData*& itemData : listData_)
-		ptr_delete(itemData);
-	listData_.clear();
+	float texW = texture->GetWidth();
+	float texH = texture->GetHeight();
+
+	size_t countFrame = 0;
+	for (StgItemData* iData : listAddData)
+		countFrame += iData->GetFrameCount();
+
+	size_t iBuffer = 0;
+	while (countFrame > 0) {
+		size_t thisCountFrame = std::min<size_t>(countFrame, StgShotVertexBufferContainer::MAX_DATA);
+
+		placement->second.push_back(unique_ptr<StgShotVertexBufferContainer>(
+			new StgShotVertexBufferContainer()));
+		StgShotVertexBufferContainer* pVertexBufferContainer = placement->second.back().get();
+		pVertexBufferContainer->SetTexture(texture);
+
+		std::vector<VERTEX_TLX> bufferVertex(4 * thisCountFrame);
+		size_t iVertex = 0;
+
+		VERTEX_TLX verts[4];
+		for (size_t iData = 0; iData < listAddData.size(); ++iData) {
+			StgItemData* data = listAddData[iData];
+			for (size_t iAnim = 0; iAnim < data->GetFrameCount(); ++iAnim) {
+				StgItemDataFrame* pFrame = &data->listFrame_[iAnim];
+				pFrame->listItemData_ = this;
+
+				LONG* ptrSrc = reinterpret_cast<LONG*>(&pFrame->rcSrc_);
+				float* ptrDst = reinterpret_cast<float*>(&pFrame->rcDst_);
+
+				for (size_t iVert = 0; iVert < 4; ++iVert) {
+					VERTEX_TLX* pv = &verts[iVert];
+
+					//((iVert & 1) << 1)
+					//   0 -> 0
+					//   1 -> 2
+					//   2 -> 0
+					//   3 -> 2
+					//(iVert | 1)
+					//   0 -> 1
+					//   1 -> 1
+					//   2 -> 3
+					//   3 -> 3
+
+					StgShotObject::_SetVertexUV(pv,
+						ptrSrc[(iVert & 1) << 1] / texW, ptrSrc[iVert | 1] / texH);
+					StgShotObject::_SetVertexPosition(pv, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1], 0);
+					StgShotObject::_SetVertexColorARGB(pv, 0xffffffff);
+				}
+
+				pFrame->pVertexBuffer_ = pVertexBufferContainer;
+				pFrame->vertexOffset_ = iVertex;
+
+				for (size_t j = 0; j < 4; ++j)
+					bufferVertex[iVertex + j] = verts[j];
+				iVertex += 4;
+			}
+		}
+
+		HRESULT hr = pVertexBufferContainer->LoadData(bufferVertex, thisCountFrame);
+		if (FAILED(hr)) {
+			std::wstring err = StringUtility::Format(L"AddItemDataList::Failed to load shot data buffer: "
+				"\t\r\n%s: %s",
+				DXGetErrorString(hr), DXGetErrorDescription(hr));
+			throw gstd::wexception(err);
+		}
+
+		++iBuffer;
+		countFrame -= thisCountFrame;
+	}
 }
 bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
-	if (!bReload && listReadPath_.find(path) != listReadPath_.end()) return true;
+	auto itrVB = mapVertexBuffer_.find(path);
+	if (!bReload && itrVB != mapVertexBuffer_.end()) return true;
 
 	std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
@@ -334,9 +402,9 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 	bool res = false;
 	Scanner scanner(source);
 	try {
-		std::vector<StgItemData*> listData;
-
+		std::map<int, unique_ptr<StgItemData>> mapData;
 		std::wstring pathImage = L"";
+
 		while (scanner.HasNext()) {
 			Token& tok = scanner.Next();
 			if (tok.GetType() == Token::Type::TK_EOF)
@@ -344,7 +412,7 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 			else if (tok.GetType() == Token::Type::TK_ID) {
 				std::wstring element = tok.GetElement();
 				if (element == L"ItemData") {
-					_ScanItem(listData, scanner);
+					_ScanItem(mapData, scanner);
 				}
 				else if (element == L"item_image") {
 					scanner.CheckType(scanner.Next(), Token::Type::TK_EQUAL);
@@ -356,50 +424,64 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 			}
 		}
 
-		//テクスチャ読み込み
 		if (pathImage.size() == 0) throw gstd::wexception("Item texture must be set.");
 		std::wstring dir = PathProperty::GetFileDirectory(path);
 		pathImage = StringUtility::Replace(pathImage, L"./", dir);
+		pathImage = PathProperty::GetUnique(pathImage);
 
-		shared_ptr<Texture> texture(new Texture());
-		bool bTexture = texture->CreateFromFile(PathProperty::GetUnique(pathImage), false, false);
-		if (!bTexture) throw gstd::wexception("The specified item texture cannot be found.");
+		shared_ptr<Texture> texture;
+		{
+			TextureManager* textureManager = TextureManager::GetBase();
 
-		int textureIndex = -1;
-		for (int iTexture = 0; iTexture < listTexture_.size(); iTexture++) {
-			shared_ptr<Texture> tSearch = listTexture_[iTexture];
-			if (tSearch->GetName() == texture->GetName()) {
-				textureIndex = iTexture;
-				break;
+			if ((texture = textureManager->GetTexture(pathImage)) == nullptr) {
+				texture = std::make_shared<Texture>();
+				if (!texture->CreateFromFile(pathImage, false, false))
+					texture = nullptr;
 			}
 		}
-		if (textureIndex < 0) {
-			textureIndex = listTexture_.size();
-			listTexture_.push_back(texture);
-			for (size_t iRender = 0; iRender < listRenderer_.size(); iRender++) {
-				StgItemRenderer* render = new StgItemRenderer();
-				render->SetTexture(texture);
-				listRenderer_[iRender].push_back(render);
+		if (texture == nullptr) {
+			throw gstd::wexception("Failed to load the specified shot texture.");
+		}
+
+		std::vector<StgItemData*> listAddData;
+
+		size_t countFrame = 0;
+		{
+			size_t i = 0;
+			for (auto itr = mapData.begin(); itr != mapData.end(); ++itr, ++i) {
+				int id = itr->first;
+				unique_ptr<StgItemData>& data = itr->second;
+				if (data == nullptr) continue;
+
+				for (auto& iFrame : data->listFrame_)
+					iFrame.listItemData_ = this;
+				countFrame += data->GetFrameCount();
+
+				listAddData.push_back(data.get());
+				if (listData_.size() <= id)
+					listData_.resize(id + 1);
+				listData_[id] = std::move(data);		//Moves unique_ptr object, do not use mapData after this point
+
+				if (unique_ptr<StgItemData>& dataOut = listData_[id]->dataOut_) {
+					//Item data has an out frame
+					
+					dataOut->listFrame_[0].listItemData_ = this;
+					++countFrame;
+
+					listAddData.push_back(dataOut.get());
+				}
 			}
 		}
 
-		if (listData_.size() < listData.size())
-			listData_.resize(listData.size());
-		for (size_t iData = 0; iData < listData.size(); iData++) {
-			StgItemData* data = listData[iData];
-			if (data == nullptr) continue;
-
-			data->indexTexture_ = textureIndex;
-			{
-				shared_ptr<Texture>& texture = listTexture_[data->indexTexture_];
-				data->textureSize_.x = texture->GetWidth();
-				data->textureSize_.y = texture->GetHeight();
-			}
-
-			listData_[iData] = data;
+		if (itrVB != mapVertexBuffer_.end()) {
+			itrVB->second.clear();
+			_LoadVertexBuffers(itrVB, texture, listAddData);
+		}
+		else {
+			itrVB = mapVertexBuffer_.insert({ path, VBContainerList() }).first;
+			_LoadVertexBuffers(itrVB, texture, listAddData);
 		}
 
-		listReadPath_.insert(path);
 		Logger::WriteTop(StringUtility::Format(L"Loaded item data: %s", pathReduce.c_str()));
 		res = true;
 	}
@@ -418,11 +500,12 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 
 	return res;
 }
-void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& scanner) {
+void StgItemDataList::_ScanItem(std::map<int, unique_ptr<StgItemData>>& mapData, Scanner& scanner) {
 	Token& tok = scanner.Next();
 	if (tok.GetType() == Token::Type::TK_NEWLINE) tok = scanner.Next();
 	scanner.CheckType(tok, Token::Type::TK_OPENC);
 
+	StgItemDataList* ptrThis = this;
 	struct Data {
 		StgItemData* itemData;
 		int id = -1;
@@ -445,15 +528,14 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
 			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
 
-		StgItemData::AnimationData anime;
-		anime.rcSrc_ = rect;
-		anime.rcDst_ = StgItemData::AnimationData::SetDestRect(&rect);
+		StgItemDataFrame dFrame;
+		dFrame.rcSrc_ = rect;
+		dFrame.rcDst_ = StgItemDataFrame::LoadDestRect(&rect);
 
-		i->itemData->listAnime_.resize(1);
-		i->itemData->listAnime_[0] = anime;
-		i->itemData->totalAnimeFrame_ = 1;
+		i->itemData->listFrame_ = { dFrame };
+		i->itemData->totalFrame_ = 1;
 	};
-	auto funcSetOut = [](Data* i, Scanner& s) {
+	auto funcSetOut = [&ptrThis](Data* i, Scanner& s) {
 		std::vector<std::wstring> list = s.GetArgumentList();
 
 		if (list.size() < 4)
@@ -462,22 +544,39 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
 			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
 
-		i->itemData->out_.rcSrc_ = rect;
-		i->itemData->out_.rcDst_ = StgItemData::AnimationData::SetDestRect(&rect);
+		StgItemDataFrame dFrame;
+		dFrame.rcSrc_ = rect;
+		dFrame.rcDst_ = StgItemDataFrame::LoadDestRect(&rect);
+
+		StgItemData* out = new StgItemData(ptrThis);
+		out->listFrame_ = { dFrame };
+		out->totalFrame_ = 1;
+		i->itemData->dataOut_.reset(out);
 	};
 	auto funcSetBlendType = [](Data* i, Scanner& s) {
 		s.CheckType(s.Next(), Token::Type::TK_EQUAL);
 
-		BlendMode typeRender = MODE_BLEND_ALPHA;
 		static const std::unordered_map<std::wstring, BlendMode> mapBlendType = {
 			{ L"ADD", MODE_BLEND_ADD_RGB },
 			{ L"ADD_RGB", MODE_BLEND_ADD_RGB },
 			{ L"ADD_ARGB", MODE_BLEND_ADD_ARGB },
+			{ L"MULTIPLY", MODE_BLEND_MULTIPLY },
+			{ L"SUBTRACT", MODE_BLEND_SUBTRACT },
+			{ L"SHADOW", MODE_BLEND_SHADOW },
+			{ L"ALPHA_INV", MODE_BLEND_ALPHA_INV },
 		};
+
+		BlendMode typeRender = MODE_BLEND_ALPHA;
 		auto itr = mapBlendType.find(s.Next().GetElement());
 		if (itr != mapBlendType.end())
 			typeRender = itr->second;
+
 		i->itemData->typeRender_ = typeRender;
+	};
+	auto funcLoadAnimation = [](Data* i, Scanner& s) {
+		i->itemData->listFrame_.clear();
+		i->itemData->totalFrame_ = 0;
+		_ScanAnimation(i->itemData, s);
 	};
 
 	//Do NOT use [&] lambdas
@@ -488,7 +587,7 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 		{ L"rect", funcSetRect },
 		{ L"out", funcSetOut },
 		{ L"render", funcSetBlendType },
-		{ L"AnimationData", [](Data* i, Scanner& s) { _ScanAnimation(i->itemData, s); } },
+		{ L"AnimationData", funcLoadAnimation },
 	};
 
 #undef LAMBDA_SETI
@@ -511,14 +610,11 @@ void StgItemDataList::_ScanItem(std::vector<StgItemData*>& listData, Scanner& sc
 	}
 
 	if (data.id >= 0) {
-		if (listData.size() <= data.id)
-			listData.resize(data.id + 1);
-
 		if (data.typeItem < 0)
 			data.typeItem = data.id;
 		data.itemData->typeItem_ = data.typeItem;
 
-		listData[data.id] = data.itemData;
+		mapData[data.id] = unique_ptr<StgItemData>(data.itemData);
 	}
 }
 void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
@@ -541,19 +637,34 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 					throw wexception("Invalid argument list size (expected 5)");
 
 				int frame = StringUtility::ToInteger(list[0]);
-				DxRect<LONG> rcSrc(StringUtility::ToInteger(list[1]), StringUtility::ToInteger(list[2]),
+				DxRect<LONG> rect(StringUtility::ToInteger(list[1]), StringUtility::ToInteger(list[2]),
 					StringUtility::ToInteger(list[3]), StringUtility::ToInteger(list[4]));
 
-				StgItemData::AnimationData anime;
-				anime.frame_ = frame;
-				anime.rcSrc_ = rcSrc;
-				anime.rcDst_ = StgItemData::AnimationData::SetDestRect(&rcSrc);
+				StgItemDataFrame dFrame;
+				dFrame.frame_ = frame;
+				dFrame.rcSrc_ = rect;
+				dFrame.rcDst_ = StgItemDataFrame::LoadDestRect(&rect);
 
-				itemData->listAnime_.push_back(anime);
-				itemData->totalAnimeFrame_ += frame;
+				itemData->listFrame_.push_back(dFrame);
+				itemData->totalFrame_ += frame;
 			}
 		}
 	}
+}
+
+//*******************************************************************
+//StgItemDataFrame
+//*******************************************************************
+StgItemDataFrame::StgItemDataFrame() {
+	listItemData_ = nullptr;
+	pVertexBuffer_ = nullptr;
+	vertexOffset_ = 0;
+	frame_ = 0;
+}
+DxRect<float> StgItemDataFrame::LoadDestRect(DxRect<LONG>* src) {
+	float width = src->GetWidth() / 2.0f;
+	float height = src->GetHeight() / 2.0f;
+	return DxRect<float>(-width, -height, width, height);
 }
 
 //*******************************************************************
@@ -562,91 +673,29 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 StgItemData::StgItemData(StgItemDataList* listItemData) {
 	listItemData_ = listItemData;
 
-	indexTexture_ = -1;
-	textureSize_ = D3DXVECTOR2(0, 0);
-
 	typeItem_ = -1;
 	typeRender_ = MODE_BLEND_ALPHA;
 
 	alpha_ = 255;
 
-	out_.rcSrc_ = DxRect<LONG>(-1, -1, -1, -1);
-
-	totalAnimeFrame_ = 0;
+	totalFrame_ = 0;
 }
 StgItemData::~StgItemData() {
 }
-StgItemRenderer* StgItemData::GetRenderer(BlendMode type) {
-	if (type < MODE_BLEND_ALPHA || type > MODE_BLEND_ADD_ARGB)
-		return listItemData_->GetRenderer(indexTexture_, 0);
-	return listItemData_->GetRenderer(indexTexture_, type - 1);
-}
 
-StgItemData::AnimationData* StgItemData::GetData(size_t frame) {
-	if (totalAnimeFrame_ <= 1)
-		return &listAnime_[0];
+StgItemDataFrame* StgItemData::GetFrame(size_t frame) {
+	if (totalFrame_ <= 1U)
+		return &listFrame_[0];
 
-	frame = frame % totalAnimeFrame_;
-	int total = 0;
+	frame = frame % totalFrame_;
+	size_t total = 0;
 
-	for (auto itr = listAnime_.begin(); itr != listAnime_.end(); ++itr) {
+	for (auto itr = listFrame_.begin(); itr != listFrame_.end(); ++itr) {
 		total += itr->frame_;
 		if (total >= frame)
 			return &(*itr);
 	}
-	return &listAnime_[0];
-}
-DxRect<float> StgItemData::AnimationData::SetDestRect(DxRect<LONG>* src) {
-	float width = src->GetWidth() / 2.0f;
-	float height = src->GetHeight() / 2.0f;
-	return DxRect<float>(-width, -height, width, height);
-}
-
-//*******************************************************************
-//StgItemRenderer
-//*******************************************************************
-StgItemRenderer::StgItemRenderer() {
-	countRenderVertex_ = 0;
-	countMaxVertex_ = 256 * 256;
-	SetVertexCount(countMaxVertex_);
-}
-StgItemRenderer::~StgItemRenderer() {
-
-}
-void StgItemRenderer::Render(StgItemManager* manager) {
-	if (countRenderVertex_ < 3) return;
-
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	IDirect3DDevice9* device = graphics->GetDevice();
-	IDirect3DTexture9* pTexture = texture_ ? texture_->GetD3DTexture() : nullptr;
-	device->SetTexture(0, pTexture);
-
-	VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
-
-	GrowableVertexBuffer* vertexBuffer = bufferManager->GetGrowableVertexBuffer();
-	vertexBuffer->Expand(countMaxVertex_);
-
-	{
-		BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
-
-		lockParam.SetSource(vertex_, countRenderVertex_, sizeof(VERTEX_TLX));
-		vertexBuffer->UpdateBuffer(&lockParam);
-	}
-
-	device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
-
-	device->DrawPrimitive(D3DPT_TRIANGLELIST, 0, countRenderVertex_ / 3U);
-
-	countRenderVertex_ = 0;
-}
-void StgItemRenderer::AddVertex(VERTEX_TLX& vertex) {
-	if (countRenderVertex_ == countMaxVertex_ - 1) {
-		countMaxVertex_ *= 2;
-		SetVertexCount(countMaxVertex_);
-	}
-
-	SetVertex(countRenderVertex_, vertex);
-	++countRenderVertex_;
+	return &listFrame_[0];
 }
 
 //*******************************************************************
@@ -834,7 +883,7 @@ void StgItemObject::_CreateScoreItem() {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 
 	if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
-		ref_unsync_ptr<StgItemObject_Score> obj = new StgItemObject_Score(stageController_);
+		ref_unsync_ptr<StgItemObject_ScoreText> obj = new StgItemObject_ScoreText(stageController_);
 
 		obj->SetX(posX_);
 		obj->SetY(posY_);
@@ -1020,8 +1069,8 @@ void StgItemObject_Bonus::Intersect(StgIntersectionTarget* ownTarget, StgInterse
 	objectManager->DeleteObject(this);
 }
 
-//StgItemObject_Score
-StgItemObject_Score::StgItemObject_Score(StgStageController* stageController) : StgItemObject(stageController) {
+//StgItemObject_ScoreText
+StgItemObject_ScoreText::StgItemObject_ScoreText(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_SCORE;
 
 	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
@@ -1031,7 +1080,7 @@ StgItemObject_Score::StgItemObject_Score(StgStageController* stageController) : 
 
 	frameDelete_ = 0;
 }
-void StgItemObject_Score::Work() {
+void StgItemObject_ScoreText::Work() {
 	StgItemObject::Work();
 	int alpha = 255 - frameDelete_ * 8;
 	color_ = D3DCOLOR_ARGB(alpha, alpha, alpha, alpha);
@@ -1042,7 +1091,7 @@ void StgItemObject_Score::Work() {
 	}
 	++frameDelete_;
 }
-void StgItemObject_Score::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) { }
+void StgItemObject_ScoreText::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) { }
 
 //StgItemObject_User
 StgItemObject_User::StgItemObject_User(StgStageController* stageController) : StgItemObject(stageController) {
@@ -1073,115 +1122,110 @@ StgItemData* StgItemObject_User::_GetItemData() {
 
 	return res;
 }
-void StgItemObject_User::_SetVertexPosition(VERTEX_TLX& vertex, float x, float y, float z, float w) {
-	constexpr float bias = 0.0f;
-	vertex.position.x = x + bias;
-	vertex.position.y = y + bias;
-	vertex.position.z = z;
-	vertex.position.w = w;
-}
-void StgItemObject_User::_SetVertexUV(VERTEX_TLX& vertex, float u, float v) {
-	vertex.texcoord.x = u;
-	vertex.texcoord.y = v;
-}
-void StgItemObject_User::_SetVertexColorARGB(VERTEX_TLX& vertex, D3DCOLOR color) {
-	vertex.diffuse_color = color;
-}
+
 void StgItemObject_User::Work() {
 	StgItemObject::Work();
 	++frameWork_;
 }
-void StgItemObject_User::RenderOnItemManager() {
-	if (!IsVisible()) return;
+void StgItemObject_User::Render(BlendMode targetBlend) {
+	//if (!IsVisible()) return;
+	StgItemManager* itemManager = stageController_->GetItemManager();
 
 	StgItemData* itemData = _GetItemData();
 	if (itemData == nullptr) return;
 
-	StgItemRenderer* renderer = nullptr;
-
 	BlendMode objBlendType = GetBlendType();
-	if (objBlendType == MODE_BLEND_NONE) {
-		objBlendType = itemData->GetRenderType();
-	}
-	renderer = itemData->GetRenderer(objBlendType);
+	objBlendType = objBlendType == MODE_BLEND_NONE ? itemData->GetRenderType() : objBlendType;
+	if (objBlendType != targetBlend) return;
 
-	if (renderer == nullptr) return;
-
-	FLOAT sposx = position_.x;
-	FLOAT sposy = position_.y;
-	if (bRoundingPosition_) {
-		sposx = roundf(sposx);
-		sposy = roundf(sposy);
-	}
-
-	float scaleX = scale_.x;
-	float scaleY = scale_.y;
-	float c = 1.0f;
-	float s = 0.0f;
-
-	StgItemData::AnimationData* frameData = itemData->GetData(frameWork_);
-
-	DxRect<LONG>* rcSrc = frameData->GetSource();
-	DxRect<float>* rcDest = frameData->GetDest();
-	D3DCOLOR color;
+	D3DXVECTOR2 rPos(position_), rScale, rAngle;
+	D3DCOLOR rColor = 0xffffffff;
 
 	{
+		StgItemDataFrame* itemFrame = itemData->GetFrame(frameWork_);
+		DxRect<LONG>* rcSrc = itemFrame->GetSourceRect();
+
 		bool bOutY = false;
-		if (position_.y + (rcSrc->bottom - rcSrc->top) / 2 <= 0) {
+		if (position_.y + rcSrc->GetHeight() / 2 <= 0)
 			bOutY = true;
-			rcSrc = itemData->GetOutRect();
-			rcDest = itemData->GetOutDest();
-		}
 
 		if (!bOutY) {
-			c = cosf(angle_.z);
-			s = sinf(angle_.z);
+			rScale = D3DXVECTOR2(scale_);
+			rAngle = D3DXVECTOR2(cosf(angle_.z), sinf(angle_.z));
 		}
 		else {
-			scaleX = 1.0;
-			scaleY = 1.0;
-			sposy = (rcSrc->bottom - rcSrc->top) / 2;
+			rPos.y = (rcSrc->bottom - rcSrc->top) / 2;
+			rScale = D3DXVECTOR2(1, 1);
+			rAngle = D3DXVECTOR2(1, 0);
 		}
 
-		bool bBlendAddRGB = (objBlendType == MODE_BLEND_ADD_RGB);
+		if (bRoundingPosition_) {
+			rPos.x = roundf(rPos.x);
+			rPos.y = roundf(rPos.y);
+		}
 
-		color = color_;
 		float alphaRate = itemData->GetAlpha() / 255.0f;
-		if (bBlendAddRGB) {
-			color = ColorAccess::ApplyAlpha(color, alphaRate);
+		{
+			byte alpha = ColorAccess::ClampColorRet(((rColor >> 24) & 0xff) * alphaRate);
+			rColor = (rColor & 0x00ffffff) | (alpha << 24);
 		}
-		else {
-			byte alpha = ColorAccess::ClampColorRet(((color >> 24) & 0xff) * alphaRate);
-			color = (color & 0x00ffffff) | (alpha << 24);
+
+		StgItemDataFrame* targetFrame = bOutY ? itemData->GetOutData()->GetFrame(0) : itemFrame;
+		if (targetFrame) {
+			StgShotVertexBufferContainer* pVB = targetFrame->GetVertexBufferContainer();
+			DWORD vertexOffset = targetFrame->vertexOffset_;
+
+			if (pVB) {
+				DirectGraphics* graphics = DirectGraphics::GetBase();
+				IDirect3DDevice9* device = graphics->GetDevice();
+
+				device->SetTexture(0, pVB->GetD3DTexture());
+				device->SetStreamSource(0, pVB->GetD3DBuffer(), vertexOffset * sizeof(VERTEX_TLX), sizeof(VERTEX_TLX));
+
+				{
+					ID3DXEffect* effect = itemManager->GetEffect();
+					if (shader_) {
+						effect = shader_->GetEffect();
+						if (shader_->LoadTechnique()) {
+							shader_->LoadParameter();
+						}
+					}
+
+					if (effect) {
+						D3DXHANDLE handle = nullptr;
+						if (handle = effect->GetParameterBySemantic(nullptr, "WORLD")) {
+							D3DXMATRIX matTransform(
+								rScale.x * rAngle.x, rScale.x * rAngle.y, 0, 0,
+								rScale.y * -rAngle.y, rScale.y * rAngle.x, 0, 0,
+								0, 0, 1, 0,
+								rPos.x, rPos.y, 0, 1
+							);
+							effect->SetMatrix(handle, &matTransform);
+						}
+						if (shader_) {
+							if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
+								effect->SetMatrix(handle, itemManager->GetProjectionMatrix());
+							}
+						}
+						if (handle = effect->GetParameterBySemantic(nullptr, "ICOLOR")) {
+							//To normalized RGBA vector
+							D3DXVECTOR4 vColor = ColorAccess::ToVec4Normalized(rColor, ColorAccess::PERMUTE_RGBA);
+							effect->SetVector(handle, &vColor);
+						}
+
+						UINT countPass = 1;
+						effect->Begin(&countPass, D3DXFX_DONOTSAVESHADERSTATE);
+						for (UINT iPass = 0; iPass < countPass; ++iPass) {
+							effect->BeginPass(iPass);
+							device->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+							effect->EndPass();
+						}
+						effect->End();
+					}
+				}
+			}
 		}
 	}
-
-	VERTEX_TLX verts[4];
-	LONG* ptrSrc = reinterpret_cast<LONG*>(rcSrc);
-	float* ptrDst = reinterpret_cast<float*>(rcDest);
-	for (size_t iVert = 0U; iVert < 4U; ++iVert) {
-		//((iVert & 1) << 1)
-		//   0 -> 0
-		//   1 -> 2
-		//   2 -> 0
-		//   3 -> 2
-		//(iVert | 1)
-		//   0 -> 1
-		//   1 -> 1
-		//   2 -> 3
-		//   3 -> 3
-
-		VERTEX_TLX vt;
-		_SetVertexUV(vt, ptrSrc[(iVert & 1) << 1], ptrSrc[iVert | 1]);
-		_SetVertexPosition(vt, ptrDst[(iVert & 1) << 1], ptrDst[iVert | 1], position_.z);
-		_SetVertexColorARGB(vt, color);
-		verts[iVert] = vt;
-	}
-	D3DXVECTOR2 texSizeInv = D3DXVECTOR2(1.0f / itemData->GetTextureSize().x, 1.0f / itemData->GetTextureSize().y);
-	DxMath::TransformVertex2D(verts, &D3DXVECTOR2(scaleX, scaleY), &D3DXVECTOR2(c, s), 
-		&D3DXVECTOR2(sposx, sposy), &texSizeInv);
-
-	renderer->AddSquareVertex(verts);
 }
 void StgItemObject_User::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	if (bDefaultScoreText_)
@@ -1198,7 +1242,6 @@ void StgItemObject_User::Intersect(StgIntersectionTarget* ownTarget, StgIntersec
 	auto objectManager = stageController_->GetMainObjectManager();
 	objectManager->DeleteObject(this);
 }
-
 
 //*******************************************************************
 //StgMovePattern_Item

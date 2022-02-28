@@ -2341,7 +2341,7 @@ gstd::value StgStageScript::Func_CreateItemScore(gstd::script_machine* machine, 
 	double posX = argv[1].as_float();
 	double posY = argv[2].as_float();
 
-	ref_unsync_ptr<StgItemObject_Score> obj = new StgItemObject_Score(stageController);
+	ref_unsync_ptr<StgItemObject_ScoreText> obj = new StgItemObject_ScoreText(stageController);
 	int id = script->AddObject(obj);
 	if (id != ID_INVALID) {
 		itemManager->AddItem(obj);
