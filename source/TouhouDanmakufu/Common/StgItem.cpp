@@ -1133,7 +1133,7 @@ void StgItemObject_User::Render(BlendMode targetBlend) {
 	if (objBlendType != targetBlend) return;
 
 	D3DXVECTOR2 rPos(position_), rScale, rAngle;
-	D3DCOLOR rColor = 0xffffffff;
+	D3DCOLOR rColor;
 
 	{
 		StgItemDataFrame* itemFrame = itemData->GetFrame(frameWork_);
@@ -1160,8 +1160,9 @@ void StgItemObject_User::Render(BlendMode targetBlend) {
 			rPos.y = roundf(rPos.y);
 		}
 
-		float alphaRate = itemData->GetAlpha() / 255.0f;
+		rColor = color_;
 		{
+			float alphaRate = itemData->GetAlpha() / 255.0f;
 			byte alpha = ColorAccess::ClampColorRet(((rColor >> 24) & 0xff) * alphaRate);
 			rColor = (rColor & 0x00ffffff) | (alpha << 24);
 		}
