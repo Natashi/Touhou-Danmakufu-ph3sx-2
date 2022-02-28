@@ -78,6 +78,7 @@ void StgShotManager::Render(int targetPriority) {
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
+	RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
 	graphics->SetZBufferEnable(false);
 	graphics->SetZWriteEnable(false);
@@ -94,8 +95,6 @@ void StgShotManager::Render(int targetPriority) {
 	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
 
 	D3DXMatrixMultiply(&matProj_, &camera2D->GetMatrix(), &graphics->GetViewPortMatrix());
-
-	RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
 	device->SetFVF(VERTEX_TLX::fvf);
 	device->SetVertexDeclaration(shaderManager->GetVertexDeclarationTLX());
@@ -115,7 +114,7 @@ void StgShotManager::Render(int targetPriority) {
 
 			for (size_t i = 0; i < renderQueue.count; ++i) {
 				StgShotObject* pShot = renderQueue.listShot[i];
-				pShot->Render(this, blend);
+				pShot->Render(blend);
 			}
 		}
 	};
@@ -124,6 +123,8 @@ void StgShotManager::Render(int targetPriority) {
 	_RenderQueue(renderQueuePlayer);
 	_RenderQueue(renderQueueEnemy);
 
+	device->SetVertexShader(nullptr);
+	device->SetPixelShader(nullptr);
 	device->SetVertexDeclaration(nullptr);
 	device->SetIndices(nullptr);
 
@@ -137,7 +138,7 @@ void StgShotManager::LoadRenderQueue() {
 	}
 
 	for (ref_unsync_ptr<StgShotObject>& obj : listObj_) {
-		if (obj->IsDeleted() || !obj->IsActive()) continue;
+		if (obj->IsDeleted() || !obj->IsActive() || !obj->IsVisible()) continue;
 
 		auto& [count, listShot] = (obj->GetOwnerType() == StgShotObject::OWNER_PLAYER ?
 			listRenderQueuePlayer_ : listRenderQueueEnemy_)[obj->GetRenderPriorityI()];
@@ -276,7 +277,7 @@ void StgShotDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>
 		placement->second.push_back(unique_ptr<StgShotVertexBufferContainer>(
 			new StgShotVertexBufferContainer()));
 		StgShotVertexBufferContainer* pVertexBufferContainer = placement->second.back().get();
-		pVertexBufferContainer->texture_ = texture;
+		pVertexBufferContainer->SetTexture(texture);
 
 		std::vector<VERTEX_TLX> bufferVertex(4 * thisCountFrame);
 		size_t iVertex = 0;
@@ -479,12 +480,11 @@ void StgShotDataList::_ScanShot(std::map<int, unique_ptr<StgShotData>>& mapData,
 		DxRect<LONG> rect(StringUtility::ToInteger(list[0]), StringUtility::ToInteger(list[1]),
 			StringUtility::ToInteger(list[2]), StringUtility::ToInteger(list[3]));
 
-		StgShotDataFrame anime;
-		anime.rcSrc_ = rect;
-		anime.rcDst_ = StgShotDataFrame::LoadDestRect(&rect);
+		StgShotDataFrame dFrame;
+		dFrame.rcSrc_ = rect;
+		dFrame.rcDst_ = StgShotDataFrame::LoadDestRect(&rect);
 
-		i->shotData->listFrame_.resize(1);
-		i->shotData->listFrame_[0] = anime;
+		i->shotData->listFrame_ = { dFrame };
 		i->shotData->totalFrame_ = 1;
 	};
 	auto funcSetDelayID = [](Data* i, Scanner& s) {
@@ -602,7 +602,7 @@ void StgShotDataList::_ScanShot(std::map<int, unique_ptr<StgShotData>>& mapData,
 		mapData[data.id] = unique_ptr<StgShotData>(data.shotData);
 	}
 }
-void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
+void StgShotDataList::_ScanAnimation(StgShotData* shotData, Scanner& scanner) {
 	Token& tok = scanner.Next();
 	if (tok.GetType() == Token::Type::TK_NEWLINE) tok = scanner.Next();
 	scanner.CheckType(tok, Token::Type::TK_OPENC);
@@ -625,12 +625,12 @@ void StgShotDataList::_ScanAnimation(StgShotData*& shotData, Scanner& scanner) {
 				DxRect<LONG> rect(StringUtility::ToInteger(list[1]), StringUtility::ToInteger(list[2]),
 					StringUtility::ToInteger(list[3]), StringUtility::ToInteger(list[4]));
 
-				StgShotDataFrame anime;
-				anime.frame_ = frame;
-				anime.rcSrc_ = rect;
-				anime.rcDst_ = StgShotDataFrame::LoadDestRect(&rect);
+				StgShotDataFrame dFrame;
+				dFrame.frame_ = frame;
+				dFrame.rcSrc_ = rect;
+				dFrame.rcDst_ = StgShotDataFrame::LoadDestRect(&rect);
 
-				shotData->listFrame_.push_back(anime);
+				shotData->listFrame_.push_back(dFrame);
 				shotData->totalFrame_ += frame;
 			}
 		}
@@ -1478,7 +1478,7 @@ static void _DefaultShotRender(StgShotManager* shotManager, StgShotData* shotDat
 		device->SetStreamSource(0, pVB->GetD3DBuffer(), vertexOffset * sizeof(VERTEX_TLX), sizeof(VERTEX_TLX));
 
 		{
-			ID3DXEffect* effect = shotManager->GetShotEffect();
+			ID3DXEffect* effect = shotManager->GetEffect();
 			if (shader) {
 				effect = shader->GetEffect();
 				if (shader->LoadTechnique()) {
@@ -1493,7 +1493,7 @@ static void _DefaultShotRender(StgShotManager* shotManager, StgShotData* shotDat
 				}
 				if (shader) {
 					if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
-						effect->SetMatrix(handle, shotManager->GetShotProjectionMatrix());
+						effect->SetMatrix(handle, shotManager->GetProjectionMatrix());
 					}
 				}
 				if (handle = effect->GetParameterBySemantic(nullptr, "ICOLOR")) {
@@ -1503,7 +1503,7 @@ static void _DefaultShotRender(StgShotManager* shotManager, StgShotData* shotDat
 				}
 
 				UINT countPass = 1;
-				effect->Begin(&countPass, D3DXFX_DONOTSAVESAMPLERSTATE);
+				effect->Begin(&countPass, D3DXFX_DONOTSAVESHADERSTATE);
 				for (UINT iPass = 0; iPass < countPass; ++iPass) {
 					effect->BeginPass(iPass);
 					device->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
@@ -1515,8 +1515,9 @@ static void _DefaultShotRender(StgShotManager* shotManager, StgShotData* shotDat
 	}
 }
 
-void StgNormalShotObject::Render(StgShotManager* shotManager, BlendMode targetBlend) {
-	if (!IsVisible()) return;
+void StgNormalShotObject::Render(BlendMode targetBlend) {
+	//if (!IsVisible()) return;
+	StgShotManager* shotManager = stageController_->GetShotManager();
 
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr) return;
@@ -1826,8 +1827,9 @@ bool StgLooseLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 	return true;
 }
 
-void StgLooseLaserObject::Render(StgShotManager* shotManager, BlendMode targetBlend) {
-	if (!IsVisible()) return;
+void StgLooseLaserObject::Render(BlendMode targetBlend) {
+	//if (!IsVisible()) return;
+	StgShotManager* shotManager = stageController_->GetShotManager();
 
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr) return;
@@ -2085,8 +2087,9 @@ bool StgStraightLaserObject::GetIntersectionTargetList_NoVector(StgShotData* sho
 	return true;
 }
 
-void StgStraightLaserObject::Render(StgShotManager* shotManager, BlendMode targetBlend) {
-	if (!IsVisible()) return;
+void StgStraightLaserObject::Render(BlendMode targetBlend) {
+	//if (!IsVisible()) return;
+	StgShotManager* shotManager = stageController_->GetShotManager();
 
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr) return;
@@ -2407,8 +2410,9 @@ bool StgCurveLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 	return true;
 }
 
-void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBlend) {
-	if (!IsVisible()) return;
+void StgCurveLaserObject::Render(BlendMode targetBlend) {
+	//if (!IsVisible()) return;
+	StgShotManager* shotManager = stageController_->GetShotManager();
 
 	StgShotData* shotData = _GetShotData();
 	if (shotData == nullptr) return;
@@ -2592,7 +2596,7 @@ void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 				device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
 
 				{
-					ID3DXEffect* effect = shotManager->GetShotEffect();
+					ID3DXEffect* effect = shotManager->GetEffect();
 					if (shader_) {
 						effect = shader_->GetEffect();
 						if (shader_->LoadTechnique()) {
@@ -2607,7 +2611,7 @@ void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 						}
 						if (shader_) {
 							if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
-								effect->SetMatrix(handle, shotManager->GetShotProjectionMatrix());
+								effect->SetMatrix(handle, shotManager->GetProjectionMatrix());
 							}
 						}
 						if (handle = effect->GetParameterBySemantic(nullptr, "ICOLOR")) {
@@ -2617,7 +2621,7 @@ void StgCurveLaserObject::Render(StgShotManager* shotManager, BlendMode targetBl
 						}
 
 						UINT countPass = 1;
-						effect->Begin(&countPass, D3DXFX_DONOTSAVESAMPLERSTATE);
+						effect->Begin(&countPass, D3DXFX_DONOTSAVESHADERSTATE);
 						for (UINT iPass = 0; iPass < countPass; ++iPass) {
 							effect->BeginPass(iPass);
 							device->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, countPrim);

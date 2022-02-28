@@ -33,7 +33,7 @@ public:
 	};
 
 	enum {
-		SHOT_MAX = 12800,
+		SHOT_MAX = 10000,
 
 		BLEND_COUNT = 8,
 	};
@@ -74,8 +74,8 @@ public:
 
 	void AddShot(ref_unsync_ptr<StgShotObject> obj);
 
-	ID3DXEffect* GetShotEffect() { return effectShot_; }
-	D3DXMATRIX* GetShotProjectionMatrix() { return &matProj_; }
+	ID3DXEffect* GetEffect() { return effectShot_; }
+	D3DXMATRIX* GetProjectionMatrix() { return &matProj_; }
 
 	StgShotDataList* GetPlayerShotDataList() { return listPlayerShotData_.get(); }
 	StgShotDataList* GetEnemyShotDataList() { return listEnemyShotData_.get(); }
@@ -114,7 +114,7 @@ protected:
 	D3DCOLOR defaultDelayColor_;
 
 	void _ScanShot(std::map<int, unique_ptr<StgShotData>>& mapData, Scanner& scanner);
-	static void _ScanAnimation(StgShotData*& shotData, Scanner& scanner);
+	static void _ScanAnimation(StgShotData* shotData, Scanner& scanner);
 
 	void _LoadVertexBuffers(std::map<std::wstring, VBContainerList>::iterator placement, 
 		shared_ptr<Texture> texture, std::vector<StgShotData*>& listAddData);
@@ -127,6 +127,9 @@ public:
 	bool AddShotDataList(const std::wstring& path, bool bReload);
 };
 
+//*******************************************************************
+//StgShotData
+//*******************************************************************
 class StgShotData {
 	friend StgShotDataList;
 private:
@@ -218,6 +221,7 @@ public:
 	IDirect3DVertexBuffer9* GetD3DBuffer() { return pVertexBuffer_ ? pVertexBuffer_->GetBuffer() : nullptr; }
 	size_t GetDataCount() { return countData_; }
 
+	void SetTexture(shared_ptr<Texture> texture) { texture_ = texture; }
 	shared_ptr<Texture> GetTexture() { return texture_; }
 	IDirect3DTexture9* GetD3DTexture() { return texture_ ? texture_->GetD3DTexture() : nullptr; }
 };
@@ -364,7 +368,7 @@ public:
 	virtual void Activate() {}
 
 	virtual void Render() {};
-	virtual void Render(StgShotManager* manager, BlendMode targetBlend) = 0;
+	virtual void Render(BlendMode targetBlend) = 0;
 
 	virtual void DeleteImmediate();
 	virtual void ConvertToItem();
@@ -462,7 +466,7 @@ public:
 	virtual ~StgNormalShotObject();
 
 	virtual void Work();
-	virtual void Render(StgShotManager* manager, BlendMode targetBlend);
+	virtual void Render(BlendMode targetBlend);
 
 	virtual void ClearShotObject() {
 		ClearIntersectionRelativeTarget();
@@ -544,7 +548,7 @@ public:
 	StgLooseLaserObject(StgStageController* stageController);
 
 	virtual void Work();
-	virtual void Render(StgShotManager* manager, BlendMode targetBlend);
+	virtual void Render(BlendMode targetBlend);
 
 	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
 
@@ -576,7 +580,7 @@ public:
 	StgStraightLaserObject(StgStageController* stageController);
 
 	virtual void Work();
-	virtual void Render(StgShotManager* manager, BlendMode targetBlend);
+	virtual void Render(BlendMode targetBlend);
 
 	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
 
@@ -630,7 +634,7 @@ public:
 	StgCurveLaserObject(StgStageController* stageController);
 
 	virtual void Work();
-	virtual void Render(StgShotManager* manager, BlendMode targetBlend);
+	virtual void Render(BlendMode targetBlend);
 
 	virtual bool GetIntersectionTargetList_NoVector(StgShotData* shotData);
 
