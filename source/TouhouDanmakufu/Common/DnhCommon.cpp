@@ -449,6 +449,7 @@ DnhConfiguration::DnhConfiguration() {
 
 	screenWidth_ = 640;
 	screenHeight_ = 480;
+	windowSizeList_ = { { 640, 480 }, { 800, 600 }, { 960, 720 }, { 1280, 960 } };
 
 	bDynamicScaling_ = false;
 	bEnableUnfocusedProcessing_ = false;
