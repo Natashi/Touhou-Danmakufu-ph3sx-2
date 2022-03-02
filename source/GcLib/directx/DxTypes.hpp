@@ -60,6 +60,7 @@ namespace directx {
 		KEY_HOLD = 3,	 //Key is being pressed, both in the previous and current frame
 	} DIKeyState;
 
+#if defined(DNH_PROJ_EXECUTOR)
 	//*******************************************************************
 	//DirectSound
 	//*******************************************************************
@@ -407,4 +408,5 @@ namespace directx {
 
 		virtual DxRect<float> GetBounds() const { return DxRect<float>(); }
 	};
+#endif
 }
