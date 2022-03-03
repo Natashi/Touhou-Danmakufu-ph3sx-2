@@ -24,20 +24,20 @@ namespace directx {
 			TYPE_RENDER_TARGET,
 		};
 	protected:
-		Type type_;
 		TextureManager* manager_;
-		IDirect3DTexture9* pTexture_;
-		D3DXIMAGE_INFO infoImage_;
-		std::wstring name_;
 		volatile bool bReady_;
+		
+		Type type_;
+		std::wstring name_;
+		D3DXIMAGE_INFO infoImage_;
+		size_t resourceSize_;
 
 		bool useMipMap_;
 		bool useNonPowerOfTwo_;
 
+		IDirect3DTexture9* pTexture_;
 		IDirect3DSurface9* lpRenderSurface_;
 		IDirect3DSurface9* lpRenderZ_;
-
-		size_t resourceSize_;
 	public:
 		TextureData();
 		virtual ~TextureData();
@@ -45,8 +45,11 @@ namespace directx {
 		std::wstring& GetName() { return name_; }
 		D3DXIMAGE_INFO* GetImageInfo() { return &infoImage_; }
 
-		size_t GetResourceSize() { return resourceSize_; }
+		IDirect3DTexture9* GetD3DTexture() { return pTexture_; }
+		IDirect3DSurface9* GetD3DSurface() { return lpRenderSurface_; }
+		IDirect3DSurface9* GetD3DZBuffer() { return lpRenderZ_; }
 
+		size_t GetResourceSize() { return resourceSize_; }
 		void CalculateResourceSize();
 	};
 
@@ -107,8 +110,14 @@ namespace directx {
 		void _ReleaseTextureData(std::map<std::wstring, shared_ptr<TextureData>>::iterator itr);
 
 		void __CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
-		bool _CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
-		bool _CreateRenderTarget(const std::wstring& name, size_t width = 0U, size_t height = 0U);
+		bool _CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
+		bool _CreateRenderTarget(shared_ptr<TextureData>& dst, const std::wstring& name, 
+			size_t width = 0U, size_t height = 0U, bool bManaged = true);
+		bool _CreateRenderTarget_Unmanaged(shared_ptr<TextureData>& dst, const std::wstring& name, 
+			size_t width, size_t height)
+		{
+			return _CreateRenderTarget(dst, name, width, height, false);
+		}
 	public:
 		TextureManager();
 		virtual ~TextureManager();

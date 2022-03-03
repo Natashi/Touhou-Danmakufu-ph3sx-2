@@ -152,7 +152,7 @@ IDirect3DTexture9* Texture::GetD3DTexture() {
 		DWORD timeOrg = timeGetTime();
 		while (true) {
 			if (data_->bReady_) {
-				res = data_->pTexture_;
+				res = data_->GetD3DTexture();
 				break;
 			}
 			else if (timeGetTime() - timeOrg > 200) {		//0.2 second timer
@@ -172,7 +172,7 @@ IDirect3DSurface9* Texture::GetD3DSurface() {
 #ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
 #endif
-		if (data_) res = data_->lpRenderSurface_;
+		if (data_) res = data_->GetD3DSurface();
 	}
 	return res;
 }
@@ -182,7 +182,7 @@ IDirect3DSurface9* Texture::GetD3DZBuffer() {
 #ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
 #endif
-		if (data_) res = data_->lpRenderZ_;
+		if (data_) res = data_->GetD3DZBuffer();
 	}
 	return res;
 }
@@ -462,7 +462,7 @@ void TextureManager::__CreateFromFile(shared_ptr<TextureData>& dst, const std::w
 	dst->name_ = path;
 	dst->type_ = TextureData::Type::TYPE_TEXTURE;
 }
-bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo) {
+bool TextureManager::_CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 
 	bool res = true;
@@ -485,9 +485,13 @@ bool TextureManager::_CreateFromFile(const std::wstring& path, bool genMipmap, b
 	}
 
 	if (res) mapTextureData_[path] = data;
+	dst = data;
+
 	return res;
 }
-bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width, size_t height) {
+bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std::wstring& name, 
+	size_t width, size_t height, bool bManaged)
+{
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
 
@@ -497,15 +501,11 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 	try {
 		if (width == 0U) {
 			size_t screenWidth = graphics->GetScreenWidth();
-			width = 1U;
-			while (width <= screenWidth)
-				width = width << 1;
+			width = Math::GetNextPow2(screenWidth);
 		}
 		if (height == 0U) {
 			size_t screenHeight = graphics->GetScreenHeight();
-			height = 1U;
-			while (height <= screenHeight)
-				height = height << 1;
+			height = Math::GetNextPow2(screenHeight);
 		}
 		{
 			size_t maxWidth = std::min<DWORD>(graphics->GetDeviceCaps()->MaxTextureWidth, 4096);
@@ -564,7 +564,9 @@ bool TextureManager::_CreateRenderTarget(const std::wstring& name, size_t width,
 		res = false;
 	}
 
-	if (res) mapTextureData_[name] = data;
+	if (res && bManaged) mapTextureData_[name] = data;
+	dst = data;
+
 	return res;
 }
 shared_ptr<Texture> TextureManager::CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo) {
@@ -578,14 +580,20 @@ shared_ptr<Texture> TextureManager::CreateFromFile(const std::wstring& path, boo
 			res = itr->second;
 		}
 		else {
-			bool bHasData = IsDataExists(path);
-			if (!bHasData) {
-				bHasData = _CreateFromFile(path, genMipmap, flgNonPowerOfTwo);
+			shared_ptr<TextureData> data;
+
+			auto itrFind = mapTextureData_.find(path);
+			if (itrFind != mapTextureData_.end()) {
+				data = itrFind->second;
+			}
+			else {
+				if (!_CreateFromFile(data, path, genMipmap, flgNonPowerOfTwo))
+					data = nullptr;
 			}
 			
-			if (bHasData) {
+			if (data) {
 				res = std::make_shared<Texture>();
-				res->data_ = mapTextureData_[path];
+				res->data_ = data;
 			}
 		}
 	}
@@ -602,14 +610,20 @@ shared_ptr<Texture> TextureManager::CreateRenderTarget(const std::wstring& name,
 			res = itr->second;
 		}
 		else {
-			bool bHasData = IsDataExists(name);
-			if (!bHasData) {
-				bHasData = _CreateRenderTarget(name, width, height);
+			shared_ptr<TextureData> data;
+
+			auto itrFind = mapTextureData_.find(name);
+			if (itrFind != mapTextureData_.end()) {
+				data = itrFind->second;
+			}
+			else {
+				if (!_CreateRenderTarget(data, name, width, height))
+					data = nullptr;
 			}
 
-			if (bHasData) {
+			if (data) {
 				res = std::make_shared<Texture>();
-				res->data_ = mapTextureData_[name];
+				res->data_ = data;
 			}
 		}
 	}
