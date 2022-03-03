@@ -327,6 +327,14 @@ namespace gstd {
 		static inline const double Round(double val) { return std::round(val); }
 		static inline const int Trunc(double val) { return (int)(val + 0.01); }
 
+		template<typename T>
+		static inline T GetNextPow2(T x) {
+			T res = (T)1;
+			while (res < x)
+				res = res << 1;
+			return res;
+		}
+
 		class Lerp {
 		public:
 			typedef enum : uint8_t {

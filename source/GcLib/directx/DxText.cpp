@@ -74,16 +74,10 @@ bool DxCharGlyph::Create(UINT code, const Font& winFont, const DxFont* dxFont) {
 
 	//--------------------------------------------------------------
 
-	UINT widthTexture = 1;
-	UINT heightTexture = 1;
-	while (widthTexture < sizeMax_.x) {
-		widthTexture = widthTexture << 1;
-		if (widthTexture >= 0x2000u) return false;
-	}
-	while (heightTexture < sizeMax_.y) {
-		heightTexture = heightTexture << 1;
-		if (heightTexture >= 0x2000u) return false;
-	}
+	if (sizeMax_.x >= 8192 || sizeMax_.y >= 8192)
+		return false;
+	UINT widthTexture = Math::GetNextPow2(sizeMax_.x);
+	UINT heightTexture = Math::GetNextPow2(sizeMax_.y);
 
 	//--------------------------------------------------------------
 
