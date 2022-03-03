@@ -23,9 +23,6 @@ namespace directx {
 			"float4 diffuse : COLOR0;"
 			"float2 texCoord : TEXCOORD0;"
 		"};"
-		"struct PS_OUTPUT {"
-			"float4 color : COLOR0;"
-		"};"
 
 		"VS_OUTPUT mainVS(VS_INPUT inVs) {"
 			"VS_OUTPUT outVs;"
