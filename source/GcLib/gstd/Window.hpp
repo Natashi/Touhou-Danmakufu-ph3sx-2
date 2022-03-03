@@ -66,6 +66,10 @@ namespace gstd {
 		void MoveWindowCenter(const RECT& rcWindow);	//rcWindow must have already been adjusted
 
 		static HWND GetTopParentWindow(HWND hWnd);
+
+		static RECT GetMonitorRect(HMONITOR hMonitor);
+		static RECT GetActiveMonitorRect(HWND hWnd);
+		static RECT GetPrimaryMonitorRect();
 	};
 
 	class WindowBase::Style {
