@@ -87,6 +87,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_MatrixLookatLH);
 		DNH_FUNCAPI_DECL_(Func_MatrixLookatRH);
 		DNH_FUNCAPI_DECL_(Func_MatrixTransformVector);
+		DNH_FUNCAPI_DECL_(Func_MatrixRotate);
 
 		//Dx関数：システム系
 		static gstd::value Func_InstallFont(gstd::script_machine* machine, int argc, const gstd::value* argv);

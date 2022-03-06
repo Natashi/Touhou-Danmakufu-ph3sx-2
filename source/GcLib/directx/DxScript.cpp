@@ -69,6 +69,7 @@ static const std::vector<function> dxFunction = {
 	{ "MatrixLookAtLH", DxScript::Func_MatrixLookatLH, 3 },
 	{ "MatrixLookAtRH", DxScript::Func_MatrixLookatRH, 3 },
 	{ "MatrixTransformVector", DxScript::Func_MatrixTransformVector, 2 },
+	{ "MatrixRotate", DxScript::Func_MatrixRotate, 4 },
 
 	//Sound functions
 	{ "LoadSound", DxScript::Func_LoadSound, 1 },
@@ -997,6 +998,20 @@ gstd::value DxScript::Func_MatrixTransformVector(gstd::script_machine* machine, 
 	D3DXVec3Transform(&out, &vect, &mat);
 
 	return script->CreateFloatArrayValue((FLOAT*)&out, 4U);
+}
+gstd::value DxScript::Func_MatrixRotate(gstd::script_machine* machine, int argc, const value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	D3DXMATRIX mat = _script_unpack_matrix(machine, argv[0]);
+	double rX = Math::DegreeToRadian(argv[1].as_float());
+	double rY = Math::DegreeToRadian(argv[2].as_float());
+	double rZ = Math::DegreeToRadian(argv[3].as_float());
+
+	D3DXMATRIX rMat;
+	D3DXMatrixRotationYawPitchRoll(&rMat, rY, rX, rZ);
+	D3DXMatrixMultiply(&mat, &mat, &rMat);
+
+	return script->CreateFloatArrayValue((FLOAT*)&mat, 16U);
 }
 
 //Dx関数：システム系系
