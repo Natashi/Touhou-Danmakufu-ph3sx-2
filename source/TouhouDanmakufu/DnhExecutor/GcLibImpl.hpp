@@ -3,6 +3,8 @@
 #include "../../GcLib/pch.h"
 
 #include "Constant.hpp"
+
+#if defined(DNH_PROJ_EXECUTOR)
 #include "../Common/DnhGcLibImpl.hpp"
 
 //*******************************************************************
@@ -53,3 +55,5 @@ public:
 	const std::wstring& GetDefaultWindowTitle() { return defaultWindowTitle_; }
 	void SetWindowTitle(const std::wstring& title);
 };
+
+#endif
