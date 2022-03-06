@@ -18,13 +18,33 @@ StgSystemController::StgSystemController() {
 	bPrevWindowFocused_ = true;
 }
 StgSystemController::~StgSystemController() {
+	_ResetSystem();
+}
+void StgSystemController::_ResetSystem() {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	graphics->ResetCamera();
+	graphics->ResetDeviceState();
+	graphics->ResetDisplaySettings();
+
+	ScriptClientBase::randCalls_ = 0;
+	ScriptClientBase::prandCalls_ = 0;
 	if (scriptEngineCache_)
 		scriptEngineCache_->Clear();
+
 	if (DxScriptResourceCache* dxRsrcCache = DxScriptResourceCache::GetBase())
 		dxRsrcCache->ClearResource();
 
-	if (auto camera2D = DirectGraphics::GetBase()->GetCamera2D())
-		camera2D->ResetAll();
+	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
+	soundManager->Clear();
+
+	EFpsController* fpsController = EFpsController::GetInstance();
+	fpsController->SetFastModeKey(DIK_LCONTROL);
+
+	EDirectInput* input = EDirectInput::GetInstance();
+	input->ResetVirtualKeyMap();
+
+	EFileManager* fileManager = EFileManager::GetInstance();
+	fileManager->ClearArchiveFileCache();
 }
 void StgSystemController::Initialize(ref_count_ptr<StgSystemInformation> infoSystem) {
 	base_ = this;
@@ -36,22 +56,7 @@ void StgSystemController::Initialize(ref_count_ptr<StgSystemInformation> infoSys
 	infoControlScript_ = new StgControlScriptInformation();
 }
 void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay) {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
-	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
-
-	ScriptClientBase::randCalls_ = 0;
-	ScriptClientBase::prandCalls_ = 0;
-	scriptEngineCache_->Clear();
-
-	camera3D->SetPerspectiveWidth(384);
-	camera3D->SetPerspectiveHeight(448);
-	camera3D->SetPerspectiveClip(10, 2000);
-	camera3D->thisProjectionChanged_ = true;
-	camera2D->Reset();
-
-	EDirectInput* input = EDirectInput::GetInstance();
-	input->ResetVirtualKeyMap();
+	_ResetSystem();
 
 	ref_count_ptr<ScriptInformation> infoMain = infoSystem_->GetMainScriptInformation();
 
@@ -132,12 +137,6 @@ void StgSystemController::Work() {
 	}
 
 	if (infoSystem_->IsError() || infoSystem_->IsStgEnd()) {
-		EFileManager* fileManager = EFileManager::GetInstance();
-		fileManager->ClearArchiveFileCache();
-
-		DirectGraphics* graphics = DirectGraphics::GetBase();
-		graphics->GetCamera2D()->Reset();
-
 		bool bRetry = false;
 		if (infoSystem_->IsError()) {
 			std::wstring error = infoSystem_->GetErrorMessage();
@@ -156,9 +155,6 @@ void StgSystemController::Work() {
 
 		ELogger* logger = ELogger::GetInstance();
 		logger->UpdateCommonDataInfoPanel();
-
-		EFpsController* fpsController = EFpsController::GetInstance();
-		fpsController->SetFastModeKey(DIK_LCONTROL);
 
 		DoEnd();
 		return;
@@ -398,6 +394,7 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 			camera3D->SetProjectionMatrix();
 			camera3D->UpdateDeviceViewProjectionMatrix();
 			graphics->SetViewPort(rcStgFrame->left, rcStgFrame->top, stgWidth, stgHeight);
+			//graphics->SetViewPortMatrix(rcStgFrame->left, rcStgFrame->top, stgWidth, stgHeight);
 
 			bRunMinStgFrame = true;
 			bClearZBufferFor2DCoordinate = false;

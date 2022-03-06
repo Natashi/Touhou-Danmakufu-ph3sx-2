@@ -233,7 +233,7 @@ protected:
 
 	bool bDefaultCollectionMove_;
 	bool bRoundingPosition_;
-
+protected:
 	void _DeleteInAutoClip();
 	void _CreateScoreItem();
 	void _NotifyEventToPlayerScript(gstd::value* listValue, size_t count);
@@ -343,6 +343,8 @@ class StgItemObject_User : public StgItemObject {
 	int frameWork_;
 	int idImage_;
 
+	weak_ptr<Texture> renderTarget_;
+protected:
 	inline StgItemData* _GetItemData();
 public:
 	StgItemObject_User(StgStageController* stageController);
@@ -351,6 +353,8 @@ public:
 
 	virtual void Render(BlendMode targetBlend);
 	virtual void RenderOnItemManager() {};
+
+	virtual void SetRenderTarget(shared_ptr<Texture> texture) { renderTarget_ = texture; }
 
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 

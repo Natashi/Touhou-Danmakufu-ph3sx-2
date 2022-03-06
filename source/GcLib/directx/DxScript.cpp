@@ -98,6 +98,11 @@ static const std::vector<function> dxFunction = {
 	{ "GetWindowedHeight", DxScript::Func_GetWindowedHeight, 0 },
 	{ "IsFullscreenMode", DxScript::Func_IsFullscreenMode, 0 },
 
+	{ "SetWindowedDisplayMatrix", DxScript::Func_SetWindowedDisplayMatrix, 1 },
+	{ "SetFullscreenDisplayMatrix", DxScript::Func_SetFullscreenDisplayMatrix, 1 },
+	{ "SetWindowedDisplayShader", DxScript::Func_SetWindowedDisplayShader, 1 },
+	{ "SetFullscreenDisplayShader", DxScript::Func_SetFullscreenDisplayShader, 1 },
+
 	{ "LoadTexture", DxScript::Func_LoadTexture, 1 },
 	{ "LoadTextureEx", DxScript::Func_LoadTextureEx, 3 },
 	{ "LoadTextureInLoadThread", DxScript::Func_LoadTextureInLoadThread, 1 },
@@ -108,8 +113,6 @@ static const std::vector<function> dxFunction = {
 	
 	{ "CreateRenderTarget", DxScript::Func_CreateRenderTarget, 1 },
 	{ "CreateRenderTargetEx", DxScript::Func_CreateRenderTargetEx, 3 },
-	//{ "SetRenderTarget", DxScript::Func_SetRenderTarget, 2 },
-	//{ "ResetRenderTarget", DxScript::Func_ResetRenderTarget, 0 },
 	{ "ClearRenderTargetA1", DxScript::Func_ClearRenderTargetA1, 1 },
 	{ "ClearRenderTargetA2", DxScript::Func_ClearRenderTargetA2, 5 },
 	{ "ClearRenderTargetA3", DxScript::Func_ClearRenderTargetA3, 9 },
@@ -311,6 +314,8 @@ static const std::vector<function> dxFunction = {
 	{ "ObjRender_SetLightingAmbientColor", DxScript::Func_ObjRender_SetLightingAmbientColor, 4 },
 	{ "ObjRender_SetLightingAmbientColor", DxScript::Func_ObjRender_SetLightingAmbientColor, 2 },	//Overloaded
 	{ "ObjRender_SetLightingDirection", DxScript::Func_ObjRender_SetLightingDirection, 4 },
+	{ "ObjRender_SetRenderTarget", DxScript::Func_ObjRender_SetRenderTarget, 2 },
+	{ "ObjRender_Render", DxScript::Func_ObjRender_Render, 1 },
 
 	//Shader object functions
 	{ "ObjShader_Create", DxScript::Func_ObjShader_Create, 0 },
@@ -812,7 +817,7 @@ D3DXMATRIX _script_unpack_matrix(script_machine* machine, const value& v) {
 	D3DXMATRIX res;
 	FLOAT* ptrMat = (FLOAT*)&res;
 
-	if (!v.has_data())
+	if (!v.has_data() || v.get_type() == nullptr)
 		goto lab_type_invalid;
 
 	type_data* typeElem = v.get_type()->get_element();
@@ -968,7 +973,7 @@ gstd::value DxScript::Func_MatrixLookatLH(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtLH(&mat, &eye, &dest, &up);
 
-	return script->CreateFloatArrayValue(reinterpret_cast<FLOAT*>(&mat), 16U);
+	return script->CreateFloatArrayValue((FLOAT*)&mat, 16U);
 }
 gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -980,7 +985,7 @@ gstd::value DxScript::Func_MatrixLookatRH(gstd::script_machine* machine, int arg
 	D3DXMATRIX mat;
 	D3DXMatrixLookAtRH(&mat, &eye, &dest, &up);
 
-	return script->CreateFloatArrayValue(reinterpret_cast<FLOAT*>(&mat), 16U);
+	return script->CreateFloatArrayValue((FLOAT*)&mat, 16U);
 }
 gstd::value DxScript::Func_MatrixTransformVector(gstd::script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -1197,12 +1202,14 @@ gstd::value DxScript::Func_GetVirtualKeyMapping(gstd::script_machine* machine, i
 
 //Dx関数：描画系
 gstd::value DxScript::Func_GetMonitorWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	LONG res = ::GetSystemMetrics(SM_CXSCREEN);
-	return DxScript::CreateIntValue(res);
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	RECT rcMonitor = WindowBase::GetActiveMonitorRect(graphics->GetAttachedWindowHandle());
+	return DxScript::CreateIntValue(DxRect<LONG>(rcMonitor).GetWidth());
 }
 gstd::value DxScript::Func_GetMonitorHeight(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	LONG res = ::GetSystemMetrics(SM_CYSCREEN);
-	return DxScript::CreateIntValue(res);
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	RECT rcMonitor = WindowBase::GetActiveMonitorRect(graphics->GetAttachedWindowHandle());
+	return DxScript::CreateIntValue(DxRect<LONG>(rcMonitor).GetHeight());
 }
 gstd::value DxScript::Func_GetScreenWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
@@ -1231,6 +1238,51 @@ gstd::value DxScript::Func_IsFullscreenMode(gstd::script_machine* machine, int a
 }
 value DxScript::Func_GetCoordinateScalingFactor(gstd::script_machine* machine, int argc, const value* argv) {
 	return DxScript::CreateFloatValue(DirectGraphics::g_dxCoordsMul_);
+}
+
+value DxScript::Func_SetWindowedDisplayMatrix(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	D3DXMATRIX* pMat = &graphics->GetDisplaySettingsWindowed()->matDisplay;
+	
+	D3DXMATRIX vMat = _script_unpack_matrix(machine, argv[0]);
+	*pMat = vMat;
+
+	return value();
+}
+value DxScript::Func_SetFullscreenDisplayMatrix(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	D3DXMATRIX* pMat = &graphics->GetDisplaySettingsFullscreen()->matDisplay;
+
+	D3DXMATRIX vMat = _script_unpack_matrix(machine, argv[0]);
+	*pMat = vMat;
+
+	return value();
+}
+value DxScript::Func_SetWindowedDisplayShader(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	DisplaySettings* pDispSettings = graphics->GetDisplaySettingsWindowed();
+
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		pDispSettings->shader = obj->GetShader();
+	}
+
+	return script->CreateBooleanValue(pDispSettings->shader != nullptr);
+}
+value DxScript::Func_SetFullscreenDisplayShader(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	DisplaySettings* pDispSettings = graphics->GetDisplaySettingsFullscreen();
+
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		pDispSettings->shader = obj->GetShader();
+	}
+
+	return script->CreateBooleanValue(pDispSettings->shader != nullptr);
 }
 
 value DxScript::Func_LoadTexture(script_machine* machine, int argc, const value* argv) {
@@ -1412,35 +1464,6 @@ gstd::value DxScript::Func_CreateRenderTargetEx(gstd::script_machine* machine, i
 	}
 	return script->CreateBooleanValue(res);
 }
-gstd::value DxScript::Func_SetRenderTarget(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	TextureManager* textureManager = TextureManager::GetBase();
-
-	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
-
-	std::wstring name = argv[0].as_string();
-	shared_ptr<Texture> texture = rsrcCache->GetTexture(name);
-	if (texture == nullptr) {
-		texture = textureManager->GetTexture(name);
-		script->RaiseError("The specified render target does not exist.");
-	}
-	if (texture->GetType() != TextureData::Type::TYPE_RENDER_TARGET)
-		script->RaiseError("Target texture must be a render target.");
-
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->SetRenderTarget(texture, false);
-	if (argv[1].as_boolean()) graphics->ClearRenderTarget();
-
-	return value();
-}
-gstd::value DxScript::Func_ResetRenderTarget(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	graphics->SetRenderTarget(nullptr, false);
-
-	return value();
-}
 gstd::value DxScript::Func_ClearRenderTargetA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	TextureManager* textureManager = TextureManager::GetBase();
@@ -1458,9 +1481,10 @@ gstd::value DxScript::Func_ClearRenderTargetA1(gstd::script_machine* machine, in
 	shared_ptr<Texture> current = graphics->GetRenderTarget();
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	graphics->SetRenderTarget(texture, false);
+
+	graphics->SetRenderTarget(texture);
 	device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-	graphics->SetRenderTarget(current, false);
+	graphics->SetRenderTarget(current);
 
 	return script->CreateBooleanValue(true);
 }
@@ -1485,9 +1509,10 @@ gstd::value DxScript::Func_ClearRenderTargetA2(gstd::script_machine* machine, in
 	D3DCOLOR color = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	graphics->SetRenderTarget(texture, false);
+
+	graphics->SetRenderTarget(texture);
 	device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, color, 1.0f, 0);
-	graphics->SetRenderTarget(current, false);
+	graphics->SetRenderTarget(current);
 
 	return script->CreateBooleanValue(true);
 }
@@ -1516,9 +1541,10 @@ gstd::value DxScript::Func_ClearRenderTargetA3(gstd::script_machine* machine, in
 		argv[7].as_int(), argv[8].as_int());
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	graphics->SetRenderTarget(texture, false);
+
+	graphics->SetRenderTarget(texture);
 	device->Clear(1, (D3DRECT*)&rc, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(ca, cr, cg, cb), 1.0f, 0);
-	graphics->SetRenderTarget(current, false);
+	graphics->SetRenderTarget(current);
 
 	return script->CreateBooleanValue(true);
 }
@@ -3176,6 +3202,50 @@ value DxScript::Func_ObjRender_SetLightingDirection(gstd::script_machine* machin
 	if (obj) {
 		if (auto objLight = obj->GetLightPointer())
 			objLight->SetDirection(D3DXVECTOR3(argv[1].as_float(), argv[2].as_float(), argv[3].as_float()));
+	}
+
+	return value();
+}
+value DxScript::Func_ObjRender_SetRenderTarget(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
+	TextureManager* textureManager = TextureManager::GetBase();
+
+	int id = argv[0].as_int();
+
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		std::wstring name = argv[1].as_string();
+
+		if (name.size() > 0) {
+			shared_ptr<Texture> texture = rsrcCache->GetTexture(name);
+			if (texture == nullptr)
+				texture = textureManager->GetTexture(name);
+			if (texture && texture->GetType() == TextureData::Type::TYPE_RENDER_TARGET) {
+				obj->SetRenderTarget(texture);
+			}
+			else {
+				obj->SetRenderTarget(nullptr);
+			}
+		}
+		else {
+			obj->SetRenderTarget(nullptr);
+		}
+	}
+
+	return value();
+}
+value DxScript::Func_ObjRender_Render(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+
+	int id = argv[0].as_int();
+	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
+	if (obj) {
+		DirectGraphics* graphics = DirectGraphics::GetBase();
+
+		graphics->BeginScene(false, false);
+		obj->Render();
+		graphics->EndScene(false);
 	}
 
 	return value();

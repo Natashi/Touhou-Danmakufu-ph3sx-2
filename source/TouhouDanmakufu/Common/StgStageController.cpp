@@ -412,14 +412,17 @@ void StgStageController::RenderToTransitionTexture() {
 	TextureManager* textureManager = ETextureManager::GetInstance();
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 
-	graphics->SetRenderTarget(texture, false);
-	graphics->BeginScene(false, true);
+	graphics->SetAllowRenderTargetChange(false);
+	graphics->SetRenderTarget(texture);
+	graphics->ResetDeviceState();
 
+	graphics->BeginScene(false, true);
 	//objectManager->RenderObject();
 	systemController_->RenderScriptObject();
-
 	graphics->EndScene(false);
-	graphics->SetRenderTarget(nullptr, false);
+
+	graphics->SetRenderTarget(nullptr);
+	graphics->SetAllowRenderTargetChange(true);
 
 	/*
 	if (false) {

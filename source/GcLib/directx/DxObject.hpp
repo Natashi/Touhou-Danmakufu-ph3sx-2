@@ -127,8 +127,10 @@ namespace directx {
 		void SetBlendType(BlendMode type) { typeBlend_ = type; }
 		BlendMode GetBlendType() { return typeBlend_; }
 
+		virtual void SetRenderTarget(shared_ptr<Texture> texture) {};
+
 		virtual shared_ptr<Shader> GetShader() { return nullptr; }
-		virtual void SetShader(shared_ptr<Shader> shader) {}
+		virtual void SetShader(shared_ptr<Shader> shader) {};
 
 		void SetRelativeObject(gstd::ref_count_weak_ptr<DxScriptRenderObject, false> id) {
 			objRelative_ = id;
@@ -184,6 +186,8 @@ namespace directx {
 		virtual void SetVertexColor(size_t index, int r, int g, int b) = 0;
 		virtual D3DCOLOR GetVertexColor(size_t index) = 0;
 		virtual D3DXVECTOR3 GetVertexPosition(size_t index) = 0;
+
+		virtual void SetRenderTarget(shared_ptr<Texture> texture) { objRender_->SetRenderTarget(texture); }
 
 		virtual shared_ptr<Shader> GetShader() { return objRender_->GetShader(); }
 		virtual void SetShader(shared_ptr<Shader> shader) { objRender_->SetShader(shader); }

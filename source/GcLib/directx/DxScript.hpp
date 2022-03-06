@@ -120,6 +120,11 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_IsFullscreenMode);
 		DNH_FUNCAPI_DECL_(Func_GetCoordinateScalingFactor);
 
+		DNH_FUNCAPI_DECL_(Func_SetWindowedDisplayMatrix);
+		DNH_FUNCAPI_DECL_(Func_SetFullscreenDisplayMatrix);
+		DNH_FUNCAPI_DECL_(Func_SetWindowedDisplayShader);
+		DNH_FUNCAPI_DECL_(Func_SetFullscreenDisplayShader);
+
 		static gstd::value Func_LoadTexture(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_LoadTextureInLoadThread(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_LoadTextureEx);
@@ -131,8 +136,6 @@ namespace directx {
 		static gstd::value Func_SetFogParam(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_CreateRenderTarget(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_CreateRenderTargetEx);
-		static gstd::value Func_SetRenderTarget(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		DNH_FUNCAPI_DECL_(Func_ResetRenderTarget);
 		DNH_FUNCAPI_DECL_(Func_ClearRenderTargetA1);
 		DNH_FUNCAPI_DECL_(Func_ClearRenderTargetA2);
 		DNH_FUNCAPI_DECL_(Func_ClearRenderTargetA3);
@@ -313,6 +316,8 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingSpecularColor);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingAmbientColor);
 		DNH_FUNCAPI_DECL_(Func_ObjRender_SetLightingDirection);
+		DNH_FUNCAPI_DECL_(Func_ObjRender_SetRenderTarget);
+		DNH_FUNCAPI_DECL_(Func_ObjRender_Render);
 
 		//Dx関数：オブジェクト操作(ShaderObject)
 		static gstd::value Func_ObjShader_Create(gstd::script_machine* machine, int argc, const gstd::value* argv);

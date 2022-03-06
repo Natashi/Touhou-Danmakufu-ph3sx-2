@@ -1459,10 +1459,9 @@ bool StgNormalShotObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 	return true;
 }
 
-static void _DefaultShotRender(StgShotManager* shotManager, StgShotData* shotData,
-	StgShotDataFrame* shotFrame, const D3DXMATRIX& matWorld, D3DCOLOR color, shared_ptr<Shader> shader)
-{
+void StgShotObject::_DefaultShotRender(StgShotData* shotData, StgShotDataFrame* shotFrame, const D3DXMATRIX& matWorld, D3DCOLOR color) {
 	if (shotFrame == nullptr) return;
+	StgShotManager* shotManager = stageController_->GetShotManager();
 
 	StgShotVertexBufferContainer* pVB = shotFrame->GetVertexBufferContainer();
 	DWORD vertexOffset = shotFrame->vertexOffset_;
@@ -1471,15 +1470,21 @@ static void _DefaultShotRender(StgShotManager* shotManager, StgShotData* shotDat
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		IDirect3DDevice9* device = graphics->GetDevice();
 
+		if (graphics->IsAllowRenderTargetChange()) {
+			if (auto pRT = renderTarget_.lock())
+				graphics->SetRenderTarget(pRT);
+			else graphics->SetRenderTarget(nullptr);
+		}
+
 		device->SetTexture(0, pVB->GetD3DTexture());
 		device->SetStreamSource(0, pVB->GetD3DBuffer(), vertexOffset * sizeof(VERTEX_TLX), sizeof(VERTEX_TLX));
 
 		{
 			ID3DXEffect* effect = shotManager->GetEffect();
-			if (shader) {
-				effect = shader->GetEffect();
-				if (shader->LoadTechnique()) {
-					shader->LoadParameter();
+			if (shader_) {
+				effect = shader_->GetEffect();
+				if (shader_->LoadTechnique()) {
+					shader_->LoadParameter();
 				}
 			}
 
@@ -1488,7 +1493,7 @@ static void _DefaultShotRender(StgShotManager* shotManager, StgShotData* shotDat
 				if (handle = effect->GetParameterBySemantic(nullptr, "WORLD")) {
 					effect->SetMatrix(handle, &matWorld);
 				}
-				if (shader) {
+				if (shader_) {
 					if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
 						effect->SetMatrix(handle, shotManager->GetProjectionMatrix());
 					}
@@ -1539,7 +1544,7 @@ void StgNormalShotObject::Render(BlendMode targetBlend) {
 			0, 0, 1, 0,
 			sposx, sposy, 0, 1
 		);
-		_DefaultShotRender(shotManager, pData, pFrame, matTransform, color, shader_);
+		_DefaultShotRender(pData, pFrame, matTransform, color);
 	};
 
 	if (delay_.time > 0) {
@@ -1866,7 +1871,7 @@ void StgLooseLaserObject::Render(BlendMode targetBlend) {
 					0, 0, 1, 0,
 					rPos.x, rPos.y, 0, 1
 				);
-				_DefaultShotRender(shotManager, delayData, delayFrame, matTransform, rColor, shader_);
+				_DefaultShotRender(delayData, delayFrame, matTransform, rColor);
 			}
 		}
 	}
@@ -1910,7 +1915,7 @@ void StgLooseLaserObject::Render(BlendMode targetBlend) {
 					0, 0, 1, 0,
 					rPos.x, rPos.y, 0, 1
 				);
-				_DefaultShotRender(shotManager, shotData, shotFrame, matTransform, rColor, shader_);
+				_DefaultShotRender(shotData, shotFrame, matTransform, rColor);
 			}
 
 		}
@@ -2130,7 +2135,7 @@ void StgStraightLaserObject::Render(BlendMode targetBlend) {
 				0, 0, 1, 0,
 				rPos.x, rPos.y, 0, 1
 			);
-			_DefaultShotRender(shotManager, shotData, shotFrame, matTransform, rColor, shader_);
+			_DefaultShotRender(shotData, shotFrame, matTransform, rColor);
 		}
 	}
 
@@ -2166,7 +2171,7 @@ void StgStraightLaserObject::Render(BlendMode targetBlend) {
 						0, 0, 1, 0,
 						delayPos.x, delayPos.y, 0, 1
 					);
-					_DefaultShotRender(shotManager, delayData, delayFrame, matTransform, rColor, shader_);
+					_DefaultShotRender(delayData, delayFrame, matTransform, rColor);
 				}
 			};
 
@@ -2448,7 +2453,7 @@ void StgCurveLaserObject::Render(BlendMode targetBlend) {
 					0, 0, 1, 0,
 					rPos.x, rPos.y, 0, 1
 				);
-				_DefaultShotRender(shotManager, delayData, shotFrame, matTransform, rColor, shader_);
+				_DefaultShotRender(delayData, shotFrame, matTransform, rColor);
 			}
 		}
 	}
@@ -2576,6 +2581,12 @@ void StgCurveLaserObject::Render(BlendMode targetBlend) {
 
 				VertexBufferManager* vbManager = VertexBufferManager::GetBase();
 				FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
+
+				if (graphics->IsAllowRenderTargetChange()) {
+					if (auto pRT = renderTarget_.lock())
+						graphics->SetRenderTarget(pRT);
+					else graphics->SetRenderTarget(nullptr);
+				}
 
 				device->SetTexture(0, texture->GetD3DTexture());
 

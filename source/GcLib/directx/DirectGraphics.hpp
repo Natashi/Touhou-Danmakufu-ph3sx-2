@@ -12,6 +12,8 @@ namespace directx {
 	class DxCamera;
 	class DxCamera2D;
 	class Texture;
+	class TextureData;
+	class Shader;
 #endif
 
 	//*******************************************************************
@@ -49,6 +51,11 @@ namespace directx {
 		HMODULE hLibrary_dinput8;
 		HMODULE hLibrary_dsound;
 	};
+	struct DisplaySettings {
+		D3DXMATRIX matDisplay;
+		shared_ptr<Shader> shader;
+	};
+
 	class DirectGraphics {
 		static DirectGraphics* thisBase_;
 	public:
@@ -78,23 +85,28 @@ namespace directx {
 		std::map<D3DMULTISAMPLE_TYPE, std::pair<bool, DWORD*>> mapSupportMultisamples_;
 
 		bool bMainRender_;
+		bool bAllowRenderTargetChange_;
 		BlendMode previousBlendMode_;
 
 		gstd::ref_count_ptr<DxCamera> camera_;
 		gstd::ref_count_ptr<DxCamera2D> camera2D_;
+
+		D3DVIEWPORT9 viewPort_;
 		D3DXMATRIX matViewPort_;
 
-		shared_ptr<Texture> textureTarget_;
+		shared_ptr<TextureData> defaultBackBufferRenderTarget_;
+		shared_ptr<Texture> currentRenderTarget_;
 		UINT defaultRenderTargetSize_[2];
 
-		VertexBufferManager* bufferManager_;
+		DisplaySettings displaySettingsWindowed_;
+		DisplaySettings displaySettingsFullscreen_;
 
+		VertexBufferManager* bufferManager_;
 		VertexFogState stateFog_;
 
 		void _ReleaseDxResource();
 		void _RestoreDxResource();
 		bool _Restore();
-		void _InitializeDeviceState(bool bResetCamera);
 
 		void _VerifyDeviceCaps();
 
@@ -125,14 +137,30 @@ namespace directx {
 		D3DCAPS9* GetDeviceCaps() { return &deviceCaps_; }
 		HRESULT GetDeviceStatus() { return deviceStatus_; }
 
+		void ResetCamera();
+		void ResetDeviceState();
+		void ResetDisplaySettings();
+
 		void BeginScene(bool bMainRender = true, bool bClear = true);
 		void EndScene(bool bPresent = true);
 
 		void ClearRenderTarget();
 		void ClearRenderTarget(DxRect<LONG>* rect);
-		void SetRenderTarget(shared_ptr<Texture> texture, bool bResetState = true);
-		shared_ptr<Texture> GetRenderTarget() { return textureTarget_; }
+
+		void SetDefaultBackBufferRenderTarget(shared_ptr<TextureData> texture) { defaultBackBufferRenderTarget_ = texture; }
+		shared_ptr<TextureData> GetDefaultBackBufferRenderTarget() { return defaultBackBufferRenderTarget_; }
+
+		void SetRenderTarget(shared_ptr<Texture> texture);
+		void SetRenderTargetNull();
+		shared_ptr<Texture> GetRenderTarget() { return currentRenderTarget_; }
 		UINT* GetDefaultRenderTargetSize() { return defaultRenderTargetSize_; }
+
+		DisplaySettings* GetDisplaySettingsWindowed() { return &displaySettingsWindowed_; }
+		DisplaySettings* GetDisplaySettingsFullscreen() { return &displaySettingsFullscreen_; }
+		DisplaySettings* GetDisplaySettings() { 
+			return GetScreenMode() == ScreenMode::SCREENMODE_WINDOW ? 
+				&displaySettingsWindowed_ : &displaySettingsFullscreen_;
+		}
 
 		//Render states
 		void SetLightingEnable(bool bEnable);
@@ -156,6 +184,9 @@ namespace directx {
 			D3DTEXTUREFILTERTYPE* fMip, int stage = 0);
 
 		bool IsMainRenderLoop() { return bMainRender_; }
+		void SetAllowRenderTargetChange(bool b) { bAllowRenderTargetChange_ = b; }
+		bool IsAllowRenderTargetChange() { return bAllowRenderTargetChange_; }
+
 		VertexFogState* GetFogState() { return &stateFog_; }
 
 		void SetDirectionalLight(D3DVECTOR& dir);
@@ -166,6 +197,8 @@ namespace directx {
 		HRESULT SetFullscreenAntiAliasing(bool bEnable);
 		bool IsSupportMultiSample(D3DMULTISAMPLE_TYPE type);
 
+		//because D3DXMatrixOrthoOffCenterRH is broken for some reason
+		static D3DXMATRIX CreateOrthographicProjectionMatrix(float x, float y, float width, float height);
 		void SetViewPort(int x, int y, int width, int height);
 		void ResetViewPort();
 		const D3DXMATRIX& GetViewPortMatrix() { return matViewPort_; }
@@ -279,7 +312,9 @@ namespace directx {
 
 		DxCamera();
 		virtual ~DxCamera();
+
 		void Reset();
+
 		const D3DXVECTOR3& GetCameraPosition() { return camPos_; }
 		const D3DXVECTOR3& GetFocusPosition() { return pos_; }
 		void SetFocus(float x, float y, float z) { pos_.x = x; pos_.y = y; pos_.z = z; }
