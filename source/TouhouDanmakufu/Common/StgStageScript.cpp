@@ -746,6 +746,7 @@ static const std::vector<constant> stgStageConstant = {
 	//AddPattern constants
 	constant("TOPLAYER_CHANGE", StgMovePattern::TOPLAYER_CHANGE),
 	constant("NO_CHANGE", StgMovePattern::NO_CHANGE),
+	constant("UNCAPPED_MAX", StgMovePattern::UNCAPPED),
 };
 
 StgStageScript::StgStageScript(StgStageController* stageController) : StgControlScript(stageController->GetSystemController()) {

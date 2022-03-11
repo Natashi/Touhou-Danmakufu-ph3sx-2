@@ -79,6 +79,7 @@ public:
 
 		NO_CHANGE = -0x1000000,
 		TOPLAYER_CHANGE = 0x1000000,
+		UNCAPPED = TOPLAYER_CHANGE,
 		SET_ZERO = -1,
 	};
 protected:
