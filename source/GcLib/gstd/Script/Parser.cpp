@@ -74,9 +74,13 @@ code& code::operator=(const code& src) {
 		arg1 = src.arg1;
 		break;
 	}
-	opc_line = src.opc_line;
+	
 #ifdef _DEBUG
+	command = src.command;
+	line = src.line;
 	var_name = src.var_name;
+#else
+	opc_line = src.opc_line;
 #endif
 
 	return *this;

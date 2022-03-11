@@ -123,11 +123,14 @@ namespace gstd {
 	};
 #pragma pack(push, 1)
 	struct code {
+#ifdef _DEBUG
+		command_kind command;
+		uint32_t line;
+		std::string var_name;	//For assign/push_variable
+#else
 		//MSB 00000000 00000000 00000000 00000000 LSB
 		//    <----------LINE----------> <OPCODE>
-		uint32_t opc_line = ((uint32_t)command_kind::pc_nop) & 0xff;
-#ifdef _DEBUG
-		std::string var_name;	//For assign/push_variable
+		uint32_t opc_line;
 #endif
 
 		union {
@@ -161,10 +164,17 @@ namespace gstd {
 
 		code& operator=(const code& src);
 
+#ifdef _DEBUG
+		uint32_t GetLine() const { return line; }
+		command_kind GetOp() const { return command; }
+		void SetLine(uint32_t _line) { line = _line; }
+		void SetOp(command_kind op) { command = op; }
+#else
 		uint32_t GetLine() const { return (opc_line & 0xffffff00) >> 8; }
 		command_kind GetOp() const { return (command_kind)(opc_line & 0xff); }
 		void SetLine(uint32_t line) { opc_line = ((line & 0xffffff) << 8) | (opc_line & 0x000000ff); }
 		void SetOp(command_kind op) { opc_line = (opc_line & 0xffffff00) | ((uint32_t)op & 0xff); }
+#endif
 	};
 #pragma pack(pop)
 
