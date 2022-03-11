@@ -1843,7 +1843,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 			}
 			frame.pop_back();
 
-			if (codeBlockSize == 0U) {
+			if (codeBlockSize == 0U && (ip_back - ip_continue == 1U)) {
 				while (newState.ip > ip_for_begin)
 					newState.PopCode(block);
 			}
