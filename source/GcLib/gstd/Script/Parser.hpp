@@ -130,7 +130,7 @@ namespace gstd {
 #else
 		//MSB 00000000 00000000 00000000 00000000 LSB
 		//    <----------LINE----------> <OPCODE>
-		uint32_t opc_line;
+		uint32_t opc_line = (uint32_t)command_kind::pc_nop;
 #endif
 
 		union {
