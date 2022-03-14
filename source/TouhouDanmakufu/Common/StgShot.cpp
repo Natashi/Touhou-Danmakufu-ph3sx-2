@@ -2130,8 +2130,8 @@ void StgStraightLaserObject::Render(BlendMode targetBlend) {
 			}
 
 			D3DXMATRIX matTransform(
-				rScale.x * rAngle.x, rScale.x * rAngle.y, 0, 0,
-				rScale.y * -rAngle.y, rScale.y * rAngle.x, 0, 0,
+				rScale.x * -rAngle.x, rScale.x * -rAngle.y, 0, 0,
+				rScale.y * rAngle.y, rScale.y * -rAngle.x, 0, 0,
 				0, 0, 1, 0,
 				rPos.x, rPos.y, 0, 1
 			);
