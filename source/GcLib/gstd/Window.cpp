@@ -226,7 +226,7 @@ void WLabel::Create(HWND hWndParent) {
 LRESULT WLabel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
 	case WM_CTLCOLORSTATIC:
-	case WM_CTLCOLOR:
+	//case WM_CTLCOLOR:
 	{
 		::SetTextColor((HDC)wParam, colorText_);
 		::SetBkColor((HDC)wParam, colorBack_);
