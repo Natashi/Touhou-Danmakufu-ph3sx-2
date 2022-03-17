@@ -825,7 +825,7 @@ gstd::value StgStageScript::Func_GetMainStgScriptPath(gstd::script_machine* mach
 	StgStageController* stageController = script->stageController_;
 	ref_count_ptr<ScriptInformation> infoMain = stageController->GetStageInformation()->GetMainScriptInformation();
 
-	std::wstring path = infoMain->GetScriptPath();
+	std::wstring path = infoMain->pathScript_;
 	path = PathProperty::GetUnique(path);
 
 	return script->CreateStringValue(path);
@@ -835,7 +835,7 @@ gstd::value StgStageScript::Func_GetMainStgScriptDirectory(gstd::script_machine*
 	StgStageController* stageController = script->stageController_;
 	ref_count_ptr<ScriptInformation> infoMain = stageController->GetStageInformation()->GetMainScriptInformation();
 
-	std::wstring path = infoMain->GetScriptPath();
+	std::wstring path = infoMain->pathScript_;
 	path = PathProperty::GetUnique(path);
 
 	std::wstring dir = PathProperty::GetFileDirectory(path);
@@ -3926,6 +3926,8 @@ gstd::value StgStageScript::Func_ObjEnemyBossScene_GetInfo(gstd::script_machine*
 	{
 		double res = 0;
 		if (sceneData) {
+			const uint32_t STANDARD_FPS = DnhConfiguration::GetInstance()->fpsStandard_;
+
 			int timer = sceneData->GetSpellTimer();
 			res = timer < 0 ? 99 : (timer / STANDARD_FPS);
 		}

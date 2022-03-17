@@ -61,13 +61,13 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 	ref_count_ptr<ScriptInformation> infoMain = infoSystem_->GetMainScriptInformation();
 
 	EFileManager* fileManager = EFileManager::GetInstance();
-	const std::wstring& archiveMain = infoMain->GetArchivePath();
+	const std::wstring& archiveMain = infoMain->pathArchive_;
 	if (archiveMain.size() > 0) {
 		fileManager->AddArchiveFile(archiveMain, 0);
 	}
 
 	if (infoPlayer) {
-		const std::wstring& archivePlayer = infoPlayer->GetArchivePath();
+		const std::wstring& archivePlayer = infoPlayer->pathArchive_;
 		if (archivePlayer.size() > 0) {
 			fileManager->AddArchiveFile(archivePlayer, 0);
 		}
@@ -528,7 +528,7 @@ bool StgSystemController::CheckMeshAndClearZBuffer(DxScriptRenderObject* obj) {
 
 void StgSystemController::_ControlScene() {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
-	if (config->IsEnableUnfocusedProcessing()) {
+	if (config->bEnableUnfocusedProcessing_) {
 		bool bNowWindowFocused = EApplication::GetInstance()->IsWindowFocused();
 
 		if (bPrevWindowFocused_ != bNowWindowFocused) {
@@ -693,16 +693,16 @@ ref_count_ptr<ReplayInformation> StgSystemController::CreateReplayInformation() 
 	//メインスクリプト関連
 	ref_count_ptr<StgStageInformation> infoLastStage = stageController_->GetStageInformation();
 	ref_count_ptr<ScriptInformation> infoMain = infoSystem_->GetMainScriptInformation();
-	const std::wstring& pathMainScript = infoMain->GetScriptPath();
+	const std::wstring& pathMainScript = infoMain->pathScript_;
 	std::wstring nameMainScript = PathProperty::GetFileName(pathMainScript);
 
 	//自機関連
 	ref_count_ptr<ScriptInformation> infoPlayer = infoLastStage->GetPlayerScriptInformation();
-	const std::wstring& pathPlayerScript = infoPlayer->GetScriptPath();
+	const std::wstring& pathPlayerScript = infoPlayer->pathScript_;
 	std::wstring filenamePlayerScript = PathProperty::GetFileName(pathPlayerScript);
 	res->SetPlayerScriptFileName(filenamePlayerScript);
-	res->SetPlayerScriptID(infoPlayer->GetID());
-	res->SetPlayerScriptReplayName(infoPlayer->GetReplayName());
+	res->SetPlayerScriptID(infoPlayer->id_);
+	res->SetPlayerScriptReplayName(infoPlayer->replayName_);
 
 	//システム関連
 	int64_t totalScore = infoLastStage->GetScore();
@@ -816,8 +816,7 @@ std::wstring StgSystemInformation::GetErrorMessage() {
 	return res;
 }
 bool StgSystemInformation::IsPackageMode() {
-	bool res = infoMain_->GetType() == ScriptInformation::TYPE_PACKAGE;
-	return res;
+	return infoMain_->type_ == ScriptInformation::TYPE_PACKAGE;
 }
 void StgSystemInformation::ResetRetry() {
 	bEndStg_ = false;

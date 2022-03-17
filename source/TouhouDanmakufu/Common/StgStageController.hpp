@@ -218,7 +218,7 @@ class PseudoSlowInformation::SlowData {
 private:
 	DWORD fps_;
 public:
-	SlowData() { fps_ = STANDARD_FPS; }
+	SlowData() { fps_ = 60; }
 	virtual ~SlowData() {}
 
 	DWORD GetFps() { return fps_; }

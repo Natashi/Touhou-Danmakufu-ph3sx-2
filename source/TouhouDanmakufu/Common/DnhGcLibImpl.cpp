@@ -123,7 +123,7 @@ bool ELogger::EAddPanel(shared_ptr<Panel> panel, const std::wstring& name, DWORD
 //*******************************************************************
 EFpsController::EFpsController() {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
-	int fpsType = config->GetFpsType();
+	int fpsType = config->fpsType_;
 	switch (fpsType) {
 	case DnhConfiguration::FPS_NORMAL:
 	case DnhConfiguration::FPS_1_2:
@@ -147,7 +147,7 @@ EFpsController::EFpsController() {
 	if (controller_ == nullptr)
 		throw gstd::wexception("Invalid refresh rate mode.");
 
-	SetFps(STANDARD_FPS);
+	SetFps(config->fpsStandard_);
 	fastModeKey_ = DIK_LCONTROL;
 }
 #endif

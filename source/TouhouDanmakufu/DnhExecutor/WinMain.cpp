@@ -13,7 +13,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 		DnhConfiguration* config = DnhConfiguration::CreateInstance();
 		ELogger* logger = ELogger::CreateInstance();
-		logger->Initialize(config->IsLogFile(), config->IsLogWindow());
+		logger->Initialize(config->bLogFile_, config->bLogWindow_);
 		EPathProperty::CreateInstance();
 
 		EApplication* app = EApplication::CreateInstance();

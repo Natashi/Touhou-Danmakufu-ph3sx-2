@@ -592,7 +592,7 @@ void StgEnemyBossSceneData::LoadSceneEvents(StgStageController* stageController)
 
 		gstd::value vTimer = script->RequestEvent(StgStageScript::EV_REQUEST_TIMER);
 		if (vTimer.has_data())
-			SetOriginalSpellTimer(vTimer.as_float() * STANDARD_FPS);
+			SetOriginalSpellTimer(vTimer.as_float() * DnhConfiguration::GetInstance()->fpsStandard_);
 
 		gstd::value vSpell = script->RequestEvent(StgStageScript::EV_REQUEST_IS_SPELL);
 		if (vSpell.has_data())

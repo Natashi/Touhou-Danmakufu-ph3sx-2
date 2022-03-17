@@ -29,7 +29,6 @@ namespace directx {
 
 		POINT sizeScreen_;
 		POINT sizeScreenDisplay_;
-		bool bUseDynamicScaling_;
 
 		ColorMode colorMode_;
 		D3DMULTISAMPLE_TYPE typeMultiSample_;
@@ -206,10 +205,10 @@ namespace directx {
 		size_t GetScreenWidth() { return config_.sizeScreen_.x; }
 		size_t GetScreenHeight() { return config_.sizeScreen_.y; }
 		size_t GetRenderScreenWidth() {
-			return config_.bUseDynamicScaling_ ? config_.sizeScreenDisplay_.x : config_.sizeScreen_.x;
+			return config_.sizeScreenDisplay_.x;
 		}
 		size_t GetRenderScreenHeight() {
-			return config_.bUseDynamicScaling_ ? config_.sizeScreenDisplay_.y : config_.sizeScreen_.y;
+			return config_.sizeScreenDisplay_.y;
 		}
 
 		double GetScreenWidthRatio();

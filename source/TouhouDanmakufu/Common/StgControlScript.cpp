@@ -204,7 +204,7 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* ma
 
 	shared_ptr<ScriptCommonData> commonData = commonDataManager->GetData(sArea);
 	if (commonData) {
-		const std::wstring& pathMain = infoSystem->GetMainScriptInformation()->GetScriptPath();
+		const std::wstring& pathMain = infoSystem->GetMainScriptInformation()->pathScript_;
 		std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
 		std::wstring dirSave = PathProperty::GetFileDirectory(pathSave);
 
@@ -228,7 +228,7 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* ma
 
 	bool res = false;
 
-	const std::wstring& pathMain = infoSystem->GetMainScriptInformation()->GetScriptPath();
+	const std::wstring& pathMain = infoSystem->GetMainScriptInformation()->pathScript_;
 	std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
 
 	RecordBuffer record;
@@ -506,7 +506,7 @@ gstd::value StgControlScript::Func_GetMainPackageScriptPath(gstd::script_machine
 	if (packageController) {
 		ref_count_ptr<ScriptInformation> infoScript =
 			packageController->GetPackageInformation()->GetMainScriptInformation();
-		path = infoScript->GetScriptPath();
+		path = infoScript->pathScript_;
 	}
 
 	return script->CreateStringValue(path);
@@ -530,7 +530,7 @@ gstd::value StgControlScript::Func_GetScriptPathList(gstd::script_machine* machi
 		path = PathProperty::GetUnique(path);
 		ref_count_ptr<ScriptInformation> infoScript = ScriptInformation::CreateScriptInformation(path, true);
 		if (infoScript == nullptr) continue;
-		if (typeScript != TYPE_SCRIPT_ALL && typeScript != infoScript->GetType()) continue;
+		if (typeScript != TYPE_SCRIPT_ALL && typeScript != infoScript->type_) continue;
 
 		script->mapScriptInfo_[path] = infoScript;
 		listRes.push_back(path);
@@ -558,25 +558,25 @@ gstd::value StgControlScript::Func_GetScriptInfoA1(gstd::script_machine* machine
 	value res;
 	switch (type) {
 	case INFO_SCRIPT_TYPE:
-		res = script->CreateIntValue(infoScript->GetType());
+		res = script->CreateIntValue(infoScript->type_);
 		break;
 	case INFO_SCRIPT_PATH:
-		res = script->CreateStringValue(infoScript->GetScriptPath());
+		res = script->CreateStringValue(infoScript->pathScript_);
 		break;
 	case INFO_SCRIPT_ID:
-		res = script->CreateStringValue(infoScript->GetID());
+		res = script->CreateStringValue(infoScript->id_);
 		break;
 	case INFO_SCRIPT_TITLE:
-		res = script->CreateStringValue(infoScript->GetTitle());
+		res = script->CreateStringValue(infoScript->title_);
 		break;
 	case INFO_SCRIPT_TEXT:
-		res = script->CreateStringValue(infoScript->GetText());
+		res = script->CreateStringValue(infoScript->text_);
 		break;
 	case INFO_SCRIPT_IMAGE:
-		res = script->CreateStringValue(infoScript->GetImagePath());
+		res = script->CreateStringValue(infoScript->pathImage_);
 		break;
 	case INFO_SCRIPT_REPLAY_NAME:
-		res = script->CreateStringValue(infoScript->GetReplayName());
+		res = script->CreateStringValue(infoScript->replayName_);
 		break;
 	}
 
@@ -589,17 +589,17 @@ gstd::value StgControlScript::Func_IsEngineFastMode(script_machine* machine, int
 }
 gstd::value StgControlScript::Func_GetConfigWindowSizeIndex(script_machine* machine, int argc, const value* argv) {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
-	size_t index = config->GetWindowSize();
+	size_t index = config->windowSizeIndex_;
 	return StgControlScript::CreateIntValue(index);
 }
 gstd::value StgControlScript::Func_GetConfigWindowSizeList(script_machine* machine, int argc, const value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
-	auto sizeList = config->GetWindowSizeList();
+	const auto& sizeList = config->windowSizeList_;
 	std::vector<gstd::value> resListSizes;
 	if (!sizeList.empty()) {
-		for (POINT& iPoint : sizeList)
-			resListSizes.push_back(StgControlScript::CreateIntArrayValue((LONG*)&iPoint, 2U));
+		for (const POINT& iPoint : sizeList)
+			resListSizes.push_back(StgControlScript::CreateIntArrayValue((const LONG*)&iPoint, 2U));
 	}
 	return script->CreateValueArrayValue(resListSizes);
 }
@@ -633,7 +633,7 @@ gstd::value StgControlScript::Func_SetEnableUnfocusedProcessing(script_machine* 
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 
 	bool enable = argv[0].as_boolean();
-	config->SetEnableUnfocusedProcessing(enable);
+	config->bEnableUnfocusedProcessing_ = enable;
 
 	return value();
 }
@@ -835,7 +835,7 @@ gstd::value StgControlScript::Func_GetPlayerID(gstd::script_machine* machine, in
 
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
 	if (stageController)
-		id = stageController->GetStageInformation()->GetPlayerScriptInformation()->GetID();
+		id = stageController->GetStageInformation()->GetPlayerScriptInformation()->id_;
 
 	return script->CreateStringValue(id);
 }
@@ -846,7 +846,7 @@ gstd::value StgControlScript::Func_GetPlayerReplayName(gstd::script_machine* mac
 
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
 	if (stageController)
-		replayName = stageController->GetStageInformation()->GetPlayerScriptInformation()->GetReplayName();
+		replayName = stageController->GetStageInformation()->GetPlayerScriptInformation()->replayName_;
 
 	return script->CreateStringValue(replayName);
 }
@@ -913,22 +913,22 @@ gstd::value StgControlScript::Func_GetFreePlayerScriptInfo(gstd::script_machine*
 	value res;
 	switch (type) {
 	case INFO_SCRIPT_PATH:
-		res = script->CreateStringValue(infoPlayer->GetScriptPath());
+		res = script->CreateStringValue(infoPlayer->pathScript_);
 		break;
 	case INFO_SCRIPT_ID:
-		res = script->CreateStringValue(infoPlayer->GetID());
+		res = script->CreateStringValue(infoPlayer->id_);
 		break;
 	case INFO_SCRIPT_TITLE:
-		res = script->CreateStringValue(infoPlayer->GetTitle());
+		res = script->CreateStringValue(infoPlayer->title_);
 		break;
 	case INFO_SCRIPT_TEXT:
-		res = script->CreateStringValue(infoPlayer->GetText());
+		res = script->CreateStringValue(infoPlayer->text_);
 		break;
 	case INFO_SCRIPT_IMAGE:
-		res = script->CreateStringValue(infoPlayer->GetImagePath());
+		res = script->CreateStringValue(infoPlayer->pathImage_);
 		break;
 	case INFO_SCRIPT_REPLAY_NAME:
-		res = script->CreateStringValue(infoPlayer->GetReplayName());
+		res = script->CreateStringValue(infoPlayer->replayName_);
 		break;
 	}
 
@@ -941,7 +941,7 @@ gstd::value StgControlScript::Func_LoadReplayList(gstd::script_machine* machine,
 	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
 	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
 
-	std::wstring& pathMainScript = infoSystem->GetMainScriptInformation()->GetScriptPath();
+	std::wstring& pathMainScript = infoSystem->GetMainScriptInformation()->pathScript_;
 	infoControlScript->LoadReplayInformation(pathMainScript);
 
 	return value();
@@ -1118,7 +1118,7 @@ gstd::value StgControlScript::Func_SaveReplay(gstd::script_machine* machine, int
 	std::wstring userName = argv[1].as_string();
 	replayInfoActive->SetUserName(userName);
 
-	bool res = replayInfoActive->SaveToFile(infoMain->GetScriptPath(), index);
+	bool res = replayInfoActive->SaveToFile(infoMain->pathScript_, index);
 	return script->CreateBooleanValue(res);
 }
 

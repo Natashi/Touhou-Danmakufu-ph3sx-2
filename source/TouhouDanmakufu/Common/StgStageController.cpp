@@ -98,12 +98,12 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 
 		ref_count_ptr<ScriptInformation> infoParent = systemController_->GetSystemInformation()->GetMainScriptInformation();
 		ref_count_ptr<ScriptInformation> infoMain = infoStage_->GetMainScriptInformation();
-		const std::wstring& pathParentScript = infoParent->GetScriptPath();
-		const std::wstring& pathMainScript = infoMain->GetScriptPath();
+		const std::wstring& pathParentScript = infoParent->pathScript_;
+		const std::wstring& pathMainScript = infoMain->pathScript_;
 		std::wstring filenameMainScript = PathProperty::GetFileName(pathMainScript);
 		std::wstring pathMainScriptRelative = PathProperty::GetRelativeDirectory(pathParentScript, pathMainScript);
 
-		replayStageData->SetMainScriptID(infoMain->GetID());
+		replayStageData->SetMainScriptID(infoMain->id_);
 		replayStageData->SetMainScriptName(filenameMainScript);
 		replayStageData->SetMainScriptRelativePath(pathMainScriptRelative);
 		replayStageData->SetStartScore(infoStage_->GetScore());
@@ -150,13 +150,13 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	}
 
 	ref_count_ptr<ScriptInformation> infoMain = infoStage_->GetMainScriptInformation();
-	std::wstring dirInfo = PathProperty::GetFileDirectory(infoMain->GetScriptPath());
+	std::wstring dirInfo = PathProperty::GetFileDirectory(infoMain->pathScript_);
 
 	ELogger::WriteTop(StringUtility::Format(L"Main script: [%s]", 
-		PathProperty::ReduceModuleDirectory(infoMain->GetScriptPath()).c_str()));
+		PathProperty::ReduceModuleDirectory(infoMain->pathScript_).c_str()));
 
 	{
-		std::wstring pathSystemScript = infoMain->GetSystemPath();
+		std::wstring pathSystemScript = infoMain->pathSystem_;
 		if (pathSystemScript == ScriptInformation::DEFAULT)
 			pathSystemScript = EPathProperty::GetStgDefaultScriptDirectory() + L"Default_System.txt";
 		if (pathSystemScript.size() > 0) {
@@ -171,7 +171,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 
 	ref_unsync_ptr<StgPlayerObject> objPlayer = nullptr;
 	ref_count_ptr<ScriptInformation> infoPlayer = infoStage_->GetPlayerScriptInformation();
-	const std::wstring& pathPlayerScript = infoPlayer->GetScriptPath();
+	const std::wstring& pathPlayerScript = infoPlayer->pathScript_;
 
 	if (pathPlayerScript.size() > 0) {
 		ELogger::WriteTop(StringUtility::Format(L"Player script: [%s]", 
@@ -198,18 +198,18 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	if (objPlayer)
 		infoStage_->SetPlayerObjectInformation(objPlayer->GetPlayerInformation());
 
-	if (infoMain->GetType() == ScriptInformation::TYPE_SINGLE) {
+	if (infoMain->type_ == ScriptInformation::TYPE_SINGLE) {
 		std::wstring pathMainScript = EPathProperty::GetSystemResourceDirectory() + L"script/System_SingleStage.txt";
 		auto script = scriptManager_->LoadScript(pathMainScript, StgStageScript::TYPE_STAGE);
 		scriptManager_->StartScript(script);
 	}
-	else if (infoMain->GetType() == ScriptInformation::TYPE_PLURAL) {
+	else if (infoMain->type_ == ScriptInformation::TYPE_PLURAL) {
 		std::wstring pathMainScript = EPathProperty::GetSystemResourceDirectory() + L"script/System_PluralStage.txt";
 		auto script = scriptManager_->LoadScript(pathMainScript, StgStageScript::TYPE_STAGE);
 		scriptManager_->StartScript(script);
 	}
 	else {
-		const std::wstring& pathMainScript = infoMain->GetScriptPath();
+		const std::wstring& pathMainScript = infoMain->pathScript_;
 		if (pathMainScript.size() > 0) {
 			auto script = scriptManager_->LoadScript(pathMainScript, StgStageScript::TYPE_STAGE);
 			_SetupReplayTargetCommonDataArea(script);
@@ -218,7 +218,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	}
 
 	{
-		std::wstring pathBack = infoMain->GetBackgroundPath();
+		std::wstring pathBack = infoMain->pathBackground_;
 		if (pathBack == ScriptInformation::DEFAULT)
 			pathBack = L"";
 		if (pathBack.size() > 0) {
@@ -238,11 +238,11 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 			replayStageData->SetPlayerPower(objPlayer->GetPower());
 			replayStageData->SetPlayerRebirthFrame(objPlayer->GetRebirthFrame());
 		}
-		const std::wstring& pathPlayerScript = infoPlayer->GetScriptPath();
+		const std::wstring& pathPlayerScript = infoPlayer->pathScript_;
 		std::wstring filenamePlayerScript = PathProperty::GetFileName(pathPlayerScript);
 		replayStageData->SetPlayerScriptFileName(filenamePlayerScript);
-		replayStageData->SetPlayerScriptID(infoPlayer->GetID());
-		replayStageData->SetPlayerScriptReplayName(infoPlayer->GetReplayName());
+		replayStageData->SetPlayerScriptID(infoPlayer->id_);
+		replayStageData->SetPlayerScriptReplayName(infoPlayer->replayName_);
 	}
 
 	infoStage_->SetStageStartTime(timeGetTime());
@@ -498,6 +498,8 @@ void StgStageInformation::SetStgFrameRect(const DxRect<LONG>& rect, bool bUpdate
 //PseudoSlowInformation
 //*******************************************************************
 DWORD PseudoSlowInformation::GetFps() {
+	const uint32_t STANDARD_FPS = DnhConfiguration::GetInstance()->fpsStandard_;
+
 	DWORD fps = STANDARD_FPS;
 	int target = TARGET_ALL;
 
@@ -517,6 +519,8 @@ bool PseudoSlowInformation::IsValidFrame(int target) {
 	return res;
 }
 void PseudoSlowInformation::Next() {
+	const uint32_t STANDARD_FPS = DnhConfiguration::GetInstance()->fpsStandard_;
+
 	DWORD fps = STANDARD_FPS;
 	int target = TARGET_ALL;
 
@@ -543,7 +547,9 @@ void PseudoSlowInformation::Next() {
 	mapValid_[target] = bValid;
 }
 void PseudoSlowInformation::AddSlow(DWORD fps, int owner, int target) {
-	fps = std::clamp(fps, (DWORD)1, (DWORD)STANDARD_FPS);
+	const uint32_t STANDARD_FPS = DnhConfiguration::GetInstance()->fpsStandard_;
+
+	fps = std::clamp<DWORD>(fps, 1, STANDARD_FPS);
 	ref_count_ptr<SlowData> data = new SlowData();
 	data->SetFps(fps);
 	switch (owner) {

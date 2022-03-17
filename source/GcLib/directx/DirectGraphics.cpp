@@ -25,7 +25,6 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 
 	sizeScreen_ = { 640, 480 };
 	sizeScreenDisplay_ = { 640, 480 };
-	bUseDynamicScaling_ = false;
 
 	colorMode_ = COLOR_MODE_32BIT;
 	typeMultiSample_ = D3DMULTISAMPLE_NONE;
@@ -151,6 +150,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 
 	UINT dxBackBufferW = config.sizeScreen_.x;
 	UINT dxBackBufferH = config.sizeScreen_.y;
+	/*
 	if (config.bUseDynamicScaling_) {
 		dxBackBufferW = config.sizeScreenDisplay_.x;
 		dxBackBufferH = config.sizeScreenDisplay_.y;
@@ -161,6 +161,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		//g_dxCoordsMul_ = std::min(coordRateX, coordRateY);
 		g_dxCoordsMul_ = 1.0f;
 	}
+	*/
 
 	{
 		//Fullscreen mode settings
@@ -942,6 +943,7 @@ void DirectGraphics::SaveBackSurfaceToFile(const std::wstring& path) {
 void DirectGraphics::UpdateDefaultRenderTargetSize() {
 	size_t baseW = 0;
 	size_t baseH = 0;
+	/*
 	if (!config_.bUseDynamicScaling_) {
 		baseW = GetScreenWidth();
 		baseH = GetScreenHeight();
@@ -950,6 +952,9 @@ void DirectGraphics::UpdateDefaultRenderTargetSize() {
 		baseW = config_.sizeScreenDisplay_.x;
 		baseH = config_.sizeScreenDisplay_.y;
 	}
+	*/
+	baseW = GetScreenWidth();
+	baseH = GetScreenHeight();
 
 	defaultRenderTargetSize_[0] = Math::GetNextPow2(baseW);
 	defaultRenderTargetSize_[1] = Math::GetNextPow2(baseH);

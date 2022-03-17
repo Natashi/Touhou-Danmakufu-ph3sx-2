@@ -14,7 +14,7 @@ SystemController::SystemController() {
 	infoSystem_ = new SystemInformation();
 
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
-	if (config && config->GetPackageScriptPath().size() == 0) {
+	if (config && config->pathPackageScript_.size() == 0) {
 		//常駐タスク登録
 		ETaskManager* taskManager = ETaskManager::GetInstance();
 		shared_ptr<SystemResidentTask> task(new SystemResidentTask());
@@ -32,7 +32,7 @@ void SystemController::Reset() {
 	fileManager->ClearArchiveFileCache();
 
 	DnhConfiguration* config = DnhConfiguration::CreateInstance();
-	std::wstring pathPackageScript = config->GetPackageScriptPath();
+	const std::wstring& pathPackageScript = config->pathPackageScript_;
 	if (pathPackageScript.size() == 0) {
 		infoSystem_->UpdateFreePlayerScriptInformationList();
 		sceneManager_->TransTitleScene();
@@ -197,8 +197,8 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 		//自機を検索
 		ref_count_ptr<ScriptInformation> infoPlayer;
 		std::vector<ref_count_ptr<ScriptInformation>> listPlayer;
-		std::vector<std::wstring>& listPlayerPath = infoMain->GetPlayerList();
-		if (listPlayerPath.size() == 0) {
+		
+		if (infoMain->listPlayer_.size() == 0) {
 			listPlayer =
 				SystemController::GetInstance()->GetSystemInformation()->GetFreePlayerScriptInformationList();
 		}
@@ -207,9 +207,9 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 		}
 
 		for (ref_count_ptr<ScriptInformation> tInfo : listPlayer) {
-			if (tInfo->GetID() != replayPlayerID) continue;
+			if (tInfo->id_ != replayPlayerID) continue;
 
-			std::wstring tPlayerScriptFileName = PathProperty::GetFileName(tInfo->GetScriptPath());
+			std::wstring tPlayerScriptFileName = PathProperty::GetFileName(tInfo->pathScript_);
 			if (tPlayerScriptFileName != replayPlayerScriptFileName) continue;
 
 			infoPlayer = tInfo;
@@ -369,7 +369,7 @@ SystemInformation::~SystemInformation() {
 void SystemInformation::_SearchFreePlayerScript(const std::wstring& dir) {
 	listFreePlayer_ = ScriptInformation::FindPlayerScriptInformationList(dir);
 	for (ref_count_ptr<ScriptInformation> info : listFreePlayer_) {
-		const std::wstring& path = info->GetScriptPath();
+		const std::wstring& path = info->pathScript_;
 		std::wstring log = StringUtility::Format(L"Found free player script: [%s]", 
 			PathProperty::ReduceModuleDirectory(path).c_str());
 		ELogger::WriteTop(log);

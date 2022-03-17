@@ -165,8 +165,8 @@ gstd::value StgPackageScript::Func_StartStageScene(gstd::script_machine* machine
 	else {
 		ref_count_ptr<ScriptInformation> infoPlayer = infoStage->GetPlayerScriptInformation();
 		if (infoPlayer) {
-			replayPlayerID = infoPlayer->GetID();
-			replayPlayerScriptFileName = PathProperty::GetFileName(infoPlayer->GetScriptPath());
+			replayPlayerID = infoPlayer->id_;
+			replayPlayerScriptFileName = PathProperty::GetFileName(infoPlayer->pathScript_);
 		}
 	}
 
@@ -174,7 +174,7 @@ gstd::value StgPackageScript::Func_StartStageScene(gstd::script_machine* machine
 	infoStage->SetPlayerScriptInformation(nullptr);
 	ref_count_ptr<ScriptInformation> infoMain = infoSystem->GetMainScriptInformation();
 	std::vector<ref_count_ptr<ScriptInformation>> listPlayer;
-	if (infoMain->GetPlayerList().size() == 0) {
+	if (infoMain->listPlayer_.size() == 0) {
 		const std::wstring& dir = EPathProperty::GetPlayerScriptRootDirectory();
 		listPlayer = ScriptInformation::FindPlayerScriptInformationList(dir);
 	}
@@ -184,8 +184,8 @@ gstd::value StgPackageScript::Func_StartStageScene(gstd::script_machine* machine
 
 	for (size_t iPlayer = 0; iPlayer < listPlayer.size(); iPlayer++) {
 		ref_count_ptr<ScriptInformation> tInfo = listPlayer[iPlayer];
-		if (tInfo->GetID() != replayPlayerID) continue;
-		std::wstring tPlayerScriptFileName = PathProperty::GetFileName(tInfo->GetScriptPath());
+		if (tInfo->id_ != replayPlayerID) continue;
+		std::wstring tPlayerScriptFileName = PathProperty::GetFileName(tInfo->pathScript_);
 		if (tPlayerScriptFileName != replayPlayerScriptFileName) continue;
 
 		infoStage->SetPlayerScriptInformation(tInfo);

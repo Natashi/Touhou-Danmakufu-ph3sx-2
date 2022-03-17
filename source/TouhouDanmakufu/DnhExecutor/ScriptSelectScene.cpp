@@ -65,7 +65,7 @@ void ScriptSelectScene::_ChangePage() {
 				dxText.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));
 				dxText.SetFontBorderColor(D3DCOLOR_ARGB(255, 32, 32, 128));
 				ref_count_ptr<ScriptInformation> info = pItem->GetScriptInformation();
-				dxText.SetText(info->GetTitle());
+				dxText.SetText(info->title_);
 			}
 
 			objMenuText_[iItem] = dxText.CreateRenderObject();
@@ -123,7 +123,7 @@ void ScriptSelectScene::Work() {
 				ScriptSelectSceneMenuItem* pItem = (ScriptSelectSceneMenuItem*)item_[index].get();
 				ref_count_ptr<ScriptInformation> info = pItem->GetScriptInformation();
 
-				const std::wstring& pathLastSelected = info->GetScriptPath();
+				const std::wstring& pathLastSelected = info->pathScript_;
 				SystemController::GetInstance()->GetSystemInformation()->SetLastSelectedScriptPath(pathLastSelected);
 
 				ETaskManager* taskManager = ETaskManager::GetInstance();
@@ -275,7 +275,7 @@ void ScriptSelectScene::Render() {
 			shared_ptr<Texture> texture = spriteImage_->GetTexture();
 			std::wstring pathImage1 = L"";
 			if (texture) pathImage1 = texture->GetName();
-			const std::wstring& pathImage2 = info->GetImagePath();
+			const std::wstring& pathImage2 = info->pathImage_;
 			if (pathImage1 != pathImage2) {
 				texture = std::make_shared<Texture>();
 				File file(pathImage2);
@@ -298,13 +298,13 @@ void ScriptSelectScene::Render() {
 			}
 
 			//スクリプトパス
-			std::wstring path = info->GetScriptPath();
+			std::wstring path = info->pathScript_;
 			std::wstring root = EPathProperty::GetStgScriptRootDirectory();
 			root = PathProperty::ReplaceYenToSlash(root);
 			path = PathProperty::ReplaceYenToSlash(path);
 			path = StringUtility::ReplaceAll(path, root, L"");
 
-			std::wstring archive = info->GetArchivePath();
+			std::wstring archive = info->pathArchive_;
 			if (archive.size() > 0) {
 				archive = PathProperty::ReplaceYenToSlash(archive);
 				archive = StringUtility::ReplaceAll(archive, root, L"");
@@ -318,7 +318,7 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.Render();
 
 			//スクリプト種別
-			int type = info->GetType();
+			int type = info->type_;
 			std::wstring strType = L"";
 			switch (type) {
 			case ScriptInformation::TYPE_SINGLE:strType = L"(Single)"; break;
@@ -333,7 +333,7 @@ void ScriptSelectScene::Render() {
 			dxTextInfo.Render();
 
 			//テキスト
-			const std::wstring& text = info->GetText();
+			const std::wstring& text = info->text_;
 			dxTextInfo.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 			dxTextInfo.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));
 			dxTextInfo.SetFontSize(18);
@@ -535,13 +535,13 @@ void ScriptSelectFileModel::_CreateMenuItem(const std::wstring& path) {
 	for (ref_count_ptr<ScriptInformation> info : listInfo) {
 		if (!_IsValidScriptInformation(info)) continue;
 
-		int typeItem = _ConvertTypeInfoToItem(info->GetType());
-		listItem_.push_back(new ScriptSelectSceneMenuItem(typeItem, info->GetScriptPath(), info));
+		int typeItem = _ConvertTypeInfoToItem(info->type_);
+		listItem_.push_back(new ScriptSelectSceneMenuItem(typeItem, info->pathScript_, info));
 	}
 
 }
 bool ScriptSelectFileModel::_IsValidScriptInformation(ref_count_ptr<ScriptInformation> info) {
-	int typeScript = info->GetType();
+	int typeScript = info->type_;
 	bool bTarget = false;
 	switch (type_) {
 	case TYPE_SINGLE:
@@ -606,9 +606,9 @@ PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) 
 	AddMenuItem(new PlayTypeSelectMenuItem(L"Play", mx, my));
 
 	//リプレイ
-	if (info->GetType() != ScriptInformation::TYPE_PACKAGE) {
+	if (info->type_ != ScriptInformation::TYPE_PACKAGE) {
 		int itemCount = 1;
-		const std::wstring& pathScript = info->GetScriptPath();
+		const std::wstring& pathScript = info->pathScript_;
 		replayInfoManager_ = new ReplayInformationManager();
 		replayInfoManager_->UpdateInformationList(pathScript);
 		std::vector<int> listReplayIndex = replayInfoManager_->GetIndexList();
@@ -637,7 +637,7 @@ void PlayTypeSelectScene::Work() {
 
 	EDirectInput* input = EDirectInput::GetInstance();
 	if (input->GetVirtualKeyState(EDirectInput::KEY_OK) == KEY_PUSH) {
-		if (info_->GetType() == ScriptInformation::TYPE_PACKAGE) {
+		if (info_->type_ == ScriptInformation::TYPE_PACKAGE) {
 			//パッケージモード
 			SceneManager* sceneManager = SystemController::GetInstance()->GetSceneManager();
 			sceneManager->TransPackageScene(info_);
@@ -757,8 +757,7 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 	SystemInformation* systemInfo = SystemController::GetInstance()->GetSystemInformation();
 
 	//自機一覧を作成
-	std::vector<std::wstring>& listPlayerPath = info_->GetPlayerList();
-	if (listPlayerPath.size() == 0) {
+	if (info_->listPlayer_.size() == 0) {
 		listPlayer_ = systemInfo->GetFreePlayerScriptInformationList();
 	}
 	else {
@@ -848,7 +847,7 @@ void PlayerSelectScene::Render() {
 		shared_ptr<Texture> texture = spriteImage_->GetTexture();
 		std::wstring pathImage1 = L"";
 		if (texture) pathImage1 = texture->GetName();
-		const std::wstring& pathImage2 = infoSelected->GetImagePath();
+		const std::wstring& pathImage2 = infoSelected->pathImage_;
 		if (pathImage1 != pathImage2) {
 			texture = std::make_shared<Texture>();
 			File file(pathImage2);
@@ -870,13 +869,13 @@ void PlayerSelectScene::Render() {
 		}
 
 		//スクリプトパス
-		std::wstring path = infoSelected->GetScriptPath();
+		std::wstring path = infoSelected->pathScript_;
 		std::wstring root = EPathProperty::GetStgScriptRootDirectory();
 		root = PathProperty::ReplaceYenToSlash(root);
 		path = PathProperty::ReplaceYenToSlash(path);
 		path = StringUtility::ReplaceAll(path, root, L"");
 
-		std::wstring archive = infoSelected->GetArchivePath();
+		std::wstring archive = infoSelected->pathArchive_;
 		if (archive.size() > 0) {
 			archive = PathProperty::ReplaceYenToSlash(archive);
 			archive = StringUtility::ReplaceAll(archive, root, L"");
@@ -898,7 +897,7 @@ void PlayerSelectScene::Render() {
 		dxTextInfo.SetFontBorderColor(D3DCOLOR_ARGB(255, 255, 255, 255));
 		dxTextInfo.SetFontColorTop(D3DCOLOR_ARGB(255, 160, 160, 160));
 		dxTextInfo.SetFontColorBottom(D3DCOLOR_ARGB(255, 255, 64, 64));
-		dxTextInfo.SetText(infoSelected->GetText());
+		dxTextInfo.SetText(infoSelected->text_);
 		dxTextInfo.SetPosition(320, 240);
 		dxTextInfo.Render();
 	}
@@ -939,7 +938,7 @@ void PlayerSelectScene::Render() {
 				dxText.SetFontColorTop(D3DCOLOR_ARGB(255, 255, 255, 255));
 				dxText.SetFontColorBottom(D3DCOLOR_ARGB(255, 64, 64, 255));
 				dxText.SetFontBorderColor(D3DCOLOR_ARGB(255, 32, 32, 128));
-				dxText.SetText(info->GetTitle());
+				dxText.SetText(info->title_);
 				//dxText.SetSyntacticAnalysis(false);
 				dxText.Render();
 

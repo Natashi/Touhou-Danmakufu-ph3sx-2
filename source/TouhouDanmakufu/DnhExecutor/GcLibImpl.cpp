@@ -23,11 +23,11 @@ bool EApplication::_Initialize() {
 	fileManager->Initialize();
 
 	EFpsController* fpsController = EFpsController::CreateInstance();
-	fpsController->SetFastModeRate((size_t)config->GetSkipModeSpeedRate() * 60U);
+	fpsController->SetFastModeRate((size_t)config->fastModeSpeed_ * 60U);
 	
 	std::wstring appName = L"";
 
-	const std::wstring& configWindowTitle = config->GetWindowTitle();
+	const std::wstring& configWindowTitle = config->windowTitle_;
 	if (configWindowTitle.size() > 0) {
 		appName = configWindowTitle;
 	}
@@ -38,7 +38,7 @@ bool EApplication::_Initialize() {
 	appName = L"[ph3sx_DEBUG]" + appName;
 #endif
 
-	if (!config->IsMouseVisible())
+	if (!config->bMouseVisible_)
 		WindowUtility::SetMouseVisible(false);
 
 	EDirectGraphics* graphics = EDirectGraphics::CreateInstance();
@@ -103,7 +103,7 @@ bool EApplication::_Initialize() {
 	}
 
 	logger->LoadState();
-	logger->SetWindowVisible(config->IsLogWindow());
+	logger->SetWindowVisible(config->bLogWindow_);
 
 	SystemController* systemController = SystemController::CreateInstance();
 	systemController->Reset();
@@ -126,7 +126,7 @@ bool EApplication::_Loop() {
 
 	bWindowFocused_ = hWndFocused == hWndGraphics || hWndFocused == hWndLogger;
 	bool bInputEnable = false;
-	if (!config->IsEnableUnfocusedProcessing()) {
+	if (!config->bEnableUnfocusedProcessing_) {
 		if (!bWindowFocused_) {
 			//Pause main thread when the window isn't focused
 			::Sleep(10);
@@ -183,7 +183,7 @@ bool EApplication::_Loop() {
 			if (count % 120 == 0) {
 				taskManager->ArrangeTask();
 			}
-			if (count % 10 == 0 && config->GetFpsType() == DnhConfiguration::FPS_VARIABLE) {
+			if (count % 10 == 0 && config->fpsType_ == DnhConfiguration::FPS_VARIABLE) {
 				fpsController->SetCriticalFrame();
 			}
 			++count;
@@ -395,15 +395,15 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 	defaultWindowTitle_ = windowTitle;
 
 	DnhConfiguration* dnhConfig = DnhConfiguration::GetInstance();
-	LONG screenWidth = dnhConfig->GetScreenWidth();		//From th_dnh.def
-	LONG screenHeight = dnhConfig->GetScreenHeight();	//From th_dnh.def
-	ScreenMode screenMode = dnhConfig->GetScreenMode();
+	LONG screenWidth = dnhConfig->screenWidth_;		//From th_dnh.def
+	LONG screenHeight = dnhConfig->screenHeight_;	//From th_dnh.def
+	ScreenMode screenMode = dnhConfig->modeScreen_;
 
 	LONG windowedWidth = screenWidth;
 	LONG windowedHeight = screenHeight;
 	{
-		std::vector<POINT>& windowSizeList = dnhConfig->GetWindowSizeList();
-		size_t windowSizeIndex = dnhConfig->GetWindowSize();
+		std::vector<POINT>& windowSizeList = dnhConfig->windowSizeList_;
+		size_t windowSizeIndex = dnhConfig->windowSizeIndex_;
 		if (windowSizeIndex < windowSizeList.size()) {
 			windowedWidth = std::max(windowSizeList[windowSizeIndex].x, 320L);
 			windowedHeight = std::max(windowSizeList[windowSizeIndex].y, 240L);
@@ -414,13 +414,12 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 	dxConfig.sizeScreen_ = { screenWidth, screenHeight };
 	dxConfig.sizeScreenDisplay_ = { windowedWidth, windowedHeight };
 	dxConfig.bShowWindow_ = true;
-	dxConfig.bShowCursor_ = dnhConfig->IsMouseVisible();
-	dxConfig.colorMode_ = dnhConfig->GetColorMode();
-	dxConfig.bVSync_ = dnhConfig->IsEnableVSync();
-	dxConfig.bUseRef_ = dnhConfig->IsEnableRef();
-	dxConfig.typeMultiSample_ = dnhConfig->GetMultiSampleType();
+	dxConfig.bShowCursor_ = dnhConfig->bMouseVisible_;
+	dxConfig.colorMode_ = dnhConfig->modeColor_;
+	dxConfig.bVSync_ = dnhConfig->bVSync_;
+	dxConfig.bUseRef_ = dnhConfig->bUseRef_;
+	dxConfig.typeMultiSample_ = dnhConfig->multiSamples_;
 	dxConfig.bBorderlessFullscreen_ = dnhConfig->bPseudoFullscreen_;
-	dxConfig.bUseDynamicScaling_ = dnhConfig->UseDynamicScaling();
 
 	{
 		RECT rcMonitor = WindowBase::GetPrimaryMonitorRect();

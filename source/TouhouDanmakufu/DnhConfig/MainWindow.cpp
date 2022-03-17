@@ -185,8 +185,8 @@ bool DevicePanel::Initialize(HWND hParent) {
 	comboWindowSize_.Attach(::GetDlgItem(hWnd_, IDC_COMBO_WINDOWSIZE));
 	{
 		DnhConfiguration* config = DnhConfiguration::GetInstance();
-		std::vector<POINT>& listSize = config->GetWindowSizeList();
-		for (POINT& p : listSize) {
+		const std::vector<POINT>& listSize = config->windowSizeList_;
+		for (const POINT& p : listSize) {
 			std::wstring str = StringUtility::Format(L"%dx%d", p.x, p.y);
 			comboWindowSize_.AddString(str);
 		}
@@ -223,7 +223,7 @@ LRESULT DevicePanel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 }
 void DevicePanel::ReadConfiguration() {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
-	int screenMode = config->GetScreenMode();
+	int screenMode = config->modeScreen_;
 	switch (screenMode) {
 	case ScreenMode::SCREENMODE_FULLSCREEN:
 		SendDlgItemMessage(hWnd_, IDC_RADIO_FULLSCREEN, BM_SETCHECK, BST_CHECKED, 0);
@@ -233,7 +233,7 @@ void DevicePanel::ReadConfiguration() {
 		break;
 	}
 
-	comboWindowSize_.SetSelectedIndex(std::min<int>(config->sizeWindow_, comboWindowSize_.GetCount()));
+	comboWindowSize_.SetSelectedIndex(std::min<int>(config->windowSizeIndex_, comboWindowSize_.GetCount()));
 
 	{
 		std::map<D3DMULTISAMPLE_TYPE, int> mapSampleIndex = {
@@ -245,7 +245,7 @@ void DevicePanel::ReadConfiguration() {
 		comboMultisample_.SetSelectedIndex(mapSampleIndex[config->multiSamples_]);
 	}
 
-	int fpsType = config->GetFpsType();
+	int fpsType = config->fpsType_;
 	switch (fpsType) {
 	case DnhConfiguration::FPS_NORMAL:
 		SendDlgItemMessage(hWnd_, IDC_RADIO_FPS_1, BM_SETCHECK, BST_CHECKED, 0);
@@ -264,9 +264,9 @@ void DevicePanel::ReadConfiguration() {
 	SendDlgItemMessage(hWnd_, (config->modeColor_ == ColorMode::COLOR_MODE_32BIT) ?
 		IDC_RADIO_COLOR_32 : IDC_RADIO_COLOR_16, BM_SETCHECK, BST_CHECKED, 0);
 	SendDlgItemMessage(hWnd_, IDC_VSYNC, BM_SETCHECK, 
-		config->IsEnableVSync() ? BST_CHECKED : BST_UNCHECKED, 0);
+		config->bVSync_ ? BST_CHECKED : BST_UNCHECKED, 0);
 	SendDlgItemMessage(hWnd_, IDC_REFERENCERASTERIZER, BM_SETCHECK,
-		config->IsEnableRef() ? BST_CHECKED : BST_UNCHECKED, 0);
+		config->bUseRef_ ? BST_CHECKED : BST_UNCHECKED, 0);
 	SendDlgItemMessage(hWnd_, IDC_PSEUDOFULLSCREEN, BM_SETCHECK,
 		config->bPseudoFullscreen_ ? BST_CHECKED : BST_UNCHECKED, 0);
 }
@@ -275,10 +275,10 @@ void DevicePanel::WriteConfiguration() {
 	ScreenMode screenMode = ScreenMode::SCREENMODE_WINDOW;
 	if (SendDlgItemMessage(hWnd_, IDC_RADIO_FULLSCREEN, BM_GETCHECK, 0, 0))
 		screenMode = ScreenMode::SCREENMODE_FULLSCREEN;
-	config->SetScreenMode(screenMode);
+	config->modeScreen_ = screenMode;
 
 	size_t windowSize = comboWindowSize_.GetSelectedIndex();
-	config->SetWindowSize(windowSize);
+	config->windowSizeIndex_ = windowSize;
 
 	{
 		std::map<int, D3DMULTISAMPLE_TYPE> mapIndexSample = {
@@ -289,7 +289,7 @@ void DevicePanel::WriteConfiguration() {
 		};
 
 		size_t multiSample = comboMultisample_.GetSelectedIndex();
-		config->SetMultiSampleType(mapIndexSample[multiSample]);
+		config->multiSamples_ = mapIndexSample[multiSample];
 	}
 
 	int fpsType = DnhConfiguration::FPS_NORMAL;
@@ -301,17 +301,17 @@ void DevicePanel::WriteConfiguration() {
 		fpsType = DnhConfiguration::FPS_1_3;
 	else if (SendDlgItemMessage(hWnd_, IDC_RADIO_FPS_AUTO, BM_GETCHECK, 0, 0))
 		fpsType = DnhConfiguration::FPS_VARIABLE;
-	config->SetFpsType(fpsType);
+	config->fpsType_ = fpsType;
 
 	ColorMode modeColor = ColorMode::COLOR_MODE_32BIT;
 	if (SendDlgItemMessage(hWnd_, IDC_RADIO_COLOR_32, BM_GETCHECK, 0, 0))
 		modeColor = ColorMode::COLOR_MODE_32BIT;
 	else if (SendDlgItemMessage(hWnd_, IDC_RADIO_COLOR_16, BM_GETCHECK, 0, 0))
 		modeColor = ColorMode::COLOR_MODE_16BIT;
-	config->SetColorMode(modeColor);
+	config->modeColor_ = modeColor;
 
-	config->SetEnableVSync(SendDlgItemMessage(hWnd_, IDC_VSYNC, BM_GETCHECK, 0, 0) == BST_CHECKED);
-	config->SetEnableRef(SendDlgItemMessage(hWnd_, IDC_REFERENCERASTERIZER, BM_GETCHECK, 0, 0) == BST_CHECKED);
+	config->bVSync_ = SendDlgItemMessage(hWnd_, IDC_VSYNC, BM_GETCHECK, 0, 0) == BST_CHECKED;
+	config->bUseRef_ = SendDlgItemMessage(hWnd_, IDC_REFERENCERASTERIZER, BM_GETCHECK, 0, 0) == BST_CHECKED;
 	config->bPseudoFullscreen_ = SendDlgItemMessage(hWnd_, IDC_PSEUDOFULLSCREEN, BM_GETCHECK, 0, 0) == BST_CHECKED;
 }
 
@@ -384,7 +384,7 @@ bool KeyPanel::StartUp() {
 		padDeviceTextWidth, 200, SWP_NOMOVE);
 
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
-	int padIndex = config->GetPadIndex();
+	int padIndex = config->padIndex_;
 	padIndex = std::min(padIndex, (int)padCount - 1);
 	padIndex = std::max(padIndex, 0);
 	comboPadIndex_.SetSelectedIndex(padIndex);
@@ -461,7 +461,7 @@ void KeyPanel::ReadConfiguration() {
 void KeyPanel::WriteConfiguration() {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 	int padIndex = comboPadIndex_.GetSelectedIndex();
-	config->SetPadIndex(padIndex);
+	config->padIndex_ = padIndex;
 }
 
 //KeyPanel::KeyListView
@@ -552,25 +552,26 @@ LRESULT OptionPanel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 void OptionPanel::ReadConfiguration() {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 	HWND hListOption = viewOption_->GetWindowHandle();
-	if (config->IsLogWindow())
+
+	if (config->bLogWindow_)
 		ListView_SetItemState(hListOption, ROW_LOG_WINDOW, INDEXTOSTATEIMAGEMASK(2), LVIS_STATEIMAGEMASK);
-	if (config->IsLogFile())
+	if (config->bLogFile_)
 		ListView_SetItemState(hListOption, ROW_LOG_FILE, INDEXTOSTATEIMAGEMASK(2), LVIS_STATEIMAGEMASK);
-	if (!config->IsMouseVisible())
+	if (!config->bMouseVisible_)
 		ListView_SetItemState(hListOption, ROW_MOUSE_UNVISIBLE, INDEXTOSTATEIMAGEMASK(2), LVIS_STATEIMAGEMASK);
 
-	std::wstring pathExe = config->GetExePath();
-	exePath_->SetText(pathExe);
+	exePath_->SetText(config->pathExeLaunch_);
 }
 void OptionPanel::WriteConfiguration() {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 	HWND hListOption = viewOption_->GetWindowHandle();
-	config->SetLogWindow(ListView_GetCheckState(hListOption, ROW_LOG_WINDOW) ? true : false);
-	config->SetLogFile(ListView_GetCheckState(hListOption, ROW_LOG_FILE) ? true : false);
-	config->SetMouseVisible(ListView_GetCheckState(hListOption, ROW_MOUSE_UNVISIBLE) ? false : true);
+
+	config->bLogWindow_ = ListView_GetCheckState(hListOption, ROW_LOG_WINDOW);
+	config->bLogFile_ = ListView_GetCheckState(hListOption, ROW_LOG_FILE);
+	config->bMouseVisible_ = !ListView_GetCheckState(hListOption, ROW_MOUSE_UNVISIBLE);
 	{
 		std::wstring str = exePath_->GetText();
-		config->SetExePath(str.size() > 0U ? str : DNH_EXE_NAME);
+		config->pathExeLaunch_ = str.size() > 0U ? str : DNH_EXE_NAME;
 	}
 }
 

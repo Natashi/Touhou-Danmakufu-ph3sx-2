@@ -129,18 +129,19 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 			}
 
 			res = new ScriptInformation();
-			res->SetScriptPath(pathScript);
-			res->SetArchivePath(pathArchive);
-			res->SetType(type);
 
-			res->SetID(info.idScript);
-			res->SetTitle(info.title);
-			res->SetText(info.text);
-			res->SetImagePath(info.pathImage);
-			res->SetSystemPath(info.pathSystem);
-			res->SetBackgroundPath(info.pathBackground);
-			res->SetPlayerList(info.listPlayer);
-			res->SetReplayName(info.replayName);
+			res->pathScript_ = pathScript;
+			res->pathArchive_ = pathArchive;
+			res->type_ = type;
+
+			res->id_ = info.idScript;
+			res->title_ = info.title;
+			res->text_ = info.text;
+			res->pathImage_ = info.pathImage;
+			res->pathSystem_ = info.pathSystem;
+			res->pathBackground_ = info.pathBackground;
+			res->listPlayer_ = info.listPlayer;
+			res->replayName_ = info.replayName;
 		}
 	}
 	catch (...) {
@@ -192,7 +193,7 @@ std::vector<std::wstring> ScriptInformation::_GetStringList(Scanner& scanner) {
 }
 std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScriptInformationList() {
 	std::vector<ref_count_ptr<ScriptInformation>> res;
-	std::wstring dirInfo = PathProperty::GetFileDirectory(GetScriptPath());
+	std::wstring dirInfo = PathProperty::GetFileDirectory(pathScript_);
 	for (const std::wstring& pathPlayer : listPlayer_) {
 		std::wstring path = EPathProperty::ExtendRelativeToFull(dirInfo, pathPlayer);
 
@@ -205,7 +206,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScr
 		std::string source = reader->ReadAllString();
 
 		auto info = ScriptInformation::CreateScriptInformation(path, L"", source);
-		if (info != nullptr && info->GetType() == ScriptInformation::TYPE_PLAYER) {
+		if (info != nullptr && info->type_ == ScriptInformation::TYPE_PLAYER) {
 			res.push_back(info);
 		}
 	}
@@ -301,7 +302,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::FindPlayerScrip
 		std::vector<ref_count_ptr<ScriptInformation>> listInfo = CreateScriptInformationList(path, true);
 		for (size_t iInfo = 0; iInfo < listInfo.size(); iInfo++) {
 			ref_count_ptr<ScriptInformation> info = listInfo[iInfo];
-			if (info != nullptr && info->GetType() == ScriptInformation::TYPE_PLAYER)
+			if (info != nullptr && info->type_ == ScriptInformation::TYPE_PLAYER)
 				res.push_back(info);
 		}
 
@@ -414,13 +415,15 @@ bool ErrorDialog::ShowModal(std::wstring msg) {
 DnhConfiguration::DnhConfiguration() {
 	modeScreen_ = ScreenMode::SCREENMODE_WINDOW;
 	modeColor_ = ColorMode::COLOR_MODE_32BIT;
+
+	fpsStandard_ = 60;
 	fpsType_ = FPS_NORMAL;
 	fastModeSpeed_ = 20;
 
-	sizeWindow_ = 0;
+	windowSizeIndex_ = 0;
 
 	bVSync_ = true;
-	referenceRasterizer_ = false;
+	bUseRef_ = false;
 	bPseudoFullscreen_ = true;
 	multiSamples_ = D3DMULTISAMPLE_NONE;
 
@@ -451,7 +454,6 @@ DnhConfiguration::DnhConfiguration() {
 	screenHeight_ = 480;
 	windowSizeList_ = { { 640, 480 }, { 800, 600 }, { 960, 720 }, { 1280, 960 } };
 
-	bDynamicScaling_ = false;
 	bEnableUnfocusedProcessing_ = false;
 
 	LoadConfigFile();
@@ -482,14 +484,14 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 	screenHeight_ = prop.GetInteger(L"screen.height", 480);
 	screenHeight_ = std::clamp(screenHeight_, MIN_HT, MAX_HT);
 
+	fpsStandard_ = prop.GetInteger(L"standard.fps", 60);
+	fpsStandard_ = std::max(fpsStandard_, 1U);
+
 	fastModeSpeed_ = prop.GetInteger(L"skip.rate", 20);
 	fastModeSpeed_ = std::clamp(fastModeSpeed_, 1, 50);
 
 	{
-		std::wstring str = prop.GetString(L"dynamic.scaling", L"false");
-		bDynamicScaling_ = str == L"true" ? true : StringUtility::ToInteger(str);
-
-		str = prop.GetString(L"unfocused.processing", L"false");
+		std::wstring str = prop.GetString(L"unfocused.processing", L"false");
 		bEnableUnfocusedProcessing_ = str == L"true" ? true : StringUtility::ToInteger(str);
 	}
 
@@ -544,10 +546,10 @@ bool DnhConfiguration::LoadConfigFile() {
 	
 	record.GetRecord<int>("fpsType", fpsType_);
 	
-	record.GetRecord<size_t>("sizeWindow", sizeWindow_);
+	record.GetRecord<size_t>("sizeWindow", windowSizeIndex_);
 
 	record.GetRecord<bool>("bVSync", bVSync_);
-	record.GetRecord<bool>("bDeviceREF", referenceRasterizer_);
+	record.GetRecord<bool>("bDeviceREF", bUseRef_);
 	record.GetRecord<bool>("bPseudoFullscreen", bPseudoFullscreen_);
 
 	record.GetRecord<D3DMULTISAMPLE_TYPE>("typeMultiSamples", multiSamples_);
@@ -594,10 +596,10 @@ bool DnhConfiguration::SaveConfigFile() {
 
 	record.SetRecordAsInteger("fpsType", fpsType_);
 
-	record.SetRecord<size_t>("sizeWindow", sizeWindow_);
+	record.SetRecord<size_t>("sizeWindow", windowSizeIndex_);
 
 	record.SetRecordAsBoolean("bVSync", bVSync_);
-	record.SetRecordAsBoolean("bDeviceREF", referenceRasterizer_);
+	record.SetRecordAsBoolean("bDeviceREF", bUseRef_);
 	record.SetRecordAsBoolean("bPseudoFullscreen", bPseudoFullscreen_);
 
 	record.SetRecord<D3DMULTISAMPLE_TYPE>("typeMultiSamples", multiSamples_);
