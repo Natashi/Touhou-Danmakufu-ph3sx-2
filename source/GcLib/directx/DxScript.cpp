@@ -623,7 +623,6 @@ static const std::vector<constant> dxConstant = {
 	constant("SOUND_UNKNOWN", (int)SoundFileFormat::Unknown),
 	constant("SOUND_WAVE", (int)SoundFileFormat::Wave),
 	constant("SOUND_OGG", (int)SoundFileFormat::Ogg),
-	constant("SOUND_MP3", (int)SoundFileFormat::Mp3),
 
 	//ObjSound_GetInfo info types
 	constant("INFO_FORMAT", SoundPlayer::INFO_FORMAT),
@@ -4241,8 +4240,7 @@ value DxScript::Func_ObjParticleList_SetColor(script_machine* machine, int argc,
 			}
 			else {
 				D3DCOLOR color = argv[1].as_int();
-				objParticle->SetInstanceColorRGB(ColorAccess::GetColorR(color), 
-					ColorAccess::GetColorG(color), ColorAccess::GetColorB(color));
+				objParticle->SetInstanceColorRGB(color);
 			}
 		}
 	}

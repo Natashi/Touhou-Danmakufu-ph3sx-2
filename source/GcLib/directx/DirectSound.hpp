@@ -191,22 +191,6 @@ namespace directx {
 		virtual void Release();
 		virtual bool Load(shared_ptr<gstd::FileReader> reader);
 	};
-	class SoundSourceDataMp3 : public SoundSourceData {
-	public:
-		MPEGLAYER3WAVEFORMAT formatMp3_;
-
-		HACMSTREAM hAcmStream_;
-		ACMSTREAMHEADER acmStreamHeader_;
-
-		QWORD posMp3DataStart_;
-		QWORD posMp3DataEnd_;
-	public:
-		SoundSourceDataMp3();
-		~SoundSourceDataMp3();
-
-		virtual void Release();
-		virtual bool Load(shared_ptr<gstd::FileReader> reader);
-	};
 
 	//*******************************************************************
 	//SoundPlayer
@@ -405,25 +389,6 @@ namespace directx {
 	public:
 		SoundStreamingPlayerOgg();
 		~SoundStreamingPlayerOgg();
-
-		virtual bool Seek(double time);
-		virtual bool Seek(DWORD sample);
-	};
-
-	//*******************************************************************
-	//SoundStreamingPlayerMp3
-	//*******************************************************************
-	class SoundStreamingPlayerMp3 : public SoundStreamingPlayer {
-	protected:
-		double timeCurrent_;
-		gstd::ByteBuffer bufDecode_;	//Temp buffer containing decoded ACM stream data
-	protected:
-		virtual bool _CreateBuffer(shared_ptr<SoundSourceData> source);
-		virtual DWORD _CopyBuffer(LPVOID pMem, DWORD dwSize);
-		DWORD _DecodeAcmStream(char* pBuffer, DWORD size);
-	public:
-		SoundStreamingPlayerMp3();
-		~SoundStreamingPlayerMp3();
 
 		virtual bool Seek(double time);
 		virtual bool Seek(DWORD sample);

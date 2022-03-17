@@ -68,7 +68,6 @@ namespace directx {
 		Unknown,	//Invalid
 		Wave,		//WAVE RIFF
 		Ogg,		//Ogg Vorbis
-		Mp3,		//MPEG3
 	};
 
 	//*******************************************************************
