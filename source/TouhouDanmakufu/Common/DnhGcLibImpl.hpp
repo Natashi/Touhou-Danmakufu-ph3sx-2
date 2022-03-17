@@ -38,7 +38,7 @@ protected:
 
 	std::list<PanelData> listPanel_;
 
-	DWORD time_;
+	uint64_t time_;
 protected:
 	void _Run();
 public:

@@ -571,6 +571,8 @@ double WindowLogger::InfoPanel::_GetCpuPerformance() {
 
 	return fmtValue.doubleValue;
 }
+
+#if 0
 WindowLogger::InfoPanel::CpuInfo WindowLogger::InfoPanel::_GetCpuInformation() {
 	int cpuid_supported;
 	char VenderID[13];
@@ -765,5 +767,6 @@ WindowLogger::InfoPanel::CpuInfo WindowLogger::InfoPanel::_GetCpuInformation() {
 	}
 	return ci;
 }
+#endif
 
 #endif

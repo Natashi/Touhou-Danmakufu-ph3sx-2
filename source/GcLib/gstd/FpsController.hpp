@@ -23,8 +23,6 @@ namespace gstd {
 		FpsController();
 		virtual ~FpsController();
 
-		static stdch::steady_clock::time_point GetCpuTime();
-
 		virtual void SetFps(DWORD fps) { fps_ = fps; }
 		virtual DWORD GetFps() { return fps_; }
 

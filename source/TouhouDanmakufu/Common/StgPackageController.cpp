@@ -26,7 +26,7 @@ void StgPackageController::Initialize() {
 	auto idScript = scriptManager_->LoadScript(pathMainScript, StgPackageScript::TYPE_PACKAGE_MAIN);
 	scriptManager_->StartScript(idScript);
 
-	infoPackage_->SetPackageStartTime(timeGetTime());
+	infoPackage_->SetPackageStartTime(SystemUtility::GetCpuTime2());
 }
 void StgPackageController::Work() {
 	scriptManager_->Work();

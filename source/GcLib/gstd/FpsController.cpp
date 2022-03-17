@@ -1,6 +1,7 @@
 #include "source/GcLib/pch.h"
 
 #include "FpsController.hpp"
+#include "GstdUtility.hpp"
 
 using namespace gstd;
 using namespace stdch;
@@ -17,15 +18,6 @@ FpsController::FpsController() {
 	fastModeFpsRate_ = 1200;
 }
 FpsController::~FpsController() {
-}
-stdch::steady_clock::time_point FpsController::GetCpuTime() {
-	/*
-	LARGE_INTEGER nFreq, nCounter;
-	QueryPerformanceFrequency(&nFreq);
-	QueryPerformanceCounter(&nCounter);
-	return (DWORD)(nCounter.QuadPart * 1000UL / nFreq.QuadPart);
-	*/
-	return steady_clock::now();
 }
 void FpsController::RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) {
 	if (obj.expired()) return;
@@ -59,7 +51,7 @@ StaticFpsController::StaticFpsController() {
 
 	rateSkip_ = 0;
 
-	timePrevious_ = GetCpuTime();
+	timePrevious_ = SystemUtility::GetCpuTime();
 	timeAccum_ = 0ns;
 
 	timePreviousFpsUpdate_ = time_point<steady_clock, nanoseconds>{ 0ns };
@@ -77,7 +69,7 @@ std::array<bool, 2> StaticFpsController::Advance() {
 	DWORD fpsTarget = std::min<DWORD>(bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps()), 1000);
 	const auto targetNs = duration<double, std::nano>(std::nano::den / (double)fpsTarget);
 
-	auto timeCurrent = GetCpuTime();
+	auto timeCurrent = SystemUtility::GetCpuTime();
 	auto timeDelta = timeCurrent - timePrevious_;
 	timePrevious_ = timeCurrent;
 
@@ -125,7 +117,7 @@ VariableFpsController::VariableFpsController() {
 	fpsCurrentRender_ = 0;
 	bFrameRendered_ = false;
 
-	timePrevious_ = GetCpuTime();
+	timePrevious_ = SystemUtility::GetCpuTime();
 	timePreviousUpdate_ = timePrevious_;
 	timePreviousRender_ = timePrevious_;
 
@@ -147,7 +139,7 @@ std::array<bool, 2> VariableFpsController::Advance() {
 	DWORD fpsTarget = std::min<DWORD>(bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps()), 1000);
 	const auto targetNs = duration<double, std::nano>(std::nano::den / (double)fpsTarget);
 
-	auto timeCurrent = GetCpuTime();
+	auto timeCurrent = SystemUtility::GetCpuTime();
 	auto timeDelta = timeCurrent - timePrevious_;
 	timePrevious_ = timeCurrent;
 

@@ -25,6 +25,13 @@ namespace gstd {
 	class SystemUtility {
 	public:
 		static void TestCpuSupportSIMD();
+
+		static stdch::steady_clock::time_point GetCpuTime() {
+			return stdch::steady_clock::now();
+		}
+		static inline uint64_t GetCpuTime2() {
+			return GetCpuTime().time_since_epoch().count();
+		}
 	};
 
 	//================================================================

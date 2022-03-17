@@ -245,7 +245,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		replayStageData->SetPlayerScriptReplayName(infoPlayer->replayName_);
 	}
 
-	infoStage_->SetStageStartTime(timeGetTime());
+	infoStage_->SetStageStartTime(SystemUtility::GetCpuTime2());
 }
 void StgStageController::CloseScene() {
 	ref_count_weak_ptr<PseudoSlowInformation> wPtr = infoSlow_;
@@ -466,7 +466,7 @@ StgStageInformation::StgStageInformation() {
 	priCameraFocusPermit_ = 69;
 
 	rand_ = std::make_shared<RandProvider>();
-	rand_->Initialize(timeGetTime() ^ 0xf5682aeb);
+	rand_->Initialize((uint32_t)SystemUtility::GetCpuTime2() ^ 0xf5682aebui32);
 	score_ = 0;
 	graze_ = 0;
 	point_ = 0;

@@ -352,8 +352,8 @@ void TaskInfoPanel::LocateParts() {
 void TaskInfoPanel::Update(TaskManager* taskManager) {
 	if (!IsWindowVisible()) return;
 
-	int time = timeGetTime();
-	if (abs(time - timeLastUpdate_) < timeUpdateInterval_) return;
+	uint64_t time = SystemUtility::GetCpuTime2();
+	if ((time - timeLastUpdate_) < timeUpdateInterval_) return;
 	timeLastUpdate_ = time;
 
 	shared_ptr<WTreeView::Item> itemRoot = wndTreeView_.GetRootItem();

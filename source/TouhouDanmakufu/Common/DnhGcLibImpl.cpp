@@ -77,11 +77,11 @@ void ELogger::UpdateCommonDataInfoPanel() {
 	panelCommonData_->Update();
 }
 void ELogger::_Run() {
-	time_ = timeGetTime();
+	time_ = SystemUtility::GetCpuTime2();
 
 	while (GetStatus() == RUN) {
-		DWORD currentTime = timeGetTime();
-		DWORD timeDelta = currentTime - time_;
+		uint64_t currentTime = SystemUtility::GetCpuTime2();
+		uint64_t timeDelta = currentTime - time_;
 
 		for (PanelData& iPanel : listPanel_) {
 			bool bUpdate = false;

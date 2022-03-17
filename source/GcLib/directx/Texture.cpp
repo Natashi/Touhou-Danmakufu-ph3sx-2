@@ -149,13 +149,13 @@ IDirect3DTexture9* Texture::GetD3DTexture() {
 	if (data_) {
 		Lock lock(TextureManager::GetBase()->GetLock());
 
-		DWORD timeOrg = timeGetTime();
+		uint64_t timeOrg = SystemUtility::GetCpuTime2();
 		while (true) {
 			if (data_->bReady_) {
 				res = data_->GetD3DTexture();
 				break;
 			}
-			else if (timeGetTime() - timeOrg > 200) {		//0.2 second timer
+			else if (SystemUtility::GetCpuTime2() - timeOrg > 200) {		//0.2 second timer
 				const std::wstring& path = data_->GetName();
 				Logger::WriteTop(StringUtility::Format(L"GetTexture timed out. (%s)", 
 					PathProperty::ReduceModuleDirectory(path).c_str()));

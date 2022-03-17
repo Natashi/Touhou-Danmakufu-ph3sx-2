@@ -103,8 +103,10 @@ private:
 	int64_t score_;
 	int64_t graze_;
 	int64_t point_;
+
 	int result_;
-	DWORD timeStart_;
+
+	uint64_t timeStart_;
 public:
 	StgStageInformation();
 	virtual ~StgStageInformation();
@@ -157,8 +159,8 @@ public:
 	int GetResult() { return result_; }
 	void SetResult(int result) { result_ = result; }
 
-	DWORD GetStageStartTime() { return timeStart_; }
-	void SetStageStartTime(DWORD time) { timeStart_ = time; }
+	uint64_t GetStageStartTime() { return timeStart_; }
+	void SetStageStartTime(uint64_t time) { timeStart_ = time; }
 };
 
 //*******************************************************************

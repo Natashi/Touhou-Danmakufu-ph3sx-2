@@ -43,7 +43,7 @@ class StgPackageInformation {
 	ref_count_ptr<ReplayInformation> infoReplay_;
 	ref_count_ptr<ScriptInformation> infoMainScript_;
 
-	int timeStart_;
+	uint64_t timeStart_;
 	bool bEndPackage_;
 public:
 	StgPackageInformation();
@@ -64,6 +64,6 @@ public:
 	ref_count_ptr<ScriptInformation> GetMainScriptInformation() { return infoMainScript_; }
 	void SetMainScriptInformation(ref_count_ptr<ScriptInformation> info) { infoMainScript_ = info; }
 
-	int GetPackageStartTime() { return timeStart_; }
-	void SetPackageStartTime(int time) { timeStart_ = time; }
+	uint64_t GetPackageStartTime() { return timeStart_; }
+	void SetPackageStartTime(uint64_t time) { timeStart_ = time; }
 };

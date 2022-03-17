@@ -334,7 +334,7 @@ DirectSoundManager::SoundManageThread::SoundManageThread(DirectSoundManager* man
 void DirectSoundManager::SoundManageThread::_Run() {
 	DirectSoundManager* manager = _GetOuter();
 	while (this->GetStatus() == RUN) {
-		timeCurrent_ = ::timeGetTime();
+		timeCurrent_ = SystemUtility::GetCpuTime2();
 
 		{
 			Lock lock(manager->GetLock());
@@ -398,7 +398,7 @@ void DirectSoundManager::SoundManageThread::_Arrange() {
 }
 void DirectSoundManager::SoundManageThread::_Fade() {
 	DirectSoundManager* manager = _GetOuter();
-	int timeGap = timeCurrent_ - timePrevious_;
+	uint64_t timeGap = timeCurrent_ - timePrevious_;
 
 	auto* listPlayer = &manager->listManagedPlayer_;
 	for (auto itrPlayer = listPlayer->begin(); itrPlayer != listPlayer->end(); ++itrPlayer) {
@@ -409,7 +409,7 @@ void DirectSoundManager::SoundManageThread::_Fade() {
 		if (rateFade == 0) continue;
 
 		double rateVolume = player->GetVolumeRate();
-		rateFade *= (double)timeGap / (double)1000.0;
+		rateFade *= timeGap / 1000.0;
 		rateVolume += rateFade;
 		player->SetVolumeRate(rateVolume);
 
@@ -459,8 +459,8 @@ void SoundInfoPanel::Update(DirectSoundManager* soundManager) {
 	if (!IsWindowVisible()) return;
 
 	{
-		int time = timeGetTime();
-		if (abs(time - timeLastUpdate_) < timeUpdateInterval_) return;
+		uint64_t time = SystemUtility::GetCpuTime2();
+		if ((time - timeLastUpdate_) < timeUpdateInterval_) return;
 		timeLastUpdate_ = time;
 	}
 

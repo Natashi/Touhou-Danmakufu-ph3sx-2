@@ -159,8 +159,9 @@ namespace gstd {
 		WSplitter wndSplitter_;
 		WTreeView wndTreeView_;
 		WListView wndListView_;
-		int timeLastUpdate_;
-		int timeUpdateInterval_;
+
+		uint64_t timeLastUpdate_;
+		uint64_t timeUpdateInterval_;
 		int addressLastFindManager_;
 
 		virtual bool _AddedLogger(HWND hTab);

@@ -87,8 +87,8 @@ namespace directx {
 	class DirectSoundManager::SoundManageThread : public gstd::Thread, public gstd::InnerClass<DirectSoundManager> {
 		friend DirectSoundManager;
 	protected:
-		int timeCurrent_;
-		int timePrevious_;
+		uint64_t timeCurrent_;
+		uint64_t timePrevious_;
 	protected:
 		SoundManageThread(DirectSoundManager* manager);
 
@@ -110,8 +110,8 @@ namespace directx {
 		};
 	protected:
 		gstd::WListView wndListView_;
-		int timeLastUpdate_;
-		int timeUpdateInterval_;
+		uint64_t timeLastUpdate_;
+		uint64_t timeUpdateInterval_;
 
 		virtual bool _AddedLogger(HWND hTab);
 	public:

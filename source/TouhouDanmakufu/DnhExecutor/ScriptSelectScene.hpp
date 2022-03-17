@@ -127,7 +127,8 @@ protected:
 	int type_;
 	std::wstring dir_;
 	std::wstring pathWait_;
-	int timeLastUpdate_;
+
+	uint64_t timeLastUpdate_;
 
 	std::list<ref_count_ptr<ScriptSelectSceneMenuItem>> listItem_;
 	

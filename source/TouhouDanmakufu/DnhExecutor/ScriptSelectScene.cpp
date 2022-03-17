@@ -477,12 +477,14 @@ ScriptSelectFileModel::~ScriptSelectFileModel() {
 
 }
 void ScriptSelectFileModel::_Run() {
-	timeLastUpdate_ = ::timeGetTime() - 1000;
+	timeLastUpdate_ = SystemUtility::GetCpuTime2();
+
 	_SearchScript(dir_);
 	if (GetStatus() == RUN) {
 		scene_->AddMenuItem(listItem_);
 		listItem_.clear();
 	}
+
 	bCreated_ = true;
 }
 void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
@@ -493,8 +495,8 @@ void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
 	do {
 		if (GetStatus() != RUN) return;
 
-		int time = ::timeGetTime();
-		if (abs(time - timeLastUpdate_) > 500) {
+		uint64_t time = SystemUtility::GetCpuTime2();
+		if ((time - timeLastUpdate_) > 500) {
 			//500ms毎に更新
 			timeLastUpdate_ = time;
 			scene_->AddMenuItem(listItem_);

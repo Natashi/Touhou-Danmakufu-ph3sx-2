@@ -411,14 +411,14 @@ gstd::value StgControlScript::Func_GetLastFrameRenderSpeed(gstd::script_machine*
 gstd::value StgControlScript::Func_GetStageTime(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 
-	DWORD res = 0;
+	uint64_t res = 0;
 
 	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
 	if (stageController) {
 		ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
-		DWORD time = timeGetTime();
 
-		DWORD timeStart = infoStage->GetStageStartTime();
+		uint64_t time = SystemUtility::GetCpuTime2();
+		uint64_t timeStart = infoStage->GetStageStartTime();
 		res = (timeStart > 0) ? time - timeStart : 0;
 	}
 
@@ -445,9 +445,9 @@ gstd::value StgControlScript::Func_GetPackageTime(gstd::script_machine* machine,
 	StgPackageController* packageController = script->systemController_->GetPackageController();
 	if (packageController) {
 		ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
-		DWORD time = timeGetTime();
 
-		DWORD timeStart = infoPackage->GetPackageStartTime();
+		uint64_t time = SystemUtility::GetCpuTime2();
+		uint64_t timeStart = infoPackage->GetPackageStartTime();
 		res = (timeStart > 0) ? time - timeStart : 0;
 	}
 
