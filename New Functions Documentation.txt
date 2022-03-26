@@ -775,7 +775,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 		Description:
 			Calculates a coordinate component of a cubic Bezier curve.
 				Direct formula is ((a * (1 - x)^3) + (3 * c1 * x * (1 - x)^2) + (3 * c2 * x^2 * (1 - x)) + (b * x^3))
-				Represented by the red graph.
+				Represented by the blue graph.
 	
 	Interpolate_Hermite
 		Arguments:
@@ -1570,7 +1570,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 		Arguments:
 			1) (string) script path
 		Description:
-			Unloads the given given from the script source cache.
+			Unloads the given script from the script source cache.
 			
 			Does nothing if the script does not exist in the cache.
 	
@@ -1593,7 +1593,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			2) (bool) pause
 		Description:
 			Pauses or unpauses the specified script. Not guaranteed to work flawlessly.
-			Causes an error is the script ID is the ID of the script from which the function was called,
+			Causes an error if the script ID is the ID of the script from which the function was called,
 				aka; "a script cannot pause itself".
 	
 	GetScriptStatus
