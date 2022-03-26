@@ -1593,7 +1593,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			2) (bool) pause
 		Description:
 			Pauses or unpauses the specified script. Not guaranteed to work flawlessly.
-			Causes an error in the script ID is the ID of the script from which the function was called,
+			Causes an error if the script ID is the ID of the script from which the function was called,
 				aka; "a script cannot pause itself".
 	
 	GetScriptStatus
