@@ -928,6 +928,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						LONG sizeOff = 0;
 						LONG weightRuby = FW_BOLD;
 						LONG leftOff = 0;
+						LONG topOff = 0;
 						LONG pitchOff = 0;
 					} data;
 
@@ -951,6 +952,9 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 					auto _FuncSetLeft = [](Data* i, DxTextScanner& sc) {
 						i->leftOff = sc.Next().GetInteger();
 					};
+					auto _FuncSetTop = [](Data* i, DxTextScanner& sc) {
+						i->topOff = sc.Next().GetInteger();
+					};
 					auto _FuncSetPitch = [](Data* i, DxTextScanner& sc) {
 						i->pitchOff = sc.Next().GetInteger();
 					};
@@ -963,6 +967,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						{ L"sz", _FuncSetSize },
 						{ L"wg", _FuncSetWeight },
 						{ L"ox", _FuncSetLeft },
+						{ L"oy", _FuncSetTop },
 						{ L"op", _FuncSetPitch },
 					};
 
@@ -997,6 +1002,7 @@ shared_ptr<DxTextInfo> DxTextRenderer::GetTextInfo(DxText* dxText) {
 						LONG rubyPitch = std::clamp(rubyGap, 0L, (LONG)(rubyFontWidth * 1.2f));
 
 						data.tag->SetLeftMargin(data.leftOff);
+						data.tag->SetTopMargin(data.topOff);
 
 						shared_ptr<DxText> dxTextRuby(new DxText());
 						dxTextRuby->SetText(data.tag->GetRuby());
@@ -1297,7 +1303,7 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 
 				DxRect<LONG> margin;
 				margin.left = xRender + ruby->GetLeftMargin();
-				margin.top = pos.y - textRuby->GetFontSize();
+				margin.top = pos.y - textRuby->GetFontSize() + ruby->GetTopMargin();
 				textRuby->SetMargin(margin);
 
 				POINT bias = { 0, 0 };
