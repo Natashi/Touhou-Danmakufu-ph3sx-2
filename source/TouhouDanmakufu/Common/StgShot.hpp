@@ -63,6 +63,8 @@ protected:
 	ID3DXEffect* effectShot_;
 	D3DXMATRIX matProj_;
 public:
+	IDirect3DTexture9* pLastTexture_;
+public:
 	StgShotManager(StgStageController* stageController);
 	virtual ~StgShotManager();
 

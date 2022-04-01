@@ -34,6 +34,7 @@ StgShotManager::StgShotManager(StgStageController* stageController) {
 			listRenderQueueEnemy_[i].listShot.resize(32);
 		}
 	}
+	pLastTexture_ = nullptr;
 
 	SetDeleteEventEnableByType(StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE, true);
 	SetDeleteEventEnableByType(StgStageItemScript::EV_DELETE_SHOT_FADE, true);
@@ -98,6 +99,7 @@ void StgShotManager::Render(int targetPriority) {
 
 	device->SetFVF(VERTEX_TLX::fvf);
 	device->SetVertexDeclaration(shaderManager->GetVertexDeclarationTLX());
+	pLastTexture_ = nullptr;
 
 	if (D3DXHANDLE handle = effectShot_->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
 		effectShot_->SetMatrix(handle, &matProj_);
@@ -1476,7 +1478,11 @@ void StgShotObject::_DefaultShotRender(StgShotData* shotData, StgShotDataFrame* 
 			else graphics->SetRenderTarget(nullptr);
 		}
 
-		device->SetTexture(0, pVB->GetD3DTexture());
+		IDirect3DTexture9* pTexture = pVB->GetD3DTexture();
+		if (pTexture != shotManager->pLastTexture_) {
+			device->SetTexture(0, pTexture);
+			shotManager->pLastTexture_ = pTexture;
+		}
 		device->SetStreamSource(0, pVB->GetD3DBuffer(), vertexOffset * sizeof(VERTEX_TLX), sizeof(VERTEX_TLX));
 
 		{
@@ -2588,7 +2594,11 @@ void StgCurveLaserObject::Render(BlendMode targetBlend) {
 					else graphics->SetRenderTarget(nullptr);
 				}
 
-				device->SetTexture(0, texture->GetD3DTexture());
+				IDirect3DTexture9* pTexture = texture->GetD3DTexture();
+				if (pTexture != shotManager->pLastTexture_) {
+					device->SetTexture(0, pTexture);
+					shotManager->pLastTexture_ = pTexture;
+				}
 
 				size_t countVert = vertexData_.size();
 				size_t countPrim = RenderObject::_GetPrimitiveCount(D3DPT_TRIANGLESTRIP, countVert);

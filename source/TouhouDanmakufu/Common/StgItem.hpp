@@ -54,6 +54,8 @@ protected:
 	ID3DXEffect* effectItem_;
 	D3DXMATRIX matProj_;
 public:
+	IDirect3DTexture9* pLastTexture_;
+public:
 	StgItemManager(StgStageController* stageController);
 	virtual ~StgItemManager();
 
