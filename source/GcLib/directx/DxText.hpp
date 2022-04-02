@@ -233,14 +233,18 @@ namespace directx {
 	};
 	class DxTextTag_Ruby : public DxTextTag {
 		LONG leftMargin_;
+		LONG topMargin_;
 		std::wstring text_;
 		std::wstring ruby_;
 		shared_ptr<DxText> dxText_;
 	public:
-		DxTextTag_Ruby() { typeTag_ = TextTagType::Ruby; leftMargin_ = 0; }
+		DxTextTag_Ruby() { typeTag_ = TextTagType::Ruby; leftMargin_ = 0; topMargin_ = 0; }
 		
 		LONG GetLeftMargin() { return leftMargin_; }
 		void SetLeftMargin(LONG left) { leftMargin_ = left; }
+
+		LONG GetTopMargin() { return topMargin_; }
+		void SetTopMargin(LONG top) { topMargin_ = top; }
 
 		std::wstring& GetText() { return text_; }
 		void SetText(const std::wstring& text) { text_ = text; }
