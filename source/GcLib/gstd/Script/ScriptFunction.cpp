@@ -3,6 +3,8 @@
 #include "ScriptFunction.hpp"
 #include "Script.hpp"
 
+#include "Parser.hpp"
+
 #ifdef _MSC_VER
 //#define for if(0);else for
 namespace std {
@@ -371,6 +373,28 @@ namespace gstd {
 	}
 
 	//-------------------------------------------------------------------------------------------
+
+	//Only checks the funcptr, real calling code is in pc_call
+	value BaseFunction::invoke(script_machine* machine, int argc, const value* argv) {
+		_null_check(nullptr, argv, 1);
+
+		int64_t _val = argv[0].as_int();
+		uint64_t val = (uint64_t&)_val;
+
+		uint32_t verif = val >> 48;
+		uint32_t arguments = (val >> 32) & 0xffff;
+		script_block* sub = (script_block*)(val & 0xffffffff);
+
+		if (verif != 0x6a53 || sub == nullptr) {
+			machine->raise_error("Invalid function pointer.\r\n");
+		}
+		else if (argc - 1 != arguments) {
+			machine->raise_error(
+				StringUtility::Format("Invoke: function expected %d arguments, got %d\r\n", arguments, argc - 1));
+		}
+
+		return value();
+	}
 
 	value BaseFunction::cast_x(script_machine* machine, int argc, const value* argv) {
 		const value& src = argv[0];

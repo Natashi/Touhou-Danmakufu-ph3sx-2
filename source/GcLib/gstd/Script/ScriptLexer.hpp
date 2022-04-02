@@ -47,7 +47,7 @@ namespace gstd {
 
 		tk_cast_int, tk_cast_float, tk_cast_char, tk_cast_bool, tk_cast_string,
 
-		tk_LENGTH, 
+		tk_LENGTH, tk_GET_FUNC,
 
 		tk_ALTERNATIVE, tk_CASE, tk_OTHERS,
 		tk_IF, tk_ELSE, tk_LOOP, tk_TIMES, tk_WHILE, tk_FOR, tk_EACH, tk_ASCENT, tk_DESCENT, tk_IN,

@@ -184,26 +184,46 @@ void script_machine::call(std::map<std::string, script_block*>::iterator event_i
 	if (event_itr != engine->events.end()) {
 		run();
 
-		auto prev_thread = current_thread_index;
-		current_thread_index = threads.begin();
-
-		ref_unsync_ptr<environment>& env_first = *current_thread_index;
-		env_first = new environment(env_first, event_itr->second);
-
-		finished = false;
-
-		list_parent_environment.push_back(env_first->parent->parent);
-		run_code();
-		list_parent_environment.pop_back();
-
-		finished = false;
-
-		//Resume previous routine
-		current_thread_index = prev_thread;
+		ref_unsync_ptr<environment> eventEnv = new environment(*current_thread_index, event_itr->second);
+		interrupt(eventEnv);
 	}
 }
 
+void script_machine::interrupt(ref_unsync_ptr<environment> env) {
+	auto prev_thread = current_thread_index;
+	current_thread_index = threads.begin();
+
+	ref_unsync_ptr<environment>& env_first = *current_thread_index;
+	env_first = env;
+
+	finished = false;
+
+	list_parent_environment.push_back(env_first->parent->parent);
+	run_code();
+	list_parent_environment.pop_back();
+
+	finished = false;
+
+	//Resume previous routine
+	current_thread_index = prev_thread;
+}
+ref_unsync_ptr<script_machine::environment> script_machine::add_thread(script_block* sub) {
+	ref_unsync_ptr<environment> e = new environment(*current_thread_index, sub);
+	threads.insert(++current_thread_index, e);
+	--current_thread_index;
+	return e;
+}
+ref_unsync_ptr<script_machine::environment> script_machine::add_child_block(script_block* sub) {
+	ref_unsync_ptr<environment> e = new environment(*current_thread_index, sub);
+	*current_thread_index = e;
+	return e;
+}
+
 void script_machine::run_code() {
+	if (threads.size() == 0) {
+		current_thread_index = std::list<ref_unsync_ptr<environment>>::iterator();
+		return;
+	}
 	try {
 		while (!finished && !bTerminate) {
 			environment* current = current_thread_index->get();
@@ -422,6 +442,18 @@ void script_machine::run_code() {
 						break;
 					}
 
+					auto _ProcessReturn_BuiltinFunc = [&](value ret) {
+						stack.pop_back(c->arg1);
+						if (opc == command_kind::pc_call_and_push_result)
+							stack.push_back(ret);
+					};
+					auto _PassArgsFromStack = [](size_t argc, script_value_vector& srcStk, script_value_vector& dstStk) {
+						value* pBack = &srcStk.back();
+						for (int i = 0; i < argc; ++i)
+							dstStk.push_back(pBack[-i]);
+						srcStk.pop_back(argc);
+					};
+
 					script_block* sub = c->block; //(script_block*)c->arg0
 					if (sub->func) {
 						//Default functions
@@ -431,45 +463,56 @@ void script_machine::run_code() {
 						value* argv = nullptr;
 						if (sizePrev > 0 && c->arg1 > 0)
 							argv = stack.at + (sizePrev - c->arg1);
-						value ret = sub->func(this, c->arg1, argv);
 
-						if (stopped) {
-							--(current->ip);
+						if (sub->func != BaseFunction::invoke) {
+							value ret = sub->func(this, c->arg1, argv);
+							if (stopped) {
+								--(current->ip);
+							}
+							else {
+								resuming = false;
+								_ProcessReturn_BuiltinFunc(ret);
+							}
 						}
 						else {
-							resuming = false;
+							BaseFunction::invoke(this, c->arg1, argv);
+							if (!error) {
+								script_block* subIvk = (script_block*)(argv[0].as_int() & 0xffffffff);
+								if (subIvk->func) {
+									value ret = subIvk->func(this, subIvk->arguments, argv + 1);
+									_ProcessReturn_BuiltinFunc(ret);
+								}
+								else if (subIvk->kind == block_kind::bk_microthread) {
+									ref_unsync_ptr<environment> e = add_thread(subIvk);
 
-							//Erase the passed arguments from the stack
-							stack.pop_back(c->arg1);
+									_PassArgsFromStack(subIvk->arguments, stack, e->stack);
+									stack.pop_back();
 
-							//Return value
-							if (opc == command_kind::pc_call_and_push_result)
-								stack.push_back(ret);
+									if (opc == command_kind::pc_call_and_push_result)
+										stack.push_back(value());
+								}
+								else {
+									ref_unsync_ptr<environment> e = add_child_block(subIvk);
+									e->has_result = true;
+
+									_PassArgsFromStack(subIvk->arguments, stack, e->stack);
+									stack.pop_back();
+								}
+							}
 						}
 					}
 					else if (sub->kind == block_kind::bk_microthread) {
 						//Tasks
-						ref_unsync_ptr<environment> e = new environment(*current_thread_index, sub);
-						threads.insert(++current_thread_index, e);
-						--current_thread_index;
+						ref_unsync_ptr<environment> e = add_thread(sub);
 
-						//Pass the arguments
-						for (size_t i = 0; i < c->arg1; ++i) {
-							e->stack.push_back(stack.back());
-							stack.pop_back();
-						}
+						_PassArgsFromStack(c->arg1, stack, e->stack);
 					}
 					else {
 						//User-defined functions or internal blocks
-						ref_unsync_ptr<environment> e = new environment(*current_thread_index, sub);
+						ref_unsync_ptr<environment> e = add_child_block(sub);
 						e->has_result = opc == command_kind::pc_call_and_push_result;
-						*current_thread_index = e;
 
-						//Pass the arguments
-						for (size_t i = 0; i < c->arg1; ++i) {
-							e->stack.push_back(stack.back());
-							stack.pop_back();
-						}
+						_PassArgsFromStack(c->arg1, stack, e->stack);
 					}
 
 					break;

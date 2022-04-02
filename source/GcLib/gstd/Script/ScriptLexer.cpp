@@ -500,6 +500,7 @@ std::unordered_map<std::string, token_kind> script_scanner::token_map = {
 	{ "as_string", token_kind::tk_cast_string },
 
 	{ "length", token_kind::tk_LENGTH },
+	{ "__funcptr", token_kind::tk_GET_FUNC },
 
 	{ "alternative", token_kind::tk_ALTERNATIVE },
 	//{ "switch", token_kind::tk_ALTERNATIVE },

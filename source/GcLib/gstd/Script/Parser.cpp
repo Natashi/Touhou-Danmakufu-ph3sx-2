@@ -140,6 +140,8 @@ static const std::vector<function> base_operations = {
 	{ "modc", BaseFunction::modc, 2 },
 	{ "power", BaseFunction::power, 2 },
 
+	{ "invoke", BaseFunction::invoke, -2 },	//1 fixed -> 1 minimum
+
 	{ "as_x", BaseFunction::cast_x, 2 },
 
 	{ "as_int_array", BaseFunction::cast_int_array, 1 },
@@ -911,6 +913,70 @@ continue_as_variadic:
 		parse_parentheses(block, state);
 		state->AddCode(block, code(command_kind::pc_inline_length_array));
 		return;
+	case token_kind::tk_GET_FUNC:
+	{
+		//Note: This is only a temporary solution, it will be deleted later
+
+		state->advance();
+
+		parser_assert(state, state->next() == token_kind::tk_open_par, "\"(\" is required.\r\n");
+		state->advance();
+
+		parser_assert(state, state->next() == token_kind::tk_word, 
+			"Invalid parameter for __funcptr\r\n");
+
+		std::string funcName = state->lex->word;
+		bool bHasArgc = false; int argc = 0;
+
+		state->advance();
+		if (state->next() == token_kind::tk_comma) {
+			state->advance();
+			
+			bHasArgc = true;
+			argc = state->lex->int_value;
+			if (state->next() == token_kind::tk_int)
+				argc = state->lex->int_value;
+			else if (state->next() == token_kind::tk_float)
+				argc = state->lex->float_value;
+			else bHasArgc = false;
+
+			parser_assert(state, bHasArgc && argc >= 0,
+				"__funcptr: argc must be a non-negative int\r\n");
+			state->advance();
+		}
+
+		parser_assert(state, state->next() == token_kind::tk_close_par, "\")\" is required.\r\n");
+		state->advance();
+
+		symbol* s = bHasArgc ? search(funcName, argc) : search(funcName);
+
+		std::string error;
+		if (s == nullptr) {
+			if (!bHasArgc)
+				error = StringUtility::Format("%s is not defined.\r\n", funcName.c_str());
+			else {
+				error = StringUtility::Format("No overload of %s takes %d arguments.\r\n",
+					funcName.c_str(), argc);
+			}
+		}
+		else if (s->bVariable)
+			error = StringUtility::Format("%s is not callable.\r\n", funcName.c_str());
+		
+		parser_assert(state, error.size() == 0, error);
+
+		uint64_t val = 0;
+
+		//TODO: Make this x64-complaint
+		val |= (uint64_t)s->sub & 0xffffffff;
+		val |= (uint64_t)(s->sub->arguments & 0xffff) << 32;
+		val |= (uint64_t)0x6a53 << 48;
+
+		state->AddCode(block, code(command_kind::pc_push_value,
+			value(script_type_manager::get_int_type(), (int64_t&)val)));
+
+		return;
+	}
+
 	case token_kind::tk_open_bra:
 	{
 		state->advance();
