@@ -443,7 +443,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjShot_SetDelay", StgStageScript::Func_ObjShot_SetDelay, 2 },
 	{ "ObjShot_SetSpellResist", StgStageScript::Func_ObjShot_SetSpellResist, 2 },
 	{ "ObjShot_SetGraphic", StgStageScript::Func_ObjShot_SetGraphic, 2 },
-	{ "ObjShot_SetSourceBlendType", StgStageScript::Func_ObjShot_SetSourceBlendType, 2 },
+	{ "ObjShot_SetDelayBlendType", StgStageScript::Func_ObjShot_SetSourceBlendType, 2 },
 	{ "ObjShot_SetDamage", StgStageScript::Func_ObjShot_SetDamage, 2 },
 	{ "ObjShot_SetPenetration", StgStageScript::Func_ObjShot_SetPenetration, 2 },
 	{ "ObjShot_SetEraseShot", StgStageScript::Func_ObjShot_SetEraseShot, 2 },
