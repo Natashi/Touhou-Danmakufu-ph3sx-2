@@ -29,6 +29,7 @@ protected:
 	ref_unsync_ptr<StgMovePattern> pattern_;
 
 	bool bEnableMovement_;
+	int frameMove_;
 
 	uint32_t framePattern_;
 	std::map<uint32_t, std::list<ref_unsync_ptr<StgMovePattern>>> mapPattern_;
@@ -60,6 +61,8 @@ public:
 		pattern_ = pattern;
 	}
 	void AddPattern(uint32_t frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap = false);
+
+	int GetMoveFrame() { return frameMove_; }
 };
 
 //*******************************************************************

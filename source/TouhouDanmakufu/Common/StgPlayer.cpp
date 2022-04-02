@@ -138,6 +138,7 @@ void StgPlayerObject::Work() {
 }
 void StgPlayerObject::Move() {
 	if (state_ == STATE_NORMAL && bEnableMovement_) {
+		++frameMove_;
 		_Move();
 	}
 	else {

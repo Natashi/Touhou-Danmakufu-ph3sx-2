@@ -106,6 +106,8 @@ namespace directx {
 		FileText,
 		FileBinary,
 
+		Base,
+
 		//------------------------------
 
 		Player = 128,

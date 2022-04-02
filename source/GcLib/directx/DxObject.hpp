@@ -29,7 +29,10 @@ namespace directx {
 		int priRender_;
 		bool bVisible_;
 		bool bDeleted_;
+		bool bQueuedToDelete_;
 		bool bActive_;
+		bool bAutoDeleteOverride_;
+		int frameExist_;
 
 		std::unordered_map<std::wstring, gstd::value> mapObjectValue_;
 		std::unordered_map<int64_t, gstd::value> mapObjectValueI_;
@@ -41,8 +44,8 @@ namespace directx {
 		
 		virtual void Initialize() {}
 		virtual void Work() {}
-		virtual void Render() = 0;
-		virtual void SetRenderState() = 0;
+		virtual void Render() {}
+		virtual void SetRenderState() {}
 		virtual void CleanUp() {}
 
 		virtual bool HasNormalRendering() { return false; }
@@ -50,6 +53,8 @@ namespace directx {
 		int GetObjectID() { return idObject_; }
 		TypeObject GetObjectType() { return typeObject_; }
 		int64_t GetScriptID() { return idScript_; }
+		void QueueDelete() { bQueuedToDelete_ = true; }
+		bool IsQueuedForDeletion() { return bQueuedToDelete_; }
 		bool IsDeleted() { return bDeleted_; }
 		bool IsActive() { return bActive_; }
 		void SetActive(bool bActive) { bActive_ = bActive; }
@@ -59,6 +64,10 @@ namespace directx {
 		int GetRenderPriorityI() { return priRender_; }
 		void SetRenderPriority(double pri);
 		void SetRenderPriorityI(int pri) { priRender_ = pri; }
+		void SetAutoDeleteOverride(bool del) { bAutoDeleteOverride_ = del; }
+		bool IsAutoDeleteOverride() { return bAutoDeleteOverride_; }
+
+		int GetExistFrame() { return frameExist_; }
 
 		std::unordered_map<std::wstring, gstd::value>* GetValueMap() { return &mapObjectValue_; }
 		std::unordered_map<int64_t, gstd::value>* GetValueMapI() { return &mapObjectValueI_; }
@@ -694,6 +703,8 @@ namespace directx {
 
 		void ClearObject();
 		void DeleteObjectByScriptID(int64_t idScript);
+		void OrphanObjectByScriptID(int64_t idScript);
+		std::vector<int> GetObjectByScriptID(int64_t idScript);
 
 		void AddRenderObject(ref_unsync_ptr<DxScriptObjectBase> obj);
 		void WorkObject();

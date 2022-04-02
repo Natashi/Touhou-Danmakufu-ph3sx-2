@@ -376,6 +376,9 @@ static const std::vector<function> managedScriptFunction = {
 	{ "SetScriptArgument", ManagedScript::Func_SetScriptArgument, 3 },
 	{ "GetScriptResult", ManagedScript::Func_GetScriptResult, 1 },
 	{ "SetAutoDeleteObject", ManagedScript::Func_SetAutoDeleteObject, 1 },
+	{ "GetAllObjectIdInScript", ManagedScript::Func_GetAllObjectIdInScript, 0 },
+	{ "GetAllObjectIdInScript", ManagedScript::Func_GetAllObjectIdInScript, 1 }, //Overloaded
+	{ "GetAllObjectIdInPool", ManagedScript::Func_GetAllObjectIdInPool, 0 },
 
 	{ "NotifyEvent", ManagedScript::Func_NotifyEvent, -4 },			//2 fixed + ... -> 3 minimum
 	{ "NotifyEventOwn", ManagedScript::Func_NotifyEventOwn, -3 },	//1 fixed + ... -> 2 minimum
@@ -595,6 +598,22 @@ gstd::value ManagedScript::Func_SetAutoDeleteObject(script_machine* machine, int
 	ManagedScript* script = (ManagedScript*)machine->data;
 	script->SetAutoDeleteObject(argv[0].as_boolean());
 	return value();
+}
+gstd::value ManagedScript::Func_GetAllObjectIdInScript(script_machine* machine, int argc, const value* argv) {
+	ManagedScript* script = (ManagedScript*)machine->data;
+	int64_t idScript = script->idScript_;
+	if (argc == 1) idScript = argv[0].as_int();
+
+	std::vector<int> res = script->GetObjectManager()->GetObjectByScriptID(idScript);
+
+	return script->CreateIntArrayValue(res);
+}
+gstd::value ManagedScript::Func_GetAllObjectIdInPool(script_machine* machine, int argc, const value* argv) {
+	ManagedScript* script = (ManagedScript*)machine->data;
+
+	std::vector<int> res = script->GetObjectManager()->GetValidObjectIdentifier();
+
+	return script->CreateIntArrayValue(res);
 }
 gstd::value ManagedScript::Func_NotifyEvent(script_machine* machine, int argc, const value* argv) {
 	ManagedScript* script = (ManagedScript*)machine->data;
