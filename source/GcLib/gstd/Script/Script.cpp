@@ -183,18 +183,17 @@ void script_machine::call(std::map<std::string, script_block*>::iterator event_i
 	assert(!stopped);
 	if (event_itr != engine->events.end()) {
 		run();
-
-		ref_unsync_ptr<environment> eventEnv = new environment(*current_thread_index, event_itr->second);
-		interrupt(eventEnv);
+		interrupt(event_itr->second);
 	}
 }
 
-void script_machine::interrupt(ref_unsync_ptr<environment> env) {
+void script_machine::interrupt(script_block* sub) {
+	//Save current thread
 	auto prev_thread = current_thread_index;
 	current_thread_index = threads.begin();
 
 	ref_unsync_ptr<environment>& env_first = *current_thread_index;
-	env_first = env;
+	env_first = new environment(env_first, sub);
 
 	finished = false;
 
@@ -204,7 +203,7 @@ void script_machine::interrupt(ref_unsync_ptr<environment> env) {
 
 	finished = false;
 
-	//Resume previous routine
+	//Resume previous thread
 	current_thread_index = prev_thread;
 }
 ref_unsync_ptr<script_machine::environment> script_machine::add_thread(script_block* sub) {
@@ -302,7 +301,6 @@ void script_machine::run_code() {
 					break;
 				case command_kind::pc_push_value:
 					stack.push_back(c->data);
-					//stack.back().make_unique();
 					break;
 				case command_kind::pc_push_variable:
 				case command_kind::pc_push_variable2:

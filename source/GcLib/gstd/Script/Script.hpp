@@ -117,7 +117,7 @@ namespace gstd {
 		script_machine(script_engine* the_engine);
 		virtual ~script_machine();
 
-		void interrupt(ref_unsync_ptr<environment> env);
+		void interrupt(script_block* sub);
 		ref_unsync_ptr<environment> add_thread(script_block* sub);
 		ref_unsync_ptr<environment> add_child_block(script_block* sub);
 	public:
