@@ -440,9 +440,11 @@ void script_machine::run_code() {
 						break;
 					}
 
+					bool bPushResult = opc == command_kind::pc_call_and_push_result;
+
 					auto _ProcessReturn_BuiltinFunc = [&](value ret) {
 						stack.pop_back(c->arg1);
-						if (opc == command_kind::pc_call_and_push_result)
+						if (bPushResult)
 							stack.push_back(ret);
 					};
 					auto _PassArgsFromStack = [](size_t argc, script_value_vector& srcStk, script_value_vector& dstStk) {
@@ -486,12 +488,12 @@ void script_machine::run_code() {
 									_PassArgsFromStack(subIvk->arguments, stack, e->stack);
 									stack.pop_back();
 
-									if (opc == command_kind::pc_call_and_push_result)
+									if (bPushResult)
 										stack.push_back(value());
 								}
 								else {
 									ref_unsync_ptr<environment> e = add_child_block(subIvk);
-									e->has_result = true;
+									e->has_result = bPushResult;
 
 									_PassArgsFromStack(subIvk->arguments, stack, e->stack);
 									stack.pop_back();
@@ -508,7 +510,7 @@ void script_machine::run_code() {
 					else {
 						//User-defined functions or internal blocks
 						ref_unsync_ptr<environment> e = add_child_block(sub);
-						e->has_result = opc == command_kind::pc_call_and_push_result;
+						e->has_result = bPushResult;
 
 						_PassArgsFromStack(c->arg1, stack, e->stack);
 					}
