@@ -395,8 +395,12 @@ void script_scanner::advance() {
 					ch = next_char();
 				};
 
+				next = token_kind::tk_int;
+
 				wchar_t ch2 = peek_next_char(1);
 				if (ch == L'.' && std::iswdigit(ch2)) {
+					next = token_kind::tk_float;
+
 					strNum += ch;
 					ch = next_char();
 					do {
@@ -408,6 +412,8 @@ void script_scanner::advance() {
 
 				ch2 = peek_next_char(1);
 				if ((ch == L'e' || ch == L'E') && (std::iswdigit(ch2) || ch2 == L'-')) {
+					next = token_kind::tk_float;
+
 					//Parse E
 					strNum += ch;
 					ch = next_char();
@@ -423,8 +429,6 @@ void script_scanner::advance() {
 						ch = next_char();
 					} while (std::iswdigit(ch));
 				}
-
-				next = token_kind::tk_float;
 			}
 
 			wchar_t suffix = std::towlower(ch);

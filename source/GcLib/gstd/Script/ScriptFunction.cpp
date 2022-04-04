@@ -542,6 +542,7 @@ namespace gstd {
 		if (argv[0].get_type()->get_kind() == type_data::tk_array)
 			return __script_perform_op_array(&argv[0], &argv[1], _script_divide);
 		else {
+			/*
 			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_float))
 				return value(script_type_manager::get_float_type(), argv[0].as_float() / argv[1].as_float());
 			else {
@@ -550,6 +551,8 @@ namespace gstd {
 					throw std::string("Invalid operation: integer division by zero.\r\n");
 				return value(script_type_manager::get_int_type(), (int64_t)(argv[0].as_int() / deno));
 			}
+			*/
+			return value(script_type_manager::get_float_type(), argv[0].as_float() / argv[1].as_float());
 		}
 	}
 	SCRIPT_DECLARE_OP(divide);
