@@ -10,7 +10,7 @@ namespace gstd {
 	public:
 		size_t length;
 		size_t capacity;
-		value* at;
+		value* at = nullptr;
 	private:
 		void _fill_with_empty(value* pos, size_t count);
 		void _relink_pointers(value* oldAt, size_t oldSize, value* newAt);

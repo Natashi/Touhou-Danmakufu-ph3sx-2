@@ -84,16 +84,25 @@ namespace gstd {
 	public:
 		class environment {
 		public:
-			ref_unsync_ptr<environment> parent;
+			script_machine* machine;
+
+			environment* parent;
 			script_block* sub;
 			int ip;
 			script_value_vector variables;
 			script_value_vector stack;
 			bool has_result;
 			int waitCount;
+
+			int _ref;
 		public:
-			environment(ref_unsync_ptr<environment> parent, script_block* b);
+			environment(script_machine* machine);
 			~environment();
+
+			void init(environment* parent, script_block* b);
+
+			void add_ref();
+			void dec_ref();
 		};
 	public:
 		void* data;		//Pointer to client script class
@@ -109,17 +118,25 @@ namespace gstd {
 		bool stopped;
 		bool resuming;
 
-		std::list<ref_unsync_ptr<environment>> list_parent_environment;
+		std::list<environment> _list_environments;
+		std::list<environment*> _list_free_environments;
 
-		std::list<ref_unsync_ptr<environment>> threads;
-		std::list<ref_unsync_ptr<environment>>::iterator current_thread_index;
+		std::list<environment*> list_parent_environment;
+
+		std::list<environment*> threads;
+		std::list<environment*>::iterator current_thread_index;
+	private:
+		void alloc_env_chunk(size_t chunk);
+
+		environment* get_new_environment();
+		void dispose_environment(environment* env);
 	public:
 		script_machine(script_engine* the_engine);
 		virtual ~script_machine();
 
 		void interrupt(script_block* sub);
-		ref_unsync_ptr<environment> add_thread(script_block* sub);
-		ref_unsync_ptr<environment> add_child_block(script_block* sub);
+		environment* add_thread(script_block* sub);
+		environment* add_child_block(script_block* sub);
 	public:
 		void reset();
 		void run();

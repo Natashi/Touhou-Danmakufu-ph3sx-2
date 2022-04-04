@@ -6,8 +6,9 @@
 
 using namespace gstd;
 
-/* script_type_manager */
-
+//****************************************************************************
+//script_type_manager
+//****************************************************************************
 script_type_manager* script_type_manager::base_ = nullptr;
 script_type_manager::script_type_manager() {
 	if (base_) return;
@@ -52,8 +53,9 @@ type_data* script_type_manager::get_array_type(type_data* element) {
 	return get_type(&target);
 }
 
-/* script_engine */
-
+//****************************************************************************
+//script_engine
+//****************************************************************************
 script_engine::script_engine(const std::wstring& source, std::vector<function>* list_func, std::vector<constant>* list_const) {
 	init(source.data(), source.data() + source.size(), list_func, list_const);
 }
@@ -93,18 +95,25 @@ script_block* script_engine::new_block(int level, block_kind kind) {
 	return &*blocks.insert(blocks.end(), x);
 }
 
-/* script_machine */
+//****************************************************************************
+//script_machine::environment
+//****************************************************************************
+script_machine::environment::environment(script_machine* machine) {
+	this->machine = machine;
 
-script_machine::script_machine(script_engine* the_engine) {
-	assert(!the_engine->get_error());
-	engine = the_engine;
+	parent = nullptr;
+	sub = nullptr;
+	ip = 0;
+	has_result = false;
+	waitCount = 0;
 
-	reset();
+	_ref = 0;
 }
-script_machine::~script_machine() {
+script_machine::environment::~environment() {
+	//dec_ref();
 }
 
-script_machine::environment::environment(ref_unsync_ptr<environment> parent, script_block* b) {
+void script_machine::environment::init(environment* parent, script_block* b) {
 	this->parent = parent;
 	sub = b;
 	ip = 0;
@@ -112,10 +121,58 @@ script_machine::environment::environment(ref_unsync_ptr<environment> parent, scr
 	stack.clear();
 	has_result = false;
 	waitCount = 0;
+
+	if (parent)
+		parent->add_ref();
+	_ref = 1;
 }
-script_machine::environment::~environment() {
-	variables.clear();
-	stack.clear();
+
+void script_machine::environment::add_ref() {
+	++_ref;
+}
+void script_machine::environment::dec_ref() {
+	--_ref;
+	if (_ref == 0) {
+		variables.clear();
+		stack.clear();
+
+		machine->dispose_environment(this);
+	}
+}
+
+//****************************************************************************
+//script_machine
+//****************************************************************************
+script_machine::script_machine(script_engine* the_engine) {
+	engine = the_engine;
+
+	reset();
+}
+script_machine::~script_machine() {
+}
+
+constexpr size_t ENV_CHUNK = 2048;
+void script_machine::alloc_env_chunk(size_t chunk) {
+	//Allocate in chunks to try to be merciful to the cache
+	for (size_t i = 0; i < chunk; ++i) {
+		_list_environments.push_back(std::move(environment(this)));
+		_list_free_environments.push_back(&_list_environments.back());
+	}
+}
+script_machine::environment* script_machine::get_new_environment() {
+	environment* res = nullptr;
+
+	if (_list_free_environments.size() == 0) {
+		alloc_env_chunk(ENV_CHUNK);
+	}
+
+	res = _list_free_environments.front();
+	_list_free_environments.pop_front();
+
+	return res;
+}
+void script_machine::dispose_environment(environment* env) {
+	_list_free_environments.push_back(env);
 }
 
 bool script_machine::has_event(const std::string& event_name, std::map<std::string, script_block*>::iterator& res) {
@@ -123,8 +180,9 @@ bool script_machine::has_event(const std::string& event_name, std::map<std::stri
 	return res != engine->events.end();
 }
 int script_machine::get_current_line() {
-	ref_unsync_ptr<environment>& current = *current_thread_index;
-	return (current->sub->codes[current->ip]).GetLine();
+	//ref_unsync_ptr<environment>& current = *current_thread_index;
+	//return (current->sub->codes[current->ip]).GetLine();
+	return error_line;
 }
 
 void script_machine::reset() {
@@ -138,18 +196,23 @@ void script_machine::reset() {
 	stopped = false;
 	resuming = false;
 
+	_list_environments.clear();
+	_list_free_environments.clear();
+
 	list_parent_environment.clear();
 	threads.clear();
-	current_thread_index = std::list<ref_unsync_ptr<environment>>::iterator();
+	current_thread_index = std::list<environment*>::iterator();
 }
 void script_machine::run() {
 	if (bTerminate) return;
 
-	assert(!error);
 	if (threads.size() == 0) {
 		error_line = -1;
 
-		threads.push_back(new environment(nullptr, engine->main_block));
+		environment* mainEnv = get_new_environment();
+		mainEnv->init(nullptr, engine->main_block);
+		threads.push_back(mainEnv);
+
 		current_thread_index = threads.begin();
 
 		finished = false;
@@ -159,12 +222,8 @@ void script_machine::run() {
 		run_code();
 	}
 }
-
 void script_machine::resume() {
 	if (bTerminate) return;
-
-	assert(!error);
-	assert(stopped);
 
 	stopped = false;
 	finished = false;
@@ -179,8 +238,6 @@ void script_machine::call(const std::string& event_name) {
 void script_machine::call(std::map<std::string, script_block*>::iterator event_itr) {
 	if (bTerminate) return;
 
-	assert(!error);
-	assert(!stopped);
 	if (event_itr != engine->events.end()) {
 		run();
 		interrupt(event_itr->second);
@@ -192,12 +249,15 @@ void script_machine::interrupt(script_block* sub) {
 	auto prev_thread = current_thread_index;
 	current_thread_index = threads.begin();
 
-	ref_unsync_ptr<environment>& env_first = *current_thread_index;
-	env_first = new environment(env_first, sub);
+	environment* env_first = *current_thread_index;
+
+	environment* new_env = get_new_environment();
+	new_env->init(env_first, sub);
+	*current_thread_index = new_env;
 
 	finished = false;
 
-	list_parent_environment.push_back(env_first->parent->parent);
+	list_parent_environment.push_back(new_env->parent->parent);
 	run_code();
 	list_parent_environment.pop_back();
 
@@ -206,26 +266,32 @@ void script_machine::interrupt(script_block* sub) {
 	//Resume previous thread
 	current_thread_index = prev_thread;
 }
-ref_unsync_ptr<script_machine::environment> script_machine::add_thread(script_block* sub) {
-	ref_unsync_ptr<environment> e = new environment(*current_thread_index, sub);
+script_machine::environment* script_machine::add_thread(script_block* sub) {
+	environment* e = get_new_environment();
+	e->init(*current_thread_index, sub);
+
 	threads.insert(++current_thread_index, e);
 	--current_thread_index;
+
 	return e;
 }
-ref_unsync_ptr<script_machine::environment> script_machine::add_child_block(script_block* sub) {
-	ref_unsync_ptr<environment> e = new environment(*current_thread_index, sub);
+script_machine::environment* script_machine::add_child_block(script_block* sub) {
+	environment* e = get_new_environment();
+	e->init(*current_thread_index, sub);
+
 	*current_thread_index = e;
+
 	return e;
 }
 
 void script_machine::run_code() {
 	if (threads.size() == 0) {
-		current_thread_index = std::list<ref_unsync_ptr<environment>>::iterator();
+		current_thread_index = std::list<environment*>::iterator();
 		return;
 	}
 	try {
 		while (!finished && !bTerminate) {
-			environment* current = current_thread_index->get();
+			environment* current = *current_thread_index;
 
 			if (current->waitCount > 0) {
 				--(current->waitCount);
@@ -234,10 +300,10 @@ void script_machine::run_code() {
 			}
 
 			if (current->ip >= current->sub->codes.size()) {	//Routine finished
-				environment* parent = current->parent.get();
+				environment* parent = current->parent;
 
 				bool bFinish = false;
-				if (parent == nullptr)
+				if (parent == nullptr)	//Top-level env node
 					bFinish = true;
 				else if (list_parent_environment.size() > 1 && parent->parent != nullptr) {
 					if (parent->parent == list_parent_environment.back())
@@ -253,10 +319,16 @@ void script_machine::run_code() {
 						yield();
 					}
 					else {
-						ref_unsync_ptr<environment> parent_ref = current->parent;
 						if (current->has_result && parent != nullptr)
 							parent->stack.push_back(current->variables[0]);
-						*current_thread_index = parent_ref;
+						*current_thread_index = parent;
+					}
+
+					for (environment* pEnv = current; pEnv != nullptr;) {
+						pEnv->dec_ref();
+						if (pEnv->_ref > 0)
+							break;		//Object is still alive, stop removing refs
+						pEnv = pEnv->parent;
 					}
 				}
 			}
@@ -419,7 +491,7 @@ void script_machine::run_code() {
 				}
 
 				case command_kind::pc_sub_return:
-					for (environment* i = current; i != nullptr; i = (i->parent).get()) {
+					for (environment* i = current; i != nullptr; i = i->parent) {
 						i->ip = i->sub->codes.size();
 
 						if (i->sub->kind == block_kind::bk_sub || i->sub->kind == block_kind::bk_function
@@ -483,7 +555,7 @@ void script_machine::run_code() {
 									_ProcessReturn_BuiltinFunc(ret);
 								}
 								else if (subIvk->kind == block_kind::bk_microthread) {
-									ref_unsync_ptr<environment> e = add_thread(subIvk);
+									environment* e = add_thread(subIvk);
 
 									_PassArgsFromStack(subIvk->arguments, stack, e->stack);
 									stack.pop_back();
@@ -492,7 +564,7 @@ void script_machine::run_code() {
 										stack.push_back(value());
 								}
 								else {
-									ref_unsync_ptr<environment> e = add_child_block(subIvk);
+									environment* e = add_child_block(subIvk);
 									e->has_result = bPushResult;
 
 									_PassArgsFromStack(subIvk->arguments, stack, e->stack);
@@ -503,13 +575,13 @@ void script_machine::run_code() {
 					}
 					else if (sub->kind == block_kind::bk_microthread) {
 						//Tasks
-						ref_unsync_ptr<environment> e = add_thread(sub);
+						environment* e = add_thread(sub);
 
 						_PassArgsFromStack(c->arg1, stack, e->stack);
 					}
 					else {
 						//User-defined functions or internal blocks
-						ref_unsync_ptr<environment> e = add_child_block(sub);
+						environment* e = add_child_block(sub);
 						e->has_result = bPushResult;
 
 						_PassArgsFromStack(c->arg1, stack, e->stack);
@@ -640,7 +712,7 @@ void script_machine::run_code() {
 				case command_kind::pc_inline_dec:
 				{
 					if (c->arg0) {
-						value* var = find_variable_symbol<false>(current, c, 
+						value* var = find_variable_symbol<false>(current, c,
 							ARG1_GET_LEVEL(c->arg1), ARG1_GET_VAR(c->arg1));
 						if (var == nullptr) break;
 						value res = (opc == command_kind::pc_inline_inc) ?
@@ -665,7 +737,7 @@ void script_machine::run_code() {
 				case command_kind::pc_inline_fdiv_asi:
 				case command_kind::pc_inline_mod_asi:
 				case command_kind::pc_inline_pow_asi:
-				//case command_kind::pc_inline_cat_asi:
+					//case command_kind::pc_inline_cat_asi:
 				{
 					auto PerformFunction = [&](value* dest, command_kind cmd, value* argv) {
 #define DEF_CASE(_c, _fn) case _c: *dest = BaseFunction::_fn(this, 2, argv); break;
@@ -684,7 +756,7 @@ void script_machine::run_code() {
 
 					value res;
 					if (c->arg0) {
-						value* dest = find_variable_symbol<false>(current, c, 
+						value* dest = find_variable_symbol<false>(current, c,
 							ARG1_GET_LEVEL(c->arg1), ARG1_GET_VAR(c->arg1));
 						if (dest == nullptr) break;
 
@@ -713,7 +785,7 @@ void script_machine::run_code() {
 				case command_kind::pc_inline_cat_asi:
 				{
 					if (c->arg0) {
-						value* dest = find_variable_symbol<false>(current, c, 
+						value* dest = find_variable_symbol<false>(current, c,
 							ARG1_GET_LEVEL(c->arg1), ARG1_GET_VAR(c->arg1));
 						if (dest == nullptr) break;
 
@@ -778,8 +850,8 @@ void script_machine::run_code() {
 					}
 #undef DEF_CASE
 
-				//stack.pop_back(2U);
-				//stack.push_back(res);
+					//stack.pop_back(2U);
+					//stack.push_back(res);
 					stack.pop_back();
 					stack.back() = res;
 					break;
@@ -806,8 +878,8 @@ void script_machine::run_code() {
 					}
 #undef DEF_CASE
 
-				//stack.pop_back(2U);
-				//stack.push_back(res);
+					//stack.pop_back(2U);
+					//stack.push_back(res);
 					stack.pop_back();
 					stack.back() = cmp_res;
 					break;
@@ -896,9 +968,8 @@ void script_machine::run_code() {
 
 template<bool ALLOW_NULL>
 value* script_machine::find_variable_symbol(environment* current_env, code* c,
-	uint32_t level, uint32_t variable)
-{
-	for (environment* i = current_env; i != nullptr; i = (i->parent).get()) {
+	uint32_t level, uint32_t variable) {
+	for (environment* i = current_env; i != nullptr; i = i->parent) {
 		if (i->sub->level == level) {
 			value* res = &(i->variables[variable]);
 
