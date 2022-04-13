@@ -135,18 +135,22 @@ namespace directx {
 		D3DXHANDLE GetHandle() { return handle_; }
 		ShaderParameterType GetType() { return type_; }
 
+		void SetInt(const int32_t value);
+		void SetIntArray(const std::vector<int32_t>& values);
+		void SetFloat(const float value);
+		void SetFloatArray(const std::vector<float>& values);
+		void SetVector(const D3DXVECTOR4& vector);
 		void SetMatrix(const D3DXMATRIX& matrix);
 		void SetMatrixArray(const std::vector<D3DXMATRIX>& matrix);
-		void SetVector(const D3DXVECTOR4& vector);
-		void SetFloat(const FLOAT value);
-		void SetFloatArray(const std::vector<FLOAT>& values);
 		void SetTexture(shared_ptr<Texture> texture);
 
+		inline int32_t* GetInt();
+		std::vector<int32_t> GetIntArray();
+		inline float* GetFloat();
+		std::vector<float> GetFloatArray();
+		inline D3DXVECTOR4* GetVector();
 		inline D3DXMATRIX* GetMatrix();
 		std::vector<D3DXMATRIX> GetMatrixArray();
-		inline D3DXVECTOR4* GetVector();
-		inline FLOAT* GetFloat();
-		std::vector<FLOAT> GetFloatArray();
 		inline shared_ptr<Texture> GetTexture();
 
 		inline std::vector<byte>* GetRaw() { return &value_; }
@@ -159,10 +163,6 @@ namespace directx {
 		friend ShaderManager;
 	protected:
 		shared_ptr<ShaderData> data_;
-
-		//bool bLoadShader_;
-		//IDirect3DVertexShader9* pVertexShader_;
-		//IDirect3DPixelShader9* pPixelShader_;
 
 		std::string technique_;
 		std::map<D3DXHANDLE, ShaderParameter> mapParam_;
@@ -189,20 +189,27 @@ namespace directx {
 		bool IsLoad() { return data_ != nullptr && data_->bLoad_; }
 
 		bool SetTechnique(const std::string& name);
-		bool SetMatrix(const std::string& name, const D3DXMATRIX& matrix);
-		bool SetMatrixArray(const std::string& name, const std::vector<D3DXMATRIX>& matrix);
-		bool SetVector(const std::string& name, const D3DXVECTOR4& vector);
-		bool SetFloat(const std::string& name, const FLOAT value);
-		bool SetFloatArray(const std::string& name, const std::vector<FLOAT>& values);
-		bool SetTexture(const std::string& name, shared_ptr<Texture> texture);
-
 		bool ValidateTechnique(const std::string& name);
-		bool GetMatrix(const std::string& name, D3DXMATRIX* matrix);
-		bool GetMatrixArray(const std::string& name, std::vector<D3DXMATRIX>* matrix);
-		bool GetVector(const std::string& name, D3DXVECTOR4* vector);
-		bool GetFloat(const std::string& name, FLOAT* value);
-		bool GetFloatArray(const std::string& name, std::vector<FLOAT>* values);
-		bool GetTexture(const std::string& name, shared_ptr<Texture>* texture);
+
+		bool SetInt(const std::string& name, const int32_t value);
+		bool SetIntArray(const std::string& name, const std::vector<int32_t>& value);
+		bool SetFloat(const std::string& name, const float value);
+		bool SetFloatArray(const std::string& name, const std::vector<float>& value);
+		bool SetVector(const std::string& name, const D3DXVECTOR4& value);
+		bool SetMatrix(const std::string& name, const D3DXMATRIX& value);
+		bool SetMatrixArray(const std::string& name, const std::vector<D3DXMATRIX>& value);
+		bool SetTexture(const std::string& name, shared_ptr<Texture> value);
+	protected:
+		ShaderParameter* __GetParam(const std::string& name, void* pData);
+	public:
+		bool GetInt(const std::string& name, int32_t* value);
+		bool GetIntArray(const std::string& name, std::vector<int32_t>* value);
+		bool GetFloat(const std::string& name, float* value);
+		bool GetFloatArray(const std::string& name, std::vector<float>* value);
+		bool GetVector(const std::string& name, D3DXVECTOR4* value);
+		bool GetMatrix(const std::string& name, D3DXMATRIX* value);
+		bool GetMatrixArray(const std::string& name, std::vector<D3DXMATRIX>* value);
+		bool GetTexture(const std::string& name, shared_ptr<Texture>* value);
 	};
 
 	//*******************************************************************

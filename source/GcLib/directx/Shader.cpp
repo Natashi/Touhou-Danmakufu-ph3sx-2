@@ -43,15 +43,15 @@ ShaderParameter::~ShaderParameter() {
 void ShaderParameter::SubmitData(ID3DXEffect* effect) {
 	if (effect == nullptr) return;
 	switch (type_) {
-	case ShaderParameterType::Float:
-		effect->SetFloat(handle_, *GetFloat());
-		break;
 	case ShaderParameterType::Texture:
 		if (texture_)
 			effect->SetTexture(handle_, texture_->GetD3DTexture());
 		else
 			effect->SetTexture(handle_, nullptr);
 		break;
+	case ShaderParameterType::Int:
+	case ShaderParameterType::IntArray:
+	case ShaderParameterType::Float:
 	case ShaderParameterType::FloatArray:
 	case ShaderParameterType::Vector:
 	case ShaderParameterType::Matrix:
@@ -61,6 +61,36 @@ void ShaderParameter::SubmitData(ID3DXEffect* effect) {
 	}
 }
 
+void ShaderParameter::SetInt(const int32_t value) {
+	type_ = ShaderParameterType::Int;
+
+	value_.resize(sizeof(int32_t));
+	memcpy(value_.data(), &value, sizeof(int32_t));
+}
+void ShaderParameter::SetIntArray(const std::vector<int32_t>& values) {
+	type_ = ShaderParameterType::IntArray;
+
+	value_.resize(values.size() * sizeof(int32_t));
+	memcpy(value_.data(), values.data(), values.size() * sizeof(int32_t));
+}
+void ShaderParameter::SetFloat(const float value) {
+	type_ = ShaderParameterType::Float;
+
+	value_.resize(sizeof(float));
+	memcpy(value_.data(), &value, sizeof(float));
+}
+void ShaderParameter::SetFloatArray(const std::vector<float>& values) {
+	type_ = ShaderParameterType::FloatArray;
+
+	value_.resize(values.size() * sizeof(float));
+	memcpy(value_.data(), values.data(), values.size() * sizeof(float));
+}
+void ShaderParameter::SetVector(const D3DXVECTOR4& vector) {
+	type_ = ShaderParameterType::Vector;
+
+	value_.resize(sizeof(D3DXVECTOR4));
+	memcpy(value_.data(), &vector, sizeof(D3DXVECTOR4));
+}
 void ShaderParameter::SetMatrix(const D3DXMATRIX& matrix) {
 	type_ = ShaderParameterType::Matrix;
 
@@ -73,30 +103,33 @@ void ShaderParameter::SetMatrixArray(const std::vector<D3DXMATRIX>& listMatrix) 
 	value_.resize(listMatrix.size() * sizeof(D3DXMATRIX));
 	memcpy(value_.data(), listMatrix.data(), listMatrix.size() * sizeof(D3DXMATRIX));
 }
-void ShaderParameter::SetVector(const D3DXVECTOR4& vector) {
-	type_ = ShaderParameterType::Vector;
-
-	value_.resize(sizeof(D3DXVECTOR4));
-	memcpy(value_.data(), &vector, sizeof(D3DXVECTOR4));
-}
-void ShaderParameter::SetFloat(const FLOAT value) {
-	type_ = ShaderParameterType::Float;
-
-	value_.resize(sizeof(FLOAT));
-	memcpy(value_.data(), &value, sizeof(FLOAT));
-}
-void ShaderParameter::SetFloatArray(const std::vector<FLOAT>& values) {
-	type_ = ShaderParameterType::FloatArray;
-
-	value_.resize(values.size() * sizeof(FLOAT));
-	memcpy(value_.data(), values.data(), values.size() * sizeof(FLOAT));
-}
 void ShaderParameter::SetTexture(shared_ptr<Texture> texture) {
 	type_ = ShaderParameterType::Texture;
 
 	texture_ = texture;
 }
 
+int32_t* ShaderParameter::GetInt() {
+	return (int32_t*)(value_.data());
+}
+std::vector<int32_t> ShaderParameter::GetIntArray() {
+	std::vector<int32_t> res;
+	res.resize(value_.size() / sizeof(int32_t));
+	memcpy(res.data(), value_.data(), res.size() * sizeof(int32_t));
+	return res;
+}
+float* ShaderParameter::GetFloat() {
+	return (float*)(value_.data());
+}
+std::vector<float> ShaderParameter::GetFloatArray() {
+	std::vector<float> res;
+	res.resize(value_.size() / sizeof(float));
+	memcpy(res.data(), value_.data(), res.size() * sizeof(float));
+	return res;
+}
+D3DXVECTOR4* ShaderParameter::GetVector() {
+	return (D3DXVECTOR4*)(value_.data());
+}
 D3DXMATRIX* ShaderParameter::GetMatrix() {
 	return (D3DXMATRIX*)(value_.data());
 }
@@ -104,18 +137,6 @@ std::vector<D3DXMATRIX> ShaderParameter::GetMatrixArray() {
 	std::vector<D3DXMATRIX> res;
 	res.resize(value_.size() / sizeof(D3DXMATRIX));
 	memcpy(res.data(), value_.data(), res.size() * sizeof(D3DXMATRIX));
-	return res;
-}
-D3DXVECTOR4* ShaderParameter::GetVector() {
-	return (D3DXVECTOR4*)(value_.data());
-}
-FLOAT* ShaderParameter::GetFloat() {
-	return (FLOAT*)(value_.data());
-}
-std::vector<FLOAT> ShaderParameter::GetFloatArray() {
-	std::vector<FLOAT> res;
-	res.resize(value_.size() / sizeof(FLOAT));
-	memcpy(res.data(), value_.data(), res.size() * sizeof(FLOAT));
 	return res;
 }
 shared_ptr<Texture> ShaderParameter::GetTexture() {
@@ -263,43 +284,6 @@ bool Shader::SetTechnique(const std::string& name) {
 	technique_ = name;
 	return true;
 }
-bool Shader::SetMatrix(const std::string& name, const D3DXMATRIX& matrix) {
-	ShaderParameter* param = _GetParameter(name, true);
-	if (param)
-		param->SetMatrix(matrix);
-	return true;
-}
-bool Shader::SetMatrixArray(const std::string& name, const std::vector<D3DXMATRIX>& matrix) {
-	ShaderParameter* param = _GetParameter(name, true);
-	if (param)
-		param->SetMatrixArray(matrix);
-	return true;
-}
-bool Shader::SetVector(const std::string& name, const D3DXVECTOR4& vector) {
-	ShaderParameter* param = _GetParameter(name, true);
-	if (param)
-		param->SetVector(vector);
-	return true;
-}
-bool Shader::SetFloat(const std::string& name, const FLOAT value) {
-	ShaderParameter* param = _GetParameter(name, true);
-	if (param)
-		param->SetFloat(value);
-	return true;
-}
-bool Shader::SetFloatArray(const std::string& name, const std::vector<FLOAT>& values) {
-	ShaderParameter* param = _GetParameter(name, true);
-	if (param)
-		param->SetFloatArray(values);
-	return true;
-}
-bool Shader::SetTexture(const std::string& name, shared_ptr<Texture> texture) {
-	ShaderParameter* param = _GetParameter(name, true);
-	if (param)
-		param->SetTexture(texture);
-	return true;
-}
-
 bool Shader::ValidateTechnique(const std::string& name) {
 	ID3DXEffect* effect = GetEffect();
 	if (effect == nullptr) return false;
@@ -309,68 +293,113 @@ bool Shader::ValidateTechnique(const std::string& name) {
 
 	return SUCCEEDED(hr);
 }
-bool Shader::GetMatrix(const std::string& name, D3DXMATRIX* matrix) {
-	ID3DXEffect* effect = GetEffect();
-	if (effect == nullptr || matrix == nullptr) return false;
 
-	ShaderParameter* param = _GetParameter(name, false);
-	if (param) {
-		*matrix = *param->GetMatrix();
+bool Shader::SetInt(const std::string& name, const int32_t value) {
+	ShaderParameter* param = _GetParameter(name, true);
+	if (param)
+		param->SetInt(value);
+	return true;
+}
+bool Shader::SetIntArray(const std::string& name, const std::vector<int32_t>& value) {
+	ShaderParameter* param = _GetParameter(name, true);
+	if (param)
+		param->SetIntArray(value);
+	return true;
+}
+bool Shader::SetFloat(const std::string& name, const float value) {
+	ShaderParameter* param = _GetParameter(name, true);
+	if (param)
+		param->SetFloat(value);
+	return true;
+}
+bool Shader::SetFloatArray(const std::string& name, const std::vector<float>& value) {
+	ShaderParameter* param = _GetParameter(name, true);
+	if (param)
+		param->SetFloatArray(value);
+	return true;
+}
+bool Shader::SetVector(const std::string& name, const D3DXVECTOR4& value) {
+	ShaderParameter* param = _GetParameter(name, true);
+	if (param)
+		param->SetVector(value);
+	return true;
+}
+bool Shader::SetMatrix(const std::string& name, const D3DXMATRIX& value) {
+	ShaderParameter* param = _GetParameter(name, true);
+	if (param)
+		param->SetMatrix(value);
+	return true;
+}
+bool Shader::SetMatrixArray(const std::string& name, const std::vector<D3DXMATRIX>& value) {
+	ShaderParameter* param = _GetParameter(name, true);
+	if (param)
+		param->SetMatrixArray(value);
+	return true;
+}
+bool Shader::SetTexture(const std::string& name, shared_ptr<Texture> value) {
+	ShaderParameter* param = _GetParameter(name, true);
+	if (param)
+		param->SetTexture(value);
+	return true;
+}
+
+ShaderParameter* Shader::__GetParam(const std::string& name, void* pData) {
+	ID3DXEffect* effect = GetEffect();
+	if (effect == nullptr || pData == nullptr) return nullptr;
+	return _GetParameter(name, false);
+}
+bool Shader::GetInt(const std::string& name, int32_t* value) {
+	if (ShaderParameter* param = __GetParam(name, value)) {
+		*value = *param->GetInt();
 		return true;
 	}
 	return false;
 }
-bool Shader::GetMatrixArray(const std::string& name, std::vector<D3DXMATRIX>* matrix) {
-	ID3DXEffect* effect = GetEffect();
-	if (effect == nullptr || matrix == nullptr) return false;
-
-	ShaderParameter* param = _GetParameter(name, false);
-	if (param) {
-		*matrix = param->GetMatrixArray();
+bool Shader::GetIntArray(const std::string& name, std::vector<int32_t>* value) {
+	if (ShaderParameter* param = __GetParam(name, value)) {
+		*value = param->GetIntArray();
 		return true;
 	}
 	return false;
 }
-bool Shader::GetVector(const std::string& name, D3DXVECTOR4* vector) {
-	ID3DXEffect* effect = GetEffect();
-	if (effect == nullptr || vector == nullptr) return false;
-
-	ShaderParameter* param = _GetParameter(name, false);
-	if (param) {
-		*vector = *param->GetVector();
-		return true;
-	}
-	return false;
-}
-bool Shader::GetFloat(const std::string& name, FLOAT* value) {
-	ID3DXEffect* effect = GetEffect();
-	if (effect == nullptr || value == nullptr) return false;
-
-	ShaderParameter* param = _GetParameter(name, false);
-	if (param) {
+bool Shader::GetFloat(const std::string& name, float* value) {
+	if (ShaderParameter * param = __GetParam(name, value)) {
 		*value = *param->GetFloat();
 		return true;
 	}
 	return false;
 }
-bool Shader::GetFloatArray(const std::string& name, std::vector<FLOAT>* values) {
-	ID3DXEffect* effect = GetEffect();
-	if (effect == nullptr || values == nullptr) return false;
-
-	ShaderParameter* param = _GetParameter(name, false);
-	if (param) {
-		*values = param->GetFloatArray();
+bool Shader::GetFloatArray(const std::string& name, std::vector<float>* value) {
+	if (ShaderParameter* param = __GetParam(name, value)) {
+		*value = param->GetFloatArray();
 		return true;
 	}
 	return false;
 }
-bool Shader::GetTexture(const std::string& name, shared_ptr<Texture>* texture) {
-	ID3DXEffect* effect = GetEffect();
-	if (effect == nullptr || texture == nullptr) return false;
-
-	ShaderParameter* param = _GetParameter(name, false);
-	if (param) {
-		*texture = param->GetTexture();
+bool Shader::GetVector(const std::string& name, D3DXVECTOR4* value) {
+	if (ShaderParameter* param = __GetParam(name, value)) {
+		*value = *param->GetVector();
+		return true;
+	}
+	return false;
+}
+bool Shader::GetMatrix(const std::string& name, D3DXMATRIX* value) {
+	if (ShaderParameter* param = __GetParam(name, value)) {
+		*value = *param->GetMatrix();
+		return true;
+	}
+	return false;
+}
+bool Shader::GetMatrixArray(const std::string& name, std::vector<D3DXMATRIX>* value) {
+	if (ShaderParameter* param = __GetParam(name, value)) {
+		*value = param->GetMatrixArray();
+		return true;
+	}
+	return false;
+}
+bool Shader::GetTexture(const std::string& name, shared_ptr<Texture>* value) {
+	if (ShaderParameter* param = __GetParam(name, value)) {
+		*value = param->GetTexture();
 		return true;
 	}
 	return false;

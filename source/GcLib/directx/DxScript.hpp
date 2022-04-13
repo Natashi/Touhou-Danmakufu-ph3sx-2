@@ -327,18 +327,22 @@ namespace directx {
 		static gstd::value Func_ObjShader_SetShaderT(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_ResetShader(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_SetTechnique(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_ObjShader_SetMatrix(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_ObjShader_SetMatrixArray(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_ObjShader_SetVector(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		DNH_FUNCAPI_DECL_(Func_ObjShader_ValidateTechnique);
+		DNH_FUNCAPI_DECL_(Func_ObjShader_SetInt);
+		DNH_FUNCAPI_DECL_(Func_ObjShader_SetIntArray);
 		static gstd::value Func_ObjShader_SetFloat(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_SetFloatArray(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_ObjShader_SetVector(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_ObjShader_SetMatrix(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_ObjShader_SetMatrixArray(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_ObjShader_SetTexture(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		DNH_FUNCAPI_DECL_(Func_ObjShader_ValidateTechnique);
-		DNH_FUNCAPI_DECL_(Func_ObjShader_GetMatrix);
-		DNH_FUNCAPI_DECL_(Func_ObjShader_GetMatrixArray);
-		DNH_FUNCAPI_DECL_(Func_ObjShader_GetVector);
+		DNH_FUNCAPI_DECL_(Func_ObjShader_GetInt);
+		DNH_FUNCAPI_DECL_(Func_ObjShader_GetIntArray);
 		DNH_FUNCAPI_DECL_(Func_ObjShader_GetFloat);
 		DNH_FUNCAPI_DECL_(Func_ObjShader_GetFloatArray);
+		DNH_FUNCAPI_DECL_(Func_ObjShader_GetVector);
+		DNH_FUNCAPI_DECL_(Func_ObjShader_GetMatrix);
+		DNH_FUNCAPI_DECL_(Func_ObjShader_GetMatrixArray);
 		DNH_FUNCAPI_DECL_(Func_ObjShader_GetTexture);
 
 		//Dx関数：オブジェクト操作(PrimitiveObject)

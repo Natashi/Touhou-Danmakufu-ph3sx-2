@@ -75,6 +75,8 @@ namespace directx {
 	//*******************************************************************
 	enum class ShaderParameterType : uint8_t {
 		Unknown,
+		Int,			//Int
+		IntArray,		//Int array
 		Float,			//Float
 		FloatArray,		//Float array
 		Vector,			//(x, y, z, w) packed float
