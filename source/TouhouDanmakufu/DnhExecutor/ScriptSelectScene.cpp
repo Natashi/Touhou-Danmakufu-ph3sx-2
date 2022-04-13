@@ -477,41 +477,30 @@ ScriptSelectFileModel::~ScriptSelectFileModel() {
 
 }
 void ScriptSelectFileModel::_Run() {
-	timeLastUpdate_ = SystemUtility::GetCpuTime2();
+	timeLastUpdate_ = SystemUtility::GetCpuTime2() - 1000;
 
 	_SearchScript(dir_);
-	if (GetStatus() == RUN) {
-		scene_->AddMenuItem(listItem_);
-		listItem_.clear();
-	}
 
 	bCreated_ = true;
 }
 void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
-	WIN32_FIND_DATA data;
-	HANDLE hFind;
-	std::wstring findDir = dir + L"*.*";
-	hFind = FindFirstFile(findDir.c_str(), &data);
-	do {
+	for (auto itr : stdfs::directory_iterator(dir)) {
 		if (GetStatus() != RUN) return;
 
 		uint64_t time = SystemUtility::GetCpuTime2();
-		if ((time - timeLastUpdate_) > 500) {
-			//500ms毎に更新
+		if ((time - timeLastUpdate_) > 100) {
+			//100ms delay between updates
 			timeLastUpdate_ = time;
 			scene_->AddMenuItem(listItem_);
 			listItem_.clear();
 		}
 
-		std::wstring name = data.cFileName;
-		if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-			(name != L".." && name != L".")) {
-			//ディレクトリ
-			std::wstring tDir = dir + name;
-			tDir += L"\\";
+		if (itr.is_directory()) {
+			std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
+			if (tDir.back() != L'/')
+				tDir += L"/";
 
 			if (type_ == TYPE_DIR) {
-				//ディレクトリ
 				ref_count_ptr<ScriptSelectSceneMenuItem> item = new ScriptSelectSceneMenuItem(
 					ScriptSelectSceneMenuItem::TYPE_DIR, tDir, nullptr);
 				listItem_.push_back(item);
@@ -519,18 +508,15 @@ void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
 			else {
 				_SearchScript(tDir);
 			}
-			continue;
 		}
-		if (wcscmp(data.cFileName, L"..") == 0 || wcscmp(data.cFileName, L".") == 0)
-			continue;
+		else {
+			std::wstring tPath = PathProperty::ReplaceYenToSlash(itr.path());
+			_CreateMenuItem(tPath);
+		}
+	}
 
-		//ファイル
-		std::wstring path = dir + name;
-
-		_CreateMenuItem(path);
-
-	} while (FindNextFile(hFind, &data));
-	FindClose(hFind);
+	scene_->AddMenuItem(listItem_);
+	listItem_.clear();
 }
 void ScriptSelectFileModel::_CreateMenuItem(const std::wstring& path) {
 	std::vector<ref_count_ptr<ScriptInformation>> listInfo = ScriptInformation::CreateScriptInformationList(path, true);
@@ -544,30 +530,22 @@ void ScriptSelectFileModel::_CreateMenuItem(const std::wstring& path) {
 }
 bool ScriptSelectFileModel::_IsValidScriptInformation(ref_count_ptr<ScriptInformation> info) {
 	int typeScript = info->type_;
-	bool bTarget = false;
 	switch (type_) {
 	case TYPE_SINGLE:
-		bTarget = (typeScript == ScriptInformation::TYPE_SINGLE);
-		break;
+		return typeScript == ScriptInformation::TYPE_SINGLE;
 	case TYPE_PLURAL:
-		bTarget = (typeScript == ScriptInformation::TYPE_PLURAL);
-		break;
+		return typeScript == ScriptInformation::TYPE_PLURAL;
 	case TYPE_STAGE:
-		bTarget |= (typeScript == ScriptInformation::TYPE_STAGE);
-		//bTarget |= (typeScript == ScriptInformation::TYPE_PACKAGE);
-		break;
+		return typeScript == ScriptInformation::TYPE_STAGE;
+		//return typeScript == ScriptInformation::TYPE_PACKAGE;
 	case TYPE_PACKAGE:
-		bTarget = (typeScript == ScriptInformation::TYPE_PACKAGE);
-		break;
+		return typeScript == ScriptInformation::TYPE_PACKAGE;
 	case TYPE_DIR:
-		bTarget = (typeScript != ScriptInformation::TYPE_PLAYER);
-		break;
+		return typeScript != ScriptInformation::TYPE_PLAYER;
 	case TYPE_ALL:
-		bTarget = (typeScript != ScriptInformation::TYPE_PLAYER);
-		break;
+		return typeScript != ScriptInformation::TYPE_PLAYER;
 	}
-
-	return bTarget;
+	return false;
 }
 int ScriptSelectFileModel::_ConvertTypeInfoToItem(int typeInfo) {
 	int typeItem = ScriptSelectSceneMenuItem::TYPE_SINGLE;

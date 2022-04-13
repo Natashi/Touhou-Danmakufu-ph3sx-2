@@ -29,8 +29,10 @@ namespace gstd {
 		static stdch::steady_clock::time_point GetCpuTime() {
 			return stdch::steady_clock::now();
 		}
+		//In millis
 		static inline uint64_t GetCpuTime2() {
-			return GetCpuTime().time_since_epoch().count();
+			return stdch::duration_cast<stdch::milliseconds>(
+				GetCpuTime().time_since_epoch()).count();
 		}
 	};
 
