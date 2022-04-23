@@ -346,6 +346,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetSpeedXY);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_SetProcessMovement);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetProcessMovement);
+	DNH_FUNCAPI_DECL_(Func_ObjMove_GetMoveFrame);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_GetMovementType);
 	DNH_FUNCAPI_DECL_(Func_ObjMove_CancelMovement);
 

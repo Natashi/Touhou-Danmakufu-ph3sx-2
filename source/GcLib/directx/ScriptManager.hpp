@@ -179,6 +179,8 @@ namespace directx {
 		static gstd::value Func_SetScriptArgument(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_GetScriptResult(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_SetAutoDeleteObject(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_GetAllObjectIdInScript(gstd::script_machine* machine, int argc, const gstd::value* argv);
+		static gstd::value Func_GetAllObjectIdInPool(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_NotifyEvent(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_NotifyEventOwn);
 		static gstd::value Func_NotifyEventAll(gstd::script_machine* machine, int argc, const gstd::value* argv);
