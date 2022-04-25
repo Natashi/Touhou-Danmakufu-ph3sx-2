@@ -238,9 +238,7 @@ static const std::vector<function> dxFunction = {
 	//Base object functions
 	{ "Obj_Create", DxScript::Func_Obj_Create, 0 },
 	{ "Obj_Delete", DxScript::Func_Obj_Delete, 1 },
-	{ "Obj_QueueDelete", DxScript::Func_Obj_QueueDelete, 1 },
 	{ "Obj_IsDeleted", DxScript::Func_Obj_IsDeleted, 1 },
-	{ "Obj_IsQueuedForDeletion", DxScript::Func_Obj_IsQueuedForDeletion, 1 },
 	{ "Obj_IsExists", DxScript::Func_Obj_IsExists, 1 },
 	{ "Obj_SetVisible", DxScript::Func_Obj_SetVisible, 2 },
 	{ "Obj_IsVisible", DxScript::Func_Obj_IsVisible, 1 },
@@ -262,14 +260,13 @@ static const std::vector<function> dxFunction = {
 	{ "Obj_SetValueI", DxScript::Func_Obj_SetValueI, 3 },
 	{ "Obj_DeleteValueI", DxScript::Func_Obj_DeleteValueI, 2 },
 	{ "Obj_IsValueExistsI", DxScript::Func_Obj_IsValueExistsI, 2 },
-
 	{ "Obj_CopyValueTable", DxScript::Func_Obj_CopyValueTable, 3 },
 	{ "Obj_GetExistFrame", DxScript::Func_Obj_GetExistFrame, 1 },
+
 	{ "Obj_GetType", DxScript::Func_Obj_GetType, 1 },
 	{ "Obj_GetParentScriptID", DxScript::Func_Obj_GetParentScriptID, 1 },
-	{ "Obj_SetNewParentScript", DxScript::Func_Obj_SetNewParentScript, 1 },
-	{ "Obj_SetNewParentScript", DxScript::Func_Obj_SetNewParentScript, 2 }, //Overloaded
-	{ "Obj_SetAutoDeleteOverride", DxScript::Func_Obj_SetAutoDeleteOverride, 2 },
+	{ "Obj_SetParentScriptID", DxScript::Func_Obj_SetParentScriptID, 1 },
+	{ "Obj_SetParentScriptID", DxScript::Func_Obj_SetParentScriptID, 2 }, //Overloaded
 
 	//Render object functions
 	{ "ObjRender_SetX", DxScript::Func_ObjRender_SetX, 2 },
@@ -2464,25 +2461,11 @@ value DxScript::Func_Obj_Delete(script_machine* machine, int argc, const value* 
 	script->DeleteObject(id);
 	return value();
 }
-value DxScript::Func_Obj_QueueDelete(script_machine* machine, int argc, const value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	script->CheckRunInMainThread();
-	int id = argv[0].as_int();
-	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj) obj->QueueDelete();
-	return value();
-}
 value DxScript::Func_Obj_IsDeleted(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	return script->CreateBooleanValue(obj == nullptr);
-}
-value DxScript::Func_Obj_IsQueuedForDeletion(script_machine* machine, int argc, const value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	return script->CreateBooleanValue(obj->bQueuedToDelete_);
 }
 value DxScript::Func_Obj_IsExists(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
@@ -2767,25 +2750,14 @@ value DxScript::Func_Obj_GetParentScriptID(script_machine* machine, int argc, co
 
 	return script->CreateIntValue(res);
 }
-value DxScript::Func_Obj_SetNewParentScript(script_machine* machine, int argc, const value* argv) {
+value DxScript::Func_Obj_SetParentScriptID(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	int64_t idScript = script->GetScriptID();
 
-	if (argc == 2) idScript = argv[1].as_int();
+	int id = argv[0].as_int();
+	int64_t idScript = argc == 2 ? argv[1].as_int() : script->GetScriptID();
 
 	DxScriptObjectBase* obj = script->GetObjectPointerAs<DxScriptObjectBase>(id);
 	if (obj) obj->idScript_ = idScript;
-
-	return value();
-}
-value DxScript::Func_Obj_SetAutoDeleteOverride(script_machine* machine, int argc, const value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	bool del = argv[1].as_boolean();
-
-	DxScriptObjectBase* obj = script->GetObjectPointerAs<DxScriptObjectBase>(id);
-	if (obj) obj->SetAutoDeleteOverride(del);
 
 	return value();
 }

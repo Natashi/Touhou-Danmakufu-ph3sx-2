@@ -22,17 +22,18 @@ namespace directx {
 		friend DxScript;
 		friend DxScriptObjectManager;
 	protected:
+		DxScriptObjectManager* manager_;
+
 		int idObject_;
 		TypeObject typeObject_;
 		int64_t idScript_;
-		DxScriptObjectManager* manager_;
-		int priRender_;
-		bool bVisible_;
-		bool bDeleted_;
-		bool bQueuedToDelete_;
+
+		bool bDelete_;
 		bool bActive_;
-		bool bAutoDeleteOverride_;
-		int frameExist_;
+		bool bVisible_;
+		int priRender_;
+
+		uint32_t frameExist_;
 
 		std::unordered_map<std::wstring, gstd::value> mapObjectValue_;
 		std::unordered_map<int64_t, gstd::value> mapObjectValueI_;
@@ -53,9 +54,8 @@ namespace directx {
 		int GetObjectID() { return idObject_; }
 		TypeObject GetObjectType() { return typeObject_; }
 		int64_t GetScriptID() { return idScript_; }
-		void QueueDelete() { bQueuedToDelete_ = true; }
-		bool IsQueuedForDeletion() { return bQueuedToDelete_; }
-		bool IsDeleted() { return bDeleted_; }
+
+		bool IsDeleted() { return bDelete_; }
 		bool IsActive() { return bActive_; }
 		void SetActive(bool bActive) { bActive_ = bActive; }
 		bool IsVisible() { return bVisible_; }
@@ -64,10 +64,8 @@ namespace directx {
 		int GetRenderPriorityI() { return priRender_; }
 		void SetRenderPriority(double pri);
 		void SetRenderPriorityI(int pri) { priRender_ = pri; }
-		void SetAutoDeleteOverride(bool del) { bAutoDeleteOverride_ = del; }
-		bool IsAutoDeleteOverride() { return bAutoDeleteOverride_; }
 
-		int GetExistFrame() { return frameExist_; }
+		uint32_t GetExistFrame() { return frameExist_; }
 
 		std::unordered_map<std::wstring, gstd::value>* GetValueMap() { return &mapObjectValue_; }
 		std::unordered_map<int64_t, gstd::value>* GetValueMapI() { return &mapObjectValueI_; }
@@ -668,6 +666,7 @@ namespace directx {
 
 		std::vector<ref_unsync_ptr<DxScriptObjectBase>> obj_;
 		std::list<ref_unsync_ptr<DxScriptObjectBase>> listActiveObject_;
+		std::vector<int> listDeleteObject_;
 
 		std::unordered_map<std::wstring, shared_ptr<SoundPlayer>> mapReservedSound_;
 
@@ -675,6 +674,8 @@ namespace directx {
 		std::vector<shared_ptr<Shader>> listShader_;
 
 		void _SetObjectID(DxScriptObjectBase* obj, int index) { obj->idObject_ = index; obj->manager_ = this; }
+
+		void _DeleteObject(int id);
 	public:
 		DxScriptObjectManager();
 		virtual ~DxScriptObjectManager();
