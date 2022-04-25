@@ -10,8 +10,33 @@
 #include "Logger.hpp"
 
 namespace gstd {
-	class ScriptFileLineMap;
 	class ScriptCommonDataManager;
+
+	//*******************************************************************
+	//ScriptFileLineMap
+	//*******************************************************************
+	class ScriptFileLineMap {
+	public:
+		struct Entry {
+			int lineStart_;
+			int lineEnd_;
+			int lineStartOriginal_;
+			int lineEndOriginal_;
+			std::wstring path_;
+		};
+	protected:
+		std::list<Entry> listEntry_;
+	public:
+		ScriptFileLineMap();
+		virtual ~ScriptFileLineMap();
+
+		void AddEntry(const std::wstring& path, int lineAdd, int lineCount);
+		Entry* GetEntry(int line);
+		std::wstring& GetPath(int line);
+		std::list<Entry>& GetEntryList() { return listEntry_; }
+
+		void Clear() { listEntry_.clear(); }
+	};
 
 	//*******************************************************************
 	//ScriptEngineData
@@ -23,8 +48,8 @@ namespace gstd {
 		Encoding::Type encoding_;
 		std::vector<char> source_;
 
-		ref_count_ptr<script_engine> engine_;
-		ref_count_ptr<ScriptFileLineMap> mapLine_;
+		unique_ptr<script_engine> engine_;
+		ScriptFileLineMap mapLine_;
 	public:
 		ScriptEngineData();
 		virtual ~ScriptEngineData();
@@ -36,11 +61,10 @@ namespace gstd {
 		std::vector<char>& GetSource() { return source_; }
 		Encoding::Type GetEncoding() { return encoding_; }
 
-		void SetEngine(ref_count_ptr<script_engine>& engine) { engine_ = engine; }
-		ref_count_ptr<script_engine> GetEngine() { return engine_; }
+		void SetEngine(unique_ptr<script_engine>&& engine) { engine_ = std::move(engine); }
+		unique_ptr<script_engine>& GetEngine() { return engine_; }
 
-		ref_count_ptr<ScriptFileLineMap> GetScriptFileLineMap() { return mapLine_; }
-		void SetScriptFileLineMap(ref_count_ptr<ScriptFileLineMap>& mapLine) { mapLine_ = mapLine; }
+		ScriptFileLineMap* GetScriptFileLineMap() { return &mapLine_; }
 	};
 
 	//*******************************************************************
@@ -48,17 +72,17 @@ namespace gstd {
 	//*******************************************************************
 	class ScriptEngineCache {
 	protected:
-		std::map<std::wstring, ref_count_ptr<ScriptEngineData>> cache_;
+		std::map<std::wstring, shared_ptr<ScriptEngineData>> cache_;
 	public:
 		ScriptEngineCache();
 
 		void Clear();
 
-		void AddCache(const std::wstring& name, ref_count_ptr<ScriptEngineData>& data);
+		void AddCache(const std::wstring& name, shared_ptr<ScriptEngineData> data);
 		void RemoveCache(const std::wstring& name);
-		ref_count_ptr<ScriptEngineData> GetCache(const std::wstring& name);
+		shared_ptr<ScriptEngineData> GetCache(const std::wstring& name);
 
-		const std::map<std::wstring, ref_count_ptr<ScriptEngineData>>& GetMap() { return cache_; }
+		const std::map<std::wstring, shared_ptr<ScriptEngineData>>& GetMap() { return cache_; }
 
 		bool IsExists(const std::wstring& name);
 	};
@@ -79,9 +103,9 @@ namespace gstd {
 	protected:
 		bool bError_;
 
-		ref_count_ptr<ScriptEngineCache> cache_;
+		shared_ptr<ScriptEngineCache> cache_;
 
-		ref_count_ptr<ScriptEngineData> engine_;
+		shared_ptr<ScriptEngineData> engine_;
 		unique_ptr<script_machine> machine_;
 
 		std::vector<gstd::function> func_;
@@ -118,10 +142,10 @@ namespace gstd {
 
 		static script_type_manager* GetDefaultScriptTypeManager() { return pTypeManager_.get(); }
 
-		void SetScriptEngineCache(ref_count_ptr<ScriptEngineCache>& cache) { cache_ = cache; }
-		ref_count_ptr<ScriptEngineCache> GetScriptEngineCache() { return cache_; }
+		void SetScriptEngineCache(shared_ptr<ScriptEngineCache>& cache) { cache_ = cache; }
+		shared_ptr<ScriptEngineCache> GetScriptEngineCache() { return cache_; }
 
-		ref_count_ptr<ScriptEngineData> GetEngine() { return engine_; }
+		shared_ptr<ScriptEngineData> GetEngine() { return engine_; }
 
 		shared_ptr<RandProvider> GetRand() { return mt_; }
 
@@ -417,7 +441,7 @@ namespace gstd {
 
 		unique_ptr<Scanner> scanner_;
 
-		gstd::ref_count_ptr<ScriptFileLineMap> mapLine_;
+		ScriptFileLineMap* mapLine_;
 		std::set<std::wstring> setIncludedPath_;
 	protected:
 		void _RaiseError(int line, const std::wstring& err);
@@ -432,37 +456,13 @@ namespace gstd {
 
 		void _ConvertToEncoding(Encoding::Type targetEncoding);
 	public:
-		ScriptLoader(ScriptClientBase* script, const std::wstring& path, std::vector<char>& source);
+		ScriptLoader(ScriptClientBase* script, const std::wstring& path, std::vector<char>& source, ScriptFileLineMap* mapLine);
 		~ScriptLoader();
 
 		void Parse();
 
 		std::vector<char>& GetResult() { return src_; }
-		gstd::ref_count_ptr<ScriptFileLineMap> GetLineMap() { return mapLine_; }
-	};
-
-	//*******************************************************************
-	//ScriptFileLineMap
-	//*******************************************************************
-	class ScriptFileLineMap {
-	public:
-		struct Entry {
-			int lineStart_;
-			int lineEnd_;
-			int lineStartOriginal_;
-			int lineEndOriginal_;
-			std::wstring path_;
-		};
-	protected:
-		std::list<Entry> listEntry_;
-	public:
-		ScriptFileLineMap();
-		virtual ~ScriptFileLineMap();
-
-		void AddEntry(const std::wstring& path, int lineAdd, int lineCount);
-		Entry* GetEntry(int line);
-		std::wstring& GetPath(int line);
-		std::list<Entry>& GetEntryList() { return listEntry_; }
+		ScriptFileLineMap* GetLineMap() { return mapLine_; }
 	};
 
 	//*******************************************************************

@@ -1308,7 +1308,7 @@ void ScriptInfoPanel::Update(StgSystemController* systemController) {
 		if (systemController) {
 			auto& pCacheMap = systemController->GetScriptEngineCache()->GetMap();
 			for (auto itr = pCacheMap.cbegin(); itr != pCacheMap.cend(); ++itr, ++iCache) {
-				const ref_count_ptr<ScriptEngineData>& pData = itr->second;
+				const shared_ptr<ScriptEngineData>& pData = itr->second;
 
 				size_t uses = pData.use_count();
 				std::wstring path = PathProperty::GetPathWithoutModuleDirectory(pData->GetPath());

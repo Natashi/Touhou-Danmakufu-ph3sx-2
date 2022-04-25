@@ -51,7 +51,7 @@ void StgSystemController::Initialize(ref_count_ptr<StgSystemInformation> infoSys
 
 	infoSystem_ = infoSystem;
 
-	scriptEngineCache_ = new ScriptEngineCache();
+	scriptEngineCache_.reset(new ScriptEngineCache());
 	commonDataManager_.reset(new ScriptCommonDataManager());
 	infoControlScript_ = new StgControlScriptInformation();
 }
