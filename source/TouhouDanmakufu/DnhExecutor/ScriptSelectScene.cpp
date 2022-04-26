@@ -484,34 +484,36 @@ void ScriptSelectFileModel::_Run() {
 	bCreated_ = true;
 }
 void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
-	for (auto itr : stdfs::directory_iterator(dir)) {
-		if (GetStatus() != RUN) return;
+	if (stdfs::exists(dir) && stdfs::is_directory(dir)) {
+		for (auto itr : stdfs::directory_iterator(dir)) {
+			if (GetStatus() != RUN) return;
 
-		uint64_t time = SystemUtility::GetCpuTime2();
-		if ((time - timeLastUpdate_) > 100) {
-			//100ms delay between updates
-			timeLastUpdate_ = time;
-			scene_->AddMenuItem(listItem_);
-			listItem_.clear();
-		}
+			uint64_t time = SystemUtility::GetCpuTime2();
+			if ((time - timeLastUpdate_) > 100) {
+				//100ms delay between updates
+				timeLastUpdate_ = time;
+				scene_->AddMenuItem(listItem_);
+				listItem_.clear();
+			}
 
-		if (itr.is_directory()) {
-			std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
-			if (tDir.back() != L'/')
-				tDir += L"/";
+			if (itr.is_directory()) {
+				std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
+				if (tDir.back() != L'/')
+					tDir += L"/";
 
-			if (type_ == TYPE_DIR) {
-				ref_count_ptr<ScriptSelectSceneMenuItem> item = new ScriptSelectSceneMenuItem(
-					ScriptSelectSceneMenuItem::TYPE_DIR, tDir, nullptr);
-				listItem_.push_back(item);
+				if (type_ == TYPE_DIR) {
+					ref_count_ptr<ScriptSelectSceneMenuItem> item = new ScriptSelectSceneMenuItem(
+						ScriptSelectSceneMenuItem::TYPE_DIR, tDir, nullptr);
+					listItem_.push_back(item);
+				}
+				else {
+					_SearchScript(tDir);
+				}
 			}
 			else {
-				_SearchScript(tDir);
+				std::wstring tPath = PathProperty::ReplaceYenToSlash(itr.path());
+				_CreateMenuItem(tPath);
 			}
-		}
-		else {
-			std::wstring tPath = PathProperty::ReplaceYenToSlash(itr.path());
-			_CreateMenuItem(tPath);
 		}
 	}
 

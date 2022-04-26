@@ -252,28 +252,30 @@ void MainWindow::_AddFile(std::wstring dirBase, std::wstring path) {
 	File filePath(path);
 	if (filePath.IsDirectory()) {
 		path += L'/';
-		for (auto itr : stdfs::directory_iterator(path)) {
-			if (itr.is_directory()) {
-				std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
-				if (tDir.back() != L'/')
-					tDir += L"/";
+		if (stdfs::exists(path) && stdfs::is_directory(path)) {
+			for (auto itr : stdfs::directory_iterator(path)) {
+				if (itr.is_directory()) {
+					std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
+					if (tDir.back() != L'/')
+						tDir += L"/";
 
-				_AddFile(dirBase, tDir);
-			}
-			else {
-				std::wstring tPath = PathProperty::ReplaceYenToSlash(itr.path());
-				if (!_IsValidFilePath(dirBase, tPath)) return;
+					_AddFile(dirBase, tDir);
+				}
+				else {
+					std::wstring tPath = PathProperty::ReplaceYenToSlash(itr.path());
+					if (!_IsValidFilePath(dirBase, tPath)) return;
 
-				std::wstring filename = PathProperty::GetFileName(tPath);
-				std::wstring dir = _CreateRelativeDirectory(dirBase, path);
+					std::wstring filename = PathProperty::GetFileName(tPath);
+					std::wstring dir = _CreateRelativeDirectory(dirBase, path);
 
-				int row = wndListFile_.GetRowCount();
-				wndListFile_.SetText(row, COL_FILENAME, filename);
-				wndListFile_.SetText(row, COL_DIRECTORY, dir);
-				wndListFile_.SetText(row, COL_FULLPATH, tPath);
+					int row = wndListFile_.GetRowCount();
+					wndListFile_.SetText(row, COL_FILENAME, filename);
+					wndListFile_.SetText(row, COL_DIRECTORY, dir);
+					wndListFile_.SetText(row, COL_FULLPATH, tPath);
 
-				std::wstring key = dir + filename;
-				listFile_.insert(key);
+					std::wstring key = dir + filename;
+					listFile_.insert(key);
+				}
 			}
 		}
 	}

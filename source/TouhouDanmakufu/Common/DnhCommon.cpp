@@ -276,25 +276,27 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::FindPlayerScriptInformationList(const std::wstring& dir) {
 	std::vector<ref_count_ptr<ScriptInformation>> res;
 
-	for (auto itr : stdfs::directory_iterator(dir)) {
-		if (itr.is_directory()) {
-			std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
-			if (tDir.back() != L'/')
-				tDir += L"/";
+	if (stdfs::exists(dir) && stdfs::is_directory(dir)) {
+		for (auto itr : stdfs::directory_iterator(dir)) {
+			if (itr.is_directory()) {
+				std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
+				if (tDir.back() != L'/')
+					tDir += L"/";
 
-			std::vector<ref_count_ptr<ScriptInformation>> list = FindPlayerScriptInformationList(tDir);
-			for (auto itr = list.begin(); itr != list.end(); itr++) {
-				res.push_back(*itr);
+				std::vector<ref_count_ptr<ScriptInformation>> list = FindPlayerScriptInformationList(tDir);
+				for (auto itr = list.begin(); itr != list.end(); itr++) {
+					res.push_back(*itr);
+				}
 			}
-		}
-		else {
-			std::wstring tPath = PathProperty::ReplaceYenToSlash(itr.path());
-			
-			std::vector<ref_count_ptr<ScriptInformation>> listInfo = CreateScriptInformationList(tPath, true);
-			for (size_t iInfo = 0; iInfo < listInfo.size(); iInfo++) {
-				ref_count_ptr<ScriptInformation> info = listInfo[iInfo];
-				if (info != nullptr && info->type_ == ScriptInformation::TYPE_PLAYER)
-					res.push_back(info);
+			else {
+				std::wstring tPath = PathProperty::ReplaceYenToSlash(itr.path());
+
+				std::vector<ref_count_ptr<ScriptInformation>> listInfo = CreateScriptInformationList(tPath, true);
+				for (size_t iInfo = 0; iInfo < listInfo.size(); iInfo++) {
+					ref_count_ptr<ScriptInformation> info = listInfo[iInfo];
+					if (info != nullptr && info->type_ == ScriptInformation::TYPE_PLAYER)
+						res.push_back(info);
+				}
 			}
 		}
 	}
