@@ -828,7 +828,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			3) x
 			4) (int) interpolation type
 		Returns:
-			(int[]) result array
+			(int) result
 		Description:
 			Divides a and b (both 8-byte ints) into eight 1-byte chunks, performs interpolation on each pair, and recombines them to return the result.
 			
