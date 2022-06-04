@@ -2530,16 +2530,18 @@ void StgCurveLaserObject::Render(BlendMode targetBlend) {
 					};
 
 					auto itrHead = listPosition_.begin();
-					auto itrTail = listPosition_.rbegin().base();
+					auto itrTail = listPosition_.rbegin();
+					auto itrHeadEnd = listPosition_.rend();
+					auto itrTailEnd = listPosition_.end();
 
 					bCappable = true;
-					for (auto itr = itrHead; bCappable && remLen > 0 && itr != itrTail; ++itr, ++i, ++iPos)
+					for (auto itr = itrHead; bCappable && remLen > 0 && itr != itrTailEnd; ++itr, ++i, ++iPos)
 						bCappable = tryCap(itr);
 
 					i = 0;
 					iPos = countPos - 2; // Ends straight up do not work otherwise?
 					remLen = rcMidPt;
-					for (auto itr = itrTail; bCappable && remLen > 0 && itr != itrHead; ++itr, ++i, --iPos)
+					for (auto itr = itrTail; bCappable && remLen > 0 && itr != itrHeadEnd; ++itr, ++i, --iPos)
 						bCappable = tryCap(itr);
 				}
 				if (!bCappable) // If capping fails (or is disabled), just use the regular increment
