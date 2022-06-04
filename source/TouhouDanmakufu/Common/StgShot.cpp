@@ -2042,7 +2042,7 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 	double posXE = posX_ + length_ * move_.x;
 	double posYE = posY_ + length_ * move_.y;
 
-	if (!rcDeleteClip.IsPointIntersected(posX_, posY_) && rcDeleteClip.IsPointIntersected(posXE, posYE)) {
+	if (!rcDeleteClip.IsPointIntersected(posX_, posY_) && !rcDeleteClip.IsPointIntersected(posXE, posYE)) {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
