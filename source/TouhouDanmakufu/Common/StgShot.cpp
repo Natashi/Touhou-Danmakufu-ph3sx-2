@@ -1563,6 +1563,10 @@ void StgNormalShotObject::Render(BlendMode targetBlend) {
 			StgShotDataFrame* delayFrame = delayData ? delayData->GetFrame(frameWork_) : nullptr;
 
 			scaleX = scaleY = delay_.GetScale();
+			if (delay_.scaleMix) {
+				scaleX *= scale_.x;
+				scaleY *= scale_.y;
+			}
 
 			color = (delay_.colorRep != 0) ? delay_.colorRep : shotData->GetDelayColor();
 			if (delay_.colorMix) ColorAccess::MultiplyColor(color, color_);

@@ -473,6 +473,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjShot_SetDelayMode", StgStageScript::Func_ObjShot_SetDelayMode, 4 },
 	{ "ObjShot_SetDelayColor", StgStageScript::Func_ObjShot_SetDelayColor, 2 },
 	{ "ObjShot_SetDelayColoringEnable", StgStageScript::Func_ObjShot_SetDelayColoringEnable, 2 },
+	{ "ObjShot_SetDelayScalingEnable", StgStageScript::Func_ObjShot_SetDelayScalingEnable, 2 },
 	{ "ObjShot_SetGrazeInvalidFrame", StgStageScript::Func_ObjShot_SetGrazeInvalidFrame, 2 },
 	{ "ObjShot_SetGrazeFrame", StgStageScript::Func_ObjShot_SetGrazeFrame, 2 },
 	{ "ObjShot_IsValidGraze", StgStageScript::Func_ObjShot_IsValidGraze, 1 },
@@ -4560,6 +4561,16 @@ gstd::value StgStageScript::Func_ObjShot_SetDelayColoringEnable(gstd::script_mac
 	if (obj) {
 		StgShotObject::DelayParameter* delay = obj->GetDelayParameter();
 		delay->colorMix = argv[1].as_boolean();
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_SetDelayScalingEnable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
+	if (obj) {
+		StgShotObject::DelayParameter* delay = obj->GetDelayParameter();
+		delay->scaleMix = argv[1].as_boolean();
 	}
 	return value();
 }

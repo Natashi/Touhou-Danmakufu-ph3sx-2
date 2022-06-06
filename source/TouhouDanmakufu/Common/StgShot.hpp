@@ -258,13 +258,14 @@ public:
 		D3DXVECTOR3 alpha;	//[end, start, factor]
 		D3DCOLOR colorRep;
 		bool colorMix;
+		bool scaleMix;
 		D3DXVECTOR2 angle;	//[angle, spin]
 
 		uint8_t type;		//0 = default danmakufu, 1 = ZUN-like
 		lerp_func scaleLerpFunc;	//Scale interpolation
 		lerp_func alphaLerpFunc;	//Alpha interpolation
 
-		DelayParameter() : time(0), id(-1), blend(MODE_BLEND_NONE), type(0), colorMix(false) {
+		DelayParameter() : time(0), id(-1), blend(MODE_BLEND_NONE), type(0), colorMix(false), scaleMix(false) {
 			scale = D3DXVECTOR3(0.5f, 2.0f, 15.0f);
 			alpha = D3DXVECTOR3(1.0f, 1.0f, 15.0f);
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;
@@ -272,7 +273,7 @@ public:
 			colorRep = 0x00000000;
 			angle = D3DXVECTOR2(0, 0);
 		}
-		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(MODE_BLEND_NONE), type(0), colorMix(false) {
+		DelayParameter(float sMin, float sMax, float rate) : time(0), id(-1), blend(MODE_BLEND_NONE), type(0), colorMix(false), scaleMix(false) {
 			scale = D3DXVECTOR3(sMin, sMax, rate);
 			alpha = D3DXVECTOR3(1.0f, 1.0f, 15.0f);
 			scaleLerpFunc = Math::Lerp::Linear<float, float>;

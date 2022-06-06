@@ -418,6 +418,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayMode);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayColor);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayColoringEnable);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetDelayScalingEnable);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetGrazeInvalidFrame);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetGrazeFrame);
 	DNH_FUNCAPI_DECL_(Func_ObjShot_IsValidGraze);
