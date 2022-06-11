@@ -293,6 +293,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "SetPlayerStateEndEnable", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetEnableStateEnd>, 1 },
 	{ "SetPlayerShootdownEventEnable", StgStageScript::Func_SetPlayerInfoAsBool<&StgPlayerObject::SetEnableShootdownEvent>, 1 },
 	{ "SetPlayerRebirthPosition", StgStageScript::Func_SetPlayerRebirthPosition, 2 },
+	{ "KillPlayer", StgStageScript::Func_KillPlayer, 0 },
 
 	//STG共通関数：敵
 	{ "GetEnemyBossSceneObjectID", StgStageScript::Func_GetEnemyBossSceneObjectID, 0 },
@@ -1129,6 +1130,14 @@ gstd::value StgStageScript::Func_SetPlayerRebirthPosition(gstd::script_machine* 
 		double x = argv[0].as_float();
 		double y = argv[1].as_float();
 		objPlayer->SetRebirthPosition(x, y);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_KillPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	ref_unsync_ptr<StgPlayerObject> objPlayer = script->stageController_->GetPlayerObject();
+	if (objPlayer) {
+		objPlayer->KillSelf(ID_INVALID);
 	}
 	return value();
 }
@@ -5654,8 +5663,6 @@ static const std::vector<function> stgPlayerFunction = {
 	{ "ReloadPlayerShotData", StgStagePlayerScript::Func_ReloadPlayerShotData, 1 },
 	{ "GetSpellManageObject", StgStagePlayerScript::Func_GetSpellManageObject, 0 },
 
-	{ "KillPlayer", StgStagePlayerScript::Func_KillPlayer, 0 },
-
 	//自機専用関数：スペルオブジェクト操作
 	{ "ObjSpell_Create", StgStagePlayerScript::Func_ObjSpell_Create, 0 },
 	{ "ObjSpell_Regist", StgStagePlayerScript::Func_ObjSpell_Regist, 1 },
@@ -5759,15 +5766,6 @@ gstd::value StgStagePlayerScript::Func_GetSpellManageObject(gstd::script_machine
 			id = objManage->GetObjectID();
 	}
 	return script->CreateIntValue(id);
-}
-
-gstd::value StgStagePlayerScript::Func_KillPlayer(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgStagePlayerScript* script = (StgStagePlayerScript*)machine->data;
-	ref_unsync_ptr<StgPlayerObject> objPlayer = script->stageController_->GetPlayerObject();
-	if (objPlayer) {
-		objPlayer->KillSelf(ID_INVALID);
-	}
-	return value();
 }
 
 //自機専用関数：スペルオブジェクト操作
