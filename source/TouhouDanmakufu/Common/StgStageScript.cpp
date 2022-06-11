@@ -464,6 +464,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjShot_SetIntersectionScaleX", StgStageScript::Func_ObjShot_SetIntersectionScaleX, 2 },
 	{ "ObjShot_SetIntersectionScaleY", StgStageScript::Func_ObjShot_SetIntersectionScaleY, 2 },
 	{ "ObjShot_SetIntersectionScaleXY", StgStageScript::Func_ObjShot_SetIntersectionScaleXY, 3 },
+	{ "ObjShot_SetIntersectionScaleXY", StgStageScript::Func_ObjShot_SetIntersectionScaleXY, 2 }, //Overloaded
 	{ "ObjShot_SetPositionRounding", StgStageScript::Func_ObjShot_SetPositionRounding, 2 },
 	{ "ObjShot_SetAngleRounding", StgStageScript::Func_ObjShot_SetAngleRounding, 2 },
 	{ "ObjShot_SetDelayMotionEnable", StgStageScript::Func_ObjShot_SetDelayMotionEnable, 2 },
@@ -4459,7 +4460,7 @@ gstd::value StgStageScript::Func_ObjShot_SetIntersectionScaleXY(gstd::script_mac
 	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
 	if (obj) {
 		float scaleX = argv[1].as_float();
-		float scaleY = argv[2].as_float();
+		float scaleY = (argc == 3) ? argv[2].as_float() : scaleX;
 		obj->SetHitboxScaleX(scaleX);
 		obj->SetHitboxScaleY(scaleY);
 	}
