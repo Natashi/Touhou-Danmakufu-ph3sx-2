@@ -30,6 +30,8 @@ public:
 	SystemInformation* GetSystemInformation() { return infoSystem_.get(); }
 
 	void ShowErrorDialog(const std::wstring& msg);
+
+	void ResetWindowTitle();
 };
 
 //*******************************************************************
