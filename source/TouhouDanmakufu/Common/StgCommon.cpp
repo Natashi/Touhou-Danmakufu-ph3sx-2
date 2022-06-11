@@ -292,6 +292,7 @@ StgMovePattern_XY::StgMovePattern_XY(StgMoveObject* target) : StgMovePattern(tar
 	typeMove_ = TYPE_XY;
 	c_ = 0;
 	s_ = 0;
+	angDirection_ = 0;
 	accelerationX_ = 0;
 	accelerationY_ = 0;
 	maxSpeedX_ = 0;
@@ -320,6 +321,8 @@ void StgMovePattern_XY::Move() {
 	target_->SetPositionX(target_->GetPositionX() + c_);
 	target_->SetPositionY(target_->GetPositionY() + s_);
 
+	if ((c_ != 0 || s_ != 0)) angDirection_ = atan2(s_, c_);
+
 	++frameWork_;
 }
 void StgMovePattern_XY::Activate(StgMovePattern* _src) {
@@ -328,6 +331,7 @@ void StgMovePattern_XY::Activate(StgMovePattern* _src) {
 			StgMovePattern_XY* src = (StgMovePattern_XY*)_src;
 			c_ = src->c_;
 			s_ = src->s_;
+			angDirection_ = src->angDirection_;
 			accelerationX_ = src->accelerationX_;
 			accelerationY_ = src->accelerationY_;
 			maxSpeedX_ = src->maxSpeedX_;
@@ -337,6 +341,7 @@ void StgMovePattern_XY::Activate(StgMovePattern* _src) {
 			StgMovePattern_Angle* src = (StgMovePattern_Angle*)_src;
 			c_ = src->GetSpeedX();
 			s_ = src->GetSpeedY();
+			angDirection_ = src->angDirection_;
 			{
 				double c = c_ / src->speed_;
 				double s = s_ / src->speed_;
@@ -360,6 +365,7 @@ void StgMovePattern_XY::Activate(StgMovePattern* _src) {
 			Math::Rotate2D(tmpMS, sc);
 
 			c_ = tmpS[0]; s_ = tmpS[1];
+			angDirection_ = src->angDirection_;
 			accelerationX_ = tmpAcc[0]; accelerationY_ = tmpAcc[1];
 			maxSpeedX_ = tmpMS[0]; maxSpeedY_ = tmpMS[1];
 		}
@@ -367,6 +373,7 @@ void StgMovePattern_XY::Activate(StgMovePattern* _src) {
 			StgMovePattern_Line* src = dynamic_cast<StgMovePattern_Line*>(_src);
 			c_ = src->GetSpeedX();
 			s_ = src->GetSpeedY();
+			angDirection_ = src->GetDirectionAngle();
 		}
 	}
 
@@ -415,6 +422,7 @@ StgMovePattern_XY_Angle::StgMovePattern_XY_Angle(StgMoveObject* target) : StgMov
 	typeMove_ = TYPE_XY_ANG;
 	c_ = 0;
 	s_ = 0;
+	angDirection_ = 0;
 	accelerationX_ = 0;
 	accelerationY_ = 0;
 	maxSpeedX_ = 0;
@@ -462,6 +470,8 @@ void StgMovePattern_XY_Angle::Move() {
 	target_->SetPositionX(target_->GetPositionX() + speed[0]);
 	target_->SetPositionY(target_->GetPositionY() + speed[1]);
 
+	if ((c_ != 0 || s_ != 0)) angDirection_ = atan2(s_, c_) + angOff_;
+
 	++frameWork_;
 }
 void StgMovePattern_XY_Angle::Activate(StgMovePattern* _src) {
@@ -470,6 +480,7 @@ void StgMovePattern_XY_Angle::Activate(StgMovePattern* _src) {
 			StgMovePattern_XY* src = (StgMovePattern_XY*)_src;
 			c_ = src->c_;
 			s_ = src->s_;
+			angDirection_ = src->angDirection_;
 			accelerationX_ = src->accelerationX_;
 			accelerationY_ = src->accelerationY_;
 			maxSpeedX_ = src->maxSpeedX_;
@@ -483,6 +494,7 @@ void StgMovePattern_XY_Angle::Activate(StgMovePattern* _src) {
 			StgMovePattern_Angle* src = (StgMovePattern_Angle*)_src;
 			c_ = src->GetSpeedX();
 			s_ = src->GetSpeedY();
+			angDirection_ = src->angDirection_;
 			{
 				double c = c_ / src->speed_;
 				double s = s_ / src->speed_;
@@ -500,6 +512,7 @@ void StgMovePattern_XY_Angle::Activate(StgMovePattern* _src) {
 			StgMovePattern_XY_Angle* src = (StgMovePattern_XY_Angle*)_src;
 			c_ = src->c_;
 			s_ = src->s_;
+			angDirection_ = src->angDirection_;
 			accelerationX_ = src->accelerationX_;
 			accelerationY_ = src->accelerationY_;
 			maxSpeedX_ = src->maxSpeedX_;
