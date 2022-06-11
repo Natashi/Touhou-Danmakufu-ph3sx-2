@@ -1630,7 +1630,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 		Description:
 			Change.
 			
-			It is possible to pass as many event arguments as you want.
+			It is possible to pass as many event arguments as you want, or none at all.
 			
 			*Scripts paused with PauseScript will still be able to run events.
 	
@@ -1643,7 +1643,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 		Description:
 			NotifyEvent's the script in which it was called.
 			
-			It is possible to pass as many event arguments as you want.
+			It is possible to pass as many event arguments as you want, or none at all.
 			
 			*Scripts paused with PauseScript will still be able to run events.
 	
@@ -1655,7 +1655,7 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			Change.
 			NotifyEvent's all actively running scripts.
 			
-			It is possible to pass as many event arguments as you want.
+			It is possible to pass as many event arguments as you want, or none at all.
 			
 			*Scripts paused with PauseScript will still be able to run events.
 	
@@ -3544,6 +3544,10 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 		Description:
 			Sets the respawn point of the player.
 			Use REBIRTH_DEFAULT in either position to reset it to its default value.
+            
+    KillPlayer
+		Description:
+			Kills the player.
 	
 	--------------------------------> Enemy Functions <--------------------------------
 	
@@ -4195,7 +4199,16 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 			For normal shots, the true scale is the half-point between the X and Y scales.
 			
 			Note: Sorry folks, no ellipse hitboxes for you.
-	
+            
+    ObjShot_SetIntersectionScaleXY (Overload)
+		Arguments:
+			1) (int) object ID
+			2) XY scale
+		Description:
+            Overloaded with 2 arguments.
+            
+			Sets the shot object's XY hitbox scale.
+
 	ObjShot_SetPositionRounding
 		Arguments:
 			1) (int) object ID
@@ -5026,12 +5039,6 @@ ALL ARGUMENTS ARE FLOATS UNLESS STATED OTHERWISE
 					2 - Via ObjItem_SetMoveToPlayer
 		
 ---------------------------------------------->	[Player Script] <----------------------------------------------
-	
-	-------------------------------->  Normal Functions <--------------------------------
-	
-	KillPlayer
-		Description:
-			Kills the player.
 	
 	-------------------------------->  Shot Functions <--------------------------------
 	
