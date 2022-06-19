@@ -206,7 +206,10 @@ public:
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return hypot(c_, s_); }
-	// virtual inline double GetDirectionAngle() { return (c_ != 0 || s_ != 0) ? atan2(s_, c_) : 0; }
+	virtual inline double GetDirectionAngle() {
+		if ((c_ != 0 || s_ != 0)) angDirection_ = atan2(s_, c_);
+		return angDirection_;
+	}
 
 	virtual double GetSpeedX() { return c_; }
 	virtual double GetSpeedY() { return s_; }
@@ -258,11 +261,11 @@ public:
 	virtual void Move();
 
 	virtual inline double GetSpeed() { return hypot(c_, s_); }
-	/*
+	
 	virtual inline double GetDirectionAngle() {
-		return ((c_ != 0 || s_ != 0) ? atan2(s_, c_) : 0) + angOff_;
+		if ((c_ != 0 || s_ != 0)) angDirection_ = atan2(s_, c_) + angOff_;
+		return angDirection_;
 	}
-	*/
 
 	virtual double GetSpeedX() { return c_ * cos(angOff_) - s_ * sin(angOff_); }
 	virtual double GetSpeedY() { return c_ * sin(angOff_) + s_ * cos(angOff_); }
