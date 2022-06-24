@@ -442,6 +442,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjShot_SetAutoDelete", StgStageScript::Func_ObjShot_SetAutoDelete, 2 },
 	{ "ObjShot_FadeDelete", StgStageScript::Func_ObjShot_FadeDelete, 1 },
 	{ "ObjShot_SetDeleteFrame", StgStageScript::Func_ObjShot_SetDeleteFrame, 2 },
+	{ "ObjShot_SetFrameDeleteType", StgStageScript::Func_ObjShot_SetFrameDeleteType, 2 },
 	{ "ObjShot_SetDelay", StgStageScript::Func_ObjShot_SetDelay, 2 },
 	{ "ObjShot_SetSpellResist", StgStageScript::Func_ObjShot_SetSpellResist, 2 },
 	{ "ObjShot_SetGraphic", StgStageScript::Func_ObjShot_SetGraphic, 2 },
@@ -4172,6 +4173,27 @@ gstd::value StgStageScript::Func_ObjShot_SetDeleteFrame(gstd::script_machine* ma
 	if (obj) {
 		int frame = argv[1].as_int();
 		obj->SetAutoDeleteFrame(frame);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjShot_SetFrameDeleteType(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	int id = argv[0].as_int();
+	StgShotObject* obj = script->GetObjectPointerAs<StgShotObject>(id);
+	if (obj) {
+		int type = argv[1].as_int();
+		switch (type) {
+		case TYPE_IMMEDIATE:
+			type = StgShotManager::TO_TYPE_IMMEDIATE;
+			break;
+		case TYPE_FADE:
+			type = StgShotManager::TO_TYPE_FADE;
+			break;
+		case TYPE_ITEM:
+			type = StgShotManager::TO_TYPE_ITEM;
+			break;
+		}
+		obj->SetAutoDeleteType(type);
 	}
 	return value();
 }

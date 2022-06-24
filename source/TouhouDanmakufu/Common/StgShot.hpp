@@ -330,6 +330,7 @@ public:
 	bool bSpellFactor_;
 	bool bSpellResist_;
 	int frameAutoDelete_;
+	int typeAutoDelete_;
 	
 	IntersectionListType listIntersectionTarget_;
 	bool bUserIntersectionMode_;
@@ -437,6 +438,7 @@ public:
 	bool IsAutoDelete() { return bAutoDelete_; }
 	void SetAutoDelete(bool b) { bAutoDelete_ = b; }
 	void SetAutoDeleteFrame(int frame) { frameAutoDelete_ = frame; }
+	void SetAutoDeleteType(int type) { typeAutoDelete_ = type; }
 	bool IsEraseShot() { return bEraseShot_; }
 	void SetEraseShot(bool bErase) { bEraseShot_ = bErase; }
 	bool IsSpellFactor() { return bSpellFactor_; }
@@ -583,7 +585,6 @@ protected:
 	bool bLaserExpand_;
 
 	virtual void _DeleteInAutoClip();
-	virtual void _DeleteInAutoDeleteFrame();
 	virtual void _SendDeleteEvent(int type);
 public:
 	StgStraightLaserObject(StgStageController* stageController);

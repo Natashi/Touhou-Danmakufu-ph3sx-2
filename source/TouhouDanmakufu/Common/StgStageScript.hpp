@@ -386,6 +386,7 @@ public:
 	DNH_FUNCAPI_DECL_(Func_ObjShot_SetOwnerType);
 	static gstd::value Func_ObjShot_SetAutoDelete(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetDeleteFrame(gstd::script_machine* machine, int argc, const gstd::value* argv);
+	DNH_FUNCAPI_DECL_(Func_ObjShot_SetFrameDeleteType);
 	static gstd::value Func_ObjShot_FadeDelete(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetDelay(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_ObjShot_SetSpellResist(gstd::script_machine* machine, int argc, const gstd::value* argv);
