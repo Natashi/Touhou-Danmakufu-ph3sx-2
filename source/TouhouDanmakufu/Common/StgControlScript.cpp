@@ -712,7 +712,7 @@ gstd::value StgControlScript::Func_RenderToTextureA(gstd::script_machine* machin
 		graphics->ResetDeviceState();
 
 		graphics->BeginScene(false, bClear);
-		script->systemController->RenderScriptObject(priMin, priMax);
+		script->systemController_->RenderScriptObject(priMin, priMax);
 		graphics->EndScene(false);
 
 		graphics->SetRenderTarget(nullptr);
