@@ -29,9 +29,6 @@ DirectionalLightingState::DirectionalLightingState() {
 	light_.Ambient = { 0.5f, 0.5f, 0.5f, 0.0f };
 	light_.Direction = D3DXVECTOR3(-1, -1, -1);
 }
-DirectionalLightingState::~DirectionalLightingState() {
-
-}
 void DirectionalLightingState::Apply() {
 	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
 	device->SetRenderState(D3DRS_LIGHTING, bLightEnable_);

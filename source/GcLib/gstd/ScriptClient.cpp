@@ -1804,8 +1804,6 @@ ScriptLoader::ScriptLoader(ScriptClientBase* script, const std::wstring& path, s
 
 	mapLine_ = mapLine;
 }
-ScriptLoader::~ScriptLoader() {
-}
 
 void ScriptLoader::_RaiseError(int line, const std::wstring& err) {
 	script_->engine_->SetSource(src_);

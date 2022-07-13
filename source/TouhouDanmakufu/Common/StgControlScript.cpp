@@ -97,8 +97,10 @@ static const std::vector<function> stgControlFunction = {
 	{ "ClearInvalidRenderPriority", StgControlScript::Func_ClearInvalidRenderPriority, 0 },
 	{ "SetInvalidRenderPriorityA1", StgControlScript::Func_SetInvalidRenderPriorityA1, 2 },
 	{ "GetReservedRenderTargetName", StgControlScript::Func_GetReservedRenderTargetName, 1 },
-	{ "RenderToTextureA1", StgControlScript::Func_RenderToTextureA1, 4 },
-	{ "RenderToTextureB1", StgControlScript::Func_RenderToTextureB1, 3 },
+	{ "RenderToTextureA1", StgControlScript::Func_RenderToTextureA<false>, 4 },
+	{ "RenderToTextureA2", StgControlScript::Func_RenderToTextureA<true>, 4 },
+	{ "RenderToTextureB1", StgControlScript::Func_RenderToTextureB<false>, 3 },
+	{ "RenderToTextureB2", StgControlScript::Func_RenderToTextureB<true>, 3 },
 	{ "SaveSnapShotA1", StgControlScript::Func_SaveSnapShotA1, 1 },
 	{ "SaveSnapShotA2", StgControlScript::Func_SaveSnapShotA2, 5 },
 	{ "SaveSnapShotA3", StgControlScript::Func_SaveSnapShotA3, 6 },
@@ -672,16 +674,9 @@ gstd::value StgControlScript::Func_GetReservedRenderTargetName(gstd::script_mach
 
 	return script->CreateStringValue(name);
 }
-gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	StgControlScript* script = (StgControlScript*)machine->data;
+
+shared_ptr<Texture> _RenderToTexture_LoadTexture(DxScriptResourceCache* rsrcCache, const std::wstring& name) {
 	ETextureManager* textureManager = ETextureManager::GetInstance();
-
-	std::wstring name = argv[0].as_string();
-	int priMin = argv[1].as_int();
-	int priMax = argv[2].as_int();
-	bool bClear = argv[3].as_boolean();
-
-	DxScriptResourceCache* rsrcCache = script->pResouceCache_;
 
 	shared_ptr<Texture> texture = rsrcCache->GetTexture(name);
 	if (texture == nullptr) {
@@ -689,7 +684,7 @@ gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machi
 		if (texture == nullptr) {
 			bool bExist = false;
 			auto itrData = textureManager->IsDataExistsItr(name, &bExist);
-			if (bExist) {
+			if (bExist) {	//Texture data exists, create a new texture object
 				texture = std::make_shared<Texture>();
 				texture->CreateFromData(itrData->second);
 				textureManager->Add(name, texture);
@@ -697,27 +692,39 @@ gstd::value StgControlScript::Func_RenderToTextureA1(gstd::script_machine* machi
 		}
 	}
 
-	if (texture && texture->GetType() == TextureData::Type::TYPE_RENDER_TARGET) {
-		DirectGraphics* graphics = DirectGraphics::GetBase();
-		graphics->SetAllowRenderTargetChange(false);
+	return texture;
+}
+template<bool OVERRIDE_RT>
+gstd::value StgControlScript::Func_RenderToTextureA(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgControlScript* script = (StgControlScript*)machine->data;
+	DirectGraphics* graphics = DirectGraphics::GetBase();
 
+	std::wstring name = argv[0].as_string();
+	int priMin = argv[1].as_int();
+	int priMax = argv[2].as_int();
+	bool bClear = argv[3].as_boolean();
+
+	shared_ptr<Texture> texture = _RenderToTexture_LoadTexture(script->pResouceCache_, name);
+
+	if (texture && texture->GetType() == TextureData::Type::TYPE_RENDER_TARGET) {
+		graphics->SetAllowRenderTargetChange(OVERRIDE_RT);
 		graphics->SetRenderTarget(texture);
 		graphics->ResetDeviceState();
 
 		graphics->BeginScene(false, bClear);
-		script->systemController_->RenderScriptObject(priMin, priMax);
+		script->systemController->RenderScriptObject(priMin, priMax);
 		graphics->EndScene(false);
 
 		graphics->SetRenderTarget(nullptr);
-
 		graphics->SetAllowRenderTargetChange(true);
 	}
 
 	return value();
 }
-gstd::value StgControlScript::Func_RenderToTextureB1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+template<bool OVERRIDE_RT>
+gstd::value StgControlScript::Func_RenderToTextureB(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ETextureManager* textureManager = ETextureManager::GetInstance();
+	DirectGraphics* graphics = DirectGraphics::GetBase();
 
 	std::wstring name = argv[0].as_string();
 	int id = argv[1].as_int();
@@ -725,26 +732,10 @@ gstd::value StgControlScript::Func_RenderToTextureB1(gstd::script_machine* machi
 
 	DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(script->GetObjectPointer(id));
 	if (obj) {
-		DxScriptResourceCache* rsrcCache = script->pResouceCache_;
-
-		shared_ptr<Texture> texture = rsrcCache->GetTexture(name);
-		if (texture == nullptr) {
-			texture = textureManager->GetTexture(name);
-			if (texture == nullptr) {
-				bool bExist = false;
-				auto itrData = textureManager->IsDataExistsItr(name, &bExist);
-				if (bExist) {
-					texture = std::make_shared<Texture>();
-					texture->CreateFromData(itrData->second);
-					textureManager->Add(name, texture);
-				}
-			}
-		}
+		shared_ptr<Texture> texture = _RenderToTexture_LoadTexture(script->pResouceCache_, name);
 
 		if (texture && texture->GetType() == TextureData::Type::TYPE_RENDER_TARGET) {
-			DirectGraphics* graphics = DirectGraphics::GetBase();
-			graphics->SetAllowRenderTargetChange(false);
-
+			graphics->SetAllowRenderTargetChange(OVERRIDE_RT);
 			graphics->SetRenderTarget(texture);
 			graphics->ResetDeviceState();
 
@@ -753,7 +744,6 @@ gstd::value StgControlScript::Func_RenderToTextureB1(gstd::script_machine* machi
 			graphics->EndScene(false);
 
 			graphics->SetRenderTarget(nullptr);
-
 			graphics->SetAllowRenderTargetChange(true);
 		}
 	}

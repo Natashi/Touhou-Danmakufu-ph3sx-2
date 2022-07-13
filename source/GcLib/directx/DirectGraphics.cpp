@@ -292,7 +292,6 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 
 				SetMultiSampleType(config.typeMultiSample_);
 				//pDevice_->Reset(config.bWindowed_ ? &d3dppWin_ : &d3dppFull_);
-				SetFullscreenAntiAliasing(true);
 			}
 			else {
 				Logger::WriteTop("DirectGraphics: Anti-aliasing is not available for pseudo-fullscreen display.");
@@ -552,6 +551,8 @@ void DirectGraphics::ResetCamera() {
 	}
 }
 void DirectGraphics::ResetDeviceState() {
+	pDevice_->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, false);
+
 	SetCullingMode(D3DCULL_NONE);
 	pDevice_->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
 	pDevice_->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(192, 192, 192));
@@ -563,6 +564,8 @@ void DirectGraphics::ResetDeviceState() {
 	dir.y = -1;
 	dir.z = -1;
 	SetDirectionalLight(dir);
+
+	SetAntiAliasing(false);
 
 	SetBlendMode(MODE_BLEND_ALPHA);
 
@@ -852,7 +855,7 @@ DWORD* DirectGraphics::GetMultiSampleQuality() {
 	if (itr == mapSupportMultisamples_.end()) return nullptr;
 	return itr->second.second;
 }
-HRESULT DirectGraphics::SetFullscreenAntiAliasing(bool bEnable) {
+HRESULT DirectGraphics::SetAntiAliasing(bool bEnable) {
 	return pDevice_->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, bEnable ? TRUE : FALSE);
 }
 bool DirectGraphics::IsSupportMultiSample(D3DMULTISAMPLE_TYPE type) {

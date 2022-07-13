@@ -193,7 +193,7 @@ namespace directx {
 		D3DMULTISAMPLE_TYPE GetMultiSampleType();
 		void SetMultiSampleQuality(DWORD* quality);
 		DWORD* GetMultiSampleQuality();
-		HRESULT SetFullscreenAntiAliasing(bool bEnable);
+		HRESULT SetAntiAliasing(bool bEnable);
 		bool IsSupportMultiSample(D3DMULTISAMPLE_TYPE type);
 
 		//because D3DXMatrixOrthoOffCenterRH is broken for some reason
@@ -252,7 +252,7 @@ namespace directx {
 		void _WindowMove();
 	public:
 		DirectGraphicsPrimaryWindow();
-		~DirectGraphicsPrimaryWindow();
+		virtual ~DirectGraphicsPrimaryWindow();
 
 		virtual bool Initialize();
 		virtual bool Initialize(DirectGraphicsConfig& config);

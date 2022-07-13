@@ -8,7 +8,7 @@ script_value_vector::script_value_vector() : length(0), capacity(0), at(nullptr)
 	expand();
 }
 script_value_vector::~script_value_vector() {
-	ptr_delete_scalar(at);
+	release();
 }
 
 script_value_vector& script_value_vector::operator=(const script_value_vector& source) {

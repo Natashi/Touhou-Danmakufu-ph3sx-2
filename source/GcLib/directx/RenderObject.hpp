@@ -15,7 +15,6 @@ namespace directx {
 	class DirectionalLightingState {
 	public:
 		DirectionalLightingState();
-		~DirectionalLightingState();
 
 		void SetDirection(const D3DXVECTOR3& dir) { light_.Direction = dir; }
 		void SetColorDiffuse(const D3DCOLORVALUE& col) { light_.Diffuse = col; }
@@ -144,7 +143,7 @@ namespace directx {
 		std::vector<byte> vertCopy_;
 	public:
 		RenderObjectTLX();
-		~RenderObjectTLX();
+		virtual ~RenderObjectTLX();
 
 		virtual void Render();
 		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
@@ -176,7 +175,7 @@ namespace directx {
 	class RenderObjectLX : public RenderObject {
 	public:
 		RenderObjectLX();
-		~RenderObjectLX();
+		virtual ~RenderObjectLX();
 
 		virtual void Render();
 		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
@@ -211,7 +210,7 @@ namespace directx {
 		IDirect3DIndexBuffer9* pIndexBuffer_;
 	public:
 		RenderObjectNX();
-		~RenderObjectNX();
+		virtual ~RenderObjectNX();
 		
 		virtual void Render();
 		virtual void Render(D3DXMATRIX* matTransform);

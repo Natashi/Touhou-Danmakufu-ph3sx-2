@@ -547,7 +547,7 @@ namespace directx {
 		bool bWritable_;
 	public:
 		DxFileObject();
-		~DxFileObject();
+		virtual ~DxFileObject();
 
 		shared_ptr<gstd::File> GetFile() { return file_; }
 

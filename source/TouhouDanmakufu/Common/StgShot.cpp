@@ -863,9 +863,8 @@ void StgShotObject::_DeleteInAutoDeleteFrame() {
 			ConvertToItem();
 			break;
 		}
-		return;
 	}
-	frameAutoDelete_ = std::max(0, frameAutoDelete_ - 1);
+	else --frameAutoDelete_;
 }
 void StgShotObject::_CommonWorkTask() {
 	if (bEnableMovement_) {

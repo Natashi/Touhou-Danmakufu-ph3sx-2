@@ -124,7 +124,7 @@ static const std::vector<function> dxFunction = {
 
 	{ "IsPixelShaderSupported", DxScript::Func_IsPixelShaderSupported, 2 },
 	{ "IsVertexShaderSupported", DxScript::Func_IsVertexShaderSupported, 2 },
-	//{ "SetAntiAliasing", DxScript::Func_SetEnableAntiAliasing, 1 },
+	{ "SetEnableAntiAliasing", DxScript::Func_SetEnableAntiAliasing, 1 },
 
 	//Fog
 	{ "SetFogEnable", DxScript::Func_SetFogEnable, 1 },
@@ -1699,7 +1699,7 @@ gstd::value DxScript::Func_SetEnableAntiAliasing(gstd::script_machine* machine, 
 	bool enable = argv[0].as_boolean();
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	bool res = SUCCEEDED(graphics->SetFullscreenAntiAliasing(enable));
+	bool res = SUCCEEDED(graphics->SetAntiAliasing(enable));
 
 	return DxScript::CreateBooleanValue(res);
 }

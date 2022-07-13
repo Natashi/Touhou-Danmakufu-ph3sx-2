@@ -134,7 +134,7 @@ namespace directx {
 		size_t listValueEventSize_;
 	public:
 		ManagedScript();
-		~ManagedScript();
+		virtual ~ManagedScript();
 
 		virtual void Reset();
 

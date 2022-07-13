@@ -456,8 +456,8 @@ namespace gstd {
 
 		void _ConvertToEncoding(Encoding::Type targetEncoding);
 	public:
-		ScriptLoader(ScriptClientBase* script, const std::wstring& path, std::vector<char>& source, ScriptFileLineMap* mapLine);
-		~ScriptLoader();
+		ScriptLoader(ScriptClientBase* script, const std::wstring& path, 
+			std::vector<char>& source, ScriptFileLineMap* mapLine);
 
 		void Parse();
 

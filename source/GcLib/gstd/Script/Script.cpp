@@ -110,7 +110,8 @@ script_machine::environment::environment(script_machine* machine) {
 	_ref = 0;
 }
 script_machine::environment::~environment() {
-	//dec_ref();
+	variables.release();
+	stack.release();
 }
 
 void script_machine::environment::init(environment* parent, script_block* b) {
@@ -149,6 +150,7 @@ script_machine::script_machine(script_engine* the_engine) {
 	reset();
 }
 script_machine::~script_machine() {
+	reset();
 }
 
 constexpr size_t ENV_CHUNK = 2048;
