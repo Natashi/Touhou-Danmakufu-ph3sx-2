@@ -140,8 +140,8 @@ StgEnemyObject::StgEnemyObject(StgStageController* stageController) : StgMoveObj
 
 	life_ = 0;
 	lifePrev_ = 0;
-	rateDamageShot_ = 100;
-	rateDamageSpell_ = 100;
+	rateDamageShot_ = 1;
+	rateDamageSpell_ = 1;
 
 	maximumDamage_ = 256 * 256 * 256;
 	damageAccumFrame_ = 0;
@@ -211,7 +211,7 @@ void StgEnemyObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersection
 				if (ref_unsync_weak_ptr<StgEnemyObject> self = ownTarget->GetObject()) {
 					//Register intersection only if the enemy is off hit cooldown
 					if (!shot->CheckEnemyHitCooldownExists(self)) {
-						damage = shot->GetDamage() * (shot->IsSpellFactor() ? rateDamageSpell_ : rateDamageShot_) / 100.0;
+						damage = shot->GetDamage() * (shot->IsSpellFactor() ? rateDamageSpell_ : rateDamageShot_) * GetShotDamageRateByID(shot->GetShotDataID());
 						++intersectedPlayerShotCount_;
 
 						uint32_t frame = shot->GetEnemyIntersectionInvalidFrame();
@@ -223,7 +223,7 @@ void StgEnemyObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersection
 		}
 		else if (otherTarget->GetTargetType() == StgIntersectionTarget::TYPE_PLAYER_SPELL) {
 			if (StgPlayerSpellObject* spell = dynamic_cast<StgPlayerSpellObject*>(ptrObj.get()))
-				damage = spell->GetDamage() * rateDamageSpell_ / 100;
+				damage = spell->GetDamage() * rateDamageSpell_;
 		}
 	}
 	AddLife2(-damage);

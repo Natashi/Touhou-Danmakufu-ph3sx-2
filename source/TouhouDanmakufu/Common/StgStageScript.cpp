@@ -415,6 +415,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "ObjEnemy_AddLife", StgStageScript::Func_ObjEnemy_AddLife<false>, 2 },
 	{ "ObjEnemy_AddLifeEx", StgStageScript::Func_ObjEnemy_AddLife<true>, 2 },
 	{ "ObjEnemy_SetDamageRate", StgStageScript::Func_ObjEnemy_SetDamageRate, 3 },
+	{ "ObjEnemy_SetDamageRateToShotID", StgStageScript::Func_ObjEnemy_SetDamageRateToShotID, 3 },
 	{ "ObjEnemy_SetMaximumDamage", StgStageScript::Func_ObjEnemy_SetMaximumDamage, 2 },
 	{ "ObjEnemy_AddIntersectionCircleA", StgStageScript::Func_ObjEnemy_AddIntersectionCircleA, 4 },
 	{ "ObjEnemy_SetIntersectionCircleToShot", StgStageScript::Func_ObjEnemy_SetIntersectionCircleToShot, 4 },
@@ -3684,6 +3685,17 @@ gstd::value StgStageScript::Func_ObjEnemy_SetDamageRate(gstd::script_machine* ma
 		double rateShot = argv[1].as_float();
 		double rateSpell = argv[2].as_float();
 		obj->SetDamageRate(rateShot, rateSpell);
+	}
+	return value();
+}
+gstd::value StgStageScript::Func_ObjEnemy_SetDamageRateToShotID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	DxScript* script = (DxScript*)machine->data;
+	int id = argv[0].as_int();
+	StgEnemyObject* obj = script->GetObjectPointerAs<StgEnemyObject>(id);
+	if (obj) {
+		int gr = argv[1].as_int();
+		double rate = argv[2].as_float();
+		obj->SetDamageRateByID(gr, rate);
 	}
 	return value();
 }
