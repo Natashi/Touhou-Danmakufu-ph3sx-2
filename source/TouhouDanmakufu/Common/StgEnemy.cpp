@@ -211,7 +211,8 @@ void StgEnemyObject::Intersect(StgIntersectionTarget* ownTarget, StgIntersection
 				if (ref_unsync_weak_ptr<StgEnemyObject> self = ownTarget->GetObject()) {
 					//Register intersection only if the enemy is off hit cooldown
 					if (!shot->CheckEnemyHitCooldownExists(self)) {
-						damage = shot->GetDamage() * (shot->IsSpellFactor() ? rateDamageSpell_ : rateDamageShot_) * GetShotDamageRateByID(shot->GetShotDataID());
+						damage = shot->GetDamage() * (shot->IsSpellFactor() ? rateDamageSpell_ : rateDamageShot_) 
+							* GetShotDamageRateByShotDataID(shot->GetShotDataID());
 						++intersectedPlayerShotCount_;
 
 						uint32_t frame = shot->GetEnemyIntersectionInvalidFrame();

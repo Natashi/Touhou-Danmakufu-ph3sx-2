@@ -107,11 +107,12 @@ public:
 	void AddLife2(double inc);
 
 	void SetDamageRate(double rateShot, double rateSpell) { rateDamageShot_ = rateShot; rateDamageSpell_ = rateSpell; }
-	void SetDamageRateByID(int id, double rate) { mapShotDamageRate_[id] = rate; }
 	double GetShotDamageRate() { return rateDamageShot_; }
 	double GetSpellDamageRate() { return rateDamageSpell_; }
-	double GetShotDamageRateByID(int id) {
-		return (mapShotDamageRate_.count(id) > 0) ? mapShotDamageRate_[id] : 1;
+	void SetShotDamageRateByShotDataID(int id, double rate) { mapShotDamageRate_[id] = rate; }
+	double GetShotDamageRateByShotDataID(int id) {
+		return mapShotDamageRate_.size() > 0 ? 
+			(mapShotDamageRate_.count(id) > 0 ? mapShotDamageRate_[id] : 1) : 1;
 	}
 
 	void SetMaximumDamage(double dmg) { maximumDamage_ = dmg; }
