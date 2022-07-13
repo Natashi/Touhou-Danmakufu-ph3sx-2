@@ -758,6 +758,7 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 
 	frameFadeDelete_ = -1;
 	frameAutoDelete_ = INT_MAX;
+	typeAutoDelete_ = StgShotManager::TO_TYPE_FADE;
 
 	typeOwner_ = OWNER_ENEMY;
 
@@ -851,9 +852,17 @@ void StgShotObject::_DeleteInAutoDeleteFrame() {
 	if (IsDeleted() || delay_.time > 0) return;
 
 	if (frameAutoDelete_ <= 0) {
-		_SendDeleteEvent(StgShotManager::BIT_EV_DELETE_IMMEDIATE);
-		auto objectManager = stageController_->GetMainObjectManager();
-		objectManager->DeleteObject(this);
+		switch (typeAutoDelete_) {
+		case StgShotManager::TO_TYPE_IMMEDIATE:
+			DeleteImmediate();
+			break;
+		case StgShotManager::TO_TYPE_FADE:
+			SetFadeDelete();
+			break;
+		case StgShotManager::TO_TYPE_ITEM:
+			ConvertToItem();
+			break;
+		}
 		return;
 	}
 	frameAutoDelete_ = std::max(0, frameAutoDelete_ - 1);
@@ -2014,12 +2023,17 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 	listIntersectionTarget_.push_back(CreateEmptyIntersection());
 }
 void StgStraightLaserObject::Work() {
+	if (frameWork_ == 0 && delay_.time == 0) 
+		scaleX_ = 1.0f;
+
 	if (bEnableMovement_) {
 		_ProcessTransformAct();
 		_Move();
 
-		if (delay_.time > 0)
-			--(delay_.time);
+		if (!bLaserExpand_ || delay_.time > 0) {
+			if (delay_.time > 0) --(delay_.time);
+			scaleX_ = std::max(0.05f, scaleX_ - 0.1f);
+		}
 		else if (bLaserExpand_)
 			scaleX_ = std::min(1.0f, scaleX_ + 0.1f);
 
@@ -2050,13 +2064,6 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
-}
-void StgStraightLaserObject::_DeleteInAutoDeleteFrame() {
-	if (IsDeleted() || delay_.time > 0) return;
-
-	if (frameAutoDelete_ <= 0)
-		SetFadeDelete();
-	else --frameAutoDelete_;
 }
 bool StgStraightLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotData) {
 	if (scaleX_ < 1 && typeOwner_ != OWNER_PLAYER)
