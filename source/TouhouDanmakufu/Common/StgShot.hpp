@@ -93,8 +93,10 @@ public:
 		filterMag_ = mag;
 	}
 
-	void DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius);
+	size_t DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius);
+	size_t DeleteInRegularPolygon(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius, int edges, double angle);
 	std::vector<int> GetShotIdInCircle(int typeOwner, int cx, int cy, int* radius);
+	std::vector<int> GetShotIdInRegularPolygon(int typeOwner, int cx, int cy, int* radius, int edges, double angle);
 	size_t GetShotCount(int typeOwner);
 	size_t GetShotCountAll() { return listObj_.size(); }
 
@@ -540,6 +542,7 @@ public:
 	void SetInvalidLength(float start, float end) { invalidLengthStart_ = start; invalidLengthEnd_ = end; }
 
 	void SetItemDistance(float dist) { itemDistance_ = std::max(dist, 0.1f); }
+	float GetItemDistance() { return itemDistance_; }
 };
 
 //*******************************************************************

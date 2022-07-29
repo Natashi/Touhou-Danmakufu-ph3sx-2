@@ -485,7 +485,9 @@ void DxScriptParticleListObject2D::SetRenderState() {
 	graphics->SetTextureFilter(filterMin_, filterMag_, filterMip_);
 }
 void DxScriptParticleListObject2D::CleanUp() {
-	GetParticlePointer()->ClearInstance();
+	ParticleRenderer2D* obj = GetParticlePointer();
+	if (obj->GetAutoClearInstance())
+		obj->ClearInstance();
 }
 
 //****************************************************************************
@@ -528,7 +530,9 @@ void DxScriptParticleListObject3D::SetRenderState() {
 	graphics->SetTextureFilter(filterMin_, filterMag_, filterMip_);
 }
 void DxScriptParticleListObject3D::CleanUp() {
-	GetParticlePointer()->ClearInstance();
+	ParticleRenderer3D* obj = GetParticlePointer();
+	if (obj->GetAutoClearInstance())
+		obj->ClearInstance();
 }
 
 //****************************************************************************

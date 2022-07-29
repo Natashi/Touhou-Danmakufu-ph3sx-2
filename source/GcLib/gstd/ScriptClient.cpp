@@ -140,6 +140,28 @@ static const std::vector<function> commonFunction = {
 	{ "Interpolate_X_AngleR", ScriptClientBase::Func_Interpolate_X_Angle<true>, 4 },
     { "Interpolate_X_Array", ScriptClientBase::Func_Interpolate_X_Array, 3 },
 
+	//Kinematics
+	{ "Kinematic_U_VAD", ScriptClientBase::Func_Kinematic<Math::Kinematic::U_VAD>, 3 },
+	{ "Kinematic_U_VAT", ScriptClientBase::Func_Kinematic<Math::Kinematic::U_VAT>, 3 },
+	{ "Kinematic_U_VDT", ScriptClientBase::Func_Kinematic<Math::Kinematic::U_VDT>, 3 },
+	{ "Kinematic_U_ADT", ScriptClientBase::Func_Kinematic<Math::Kinematic::U_ADT>, 3 },
+	{ "Kinematic_V_UAD", ScriptClientBase::Func_Kinematic<Math::Kinematic::V_UAD>, 3 },
+	{ "Kinematic_V_UAT", ScriptClientBase::Func_Kinematic<Math::Kinematic::V_UAT>, 3 },
+	{ "Kinematic_V_UDT", ScriptClientBase::Func_Kinematic<Math::Kinematic::V_UDT>, 3 },
+	{ "Kinematic_V_ADT", ScriptClientBase::Func_Kinematic<Math::Kinematic::V_ADT>, 3 },
+	{ "Kinematic_A_UVD", ScriptClientBase::Func_Kinematic<Math::Kinematic::A_UVD>, 3 },
+	{ "Kinematic_A_UVT", ScriptClientBase::Func_Kinematic<Math::Kinematic::A_UVT>, 3 },
+	{ "Kinematic_A_UDT", ScriptClientBase::Func_Kinematic<Math::Kinematic::A_UDT>, 3 },
+	{ "Kinematic_A_VDT", ScriptClientBase::Func_Kinematic<Math::Kinematic::A_VDT>, 3 },
+	{ "Kinematic_D_UVA", ScriptClientBase::Func_Kinematic<Math::Kinematic::D_UVA>, 3 },
+	{ "Kinematic_D_UVT", ScriptClientBase::Func_Kinematic<Math::Kinematic::D_UVT>, 3 },
+	{ "Kinematic_D_UAT", ScriptClientBase::Func_Kinematic<Math::Kinematic::D_UAT>, 3 },
+	{ "Kinematic_D_VAT", ScriptClientBase::Func_Kinematic<Math::Kinematic::D_VAT>, 3 },
+	{ "Kinematic_T_UVA", ScriptClientBase::Func_Kinematic<Math::Kinematic::T_UVA>, 3 },
+	{ "Kinematic_T_UVD", ScriptClientBase::Func_Kinematic<Math::Kinematic::T_UVD>, 3 },
+	{ "Kinematic_T_UAD", ScriptClientBase::Func_Kinematic<Math::Kinematic::T_UAD>, 3 },
+	{ "Kinematic_T_VAD", ScriptClientBase::Func_Kinematic<Math::Kinematic::T_VAD>, 3 },
+
 	//Rotation
 	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 3 },
 	{ "Rotate2D", ScriptClientBase::Func_Rotate2D, 5 },
@@ -1039,6 +1061,11 @@ value ScriptClientBase::Func_Interpolate_X_Array(script_machine* machine, int ar
 	auto lerpFunc =  Math::Lerp::GetFunc<double, double>(type);
 
 	return _ScriptValueLerp(machine, &arr[from], &arr[to], x, lerpFunc);
+}
+
+template<double (*funcKinematic)(double, double, double)>
+value ScriptClientBase::Func_Kinematic(script_machine* machine, int argc, const value* argv) {
+	return CreateFloatValue(funcKinematic(argv[0].as_float(), argv[1].as_float(), argv[2].as_float()));
 }
 
 value ScriptClientBase::Func_Rotate2D(script_machine* machine, int argc, const value* argv) {

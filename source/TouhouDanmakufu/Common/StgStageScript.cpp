@@ -311,6 +311,7 @@ static const std::vector<function> stgStageFunction = {
 	//STG共通関数：弾
 	{ "DeleteShotAll", StgStageScript::Func_DeleteShotAll, 2 },
 	{ "DeleteShotInCircle", StgStageScript::Func_DeleteShotInCircle, 5 },
+	{ "DeleteShotInRegularPolygon", StgStageScript::Func_DeleteShotInRegularPolygon, 7 },
 	{ "CreateShotA1", StgStageScript::Func_CreateShotA1, 6 },
 	{ "CreateShotA2", StgStageScript::Func_CreateShotA2, 8 }, //Deprecated, exists for compatibility
 	{ "CreateShotA2", StgStageScript::Func_CreateShotA2, 9 },
@@ -329,6 +330,8 @@ static const std::vector<function> stgStageFunction = {
 	{ "GetAllShotID", StgStageScript::Func_GetAllShotID, 1 },
 	{ "GetShotIdInCircleA1", StgStageScript::Func_GetShotIdInCircleA1, 3 },
 	{ "GetShotIdInCircleA2", StgStageScript::Func_GetShotIdInCircleA2, 4 },
+	{ "GetShotIdInRegularPolygonA1", StgStageScript::Func_GetShotIdInRegularPolygonA1, 5 },
+	{ "GetShotIdInRegularPolygonA2", StgStageScript::Func_GetShotIdInRegularPolygonA2, 6 },
 	{ "GetShotCount", StgStageScript::Func_GetShotCount, 1 },
 	{ "SetShotAutoDeleteClip", StgStageScript::Func_SetShotAutoDeleteClip, 4 },
 	{ "GetShotDataInfoA1", StgStageScript::Func_GetShotDataInfoA1, 3 },
@@ -348,6 +351,7 @@ static const std::vector<function> stgStageFunction = {
 	{ "SetDefaultBonusItemEnable", StgStageScript::Func_SetDefaultBonusItemEnable, 1 },
 	{ "LoadItemData", StgStageScript::Func_LoadItemData, 1 },
 	{ "ReloadItemData", StgStageScript::Func_ReloadItemData, 1 },
+	{ "GetAllItemID", StgStageScript::Func_GetAllItemID, 0 },
 	{ "GetItemIdInCircleA1", StgStageScript::Func_GetItemIdInCircleA1, 3 },
 	{ "GetItemIdInCircleA2", StgStageScript::Func_GetItemIdInCircleA2, 4 },
 	{ "SetItemAutoDeleteClip", StgStageScript::Func_SetItemAutoDeleteClip, 4 },
@@ -1491,9 +1495,9 @@ gstd::value StgStageScript::Func_DeleteShotAll(gstd::script_machine* machine, in
 	case TYPE_ITEM:typeTo = StgShotManager::TO_TYPE_ITEM; break;
 	}
 
-	stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, 0, 0, nullptr);
+	size_t res = stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, 0, 0, nullptr);
 
-	return value();
+	return script->CreateIntValue(res);
 }
 gstd::value StgStageScript::Func_DeleteShotInCircle(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -1517,9 +1521,37 @@ gstd::value StgStageScript::Func_DeleteShotInCircle(gstd::script_machine* machin
 	case TYPE_ITEM:typeTo = StgShotManager::TO_TYPE_ITEM; break;
 	}
 
-	stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, posX, posY, &radius);
+	size_t res = stageController->GetShotManager()->DeleteInCircle(typeDel, typeTo, StgShotObject::OWNER_ENEMY, posX, posY, &radius);
 
-	return value();
+	return script->CreateIntValue(res);
+}
+gstd::value StgStageScript::Func_DeleteShotInRegularPolygon(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	int typeDel = argv[0].as_int();
+	int typeTo = argv[1].as_int();
+	int posX = argv[2].as_float();
+	int posY = argv[3].as_float();
+	int radius = argv[4].as_float();
+	int edges = argv[5].as_int();
+	double angle = argv[6].as_float();
+
+	switch (typeDel) {
+	case TYPE_ALL:typeDel = StgShotManager::DEL_TYPE_ALL; break;
+	case TYPE_SHOT:typeDel = StgShotManager::DEL_TYPE_SHOT; break;
+	case TYPE_CHILD:typeDel = StgShotManager::DEL_TYPE_CHILD; break;
+	}
+
+	switch (typeTo) {
+	case TYPE_IMMEDIATE:typeTo = StgShotManager::TO_TYPE_IMMEDIATE; break;
+	case TYPE_FADE:typeTo = StgShotManager::TO_TYPE_FADE; break;
+	case TYPE_ITEM:typeTo = StgShotManager::TO_TYPE_ITEM; break;
+	}
+
+	size_t res = stageController->GetShotManager()->DeleteInRegularPolygon(typeDel, typeTo, StgShotObject::OWNER_ENEMY, posX, posY, &radius, edges, angle);
+
+	return script->CreateIntValue(res);
 }
 gstd::value StgStageScript::Func_CreateShotA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
@@ -2082,6 +2114,43 @@ gstd::value StgStageScript::Func_GetShotIdInCircleA2(gstd::script_machine* machi
 	std::vector<int> listID = shotManager->GetShotIdInCircle(typeOwner, px, py, &radius);
 	return script->CreateIntArrayValue(listID);
 }
+gstd::value StgStageScript::Func_GetShotIdInRegularPolygonA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	StgShotManager* shotManager = stageController->GetShotManager();
+	int px = argv[0].as_float();
+	int py = argv[1].as_float();
+	int radius = argv[2].as_float();
+	int edges = argv[3].as_int();
+	double angle = argv[4].as_float();
+	int typeOwner = script->GetScriptType() == TYPE_PLAYER ? StgShotObject::OWNER_PLAYER : StgShotObject::OWNER_ENEMY;
+
+	std::vector<int> listID = shotManager->GetShotIdInRegularPolygon(typeOwner, px, py, &radius, edges, angle);
+	return script->CreateIntArrayValue(listID);
+}
+gstd::value StgStageScript::Func_GetShotIdInRegularPolygonA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgStageController* stageController = script->stageController_;
+
+	StgShotManager* shotManager = stageController->GetShotManager();
+	int px = argv[0].as_float();
+	int py = argv[1].as_float();
+	int radius = argv[2].as_float();
+	int edges = argv[3].as_int();
+	double angle = argv[4].as_float();
+	int target = argv[5].as_int();
+
+	int typeOwner = StgShotObject::OWNER_NULL;
+	switch (target) {
+	case TARGET_ALL:typeOwner = StgShotObject::OWNER_NULL; break;
+	case TARGET_PLAYER:typeOwner = StgShotObject::OWNER_PLAYER; break;
+	case TARGET_ENEMY:typeOwner = StgShotObject::OWNER_ENEMY; break;
+	}
+
+	std::vector<int> listID = shotManager->GetShotIdInRegularPolygon(typeOwner, px, py, &radius, edges, angle);
+	return script->CreateIntArrayValue(listID);
+}
 gstd::value StgStageScript::Func_GetShotCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgStageController* stageController = script->stageController_;
@@ -2436,6 +2505,13 @@ gstd::value StgStageScript::Func_ReloadItemData(gstd::script_machine* machine, i
 	bool res = itemManager->LoadItemData(path, true);
 	return script->CreateBooleanValue(res);
 }
+gstd::value StgStageScript::Func_GetAllItemID(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+	StgStageScript* script = (StgStageScript*)machine->data;
+	StgItemManager* itemManager = script->stageController_->GetItemManager();
+
+	std::vector<int> listID = itemManager->GetItemIdInCircle(0, 0, nullptr, nullptr);
+	return script->CreateIntArrayValue(listID);
+}
 gstd::value StgStageScript::Func_GetItemIdInCircleA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgStageScript* script = (StgStageScript*)machine->data;
 	StgItemManager* itemManager = script->stageController_->GetItemManager();
@@ -2444,7 +2520,7 @@ gstd::value StgStageScript::Func_GetItemIdInCircleA1(gstd::script_machine* machi
 	int py = argv[1].as_float();
 	int radius = argv[2].as_float();
 
-	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, radius, nullptr);
+	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, &radius, nullptr);
 	return script->CreateIntArrayValue(listID);
 }
 gstd::value StgStageScript::Func_GetItemIdInCircleA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -2456,7 +2532,7 @@ gstd::value StgStageScript::Func_GetItemIdInCircleA2(gstd::script_machine* machi
 	int radius = argv[2].as_float();
 	int type = argv[3].as_int();
 
-	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, radius, &type);
+	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, &radius, &type);
 	return script->CreateIntArrayValue(listID);
 }
 gstd::value StgStageScript::Func_SetItemAutoDeleteClip(gstd::script_machine* machine, int argc, const gstd::value* argv) {
