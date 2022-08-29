@@ -43,7 +43,7 @@ Preamble:
             
             EXAMPLE:
             
-                function<void> DoSomething()
+                func<void> DoSomething()
                 {
                     float posX, posY;
                     // ...
@@ -74,7 +74,7 @@ Preamble:
             
             EXAMPLE:
             
-                function<void> DoSomethingElse(int foo_, float bar_)
+                func<void> DoSomethingElse(int foo_, float bar_)
                 {
                     // ...
                 }
@@ -137,22 +137,22 @@ Preamble:
             
             EXAMPLE:
                 
-                function<void> DoSomething()
+                func<void> DoSomething()
                 {
                     // ...
                 }
                 
-                function<int> GetSomething(int foo_)
+                func<int> GetSomething(int foo_)
                 {
                     // ...
                 }
                 
-                function<void> SetSomething(int foo_, float bar_)
+                func<void> SetSomething(int foo_, float bar_)
                 {
                     // ...
                 }
                 
-                function<bool> IsSomethingExists(int foo_)
+                func<bool> IsSomethingExists(int foo_)
                 {
                     // ...
                 }
@@ -161,6 +161,7 @@ Preamble:
         1.2.1: Functions
             
             Functions SHOULD be declared with explicit type keywords in angle brackets, unless the type is unknown or variant.
+            For brevity, functions SHOULD use the abbreviated "func" keyword alias instead of "function" when a type keyword is specified.
             
             Function names MUST use PascalCase with no underscores.*
             Function calls require trailing parentheses, even when there are no arguments.
@@ -169,23 +170,23 @@ Preamble:
             
             EXAMPLE:
             
-                function<void> DoSomething()
+                func<void> DoSomething()
                 {
                     // ...
                 }
                 
-                function<void> DoSomethingElse(bool foo_, float bar_)
+                func<void> DoSomethingElse(bool foo_, float bar_)
                 {
                     DoSomething();
                     // ...
                 }
                 
-                function<void> Obj_DoSomething(int obj_)
+                func<void> Obj_DoSomething(int obj_)
                 {
                     // ...
                 }
                 
-                function<void> DoSomething_Obj_Obj(int obj1_, int obj2_)
+                func<void> DoSomething_Obj_Obj(int obj1_, int obj2_)
                 {
                     // ...
                 }
@@ -197,6 +198,7 @@ Preamble:
             The same rules about affixes and parentheses that apply to functions apply here.
             
             // NAZ: I like to treat my tasks as private routines, so often times you'll see me create a "public" function that calls task nested inside.
+            // NAZ: ...though, nowadays the same effect is more cleanly achieved by using inline tasks with the "async" keyword.
             
             EXAMPLE:
             
@@ -205,10 +207,18 @@ Preamble:
                     // ...
                 }
                 
-                task _RenderPlayer_Reimu()
+                func<void> RenderPlayer_Reimu()
                 {
                     _RenderPlayer(PLAYER_REIMU);
                     // ...
+                }
+                
+                func<void> RenderPlayerHitbox()
+                {
+                    async
+                    {
+                        // ...
+                    }
                 }
             
         
@@ -240,7 +250,7 @@ Preamble:
     2.1: Operators
     
         Expressions and statements consisting of one or more literals and/or identifiers MUST employ one space on both sides of all binary and ternary operators
-        (= +, -, *, /, ~/, %, ^, ~, +=, -=, *=, /=, ~/=, %=, ^=, ~=, ==, !=, >, <, >=, <=, &&, ||, &, |, ^^, .., ?, :).
+        (=, +, -, *, /, ~/, %, ^, ~, +=, -=, *=, /=, ~/=, %=, ^=, ~=, ==, !=, >, <, >=, <=, &&, ||, &, |, ^^, .., ?, :).
         
         Expressions and statements consisting of an identifier and a unary operator (!, ++, --) MUST NOT employ a space between the operator and operand.
         
@@ -279,7 +289,7 @@ Preamble:
         and NO space between the identifier and the parentheses, differently from flow control statements.
         Parameters contained inside the parentheses MUST employ one space between each identifier, i.e. after each comma.
         
-        The opening and closing braces of a function, task, or subroutine block MUST go on their own lines, and all lines in between them MUST be indented.
+        The opening and closing braces of a function, task, async, or subroutine block MUST go on their own lines, and all lines in between them MUST be indented.
         There MUST also be an empty line following each closing brace.
         The same rules also apply to @Initialize, @MainLoop, @Event, @Finalize, and @Loading.
 		
@@ -308,7 +318,7 @@ Preamble:
                 // ...
             }
             
-            function<void> DoSomething(bool foo_, int bar_, float baz_, char qux_, string quux_)
+            func<void> DoSomething(bool foo_, int bar_, float baz_, char qux_, string quux_)
             {
                 // ...
             }
@@ -565,7 +575,7 @@ Preamble:
                 }
             }
             
-            function<void> Shoot(float speed_, float dir_)
+            func<void> Shoot(float speed_, float dir_)
             {
                 int obj = CreateShotA1(someX, someY, speed_, dir_, someID, 15);
                 ObjShot_SetDeleteFrame(obj, 180);

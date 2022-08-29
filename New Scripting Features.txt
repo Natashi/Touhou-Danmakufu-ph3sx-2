@@ -506,9 +506,9 @@
 					return a + b + c;
 				}
 				
-				DoStuff();              //Returns 0
-				DoStuff("asdf");        //Returns 100
-				DoStuff(1, 2, 3);       //Returns 6
+				Func();              //Returns 0
+				Func("asdf");        //Returns 100
+				Func(1, 2, 3);       //Returns 6
 				
 		- Variadic argument count (varargs)
 			
