@@ -731,8 +731,6 @@ HRESULT StgShotVertexBufferContainer::LoadData(const std::vector<VERTEX_TLX>& da
 //StgShotObject
 //****************************************************************************
 StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObject(stageController) {
-	stageController_ = stageController;
-
 	frameWork_ = 0;
 	posX_ = 0;
 	posY_ = 0;
@@ -780,6 +778,59 @@ StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObjec
 }
 StgShotObject::~StgShotObject() {
 }
+
+void StgShotObject::Clone(DxScriptObjectBase* _src) {
+	DxScriptShaderObject::Clone(_src);
+
+	auto src = (StgShotObject*)_src;
+	StgMoveObject::Copy((StgMoveObject*)src);
+	StgIntersectionObject::Copy((StgIntersectionObject*)src);
+
+	frameWork_ = src->frameWork_;
+	idShotData_ = src->idShotData_;
+	typeOwner_ = src->typeOwner_;
+
+	move_ = src->move_;
+	lastAngle_ = src->lastAngle_;
+
+	hitboxScale_ = src->hitboxScale_;
+	delay_ = src->delay_;
+
+	frameGrazeInvalid_ = src->frameGrazeInvalid_;
+	frameGrazeInvalidStart_ = src->frameGrazeInvalidStart_;
+	frameFadeDelete_ = src->frameFadeDelete_;
+	bPenetrateShot_ = src->bPenetrateShot_;
+
+	renderTarget_ = src->renderTarget_;
+
+	frameEnemyHitInvalid_ = src->frameEnemyHitInvalid_;
+	mapEnemyHitCooldown_ = src->mapEnemyHitCooldown_;
+
+	bRequestedPlayerDeleteEvent_ = src->bRequestedPlayerDeleteEvent_;
+	damage_ = src->damage_;
+	life_ = src->life_;
+
+	bAutoDelete_ = src->bAutoDelete_;
+	bEraseShot_ = src->bEraseShot_;
+	bSpellFactor_ = src->bSpellFactor_;
+	bSpellResist_ = src->bSpellResist_;
+	frameAutoDelete_ = src->frameAutoDelete_;
+	typeAutoDelete_ = src->typeAutoDelete_;
+
+	listIntersectionTarget_ = src->listIntersectionTarget_;
+	bUserIntersectionMode_ = src->bUserIntersectionMode_;
+	bIntersectionEnable_ = src->bIntersectionEnable_;
+	bChangeItemEnable_ = src->bChangeItemEnable_;
+
+	bEnableMotionDelay_ = src->bEnableMotionDelay_;
+	bRoundingPosition_ = src->bRoundingPosition_;
+	roundingAngle_ = src->roundingAngle_;
+
+	listTransformationShotAct_ = src->listTransformationShotAct_;
+	timerTransform_ = src->timerTransform_;
+	timerTransformNext_ = src->timerTransformNext_;
+}
+
 void StgShotObject::SetOwnObjectReference() {
 	auto ptr = ref_unsync_ptr<StgShotObject>::Cast(stageController_->GetMainRenderObject(idObject_));
 	pOwnReference_ = ptr;
@@ -1007,13 +1058,13 @@ void StgShotObject::_ProcessTransformAct() {
 
 	if (timerTransform_ == 0) timerTransform_ = delay_.time;
 	while (timerTransform_ == frameWork_ && listTransformationShotAct_.size() > 0) {
-		StgPatternShotTransform& transform = listTransformationShotAct_.front();
+		StgShotPatternTransform& transform = listTransformationShotAct_.front();
 
 		switch (transform.act) {
-		case StgPatternShotTransform::TRANSFORM_WAIT:
+		case StgShotPatternTransform::TRANSFORM_WAIT:
 			timerTransform_ += std::max((int)transform.param[0], 0);
 			break;
-		case StgPatternShotTransform::TRANSFORM_ADD_SPEED_ANGLE:
+		case StgShotPatternTransform::TRANSFORM_ADD_SPEED_ANGLE:
 		{
 			int duration = transform.param[0];
 			int delay = transform.param[1];
@@ -1036,7 +1087,7 @@ void StgShotObject::_ProcessTransformAct() {
 			}
 			break;
 		}
-		case StgPatternShotTransform::TRANSFORM_ANGULAR_MOVE:
+		case StgShotPatternTransform::TRANSFORM_ANGULAR_MOVE:
 		{
 			int duration = transform.param[0];
 			double agvel = transform.param[1];
@@ -1059,7 +1110,7 @@ void StgShotObject::_ProcessTransformAct() {
 
 			break;
 		}
-		case StgPatternShotTransform::TRANSFORM_N_DECEL_CHANGE:
+		case StgShotPatternTransform::TRANSFORM_N_DECEL_CHANGE:
 		{
 			int timer = transform.param[0];
 			int countRep = transform.param[1];
@@ -1131,17 +1182,17 @@ void StgShotObject::_ProcessTransformAct() {
 
 			break;
 		}
-		case StgPatternShotTransform::TRANSFORM_GRAPHIC_CHANGE:
+		case StgShotPatternTransform::TRANSFORM_GRAPHIC_CHANGE:
 		{
 			idShotData_ = transform.param[0];
 			break;
 		}
-		case StgPatternShotTransform::TRANSFORM_BLEND_CHANGE:
+		case StgShotPatternTransform::TRANSFORM_BLEND_CHANGE:
 		{
 			SetBlendType((BlendMode)transform.param[0]);
 			break;
 		}
-		case StgPatternShotTransform::TRANSFORM_TO_SPEED_ANGLE:
+		case StgShotPatternTransform::TRANSFORM_TO_SPEED_ANGLE:
 		{
 			int duration = transform.param[0];
 			double targetSpeed = transform.param[1];
@@ -1186,7 +1237,7 @@ void StgShotObject::_ProcessTransformAct() {
 								pattern->AddCommand(std::make_pair(__cmd, __arg));
 #define ADD_CMD2(__cmd, __target, __arg) if (__target != StgMovePattern::NO_CHANGE) \
 								pattern->AddCommand(std::make_pair(__cmd, __arg));
-		case StgPatternShotTransform::TRANSFORM_ADDPATTERN_A1:
+		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_A1:
 		{
 			int time = transform.param[0];
 
@@ -1202,7 +1253,7 @@ void StgShotObject::_ProcessTransformAct() {
 			AddPattern(time, pattern, true);
 			break;
 		}
-		case StgPatternShotTransform::TRANSFORM_ADDPATTERN_A2:
+		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_A2:
 		{
 			int time = transform.param[0];
 
@@ -1230,7 +1281,7 @@ void StgShotObject::_ProcessTransformAct() {
 			AddPattern(time, pattern, true);
 			break;
 		}
-		case StgPatternShotTransform::TRANSFORM_ADDPATTERN_B1:
+		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_B1:
 		{
 			int time = transform.param[0];
 
@@ -1246,7 +1297,7 @@ void StgShotObject::_ProcessTransformAct() {
 			AddPattern(time, pattern, true);
 			break;
 		}
-		case StgPatternShotTransform::TRANSFORM_ADDPATTERN_B2:
+		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_B2:
 		{
 			int time = transform.param[0];
 
@@ -1273,7 +1324,7 @@ void StgShotObject::_ProcessTransformAct() {
 			AddPattern(time, pattern, true);
 			break;
 		}
-		case StgPatternShotTransform::TRANSFORM_ADDPATTERN_C1:
+		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_C1:
 		{
 			int time = transform.param[0];
 
@@ -1291,7 +1342,7 @@ void StgShotObject::_ProcessTransformAct() {
 			AddPattern(time, pattern, true);
 			break;
 		}
-		case StgPatternShotTransform::TRANSFORM_ADDPATTERN_C2:
+		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_C2:
 		{
 			int time = transform.param[0];
 
@@ -1356,6 +1407,16 @@ StgNormalShotObject::StgNormalShotObject(StgStageController* stageController) : 
 }
 StgNormalShotObject::~StgNormalShotObject() {
 }
+
+void StgNormalShotObject::Clone(DxScriptObjectBase* _src) {
+	StgShotObject::Clone(_src);
+
+	auto src = (StgNormalShotObject*)_src;
+
+	angularVelocity_ = src->angularVelocity_;
+	bFixedAngle_ = src->bFixedAngle_;
+}
+
 void StgNormalShotObject::Work() {
 	if (bEnableMovement_) {
 		_ProcessTransformAct();
@@ -1705,6 +1766,21 @@ StgLaserObject::StgLaserObject(StgStageController* stageController) : StgShotObj
 	move_ = D3DXVECTOR2(1, 0);
 	lastAngle_ = 0;
 }
+
+void StgLaserObject::Clone(DxScriptObjectBase* _src) {
+	StgShotObject::Clone(_src);
+
+	auto src = (StgLaserObject*)_src;
+
+	length_ = src->length_;
+	widthRender_ = src->widthRender_;
+	widthIntersection_ = src->widthIntersection_;
+
+	invalidLengthStart_ = src->invalidLengthStart_;
+	invalidLengthEnd_ = src->invalidLengthEnd_;
+	itemDistance_ = src->itemDistance_;
+}
+
 void StgLaserObject::_AddIntersectionRelativeTarget() {
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 
@@ -1756,6 +1832,18 @@ StgLooseLaserObject::StgLooseLaserObject(StgStageController* stageController) : 
 
 	listIntersectionTarget_.push_back(CreateEmptyIntersection());
 }
+
+void StgLooseLaserObject::Clone(DxScriptObjectBase* _src) {
+	StgLaserObject::Clone(_src);
+
+	auto src = (StgLooseLaserObject*)_src;
+
+	posTail_ = src->posTail_;
+	posOrigin_ = src->posOrigin_;
+
+	currentLength_ = src->currentLength_;
+}
+
 void StgLooseLaserObject::Work() {
 	if (frameWork_ == 0) {
 		posTail_[0] = posOrigin_.x = posX_;
@@ -2021,6 +2109,23 @@ StgStraightLaserObject::StgStraightLaserObject(StgStageController* stageControll
 
 	listIntersectionTarget_.push_back(CreateEmptyIntersection());
 }
+
+void StgStraightLaserObject::Clone(DxScriptObjectBase* _src) {
+	StgLaserObject::Clone(_src);
+
+	auto src = (StgStraightLaserObject*)_src;
+
+	angLaser_ = src->angLaser_;
+
+	bUseSouce_ = src->bUseSouce_;
+	bUseEnd_ = src->bUseEnd_;
+	idImageEnd_ = src->idImageEnd_;
+
+	delaySize_ = src->delaySize_;
+	scaleX_ = src->scaleX_;
+	bLaserExpand_ = src->bLaserExpand_;
+}
+
 void StgStraightLaserObject::Work() {
 	if (frameWork_ == 0 && delay_.time == 0) 
 		scaleX_ = 1.0f;
@@ -2274,6 +2379,23 @@ StgCurveLaserObject::StgCurveLaserObject(StgStageController* stageController) : 
 	bCap_ = false;
 	posOrigin_ = D3DXVECTOR2(0, 0);
 }
+
+void StgCurveLaserObject::Clone(DxScriptObjectBase* _src) {
+	StgLaserObject::Clone(_src);
+
+	auto src = (StgCurveLaserObject*)_src;
+
+	listPosition_ = src->listPosition_;
+	vertexData_ = src->vertexData_;
+	listRectIncrement_ = src->listRectIncrement_;
+
+	posXO_ = src->posXO_;
+	posYO_ = src->posYO_;
+	tipDecrement_ = src->tipDecrement_;
+	bCap_ = src->bCap_;
+	posOrigin_ = src->posOrigin_;
+}
+
 void StgCurveLaserObject::Work() {
 	if (frameWork_ == 0) {
 		posOrigin_.x = posX_;
@@ -2613,7 +2735,7 @@ void StgCurveLaserObject::Render(BlendMode targetBlend) {
 				}
 
 				size_t countVert = vertexData_.size();
-				size_t countPrim = RenderObject::_GetPrimitiveCount(D3DPT_TRIANGLESTRIP, countVert);
+				size_t countPrim = RenderObjectPrimitive::GetPrimitiveCount(D3DPT_TRIANGLESTRIP, countVert);
 
 				{
 					BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
@@ -2738,9 +2860,9 @@ void StgCurveLaserObject::_SendDeleteEvent(int type) {
 }
 
 //****************************************************************************
-//StgPatternShotObjectGenerator (ECL-style bullets firing)
+//StgShotPatternGeneratorObject (ECL-style bullets firing)
 //****************************************************************************
-StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
+StgShotPatternGeneratorObject::StgShotPatternGeneratorObject(StgStageController* stageController) : StgObjectBase(stageController) {
 	typeObject_ = TypeObject::ShotPattern;
 
 	idShotData_ = -1;
@@ -2769,45 +2891,49 @@ StgPatternShotObjectGenerator::StgPatternShotObjectGenerator() {
 	laserWidth_ = 16;
 	laserLength_ = 64;
 }
-StgPatternShotObjectGenerator::~StgPatternShotObjectGenerator() {
+
+void StgShotPatternGeneratorObject::Clone(DxScriptObjectBase* _src) {
+	DxScriptObjectBase::Clone(_src);
+
+	auto src = (StgShotPatternGeneratorObject*)_src;
+
+	parent_ = src->parent_;
+
+	idShotData_ = src->idShotData_;
+	typeOwner_ = src->typeOwner_;
+	typeShot_ = src->typeShot_;
+	typePattern_ = src->typePattern_;
+	iniBlendType_ = src->iniBlendType_;
+
+	shotWay_ = src->shotWay_;
+	shotStack_ = src->shotStack_;
+
+	basePointX_ = src->basePointX_;
+	basePointY_ = src->basePointY_;
+	basePointOffsetX_ = src->basePointOffsetX_;
+	basePointOffsetY_ = src->basePointOffsetY_;
+	fireRadiusOffset_ = src->fireRadiusOffset_;
+
+	speedBase_ = src->speedBase_;
+	speedArgument_ = src->speedArgument_;
+	angleBase_ = src->angleBase_;
+	angleArgument_ = src->angleArgument_;
+
+	delay_ = src->delay_;
+	//delayMove_ = src->delayMove_;
+
+	laserWidth_ = src->laserWidth_;
+	laserLength_ = src->laserLength_;
+
+	listTransformation_ = src->listTransformation_;
 }
 
-void StgPatternShotObjectGenerator::CopyFrom(StgPatternShotObjectGenerator* other) {
-	parent_ = other->parent_;
-	listTransformation_ = other->listTransformation_;
-
-	idShotData_ = other->idShotData_;
-	//typeOwner_ = other->typeOwner_;
-	typeShot_ = other->typeShot_;
-	typePattern_ = other->typePattern_;
-	iniBlendType_ = other->iniBlendType_;
-
-	shotWay_ = other->shotWay_;
-	shotStack_ = other->shotStack_;
-
-	basePointX_ = other->basePointX_;
-	basePointY_ = other->basePointY_;
-	basePointOffsetX_ = other->basePointOffsetX_;
-	basePointOffsetY_ = other->basePointOffsetY_;
-	fireRadiusOffset_ = other->fireRadiusOffset_;
-
-	speedBase_ = other->speedBase_;
-	speedArgument_ = other->speedArgument_;
-	angleBase_ = other->angleBase_;
-	angleArgument_ = other->angleArgument_;
-
-	delay_ = other->delay_;
-	//delayMove_ = other->delayMove_;
-
-	laserWidth_ = other->laserWidth_;
-	laserLength_ = other->laserLength_;
-}
-void StgPatternShotObjectGenerator::SetTransformation(size_t off, StgPatternShotTransform& entry) {
+void StgShotPatternGeneratorObject::SetTransformation(size_t off, StgShotPatternTransform& entry) {
 	if (off >= listTransformation_.size()) listTransformation_.resize(off + 1);
 	listTransformation_[off] = entry;
 }
 
-void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController* controller, std::vector<int>* idVector) {
+void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController* controller, std::vector<int>* idVector) {
 	if (idVector) idVector->clear();
 
 	StgStageScript* script = (StgStageScript*)scriptData;
@@ -2830,8 +2956,8 @@ void StgPatternShotObjectGenerator::FireSet(void* scriptData, StgStageController
 	basePosX += basePointOffsetX_;
 	basePosY += basePointOffsetY_;
 
-	std::list<StgPatternShotTransform> transformAsList;
-	for (StgPatternShotTransform& iTransform : listTransformation_)
+	std::list<StgShotPatternTransform> transformAsList;
+	for (StgShotPatternTransform& iTransform : listTransformation_)
 		transformAsList.push_back(iTransform);
 
 	auto __CreateShot = [&](float _x, float _y, double _ss, double _sa) -> bool {

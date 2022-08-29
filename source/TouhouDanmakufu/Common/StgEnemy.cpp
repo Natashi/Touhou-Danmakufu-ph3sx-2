@@ -133,7 +133,6 @@ lab_cancel_all:
 //StgEnemyObject
 //*******************************************************************
 StgEnemyObject::StgEnemyObject(StgStageController* stageController) : StgMoveObject(stageController) {
-	stageController_ = stageController;
 	typeObject_ = TypeObject::Enemy;
 
 	SetRenderPriorityI(40);
@@ -155,6 +154,33 @@ StgEnemyObject::StgEnemyObject(StgStageController* stageController) : StgMoveObj
 }
 StgEnemyObject::~StgEnemyObject() {
 }
+
+void StgEnemyObject::Clone(DxScriptObjectBase* _src) {
+	DxScriptSpriteObject2D::Clone(_src);
+
+	auto src = (StgEnemyObject*)_src;
+	StgMoveObject::Copy((StgMoveObject*)src);
+	StgIntersectionObject::Copy((StgIntersectionObject*)src);
+
+	life_ = src->life_;
+	lifePrev_ = src->lifePrev_;
+	lifeDelta_ = src->lifeDelta_;
+
+	rateDamageShot_ = src->rateDamageShot_;
+	rateDamageSpell_ = src->rateDamageSpell_;
+	maximumDamage_ = src->maximumDamage_;
+	damageAccumFrame_ = src->damageAccumFrame_;
+	intersectedPlayerShotCount_ = src->intersectedPlayerShotCount_;
+
+	bAutoDelete_ = src->bAutoDelete_;
+	frameAutoDelete_ = src->frameAutoDelete_;
+
+	bEnableGetIntersectionPositionFetch_ = src->bEnableGetIntersectionPositionFetch_;
+	ptrIntersectionToShot_ = src->ptrIntersectionToShot_;
+	ptrIntersectionToPlayer_ = src->ptrIntersectionToPlayer_;
+	mapShotDamageRate_ = src->mapShotDamageRate_;
+}
+
 void StgEnemyObject::Work() {
 	ClearIntersected();
 	intersectedPlayerShotCount_ = 0U;
@@ -258,11 +284,18 @@ StgEnemyBossObject::StgEnemyBossObject(StgStageController* stageController) : St
 	typeObject_ = TypeObject::EnemyBoss;
 }
 
+void StgEnemyBossObject::Clone(DxScriptObjectBase* _src) {
+	StgEnemyObject::Clone(_src);
+
+	auto src = (StgEnemyBossObject*)_src;
+
+	throw new wexception("Object cannot be cloned: ObjEnemyBoss");
+}
+
 //*******************************************************************
 //StgEnemyBossSceneObject
 //*******************************************************************
-StgEnemyBossSceneObject::StgEnemyBossSceneObject(StgStageController* stageController) {
-	stageController_ = stageController;
+StgEnemyBossSceneObject::StgEnemyBossSceneObject(StgStageController* stageController) : StgObjectBase(stageController) {
 	typeObject_ = TypeObject::EnemyBossScene;
 
 	bScriptsLoaded_ = false;
@@ -280,6 +313,14 @@ StgEnemyBossSceneObject::~StgEnemyBossSceneObject() {
 			}
 		}
 	}
+}
+
+void StgEnemyBossSceneObject::Clone(DxScriptObjectBase* _src) {
+	DxScriptObjectBase::Clone(_src);
+
+	auto src = (StgEnemyBossObject*)_src;
+
+	throw new wexception("Object cannot be cloned: ObjEnemyBossScene");
 }
 
 void StgEnemyBossSceneObject::_WaitForStepLoad(int iStep) {

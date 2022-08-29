@@ -731,6 +731,15 @@ StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObjec
 	int priItemI = stageController_->GetStageInformation()->GetItemObjectPriority();
 	SetRenderPriorityI(priItemI);
 }
+
+void StgItemObject::Clone(DxScriptObjectBase* _src) {
+	DxScriptShaderObject::Clone(_src);
+
+	auto src = (StgItemObject*)_src;
+
+	throw new wexception("Object cannot be cloned: ObjItem (non-user-defined)");
+}
+
 void StgItemObject::Work() {
 	if (bEnableMovement_) {
 		bool bNullMovePattern = dynamic_cast<StgMovePattern_Item*>(GetPattern().get()) == nullptr;
@@ -1099,13 +1108,38 @@ void StgItemObject_ScoreText::Intersect(StgIntersectionTarget* ownTarget, StgInt
 StgItemObject_User::StgItemObject_User(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_USER;
 	idImage_ = -1;
-	frameWork_ = 0;
 
 	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
 		move->SetItemMoveType(StgMovePattern_Item::MOVE_DOWN);
 
 	bDefaultScoreText_ = true;
 }
+
+void StgItemObject_User::Clone(DxScriptObjectBase* _src) {
+	DxScriptShaderObject::Clone(_src);
+
+	auto src = (StgItemObject_User*)_src;
+	StgMoveObject::Copy((StgMoveObject*)src);
+	StgIntersectionObject::Copy((StgIntersectionObject*)src);
+
+	typeItem_ = src->typeItem_;
+	frameWork_ = src->frameWork_;
+	score_ = src->score_;
+
+	bMoveToPlayer_ = src->bMoveToPlayer_;
+	moveToPlayerFlags_ = src->moveToPlayerFlags_;
+
+	bDefaultScoreText_ = src->bDefaultScoreText_;
+	bAutoDelete_ = src->bAutoDelete_;
+	bIntersectEnable_ = src->bIntersectEnable_;
+	itemIntersectRadius_ = src->itemIntersectRadius_;
+	bDefaultCollectionMove_ = src->bDefaultCollectionMove_;
+	bRoundingPosition_ = src->bRoundingPosition_;
+
+	idImage_ = src->idImage_;
+	renderTarget_ = src->renderTarget_;
+}
+
 void StgItemObject_User::SetImageID(int id) {
 	idImage_ = id;
 	StgItemData* data = _GetItemData();
@@ -1262,6 +1296,18 @@ StgMovePattern_Item::StgMovePattern_Item(StgMoveObject* target) : StgMovePattern
 	angDirection_ = Math::DegreeToRadian(270);
 	posTo_ = D3DXVECTOR2(0, 0);
 }
+
+void StgMovePattern_Item::CopyFrom(StgMovePattern* _src) {
+	StgMovePattern::CopyFrom(_src);
+	auto src = (StgMovePattern_Item*)_src;
+
+	frame_ = src->frame_;
+	typeMove_ = src->typeMove_;
+	speed_ = src->speed_;
+	angDirection_ = src->angDirection_;
+	posTo_ = src->posTo_;
+}
+
 void StgMovePattern_Item::Move() {
 	StgItemObject* itemObject = (StgItemObject*)target_;
 	StgStageController* stageController = itemObject->GetStageController();

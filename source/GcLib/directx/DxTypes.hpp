@@ -89,6 +89,8 @@ namespace directx {
 	//DxObject
 	//*******************************************************************
 	enum class TypeObject : uint8_t {
+		Base,
+
 		Primitive2D,
 		Sprite2D,
 		SpriteList2D,
@@ -107,8 +109,6 @@ namespace directx {
 
 		FileText,
 		FileBinary,
-
-		Base,
 
 		//------------------------------
 

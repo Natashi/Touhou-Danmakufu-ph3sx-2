@@ -6,11 +6,10 @@
 //****************************************************************************
 //StgMoveObject
 //****************************************************************************
-StgMoveObject::StgMoveObject(StgStageController* stageController) {
+StgMoveObject::StgMoveObject(StgStageController* stageController) : StgObjectBase(stageController) {
 	posX_ = 0;
 	posY_ = 0;
 	framePattern_ = 0;
-	stageController_ = stageController;
 
 	pattern_ = nullptr;
 	bEnableMovement_ = true;
@@ -19,6 +18,37 @@ StgMoveObject::StgMoveObject(StgStageController* stageController) {
 StgMoveObject::~StgMoveObject() {
 	pattern_ = nullptr;
 }
+
+void StgMoveObject::Copy(StgMoveObject* src) {
+	posX_ = src->posX_;
+	posY_ = src->posY_;
+
+	auto _ClonePattern = [](StgMovePattern* srcPattern, StgMoveObject* newTarget) {
+		ref_unsync_ptr<StgMovePattern> pattern = nullptr;
+		if (srcPattern) {
+			pattern = srcPattern->CreateCopy(newTarget);		//Takes ownership of raw ptr
+			pattern->CopyFrom(srcPattern);
+		}
+		return pattern;
+	};
+
+	pattern_ = _ClonePattern(src->pattern_.get(), this);
+
+	bEnableMovement_ = src->bEnableMovement_;
+	frameMove_ = src->frameMove_;
+	framePattern_ = src->framePattern_;
+
+	mapPattern_.clear();
+	for (auto& iPair : src->mapPattern_) {
+		std::list<ref_unsync_ptr<StgMovePattern>> listPattern;
+		for (auto& iPattern : iPair.second) {
+			auto pattern = _ClonePattern(iPattern.get(), this);
+			listPattern.push_back(pattern);
+		}
+		mapPattern_[iPair.first] = listPattern;
+	}
+}
+
 void StgMoveObject::_Move() {
 	if (!bEnableMovement_) return;
 	++frameMove_;
@@ -101,6 +131,19 @@ StgMovePattern::StgMovePattern(StgMoveObject* target) {
 	c_ = 1;
 	s_ = 0;
 }
+
+void StgMovePattern::CopyFrom(StgMovePattern* src) {
+	typeMove_ = src->typeMove_;
+	frameWork_ = src->frameWork_;
+	idShotData_ = src->idShotData_;
+
+	c_ = src->c_;
+	s_ = src->s_;
+	angDirection_ = src->angDirection_;
+
+	listCommand_ = src->listCommand_;
+}
+
 ref_unsync_ptr<StgMoveObject> StgMovePattern::_GetMoveObject(int id) {
 	if (id == DxScript::ID_INVALID) return nullptr;
 
@@ -131,6 +174,20 @@ StgMovePattern_Angle::StgMovePattern_Angle(StgMoveObject* target) : StgMovePatte
 	angularMaxVelocity_ = 0;
 	objRelative_ = ref_unsync_weak_ptr<StgMoveObject>();
 }
+
+void StgMovePattern_Angle::CopyFrom(StgMovePattern* _src) {
+	StgMovePattern::CopyFrom(_src);
+	auto src = (StgMovePattern_Angle*)_src;
+
+	speed_ = src->speed_;
+	acceleration_ = src->acceleration_;
+	maxSpeed_ = src->maxSpeed_;
+	angularVelocity_ = src->angularVelocity_;
+	angularAcceleration_ = src->angularAcceleration_;
+	angularMaxVelocity_ = src->angularMaxVelocity_;
+	objRelative_ = src->objRelative_;
+}
+
 void StgMovePattern_Angle::Move() {
 	double angle = angDirection_;
 
@@ -298,6 +355,17 @@ StgMovePattern_XY::StgMovePattern_XY(StgMoveObject* target) : StgMovePattern(tar
 	maxSpeedX_ = 0;
 	maxSpeedY_ = 0;
 }
+
+void StgMovePattern_XY::CopyFrom(StgMovePattern* _src) {
+	StgMovePattern::CopyFrom(_src);
+	auto src = (StgMovePattern_XY*)_src;
+
+	accelerationX_ = src->accelerationX_;
+	accelerationY_ = src->accelerationY_;
+	maxSpeedX_ = src->maxSpeedX_;
+	maxSpeedY_ = src->maxSpeedY_;
+}
+
 void StgMovePattern_XY::Move() {
 	if (accelerationX_ != 0) {
 		c_ += accelerationX_;
@@ -426,6 +494,21 @@ StgMovePattern_XY_Angle::StgMovePattern_XY_Angle(StgMoveObject* target) : StgMov
 	angOffAcceleration_ = 0;
 	angOffMaxVelocity_ = 0;
 }
+
+void StgMovePattern_XY_Angle::CopyFrom(StgMovePattern* _src) {
+	StgMovePattern::CopyFrom(_src);
+	auto src = (StgMovePattern_XY_Angle*)_src;
+
+	accelerationX_ = src->accelerationX_;
+	accelerationY_ = src->accelerationY_;
+	maxSpeedX_ = src->maxSpeedX_;
+	maxSpeedY_ = src->maxSpeedY_;
+	angOff_ = src->angOff_;
+	angOffVelocity_ = src->angOffVelocity_;
+	angOffAcceleration_ = src->angOffAcceleration_;
+	angOffMaxVelocity_ = src->angOffMaxVelocity_;
+}
+
 void StgMovePattern_XY_Angle::Move() {
 	if (accelerationX_ != 0) {
 		c_ += accelerationX_;
@@ -575,9 +658,21 @@ StgMovePattern_Line::StgMovePattern_Line(StgMoveObject* target) : StgMovePattern
 	maxFrame_ = -1;
 	speed_ = 0;
 	angDirection_ = 0;
-	memset(iniPos_, 0x00, sizeof(iniPos_));
-	memset(targetPos_, 0x00, sizeof(targetPos_));
+	iniPos_ = { 0, 0 };
+	targetPos_ = { 0, 0 };
 }
+
+void StgMovePattern_Line::CopyFrom(StgMovePattern* _src) {
+	StgMovePattern::CopyFrom(_src);
+	auto src = (StgMovePattern_Line*)_src;
+
+	typeLine_ = src->typeLine_;
+	maxFrame_ = src->maxFrame_;
+	speed_ = src->speed_;
+	iniPos_ = src->iniPos_;
+	targetPos_ = src->targetPos_;
+}
+
 void StgMovePattern_Line::Move() {
 	if (frameWork_ < maxFrame_) {
 		target_->SetPositionX(fma(speed_, c_, target_->GetPositionX()));
@@ -672,6 +767,14 @@ StgMovePattern_Line_Frame::StgMovePattern_Line_Frame(StgMoveObject* target) : St
 	moveLerpFunc = Math::Lerp::Linear<double, double>;
 	diffLerpFunc = Math::Lerp::DifferentialLinear<double>;
 }
+void StgMovePattern_Line_Frame::CopyFrom(StgMovePattern* _src) {
+	StgMovePattern_Line::CopyFrom(_src);
+	auto src = (StgMovePattern_Line_Frame*)_src;
+
+	speedRate_ = src->speedRate_;
+	moveLerpFunc = src->moveLerpFunc;
+	diffLerpFunc = src->diffLerpFunc;
+}
 void StgMovePattern_Line_Frame::SetAtFrame(double tx, double ty, uint32_t frame, lerp_func lerpFunc, lerp_diff_func diffFunc) {
 	iniPos_[0] = target_->GetPositionX();
 	iniPos_[1] = target_->GetPositionY();
@@ -718,6 +821,14 @@ StgMovePattern_Line_Weight::StgMovePattern_Line_Weight(StgMoveObject* target) : 
 	dist_ = 0;
 	weight_ = 0;
 	maxSpeed_ = 0;
+}
+void StgMovePattern_Line_Weight::CopyFrom(StgMovePattern* _src) {
+	StgMovePattern_Line::CopyFrom(_src);
+	auto src = (StgMovePattern_Line_Weight*)_src;
+
+	dist_ = src->dist_;
+	weight_ = src->weight_;
+	maxSpeed_ = src->maxSpeed_;
 }
 void StgMovePattern_Line_Weight::SetAtWeight(double tx, double ty, double weight, double maxSpeed) {
 	iniPos_[0] = target_->GetPositionX();

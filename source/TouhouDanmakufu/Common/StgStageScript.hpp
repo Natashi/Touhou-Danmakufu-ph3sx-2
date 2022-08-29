@@ -167,6 +167,7 @@ public:
 	StgStageScript(StgStageController* stageController);
 	virtual ~StgStageScript();
 
+	StgStageController* GetStageController() { return stageController_; }
 	std::shared_ptr<StgStageScriptObjectManager> GetStgObjectManager();
 
 	//STG共通関数：共通データ
@@ -481,7 +482,6 @@ public:
 	//DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetDelayMotion);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetGraphic);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetLaserParameter);
-	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_CopySettings);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_AddTransform);
 	DNH_FUNCAPI_DECL_(Func_ObjPatternShot_SetTransform);
 

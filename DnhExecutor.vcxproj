@@ -263,6 +263,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClCompile Include="source\GcLib\directx\DirectSound.cpp" />
     <ClCompile Include="source\GcLib\directx\DxObject.cpp" />
     <ClCompile Include="source\GcLib\directx\DxScript.cpp" />
+    <ClCompile Include="source\GcLib\directx\DxScriptObjClone.cpp" />
     <ClCompile Include="source\GcLib\directx\DxText.cpp" />
     <ClCompile Include="source\GcLib\directx\DxUtility.cpp" />
     <ClCompile Include="source\GcLib\directx\DxUtilityIntersection.cpp" />
@@ -385,6 +386,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClInclude Include="source\TouhouDanmakufu\Common\StgEnemy.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\StgIntersection.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\StgItem.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgObjectBase.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\StgPackageController.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\StgPackageScript.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\StgPlayer.hpp" />

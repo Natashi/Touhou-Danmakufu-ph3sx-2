@@ -425,6 +425,7 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 			IDirect3DVertexBuffer9*& vertexBuf = render->pVertexBuffer_;
 
 			size_t vertexBufSize = std::min(countVert, 65536U) * sizeof(VERTEX_NX);
+			render->vertexBufferSize_ = vertexBufSize;
 
 			void* pVoid;
 			VERTEX_NX* pVertData = render->GetVertex(0);

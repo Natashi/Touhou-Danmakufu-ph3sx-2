@@ -246,6 +246,7 @@ static const std::vector<function> dxFunction = {
 	{ "Obj_SetRenderPriorityI", DxScript::Func_Obj_SetRenderPriorityI, 2 },
 	{ "Obj_GetRenderPriority", DxScript::Func_Obj_GetRenderPriority, 1 },
 	{ "Obj_GetRenderPriorityI", DxScript::Func_Obj_GetRenderPriorityI, 1 },
+	{ "Obj_Clone", DxScript::Func_Obj_Clone, 1 },
 
 	{ "Obj_GetValue", DxScript::Func_Obj_GetValue, 2 },
 	{ "Obj_GetValue", DxScript::Func_Obj_GetValue, 3 },
@@ -4003,7 +4004,7 @@ value DxScript::Func_ObjPrimitive_SetVertexIndex(script_machine* machine, int ar
 		for (size_t i = 0; i < valArr.length_as_array(); ++i) {
 			vecIndex[i] = (uint16_t)valArr[i].as_int();
 		}
-		obj->GetObjectPointer()->SetVertexIndices(vecIndex);
+		obj->GetRenderObject()->SetVertexIndices(vecIndex);
 	}
 	return value();
 }
@@ -4235,7 +4236,7 @@ value DxScript::Func_ObjTrajectory3D_SetInitialPoint(script_machine* machine, in
 	if (obj) {
 		D3DXVECTOR3 pos1(argv[1].as_float(), argv[2].as_float(), argv[3].as_float());
 		D3DXVECTOR3 pos2(argv[4].as_float(), argv[5].as_float(), argv[6].as_float());
-		obj->GetObjectPointer()->SetInitialLine(pos1, pos2);
+		obj->GetRenderObject()->SetInitialLine(pos1, pos2);
 	}
 	return value();
 }
@@ -4244,7 +4245,7 @@ value DxScript::Func_ObjTrajectory3D_SetAlphaVariation(script_machine* machine, 
 	int id = argv[0].as_int();
 	DxScriptTrajectoryObject3D* obj = script->GetObjectPointerAs<DxScriptTrajectoryObject3D>(id);
 	if (obj)
-		obj->GetObjectPointer()->SetAlphaVariation(argv[1].as_float());
+		obj->GetRenderObject()->SetAlphaVariation(argv[1].as_float());
 	return value();
 }
 value DxScript::Func_ObjTrajectory3D_SetComplementCount(script_machine* machine, int argc, const value* argv) {
@@ -4252,7 +4253,7 @@ value DxScript::Func_ObjTrajectory3D_SetComplementCount(script_machine* machine,
 	int id = argv[0].as_int();
 	DxScriptTrajectoryObject3D* obj = script->GetObjectPointerAs<DxScriptTrajectoryObject3D>(id);
 	if (obj)
-		obj->GetObjectPointer()->SetComplementCount(argv[1].as_int());
+		obj->GetRenderObject()->SetComplementCount(argv[1].as_int());
 	return value();
 }
 
@@ -4284,7 +4285,7 @@ value DxScript::Func_ObjParticleList_SetPosition(script_machine* machine, int ar
 
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
-		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetRenderObject());
 		if (objParticle)
 			objParticle->SetInstancePosition(argv[1].as_float(), argv[2].as_float(), argv[3].as_float());
 	}
@@ -4297,7 +4298,7 @@ value DxScript::Func_ObjParticleList_SetScaleSingle(script_machine* machine, int
 
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
-		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetRenderObject());
 		if (objParticle)
 			objParticle->SetInstanceScaleSingle(ID, argv[1].as_float());
 	}
@@ -4309,7 +4310,7 @@ value DxScript::Func_ObjParticleList_SetScaleXYZ(script_machine* machine, int ar
 
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
-		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetRenderObject());
 		if (objParticle) {
 			if (argc == 4)
 				objParticle->SetInstanceScale(argv[1].as_float(), argv[2].as_float(), argv[3].as_float());
@@ -4329,7 +4330,7 @@ value DxScript::Func_ObjParticleList_SetAngleSingle(script_machine* machine, int
 
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
-		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetRenderObject());
 		if (objParticle)
 			objParticle->SetInstanceAngleSingle(ID, argv[1].as_float());
 	}
@@ -4341,7 +4342,7 @@ value DxScript::Func_ObjParticleList_SetAngle(script_machine* machine, int argc,
 
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
-		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetRenderObject());
 		if (objParticle)
 			objParticle->SetInstanceAngle(argv[1].as_float(), argv[2].as_float(), argv[3].as_float());
 	}
@@ -4353,7 +4354,7 @@ value DxScript::Func_ObjParticleList_SetColor(script_machine* machine, int argc,
 
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
-		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetRenderObject());
 		if (objParticle) {
 			if (argc == 4) {
 				objParticle->SetInstanceColorRGB(argv[1].as_int(), argv[2].as_int(), argv[3].as_int());
@@ -4372,7 +4373,7 @@ value DxScript::Func_ObjParticleList_SetAlpha(script_machine* machine, int argc,
 
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
-		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetRenderObject());
 		if (objParticle)
 			objParticle->SetInstanceAlpha(argv[1].as_int());
 	}
@@ -4384,7 +4385,7 @@ value DxScript::Func_ObjParticleList_SetExtraData(script_machine* machine, int a
 
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
-		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetRenderObject());
 		if (objParticle)
 			objParticle->SetInstanceUserData(D3DXVECTOR3(argv[1].as_float(), argv[2].as_float(), argv[3].as_float()));
 	}
@@ -4396,7 +4397,7 @@ value DxScript::Func_ObjParticleList_AddInstance(script_machine* machine, int ar
 
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
-		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetRenderObject());
 		if (objParticle)
 			objParticle->AddInstance();
 	}
@@ -4408,7 +4409,7 @@ value DxScript::Func_ObjParticleList_ClearInstance(script_machine* machine, int 
 
 	DxScriptPrimitiveObject* obj = script->GetObjectPointerAs<DxScriptPrimitiveObject>(id);
 	if (obj) {
-		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetObjectPointer());
+		ParticleRendererBase* objParticle = dynamic_cast<ParticleRendererBase*>(obj->GetRenderObject());
 		if (objParticle)
 			objParticle->ClearInstance();
 	}

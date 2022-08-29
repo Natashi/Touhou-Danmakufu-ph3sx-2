@@ -46,7 +46,6 @@ public:
 		REBIRTH_DEFAULT = -99999,
 	};
 protected:
-	StgStageController* stageController_;
 	StgStagePlayerScript* script_;
 
 	ref_count_ptr<StgPlayerInformation> infoPlayer_;
@@ -86,6 +85,8 @@ protected:
 public:
 	StgPlayerObject(StgStageController* stageController);
 	virtual ~StgPlayerObject();
+
+	virtual void Clone(DxScriptObjectBase* src);
 
 	void Clear() { ClearIntersectionRelativeTarget(); }
 
@@ -164,9 +165,11 @@ public:
 //*******************************************************************
 //StgPlayerSpellManageObject
 //*******************************************************************
-class StgPlayerSpellManageObject : public DxScriptObjectBase {
+class StgPlayerSpellManageObject : public DxScriptObjectBase, public StgObjectBase {
 public:
-	StgPlayerSpellManageObject() { bVisible_ = false; }
+	StgPlayerSpellManageObject(StgStageController* stageController) : StgObjectBase(stageController) {
+		bVisible_ = false;
+	}
 	
 	virtual void Render() {}
 	virtual void SetRenderState() {}
@@ -175,14 +178,15 @@ public:
 //*******************************************************************
 //StgPlayerSpellObject
 //*******************************************************************
-class StgPlayerSpellObject : public DxScriptPrimitiveObject2D, public StgIntersectionObject {
+class StgPlayerSpellObject : public DxScriptPrimitiveObject2D, public StgObjectBase, public StgIntersectionObject {
 protected:
-	StgStageController* stageController_;
 	double damage_;
 	bool bEraseShot_;
 	double life_;
 public:
 	StgPlayerSpellObject(StgStageController* stageController);
+
+	virtual void Clone(DxScriptObjectBase* src);
 	
 	virtual void Work();
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);

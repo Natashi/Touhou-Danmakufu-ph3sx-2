@@ -231,9 +231,8 @@ public:
 //*******************************************************************
 //StgShotObject
 //*******************************************************************
-struct StgPatternShotTransform;
+struct StgShotPatternTransform;
 class StgShotObject : public DxScriptShaderObject, public StgMoveObject, public StgIntersectionObject {
-	friend StgPatternShotTransform;
 public:
 	enum {
 		OWNER_PLAYER = 0,
@@ -289,8 +288,6 @@ public:
 
 	};
 protected:
-	StgStageController* stageController_;
-
 	ref_unsync_weak_ptr<StgShotObject> pOwnReference_;
 
 	int frameWork_;
@@ -361,7 +358,7 @@ protected:
 
 	inline void _DefaultShotRender(StgShotData* shotData, StgShotDataFrame* shotFrame, const D3DXMATRIX& matWorld, D3DCOLOR color);
 protected:
-	std::list<StgPatternShotTransform> listTransformationShotAct_;
+	std::list<StgShotPatternTransform> listTransformationShotAct_;
 	int timerTransform_;
 	int timerTransformNext_;
 
@@ -369,6 +366,8 @@ protected:
 public:
 	StgShotObject(StgStageController* stageController);
 	virtual ~StgShotObject();
+
+	virtual void Clone(DxScriptObjectBase* src);
 
 	virtual bool HasNormalRendering() { return false; }
 
@@ -393,7 +392,7 @@ public:
 	virtual void SetAlpha(int alpha);
 	virtual void SetRenderState() {}
 
-	void SetTransformList(const std::list<StgPatternShotTransform>& listTransform) {
+	void SetTransformList(const std::list<StgShotPatternTransform>& listTransform) {
 		listTransformationShotAct_ = listTransform;
 	}
 
@@ -476,6 +475,8 @@ public:
 	StgNormalShotObject(StgStageController* stageController);
 	virtual ~StgNormalShotObject();
 
+	virtual void Clone(DxScriptObjectBase* src);
+
 	virtual void Work();
 	virtual void Render(BlendMode targetBlend);
 
@@ -514,6 +515,8 @@ protected:
 	void _AddIntersectionRelativeTarget();
 public:
 	StgLaserObject(StgStageController* stageController);
+
+	virtual void Clone(DxScriptObjectBase* src);
 
 	virtual void ClearShotObject() {
 		ClearIntersectionRelativeTarget();
@@ -558,6 +561,8 @@ protected:
 public:
 	StgLooseLaserObject(StgStageController* stageController);
 
+	virtual void Clone(DxScriptObjectBase* src);
+
 	virtual void Work();
 	virtual void Render(BlendMode targetBlend);
 
@@ -588,6 +593,8 @@ protected:
 	virtual void _SendDeleteEvent(int type);
 public:
 	StgStraightLaserObject(StgStageController* stageController);
+
+	virtual void Clone(DxScriptObjectBase* src);
 
 	virtual void Work();
 	virtual void Render(BlendMode targetBlend);
@@ -643,6 +650,8 @@ protected:
 public:
 	StgCurveLaserObject(StgStageController* stageController);
 
+	virtual void Clone(DxScriptObjectBase* src);
+
 	virtual void Work();
 	virtual void Render(BlendMode targetBlend);
 
@@ -659,9 +668,9 @@ public:
 
 
 //*******************************************************************
-//StgPatternShotObjectGenerator (ECL-style bullets firing)
+//StgShotPatternGeneratorObject (ECL-style bullets firing)
 //*******************************************************************
-class StgPatternShotObjectGenerator : public DxScriptObjectBase {
+class StgShotPatternGeneratorObject : public DxScriptObjectBase, public StgObjectBase {
 public:
 	enum {
 		PATTERN_TYPE_FAN = 0,
@@ -718,21 +727,17 @@ private:
 	int laserWidth_;
 	int laserLength_;
 
-	std::vector<StgPatternShotTransform> listTransformation_;
+	std::vector<StgShotPatternTransform> listTransformation_;
 public:
-	StgPatternShotObjectGenerator();
-	~StgPatternShotObjectGenerator();
+	StgShotPatternGeneratorObject(StgStageController* stageController);
+
+	virtual void Clone(DxScriptObjectBase* src);
 
 	virtual void Render() {}
 	virtual void SetRenderState() {}
 
-	void CopyFrom(ref_unsync_ptr<StgPatternShotObjectGenerator> other) {
-		StgPatternShotObjectGenerator::CopyFrom(other.get());
-	}
-	void CopyFrom(StgPatternShotObjectGenerator* other);
-
-	void AddTransformation(StgPatternShotTransform& entry) { listTransformation_.push_back(entry); }
-	void SetTransformation(size_t off, StgPatternShotTransform& entry);
+	void AddTransformation(StgShotPatternTransform& entry) { listTransformation_.push_back(entry); }
+	void SetTransformation(size_t off, StgShotPatternTransform& entry);
 	void ClearTransformation() { listTransformation_.clear(); }
 
 	void SetParent(ref_unsync_ptr<StgMoveObject> obj) { parent_ = obj; }
@@ -776,7 +781,7 @@ public:
 		laserLength_ = length;
 	}
 };
-struct StgPatternShotTransform {
+struct StgShotPatternTransform {
 	enum : uint8_t {
 		TRANSFORM_WAIT,
 		TRANSFORM_ADD_SPEED_ANGLE,

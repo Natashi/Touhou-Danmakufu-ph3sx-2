@@ -41,39 +41,45 @@ void DirectionalLightingState::Apply() {
 //RenderObject
 //****************************************************************************
 RenderObject::RenderObject() {
-	typePrimitive_ = D3DPT_TRIANGLELIST;
 	position_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	angle_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	scale_ = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 	posWeightCenter_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 
 	bCoordinate2D_ = false;
-
+	disableMatrixTransform_ = false;
 	bVertexShaderMode_ = false;
 	flgUseVertexBufferMode_ = true;
-
-	disableMatrixTransform_ = false;
 }
 RenderObject::~RenderObject() {
 }
-size_t RenderObject::_GetPrimitiveCount() {
-	return _GetPrimitiveCount(typePrimitive_, GetVertexCount());
-}
-size_t RenderObject::_GetPrimitiveCount(D3DPRIMITIVETYPE typePrim, size_t count) {
-	switch (typePrim) {
-	case D3DPT_POINTLIST:
-		return count;
-	case D3DPT_LINELIST:
-		return count / 2U;
-	case D3DPT_LINESTRIP:
-		return (count > 0U ? count - 1U : 0U);
-	case D3DPT_TRIANGLELIST:
-		return count / 3U;
-	case D3DPT_TRIANGLESTRIP:
-	case D3DPT_TRIANGLEFAN:
-		return (count > 1U ? count - 2U : 0U);
+
+void RenderObject::Copy(RenderObject* src) {
+	lightParameter_ = src->lightParameter_;
+
+	texture_ = src->texture_;
+	renderTarget_ = src->renderTarget_;
+
+	posWeightCenter_ = src->posWeightCenter_;
+	position_ = src->position_;
+	angle_ = src->angle_;
+	scale_ = src->scale_;
+
+	matRelative_ = nullptr;
+	if (src->matRelative_) {
+		matRelative_ = shared_ptr<D3DXMATRIX>(new D3DXMATRIX(*src->matRelative_));
 	}
-	return 0U;
+
+	shader_ = nullptr;
+	if (src->shader_) {
+		ShaderManager* manager = ShaderManager::GetBase();
+		shader_ = manager->CreateFromData(src->shader_->GetData());
+	}
+	
+	bCoordinate2D_ = src->bCoordinate2D_;
+	disableMatrixTransform_ = src->disableMatrixTransform_;
+	bVertexShaderMode_ = src->bVertexShaderMode_;
+	flgUseVertexBufferMode_ = src->flgUseVertexBufferMode_;
 }
 
 void RenderObject::SetPosition(float x, float y, float z) {
@@ -343,8 +349,50 @@ void RenderObject::SetCoordinate2dDeviceMatrix() {
 }
 
 //****************************************************************************
+//RenderObjectPrimitive
+//****************************************************************************
+RenderObjectPrimitive::RenderObjectPrimitive() {
+	typePrimitive_ = D3DPT_TRIANGLELIST;
+
+	strideVertexStreamZero_ = 0;
+}
+RenderObjectPrimitive::~RenderObjectPrimitive() {
+}
+
+void RenderObjectPrimitive::Copy(RenderObject* _src) {
+	RenderObject::Copy(_src);
+
+	auto src = (RenderObjectPrimitive*)_src;
+
+	typePrimitive_ = src->typePrimitive_;
+
+	strideVertexStreamZero_ = src->strideVertexStreamZero_;
+	vertex_ = src->vertex_;
+	vertexIndices_ = src->vertexIndices_;
+}
+
+size_t RenderObjectPrimitive::GetPrimitiveCount() {
+	return GetPrimitiveCount(typePrimitive_, GetVertexCount());
+}
+size_t RenderObjectPrimitive::GetPrimitiveCount(D3DPRIMITIVETYPE typePrim, size_t count) {
+	switch (typePrim) {
+	case D3DPT_POINTLIST:
+		return count;
+	case D3DPT_LINELIST:
+		return count / 2U;
+	case D3DPT_LINESTRIP:
+		return (count > 0U ? count - 1U : 0U);
+	case D3DPT_TRIANGLELIST:
+		return count / 3U;
+	case D3DPT_TRIANGLESTRIP:
+	case D3DPT_TRIANGLEFAN:
+		return (count > 1U ? count - 2U : 0U);
+	}
+	return 0U;
+}
+
+//****************************************************************************
 //RenderObjectTLX
-//座標3D変換済み、ライティング済み、テクスチャ有り
 //****************************************************************************
 RenderObjectTLX::RenderObjectTLX() {
 	strideVertexStreamZero_ = sizeof(VERTEX_TLX);
@@ -353,6 +401,7 @@ RenderObjectTLX::RenderObjectTLX() {
 RenderObjectTLX::~RenderObjectTLX() {
 
 }
+
 void RenderObjectTLX::Render() {
 	RenderObjectTLX::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
@@ -391,7 +440,7 @@ void RenderObjectTLX::Render(const D3DXMATRIX& matTransform) {
 		bool bUseIndex = vertexIndices_.size() > 0;
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
 		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
-		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
+		size_t countPrim = std::min(GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
 
 		if (!bVertexShaderMode_) {
 			vertCopy_ = vertex_;
@@ -472,8 +521,16 @@ void RenderObjectTLX::Render(const D3DXMATRIX& matTransform) {
 	}
 }
 
+void RenderObjectTLX::Copy(RenderObject* _src) {
+	RenderObjectPrimitive::Copy(_src);
+
+	auto src = (RenderObjectTLX*)_src;
+
+	bPermitCamera_ = src->bPermitCamera_;
+}
+
 void RenderObjectTLX::SetVertexCount(size_t count) {
-	RenderObject::SetVertexCount(count);
+	RenderObjectPrimitive::SetVertexCount(count);
 	SetColorRGB(D3DCOLOR_ARGB(255, 255, 255, 255));
 	SetAlpha(255);
 }
@@ -559,6 +616,7 @@ RenderObjectLX::RenderObjectLX() {
 }
 RenderObjectLX::~RenderObjectLX() {
 }
+
 void RenderObjectLX::Render() {
 	RenderObjectLX::Render(D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0), D3DXVECTOR2(1, 0));
 }
@@ -595,7 +653,7 @@ void RenderObjectLX::Render(const D3DXMATRIX& matTransform) {
 		bool bUseIndex = vertexIndices_.size() > 0;
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
 		size_t countIndex = std::min(vertexIndices_.size(), 65536U);
-		size_t countPrim = std::min(_GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
+		size_t countPrim = std::min(GetPrimitiveCount(bUseIndex ? countIndex : countVertex), 65536U);
 
 		RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 
@@ -682,7 +740,7 @@ void RenderObjectLX::Render(const D3DXMATRIX& matTransform) {
 }
 
 void RenderObjectLX::SetVertexCount(size_t count) {
-	RenderObject::SetVertexCount(count);
+	RenderObjectPrimitive::SetVertexCount(count);
 	SetColorRGB(D3DCOLOR_ARGB(255, 255, 255, 255));
 	SetAlpha(255);
 }
@@ -768,11 +826,12 @@ RenderObjectNX::RenderObjectNX() {
 	color_ = 0xffffffff;
 
 	pVertexBuffer_ = nullptr;
-	pIndexBuffer_ = nullptr;
+	//pIndexBuffer_ = nullptr;
+	vertexBufferSize_ = 0;
 }
 RenderObjectNX::~RenderObjectNX() {
 	ptr_release(pVertexBuffer_);
-	ptr_release(pIndexBuffer_);
+	//ptr_release(pIndexBuffer_);
 }
 void RenderObjectNX::Render() {
 	RenderObjectNX::Render(nullptr);
@@ -794,7 +853,7 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 		bool bUseIndex = vertexIndices_.size() > 0;
 		size_t countVertex = GetVertexCount();
 		size_t countIndex = vertexIndices_.size();
-		size_t countPrim = _GetPrimitiveCount(bUseIndex ? countIndex : countVertex);
+		size_t countPrim = GetPrimitiveCount(bUseIndex ? countIndex : countVertex);
 
 		RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 
@@ -869,6 +928,32 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 	}
 }
 
+void RenderObjectNX::Copy(RenderObject* _src) {
+	RenderObjectPrimitive::Copy(_src);
+
+	auto src = (RenderObjectNX*)_src;
+
+	color_ = src->color_;
+
+	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
+	
+	ptr_release(pVertexBuffer_);
+	{
+		device->CreateVertexBuffer(src->vertexBufferSize_, 0, VERTEX_NX::fvf, D3DPOOL_MANAGED, &pVertexBuffer_, nullptr);
+
+		void* pSrcData, *pDstData;
+		if (SUCCEEDED(src->pVertexBuffer_->Lock(0, src->vertexBufferSize_, &pSrcData, D3DLOCK_READONLY))) {
+			pVertexBuffer_->Lock(0, src->vertexBufferSize_, &pDstData, D3DLOCK_DISCARD);
+			memcpy(pDstData, pSrcData, src->vertexBufferSize_);
+			pVertexBuffer_->Unlock();
+
+			src->pVertexBuffer_->Unlock();
+		}
+
+		vertexBufferSize_ = src->vertexBufferSize_;
+	}
+}
+
 VERTEX_NX* RenderObjectNX::GetVertex(size_t index) {
 	size_t pos = index * strideVertexStreamZero_;
 	if (pos >= vertex_.size()) return nullptr;
@@ -917,21 +1002,7 @@ Sprite2D::Sprite2D() {
 Sprite2D::~Sprite2D() {
 
 }
-void Sprite2D::Copy(Sprite2D* src) {
-	dxObjParent_ = src->dxObjParent_;
-	
-	typePrimitive_ = src->typePrimitive_;
-	strideVertexStreamZero_ = src->strideVertexStreamZero_;
 
-	vertex_ = src->vertex_;
-	vertexIndices_ = src->vertexIndices_;
-
-	texture_ = src->texture_;
-
-	posWeightCenter_ = src->posWeightCenter_;
-
-	matRelative_ = src->matRelative_;
-}
 void Sprite2D::SetSourceRect(const DxRect<int>& rcSrc) {
 	if (texture_ == nullptr) return;
 	float width = texture_->GetWidth();
@@ -1030,7 +1101,7 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 		bool bUseIndex = vertexIndices_.size() > 0;
 		size_t countVertex = std::min(countRenderVertex, 43688U);	//10922 * 4
 		size_t countIndex = std::min(countRenderIndex, 65532U);		//10922 * 6
-		size_t countPrim = _GetPrimitiveCount(countIndex);			//Max = 10922 quads
+		size_t countPrim = GetPrimitiveCount(countIndex);			//Max = 10922 quads
 
 		D3DXMATRIX matWorld;
 		if (bCloseVertexList_)
@@ -1194,6 +1265,26 @@ void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 
 	_AddVertex(verts);
 }
+
+void SpriteList2D::Copy(RenderObject* _src) {
+	RenderObjectTLX::Copy(_src);
+
+	auto src = (SpriteList2D*)_src;
+
+	countRenderIndex_ = src->countRenderIndex_;
+	countRenderIndexPrev_ = src->countRenderIndexPrev_;
+	countRenderVertex_ = src->countRenderVertex_;
+	countRenderVertexPrev_ = src->countRenderVertexPrev_;
+
+	rcSrc_ = src->rcSrc_;
+	rcDest_ = src->rcDest_;
+
+	color_ = src->color_;
+
+	bCloseVertexList_ = src->bCloseVertexList_;
+	autoClearVertexList_ = src->autoClearVertexList_;
+}
+
 void SpriteList2D::SetDestinationCenter() {
 	if (texture_ == nullptr) return;
 
@@ -1234,6 +1325,15 @@ void Sprite3D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3
 
 	RenderObjectLX::Render(matWorld);
 }
+
+void Sprite3D::Copy(RenderObject* _src) {
+	RenderObjectLX::Copy(_src);
+
+	auto src = (Sprite3D*)_src;
+
+	bBillboard_ = src->bBillboard_;
+}
+
 void Sprite3D::SetSourceDestRect(const DxRect<double>& rcSrc) {
 	DxRect<int> rcSrcCopy(rcSrc.left, rcSrc.top,
 		(int)rcSrc.right - 1, (int)rcSrc.bottom - 1);
@@ -1289,6 +1389,7 @@ TrajectoryObject3D::TrajectoryObject3D() {
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 }
 TrajectoryObject3D::~TrajectoryObject3D() {}
+
 D3DXMATRIX TrajectoryObject3D::_CreateWorldTransformMatrix() {
 	D3DXMATRIX mat;
 	D3DXMatrixIdentity(&mat);
@@ -1377,7 +1478,21 @@ void TrajectoryObject3D::AddPoint(const D3DXMATRIX& mat) {
 		dataLast2_ = dataLast1_;
 		dataLast1_ = data;
 	}
+}
 
+void TrajectoryObject3D::Copy(RenderObject* _src) {
+	RenderObjectLX::Copy(_src);
+
+	auto src = (TrajectoryObject3D*)_src;
+
+	color_ = src->color_;
+	diffAlpha_ = src->diffAlpha_;
+	countComplement_ = src->countComplement_;
+
+	dataInit_ = src->dataInit_;
+	dataLast1_ = src->dataLast1_;
+	dataLast2_ = src->dataLast2_;
+	listData_ = src->listData_;
 }
 
 //****************************************************************************
@@ -1395,6 +1510,19 @@ ParticleRendererBase::ParticleRendererBase() {
 }
 ParticleRendererBase::~ParticleRendererBase() {
 }
+
+void ParticleRendererBase::CopyParticle(ParticleRendererBase* src) {
+	countInstance_ = src->countInstance_;
+	countInstancePrev_ = src->countInstancePrev_;
+	instanceData_ = src->instanceData_;
+
+	instColor_ = src->instColor_;
+	instPosition_ = src->instPosition_;
+	instScale_ = src->instScale_;
+	instAngle_ = src->instAngle_;
+	instUserData_ = src->instUserData_;
+}
+
 void ParticleRendererBase::AddInstance() {
 	if (countInstance_ == 32768U) return;
 	if (instanceData_.size() == countInstance_) {
@@ -1472,7 +1600,7 @@ void ParticleRenderer2D::Render() {
 
 	{
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
-		size_t countPrim = _GetPrimitiveCount(countIndex);
+		size_t countPrim = GetPrimitiveCount(countIndex);
 
 		VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 		RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
@@ -1566,6 +1694,11 @@ void ParticleRenderer2D::Render() {
 #endif
 	}
 }
+void ParticleRenderer2D::Copy(RenderObject* _src) {
+	Sprite2D::Copy(_src);
+	ParticleRendererBase::CopyParticle((ParticleRendererBase*)_src);
+}
+
 ParticleRenderer3D::ParticleRenderer3D() {
 }
 void ParticleRenderer3D::Render() {
@@ -1593,7 +1726,7 @@ void ParticleRenderer3D::Render() {
 
 	{
 		size_t countVertex = std::min(GetVertexCount(), 65536U);
-		size_t countPrim = _GetPrimitiveCount(countIndex);
+		size_t countPrim = GetPrimitiveCount(countIndex);
 
 		VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 		RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
@@ -1706,6 +1839,10 @@ void ParticleRenderer3D::Render() {
 #endif
 	}
 }
+void ParticleRenderer3D::Copy(RenderObject* _src) {
+	Sprite3D::Copy(_src);
+	ParticleRendererBase::CopyParticle((ParticleRendererBase*)_src);
+}
 
 //****************************************************************************
 //DxMesh
@@ -1726,22 +1863,13 @@ DxMesh::~DxMesh() {
 	Release();
 }
 
-void DxMesh::SetPosition(float x, float y, float z) {
-	position_ = D3DXVECTOR3(x, y, z);
-	D3DXVec3Scale(&position_, &position_, DirectGraphics::g_dxCoordsMul_);
-}
-void DxMesh::SetX(float x) {
-	position_.x = x * DirectGraphics::g_dxCoordsMul_;
-}
-void DxMesh::SetY(float y) {
-	position_.y = y * DirectGraphics::g_dxCoordsMul_;
-}
-void DxMesh::SetZ(float z) {
-	position_.z = z * DirectGraphics::g_dxCoordsMul_;
-}
-void DxMesh::SetScaleXYZ(float sx, float sy, float sz) {
-	scale_ = D3DXVECTOR3(sx, sy, sz);
-	D3DXVec3Scale(&scale_, &scale_, DirectGraphics::g_dxCoordsMul_);
+void DxMesh::Copy(RenderObject* _src) {
+	RenderObject::Copy(_src);
+
+	auto src = (DxMesh*)_src;
+
+	data_ = src->data_;
+	color_ = src->color_;
 }
 
 shared_ptr<DxMeshData> DxMesh::_GetFromManager(const std::wstring& name) {

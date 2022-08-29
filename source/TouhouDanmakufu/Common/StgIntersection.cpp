@@ -113,7 +113,7 @@ void StgIntersectionManager::Work() {
 	objIntersectionVisualizerCircle_->CleanUp();
 	objIntersectionVisualizerLine_->CleanUp();
 	{
-		RenderObjectTLX* objParticleLine = objIntersectionVisualizerLine_->GetObjectPointer();
+		RenderObjectTLX* objParticleLine = objIntersectionVisualizerLine_->GetRenderObject();
 		VERTEX_TLX* ptrVert = objParticleLine->GetVertex(0);
 		memset(ptrVert, 0x00, sizeof(VERTEX_TLX) * countLineVertex_);
 	}
@@ -328,7 +328,7 @@ void StgIntersectionManager::AddVisualization(ref_unsync_ptr<StgIntersectionTarg
 	if (!bRenderIntersection_ || target == nullptr) return;
 
 	ParticleRenderer2D* objParticleCircle = objIntersectionVisualizerCircle_->GetParticlePointer();
-	RenderObjectTLX* objParticleLine = objIntersectionVisualizerLine_->GetObjectPointer();
+	RenderObjectTLX* objParticleLine = objIntersectionVisualizerLine_->GetRenderObject();
 
 	D3DCOLOR color = 0xffffffff;
 	switch (target->GetTargetType()) {
@@ -546,6 +546,16 @@ std::vector<StgIntersectionSpace::TargetCheckListPair>* StgIntersectionSpace::Cr
 //*******************************************************************
 //StgIntersectionObject
 //*******************************************************************
+StgIntersectionObject::StgIntersectionObject() {
+	bIntersected_ = false;
+	intersectedCount_ = 0;
+}
+void StgIntersectionObject::Copy(StgIntersectionObject* src) {
+	bIntersected_ = src->bIntersected_;
+	intersectedCount_ = src->intersectedCount_;
+	listIntersectedID_ = src->listIntersectedID_;
+	listRelativeTarget_ = src->listRelativeTarget_;
+}
 void StgIntersectionObject::AddIntersectionRelativeTarget(ref_unsync_ptr<StgIntersectionTarget> target) {
 	IntersectionRelativeTarget newTarget;
 	{

@@ -55,8 +55,6 @@ public:
 //*******************************************************************
 class StgEnemyObject : public DxScriptSpriteObject2D, public StgMoveObject, public StgIntersectionObject {
 protected:
-	StgStageController* stageController_;
-
 	double life_;
 	double lifePrev_;
 	double lifeDelta_;
@@ -85,6 +83,8 @@ protected:
 public:
 	StgEnemyObject(StgStageController* stageController);
 	virtual ~StgEnemyObject();
+
+	virtual void Clone(DxScriptObjectBase* src);
 
 	virtual void Work();
 	virtual void Activate();
@@ -136,15 +136,15 @@ private:
 	int timeSpellCard_;
 public:
 	StgEnemyBossObject(StgStageController* stageController);
+
+	virtual void Clone(DxScriptObjectBase* src);
 };
 
 //*******************************************************************
 //StgEnemyBossSceneObject
 //*******************************************************************
-class StgEnemyBossSceneObject : public DxScriptObjectBase {
+class StgEnemyBossSceneObject : public DxScriptObjectBase, public StgObjectBase {
 private:
-	StgStageController* stageController_;
-
 	bool bScriptsLoaded_;
 	bool bEnableUnloadCache_;
 
@@ -158,6 +158,8 @@ private:
 public:
 	StgEnemyBossSceneObject(StgStageController* stageController);
 	~StgEnemyBossSceneObject();
+
+	virtual void Clone(DxScriptObjectBase* src);
 
 	virtual void Work();
 	virtual void Activate();

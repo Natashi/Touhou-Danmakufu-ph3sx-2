@@ -273,6 +273,7 @@ namespace directx {
 		DNH_FUNCAPI_DECL_(Func_Obj_GetExistFrame);
 		DNH_FUNCAPI_DECL_(Func_Obj_GetParentScriptID);
 		DNH_FUNCAPI_DECL_(Func_Obj_SetParentScriptID);
+		DNH_FUNCAPI_DECL_(Func_Obj_Clone);
 
 		//Dx関数：オブジェクト操作(RenderObject)
 		static gstd::value Func_ObjRender_SetX(gstd::script_machine* machine, int argc, const gstd::value* argv);

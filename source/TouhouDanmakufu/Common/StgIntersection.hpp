@@ -212,8 +212,10 @@ protected:
 
 	std::vector<IntersectionRelativeTarget> listRelativeTarget_;
 public:
-	StgIntersectionObject() { bIntersected_ = false; intersectedCount_ = 0; }
+	StgIntersectionObject();
 	virtual ~StgIntersectionObject() {}
+
+	void Copy(StgIntersectionObject* src);
 
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) = 0;
 

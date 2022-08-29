@@ -7,7 +7,6 @@
 //StgPlayerObject
 //*******************************************************************
 StgPlayerObject::StgPlayerObject(StgStageController* stageController) : StgMoveObject(stageController) {
-	stageController_ = stageController;
 	typeObject_ = TypeObject::Player;
 
 	infoPlayer_ = new StgPlayerInformation();
@@ -51,6 +50,17 @@ StgPlayerObject::StgPlayerObject(StgStageController* stageController) : StgMoveO
 	_InitializeRebirth();
 }
 StgPlayerObject::~StgPlayerObject() {}
+
+void StgPlayerObject::Clone(DxScriptObjectBase* _src) {
+	DxScriptSpriteObject2D::Clone(_src);
+
+	auto src = (StgPlayerObject*)_src;
+	StgMoveObject::Copy((StgMoveObject*)src);
+	StgIntersectionObject::Copy((StgIntersectionObject*)src);
+
+	throw new wexception("Object cannot be cloned: ObjPlayer");
+}
+
 void StgPlayerObject::_InitializeRebirth() {
 	DxRect<LONG>* rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
 
@@ -207,7 +217,7 @@ void StgPlayerObject::CallSpell() {
 	if (!IsPermitSpell()) return;
 
 	auto objectManager = stageController_->GetMainObjectManager();
-	objSpell_ = new StgPlayerSpellManageObject();
+	objSpell_ = new StgPlayerSpellManageObject(stageController_);
 	int idSpell = objectManager->AddObject(objSpell_);
 
 	gstd::value vUse = script_->RequestEvent(StgStagePlayerScript::EV_REQUEST_SPELL);
@@ -341,12 +351,23 @@ bool StgPlayerObject::IsWaitLastSpell() {
 //*******************************************************************
 //StgPlayerSpellObject
 //*******************************************************************
-StgPlayerSpellObject::StgPlayerSpellObject(StgStageController* stageController) {
-	stageController_ = stageController;
+StgPlayerSpellObject::StgPlayerSpellObject(StgStageController* stageController) : StgObjectBase(stageController) {
 	damage_ = 0;
 	bEraseShot_ = true;
 	life_ = 256 * 256 * 256;
 }
+
+void StgPlayerSpellObject::Clone(DxScriptObjectBase* _src) {
+	DxScriptPrimitiveObject2D::Clone(_src);
+
+	auto src = (StgPlayerSpellObject*)_src;
+	StgIntersectionObject::Copy((StgIntersectionObject*)src);
+
+	damage_ = src->damage_;
+	bEraseShot_ = src->bEraseShot_;
+	life_ = src->life_;
+}
+
 void StgPlayerSpellObject::Work() {
 	if (IsDeleted()) return;
 	if (life_ <= 0) {

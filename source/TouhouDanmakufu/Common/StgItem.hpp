@@ -243,6 +243,8 @@ protected:
 public:
 	StgItemObject(StgStageController* stageController);
 
+	virtual void Clone(DxScriptObjectBase* src);
+
 	virtual bool HasNormalRendering() { return false; }
 
 	virtual void Work();
@@ -342,7 +344,6 @@ public:
 };
 
 class StgItemObject_User : public StgItemObject {
-	int frameWork_;
 	int idImage_;
 
 	weak_ptr<Texture> renderTarget_;
@@ -350,6 +351,8 @@ protected:
 	inline StgItemData* _GetItemData();
 public:
 	StgItemObject_User(StgStageController* stageController);
+
+	virtual void Clone(DxScriptObjectBase* src);
 
 	virtual void Work();
 
@@ -385,6 +388,11 @@ protected:
 	D3DXVECTOR2 posTo_;
 public:
 	StgMovePattern_Item(StgMoveObject* target);
+
+	virtual void CopyFrom(StgMovePattern* src);
+	virtual StgMovePattern* CreateCopy(StgMoveObject* target) {
+		return new StgMovePattern_Item(target);
+	}
 
 	virtual void Move();
 

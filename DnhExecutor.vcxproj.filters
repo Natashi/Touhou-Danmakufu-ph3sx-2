@@ -209,6 +209,9 @@
     <ClCompile Include="source\GcLib\directx\DxUtilityIntersection.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DxScriptObjClone.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">
@@ -423,6 +426,9 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\GstdConstant.hpp">
       <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgObjectBase.hpp">
+      <Filter>source\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

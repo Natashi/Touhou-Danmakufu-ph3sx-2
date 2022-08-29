@@ -32,6 +32,7 @@ namespace directx {
 	};
 
 	class DxScriptRenderObject;
+
 	//****************************************************************************
 	//RenderObject
 	//	Base class for ObjRender
@@ -40,13 +41,7 @@ namespace directx {
 	protected:
 		DxScriptRenderObject* dxObjParent_;
 
-		D3DPRIMITIVETYPE typePrimitive_;
-
 		DirectionalLightingState lightParameter_;
-
-		size_t strideVertexStreamZero_;			//byte size per vertex data
-		std::vector<byte> vertex_;				//vertex data
-		std::vector<uint16_t> vertexIndices_;	//Index data
 
 		shared_ptr<Texture> texture_;
 		weak_ptr<Texture> renderTarget_;
@@ -67,6 +62,8 @@ namespace directx {
 		RenderObject();
 		virtual ~RenderObject();
 
+		virtual void Copy(RenderObject* src);
+
 		virtual void Render() = 0;
 
 		virtual void CalculateWeightCenter() {}
@@ -76,11 +73,7 @@ namespace directx {
 		shared_ptr<Texture> GetTexture() { return texture_; }
 		void SetRenderTarget(shared_ptr<Texture> texture) { renderTarget_ = texture; }
 
-		size_t _GetPrimitiveCount();
-		size_t _GetPrimitiveCount(size_t count) { return  _GetPrimitiveCount(typePrimitive_, count); }
-		static size_t _GetPrimitiveCount(D3DPRIMITIVETYPE typePrim, size_t count);
-
-		void SetRalativeMatrix(shared_ptr<D3DXMATRIX>& mat) { matRelative_ = mat; }
+		void SetRelativeMatrix(shared_ptr<D3DXMATRIX>& mat) { matRelative_ = mat; }
 
 		static D3DXMATRIX CreateWorldMatrix(const D3DXVECTOR3& position, const D3DXVECTOR3& scale,
 			const D3DXVECTOR2& angleX, const D3DXVECTOR2& angleY, const D3DXVECTOR2& angleZ,
@@ -98,16 +91,6 @@ namespace directx {
 		static void SetCoordinate2dDeviceMatrix();
 
 		void SetDxObjectReference(DxScriptRenderObject* obj) { dxObjParent_ = obj; }
-
-		void SetPrimitiveType(D3DPRIMITIVETYPE type) { typePrimitive_ = type; }
-		D3DPRIMITIVETYPE GetPrimitiveType() { return typePrimitive_; }
-		virtual void SetVertexCount(size_t count) {
-			count = std::min(count, 65536U);
-			vertex_.resize(count * strideVertexStreamZero_);
-			ZeroMemory(vertex_.data(), vertex_.size());
-		}
-		virtual size_t GetVertexCount() { return vertex_.size() / strideVertexStreamZero_; }
-		void SetVertexIndices(const std::vector<uint16_t>& indices) { vertexIndices_ = indices; }
 
 		void SetPosition(const D3DXVECTOR3& pos) { SetPosition(pos.x, pos.y, pos.z); }
 		void SetPosition(float x, float y, float z);
@@ -134,16 +117,52 @@ namespace directx {
 	};
 
 	//****************************************************************************
+	//RenderObjectPrimitive
+	//	ObjRender with vertices
+	//****************************************************************************
+	class RenderObjectPrimitive : public RenderObject {
+	protected:
+		D3DPRIMITIVETYPE typePrimitive_;
+
+		size_t strideVertexStreamZero_;			//byte size per vertex data
+		std::vector<byte> vertex_;				//vertex data
+		std::vector<uint16_t> vertexIndices_;	//Index data
+	public:
+		RenderObjectPrimitive();
+		virtual ~RenderObjectPrimitive();
+
+		virtual void Copy(RenderObject* src);
+
+		virtual void Render() = 0;
+
+		size_t GetPrimitiveCount();
+		size_t GetPrimitiveCount(size_t count) { return  GetPrimitiveCount(typePrimitive_, count); }
+		static size_t GetPrimitiveCount(D3DPRIMITIVETYPE typePrim, size_t count);
+
+		void SetPrimitiveType(D3DPRIMITIVETYPE type) { typePrimitive_ = type; }
+		D3DPRIMITIVETYPE GetPrimitiveType() { return typePrimitive_; }
+		virtual void SetVertexCount(size_t count) {
+			count = std::min(count, 65536U);
+			vertex_.resize(count * strideVertexStreamZero_);
+			ZeroMemory(vertex_.data(), vertex_.size());
+		}
+		virtual size_t GetVertexCount() { return vertex_.size() / strideVertexStreamZero_; }
+		void SetVertexIndices(const std::vector<uint16_t>& indices) { vertexIndices_ = indices; }
+	};
+
+	//****************************************************************************
 	//RenderObjectTLX
 	//	2D render object
 	//****************************************************************************
-	class RenderObjectTLX : public RenderObject {
+	class RenderObjectTLX : public RenderObjectPrimitive {
 	protected:
 		bool bPermitCamera_;
 		std::vector<byte> vertCopy_;
 	public:
 		RenderObjectTLX();
 		virtual ~RenderObjectTLX();
+
+		virtual void Copy(RenderObject* src);
 
 		virtual void Render();
 		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
@@ -172,7 +191,7 @@ namespace directx {
 	//RenderObjectLX
 	//	3D render object
 	//****************************************************************************
-	class RenderObjectLX : public RenderObject {
+	class RenderObjectLX : public RenderObjectPrimitive {
 	public:
 		RenderObjectLX();
 		virtual ~RenderObjectLX();
@@ -202,15 +221,19 @@ namespace directx {
 	//	3D render object with vertex normal data
 	//	For meshes
 	//****************************************************************************
-	class RenderObjectNX : public RenderObject {
+	class RenderObjectNX : public RenderObjectPrimitive {
 	protected:
 		D3DCOLOR color_;
 
 		IDirect3DVertexBuffer9* pVertexBuffer_;
-		IDirect3DIndexBuffer9* pIndexBuffer_;
+		//IDirect3DIndexBuffer9* pIndexBuffer_;
+		size_t vertexBufferSize_;
+		//size_t indexBufferSize_;
 	public:
 		RenderObjectNX();
 		virtual ~RenderObjectNX();
+
+		virtual void Copy(RenderObject* src);
 		
 		virtual void Render();
 		virtual void Render(D3DXMATRIX* matTransform);
@@ -232,7 +255,6 @@ namespace directx {
 		Sprite2D();
 		~Sprite2D();
 		
-		void Copy(Sprite2D* src);
 		void SetSourceRect(const DxRect<int>& rcSrc);
 		void SetDestinationRect(const DxRect<double>& rcDest);
 		void SetDestinationCenter();
@@ -262,6 +284,8 @@ namespace directx {
 		void _AddVertex(VERTEX_TLX(&verts)[4]);
 	public:
 		SpriteList2D();
+
+		virtual void Copy(RenderObject* src);
 
 		virtual size_t GetVertexCount() { return GetVertexCount(countRenderIndex_); }
 		virtual size_t GetVertexCount(size_t count) {
@@ -301,6 +325,8 @@ namespace directx {
 		Sprite3D();
 		~Sprite3D();
 
+		virtual void Copy(RenderObject* src);
+
 		virtual void Render();
 		virtual void Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ);
 
@@ -326,6 +352,7 @@ namespace directx {
 		D3DCOLOR color_;
 		int diffAlpha_;
 		int countComplement_;
+
 		Data dataInit_;
 		Data dataLast1_;
 		Data dataLast2_;
@@ -335,6 +362,8 @@ namespace directx {
 	public:
 		TrajectoryObject3D();
 		~TrajectoryObject3D();
+
+		virtual void Copy(RenderObject* src);
 		
 		virtual void Work();
 		virtual void Render();
@@ -355,9 +384,21 @@ namespace directx {
 	//	Base class for instanced render objects
 	//****************************************************************************
 	class ParticleRendererBase {
+	protected:
+		size_t countInstance_;
+		size_t countInstancePrev_;
+		std::vector<VERTEX_INSTANCE> instanceData_;
+
+		D3DCOLOR instColor_;
+		D3DXVECTOR3 instPosition_;
+		D3DXVECTOR3 instScale_;
+		D3DXVECTOR3 instAngle_;
+		D3DXVECTOR3 instUserData_;
 	public:
 		ParticleRendererBase();
 		virtual ~ParticleRendererBase();
+
+		void CopyParticle(ParticleRendererBase* src);
 
 		void AddInstance();
 		void ClearInstance();
@@ -383,16 +424,6 @@ namespace directx {
 		}
 
 		void SetInstanceUserData(const D3DXVECTOR3& data) { instUserData_ = data; }
-	protected:
-		size_t countInstance_;
-		size_t countInstancePrev_;
-		std::vector<VERTEX_INSTANCE> instanceData_;
-		
-		D3DCOLOR instColor_;
-		D3DXVECTOR3 instPosition_;
-		D3DXVECTOR3 instScale_;
-		D3DXVECTOR3 instAngle_;
-		D3DXVECTOR3 instUserData_;
 	};
 
 	//****************************************************************************
@@ -404,6 +435,8 @@ namespace directx {
 		ParticleRenderer2D();
 
 		virtual void Render();
+
+		virtual void Copy(RenderObject* src);
 	};
 
 	//****************************************************************************
@@ -415,6 +448,8 @@ namespace directx {
 		ParticleRenderer3D();
 
 		virtual void Render();
+
+		virtual void Copy(RenderObject* src);
 	};
 
 	class DxMeshManager;
@@ -434,33 +469,23 @@ namespace directx {
 
 		virtual bool CreateFromFileReader(shared_ptr<gstd::FileReader> reader) = 0;
 	};
-	class DxMesh : public gstd::FileManager::LoadObject {
+	class DxMesh : public gstd::FileManager::LoadObject, public RenderObject {
 	public:
 		friend DxMeshManager;
 		enum {
 			MESH_METASEQUOIA,
 		};
 	protected:
-		DxScriptRenderObject* dxObjParent_;
-
-		bool bVertexShaderMode_;
-		bool bCoordinate2D_;
-
-		DirectionalLightingState lightParameter_;
-
-		D3DXVECTOR3 position_;
-		D3DXVECTOR3 angle_;
-		D3DXVECTOR3 scale_;
-		D3DCOLOR color_;
-		
-		shared_ptr<Shader> shader_;
-
 		shared_ptr<DxMeshData> data_;
+		D3DCOLOR color_;
+
 		shared_ptr<DxMeshData> _GetFromManager(const std::wstring& name);
 		void _AddManager(const std::wstring& name, shared_ptr<DxMeshData> data);
 	public:
 		DxMesh();
 		virtual ~DxMesh();
+
+		virtual void Copy(RenderObject* src);
 
 		virtual void Release();
 		bool CreateFromFile(const std::wstring& path);
@@ -475,18 +500,6 @@ namespace directx {
 		virtual inline void Render(const std::wstring& nameAnime, int time,
 			const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) { Render(angX, angY, angZ); }
 
-		void SetPosition(const D3DXVECTOR3& pos) { SetPosition(pos.x, pos.y, pos.z); }
-		void SetPosition(float x, float y, float z);
-		void SetX(float x);
-		void SetY(float y);
-		void SetZ(float z);
-
-		void SetAngle(const D3DXVECTOR3& angle) { angle_ = angle; }
-		void SetAngleXYZ(float angx = 0.0f, float angy = 0.0f, float angz = 0.0f) { angle_.x = angx; angle_.y = angy; angle_.z = angz; }
-
-		void SetScale(const D3DXVECTOR3& scale) { SetScaleXYZ(scale.x, scale.y, scale.z); }
-		void SetScaleXYZ(float sx = 1.0f, float sy = 1.0f, float sz = 1.0f);
-		
 		void SetColor(D3DCOLOR color) { color_ = color; }
 		inline void SetColorRGB(D3DCOLOR color) {
 			color_ = (color_ & 0xff000000) | (color & 0x00ffffff);
@@ -494,24 +507,13 @@ namespace directx {
 		inline void SetAlpha(int alpha) {
 			color_ = (color_ & 0x00ffffff) | ((byte)alpha << 24);
 		}
-
-		void SetVertexShaderRendering(bool b) { bVertexShaderMode_ = b; }
-
-		DirectionalLightingState* GetLighting() { return &lightParameter_; }
-
-		bool IsCoordinate2D() { return bCoordinate2D_; }
-		void SetCoordinate2D(bool b) { bCoordinate2D_ = b; }
-
-		void SetDxObjectReference(DxScriptRenderObject* obj) { dxObjParent_ = obj; }
-
+		
 		//gstd::ref_count_ptr<RenderBlocks> CreateRenderBlocks() { return nullptr; }
 		virtual D3DXMATRIX GetAnimationMatrix(const std::wstring& nameAnime, double time) {
 			D3DXMATRIX mat; 
 			D3DXMatrixIdentity(&mat); 
 			return mat; 
 		}
-		shared_ptr<Shader> GetShader() { return shader_; }
-		void SetShader(shared_ptr<Shader> shader) { shader_ = shader; }
 	};
 
 	class DxMeshInfoPanel;

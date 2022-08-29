@@ -192,7 +192,17 @@ public:
 //*******************************************************************
 class PseudoSlowInformation : public gstd::FpsControlObject {
 public:
-	class SlowData;
+	class SlowData {
+	private:
+		DWORD fps_;
+	public:
+		SlowData() { fps_ = 60; }
+		virtual ~SlowData() {}
+
+		DWORD GetFps() { return fps_; }
+		void SetFps(DWORD fps) { fps_ = fps; }
+	};
+
 	enum {
 		OWNER_PLAYER = 0,
 		OWNER_ENEMY,
@@ -214,15 +224,4 @@ public:
 
 	void AddSlow(DWORD fps, int owner, int target);
 	void RemoveSlow(int owner, int target);
-};
-
-class PseudoSlowInformation::SlowData {
-private:
-	DWORD fps_;
-public:
-	SlowData() { fps_ = 60; }
-	virtual ~SlowData() {}
-
-	DWORD GetFps() { return fps_; }
-	void SetFps(DWORD fps) { fps_ = fps; }
 };
