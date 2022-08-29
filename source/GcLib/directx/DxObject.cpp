@@ -650,6 +650,10 @@ void DxScriptMeshObject::SetAlpha(int alpha) {
 	ColorAccess::ClampColor(alpha);
 	color_ = (color_ & 0x00ffffff) | ((byte)alpha << 24);
 }
+shared_ptr<Shader> DxScriptMeshObject::GetShader() {
+	if (mesh_ == nullptr) return nullptr;
+	return mesh_->GetShader();
+}
 void DxScriptMeshObject::SetShader(shared_ptr<Shader> shader) {
 	if (mesh_ == nullptr) return;
 	mesh_->SetShader(shader);

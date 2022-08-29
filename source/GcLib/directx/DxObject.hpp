@@ -417,6 +417,7 @@ namespace directx {
 		virtual void SetScaleY(float y) { scale_.y = y; }
 		virtual void SetScaleZ(float z) { scale_.z = z; }
 
+		virtual shared_ptr<Shader> GetShader();
 		virtual void SetShader(shared_ptr<Shader> shader);
 	};
 
