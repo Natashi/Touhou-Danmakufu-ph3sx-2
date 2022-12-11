@@ -274,25 +274,16 @@ __pycache__/
 !/bin_th_dnh/license.txt
 !/bin_th_dnh/readme.txt
 
-# libogg & libvorbis
-/source/ext/ogg/*
-/source/ext/vorbis/*
-/library/ogg_static.lib
-/library/vorbis_static.lib
-/library/vorbisfile_static.lib
+# External Libraries
+/source/ext/*
+!/source/ext/.Information.txt
 
-# zlib
-/source/ext/zlib/*
-/library/zlibstatic.lib
-/library/zlibdynamic.lib
+# External Libraries (Compiled .lib)
+/library/*
+!/library/.Information.txt
 
-# kissfft
-/source/ext/kissfft/*
-
-# Steam API
-/source/ext/steam_api/*
+# Steam API (Remove once the Steam integration is ready)
 /source/Steam/*
-/library/steam_api.lib
 
 # code
 /source/GcLib/gstd/ArchiveEncryption.hpp
