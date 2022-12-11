@@ -499,7 +499,6 @@ void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
 			if (itr.is_directory()) {
 				std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
 				tDir = PathProperty::AppendSlash(tDir);
-					tDir += L"/";
 
 				if (type_ == TYPE_DIR) {
 					ref_count_ptr<ScriptSelectSceneMenuItem> item = new ScriptSelectSceneMenuItem(
