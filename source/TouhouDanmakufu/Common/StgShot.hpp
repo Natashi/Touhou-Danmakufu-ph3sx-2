@@ -25,12 +25,15 @@ public:
 		TO_TYPE_ITEM,
 	};
 
-	enum {
-		BIT_EV_DELETE_IMMEDIATE = 1,
-		BIT_EV_DELETE_TO_ITEM,
-		BIT_EV_DELETE_FADE,
-		BIT_EV_DELETE_COUNT,
+	enum class TypeDelete {
+		Immediate,
+		Fade,
+		Item,
+
+		_Max,
 	};
+	static inline int _TypeDeleteToEventType(TypeDelete type);
+	static inline TypeDelete _EventTypeToTypeDelete(int type);
 
 	enum {
 		SHOT_MAX = 10000,
@@ -53,7 +56,7 @@ protected:
 	std::vector<RenderQueue> listRenderQueuePlayer_;		//one for each render pri
 	std::vector<RenderQueue> listRenderQueueEnemy_;			//one for each render pri
 
-	std::bitset<BIT_EV_DELETE_COUNT> listDeleteEventEnable_;
+	std::bitset<(int)TypeDelete::_Max> listDeleteEventEnable_;
 
 	DxRect<LONG> rcDeleteClip_;
 
@@ -99,7 +102,7 @@ public:
 	size_t GetShotCountAll() { return listObj_.size(); }
 
 	void SetDeleteEventEnableByType(int type, bool bEnable);
-	bool IsDeleteEventEnable(int bit) { return listDeleteEventEnable_[bit]; }
+	bool IsDeleteEventEnable(TypeDelete bit) { return listDeleteEventEnable_[(int)bit]; }
 };
 
 //*******************************************************************
@@ -233,6 +236,8 @@ public:
 //*******************************************************************
 struct StgShotPatternTransform;
 class StgShotObject : public DxScriptShaderObject, public StgMoveObject, public StgIntersectionObject {
+protected:
+	using TypeDelete = StgShotManager::TypeDelete;
 public:
 	enum {
 		OWNER_PLAYER = 0,
@@ -353,7 +358,7 @@ protected:
 
 	virtual void _Move();
 
-	virtual void _SendDeleteEvent(int type) {}
+	virtual void _SendDeleteEvent(TypeDelete type) {}
 	void _RequestPlayerDeleteEvent(int hitObjectID);
 
 	inline void _DefaultShotRender(StgShotData* shotData, StgShotDataFrame* shotFrame, const D3DXMATRIX& matWorld, D3DCOLOR color);
@@ -470,7 +475,7 @@ protected:
 	bool bFixedAngle_;
 
 	void _AddIntersectionRelativeTarget();
-	virtual void _SendDeleteEvent(int type);
+	virtual void _SendDeleteEvent(TypeDelete type);
 public:
 	StgNormalShotObject(StgStageController* stageController);
 	virtual ~StgNormalShotObject();
@@ -557,7 +562,7 @@ protected:
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
-	virtual void _SendDeleteEvent(int type);
+	virtual void _SendDeleteEvent(TypeDelete type);
 public:
 	StgLooseLaserObject(StgStageController* stageController);
 
@@ -590,7 +595,7 @@ protected:
 	bool bLaserExpand_;
 
 	virtual void _DeleteInAutoClip();
-	virtual void _SendDeleteEvent(int type);
+	virtual void _SendDeleteEvent(TypeDelete type);
 public:
 	StgStraightLaserObject(StgStageController* stageController);
 
@@ -646,7 +651,7 @@ protected:
 
 	virtual void _DeleteInAutoClip();
 	virtual void _Move();
-	virtual void _SendDeleteEvent(int type);
+	virtual void _SendDeleteEvent(TypeDelete type);
 public:
 	StgCurveLaserObject(StgStageController* stageController);
 

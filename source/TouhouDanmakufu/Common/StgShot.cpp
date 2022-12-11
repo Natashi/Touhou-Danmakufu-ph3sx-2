@@ -222,26 +222,32 @@ size_t StgShotManager::GetShotCount(int typeOwner) {
 	return res;
 }
 
-void StgShotManager::SetDeleteEventEnableByType(int type, bool bEnable) {
-	int bit = 0;
+int StgShotManager::_TypeDeleteToEventType(TypeDelete type) {
+	switch (type) {
+	case TypeDelete::Immediate:
+		return StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE;
+	case TypeDelete::Fade:
+		return StgStageItemScript::EV_DELETE_SHOT_FADE;
+	case TypeDelete::Item:
+		return StgStageItemScript::EV_DELETE_SHOT_TO_ITEM;
+	}
+	return StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE;
+}
+StgShotManager::TypeDelete StgShotManager::_EventTypeToTypeDelete(int type) {
 	switch (type) {
 	case StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE:
-		bit = StgShotManager::BIT_EV_DELETE_IMMEDIATE;
-		break;
-	case StgStageItemScript::EV_DELETE_SHOT_TO_ITEM:
-		bit = StgShotManager::BIT_EV_DELETE_TO_ITEM;
-		break;
+		return TypeDelete::Immediate;
 	case StgStageItemScript::EV_DELETE_SHOT_FADE:
-		bit = StgShotManager::BIT_EV_DELETE_FADE;
-		break;
+		return TypeDelete::Fade;
+	case StgStageItemScript::EV_DELETE_SHOT_TO_ITEM:
+		return TypeDelete::Item;
 	}
+	return TypeDelete::Immediate;
+}
 
-	if (bEnable) {
-		listDeleteEventEnable_.set(bit);
-	}
-	else {
-		listDeleteEventEnable_.reset(bit);
-	}
+void StgShotManager::SetDeleteEventEnableByType(int type, bool bEnable) {
+	int bit = (int)_EventTypeToTypeDelete(type);
+	listDeleteEventEnable_.set(bit, bEnable);
 }
 bool StgShotManager::LoadPlayerShotData(const std::wstring& path, bool bReload) {
 	return listPlayerShotData_->AddShotDataList(path, bReload);
@@ -846,7 +852,7 @@ void StgShotObject::_Move() {
 void StgShotObject::_DeleteInLife() {
 	if (IsDeleted() || life_ > 0) return;
 
-	_SendDeleteEvent(StgShotManager::BIT_EV_DELETE_IMMEDIATE);
+	_SendDeleteEvent(TypeDelete::Immediate);
 	_RequestPlayerDeleteEvent(DxScript::ID_INVALID);
 
 	auto objectManager = stageController_->GetMainObjectManager();
@@ -894,7 +900,8 @@ void StgShotObject::_DeleteInAutoClip() {
 void StgShotObject::_DeleteInFadeDelete() {
 	if (IsDeleted()) return;
 	if (frameFadeDelete_ == 0) {
-		_SendDeleteEvent(StgShotManager::BIT_EV_DELETE_FADE);
+		_SendDeleteEvent(TypeDelete::Fade);
+
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
@@ -1038,8 +1045,7 @@ void StgShotObject::SetColor(int r, int g, int b) {
 void StgShotObject::ConvertToItem() {
 	if (IsDeleted()) return;
 
-	_SendDeleteEvent(bChangeItemEnable_ ? StgShotManager::BIT_EV_DELETE_TO_ITEM
-		: StgShotManager::BIT_EV_DELETE_IMMEDIATE);
+	_SendDeleteEvent(bChangeItemEnable_ ? TypeDelete::Item : TypeDelete::Immediate);
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	objectManager->DeleteObject(this);
@@ -1047,7 +1053,7 @@ void StgShotObject::ConvertToItem() {
 void StgShotObject::DeleteImmediate() {
 	if (IsDeleted()) return;
 
-	_SendDeleteEvent(StgShotManager::BIT_EV_DELETE_IMMEDIATE);
+	_SendDeleteEvent(TypeDelete::Immediate);
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	objectManager->DeleteObject(this);
@@ -1671,7 +1677,7 @@ void StgNormalShotObject::Render(BlendMode targetBlend) {
 	//if (bIntersected_) color = D3DCOLOR_ARGB(255, 255, 0, 0);
 }
 
-void StgNormalShotObject::_SendDeleteEvent(int type) {
+void StgNormalShotObject::_SendDeleteEvent(TypeDelete type) {
 	if (typeOwner_ != OWNER_ENEMY) return;
 
 	auto stageScriptManager = stageController_->GetScriptManager();
@@ -1682,37 +1688,31 @@ void StgNormalShotObject::_SendDeleteEvent(int type) {
 
 	if (!shotManager->IsDeleteEventEnable(type)) return;
 
-	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
-		int typeEvent = 0;
-		switch (type) {
-		case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE;
-			break;
-		case StgShotManager::BIT_EV_DELETE_TO_ITEM:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_TO_ITEM;
-			break;
-		case StgShotManager::BIT_EV_DELETE_FADE:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_FADE;
-			break;
-		}
+	{
+		int typeEvent = StgShotManager::_TypeDeleteToEventType(type);
 
-		Math::DVec2 pos{ GetPositionX(), GetPositionY() };
+		{
+			Math::DVec2 pos{ GetPositionX(), GetPositionY() };
 
-		gstd::value listScriptValue[3];
-		listScriptValue[0] = DxScript::CreateIntValue(idObject_);
-		listScriptValue[1] = DxScript::CreateFloatArrayValue(pos);
-		listScriptValue[2] = DxScript::CreateIntValue(GetShotDataID());
-		itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+			LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
+				gstd::value listScriptValue[3];
+				listScriptValue[0] = DxScript::CreateIntValue(idObject_);
+				listScriptValue[1] = DxScript::CreateFloatArrayValue(pos);
+				listScriptValue[2] = DxScript::CreateIntValue(GetShotDataID());
+				itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+			}
 
-		if (typeEvent == StgStageItemScript::EV_DELETE_SHOT_TO_ITEM && itemManager->IsDefaultBonusItemEnable()) {
-			if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
-				ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
+			//Create default delete item
+			if (type == TypeDelete::Item && itemManager->IsDefaultBonusItemEnable()) {
+				if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
+					ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
 
-				int id = objectManager->AddObject(obj);
-				if (id != DxScript::ID_INVALID) {
-					itemManager->AddItem(obj);
-					obj->SetPositionX(pos[0]);
-					obj->SetPositionY(pos[1]);
+					int id = objectManager->AddObject(obj);
+					if (id != DxScript::ID_INVALID) {
+						itemManager->AddItem(obj);
+						obj->SetPositionX(pos[0]);
+						obj->SetPositionY(pos[1]);
+					}
 				}
 			}
 		}
@@ -2028,7 +2028,7 @@ void StgLooseLaserObject::Render(BlendMode targetBlend) {
 	}
 }
 
-void StgLooseLaserObject::_SendDeleteEvent(int type) {
+void StgLooseLaserObject::_SendDeleteEvent(TypeDelete type) {
 	if (typeOwner_ != OWNER_ENEMY) return;
 
 	auto stageScriptManager = stageController_->GetScriptManager();
@@ -2039,19 +2039,10 @@ void StgLooseLaserObject::_SendDeleteEvent(int type) {
 
 	if (!shotManager->IsDeleteEventEnable(type)) return;
 
-	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
-		int typeEvent = 0;
-		switch (type) {
-		case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE;
-			break;
-		case StgShotManager::BIT_EV_DELETE_TO_ITEM:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_TO_ITEM;
-			break;
-		case StgShotManager::BIT_EV_DELETE_FADE:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_FADE;
-			break;
-		}
+	auto itemScript = stageScriptManager->GetItemScript().lock();
+
+	{
+		int typeEvent = StgShotManager::_TypeDeleteToEventType(type);
 
 		double ex = GetPositionX();
 		double ey = GetPositionY();
@@ -2062,14 +2053,17 @@ void StgLooseLaserObject::_SendDeleteEvent(int type) {
 		for (double itemPos = 0; itemPos < currentLength_; itemPos += itemDistance_) {
 			pos = { ex - itemPos * move_.x, ey - itemPos * move_.y };
 
-			gstd::value listScriptValue[3];
-			listScriptValue[0] = DxScript::CreateIntValue(idObject_);
-			listScriptValue[1] = DxScript::CreateFloatArrayValue(pos);
-			listScriptValue[2] = DxScript::CreateIntValue(GetShotDataID());
-			itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+			if (itemScript) {
+				gstd::value listScriptValue[3];
+				listScriptValue[0] = DxScript::CreateIntValue(idObject_);
+				listScriptValue[1] = DxScript::CreateFloatArrayValue(pos);
+				listScriptValue[2] = DxScript::CreateIntValue(GetShotDataID());
+				itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+			}
 
-			if (delay_.time == 0 || bEnableMotionDelay_) {
-				if (typeEvent == StgStageItemScript::EV_DELETE_SHOT_TO_ITEM && itemManager->IsDefaultBonusItemEnable()) {
+			//Create default delete item
+			if (type == TypeDelete::Item && itemManager->IsDefaultBonusItemEnable()) {
+				if (delay_.time == 0 || bEnableMotionDelay_) {
 					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 						ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
 
@@ -2309,7 +2303,7 @@ void StgStraightLaserObject::Render(BlendMode targetBlend) {
 	}
 }
 
-void StgStraightLaserObject::_SendDeleteEvent(int type) {
+void StgStraightLaserObject::_SendDeleteEvent(TypeDelete type) {
 	if (typeOwner_ != OWNER_ENEMY) return;
 
 	auto stageScriptManager = stageController_->GetScriptManager();
@@ -2320,19 +2314,10 @@ void StgStraightLaserObject::_SendDeleteEvent(int type) {
 
 	if (!shotManager->IsDeleteEventEnable(type)) return;
 
-	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
-		int typeEvent = 0;
-		switch (type) {
-		case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE;
-			break;
-		case StgShotManager::BIT_EV_DELETE_TO_ITEM:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_TO_ITEM;
-			break;
-		case StgShotManager::BIT_EV_DELETE_FADE:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_FADE;
-			break;
-		}
+	auto itemScript = stageScriptManager->GetItemScript().lock();
+
+	{
+		int typeEvent = StgShotManager::_TypeDeleteToEventType(type);
 
 		Math::DVec2 pos;
 		gstd::value listScriptValue[3];
@@ -2340,14 +2325,17 @@ void StgStraightLaserObject::_SendDeleteEvent(int type) {
 		for (double itemPos = 0; itemPos < length_; itemPos += itemDistance_) {
 			pos = { posX_ + itemPos * move_.x, posY_ + itemPos * move_.y };
 
-			gstd::value listScriptValue[3];
-			listScriptValue[0] = DxScript::CreateIntValue(idObject_);
-			listScriptValue[1] = DxScript::CreateFloatArrayValue(pos);
-			listScriptValue[2] = DxScript::CreateIntValue(GetShotDataID());
-			itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+			if (itemScript) {
+				gstd::value listScriptValue[3];
+				listScriptValue[0] = DxScript::CreateIntValue(idObject_);
+				listScriptValue[1] = DxScript::CreateFloatArrayValue(pos);
+				listScriptValue[2] = DxScript::CreateIntValue(GetShotDataID());
+				itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+			}
 
-			if (delay_.time == 0) {
-				if (typeEvent == StgStageItemScript::EV_DELETE_SHOT_TO_ITEM && itemManager->IsDefaultBonusItemEnable()) {
+			//Create default delete item
+			if (type == TypeDelete::Item && itemManager->IsDefaultBonusItemEnable()) {
+				if (delay_.time == 0) {
 					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 						ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
 
@@ -2786,7 +2774,7 @@ void StgCurveLaserObject::Render(BlendMode targetBlend) {
 	}
 }
 
-void StgCurveLaserObject::_SendDeleteEvent(int type) {
+void StgCurveLaserObject::_SendDeleteEvent(TypeDelete type) {
 	if (typeOwner_ != OWNER_ENEMY) return;
 
 	auto stageScriptManager = stageController_->GetScriptManager();
@@ -2797,19 +2785,10 @@ void StgCurveLaserObject::_SendDeleteEvent(int type) {
 
 	if (!shotManager->IsDeleteEventEnable(type)) return;
 
-	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
-		int typeEvent = 0;
-		switch (type) {
-		case StgShotManager::BIT_EV_DELETE_IMMEDIATE:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_IMMEDIATE;
-			break;
-		case StgShotManager::BIT_EV_DELETE_TO_ITEM:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_TO_ITEM;
-			break;
-		case StgShotManager::BIT_EV_DELETE_FADE:
-			typeEvent = StgStageItemScript::EV_DELETE_SHOT_FADE;
-			break;
-		}
+	auto itemScript = stageScriptManager->GetItemScript().lock();
+
+	{
+		int typeEvent = StgShotManager::_TypeDeleteToEventType(type);
 
 		gstd::value listScriptValue[3];
 		listScriptValue[0] = DxScript::CreateIntValue(idObject_);
@@ -2817,11 +2796,14 @@ void StgCurveLaserObject::_SendDeleteEvent(int type) {
 
 		size_t countToItem = 0U;
 		auto _RequestItem = [&](double ix, double iy) {
-			listScriptValue[1] = itemScript->CreateFloatArrayValue(Math::DVec2{ ix, iy });
-			itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+			if (itemScript) {
+				listScriptValue[1] = itemScript->CreateFloatArrayValue(Math::DVec2{ ix, iy });
+				itemScript->RequestEvent(typeEvent, listScriptValue, 3);
+			}
 
-			if (delay_.time == 0 || bEnableMotionDelay_) {
-				if (typeEvent == StgStageItemScript::EV_DELETE_SHOT_TO_ITEM && itemManager->IsDefaultBonusItemEnable()) {
+			//Create default delete item
+			if (type == TypeDelete::Item && itemManager->IsDefaultBonusItemEnable()) {
+				if (delay_.time == 0 || bEnableMotionDelay_) {
 					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 						ref_unsync_ptr<StgItemObject> obj = new StgItemObject_Bonus(stageController_);
 
