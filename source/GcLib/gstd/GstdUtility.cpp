@@ -869,6 +869,11 @@ std::wstring PathProperty::ExtendRelativeToFull(const std::wstring& dir, std::ws
 std::wstring PathProperty::ReplaceYenToSlash(const std::wstring& path) {
 	return StringUtility::ReplaceAll(path, L'\\', L'/');
 }
+std::wstring PathProperty::AppendSlash(const std::wstring& path) {
+	if (path.size() == 0 || path.back() == L'/')
+		return path;
+	return path + L'/';
+}
 std::wstring PathProperty::Canonicalize(const std::wstring& srcPath) {
 #ifdef __L_STD_FILESYSTEM
 	path_t p(srcPath);

@@ -277,11 +277,10 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::FindPlayerScrip
 	std::vector<ref_count_ptr<ScriptInformation>> res;
 
 	if (stdfs::exists(dir) && stdfs::is_directory(dir)) {
-		for (auto itr : stdfs::directory_iterator(dir)) {
+		for (auto& itr : stdfs::directory_iterator(dir)) {
 			if (itr.is_directory()) {
 				std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
-				if (tDir.back() != L'/')
-					tDir += L"/";
+				tDir = PathProperty::AppendSlash(tDir);
 
 				std::vector<ref_count_ptr<ScriptInformation>> list = FindPlayerScriptInformationList(tDir);
 				for (auto itr = list.begin(); itr != list.end(); itr++) {

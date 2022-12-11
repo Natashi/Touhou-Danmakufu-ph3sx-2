@@ -479,6 +479,9 @@ namespace gstd {
 		//Replaces all the '\\' characters with '/'.
 		static std::wstring ReplaceYenToSlash(const std::wstring& path);
 
+		//Appends a '/' at the back if one doesn't already exist.
+		static std::wstring AppendSlash(const std::wstring& path);
+
 		static std::wstring Canonicalize(const std::wstring& srcPath);
 
 		//Replaces all the '/' characters with '\\' (at the very least).

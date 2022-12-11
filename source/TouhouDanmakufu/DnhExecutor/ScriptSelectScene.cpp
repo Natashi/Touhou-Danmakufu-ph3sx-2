@@ -498,7 +498,7 @@ void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
 
 			if (itr.is_directory()) {
 				std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
-				if (tDir.back() != L'/')
+				tDir = PathProperty::AppendSlash(tDir);
 					tDir += L"/";
 
 				if (type_ == TYPE_DIR) {
