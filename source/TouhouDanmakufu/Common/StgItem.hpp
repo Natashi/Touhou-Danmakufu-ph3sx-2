@@ -183,6 +183,7 @@ class StgItemObject : public DxScriptShaderObject, public StgMoveObject, public 
 	friend class StgItemManager;
 public:
 	enum {
+		//Default item IDs
 		ITEM_1UP = -256 * 256,
 		ITEM_1UP_S,
 		ITEM_SPELL,
@@ -192,17 +193,19 @@ public:
 		ITEM_POINT,
 		ITEM_POINT_S,
 
-		ITEM_SCORE,
-		ITEM_BONUS,
+		ITEM_SCORE_TEXT,	//Default score text objects
+		ITEM_BONUS,			//Default bullet cancel items
 
 		ITEM_USER = 0,
 
+		//Collection types
 		COLLECT_PLAYER_SCOPE = 0,
 		COLLECT_PLAYER_LINE,
 		COLLECT_IN_CIRCLE,
 		COLLECT_ALL,
 		COLLECT_SINGLE,
 
+		//Collection cancel types
 		CANCEL_PLAYER_DOWN = 0,
 		CANCEL_ALL,
 		CANCEL_SINGLE,
