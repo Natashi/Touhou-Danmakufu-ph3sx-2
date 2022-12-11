@@ -82,6 +82,48 @@ namespace gstd {
 	};
 
 	//================================================================
+	//AnyMap
+	class AnyMap {
+	private:
+		std::unordered_map<std::string, std::any> map_;
+	public:
+		AnyMap();
+		virtual ~AnyMap();
+
+		template<typename T>
+		inline void SetValue(const std::string& key, const T& value) {
+			map_[key] = std::any(value);
+		}
+
+		template<typename T>
+		const T GetValue(const std::string& key, bool* bHasValue = nullptr) const {
+			if (bHasValue) *bHasValue = false;
+			try {
+				auto itr = map_.find(key);
+				if (itr != map_.end()) {
+					if (bHasValue) *bHasValue = true;
+					return std::any_cast<T>(itr->second);
+				}
+			}
+			catch (const std::bad_any_cast& e) {}
+			return T();
+		}
+		template<typename T>
+		T* GetValuePtr(const std::string& key) const {
+			try {
+				auto itr = map_.find(key);
+				if (itr != map_.end()) {
+					return &std::any_cast<T>(itr->second);
+				}
+			}
+			catch (const std::bad_any_cast& e) {}
+			return nullptr;
+		}
+
+		const size_t Count() { return map_.size(); }
+	};
+
+	//================================================================
 	//Encoding
 	class Encoding {
 	public:
