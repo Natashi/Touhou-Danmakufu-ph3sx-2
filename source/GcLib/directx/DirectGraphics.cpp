@@ -36,6 +36,143 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 	bCheckDeviceCaps = true;
 }
 
+//*******************************************************************
+//DirectGraphicsBase
+//*******************************************************************
+DirectGraphicsBase::DirectGraphicsBase() {
+	pDirect3D_ = nullptr;
+	pDevice_ = nullptr;
+	pBackSurf_ = nullptr;
+	pZBuffer_ = nullptr;
+
+	ZeroMemory(&deviceCaps_, sizeof(deviceCaps_));
+	deviceStatus_ = S_OK;
+
+	hAttachedWindow_ = nullptr;
+}
+DirectGraphicsBase::~DirectGraphicsBase() {
+	Release();
+}
+
+void DirectGraphicsBase::_ReleaseDxResource() {
+	ptr_release(pZBuffer_);
+	ptr_release(pBackSurf_);
+
+	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
+		(*itr)->ReleaseDxResource();
+	}
+}
+void DirectGraphicsBase::_RestoreDxResource() {
+	pDevice_->GetRenderTarget(0, &pBackSurf_);
+	pDevice_->GetDepthStencilSurface(&pZBuffer_);
+
+	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
+		(*itr)->RestoreDxResource();
+	}
+}
+
+void DirectGraphicsBase::_VerifyDeviceCaps() {
+	std::vector<std::string> listError;
+	std::vector<std::string> listWarning;
+
+	if ((deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_IMMEDIATE) == 0)
+		listError.push_back("D3DPRESENT_INTERVAL_IMMEDIATE is unavailable");
+	if ((deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_ONE) == 0)
+		listWarning.push_back("V-Sync is unavailable");
+
+	if (deviceCaps_.VertexShaderVersion < D3DVS_VERSION(2, 0)
+		|| deviceCaps_.MaxVertexShaderConst < 4)
+		listError.push_back("The device's vertex shader support is insufficient (vs_2_0 required)");
+	else if (deviceCaps_.VertexShaderVersion < D3DVS_VERSION(3, 0))
+		listWarning.push_back("The device's vertex shader support is insufficient (vs_3_0 recommended)");
+
+	if (deviceCaps_.NumSimultaneousRTs < 1)
+		listError.push_back("Device must support at least 1 render target");
+
+	//-------------------------------------------------------------------------------
+
+	_VerifyDeviceCaps_Result(listError, listWarning);
+}
+void DirectGraphicsBase::_VerifyDeviceCaps_Result(const std::vector<std::string>& err, const std::vector<std::string>& warn) {
+	if (err.size() > 0) {
+		std::string strAll = "The game cannot start as the\r\n"
+			"Direct3D device has the following issue(s):\r\n";
+		for (auto& str : err)
+			strAll += "   - " + str + "\r\n";
+		strAll += "Try restarting in reference rasterizer mode\r\n";
+		throw wexception(strAll);
+	}
+	else if (warn.size() > 0) {
+		std::string strAll = "The game's rendering might behave strangely as the\r\n"
+			"Direct3D device has the following issue(s):\r\n";
+		for (auto& str : warn)
+			strAll += "   - " + str + "\r\n";
+		Logger::WriteTop(strAll);
+	}
+}
+
+std::vector<std::wstring> DirectGraphicsBase::_GetRequiredModules() {
+	return std::vector<std::wstring>({
+		L"d3d9.dll", L"d3dx9_43.dll", L"d3dcompiler_43.dll",
+		L"dsound.dll", L"dinput8.dll"
+	});
+}
+void DirectGraphicsBase::_LoadModules() {
+	HANDLE hCurrentProcess = ::GetCurrentProcess();
+
+	std::vector<std::wstring> moduleNames = _GetRequiredModules();
+	for (auto& iModule : moduleNames) {
+		HMODULE hModule = ::LoadLibraryW(iModule.c_str());
+		if (hModule == nullptr)
+			throw gstd::wexception(L"Failed to load module: " + iModule);
+		mapDxModules_[iModule] = hModule;
+	}
+}
+void DirectGraphicsBase::_FreeModules() {
+	for (auto itr = mapDxModules_.begin(); itr != mapDxModules_.end(); ++itr) {
+		HMODULE pModule = itr->second;
+		if (pModule)
+			::FreeLibrary(pModule);
+	}
+	mapDxModules_.clear();
+}
+
+void DirectGraphicsBase::Release() {
+	ptr_release(pZBuffer_);
+	ptr_release(pBackSurf_);
+	ptr_release(pDevice_);
+	ptr_release(pDirect3D_);
+
+	_FreeModules();
+}
+
+void DirectGraphicsBase::AddDirectGraphicsListener(DirectGraphicsListener* listener) {
+	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
+		if ((*itr) == listener)
+			return;
+	}
+	listListener_.push_back(listener);
+}
+void DirectGraphicsBase::RemoveDirectGraphicsListener(DirectGraphicsListener* listener) {
+	listListener_.remove(listener);
+}
+
+void DirectGraphicsBase::BeginScene(bool bClear = true) {
+	pDevice_->BeginScene();
+}
+void DirectGraphicsBase::EndScene(bool bPresent = true) {
+	pDevice_->EndScene();
+
+	if (bPresent) {
+		deviceStatus_ = pDevice_->Present(nullptr, nullptr, nullptr, nullptr);
+		if (FAILED(deviceStatus_)) {
+			if (_Restore()) {
+				ResetDeviceState();
+			}
+		}
+	}
+}
+
 #if defined(DNH_PROJ_EXECUTOR)
 //*******************************************************************
 //DirectGraphics
@@ -43,15 +180,6 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 DirectGraphics* DirectGraphics::thisBase_ = nullptr;
 float DirectGraphics::g_dxCoordsMul_ = 1.0f;
 DirectGraphics::DirectGraphics() {
-	ZeroMemory(&dxModules_, sizeof(dxModules_));
-
-	pDirect3D_ = nullptr;
-	pDevice_ = nullptr;
-	pBackSurf_ = nullptr;
-	pZBuffer_ = nullptr;
-
-	deviceStatus_ = S_OK;
-
 	camera_ = new DxCamera();
 	camera2D_ = new DxCamera2D();
 
@@ -74,51 +202,9 @@ DirectGraphics::DirectGraphics() {
 DirectGraphics::~DirectGraphics() {
 	Logger::WriteTop("DirectGraphics: Finalizing.");
 
-	ptr_release(pZBuffer_);
-	ptr_release(pBackSurf_);
-	ptr_release(pDevice_);
-	ptr_release(pDirect3D_);
-	ptr_delete(bufferManager_);
+	Release();
 
-	for (auto& itrSample : mapSupportMultisamples_) {
-		delete itrSample.second.second;
-	}
-
-	_FreeModules();
-
-	thisBase_ = nullptr;
 	Logger::WriteTop("DirectGraphics: Finalized.");
-}
-
-void DirectGraphics::_LoadModules() {
-	HANDLE hCurrentProcess = ::GetCurrentProcess();
-
-	auto _LoadModule = [](const std::wstring& name, HMODULE* hDest, bool bThrowErr = true) -> bool {
-		*hDest = ::LoadLibraryW(name.c_str());
-		if (*hDest == nullptr && bThrowErr)
-			throw gstd::wexception(L"Failed to load module: " + name);
-		return *hDest != nullptr;
-	};
-
-	_LoadModule(L"d3d9.dll", &dxModules_.hLibrary_d3d9);
-	_LoadModule(L"d3dx9_43.dll", &dxModules_.hLibrary_d3dx9);
-	_LoadModule(L"d3dcompiler_43.dll", &dxModules_.hLibrary_d3dcompiler);
-	_LoadModule(L"dsound.dll", &dxModules_.hLibrary_dsound);
-	_LoadModule(L"dinput8.dll", &dxModules_.hLibrary_dinput8);
-}
-void DirectGraphics::_FreeModules() {
-	auto _Free = [](HMODULE* pModule) {
-		if (*pModule) {
-			::FreeLibrary(*pModule);
-			*pModule = nullptr;
-		}
-	};
-
-	_Free(&dxModules_.hLibrary_d3d9);
-	_Free(&dxModules_.hLibrary_d3dx9);
-	_Free(&dxModules_.hLibrary_d3dcompiler);
-	_Free(&dxModules_.hLibrary_dinput8);
-	_Free(&dxModules_.hLibrary_dsound);
 }
 
 bool DirectGraphics::Initialize(HWND hWnd) {
@@ -311,19 +397,22 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	ResetDeviceState();
 	ResetDisplaySettings();
 
-	BeginScene();
-	EndScene();
+	BeginScene(true, true);
+	EndScene(true);
 
 	Logger::WriteTop("DirectGraphics: Initialized.");
 	return true;
+}
+void DirectGraphics::Release() {
+	for (auto& itrSample : mapSupportMultisamples_) {
+		delete itrSample.second.second;
+	}
+	DirectGraphicsBase::Release();
 }
 
 void DirectGraphics::_VerifyDeviceCaps() {
 	std::vector<std::string> listError;
 	std::vector<std::string> listWarning;
-
-	//listError.push_back("Test");
-	//listWarning.push_back("Test");
 
 	if ((deviceCaps_.Caps2 & D3DCAPS2_DYNAMICTEXTURES) == 0)
 		listError.push_back("Device doesn't support dynamic textures");
@@ -443,38 +532,11 @@ void DirectGraphics::_VerifyDeviceCaps() {
 
 	//-------------------------------------------------------------------------------
 
-	if (listError.size() > 0) {
-		std::string strAll = "The game cannot start as the\r\n"
-			"Direct3D device has the following issue(s):\r\n";
-		for (auto& str : listError)
-			strAll += "   - " + str + "\r\n";
-		strAll += "Try restarting in reference rasterizer mode\r\n";
-		throw wexception(strAll);
-	}
-	else if (listWarning.size() > 0) {
-		std::string strAll = "The game's rendering might behave strangely as the\r\n"
-			"Direct3D device has the following issue(s):\r\n";
-		for (auto& str : listWarning)
-			strAll += "   - " + str + "\r\n";
-		Logger::WriteTop(strAll);
-	}
+	_VerifyDeviceCaps_Result(listError, listWarning);
 }
 
-void DirectGraphics::_ReleaseDxResource() {
-	ptr_release(pZBuffer_);
-	ptr_release(pBackSurf_);
-
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		(*itr)->ReleaseDxResource();
-	}
-}
 void DirectGraphics::_RestoreDxResource() {
-	pDevice_->GetRenderTarget(0, &pBackSurf_);
-	pDevice_->GetDepthStencilSurface(&pZBuffer_);
-
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		(*itr)->RestoreDxResource();
-	}
+	DirectGraphicsBase::_RestoreDxResource();
 
 	ResetCamera();
 	ResetDeviceState();
@@ -588,20 +650,8 @@ void DirectGraphics::ResetDisplaySettings() {
 	displaySettingsFullscreen_.shader = nullptr;
 }
 
-void DirectGraphics::AddDirectGraphicsListener(DirectGraphicsListener* listener) {
-	std::list<DirectGraphicsListener*>::iterator itr;
-	for (itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		if ((*itr) == listener) return;
-	}
-	listListener_.push_back(listener);
-}
-void DirectGraphics::RemoveDirectGraphicsListener(DirectGraphicsListener* listener) {
-	std::list<DirectGraphicsListener*>::iterator itr;
-	for (itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		if ((*itr) != listener) continue;
-		listListener_.erase(itr);
-		break;
-	}
+void DirectGraphics::BeginScene(bool bClear) {
+	BeginScene(true, bClear);
 }
 void DirectGraphics::BeginScene(bool bMainRender, bool bClear) {
 	if (bClear) ClearRenderTarget();
@@ -619,18 +669,7 @@ void DirectGraphics::BeginScene(bool bMainRender, bool bClear) {
 
 	pDevice_->BeginScene();
 }
-void DirectGraphics::EndScene(bool bPresent) {
-	pDevice_->EndScene();
 
-	if (bPresent) {
-		deviceStatus_ = pDevice_->Present(nullptr, nullptr, nullptr, nullptr);
-		if (FAILED(deviceStatus_)) {
-			if (_Restore()) {
-				ResetDeviceState();
-			}
-		}
-	}
-}
 void DirectGraphics::ClearRenderTarget() {
 	pDevice_->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
 		currentRenderTarget_ != nullptr ? D3DCOLOR_ARGB(0, 0, 0, 0) : D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
