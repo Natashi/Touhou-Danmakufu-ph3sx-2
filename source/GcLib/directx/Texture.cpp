@@ -435,7 +435,8 @@ void TextureManager::__CreateFromFile(shared_ptr<TextureData>& dst, const std::w
 
 	std::string source = reader->ReadAllString();
 
-	D3DFORMAT pixelFormat = graphics->GetConfigData().colorMode_ == ColorMode::COLOR_MODE_32BIT ?
+	ColorMode colorMode = graphics->GetGraphicsConfig().colorMode;
+	D3DFORMAT pixelFormat = colorMode == ColorMode::COLOR_MODE_32BIT ?
 		D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
 
 	dst->useMipMap_ = genMipmap;
@@ -524,7 +525,8 @@ bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std
 			qualitySample ? qualitySample[1] : 0, FALSE, &data->lpRenderZ_, nullptr);
 		if (FAILED(hr)) throw false;
 
-		D3DFORMAT fmt = graphics->GetConfigData().colorMode_ == ColorMode::COLOR_MODE_32BIT ?
+		ColorMode colorMode = graphics->GetGraphicsConfig().colorMode;
+		D3DFORMAT fmt = colorMode == ColorMode::COLOR_MODE_32BIT ?
 			D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
 
 		hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT,

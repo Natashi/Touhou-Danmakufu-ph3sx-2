@@ -1,6 +1,7 @@
 #include "source/GcLib/pch.h"
 
 #include "DnhGcLibImpl.hpp"
+#include "DnhConfiguration.hpp"
 #include "DnhCommon.hpp"
 
 #include "../DnhExecutor/GcLibImpl.hpp"

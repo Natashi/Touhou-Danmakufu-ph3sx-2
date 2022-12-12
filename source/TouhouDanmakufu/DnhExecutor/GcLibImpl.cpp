@@ -4,6 +4,8 @@
 #include "System.hpp"
 #include "StgScene.hpp"
 
+#include "../Common/DnhConfiguration.hpp"
+
 //*******************************************************************
 //EApplication
 //*******************************************************************
@@ -167,14 +169,16 @@ bool EApplication::_Loop() {
 					fpsController->GetCurrentRenderFps());
 				logger->SetInfo(0, L"Fps", fps);
 
-				const POINT& screenSize = graphics->GetConfigData().sizeScreen_;
-				const POINT& screenSizeWindowed = graphics->GetConfigData().sizeScreenDisplay_;
-				//int widthScreen = widthConfig * graphics->GetScreenWidthRatio();
-				//int heightScreen = heightConfig * graphics->GetScreenHeightRatio();
-				std::wstring screenInfo = StringUtility::Format(L"Width: %d/%d, Height: %d/%d",
-					screenSizeWindowed.x, screenSize.x,
-					screenSizeWindowed.y, screenSize.y);
-				logger->SetInfo(1, L"Screen", screenInfo);
+				{
+					const DirectGraphicsConfig& config = graphics->GetGraphicsConfig();
+
+					//int widthScreen = widthConfig * graphics->GetScreenWidthRatio();
+					//int heightScreen = heightConfig * graphics->GetScreenHeightRatio();
+					std::wstring screenInfo = StringUtility::Format(L"Width: %d/%d, Height: %d/%d",
+						graphics->GetRenderScreenWidth(), graphics->GetScreenWidth(),
+						graphics->GetRenderScreenHeight(), graphics->GetScreenHeight());
+					logger->SetInfo(1, L"Screen", screenInfo);
+				}
 
 				logger->SetInfo(2, L"Font cache",
 					StringUtility::Format(L"%d", EDxTextRenderer::GetInstance()->GetCacheCount()));
@@ -194,7 +198,7 @@ bool EApplication::_Loop() {
 			graphics->SetRenderTarget(nullptr);
 			graphics->ResetDeviceState();
 
-			graphics->BeginScene();
+			graphics->BeginScene(true, true);
 
 			taskManager->CallRenderFunction();
 			taskManager->SetRenderTime(taskManager->GetTimeSpentOnLastFuncCall());
@@ -222,7 +226,8 @@ void EApplication::_RenderDisplay() {
 	{
 		graphics->SetRenderTargetNull();
 		graphics->ResetDeviceState();
-		graphics->BeginScene();
+
+		graphics->BeginScene(true, true);
 
 		{
 			device->SetFVF(VERTEX_TLX::fvf);
@@ -349,7 +354,7 @@ void EApplication::_RenderDisplay() {
 			}
 		}
 
-		graphics->EndScene();
+		graphics->EndScene(true);
 		{
 			graphics->SetRenderTarget(secondaryBackBuffer_);
 			device->Clear(0, nullptr, D3DCLEAR_TARGET, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
@@ -395,12 +400,12 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 	defaultWindowTitle_ = windowTitle;
 
 	DnhConfiguration* dnhConfig = DnhConfiguration::GetInstance();
-	LONG screenWidth = dnhConfig->screenWidth_;		//From th_dnh.def
-	LONG screenHeight = dnhConfig->screenHeight_;	//From th_dnh.def
+	size_t screenWidth = dnhConfig->screenWidth_;		//From th_dnh.def
+	size_t screenHeight = dnhConfig->screenHeight_;	//From th_dnh.def
 	ScreenMode screenMode = dnhConfig->modeScreen_;
 
-	LONG windowedWidth = screenWidth;
-	LONG windowedHeight = screenHeight;
+	size_t windowedWidth = screenWidth;
+	size_t windowedHeight = screenHeight;
 	{
 		std::vector<POINT>& windowSizeList = dnhConfig->windowSizeList_;
 		size_t windowSizeIndex = dnhConfig->windowSizeIndex_;
@@ -411,15 +416,15 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 	}
 
 	DirectGraphicsConfig dxConfig;
-	dxConfig.sizeScreen_ = { screenWidth, screenHeight };
-	dxConfig.sizeScreenDisplay_ = { windowedWidth, windowedHeight };
-	dxConfig.bShowWindow_ = true;
-	dxConfig.bShowCursor_ = dnhConfig->bMouseVisible_;
-	dxConfig.colorMode_ = dnhConfig->modeColor_;
-	dxConfig.bVSync_ = dnhConfig->bVSync_;
-	dxConfig.bUseRef_ = dnhConfig->bUseRef_;
-	dxConfig.typeMultiSample_ = dnhConfig->multiSamples_;
-	dxConfig.bBorderlessFullscreen_ = dnhConfig->bPseudoFullscreen_;
+	dxConfig.sizeScreen = { screenWidth, screenHeight };
+	dxConfig.sizeScreenDisplay = { windowedWidth, windowedHeight };
+	dxConfig.bShowWindow = true;
+	dxConfig.bShowCursor = dnhConfig->bMouseVisible_;
+	dxConfig.colorMode = dnhConfig->modeColor_;
+	dxConfig.bVSync = dnhConfig->bVSync_;
+	dxConfig.bUseRef = dnhConfig->bUseRef_;
+	dxConfig.typeMultiSample = dnhConfig->multiSamples_;
+	dxConfig.bBorderlessFullscreen = dnhConfig->bPseudoFullscreen_;
 
 	{
 		RECT rcMonitor = WindowBase::GetPrimaryMonitorRect();
@@ -460,7 +465,8 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 				}
 				windowedWidth = newWidth;
 				windowedHeight = newHeight;
-				dxConfig.sizeScreenDisplay_ = { windowedWidth, windowedHeight };
+				
+				dxConfig.sizeScreenDisplay = { windowedWidth, windowedHeight };
 			}
 		}
 	}

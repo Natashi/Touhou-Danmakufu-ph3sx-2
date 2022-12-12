@@ -305,6 +305,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">DnhExecutor/Release_legacy/DnhExecutor.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhCommon.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\DnhConfiguration.cpp" />
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.cpp" />
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhReplay.cpp" />
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhScript.cpp" />
@@ -377,6 +378,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClInclude Include="source\Steam\Achievement.hpp" />
     <ClInclude Include="source\Steam\SteamBase.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhCommon.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConfiguration.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhConstant.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhReplay.hpp" />

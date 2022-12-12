@@ -21,23 +21,23 @@ namespace directx {
 	//*******************************************************************
 	class DirectGraphicsConfig {
 	public:
-		bool bShowWindow_;
-		bool bShowCursor_;
+		bool bShowWindow;
+		bool bShowCursor;
 
-		bool bWindowed_;
-		bool bBorderlessFullscreen_;
+		bool bWindowed;
+		bool bBorderlessFullscreen;
 
-		POINT sizeScreen_;
-		POINT sizeScreenDisplay_;
+		std::array<size_t, 2> sizeScreen;
+		std::array<size_t, 2> sizeScreenDisplay;
 
-		ColorMode colorMode_;
-		D3DMULTISAMPLE_TYPE typeMultiSample_;
+		ColorMode colorMode;
+		D3DMULTISAMPLE_TYPE typeMultiSample;
 
-		bool bUseRef_;
-		bool bUseTripleBuffer_;
-		bool bVSync_;
+		bool bUseRef;
+		bool bUseTripleBuffer;
+		bool bVSync;
 
-		bool bCheckDeviceCaps_;
+		bool bCheckDeviceCaps;
 	public:
 		DirectGraphicsConfig();
 	};
@@ -93,12 +93,17 @@ namespace directx {
 		D3DVIEWPORT9 viewPort_;
 		D3DXMATRIX matViewPort_;
 
+		//-----------------------------------------------------------
+
 		shared_ptr<TextureData> defaultBackBufferRenderTarget_;
 		shared_ptr<Texture> currentRenderTarget_;
-		UINT defaultRenderTargetSize_[2];
+
+		size_t defaultRenderTargetSize_[2];
 
 		DisplaySettings displaySettingsWindowed_;
 		DisplaySettings displaySettingsFullscreen_;
+
+		//-----------------------------------------------------------
 
 		VertexBufferManager* bufferManager_;
 		VertexFogState stateFog_;
@@ -128,7 +133,7 @@ namespace directx {
 		D3DPRESENT_PARAMETERS GetFullScreenPresentParameter() { return d3dppFull_; }
 		D3DPRESENT_PARAMETERS GetWindowPresentParameter() { return d3dppWin_; }
 
-		const DirectGraphicsConfig& GetConfigData() { return config_; }
+		const DirectGraphicsConfig& GetGraphicsConfig() { return config_; }
 		IDirect3DDevice9* GetDevice() { return pDevice_; }
 
 		IDirect3DSurface9* GetBaseSurface() { return pBackSurf_; }
@@ -160,6 +165,10 @@ namespace directx {
 			return GetScreenMode() == ScreenMode::SCREENMODE_WINDOW ? 
 				&displaySettingsWindowed_ : &displaySettingsFullscreen_;
 		}
+
+		void UpdateDefaultRenderTargetSize();
+
+		//-----------------------------------------------------------
 
 		//Render states
 		void SetLightingEnable(bool bEnable);
@@ -202,13 +211,13 @@ namespace directx {
 		void ResetViewPort();
 		const D3DXMATRIX& GetViewPortMatrix() { return matViewPort_; }
 
-		size_t GetScreenWidth() { return config_.sizeScreen_.x; }
-		size_t GetScreenHeight() { return config_.sizeScreen_.y; }
+		size_t GetScreenWidth() { return config_.sizeScreen[0]; }
+		size_t GetScreenHeight() { return config_.sizeScreen[1]; }
 		size_t GetRenderScreenWidth() {
-			return config_.sizeScreenDisplay_.x;
+			return config_.sizeScreenDisplay[0];
 		}
 		size_t GetRenderScreenHeight() {
-			return config_.sizeScreenDisplay_.y;
+			return config_.sizeScreenDisplay[1];
 		}
 
 		double GetScreenWidthRatio();

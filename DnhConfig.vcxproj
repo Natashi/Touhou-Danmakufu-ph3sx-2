@@ -247,6 +247,7 @@
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">DnhConfig/Release_legacy/DnhConfig.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhCommon.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\Common\DnhConfiguration.cpp" />
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.cpp" />
     <ClCompile Include="source\TouhouDanmakufu\DnhConfig\Common.cpp" />
     <ClCompile Include="source\TouhouDanmakufu\DnhConfig\GcLibImpl.cpp" />
@@ -269,6 +270,7 @@
     <ClInclude Include="source\GcLib\gstd\Window.hpp" />
     <ClInclude Include="source\GcLib\pch.h" />
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhCommon.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConfiguration.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhConstant.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\DnhConfig\Common.hpp" />

@@ -68,6 +68,9 @@
     <ClCompile Include="source\GcLib\gstd\Logger.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\Common\DnhConfiguration.cpp">
+      <Filter>source\Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">
@@ -132,6 +135,9 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\Logger.hpp">
       <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConfiguration.hpp">
+      <Filter>source\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
