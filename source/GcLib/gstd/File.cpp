@@ -533,9 +533,9 @@ shared_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	std::wstring pathAsUnique = PathProperty::GetUnique(path);
 
 	shared_ptr<FileReader> res = nullptr;
-	shared_ptr<File> fileRaw(new File(pathAsUnique));
-	if (fileRaw->IsExists()) {
-		res = shared_ptr<ManagedFileReader>(new ManagedFileReader(fileRaw, nullptr));
+	if (File::IsExists(pathAsUnique)) {
+		shared_ptr<File> fileRaw(new File(pathAsUnique));
+		res.reset(new ManagedFileReader(fileRaw, nullptr));
 	}
 #if defined(DNH_PROJ_EXECUTOR)
 	else {
@@ -548,7 +548,7 @@ shared_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 			ArchiveFileEntry* pEntry = itrFind->second.first;
 
 			shared_ptr<File> file = pEntry->archiveParent->GetFile();
-			res = shared_ptr<ManagedFileReader>(new ManagedFileReader(file, pEntry));
+			res.reset(new ManagedFileReader(file, pEntry));
 		}
 	}
 #endif
