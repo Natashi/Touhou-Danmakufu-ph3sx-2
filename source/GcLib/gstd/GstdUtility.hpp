@@ -261,7 +261,9 @@ namespace gstd {
 		wexception(const std::string& msg) {
 			message_ = StringUtility::ConvertMultiToWide(msg);
 		}
-		std::wstring& GetMessage() { return message_; }
+
+		const std::wstring& GetErrorMessage() const { return message_; }
+		std::wstring& GetErrorMessage() { return message_; }
 		const wchar_t* what() { return message_.c_str(); }
 	};
 

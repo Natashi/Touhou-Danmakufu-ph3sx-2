@@ -739,7 +739,7 @@ int parser::scan_current_scope(parser_state_t* state, int level, int initVar, co
 	}
 	catch (parser_error& e) {
 		//state->lex->line = lex2.line;
-		throw parser_error_mapped(lex2.line, e.GetMessageW());
+		throw parser_error_mapped(lex2.line, e.GetErrorMessage());
 	}
 
 	return (var - initVar);

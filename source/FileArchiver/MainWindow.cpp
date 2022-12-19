@@ -435,10 +435,11 @@ void MainWindow::_Archive() {
 		Logger::WriteTop(log);
 		MessageBox(hWnd_, log.c_str(), L"Success", MB_OK);
 	}
-	catch (gstd::wexception e) {
-		std::wstring log = StringUtility::Format(L"Failed to create the archive.[%s]", e.what());
+	
+	catch (const gstd::wexception& e) {
+		std::wstring log = StringUtility::Format(L"Failed to create the archive.[%s]", e.GetErrorMessage());
 		Logger::WriteTop(log);
-		MessageBox(hWnd_, log.c_str(), L"Error", MB_OK);
+		::MessageBoxW(hWnd_, log.c_str(), L"Error", MB_OK);
 	}
 
 }

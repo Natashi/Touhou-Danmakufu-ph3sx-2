@@ -1928,9 +1928,9 @@ void ScriptLoader::Parse() {
 			file.Close();
 		}
 	}
-	catch (wexception& e) {
+	catch (const wexception& e) {
 		int line = scanner_->GetCurrentLine();
-		_RaiseError(line, e.GetMessageW());
+		_RaiseError(line, e.GetErrorMessage());
 	}
 
 	for (size_t i = 0; i < charSize_; ++i)
