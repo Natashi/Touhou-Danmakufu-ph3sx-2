@@ -61,31 +61,31 @@
 
 #define D3D_OVERLOADS
 
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
-
-#define DIRECTINPUT_VERSION 0x0800
-
 #include <d3d9.h>
 #include <d3dx9.h>
-#include <dinput.h>
 #include <DxErr.h>
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "d3d9.lib")
 #pragma comment(lib, "d3dx9.lib")
-#pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxerr.lib")
-#pragma comment(lib, "d3dcompiler.lib")
+
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
+
+#define DIRECTINPUT_VERSION 0x0800
+
+#include <dinput.h>
+#pragma comment(lib, "dinput8.lib")
+
+#endif	// defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 
 #if defined(DNH_PROJ_EXECUTOR)
 
-#define DIRECTSOUND_VERSION 0x0900
 #include <mmreg.h>		//For some wave format constants
 #include <dsound.h>
+#pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dsound.lib")
 
-#endif	//defined(DNH_PROJ_EXECUTOR)
-
-#endif	//defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
+#endif	// defined(DNH_PROJ_EXECUTOR)
 
 //------------------------------------------------------------------------------
 

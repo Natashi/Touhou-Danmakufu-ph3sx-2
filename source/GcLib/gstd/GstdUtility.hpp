@@ -532,7 +532,6 @@ namespace gstd {
 		static std::wstring GetUnique(const std::wstring& srcPath);
 	};
 
-#if defined(DNH_PROJ_EXECUTOR)
 	//================================================================
 	//BitAccess
 	class BitAccess {
@@ -558,6 +557,7 @@ namespace gstd {
 		}
 	};
 
+#if defined(DNH_PROJ_EXECUTOR)
 	//================================================================
 	//IStringInfo
 	class IStringInfo {

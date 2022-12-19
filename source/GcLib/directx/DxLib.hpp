@@ -3,9 +3,9 @@
 #include "../pch.h"
 
 #include "DxConstant.hpp"
+#include "DxUtility.hpp"
 
 #if defined(DNH_PROJ_EXECUTOR)
-#include "DxUtility.hpp"
 #include "HLSL.hpp"
 #endif
 
@@ -30,4 +30,6 @@
 #include "DirectSound.hpp"
 #endif
 
+#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 #include "DirectInput.hpp"
+#endif
