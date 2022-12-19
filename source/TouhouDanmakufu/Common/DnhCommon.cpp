@@ -229,21 +229,22 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 		ArchiveEncryption::ShiftBlock((byte*)header, ArchiveFileHeader::MAGIC_LENGTH, keyBase, keyStep);
 	}
 
-	//Reading a .dat
+	//Found a .dat, open it to read script files within
 	if (memcmp(header, ArchiveEncryption::HEADER_ARCHIVEFILE, ArchiveFileHeader::MAGIC_LENGTH) == 0) {
 		file.Close();
 
 		ArchiveFile archive(path, 0);
 		if (!archive.Open()) return res;
 
-		std::multimap<std::wstring, shared_ptr<ArchiveFileEntry>>& mapEntry = archive.GetEntryMap();
+		auto& mapEntry = archive.GetEntryMap();
 		for (auto itr = mapEntry.begin(); itr != mapEntry.end(); itr++) {
-			shared_ptr<ArchiveFileEntry> entry = itr->second;
+			ArchiveFileEntry* entry = &itr->second;
 
-			std::wstring ext = PathProperty::GetFileExtension(entry->name);
-			if (ScriptInformation::IsExcludeExtention(ext)) continue;
+			std::wstring ext = PathProperty::GetFileExtension(entry->path);
+			if (ScriptInformation::IsExcludeExtention(ext))
+				continue;
 
-			std::wstring tPath = PathProperty::GetFileDirectory(path) + entry->directory + entry->name;
+			std::wstring tPath = PathProperty::GetModuleDirectory() + entry->fullPath;
 
 			shared_ptr<ByteBuffer> buffer = ArchiveFile::CreateEntryBuffer(entry);
 			std::string source = "";

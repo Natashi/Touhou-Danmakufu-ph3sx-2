@@ -114,7 +114,7 @@ namespace gstd {
 			WRITEONLY = 0x4,
 		};
 	protected:
-		std::fstream* hFile_;
+		std::fstream hFile_;
 		std::wstring path_;
 		DWORD perms_;
 	public:
@@ -136,12 +136,13 @@ namespace gstd {
 		bool IsExists();
 		bool IsDirectory();
 
-		bool IsOpen() { return hFile_ && hFile_->is_open(); }
+		bool IsOpen() { return hFile_.is_open(); }
 
 		size_t GetSize();
 		std::wstring& GetPath() { return path_; }
-		const std::fstream* GetFileHandle() const { return hFile_; }
-		std::fstream* GetFileHandle() { return hFile_; }
+
+		const std::fstream& GetFileHandle() const { return hFile_; }
+		std::fstream& GetFileHandle() { return hFile_; }
 
 		virtual bool Open();
 		bool Open(DWORD typeAccess);
@@ -215,12 +216,15 @@ namespace gstd {
 #if defined(DNH_PROJ_EXECUTOR)
 		shared_ptr<LoadThread> threadLoad_;
 #endif
-		std::map<std::wstring, shared_ptr<ArchiveFile>> mapArchiveFile_;
-		std::map<std::wstring, shared_ptr<ByteBuffer>> mapByteBuffer_;
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
-		shared_ptr<ByteBuffer> _GetByteBuffer(shared_ptr<ArchiveFileEntry> entry);
-		void _ReleaseByteBuffer(shared_ptr<ArchiveFileEntry> entry);
+		using PairArchiveEntry = std::pair<ArchiveFileEntry*, shared_ptr<ByteBuffer>>;
+
+		std::unordered_map<std::wstring, shared_ptr<ArchiveFile>> mapArchiveFile_;
+		std::unordered_map<std::wstring, PairArchiveEntry> mapArchiveEntries_;
+
+		shared_ptr<ByteBuffer> _GetByteBuffer(ArchiveFileEntry* entry);
+		void _ReleaseByteBuffer(ArchiveFileEntry* entry);
 #endif
 	public:
 		FileManager();
@@ -237,9 +241,9 @@ namespace gstd {
 		void RemoveLoadThreadListener(FileManager::LoadThreadListener* listener);
 		void WaitForThreadLoadComplete();
 
-		bool AddArchiveFile(const std::wstring& path, size_t readOff);
-		bool RemoveArchiveFile(const std::wstring& path);
-		shared_ptr<ArchiveFile> GetArchiveFile(const std::wstring& name);
+		bool AddArchiveFile(const std::wstring& archivePath, size_t readOff);
+		bool RemoveArchiveFile(const std::wstring& archivePath);
+		shared_ptr<ArchiveFile> GetArchiveFile(const std::wstring& archivePath);
 		bool ClearArchiveFileCache();
 #endif
 
@@ -327,12 +331,12 @@ namespace gstd {
 
 		FILETYPE type_;
 		shared_ptr<File> file_;
-		shared_ptr<ArchiveFileEntry> entry_;
+		ArchiveFileEntry* entry_;
 
 		shared_ptr<ByteBuffer> buffer_;
 		size_t offset_;
 	public:
-		ManagedFileReader(shared_ptr<File> file, shared_ptr<ArchiveFileEntry> entry);
+		ManagedFileReader(shared_ptr<File> file, ArchiveFileEntry* entry);
 		~ManagedFileReader();
 
 		virtual bool Open();

@@ -11,7 +11,7 @@ using namespace stdch;
 //*******************************************************************
 FpsController::FpsController() {
 	fps_ = 60;
-	
+
 	bCriticalFrame_ = true;
 
 	bFastMode_ = false;
@@ -158,7 +158,7 @@ std::array<bool, 2> VariableFpsController::Advance() {
 		timeAccumRender_ += timeAccumUpdate_;
 		bFrameRendered_ = false;
 	}
-	
+
 	if (bCriticalFrame_ || (!bFrameRendered_ && timeAccumRender_ < targetNs)) {
 		auto timeDeltaRender = timeCurrent - timePreviousRender_;
 

@@ -383,11 +383,10 @@ gstd::value StgControlScript::Func_GetArchiveFilePathList(gstd::script_machine* 
 	if (archive) {
 		std::wstring archiveBaseDir = PathProperty::GetFileDirectory(archive->GetPath());
 
-		auto mapFileArchive = archive->GetEntryMap();
-		for (auto itr = mapFileArchive.begin(); itr != mapFileArchive.end(); ++itr) {
-			shared_ptr<ArchiveFileEntry> entry = itr->second;
-			std::wstring path = entry->directory + entry->name;
-			if (bExtendPath) path = archiveBaseDir + path;
+		auto& mapFileArchive = archive->GetEntryMap();
+		for (auto itr = mapFileArchive.cbegin(); itr != mapFileArchive.cend(); ++itr) {
+			const ArchiveFileEntry* entry = &itr->second;
+			std::wstring path = bExtendPath ? entry->fullPath : entry->path;
 			pathList.push_back(PathProperty::ReplaceYenToSlash(path));
 		}
 	}

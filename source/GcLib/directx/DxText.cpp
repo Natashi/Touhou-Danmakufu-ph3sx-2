@@ -1264,7 +1264,7 @@ std::wstring DxTextRenderer::_ReplaceRenderText(std::wstring text) {
 }
 
 void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, DxText* pDxText, 
-	const POINT & pos, DxFont dxFont, shared_ptr<DxTextLine> textLine)
+	const POINT& pos, DxFont dxFont, shared_ptr<DxTextLine> textLine)
 {
 	SetFont(dxFont.GetLogFont());
 

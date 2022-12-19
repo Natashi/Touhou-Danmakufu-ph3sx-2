@@ -296,7 +296,6 @@ std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir) {
 }
 
 File::File() {
-	hFile_ = nullptr;
 	path_ = L"";
 	perms_ = 0;
 }
@@ -359,16 +358,16 @@ bool File::Open(DWORD typeAccess) {
 	if (modeAccess == 0) return false;
 	perms_ = typeAccess;
 
-	hFile_ = new std::fstream();
+	Close();
 
-	hFile_->exceptions(std::ios::failbit);
+	hFile_.exceptions(std::ios::failbit);
 	try {
 		try {
-			hFile_->open(path_, modeAccess | std::ios::binary);
+			hFile_.open(path_, modeAccess | std::ios::binary);
 		}
 		catch (std::system_error& e) {
 			if (typeAccess == WRITE)	//Open failed, file might not exist, try creating one
-				hFile_->open(path_, ACC_NEWWRITEONLY | std::ios::in | std::ios::binary);
+				hFile_.open(path_, ACC_NEWWRITEONLY | std::ios::in | std::ios::binary);
 			else throw e;
 		}
 	}
@@ -377,9 +376,9 @@ bool File::Open(DWORD typeAccess) {
 		lastError_ = StringUtility::FormatToWide("%s (code=%d)", 
 			strerror(code), code);
 	}
-	hFile_->exceptions(0);
+	hFile_.exceptions(0);
 
-	if (hFile_->is_open()) {
+	if (hFile_.is_open()) {
 #if _DEBUG
 		auto itr = mapFileUseCount_.find(path_);
 		if (itr != mapFileUseCount_.end())
@@ -392,46 +391,42 @@ bool File::Open(DWORD typeAccess) {
 	return false;
 }
 void File::Close() {
-	if (hFile_) {
 #if _DEBUG
-		if (hFile_->is_open()) {
-			auto itr = mapFileUseCount_.find(path_);
-			if (itr != mapFileUseCount_.end())
-				--(itr->second);
-		}
-#endif
-		hFile_->close();
-		delete hFile_;
+	if (IsOpen()) {
+		auto itr = mapFileUseCount_.find(path_);
+		if (itr != mapFileUseCount_.end())
+			--(itr->second);
 	}
-	hFile_ = nullptr;
+#endif
+	hFile_ = std::fstream();
 	perms_ = 0;
 }
 
 DWORD File::Read(LPVOID buf, DWORD size) {
 	if (!IsOpen()) return 0;
-	hFile_->clear();
-	hFile_->read((char*)buf, size);
-	return hFile_->gcount();
+	hFile_.clear();
+	hFile_.read((char*)buf, size);
+	return hFile_.gcount();
 }
 DWORD File::Write(LPVOID buf, DWORD size) {
 	if (!IsOpen()) return 0;
-	hFile_->write((char*)buf, size);
-	return hFile_->good();
+	hFile_.write((char*)buf, size);
+	return hFile_.good();
 }
 
 bool File::Seek(size_t offset, DWORD way, AccessType type) {
 	if (!IsOpen()) return false;
-	hFile_->clear();
+	hFile_.clear();
 	if (type == READ)
-		hFile_->seekg(offset, way);
+		hFile_.seekg(offset, way);
 	else
-		hFile_->seekp(offset, way);
-	return hFile_->good();
+		hFile_.seekp(offset, way);
+	return hFile_.good();
 }
 size_t File::GetFilePointer(AccessType type) {
 	if (!IsOpen()) return 0;
-	if (type == READ) return hFile_->tellg();
-	else return hFile_->tellp();
+	if (type == READ) return hFile_.tellg();
+	else return hFile_.tellp();
 }
 
 //*******************************************************************
@@ -468,49 +463,67 @@ void FileManager::EndLoadThread() {
 	}
 }
 
-bool FileManager::AddArchiveFile(const std::wstring& path, size_t readOff) {
-	if (mapArchiveFile_.find(path) != mapArchiveFile_.end())
+bool FileManager::AddArchiveFile(const std::wstring& archivePath, size_t readOff) {
+	//Archive already loaded
+	if (mapArchiveFile_.find(archivePath) != mapArchiveFile_.end())
 		return true;
 
-	shared_ptr<ArchiveFile> file = shared_ptr<ArchiveFile>(new ArchiveFile(path, readOff));
-	if (!file->Open()) return false;
+	shared_ptr<ArchiveFile> archive(new ArchiveFile(archivePath, readOff));
+	if (!archive->Open())
+		return false;
 
-	std::set<std::wstring> listKeyCurrent;
-	for (auto itrFile = mapArchiveFile_.begin(); itrFile != mapArchiveFile_.end(); ++itrFile) {
-		shared_ptr<ArchiveFile> tFile = itrFile->second;
-		std::set<std::wstring> tList = tFile->GetKeyList();
-		for (auto itrList = tList.begin(); itrList != tList.end(); ++itrList) {
-			listKeyCurrent.insert(*itrList);
+	std::wstring moduleDir = PathProperty::GetModuleDirectory();
+
+	auto& mapEntry = archive->GetEntryMap();
+	for (auto itr = mapEntry.begin(); itr != mapEntry.end(); ++itr) {
+		const std::wstring& path = itr->first;		//No module dir
+		ArchiveFileEntry* pEntry = &itr->second;
+
+		std::wstring fullEntryPath = moduleDir + path;
+
+		pEntry->fullPath = path;
+
+		auto itrFind = mapArchiveEntries_.find(path);
+		if (itrFind != mapArchiveEntries_.end()) {
+			std::wstring log = StringUtility::Format(
+				L"Archive file entry already exists [%s]",
+				path.c_str());
+			Logger::WriteTop(log);
+			throw wexception(log);
+		}
+		else {
+			mapArchiveEntries_[path] = std::make_pair(pEntry, nullptr);
 		}
 	}
 
-	std::set<std::wstring> listKeyIn = file->GetKeyList();
-	for (auto itrKey = listKeyIn.begin(); itrKey != listKeyIn.end(); ++itrKey) {
-		const std::wstring& key = *itrKey;
-		if (listKeyCurrent.find(key) == listKeyCurrent.end()) continue;
-
-		std::string log = StringUtility::Format("archive file entry already exists [%s]", 
-			StringUtility::ConvertWideToMulti(key).c_str());
-		Logger::WriteTop(log);
-		throw wexception(log.c_str());
+	mapArchiveFile_[archivePath] = archive;
+	return true;
+}
+bool FileManager::RemoveArchiveFile(const std::wstring& archivePath) {
+	auto itrFind = mapArchiveFile_.find(archivePath);
+	if (itrFind != mapArchiveFile_.end()) {
+		ArchiveFile* pArchiveFile = itrFind->second.get();
+		for (auto itr = mapArchiveEntries_.begin(); itr != mapArchiveEntries_.end();) {
+			if (itr->second.first->archiveParent == pArchiveFile) {
+				itr = mapArchiveEntries_.erase(itr);
+			}
+			else ++itr;
+		}
+		mapArchiveFile_.erase(itrFind);
+		return true;
 	}
-
-	mapArchiveFile_[path] = file;
-	return true;
+	return false;
 }
-bool FileManager::RemoveArchiveFile(const std::wstring& path) {
-	mapArchiveFile_.erase(path);
-	return true;
-}
-shared_ptr<ArchiveFile> FileManager::GetArchiveFile(const std::wstring& name) {
+shared_ptr<ArchiveFile> FileManager::GetArchiveFile(const std::wstring& archivePath) {
 	shared_ptr<ArchiveFile> res = nullptr;
-	auto itrFind = mapArchiveFile_.find(name);
+	auto itrFind = mapArchiveFile_.find(archivePath);
 	if (itrFind != mapArchiveFile_.end())
 		res = itrFind->second;
 	return res;
 }
 bool FileManager::ClearArchiveFileCache() {
 	mapArchiveFile_.clear();
+	mapArchiveEntries_.clear();
 	return true;
 }
 #endif
@@ -528,32 +541,14 @@ shared_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	else {
 		//Cannot find a physical file, search in the archive entries.
 
-		std::list<shared_ptr<ArchiveFileEntry>> listMatchEntry;
+		std::wstring pathNoModule = PathProperty::GetPathWithoutModuleDirectory(pathAsUnique);
 
-		std::wstring name = PathProperty::GetFileName(pathAsUnique);
-		for (auto itrArchive = mapArchiveFile_.begin(); itrArchive != mapArchiveFile_.end(); ++itrArchive) {
-			std::vector<shared_ptr<ArchiveFileEntry>> list = itrArchive->second->GetEntryList(name);
-			for (auto& iEntry : list)
-				listMatchEntry.push_back(iEntry);
-		}
+		auto itrFind = mapArchiveEntries_.find(pathNoModule);
+		if (itrFind != mapArchiveEntries_.end()) {
+			ArchiveFileEntry* pEntry = itrFind->second.first;
 
-		if (listMatchEntry.size() == 1U) {
-			shared_ptr<ArchiveFileEntry>& entry = *listMatchEntry.begin();
-			shared_ptr<File> file(new File(entry->archiveParent->GetPath()));
-			res = shared_ptr<ManagedFileReader>(new ManagedFileReader(file, entry));
-		}
-		else if (listMatchEntry.size() > 0U) {
-			std::wstring fileTargetDir = PathProperty::GetDirectoryWithoutModuleDirectory(pathAsUnique);
-			fileTargetDir = PathProperty::ReplaceYenToSlash(fileTargetDir);
-
-			for (auto itr = listMatchEntry.begin(); itr != listMatchEntry.end(); ++itr) {
-				shared_ptr<ArchiveFileEntry>& entry = *itr;
-				if (fileTargetDir.find(entry->directory) == std::wstring::npos)
-					continue;
-				shared_ptr<File> file(new File(entry->archiveParent->GetPath()));
-				res = shared_ptr<ManagedFileReader>(new ManagedFileReader(file, entry));
-				break;
-			}
+			shared_ptr<File> file = pEntry->archiveParent->GetFile();
+			res = shared_ptr<ManagedFileReader>(new ManagedFileReader(file, pEntry));
 		}
 	}
 #endif
@@ -562,37 +557,37 @@ shared_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	return res;
 }
 
-shared_ptr<ByteBuffer> FileManager::_GetByteBuffer(shared_ptr<ArchiveFileEntry> entry) {
+shared_ptr<ByteBuffer> FileManager::_GetByteBuffer(ArchiveFileEntry* entry) {
 	shared_ptr<ByteBuffer> res = nullptr;
 	try {
 		Lock lock(lock_);
 
-		std::wstring key = entry->directory + entry->name;
-		auto itr = mapByteBuffer_.find(key);
+		const std::wstring& fullPath = entry->fullPath;	//Without module dir
 
-		if (itr != mapByteBuffer_.end()) {
-			res = itr->second;
-		}
-		else {
-			res = ArchiveFile::CreateEntryBuffer(entry);
-			if (res) mapByteBuffer_[key] = res;
+		auto itr = mapArchiveEntries_.find(fullPath);
+		if (itr != mapArchiveEntries_.end()) {
+			res = itr->second.second;
+
+			//Buffer for this entry doesn't yet exist, create new one
+			if (res == nullptr) {
+				res = ArchiveFile::CreateEntryBuffer(entry);
+				itr->second.second = res;
+			}
 		}
 	}
 	catch (...) {}
 
 	return res;
 }
-void FileManager::_ReleaseByteBuffer(shared_ptr<ArchiveFileEntry> entry) {
+void FileManager::_ReleaseByteBuffer(ArchiveFileEntry* entry) {
 	{
 		Lock lock(lock_);
 
-		std::wstring key = entry->directory + entry->name;
-		auto itr = mapByteBuffer_.find(key);
+		const std::wstring& fullPath = entry->fullPath;	//Without module dir
 
-		if (itr == mapByteBuffer_.end()) return;
-		shared_ptr<ByteBuffer> buffer = itr->second;
-		if (buffer.use_count() == 2) {
-			mapByteBuffer_.erase(itr);
+		auto itr = mapArchiveEntries_.find(fullPath);
+		if (itr != mapArchiveEntries_.end()) {
+			itr->second.second = nullptr;
 		}
 	}
 }
@@ -717,7 +712,7 @@ void FileManager::LoadThread::RemoveListener(FileManager::LoadThreadListener* li
 //*******************************************************************
 //ManagedFileReader
 //*******************************************************************
-ManagedFileReader::ManagedFileReader(shared_ptr<File> file, shared_ptr<ArchiveFileEntry> entry) {
+ManagedFileReader::ManagedFileReader(shared_ptr<File> file, ArchiveFileEntry* entry) {
 	offset_ = 0;
 	file_ = file;
 
@@ -726,27 +721,29 @@ ManagedFileReader::ManagedFileReader(shared_ptr<File> file, shared_ptr<ArchiveFi
 	if (entry_ == nullptr) {
 		type_ = TYPE_NORMAL;
 	}
-	else if (entry_->compressionType == ArchiveFileEntry::CT_NONE && entry_ != nullptr) {
-		type_ = TYPE_ARCHIVED;
-	}
-	else if (entry_->compressionType != ArchiveFileEntry::CT_NONE && entry_ != nullptr) {
-		type_ = TYPE_ARCHIVED_COMPRESSED;
+	else {
+		switch (entry_->compressionType) {
+		case ArchiveFileEntry::CT_NONE:
+			type_ = TYPE_ARCHIVED; break;
+		case ArchiveFileEntry::CT_ZLIB:
+			type_ = TYPE_ARCHIVED_COMPRESSED; break;
+		}
 	}
 }
 ManagedFileReader::~ManagedFileReader() {
 	Close();
 }
 bool ManagedFileReader::Open() {
-	bool res = false;
 	offset_ = 0;
-	if (type_ == TYPE_NORMAL) {
-		res = file_->Open();
-	}
-	else if (type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) {
+	switch (type_) {
+	case TYPE_NORMAL:
+		return file_->Open();
+	case TYPE_ARCHIVED:
+	case TYPE_ARCHIVED_COMPRESSED:
 		buffer_ = FileManager::GetBase()->_GetByteBuffer(entry_);
-		res = buffer_ != nullptr;
+		return buffer_ != nullptr;
 	}
-	return res;
+	return false;
 }
 void ManagedFileReader::Close() {
 	if (file_) file_->Close();
@@ -756,11 +753,14 @@ void ManagedFileReader::Close() {
 	}
 }
 size_t ManagedFileReader::GetFileSize() {
-	size_t res = 0;
-	if (type_ == TYPE_NORMAL) res = file_->GetSize();
-	else if ((type_ == TYPE_ARCHIVED || type_ == TYPE_ARCHIVED_COMPRESSED) && buffer_ != nullptr)
-		res = entry_->sizeFull;
-	return res;
+	switch (type_) {
+	case TYPE_NORMAL:
+		return file_->GetSize();
+	case TYPE_ARCHIVED:
+	case TYPE_ARCHIVED_COMPRESSED:
+		return buffer_ ? entry_->sizeFull : 0;
+	}
+	return 0;
 }
 DWORD ManagedFileReader::Read(LPVOID buf, DWORD size) {
 	DWORD res = 0;

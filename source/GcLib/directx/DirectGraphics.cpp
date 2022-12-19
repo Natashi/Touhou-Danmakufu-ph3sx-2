@@ -157,8 +157,8 @@ void DirectGraphicsBase::RemoveDirectGraphicsListener(DirectGraphicsListener* li
 	listListener_.remove(listener);
 }
 
-void DirectGraphicsBase::BeginScene(bool bClear = true) {
-	pDevice_->BeginScene();
+bool DirectGraphicsBase::BeginScene(bool bClear = true) {
+	return SUCCEEDED(pDevice_->BeginScene());
 }
 void DirectGraphicsBase::EndScene(bool bPresent = true) {
 	pDevice_->EndScene();
@@ -650,10 +650,10 @@ void DirectGraphics::ResetDisplaySettings() {
 	displaySettingsFullscreen_.shader = nullptr;
 }
 
-void DirectGraphics::BeginScene(bool bClear) {
-	BeginScene(true, bClear);
+bool DirectGraphics::BeginScene(bool bClear) {
+	return BeginScene(true, bClear);
 }
-void DirectGraphics::BeginScene(bool bMainRender, bool bClear) {
+bool DirectGraphics::BeginScene(bool bMainRender, bool bClear) {
 	if (bClear) ClearRenderTarget();
 	bMainRender_ = bMainRender;
 
@@ -667,7 +667,7 @@ void DirectGraphics::BeginScene(bool bMainRender, bool bClear) {
 		camera_->thisProjectionChanged_ = false;
 	}
 
-	pDevice_->BeginScene();
+	return SUCCEEDED(pDevice_->BeginScene());
 }
 
 void DirectGraphics::ClearRenderTarget() {

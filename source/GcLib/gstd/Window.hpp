@@ -11,7 +11,22 @@ namespace gstd {
 	//****************************************************************************
 	class WindowBase {
 	public:
-		class Style;
+		class Style {
+		protected:
+			DWORD style_;
+			DWORD styleEx_;
+		public:
+			Style() { style_ = 0; styleEx_ = 0; }
+			virtual ~Style() {}
+
+			DWORD GetStyle() { return style_; }
+			DWORD SetStyle(DWORD style) { style_ |= style; return style_; }
+			DWORD RemoveStyle(DWORD style) { style_ &= ~style; return style_; }
+
+			DWORD GetStyleEx() { return styleEx_; }
+			DWORD SetStyleEx(DWORD style) { styleEx_ |= style; return styleEx_; }
+			DWORD RemoveStyleEx(DWORD style) { styleEx_ &= ~style; return styleEx_; }
+		};
 	private:
 		static std::list<int> listWndId_;
 		static CriticalSection lock_;
@@ -64,28 +79,13 @@ namespace gstd {
 		virtual void LocateParts() {};
 		void MoveWindowCenter();
 		void MoveWindowCenter(const RECT& rcWindow);	//rcWindow must have already been adjusted
+		static void MoveWindowCenter(HWND hWnd, const RECT& rcMonitor, const RECT& rcWindow);
 
 		static HWND GetTopParentWindow(HWND hWnd);
 
 		static RECT GetMonitorRect(HMONITOR hMonitor);
 		static RECT GetActiveMonitorRect(HWND hWnd);
 		static RECT GetPrimaryMonitorRect();
-	};
-
-	class WindowBase::Style {
-	protected:
-		DWORD style_;
-		DWORD styleEx_;
-	public:
-		Style() { style_ = 0; styleEx_ = 0; }
-		virtual ~Style() {}
-		DWORD GetStyle() { return style_; }
-		DWORD SetStyle(DWORD style) { style_ |= style; return style_; }
-		DWORD RemoveStyle(DWORD style) { style_ &= ~style; return style_; }
-
-		DWORD GetStyleEx() { return styleEx_; }
-		DWORD SetStyleEx(DWORD style) { styleEx_ |= style; return styleEx_; }
-		DWORD RemoveStyleEx(DWORD style) { styleEx_ &= ~style; return styleEx_; }
 	};
 
 	//****************************************************************************
@@ -139,8 +139,6 @@ namespace gstd {
 	//****************************************************************************
 	class WButton : public WindowBase {
 	public:
-		class Style;
-	public:
 		void Create(HWND hWndParent);
 		void Create(HWND hWndParent, WButton::Style& style);
 
@@ -148,7 +146,15 @@ namespace gstd {
 
 		bool IsChecked();
 	};
-	class WButton::Style : public WindowBase::Style {};
+
+	//****************************************************************************
+	//WCheckButton
+	//****************************************************************************
+	class WCheckButton : public WindowBase {
+	public:
+		void Create(HWND hWndParent);
+		void Create(HWND hWndParent, Style& style);
+	};
 
 	//****************************************************************************
 	//WGroupBox
@@ -165,7 +171,7 @@ namespace gstd {
 	//****************************************************************************
 	class WEditBox : public WindowBase {
 	public:
-		class Style;
+		class Style : public WindowBase::Style {};
 	public:
 		void Create(HWND hWndParent, WEditBox::Style& style);
 
@@ -176,7 +182,6 @@ namespace gstd {
 		int GetMaxTextLength() { return ::SendMessage(hWnd_, EM_GETLIMITTEXT, 0, 0); }
 		void SetMaxTextLength(int length) { ::SendMessage(hWnd_, EM_SETLIMITTEXT, (WPARAM)length, 0); }
 	};
-	class WEditBox::Style : public WindowBase::Style {};
 
 
 	//****************************************************************************
@@ -184,7 +189,7 @@ namespace gstd {
 	//****************************************************************************
 	class WListBox : public WindowBase {
 	public:
-		class Style;
+		class Style : public WindowBase::Style {};
 	public:
 		void Create(HWND hWndParent, WListBox::Style& style);
 
@@ -199,14 +204,13 @@ namespace gstd {
 
 		std::wstring GetText(int index);
 	};
-	class WListBox::Style : public WindowBase::Style {};
 
 	//****************************************************************************
 	//WComboBox
 	//****************************************************************************
 	class WComboBox : public WindowBase {
 	public:
-		class Style;
+		class Style : public WindowBase::Style {};
 	public:
 		void Create(HWND hWndParent, WComboBox::Style& style);
 
@@ -223,14 +227,22 @@ namespace gstd {
 		void AddString(const std::wstring& str);
 		void InsertString(int index, const std::wstring& str);
 	};
-	class WComboBox::Style : public WindowBase::Style {};
 
 	//****************************************************************************
 	//WListView
 	//****************************************************************************
 	class WListView : public WindowBase {
 	public:
-		class Style;
+		class Style : public WindowBase::Style {
+		protected:
+			DWORD styleListViewEx_;
+		public:
+			Style() { styleListViewEx_ = 0; }
+
+			DWORD GetListViewStyleEx() { return styleListViewEx_; }
+			DWORD SetListViewStyleEx(DWORD style) { styleListViewEx_ |= style; return styleListViewEx_; }
+			DWORD RemoveListViewStyleEx(DWORD style) { styleListViewEx_ &= ~style; return styleListViewEx_; }
+		};
 	public:
 		void Create(HWND hWndParent, Style& style);
 
@@ -256,25 +268,25 @@ namespace gstd {
 
 		void ClearSelection();
 	};
-	class WListView::Style : public WindowBase::Style {
-	protected:
-		DWORD styleListViewEx_;
-	public:
-		Style() { styleListViewEx_ = 0; }
-
-		DWORD GetListViewStyleEx() { return styleListViewEx_; }
-		DWORD SetListViewStyleEx(DWORD style) { styleListViewEx_ |= style; return styleListViewEx_; }
-		DWORD RemoveListViewStyleEx(DWORD style) { styleListViewEx_ &= ~style; return styleListViewEx_; }
-	};
 
 	//****************************************************************************
 	//WTreeView
 	//****************************************************************************
 	class WTreeView : public WindowBase {
 	public:
+		class Style : public WindowBase::Style {};
+		class ItemStyle {
+			friend WTreeView;
+		private:
+			TVINSERTSTRUCT tvis_;
+		public:
+			ItemStyle() { ZeroMemory(&tvis_, sizeof(TVINSERTSTRUCT)); tvis_.hInsertAfter = TVI_LAST; }
+
+			TVINSERTSTRUCT& GetInsertStruct() { return tvis_; }
+			void SetMask(UINT mask) { tvis_.item.mask |= mask; }
+		};
+
 		class Item;
-		class ItemStyle;
-		class Style;
 	private:
 		shared_ptr<Item> itemRoot_;
 	public:
@@ -285,7 +297,7 @@ namespace gstd {
 
 		void Clear() { itemRoot_ = nullptr; TreeView_DeleteAllItems(hWnd_); }
 
-		void CreateRootItem(ItemStyle& style);
+		shared_ptr<Item> CreateRootItem(ItemStyle& style);
 		shared_ptr<Item> GetRootItem() { return itemRoot_; }
 
 		shared_ptr<Item> GetSelectedItem();
@@ -299,6 +311,8 @@ namespace gstd {
 		Item();
 		virtual ~Item();
 
+		HTREEITEM GetHandle() { return hItem_; }
+
 		shared_ptr<Item> CreateChild(WTreeView::ItemStyle& style);
 		void Delete();
 
@@ -308,18 +322,11 @@ namespace gstd {
 		void SetParam(LPARAM param);
 		LPARAM GetParam();
 
+		void SetState(DWORD state, DWORD mask = 0xff);
+		void AddState(DWORD state, DWORD mask = 0xff);
+
 		std::list<shared_ptr<Item>> GetChildList();
 	};
-	class WTreeView::ItemStyle {
-		friend WTreeView;
-		TVINSERTSTRUCT tvis_;
-	public:
-		ItemStyle() { ZeroMemory(&tvis_, sizeof(TVINSERTSTRUCT)); tvis_.hInsertAfter = TVI_LAST; }
-
-		TVINSERTSTRUCT& GetInsertStruct() { return tvis_; }
-		void SetMask(UINT mask) { tvis_.item.mask |= mask; }
-	};
-	class WTreeView::Style : public WindowBase::Style {};
 
 	//****************************************************************************
 	//WTabControll

@@ -99,8 +99,8 @@ void FileLogger::_CreateFile() {
 void FileLogger::FlushFile() {
 	if (!bEnable_) return;
 	if (file_->IsOpen()) {
-		std::fstream* hFile = file_->GetFileHandle();
-		hFile->flush();
+		std::fstream& hFile = file_->GetFileHandle();
+		hFile.flush();
 	}
 }
 void FileLogger::_Write(SYSTEMTIME& time, const std::wstring& str) {

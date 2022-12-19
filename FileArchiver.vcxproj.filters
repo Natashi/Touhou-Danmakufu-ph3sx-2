@@ -15,6 +15,18 @@
       <UniqueIdentifier>{35d6466c-4cc9-44a9-9a12-82b09b4df1c4}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
+    <Filter Include="source\GcLib\directx">
+      <UniqueIdentifier>{20876abb-0bc6-48b8-9419-2e2d6e410c5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\external">
+      <UniqueIdentifier>{5bc0fa8b-305e-47c6-b57e-56be3d611636}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\external\imgui">
+      <UniqueIdentifier>{f4ba19d6-8287-4ea2-bd17-6e2eab402429}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\external\imgui\backends">
+      <UniqueIdentifier>{08a44d96-2bef-486a-ad0e-6b6ec769dcbc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\FileArchiver\LibImpl.cpp">
@@ -50,6 +62,30 @@
     <ClCompile Include="source\GcLib\gstd\Thread.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DirectGraphics.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DxUtility.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui_draw.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui_tables.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui_widgets.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\backends\imgui_impl_dx9.cpp">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\FileArchiver\Constant.hpp">
@@ -64,7 +100,7 @@
     <ClInclude Include="source\GcLib\gstd\Application.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
-    <ClInclude Include="source\GcLib\gstd\ArchiveFile.h">
+    <ClInclude Include="source\GcLib\gstd\ArchiveFile.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\File.hpp">
@@ -85,24 +121,55 @@
     <ClInclude Include="source\GcLib\gstd\Window.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
-    <ClInclude Include="source\FileArchiver\resource.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
     <ClInclude Include="source\GcLib\pch.h">
       <Filter>source\GcLib</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\Thread.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DirectGraphics.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxConstant.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxLib.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxTypes.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxUtility.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imconfig.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imgui.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imgui_internal.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imstb_rectpack.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imstb_textedit.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imstb_truetype.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\backends\imgui_impl_dx9.h">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\backends\imgui_impl_win32.h">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="source\FileArchiver\FileArchiver.rc">
       <Filter>source</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="source\FileArchiver\icon.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
   </ItemGroup>
 </Project>

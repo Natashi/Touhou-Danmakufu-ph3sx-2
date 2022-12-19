@@ -33,10 +33,7 @@ namespace gstd {
 			CT_ZLIB,
 		};
 
-		//uint32_t directorySize;
-		std::wstring directory;
-		//uint32_t nameSize;
-		std::wstring name;
+		std::wstring path;
 		TypeCompression compressionType;
 		uint32_t sizeFull;
 		uint32_t sizeStored;
@@ -44,10 +41,12 @@ namespace gstd {
 		byte keyBase;
 		byte keyStep;
 
+		//Not stored into archive files, only for engine usage
 		ArchiveFile* archiveParent;
+		std::wstring fullPath;	//Without module dir
 
 		const size_t GetRecordSize() {
-			return ((directory.size() + name.size()) * sizeof(wchar_t) + sizeof(uint32_t) * 2 
+			return (path.size() * sizeof(wchar_t) + sizeof(uint32_t)	//string + length
 				+ sizeof(TypeCompression) + sizeof(uint32_t) * 3 + sizeof(byte) * 2);
 		}
 
@@ -62,6 +61,9 @@ namespace gstd {
 	class WStatusBar;
 	class WProgressBar;
 	class FileArchiver {
+	public:
+		using CbSetStatus = std::function<void(const std::wstring&)>;
+		using CbSetProgress = std::function<void(float)>;
 	private:
 		std::list<shared_ptr<ArchiveFileEntry>> listEntry_;
 	public:
@@ -69,40 +71,50 @@ namespace gstd {
 		virtual ~FileArchiver();
 
 		void AddEntry(shared_ptr<ArchiveFileEntry> entry) { listEntry_.push_back(entry); }
-		bool CreateArchiveFile(const std::wstring& path, WStatusBar* pStatus, WProgressBar* pProgress);
+		bool CreateArchiveFile(const std::wstring& baseDir, const std::wstring& pathArchive, 
+			CbSetStatus cbStatus, CbSetProgress cbProgress);
 
-		bool EncryptArchive(std::fstream& inSrc, const std::wstring& pathOut, ArchiveFileHeader* header, 
-			byte keyBase, byte keyStep);
+		bool EncryptArchive(std::fstream& inSrc, const std::wstring& pathOut, 
+			ArchiveFileHeader* header, byte keyBase, byte keyStep);
 	};
 
 	//*******************************************************************
 	//ArchiveFile
 	//*******************************************************************
 	class ArchiveFile {
+	public:
+		using EntryMap = std::multimap<std::wstring, ArchiveFileEntry>;
+		using EntryMapIterator = EntryMap::iterator;
 	private:
 		std::wstring basePath_;
-		std::ifstream file_;
-		std::multimap<std::wstring, shared_ptr<ArchiveFileEntry>> mapEntry_;
+		std::wstring baseDir_;
+
+		shared_ptr<File> file_;
+		size_t globalReadOffset_;
 		uint8_t keyBase_;
 		uint8_t keyStep_;
 
-		size_t globalReadOffset_;
+		EntryMap mapEntry_;
 	public:
-		ArchiveFile(std::wstring path, size_t readOffset);
+		ArchiveFile(const std::wstring& path, size_t readOffset);
 		virtual ~ArchiveFile();
+
+		bool OpenFile();
 
 		bool Open();
 		void Close();
 
-		std::ifstream& GetFile() { return file_; }
-		std::wstring& GetPath() { return basePath_; }
+		shared_ptr<File> GetFile() { return file_; }
+		const std::wstring& GetPath() { return basePath_; }
+		const std::wstring& GetBaseDirectory() { return baseDir_; }
 
-		std::set<std::wstring> GetKeyList();
-		std::multimap<std::wstring, shared_ptr<ArchiveFileEntry>>& GetEntryMap() { return mapEntry_; }
-		std::vector<shared_ptr<ArchiveFileEntry>> GetEntryList(const std::wstring& name);
-		bool IsExists(const std::wstring& name);
-		static shared_ptr<ByteBuffer> CreateEntryBuffer(shared_ptr<ArchiveFileEntry> entry);
-		//ref_count_ptr<ByteBuffer> GetBuffer(std::string name);
+		EntryMap& GetEntryMap() { return mapEntry_; }
+
+		bool IsExists(const std::wstring& name, EntryMapIterator* out = nullptr);
+		std::set<std::wstring> GetFileList();
+		ArchiveFileEntry* GetEntryByPath(const std::wstring& name);
+		
+		static shared_ptr<ByteBuffer> CreateEntryBuffer(ArchiveFileEntry* entry);
 	};
 
 	//*******************************************************************
@@ -111,9 +123,8 @@ namespace gstd {
 	class Compressor {
 		using in_stream_t = std::basic_istream<char, std::char_traits<char>>;
 		using out_stream_t = std::basic_ostream<char, std::char_traits<char>>;
-		enum : size_t {
-			BASIC_CHUNK = 65536U,
-		};
+		
+		static constexpr const size_t BASIC_CHUNK = (size_t)(1 << 16);
 	public:
 		static bool Deflate(const size_t chunk, 
 			std::function<size_t(char*, size_t, int*)>&& ReadFunction,

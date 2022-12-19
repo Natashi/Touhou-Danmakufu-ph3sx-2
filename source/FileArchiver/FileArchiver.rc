@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -12,33 +12,24 @@
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
-/////////////////////////////////////////////////////////////////////////////
-// “ú–{Œê resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
-#ifdef _WIN32
-LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
-#pragma code_page(932)
-#endif //_WIN32
-
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE 
 BEGIN
     "#include <windows.h>\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE 
 BEGIN
     "\r\n"
     "\0"
@@ -46,68 +37,28 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
+/////////////////////////////////////////////////////////////////////////////
+
 
 /////////////////////////////////////////////////////////////////////////////
-//
-// Dialog
-//
+// Neutral (Default) resources
 
-IDD_DIALOG_MAIN DIALOGEX 0, 0, 254, 171
-STYLE WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
-CAPTION "FileArchiver"
-MENU IDR_MENU_MAIN
-FONT 9, "‚l‚r ‚oƒSƒVƒbƒN"
-BEGIN
-    CONTROL         "List1",IDC_LIST_FILE,"SysListView32",LVS_REPORT | 
-                    WS_BORDER | WS_TABSTOP,1,5,195,138,WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Add",IDC_BUTTON_ADD,201,5,50,14
-    PUSHBUTTON      "Delete",IDC_BUTTON_DELETE,201,27,50,14
-    PUSHBUTTON      "Clear",IDC_BUTTON_CLEAR,201,49,50,14
-    PUSHBUTTON      "Start Archive",IDC_BUTTON_ARCHIVE,171,149,80,17
-END
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEUD)
+LANGUAGE LANG_NEUTRAL, SUBLANG_DEFAULT
+#pragma code_page(1252)
 
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// DESIGNINFO
+// AFX_DIALOG_LAYOUT
 //
 
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+IDD_DIALOG_MAIN AFX_DIALOG_LAYOUT
 BEGIN
-    IDD_DIALOG_MAIN, DIALOG
-    BEGIN
-        LEFTMARGIN, 2
-        RIGHTMARGIN, 251
-        TOPMARGIN, 5
-        BOTTOMMARGIN, 166
-    END
-END
-#endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Menu
-//
-
-IDR_MENU_MAIN MENU DISCARDABLE 
-BEGIN
-    POPUP "File(&F)"
-    BEGIN
-        MENUITEM "Add(&A)",                     ID_MENUITEM_ADD
-        MENUITEM SEPARATOR
-        MENUITEM "Exit(&X)\tAlt+F4",            ID_MENUITEM_EXIT
-    END
-    POPUP "Help(&H)"
-    BEGIN
-        MENUITEM "Version(&A)",                 ID_MENUITEM_VERSION
-        MENUITEM "How to Use(&U)",              ID_MENUITEM_HELP
-    END
+    0
 END
 
-#endif    // “ú–{Œê resources
+#endif    // Neutral (Default) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

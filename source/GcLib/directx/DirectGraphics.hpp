@@ -92,7 +92,7 @@ namespace directx {
 		D3DCAPS9* GetDeviceCaps() { return &deviceCaps_; }
 		HRESULT GetDeviceStatus() { return deviceStatus_; }
 
-		virtual void BeginScene(bool bClear);
+		virtual bool BeginScene(bool bClear);
 		virtual void EndScene(bool bPresent);
 
 		virtual void ResetDeviceState() = 0;
@@ -172,8 +172,8 @@ namespace directx {
 		void ResetDeviceState();
 		void ResetDisplaySettings();
 
-		void BeginScene(bool bMainRender, bool bClear);
-		virtual void BeginScene(bool bClear);
+		bool BeginScene(bool bMainRender, bool bClear);
+		virtual bool BeginScene(bool bClear);
 
 		//-----------------------------------------------------------
 
@@ -190,8 +190,8 @@ namespace directx {
 
 		DisplaySettings* GetDisplaySettingsWindowed() { return &displaySettingsWindowed_; }
 		DisplaySettings* GetDisplaySettingsFullscreen() { return &displaySettingsFullscreen_; }
-		DisplaySettings* GetDisplaySettings() { 
-			return GetScreenMode() == ScreenMode::SCREENMODE_WINDOW ? 
+		DisplaySettings* GetDisplaySettings() {
+			return GetScreenMode() == ScreenMode::SCREENMODE_WINDOW ?
 				&displaySettingsWindowed_ : &displaySettingsFullscreen_;
 		}
 
@@ -215,9 +215,9 @@ namespace directx {
 		void SetVertexFog(bool bEnable, D3DCOLOR color, float start, float end);
 		void SetPixelFog(bool bEnable, D3DCOLOR color, float start, float end);
 
-		void SetTextureFilter(D3DTEXTUREFILTERTYPE fMin, D3DTEXTUREFILTERTYPE fMag, 
+		void SetTextureFilter(D3DTEXTUREFILTERTYPE fMin, D3DTEXTUREFILTERTYPE fMag,
 			D3DTEXTUREFILTERTYPE fMip, int stage = 0);
-		DWORD GetTextureFilter(D3DTEXTUREFILTERTYPE* fMin, D3DTEXTUREFILTERTYPE* fMag, 
+		DWORD GetTextureFilter(D3DTEXTUREFILTERTYPE* fMin, D3DTEXTUREFILTERTYPE* fMag,
 			D3DTEXTUREFILTERTYPE* fMip, int stage = 0);
 
 		bool IsMainRenderLoop() { return bMainRender_; }
@@ -279,7 +279,7 @@ namespace directx {
 		POINT cPosOffset_;
 	protected:
 		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		
+
 		void _PauseDrawing();
 		void _RestartDrawing();
 

@@ -105,6 +105,7 @@ LRESULT WindowBase::_CallPreviousWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wP
 	return ::GetWindowLong(hWnd, DWL_DLGPROC) ?
 		FALSE : ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
+
 void WindowBase::MoveWindowCenter() {
 	RECT rcWindow;
 	::GetWindowRect(hWnd_, &rcWindow);
@@ -112,14 +113,17 @@ void WindowBase::MoveWindowCenter() {
 }
 void WindowBase::MoveWindowCenter(const RECT& rcWindow) {
 	RECT rcMonitor = GetActiveMonitorRect(hWnd_);
-
+	MoveWindowCenter(hWnd_, rcMonitor, rcWindow);
+}
+void WindowBase::MoveWindowCenter(HWND hWnd, const RECT& rcMonitor, const RECT& rcWindow) {
 	LONG tWidth = rcWindow.right - rcWindow.left;
 	LONG tHeight = rcWindow.bottom - rcWindow.top;
 	LONG left = rcMonitor.right / 2L - tWidth / 2L;
 	LONG top = std::max(0L, rcMonitor.bottom / 2L - tHeight / 2L);
 
-	::MoveWindow(hWnd_, left, top, tWidth, tHeight, TRUE);
+	::MoveWindow(hWnd, left, top, tWidth, tHeight, TRUE);
 }
+
 HWND WindowBase::GetTopParentWindow(HWND hWnd) {
 	HWND res = hWnd;
 	while (true) {
@@ -193,6 +197,9 @@ void WPanel::Create(HWND hWndParent) {
 		hInst, nullptr);
 	this->Attach(hWnd_);
 	this->SetWindowStyle(SS_NOTIFY);
+
+	//WNDCLASSEX wcex;
+	//GetClassInfoExW(hInst, L"STATIC", &wcex);
 }
 LRESULT WPanel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
@@ -260,20 +267,19 @@ std::wstring WLabel::GetText() {
 int WLabel::GetTextLength() {
 	return ::GetWindowTextLength(hWnd_);
 }
+
 //****************************************************************************
 //WButton
 //****************************************************************************
 void WButton::Create(HWND hWndParent) {
-	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
-	hWnd_ = ::CreateWindow(
-		L"BUTTON", L"",
-		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		0, 0, 0, 0, hWndParent, (HMENU)GetWindowId(),
-		hInst, nullptr);
-	this->Attach(hWnd_);
-	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
+	WCheckButton::Style style;
+
+	style.SetStyle(WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON);
+	style.SetStyleEx(0);
+
+	Create(hWndParent, style);
 }
-void WButton::Create(HWND hWndParent, WButton::Style& style) {
+void WButton::Create(HWND hWndParent, Style& style) {
 	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
 
 	hWnd_ = ::CreateWindowEx(
@@ -291,6 +297,27 @@ void WButton::SetText(const std::wstring& text) {
 bool WButton::IsChecked() {
 	bool bCheck = ::SendMessageW(hWnd_, BM_GETCHECK, 0, 0) == BST_CHECKED;
 	return bCheck;
+}
+
+//****************************************************************************
+//WCheckButton
+//****************************************************************************
+void WCheckButton::Create(HWND hWndParent) {
+	WCheckButton::Style style;
+
+	style.SetStyle(WS_CHILD | WS_VISIBLE | BS_CHECKBOX | BS_FLAT);
+	style.SetStyleEx(0);
+
+	Create(hWndParent, style);
+}
+void WCheckButton::Create(HWND hWndParent, Style& style) {
+	HINSTANCE hInst = (HINSTANCE)::GetWindowLong(hWndParent, GWL_HINSTANCE);
+	hWnd_ = ::CreateWindowExW(
+		style.GetStyleEx(), L"CHECKBOX", L"",
+		style.GetStyle(), 0, 0, 0, 0, 
+		hWndParent, (HMENU)GetWindowId(), hInst, nullptr);
+	this->Attach(hWnd_);
+	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
 
 //****************************************************************************
@@ -596,7 +623,7 @@ void WTreeView::Create(HWND hWndParent, Style& style) {
 	this->Attach(hWnd_);
 	::SendMessageW(hWnd_, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 }
-void WTreeView::CreateRootItem(ItemStyle& style) {
+shared_ptr<WTreeView::Item> WTreeView::CreateRootItem(ItemStyle& style) {
 	this->Clear();
 
 	itemRoot_.reset(new Item());
@@ -605,6 +632,8 @@ void WTreeView::CreateRootItem(ItemStyle& style) {
 	TVINSERTSTRUCT& tvis = style.GetInsertStruct();
 	tvis.hParent = TVI_ROOT;
 	itemRoot_->hItem_ = TreeView_InsertItem(hWnd_, &tvis);
+
+	return itemRoot_;
 }
 shared_ptr<WTreeView::Item> WTreeView::GetSelectedItem() {
 	HTREEITEM hTreeItem = TreeView_GetSelection(hWnd_);
@@ -668,6 +697,9 @@ LPARAM WTreeView::Item::GetParam() {
 	tvi.hItem = hItem_;
 	TreeView_GetItem(hTree_, &tvi);
 	return tvi.lParam;
+}
+void WTreeView::Item::SetState(DWORD state, DWORD mask) {
+	TreeView_SetItemState(hTree_, hItem_, state, mask);
 }
 std::list<shared_ptr<WTreeView::Item>> WTreeView::Item::GetChildList() {
 	std::list<shared_ptr<Item>> res;
