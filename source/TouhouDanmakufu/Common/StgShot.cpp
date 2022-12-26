@@ -884,8 +884,6 @@ void StgShotObject::_RequestPlayerDeleteEvent(int hitObjectID) {	//A super ugly 
 void StgShotObject::_DeleteInAutoClip() {
 	if (IsDeleted() || !IsAutoDelete()) return;
 
-	StgShotManager* shotManager = stageController_->GetShotManager();
-
 	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
 	DxRect<LONG>* const rcClipBase = stageController_->GetShotManager()->GetShotDeleteClip();
 	DxRect<LONG> rcDeleteClip(rcClipBase->left, rcClipBase->top,

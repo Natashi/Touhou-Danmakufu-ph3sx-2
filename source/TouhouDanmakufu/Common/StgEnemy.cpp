@@ -199,16 +199,16 @@ void StgEnemyObject::Work() {
 }
 void StgEnemyObject::_DeleteInAutoClip() {
 	if (!bAutoDelete_ || IsDeleted()) return;
-	DirectGraphics* graphics = DirectGraphics::GetBase();
 
 	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
 	DxRect<LONG>* const rcClipBase = stageController_->GetEnemyManager()->GetEnemyDeleteClip();
+	DxRect<LONG> rcDeleteClip(rcClipBase->left, rcClipBase->top,
+		rcStgFrame->GetWidth() + rcClipBase->right,
+		rcStgFrame->GetHeight() + rcClipBase->bottom);
 
-	bool bDelete = ((LONG)posX_ < rcClipBase->left) || ((LONG)posX_ > rcStgFrame->GetWidth() + rcClipBase->right)
-		|| ((LONG)posY_ > rcStgFrame->GetHeight() + rcClipBase->bottom);
-	if (!bDelete) return;
-
-	stageController_->GetMainObjectManager()->DeleteObject(this);
+	if (!rcDeleteClip.IsPointIntersected(posX_, posY_)) {
+		stageController_->GetMainObjectManager()->DeleteObject(this);
+	}
 }
 void StgEnemyObject::_DeleteInAutoDeleteFrame() {
 	if (IsDeleted()) return;

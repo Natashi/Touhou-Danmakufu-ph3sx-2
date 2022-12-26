@@ -878,16 +878,16 @@ void StgItemObject::RenderOnItemManager() {
 }
 void StgItemObject::_DeleteInAutoClip() {
 	if (!bAutoDelete_) return;
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-
+	
 	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
-	DxRect<LONG>* const rcClipBase = stageController_->GetItemManager()->GetItemDeleteClip();
+	DxRect<LONG>* const rcClipBase = stageController_->GetEnemyManager()->GetEnemyDeleteClip();
+	DxRect<LONG> rcDeleteClip(rcClipBase->left, LONG_MIN,
+		rcStgFrame->GetWidth() + rcClipBase->right,
+		rcStgFrame->GetHeight() + rcClipBase->bottom);
 
-	bool bDelete = ((LONG)posX_ < rcClipBase->left) || ((LONG)posX_ > rcStgFrame->GetWidth() + rcClipBase->right)
-		|| ((LONG)posY_ > rcStgFrame->GetHeight() + rcClipBase->bottom);
-	if (!bDelete) return;
-
-	stageController_->GetMainObjectManager()->DeleteObject(this);
+	if (!rcDeleteClip.IsPointIntersected(posX_, posY_)) {
+		stageController_->GetMainObjectManager()->DeleteObject(this);
+	}
 }
 void StgItemObject::_CreateScoreItem() {
 	auto objectManager = stageController_->GetMainObjectManager();
