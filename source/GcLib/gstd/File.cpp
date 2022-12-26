@@ -749,7 +749,7 @@ void ManagedFileReader::Close() {
 	if (file_) file_->Close();
 	if (buffer_) {
 		buffer_ = nullptr;
-		FileManager::GetBase()->_ReleaseByteBuffer(entry_);
+		//FileManager::GetBase()->_ReleaseByteBuffer(entry_);
 	}
 }
 size_t ManagedFileReader::GetFileSize() {
