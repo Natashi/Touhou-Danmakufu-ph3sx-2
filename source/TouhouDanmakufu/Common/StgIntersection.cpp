@@ -12,7 +12,7 @@
 StgIntersectionManager::StgIntersectionManager() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG screenWidth = graphics->GetScreenWidth();
-	LONG screenHeight = graphics->GetScreenWidth();
+	LONG screenHeight = graphics->GetScreenHeight();
 
 	//_CreatePool(2);
 	listSpace_.resize(3);
