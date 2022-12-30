@@ -465,14 +465,28 @@ void FileManager::EndLoadThread() {
 
 bool FileManager::AddArchiveFile(const std::wstring& archivePath, size_t readOff) {
 	//Archive already loaded
-	if (mapArchiveFile_.find(archivePath) != mapArchiveFile_.end())
+	if (mapArchiveFile_.find(archivePath) != mapArchiveFile_.end()) {
+		std::wstring log = StringUtility::Format(
+			L"Archive already loaded [%s]",
+			PathProperty::ReduceModuleDirectory(archivePath).c_str());
+		Logger::WriteTop(log);
 		return true;
+	}
+
+	std::wstring moduleDir = PathProperty::GetModuleDirectory();
+	std::wstring archiveDir = PathProperty::GetFileDirectory(archivePath);
+
+	if (archiveDir.find(moduleDir) == std::wstring::npos) {
+		std::wstring log = StringUtility::Format(
+			L"Cannot load an archive file at [%s]",
+			archiveDir.c_str());
+		Logger::WriteTop(log);
+		return false;
+	}
 
 	shared_ptr<ArchiveFile> archive(new ArchiveFile(archivePath, readOff));
 	if (!archive->Open())
 		return false;
-
-	std::wstring moduleDir = PathProperty::GetModuleDirectory();
 
 	auto& mapEntry = archive->GetEntryMap();
 	for (auto itr = mapEntry.begin(); itr != mapEntry.end(); ++itr) {
