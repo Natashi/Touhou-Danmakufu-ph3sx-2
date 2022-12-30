@@ -535,6 +535,43 @@ shared_ptr<ArchiveFile> FileManager::GetArchiveFile(const std::wstring& archiveP
 		res = itrFind->second;
 	return res;
 }
+ArchiveFileEntry* FileManager::GetArchiveFileEntry(const std::wstring& path) {
+	std::wstring pathNoModule = PathProperty::GetPathWithoutModuleDirectory(path);
+	auto itrFind = mapArchiveEntries_.find(pathNoModule);
+	if (itrFind != mapArchiveEntries_.end())
+		return itrFind->second.first;
+	return nullptr;
+}
+
+bool FileManager::IsArchiveFileExists(const std::wstring& path) {
+	/*
+	std::wstring moduleDir = PathProperty::GetModuleDirectory();
+	if (path.find(moduleDir) == std::wstring::npos)
+		return false;
+	*/
+
+	ArchiveFileEntry* pEntry = GetArchiveFileEntry(path);
+	return pEntry != nullptr;
+}
+bool FileManager::IsArchiveDirectoryExists(const std::wstring& _dir) {
+	std::wstring moduleDir = PathProperty::GetModuleDirectory();
+	if (_dir.find(moduleDir) != std::wstring::npos) {
+		std::wstring dir = PathProperty::AppendSlash(_dir.substr(moduleDir.size()));
+
+		std::set<std::wstring> dirSet;
+		for (auto itr = mapArchiveEntries_.cbegin(); itr != mapArchiveEntries_.cend(); ++itr) {
+			const std::wstring& fullPath = itr->first;
+			dirSet.insert(PathProperty::GetFileDirectory(fullPath));
+		}
+
+		for (auto& iDir : dirSet) {
+			if (iDir._Starts_with(dir))
+				return true;
+		}
+	}
+	return false;
+}
+
 bool FileManager::ClearArchiveFileCache() {
 	mapArchiveFile_.clear();
 	mapArchiveEntries_.clear();
@@ -555,12 +592,8 @@ shared_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	else {
 		//Cannot find a physical file, search in the archive entries.
 
-		std::wstring pathNoModule = PathProperty::GetPathWithoutModuleDirectory(pathAsUnique);
-
-		auto itrFind = mapArchiveEntries_.find(pathNoModule);
-		if (itrFind != mapArchiveEntries_.end()) {
-			ArchiveFileEntry* pEntry = itrFind->second.first;
-
+		ArchiveFileEntry* pEntry = GetArchiveFileEntry(pathAsUnique);
+		if (pEntry) {
 			shared_ptr<File> file = pEntry->archiveParent->GetFile();
 			res.reset(new ManagedFileReader(file, pEntry));
 		}

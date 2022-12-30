@@ -221,7 +221,7 @@ namespace gstd {
 		using PairArchiveEntry = std::pair<ArchiveFileEntry*, shared_ptr<ByteBuffer>>;
 
 		std::unordered_map<std::wstring, shared_ptr<ArchiveFile>> mapArchiveFile_;
-		std::unordered_map<std::wstring, PairArchiveEntry> mapArchiveEntries_;
+		std::map<std::wstring, PairArchiveEntry> mapArchiveEntries_;
 
 		shared_ptr<ByteBuffer> _GetByteBuffer(ArchiveFileEntry* entry);
 		void _ReleaseByteBuffer(ArchiveFileEntry* entry);
@@ -243,7 +243,13 @@ namespace gstd {
 
 		bool AddArchiveFile(const std::wstring& archivePath, size_t readOff);
 		bool RemoveArchiveFile(const std::wstring& archivePath);
+
 		shared_ptr<ArchiveFile> GetArchiveFile(const std::wstring& archivePath);
+		ArchiveFileEntry* GetArchiveFileEntry(const std::wstring& path);
+
+		bool IsArchiveFileExists(const std::wstring& path);
+		bool IsArchiveDirectoryExists(const std::wstring& dir);
+
 		bool ClearArchiveFileCache();
 #endif
 

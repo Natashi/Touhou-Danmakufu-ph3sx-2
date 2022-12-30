@@ -1439,11 +1439,36 @@ value ScriptClientBase::Func_GetFileExtension(script_machine* machine, int argc,
 }
 value ScriptClientBase::Func_IsFileExists(script_machine* machine, int argc, const value* argv) {
 	std::wstring path = argv->as_string();
-	return ScriptClientBase::CreateBooleanValue(File::IsExists(path));
+	bool res = false;
+	
+	if (File::IsExists(path)) {
+		res = true;
+	}
+	else {
+		path = PathProperty::GetUnique(path);
+
+		res = FileManager::GetBase()->IsArchiveFileExists(path);
+	}
+
+	return ScriptClientBase::CreateBooleanValue(res);
 }
 value ScriptClientBase::Func_IsDirectoryExists(script_machine* machine, int argc, const value* argv) {
-	std::wstring path = argv->as_string();
-	return ScriptClientBase::CreateBooleanValue(File::IsDirectory(path));
+	std::wstring dir = argv->as_string();
+	bool res = false;
+
+	if (File::IsDirectory(dir)) {
+		res = true;
+	}
+	else {
+		dir = PathProperty::GetUnique(dir);
+
+		std::wstring moduleDir = PathProperty::GetModuleDirectory();
+		if (dir.find(moduleDir) != std::wstring::npos) {
+			res = FileManager::GetBase()->IsArchiveDirectoryExists(dir);
+		}
+	}
+
+	return ScriptClientBase::CreateBooleanValue(res);
 }
 
 //共通関数：時刻関連
