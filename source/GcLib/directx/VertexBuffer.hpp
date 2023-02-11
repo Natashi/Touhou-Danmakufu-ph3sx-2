@@ -47,22 +47,30 @@ namespace directx {
 	template<typename T>
 	class BufferBase {
 		static_assert(std::is_base_of<IDirect3DResource9, T>::value, "T must be a Direct3D resource");
+		friend class VertexBufferManager;
 	public:
 		BufferBase();
 		BufferBase(IDirect3DDevice9* device);
 		virtual ~BufferBase();
 
+		void SetUsage(DWORD usage) { usage_ = usage; }
+		void SetPool(D3DPOOL pool) { pool_ = pool; }
+
 		inline void Release() { ptr_release(buffer_); }
 
+		HRESULT Create(DWORD usage, D3DPOOL pool);
 		HRESULT UpdateBuffer(BufferLockParameter* pLock);
-
-		virtual HRESULT Create(DWORD usage, D3DPOOL pool) = 0;
 
 		T* GetBuffer() { return buffer_; }
 		size_t GetSize() { return size_; }
 		size_t GetSizeInBytes() { return sizeInBytes_; }
 	protected:
+		virtual HRESULT _Create() = 0;
+	protected:
 		IDirect3DDevice9* pDevice_;
+		DWORD usage_;
+		D3DPOOL pool_;
+
 		T* buffer_;
 		size_t size_;
 		size_t stride_;
@@ -75,7 +83,8 @@ namespace directx {
 		virtual ~FixedVertexBuffer();
 
 		virtual void Setup(size_t iniSize, size_t stride, DWORD fvf);
-		virtual HRESULT Create(DWORD usage = D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DPOOL pool = D3DPOOL_DEFAULT);
+	protected:
+		virtual HRESULT _Create();
 	private:
 		DWORD fvf_;
 	};
@@ -85,7 +94,8 @@ namespace directx {
 		virtual ~FixedIndexBuffer();
 
 		virtual void Setup(size_t iniSize, size_t stride, D3DFORMAT format);
-		virtual HRESULT Create(DWORD usage = D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DPOOL pool = D3DPOOL_DEFAULT);
+	protected:
+		virtual HRESULT _Create();
 	private:
 		D3DFORMAT format_;
 	};
@@ -96,7 +106,6 @@ namespace directx {
 		GrowableBuffer(IDirect3DDevice9* device);
 		virtual ~GrowableBuffer();
 
-		virtual HRESULT Create(DWORD usage, D3DPOOL pool) = 0;
 		virtual void Expand(size_t newSize) = 0;
 	};
 
@@ -106,8 +115,9 @@ namespace directx {
 		virtual ~GrowableVertexBuffer();
 
 		virtual void Setup(size_t iniSize, size_t stride, DWORD fvf);
-		virtual HRESULT Create(DWORD usage = D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DPOOL pool = D3DPOOL_DEFAULT);
 		virtual void Expand(size_t newSize);
+	protected:
+		virtual HRESULT _Create();
 	private:
 		DWORD fvf_;
 	};
@@ -117,8 +127,9 @@ namespace directx {
 		virtual ~GrowableIndexBuffer();
 
 		virtual void Setup(size_t iniSize, size_t stride, D3DFORMAT format);
-		virtual HRESULT Create(DWORD usage = D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DPOOL pool = D3DPOOL_DEFAULT);
 		virtual void Expand(size_t newSize);
+	protected:
+		virtual HRESULT _Create();
 	private:
 		D3DFORMAT format_;
 	};
@@ -135,6 +146,7 @@ namespace directx {
 		~VertexBufferManager();
 
 		static VertexBufferManager* GetBase() { return thisBase_; }
+		gstd::CriticalSection* GetCriticalSection() { return &cs_; }
 
 		virtual void ReleaseDxResource();
 		virtual void RestoreDxResource();
@@ -142,30 +154,38 @@ namespace directx {
 		virtual bool Initialize(DirectGraphics* graphics);
 		virtual void Release();
 
-		FixedVertexBuffer* GetVertexBufferTLX() { return vertexBuffers_[0]; }
-		FixedVertexBuffer* GetVertexBufferLX() { return vertexBuffers_[1]; }
-		FixedVertexBuffer* GetVertexBufferNX() { return vertexBuffers_[2]; }
-		FixedIndexBuffer* GetIndexBuffer() { return indexBuffer_; }
+		FixedVertexBuffer* GetVertexBufferTLX() { return vertexBuffers_[0].get(); }
+		FixedVertexBuffer* GetVertexBufferLX() { return vertexBuffers_[1].get(); }
+		FixedVertexBuffer* GetVertexBufferNX() { return vertexBuffers_[2].get(); }
+		FixedIndexBuffer* GetIndexBuffer() { return indexBuffer_.get(); }
 
-		GrowableVertexBuffer* GetGrowableVertexBuffer() { return vertexBufferGrowable_; }
-		GrowableIndexBuffer* GetGrowableIndexBuffer() { return indexBufferGrowable_; }
+		GrowableVertexBuffer* GetGrowableVertexBuffer() { return vertexBufferGrowable_.get(); }
+		GrowableIndexBuffer* GetGrowableIndexBuffer() { return indexBufferGrowable_.get(); }
 
-		GrowableVertexBuffer* GetInstancingVertexBuffer() { return vertexBuffer_HWInstancing_; }
+		GrowableVertexBuffer* GetInstancingVertexBuffer() { return vertexBuffer_HWInstancing_.get(); }
 
 		static void AssertBuffer(HRESULT hr, const std::wstring& bufferID);
+		
+		BufferBase<IDirect3DVertexBuffer9>* CreateExtraVertexBuffer();
+		BufferBase<IDirect3DVertexBuffer9>* GetExtraVertexBuffer(size_t addr);
+		void ReleaseExtraVertexBuffer(size_t addr);
 	private:
+		gstd::CriticalSection cs_;
+
 		/*
 		 * 0 -> TLX
 		 * 1 -> LX
 		 * 2 -> NX
 		 */
-		std::vector<FixedVertexBuffer*> vertexBuffers_;
-		FixedIndexBuffer* indexBuffer_;
+		std::vector<unique_ptr<FixedVertexBuffer>> vertexBuffers_;
+		unique_ptr<FixedIndexBuffer> indexBuffer_;
 
-		GrowableVertexBuffer* vertexBufferGrowable_;
-		GrowableIndexBuffer* indexBufferGrowable_;
+		unique_ptr<GrowableVertexBuffer> vertexBufferGrowable_;
+		unique_ptr<GrowableIndexBuffer> indexBufferGrowable_;
 
-		GrowableVertexBuffer* vertexBuffer_HWInstancing_;
+		unique_ptr<GrowableVertexBuffer> vertexBuffer_HWInstancing_;
+
+		std::unordered_map<size_t, unique_ptr<BufferBase<IDirect3DVertexBuffer9>>> mapExtraBuffer_Vertex_;
 
 		virtual void CreateBuffers(IDirect3DDevice9* device);
 	};

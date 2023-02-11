@@ -62,7 +62,7 @@ namespace directx {
 
 		bool _CreateFromFile(const std::wstring& path, shared_ptr<ShaderData>& dest);
 		bool _CreateFromText(const std::wstring& name, const std::string& source, shared_ptr<ShaderData>& dest);
-		bool _CreateUnmanagedFromEffect(ID3DXEffect* effect, shared_ptr<ShaderData>& dest);
+		bool _CreateCloneFromEffect(ID3DXEffect* effect, shared_ptr<ShaderData>& dest);
 	public:
 		ShaderManager();
 		virtual ~ShaderManager();
@@ -85,7 +85,7 @@ namespace directx {
 		shared_ptr<Shader> CreateFromFile(const std::wstring& path);
 		shared_ptr<Shader> CreateFromText(const std::wstring& name, const std::string& source);
 		shared_ptr<Shader> CreateFromData(shared_ptr<ShaderData> data);
-		shared_ptr<Shader> CreateUnmanagedFromEffect(ID3DXEffect* effect);
+		shared_ptr<Shader> CreateCloneFromEffect(ID3DXEffect* effect);
 		shared_ptr<Shader> CreateFromFileInLoadThread(const std::wstring& path);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 

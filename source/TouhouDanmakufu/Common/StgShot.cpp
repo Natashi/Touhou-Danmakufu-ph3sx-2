@@ -702,32 +702,30 @@ StgShotDataFrame* StgShotData::GetFrame(size_t frame) {
 //StgShotVertexBufferContainer
 //****************************************************************************
 StgShotVertexBufferContainer::StgShotVertexBufferContainer() {
-	pVertexBuffer_ = nullptr;
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	VertexBufferManager* vbManager = VertexBufferManager::GetBase();
+
+	pVertexBuffer_ = (FixedVertexBuffer*)vbManager->CreateExtraVertexBuffer();
+
 	countData_ = 0;
 }
 StgShotVertexBufferContainer::~StgShotVertexBufferContainer() {
-	ptr_release(pVertexBuffer_);
+	VertexBufferManager* vbManager = VertexBufferManager::GetBase();
+	vbManager->ReleaseExtraVertexBuffer((size_t)pVertexBuffer_);
 }
 
 HRESULT StgShotVertexBufferContainer::LoadData(const std::vector<VERTEX_TLX>& data, size_t countFrame) {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	IDirect3DDevice9* device = graphics->GetDevice();
+	pVertexBuffer_->Setup(data.size(), StgShotVertexBufferContainer::STRIDE, VERTEX_TLX::fvf);
 
-	if (pVertexBuffer_ == nullptr) {
-		pVertexBuffer_ = new FixedVertexBuffer(device);
-		pVertexBuffer_->Setup(data.size(), StgShotVertexBufferContainer::STRIDE, VERTEX_TLX::fvf);
-
-		HRESULT hr = pVertexBuffer_->Create(0, D3DPOOL_MANAGED);
-		if (FAILED(hr)) {
-			ptr_release(pVertexBuffer_);
-			return hr;
-		}
+	HRESULT hr = pVertexBuffer_->Create(0, D3DPOOL_MANAGED);
+	if (FAILED(hr)) {
+		return hr;
 	}
 
 	BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
 	lockParam.SetSource(const_cast<std::vector<VERTEX_TLX>&>(data), pVertexBuffer_->GetSize(), sizeof(VERTEX_TLX));
 
-	HRESULT hr = pVertexBuffer_->UpdateBuffer(&lockParam);
+	hr = pVertexBuffer_->UpdateBuffer(&lockParam);
 	countData_ = countFrame;
 
 	return hr;

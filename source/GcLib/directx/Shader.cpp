@@ -237,7 +237,7 @@ bool Shader::LoadTechnique() {
 		if (FAILED(hr)) {
 			const char* err = DXGetErrorStringA(hr);
 			const char* desc = DXGetErrorDescriptionA(hr);
-			std::string log = StringUtility::Format("Shader: Invalid technique. [%s]\r\n\t%s",
+			std::string log = StringUtility::Format("Shader: Invalid technique [%s]\r\n\t%s",
 				err, desc);
 			Logger::WriteTop(log);
 		}
@@ -446,7 +446,7 @@ void ShaderManager::_ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderD
 			const std::wstring& name = itr->second->name_;
 			itr->second->bLoad_ = false;
 			mapShaderData_.erase(itr);
-			Logger::WriteTop(StringUtility::Format(L"ShaderManager: Shader released. [%s]", 
+			Logger::WriteTop(StringUtility::Format(L"ShaderManager: Shader released [%s]", 
 				PathProperty::ReduceModuleDirectory(name).c_str()));
 		}
 	}
@@ -500,12 +500,12 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 
 			mapShaderData_[path] = dest;
 
-			std::wstring log = StringUtility::Format(L"ShaderManager: Shader loaded. [%s]", pathReduce.c_str());
+			std::wstring log = StringUtility::Format(L"ShaderManager: Shader loaded [%s]", pathReduce.c_str());
 			Logger::WriteTop(log);
 		}
 	}
 	catch (gstd::wexception& e) {
-		std::wstring err = StringUtility::Format(L"ShaderManager: Shader compile failed. [%s]\r\n\t%s",
+		std::wstring err = StringUtility::Format(L"ShaderManager: Shader compile failed [%s]\r\n\t%s",
 			pathReduce.c_str(), e.what());
 		Logger::WriteTop(err);
 		lastError_ = err;
@@ -552,12 +552,12 @@ bool ShaderManager::_CreateFromText(const std::wstring& name, const std::string&
 
 			mapShaderData_[name] = dest;
 
-			std::wstring log = StringUtility::Format(L"ShaderManager: Shader loaded. [%s]", name.c_str());
+			std::wstring log = StringUtility::Format(L"ShaderManager: Shader loaded [%s]", name.c_str());
 			Logger::WriteTop(log);
 		}
 	}
 	catch (gstd::wexception& e) {
-		std::wstring err = StringUtility::Format(L"ShaderManager: Shader compile failed. [%s]\r\n\t%s",
+		std::wstring err = StringUtility::Format(L"ShaderManager: Shader compile failed [%s]\r\n\t%s",
 			name.c_str(), e.what());
 		Logger::WriteTop(err);
 		lastError_ = err;
@@ -569,11 +569,11 @@ bool ShaderManager::_CreateFromText(const std::wstring& name, const std::string&
 
 	return true;
 }
-bool ShaderManager::_CreateUnmanagedFromEffect(ID3DXEffect* effect, shared_ptr<ShaderData>& dest) {
+bool ShaderManager::_CreateCloneFromEffect(ID3DXEffect* effect, shared_ptr<ShaderData>& dest) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	lastError_ = L"";
 
-	std::string shaderID = StringUtility::Format("%08x", (int)effect);
+	std::wstring shaderID = StringUtility::Format(L"Clone[%08x]", (int)effect);
 
 	try {
 		HRESULT hr = effect->CloneEffect(graphics->GetDevice(), &dest->effect_);
@@ -586,15 +586,19 @@ bool ShaderManager::_CreateUnmanagedFromEffect(ID3DXEffect* effect, shared_ptr<S
 			throw wexception(err);
 		}
 		else {
-			dest->name_ = L"";
+			dest->manager_ = this;
+			dest->name_ = shaderID;
 			dest->bLoad_ = true;
+			dest->bText_ = true;
 
-			std::string log = StringUtility::Format("ShaderManager: Shader cloned. [%s]", shaderID.c_str());
+			mapShaderData_[shaderID] = dest;
+
+			std::wstring log = StringUtility::Format(L"ShaderManager: Shader cloned [%s]", shaderID.c_str());
 			Logger::WriteTop(log);
 		}
 	}
 	catch (gstd::wexception& e) {
-		std::wstring err = StringUtility::Format(L"ShaderManager: Shader clone failed. [%s]\r\n\t%s",
+		std::wstring err = StringUtility::Format(L"ShaderManager: Shader clone failed [%s]\r\n\t%s",
 			shaderID.c_str(), e.what());
 		Logger::WriteTop(err);
 		lastError_ = err;
@@ -698,13 +702,13 @@ shared_ptr<Shader> ShaderManager::CreateFromData(shared_ptr<ShaderData> data) {
 	}
 	return res;
 }
-shared_ptr<Shader> ShaderManager::CreateUnmanagedFromEffect(ID3DXEffect* effect) {
+shared_ptr<Shader> ShaderManager::CreateCloneFromEffect(ID3DXEffect* effect) {
 	shared_ptr<Shader> res = nullptr;
 	{
 		Lock lock(lock_);
 
 		shared_ptr<ShaderData> data(new ShaderData());
-		if (_CreateUnmanagedFromEffect(effect, data)) {
+		if (_CreateCloneFromEffect(effect, data)) {
 			res = std::make_shared<Shader>();
 			res->data_ = data;
 		}
@@ -748,7 +752,7 @@ HRESULT __stdcall ShaderIncludeCallback::Open(D3DXINCLUDE_TYPE type, LPCSTR pFil
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(sPath);
 	if (reader == nullptr || !reader->Open()) {
 		std::wstring error = StringUtility::Format(
-			L"Shader Compiler: Include file is not found. [%s]\r\n", sPath.c_str());
+			L"Shader Compiler: Include file is not found [%s]\r\n", sPath.c_str());
 		Logger::WriteTop(error);
 		return E_FAIL;
 	}

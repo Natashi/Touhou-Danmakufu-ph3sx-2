@@ -84,7 +84,7 @@ bool DxCharGlyph::Create(UINT code, const Font& winFont, const DxFont* dxFont) {
 	IDirect3DTexture9* pTexture = nullptr;
 	IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
 	HRESULT hr = device->CreateTexture(widthTexture, heightTexture, 1, 
-		D3DPOOL_DEFAULT, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
+		0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
 	if (FAILED(hr)) return false;
 
 	D3DLOCKED_RECT lock;

@@ -27,10 +27,10 @@ StgIntersectionManager::StgIntersectionManager() {
 			ShaderManager* shaderManager = ShaderManager::GetBase();
 			RenderShaderLibrary* shaderLib = shaderManager->GetRenderLib();
 
-			shaderVisualizerCircle_ = shaderManager->CreateUnmanagedFromEffect(shaderLib->GetIntersectVisualShader1());
+			shaderVisualizerCircle_ = shaderManager->CreateCloneFromEffect(shaderLib->GetIntersectVisualShader1());
 			shaderVisualizerCircle_->SetTechnique("Render");
 
-			shaderVisualizerLine_ = shaderManager->CreateUnmanagedFromEffect(shaderLib->GetIntersectVisualShader2());
+			shaderVisualizerLine_ = shaderManager->CreateCloneFromEffect(shaderLib->GetIntersectVisualShader2());
 			shaderVisualizerLine_->SetTechnique("Render");
 		}
 
