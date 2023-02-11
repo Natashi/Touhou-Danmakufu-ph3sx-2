@@ -214,15 +214,15 @@ bool File::IsEqualsPath(const std::wstring& path1, const std::wstring& path2) {
 #endif
 	return res;
 }
-std::vector<std::wstring> File::GetFilePathList(const std::wstring& dir) {
-	std::vector<std::wstring> res;
+std::vector<std::wstring> File::GetFilePathList(const std::wstring& dir, bool bSearchArchive) {
+	std::set<std::wstring> res;
 
 #ifdef __L_STD_FILESYSTEM
 	path_t p = dir;
 	if (stdfs::exists(p) && stdfs::is_directory(p)) {
-		for (auto itr : stdfs::directory_iterator(p)) {
+		for (auto& itr : stdfs::directory_iterator(p)) {
 			if (!itr.is_directory())
-				res.push_back(PathProperty::ReplaceYenToSlash(itr.path()));
+				res.insert(PathProperty::ReplaceYenToSlash(itr.path()));
 		}
 	}
 #else
@@ -252,19 +252,28 @@ std::vector<std::wstring> File::GetFilePathList(const std::wstring& dir) {
 	FindClose(hFind);
 #endif
 
-	return res;
+	if (bSearchArchive) {
+		std::wstring moduleDir = PathProperty::GetModuleDirectory();
+		std::wstring dirUnique = PathProperty::GetUnique(dir);
+		auto listArchiveEntry = FileManager::GetBase()->GetArchiveFilesInDirectory(dirUnique, false);
+		for (auto& iEntry : listArchiveEntry) {
+			res.insert(moduleDir + iEntry->fullPath);
+		}
+	}
+
+	return std::vector<std::wstring>(res.begin(), res.end());
 }
-std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir) {
-	std::vector<std::wstring> res;
+std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir, bool bSearchArchive) {
+	std::set<std::wstring> res;
 
 #ifdef __L_STD_FILESYSTEM
 	path_t p = dir;
 	if (stdfs::exists(p) && stdfs::is_directory(p)) {
-		for (auto itr : stdfs::directory_iterator(dir)) {
+		for (auto& itr : stdfs::directory_iterator(dir)) {
 			if (itr.is_directory()) {
-				std::wstring str = PathProperty::ReplaceYenToSlash(itr.path());
-				str += L'/';
-				res.push_back(str);
+				std::wstring str = PathProperty::AppendSlash(
+					PathProperty::ReplaceYenToSlash(itr.path()));
+				res.insert(str);
 			}
 		}
 	}
@@ -292,7 +301,17 @@ std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir) {
 	FindClose(hFind);
 #endif
 
-	return res;
+	if (bSearchArchive) {
+		std::wstring moduleDir = PathProperty::GetModuleDirectory();
+		std::wstring dirUnique = PathProperty::GetUnique(dir);
+		auto listArchiveEntry = FileManager::GetBase()->GetArchiveSubDirectoriesInDirectory(dirUnique);
+		for (auto& iDir : listArchiveEntry) {
+			std::wstring dir = PathProperty::GetFileDirectory(moduleDir + iDir);
+			res.insert(dir);
+		}
+	}
+
+	return std::vector<std::wstring>(res.begin(), res.end());
 }
 
 File::File() {
@@ -543,6 +562,50 @@ ArchiveFileEntry* FileManager::GetArchiveFileEntry(const std::wstring& path) {
 	return nullptr;
 }
 
+std::vector<ArchiveFileEntry*> FileManager::GetArchiveFilesInDirectory(const std::wstring& dir, bool bSubDirectory) {
+	std::vector<ArchiveFileEntry*> res;
+
+	std::wstring dirNoModule = PathProperty::GetPathWithoutModuleDirectory(dir);
+	dirNoModule = PathProperty::AppendSlash(dirNoModule);
+
+	for (auto& [_, entryPair] : mapArchiveEntries_) {
+		ArchiveFileEntry* pEntry = entryPair.first;
+		if (!bSubDirectory) {
+			std::wstring entryDir = PathProperty::GetFileDirectory(pEntry->fullPath);
+			if (entryDir == dirNoModule) {
+				res.push_back((ArchiveFileEntry*)pEntry);
+			}
+		}
+		else {
+			if (pEntry->fullPath._Starts_with(dirNoModule)) {
+				res.push_back((ArchiveFileEntry*)pEntry);
+			}
+		}
+	}
+
+	return res;
+}
+std::set<std::wstring> FileManager::GetArchiveSubDirectoriesInDirectory(const std::wstring& dir) {
+	std::set<std::wstring> res;
+
+	std::wstring dirNoModule = PathProperty::GetPathWithoutModuleDirectory(dir);
+	dirNoModule = PathProperty::AppendSlash(dirNoModule);
+
+	for (auto& [_, entryPair] : mapArchiveEntries_) {
+		ArchiveFileEntry* pEntry = entryPair.first;
+		if (pEntry->fullPath._Starts_with(dirNoModule)) {
+			size_t pos = pEntry->fullPath.find_first_of(L"/", dirNoModule.size());
+			if (pos != std::wstring::npos) {	// If the substr is a directory
+				std::wstring subDir = pEntry->fullPath.substr(0, pos);
+				subDir = PathProperty::AppendSlash(subDir);
+				res.insert(subDir);
+			}
+		}
+	}
+
+	return res;
+}
+
 bool FileManager::IsArchiveFileExists(const std::wstring& path) {
 	/*
 	std::wstring moduleDir = PathProperty::GetModuleDirectory();
@@ -558,14 +621,10 @@ bool FileManager::IsArchiveDirectoryExists(const std::wstring& _dir) {
 	if (_dir.find(moduleDir) != std::wstring::npos) {
 		std::wstring dir = PathProperty::AppendSlash(_dir.substr(moduleDir.size()));
 
-		std::set<std::wstring> dirSet;
 		for (auto itr = mapArchiveEntries_.cbegin(); itr != mapArchiveEntries_.cend(); ++itr) {
 			const std::wstring& fullPath = itr->first;
-			dirSet.insert(PathProperty::GetFileDirectory(fullPath));
-		}
-
-		for (auto& iDir : dirSet) {
-			if (iDir._Starts_with(dir))
+			std::wstring entryDir = PathProperty::GetFileDirectory(fullPath);
+			if (entryDir._Starts_with(dir))
 				return true;
 		}
 	}

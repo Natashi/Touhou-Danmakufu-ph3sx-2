@@ -129,8 +129,8 @@ namespace gstd {
 		static bool IsDirectory(const std::wstring& path);
 
 		static bool IsEqualsPath(const std::wstring& path1, const std::wstring& path2);
-		static std::vector<std::wstring> GetFilePathList(const std::wstring& dir);
-		static std::vector<std::wstring> GetDirectoryPathList(const std::wstring& dir);
+		static std::vector<std::wstring> GetFilePathList(const std::wstring& dir, bool bSearchArchive = false);
+		static std::vector<std::wstring> GetDirectoryPathList(const std::wstring& dir, bool bSearchArchive = false);
 
 		void Delete();
 		bool IsExists();
@@ -246,6 +246,9 @@ namespace gstd {
 
 		shared_ptr<ArchiveFile> GetArchiveFile(const std::wstring& archivePath);
 		ArchiveFileEntry* GetArchiveFileEntry(const std::wstring& path);
+
+		std::vector<ArchiveFileEntry*> GetArchiveFilesInDirectory(const std::wstring& dir, bool bSubDirectory);
+		std::set<std::wstring> GetArchiveSubDirectoriesInDirectory(const std::wstring& dir);
 
 		bool IsArchiveFileExists(const std::wstring& path);
 		bool IsArchiveDirectoryExists(const std::wstring& dir);

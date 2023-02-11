@@ -1388,13 +1388,13 @@ value ScriptClientBase::Func_GetCurrentScriptDirectory(script_machine* machine, 
 value ScriptClientBase::Func_GetFilePathList(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	std::wstring dir = PathProperty::GetFileDirectory(argv->as_string());
-	std::vector<std::wstring> listDir = File::GetFilePathList(dir);
+	std::vector<std::wstring> listDir = File::GetFilePathList(dir, true);
 	return script->CreateStringArrayValue(listDir);
 }
 value ScriptClientBase::Func_GetDirectoryList(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	std::wstring dir = PathProperty::GetFileDirectory(argv->as_string());
-	std::vector<std::wstring> listDir = File::GetDirectoryPathList(dir);
+	std::vector<std::wstring> listDir = File::GetDirectoryPathList(dir, true);
 	return script->CreateStringArrayValue(listDir);
 }
 
