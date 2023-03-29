@@ -252,6 +252,7 @@ std::vector<std::wstring> File::GetFilePathList(const std::wstring& dir, bool bS
 	FindClose(hFind);
 #endif
 
+#if defined(DNH_PROJ_EXECUTOR)
 	if (bSearchArchive) {
 		std::wstring moduleDir = PathProperty::GetModuleDirectory();
 		std::wstring dirUnique = PathProperty::GetUnique(dir);
@@ -260,6 +261,7 @@ std::vector<std::wstring> File::GetFilePathList(const std::wstring& dir, bool bS
 			res.insert(moduleDir + iEntry->fullPath);
 		}
 	}
+#endif
 
 	return std::vector<std::wstring>(res.begin(), res.end());
 }
@@ -301,6 +303,7 @@ std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir, bo
 	FindClose(hFind);
 #endif
 
+#if defined(DNH_PROJ_EXECUTOR)
 	if (bSearchArchive) {
 		std::wstring moduleDir = PathProperty::GetModuleDirectory();
 		std::wstring dirUnique = PathProperty::GetUnique(dir);
@@ -310,6 +313,7 @@ std::vector<std::wstring> File::GetDirectoryPathList(const std::wstring& dir, bo
 			res.insert(dir);
 		}
 	}
+#endif
 
 	return std::vector<std::wstring>(res.begin(), res.end());
 }
