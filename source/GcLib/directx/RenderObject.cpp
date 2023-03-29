@@ -1902,7 +1902,8 @@ bool DxMesh::CreateFromFile(const std::wstring& path) {
 		return CreateFromFileReader(reader);
 	}
 	catch (gstd::wexception& e) {
-		std::wstring str = StringUtility::Format(L"DxMesh: Mesh load failed. [%s]\r\n\t%s", path.c_str(), e.what());
+		std::wstring str = StringUtility::Format(L"DxMesh: Mesh load failed. [%s]\r\n\t%s", 
+			PathProperty::ReduceModuleDirectory(path).c_str(), e.what());
 		Logger::WriteTop(str);
 	}
 	return false;

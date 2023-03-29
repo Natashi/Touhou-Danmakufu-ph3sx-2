@@ -474,7 +474,8 @@ bool MetasequoiaMesh::CreateFromFileReader(shared_ptr<gstd::FileReader> reader) 
 			MetasequoiaMeshData* data = (MetasequoiaMeshData*)data_.get();
 			res = data->CreateFromFileReader(reader);
 			if (res) {
-				Logger::WriteTop(StringUtility::Format(L"MetasequoiaMesh: Mesh loaded. [%s]", name.c_str()));
+				Logger::WriteTop(StringUtility::Format(L"MetasequoiaMesh: Mesh loaded. [%s]", 
+					PathProperty::ReduceModuleDirectory(name).c_str()));
 				_AddManager(name, data_);
 			}
 			else {
