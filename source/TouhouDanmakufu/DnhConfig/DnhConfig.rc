@@ -12,12 +12,6 @@
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
-#ifdef _WIN32
-LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
-#pragma code_page(932)
-#endif //_WIN32
-
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -46,144 +40,15 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu
+// Icon
 //
 
-IDR_MENU_MAIN MENU DISCARDABLE 
-BEGIN
-    POPUP "File(&F)"
-    BEGIN
-        MENUITEM "Exit(&E)\tALT+F4",            ID_MENUITEM_MAIN_EXIT
-    END
-END
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
 
+//IDI_ICON                ICON    DISCARDABLE     "th_dnh_sx.ico"
 
 /////////////////////////////////////////////////////////////////////////////
-//
-// Dialog
-//
-
-IDD_DIALOG_MAIN DIALOG DISCARDABLE  0, 0, 229, 249
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Config th_dnh_ph3sx"
-MENU IDR_MENU_MAIN
-FONT 9, "Arial"
-BEGIN
-    PUSHBUTTON      "OK",IDOK,116,230,50,14,BS_FLAT
-    PUSHBUTTON      "Cancel",IDCANCEL,172,230,50,14,BS_FLAT
-    PUSHBUTTON      "Start Game",ID_BUTTON_EXECUTE,60,230,50,14,BS_FLAT
-	CONTROL         "Tab1",IDC_TAB_MAIN,"SysTabControl32",0x0,7,0,215,223
-END
-
-IDD_PANEL_DEVICE DIALOG DISCARDABLE  0, 0, 155, 96
-STYLE WS_CHILD
-FONT 9, "Arial"
-BEGIN
-    GROUPBOX        "Window Style",IDC_STATIC,6,3,116,24
-    CONTROL         "Fullscreen",IDC_RADIO_FULLSCREEN,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,12,13,49,10
-    CONTROL         "Windowed",IDC_RADIO_WINDOW,"Button",BS_AUTORADIOBUTTON,69,
-                    13,44,10
-					
-    GROUPBOX        "Window Size",IDC_STATIC,6,32,93,29
-    COMBOBOX        IDC_COMBO_WINDOWSIZE,13,43,71,30,CBS_DROPDOWNLIST | 
-                    WS_VSCROLL | WS_TABSTOP
-					
-	GROUPBOX        "Anti-Aliasing",IDC_STATIC,105,32,93,29
-    COMBOBOX        IDC_COMBO_MULTISAMPLE,112,43,71,30,CBS_DROPDOWNLIST | 
-                    WS_VSCROLL | WS_TABSTOP
-					
-    GROUPBOX        "Screen Refresh Rate",IDC_STATIC,6,65,192,24
-    CONTROL         "1/1 (Recommended)",IDC_RADIO_FPS_1,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,12,75,76,10
-    CONTROL         "1/2",IDC_RADIO_FPS_2,"Button",BS_AUTORADIOBUTTON,96,75,
-                    26,10
-    CONTROL         "1/3",IDC_RADIO_FPS_3,"Button",BS_AUTORADIOBUTTON,125,75,
-                    26,10
-    CONTROL         "Variable",IDC_RADIO_FPS_AUTO,"Button",BS_AUTORADIOBUTTON,155,75,
-					42,10
-					
-	GROUPBOX        "Color Mode",IDC_STATIC,6,93,120,24
-	CONTROL         "32 bit (Default)",IDC_RADIO_COLOR_32,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,12,103,70,10
-	CONTROL         "16 bit",IDC_RADIO_COLOR_16,"Button",BS_AUTORADIOBUTTON,78,103,36,10
-	
-	GROUPBOX        "Graphics",IDC_STATIC,6,122,192,74
-	CONTROL         "Fullscreen Vertical Sync (Recommended)",IDC_VSYNC,"Button",BS_AUTOCHECKBOX,
-					12,133,180,10
-	CONTROL         "Use Borderless Fullscreen in Fullscreen Mode",IDC_PSEUDOFULLSCREEN,"Button",BS_AUTOCHECKBOX,
-					12,147,180,10
-	CONTROL         "Start in Reference Rasterizer Mode (Forbidden)",IDC_REFERENCERASTERIZER,"Button",BS_AUTOCHECKBOX,
-					12,161,180,10
-END
-
-IDD_PANEL_KEY DIALOG DISCARDABLE  0, 0, 208, 171
-STYLE WS_CHILD
-FONT 9, "Arial"
-BEGIN
-    CONTROL         "List1",IDC_LIST_KEY,"SysListView32",LVS_REPORT | 
-                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | 
-                    WS_BORDER | WS_TABSTOP,7,36,194,164
-    COMBOBOX        IDC_COMBO_PADINDEX,13,14,182,15,CBS_DROPDOWNLIST | 
-                    WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Pad Device",IDC_STATIC,7,3,194,29
-END
-
-IDD_PANEL_OPTION DIALOG DISCARDABLE  0, 0, 209, 167
-STYLE WS_CHILD
-FONT 9, "Arial"
-BEGIN
-	GROUPBOX        "Game Executable Path",IDC_STATIC,7,3,194,29
-	EDITTEXT        IDC_TEXT_EXE_PATH,13,14,149,14,ES_LEFT | ES_AUTOHSCROLL
-	PUSHBUTTON      "Browse",IDC_BUTTON_EXE_PATH_BROWSE,166,14,29,13,BS_FLAT
-    CONTROL         "List1",IDC_LIST_OPTION,"SysListView32",LVS_REPORT | 
-                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | 
-                    WS_BORDER | WS_TABSTOP,7,36,194,164
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
-BEGIN
-    IDD_DIALOG_MAIN, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 222
-        BOTTOMMARGIN, 204
-    END
-
-    IDD_PANEL_DEVICE, DIALOG
-    BEGIN
-        RIGHTMARGIN, 168
-        BOTTOMMARGIN, 92
-    END
-
-    IDD_PANEL_KEY, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 221
-        BOTTOMMARGIN, 168
-    END
-
-    IDD_PANEL_OPTION, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 222
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 160
-    END
-END
-#endif    // APSTUDIO_INVOKED
-
-#endif    // “ú–{Œê resources
-/////////////////////////////////////////////////////////////////////////////
-
-
 
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

@@ -21,6 +21,15 @@
       <UniqueIdentifier>{5729d24a-873a-4c5e-978c-e72543cec9d5}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
+    <Filter Include="source\external">
+      <UniqueIdentifier>{d05e6834-306a-46e4-bdef-fb70ec377849}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\external\imgui">
+      <UniqueIdentifier>{22e2dd30-542e-4d56-9025-ab1bd2a91ac3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\external\imgui\backends">
+      <UniqueIdentifier>{9c339da4-8f04-46e3-a172-9610a645517e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\GcLib\gstd\Application.cpp">
@@ -70,6 +79,27 @@
     </ClCompile>
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhConfiguration.cpp">
       <Filter>source\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\backends\imgui_impl_dx9.cpp">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui_draw.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui_tables.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui_widgets.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhConfig\ControllerMap.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -138,6 +168,33 @@
     </ClInclude>
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhConfiguration.hpp">
       <Filter>source\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\backends\imgui_impl_dx9.h">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\backends\imgui_impl_win32.h">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imconfig.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imgui.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imgui_internal.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imstb_rectpack.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imstb_textedit.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imstb_truetype.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhConfig\ControllerMap.hpp">
+      <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

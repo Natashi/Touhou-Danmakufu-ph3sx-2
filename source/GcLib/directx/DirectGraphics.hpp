@@ -84,6 +84,7 @@ namespace directx {
 		void AddDirectGraphicsListener(DirectGraphicsListener* listener);
 		void RemoveDirectGraphicsListener(DirectGraphicsListener* listener);
 
+		IDirect3D9* GetDirect3D() { return pDirect3D_; }
 		IDirect3DDevice9* GetDevice() { return pDevice_; }
 		IDirect3DSurface9* GetBaseSurface() { return pBackSurf_; }
 		IDirect3DSurface9* GetZBufferSurface() { return pZBuffer_; }

@@ -25,22 +25,26 @@ DnhConfiguration::DnhConfiguration() {
 
 	pathExeLaunch_ = DNH_EXE_NAME;
 
-	padIndex_ = 0;
-	mapKey_[EDirectInput::KEY_LEFT] = new VirtualKey(DIK_LEFT, 0, 0);
-	mapKey_[EDirectInput::KEY_RIGHT] = new VirtualKey(DIK_RIGHT, 0, 1);
-	mapKey_[EDirectInput::KEY_UP] = new VirtualKey(DIK_UP, 0, 2);
-	mapKey_[EDirectInput::KEY_DOWN] = new VirtualKey(DIK_DOWN, 0, 3);
+	{
+		padIndex_ = 0;
+		padResponse_ = 500;
 
-	mapKey_[EDirectInput::KEY_OK] = new VirtualKey(DIK_Z, 0, 5);
-	mapKey_[EDirectInput::KEY_CANCEL] = new VirtualKey(DIK_X, 0, 6);
+		mapKey_[EDirectInput::KEY_LEFT] = new VirtualKey(DIK_LEFT, 0, 0);
+		mapKey_[EDirectInput::KEY_RIGHT] = new VirtualKey(DIK_RIGHT, 0, 1);
+		mapKey_[EDirectInput::KEY_UP] = new VirtualKey(DIK_UP, 0, 2);
+		mapKey_[EDirectInput::KEY_DOWN] = new VirtualKey(DIK_DOWN, 0, 3);
 
-	mapKey_[EDirectInput::KEY_SHOT] = new VirtualKey(DIK_Z, 0, 5);
-	mapKey_[EDirectInput::KEY_BOMB] = new VirtualKey(DIK_X, 0, 6);
-	mapKey_[EDirectInput::KEY_SLOWMOVE] = new VirtualKey(DIK_LSHIFT, 0, 7);
-	mapKey_[EDirectInput::KEY_USER1] = new VirtualKey(DIK_C, 0, 8);
-	mapKey_[EDirectInput::KEY_USER2] = new VirtualKey(DIK_V, 0, 9);
+		mapKey_[EDirectInput::KEY_OK] = new VirtualKey(DIK_Z, 0, 5);
+		mapKey_[EDirectInput::KEY_CANCEL] = new VirtualKey(DIK_X, 0, 6);
 
-	mapKey_[EDirectInput::KEY_PAUSE] = new VirtualKey(DIK_ESCAPE, 0, 10);
+		mapKey_[EDirectInput::KEY_SHOT] = new VirtualKey(DIK_Z, 0, 5);
+		mapKey_[EDirectInput::KEY_BOMB] = new VirtualKey(DIK_X, 0, 6);
+		mapKey_[EDirectInput::KEY_SLOWMOVE] = new VirtualKey(DIK_LSHIFT, 0, 7);
+		mapKey_[EDirectInput::KEY_USER1] = new VirtualKey(DIK_C, 0, 8);
+		mapKey_[EDirectInput::KEY_USER2] = new VirtualKey(DIK_V, 0, 9);
+
+		mapKey_[EDirectInput::KEY_PAUSE] = new VirtualKey(DIK_ESCAPE, 0, 10);
+	}
 
 	bLogWindow_ = false;
 	bLogFile_ = false;
@@ -153,8 +157,8 @@ bool DnhConfiguration::LoadConfigFile() {
 	pathExeLaunch_ = record.GetRecordAsStringW("pathLaunch");
 	if (pathExeLaunch_.size() == 0) pathExeLaunch_ = DNH_EXE_NAME;
 
-	if (record.IsExists("padIndex"))
-		padIndex_ = record.GetRecordAsInteger("padIndex");
+	padIndex_ = record.GetRecordAsInteger("padIndex");
+	padResponse_ = record.GetRecordAsInteger("padResponse");
 
 	{
 		ByteBuffer bufKey;
@@ -203,6 +207,7 @@ bool DnhConfiguration::SaveConfigFile() {
 	record.SetRecordAsStringW("pathLaunch", pathExeLaunch_);
 
 	record.SetRecordAsInteger("padIndex", padIndex_);
+	record.SetRecordAsInteger("padResponse", padResponse_);
 
 	{
 		ByteBuffer bufKey;

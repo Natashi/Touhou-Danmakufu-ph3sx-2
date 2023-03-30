@@ -7,48 +7,37 @@
 //EApplication
 //*******************************************************************
 EApplication::EApplication() {
-
 }
 EApplication::~EApplication() {
-
 }
-bool EApplication::_Initialize() {
-	EFileManager* fileManager = EFileManager::CreateInstance();
-	fileManager->Initialize();
 
-	HWND hWndMain = MainWindow::GetInstance()->GetWindowHandle();
+bool EApplication::_Initialize() {
+	MainWindow* wndMain = MainWindow::GetInstance();
+	HWND hWndMain = wndMain->GetWindowHandle();
 
 	EDirectInput* input = EDirectInput::CreateInstance();
 	input->Initialize(hWndMain);
 
-	MainWindow* wndMain = MainWindow::GetInstance();
-	wndMain->StartUp();
-	::SetForegroundWindow(wndMain->GetWindowHandle());
+	wndMain->InitializePanels();
 
 	return true;
 }
+
 bool EApplication::_Loop() {
-	MainWindow* mainWindow = MainWindow::GetInstance();
-	HWND hWndFocused = ::GetForegroundWindow();
-	HWND hWndMain = mainWindow->GetWindowHandle();
-	if (hWndFocused != hWndMain) {
-		//非アクティブ時は動作しない
-		::Sleep(10);
-		return true;
+	MainWindow* wndMain = MainWindow::GetInstance();
+	return wndMain->Loop();
+}
+bool EApplication::Run() {
+	while (true) {
+		if (!_Loop())
+			break;
 	}
 
-	EDirectInput* input = EDirectInput::GetInstance();
-	input->Update();
-	mainWindow->UpdateKeyAssign();
-
-	::Sleep(10);
-
+	bAppRun_ = false;
 	return true;
 }
+
 bool EApplication::_Finalize() {
 	EDirectInput::DeleteInstance();
-	EFileManager::DeleteInstance();
 	return true;
 }
-
-

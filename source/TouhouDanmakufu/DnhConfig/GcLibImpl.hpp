@@ -10,10 +10,13 @@
 class EApplication : public Singleton<EApplication>, public Application {
 	friend Singleton<EApplication>;
 public:
-	~EApplication();
 	EApplication();
+	~EApplication();
 
 	bool _Initialize();
+
 	bool _Loop();
+	virtual bool Run();
+
 	bool _Finalize();
 };

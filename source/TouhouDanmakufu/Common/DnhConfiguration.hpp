@@ -40,6 +40,7 @@ public:
 
 	int16_t padIndex_;
 	std::map<int16_t, ref_count_ptr<VirtualKey>> mapKey_;
+	LONG padResponse_;
 
 	std::wstring pathExeLaunch_;
 

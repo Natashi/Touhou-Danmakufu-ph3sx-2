@@ -163,6 +163,7 @@ namespace gstd {
 		static std::wstring BytesToWString(const char* pBegin, size_t count, Type encoding);
 	};
 
+#define BASIC_STR_TEMPL template<class E, class T = std::char_traits<E>, class A = std::allocator<E>>
 
 	//================================================================
 	//StringUtility
@@ -207,6 +208,12 @@ namespace gstd {
 		static std::string Slice(const std::string& s, size_t length);
 		static std::string Trim(const std::string& str);
 
+		template<class _Iter>
+		static std::string Join(_Iter begin, _Iter end, const std::string& join);
+		static std::string Join(const std::vector<std::string>& strs, const std::string& join);
+
+		static std::string FromGuid(const GUID* guid);
+
 		//----------------------------------------------------------------
 
 		static std::vector<std::wstring> Split(const std::wstring& str, const std::wstring& delim);
@@ -227,9 +234,12 @@ namespace gstd {
 		static std::wstring Slice(const std::wstring& s, size_t length);
 		static std::wstring Trim(const std::wstring& str);
 
+		template<class _Iter>
+		static std::wstring Join(_Iter begin, _Iter end, const std::wstring& join);
+		static std::wstring Join(const std::vector<std::wstring>& strs, const std::wstring& join);
+
 		static size_t CountAsciiSizeCharacter(const std::wstring& str);
-		template<class E, class T = std::char_traits<E>, class A = std::allocator<E>>
-		static size_t GetByteSize(const std::basic_string<E, T, A>& str) {
+		BASIC_STR_TEMPL static size_t GetByteSize(const std::basic_string<E, T, A>& str) {
 			return str.size() * sizeof(E);
 		}
 	};
@@ -274,7 +284,6 @@ namespace gstd {
 		const wchar_t* what() { return message_.c_str(); }
 	};
 
-#if defined(DNH_PROJ_EXECUTOR)
 	//================================================================
 	//Math
 	constexpr double GM_PI = 3.14159265358979323846;
@@ -484,7 +493,6 @@ namespace gstd {
 			}
 		};
 	};
-#endif
 
 	//================================================================
 	//ByteOrder

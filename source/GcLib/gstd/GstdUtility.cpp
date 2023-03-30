@@ -573,6 +573,29 @@ std::string StringUtility::Trim(const std::string& str) {
 	return res;
 }
 
+template<class _Iter>
+std::string StringUtility::Join(_Iter begin, _Iter end, const std::string& join) {
+	std::string res;
+	size_t i = 0;
+	for (auto itr = begin; itr != end; ++i) {
+		res += *itr;
+		if ((++itr) != end)
+			res += join;
+	}
+	return res;
+}
+std::string StringUtility::Join(const std::vector<std::string>& strs, const std::string& join) {
+	return Join(strs.begin(), strs.end(), join);
+}
+
+std::string StringUtility::FromGuid(const GUID* guid) {
+	return Format(
+		"{%08x-%04x-%04x-%04x-%04x%08x}",
+		guid->Data1, guid->Data2, guid->Data3,
+		((uint16_t*)guid->Data4)[0], ((uint16_t*)guid->Data4)[1],
+		((uint32_t*)guid->Data4)[1]);
+}
+
 //----------------------------------------------------------------
 
 std::vector<std::wstring> StringUtility::Split(const std::wstring& str, const std::wstring& delim) {
@@ -689,6 +712,22 @@ std::wstring StringUtility::Trim(const std::wstring& str) {
 
 	return res;
 }
+
+template<class _Iter>
+std::wstring StringUtility::Join(_Iter begin, _Iter end, const std::wstring& join) {
+	std::wstring res;
+	size_t i = 0;
+	for (auto itr = begin; itr != end; ++i) {
+		res += *itr;
+		if ((++itr) != end)
+			res += join;
+	}
+	return res;
+}
+std::wstring StringUtility::Join(const std::vector<std::wstring>& strs, const std::wstring& join) {
+	return Join(strs.begin(), strs.end(), join);
+}
+
 size_t StringUtility::CountAsciiSizeCharacter(const std::wstring& str) {
 	if (str.size() == 0) return 0;
 

@@ -6,149 +6,149 @@
 //KeyCodeList
 //*******************************************************************
 KeyCodeList::KeyCodeList() {
-	mapText_[DIK_ESCAPE] = L"Esc";
-	mapText_[DIK_1] = L"1";
-	mapText_[DIK_2] = L"2";
-	mapText_[DIK_3] = L"3";
-	mapText_[DIK_4] = L"4";
-	mapText_[DIK_5] = L"5";
-	mapText_[DIK_6] = L"6";
-	mapText_[DIK_7] = L"7";
-	mapText_[DIK_8] = L"8";
-	mapText_[DIK_9] = L"9";
-	mapText_[DIK_0] = L"0";
-	mapText_[DIK_MINUS] = L"-";
-	mapText_[DIK_EQUALS] = L"=";
-	mapText_[DIK_BACK] = L"Backspace ";
-	mapText_[DIK_TAB] = L"Tab";
+	mapText_[DIK_ESCAPE] = "Esc";
+	mapText_[DIK_1] = "1";
+	mapText_[DIK_2] = "2";
+	mapText_[DIK_3] = "3";
+	mapText_[DIK_4] = "4";
+	mapText_[DIK_5] = "5";
+	mapText_[DIK_6] = "6";
+	mapText_[DIK_7] = "7";
+	mapText_[DIK_8] = "8";
+	mapText_[DIK_9] = "9";
+	mapText_[DIK_0] = "0";
+	mapText_[DIK_MINUS] = "-";
+	mapText_[DIK_EQUALS] = "=";
+	mapText_[DIK_BACK] = "Backspace ";
+	mapText_[DIK_TAB] = "Tab";
 
-	mapText_[DIK_Q] = L"Q";
-	mapText_[DIK_W] = L"W";
-	mapText_[DIK_E] = L"E";
-	mapText_[DIK_R] = L"R";
-	mapText_[DIK_T] = L"T";
-	mapText_[DIK_Y] = L"Y";
-	mapText_[DIK_U] = L"U";
-	mapText_[DIK_I] = L"I";
-	mapText_[DIK_O] = L"O";
-	mapText_[DIK_P] = L"P";
-	mapText_[DIK_LBRACKET] = L"[";
-	mapText_[DIK_RBRACKET] = L"]";
-	mapText_[DIK_RETURN] = L"Enter";
-	mapText_[DIK_LCONTROL] = L"LCtrl";
+	mapText_[DIK_Q] = "Q";
+	mapText_[DIK_W] = "W";
+	mapText_[DIK_E] = "E";
+	mapText_[DIK_R] = "R";
+	mapText_[DIK_T] = "T";
+	mapText_[DIK_Y] = "Y";
+	mapText_[DIK_U] = "U";
+	mapText_[DIK_I] = "I";
+	mapText_[DIK_O] = "O";
+	mapText_[DIK_P] = "P";
+	mapText_[DIK_LBRACKET] = "[";
+	mapText_[DIK_RBRACKET] = "]";
+	mapText_[DIK_RETURN] = "Enter";
+	mapText_[DIK_LCONTROL] = "LCtrl";
 
-	mapText_[DIK_A] = L"A";
-	mapText_[DIK_S] = L"S";
-	mapText_[DIK_D] = L"D";
-	mapText_[DIK_F] = L"F";
-	mapText_[DIK_G] = L"G";
-	mapText_[DIK_H] = L"H";
-	mapText_[DIK_J] = L"J";
-	mapText_[DIK_K] = L"K";
-	mapText_[DIK_L] = L"L";
-	mapText_[DIK_SEMICOLON] = L";";
-	mapText_[DIK_APOSTROPHE] = L"'";
-	mapText_[DIK_GRAVE] = L"`";
-	mapText_[DIK_LSHIFT] = L"LShift";
-	mapText_[DIK_BACKSLASH] = L"\\";
+	mapText_[DIK_A] = "A";
+	mapText_[DIK_S] = "S";
+	mapText_[DIK_D] = "D";
+	mapText_[DIK_F] = "F";
+	mapText_[DIK_G] = "G";
+	mapText_[DIK_H] = "H";
+	mapText_[DIK_J] = "J";
+	mapText_[DIK_K] = "K";
+	mapText_[DIK_L] = "L";
+	mapText_[DIK_SEMICOLON] = ";";
+	mapText_[DIK_APOSTROPHE] = "'";
+	mapText_[DIK_GRAVE] = "`";
+	mapText_[DIK_LSHIFT] = "LShift";
+	mapText_[DIK_BACKSLASH] = "\\";
 
-	mapText_[DIK_Z] = L"Z";
-	mapText_[DIK_X] = L"X";
-	mapText_[DIK_C] = L"C";
-	mapText_[DIK_V] = L"V";
-	mapText_[DIK_B] = L"B";
-	mapText_[DIK_N] = L"N";
-	mapText_[DIK_M] = L"M";
-	mapText_[DIK_COMMA] = L",";
-	mapText_[DIK_PERIOD] = L".";
-	mapText_[DIK_SLASH] = L"/";
-	mapText_[DIK_RSHIFT] = L"RShift";
-	mapText_[DIK_MULTIPLY] = L"* (Numpad)";
-	mapText_[DIK_LMENU] = L"LAlt";
-	mapText_[DIK_SPACE] = L"Space";
-	mapText_[DIK_CAPITAL] = L"Caps Lock";
+	mapText_[DIK_Z] = "Z";
+	mapText_[DIK_X] = "X";
+	mapText_[DIK_C] = "C";
+	mapText_[DIK_V] = "V";
+	mapText_[DIK_B] = "B";
+	mapText_[DIK_N] = "N";
+	mapText_[DIK_M] = "M";
+	mapText_[DIK_COMMA] = ",";
+	mapText_[DIK_PERIOD] = ".";
+	mapText_[DIK_SLASH] = "/";
+	mapText_[DIK_RSHIFT] = "RShift";
+	mapText_[DIK_MULTIPLY] = "* (Numpad)";
+	mapText_[DIK_LMENU] = "LAlt";
+	mapText_[DIK_SPACE] = "Space";
+	mapText_[DIK_CAPITAL] = "Caps Lock";
 
-	mapText_[DIK_F1] = L"F1";
-	mapText_[DIK_F2] = L"F2";
-	mapText_[DIK_F3] = L"F3";
-	mapText_[DIK_F4] = L"F4";
-	mapText_[DIK_F5] = L"F5";
-	mapText_[DIK_F6] = L"F6";
-	mapText_[DIK_F7] = L"F7";
-	mapText_[DIK_F8] = L"F8";
-	mapText_[DIK_F9] = L"F9";
-	mapText_[DIK_F10] = L"F10";
+	mapText_[DIK_F1] = "F1";
+	mapText_[DIK_F2] = "F2";
+	mapText_[DIK_F3] = "F3";
+	mapText_[DIK_F4] = "F4";
+	mapText_[DIK_F5] = "F5";
+	mapText_[DIK_F6] = "F6";
+	mapText_[DIK_F7] = "F7";
+	mapText_[DIK_F8] = "F8";
+	mapText_[DIK_F9] = "F9";
+	mapText_[DIK_F10] = "F10";
 
-	mapText_[DIK_NUMLOCK] = L"Num Lock";
-	mapText_[DIK_SCROLL] = L"Scroll Lock";
+	mapText_[DIK_NUMLOCK] = "Num Lock";
+	mapText_[DIK_SCROLL] = "Scroll Lock";
 
-	mapText_[DIK_NUMPAD7] = L"7 (Numpad)";
-	mapText_[DIK_NUMPAD8] = L"8 (Numpad)";
-	mapText_[DIK_NUMPAD9] = L"9 (Numpad)";
-	mapText_[DIK_SUBTRACT] = L"- (Numpad)";
-	mapText_[DIK_NUMPAD4] = L"4 (Numpad)";
-	mapText_[DIK_NUMPAD5] = L"5 (Numpad)";
-	mapText_[DIK_NUMPAD6] = L"6 (Numpad)";
-	mapText_[DIK_ADD] = L"+ (Numpad)";
-	mapText_[DIK_NUMPAD1] = L"1 (Numpad)";
-	mapText_[DIK_NUMPAD2] = L"2 (Numpad)";
-	mapText_[DIK_NUMPAD3] = L"3 (Numpad)";
-	mapText_[DIK_NUMPAD0] = L"0 (Numpad)";
-	mapText_[DIK_DECIMAL] = L". (Numpad)";
+	mapText_[DIK_NUMPAD7] = "7 (Numpad)";
+	mapText_[DIK_NUMPAD8] = "8 (Numpad)";
+	mapText_[DIK_NUMPAD9] = "9 (Numpad)";
+	mapText_[DIK_SUBTRACT] = "- (Numpad)";
+	mapText_[DIK_NUMPAD4] = "4 (Numpad)";
+	mapText_[DIK_NUMPAD5] = "5 (Numpad)";
+	mapText_[DIK_NUMPAD6] = "6 (Numpad)";
+	mapText_[DIK_ADD] = "+ (Numpad)";
+	mapText_[DIK_NUMPAD1] = "1 (Numpad)";
+	mapText_[DIK_NUMPAD2] = "2 (Numpad)";
+	mapText_[DIK_NUMPAD3] = "3 (Numpad)";
+	mapText_[DIK_NUMPAD0] = "0 (Numpad)";
+	mapText_[DIK_DECIMAL] = ". (Numpad)";
 
-	mapText_[DIK_F11] = L"F11";
-	mapText_[DIK_F12] = L"F12";
-	mapText_[DIK_F13] = L"F13";		//NEC PC-98
-	mapText_[DIK_F14] = L"F14";		//NEC PC-98
-	mapText_[DIK_F15] = L"F15";		//NEC PC-98
+	mapText_[DIK_F11] = "F11";
+	mapText_[DIK_F12] = "F12";
+	mapText_[DIK_F13] = "F13";		//NEC PC-98
+	mapText_[DIK_F14] = "F14";		//NEC PC-98
+	mapText_[DIK_F15] = "F15";		//NEC PC-98
 
-	mapText_[DIK_KANA] = L"Kana";				//Japanese Keyboard
-	mapText_[DIK_CONVERT] = L"Convert";			//Japanese Keyboard
-	mapText_[DIK_NOCONVERT] = L"No Convert";	//Japanese Keyboard
-	mapText_[DIK_YEN] = L"\\";					//Japanese Keyboard
-	mapText_[DIK_NUMPADEQUALS] = L"(Numpad)";	//NEC PC-98
-	mapText_[DIK_CIRCUMFLEX] = L"^";			//Japanese Keyboard
+	mapText_[DIK_KANA] = "Kana";				//Japanese Keyboard
+	mapText_[DIK_CONVERT] = "Convert";			//Japanese Keyboard
+	mapText_[DIK_NOCONVERT] = "No Convert";	//Japanese Keyboard
+	mapText_[DIK_YEN] = "\\";					//Japanese Keyboard
+	mapText_[DIK_NUMPADEQUALS] = "(Numpad)";	//NEC PC-98
+	mapText_[DIK_CIRCUMFLEX] = "^";			//Japanese Keyboard
 
-	mapText_[DIK_AT] = L"@";			//NEC PC-98
-	mapText_[DIK_COLON] = L":";			//NEC PC-98
-	mapText_[DIK_UNDERLINE] = L"_";		//NEC PC-98
-	mapText_[DIK_KANJI] = L"Kanji";		//Japanese Keyboard
-	mapText_[DIK_STOP] = L"Stop";		//NEC PC-98
-	mapText_[DIK_AX] = L"(Japan AX)";
-	mapText_[DIK_UNLABELED] = L"(J3100)";
+	mapText_[DIK_AT] = "@";			//NEC PC-98
+	mapText_[DIK_COLON] = ":";			//NEC PC-98
+	mapText_[DIK_UNDERLINE] = "_";		//NEC PC-98
+	mapText_[DIK_KANJI] = "Kanji";		//Japanese Keyboard
+	mapText_[DIK_STOP] = "Stop";		//NEC PC-98
+	mapText_[DIK_AX] = "(Japan AX)";
+	mapText_[DIK_UNLABELED] = "(J3100)";
 
-	mapText_[DIK_NUMPADENTER] = L"Enter (Numpad)";
-	mapText_[DIK_RCONTROL] = L"RCtrl";
-	mapText_[DIK_NUMPADCOMMA] = L", (Numpad)";		//NEC PC-98
-	mapText_[DIK_DIVIDE] = L"/ (Numpad)";
-	mapText_[DIK_SYSRQ] = L"Sys Rq";
-	mapText_[DIK_RMENU] = L"RAlt";
-	mapText_[DIK_PAUSE] = L"Pause";
-	mapText_[DIK_HOME] = L"Home";
-	mapText_[DIK_UP] = L"↑";
-	mapText_[DIK_PRIOR] = L"Page Up";
-	mapText_[DIK_LEFT] = L"←";
-	mapText_[DIK_RIGHT] = L"→";
-	mapText_[DIK_END] = L"End";
-	mapText_[DIK_DOWN] = L"↓";
-	mapText_[DIK_NEXT] = L"Page Down";
+	mapText_[DIK_NUMPADENTER] = "Enter (Numpad)";
+	mapText_[DIK_RCONTROL] = "RCtrl";
+	mapText_[DIK_NUMPADCOMMA] = ", (Numpad)";		//NEC PC-98
+	mapText_[DIK_DIVIDE] = "/ (Numpad)";
+	mapText_[DIK_SYSRQ] = "Sys Rq";
+	mapText_[DIK_RMENU] = "RAlt";
+	mapText_[DIK_PAUSE] = "Pause";
+	mapText_[DIK_HOME] = "Home";
+	mapText_[DIK_UP] = "↑";
+	mapText_[DIK_PRIOR] = "Page Up";
+	mapText_[DIK_LEFT] = "←";
+	mapText_[DIK_RIGHT] = "→";
+	mapText_[DIK_END] = "End";
+	mapText_[DIK_DOWN] = "↓";
+	mapText_[DIK_NEXT] = "Page Down";
 
-	mapText_[DIK_INSERT] = L"Insert";
-	mapText_[DIK_DELETE] = L"Delete";
-	mapText_[DIK_LWIN] = L"LWindows";
-	mapText_[DIK_RWIN] = L"RWindows";
-	mapText_[DIK_APPS] = L"Menu";
-	mapText_[DIK_POWER] = L"Power";
-	mapText_[DIK_SLEEP] = L"Sleep";
+	mapText_[DIK_INSERT] = "Insert";
+	mapText_[DIK_DELETE] = "Delete";
+	mapText_[DIK_LWIN] = "LWindows";
+	mapText_[DIK_RWIN] = "RWindows";
+	mapText_[DIK_APPS] = "Menu";
+	mapText_[DIK_POWER] = "Power";
+	mapText_[DIK_SLEEP] = "Sleep";
 }
-KeyCodeList::~KeyCodeList() {
-}
+
 bool KeyCodeList::IsValidCode(int16_t code) {
 	bool res = mapText_.find(code) != mapText_.end();
 	return res;
 }
-std::wstring KeyCodeList::GetCodeText(int16_t code) {
+std::string KeyCodeList::GetCodeText(int16_t code) {
 	auto itr = mapText_.find(code);
-	if (itr == mapText_.end()) return L"";
+	if (itr == mapText_.end())
+		return "";
 	return itr->second;
 }

@@ -6,10 +6,11 @@
 //*******************************************************************
 //WinMain
 //*******************************************************************
-int APIENTRY wWinMain(HINSTANCE hInstance,
-                        HINSTANCE hPrevInstance,
-                        LPWSTR lpCmdLine,
-                        int nCmdShow )
+int APIENTRY wWinMain(
+	HINSTANCE hInstance,
+    HINSTANCE hPrevInstance,
+    LPWSTR lpCmdLine,
+    int nCmdShow)
 {
 	DebugUtility::DumpMemoryLeaksOnExit();
 
@@ -23,7 +24,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
 
 		MainWindow* wndMain = MainWindow::CreateInstance();
 		wndMain->Initialize();
-		wndMain->SetWindowVisible(true);
 
 		EApplication* app = EApplication::CreateInstance();
 		app->Initialize();
