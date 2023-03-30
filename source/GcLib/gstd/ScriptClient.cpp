@@ -2037,14 +2037,16 @@ void ScriptLoader::_ParseInclude() {
 								reader->SetFilePointerBegin();
 							}
 
-							if (includeEncoding == Encoding::UTF16LE || includeEncoding == Encoding::UTF16BE) {
-								//Including UTF-16
-
+							if (reader->GetFileSize() >= targetBomSize) {
 								reader->Seek(targetBomSize);
 								bufIncluding.resize(reader->GetFileSize() - targetBomSize); //- BOM size
 								reader->Read(&bufIncluding[0], bufIncluding.size());
+							}
 
-								if (bufIncluding.size() > 0U) {
+							if (bufIncluding.size() > 0U) {
+								if (includeEncoding == Encoding::UTF16LE || includeEncoding == Encoding::UTF16BE) {
+									//Including UTF-16
+
 									//Convert the including file to UTF-8
 									if (encoding_ == Encoding::UTF8 || encoding_ == Encoding::UTF8BOM) {
 										if (includeEncoding == Encoding::UTF16BE) {
@@ -2067,15 +2069,9 @@ void ScriptLoader::_ParseInclude() {
 										bufIncluding = mbres;
 									}
 								}
-							}
-							else {
-								//Including UTF-8
+								else {
+									//Including UTF-8
 
-								reader->Seek(targetBomSize);
-								bufIncluding.resize(reader->GetFileSize() - targetBomSize);
-								reader->Read(&bufIncluding[0], bufIncluding.size());
-
-								if (bufIncluding.size() > 0U) {
 									//Convert the include file to UTF-16 if it's in UTF-8
 									if (encoding_ == Encoding::UTF16LE || encoding_ == Encoding::UTF16BE) {
 										size_t includeSize = bufIncluding.size();

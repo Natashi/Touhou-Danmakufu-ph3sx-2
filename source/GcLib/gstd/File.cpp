@@ -108,6 +108,7 @@ void ByteBuffer::Seek(size_t pos) {
 	if (offset_ > size_) offset_ = size_;
 }
 DWORD ByteBuffer::Write(LPVOID buf, DWORD size) {
+	if (size == 0) return 0;
 	if (offset_ + size > reserve_) {
 		SetSize(offset_ + size);
 	}
@@ -118,7 +119,7 @@ DWORD ByteBuffer::Write(LPVOID buf, DWORD size) {
 	return size;
 }
 DWORD ByteBuffer::Read(LPVOID buf, DWORD size) {
-	if (offset_ >= size_) return 0;
+	if (offset_ >= size_ || size == 0) return 0;
 	size_t readable = std::min<size_t>(size, size_ - offset_);
 	memcpy(buf, &data_[offset_], readable);
 	offset_ += readable;
