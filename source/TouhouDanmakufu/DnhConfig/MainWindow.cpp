@@ -1151,7 +1151,7 @@ void KeyPanel::ProcessGui() {
 								}
 
 								if (bColor) {
-									ImGui::PopStyleColor();
+									ImGui::PopStyleColor(2);
 								}
 							}
 							if (!bPadAvailable) ImGui::EndDisabled();
