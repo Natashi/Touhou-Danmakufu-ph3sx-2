@@ -246,28 +246,29 @@ static const std::vector<function> dxFunction = {
 	{ "Obj_SetRenderPriorityI", DxScript::Func_Obj_SetRenderPriorityI, 2 },
 	{ "Obj_GetRenderPriority", DxScript::Func_Obj_GetRenderPriority, 1 },
 	{ "Obj_GetRenderPriorityI", DxScript::Func_Obj_GetRenderPriorityI, 1 },
-	{ "Obj_Clone", DxScript::Func_Obj_Clone, 1 },
-
-	{ "Obj_GetValue", DxScript::Func_Obj_GetValue, 2 },
-	{ "Obj_GetValue", DxScript::Func_Obj_GetValue, 3 },
-	{ "Obj_GetValueD", DxScript::Func_Obj_GetValue, 3 },
-	{ "Obj_SetValue", DxScript::Func_Obj_SetValue, 3 },
-	{ "Obj_DeleteValue", DxScript::Func_Obj_DeleteValue, 2 },
-	{ "Obj_IsValueExists", DxScript::Func_Obj_IsValueExists, 2 },
-
-	{ "Obj_GetValueI", DxScript::Func_Obj_GetValueI, 2 },
-	{ "Obj_GetValueI", DxScript::Func_Obj_GetValueI, 3 },
-	{ "Obj_GetValueDI", DxScript::Func_Obj_GetValueI, 3 },
-	{ "Obj_SetValueI", DxScript::Func_Obj_SetValueI, 3 },
-	{ "Obj_DeleteValueI", DxScript::Func_Obj_DeleteValueI, 2 },
-	{ "Obj_IsValueExistsI", DxScript::Func_Obj_IsValueExistsI, 2 },
-	{ "Obj_CopyValueTable", DxScript::Func_Obj_CopyValueTable, 3 },
-	{ "Obj_GetExistFrame", DxScript::Func_Obj_GetExistFrame, 1 },
 
 	{ "Obj_GetType", DxScript::Func_Obj_GetType, 1 },
+	{ "Obj_GetExistFrame", DxScript::Func_Obj_GetExistFrame, 1 },
 	{ "Obj_GetParentScriptID", DxScript::Func_Obj_GetParentScriptID, 1 },
 	{ "Obj_SetParentScriptID", DxScript::Func_Obj_SetParentScriptID, 1 },
 	{ "Obj_SetParentScriptID", DxScript::Func_Obj_SetParentScriptID, 2 }, //Overloaded
+	{ "Obj_Clone", DxScript::Func_Obj_Clone, 1 },
+
+	{ "Obj_GetValue", DxScript::Func_Obj_GetValue<false>, 2 },
+	{ "Obj_GetValue", DxScript::Func_Obj_GetValue<false>, 3 },
+	{ "Obj_GetValueD", DxScript::Func_Obj_GetValue<false>, 3 },
+	{ "Obj_SetValue", DxScript::Func_Obj_SetValue<false>, 3 },
+	{ "Obj_DeleteValue", DxScript::Func_Obj_DeleteValue<false>, 2 },
+	{ "Obj_IsValueExists", DxScript::Func_Obj_IsValueExists<false>, 2 },
+	{ "Obj_CopyValueTable", DxScript::Func_Obj_CopyValueTable<false>, 3 },
+
+	{ "Obj_GetValueI", DxScript::Func_Obj_GetValue<true>, 2 },
+	{ "Obj_GetValueI", DxScript::Func_Obj_GetValue<true>, 3 },
+	{ "Obj_GetValueDI", DxScript::Func_Obj_GetValue<true>, 3 },
+	{ "Obj_SetValueI", DxScript::Func_Obj_SetValue<true>, 3 },
+	{ "Obj_DeleteValueI", DxScript::Func_Obj_DeleteValue<true>, 2 },
+	{ "Obj_IsValueExistsI", DxScript::Func_Obj_IsValueExists<true>, 2 },
+	{ "Obj_CopyValueTableI", DxScript::Func_Obj_CopyValueTable<true>, 3 },
 
 	//Render object functions
 	{ "ObjRender_SetX", DxScript::Func_ObjRender_SetX, 2 },
@@ -2542,121 +2543,154 @@ gstd::value DxScript::Func_Obj_GetRenderPriorityI(gstd::script_machine* machine,
 	return script->CreateFloatValue(res);
 }
 
+template<bool INTEGER>
 gstd::value DxScript::Func_Obj_GetValue(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	std::wstring key = argv[1].as_string();
-	gstd::value def = argc >= 3 ? argv[2] : value();
+
+	gstd::value defaultValue = argc >= 3 ? argv[2] : value();
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		auto pValueMap = obj->GetValueMap();
-		auto itr = pValueMap->find(key);
-		if (itr != pValueMap->end())
-			return itr->second;
+		if constexpr (!INTEGER) {
+			std::wstring key = argv[1].as_string();
+
+			auto& pValueMap = obj->GetValueMap();
+			auto itr = pValueMap.find(key);
+			if (itr != pValueMap.end())
+				return itr->second;
+		}
+		else {
+			int64_t key = argv[1].as_int();
+
+			auto& pValueMap = obj->GetValueMapI();
+			auto itr = pValueMap.find(key);
+			if (itr != pValueMap.end())
+				return itr->second;
+		}
 	}
-	return def;
+
+	return defaultValue;
 }
+template<bool INTEGER>
 gstd::value DxScript::Func_Obj_SetValue(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	std::wstring key = argv[1].as_string();
+	
 	gstd::value val = argv[2];
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		auto pValueMap = obj->GetValueMap();
-		(*pValueMap)[key] = val;
+		if constexpr (!INTEGER) {
+			std::wstring key = argv[1].as_string();
+
+			auto& pValueMap = obj->GetValueMap();
+			pValueMap[key] = val;
+		}
+		else {
+			int64_t key = argv[1].as_int();
+
+			auto& pValueMap = obj->GetValueMapI();
+			pValueMap[key] = val;
+		}
 	}
 
 	return value();
 }
+template<bool INTEGER>
 gstd::value DxScript::Func_Obj_DeleteValue(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	std::wstring key = argv[1].as_string();
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		auto pValueMap = obj->GetValueMap();
-		pValueMap->erase(key);
+		if constexpr (!INTEGER) {
+			std::wstring key = argv[1].as_string();
+
+			auto& pValueMap = obj->GetValueMap();
+			pValueMap.erase(key);
+		}
+		else {
+			int64_t key = argv[1].as_int();
+
+			auto& pValueMap = obj->GetValueMapI();
+			pValueMap.erase(key);
+		}
 	}
 
 	return value();
 }
+template<bool INTEGER>
 gstd::value DxScript::Func_Obj_IsValueExists(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	std::wstring key = argv[1].as_string();
 
 	bool res = false;
 
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		auto pValueMap = obj->GetValueMap();
-		res = pValueMap->find(key) != pValueMap->end();
+		if constexpr (!INTEGER) {
+			std::wstring key = argv[1].as_string();
+
+			auto& pValueMap = obj->GetValueMap();
+			res = pValueMap.find(key) != pValueMap.end();
+		}
+		else {
+			int64_t key = argv[1].as_int();
+
+			auto& pValueMap = obj->GetValueMapI();
+			res = pValueMap.find(key) != pValueMap.end();
+		}
 	}
 
 	return script->CreateBooleanValue(res);
 }
-
-gstd::value DxScript::Func_Obj_GetValueI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
+template<bool INTEGER>
+gstd::value DxScript::Func_Obj_GetValueCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();
-	int64_t key = argv[1].as_int();
-	gstd::value def = argc >= 3 ? argv[2] : value();
-
+	int64_t res = 0;
 	DxScriptObjectBase* obj = script->GetObjectPointer(id);
 	if (obj) {
-		auto pValueMap = obj->GetValueMapI();
-		auto itr = pValueMap->find(key);
-		if (itr != pValueMap->end())
-			return itr->second;
+		if constexpr (!INTEGER) {
+			res = obj->GetValueMap().size();
+		}
+		else {
+			res = obj->GetValueMapI().size();
+		}
 	}
-	return def;
+	return script->CreateIntValue(res);
 }
-gstd::value DxScript::Func_Obj_SetValueI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	int64_t key = argv[1].as_int();
-	gstd::value val = argv[2];
 
-	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj) {
-		auto pValueMap = obj->GetValueMapI();
-		(*pValueMap)[key] = val;
+template<typename T>
+static void _CopyValueTable(std::unordered_map<T, gstd::value>& srcMap, std::unordered_map<T, gstd::value>& dstMap, int mode) {
+	//Mode 0 - Clear dest and copy
+	if (mode == 0) {
+		dstMap.clear();
+		for (auto itr = srcMap.begin(); itr != srcMap.end(); ++itr)
+			dstMap.insert(*itr);
 	}
-
-	return value();
-}
-gstd::value DxScript::Func_Obj_DeleteValueI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	int64_t key = argv[1].as_int();
-
-	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj) {
-		auto pValueMap = obj->GetValueMapI();
-		pValueMap->erase(key);
+	//Mode 1 - Source takes priority (Always overwrite)
+	else if (mode == 1) {
+		for (auto itr = srcMap.begin(); itr != srcMap.end(); ++itr) {
+			auto itrDst = srcMap.find(itr->first);
+			if (itrDst != srcMap.end())
+				itrDst->second = itr->second;
+			else
+				dstMap.insert(*itr);
+		}
 	}
-
-	return value();
-}
-gstd::value DxScript::Func_Obj_IsValueExistsI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	int64_t key = argv[1].as_float();
-
-	bool res = false;
-
-	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj) {
-		auto pValueMap = obj->GetValueMapI();
-		res = pValueMap->find(key) != pValueMap->end();
+	//Mode 2 - Dest takes priority (No overwrite)
+	else if (mode == 2) {
+		for (auto itr = srcMap.begin(); itr != srcMap.end(); ++itr) {
+			auto itrDst = srcMap.find(itr->first);
+			if (itrDst == srcMap.end())
+				dstMap.insert(*itr);
+		}
 	}
-
-	return script->CreateBooleanValue(res);
 }
+
+template<bool INTEGER>
 gstd::value DxScript::Func_Obj_CopyValueTable(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
@@ -2668,57 +2702,24 @@ gstd::value DxScript::Func_Obj_CopyValueTable(gstd::script_machine* machine, int
 		int idSrc = argv[1].as_int();
 		DxScriptObjectBase* objSrc = script->GetObjectPointer(idSrc);
 		if (objSrc) {
-			auto& valMap = objSrc->mapObjectValue_;
-			countValue = valMap.size();
-
 			int copyMode = argv[2].as_int();
-			//Mode 0 - Clear dest and copy
-			if (copyMode == 0) {
-				objDst->mapObjectValue_.clear();
-				for (auto itr = valMap.begin(); itr != valMap.end(); ++itr)
-					objDst->mapObjectValue_.insert(*itr);
+
+			if constexpr (!INTEGER) {
+				auto& srcMap = objSrc->GetValueMap();
+				auto& dstMap = objDst->GetValueMap();
+				countValue = srcMap.size();
+				_CopyValueTable(srcMap, dstMap, copyMode);
 			}
-			//Mode 1 - Source takes priority (Always overwrite)
-			else if (copyMode == 1) {
-				for (auto itr = valMap.begin(); itr != valMap.end(); ++itr) {
-					auto itrDst = objSrc->mapObjectValue_.find(itr->first);
-					if (itrDst != objSrc->mapObjectValue_.end())
-						itrDst->second = itr->second;
-					else
-						objDst->mapObjectValue_.insert(*itr);
-				}
-			}
-			//Mode 2 - Dest takes priority (No overwrite)
-			else if (copyMode == 2) {
-				for (auto itr = valMap.begin(); itr != valMap.end(); ++itr) {
-					auto itrDst = objSrc->mapObjectValue_.find(itr->first);
-					if (itrDst == objSrc->mapObjectValue_.end())
-						objDst->mapObjectValue_.insert(*itr);
-				}
+			else {
+				auto& srcMap = objSrc->GetValueMapI();
+				auto& dstMap = objDst->GetValueMapI();
+				countValue = srcMap.size();
+				_CopyValueTable(srcMap, dstMap, copyMode);
 			}
 		}
 	}
 
 	return script->CreateIntValue(countValue);
-}
-
-gstd::value DxScript::Func_Obj_GetValueCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	int64_t res = 0;
-	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj)
-		res = obj->GetValueMap()->size();
-	return script->CreateIntValue(res);
-}
-gstd::value DxScript::Func_Obj_GetValueCountI(gstd::script_machine* machine, int argc, const gstd::value* argv) {
-	DxScript* script = (DxScript*)machine->data;
-	int id = argv[0].as_int();
-	int64_t res = 0;
-	DxScriptObjectBase* obj = script->GetObjectPointer(id);
-	if (obj)
-		res = obj->GetValueMapI()->size();
-	return script->CreateIntValue(res);
 }
 
 gstd::value DxScript::Func_Obj_GetExistFrame(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -2728,7 +2729,6 @@ gstd::value DxScript::Func_Obj_GetExistFrame(gstd::script_machine* machine, int 
 	int res = obj ? obj->GetExistFrame() : 0;
 	return script->CreateIntValue(res);
 }
-
 value DxScript::Func_Obj_GetType(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 	int id = argv[0].as_int();

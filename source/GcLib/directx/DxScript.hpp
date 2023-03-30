@@ -258,22 +258,20 @@ namespace directx {
 		static gstd::value Func_Obj_SetRenderPriorityI(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_GetRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		static gstd::value Func_Obj_GetRenderPriorityI(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_Obj_GetValue(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_Obj_SetValue(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_Obj_DeleteValue(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		static gstd::value Func_Obj_IsValueExists(gstd::script_machine* machine, int argc, const gstd::value* argv);
-		DNH_FUNCAPI_DECL_(Func_Obj_GetValueI);
-		DNH_FUNCAPI_DECL_(Func_Obj_SetValueI);
-		DNH_FUNCAPI_DECL_(Func_Obj_DeleteValueI);
-		DNH_FUNCAPI_DECL_(Func_Obj_IsValueExistsI);
-		DNH_FUNCAPI_DECL_(Func_Obj_CopyValueTable);
-		DNH_FUNCAPI_DECL_(Func_Obj_GetValueCount);
-		DNH_FUNCAPI_DECL_(Func_Obj_GetValueCountI);
 		static gstd::value Func_Obj_GetType(gstd::script_machine* machine, int argc, const gstd::value* argv);
 		DNH_FUNCAPI_DECL_(Func_Obj_GetExistFrame);
 		DNH_FUNCAPI_DECL_(Func_Obj_GetParentScriptID);
 		DNH_FUNCAPI_DECL_(Func_Obj_SetParentScriptID);
 		DNH_FUNCAPI_DECL_(Func_Obj_Clone);
+
+#define DEFINE_OBJVALUE_FUNC(name) template<bool INTEGER> DNH_FUNCAPI_DECL_(name);
+		DEFINE_OBJVALUE_FUNC(Func_Obj_GetValue);
+		DEFINE_OBJVALUE_FUNC(Func_Obj_SetValue);
+		DEFINE_OBJVALUE_FUNC(Func_Obj_DeleteValue);
+		DEFINE_OBJVALUE_FUNC(Func_Obj_IsValueExists);
+		DEFINE_OBJVALUE_FUNC(Func_Obj_GetValueCount);
+		DEFINE_OBJVALUE_FUNC(Func_Obj_CopyValueTable);
+#undef DEFINE_OBJVALUE_FUNC
 
 		//Dx関数：オブジェクト操作(RenderObject)
 		static gstd::value Func_ObjRender_SetX(gstd::script_machine* machine, int argc, const gstd::value* argv);

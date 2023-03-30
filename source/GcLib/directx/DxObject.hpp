@@ -69,8 +69,8 @@ namespace directx {
 
 		uint32_t GetExistFrame() { return frameExist_; }
 
-		std::unordered_map<std::wstring, gstd::value>* GetValueMap() { return &mapObjectValue_; }
-		std::unordered_map<int64_t, gstd::value>* GetValueMapI() { return &mapObjectValueI_; }
+		std::unordered_map<std::wstring, gstd::value>& GetValueMap() { return mapObjectValue_; }
+		std::unordered_map<int64_t, gstd::value>& GetValueMapI() { return mapObjectValueI_; }
 	};
 
 	//****************************************************************************
