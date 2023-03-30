@@ -34,6 +34,13 @@ namespace gstd {
 			return stdch::duration_cast<stdch::milliseconds>(
 				GetCpuTime().time_since_epoch()).count();
 		}
+
+		//Get a font filepath from name and style in C++/Windows
+		static std::wstring GetSystemFontFilePath(const std::wstring& faceName);
+
+		static inline float DpiToScalingFactor(UINT dpi) {
+			return (float)dpi / USER_DEFAULT_SCREEN_DPI;
+		}
 	};
 
 	//================================================================

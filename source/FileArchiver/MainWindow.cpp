@@ -270,82 +270,18 @@ void MainWindow::_SaveEnvironment() {
 	}
 }
 
-//Get a font filepath from name and style in C++/Windows
-//https://stackoverflow.com/a/14127259
-std::wstring GetSystemFontFilePath(const std::wstring& faceName) {
-	static const LPWSTR fontRegistryPath = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
-
-	HKEY hKey;
-
-	LONG result = ::RegOpenKeyExW(HKEY_LOCAL_MACHINE, fontRegistryPath, 0, KEY_READ, &hKey);
-	if (result != ERROR_SUCCESS)
-		return L"";
-
-	DWORD maxValueNameSize, maxValueDataSize;
-	result = ::RegQueryInfoKeyW(hKey, 0, 0, 0, 0, 0, 0, 0, &maxValueNameSize, &maxValueDataSize, 0, 0);
-	if (result != ERROR_SUCCESS)
-		return L"";
-
-	std::wstring wsFontFile;
-	{
-		DWORD valueIndex = 0;
-		DWORD valueNameSize, valueDataSize, valueType;
-
-		std::wstring valueName;
-		valueName.resize(maxValueNameSize);
-
-		std::vector<byte> valueData(maxValueDataSize);
-
-		do {
-			wsFontFile.clear();
-			valueDataSize = maxValueDataSize;
-			valueNameSize = maxValueNameSize;
-
-			result = ::RegEnumValueW(hKey, valueIndex, (LPWSTR)valueName.c_str(), &valueNameSize,
-				0, &valueType, (LPBYTE)valueData.data(), &valueDataSize);
-			valueIndex++;
-			if (result != ERROR_SUCCESS || valueType != REG_SZ)
-				continue;
-
-			// Found a match
-			if (valueName.find(faceName) != std::wstring::npos) {
-				//if (_wcsnicmp(faceName.c_str(), valueName.c_str(), faceName.length()) == 0) {
-				wsFontFile.assign((LPWSTR)valueData.data(), valueDataSize);
-				break;
-			}
-		} while (result != ERROR_NO_MORE_ITEMS);
-	}
-
-	::RegCloseKey(hKey);
-
-	if (wsFontFile.empty())
-		return L"";
-
-	WCHAR winDir[MAX_PATH];
-	::GetWindowsDirectoryW(winDir, MAX_PATH);
-
-	std::wstringstream ss;
-	ss << winDir << "\\Fonts\\" << wsFontFile;
-	wsFontFile = ss.str();
-
-	return std::wstring(wsFontFile.begin(), wsFontFile.end());
-}
-float DpiToScalingFactor(UINT dpi) {
-	return (float)dpi / USER_DEFAULT_SCREEN_DPI;
-}
-
 void MainWindow::_ResetFont() {
 	if (mapSystemFontPath_.size() == 0) {
 		std::vector<std::wstring> fonts = { L"Arial" };
 		for (auto& i : fonts) {
-			auto path = GetSystemFontFilePath(i);
+			auto path = SystemUtility::GetSystemFontFilePath(i);
 			mapSystemFontPath_[i] = StringUtility::ConvertWideToMulti(path);
 		}
 	}
 
 	if (pIo_ == nullptr || ImGui::GetCurrentContext() == nullptr) return;
 
-	float scale = DpiToScalingFactor(dpi_);
+	float scale = SystemUtility::DpiToScalingFactor(dpi_);
 
 	pIo_->Fonts->Clear();
 	mapFont_.clear();
@@ -520,17 +456,15 @@ void MainWindow::_ProcessGui() {
 				ImGuiWindowFlags window_flags = ImGuiWindowFlags_None | ImGuiWindowFlags_MenuBar;
 				ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
 
-				ImGui::BeginChild("ChildW_FileTreeView",
-					ImVec2(ImGui::GetContentRegionAvail().x - 112, ht),
-					true, window_flags);
+				ImVec2 size(ImGui::GetContentRegionAvail().x - 112, ht);
 
-				if (ImGui::BeginMenuBar()) {
-					ImGui::Text("Files");
-					ImGui::EndMenuBar();
+				if (ImGui::BeginChild("ChildW_FileTreeView", size, true, window_flags)) {
+					if (ImGui::BeginMenuBar()) {
+						ImGui::Text("Files");
+						ImGui::EndMenuBar();
+					}
+					_ProcessGui_FileTree();
 				}
-
-				_ProcessGui_FileTree();
-
 				ImGui::EndChild();
 				ImGui::PopStyleVar();
 			}
@@ -609,7 +543,7 @@ void MainWindow::_ProcessGui() {
 		ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 		ImGui::SetNextWindowSize(ImVec2(popupSize, 0), ImGuiCond_Appearing);
 		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-		if (ImGui::BeginPopupModal(title, nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+		if (ImGui::BeginPopupModal(title, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse)) {
 			if (pArchiverWorkThread_->GetStatus() == Thread::RUN) {
 				const std::wstring& status = pArchiverWorkThread_->GetArchiverStatus();
 				float progress = pArchiverWorkThread_->GetArchiverProgress();
@@ -790,7 +724,7 @@ LRESULT MainWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 	case WM_DPICHANGED:
 	{
 		dpi_ = LOWORD(wParam);
-		_Resize(DpiToScalingFactor(dpi_));
+		_Resize(SystemUtility::DpiToScalingFactor(dpi_));
 		return 0;
 	}
 	case WM_SYSCOMMAND:

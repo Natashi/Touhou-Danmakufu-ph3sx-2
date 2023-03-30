@@ -83,6 +83,65 @@ void SystemUtility::TestCpuSupportSIMD() {
 #endif
 }
 
+std::wstring SystemUtility::GetSystemFontFilePath(const std::wstring& faceName) {
+	static const LPWSTR fontRegistryPath = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
+
+	HKEY hKey;
+
+	LONG result = ::RegOpenKeyExW(HKEY_LOCAL_MACHINE, fontRegistryPath, 0, KEY_READ, &hKey);
+	if (result != ERROR_SUCCESS)
+		return L"";
+
+	DWORD maxValueNameSize, maxValueDataSize;
+	result = ::RegQueryInfoKeyW(hKey, 0, 0, 0, 0, 0, 0, 0, &maxValueNameSize, &maxValueDataSize, 0, 0);
+	if (result != ERROR_SUCCESS)
+		return L"";
+
+	std::wstring wsFontFile;
+	{
+		DWORD valueIndex = 0;
+		DWORD valueNameSize, valueDataSize, valueType;
+
+		std::wstring valueName;
+		valueName.resize(maxValueNameSize);
+
+		std::vector<byte> valueData(maxValueDataSize);
+
+		do {
+			wsFontFile.clear();
+			valueDataSize = maxValueDataSize;
+			valueNameSize = maxValueNameSize;
+
+			result = ::RegEnumValueW(hKey, valueIndex, (LPWSTR)valueName.c_str(), &valueNameSize,
+				0, &valueType, (LPBYTE)valueData.data(), &valueDataSize);
+			valueIndex++;
+			if (result != ERROR_SUCCESS || valueType != REG_SZ)
+				continue;
+
+			// Found a match
+			if (valueName.find(faceName) != std::wstring::npos) {
+				//if (_wcsnicmp(faceName.c_str(), valueName.c_str(), faceName.length()) == 0) {
+				wsFontFile.assign((LPWSTR)valueData.data(), valueDataSize);
+				break;
+			}
+		} while (result != ERROR_NO_MORE_ITEMS);
+	}
+
+	::RegCloseKey(hKey);
+
+	if (wsFontFile.empty())
+		return L"";
+
+	WCHAR winDir[MAX_PATH];
+	::GetWindowsDirectoryW(winDir, MAX_PATH);
+
+	std::wstringstream ss;
+	ss << winDir << "\\Fonts\\" << wsFontFile;
+	wsFontFile = ss.str();
+
+	return std::wstring(wsFontFile.begin(), wsFontFile.end());
+}
+
 //*******************************************************************
 //AnyMap
 //*******************************************************************
