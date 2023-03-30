@@ -15,18 +15,78 @@ namespace directx {
 			MAX_KEY = 256,
 			MAX_MOUSE_BUTTON = 4,
 			MAX_PAD_BUTTON = 16,
+			MAX_PAD_STATE = 32,
+
+			// ------------------------------
+
+			PAD_ANALOG_LEFT = 0,
+			PAD_ANALOG_RIGHT,
+			PAD_ANALOG_UP,
+			PAD_ANALOG_DOWN,
+
+			PAD_D_LEFT = 4,
+			PAD_D_RIGHT,
+			PAD_D_UP,
+			PAD_D_DOWN,
+
+			PAD_0 = 8,
+			PAD_1,
+			PAD_2,
+			PAD_3,
+			PAD_4,
+			PAD_5,
+			PAD_6,
+			PAD_7,
+			PAD_8,
+			PAD_9,
+			PAD_10,
+			PAD_11,
+			PAD_12,
+			PAD_13,
+			PAD_14,
+			PAD_15,
+		};
+	public:
+		struct InputDeviceHeader {
+			LPDIRECTINPUTDEVICE8 pDevice = nullptr;
+			DIDEVICEINSTANCE ddi;
+
+			std::wstring hidPath;
+			uint16_t vendorID = 0, productID = 0;
+
+			HRESULT QueryDeviceInstance();
+			HRESULT QueryHidPath();
+			HRESULT QueryVidPid();
+
+			inline void Unacquire() {
+				if (pDevice) {
+					pDevice->Unacquire();
+					ptr_release(pDevice);
+				}
+			}
+		};
+
+		struct KeyboardInputDevice {
+			InputDeviceHeader idh;
+			BYTE state[MAX_KEY];
+		};
+		struct MouseInputDevice {
+			InputDeviceHeader idh;
+			DIMOUSESTATE2 state;
+		};
+		struct JoypadInputDevice {
+			InputDeviceHeader idh;
+			DIJOYSTATE state;
+			LONG responseThreshold;
 		};
 	protected:
 		HWND hWnd_;
 
-		LPDIRECTINPUT8 pInput_;
-		LPDIRECTINPUTDEVICE8 pKeyboard_;
-		LPDIRECTINPUTDEVICE8 pMouse_;
-		std::vector<LPDIRECTINPUTDEVICE8> pJoypad_;		//Vector for pad device objects
-		BYTE stateKey_[MAX_KEY];
-		DIMOUSESTATE stateMouse_;
-		std::vector<DIJOYSTATE> statePad_;
-		std::vector<LONG> padRes_;						//Minumum response for pad input
+		LPDIRECTINPUT8 pDirectInput_;
+
+		KeyboardInputDevice deviceKeyboard_;
+		MouseInputDevice deviceMouse_;
+		std::vector<JoypadInputDevice> listDeviceJoypad_;
 
 		DIKeyState bufKey_[MAX_KEY];					//Keyboard key states
 		DIKeyState bufMouse_[MAX_MOUSE_BUTTON];			//Mouse key states
@@ -44,10 +104,13 @@ namespace directx {
 		bool _IdleJoypad();
 		bool _IdleMouse();
 
-		DIKeyState _GetKey(UINT code, DIKeyState state);
+		DIKeyState _GetKeyboardKey(UINT code, DIKeyState state);
 		DIKeyState _GetMouseButton(int16_t button, DIKeyState state);
-		DIKeyState _GetPadDirection(int16_t index, UINT code, DIKeyState state);
+
 		DIKeyState _GetPadButton(int16_t index, int16_t buttonNo, DIKeyState state);
+		DIKeyState _GetPadAnalogDirection(int16_t index, uint16_t direction, DIKeyState state);
+		DIKeyState _GetPadPovHatDirection(int16_t index, int iHat, uint16_t direction, DIKeyState state);
+
 		DIKeyState _GetStateSub(bool flag, DIKeyState state);
 	public:
 		DirectInput();
@@ -58,22 +121,28 @@ namespace directx {
 		virtual bool Initialize(HWND hWnd);
 		virtual void Update();
 
+		void UnacquireInputDevices();
+		void RefreshInputDevices();
+
 		DIKeyState GetKeyState(int16_t key);
 		DIKeyState GetMouseState(int16_t button);
 		DIKeyState GetPadState(int16_t padNo, int16_t button);
 
-		LONG GetMouseMoveX() { return stateMouse_.lX; }
-		LONG GetMouseMoveY() { return stateMouse_.lY; }
-		LONG GetMouseMoveZ() { return stateMouse_.lZ; }
+		LONG GetMouseMoveX() { return deviceMouse_.state.lX; }
+		LONG GetMouseMoveY() { return deviceMouse_.state.lY; }
+		LONG GetMouseMoveZ() { return deviceMouse_.state.lZ; }
 		POINT GetMousePosition();
 
 		void ResetInputState();
 		void ResetMouseState();
 		void ResetKeyState();
-		void ResetPadState();
+		void ResetPadState(int16_t padIndex = -1);
 
-		size_t GetPadDeviceCount() { return bufPad_.size(); }
-		DIDEVICEINSTANCE GetPadDeviceInformation(int16_t padIndex);
+		const KeyboardInputDevice* GetKeyboardDevice() { return &deviceKeyboard_; }
+		const MouseInputDevice* GetMouseDevice() { return &deviceMouse_; }
+
+		size_t GetPadDeviceCount() { return listDeviceJoypad_.size(); }
+		const JoypadInputDevice* GetPadDevice(int16_t padIndex);
 	};
 
 	//*******************************************************************

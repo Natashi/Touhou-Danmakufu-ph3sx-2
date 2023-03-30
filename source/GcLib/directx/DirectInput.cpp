@@ -11,31 +11,18 @@ using namespace directx;
 DirectInput* DirectInput::thisBase_ = nullptr;
 DirectInput::DirectInput() {
 	hWnd_ = nullptr;
-	pInput_ = nullptr;
-	pKeyboard_ = nullptr;
-	pMouse_ = nullptr;
+
+	pDirectInput_ = nullptr;
 }
 DirectInput::~DirectInput() {
 	if (this != thisBase_) return;
 
 	Logger::WriteTop("DirectInput: Finalizing:");
-	for (auto& ptrPad : pJoypad_) {
-		if (ptrPad == nullptr) continue;
-		ptrPad->Unacquire();
-		ptr_release(ptrPad);
-	}
 
-	if (pMouse_) {
-		pMouse_->Unacquire();
-		ptr_release(pMouse_);
-	}
+	UnacquireInputDevices();
 
-	if (pKeyboard_) {
-		pKeyboard_->Unacquire();
-		ptr_release(pKeyboard_);
-	}
+	ptr_release(pDirectInput_);
 
-	ptr_release(pInput_);
 	thisBase_ = nullptr;
 	Logger::WriteTop("DirectInput: Finalized.");
 }
@@ -47,17 +34,10 @@ bool DirectInput::Initialize(HWND hWnd) {
 
 	HINSTANCE hInst = ::GetModuleHandle(nullptr);
 
-	HRESULT hr = DirectInput8Create(hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&pInput_, nullptr);
+	HRESULT hr = DirectInput8Create(hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&pDirectInput_, nullptr);
 	_WrapDXErr(hr, "Initialize", "DirectInput8Create failure.", true);
 
-	_InitializeKeyBoard();
-	_InitializeMouse();
-	_InitializeJoypad();
-
-	bufPad_.resize(pJoypad_.size());
-	for (int16_t iPad = 0; iPad < pJoypad_.size(); ++iPad) {
-		bufPad_[iPad].resize(32);
-	}
+	RefreshInputDevices();
 
 	thisBase_ = this;
 
@@ -73,65 +53,154 @@ void DirectInput::_WrapDXErr(HRESULT hr, const std::string& routine, const std::
 	if (bThrow) throw wexception(err);
 }
 
+void DirectInput::UnacquireInputDevices() {
+	deviceKeyboard_.idh.Unacquire();
+	deviceMouse_.idh.Unacquire();
+	for (auto& iPad : listDeviceJoypad_) {
+		iPad.idh.Unacquire();
+	}
+	listDeviceJoypad_.clear();
+}
+void DirectInput::RefreshInputDevices() {
+	UnacquireInputDevices();
+
+	_InitializeKeyBoard();
+
+	_InitializeMouse();
+
+	_InitializeJoypad();
+	bufPad_.resize(listDeviceJoypad_.size());
+	for (int16_t iPad = 0; iPad < listDeviceJoypad_.size(); ++iPad) {
+		bufPad_[iPad].resize(MAX_PAD_STATE);
+	}
+}
+
+HRESULT DirectInput::InputDeviceHeader::QueryDeviceInstance() {
+	if (pDevice == nullptr)
+		return E_FAIL;
+
+	ZeroMemory(&ddi, sizeof(DIDEVICEINSTANCE));
+	ddi.dwSize = sizeof(DIDEVICEINSTANCE);
+
+	HRESULT hr = pDevice->GetDeviceInfo(&ddi);
+
+	return hr;
+}
+HRESULT DirectInput::InputDeviceHeader::QueryHidPath() {
+	if (pDevice == nullptr)
+		return E_FAIL;
+
+	DIPROPGUIDANDPATH dip;
+	dip.diph.dwSize = sizeof(dip);
+	dip.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+	dip.diph.dwObj = 0;
+	dip.diph.dwHow = DIPH_DEVICE;
+
+	HRESULT hr = pDevice->GetProperty(DIPROP_GUIDANDPATH, &dip.diph);
+	if (SUCCEEDED(hr)) {
+		hidPath = dip.wszPath;
+	}
+
+	return hr;
+}
+HRESULT DirectInput::InputDeviceHeader::QueryVidPid() {
+	if (pDevice == nullptr)
+		return E_FAIL;
+
+	DIPROPDWORD dip;
+	dip.diph.dwSize = sizeof(dip);
+	dip.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+	dip.diph.dwObj = 0;
+	dip.diph.dwHow = DIPH_DEVICE;
+
+	HRESULT hr = pDevice->GetProperty(DIPROP_VIDPID, &dip.diph);
+	if (SUCCEEDED(hr)) {
+		vendorID = LOWORD(dip.dwData);
+		productID = HIWORD(dip.dwData);
+	}
+
+	return hr;
+}
+
 bool DirectInput::_InitializeKeyBoard() {
-	Logger::WriteTop("DirectInput: Initializing keyboard.");
+	Logger::WriteTop("DirectInput: Initializing keyboard device.");
 
-	HRESULT hr = S_OK;
+	InputDeviceHeader* idh = &deviceKeyboard_.idh;
+	LPDIRECTINPUTDEVICE8& device = idh->pDevice;
 
-	hr = pInput_->CreateDevice(GUID_SysKeyboard, &pKeyboard_, nullptr);
-	_WrapDXErr(hr, "_InitializeKeyBoard", "Failed to create keyboard object.");
+	HRESULT hr;
+	const std::string method = "_InitializeKeyBoard";
 
-	hr = pKeyboard_->SetDataFormat(&c_dfDIKeyboard);
-	_WrapDXErr(hr, "_InitializeKeyBoard", "Failed to set keyboard data format.");
+	_WrapDXErr(hr = pDirectInput_->CreateDevice(GUID_SysKeyboard, &device, nullptr),
+		method, "Failed to create device.");
 
-	hr = pKeyboard_->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-	_WrapDXErr(hr, "_InitializeKeyBoard", "Failed to set keyboard cooperative level.");
+	_WrapDXErr(hr = idh->QueryDeviceInstance(),
+		method, "Failed to get device info.");
 
-	hr = pKeyboard_->Acquire();
-	_WrapDXErr(hr, "_InitializeKeyBoard", "Failed to acquire keyboard object.");
+	_WrapDXErr(hr = idh->QueryHidPath(),
+		method, "Failed to get device HID path.", false);
+	_WrapDXErr(hr = idh->QueryVidPid(),
+		method, "Failed to get device vendor/product IDs.", false);
 
-	Logger::WriteTop("DirectInput: Keyboard initialized.");
+	_WrapDXErr(hr = device->SetDataFormat(&c_dfDIKeyboard),
+		method, "Failed to set data format.");
+	_WrapDXErr(hr = device->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND),
+		method, "Failed to set cooperative level.");
+
+	_WrapDXErr(hr = device->Acquire(),
+		method, "Failed to acquire device.");
+
+	memset(&deviceKeyboard_.state, 0, sizeof(deviceKeyboard_.state));
+	Logger::WriteTop("DirectInput: Keyboard device initialized.");
 
 	return true;
 }
 bool DirectInput::_InitializeMouse() {
-	Logger::WriteTop("DirectInput: Initializing mouse.");
+	Logger::WriteTop("DirectInput: Initializing mouse device.");
 
-	HRESULT hr = S_OK;
+	InputDeviceHeader* idh = &deviceMouse_.idh;
+	LPDIRECTINPUTDEVICE8& device = idh->pDevice;
 
-	hr = pInput_->CreateDevice(GUID_SysMouse, &pMouse_, nullptr);
-	_WrapDXErr(hr, "_InitializeMouse", "Failed to create mouse object.");
+	HRESULT hr;
+	const std::string method = "_InitializeMouse";
 
-	hr = pMouse_->SetDataFormat(&c_dfDIMouse);
-	_WrapDXErr(hr, "_InitializeMouse", "Failed to set mouse data format.");
+	_WrapDXErr(hr = pDirectInput_->CreateDevice(GUID_SysMouse, &device, nullptr),
+		method, "Failed to create device.");
 
-	hr = pMouse_->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-	_WrapDXErr(hr, "_InitializeMouse", "Failed to set mouse cooperative level.");
+	_WrapDXErr(hr = idh->QueryDeviceInstance(),
+		method, "Failed to get device info.");
 
-	hr = pMouse_->Acquire();
-	_WrapDXErr(hr, "_InitializeMouse", "Failed to acquire mouse object.");
+	_WrapDXErr(hr = idh->QueryHidPath(),
+		method, "Failed to get device HID path.", false);
+	_WrapDXErr(hr = idh->QueryVidPid(),
+		method, "Failed to get device vendor/product IDs.", false);
 
-	Logger::WriteTop("DirectInput: Mouse initialized.");
+	_WrapDXErr(hr = device->SetDataFormat(&c_dfDIMouse2),
+		method, "Failed to set data format.");
+	_WrapDXErr(hr = device->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND),
+		method, "Failed to set cooperative level.");
+
+	_WrapDXErr(device->Acquire(),
+		method, "Failed to acquire device.");
+
+	memset(&deviceMouse_.state, 0, sizeof(DIMOUSESTATE2));
+	Logger::WriteTop("DirectInput: Mouse device initialized.");
+
 	return true;
 }
 bool DirectInput::_InitializeJoypad() {
-	Logger::WriteTop("DirectInput: Initializing joypad.");
+	Logger::WriteTop("DirectInput: Initializing pad device.");
 
 	HRESULT hr = S_OK;
 
-	hr = pInput_->EnumDevices(DI8DEVCLASS_GAMECTRL, (LPDIENUMDEVICESCALLBACK)_GetJoypadStaticCallback, this, DIEDFL_ATTACHEDONLY);
-	_WrapDXErr(hr, "_InitializeJoypad", "Failed to connect to a joypad.");
+	hr = pDirectInput_->EnumDevices(DI8DEVCLASS_GAMECTRL, (LPDIENUMDEVICESCALLBACK)_GetJoypadStaticCallback, this, DIEDFL_ATTACHEDONLY);
+	_WrapDXErr(hr, "_InitializeJoypad", "Failed to connect to a pad device.");
 
-	size_t count = pJoypad_.size();
+	size_t count = listDeviceJoypad_.size();
 	if (count == 0U)
-		Logger::WriteTop("DirectInput:_InitializeJoypad: Failed to connect to a joypad.");
+		Logger::WriteTop("DirectInput:_InitializeJoypad: No pad device detected.");
 
-	statePad_.resize(count);
-	padRes_.resize(count);
-	for (int16_t iPad = 0; iPad < count; ++iPad)
-		padRes_[iPad] = 500L;
-
-	Logger::WriteTop("DirectInput: Joypad initialized.");
+	Logger::WriteTop("DirectInput: Pad device initialized.");
 	return true;
 }
 BOOL CALLBACK DirectInput::_GetJoypadStaticCallback(LPDIDEVICEINSTANCE lpddi, LPVOID pvRef) {
@@ -139,118 +208,139 @@ BOOL CALLBACK DirectInput::_GetJoypadStaticCallback(LPDIDEVICEINSTANCE lpddi, LP
 	return input->_GetJoypadCallback(lpddi);
 }
 BOOL DirectInput::_GetJoypadCallback(LPDIDEVICEINSTANCE lpddi) {
-	Logger::WriteTop("DirectInput: Connecting to a joypad.");
+	Logger::WriteTop(StringUtility::Format(
+		"DirectInput: Attempting to connect to pad device %016x...", (uint64_t)lpddi));
 
-	LPDIRECTINPUTDEVICE8 pJoypad = nullptr;
+	JoypadInputDevice joypad;
+	InputDeviceHeader* idh = &joypad.idh;
+	LPDIRECTINPUTDEVICE8& device = idh->pDevice;
 
-	HRESULT hr = S_OK;
+	try {
+		HRESULT hr = S_OK;
+		const std::string method = "_InitializeJoypad";
 
-	hr = pInput_->CreateDevice(lpddi->guidInstance, &pJoypad, nullptr);
-	if (FAILED(hr)) {
-		Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to create joypad object.");
-		return DIENUM_CONTINUE;
-	}
+		_WrapDXErr((lpddi->dwDevType & DIDEVTYPE_HID) == 0 ? ERROR_NOT_SUPPORTED: 0, 
+			method, "Device not supported (not a Human Interface Device)");
 
-	{
-		DIDEVICEINSTANCE deviceInst;
-		ZeroMemory(&deviceInst, sizeof(DIDEVICEINSTANCE));
-		deviceInst.dwSize = sizeof(DIDEVICEINSTANCE);
-		pJoypad->GetDeviceInfo(&deviceInst);
+		_WrapDXErr(hr = pDirectInput_->CreateDevice(lpddi->guidInstance, &device, nullptr),
+			method, "Failed to create device.");
 
-		Logger::WriteTop(StringUtility::Format("Joypad: Device name=%s", deviceInst.tszInstanceName));
-		Logger::WriteTop(StringUtility::Format("Joypad: Product name=%s", deviceInst.tszProductName));
-	}
+		memcpy(&idh->ddi, lpddi, sizeof(DIDEVICEINSTANCE));
 
-	hr = pJoypad->SetDataFormat(&c_dfDIJoystick);
-	if (FAILED(hr)) {
-		ptr_release(pJoypad);
-		Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad data format.");
-		return DIENUM_CONTINUE;
-	}
+		_WrapDXErr(hr = idh->QueryHidPath(), 
+			method, "Failed to get device HID path.", false);
+		_WrapDXErr(hr = idh->QueryVidPid(),
+			method, "Failed to get device vendor/product IDs.", false);
 
-	hr = pJoypad->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-	if (FAILED(hr)) {
-		ptr_release(pJoypad);
-		Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad cooperative level.");
-		return DIENUM_CONTINUE;
-	}
+		_WrapDXErr(hr = device->SetDataFormat(&c_dfDIJoystick),
+			method, "Failed to set data format.");
+		_WrapDXErr(hr = device->SetCooperativeLevel(hWnd_, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND),
+			method, "Failed to set cooperative level.");
 
-	{
-		DIPROPRANGE diprg;
-		diprg.diph.dwSize = sizeof(DIPROPRANGE);
-		diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-		diprg.diph.dwObj = 0;
-		diprg.diph.dwHow = DIPH_DEVICE;
-		diprg.lMin = -1000;
-		diprg.lMax = +1000;
+		{
+			{
+				DIPROPRANGE diprg;
+				diprg.diph.dwSize = sizeof(DIPROPRANGE);
+				diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+				diprg.diph.dwObj = 0;
+				diprg.diph.dwHow = DIPH_DEVICE;
+				diprg.lMin = -1000;
+				diprg.lMax = +1000;
 
-		hr = pJoypad->SetProperty(DIPROP_RANGE, &diprg.diph);
-		if (FAILED(hr)) {
-			ptr_release(pJoypad);
-			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad axis range.");
-			return DIENUM_CONTINUE;
+				_WrapDXErr(hr = device->SetProperty(DIPROP_RANGE, &diprg.diph),
+					method, "Failed to set pad axis range.");
+			}
+
+			{
+				DIPROPDWORD dipdw;
+				dipdw.diph.dwSize = sizeof(DIPROPDWORD);
+				dipdw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+				dipdw.diph.dwObj = 0;
+				dipdw.diph.dwHow = DIPH_DEVICE;
+				dipdw.dwData = 2000;	//20% deadzone
+
+				_WrapDXErr(hr = device->SetProperty(DIPROP_DEADZONE, &dipdw.diph),
+					method, "Failed to set pad axis deadzone.");
+			}
+
+			_WrapDXErr(hr = device->Acquire(),
+				method, "Failed to acquire device.");
+
+			Logger::WriteTop(StringUtility::Format(
+				"DirectInput: Pad device connected: \n"
+				"    Product name  = %s\n"
+				"    Instance name = %s",
+				idh->ddi.tszProductName, idh->ddi.tszInstanceName));
 		}
+
+		memset(&joypad.state, 0, sizeof(DIJOYSTATE));
+		joypad.responseThreshold = 500;
+
+		listDeviceJoypad_.push_back(joypad);
+	}
+	catch (wexception& err) {
+		ptr_release(device);
+		Logger::WriteTop("DirectInput::_GetJoypadCallback: Connection attempt failed.");
 	}
 
-	{
-		DIPROPDWORD dipdw;
-		dipdw.diph.dwSize = sizeof(DIPROPDWORD);
-		dipdw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-		dipdw.diph.dwObj = 0;
-		dipdw.diph.dwHow = DIPH_DEVICE;
-		dipdw.dwData = 2000;	//20% deadzone
-
-		hr = pJoypad->SetProperty(DIPROP_DEADZONE, &dipdw.diph);
-		if (FAILED(hr)) {
-			ptr_release(pJoypad);
-			Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to set joypad axis deadzone.");
-			return DIENUM_CONTINUE;
-		}
-	}
-
-	hr = pJoypad->Acquire();
-	if (FAILED(hr)) {
-		Logger::WriteTop("DirectInput::_GetJoypadCallback: Failed to acquire joypad object.");
-		return DIENUM_CONTINUE;
-	}
-
-	pJoypad_.push_back(pJoypad);
+#undef CHECKERR
 
 	return DIENUM_CONTINUE;
 }
 
-DIKeyState DirectInput::_GetKey(UINT code, DIKeyState state) {
-	return _GetStateSub((stateKey_[code] & 0x80) == 0x80, state);
+DIKeyState DirectInput::_GetKeyboardKey(UINT code, DIKeyState state) {
+	return _GetStateSub((deviceKeyboard_.state[code] & 0x80) == 0x80, state);
 }
 DIKeyState DirectInput::_GetMouseButton(int16_t button, DIKeyState state) {
-	return _GetStateSub((stateMouse_.rgbButtons[button] & 0x80) == 0x80, state);
+	return _GetStateSub((deviceMouse_.state.rgbButtons[button] & 0x80) == 0x80, state);
 }
-DIKeyState DirectInput::_GetPadDirection(int16_t index, UINT code, DIKeyState state) {
-	if (index >= pJoypad_.size()) return KEY_FREE;
 
-	LONG response = padRes_[index];
-	DIKeyState res = KEY_FREE;
-
-	switch (code) {
-	case DIK_UP:
-		res = _GetStateSub(statePad_[index].lY < -response, state);
-		break;
-	case DIK_DOWN:
-		res = _GetStateSub(statePad_[index].lY > response, state);
-		break;
-	case DIK_LEFT:
-		res = _GetStateSub(statePad_[index].lX < -response, state);
-		break;
-	case DIK_RIGHT:
-		res = _GetStateSub(statePad_[index].lX > response, state);
-		break;
-	}
-
-	return res;
-}
 DIKeyState DirectInput::_GetPadButton(int16_t index, int16_t buttonNo, DIKeyState state) {
-	return _GetStateSub((statePad_[index].rgbButtons[buttonNo] & 0x80) == 0x80, state);
+	return _GetStateSub((listDeviceJoypad_[index].state.rgbButtons[buttonNo] & 0x80) == 0x80, state);
 }
+DIKeyState DirectInput::_GetPadAnalogDirection(int16_t index, uint16_t direction, DIKeyState state) {
+	if (index < listDeviceJoypad_.size()) {
+		LONG response = listDeviceJoypad_[index].responseThreshold;
+		DIJOYSTATE* pState = &listDeviceJoypad_[index].state;
+
+		switch (direction) {
+		case DIK_UP:
+			return _GetStateSub(pState->lY < -response, state);
+		case DIK_DOWN:
+			return _GetStateSub(pState->lY > response, state);
+		case DIK_LEFT:
+			return _GetStateSub(pState->lX < -response, state);
+		case DIK_RIGHT:
+			return _GetStateSub(pState->lX > response, state);
+		}
+	}
+	return KEY_FREE;
+}
+DIKeyState DirectInput::_GetPadPovHatDirection(int16_t index, int iHat, uint16_t direction, DIKeyState state) {
+	// TODO: Determine the amount of POV hats available in a pad
+	if (index < listDeviceJoypad_.size() && iHat < 4) {
+		DIJOYSTATE* pState = &listDeviceJoypad_[index].state;
+		DWORD pov = pState->rgdwPOV[iHat];
+		if (pov == UINT32_MAX)
+			return _GetStateSub(false, state);
+
+		pov /= 100;
+
+		constexpr const int MARGIN = 15;
+		switch (direction) {
+		case DIK_UP:
+			return _GetStateSub(pov < 90  - MARGIN || pov > 270 + MARGIN, state);
+		case DIK_DOWN:
+			return _GetStateSub(pov > 90  + MARGIN && pov < 270 - MARGIN, state);
+		case DIK_LEFT:
+			return _GetStateSub(pov > 180 + MARGIN && pov < 360 - MARGIN, state);
+		case DIK_RIGHT:
+			return _GetStateSub(pov > 0   + MARGIN && pov < 180 - MARGIN, state);
+		}
+	}
+	return KEY_FREE;
+}
+
 DIKeyState DirectInput::_GetStateSub(bool flag, DIKeyState state) {
 	DIKeyState res = KEY_FREE;
 	if (flag) {
@@ -263,64 +353,71 @@ DIKeyState DirectInput::_GetStateSub(bool flag, DIKeyState state) {
 }
 
 bool DirectInput::_IdleKeyboard() {
-	if (!pInput_ || !pKeyboard_)
+	LPDIRECTINPUTDEVICE8 pDevice = deviceKeyboard_.idh.pDevice;
+	if (!pDirectInput_ || !pDevice)
 		return false;
 
-	HRESULT hr = pKeyboard_->GetDeviceState(MAX_KEY, stateKey_);
-	if (SUCCEEDED(hr)) {
-
-	}
-	else if (hr == DIERR_INPUTLOST) {
-		pKeyboard_->Acquire();
-	}
-	return true;
-}
-bool DirectInput::_IdleJoypad() {
-	if (pJoypad_.size() == 0) return false;
-	for (int16_t iPad = 0; iPad < pJoypad_.size(); ++iPad) {
-		if (!pInput_ || !pJoypad_[iPad])
-			return false;
-
-		pJoypad_[iPad]->Poll();
-		HRESULT hr = pJoypad_[iPad]->GetDeviceState(sizeof(DIJOYSTATE), &statePad_[iPad]);
-		if (SUCCEEDED(hr)) {
-
-		}
-		else if (hr == DIERR_INPUTLOST) {
-			pJoypad_[iPad]->Acquire();
-		}
-	}
+	HRESULT hr = pDevice->GetDeviceState(sizeof(BYTE) * MAX_KEY, deviceKeyboard_.state);
+	if (hr == DIERR_INPUTLOST)
+		pDevice->Acquire();
+	
 	return true;
 }
 bool DirectInput::_IdleMouse() {
-	if (!pInput_ || !pMouse_)
+	LPDIRECTINPUTDEVICE8 pDevice = deviceMouse_.idh.pDevice;
+	if (!pDirectInput_ || !pDevice)
 		return false;
 
-	HRESULT hr = pMouse_->GetDeviceState(sizeof(DIMOUSESTATE), &stateMouse_);
-	if (hr == DIERR_INPUTLOST) pMouse_->Acquire();
+	HRESULT hr = pDevice->GetDeviceState(sizeof(DIMOUSESTATE2), &deviceMouse_.state);
+	if (hr == DIERR_INPUTLOST)
+		pDevice->Acquire();
 
+	return true;
+}
+bool DirectInput::_IdleJoypad() {
+	for (int16_t iPad = 0; iPad < listDeviceJoypad_.size(); ++iPad) {
+		JoypadInputDevice* pJoypad = &listDeviceJoypad_[iPad];
+		LPDIRECTINPUTDEVICE8 pDevice = pJoypad->idh.pDevice;
+		if (!pDirectInput_ || pDevice == nullptr)
+			return false;
+
+		pDevice->Poll();
+
+		HRESULT hr = pDevice->GetDeviceState(sizeof(DIJOYSTATE), &pJoypad->state);
+		if (hr == DIERR_INPUTLOST)
+			pDevice->Acquire();
+	}
 	return true;
 }
 
 void DirectInput::Update() {
 	this->_IdleKeyboard();
-	this->_IdleJoypad();
 	this->_IdleMouse();
+	this->_IdleJoypad();
 
 	for (int16_t iKey = 0; iKey < MAX_KEY; ++iKey)
-		bufKey_[iKey] = _GetKey(iKey, bufKey_[iKey]);
+		bufKey_[iKey] = _GetKeyboardKey(iKey, bufKey_[iKey]);
 
 	for (int16_t iButton = 0; iButton < 3; ++iButton)
 		bufMouse_[iButton] = _GetMouseButton(iButton, bufMouse_[iButton]);
 
-	for (int16_t iPad = 0; iPad < pJoypad_.size(); ++iPad) {
-		bufPad_[iPad][0] = _GetPadDirection(iPad, DIK_LEFT, bufPad_[iPad][0]);
-		bufPad_[iPad][1] = _GetPadDirection(iPad, DIK_RIGHT, bufPad_[iPad][1]);
-		bufPad_[iPad][2] = _GetPadDirection(iPad, DIK_UP, bufPad_[iPad][2]);
-		bufPad_[iPad][3] = _GetPadDirection(iPad, DIK_DOWN, bufPad_[iPad][3]);
+	for (int16_t iPad = 0; iPad < listDeviceJoypad_.size(); ++iPad) {
+		auto& pad = bufPad_[iPad];
+
+		// 0-3 -> (Typically) Left analog stick
+		pad[0] = _GetPadAnalogDirection(iPad, DIK_LEFT, pad[0]);
+		pad[1] = _GetPadAnalogDirection(iPad, DIK_RIGHT, pad[1]);
+		pad[2] = _GetPadAnalogDirection(iPad, DIK_UP, pad[2]);
+		pad[3] = _GetPadAnalogDirection(iPad, DIK_DOWN, pad[3]);
+
+		// 4-7 -> D-Pad
+		pad[4] = _GetPadPovHatDirection(iPad, 0, DIK_LEFT, pad[4]);
+		pad[5] = _GetPadPovHatDirection(iPad, 0, DIK_RIGHT, pad[5]);
+		pad[6] = _GetPadPovHatDirection(iPad, 0, DIK_UP, pad[6]);
+		pad[7] = _GetPadPovHatDirection(iPad, 0, DIK_DOWN, pad[7]);
 
 		for (int16_t iButton = 0; iButton < MAX_PAD_BUTTON; ++iButton)
-			bufPad_[iPad][iButton + 4] = _GetPadButton(iPad, iButton, bufPad_[iPad][iButton + 4]);
+			pad[iButton + 8] = _GetPadButton(iPad, iButton, pad[iButton + 8]);
 	}
 }
 
@@ -351,38 +448,47 @@ POINT DirectInput::GetMousePosition() {
 #endif
 
 void DirectInput::ResetInputState() {
-	ResetMouseState();
 	ResetKeyState();
+	ResetMouseState();
 	ResetPadState();
-}
-void DirectInput::ResetMouseState() {
-	for (int16_t iButton = 0; iButton < 3; ++iButton)
-		bufMouse_[iButton] = KEY_FREE;
-	ZeroMemory(&stateMouse_, sizeof(stateMouse_));
 }
 void DirectInput::ResetKeyState() {
 	for (int16_t iKey = 0; iKey < MAX_KEY; ++iKey)
 		bufKey_[iKey] = KEY_FREE;
-	ZeroMemory(&stateKey_, sizeof(stateKey_));
+	ZeroMemory(&deviceKeyboard_.state, sizeof(deviceKeyboard_.state));
 }
-void DirectInput::ResetPadState() {
-	for (int16_t iPad = 0; iPad < bufPad_.size(); ++iPad) {
+void DirectInput::ResetMouseState() {
+	for (int16_t iButton = 0; iButton < 3; ++iButton)
+		bufMouse_[iButton] = KEY_FREE;
+	ZeroMemory(&deviceMouse_.state, sizeof(deviceMouse_.state));
+}
+void DirectInput::ResetPadState(int16_t padIndex) {
+	auto _ResetPad = [&](int16_t iPad) {
+		auto& pad = bufPad_[iPad];
+		auto& state = listDeviceJoypad_[iPad].state;
+
 		for (int16_t iKey = 0; iKey < bufPad_.size(); ++iKey)
-			bufPad_[iPad][iKey] = KEY_FREE;
-		statePad_[iPad].lX = 0;
-		statePad_[iPad].lY = 0;
-		for (int16_t iButton = 0; iButton < MAX_PAD_BUTTON; ++iButton) {
-			statePad_[iPad].rgbButtons[iButton] = KEY_FREE;
+			pad[iKey] = KEY_FREE;
+		state.lX = 0;
+		state.lY = 0;
+		for (int16_t iButton = 0; iButton < MAX_PAD_BUTTON; ++iButton)
+			state.rgbButtons[iButton] = KEY_FREE;
+	};
+
+	if (padIndex < 0) {
+		for (int16_t iPad = 0; iPad < listDeviceJoypad_.size(); ++iPad) {
+			_ResetPad(iPad);
 		}
+	}
+	else {
+		_ResetPad(padIndex);
 	}
 }
 
-DIDEVICEINSTANCE DirectInput::GetPadDeviceInformation(int16_t padIndex) {
-	DIDEVICEINSTANCE state;
-	ZeroMemory(&state, sizeof(state));
-	state.dwSize = sizeof(state);
-	pJoypad_[padIndex]->GetDeviceInfo(&state);
-	return state;
+const DirectInput::JoypadInputDevice* DirectInput::GetPadDevice(int16_t padIndex) {
+	if (padIndex > listDeviceJoypad_.size())
+		return nullptr;
+	return &listDeviceJoypad_[padIndex];
 }
 
 //*******************************************************************
@@ -430,7 +536,7 @@ DIKeyState VirtualKeyManager::_GetVirtualKeyState(int16_t id) {
 		res = bufKey_[key->keyboard_];
 	if (res == KEY_FREE) {
 		int16_t indexPad = key->padIndex_;
-		if (indexPad >= 0 && indexPad < pJoypad_.size()) {
+		if (indexPad >= 0 && indexPad < listDeviceJoypad_.size()) {
 			if (key->padButton_ >= 0 && key->padButton_ < bufPad_[indexPad].size())
 				res = bufPad_[indexPad][key->padButton_];
 		}
