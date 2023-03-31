@@ -112,10 +112,13 @@ std::array<bool, 2> StaticFpsController::Advance() {
 //*******************************************************************
 //VariableFpsController
 //*******************************************************************
+static constexpr size_t MAX_SKIP = 5;	// Can only skip 5 frames consecutively
 VariableFpsController::VariableFpsController() {
 	fpsCurrentUpdate_ = 0;
 	fpsCurrentRender_ = 0;
 	bFrameRendered_ = false;
+
+	countSkip_ = 0;
 
 	timePrevious_ = SystemUtility::GetCpuTime();
 	timePreviousUpdate_ = timePrevious_;
@@ -130,6 +133,7 @@ VariableFpsController::~VariableFpsController() {
 }
 void VariableFpsController::SetCriticalFrame() {
 	bCriticalFrame_ = true;
+	countSkip_ = 0;
 	timeAccumUpdate_ = 0ns;
 	timeAccumRender_ = 0ns;
 }
@@ -159,7 +163,7 @@ std::array<bool, 2> VariableFpsController::Advance() {
 		bFrameRendered_ = false;
 	}
 
-	if (bCriticalFrame_ || (!bFrameRendered_ && timeAccumRender_ < targetNs)) {
+	if (bCriticalFrame_ || (!bFrameRendered_ && (countSkip_ >= MAX_SKIP || timeAccumRender_ < targetNs))) {
 		auto timeDeltaRender = timeCurrent - timePreviousRender_;
 
 		listFpsRender_.push_back(timeDeltaRender.count());
@@ -167,6 +171,10 @@ std::array<bool, 2> VariableFpsController::Advance() {
 
 		timePreviousRender_ = timeCurrent;
 		bFrameRendered_ = true;
+		countSkip_ = 0;
+	}
+	else if (!bFrameRendered_) {
+		++countSkip_;
 	}
 	timeAccumRender_ = 0ns;
 
@@ -177,7 +185,7 @@ std::array<bool, 2> VariableFpsController::Advance() {
 				fpsAccum += iFps / 1e6;
 			fpsAccum /= listFpsUpdate_.size();
 
-			fpsCurrentUpdate_= 1000 / fpsAccum;
+			fpsCurrentUpdate_ = 1000 / fpsAccum;
 		}
 		else fpsCurrentUpdate_ = 0;
 

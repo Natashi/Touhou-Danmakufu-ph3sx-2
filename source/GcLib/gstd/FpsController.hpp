@@ -67,7 +67,7 @@ namespace gstd {
 		std::list<double> listFps_;
 	public:
 		StaticFpsController();
-		~StaticFpsController();
+		virtual ~StaticFpsController();
 
 		virtual std::array<bool, 2> Advance();
 
@@ -91,6 +91,8 @@ namespace gstd {
 		float fpsCurrentRender_;
 		bool bFrameRendered_;
 
+		size_t countSkip_;
+
 		stdch::steady_clock::time_point timePrevious_;
 		stdch::steady_clock::time_point timePreviousUpdate_;
 		stdch::steady_clock::time_point timePreviousRender_;
@@ -103,7 +105,7 @@ namespace gstd {
 		std::list<double> listFpsRender_;
 	public:
 		VariableFpsController();
-		~VariableFpsController();
+		virtual ~VariableFpsController();
 
 		virtual std::array<bool, 2> Advance();
 

@@ -1133,7 +1133,9 @@ void Scanner::_SkipSpace() {
 
 Token& Scanner::Next() {
 	if (!HasNext()) {
-		_RaiseError(L"Scanner::Next: End-of-file already reached.");
+		//_RaiseError(L"Scanner::Next: End-of-file already reached.");
+		token_ = Token(Token::Type::TK_EOF, L"", -1, -1);
+		return token_;
 	}
 
 	_SkipComment();
