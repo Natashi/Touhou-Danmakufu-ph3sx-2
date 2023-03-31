@@ -374,17 +374,16 @@ void TextureManager::RestoreDxResource() {
 				UINT height = data->infoImage_.Height;
 
 				D3DMULTISAMPLE_TYPE typeSample = graphics->GetMultiSampleType();
-				DWORD* qualitySample = graphics->GetMultiSampleQuality();
 
 				HRESULT hr;
 				hr = graphics->GetDevice()->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-					qualitySample ? qualitySample[1] : 0, FALSE, &data->lpRenderZ_, nullptr);
+					0, FALSE, &data->lpRenderZ_, nullptr);
 				if (FAILED(hr)) {
 					if (width > height) height = width;
 					else width = height;
 
 					hr = graphics->GetDevice()->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-						qualitySample ? qualitySample[1] : 0, FALSE, &data->lpRenderZ_, nullptr);
+						0, FALSE, &data->lpRenderZ_, nullptr);
 					if (FAILED(hr)) {
 						std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: (Depth)\n%s\n  %s",
 							DXGetErrorString(hr), DXGetErrorDescription(hr));
@@ -518,11 +517,10 @@ bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std
 		data.reset(new TextureData());
 
 		D3DMULTISAMPLE_TYPE typeSample = graphics->GetMultiSampleType();
-		DWORD* qualitySample = graphics->GetMultiSampleQuality();
 
 		HRESULT hr;
 		hr = device->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-			qualitySample ? qualitySample[1] : 0, FALSE, &data->lpRenderZ_, nullptr);
+			0, FALSE, &data->lpRenderZ_, nullptr);
 		if (FAILED(hr)) throw false;
 
 		ColorMode colorMode = graphics->GetGraphicsConfig().colorMode;
@@ -536,7 +534,7 @@ bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std
 			else if (height > width) width = height;
 
 			hr = device->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-				qualitySample ? qualitySample[1] : 0, FALSE, &data->lpRenderZ_, nullptr);
+				0, FALSE, &data->lpRenderZ_, nullptr);
 			if (FAILED(hr))
 				throw wexception("CreateDepthStencilSurface failure.");
 

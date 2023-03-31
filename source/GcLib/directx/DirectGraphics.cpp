@@ -247,6 +247,9 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	}
 	*/
 
+	D3DFORMAT backBufferFmt = config.colorMode == ColorMode::COLOR_MODE_16BIT
+		? D3DFMT_R5G6B5 : D3DFMT_X8R8G8B8;
+
 	{
 		//Fullscreen mode settings
 
@@ -256,8 +259,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		d3dppFull_.BackBufferHeight = config.sizeScreen[1];
 		d3dppFull_.Windowed = FALSE;
 		d3dppFull_.SwapEffect = D3DSWAPEFFECT_DISCARD;
-		d3dppFull_.BackBufferFormat = config.colorMode == ColorMode::COLOR_MODE_16BIT ?
-			D3DFMT_R5G6B5 : D3DFMT_X8R8G8B8;
+		d3dppFull_.BackBufferFormat = backBufferFmt;
 		d3dppFull_.BackBufferCount = 1;
 		d3dppFull_.EnableAutoDepthStencil = TRUE;
 		d3dppFull_.AutoDepthStencilFormat = D3DFMT_D16;
@@ -276,7 +278,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		d3dppWin_.BackBufferHeight = config.sizeScreen[1];
 		d3dppWin_.Windowed = TRUE;
 		d3dppWin_.SwapEffect = D3DSWAPEFFECT_DISCARD;
-		d3dppWin_.BackBufferFormat = D3DFMT_UNKNOWN;
+		d3dppWin_.BackBufferFormat = backBufferFmt;
 		d3dppWin_.BackBufferCount = 1;
 		d3dppWin_.EnableAutoDepthStencil = TRUE;
 		d3dppWin_.AutoDepthStencilFormat = D3DFMT_D16;
@@ -288,6 +290,55 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	if (!config.bWindowed) {	//Start in fullscreen Mode
 		::SetWindowLong(hWnd, GWL_STYLE, wndStyleFull_);
 		::ShowWindow(hWnd, SW_SHOW);
+	}
+
+	// Check and set multisampling type
+	{
+		std::vector<std::pair<D3DMULTISAMPLE_TYPE, const char*>> listMsaaAll = {
+			{ D3DMULTISAMPLE_2_SAMPLES, "MSAA 2x"},
+			{ D3DMULTISAMPLE_3_SAMPLES, "MSAA 3x"},
+			{ D3DMULTISAMPLE_4_SAMPLES, "MSAA 4x"},
+			{ D3DMULTISAMPLE_5_SAMPLES, "MSAA 5x"},
+			{ D3DMULTISAMPLE_6_SAMPLES, "MSAA 6x"},
+			{ D3DMULTISAMPLE_7_SAMPLES, "MSAA 7x"},
+			{ D3DMULTISAMPLE_8_SAMPLES, "MSAA 8x"},
+		};
+
+		auto pD3D = pDirect3D_;
+		auto _Check = [&pD3D, &backBufferFmt](D3DMULTISAMPLE_TYPE msaa, bool windowed) {
+			HRESULT hrBack = pD3D->CheckDeviceMultiSampleType(
+				D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, backBufferFmt,
+				windowed, msaa, nullptr);
+			HRESULT hrDepth = pD3D->CheckDeviceMultiSampleType(
+				D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_D16,
+				windowed, msaa, nullptr);
+			return SUCCEEDED(hrBack) && SUCCEEDED(hrDepth);
+		};
+
+		for (size_t i = 0; i < listMsaaAll.size(); ++i) {
+			D3DMULTISAMPLE_TYPE msaaType = listMsaaAll[i].first;
+
+			bool bFullscreen = _Check(msaaType, false);
+			bool bWindowed = _Check(msaaType, true);
+
+			mapSupportMultisamples_.insert(std::make_pair(msaaType,
+				std::array<bool, 2>{ bWindowed, bFullscreen }));
+		}
+
+		D3DMULTISAMPLE_TYPE typeSamples = config.typeMultiSample;
+
+		if (typeSamples != D3DMULTISAMPLE_NONE) {
+			if (!(IsSupportMultiSample(typeSamples, true) || IsSupportMultiSample(typeSamples, false))) {
+				Logger::WriteTop("DirectGraphics: Selected multisampling is not supported on this device. Initializing without anti-aliasing support.");
+				typeSamples = D3DMULTISAMPLE_NONE;
+			}
+			else {
+				std::string log = StringUtility::Format("DirectGraphics: Anti-aliasing available [%s]",
+					listMsaaAll[typeSamples].second);
+			}
+		}
+
+		SetMultiSampleType(typeSamples);
 	}
 
 	{
@@ -316,9 +367,8 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 
 				if (FAILED(hrDevice)) {
 					std::wstring err = StringUtility::Format(
-						L"Cannot create Direct3D device with HAL. [%s]\r\n  %s\r\n%s",
-						DXGetErrorString(hrDevice), DXGetErrorDescription(hrDevice),
-						L"Restart in reference rasterizer mode.");
+						L"Cannot create Direct3D device with HAL. [%s]\r\n  %s",
+						DXGetErrorString(hrDevice), DXGetErrorDescription(hrDevice));
 					throw wexception(err);
 				}
 			}
@@ -331,57 +381,6 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 			if (deviceType == D3DDEVTYPE_HAL)
 				err += L"\r\nRestart in reference rasterizer mode.";
 			throw wexception(err);
-		}
-	}
-
-	{
-		D3DMULTISAMPLE_TYPE chkSamples[] = {
-			D3DMULTISAMPLE_NONE,
-			D3DMULTISAMPLE_2_SAMPLES,
-			D3DMULTISAMPLE_3_SAMPLES,
-			D3DMULTISAMPLE_4_SAMPLES,
-		};
-		for (size_t i = 0; i < sizeof(chkSamples) / sizeof(D3DMULTISAMPLE_TYPE); ++i) {
-			DWORD* arrQuality = new DWORD[2];
-
-			HRESULT hrColor = pDirect3D_->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, deviceType,
-				config.colorMode == ColorMode::COLOR_MODE_16BIT ? D3DFMT_X4R4G4B4 : D3DFMT_X8R8G8B8,
-				FALSE, chkSamples[i], &arrQuality[0]);
-			HRESULT hrDepth = pDirect3D_->CheckDeviceMultiSampleType(D3DADAPTER_DEFAULT, deviceType,
-				D3DFMT_D16, FALSE, chkSamples[i], &arrQuality[1]);
-
-			arrQuality[0] -= 1;
-			arrQuality[1] -= 1;
-			mapSupportMultisamples_.insert(std::make_pair(chkSamples[i], 
-				std::make_pair(SUCCEEDED(hrColor) && SUCCEEDED(hrDepth), arrQuality)));
-		}
-
-		D3DMULTISAMPLE_TYPE typeSamples = config.typeMultiSample;
-
-		if (!IsSupportMultiSample(typeSamples)) {
-			Logger::WriteTop("DirectGraphics: Selected multisampling is not supported on this device, falling back to D3DMULTISAMPLE_NONE.");
-		}
-		else if (typeSamples != D3DMULTISAMPLE_NONE) {
-			if (!config.bBorderlessFullscreen) {
-				std::map<D3DMULTISAMPLE_TYPE, std::string> mapSampleIndex = {
-					{ D3DMULTISAMPLE_NONE, "D3DMULTISAMPLE_NONE" },
-					{ D3DMULTISAMPLE_2_SAMPLES, "D3DMULTISAMPLE_2_SAMPLES" },
-					{ D3DMULTISAMPLE_3_SAMPLES, "D3DMULTISAMPLE_3_SAMPLES" },
-					{ D3DMULTISAMPLE_4_SAMPLES, "D3DMULTISAMPLE_4_SAMPLES" },
-				};
-
-				DWORD* qualities = GetMultiSampleQuality();
-
-				std::string log = StringUtility::Format("DirectGraphics: Anti-aliasing available [%s at Quality (%d, %d)]",
-					mapSampleIndex[typeSamples].c_str(), qualities[0], qualities[1]);
-				Logger::WriteTop(log);
-
-				SetMultiSampleType(typeSamples);
-				//pDevice_->Reset(config.bWindowed_ ? &d3dppWin_ : &d3dppFull_);
-			}
-			else {
-				Logger::WriteTop("DirectGraphics: Anti-aliasing is not available for pseudo-fullscreen display.");
-			}
 		}
 	}
 
@@ -404,9 +403,6 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	return true;
 }
 void DirectGraphics::Release() {
-	for (auto& itrSample : mapSupportMultisamples_) {
-		delete itrSample.second.second;
-	}
 	DirectGraphicsBase::Release();
 }
 
@@ -867,40 +863,21 @@ void DirectGraphics::SetDirectionalLight(D3DVECTOR& dir) {
 	pDevice_->LightEnable(0, TRUE);
 }
 void DirectGraphics::SetMultiSampleType(D3DMULTISAMPLE_TYPE type) {
-	if (IsSupportMultiSample(type)) {
-		d3dppWin_.MultiSampleType = type;
-		d3dppFull_.MultiSampleType = type;
-	}
-	else {
-		d3dppWin_.MultiSampleType = D3DMULTISAMPLE_NONE;
-		d3dppFull_.MultiSampleType = D3DMULTISAMPLE_NONE;
-	}
+	d3dppWin_.MultiSampleType = IsSupportMultiSample(type, true)
+		? type : D3DMULTISAMPLE_NONE;
+	d3dppFull_.MultiSampleType = IsSupportMultiSample(type, false)
+		? type : D3DMULTISAMPLE_NONE;
 }
 D3DMULTISAMPLE_TYPE DirectGraphics::GetMultiSampleType() {
 	return d3dppFull_.MultiSampleType;
 }
-void DirectGraphics::SetMultiSampleQuality(DWORD* quality) {
-	if (quality) {
-		d3dppWin_.MultiSampleQuality = quality[0];
-		d3dppFull_.MultiSampleQuality = quality[0];
-	}
-	else {
-		d3dppWin_.MultiSampleQuality = 0;
-		d3dppFull_.MultiSampleQuality = 0;
-	}
-}
-DWORD* DirectGraphics::GetMultiSampleQuality() {
-	auto itr = mapSupportMultisamples_.find(GetMultiSampleType());
-	if (itr == mapSupportMultisamples_.end()) return nullptr;
-	return itr->second.second;
-}
 HRESULT DirectGraphics::SetAntiAliasing(bool bEnable) {
 	return pDevice_->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, bEnable ? TRUE : FALSE);
 }
-bool DirectGraphics::IsSupportMultiSample(D3DMULTISAMPLE_TYPE type) {
+bool DirectGraphics::IsSupportMultiSample(D3DMULTISAMPLE_TYPE type, bool bWindowed) {
 	auto itr = mapSupportMultisamples_.find(type);
 	if (itr == mapSupportMultisamples_.end()) return false;
-	return itr->second.first;
+	return itr->second[bWindowed ? 0 : 1];
 }
 
 D3DXMATRIX DirectGraphics::CreateOrthographicProjectionMatrix(float x, float y, float width, float height) {
