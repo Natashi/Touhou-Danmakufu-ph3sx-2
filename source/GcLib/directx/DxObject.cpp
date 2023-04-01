@@ -1601,6 +1601,14 @@ shared_ptr<Shader> DxScriptObjectManager::GetShader(int index) {
 }
 
 void DxScriptObjectManager::WorkObject() {
+	// Play cached sounds
+	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
+	for (auto itrSound = mapReservedSound_.begin(); itrSound != mapReservedSound_.end(); ++itrSound) {
+		shared_ptr<SoundPlayer> player = itrSound->second;
+		player->Play();
+	}
+	mapReservedSound_.clear();
+
 	for (auto itr = listActiveObject_.begin(); itr != listActiveObject_.end();) {
 		DxScriptObjectBase* obj = itr->get();
 		if (obj == nullptr || obj->IsDeleted()) {
@@ -1611,14 +1619,6 @@ void DxScriptObjectManager::WorkObject() {
 		++(obj->frameExist_);
 		++itr;
 	}
-
-	//Play cached sounds
-	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
-	for (auto itrSound = mapReservedSound_.begin(); itrSound != mapReservedSound_.end(); ++itrSound) {
-		shared_ptr<SoundPlayer> player = itrSound->second;
-		player->Play();
-	}
-	mapReservedSound_.clear();
 }
 void DxScriptObjectManager::RenderObject() {
 	PrepareRenderObject();
