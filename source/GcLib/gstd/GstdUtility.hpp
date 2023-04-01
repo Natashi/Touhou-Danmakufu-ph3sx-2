@@ -659,7 +659,7 @@ namespace gstd {
 		int posEnd_;
 	public:
 		Token() { type_ = Type::TK_UNKNOWN; posStart_ = 0; posEnd_ = 0; }
-		Token(Type type, std::wstring& element, int start, int end) { type_ = type; element_ = element; posStart_ = start; posEnd_ = end; }
+		Token(Type type, const std::wstring& element, int start, int end) { type_ = type; element_ = element; posStart_ = start; posEnd_ = end; }
 		virtual ~Token() {};
 
 		Type GetType() { return type_; }
