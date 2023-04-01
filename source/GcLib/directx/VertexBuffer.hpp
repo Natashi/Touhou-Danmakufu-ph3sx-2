@@ -63,7 +63,7 @@ namespace directx {
 
 		T* GetBuffer() { return buffer_; }
 		size_t GetSize() { return size_; }
-		size_t GetSizeInBytes() { return sizeInBytes_; }
+		size_t GetSizeInBytes() { return size_ * stride_; }
 	protected:
 		virtual HRESULT _Create() = 0;
 	protected:
@@ -74,7 +74,6 @@ namespace directx {
 		T* buffer_;
 		size_t size_;
 		size_t stride_;
-		size_t sizeInBytes_;
 	};
 
 	class FixedVertexBuffer : public BufferBase<IDirect3DVertexBuffer9> {

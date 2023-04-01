@@ -18,7 +18,6 @@ namespace directx {
 		buffer_ = nullptr;
 		size_ = 0U;
 		stride_ = 0U;
-		sizeInBytes_ = 0U;
 	}
 	template<typename T>
 	BufferBase<T>::BufferBase(IDirect3DDevice9* device) : BufferBase() {
@@ -37,13 +36,14 @@ namespace directx {
 		else if (pLock->lockOffset >= size_) return E_INVALIDARG;
 		else if (pLock->dataCount == 0U || pLock->dataStride == 0U) return S_OK;
 
+		size_t totalSizeInBytes = GetSizeInBytes();
 		size_t usableCount = size_ - pLock->lockOffset;
 		size_t lockCopySize = std::min(pLock->dataCount, usableCount) * pLock->dataStride;
 
 		void* tmp;
 		hr = buffer_->Lock(pLock->lockOffset * pLock->dataStride, lockCopySize, &tmp, pLock->lockFlag);
 		if (SUCCEEDED(hr)) {
-			memcpy_s(tmp, sizeInBytes_, pLock->data, lockCopySize);
+			memcpy_s(tmp, totalSizeInBytes, pLock->data, lockCopySize);
 			buffer_->Unlock();
 		}
 
@@ -56,7 +56,6 @@ namespace directx {
 
 		usage_ = usage;
 		pool_ = pool;
-		sizeInBytes_ = size_ * stride_;
 
 		HRESULT res = _Create();
 		return res;
@@ -76,7 +75,7 @@ namespace directx {
 		size_ = iniSize;
 	}
 	HRESULT FixedVertexBuffer::_Create() {
-		return pDevice_->CreateVertexBuffer(sizeInBytes_, usage_,
+		return pDevice_->CreateVertexBuffer(GetSizeInBytes(), usage_,
 			fvf_, pool_, &buffer_, nullptr);
 	}
 
@@ -95,7 +94,7 @@ namespace directx {
 		size_ = iniSize;
 	}
 	HRESULT FixedIndexBuffer::_Create() {
-		return pDevice_->CreateIndexBuffer(sizeInBytes_, usage_,
+		return pDevice_->CreateIndexBuffer(GetSizeInBytes(), usage_,
 			format_, pool_, &buffer_, nullptr);
 	}
 
@@ -130,7 +129,7 @@ namespace directx {
 		VertexBufferManager::AssertBuffer(hr, L"VB_Growable");
 	}
 	HRESULT GrowableVertexBuffer::_Create() {
-		return pDevice_->CreateVertexBuffer(sizeInBytes_, usage_,
+		return pDevice_->CreateVertexBuffer(GetSizeInBytes(), usage_,
 			fvf_, pool_, &buffer_, nullptr);
 	}
 
@@ -154,7 +153,7 @@ namespace directx {
 		VertexBufferManager::AssertBuffer(hr, L"IB_Growable");
 	}
 	HRESULT GrowableIndexBuffer::_Create() {
-		return pDevice_->CreateIndexBuffer(sizeInBytes_, usage_,
+		return pDevice_->CreateIndexBuffer(GetSizeInBytes(), usage_,
 			format_, pool_, &buffer_, nullptr);
 	}
 
