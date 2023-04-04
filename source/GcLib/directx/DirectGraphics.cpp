@@ -294,7 +294,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 
 	// Check and set multisampling type
 	{
-		std::vector<std::pair<D3DMULTISAMPLE_TYPE, const char*>> listMsaaAll = {
+		std::unordered_map<D3DMULTISAMPLE_TYPE, const char*> msaaAll = {
 			{ D3DMULTISAMPLE_2_SAMPLES, "MSAA 2x"},
 			{ D3DMULTISAMPLE_3_SAMPLES, "MSAA 3x"},
 			{ D3DMULTISAMPLE_4_SAMPLES, "MSAA 4x"},
@@ -315,9 +315,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 			return SUCCEEDED(hrBack) && SUCCEEDED(hrDepth);
 		};
 
-		for (size_t i = 0; i < listMsaaAll.size(); ++i) {
-			D3DMULTISAMPLE_TYPE msaaType = listMsaaAll[i].first;
-
+		for (auto& [msaaType, _] : msaaAll) {
 			bool bFullscreen = _Check(msaaType, false);
 			bool bWindowed = _Check(msaaType, true);
 
@@ -334,7 +332,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 			}
 			else {
 				std::string log = StringUtility::Format("DirectGraphics: Anti-aliasing available [%s]",
-					listMsaaAll[typeSamples].second);
+					msaaAll[typeSamples]);
 			}
 		}
 
@@ -875,6 +873,8 @@ HRESULT DirectGraphics::SetAntiAliasing(bool bEnable) {
 	return pDevice_->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, bEnable ? TRUE : FALSE);
 }
 bool DirectGraphics::IsSupportMultiSample(D3DMULTISAMPLE_TYPE type, bool bWindowed) {
+	if (type == D3DMULTISAMPLE_NONE)
+		return true;
 	auto itr = mapSupportMultisamples_.find(type);
 	if (itr == mapSupportMultisamples_.end()) return false;
 	return itr->second[bWindowed ? 0 : 1];
