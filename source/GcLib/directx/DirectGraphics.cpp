@@ -867,7 +867,7 @@ void DirectGraphics::SetMultiSampleType(D3DMULTISAMPLE_TYPE type) {
 		? type : D3DMULTISAMPLE_NONE;
 }
 D3DMULTISAMPLE_TYPE DirectGraphics::GetMultiSampleType() {
-	return d3dppFull_.MultiSampleType;
+	return d3dppWin_.MultiSampleType;
 }
 HRESULT DirectGraphics::SetAntiAliasing(bool bEnable) {
 	return pDevice_->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, bEnable ? TRUE : FALSE);

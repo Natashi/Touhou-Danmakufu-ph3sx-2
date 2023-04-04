@@ -434,10 +434,6 @@ void TextureManager::__CreateFromFile(shared_ptr<TextureData>& dst, const std::w
 
 	std::string source = reader->ReadAllString();
 
-	ColorMode colorMode = graphics->GetGraphicsConfig().colorMode;
-	D3DFORMAT pixelFormat = colorMode == ColorMode::COLOR_MODE_32BIT ?
-		D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
-
 	dst->useMipMap_ = genMipmap;
 	dst->useNonPowerOfTwo_ = flgNonPowerOfTwo;
 
@@ -445,13 +441,11 @@ void TextureManager::__CreateFromFile(shared_ptr<TextureData>& dst, const std::w
 		source.c_str(), source.size(),
 		dst->useNonPowerOfTwo_ ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT,
 		dst->useNonPowerOfTwo_ ? D3DX_DEFAULT_NONPOW2 : D3DX_DEFAULT,
-		0, 0, pixelFormat, D3DPOOL_MANAGED, D3DX_FILTER_BOX, D3DX_DEFAULT, 0x00000000,
+		dst->useMipMap_ ? D3DX_DEFAULT : 1, 0,
+		D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_FILTER_BOX, D3DX_DEFAULT, 0x00000000,
 		nullptr, nullptr, &(dst->pTexture_));
 	if (FAILED(hr))
 		throw wexception("D3DXCreateTextureFromFileInMemoryEx failure.");
-
-	if (dst->useMipMap_)
-		dst->pTexture_->GenerateMipSubLevels();
 
 	hr = D3DXGetImageInfoFromFileInMemory(source.c_str(), source.size(), &dst->infoImage_);
 	if (FAILED(hr))
