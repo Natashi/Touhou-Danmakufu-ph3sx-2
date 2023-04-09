@@ -277,6 +277,7 @@ __pycache__/
 # External Libraries
 /source/ext/*
 !/source/ext/.Information.txt
+!/source/ext/get-dependencies.py
 
 # External Libraries (Compiled .lib)
 /library/*
