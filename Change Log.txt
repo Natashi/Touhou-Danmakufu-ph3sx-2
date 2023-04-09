@@ -1,5 +1,114 @@
 A mostly-complete history log of engine updates can be found here.
 
+1.33a-pre: [Pre-release]
+	Changes:
+		- Reworked the FileArchiver to have a more modern-looking UI.
+			- Also changed the .dat archive format and how archive loading works. 
+				- Not backwards-compatible with archives from older versions.
+		- Reworked the Config to have a more modern-looking UI.
+			- Improved controller support, the D-Pad is now supported as an input method.
+		- Number literals without decimal points now default to integer type, unless specified otherwise by a float suffix.
+		- Made both the function "divide" and the division operator always perform a float division.
+			- For int divisions, use the floored division operator/function.
+		- Temporarily removed mp3 support.
+		- Completely overhauled the shot and item renderers.
+			- It is now possible to apply shaders on shots and items, check the new sample script. (!WILL BE MADE LATER!)
+		- Added OBJ_STRAIGHT_LASER support for ObjPatternShot_SetShotType.
+		- Changed how delay data definition in shot data files work:
+			- Delays will now take data from another shot data for greater flexibility.
+			- Use "delay_id = x" to specify delay data, with x being a shot data ID.
+				- Use at the top for a "global" definition, and locally inside shot data definitions for shot-specific overrides.
+		- Allowed ObjPatternShot to create straight lasers.
+		- Renamed ObjShot_SetSourceBlendType to ObjShot_SetDelayBlendType.
+		- Completely overhauled the frame timing algorithm, which allows the game to run at a more stable frame rate.
+			- The frameskip mode "Automatic" may currently be unstable.
+		- Changed the frame parameter of ObjMove_AddPatternXX to be unsigned.
+			- If you were previously using -1, change them to 0 now. Nothing will change in terms of functionality.
+		- Allowed NotifyEvent, NotifyEventOwn, and NotifyEventAll to be called without event arguments. (Thanks to Naudiz)
+		- Allowed KillPlayer to be used in stage scripts instead of being exclusive to the player script. (Thanks to Naudiz)
+		- Changed how Obj_Delete works. (Thanks to Naudiz)
+			- Using Obj_Delete no longer instantly deletes the object, but will rather mark the object for deletion and turn it inactive.
+				- Objects marked for deletion will be actually deleted at the start of the next frame.
+		- Changed the minimum window size to 64x64, and the maximum window size to 3840x2160.
+		- (Partial) Massive overhaul of window resolution system:
+			- Use SetFullscreenDisplayMatrix and SetWindowedDisplayMatrix to change how the game renders onto the game window.
+				- May be used to manually tweak the aspect ratio for instance.
+			- New built-in render target "__SECONDARY_BACKSURFACE__" may be used to fill in the "black bars" at the sides of the screen with custom texture/scene.
+			- Check the new sample script for usage example. (!WILL BE MADE LATER!)
+	Additions:
+		- Added "standard.fps" property to the th_dnh.def, allowing scripters to change the standard game logic rate.
+			- Default is 60 (60 logic frames per second).
+		- Added GetCurrentUpdateFps and GetCurrentRenderFps.
+		- Added a prototype implementation of function pointers.
+			- Obtain the function pointer of a function/task/sub with "__funcptr".
+			- Call the function pointer with "invoke".
+			- See "New Scripting Features". (!WILL BE WRITTEN LATER!)
+		- Added the ability to cast values with type keywords.
+			- as_float(x) -> float(x)
+			- as_int(x)   -> int(x)
+			- ...
+		- Added as_x, an all-in-one type conversion function.
+		- Added the ability to visualize sound data with ObjSound_GetSamplesFFT.
+		- Added GetCurrentUpdateFps and GetCurrentRenderFps.
+		- Added MatrixRotate.
+		- Added new object functions and constant: (Thanks to Naudiz)
+			- Obj_Create
+			- Obj_GetExistFrame
+			- Obj_GetParentScriptID
+			- Obj_SetParentScriptID
+			- OBJ_BASE
+		- Added Obj_Clone.
+		- Added missing Obj_CopyValueTableI.
+		- Added new shader object functions:
+			- ObjShader_ValidateTechnique
+			- ObjShader_SetInt
+			- ObjShader_GetInt
+			- ObjShader_SetIntArray
+			- ObjShader_GetIntArray
+			- ObjShader_GetFloat
+			- ObjShader_GetFloatArray
+			- ObjShader_GetVector
+			- ObjShader_GetMatrix
+			- ObjShader_GetMatrixArray
+			- ObjShader_GetTexture
+		- Added functions for the new window resolution system:
+			- SetWindowedDisplayMatrix
+			- SetFullscreenDisplayMatrix
+			- SetWindowedDisplayShader
+			- SetFullscreenDisplayShader
+		- Added ObjRender_SetRenderTarget and ObjRender_Render.
+		- Added SetEnableAntiAliasing.
+		- Added UNCAPPED_MAX, which can be used in the "max speeds" parameters of ObjMove_AddPatternXX to disable max/min speeds for these properties:
+			- A-movement:
+				- max speed
+				- angular max velocity
+			- B-movement:
+				- max X speed
+				- max Y speed
+			- C-movement:
+				- max X speed
+				- max Y speed
+				- angle offset max speed
+		- Added ObjShot_SetDelayScalingEnable. (Thanks to Naudiz)
+		- Added ObjShot_SetFrameDeleteType. (Thanks to Naudiz)
+		- Added ObjEnemy_SetDamageRateByShotDataID. (Thanks to Naudiz)
+		- Added "oy" as another ruby text tag for text objects. (Thanks to Naudiz)
+	Bug fixes:
+		- Fixed crash bugs with sound objects.
+		- Fixed "_Restore" crashes when switching to and from true fullscreen or when alt-tab'ing away.
+		- Fixed the window sizes list in the config.exe being empty if th_dnh.def is absent.
+		- Fixed strange anti-aliasing and mipmapping behaviours.
+		- Fixed the game not respecting monitor DPI by default, resulting in loss of graphic quality.
+		- Fixed bodiless for-loops being mistakenly optimized away in some cases.
+		- Fixed incorrect angle calculation for objects using B-movement and C-movement.
+		- Fixed ColorHSVtoHexRGB incorrectly having an alpha channel value in its return value.
+		- Fixed the window title (set using SetWindowTitle) not resetting upon exiting the script.
+		- Fixed fixed default cancel items not spawning if there is no item script.
+		- Fixed the default item score text incorrectly being affected by item autocollection.
+		- Fixed the enemy delete clip mistakenly not checking the top boundary.
+		- Fixed IsFileExists, IsDirectoryExists, GetFilePathList, and GetDirectoryPathList ignoring files and paths in loaded archive files.
+		- Optimizations to the script interpreter.
+
 1.32b
 	Changes:
 		- All functions and actions that change a shot's graphic ID has an additional feature:
