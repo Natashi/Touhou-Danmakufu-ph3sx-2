@@ -25,9 +25,11 @@
 							- d3dx9_43
 							- d3dcompiler_43
 					5b) Apply the settings, and everything should now work.
+				
+				On Mac, I do not care if you cannot get the game to run. You deserve it for using an Apple product.
 
 ●	Uninstallation
-　		Simple delete all the related files.
+　		Simply delete all the related files.
 		This application does not utilize registry keys nor AppData storage.
 
 ●	Key Controls (default)
@@ -40,6 +42,7 @@
 		Backspace:	Restart Script  (Unavailable by default in package scripts)
 		
 		** Default key controls are purely engine-default, and may be overridden and changed from script to script.
+		** It is highly recommend to immediately remap key configurations for controllers, as different controller models have different button layouts.
 
 Check out the sample scripts for demonstrations of new functions and features.
 
