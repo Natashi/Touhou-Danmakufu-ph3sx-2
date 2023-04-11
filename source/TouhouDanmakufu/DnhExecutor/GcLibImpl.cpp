@@ -400,8 +400,8 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 	defaultWindowTitle_ = windowTitle;
 
 	DnhConfiguration* dnhConfig = DnhConfiguration::GetInstance();
-	size_t screenWidth = dnhConfig->screenWidth_;		//From th_dnh.def
-	size_t screenHeight = dnhConfig->screenHeight_;	//From th_dnh.def
+	size_t screenWidth = dnhConfig->screenWidth_;		// From th_dnh.def
+	size_t screenHeight = dnhConfig->screenHeight_;		// From th_dnh.def
 	ScreenMode screenMode = dnhConfig->modeScreen_;
 
 	size_t windowedWidth = screenWidth;
@@ -410,8 +410,8 @@ bool EDirectGraphics::Initialize(const std::wstring& windowTitle) {
 		std::vector<POINT>& windowSizeList = dnhConfig->windowSizeList_;
 		size_t windowSizeIndex = dnhConfig->windowSizeIndex_;
 		if (windowSizeIndex < windowSizeList.size()) {
-			windowedWidth = std::max(windowSizeList[windowSizeIndex].x, 320L);
-			windowedHeight = std::max(windowSizeList[windowSizeIndex].y, 240L);
+			windowedWidth = windowSizeList[windowSizeIndex].x;
+			windowedHeight = windowSizeList[windowSizeIndex].y;
 		}
 	}
 

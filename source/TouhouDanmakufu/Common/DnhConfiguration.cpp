@@ -8,6 +8,10 @@
 //*******************************************************************
 //DnhConfiguration
 //*******************************************************************
+const size_t DnhConfiguration::MinScreenWidth = 150;
+const size_t DnhConfiguration::MinScreenHeight = 150;
+const size_t DnhConfiguration::MaxScreenWidth = 3840;
+const size_t DnhConfiguration::MaxScreenHeight = 2160;
 DnhConfiguration::DnhConfiguration() {
 	modeScreen_ = ScreenMode::SCREENMODE_WINDOW;
 	modeColor_ = ColorMode::COLOR_MODE_32BIT;
@@ -71,18 +75,13 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 		pathPackageScript_ = PathProperty::ReplaceYenToSlash(pathPackageScript_);
 	}
 
-	constexpr const LONG MIN_WD = 64;
-	constexpr const LONG MIN_HT = 64;
-	constexpr const LONG MAX_WD = 3840;
-	constexpr const LONG MAX_HT = 2160;
-
 	windowTitle_ = prop.GetString(L"window.title", L"");
 
 	screenWidth_ = prop.GetInteger(L"screen.width", 640);
-	screenWidth_ = std::clamp(screenWidth_, MIN_WD, MAX_WD);
+	screenWidth_ = std::clamp<LONG>(screenWidth_, MinScreenWidth, MaxScreenWidth);
 
 	screenHeight_ = prop.GetInteger(L"screen.height", 480);
-	screenHeight_ = std::clamp(screenHeight_, MIN_HT, MAX_HT);
+	screenHeight_ = std::clamp<LONG>(screenHeight_, MinScreenHeight, MaxScreenHeight);
 
 	fpsStandard_ = prop.GetInteger(L"standard.fps", 60);
 	fpsStandard_ = std::max(fpsStandard_, 1U);
@@ -96,9 +95,17 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 	}
 
 	{
+		auto _AddWindowSize = [&](std::vector<POINT>& listSize, LONG width, LONG height) {
+			POINT size = {
+				std::clamp<LONG>(width, MinScreenWidth, MaxScreenWidth),
+				std::clamp<LONG>(height, MinScreenHeight, MaxScreenHeight)
+			};
+			listSize.push_back(size);
+		};
+
 		if (prop.HasProperty(L"window.size.list")) {
 			std::wstring strList = prop.GetString(L"window.size.list", L"");
-			if (strList.size() >= 3) {	//Minimum format: "0x0"
+			if (strList.size() >= 3) {	// Minimum format: "0x0"
 				std::wregex reg(L"([0-9]+)x([0-9]+)");
 				auto itrBegin = std::wsregex_iterator(strList.begin(), strList.end(), reg);
 				auto itrEnd = std::wsregex_iterator();
@@ -106,27 +113,19 @@ bool DnhConfiguration::_LoadDefinitionFile() {
 				if (itrBegin != itrEnd) {
 					windowSizeList_.clear();
 
-					for (auto itr = itrBegin; itr != itrEnd; ++itr) {
+					for (auto& itr = itrBegin; itr != itrEnd; ++itr) {
 						const std::wsmatch& match = *itr;
 
-						POINT size;
-						size.x = wcstol(match[1].str().c_str(), nullptr, 10);
-						size.y = wcstol(match[2].str().c_str(), nullptr, 10);
-						size.x = std::clamp(size.x, MIN_WD, MAX_WD);
-						size.y = std::clamp(size.y, MIN_HT, MAX_HT);
-
-						windowSizeList_.push_back(size);
+						_AddWindowSize(windowSizeList_, 
+							wcstol(match[1].str().c_str(), nullptr, 10),
+							wcstol(match[2].str().c_str(), nullptr, 10));
 					}
 				}
 			}
 		}
 		if (windowSizeList_.size() == 0) {
-			for (float iSizeMul : std::vector<float>({ 1, 1.25, 1.5, 2 })) {
-				POINT size = { (LONG)(screenWidth_ * iSizeMul), (LONG)(screenHeight_ * iSizeMul) };
-				size.x = std::clamp(size.x, MIN_WD, MAX_WD);
-				size.y = std::clamp(size.y, MIN_HT, MAX_HT);
-
-				windowSizeList_.push_back(size);
+			for (float iSizeMul : { 1.0f, 1.25f, 1.5f, 2.0f }) {
+				_AddWindowSize(windowSizeList_, screenWidth_ * iSizeMul, screenHeight_ * iSizeMul);
 			}
 		}
 	}

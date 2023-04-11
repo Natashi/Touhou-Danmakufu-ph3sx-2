@@ -17,6 +17,11 @@ public:
 		FPS_1_3,		// 1/3
 		FPS_VARIABLE,
 	};
+
+	static const size_t MinScreenWidth;
+	static const size_t MinScreenHeight;
+	static const size_t MaxScreenWidth;
+	static const size_t MaxScreenHeight;
 public:
 	ScreenMode modeScreen_;
 	ColorMode modeColor_;
