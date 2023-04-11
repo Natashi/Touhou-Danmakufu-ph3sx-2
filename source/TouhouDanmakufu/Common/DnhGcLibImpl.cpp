@@ -176,8 +176,8 @@ bool ETextureManager::Initialize() {
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	{
-		size_t rW = Math::GetNextPow2(graphics->GetRenderScreenWidth());
-		size_t rH = Math::GetNextPow2(graphics->GetRenderScreenHeight());
+		size_t rW = Math::GetNextPow2(graphics->GetScreenWidth());
+		size_t rH = Math::GetNextPow2(graphics->GetScreenHeight());
 
 		shared_ptr<TextureData> data;
 		if (!_CreateRenderTarget_Unmanaged(data, L"__PRIMARY_BACKSURFACE__", rW, rH)) {

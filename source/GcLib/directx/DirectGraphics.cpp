@@ -595,7 +595,7 @@ void DirectGraphics::ResetCamera() {
 		D3DXMatrixLookAtLH(&viewMat, (D3DXVECTOR3*)&viewFrom, &D3DXVECTOR3(0, 0, 0), &D3DXVECTOR3(0, 1, 0));
 
 		D3DXMatrixPerspectiveFovLH(&persMat, D3DXToRadian(45.0),
-			GetRenderScreenWidth() / (float)GetRenderScreenHeight(), 10.0f, 2000.0f);
+			GetScreenWidth() / (float)GetScreenHeight(), 10.0f, 2000.0f);
 
 		viewMat = viewMat * persMat;
 
@@ -907,7 +907,7 @@ void DirectGraphics::SetViewPort(int x, int y, int width, int height) {
 	matViewPort_ = CreateOrthographicProjectionMatrix(x, y, width, height);
 }
 void DirectGraphics::ResetViewPort() {
-	SetViewPort(0, 0, GetRenderScreenWidth(), GetRenderScreenHeight());
+	SetViewPort(0, 0, GetScreenWidth(), GetScreenHeight());
 }
 
 double DirectGraphics::GetScreenWidthRatio() {
@@ -951,7 +951,7 @@ DxRect<LONG> DirectGraphics::ClientSizeToWindowSize(const DxRect<LONG>& rc, Scre
 }
 
 void DirectGraphics::SaveBackSurfaceToFile(const std::wstring& path) {
-	DxRect<LONG> rect(0, 0, GetRenderScreenWidth(), GetRenderScreenHeight());
+	DxRect<LONG> rect(0, 0, GetScreenWidth(), GetScreenHeight());
 	LPDIRECT3DSURFACE9 pBackSurface = nullptr;
 	pDevice_->GetRenderTarget(0, &pBackSurface);
 	D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
@@ -999,9 +999,7 @@ DirectGraphicsPrimaryWindow::~DirectGraphicsPrimaryWindow() {
 
 void DirectGraphicsPrimaryWindow::_PauseDrawing() {
 	//	gstd::Application::GetBase()->SetActive(false);
-		// ウインドウのメニューバーを描画する
 	::DrawMenuBar(hWnd_);
-	// ウインドウのフレームを描画する
 	::RedrawWindow(hWnd_, nullptr, nullptr, RDW_FRAME);
 }
 void DirectGraphicsPrimaryWindow::_RestartDrawing() {
@@ -1162,13 +1160,11 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 	}
 	case WM_ENTERMENULOOP:
 	{
-		//メニューが選択されたら動作を停止する
 		_PauseDrawing();
 		return FALSE;
 	}
 	case WM_EXITMENULOOP:
 	{
-		//メニューの選択が解除されたら動作を再開する
 		_RestartDrawing();
 		return FALSE;
 	}
@@ -1222,6 +1218,8 @@ LRESULT DirectGraphicsPrimaryWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPAR
 
 		DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 
+		info->ptMinTrackSize.x = DnhConfiguration::MinScreenWidth;
+		info->ptMinTrackSize.y = DnhConfiguration::MinScreenHeight;
 		info->ptMaxSize.x = wr.GetWidth();
 		info->ptMaxSize.y = wr.GetHeight();
 
@@ -1552,8 +1550,8 @@ DxCamera2D::DxCamera2D() {
 DxCamera2D::~DxCamera2D() {}
 void DxCamera2D::Reset() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	LONG width = graphics->GetRenderScreenWidth();
-	LONG height = graphics->GetRenderScreenHeight();
+	LONG width = graphics->GetScreenWidth();
+	LONG height = graphics->GetScreenHeight();
 	if (posReset_ == nullptr) {
 		pos_.x = width / 2;
 		pos_.y = height / 2;

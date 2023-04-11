@@ -274,6 +274,7 @@ void EApplication::_RenderDisplay() {
 				VertexBufferManager* vbManager = VertexBufferManager::GetBase();
 				FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
 
+				UINT scW = graphics->GetScreenWidth(), scH = graphics->GetScreenHeight();
 				UINT vpW = graphics->GetRenderScreenWidth(), vpH = graphics->GetRenderScreenHeight();
 				/*
 				if (graphics->GetScreenMode() == ScreenMode::SCREENMODE_FULLSCREEN) {
@@ -293,12 +294,12 @@ void EApplication::_RenderDisplay() {
 
 				verts[0] = VERTEX_TLX(D3DXVECTOR4(0, 0, 0, 1), 0xffffffff,
 					D3DXVECTOR2(0, 0));
-				verts[1] = VERTEX_TLX(D3DXVECTOR4(vpW, 0, 0, 1), 0xffffffff,
-					D3DXVECTOR2(vpW / texW, 0));
-				verts[2] = VERTEX_TLX(D3DXVECTOR4(0, vpH, 0, 1), 0xffffffff,
-					D3DXVECTOR2(0, vpH / texH));
-				verts[3] = VERTEX_TLX(D3DXVECTOR4(vpW, vpH, 0, 1), 0xffffffff,
-					D3DXVECTOR2(vpW / texW, vpH / texH));
+				verts[1] = VERTEX_TLX(D3DXVECTOR4(scW, 0, 0, 1), 0xffffffff,
+					D3DXVECTOR2(scW / texW, 0));
+				verts[2] = VERTEX_TLX(D3DXVECTOR4(0, scH, 0, 1), 0xffffffff,
+					D3DXVECTOR2(0, scH / texH));
+				verts[3] = VERTEX_TLX(D3DXVECTOR4(scW, scH, 0, 1), 0xffffffff,
+					D3DXVECTOR2(scW / texW, scH / texH));
 				{
 					constexpr float bias = -0.5f;
 					for (size_t iVert = 0; iVert < 4; ++iVert) {
