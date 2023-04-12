@@ -1,5 +1,12 @@
 A mostly-complete history log of engine updates can be found here.
 
+1.33a-pre2:
+	Changes:
+		- ObjEnemy_SetDamageRate now ranges from 0 to 1 instead of 0 to 100.
+		- Bumped up the minimum window size to 150x150 due to limitations imposed by Windows.
+	Bug fixes:
+		- Fixed a rendering glitch that happens if the selected window size is less than the game's resolution.
+
 1.33a-pre: [Pre-release]
 	Changes:
 		- Reworked the FileArchiver to have a more modern-looking UI.
@@ -18,7 +25,6 @@ A mostly-complete history log of engine updates can be found here.
 			- Delays will now take data from another shot data for greater flexibility.
 			- Use "delay_id = x" to specify delay data, with x being a shot data ID.
 				- Use at the top for a "global" definition, and locally inside shot data definitions for shot-specific overrides.
-		- Allowed ObjPatternShot to create straight lasers.
 		- Renamed ObjShot_SetSourceBlendType to ObjShot_SetDelayBlendType.
 		- Completely overhauled the frame timing algorithm, which allows the game to run at a more stable frame rate.
 			- The frameskip mode "Automatic" may currently be unstable.
