@@ -10,6 +10,11 @@
 		4. Suffer or enjoy, I don't know.
 		
 ●	Notes
+		■	Legacy Build
+				There is a second engine exe provided (th_dnh_ph3sx_legacy.exe) in addition to the base engine exe (th_dnh_ph3sx.exe).
+				This is because the base engine utilize some components that not all devices may support.
+				Should you see an error when starting the engine, or experience some visual problems with the base version on your device, try switching to the legacy version.
+				
 		■	Running on Wine
 				If the engine shows an error regarding shader compilation on startup, it's likely because of Wine failing to load required dlls.
 				
