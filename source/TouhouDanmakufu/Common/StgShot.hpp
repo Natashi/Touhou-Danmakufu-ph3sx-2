@@ -96,8 +96,8 @@ public:
 		filterMag_ = mag;
 	}
 
-	void DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius);
-	std::vector<int> GetShotIdInCircle(int typeOwner, int cx, int cy, int* radius);
+	void DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, optional<int> radius);
+	std::vector<int> GetShotIdInCircle(int typeOwner, int cx, int cy, optional<int> radius);
 	size_t GetShotCount(int typeOwner);
 	size_t GetShotCountAll() { return listObj_.size(); }
 

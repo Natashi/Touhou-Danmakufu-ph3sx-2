@@ -120,6 +120,7 @@
 #include <any>
 #include <bitset>
 #include <complex>
+#include <optional>
 
 #include <memory>
 #include <algorithm>
@@ -192,6 +193,8 @@ using std::shared_ptr;
 using std::weak_ptr;
 
 using QWORD = uint64_t;		//Quad word
+
+using std::optional;
 
 #undef min
 #undef max

@@ -291,15 +291,17 @@ void StgItemManager::CancelCollectItems() {
 	bCancelToPlayer_ = true;
 }
 
-std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, int radius, int* itemType) {
-	int rr = radius * radius;
+std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, optional<int> radius, optional<int> itemType) {
+	int r = radius.has_value() ? *radius : 0;
+	int rr = r * r;
 
 	std::vector<int> res;
 	for (ref_unsync_ptr<StgItemObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
-		if (itemType != nullptr && (*itemType != obj->GetItemType())) continue;
+		if (itemType.has_value() && (*itemType != obj->GetItemType())) continue;
 
-		if (Math::HypotSq<int>(cx - obj->GetPositionX(), cy - obj->GetPositionY()) <= rr)
+		bool bInRadius = Math::HypotSq<int>(cx - obj->GetPositionX(), cy - obj->GetPositionY()) <= rr;
+		if (!radius.has_value() || bInRadius)
 			res.push_back(obj->GetObjectID());
 	}
 

@@ -164,7 +164,7 @@ void StgShotManager::AddShot(ref_unsync_ptr<StgShotObject> obj) {
 	listObj_.push_back(obj);
 }
 
-void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, int* radius) {
+void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, int cx, int cy, optional<int> radius) {
 	int r = radius ? *radius : 0;
 	int rr = r * r;
 
@@ -178,7 +178,8 @@ void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, i
 		int sx = obj->GetPositionX();
 		int sy = obj->GetPositionY();
 
-		if (radius == nullptr || (rcBox.IsPointIntersected(sx, sy) && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr)) {
+		bool bInRadius = rcBox.IsPointIntersected(sx, sy) && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr;
+		if (!radius.has_value() || bInRadius) {
 			if (typeTo == TO_TYPE_IMMEDIATE)
 				obj->DeleteImmediate();
 			else if (typeTo == TO_TYPE_FADE)
@@ -189,7 +190,7 @@ void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, i
 	}
 }
 
-std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, int cx, int cy, int* radius) {
+std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, int cx, int cy, optional<int> radius) {
 	int r = radius ? *radius : 0;
 	int rr = r * r;
 
@@ -203,7 +204,8 @@ std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, int cx, int cy
 		int sx = obj->GetPositionX();
 		int sy = obj->GetPositionY();
 
-		if (radius == nullptr || (rcBox.IsPointIntersected(sx, sy) && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr)) {
+		bool bInRadius = rcBox.IsPointIntersected(sx, sy) && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr;
+		if (!radius.has_value() || bInRadius) {
 			res.push_back(obj->GetObjectID());
 		}
 	}
