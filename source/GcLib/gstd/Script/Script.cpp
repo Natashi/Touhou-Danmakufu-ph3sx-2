@@ -633,9 +633,9 @@ void script_machine::run_code() {
 					value* cmp_arg = &stack.back() - 1;
 					value cmp_res = BaseFunction::compare(this, 2, cmp_arg);
 
-					bool bSkip = opc == command_kind::pc_loop_ascent ?
+					bool bStopLoop = opc == command_kind::pc_loop_ascent ?
 						(cmp_res.as_int() <= 0) : (cmp_res.as_int() >= 0);
-					stack.push_back(value(script_type_manager::get_boolean_type(), bSkip));
+					stack.push_back(value(script_type_manager::get_boolean_type(), bStopLoop));
 
 					//stack.pop_back(2U);
 					break;
@@ -655,20 +655,20 @@ void script_machine::run_code() {
 					value* i = &stack.back();
 					value* src_array = i - 1;
 
-					std::vector<value>::iterator itrCur = src_array->array_get_begin() + i->as_int();
-					std::vector<value>::iterator itrEnd = src_array->array_get_end();
+					size_t index = i->as_int();
+					size_t arrSize = src_array->length_as_array();
 
-					bool bSkip = false;
-					if (src_array->get_type()->get_kind() != type_data::tk_array || itrCur >= itrEnd) {
-						bSkip = true;
+					bool bStopLoop = false;
+					if (src_array->get_type()->get_kind() != type_data::tk_array || index >= arrSize) {
+						bStopLoop = true;
 					}
 					else {
-						stack.push_back(*itrCur);
+						stack.push_back(src_array->index_as_array(index));
 						//stack.back().make_unique();
 						i->set(i->get_type(), i->as_int() + 1i64);
 					}
 
-					stack.push_back(value(script_type_manager::get_boolean_type(), bSkip));
+					stack.push_back(value(script_type_manager::get_boolean_type(), bStopLoop));
 					break;
 				}
 
