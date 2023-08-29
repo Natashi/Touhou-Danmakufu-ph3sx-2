@@ -86,6 +86,9 @@
     <ClCompile Include="source\ext\imgui\backends\imgui_impl_win32.cpp">
       <Filter>source\external\imgui\backends</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\directx\ImGuiWindow.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\FileArchiver\Constant.hpp">
@@ -165,6 +168,9 @@
     </ClInclude>
     <ClInclude Include="source\ext\imgui\backends\imgui_impl_win32.h">
       <Filter>source\external\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\ImGuiWindow.hpp">
+      <Filter>source\GcLib\directx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

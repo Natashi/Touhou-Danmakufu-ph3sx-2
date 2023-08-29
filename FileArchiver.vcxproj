@@ -268,6 +268,7 @@
     <ClCompile Include="source\FileArchiver\WinMain.cpp" />
     <ClCompile Include="source\GcLib\directx\DirectGraphics.cpp" />
     <ClCompile Include="source\GcLib\directx\DxUtility.cpp" />
+    <ClCompile Include="source\GcLib\directx\ImGuiWindow.cpp" />
     <ClCompile Include="source\GcLib\gstd\Application.cpp" />
     <ClCompile Include="source\GcLib\gstd\ArchiveFile.cpp" />
     <ClCompile Include="source\GcLib\gstd\File.cpp" />
@@ -304,6 +305,7 @@
     <ClInclude Include="source\GcLib\directx\DxLib.hpp" />
     <ClInclude Include="source\GcLib\directx\DxTypes.hpp" />
     <ClInclude Include="source\GcLib\directx\DxUtility.hpp" />
+    <ClInclude Include="source\GcLib\directx\ImGuiWindow.hpp" />
     <ClInclude Include="source\GcLib\gstd\Application.hpp" />
     <ClInclude Include="source\GcLib\gstd\ArchiveFile.hpp" />
     <ClInclude Include="source\GcLib\gstd\File.hpp" />

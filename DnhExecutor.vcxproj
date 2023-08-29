@@ -61,7 +61,7 @@
     <IntDir>DnhExecutor\Release\</IntDir>
     <LinkIncremental>
     </LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext;.\source\ext\imgui</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>th_dnh_ph3sx</TargetName>
   </PropertyGroup>
@@ -70,7 +70,7 @@
     <IntDir>DnhExecutor\Release_legacy\</IntDir>
     <LinkIncremental>
     </LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext;.\source\ext\imgui</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>th_dnh_ph3sx_legacy</TargetName>
   </PropertyGroup>
@@ -79,7 +79,7 @@
     <IntDir>DnhExecutor/Debug/</IntDir>
     <LinkIncremental>
     </LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext;.\source\ext\imgui</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>th_dnh_d</TargetName>
   </PropertyGroup>
@@ -278,6 +278,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClCompile Include="source\GcLib\directx\DxUtilityIntersection.cpp" />
     <ClCompile Include="source\GcLib\directx\DxWindow.cpp" />
     <ClCompile Include="source\GcLib\directx\HLSL.cpp" />
+    <ClCompile Include="source\GcLib\directx\ImGuiWindow.cpp" />
     <ClCompile Include="source\GcLib\directx\MetasequoiaMesh.cpp" />
     <ClCompile Include="source\GcLib\directx\RenderObject.cpp" />
     <ClCompile Include="source\GcLib\directx\ScriptManager.cpp" />
@@ -352,6 +353,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClInclude Include="source\GcLib\directx\DxUtility.hpp" />
     <ClInclude Include="source\GcLib\directx\DxWindow.hpp" />
     <ClInclude Include="source\GcLib\directx\HLSL.hpp" />
+    <ClInclude Include="source\GcLib\directx\ImGuiWindow.hpp" />
     <ClInclude Include="source\GcLib\directx\MetasequoiaMesh.hpp" />
     <ClInclude Include="source\GcLib\directx\RenderObject.hpp" />
     <ClInclude Include="source\GcLib\directx\ScriptManager.hpp" />

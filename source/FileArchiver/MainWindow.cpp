@@ -8,128 +8,6 @@
 static const std::wstring FILEARCH_VERSION_STR = WINDOW_TITLE + L" " + DNH_VERSION;
 
 //*******************************************************************
-//DxGraphicsFileArchiver
-//*******************************************************************
-DxGraphicsFileArchiver::DxGraphicsFileArchiver() {
-	ZeroMemory(&d3dpp_, sizeof(d3dpp_));
-}
-DxGraphicsFileArchiver::~DxGraphicsFileArchiver() {
-}
-
-void DxGraphicsFileArchiver::_ReleaseDxResource() {
-	ImGui_ImplDX9_InvalidateDeviceObjects();
-	DirectGraphicsBase::_ReleaseDxResource();
-}
-void DxGraphicsFileArchiver::_RestoreDxResource() {
-	ImGui_ImplDX9_CreateDeviceObjects();
-	DirectGraphicsBase::_RestoreDxResource();
-}
-bool DxGraphicsFileArchiver::_Restore() {
-	deviceStatus_ = pDevice_->TestCooperativeLevel();
-	if (deviceStatus_ == D3D_OK) {
-		return true;
-	}
-	else if (deviceStatus_ == D3DERR_DEVICENOTRESET) {
-		ResetDevice();
-		return SUCCEEDED(deviceStatus_);
-	}
-	return false;
-}
-
-std::vector<std::wstring> DxGraphicsFileArchiver::_GetRequiredModules() {
-	return std::vector<std::wstring>({
-		L"d3d9.dll", 
-	});
-}
-
-bool DxGraphicsFileArchiver::Initialize(HWND hWnd) {
-	_LoadModules();
-
-	Logger::WriteTop("DirectGraphics: Initialize.");
-	pDirect3D_ = Direct3DCreate9(D3D_SDK_VERSION);
-	if (pDirect3D_ == nullptr) throw gstd::wexception("Direct3DCreate9 error.");
-
-	hAttachedWindow_ = hWnd;
-
-	pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &deviceCaps_);
-	_VerifyDeviceCaps();
-
-	d3dpp_.hDeviceWindow = hWnd;
-	d3dpp_.Windowed = TRUE;
-	d3dpp_.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	d3dpp_.BackBufferFormat = D3DFMT_X8R8G8B8;
-	d3dpp_.EnableAutoDepthStencil = TRUE;
-	d3dpp_.AutoDepthStencilFormat = D3DFMT_D16;
-	d3dpp_.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
-
-	{
-		HRESULT hrDevice = E_FAIL;
-		auto _TryCreateDevice = [&](D3DDEVTYPE type, DWORD addFlag) {
-			hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, type, hWnd,
-				addFlag | D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE, &d3dpp_, &pDevice_);
-		};
-		
-		_TryCreateDevice(D3DDEVTYPE_HAL, D3DCREATE_HARDWARE_VERTEXPROCESSING);
-		if (SUCCEEDED(hrDevice)) {
-			Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_HARDWARE_VERTEXPROCESSING)");
-		}
-		else {
-			_TryCreateDevice(D3DDEVTYPE_HAL, D3DCREATE_SOFTWARE_VERTEXPROCESSING);
-			if (SUCCEEDED(hrDevice))
-				Logger::WriteTop("DirectGraphics: Created device (D3DCREATE_SOFTWARE_VERTEXPROCESSING)");
-		}
-
-		if (FAILED(hrDevice)) {
-			std::wstring err = StringUtility::Format(
-				L"Cannot create Direct3D device. [%s]\r\n  %s",
-				DXGetErrorString(hrDevice), DXGetErrorDescription(hrDevice));
-			throw wexception(err);
-		}
-	}
-
-	pDevice_->GetRenderTarget(0, &pBackSurf_);
-	pDevice_->GetDepthStencilSurface(&pZBuffer_);
-
-	Logger::WriteTop("DirectGraphics: Initialized.");
-	return true;
-}
-void DxGraphicsFileArchiver::Release() {
-	DirectGraphicsBase::Release();
-}
-
-bool DxGraphicsFileArchiver::BeginScene(bool bClear) {
-	pDevice_->SetRenderState(D3DRS_ZENABLE, FALSE);
-	pDevice_->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-	pDevice_->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-
-	pDevice_->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 
-		D3DCOLOR_RGBA(0, 0, 0, 255), 1.0f, 0);
-
-	HRESULT hr = pDevice_->BeginScene();
-	if (FAILED(hr)) {
-		const wchar_t* str = DXGetErrorStringW(hr);
-		const wchar_t* desc = DXGetErrorDescriptionW(hr);
-	}
-	return SUCCEEDED(hr);
-}
-void DxGraphicsFileArchiver::EndScene(bool bPresent) {
-	pDevice_->EndScene();
-
-	deviceStatus_ = pDevice_->Present(nullptr, nullptr, nullptr, nullptr);
-	if (FAILED(deviceStatus_)) {
-		_Restore();
-	}
-}
-
-void DxGraphicsFileArchiver::ResetDevice() {
-	_ReleaseDxResource();
-	deviceStatus_ = pDevice_->Reset(&d3dpp_);
-	if (SUCCEEDED(deviceStatus_)) {
-		_RestoreDxResource();
-	}
-}
-
-//*******************************************************************
 //FileEntryInfo
 //*******************************************************************
 void FileEntryInfo::Sort() {
@@ -156,82 +34,56 @@ void FileEntryInfo::Sort() {
 //MainWindow
 //*******************************************************************
 MainWindow::MainWindow() {
-	bInitialized_ = false;
-
-	pIo_ = nullptr;
-	dpi_ = USER_DEFAULT_SCREEN_DPI;
-
 	bArchiveEnabled_ = false;
 }
 MainWindow::~MainWindow() {
-	//Stop();
-	//Join();
-
 	_SaveEnvironment();
-
-	ImGui_ImplDX9_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
-
-	dxGraphics_->Release();
-	::UnregisterClassW(L"WC_FileArchiver", ::GetModuleHandleW(nullptr));
 }
 
 bool MainWindow::Initialize() {
-	dxGraphics_.reset(new DxGraphicsFileArchiver());
+	dxGraphics_.reset(new ImGuiDirectGraphics());
 	dxGraphics_->SetSize(800, 600);
 
-	HINSTANCE hInst = ::GetModuleHandleW(nullptr);
+	if (!InitializeWindow(L"WC_FileArchiver"))
+		return false;
+	if (InitializeImGui())
+		return false;
+
+	pIo_->IniFilename = nullptr;	// Disable default save/load of imgui.ini
+
+	ImGui::StyleColorsDark();
+	_SetImguiStyle(1);
 
 	{
-		WNDCLASSEX wcex;
-		ZeroMemory(&wcex, sizeof(wcex));
-		wcex.cbSize = sizeof(WNDCLASSEX);
-		wcex.style = CS_CLASSDC;
-		wcex.lpfnWndProc = (WNDPROC)WindowBase::_StaticWindowProcedure;
-		wcex.hInstance = hInst;
-		wcex.lpszClassName = L"WC_FileArchiver";
-		::RegisterClassExW(&wcex);
+		for (auto size : { 8, 14, 16, 20, 24 }) {
+			std::string key = StringUtility::Format("Arial%d", size);
+			_AddUserFont(ImGuiAddFont(key, L"Arial", size));
+		}
 
-		hWnd_ = ::CreateWindowW(wcex.lpszClassName, L"", WS_OVERLAPPEDWINDOW,
-			0, 0, 0, 0, nullptr, nullptr, hInst, nullptr);
-	}
+		for (auto size : { 18, 20 }) {
+			std::string key = StringUtility::Format("Arial%d_Ex", size);
+			_AddUserFont(ImGuiAddFont(key, L"Arial", size, {
+				{ 0x0020, 0x00FF },		// ASCII
+				{ 0x2190, 0x2199 },		// Arrows
+			}));
+		}
 
-	SetBounds(0, 0, dxGraphics_->GetWidth(), dxGraphics_->GetHeight());
-	{
-		RECT drect, mrect;
-		::GetWindowRect(::GetDesktopWindow(), &drect);
-		::GetWindowRect(hWnd_, &mrect);
-
-		MoveWindowCenter(hWnd_, drect, mrect);
+		_ResetFont();
 	}
 
 	SetWindowTextW(hWnd_, FILEARCH_VERSION_STR.c_str());
+	MoveWindowCenter();
 
-	dxGraphics_->Initialize(hWnd_);
+	{
+		for (auto size : { 8, 16, 24 }) {
+			std::string key = StringUtility::Format("Arial%d", size);
+			_AddUserFont(ImGuiAddFont(key, L"Arial", size));
+		}
 
-	this->Attach(hWnd_);
-	::ShowWindow(hWnd_, SW_SHOWDEFAULT);
-
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	pIo_ = &ImGui::GetIO();
-	pIo_->IniFilename = nullptr;	//Disable default save/load of imgui.ini
-
-	ImGui::StyleColorsDark();
-	ImGui_ImplWin32_Init(hWnd_);
-	ImGui_ImplDX9_Init(dxGraphics_->GetDevice());
-
-	ImGui_ImplWin32_EnableDpiAwareness();
-
-	_SetImguiStyle(1);
-	_ResetFont();
-
-	_LoadEnvironment();
+		_ResetFont();
+	}
 
 	bInitialized_ = true;
-	//Start();
-
 	return true;
 }
 
@@ -270,55 +122,7 @@ void MainWindow::_SaveEnvironment() {
 	}
 }
 
-void MainWindow::_ResetFont() {
-	if (mapSystemFontPath_.size() == 0) {
-		std::vector<std::wstring> fonts = { L"Arial" };
-		for (auto& i : fonts) {
-			auto path = SystemUtility::GetSystemFontFilePath(i);
-			mapSystemFontPath_[i] = StringUtility::ConvertWideToMulti(path);
-		}
-	}
-
-	if (pIo_ == nullptr || ImGui::GetCurrentContext() == nullptr) return;
-
-	float scale = SystemUtility::DpiToScalingFactor(dpi_);
-
-	pIo_->Fonts->Clear();
-	mapFont_.clear();
-	
-	{
-		auto pathArial = mapSystemFontPath_[L"Arial"].c_str();
-		mapFont_["Arial8"] = pIo_->Fonts->AddFontFromFileTTF(pathArial, 8.0f * scale);
-		mapFont_["Arial16"] = pIo_->Fonts->AddFontFromFileTTF(pathArial, 16.0f * scale);
-		mapFont_["Arial24"] = pIo_->Fonts->AddFontFromFileTTF(pathArial, 24.0f * scale);
-	}
-
-	pIo_->Fonts->Build();
-}
-void MainWindow::_ResetDevice() {
-	_ResetFont();
-	dxGraphics_->ResetDevice();
-}
-
-void MainWindow::_Resize(float scale) {
-	RECT rc;
-	::GetWindowRect(hWnd_, &rc);
-
-	UINT wd = rc.right - rc.left;
-	UINT ht = rc.bottom - rc.top;
-	wd *= scale;
-	ht *= scale;
-
-	::MoveWindow(hWnd_, rc.left, rc.left, wd, ht, true);
-	MoveWindowCenter();
-
-	dxGraphics_->SetSize(wd, ht);
-	_ResetDevice();
-}
 void MainWindow::_SetImguiStyle(float scale) {
-	if (ImGui::GetCurrentContext() == nullptr)
-		return;
-
 	ImGuiStyle style;
 	ImGui::StyleColorsLight(&style);
 
@@ -333,35 +137,24 @@ void MainWindow::_SetImguiStyle(float scale) {
 	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.62f, 0.80f, 1.00f, 1.00f);
 	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
 
-	ImGui::GetStyle() = style;
+	ImGuiBaseWindow::_SetImguiStyle(style);
 }
 
-bool MainWindow::Loop() {
-	MSG msg;
-	while (::PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) {
-		::TranslateMessage(&msg);
-		::DispatchMessageW(&msg);
-
-		if (msg.message == WM_QUIT)
-			return false;
+LRESULT MainWindow::_SubWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	switch (uMsg) {
+	case WM_GETMINMAXINFO:
+	{
+		MINMAXINFO* minmax = (MINMAXINFO*)lParam;
+		minmax->ptMinTrackSize.x = 280;
+		minmax->ptMinTrackSize.y = 240;
+		minmax->ptMaxTrackSize.x = ::GetSystemMetrics(SM_CXMAXTRACK);
+		minmax->ptMaxTrackSize.y = ::GetSystemMetrics(SM_CYMAXTRACK);
+		return 0;
 	}
-	return bRun_;
-}
-
-void MainWindow::_Update() {
-	ImGui_ImplDX9_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-
-	ImGui::NewFrame();
-	_ProcessGui();
-	ImGui::EndFrame();
-
-	if (dxGraphics_->BeginScene(true)) {
-		ImGui::Render();
-		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 	}
-	dxGraphics_->EndScene(true);
+	return 0;
 }
+
 void MainWindow::_ProcessGui() {
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
@@ -676,65 +469,6 @@ void MainWindow::_ProcessGui_FileTree() {
 
 		ImGui::PopStyleVar();
 	}
-}
-
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-LRESULT MainWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
-		return true;
-
-	switch (uMsg) {
-	case WM_CLOSE:
-		::DestroyWindow(hWnd);
-		bRun_ = false;
-		return 0;
-	case WM_DESTROY:
-		::PostQuitMessage(0);
-		return 0;
-
-	case WM_PAINT:
-	{
-		/*
-		PAINTSTRUCT ps;
-		HDC hdc = ::BeginPaint(hWnd, &ps);
-		::FillRect(hdc, &ps.rcPaint, 0);
-		::EndPaint(hWnd, &ps);
-		*/
-		_Update();
-		return 0;
-	}
-
-	case WM_GETMINMAXINFO:
-	{
-		MINMAXINFO* minmax = (MINMAXINFO*)lParam;
-		minmax->ptMinTrackSize.x = 280;
-		minmax->ptMinTrackSize.y = 240;
-		minmax->ptMaxTrackSize.x = ::GetSystemMetrics(SM_CXMAXTRACK);
-		minmax->ptMaxTrackSize.y = ::GetSystemMetrics(SM_CYMAXTRACK);
-		return 0;
-	}
-	case WM_SIZE:
-	{
-		if (dxGraphics_->GetDevice() != nullptr && wParam != SIZE_MINIMIZED) {
-			dxGraphics_->SetSize(LOWORD(lParam), HIWORD(lParam));
-			_ResetDevice();
-		}
-		return 0;
-	}
-	case WM_DPICHANGED:
-	{
-		dpi_ = LOWORD(wParam);
-		_Resize(SystemUtility::DpiToScalingFactor(dpi_));
-		return 0;
-	}
-	case WM_SYSCOMMAND:
-	{
-		if ((wParam & 0xfff0) == SC_KEYMENU)	// Disable default alt menu
-			return 0;
-		break;
-	}
-	}
-	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
 
 void MainWindow::_AddFileFromDialog() {

@@ -4,69 +4,21 @@
 #include "Constant.hpp"
 #include "Common.hpp"
 
-//*******************************************************************
-//DxGraphicsConfigurator
-//*******************************************************************
-class DxGraphicsConfigurator : public DirectGraphicsBase {
-protected:
-	D3DPRESENT_PARAMETERS d3dpp_;
-protected:
-	virtual void _ReleaseDxResource();
-	virtual void _RestoreDxResource();
-	virtual bool _Restore();
-
-	virtual std::vector<std::wstring> _GetRequiredModules();
-public:
-	DxGraphicsConfigurator();
-	virtual ~DxGraphicsConfigurator();
-
-	virtual bool Initialize(HWND hWnd);
-	virtual void Release();
-
-	virtual bool BeginScene(bool bClear);
-	virtual void EndScene(bool bPresent);
-
-	virtual void ResetDeviceState() {};
-
-	void ResetDevice();
-
-	void SetSize(UINT wd, UINT ht) {
-		d3dpp_.BackBufferWidth = wd;
-		d3dpp_.BackBufferHeight = ht;
-	}
-	UINT GetWidth() { return d3dpp_.BackBufferWidth; }
-	UINT GetHeight() { return d3dpp_.BackBufferHeight; }
-};
+#include "../../GcLib/directx/ImGuiWindow.hpp"
 
 //*******************************************************************
 //MainWindow
 //*******************************************************************
 class Panel;
-class MainWindow : public WindowBase, public gstd::Singleton<MainWindow> {
+class MainWindow : public ImGuiBaseWindow, public gstd::Singleton<MainWindow> {
 protected:
-	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-private:
-	unique_ptr<DxGraphicsConfigurator> dxGraphics_;
-	ImGuiIO* pIo_;
-
-	std::unordered_map<std::wstring, std::string> mapSystemFontPath_;
-	std::unordered_map<std::string, ImFont*> mapFont_;
-	UINT dpi_;
-
-	bool bInitialized_;
-	volatile bool bRun_;
-
+	virtual LRESULT _SubWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+protected:
 	std::vector<unique_ptr<Panel>> listPanels_;
 	Panel* pCurrentPanel_;
 	Panel* pPanelOption_;
-public:
-	ImVec4 defaultStyleColors[ImGuiCol_COUNT];
-private:
-	void _ResetDevice();
-	void _ResetFont();
-
-	void _Resize(float scale);
-	void _SetImguiStyle(float scale);
+protected:
+	virtual void _SetImguiStyle(float scale);
 private:
 	bool _StartGame();
 
@@ -74,19 +26,15 @@ private:
 	void _SaveConfig();
 	void _ClearConfig();
 
-	void _ProcessGui();
-	void _Update();
+	virtual void _ProcessGui();
+	virtual void _Update();
 public:
 	MainWindow();
-	~MainWindow();
+	virtual ~MainWindow();
 
-	bool Initialize();
-	bool Loop();
+	virtual bool Initialize();
 
 	void InitializePanels();
-
-	DxGraphicsConfigurator* GetDxGraphics() { return dxGraphics_.get(); }
-	std::unordered_map<std::string, ImFont*>& GetFontMap() { return mapFont_; }
 };
 
 //*******************************************************************
