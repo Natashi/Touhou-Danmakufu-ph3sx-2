@@ -46,12 +46,11 @@ bool MainWindow::Initialize() {
 
 	if (!InitializeWindow(L"WC_FileArchiver"))
 		return false;
-	if (InitializeImGui())
+	if (!InitializeImGui())
 		return false;
 
 	pIo_->IniFilename = nullptr;	// Disable default save/load of imgui.ini
 
-	ImGui::StyleColorsDark();
 	_SetImguiStyle(1);
 
 	{

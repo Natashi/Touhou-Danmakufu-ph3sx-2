@@ -26,10 +26,9 @@ bool MainWindow::Initialize() {
 
 	if (!InitializeWindow(L"WC_Configurator"))
 		return false;
-	if (InitializeImGui())
+	if (!InitializeImGui())
 		return false;
 
-	ImGui::StyleColorsDark();
 	_SetImguiStyle(1);
 
 	SetWindowTextW(hWnd_, CONFIG_VERSION_STR.c_str());
