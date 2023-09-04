@@ -196,7 +196,7 @@ bool ImGuiBaseWindow::InitializeImGui() {
 
 	if (!ImGui_ImplWin32_Init(hWnd_))
 		return false;
-	if (ImGui_ImplDX9_Init(dxGraphics_->GetDevice()))
+	if (!ImGui_ImplDX9_Init(dxGraphics_->GetDevice()))
 		return false;
 
 	ImGui_ImplWin32_EnableDpiAwareness();
