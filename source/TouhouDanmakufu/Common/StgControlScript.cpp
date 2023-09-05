@@ -526,7 +526,7 @@ gstd::value StgControlScript::Func_GetScriptPathList(gstd::script_machine* machi
 
 		//明らかに関係なさそうな拡張子は除外
 		std::wstring ext = PathProperty::GetFileExtension(path);
-		if (ScriptInformation::IsExcludeExtention(ext)) continue;
+		if (ScriptInformation::IsExcludeExtension(ext)) continue;
 
 		path = PathProperty::GetUnique(path);
 		ref_count_ptr<ScriptInformation> infoScript = ScriptInformation::CreateScriptInformation(path, true);

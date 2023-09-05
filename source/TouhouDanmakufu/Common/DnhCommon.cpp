@@ -150,7 +150,7 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 
 	return res;
 }
-bool ScriptInformation::IsExcludeExtention(const std::wstring& ext) {
+bool ScriptInformation::IsExcludeExtension(const std::wstring& ext) {
 	static std::set<std::wstring> setExt = {
 		L".dat",
 
@@ -241,7 +241,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 			ArchiveFileEntry* entry = &itr->second;
 
 			std::wstring ext = PathProperty::GetFileExtension(entry->path);
-			if (ScriptInformation::IsExcludeExtention(ext))
+			if (ScriptInformation::IsExcludeExtension(ext))
 				continue;
 
 			std::wstring tPath = PathProperty::GetModuleDirectory() + entry->fullPath;
@@ -258,7 +258,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 	}
 	else {
 		std::wstring ext = PathProperty::GetFileExtension(path);
-		if (ScriptInformation::IsExcludeExtention(ext)) return res;
+		if (ScriptInformation::IsExcludeExtension(ext)) return res;
 
 		file.SetFilePointerBegin();
 		std::string source = "";

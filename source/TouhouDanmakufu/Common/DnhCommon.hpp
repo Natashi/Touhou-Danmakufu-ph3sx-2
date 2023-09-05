@@ -52,7 +52,7 @@ public:
 	static std::vector<ref_count_ptr<ScriptInformation>> CreateScriptInformationList(const std::wstring& path,
 		bool bNeedHeader = true);
 	static std::vector<ref_count_ptr<ScriptInformation>> FindPlayerScriptInformationList(const std::wstring& dir);
-	static bool IsExcludeExtention(const std::wstring& ext);
+	static bool IsExcludeExtension(const std::wstring& ext);
 
 private:
 	static std::wstring _GetString(Scanner& scanner);
