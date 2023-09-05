@@ -18,12 +18,14 @@ namespace gstd {
 		virtual ~Writer() {};
 
 		virtual DWORD Write(LPVOID buf, DWORD size) = 0;
+
 		template <typename T> DWORD Write(T& data) {
 			return Write(&data, sizeof(T));
 		}
 		template <typename T> DWORD WriteValue(T data) {
 			return Write(&data, sizeof(T));
 		}
+
 		void WriteBoolean(bool b) { Write(b); }
 		void WriteCharacter(char ch) { Write(ch); }
 		void WriteShort(short num) { Write(num); }
@@ -31,6 +33,11 @@ namespace gstd {
 		void WriteInteger64(int64_t num) { Write(num); }
 		void WriteFloat(float num) { Write(num); }
 		void WriteDouble(double num) { Write(num); }
+
+		template<typename E>
+		void WriteString(std::basic_string<E, std::char_traits<E>, std::allocator<E>> str) {
+			Write(str.data(), str.size() * sizeof(E));
+		}
 	};
 
 	//*******************************************************************
