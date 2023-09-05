@@ -5,6 +5,8 @@
 #include "MainWindow.hpp"
 #include "LibImpl.hpp"
 
+using namespace directx::imgui;
+
 static const std::wstring FILEARCH_VERSION_STR = WINDOW_TITLE + L" " + DNH_VERSION;
 
 //*******************************************************************

@@ -100,7 +100,7 @@ namespace directx {
 	//*******************************************************************
 	//SoundInfoPanel
 	//*******************************************************************
-	class SoundInfoPanel : public gstd::WindowLogger::Panel {
+	class SoundInfoPanel : public gstd::ILoggerPanel {
 	protected:
 		enum {
 			ROW_ADDRESS,
@@ -109,18 +109,18 @@ namespace directx {
 			ROW_COUNT_REFFRENCE,
 		};
 	protected:
-		gstd::WListView wndListView_;
+		/*gstd::WListView wndListView_;
 		uint64_t timeLastUpdate_;
 		uint64_t timeUpdateInterval_;
 
-		virtual bool _AddedLogger(HWND hTab);
+		virtual bool _AddedLogger(HWND hTab);*/
 	public:
 		SoundInfoPanel();
 
-		void SetUpdateInterval(int time) { timeUpdateInterval_ = time; }
-		virtual void LocateParts();
+		virtual void Initialize(const std::string& name);
 
-		virtual void Update(DirectSoundManager* soundManager);
+		virtual void Update();
+		virtual void ProcessGui();
 	};
 
 	//*******************************************************************

@@ -552,7 +552,7 @@ namespace gstd {
 	//*******************************************************************
 	//ScriptCommonDataInfoPanel
 	//*******************************************************************
-	class ScriptCommonDataInfoPanel : public WindowLogger::Panel {
+	class ScriptCommonDataInfoPanel : public ILoggerPanel {
 	protected:
 		enum {
 			COL_AREA = 0,
@@ -560,6 +560,7 @@ namespace gstd {
 			COL_VALUE,
 		};
 
+		/*
 		std::vector<std::map<std::string, shared_ptr<ScriptCommonData>>::iterator> vecMapItr_;
 
 		gstd::CriticalSection lock_;
@@ -576,13 +577,14 @@ namespace gstd {
 
 		void _UpdateAreaView();
 		void _UpdateValueView();
+		*/
 	public:
 		ScriptCommonDataInfoPanel();
 
-		void SetUpdateInterval(int time) { timeUpdateInterval_ = time; }
+		virtual void Initialize(const std::string& name);
 
-		virtual void LocateParts();
 		virtual void Update();
+		virtual void ProcessGui();
 	};
 
 }

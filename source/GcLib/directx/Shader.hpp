@@ -96,7 +96,7 @@ namespace directx {
 	//****************************************************************************
 	//ShaderInfoPanel
 	//****************************************************************************
-	class ShaderInfoPanel : public gstd::WindowLogger::Panel {
+	class ShaderInfoPanel : public gstd::ILoggerPanel {
 	protected:
 		enum {
 			ROW_ADDRESS,
@@ -106,15 +106,16 @@ namespace directx {
 			ROW_PARAMETERS,
 			ROW_TECHNIQUES,
 		};
-		gstd::WListView wndListView_;
+		//gstd::WListView wndListView_;
 
-		virtual bool _AddedLogger(HWND hTab);
+		//virtual bool _AddedLogger(HWND hTab);
 	public:
 		ShaderInfoPanel();
-		~ShaderInfoPanel();
 
-		virtual void LocateParts();
-		virtual void PanelUpdate();
+		virtual void Initialize(const std::string& name);
+
+		virtual void Update();
+		virtual void ProcessGui();
 	};
 
 	//*******************************************************************

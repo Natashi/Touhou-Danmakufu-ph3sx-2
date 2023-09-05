@@ -57,7 +57,7 @@ void TaskManager::ArrangeTask() {
 		}
 	}
 
-	if (panelInfo_) panelInfo_->Update(this);
+	//if (panelInfo_) panelInfo_->Update(this);
 }
 void TaskManager::Clear() {
 	listTask_.clear();
@@ -298,10 +298,23 @@ void TaskManager::SetFunctionEnable(bool bEnable, const std::type_info& info, in
 //TaskInfoPanel
 //****************************************************************************
 TaskInfoPanel::TaskInfoPanel() {
-	addressLastFindManager_ = 0;
-	timeLastUpdate_ = 0;
-	timeUpdateInterval_ = 2000;
+	//addressLastFindManager_ = 0;
+	//timeLastUpdate_ = 0;
+	//timeUpdateInterval_ = 2000;
 }
+
+void TaskInfoPanel::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
+}
+
+void TaskInfoPanel::Update() {
+	
+}
+void TaskInfoPanel::ProcessGui() {
+
+}
+
+/*
 bool TaskInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
 
@@ -465,6 +478,7 @@ void TaskInfoPanel::_UpdateListView(TaskManager* taskManager) {
 
 	addressLastFindManager_ = (int)taskManager;
 }
+*/
 
 //****************************************************************************
 //WorkRenderTaskManager

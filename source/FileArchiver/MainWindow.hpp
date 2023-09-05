@@ -1,6 +1,6 @@
 #pragma once
-
 #include "../GcLib/pch.h"
+
 #include "Constant.hpp"
 
 #include "../../GcLib/directx/ImGuiWindow.hpp"
@@ -33,7 +33,7 @@ struct FileEntryInfo {
 //MainWindow
 //*******************************************************************
 class ArchiverThread;
-class MainWindow : public ImGuiBaseWindow, public Singleton<MainWindow> {
+class MainWindow : public directx::imgui::ImGuiBaseWindow, public Singleton<MainWindow> {
 protected:
 	virtual LRESULT _SubWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 private:

@@ -36,143 +36,6 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 	bCheckDeviceCaps = true;
 }
 
-//*******************************************************************
-//DirectGraphicsBase
-//*******************************************************************
-DirectGraphicsBase::DirectGraphicsBase() {
-	pDirect3D_ = nullptr;
-	pDevice_ = nullptr;
-	pBackSurf_ = nullptr;
-	pZBuffer_ = nullptr;
-
-	ZeroMemory(&deviceCaps_, sizeof(deviceCaps_));
-	deviceStatus_ = S_OK;
-
-	hAttachedWindow_ = nullptr;
-}
-DirectGraphicsBase::~DirectGraphicsBase() {
-	Release();
-}
-
-void DirectGraphicsBase::_ReleaseDxResource() {
-	ptr_release(pZBuffer_);
-	ptr_release(pBackSurf_);
-
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		(*itr)->ReleaseDxResource();
-	}
-}
-void DirectGraphicsBase::_RestoreDxResource() {
-	pDevice_->GetRenderTarget(0, &pBackSurf_);
-	pDevice_->GetDepthStencilSurface(&pZBuffer_);
-
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		(*itr)->RestoreDxResource();
-	}
-}
-
-void DirectGraphicsBase::_VerifyDeviceCaps() {
-	std::vector<std::string> listError;
-	std::vector<std::string> listWarning;
-
-	if ((deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_IMMEDIATE) == 0)
-		listError.push_back("D3DPRESENT_INTERVAL_IMMEDIATE is unavailable");
-	if ((deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_ONE) == 0)
-		listWarning.push_back("V-Sync is unavailable");
-
-	if (deviceCaps_.VertexShaderVersion < D3DVS_VERSION(2, 0)
-		|| deviceCaps_.MaxVertexShaderConst < 4)
-		listError.push_back("The device's vertex shader support is insufficient (vs_2_0 required)");
-	else if (deviceCaps_.VertexShaderVersion < D3DVS_VERSION(3, 0))
-		listWarning.push_back("The device's vertex shader support is insufficient (vs_3_0 recommended)");
-
-	if (deviceCaps_.NumSimultaneousRTs < 1)
-		listError.push_back("Device must support at least 1 render target");
-
-	//-------------------------------------------------------------------------------
-
-	_VerifyDeviceCaps_Result(listError, listWarning);
-}
-void DirectGraphicsBase::_VerifyDeviceCaps_Result(const std::vector<std::string>& err, const std::vector<std::string>& warn) {
-	if (err.size() > 0) {
-		std::string strAll = "The game cannot start as the\r\n"
-			"Direct3D device has the following issue(s):\r\n";
-		for (auto& str : err)
-			strAll += "   - " + str + "\r\n";
-		strAll += "Try restarting in reference rasterizer mode\r\n";
-		throw wexception(strAll);
-	}
-	else if (warn.size() > 0) {
-		std::string strAll = "The game's rendering might behave strangely as the\r\n"
-			"Direct3D device has the following issue(s):\r\n";
-		for (auto& str : warn)
-			strAll += "   - " + str + "\r\n";
-		Logger::WriteTop(strAll);
-	}
-}
-
-std::vector<std::wstring> DirectGraphicsBase::_GetRequiredModules() {
-	return std::vector<std::wstring>({
-		L"d3d9.dll", L"d3dx9_43.dll", L"d3dcompiler_43.dll",
-		L"dsound.dll", L"dinput8.dll"
-	});
-}
-void DirectGraphicsBase::_LoadModules() {
-	HANDLE hCurrentProcess = ::GetCurrentProcess();
-
-	std::vector<std::wstring> moduleNames = _GetRequiredModules();
-	for (auto& iModule : moduleNames) {
-		HMODULE hModule = ::LoadLibraryW(iModule.c_str());
-		if (hModule == nullptr)
-			throw gstd::wexception(L"Failed to load module: " + iModule);
-		mapDxModules_[iModule] = hModule;
-	}
-}
-void DirectGraphicsBase::_FreeModules() {
-	for (auto itr = mapDxModules_.begin(); itr != mapDxModules_.end(); ++itr) {
-		HMODULE pModule = itr->second;
-		if (pModule)
-			::FreeLibrary(pModule);
-	}
-	mapDxModules_.clear();
-}
-
-void DirectGraphicsBase::Release() {
-	ptr_release(pZBuffer_);
-	ptr_release(pBackSurf_);
-	ptr_release(pDevice_);
-	ptr_release(pDirect3D_);
-
-	_FreeModules();
-}
-
-void DirectGraphicsBase::AddDirectGraphicsListener(DirectGraphicsListener* listener) {
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		if ((*itr) == listener)
-			return;
-	}
-	listListener_.push_back(listener);
-}
-void DirectGraphicsBase::RemoveDirectGraphicsListener(DirectGraphicsListener* listener) {
-	listListener_.remove(listener);
-}
-
-bool DirectGraphicsBase::BeginScene(bool bClear = true) {
-	return SUCCEEDED(pDevice_->BeginScene());
-}
-void DirectGraphicsBase::EndScene(bool bPresent = true) {
-	pDevice_->EndScene();
-
-	if (bPresent) {
-		deviceStatus_ = pDevice_->Present(nullptr, nullptr, nullptr, nullptr);
-		if (FAILED(deviceStatus_)) {
-			if (_Restore()) {
-				ResetDeviceState();
-			}
-		}
-	}
-}
-
 #if defined(DNH_PROJ_EXECUTOR)
 //*******************************************************************
 //DirectGraphics
@@ -216,16 +79,16 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	_LoadModules();
 
 	Logger::WriteTop("DirectGraphics: Initialize.");
-	pDirect3D_ = Direct3DCreate9(D3D_SDK_VERSION);
-	if (pDirect3D_ == nullptr) throw gstd::wexception("Direct3DCreate9 error.");
+
+	IDirect3D9* pDirect3D = EDirect3D9::GetInstance()->GetD3D();
 
 	config_ = config;
 	hAttachedWindow_ = hWnd;
 
 	D3DCAPS9 capsRef;
 	D3DCAPS9 capsHal;
-	pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, &capsRef);
-	pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &capsHal);
+	pDirect3D->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, &capsRef);
+	pDirect3D->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &capsHal);
 
 	D3DDEVTYPE deviceType = config.bUseRef ? D3DDEVTYPE_REF : D3DDEVTYPE_HAL;
 	deviceCaps_ = deviceType == D3DDEVTYPE_REF ? capsRef : capsHal;
@@ -304,7 +167,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 			{ D3DMULTISAMPLE_8_SAMPLES, "MSAA 8x"},
 		};
 
-		auto pD3D = pDirect3D_;
+		auto pD3D = pDirect3D;
 		auto _Check = [&pD3D, &backBufferFmt](D3DMULTISAMPLE_TYPE msaa, bool windowed) {
 			HRESULT hrBack = pD3D->CheckDeviceMultiSampleType(
 				D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, backBufferFmt,
@@ -346,7 +209,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		HRESULT hrDevice = E_FAIL;
 		{
 			auto _TryCreateDevice = [&](D3DDEVTYPE type, DWORD addFlag) {
-				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, type, hWnd, 
+				hrDevice = pDirect3D->CreateDevice(D3DADAPTER_DEFAULT, type, hWnd, 
 					addFlag | D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE, d3dpp, &pDevice_);
 			};
 			if (config.bUseRef) {
@@ -536,6 +399,21 @@ void DirectGraphics::_RestoreDxResource() {
 	ResetDeviceState();
 }
 
+bool DirectGraphics::_Reset() {
+	::InvalidateRect(hAttachedWindow_, nullptr, false);
+
+	_ReleaseDxResource();
+
+	deviceStatus_ = pDevice_->Reset(modeScreen_ == SCREENMODE_FULLSCREEN ? &d3dppFull_ : &d3dppWin_);
+
+	if (SUCCEEDED(deviceStatus_)) {
+		_RestoreDxResource();
+		return true;
+	}
+
+	return false;
+}
+
 static int g_restoreFailCount = 0;
 bool DirectGraphics::_Restore() {
 	//The device was lost, wait until it's able to be restored
@@ -548,20 +426,15 @@ bool DirectGraphics::_Restore() {
 		while ((deviceStatus_ = pDevice_->TestCooperativeLevel()) == D3DERR_DEVICELOST)
 			::Sleep(50);
 
-		if (deviceStatus_ == D3DERR_DEVICENOTRESET) {	//The device is now able to be restored
-			::InvalidateRect(hAttachedWindow_, nullptr, false);
-
-			_ReleaseDxResource();
-
-			deviceStatus_ = pDevice_->Reset(modeScreen_ == SCREENMODE_FULLSCREEN ? &d3dppFull_ : &d3dppWin_);
-			if (SUCCEEDED(deviceStatus_)) {
-				_RestoreDxResource();
+		if (deviceStatus_ == D3DERR_DEVICENOTRESET) {	// The device is now able to be restored
+			bool reset = _Reset();
+			if (reset) {
 				Logger::WriteTop("_Restore: IDirect3DDevice restored.");
 				g_restoreFailCount = 0;
 				return true;
 			}
 		}
-		if (FAILED(deviceStatus_)) {					//Something went wrong
+		if (FAILED(deviceStatus_)) {					// Something went wrong
 			++g_restoreFailCount;
 			if (g_restoreFailCount >= 60) {
 				g_restoreFailCount = 0;
@@ -615,10 +488,7 @@ void DirectGraphics::ResetDeviceState() {
 	SetLightingEnable(true);
 	SetSpecularEnable(false);
 
-	D3DVECTOR dir;
-	dir.x = -1;
-	dir.y = -1;
-	dir.z = -1;
+	D3DVECTOR dir = { -1, -1, -1 };
 	SetDirectionalLight(dir);
 
 	SetAntiAliasing(false);

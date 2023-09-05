@@ -1117,8 +1117,19 @@ gstd::value StgControlScript::Func_SaveReplay(gstd::script_machine* machine, int
 //*******************************************************************
 ScriptInfoPanel::ScriptInfoPanel() {
 }
-ScriptInfoPanel::~ScriptInfoPanel() {
+
+void ScriptInfoPanel::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
 }
+
+void ScriptInfoPanel::Update() {
+
+}
+void ScriptInfoPanel::ProcessGui() {
+
+}
+
+/*
 bool ScriptInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
 
@@ -1396,3 +1407,4 @@ LRESULT ScriptInfoPanel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, L
 	}
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
+*/

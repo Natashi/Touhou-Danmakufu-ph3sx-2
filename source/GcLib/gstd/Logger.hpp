@@ -4,44 +4,106 @@
 
 #include "GstdUtility.hpp"
 #include "File.hpp"
-#include "Thread.hpp"
 
-#include "Window.hpp"
+#include "../directx/ImGuiWindow.hpp"
 
 namespace gstd {
-	//*******************************************************************
-	//Logger
-	//*******************************************************************
-	class Logger {
+	class ILogger {
+	protected:
+		std::string name_;
+	public:
+		enum class LogType {
+			Info,
+			Warning,
+			Error,
+		};
+
+		struct LogData {
+			SYSTEMTIME time;
+			LogType type;
+			std::string text;
+		};
+	public:
+		virtual bool Initialize(const std::string& name) = 0;
+
+		const std::string& GetName() const { return name_; }
+
+		virtual void LoadState() = 0;
+		virtual void SaveState() = 0;
+
+		virtual void Update() = 0;
+		virtual void ProcessGui() = 0;
+
+		virtual void Write(const LogData& data) = 0;
+		virtual void Flush() {};
+	};
+
+	class Logger : public directx::imgui::ImGuiBaseWindow {
 	protected:
 		static Logger* top_;
-		gstd::CriticalSection lock_;
-		std::list<shared_ptr<Logger>> listLogger_;
-		virtual void _WriteChild(SYSTEMTIME& time, const std::wstring& str);
-		virtual void _Write(SYSTEMTIME& time, const std::wstring& str) = 0;
+	protected:
+		virtual LRESULT _SubWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	protected:
+		std::list<shared_ptr<ILogger>> listLogger_;
+
+		bool bWindowActive_;
+	protected:
+		virtual void _SetImguiStyle(float scale);
+
+		virtual void _ProcessGui();
+		virtual void _Update();
 	public:
 		Logger();
 		virtual ~Logger();
 
-		virtual bool Initialize() { return true; }
+		virtual bool Initialize();
+		bool Initialize(bool bEnable = true);
 
-		void AddLogger(shared_ptr<Logger> logger) { listLogger_.push_back(logger); }
-		
-		virtual void Write(const std::string& str);
-		virtual void Write(const std::wstring& str);
+		void AddLogger(shared_ptr<ILogger> logger) { listLogger_.push_back(logger); }
+		template<class T> shared_ptr<T> GetLogger(const std::string& name);
+
+		virtual void Write(ILogger::LogType type, const std::string& str);
+		virtual void Write(ILogger::LogType type, const std::wstring& str);
 
 		static void SetTop(Logger* logger) { top_ = logger; }
-		static void WriteTop(const std::string& str) { if (top_) top_->Write(str); }
-		static void WriteTop(const std::wstring& str) { if (top_) top_->Write(str); }
+		static Logger* GetTop() { return top_; }
 
-		void FlushFileLogger();
+#define DEF_WRITE(_name, _type) \
+		static void _name(const std::string& str) { WriteTop(_type, str); } \
+		static void _name(const std::wstring& str) { WriteTop(_type, str); }
+
+		static void WriteTop(ILogger::LogType type, const std::string& str) { if (top_) top_->Write(type, str); }
+		static void WriteTop(ILogger::LogType type, const std::wstring& str) { if (top_) top_->Write(type, str); }
+
+		DEF_WRITE(WriteInfo, ILogger::LogType::Info);
+		DEF_WRITE(WriteWarning, ILogger::LogType::Warning);
+		DEF_WRITE(WriteError, ILogger::LogType::Error);
+
+		static void WriteTop(const std::string& str) { WriteInfo(str); }
+		static void WriteTop(const std::wstring& str) { WriteInfo(str); }
+
+#undef DEF_WRITE
+
+		virtual void Flush();
+
+		void ShowLogWindow();
 	};
+
+	template<class T> shared_ptr<T> Logger::GetLogger(const std::string& name) {
+		static_assert(std::is_base_of<ILogger, T>::value, "Type parameter must derive from ILogger");
+
+		for (auto& iLogger : listLogger_) {
+			if (iLogger->GetName() == name)
+				return std::dynamic_pointer_cast<T>(iLogger);
+		}
+		return nullptr;
+	}
 
 #if defined(DNH_PROJ_EXECUTOR)
 	//*******************************************************************
 	//FileLogger
 	//*******************************************************************
-	class FileLogger : public Logger {
+	class FileLogger : public ILogger {
 	protected:
 		bool bEnable_;
 
@@ -49,132 +111,120 @@ namespace gstd {
 		std::wstring path_;
 
 		size_t sizeMax_;
-
-		virtual void _Write(SYSTEMTIME& systemTime, const std::wstring& str);
+	protected:
 		void _CreateFile();
 	public:
 		FileLogger();
 		~FileLogger();
 
-		void FlushFile();
-
-		bool Initialize(bool bEnable = true);
-		bool Initialize(std::wstring path, bool bEnable = true);
-		
 		bool SetPath(const std::wstring& path);
 		void SetMaxFileSize(int size) { sizeMax_ = size; }
+
+		virtual bool Initialize(const std::string& name);
+		bool Initialize(const std::string& name, bool bEnable = true);
+		bool Initialize(const std::string& name, const std::wstring& path, bool bEnable = true);
+
+		virtual void LoadState() {};
+		virtual void SaveState() {};
+
+		virtual void Update() {};
+		virtual void ProcessGui() {};
+
+		virtual void Write(const LogData& data);
+		virtual void Flush();
+	};
+
+	class ILoggerPanel {
+	protected:
+		std::string name_;
+		std::string displayName_;
+		bool bActive_;
+	public:
+		virtual void Initialize(const std::string& name) {
+			name_ = name;
+			bActive_ = false;
+		}
+
+		virtual void Update() = 0;
+		virtual void ProcessGui() = 0;
+
+		const bool IsActive() const { return bActive_; }
+		void SetActive(bool b) { bActive_ = b; }
+
+		const std::string& GetName() const { return name_; }
+		const std::string& GetDisplayName() const { return displayName_; }
+		void SetDisplayName(const std::string& name) { displayName_ = name; }
 	};
 
 	//*******************************************************************
 	//WindowLogger
-	//ログウィンドウ
-	//ウィンドウは別スレッド動作です
-	//Natashi: Only instantiate once.
 	//*******************************************************************
-	class WindowLogger : public Logger, public WindowBase {
+	class WindowLogger : public ILogger {
 	public:
-		class WindowThread;
-		class Panel;
-		class LogPanel;
-		class InfoPanel;
-		friend WindowThread;
-		friend LogPanel;
-		friend InfoPanel;
-		enum {
-			WM_ENDLOGGER = WM_APP + 1,
-			WM_ADDPANEL,
-
-			STATUS_MEMORY = 0,
-			STATUS_CPU = 1,
-
-			MENU_ID_OPEN = 1,
-
-			STATE_INITIALIZING = 0,
-			STATE_RUNNING,
-			STATE_CLOSED,
-		};
-
-		struct AddPanelEvent {
-			std::wstring name;
-			shared_ptr<Panel> panel;
-		};
-	public:
-		static WindowLogger* loggerParentGlobal_;
+		class PanelEventLog;
+		class PanelInfo;
 	protected:
 		bool bEnable_;
-		int windowState_;
 
-		shared_ptr<WindowThread> threadWindow_;
-		shared_ptr<WTabControll> wndTab_;
-		shared_ptr<WStatusBar> wndStatus_;
-		shared_ptr<LogPanel> wndLogPanel_;
-		shared_ptr<InfoPanel> wndInfoPanel_;
-		gstd::CriticalSection lock_;
-		std::list<AddPanelEvent> listEventAddPanel_;
+		std::vector<shared_ptr<ILoggerPanel>> panels_;
+		shared_ptr<ILoggerPanel> currentPanel_;
 
-		void _Run();
-		void _CreateWindow();
-		virtual void _Write(SYSTEMTIME& systemTime, const std::wstring& str);
-		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		shared_ptr<PanelEventLog> panelEventLog_;
+		shared_ptr<PanelInfo> panelInfo_;
 	public:
 		WindowLogger();
 		~WindowLogger();
 
-		bool Initialize(bool bEnable = true);
+		virtual bool Initialize(const std::string& name);
+		bool Initialize(const std::string& name, bool bEnable = true);
 
-		void SaveState();
-		void LoadState();
+		virtual void LoadState();
+		virtual void SaveState();
 
-		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
-		bool AddPanel(shared_ptr<Panel> panel, const std::wstring& name);
+		virtual void Update() {};
+		virtual void ProcessGui();
 
-		shared_ptr<InfoPanel> GetInfoPanel() { return wndInfoPanel_; }
+		virtual void Write(const LogData& data);
+		virtual void Flush() {};
 
-		int GetState() { return windowState_; }
+		bool AddPanel(shared_ptr<ILoggerPanel> panel, const std::string& name);
 
-		void ShowLogWindow();
-		static void InsertOpenCommandInSystemMenu(HWND hWnd);
+		template<class T> shared_ptr<T> GetPanel(const std::string& name);
 
-		shared_ptr<WStatusBar> GetStatusBar() { return wndStatus_; }
-		void ClearStatusBar();
-		
-		static WindowLogger* GetParent() { return loggerParentGlobal_; }
+		shared_ptr<PanelEventLog> GetLogPanel() { return panelEventLog_; }
+		shared_ptr<PanelInfo> GetInfoPanel() { return panelInfo_; }
 	};
-	class WindowLogger::WindowThread : public gstd::Thread, public gstd::InnerClass<WindowLogger> {
-		friend WindowLogger;
-	protected:
-		WindowThread(WindowLogger* logger);
 
-		void _Run();
-	};
-	class WindowLogger::Panel : public WPanel {
-		friend WindowLogger;
-	protected:
-		virtual bool _AddedLogger(HWND hTab) = 0;
+	template<class T> shared_ptr<T> WindowLogger::GetPanel(const std::string& name) {
+		static_assert(std::is_base_of<ILoggerPanel, T>::value, "Type parameter must derive from ILoggerPanel");
 
-		virtual void _ReadRecord(RecordBuffer& record) {}
-		virtual void _WriteRecord(RecordBuffer& record) {}
+		for (auto& iPanel : panels_) {
+			if (iPanel->GetName() == name)
+				return std::dynamic_pointer_cast<T>(iPanel);
+		}
+		return nullptr;
+	}
+
+	class WindowLogger::PanelEventLog : public ILoggerPanel {
+		struct LogEntry {
+			LogType type;
+			std::string text;
+		};
+		std::list<LogEntry> events_;
 	public:
-		virtual void PanelInitialize() {}
-		virtual void PanelUpdate() {}
+		PanelEventLog();
+		~PanelEventLog();
+
+		virtual void Initialize(const std::string& name);
+
+		virtual void Update() {};
+		virtual void ProcessGui();
+
+		void AddEvent(const LogData& data);
+		void ClearEvents();
 	};
 
-	class WindowLogger::LogPanel : public WindowLogger::Panel {
-		WEditBox wndEdit_;
-	protected:
-		virtual bool _AddedLogger(HWND hTab);
-	public:
-		LogPanel();
-		~LogPanel();
-
-		virtual void LocateParts();
-
-		void AddText(const std::wstring& text);
-		void ClearText();
-	};
-
-	class WindowLogger::InfoPanel : public WindowLogger::Panel {
-	private:
+	class WindowLogger::PanelInfo : public ILoggerPanel {
 		struct CpuInfo {
 			char venderID[13];
 			char name[49];
@@ -189,40 +239,31 @@ namespace gstd {
 			bool bSIMDEnabled;
 		};
 	private:
-		class InfoCollector;
-		friend class InfoCollector;
-
-		enum {
-			ROW_INFO = 0,
-			ROW_DATA,
-		};
-
-		gstd::CriticalSection lock_;
-
-		WListView wndListView_;
-
-		CpuInfo infoCpu_;
-
 		HANDLE hProcess_;
 		HQUERY hQuery_;
 		HCOUNTER hCounter_;
-	protected:
-		virtual bool _AddedLogger(HWND hTab);
 
+		CpuInfo infoCpu_;
+		uint64_t ramMemAvail_, ramMemMax_;
+		double rateCpuUsage_;
+
+		std::map<int, std::array<std::string, 2>> infoLines_;
+	protected:
 		void _InitializeHandle();
 		CpuInfo _GetCpuInformation();
 		double _GetCpuPerformance();
 
 		void _SetRamInfo();
 	public:
-		InfoPanel();
-		~InfoPanel();
+		PanelInfo();
+		~PanelInfo();
 
-		virtual void LocateParts();
+		virtual void Initialize(const std::string& name);
 
-		void SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData);
+		virtual void Update();
+		virtual void ProcessGui();
 
-		virtual void PanelUpdate();
+		void SetInfo(int row, const std::string& label, const std::string& text);
 	};
 #endif
 }

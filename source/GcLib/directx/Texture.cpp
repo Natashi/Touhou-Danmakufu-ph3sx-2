@@ -777,8 +777,19 @@ std::map<std::wstring, shared_ptr<TextureData>>::iterator TextureManager::IsData
 //****************************************************************************
 TextureInfoPanel::TextureInfoPanel() {
 }
-TextureInfoPanel::~TextureInfoPanel() {
+
+void TextureInfoPanel::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
 }
+
+void TextureInfoPanel::Update() {
+
+}
+void TextureInfoPanel::ProcessGui() {
+
+}
+
+/*
 bool TextureInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
 
@@ -885,3 +896,4 @@ void TextureInfoPanel::PanelUpdate() {
 		}
 	}
 }
+*/

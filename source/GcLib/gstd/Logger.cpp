@@ -3,81 +3,196 @@
 #include "Logger.hpp"
 
 using namespace gstd;
+using namespace directx;
+
+#define ENABLE_RENDER 1
 
 //*******************************************************************
 //Logger
 //*******************************************************************
 Logger* Logger::top_ = nullptr;
 Logger::Logger() {
-
 }
 Logger::~Logger() {
 	listLogger_.clear();
 	if (top_ == this) top_ = nullptr;
 }
-void Logger::_WriteChild(SYSTEMTIME& time, const std::wstring& str) {
-	_Write(time, str);
-	for (auto& iLogger : listLogger_)
-		iLogger->_Write(time, str);
+
+bool Logger::Initialize() {
+	return Initialize(true);
 }
-
-void Logger::Write(const std::string& str) {
-#if defined(DNH_PROJ_EXECUTOR)
-	if (WindowLogger* windowLogger = WindowLogger::GetParent()) {
-		if (windowLogger->GetState() != WindowLogger::STATE_RUNNING)
-			return;
-	}
-
-	SYSTEMTIME systemTime;
-	GetLocalTime(&systemTime);
-	this->_WriteChild(systemTime, StringUtility::ConvertMultiToWide(str));
+bool Logger::Initialize(bool bEnable) {
+#if ENABLE_RENDER
+	dxGraphics_.reset(new imgui::ImGuiDirectGraphics());
+	dxGraphics_->SetSize(560, 600);
 #endif
-}
-void Logger::Write(const std::wstring& str) {
-#if defined(DNH_PROJ_EXECUTOR)
-	if (WindowLogger* windowLogger = WindowLogger::GetParent()) {
-		if (windowLogger->GetState() != WindowLogger::STATE_RUNNING)
-			return;
-	}
 
-	SYSTEMTIME systemTime;
-	GetLocalTime(&systemTime);
-	this->_WriteChild(systemTime, str);
-#endif
-}
+	if (!InitializeWindow(L"WC_LogWindow"))
+		return false;
 
-#if defined(DNH_PROJ_EXECUTOR)
-void Logger::FlushFileLogger() {
-	for (auto iLogger : listLogger_) {
-		if (FileLogger* fileLogger = dynamic_cast<FileLogger*>(iLogger.get())) {
-			fileLogger->FlushFile();
+#if ENABLE_RENDER
+	if (!InitializeImGui())
+		return false;
+
+	_SetImguiStyle(1);
+
+	SetWindowTextW(hWnd_, L"LogWindow");
+	MoveWindowCenter();
+
+	SetWindowVisible(bEnable);
+	bWindowActive_ = bEnable;
+
+	{
+		for (auto size : { 8, 14, 16, 20, 24 }) {
+			std::string key = StringUtility::Format("Arial%d", size);
+			_AddUserFont(imgui::ImGuiAddFont(key, L"Arial", size));
 		}
+
+		for (auto size : { 18, 20 }) {
+			std::string key = StringUtility::Format("Arial%d_Ex", size);
+			_AddUserFont(imgui::ImGuiAddFont(key, L"Arial", size, {
+				{ 0x0020, 0x00FF },		// ASCII
+				{ 0x2190, 0x2199 },		// Arrows
+			}));
+		}
+
+		_ResetFont();
 	}
-}
 #endif
+
+	bInitialized_ = true;
+	return true;
+}
+
+void Logger::_SetImguiStyle(float scale) {
+#if ENABLE_RENDER
+	ImGuiStyle style;
+	ImGui::StyleColorsLight(&style);
+
+	style.ChildBorderSize = style.FrameBorderSize = style.PopupBorderSize
+		= style.TabBorderSize = style.WindowBorderSize = 1.0f;
+	style.ChildRounding = style.FrameRounding = style.GrabRounding
+		= style.PopupRounding = style.ScrollbarRounding
+		= style.TabRounding = style.WindowRounding = 0.0f;
+	style.ScaleAllSizes(scale);
+
+	ImVec4 lightBlue(0.62f, 0.80f, 1.00f, 1.00f);
+	ImVec4 darkBlue(0.06f, 0.53f, 0.98f, 1.00f);
+
+	style.Colors[ImGuiCol_Button] = ImVec4(0.73f, 0.73f, 0.73f, 0.40f);
+	style.Colors[ImGuiCol_ButtonHovered] = lightBlue;
+	style.Colors[ImGuiCol_ButtonActive] = darkBlue;
+
+	style.Colors[ImGuiCol_TabActive] = ImVec4(0.70f, 0.70f, 1.00f, 1.00f);
+	style.Colors[ImGuiCol_TabHovered] = lightBlue;
+
+	style.Colors[ImGuiCol_ScrollbarGrabHovered] = lightBlue;
+	style.Colors[ImGuiCol_FrameBgHovered] = lightBlue;
+	style.Colors[ImGuiCol_FrameBgActive] = darkBlue;
+	//style.Colors[] = ;
+
+	ImGuiBaseWindow::_SetImguiStyle(style);
+#endif
+}
+
+LRESULT Logger::_SubWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	switch (uMsg) {
+	case WM_CLOSE:
+		SetWindowVisible(false);
+		return 1;
+
+	case WM_GETMINMAXINFO:
+	{
+		MINMAXINFO* minmax = (MINMAXINFO*)lParam;
+		minmax->ptMinTrackSize.x = 64;
+		minmax->ptMinTrackSize.y = 96;
+		minmax->ptMaxTrackSize.x = ::GetSystemMetrics(SM_CXMAXTRACK);
+		minmax->ptMaxTrackSize.y = ::GetSystemMetrics(SM_CYMAXTRACK);
+		return 0;
+	}
+	case WM_SETFOCUS:
+		bWindowActive_ = true;
+		break;
+	case WM_KILLFOCUS:
+		bWindowActive_ = false;
+		break;
+	}
+
+	return 0;
+}
+
+void Logger::_Update() {
+	for (auto& logger : listLogger_)
+		logger->Update();
+
+	ImGuiBaseWindow::_Update();
+}
+void Logger::_ProcessGui() {
+#if ENABLE_RENDER
+	for (auto& logger : listLogger_)
+		logger->ProcessGui();
+#endif
+}
+
+void Logger::Write(ILogger::LogType type, const std::string& str) {
+	if (!bWindowActive_) return;
+
+	SYSTEMTIME systemTime;
+	GetLocalTime(&systemTime);
+
+	ILogger::LogData data = { systemTime, type, str };
+
+	for (auto& logger : listLogger_)
+		logger->Write(data);
+}
+void Logger::Write(ILogger::LogType type, const std::wstring& str) {
+	Write(type, StringUtility::ConvertWideToMulti(str));
+}
+
+void Logger::Flush() {
+	for (auto& logger : listLogger_)
+		logger->Flush();
+}
+
+void Logger::ShowLogWindow() {
+	SetWindowVisible(true);
+}
 
 #if defined(DNH_PROJ_EXECUTOR)
 //*******************************************************************
 //FileLogger
 //*******************************************************************
 FileLogger::FileLogger() {
-	sizeMax_ = 10 * 1024 * 1024;//10MB
+	sizeMax_ = 10 * 1024 * 1024;	// 10MB
 }
 FileLogger::~FileLogger() {
 	file_->Close();
 }
-bool FileLogger::Initialize(bool bEnable) {
-	return this->Initialize(L"", bEnable);
+
+bool FileLogger::Initialize(const std::string& name) {
+	return Initialize(name, L"", true);
 }
-bool FileLogger::Initialize(std::wstring path, bool bEnable) {
+bool FileLogger::Initialize(const std::string& name, bool bEnable) {
+	return Initialize(name, L"", bEnable);
+}
+bool FileLogger::Initialize(const std::string& name, const std::wstring& path, bool bEnable) {
+	name_ = name;
 	bEnable_ = bEnable;
-	if (path.size() == 0) {
-		path = PathProperty::GetModuleDirectory() +
-			PathProperty::GetModuleName() +
-			std::wstring(L".log");
+
+	{
+		auto npath = path;
+		if (npath.size() == 0) {
+			npath = PathProperty::GetModuleDirectory() +
+				PathProperty::GetModuleName() +
+				std::wstring(L".log");
+		}
+		if (!SetPath(npath))
+			return false;
 	}
-	return this->SetPath(path);
+
+	return true;
 }
+
 bool FileLogger::SetPath(const std::wstring& path) {
 	if (!bEnable_) return false;
 
@@ -86,92 +201,76 @@ bool FileLogger::SetPath(const std::wstring& path) {
 
 	_CreateFile();
 
-	return true;
+	return file_->IsOpen();
 }
 void FileLogger::_CreateFile() {
 	file_ = shared_ptr<File>(new File(path_));
 	if (file_->Open(File::WRITEONLY)) {
-		//BOM for UTF-16 LE
-		file_->WriteCharacter((unsigned char)0xFF);
-		file_->WriteCharacter((unsigned char)0xFE);
+		// BOM for UTF-16 LE
+		file_->WriteCharacter((byte)0xFF);
+		file_->WriteCharacter((byte)0xFE);
 	}
 }
-void FileLogger::FlushFile() {
+
+void FileLogger::Write(const LogData& data) {
 	if (!bEnable_) return;
+
+	if (file_->IsOpen()) {
+		Lock lock(Logger::GetTop()->GetLock());
+
+		std::wstring strTime = StringUtility::Format(
+			L"%.2d:%.2d:%.2d.%.3d ",
+			data.time.wHour, data.time.wMinute, 
+			data.time.wSecond, data.time.wMilliseconds);
+
+		file_->WriteString(strTime);
+		file_->WriteString(data.text);
+		file_->WriteString(std::wstring(L"\n"));
+	}
+}
+
+void FileLogger::Flush() {
+	if (!bEnable_) return;
+
 	if (file_->IsOpen()) {
 		std::fstream& hFile = file_->GetFileHandle();
 		hFile.flush();
-	}
-}
-void FileLogger::_Write(SYSTEMTIME& time, const std::wstring& str) {
-	if (!bEnable_) return;
-
-	if (file_->IsOpen()) {
-		Lock lock(lock_);
-
-		std::wstring strTime = StringUtility::Format(
-			//L"%.4d/%.2d/%.2d "
-			L"%.2d:%.2d:%.2d.%.3d ", 
-			//time.wYear, time.wMonth, time.wDay, 
-			time.wHour, time.wMinute, time.wSecond, time.wMilliseconds);
-		
-		file_->Write(strTime.data(), StringUtility::GetByteSize(strTime));
-		file_->Write((wchar_t*)str.data(), StringUtility::GetByteSize(str));
-		file_->Write(L"\n", sizeof(wchar_t));
 	}
 }
 
 //*******************************************************************
 //WindowLogger
 //*******************************************************************
-WindowLogger* WindowLogger::loggerParentGlobal_ = nullptr;
 WindowLogger::WindowLogger() {
-	windowState_ = STATE_INITIALIZING;
 }
 WindowLogger::~WindowLogger() {
-	windowState_ = STATE_CLOSED;
-
-	wndInfoPanel_ = nullptr;
-	wndLogPanel_ = nullptr;
-	wndStatus_ = nullptr;
-	wndTab_ = nullptr;
-	if (hWnd_)
-		SendMessage(hWnd_, WM_ENDLOGGER, 0, 0);
-	if (threadWindow_) {
-		threadWindow_->Stop();
-		threadWindow_->Join(2000);
-	}
 }
-bool WindowLogger::Initialize(bool bEnable) {
+
+bool WindowLogger::Initialize(const std::string& name) {
+	return Initialize(name, true);
+}
+bool WindowLogger::Initialize(const std::string& name, bool bEnable) {
+	name_ = name;
 	bEnable_ = bEnable;
-	//if (!bEnable) return true;
 
-	loggerParentGlobal_ = this;
+	panelEventLog_.reset(new PanelEventLog());
+	panelEventLog_->SetDisplayName("Log");
+	this->AddPanel(panelEventLog_, "Log");
 
-	threadWindow_.reset(new WindowThread(this));
-	threadWindow_->Start();
-
-	while (GetWindowHandle() == nullptr) {
-		::Sleep(10);
-	}
-
-	//LogPanel
-	wndLogPanel_.reset(new LogPanel());
-	this->AddPanel(wndLogPanel_, L"Log");
-
-	//InfoPanel
-	wndInfoPanel_.reset(new InfoPanel());
-	//this->AddPanel(wndInfoPanel_, L"Info");
-
-	windowState_ = bEnable ? STATE_RUNNING : STATE_CLOSED;
+	panelInfo_.reset(new PanelInfo());
+	panelInfo_->SetDisplayName("Info");
+	this->AddPanel(panelInfo_, "Info");
 
 	return true;
 }
+
 void WindowLogger::SaveState() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"LogWindow.dat";
+
 	RecordBuffer recordMain;
 	bool bRecordExists = recordMain.ReadFromFile(path, 0, HEADER_RECORDFILE);
 
+	/*
 	if (wndTab_) {
 		int panelIndex = wndTab_->GetCurrentPage();
 		recordMain.SetRecordAsInteger("panelIndex", panelIndex);
@@ -196,14 +295,17 @@ void WindowLogger::SaveState() {
 		}
 		recordMain.SetRecordAsRecordBuffer("panel", recordPanel);
 	}
+	*/
 
 	recordMain.WriteToFile(path, 0, HEADER_RECORDFILE);
 }
 void WindowLogger::LoadState() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"LogWindow.dat";
+
 	RecordBuffer recordMain;
 	if (!recordMain.ReadFromFile(path, 0, HEADER_RECORDFILE)) return;
 
+	/*
 	int panelIndex = recordMain.GetRecordAsInteger("panelIndex");
 	if (panelIndex >= 0 && panelIndex < wndTab_->GetPageCount())
 		wndTab_->SetCurrentPage(panelIndex);
@@ -225,345 +327,165 @@ void WindowLogger::LoadState() {
 
 		panel->_ReadRecord(recordPanel);
 	}
+	*/
 }
-void WindowLogger::_CreateWindow() {
-	HINSTANCE hInst = ::GetModuleHandle(nullptr);
-	std::wstring wName = L"LogWindow";
 
-	WNDCLASSEX wcex;
-	ZeroMemory(&wcex, sizeof(wcex));
-	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.lpfnWndProc = (WNDPROC)WindowBase::_StaticWindowProcedure;
-	wcex.hInstance = hInst;
-	wcex.hIcon = nullptr;
-	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW);
-	wcex.lpszMenuName = nullptr;
-	wcex.lpszClassName = wName.c_str();
-	wcex.hIconSm = nullptr;
-	RegisterClassEx(&wcex);
+void WindowLogger::ProcessGui() {
+	Logger* parent = Logger::GetTop();
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
-	hWnd_ = ::CreateWindow(wcex.lpszClassName,
-		wName.c_str(),
-		WS_OVERLAPPEDWINDOW,
-		0, 0, 640, 480, nullptr, (HMENU)nullptr, hInst, nullptr);
-	::ShowWindow(hWnd_, SW_HIDE);
-	this->Attach(hWnd_);
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImGui::SetNextWindowSize(viewport->WorkSize);
 
-	//タブ
-	wndTab_.reset(new WTabControll());
-	wndTab_->Create(hWnd_);
-	HWND hTab = wndTab_->GetWindowHandle();
+	ImGui::PushFont(parent->GetFont("Arial16"));
 
-	//ステータスバー
-	wndStatus_.reset(new WStatusBar());
-	wndStatus_->Create(hWnd_);
-	std::vector<int> sizeStatus;
-	sizeStatus.push_back(180);
-	sizeStatus.push_back(sizeStatus[0] + 560);
-	wndStatus_->SetPartsSize(sizeStatus);
+	if (ImGui::Begin("MainWindow", nullptr, flags)) {
+		float ht = ImGui::GetContentRegionAvail().y - 16;
 
-	//初期化完了
-	this->SetBounds(32, 32, 280, 480);
-	wndTab_->ShowPage();
+		//ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+		ImGuiWindowFlags window_flags = 0;
+		if (ImGui::BeginChild("ChildW_Tabs", ImVec2(0, ht), false, window_flags)) {
+			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_NoCloseWithMiddleMouseButton;
+			if (ImGui::BeginTabBar("TabBar_Tabs", tab_bar_flags)) {
+				currentPanel_ = nullptr;
+				for (auto& iPanel : panels_) {
+					iPanel->SetActive(false);
 
-	::UpdateWindow(hWnd_);
-}
-void WindowLogger::_Run() {
-	_CreateWindow();
-	MSG msg;
-	while (GetMessage(&msg, nullptr, 0, 0)) {	//メッセージループ
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-}
-void WindowLogger::_Write(SYSTEMTIME& systemTime, const std::wstring& str) {
-	if (hWnd_ == nullptr) return;
+					if (ImGui::BeginTabItem(iPanel->GetDisplayName().c_str())) {
+						iPanel->SetActive(true);
+						currentPanel_ = iPanel;
 
-	wchar_t timeStr[128];
-	swprintf(timeStr, 
-		//L"%.4d/%.2d/%.2d " 
-		L"%.2d:%.2d:%.2d.%.3d ",
-		//systemTime.wYear, systemTime.wMonth, systemTime.wDay,
-		systemTime.wHour, systemTime.wMinute, systemTime.wSecond, systemTime.wMilliseconds);
+						iPanel->ProcessGui();
+						ImGui::EndTabItem();
+					}
+				}
 
-	std::wstring out = timeStr;
-	out += str;
-	out += L"\n";
-	{
-		Lock lock(lock_);
-		wndLogPanel_->AddText(out);
-	}
-}
-LRESULT WindowLogger::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	switch (uMsg) {
-	case WM_DESTROY:
-	{
-		::PostQuitMessage(0);
-		windowState_ = STATE_CLOSED;
-		//wndLogPanel_->ClearText();
-		return FALSE;
-	}
-	case WM_CLOSE:
-	{
-		SaveState();
-		::ShowWindow(hWnd, SW_HIDE);
-		windowState_ = STATE_CLOSED;
-		wndLogPanel_->ClearText();
-		return FALSE;
-	}
-	case WM_SIZE:
-	{
-		RECT rect;
-		::GetClientRect(hWnd_, &rect);
-		int wx = rect.left;
-		int wy = rect.top;
-		int wWidth = rect.right - rect.left;
-		int wHeight = rect.bottom - rect.top;
-
-		wndStatus_->SetBounds(wParam, lParam);
-		wndTab_->SetBounds(wx + 8, wy + 4, wWidth - 16, wHeight - 32);
-		::InvalidateRect(wndTab_->GetWindowHandle(), nullptr, TRUE);
-
-		return FALSE;
-	}
-	case WM_NOTIFY:
-	{
-		switch (((NMHDR*)lParam)->code) {
-		case TCN_SELCHANGE:
-			this->ClearStatusBar();
-			wndTab_->ShowPage();
-			return FALSE;
-		}
-		break;
-	}
-	case WM_ENDLOGGER:
-	{
-		::DestroyWindow(hWnd);
-		windowState_ = STATE_CLOSED;
-		break;
-	}
-	case WM_ADDPANEL:
-	{
-		{
-			Lock lock(lock_);
-			
-			for (auto itr = listEventAddPanel_.begin(); itr != listEventAddPanel_.end(); itr++) {
-				AddPanelEvent& event = *itr;
-				const std::wstring& name = event.name;
-				shared_ptr<Panel> panel = event.panel;
-
-				HWND hTab = wndTab_->GetWindowHandle();
-				panel->_AddedLogger(hTab);
-				wndTab_->AddTab(name, panel);
-
-				RECT rect;
-				::GetClientRect(hWnd_, &rect);
-				int wx = rect.left;
-				int wy = rect.top;
-				int wWidth = rect.right - rect.left;
-				int wHeight = rect.bottom - rect.top;
-				wndTab_->SetBounds(wx + 8, wy + 4, wWidth - 16, wHeight - 32);
-				wndTab_->LocateParts();
+				ImGui::EndTabBar();
 			}
-			listEventAddPanel_.clear();
 		}
-		break;
-	}
-	}
-	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
+		ImGui::EndChild();
 
+		ImGui::End();
+	}
+
+	ImGui::PopFont();
 }
 
-
-void WindowLogger::SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData) {
-	if (hWnd_ == nullptr) return;
-	if (!IsWindowVisible()) return;
-
-	wndInfoPanel_->SetInfo(row, textInfo, textData);
-}
-
-bool WindowLogger::AddPanel(shared_ptr<Panel> panel, const std::wstring& name) {
-	if (hWnd_ == nullptr) return false;
-
-	AddPanelEvent event;
-	event.name = name;
-	event.panel = panel;
+void WindowLogger::Write(const LogData& data) {
 	{
-		Lock lock(lock_);
-		listEventAddPanel_.push_back(event);
+		Lock lock(Logger::GetTop()->GetLock());
+
+		panelEventLog_->AddEvent(data);
+	}
+}
+
+bool WindowLogger::AddPanel(shared_ptr<ILoggerPanel> panel, const std::string& name) {
+	panel->Initialize(name);
+
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		panels_.push_back(panel);
 	}
 
-	::SendMessage(hWnd_, WM_ADDPANEL, 0, 0);
-
-	while (panel->GetWindowHandle() == nullptr) {
-		Sleep(10);//ウィンドウが作成完了するまで待機
-	}
 	return true;
-}
-void WindowLogger::ShowLogWindow() {
-	//if (!bEnable_) return;
-	windowState_ = STATE_RUNNING;
-	ShowWindow(hWnd_, SW_SHOW);
-}
-void WindowLogger::InsertOpenCommandInSystemMenu(HWND hWnd) {
-	HMENU hMenu = GetSystemMenu(hWnd, FALSE);
-
-	MENUITEMINFO mii;
-	ZeroMemory(&mii, sizeof(MENUITEMINFO));
-	mii.cbSize = sizeof(MENUITEMINFO);
-	InsertMenuItem(hMenu, 0, 1, &mii);
-
-	mii.fMask = MIIM_ID | MIIM_TYPE;
-	mii.fType = MFT_STRING;
-	mii.wID = MENU_ID_OPEN;
-	mii.dwTypeData = L"Show LogWindow";
-
-	InsertMenuItem(hMenu, 0, 1, &mii);
-}
-void WindowLogger::ClearStatusBar() {
-	wndStatus_->SetText(0, L"");
-	wndStatus_->SetText(1, L"");
-}
-
-//WindowLogger::WindowThread
-WindowLogger::WindowThread::WindowThread(WindowLogger* logger) {
-	_SetOuter(logger);
-}
-void WindowLogger::WindowThread::_Run() {
-	WindowLogger* logger = _GetOuter();
-	logger->_Run();
 }
 
 //WindowLogger::LogPanel
-WindowLogger::LogPanel::LogPanel() {
+WindowLogger::PanelEventLog::PanelEventLog() {
+}
+WindowLogger::PanelEventLog::~PanelEventLog() {
+}
+
+void WindowLogger::PanelEventLog::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
+}
+
+void WindowLogger::PanelEventLog::ProcessGui() {
 
 }
-WindowLogger::LogPanel::~LogPanel() {
 
-}
-bool WindowLogger::LogPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
+void WindowLogger::PanelEventLog::AddEvent(const LogData& data) {
+	static const wchar_t* strInfo = L"";
+	static const wchar_t* strWarning = L"[WARNING] ";
+	static const wchar_t* strError = L"[ERROR]   ";
 
-	gstd::WEditBox::Style styleEdit;
-	styleEdit.SetStyle(WS_CHILD | WS_VISIBLE |
-		ES_MULTILINE | ES_READONLY | ES_AUTOHSCROLL | ES_AUTOVSCROLL |
-		WS_HSCROLL | WS_VSCROLL);
-	styleEdit.SetStyleEx(WS_EX_CLIENTEDGE);
-	wndEdit_.Create(hWnd_, styleEdit);
-	return true;
-}
-void WindowLogger::LogPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
-	wndEdit_.SetBounds(wx, wy, wWidth, wHeight);
-}
-void WindowLogger::LogPanel::AddText(const std::wstring& text) {
-	HWND hEdit = wndEdit_.GetWindowHandle();
-	if (hEdit) {
-		int pos = wndEdit_.GetTextLength();
-		if (pos + text.size() >= wndEdit_.GetMaxTextLength()) {
-			::SendMessage(hEdit, EM_SETSEL, 0, wndEdit_.GetMaxTextLength() * 0.7);
-			::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)L"");
-			pos = wndEdit_.GetTextLength();
-		}
-		::SendMessage(hEdit, EM_SETSEL, pos, pos);
-		::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)text.c_str());
-		::SendMessage(hEdit, EM_SCROLL, 0, 1);
+	const wchar_t* initial = strInfo;
+	switch (data.type) {
+	case LogType::Warning:	initial = strWarning; break;
+	case LogType::Error:	initial = strError; break;
 	}
+
+	std::string strLog = StringUtility::Format(
+		"%s%.2d:%.2d:%.2d.%.3d %s",
+		initial,
+		data.time.wHour, data.time.wMinute, data.time.wSecond, data.time.wMilliseconds,
+		data.text.c_str());
+
+	events_.push_back({ data.type, strLog });
 }
-void WindowLogger::LogPanel::ClearText() {
-	HWND hEdit = wndEdit_.GetWindowHandle();
-	if (hEdit) {
-		::SendMessage(hEdit, EM_SETSEL, 0, -1);
-		::SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)L"");
-	}
+void WindowLogger::PanelEventLog::ClearEvents() {
+	events_.clear();
 }
 
-//WindowLogger::InfoPanel
-WindowLogger::InfoPanel::InfoPanel() {
+//WindowLogger::PanelInfo
+WindowLogger::PanelInfo::PanelInfo() {
 	hProcess_ = INVALID_HANDLE_VALUE;
 	hQuery_ = INVALID_HANDLE_VALUE;
 	hCounter_ = INVALID_HANDLE_VALUE;
 
 	_InitializeHandle();
 }
-WindowLogger::InfoPanel::~InfoPanel() {
+WindowLogger::PanelInfo::~PanelInfo() {
 	if (hQuery_ != INVALID_HANDLE_VALUE)
 		PdhCloseQuery(&hQuery_);
 	//if (hProcess_ != INVALID_HANDLE_VALUE)
 	//	CloseHandle(&hProcess_);
 }
-bool WindowLogger::InfoPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
 
-	gstd::WListView::Style styleListView;
-	styleListView.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
-	styleListView.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListView.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListView_.Create(hWnd_, styleListView);
+void WindowLogger::PanelInfo::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
+}
 
-	wndListView_.AddColumn(120, ROW_INFO, L"Info");
-	wndListView_.AddColumn(400, ROW_DATA, L"Data");
-	return true;
-}
-void WindowLogger::InfoPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
-	wndListView_.SetBounds(wx, wy, wWidth, wHeight);
-}
-void WindowLogger::InfoPanel::SetInfo(int row, const std::wstring& textInfo, const std::wstring& textData) {
-	wndListView_.SetText(row, ROW_INFO, textInfo);
-	wndListView_.SetText(row, ROW_DATA, textData);
-}
-void WindowLogger::InfoPanel::PanelUpdate() {
+void WindowLogger::PanelInfo::Update() {
 	_SetRamInfo();
 
-#if defined(DNH_PROJ_EXECUTOR)
-	if (WindowLogger* wLogger = WindowLogger::GetParent()) {
-		if (wLogger->GetState() == WindowLogger::STATE_RUNNING)
-			wLogger->FlushFileLogger();
-	}
-#endif
+	Logger::GetTop()->Flush();
+}
+void WindowLogger::PanelInfo::ProcessGui() {
+	
 }
 
-void WindowLogger::InfoPanel::_SetRamInfo() {
-	if (!IsWindowVisible()) return;
-	{
-		Lock lock(lock_);
+void WindowLogger::PanelInfo::SetInfo(int row, const std::string& textInfo, const std::string& textData) {
+	infoLines_[row] = { textInfo, textData };
+}
 
-		//Get RAM info
+void WindowLogger::PanelInfo::_SetRamInfo() {
+	if (!bActive_) return;
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		// Get RAM info
 		MEMORYSTATUSEX mse;
 		mse.dwLength = sizeof(MEMORYSTATUSEX);
 		GlobalMemoryStatusEx(&mse);
-		DWORD memTotalAsMB = mse.ullTotalVirtual / (1024U * 1024U);
-		DWORD memAvailAsMB = mse.ullAvailVirtual / (1024U * 1024U);
 
-		//Get CPU info
-		double cpuUsage = _GetCpuPerformance();
-
-		//Set text
-		if (WindowLogger* logger = WindowLogger::GetParent()) {
-			shared_ptr<WStatusBar> statusBar = logger->GetStatusBar();
-			statusBar->SetText(0, StringUtility::Format(L"Process RAM: %u/%u MB",
-				memTotalAsMB - memAvailAsMB, memTotalAsMB));
-			statusBar->SetText(1, StringUtility::Format(L"Process CPU: %.2f%%", cpuUsage));
-		}
+		ramMemAvail_ = mse.ullAvailVirtual / (1024ui64 * 1024ui64);
+		ramMemMax_ = mse.ullTotalVirtual / (1024ui64 * 1024ui64);
+		
+		// Get CPU info
+		rateCpuUsage_ = _GetCpuPerformance();;
 	}
 }
 
-void WindowLogger::InfoPanel::_InitializeHandle() {
+void WindowLogger::PanelInfo::_InitializeHandle() {
 	hProcess_ = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId());
 	PdhOpenQueryW(nullptr, 0, &hQuery_);
 	PdhAddEnglishCounterW(hQuery_, L"\\Processor(_Total)\\% Processor Time", 0, &hCounter_);
 	PdhCollectQueryData(hQuery_);
 }
-double WindowLogger::InfoPanel::_GetCpuPerformance() {
+double WindowLogger::PanelInfo::_GetCpuPerformance() {
 	PDH_FMT_COUNTERVALUE fmtValue;
 
 	PdhCollectQueryData(hQuery_);
@@ -573,7 +495,7 @@ double WindowLogger::InfoPanel::_GetCpuPerformance() {
 }
 
 #if 0
-WindowLogger::InfoPanel::CpuInfo WindowLogger::InfoPanel::_GetCpuInformation() {
+WindowLogger::PanelInfo::CpuInfo WindowLogger::PanelInfo::_GetCpuInformation() {
 	int cpuid_supported;
 	char VenderID[13];
 	char name[17];

@@ -332,8 +332,8 @@ void DirectSoundManager::SoundManageThread::_Run() {
 			_Arrange();
 		}
 
-		if (manager->panelInfo_ != nullptr && this->GetStatus() == RUN)
-			manager->panelInfo_->Update(manager);
+		//if (manager->panelInfo_ != nullptr && this->GetStatus() == RUN)
+		//	manager->panelInfo_->Update(manager);
 		
 		timePrevious_ = timeCurrent_;
 		::Sleep(100);
@@ -415,9 +415,20 @@ void DirectSoundManager::SoundManageThread::_Fade() {
 //SoundInfoPanel
 //*******************************************************************
 SoundInfoPanel::SoundInfoPanel() {
-	timeLastUpdate_ = 0;
-	timeUpdateInterval_ = 500;
 }
+
+void SoundInfoPanel::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
+}
+
+void SoundInfoPanel::Update() {
+
+}
+void SoundInfoPanel::ProcessGui() {
+
+}
+
+/*
 bool SoundInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
 
@@ -508,6 +519,8 @@ void SoundInfoPanel::Update(DirectSoundManager* soundManager) {
 		}
 	}
 }
+*/
+
 //*******************************************************************
 //SoundDivision
 //*******************************************************************

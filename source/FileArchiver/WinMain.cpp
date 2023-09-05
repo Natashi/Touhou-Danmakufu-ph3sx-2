@@ -22,6 +22,8 @@ int APIENTRY wWinMain(
 				throw wexception("CoInitializeEx failed");
 		}
 
+		directx::EDirect3D9::CreateInstance();
+
 		MainWindow* wndMain = MainWindow::CreateInstance();
 		wndMain->Initialize();
 
@@ -46,6 +48,8 @@ int APIENTRY wWinMain(
 
 	EApplication::DeleteInstance();
 	MainWindow::DeleteInstance();
+	directx::EDirect3D9::DeleteInstance();
+
 	::CoUninitialize();
 
 	return 0;

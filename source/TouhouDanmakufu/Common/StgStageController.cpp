@@ -28,6 +28,9 @@ StgStageController::~StgStageController() {
 	ptr_delete(intersectionManager_);
 }
 void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) {
+	ELogger* logger = ELogger::GetInstance();
+	auto infoLog = logger->GetInfoLog();
+
 	Math::InitializeFPU();
 
 	EDirectInput* input = EDirectInput::GetInstance();
@@ -91,10 +94,9 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	if (!infoStage_->IsReplay()) {
 		uint32_t randSeed = infoStage_->GetRandProvider()->GetSeed();
 		replayStageData->SetRandSeed(randSeed);
-
-		ELogger* logger = ELogger::GetInstance();
-		if (logger->IsWindowVisible())
-			logger->SetInfo(11, L"Rand seed", StringUtility::Format(L"%08x", randSeed));
+		
+		if (infoLog)
+			infoLog->SetInfo(11, "Rand seed", StringUtility::Format("%08x", randSeed));
 
 		ref_count_ptr<ScriptInformation> infoParent = systemController_->GetSystemInformation()->GetMainScriptInformation();
 		ref_count_ptr<ScriptInformation> infoMain = infoStage_->GetMainScriptInformation();
@@ -114,9 +116,8 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		uint32_t randSeed = replayStageData->GetRandSeed();
 		infoStage_->GetRandProvider()->Initialize(randSeed);
 
-		ELogger* logger = ELogger::GetInstance();
-		if (logger->IsWindowVisible())
-			logger->SetInfo(11, L"Rand seed", StringUtility::Format(L"%08x", randSeed));
+		if (infoLog)
+			infoLog->SetInfo(11, "Rand seed", StringUtility::Format("%08x", randSeed));
 
 		keyReplayManager_->ReadRecord(*replayStageData->GetReplayKeyRecord());
 
@@ -387,11 +388,11 @@ void StgStageController::Work() {
 	}
 
 	ELogger* logger = ELogger::GetInstance();
-	if (logger->IsWindowVisible()) {
-		logger->SetInfo(6, L"Shot count", StringUtility::Format(L"%d", shotManager_->GetShotCountAll()));
-		logger->SetInfo(7, L"Enemy count", StringUtility::Format(L"%d", enemyManager_->GetEnemyCount()));
-		logger->SetInfo(8, L"Item count", StringUtility::Format(L"%d", itemManager_->GetItemCount()));
-	}
+	auto infoLog = logger->GetInfoLog();
+
+	infoLog->SetInfo(6, "Shot count", std::to_string(shotManager_->GetShotCountAll()));
+	infoLog->SetInfo(7, "Enemy count", std::to_string(enemyManager_->GetEnemyCount()));
+	infoLog->SetInfo(8, "Item count", std::to_string(itemManager_->GetItemCount()));
 }
 void StgStageController::Render() {
 	bool bPause = infoStage_->IsPause();

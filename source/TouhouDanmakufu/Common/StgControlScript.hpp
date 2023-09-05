@@ -174,32 +174,32 @@ public:
 //*******************************************************************
 //ScriptInfoPanel
 //*******************************************************************
-class ScriptInfoPanel : public WindowLogger::Panel {
+class ScriptInfoPanel : public gstd::ILoggerPanel {
 protected:
-	gstd::CriticalSection lock_;
+	//gstd::CriticalSection lock_;
 
-	WButton buttonTerminateAllScript_;
-	WButton buttonTerminateSingleScript_;
-	WListView wndManager_;
-	WListView wndCache_;
-	WListView wndScript_;
-	//WListBox wndListViewData_;
-	WSplitter wndSplitter_;
-	WSplitter wndSplitter2_;
+	//WButton buttonTerminateAllScript_;
+	//WButton buttonTerminateSingleScript_;
+	//WListView wndManager_;
+	//WListView wndCache_;
+	//WListView wndScript_;
+	////WListBox wndListViewData_;
+	//WSplitter wndSplitter_;
+	//WSplitter wndSplitter2_;
 
-	std::list<weak_ptr<ManagedScript>> listScript_;
+	//std::list<weak_ptr<ManagedScript>> listScript_;
 
-	virtual bool _AddedLogger(HWND hTab);
-	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	//virtual bool _AddedLogger(HWND hTab);
+	//virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	void _TerminateScriptAll();
+	//void _TerminateScriptAll();
 
-	static const wchar_t* GetScriptTypeName(ManagedScript* script);
+	//static const wchar_t* GetScriptTypeName(ManagedScript* script);
 public:
 	ScriptInfoPanel();
-	~ScriptInfoPanel();
 
-	virtual void LocateParts();
-	virtual void PanelUpdate();
-	void Update(StgSystemController* systemController);
+	virtual void Initialize(const std::string& name);
+
+	virtual void Update();
+	virtual void ProcessGui();
 };

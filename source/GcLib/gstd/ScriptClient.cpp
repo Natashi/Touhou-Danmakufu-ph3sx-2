@@ -2660,10 +2660,23 @@ bool ScriptCommonData::Script_DecomposePtr(uint64_t val, _Script_PointerData* ds
 //ScriptCommonDataPanel
 //****************************************************************************
 ScriptCommonDataInfoPanel::ScriptCommonDataInfoPanel() {
-	timeLastUpdate_ = 0;
+	/*timeLastUpdate_ = 0;
 	timeUpdateInterval_ = 1000;
-	commonDataManager_ = nullptr;
+	commonDataManager_ = nullptr;*/
 }
+
+void ScriptCommonDataInfoPanel::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
+}
+
+void ScriptCommonDataInfoPanel::Update() {
+
+}
+void ScriptCommonDataInfoPanel::ProcessGui() {
+
+}
+
+/*
 bool ScriptCommonDataInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
 
@@ -2751,3 +2764,4 @@ void ScriptCommonDataInfoPanel::_UpdateValueView() {
 	for (; iRow < countRow; ++iRow)
 		wndListViewValue_.DeleteRow(iRow);
 }
+*/

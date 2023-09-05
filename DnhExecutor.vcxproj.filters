@@ -24,11 +24,20 @@
     <Filter Include="source\GcLib\gstd\Script">
       <UniqueIdentifier>{842c9536-cd88-428d-9df2-5c780842a6f0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Steam">
-      <UniqueIdentifier>{a34dabe5-7a05-4b7b-a4a3-bb0790b325ae}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\GcLib\directx\Mesh">
       <UniqueIdentifier>{e73259af-d068-459b-8c48-0927a38e30fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\external">
+      <UniqueIdentifier>{d3c09ab9-3e41-4cfa-abcb-75b5ecaa4e84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\external\Steam">
+      <UniqueIdentifier>{a34dabe5-7a05-4b7b-a4a3-bb0790b325ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\external\imgui">
+      <UniqueIdentifier>{5a411432-c3eb-4bfa-9d7e-821edd7f727f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\external\imgui\backends">
+      <UniqueIdentifier>{c15439b1-e189-466d-8d02-e1d375363d28}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -218,6 +227,27 @@
     <ClCompile Include="source\GcLib\directx\ImGuiWindow.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui_draw.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui_tables.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\imgui_widgets.cpp">
+      <Filter>source\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DirectGraphicsBase.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\backends\imgui_impl_dx9.cpp">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ext\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">
@@ -395,10 +425,10 @@
       <Filter>source\GcLib\gstd\Script</Filter>
     </ClInclude>
     <ClInclude Include="source\Steam\SteamBase.hpp">
-      <Filter>source\Steam</Filter>
+      <Filter>source\external\Steam</Filter>
     </ClInclude>
     <ClInclude Include="source\Steam\Achievement.hpp">
-      <Filter>source\Steam</Filter>
+      <Filter>source\external\Steam</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\ArchiveEncryption.hpp">
       <Filter>source\GcLib\gstd</Filter>
@@ -441,6 +471,33 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\ImGuiWindow.hpp">
       <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imconfig.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imgui.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imgui_internal.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imstb_rectpack.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imstb_textedit.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\imstb_truetype.h">
+      <Filter>source\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DirectGraphicsBase.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\backends\imgui_impl_dx9.h">
+      <Filter>source\external\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ext\imgui\backends\imgui_impl_win32.h">
+      <Filter>source\external\imgui\backends</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -57,66 +57,154 @@ std::wstring EPathProperty::GetCommonDataPath(const std::wstring& scriptPath, co
 ELogger::ELogger() {
 }
 ELogger::~ELogger() {
-	Stop();
-	Join(1000);
-}
-void ELogger::Initialize(bool bFile, bool bWindow) {
-	if (bFile) {
-		shared_ptr<gstd::FileLogger> fileLogger(new gstd::FileLogger());
-		fileLogger->Initialize(bFile);
-		this->AddLogger(fileLogger);
+	if (threadWindow_) {
+		threadWindow_->Stop();
+		threadWindow_->Join(1000);
 	}
+}
 
+bool ELogger::Initialize() {
+	return Initialize(false, true);
+}
+bool ELogger::Initialize(bool bFile, bool bWindow) {
 	Logger::SetTop(this);
-	WindowLogger::Initialize(bWindow);
+	Logger::Initialize(bWindow);
+
+	{
+		shared_ptr<gstd::WindowLogger> logger(new gstd::WindowLogger());
+		logger->Initialize("Window", bWindow);
+		this->AddLogger(logger);
+	}
+	if (bFile) {
+		shared_ptr<gstd::FileLogger> logger(new gstd::FileLogger());
+		logger->Initialize("File", bFile);
+		this->AddLogger(logger);
+	}
 
 	panelCommonData_.reset(new gstd::ScriptCommonDataInfoPanel());
 
-	Start();
+	time_ = SystemUtility::GetCpuTime2();
+
+	threadWindow_ = new WindowThread(this);
+	threadWindow_->Start();
+
+	return true;
 }
 void ELogger::UpdateCommonDataInfoPanel() {
 	panelCommonData_->Update();
 }
+
+void ELogger::LoadState() {
+	for (auto& logger : listLogger_)
+		logger->LoadState();
+}
+void ELogger::SaveState() {
+	for (auto& logger : listLogger_)
+		logger->SaveState();
+}
+
 void ELogger::_Run() {
-	time_ = SystemUtility::GetCpuTime2();
+	while (true) {
+		if (listLogger_.size() > 0) {
+			uint64_t currentTime = SystemUtility::GetCpuTime2();
+			uint64_t timeDelta = currentTime - time_;
 
-	while (GetStatus() == RUN) {
-		uint64_t currentTime = SystemUtility::GetCpuTime2();
-		uint64_t timeDelta = currentTime - time_;
+			for (PanelData& iPanel : listPanel_) {
+				if (iPanel.updateFreq == UINT_MAX) continue;
 
-		for (PanelData& iPanel : listPanel_) {
-			bool bUpdate = false;
+				bool bUpdate = false;
 
-			bool bNowVisible = iPanel.panel->IsWindowVisible();
-			if (bNowVisible && !iPanel.bPrevVisible)
-				bUpdate = true;
+				bool bNowVisible = iPanel.panel->IsActive();
+				if (bNowVisible && !iPanel.bPrevVisible)
+					bUpdate = true;
 
-			iPanel.timer += timeDelta;
-			if (iPanel.timer >= iPanel.updateFreq) {
-				iPanel.timer -= iPanel.updateFreq;
-				bUpdate = true;
+				if (!bUpdate) {
+					iPanel.timer += timeDelta;
+					if (iPanel.timer >= iPanel.updateFreq)
+						bUpdate = true;
+				}
+
+				if (bUpdate) {
+					iPanel.panel->Update();
+					iPanel.timer = 0;
+				}
+
+				iPanel.bPrevVisible = bNowVisible;
 			}
 
-			if (bUpdate) iPanel.panel->PanelUpdate();
-
-			iPanel.bPrevVisible = bNowVisible;
+			time_ = currentTime;
 		}
 
-		time_ = currentTime;
-		::Sleep(1);
+		if (!Loop()) {
+			threadWindow_->Stop();
+			_Close();
+			break;
+		}
 	}
 }
-bool ELogger::EAddPanel(shared_ptr<Panel> panel, const std::wstring& name, DWORD updateFreq) {
-	if (!this->AddPanel(panel, name)) return false;
 
-	PanelData data;
-	data.panel = panel;
-	data.updateFreq = updateFreq;
-	data.timer = 0;
-	data.bPrevVisible = false;
-	listPanel_.push_back(data);
+bool ELogger::_AddPanel(shared_ptr<ILoggerPanel> panel, const std::wstring& name) {
+	for (auto& logger : listLogger_) {
+		if (auto wLogger = dynamic_cast<gstd::WindowLogger*>(logger.get())) {
+			if (!wLogger->AddPanel(panel, StringUtility::ConvertWideToMulti(name)))
+				return false;
+		}
+	}
+	return true;
+}
+bool ELogger::EAddPanel(shared_ptr<ILoggerPanel> panel, const std::wstring& name, uint32_t updateFreq) {
+	if (!_AddPanel(panel, name))
+		return false;
+
+	return EAddPanelUpdateData(panel, updateFreq);
+}
+bool ELogger::EAddPanelNoUpdate(shared_ptr<ILoggerPanel> panel, const std::wstring& name) {
+	return EAddPanel(panel, name, UINT_MAX);
+}
+bool ELogger::EAddPanelUpdateData(shared_ptr<ILoggerPanel> panel, uint32_t updateFreq) {
+	{
+		Lock lock(GetLock());
+		
+		PanelData data;
+		data.panel = panel;
+
+		data.updateFreq = updateFreq;
+		data.timer = 0;
+
+		data.bPrevVisible = false;
+
+		listPanel_.push_back(data);
+	}
 
 	return true;
+}
+
+void ELogger::InsertOpenCommandInSystemMenu(HWND hWnd) {
+	HMENU hMenu = ::GetSystemMenu(hWnd, FALSE);
+
+	MENUITEMINFO mii;
+	ZeroMemory(&mii, sizeof(MENUITEMINFO));
+	mii.cbSize = sizeof(MENUITEMINFO);
+	InsertMenuItem(hMenu, 0, 1, &mii);
+
+	mii.fMask = MIIM_ID | MIIM_TYPE;
+	mii.fType = MFT_STRING;
+	mii.wID = MY_SYSCMD_OPEN;
+	mii.dwTypeData = L"Show LogWindow";
+
+	InsertMenuItem(hMenu, 0, 1, &mii);
+}
+
+void ELogger::ResetDevice() {
+	_ResetDevice();
+}
+
+ELogger::WindowThread::WindowThread(ELogger* logger) {
+	_SetOuter(logger);
+}
+void ELogger::WindowThread::_Run() {
+	ELogger* logger = _GetOuter();
+	logger->_Run();
 }
 
 //*******************************************************************

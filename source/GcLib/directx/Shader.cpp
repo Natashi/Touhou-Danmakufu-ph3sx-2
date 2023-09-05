@@ -781,8 +781,19 @@ HRESULT __stdcall ShaderIncludeCallback::Close(LPCVOID pData) {
 //****************************************************************************
 ShaderInfoPanel::ShaderInfoPanel() {
 }
-ShaderInfoPanel::~ShaderInfoPanel() {
+
+void ShaderInfoPanel::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
 }
+
+void ShaderInfoPanel::Update() {
+
+}
+void ShaderInfoPanel::ProcessGui() {
+
+}
+
+/*
 bool ShaderInfoPanel::_AddedLogger(HWND hTab) {
 	Create(hTab);
 
@@ -907,3 +918,4 @@ void ShaderInfoPanel::PanelUpdate() {
 		wndListView_.Clear();
 	}
 }
+*/

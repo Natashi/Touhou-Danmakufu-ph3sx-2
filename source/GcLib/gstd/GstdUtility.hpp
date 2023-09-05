@@ -614,6 +614,7 @@ namespace gstd {
 		}
 	public:
 		virtual ~Singleton() {};
+
 		static T* CreateInstance() {
 			T*& p = _This();
 			if (p == nullptr) p = new T();

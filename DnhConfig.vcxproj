@@ -59,7 +59,7 @@
     <OutDir>.\bin_th_dnh\</OutDir>
     <IntDir>DnhConfig\Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext\imgui</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext;.\source\ext\imgui</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>config_d</TargetName>
   </PropertyGroup>
@@ -67,7 +67,7 @@
     <OutDir>.\bin_th_dnh\</OutDir>
     <IntDir>DnhConfig\Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext\imgui</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext;.\source\ext\imgui</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>config_ph3sx</TargetName>
   </PropertyGroup>
@@ -75,7 +75,7 @@
     <OutDir>.\bin_th_dnh\</OutDir>
     <IntDir>DnhConfig\Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext\imgui</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext;.\source\ext\imgui</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>config_ph3sx</TargetName>
   </PropertyGroup>
@@ -263,7 +263,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="source\GcLib\directx\DirectGraphics.cpp" />
+    <ClCompile Include="source\GcLib\directx\DirectGraphicsBase.cpp" />
     <ClCompile Include="source\GcLib\directx\DirectInput.cpp" />
     <ClCompile Include="source\GcLib\directx\ImGuiWindow.cpp" />
     <ClCompile Include="source\GcLib\gstd\Application.cpp" />
@@ -301,10 +301,11 @@
     <ClInclude Include="source\ext\imgui\imstb_rectpack.h" />
     <ClInclude Include="source\ext\imgui\imstb_textedit.h" />
     <ClInclude Include="source\ext\imgui\imstb_truetype.h" />
-    <ClInclude Include="source\GcLib\directx\DirectGraphics.hpp" />
+    <ClInclude Include="source\GcLib\directx\DirectGraphicsBase.hpp" />
     <ClInclude Include="source\GcLib\directx\DirectInput.hpp" />
     <ClInclude Include="source\GcLib\directx\DxConstant.hpp" />
     <ClInclude Include="source\GcLib\directx\DxLib.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxTypes.hpp" />
     <ClInclude Include="source\GcLib\directx\ImGuiWindow.hpp" />
     <ClInclude Include="source\GcLib\GcLib.hpp" />
     <ClInclude Include="source\GcLib\gstd\Application.hpp" />

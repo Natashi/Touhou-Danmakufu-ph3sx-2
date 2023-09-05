@@ -617,7 +617,7 @@ void StgSystemController::_ControlScene() {
 	}
 
 	ELogger* logger = ELogger::GetInstance();
-	if (logger->IsWindowVisible()) {
+	if (auto infoLog = logger->GetInfoLog()) {
 		size_t taskCount = 0;
 		size_t objectCount = 0;
 		if (packageController_) {
@@ -641,8 +641,8 @@ void StgSystemController::_ControlScene() {
 					objectCount += objectManager->GetAliveObjectCount();
 			}
 		}
-		logger->SetInfo(4, L"Task count", StringUtility::Format(L"%u", taskCount));
-		logger->SetInfo(5, L"Object count", StringUtility::Format(L"%u", objectCount));
+		infoLog->SetInfo(4, "Task count", std::to_string(taskCount));
+		infoLog->SetInfo(5, "Object count", std::to_string(objectCount));
 	}
 }
 

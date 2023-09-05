@@ -62,9 +62,6 @@
     <ClCompile Include="source\GcLib\gstd\Thread.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
-    <ClCompile Include="source\GcLib\directx\DirectGraphics.cpp">
-      <Filter>source\GcLib\directx</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\directx\DxUtility.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
@@ -87,6 +84,9 @@
       <Filter>source\external\imgui\backends</Filter>
     </ClCompile>
     <ClCompile Include="source\GcLib\directx\ImGuiWindow.cpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GcLib\directx\DirectGraphicsBase.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
   </ItemGroup>
@@ -130,9 +130,6 @@
     <ClInclude Include="source\GcLib\gstd\Thread.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
-    <ClInclude Include="source\GcLib\directx\DirectGraphics.hpp">
-      <Filter>source\GcLib\directx</Filter>
-    </ClInclude>
     <ClInclude Include="source\GcLib\directx\DxConstant.hpp">
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
@@ -170,6 +167,9 @@
       <Filter>source\external\imgui\backends</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\ImGuiWindow.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DirectGraphicsBase.hpp">
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
   </ItemGroup>
