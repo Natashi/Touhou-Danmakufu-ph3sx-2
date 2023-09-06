@@ -152,7 +152,7 @@ ImGuiBaseWindow::ImGuiBaseWindow() {
 	pIo_ = nullptr;
 	dpi_ = USER_DEFAULT_SCREEN_DPI;
 
-	bBusy_ = false;
+	bRendering_ = false;
 }
 ImGuiBaseWindow::~ImGuiBaseWindow() {
 	ImGui_ImplDX9_Shutdown();
@@ -232,7 +232,7 @@ void ImGuiBaseWindow::_InitializeSystemFonts() {
 
 void ImGuiBaseWindow::_ResetDevice() {
 	{
-		Lock lock(lock_);		// Prevent Render and ResetDevice from happening concurrently
+		//Lock lock(lock_);
 
 		_ResetFont();
 		dxGraphics_->ResetDevice();
@@ -298,12 +298,12 @@ void ImGuiBaseWindow::_Close() {
 }
 
 void ImGuiBaseWindow::_Update() {
-	if (!bInitialized_) return;
+	if (!bInitialized_ || bRendering_) return;
 
-	bBusy_ = true;
+	bRendering_ = true;
 
 	{
-		Lock lock(lock_);	// Prevent Render and ResetDevice from happening concurrently
+		//Lock lock(lock_);
 
 		ImGui_ImplDX9_NewFrame();
 		ImGui_ImplWin32_NewFrame();
@@ -319,7 +319,7 @@ void ImGuiBaseWindow::_Update() {
 		dxGraphics_->EndScene(true);
 	}
 
-	bBusy_ = false;
+	bRendering_ = false;
 }
 
 bool ImGuiBaseWindow::Loop() {
@@ -362,7 +362,7 @@ LRESULT ImGuiBaseWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, L
 		if (dxGraphics_) {
 			_Update();
 		}
-		break;
+		return 0;
 	}*/
 	
 	case WM_SIZE:

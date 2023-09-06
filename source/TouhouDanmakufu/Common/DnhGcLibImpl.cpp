@@ -68,7 +68,8 @@ bool ELogger::Initialize() {
 }
 bool ELogger::Initialize(bool bFile, bool bWindow) {
 	Logger::SetTop(this);
-	Logger::Initialize(bWindow);
+
+	bWindow_ = bWindow;
 
 	{
 		shared_ptr<gstd::WindowLogger> logger(new gstd::WindowLogger());
@@ -80,8 +81,10 @@ bool ELogger::Initialize(bool bFile, bool bWindow) {
 		logger->Initialize("File", bFile);
 		this->AddLogger(logger);
 	}
-
+	
 	panelCommonData_.reset(new gstd::ScriptCommonDataInfoPanel());
+
+	
 
 	time_ = SystemUtility::GetCpuTime2();
 
@@ -104,6 +107,10 @@ void ELogger::SaveState() {
 }
 
 void ELogger::_Run() {
+	// Must initialize in a different thread so the window message queue doesn't cross with that of the main window's
+
+	Logger::Initialize(bWindow_);
+
 	while (true) {
 		if (listLogger_.size() > 0) {
 			uint64_t currentTime = SystemUtility::GetCpuTime2();

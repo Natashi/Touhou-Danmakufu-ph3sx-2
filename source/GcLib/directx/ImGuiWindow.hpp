@@ -83,7 +83,7 @@ namespace directx::imgui {
 		bool bImGuiInitialized_;
 		volatile bool bRun_;
 
-		volatile bool bBusy_;
+		volatile bool bRendering_;
 	public:
 		ImVec4 defaultStyleColors[ImGuiCol_COUNT];
 	protected:

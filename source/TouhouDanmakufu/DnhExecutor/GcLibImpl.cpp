@@ -539,6 +539,6 @@ LRESULT EDirectGraphics::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, L
 
 void EDirectGraphics::SetWindowTitle(const std::wstring& title) {
 	HWND hWndDisplay = GetParentHWND();
-	::SetWindowText(hWndDisplay, (title.size() > 0) 
+	::SetWindowTextW(hWndDisplay, (title.size() > 0) 
 		? title.c_str() : defaultWindowTitle_.c_str());
 }
