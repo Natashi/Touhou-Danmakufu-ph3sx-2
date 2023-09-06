@@ -135,7 +135,7 @@ void Logger::_ProcessGui() {
 }
 
 void Logger::Write(ILogger::LogType type, const std::string& str) {
-	if (!bWindowActive_) return;
+	if (!IsWindowVisible()) return;
 
 	SYSTEMTIME systemTime;
 	GetLocalTime(&systemTime);
