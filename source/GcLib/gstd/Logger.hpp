@@ -76,7 +76,7 @@ namespace gstd {
 		static void WriteTop(ILogger::LogType type, const std::wstring& str) { if (top_) top_->Write(type, str); }
 
 		DEF_WRITE(WriteInfo, ILogger::LogType::Info);
-		DEF_WRITE(WriteWarning, ILogger::LogType::Warning);
+		DEF_WRITE(WriteWarn, ILogger::LogType::Warning);
 		DEF_WRITE(WriteError, ILogger::LogType::Error);
 
 		static void WriteTop(const std::string& str) { WriteInfo(str); }
