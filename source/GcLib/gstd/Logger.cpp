@@ -104,8 +104,8 @@ LRESULT Logger::_SubWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	case WM_GETMINMAXINFO:
 	{
 		MINMAXINFO* minmax = (MINMAXINFO*)lParam;
-		minmax->ptMinTrackSize.x = 64;
-		minmax->ptMinTrackSize.y = 96;
+		minmax->ptMinTrackSize.x = 250;
+		minmax->ptMinTrackSize.y = 200;
 		minmax->ptMaxTrackSize.x = ::GetSystemMetrics(SM_CXMAXTRACK);
 		minmax->ptMaxTrackSize.y = ::GetSystemMetrics(SM_CYMAXTRACK);
 		return 0;
