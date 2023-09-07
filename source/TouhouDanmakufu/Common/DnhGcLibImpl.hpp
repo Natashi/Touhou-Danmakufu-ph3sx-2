@@ -68,6 +68,7 @@ public:
 
 	void LoadState();
 	void SaveState();
+	void Close();
 
 	bool EAddPanel(shared_ptr<ILoggerPanel> panel, const std::wstring& name, uint32_t updateFreq);
 	bool EAddPanelNoUpdate(shared_ptr<ILoggerPanel> panel, const std::wstring& name);

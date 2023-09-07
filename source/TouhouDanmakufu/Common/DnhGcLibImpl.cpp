@@ -57,10 +57,7 @@ std::wstring EPathProperty::GetCommonDataPath(const std::wstring& scriptPath, co
 ELogger::ELogger() {
 }
 ELogger::~ELogger() {
-	if (threadWindow_) {
-		threadWindow_->Stop();
-		threadWindow_->Join(1000);
-	}
+	Close();
 }
 
 bool ELogger::Initialize() {
@@ -84,8 +81,6 @@ bool ELogger::Initialize(bool bFile, bool bWindow) {
 	
 	panelCommonData_.reset(new gstd::ScriptCommonDataInfoPanel());
 
-	
-
 	time_ = SystemUtility::GetCpuTime2();
 
 	threadWindow_ = new WindowThread(this);
@@ -105,13 +100,20 @@ void ELogger::SaveState() {
 	for (auto& logger : listLogger_)
 		logger->SaveState();
 }
+void ELogger::Close() {
+	_Close();
+	if (threadWindow_) {
+		threadWindow_->Stop();
+		threadWindow_->Join(1000);
+	}
+}
 
 void ELogger::_Run() {
 	// Must initialize in a different thread so the window message queue doesn't cross with that of the main window's
 
 	Logger::Initialize(bWindow_);
 
-	while (true) {
+	while (bRun_) {
 		if (listLogger_.size() > 0) {
 			uint64_t currentTime = SystemUtility::GetCpuTime2();
 			uint64_t timeDelta = currentTime - time_;
@@ -132,15 +134,15 @@ void ELogger::_Run() {
 					bUpdate = !iPanel.bPrevVisible;
 
 					// Check update frequency
-				if (!bUpdate) {
-					iPanel.timer += timeDelta;
+					if (!bUpdate) {
+						iPanel.timer += timeDelta;
 						bUpdate = iPanel.timer >= iPanel.updateFreq;
-				}
+					}
 
-				if (bUpdate) {
-					iPanel.panel->Update();
-					iPanel.timer = 0;
-				}
+					if (bUpdate) {
+						iPanel.panel->Update();
+						iPanel.timer = 0;
+					}
 				}
 
 				iPanel.bPrevVisible = bNowVisible;
@@ -150,11 +152,11 @@ void ELogger::_Run() {
 		}
 
 		if (!Loop()) {
-			threadWindow_->Stop();
-			_Close();
 			break;
 		}
 	}
+
+	Close();
 }
 
 bool ELogger::_AddPanel(shared_ptr<ILoggerPanel> panel, const std::wstring& name) {
