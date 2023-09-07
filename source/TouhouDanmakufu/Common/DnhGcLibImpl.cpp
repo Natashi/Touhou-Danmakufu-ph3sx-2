@@ -121,19 +121,26 @@ void ELogger::_Run() {
 
 				bool bUpdate = false;
 
-				bool bNowVisible = iPanel.panel->IsActive();
-				if (bNowVisible && !iPanel.bPrevVisible)
-					bUpdate = true;
+				// Update in any of these situations:
+				//    - Panel is visible, but wasn't last time
+				//    - If panel is visible, update according to its update frequency value
 
+				bool bNowVisible = iPanel.panel->IsActive();
+
+				if (bNowVisible) {
+					// Panel wasn't visible last time
+					bUpdate = !iPanel.bPrevVisible;
+
+					// Check update frequency
 				if (!bUpdate) {
 					iPanel.timer += timeDelta;
-					if (iPanel.timer >= iPanel.updateFreq)
-						bUpdate = true;
+						bUpdate = iPanel.timer >= iPanel.updateFreq;
 				}
 
 				if (bUpdate) {
 					iPanel.panel->Update();
 					iPanel.timer = 0;
+				}
 				}
 
 				iPanel.bPrevVisible = bNowVisible;
