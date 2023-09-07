@@ -617,7 +617,7 @@ void StgSystemController::_ControlScene() {
 	}
 
 	ELogger* logger = ELogger::GetInstance();
-	if (auto infoLog = logger->GetInfoLog()) {
+	if (auto infoLog = logger->GetInfoPanel()) {
 		size_t taskCount = 0;
 		size_t objectCount = 0;
 		if (packageController_) {

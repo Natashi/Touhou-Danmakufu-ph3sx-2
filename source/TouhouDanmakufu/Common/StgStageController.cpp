@@ -29,7 +29,7 @@ StgStageController::~StgStageController() {
 }
 void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) {
 	ELogger* logger = ELogger::GetInstance();
-	auto infoLog = logger->GetInfoLog();
+	auto infoLog = logger->GetInfoPanel();
 
 	Math::InitializeFPU();
 
@@ -388,7 +388,7 @@ void StgStageController::Work() {
 	}
 
 	ELogger* logger = ELogger::GetInstance();
-	auto infoLog = logger->GetInfoLog();
+	auto infoLog = logger->GetInfoPanel();
 
 	infoLog->SetInfo(6, "Shot count", std::to_string(shotManager_->GetShotCountAll()));
 	infoLog->SetInfo(7, "Enemy count", std::to_string(enemyManager_->GetEnemyCount()));

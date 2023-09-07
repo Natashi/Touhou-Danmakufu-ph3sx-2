@@ -77,7 +77,12 @@ public:
 	shared_ptr<gstd::WindowLogger> GetWindowLogger() { return GetLogger<gstd::WindowLogger>("Window"); }
 	shared_ptr<gstd::FileLogger> GetFileLogger() { return GetLogger<gstd::FileLogger>("File"); }
 
-	shared_ptr<gstd::WindowLogger::PanelInfo> GetInfoLog() {
+	shared_ptr<gstd::WindowLogger::PanelEventLog> GetEventLog() {
+		if (auto wLogger = GetWindowLogger())
+			return wLogger->GetLogPanel();
+		return nullptr;
+	}
+	shared_ptr<gstd::WindowLogger::PanelInfo> GetInfoPanel() {
 		if (auto wLogger = GetWindowLogger())
 			return wLogger->GetInfoPanel();
 		return nullptr;

@@ -165,7 +165,7 @@ void StgIntersectionManager::Work() {
 	//_ArrangePool();
 
 	ELogger* logger = ELogger::GetInstance();
-	if (auto infoLog = logger->GetInfoLog()) {
+	if (auto infoLog = logger->GetInfoPanel()) {
 		/*
 		int countUsed = GetUsedPoolObjectCount();
 		int countCache = GetCachePoolObjectCount();
