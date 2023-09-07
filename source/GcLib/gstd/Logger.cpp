@@ -341,11 +341,9 @@ void WindowLogger::ProcessGui() {
 	ImGui::PushFont(parent->GetFont("Arial16"));
 
 	if (ImGui::Begin("MainWindow", nullptr, flags)) {
-		float ht = ImGui::GetContentRegionAvail().y - 16;
-
 		//ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 		ImGuiWindowFlags window_flags = 0;
-		if (ImGui::BeginChild("ChildW_Tabs", ImVec2(0, ht), false, window_flags)) {
+		if (ImGui::BeginChild("ChildW_Tabs", ImVec2(0, 0), false, window_flags)) {
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_NoCloseWithMiddleMouseButton;
 			if (ImGui::BeginTabBar("TabBar_Tabs", tab_bar_flags)) {
 				currentPanel_ = nullptr;
@@ -355,6 +353,8 @@ void WindowLogger::ProcessGui() {
 					if (ImGui::BeginTabItem(iPanel->GetDisplayName().c_str())) {
 						iPanel->SetActive(true);
 						currentPanel_ = iPanel;
+
+						ImGui::Dummy(ImVec2(0, 2));
 
 						iPanel->ProcessGui();
 						ImGui::EndTabItem();
@@ -394,39 +394,147 @@ bool WindowLogger::AddPanel(shared_ptr<ILoggerPanel> panel, const std::string& n
 
 //WindowLogger::LogPanel
 WindowLogger::PanelEventLog::PanelEventLog() {
+	bLogChanged_ = false;
 }
 WindowLogger::PanelEventLog::~PanelEventLog() {
 }
 
 void WindowLogger::PanelEventLog::Initialize(const std::string& name) {
 	ILoggerPanel::Initialize(name);
+
+	filter_.resize(256);
+
+	timeStart_ = stdch::high_resolution_clock::now();
 }
 
-void WindowLogger::PanelEventLog::ProcessGui() {
+void WindowLogger::PanelEventLog::Update() {
+	if (bLogChanged_) {
+		// Copy logs for rendering, can't happen at the same time as AddEvent 
+		Lock lock(Logger::GetTop()->GetLock());
 
+		eventsCopy_ = std::vector<LogEntry>(events_.begin(), events_.end());
+
+		bLogChanged_ = false;
+	}
+}
+void WindowLogger::PanelEventLog::ProcessGui() {
+	ImGui::Separator();
+
+	bool bClear = ImGui::Button("Clear");
+	ImGui::SameLine();
+
+	bool bCopy = ImGui::Button("Copy");
+	ImGui::SameLine();
+
+	ImGui::SetNextItemWidth(-100);
+	bool bFilterTextChanged = ImGui::InputText("Filter", filter_.data(), filter_.size() - 1);
+
+	ImGui::Separator();
+
+	float ht = ImGui::GetContentRegionAvail().y - 32;
+
+	if (ImGui::BeginChild("plog_child_logscr", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
+		static size_t prevCount = 0;
+
+		bool bScrollToBottom = false;
+		if (events_.size() > prevCount) {
+			bScrollToBottom = true;
+			prevCount = events_.size();
+		}
+
+		if (bClear)
+			ClearEvents();
+		if (bCopy) {
+			//ImGui::LogToClipboard();
+		}
+
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+
+		// TODO: Implement custom text clipping because ImGuiListClipper doesn't work here
+		{
+			static const ImVec4 colorInfo = ImColor(0, 0, 64);
+			static const ImVec4 colorWarn = ImColor(255, 128, 0);
+			static const ImVec4 colorError = ImColor(255, 24, 24);
+			static const char* strWarning = "[warn]";
+			static const char* strError = "[error]";
+
+			size_t iStart = 0;
+			size_t count = eventsCopy_.size();
+
+			for (size_t i = iStart; i < iStart + count; ++i) {
+				const LogEntry& entry = eventsCopy_[i];
+
+				const ImVec4* color = &colorInfo;
+				const char* label = "";
+
+				switch (entry.type) {
+				case LogType::Warning:
+					color = &colorWarn;
+					label = strWarning;
+					break;
+				case LogType::Error:
+					color = &colorError;
+					label = strError;
+					break;
+				}
+
+				ImGui::PushStyleColor(ImGuiCol_Text, *color);
+
+				ImGui::TextUnformatted(entry.time.c_str());
+				ImGui::SameLine(92);
+
+				if (entry.type != LogType::Info) {
+					ImGui::TextUnformatted(label);
+					ImGui::SameLine(92 + 48);
+				}
+
+				ImGui::TextUnformatted(entry.text.c_str());
+
+				ImGui::PopStyleColor();
+			}
+		};
+
+		ImGui::PopStyleVar();
+
+		// Scroll to the bottom when getting new events
+		if (bScrollToBottom)
+			ImGui::SetScrollHereY(1.0f);
+	}
+	ImGui::EndChild();
+
+	ImGui::Dummy(ImVec2(0, 4));
+	ImGui::Indent(6);
+
+	{
+		auto elapsedMs = stdch::duration_cast<stdch::milliseconds>(
+			stdch::high_resolution_clock::now() - timeStart_).count();
+
+		size_t s = elapsedMs / 1000;
+		size_t m = s / 60;
+		size_t h = m / 60;
+
+		ImGui::Text("Time elapsed: %u:%u:%u.%04u", h, m % 60, s % 60, elapsedMs % 1000);
+	}
 }
 
 void WindowLogger::PanelEventLog::AddEvent(const LogData& data) {
-	static const wchar_t* strInfo = L"";
-	static const wchar_t* strWarning = L"[WARNING] ";
-	static const wchar_t* strError = L"[ERROR]   ";
+	LogEntry entry;
+	entry.type = data.type;
+	entry.time = StringUtility::Format(
+		"%.2d:%.2d:%.2d.%.3d",
+		data.time.wHour, data.time.wMinute, data.time.wSecond, data.time.wMilliseconds);
+	entry.text = data.text;
 
-	const wchar_t* initial = strInfo;
-	switch (data.type) {
-	case LogType::Warning:	initial = strWarning; break;
-	case LogType::Error:	initial = strError; break;
+	if (events_.size() >= 1000) {
+		events_.pop_front();
 	}
+	events_.push_back(entry);
 
-	std::string strLog = StringUtility::Format(
-		"%s%.2d:%.2d:%.2d.%.3d %s",
-		initial,
-		data.time.wHour, data.time.wMinute, data.time.wSecond, data.time.wMilliseconds,
-		data.text.c_str());
-
-	events_.push_back({ data.type, strLog });
+	bLogChanged_ = true;
 }
 void WindowLogger::PanelEventLog::ClearEvents() {
 	events_.clear();
+	bLogChanged_ = true;
 }
 
 //WindowLogger::PanelInfo
@@ -435,7 +543,7 @@ WindowLogger::PanelInfo::PanelInfo() {
 	hQuery_ = INVALID_HANDLE_VALUE;
 	hCounter_ = INVALID_HANDLE_VALUE;
 
-	_InitializeHandle();
+	rateCpuUsage_ = 0;
 }
 WindowLogger::PanelInfo::~PanelInfo() {
 	if (hQuery_ != INVALID_HANDLE_VALUE)
@@ -446,28 +554,95 @@ WindowLogger::PanelInfo::~PanelInfo() {
 
 void WindowLogger::PanelInfo::Initialize(const std::string& name) {
 	ILoggerPanel::Initialize(name);
+
+	_InitializeHandle();
 }
 
 void WindowLogger::PanelInfo::Update() {
-	_SetRamInfo();
+	_GetRamInfo();
+	_GetCpuPerformance();
 
 	Logger::GetTop()->Flush();
 }
 void WindowLogger::PanelInfo::ProcessGui() {
-	
+	ImGui::Separator();
+
+	float ht = ImGui::GetContentRegionAvail().y - 32;
+
+	if (ImGui::BeginChild("pinfo_child_table", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
+		ImGuiTableFlags flags = ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable
+			| ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingStretchProp;
+
+		if (ImGui::BeginTable("pinfo_table", 2, flags)) {
+			ImGui::TableSetupScrollFreeze(1, 1);
+			ImGui::TableSetupColumn("Info", 
+				ImGuiTableColumnFlags_NoHide  | ImGuiTableColumnFlags_WidthFixed, 128);
+			ImGui::TableSetupColumn("Data");
+			ImGui::TableHeadersRow();
+
+			auto itr = infoLines_.begin();
+			for (size_t iRow = 0; itr != infoLines_.end(); ++iRow) {
+				ImGui::TableNextRow();
+
+				auto _SetRow = [](const char* s0, const char* s1) {
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text(s0);
+
+					if (ImGui::TableSetColumnIndex(1))
+						ImGui::Text(s1);
+				};
+
+				if (iRow == itr->first) {
+					_SetRow(itr->second[0].c_str(), itr->second[1].c_str());
+					++itr;
+				}
+				else {
+					_SetRow("", "");
+				}
+			}
+
+			ImGui::EndTable();
+		}
+	}
+	ImGui::EndChild();
+
+	ImGui::Dummy(ImVec2(0, 4));
+	ImGui::Indent(6);
+
+	{
+		static double cpuDisplay = 0;
+
+		ImGui::Text("Process RAM: %llu/%llu MB", ramMemAvail_, ramMemMax_);
+		ImGui::SameLine(240);
+
+		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, (ImU32)ImColor(32, 144, 255));
+		{
+			ImGui::TextUnformatted("Process CPU: ");
+
+			constexpr double smoothing = 0.08;
+			cpuDisplay = (1 - smoothing) * cpuDisplay + rateCpuUsage_ * smoothing;
+
+			ImGui::SameLine(240 + 96 + 106);
+			ImGui::Text("%.2f%%", rateCpuUsage_);
+
+			auto height = ImGui::GetCurrentContext()->FontSize;
+
+			ImGui::SameLine(240 + 96);
+			ImGui::ProgressBar(cpuDisplay / 100, ImVec2(100, height), "");
+		}
+		ImGui::PopStyleColor();
+	}
 }
 
 void WindowLogger::PanelInfo::SetInfo(int row, const std::string& textInfo, const std::string& textData) {
 	infoLines_[row] = { textInfo, textData };
 }
 
-void WindowLogger::PanelInfo::_SetRamInfo() {
+void WindowLogger::PanelInfo::_GetRamInfo() {
 	if (!bActive_) return;
 	{
-		Lock lock(Logger::GetTop()->GetLock());
-
 		// Get RAM info
-		MEMORYSTATUSEX mse;
+		MEMORYSTATUSEX mse = {};
 		mse.dwLength = sizeof(MEMORYSTATUSEX);
 		GlobalMemoryStatusEx(&mse);
 
@@ -475,7 +650,7 @@ void WindowLogger::PanelInfo::_SetRamInfo() {
 		ramMemMax_ = mse.ullTotalVirtual / (1024ui64 * 1024ui64);
 		
 		// Get CPU info
-		rateCpuUsage_ = _GetCpuPerformance();;
+		rateCpuUsage_ = std::clamp<double>(_GetCpuPerformance(), 0, 100);
 	}
 }
 

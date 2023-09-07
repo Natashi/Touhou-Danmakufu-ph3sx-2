@@ -208,16 +208,23 @@ namespace gstd {
 	class WindowLogger::PanelEventLog : public ILoggerPanel {
 		struct LogEntry {
 			LogType type;
+			std::string time;
 			std::string text;
 		};
 		std::list<LogEntry> events_;
+		std::vector<LogEntry> eventsCopy_;
+		bool bLogChanged_;
+
+		std::string filter_;
+
+		stdch::high_resolution_clock::time_point timeStart_;
 	public:
 		PanelEventLog();
 		~PanelEventLog();
 
 		virtual void Initialize(const std::string& name);
 
-		virtual void Update() {};
+		virtual void Update();
 		virtual void ProcessGui();
 
 		void AddEvent(const LogData& data);
@@ -250,10 +257,11 @@ namespace gstd {
 		std::map<int, std::array<std::string, 2>> infoLines_;
 	protected:
 		void _InitializeHandle();
+
 		CpuInfo _GetCpuInformation();
 		double _GetCpuPerformance();
 
-		void _SetRamInfo();
+		void _GetRamInfo();
 	public:
 		PanelInfo();
 		~PanelInfo();

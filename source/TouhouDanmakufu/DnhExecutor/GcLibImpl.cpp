@@ -75,6 +75,10 @@ bool EApplication::_Initialize() {
 
 	{
 		{
+			auto logPanel = logger->GetEventLog();
+			logger->EAddPanelUpdateData(logPanel, 20);
+		}
+		{
 			auto infoPanel = logger->GetInfoPanel();
 			logger->EAddPanelUpdateData(infoPanel, 50);
 		}
