@@ -12,6 +12,8 @@
 #include "DirectGraphics.hpp"
 
 #if defined(DNH_PROJ_EXECUTOR)
+#include "DxCamera.hpp"
+
 #include "Texture.hpp"
 #include "Shader.hpp"
 

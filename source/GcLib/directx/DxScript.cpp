@@ -2,7 +2,7 @@
 
 #include "DxUtility.hpp"
 #include "DirectGraphics.hpp"
-#include "DirectGraphics.hpp"
+#include "DxCamera.hpp"
 #include "DxScript.hpp"
 #include "DxObject.hpp"
 #include "DirectInput.hpp"

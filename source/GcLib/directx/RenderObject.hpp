@@ -4,6 +4,7 @@
 
 #include "DxConstant.hpp"
 #include "DxUtility.hpp"
+#include "DxCamera.hpp"
 #include "Texture.hpp"
 #include "Shader.hpp"
 

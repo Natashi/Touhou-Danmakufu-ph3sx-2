@@ -301,6 +301,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClCompile Include="source\GcLib\directx\DirectGraphicsBase.cpp" />
     <ClCompile Include="source\GcLib\directx\DirectInput.cpp" />
     <ClCompile Include="source\GcLib\directx\DirectSound.cpp" />
+    <ClCompile Include="source\GcLib\directx\DxCamera.cpp" />
     <ClCompile Include="source\GcLib\directx\DxObject.cpp" />
     <ClCompile Include="source\GcLib\directx\DxScript.cpp" />
     <ClCompile Include="source\GcLib\directx\DxScriptObjClone.cpp" />
@@ -384,6 +385,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClInclude Include="source\GcLib\directx\DirectGraphicsBase.hpp" />
     <ClInclude Include="source\GcLib\directx\DirectInput.hpp" />
     <ClInclude Include="source\GcLib\directx\DirectSound.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxCamera.hpp" />
     <ClInclude Include="source\GcLib\directx\DxConstant.hpp" />
     <ClInclude Include="source\GcLib\directx\DxLib.hpp" />
     <ClInclude Include="source\GcLib\directx\DxObject.hpp" />
