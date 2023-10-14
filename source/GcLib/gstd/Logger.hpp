@@ -166,7 +166,7 @@ namespace gstd {
 	protected:
 		bool bEnable_;
 
-		std::vector<shared_ptr<ILoggerPanel>> panels_;
+		std::list<shared_ptr<ILoggerPanel>> panels_;
 		shared_ptr<ILoggerPanel> currentPanel_;
 
 		shared_ptr<PanelEventLog> panelEventLog_;
