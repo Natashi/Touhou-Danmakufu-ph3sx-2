@@ -43,7 +43,7 @@ bool Logger::Initialize(bool bEnable) {
 	bWindowActive_ = bEnable;
 
 	{
-		for (auto size : { 8, 14, 16, 20, 24 }) {
+		for (auto size : { 8, 10, 14, 15, 16, 20, 24 }) {
 			std::string key = StringUtility::Format("Arial%d", size);
 			_AddUserFont(imgui::ImGuiAddFont(key, L"Arial", size));
 		}
@@ -146,6 +146,8 @@ void Logger::Write(ILogger::LogType type, const std::string& str) {
 		logger->Write(data);
 }
 void Logger::Write(ILogger::LogType type, const std::wstring& str) {
+	if (!IsWindowVisible()) return;
+
 	Write(type, StringUtility::ConvertWideToMulti(str));
 }
 
@@ -356,7 +358,9 @@ void WindowLogger::ProcessGui() {
 
 						ImGui::Dummy(ImVec2(0, 2));
 
+						ImGui::Separator();
 						iPanel->ProcessGui();
+
 						ImGui::EndTabItem();
 					}
 				}
@@ -418,8 +422,6 @@ void WindowLogger::PanelEventLog::Update() {
 	}
 }
 void WindowLogger::PanelEventLog::ProcessGui() {
-	ImGui::Separator();
-
 	bool bClear = ImGui::Button("Clear");
 	ImGui::SameLine();
 
@@ -450,7 +452,8 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
-		// TODO: Implement custom text clipping because ImGuiListClipper doesn't work here
+		float htItem = ImGui::GetTextLineHeightWithSpacing();
+
 		{
 			static const ImVec4 colorInfo = ImColor(0, 0, 64);
 			static const ImVec4 colorWarn = ImColor(255, 128, 0);
@@ -458,10 +461,24 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 			static const char* strWarning = "[warn]";
 			static const char* strError = "[error]";
 
-			size_t iStart = 0;
 			size_t count = eventsCopy_.size();
 
-			for (size_t i = iStart; i < iStart + count; ++i) {
+			// Clip display to only visible items
+			// TODO: CalcListClipping doesn't work properly due to some entries spanning multiple lines
+
+			int dispStart = 0, dispEnd = count;
+			constexpr bool bClipping = false;
+
+			if constexpr (bClipping) {
+				ImGui::CalcListClipping(count, htItem, &dispStart, &dispEnd);
+
+				dispStart = std::max(0, dispStart - 3);
+				dispEnd = std::min<int>(count, dispEnd + 1);
+
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + dispStart * htItem);
+			}
+
+			for (size_t i = dispStart; i < dispEnd; ++i) {
 				const LogEntry& entry = eventsCopy_[i];
 
 				const ImVec4* color = &colorInfo;
@@ -491,6 +508,10 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 				ImGui::TextUnformatted(entry.text.c_str());
 
 				ImGui::PopStyleColor();
+			}
+
+			if constexpr (bClipping) {
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (count - dispEnd) * htItem);
 			}
 		};
 
@@ -565,8 +586,6 @@ void WindowLogger::PanelInfo::Update() {
 	Logger::GetTop()->Flush();
 }
 void WindowLogger::PanelInfo::ProcessGui() {
-	ImGui::Separator();
-
 	float ht = ImGui::GetContentRegionAvail().y - 32;
 
 	if (ImGui::BeginChild("pinfo_child_table", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
@@ -576,7 +595,7 @@ void WindowLogger::PanelInfo::ProcessGui() {
 		if (ImGui::BeginTable("pinfo_table", 2, flags)) {
 			ImGui::TableSetupScrollFreeze(1, 1);
 			ImGui::TableSetupColumn("Info", 
-				ImGuiTableColumnFlags_NoHide  | ImGuiTableColumnFlags_WidthFixed, 128);
+				ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_WidthFixed, 128);
 			ImGui::TableSetupColumn("Data");
 			ImGui::TableHeadersRow();
 
