@@ -559,16 +559,26 @@ namespace directx {
 	};
 
 	class DxMeshInfoPanel : public gstd::ILoggerPanel {
-	protected:
-		enum {
-			ROW_ADDRESS,
-			ROW_NAME,
-			ROW_FULLNAME,
-			ROW_COUNT_REFFRENCE,
-		};
-		//gstd::WListView wndListView_;
+	public:
+		struct MeshDisplay {
+			enum Column {
+				Address,
+				Name, FullPath,
+				Uses,
+				_NoSort,
+			};
 
-		//virtual bool _AddedLogger(HWND hTab);
+			size_t address;
+			std::string strAddress;
+			std::string fileName;
+			std::string fullPath;
+			int countRef;
+
+			static const ImGuiTableSortSpecs* imguiSortSpecs;
+			static bool IMGUI_CDECL Compare(const MeshDisplay& a, const MeshDisplay& b);
+		};
+	protected:
+		std::vector<MeshDisplay> listDisplay_;
 	public:
 		DxMeshInfoPanel();
 

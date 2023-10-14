@@ -1427,10 +1427,10 @@ void TrajectoryObject3D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY
 			SetVertexPosition(index, pos.x, pos.y, pos.z);
 			SetVertexUV(index, u, v);
 
-			float r = ColorAccess::GetColorR(color_) * alpha / 255;
-			float g = ColorAccess::GetColorG(color_) * alpha / 255;
-			float b = ColorAccess::GetColorB(color_) * alpha / 255;
-			SetVertexColorARGB(index, alpha, r, g, b);
+			D3DCOLOR newColor = color_;
+			ColorAccess::ApplyAlpha(newColor, alpha / 255.0f);
+			ColorAccess::SetColorA(newColor, alpha);
+			SetVertexColor(index, newColor);
 		}
 	}
 	RenderObjectLX::Render(angX, angY, angZ);
@@ -2067,7 +2067,9 @@ void DxMeshManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> 
 	}
 }
 
+//****************************************************************************
 //DxMeshInfoPanel
+//****************************************************************************
 DxMeshInfoPanel::DxMeshInfoPanel() {
 }
 
@@ -2076,80 +2078,146 @@ void DxMeshInfoPanel::Initialize(const std::string& name) {
 }
 
 void DxMeshInfoPanel::Update() {
-
-}
-void DxMeshInfoPanel::ProcessGui() {
-
-}
-
-/*
-bool DxMeshInfoPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
-
-	gstd::WListView::Style styleListView;
-	styleListView.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
-	styleListView.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListView.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListView_.Create(hWnd_, styleListView);
-
-	wndListView_.AddColumn(64, ROW_ADDRESS, L"Address");
-	wndListView_.AddColumn(128, ROW_NAME, L"Name");
-	wndListView_.AddColumn(128, ROW_FULLNAME, L"FullName");
-	wndListView_.AddColumn(32, ROW_COUNT_REFFRENCE, L"Ref");
-
-	SetWindowVisible(false);
-	PanelInitialize();
-
-	return true;
-}
-void DxMeshInfoPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
-
-	wndListView_.SetBounds(wx, wy, wWidth, wHeight);
-}
-void DxMeshInfoPanel::PanelUpdate() {
 	DxMeshManager* manager = DxMeshManager::GetBase();
 	if (manager == nullptr) return;
 
-	if (!IsWindowVisible()) return;
-
-	std::set<std::wstring> setKey;
-	std::map<std::wstring, shared_ptr<DxMeshData>>& mapData = manager->mapMeshData_;
-	std::map<std::wstring, shared_ptr<DxMeshData>>::iterator itrMap;
 	{
-		Lock lock(manager->GetLock());
-		for (itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap) {
-			std::wstring name = itrMap->first;
-			DxMeshData* data = (itrMap->second).get();
+		Lock lock(Logger::GetTop()->GetLock());
 
-			int address = (int)data;
-			std::wstring key = StringUtility::Format(L"%08x", address);
-			int index = wndListView_.GetIndexInColumn(key, ROW_ADDRESS);
-			if (index == -1) {
-				index = wndListView_.GetRowCount();
-				wndListView_.SetText(index, ROW_ADDRESS, key);
-			}
+		auto& mapData = manager->mapMeshData_;
+		listDisplay_.resize(mapData.size());
+
+		int iMesh = 0;
+		for (auto itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap, ++iMesh) {
+			const std::wstring& path = itrMap->first;
+			DxMeshData* data = (itrMap->second).get();
 
 			int countRef = (itrMap->second).use_count();
 
-			wndListView_.SetText(index, ROW_NAME, PathProperty::GetFileName(name));
-			wndListView_.SetText(index, ROW_FULLNAME, name);
-			wndListView_.SetText(index, ROW_COUNT_REFFRENCE, StringUtility::Format(L"%d", countRef));
+			std::wstring fileName = PathProperty::GetFileName(path);
+			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
-			setKey.insert(key);
+			MeshDisplay displayData = {
+				(size_t)data,
+				"",		// Computed below: strAddress
+				STR_MULTI(fileName),
+				STR_MULTI(pathReduce),
+				countRef
+			};
+#ifdef _WIN64
+			displayData.strAddress = STR_FMT("%016x", displayData.address);
+#else
+			displayData.strAddress = STR_FMT("%08x", displayData.address);
+#endif
+
+			listDisplay_[iMesh] = displayData;
+		}
+
+		// Sort new data as well
+		if (MeshDisplay::imguiSortSpecs) {
+			if (listDisplay_.size() > 1) {
+				std::sort(listDisplay_.begin(), listDisplay_.end(), MeshDisplay::Compare);
+			}
 		}
 	}
-
-	for (int iRow = 0; iRow < wndListView_.GetRowCount();) {
-		std::wstring key = wndListView_.GetText(iRow, ROW_ADDRESS);
-		if (setKey.find(key) != setKey.end())
-			++iRow;
-		else
-			wndListView_.DeleteRow(iRow);
-	}
 }
-*/
+void DxMeshInfoPanel::ProcessGui() {
+	Logger* parent = Logger::GetTop();
+
+	float ht = ImGui::GetContentRegionAvail().y;
+
+	if (ImGui::BeginChild("pmesh_child_table", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
+		ImGuiTableFlags flags = ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable
+			| ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendX
+			| ImGuiTableFlags_RowBg
+			| ImGuiTableFlags_Sortable /*| ImGuiTableFlags_SortMulti*/;
+
+		if (ImGui::BeginTable("pmesh_table", 4, flags)) {
+			ImGui::TableSetupScrollFreeze(0, 1);
+
+			constexpr auto sortDef = ImGuiTableColumnFlags_DefaultSort,
+				sortNone = ImGuiTableColumnFlags_NoSort;
+			constexpr auto colFlags = ImGuiTableColumnFlags_WidthStretch;
+			ImGui::TableSetupColumn("Address", sortDef, 0, MeshDisplay::Address);
+			ImGui::TableSetupColumn("Name", colFlags | sortDef, 160, MeshDisplay::Name);
+			ImGui::TableSetupColumn("Path", colFlags | sortDef, 200, MeshDisplay::FullPath);
+			ImGui::TableSetupColumn("Uses", sortDef, 0, MeshDisplay::Uses);
+
+			ImGui::TableHeadersRow();
+
+			if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs()) {
+				if (specs->SpecsDirty) {
+					MeshDisplay::imguiSortSpecs = specs;
+					if (listDisplay_.size() > 1) {
+						std::sort(listDisplay_.begin(), listDisplay_.end(), MeshDisplay::Compare);
+					}
+					//MeshDisplay::imguiSortSpecs = nullptr;
+
+					specs->SpecsDirty = false;
+				}
+			}
+
+			{
+				ImGui::PushFont(parent->GetFont("Arial15"));
+
+#define _SETCOL(_i, _s) ImGui::TableSetColumnIndex(_i); ImGui::Text((_s).c_str());
+
+				ImGuiListClipper clipper;
+				clipper.Begin(listDisplay_.size());
+				while (clipper.Step()) {
+					for (size_t i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+						const MeshDisplay& item = listDisplay_[i];
+
+						ImGui::TableNextRow();
+
+						_SETCOL(0, item.strAddress);
+
+						_SETCOL(1, item.fileName);
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(item.fileName.c_str());
+
+						_SETCOL(2, item.fullPath);
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(item.fullPath.c_str());
+
+						_SETCOL(3, std::to_string(item.countRef));
+					}
+				}
+
+				ImGui::PopFont();
+
+#undef _SETCOL
+			}
+
+			ImGui::EndTable();
+		}
+	}
+	ImGui::EndChild();
+}
+
+const ImGuiTableSortSpecs* DxMeshInfoPanel::MeshDisplay::imguiSortSpecs = nullptr;
+bool DxMeshInfoPanel::MeshDisplay::Compare(const MeshDisplay& a, const MeshDisplay& b) {
+	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
+		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
+
+		const auto ascending = spec->SortDirection == ImGuiSortDirection_Ascending;
+
+#define CASE_SORT(_id, _cmp) case _id: { \
+			int res = _cmp; \
+			if (res != 0) \
+				return ascending ? res < 0 : res > 0; \
+			break; }
+
+		switch ((Column)spec->ColumnUserID) {
+			CASE_SORT(Column::Address, (ptrdiff_t)a.address - (ptrdiff_t)b.address);
+			CASE_SORT(Column::Name, a.fileName.compare(b.fileName));
+			CASE_SORT(Column::FullPath, a.fullPath.compare(b.fullPath));
+			CASE_SORT(Column::Uses, a.countRef - b.countRef);
+		default: break;
+		}
+
+#undef CASE_SORT
+	}
+
+	return (ptrdiff_t)a.address < (ptrdiff_t)b.address;
+}
