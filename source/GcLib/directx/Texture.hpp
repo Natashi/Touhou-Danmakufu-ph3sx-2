@@ -153,19 +153,29 @@ namespace directx {
 	//TextureInfoPanel
 	//****************************************************************************
 	class TextureInfoPanel : public gstd::ILoggerPanel {
-	protected:
-		enum {
-			ROW_ADDRESS,
-			ROW_NAME,
-			ROW_FULLNAME,
-			ROW_REFCOUNT,
-			ROW_WIDTH_IMAGE,
-			ROW_HEIGHT_IMAGE,
-			ROW_SIZE,
-		};
-		//gstd::WListView wndListView_;
+		struct TextureDisplay {
+			enum Column {
+				Address,
+				Name, FullPath,
+				Uses, Size,
+				_NoSort,
+			};
 
-		//virtual bool _AddedLogger(HWND hTab);
+			size_t address;
+			std::string strAddress;
+			std::string fileName;
+			std::string fullPath;
+			int countRef;
+			uint32_t wd;
+			uint32_t ht;
+			uint32_t size;
+
+			static const ImGuiTableSortSpecs* imguiSortSpecs;
+			static bool IMGUI_CDECL Compare(const TextureDisplay& a, const TextureDisplay& b);
+		};
+	protected:
+		std::vector<TextureDisplay> listDisplay_;
+		uint32_t videoMem_;
 	public:
 		TextureInfoPanel();
 
