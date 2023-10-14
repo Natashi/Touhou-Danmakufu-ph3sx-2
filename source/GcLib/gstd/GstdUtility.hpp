@@ -165,6 +165,11 @@ namespace gstd {
 
 #define BASIC_STR_TEMPL template<class E, class T = std::char_traits<E>, class A = std::allocator<E>>
 
+#define STR_WIDE gstd::StringUtility::ConvertMultiToWide
+#define STR_MULTI gstd::StringUtility::ConvertWideToMulti
+#define STR_FMT gstd::StringUtility::Format
+#define STR_FMT_W gstd::StringUtility::FormatToWide
+
 	//================================================================
 	//StringUtility
 	class StringUtility {
