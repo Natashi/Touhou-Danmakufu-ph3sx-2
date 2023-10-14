@@ -787,10 +787,361 @@ void ShaderInfoPanel::Initialize(const std::string& name) {
 }
 
 void ShaderInfoPanel::Update() {
+	ShaderManager* manager = ShaderManager::GetBase();
+	if (manager == nullptr) {
+		listDisplay_.clear();
+		return;
+	}
 
+	RenderShaderLibrary* renderLib = manager->GetRenderLib();
+
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		auto& mapData = manager->mapShaderData_;
+
+		size_t iDataAdd = 0;
+		{
+			size_t size = mapData.size();
+			if (renderLib)
+				size += renderLib->GetShaderCount();
+			listDisplay_.resize(size);
+		}
+
+		auto _AddData = [&](ID3DXEffect* pEffect, const std::string& name, size_t dataAddress, shared_ptr<ShaderData> ref) {
+			ShaderDisplay displayData(pEffect, name, dataAddress, ref);
+			listDisplay_[iDataAdd++] = displayData;
+		};
+
+		// Add built-in shaders
+		if (renderLib) {
+#define _ADD_BUILTIN(_eff, _name) _AddData(_eff, _name, (size_t)(_eff), nullptr);
+
+			_ADD_BUILTIN(renderLib->GetRender2DShader(), ShaderSource::nameRender2D_);
+			_ADD_BUILTIN(renderLib->GetInstancing2DShader(), ShaderSource::nameHwInstance2D_);
+			_ADD_BUILTIN(renderLib->GetInstancing3DShader(), ShaderSource::nameHwInstance3D_);
+			_ADD_BUILTIN(renderLib->GetIntersectVisualShader1(), ShaderSource::nameIntersectVisual1_);
+			_ADD_BUILTIN(renderLib->GetIntersectVisualShader2(), ShaderSource::nameIntersectVisual2_);
+
+#undef _ADD_BUILTIN
+		}
+
+		// Add user shaders
+		{
+			for (auto& [name, data] : mapData) {
+				std::string nameReduce = STR_MULTI(PathProperty::ReduceModuleDirectory(name));
+				_AddData(data->effect_, nameReduce, (size_t)data.get(), data);
+			}
+		}
+
+		// Sort new data as well
+		if (ShaderDisplay::imguiSortSpecs) {
+			if (listDisplay_.size() > 1) {
+				std::sort(listDisplay_.begin(), listDisplay_.end(), ShaderDisplay::Compare);
+			}
+		}	
+	}
 }
-void ShaderInfoPanel::ProcessGui() {
 
+const char* ShaderParamClassToString(D3DXPARAMETER_CLASS type) {
+	switch (type) {
+	case D3DXPC_SCALAR:		return "scalar";
+	case D3DXPC_VECTOR:		return "vector";
+	case D3DXPC_MATRIX_ROWS:
+	case D3DXPC_MATRIX_COLUMNS:
+		return "matrix";
+	case D3DXPC_OBJECT:		return "object";
+	case D3DXPC_STRUCT:		return "struct";
+	}
+	return "other";
+}
+const char* ShaderParamTypeToString(D3DXPARAMETER_TYPE type) {
+	switch (type) {
+	case D3DXPT_VOID:		return "void";
+	case D3DXPT_BOOL:		return "bool";
+	case D3DXPT_INT:		return "int";
+	case D3DXPT_FLOAT:		return "float";
+	case D3DXPT_STRING:		return "string";
+	case D3DXPT_TEXTURE:	return "texture";
+	case D3DXPT_TEXTURE1D:	return "texture1d";
+	case D3DXPT_TEXTURE2D:	return "texture2d";
+	case D3DXPT_TEXTURE3D:	return "texture3d";
+	case D3DXPT_TEXTURECUBE:	return "texture_cube";
+	case D3DXPT_SAMPLER:	return "sampler";
+	case D3DXPT_SAMPLER1D:	return "sampler1d";
+	case D3DXPT_SAMPLER2D:	return "sampler2d";
+	case D3DXPT_SAMPLER3D:	return "sampler3d";
+	case D3DXPT_SAMPLERCUBE:	return "sampler_cube";
+	case D3DXPT_PIXELSHADER:	return "pixel_shader";
+	case D3DXPT_VERTEXSHADER:	return "vertex_shader";
+	case D3DXPT_PIXELFRAGMENT:	return "pixel_fragment";
+	case D3DXPT_VERTEXFRAGMENT:	return "vertex_fragment";
+	}
+	return "other";
+}
+
+void ShaderInfoPanel::ProcessGui() {
+	Logger* parent = Logger::GetTop();
+
+	auto orgTextColor = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+
+	auto _Tooltip = [&orgTextColor](std::function<void()> gui) {
+		ImGui::BeginTooltipEx(ImGuiTooltipFlags_OverridePreviousTooltip, ImGuiWindowFlags_None);
+
+		ImGui::PushStyleColor(ImGuiCol_Text, orgTextColor);
+		gui();
+		ImGui::PopStyleColor();
+
+		ImGui::EndTooltip();
+	};
+
+	float ht = ImGui::GetContentRegionAvail().y;
+
+	if (ImGui::BeginChild("pshader_child_table", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
+		ImGuiTableFlags flags = ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable
+			| ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendX
+			| ImGuiTableFlags_RowBg
+			| ImGuiTableFlags_Sortable /*| ImGuiTableFlags_SortMulti*/;
+
+		if (ImGui::BeginTable("pshader_table", 7, flags)) {
+			ImGui::TableSetupScrollFreeze(0, 1);
+
+			constexpr auto sortDef = ImGuiTableColumnFlags_DefaultSort,
+				sortNone = ImGuiTableColumnFlags_NoSort;
+			constexpr auto colFlags = ImGuiTableColumnFlags_WidthStretch;
+			ImGui::TableSetupColumn("Address", sortDef, 0, ShaderDisplay::Address);
+			ImGui::TableSetupColumn("Name", colFlags | sortDef, 220, ShaderDisplay::Name);
+			ImGui::TableSetupColumn("Effect", sortDef, 0, ShaderDisplay::Effect);
+			ImGui::TableSetupColumn("Uses", sortDef, 0, ShaderDisplay::Uses);
+			ImGui::TableSetupColumn("Parameters", colFlags | sortNone, 80, ShaderDisplay::_NoSort);
+			ImGui::TableSetupColumn("Techniques", colFlags | sortNone, 80, ShaderDisplay::_NoSort);
+			ImGui::TableSetupColumn("Functions", colFlags | sortNone, 80, ShaderDisplay::_NoSort);
+
+			ImGui::TableHeadersRow();
+
+			if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs()) {
+				if (specs->SpecsDirty) {
+					ShaderDisplay::imguiSortSpecs = specs;
+					if (listDisplay_.size() > 1) {
+						std::sort(listDisplay_.begin(), listDisplay_.end(), ShaderDisplay::Compare);
+					}
+					//ShaderDisplay::imguiSortSpecs = nullptr;
+
+					specs->SpecsDirty = false;
+				}
+			}
+
+			{
+				ImGui::PushFont(parent->GetFont("Arial15"));
+
+#define _SETCOL(_i, _s) ImGui::TableSetColumnIndex(_i); ImGui::Text((_s).c_str());
+
+				ImGuiListClipper clipper;
+				clipper.Begin(listDisplay_.size());
+				while (clipper.Step()) {
+					for (size_t i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+						ShaderDisplay& item = listDisplay_[i];
+						bool bBuiltin = !item.refData.has_value();
+
+						ImGui::TableNextRow();
+
+						if (bBuiltin)
+							ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor(32, 32, 192));
+
+						_SETCOL(0, item.strAddress);
+
+						_SETCOL(1, item.name);
+						if (ImGui::IsItemHovered())
+							_Tooltip([&]() { ImGui::TextUnformatted(item.name.c_str()); });
+
+						_SETCOL(2, item.strAddrEffect);
+						if (ImGui::IsItemHovered())
+							_Tooltip([&]() { ImGui::TextUnformatted(item.descEffect.Creator); });
+
+						if (!bBuiltin) {
+							_SETCOL(3, std::to_string(item.countRef));
+						}
+						else {
+							ImGui::TableSetColumnIndex(3);
+							ImGui::Text("[internal]");
+						}
+
+						_SETCOL(4, std::to_string(item.descEffect.Parameters));
+						if (ImGui::IsItemHovered()) {
+							item.LoadDescParameters();
+							if (item.descParams.has_value() && !item.descParams->empty()) {
+								_Tooltip([&]() {
+									for (auto& param : *item.descParams) {
+										ImGui::TextUnformatted(param.c_str());
+									}
+								});
+							}
+						}
+
+						_SETCOL(5, std::to_string(item.descEffect.Techniques));
+						if (ImGui::IsItemHovered()) {
+							item.LoadDescTechniques();
+							if (item.descTechs.has_value() && !item.descTechs->empty()) {
+								_Tooltip([&]() {
+									for (auto& tech : *item.descTechs) {
+										ImGui::TextUnformatted(tech.c_str());
+									}
+								});
+							}
+						}
+						
+						_SETCOL(6, std::to_string(item.descEffect.Functions));
+						if (ImGui::IsItemHovered()) {
+							item.LoadDescFunctions();
+							if (item.descFuncs.has_value() && !item.descFuncs->empty()) {
+								_Tooltip([&]() {
+									for (auto& func : *item.descFuncs) {
+										ImGui::TextUnformatted(func.c_str());
+									}
+								});
+							}
+						}
+
+						if (bBuiltin)
+							ImGui::PopStyleColor();
+					}
+				}
+
+				ImGui::PopFont();
+
+#undef _SETCOL
+			}
+
+			ImGui::EndTable();
+		}
+	}
+	ImGui::EndChild();
+}
+
+ShaderInfoPanel::ShaderDisplay::ShaderDisplay(ID3DXEffect* pEffect, const std::string& name, 
+	size_t dataAddress, shared_ptr<ShaderData> ref) {
+
+	this->pEffect = pEffect;
+	this->address = dataAddress;
+	this->name = name;
+
+	if (ref) {
+		this->refData = ref;
+		this->countRef = ref.use_count() - 1;
+	}
+
+#ifdef _WIN64
+	strAddress = STR_FMT("%016x", dataAddress);
+	strAddrEffect = STR_FMT("%016x", (size_t)pEffect);
+#else
+	strAddress = STR_FMT("%08x", dataAddress);
+	strAddrEffect = STR_FMT("%08x", (size_t)pEffect);
+#endif
+
+	pEffect->GetDesc(&descEffect);
+}
+void ShaderInfoPanel::ShaderDisplay::LoadDescParameters() {
+	if (descParams.has_value()) return;
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		// If refData is not empty (not a builtin), shader must not have already been released
+		if (!refData.has_value() || !refData->expired()) {
+			std::vector<std::string> res(descEffect.Parameters);
+
+			for (size_t i = 0; i < res.size(); ++i) {
+				D3DXPARAMETER_DESC desc;
+				D3DXHANDLE hParam = pEffect->GetParameter(nullptr, i);
+				pEffect->GetParameterDesc(hParam, &desc);
+
+				res[i] = STR_FMT("%s %s %s : %s",
+					ShaderParamClassToString(desc.Class),
+					ShaderParamTypeToString(desc.Type),
+					desc.Name, desc.Semantic);
+			}
+
+			descParams = res;
+		}
+	}
+}
+void ShaderInfoPanel::ShaderDisplay::LoadDescTechniques() {
+	if (descTechs.has_value()) return;
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		// If refData is not empty (not a builtin), shader must not have already been released
+		if (!refData.has_value() || !refData->expired()) {
+			std::vector<std::string> res(descEffect.Techniques);
+
+			for (size_t i = 0; i < res.size(); ++i) {
+				D3DXHANDLE hTech = pEffect->GetTechnique(i);
+
+				D3DXTECHNIQUE_DESC desc;
+				pEffect->GetTechniqueDesc(hTech, &desc);
+
+				/*
+				std::vector<D3DXPASS_DESC> passes(desc.Passes);
+				for (size_t iPass = 0; iPass < passes.size(); ++iPass) {
+					D3DXHANDLE hPass = pEffect->GetPass(hTech, iPass);
+					pEffect->GetPassDesc(hPass, &passes[i]);
+				}
+				*/
+
+				res[i] = STR_FMT("%s : %u pass",
+					desc.Name, desc.Passes);
+			}
+
+			descTechs = res;
+		}
+	}
+}
+void ShaderInfoPanel::ShaderDisplay::LoadDescFunctions() {
+	if (descFuncs.has_value()) return;
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		// If refData is not empty (not a builtin), shader must not have already been released
+		if (!refData.has_value() || !refData->expired()) {
+			std::vector<std::string> res(descEffect.Functions);
+
+			for (size_t i = 0; i < res.size(); ++i) {
+				D3DXFUNCTION_DESC desc;
+				D3DXHANDLE hFunc = pEffect->GetFunction(i);
+				pEffect->GetFunctionDesc(hFunc, &desc);
+
+				res[i] = STR_FMT("%s", desc.Name);
+			}
+
+			descFuncs = res;
+		}
+	}
+}
+
+const ImGuiTableSortSpecs* ShaderInfoPanel::ShaderDisplay::imguiSortSpecs = nullptr;
+bool ShaderInfoPanel::ShaderDisplay::Compare(const ShaderDisplay& a, const ShaderDisplay& b) {
+	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
+		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
+
+		const auto ascending = spec->SortDirection == ImGuiSortDirection_Ascending;
+
+#define CASE_SORT(_id, _cmp) case _id: { \
+			int res = _cmp; \
+			if (res != 0) \
+				return ascending ? res < 0 : res > 0; \
+			break; }
+
+		switch ((Column)spec->ColumnUserID) {
+			CASE_SORT(Column::Address, (ptrdiff_t)a.address - (ptrdiff_t)b.address);
+			CASE_SORT(Column::Name, a.name.compare(b.name));
+			CASE_SORT(Column::Uses, a.countRef - b.countRef);
+			CASE_SORT(Column::Effect, (ptrdiff_t)a.pEffect - (ptrdiff_t)b.pEffect);
+		default: break;
+		}
+
+#undef CASE_SORT
+	}
+
+	return (ptrdiff_t)a.address < (ptrdiff_t)b.address;
 }
 
 /*
