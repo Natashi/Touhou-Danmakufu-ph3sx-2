@@ -553,31 +553,31 @@ namespace gstd {
 	//ScriptCommonDataInfoPanel
 	//*******************************************************************
 	class ScriptCommonDataInfoPanel : public ILoggerPanel {
-	protected:
-		enum {
-			COL_AREA = 0,
-			COL_KEY = 0,
-			COL_VALUE,
+		class CommonDataDisplay {
+		public:
+			struct DataPair {
+				std::string key;
+				std::string value;
+			};
+		public:
+			weak_ptr<ScriptCommonData> refData;
+
+			std::string name;
+
+			CommonDataDisplay(shared_ptr<ScriptCommonData> data, const std::string& name);
+		public:
+			// Lazy-loaded as they're only visible upon selecting an area
+			optional<std::vector<DataPair>> dataValues;
+			void LoadValues();
+		public:
+			/*
+			static const ImGuiTableSortSpecs* imguiSortSpecs;
+			static bool IMGUI_CDECL Compare(const CommonDataDisplay& a, const CommonDataDisplay& b);
+			*/
 		};
-
-		/*
-		std::vector<std::map<std::string, shared_ptr<ScriptCommonData>>::iterator> vecMapItr_;
-
-		gstd::CriticalSection lock_;
-
-		ScriptCommonDataManager* commonDataManager_;
-
-		WSplitter wndSplitter_;
-		WListView wndListViewArea_;
-		WListView wndListViewValue_;
-		int timeLastUpdate_;
-		int timeUpdateInterval_;
-
-		virtual bool _AddedLogger(HWND hTab);
-
-		void _UpdateAreaView();
-		void _UpdateValueView();
-		*/
+	protected:
+		std::vector<CommonDataDisplay> listDisplay_;
+		size_t selectedData_;
 	public:
 		ScriptCommonDataInfoPanel();
 

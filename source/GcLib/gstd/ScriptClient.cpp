@@ -2660,9 +2660,7 @@ bool ScriptCommonData::Script_DecomposePtr(uint64_t val, _Script_PointerData* ds
 //ScriptCommonDataPanel
 //****************************************************************************
 ScriptCommonDataInfoPanel::ScriptCommonDataInfoPanel() {
-	/*timeLastUpdate_ = 0;
-	timeUpdateInterval_ = 1000;
-	commonDataManager_ = nullptr;*/
+	selectedData_ = UINT_MAX;
 }
 
 void ScriptCommonDataInfoPanel::Initialize(const std::string& name) {
@@ -2670,10 +2668,140 @@ void ScriptCommonDataInfoPanel::Initialize(const std::string& name) {
 }
 
 void ScriptCommonDataInfoPanel::Update() {
+	ScriptCommonDataManager* manager = ScriptCommonDataManager::GetInstance();
+	if (manager == nullptr) {
+		listDisplay_.clear();
+		return;
+	}
 
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		std::vector<CommonDataDisplay> listArea;
+
+		int iRow = 0;
+		for (auto itr = manager->MapBegin(); itr != manager->MapEnd(); ++itr, ++iRow) {
+			const std::string& name = itr->first;
+			shared_ptr<ScriptCommonData> pArea = itr->second;
+
+			listArea.push_back(CommonDataDisplay(pArea, name));
+		}
+
+		listDisplay_ = listArea;
+	}
 }
 void ScriptCommonDataInfoPanel::ProcessGui() {
+	Logger* parent = Logger::GetTop();
 
+	const ImGuiStyle& style = ImGui::GetStyle();
+
+	float wd = ImGui::GetContentRegionAvail().x;
+	float ht = ImGui::GetContentRegionAvail().y;
+	float iniDivider = std::max(200.0f, ht * 0.3f);
+
+	if (ImGui::BeginChild("pcdata_child_disp", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
+		{
+			if (ImGui::BeginListBox("##pcdata_list", ImVec2(wd, iniDivider))) {
+				ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+				float itemHeight = ImGui::GetCurrentContext()->FontSize + style.ItemSpacing.y;
+
+				for (size_t i = 0; i < listDisplay_.size(); ++i) {
+					bool selected = (selectedData_ == i);
+					
+					{
+						const ImVec2 p = ImGui::GetCursorScreenPos();
+						float py = p.y + itemHeight / 2;
+						const float size = 5;
+						drawList->AddTriangleFilled(ImVec2(p.x + size, py),
+							ImVec2(p.x, py - size), ImVec2(p.x, py + size),
+							ImColor(16, 16, 128));
+					}
+
+					const float GAP = 24;
+
+					ImGui::Indent(GAP);
+					if (ImGui::Selectable(STR_FMT("%s##item%u", listDisplay_[i].name.c_str(), i).c_str(), selected))
+						selectedData_ = i;
+					ImGui::Unindent(GAP);
+
+					if (selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndListBox();
+			}
+		}
+
+		{
+			ImGuiTableFlags flags = ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable
+				| ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendX
+				| ImGuiTableFlags_RowBg;
+
+			if (ImGui::BeginTable("pcdata_table", 2, flags)) {
+				ImGui::TableSetupScrollFreeze(0, 1);
+
+				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch, 100);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 300);
+
+				ImGui::TableHeadersRow();
+
+				if (selectedData_ < listDisplay_.size()) {
+					CommonDataDisplay* dataDisplay = &listDisplay_[selectedData_];
+					if (!dataDisplay->dataValues.has_value())
+						dataDisplay->LoadValues();
+
+					ImGuiListClipper clipper;
+					clipper.Begin(dataDisplay->dataValues->size());
+					while (clipper.Step()) {
+						for (size_t i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+							auto& item = dataDisplay->dataValues->at(i);
+
+							ImGui::TableNextRow();
+
+							ImGui::TableSetColumnIndex(0);
+							ImGui::Text(item.key.c_str());
+
+							ImGui::TableSetColumnIndex(1);
+							ImGui::Text(item.value.c_str());
+						}
+					}
+				}
+
+				ImGui::EndTable();
+			}
+		}
+	}
+	ImGui::EndChild();
+}
+
+ScriptCommonDataInfoPanel::CommonDataDisplay::CommonDataDisplay(
+	shared_ptr<ScriptCommonData> data, const std::string& name) {
+
+	this->refData = data;
+	this->name = name;
+}
+
+void ScriptCommonDataInfoPanel::CommonDataDisplay::LoadValues() {
+	if (dataValues.has_value()) return;
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		LOCK_WEAK(pData, refData) {
+			std::vector<DataPair> res;
+
+			// Sorted alphabetically by key
+			for (auto itr = pData->MapBegin(); itr != pData->MapEnd(); ++itr) {
+				res.push_back({
+					itr->first,
+					STR_MULTI(itr->second.as_string())
+				});
+			}
+
+			res.emplace_back();
+
+			dataValues = res;
+		}
+	}
 }
 
 /*
