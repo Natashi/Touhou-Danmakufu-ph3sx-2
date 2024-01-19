@@ -27,7 +27,7 @@ bool StgStageScriptManager::IsError() {
 	return res;
 }
 
-shared_ptr<ManagedScript> StgStageScriptManager::Create(int type) {
+shared_ptr<ManagedScript> StgStageScriptManager::Create(shared_ptr<ScriptManager> manager, int type) {
 	shared_ptr<ManagedScript> res = nullptr;
 	switch (type) {
 	case StgStageScript::TYPE_STAGE:

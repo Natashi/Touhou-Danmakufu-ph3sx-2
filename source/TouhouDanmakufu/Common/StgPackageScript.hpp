@@ -21,7 +21,7 @@ public:
 
 	virtual void Work();
 	virtual void Render();
-	virtual shared_ptr<ManagedScript> Create(int type);
+	virtual shared_ptr<ManagedScript> Create(shared_ptr<ScriptManager> manager, int type) override;
 
 	DxScriptObjectManager* GetObjectManager() { return objectManager_.get(); }
 	std::shared_ptr<DxScriptObjectManager> GetObjectManagerRef() { return objectManager_; }

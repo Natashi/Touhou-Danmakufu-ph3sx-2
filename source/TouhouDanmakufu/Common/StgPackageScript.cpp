@@ -26,7 +26,7 @@ void StgPackageScriptManager::Work() {
 void StgPackageScriptManager::Render() {
 	objectManager_->RenderObject();
 }
-shared_ptr<ManagedScript> StgPackageScriptManager::Create(int type) {
+shared_ptr<ManagedScript> StgPackageScriptManager::Create(shared_ptr<ScriptManager> manager, int type) {
 	shared_ptr<ManagedScript> res;
 	switch (type) {
 	case StgPackageScript::TYPE_PACKAGE_MAIN:
@@ -36,7 +36,7 @@ shared_ptr<ManagedScript> StgPackageScriptManager::Create(int type) {
 
 	if (res) {
 		res->SetObjectManager(objectManager_);
-		res->SetScriptManager(this);
+		res->SetScriptManager(manager);
 	}
 
 	return res;

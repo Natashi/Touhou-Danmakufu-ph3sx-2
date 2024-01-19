@@ -23,7 +23,9 @@ void StgPackageController::Initialize() {
 	//メインスクリプト
 	std::wstring& pathMainScript = infoScript->pathScript_;
 	ELogger::WriteTop(StringUtility::Format(L"Package script: [%s]", pathMainScript.c_str()));
-	auto idScript = scriptManager_->LoadScript(pathMainScript, StgPackageScript::TYPE_PACKAGE_MAIN);
+
+	auto idScript = scriptManager_->LoadScript(
+		scriptManager_, pathMainScript, StgPackageScript::TYPE_PACKAGE_MAIN);
 	scriptManager_->StartScript(idScript);
 
 	infoPackage_->SetPackageStartTime(SystemUtility::GetCpuTime2());

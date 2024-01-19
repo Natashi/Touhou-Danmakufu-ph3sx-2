@@ -72,15 +72,18 @@ namespace directx {
 		void OrphanAllScripts();
 
 		int64_t LoadScript(const std::wstring& path, shared_ptr<ManagedScript> script);
-		shared_ptr<ManagedScript> LoadScript(const std::wstring& path, int type);
+		shared_ptr<ManagedScript> LoadScript(
+			shared_ptr<ScriptManager> manager, const std::wstring& path, int type);
+
 		int64_t LoadScriptInThread(const std::wstring& path, shared_ptr<ManagedScript> script);
-		shared_ptr<ManagedScript> LoadScriptInThread(const std::wstring& path, int type);
+		shared_ptr<ManagedScript> LoadScriptInThread(
+			shared_ptr<ScriptManager> manager, const std::wstring& path, int type);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
 		void UnloadScript(int64_t id);
 		void UnloadScript(shared_ptr<ManagedScript> script);
 
-		virtual shared_ptr<ManagedScript> Create(int type) = 0;
+		virtual shared_ptr<ManagedScript> Create(shared_ptr<ScriptManager> manager, int type) = 0;
 
 		virtual void RequestEventAll(int type, const gstd::value* listValue = nullptr, size_t countArgument = 0);
 
@@ -114,7 +117,7 @@ namespace directx {
 			STATUS_CLOSING,
 		};
 	protected:
-		ScriptManager* scriptManager_;
+		shared_ptr<ScriptManager> scriptManager_;
 
 		std::atomic_bool bBeginLoad_;
 		std::atomic_bool bLoad_;
@@ -138,11 +141,11 @@ namespace directx {
 
 		virtual void Reset();
 
-		virtual void SetScriptManager(ScriptManager* manager);
+		virtual void SetScriptManager(shared_ptr<ScriptManager> manager);
 		virtual void SetScriptParameter(shared_ptr<ManagedScriptParameter> param) { scriptParam_ = param; }
 		shared_ptr<ManagedScriptParameter> GetScriptParameter() { return scriptParam_; }
 
-		ScriptManager* GetScriptManager() { return scriptManager_; }
+		shared_ptr<ScriptManager> GetScriptManager() { return scriptManager_; }
 
 		bool IsBeginLoad() { return bBeginLoad_; }
 		bool IsLoad() { return bLoad_; }

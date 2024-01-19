@@ -255,8 +255,10 @@ int64_t ScriptManager::LoadScript(const std::wstring& path, shared_ptr<ManagedSc
 	int64_t res = _LoadScript(path, script);
 	return res;
 }
-shared_ptr<ManagedScript> ScriptManager::LoadScript(const std::wstring& path, int type) {
-	shared_ptr<ManagedScript> script = Create(type);
+shared_ptr<ManagedScript> ScriptManager::LoadScript(
+	shared_ptr<ScriptManager> manager, const std::wstring& path, int type)
+{
+	shared_ptr<ManagedScript> script = Create(manager, type);
 	this->LoadScript(path, script);
 	return script;
 }
@@ -275,8 +277,10 @@ int64_t ScriptManager::LoadScriptInThread(const std::wstring& path, shared_ptr<M
 	}
 	return res;
 }
-shared_ptr<ManagedScript> ScriptManager::LoadScriptInThread(const std::wstring& path, int type) {
-	shared_ptr<ManagedScript> script = Create(type);
+shared_ptr<ManagedScript> ScriptManager::LoadScriptInThread(
+	shared_ptr<ScriptManager> manager, const std::wstring& path, int type)
+{
+	shared_ptr<ManagedScript> script = Create(manager, type);
 	LoadScriptInThread(path, script);
 	return script;
 }
@@ -438,7 +442,7 @@ void ManagedScript::Reset() {
 	bPaused_ = false;
 }
 
-void ManagedScript::SetScriptManager(ScriptManager* manager) {
+void ManagedScript::SetScriptManager(shared_ptr<ScriptManager> manager) {
 	scriptManager_ = manager;
 	mainThreadID_ = scriptManager_->GetMainThreadID();
 	idScript_ = scriptManager_->IssueScriptID();
@@ -485,7 +489,7 @@ gstd::value ManagedScript::Func_LoadScript(gstd::script_machine* machine, int ar
 
 	std::wstring path = argv[0].as_string();
 	int type = script->GetScriptType();
-	shared_ptr<ManagedScript> target = scriptManager->Create(type);
+	shared_ptr<ManagedScript> target = scriptManager->Create(scriptManager, type);
 	target->scriptParam_ = script->scriptParam_;
 
 	int64_t res = scriptManager->LoadScript(path, target);
@@ -497,7 +501,7 @@ gstd::value ManagedScript::Func_LoadScriptInThread(gstd::script_machine* machine
 
 	std::wstring path = argv[0].as_string();
 	int type = script->GetScriptType();
-	shared_ptr<ManagedScript> target = scriptManager->Create(type);
+	shared_ptr<ManagedScript> target = scriptManager->Create(scriptManager, type);
 	target->scriptParam_ = script->scriptParam_;
 
 	int64_t res = scriptManager->LoadScriptInThread(path, target);
