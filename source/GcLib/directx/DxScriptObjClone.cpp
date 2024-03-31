@@ -24,7 +24,7 @@ value DxScript::Func_Obj_Clone(script_machine* machine, int argc, const value* a
 		if (dynamic_cast<StgObjectBase*>(objSrc) == nullptr) {
 			//Not an STG-exclusive object
 
-#define DEF_CASE(_type, _class) case _type: obj = new _class(); break;
+#define DEF_CASE(_type, _class) case _type: obj.reset(new _class()); break;
 			switch (objSrc->typeObject_) {
 				DEF_CASE(TypeObject::Base, DxScriptObjectBase);
 
@@ -54,7 +54,7 @@ value DxScript::Func_Obj_Clone(script_machine* machine, int argc, const value* a
 
 			StgStageController* stageController = scriptStg->GetStageController();
 
-#define DEF_CASE(_type, _class) case _type: obj = new _class(stageController); break;
+#define DEF_CASE(_type, _class) case _type: obj.reset(new _class(stageController)); break;
 			switch (objSrc->typeObject_) {
 				DEF_CASE(TypeObject::Player, StgPlayerObject);
 				DEF_CASE(TypeObject::SpellManage, StgPlayerSpellManageObject);
@@ -73,7 +73,7 @@ value DxScript::Func_Obj_Clone(script_machine* machine, int argc, const value* a
 			case TypeObject::Item:
 			{
 				if (StgItemObject_User* pItem = dynamic_cast<StgItemObject_User*>(objSrc)) {
-					obj = new StgItemObject_User(stageController);
+					obj.reset(new StgItemObject_User(stageController));
 				}
 				break;
 			}

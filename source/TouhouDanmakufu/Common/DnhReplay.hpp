@@ -94,7 +94,7 @@ private:
 	double playerPower_;
 	int playerRebirthFrame_;	//Current deathbomb frame
 public:
-	StageData() { recordKey_ = new gstd::RecordBuffer(); scoreStart_ = 0; scoreLast_ = 0; }
+	StageData();
 	virtual ~StageData() {}
 
 	std::wstring& GetMainScriptID() { return mainScriptID_; }

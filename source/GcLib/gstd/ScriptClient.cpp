@@ -27,18 +27,19 @@ ScriptEngineCache::ScriptEngineCache() {
 void ScriptEngineCache::Clear() {
 	cache_.clear();
 }
-void ScriptEngineCache::AddCache(const std::wstring& name, shared_ptr<ScriptEngineData> data) {
-	cache_[name] = data;
+ScriptEngineData* ScriptEngineCache::AddCache(const std::wstring& name, uptr<ScriptEngineData>&& data) {
+	auto& res = (cache_[name] = MOVE(data));
+	return res.get();
 }
 void ScriptEngineCache::RemoveCache(const std::wstring& name) {
 	auto itrFind = cache_.find(name);
 	if (cache_.find(name) != cache_.end())
 		cache_.erase(itrFind);
 }
-shared_ptr<ScriptEngineData> ScriptEngineCache::GetCache(const std::wstring& name) {
+ScriptEngineData* ScriptEngineCache::GetCache(const std::wstring& name) {
 	auto itrFind = cache_.find(name);
 	if (cache_.find(name) == cache_.end()) return nullptr;
-	return itrFind->second;
+	return itrFind->second.get();
 }
 bool ScriptEngineCache::IsExists(const std::wstring& name) {
 	return cache_.find(name) != cache_.end();
@@ -278,7 +279,7 @@ uint64_t ScriptClientBase::prandCalls_ = 0;
 ScriptClientBase::ScriptClientBase() {
 	bError_ = false;
 
-	engine_.reset(new ScriptEngineData());
+	engineData_ = nullptr;
 	machine_ = nullptr;
 
 	mainThreadID_ = -1;
@@ -322,11 +323,11 @@ void ScriptClientBase::_RaiseError(int line, const std::wstring& message) {
 	bError_ = true;
 	std::wstring errorPos = _GetErrorLineSource(line);
 
-	ScriptFileLineMap* mapLine = engine_->GetScriptFileLineMap();
+	ScriptFileLineMap* mapLine = engineData_->GetScriptFileLineMap();
 	ScriptFileLineMap::Entry* entry = mapLine->GetEntry(line);
 
 	int lineOriginal = -1;
-	std::wstring entryPath = engine_->GetPath();
+	std::wstring entryPath = engineData_->GetPath();
 	if (entry) {
 		lineOriginal = entry->lineEndOriginal_ - (entry->lineEnd_ - line);
 		entryPath = entry->path_;
@@ -336,13 +337,13 @@ void ScriptClientBase::_RaiseError(int line, const std::wstring& message) {
 	std::wstring str = StringUtility::Format(L"%s\r\n%s" "\r\n[%s (main=%s)] " "line-> %d\r\n\r\n↓\r\n%s\r\n～～～",
 		message.c_str(),
 		entryPath.c_str(),
-		fileName.c_str(), PathProperty::GetFileName(engine_->GetPath()).c_str(),
+		fileName.c_str(), PathProperty::GetFileName(engineData_->GetPath()).c_str(),
 		lineOriginal, errorPos.c_str());
 	throw wexception(str);
 }
 void ScriptClientBase::_RaiseErrorFromEngine() {
-	int line = engine_->GetEngine()->get_error_line();
-	_RaiseError(line, engine_->GetEngine()->get_error_message());
+	int line = engineData_->GetEngine()->get_error_line();
+	_RaiseError(line, engineData_->GetEngine()->get_error_message());
 }
 void ScriptClientBase::_RaiseErrorFromMachine() {
 	int line = machine_->get_error_line();
@@ -351,8 +352,8 @@ void ScriptClientBase::_RaiseErrorFromMachine() {
 std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 	if (line == 0) return L"";
 
-	Encoding::Type encoding = engine_->GetEncoding();
-	std::vector<char>& source = engine_->GetSource();
+	Encoding::Type encoding = engineData_->GetEncoding();
+	std::vector<char>& source = engineData_->GetSource();
 
 	int tLine = 1;
 
@@ -372,41 +373,44 @@ std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 	return Encoding::BytesToWString(pStr, size, encoding);
 }
 std::vector<char> ScriptClientBase::_ParseScriptSource(std::vector<char>& source) {
-	ScriptFileLineMap* lineMap = engine_->GetScriptFileLineMap();
+	ScriptFileLineMap* lineMap = engineData_->GetScriptFileLineMap();
 
 	lineMap->Clear();
-	ScriptLoader scriptLoader(this, engine_->GetPath(), source, lineMap);
+	ScriptLoader scriptLoader(this, engineData_->GetPath(), source, lineMap);
 
 	scriptLoader.Parse();
 
 	return scriptLoader.GetResult();
 }
 bool ScriptClientBase::_CreateEngine() {
-	unique_ptr<script_engine> engine(new script_engine(engine_->GetSource(), &func_, &const_));
-	engine_->SetEngine(std::move(engine));
-	return !engine_->GetEngine()->get_error();
+	unique_ptr<script_engine> engine(new script_engine(engineData_->GetSource(), &func_, &const_));
+	engineData_->SetEngine(std::move(engine));
+	return !engineData_->GetEngine()->get_error();
 }
 bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 	path = PathProperty::GetUnique(path);
 
-	if (cache_) {
-		shared_ptr<ScriptEngineData> pCachedEngine = cache_->GetCache(path);
-		if (pCachedEngine) {
-			engine_ = pCachedEngine;
-			return true;
-		}
+	if (auto pFindCache = cache_->GetCache(path)) {
+		engineData_ = pFindCache;
+		return true;
 	}
 
-	engine_->SetPath(path);
+	// Script not found in cache, create a new entry
+
+	engineData_ = cache_->AddCache(path, std::make_unique<ScriptEngineData>());
+	engineData_->SetPath(path);
+	
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open())
 		throw gstd::wexception(L"SetScriptFileSource: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
 	size_t size = reader->GetFileSize();
+
 	std::vector<char> source;
 	source.resize(size);
 	reader->Read(&source[0], size);
-	this->SetSource(source);
+
+	SetSource(source);
 
 	return true;
 }
@@ -417,26 +421,23 @@ void ScriptClientBase::SetSource(const std::string& source) {
 	this->SetSource(vect);
 }
 void ScriptClientBase::SetSource(std::vector<char>& source) {
-	engine_->SetSource(source);
-	ScriptFileLineMap* mapLine = engine_->GetScriptFileLineMap();
-	mapLine->AddEntry(engine_->GetPath(), 1, StringUtility::CountCharacter(source, '\n') + 1);
+	engineData_->SetSource(source);
+	ScriptFileLineMap* mapLine = engineData_->GetScriptFileLineMap();
+	mapLine->AddEntry(engineData_->GetPath(), 1, StringUtility::CountCharacter(source, '\n') + 1);
 }
 void ScriptClientBase::Compile() {
-	if (engine_->GetEngine() == nullptr) {
-		std::vector<char> source = _ParseScriptSource(engine_->GetSource());
-		engine_->SetSource(source);
+	if (engineData_->GetEngine() == nullptr) {
+		std::vector<char> source = _ParseScriptSource(engineData_->GetSource());
+		engineData_->SetSource(source);
 
 		bool bCreateSuccess = _CreateEngine();
 		if (!bCreateSuccess) {
 			bError_ = true;
 			_RaiseErrorFromEngine();
 		}
-		if (cache_ != nullptr && engine_->GetPath().size() > 0) {
-			cache_->AddCache(engine_->GetPath(), engine_);
-		}
 	}
 
-	machine_.reset(new script_machine(engine_->GetEngine().get()));
+	machine_.reset(new script_machine(engineData_->GetEngine().get()));
 	if (machine_->get_error()) {
 		bError_ = true;
 		_RaiseErrorFromMachine();
@@ -484,7 +485,7 @@ bool ScriptClientBase::IsEventExists(const std::string& name, std::map<std::stri
 	if (bError_) {
 		if (machine_ && machine_->get_error())
 			_RaiseErrorFromMachine();
-		else if (engine_->GetEngine()->get_error())
+		else if (engineData_->GetEngine()->get_error())
 			_RaiseErrorFromEngine();
 		return false;
 	}
@@ -601,7 +602,7 @@ void ScriptClientBase::CheckRunInMainThread() {
 }
 std::wstring ScriptClientBase::_ExtendPath(std::wstring path) {
 	int line = machine_->get_current_line();
-	const std::wstring& pathScript = GetEngine()->GetScriptFileLineMap()->GetPath(line);
+	const std::wstring& pathScript = GetEngineData()->GetScriptFileLineMap()->GetPath(line);
 
 	path = StringUtility::ReplaceAll(path, L'\\', L'/');
 	path = StringUtility::ReplaceAll(path, L"./", pathScript);
@@ -1374,14 +1375,14 @@ value ScriptClientBase::Func_ReflectAngle(script_machine* machine, int argc, con
 //共通関数：パス関連
 value ScriptClientBase::Func_GetParentScriptDirectory(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-	const std::wstring& path = script->GetEngine()->GetPath();
+	const std::wstring& path = script->GetEngineData()->GetPath();
 	std::wstring res = PathProperty::GetFileDirectory(path);
 	return script->CreateStringValue(res);
 }
 value ScriptClientBase::Func_GetCurrentScriptDirectory(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	int line = machine->get_current_line();
-	const std::wstring& path = script->GetEngine()->GetScriptFileLineMap()->GetPath(line);
+	const std::wstring& path = script->GetEngineData()->GetScriptFileLineMap()->GetPath(line);
 	std::wstring res = PathProperty::GetFileDirectory(path);
 	return script->CreateStringValue(res);
 }
@@ -1831,7 +1832,7 @@ ScriptLoader::ScriptLoader(ScriptClientBase* script, const std::wstring& path, s
 }
 
 void ScriptLoader::_RaiseError(int line, const std::wstring& err) {
-	script_->engine_->SetSource(src_);
+	script_->engineData_->SetSource(src_);
 	script_->_RaiseError(line, err);
 }
 void ScriptLoader::_DumpRes() {
@@ -2796,8 +2797,6 @@ void ScriptCommonDataInfoPanel::CommonDataDisplay::LoadValues() {
 					STR_MULTI(itr->second.as_string())
 				});
 			}
-
-			res.emplace_back();
 
 			dataValues = res;
 		}

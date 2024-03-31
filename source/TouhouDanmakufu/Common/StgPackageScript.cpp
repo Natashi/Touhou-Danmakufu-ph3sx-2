@@ -106,7 +106,7 @@ gstd::value StgPackageScript::Func_InitializeStageScene(gstd::script_machine* ma
 	StgPackageController* packageController = script->packageController_;
 
 	StgSystemController* systemController = packageController->GetSystemController();
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+	auto infoSystem = systemController->GetSystemInformation();
 	infoSystem->SetActiveReplayInformation(nullptr);
 
 	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
@@ -118,16 +118,16 @@ gstd::value StgPackageScript::Func_FinalizeStageScene(gstd::script_machine* mach
 	StgPackageScript* script = (StgPackageScript*)machine->data;
 	StgPackageController* packageController = script->packageController_;
 	StgSystemController* systemController = packageController->GetSystemController();
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+	auto infoSystem = systemController->GetSystemInformation();
 
 	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
-	if (infoPackage->GetNextStageData() != nullptr && infoPackage->GetNextStageData()->GetPrevStageInformation() == nullptr)
+	if (infoPackage->GetNextStageData() != nullptr && infoPackage->GetNextStageData()->prevStageInfo_ == nullptr)
 		script->RaiseError("Stage not yet finished.");
 
 	std::vector<ref_count_ptr<StgStageStartData>> listStage = infoPackage->GetStageDataList();
 	if (listStage.size() > 0) {
-		ref_count_ptr<StgStageStartData> stageData = listStage[listStage.size() - 1];
-		ref_count_ptr<StgStageInformation> infoStage = stageData->GetStageInformation();
+		auto stageData = listStage[listStage.size() - 1];
+		auto infoStage = stageData->infoStage_;
 		bool bReplay = infoStage->IsReplay();
 		if (bReplay) return value();
 	}
@@ -143,10 +143,11 @@ gstd::value StgPackageScript::Func_StartStageScene(gstd::script_machine* machine
 	script->_CheckNextStageExists();
 
 	StgSystemController* systemController = packageController->GetSystemController();
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+	auto infoSystem = systemController->GetSystemInformation();
+
 	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
 	ref_count_ptr<StgStageStartData> nextStageData = infoPackage->GetNextStageData();
-	ref_count_ptr<StgStageInformation> infoStage = nextStageData->GetStageInformation();
+	ref_count_ptr<StgStageInformation> infoStage = nextStageData->infoStage_;
 
 	int stageIndex = infoStage->GetStageIndex();
 	ref_count_ptr<ReplayInformation> infoReplay = infoPackage->GetReplayInformation();
@@ -156,7 +157,7 @@ gstd::value StgPackageScript::Func_StartStageScene(gstd::script_machine* machine
 		ref_count_ptr<ReplayInformation::StageData> replayStageData = infoReplay->GetStageData(stageIndex);
 		if (replayStageData == nullptr)
 			script->RaiseError("Invalid stage replay index.");
-		nextStageData->SetStageReplayData(replayStageData);
+		nextStageData->replayStageData_ = replayStageData;
 
 		//自機スクリプト
 		replayPlayerID = replayStageData->GetPlayerScriptID();
@@ -173,6 +174,7 @@ gstd::value StgPackageScript::Func_StartStageScene(gstd::script_machine* machine
 	//自機を検索
 	infoStage->SetPlayerScriptInformation(nullptr);
 	ref_count_ptr<ScriptInformation> infoMain = infoSystem->GetMainScriptInformation();
+
 	std::vector<ref_count_ptr<ScriptInformation>> listPlayer;
 	if (infoMain->listPlayer_.size() == 0) {
 		const std::wstring& dir = EPathProperty::GetPlayerScriptRootDirectory();
@@ -208,13 +210,13 @@ gstd::value StgPackageScript::Func_SetStageIndex(gstd::script_machine* machine, 
 
 	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
 	ref_count_ptr<StgStageStartData> nextStageData = infoPackage->GetNextStageData();
-	ref_count_ptr<StgStageInformation> infoStage = nextStageData->GetStageInformation();
+	ref_count_ptr<StgStageInformation> infoStage = nextStageData->infoStage_;
 
 	int stageIndex = argv[0].as_int();
 	std::vector<ref_count_ptr<StgStageStartData>> listStage = infoPackage->GetStageDataList();
 	for (size_t iStage = 0; iStage < listStage.size(); iStage++) {
 		ref_count_ptr<StgStageStartData> stageData = listStage[iStage];
-		if (stageIndex == stageData->GetStageInformation()->GetStageIndex())
+		if (stageIndex == stageData->infoStage_->GetStageIndex())
 			script->RaiseError("Stage index already used.");
 	}
 
@@ -229,7 +231,7 @@ gstd::value StgPackageScript::Func_SetStageMainScript(gstd::script_machine* mach
 
 	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
 	ref_count_ptr<StgStageStartData> nextStageData = infoPackage->GetNextStageData();
-	ref_count_ptr<StgStageInformation> infoStage = nextStageData->GetStageInformation();
+	ref_count_ptr<StgStageInformation> infoStage = nextStageData->infoStage_;
 
 	std::wstring path = argv[0].as_string();
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
@@ -256,7 +258,7 @@ gstd::value StgPackageScript::Func_SetStagePlayerScript(gstd::script_machine* ma
 
 	ref_count_ptr<StgPackageInformation> infoPackage = packageController->GetPackageInformation();
 	ref_count_ptr<StgStageStartData> nextStageData = infoPackage->GetNextStageData();
-	ref_count_ptr<StgStageInformation> infoStage = nextStageData->GetStageInformation();
+	ref_count_ptr<StgStageInformation> infoStage = nextStageData->infoStage_;
 
 	std::wstring path = argv[0].as_string();
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
@@ -292,9 +294,10 @@ gstd::value StgPackageScript::Func_SetStageReplayFile(gstd::script_machine* mach
 }
 gstd::value StgPackageScript::Func_GetStageSceneState(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgPackageScript* script = (StgPackageScript*)machine->data;
+
 	StgPackageController* packageController = script->packageController_;
 	StgSystemController* systemController = packageController->GetSystemController();
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+	auto infoSystem = systemController->GetSystemInformation();
 
 	int res = -1;
 	int scene = infoSystem->GetScene();
@@ -313,7 +316,7 @@ gstd::value StgPackageScript::Func_GetStageSceneResult(gstd::script_machine* mac
 	std::vector<ref_count_ptr<StgStageStartData>> listStage = infoPackage->GetStageDataList();
 	if (listStage.size() > 0) {
 		ref_count_ptr<StgStageStartData> stageData = listStage[listStage.size() - 1];
-		ref_count_ptr<StgStageInformation> infoStage = stageData->GetStageInformation();
+		ref_count_ptr<StgStageInformation> infoStage = stageData->infoStage_;
 		res = infoStage->GetResult();
 	}
 
@@ -321,9 +324,11 @@ gstd::value StgPackageScript::Func_GetStageSceneResult(gstd::script_machine* mac
 }
 gstd::value StgPackageScript::Func_PauseStageScene(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgPackageScript* script = (StgPackageScript*)machine->data;
+
 	StgPackageController* packageController = script->packageController_;
 	StgSystemController* systemController = packageController->GetSystemController();
-	shared_ptr<StgStageController> stageController = systemController->GetStageController();
+	StgStageController* stageController = systemController->GetStageController();
+
 	if (stageController) {
 		bool bPause = argv[0].as_boolean();
 
@@ -340,9 +345,11 @@ gstd::value StgPackageScript::Func_PauseStageScene(gstd::script_machine* machine
 }
 gstd::value StgPackageScript::Func_TerminateStageScene(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgPackageScript* script = (StgPackageScript*)machine->data;
+
 	StgPackageController* packageController = script->packageController_;
 	StgSystemController* systemController = packageController->GetSystemController();
-	shared_ptr<StgStageController> stageController = systemController->GetStageController();
+	StgStageController* stageController = systemController->GetStageController();
+
 	if (stageController) {
 		ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 		infoStage->SetResult(StgStageInformation::RESULT_BREAK_OFF);

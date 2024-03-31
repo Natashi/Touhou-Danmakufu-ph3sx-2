@@ -150,8 +150,11 @@ namespace gstd {
 			return *this;
 		}
 		_MyType& operator=(T* src) {
+			/*
 			reset(src);
 			return *this;
+			*/
+			static_assert(false, "Cannot construct ref_count_ptr with raw ptr using assignment operation");
 		}
 
 		_MyType& operator=(const _MyType& src) {

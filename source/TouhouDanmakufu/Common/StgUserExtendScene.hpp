@@ -47,7 +47,7 @@ public:
 
 	virtual void Work();
 	virtual void Render();
-	virtual shared_ptr<ManagedScript> Create(int type);
+	virtual shared_ptr<ManagedScript> Create(shared_ptr<ScriptManager> manager, int type) override;
 
 	void CallScriptFinalizeAll();
 	gstd::value GetResultValue();

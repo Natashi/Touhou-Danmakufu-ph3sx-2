@@ -83,7 +83,7 @@ bool ELogger::Initialize(bool bFile, bool bWindow) {
 
 	time_ = SystemUtility::GetCpuTime2();
 
-	threadWindow_ = new WindowThread(this);
+	threadWindow_.reset(new WindowThread(this));
 	threadWindow_->Start();
 
 	return true;
@@ -239,13 +239,13 @@ EFpsController::EFpsController() {
 			controller->SetSkipRate(2);
 		else if (fpsType == DnhConfiguration::FPS_1_3)
 			controller->SetSkipRate(3);
-		controller_ = controller;
+		controller_.reset(controller);
 		break;
 	}
 	case DnhConfiguration::FPS_VARIABLE:
 	{
 		VariableFpsController* controller = new VariableFpsController();
-		controller_ = controller;
+		controller_.reset(controller);
 	}
 	}
 

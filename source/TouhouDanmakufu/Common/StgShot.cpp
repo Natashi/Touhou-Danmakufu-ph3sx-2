@@ -1504,7 +1504,7 @@ bool StgNormalShotObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 		StgIntersectionTarget_Circle* pTarget = (StgIntersectionTarget_Circle*)(pPair->second.get());
 		if (pTarget == nullptr) {
 			pTarget = new StgIntersectionTarget_Circle();
-			pPair->second = pTarget;
+			pPair->second.reset(pTarget);
 		}
 
 		const DxCircle* pSrcCircle = &listCircle[i];
@@ -1916,7 +1916,7 @@ bool StgLooseLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 		StgIntersectionTarget_Line* pTarget = (StgIntersectionTarget_Line*)(pPair->second.get());
 		if (pTarget == nullptr) {
 			pTarget = new StgIntersectionTarget_Line();
-			pPair->second = pTarget;
+			pPair->second.reset(pTarget);
 		}
 		pPair->first = true;
 
@@ -2185,7 +2185,7 @@ bool StgStraightLaserObject::GetIntersectionTargetList_NoVector(StgShotData* sho
 		StgIntersectionTarget_Line* pTarget = (StgIntersectionTarget_Line*)(pPair->second.get());
 		if (pTarget == nullptr) {
 			pTarget = new StgIntersectionTarget_Line();
-			pPair->second = pTarget;
+			pPair->second.reset(pTarget);
 		}
 		pPair->first = true;
 
@@ -2515,7 +2515,7 @@ bool StgCurveLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 		StgIntersectionTarget_Line* pTarget = (StgIntersectionTarget_Line*)(pPair->second.get());
 		if (pTarget == nullptr) {
 			pTarget = new StgIntersectionTarget_Line();
-			pPair->second = pTarget;
+			pPair->second.reset(pTarget);
 		}
 		pPair->first = true;
 
@@ -2917,9 +2917,11 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 	if (idVector) idVector->clear();
 
 	StgStageScript* script = (StgStageScript*)scriptData;
+
 	ref_unsync_ptr<StgPlayerObject> objPlayer = controller->GetPlayerObject();
-	StgStageScriptObjectManager* objManager = controller->GetMainObjectManager();
+	auto objManager = controller->GetMainObjectManager();
 	StgShotManager* shotManager = controller->GetShotManager();
+
 	shared_ptr<RandProvider> randGenerator = controller->GetStageInformation()->GetRandProvider();
 
 	if (idShotData_ < 0) return;

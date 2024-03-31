@@ -259,22 +259,22 @@ ref_unsync_ptr<StgItemObject> StgItemManager::CreateItem(int type) {
 	switch (type) {
 	case StgItemObject::ITEM_1UP:
 	case StgItemObject::ITEM_1UP_S:
-		res = new StgItemObject_1UP(stageController_);
+		res.reset(new StgItemObject_1UP(stageController_));
 		break;
 	case StgItemObject::ITEM_SPELL:
 	case StgItemObject::ITEM_SPELL_S:
-		res = new StgItemObject_Bomb(stageController_);
+		res.reset(new StgItemObject_Bomb(stageController_));
 		break;
 	case StgItemObject::ITEM_POWER:
 	case StgItemObject::ITEM_POWER_S:
-		res = new StgItemObject_Power(stageController_);
+		res.reset(new StgItemObject_Power(stageController_));
 		break;
 	case StgItemObject::ITEM_POINT:
 	case StgItemObject::ITEM_POINT_S:
-		res = new StgItemObject_Point(stageController_);
+		res.reset(new StgItemObject_Point(stageController_));
 		break;
 	case StgItemObject::ITEM_USER:
-		res = new StgItemObject_User(stageController_);
+		res.reset(new StgItemObject_User(stageController_));
 		break;
 	}
 	res->SetItemType(type);
@@ -709,7 +709,7 @@ StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObjec
 	stageController_ = stageController;
 	typeObject_ = TypeObject::Item;
 
-	pattern_ = new StgMovePattern_Item(this);
+	pattern_.reset(new StgMovePattern_Item(this));
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
 
 	typeItem_ = INT_MIN;

@@ -71,9 +71,11 @@ bool ReplayInformation::SaveToFile(const std::wstring& scriptPath, int index) {
 	for (const int iStage : listStage) {
 		std::string key = StringUtility::Format("stage%d", iStage);
 
-		ref_count_ptr<StageData> data = mapStageData_[iStage];
+		auto& data = mapStageData_[iStage];
+
 		gstd::RecordBuffer recStage;
 		data->WriteRecord(recStage);
+
 		rec.SetRecordAsRecordBuffer(key, recStage);
 	}
 
@@ -104,8 +106,7 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 	//	std::string path = dir + scriptName + StringUtility::Format("_replay%02d.dat", index);
 	std::wstring path = dir + fileName;
 
-	ref_count_ptr<ReplayInformation> res = CreateFromFile(path);
-	return res;
+	return CreateFromFile(path);
 }
 ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring path) {
 	RecordBuffer rec;
@@ -161,7 +162,8 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 		return nullptr;
 	}
 
-	ref_count_ptr<ReplayInformation> res = new ReplayInformation();
+	ref_count_ptr<ReplayInformation> res(new ReplayInformation());
+
 	res->path_ = path;
 	res->playerScriptID_ = rec.GetRecordAsStringW("playerScriptID");
 	res->playerScriptFileName_ = rec.GetRecordAsStringW("playerScriptFileName");
@@ -186,17 +188,26 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 	rec.GetRecord("stageIndexList", &listStage[0], sizeof(int) * stageCount);
 	for (const int iStage : listStage) {
 		std::string key = StringUtility::Format("stage%d", iStage);
-		ref_count_ptr<StageData> data = new StageData();
+
+		ref_count_ptr<StageData> data(new StageData());
+
 		gstd::RecordBuffer recStage;
 		rec.GetRecordAsRecordBuffer(key, recStage);
 		data->ReadRecord(recStage);
-		res->mapStageData_[iStage] = data;
+
+		res->mapStageData_[iStage] = MOVE(data);
 	}
 
 	return res;
 }
 
 //ReplayInformation::StageData
+ReplayInformation::StageData::StageData() { 
+	recordKey_.reset(new gstd::RecordBuffer());
+	scoreStart_ = 0; 
+	scoreLast_ = 0; 
+}
+
 double ReplayInformation::StageData::GetFramePerSecondAverage() {
 	double totalFps = 0;
 	for (const FLOAT iFps : listFramePerSecond_)
@@ -223,7 +234,7 @@ shared_ptr<ScriptCommonData> ReplayInformation::StageData::GetCommonData(const s
 	return res;
 }
 void ReplayInformation::StageData::SetCommonData(const std::string& area, shared_ptr<ScriptCommonData> commonData) {
-	ref_count_ptr<RecordBuffer> record = new RecordBuffer();
+	ref_count_ptr<RecordBuffer> record(new RecordBuffer());
 	if (commonData)
 		commonData->WriteRecord(*record);
 	mapCommonData_[area] = record;
@@ -252,9 +263,9 @@ void ReplayInformation::StageData::ReadRecord(gstd::RecordBuffer& record) {
 	record.GetRecordAsRecordBuffer("mapCommonData", recComMap);
 	std::vector<std::string> listKeyCommonData = recComMap.GetKeyList();
 	for (auto& iCommonData : listKeyCommonData) {
-		ref_count_ptr<RecordBuffer> recComData = new RecordBuffer();
-		recComMap.GetRecordAsRecordBuffer(iCommonData, *recComData);
-		mapCommonData_[iCommonData] = recComData;
+		ref_count_ptr<RecordBuffer> record(new RecordBuffer());
+		recComMap.GetRecordAsRecordBuffer(iCommonData, *record);
+		mapCommonData_[iCommonData] = record;
 	}
 
 	//Player information
@@ -288,8 +299,8 @@ void ReplayInformation::StageData::WriteRecord(gstd::RecordBuffer& record) {
 	gstd::RecordBuffer recComMap;
 	for (auto itrCommonData = mapCommonData_.begin(); itrCommonData != mapCommonData_.end(); itrCommonData++) {
 		const std::string& key = itrCommonData->first;
-		ref_count_ptr<RecordBuffer> recComData = itrCommonData->second;
-		recComMap.SetRecordAsRecordBuffer(key, *recComData);
+		ref_count_ptr<RecordBuffer> record = itrCommonData->second;
+		recComMap.SetRecordAsRecordBuffer(key, *record);
 	}
 	record.SetRecordAsRecordBuffer("mapCommonData", recComMap);
 
@@ -343,7 +354,7 @@ void ReplayInformationManager::UpdateInformationList(std::wstring pathScript) {
 		}
 
 		int key = StringUtility::ToInteger(strKey);
-		mapInfo_[key] = info;
+		mapInfo_[key] = MOVE(info);
 	}
 
 }

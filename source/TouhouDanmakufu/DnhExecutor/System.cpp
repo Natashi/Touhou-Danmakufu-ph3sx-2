@@ -9,9 +9,9 @@
 //SystemController
 //*******************************************************************
 SystemController::SystemController() {
-	sceneManager_ = new SceneManager();
-	transitionManager_ = new TransitionManager();
-	infoSystem_ = new SystemInformation();
+	sceneManager_.reset(new SceneManager());
+	transitionManager_.reset(new TransitionManager());
+	infoSystem_.reset(new SystemInformation());
 
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 	if (config && config->pathPackageScript_.size() == 0) {
@@ -101,7 +101,7 @@ void SceneManager::TransScriptSelectScene(int type) {
 	taskManager->AddRenderFunction(TTaskFunction<ScriptSelectScene>::Create(task,
 		&ScriptSelectScene::Render), ScriptSelectScene::TASK_PRI_RENDER);
 
-	ref_count_ptr<ScriptSelectModel> model = nullptr;
+	shared_ptr<ScriptSelectModel> model;
 	if (type == ScriptSelectScene::TYPE_SINGLE ||
 		type == ScriptSelectScene::TYPE_PLURAL ||
 		type == ScriptSelectScene::TYPE_STAGE ||
@@ -117,7 +117,7 @@ void SceneManager::TransScriptSelectScene(int type) {
 		ScriptSelectFileModel* fileModel = new ScriptSelectFileModel(type, dir);
 		const std::wstring& pathWait = systemInfo->GetLastSelectedScriptPath();
 		fileModel->SetWaitPath(pathWait);
-		model = fileModel;
+		model.reset(fileModel);
 	}
 	task->SetModel(model);
 }
@@ -143,7 +143,7 @@ void SceneManager::TransScriptSelectScene_Last() {
 	int type = SystemController::GetInstance()->GetSystemInformation()->GetLastSelectScriptSceneType();
 	TransScriptSelectScene(type);
 }
-void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, 
+void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain,
 	ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay)
 {
 	EDirectSoundManager* soundManager = EDirectSoundManager::GetInstance();
@@ -161,6 +161,7 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain,
 		//STGシーン初期化
 		ref_count_ptr<StgSystemInformation> infoStgSystem(new StgSystemInformation());
 		infoStgSystem->SetMainScriptInformation(infoMain);
+
 		shared_ptr<StgSystemController> task(new EStgSystemController());
 
 		//STGタスク初期化
@@ -193,7 +194,9 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain,
 	}
 }
 
-void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_count_ptr<ReplayInformation> infoReplay) {
+void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain,
+	ref_count_ptr<ReplayInformation> infoReplay)
+{
 	try {
 		const std::wstring& replayPlayerID = infoReplay->GetPlayerScriptID();
 		const std::wstring& replayPlayerScriptFileName = infoReplay->GetPlayerScriptFileName();
@@ -203,14 +206,14 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_
 		std::vector<ref_count_ptr<ScriptInformation>> listPlayer;
 		
 		if (infoMain->listPlayer_.size() == 0) {
-			listPlayer =
-				SystemController::GetInstance()->GetSystemInformation()->GetFreePlayerScriptInformationList();
+			listPlayer = SystemController::GetInstance()->GetSystemInformation()->
+				GetFreePlayerScriptInformationList();
 		}
 		else {
 			listPlayer = infoMain->CreatePlayerScriptInformationList();
 		}
 
-		for (ref_count_ptr<ScriptInformation> tInfo : listPlayer) {
+		for (auto& tInfo : listPlayer) {
 			if (tInfo->id_ != replayPlayerID) continue;
 
 			std::wstring tPlayerScriptFileName = PathProperty::GetFileName(tInfo->pathScript_);
@@ -320,12 +323,13 @@ void TransitionManager::_CreateCurrentSceneTexture() {
 
 	graphics->SetRenderTarget(nullptr);
 }
-void TransitionManager::_AddTask(ref_count_ptr<TransitionEffect> effect) {
+void TransitionManager::_AddTask(shared_ptr<TransitionEffect> effect) {
 	WorkRenderTaskManager* taskManager = ETaskManager::GetInstance();
 	taskManager->RemoveTask(typeid(SystemTransitionEffectTask));
 
 	shared_ptr<SystemTransitionEffectTask> task(new SystemTransitionEffectTask());
 	task->SetTransition(effect);
+
 	taskManager->AddTask(task);
 	taskManager->AddWorkFunction(TTaskFunction<SystemTransitionEffectTask>::Create(task, 
 		&SystemTransitionEffectTask::Work), TASK_PRI);
@@ -337,7 +341,7 @@ void TransitionManager::DoFadeOut() {
 	shared_ptr<Texture> texture = textureManager->GetTexture(TextureManager::TARGET_TRANSITION);
 	_CreateCurrentSceneTexture();
 
-	ref_count_ptr<TransitionEffect_FadeOut> effect = new TransitionEffect_FadeOut();
+	shared_ptr<TransitionEffect_FadeOut> effect(new TransitionEffect_FadeOut());
 	effect->Initialize(10, texture);
 	_AddTask(effect);
 
@@ -372,7 +376,7 @@ SystemInformation::~SystemInformation() {
 }
 void SystemInformation::_SearchFreePlayerScript(const std::wstring& dir) {
 	listFreePlayer_ = ScriptInformation::FindPlayerScriptInformationList(dir);
-	for (ref_count_ptr<ScriptInformation> info : listFreePlayer_) {
+	for (auto& info : listFreePlayer_) {
 		const std::wstring& path = info->pathScript_;
 		std::wstring log = StringUtility::Format(L"Found free player script: [%s]", 
 			PathProperty::ReduceModuleDirectory(path).c_str());
@@ -385,7 +389,10 @@ void SystemInformation::UpdateFreePlayerScriptInformationList() {
 	_SearchFreePlayerScript(dir);
 
 	//ソート
-	std::sort(listFreePlayer_.begin(), listFreePlayer_.end(), ScriptInformation::PlayerListSort());
+	std::sort(listFreePlayer_.begin(), listFreePlayer_.end(), 
+		[](const ref_count_ptr<ScriptInformation>& r, const ref_count_ptr<ScriptInformation>& l) {
+			return ScriptInformation::Sort::Compare(r, l);
+		});
 }
 
 //*******************************************************************

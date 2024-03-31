@@ -26,16 +26,17 @@ public:
 	};
 protected:
 	ref_count_ptr<StgSystemInformation> infoSystem_;
-	shared_ptr<ScriptEngineCache> scriptEngineCache_;
-	shared_ptr<ScriptCommonDataManager> commonDataManager_;
+	
+	unique_ptr<ScriptEngineCache> scriptEngineCache_;
+	unique_ptr<ScriptCommonDataManager> commonDataManager_;
 
-	shared_ptr<StgEndScene> endScene_;
-	shared_ptr<StgReplaySaveScene> replaySaveScene_;
+	unique_ptr<StgEndScene> endScene_;
+	unique_ptr<StgReplaySaveScene> replaySaveScene_;
 
-	shared_ptr<StgStageController> stageController_;
-	shared_ptr<StgPackageController> packageController_;
+	unique_ptr<StgStageController> stageController_;
+	unique_ptr<StgPackageController> packageController_;
 
-	ref_count_ptr<StgControlScriptInformation> infoControlScript_;
+	unique_ptr<StgControlScriptInformation> infoControlScript_;
 
 	bool bPrevWindowFocused_;
 
@@ -63,13 +64,13 @@ public:
 
 	ref_count_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
 
-	shared_ptr<StgStageController> GetStageController() { return stageController_; }
+	StgStageController* GetStageController() { return stageController_.get(); }
 	StgPackageController* GetPackageController() { return packageController_.get(); }
 
-	ref_count_ptr<StgControlScriptInformation> GetControlScriptInformation() { return infoControlScript_; }
+	StgControlScriptInformation* GetControlScriptInformation() { return infoControlScript_.get(); }
 
-	shared_ptr<ScriptEngineCache> GetScriptEngineCache() { return scriptEngineCache_; }
-	shared_ptr<ScriptCommonDataManager> GetCommonDataManager() { return commonDataManager_; }
+	ScriptEngineCache* GetScriptEngineCache() { return scriptEngineCache_.get(); }
+	ScriptCommonDataManager* GetCommonDataManager() { return commonDataManager_.get(); }
 
 	void StartStgScene(ref_count_ptr<StgStageInformation> infoStage, ref_count_ptr<ReplayInformation::StageData> replayStageData);
 	void StartStgScene(ref_count_ptr<StgStageStartData> startData);
@@ -106,7 +107,7 @@ private:
 
 	std::list<std::wstring> listError_;
 	ref_count_ptr<ScriptInformation> infoMain_;
-	ref_count_ptr<ReplayInformation> infoReplayActive_; //アクティブリプレイ情報
+	ref_count_ptr<ReplayInformation> infoReplayActive_;
 
 	int invalidPriMin_;
 	int invalidPriMax_;

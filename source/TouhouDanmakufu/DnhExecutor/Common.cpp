@@ -125,7 +125,8 @@ void MenuTask::Work() {
 		int countCurrentPageItem = GetCurrentPageItemCount();
 		for (int iItem = 0; iItem < countCurrentPageItem; iItem++) {
 			int index = indexTop + iItem;
-			ref_count_ptr<MenuItem> item = item_[index];
+
+			auto& item = item_[index];
 			if (item) item->Work();
 		}
 	}
@@ -137,12 +138,13 @@ void MenuTask::Render() {
 		int countCurrentPageItem = GetCurrentPageItemCount();
 		for (int iItem = 0; iItem < countCurrentPageItem; iItem++) {
 			int index = indexTop + iItem;
-			ref_count_ptr<MenuItem> item = item_[index];
+
+			auto& item = item_[index];
 			if (item) item->Render();
 		}
 	}
 }
-void MenuTask::AddMenuItem(ref_count_ptr<MenuItem> item) {
+void MenuTask::AddMenuItem(shared_ptr<MenuItem> item) {
 	{
 		Lock lock(cs_);
 		item->menu_ = this;
@@ -168,16 +170,15 @@ int MenuTask::GetSelectedItemIndex() {
 	}
 	return res;
 }
-ref_count_ptr<MenuItem> MenuTask::GetSelectedMenuItem() {
-	ref_count_ptr<MenuItem> res = nullptr;
+MenuItem* MenuTask::GetSelectedMenuItem() {
 	{
 		Lock lock(cs_);
 		int index = GetSelectedItemIndex();
 		if (index >= 0 && index < item_.size()) {
-			res = item_[index];
+			return item_[index].get();
 		}
 	}
-	return res;
+	return nullptr;
 }
 
 int MenuTask::GetCurrentPageItemCount() {

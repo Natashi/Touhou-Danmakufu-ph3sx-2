@@ -30,7 +30,7 @@ public:
 	class Sort;
 
 private:
-	ref_count_ptr<ScriptSelectModel> model_;
+	shared_ptr<ScriptSelectModel> model_;
 	shared_ptr<Sprite2D> spriteBack_;
 	shared_ptr<Sprite2D> spriteImage_;
 	std::vector<shared_ptr<DxTextRenderObject>> objMenuText_;
@@ -46,9 +46,9 @@ public:
 	virtual void Clear();
 
 	int GetType();
-	void SetModel(ref_count_ptr<ScriptSelectModel> model);
+	void SetModel(shared_ptr<ScriptSelectModel> model);
 	void ClearModel();
-	void AddMenuItem(std::list<ref_count_ptr<ScriptSelectSceneMenuItem>>& listItem);
+	void AddMenuItem(std::list<shared_ptr<ScriptSelectSceneMenuItem>>& listItem);
 };
 
 class ScriptSelectSceneMenuItem : public MenuItem {
@@ -78,22 +78,18 @@ public:
 
 class ScriptSelectScene::Sort {
 public:
-	BOOL operator()(const ref_count_ptr<MenuItem>& lf, const ref_count_ptr<MenuItem>& rf) {
-		ref_count_ptr<MenuItem> lsp = lf;
-		ref_count_ptr<MenuItem> rsp = rf;
-		ScriptSelectSceneMenuItem* lp = (ScriptSelectSceneMenuItem*)lsp.get();
-		ScriptSelectSceneMenuItem* rp = (ScriptSelectSceneMenuItem*)rsp.get();
+	static bool Compare(MenuItem* lf, MenuItem* rf) {
+		auto lp = dcast(ScriptSelectSceneMenuItem*, lf);
+		auto rp = dcast(ScriptSelectSceneMenuItem*, rf);
 
 		if (lp->GetType() == ScriptSelectSceneMenuItem::TYPE_DIR &&
 			rp->GetType() != ScriptSelectSceneMenuItem::TYPE_DIR) return TRUE;
 		if (lp->GetType() != ScriptSelectSceneMenuItem::TYPE_DIR &&
 			rp->GetType() == ScriptSelectSceneMenuItem::TYPE_DIR) return FALSE;
 
-		std::wstring& lPath = lp->GetPath();
-		std::wstring& rPath = rp->GetPath();
-		BOOL res = CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-			lPath.c_str(), -1, rPath.c_str(), -1);
-		return res == CSTR_LESS_THAN ? TRUE : FALSE;
+		int res = ::CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+			lp->GetPath().c_str(), -1, rp->GetPath().c_str(), -1);
+		return res == CSTR_LESS_THAN;
 	}
 };
 
@@ -130,7 +126,7 @@ protected:
 
 	uint64_t timeLastUpdate_;
 
-	std::list<ref_count_ptr<ScriptSelectSceneMenuItem>> listItem_;
+	std::list<shared_ptr<ScriptSelectSceneMenuItem>> listItem_;
 	
 	virtual void _Run();
 	virtual void _SearchScript(const std::wstring& dir);

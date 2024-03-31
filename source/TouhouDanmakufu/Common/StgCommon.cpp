@@ -26,7 +26,7 @@ void StgMoveObject::Copy(StgMoveObject* src) {
 	auto _ClonePattern = [](StgMovePattern* srcPattern, StgMoveObject* newTarget) {
 		ref_unsync_ptr<StgMovePattern> pattern = nullptr;
 		if (srcPattern) {
-			pattern = srcPattern->CreateCopy(newTarget);		//Takes ownership of raw ptr
+			pattern.reset(srcPattern->CreateCopy(newTarget));
 			pattern->CopyFrom(srcPattern);
 		}
 		return pattern;
@@ -62,7 +62,7 @@ void StgMoveObject::_Move() {
 			if (mapPattern_.size() == 0) break;
 		}
 		if (pattern_ == nullptr)
-			pattern_ = new StgMovePattern_Angle(this);
+			pattern_.reset(new StgMovePattern_Angle(this));
 	}
 	else if (pattern_ == nullptr) return;
 
@@ -88,7 +88,7 @@ double StgMoveObject::GetSpeed() {
 }
 void StgMoveObject::SetSpeed(double speed) {
 	if (pattern_ == nullptr || pattern_->GetType() != StgMovePattern::TYPE_ANGLE) {
-		pattern_ = new StgMovePattern_Angle(this);
+		pattern_.reset(new StgMovePattern_Angle(this));
 	}
 	StgMovePattern_Angle* pattern = dynamic_cast<StgMovePattern_Angle*>(pattern_.get());
 	pattern->SetSpeed(speed);
@@ -100,21 +100,21 @@ double StgMoveObject::GetDirectionAngle() {
 }
 void StgMoveObject::SetDirectionAngle(double angle) {
 	if (pattern_ == nullptr || pattern_->GetType() != StgMovePattern::TYPE_ANGLE) {
-		pattern_ = new StgMovePattern_Angle(this);
+		pattern_.reset(new StgMovePattern_Angle(this));
 	}
 	StgMovePattern_Angle* pattern = dynamic_cast<StgMovePattern_Angle*>(pattern_.get());
 	pattern->SetDirectionAngle(angle);
 }
 void StgMoveObject::SetSpeedX(double speedX) {
 	if (pattern_ == nullptr || pattern_->GetType() != StgMovePattern::TYPE_XY) {
-		pattern_ = new StgMovePattern_XY(this);
+		pattern_.reset(new StgMovePattern_XY(this));
 	}
 	StgMovePattern_XY* pattern = dynamic_cast<StgMovePattern_XY*>(pattern_.get());
 	pattern->SetSpeedX(speedX);
 }
 void StgMoveObject::SetSpeedY(double speedY) {
 	if (pattern_ == nullptr || pattern_->GetType() != StgMovePattern::TYPE_XY) {
-		pattern_ = new StgMovePattern_XY(this);
+		pattern_.reset(new StgMovePattern_XY(this));
 	}
 	StgMovePattern_XY* pattern = dynamic_cast<StgMovePattern_XY*>(pattern_.get());
 	pattern->SetSpeedY(speedY);

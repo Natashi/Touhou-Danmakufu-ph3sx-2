@@ -23,7 +23,8 @@ protected:
 	};
 	CriticalSection cs_;
 	bool bActive_;
-	std::vector<ref_count_ptr<MenuItem>> item_;
+
+	std::vector<shared_ptr<MenuItem>> item_;
 
 	std::vector<int> cursorFrame_;
 	int cursorX_;
@@ -50,11 +51,11 @@ public:
 
 	void SetActive(bool bActive) { bActive_ = bActive; }
 
-	virtual void AddMenuItem(ref_count_ptr<MenuItem> item);
+	virtual void AddMenuItem(shared_ptr<MenuItem> item);
 
 	int GetPageCount();
 	int GetSelectedItemIndex();
-	ref_count_ptr<MenuItem> GetSelectedMenuItem();
+	MenuItem* GetSelectedMenuItem();
 
 	int GetCurrentPageItemCount();
 	int GetCurrentPageMaxX();

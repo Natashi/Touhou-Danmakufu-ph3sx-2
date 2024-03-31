@@ -72,17 +72,17 @@ namespace gstd {
 	//*******************************************************************
 	class ScriptEngineCache {
 	protected:
-		std::map<std::wstring, shared_ptr<ScriptEngineData>> cache_;
+		std::map<std::wstring, uptr<ScriptEngineData>> cache_;
 	public:
 		ScriptEngineCache();
 
 		void Clear();
 
-		void AddCache(const std::wstring& name, shared_ptr<ScriptEngineData> data);
+		ScriptEngineData* AddCache(const std::wstring& name, uptr<ScriptEngineData>&& data);
 		void RemoveCache(const std::wstring& name);
-		shared_ptr<ScriptEngineData> GetCache(const std::wstring& name);
+		ScriptEngineData* GetCache(const std::wstring& name);
 
-		const std::map<std::wstring, shared_ptr<ScriptEngineData>>& GetMap() { return cache_; }
+		const std::map<std::wstring, uptr<ScriptEngineData>>& GetMap() { return cache_; }
 
 		bool IsExists(const std::wstring& name);
 	};
@@ -103,9 +103,9 @@ namespace gstd {
 	protected:
 		bool bError_;
 
-		shared_ptr<ScriptEngineCache> cache_;
+		ScriptEngineCache* cache_;
 
-		shared_ptr<ScriptEngineData> engine_;
+		ScriptEngineData* engineData_;
 		unique_ptr<script_machine> machine_;
 
 		std::vector<gstd::function> func_;
@@ -142,10 +142,10 @@ namespace gstd {
 
 		static script_type_manager* GetDefaultScriptTypeManager() { return pTypeManager_.get(); }
 
-		void SetScriptEngineCache(shared_ptr<ScriptEngineCache>& cache) { cache_ = cache; }
-		shared_ptr<ScriptEngineCache> GetScriptEngineCache() { return cache_; }
+		void SetScriptEngineCache(ScriptEngineCache* cache) { cache_ = cache; }
+		ScriptEngineCache* GetScriptEngineCache() { return cache_; }
 
-		shared_ptr<ScriptEngineData> GetEngine() { return engine_; }
+		ScriptEngineData* GetEngineData() { return engineData_; }
 
 		shared_ptr<RandProvider> GetRand() { return mt_; }
 
@@ -153,8 +153,8 @@ namespace gstd {
 		virtual void SetSource(std::vector<char>& source);
 		virtual void SetSource(const std::string& source);
 
-		std::wstring& GetPath() { return engine_->GetPath(); }
-		void SetPath(const std::wstring& path) { engine_->SetPath(path); }
+		std::wstring& GetPath() { return engineData_->GetPath(); }
+		void SetPath(const std::wstring& path) { engineData_->SetPath(path); }
 
 		virtual void Compile();
 		virtual void Reset();

@@ -19,14 +19,17 @@ StgControlScriptManager::~StgControlScriptManager() {
 //StgControlScriptInformation
 //*******************************************************************
 StgControlScriptInformation::StgControlScriptInformation() {
-	replayManager_ = new ReplayInformationManager();
+	replayManager_.reset(new ReplayInformationManager());
 }
 StgControlScriptInformation::~StgControlScriptInformation() {}
 void StgControlScriptInformation::LoadFreePlayerList() {
 	const std::wstring& dir = EPathProperty::GetPlayerScriptRootDirectory();
 	listFreePlayer_ = ScriptInformation::FindPlayerScriptInformationList(dir);
 
-	std::sort(listFreePlayer_.begin(), listFreePlayer_.end(), ScriptInformation::PlayerListSort());
+	std::sort(listFreePlayer_.begin(), listFreePlayer_.end(), 
+		[](const ref_count_ptr<ScriptInformation>& r, const ref_count_ptr<ScriptInformation>& l) {
+			return ScriptInformation::Sort::Compare(r, l);
+		});
 }
 void StgControlScriptInformation::LoadReplayInformation(std::wstring pathMainScript) {
 	replayManager_->UpdateInformationList(pathMainScript);
@@ -196,7 +199,7 @@ StgControlScript::StgControlScript(StgSystemController* systemController) {
 //STG制御共通関数：共通データ
 gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
+	auto infoSystem = script->systemController_->GetSystemInformation();
 
 	std::wstring area = argv[0].as_string();
 	std::string sArea = StringUtility::ConvertWideToMulti(area);
@@ -222,7 +225,7 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* ma
 }
 gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
+	auto infoSystem = script->systemController_->GetSystemInformation();
 
 	std::wstring area = argv[0].as_string();
 	std::string sArea = StringUtility::ConvertWideToMulti(area);
@@ -247,7 +250,7 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* ma
 
 gstd::value StgControlScript::Func_SaveCommonDataAreaA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
+	auto infoSystem = script->systemController_->GetSystemInformation();
 
 	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
 	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
@@ -271,7 +274,7 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA2(gstd::script_machine* ma
 }
 gstd::value StgControlScript::Func_LoadCommonDataAreaA2(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
+	auto infoSystem = script->systemController_->GetSystemInformation();
 
 	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
 	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
@@ -300,15 +303,15 @@ gstd::value StgControlScript::Func_AddVirtualKey(gstd::script_machine* machine, 
 	int16_t key = argv[1].as_int();
 	int16_t padButton = argv[2].as_int();
 
-	ref_count_ptr<VirtualKey> vkey = new VirtualKey(key, padIndex, padButton);
+	ref_count_ptr<VirtualKey> vkey(new VirtualKey(key, padIndex, padButton));
 	input->AddKeyMap(id, vkey);
 
 	return value();
 }
 gstd::value StgControlScript::Func_AddReplayTargetVirtualKey(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	auto infoSystem = script->systemController_->GetSystemInformation();
+	StgStageController* stageController = script->systemController_->GetStageController();
 
 	int16_t id = argv[0].as_int();
 	infoSystem->AddReplayTargetKey(id);
@@ -332,7 +335,7 @@ gstd::value StgControlScript::Func_StgStageInformation_int64_void(gstd::script_m
 
 	int64_t res = 0;
 
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 	if (stageController) {
 		auto stgInfo = stageController->GetStageInformation().get();
 		res = (stgInfo->*Func)();
@@ -344,7 +347,7 @@ template<void(StgStageInformation::* Func)(int64_t)>
 gstd::value StgControlScript::Func_StgStageInformation_void_int64(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 	if (stageController) {
 		int64_t inc = argv[0].as_int();
 		auto stgInfo = stageController->GetStageInformation().get();
@@ -359,7 +362,7 @@ gstd::value StgControlScript::Func_IsReplay(gstd::script_machine* machine, int a
 
 	bool res = false;
 
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 	if (stageController)
 		res = stageController->GetStageInformation()->IsReplay();
 
@@ -414,7 +417,7 @@ gstd::value StgControlScript::Func_GetStageTime(gstd::script_machine* machine, i
 
 	uint64_t res = 0;
 
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 	if (stageController) {
 		ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 
@@ -430,7 +433,7 @@ gstd::value StgControlScript::Func_GetStageTimeF(gstd::script_machine* machine, 
 
 	DWORD res = 0;
 
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 	if (stageController) {
 		ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 		res = infoStage->GetCurrentFrame();
@@ -457,7 +460,7 @@ gstd::value StgControlScript::Func_GetPackageTime(gstd::script_machine* machine,
 
 gstd::value StgControlScript::Func_GetStgFrameLeft(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 
 	LONG res = 0;
 	if (stageController)
@@ -467,7 +470,7 @@ gstd::value StgControlScript::Func_GetStgFrameLeft(gstd::script_machine* machine
 }
 gstd::value StgControlScript::Func_GetStgFrameTop(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 
 	LONG res = 0;
 	if (stageController)
@@ -477,7 +480,7 @@ gstd::value StgControlScript::Func_GetStgFrameTop(gstd::script_machine* machine,
 }
 gstd::value StgControlScript::Func_GetStgFrameWidth(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 
 	LONG res = 0;
 	if (stageController) {
@@ -489,7 +492,7 @@ gstd::value StgControlScript::Func_GetStgFrameWidth(gstd::script_machine* machin
 }
 gstd::value StgControlScript::Func_GetStgFrameHeight(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 
 	LONG res = 0;
 	if (stageController) {
@@ -524,7 +527,6 @@ gstd::value StgControlScript::Func_GetScriptPathList(gstd::script_machine* machi
 	for (auto itr = listFile.begin(); itr != listFile.end(); ++itr) {
 		std::wstring path = *itr;
 
-		//明らかに関係なさそうな拡張子は除外
 		std::wstring ext = PathProperty::GetFileExtension(path);
 		if (ScriptInformation::IsExcludeExtension(ext)) continue;
 
@@ -546,6 +548,7 @@ gstd::value StgControlScript::Func_GetScriptInfoA1(gstd::script_machine* machine
 	int type = argv[1].as_int();
 
 	ref_count_ptr<ScriptInformation> infoScript = nullptr;
+
 	auto itr = script->mapScriptInfo_.find(path);
 	if (itr != script->mapScriptInfo_.end())
 		infoScript = itr->second;
@@ -646,7 +649,7 @@ value StgControlScript::Func_IsWindowFocused(gstd::script_machine* machine, int 
 gstd::value StgControlScript::Func_ClearInvalidRenderPriority(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	StgSystemController* systemController = script->systemController_;
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+	auto infoSystem = systemController->GetSystemInformation();
 
 	infoSystem->SetInvalidRenderPriority(-1, -1);
 
@@ -655,7 +658,7 @@ gstd::value StgControlScript::Func_ClearInvalidRenderPriority(gstd::script_machi
 gstd::value StgControlScript::Func_SetInvalidRenderPriorityA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	StgSystemController* systemController = script->systemController_;
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController->GetSystemInformation();
+	auto infoSystem = systemController->GetSystemInformation();
 
 	int priMin = argv[0].as_int();
 	int priMax = argv[1].as_int();
@@ -822,7 +825,7 @@ gstd::value StgControlScript::Func_GetPlayerID(gstd::script_machine* machine, in
 
 	std::wstring id = L"";
 
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 	if (stageController)
 		id = stageController->GetStageInformation()->GetPlayerScriptInformation()->id_;
 
@@ -833,7 +836,7 @@ gstd::value StgControlScript::Func_GetPlayerReplayName(gstd::script_machine* mac
 
 	std::wstring replayName = L"";
 
-	shared_ptr<StgStageController> stageController = script->systemController_->GetStageController();
+	StgStageController* stageController = script->systemController_->GetStageController();
 	if (stageController)
 		replayName = stageController->GetStageInformation()->GetPlayerScriptInformation()->replayName_;
 
@@ -843,7 +846,7 @@ gstd::value StgControlScript::Func_GetPlayerReplayName(gstd::script_machine* mac
 //STG制御共通関数：ユーザスクリプト
 gstd::value StgControlScript::Func_SetPauseScriptPath(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgSystemInformation> info = script->systemController_->GetSystemInformation();
+	auto info = script->systemController_->GetSystemInformation();
 
 	std::wstring path = argv[0].as_string();
 	info->SetPauseScriptPath(path);
@@ -852,7 +855,7 @@ gstd::value StgControlScript::Func_SetPauseScriptPath(gstd::script_machine* mach
 }
 gstd::value StgControlScript::Func_SetEndSceneScriptPath(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgSystemInformation> info = script->systemController_->GetSystemInformation();
+	auto info = script->systemController_->GetSystemInformation();
 
 	std::wstring path = argv[0].as_string();
 	info->SetEndSceneScriptPath(path);
@@ -861,7 +864,7 @@ gstd::value StgControlScript::Func_SetEndSceneScriptPath(gstd::script_machine* m
 }
 gstd::value StgControlScript::Func_SetReplaySaveSceneScriptPath(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgSystemInformation> info = script->systemController_->GetSystemInformation();
+	auto info = script->systemController_->GetSystemInformation();
 
 	std::wstring path = argv[0].as_string();
 	info->SetReplaySaveSceneScriptPath(path);
@@ -872,7 +875,7 @@ gstd::value StgControlScript::Func_SetReplaySaveSceneScriptPath(gstd::script_mac
 //STG制御共通関数：自機スクリプト
 gstd::value StgControlScript::Func_GetLoadFreePlayerScriptList(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
 
 	infoControlScript->LoadFreePlayerList();
 	std::vector<ref_count_ptr<ScriptInformation>>& listFreePlayer = infoControlScript->GetFreePlayerList();
@@ -881,7 +884,7 @@ gstd::value StgControlScript::Func_GetLoadFreePlayerScriptList(gstd::script_mach
 }
 gstd::value StgControlScript::Func_GetFreePlayerScriptCount(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
 
 	std::vector<ref_count_ptr<ScriptInformation>>& listFreePlayer = infoControlScript->GetFreePlayerList();
 
@@ -889,7 +892,7 @@ gstd::value StgControlScript::Func_GetFreePlayerScriptCount(gstd::script_machine
 }
 gstd::value StgControlScript::Func_GetFreePlayerScriptInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
 
 	std::vector<ref_count_ptr<ScriptInformation>>& listFreePlayer = infoControlScript->GetFreePlayerList();
 
@@ -927,8 +930,9 @@ gstd::value StgControlScript::Func_GetFreePlayerScriptInfo(gstd::script_machine*
 //STG制御共通関数：リプレイ関連
 gstd::value StgControlScript::Func_LoadReplayList(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
+
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
+	auto infoSystem = script->systemController_->GetSystemInformation();
 
 	std::wstring& pathMainScript = infoSystem->GetMainScriptInformation()->pathScript_;
 	infoControlScript->LoadReplayInformation(pathMainScript);
@@ -937,7 +941,8 @@ gstd::value StgControlScript::Func_LoadReplayList(gstd::script_machine* machine,
 }
 gstd::value StgControlScript::Func_GetValidReplayIndices(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
+
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
 	ref_count_ptr<ReplayInformationManager> replayInfoManager = infoControlScript->GetReplayInformationManager();
 
 	std::vector<int> listValidIndices = replayInfoManager->GetIndexList();
@@ -945,7 +950,8 @@ gstd::value StgControlScript::Func_GetValidReplayIndices(gstd::script_machine* m
 }
 gstd::value StgControlScript::Func_IsValidReplayIndex(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
+
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
 	ref_count_ptr<ReplayInformationManager> replayInfoManager = infoControlScript->GetReplayInformationManager();
 
 	int index = argv[0].as_int();
@@ -953,9 +959,11 @@ gstd::value StgControlScript::Func_IsValidReplayIndex(gstd::script_machine* mach
 }
 gstd::value StgControlScript::Func_GetReplayInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
+
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
+	auto infoSystem = script->systemController_->GetSystemInformation();
+
 	ref_count_ptr<ReplayInformationManager> replayInfoManager = infoControlScript->GetReplayInformationManager();
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
 
 	int index = argv[0].as_int();
 	int type = argv[1].as_int();
@@ -1022,9 +1030,12 @@ gstd::value StgControlScript::Func_GetReplayInfo(gstd::script_machine* machine, 
 }
 gstd::value StgControlScript::Func_SetReplayInfo(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
+
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
+	auto infoSystem = script->systemController_->GetSystemInformation();
+
 	ref_count_ptr<ReplayInformationManager> replayInfoManager = infoControlScript->GetReplayInformationManager();
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
+
 	ref_count_ptr<ReplayInformation> replayInfo = infoSystem->GetActiveReplayInformation();
 	if (replayInfo == nullptr)
 		script->RaiseError("Cannot find a target replay data.");
@@ -1041,9 +1052,11 @@ gstd::value StgControlScript::Func_SetReplayInfo(gstd::script_machine* machine, 
 }
 gstd::value StgControlScript::Func_GetReplayUserData(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
+
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
+	auto infoSystem = script->systemController_->GetSystemInformation();
+
 	ref_count_ptr<ReplayInformationManager> replayInfoManager = infoControlScript->GetReplayInformationManager();
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
 
 	int index = argv[0].as_int();
 	std::string key = StringUtility::ConvertWideToMulti(argv[1].as_string());
@@ -1059,9 +1072,12 @@ gstd::value StgControlScript::Func_GetReplayUserData(gstd::script_machine* machi
 }
 gstd::value StgControlScript::Func_SetReplayUserData(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
+
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
+	auto infoSystem = script->systemController_->GetSystemInformation();
+
 	ref_count_ptr<ReplayInformationManager> replayInfoManager = infoControlScript->GetReplayInformationManager();
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
+
 	ref_count_ptr<ReplayInformation> replayInfo = infoSystem->GetActiveReplayInformation();
 	if (replayInfo == nullptr)
 		script->RaiseError("The replay data is not found.");
@@ -1074,9 +1090,11 @@ gstd::value StgControlScript::Func_SetReplayUserData(gstd::script_machine* machi
 }
 gstd::value StgControlScript::Func_IsReplayUserDataExists(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgControlScriptInformation> infoControlScript = script->systemController_->GetControlScriptInformation();
+
+	StgControlScriptInformation* infoControlScript = script->systemController_->GetControlScriptInformation();
+	auto infoSystem = script->systemController_->GetSystemInformation();
+
 	ref_count_ptr<ReplayInformationManager> replayInfoManager = infoControlScript->GetReplayInformationManager();
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
 
 	int index = argv[0].as_int();
 	std::string key = StringUtility::ConvertWideToMulti(argv[1].as_string());
@@ -1093,8 +1111,9 @@ gstd::value StgControlScript::Func_IsReplayUserDataExists(gstd::script_machine* 
 
 gstd::value StgControlScript::Func_SaveReplay(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
-	ref_count_ptr<StgSystemInformation> infoSystem = script->systemController_->GetSystemInformation();
-	ref_count_ptr<ScriptInformation> infoMain = script->systemController_->GetSystemInformation()->GetMainScriptInformation();
+
+	auto infoSystem = script->systemController_->GetSystemInformation();
+	auto infoMain = script->systemController_->GetSystemInformation()->GetMainScriptInformation();
 
 	ref_count_ptr<ReplayInformation> replayInfoActive = infoSystem->GetActiveReplayInformation();
 	if (replayInfoActive == nullptr)

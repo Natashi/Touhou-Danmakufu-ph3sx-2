@@ -3779,24 +3779,17 @@ value DxScript::Func_ObjPrimitive_Create(script_machine* machine, int argc, cons
 	TypeObject type = (TypeObject)argv[0].as_int();
 
 	ref_unsync_ptr<DxScriptRenderObject> obj;
-	if (type == TypeObject::Primitive2D) {
-		obj = new DxScriptPrimitiveObject2D();
+
+#define DEF_CASE(_type, _class) case _type: obj.reset(new _class()); break;
+	switch (type) {
+		DEF_CASE(TypeObject::Primitive2D, DxScriptPrimitiveObject2D);
+		DEF_CASE(TypeObject::Sprite2D, DxScriptSpriteObject2D);
+		DEF_CASE(TypeObject::SpriteList2D, DxScriptSpriteListObject2D);
+		DEF_CASE(TypeObject::Primitive3D, DxScriptPrimitiveObject3D);
+		DEF_CASE(TypeObject::Sprite3D, DxScriptSpriteObject3D);
+		DEF_CASE(TypeObject::Trajectory3D, DxScriptTrajectoryObject3D);
 	}
-	else if (type == TypeObject::Sprite2D) {
-		obj = new DxScriptSpriteObject2D();
-	}
-	else if (type == TypeObject::SpriteList2D) {
-		obj = new DxScriptSpriteListObject2D();
-	}
-	else if (type == TypeObject::Primitive3D) {
-		obj = new DxScriptPrimitiveObject3D();
-	}
-	else if (type == TypeObject::Sprite3D) {
-		obj = new DxScriptSpriteObject3D();
-	}
-	else if (type == TypeObject::Trajectory3D) {
-		obj = new DxScriptTrajectoryObject3D();
-	}
+#undef DEF_CASE
 
 	int id = ID_INVALID;
 	if (obj) {
@@ -4265,10 +4258,10 @@ value DxScript::Func_ObjParticleList_Create(script_machine* machine, int argc, c
 
 	ref_unsync_ptr<DxScriptRenderObject> obj;
 	if (type == TypeObject::ParticleList2D) {
-		obj = new DxScriptParticleListObject2D();
+		obj.reset(new DxScriptParticleListObject2D());
 	}
 	else if (type == TypeObject::ParticleList3D) {
-		obj = new DxScriptParticleListObject3D();
+		obj.reset(new DxScriptParticleListObject3D());
 	}
 
 	int id = ID_INVALID;
@@ -5205,10 +5198,10 @@ gstd::value DxScript::Func_ObjFile_Create(gstd::script_machine* machine, int arg
 
 	ref_unsync_ptr<DxFileObject> obj;
 	if (type == TypeObject::FileText) {
-		obj = new DxTextFileObject();
+		obj.reset(new DxTextFileObject());
 	}
 	else if (type == TypeObject::FileBinary) {
-		obj = new DxBinaryFileObject();
+		obj.reset(new DxBinaryFileObject());
 	}
 
 	int id = ID_INVALID;

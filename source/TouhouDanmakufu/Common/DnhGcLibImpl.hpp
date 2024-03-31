@@ -46,7 +46,7 @@ public:
 	};
 protected:
 	bool bWindow_;
-	ref_count_ptr<WindowThread> threadWindow_;
+	shared_ptr<WindowThread> threadWindow_;
 
 	shared_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData_;
 

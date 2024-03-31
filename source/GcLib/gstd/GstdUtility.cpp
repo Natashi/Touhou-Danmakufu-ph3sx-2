@@ -1439,27 +1439,28 @@ std::string Token::GetIdentifierA() {
 //*******************************************************************
 //TextParser
 //*******************************************************************
-TextParser::TextParser() {
+TextParser::TextParser() : scan_(Scanner("")) {
 }
-TextParser::TextParser(const std::string& source) {
+TextParser::TextParser(const std::string& source) : TextParser() {
 	SetSource(source);
 }
 TextParser::~TextParser() {}
+
 TextParser::Result TextParser::_ParseComparison(int pos) {
 	Result res = _ParseSum(pos);
-	while (scan_->HasNext()) {
-		scan_->SetCurrentPointer(res.pos_);
+	while (scan_.HasNext()) {
+		scan_.SetCurrentPointer(res.pos_);
 
-		Token& tok = scan_->Next();
+		Token& tok = scan_.Next();
 		Token::Type type = tok.GetType();
 		if (type == Token::Type::TK_EXCLAMATION || type == Token::Type::TK_EQUAL) {
-			//「==」「!=」
+			// ==, !=
 			bool bNot = type == Token::Type::TK_EXCLAMATION;
-			tok = scan_->Next();
+			tok = scan_.Next();
 			type = tok.GetType();
 			if (type != Token::Type::TK_EQUAL) break;
 
-			Result tRes = _ParseSum(scan_->GetCurrentPointer());
+			Result tRes = _ParseSum(scan_.GetCurrentPointer());
 			res.pos_ = tRes.pos_;
 			if (res.type_ == Type::TYPE_BOOLEAN && tRes.type_ == Type::TYPE_BOOLEAN) {
 				res.valueBoolean_ = bNot ?
@@ -1475,10 +1476,10 @@ TextParser::Result TextParser::_ParseComparison(int pos) {
 			res.type_ = Type::TYPE_BOOLEAN;
 		}
 		else if (type == Token::Type::TK_PIPE) {
-			tok = scan_->Next();
+			tok = scan_.Next();
 			type = tok.GetType();
 			if (type != Token::Type::TK_PIPE) break;
-			Result tRes = _ParseSum(scan_->GetCurrentPointer());
+			Result tRes = _ParseSum(scan_.GetCurrentPointer());
 			res.pos_ = tRes.pos_;
 			if (res.type_ == Type::TYPE_BOOLEAN && tRes.type_ == Type::TYPE_BOOLEAN) {
 				res.valueBoolean_ = res.valueBoolean_ || tRes.valueBoolean_;
@@ -1488,10 +1489,10 @@ TextParser::Result TextParser::_ParseComparison(int pos) {
 			}
 		}
 		else if (type == Token::Type::TK_AMPERSAND) {
-			tok = scan_->Next();
+			tok = scan_.Next();
 			type = tok.GetType();
 			if (type != Token::Type::TK_AMPERSAND) break;
-			Result tRes = _ParseSum(scan_->GetCurrentPointer());
+			Result tRes = _ParseSum(scan_.GetCurrentPointer());
 			res.pos_ = tRes.pos_;
 			if (res.type_ == Type::TYPE_BOOLEAN && tRes.type_ == Type::TYPE_BOOLEAN) {
 				res.valueBoolean_ = res.valueBoolean_ && tRes.valueBoolean_;
@@ -1507,15 +1508,15 @@ TextParser::Result TextParser::_ParseComparison(int pos) {
 
 TextParser::Result TextParser::_ParseSum(int pos) {
 	Result res = _ParseProduct(pos);
-	while (scan_->HasNext()) {
-		scan_->SetCurrentPointer(res.pos_);
+	while (scan_.HasNext()) {
+		scan_.SetCurrentPointer(res.pos_);
 
-		Token& tok = scan_->Next();
+		Token& tok = scan_.Next();
 		Token::Type type = tok.GetType();
 		if (type != Token::Type::TK_PLUS && type != Token::Type::TK_MINUS)
 			break;
 
-		Result tRes = _ParseProduct(scan_->GetCurrentPointer());
+		Result tRes = _ParseProduct(scan_.GetCurrentPointer());
 		if (res.IsString() || tRes.IsString()) {
 			res.type_ = Type::TYPE_STRING;
 			res.valueString_ = res.GetString() + tRes.GetString();
@@ -1535,13 +1536,13 @@ TextParser::Result TextParser::_ParseSum(int pos) {
 }
 TextParser::Result TextParser::_ParseProduct(int pos) {
 	Result res = _ParseTerm(pos);
-	while (scan_->HasNext()) {
-		scan_->SetCurrentPointer(res.pos_);
-		Token& tok = scan_->Next();
+	while (scan_.HasNext()) {
+		scan_.SetCurrentPointer(res.pos_);
+		Token& tok = scan_.Next();
 		Token::Type type = tok.GetType();
 		if (type != Token::Type::TK_ASTERISK && type != Token::Type::TK_SLASH) break;
 
-		Result tRes = _ParseTerm(scan_->GetCurrentPointer());
+		Result tRes = _ParseTerm(scan_.GetCurrentPointer());
 		if (tRes.type_ == Type::TYPE_BOOLEAN) _RaiseError(L"真偽値の乗算除算");
 
 		res.type_ = tRes.type_;
@@ -1556,9 +1557,9 @@ TextParser::Result TextParser::_ParseProduct(int pos) {
 }
 
 TextParser::Result TextParser::_ParseTerm(int pos) {
-	scan_->SetCurrentPointer(pos);
+	scan_.SetCurrentPointer(pos);
 	Result res;
-	Token& tok = scan_->Next();
+	Token& tok = scan_.Next();
 
 	bool bMinus = false;
 	bool bNot = false;
@@ -1568,13 +1569,13 @@ TextParser::Result TextParser::_ParseTerm(int pos) {
 		type == Token::Type::TK_EXCLAMATION) {
 		if (type == Token::Type::TK_MINUS) bMinus = true;
 		if (type == Token::Type::TK_EXCLAMATION) bNot = true;
-		tok = scan_->Next();
+		tok = scan_.Next();
 	}
 
 	if (tok.GetType() == Token::Type::TK_OPENP) {
-		res = _ParseComparison(scan_->GetCurrentPointer());
-		scan_->SetCurrentPointer(res.pos_);
-		tok = scan_->Next();
+		res = _ParseComparison(scan_.GetCurrentPointer());
+		scan_.SetCurrentPointer(res.pos_);
+		tok = scan_.Next();
 		if (tok.GetType() != Token::Type::TK_CLOSEP) _RaiseError(L")がありません");
 	}
 	else {
@@ -1584,7 +1585,7 @@ TextParser::Result TextParser::_ParseTerm(int pos) {
 			res.type_ = Type::TYPE_REAL;
 		}
 		else if (type == Token::Type::TK_ID) {
-			Result tRes = _ParseIdentifer(scan_->GetCurrentPointer());
+			Result tRes = _ParseIdentifer(scan_.GetCurrentPointer());
 			res = tRes;
 		}
 		else if (type == Token::Type::TK_STRING) {
@@ -1603,15 +1604,15 @@ TextParser::Result TextParser::_ParseTerm(int pos) {
 		res.valueBoolean_ = !res.valueBoolean_;
 	}
 
-	res.pos_ = scan_->GetCurrentPointer();
+	res.pos_ = scan_.GetCurrentPointer();
 
 	return res;
 }
 TextParser::Result TextParser::_ParseIdentifer(int pos) {
 	Result res;
-	res.pos_ = scan_->GetCurrentPointer();
+	res.pos_ = scan_.GetCurrentPointer();
 
-	Token& tok = scan_->GetToken();
+	Token& tok = scan_.GetToken();
 	std::wstring id = tok.GetElement();
 	if (id == L"true") {
 		res.type_ = Type::TYPE_BOOLEAN;
@@ -1632,21 +1633,20 @@ void TextParser::SetSource(const std::string& source) {
 	std::vector<char> buf;
 	buf.resize(source.size() + 1);
 	memcpy(&buf[0], source.c_str(), source.size() + 1);
-	scan_ = new Scanner(buf);
-	scan_->SetPermitSignNumber(false);
+
+	scan_ = Scanner(buf);
+	scan_.SetPermitSignNumber(false);
 }
 TextParser::Result TextParser::GetResult() {
-	if (scan_ == nullptr) _RaiseError(L"テキストが設定されていません");
-	scan_->SetPointerBegin();
-	Result res = _ParseComparison(scan_->GetCurrentPointer());
-	if (scan_->HasNext()) _RaiseError(StringUtility::Format(L"不正なトークン:%s", scan_->GetToken().GetElement().c_str()));
+	scan_.SetPointerBegin();
+	Result res = _ParseComparison(scan_.GetCurrentPointer());
+	if (scan_.HasNext()) _RaiseError(StringUtility::Format(L"不正なトークン:%s", scan_.GetToken().GetElement().c_str()));
 	return res;
 }
 double TextParser::GetReal() {
-	if (scan_ == nullptr) _RaiseError(L"テキストが設定されていません");
-	scan_->SetPointerBegin();
-	Result res = _ParseSum(scan_->GetCurrentPointer());
-	if (scan_->HasNext()) _RaiseError(StringUtility::Format(L"不正なトークン:%s", scan_->GetToken().GetElement().c_str()));
+	scan_.SetPointerBegin();
+	Result res = _ParseSum(scan_.GetCurrentPointer());
+	if (scan_.HasNext()) _RaiseError(StringUtility::Format(L"不正なトークン:%s", scan_.GetToken().GetElement().c_str()));
 	return res.GetReal();
 }
 

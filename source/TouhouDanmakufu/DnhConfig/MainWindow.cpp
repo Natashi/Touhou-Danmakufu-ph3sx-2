@@ -597,7 +597,7 @@ void KeyPanel::LoadConfiguration() {
 	for (auto& itr : mapAction_) {
 		int action = itr.first;
 
-		ref_count_ptr<VirtualKey> vk = config->GetVirtualKey(action);
+		auto vk = config->GetVirtualKey(action);
 		if (vk) {
 			mapAction_[action].SetKeys(vk->GetKeyCode(), 0, vk->GetPadButton());
 		}
@@ -612,7 +612,7 @@ void KeyPanel::SaveConfiguration() {
 	for (auto& itr : mapAction_) {
 		int action = itr.first;
 
-		ref_count_ptr<VirtualKey> vk = config->GetVirtualKey(action);
+		auto vk = config->GetVirtualKey(action);
 		if (vk) {
 			vk->SetKeyCode(itr.second.keyboardButton);
 			vk->SetPadIndex(itr.second.padDevice);

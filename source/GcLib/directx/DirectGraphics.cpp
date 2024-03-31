@@ -44,8 +44,8 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 DirectGraphics* DirectGraphics::thisBase_ = nullptr;
 float DirectGraphics::g_dxCoordsMul_ = 1.0f;
 DirectGraphics::DirectGraphics() {
-	camera_ = new DxCamera();
-	camera2D_ = new DxCamera2D();
+	camera_.reset(new DxCamera());
+	camera2D_.reset(new DxCamera2D());
 
 	ZeroMemory(&viewPort_, sizeof(D3DVIEWPORT9));
 	D3DXMatrixIdentity(&matViewPort_);

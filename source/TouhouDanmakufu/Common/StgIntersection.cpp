@@ -35,8 +35,8 @@ StgIntersectionManager::StgIntersectionManager() {
 		}
 
 		{
-			objIntersectionVisualizerCircle_ = new DxScriptParticleListObject2D();
-			objIntersectionVisualizerLine_ = new DxScriptPrimitiveObject2D();
+			objIntersectionVisualizerCircle_.reset(new DxScriptParticleListObject2D());
+			objIntersectionVisualizerLine_.reset(new DxScriptPrimitiveObject2D());
 
 			countCircleInstance_ = 0U;
 			countLineVertex_ = 0U;
