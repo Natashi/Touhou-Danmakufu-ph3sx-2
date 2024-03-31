@@ -24,6 +24,9 @@ namespace gstd {
 	//SystemUtility
 	class SystemUtility {
 	public:
+		static void InitializeCOM();
+		static void UninitializeCOM();
+
 		static void TestCpuSupportSIMD();
 
 		static stdch::steady_clock::time_point GetCpuTime() {

@@ -9,7 +9,23 @@ using namespace gstd;
 //SystemUtility
 //*******************************************************************
 
-//Vector compile checks
+void SystemUtility::InitializeCOM() {
+	HRESULT hr = ::CoInitializeEx(nullptr, COINIT_MULTITHREADED |
+		COINIT_DISABLE_OLE1DDE);
+	if (FAILED(hr))
+		throw wexception("CoInitializeEx failed");
+
+	hr = ::CoInitializeSecurity(nullptr, -1, nullptr, nullptr,
+		RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
+		nullptr, EOAC_NONE, nullptr);
+	if (FAILED(hr))
+		throw wexception("CoInitializeSecurity failed");
+}
+void SystemUtility::UninitializeCOM() {
+	::CoUninitialize();
+}
+
+// Vector compile checks
 #ifdef __L_MATH_VECTORIZE
 #if !defined(_XM_X64_) && !defined(_XM_X86_)
 #if defined(_M_AMD64) || defined(_AMD64_)

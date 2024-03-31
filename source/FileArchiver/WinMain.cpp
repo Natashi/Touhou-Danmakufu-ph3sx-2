@@ -15,12 +15,7 @@ int APIENTRY wWinMain(
 	DebugUtility::DumpMemoryLeaksOnExit();
 
 	try {
-		{
-			HRESULT hr = ::CoInitializeEx(NULL, COINIT_MULTITHREADED |
-				COINIT_DISABLE_OLE1DDE);
-			if (FAILED(hr))
-				throw wexception("CoInitializeEx failed");
-		}
+		SystemUtility::InitializeCOM();
 
 		directx::EDirect3D9::CreateInstance();
 
@@ -50,7 +45,7 @@ int APIENTRY wWinMain(
 	MainWindow::DeleteInstance();
 	directx::EDirect3D9::DeleteInstance();
 
-	::CoUninitialize();
+	SystemUtility::UninitializeCOM();
 
 	return 0;
 }
