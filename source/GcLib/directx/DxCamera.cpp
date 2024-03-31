@@ -185,16 +185,19 @@ DxCamera2D::DxCamera2D() {
 	angleZ_ = 0;
 	bEnable_ = false;
 
-	posReset_ = nullptr;
+	posReset_ = { 0, 0 };
 
 	D3DXMatrixIdentity(&matIdentity_);
 }
 DxCamera2D::~DxCamera2D() {}
+
 void DxCamera2D::Reset() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
+
 	LONG width = graphics->GetScreenWidth();
 	LONG height = graphics->GetScreenHeight();
-	if (posReset_ == nullptr) {
+
+	if (!posReset_.has_value()) {
 		pos_.x = width / 2;
 		pos_.y = height / 2;
 	}
@@ -209,6 +212,11 @@ void DxCamera2D::Reset() {
 
 	angleZ_ = 0;
 }
+void DxCamera2D::ResetAll() {
+	posReset_ = {};
+	Reset();
+}
+
 D3DXVECTOR2 DxCamera2D::GetLeftTopPosition() {
 	return GetLeftTopPosition(pos_, ratioX_, ratioY_, rcClip_);
 }

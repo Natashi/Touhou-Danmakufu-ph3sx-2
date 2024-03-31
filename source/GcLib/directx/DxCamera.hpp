@@ -126,7 +126,7 @@ namespace directx {
 
 		DxRect<LONG> rcClip_;
 
-		gstd::ref_count_ptr<D3DXVECTOR2> posReset_;
+		optional<D3DXVECTOR2> posReset_;
 
 		D3DXMATRIX matCamera_;
 		D3DXMATRIX matIdentity_;
@@ -156,12 +156,9 @@ namespace directx {
 		const DxRect<LONG>& GetClip() { return rcClip_; }
 		void SetClip(const DxRect<LONG>& rect) { rcClip_ = rect; }
 
-		void SetResetFocus(gstd::ref_count_ptr<D3DXVECTOR2>& pos) { posReset_ = pos; }
+		void SetResetFocus(const D3DXVECTOR2& pos) { posReset_ = pos; }
 		void Reset();
-		void ResetAll() {
-			posReset_ = nullptr;
-			Reset();
-		}
+		void ResetAll();
 
 		inline D3DXVECTOR2 GetLeftTopPosition();
 		inline static D3DXVECTOR2 GetLeftTopPosition(const D3DXVECTOR2& focus, float ratio);

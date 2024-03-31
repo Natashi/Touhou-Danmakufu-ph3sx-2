@@ -1824,28 +1824,28 @@ gstd::value DxScript::Func_ResetShaderI(gstd::script_machine* machine, int argc,
 //Dx関数：カメラ3D
 value DxScript::Func_SetCameraFocusX(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetFocusX(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusY(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetFocusY(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusZ(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetFocusZ(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusXYZ(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetFocusX(argv[0].as_float());
 	camera->SetFocusY(argv[1].as_float());
 	camera->SetFocusZ(argv[2].as_float());
@@ -1854,56 +1854,56 @@ value DxScript::Func_SetCameraFocusXYZ(script_machine* machine, int argc, const 
 }
 value DxScript::Func_SetCameraRadius(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetRadius(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraAzimuthAngle(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetAzimuthAngle(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraElevationAngle(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetElevationAngle(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraYaw(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetYaw(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraPitch(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetPitch(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraRoll(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetRoll(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraMode(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetCameraMode(argv[0].as_int());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraPosLookAt(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetCameraLookAtVector(D3DXVECTOR3(argv[0].as_float(), argv[1].as_float(), argv[2].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
@@ -1970,7 +1970,7 @@ value DxScript::Func_GetCameraRoll(script_machine* machine, int argc, const valu
 }
 value DxScript::Func_SetCameraPerspectiveClip(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	auto camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetPerspectiveClip(argv[0].as_float(), argv[1].as_float());
 	camera->thisProjectionChanged_ = true;
 	return value();
@@ -2147,7 +2147,7 @@ gstd::value DxScript::Func_GetObject2dPosition(gstd::script_machine* machine, in
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+		auto& camera = graphics->GetCamera();
 
 		D3DXVECTOR2 point = camera->TransformCoordinateTo2D(obj->GetPosition());
 		listRes[0] = point.x;
@@ -2165,7 +2165,7 @@ gstd::value DxScript::Func_Get2dPosition(gstd::script_machine* machine, int argc
 	D3DXVECTOR3 pos(px, py, pz);
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 
 	D3DXVECTOR2 point = camera->TransformCoordinateTo2D(pos);
 	float listRes[2] = { point.x, point.y };

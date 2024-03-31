@@ -658,7 +658,7 @@ void DxTextRenderObject::Render() {
 void DxTextRenderObject::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	D3DXVECTOR2 position = D3DXVECTOR2(position_.x, position_.y);
 
-	auto camera = DirectGraphics::GetBase()->GetCamera2D();
+	auto& camera = DirectGraphics::GetBase()->GetCamera2D();
 	bool bCamera = camera->IsEnable() && bPermitCamera_;
 
 	D3DXVECTOR2 center = center_;

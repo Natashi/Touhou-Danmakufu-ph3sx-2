@@ -135,8 +135,8 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 		float width = viewPort.Width * 0.5f;
 		float height = viewPort.Height * 0.5f;
 
-		ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+		auto& camera = graphics->GetCamera();
+		auto& camera2D = graphics->GetCamera2D();
 		if (camera2D->IsEnable()) {
 			D3DXMATRIX matCamera = camera2D->GetMatrix();
 			mat = mat * matCamera;
@@ -200,8 +200,8 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 		float width = viewPort.Width * 0.5f;
 		float height = viewPort.Height * 0.5f;
 
-		ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+		auto& camera = graphics->GetCamera();
+		auto& camera2D = graphics->GetCamera2D();
 		if (camera2D->IsEnable()) {
 			D3DXMatrixMultiply(&mat, &mat, &camera2D->GetMatrix());
 		}
@@ -407,7 +407,7 @@ void RenderObjectTLX::Render() {
 }
 void RenderObjectTLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
+	auto& camera = graphics->GetCamera2D();
 	bool bCamera = camera->IsEnable() && bPermitCamera_;
 
 	D3DXMATRIX matWorld;
@@ -424,8 +424,8 @@ void RenderObjectTLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 void RenderObjectTLX::Render(const D3DXMATRIX& matTransform) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
-	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
+	auto& camera = graphics->GetCamera2D();
+	auto& camera3D = graphics->GetCamera();
 
 	if (graphics->IsAllowRenderTargetChange()) {
 		if (auto pRT = renderTarget_.lock())
@@ -687,7 +687,7 @@ void RenderObjectLX::Render(const D3DXMATRIX& matTransform) {
 				if (bVertexShaderMode_) {
 					VertexFogState* fogParam = graphics->GetFogState();
 
-					auto camera = DirectGraphics::GetBase()->GetCamera();
+					auto& camera = DirectGraphics::GetBase()->GetCamera();
 
 					bool bFog = graphics->IsFogEnable();
 					graphics->SetFogEnable(false);
@@ -883,7 +883,7 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 				if (bVertexShaderMode_) {
 					VertexFogState* fogParam = graphics->GetFogState();
 
-					auto camera = graphics->GetCamera();
+					auto& camera = graphics->GetCamera();
 
 					bool bFog = graphics->IsFogEnable();
 					graphics->SetFogEnable(false);
@@ -1084,8 +1084,8 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 	if (countRenderIndex == 0U || countRenderVertex == 0U) return;
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
+	auto& camera = graphics->GetCamera2D();
+	auto& camera3D = graphics->GetCamera();
 
 	if (graphics->IsAllowRenderTargetChange()) {
 		if (auto pRT = renderTarget_.lock())
@@ -1585,8 +1585,8 @@ void ParticleRenderer2D::Render() {
 	if (countIndex == 0U) return;
 	
 	IDirect3DDevice9* device = graphics->GetDevice();
-	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
+	auto& camera = graphics->GetCamera2D();
+	auto& camera3D = graphics->GetCamera();
 
 	if (graphics->IsAllowRenderTargetChange()) {
 		if (auto pRT = renderTarget_.lock())
@@ -1713,8 +1713,8 @@ void ParticleRenderer3D::Render() {
 	if (countIndex == 0U) return;
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+	auto& camera = graphics->GetCamera();
+	auto& camera2D = graphics->GetCamera2D();
 
 	if (graphics->IsAllowRenderTargetChange()) {
 		if (auto pRT = renderTarget_.lock())

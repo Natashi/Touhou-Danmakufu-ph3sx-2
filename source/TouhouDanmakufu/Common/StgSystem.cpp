@@ -188,9 +188,11 @@ void StgSystemController::Render() {
 	}
 	catch (gstd::wexception& e) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+		auto& camera2D = graphics->GetCamera2D();
+
 		camera2D->SetEnable(false);
 		camera2D->Reset();
+
 		Logger::WriteTop(e.what());
 		infoSystem_->SetError(e.what());
 	}
@@ -292,8 +294,8 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	}
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
-	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+	auto& camera3D = graphics->GetCamera();
+	auto& camera2D = graphics->GetCamera2D();
 	double focusRatioX = camera2D->GetRatioX();
 	double focusRatioY = camera2D->GetRatioY();
 	double focusAngleZ = camera2D->GetAngleZ();
@@ -305,9 +307,10 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 		stageInfo = stageController_->GetStageInformation();
 		DxRect<LONG>* rcStgFrame = stageInfo->GetStgFrameRect();
 
-		ref_count_ptr<D3DXVECTOR2> pos = new D3DXVECTOR2;
-		pos->x = (rcStgFrame->right - rcStgFrame->left) / 2.0f;
-		pos->y = (rcStgFrame->bottom - rcStgFrame->top) / 2.0f;
+		D3DXVECTOR2 pos = {
+			(rcStgFrame->right - rcStgFrame->left) / 2.0f,
+			(rcStgFrame->bottom - rcStgFrame->top) / 2.0f
+		};
 		camera2D->SetResetFocus(pos);
 
 		orgFocusPos = camera2D->GetFocusPosition();

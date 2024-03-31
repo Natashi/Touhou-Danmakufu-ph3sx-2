@@ -92,8 +92,8 @@ void StgShotManager::Render(int targetPriority) {
 	if (bEnableFog)
 		graphics->SetFogEnable(false);
 
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
-	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+	auto& camera3D = graphics->GetCamera();
+	auto& camera2D = graphics->GetCamera2D();
 
 	D3DXMatrixMultiply(&matProj_, &camera2D->GetMatrix(), &graphics->GetViewPortMatrix());
 

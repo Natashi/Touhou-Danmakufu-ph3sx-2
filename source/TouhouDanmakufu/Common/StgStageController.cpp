@@ -483,13 +483,14 @@ void StgStageInformation::SetStgFrameRect(const DxRect<LONG>& rect, bool bUpdate
 	rcStgFrame_.top *= DirectGraphics::g_dxCoordsMul_;
 	rcStgFrame_.bottom *= DirectGraphics::g_dxCoordsMul_;
 
-	ref_count_ptr<D3DXVECTOR2> pos = new D3DXVECTOR2;
-	pos->x = (rcStgFrame_.right - rcStgFrame_.left) / 2.0f;
-	pos->y = (rcStgFrame_.bottom - rcStgFrame_.top) / 2.0f;
-
 	if (bUpdateFocusResetValue) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+		auto& camera2D = graphics->GetCamera2D();
+
+		D3DXVECTOR2 pos = {
+			(rcStgFrame_.right - rcStgFrame_.left) / 2.0f,
+			(rcStgFrame_.bottom - rcStgFrame_.top) / 2.0f
+		};
 		camera2D->SetResetFocus(pos);
 		camera2D->Reset();
 	}

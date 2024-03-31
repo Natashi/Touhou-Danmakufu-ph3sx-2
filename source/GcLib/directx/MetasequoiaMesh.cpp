@@ -510,7 +510,7 @@ void MetasequoiaMesh::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 	{
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		IDirect3DDevice9* device = graphics->GetDevice();
-		ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+		auto& camera = graphics->GetCamera();
 
 		DWORD bFogEnable = FALSE;
 		if (bCoordinate2D_) {

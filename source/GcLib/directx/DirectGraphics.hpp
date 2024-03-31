@@ -199,13 +199,11 @@ namespace directx {
 		POINT GetMousePosition();
 		static DxRect<LONG> ClientSizeToWindowSize(const DxRect<LONG>& rc, ScreenMode mode);
 
-		gstd::ref_count_ptr<DxCamera> GetCamera() { return camera_; }
-		gstd::ref_count_ptr<DxCamera2D> GetCamera2D() { return camera2D_; }
+		const gstd::ref_count_ptr<DxCamera>& GetCamera() { return camera_; }
+		const gstd::ref_count_ptr<DxCamera2D>& GetCamera2D() { return camera2D_; }
 
 		void SaveBackSurfaceToFile(const std::wstring& path);
 	};
-
-	//-----------------------------------------------------------------------------------------------
 
 	//*******************************************************************
 	//DirectGraphicsPrimaryWindow
