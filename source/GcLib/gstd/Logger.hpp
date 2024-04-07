@@ -24,6 +24,8 @@ namespace gstd {
 			std::string text;
 		};
 	public:
+		virtual ~ILogger() = default;
+
 		virtual bool Initialize(const std::string& name) = 0;
 
 		const std::string& GetName() const { return name_; }
@@ -140,6 +142,8 @@ namespace gstd {
 		std::string displayName_;
 		bool bActive_;
 	public:
+		virtual ~ILoggerPanel() = default;
+
 		virtual void Initialize(const std::string& name) {
 			name_ = name;
 			bActive_ = false;
