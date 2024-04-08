@@ -142,6 +142,7 @@ namespace gstd {
 		std::string displayName_;
 		bool bActive_;
 	public:
+		ILoggerPanel() = default;
 		virtual ~ILoggerPanel() = default;
 
 		virtual void Initialize(const std::string& name) {
