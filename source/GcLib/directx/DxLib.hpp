@@ -12,6 +12,7 @@
 #include "DirectGraphics.hpp"
 
 #if defined(DNH_PROJ_EXECUTOR)
+#include "SystemPanel.hpp"
 #include "DxCamera.hpp"
 
 #include "Texture.hpp"

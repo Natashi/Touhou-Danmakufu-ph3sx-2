@@ -67,9 +67,11 @@
 
 	#include <wingdi.h>		// For font generation in DxText.cpp
 	#include <pdh.h>		// For performance queries in Logger.cpp
+	#include <wbemidl.h>
 
 	#pragma comment (lib, "gdi32.lib")
 	#pragma comment (lib, "pdh.lib")
+	#pragma comment (lib, "wbemuuid.lib")
 
 #endif	// defined(DNH_PROJ_EXECUTOR)
 

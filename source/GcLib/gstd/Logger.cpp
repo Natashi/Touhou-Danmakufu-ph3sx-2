@@ -580,9 +580,6 @@ void WindowLogger::PanelInfo::Initialize(const std::string& name) {
 }
 
 void WindowLogger::PanelInfo::Update() {
-	_GetRamInfo();
-	_GetCpuPerformance();
-
 	Logger::GetTop()->Flush();
 }
 void WindowLogger::PanelInfo::ProcessGui() {
@@ -627,30 +624,6 @@ void WindowLogger::PanelInfo::ProcessGui() {
 
 	ImGui::Dummy(ImVec2(0, 4));
 	ImGui::Indent(6);
-
-	{
-		static double cpuDisplay = 0;
-
-		ImGui::Text("Process RAM: %llu/%llu MB", ramMemAvail_, ramMemMax_);
-		ImGui::SameLine(240);
-
-		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, (ImU32)ImColor(32, 144, 255));
-		{
-			ImGui::TextUnformatted("Process CPU: ");
-
-			constexpr double smoothing = 0.08;
-			cpuDisplay = (1 - smoothing) * cpuDisplay + rateCpuUsage_ * smoothing;
-
-			ImGui::SameLine(240 + 96 + 106);
-			ImGui::Text("%.2f%%", rateCpuUsage_);
-
-			auto height = ImGui::GetCurrentContext()->FontSize;
-
-			ImGui::SameLine(240 + 96);
-			ImGui::ProgressBar(cpuDisplay / 100, ImVec2(100, height), "");
-		}
-		ImGui::PopStyleColor();
-	}
 }
 
 void WindowLogger::PanelInfo::SetInfo(int row, const std::string& textInfo, const std::string& textData) {

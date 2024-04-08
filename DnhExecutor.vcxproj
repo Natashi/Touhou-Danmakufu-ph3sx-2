@@ -315,6 +315,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClCompile Include="source\GcLib\directx\RenderObject.cpp" />
     <ClCompile Include="source\GcLib\directx\ScriptManager.cpp" />
     <ClCompile Include="source\GcLib\directx\Shader.cpp" />
+    <ClCompile Include="source\GcLib\directx\SystemPanel.cpp" />
     <ClCompile Include="source\GcLib\directx\Texture.cpp" />
     <ClCompile Include="source\GcLib\directx\TransitionEffect.cpp" />
     <ClCompile Include="source\GcLib\directx\VertexBuffer.cpp" />
@@ -401,6 +402,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClInclude Include="source\GcLib\directx\RenderObject.hpp" />
     <ClInclude Include="source\GcLib\directx\ScriptManager.hpp" />
     <ClInclude Include="source\GcLib\directx\Shader.hpp" />
+    <ClInclude Include="source\GcLib\directx\SystemPanel.hpp" />
     <ClInclude Include="source\GcLib\directx\Texture.hpp" />
     <ClInclude Include="source\GcLib\directx\TransitionEffect.hpp" />
     <ClInclude Include="source\GcLib\directx\Vertex.hpp" />

@@ -50,6 +50,7 @@ namespace directx {
 		shared_ptr<Shader> shader;
 	};
 
+	class SystemInfoPanel;
 	class DirectGraphics : public DirectGraphicsBase {
 		static DirectGraphics* thisBase_;
 	public:
@@ -59,6 +60,8 @@ namespace directx {
 		D3DPRESENT_PARAMETERS d3dppWin_;
 
 		DirectGraphicsConfig config_;
+
+		shared_ptr<SystemInfoPanel> panelSystem_;
 	protected:
 		static constexpr DWORD wndStyleFull_ = WS_POPUP;
 		static constexpr DWORD wndStyleWin_ = WS_OVERLAPPEDWINDOW - WS_SIZEBOX;
@@ -115,12 +118,15 @@ namespace directx {
 
 		const DirectGraphicsConfig& GetGraphicsConfig() { return config_; }
 
+		void SetSystemPanel(shared_ptr<SystemInfoPanel> panel) { panelSystem_ = panel; }
+
 		void ResetCamera();
 		void ResetDeviceState();
 		void ResetDisplaySettings();
 
 		bool BeginScene(bool bMainRender, bool bClear);
 		virtual bool BeginScene(bool bClear);
+		virtual void EndScene(bool bPresent);
 
 		//-----------------------------------------------------------
 

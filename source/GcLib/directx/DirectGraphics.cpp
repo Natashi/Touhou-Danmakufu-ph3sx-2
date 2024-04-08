@@ -6,9 +6,11 @@
 #include "DxUtility.hpp"
 
 #if defined(DNH_PROJ_EXECUTOR)
-#include "Texture.hpp"
 
-#include "../../TouhouDanmakufu/Common/DnhCommon.hpp"
+#include "SystemPanel.hpp"
+
+#include "../../TouhouDanmakufu/Common/DnhConfiguration.hpp"
+
 #endif
 
 using namespace gstd;
@@ -398,6 +400,8 @@ void DirectGraphics::_RestoreDxResource() {
 
 	ResetCamera();
 	ResetDeviceState();
+
+	panelSystem_->CreateD3DQueries();
 }
 
 bool DirectGraphics::_Reset() {
@@ -532,7 +536,16 @@ bool DirectGraphics::BeginScene(bool bMainRender, bool bClear) {
 		camera_->thisProjectionChanged_ = false;
 	}
 
+	if (panelSystem_)
+		panelSystem_->StartD3DQuery();
+
 	return SUCCEEDED(pDevice_->BeginScene());
+}
+void DirectGraphics::EndScene(bool bPresent) {
+	if (panelSystem_)
+		panelSystem_->EndD3DQuery();
+
+	DirectGraphicsBase::EndScene(bPresent);
 }
 
 void DirectGraphics::ClearRenderTarget() {
