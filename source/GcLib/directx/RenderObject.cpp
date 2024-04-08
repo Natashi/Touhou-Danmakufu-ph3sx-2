@@ -2098,17 +2098,12 @@ void DxMeshInfoPanel::Update() {
 			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
 			MeshDisplay displayData = {
-				(size_t)data,
-				"",		// Computed below: strAddress
+				(uintptr_t)data,
+				StringUtility::FromAddress((uintptr_t)data),
 				STR_MULTI(fileName),
 				STR_MULTI(pathReduce),
 				countRef
 			};
-#ifdef _WIN64
-			displayData.strAddress = STR_FMT("%016x", displayData.address);
-#else
-			displayData.strAddress = STR_FMT("%08x", displayData.address);
-#endif
 
 			listDisplay_[iMesh] = displayData;
 		}

@@ -222,7 +222,7 @@ namespace directx {
 		public:
 			ID3DXEffect* pEffect;
 
-			size_t address;
+			uintptr_t address;
 			std::string strAddress;
 			std::string name;
 			int countRef;
@@ -232,7 +232,7 @@ namespace directx {
 			optional<weak_ptr<ShaderData>> refData;
 
 			ShaderDisplay() {};
-			ShaderDisplay(ID3DXEffect* pEffect, const std::string& name, size_t dataAddress, shared_ptr<ShaderData> ref);
+			ShaderDisplay(ID3DXEffect* pEffect, const std::string& name, uintptr_t dataAddress, shared_ptr<ShaderData> ref);
 		public:
 			// Lazy-loaded as they're only visible on hover
 			optional<std::vector<std::string>> descParams;

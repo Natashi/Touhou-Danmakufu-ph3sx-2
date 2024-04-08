@@ -226,6 +226,7 @@ namespace gstd {
 		static std::string Join(const std::vector<std::string>& strs, const std::string& join);
 
 		static std::string FromGuid(const GUID* guid);
+		static std::string FromAddress(const uintptr_t addr);
 
 		//----------------------------------------------------------------
 

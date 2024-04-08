@@ -1019,24 +1019,16 @@ void ShaderInfoPanel::ProcessGui() {
 }
 
 ShaderInfoPanel::ShaderDisplay::ShaderDisplay(ID3DXEffect* pEffect, const std::string& name, 
-	size_t dataAddress, shared_ptr<ShaderData> ref) {
-
-	this->pEffect = pEffect;
-	this->address = dataAddress;
-	this->name = name;
-
+	uintptr_t dataAddress, shared_ptr<ShaderData> ref) :
+	pEffect(pEffect), address(dataAddress), name(name)
+{
 	if (ref) {
 		this->refData = ref;
 		this->countRef = ref.use_count() - 1;
 	}
 
-#ifdef _WIN64
-	strAddress = STR_FMT("%016x", dataAddress);
-	strAddrEffect = STR_FMT("%016x", (size_t)pEffect);
-#else
-	strAddress = STR_FMT("%08x", dataAddress);
-	strAddrEffect = STR_FMT("%08x", (size_t)pEffect);
-#endif
+	strAddress = StringUtility::FromAddress(dataAddress);
+	strAddrEffect = StringUtility::FromAddress((uintptr_t)pEffect);
 
 	pEffect->GetDesc(&descEffect);
 }

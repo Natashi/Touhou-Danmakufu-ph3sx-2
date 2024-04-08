@@ -807,8 +807,8 @@ void TextureInfoPanel::Update() {
 			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
 			TextureDisplay displayData = {
-				(size_t)data,
-				"",		// Computed below: strAddress
+				(uintptr_t)data,
+				StringUtility::FromAddress((uintptr_t)data),
 				STR_MULTI(fileName),
 				STR_MULTI(pathReduce),
 				countRef,
@@ -816,11 +816,6 @@ void TextureInfoPanel::Update() {
 				infoImage->Height,
 				data->GetResourceSize()
 			};
-#ifdef _WIN64
-			displayData.strAddress = STR_FMT("%016x", displayData.address);
-#else
-			displayData.strAddress = STR_FMT("%08x", displayData.address);
-#endif
 
 			listDisplay_[iTex] = displayData;
 		}

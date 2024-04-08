@@ -574,6 +574,13 @@ std::string StringUtility::FromGuid(const GUID* guid) {
 		((uint16_t*)guid->Data4)[0], ((uint16_t*)guid->Data4)[1],
 		((uint32_t*)guid->Data4)[1]);
 }
+std::string StringUtility::FromAddress(const uintptr_t addr) {
+#ifdef _WIN64
+	return STR_FMT("%016x", addr);
+#else
+	return STR_FMT("%08x", addr);
+#endif
+}
 
 //----------------------------------------------------------------
 

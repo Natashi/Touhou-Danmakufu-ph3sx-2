@@ -109,7 +109,7 @@ namespace directx {
 				_NoSort,
 			};
 
-			size_t address;
+			uintptr_t address;
 			std::string strAddress;
 			std::string fileName;
 			std::string fullPath;
