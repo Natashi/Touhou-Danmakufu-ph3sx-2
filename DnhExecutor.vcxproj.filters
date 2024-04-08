@@ -251,6 +251,9 @@
     <ClCompile Include="source\GcLib\directx\DxCamera.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\CpuInformation.cpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">
@@ -504,6 +507,9 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\DxCamera.hpp">
       <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\CpuInformation.hpp">
+      <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,8 @@
 
 #include "GstdConstant.hpp"
 
+#include "CpuInformation.hpp"
+
 namespace gstd {
 	//================================================================
 	//DebugUtility
@@ -23,11 +25,14 @@ namespace gstd {
 	//================================================================
 	//SystemUtility
 	class SystemUtility {
+		static const CpuInformation _cpuInfo;
 	public:
 		static void InitializeCOM();
 		static void UninitializeCOM();
 
 		static void TestCpuSupportSIMD();
+
+		static const CpuInformation& GetCpuInfo() { return _cpuInfo; }
 
 		static stdch::steady_clock::time_point GetCpuTime() {
 			return stdch::steady_clock::now();

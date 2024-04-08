@@ -40,60 +40,23 @@ void SystemUtility::UninitializeCOM() {
 #endif
 #endif
 
+const CpuInformation SystemUtility::_cpuInfo = CpuInformation();
+
 void SystemUtility::TestCpuSupportSIMD() {
 #ifdef __L_MATH_VECTORIZE
-	bool hasSSE = true;
-	bool hasSSE2 = true;
-	bool hasSSE3 = true;
-	bool hasSSE4_1 = true;
+	auto& cpuInfo = GetCpuInfo();
 
-	struct _Four { int m[4]; };
+	bool hasSSE = cpuInfo.FlagSSE();
+	bool hasSSE2 = cpuInfo.FlagSSE2();
+	bool hasSSE3 = cpuInfo.FlagSSE3();
+	bool hasSSE41 = cpuInfo.FlagSSE41();
 
-	std::bitset<32> f_1_ECX;
-	std::bitset<32> f_1_EDX;
-	std::bitset<32> f_7_EBX;
-	std::bitset<32> f_7_ECX;
-	std::vector<_Four> cpuData;
-
-	memset(&f_1_ECX[0], 0, 32 / 8);
-	memset(&f_1_EDX[0], 0, 32 / 8);
-	memset(&f_7_EBX[0], 0, 32 / 8);
-	memset(&f_7_ECX[0], 0, 32 / 8);
-
-	int cpui[4];
-	__cpuid(cpui, 0);
-	int nIds = cpui[0];
-
-	for (int i = 0; i <= nIds; ++i) {
-		__cpuidex(cpui, i, 0);
-		_Four arr;
-		memcpy(&arr, cpui, sizeof(cpui));
-		cpuData.push_back(arr);
-	}
-
-	// load bitset with flags for function 0x00000001
-	if (nIds >= 1) {
-		f_1_ECX = cpuData[1].m[2];
-		f_1_EDX = cpuData[1].m[3];
-	}
-	// load bitset with flags for function 0x00000007
-	if (nIds >= 7) {
-		f_7_EBX = cpuData[7].m[1];
-		f_7_ECX = cpuData[7].m[2];
-	}
-
-	//Test SSE
-	hasSSE = f_1_EDX[25];
-	hasSSE2 = f_1_EDX[26];
-	hasSSE3 = f_1_ECX[0];
-	hasSSE4_1 = f_1_ECX[19];
-
-	if (!hasSSE || !hasSSE2 || !hasSSE3 || !hasSSE4_1) {
+	if (!hasSSE || !hasSSE2 || !hasSSE3 || !hasSSE41) {
 		std::string err = "The game cannot start because your CPU lacks the required vector instruction sets(s):\r\n  ";
 		if (!hasSSE)	err += " SSE";
 		if (!hasSSE2)	err += " SSE2";
 		if (!hasSSE3)	err += " SSE3";
-		if (!hasSSE4_1)	err += " SSE4.1";
+		if (!hasSSE41)	err += " SSE4.1";
 		throw wexception(err);
 	}
 #endif
