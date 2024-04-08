@@ -69,14 +69,14 @@ bool ELogger::Initialize(bool bFile, bool bWindow) {
 	bWindow_ = bWindow;
 
 	{
-		shared_ptr<gstd::WindowLogger> logger(new gstd::WindowLogger());
+		unique_ptr<gstd::WindowLogger> logger(new gstd::WindowLogger());
 		logger->Initialize("Window", bWindow);
-		this->AddLogger(logger);
+		this->AddLogger(MOVE(logger));
 	}
 	if (bFile) {
-		shared_ptr<gstd::FileLogger> logger(new gstd::FileLogger());
+		unique_ptr<gstd::FileLogger> logger(new gstd::FileLogger());
 		logger->Initialize("File", bFile);
-		this->AddLogger(logger);
+		this->AddLogger(MOVE(logger));
 	}
 	
 	panelCommonData_.reset(new gstd::ScriptCommonDataInfoPanel());

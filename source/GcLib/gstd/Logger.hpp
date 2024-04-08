@@ -46,7 +46,7 @@ namespace gstd {
 	protected:
 		virtual LRESULT _SubWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	protected:
-		std::list<shared_ptr<ILogger>> listLogger_;
+		std::list<unique_ptr<ILogger>> listLogger_;
 
 		bool bWindowActive_;
 	protected:
@@ -61,8 +61,8 @@ namespace gstd {
 		virtual bool Initialize();
 		bool Initialize(bool bEnable = true);
 
-		void AddLogger(shared_ptr<ILogger> logger) { listLogger_.push_back(logger); }
-		template<class T> shared_ptr<T> GetLogger(const std::string& name);
+		void AddLogger(unique_ptr<ILogger>&& logger) { listLogger_.push_back(MOVE(logger)); }
+		template<class T> T* GetLogger(const std::string& name);
 
 		virtual void Write(ILogger::LogType type, const std::string& str);
 		virtual void Write(ILogger::LogType type, const std::wstring& str);
@@ -91,12 +91,12 @@ namespace gstd {
 		void ShowLogWindow();
 	};
 
-	template<class T> shared_ptr<T> Logger::GetLogger(const std::string& name) {
+	template<class T> T* Logger::GetLogger(const std::string& name) {
 		static_assert(std::is_base_of<ILogger, T>::value, "Type parameter must derive from ILogger");
 
 		for (auto& iLogger : listLogger_) {
 			if (iLogger->GetName() == name)
-				return std::dynamic_pointer_cast<T>(iLogger);
+				return dcast(T*, iLogger.get());
 		}
 		return nullptr;
 	}

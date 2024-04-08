@@ -74,8 +74,8 @@ public:
 	bool EAddPanelNoUpdate(shared_ptr<ILoggerPanel> panel, const std::wstring& name);
 	bool EAddPanelUpdateData(shared_ptr<ILoggerPanel> panel, uint32_t updateFreq);
 
-	shared_ptr<gstd::WindowLogger> GetWindowLogger() { return GetLogger<gstd::WindowLogger>("Window"); }
-	shared_ptr<gstd::FileLogger> GetFileLogger() { return GetLogger<gstd::FileLogger>("File"); }
+	gstd::WindowLogger* GetWindowLogger() { return GetLogger<gstd::WindowLogger>("Window"); }
+	gstd::FileLogger* GetFileLogger() { return GetLogger<gstd::FileLogger>("File"); }
 
 	shared_ptr<gstd::WindowLogger::PanelEventLog> GetEventLog() {
 		if (auto wLogger = GetWindowLogger())
@@ -119,8 +119,8 @@ public:
 	void SetFastMode(bool b) { controller_->SetFastMode(b); }
 	void SetFastModeRate(size_t rate) { controller_->SetFastModeRate(rate); }
 
-	void AddFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) { controller_->AddFpsControlObject(obj); }
-	void RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) { controller_->RemoveFpsControlObject(obj); }
+	void AddFpsControlObject(unique_ptr<FpsControlObject>&& obj) { controller_->AddFpsControlObject(MOVE(obj)); }
+	void RemoveFpsControlObject(FpsControlObject* obj) { controller_->RemoveFpsControlObject(obj); }
 
 	int16_t GetFastModeKey() { return fastModeKey_; }
 	void SetFastModeKey(int16_t key) { fastModeKey_ = key; }
