@@ -43,16 +43,45 @@ bool Logger::Initialize(bool bEnable) {
 	bWindowActive_ = bEnable;
 
 	{
-		for (auto size : { 8, 10, 14, 15, 16, 20, 24 }) {
-			std::string key = StringUtility::Format("Arial%d", size);
+		for (auto size : { 8, 10, 14, 20, 24 }) {
+			auto key = STR_FMT("Arial%d", size);
 			_AddUserFont(imgui::ImGuiAddFont(key, L"Arial", size));
+		}
+		for (auto size : { 15, 16 }) {
+			auto key = STR_FMT("Arial%d", size);
+			_AddUserFont(imgui::ImGuiAddFont(key, L"Arial", size, {
+				{ 0x0020, 0x00FF },		// ASCII
+				{ 0x0370, 0x03FF },		// Greek and Coptic
+			}));
 		}
 
 		for (auto size : { 18, 20 }) {
-			std::string key = StringUtility::Format("Arial%d_Ex", size);
+			auto key = STR_FMT("Arial%d_Ex", size);
 			_AddUserFont(imgui::ImGuiAddFont(key, L"Arial", size, {
 				{ 0x0020, 0x00FF },		// ASCII
 				{ 0x2190, 0x2199 },		// Arrows
+			}));
+		}
+
+		for (auto size : { 16 }) {
+			auto key = STR_FMT("Arial%d_U", size);
+			_AddUserFont(imgui::ImGuiAddFont(key, L"Arial", size, {
+				{ 0x0020, 0x00FF },		// ASCII
+				{ 0x0100, 0x024F },		// Latin Extended A+B
+				{ 0x0250, 0x02AF },		// IPA Extensions
+				{ 0x0370, 0x03FF },		// Greek and Coptic
+				{ 0x0400, 0x04FF },		// Cyrillic
+				{ 0x0590, 0x06FF },		// Hebrew + Arabic
+				{ 0x0900, 0x109F },		// Various South Asian Scripts
+				{ 0x16A0, 0x16FF },		// Runic
+				{ 0x1780, 0x17FF },		// Khmer
+				{ 0x0400, 0x04FF },		// Cyrillic
+				{ 0x2000, 0x28FF },		// Special Symbols
+				{ 0x2000, 0x28FF },		// Punctuations
+				{ 0x2E80, 0x2FFF },		// CJK Radicals
+				{ 0x3000, 0x312F },		// CJK Symbols, Japanese Kana
+				{ 0x4E00, 0x9FFF },		// CJK Unified
+				{ 0xFF00, 0xFFEF },		// Half-Width
 			}));
 		}
 
@@ -422,6 +451,8 @@ void WindowLogger::PanelEventLog::Update() {
 	}
 }
 void WindowLogger::PanelEventLog::ProcessGui() {
+	Logger* parent = Logger::GetTop();
+
 	bool bClear = ImGui::Button("Clear");
 	ImGui::SameLine();
 
@@ -450,6 +481,7 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 			//ImGui::LogToClipboard();
 		}
 
+		ImGui::PushFont(parent->GetFont("Arial16_U"));
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
 		float htItem = ImGui::GetTextLineHeightWithSpacing();
@@ -516,6 +548,7 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 		};
 
 		ImGui::PopStyleVar();
+		ImGui::PopFont();
 
 		// Scroll to the bottom when getting new events
 		if (bScrollToBottom)
