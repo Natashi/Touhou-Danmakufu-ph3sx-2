@@ -56,7 +56,7 @@ namespace directx {
 			struct VideoController {
 				std::string name;
 				std::string compatibility;
-				uint64_t ram = 0;
+				uint64_t ram;
 				std::string driverVersion;
 			};
 

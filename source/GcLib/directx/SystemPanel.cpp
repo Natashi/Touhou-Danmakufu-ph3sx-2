@@ -76,7 +76,7 @@ void SystemInfoPanel::_InitializeWMI() {
 	if (wmi.Initialize()) {
 		if (auto query = wmi.MakeQuery(L"Win32_ComputerSystem")) {
 			if (query->Count() > 0) {
-				SystemData::System system;
+				SystemData::System system{};
 
 				if (auto v = query->Get(0, L"Manufacturer")) {
 					system.manufacturer = STR_MULTI((*v)->bstrVal);
@@ -93,7 +93,7 @@ void SystemInfoPanel::_InitializeWMI() {
 		}
 		if (auto query = wmi.MakeQuery(L"Win32_BIOS")) {
 			if (query->Count() > 0) {
-				SystemData::Bios bios;
+				SystemData::Bios bios{};
 
 				if (auto v = query->Get(0, L"Manufacturer")) {
 					bios.manufacturer = STR_MULTI((*v)->bstrVal);
@@ -107,7 +107,7 @@ void SystemInfoPanel::_InitializeWMI() {
 		}
 		if (auto query = wmi.MakeQuery(L"Win32_OperatingSystem")) {
 			if (query->Count() > 0) {
-				SystemData::OS os;
+				SystemData::OS os{};
 
 				if (auto v = query->Get(0, L"Version")) {
 					auto nums = StringUtility::Split(STR_MULTI((*v)->bstrVal), ".");
@@ -121,7 +121,7 @@ void SystemInfoPanel::_InitializeWMI() {
 		}
 		if (auto query = wmi.MakeQuery(L"Win32_SoundDevice")) {
 			for (size_t i = 0; i < query->Count(); ++i) {
-				SystemData::SoundDevice sd;
+				SystemData::SoundDevice sd{};
 
 				if (auto v = query->Get(i, L"Manufacturer")) {
 					sd.manufacturer = STR_MULTI((*v)->bstrVal);
@@ -135,7 +135,7 @@ void SystemInfoPanel::_InitializeWMI() {
 		}
 		if (auto query = wmi.MakeQuery(L"Win32_VideoController")) {
 			for (size_t i = 0; i < query->Count(); ++i) {
-				SystemData::VideoController vc;
+				SystemData::VideoController vc{};
 
 				if (auto v = query->Get(i, L"Name")) {
 					vc.name = STR_MULTI((*v)->bstrVal);
