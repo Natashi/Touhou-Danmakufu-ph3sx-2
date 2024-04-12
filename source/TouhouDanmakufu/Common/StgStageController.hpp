@@ -23,7 +23,7 @@ private:
 	ref_count_ptr<StgSystemInformation> infoSystem_;
 
 	ref_count_ptr<StgStageInformation> infoStage_;
-	ref_count_ptr<PseudoSlowInformation> infoSlow_;
+	PseudoSlowInformation* infoSlow_;
 
 	ref_count_ptr<StgPauseScene> pauseManager_;
 	ref_count_ptr<KeyReplayManager> keyReplayManager_;
@@ -52,7 +52,7 @@ public:
 	ref_count_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
 
 	ref_count_ptr<StgStageInformation> GetStageInformation() { return infoStage_; }
-	ref_count_ptr<PseudoSlowInformation> GetSlowInformation() { return infoSlow_; }
+	PseudoSlowInformation* GetSlowInformation() { return infoSlow_; }
 
 	ref_count_ptr<StgPauseScene> GetPauseManager() { return pauseManager_; }
 	ref_count_ptr<KeyReplayManager> GetKeyReplayManager() { return keyReplayManager_; }

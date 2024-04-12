@@ -18,7 +18,7 @@ namespace gstd {
 
 		size_t fastModeFpsRate_;
 
-		std::list<ref_count_weak_ptr<FpsControlObject>> listFpsControlObject_;
+		std::list<unique_ptr<FpsControlObject>> listFpsControlObject_;
 	public:
 		FpsController();
 		virtual ~FpsController();
@@ -42,10 +42,10 @@ namespace gstd {
 
 		void SetFastModeRate(size_t fpsRate) { fastModeFpsRate_ = fpsRate; }
 
-		void AddFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) {
-			listFpsControlObject_.push_back(obj);
+		void AddFpsControlObject(unique_ptr<FpsControlObject>&& obj) {
+			listFpsControlObject_.push_back(MOVE(obj));
 		}
-		void RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj);
+		void RemoveFpsControlObject(FpsControlObject* obj);
 		DWORD GetControlObjectFps();
 	};
 

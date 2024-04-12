@@ -64,8 +64,9 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	}
 
 	{
-		infoSlow_.reset(new PseudoSlowInformation());
-		EFpsController::GetInstance()->AddFpsControlObject(infoSlow_);
+		auto slow = std::make_unique<PseudoSlowInformation>();
+		infoSlow_ = slow.get();
+		EFpsController::GetInstance()->AddFpsControlObject(MOVE(slow));
 	}
 
 	if (prevStageData) {

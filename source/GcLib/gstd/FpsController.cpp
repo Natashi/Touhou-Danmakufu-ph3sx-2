@@ -19,26 +19,13 @@ FpsController::FpsController() {
 }
 FpsController::~FpsController() {
 }
-void FpsController::RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) {
-	if (obj.expired()) return;
-	for (auto itr = listFpsControlObject_.begin(); itr != listFpsControlObject_.end(); itr++) {
-		ref_count_weak_ptr<FpsControlObject>& tObj = *itr;
-		if (tObj.expired() || obj.get() == tObj.get()) {
-			listFpsControlObject_.erase(itr);
-			break;
-		}
-	}
+void FpsController::RemoveFpsControlObject(FpsControlObject* obj) {
+	listFpsControlObject_.remove_if([&](const auto& x) { return x.get() == obj; });
 }
 DWORD FpsController::GetControlObjectFps() {
 	DWORD res = fps_;
-	for (auto itr = listFpsControlObject_.begin(); itr != listFpsControlObject_.end(); ) {
-		if (auto obj = itr->get()) {
-			res = std::min(res, obj->GetFps());
-			++itr;
-		}
-		else {
-			itr = listFpsControlObject_.erase(itr);
-		}
+	for (auto& pControl : listFpsControlObject_) {
+		res = std::min(res, pControl->GetFps());
 	}
 	return res;
 }
