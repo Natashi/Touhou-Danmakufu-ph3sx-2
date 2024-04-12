@@ -125,5 +125,14 @@ namespace directx::imgui {
 	public:
 		static void BeginGroupPanel(ImVector<ImRect>* stack, const char* name, const ImVec2& size = ImVec2(0.0f, 0.0f));
 		static void EndGroupPanel(ImVector<ImRect>* stack);
+
+		template<typename Fn>
+		static inline void Disabled(bool disable, Fn fnInnerGui) {
+			if (disable)
+				ImGui::BeginDisabled();
+			fnInnerGui();
+			if (disable)
+				ImGui::EndDisabled();
+		}
 	};
 }

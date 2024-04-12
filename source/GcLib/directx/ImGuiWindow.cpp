@@ -133,9 +133,8 @@ void ImGuiDirectGraphics::ResetDevice() {
 // ------------------------------------------------------------------------
 
 ImGuiAddFont::ImGuiAddFont(const std::string& name_, const std::wstring& font_, float size_, const GlyphRange& ranges)
-	: ImGuiAddFont(name_, font_, size_) {
-
-	rangesEx.clear();
+	: ImGuiAddFont(name_, font_, size_)
+{
 	for (auto& data : ranges) {
 		rangesEx.push_back(data[0]);
 		rangesEx.push_back(data[1]);
@@ -521,3 +520,4 @@ void ImGuiExt::EndGroupPanel(ImVector<ImRect>* stack) {
 
 	ImGui::EndGroup();
 }
+
