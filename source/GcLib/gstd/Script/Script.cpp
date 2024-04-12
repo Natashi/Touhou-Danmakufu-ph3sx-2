@@ -351,8 +351,9 @@ void script_machine::run_code() {
 					current->waitCount = (int)t->as_int() - 1;
 					stack.pop_back();
 					if (current->waitCount < 0) break;
+
+					__fallthrough;
 				}
-				//Fallthrough
 				case command_kind::pc_yield:
 					yield();
 					break;

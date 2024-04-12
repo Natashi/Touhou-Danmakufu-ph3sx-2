@@ -636,6 +636,7 @@ void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 		break;
 	case MODE_BLEND_ALPHA_INV:		//Alpha + Invert
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLORARG1, D3DTA_TEXTURE | D3DTA_COMPLEMENT);
+		__fallthrough;
 	case MODE_BLEND_ALPHA:			//Alpha
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);

@@ -5522,6 +5522,7 @@ gstd::value DxScript::Func_ObjFileB_ReadString(gstd::script_machine* machine, in
 				ByteOrder::Reverse(&res[0], strSize);
 		}
 		case CODE_ACP:
+			__fallthrough;
 		case CODE_UTF8:
 		default:
 		{
