@@ -524,7 +524,7 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 bool StgSystemController::CheckMeshAndClearZBuffer(DxScriptRenderObject* obj) {
 	if (obj == nullptr) return false;
 	if (DxScriptMeshObject* objMesh = dynamic_cast<DxScriptMeshObject*>(obj)) {
-		if (DxMesh* mesh = objMesh->GetMesh().get()) {
+		if (auto mesh = objMesh->GetMesh()) {
 			if (mesh->IsCoordinate2D()) {
 				DirectGraphics::GetBase()->GetDevice()->Clear(0, nullptr,
 					D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0, 0);
@@ -779,23 +779,25 @@ void StgSystemController::TerminateScriptAll() {
 			scriptManager->TerminateScriptAll(error);
 	}
 }
-void StgSystemController::GetAllScriptList(std::list<weak_ptr<ScriptManager>>& listRes) {
-	listRes.clear();
+std::vector<weak_ptr<ScriptManager>> StgSystemController::GetScriptManagers() {
+	std::vector<weak_ptr<ScriptManager>> res;
 
 	if (packageController_)
-		listRes.push_back(packageController_->GetScriptManager());
+		res.push_back(packageController_->GetScriptManager());
 	if (stageController_) {
-		listRes.push_back(stageController_->GetScriptManager());
+		res.push_back(stageController_->GetScriptManager());
 
 		ref_count_ptr<StgPauseScene> pauseScene = stageController_->GetPauseManager();
 		if (pauseScene)
-			listRes.push_back(pauseScene->GetScriptManagerRef());
+			res.push_back(pauseScene->GetScriptManagerRef());
 	}
 
 	if (endScene_)
-		listRes.push_back(endScene_->GetScriptManagerRef());
+		res.push_back(endScene_->GetScriptManagerRef());
 	if (replaySaveScene_)
-		listRes.push_back(replaySaveScene_->GetScriptManagerRef());
+		res.push_back(replaySaveScene_->GetScriptManagerRef());
+
+	return res;
 }
 
 //****************************************************************************

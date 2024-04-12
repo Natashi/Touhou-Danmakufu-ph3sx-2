@@ -80,7 +80,7 @@ public:
 
 	ref_count_ptr<ReplayInformation> CreateReplayInformation();
 	void TerminateScriptAll();
-	void GetAllScriptList(std::list<weak_ptr<ScriptManager>>& listRes);
+	std::vector<weak_ptr<ScriptManager>> GetScriptManagers();
 };
 
 //*******************************************************************

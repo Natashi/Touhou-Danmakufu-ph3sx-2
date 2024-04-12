@@ -1135,6 +1135,8 @@ gstd::value StgControlScript::Func_SaveReplay(gstd::script_machine* machine, int
 //ScriptInfoPanel
 //*******************************************************************
 ScriptInfoPanel::ScriptInfoPanel() {
+	selectedManagerAddr_ = 0;
+	selectedScriptAddr_ = 0;
 }
 
 void ScriptInfoPanel::Initialize(const std::string& name) {
@@ -1142,288 +1144,481 @@ void ScriptInfoPanel::Initialize(const std::string& name) {
 }
 
 void ScriptInfoPanel::Update() {
+	listCachedScript_.clear();
+	listManager_.clear();
 
-}
-void ScriptInfoPanel::ProcessGui() {
-
-}
-
-/*
-bool ScriptInfoPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
-
-	gstd::WButton::Style buttonStyle;
-	buttonStyle.SetStyle(WS_CHILD | WS_VISIBLE | BS_FLAT | 
-		BS_PUSHBUTTON | BS_TEXT);
-	buttonTerminateAllScript_.Create(hWnd_, buttonStyle);
-	buttonTerminateAllScript_.SetText(L"Terminate All Scripts");
-	buttonTerminateSingleScript_.Create(hWnd_, buttonStyle);
-	buttonTerminateSingleScript_.SetText(L"Terminate Selected Script");
-
-	gstd::WListView::Style styleListView;
-	styleListView.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
-	styleListView.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListView.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-
-	wndManager_.Create(hWnd_, styleListView);
-	wndManager_.AddColumn(64, 0, L"Address");
-	wndManager_.AddColumn(64, 1, L"Thread ID");
-	wndManager_.AddColumn(96, 2, L"Scripts Running");
-	wndManager_.AddColumn(96, 3, L"Scripts Loaded");
-
-	wndCache_.Create(hWnd_, styleListView);
-	wndCache_.AddColumn(40, 0, L"Uses");
-	wndCache_.AddColumn(128, 1, L"Cached Script");
-	wndCache_.AddColumn(448, 2, L"Full Path");
-
-	wndScript_.Create(hWnd_, styleListView);
-	wndScript_.AddColumn(64, 0, L"Address");
-	wndScript_.AddColumn(32, 1, L"ID");
-	wndScript_.AddColumn(60, 2, L"Type");
-	wndScript_.AddColumn(224, 3, L"Name");
-	wndScript_.AddColumn(64, 4, L"Status");
-	wndScript_.AddColumn(80, 5, L"Task Count");
-	wndScript_.AddColumn(80, 6, L"CPU Time (μs)");
-
-	wndSplitter_.Create(hWnd_, WSplitter::TYPE_HORIZONTAL);
-	wndSplitter_.SetRatioY(0.5f);
-
-	wndSplitter2_.Create(hWnd_, WSplitter::TYPE_VERTICAL);
-	wndSplitter2_.SetRatioX(0.45f);
-
-	SetWindowVisible(false);
-	PanelInitialize();
-
-	return true;
-}
-void ScriptInfoPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
-
-	int xButton1 = wx + 16;
-	int yButton1 = wy + 8;
-	int wButton1 = 144;
-	int hButton1 = 32;
-
-	int xButton2 = xButton1 + wButton1 + 16;
-
-	buttonTerminateAllScript_.SetBounds(xButton1, yButton1, wButton1, hButton1);
-	buttonTerminateSingleScript_.SetBounds(xButton2, yButton1, wButton1, hButton1);
-
-	int yManager = xButton1 + hButton1 + 8;
-
-	int yLowerSec = (int)(wHeight * wndSplitter_.GetRatioY());
-	int wSplitter = 4;
-	int hSplitter = 6;
-
-	int wManager = wWidth * wndSplitter2_.GetRatioX();
-	int hManager = yLowerSec - yManager;
-
-	int xRightSec = wx + wManager;
-	int xCache = xRightSec + wSplitter;
-
-	wndManager_.SetBounds(wx, yManager, wManager, hManager);
-	wndSplitter2_.SetBounds(xRightSec, yManager, wSplitter, hManager);
-	wndCache_.SetBounds(xCache, yManager, wWidth - xCache, hManager);
-
-	wndSplitter_.SetBounds(wx, yLowerSec, wWidth, hSplitter);
-
-	int yScriptList = yLowerSec + hSplitter;
-	int wScriptList = 64 + 32 + 192 + 64 + 82 + 16;
-	int hScriptList = wHeight - yScriptList;
-
-	wndScript_.SetBounds(wx, yScriptList, wWidth, hScriptList);
-}
-
-void ScriptInfoPanel::_TerminateScriptAll() {
 	ETaskManager* taskManager = ETaskManager::GetInstance();
-	std::list<shared_ptr<TaskBase>>& listTask = taskManager->GetTaskList();
-	for (auto itr = listTask.begin(); itr != listTask.end(); ++itr) {
-		StgSystemController* systemController = dynamic_cast<StgSystemController*>(itr->get());
-		if (systemController)
-			systemController->TerminateScriptAll();
+	if (taskManager == nullptr) {
+		return;
+	}
+
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		std::list<shared_ptr<TaskBase>>& listTask = taskManager->GetTaskList();
+
+		for (auto& task : listTask) {
+			if (auto& systemController = dptr_cast(StgSystemController, task)) {
+				{
+					auto& pCacheMap = systemController->GetScriptEngineCache()->GetMap();
+
+					for (auto& [path, pCacheData] : pCacheMap) {
+						std::wstring pathShort = PathProperty::ReduceModuleDirectory(
+							pCacheData->GetPath());
+
+						auto displayData = CacheDisplay {
+							pCacheData.get(),
+							STR_MULTI(PathProperty::GetFileName(pathShort)),
+							STR_MULTI(pathShort),
+						};
+						listCachedScript_.push_back(MOVE(displayData));
+					}
+				}
+
+				{
+					std::set<shared_ptr<ScriptManager>> scriptManagersAll;
+
+					auto scriptManagers = systemController->GetScriptManagers();
+					for (auto& wManager : scriptManagers) {
+						if (auto manager = wManager.lock()) {
+							scriptManagersAll.insert(manager);
+
+							for (auto& wManagerRelative : manager->GetRelativeManagerList()) {
+								if (!wManagerRelative.expired())
+									scriptManagersAll.insert(wManagerRelative.lock());
+							}
+						}
+					}
+
+					for (auto& manager : scriptManagersAll) {
+						auto managerData = ManagerDisplay(manager);
+						listManager_.push_back(MOVE(managerData));
+					}
+				}
+
+				break;
+			}
+		}
 	}
 }
+void ScriptInfoPanel::ProcessGui() {
+	Logger* parent = Logger::GetTop();
 
-const wchar_t* ScriptInfoPanel::GetScriptTypeName(ManagedScript* script) {
-	if (script == nullptr) return L"Null";
+	auto font15 = parent->GetFont("Arial15");
+
+	float ht = ImGui::GetContentRegionAvail().y - 32;
+
+	if (ImGui::BeginChild("pscript_child_table", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
+
+#define _SETCOL(_i, _s) ImGui::TableSetColumnIndex(_i); ImGui::TextUnformatted((_s).c_str());
+
+		ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_NoCloseWithMiddleMouseButton;
+		if (ImGui::BeginTabBar("pscript_tabs", tab_bar_flags)) {
+			if (ImGui::BeginTabItem("Scripts")) {
+				ImGui::Dummy(ImVec2(0, 2));
+
+				if (ImGui::Button("Terminate All Scripts", ImVec2(160, 28))) {
+					_TerminateScriptAll();
+				}
+				ImGui::SameLine();
+
+				weak_ptr<ManagedScript> selectedScript = {};
+				ManagerDisplay* selectedManager = nullptr;
+
+				{
+					{
+						auto itrFind = std::find_if(listManager_.begin(), listManager_.end(),
+							[&](const ManagerDisplay& x) { return x.address == selectedManagerAddr_; });
+						if (itrFind != listManager_.end()) {
+							selectedManager = &*itrFind;
+
+							if (selectedScriptAddr_ != 0) {
+								auto& scripts = selectedManager->listScripts;
+
+								auto itrFindScr = std::find_if(scripts.cbegin(), scripts.cend(),
+									[&](const ScriptDisplay& x) { return x.address == selectedScriptAddr_; });
+								if (itrFindScr != scripts.cend()) {
+									selectedScript = itrFindScr->script;
+								}
+							}
+						}
+					}
+
+					directx::imgui::ImGuiExt::Disabled(selectedScript.expired(), [&]() {
+						if (ImGui::Button("Terminate Selected Script", ImVec2(200, 28))) {
+							selectedScriptAddr_ = 0;
+							_TerminateScript(selectedScript);
+						}
+					});
+				}
+
+				ImGui::Dummy(ImVec2(0, 2));
+
+				{
+					ImGuiTableFlags flags = ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable
+						| ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendX
+						| ImGuiTableFlags_RowBg;
+
+					float ht2 = ImGui::GetContentRegionAvail().y * 0.3;
+
+					if (ImGui::BeginTable("pscript_table_manager", 4, flags, ImVec2(0, ht2))) {
+						ImGui::TableSetupScrollFreeze(0, 1);
+
+						constexpr auto colFlags = ImGuiTableColumnFlags_WidthStretch;
+
+						ImGui::TableSetupColumn("Address", colFlags);
+						ImGui::TableSetupColumn("Thread ID", colFlags);
+						ImGui::TableSetupColumn("Scripts Running", colFlags);
+						ImGui::TableSetupColumn("Scripts Loaded", colFlags);
+
+						ImGui::TableHeadersRow();
+
+						{
+							ImGui::PushFont(font15);
+
+							ImGuiListClipper clipper;
+							clipper.Begin(listManager_.size());
+							while (clipper.Step()) {
+								for (size_t i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+									const auto& item = listManager_[i];
+									bool selected = (selectedManagerAddr_ == item.address);
+
+									ImGui::PushID(item.address);
+									ImGui::TableNextRow();
+
+									{
+										auto strAddress = StringUtility::FromAddress(item.address);
+
+										ImGui::TableSetColumnIndex(0);
+										if (ImGui::Selectable(strAddress.c_str(), selected,
+											ImGuiSelectableFlags_SpanAllColumns))
+										{
+											selectedManagerAddr_ = item.address;
+										}
+									}
+
+									_SETCOL(1, std::to_string(item.idThread));
+									_SETCOL(2, std::to_string(item.nScriptRun));
+									_SETCOL(3, std::to_string(item.nScriptLoad));
+
+									ImGui::PopID();
+								}
+							}
+
+							ImGui::PopFont();
+						}
+
+						ImGui::EndTable();
+					}
+				}
+
+				ImGui::Separator();
+
+				{
+					ImGuiTableFlags flags = ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable
+						| ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendX
+						| ImGuiTableFlags_RowBg
+						| ImGuiTableFlags_Sortable;
+
+					float ht2 = ImGui::GetContentRegionAvail().y;
+
+					if (ImGui::BeginTable("pscript_table_scripts", 7, flags, ImVec2(0, ht2))) {
+						ImGui::TableSetupScrollFreeze(0, 1);
+
+						constexpr auto sortDef = ImGuiTableColumnFlags_DefaultSort,
+							sortNone = ImGuiTableColumnFlags_NoSort;
+						constexpr auto colFlags = ImGuiTableColumnFlags_WidthStretch;
+
+						ImGui::TableSetupColumn("Address", sortDef, 0, ScriptDisplay::Column::Address);
+						ImGui::TableSetupColumn("ID", sortDef, 0, ScriptDisplay::Column::Id);
+						ImGui::TableSetupColumn("Type", sortDef, 0, ScriptDisplay::Column::Type);
+						ImGui::TableSetupColumn("Name", colFlags | sortDef, 100, ScriptDisplay::Column::Path);
+						ImGui::TableSetupColumn("Status", sortDef, 0, ScriptDisplay::Column::Status);
+						ImGui::TableSetupColumn("Task Count", sortDef, 0, ScriptDisplay::Column::Task);
+						ImGui::TableSetupColumn("Time Spent (μs)", colFlags | sortDef, 60, ScriptDisplay::Column::Time);
+
+						ImGui::TableHeadersRow();
+
+						if (selectedManager != nullptr) {
+							selectedManager->LoadScripts();
+							auto& scripts = selectedManager->listScripts;
+
+							if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs()) {
+								if (specs->SpecsDirty) {
+									ScriptDisplay::imguiSortSpecs = specs;
+
+									if (scripts.size() > 1) {
+										std::sort(scripts.begin(), scripts.end(),
+											ScriptDisplay::Compare);
+									}
+
+									specs->SpecsDirty = false;
+								}
+							}
+
+							ImGui::PushFont(font15);
+
+							ImGuiListClipper clipper;
+							clipper.Begin(scripts.size());
+							while (clipper.Step()) {
+								for (size_t i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+									auto& item = scripts[i];
+									bool selected = (selectedScriptAddr_ == item.address);
+
+									ImGui::PushID(item.address);
+									ImGui::TableNextRow();
+
+									{
+										auto strAddress = StringUtility::FromAddress(item.address);
+
+										ImGui::TableSetColumnIndex(0);
+										if (ImGui::Selectable(strAddress.c_str(), selected,
+											ImGuiSelectableFlags_SpanAllColumns))
+										{
+											selectedScriptAddr_ = item.address;
+										}
+									}
+
+									_SETCOL(1, std::to_string(item.id));
+									_SETCOL(2, item.type);
+
+									_SETCOL(3, item.name);
+									if (ImGui::IsItemHovered())
+										ImGui::SetTooltip(item.name.c_str());
+
+									ImGui::TableSetColumnIndex(4);
+									ImGui::Text(GetScriptStatusStr(item.status));
+
+									_SETCOL(5, std::to_string(item.tasks));
+									_SETCOL(6, std::to_string(item.time));
+
+									ImGui::PopID();
+								}
+							}
+
+							ImGui::PopFont();
+						}
+
+						ImGui::EndTable();
+					}
+				}
+
+				ImGui::EndTabItem();
+			}
+
+			if (ImGui::BeginTabItem("Cached")) {
+				ImGui::Dummy(ImVec2(0, 2));
+
+				{
+					ImGuiTableFlags flags = ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable
+						| ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendX
+						| ImGuiTableFlags_RowBg;
+
+					if (ImGui::BeginTable("pscript_table_cached", 3, flags)) {
+						ImGui::TableSetupScrollFreeze(0, 1);
+
+						constexpr auto colFlags = ImGuiTableColumnFlags_WidthStretch;
+
+						ImGui::TableSetupColumn("Address", colFlags);
+						ImGui::TableSetupColumn("Name", colFlags);
+						ImGui::TableSetupColumn("Full Path", colFlags);
+
+						ImGui::TableHeadersRow();
+
+						{
+							ImGui::PushFont(font15);
+
+							ImGuiListClipper clipper;
+							clipper.Begin(listCachedScript_.size());
+							while (clipper.Step()) {
+								for (size_t i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+									const auto& item = listCachedScript_[i];
+
+									ImGui::TableNextRow();
+
+									_SETCOL(0, StringUtility::FromAddress((uintptr_t)item.script));
+									_SETCOL(1, item.name);
+
+									_SETCOL(2, item.path);
+									if (ImGui::IsItemHovered())
+										ImGui::SetTooltip(item.path.c_str());
+								}
+							}
+
+							ImGui::PopFont();
+						}
+
+						ImGui::EndTable();
+					}
+				}
+
+				ImGui::EndTabItem();
+			}
+
+			ImGui::EndTabBar();
+		}
+
+#undef _SETCOL
+	}
+	ImGui::EndChild();
+
+	ImGui::Dummy(ImVec2(0, 4));
+	ImGui::Indent(6);
+}
+
+const char* ScriptInfoPanel::GetScriptTypeName(ManagedScript* script) {
+	if (script == nullptr) 
+		return "Null";
+
 	if (dynamic_cast<StgStageScript*>(script)) {
 		switch (script->GetScriptType()) {
 		case StgStageScript::TYPE_SYSTEM:
-			return L"System";
+			return "System";
 		case StgStageScript::TYPE_STAGE:
-			return L"Stage";
+			return "Stage";
 		case StgStageScript::TYPE_PLAYER:
-			return L"Player";
+			return "Player";
 		case StgStageScript::TYPE_ITEM:
-			return L"Item";
+			return "Item";
 		case StgStageScript::TYPE_SHOT:
-			return L"Shot";
+			return "Shot";
 		}
 	}
 	else if (dynamic_cast<StgPackageScript*>(script)) {
 		switch (script->GetScriptType()) {
 		case StgPackageScript::TYPE_PACKAGE_MAIN:
-			return L"Package";
+			return "Package";
 		}
 	}
 	else if (dynamic_cast<StgUserExtendSceneScript*>(script)) {
 		switch (script->GetScriptType()) {
 		case StgUserExtendSceneScript::TYPE_PAUSE_SCENE:
-			return L"PauseScene";
+			return "PauseScene";
 		case StgUserExtendSceneScript::TYPE_END_SCENE:
-			return L"EndScene";
+			return "EndScene";
 		case StgUserExtendSceneScript::TYPE_REPLAY_SCENE:
-			return L"ReplaySaveScene";
+			return "ReplaySaveScene";
 		}
 	}
-	return L"Unknown";
+	return "Unknown";
+}
+const char* ScriptInfoPanel::GetScriptStatusStr(ScriptDisplay::ScriptStatus status) {
+	switch (status) {
+	case ScriptDisplay::ScriptStatus::Running:
+		return "Running";
+	case ScriptDisplay::ScriptStatus::Loaded:
+		return "Loaded";
+	case ScriptDisplay::ScriptStatus::Paused:
+		return "Paused";
+	case ScriptDisplay::ScriptStatus::Closing:
+		return "Closing";
+	}
+	return "";
 }
 
-void ScriptInfoPanel::PanelUpdate() {
-	if (!IsWindowVisible()) return;
+ScriptInfoPanel::ManagerDisplay::ManagerDisplay(shared_ptr<ScriptManager> manager) :
+	manager(manager), address((uintptr_t)manager.get())
+{
+	idThread = manager->GetMainThreadID();
+	nScriptRun = manager->GetRunningScriptList().size();
+	nScriptLoad = manager->GetMapScriptLoad().size();
+}
 
+void ScriptInfoPanel::ManagerDisplay::LoadScripts() {
+	if (listScripts.size() > 0)
+		return;
+
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		LOCK_WEAK(pManager, manager) {
+			for (auto& [sId, pScript] : pManager->GetMapScriptLoad()) {
+				listScripts.push_back(ScriptDisplay(pScript, ScriptDisplay::ScriptStatus::Loaded));
+			}
+
+			for (auto& pScript : pManager->GetRunningScriptList()) {
+				listScripts.push_back(ScriptDisplay(pScript, 
+					pScript->IsPaused() ? 
+					ScriptDisplay::ScriptStatus::Paused : 
+					ScriptDisplay::ScriptStatus::Running));
+			}
+		}
+
+		// Sort new data as well
+		if (ScriptDisplay::imguiSortSpecs) {
+			if (listScripts.size() > 1) {
+				std::sort(listScripts.begin(), listScripts.end(), ScriptDisplay::Compare);
+			}
+		}
+	}
+}
+
+ScriptInfoPanel::ScriptDisplay::ScriptDisplay(shared_ptr<ManagedScript> script, ScriptStatus status) :
+	script(script), address((uintptr_t)script.get()),
+	status(status)
+{
+	id = script->GetScriptID();
+	name = STR_MULTI(PathProperty::GetFileName(script->GetPath()));
+	tasks = script->GetThreadCount();
+	time = script->GetScriptRunTime();
+
+	type = GetScriptTypeName(script.get());
+}
+
+const ImGuiTableSortSpecs* ScriptInfoPanel::ScriptDisplay::imguiSortSpecs = nullptr;
+bool ScriptInfoPanel::ScriptDisplay::Compare(const ScriptDisplay& a, const ScriptDisplay& b) {
+	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
+		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
+
+		int rcmp = 0;
+
+#define CASE_SORT(_id, _l, _r) \
+		case _id: { \
+			if (_l != _r) rcmp = (_l < _r) ? 1 : -1; \
+			break; \
+		}
+
+		switch ((Column)spec->ColumnUserID) {
+		CASE_SORT(Column::Address, a.address, b.address);
+		CASE_SORT(Column::Id, a.id, b.id);
+		case Column::Type:
+			rcmp = a.type.compare(b.type);
+			break;
+		case Column::Path:
+			rcmp = a.name.compare(b.name);
+			break;
+		CASE_SORT(Column::Status, (int)a.status, (int)b.status);
+		CASE_SORT(Column::Task, a.tasks, b.tasks);
+		CASE_SORT(Column::Time, a.time, b.time);
+		}
+
+#undef CASE_SORT
+
+		if (rcmp != 0) {
+			return spec->SortDirection == ImGuiSortDirection_Ascending 
+				? rcmp < 0 : rcmp > 0;
+		}
+	}
+
+	return a.address < b.address;
+}
+
+void ScriptInfoPanel::_TerminateScriptAll() {
 	ETaskManager* taskManager = ETaskManager::GetInstance();
-	if (taskManager) {
-		bool bSystemAvailable = false;
-		std::list<shared_ptr<TaskBase>>& listTask = taskManager->GetTaskList();
-		for (auto itr = listTask.begin(); itr != listTask.end(); ++itr) {
-			StgSystemController* systemController = dynamic_cast<StgSystemController*>(itr->get());
-			if (systemController) {
-				Update(systemController);
-				bSystemAvailable = true;
-			}
-		}
-		if (!bSystemAvailable)
-			Update(nullptr);
-	}
-}
-void ScriptInfoPanel::Update(StgSystemController* systemController) {
-	std::vector<ScriptManager*> vecScriptManager;
-	std::list<weak_ptr<ScriptManager>> listScriptManager;
-	if (systemController)
-		systemController->GetAllScriptList(listScriptManager);
 
-	std::set<shared_ptr<ScriptManager>> setScriptManager;
-	for (auto itr = listScriptManager.begin(); itr != listScriptManager.end(); ++itr) {
-		if (auto manager = itr->lock()) {
-			setScriptManager.insert(manager);
+	std::list<shared_ptr<TaskBase>>& listTask = taskManager->GetTaskList();
 
-			std::list<weak_ptr<ScriptManager>>& listRelative = manager->GetRelativeManagerList();
-			for (auto itrRelative = listRelative.begin(); itrRelative != listRelative.end(); ++itrRelative) {
-				if (auto managerRelative = itrRelative->lock())
-					setScriptManager.insert(managerRelative);
-			}
-		}
-	}
-
-	{
-		int iCache = 0;
-		int orgRowCount = wndCache_.GetRowCount();
-
-		if (systemController) {
-			auto& pCacheMap = systemController->GetScriptEngineCache()->GetMap();
-			for (auto itr = pCacheMap.cbegin(); itr != pCacheMap.cend(); ++itr, ++iCache) {
-				const shared_ptr<ScriptEngineData>& pData = itr->second;
-
-				size_t uses = pData.use_count();
-				std::wstring path = PathProperty::GetPathWithoutModuleDirectory(pData->GetPath());
-
-				wndCache_.SetText(iCache, 0, StringUtility::Format(L"%u", uses));
-				wndCache_.SetText(iCache, 1, StringUtility::Format(L"%s", PathProperty::GetFileName(path).c_str()));
-				wndCache_.SetText(iCache, 2, StringUtility::Format(L"%s", path.c_str()));
-			}
-		}
-
-		for (int i = iCache; i < orgRowCount; ++i)
-			wndCache_.DeleteRow(i);
-	}
-
-	{
-		{
-			Lock lock(lock_);
-
-			size_t i = 0;
-			for (auto itr = setScriptManager.begin(); itr != setScriptManager.end(); ++itr, ++i) {
-				const shared_ptr<ScriptManager>& manager = *itr;
-				wndManager_.SetText(i, 0, StringUtility::Format(L"%08x", (int)manager.get()));
-				wndManager_.SetText(i, 1, StringUtility::Format(L"%d", manager->GetMainThreadID()));
-				wndManager_.SetText(i, 2, StringUtility::Format(L"%u", manager->GetRunningScriptList().size()));
-				wndManager_.SetText(i, 3, StringUtility::Format(L"%u", manager->GetMapScriptLoad().size()));
-				vecScriptManager.push_back(manager.get());
-			}
-		}
-
-		{
-			listScript_.clear();
-
-			int iScript = 0;
-			int orgRowCount = wndScript_.GetRowCount();
-			int selectedIndex = wndManager_.GetSelectedRow();
-			if (selectedIndex >= 0 && selectedIndex < vecScriptManager.size()) {
-				auto AddScript = [&](shared_ptr<ManagedScript>& script, const std::wstring& status) {
-					listScript_.push_back(script);
-					wndScript_.SetText(iScript, 0, StringUtility::Format(L"%08x", (int)script.get()));
-					wndScript_.SetText(iScript, 1, StringUtility::Format(L"%d", script->GetScriptID()));
-					wndScript_.SetText(iScript, 2, GetScriptTypeName(script.get()));
-					wndScript_.SetText(iScript, 3,
-						StringUtility::Format(L"%s", PathProperty::GetFileName(script->GetPath()).c_str()));
-					wndScript_.SetText(iScript, 4, status);
-					wndScript_.SetText(iScript, 5, StringUtility::Format(L"%u", script->GetThreadCount()));
-					wndScript_.SetText(iScript, 6, StringUtility::Format(L"%u", script->GetScriptRunTime()));
-				};
-
-				ScriptManager* manager = vecScriptManager[selectedIndex];
-				{
-					std::map<int64_t, shared_ptr<ManagedScript>>& mapLoad = manager->GetMapScriptLoad();
-					for (auto itr = mapLoad.begin(); itr != mapLoad.end(); ++itr, ++iScript)
-						AddScript(itr->second, L"Loaded");
-				}
-				{
-					std::list<shared_ptr<ManagedScript>>& listRun = manager->GetRunningScriptList();
-					for (auto itr = listRun.begin(); itr != listRun.end(); ++itr, ++iScript) {
-						shared_ptr<ManagedScript>& script = *itr;
-						AddScript(script, script->IsPaused() ? L"Paused" : L"Running");
-					}
-				}
-			}
-
-			for (int i = iScript; i < orgRowCount; ++i)
-				wndScript_.DeleteRow(i);
+	for (auto& task : listTask) {
+		if (auto& systemController = dptr_cast(StgSystemController, task)) {
+			systemController->TerminateScriptAll();
+			break;
 		}
 	}
 }
-
-LRESULT ScriptInfoPanel::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	switch (uMsg) {
-	case WM_SIZE:
-	{
-		LocateParts();
-		break;
+void ScriptInfoPanel::_TerminateScript(weak_ptr<ManagedScript> wScript) {
+	if (auto script = wScript.lock()) {
+		if (auto manager = script->GetScriptManager())
+			manager->CloseScript(script);
 	}
-	case WM_COMMAND:
-	{
-		int id = wParam & 0xffff;
-		if (id == buttonTerminateAllScript_.GetWindowId()) {
-			_TerminateScriptAll();
-			return FALSE;
-		}
-		else if (id == buttonTerminateSingleScript_.GetWindowId()) {
-			int selectedIndex = wndScript_.GetSelectedRow();
-			if (selectedIndex >= 0 && selectedIndex < listScript_.size()) {
-				auto itr = std::next(listScript_.begin(), selectedIndex);
-				if (auto script = itr->lock()) {
-					ScriptManager* manager = script->GetScriptManager();
-					if (manager) manager->CloseScript(script);
-				}
-			}
-			return TRUE;
-		}
-	}
-	}
-	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
-*/
+
