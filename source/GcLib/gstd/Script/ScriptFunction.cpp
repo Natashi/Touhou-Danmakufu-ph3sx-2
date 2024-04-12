@@ -425,13 +425,16 @@ namespace gstd {
 
 		for (size_t i = 0; i < arrVal.size(); ++i) {
 			value nv = (*val)[i];
+
 			if (nv.get_type()->get_kind() == type_data::tk_array) {
 				type_data* nextElemType = __cast_array(machine, rootType, &nv, setType);
 				if (elemType == nullptr)
 					elemType = nextElemType;
 			}
-			else
+			else {
 				BaseFunction::_value_cast(&nv, rootType);
+			}
+
 			arrVal[i] = nv;
 		}
 

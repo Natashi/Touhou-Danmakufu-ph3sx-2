@@ -104,7 +104,7 @@ namespace gstd {
 		pc_inline_index_array2,		//Push ({esp-1}[{esp-0}]) to stack
 		pc_inline_length_array,		//Push length({esp-0}) to stack
 
-		pc_nop = 0xff,			//No operation
+		pc_nop = (uint8_t)-1,	//No operation
 	};
 	enum class block_kind : uint8_t {
 		bk_normal, bk_sub, bk_function, bk_microthread
@@ -119,8 +119,9 @@ namespace gstd {
 		std::vector<code> codes;
 		block_kind kind;
 
-		script_block(uint32_t the_level, block_kind the_kind);
+		script_block(uint32_t level, block_kind kind);
 	};
+
 #pragma pack(push, 1)
 	struct code {
 #ifdef _DEBUG
