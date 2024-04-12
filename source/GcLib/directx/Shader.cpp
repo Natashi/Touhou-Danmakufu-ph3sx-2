@@ -1114,151 +1114,31 @@ bool ShaderInfoPanel::ShaderDisplay::Compare(const ShaderDisplay& a, const Shade
 	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
 		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
 
-		const auto ascending = spec->SortDirection == ImGuiSortDirection_Ascending;
+		int rcmp = 0;
 
-#define CASE_SORT(_id, _cmp) case _id: { \
-			int res = _cmp; \
-			if (res != 0) \
-				return ascending ? res < 0 : res > 0; \
-			break; }
+#define CASE_SORT(_id, _l, _r) \
+		case _id: { \
+			if (_l != _r) rcmp = (_l < _r) ? 1 : -1; \
+			break; \
+		}
 
 		switch ((Column)spec->ColumnUserID) {
-			CASE_SORT(Column::Address, (ptrdiff_t)a.address - (ptrdiff_t)b.address);
-			CASE_SORT(Column::Name, a.name.compare(b.name));
-			CASE_SORT(Column::Uses, a.countRef - b.countRef);
-			CASE_SORT(Column::Effect, (ptrdiff_t)a.pEffect - (ptrdiff_t)b.pEffect);
-		default: break;
+		CASE_SORT(Column::Address, a.address, b.address);
+		case Column::Name:
+			rcmp = a.name.compare(b.name);
+			break;
+		CASE_SORT(Column::Uses, a.countRef, b.countRef);
+		CASE_SORT(Column::Effect, a.pEffect, b.pEffect);
 		}
 
 #undef CASE_SORT
-	}
 
-	return (ptrdiff_t)a.address < (ptrdiff_t)b.address;
-}
-
-/*
-bool ShaderInfoPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
-
-	gstd::WListView::Style styleListView;
-	styleListView.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
-	styleListView.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListView.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListView_.Create(hWnd_, styleListView);
-
-	wndListView_.AddColumn(60, ROW_ADDRESS, L"Address");
-	wndListView_.AddColumn(224, ROW_NAME, L"Name");
-	wndListView_.AddColumn(36, ROW_REFCOUNT, L"Uses");
-	wndListView_.AddColumn(60, ROW_EFFECT, L"Effect");
-	wndListView_.AddColumn(72, ROW_PARAMETERS, L"Parameters");
-	wndListView_.AddColumn(72, ROW_TECHNIQUES, L"Techniques");
-
-	SetWindowVisible(false);
-	PanelInitialize();
-
-	return true;
-}
-void ShaderInfoPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
-
-	wndListView_.SetBounds(wx, wy, wWidth, wHeight);
-}
-void ShaderInfoPanel::PanelUpdate() {
-	ShaderManager* manager = ShaderManager::GetBase();
-	if (manager == nullptr) return;
-
-	if (!IsWindowVisible()) return;
-
-	struct ShaderDisplay {
-		uint32_t address;
-		std::wstring name;
-		int countRef;
-		ID3DXEffect* pEffect;
-		uint32_t parameters;
-		uint32_t techniques;
-	};
-
-	if (manager) {
-		StaticLock lock = StaticLock();
-
-		std::vector<ShaderDisplay> listShaderDisp;
-		{
-			int iData = 0;
-			auto _AddData = [&](ID3DXEffect* pEffect, const std::wstring& name, uint32_t dataAddress, int ref) {
-				D3DXEFFECT_DESC desc;
-				pEffect->GetDesc(&desc);
-
-				ShaderDisplay shaderDisp;
-				shaderDisp.address = dataAddress;
-				shaderDisp.name = name;
-				shaderDisp.countRef = ref;
-				shaderDisp.pEffect = pEffect;
-				shaderDisp.parameters = desc.Parameters;
-				shaderDisp.techniques = desc.Techniques;
-
-				listShaderDisp[iData++] = shaderDisp;
-			};
-
-			if (RenderShaderLibrary* renderLib = manager->GetRenderLib()) {
-				static std::vector<std::pair<ID3DXEffect*, const std::string*>> listShader = {
-					std::make_pair(renderLib->GetRender2DShader(), &ShaderSource::nameRender2D_),
-					std::make_pair(renderLib->GetInstancing2DShader(), &ShaderSource::nameHwInstance2D_),
-					std::make_pair(renderLib->GetInstancing3DShader(), &ShaderSource::nameHwInstance3D_),
-					std::make_pair(renderLib->GetIntersectVisualShader1(), &ShaderSource::nameIntersectVisual1_),
-					std::make_pair(renderLib->GetIntersectVisualShader2(), &ShaderSource::nameIntersectVisual2_)
-				};
-
-				listShaderDisp.resize(listShader.size());
-				for (size_t i = 0; i < listShader.size(); ++i) {
-					ID3DXEffect* pEffect = listShader[i].first;
-					const std::string* name = listShader[i].second;
-
-					_AddData(pEffect, StringUtility::ConvertMultiToWide(*name), (uint32_t)pEffect, 1);
-				}
-			}
-
-			{
-				auto& mapData = manager->mapShaderData_;
-				listShaderDisp.resize(listShaderDisp.size() + mapData.size());
-
-				for (auto itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap) {
-					const std::wstring& name = itrMap->first;
-					const shared_ptr<ShaderData>& data = itrMap->second;
-
-					ID3DXEffect* pEffect = data->effect_;
-
-					if (data->bText_)
-						_AddData(pEffect, name, (uint32_t)data.get(), data.use_count());
-					else {
-						_AddData(pEffect, PathProperty::GetPathWithoutModuleDirectory(name),
-							(uint32_t)data.get(), data.use_count());
-					}
-				}
-			}
-		}
-		{
-			int iRow = 0;
-			for (; iRow < listShaderDisp.size(); ++iRow) {
-				ShaderDisplay* data = &listShaderDisp[iRow];
-
-				wndListView_.SetText(iRow, ROW_ADDRESS, StringUtility::Format(L"%08x", data->address));
-				wndListView_.SetText(iRow, ROW_NAME, data->name);
-				wndListView_.SetText(iRow, ROW_REFCOUNT, std::to_wstring(data->countRef));
-				wndListView_.SetText(iRow, ROW_EFFECT, StringUtility::Format(L"%08x", (uint32_t)data->pEffect));
-				wndListView_.SetText(iRow, ROW_PARAMETERS, std::to_wstring(data->parameters));
-				wndListView_.SetText(iRow, ROW_TECHNIQUES, std::to_wstring(data->techniques));
-			}
-
-			for (; iRow < wndListView_.GetRowCount(); ++iRow)
-				wndListView_.DeleteRow(iRow);
+		if (rcmp != 0) {
+			return spec->SortDirection == ImGuiSortDirection_Ascending
+				? rcmp < 0 : rcmp > 0;
 		}
 	}
-	else {
-		wndListView_.Clear();
-	}
+
+	return a.address < b.address;
 }
-*/
+

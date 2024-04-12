@@ -927,25 +927,34 @@ bool TextureInfoPanel::TextureDisplay::Compare(const TextureDisplay& a, const Te
 	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
 		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
 
-		const auto ascending = spec->SortDirection == ImGuiSortDirection_Ascending;
+		int rcmp = 0;
 
-#define CASE_SORT(_id, _cmp) case _id: { \
-			int res = _cmp; \
-			if (res != 0) \
-				return ascending ? res < 0 : res > 0; \
-			break; }
+#define CASE_SORT(_id, _l, _r) \
+		case _id: { \
+			if (_l != _r) rcmp = (_l < _r) ? 1 : -1; \
+			break; \
+		}
 
 		switch ((Column)spec->ColumnUserID) {
-			CASE_SORT(Column::Address, (ptrdiff_t)a.address - (ptrdiff_t)b.address);
-			CASE_SORT(Column::Name, a.fileName.compare(b.fileName));
-			CASE_SORT(Column::FullPath, a.fullPath.compare(b.fullPath));
-			CASE_SORT(Column::Uses, a.countRef - b.countRef);
-			CASE_SORT(Column::Size, a.size - b.size);
-			default: break;
+		CASE_SORT(Column::Address, a.address, b.address);
+		case Column::Name:
+			rcmp = a.fileName.compare(b.fileName);
+			break;
+		case Column::FullPath:
+			rcmp = a.fullPath.compare(b.fullPath);
+			break;
+		CASE_SORT(Column::Uses, a.countRef, b.countRef);
+		CASE_SORT(Column::Size, a.size, b.size);
+		default: break;
 		}
 
 #undef CASE_SORT
+
+		if (rcmp != 0) {
+			return spec->SortDirection == ImGuiSortDirection_Ascending
+				? rcmp < 0 : rcmp > 0;
+		}
 	}
 
-	return (ptrdiff_t)a.address < (ptrdiff_t)b.address;
+	return a.address < b.address;
 }
