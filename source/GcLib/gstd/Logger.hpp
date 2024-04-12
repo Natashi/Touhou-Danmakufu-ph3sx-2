@@ -234,6 +234,7 @@ namespace gstd {
 
 		void AddEvent(const LogData& data);
 		void ClearEvents();
+		void CopyEventsToClipboard();
 	};
 
 	class WindowLogger::PanelInfo : public ILoggerPanel {

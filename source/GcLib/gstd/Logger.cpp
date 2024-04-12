@@ -459,6 +459,7 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 	bool bCopy = ImGui::Button("Copy");
 	ImGui::SameLine();
 
+	// TODO: Maybe implement filtering
 	ImGui::SetNextItemWidth(-100);
 	bool bFilterTextChanged = ImGui::InputText("Filter", filter_.data(), filter_.size() - 1);
 
@@ -475,10 +476,11 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 			prevCount = events_.size();
 		}
 
-		if (bClear)
+		if (bClear) {
 			ClearEvents();
+		}
 		if (bCopy) {
-			//ImGui::LogToClipboard();
+			CopyEventsToClipboard();
 		}
 
 		ImGui::PushFont(parent->GetFont("Arial16_U"));
@@ -589,6 +591,33 @@ void WindowLogger::PanelEventLog::AddEvent(const LogData& data) {
 void WindowLogger::PanelEventLog::ClearEvents() {
 	events_.clear();
 	bLogChanged_ = true;
+}
+
+void WindowLogger::PanelEventLog::CopyEventsToClipboard() {
+	std::wstring strAll;
+	for (auto& event : events_) {
+		strAll += STR_WIDE(event.time + " " + event.text + "\r\n");
+	}
+	strAll.push_back(0);
+
+	using StrChType = decltype(strAll)::traits_type::char_type;
+	size_t strSizeInBytes = strAll.size() * sizeof(StrChType);
+
+	if (::OpenClipboard(NULL)) {
+		HGLOBAL hAlloc = ::GlobalAlloc(GMEM_MOVEABLE, strSizeInBytes);
+		if (hAlloc) {
+			// Lock memory and copy string data
+			{
+				StrChType* dataLock = reinterpret_cast<StrChType*>(::GlobalLock(hAlloc));
+				memcpy(dataLock, strAll.data(), strSizeInBytes);
+				::GlobalUnlock(hAlloc);
+			}
+
+			::SetClipboardData(CF_UNICODETEXT, hAlloc);
+		}
+
+		::CloseClipboard();
+	}
 }
 
 //WindowLogger::PanelInfo
