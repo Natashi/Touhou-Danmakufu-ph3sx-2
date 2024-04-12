@@ -137,7 +137,7 @@ void DxWindowManager::_DispatchMouseEvent() {
 	DirectInput* input = DirectInput::GetBase();
 	if (input == nullptr) return;
 
-	gstd::ref_count_ptr<DxWindowEvent> event = new DxWindowEvent();
+	gstd::ref_count_ptr<DxWindowEvent> event(new DxWindowEvent());
 	gstd::ref_count_ptr<DxWindow> wndIntersect = GetIntersectedWindow();
 
 	//左クリック

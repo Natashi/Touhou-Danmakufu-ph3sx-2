@@ -896,7 +896,7 @@ void StgItemObject::_CreateScoreItem() {
 	StgItemManager* itemManager = stageController_->GetItemManager();
 
 	if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
-		ref_unsync_ptr<StgItemObject_ScoreText> obj = new StgItemObject_ScoreText(stageController_);
+		ref_unsync_ptr<StgItemObject_ScoreText> obj(new StgItemObject_ScoreText(stageController_));
 
 		obj->SetX(posX_);
 		obj->SetY(posY_);

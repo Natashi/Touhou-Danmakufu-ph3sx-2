@@ -656,7 +656,7 @@ void StgEnemyBossSceneData::LoadSceneEvents(StgStageController* stageController)
 
 		std::vector<ref_unsync_ptr<StgEnemyBossObject>> listEnemyObject;
 		for (size_t iEnemy = 0; iEnemy < listLife.size(); iEnemy++) {
-			ref_unsync_ptr<StgEnemyBossObject> obj = new StgEnemyBossObject(stageController);
+			ref_unsync_ptr<StgEnemyBossObject> obj(new StgEnemyBossObject(stageController));
 			int idEnemy = objectManager->AddObject(obj, false);
 			listEnemyObject.push_back(obj);
 		}

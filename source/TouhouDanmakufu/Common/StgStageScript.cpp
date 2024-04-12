@@ -2504,7 +2504,7 @@ gstd::value StgStageScript::Func_StartSlow(gstd::script_machine* machine, int ar
 	int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 		PseudoSlowInformation::OWNER_PLAYER : PseudoSlowInformation::OWNER_ENEMY;
 
-	ref_count_ptr<PseudoSlowInformation> infoSlow = stageController->GetSlowInformation();
+	auto infoSlow = stageController->GetSlowInformation();
 	infoSlow->AddSlow(fps, typeOwner, slowTarget);
 
 	return value();
@@ -2519,7 +2519,7 @@ gstd::value StgStageScript::Func_StopSlow(gstd::script_machine* machine, int arg
 	int typeOwner = script->GetScriptType() == TYPE_PLAYER ?
 		PseudoSlowInformation::OWNER_PLAYER : PseudoSlowInformation::OWNER_ENEMY;
 
-	ref_count_ptr<PseudoSlowInformation> infoSlow = stageController->GetSlowInformation();
+	auto infoSlow = stageController->GetSlowInformation();
 	infoSlow->RemoveSlow(typeOwner, slowTarget);
 
 	return value();
@@ -2683,7 +2683,7 @@ gstd::value StgStageScript::Func_ObjMove_SetSpeed(gstd::script_machine* machine,
 			}
 		}
 		
-		obj->AddPattern(0, new StgMovePattern_Angle(obj));
+		obj->AddPattern(0, ref_unsync_ptr<StgMovePattern>(new StgMovePattern_Angle(obj)));
 lab_set:
 		obj->SetSpeed(speed);
 	}
@@ -2721,7 +2721,7 @@ gstd::value StgStageScript::Func_ObjMove_SetAngle(gstd::script_machine* machine,
 			}
 		}
 
-		obj->AddPattern(0, new StgMovePattern_Angle(obj));
+		obj->AddPattern(0, ref_unsync_ptr<StgMovePattern>(new StgMovePattern_Angle(obj)));
 lab_set:
 		obj->SetDirectionAngle(angle);
 	}

@@ -129,9 +129,13 @@ namespace gstd {
 		ref_count_ptr() {
 			_SetPointerNew(nullptr);
 		}
-		ref_count_ptr(T* src) {
+		ref_count_ptr(nullptr_t) {
+			_SetPointerNew(nullptr);
+		}
+		explicit ref_count_ptr(T* src) {
 			_SetPointerNew(src);
 		}
+
 		ref_count_ptr(const _MyType& src) {
 			this->_SetPointerFromInfo<T>(src.pInfo_, src.pPtr_);
 		}

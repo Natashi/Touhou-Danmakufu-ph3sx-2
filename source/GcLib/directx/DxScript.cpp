@@ -2446,7 +2446,7 @@ value DxScript::Func_Obj_Create(gstd::script_machine* machine, int argc, const v
 	DxScript* script = (DxScript*)machine->data;
 	script->CheckRunInMainThread();
 
-	ref_unsync_ptr<DxScriptObjectBase> obj = new DxScriptObjectBase();
+	ref_unsync_ptr<DxScriptObjectBase> obj(new DxScriptObjectBase());
 
 	int id = ID_INVALID;
 	if (obj) {
@@ -3325,7 +3325,7 @@ gstd::value DxScript::Func_ObjShader_Create(gstd::script_machine* machine, int a
 	DxScript* script = (DxScript*)machine->data;
 	script->CheckRunInMainThread();
 
-	ref_unsync_ptr<DxScriptShaderObject> obj = new DxScriptShaderObject();
+	ref_unsync_ptr<DxScriptShaderObject> obj(new DxScriptShaderObject());
 
 	int id = ID_INVALID;
 	if (obj) {
@@ -4413,7 +4413,7 @@ value DxScript::Func_ObjParticleList_ClearInstance(script_machine* machine, int 
 value DxScript::Func_ObjMesh_Create(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	ref_unsync_ptr<DxScriptMeshObject> obj = new DxScriptMeshObject();
+	ref_unsync_ptr<DxScriptMeshObject> obj(new DxScriptMeshObject());
 
 	int id = ID_INVALID;
 	if (obj) {
@@ -4526,7 +4526,7 @@ value DxScript::Func_ObjMesh_GetPath(script_machine* machine, int argc, const va
 value DxScript::Func_ObjText_Create(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	ref_unsync_ptr<DxScriptTextObject> obj = new DxScriptTextObject();
+	ref_unsync_ptr<DxScriptTextObject> obj(new DxScriptTextObject());
 
 	int id = ID_INVALID;
 	if (obj) {
@@ -4855,7 +4855,7 @@ gstd::value DxScript::Func_ObjSound_Create(gstd::script_machine* machine, int ar
 	DxScript* script = (DxScript*)machine->data;
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
 
-	ref_unsync_ptr<DxSoundObject> obj = new DxSoundObject();
+	ref_unsync_ptr<DxSoundObject> obj(new DxSoundObject());
 	obj->manager_ = script->objManager_.get();
 
 	int id = script->AddObject(obj);

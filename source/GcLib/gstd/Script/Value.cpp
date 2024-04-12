@@ -135,7 +135,7 @@ value* value::set(type_data* t, value* v) {
 value* value::set(type_data* t, std::vector<value>& v) {
 	kind = type_data::tk_array;
 	type = t;
-	ref_unsync_ptr<std::vector<value>> nv = new std::vector<value>(v);
+	ref_unsync_ptr<std::vector<value>> nv(new std::vector<value>(v));
 	new (&p_array_value) auto(nv);
 	return this;
 }
