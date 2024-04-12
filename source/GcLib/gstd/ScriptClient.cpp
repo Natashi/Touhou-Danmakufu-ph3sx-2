@@ -851,6 +851,7 @@ static value _ScriptValueLerp(script_machine* machine, const value* v1, const va
 		&& v2->get_type()->get_kind() == type_data::type_kind::tk_array)
 	{
 		value res;
+
 		if (v1->length_as_array() != v2->length_as_array()) {
 			std::string err = StringUtility::Format("Sizes must be the same when interpolating arrays. (%u and %u)",
 				v1->length_as_array(), v2->length_as_array());
@@ -1322,17 +1323,19 @@ value ScriptClientBase::Func_RegexMatchRepeated(script_machine* machine, int arg
 	std::vector<std::wstring> singleArray;
 
 	std::wregex reg(pattern);
+
 	auto itrBegin = std::wsregex_iterator(str.begin(), str.end(), reg);
 	auto itrEnd = std::wsregex_iterator();
 
-	valueArrayRes.resize(std::distance(itrBegin, itrEnd));
 	for (size_t i = 0; itrBegin != itrEnd; ++itrBegin, ++i) {
 		const std::wsmatch& match = *itrBegin;
+
 		singleArray.clear();
 		for (const std::wssub_match& itrMatch : match) {
 			singleArray.push_back(itrMatch.str());
 		}
-		valueArrayRes[i] = script->CreateStringArrayValue(singleArray);
+
+		valueArrayRes.push_back(script->CreateStringArrayValue(singleArray));
 	}
 
 	return script->CreateValueArrayValue(valueArrayRes);
