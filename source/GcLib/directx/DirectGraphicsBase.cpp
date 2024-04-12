@@ -81,6 +81,7 @@ void DirectGraphicsBase::_VerifyDeviceCaps_Result(const std::vector<std::string>
 		for (auto& str : err)
 			strAll += "   - " + str + "\r\n";
 		strAll += "Try restarting in reference rasterizer mode\r\n";
+		Logger::WriteError(strAll);
 		throw wexception(strAll);
 	}
 	else if (warn.size() > 0) {
@@ -88,7 +89,7 @@ void DirectGraphicsBase::_VerifyDeviceCaps_Result(const std::vector<std::string>
 			"Direct3D device has the following issue(s):\r\n";
 		for (auto& str : warn)
 			strAll += "   - " + str + "\r\n";
-		Logger::WriteTop(strAll);
+		Logger::WriteWarn(strAll);
 	}
 }
 

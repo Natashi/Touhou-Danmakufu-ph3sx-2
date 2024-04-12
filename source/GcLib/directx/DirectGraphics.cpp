@@ -193,7 +193,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 
 		if (typeSamples != D3DMULTISAMPLE_NONE) {
 			if (!(IsSupportMultiSample(typeSamples, true) || IsSupportMultiSample(typeSamples, false))) {
-				Logger::WriteTop("DirectGraphics: Selected multisampling is not supported on this device. Initializing without anti-aliasing support.");
+				Logger::WriteWarn("DirectGraphics: Selected multisampling is not supported on this device. Initializing without anti-aliasing support.");
 				typeSamples = D3DMULTISAMPLE_NONE;
 			}
 			else {
@@ -446,13 +446,13 @@ bool DirectGraphics::_Restore() {
 
 				std::wstring err = StringUtility::Format(L"_Restore: Failed to restore the Direct3D device; %s\r\n\t%s",
 					DXGetErrorString(deviceStatus_), DXGetErrorDescription(deviceStatus_));
-				Logger::WriteTop(err);
+				Logger::WriteError(err);
 				throw gstd::wexception(err);
 			}
 			else {
 				std::wstring err = StringUtility::Format(L"_Restore: Attempt failed; %s\r\n\t%s",
 					DXGetErrorString(deviceStatus_), DXGetErrorDescription(deviceStatus_));
-				Logger::WriteTop(err);
+				Logger::WriteWarn(err);
 			}
 		}
 		return false;

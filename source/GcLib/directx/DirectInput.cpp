@@ -49,7 +49,7 @@ void DirectInput::_WrapDXErr(HRESULT hr, const std::string& routine, const std::
 	if (SUCCEEDED(hr)) return;
 	std::string err = StringUtility::Format("DirectInput::%s: %s. [%s]\r\n  %s",
 		routine.c_str(), msg.c_str(), DXGetErrorStringA(hr), DXGetErrorDescriptionA(hr));
-	Logger::WriteTop(err);
+	Logger::WriteError(err);
 	if (bThrow) throw wexception(err);
 }
 
@@ -198,7 +198,7 @@ bool DirectInput::_InitializeJoypad() {
 
 	size_t count = listDeviceJoypad_.size();
 	if (count == 0U)
-		Logger::WriteTop("DirectInput:_InitializeJoypad: No pad device detected.");
+		Logger::WriteWarn("DirectInput:_InitializeJoypad: No pad device detected.");
 
 	Logger::WriteTop("DirectInput: Pad device initialized.");
 	return true;
@@ -280,7 +280,7 @@ BOOL DirectInput::_GetJoypadCallback(LPDIDEVICEINSTANCE lpddi) {
 	}
 	catch (wexception& err) {
 		ptr_release(device);
-		Logger::WriteTop("DirectInput::_GetJoypadCallback: Connection attempt failed.");
+		Logger::WriteError("DirectInput::_GetJoypadCallback: Connection attempt failed.");
 	}
 
 #undef CHECKERR
