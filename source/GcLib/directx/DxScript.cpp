@@ -5375,7 +5375,7 @@ gstd::value DxScript::Func_ObjFileB_GetPointer(gstd::script_machine* machine, in
 
 	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
 	if (obj) {
-		ByteBuffer* buffer = obj->GetBuffer();
+		const ByteBuffer* buffer = obj->GetBuffer();
 		res = buffer ? buffer->GetOffset() : 0;
 	}
 
