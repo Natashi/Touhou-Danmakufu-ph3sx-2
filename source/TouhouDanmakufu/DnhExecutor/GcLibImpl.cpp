@@ -412,6 +412,10 @@ bool EApplication::_Finalize() {
 	secondaryBackBuffer_ = nullptr;
 	//EDirectGraphics::GetBase()->ResetDisplaySettings();
 
+	ELogger* logger = ELogger::GetInstance();
+	logger->SaveState();
+	logger->Close();
+
 	SystemController::DeleteInstance();
 	ETaskManager::DeleteInstance();
 	EFileManager::GetInstance()->EndLoadThread();
@@ -424,10 +428,6 @@ bool EApplication::_Finalize() {
 	EDirectGraphics::DeleteInstance();
 	EFpsController::DeleteInstance();
 	EFileManager::DeleteInstance();
-
-	ELogger* logger = ELogger::GetInstance();
-	logger->SaveState();
-	logger->Close();
 
 	Logger::WriteTop("Application finalized.");
 	return true;

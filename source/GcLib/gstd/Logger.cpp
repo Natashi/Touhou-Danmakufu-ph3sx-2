@@ -301,29 +301,22 @@ void WindowLogger::SaveState() {
 	RecordBuffer recordMain;
 	bool bRecordExists = recordMain.ReadFromFile(path, 0, HEADER_RECORDFILE);
 
-	/*
-	if (wndTab_) {
-		int panelIndex = wndTab_->GetCurrentPage();
-		recordMain.SetRecordAsInteger("panelIndex", panelIndex);
+	if (currentPanel_) {
+		recordMain.SetRecordAsStringA("panelIndex", currentPanel_->GetName());
 	}
 
-	RECT rcWnd;
-	ZeroMemory(&rcWnd, sizeof(RECT));
-	if (bRecordExists)
-		recordMain.GetRecord("windowRect", rcWnd);
-	if (IsWindowVisible())
-		GetWindowRect(hWnd_, &rcWnd);
-	recordMain.SetRecord("windowRect", rcWnd);
+	{
+		recordMain.SetRecord("windowRect", windowRect_);
+	}
 
-	if (wndTab_) {
+	/*
+	{
 		RecordBuffer recordPanel;
-		int panelCount = wndTab_->GetPageCount();
-		for (int iPanel = 0; iPanel < panelCount; iPanel++) {
-			WindowLogger::Panel* panel = (WindowLogger::Panel*)(wndTab_->GetPanel(iPanel).get());
-			if (panel == nullptr) continue;
 
-			panel->_WriteRecord(recordPanel);
+		for (auto& iPanel : panels_) {
+			iPanel->WriteRecord(recordPanel);
 		}
+
 		recordMain.SetRecordAsRecordBuffer("panel", recordPanel);
 	}
 	*/
@@ -336,36 +329,40 @@ void WindowLogger::LoadState() {
 	RecordBuffer recordMain;
 	if (!recordMain.ReadFromFile(path, 0, HEADER_RECORDFILE)) return;
 
-	/*
-	int panelIndex = recordMain.GetRecordAsInteger("panelIndex");
-	if (panelIndex >= 0 && panelIndex < wndTab_->GetPageCount())
-		wndTab_->SetCurrentPage(panelIndex);
+	if (auto lastPanel = recordMain.GetRecordAsStringA("panelIndex")) {
+		auto& name = *lastPanel;
 
-	RECT rcWnd;
-	recordMain.GetRecord("windowRect", rcWnd);
-	if (rcWnd.left >= 0 && rcWnd.right > rcWnd.left &&
-		rcWnd.top >= 0 && rcWnd.bottom > rcWnd.top) {
-		SetBounds(rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top);
+		auto itrFind = std::find_if(panels_.begin(), panels_.end(), 
+			[&](decltype(panels_)::const_reference item) {
+				return item->GetName() == name;
+			});
+		if (itrFind != panels_.end()) {
+			(*itrFind)->SetActive(true);
+		}
+		else {
+			(*panels_.begin())->SetActive(true);
+		}
 	}
 
-	RecordBuffer recordPanel;
-	recordMain.GetRecordAsRecordBuffer("panel", recordPanel);
+	{
+		if (auto oRect = recordMain.GetRecordAs<std::array<int, 4>>("windowRect")) {
+			windowRect_ = *oRect;
 
-	int panelCount = wndTab_->GetPageCount();
-	for (int iPanel = 0; iPanel < panelCount; iPanel++) {
-		WindowLogger::Panel* panel = (WindowLogger::Panel*)(wndTab_->GetPanel(iPanel).get());
-		if (panel == nullptr) continue;
+			Logger* parent = Logger::GetTop();
+			HWND hWnd = parent->GetWindowHandle();
 
-		panel->_ReadRecord(recordPanel);
+			::MoveWindow(hWnd, windowRect_[0], windowRect_[1], 
+				windowRect_[2], windowRect_[3], TRUE);
+		}
 	}
-	*/
 }
 
 void WindowLogger::ProcessGui() {
 	Logger* parent = Logger::GetTop();
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+	constexpr ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration 
+		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 	ImGui::SetNextWindowPos(viewport->WorkPos);
 	ImGui::SetNextWindowSize(viewport->WorkSize);
 
@@ -375,14 +372,16 @@ void WindowLogger::ProcessGui() {
 		//ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 		ImGuiWindowFlags window_flags = 0;
 		if (ImGui::BeginChild("ChildW_Tabs", ImVec2(0, 0), false, window_flags)) {
-			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_NoCloseWithMiddleMouseButton;
+			constexpr ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_NoCloseWithMiddleMouseButton;
+			constexpr ImGuiTabItemFlags tab_item_flags = ImGuiTabItemFlags_NoCloseWithMiddleMouseButton
+				| ImGuiTabItemFlags_NoTooltip | ImGuiTabItemFlags_NoReorder;
+
 			if (ImGui::BeginTabBar("TabBar_Tabs", tab_bar_flags)) {
 				currentPanel_ = nullptr;
 				for (auto& iPanel : panels_) {
-					iPanel->SetActive(false);
-
-					if (ImGui::BeginTabItem(iPanel->GetDisplayName().c_str())) {
+					if (ImGui::BeginTabItem(iPanel->GetDisplayName().c_str(), nullptr, tab_item_flags)) {
 						iPanel->SetActive(true);
+
 						currentPanel_ = iPanel;
 
 						ImGui::Dummy(ImVec2(0, 2));
@@ -391,6 +390,9 @@ void WindowLogger::ProcessGui() {
 						iPanel->ProcessGui();
 
 						ImGui::EndTabItem();
+					}
+					else {
+						iPanel->SetActive(false);
 					}
 				}
 
@@ -403,6 +405,15 @@ void WindowLogger::ProcessGui() {
 	}
 
 	ImGui::PopFont();
+
+	{
+		auto windowPos = ImGui::GetWindowPos();
+		auto windowSize = ImGui::GetWindowSize();
+		windowRect_ = {
+			(int)windowPos[0], (int)windowPos[1],
+			(int)windowSize[0], (int)windowSize[1],
+		};
+	}
 }
 
 void WindowLogger::Write(const LogData& data) {

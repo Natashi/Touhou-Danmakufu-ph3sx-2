@@ -135,7 +135,7 @@ namespace gstd {
 		virtual void Write(const LogData& data);
 		virtual void Flush();
 	};
-
+	
 	class ILoggerPanel {
 	protected:
 		std::string name_;
@@ -170,6 +170,8 @@ namespace gstd {
 		class PanelInfo;
 	protected:
 		bool bEnable_;
+		std::string iniPanel_;
+		std::array<int, 4> windowRect_;
 
 		std::list<shared_ptr<ILoggerPanel>> panels_;
 		shared_ptr<ILoggerPanel> currentPanel_;
