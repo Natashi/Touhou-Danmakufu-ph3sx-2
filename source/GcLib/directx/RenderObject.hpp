@@ -4,6 +4,7 @@
 
 #include "DxConstant.hpp"
 #include "DxUtility.hpp"
+#include "DxCamera.hpp"
 #include "Texture.hpp"
 #include "Shader.hpp"
 
@@ -557,22 +558,33 @@ namespace directx {
 		void SetInfoPanel(shared_ptr<DxMeshInfoPanel> panel) { panelInfo_ = panel; }
 	};
 
-	class DxMeshInfoPanel : public gstd::WindowLogger::Panel {
-	protected:
-		enum {
-			ROW_ADDRESS,
-			ROW_NAME,
-			ROW_FULLNAME,
-			ROW_COUNT_REFFRENCE,
-		};
-		gstd::WListView wndListView_;
+	class DxMeshInfoPanel : public gstd::ILoggerPanel {
+	public:
+		struct MeshDisplay {
+			enum Column {
+				Address,
+				Name, FullPath,
+				Uses,
+				_NoSort,
+			};
 
-		virtual bool _AddedLogger(HWND hTab);
+			uintptr_t address;
+			std::string strAddress;
+			std::string fileName;
+			std::string fullPath;
+			int countRef;
+
+			static const ImGuiTableSortSpecs* imguiSortSpecs;
+			static bool IMGUI_CDECL Compare(const MeshDisplay& a, const MeshDisplay& b);
+		};
+	protected:
+		std::vector<MeshDisplay> listDisplay_;
 	public:
 		DxMeshInfoPanel();
-		~DxMeshInfoPanel();
 
-		virtual void LocateParts();
-		virtual void PanelUpdate();
+		virtual void Initialize(const std::string& name);
+
+		virtual void Update();
+		virtual void ProcessGui();
 	};
 }

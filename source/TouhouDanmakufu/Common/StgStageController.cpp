@@ -9,78 +9,65 @@
 StgStageController::StgStageController(StgSystemController* systemController) {
 	systemController_ = systemController;
 	infoSystem_ = systemController_->GetSystemInformation();
-
-	scriptManager_ = nullptr;
-	enemyManager_ = nullptr;
-	shotManager_ = nullptr;
-	itemManager_ = nullptr;
-	intersectionManager_ = nullptr;
 }
 StgStageController::~StgStageController() {
-	objectManagerMain_ = nullptr;
 	if (scriptManager_) {
 		scriptManager_->OrphanAllScripts();
-		scriptManager_ = nullptr;
 	}
-	ptr_delete(enemyManager_);
-	ptr_delete(shotManager_);
-	ptr_delete(itemManager_);
-	ptr_delete(intersectionManager_);
 }
 void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) {
+	ELogger* logger = ELogger::GetInstance();
+	auto infoLog = logger->GetInfoPanel();
+
 	Math::InitializeFPU();
 
 	EDirectInput* input = EDirectInput::GetInstance();
 	input->ClearKeyState();
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	/*
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
-	camera3D->Reset();
-	camera3D->SetPerspectiveWidth(384);
-	camera3D->SetPerspectiveHeight(448);
-	camera3D->SetPerspectiveClip(10, 2000);
-	camera3D->thisProjectionChanged_ = true;
 
-	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
-	camera2D->Reset();
-	*/
-
-	ref_count_ptr<StgStageInformation> infoStage = startData->GetStageInformation();
-	ref_count_ptr<ReplayInformation::StageData> replayStageData = startData->GetStageReplayData();
-	ref_count_ptr<StgStageInformation> prevStageData = startData->GetPrevStageInformation();
-	ref_count_ptr<StgPlayerInformation> prevPlayerInfo = startData->GetPrevPlayerInformation();
+	auto infoStage = startData->infoStage_;
+	auto replayStageData = startData->replayStageData_;
+	auto prevStageData = startData->prevStageInfo_;
+	auto prevPlayerInfo = startData->prevPlayerInfo_;
 
 	infoStage_ = infoStage;
 	infoStage_->SetReplay(replayStageData != nullptr);
 
-	int replayState = infoStage_->IsReplay() ? KeyReplayManager::STATE_REPLAY : KeyReplayManager::STATE_RECORD;
-	keyReplayManager_ = new KeyReplayManager(EDirectInput::GetInstance());
-	keyReplayManager_->SetManageState(replayState);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_LEFT);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_RIGHT);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_UP);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_DOWN);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_SHOT);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_BOMB);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_SLOWMOVE);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_USER1);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_USER2);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_OK);
-	keyReplayManager_->AddTarget(EDirectInput::KEY_CANCEL);
-	std::set<int16_t> listReplayTargetKey = infoSystem_->GetReplayTargetKeyList();
-	for (auto itrKey = listReplayTargetKey.begin(); itrKey != listReplayTargetKey.end(); itrKey++) {
-		int16_t id = *itrKey;
-		keyReplayManager_->AddTarget(id);
+	{
+		int replayState = infoStage_->IsReplay() ? KeyReplayManager::STATE_REPLAY : KeyReplayManager::STATE_RECORD;
+
+		keyReplayManager_.reset(new KeyReplayManager(EDirectInput::GetInstance()));
+		keyReplayManager_->SetManageState(replayState);
+
+		keyReplayManager_->AddTarget(EDirectInput::KEY_LEFT);
+		keyReplayManager_->AddTarget(EDirectInput::KEY_RIGHT);
+		keyReplayManager_->AddTarget(EDirectInput::KEY_UP);
+		keyReplayManager_->AddTarget(EDirectInput::KEY_DOWN);
+		keyReplayManager_->AddTarget(EDirectInput::KEY_SHOT);
+		keyReplayManager_->AddTarget(EDirectInput::KEY_BOMB);
+		keyReplayManager_->AddTarget(EDirectInput::KEY_SLOWMOVE);
+		keyReplayManager_->AddTarget(EDirectInput::KEY_USER1);
+		keyReplayManager_->AddTarget(EDirectInput::KEY_USER2);
+		keyReplayManager_->AddTarget(EDirectInput::KEY_OK);
+		keyReplayManager_->AddTarget(EDirectInput::KEY_CANCEL);
+
+		std::set<int16_t> listReplayTargetKey = infoSystem_->GetReplayTargetKeyList();
+		for (auto itrKey = listReplayTargetKey.begin(); itrKey != listReplayTargetKey.end(); itrKey++) {
+			int16_t id = *itrKey;
+			keyReplayManager_->AddTarget(id);
+		}
+
+		if (replayStageData == nullptr)
+			replayStageData.reset(new ReplayInformation::StageData());
+		infoStage_->SetReplayData(replayStageData);
 	}
 
-	if (replayStageData == nullptr)
-		replayStageData = new ReplayInformation::StageData();
-	infoStage_->SetReplayData(replayStageData);
-
-	infoSlow_ = new PseudoSlowInformation();
-	ref_count_weak_ptr<PseudoSlowInformation> wPtr = infoSlow_;
-	EFpsController::GetInstance()->AddFpsControlObject(wPtr);
+	{
+		auto slow = std::make_unique<PseudoSlowInformation>();
+		infoSlow_ = slow.get();
+		EFpsController::GetInstance()->AddFpsControlObject(MOVE(slow));
+	}
 
 	if (prevStageData) {
 		infoStage_->SetScore(prevStageData->GetScore());
@@ -91,10 +78,9 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	if (!infoStage_->IsReplay()) {
 		uint32_t randSeed = infoStage_->GetRandProvider()->GetSeed();
 		replayStageData->SetRandSeed(randSeed);
-
-		ELogger* logger = ELogger::GetInstance();
-		if (logger->IsWindowVisible())
-			logger->SetInfo(11, L"Rand seed", StringUtility::Format(L"%08x", randSeed));
+		
+		if (infoLog)
+			infoLog->SetInfo(11, "Rand seed", StringUtility::Format("%08x", randSeed));
 
 		ref_count_ptr<ScriptInformation> infoParent = systemController_->GetSystemInformation()->GetMainScriptInformation();
 		ref_count_ptr<ScriptInformation> infoMain = infoStage_->GetMainScriptInformation();
@@ -114,9 +100,8 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		uint32_t randSeed = replayStageData->GetRandSeed();
 		infoStage_->GetRandProvider()->Initialize(randSeed);
 
-		ELogger* logger = ELogger::GetInstance();
-		if (logger->IsWindowVisible())
-			logger->SetInfo(11, L"Rand seed", StringUtility::Format(L"%08x", randSeed));
+		if (infoLog)
+			infoLog->SetInfo(11, "Rand seed", StringUtility::Format("%08x", randSeed));
 
 		keyReplayManager_->ReadRecord(*replayStageData->GetReplayKeyRecord());
 
@@ -124,28 +109,30 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		infoStage_->SetGraze(replayStageData->GetGraze());
 		infoStage_->SetPoint(replayStageData->GetPoint());
 
-		prevPlayerInfo = new StgPlayerInformation();
+		prevPlayerInfo.reset(new StgPlayerInformation());
 		prevPlayerInfo->SetLife(replayStageData->GetPlayerLife());
 		prevPlayerInfo->SetSpell(replayStageData->GetPlayerBombCount());
 		prevPlayerInfo->SetPower(replayStageData->GetPlayerPower());
 		prevPlayerInfo->SetRebirthFrame(replayStageData->GetPlayerRebirthFrame());
 	}
 
-	objectManagerMain_ = std::make_shared<StgStageScriptObjectManager>(this);
-	//_objectManagerMain_ = objectManagerMain_;
-	scriptManager_ = std::make_shared<StgStageScriptManager>(this);
-	enemyManager_ = new StgEnemyManager(this);
-	shotManager_ = new StgShotManager(this);
-	itemManager_ = new StgItemManager(this);
-	intersectionManager_ = new StgIntersectionManager();
-	pauseManager_ = new StgPauseScene(systemController_);
+	objectManagerMain_.reset(new StgStageScriptObjectManager(this));
+	scriptManager_.reset(new StgStageScriptManager(this));
+
+	enemyManager_.reset(new StgEnemyManager(this));
+	shotManager_.reset(new StgShotManager(this));
+	itemManager_.reset(new StgItemManager(this));
+	intersectionManager_.reset(new StgIntersectionManager());
+	pauseManager_.reset(new StgPauseScene(systemController_));
 
 	intersectionManager_->SetVisualizerRenderPriority(infoStage->GetCameraFocusPermitPriority() - 1);
 
-	//It's a package script, link its manager with the stage's
-	if (StgPackageController* packageController = systemController_->GetPackageController()) {
-		shared_ptr<ScriptManager> packageScriptManager = std::dynamic_pointer_cast<ScriptManager>(packageController->GetScriptManagerRef());
-		shared_ptr<ScriptManager> stageScriptManager = std::dynamic_pointer_cast<ScriptManager>(scriptManager_);
+	// It's a package script, link its manager with the stage's
+	if (auto packageController = systemController_->GetPackageController()) {
+		shared_ptr<ScriptManager> packageScriptManager = std::dynamic_pointer_cast<ScriptManager>(
+			packageController->GetScriptManager());
+		shared_ptr<ScriptManager> stageScriptManager = std::dynamic_pointer_cast<ScriptManager>(
+			scriptManager_);
 		ScriptManager::AddRelativeScriptManagerMutual(packageScriptManager, stageScriptManager);
 	}
 
@@ -164,7 +151,8 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 			ELogger::WriteTop(StringUtility::Format(L"System script: [%s]", 
 				PathProperty::ReduceModuleDirectory(pathSystemScript).c_str()));
 
-			auto script = scriptManager_->LoadScript(pathSystemScript, StgStageScript::TYPE_SYSTEM);
+			auto script = scriptManager_->LoadScript(
+				scriptManager_, pathSystemScript, StgStageScript::TYPE_SYSTEM);
 			scriptManager_->StartScript(script);
 		}
 	}
@@ -182,7 +170,8 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		if (systemController_->GetSystemInformation()->IsPackageMode())
 			objPlayer->SetEnableStateEnd(false);
 
-		auto script = scriptManager_->LoadScript(pathPlayerScript, StgStageScript::TYPE_PLAYER);
+		auto script = scriptManager_->LoadScript(
+			scriptManager_, pathPlayerScript, StgStageScript::TYPE_PLAYER);
 		_SetupReplayTargetCommonDataArea(script);
 
 		shared_ptr<StgStagePlayerScript> scriptPlayer =
@@ -193,25 +182,28 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		scriptManager_->StartScript(script);
 
 		if (prevPlayerInfo)
-			objPlayer->SetPlayerInforamtion(prevPlayerInfo);
+			objPlayer->SetPlayerInformation(prevPlayerInfo);
 	}
 	if (objPlayer)
 		infoStage_->SetPlayerObjectInformation(objPlayer->GetPlayerInformation());
 
 	if (infoMain->type_ == ScriptInformation::TYPE_SINGLE) {
 		std::wstring pathMainScript = EPathProperty::GetSystemResourceDirectory() + L"script/System_SingleStage.txt";
-		auto script = scriptManager_->LoadScript(pathMainScript, StgStageScript::TYPE_STAGE);
+		auto script = scriptManager_->LoadScript(
+			scriptManager_, pathMainScript, StgStageScript::TYPE_STAGE);
 		scriptManager_->StartScript(script);
 	}
 	else if (infoMain->type_ == ScriptInformation::TYPE_PLURAL) {
 		std::wstring pathMainScript = EPathProperty::GetSystemResourceDirectory() + L"script/System_PluralStage.txt";
-		auto script = scriptManager_->LoadScript(pathMainScript, StgStageScript::TYPE_STAGE);
+		auto script = scriptManager_->LoadScript(
+			scriptManager_, pathMainScript, StgStageScript::TYPE_STAGE);
 		scriptManager_->StartScript(script);
 	}
 	else {
 		const std::wstring& pathMainScript = infoMain->pathScript_;
 		if (pathMainScript.size() > 0) {
-			auto script = scriptManager_->LoadScript(pathMainScript, StgStageScript::TYPE_STAGE);
+			auto script = scriptManager_->LoadScript(
+				scriptManager_, pathMainScript, StgStageScript::TYPE_STAGE);
 			_SetupReplayTargetCommonDataArea(script);
 			scriptManager_->StartScript(script);
 		}
@@ -225,7 +217,8 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 			pathBack = EPathProperty::ExtendRelativeToFull(dirInfo, pathBack);
 			ELogger::WriteTop(StringUtility::Format(L"Background script: [%s]", 
 				PathProperty::ReduceModuleDirectory(pathBack).c_str()));
-			auto script = scriptManager_->LoadScript(pathBack, StgStageScript::TYPE_STAGE);
+			auto script = scriptManager_->LoadScript(
+				scriptManager_, pathBack, StgStageScript::TYPE_STAGE);
 			scriptManager_->StartScript(script);
 		}
 	}
@@ -248,13 +241,12 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	infoStage_->SetStageStartTime(SystemUtility::GetCpuTime2());
 }
 void StgStageController::CloseScene() {
-	ref_count_weak_ptr<PseudoSlowInformation> wPtr = infoSlow_;
-	EFpsController::GetInstance()->RemoveFpsControlObject(wPtr);
+	EFpsController::GetInstance()->RemoveFpsControlObject(infoSlow_);
 
 	//リプレイ
 	if (!infoStage_->IsReplay()) {
 		//キー
-		ref_count_ptr<RecordBuffer> recKey = new RecordBuffer();
+		ref_count_ptr<RecordBuffer> recKey(new RecordBuffer());
 		keyReplayManager_->WriteRecord(*recKey);
 
 		ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage_->GetReplayData();
@@ -285,7 +277,7 @@ void StgStageController::_SetupReplayTargetCommonDataArea(shared_ptr<ManagedScri
 		listArea.insert(area);
 	}
 
-	shared_ptr<ScriptCommonDataManager> scriptCommonDataManager = systemController_->GetCommonDataManager();
+	auto scriptCommonDataManager = systemController_->GetCommonDataManager();
 	if (!infoStage_->IsReplay()) {
 		for (auto itrArea = listArea.begin(); itrArea != listArea.end(); ++itrArea) {
 			const std::string& area = (*itrArea);
@@ -304,7 +296,8 @@ void StgStageController::_SetupReplayTargetCommonDataArea(shared_ptr<ManagedScri
 
 void StgStageController::Work() {
 	EDirectInput* input = EDirectInput::GetInstance();
-	ref_count_ptr<StgSystemInformation>& infoSystem = systemController_->GetSystemInformation();
+	auto infoSystem = systemController_->GetSystemInformation();
+
 	bool bPackageMode = infoSystem->IsPackageMode();
 
 	bool bPermitRetryKey = !input->IsTargetKeyCode(DIK_BACK);
@@ -387,11 +380,11 @@ void StgStageController::Work() {
 	}
 
 	ELogger* logger = ELogger::GetInstance();
-	if (logger->IsWindowVisible()) {
-		logger->SetInfo(6, L"Shot count", StringUtility::Format(L"%d", shotManager_->GetShotCountAll()));
-		logger->SetInfo(7, L"Enemy count", StringUtility::Format(L"%d", enemyManager_->GetEnemyCount()));
-		logger->SetInfo(8, L"Item count", StringUtility::Format(L"%d", itemManager_->GetItemCount()));
-	}
+	auto infoLog = logger->GetInfoPanel();
+
+	infoLog->SetInfo(6, "Shot count", std::to_string(shotManager_->GetShotCountAll()));
+	infoLog->SetInfo(7, "Enemy count", std::to_string(enemyManager_->GetEnemyCount()));
+	infoLog->SetInfo(8, "Item count", std::to_string(itemManager_->GetItemCount()));
 }
 void StgStageController::Render() {
 	bool bPause = infoStage_->IsPause();
@@ -482,13 +475,14 @@ void StgStageInformation::SetStgFrameRect(const DxRect<LONG>& rect, bool bUpdate
 	rcStgFrame_.top *= DirectGraphics::g_dxCoordsMul_;
 	rcStgFrame_.bottom *= DirectGraphics::g_dxCoordsMul_;
 
-	ref_count_ptr<D3DXVECTOR2> pos = new D3DXVECTOR2;
-	pos->x = (rcStgFrame_.right - rcStgFrame_.left) / 2.0f;
-	pos->y = (rcStgFrame_.bottom - rcStgFrame_.top) / 2.0f;
-
 	if (bUpdateFocusResetValue) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+		auto& camera2D = graphics->GetCamera2D();
+
+		D3DXVECTOR2 pos = {
+			(rcStgFrame_.right - rcStgFrame_.left) / 2.0f,
+			(rcStgFrame_.bottom - rcStgFrame_.top) / 2.0f
+		};
 		camera2D->SetResetFocus(pos);
 		camera2D->Reset();
 	}
@@ -505,11 +499,11 @@ DWORD PseudoSlowInformation::GetFps() {
 
 	auto itrPlayer = mapDataPlayer_.find(target);
 	if (itrPlayer != mapDataPlayer_.end())
-		fps = std::min(fps, itrPlayer->second->GetFps());
+		fps = std::min(fps, itrPlayer->second.GetFps());
 
 	auto itrEnemy = mapDataEnemy_.find(target);
 	if (itrEnemy != mapDataEnemy_.end())
-		fps = std::min(fps, itrEnemy->second->GetFps());
+		fps = std::min(fps, itrEnemy->second.GetFps());
 
 	return fps;
 }
@@ -526,11 +520,11 @@ void PseudoSlowInformation::Next() {
 
 	auto itrPlayer = mapDataPlayer_.find(target);
 	if (itrPlayer != mapDataPlayer_.end())
-		fps = std::min(fps, itrPlayer->second->GetFps());
+		fps = std::min(fps, itrPlayer->second.GetFps());
 
 	auto itrEnemy = mapDataEnemy_.find(target);
 	if (itrEnemy != mapDataEnemy_.end())
-		fps = std::min(fps, itrEnemy->second->GetFps());
+		fps = std::min(fps, itrEnemy->second.GetFps());
 
 	bool bValid = false;
 	if (fps == STANDARD_FPS) {
@@ -550,8 +544,10 @@ void PseudoSlowInformation::AddSlow(DWORD fps, int owner, int target) {
 	const uint32_t STANDARD_FPS = DnhConfiguration::GetInstance()->fpsStandard_;
 
 	fps = std::clamp<DWORD>(fps, 1, STANDARD_FPS);
-	ref_count_ptr<SlowData> data = new SlowData();
-	data->SetFps(fps);
+
+	SlowData data;
+	data.SetFps(fps);
+
 	switch (owner) {
 	case OWNER_PLAYER:
 		mapDataPlayer_[target] = data;

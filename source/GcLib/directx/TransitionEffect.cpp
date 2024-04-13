@@ -47,7 +47,7 @@ void TransitionEffect_FadeOut::Initialize(int frame, shared_ptr<Texture> texture
 
 	DxRect<int> rect(0, 0, width, height);
 
-	sprite_ = new Sprite2D();
+	sprite_.reset(new Sprite2D());
 	sprite_->SetTexture(texture);
 	sprite_->SetVertex(rect, rect, D3DCOLOR_ARGB((int)alpha_, 255, 255, 255));
 }
@@ -59,7 +59,7 @@ TransitionEffectTask::TransitionEffectTask() {
 }
 TransitionEffectTask::~TransitionEffectTask() {
 }
-void TransitionEffectTask::SetTransition(gstd::ref_count_ptr<TransitionEffect> effect) {
+void TransitionEffectTask::SetTransition(shared_ptr<TransitionEffect> effect) {
 	effect_ = effect;
 }
 void TransitionEffectTask::Work() {

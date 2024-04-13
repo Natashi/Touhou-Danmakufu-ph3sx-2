@@ -141,8 +141,7 @@ shared_ptr<SoundSourceData> DirectSoundManager::_CreateSoundSource(std::wstring 
 		if (sizeFile <= 64)
 			throw gstd::wexception(L"Audio file invalid.");
 
-		ByteBuffer header;
-		header.SetSize(0x100);
+		ByteBuffer header(0x100);
 		reader->Read(header.GetPointer(), header.GetSize());
 
 		SoundFileFormat format = SoundFileFormat::Unknown;
@@ -219,7 +218,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::CreatePlayer(shared_ptr<SoundSourceD
 		//Create the sound player object
 		switch (source->format_) {
 		case SoundFileFormat::Wave:
-			if (source->audioSizeTotal_ < 1024 * 1024) {
+			if (source->audioSizeTotal_ < 1024U * 1024U) {
 				//The audio is small enough (<1MB), just load the entire thing into memory
 				//Max: ~23.78sec at 44100hz
 				res = std::shared_ptr<SoundPlayerWave>(new SoundPlayerWave());
@@ -415,99 +414,217 @@ void DirectSoundManager::SoundManageThread::_Fade() {
 //SoundInfoPanel
 //*******************************************************************
 SoundInfoPanel::SoundInfoPanel() {
-	timeLastUpdate_ = 0;
-	timeUpdateInterval_ = 500;
 }
-bool SoundInfoPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
 
-	gstd::WListView::Style styleListView;
-	styleListView.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
-	styleListView.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListView.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListView_.Create(hWnd_, styleListView);
-
-	wndListView_.AddColumn(64, ROW_ADDRESS, L"Address");
-	wndListView_.AddColumn(96, ROW_FILENAME, L"Name");
-	wndListView_.AddColumn(128, ROW_FULLPATH, L"Path");
-	wndListView_.AddColumn(48, ROW_COUNT_REFFRENCE, L"Uses");
-
-	SetWindowVisible(false);
-
-	return true;
+void SoundInfoPanel::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
 }
-void SoundInfoPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
 
-	wndListView_.SetBounds(wx, wy, wWidth, wHeight);
-}
-void SoundInfoPanel::Update(DirectSoundManager* soundManager) {
-	if (!IsWindowVisible()) return;
-
-	{
-		uint64_t time = SystemUtility::GetCpuTime2();
-		if ((time - timeLastUpdate_) < timeUpdateInterval_) return;
-		timeLastUpdate_ = time;
+void SoundInfoPanel::Update(DirectSoundManager* manager) {
+	if (manager == nullptr) {
+		listDisplay_.clear();
+		return;
 	}
 
-	struct _Info {
-		uint32_t address;
-		std::wstring path;
-		int countRef;
-	};
-
-	std::vector<_Info> listInfo;
 	{
-		Lock lock(soundManager->GetLock());
+		Lock lock(Logger::GetTop()->GetLock());
 
-		auto* mapSource = &soundManager->mapSoundSource_;
-		for (auto itrSource = mapSource->begin(); itrSource != mapSource->end(); ++itrSource) {
-			const std::wstring& path = itrSource->first;
-			shared_ptr<SoundSourceData>& source = itrSource->second;
+		auto& mapData = manager->mapSoundSource_;
+		listDisplay_.resize(mapData.size());
 
-			{
-				_Info info;
-				info.address = (uint32_t)source.get();
-				info.path = path;
-				info.countRef = source.use_count();
-				listInfo.push_back(info);
+		int iTex = 0;
+		for (auto itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap, ++iTex) {
+			const std::wstring& path = itrMap->first;
+			SoundSourceData* data = (itrMap->second).get();
+
+			int countRef = (itrMap->second).use_count();
+
+			std::wstring fileName = PathProperty::GetFileName(path);
+			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
+
+			SoundDisplay displayData = {
+				(uintptr_t)data,
+				StringUtility::FromAddress((uintptr_t)data),
+				STR_MULTI(fileName),
+				STR_MULTI(pathReduce),
+				countRef,
+				data->format_,
+				data->audioSizeTotal_,
+				data->formatWave_
+			};
+
+			listDisplay_[iTex] = displayData;
+		}
+
+		// Sort new data as well
+		if (SoundDisplay::imguiSortSpecs) {
+			if (listDisplay_.size() > 1) {
+				std::sort(listDisplay_.begin(), listDisplay_.end(), SoundDisplay::Compare);
 			}
 		}
 	}
 
 	{
-		size_t i = 0;
-		for (auto itrInfo = listInfo.begin(); itrInfo != listInfo.end(); ++itrInfo, ++i) {
-			_Info* pInfo = itrInfo._Ptr;
-
-			wndListView_.SetText(i, ROW_ADDRESS, StringUtility::Format(L"%08x", pInfo->address));
-			wndListView_.SetText(i, ROW_FILENAME, PathProperty::GetFileName(pInfo->path));
-			wndListView_.SetText(i, ROW_FULLPATH, pInfo->path);
-			wndListView_.SetText(i, ROW_COUNT_REFFRENCE, StringUtility::Format(L"%d", pInfo->countRef));
-		}
-		for (; i < wndListView_.GetRowCount(); ++i) {
-			wndListView_.DeleteRow(i);
-		}
-	}
-
-	{
 		DSCAPS _sndCaps;
-		soundManager->GetDirectSound()->GetCaps(&_sndCaps);
+		manager->GetDirectSound()->GetCaps(&_sndCaps);
 
-		UINT sndMemRemain = _sndCaps.dwFreeHwMemBytes / (1024U * 1024U);
-		UINT sndMemTotal = _sndCaps.dwTotalHwMemBytes / (1024U * 1024U);
+		UINT memRemain = _sndCaps.dwFreeHwMemBytes / (1024U * 1024U);
+		UINT memTotal = _sndCaps.dwTotalHwMemBytes / (1024U * 1024U);
 
-		if (WindowLogger* logger = WindowLogger::GetParent()) {
-			shared_ptr<WStatusBar> statusBar = logger->GetStatusBar();
-			statusBar->SetText(0, L"Sound Memory");
-			statusBar->SetText(1, StringUtility::Format(L"%u/%u MB", sndMemRemain, sndMemTotal));
-		}
+		soundMemAvail_ = memRemain;
+		soundMem_ = memTotal;
 	}
 }
+
+const char* SoundFormatToString(SoundFileFormat format) {
+	switch (format) {
+	case SoundFileFormat::Wave:	return "wave";
+	case SoundFileFormat::Ogg:	return "ogg";
+	}
+	return "unknown";
+}
+
+void SoundInfoPanel::ProcessGui() {
+	Logger* parent = Logger::GetTop();
+
+	float ht = ImGui::GetContentRegionAvail().y - 32;
+
+	if (ImGui::BeginChild("psound_child_table", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
+		ImGuiTableFlags flags = ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable
+			| ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendX
+			| ImGuiTableFlags_RowBg
+			| ImGuiTableFlags_Sortable /*| ImGuiTableFlags_SortMulti*/;
+
+		if (ImGui::BeginTable("psound_table", 6, flags)) {
+			ImGui::TableSetupScrollFreeze(0, 1);
+
+			constexpr auto sortDef = ImGuiTableColumnFlags_DefaultSort,
+				sortNone = ImGuiTableColumnFlags_NoSort;
+			constexpr auto colFlags = ImGuiTableColumnFlags_WidthStretch;
+			ImGui::TableSetupColumn("Address", sortDef, 0, SoundDisplay::Address);
+			ImGui::TableSetupColumn("Name", colFlags | sortDef, 120, SoundDisplay::Name);
+			ImGui::TableSetupColumn("Path", colFlags | sortDef, 200, SoundDisplay::FullPath);
+			ImGui::TableSetupColumn("Uses", sortDef, 0, SoundDisplay::Uses);
+			ImGui::TableSetupColumn("Size", colFlags | sortDef, 80, SoundDisplay::Size);
+			ImGui::TableSetupColumn("Format", sortDef, 0, SoundDisplay::Format);
+
+			ImGui::TableHeadersRow();
+
+			if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs()) {
+				if (specs->SpecsDirty) {
+					SoundDisplay::imguiSortSpecs = specs;
+					if (listDisplay_.size() > 1) {
+						std::sort(listDisplay_.begin(), listDisplay_.end(), SoundDisplay::Compare);
+					}
+					//SoundDisplay::imguiSortSpecs = nullptr;
+
+					specs->SpecsDirty = false;
+				}
+			}
+
+			{
+				ImGui::PushFont(parent->GetFont("Arial15"));
+
+#define _SETCOL(_i, _s) ImGui::TableSetColumnIndex(_i); ImGui::Text((_s).c_str());
+
+				ImGuiListClipper clipper;
+				clipper.Begin(listDisplay_.size());
+				while (clipper.Step()) {
+					for (size_t i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+						const SoundDisplay& item = listDisplay_[i];
+
+						ImGui::TableNextRow();
+
+						_SETCOL(0, item.strAddress);
+
+						_SETCOL(1, item.fileName);
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(item.fileName.c_str());
+
+						_SETCOL(2, item.fullPath);
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(item.fullPath.c_str());
+
+						_SETCOL(3, std::to_string(item.countRef));
+
+						_SETCOL(4, STR_FMT("%u KB", item.audioSize / 1024U));
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(std::to_string(item.audioSize).c_str());
+
+						ImGui::TableSetColumnIndex(5);
+						ImGui::Text(SoundFormatToString(item.format));
+						if (ImGui::IsItemHovered()) {
+							ImGui::BeginTooltipEx(ImGuiTooltipFlags_OverridePreviousTooltip, ImGuiWindowFlags_None);
+
+							ImGui::Text("Format Tag: %d", item.waveFmt.wFormatTag);
+							ImGui::Text("%u Hz, %u channels", item.waveFmt.nSamplesPerSec, item.waveFmt.nChannels);
+
+							ImGui::EndTooltip();
+						}
+
+						
+					}
+				}
+
+				ImGui::PopFont();
+
+#undef _SETCOL
+			}
+
+			ImGui::EndTable();
+		}
+	}
+	ImGui::EndChild();
+
+	ImGui::Dummy(ImVec2(0, 4));
+	ImGui::Indent(6);
+
+	{
+		ImGui::Text("Sound Memory: %u MB", soundMem_);
+
+		ImGui::SameLine(200);
+
+		ImGui::Text("Available: %u MB", soundMemAvail_);
+	}
+}
+
+const ImGuiTableSortSpecs* SoundInfoPanel::SoundDisplay::imguiSortSpecs = nullptr;
+bool SoundInfoPanel::SoundDisplay::Compare(const SoundDisplay& a, const SoundDisplay& b) {
+	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
+		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
+
+		int rcmp = 0;
+
+#define CASE_SORT(_id, _l, _r) \
+		case _id: { \
+			if (_l != _r) rcmp = (_l < _r) ? 1 : -1; \
+			break; \
+		}
+
+		switch ((Column)spec->ColumnUserID) {
+		CASE_SORT(Column::Address, a.address, b.address);
+		case Column::Name:
+			rcmp = a.fileName.compare(b.fileName);
+			break;
+		case Column::FullPath:
+			rcmp = a.fullPath.compare(b.fullPath);
+			break;
+		CASE_SORT(Column::Uses, a.countRef, b.countRef);
+		CASE_SORT(Column::Format, (int)a.format, (int)b.format);
+		CASE_SORT(Column::Size, a.audioSize, b.audioSize);
+		}
+
+#undef CASE_SORT
+
+		if (rcmp != 0) {
+			return spec->SortDirection == ImGuiSortDirection_Ascending
+				? rcmp < 0 : rcmp > 0;
+		}
+	}
+
+	return a.address < b.address;
+}
+
 //*******************************************************************
 //SoundDivision
 //*******************************************************************
@@ -672,7 +789,7 @@ bool SoundSourceDataOgg::Load(shared_ptr<gstd::FileReader> reader) {
 		formatWave_.wBitsPerSample = 2 * 8;
 		formatWave_.cbSize = 0;
 
-		QWORD pcmTotal = ov_pcm_total(fileOgg_, -1);
+		uint64_t pcmTotal = ov_pcm_total(fileOgg_, -1);
 		audioSizeTotal_ = pcmTotal * formatWave_.nBlockAlign;
 	}
 	catch (bool) {

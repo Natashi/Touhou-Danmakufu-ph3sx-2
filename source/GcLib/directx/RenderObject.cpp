@@ -135,8 +135,8 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 		float width = viewPort.Width * 0.5f;
 		float height = viewPort.Height * 0.5f;
 
-		ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+		auto& camera = graphics->GetCamera();
+		auto& camera2D = graphics->GetCamera2D();
 		if (camera2D->IsEnable()) {
 			D3DXMATRIX matCamera = camera2D->GetMatrix();
 			mat = mat * matCamera;
@@ -200,8 +200,8 @@ D3DXMATRIX RenderObject::CreateWorldMatrix(const D3DXVECTOR3& position, const D3
 		float width = viewPort.Width * 0.5f;
 		float height = viewPort.Height * 0.5f;
 
-		ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+		auto& camera = graphics->GetCamera();
+		auto& camera2D = graphics->GetCamera2D();
 		if (camera2D->IsEnable()) {
 			D3DXMatrixMultiply(&mat, &mat, &camera2D->GetMatrix());
 		}
@@ -407,7 +407,7 @@ void RenderObjectTLX::Render() {
 }
 void RenderObjectTLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, const D3DXVECTOR2& angZ) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
+	auto& camera = graphics->GetCamera2D();
 	bool bCamera = camera->IsEnable() && bPermitCamera_;
 
 	D3DXMATRIX matWorld;
@@ -424,8 +424,8 @@ void RenderObjectTLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 void RenderObjectTLX::Render(const D3DXMATRIX& matTransform) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
-	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
+	auto& camera = graphics->GetCamera2D();
+	auto& camera3D = graphics->GetCamera();
 
 	if (graphics->IsAllowRenderTargetChange()) {
 		if (auto pRT = renderTarget_.lock())
@@ -687,7 +687,7 @@ void RenderObjectLX::Render(const D3DXMATRIX& matTransform) {
 				if (bVertexShaderMode_) {
 					VertexFogState* fogParam = graphics->GetFogState();
 
-					auto camera = DirectGraphics::GetBase()->GetCamera();
+					auto& camera = DirectGraphics::GetBase()->GetCamera();
 
 					bool bFog = graphics->IsFogEnable();
 					graphics->SetFogEnable(false);
@@ -883,7 +883,7 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 				if (bVertexShaderMode_) {
 					VertexFogState* fogParam = graphics->GetFogState();
 
-					auto camera = graphics->GetCamera();
+					auto& camera = graphics->GetCamera();
 
 					bool bFog = graphics->IsFogEnable();
 					graphics->SetFogEnable(false);
@@ -1084,8 +1084,8 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 	if (countRenderIndex == 0U || countRenderVertex == 0U) return;
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
+	auto& camera = graphics->GetCamera2D();
+	auto& camera3D = graphics->GetCamera();
 
 	if (graphics->IsAllowRenderTargetChange()) {
 		if (auto pRT = renderTarget_.lock())
@@ -1427,10 +1427,10 @@ void TrajectoryObject3D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY
 			SetVertexPosition(index, pos.x, pos.y, pos.z);
 			SetVertexUV(index, u, v);
 
-			float r = ColorAccess::GetColorR(color_) * alpha / 255;
-			float g = ColorAccess::GetColorG(color_) * alpha / 255;
-			float b = ColorAccess::GetColorB(color_) * alpha / 255;
-			SetVertexColorARGB(index, alpha, r, g, b);
+			D3DCOLOR newColor = color_;
+			ColorAccess::ApplyAlpha(newColor, alpha / 255.0f);
+			ColorAccess::SetColorA(newColor, alpha);
+			SetVertexColor(index, newColor);
 		}
 	}
 	RenderObjectLX::Render(angX, angY, angZ);
@@ -1585,8 +1585,8 @@ void ParticleRenderer2D::Render() {
 	if (countIndex == 0U) return;
 	
 	IDirect3DDevice9* device = graphics->GetDevice();
-	ref_count_ptr<DxCamera2D> camera = graphics->GetCamera2D();
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
+	auto& camera = graphics->GetCamera2D();
+	auto& camera3D = graphics->GetCamera();
 
 	if (graphics->IsAllowRenderTargetChange()) {
 		if (auto pRT = renderTarget_.lock())
@@ -1713,8 +1713,8 @@ void ParticleRenderer3D::Render() {
 	if (countIndex == 0U) return;
 
 	IDirect3DDevice9* device = graphics->GetDevice();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
-	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+	auto& camera = graphics->GetCamera();
+	auto& camera2D = graphics->GetCamera2D();
 
 	if (graphics->IsAllowRenderTargetChange()) {
 		if (auto pRT = renderTarget_.lock())
@@ -2067,79 +2067,160 @@ void DxMeshManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> 
 	}
 }
 
+//****************************************************************************
 //DxMeshInfoPanel
+//****************************************************************************
 DxMeshInfoPanel::DxMeshInfoPanel() {
 }
-DxMeshInfoPanel::~DxMeshInfoPanel() {
+
+void DxMeshInfoPanel::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
 }
-bool DxMeshInfoPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
 
-	gstd::WListView::Style styleListView;
-	styleListView.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
-	styleListView.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListView.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListView_.Create(hWnd_, styleListView);
-
-	wndListView_.AddColumn(64, ROW_ADDRESS, L"Address");
-	wndListView_.AddColumn(128, ROW_NAME, L"Name");
-	wndListView_.AddColumn(128, ROW_FULLNAME, L"FullName");
-	wndListView_.AddColumn(32, ROW_COUNT_REFFRENCE, L"Ref");
-
-	SetWindowVisible(false);
-	PanelInitialize();
-
-	return true;
-}
-void DxMeshInfoPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
-
-	wndListView_.SetBounds(wx, wy, wWidth, wHeight);
-}
-void DxMeshInfoPanel::PanelUpdate() {
+void DxMeshInfoPanel::Update() {
 	DxMeshManager* manager = DxMeshManager::GetBase();
 	if (manager == nullptr) return;
 
-	if (!IsWindowVisible()) return;
-
-	std::set<std::wstring> setKey;
-	std::map<std::wstring, shared_ptr<DxMeshData>>& mapData = manager->mapMeshData_;
-	std::map<std::wstring, shared_ptr<DxMeshData>>::iterator itrMap;
 	{
-		Lock lock(manager->GetLock());
-		for (itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap) {
-			std::wstring name = itrMap->first;
-			DxMeshData* data = (itrMap->second).get();
+		Lock lock(Logger::GetTop()->GetLock());
 
-			int address = (int)data;
-			std::wstring key = StringUtility::Format(L"%08x", address);
-			int index = wndListView_.GetIndexInColumn(key, ROW_ADDRESS);
-			if (index == -1) {
-				index = wndListView_.GetRowCount();
-				wndListView_.SetText(index, ROW_ADDRESS, key);
-			}
+		auto& mapData = manager->mapMeshData_;
+		listDisplay_.resize(mapData.size());
+
+		int iMesh = 0;
+		for (auto itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap, ++iMesh) {
+			const std::wstring& path = itrMap->first;
+			DxMeshData* data = (itrMap->second).get();
 
 			int countRef = (itrMap->second).use_count();
 
-			wndListView_.SetText(index, ROW_NAME, PathProperty::GetFileName(name));
-			wndListView_.SetText(index, ROW_FULLNAME, name);
-			wndListView_.SetText(index, ROW_COUNT_REFFRENCE, StringUtility::Format(L"%d", countRef));
+			std::wstring fileName = PathProperty::GetFileName(path);
+			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
-			setKey.insert(key);
+			MeshDisplay displayData = {
+				(uintptr_t)data,
+				StringUtility::FromAddress((uintptr_t)data),
+				STR_MULTI(fileName),
+				STR_MULTI(pathReduce),
+				countRef
+			};
+
+			listDisplay_[iMesh] = displayData;
+		}
+
+		// Sort new data as well
+		if (MeshDisplay::imguiSortSpecs) {
+			if (listDisplay_.size() > 1) {
+				std::sort(listDisplay_.begin(), listDisplay_.end(), MeshDisplay::Compare);
+			}
+		}
+	}
+}
+void DxMeshInfoPanel::ProcessGui() {
+	Logger* parent = Logger::GetTop();
+
+	float ht = ImGui::GetContentRegionAvail().y;
+
+	if (ImGui::BeginChild("pmesh_child_table", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
+		ImGuiTableFlags flags = ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable
+			| ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendX
+			| ImGuiTableFlags_RowBg
+			| ImGuiTableFlags_Sortable /*| ImGuiTableFlags_SortMulti*/;
+
+		if (ImGui::BeginTable("pmesh_table", 4, flags)) {
+			ImGui::TableSetupScrollFreeze(0, 1);
+
+			constexpr auto sortDef = ImGuiTableColumnFlags_DefaultSort,
+				sortNone = ImGuiTableColumnFlags_NoSort;
+			constexpr auto colFlags = ImGuiTableColumnFlags_WidthStretch;
+			ImGui::TableSetupColumn("Address", sortDef, 0, MeshDisplay::Address);
+			ImGui::TableSetupColumn("Name", colFlags | sortDef, 160, MeshDisplay::Name);
+			ImGui::TableSetupColumn("Path", colFlags | sortDef, 200, MeshDisplay::FullPath);
+			ImGui::TableSetupColumn("Uses", sortDef, 0, MeshDisplay::Uses);
+
+			ImGui::TableHeadersRow();
+
+			if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs()) {
+				if (specs->SpecsDirty) {
+					MeshDisplay::imguiSortSpecs = specs;
+					if (listDisplay_.size() > 1) {
+						std::sort(listDisplay_.begin(), listDisplay_.end(), MeshDisplay::Compare);
+					}
+					//MeshDisplay::imguiSortSpecs = nullptr;
+
+					specs->SpecsDirty = false;
+				}
+			}
+
+			{
+				ImGui::PushFont(parent->GetFont("Arial15"));
+
+#define _SETCOL(_i, _s) ImGui::TableSetColumnIndex(_i); ImGui::Text((_s).c_str());
+
+				ImGuiListClipper clipper;
+				clipper.Begin(listDisplay_.size());
+				while (clipper.Step()) {
+					for (size_t i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+						const MeshDisplay& item = listDisplay_[i];
+
+						ImGui::TableNextRow();
+
+						_SETCOL(0, item.strAddress);
+
+						_SETCOL(1, item.fileName);
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(item.fileName.c_str());
+
+						_SETCOL(2, item.fullPath);
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(item.fullPath.c_str());
+
+						_SETCOL(3, std::to_string(item.countRef));
+					}
+				}
+
+				ImGui::PopFont();
+
+#undef _SETCOL
+			}
+
+			ImGui::EndTable();
+		}
+	}
+	ImGui::EndChild();
+}
+
+const ImGuiTableSortSpecs* DxMeshInfoPanel::MeshDisplay::imguiSortSpecs = nullptr;
+bool DxMeshInfoPanel::MeshDisplay::Compare(const MeshDisplay& a, const MeshDisplay& b) {
+	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
+		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
+
+		int rcmp = 0;
+
+#define CASE_SORT(_id, _l, _r) \
+		case _id: { \
+			if (_l != _r) rcmp = (_l < _r) ? 1 : -1; \
+			break; \
+		}
+
+		switch ((Column)spec->ColumnUserID) {
+		CASE_SORT(Column::Address, a.address, b.address);
+		case Column::Name:
+			rcmp = a.fileName.compare(b.fileName);
+			break;
+		case Column::FullPath:
+			rcmp = a.fullPath.compare(b.fullPath);
+			break;
+		CASE_SORT(Column::Uses, a.countRef, b.countRef);
+		}
+
+#undef CASE_SORT
+
+		if (rcmp != 0) {
+			return spec->SortDirection == ImGuiSortDirection_Ascending
+				? rcmp < 0 : rcmp > 0;
 		}
 	}
 
-	for (int iRow = 0; iRow < wndListView_.GetRowCount();) {
-		std::wstring key = wndListView_.GetText(iRow, ROW_ADDRESS);
-		if (setKey.find(key) != setKey.end())
-			++iRow;
-		else
-			wndListView_.DeleteRow(iRow);
-	}
+	return a.address < b.address;
 }
-
-

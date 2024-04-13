@@ -53,12 +53,12 @@ void StgSystemController::Initialize(ref_count_ptr<StgSystemInformation> infoSys
 
 	scriptEngineCache_.reset(new ScriptEngineCache());
 	commonDataManager_.reset(new ScriptCommonDataManager());
-	infoControlScript_ = new StgControlScriptInformation();
+	infoControlScript_.reset(new StgControlScriptInformation());
 }
 void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay) {
 	_ResetSystem();
 
-	ref_count_ptr<ScriptInformation> infoMain = infoSystem_->GetMainScriptInformation();
+	auto infoMain = infoSystem_->GetMainScriptInformation();
 
 	EFileManager* fileManager = EFileManager::GetInstance();
 	const std::wstring& archiveMain = infoMain->pathArchive_;
@@ -75,16 +75,18 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 
 	if (infoSystem_->IsPackageMode()) {
 		infoSystem_->SetScene(StgSystemInformation::SCENE_PACKAGE_CONTROL);
-		packageController_ = std::make_shared<StgPackageController>(this);
+		packageController_ = std::make_unique<StgPackageController>(this);
 		packageController_->Initialize();
 	}
 	else {
 		ref_count_ptr<ReplayInformation::StageData> replayStageData = nullptr;
 		if (infoReplay)
 			replayStageData = infoReplay->GetStageData(0);
-		ref_count_ptr<StgStageInformation> infoStage = new StgStageInformation();
+		ref_count_ptr<StgStageInformation> infoStage(new StgStageInformation());
+
 		infoStage->SetMainScriptInformation(infoMain);
 		infoStage->SetPlayerScriptInformation(infoPlayer);
+
 		StartStgScene(infoStage, replayStageData);
 	}
 }
@@ -111,20 +113,24 @@ void StgSystemController::Work() {
 			ref_count_ptr<StgStageStartData> oldStageStartData;
 			ref_count_ptr<StgPackageInformation> infoPackage = packageController_->GetPackageInformation();
 			std::vector<ref_count_ptr<StgStageStartData>> listStageData = infoPackage->GetStageDataList();
+
 			if (listStageData.size() > 0) {
 				oldStageStartData = *listStageData.begin();
 			}
 			else {
 				oldStageStartData = infoPackage->GetNextStageData();
 			}
-			ref_count_ptr<StgStageInformation> oldStageInformation = oldStageStartData->GetStageInformation();
 
-			ref_count_ptr<StgStageStartData> newStageStartData = new StgStageStartData();
-			ref_count_ptr<StgStageInformation> newStageInformaiton = new StgStageInformation();
+			ref_count_ptr<StgStageInformation> oldStageInformation = oldStageStartData->infoStage_;
+
+			ref_count_ptr<StgStageStartData> newStageStartData(new StgStageStartData());
+			ref_count_ptr<StgStageInformation> newStageInformaiton(new StgStageInformation());
+
 			newStageInformaiton->SetMainScriptInformation(oldStageInformation->GetMainScriptInformation());
 			newStageInformaiton->SetPlayerScriptInformation(oldStageInformation->GetPlayerScriptInformation());
 			newStageInformaiton->SetStageIndex(oldStageInformation->GetStageIndex());
-			newStageStartData->SetStageInformation(newStageInformaiton);
+			newStageStartData->infoStage_ = newStageInformaiton;
+
 			infoPackage->SetNextStageData(newStageStartData);
 			infoSystem_->ResetRetry();
 
@@ -188,9 +194,11 @@ void StgSystemController::Render() {
 	}
 	catch (gstd::wexception& e) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+		auto& camera2D = graphics->GetCamera2D();
+
 		camera2D->SetEnable(false);
 		camera2D->Reset();
+
 		Logger::WriteTop(e.what());
 		infoSystem_->SetError(e.what());
 	}
@@ -211,7 +219,7 @@ void StgSystemController::RenderScriptObject() {
 		bool bReplay = false;
 		size_t countRender = 0;
 		if (scene == StgSystemInformation::SCENE_STG && stageController_ != nullptr) {
-			StgStageScriptObjectManager* objectManagerStage = stageController_->GetMainObjectManager();
+			auto objectManagerStage = stageController_->GetMainObjectManager();
 			countRender = std::max(objectManagerStage->GetRenderBucketCapacity() - 1, countRender);
 
 			ref_count_ptr<StgStageInformation> infoStage = stageController_->GetStageInformation();
@@ -265,7 +273,7 @@ void StgSystemController::RenderScriptObject() {
 
 }
 void StgSystemController::RenderScriptObject(int priMin, int priMax) {
-	StgStageScriptObjectManager* objManagerStage = nullptr;
+	shared_ptr<StgStageScriptObjectManager> objManagerStage;
 	DxScriptObjectManager* objManagerPackage = nullptr;
 
 	std::vector<DxScriptObjectManager::RenderList>* pRenderListStage = nullptr;
@@ -292,29 +300,30 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 	}
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera3D = graphics->GetCamera();
-	ref_count_ptr<DxCamera2D> camera2D = graphics->GetCamera2D();
+	auto& camera3D = graphics->GetCamera();
+	auto& camera2D = graphics->GetCamera2D();
 	double focusRatioX = camera2D->GetRatioX();
 	double focusRatioY = camera2D->GetRatioY();
 	double focusAngleZ = camera2D->GetAngleZ();
 	D3DXVECTOR2 orgFocusPos = camera2D->GetFocusPosition();
 	D3DXVECTOR2 focusPos = orgFocusPos;
 
-	ref_count_ptr<StgStageInformation> stageInfo = nullptr;
+	ref_count_ptr<StgStageInformation> stageInfo;
 	if (bValidStage) {
 		stageInfo = stageController_->GetStageInformation();
 		DxRect<LONG>* rcStgFrame = stageInfo->GetStgFrameRect();
 
-		ref_count_ptr<D3DXVECTOR2> pos = new D3DXVECTOR2;
-		pos->x = (rcStgFrame->right - rcStgFrame->left) / 2.0f;
-		pos->y = (rcStgFrame->bottom - rcStgFrame->top) / 2.0f;
+		D3DXVECTOR2 pos = {
+			(rcStgFrame->right - rcStgFrame->left) / 2.0f,
+			(rcStgFrame->bottom - rcStgFrame->top) / 2.0f
+		};
 		camera2D->SetResetFocus(pos);
 
 		orgFocusPos = camera2D->GetFocusPosition();
 		focusPos = orgFocusPos;
 	}
 	else {
-		stageInfo = new StgStageInformation();
+		stageInfo.reset(new StgStageInformation());
 
 		DxRect<LONG> rect;
 		rect.right = graphics->GetScreenWidth();
@@ -515,7 +524,7 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 bool StgSystemController::CheckMeshAndClearZBuffer(DxScriptRenderObject* obj) {
 	if (obj == nullptr) return false;
 	if (DxScriptMeshObject* objMesh = dynamic_cast<DxScriptMeshObject*>(obj)) {
-		if (DxMesh* mesh = objMesh->GetMesh().get()) {
+		if (auto mesh = objMesh->GetMesh()) {
 			if (mesh->IsCoordinate2D()) {
 				DirectGraphics::GetBase()->GetDevice()->Clear(0, nullptr,
 					D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0, 0);
@@ -532,7 +541,7 @@ void StgSystemController::_ControlScene() {
 		bool bNowWindowFocused = EApplication::GetInstance()->IsWindowFocused();
 
 		if (bPrevWindowFocused_ != bNowWindowFocused) {
-			ScriptManager* scriptManager = nullptr;
+			shared_ptr<ScriptManager> scriptManager;
 			if (packageController_)
 				scriptManager = packageController_->GetScriptManager();
 			else scriptManager = stageController_->GetScriptManager();
@@ -586,7 +595,7 @@ void StgSystemController::_ControlScene() {
 				ref_count_ptr<StgPackageInformation> infoPackage = packageController_->GetPackageInformation();
 				infoPackage->FinishCurrentStage();
 
-				if (StgStageScriptManager* scriptManager = stageController_->GetScriptManager()) {
+				if (auto scriptManager = stageController_->GetScriptManager()) {
 					scriptManager->CloseScriptOnType(StgStageScript::TYPE_STAGE);
 					scriptManager->CloseScriptOnType(StgStageScript::TYPE_ITEM);
 					scriptManager->CloseScriptOnType(StgStageScript::TYPE_SHOT);
@@ -617,11 +626,11 @@ void StgSystemController::_ControlScene() {
 	}
 
 	ELogger* logger = ELogger::GetInstance();
-	if (logger->IsWindowVisible()) {
+	if (auto infoLog = logger->GetInfoPanel()) {
 		size_t taskCount = 0;
 		size_t objectCount = 0;
 		if (packageController_) {
-			StgControlScriptManager* scriptManager = packageController_->GetScriptManager();
+			auto scriptManager = packageController_->GetScriptManager();
 			if (scriptManager)
 				taskCount = scriptManager->GetAllScriptThreadCount();
 
@@ -632,24 +641,24 @@ void StgSystemController::_ControlScene() {
 		if (stageController_) {
 			ref_count_ptr<StgStageInformation> infoStage = stageController_->GetStageInformation();
 			if (!infoStage->IsEnd()) {
-				StgStageScriptManager* scriptManager = stageController_->GetScriptManager();
+				auto scriptManager = stageController_->GetScriptManager();
 				if (scriptManager)
 					taskCount = scriptManager->GetAllScriptThreadCount();
 
-				StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
+				auto objectManager = stageController_->GetMainObjectManager();
 				if (objectManager)
 					objectCount += objectManager->GetAliveObjectCount();
 			}
 		}
-		logger->SetInfo(4, L"Task count", StringUtility::Format(L"%u", taskCount));
-		logger->SetInfo(5, L"Object count", StringUtility::Format(L"%u", objectCount));
+		infoLog->SetInfo(4, "Task count", std::to_string(taskCount));
+		infoLog->SetInfo(5, "Object count", std::to_string(objectCount));
 	}
 }
 
 void StgSystemController::StartStgScene(ref_count_ptr<StgStageInformation> infoStage, ref_count_ptr<ReplayInformation::StageData> replayStageData) {
-	ref_count_ptr<StgStageStartData> startData = new StgStageStartData();
-	startData->SetStageInformation(infoStage);
-	startData->SetStageReplayData(replayStageData);
+	ref_count_ptr<StgStageStartData> startData(new StgStageStartData());
+	startData->infoStage_ = infoStage;
+	startData->replayStageData_ = replayStageData;
 	StartStgScene(startData);
 }
 void StgSystemController::StartStgScene(ref_count_ptr<StgStageStartData> startData) {
@@ -658,8 +667,7 @@ void StgSystemController::StartStgScene(ref_count_ptr<StgStageStartData> startDa
 
 	infoSystem_->SetScene(StgSystemInformation::SCENE_STG);
 
-	stageController_ = std::make_shared<StgStageController>(this);
-
+	stageController_ = std::make_unique<StgStageController>(this);
 	stageController_->Initialize(startData);
 }
 void StgSystemController::TransStgEndScene() {
@@ -672,7 +680,7 @@ void StgSystemController::TransStgEndScene() {
 	if (!bReplay) {
 		ref_count_ptr<ReplayInformation> infoReplay = CreateReplayInformation();
 		infoSystem_->SetActiveReplayInformation(infoReplay);
-		endScene_ = std::make_shared<StgEndScene>(this);
+		endScene_ = std::make_unique<StgEndScene>(this);
 		endScene_->Start();
 		infoSystem_->SetScene(StgSystemInformation::SCENE_END);
 	}
@@ -682,13 +690,13 @@ void StgSystemController::TransStgEndScene() {
 }
 
 void StgSystemController::TransReplaySaveScene() {
-	replaySaveScene_ = std::make_shared<StgReplaySaveScene>(this);
+	replaySaveScene_ = std::make_unique<StgReplaySaveScene>(this);
 	replaySaveScene_->Start();
 	infoSystem_->SetScene(StgSystemInformation::SCENE_REPLAY_SAVE);
 }
 
 ref_count_ptr<ReplayInformation> StgSystemController::CreateReplayInformation() {
-	ref_count_ptr<ReplayInformation> res = new ReplayInformation();
+	ref_count_ptr<ReplayInformation> res(new ReplayInformation());
 
 	//メインスクリプト関連
 	ref_count_ptr<StgStageInformation> infoLastStage = stageController_->GetStageInformation();
@@ -713,9 +721,9 @@ ref_count_ptr<ReplayInformation> StgSystemController::CreateReplayInformation() 
 		ref_count_ptr<StgPackageInformation> infoPackage = packageController_->GetPackageInformation();
 		std::vector<ref_count_ptr<StgStageStartData>>& listStageData = infoPackage->GetStageDataList();
 		for (size_t iStage = 0; iStage < listStageData.size(); iStage++) {
-			ref_count_ptr<StgStageStartData> stageData = listStageData[iStage];
-			ref_count_ptr<StgStageInformation> infoStage = stageData->GetStageInformation();
-			ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage->GetReplayData();
+			auto stageData = listStageData[iStage];
+			auto infoStage = stageData->infoStage_;
+			auto replayStageData = infoStage->GetReplayData();
 			res->SetStageData(infoStage->GetStageIndex(), replayStageData);
 
 			fpsAverage += replayStageData->GetFramePerSecondAverage();
@@ -741,7 +749,7 @@ ref_count_ptr<ReplayInformation> StgSystemController::CreateReplayInformation() 
 void StgSystemController::TerminateScriptAll() {
 	std::wstring error = L"Forced termination.";
 	if (packageController_) {
-		ScriptManager* scriptManager = packageController_->GetScriptManager();
+		auto scriptManager = packageController_->GetScriptManager();
 		if (scriptManager)
 			scriptManager->TerminateScriptAll(error);
 	}
@@ -771,23 +779,25 @@ void StgSystemController::TerminateScriptAll() {
 			scriptManager->TerminateScriptAll(error);
 	}
 }
-void StgSystemController::GetAllScriptList(std::list<weak_ptr<ScriptManager>>& listRes) {
-	listRes.clear();
+std::vector<weak_ptr<ScriptManager>> StgSystemController::GetScriptManagers() {
+	std::vector<weak_ptr<ScriptManager>> res;
 
 	if (packageController_)
-		listRes.push_back(packageController_->GetScriptManagerRef());
+		res.push_back(packageController_->GetScriptManager());
 	if (stageController_) {
-		listRes.push_back(stageController_->GetScriptManagerRef());
+		res.push_back(stageController_->GetScriptManager());
 
 		ref_count_ptr<StgPauseScene> pauseScene = stageController_->GetPauseManager();
 		if (pauseScene)
-			listRes.push_back(pauseScene->GetScriptManagerRef());
+			res.push_back(pauseScene->GetScriptManagerRef());
 	}
 
 	if (endScene_)
-		listRes.push_back(endScene_->GetScriptManagerRef());
+		res.push_back(endScene_->GetScriptManagerRef());
 	if (replaySaveScene_)
-		listRes.push_back(replaySaveScene_->GetScriptManagerRef());
+		res.push_back(replaySaveScene_->GetScriptManagerRef());
+
+	return res;
 }
 
 //****************************************************************************

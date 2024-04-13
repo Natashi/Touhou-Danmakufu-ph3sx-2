@@ -44,7 +44,6 @@ namespace directx {
 		D3DXVECTOR2 fogDist;
 	};
 
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 	//*******************************************************************
 	//DirectInput
 	//*******************************************************************
@@ -60,8 +59,7 @@ namespace directx {
 		KEY_PULL = 2,	 //Key was pressed in the previous frame, now free
 		KEY_HOLD = 3,	 //Key is being pressed, both in the previous and current frame
 	} DIKeyState;
-#endif
-
+	
 #if defined(DNH_PROJ_EXECUTOR)
 	//*******************************************************************
 	//DirectSound

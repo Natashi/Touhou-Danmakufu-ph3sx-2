@@ -12,7 +12,7 @@
 #include "StgUserExtendScene.hpp"
 
 class StgStageInformation;
-class StgStageStartData;
+struct StgStageStartData;
 class PseudoSlowInformation;
 //*******************************************************************
 //StgStageController
@@ -21,17 +21,19 @@ class StgStageController {
 private:
 	StgSystemController* systemController_;
 	ref_count_ptr<StgSystemInformation> infoSystem_;
+
 	ref_count_ptr<StgStageInformation> infoStage_;
-	ref_count_ptr<PseudoSlowInformation> infoSlow_;
+	PseudoSlowInformation* infoSlow_;
 
 	ref_count_ptr<StgPauseScene> pauseManager_;
 	ref_count_ptr<KeyReplayManager> keyReplayManager_;
 	shared_ptr<StgStageScriptObjectManager> objectManagerMain_;
 	shared_ptr<StgStageScriptManager> scriptManager_;
-	StgEnemyManager* enemyManager_;
-	StgShotManager* shotManager_;
-	StgItemManager* itemManager_;
-	StgIntersectionManager* intersectionManager_;
+
+	unique_ptr<StgEnemyManager> enemyManager_;
+	unique_ptr<StgShotManager> shotManager_;
+	unique_ptr<StgItemManager> itemManager_;
+	unique_ptr<StgIntersectionManager> intersectionManager_;
 
 	void _SetupReplayTargetCommonDataArea(shared_ptr<ManagedScript> pScript);
 public:
@@ -46,25 +48,24 @@ public:
 
 	void RenderToTransitionTexture();
 
-	StgStageScriptObjectManager* GetMainObjectManager() { return objectManagerMain_.get(); }
-	shared_ptr<StgStageScriptObjectManager> GetMainObjectManagerRef() { return objectManagerMain_; }
-	StgStageScriptManager* GetScriptManager() { return scriptManager_.get(); }
-	shared_ptr<StgStageScriptManager> GetScriptManagerRef() { return scriptManager_; }
-	StgEnemyManager* GetEnemyManager() { return enemyManager_; }
-	StgShotManager* GetShotManager() { return shotManager_; }
-	StgItemManager* GetItemManager() { return itemManager_; }
-	StgIntersectionManager* GetIntersectionManager() { return intersectionManager_; }
+	StgSystemController* GetSystemController() { return systemController_; }
+	ref_count_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
+
+	ref_count_ptr<StgStageInformation> GetStageInformation() { return infoStage_; }
+	PseudoSlowInformation* GetSlowInformation() { return infoSlow_; }
+
 	ref_count_ptr<StgPauseScene> GetPauseManager() { return pauseManager_; }
+	ref_count_ptr<KeyReplayManager> GetKeyReplayManager() { return keyReplayManager_; }
+	shared_ptr<StgStageScriptObjectManager> GetMainObjectManager() { return objectManagerMain_; }
+	shared_ptr<StgStageScriptManager> GetScriptManager() { return scriptManager_; }
+
+	StgEnemyManager* GetEnemyManager() { return enemyManager_.get(); }
+	StgShotManager* GetShotManager() { return shotManager_.get(); }
+	StgItemManager* GetItemManager() { return itemManager_.get(); }
+	StgIntersectionManager* GetIntersectionManager() { return intersectionManager_.get(); }
 
 	ref_unsync_ptr<DxScriptObjectBase> GetMainRenderObject(int idObject) { return objectManagerMain_->GetObject(idObject); }
 	ref_unsync_ptr<StgPlayerObject> GetPlayerObject() { return objectManagerMain_->GetPlayerObject(); }
-
-	StgSystemController* GetSystemController() { return systemController_; }
-	ref_count_ptr<StgSystemInformation> GetSystemInformation() { return infoSystem_; }
-	ref_count_ptr<StgStageInformation> GetStageInformation() { return infoStage_; }
-	ref_count_ptr<KeyReplayManager> GetKeyReplayManager() { return keyReplayManager_; }
-
-	ref_count_ptr<PseudoSlowInformation> GetSlowInformation() { return infoSlow_; }
 };
 
 
@@ -166,25 +167,11 @@ public:
 //*******************************************************************
 //StgStageStartData
 //*******************************************************************
-class StgStageStartData {
-private:
+struct StgStageStartData {
 	ref_count_ptr<StgStageInformation> infoStage_;
 	ref_count_ptr<ReplayInformation::StageData> replayStageData_;
 	ref_count_ptr<StgStageInformation> prevStageInfo_;
 	ref_count_ptr<StgPlayerInformation> prevPlayerInfo_;
-public:
-	StgStageStartData() {}
-	virtual ~StgStageStartData() {}
-
-	ref_count_ptr<StgStageInformation> GetStageInformation() { return infoStage_; }
-	void SetStageInformation(ref_count_ptr<StgStageInformation> info) { infoStage_ = info; }
-	ref_count_ptr<ReplayInformation::StageData> GetStageReplayData() { return replayStageData_; }
-	void SetStageReplayData(ref_count_ptr<ReplayInformation::StageData> data) { replayStageData_ = data; }
-	ref_count_ptr<StgStageInformation> GetPrevStageInformation() { return prevStageInfo_; }
-	void SetPrevStageInformation(ref_count_ptr<StgStageInformation> info) { prevStageInfo_ = info; }
-	ref_count_ptr<StgPlayerInformation> GetPrevPlayerInformation() { return prevPlayerInfo_; }
-	void SetPrevPlayerInformation(ref_count_ptr<StgPlayerInformation> info) { prevPlayerInfo_ = info; }
-
 };
 
 //*******************************************************************
@@ -210,8 +197,8 @@ public:
 	};
 private:
 	int current_;
-	std::map<int, gstd::ref_count_ptr<SlowData>> mapDataPlayer_;
-	std::map<int, gstd::ref_count_ptr<SlowData>> mapDataEnemy_;
+	std::map<int, SlowData> mapDataPlayer_;
+	std::map<int, SlowData> mapDataEnemy_;
 	std::map<int, bool> mapValid_;
 public:
 	PseudoSlowInformation() { current_ = 0; }

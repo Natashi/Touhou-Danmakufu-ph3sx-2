@@ -145,7 +145,7 @@ namespace gstd {
 	//****************************************************************************
 	//TaskInfoPanel
 	//****************************************************************************
-	class TaskInfoPanel : public WindowLogger::Panel {
+	class TaskInfoPanel : public ILoggerPanel {
 	protected:
 		enum {
 			ROW_FUNC_ADDRESS = 0,
@@ -156,6 +156,7 @@ namespace gstd {
 			ROW_FUNC_ENABLE,
 			ROW_FUNC_INFO,
 		};
+		/*
 		WSplitter wndSplitter_;
 		WTreeView wndTreeView_;
 		WListView wndListView_;
@@ -164,16 +165,16 @@ namespace gstd {
 		uint64_t timeUpdateInterval_;
 		int addressLastFindManager_;
 
-		virtual bool _AddedLogger(HWND hTab);
 		void _UpdateTreeView(TaskManager* taskManager, shared_ptr<WTreeView::Item> item);
 		void _UpdateListView(TaskManager* taskManager);
+		*/
 	public:
 		TaskInfoPanel();
 
-		void SetUpdateInterval(int time) { timeUpdateInterval_ = time; }
+		virtual void Initialize(const std::string& name);
 
-		virtual void LocateParts();
-		virtual void Update(TaskManager* taskManager);
+		virtual void Update();
+		virtual void ProcessGui();
 	};
 
 	//****************************************************************************

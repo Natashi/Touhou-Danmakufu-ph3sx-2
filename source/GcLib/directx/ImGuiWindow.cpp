@@ -2,8 +2,12 @@
 
 #include "ImGuiWindow.hpp"
 
-using namespace directx;
+#include "DxConstant.hpp"
+#include "DirectGraphics.hpp"
+
 using namespace gstd;
+using namespace directx;
+using namespace directx::imgui;
 
 // ------------------------------------------------------------------------
 
@@ -41,12 +45,12 @@ bool ImGuiDirectGraphics::Initialize(HWND hWnd) {
 	_LoadModules();
 
 	Logger::WriteTop("DirectGraphics: Initialize.");
-	pDirect3D_ = Direct3DCreate9(D3D_SDK_VERSION);
-	if (pDirect3D_ == nullptr) throw gstd::wexception("Direct3DCreate9 error.");
+
+	IDirect3D9* pDirect3D = EDirect3D9::GetInstance()->GetD3D();
 
 	hAttachedWindow_ = hWnd;
 
-	pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &deviceCaps_);
+	pDirect3D->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &deviceCaps_);
 	_VerifyDeviceCaps();
 
 	d3dpp_.hDeviceWindow = hWnd;
@@ -60,7 +64,7 @@ bool ImGuiDirectGraphics::Initialize(HWND hWnd) {
 	{
 		HRESULT hrDevice = E_FAIL;
 		auto _TryCreateDevice = [&](D3DDEVTYPE type, DWORD addFlag) {
-			hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, type, hWnd,
+			hrDevice = pDirect3D->CreateDevice(D3DADAPTER_DEFAULT, type, hWnd,
 				addFlag | D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE, &d3dpp_, &pDevice_);
 		};
 
@@ -129,9 +133,8 @@ void ImGuiDirectGraphics::ResetDevice() {
 // ------------------------------------------------------------------------
 
 ImGuiAddFont::ImGuiAddFont(const std::string& name_, const std::wstring& font_, float size_, const GlyphRange& ranges)
-	: ImGuiAddFont(name_, font_, size_) {
-
-	rangesEx.clear();
+	: ImGuiAddFont(name_, font_, size_)
+{
 	for (auto& data : ranges) {
 		rangesEx.push_back(data[0]);
 		rangesEx.push_back(data[1]);
@@ -143,9 +146,12 @@ ImGuiAddFont::ImGuiAddFont(const std::string& name_, const std::wstring& font_, 
 
 ImGuiBaseWindow::ImGuiBaseWindow() {
 	bInitialized_ = false;
+	bImGuiInitialized_ = false;
 
 	pIo_ = nullptr;
 	dpi_ = USER_DEFAULT_SCREEN_DPI;
+
+	bRendering_ = false;
 }
 ImGuiBaseWindow::~ImGuiBaseWindow() {
 	ImGui_ImplDX9_Shutdown();
@@ -175,13 +181,17 @@ bool ImGuiBaseWindow::InitializeWindow(const std::wstring& className) {
 			0, 0, 0, 0, nullptr, nullptr, hInst, nullptr);
 	}
 
-	if (!dxGraphics_->Initialize(hWnd_))
-		return false;
+	if (dxGraphics_) {
+		if (!dxGraphics_->Initialize(hWnd_))
+			return false;
 
-	SetBounds(0, 0, dxGraphics_->GetWidth(), dxGraphics_->GetHeight());
+		SetBounds(0, 0, dxGraphics_->GetWidth(), dxGraphics_->GetHeight());
+	}
 
 	this->Attach(hWnd_);
 	::ShowWindow(hWnd_, SW_SHOWDEFAULT);
+
+	bRun_ = true;
 
 	return true;
 }
@@ -202,6 +212,7 @@ bool ImGuiBaseWindow::InitializeImGui() {
 	ImGui_ImplWin32_EnableDpiAwareness();
 	_InitializeSystemFonts();
 
+	bImGuiInitialized_ = true;
 	return true;
 }
 
@@ -219,8 +230,12 @@ void ImGuiBaseWindow::_InitializeSystemFonts() {
 }
 
 void ImGuiBaseWindow::_ResetDevice() {
-	_ResetFont();
-	dxGraphics_->ResetDevice();
+	{
+		//Lock lock(lock_);
+
+		_ResetFont();
+		dxGraphics_->ResetDevice();
+	}
 }
 void ImGuiBaseWindow::_ResetFont() {
 	_InitializeSystemFonts();
@@ -229,22 +244,24 @@ void ImGuiBaseWindow::_ResetFont() {
 
 	float scale = SystemUtility::DpiToScalingFactor(dpi_);
 
-	pIo_->Fonts->Clear();
-	mapFont_.clear();
+	{
+		pIo_->Fonts->Clear();
+		mapFont_.clear();
 
-	for (const auto& iData : userFontData_) {
-		auto baseFont = mapSystemFontPath_[iData.font].c_str();
+		for (const auto& iData : userFontData_) {
+			auto baseFont = mapSystemFontPath_[iData.font].c_str();
 
-		if (iData.rangesEx.size() == 0) {
-			mapFont_[iData.name] = pIo_->Fonts->AddFontFromFileTTF(baseFont, iData.size * scale);
+			if (iData.rangesEx.size() == 0) {
+				mapFont_[iData.name] = pIo_->Fonts->AddFontFromFileTTF(baseFont, iData.size * scale);
+			}
+			else {
+				mapFont_[iData.name] = pIo_->Fonts->AddFontFromFileTTF(baseFont, iData.size * scale,
+					nullptr, iData.rangesEx.data());
+			}
 		}
-		else {
-			mapFont_[iData.name] = pIo_->Fonts->AddFontFromFileTTF(baseFont, iData.size * scale,
-				nullptr, iData.rangesEx.data());
-		}
+
+		pIo_->Fonts->Build();
 	}
-
-	pIo_->Fonts->Build();
 }
 
 void ImGuiBaseWindow::_Resize(float scale) {
@@ -259,8 +276,10 @@ void ImGuiBaseWindow::_Resize(float scale) {
 	::MoveWindow(hWnd_, rc.left, rc.left, wd, ht, true);
 	MoveWindowCenter();
 
-	dxGraphics_->SetSize(wd, ht);
-	_ResetDevice();
+	if (dxGraphics_) {
+		dxGraphics_->SetSize(wd, ht);
+		_ResetDevice();
+	}
 }
 
 void ImGuiBaseWindow::_SetImguiStyle(const ImGuiStyle& style) {
@@ -272,22 +291,39 @@ void ImGuiBaseWindow::_SetImguiStyle(const ImGuiStyle& style) {
 	ImGui::GetStyle() = style;
 }
 
+void ImGuiBaseWindow::_Close() {
+	bRun_ = false;
+	::DestroyWindow(hWnd_);
+}
+
 void ImGuiBaseWindow::_Update() {
-	ImGui_ImplDX9_NewFrame();
-	ImGui_ImplWin32_NewFrame();
+	if (!bInitialized_ || bRendering_) return;
 
-	ImGui::NewFrame();
-	_ProcessGui();
-	ImGui::EndFrame();
+	bRendering_ = true;
 
-	if (dxGraphics_->BeginScene(true)) {
-		ImGui::Render();
-		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+	{
+		//Lock lock(lock_);
+
+		ImGui_ImplDX9_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+
+		ImGui::NewFrame();
+		_ProcessGui();
+		ImGui::EndFrame();
+
+		if (dxGraphics_->BeginScene(true)) {
+			ImGui::Render();
+			ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+		}
+		dxGraphics_->EndScene(true);
 	}
-	dxGraphics_->EndScene(true);
+
+	bRendering_ = false;
 }
 
 bool ImGuiBaseWindow::Loop() {
+	if (!bRun_) return false;
+
 	MSG msg;
 	while (::PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) {
 		::TranslateMessage(&msg);
@@ -296,6 +332,11 @@ bool ImGuiBaseWindow::Loop() {
 		if (msg.message == WM_QUIT)
 			return false;
 	}
+
+	if (dxGraphics_) {
+		_Update();
+	}
+
 	return bRun_;
 }
 
@@ -303,33 +344,36 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 LRESULT ImGuiBaseWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
 		return true;
+	
+	if (_SubWindowProcedure(hWnd, uMsg, wParam, lParam))
+		return true;
 
 	switch (uMsg) {
 	case WM_CLOSE:
-		::DestroyWindow(hWnd);
-		bRun_ = false;
+		_Close();
 		return 0;
 	case WM_DESTROY:
 		::PostQuitMessage(0);
 		return 0;
 
-	case WM_PAINT:
+	/*case WM_PAINT:
 	{
-		/*
-		PAINTSTRUCT ps;
-		HDC hdc = ::BeginPaint(hWnd, &ps);
-		::FillRect(hdc, &ps.rcPaint, 0);
-		::EndPaint(hWnd, &ps);
-		*/
-		_Update();
+		if (dxGraphics_) {
+			_Update();
+		}
 		return 0;
-	}
-
+	}*/
+	
 	case WM_SIZE:
 	{
-		if (dxGraphics_->GetDevice() != nullptr && wParam != SIZE_MINIMIZED) {
-			dxGraphics_->SetSize(LOWORD(lParam), HIWORD(lParam));
-			_ResetDevice();
+		if (dxGraphics_) {
+			if (dxGraphics_->GetDevice() != nullptr && wParam != SIZE_MINIMIZED) {
+				dxGraphics_->SetSize(LOWORD(lParam), HIWORD(lParam));
+				_ResetDevice();
+			}
+
+			// Immediately re-render after resizing action
+			_Update();
 		}
 		return 0;
 	}
@@ -346,10 +390,7 @@ LRESULT ImGuiBaseWindow::_WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, L
 		break;
 	}
 	}
-
-	if (_SubWindowProcedure(hWnd, uMsg, wParam, lParam))
-		return true;
-
+	
 	return _CallPreviousWindowProcedure(hWnd, uMsg, wParam, lParam);
 }
 
@@ -479,3 +520,4 @@ void ImGuiExt::EndGroupPanel(ImVector<ImRect>* stack) {
 
 	ImGui::EndGroup();
 }
+

@@ -9,7 +9,7 @@
 StgPlayerObject::StgPlayerObject(StgStageController* stageController) : StgMoveObject(stageController) {
 	typeObject_ = TypeObject::Player;
 
-	infoPlayer_ = new StgPlayerInformation();
+	infoPlayer_.reset(new StgPlayerInformation());
 
 	SetRenderPriorityI(30);
 	speedFast_ = 4;
@@ -217,7 +217,8 @@ void StgPlayerObject::CallSpell() {
 	if (!IsPermitSpell()) return;
 
 	auto objectManager = stageController_->GetMainObjectManager();
-	objSpell_ = new StgPlayerSpellManageObject(stageController_);
+
+	objSpell_.reset(new StgPlayerSpellManageObject(stageController_));
 	int idSpell = objectManager->AddObject(objSpell_);
 
 	gstd::value vUse = script_->RequestEvent(StgStagePlayerScript::EV_REQUEST_SPELL);

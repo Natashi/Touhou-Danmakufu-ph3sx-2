@@ -174,32 +174,81 @@ public:
 //*******************************************************************
 //ScriptInfoPanel
 //*******************************************************************
-class ScriptInfoPanel : public WindowLogger::Panel {
+class ScriptInfoPanel : public gstd::ILoggerPanel {
+	struct CacheDisplay {
+		ScriptEngineData* script;
+		std::string name;
+		std::string path;
+	};
+
+	struct ScriptDisplay {
+		enum Column : ImGuiID {
+			Address, Id,
+			Type, Path,
+			Status, Task, Time,
+			_NoSort,
+		};
+		enum class ScriptStatus {
+			Running,
+			Loaded,
+			Paused,
+			Closing,
+		};
+
+		weak_ptr<ManagedScript> script;
+		uintptr_t address;
+
+		size_t id;
+		std::string type;
+		std::string name;
+		ScriptStatus status;
+		size_t tasks;
+		uint64_t time;
+	public:
+		ScriptDisplay(shared_ptr<ManagedScript> script, ScriptStatus status);
+	public:
+		static const ImGuiTableSortSpecs* imguiSortSpecs;
+		static bool IMGUI_CDECL Compare(const ScriptDisplay& a, const ScriptDisplay& b);
+	};
+	class ManagerDisplay {
+	public:
+		struct DataPair {
+			std::string key;
+			std::string value;
+		};
+	public:
+		weak_ptr<ScriptManager> manager;
+		uintptr_t address;
+
+		size_t idThread;
+		size_t nScriptRun;
+		size_t nScriptLoad;
+
+		std::vector<ScriptDisplay> listScripts;
+
+		ManagerDisplay(shared_ptr<ScriptManager> manager);
+	public:
+		// Lazy-loaded
+		void LoadScripts();
+	};
 protected:
-	gstd::CriticalSection lock_;
+	std::vector<CacheDisplay> listCachedScript_;
 
-	WButton buttonTerminateAllScript_;
-	WButton buttonTerminateSingleScript_;
-	WListView wndManager_;
-	WListView wndCache_;
-	WListView wndScript_;
-	//WListBox wndListViewData_;
-	WSplitter wndSplitter_;
-	WSplitter wndSplitter2_;
+	std::vector<ManagerDisplay> listManager_;
 
-	std::list<weak_ptr<ManagedScript>> listScript_;
-
-	virtual bool _AddedLogger(HWND hTab);
-	virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	uintptr_t selectedManagerAddr_;
+	uintptr_t selectedScriptAddr_;
+private:
+	static const char* GetScriptTypeName(ManagedScript* script);
+	static const char* GetScriptStatusStr(ScriptDisplay::ScriptStatus status);
 
 	void _TerminateScriptAll();
-
-	static const wchar_t* GetScriptTypeName(ManagedScript* script);
+	void _TerminateScript(weak_ptr<ManagedScript> script);
 public:
 	ScriptInfoPanel();
-	~ScriptInfoPanel();
 
-	virtual void LocateParts();
-	virtual void PanelUpdate();
-	void Update(StgSystemController* systemController);
+	virtual void Initialize(const std::string& name);
+
+	virtual void Update();
+	virtual void ProcessGui();
 };

@@ -8,12 +8,10 @@
 
 using namespace gstd;
 
-script_block::script_block(uint32_t the_level, block_kind the_kind) {
-	level = the_level;
-	arguments = 0;
-	func = nullptr;
-	kind = the_kind;
-}
+
+script_block::script_block(uint32_t level, block_kind kind) :
+	level(level), kind(kind), arguments(0), func(nullptr) {}
+
 
 #pragma push_macro("new")
 #undef new
@@ -183,11 +181,11 @@ static const std::vector<function> base_operations = {
 
 parser::symbol* parser::scope_t::singular_insert(const std::string& name, const symbol& s, int argc) {
 	bool exists = this->find(name) != this->end();
-	auto itr = this->equal_range(name);
+	auto& [itrStart, itrEnd] = this->equal_range(name);
 
 	//Uh oh! Duplication!
 	if (exists) {
-		symbol* sPrev = &(itr.first->second);
+		symbol* sPrev = &(itrStart->second);
 
 		//Check if the symbol can be overloaded
 		if (!sPrev->bAllowOverload && sPrev->level > 0) {
@@ -203,7 +201,7 @@ parser::symbol* parser::scope_t::singular_insert(const std::string& name, const 
 			parser_assert(false, error);
 		}
 		else {
-			for (auto itrPair = itr.first; itrPair != itr.second; ++itrPair) {
+			for (auto itrPair = itrStart; itrPair != itrEnd; ++itrPair) {
 				if (argc == itrPair->second.sub->arguments) {
 					std::string error = StringUtility::Format("An overload with the same number of "
 						"arguments already exists. (%s, argc=%d)",
@@ -365,7 +363,7 @@ parser::symbol* parser::search_in(scope_t* scope, const std::string& name, int a
 
 	auto itrSymbol = scope->equal_range(name);
 	if (itrSymbol.first != scope->end()) {
-		for (auto itrPair = itrSymbol.first; itrPair != itrSymbol.second; ++itrPair) {
+		for (auto& itrPair = itrSymbol.first; itrPair != itrSymbol.second; ++itrPair) {
 			symbol* s = &itrPair->second;
 			if (!s->bVariable) {
 				//Check overload
@@ -747,24 +745,31 @@ int parser::scan_current_scope(parser_state_t* state, int level, int initVar, co
 
 void parser::write_operation(script_block* block, parser_state_t* state, const char* name, int clauses) {
 	symbol* s = search(name, clauses);
-	parser_assert(state, !s->bVariable, StringUtility::Format("write_operation: \"%s\" is not callable", name));
+
+	parser_assert(state, s != nullptr, "write_operation: symbol is null");
+	parser_assert(state, !s->bVariable, 
+		StringUtility::Format("write_operation: \"%s\" is not callable", name));
+
 	{
 		std::string error = StringUtility::Format(
 			"Invalid argument count for the default function \"%s\". (argc=%d)",
 			name, clauses);
 		parser_assert(state, s != nullptr, error);
 	}
+
 	state->AddCode(block, code(command_kind::pc_call_and_push_result, (uint32_t)s->sub, clauses));
 }
 void parser::write_operation(script_block* block, parser_state_t* state, const symbol* s, int clauses) {
 	parser_assert(state, s != nullptr, "write_operation: symbol is null");
 	parser_assert(state, !s->bVariable, "write_operation: symbol is not callable");
+
 	{
 		std::string error = StringUtility::Format(
 			"Invalid argument count for the default function \"%s\". (argc=%d, expected=%d)",
 			s->sub->name.c_str(), clauses, s->sub->arguments);
 		parser_assert(state, s->sub->arguments == clauses, error);
 	}
+
 	state->AddCode(block, code(command_kind::pc_call_and_push_result, (uint32_t)s->sub, clauses));
 }
 
@@ -1566,7 +1571,7 @@ void parser::parse_single_statement(script_block* block, parser_state_t* state,
 		if (state->next() == token_kind::tk_LOOP) state->advance();
 
 		{
-			state->AddCode(block, code(command_kind::pc_inline_cast_var, 
+			state->AddCode(block, code(command_kind::pc_inline_cast_var,
 				(uint32_t)script_type_manager::get_int_type(), false));
 
 			size_t ip_var_format = state->ip;

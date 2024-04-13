@@ -9,11 +9,15 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	HWND handleWindow = nullptr;
 
 	try {
+		gstd::SystemUtility::InitializeCOM();
 		gstd::SystemUtility::TestCpuSupportSIMD();
 
+		directx::EDirect3D9::CreateInstance();
 		DnhConfiguration* config = DnhConfiguration::CreateInstance();
+
 		ELogger* logger = ELogger::CreateInstance();
 		logger->Initialize(config->bLogFile_, config->bLogWindow_);
+
 		EPathProperty::CreateInstance();
 
 		EApplication* app = EApplication::CreateInstance();
@@ -46,7 +50,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	EPathProperty::DeleteInstance();
 	ELogger::DeleteInstance();
 	DnhConfiguration::DeleteInstance();
+	directx::EDirect3D9::DeleteInstance();
 
+	gstd::SystemUtility::UninitializeCOM();
 	gstd::DebugUtility::DumpMemoryLeaksOnExit();
 
 	return 0;

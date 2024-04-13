@@ -93,29 +93,6 @@ namespace directx {
 
 		void SetInfoPanel(shared_ptr<ShaderInfoPanel> panel) { panelInfo_ = panel; }
 	};
-	//****************************************************************************
-	//ShaderInfoPanel
-	//****************************************************************************
-	class ShaderInfoPanel : public gstd::WindowLogger::Panel {
-	protected:
-		enum {
-			ROW_ADDRESS,
-			ROW_NAME,
-			ROW_REFCOUNT,
-			ROW_EFFECT,
-			ROW_PARAMETERS,
-			ROW_TECHNIQUES,
-		};
-		gstd::WListView wndListView_;
-
-		virtual bool _AddedLogger(HWND hTab);
-	public:
-		ShaderInfoPanel();
-		~ShaderInfoPanel();
-
-		virtual void LocateParts();
-		virtual void PanelUpdate();
-	};
 
 	//*******************************************************************
 	//ShaderParameter
@@ -225,5 +202,57 @@ namespace directx {
 
 		HRESULT __stdcall Open(D3DXINCLUDE_TYPE type, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes);
 		HRESULT __stdcall Close(LPCVOID pData);
+	};
+
+	//****************************************************************************
+	//ShaderInfoPanel
+	//****************************************************************************
+	class ShaderInfoPanel : public gstd::ILoggerPanel {
+	protected:
+		class ShaderDisplay {
+		public:
+			enum Column {
+				Address,
+				Name,
+				Uses,
+				Effect,
+				Params, Techniques, Functions,
+				_NoSort,
+			};
+		public:
+			ID3DXEffect* pEffect;
+
+			uintptr_t address;
+			std::string strAddress;
+			std::string name;
+			int countRef;
+			std::string strAddrEffect;
+			D3DXEFFECT_DESC descEffect;
+
+			optional<weak_ptr<ShaderData>> refData;
+
+			ShaderDisplay() {};
+			ShaderDisplay(ID3DXEffect* pEffect, const std::string& name, uintptr_t dataAddress, shared_ptr<ShaderData> ref);
+		public:
+			// Lazy-loaded as they're only visible on hover
+			optional<std::vector<std::string>> descParams;
+			optional<std::vector<std::string>> descTechs;
+			optional<std::vector<std::string>> descFuncs;
+			void LoadDescParameters();
+			void LoadDescTechniques();
+			void LoadDescFunctions();
+		public:
+			static const ImGuiTableSortSpecs* imguiSortSpecs;
+			static bool IMGUI_CDECL Compare(const ShaderDisplay& a, const ShaderDisplay& b);
+		};
+	protected:
+		std::vector<ShaderDisplay> listDisplay_;
+	public:
+		ShaderInfoPanel();
+
+		virtual void Initialize(const std::string& name);
+
+		virtual void Update();
+		virtual void ProcessGui();
 	};
 }

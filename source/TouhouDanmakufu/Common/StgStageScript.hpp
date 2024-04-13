@@ -29,7 +29,7 @@ public:
 	virtual bool IsError();
 
 	shared_ptr<StgStageScriptObjectManager> GetObjectManager() { return objManager_; }
-	virtual shared_ptr<ManagedScript> Create(int type);
+	virtual shared_ptr<ManagedScript> Create(shared_ptr<ScriptManager> manager, int type) override;
 
 	int64_t GetPlayerScriptID() { return idPlayerScript_; }
 	int64_t GetItemScriptID() { return idItemScript_; }

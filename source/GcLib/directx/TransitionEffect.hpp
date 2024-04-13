@@ -27,7 +27,7 @@ namespace directx {
 	protected:
 		double diffAlpha_;
 		double alpha_;
-		gstd::ref_count_ptr<Sprite2D> sprite_;
+		shared_ptr<Sprite2D> sprite_;
 	public:
 		virtual void Work();
 		virtual void Render();
@@ -40,12 +40,12 @@ namespace directx {
 	//*******************************************************************
 	class TransitionEffectTask : public gstd::TaskBase {
 	protected:
-		gstd::ref_count_ptr<TransitionEffect> effect_;
+		shared_ptr<TransitionEffect> effect_;
 	public:
 		TransitionEffectTask();
 		~TransitionEffectTask();
 
-		void SetTransition(gstd::ref_count_ptr<TransitionEffect> effect);
+		void SetTransition(shared_ptr<TransitionEffect> effect);
 		virtual void Work();
 		virtual void Render();
 	};

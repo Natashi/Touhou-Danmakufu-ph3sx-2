@@ -71,9 +71,11 @@ bool ReplayInformation::SaveToFile(const std::wstring& scriptPath, int index) {
 	for (const int iStage : listStage) {
 		std::string key = StringUtility::Format("stage%d", iStage);
 
-		ref_count_ptr<StageData> data = mapStageData_[iStage];
+		auto& data = mapStageData_[iStage];
+
 		gstd::RecordBuffer recStage;
 		data->WriteRecord(recStage);
+
 		rec.SetRecordAsRecordBuffer(key, recStage);
 	}
 
@@ -104,8 +106,7 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 	//	std::string path = dir + scriptName + StringUtility::Format("_replay%02d.dat", index);
 	std::wstring path = dir + fileName;
 
-	ref_count_ptr<ReplayInformation> res = CreateFromFile(path);
-	return res;
+	return CreateFromFile(path);
 }
 ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring path) {
 	RecordBuffer rec;
@@ -161,42 +162,50 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 		return nullptr;
 	}
 
-	ref_count_ptr<ReplayInformation> res = new ReplayInformation();
-	res->path_ = path;
-	res->playerScriptID_ = rec.GetRecordAsStringW("playerScriptID");
-	res->playerScriptFileName_ = rec.GetRecordAsStringW("playerScriptFileName");
-	res->playerScriptReplayName_ = rec.GetRecordAsStringW("playerScriptReplayName");
+	ref_count_ptr<ReplayInformation> res(new ReplayInformation());
 
-	res->comment_ = rec.GetRecordAsStringW("comment");
-	res->userName_ = rec.GetRecordAsStringW("userName");
+	res->path_ = path;
+	res->playerScriptID_ = *rec.GetRecordAsStringW("playerScriptID");
+	res->playerScriptFileName_ = *rec.GetRecordAsStringW("playerScriptFileName");
+	res->playerScriptReplayName_ = *rec.GetRecordAsStringW("playerScriptReplayName");
+
+	res->comment_ = *rec.GetRecordAsStringW("comment");
+	res->userName_ = *rec.GetRecordAsStringW("userName");
 	rec.GetRecord("totalScore", res->totalScore_);
-	res->fpsAverage_ = rec.GetRecordAsDouble("fpsAverage");
+	res->fpsAverage_ = *rec.GetRecordAsDouble("fpsAverage");
 	rec.GetRecord("date", res->date_);
 
 	res->userData_->Clear();
-	if (rec.IsExists("userData")) {
-		RecordBuffer recUserData;
-		rec.GetRecordAsRecordBuffer("userData", recUserData);
-		res->userData_->ReadRecord(recUserData);
+	if (auto data = rec.GetRecordAsRecordBuffer("userData")) {
+		res->userData_->ReadRecord(*data);
 	}
 
-	uint32_t stageCount = rec.GetRecordAs<uint32_t>("stageCount");
+	uint32_t stageCount = *rec.GetRecordAs<uint32_t>("stageCount");
+
 	std::vector<int> listStage;
 	listStage.resize(stageCount);
 	rec.GetRecord("stageIndexList", &listStage[0], sizeof(int) * stageCount);
 	for (const int iStage : listStage) {
 		std::string key = StringUtility::Format("stage%d", iStage);
-		ref_count_ptr<StageData> data = new StageData();
-		gstd::RecordBuffer recStage;
-		rec.GetRecordAsRecordBuffer(key, recStage);
+
+		ref_count_ptr<StageData> data(new StageData());
+
+		gstd::RecordBuffer recStage = *rec.GetRecordAsRecordBuffer(key);
 		data->ReadRecord(recStage);
-		res->mapStageData_[iStage] = data;
+
+		res->mapStageData_[iStage] = MOVE(data);
 	}
 
 	return res;
 }
 
 //ReplayInformation::StageData
+ReplayInformation::StageData::StageData() { 
+	recordKey_.reset(new gstd::RecordBuffer());
+	scoreStart_ = 0; 
+	scoreLast_ = 0; 
+}
+
 double ReplayInformation::StageData::GetFramePerSecondAverage() {
 	double totalFps = 0;
 	for (const FLOAT iFps : listFramePerSecond_)
@@ -223,48 +232,47 @@ shared_ptr<ScriptCommonData> ReplayInformation::StageData::GetCommonData(const s
 	return res;
 }
 void ReplayInformation::StageData::SetCommonData(const std::string& area, shared_ptr<ScriptCommonData> commonData) {
-	ref_count_ptr<RecordBuffer> record = new RecordBuffer();
+	ref_count_ptr<RecordBuffer> record(new RecordBuffer());
 	if (commonData)
 		commonData->WriteRecord(*record);
 	mapCommonData_[area] = record;
 }
 
 void ReplayInformation::StageData::ReadRecord(gstd::RecordBuffer& record) {
-	mainScriptID_ = record.GetRecordAsStringW("mainScriptID");
-	mainScriptName_ = record.GetRecordAsStringW("mainScriptName");
-	mainScriptRelativePath_ = record.GetRecordAsStringW("mainScriptRelativePath");
+	mainScriptID_ = *record.GetRecordAsStringW("mainScriptID");
+	mainScriptName_ = *record.GetRecordAsStringW("mainScriptName");
+	mainScriptRelativePath_ = *record.GetRecordAsStringW("mainScriptRelativePath");
 
 	record.GetRecord<int64_t>("scoreStart", scoreStart_);
 	record.GetRecord<int64_t>("scoreLast", scoreLast_);
 	record.GetRecord<int64_t>("graze", graze_);
 	record.GetRecord<int64_t>("point", point_);
-	frameEnd_ = record.GetRecordAs<uint32_t>("frameEnd");
+	frameEnd_ = *record.GetRecordAs<uint32_t>("frameEnd");
 	record.GetRecord<uint32_t>("randSeed", randSeed_);
-	record.GetRecordAsRecordBuffer("recordKey", *recordKey_);
+	*recordKey_ = MOVE(*record.GetRecordAsRecordBuffer("recordKey"));
 
 	//FPS list
-	size_t countFramePerSecond = record.GetRecordAs<uint32_t>("countFramePerSecond");
+	size_t countFramePerSecond = *record.GetRecordAs<uint32_t>("countFramePerSecond");
 	listFramePerSecond_.resize(countFramePerSecond);
 	record.GetRecord("listFramePerSecond", &listFramePerSecond_[0], sizeof(FLOAT) * listFramePerSecond_.size());
 
 	//Common data
-	gstd::RecordBuffer recComMap;
-	record.GetRecordAsRecordBuffer("mapCommonData", recComMap);
+	gstd::RecordBuffer recComMap = *record.GetRecordAsRecordBuffer("mapCommonData");
 	std::vector<std::string> listKeyCommonData = recComMap.GetKeyList();
 	for (auto& iCommonData : listKeyCommonData) {
-		ref_count_ptr<RecordBuffer> recComData = new RecordBuffer();
-		recComMap.GetRecordAsRecordBuffer(iCommonData, *recComData);
-		mapCommonData_[iCommonData] = recComData;
+		ref_count_ptr<RecordBuffer> record(new RecordBuffer());
+		*record = MOVE(*recComMap.GetRecordAsRecordBuffer(iCommonData));
+		mapCommonData_[iCommonData] = record;
 	}
 
 	//Player information
-	playerScriptID_ = record.GetRecordAsStringW("playerScriptID");
-	playerScriptFileName_ = record.GetRecordAsStringW("playerScriptFileName");
-	playerScriptReplayName_ = record.GetRecordAsStringW("playerScriptReplayName");
-	playerLife_ = record.GetRecordAsDouble("playerLife");
-	playerBombCount_ = record.GetRecordAsDouble("playerBombCount");
-	playerPower_ = record.GetRecordAsDouble("playerPower");
-	playerRebirthFrame_ = record.GetRecordAsInteger("playerRebirthFrame");
+	playerScriptID_ = *record.GetRecordAsStringW("playerScriptID");
+	playerScriptFileName_ = *record.GetRecordAsStringW("playerScriptFileName");
+	playerScriptReplayName_ = *record.GetRecordAsStringW("playerScriptReplayName");
+	playerLife_ = *record.GetRecordAsDouble("playerLife");
+	playerBombCount_ = *record.GetRecordAsDouble("playerBombCount");
+	playerPower_ = *record.GetRecordAsDouble("playerPower");
+	playerRebirthFrame_ = *record.GetRecordAsInteger("playerRebirthFrame");
 }
 void ReplayInformation::StageData::WriteRecord(gstd::RecordBuffer& record) {
 	record.SetRecordAsStringW("mainScriptID", mainScriptID_);
@@ -288,8 +296,8 @@ void ReplayInformation::StageData::WriteRecord(gstd::RecordBuffer& record) {
 	gstd::RecordBuffer recComMap;
 	for (auto itrCommonData = mapCommonData_.begin(); itrCommonData != mapCommonData_.end(); itrCommonData++) {
 		const std::string& key = itrCommonData->first;
-		ref_count_ptr<RecordBuffer> recComData = itrCommonData->second;
-		recComMap.SetRecordAsRecordBuffer(key, *recComData);
+		ref_count_ptr<RecordBuffer> record = itrCommonData->second;
+		recComMap.SetRecordAsRecordBuffer(key, *record);
 	}
 	record.SetRecordAsRecordBuffer("mapCommonData", recComMap);
 
@@ -343,7 +351,7 @@ void ReplayInformationManager::UpdateInformationList(std::wstring pathScript) {
 		}
 
 		int key = StringUtility::ToInteger(strKey);
-		mapInfo_[key] = info;
+		mapInfo_[key] = MOVE(info);
 	}
 
 }

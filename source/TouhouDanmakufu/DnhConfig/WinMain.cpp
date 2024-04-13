@@ -16,13 +16,9 @@ int APIENTRY wWinMain(
 	//gstd::DebugUtility::DumpMemoryLeaksOnExit();
 
 	try {
-		{
-			HRESULT hr = ::CoInitializeEx(NULL, COINIT_MULTITHREADED |
-				COINIT_DISABLE_OLE1DDE);
-			if (FAILED(hr))
-				throw wexception("CoInitializeEx failed");
-		}
+		SystemUtility::InitializeCOM();
 
+		directx::EDirect3D9::CreateInstance();
 		DnhConfiguration::CreateInstance();
 
 		MainWindow* wndMain = MainWindow::CreateInstance();
@@ -50,7 +46,9 @@ int APIENTRY wWinMain(
 	EApplication::DeleteInstance();
 	MainWindow::DeleteInstance();
 	DnhConfiguration::DeleteInstance();
-	::CoUninitialize();
+	directx::EDirect3D9::DeleteInstance();
+
+	SystemUtility::UninitializeCOM();
 
 	return 0;
 }

@@ -46,6 +46,7 @@ namespace directx {
 		ID3DXEffect* GetInstancing3DShader() { return listEffect_[2]; }
 		ID3DXEffect* GetIntersectVisualShader1() { return listEffect_[3]; }
 		ID3DXEffect* GetIntersectVisualShader2() { return listEffect_[4]; }
+		size_t GetShaderCount() const { return listEffect_.size(); }
 
 		IDirect3DVertexDeclaration9* GetVertexDeclarationTLX() { return listDeclaration_[0]; }
 		IDirect3DVertexDeclaration9* GetVertexDeclarationLX() { return listDeclaration_[1]; }

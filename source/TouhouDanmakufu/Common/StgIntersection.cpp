@@ -35,8 +35,8 @@ StgIntersectionManager::StgIntersectionManager() {
 		}
 
 		{
-			objIntersectionVisualizerCircle_ = new DxScriptParticleListObject2D();
-			objIntersectionVisualizerLine_ = new DxScriptPrimitiveObject2D();
+			objIntersectionVisualizerCircle_.reset(new DxScriptParticleListObject2D());
+			objIntersectionVisualizerLine_.reset(new DxScriptPrimitiveObject2D());
 
 			countCircleInstance_ = 0U;
 			countLineVertex_ = 0U;
@@ -165,15 +165,15 @@ void StgIntersectionManager::Work() {
 	//_ArrangePool();
 
 	ELogger* logger = ELogger::GetInstance();
-	if (logger->IsWindowVisible()) {
+	if (auto infoLog = logger->GetInfoPanel()) {
 		/*
 		int countUsed = GetUsedPoolObjectCount();
 		int countCache = GetCachePoolObjectCount();
 		logger->SetInfo(9, L"Intersection count",
 			StringUtility::Format(L"Used=%4d, Cached=%4d, Total=%4d, Check=%4d", countUsed, countCache, countUsed + countCache, totalCheck));
 		*/
-		logger->SetInfo(9, L"Intersection count",
-			StringUtility::Format(L"Total=%4d, Check=%4d", totalTarget, totalCheck));
+		infoLog->SetInfo(9, "Intersection count",
+			StringUtility::Format("Total=%4d, Check=%4d", totalTarget, totalCheck));
 	}
 }
 void StgIntersectionManager::RenderVisualizer() {

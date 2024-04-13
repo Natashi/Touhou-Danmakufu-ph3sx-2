@@ -33,10 +33,10 @@ bool Application::Run() {
 	MSG msg;
 	while (true) {
 		if (bAppRun_ == false) break;
-		if (::PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE)) {
-			if (!::GetMessage(&msg, NULL, 0, 0)) break;
+		if (::PeekMessageW(&msg, 0, 0, 0, PM_NOREMOVE)) {
+			if (!::GetMessageW(&msg, NULL, 0, 0)) break;
 			::TranslateMessage(&msg);
-			::DispatchMessage(&msg);
+			::DispatchMessageW(&msg);
 		}
 		else {
 			if (bAppActive_ == false) {

@@ -19,26 +19,13 @@ FpsController::FpsController() {
 }
 FpsController::~FpsController() {
 }
-void FpsController::RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) {
-	if (obj.expired()) return;
-	for (auto itr = listFpsControlObject_.begin(); itr != listFpsControlObject_.end(); itr++) {
-		ref_count_weak_ptr<FpsControlObject>& tObj = *itr;
-		if (obj.get() == tObj.get()) {
-			listFpsControlObject_.erase(itr);
-			break;
-		}
-	}
+void FpsController::RemoveFpsControlObject(FpsControlObject* obj) {
+	listFpsControlObject_.remove_if([&](const auto& x) { return x.get() == obj; });
 }
 DWORD FpsController::GetControlObjectFps() {
 	DWORD res = fps_;
-	for (auto itr = listFpsControlObject_.begin(); itr != listFpsControlObject_.end(); ) {
-		ref_count_weak_ptr<FpsControlObject>& obj = *itr;
-		if (obj.IsExists()) {
-			res = std::min(res, obj->GetFps());
-			++itr;
-		}
-		else
-			itr = listFpsControlObject_.erase(itr);
+	for (auto& pControl : listFpsControlObject_) {
+		res = std::min(res, pControl->GetFps());
 	}
 	return res;
 }
@@ -65,6 +52,7 @@ void StaticFpsController::SetCriticalFrame() {
 }
 std::array<bool, 2> StaticFpsController::Advance() {
 	std::array<bool, 2> res{ false, false };
+	bool renderFrame = false, updateFrame = false;
 
 	DWORD fpsTarget = std::min<DWORD>(bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps()), 1000);
 	const auto targetNs = duration<double, std::nano>(std::nano::den / (double)fpsTarget);
@@ -77,9 +65,9 @@ std::array<bool, 2> StaticFpsController::Advance() {
 	if (timeAccum_ >= targetNs) {
 		if (bCriticalFrame_ || (rateSkip_ <= 1 || countSkip_ % rateSkip_ == 0)) {
 			listFps_.push_back(timeAccum_.count());
-			res[0] = true;
+			renderFrame = true;
 		}
-		res[1] = true;
+		updateFrame = true;
 
 		++countSkip_;
 
@@ -91,12 +79,12 @@ std::array<bool, 2> StaticFpsController::Advance() {
 
 	if (timeCurrent - timePreviousFpsUpdate_ >= 500ms) {
 		if (listFps_.size() > 0) {
-			double fpsAccum = 0;		//ms
+			double fpsAccum = 0;		// us
 			for (double iFps : listFps_)
-				fpsAccum += iFps / 1e6;
+				fpsAccum += iFps / 1e3;
 			fpsAccum /= listFps_.size();
 
-			fpsCurrent_ = 1000 / fpsAccum;
+			fpsCurrent_ = 1e6 / fpsAccum;
 
 			listFps_.clear();
 		}
@@ -106,7 +94,7 @@ std::array<bool, 2> StaticFpsController::Advance() {
 	}
 
 	bCriticalFrame_ = false;
-	return res;
+	return { renderFrame, updateFrame };
 }
 
 //*******************************************************************
@@ -138,7 +126,7 @@ void VariableFpsController::SetCriticalFrame() {
 	timeAccumRender_ = 0ns;
 }
 std::array<bool, 2> VariableFpsController::Advance() {
-	std::array<bool, 2> res{ false, false };
+	bool renderFrame = false, updateFrame = false;
 
 	DWORD fpsTarget = std::min<DWORD>(bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps()), 1000);
 	const auto targetNs = duration<double, std::nano>(std::nano::den / (double)fpsTarget);
@@ -152,7 +140,7 @@ std::array<bool, 2> VariableFpsController::Advance() {
 
 	if (timeAccumUpdate_ >= targetNs) {
 		listFpsUpdate_.push_back(timeAccumUpdate_.count());
-		res[1] = true;
+		updateFrame = true;
 
 		const nanoseconds dCast = duration_cast<nanoseconds>(targetNs);
 		timeAccumUpdate_ -= dCast;
@@ -167,7 +155,7 @@ std::array<bool, 2> VariableFpsController::Advance() {
 		auto timeDeltaRender = timeCurrent - timePreviousRender_;
 
 		listFpsRender_.push_back(timeDeltaRender.count());
-		res[0] = true;
+		renderFrame = true;
 
 		timePreviousRender_ = timeCurrent;
 		bFrameRendered_ = true;
@@ -208,7 +196,7 @@ std::array<bool, 2> VariableFpsController::Advance() {
 	}
 
 	bCriticalFrame_ = false;
-	return res;
+	return { renderFrame, updateFrame };
 	/*
 	DWORD fpsTarget = bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps());
 	const double targetMs = 1000.0 / fpsTarget;

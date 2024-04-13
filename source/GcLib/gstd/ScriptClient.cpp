@@ -27,18 +27,19 @@ ScriptEngineCache::ScriptEngineCache() {
 void ScriptEngineCache::Clear() {
 	cache_.clear();
 }
-void ScriptEngineCache::AddCache(const std::wstring& name, shared_ptr<ScriptEngineData> data) {
-	cache_[name] = data;
+ScriptEngineData* ScriptEngineCache::AddCache(const std::wstring& name, uptr<ScriptEngineData>&& data) {
+	auto& res = (cache_[name] = MOVE(data));
+	return res.get();
 }
 void ScriptEngineCache::RemoveCache(const std::wstring& name) {
 	auto itrFind = cache_.find(name);
 	if (cache_.find(name) != cache_.end())
 		cache_.erase(itrFind);
 }
-shared_ptr<ScriptEngineData> ScriptEngineCache::GetCache(const std::wstring& name) {
+ScriptEngineData* ScriptEngineCache::GetCache(const std::wstring& name) {
 	auto itrFind = cache_.find(name);
 	if (cache_.find(name) == cache_.end()) return nullptr;
-	return itrFind->second;
+	return itrFind->second.get();
 }
 bool ScriptEngineCache::IsExists(const std::wstring& name) {
 	return cache_.find(name) != cache_.end();
@@ -278,7 +279,7 @@ uint64_t ScriptClientBase::prandCalls_ = 0;
 ScriptClientBase::ScriptClientBase() {
 	bError_ = false;
 
-	engine_.reset(new ScriptEngineData());
+	engineData_ = nullptr;
 	machine_ = nullptr;
 
 	mainThreadID_ = -1;
@@ -322,11 +323,11 @@ void ScriptClientBase::_RaiseError(int line, const std::wstring& message) {
 	bError_ = true;
 	std::wstring errorPos = _GetErrorLineSource(line);
 
-	ScriptFileLineMap* mapLine = engine_->GetScriptFileLineMap();
+	ScriptFileLineMap* mapLine = engineData_->GetScriptFileLineMap();
 	ScriptFileLineMap::Entry* entry = mapLine->GetEntry(line);
 
 	int lineOriginal = -1;
-	std::wstring entryPath = engine_->GetPath();
+	std::wstring entryPath = engineData_->GetPath();
 	if (entry) {
 		lineOriginal = entry->lineEndOriginal_ - (entry->lineEnd_ - line);
 		entryPath = entry->path_;
@@ -336,13 +337,13 @@ void ScriptClientBase::_RaiseError(int line, const std::wstring& message) {
 	std::wstring str = StringUtility::Format(L"%s\r\n%s" "\r\n[%s (main=%s)] " "line-> %d\r\n\r\n↓\r\n%s\r\n～～～",
 		message.c_str(),
 		entryPath.c_str(),
-		fileName.c_str(), PathProperty::GetFileName(engine_->GetPath()).c_str(),
+		fileName.c_str(), PathProperty::GetFileName(engineData_->GetPath()).c_str(),
 		lineOriginal, errorPos.c_str());
 	throw wexception(str);
 }
 void ScriptClientBase::_RaiseErrorFromEngine() {
-	int line = engine_->GetEngine()->get_error_line();
-	_RaiseError(line, engine_->GetEngine()->get_error_message());
+	int line = engineData_->GetEngine()->get_error_line();
+	_RaiseError(line, engineData_->GetEngine()->get_error_message());
 }
 void ScriptClientBase::_RaiseErrorFromMachine() {
 	int line = machine_->get_error_line();
@@ -351,8 +352,8 @@ void ScriptClientBase::_RaiseErrorFromMachine() {
 std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 	if (line == 0) return L"";
 
-	Encoding::Type encoding = engine_->GetEncoding();
-	std::vector<char>& source = engine_->GetSource();
+	Encoding::Type encoding = engineData_->GetEncoding();
+	std::vector<char>& source = engineData_->GetSource();
 
 	int tLine = 1;
 
@@ -372,41 +373,44 @@ std::wstring ScriptClientBase::_GetErrorLineSource(int line) {
 	return Encoding::BytesToWString(pStr, size, encoding);
 }
 std::vector<char> ScriptClientBase::_ParseScriptSource(std::vector<char>& source) {
-	ScriptFileLineMap* lineMap = engine_->GetScriptFileLineMap();
+	ScriptFileLineMap* lineMap = engineData_->GetScriptFileLineMap();
 
 	lineMap->Clear();
-	ScriptLoader scriptLoader(this, engine_->GetPath(), source, lineMap);
+	ScriptLoader scriptLoader(this, engineData_->GetPath(), source, lineMap);
 
 	scriptLoader.Parse();
 
 	return scriptLoader.GetResult();
 }
 bool ScriptClientBase::_CreateEngine() {
-	unique_ptr<script_engine> engine(new script_engine(engine_->GetSource(), &func_, &const_));
-	engine_->SetEngine(std::move(engine));
-	return !engine_->GetEngine()->get_error();
+	unique_ptr<script_engine> engine(new script_engine(engineData_->GetSource(), &func_, &const_));
+	engineData_->SetEngine(std::move(engine));
+	return !engineData_->GetEngine()->get_error();
 }
 bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 	path = PathProperty::GetUnique(path);
 
-	if (cache_) {
-		shared_ptr<ScriptEngineData> pCachedEngine = cache_->GetCache(path);
-		if (pCachedEngine) {
-			engine_ = pCachedEngine;
-			return true;
-		}
+	if (auto pFindCache = cache_->GetCache(path)) {
+		engineData_ = pFindCache;
+		return true;
 	}
 
-	engine_->SetPath(path);
+	// Script not found in cache, create a new entry
+
+	engineData_ = cache_->AddCache(path, std::make_unique<ScriptEngineData>());
+	engineData_->SetPath(path);
+	
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 	if (reader == nullptr || !reader->Open())
 		throw gstd::wexception(L"SetScriptFileSource: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
 	size_t size = reader->GetFileSize();
+
 	std::vector<char> source;
 	source.resize(size);
 	reader->Read(&source[0], size);
-	this->SetSource(source);
+
+	SetSource(source);
 
 	return true;
 }
@@ -417,26 +421,23 @@ void ScriptClientBase::SetSource(const std::string& source) {
 	this->SetSource(vect);
 }
 void ScriptClientBase::SetSource(std::vector<char>& source) {
-	engine_->SetSource(source);
-	ScriptFileLineMap* mapLine = engine_->GetScriptFileLineMap();
-	mapLine->AddEntry(engine_->GetPath(), 1, StringUtility::CountCharacter(source, '\n') + 1);
+	engineData_->SetSource(source);
+	ScriptFileLineMap* mapLine = engineData_->GetScriptFileLineMap();
+	mapLine->AddEntry(engineData_->GetPath(), 1, StringUtility::CountCharacter(source, '\n') + 1);
 }
 void ScriptClientBase::Compile() {
-	if (engine_->GetEngine() == nullptr) {
-		std::vector<char> source = _ParseScriptSource(engine_->GetSource());
-		engine_->SetSource(source);
+	if (engineData_->GetEngine() == nullptr) {
+		std::vector<char> source = _ParseScriptSource(engineData_->GetSource());
+		engineData_->SetSource(source);
 
 		bool bCreateSuccess = _CreateEngine();
 		if (!bCreateSuccess) {
 			bError_ = true;
 			_RaiseErrorFromEngine();
 		}
-		if (cache_ != nullptr && engine_->GetPath().size() > 0) {
-			cache_->AddCache(engine_->GetPath(), engine_);
-		}
 	}
 
-	machine_.reset(new script_machine(engine_->GetEngine().get()));
+	machine_.reset(new script_machine(engineData_->GetEngine().get()));
 	if (machine_->get_error()) {
 		bError_ = true;
 		_RaiseErrorFromMachine();
@@ -484,7 +485,7 @@ bool ScriptClientBase::IsEventExists(const std::string& name, std::map<std::stri
 	if (bError_) {
 		if (machine_ && machine_->get_error())
 			_RaiseErrorFromMachine();
-		else if (engine_->GetEngine()->get_error())
+		else if (engineData_->GetEngine()->get_error())
 			_RaiseErrorFromEngine();
 		return false;
 	}
@@ -601,7 +602,7 @@ void ScriptClientBase::CheckRunInMainThread() {
 }
 std::wstring ScriptClientBase::_ExtendPath(std::wstring path) {
 	int line = machine_->get_current_line();
-	const std::wstring& pathScript = GetEngine()->GetScriptFileLineMap()->GetPath(line);
+	const std::wstring& pathScript = GetEngineData()->GetScriptFileLineMap()->GetPath(line);
 
 	path = StringUtility::ReplaceAll(path, L'\\', L'/');
 	path = StringUtility::ReplaceAll(path, L"./", pathScript);
@@ -850,6 +851,7 @@ static value _ScriptValueLerp(script_machine* machine, const value* v1, const va
 		&& v2->get_type()->get_kind() == type_data::type_kind::tk_array)
 	{
 		value res;
+
 		if (v1->length_as_array() != v2->length_as_array()) {
 			std::string err = StringUtility::Format("Sizes must be the same when interpolating arrays. (%u and %u)",
 				v1->length_as_array(), v2->length_as_array());
@@ -1224,7 +1226,7 @@ value ScriptClientBase::Func_StringFormat(script_machine* machine, int argc, con
 
 		std::list<std::wstring> stringCache;
 		std::vector<byte> fakeVaList;
-		char tmp[8];
+		char tmp[8]{};
 
 		const value* pValue = &argv[2];
 		size_t iMem = 0;
@@ -1321,17 +1323,19 @@ value ScriptClientBase::Func_RegexMatchRepeated(script_machine* machine, int arg
 	std::vector<std::wstring> singleArray;
 
 	std::wregex reg(pattern);
+
 	auto itrBegin = std::wsregex_iterator(str.begin(), str.end(), reg);
 	auto itrEnd = std::wsregex_iterator();
 
-	valueArrayRes.resize(std::distance(itrBegin, itrEnd));
 	for (size_t i = 0; itrBegin != itrEnd; ++itrBegin, ++i) {
 		const std::wsmatch& match = *itrBegin;
+
 		singleArray.clear();
 		for (const std::wssub_match& itrMatch : match) {
 			singleArray.push_back(itrMatch.str());
 		}
-		valueArrayRes[i] = script->CreateStringArrayValue(singleArray);
+
+		valueArrayRes.push_back(script->CreateStringArrayValue(singleArray));
 	}
 
 	return script->CreateValueArrayValue(valueArrayRes);
@@ -1374,14 +1378,14 @@ value ScriptClientBase::Func_ReflectAngle(script_machine* machine, int argc, con
 //共通関数：パス関連
 value ScriptClientBase::Func_GetParentScriptDirectory(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
-	const std::wstring& path = script->GetEngine()->GetPath();
+	const std::wstring& path = script->GetEngineData()->GetPath();
 	std::wstring res = PathProperty::GetFileDirectory(path);
 	return script->CreateStringValue(res);
 }
 value ScriptClientBase::Func_GetCurrentScriptDirectory(script_machine* machine, int argc, const value* argv) {
 	ScriptClientBase* script = reinterpret_cast<ScriptClientBase*>(machine->data);
 	int line = machine->get_current_line();
-	const std::wstring& path = script->GetEngine()->GetScriptFileLineMap()->GetPath(line);
+	const std::wstring& path = script->GetEngineData()->GetScriptFileLineMap()->GetPath(line);
 	std::wstring res = PathProperty::GetFileDirectory(path);
 	return script->CreateStringValue(res);
 }
@@ -1741,7 +1745,8 @@ value ScriptClientBase::Func_LoadCommonDataValuePointer(script_machine* machine,
 		}
 		else dataArea = nullptr;
 
-		//Galaxy brain hax method
+		// Galaxy brain hax method
+		// TODO: Make this bitness-invariant
 		res = ((uint64_t)(dataArea.get()) << 32) | (uint64_t)(pData);
 	}
 
@@ -1757,10 +1762,14 @@ value ScriptClientBase::Func_LoadAreaCommonDataValuePointer(script_machine* mach
 	uint64_t res = (uint64_t)nullptr;
 
 	{
-		ScriptCommonData* pArea = commonDataManager->GetData(area).get();
+		auto pArea = commonDataManager->GetData(area);
 		value* pData = nullptr;
 
+		// TODO: Make this bitness-invariant
+
 		if (pArea) {
+			ScriptCommonData* pAreaAddr = pArea.get();
+
 			auto resFind = pArea->IsExists(key);
 			if (resFind.first) {
 				pData = &(resFind.second->second);
@@ -1771,7 +1780,7 @@ value ScriptClientBase::Func_LoadAreaCommonDataValuePointer(script_machine* mach
 			}
 			else pArea = nullptr;
 
-			res = ((uint64_t)(pArea) << 32) | (uint64_t)(pData);
+			res = ((uint64_t)(pAreaAddr) << 32) | (uint64_t)(pData);
 		}
 	}
 
@@ -1831,7 +1840,7 @@ ScriptLoader::ScriptLoader(ScriptClientBase* script, const std::wstring& path, s
 }
 
 void ScriptLoader::_RaiseError(int line, const std::wstring& err) {
-	script_->engine_->SetSource(src_);
+	script_->engineData_->SetSource(src_);
 	script_->_RaiseError(line, err);
 }
 void ScriptLoader::_DumpRes() {
@@ -2028,7 +2037,7 @@ void ScriptLoader::_ParseInclude() {
 							size_t targetBomSize = 0;
 							Encoding::Type includeEncoding = Encoding::UTF8;
 							if (reader->GetFileSize() >= 2) {
-								byte data[3];
+								byte data[3]{};
 								reader->Read(data, 3);
 
 								includeEncoding = Encoding::Detect((char*)data, reader->GetFileSize());
@@ -2529,7 +2538,7 @@ void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
 
 	std::vector<std::string> listKey = record.GetKeyList();
 	for (const std::string& key : listKey) {
-		shared_ptr<RecordEntry> entry = record.GetEntry(key);
+		RecordEntry* entry = record.GetEntry(key);
 		gstd::ByteBuffer& buffer = entry->GetBufferRef();
 
 		gstd::value storedVal;
@@ -2538,8 +2547,7 @@ void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
 		buffer.Read(&storedSize, sizeof(uint32_t));
 
 		if (storedSize > 0U) {
-			gstd::ByteBuffer bufferRes;
-			bufferRes.SetSize(storedSize);
+			gstd::ByteBuffer bufferRes(storedSize);
 			buffer.Read(bufferRes.GetPointer(), bufferRes.GetSize());
 			storedVal = _ReadRecord(bufferRes);
 		}
@@ -2550,7 +2558,7 @@ void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
 gstd::value ScriptCommonData::_ReadRecord(gstd::ByteBuffer& buffer) {
 	script_type_manager* scriptTypeManager = script_type_manager::get_instance();
 
-	uint8_t kind;
+	uint8_t kind{};
 	buffer.Read(&kind, sizeof(uint8_t));
 
 	switch ((type_data::type_kind)kind) {
@@ -2641,6 +2649,8 @@ void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, const gstd::value&
 }
 
 bool ScriptCommonData::Script_DecomposePtr(uint64_t val, _Script_PointerData* dst) {
+	// TODO: Make this bitness-invariant
+
 	//Pointer format:
 	//	63    32				31     0
 	//	xxxxxxxx				xxxxxxxx
@@ -2660,94 +2670,145 @@ bool ScriptCommonData::Script_DecomposePtr(uint64_t val, _Script_PointerData* ds
 //ScriptCommonDataPanel
 //****************************************************************************
 ScriptCommonDataInfoPanel::ScriptCommonDataInfoPanel() {
-	timeLastUpdate_ = 0;
-	timeUpdateInterval_ = 1000;
-	commonDataManager_ = nullptr;
+	selectedData_ = UINT_MAX;
 }
-bool ScriptCommonDataInfoPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
 
-	gstd::WListView::Style styleListViewArea;
-	styleListViewArea.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOCOLUMNHEADER);
-	styleListViewArea.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListViewArea.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListViewArea_.Create(hWnd_, styleListViewArea);
-	wndListViewArea_.AddColumn(256, 0, L"Area");
-
-	gstd::WListView::Style styleListViewValue;
-	styleListViewValue.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
-	styleListViewValue.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListViewValue.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListViewValue_.Create(hWnd_, styleListViewValue);
-	wndListViewValue_.AddColumn(96, COL_KEY, L"Key");
-	wndListViewValue_.AddColumn(512, COL_VALUE, L"Value");
-
-	wndSplitter_.Create(hWnd_, WSplitter::TYPE_HORIZONTAL);
-	wndSplitter_.SetRatioY(0.25f);
-
-	return true;
+void ScriptCommonDataInfoPanel::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
 }
-void ScriptCommonDataInfoPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
 
-	int ySplitter = (int)((float)wHeight * wndSplitter_.GetRatioY());
-	int heightSplitter = 6;
-
-	wndSplitter_.SetBounds(wx, ySplitter, wWidth, heightSplitter);
-	wndListViewArea_.SetBounds(wx, wy, wWidth, ySplitter);
-	wndListViewValue_.SetBounds(wx, ySplitter + heightSplitter, wWidth, wHeight - ySplitter - heightSplitter);
-}
 void ScriptCommonDataInfoPanel::Update() {
-	if (!IsWindowVisible()) return;
-	{
-		Lock lock(lock_);
-		//if (commonDataManager_) commonDataManager_->Clear();
-
-		if (commonDataManager_ = ScriptCommonDataManager::GetInstance()) {
-			_UpdateAreaView();
-			_UpdateValueView();
-		}
-		else {
-			wndListViewArea_.Clear();
-			wndListViewValue_.Clear();
-		}
-	}
-}
-void ScriptCommonDataInfoPanel::_UpdateAreaView() {
-	vecMapItr_.clear();
-
-	int iRow = 0;
-	for (auto itr = commonDataManager_->MapBegin(); itr != commonDataManager_->MapEnd(); ++itr, ++iRow) {
-		std::wstring key = StringUtility::ConvertMultiToWide(itr->first);
-		wndListViewArea_.SetText(iRow, COL_KEY, std::wstring(L"> ") + key);
-		vecMapItr_.push_back(itr);
-	}
-
-	int countRow = wndListViewArea_.GetRowCount();
-	for (; iRow < countRow; ++iRow)
-		wndListViewArea_.DeleteRow(iRow);
-}
-void ScriptCommonDataInfoPanel::_UpdateValueView() {
-	int indexArea = wndListViewArea_.GetSelectedRow();
-	if (indexArea < 0) {
-		wndListViewValue_.Clear();
+	ScriptCommonDataManager* manager = ScriptCommonDataManager::GetInstance();
+	if (manager == nullptr) {
+		listDisplay_.clear();
 		return;
 	}
 
-	shared_ptr<ScriptCommonData>& selectedArea = commonDataManager_->GetData(vecMapItr_[indexArea]);
-	int iRow = 0;
-	for (auto itr = selectedArea->MapBegin(); itr != selectedArea->MapEnd(); ++itr, ++iRow) {
-		gstd::value* val = selectedArea->GetValueRef(itr);
-		wndListViewValue_.SetText(iRow, COL_KEY, StringUtility::ConvertMultiToWide(itr->first));
-		wndListViewValue_.SetText(iRow, COL_VALUE, val->as_string());
-	}
+	{
+		Lock lock(Logger::GetTop()->GetLock());
 
-	int countRow = wndListViewValue_.GetRowCount();
-	for (; iRow < countRow; ++iRow)
-		wndListViewValue_.DeleteRow(iRow);
+		std::vector<CommonDataDisplay> listArea;
+
+		int iRow = 0;
+		for (auto itr = manager->MapBegin(); itr != manager->MapEnd(); ++itr, ++iRow) {
+			const std::string& name = itr->first;
+			shared_ptr<ScriptCommonData> pArea = itr->second;
+
+			listArea.push_back(CommonDataDisplay(pArea, name));
+		}
+
+		listDisplay_ = listArea;
+	}
 }
+void ScriptCommonDataInfoPanel::ProcessGui() {
+	Logger* parent = Logger::GetTop();
+
+	const ImGuiStyle& style = ImGui::GetStyle();
+
+	float wd = ImGui::GetContentRegionAvail().x;
+	float ht = ImGui::GetContentRegionAvail().y;
+	float iniDivider = std::max(200.0f, ht * 0.3f);
+
+	if (ImGui::BeginChild("pcdata_child_disp", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
+		{
+			if (ImGui::BeginListBox("##pcdata_list", ImVec2(wd, iniDivider))) {
+				ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+				float itemHeight = ImGui::GetCurrentContext()->FontSize + style.ItemSpacing.y;
+
+				for (size_t i = 0; i < listDisplay_.size(); ++i) {
+					bool selected = (selectedData_ == i);
+					
+					{
+						const ImVec2 p = ImGui::GetCursorScreenPos();
+						float py = p.y + itemHeight / 2;
+						const float size = 5;
+						drawList->AddTriangleFilled(ImVec2(p.x + size, py),
+							ImVec2(p.x, py - size), ImVec2(p.x, py + size),
+							ImColor(16, 16, 128));
+					}
+
+					const float GAP = 24;
+
+					ImGui::Indent(GAP);
+					if (ImGui::Selectable(STR_FMT("%s##item%u", listDisplay_[i].name.c_str(), i).c_str(), selected))
+						selectedData_ = i;
+					ImGui::Unindent(GAP);
+
+					if (selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndListBox();
+			}
+		}
+
+		{
+			ImGuiTableFlags flags = ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable
+				| ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendX
+				| ImGuiTableFlags_RowBg;
+
+			if (ImGui::BeginTable("pcdata_table", 2, flags)) {
+				ImGui::TableSetupScrollFreeze(0, 1);
+
+				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch, 100);
+				ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 300);
+
+				ImGui::TableHeadersRow();
+
+				if (selectedData_ < listDisplay_.size()) {
+					CommonDataDisplay* dataDisplay = &listDisplay_[selectedData_];
+					if (!dataDisplay->dataValues.has_value())
+						dataDisplay->LoadValues();
+
+					ImGuiListClipper clipper;
+					clipper.Begin(dataDisplay->dataValues->size());
+					while (clipper.Step()) {
+						for (size_t i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+							auto& item = dataDisplay->dataValues->at(i);
+
+							ImGui::TableNextRow();
+
+							ImGui::TableSetColumnIndex(0);
+							ImGui::Text(item.key.c_str());
+
+							ImGui::TableSetColumnIndex(1);
+							ImGui::Text(item.value.c_str());
+						}
+					}
+				}
+
+				ImGui::EndTable();
+			}
+		}
+	}
+	ImGui::EndChild();
+}
+
+ScriptCommonDataInfoPanel::CommonDataDisplay::CommonDataDisplay(
+	shared_ptr<ScriptCommonData> data, const std::string& name) {
+
+	this->refData = data;
+	this->name = name;
+}
+
+void ScriptCommonDataInfoPanel::CommonDataDisplay::LoadValues() {
+	if (dataValues.has_value()) return;
+	{
+		Lock lock(Logger::GetTop()->GetLock());
+
+		LOCK_WEAK(pData, refData) {
+			std::vector<DataPair> res;
+
+			// Sorted alphabetically by key
+			for (auto itr = pData->MapBegin(); itr != pData->MapEnd(); ++itr) {
+				res.push_back({
+					itr->first,
+					STR_MULTI(itr->second.as_string())
+				});
+			}
+
+			dataValues = res;
+		}
+	}
+}
+

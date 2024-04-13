@@ -100,27 +100,39 @@ namespace directx {
 	//*******************************************************************
 	//SoundInfoPanel
 	//*******************************************************************
-	class SoundInfoPanel : public gstd::WindowLogger::Panel {
-	protected:
-		enum {
-			ROW_ADDRESS,
-			ROW_FILENAME,
-			ROW_FULLPATH,
-			ROW_COUNT_REFFRENCE,
+	class SoundInfoPanel : public gstd::ILoggerPanel {
+		struct SoundDisplay {
+			enum Column {
+				Address,
+				Name, FullPath,
+				Uses, Format, Size,
+				_NoSort,
+			};
+
+			uintptr_t address;
+			std::string strAddress;
+			std::string fileName;
+			std::string fullPath;
+			int countRef;
+			SoundFileFormat format;
+			uint64_t audioSize;
+			WAVEFORMATEX waveFmt;
+
+			static const ImGuiTableSortSpecs* imguiSortSpecs;
+			static bool IMGUI_CDECL Compare(const SoundDisplay& a, const SoundDisplay& b);
 		};
 	protected:
-		gstd::WListView wndListView_;
-		uint64_t timeLastUpdate_;
-		uint64_t timeUpdateInterval_;
-
-		virtual bool _AddedLogger(HWND hTab);
+		std::vector<SoundDisplay> listDisplay_;
+		uint32_t soundMemAvail_;
+		uint32_t soundMem_;
 	public:
 		SoundInfoPanel();
 
-		void SetUpdateInterval(int time) { timeUpdateInterval_ = time; }
-		virtual void LocateParts();
+		virtual void Initialize(const std::string& name);
 
-		virtual void Update(DirectSoundManager* soundManager);
+		virtual void Update() {};
+		void Update(DirectSoundManager* manager);
+		virtual void ProcessGui();
 	};
 
 	//*******************************************************************
@@ -134,7 +146,7 @@ namespace directx {
 			DIVISION_VOICE,
 		};
 	protected:
-		double rateVolume_;		//0~100
+		double rateVolume_;		// 0~100
 	public:
 		SoundDivision();
 		virtual ~SoundDivision();
@@ -156,7 +168,7 @@ namespace directx {
 
 		shared_ptr<gstd::FileReader> reader_;
 
-		QWORD audioSizeTotal_;		//In bytes
+		uint64_t audioSizeTotal_;		// In bytes
 	public:
 		SoundSourceData();
 		virtual ~SoundSourceData() {};
@@ -166,8 +178,8 @@ namespace directx {
 	};
 	class SoundSourceDataWave : public SoundSourceData {
 	public:
-		QWORD posWaveStart_;		//In bytes
-		QWORD posWaveEnd_;			//In bytes
+		uint64_t posWaveStart_;			// In bytes
+		uint64_t posWaveEnd_;			// In bytes
 		gstd::ByteBuffer bufWaveData_;
 	public:
 		SoundSourceDataWave();

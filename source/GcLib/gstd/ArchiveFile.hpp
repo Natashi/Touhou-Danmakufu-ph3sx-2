@@ -58,8 +58,6 @@ namespace gstd {
 	//*******************************************************************
 	//FileArchiver
 	//*******************************************************************
-	class WStatusBar;
-	class WProgressBar;
 	class FileArchiver {
 	public:
 		using CbSetStatus = std::function<void(const std::wstring&)>;

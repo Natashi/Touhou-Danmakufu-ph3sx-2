@@ -2,12 +2,15 @@
 
 #include "DirectGraphics.hpp"
 
+#include "DxCamera.hpp"
 #include "DxUtility.hpp"
 
 #if defined(DNH_PROJ_EXECUTOR)
-#include "Texture.hpp"
 
-#include "../../TouhouDanmakufu/Common/DnhCommon.hpp"
+#include "SystemPanel.hpp"
+
+#include "../../TouhouDanmakufu/Common/DnhConfiguration.hpp"
+
 #endif
 
 using namespace gstd;
@@ -36,143 +39,6 @@ DirectGraphicsConfig::DirectGraphicsConfig() {
 	bCheckDeviceCaps = true;
 }
 
-//*******************************************************************
-//DirectGraphicsBase
-//*******************************************************************
-DirectGraphicsBase::DirectGraphicsBase() {
-	pDirect3D_ = nullptr;
-	pDevice_ = nullptr;
-	pBackSurf_ = nullptr;
-	pZBuffer_ = nullptr;
-
-	ZeroMemory(&deviceCaps_, sizeof(deviceCaps_));
-	deviceStatus_ = S_OK;
-
-	hAttachedWindow_ = nullptr;
-}
-DirectGraphicsBase::~DirectGraphicsBase() {
-	Release();
-}
-
-void DirectGraphicsBase::_ReleaseDxResource() {
-	ptr_release(pZBuffer_);
-	ptr_release(pBackSurf_);
-
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		(*itr)->ReleaseDxResource();
-	}
-}
-void DirectGraphicsBase::_RestoreDxResource() {
-	pDevice_->GetRenderTarget(0, &pBackSurf_);
-	pDevice_->GetDepthStencilSurface(&pZBuffer_);
-
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		(*itr)->RestoreDxResource();
-	}
-}
-
-void DirectGraphicsBase::_VerifyDeviceCaps() {
-	std::vector<std::string> listError;
-	std::vector<std::string> listWarning;
-
-	if ((deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_IMMEDIATE) == 0)
-		listError.push_back("D3DPRESENT_INTERVAL_IMMEDIATE is unavailable");
-	if ((deviceCaps_.PresentationIntervals & D3DPRESENT_INTERVAL_ONE) == 0)
-		listWarning.push_back("V-Sync is unavailable");
-
-	if (deviceCaps_.VertexShaderVersion < D3DVS_VERSION(2, 0)
-		|| deviceCaps_.MaxVertexShaderConst < 4)
-		listError.push_back("The device's vertex shader support is insufficient (vs_2_0 required)");
-	else if (deviceCaps_.VertexShaderVersion < D3DVS_VERSION(3, 0))
-		listWarning.push_back("The device's vertex shader support is insufficient (vs_3_0 recommended)");
-
-	if (deviceCaps_.NumSimultaneousRTs < 1)
-		listError.push_back("Device must support at least 1 render target");
-
-	//-------------------------------------------------------------------------------
-
-	_VerifyDeviceCaps_Result(listError, listWarning);
-}
-void DirectGraphicsBase::_VerifyDeviceCaps_Result(const std::vector<std::string>& err, const std::vector<std::string>& warn) {
-	if (err.size() > 0) {
-		std::string strAll = "The game cannot start as the\r\n"
-			"Direct3D device has the following issue(s):\r\n";
-		for (auto& str : err)
-			strAll += "   - " + str + "\r\n";
-		strAll += "Try restarting in reference rasterizer mode\r\n";
-		throw wexception(strAll);
-	}
-	else if (warn.size() > 0) {
-		std::string strAll = "The game's rendering might behave strangely as the\r\n"
-			"Direct3D device has the following issue(s):\r\n";
-		for (auto& str : warn)
-			strAll += "   - " + str + "\r\n";
-		Logger::WriteTop(strAll);
-	}
-}
-
-std::vector<std::wstring> DirectGraphicsBase::_GetRequiredModules() {
-	return std::vector<std::wstring>({
-		L"d3d9.dll", L"d3dx9_43.dll", L"d3dcompiler_43.dll",
-		L"dsound.dll", L"dinput8.dll"
-	});
-}
-void DirectGraphicsBase::_LoadModules() {
-	HANDLE hCurrentProcess = ::GetCurrentProcess();
-
-	std::vector<std::wstring> moduleNames = _GetRequiredModules();
-	for (auto& iModule : moduleNames) {
-		HMODULE hModule = ::LoadLibraryW(iModule.c_str());
-		if (hModule == nullptr)
-			throw gstd::wexception(L"Failed to load module: " + iModule);
-		mapDxModules_[iModule] = hModule;
-	}
-}
-void DirectGraphicsBase::_FreeModules() {
-	for (auto itr = mapDxModules_.begin(); itr != mapDxModules_.end(); ++itr) {
-		HMODULE pModule = itr->second;
-		if (pModule)
-			::FreeLibrary(pModule);
-	}
-	mapDxModules_.clear();
-}
-
-void DirectGraphicsBase::Release() {
-	ptr_release(pZBuffer_);
-	ptr_release(pBackSurf_);
-	ptr_release(pDevice_);
-	ptr_release(pDirect3D_);
-
-	_FreeModules();
-}
-
-void DirectGraphicsBase::AddDirectGraphicsListener(DirectGraphicsListener* listener) {
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		if ((*itr) == listener)
-			return;
-	}
-	listListener_.push_back(listener);
-}
-void DirectGraphicsBase::RemoveDirectGraphicsListener(DirectGraphicsListener* listener) {
-	listListener_.remove(listener);
-}
-
-bool DirectGraphicsBase::BeginScene(bool bClear = true) {
-	return SUCCEEDED(pDevice_->BeginScene());
-}
-void DirectGraphicsBase::EndScene(bool bPresent = true) {
-	pDevice_->EndScene();
-
-	if (bPresent) {
-		deviceStatus_ = pDevice_->Present(nullptr, nullptr, nullptr, nullptr);
-		if (FAILED(deviceStatus_)) {
-			if (_Restore()) {
-				ResetDeviceState();
-			}
-		}
-	}
-}
-
 #if defined(DNH_PROJ_EXECUTOR)
 //*******************************************************************
 //DirectGraphics
@@ -180,8 +46,8 @@ void DirectGraphicsBase::EndScene(bool bPresent = true) {
 DirectGraphics* DirectGraphics::thisBase_ = nullptr;
 float DirectGraphics::g_dxCoordsMul_ = 1.0f;
 DirectGraphics::DirectGraphics() {
-	camera_ = new DxCamera();
-	camera2D_ = new DxCamera2D();
+	camera_.reset(new DxCamera());
+	camera2D_.reset(new DxCamera2D());
 
 	ZeroMemory(&viewPort_, sizeof(D3DVIEWPORT9));
 	D3DXMatrixIdentity(&matViewPort_);
@@ -216,16 +82,16 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	_LoadModules();
 
 	Logger::WriteTop("DirectGraphics: Initialize.");
-	pDirect3D_ = Direct3DCreate9(D3D_SDK_VERSION);
-	if (pDirect3D_ == nullptr) throw gstd::wexception("Direct3DCreate9 error.");
+
+	IDirect3D9* pDirect3D = EDirect3D9::GetInstance()->GetD3D();
 
 	config_ = config;
 	hAttachedWindow_ = hWnd;
 
 	D3DCAPS9 capsRef;
 	D3DCAPS9 capsHal;
-	pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, &capsRef);
-	pDirect3D_->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &capsHal);
+	pDirect3D->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, &capsRef);
+	pDirect3D->GetDeviceCaps(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &capsHal);
 
 	D3DDEVTYPE deviceType = config.bUseRef ? D3DDEVTYPE_REF : D3DDEVTYPE_HAL;
 	deviceCaps_ = deviceType == D3DDEVTYPE_REF ? capsRef : capsHal;
@@ -304,7 +170,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 			{ D3DMULTISAMPLE_8_SAMPLES, "MSAA 8x"},
 		};
 
-		auto pD3D = pDirect3D_;
+		auto pD3D = pDirect3D;
 		auto _Check = [&pD3D, &backBufferFmt](D3DMULTISAMPLE_TYPE msaa, bool windowed) {
 			HRESULT hrBack = pD3D->CheckDeviceMultiSampleType(
 				D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, backBufferFmt,
@@ -327,7 +193,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 
 		if (typeSamples != D3DMULTISAMPLE_NONE) {
 			if (!(IsSupportMultiSample(typeSamples, true) || IsSupportMultiSample(typeSamples, false))) {
-				Logger::WriteTop("DirectGraphics: Selected multisampling is not supported on this device. Initializing without anti-aliasing support.");
+				Logger::WriteWarn("DirectGraphics: Selected multisampling is not supported on this device. Initializing without anti-aliasing support.");
 				typeSamples = D3DMULTISAMPLE_NONE;
 			}
 			else {
@@ -346,7 +212,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 		HRESULT hrDevice = E_FAIL;
 		{
 			auto _TryCreateDevice = [&](D3DDEVTYPE type, DWORD addFlag) {
-				hrDevice = pDirect3D_->CreateDevice(D3DADAPTER_DEFAULT, type, hWnd, 
+				hrDevice = pDirect3D->CreateDevice(D3DADAPTER_DEFAULT, type, hWnd, 
 					addFlag | D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE, d3dpp, &pDevice_);
 			};
 			if (config.bUseRef) {
@@ -534,6 +400,23 @@ void DirectGraphics::_RestoreDxResource() {
 
 	ResetCamera();
 	ResetDeviceState();
+
+	panelSystem_->CreateD3DQueries();
+}
+
+bool DirectGraphics::_Reset() {
+	::InvalidateRect(hAttachedWindow_, nullptr, false);
+
+	_ReleaseDxResource();
+
+	deviceStatus_ = pDevice_->Reset(modeScreen_ == SCREENMODE_FULLSCREEN ? &d3dppFull_ : &d3dppWin_);
+
+	if (SUCCEEDED(deviceStatus_)) {
+		_RestoreDxResource();
+		return true;
+	}
+
+	return false;
 }
 
 static int g_restoreFailCount = 0;
@@ -548,33 +431,28 @@ bool DirectGraphics::_Restore() {
 		while ((deviceStatus_ = pDevice_->TestCooperativeLevel()) == D3DERR_DEVICELOST)
 			::Sleep(50);
 
-		if (deviceStatus_ == D3DERR_DEVICENOTRESET) {	//The device is now able to be restored
-			::InvalidateRect(hAttachedWindow_, nullptr, false);
-
-			_ReleaseDxResource();
-
-			deviceStatus_ = pDevice_->Reset(modeScreen_ == SCREENMODE_FULLSCREEN ? &d3dppFull_ : &d3dppWin_);
-			if (SUCCEEDED(deviceStatus_)) {
-				_RestoreDxResource();
+		if (deviceStatus_ == D3DERR_DEVICENOTRESET) {	// The device is now able to be restored
+			bool reset = _Reset();
+			if (reset) {
 				Logger::WriteTop("_Restore: IDirect3DDevice restored.");
 				g_restoreFailCount = 0;
 				return true;
 			}
 		}
-		if (FAILED(deviceStatus_)) {					//Something went wrong
+		if (FAILED(deviceStatus_)) {					// Something went wrong
 			++g_restoreFailCount;
 			if (g_restoreFailCount >= 60) {
 				g_restoreFailCount = 0;
 
 				std::wstring err = StringUtility::Format(L"_Restore: Failed to restore the Direct3D device; %s\r\n\t%s",
 					DXGetErrorString(deviceStatus_), DXGetErrorDescription(deviceStatus_));
-				Logger::WriteTop(err);
+				Logger::WriteError(err);
 				throw gstd::wexception(err);
 			}
 			else {
 				std::wstring err = StringUtility::Format(L"_Restore: Attempt failed; %s\r\n\t%s",
 					DXGetErrorString(deviceStatus_), DXGetErrorDescription(deviceStatus_));
-				Logger::WriteTop(err);
+				Logger::WriteWarn(err);
 			}
 		}
 		return false;
@@ -615,10 +493,7 @@ void DirectGraphics::ResetDeviceState() {
 	SetLightingEnable(true);
 	SetSpecularEnable(false);
 
-	D3DVECTOR dir;
-	dir.x = -1;
-	dir.y = -1;
-	dir.z = -1;
+	D3DVECTOR dir = { -1, -1, -1 };
 	SetDirectionalLight(dir);
 
 	SetAntiAliasing(false);
@@ -661,7 +536,16 @@ bool DirectGraphics::BeginScene(bool bMainRender, bool bClear) {
 		camera_->thisProjectionChanged_ = false;
 	}
 
+	if (panelSystem_)
+		panelSystem_->StartD3DQuery();
+
 	return SUCCEEDED(pDevice_->BeginScene());
+}
+void DirectGraphics::EndScene(bool bPresent) {
+	if (panelSystem_)
+		panelSystem_->EndD3DQuery();
+
+	DirectGraphicsBase::EndScene(bPresent);
 }
 
 void DirectGraphics::ClearRenderTarget() {
@@ -752,6 +636,7 @@ void DirectGraphics::SetBlendMode(BlendMode mode, int stage) {
 		break;
 	case MODE_BLEND_ALPHA_INV:		//Alpha + Invert
 		pDevice_->SetTextureStageState(stage, D3DTSS_COLORARG1, D3DTA_TEXTURE | D3DTA_COMPLEMENT);
+		__fallthrough;
 	case MODE_BLEND_ALPHA:			//Alpha
 		SETBLENDOP(D3DBLENDOP_ADD, TRUE);
 		SETBLENDARGS(D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA, D3DBLEND_ONE, D3DBLEND_INVSRCALPHA);
@@ -1365,268 +1250,4 @@ void DirectGraphicsPrimaryWindow::ChangeScreenMode(ScreenMode newMode, bool bNoR
 	modeScreen_ = newMode;
 }
 
-//*******************************************************************
-//DxCamera
-//*******************************************************************
-DxCamera::DxCamera() {
-	Reset();
-}
-DxCamera::~DxCamera() {
-}
-void DxCamera::Reset() {
-	radius_ = 500;
-	angleAzimuth_ = D3DXToRadian(15);
-	angleElevation_ = D3DXToRadian(45);
-
-	ZeroMemory(&pos_, sizeof(D3DXVECTOR3));
-	ZeroMemory(&camPos_, sizeof(D3DXVECTOR3));
-	ZeroMemory(&laPosLookAt_, sizeof(D3DXVECTOR3));
-
-	yaw_ = 0;
-	pitch_ = 0;
-	roll_ = 0;
-
-	projWidth_ = 384.0f;
-	projHeight_ = 448.0f;
-	clipNear_ = 10.0f;
-	clipFar_ = 2000.0f;
-
-	D3DXMatrixIdentity(&matView_);
-	D3DXMatrixIdentity(&matProjection_);
-	D3DXMatrixIdentity(&matViewProjection_);
-	D3DXMatrixIdentity(&matViewInverse_);
-	D3DXMatrixIdentity(&matViewTranspose_);
-	D3DXMatrixIdentity(&matProjectionInverse_);
-
-	D3DXMatrixIdentity(&matIdentity_);
-
-	thisViewChanged_ = true;
-	thisProjectionChanged_ = true;
-
-	modeCamera_ = MODE_NORMAL;
-}
-
-D3DXMATRIX DxCamera::GetMatrixLookAtLH() {
-	D3DXMATRIX res;
-
-	D3DXVECTOR3 vCameraUp(0, 1, 0);
-	{
-		D3DXQUATERNION qRot(0, 0, 0, 1.0f);
-		D3DXQuaternionRotationYawPitchRoll(&qRot, yaw_, pitch_, roll_);
-		D3DXMATRIX matRot;
-		D3DXMatrixRotationQuaternion(&matRot, &qRot);
-		D3DXVec3TransformCoord((D3DXVECTOR3*)&vCameraUp, (D3DXVECTOR3*)&vCameraUp, &matRot);
-	}
-
-	if (modeCamera_ == MODE_LOOKAT) {
-		D3DXMatrixLookAtLH(&res, &pos_, &laPosLookAt_, &vCameraUp);
-	}
-	else {
-		camPos_.x = pos_.x + (float)(radius_ * cos(angleElevation_) * cos(angleAzimuth_));
-		camPos_.y = pos_.y + (float)(radius_ * sin(angleElevation_));
-		camPos_.z = pos_.z + (float)(radius_ * cos(angleElevation_) * sin(angleAzimuth_));
-
-		D3DXVECTOR3 posTo = pos_;
-
-		{
-			D3DXMATRIX matTrans1;
-			D3DXMatrixTranslation(&matTrans1, -camPos_.x, -camPos_.y, -camPos_.z);
-			D3DXMATRIX matTrans2;
-			D3DXMatrixTranslation(&matTrans2, camPos_.x, camPos_.y, camPos_.z);
-
-			D3DXQUATERNION qRot(0, 0, 0, 1.0f);
-			D3DXQuaternionRotationYawPitchRoll(&qRot, yaw_, pitch_, 0);
-			D3DXMATRIX matRot;
-			D3DXMatrixRotationQuaternion(&matRot, &qRot);
-
-			D3DXMATRIX mat;
-			mat = matTrans1 * matRot * matTrans2;
-			D3DXVec3TransformCoord((D3DXVECTOR3*)&posTo, (D3DXVECTOR3*)&posTo, &mat);
-		}
-
-		D3DXMatrixLookAtLH(&res, &camPos_, &posTo, &vCameraUp);
-	}
-
-	return res;
-}
-void DxCamera::SetWorldViewMatrix() {
-	DirectGraphics* graph = DirectGraphics::GetBase();
-	if (graph == nullptr) return;
-	IDirect3DDevice9* device = graph->GetDevice();
-
-	matView_ = GetMatrixLookAtLH();
-	D3DXMatrixInverse(&matViewInverse_, nullptr, &matView_);
-
-	{
-		matViewTranspose_._11 = matView_._11;
-		matViewTranspose_._12 = matView_._21;
-		matViewTranspose_._13 = matView_._31;
-		matViewTranspose_._21 = matView_._12;
-		matViewTranspose_._22 = matView_._22;
-		matViewTranspose_._23 = matView_._32;
-		matViewTranspose_._31 = matView_._13;
-		matViewTranspose_._32 = matView_._23;
-		matViewTranspose_._33 = matView_._33;
-		matViewTranspose_._14 = 0.0f;
-		matViewTranspose_._24 = 0.0f;
-		matViewTranspose_._34 = 0.0f;
-		matViewTranspose_._44 = 1.0f;
-	}
-
-	//UpdateDeviceProjectionMatrix();
-}
-void DxCamera::SetProjectionMatrix() {
-	DirectGraphics* graph = DirectGraphics::GetBase();
-	if (graph == nullptr) return;
-	IDirect3DDevice9* device = graph->GetDevice();
-
-	D3DXMatrixPerspectiveFovLH(&matProjection_, D3DXToRadian(45.0),
-		projWidth_ / projHeight_, clipNear_, clipFar_);
-	D3DXMatrixInverse(&matProjectionInverse_, nullptr, &matProjection_);
-
-	//UpdateDeviceProjectionMatrix();
-}
-void DxCamera::UpdateDeviceViewProjectionMatrix() {
-	DirectGraphics* graph = DirectGraphics::GetBase();
-	if (graph == nullptr) return;
-	IDirect3DDevice9* device = graph->GetDevice();
-
-	matViewProjection_ = matView_ * matProjection_;
-	device->SetTransform(D3DTS_VIEW, &matViewProjection_);
-	device->SetTransform(D3DTS_PROJECTION, &matIdentity_);
-}
-D3DXVECTOR2 DxCamera::TransformCoordinateTo2D(D3DXVECTOR3 pos) {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	IDirect3DDevice9* device = graphics->GetDevice();
-	LONG width = graphics->GetScreenWidth();
-	LONG height = graphics->GetScreenHeight();
-
-	D3DXVECTOR4 vect;
-	D3DXVec3Transform(&vect, &pos, &matViewProjection_);
-
-	/*
-	if (vect.w > 0) {
-		vect.x = width / 2.0f + (vect.x / vect.w) * width / 2.0f;
-		vect.y = height / 2.0f - (vect.y / vect.w) * height / 2.0f; // Ｙ方向は上が正となるため
-	}
-	*/
-
-	return D3DXVECTOR2(vect.x, vect.y);
-}
-void DxCamera::PushMatrixState() {
-	listMatrixState_.push_back(matViewProjection_);
-}
-void DxCamera::PopMatrixState() {
-	if (listMatrixState_.empty()) return;
-
-	DirectGraphics* graph = DirectGraphics::GetBase();
-	if (graph == nullptr) return;
-	IDirect3DDevice9* device = graph->GetDevice();
-
-	D3DXMATRIX* top = &listMatrixState_.back();
-
-	matViewProjection_ = *top;
-	device->SetTransform(D3DTS_VIEW, top);
-	device->SetTransform(D3DTS_PROJECTION, &matIdentity_);
-
-	listMatrixState_.pop_back();
-}
-
-//*******************************************************************
-//DxCamera2D
-//*******************************************************************
-DxCamera2D::DxCamera2D() {
-	pos_.x = 400;
-	pos_.y = 300;
-	ratioX_ = 1.0f;
-	ratioY_ = 1.0f;
-	angleZ_ = 0;
-	bEnable_ = false;
-
-	posReset_ = nullptr;
-
-	D3DXMatrixIdentity(&matIdentity_);
-}
-DxCamera2D::~DxCamera2D() {}
-void DxCamera2D::Reset() {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	LONG width = graphics->GetScreenWidth();
-	LONG height = graphics->GetScreenHeight();
-	if (posReset_ == nullptr) {
-		pos_.x = width / 2;
-		pos_.y = height / 2;
-	}
-	else {
-		pos_.x = posReset_->x;
-		pos_.y = posReset_->y;
-	}
-	ratioX_ = 1.0f;
-	ratioY_ = 1.0f;
-
-	rcClip_.Set(0, 0, width, height);
-
-	angleZ_ = 0;
-}
-D3DXVECTOR2 DxCamera2D::GetLeftTopPosition() {
-	return GetLeftTopPosition(pos_, ratioX_, ratioY_, rcClip_);
-}
-D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(const D3DXVECTOR2& focus, float ratio) {
-	return GetLeftTopPosition(focus, ratio, ratio);
-}
-D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY) {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	LONG width = graphics->GetScreenWidth();
-	LONG height = graphics->GetScreenHeight();
-	DxRect<LONG> rcClip;
-	rcClip.right = width;
-	rcClip.bottom = height;
-	return GetLeftTopPosition(focus, ratioX, ratioY, rcClip);
-}
-D3DXVECTOR2 DxCamera2D::GetLeftTopPosition(const D3DXVECTOR2& focus, float ratioX, float ratioY, const DxRect<LONG>& rcClip) {
-	LONG width_2 = (rcClip.right - rcClip.left) / 2L;
-	LONG height_2 = (rcClip.bottom - rcClip.top) / 2L;
-
-	LONG cen_x = rcClip.left + width_2;
-	LONG cen_y = rcClip.top + height_2;
-
-	LONG dx = focus.x - cen_x;
-	LONG dy = focus.y - cen_y;
-
-	D3DXVECTOR2 res;
-	res.x = cen_x - dx * ratioX;
-	res.y = cen_y - dy * ratioY;
-
-	res.x -= width_2 * ratioX;
-	res.y -= height_2 * ratioY;
-
-	return res;
-}
-
-void DxCamera2D::UpdateMatrix() {
-	D3DXVECTOR2 pos = GetLeftTopPosition();
-
-	D3DXMatrixIdentity(&matCamera_);
-
-	if (angleZ_ != 0) {
-		float c = cosf(angleZ_);
-		float s = sinf(angleZ_);
-		float x = GetFocusX() - pos.x;
-		float y = GetFocusY() - pos.y;
-
-		__m128 v1 = Vectorize::Mul(
-			Vectorize::Set(c, s, s, c),
-			Vectorize::Set(x, y, x, y));
-		matCamera_._11 = c;
-		matCamera_._12 = -s;
-		matCamera_._21 = s;
-		matCamera_._22 = c;
-		matCamera_._41 = -v1.m128_f32[0] - v1.m128_f32[1] + x;
-		matCamera_._42 = v1.m128_f32[2] - v1.m128_f32[3] + y;
-	}
-
-	matCamera_._11 *= ratioX_;
-	matCamera_._22 *= ratioY_;
-	matCamera_._41 += pos.x;
-	matCamera_._42 += pos.y;
-}
 #endif

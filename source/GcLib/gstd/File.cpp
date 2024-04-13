@@ -16,123 +16,85 @@ using namespace gstd;
 //*******************************************************************
 //ByteBuffer
 //*******************************************************************
-ByteBuffer::ByteBuffer() {
-	data_ = nullptr;
-	Clear();
+ByteBuffer::ByteBuffer() : offset_(0) {
 }
-ByteBuffer::ByteBuffer(ByteBuffer& buffer) {
-	data_ = nullptr;
-	Clear();
+ByteBuffer::ByteBuffer(size_t size) : ByteBuffer() {
+	SetSize(size);
+}
+ByteBuffer::ByteBuffer(const ByteBuffer& buffer) : ByteBuffer() {
 	Copy(buffer);
 }
-ByteBuffer::ByteBuffer(std::stringstream& stream) {
-	data_ = nullptr;
-	Clear();
+ByteBuffer::ByteBuffer(std::stringstream& stream) : ByteBuffer() {
 	Copy(stream);
 }
 ByteBuffer::~ByteBuffer() {
-	Clear();
 }
 
-void ByteBuffer::Copy(ByteBuffer& src) {
-	if (data_ != nullptr && src.reserve_ != reserve_) {
-		ptr_delete_scalar(data_);
-		data_ = new char[src.reserve_];
-		ZeroMemory(data_, src.reserve_);
-	}
-
+void ByteBuffer::Copy(const ByteBuffer& src) {
+	data_ = src.data_;
 	offset_ = src.offset_;
-	reserve_ = src.reserve_;
-	size_ = src.size_;
-
-	memcpy(data_, src.data_, reserve_);
 }
 void ByteBuffer::Copy(std::stringstream& src) {
 	std::streampos org = src.tellg();
-	src.seekg(0, std::ios::end);
-	size_t size = src.tellg();
-	src.seekg(0, std::ios::beg);
+	auto& srcData = src.str();
 
 	offset_ = org;
-	size_ = size;
-	reserve_ = 4U;
-	while (reserve_ < size) reserve_ = reserve_ * 2;
 
-	ptr_delete_scalar(data_);
-	data_ = new char[reserve_];
+	data_.clear();
+	data_.reserve(srcData.capacity());
+	data_.resize(srcData.size());
 
-	src.read(data_, size);
-	src.clear();
-
-	src.seekg(org, std::ios::beg);
+	memcpy(data_.data(), srcData.data(), srcData.size());
 }
 void ByteBuffer::Clear() {
-	ptr_delete_scalar(data_);
+	data_.clear();
 	offset_ = 0;
-	reserve_ = 0;
-	size_ = 0;
 }
 
 void ByteBuffer::SetSize(size_t size) {
-	size_t oldSize = size_;
-	if (size < reserve_) {
-		//The current reserve is enough for the new size
-		size_ = size;
+	data_.resize(size);
 	}
-	else {
-		//The new size is bigger than the reserve, expand the array
-
-		size_t newReserve = 4U;
-		while (newReserve < size) newReserve = newReserve * 2;
-		Reserve(newReserve);
-
-		size_ = size;
-	}
-}
 void ByteBuffer::Reserve(size_t newReserve) {
-	if (reserve_ == newReserve) return;
-
-	char* newBuf = new char[newReserve];
-	ZeroMemory(newBuf, newReserve);
-
-	if (data_) {
-		memcpy(newBuf, data_, std::min(size_, newReserve));
-		ptr_delete_scalar(data_);
+	data_.reserve(newReserve);
 	}
-	data_ = newBuf;
-	reserve_ = newReserve;
-}
 
 void ByteBuffer::Seek(size_t pos) {
 	offset_ = pos;
-	if (offset_ > size_) offset_ = size_;
+	if (offset_ > GetSize())
+		offset_ = GetSize();
 }
 DWORD ByteBuffer::Write(LPVOID buf, DWORD size) {
 	if (size == 0) return 0;
-	if (offset_ + size > reserve_) {
-		SetSize(offset_ + size);
-	}
 
+	data_.resize(offset_ + size);
 	memcpy(&data_[offset_], buf, size);
 	offset_ += size;
-	size_ = std::max(size_, offset_);
+
 	return size;
 }
 DWORD ByteBuffer::Read(LPVOID buf, DWORD size) {
-	if (offset_ >= size_ || size == 0) return 0;
-	size_t readable = std::min<size_t>(size, size_ - offset_);
-	memcpy(buf, &data_[offset_], readable);
-	offset_ += readable;
-	return readable;
+	if (offset_ + size > GetSize())
+		return 0;
+
+	memcpy(buf, &data_[offset_], size);
+	offset_ += size;
+
+	return size;
 }
 
 _NODISCARD char* ByteBuffer::GetPointer(size_t offset) {
-	if (data_ == nullptr) return nullptr;
 #if _DEBUG
-	if (offset > size_)
+	if (offset > GetSize())
 		throw gstd::wexception("ByteBuffer: Index out of bounds.");
 #endif
-	return &data_[offset];
+	return reinterpret_cast<char*>(&data_[offset]);
+}
+_NODISCARD const char* ByteBuffer::GetPointer(size_t offset) const {
+#if _DEBUG
+	if (offset > GetSize())
+		throw gstd::wexception("ByteBuffer: Index out of bounds.");
+#endif
+	return reinterpret_cast<const char*>(&data_[offset]);
 }
 
 ByteBuffer& ByteBuffer::operator=(const ByteBuffer& other) noexcept {
@@ -983,24 +945,31 @@ void RecordEntry::_ReadEntryRecord(Reader& reader) {
 //RecordBuffer
 //*******************************************************************
 RecordBuffer::RecordBuffer() {
-
 }
 RecordBuffer::~RecordBuffer() {
 	this->Clear();
 }
+
 void RecordBuffer::Clear() {
 	mapEntry_.clear();
 }
-shared_ptr<RecordEntry> RecordBuffer::GetEntry(const std::string& key) {
-	shared_ptr<RecordEntry> res = nullptr;
+
+RecordEntry* RecordBuffer::GetEntry(const std::string& key) {
 	auto itr = mapEntry_.find(key);
-	if (itr != mapEntry_.end()) res = itr->second;
-	return res;
+	if (itr != mapEntry_.end())
+		return &itr->second;
+	return nullptr;
 }
-bool RecordBuffer::IsExists(const std::string& key) {
+const RecordEntry* RecordBuffer::GetEntry(const std::string& key) const {
+	auto itr = mapEntry_.find(key);
+	if (itr != mapEntry_.cend())
+		return &itr->second;
+	return nullptr;
+}
+bool RecordBuffer::IsExists(const std::string& key) const {
 	return mapEntry_.find(key) != mapEntry_.end();
 }
-std::vector<std::string> RecordBuffer::GetKeyList() {
+std::vector<std::string> RecordBuffer::GetKeyList() const {
 	std::vector<std::string> res;
 	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); ++itr)
 		res.push_back(itr->first);
@@ -1011,21 +980,22 @@ void RecordBuffer::Write(Writer& writer) {
 	uint32_t countEntry = mapEntry_.size();
 	writer.Write<uint32_t>(countEntry);
 
-	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); ++itr) {
-		shared_ptr<RecordEntry>& entry = itr->second;
-		entry->_WriteEntryRecord(writer);
+	for (auto& [name, entry] : mapEntry_) {
+		entry._WriteEntryRecord(writer);
 	}
 }
 void RecordBuffer::Read(Reader& reader) {
 	this->Clear();
+
 	uint32_t countEntry = 0;
 	reader.Read<uint32_t>(countEntry);
-	for (size_t iEntry = 0; iEntry < countEntry; ++iEntry) {
-		shared_ptr<RecordEntry> entry(new RecordEntry());
-		entry->_ReadEntryRecord(reader);
 
-		const std::string& key = entry->GetKey();
-		mapEntry_[key] = entry;
+	for (size_t iEntry = 0; iEntry < countEntry; ++iEntry) {
+		RecordEntry entry;
+		entry._ReadEntryRecord(reader);
+
+		auto& key = entry.GetKey();
+		mapEntry_[key] = MOVE(entry);
 	}
 }
 bool RecordBuffer::WriteToFile(const std::wstring& path, uint64_t version, const char* header, size_t headerSize) {
@@ -1049,13 +1019,13 @@ bool RecordBuffer::ReadFromFile(const std::wstring& path, uint64_t version, cons
 		return false;
 
 	{
-		std::unique_ptr<char> fHead(new char[headerSize]);
+		unique_ptr<char> fHead(new char[headerSize]);
 		file.Read(fHead.get(), headerSize);
 		if (memcmp(fHead.get(), header, headerSize) != 0)
 			return false;
 	}
 	{
-		uint64_t fVersion;
+		uint64_t fVersion{};
 		file.Read(&fVersion, sizeof(uint64_t));
 		if (!VersionUtility::IsDataBackwardsCompatible(version, fVersion))
 			return false;
@@ -1068,58 +1038,71 @@ bool RecordBuffer::ReadFromFile(const std::wstring& path, uint64_t version, cons
 
 size_t RecordBuffer::GetEntrySize(const std::string& key) {
 	auto itr = mapEntry_.find(key);
-	if (itr == mapEntry_.end()) return 0U;
-	ByteBuffer& buffer = itr->second->GetBufferRef();
+	if (itr == mapEntry_.end())
+		return 0U;
+
+	auto& buffer = itr->second.GetBufferRef();
 	return buffer.GetSize();
 }
+
 bool RecordBuffer::GetRecord(const std::string& key, LPVOID buf, DWORD size) {
 	auto itr = mapEntry_.find(key);
-	if (itr == mapEntry_.end()) return false;
-	ByteBuffer& buffer = itr->second->GetBufferRef();
+	if (itr == mapEntry_.end())
+		return false;
+
+	auto& buffer = itr->second.GetBufferRef();
 	buffer.Seek(0);
 	buffer.Read(buf, size);
+
 	return true;
 }
-std::string RecordBuffer::GetRecordAsStringA(const std::string& key) {
+optional<std::string> RecordBuffer::GetRecordAsStringA(const std::string& key) {
 	auto itr = mapEntry_.find(key);
-	if (itr == mapEntry_.end()) return "";
+	if (itr == mapEntry_.end())
+		return {};
 
-	shared_ptr<RecordEntry>& entry = itr->second;
-	ByteBuffer& buffer = entry->GetBufferRef();
+	auto& buffer = itr->second.GetBufferRef();
 	buffer.Seek(0);
 
 	std::string res;
+
 	res.resize(buffer.GetSize());
 	buffer.Read(&res[0], buffer.GetSize());
 
-	return res;
+	return MOVE(res);
 }
-std::wstring RecordBuffer::GetRecordAsStringW(const std::string& key) {
-	std::string mbstr = GetRecordAsStringA(key);
-	return StringUtility::ConvertMultiToWide(mbstr);
-}
-bool RecordBuffer::GetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record) {
+optional<RecordBuffer> RecordBuffer::GetRecordAsRecordBuffer(const std::string& key) {
 	auto itr = mapEntry_.find(key);
-	if (itr == mapEntry_.end()) return false;
-	ByteBuffer& buffer = itr->second->GetBufferRef();
+	if (itr == mapEntry_.end())
+		return {};
+
+	auto& buffer = itr->second.GetBufferRef();
 	buffer.Seek(0);
-	record.Read(buffer);
-	return true;
+
+	RecordBuffer res;
+	res.Read(buffer);
+
+	return MOVE(res);
 }
+
 void RecordBuffer::SetRecord(const std::string& key, LPVOID buf, DWORD size) {
-	shared_ptr<RecordEntry> entry(new RecordEntry());
-	entry->SetKey(key);
-	ByteBuffer& buffer = entry->GetBufferRef();
+	RecordEntry entry;
+	entry.SetKey(key);
+
+	auto& buffer = entry.GetBufferRef();
 	buffer.SetSize(size);
 	buffer.Write(buf, size);
-	mapEntry_[key] = entry;
+
+	mapEntry_[key] = MOVE(entry);
 }
 void RecordBuffer::SetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record) {
-	shared_ptr<RecordEntry> entry(new RecordEntry());
-	entry->SetKey(key);
-	ByteBuffer& buffer = entry->GetBufferRef();
+	RecordEntry entry;
+	entry.SetKey(key);
+
+	auto& buffer = entry.GetBufferRef();
 	record.Write(buffer);
-	mapEntry_[key] = entry;
+
+	mapEntry_[key] = MOVE(entry);
 }
 
 void RecordBuffer::Read(RecordBuffer& record) {}
@@ -1242,30 +1225,38 @@ double PropertyFile::GetReal(const std::wstring& key, double def) {
 const std::string SystemValueManager::RECORD_SYSTEM = "__RECORD_SYSTEM__";
 const std::string SystemValueManager::RECORD_SYSTEM_GLOBAL = "__RECORD_SYSTEM_GLOBAL__";
 SystemValueManager* SystemValueManager::thisBase_ = nullptr;
+
 SystemValueManager::SystemValueManager() {}
 SystemValueManager::~SystemValueManager() {}
+
 bool SystemValueManager::Initialize() {
 	if (thisBase_) return false;
 
-	mapRecord_[RECORD_SYSTEM] = std::make_shared<RecordBuffer>();
-	mapRecord_[RECORD_SYSTEM_GLOBAL] = std::make_shared<RecordBuffer>();
+	mapRecord_[RECORD_SYSTEM] = std::make_unique<RecordBuffer>();
+	mapRecord_[RECORD_SYSTEM_GLOBAL] = std::make_unique<RecordBuffer>();
 
 	thisBase_ = this;
 	return true;
 }
+
 void SystemValueManager::ClearRecordBuffer(const std::string& key) {
 	if (!IsExists(key)) return;
 	mapRecord_[key]->Clear();
 }
-bool SystemValueManager::IsExists(const std::string& key) {
+
+bool SystemValueManager::IsExists(const std::string& key) const {
 	return mapRecord_.find(key) != mapRecord_.end();
 }
-bool SystemValueManager::IsExists(const std::string& keyRecord, const std::string& keyValue) {
-	if (!IsExists(keyRecord)) return false;
-	shared_ptr<RecordBuffer> record = GetRecordBuffer(keyRecord);
-	return record->IsExists(keyValue);
+bool SystemValueManager::IsExists(const std::string& keyRecord, const std::string& keyValue) const {
+	const RecordBuffer* record = GetRecordBuffer(keyRecord);
+	return record != nullptr && record->IsExists(keyValue);
 }
-shared_ptr<RecordBuffer> SystemValueManager::GetRecordBuffer(const std::string& key) {
-	return IsExists(key) ? mapRecord_[key] : nullptr;
+
+const RecordBuffer* SystemValueManager::GetRecordBuffer(const std::string& key) const {
+	auto itr = mapRecord_.find(key);
+	if (itr != mapRecord_.end())
+		return itr->second.get();
+	return nullptr;
 }
+
 #endif

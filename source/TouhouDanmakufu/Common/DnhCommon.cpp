@@ -18,14 +18,13 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 
 	std::string source = reader->ReadAllString();
 
-	ref_count_ptr<ScriptInformation> res = CreateScriptInformation(pathScript, L"", source, bNeedHeader);
-	return res;
+	return CreateScriptInformation(pathScript, L"", source, bNeedHeader);
 }
 
-ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(const std::wstring& pathScript, 
+ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(const std::wstring& pathScript,
 	const std::wstring& pathArchive, const std::string& source, bool bNeedHeader) 
 {
-	ref_count_ptr<ScriptInformation> res = nullptr;
+	ref_count_ptr<ScriptInformation> res;
 
 	Scanner scanner(source);
 	Encoding::Type encoding = scanner.GetEncoding();
@@ -128,7 +127,7 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 				}
 			}
 
-			res = new ScriptInformation();
+			res.reset(new ScriptInformation());
 
 			res->pathScript_ = pathScript;
 			res->pathArchive_ = pathArchive;
@@ -179,6 +178,7 @@ std::wstring ScriptInformation::_GetString(Scanner& scanner) {
 }
 std::vector<std::wstring> ScriptInformation::_GetStringList(Scanner& scanner) {
 	std::vector<std::wstring> res;
+
 	scanner.CheckType(scanner.Next(), Token::Type::TK_OPENB);
 	while (true) {
 		Token& tok = scanner.Next();
@@ -189,10 +189,12 @@ std::vector<std::wstring> ScriptInformation::_GetStringList(Scanner& scanner) {
 			res.push_back(wstr);
 		}
 	}
+
 	return res;
 }
 std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScriptInformationList() {
 	std::vector<ref_count_ptr<ScriptInformation>> res;
+
 	std::wstring dirInfo = PathProperty::GetFileDirectory(pathScript_);
 	for (const std::wstring& pathPlayer : listPlayer_) {
 		std::wstring path = EPathProperty::ExtendRelativeToFull(dirInfo, pathPlayer);
@@ -210,12 +212,14 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScr
 			res.push_back(info);
 		}
 	}
+
 	return res;
 }
-std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInformationList(const std::wstring& path, 
+std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInformationList(const std::wstring& path,
 	bool bNeedHeader) 
 {
 	std::vector<ref_count_ptr<ScriptInformation>> res;
+
 	File file(path);
 	if (!file.Open()) return res;
 	if (file.GetSize() < ArchiveFileHeader::MAGIC_LENGTH) return res;

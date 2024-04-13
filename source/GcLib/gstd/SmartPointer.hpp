@@ -1,7 +1,7 @@
 #pragma once
 
 //Update: I found a use for these.
-//	I can customize them to use in place of shared_ptr's because of their non-atomicity option
+//	They can be used in some places instead of shared_ptr where atomicity is not required
 
 #include "../pch.h"
 
@@ -10,9 +10,9 @@ namespace gstd {
 	template<class T, bool ATOMIC>
 	class _ptr_ref_counter {
 	public:
-		uint32_t countRef_ = 0;		//Strong ref count, the managed pointer is deleted when this reaches 0
-		uint32_t countWeak_ = 0;	//Weak ref count, the counter is deleted when this reaches 0
-		T* pPtr_ = nullptr;			//Managed pointer, shouldn't be accessed from outside
+		uint32_t countRef_ = 0;		// Strong ref count, the managed pointer is deleted when this reaches 0
+		uint32_t countWeak_ = 0;	// Weak ref count, the counter is deleted when this reaches 0
+		T* pPtr_ = nullptr;			// Managed pointer, shouldn't be accessed from outside
 	public:
 		_ptr_ref_counter(T* src) noexcept {
 			pPtr_ = src;
@@ -39,13 +39,13 @@ namespace gstd {
 
 		//----------------------------------------------------------------------
 
-		inline void DeleteResource() noexcept {	//Deletes managed pointer
+		inline void DeleteResource() noexcept {	// Deletes managed pointer
 			if constexpr (std::is_array_v<T>)
 				ptr_delete_scalar(pPtr_);
 			else
 				ptr_delete(pPtr_);
 		}
-		inline void DeleteSelf() noexcept {		//Deletes [this]
+		inline void DeleteSelf() noexcept {		// Deletes [this]
 			delete this;
 		}
 
@@ -84,7 +84,7 @@ namespace gstd {
 	template<class T> using ref_unsync_ptr = ref_count_ptr<T, false>;
 	template<class T> using ref_unsync_weak_ptr = ref_count_weak_ptr<T, false>;
 
-	//A non-atomic smart pointer
+	// A non-atomic smart pointer
 	template<class T, bool ATOMIC = true>
 	class ref_count_ptr {
 		template<class U, bool ATOMIC> friend class ref_count_ptr;
@@ -129,9 +129,13 @@ namespace gstd {
 		ref_count_ptr() {
 			_SetPointerNew(nullptr);
 		}
-		ref_count_ptr(T* src) {
+		ref_count_ptr(nullptr_t) {
+			_SetPointerNew(nullptr);
+		}
+		explicit ref_count_ptr(T* src) {
 			_SetPointerNew(src);
 		}
+
 		ref_count_ptr(const _MyType& src) {
 			this->_SetPointerFromInfo<T>(src.pInfo_, src.pPtr_);
 		}
@@ -145,11 +149,18 @@ namespace gstd {
 
 		//----------------------------------------------------------------------
 
-		_MyType& operator=(T* src) {
-			if (get() != src)
-				_SetPointerNew(src);
+		_MyType& operator=(nullptr_t) {
+			reset();
 			return *this;
 		}
+		_MyType& operator=(T* src) {
+			/*
+			reset(src);
+			return *this;
+			*/
+			static_assert(false, "Cannot construct ref_count_ptr with raw ptr using assignment operation");
+		}
+
 		_MyType& operator=(const _MyType& src) {
 			if (get() != src.get())
 				this->_SetPointerFromInfo<T>(src.pInfo_, src.pPtr_);
@@ -159,6 +170,14 @@ namespace gstd {
 			if (get() != src.get())
 				this->_SetPointerFromInfo<U>(src.pInfo_, (T*)src.pPtr_);
 			return *this;
+		}
+
+		inline void reset() {
+			reset(nullptr);
+		}
+		inline void reset(T* src) {
+			if (get() != src)
+				_SetPointerNew(src);
 		}
 
 		//----------------------------------------------------------------------
@@ -202,7 +221,7 @@ namespace gstd {
 		}
 	};
 
-	//A non-atomic smart pointer (weak ref)
+	// A non-atomic smart pointer (weak ref)
 	template<class T, bool ATOMIC = true>
 	class ref_count_weak_ptr {
 		template<class U, bool ATOMIC> friend class ref_count_weak_ptr;
@@ -260,12 +279,12 @@ namespace gstd {
 				this->_SetPointerFromInfo<T>(src.pInfo_, src.pPtr_);
 			return *this;
 		}
-		_MyType& operator=(const ref_count_ptr<T, ATOMIC>& src) {	//Create from ref_count_ptr
+		_MyType& operator=(const ref_count_ptr<T, ATOMIC>& src) {	// Create from ref_count_ptr
 			if (get() != src.get())
 				this->_SetPointerFromInfo<T>(src.pInfo_, src.pPtr_);
 			return *this;
 		}
-		template<class U> _MyType& operator=(const ref_count_ptr<U, ATOMIC>& src) {		//Create from aliased ref_count_ptr
+		template<class U> _MyType& operator=(const ref_count_ptr<U, ATOMIC>& src) {		// Create from aliased ref_count_ptr
 			if (get() != src.get())
 				this->_SetPointerFromInfo<U>(src.pInfo_, (T*)src.pPtr_);
 			return *this;
@@ -276,7 +295,7 @@ namespace gstd {
 			return *this;
 		}
 
-		ref_count_ptr<T, ATOMIC> Lock() {	//Create a ref_count_ptr from a weak pointer
+		ref_count_ptr<T, ATOMIC> Lock() {	// Create a ref_count_ptr from a weak pointer
 			ref_count_ptr<T, ATOMIC> res;
 			if (IsExists())
 				res._SetPointerFromInfo<T>(pInfo_, pPtr_);

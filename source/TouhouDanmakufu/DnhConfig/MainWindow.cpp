@@ -10,6 +10,8 @@
 #include <imgui_internal.h>
 #pragma pop_macro("new")
 
+using namespace directx::imgui;
+
 static const std::wstring CONFIG_VERSION_STR = WINDOW_TITLE + L" " + DNH_VERSION;
 
 //*******************************************************************
@@ -126,8 +128,12 @@ LRESULT MainWindow::_SubWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_GETMINMAXINFO:
 	{
 		MINMAXINFO* minmax = (MINMAXINFO*)lParam;
-		minmax->ptMinTrackSize.x = 16 * 2 + 136 * 3 
-			+ ImGui::GetStyle().ItemSpacing.x * 2 + 4;
+		{
+			minmax->ptMinTrackSize.x = 16 * 2 + 136 * 3;
+			if (bImGuiInitialized_) {
+				minmax->ptMinTrackSize.x += ImGui::GetStyle().ItemSpacing.x * 2 + 4;
+			}
+		}
 		minmax->ptMinTrackSize.y = 320;
 		minmax->ptMaxTrackSize.x = ::GetSystemMetrics(SM_CXMAXTRACK);
 		minmax->ptMaxTrackSize.y = ::GetSystemMetrics(SM_CYMAXTRACK);
@@ -287,7 +293,7 @@ bool DevicePanel::Initialize() {
 
 	{
 		auto graphics = MainWindow::GetInstance()->GetDxGraphics();
-		IDirect3D9* pD3D = graphics->GetDirect3D();
+		IDirect3D9* pD3D = EDirect3D9::GetInstance()->GetD3D();
 
 		std::vector<std::pair<D3DMULTISAMPLE_TYPE, const char*>> listMsaaAll = {
 			{ D3DMULTISAMPLE_2_SAMPLES, "MSAA 2x"},
@@ -591,7 +597,7 @@ void KeyPanel::LoadConfiguration() {
 	for (auto& itr : mapAction_) {
 		int action = itr.first;
 
-		ref_count_ptr<VirtualKey> vk = config->GetVirtualKey(action);
+		auto vk = config->GetVirtualKey(action);
 		if (vk) {
 			mapAction_[action].SetKeys(vk->GetKeyCode(), 0, vk->GetPadButton());
 		}
@@ -606,7 +612,7 @@ void KeyPanel::SaveConfiguration() {
 	for (auto& itr : mapAction_) {
 		int action = itr.first;
 
-		ref_count_ptr<VirtualKey> vk = config->GetVirtualKey(action);
+		auto vk = config->GetVirtualKey(action);
 		if (vk) {
 			vk->SetKeyCode(itr.second.keyboardButton);
 			vk->SetPadIndex(itr.second.padDevice);

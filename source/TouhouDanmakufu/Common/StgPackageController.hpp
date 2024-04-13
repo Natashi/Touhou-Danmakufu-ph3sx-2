@@ -14,7 +14,7 @@ private:
 	StgSystemController* systemController_;
 
 	ref_count_ptr<StgPackageInformation> infoPackage_;
-	std::shared_ptr<StgPackageScriptManager> scriptManager_;
+	shared_ptr<StgPackageScriptManager> scriptManager_;
 public:
 	StgPackageController(StgSystemController* systemController);
 	virtual ~StgPackageController();
@@ -26,10 +26,10 @@ public:
 	void RenderToTransitionTexture();
 
 	StgSystemController* GetSystemController() { return systemController_; }
-	ref_count_ptr<StgPackageInformation> GetPackageInformation() { return infoPackage_; }
 
-	StgPackageScriptManager* GetScriptManager() { return scriptManager_.get(); }
-	std::shared_ptr<StgPackageScriptManager> GetScriptManagerRef() { return scriptManager_; }
+	ref_count_ptr<StgPackageInformation> GetPackageInformation() { return infoPackage_; }
+	shared_ptr<StgPackageScriptManager> GetScriptManager() { return scriptManager_; }
+
 	DxScriptObjectManager* GetMainObjectManager() { return scriptManager_->GetObjectManager(); }
 };
 
@@ -54,6 +54,7 @@ public:
 
 	void InitializeStageData();
 	void FinishCurrentStage();
+
 	ref_count_ptr<StgStageStartData> GetNextStageData() { return nextStageStartData_; }
 	void SetNextStageData(ref_count_ptr<StgStageStartData> data) { nextStageStartData_ = data; }
 	std::vector<ref_count_ptr<StgStageStartData>>& GetStageDataList() { return listStageData_; }

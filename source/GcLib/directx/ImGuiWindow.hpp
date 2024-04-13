@@ -2,22 +2,21 @@
 
 #include "../pch.h"
 
-#include "../gstd/Window.hpp"
-
-#include "DxConstant.hpp"
-#include "DirectGraphics.hpp"
-
 #pragma push_macro("new")
 #undef new
 
 #include "imgui.h"
 #include "backends/imgui_impl_dx9.h"
 #include "backends/imgui_impl_win32.h"
-#include <imgui_internal.h>
+#include "imgui_internal.h"
 
 #pragma pop_macro("new")
 
-namespace directx {
+#include "../gstd/Window.hpp"
+
+#include "DirectGraphicsBase.hpp"
+
+namespace directx::imgui {
 	class ImGuiDirectGraphics : public DirectGraphicsBase {
 	protected:
 		D3DPRESENT_PARAMETERS d3dpp_;
@@ -65,6 +64,7 @@ namespace directx {
 	// ------------------------------------------------------------------------
 
 	class ImGuiBaseWindow : public gstd::WindowBase {
+		gstd::CriticalSection lock_;
 	protected:
 		virtual LRESULT _WindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		virtual LRESULT _SubWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
@@ -80,7 +80,10 @@ namespace directx {
 		UINT dpi_;
 
 		bool bInitialized_;
+		bool bImGuiInitialized_;
 		volatile bool bRun_;
+
+		volatile bool bRendering_;
 	public:
 		ImVec4 defaultStyleColors[ImGuiCol_COUNT];
 	protected:
@@ -92,6 +95,8 @@ namespace directx {
 
 		virtual void _Resize(float scale);
 		virtual void _SetImguiStyle(float scale) = 0;
+
+		void _Close();
 	protected:
 		void _SetImguiStyle(const ImGuiStyle& style);
 	protected:
@@ -107,8 +112,11 @@ namespace directx {
 
 		bool Loop();
 
+		gstd::CriticalSection& GetLock() { return lock_; }
+
 		DirectGraphicsBase* GetDxGraphics() { return dxGraphics_.get(); }
 		std::unordered_map<std::string, ImFont*>& GetFontMap() { return mapFont_; }
+		ImFont* GetFont(const std::string& name) { return mapFont_[name]; }
 	};
 
 	class ImGuiExt {
@@ -117,5 +125,14 @@ namespace directx {
 	public:
 		static void BeginGroupPanel(ImVector<ImRect>* stack, const char* name, const ImVec2& size = ImVec2(0.0f, 0.0f));
 		static void EndGroupPanel(ImVector<ImRect>* stack);
+
+		template<typename Fn>
+		static inline void Disabled(bool disable, Fn fnInnerGui) {
+			if (disable)
+				ImGui::BeginDisabled();
+			fnInnerGui();
+			if (disable)
+				ImGui::EndDisabled();
+		}
 	};
 }

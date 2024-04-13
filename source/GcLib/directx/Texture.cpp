@@ -777,111 +777,184 @@ std::map<std::wstring, shared_ptr<TextureData>>::iterator TextureManager::IsData
 //****************************************************************************
 TextureInfoPanel::TextureInfoPanel() {
 }
-TextureInfoPanel::~TextureInfoPanel() {
+
+void TextureInfoPanel::Initialize(const std::string& name) {
+	ILoggerPanel::Initialize(name);
 }
-bool TextureInfoPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
 
-	WListView::Style styleListView;
-	styleListView.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
-	styleListView.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListView.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListView_.Create(hWnd_, styleListView);
-
-	wndListView_.AddColumn(60, ROW_ADDRESS, L"Address");
-	wndListView_.AddColumn(144, ROW_NAME, L"Name");
-	wndListView_.AddColumn(144, ROW_FULLNAME, L"Full Path");
-	wndListView_.AddColumn(36, ROW_REFCOUNT, L"Uses");
-	wndListView_.AddColumn(48, ROW_WIDTH_IMAGE, L"Width");
-	wndListView_.AddColumn(48, ROW_HEIGHT_IMAGE, L"Height");
-	wndListView_.AddColumn(60, ROW_SIZE, L"Size");
-
-	SetWindowVisible(false);
-	PanelInitialize();
-	
-	return true;
-}
-void TextureInfoPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
-
-	wndListView_.SetBounds(wx, wy, wWidth, wHeight);
-}
-void TextureInfoPanel::PanelUpdate() {
+void TextureInfoPanel::Update() {
 	TextureManager* manager = TextureManager::GetBase();
-	if (manager == nullptr) return;
+	if (manager == nullptr) {
+		listDisplay_.clear();
+		return;
+	}
 
-	if (!IsWindowVisible()) return;
-
-	struct TextureDisplay {
-		int address;
-		std::wstring fileName;
-		std::wstring fullPath;
-		int countRef;
-		uint32_t wd;
-		uint32_t ht;
-		uint32_t size;
-	};
-
-	std::vector<TextureDisplay> listTextureDisp;
 	{
-		Lock lock(manager->GetLock());
+		Lock lock(Logger::GetTop()->GetLock());
 
-		{
-			auto& mapData = manager->mapTextureData_;
-			listTextureDisp.resize(mapData.size());
+		auto& mapData = manager->mapTextureData_;
+		listDisplay_.resize(mapData.size());
 
-			int iTex = 0;
-			for (auto itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap) {
-				const std::wstring& name = itrMap->first;
-				TextureData* data = (itrMap->second).get();
+		int iTex = 0;
+		for (auto itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap, ++iTex) {
+			const std::wstring& path = itrMap->first;
+			TextureData* data = (itrMap->second).get();
 
-				int countRef = (itrMap->second).use_count();
-				D3DXIMAGE_INFO* infoImage = &data->infoImage_;
+			int countRef = (itrMap->second).use_count();
+			D3DXIMAGE_INFO* infoImage = &data->infoImage_;
 
-				TextureDisplay displayData = {
-					(int)data,
-					PathProperty::GetFileName(name),
-					name,
-					countRef,
-					infoImage->Width,
-					infoImage->Height,
-					data->GetResourceSize()
-				};
-				listTextureDisp[iTex++] = displayData;
-			}
+			std::wstring fileName = PathProperty::GetFileName(path);
+			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
+
+			TextureDisplay displayData = {
+				(uintptr_t)data,
+				StringUtility::FromAddress((uintptr_t)data),
+				STR_MULTI(fileName),
+				STR_MULTI(pathReduce),
+				countRef,
+				infoImage->Width,
+				infoImage->Height,
+				data->GetResourceSize()
+			};
+
+			listDisplay_[iTex] = displayData;
 		}
 
-		{
-			int iRow = 0;
-			for (; iRow < listTextureDisp.size(); ++iRow) {
-				TextureDisplay* data = &listTextureDisp[iRow];
-
-				wndListView_.SetText(iRow, ROW_ADDRESS, StringUtility::Format(L"%08x", data->address));
-				wndListView_.SetText(iRow, ROW_NAME, data->fileName);
-				wndListView_.SetText(iRow, ROW_FULLNAME, data->fullPath);
-				wndListView_.SetText(iRow, ROW_REFCOUNT, std::to_wstring(data->countRef));
-				wndListView_.SetText(iRow, ROW_WIDTH_IMAGE, std::to_wstring(data->wd));
-				wndListView_.SetText(iRow, ROW_HEIGHT_IMAGE, std::to_wstring(data->ht));
-				wndListView_.SetText(iRow, ROW_SIZE, std::to_wstring(data->size));
+		// Sort new data as well
+		if (TextureDisplay::imguiSortSpecs) {
+			if (listDisplay_.size() > 1) {
+				std::sort(listDisplay_.begin(), listDisplay_.end(), TextureDisplay::Compare);
 			}
-
-			for (; iRow < wndListView_.GetRowCount(); ++iRow)
-				wndListView_.DeleteRow(iRow);
 		}
 	}
 
 	{
 		IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
-		UINT texMem = device->GetAvailableTextureMem() / (1024U * 1024U);
 
-		if (WindowLogger* logger = WindowLogger::GetParent()) {
-			shared_ptr<WStatusBar> statusBar = logger->GetStatusBar();
-			statusBar->SetText(0, L"Available Video Memory");
-			statusBar->SetText(1, StringUtility::Format(L"%u MB", texMem));
+		UINT texMem = device->GetAvailableTextureMem() / (1024U * 1024U);
+		videoMem_ = texMem;
+	}
+}
+void TextureInfoPanel::ProcessGui() {
+	Logger* parent = Logger::GetTop();
+
+	float ht = ImGui::GetContentRegionAvail().y - 32;
+
+	if (ImGui::BeginChild("ptexture_child_table", ImVec2(0, ht), false, ImGuiWindowFlags_HorizontalScrollbar)) {
+		ImGuiTableFlags flags = ImGuiTableFlags_Reorderable | ImGuiTableFlags_Resizable
+			| ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendX 
+			| ImGuiTableFlags_RowBg
+			| ImGuiTableFlags_Sortable /*| ImGuiTableFlags_SortMulti*/;
+
+		if (ImGui::BeginTable("ptexture_table", 7, flags)) {
+			ImGui::TableSetupScrollFreeze(0, 1);
+
+			constexpr auto sortDef = ImGuiTableColumnFlags_DefaultSort, 
+				sortNone = ImGuiTableColumnFlags_NoSort;
+			constexpr auto colFlags = ImGuiTableColumnFlags_WidthStretch;
+			ImGui::TableSetupColumn("Address", sortDef, 0, TextureDisplay::Address);
+			ImGui::TableSetupColumn("Name", colFlags | sortDef, 160, TextureDisplay::Name);
+			ImGui::TableSetupColumn("Path", colFlags | sortDef, 200, TextureDisplay::FullPath);
+			ImGui::TableSetupColumn("Uses", sortDef, 0, TextureDisplay::Uses);
+			ImGui::TableSetupColumn("Width", sortNone, 0, TextureDisplay::_NoSort);
+			ImGui::TableSetupColumn("Height", sortNone, 0, TextureDisplay::_NoSort);
+			ImGui::TableSetupColumn("Size", colFlags | sortDef, 100, TextureDisplay::Size);
+
+			ImGui::TableHeadersRow();
+
+			if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs()) {
+				if (specs->SpecsDirty) {
+					TextureDisplay::imguiSortSpecs = specs;
+					if (listDisplay_.size() > 1) {
+						std::sort(listDisplay_.begin(), listDisplay_.end(), TextureDisplay::Compare);
+					}
+					//TextureDisplay::imguiSortSpecs = nullptr;
+
+					specs->SpecsDirty = false;
+				}
+			}
+
+			{
+				ImGui::PushFont(parent->GetFont("Arial15"));
+
+#define _SETCOL(_i, _s) ImGui::TableSetColumnIndex(_i); ImGui::Text((_s).c_str());
+
+				ImGuiListClipper clipper;
+				clipper.Begin(listDisplay_.size());
+				while (clipper.Step()) {
+					for (size_t i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+						const TextureDisplay& item = listDisplay_[i];
+
+						ImGui::TableNextRow();
+
+						_SETCOL(0, item.strAddress);
+
+						_SETCOL(1, item.fileName);
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(item.fileName.c_str());
+
+						_SETCOL(2, item.fullPath);
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(item.fullPath.c_str());
+
+						_SETCOL(3, std::to_string(item.countRef));
+						_SETCOL(4, std::to_string(item.wd));
+						_SETCOL(5, std::to_string(item.ht));
+						_SETCOL(6, std::to_string(item.size));
+					}
+				}
+
+				ImGui::PopFont();
+
+#undef _SETCOL
+			}
+
+			ImGui::EndTable();
 		}
 	}
+	ImGui::EndChild();
+
+	ImGui::Dummy(ImVec2(0, 4));
+	ImGui::Indent(6);
+
+	{
+		ImGui::Text("Available Video Memory: %u MB", videoMem_);
+	}
+}
+
+const ImGuiTableSortSpecs* TextureInfoPanel::TextureDisplay::imguiSortSpecs = nullptr;
+bool TextureInfoPanel::TextureDisplay::Compare(const TextureDisplay& a, const TextureDisplay& b) {
+	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
+		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
+
+		int rcmp = 0;
+
+#define CASE_SORT(_id, _l, _r) \
+		case _id: { \
+			if (_l != _r) rcmp = (_l < _r) ? 1 : -1; \
+			break; \
+		}
+
+		switch ((Column)spec->ColumnUserID) {
+		CASE_SORT(Column::Address, a.address, b.address);
+		case Column::Name:
+			rcmp = a.fileName.compare(b.fileName);
+			break;
+		case Column::FullPath:
+			rcmp = a.fullPath.compare(b.fullPath);
+			break;
+		CASE_SORT(Column::Uses, a.countRef, b.countRef);
+		CASE_SORT(Column::Size, a.size, b.size);
+		default: break;
+		}
+
+#undef CASE_SORT
+
+		if (rcmp != 0) {
+			return spec->SortDirection == ImGuiSortDirection_Ascending
+				? rcmp < 0 : rcmp > 0;
+		}
+	}
+
+	return a.address < b.address;
 }

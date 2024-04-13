@@ -137,7 +137,7 @@ void DxWindowManager::_DispatchMouseEvent() {
 	DirectInput* input = DirectInput::GetBase();
 	if (input == nullptr) return;
 
-	gstd::ref_count_ptr<DxWindowEvent> event = new DxWindowEvent();
+	gstd::ref_count_ptr<DxWindowEvent> event(new DxWindowEvent());
 	gstd::ref_count_ptr<DxWindow> wndIntersect = GetIntersectedWindow();
 
 	//左クリック
@@ -418,7 +418,7 @@ void DxLabel::SetText(const std::wstring& str) {
 		DxRect<int> rect = GetAbsoluteWindowRect();
 		int width = rect.right - rect.left;
 		int height = rect.bottom - rect.top;
-		text_ = new DxText();
+		text_.reset(new DxText());
 		text_->SetHorizontalAlignment(TextAlignment::Center);
 		text_->SetFontSize(std::min(width, height));
 		text_->SetPosition(rect.top, rect.bottom);

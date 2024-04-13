@@ -26,31 +26,71 @@ public:
 //*******************************************************************
 //ELogger
 //*******************************************************************
-class ELogger : public Singleton<ELogger>, public WindowLogger, public gstd::Thread {
+class ELogger : public Singleton<ELogger>, public Logger {
+	class WindowThread : public Thread, public InnerClass<ELogger> {
+		friend class ELogger;
+	protected:
+		WindowThread(ELogger* logger);
+		void _Run();
+	};
+
 	struct PanelData {
-		shared_ptr<gstd::WindowLogger::Panel> panel;
-		DWORD updateFreq;
-		DWORD timer;
+		shared_ptr<gstd::ILoggerPanel> panel;
+		uint32_t updateFreq;
+		uint32_t timer;
 		bool bPrevVisible;
 	};
+public:
+	enum {
+		MY_SYSCMD_OPEN = 1,
+	};
 protected:
+	bool bWindow_;
+	shared_ptr<WindowThread> threadWindow_;
+
 	shared_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData_;
 
 	std::list<PanelData> listPanel_;
-
 	uint64_t time_;
 protected:
 	void _Run();
+
+	bool _AddPanel(shared_ptr<ILoggerPanel> panel, const std::wstring& name);
 public:
 	ELogger();
 	virtual ~ELogger();
 
-	void Initialize(bool bFile, bool bWindow);
+	virtual bool Initialize();
+	bool Initialize(bool bFile, bool bWindow);
 
 	shared_ptr<gstd::ScriptCommonDataInfoPanel> GetScriptCommonDataInfoPanel() { return panelCommonData_; }
 	void UpdateCommonDataInfoPanel();
 
-	bool EAddPanel(shared_ptr<Panel> panel, const std::wstring& name, DWORD updateFreq);
+	void LoadState();
+	void SaveState();
+	void Close();
+
+	bool EAddPanel(shared_ptr<ILoggerPanel> panel, const std::wstring& name, uint32_t updateFreq);
+	bool EAddPanelNoUpdate(shared_ptr<ILoggerPanel> panel, const std::wstring& name);
+	bool EAddPanelUpdateData(shared_ptr<ILoggerPanel> panel, uint32_t updateFreq);
+
+	gstd::WindowLogger* GetWindowLogger() { return GetLogger<gstd::WindowLogger>("Window"); }
+	gstd::FileLogger* GetFileLogger() { return GetLogger<gstd::FileLogger>("File"); }
+
+	shared_ptr<gstd::WindowLogger::PanelEventLog> GetEventLog() {
+		if (auto wLogger = GetWindowLogger())
+			return wLogger->GetLogPanel();
+		return nullptr;
+	}
+	shared_ptr<gstd::WindowLogger::PanelInfo> GetInfoPanel() {
+		if (auto wLogger = GetWindowLogger())
+			return wLogger->GetInfoPanel();
+		return nullptr;
+	}
+
+	void InsertOpenCommandInSystemMenu(HWND hWnd);
+
+	void ResetDevice();
 };
 
 
@@ -79,8 +119,8 @@ public:
 	void SetFastMode(bool b) { controller_->SetFastMode(b); }
 	void SetFastModeRate(size_t rate) { controller_->SetFastModeRate(rate); }
 
-	void AddFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) { controller_->AddFpsControlObject(obj); }
-	void RemoveFpsControlObject(ref_count_weak_ptr<FpsControlObject> obj) { controller_->RemoveFpsControlObject(obj); }
+	void AddFpsControlObject(unique_ptr<FpsControlObject>&& obj) { controller_->AddFpsControlObject(MOVE(obj)); }
+	void RemoveFpsControlObject(FpsControlObject* obj) { controller_->RemoveFpsControlObject(obj); }
 
 	int16_t GetFastModeKey() { return fastModeKey_; }
 	void SetFastModeKey(int16_t key) { fastModeKey_ = key; }

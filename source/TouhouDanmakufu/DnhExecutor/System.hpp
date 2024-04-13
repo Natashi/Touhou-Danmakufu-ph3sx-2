@@ -15,9 +15,9 @@ class SystemInformation;
 class SystemController : public Singleton<SystemController> {
 	friend Singleton<SystemController>;
 private:
-	ref_count_ptr<SceneManager> sceneManager_;
-	ref_count_ptr<TransitionManager> transitionManager_;
-	ref_count_ptr<SystemInformation> infoSystem_;
+	unique_ptr<SceneManager> sceneManager_;
+	unique_ptr<TransitionManager> transitionManager_;
+	unique_ptr<SystemInformation> infoSystem_;
 public:
 	SystemController();
 	virtual ~SystemController();
@@ -53,8 +53,10 @@ public:
 	void TransScriptSelectScene_Directory();
 	void TransScriptSelectScene_Last();
 
-	void TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay);
-	void TransStgScene(ref_count_ptr<ScriptInformation> infoMain, ref_count_ptr<ReplayInformation> infoReplay);
+	void TransStgScene(ref_count_ptr<ScriptInformation> infoMain,
+		ref_count_ptr<ScriptInformation> infoPlayer, ref_count_ptr<ReplayInformation> infoReplay);
+	void TransStgScene(ref_count_ptr<ScriptInformation> infoMain,
+		ref_count_ptr<ReplayInformation> infoReplay);
 
 	void TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, bool bOnlyPackage = false);
 };
@@ -68,7 +70,7 @@ class TransitionManager {
 	};
 private:
 	void _CreateCurrentSceneTexture();
-	void _AddTask(ref_count_ptr<TransitionEffect> effect);
+	void _AddTask(shared_ptr<TransitionEffect> effect);
 public:
 	TransitionManager();
 	virtual ~TransitionManager();
@@ -111,7 +113,10 @@ public:
 
 	int GetLastSelectedPlayerIndex() { return lastPlayerSelectIndex_; }
 	std::vector<ref_count_ptr<ScriptInformation>>& GetLastPlayerSelectedList() { return listLastPlayerSelect_; }
-	void SetLastSelectedPlayerIndex(int index, std::vector<ref_count_ptr<ScriptInformation> >& list) { lastPlayerSelectIndex_ = index; listLastPlayerSelect_ = list; }
+	void SetLastSelectedPlayerIndex(int index, std::vector<ref_count_ptr<ScriptInformation>>& list) {
+		lastPlayerSelectIndex_ = index;
+		listLastPlayerSelect_ = list;
+	}
 
 	void UpdateFreePlayerScriptInformationList();
 	std::vector<ref_count_ptr<ScriptInformation>>& GetFreePlayerScriptInformationList() { return listFreePlayer_; }

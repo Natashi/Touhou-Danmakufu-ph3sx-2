@@ -98,83 +98,90 @@ script_block* script_engine::new_block(int level, block_kind kind) {
 //****************************************************************************
 //script_machine::environment
 //****************************************************************************
-script_machine::environment::environment(script_machine* machine) {
-	this->machine = machine;
-
-	parent = nullptr;
-	sub = nullptr;
-	ip = 0;
-	has_result = false;
-	waitCount = 0;
-
-	_ref = 0;
+script_machine::env_allocator::env_allocator(script_machine* machine) : machine(machine) {
+	_alloc_more(1024);
 }
-script_machine::environment::~environment() {
-	variables.release();
-	stack.release();
+script_machine::env_allocator::~env_allocator() {
+	// Must release all owned environment before destroying the allocator
+	environments.clear();
 }
 
-void script_machine::environment::init(environment* parent, script_block* b) {
-	this->parent = parent;
-	sub = b;
-	ip = 0;
-	variables.clear();
-	stack.clear();
-	has_result = false;
-	waitCount = 0;
+void script_machine::env_allocator::_alloc_more(size_t n) {
+	constexpr size_t MAX_N = std::numeric_limits<size_t>::max() / sizeof(value_type);
 
-	if (parent)
-		parent->add_ref();
-	_ref = 1;
-}
+	size_t before_size = environments.size();
 
-void script_machine::environment::add_ref() {
-	++_ref;
-}
-void script_machine::environment::dec_ref() {
-	--_ref;
-	if (_ref == 0) {
-		variables.clear();
-		stack.clear();
+	if (before_size + n > MAX_N)
+		throw std::bad_array_new_length();
 
-		machine->dispose_environment(this);
+	for (size_t i = 0; i < n; ++i) {
+		size_t index = before_size + i;
+
+		environment env(machine);
+		env._index = index;
+
+		environments.push_back(std::move(env));
+		free_environments.push_back(index);
 	}
+}
+
+script_machine::env_allocator::value_type* 
+script_machine::env_allocator::allocate(size_t n) {
+	if (free_environments.size() == 0) {
+		_alloc_more(1024);
+	}
+
+	size_t free_index = free_environments.front();
+	free_environments.pop_front();
+
+	return &environments[free_index];
+}
+void script_machine::env_allocator::deallocate(value_type* p, size_t n) noexcept {
+	for (size_t i = 0; i < n; ++i) {
+		value_type& env = p[i];
+
+		env.variables.clear();
+		env.stack.clear();
+
+		free_environments.push_back(env._index);
+	}
+}
+
+//****************************************************************************
+//script_machine::environment
+//****************************************************************************
+script_machine::environment::environment(script_machine* machine) : 
+	machine(machine), _index(-1),
+	parent(parent),
+	sub(sub), ip(0),
+	hasResult(false), waitCount(0) {}
+
+script_machine::environment::environment(const environment& base_from, sptr<environment> parent, script_block* sub) :
+	environment(base_from.machine)
+{
+	_index = base_from._index;
+	this->parent = parent;
+	this->sub = sub;
 }
 
 //****************************************************************************
 //script_machine
 //****************************************************************************
-script_machine::script_machine(script_engine* the_engine) {
-	engine = the_engine;
-
+script_machine::script_machine(script_engine* engine) : engine(engine), allocator(this) {
 	reset();
 }
 script_machine::~script_machine() {
 	reset();
 }
 
-constexpr size_t ENV_CHUNK = 2048;
-void script_machine::alloc_env_chunk(size_t chunk) {
-	//Allocate in chunks to try to be merciful to the cache
-	for (size_t i = 0; i < chunk; ++i) {
-		_list_environments.push_back(std::move(environment(this)));
-		_list_free_environments.push_back(&_list_environments.back());
-	}
-}
-script_machine::environment* script_machine::get_new_environment() {
-	environment* res = nullptr;
+script_machine::env_ptr script_machine::get_new_environment() {
+	shared_ptr<environment> res;
+	environment* pEnv = allocator.allocate(1);
 
-	if (_list_free_environments.size() == 0) {
-		alloc_env_chunk(ENV_CHUNK);
-	}
-
-	res = _list_free_environments.front();
-	_list_free_environments.pop_front();
-
+	res.reset(pEnv, [this](environment* ptr) { 
+		allocator.deallocate(ptr, 1);
+	});
 	return res;
-}
-void script_machine::dispose_environment(environment* env) {
-	_list_free_environments.push_back(env);
 }
 
 bool script_machine::has_event(const std::string& event_name, std::map<std::string, script_block*>::iterator& res) {
@@ -198,12 +205,9 @@ void script_machine::reset() {
 	stopped = false;
 	resuming = false;
 
-	_list_environments.clear();
-	_list_free_environments.clear();
-
 	list_parent_environment.clear();
 	threads.clear();
-	current_thread_index = std::list<environment*>::iterator();
+	current_thread_index = {};
 }
 void script_machine::run() {
 	if (bTerminate) return;
@@ -211,8 +215,9 @@ void script_machine::run() {
 	if (threads.size() == 0) {
 		error_line = -1;
 
-		environment* mainEnv = get_new_environment();
-		mainEnv->init(nullptr, engine->main_block);
+		env_ptr mainEnv = get_new_environment();
+		*mainEnv = environment(*mainEnv, nullptr, engine->main_block);
+
 		threads.push_back(mainEnv);
 
 		current_thread_index = threads.begin();
@@ -247,53 +252,55 @@ void script_machine::call(std::map<std::string, script_block*>::iterator event_i
 }
 
 void script_machine::interrupt(script_block* sub) {
-	//Save current thread
+	// Save current thread
 	auto prev_thread = current_thread_index;
 	current_thread_index = threads.begin();
 
-	environment* env_first = *current_thread_index;
+	// Replace current thread with the interrupt
+	{
+		env_ptr env_first = *current_thread_index;
 
-	environment* new_env = get_new_environment();
-	new_env->init(env_first, sub);
-	*current_thread_index = new_env;
+		env_ptr new_env = get_new_environment();
+		*new_env = environment(*new_env, env_first, sub);
 
-	finished = false;
+		*current_thread_index = new_env;
 
-	list_parent_environment.push_back(new_env->parent->parent);
-	run_code();
-	list_parent_environment.pop_back();
+		finished = false;
 
-	finished = false;
+		list_parent_environment.push_back(new_env->parent->parent);
+		run_code();
+		list_parent_environment.pop_back();
 
-	//Resume previous thread
+		finished = false;
+	}
+
+	// Resume previous thread
 	current_thread_index = prev_thread;
 }
-script_machine::environment* script_machine::add_thread(script_block* sub) {
-	environment* e = get_new_environment();
-	e->init(*current_thread_index, sub);
+script_machine::env_ptr script_machine::add_thread(script_block* sub) {
+	env_ptr e = get_new_environment();
+	*e = environment(*e, *current_thread_index, sub);
 
 	threads.insert(++current_thread_index, e);
 	--current_thread_index;
 
-	return e;
+	return MOVE(e);
 }
-script_machine::environment* script_machine::add_child_block(script_block* sub) {
-	environment* e = get_new_environment();
-	e->init(*current_thread_index, sub);
+script_machine::env_ptr script_machine::add_child_block(script_block* sub) {
+	env_ptr e = get_new_environment();
+	*e = environment(*e, *current_thread_index, sub);
 
-	*current_thread_index = e;
-
-	return e;
+	return *current_thread_index = MOVE(e);
 }
 
 void script_machine::run_code() {
 	if (threads.size() == 0) {
-		current_thread_index = std::list<environment*>::iterator();
+		current_thread_index = {};
 		return;
 	}
 	try {
 		while (!finished && !bTerminate) {
-			environment* current = *current_thread_index;
+			env_ptr current = *current_thread_index;
 
 			if (current->waitCount > 0) {
 				--(current->waitCount);
@@ -301,11 +308,11 @@ void script_machine::run_code() {
 				continue;
 			}
 
-			if (current->ip >= current->sub->codes.size()) {	//Routine finished
-				environment* parent = current->parent;
+			if (current->ip >= current->sub->codes.size()) {	// Routine finished
+				env_ptr parent = current->parent;
 
 				bool bFinish = false;
-				if (parent == nullptr)	//Top-level env node
+				if (parent == nullptr)	// Top-level env node
 					bFinish = true;
 				else if (list_parent_environment.size() > 1 && parent->parent != nullptr) {
 					if (parent->parent == list_parent_environment.back())
@@ -321,22 +328,15 @@ void script_machine::run_code() {
 						yield();
 					}
 					else {
-						if (current->has_result && parent != nullptr)
+						if (current->hasResult && parent != nullptr)
 							parent->stack.push_back(current->variables[0]);
 						*current_thread_index = parent;
-					}
-
-					for (environment* pEnv = current; pEnv != nullptr;) {
-						pEnv->dec_ref();
-						if (pEnv->_ref > 0)
-							break;		//Object is still alive, stop removing refs
-						pEnv = pEnv->parent;
 					}
 				}
 			}
 			else {
-				script_value_vector& stack = current->stack;
-				script_value_vector& variables = current->variables;
+				auto& stack = current->stack;
+				auto& variables = current->variables;
 
 				code* c = &(current->sub->codes[current->ip]);
 				error_line = c->GetLine();
@@ -351,27 +351,28 @@ void script_machine::run_code() {
 					current->waitCount = (int)t->as_int() - 1;
 					stack.pop_back();
 					if (current->waitCount < 0) break;
+
+					__fallthrough;
 				}
-				//Fallthrough
 				case command_kind::pc_yield:
 					yield();
 					break;
 
 				case command_kind::pc_var_alloc:
 					variables.resize(c->arg0);
-					variables.length = c->arg0;
 					break;
 				case command_kind::pc_var_format:
 				{
 					for (size_t i = c->arg0; i < c->arg0 + c->arg1; ++i) {
-						if (i >= variables.capacity) break;
+						if (i >= variables.capacity()) break;
 						variables[i] = value();
 					}
 					break;
 				}
 
 				case command_kind::pc_pop:
-					stack.pop_back(c->arg0);
+					for (int i = 0; i < c->arg0; ++i)
+						stack.pop_back();
 					break;
 				case command_kind::pc_push_value:
 					stack.push_back(c->data);
@@ -459,7 +460,7 @@ void script_machine::run_code() {
 						value* src = &stack.back();
 
 						if (dest != nullptr && src != nullptr) {
-							//pc_copy_assign
+							// pc_copy_assign
 							if (BaseFunction::_type_assign_check(this, src, dest)) {
 								type_data* prev_type = dest->get_type();
 
@@ -472,7 +473,7 @@ void script_machine::run_code() {
 						}
 						stack.pop_back();
 					}
-					else {		//pc_ref_assign
+					else {		// pc_ref_assign
 						value* src = &stack.back();
 						value* dest = src[-1].as_ptr();
 
@@ -486,14 +487,15 @@ void script_machine::run_code() {
 									BaseFunction::_value_cast(dest, prev_type);
 							}
 						}
-						stack.pop_back(2U);
+						stack.pop_back();
+						stack.pop_back();
 					}
 
 					break;
 				}
 
 				case command_kind::pc_sub_return:
-					for (environment* i = current; i != nullptr; i = i->parent) {
+					for (env_ptr i = current; i != nullptr; i = i->parent) {
 						i->ip = i->sub->codes.size();
 
 						if (i->sub->kind == block_kind::bk_sub || i->sub->kind == block_kind::bk_function
@@ -517,26 +519,27 @@ void script_machine::run_code() {
 					bool bPushResult = opc == command_kind::pc_call_and_push_result;
 
 					auto _ProcessReturn_BuiltinFunc = [&](value ret) {
-						stack.pop_back(c->arg1);
+						for (int i = 0; i < c->arg1; ++i)
+							stack.pop_back();
 						if (bPushResult)
 							stack.push_back(ret);
 					};
-					auto _PassArgsFromStack = [](size_t argc, script_value_vector& srcStk, script_value_vector& dstStk) {
-						value* pBack = &srcStk.back();
-						for (int i = 0; i < argc; ++i)
-							dstStk.push_back(pBack[-i]);
-						srcStk.pop_back(argc);
+					auto _PassArgsFromStack = [](size_t argc, std::vector<value>& srcStk, std::vector<value>& dstStk) {
+						for (int i = 0; i < argc; ++i) {
+							dstStk.push_back(srcStk.back());
+							srcStk.pop_back();
+						}
 					};
 
 					script_block* sub = c->block; //(script_block*)c->arg0
 					if (sub->func) {
-						//Default functions
+						// Default functions
 
 						size_t sizePrev = stack.size();
 
 						value* argv = nullptr;
 						if (sizePrev > 0 && c->arg1 > 0)
-							argv = stack.at + (sizePrev - c->arg1);
+							argv = stack.data() + (sizePrev - c->arg1);
 
 						if (sub->func != BaseFunction::invoke) {
 							value ret = sub->func(this, c->arg1, argv);
@@ -557,7 +560,7 @@ void script_machine::run_code() {
 									_ProcessReturn_BuiltinFunc(ret);
 								}
 								else if (subIvk->kind == block_kind::bk_microthread) {
-									environment* e = add_thread(subIvk);
+									env_ptr e = add_thread(subIvk);
 
 									_PassArgsFromStack(subIvk->arguments, stack, e->stack);
 									stack.pop_back();
@@ -566,8 +569,8 @@ void script_machine::run_code() {
 										stack.push_back(value());
 								}
 								else {
-									environment* e = add_child_block(subIvk);
-									e->has_result = bPushResult;
+									env_ptr e = add_child_block(subIvk);
+									e->hasResult = bPushResult;
 
 									_PassArgsFromStack(subIvk->arguments, stack, e->stack);
 									stack.pop_back();
@@ -576,15 +579,15 @@ void script_machine::run_code() {
 						}
 					}
 					else if (sub->kind == block_kind::bk_microthread) {
-						//Tasks
-						environment* e = add_thread(sub);
+						// Tasks
+						env_ptr e = add_thread(sub);
 
 						_PassArgsFromStack(c->arg1, stack, e->stack);
 					}
 					else {
-						//User-defined functions or internal blocks
-						environment* e = add_child_block(sub);
-						e->has_result = bPushResult;
+						// User-defined functions or internal blocks
+						env_ptr e = add_child_block(sub);
+						e->hasResult = bPushResult;
 
 						_PassArgsFromStack(c->arg1, stack, e->stack);
 					}
@@ -600,8 +603,10 @@ void script_machine::run_code() {
 				case command_kind::pc_compare_ne:
 				{
 					value* t = &stack.back();
+
 					int r = t->as_int();
 					bool b = false;
+
 					switch (opc) {
 					case command_kind::pc_compare_e:
 						b = r == 0;
@@ -626,7 +631,7 @@ void script_machine::run_code() {
 					break;
 				}
 
-				//Loop commands
+				// Loop commands
 				case command_kind::pc_loop_ascent:
 				case command_kind::pc_loop_descent:
 				{
@@ -643,15 +648,18 @@ void script_machine::run_code() {
 				case command_kind::pc_loop_count:
 				{
 					value* i = &stack.back();
+
 					int64_t r = i->as_int();
 					if (r > 0)
 						i->reset(script_type_manager::get_int_type(), r - 1);
+					
 					stack.push_back(value(script_type_manager::get_boolean_type(), r > 0));
+
 					break;
 				}
 				case command_kind::pc_loop_foreach:
 				{
-					//Stack: .... [array] [counter]
+					// Stack: .... [array] [counter]
 					value* i = &stack.back();
 					value* src_array = i - 1;
 
@@ -701,7 +709,8 @@ void script_machine::run_code() {
 					}
 					res.reset(type_arr, res_arr);
 
-					stack.pop_back(c->arg0);
+					for (int i = 0; i < c->arg0; ++i)
+						stack.pop_back();
 					stack.push_back(res);
 					break;
 				}
@@ -709,7 +718,7 @@ void script_machine::run_code() {
 #define ARG1_GET_LEVEL(_PK) (uint32_t)(((uint32_t)(_PK) & 0xfff00000) >> 20)
 #define ARG1_GET_VAR(_PK)	(uint32_t)(((uint32_t)(_PK) & 0x000fffff))
 
-				//----------------------------------Inline operations----------------------------------
+				// ----------------------------------Inline operations----------------------------------
 				case command_kind::pc_inline_inc:
 				case command_kind::pc_inline_dec:
 				{
@@ -739,7 +748,7 @@ void script_machine::run_code() {
 				case command_kind::pc_inline_fdiv_asi:
 				case command_kind::pc_inline_mod_asi:
 				case command_kind::pc_inline_pow_asi:
-					//case command_kind::pc_inline_cat_asi:
+				//case command_kind::pc_inline_cat_asi:
 				{
 					auto PerformFunction = [&](value* dest, command_kind cmd, value* argv) {
 #define DEF_CASE(_c, _fn) case _c: *dest = BaseFunction::_fn(this, 2, argv); break;
@@ -780,7 +789,8 @@ void script_machine::run_code() {
 						BaseFunction::_value_cast(&res, pDest.get_type());
 						pDest = res;
 
-						stack.pop_back(2U);
+						stack.pop_back();
+						stack.pop_back();
 					}
 					break;
 				}
@@ -802,7 +812,8 @@ void script_machine::run_code() {
 						value arg[2] = { *(pArg->as_ptr()), pArg[1] };
 						BaseFunction::concatenate_direct(this, 2, arg);
 
-						stack.pop_back(2U);
+						stack.pop_back();
+						stack.pop_back();
 					}
 					break;
 				}
@@ -866,10 +877,13 @@ void script_machine::run_code() {
 				case command_kind::pc_inline_cmp_ne:
 				{
 					value* args = &stack.back() - 1;
+
 					value cmp_res = BaseFunction::compare(this, 2, args);
 					int cmp_r = cmp_res.as_int();
 
-#define DEF_CASE(cmd, expr) case cmd: cmp_res.reset(script_type_manager::get_boolean_type(), expr); break;
+					bool cmp_rb = false;
+
+#define DEF_CASE(cmd, expr) case cmd: cmp_rb = (expr); break;
 					switch (opc) {
 						DEF_CASE(command_kind::pc_inline_cmp_e, cmp_r == 0);
 						DEF_CASE(command_kind::pc_inline_cmp_g, cmp_r > 0);
@@ -883,7 +897,8 @@ void script_machine::run_code() {
 					//stack.pop_back(2U);
 					//stack.push_back(res);
 					stack.pop_back();
-					stack.back() = cmp_res;
+					stack.back().reset(script_type_manager::get_boolean_type(), cmp_rb);
+
 					break;
 				}
 				case command_kind::pc_inline_logic_and:
@@ -916,7 +931,9 @@ void script_machine::run_code() {
 							}
 						}
 					}
-					else BaseFunction::_value_cast(var, castTo);
+					else {
+						BaseFunction::_value_cast(var, castTo);
+					}
 
 					break;
 				}
@@ -929,7 +946,7 @@ void script_machine::run_code() {
 					if (pRes == nullptr) break;
 
 					*arr = value(script_type_manager::get_ptr_type(), pRes);
-					stack.pop_back(1U);	//pop idx
+					stack.pop_back();	//pop idx
 					break;
 				}
 				case command_kind::pc_inline_index_array2:
@@ -969,9 +986,10 @@ void script_machine::run_code() {
 }
 
 template<bool ALLOW_NULL>
-value* script_machine::find_variable_symbol(environment* current_env, code* c,
-	uint32_t level, uint32_t variable) {
-	for (environment* i = current_env; i != nullptr; i = i->parent) {
+value* script_machine::find_variable_symbol(env_ptr current_env, code* c,
+	uint32_t level, uint32_t variable)
+{
+	for (env_ptr i = current_env; i != nullptr; i = i->parent) {
 		if (i->sub->level == level) {
 			value* res = &(i->variables[variable]);
 

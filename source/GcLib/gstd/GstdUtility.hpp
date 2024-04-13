@@ -7,6 +7,8 @@
 
 #include "GstdConstant.hpp"
 
+#include "CpuInformation.hpp"
+
 namespace gstd {
 	//================================================================
 	//DebugUtility
@@ -23,8 +25,14 @@ namespace gstd {
 	//================================================================
 	//SystemUtility
 	class SystemUtility {
+		static const CpuInformation _cpuInfo;
 	public:
+		static void InitializeCOM();
+		static void UninitializeCOM();
+
 		static void TestCpuSupportSIMD();
+
+		static const CpuInformation& GetCpuInfo() { return _cpuInfo; }
 
 		static stdch::steady_clock::time_point GetCpuTime() {
 			return stdch::steady_clock::now();
@@ -165,6 +173,11 @@ namespace gstd {
 
 #define BASIC_STR_TEMPL template<class E, class T = std::char_traits<E>, class A = std::allocator<E>>
 
+#define STR_WIDE gstd::StringUtility::ConvertMultiToWide
+#define STR_MULTI gstd::StringUtility::ConvertWideToMulti
+#define STR_FMT gstd::StringUtility::Format
+#define STR_FMT_W gstd::StringUtility::FormatToWide
+
 	//================================================================
 	//StringUtility
 	class StringUtility {
@@ -213,6 +226,7 @@ namespace gstd {
 		static std::string Join(const std::vector<std::string>& strs, const std::string& join);
 
 		static std::string FromGuid(const GUID* guid);
+		static std::string FromAddress(const uintptr_t addr);
 
 		//----------------------------------------------------------------
 
@@ -614,6 +628,7 @@ namespace gstd {
 		}
 	public:
 		virtual ~Singleton() {};
+
 		static T* CreateInstance() {
 			T*& p = _This();
 			if (p == nullptr) p = new T();
@@ -789,7 +804,7 @@ namespace gstd {
 		};
 
 	protected:
-		gstd::ref_count_ptr<Scanner> scan_;
+		Scanner scan_;
 
 		void _RaiseError(const std::wstring& message) {
 			throw gstd::wexception(message);

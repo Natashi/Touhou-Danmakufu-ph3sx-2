@@ -49,7 +49,7 @@ void DirectInput::_WrapDXErr(HRESULT hr, const std::string& routine, const std::
 	if (SUCCEEDED(hr)) return;
 	std::string err = StringUtility::Format("DirectInput::%s: %s. [%s]\r\n  %s",
 		routine.c_str(), msg.c_str(), DXGetErrorStringA(hr), DXGetErrorDescriptionA(hr));
-	Logger::WriteTop(err);
+	Logger::WriteError(err);
 	if (bThrow) throw wexception(err);
 }
 
@@ -198,7 +198,7 @@ bool DirectInput::_InitializeJoypad() {
 
 	size_t count = listDeviceJoypad_.size();
 	if (count == 0U)
-		Logger::WriteTop("DirectInput:_InitializeJoypad: No pad device detected.");
+		Logger::WriteWarn("DirectInput:_InitializeJoypad: No pad device detected.");
 
 	Logger::WriteTop("DirectInput: Pad device initialized.");
 	return true;
@@ -280,7 +280,7 @@ BOOL DirectInput::_GetJoypadCallback(LPDIDEVICEINSTANCE lpddi) {
 	}
 	catch (wexception& err) {
 		ptr_release(device);
-		Logger::WriteTop("DirectInput::_GetJoypadCallback: Connection attempt failed.");
+		Logger::WriteError("DirectInput::_GetJoypadCallback: Connection attempt failed.");
 	}
 
 #undef CHECKERR
@@ -634,15 +634,18 @@ bool KeyReplayManager::IsTargetKeyCode(int16_t key) {
 	return res;
 }
 void KeyReplayManager::ReadRecord(RecordBuffer& record) {
-	size_t countReplayData = record.GetRecordAs<uint32_t>("count");
+	if (auto data = record.GetRecordAs<uint32_t>("count")) {
+		auto countReplayData = *data;
 
-	ByteBuffer buffer;
-	buffer.SetSize(sizeof(ReplayData) * countReplayData);
-	record.GetRecord("data", buffer.GetPointer(), buffer.GetSize());
-	for (size_t iRec = 0; iRec < countReplayData; ++iRec) {
-		ReplayData data;
-		buffer.Read(&data, sizeof(ReplayData));
-		listReplayData_.push_back(data);
+		ByteBuffer buffer(sizeof(ReplayData) * countReplayData);
+
+		record.GetRecord("data", buffer.GetPointer(), buffer.GetSize());
+
+		for (size_t iRec = 0; iRec < countReplayData; ++iRec) {
+			ReplayData data{};
+			buffer.Read(&data, sizeof(ReplayData));
+			listReplayData_.push_back(data);
+		}
 	}
 }
 void KeyReplayManager::WriteRecord(RecordBuffer& record) {

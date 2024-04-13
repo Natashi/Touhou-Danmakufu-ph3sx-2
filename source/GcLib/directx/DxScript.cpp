@@ -2,7 +2,7 @@
 
 #include "DxUtility.hpp"
 #include "DirectGraphics.hpp"
-#include "DirectGraphics.hpp"
+#include "DxCamera.hpp"
 #include "DxScript.hpp"
 #include "DxObject.hpp"
 #include "DirectInput.hpp"
@@ -1824,28 +1824,28 @@ gstd::value DxScript::Func_ResetShaderI(gstd::script_machine* machine, int argc,
 //Dx関数：カメラ3D
 value DxScript::Func_SetCameraFocusX(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetFocusX(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusY(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetFocusY(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusZ(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetFocusZ(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraFocusXYZ(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetFocusX(argv[0].as_float());
 	camera->SetFocusY(argv[1].as_float());
 	camera->SetFocusZ(argv[2].as_float());
@@ -1854,56 +1854,56 @@ value DxScript::Func_SetCameraFocusXYZ(script_machine* machine, int argc, const 
 }
 value DxScript::Func_SetCameraRadius(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetRadius(argv[0].as_float());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraAzimuthAngle(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetAzimuthAngle(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraElevationAngle(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetElevationAngle(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraYaw(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetYaw(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraPitch(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetPitch(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraRoll(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetRoll(Math::DegreeToRadian(argv[0].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraMode(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetCameraMode(argv[0].as_int());
 	camera->thisViewChanged_ = true;
 	return value();
 }
 value DxScript::Func_SetCameraPosLookAt(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetCameraLookAtVector(D3DXVECTOR3(argv[0].as_float(), argv[1].as_float(), argv[2].as_float()));
 	camera->thisViewChanged_ = true;
 	return value();
@@ -1970,7 +1970,7 @@ value DxScript::Func_GetCameraRoll(script_machine* machine, int argc, const valu
 }
 value DxScript::Func_SetCameraPerspectiveClip(script_machine* machine, int argc, const value* argv) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	auto camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 	camera->SetPerspectiveClip(argv[0].as_float(), argv[1].as_float());
 	camera->thisProjectionChanged_ = true;
 	return value();
@@ -2147,7 +2147,7 @@ gstd::value DxScript::Func_GetObject2dPosition(gstd::script_machine* machine, in
 	DxScriptRenderObject* obj = script->GetObjectPointerAs<DxScriptRenderObject>(id);
 	if (obj) {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
-		ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+		auto& camera = graphics->GetCamera();
 
 		D3DXVECTOR2 point = camera->TransformCoordinateTo2D(obj->GetPosition());
 		listRes[0] = point.x;
@@ -2165,7 +2165,7 @@ gstd::value DxScript::Func_Get2dPosition(gstd::script_machine* machine, int argc
 	D3DXVECTOR3 pos(px, py, pz);
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	ref_count_ptr<DxCamera> camera = graphics->GetCamera();
+	auto& camera = graphics->GetCamera();
 
 	D3DXVECTOR2 point = camera->TransformCoordinateTo2D(pos);
 	float listRes[2] = { point.x, point.y };
@@ -2446,7 +2446,7 @@ value DxScript::Func_Obj_Create(gstd::script_machine* machine, int argc, const v
 	DxScript* script = (DxScript*)machine->data;
 	script->CheckRunInMainThread();
 
-	ref_unsync_ptr<DxScriptObjectBase> obj = new DxScriptObjectBase();
+	ref_unsync_ptr<DxScriptObjectBase> obj(new DxScriptObjectBase());
 
 	int id = ID_INVALID;
 	if (obj) {
@@ -3325,7 +3325,7 @@ gstd::value DxScript::Func_ObjShader_Create(gstd::script_machine* machine, int a
 	DxScript* script = (DxScript*)machine->data;
 	script->CheckRunInMainThread();
 
-	ref_unsync_ptr<DxScriptShaderObject> obj = new DxScriptShaderObject();
+	ref_unsync_ptr<DxScriptShaderObject> obj(new DxScriptShaderObject());
 
 	int id = ID_INVALID;
 	if (obj) {
@@ -3779,24 +3779,17 @@ value DxScript::Func_ObjPrimitive_Create(script_machine* machine, int argc, cons
 	TypeObject type = (TypeObject)argv[0].as_int();
 
 	ref_unsync_ptr<DxScriptRenderObject> obj;
-	if (type == TypeObject::Primitive2D) {
-		obj = new DxScriptPrimitiveObject2D();
+
+#define DEF_CASE(_type, _class) case _type: obj.reset(new _class()); break;
+	switch (type) {
+		DEF_CASE(TypeObject::Primitive2D, DxScriptPrimitiveObject2D);
+		DEF_CASE(TypeObject::Sprite2D, DxScriptSpriteObject2D);
+		DEF_CASE(TypeObject::SpriteList2D, DxScriptSpriteListObject2D);
+		DEF_CASE(TypeObject::Primitive3D, DxScriptPrimitiveObject3D);
+		DEF_CASE(TypeObject::Sprite3D, DxScriptSpriteObject3D);
+		DEF_CASE(TypeObject::Trajectory3D, DxScriptTrajectoryObject3D);
 	}
-	else if (type == TypeObject::Sprite2D) {
-		obj = new DxScriptSpriteObject2D();
-	}
-	else if (type == TypeObject::SpriteList2D) {
-		obj = new DxScriptSpriteListObject2D();
-	}
-	else if (type == TypeObject::Primitive3D) {
-		obj = new DxScriptPrimitiveObject3D();
-	}
-	else if (type == TypeObject::Sprite3D) {
-		obj = new DxScriptSpriteObject3D();
-	}
-	else if (type == TypeObject::Trajectory3D) {
-		obj = new DxScriptTrajectoryObject3D();
-	}
+#undef DEF_CASE
 
 	int id = ID_INVALID;
 	if (obj) {
@@ -4265,10 +4258,10 @@ value DxScript::Func_ObjParticleList_Create(script_machine* machine, int argc, c
 
 	ref_unsync_ptr<DxScriptRenderObject> obj;
 	if (type == TypeObject::ParticleList2D) {
-		obj = new DxScriptParticleListObject2D();
+		obj.reset(new DxScriptParticleListObject2D());
 	}
 	else if (type == TypeObject::ParticleList3D) {
-		obj = new DxScriptParticleListObject3D();
+		obj.reset(new DxScriptParticleListObject3D());
 	}
 
 	int id = ID_INVALID;
@@ -4420,7 +4413,7 @@ value DxScript::Func_ObjParticleList_ClearInstance(script_machine* machine, int 
 value DxScript::Func_ObjMesh_Create(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	ref_unsync_ptr<DxScriptMeshObject> obj = new DxScriptMeshObject();
+	ref_unsync_ptr<DxScriptMeshObject> obj(new DxScriptMeshObject());
 
 	int id = ID_INVALID;
 	if (obj) {
@@ -4533,7 +4526,7 @@ value DxScript::Func_ObjMesh_GetPath(script_machine* machine, int argc, const va
 value DxScript::Func_ObjText_Create(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;
 
-	ref_unsync_ptr<DxScriptTextObject> obj = new DxScriptTextObject();
+	ref_unsync_ptr<DxScriptTextObject> obj(new DxScriptTextObject());
 
 	int id = ID_INVALID;
 	if (obj) {
@@ -4862,7 +4855,7 @@ gstd::value DxScript::Func_ObjSound_Create(gstd::script_machine* machine, int ar
 	DxScript* script = (DxScript*)machine->data;
 	DirectSoundManager* manager = DirectSoundManager::GetBase();
 
-	ref_unsync_ptr<DxSoundObject> obj = new DxSoundObject();
+	ref_unsync_ptr<DxSoundObject> obj(new DxSoundObject());
 	obj->manager_ = script->objManager_.get();
 
 	int id = script->AddObject(obj);
@@ -5205,10 +5198,10 @@ gstd::value DxScript::Func_ObjFile_Create(gstd::script_machine* machine, int arg
 
 	ref_unsync_ptr<DxFileObject> obj;
 	if (type == TypeObject::FileText) {
-		obj = new DxTextFileObject();
+		obj.reset(new DxTextFileObject());
 	}
 	else if (type == TypeObject::FileBinary) {
-		obj = new DxBinaryFileObject();
+		obj.reset(new DxBinaryFileObject());
 	}
 
 	int id = ID_INVALID;
@@ -5382,7 +5375,7 @@ gstd::value DxScript::Func_ObjFileB_GetPointer(gstd::script_machine* machine, in
 
 	DxBinaryFileObject* obj = script->GetObjectPointerAs<DxBinaryFileObject>(argv[0].as_int());
 	if (obj) {
-		ByteBuffer* buffer = obj->GetBuffer();
+		const ByteBuffer* buffer = obj->GetBuffer();
 		res = buffer ? buffer->GetOffset() : 0;
 	}
 
@@ -5529,6 +5522,7 @@ gstd::value DxScript::Func_ObjFileB_ReadString(gstd::script_machine* machine, in
 				ByteOrder::Reverse(&res[0], strSize);
 		}
 		case CODE_ACP:
+			__fallthrough;
 		case CODE_UTF8:
 		default:
 		{

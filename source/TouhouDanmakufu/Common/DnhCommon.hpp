@@ -44,9 +44,9 @@ public:
 
 	std::vector<ref_count_ptr<ScriptInformation>> CreatePlayerScriptInformationList();
 public:
-	static ref_count_ptr<ScriptInformation> CreateScriptInformation(const std::wstring& pathScript, 
+	static ref_count_ptr<ScriptInformation> CreateScriptInformation(const std::wstring& pathScript,
 		bool bNeedHeader = true);
-	static ref_count_ptr<ScriptInformation> CreateScriptInformation(const std::wstring& pathScript, 
+	static ref_count_ptr<ScriptInformation> CreateScriptInformation(const std::wstring& pathScript,
 		const std::wstring& pathArchive, const std::string& source, bool bNeedHeader = true);
 
 	static std::vector<ref_count_ptr<ScriptInformation>> CreateScriptInformationList(const std::wstring& path,
@@ -62,17 +62,7 @@ private:
 //Fuck?????
 class ScriptInformation::Sort {
 public:
-	BOOL operator()(const ref_count_ptr<ScriptInformation>& lf, const ref_count_ptr<ScriptInformation>& rf) {
-		const std::wstring& lPath = lf->pathScript_;
-		const std::wstring& rPath = lf->pathScript_;
-		int res = ::CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-			lPath.c_str(), -1, rPath.c_str(), -1);
-		return res == CSTR_LESS_THAN;
-	}
-};
-
-struct ScriptInformation::PlayerListSort {
-	BOOL operator()(const ref_count_ptr<ScriptInformation>& lf, const ref_count_ptr<ScriptInformation>& rf) {
+	static bool Compare(const ref_count_ptr<ScriptInformation>&lf, const ref_count_ptr<ScriptInformation>&rf) {
 		const std::wstring& lPath = lf->pathScript_;
 		const std::wstring& rPath = lf->pathScript_;
 		int res = ::CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,

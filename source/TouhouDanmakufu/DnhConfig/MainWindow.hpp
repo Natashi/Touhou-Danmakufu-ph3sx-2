@@ -10,7 +10,7 @@
 //MainWindow
 //*******************************************************************
 class Panel;
-class MainWindow : public ImGuiBaseWindow, public gstd::Singleton<MainWindow> {
+class MainWindow : public directx::imgui::ImGuiBaseWindow, public gstd::Singleton<MainWindow> {
 protected:
 	virtual LRESULT _SubWindowProcedure(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 protected:

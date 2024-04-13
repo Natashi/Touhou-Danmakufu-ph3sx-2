@@ -69,7 +69,7 @@ namespace gstd {
 
 		script_block* new_block(int level, block_kind kind);
 	public:
-		void* data;		//Client script pointer
+		void* data;		// Client script pointer
 
 		bool error;
 		std::wstring error_message;
@@ -83,29 +83,51 @@ namespace gstd {
 	class script_machine {
 	public:
 		class environment {
+			friend class script_machine;
+		private:
+			size_t _index;
 		public:
 			script_machine* machine;
+			sptr<environment> parent;
 
-			environment* parent;
 			script_block* sub;
 			int ip;
-			script_value_vector variables;
-			script_value_vector stack;
-			bool has_result;
-			int waitCount;
 
-			int _ref;
+			std::vector<value> variables;
+			std::vector<value> stack;
+
+			bool hasResult;
+			int waitCount;
 		public:
 			environment(script_machine* machine);
-			~environment();
+			environment(const environment& base_from, sptr<environment> parent, script_block* sub);
 
-			void init(environment* parent, script_block* b);
+			//environment& operator=(const environment& other) = delete;
+		};
 
-			void add_ref();
-			void dec_ref();
+		using env_ptr = sptr<environment>;
+
+	private:
+		class env_allocator {
+		private:
+			script_machine* machine;
+
+			std::vector<environment> environments;
+			std::list<size_t> free_environments;
+		private:
+			void _alloc_more(size_t n);
+		public:
+			using value_type = environment;
+			using pointer = value_type*;
+
+			env_allocator(script_machine* machine);
+			~env_allocator();
+
+			NODISCARD value_type* allocate(size_t n);
+			void deallocate(value_type* p, size_t n) noexcept;
 		};
 	public:
-		void* data;		//Pointer to client script class
+		void* data;		// Pointer to client script class
 
 		script_engine* engine;
 
@@ -118,25 +140,21 @@ namespace gstd {
 		bool stopped;
 		bool resuming;
 
-		std::list<environment> _list_environments;
-		std::list<environment*> _list_free_environments;
+		std::list<env_ptr> list_parent_environment;
 
-		std::list<environment*> list_parent_environment;
+		std::list<env_ptr> threads;
+		std::list<env_ptr>::iterator current_thread_index;
 
-		std::list<environment*> threads;
-		std::list<environment*>::iterator current_thread_index;
+		env_allocator allocator;
 	private:
-		void alloc_env_chunk(size_t chunk);
-
-		environment* get_new_environment();
-		void dispose_environment(environment* env);
+		NODISCARD env_ptr get_new_environment();
 	public:
 		script_machine(script_engine* the_engine);
 		virtual ~script_machine();
 
 		void interrupt(script_block* sub);
-		environment* add_thread(script_block* sub);
-		environment* add_child_block(script_block* sub);
+		env_ptr add_thread(script_block* sub);
+		env_ptr add_child_block(script_block* sub);
 	public:
 		void reset();
 		void run();
@@ -190,7 +208,7 @@ namespace gstd {
 		void run_code();
 
 		template<bool ALLOW_NULL>
-		value* find_variable_symbol(environment* current_env, code* c,
+		value* find_variable_symbol(env_ptr current_env, code* c,
 			uint32_t level, uint32_t variable);
 	};
 }

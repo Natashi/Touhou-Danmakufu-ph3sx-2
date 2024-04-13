@@ -33,21 +33,25 @@ DnhConfiguration::DnhConfiguration() {
 		padIndex_ = 0;
 		padResponse_ = 500;
 
-		mapKey_[EDirectInput::KEY_LEFT] = new VirtualKey(DIK_LEFT, 0, 0);
-		mapKey_[EDirectInput::KEY_RIGHT] = new VirtualKey(DIK_RIGHT, 0, 1);
-		mapKey_[EDirectInput::KEY_UP] = new VirtualKey(DIK_UP, 0, 2);
-		mapKey_[EDirectInput::KEY_DOWN] = new VirtualKey(DIK_DOWN, 0, 3);
+		auto _AddKey = [&](int key, VirtualKey* pVk) {
+			mapKey_[key].reset(pVk);
+		};
 
-		mapKey_[EDirectInput::KEY_OK] = new VirtualKey(DIK_Z, 0, 5);
-		mapKey_[EDirectInput::KEY_CANCEL] = new VirtualKey(DIK_X, 0, 6);
+		_AddKey(EDirectInput::KEY_LEFT, new VirtualKey(DIK_LEFT, 0, 0));
+		_AddKey(EDirectInput::KEY_RIGHT, new VirtualKey(DIK_RIGHT, 0, 1));
+		_AddKey(EDirectInput::KEY_UP, new VirtualKey(DIK_UP, 0, 2));
+		_AddKey(EDirectInput::KEY_DOWN, new VirtualKey(DIK_DOWN, 0, 3));
 
-		mapKey_[EDirectInput::KEY_SHOT] = new VirtualKey(DIK_Z, 0, 5);
-		mapKey_[EDirectInput::KEY_BOMB] = new VirtualKey(DIK_X, 0, 6);
-		mapKey_[EDirectInput::KEY_SLOWMOVE] = new VirtualKey(DIK_LSHIFT, 0, 7);
-		mapKey_[EDirectInput::KEY_USER1] = new VirtualKey(DIK_C, 0, 8);
-		mapKey_[EDirectInput::KEY_USER2] = new VirtualKey(DIK_V, 0, 9);
+		_AddKey(EDirectInput::KEY_OK, new VirtualKey(DIK_Z, 0, 5));
+		_AddKey(EDirectInput::KEY_CANCEL, new VirtualKey(DIK_X, 0, 6));
 
-		mapKey_[EDirectInput::KEY_PAUSE] = new VirtualKey(DIK_ESCAPE, 0, 10);
+		_AddKey(EDirectInput::KEY_SHOT, new VirtualKey(DIK_Z, 0, 5));
+		_AddKey(EDirectInput::KEY_BOMB, new VirtualKey(DIK_X, 0, 6));
+		_AddKey(EDirectInput::KEY_SLOWMOVE, new VirtualKey(DIK_LSHIFT, 0, 7));
+		_AddKey(EDirectInput::KEY_USER1, new VirtualKey(DIK_C, 0, 8));
+		_AddKey(EDirectInput::KEY_USER2, new VirtualKey(DIK_V, 0, 9));
+
+		_AddKey(EDirectInput::KEY_PAUSE, new VirtualKey(DIK_ESCAPE, 0, 10));
 	}
 
 	bLogWindow_ = false;
@@ -153,16 +157,19 @@ bool DnhConfiguration::LoadConfigFile() {
 
 	record.GetRecord<D3DMULTISAMPLE_TYPE>("typeMultiSamples", multiSamples_);
 
-	pathExeLaunch_ = record.GetRecordAsStringW("pathLaunch");
-	if (pathExeLaunch_.size() == 0) pathExeLaunch_ = DNH_EXE_NAME;
+	if (auto data = record.GetRecordAsStringW("pathLaunch")) {
+		pathExeLaunch_ = *data;
+	}
+	if (pathExeLaunch_.size() == 0)
+		pathExeLaunch_ = DNH_EXE_NAME;
 
-	padIndex_ = record.GetRecordAsInteger("padIndex");
-	padResponse_ = record.GetRecordAsInteger("padResponse");
+	padIndex_ = record.GetRecordOr<int>("padIndex", padIndex_);
+	padResponse_ = record.GetRecordOr<int>("padResponse", padResponse_);
 
-	{
-		ByteBuffer bufKey;
-		int bufKeySize = record.GetRecordAsInteger("mapKey_size");
-		bufKey.SetSize(bufKeySize);
+	if (auto data = record.GetRecordAsInteger("mapKey_size")) {
+		int bufKeySize = *data;
+
+		ByteBuffer bufKey(bufKeySize);
 		record.GetRecord("mapKey", bufKey.GetPointer(), bufKey.GetSize());
 
 		size_t mapKeyCount = bufKey.ReadValue<size_t>();
@@ -173,15 +180,14 @@ bool DnhConfiguration::LoadConfigFile() {
 				int16_t padIndex = bufKey.ReadShort();
 				int16_t padButton = bufKey.ReadShort();
 
-				mapKey_[id] = new VirtualKey(keyCode, padIndex, padButton);
+				mapKey_[id].reset(new VirtualKey(keyCode, padIndex, padButton));
 			}
 		}
 	}
 
-	bLogWindow_ = record.GetRecordAsBoolean("bLogWindow");
-	bLogFile_ = record.GetRecordAsBoolean("bLogFile");
-	if (record.IsExists("bMouseVisible"))
-		bMouseVisible_ = record.GetRecordAsBoolean("bMouseVisible");
+	record.GetRecord("bLogWindow", bLogWindow_);
+	record.GetRecordAsBoolean("bLogFile", bLogFile_);
+	record.GetRecordAsBoolean("bMouseVisible", bMouseVisible_);
 
 	return res;
 }

@@ -84,8 +84,8 @@ void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent
 	++countLoad_;
 
 	{
-		weak_ptr<StgStageScriptManager> scriptManagerWeak = stageController_->GetScriptManagerRef();
-		StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
+		weak_ptr<StgStageScriptManager> scriptManagerWeak = stageController_->GetScriptManager();
+		auto objectManager = stageController_->GetMainObjectManager();
 
 		for (size_t i = 0; i < pListData->cData; ++i) {
 			shared_ptr<StgEnemyBossSceneData> pData = pListData->listData[i].lock();
@@ -95,7 +95,7 @@ void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent
 				auto pManager = scriptManagerWeak.lock();
 				if (pManager && pData->objBossSceneParent_.IsExists()) {
 					try {
-						auto script = pManager->LoadScript(pData->GetPath(), StgStageScript::TYPE_STAGE);
+						auto script = pManager->LoadScript(pManager, pData->GetPath(), StgStageScript::TYPE_STAGE);
 						if (script == nullptr)
 							throw gstd::wexception(StringUtility::Format(L"Cannot load script: %s", pData->GetPath().c_str()));
 
@@ -347,7 +347,7 @@ bool StgEnemyBossSceneObject::_NextScript() {
 	if (dataStep_ >= listData_.size()) return false;
 
 	auto scriptManager = stageController_->GetScriptManager();
-	StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
+	auto objectManager = stageController_->GetMainObjectManager();
 
 	shared_ptr<StgEnemyBossSceneData> oldActiveData = activeData_;
 
@@ -409,7 +409,7 @@ void StgEnemyBossSceneObject::Work() {
 			bool bNext = _NextScript();
 			if (!bNext) {
 				StgEnemyManager* enemyManager = stageController_->GetEnemyManager();
-				StgStageScriptObjectManager* objectManager = stageController_->GetMainObjectManager();
+				auto objectManager = stageController_->GetMainObjectManager();
 				objectManager->DeleteObject(idObject_);
 				enemyManager->SetBossSceneObject(nullptr);
 				return;
@@ -609,7 +609,7 @@ int64_t StgEnemyBossSceneData::GetCurrentSpellScore() {
 
 void StgEnemyBossSceneData::LoadSceneEvents(StgStageController* stageController) {
 	auto scriptManager = stageController->GetScriptManager();
-	StgStageScriptObjectManager* objectManager = stageController->GetMainObjectManager();
+	auto objectManager = stageController->GetMainObjectManager();
 
 	LOCK_WEAK(script, ptrScript_) {
 		std::vector<double> listLife;
@@ -656,7 +656,7 @@ void StgEnemyBossSceneData::LoadSceneEvents(StgStageController* stageController)
 
 		std::vector<ref_unsync_ptr<StgEnemyBossObject>> listEnemyObject;
 		for (size_t iEnemy = 0; iEnemy < listLife.size(); iEnemy++) {
-			ref_unsync_ptr<StgEnemyBossObject> obj = new StgEnemyBossObject(stageController);
+			ref_unsync_ptr<StgEnemyBossObject> obj(new StgEnemyBossObject(stageController));
 			int idEnemy = objectManager->AddObject(obj, false);
 			listEnemyObject.push_back(obj);
 		}

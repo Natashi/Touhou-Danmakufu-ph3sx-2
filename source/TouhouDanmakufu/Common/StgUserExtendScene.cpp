@@ -16,7 +16,7 @@ StgUserExtendScene::~StgUserExtendScene() {
 }
 void StgUserExtendScene::_InitializeScript(const std::wstring& path, int type) {
 	if (scriptManager_ == nullptr) return;
-	auto idScript = scriptManager_->LoadScript(path, type);
+	auto idScript = scriptManager_->LoadScript(scriptManager_, path, type);
 	scriptManager_->StartScript(idScript);
 }
 void StgUserExtendScene::_CallScriptMainLoop() {
@@ -32,16 +32,16 @@ void StgUserExtendScene::_AddRelativeManager() {
 
 	shared_ptr<ScriptManager> scriptManager = std::dynamic_pointer_cast<ScriptManager>(scriptManager_);
 
-	shared_ptr<StgStageController> stageController = systemController_->GetStageController();
+	StgStageController* stageController = systemController_->GetStageController();
 	if (stageController) {
-		shared_ptr<ScriptManager> stageScriptManager = stageController->GetScriptManagerRef();
+		shared_ptr<ScriptManager> stageScriptManager = stageController->GetScriptManager();
 		if (stageScriptManager)
 			ScriptManager::AddRelativeScriptManagerMutual(scriptManager, stageScriptManager);
 	}
 
 	StgPackageController* packageController = systemController_->GetPackageController();
 	if (packageController) {
-		shared_ptr<ScriptManager> packageScriptManager = packageController->GetScriptManagerRef();
+		shared_ptr<ScriptManager> packageScriptManager = packageController->GetScriptManager();
 		if (packageScriptManager)
 			ScriptManager::AddRelativeScriptManagerMutual(scriptManager, packageScriptManager);
 	}
@@ -78,7 +78,7 @@ void StgUserExtendSceneScriptManager::Work() {
 void StgUserExtendSceneScriptManager::Render() {
 	objectManager_->RenderObject();
 }
-shared_ptr<ManagedScript> StgUserExtendSceneScriptManager::Create(int type) {
+shared_ptr<ManagedScript> StgUserExtendSceneScriptManager::Create(shared_ptr<ScriptManager> manager, int type) {
 	shared_ptr<ManagedScript> res;
 	switch (type) {
 	case StgUserExtendSceneScript::TYPE_PAUSE_SCENE:
@@ -94,7 +94,7 @@ shared_ptr<ManagedScript> StgUserExtendSceneScriptManager::Create(int type) {
 
 	if (res) {
 		res->SetObjectManager(objectManager_);
-		res->SetScriptManager(this);
+		res->SetScriptManager(manager);
 	}
 
 	return res;
@@ -124,8 +124,7 @@ gstd::value StgUserExtendSceneScriptManager::GetResultValue() {
 //StgUserExtendSceneScript
 //*******************************************************************
 StgUserExtendSceneScript::StgUserExtendSceneScript(StgSystemController* systemController) : StgControlScript(systemController) {
-	shared_ptr<StgStageController> stageController = systemController_->GetStageController();
-
+	auto stageController = systemController_->GetStageController();
 	auto scriptManager = stageController->GetScriptManager();
 
 	mainThreadID_ = scriptManager->GetMainThreadID();
@@ -141,8 +140,8 @@ void StgPauseScene::Work() {
 	if (scriptManager_ == nullptr) return;
 	_CallScriptMainLoop();
 
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
-	ref_count_ptr<StgStageInformation> infoStage = systemController_->GetStageController()->GetStageInformation();
+	auto infoSystem = systemController_->GetSystemInformation();
+	auto infoStage = systemController_->GetStageController()->GetStageInformation();
 	gstd::value resValue = scriptManager_->GetResultValue();
 	if (resValue.has_data()) {
 		int result = resValue.as_int();
@@ -169,13 +168,14 @@ void StgPauseScene::Work() {
 
 void StgPauseScene::Start() {
 	//停止イベント呼び出し
-	shared_ptr<StgStageController> stageController = systemController_->GetStageController();
+	auto stageController = systemController_->GetStageController();
 
 	//停止処理初期化
 	scriptManager_ = nullptr;
 	scriptManager_ = std::shared_ptr<StgUserExtendSceneScriptManager>(new StgUserExtendSceneScriptManager(systemController_));
 	_AddRelativeManager();
-	ref_count_ptr<StgSystemInformation> sysInfo = systemController_->GetSystemInformation();
+
+	auto sysInfo = systemController_->GetSystemInformation();
 
 	stageController->RenderToTransitionTexture();
 
@@ -190,7 +190,7 @@ void StgPauseScene::Start() {
 		stageController->GetStageInformation()->SetPause(true);
 }
 void StgPauseScene::Finish() {
-	shared_ptr<StgStageController> stageController = systemController_->GetStageController();
+	auto stageController = systemController_->GetStageController();
 	if (stageController)
 		stageController->GetStageInformation()->SetPause(false);
 
@@ -229,7 +229,7 @@ void StgEndScene::Work() {
 	if (scriptManager_ == nullptr) return;
 	_CallScriptMainLoop();
 
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
+	auto infoSystem = systemController_->GetSystemInformation();
 	gstd::value resValue = scriptManager_->GetResultValue();
 	if (resValue.has_data()) {
 		int result = resValue.as_int();
@@ -253,7 +253,7 @@ void StgEndScene::Start() {
 	scriptManager_ = std::shared_ptr<StgUserExtendSceneScriptManager>(new StgUserExtendSceneScriptManager(systemController_));
 	_AddRelativeManager();
 
-	ref_count_ptr<StgSystemInformation> info = systemController_->GetSystemInformation();
+	auto info = systemController_->GetSystemInformation();
 
 	systemController_->GetStageController()->RenderToTransitionTexture();
 
@@ -262,7 +262,7 @@ void StgEndScene::Start() {
 	_InitializeScript(path, StgUserExtendSceneScript::TYPE_END_SCENE);
 }
 void StgEndScene::Finish() {
-	ref_count_ptr<StgSystemInformation> info = systemController_->GetSystemInformation();
+	auto info = systemController_->GetSystemInformation();
 
 	if (scriptManager_ == nullptr) return;
 	_CallScriptFinalize();
@@ -292,7 +292,7 @@ void StgReplaySaveScene::Work() {
 	if (scriptManager_ == nullptr) return;
 	_CallScriptMainLoop();
 
-	ref_count_ptr<StgSystemInformation> infoSystem = systemController_->GetSystemInformation();
+	auto infoSystem = systemController_->GetSystemInformation();
 	gstd::value resValue = scriptManager_->GetResultValue();
 	if (resValue.has_data()) {
 		int result = resValue.as_int();
@@ -313,7 +313,7 @@ void StgReplaySaveScene::Start() {
 	scriptManager_ = std::shared_ptr<StgUserExtendSceneScriptManager>(new StgUserExtendSceneScriptManager(systemController_));
 	_AddRelativeManager();
 
-	ref_count_ptr<StgSystemInformation> info = systemController_->GetSystemInformation();
+	auto info = systemController_->GetSystemInformation();
 
 	//_InitializeTransitionTexture();
 
@@ -322,7 +322,7 @@ void StgReplaySaveScene::Start() {
 	_InitializeScript(path, StgUserExtendSceneScript::TYPE_REPLAY_SCENE);
 }
 void StgReplaySaveScene::Finish() {
-	ref_count_ptr<StgSystemInformation> info = systemController_->GetSystemInformation();
+	auto info = systemController_->GetSystemInformation();
 
 	if (scriptManager_ == nullptr) return;
 	_CallScriptFinalize();
