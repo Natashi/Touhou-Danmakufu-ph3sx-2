@@ -141,8 +141,7 @@ shared_ptr<SoundSourceData> DirectSoundManager::_CreateSoundSource(std::wstring 
 		if (sizeFile <= 64)
 			throw gstd::wexception(L"Audio file invalid.");
 
-		ByteBuffer header;
-		header.SetSize(0x100);
+		ByteBuffer header(0x100);
 		reader->Read(header.GetPointer(), header.GetSize());
 
 		SoundFileFormat format = SoundFileFormat::Unknown;

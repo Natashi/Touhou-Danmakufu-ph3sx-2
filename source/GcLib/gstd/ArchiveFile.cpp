@@ -366,8 +366,7 @@ bool ArchiveFile::Open() {
 		std::stringstream bufInfo;
 		stream.seekg(globalReadOffset_ + header.headerOffset, std::ios::beg);
 		{
-			ByteBuffer tmpBufInfo;
-			tmpBufInfo.SetSize(header.headerSize);
+			ByteBuffer tmpBufInfo(header.headerSize);
 			stream.read(tmpBufInfo.GetPointer(), header.headerSize);
 
 			ArchiveEncryption::ShiftBlock((byte*)tmpBufInfo.GetPointer(), header.headerSize, keyBase_, keyStep_);
@@ -461,8 +460,9 @@ shared_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry* entry) {
 		case ArchiveFileEntry::CT_NONE:
 		{
 			stream.seekg(globalReadOff + entry->offsetPos, std::ios::beg);
-			res = shared_ptr<ByteBuffer>(new ByteBuffer());
-			res->SetSize(entry->sizeFull);
+
+			res.reset(new ByteBuffer(entry->sizeFull));
+
 			stream.read(res->GetPointer(), entry->sizeFull);
 
 			byte keyBase = entry->keyBase;
@@ -474,11 +474,10 @@ shared_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry* entry) {
 		case ArchiveFileEntry::CT_ZLIB:
 		{
 			stream.seekg(globalReadOff + entry->offsetPos, std::ios::beg);
-			res = shared_ptr<ByteBuffer>(new ByteBuffer());
-			//res->SetSize(entry->sizeFull);
 
-			ByteBuffer rawBuf;
-			rawBuf.SetSize(entry->sizeStored);
+			res.reset(new ByteBuffer());
+
+			ByteBuffer rawBuf(entry->sizeStored);
 			stream.read(rawBuf.GetPointer(), entry->sizeStored);
 
 			byte keyBase = entry->keyBase;

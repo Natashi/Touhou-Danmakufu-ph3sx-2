@@ -414,16 +414,19 @@ namespace gstd {
 	//*******************************************************************
 	class RecordBuffer : public Recordable {
 	private:
-		std::unordered_map<std::string, shared_ptr<RecordEntry>> mapEntry_;
+		std::unordered_map<std::string, RecordEntry> mapEntry_;
 	public:
 		RecordBuffer();
 		virtual ~RecordBuffer();
 
 		void Clear();
-		size_t GetEntryCount() { return mapEntry_.size(); }
-		bool IsExists(const std::string& key);
-		std::vector<std::string> GetKeyList();
-		shared_ptr<RecordEntry> GetEntry(const std::string& key);
+
+		size_t GetEntryCount() const { return mapEntry_.size(); }
+		RecordEntry* GetEntry(const std::string& key);
+		const RecordEntry* GetEntry(const std::string& key) const;
+
+		bool IsExists(const std::string& key) const;
+		std::vector<std::string> GetKeyList() const;
 
 		void Write(Writer& writer);
 		void Read(Reader& reader);
@@ -438,25 +441,59 @@ namespace gstd {
 
 		size_t GetEntrySize(const std::string& key);
 
-		//Record get
+		// --------------------------------------------------------------------------------
+		// Record get
+		
 		bool GetRecord(const std::string& key, LPVOID buf, DWORD size);
-		template <typename T> bool GetRecord(const std::string& key, T& data) {
+		template <typename T> inline bool GetRecord(const std::string& key, T& data) {
 			return GetRecord(key, (LPVOID)&data, sizeof(T));
 		}
-		template <typename T> T GetRecordAs(const std::string& key, T def = T()) {
-			T res = def;
-			GetRecord(key, res);
+		template <typename T> inline optional<T> GetRecordAs(const std::string& key) {
+			T res{};
+			if (GetRecord(key, res))
 			return res;
+			return {};
 		}
-		bool GetRecordAsBoolean(const std::string& key, bool def = false) { return GetRecordAs<bool>(key, false); }
-		int GetRecordAsInteger(const std::string& key, int def = 0) { return GetRecordAs<int>(key, 0); }
-		float GetRecordAsFloat(const std::string& key, float def = 0.0f) { return GetRecordAs<float>(key, 0.0f); }
-		double GetRecordAsDouble(const std::string& key, double def = 0.0) { return GetRecordAs<double>(key, 0.0); }
-		std::string GetRecordAsStringA(const std::string& key);
-		std::wstring GetRecordAsStringW(const std::string& key);
-		bool GetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record);
+		template <typename T> inline T GetRecordOr(const std::string& key, T def) {
+			GetRecord(key, def);
+			return MOVE(def);
+		}
 
-		//Record set
+		// --------------------------------------------------------------------------------
+
+		inline optional<bool> GetRecordAsBoolean(const std::string& key) { return GetRecordAs<bool>(key); }
+		inline optional<int> GetRecordAsInteger(const std::string& key) { return GetRecordAs<int>(key); }
+		inline optional<float> GetRecordAsFloat(const std::string& key) { return GetRecordAs<float>(key); }
+		inline optional<double> GetRecordAsDouble(const std::string& key) { return GetRecordAs<double>(key); }
+
+		inline bool GetRecordAsBoolean(const std::string& key, bool def) { return GetRecordOr(key, def); }
+		inline int GetRecordAsInteger(const std::string& key, int def) { return GetRecordOr(key, def); }
+		inline float GetRecordAsFloat(const std::string& key, float def) { return GetRecordOr(key, def); }
+		inline double GetRecordAsDouble(const std::string& key, double def) { return GetRecordOr(key, def); }
+
+		optional<std::string> GetRecordAsStringA(const std::string& key);
+		inline std::string GetRecordAsStringA(const std::string& key, std::string def) {
+			if (auto res = GetRecordAsStringA(key))
+				return *res;
+			return MOVE(def);
+		}
+
+		inline optional<std::wstring> GetRecordAsStringW(const std::string& key) {
+			if (auto res = GetRecordAsStringA(key))
+				return STR_WIDE(*res);
+			return {};
+		}
+		inline std::wstring GetRecordAsStringW(const std::string& key, std::wstring def) {
+			if (auto res = GetRecordAsStringW(key))
+				return *res;
+			return MOVE(def);
+		}
+
+		optional<RecordBuffer> GetRecordAsRecordBuffer(const std::string& key);
+
+		// --------------------------------------------------------------------------------
+		// Record set
+
 		void SetRecord(const std::string& key, LPVOID buf, DWORD size);
 		template <typename T> void SetRecord(const std::string& key, const T& data) {
 			SetRecord(key, (LPVOID)&data, sizeof(T));
@@ -474,7 +511,9 @@ namespace gstd {
 		}
 		void SetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record);
 
-		//Recordable
+		// --------------------------------------------------------------------------------
+		// Recordable
+
 		virtual void Read(RecordBuffer& record);
 		virtual void Write(RecordBuffer& record);
 	};
@@ -512,7 +551,7 @@ namespace gstd {
 	private:
 		static SystemValueManager* thisBase_;
 	protected:
-		std::map<std::string, shared_ptr<RecordBuffer>> mapRecord_;
+		std::map<std::string, unique_ptr<RecordBuffer>> mapRecord_;
 	public:
 		SystemValueManager();
 		virtual ~SystemValueManager();
@@ -522,9 +561,11 @@ namespace gstd {
 		virtual bool Initialize();
 
 		virtual void ClearRecordBuffer(const std::string& key);
-		bool IsExists(const std::string& key);
-		bool IsExists(const std::string& keyRecord, const std::string& keyValue);
-		shared_ptr<RecordBuffer> GetRecordBuffer(const std::string& key);
+
+		bool IsExists(const std::string& key) const;
+		bool IsExists(const std::string& keyRecord, const std::string& keyValue) const;
+
+		const RecordBuffer* GetRecordBuffer(const std::string& key) const;
 	};
 #endif
 }

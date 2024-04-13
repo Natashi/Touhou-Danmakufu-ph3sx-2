@@ -165,24 +165,23 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 	ref_count_ptr<ReplayInformation> res(new ReplayInformation());
 
 	res->path_ = path;
-	res->playerScriptID_ = rec.GetRecordAsStringW("playerScriptID");
-	res->playerScriptFileName_ = rec.GetRecordAsStringW("playerScriptFileName");
-	res->playerScriptReplayName_ = rec.GetRecordAsStringW("playerScriptReplayName");
+	res->playerScriptID_ = *rec.GetRecordAsStringW("playerScriptID");
+	res->playerScriptFileName_ = *rec.GetRecordAsStringW("playerScriptFileName");
+	res->playerScriptReplayName_ = *rec.GetRecordAsStringW("playerScriptReplayName");
 
-	res->comment_ = rec.GetRecordAsStringW("comment");
-	res->userName_ = rec.GetRecordAsStringW("userName");
+	res->comment_ = *rec.GetRecordAsStringW("comment");
+	res->userName_ = *rec.GetRecordAsStringW("userName");
 	rec.GetRecord("totalScore", res->totalScore_);
-	res->fpsAverage_ = rec.GetRecordAsDouble("fpsAverage");
+	res->fpsAverage_ = *rec.GetRecordAsDouble("fpsAverage");
 	rec.GetRecord("date", res->date_);
 
 	res->userData_->Clear();
-	if (rec.IsExists("userData")) {
-		RecordBuffer recUserData;
-		rec.GetRecordAsRecordBuffer("userData", recUserData);
-		res->userData_->ReadRecord(recUserData);
+	if (auto data = rec.GetRecordAsRecordBuffer("userData")) {
+		res->userData_->ReadRecord(*data);
 	}
 
-	uint32_t stageCount = rec.GetRecordAs<uint32_t>("stageCount");
+	uint32_t stageCount = *rec.GetRecordAs<uint32_t>("stageCount");
+
 	std::vector<int> listStage;
 	listStage.resize(stageCount);
 	rec.GetRecord("stageIndexList", &listStage[0], sizeof(int) * stageCount);
@@ -191,8 +190,7 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 
 		ref_count_ptr<StageData> data(new StageData());
 
-		gstd::RecordBuffer recStage;
-		rec.GetRecordAsRecordBuffer(key, recStage);
+		gstd::RecordBuffer recStage = *rec.GetRecordAsRecordBuffer(key);
 		data->ReadRecord(recStage);
 
 		res->mapStageData_[iStage] = MOVE(data);
@@ -241,41 +239,40 @@ void ReplayInformation::StageData::SetCommonData(const std::string& area, shared
 }
 
 void ReplayInformation::StageData::ReadRecord(gstd::RecordBuffer& record) {
-	mainScriptID_ = record.GetRecordAsStringW("mainScriptID");
-	mainScriptName_ = record.GetRecordAsStringW("mainScriptName");
-	mainScriptRelativePath_ = record.GetRecordAsStringW("mainScriptRelativePath");
+	mainScriptID_ = *record.GetRecordAsStringW("mainScriptID");
+	mainScriptName_ = *record.GetRecordAsStringW("mainScriptName");
+	mainScriptRelativePath_ = *record.GetRecordAsStringW("mainScriptRelativePath");
 
 	record.GetRecord<int64_t>("scoreStart", scoreStart_);
 	record.GetRecord<int64_t>("scoreLast", scoreLast_);
 	record.GetRecord<int64_t>("graze", graze_);
 	record.GetRecord<int64_t>("point", point_);
-	frameEnd_ = record.GetRecordAs<uint32_t>("frameEnd");
+	frameEnd_ = *record.GetRecordAs<uint32_t>("frameEnd");
 	record.GetRecord<uint32_t>("randSeed", randSeed_);
-	record.GetRecordAsRecordBuffer("recordKey", *recordKey_);
+	*recordKey_ = MOVE(*record.GetRecordAsRecordBuffer("recordKey"));
 
 	//FPS list
-	size_t countFramePerSecond = record.GetRecordAs<uint32_t>("countFramePerSecond");
+	size_t countFramePerSecond = *record.GetRecordAs<uint32_t>("countFramePerSecond");
 	listFramePerSecond_.resize(countFramePerSecond);
 	record.GetRecord("listFramePerSecond", &listFramePerSecond_[0], sizeof(FLOAT) * listFramePerSecond_.size());
 
 	//Common data
-	gstd::RecordBuffer recComMap;
-	record.GetRecordAsRecordBuffer("mapCommonData", recComMap);
+	gstd::RecordBuffer recComMap = *record.GetRecordAsRecordBuffer("mapCommonData");
 	std::vector<std::string> listKeyCommonData = recComMap.GetKeyList();
 	for (auto& iCommonData : listKeyCommonData) {
 		ref_count_ptr<RecordBuffer> record(new RecordBuffer());
-		recComMap.GetRecordAsRecordBuffer(iCommonData, *record);
+		*record = MOVE(*recComMap.GetRecordAsRecordBuffer(iCommonData));
 		mapCommonData_[iCommonData] = record;
 	}
 
 	//Player information
-	playerScriptID_ = record.GetRecordAsStringW("playerScriptID");
-	playerScriptFileName_ = record.GetRecordAsStringW("playerScriptFileName");
-	playerScriptReplayName_ = record.GetRecordAsStringW("playerScriptReplayName");
-	playerLife_ = record.GetRecordAsDouble("playerLife");
-	playerBombCount_ = record.GetRecordAsDouble("playerBombCount");
-	playerPower_ = record.GetRecordAsDouble("playerPower");
-	playerRebirthFrame_ = record.GetRecordAsInteger("playerRebirthFrame");
+	playerScriptID_ = *record.GetRecordAsStringW("playerScriptID");
+	playerScriptFileName_ = *record.GetRecordAsStringW("playerScriptFileName");
+	playerScriptReplayName_ = *record.GetRecordAsStringW("playerScriptReplayName");
+	playerLife_ = *record.GetRecordAsDouble("playerLife");
+	playerBombCount_ = *record.GetRecordAsDouble("playerBombCount");
+	playerPower_ = *record.GetRecordAsDouble("playerPower");
+	playerRebirthFrame_ = *record.GetRecordAsInteger("playerRebirthFrame");
 }
 void ReplayInformation::StageData::WriteRecord(gstd::RecordBuffer& record) {
 	record.SetRecordAsStringW("mainScriptID", mainScriptID_);

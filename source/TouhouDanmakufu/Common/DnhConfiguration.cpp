@@ -157,16 +157,19 @@ bool DnhConfiguration::LoadConfigFile() {
 
 	record.GetRecord<D3DMULTISAMPLE_TYPE>("typeMultiSamples", multiSamples_);
 
-	pathExeLaunch_ = record.GetRecordAsStringW("pathLaunch");
-	if (pathExeLaunch_.size() == 0) pathExeLaunch_ = DNH_EXE_NAME;
+	if (auto data = record.GetRecordAsStringW("pathLaunch")) {
+		pathExeLaunch_ = *data;
+	}
+	if (pathExeLaunch_.size() == 0)
+		pathExeLaunch_ = DNH_EXE_NAME;
 
-	padIndex_ = record.GetRecordAsInteger("padIndex");
-	padResponse_ = record.GetRecordAsInteger("padResponse");
+	padIndex_ = record.GetRecordOr<int>("padIndex", padIndex_);
+	padResponse_ = record.GetRecordOr<int>("padResponse", padResponse_);
 
-	{
-		ByteBuffer bufKey;
-		int bufKeySize = record.GetRecordAsInteger("mapKey_size");
-		bufKey.SetSize(bufKeySize);
+	if (auto data = record.GetRecordAsInteger("mapKey_size")) {
+		int bufKeySize = *data;
+
+		ByteBuffer bufKey(bufKeySize);
 		record.GetRecord("mapKey", bufKey.GetPointer(), bufKey.GetSize());
 
 		size_t mapKeyCount = bufKey.ReadValue<size_t>();
@@ -182,10 +185,9 @@ bool DnhConfiguration::LoadConfigFile() {
 		}
 	}
 
-	bLogWindow_ = record.GetRecordAsBoolean("bLogWindow");
-	bLogFile_ = record.GetRecordAsBoolean("bLogFile");
-	if (record.IsExists("bMouseVisible"))
-		bMouseVisible_ = record.GetRecordAsBoolean("bMouseVisible");
+	record.GetRecord("bLogWindow", bLogWindow_);
+	record.GetRecordAsBoolean("bLogFile", bLogFile_);
+	record.GetRecordAsBoolean("bMouseVisible", bMouseVisible_);
 
 	return res;
 }

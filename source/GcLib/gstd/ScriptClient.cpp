@@ -2542,8 +2542,7 @@ void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
 		buffer.Read(&storedSize, sizeof(uint32_t));
 
 		if (storedSize > 0U) {
-			gstd::ByteBuffer bufferRes;
-			bufferRes.SetSize(storedSize);
+			gstd::ByteBuffer bufferRes(storedSize);
 			buffer.Read(bufferRes.GetPointer(), bufferRes.GetSize());
 			storedVal = _ReadRecord(bufferRes);
 		}
