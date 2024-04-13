@@ -16,123 +16,85 @@ using namespace gstd;
 //*******************************************************************
 //ByteBuffer
 //*******************************************************************
-ByteBuffer::ByteBuffer() {
-	data_ = nullptr;
-	Clear();
+ByteBuffer::ByteBuffer() : offset_(0) {
 }
-ByteBuffer::ByteBuffer(ByteBuffer& buffer) {
-	data_ = nullptr;
-	Clear();
+ByteBuffer::ByteBuffer(size_t size) : ByteBuffer() {
+	SetSize(size);
+}
+ByteBuffer::ByteBuffer(const ByteBuffer& buffer) : ByteBuffer() {
 	Copy(buffer);
 }
-ByteBuffer::ByteBuffer(std::stringstream& stream) {
-	data_ = nullptr;
-	Clear();
+ByteBuffer::ByteBuffer(std::stringstream& stream) : ByteBuffer() {
 	Copy(stream);
 }
 ByteBuffer::~ByteBuffer() {
-	Clear();
 }
 
-void ByteBuffer::Copy(ByteBuffer& src) {
-	if (data_ != nullptr && src.reserve_ != reserve_) {
-		ptr_delete_scalar(data_);
-		data_ = new char[src.reserve_];
-		ZeroMemory(data_, src.reserve_);
-	}
-
+void ByteBuffer::Copy(const ByteBuffer& src) {
+	data_ = src.data_;
 	offset_ = src.offset_;
-	reserve_ = src.reserve_;
-	size_ = src.size_;
-
-	memcpy(data_, src.data_, reserve_);
 }
 void ByteBuffer::Copy(std::stringstream& src) {
 	std::streampos org = src.tellg();
-	src.seekg(0, std::ios::end);
-	size_t size = src.tellg();
-	src.seekg(0, std::ios::beg);
+	auto& srcData = src.str();
 
 	offset_ = org;
-	size_ = size;
-	reserve_ = 4U;
-	while (reserve_ < size) reserve_ = reserve_ * 2;
 
-	ptr_delete_scalar(data_);
-	data_ = new char[reserve_];
+	data_.clear();
+	data_.reserve(srcData.capacity());
+	data_.resize(srcData.size());
 
-	src.read(data_, size);
-	src.clear();
-
-	src.seekg(org, std::ios::beg);
+	memcpy(data_.data(), srcData.data(), srcData.size());
 }
 void ByteBuffer::Clear() {
-	ptr_delete_scalar(data_);
+	data_.clear();
 	offset_ = 0;
-	reserve_ = 0;
-	size_ = 0;
 }
 
 void ByteBuffer::SetSize(size_t size) {
-	size_t oldSize = size_;
-	if (size < reserve_) {
-		//The current reserve is enough for the new size
-		size_ = size;
+	data_.resize(size);
 	}
-	else {
-		//The new size is bigger than the reserve, expand the array
-
-		size_t newReserve = 4U;
-		while (newReserve < size) newReserve = newReserve * 2;
-		Reserve(newReserve);
-
-		size_ = size;
-	}
-}
 void ByteBuffer::Reserve(size_t newReserve) {
-	if (reserve_ == newReserve) return;
-
-	char* newBuf = new char[newReserve];
-	ZeroMemory(newBuf, newReserve);
-
-	if (data_) {
-		memcpy(newBuf, data_, std::min(size_, newReserve));
-		ptr_delete_scalar(data_);
+	data_.reserve(newReserve);
 	}
-	data_ = newBuf;
-	reserve_ = newReserve;
-}
 
 void ByteBuffer::Seek(size_t pos) {
 	offset_ = pos;
-	if (offset_ > size_) offset_ = size_;
+	if (offset_ > GetSize())
+		offset_ = GetSize();
 }
 DWORD ByteBuffer::Write(LPVOID buf, DWORD size) {
 	if (size == 0) return 0;
-	if (offset_ + size > reserve_) {
-		SetSize(offset_ + size);
-	}
 
+	data_.resize(offset_ + size);
 	memcpy(&data_[offset_], buf, size);
 	offset_ += size;
-	size_ = std::max(size_, offset_);
+
 	return size;
 }
 DWORD ByteBuffer::Read(LPVOID buf, DWORD size) {
-	if (offset_ >= size_ || size == 0) return 0;
-	size_t readable = std::min<size_t>(size, size_ - offset_);
-	memcpy(buf, &data_[offset_], readable);
-	offset_ += readable;
-	return readable;
+	if (offset_ + size > GetSize())
+		return 0;
+
+	memcpy(buf, &data_[offset_], size);
+	offset_ += size;
+
+	return size;
 }
 
 _NODISCARD char* ByteBuffer::GetPointer(size_t offset) {
-	if (data_ == nullptr) return nullptr;
 #if _DEBUG
-	if (offset > size_)
+	if (offset > GetSize())
 		throw gstd::wexception("ByteBuffer: Index out of bounds.");
 #endif
-	return &data_[offset];
+	return reinterpret_cast<char*>(&data_[offset]);
+}
+_NODISCARD const char* ByteBuffer::GetPointer(size_t offset) const {
+#if _DEBUG
+	if (offset > GetSize())
+		throw gstd::wexception("ByteBuffer: Index out of bounds.");
+#endif
+	return reinterpret_cast<const char*>(&data_[offset]);
 }
 
 ByteBuffer& ByteBuffer::operator=(const ByteBuffer& other) noexcept {

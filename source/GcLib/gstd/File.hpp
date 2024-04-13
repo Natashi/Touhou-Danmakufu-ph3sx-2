@@ -76,34 +76,34 @@ namespace gstd {
 	//*******************************************************************
 	class ByteBuffer : public Writer, public Reader {
 	protected:
-		size_t reserve_;
-		size_t size_;
+		std::vector<byte> data_;
 		size_t offset_;
-		char* data_;
 
-		size_t _GetReservedSize() { return reserve_; }
+		size_t _GetReservedSize() { return data_.capacity(); }
 	public:
 		ByteBuffer();
-		ByteBuffer(ByteBuffer& buffer);
+		ByteBuffer(size_t size);
+		ByteBuffer(const ByteBuffer& buffer);
 		ByteBuffer(std::stringstream& stream);
 		virtual ~ByteBuffer();
 
-		void Copy(ByteBuffer& src);
+		void Copy(const ByteBuffer& src);
 		void Copy(std::stringstream& src);
 		void Clear();
 
 		void SetSize(size_t size);
 		void Reserve(size_t newReserve);
 
-		size_t GetSize() { return size_; }
-		size_t size() { return size_; }
-		size_t GetOffset() { return offset_; }
+		size_t GetSize() const { return data_.size(); }
+		size_t size() const { return GetSize(); }
+		size_t GetOffset() const { return offset_; }
 
 		void Seek(size_t pos);
 		virtual DWORD Write(LPVOID buf, DWORD size);
 		virtual DWORD Read(LPVOID buf, DWORD size);
 
 		_NODISCARD char* GetPointer(size_t offset = 0);
+		_NODISCARD const char* GetPointer(size_t offset = 0) const;
 
 		ByteBuffer& operator=(const ByteBuffer& other) noexcept;
 	};
