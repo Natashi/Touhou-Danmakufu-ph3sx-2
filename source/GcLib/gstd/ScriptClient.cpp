@@ -1226,7 +1226,7 @@ value ScriptClientBase::Func_StringFormat(script_machine* machine, int argc, con
 
 		std::list<std::wstring> stringCache;
 		std::vector<byte> fakeVaList;
-		char tmp[8];
+		char tmp[8]{};
 
 		const value* pValue = &argv[2];
 		size_t iMem = 0;
@@ -1745,7 +1745,8 @@ value ScriptClientBase::Func_LoadCommonDataValuePointer(script_machine* machine,
 		}
 		else dataArea = nullptr;
 
-		//Galaxy brain hax method
+		// Galaxy brain hax method
+		// TODO: Make this bitness-invariant
 		res = ((uint64_t)(dataArea.get()) << 32) | (uint64_t)(pData);
 	}
 
@@ -1761,10 +1762,14 @@ value ScriptClientBase::Func_LoadAreaCommonDataValuePointer(script_machine* mach
 	uint64_t res = (uint64_t)nullptr;
 
 	{
-		ScriptCommonData* pArea = commonDataManager->GetData(area).get();
+		auto pArea = commonDataManager->GetData(area);
 		value* pData = nullptr;
 
+		// TODO: Make this bitness-invariant
+
 		if (pArea) {
+			ScriptCommonData* pAreaAddr = pArea.get();
+
 			auto resFind = pArea->IsExists(key);
 			if (resFind.first) {
 				pData = &(resFind.second->second);
@@ -1775,7 +1780,7 @@ value ScriptClientBase::Func_LoadAreaCommonDataValuePointer(script_machine* mach
 			}
 			else pArea = nullptr;
 
-			res = ((uint64_t)(pArea) << 32) | (uint64_t)(pData);
+			res = ((uint64_t)(pAreaAddr) << 32) | (uint64_t)(pData);
 		}
 	}
 
@@ -2032,7 +2037,7 @@ void ScriptLoader::_ParseInclude() {
 							size_t targetBomSize = 0;
 							Encoding::Type includeEncoding = Encoding::UTF8;
 							if (reader->GetFileSize() >= 2) {
-								byte data[3];
+								byte data[3]{};
 								reader->Read(data, 3);
 
 								includeEncoding = Encoding::Detect((char*)data, reader->GetFileSize());
@@ -2533,7 +2538,7 @@ void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
 
 	std::vector<std::string> listKey = record.GetKeyList();
 	for (const std::string& key : listKey) {
-		shared_ptr<RecordEntry> entry = record.GetEntry(key);
+		RecordEntry* entry = record.GetEntry(key);
 		gstd::ByteBuffer& buffer = entry->GetBufferRef();
 
 		gstd::value storedVal;
@@ -2553,7 +2558,7 @@ void ScriptCommonData::ReadRecord(gstd::RecordBuffer& record) {
 gstd::value ScriptCommonData::_ReadRecord(gstd::ByteBuffer& buffer) {
 	script_type_manager* scriptTypeManager = script_type_manager::get_instance();
 
-	uint8_t kind;
+	uint8_t kind{};
 	buffer.Read(&kind, sizeof(uint8_t));
 
 	switch ((type_data::type_kind)kind) {
@@ -2644,6 +2649,8 @@ void ScriptCommonData::_WriteRecord(gstd::ByteBuffer& buffer, const gstd::value&
 }
 
 bool ScriptCommonData::Script_DecomposePtr(uint64_t val, _Script_PointerData* dst) {
+	// TODO: Make this bitness-invariant
+
 	//Pointer format:
 	//	63    32				31     0
 	//	xxxxxxxx				xxxxxxxx
@@ -2805,92 +2812,3 @@ void ScriptCommonDataInfoPanel::CommonDataDisplay::LoadValues() {
 	}
 }
 
-/*
-bool ScriptCommonDataInfoPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
-
-	gstd::WListView::Style styleListViewArea;
-	styleListViewArea.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOCOLUMNHEADER);
-	styleListViewArea.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListViewArea.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListViewArea_.Create(hWnd_, styleListViewArea);
-	wndListViewArea_.AddColumn(256, 0, L"Area");
-
-	gstd::WListView::Style styleListViewValue;
-	styleListViewValue.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
-	styleListViewValue.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListViewValue.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListViewValue_.Create(hWnd_, styleListViewValue);
-	wndListViewValue_.AddColumn(96, COL_KEY, L"Key");
-	wndListViewValue_.AddColumn(512, COL_VALUE, L"Value");
-
-	wndSplitter_.Create(hWnd_, WSplitter::TYPE_HORIZONTAL);
-	wndSplitter_.SetRatioY(0.25f);
-
-	return true;
-}
-void ScriptCommonDataInfoPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
-
-	int ySplitter = (int)((float)wHeight * wndSplitter_.GetRatioY());
-	int heightSplitter = 6;
-
-	wndSplitter_.SetBounds(wx, ySplitter, wWidth, heightSplitter);
-	wndListViewArea_.SetBounds(wx, wy, wWidth, ySplitter);
-	wndListViewValue_.SetBounds(wx, ySplitter + heightSplitter, wWidth, wHeight - ySplitter - heightSplitter);
-}
-void ScriptCommonDataInfoPanel::Update() {
-	if (!IsWindowVisible()) return;
-	{
-		Lock lock(lock_);
-		//if (commonDataManager_) commonDataManager_->Clear();
-
-		if (commonDataManager_ = ScriptCommonDataManager::GetInstance()) {
-			_UpdateAreaView();
-			_UpdateValueView();
-		}
-		else {
-			wndListViewArea_.Clear();
-			wndListViewValue_.Clear();
-		}
-	}
-}
-void ScriptCommonDataInfoPanel::_UpdateAreaView() {
-	vecMapItr_.clear();
-
-	int iRow = 0;
-	for (auto itr = commonDataManager_->MapBegin(); itr != commonDataManager_->MapEnd(); ++itr, ++iRow) {
-		std::wstring key = StringUtility::ConvertMultiToWide(itr->first);
-		wndListViewArea_.SetText(iRow, COL_KEY, std::wstring(L"> ") + key);
-		vecMapItr_.push_back(itr);
-	}
-
-	int countRow = wndListViewArea_.GetRowCount();
-	for (; iRow < countRow; ++iRow)
-		wndListViewArea_.DeleteRow(iRow);
-}
-void ScriptCommonDataInfoPanel::_UpdateValueView() {
-	int indexArea = wndListViewArea_.GetSelectedRow();
-	if (indexArea < 0) {
-		wndListViewValue_.Clear();
-		return;
-	}
-
-	shared_ptr<ScriptCommonData>& selectedArea = commonDataManager_->GetData(vecMapItr_[indexArea]);
-	int iRow = 0;
-	for (auto itr = selectedArea->MapBegin(); itr != selectedArea->MapEnd(); ++itr, ++iRow) {
-		gstd::value* val = selectedArea->GetValueRef(itr);
-		wndListViewValue_.SetText(iRow, COL_KEY, StringUtility::ConvertMultiToWide(itr->first));
-		wndListViewValue_.SetText(iRow, COL_VALUE, val->as_string());
-	}
-
-	int countRow = wndListViewValue_.GetRowCount();
-	for (; iRow < countRow; ++iRow)
-		wndListViewValue_.DeleteRow(iRow);
-}
-*/
