@@ -1114,11 +1114,11 @@ void RecordBuffer::SetRecordAsRecordBuffer(const std::string& key, RecordBuffer&
 
 	mapEntry_[key] = MOVE(entry);
 }
-void RecordBuffer::SetRecordAsByteBuffer(const std::string& key, ByteBuffer& buffer) {
+void RecordBuffer::SetRecordAsByteBuffer(const std::string& key, ByteBuffer&& buffer) {
 	RecordEntry entry;
 	entry.SetKey(key);
 
-	entry.buffer_.Copy(buffer);
+	entry.buffer_ = MOVE(buffer);
 
 	mapEntry_[key] = MOVE(entry);
 }

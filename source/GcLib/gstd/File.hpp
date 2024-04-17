@@ -500,7 +500,7 @@ namespace gstd {
 		}
 
 		void SetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record);
-		void SetRecordAsByteBuffer(const std::string& key, ByteBuffer& buffer);
+		void SetRecordAsByteBuffer(const std::string& key, ByteBuffer&& buffer);
 	};
 
 	//*******************************************************************
