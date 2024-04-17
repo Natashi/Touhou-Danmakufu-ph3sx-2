@@ -373,22 +373,9 @@ namespace gstd {
 #endif
 
 	//*******************************************************************
-	//Recordable
-	//*******************************************************************
-	class Recordable;
-	class RecordEntry;
-	class RecordBuffer;
-	class Recordable {
-	public:
-		virtual ~Recordable() {}
-
-		virtual void Read(RecordBuffer& record) = 0;
-		virtual void Write(RecordBuffer& record) = 0;
-	};
-
-	//*******************************************************************
 	//RecordEntry
 	//*******************************************************************
+	class RecordBuffer;
 	class RecordEntry {
 		friend RecordBuffer;
 	private:
@@ -412,7 +399,7 @@ namespace gstd {
 	//*******************************************************************
 	//RecordBuffer
 	//*******************************************************************
-	class RecordBuffer : public Recordable {
+	class RecordBuffer {
 	private:
 		std::unordered_map<std::string, RecordEntry> mapEntry_;
 	public:
@@ -490,6 +477,7 @@ namespace gstd {
 		}
 
 		optional<RecordBuffer> GetRecordAsRecordBuffer(const std::string& key);
+		optional<ByteBuffer> GetRecordAsByteBuffer(const std::string& key);
 
 		// --------------------------------------------------------------------------------
 		// Record set
@@ -498,6 +486,7 @@ namespace gstd {
 		template <typename T> void SetRecord(const std::string& key, const T& data) {
 			SetRecord(key, (LPVOID)&data, sizeof(T));
 		}
+
 		void SetRecordAsBoolean(const std::string& key, bool data) { SetRecord(key, data); }
 		void SetRecordAsInteger(const std::string& key, int data) { SetRecord(key, data); }
 		void SetRecordAsFloat(const std::string& key, float data) { SetRecord(key, data); }
@@ -509,13 +498,9 @@ namespace gstd {
 			std::string mbstr = StringUtility::ConvertWideToMulti(data);
 			SetRecord(key, (LPVOID)mbstr.c_str(), mbstr.size() * sizeof(char));
 		}
+
 		void SetRecordAsRecordBuffer(const std::string& key, RecordBuffer& record);
-
-		// --------------------------------------------------------------------------------
-		// Recordable
-
-		virtual void Read(RecordBuffer& record);
-		virtual void Write(RecordBuffer& record);
+		void SetRecordAsByteBuffer(const std::string& key, ByteBuffer& buffer);
 	};
 
 	//*******************************************************************

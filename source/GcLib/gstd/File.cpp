@@ -935,9 +935,9 @@ void RecordEntry::_ReadEntryRecord(Reader& reader) {
 	key_.resize(reader.ReadValue<uint32_t>());
 	reader.Read(&key_[0], key_.size());
 
-	buffer_.Clear();
-	buffer_.SetSize(reader.ReadValue<uint32_t>());
-	reader.Read(buffer_.GetPointer(), buffer_.GetSize());
+	uint32_t size = reader.ReadValue<uint32_t>();
+	buffer_ = ByteBuffer(size);
+	reader.Read(buffer_.GetPointer(), size);
 }
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
@@ -998,6 +998,7 @@ void RecordBuffer::Read(Reader& reader) {
 		mapEntry_[key] = MOVE(entry);
 	}
 }
+
 bool RecordBuffer::WriteToFile(const std::wstring& path, uint64_t version, const char* header, size_t headerSize) {
 	File file(path);
 	if (!file.Open(File::AccessType::WRITEONLY))
@@ -1005,8 +1006,8 @@ bool RecordBuffer::WriteToFile(const std::wstring& path, uint64_t version, const
 
 	file.Write((LPVOID)header, headerSize);
 	file.Write(&version, sizeof(uint64_t));
+
 	Write(file);
-	file.Close();
 
 	return true;
 }
@@ -1030,8 +1031,8 @@ bool RecordBuffer::ReadFromFile(const std::wstring& path, uint64_t version, cons
 		if (!VersionUtility::IsDataBackwardsCompatible(version, fVersion))
 			return false;
 	}
+
 	Read(file);
-	file.Close();
 
 	return true;
 }
@@ -1084,6 +1085,16 @@ optional<RecordBuffer> RecordBuffer::GetRecordAsRecordBuffer(const std::string& 
 
 	return MOVE(res);
 }
+optional<ByteBuffer> RecordBuffer::GetRecordAsByteBuffer(const std::string& key) {
+	auto itr = mapEntry_.find(key);
+	if (itr == mapEntry_.end())
+		return {};
+
+	auto& buffer = itr->second.GetBufferRef();
+	buffer.Seek(0);
+
+	return ByteBuffer(buffer);
+}
 
 void RecordBuffer::SetRecord(const std::string& key, LPVOID buf, DWORD size) {
 	RecordEntry entry;
@@ -1099,14 +1110,18 @@ void RecordBuffer::SetRecordAsRecordBuffer(const std::string& key, RecordBuffer&
 	RecordEntry entry;
 	entry.SetKey(key);
 
-	auto& buffer = entry.GetBufferRef();
-	record.Write(buffer);
+	record.Write(entry.buffer_);
 
 	mapEntry_[key] = MOVE(entry);
 }
+void RecordBuffer::SetRecordAsByteBuffer(const std::string& key, ByteBuffer& buffer) {
+	RecordEntry entry;
+	entry.SetKey(key);
 
-void RecordBuffer::Read(RecordBuffer& record) {}
-void RecordBuffer::Write(RecordBuffer& record) {}
+	entry.buffer_.Copy(buffer);
+
+	mapEntry_[key] = MOVE(entry);
+}
 
 //*******************************************************************
 //PropertyFile
