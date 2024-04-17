@@ -18,8 +18,6 @@ struct FileEntryInfo {
 	FileEntryInfo* parent = nullptr;
 	std::list<unique_ptr<FileEntryInfo>> children;
 
-	shared_ptr<gstd::WTreeView::Item> pTreeItem = nullptr;
-
 	FileEntryInfo* AddChild(FileEntryInfo* node) {
 		node->parent = parent;
 		children.push_back(unique_ptr<FileEntryInfo>(node));
