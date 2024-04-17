@@ -286,6 +286,7 @@
     <ClCompile Include="source\GcLib\directx\ImGuiWindow.cpp" />
     <ClCompile Include="source\GcLib\gstd\Application.cpp" />
     <ClCompile Include="source\GcLib\gstd\ArchiveFile.cpp" />
+    <ClCompile Include="source\GcLib\gstd\CpuInformation.cpp" />
     <ClCompile Include="source\GcLib\gstd\File.cpp" />
     <ClCompile Include="source\GcLib\gstd\GstdUtility.cpp" />
     <ClCompile Include="source\GcLib\gstd\Logger.cpp" />
@@ -323,6 +324,7 @@
     <ClInclude Include="source\GcLib\directx\ImGuiWindow.hpp" />
     <ClInclude Include="source\GcLib\gstd\Application.hpp" />
     <ClInclude Include="source\GcLib\gstd\ArchiveFile.hpp" />
+    <ClInclude Include="source\GcLib\gstd\CpuInformation.hpp" />
     <ClInclude Include="source\GcLib\gstd\File.hpp" />
     <ClInclude Include="source\GcLib\gstd\GstdLib.hpp" />
     <ClInclude Include="source\GcLib\gstd\GstdUtility.hpp" />
