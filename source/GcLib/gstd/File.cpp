@@ -16,36 +16,20 @@ using namespace gstd;
 //*******************************************************************
 //ByteBuffer
 //*******************************************************************
-ByteBuffer::ByteBuffer() : offset_(0) {
-}
+ByteBuffer::ByteBuffer() : offset_(0) {}
 ByteBuffer::ByteBuffer(size_t size) : ByteBuffer() {
 	SetSize(size);
 }
-ByteBuffer::ByteBuffer(const ByteBuffer& buffer) : ByteBuffer() {
-	Copy(buffer);
-}
-ByteBuffer::ByteBuffer(std::stringstream& stream) : ByteBuffer() {
-	Copy(stream);
-}
-ByteBuffer::~ByteBuffer() {
-}
-
-void ByteBuffer::Copy(const ByteBuffer& src) {
-	data_ = src.data_;
-	offset_ = src.offset_;
-}
-void ByteBuffer::Copy(std::stringstream& src) {
+ByteBuffer::ByteBuffer(std::stringstream& src) : ByteBuffer() {
 	std::streampos org = src.tellg();
 	auto& srcData = src.str();
 
 	offset_ = org;
 
-	data_.clear();
-	data_.reserve(srcData.capacity());
 	data_.resize(srcData.size());
-
 	memcpy(data_.data(), srcData.data(), srcData.size());
 }
+
 void ByteBuffer::Clear() {
 	data_.clear();
 	offset_ = 0;
@@ -95,14 +79,6 @@ _NODISCARD const char* ByteBuffer::GetPointer(size_t offset) const {
 		throw gstd::wexception("ByteBuffer: Index out of bounds.");
 #endif
 	return reinterpret_cast<const char*>(&data_[offset]);
-}
-
-ByteBuffer& ByteBuffer::operator=(const ByteBuffer& other) noexcept {
-	if (this != std::addressof(other)) {
-		Clear();
-		Copy(const_cast<ByteBuffer&>(other));
-	}
-	return *this;
 }
 
 //*******************************************************************

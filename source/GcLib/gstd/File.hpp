@@ -76,25 +76,19 @@ namespace gstd {
 	protected:
 		std::vector<byte> data_;
 		size_t offset_;
-
-		size_t _GetReservedSize() { return data_.capacity(); }
 	public:
 		ByteBuffer();
 		ByteBuffer(size_t size);
-		ByteBuffer(const ByteBuffer& buffer);
-		ByteBuffer(std::stringstream& stream);
-		virtual ~ByteBuffer();
+		ByteBuffer(std::stringstream& src);
+		virtual ~ByteBuffer() = default;
 
-		void Copy(const ByteBuffer& src);
-		void Copy(std::stringstream& src);
 		void Clear();
 
 		void SetSize(size_t size);
 		void Reserve(size_t newReserve);
 
-		size_t GetSize() const { return data_.size(); }
-		size_t size() const { return GetSize(); }
-		size_t GetOffset() const { return offset_; }
+		_NODISCARD size_t GetSize() const { return data_.size(); }
+		_NODISCARD size_t GetOffset() const { return offset_; }
 
 		void Seek(size_t pos);
 		virtual DWORD Write(LPVOID buf, DWORD size);
@@ -102,8 +96,6 @@ namespace gstd {
 
 		_NODISCARD char* GetPointer(size_t offset = 0);
 		_NODISCARD const char* GetPointer(size_t offset = 0) const;
-
-		ByteBuffer& operator=(const ByteBuffer& other) noexcept;
 	};
 
 	//*******************************************************************
