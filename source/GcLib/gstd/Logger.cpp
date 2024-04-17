@@ -299,7 +299,7 @@ void WindowLogger::SaveState() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"LogWindow.dat";
 
 	RecordBuffer recordMain;
-	bool bRecordExists = recordMain.ReadFromFile(path, 0, HEADER_RECORDFILE);
+	bool bRecordExists = recordMain.ReadFromFile(path, 0, RecordBuffer::HEADER);
 
 	if (currentPanel_) {
 		recordMain.SetRecordAsStringA("panelIndex", currentPanel_->GetName());
@@ -321,13 +321,13 @@ void WindowLogger::SaveState() {
 	}
 	*/
 
-	recordMain.WriteToFile(path, 0, HEADER_RECORDFILE);
+	recordMain.WriteToFile(path, 0, RecordBuffer::HEADER);
 }
 void WindowLogger::LoadState() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"LogWindow.dat";
 
 	RecordBuffer recordMain;
-	if (!recordMain.ReadFromFile(path, 0, HEADER_RECORDFILE)) return;
+	if (!recordMain.ReadFromFile(path, 0, RecordBuffer::HEADER)) return;
 
 	if (auto lastPanel = recordMain.GetRecordAsStringA("panelIndex")) {
 		auto& name = *lastPanel;

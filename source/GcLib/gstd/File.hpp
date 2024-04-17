@@ -6,8 +6,6 @@
 #include "Thread.hpp"
 
 namespace gstd {
-	const std::string HEADER_RECORDFILE = "RecordBufferFile";
-
 	class ByteBuffer;
 	class FileManager;
 	//*******************************************************************
@@ -400,6 +398,8 @@ namespace gstd {
 	//RecordBuffer
 	//*******************************************************************
 	class RecordBuffer {
+	public:
+		static inline const std::string HEADER = "RecordBufferFile";
 	private:
 		std::unordered_map<std::string, RecordEntry> mapEntry_;
 	public:
