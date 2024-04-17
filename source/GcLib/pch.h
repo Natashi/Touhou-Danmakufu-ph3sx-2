@@ -243,6 +243,3 @@ using unique_ptr_fd = std::unique_ptr<T, std::function<void(T*)>>;
 
 #define MOVE(x) std::move(x)
 
-#ifndef NODISCARD
-#define NODISCARD [[nodiscard]]
-#endif

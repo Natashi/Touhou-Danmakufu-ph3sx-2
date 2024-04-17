@@ -123,7 +123,7 @@ namespace gstd {
 			env_allocator(script_machine* machine);
 			~env_allocator();
 
-			NODISCARD value_type* allocate(size_t n);
+			_NODISCARD value_type* allocate(size_t n);
 			void deallocate(value_type* p, size_t n) noexcept;
 		};
 	public:
@@ -147,7 +147,7 @@ namespace gstd {
 
 		env_allocator allocator;
 	private:
-		NODISCARD env_ptr get_new_environment();
+		_NODISCARD env_ptr get_new_environment();
 	public:
 		script_machine(script_engine* the_engine);
 		virtual ~script_machine();
