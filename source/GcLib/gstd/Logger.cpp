@@ -283,6 +283,7 @@ bool WindowLogger::Initialize(const std::string& name) {
 bool WindowLogger::Initialize(const std::string& name, bool bEnable) {
 	name_ = name;
 	bEnable_ = bEnable;
+	bTabInit_ = false;
 
 	panelEventLog_.reset(new PanelEventLog());
 	panelEventLog_->SetDisplayName("Log");
@@ -299,14 +300,20 @@ void WindowLogger::SaveState() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"LogWindow.dat";
 
 	RecordBuffer recordMain;
-	bool bRecordExists = recordMain.ReadFromFile(path, 0, RecordBuffer::HEADER);
+	recordMain.ReadFromFile(path, 0, RecordBuffer::HEADER);
 
 	if (currentPanel_) {
 		recordMain.SetRecordAsStringA("panelIndex", currentPanel_->GetName());
 	}
 
 	{
-		recordMain.SetRecord("windowRect", windowRect_);
+		Logger* parent = Logger::GetTop();
+		HWND hWnd = parent->GetWindowHandle();
+
+		RECT rc{};
+		::GetWindowRect(hWnd, &rc);
+
+		recordMain.SetRecord("windowRect", rc);
 	}
 
 	/*
@@ -330,29 +337,18 @@ void WindowLogger::LoadState() {
 	if (!recordMain.ReadFromFile(path, 0, RecordBuffer::HEADER)) return;
 
 	if (auto lastPanel = recordMain.GetRecordAsStringA("panelIndex")) {
-		auto& name = *lastPanel;
-
-		auto itrFind = std::find_if(panels_.begin(), panels_.end(), 
-			[&](decltype(panels_)::const_reference item) {
-				return item->GetName() == name;
-			});
-		if (itrFind != panels_.end()) {
-			(*itrFind)->SetActive(true);
-		}
-		else {
-			(*panels_.begin())->SetActive(true);
-		}
+		iniPanel_ = *lastPanel;
 	}
 
 	{
-		if (auto oRect = recordMain.GetRecordAs<std::array<int, 4>>("windowRect")) {
-			windowRect_ = *oRect;
+		if (auto oRect = recordMain.GetRecordAs<RECT>("windowRect")) {
+			auto& rc = *oRect;
 
 			Logger* parent = Logger::GetTop();
 			HWND hWnd = parent->GetWindowHandle();
 
-			::MoveWindow(hWnd, windowRect_[0], windowRect_[1], 
-				windowRect_[2], windowRect_[3], TRUE);
+			::MoveWindow(hWnd, rc.left, rc.top,
+				rc.right - rc.left, rc.bottom - rc.top, true);
 		}
 	}
 }
@@ -379,7 +375,15 @@ void WindowLogger::ProcessGui() {
 			if (ImGui::BeginTabBar("TabBar_Tabs", tab_bar_flags)) {
 				currentPanel_ = nullptr;
 				for (auto& iPanel : panels_) {
-					if (ImGui::BeginTabItem(iPanel->GetDisplayName().c_str(), nullptr, tab_item_flags)) {
+					ImGuiTabItemFlags _tab_item_flags = tab_item_flags;
+					if (!bTabInit_) {
+						if (iniPanel_ == iPanel->GetName()) {
+							_tab_item_flags |= ImGuiTabItemFlags_SetSelected;
+							bTabInit_ = true;
+						}
+					}
+
+					if (ImGui::BeginTabItem(iPanel->GetDisplayName().c_str(), nullptr, _tab_item_flags)) {
 						iPanel->SetActive(true);
 
 						currentPanel_ = iPanel;
@@ -405,15 +409,6 @@ void WindowLogger::ProcessGui() {
 	}
 
 	ImGui::PopFont();
-
-	{
-		auto windowPos = ImGui::GetWindowPos();
-		auto windowSize = ImGui::GetWindowSize();
-		windowRect_ = {
-			(int)windowPos[0], (int)windowPos[1],
-			(int)windowSize[0], (int)windowSize[1],
-		};
-	}
 }
 
 void WindowLogger::Write(const LogData& data) {

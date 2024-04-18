@@ -170,8 +170,9 @@ namespace gstd {
 		class PanelInfo;
 	protected:
 		bool bEnable_;
+
+		bool bTabInit_;
 		std::string iniPanel_;
-		std::array<int, 4> windowRect_;
 
 		std::list<shared_ptr<ILoggerPanel>> panels_;
 		shared_ptr<ILoggerPanel> currentPanel_;
