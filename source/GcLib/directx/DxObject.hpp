@@ -436,7 +436,7 @@ namespace directx {
 		byte change_;
 
 		DxText text_;
-		shared_ptr<DxTextInfo> textInfo_;
+		DxTextInfo textInfo_;
 		shared_ptr<DxTextRenderObject> objRender_;
 
 		D3DXVECTOR2 center_;	//Transformation center

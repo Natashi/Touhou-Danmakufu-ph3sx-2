@@ -70,7 +70,7 @@ namespace directx {
 		void SetWindowEnableWithoutArgumentWindow(bool bEnable, DxWindow* window);
 
 		gstd::ref_count_ptr<DxWindow> GetIntersectedWindow();
-		gstd::ref_count_ptr<DxWindow> GetIntersectedWindow(POINT& pos, gstd::ref_count_ptr<DxWindow> parent = NULL);
+		gstd::ref_count_ptr<DxWindow> GetIntersectedWindow(POINT& pos, gstd::ref_count_ptr<DxWindow> parent = {});
 	};
 
 	//*******************************************************************

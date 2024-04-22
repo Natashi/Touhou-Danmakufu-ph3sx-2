@@ -838,8 +838,8 @@ namespace gstd {
 		Font();
 		virtual ~Font();
 
-		void CreateFont(const wchar_t* type, int size, bool bBold = false, bool bItalic = false, bool bLine = false);
-		void CreateFontIndirect(LOGFONT& fontInfo);
+		void FCreateFont(const wchar_t* type, int size, bool bBold = false, bool bItalic = false, bool bLine = false);
+		void FCreateFontIndirect(LOGFONT& fontInfo);
 		void Clear();
 
 		HFONT GetHandle() const { return hFont_; }

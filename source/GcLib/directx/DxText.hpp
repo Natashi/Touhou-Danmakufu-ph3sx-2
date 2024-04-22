@@ -30,7 +30,6 @@ namespace directx {
 		D3DCOLOR colorBorder_;
 	public:
 		DxFont();
-		virtual ~DxFont();
 
 		void SetLogFont(LOGFONT& font) { info_ = font; }
 		LOGFONT& GetLogFont() { return info_; }
@@ -63,14 +62,15 @@ namespace directx {
 		POINT size_;
 		POINT sizeMax_;
 	public:
-		DxCharGlyph();
-		virtual ~DxCharGlyph();
+		DxCharGlyph(UINT code);
 
-		bool Create(UINT code, const gstd::Font& winFont, const DxFont* dxFont);
+		bool Create(gstd::CriticalSection& cs, const gstd::Font& winFont, const DxFont* dxFont);
+
 		shared_ptr<Texture> GetTexture() { return texture_; }
-		POINT& GetSize() { return size_; }
-		POINT& GetMaxSize() { return sizeMax_; }
-		GLYPHMETRICS* GetGM() { return &glpMet_; }
+
+		const POINT& GetSize() const { return size_; }
+		const POINT& GetMaxSize() const { return sizeMax_; }
+		const GLYPHMETRICS* GetGM() const { return &glpMet_; }
 	};
 
 
@@ -111,11 +111,11 @@ namespace directx {
 		friend DxTextRenderer;
 	public:
 		enum : size_t {
-			MAX = 1024U,
+			MAX = 1U << 14,
 		};
 	private:
 		int countPri_;
-		std::map<DxCharCacheKey, shared_ptr<DxCharGlyph>> mapCache_;
+		std::map<DxCharCacheKey, DxCharGlyph> mapCache_;
 		std::map<int, DxCharCacheKey> mapPriKey_;
 		std::map<DxCharCacheKey, int> mapKeyPri_;
 
@@ -125,10 +125,10 @@ namespace directx {
 		~DxCharCache();
 
 		void Clear();
-		size_t GetCacheCount() { return mapCache_.size(); }
+		size_t GetCacheCount() const { return mapCache_.size(); }
 
-		shared_ptr<DxCharGlyph> GetChar(DxCharCacheKey& key);
-		void AddChar(DxCharCacheKey& key, shared_ptr<DxCharGlyph> value);
+		DxCharGlyph* GetChar(const DxCharCacheKey& key);
+		DxCharGlyph* AddChar(const DxCharCacheKey& key, DxCharGlyph&& value);
 	};
 
 	//*******************************************************************
@@ -219,36 +219,43 @@ namespace directx {
 	class DxTextLine;
 	class DxTextInfo;
 	class DxTextRenderer;
+
 	class DxTextTag {
 	protected:
 		TextTagType typeTag_;
 		int indexTag_;
 	public:
-		DxTextTag() { indexTag_ = 0; typeTag_ = TextTagType::Unknown; }
-		virtual ~DxTextTag() {};
+		DxTextTag(TextTagType typeTag);
+		virtual ~DxTextTag() {}
 
-		TextTagType GetTagType() { return typeTag_; }
-		int GetTagIndex() { return indexTag_; }
+		virtual DxTextTag* Clone() const = 0;
+
+		TextTagType GetTagType() const { return typeTag_; }
+		int GetTagIndex() const { return indexTag_; }
 		void SetTagIndex(int index) { indexTag_ = index; }
 	};
 	class DxTextTag_Ruby : public DxTextTag {
 		LONG leftMargin_;
 		LONG topMargin_;
+
 		std::wstring text_;
 		std::wstring ruby_;
+
 		shared_ptr<DxText> dxText_;
 	public:
-		DxTextTag_Ruby() { typeTag_ = TextTagType::Ruby; leftMargin_ = 0; topMargin_ = 0; }
+		DxTextTag_Ruby();
+
+		virtual DxTextTag_Ruby* Clone() const override { return new DxTextTag_Ruby(*this); }
 		
-		LONG GetLeftMargin() { return leftMargin_; }
+		LONG GetLeftMargin() const { return leftMargin_; }
 		void SetLeftMargin(LONG left) { leftMargin_ = left; }
 
-		LONG GetTopMargin() { return topMargin_; }
+		LONG GetTopMargin() const { return topMargin_; }
 		void SetTopMargin(LONG top) { topMargin_ = top; }
 
-		std::wstring& GetText() { return text_; }
+		const std::wstring& GetText() const { return text_; }
 		void SetText(const std::wstring& text) { text_ = text; }
-		std::wstring& GetRuby() { return ruby_; }
+		const std::wstring& GetRuby() const { return ruby_; }
 		void SetRuby(const std::wstring& ruby) { ruby_ = ruby; }
 
 		shared_ptr<DxText> GetRenderText() { return dxText_; }
@@ -258,62 +265,74 @@ namespace directx {
 		DxFont font_;
 		D3DXVECTOR2 offset_;
 	public:
-		DxTextTag_Font() { typeTag_ = TextTagType::Font; offset_ = D3DXVECTOR2(0, 0); }
+		DxTextTag_Font();
+
+		virtual DxTextTag_Font* Clone() const override { return new DxTextTag_Font(*this); }
 		
 		void SetFont(DxFont& font) { font_ = font; }
-		DxFont& GetFont() { return font_; }
+		const DxFont& GetFont() const { return font_; }
 
 		void SetOffset(D3DXVECTOR2& off) { offset_ = off; }
 		D3DXVECTOR2& GetOffset() { return offset_; }
+		const D3DXVECTOR2& GetOffset() const { return offset_; }
 	};
+
 	class DxTextLine {
 		friend DxTextRenderer;
 	protected:
 		LONG width_;
 		LONG height_;
 		LONG sidePitch_;
+
 		std::vector<UINT> code_;
-		std::vector<shared_ptr<DxTextTag>> tag_;
+
+		std::vector<unique_ptr<DxTextTag>> tag_;
 	public:
-		DxTextLine() { width_ = 0; height_ = 0; sidePitch_ = 0; }
-		virtual ~DxTextLine() {};
+		DxTextLine();
+		DxTextLine(const DxTextLine& other);
+
+		DxTextLine& operator=(DxTextLine other) noexcept;
+		void swap(DxTextLine& other) noexcept;
 		
-		LONG GetWidth() { return width_; }
-		LONG GetHeight() { return height_; }
-		LONG GetSidePitch() { return sidePitch_; }
+		LONG GetWidth() const { return width_; }
+		LONG GetHeight() const { return height_; }
+		LONG GetSidePitch() const { return sidePitch_; }
 		void SetSidePitch(LONG pitch) { sidePitch_ = pitch; }
 
-		std::vector<UINT>& GetTextCodes() { return code_; }
-		size_t GetTextCodeCount() { return code_.size(); }
-		size_t GetTagCount() { return tag_.size(); }
-		shared_ptr<DxTextTag> GetTag(size_t index) { return tag_[index]; }
+		const std::vector<UINT>& GetTextCodes() const { return code_; }
+		size_t GetTextCodeCount() const { return code_.size(); }
+
+		size_t GetTagCount() const { return tag_.size(); }
+		const DxTextTag* GetTag(size_t index) const { return tag_[index].get(); }
 	};
+
 	class DxTextInfo {
 		friend DxTextRenderer;
 	protected:
 		LONG totalWidth_;
 		LONG totalHeight_;
+
 		int lineValidStart_;
 		int lineValidEnd_;
 		bool bAutoIndent_;
-		std::vector<shared_ptr<DxTextLine>> textLine_;
-	public:
-		DxTextInfo() { totalWidth_ = 0; totalHeight_ = 0; lineValidStart_ = 1; lineValidEnd_ = 0; bAutoIndent_ = false; }
-		virtual ~DxTextInfo() {};
 
-		LONG GetTotalWidth() { return totalWidth_; }
-		LONG GetTotalHeight() { return totalHeight_; }
-		int GetValidStartLine() { return lineValidStart_; }
-		int GetValidEndLine() { return lineValidEnd_; }
+		std::vector<DxTextLine> textLine_;
+	public:
+		DxTextInfo();
+
+		LONG GetTotalWidth() const { return totalWidth_; }
+		LONG GetTotalHeight() const { return totalHeight_; }
+
+		int GetValidStartLine() const { return lineValidStart_; }
+		int GetValidEndLine() const { return lineValidEnd_; }
 		void SetValidStartLine(int line) { lineValidStart_ = line; }
 		void SetValidEndLine(int line) { lineValidEnd_ = line; }
-		bool IsAutoIndent() { return bAutoIndent_; }
+		bool IsAutoIndent() const { return bAutoIndent_; }
 		void SetAutoIndent(bool bEnable) { bAutoIndent_ = bEnable; }
 
-		size_t GetLineCount() { return textLine_.size(); }
-		void AddTextLine(shared_ptr<DxTextLine> text) { textLine_.push_back(text), lineValidEnd_++; }
-		shared_ptr<DxTextLine> GetTextLine(size_t pos) { return textLine_[pos]; }
-
+		size_t GetLineCount() const { return textLine_.size(); }
+		void AddTextLine(DxTextLine&& text) { textLine_.push_back(text), lineValidEnd_++; }
+		const DxTextLine& GetTextLine(size_t pos) const { return textLine_[pos]; }
 	};
 
 	class DxTextRenderObject {
@@ -364,28 +383,34 @@ namespace directx {
 		gstd::CriticalSection lock_;
 
 		SIZE _GetTextSize(HDC hDC, wchar_t* pText);
-		shared_ptr<DxTextLine> _GetTextInfoSub(const std::wstring& text, DxText* dxText, DxTextInfo* textInfo,
-			shared_ptr<DxTextLine> textLine, HDC& hDC, LONG& totalWidth, LONG& totalHeight);
+
+		bool _GetTextInfoSub(DxTextLine& destLine,
+			const std::wstring& text, DxText* dxText, DxTextInfo* textInfo,
+			HDC& hDC, LONG& totalWidth, LONG& totalHeight);
+
 		void _CreateRenderObject(shared_ptr<DxTextRenderObject> objRender, DxText* pDxText, 
-			const POINT& pos, DxFont dxFont, shared_ptr<DxTextLine> textLine);
+			const POINT& pos, DxFont dxFont, const DxTextLine& textLine);
+
 		std::wstring _ReplaceRenderText(std::wstring text);
 	public:
 		DxTextRenderer();
 		virtual ~DxTextRenderer();
 
 		static DxTextRenderer* GetBase() { return thisBase_; }
-		bool Initialize();
 		gstd::CriticalSection& GetLock() { return lock_; }
 
-		void ClearCache() { cache_.Clear(); }
-		void SetFont(LOGFONT& logFont) { winFont_.CreateFontIndirect(logFont); }
-		void SetVertexColor(D3DCOLOR color) { colorVertex_ = color; }
-		shared_ptr<DxTextInfo> GetTextInfo(DxText* dxText);
+		bool Initialize();
 
-		shared_ptr<DxTextRenderObject> CreateRenderObject(DxText* dxText, shared_ptr<DxTextInfo> textInfo);
+		void ClearCache() { cache_.Clear(); }
+		void SetFont(LOGFONT& logFont);
+		void SetVertexColor(D3DCOLOR color) { colorVertex_ = color; }
+
+		DxTextInfo CreateTextInfo(DxText* dxText);
+
+		shared_ptr<DxTextRenderObject> CreateRenderObject(DxText* dxText, const DxTextInfo& textInfo);
 
 		void Render(DxText* dxText);
-		void Render(DxText* dxText, shared_ptr<DxTextInfo> textInfo);
+		void Render(DxText* dxText, const DxTextInfo& textInfo);
 
 		size_t GetCacheCount() { return cache_.GetCacheCount(); }
 
@@ -423,11 +448,11 @@ namespace directx {
 
 		void Copy(const DxText& src);
 		virtual void Render();
-		void Render(shared_ptr<DxTextInfo> textInfo);
+		void Render(const DxTextInfo& textInfo);
 
-		shared_ptr<DxTextInfo> GetTextInfo();
+		DxTextInfo CreateTextInfo();
 		shared_ptr<DxTextRenderObject> CreateRenderObject();
-		shared_ptr<DxTextRenderObject> CreateRenderObject(shared_ptr<DxTextInfo> textInfo);
+		shared_ptr<DxTextRenderObject> CreateRenderObject(const DxTextInfo& textInfo);
 
 		DxFont& GetFont() { return dxFont_; }
 		void SetFont(DxFont& font) { dxFont_ = font; }

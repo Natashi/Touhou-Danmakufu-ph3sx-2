@@ -1643,7 +1643,7 @@ void Font::Clear() {
 		ZeroMemory(&info_, sizeof(LOGFONT));
 	}
 }
-void Font::CreateFont(const wchar_t* type, int size, bool bBold, bool bItalic, bool bLine) {
+void Font::FCreateFont(const wchar_t* type, int size, bool bBold, bool bItalic, bool bLine) {
 	ZeroMemory(&info_, sizeof(info_));
 
 	info_.lfHeight = size;
@@ -1654,10 +1654,12 @@ void Font::CreateFont(const wchar_t* type, int size, bool bBold, bool bItalic, b
 	info_.lfCharSet = DetectCharset(type);
 	lstrcpy(info_.lfFaceName, type);
 
-	this->CreateFontIndirect(info_);
+	this->FCreateFontIndirect(info_);
 }
-void Font::CreateFontIndirect(LOGFONT& fontInfo) {
-	if (hFont_) this->Clear();
+void Font::FCreateFontIndirect(LOGFONT& fontInfo) {
+	if (hFont_)
+		this->Clear();
+
 	hFont_ = ::CreateFontIndirect(&fontInfo);
 	info_ = fontInfo;
 

@@ -524,8 +524,8 @@ void DxMessageBox::UpdateWindowRect() {
 	text_->SetMaxWidth(wndWidth - margin * 2);
 	text_->SetPosition(rcWnd.left + margin, rcWnd.top + margin);
 
-	shared_ptr<DxTextInfo> textInfo = text_->GetTextInfo();
-	int textHeight = textInfo->GetTotalHeight();
+	DxTextInfo textInfo = text_->CreateTextInfo();
+	int textHeight = textInfo.GetTotalHeight();
 
 	int iButton = 0;
 	int totalButtonWidth = 0;

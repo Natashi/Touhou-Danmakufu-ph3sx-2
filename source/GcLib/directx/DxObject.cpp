@@ -704,7 +704,7 @@ void DxScriptTextObject::Clone(DxScriptObjectBase* _src) {
 
 	text_.Copy(src->text_);
 
-	textInfo_ = nullptr;
+	textInfo_ = {};
 	objRender_ = nullptr;
 	_UpdateRenderer();
 
@@ -750,7 +750,7 @@ void DxScriptTextObject::SetRenderState() {
 }
 void DxScriptTextObject::_UpdateRenderer() {
 	if (change_ & CHANGE_INFO)
-		textInfo_ = text_.GetTextInfo();
+		textInfo_ = text_.CreateTextInfo();
 	if (change_ & CHANGE_RENDERER)
 		objRender_ = text_.CreateRenderObject(textInfo_);
 	change_ = 0;
@@ -784,13 +784,17 @@ void DxScriptTextObject::SetText(const std::wstring& text) {
 }
 std::vector<size_t> DxScriptTextObject::GetTextCountCU() {
 	_UpdateRenderer();
-	size_t lineCount = textInfo_->GetLineCount();
+
+	size_t lineCount = textInfo_.GetLineCount();
 	std::vector<size_t> listCount;
+
 	for (size_t iLine = 0; iLine < lineCount; ++iLine) {
-		shared_ptr<DxTextLine> textLine = textInfo_->GetTextLine(iLine);
-		size_t count = textLine->GetTextCodeCount();
+		const DxTextLine& textLine = textInfo_.GetTextLine(iLine);
+
+		size_t count = textLine.GetTextCodeCount();
 		listCount.push_back(count);
 	}
+
 	return listCount;
 }
 
@@ -809,17 +813,17 @@ void DxScriptTextObject::SetColor(int r, int g, int b) {
 
 LONG DxScriptTextObject::GetTotalWidth() {
 	if (change_ & CHANGE_INFO) {
-		textInfo_ = text_.GetTextInfo();
+		textInfo_ = text_.CreateTextInfo();
 		change_ &= (~CHANGE_INFO);
 	}
-	return textInfo_->GetTotalWidth();
+	return textInfo_.GetTotalWidth();
 }
 LONG DxScriptTextObject::GetTotalHeight() {
 	if (change_ & CHANGE_INFO) {
-		textInfo_ = text_.GetTextInfo();
+		textInfo_ = text_.CreateTextInfo();
 		change_ &= (~CHANGE_INFO);
 	}
-	return textInfo_->GetTotalHeight();
+	return textInfo_.GetTotalHeight();
 }
 
 void DxScriptTextObject::SetShader(shared_ptr<Shader> shader) {
