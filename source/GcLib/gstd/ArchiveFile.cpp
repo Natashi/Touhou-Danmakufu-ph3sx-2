@@ -248,15 +248,16 @@ bool FileArchiver::EncryptArchive(std::fstream& inSrc, const std::wstring& pathO
 	dest.open(pathOut, std::ios::binary | std::ios::trunc);
 
 	constexpr size_t CHUNK = 16384U;
-	char buf[CHUNK];
+	auto buf = std::make_unique<char[]>(CHUNK);
+	auto pBuf = buf.get();
 
 	size_t read = 0U;
 	byte headerBase = keyBase;
 
 	{
-		inSrc.read(buf, sizeof(ArchiveFileHeader));
-		ArchiveEncryption::ShiftBlock((byte*)buf, sizeof(ArchiveFileHeader), headerBase, keyStep);
-		dest.write(buf, sizeof(ArchiveFileHeader));
+		inSrc.read(pBuf, sizeof(ArchiveFileHeader));
+		ArchiveEncryption::ShiftBlock((byte*)pBuf, sizeof(ArchiveFileHeader), headerBase, keyStep);
+		dest.write(pBuf, sizeof(ArchiveFileHeader));
 	}
 
 	{
@@ -271,13 +272,13 @@ bool FileArchiver::EncryptArchive(std::fstream& inSrc, const std::wstring& pathO
 			dest.seekp(entry->offsetPos, std::ios::beg);
 
 			do {
-				inSrc.read(buf, CHUNK);
+				inSrc.read(pBuf, CHUNK);
 				read = inSrc.gcount();
 				if (read > count) read = count;
 
-				ArchiveEncryption::ShiftBlock((byte*)buf, read, localBase, entry->keyStep);
+				ArchiveEncryption::ShiftBlock((byte*)pBuf, read, localBase, entry->keyStep);
 
-				dest.write(buf, read);
+				dest.write(pBuf, read);
 				count -= read;
 			} while (count > 0U && read > 0U);
 		}
@@ -292,13 +293,13 @@ bool FileArchiver::EncryptArchive(std::fstream& inSrc, const std::wstring& pathO
 		dest.seekp(header->headerOffset, std::ios::beg);
 
 		do {
-			inSrc.read(buf, CHUNK);
+			inSrc.read(pBuf, CHUNK);
 			read = inSrc.gcount();
 			if (read > infoSize) read = infoSize;
 
-			ArchiveEncryption::ShiftBlock((byte*)buf, read, headerBase, keyStep);
+			ArchiveEncryption::ShiftBlock((byte*)pBuf, read, headerBase, keyStep);
 
-			dest.write(buf, read);
+			dest.write(pBuf, read);
 			infoSize -= read;
 		} while (infoSize > 0U && read > 0U);
 	}
@@ -553,13 +554,13 @@ bool Compressor::Deflate(const size_t chunk,
 {
 	bool ret = true;
 
-	char* in = new char[chunk];
-	char* out = new char[chunk];
+	auto in = std::make_unique<char[]>(chunk);
+	auto out = std::make_unique<char[]>(chunk);
 
 	int returnState = 0;
 	size_t countBytes = 0U;
 
-	z_stream stream;
+	z_stream stream{};
 	stream.zalloc = Z_NULL;
 	stream.zfree = Z_NULL;
 	stream.opaque = Z_NULL;
@@ -570,14 +571,14 @@ bool Compressor::Deflate(const size_t chunk,
 		int flushType = Z_NO_FLUSH;
 
 		do {
-			size_t read = ReadFunction(in, chunk, &flushType);
+			size_t read = ReadFunction(in.get(), chunk, &flushType);
 
 			if (read > 0) {
-				stream.next_in = (Bytef*)in;
+				stream.next_in = (Bytef*)in.get();
 				stream.avail_in = read;
 
 				do {
-					stream.next_out = (Bytef*)out;
+					stream.next_out = (Bytef*)out.get();
 					stream.avail_out = chunk;
 
 					returnState = deflate(&stream, flushType);
@@ -585,7 +586,7 @@ bool Compressor::Deflate(const size_t chunk,
 					size_t availWrite = chunk - stream.avail_out;
 					countBytes += availWrite;
 					if (returnState != Z_STREAM_ERROR)
-						WriteFunction(out, availWrite);
+						WriteFunction(out.get(), availWrite);
 					else throw returnState;
 				} while (stream.avail_out == 0);
 			}
@@ -596,9 +597,6 @@ bool Compressor::Deflate(const size_t chunk,
 	catch (int&) {
 		ret = false;
 	}
-
-	delete[] in;
-	delete[] out;
 
 	deflateEnd(&stream);
 	if (res) *res = countBytes;
@@ -613,8 +611,8 @@ bool Compressor::Inflate(const size_t chunk,
 {
 	bool ret = true;
 
-	char* in = new char[chunk];
-	char* out = new char[chunk];
+	auto in = std::make_unique<char[]>(chunk);
+	auto out = std::make_unique<char[]>(chunk);
 
 	int returnState = 0;
 	size_t countBytes = 0U;
@@ -632,14 +630,14 @@ bool Compressor::Inflate(const size_t chunk,
 		size_t read = 0U;
 
 		do {
-			read = ReadFunction(in, chunk);
+			read = ReadFunction(in.get(), chunk);
 
 			if (read > 0U) {
-				stream.next_in = (Bytef*)in;
+				stream.next_in = (Bytef*)in.get();
 				stream.avail_in = read;
 
 				do {
-					stream.next_out = (Bytef*)out;
+					stream.next_out = (Bytef*)out.get();
 					stream.avail_out = chunk;
 
 					returnState = inflate(&stream, Z_NO_FLUSH);
@@ -653,7 +651,7 @@ bool Compressor::Inflate(const size_t chunk,
 
 					size_t availWrite = chunk - stream.avail_out;
 					countBytes += availWrite;
-					WriteFunction(out, availWrite);
+					WriteFunction(out.get(), availWrite);
 				} while (stream.avail_out == 0);
 			}
 
@@ -663,9 +661,6 @@ bool Compressor::Inflate(const size_t chunk,
 	catch (int&) {
 		ret = false;
 	}
-
-	delete[] in;
-	delete[] out;
 
 	inflateEnd(&stream);
 	if (res) *res = countBytes;

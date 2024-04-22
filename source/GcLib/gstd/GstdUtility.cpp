@@ -716,10 +716,11 @@ std::wstring StringUtility::Join(const std::vector<std::wstring>& strs, const st
 
 size_t StringUtility::CountAsciiSizeCharacter(const std::wstring& str) {
 	if (str.size() == 0) return 0;
-
+	
 	size_t wcount = str.size();
-	WORD* listType = new WORD[wcount];
-	GetStringTypeEx(0, CT_CTYPE3, str.c_str(), wcount, listType);
+	std::vector<WORD> listType(wcount);
+
+	GetStringTypeEx(0, CT_CTYPE3, str.c_str(), wcount, listType.data());
 
 	size_t res = 0;
 	for (size_t iType = 0; iType < wcount; iType++) {
@@ -732,7 +733,6 @@ size_t StringUtility::CountAsciiSizeCharacter(const std::wstring& str) {
 		}
 	}
 
-	delete[] listType;
 	return res;
 }
 

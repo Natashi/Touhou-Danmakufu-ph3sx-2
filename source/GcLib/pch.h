@@ -200,7 +200,7 @@ namespace stdch = std::chrono;
 
 //------------------------------------------------------------------------------
 
-//Pointer utilities
+// Pointer utilities
 template<typename T> static constexpr inline void ptr_delete(T*& ptr) {
 	delete ptr;
 	ptr = nullptr;
