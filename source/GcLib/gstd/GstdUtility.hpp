@@ -57,6 +57,7 @@ namespace gstd {
 	static void ParallelFor(size_t countLoop, F&& func) {
 		size_t countCore = std::max(std::thread::hardware_concurrency(), 1U);
 
+		if (countCore > 1 && countLoop >= countCore * 64) {
 		std::vector<std::future<void>> workers;
 		workers.reserve(countCore);
 
@@ -72,6 +73,12 @@ namespace gstd {
 			workers.emplace_back(std::async(std::launch::async | std::launch::deferred, coreTask, iCore));
 		for (const auto& worker : workers)
 			worker.wait();
+	}
+		else {
+			for (size_t i = 0; i < countLoop; ++i) {
+				func(i);
+			}
+		}
 	}
 
 	//================================================================
