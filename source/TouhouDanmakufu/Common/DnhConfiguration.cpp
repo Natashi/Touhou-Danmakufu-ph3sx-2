@@ -141,8 +141,8 @@ bool DnhConfiguration::LoadConfigFile() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"config.dat";
 
 	RecordBuffer record;
-	bool res = record.ReadFromFile(path, GAME_VERSION_NUM, "DNHCNFG\0", 8U);
-	if (!res) return false;
+	if (!record.ReadFromFile(path, DATA_VERSION_CONFIG, "DNHCNFG\0", 8U))
+		return false;
 
 	record.GetRecord<ScreenMode>("modeScreen", modeScreen_);
 	record.GetRecord<ColorMode>("modeColor", modeColor_);
@@ -189,7 +189,7 @@ bool DnhConfiguration::LoadConfigFile() {
 	record.GetRecordAsBoolean("bLogFile", bLogFile_);
 	record.GetRecordAsBoolean("bMouseVisible", bMouseVisible_);
 
-	return res;
+	return true;
 }
 bool DnhConfiguration::SaveConfigFile() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"config.dat";
@@ -234,8 +234,7 @@ bool DnhConfiguration::SaveConfigFile() {
 	record.SetRecordAsBoolean("bLogFile", bLogFile_);
 	record.SetRecordAsBoolean("bMouseVisible", bMouseVisible_);
 
-	record.WriteToFile(path, GAME_VERSION_NUM, "DNHCNFG\0", 8U);
-	return true;
+	return record.WriteToFile(path, DATA_VERSION_CONFIG, "DNHCNFG\0", 8);
 }
 ref_count_ptr<VirtualKey> DnhConfiguration::GetVirtualKey(int16_t id) {
 	auto itr = mapKey_.find(id);

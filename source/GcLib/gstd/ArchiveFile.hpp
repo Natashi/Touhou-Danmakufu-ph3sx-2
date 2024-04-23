@@ -19,7 +19,7 @@ namespace gstd {
 		};
 
 		char magic[MAGIC_LENGTH];
-		uint64_t version;
+		uint32_t version;
 		uint32_t entryCount;
 		//uint8_t headerCompressed;
 		uint32_t headerOffset;

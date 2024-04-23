@@ -71,7 +71,8 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& baseDir, const std::wst
 	}
 
 	try {
-		ArchiveFileHeader header;
+		ArchiveFileHeader header{};
+
 		memcpy(header.magic, ArchiveEncryption::HEADER_ARCHIVEFILE, ArchiveFileHeader::MAGIC_LENGTH);
 		header.version = GAME_VERSION_NUM;
 		header.entryCount = listEntry_.size();
@@ -351,16 +352,20 @@ bool ArchiveFile::Open() {
 	try {
 		ArchiveEncryption::GetKeyHashHeader(ArchiveEncryption::ARCHIVE_ENCRYPTION_KEY, keyBase_, keyStep_);
 
-		ArchiveFileHeader header;
+		ArchiveFileHeader header{};
 
 		stream.seekg(globalReadOffset_, std::ios::beg);
 		stream.read((char*)&header, sizeof(ArchiveFileHeader));
 		ArchiveEncryption::ShiftBlock((byte*)&header, sizeof(ArchiveFileHeader), keyBase_, keyStep_);
 
-		if (memcmp(header.magic, ArchiveEncryption::HEADER_ARCHIVEFILE, ArchiveFileHeader::MAGIC_LENGTH) != 0) 
-			throw gstd::wexception();
-		if (!VersionUtility::IsDataBackwardsCompatible(GAME_VERSION_NUM, header.version))
-			throw gstd::wexception();
+		if (memcmp(header.magic, ArchiveEncryption::HEADER_ARCHIVEFILE, ArchiveFileHeader::MAGIC_LENGTH) != 0) {
+			Logger::WriteError("File is not a ph3sx data archive");
+			throw wexception();
+		}
+		if (header.version != DATA_VERSION_ARCHIVE) {
+			Logger::WriteError("Archive version not compatible with engine version");
+			throw wexception();
+		}
 
 		uint32_t headerSizeTrue = 0U;
 

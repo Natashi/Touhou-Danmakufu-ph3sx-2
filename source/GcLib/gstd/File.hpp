@@ -409,14 +409,15 @@ namespace gstd {
 
 		void Write(Writer& writer);
 		void Read(Reader& reader);
-		bool WriteToFile(const std::wstring& path, uint64_t version, const std::string& header) {
+
+		bool WriteToFile(const std::wstring& path, uint32_t version, const char* header, size_t headerSize);
+		bool ReadFromFile(const std::wstring& path, uint32_t version, const char* header, size_t headerSize);
+		bool WriteToFile(const std::wstring& path, uint32_t version, const std::string& header) {
 			return WriteToFile(path, version, header.c_str(), header.size());
 		}
-		bool WriteToFile(const std::wstring& path, uint64_t version, const char* header, size_t headerSize);
-		bool ReadFromFile(const std::wstring& path, uint64_t version, const std::string& header) {
+		bool ReadFromFile(const std::wstring& path, uint32_t version, const std::string& header) {
 			return ReadFromFile(path, version, header.c_str(), header.size());
 		}
-		bool ReadFromFile(const std::wstring& path, uint64_t version, const char* header, size_t headerSize);
 
 		size_t GetEntrySize(const std::string& key);
 

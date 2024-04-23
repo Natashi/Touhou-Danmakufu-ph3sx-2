@@ -58,22 +58,22 @@ namespace gstd {
 		size_t countCore = std::max(std::thread::hardware_concurrency(), 1U);
 
 		if (countCore > 1 && countLoop >= countCore * 64) {
-		std::vector<std::future<void>> workers;
-		workers.reserve(countCore);
+			std::vector<std::future<void>> workers;
+			workers.reserve(countCore);
 
-		auto coreTask = [&](size_t id) {
-			const size_t begin = countLoop / countCore * id + std::min(countLoop % countCore, id);
-			const size_t end = countLoop / countCore * (id + 1U) + std::min(countLoop % countCore, id + 1U);
+			auto coreTask = [&](size_t id) {
+				const size_t begin = countLoop / countCore * id + std::min(countLoop % countCore, id);
+				const size_t end = countLoop / countCore * (id + 1U) + std::min(countLoop % countCore, id + 1U);
 
-			for (size_t i = begin; i < end; ++i)
-				func(i);
-		};
+				for (size_t i = begin; i < end; ++i)
+					func(i);
+			};
 
-		for (size_t iCore = 0; iCore < countCore; ++iCore)
-			workers.emplace_back(std::async(std::launch::async | std::launch::deferred, coreTask, iCore));
-		for (const auto& worker : workers)
-			worker.wait();
-	}
+			for (size_t iCore = 0; iCore < countCore; ++iCore)
+				workers.emplace_back(std::async(std::launch::async | std::launch::deferred, coreTask, iCore));
+			for (const auto& worker : workers)
+				worker.wait();
+		}
 		else {
 			for (size_t i = 0; i < countLoop; ++i) {
 				func(i);
@@ -96,10 +96,6 @@ namespace gstd {
 		}
 		static inline uint64_t ExtractRevision(uint64_t target) {
 			return target & 0xff;
-		}
-		//Should ensure compatibility if reserved, major, and submajor match target's
-		static inline const bool IsDataBackwardsCompatible(uint64_t target, uint64_t version) {
-			return (version >> 24) == (target >> 24);
 		}
 	};
 

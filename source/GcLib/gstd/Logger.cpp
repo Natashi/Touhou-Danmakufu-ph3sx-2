@@ -334,7 +334,8 @@ void WindowLogger::LoadState() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"LogWindow.dat";
 
 	RecordBuffer recordMain;
-	if (!recordMain.ReadFromFile(path, 0, RecordBuffer::HEADER)) return;
+	if (!recordMain.ReadFromFile(path, 0, RecordBuffer::HEADER))
+		return;
 
 	if (auto lastPanel = recordMain.GetRecordAsStringA("panelIndex")) {
 		iniPanel_ = *lastPanel;

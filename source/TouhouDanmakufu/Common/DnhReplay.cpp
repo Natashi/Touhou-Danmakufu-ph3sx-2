@@ -41,12 +41,16 @@ bool ReplayInformation::IsUserDataExists(const std::string& key) {
 	return userData_->IsExists(key).first;
 }
 
+struct HeaderReplay {
+	char magic[8];
+	uint32_t version;
+};
+
 bool ReplayInformation::SaveToFile(const std::wstring& scriptPath, int index) {
 	std::wstring dir = EPathProperty::GetReplaySaveDirectory(scriptPath);
 	std::wstring scriptName = PathProperty::GetFileNameWithoutExtension(scriptPath);
 	std::wstring path = dir + scriptName + StringUtility::Format(L"_replay%02d.dat", index);
 
-	//フォルダ作成
 	File::CreateFileDirectory(dir);
 
 	RecordBuffer rec;
@@ -87,15 +91,17 @@ bool ReplayInformation::SaveToFile(const std::wstring& scriptPath, int index) {
 		std::ofstream replayFile;
 		replayFile.open(path, std::ios::binary | std::ios::trunc);
 		if (replayFile.is_open()) {
-			replayFile.write("DNHRPY\0\0", 0x8);
-			replayFile.write((char*)&GAME_VERSION_NUM, sizeof(uint64_t));
+			HeaderReplay header = {
+				"DNHRPY\0",
+				DATA_VERSION_REPLAY,
+			};
+			replayFile.write((char*)&header, sizeof(HeaderReplay));
+
 			Compressor::DeflateStream(replayBase, replayFile, replayBase.GetSize(), nullptr);
 		}
 		else {
-			Logger::WriteTop("ReplayInformation::SaveToFile: Failed to create replay file.");
+			Logger::WriteError("ReplayInformation::SaveToFile: Failed to create replay file.");
 		}
-
-		replayFile.close();
 	}
 
 	return true;
@@ -114,13 +120,6 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 		std::stringstream data;
 		size_t dataSize = 0;
 
-#pragma pack(push, 1)
-		struct HeaderReplay {
-			char magic[8];
-			uint64_t version;
-		};
-#pragma pack(push)
-
 		{
 			shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 			if (reader == nullptr || !reader->Open())
@@ -138,13 +137,15 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 			return nullptr;
 
 		{
-			HeaderReplay header;
+			HeaderReplay header{};
 			data.read((char*)&header, sizeof(HeaderReplay));
 
-			if (memcmp(header.magic, "DNHRPY\0\0", sizeof(header.magic)) != 0)
-				return nullptr;
-			if (!VersionUtility::IsDataBackwardsCompatible(GAME_VERSION_NUM, header.version))
-				return nullptr;
+			if (memcmp(header.magic, "DNHRPY\0\0", sizeof(header.magic)) != 0) {
+				throw wexception("File is not a ph3sx replay file");
+			}
+			if (header.version != DATA_VERSION_REPLAY) {
+				throw wexception("Replay version not compatible with engine version");
+			}
 		}
 
 		size_t sizeFull = 0U;
@@ -156,8 +157,10 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 		rec.Read(bufDecomp);
 	}
 	catch (gstd::wexception& e) {
-		std::wstring str = StringUtility::Format(L"LoadReplay: Failed to load replay file \"%s\"\r\n    %s", path.c_str(), e.what());
-		Logger::WriteTop(str);
+		std::wstring str = StringUtility::Format(
+			L"LoadReplay: Failed to load replay file \"%s\"\r\n    %s", 
+			path.c_str(), e.what());
+		Logger::WriteError(str);
 
 		return nullptr;
 	}

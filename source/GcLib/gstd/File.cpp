@@ -975,36 +975,38 @@ void RecordBuffer::Read(Reader& reader) {
 	}
 }
 
-bool RecordBuffer::WriteToFile(const std::wstring& path, uint64_t version, const char* header, size_t headerSize) {
+bool RecordBuffer::WriteToFile(const std::wstring& path, uint32_t version, const char* header, size_t headerSize) {
 	File file(path);
 	if (!file.Open(File::AccessType::WRITEONLY))
 		return false;
 
 	file.Write((LPVOID)header, headerSize);
-	file.Write(&version, sizeof(uint64_t));
+	file.WriteValue<uint32_t>(version);
 
 	Write(file);
 
 	return true;
 }
-bool RecordBuffer::ReadFromFile(const std::wstring& path, uint64_t version, const char* header, size_t headerSize) {
+bool RecordBuffer::ReadFromFile(const std::wstring& path, uint32_t version, const char* header, size_t headerSize) {
 	File file(path);
 	if (!file.Open())
 		return false;
 
-	if (file.GetSize() < headerSize + sizeof(uint64_t))
+	if (file.GetSize() < headerSize + sizeof(uint32_t))
 		return false;
 
 	{
-		unique_ptr<char> fHead(new char[headerSize]);
+		auto fHead = std::make_unique<char[]>(headerSize);
 		file.Read(fHead.get(), headerSize);
+
 		if (memcmp(fHead.get(), header, headerSize) != 0)
 			return false;
 	}
 	{
-		uint64_t fVersion{};
-		file.Read(&fVersion, sizeof(uint64_t));
-		if (!VersionUtility::IsDataBackwardsCompatible(version, fVersion))
+		uint32_t fVersion{};
+		file.Read(&fVersion, sizeof(uint32_t));
+
+		if (fVersion != version)
 			return false;
 	}
 
