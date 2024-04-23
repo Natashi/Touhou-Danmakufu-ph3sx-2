@@ -3,6 +3,8 @@
 #include "DnhReplay.hpp"
 #include "DnhGcLibImpl.hpp"
 
+#include "../../GcLib/gstd/CompressorStream.hpp"
+
 //*******************************************************************
 //ReplayInformation
 //*******************************************************************
@@ -97,7 +99,9 @@ bool ReplayInformation::SaveToFile(const std::wstring& scriptPath, int index) {
 			};
 			replayFile.write((char*)&header, sizeof(HeaderReplay));
 
-			Compressor::DeflateStream(replayBase, replayFile, replayBase.GetSize(), nullptr);
+			if (!CompressorStream::Deflate(replayBase, replayFile, replayBase.GetSize())) {
+				Logger::WriteError("ReplayInformation::SaveToFile: Failed to compress replay file");
+			}
 		}
 		else {
 			Logger::WriteError("ReplayInformation::SaveToFile: Failed to create replay file.");
@@ -150,8 +154,11 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 
 		size_t sizeFull = 0U;
 		ByteBuffer bufDecomp;
-		if (!Compressor::InflateStream(data, bufDecomp, dataSize - sizeof(HeaderReplay), &sizeFull))
-			return nullptr;
+
+		if (auto oSize = CompressorStream::Inflate(data, bufDecomp, dataSize - sizeof(HeaderReplay))) {
+			sizeFull = *oSize;
+		}
+		else return nullptr;
 
 		bufDecomp.Seek(0);
 		rec.Read(bufDecomp);

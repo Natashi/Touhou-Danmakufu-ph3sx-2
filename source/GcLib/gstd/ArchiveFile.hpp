@@ -114,34 +114,4 @@ namespace gstd {
 		
 		static shared_ptr<ByteBuffer> CreateEntryBuffer(ArchiveFileEntry* entry);
 	};
-
-	//*******************************************************************
-	//Compressor
-	//*******************************************************************
-	class Compressor {
-		using in_stream_t = std::basic_istream<char, std::char_traits<char>>;
-		using out_stream_t = std::basic_ostream<char, std::char_traits<char>>;
-		
-		static constexpr const size_t BASIC_CHUNK = (size_t)(1 << 16);
-	public:
-		static bool Deflate(const size_t chunk, 
-			std::function<size_t(char*, size_t, int*)>&& ReadFunction,
-			std::function<void(char*, size_t)>&& WriteFunction,
-			std::function<void(size_t)>&& AdvanceFunction,
-			std::function<bool()>&& CheckFunction,
-			size_t* res);
-		static bool DeflateStream(in_stream_t& bufIn, out_stream_t& bufOut, size_t count, size_t* res);
-		static bool DeflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t count, size_t* res);
-
-		static bool Inflate(const size_t chunk,
-			std::function<size_t(char*, size_t)>&& ReadFunction,
-			std::function<void(char*, size_t)>&& WriteFunction,
-			std::function<void(size_t)>&& AdvanceFunction,
-			std::function<bool()>&& CheckFunction,
-			size_t* res);
-		static bool InflateStream(in_stream_t& bufIn, out_stream_t& bufOut, size_t count, size_t* res);
-		static bool InflateStream(ByteBuffer& bufIn, out_stream_t& bufOut, size_t count, size_t* res);
-		static bool InflateStream(in_stream_t& bufIn, ByteBuffer& bufOut, size_t count, size_t* res);
-		static bool InflateStream(ByteBuffer& bufIn, ByteBuffer& bufOut, size_t count, size_t* res);
-	};
 }

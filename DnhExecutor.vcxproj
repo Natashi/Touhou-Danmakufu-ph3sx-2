@@ -334,6 +334,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClCompile Include="source\GcLib\directx\Texture.cpp" />
     <ClCompile Include="source\GcLib\directx\TransitionEffect.cpp" />
     <ClCompile Include="source\GcLib\directx\VertexBuffer.cpp" />
+    <ClCompile Include="source\GcLib\gstd\CompressorStream.cpp" />
     <ClCompile Include="source\GcLib\gstd\CpuInformation.cpp" />
     <ClCompile Include="source\GcLib\gstd\Script\Parser.cpp" />
     <ClCompile Include="source\GcLib\gstd\Script\Script.cpp" />
@@ -423,6 +424,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClInclude Include="source\GcLib\directx\Vertex.hpp" />
     <ClInclude Include="source\GcLib\directx\VertexBuffer.hpp" />
     <ClInclude Include="source\GcLib\GcLib.hpp" />
+    <ClInclude Include="source\GcLib\gstd\CompressorStream.hpp" />
     <ClInclude Include="source\GcLib\gstd\CpuInformation.hpp" />
     <ClInclude Include="source\GcLib\gstd\GstdConstant.hpp" />
     <ClInclude Include="source\GcLib\gstd\VectorExtension.hpp" />

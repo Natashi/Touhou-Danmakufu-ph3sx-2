@@ -257,6 +257,9 @@
     <ClCompile Include="source\GcLib\directx\SystemPanel.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\CompressorStream.cpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">
@@ -516,6 +519,9 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\SystemPanel.hpp">
       <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\CompressorStream.hpp">
+      <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -92,6 +92,9 @@
     <ClCompile Include="source\GcLib\gstd\CpuInformation.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
+    <ClCompile Include="source\GcLib\gstd\CompressorStream.cpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\FileArchiver\Constant.hpp">
@@ -176,6 +179,9 @@
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\CpuInformation.hpp">
+      <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\gstd\CompressorStream.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
   </ItemGroup>
