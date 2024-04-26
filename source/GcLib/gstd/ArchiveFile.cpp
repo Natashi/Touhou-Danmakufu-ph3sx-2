@@ -74,7 +74,7 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& baseDir, const std::wst
 		ArchiveFileHeader header{};
 
 		memcpy(header.magic, ArchiveEncryption::HEADER_ARCHIVEFILE, ArchiveFileHeader::MAGIC_LENGTH);
-		header.version = GAME_VERSION_NUM;
+		header.version = DATA_VERSION_ARCHIVE;
 		header.entryCount = listEntry_.size();
 		//header.headerCompressed = true;
 		header.headerOffset = 0U;
