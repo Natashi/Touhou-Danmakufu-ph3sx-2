@@ -141,8 +141,10 @@ bool DnhConfiguration::LoadConfigFile() {
 	std::wstring path = PathProperty::GetModuleDirectory() + L"config.dat";
 
 	RecordBuffer record;
-	if (!record.ReadFromFile(path, DATA_VERSION_CONFIG, "DNHCNFG\0", 8U))
+	if (!record.ReadFromFile(path, DATA_VERSION_CONFIG, "DNHCNFG\0", 8U)) {
+		Logger::WriteWarn("Failed to read saved config file config.dat");
 		return false;
+	}
 
 	record.GetRecord<ScreenMode>("modeScreen", modeScreen_);
 	record.GetRecord<ColorMode>("modeColor", modeColor_);
