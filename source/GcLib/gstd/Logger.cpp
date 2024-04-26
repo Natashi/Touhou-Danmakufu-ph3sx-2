@@ -211,13 +211,17 @@ bool FileLogger::Initialize(const std::string& name, const std::wstring& path, b
 	bEnable_ = bEnable;
 
 	{
-		auto npath = path;
-		if (npath.size() == 0) {
-			npath = PathProperty::GetModuleDirectory() +
-				PathProperty::GetModuleName() +
-				std::wstring(L".log");
+		bool res;
+
+		if (path.size() == 0) {
+			auto nPath = PathProperty::GetModuleName() + std::wstring(L".log");
+			res = SetPath(nPath);
 		}
-		if (!SetPath(npath))
+		else {
+			res = SetPath(path);
+		}
+
+		if (!res)
 			return false;
 	}
 

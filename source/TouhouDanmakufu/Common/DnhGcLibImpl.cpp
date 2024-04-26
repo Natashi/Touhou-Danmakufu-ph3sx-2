@@ -346,19 +346,12 @@ void EDirectInput::ResetVirtualKeyMap() {
 	
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
 
-	AddKeyMap(KEY_LEFT, config->GetVirtualKey(KEY_LEFT));
-	AddKeyMap(KEY_RIGHT, config->GetVirtualKey(KEY_RIGHT));
-	AddKeyMap(KEY_UP, config->GetVirtualKey(KEY_UP));
-	AddKeyMap(KEY_DOWN, config->GetVirtualKey(KEY_DOWN));
-
-	AddKeyMap(KEY_OK, config->GetVirtualKey(KEY_OK));
-	AddKeyMap(KEY_CANCEL, config->GetVirtualKey(KEY_CANCEL));
-
-	AddKeyMap(KEY_SHOT, config->GetVirtualKey(KEY_SHOT));
-	AddKeyMap(KEY_BOMB, config->GetVirtualKey(KEY_BOMB));
-	AddKeyMap(KEY_SLOWMOVE, config->GetVirtualKey(KEY_SLOWMOVE));
-	AddKeyMap(KEY_USER1, config->GetVirtualKey(KEY_USER1));
-	AddKeyMap(KEY_USER2, config->GetVirtualKey(KEY_USER2));
-
-	AddKeyMap(KEY_PAUSE, config->GetVirtualKey(KEY_PAUSE));
+	for (auto key : { 
+		KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN,
+		KEY_OK, KEY_CANCEL,
+		KEY_SHOT, KEY_BOMB, KEY_SLOWMOVE, KEY_USER1, KEY_USER2,
+		KEY_PAUSE
+	}) {
+		AddKeyMap(key, config->GetVirtualKey(key));
+	}
 }
