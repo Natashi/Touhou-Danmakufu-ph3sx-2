@@ -166,23 +166,24 @@ bool DnhConfiguration::LoadConfigFile() {
 	padIndex_ = record.GetRecordOr<int>("padIndex", padIndex_);
 	padResponse_ = record.GetRecordOr<int>("padResponse", padResponse_);
 
-	if (auto data = record.GetRecordAsInteger("mapKey_size")) {
-		int bufKeySize = *data;
+	if (auto data = record.GetRecordAsRecordBuffer("mapKey")) {
+		auto& keyMappingRecord = *data;
 
-		ByteBuffer bufKey(bufKeySize);
-		record.GetRecord("mapKey", bufKey.GetPointer(), bufKey.GetSize());
-
-		size_t mapKeyCount = bufKey.ReadValue<size_t>();
+		if (auto count = keyMappingRecord.GetRecordAs<uint32_t>("count")) {
+			size_t mapKeyCount = *count;
 		if (mapKeyCount == mapKey_.size()) {
+				auto mapKey = *keyMappingRecord.GetRecordAsByteBuffer("data");
+
 			for (size_t iKey = 0; iKey < mapKeyCount; iKey++) {
-				int16_t id = bufKey.ReadShort();
-				int16_t keyCode = bufKey.ReadShort();
-				int16_t padIndex = bufKey.ReadShort();
-				int16_t padButton = bufKey.ReadShort();
+					int16_t id = mapKey.ReadShort();
+					int16_t keyCode = mapKey.ReadShort();
+					int16_t padIndex = mapKey.ReadShort();
+					int16_t padButton = mapKey.ReadShort();
 
 				mapKey_[id].reset(new VirtualKey(keyCode, padIndex, padButton));
 			}
 		}
+	}
 	}
 
 	record.GetRecord("bLogWindow", bLogWindow_);
@@ -215,19 +216,21 @@ bool DnhConfiguration::SaveConfigFile() {
 	record.SetRecordAsInteger("padResponse", padResponse_);
 
 	{
-		ByteBuffer bufKey;
-		bufKey.WriteValue(mapKey_.size());
-		for (auto itrKey = mapKey_.begin(); itrKey != mapKey_.end(); itrKey++) {
-			int16_t id = itrKey->first;
-			ref_count_ptr<VirtualKey> vk = itrKey->second;
+		RecordBuffer keyMappingRecord;
 
-			bufKey.WriteShort(id);
-			bufKey.WriteShort(vk->GetKeyCode());
-			bufKey.WriteShort(padIndex_);
-			bufKey.WriteShort(vk->GetPadButton());
+		keyMappingRecord.SetRecord<uint32_t>("count", mapKey_.size());
+
+		ByteBuffer bufData;
+		for (auto& [id, vk] : mapKey_) {
+			bufData.WriteShort(id);
+			bufData.WriteShort(vk->GetKeyCode());
+			bufData.WriteShort(padIndex_);
+			bufData.WriteShort(vk->GetPadButton());
 		}
-		record.SetRecordAsInteger("mapKey_size", bufKey.GetSize());
-		record.SetRecord("mapKey", bufKey.GetPointer(), bufKey.GetSize());
+
+		keyMappingRecord.SetRecordAsByteBuffer("data", MOVE(bufData));
+
+		record.SetRecordAsRecordBuffer("mapKey", keyMappingRecord);
 	}
 
 	record.SetRecordAsBoolean("bLogWindow", bLogWindow_);
