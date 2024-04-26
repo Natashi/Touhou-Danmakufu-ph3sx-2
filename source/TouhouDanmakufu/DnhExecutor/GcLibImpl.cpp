@@ -224,6 +224,7 @@ bool EApplication::_Loop() {
 					infoLog->SetInfo(2, "Font cache",
 						std::to_string(EDxTextRenderer::GetInstance()->GetCacheCount()));
 				}
+			}
 
 				if (count % 120 == 0) {
 					taskManager->ArrangeTask();
@@ -233,7 +234,6 @@ bool EApplication::_Loop() {
 				}
 				++count;
 			}
-		}
 
 		if (bRenderFrame) {
 			//graphics->SetAllowRenderTargetChange(false);
