@@ -164,7 +164,7 @@ void Logger::_ProcessGui() {
 }
 
 void Logger::Write(ILogger::LogType type, const std::string& str) {
-	if (!IsWindowVisible()) return;
+	//if (!IsWindowVisible()) return;
 
 	SYSTEMTIME systemTime;
 	GetLocalTime(&systemTime);
@@ -175,7 +175,7 @@ void Logger::Write(ILogger::LogType type, const std::string& str) {
 		logger->Write(data);
 }
 void Logger::Write(ILogger::LogType type, const std::wstring& str) {
-	if (!IsWindowVisible()) return;
+	//if (!IsWindowVisible()) return;
 
 	Write(type, StringUtility::ConvertWideToMulti(str));
 }
