@@ -1507,7 +1507,7 @@ value ScriptClientBase::Func_WriteLog(script_machine* machine, int argc, const v
 		if ((++i) >= argc) break;
 		msg += L",";
 	}
-	Logger::WriteTop(msg);
+	Logger::WriteTop(ILogger::LogType::User1, msg);
 	return value();
 }
 value ScriptClientBase::Func_RaiseError(script_machine* machine, int argc, const value* argv) {

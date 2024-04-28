@@ -500,11 +500,12 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 		float htItem = ImGui::GetTextLineHeightWithSpacing();
 
 		{
-			static const ImVec4 colorInfo = ImColor(0, 0, 64);
-			static const ImVec4 colorWarn = ImColor(255, 128, 0);
-			static const ImVec4 colorError = ImColor(255, 24, 24);
-			static const char* strWarning = "[warn]";
-			static const char* strError = "[error]";
+			const ImVec4 colorInfo  = ImColor(0, 0, 64);
+			const ImVec4 colorWarn  = ImColor(255, 128, 0);
+			const ImVec4 colorError = ImColor(255, 24, 24);
+			const ImVec4 colorUser1 = ImColor(0, 32, 192);
+			const char* strWarning  = "[warn]";
+			const char* strError    = "[error]";
 
 			size_t count = eventsCopy_.size();
 
@@ -526,30 +527,35 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 			for (size_t i = dispStart; i < dispEnd; ++i) {
 				const LogEntry& entry = eventsCopy_[i];
 
-				const ImVec4* color = &colorInfo;
+				ImVec4 color = ImColor(0, 0, 64);
 				const char* label = "";
+				bool addIndent = false;
 
 				switch (entry.type) {
 				case LogType::Warning:
-					color = &colorWarn;
+					color = colorWarn;
 					label = strWarning;
+					addIndent = true;
 					break;
 				case LogType::Error:
-					color = &colorError;
+					color = colorError;
 					label = strError;
+					addIndent = true;
+					break;
+				case LogType::User1:
+					color = colorUser1;
 					break;
 				}
 
-				ImGui::PushStyleColor(ImGuiCol_Text, *color);
+				ImGui::PushStyleColor(ImGuiCol_Text, color);
 
 				ImGui::TextUnformatted(entry.time.c_str());
 				ImGui::SameLine(92);
 
-				if (entry.type != LogType::Info) {
+				if (addIndent) {
 					ImGui::TextUnformatted(label);
 					ImGui::SameLine(92 + 48);
 				}
-
 				ImGui::TextUnformatted(entry.text.c_str());
 
 				ImGui::PopStyleColor();

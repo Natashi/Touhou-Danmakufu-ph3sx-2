@@ -16,6 +16,7 @@ namespace gstd {
 			Info,
 			Warning,
 			Error,
+			User1,
 		};
 
 		struct LogData {
