@@ -16,7 +16,6 @@ class StgItemObject;
 //StgItemManager
 //*******************************************************************
 class StgItemManager {
-	friend class StgItemRenderer;
 public:
 	enum {
 		ITEM_MAX = 10000,
@@ -180,7 +179,7 @@ public:
 //StgItemObject
 //*******************************************************************
 class StgItemObject : public DxScriptShaderObject, public StgMoveObject, public StgIntersectionObject {
-	friend class StgItemManager;
+	friend StgItemManager;
 public:
 	enum {
 		//Default item IDs

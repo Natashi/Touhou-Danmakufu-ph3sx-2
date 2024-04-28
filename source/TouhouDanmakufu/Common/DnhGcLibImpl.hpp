@@ -28,7 +28,7 @@ public:
 //*******************************************************************
 class ELogger : public Singleton<ELogger>, public Logger {
 	class WindowThread : public Thread, public InnerClass<ELogger> {
-		friend class ELogger;
+		friend ELogger;
 	protected:
 		WindowThread(ELogger* logger);
 		void _Run();

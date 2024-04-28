@@ -47,7 +47,7 @@ namespace directx {
 	template<typename T>
 	class BufferBase {
 		static_assert(std::is_base_of<IDirect3DResource9, T>::value, "T must be a Direct3D resource");
-		friend class VertexBufferManager;
+		friend VertexBufferManager;
 	public:
 		BufferBase();
 		BufferBase(IDirect3DDevice9* device);

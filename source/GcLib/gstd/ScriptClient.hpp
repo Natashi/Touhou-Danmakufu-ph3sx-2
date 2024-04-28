@@ -92,7 +92,7 @@ namespace gstd {
 	//*******************************************************************
 	class ScriptLoader;
 	class ScriptClientBase {
-		friend class ScriptLoader;
+		friend ScriptLoader;
 		static unique_ptr<script_type_manager> pTypeManager_;
 	public:
 		enum {

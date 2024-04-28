@@ -83,7 +83,7 @@ namespace gstd {
 	class script_machine {
 	public:
 		class environment {
-			friend class script_machine;
+			friend script_machine;
 		private:
 			size_t _index;
 		public:

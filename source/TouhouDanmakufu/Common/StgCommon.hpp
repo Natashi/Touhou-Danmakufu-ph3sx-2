@@ -127,9 +127,9 @@ public:
 class StgMovePattern_XY;
 class StgMovePattern_XY_Angle;
 class StgMovePattern_Angle : public StgMovePattern {
-	friend class StgMoveObject;
-	friend class StgMovePattern_XY;
-	friend class StgMovePattern_XY_Angle;
+	friend StgMoveObject;
+	friend StgMovePattern_XY;
+	friend StgMovePattern_XY_Angle;
 public:
 	enum : int8_t {
 		SET_SPEED,
@@ -191,9 +191,9 @@ public:
 };
 
 class StgMovePattern_XY : public StgMovePattern {
-	friend class StgMoveObject;
-	friend class StgMovePattern_Angle;
-	friend class StgMovePattern_XY_Angle;
+	friend StgMoveObject;
+	friend StgMovePattern_Angle;
+	friend StgMovePattern_XY_Angle;
 public:
 	enum : int8_t {
 		SET_S_X,
@@ -243,9 +243,9 @@ public:
 };
 
 class StgMovePattern_XY_Angle : public StgMovePattern {
-	friend class StgMoveObject;
-	friend class StgMovePattern_Angle;
-	friend class StgMovePattern_XY;
+	friend StgMoveObject;
+	friend StgMovePattern_Angle;
+	friend StgMovePattern_XY;
 public:
 	enum : int8_t {
 		SET_S_X,
@@ -312,7 +312,7 @@ public:
 };
 
 class StgMovePattern_Line : public StgMovePattern {
-	friend class StgMoveObject;
+	friend StgMoveObject;
 public:
 	enum : int8_t {
 		SET_DX,
@@ -355,7 +355,7 @@ public:
 	virtual double GetSpeedY() { return (speed_ * s_); }
 };
 class StgMovePattern_Line_Speed : public StgMovePattern_Line {
-	friend class StgMoveObject;
+	friend StgMoveObject;
 public:
 	StgMovePattern_Line_Speed(StgMoveObject* target);
 
@@ -366,7 +366,7 @@ public:
 	void SetAtSpeed(double tx, double ty, double speed);
 };
 class StgMovePattern_Line_Frame : public StgMovePattern_Line {
-	friend class StgMoveObject;
+	friend StgMoveObject;
 public:
 	using lerp_func = Math::Lerp::funcLerp<double, double>;
 	using lerp_diff_func = Math::Lerp::funcLerpDiff<double>;
@@ -387,7 +387,7 @@ public:
 	void SetAtFrame(double tx, double ty, uint32_t frame, lerp_func lerpFunc, lerp_diff_func diffFunc);
 };
 class StgMovePattern_Line_Weight : public StgMovePattern_Line {
-	friend class StgMoveObject;
+	friend StgMoveObject;
 protected:
 	double dist_;
 	double weight_;

@@ -186,7 +186,7 @@ public:
 };
 
 class StgEnemyBossSceneData {
-	friend class StgEnemyManager;
+	friend StgEnemyManager;
 private:
 	volatile bool bLoad_;
 

@@ -14,7 +14,7 @@ class StgShotObject;
 //StgShotManager
 //*******************************************************************
 class StgShotManager {
-	friend class StgShotVertexBufferContainer;
+	friend StgShotVertexBufferContainer;
 public:
 	enum {
 		DEL_TYPE_ALL,
@@ -205,7 +205,7 @@ public:
 //StgShotVertexBufferContainer
 //*******************************************************************
 class StgShotVertexBufferContainer {
-	friend class StgShotDataList;
+	friend StgShotDataList;
 public:
 	enum {
 		MAX_DATA = 2048,
@@ -469,7 +469,7 @@ public:
 //StgNormalShotObject
 //*******************************************************************
 class StgNormalShotObject : public StgShotObject {
-	friend class StgShotObject;
+	friend StgShotObject;
 protected:
 	double angularVelocity_;
 	bool bFixedAngle_;
