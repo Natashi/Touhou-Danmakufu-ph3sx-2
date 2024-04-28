@@ -92,9 +92,7 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& baseDir, const std::wst
 
 		size_t iEntry = 0;
 		//Write the files and record their information.
-		for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr, ++iEntry) {
-			shared_ptr<ArchiveFileEntry> entry = *itr;
-
+		for (auto& entry : listEntry_) {
 			if (cbStatus) {
 				std::wstring name = entry->path;
 				cbStatus(StringUtility::Format(L"Processing [%s]", name.c_str()));
@@ -155,6 +153,8 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& baseDir, const std::wst
 
 			if (cbProgress)
 				cbProgress(0.1f + progressStep * iEntry);
+
+			++iEntry;
 		}
 
 		std::streampos sOffsetInfoBegin = fileArchiveTmp.tellp();
@@ -172,9 +172,7 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& baseDir, const std::wst
 			size_t totalSize = 0U;
 
 			iEntry = 0;
-			for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr, ++iEntry) {
-				shared_ptr<ArchiveFileEntry> entry = *itr;
-
+			for (auto& entry : listEntry_) {
 				uint32_t sz = entry->GetRecordSize();
 				buf.write((char*)&sz, sizeof(uint32_t));	//Write the size of the entry
 				entry->_WriteEntryRecord(buf);
@@ -183,6 +181,8 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& baseDir, const std::wst
 
 				if (cbProgress)
 					cbProgress(0.75f + progressStep * iEntry);
+
+				++iEntry;
 			}
 
 			size_t countByte = totalSize;
@@ -237,7 +237,7 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& baseDir, const std::wst
 		throw e;
 	}
 
-	::DeleteFileW(pathTmp.c_str());
+	//::DeleteFileW(pathTmp.c_str());
 
 	if (cbStatus)
 		cbStatus(L"Done");
@@ -247,7 +247,8 @@ bool FileArchiver::CreateArchiveFile(const std::wstring& baseDir, const std::wst
 	return res;
 }
 
-bool FileArchiver::EncryptArchive(std::fstream& inSrc, const std::wstring& pathOut, ArchiveFileHeader* header,
+bool FileArchiver::EncryptArchive(std::fstream& inSrc, const std::wstring& pathOut, 
+	ArchiveFileHeader* header,
 	byte keyBase, byte keyStep) 
 {
 	if (!inSrc.is_open()) return false;
@@ -271,8 +272,7 @@ bool FileArchiver::EncryptArchive(std::fstream& inSrc, const std::wstring& pathO
 	}
 
 	{
-		for (auto itr = listEntry_.begin(); itr != listEntry_.end(); ++itr) {
-			auto entry = *itr;
+		for (auto& entry : listEntry_) {
 			size_t count = entry->sizeStored;
 
 			byte localBase = entry->keyBase;
@@ -415,7 +415,6 @@ bool ArchiveFile::Open() {
 			bufInfo.read((char*)&sizeEntry, sizeof(uint32_t));
 
 			entry._ReadEntryRecord(bufInfo);
-			entry.archiveParent = this;
 
 			/*
 			{
@@ -446,42 +445,32 @@ void ArchiveFile::Close() {
 	mapEntry_.clear();
 }
 
-bool ArchiveFile::IsExists(const std::wstring& name, EntryMapIterator* out) {
-	auto itr = mapEntry_.find(name);
-	if (out) *out = itr;
-	return itr != mapEntry_.end();
-}
 std::set<std::wstring> ArchiveFile::GetFileList() {
 	std::set<std::wstring> res;
-	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); ++itr)
-		res.insert(itr->second.path);
+	for (auto& [path, entry] : mapEntry_)
+		res.insert(entry.path);
 	return res;
 }
-ArchiveFileEntry* ArchiveFile::GetEntryByPath(const std::wstring& name) {
-	EntryMapIterator itrFind;
-	if (!IsExists(name, &itrFind))
-		return nullptr;
-	return &itrFind->second;
+optional<ArchiveFileEntry*> ArchiveFile::GetEntryByPath(const std::wstring& name) {
+	auto itr = mapEntry_.find(name);
+	if (itr != mapEntry_.end())
+		return &itr->second;
+	return {};
 }
 
-shared_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry* entry) {
-	shared_ptr<ByteBuffer> res;
+unique_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry* entry) {
+	unique_ptr<ByteBuffer> res;
 
-	ArchiveFile* parentArchive = entry->archiveParent;
-	size_t globalReadOff = parentArchive->globalReadOffset_;
+	// Archive file somehow closed, try to reopen
+	if (!file_->IsOpen())
+		OpenFile();
 
-	shared_ptr<File> archFile = parentArchive->GetFile();
-
-	//Archive file somehow closed, try to reopen
-	if (!archFile->IsOpen())
-		parentArchive->OpenFile();
-
-	std::fstream& stream = archFile->GetFileHandle();
+	std::fstream& stream = file_->GetFileHandle();
 	if (stream.is_open()) {
 		switch (entry->compressionType) {
 		case ArchiveFileEntry::CT_NONE:
 		{
-			stream.seekg(globalReadOff + entry->offsetPos, std::ios::beg);
+			stream.seekg(globalReadOffset_ + entry->offsetPos, std::ios::beg);
 
 			res.reset(new ByteBuffer(entry->sizeFull));
 
@@ -495,7 +484,7 @@ shared_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry* entry) {
 		}
 		case ArchiveFileEntry::CT_ZLIB:
 		{
-			stream.seekg(globalReadOff + entry->offsetPos, std::ios::beg);
+			stream.seekg(globalReadOffset_ + entry->offsetPos, std::ios::beg);
 
 			res.reset(new ByteBuffer());
 
@@ -543,7 +532,7 @@ shared_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry* entry) {
 		Logger::WriteTop(StringUtility::Format(
 			L"CreateEntryBuffer: Cannot open archive file for reading.\r\n"
 			L"\t[%s] in [%s]", entry->fullPath.c_str(), 
-			PathProperty::ReduceModuleDirectory(entry->archiveParent->GetPath()).c_str()));
+			PathProperty::ReduceModuleDirectory(GetPath()).c_str()));
 	}
 
 	return res;

@@ -173,19 +173,19 @@ bool DnhConfiguration::LoadConfigFile() {
 
 		if (auto count = keyMappingRecord.GetRecordAs<uint32_t>("count")) {
 			size_t mapKeyCount = *count;
-		if (mapKeyCount == mapKey_.size()) {
+			if (mapKeyCount == mapKey_.size()) {
 				auto mapKey = *keyMappingRecord.GetRecordAsByteBuffer("data");
 
-			for (size_t iKey = 0; iKey < mapKeyCount; iKey++) {
+				for (size_t iKey = 0; iKey < mapKeyCount; iKey++) {
 					int16_t id = mapKey.ReadShort();
 					int16_t keyCode = mapKey.ReadShort();
 					int16_t padIndex = mapKey.ReadShort();
 					int16_t padButton = mapKey.ReadShort();
 
-				mapKey_[id].reset(new VirtualKey(keyCode, padIndex, padButton));
+					mapKey_[id].reset(new VirtualKey(keyCode, padIndex, padButton));
+				}
 			}
 		}
-	}
 	}
 
 	record.GetRecord("bLogWindow", bLogWindow_);

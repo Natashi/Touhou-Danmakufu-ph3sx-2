@@ -475,7 +475,7 @@ void MainWindow::_ProcessGui_FileTree() {
 void MainWindow::_AddFileFromDialog() {
 	std::wstring dirBase;
 
-	IFileOpenDialog* pFileOpen;
+	IFileOpenDialog* pFileOpen{};
 	HRESULT hr = ::CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL,
 		IID_IFileOpenDialog, (void**)(&pFileOpen));
 	if (SUCCEEDED(hr)) {
@@ -617,7 +617,7 @@ std::wstring MainWindow::_CreateRelativeDirectory(const std::wstring& dirBase, c
 void MainWindow::_StartArchive() {
 	std::wstring path;
 
-	IFileSaveDialog* pFileSave;
+	IFileSaveDialog* pFileSave{};
 	HRESULT hr = ::CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_ALL,
 		IID_IFileSaveDialog, (void**)(&pFileSave));
 	if (SUCCEEDED(hr)) {
@@ -697,18 +697,13 @@ void ArchiverThread::_Run() {
 	FileArchiver archiver;
 
 	for (FileEntryInfo* iFile : listFile_) {
-		std::shared_ptr<ArchiveFileEntry> entry = std::make_shared<ArchiveFileEntry>();
-
-		entry->path = iFile->path;
-		entry->sizeFull = 0U;
-		entry->sizeStored = 0U;
-		entry->offsetPos = 0U;
+		auto entry = std::make_unique<ArchiveFileEntry>(iFile->path);
 
 		std::wstring ext = PathProperty::GetFileExtension(entry->path);
 		bool bCompress = listCompressExclude_.find(ext) == listCompressExclude_.end();
 		entry->compressionType = bCompress ? ArchiveFileEntry::CT_ZLIB : ArchiveFileEntry::CT_NONE;
 
-		archiver.AddEntry(entry);
+		archiver.AddEntry(MOVE(entry));
 	}
 
 	::Sleep(100);

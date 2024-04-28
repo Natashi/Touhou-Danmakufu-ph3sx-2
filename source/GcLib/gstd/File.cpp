@@ -446,16 +446,15 @@ bool FileManager::AddArchiveFile(const std::wstring& archivePath, size_t readOff
 		return false;
 	}
 
-	shared_ptr<ArchiveFile> archive(new ArchiveFile(archivePath, readOff));
+	unique_ptr<ArchiveFile> archive(new ArchiveFile(archivePath, readOff));
 	if (!archive->Open())
 		return false;
 
-	auto& mapEntry = archive->GetEntryMap();
-	for (auto itr = mapEntry.begin(); itr != mapEntry.end(); ++itr) {
-		const std::wstring& path = itr->first;		//No module dir
-		ArchiveFileEntry* pEntry = &itr->second;
-
+	for (auto& [path, entry] : archive->GetEntryMap()) {
+		// path is without module dir
 		std::wstring fullEntryPath = moduleDir + path;
+
+		ArchiveFileEntry* pEntry = &entry;
 
 		pEntry->fullPath = path;
 
@@ -468,40 +467,41 @@ bool FileManager::AddArchiveFile(const std::wstring& archivePath, size_t readOff
 			throw wexception(log);
 		}
 		else {
-			mapArchiveEntries_[path] = std::make_pair(pEntry, nullptr);
+			ArchiveEntryStore entry = {
+				archive.get(),
+				pEntry,
+				nullptr
+			};
+			mapArchiveEntries_[path] = MOVE(entry);
 		}
 	}
 
-	mapArchiveFile_[archivePath] = archive;
+	mapArchiveFile_[archivePath] = MOVE(archive);
 	return true;
 }
 bool FileManager::RemoveArchiveFile(const std::wstring& archivePath) {
-	auto itrFind = mapArchiveFile_.find(archivePath);
-	if (itrFind != mapArchiveFile_.end()) {
-		ArchiveFile* pArchiveFile = itrFind->second.get();
-		for (auto itr = mapArchiveEntries_.begin(); itr != mapArchiveEntries_.end();) {
-			if (itr->second.first->archiveParent == pArchiveFile) {
-				itr = mapArchiveEntries_.erase(itr);
-			}
-			else ++itr;
-		}
-		mapArchiveFile_.erase(itrFind);
+	auto itr = mapArchiveFile_.find(archivePath);
+	if (itr != mapArchiveFile_.end()) {
+		ArchiveFile* archive = itr->second.get();
+		archive->Close();
+		
+		mapArchiveFile_.erase(itr);
 		return true;
 	}
 	return false;
 }
-shared_ptr<ArchiveFile> FileManager::GetArchiveFile(const std::wstring& archivePath) {
-	shared_ptr<ArchiveFile> res = nullptr;
+ArchiveFile* FileManager::GetArchiveFile(const std::wstring& archivePath) {
 	auto itrFind = mapArchiveFile_.find(archivePath);
 	if (itrFind != mapArchiveFile_.end())
-		res = itrFind->second;
-	return res;
+		return itrFind->second.get();
+	return nullptr;
 }
-ArchiveFileEntry* FileManager::GetArchiveFileEntry(const std::wstring& path) {
+FileManager::ArchiveEntryStore* FileManager::GetArchiveFileEntry(const std::wstring& path) {
 	std::wstring pathNoModule = PathProperty::GetPathWithoutModuleDirectory(path);
+
 	auto itrFind = mapArchiveEntries_.find(pathNoModule);
 	if (itrFind != mapArchiveEntries_.end())
-		return itrFind->second.first;
+		return &itrFind->second;
 	return nullptr;
 }
 
@@ -511,8 +511,9 @@ std::vector<ArchiveFileEntry*> FileManager::GetArchiveFilesInDirectory(const std
 	std::wstring dirNoModule = PathProperty::GetPathWithoutModuleDirectory(dir);
 	dirNoModule = PathProperty::AppendSlash(dirNoModule);
 
-	for (auto& [_, entryPair] : mapArchiveEntries_) {
-		ArchiveFileEntry* pEntry = entryPair.first;
+	for (auto& [_, entryData] : mapArchiveEntries_) {
+		ArchiveFileEntry* pEntry = entryData.entry;
+
 		if (!bSubDirectory) {
 			std::wstring entryDir = PathProperty::GetFileDirectory(pEntry->fullPath);
 			if (entryDir == dirNoModule) {
@@ -534,13 +535,16 @@ std::set<std::wstring> FileManager::GetArchiveSubDirectoriesInDirectory(const st
 	std::wstring dirNoModule = PathProperty::GetPathWithoutModuleDirectory(dir);
 	dirNoModule = PathProperty::AppendSlash(dirNoModule);
 
-	for (auto& [_, entryPair] : mapArchiveEntries_) {
-		ArchiveFileEntry* pEntry = entryPair.first;
+	for (auto& [_, entryData] : mapArchiveEntries_) {
+		ArchiveFileEntry* pEntry = entryData.entry;
+
 		if (pEntry->fullPath._Starts_with(dirNoModule)) {
 			size_t pos = pEntry->fullPath.find_first_of(L"/", dirNoModule.size());
+
 			if (pos != std::wstring::npos) {	// If the substr is a directory
 				std::wstring subDir = pEntry->fullPath.substr(0, pos);
 				subDir = PathProperty::AppendSlash(subDir);
+
 				res.insert(subDir);
 			}
 		}
@@ -556,17 +560,16 @@ bool FileManager::IsArchiveFileExists(const std::wstring& path) {
 		return false;
 	*/
 
-	ArchiveFileEntry* pEntry = GetArchiveFileEntry(path);
-	return pEntry != nullptr;
+	auto pEntry = GetArchiveFileEntry(path);
+	return pEntry != nullptr && pEntry->entry != nullptr;
 }
 bool FileManager::IsArchiveDirectoryExists(const std::wstring& _dir) {
 	std::wstring moduleDir = PathProperty::GetModuleDirectory();
 	if (_dir.find(moduleDir) != std::wstring::npos) {
 		std::wstring dir = PathProperty::AppendSlash(_dir.substr(moduleDir.size()));
 
-		for (auto itr = mapArchiveEntries_.cbegin(); itr != mapArchiveEntries_.cend(); ++itr) {
-			const std::wstring& fullPath = itr->first;
-			std::wstring entryDir = PathProperty::GetFileDirectory(fullPath);
+		for (auto& [path, _] : mapArchiveEntries_) {
+			std::wstring entryDir = PathProperty::GetFileDirectory(path);
 			if (entryDir._Starts_with(dir))
 				return true;
 		}
@@ -592,12 +595,11 @@ shared_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	}
 #if defined(DNH_PROJ_EXECUTOR)
 	else {
-		//Cannot find a physical file, search in the archive entries.
+		// Cannot find a physical file, search in the archive entries.
 
-		ArchiveFileEntry* pEntry = GetArchiveFileEntry(pathAsUnique);
-		if (pEntry) {
-			shared_ptr<File> file = pEntry->archiveParent->GetFile();
-			res.reset(new ManagedFileReader(file, pEntry));
+		if (auto pEntry = GetArchiveFileEntry(pathAsUnique)) {
+			shared_ptr<File> file = pEntry->archive->GetFile();
+			res.reset(new ManagedFileReader(file, pEntry->entry));
 		}
 	}
 #endif
@@ -606,22 +608,25 @@ shared_ptr<FileReader> FileManager::GetFileReader(const std::wstring& path) {
 	return res;
 }
 
-shared_ptr<ByteBuffer> FileManager::_GetByteBuffer(ArchiveFileEntry* entry) {
-	shared_ptr<ByteBuffer> res = nullptr;
+ByteBuffer* FileManager::_GetByteBuffer(ArchiveFileEntry* entry) {
+	ByteBuffer* res = nullptr;
+
 	try {
 		Lock lock(lock_);
 
-		const std::wstring& fullPath = entry->fullPath;	//Without module dir
+		const std::wstring& fullPath = entry->fullPath;	// without module dir
 
 		auto itr = mapArchiveEntries_.find(fullPath);
 		if (itr != mapArchiveEntries_.end()) {
-			res = itr->second.second;
+			auto archive = itr->second.archive;
+			auto& buf = itr->second.dataBuffer;
 
-			//Buffer for this entry doesn't yet exist, create new one
-			if (res == nullptr) {
-				res = ArchiveFile::CreateEntryBuffer(entry);
-				itr->second.second = res;
+			// Buffer for this entry doesn't yet exist, create new one
+			if (buf == nullptr) {
+				buf = MOVE(archive->CreateEntryBuffer(entry));
 			}
+
+			res = buf.get();
 		}
 	}
 	catch (...) {}
@@ -632,11 +637,11 @@ void FileManager::_ReleaseByteBuffer(ArchiveFileEntry* entry) {
 	{
 		Lock lock(lock_);
 
-		const std::wstring& fullPath = entry->fullPath;	//Without module dir
+		const std::wstring& fullPath = entry->fullPath;	// Without module dir
 
 		auto itr = mapArchiveEntries_.find(fullPath);
 		if (itr != mapArchiveEntries_.end()) {
-			itr->second.second = nullptr;
+			itr->second.dataBuffer = nullptr;
 		}
 	}
 }

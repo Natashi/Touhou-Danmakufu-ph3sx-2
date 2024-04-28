@@ -215,12 +215,16 @@ namespace gstd {
 #endif
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
-		using PairArchiveEntry = std::pair<ArchiveFileEntry*, shared_ptr<ByteBuffer>>;
+		struct ArchiveEntryStore {
+			ArchiveFile* archive;
+			ArchiveFileEntry* entry;
+			unique_ptr<ByteBuffer> dataBuffer;
+		};
 
-		std::unordered_map<std::wstring, shared_ptr<ArchiveFile>> mapArchiveFile_;
-		std::map<std::wstring, PairArchiveEntry> mapArchiveEntries_;
+		std::unordered_map<std::wstring, unique_ptr<ArchiveFile>> mapArchiveFile_;
+		std::map<std::wstring, ArchiveEntryStore> mapArchiveEntries_;
 
-		shared_ptr<ByteBuffer> _GetByteBuffer(ArchiveFileEntry* entry);
+		ByteBuffer* _GetByteBuffer(ArchiveFileEntry* entry);
 		void _ReleaseByteBuffer(ArchiveFileEntry* entry);
 #endif
 	public:
@@ -241,8 +245,8 @@ namespace gstd {
 		bool AddArchiveFile(const std::wstring& archivePath, size_t readOff);
 		bool RemoveArchiveFile(const std::wstring& archivePath);
 
-		shared_ptr<ArchiveFile> GetArchiveFile(const std::wstring& archivePath);
-		ArchiveFileEntry* GetArchiveFileEntry(const std::wstring& path);
+		ArchiveFile* GetArchiveFile(const std::wstring& archivePath);
+		ArchiveEntryStore* GetArchiveFileEntry(const std::wstring& path);
 
 		std::vector<ArchiveFileEntry*> GetArchiveFilesInDirectory(const std::wstring& dir, bool bSubDirectory);
 		std::set<std::wstring> GetArchiveSubDirectoriesInDirectory(const std::wstring& dir);
@@ -339,7 +343,7 @@ namespace gstd {
 		shared_ptr<File> file_;
 		ArchiveFileEntry* entry_;
 
-		shared_ptr<ByteBuffer> buffer_;
+		ByteBuffer* buffer_;
 		size_t offset_;
 	public:
 		ManagedFileReader(shared_ptr<File> file, ArchiveFileEntry* entry);
@@ -358,7 +362,7 @@ namespace gstd {
 		virtual bool IsArchived();
 		virtual bool IsCompressed();
 
-		virtual shared_ptr<ByteBuffer> GetBuffer() { return buffer_; }
+		virtual ByteBuffer* GetBuffer() { return buffer_; }
 	};
 #endif
 
@@ -431,7 +435,7 @@ namespace gstd {
 		template <typename T> inline optional<T> GetRecordAs(const std::string& key) {
 			T res{};
 			if (GetRecord(key, res))
-			return res;
+				return res;
 			return {};
 		}
 		template <typename T> inline T GetRecordOr(const std::string& key, T def) {

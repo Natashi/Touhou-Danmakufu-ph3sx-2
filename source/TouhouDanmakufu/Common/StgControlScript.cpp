@@ -386,7 +386,7 @@ gstd::value StgControlScript::Func_GetArchiveFilePathList(gstd::script_machine* 
 	std::wstring name = argv[0].as_string();
 	bool bExtendPath = argv[1].as_boolean();
 
-	shared_ptr<ArchiveFile> archive = fileManager->GetArchiveFile(name);
+	ArchiveFile* archive = fileManager->GetArchiveFile(name);
 	if (archive) {
 		std::wstring archiveBaseDir = PathProperty::GetFileDirectory(archive->GetPath());
 

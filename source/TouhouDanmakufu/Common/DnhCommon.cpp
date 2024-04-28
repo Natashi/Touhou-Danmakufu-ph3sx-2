@@ -201,7 +201,8 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScr
 
 		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader == nullptr || !reader->Open()) {
-			Logger::WriteTop(L"CreatePlayerScriptInformationList: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
+			Logger::WriteTop(L"CreatePlayerScriptInformationList: " 
+				+ ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 			continue;
 		}
 
@@ -215,16 +216,18 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScr
 
 	return res;
 }
-std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInformationList(const std::wstring& path,
-	bool bNeedHeader) 
+std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInformationList(
+	const std::wstring& path, bool bNeedHeader) 
 {
 	std::vector<ref_count_ptr<ScriptInformation>> res;
 
 	File file(path);
-	if (!file.Open()) return res;
-	if (file.GetSize() < ArchiveFileHeader::MAGIC_LENGTH) return res;
+	if (!file.Open())
+		return res;
+	if (file.GetSize() < ArchiveFileHeader::MAGIC_LENGTH)
+		return res;
 
-	char header[ArchiveFileHeader::MAGIC_LENGTH];
+	char header[ArchiveFileHeader::MAGIC_LENGTH]{};
 	file.Read(&header, ArchiveFileHeader::MAGIC_LENGTH);
 	{
 		byte keyBase;
@@ -233,24 +236,23 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 		ArchiveEncryption::ShiftBlock((byte*)header, ArchiveFileHeader::MAGIC_LENGTH, keyBase, keyStep);
 	}
 
-	//Found a .dat, open it to read script files within
+	// Found a .dat, open it to read script files within
 	if (memcmp(header, ArchiveEncryption::HEADER_ARCHIVEFILE, ArchiveFileHeader::MAGIC_LENGTH) == 0) {
 		file.Close();
 
 		ArchiveFile archive(path, 0);
-		if (!archive.Open()) return res;
+		if (!archive.Open())
+			return res;
 
-		auto& mapEntry = archive.GetEntryMap();
-		for (auto itr = mapEntry.begin(); itr != mapEntry.end(); itr++) {
-			ArchiveFileEntry* entry = &itr->second;
-
-			std::wstring ext = PathProperty::GetFileExtension(entry->path);
+		for (auto& [_, entry] : archive.GetEntryMap()) {
+			std::wstring ext = PathProperty::GetFileExtension(entry.path);
 			if (ScriptInformation::IsExcludeExtension(ext))
 				continue;
 
-			std::wstring tPath = PathProperty::GetModuleDirectory() + entry->fullPath;
+			std::wstring tPath = PathProperty::GetModuleDirectory() + entry.fullPath;
 
-			shared_ptr<ByteBuffer> buffer = ArchiveFile::CreateEntryBuffer(entry);
+			shared_ptr<ByteBuffer> buffer = archive.CreateEntryBuffer(&entry);
+
 			std::string source = "";
 			size_t size = buffer->GetSize();
 			source.resize(size);
@@ -262,18 +264,19 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 	}
 	else {
 		std::wstring ext = PathProperty::GetFileExtension(path);
-		if (ScriptInformation::IsExcludeExtension(ext)) return res;
+		if (ScriptInformation::IsExcludeExtension(ext))
+			return res;
 
 		file.SetFilePointerBegin();
+
 		std::string source = "";
 		size_t size = file.GetSize();
 		source.resize(size);
 		file.Read(&source[0], size);
 
 		auto info = CreateScriptInformation(path, L"", source, bNeedHeader);
-		if (info) res.push_back(info);
-
-		file.Close();
+		if (info)
+			res.push_back(info);
 	}
 
 	return res;
