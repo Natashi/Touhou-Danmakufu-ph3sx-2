@@ -37,10 +37,10 @@ void ByteBuffer::Clear() {
 
 void ByteBuffer::SetSize(size_t size) {
 	data_.resize(size);
-	}
+}
 void ByteBuffer::Reserve(size_t newReserve) {
 	data_.reserve(newReserve);
-	}
+}
 
 void ByteBuffer::Seek(size_t pos) {
 	offset_ = pos;
@@ -50,7 +50,9 @@ void ByteBuffer::Seek(size_t pos) {
 DWORD ByteBuffer::Write(LPVOID buf, DWORD size) {
 	if (size == 0) return 0;
 
-	data_.resize(offset_ + size);
+	if (offset_ + size >= data_.size())
+		data_.resize(offset_ + size);
+
 	memcpy(&data_[offset_], buf, size);
 	offset_ += size;
 
