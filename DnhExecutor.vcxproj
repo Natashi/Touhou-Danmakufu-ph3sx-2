@@ -210,8 +210,6 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
       <Optimization>Disabled</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level2</WarningLevel>
-      <MinimalRebuild>
-      </MinimalRebuild>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>DNH_PROJ_EXECUTOR;WIN32;_DEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
