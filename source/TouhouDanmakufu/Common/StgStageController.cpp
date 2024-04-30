@@ -103,7 +103,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		if (infoLog)
 			infoLog->SetInfo(11, "Rand seed", StringUtility::Format("%08x", randSeed));
 
-		keyReplayManager_->ReadRecord(*replayStageData->GetReplayKeyRecord());
+		keyReplayManager_->ReadRecord(replayStageData->GetReplayKeyRecord());
 
 		infoStage_->SetScore(replayStageData->GetStartScore());
 		infoStage_->SetGraze(replayStageData->GetGraze());
@@ -245,12 +245,11 @@ void StgStageController::CloseScene() {
 
 	//リプレイ
 	if (!infoStage_->IsReplay()) {
-		//キー
-		ref_count_ptr<RecordBuffer> recKey(new RecordBuffer());
-		keyReplayManager_->WriteRecord(*recKey);
+		RecordBuffer recKey;
+		keyReplayManager_->WriteRecord(recKey);
 
 		ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage_->GetReplayData();
-		replayStageData->SetReplayKeyRecord(recKey);
+		replayStageData->SetReplayKeyRecord(MOVE(recKey));
 
 		//最終フレーム
 		DWORD stageFrame = infoStage_->GetCurrentFrame();
@@ -279,17 +278,15 @@ void StgStageController::_SetupReplayTargetCommonDataArea(shared_ptr<ManagedScri
 
 	auto scriptCommonDataManager = systemController_->GetCommonDataManager();
 	if (!infoStage_->IsReplay()) {
-		for (auto itrArea = listArea.begin(); itrArea != listArea.end(); ++itrArea) {
-			const std::string& area = (*itrArea);
-			shared_ptr<ScriptCommonData> commonData = scriptCommonDataManager->GetData(area);
-			replayStageData->SetCommonData(area, commonData);
+		for (auto& area : listArea) {
+			auto areaInManager = scriptCommonDataManager->GetArea(area);
+			replayStageData->SetCommonData(area, areaInManager);
 		}
 	}
 	else {
-		for (auto itrArea = listArea.begin(); itrArea != listArea.end(); ++itrArea) {
-			const std::string& area = (*itrArea);
-			shared_ptr<ScriptCommonData> commonData = replayStageData->GetCommonData(area);
-			scriptCommonDataManager->SetData(area, commonData);
+		for (auto& area : listArea) {
+			auto areaInReplay = replayStageData->GetCommonData(area);
+			scriptCommonDataManager->SetArea(area, MOVE(areaInReplay));
 		}
 	}
 }

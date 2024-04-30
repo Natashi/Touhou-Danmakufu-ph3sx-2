@@ -785,21 +785,24 @@ gstd::value StgStageScript::Func_SaveCommonDataAreaToReplayFile(gstd::script_mac
 	StgStageController* stageController = script->stageController_;
 	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 	ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage->GetReplayData();
-	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
+
+	auto commonDataManager = stageController->GetSystemController()->GetCommonDataManager();
 
 	if (infoStage->IsReplay())
 		script->RaiseError(L"This function can only be called outside of replays.");
 
 	bool res = false;
-	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
 
-	shared_ptr<ScriptCommonData> commonDataO = commonDataManager->GetData(area);
-	if (commonDataO) {
-		shared_ptr<ScriptCommonData> commonDataS(new ScriptCommonData());
-		commonDataS->Copy(commonDataO);
-		replayStageData->SetCommonData(area, commonDataS);
+	std::string nameArea = STR_MULTI(argv[0].as_string());
+	if (auto area = commonDataManager->GetArea(nameArea)) {
+		auto areaCopy = std::make_unique<ScriptCommonDataArea>();
+		areaCopy->Copy(area);
+
+		replayStageData->SetCommonData(nameArea, areaCopy.get());
+
 		res = true;
 	}
+
 	return script->CreateBooleanValue(res);
 }
 gstd::value StgStageScript::Func_LoadCommonDataAreaFromReplayFile(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -807,21 +810,24 @@ gstd::value StgStageScript::Func_LoadCommonDataAreaFromReplayFile(gstd::script_m
 	StgStageController* stageController = script->stageController_;
 	ref_count_ptr<StgStageInformation> infoStage = stageController->GetStageInformation();
 	ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage->GetReplayData();
-	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
+
+	auto commonDataManager = stageController->GetSystemController()->GetCommonDataManager();
 
 	if (!infoStage->IsReplay())
 		script->RaiseError(L"This function can only be called during replays.");
 
 	bool res = false;
-	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
 
-	shared_ptr<ScriptCommonData> commonDataS = replayStageData->GetCommonData(area);
-	if (commonDataS) {
-		shared_ptr<ScriptCommonData> commonDataO(new ScriptCommonData());
-		commonDataO->Copy(commonDataS);
-		commonDataManager->SetData(area, commonDataO);
+	std::string nameArea = STR_MULTI(argv[0].as_string());
+	if (auto area = replayStageData->GetCommonData(nameArea)) {
+		auto areaCopy = std::make_unique<ScriptCommonDataArea>();
+		areaCopy->Copy(area.get());
+
+		commonDataManager->SetArea(nameArea, MOVE(areaCopy));
+
 		res = true;
 	}
+
 	return script->CreateBooleanValue(res);
 }
 

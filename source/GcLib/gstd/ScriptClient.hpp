@@ -10,8 +10,6 @@
 #include "Logger.hpp"
 
 namespace gstd {
-	class ScriptCommonDataManager;
-
 	//*******************************************************************
 	//ScriptFileLineMap
 	//*******************************************************************
@@ -339,28 +337,6 @@ namespace gstd {
 		static value Func_WriteLog(script_machine* machine, int argc, const value* argv);
 		static value Func_RaiseError(script_machine* machine, int argc, const value* argv);
 		DNH_FUNCAPI_DECL_(Func_RaiseMessageWindow);
-
-		//Script common data
-		static value Func_SetCommonData(script_machine* machine, int argc, const value* argv);
-		static value Func_GetCommonData(script_machine* machine, int argc, const value* argv);
-		static value Func_ClearCommonData(script_machine* machine, int argc, const value* argv);
-		static value Func_DeleteCommonData(script_machine* machine, int argc, const value* argv);
-		static value Func_SetAreaCommonData(script_machine* machine, int argc, const value* argv);
-		static value Func_GetAreaCommonData(script_machine* machine, int argc, const value* argv);
-		static value Func_ClearAreaCommonData(script_machine* machine, int argc, const value* argv);
-		static value Func_DeleteAreaCommonData(script_machine* machine, int argc, const value* argv);
-		DNH_FUNCAPI_DECL_(Func_DeleteWholeAreaCommonData);
-		static value Func_CreateCommonDataArea(script_machine* machine, int argc, const value* argv);
-		static value Func_CopyCommonDataArea(script_machine* machine, int argc, const value* argv);
-		static value Func_IsCommonDataAreaExists(script_machine* machine, int argc, const value* argv);
-		static value Func_GetCommonDataAreaKeyList(script_machine* machine, int argc, const value* argv);
-		static value Func_GetCommonDataValueKeyList(script_machine* machine, int argc, const value* argv);
-
-		DNH_FUNCAPI_DECL_(Func_LoadCommonDataValuePointer);
-		DNH_FUNCAPI_DECL_(Func_LoadAreaCommonDataValuePointer);
-		DNH_FUNCAPI_DECL_(Func_IsValidCommonDataValuePointer);
-		DNH_FUNCAPI_DECL_(Func_SetCommonDataPtr);
-		DNH_FUNCAPI_DECL_(Func_GetCommonDataPtr);
 	};
 
 #pragma region ScriptClientBase_impl
@@ -464,127 +440,4 @@ namespace gstd {
 		std::vector<char>& GetResult() { return src_; }
 		ScriptFileLineMap* GetLineMap() { return mapLine_; }
 	};
-
-	//*******************************************************************
-	//ScriptCommonData
-	//*******************************************************************
-	class ScriptCommonData {
-	public:
-		static constexpr const char* HEADER_SAVED_DATA = "DNHCDR\0\0";
-		static constexpr size_t HEADER_SAVED_DATA_SIZE = 8U;
-		static constexpr size_t DATA_HASH = 0xabcdef69u;
-
-		struct _Script_PointerData {
-			ScriptCommonData* pArea = nullptr;
-			gstd::value* pData = nullptr;
-		};
-	protected:
-		volatile size_t verifHash_;
-		std::map<std::string, gstd::value> mapValue_;
-
-		gstd::value _ReadRecord(gstd::ByteBuffer& buffer);
-		void _WriteRecord(gstd::ByteBuffer& buffer, const gstd::value& comValue);
-	public:
-		ScriptCommonData();
-		virtual ~ScriptCommonData();
-
-		void Clear();
-		std::pair<bool, std::map<std::string, gstd::value>::iterator> IsExists(const std::string& name);
-
-		gstd::value* GetValueRef(const std::string& name);
-		gstd::value* GetValueRef(std::map<std::string, gstd::value>::iterator itr);
-		gstd::value GetValue(const std::string& name);
-		gstd::value GetValue(std::map<std::string, gstd::value>::iterator itr);
-		void SetValue(const std::string& name, gstd::value v);
-		void SetValue(std::map<std::string, gstd::value>::iterator itr, gstd::value v);
-		void DeleteValue(const std::string& name);
-		void Copy(shared_ptr<ScriptCommonData>& dataSrc);
-
-		std::map<std::string, gstd::value>::iterator MapBegin() { return mapValue_.begin(); }
-		std::map<std::string, gstd::value>::iterator MapEnd() { return mapValue_.end(); }
-
-		void ReadRecord(gstd::RecordBuffer& record);
-		void WriteRecord(gstd::RecordBuffer& record);
-
-		bool CheckHash() { return verifHash_ == DATA_HASH; }
-		static bool Script_DecomposePtr(uint64_t val, _Script_PointerData* dst);
-	};
-
-	//*******************************************************************
-	//ScriptCommonDataManager
-	//*******************************************************************
-	class ScriptCommonDataManager {
-		static ScriptCommonDataManager* inst_;
-	public:
-		using CommonDataMap = std::map<std::string, shared_ptr<ScriptCommonData>>;
-	protected:
-		gstd::CriticalSection lock_;
-		CommonDataMap mapData_;
-		CommonDataMap::iterator defaultAreaIterator_;
-	public:
-		static const std::string nameAreaDefault_;
-
-		ScriptCommonDataManager();
-		virtual ~ScriptCommonDataManager();
-
-		static ScriptCommonDataManager* GetInstance() { return inst_; }
-
-		void Clear();
-		void Erase(const std::string& name);
-
-		const std::string& GetDefaultAreaName() { return nameAreaDefault_; }
-		CommonDataMap::iterator GetDefaultAreaIterator() { return defaultAreaIterator_; }
-
-		std::pair<bool, CommonDataMap::iterator> IsExists(const std::string& name);
-		CommonDataMap::iterator CreateArea(const std::string& name);
-		void CopyArea(const std::string& nameDest, const std::string& nameSrc);
-		shared_ptr<ScriptCommonData> GetData(const std::string& name);
-		shared_ptr<ScriptCommonData> GetData(CommonDataMap::iterator itr);
-		void SetData(const std::string& name, shared_ptr<ScriptCommonData> commonData);
-		void SetData(CommonDataMap::iterator itr, shared_ptr<ScriptCommonData> commonData);
-
-		CommonDataMap::iterator MapBegin() { return mapData_.begin(); }
-		CommonDataMap::iterator MapEnd() { return mapData_.end(); }
-
-		gstd::CriticalSection& GetLock() { return lock_; }
-	};
-
-	//*******************************************************************
-	//ScriptCommonDataInfoPanel
-	//*******************************************************************
-	class ScriptCommonDataInfoPanel : public ILoggerPanel {
-		class CommonDataDisplay {
-		public:
-			struct DataPair {
-				std::string key;
-				std::string value;
-			};
-		public:
-			weak_ptr<ScriptCommonData> refData;
-
-			std::string name;
-
-			CommonDataDisplay(shared_ptr<ScriptCommonData> data, const std::string& name);
-		public:
-			// Lazy-loaded as they're only visible upon selecting an area
-			optional<std::vector<DataPair>> dataValues;
-			void LoadValues();
-		public:
-			/*
-			static const ImGuiTableSortSpecs* imguiSortSpecs;
-			static bool IMGUI_CDECL Compare(const CommonDataDisplay& a, const CommonDataDisplay& b);
-			*/
-		};
-	protected:
-		std::vector<CommonDataDisplay> listDisplay_;
-		size_t selectedData_;
-	public:
-		ScriptCommonDataInfoPanel();
-
-		virtual void Initialize(const std::string& name);
-
-		virtual void Update();
-		virtual void ProcessGui();
-	};
-
 }

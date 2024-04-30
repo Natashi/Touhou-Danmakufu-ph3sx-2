@@ -260,6 +260,9 @@
     <ClCompile Include="source\GcLib\gstd\CompressorStream.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\Common\StgCommonData.cpp">
+      <Filter>source\Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">
@@ -522,6 +525,9 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\CompressorStream.hpp">
       <Filter>source\GcLib\gstd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\Common\StgCommonData.hpp">
+      <Filter>source\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

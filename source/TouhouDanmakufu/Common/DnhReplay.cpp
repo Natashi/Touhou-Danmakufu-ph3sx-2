@@ -2,6 +2,7 @@
 
 #include "DnhReplay.hpp"
 #include "DnhGcLibImpl.hpp"
+#include "StgCommonData.hpp"
 
 #include "../../GcLib/gstd/CompressorStream.hpp"
 
@@ -9,7 +10,7 @@
 //ReplayInformation
 //*******************************************************************
 ReplayInformation::ReplayInformation() {
-	userData_ = std::make_shared<ScriptCommonData>();
+	userData_ = std::make_unique<ScriptCommonDataArea>();
 }
 ReplayInformation::~ReplayInformation() {}
 std::vector<int> ReplayInformation::GetStageIndexList() {
@@ -36,11 +37,12 @@ void ReplayInformation::SetUserData(const std::string& key, gstd::value val) {
 	userData_->SetValue(key, val);
 }
 gstd::value ReplayInformation::GetUserData(const std::string& key) {
-	gstd::value res = userData_->GetValue(key);
-	return res;
+	if (auto v = userData_->GetValueRef(key))
+		return *v;
+	return {};
 }
 bool ReplayInformation::IsUserDataExists(const std::string& key) {
-	return userData_->IsExists(key).first;
+	return userData_->GetValue(key).has_value();
 }
 
 struct HeaderReplay {
@@ -210,11 +212,6 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 }
 
 //ReplayInformation::StageData
-ReplayInformation::StageData::StageData() { 
-	recordKey_.reset(new gstd::RecordBuffer());
-	scoreStart_ = 0; 
-	scoreLast_ = 0; 
-}
 
 double ReplayInformation::StageData::GetFramePerSecondAverage() {
 	double totalFps = 0;
@@ -227,25 +224,28 @@ double ReplayInformation::StageData::GetFramePerSecondAverage() {
 }
 std::set<std::string> ReplayInformation::StageData::GetCommonDataAreaList() {
 	std::set<std::string> res;
-	for (auto itrCommonData = mapCommonData_.begin(); itrCommonData != mapCommonData_.end(); itrCommonData++) {
-		const std::string& key = itrCommonData->first;
-		res.insert(key);
+	for (auto& [name, _] : mapCommonData_) {
+		res.insert(name);
 	}
 	return res;
 }
-shared_ptr<ScriptCommonData> ReplayInformation::StageData::GetCommonData(const std::string& area) {
-	shared_ptr<ScriptCommonData> res(new ScriptCommonData());
+unique_ptr<ScriptCommonDataArea> ReplayInformation::StageData::GetCommonData(const std::string& area) {
+	auto commonData = std::make_unique<ScriptCommonDataArea>();
+
 	auto itr = mapCommonData_.find(area);
 	if (itr != mapCommonData_.end()) {
-		res->ReadRecord(*itr->second);
+		commonData->ReadRecord(itr->second);
 	}
-	return res;
+
+	return MOVE(commonData);
 }
-void ReplayInformation::StageData::SetCommonData(const std::string& area, shared_ptr<ScriptCommonData> commonData) {
-	ref_count_ptr<RecordBuffer> record(new RecordBuffer());
+void ReplayInformation::StageData::SetCommonData(
+	const std::string& area, ScriptCommonDataArea* commonData)
+{
+	RecordBuffer record;
 	if (commonData)
-		commonData->WriteRecord(*record);
-	mapCommonData_[area] = record;
+		commonData->WriteRecord(record);
+	mapCommonData_[area] = MOVE(record);
 }
 
 void ReplayInformation::StageData::ReadRecord(gstd::RecordBuffer& record) {
@@ -259,7 +259,7 @@ void ReplayInformation::StageData::ReadRecord(gstd::RecordBuffer& record) {
 	record.GetRecord<int64_t>("point", point_);
 	frameEnd_ = *record.GetRecordAs<uint32_t>("frameEnd");
 	record.GetRecord<uint32_t>("randSeed", randSeed_);
-	*recordKey_ = MOVE(*record.GetRecordAsRecordBuffer("recordKey"));
+	recordKey_ = *record.GetRecordAsRecordBuffer("recordKey");
 
 	//FPS list
 	size_t countFramePerSecond = *record.GetRecordAs<uint32_t>("countFramePerSecond");
@@ -267,12 +267,12 @@ void ReplayInformation::StageData::ReadRecord(gstd::RecordBuffer& record) {
 	record.GetRecord("listFramePerSecond", &listFramePerSecond_[0], sizeof(FLOAT) * listFramePerSecond_.size());
 
 	//Common data
-	gstd::RecordBuffer recComMap = *record.GetRecordAsRecordBuffer("mapCommonData");
-	std::vector<std::string> listKeyCommonData = recComMap.GetKeyList();
-	for (auto& iCommonData : listKeyCommonData) {
-		ref_count_ptr<RecordBuffer> record(new RecordBuffer());
-		*record = MOVE(*recComMap.GetRecordAsRecordBuffer(iCommonData));
-		mapCommonData_[iCommonData] = record;
+	{
+		gstd::RecordBuffer recComMap = *record.GetRecordAsRecordBuffer("mapCommonData");
+		for (auto& iCommonData : recComMap.GetKeyList()) {
+			auto record = *recComMap.GetRecordAsRecordBuffer(iCommonData);
+			mapCommonData_[iCommonData] = MOVE(record);
+		}
 	}
 
 	//Player information
@@ -295,7 +295,7 @@ void ReplayInformation::StageData::WriteRecord(gstd::RecordBuffer& record) {
 	record.SetRecord<int64_t>("point", point_);
 	record.SetRecord<uint32_t>("frameEnd", frameEnd_);
 	record.SetRecord<uint32_t>("randSeed", randSeed_);
-	record.SetRecordAsRecordBuffer("recordKey", *recordKey_);
+	record.SetRecordAsRecordBuffer("recordKey", recordKey_);
 
 	//FPS list
 	size_t countFramePerSecond = listFramePerSecond_.size();
@@ -303,13 +303,15 @@ void ReplayInformation::StageData::WriteRecord(gstd::RecordBuffer& record) {
 	record.SetRecord("listFramePerSecond", &listFramePerSecond_[0], sizeof(FLOAT) * listFramePerSecond_.size());
 
 	//Common data
-	gstd::RecordBuffer recComMap;
-	for (auto itrCommonData = mapCommonData_.begin(); itrCommonData != mapCommonData_.end(); itrCommonData++) {
-		const std::string& key = itrCommonData->first;
-		ref_count_ptr<RecordBuffer> record = itrCommonData->second;
-		recComMap.SetRecordAsRecordBuffer(key, *record);
+	{
+		gstd::RecordBuffer recComMap;
+
+		for (auto& [name, areaRec] : mapCommonData_) {
+			recComMap.SetRecordAsRecordBuffer(name, areaRec);
+		}
+
+		record.SetRecordAsRecordBuffer("mapCommonData", recComMap);
 	}
-	record.SetRecordAsRecordBuffer("mapCommonData", recComMap);
 
 	//Player information
 	record.SetRecordAsStringW("playerScriptID", playerScriptID_);

@@ -16,7 +16,7 @@ EApplication::~EApplication() {
 }
 
 bool EApplication::_Initialize() {
-	ELogger* logger = ELogger::GetInstance();
+	ELogger* logger = ELogger::CreateInstance();
 	Logger::WriteTop("Initializing application.");
 
 	DnhConfiguration* config = DnhConfiguration::CreateInstance();
@@ -130,17 +130,17 @@ bool EApplication::_Initialize() {
 		}
 
 		{
-			shared_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData = logger->GetScriptCommonDataInfoPanel();
-			panelCommonData->SetDisplayName("Common Data");
+			auto panelCData = std::make_shared<ScriptCommonDataInfoPanel>();
+			panelCData->SetDisplayName("Common Data");
 
-			// Updated in StgSystem
-			logger->EAddPanelNoUpdate(panelCommonData, L"Common Data");
+			logger->EAddPanel(panelCData, L"Common Data", 100);
 		}
 
 		{
-			shared_ptr<ScriptInfoPanel> panelScript(new ScriptInfoPanel());
+			auto panelScript = std::make_shared<ScriptInfoPanel>();
 			panelScript->SetDisplayName("Script");
-			logger->EAddPanel(panelScript, L"Script", 250);
+
+			logger->EAddPanel(panelScript, L"Script", 100);
 		}
 	}
 
@@ -226,14 +226,14 @@ bool EApplication::_Loop() {
 				}
 			}
 
-				if (count % 120 == 0) {
-					taskManager->ArrangeTask();
-				}
-				if (count % 10 == 0 && config->fpsType_ == DnhConfiguration::FPS_VARIABLE) {
-					fpsController->SetCriticalFrame();
-				}
-				++count;
+			if (count % 120 == 0) {
+				taskManager->ArrangeTask();
 			}
+			if (count % 10 == 0 && config->fpsType_ == DnhConfiguration::FPS_VARIABLE) {
+				fpsController->SetCriticalFrame();
+			}
+			++count;
+		}
 
 		if (bRenderFrame) {
 			//graphics->SetAllowRenderTargetChange(false);

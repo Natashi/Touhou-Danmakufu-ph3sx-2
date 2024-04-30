@@ -222,6 +222,8 @@ using std::weak_ptr;
 #define sptr std::shared_ptr
 #define wptr std::weak_ptr
 
+#define scast(_ty, _p) static_cast<_ty>(_p)
+#define rcast(_ty, _p) reinterpret_cast<_ty>(_p)
 #define dcast(_ty, _p) dynamic_cast<_ty>(_p)
 #define dptr_cast(_ty, _p) std::dynamic_pointer_cast<_ty>(_p)
 

@@ -48,8 +48,6 @@ protected:
 	bool bWindow_;
 	shared_ptr<WindowThread> threadWindow_;
 
-	shared_ptr<gstd::ScriptCommonDataInfoPanel> panelCommonData_;
-
 	std::list<PanelData> listPanel_;
 	uint64_t time_;
 protected:
@@ -62,9 +60,6 @@ public:
 
 	virtual bool Initialize();
 	bool Initialize(bool bFile, bool bWindow);
-
-	shared_ptr<gstd::ScriptCommonDataInfoPanel> GetScriptCommonDataInfoPanel() { return panelCommonData_; }
-	void UpdateCommonDataInfoPanel();
 
 	void LoadState();
 	void SaveState();

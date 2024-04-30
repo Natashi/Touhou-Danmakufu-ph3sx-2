@@ -79,17 +79,12 @@ bool ELogger::Initialize(bool bFile, bool bWindow) {
 		this->AddLogger(MOVE(logger));
 	}
 	
-	panelCommonData_.reset(new gstd::ScriptCommonDataInfoPanel());
-
 	time_ = SystemUtility::GetCpuTime2();
 
 	threadWindow_.reset(new WindowThread(this));
 	threadWindow_->Start();
 
 	return true;
-}
-void ELogger::UpdateCommonDataInfoPanel() {
-	panelCommonData_->Update();
 }
 
 void ELogger::LoadState() {

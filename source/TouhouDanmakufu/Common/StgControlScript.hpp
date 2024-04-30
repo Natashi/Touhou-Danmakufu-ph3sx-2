@@ -86,7 +86,31 @@ protected:
 public:
 	StgControlScript(StgSystemController* systemController);
 
-	//Area common data save/load
+	// Common data
+	DNH_FUNCAPI_DECL_(Func_SetCommonData);
+	DNH_FUNCAPI_DECL_(Func_GetCommonData);
+	DNH_FUNCAPI_DECL_(Func_ClearCommonData);
+	DNH_FUNCAPI_DECL_(Func_DeleteCommonData);
+
+	DNH_FUNCAPI_DECL_(Func_SetAreaCommonData);
+	DNH_FUNCAPI_DECL_(Func_GetAreaCommonData);
+	DNH_FUNCAPI_DECL_(Func_ClearAreaCommonData);
+	DNH_FUNCAPI_DECL_(Func_DeleteAreaCommonData);
+
+	DNH_FUNCAPI_DECL_(Func_CreateCommonDataArea);
+	DNH_FUNCAPI_DECL_(Func_DeleteWholeAreaCommonData);
+	DNH_FUNCAPI_DECL_(Func_CopyCommonDataArea);
+	DNH_FUNCAPI_DECL_(Func_IsCommonDataAreaExists);
+	DNH_FUNCAPI_DECL_(Func_GetCommonDataAreaKeyList);
+	DNH_FUNCAPI_DECL_(Func_GetCommonDataValueKeyList);
+
+	DNH_FUNCAPI_DECL_(Func_LoadCommonDataValuePointer);
+	DNH_FUNCAPI_DECL_(Func_LoadAreaCommonDataValuePointer);
+	DNH_FUNCAPI_DECL_(Func_IsValidCommonDataValuePointer);
+	DNH_FUNCAPI_DECL_(Func_SetCommonDataPtr);
+	DNH_FUNCAPI_DECL_(Func_GetCommonDataPtr);
+
+	// Common data save/load
 	static gstd::value Func_SaveCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_LoadCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv);
 	static gstd::value Func_SaveCommonDataAreaA2(gstd::script_machine* machine, int argc, const gstd::value* argv);

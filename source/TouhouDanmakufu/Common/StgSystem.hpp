@@ -5,6 +5,7 @@
 #include "StgCommon.hpp"
 #include "StgStageScript.hpp"
 #include "StgStageController.hpp"
+#include "StgCommonData.hpp"
 #include "StgPlayer.hpp"
 #include "StgEnemy.hpp"
 #include "StgShot.hpp"

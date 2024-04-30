@@ -39,8 +39,36 @@ void StgControlScriptInformation::LoadReplayInformation(std::wstring pathMainScr
 //StgControlScript
 //*******************************************************************
 static const std::vector<function> stgControlFunction = {
-	//関数：
-	//STG制御共通関数：共通データ
+	// Common data
+	{ "SetCommonData", StgControlScript::Func_SetCommonData, 2 },
+	{ "GetCommonData", StgControlScript::Func_GetCommonData, 2 },
+	{ "GetCommonData", StgControlScript::Func_GetCommonData, 1 },	//Overloaded
+	{ "ClearCommonData", StgControlScript::Func_ClearCommonData, 0 },
+	{ "DeleteCommonData", StgControlScript::Func_DeleteCommonData, 1 },
+
+	{ "SetAreaCommonData", StgControlScript::Func_SetAreaCommonData, 3 },
+	{ "GetAreaCommonData", StgControlScript::Func_GetAreaCommonData, 3 },
+	{ "GetAreaCommonData", StgControlScript::Func_GetAreaCommonData, 2 },	//Overloaded
+	{ "ClearAreaCommonData", StgControlScript::Func_ClearAreaCommonData, 1 },
+	{ "DeleteAreaCommonData", StgControlScript::Func_DeleteAreaCommonData, 2 },
+
+	{ "DeleteWholeAreaCommonData", StgControlScript::Func_DeleteWholeAreaCommonData, 1 },
+	{ "CreateCommonDataArea", StgControlScript::Func_CreateCommonDataArea, 1 },
+	{ "CopyCommonDataArea", StgControlScript::Func_CopyCommonDataArea, 2 },
+	{ "IsCommonDataAreaExists", StgControlScript::Func_IsCommonDataAreaExists, 1 },
+	{ "GetCommonDataAreaKeyList", StgControlScript::Func_GetCommonDataAreaKeyList, 0 },
+	{ "GetCommonDataValueKeyList", StgControlScript::Func_GetCommonDataValueKeyList, 1 },
+
+	{ "LoadCommonDataValuePointer", StgControlScript::Func_LoadCommonDataValuePointer, 1 },
+	{ "LoadCommonDataValuePointer", StgControlScript::Func_LoadCommonDataValuePointer, 2 },			//Overloaded
+	{ "LoadAreaCommonDataValuePointer", StgControlScript::Func_LoadAreaCommonDataValuePointer, 2 },
+	{ "LoadAreaCommonDataValuePointer", StgControlScript::Func_LoadAreaCommonDataValuePointer, 3 },	//Overloaded
+	{ "IsValidCommonDataValuePointer", StgControlScript::Func_IsValidCommonDataValuePointer, 1 },
+	{ "SetCommonDataPtr", StgControlScript::Func_SetCommonDataPtr, 2 },
+	{ "GetCommonDataPtr", StgControlScript::Func_GetCommonDataPtr, 1 },
+	{ "GetCommonDataPtr", StgControlScript::Func_GetCommonDataPtr, 2 },		//Overloaded
+
+	// Common data save/load
 	{ "SaveCommonDataAreaA1", StgControlScript::Func_SaveCommonDataAreaA1, 1 },
 	{ "LoadCommonDataAreaA1", StgControlScript::Func_LoadCommonDataAreaA1, 1 },
 	{ "SaveCommonDataAreaA2", StgControlScript::Func_SaveCommonDataAreaA2, 2 },
@@ -196,30 +224,295 @@ StgControlScript::StgControlScript(StgSystemController* systemController) {
 	SetScriptEngineCache(systemController->GetScriptEngineCache());
 }
 
-//STG制御共通関数：共通データ
+// Common data
+
+value StgControlScript::Func_SetCommonData(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	auto area = commonDataManager->GetDefaultArea();
+	std::string key = STR_MULTI(argv[0].as_string());
+
+	area->SetValue(key, argv[1]);
+
+	return value();
+}
+value StgControlScript::Func_GetCommonData(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	auto area = commonDataManager->GetDefaultArea();
+	std::string key = STR_MULTI(argv[0].as_string());
+
+	value res;
+
+	if (auto pValue = area->GetValueRef(key))
+		res = *pValue;
+	else if (argc == 2)
+		res = argv[1];
+
+	return res;
+}
+value StgControlScript::Func_ClearCommonData(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	auto area = commonDataManager->GetDefaultArea();
+	area->Clear();
+
+	return value();
+}
+value StgControlScript::Func_DeleteCommonData(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	auto area = commonDataManager->GetDefaultArea();
+	std::string key = STR_MULTI(argv[0].as_string());
+
+	area->DeleteValue(key);
+
+	return value();
+}
+value StgControlScript::Func_SetAreaCommonData(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string area = STR_MULTI(argv[0].as_string());
+	std::string key = STR_MULTI(argv[1].as_string());
+
+	if (auto pArea = commonDataManager->GetArea(area)) {
+		pArea->SetValue(key, argv[2]);
+	}
+
+	return value();
+}
+value StgControlScript::Func_GetAreaCommonData(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string area = STR_MULTI(argv[0].as_string());
+	std::string key = STR_MULTI(argv[1].as_string());
+
+	value res;
+
+	if (auto pArea = commonDataManager->GetArea(area)) {
+		if (auto pValue = pArea->GetValueRef(key))
+			res = *pValue;
+		else if (argc == 3)
+			res = argv[2];
+	}
+
+	return res;
+}
+value StgControlScript::Func_ClearAreaCommonData(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string area = STR_MULTI(argv[0].as_string());
+
+	if (auto pArea = commonDataManager->GetArea(area)) {
+		pArea->Clear();
+	}
+
+	return value();
+}
+value StgControlScript::Func_DeleteAreaCommonData(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string area = STR_MULTI(argv[0].as_string());
+	std::string key = STR_MULTI(argv[1].as_string());
+
+	if (auto pArea = commonDataManager->GetArea(area)) {
+		pArea->DeleteValue(key);
+	}
+
+	return value();
+}
+
+value StgControlScript::Func_CreateCommonDataArea(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string area = STR_MULTI(argv->as_string());
+	commonDataManager->CreateArea(area);
+
+	return value();
+}
+value StgControlScript::Func_DeleteWholeAreaCommonData(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string area = STR_MULTI(argv->as_string());
+	commonDataManager->Erase(area);
+
+	return value();
+}
+value StgControlScript::Func_CopyCommonDataArea(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string areaDest = STR_MULTI(argv[0].as_string());
+	std::string areaSrc = STR_MULTI(argv[1].as_string());
+
+	if (auto pSrc = commonDataManager->GetArea(areaSrc)) {
+		if (auto pDst = commonDataManager->GetArea(areaDest)) {
+			pDst->Copy(pSrc);
+		}
+	}
+
+	return value();
+}
+
+value StgControlScript::Func_IsCommonDataAreaExists(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string area = STR_MULTI(argv->as_string());
+	bool res = commonDataManager->GetArea(area) != nullptr;
+
+	return script->CreateBooleanValue(res);
+}
+value StgControlScript::Func_GetCommonDataAreaKeyList(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::vector<std::string> listKey;
+	for (auto& [key, _] : *commonDataManager) {
+		listKey.push_back(key);
+	}
+
+	return script->CreateStringArrayValue(listKey);
+}
+value StgControlScript::Func_GetCommonDataValueKeyList(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string area = STR_MULTI(argv->as_string());
+
+	std::vector<std::string> listKey;
+
+	if (auto pArea = commonDataManager->GetArea(area)) {
+		for (auto& [key, _] : *pArea) {
+			listKey.push_back(key);
+		}
+	}
+
+	return script->CreateStringArrayValue(listKey);
+}
+
+value StgControlScript::Func_LoadCommonDataValuePointer(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	auto area = commonDataManager->GetDefaultArea();
+	std::string key = STR_MULTI(argv[0].as_string());
+
+	uint64_t res = 0;
+	{
+		value* pData = nullptr;
+
+		if (auto pValue = area->GetValueRef(key)) {
+			pData = pValue;
+		}
+		else if (argc == 2) {
+			area->SetValue(key, argv[1]);
+			pData = area->GetValueRef(key);
+		}
+
+		res = (uint64_t)ScriptCommonData_Pointer(area, pData);
+	}
+
+	return script->CreateIntValue((int64_t&)res);
+}
+value StgControlScript::Func_LoadAreaCommonDataValuePointer(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string nameArea = STR_MULTI(argv[0].as_string());
+	std::string key = STR_MULTI(argv[1].as_string());
+
+	uint64_t res = 0;
+	if (auto area = commonDataManager->GetArea(nameArea)) {
+		value* pData = nullptr;
+
+		if (auto pValue = area->GetValueRef(key)) {
+			pData = pValue;
+		}
+		else if (argc == 3) {
+			area->SetValue(key, argv[2]);
+			pData = area->GetValueRef(key);
+		}
+
+		res = (uint64_t)ScriptCommonData_Pointer(area, pData);
+	}
+
+	return script->CreateIntValue((int64_t&)res);
+}
+value StgControlScript::Func_SetCommonDataPtr(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	int64_t val = argv[0].as_int();
+
+	if (auto cdPtr = ScriptCommonData_Pointer::From((uint64_t&)val)) {
+		*cdPtr->data = argv[1];
+	}
+
+	return value();
+}
+value StgControlScript::Func_GetCommonDataPtr(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+	
+	int64_t val = argv[0].as_int();
+
+	value res;
+
+	if (auto cdPtr = ScriptCommonData_Pointer::From((uint64_t&)val)) {
+		res = *cdPtr->data;
+	}
+	else if (argc == 2) {
+		res = argv[1];
+	}
+
+	return res;
+}
+value StgControlScript::Func_IsValidCommonDataValuePointer(script_machine* machine, int argc, const value* argv) {
+	StgControlScript* script = rcast(StgControlScript*, machine->data);
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	int64_t val = argv[0].as_int();
+	auto cdPtr = ScriptCommonData_Pointer::From((uint64_t&)val);
+
+	return script->CreateBooleanValue(cdPtr.has_value());
+}
+
+// Common data save/load
 gstd::value StgControlScript::Func_SaveCommonDataAreaA1(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	StgControlScript* script = (StgControlScript*)machine->data;
 	auto infoSystem = script->systemController_->GetSystemInformation();
 
-	std::wstring area = argv[0].as_string();
-	std::string sArea = StringUtility::ConvertWideToMulti(area);
-	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::wstring nameAreaW = argv[0].as_string();
+	std::string nameArea = STR_MULTI(nameAreaW);
 
 	bool res = false;
 
-	shared_ptr<ScriptCommonData> commonData = commonDataManager->GetData(sArea);
-	if (commonData) {
+	if (auto area = commonDataManager->GetArea(nameArea)) {
 		const std::wstring& pathMain = infoSystem->GetMainScriptInformation()->pathScript_;
-		std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
+
+		std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, nameAreaW);
 		std::wstring dirSave = PathProperty::GetFileDirectory(pathSave);
 
 		File::CreateFileDirectory(dirSave);
 
 		RecordBuffer record;
-		commonData->WriteRecord(record);
+		area->WriteRecord(record);
 		res = record.WriteToFile(pathSave, DATA_VERSION_CAREA,
-			ScriptCommonData::HEADER_SAVED_DATA, 
-			ScriptCommonData::HEADER_SAVED_DATA_SIZE);
+			ScriptCommonDataArea::HEADER_SAVED_DATA, 
+			ScriptCommonDataArea::HEADER_SAVED_DATA_SIZE);
 	}
 
 	return script->CreateBooleanValue(res);
@@ -228,23 +521,25 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* ma
 	StgControlScript* script = (StgControlScript*)machine->data;
 	auto infoSystem = script->systemController_->GetSystemInformation();
 
-	std::wstring area = argv[0].as_string();
-	std::string sArea = StringUtility::ConvertWideToMulti(area);
-	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::wstring nameAreaW = argv[0].as_string();
+	std::string nameArea = STR_MULTI(nameAreaW);
 
 	bool res = false;
 
 	const std::wstring& pathMain = infoSystem->GetMainScriptInformation()->pathScript_;
-	std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, area);
+	std::wstring pathSave = EPathProperty::GetCommonDataPath(pathMain, nameAreaW);
 
 	RecordBuffer record;
 	res = record.ReadFromFile(pathSave, DATA_VERSION_CAREA,
-		ScriptCommonData::HEADER_SAVED_DATA, 
-		ScriptCommonData::HEADER_SAVED_DATA_SIZE);
+		ScriptCommonDataArea::HEADER_SAVED_DATA, 
+		ScriptCommonDataArea::HEADER_SAVED_DATA_SIZE);
 	if (res) {
-		shared_ptr<ScriptCommonData> commonData(new ScriptCommonData());
+		auto commonData = std::make_unique<ScriptCommonDataArea>();
 		commonData->ReadRecord(record);
-		commonDataManager->SetData(sArea, commonData);
+
+		commonDataManager->SetArea(nameArea, MOVE(commonData));
 	}
 
 	return script->CreateBooleanValue(res);
@@ -254,23 +549,22 @@ gstd::value StgControlScript::Func_SaveCommonDataAreaA2(gstd::script_machine* ma
 	StgControlScript* script = (StgControlScript*)machine->data;
 	auto infoSystem = script->systemController_->GetSystemInformation();
 
-	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
-	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string nameArea = STR_MULTI(argv[0].as_string());
+	std::wstring pathSave = argv[1].as_string();
 
 	bool res = false;
 
-	shared_ptr<ScriptCommonData> commonData = commonDataManager->GetData(area);
-	if (commonData) {
-		std::wstring pathSave = argv[1].as_string();
+	if (auto area = commonDataManager->GetArea(nameArea)) {
 		std::wstring dirSave = PathProperty::GetFileDirectory(pathSave);
-
 		File::CreateFileDirectory(dirSave);
 
 		RecordBuffer record;
-		commonData->WriteRecord(record);
+		area->WriteRecord(record);
 		res = record.WriteToFile(pathSave, DATA_VERSION_CAREA,
-			ScriptCommonData::HEADER_SAVED_DATA, 
-			ScriptCommonData::HEADER_SAVED_DATA_SIZE);
+			ScriptCommonDataArea::HEADER_SAVED_DATA, 
+			ScriptCommonDataArea::HEADER_SAVED_DATA_SIZE);
 	}
 
 	return script->CreateBooleanValue(res);
@@ -279,20 +573,22 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA2(gstd::script_machine* ma
 	StgControlScript* script = (StgControlScript*)machine->data;
 	auto infoSystem = script->systemController_->GetSystemInformation();
 
-	std::string area = StringUtility::ConvertWideToMulti(argv[0].as_string());
-	ScriptCommonDataManager* commonDataManager = ScriptCommonDataManager::GetInstance();
+	auto commonDataManager = script->systemController_->GetCommonDataManager();
+
+	std::string nameArea = STR_MULTI(argv[0].as_string());
+	std::wstring pathSave = argv[1].as_string();
 
 	bool res = false;
-
-	std::wstring pathSave = argv[1].as_string();
+	
 	RecordBuffer record;
 	res = record.ReadFromFile(pathSave, DATA_VERSION_CAREA,
-		ScriptCommonData::HEADER_SAVED_DATA, 
-		ScriptCommonData::HEADER_SAVED_DATA_SIZE);
+		ScriptCommonDataArea::HEADER_SAVED_DATA, 
+		ScriptCommonDataArea::HEADER_SAVED_DATA_SIZE);
 	if (res) {
-		shared_ptr<ScriptCommonData> commonData(new ScriptCommonData());
+		auto commonData = std::make_unique<ScriptCommonDataArea>();
 		commonData->ReadRecord(record);
-		commonDataManager->SetData(area, commonData);
+
+		commonDataManager->SetArea(nameArea, MOVE(commonData));
 	}
 
 	return script->CreateBooleanValue(res);

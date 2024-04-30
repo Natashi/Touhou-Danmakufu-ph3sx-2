@@ -7,6 +7,7 @@
 //*******************************************************************
 //ReplayInformation
 //*******************************************************************
+class ScriptCommonDataArea;
 class ReplayInformation {
 public:
 	enum {
@@ -29,7 +30,7 @@ private:
 	double fpsAverage_;
 	SYSTEMTIME date_;
 
-	shared_ptr<ScriptCommonData> userData_;
+	unique_ptr<ScriptCommonDataArea> userData_;
 	std::map<int, ref_count_ptr<StageData>> mapStageData_;
 public:
 	ReplayInformation();
@@ -82,8 +83,9 @@ private:
 
 	uint32_t randSeed_;
 	std::vector<float> listFramePerSecond_;
-	ref_count_ptr<gstd::RecordBuffer> recordKey_;
-	std::map<std::string, ref_count_ptr<gstd::RecordBuffer>> mapCommonData_;
+
+	gstd::RecordBuffer recordKey_;
+	std::map<std::string, gstd::RecordBuffer> mapCommonData_;
 
 	std::wstring playerScriptID_;
 	std::wstring playerScriptFileName_;
@@ -94,7 +96,7 @@ private:
 	double playerPower_;
 	int playerRebirthFrame_;	//Current deathbomb frame
 public:
-	StageData();
+	StageData() = default;
 	virtual ~StageData() {}
 
 	std::wstring& GetMainScriptID() { return mainScriptID_; }
@@ -118,11 +120,15 @@ public:
 	float GetFramePerSecond(int frame) { int index = frame / 60; int res = index < listFramePerSecond_.size() ? listFramePerSecond_[index] : 0; return res; }
 	void AddFramePerSecond(float frame) { listFramePerSecond_.push_back(frame); }
 	double GetFramePerSecondAverage();
-	ref_count_ptr<gstd::RecordBuffer> GetReplayKeyRecord() { return recordKey_; }
-	void SetReplayKeyRecord(ref_count_ptr<gstd::RecordBuffer> rec) { recordKey_ = rec; }
+
+	gstd::RecordBuffer& GetReplayKeyRecord() { return recordKey_; }
+	void SetReplayKeyRecord(gstd::RecordBuffer&& rec) { recordKey_ = MOVE(rec); }
 	std::set<std::string> GetCommonDataAreaList();
-	shared_ptr<ScriptCommonData> GetCommonData(const std::string& area);
-	void SetCommonData(const std::string& area, shared_ptr<ScriptCommonData> commonData);
+	unique_ptr<ScriptCommonDataArea> GetCommonData(const std::string& area);
+	void SetCommonData(const std::string& area, ScriptCommonDataArea* commonData);
+	void SetCommonData(const std::string& area, unique_ptr<ScriptCommonDataArea>&& commonData) {
+		SetCommonData(area, commonData.get());
+	}
 
 	std::wstring& GetPlayerScriptID() { return playerScriptID_; }
 	void SetPlayerScriptID(const std::wstring& id) { playerScriptID_ = id; }

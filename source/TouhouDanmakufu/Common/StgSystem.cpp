@@ -93,9 +93,6 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 void StgSystemController::Work() {
 	try {
 		_ControlScene();
-
-		ELogger* logger = ELogger::GetInstance();
-		logger->UpdateCommonDataInfoPanel();
 	}
 	catch (gstd::wexception& e) {
 		Logger::WriteTop(e.what());
@@ -158,9 +155,6 @@ void StgSystemController::Work() {
 			DirectSoundManager* soundManager = DirectSoundManager::GetBase();
 			soundManager->Clear();
 		}
-
-		ELogger* logger = ELogger::GetInstance();
-		logger->UpdateCommonDataInfoPanel();
 
 		DoEnd();
 		return;
