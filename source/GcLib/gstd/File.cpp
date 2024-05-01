@@ -909,17 +909,22 @@ size_t RecordEntry::_GetEntryRecordSize() {
 }
 void RecordEntry::_WriteEntryRecord(Writer& writer) {
 	writer.WriteValue<uint32_t>(key_.size());
+	if (key_.size() > 0)
 	writer.Write(&key_[0], key_.size());
 
-	writer.WriteValue<uint32_t>(buffer_.GetSize());
-	writer.Write(buffer_.GetPointer(), buffer_.GetSize());
+	uint32_t size = buffer_.GetSize();
+	writer.WriteValue<uint32_t>(size);
+	if (size > 0)
+		writer.Write(buffer_.GetPointer(), size);
 }
 void RecordEntry::_ReadEntryRecord(Reader& reader) {
 	key_.resize(reader.ReadValue<uint32_t>());
+	if (key_.size() > 0)
 	reader.Read(&key_[0], key_.size());
 
 	uint32_t size = reader.ReadValue<uint32_t>();
 	buffer_ = ByteBuffer(size);
+	if (size > 0)
 	reader.Read(buffer_.GetPointer(), size);
 }
 
@@ -954,8 +959,8 @@ bool RecordBuffer::IsExists(const std::string& key) const {
 }
 std::vector<std::string> RecordBuffer::GetKeyList() const {
 	std::vector<std::string> res;
-	for (auto itr = mapEntry_.begin(); itr != mapEntry_.end(); ++itr)
-		res.push_back(itr->first);
+	for (auto& [key, _] : mapEntry_)
+		res.push_back(key);
 	return res;
 }
 
@@ -1053,7 +1058,9 @@ optional<std::string> RecordBuffer::GetRecordAsStringA(const std::string& key) {
 	std::string res;
 
 	res.resize(buffer.GetSize());
+	if (res.size() > 0) {
 	buffer.Read(&res[0], buffer.GetSize());
+	}
 
 	return MOVE(res);
 }
