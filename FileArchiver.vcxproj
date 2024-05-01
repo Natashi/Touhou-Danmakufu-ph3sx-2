@@ -338,6 +338,7 @@
     <ClInclude Include="source\GcLib\gstd\Thread.hpp" />
     <ClInclude Include="source\GcLib\gstd\Window.hpp" />
     <ClInclude Include="source\GcLib\pch.h" />
+    <ClInclude Include="source\GcLib\Types.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="source\FileArchiver\FileArchiver.rc">

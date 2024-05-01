@@ -10,7 +10,7 @@
 //ReplayInformation
 //*******************************************************************
 ReplayInformation::ReplayInformation() {
-	userData_ = std::make_unique<ScriptCommonDataArea>();
+	userData_ = make_unique<ScriptCommonDataArea>();
 }
 ReplayInformation::~ReplayInformation() {}
 std::vector<int> ReplayInformation::GetStageIndexList() {
@@ -230,7 +230,7 @@ std::set<std::string> ReplayInformation::StageData::GetCommonDataAreaList() {
 	return res;
 }
 unique_ptr<ScriptCommonDataArea> ReplayInformation::StageData::GetCommonData(const std::string& area) {
-	auto commonData = std::make_unique<ScriptCommonDataArea>();
+	auto commonData = make_unique<ScriptCommonDataArea>();
 
 	auto itr = mapCommonData_.find(area);
 	if (itr != mapCommonData_.end()) {

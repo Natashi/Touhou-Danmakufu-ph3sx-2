@@ -529,6 +529,9 @@
     <ClInclude Include="source\TouhouDanmakufu\Common\StgCommonData.hpp">
       <Filter>source\Common</Filter>
     </ClInclude>
+    <ClInclude Include="source\GcLib\Types.hpp">
+      <Filter>source\GcLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="source\TouhouDanmakufu\DnhExecutor\DnhExecuter.rc">

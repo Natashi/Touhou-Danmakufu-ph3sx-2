@@ -20,7 +20,7 @@ TitleScene::TitleScene() {
 	DxRect<int> srcBack(0, 0, 640, 480);
 	DxRect<double> destBack(0, 0, screenWidth, screenHeight);
 
-	spriteBack_ = std::make_shared<Sprite2D>();
+	spriteBack_ = make_shared<Sprite2D>();
 	spriteBack_->SetTexture(textureBack);
 	spriteBack_->SetVertex(srcBack, destBack);
 
@@ -38,7 +38,7 @@ TitleScene::TitleScene() {
 	for (int iItem = 0; iItem < ITEM_COUNT; iItem++) {
 		int x = 48 + iItem * 6 + 12 * pow((double)-1, (int)(iItem - 1));
 		int y = 154 + iItem * 30;
-		AddMenuItem(std::make_unique<TitleSceneMenuItem>(strText[iItem], strDescription[iItem], x, y));
+		AddMenuItem(make_unique<TitleSceneMenuItem>(strText[iItem], strDescription[iItem], x, y));
 	}
 
 	cursorY_ = SystemController::GetInstance()->GetSystemInformation()->GetLastTitleSelectedIndex();

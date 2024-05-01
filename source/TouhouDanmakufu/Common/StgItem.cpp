@@ -11,7 +11,7 @@
 StgItemManager::StgItemManager(StgStageController* stageController) {
 	stageController_ = stageController;
 
-	listItemData_ = std::make_unique<StgItemDataList>();
+	listItemData_ = make_unique<StgItemDataList>();
 
 	const std::wstring& dir = EPathProperty::GetSystemImageDirectory();
 
@@ -438,7 +438,7 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 			TextureManager* textureManager = TextureManager::GetBase();
 
 			if ((texture = textureManager->GetTexture(pathImage)) == nullptr) {
-				texture = std::make_shared<Texture>();
+				texture = make_shared<Texture>();
 				if (!texture->CreateFromFile(pathImage, false, false))
 					texture = nullptr;
 			}

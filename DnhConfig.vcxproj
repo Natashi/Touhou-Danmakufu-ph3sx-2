@@ -337,6 +337,7 @@
     <ClInclude Include="source\GcLib\gstd\Thread.hpp" />
     <ClInclude Include="source\GcLib\gstd\Window.hpp" />
     <ClInclude Include="source\GcLib\pch.h" />
+    <ClInclude Include="source\GcLib\Types.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhCommon.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhConfiguration.hpp" />
     <ClInclude Include="source\TouhouDanmakufu\Common\DnhConstant.hpp" />

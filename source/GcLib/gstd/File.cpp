@@ -1008,7 +1008,7 @@ bool RecordBuffer::ReadFromFile(const std::wstring& path, uint32_t version, cons
 		return false;
 
 	{
-		auto fHead = std::make_unique<char[]>(headerSize);
+		auto fHead = make_unique<char[]>(headerSize);
 		file.Read(fHead.get(), headerSize);
 
 		if (memcmp(fHead.get(), header, headerSize) != 0)
@@ -1239,8 +1239,8 @@ SystemValueManager::~SystemValueManager() {}
 bool SystemValueManager::Initialize() {
 	if (thisBase_) return false;
 
-	mapRecord_[RECORD_SYSTEM] = std::make_unique<RecordBuffer>();
-	mapRecord_[RECORD_SYSTEM_GLOBAL] = std::make_unique<RecordBuffer>();
+	mapRecord_[RECORD_SYSTEM] = make_unique<RecordBuffer>();
+	mapRecord_[RECORD_SYSTEM_GLOBAL] = make_unique<RecordBuffer>();
 
 	thisBase_ = this;
 	return true;

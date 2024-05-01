@@ -164,7 +164,7 @@ void DxScriptPrimitiveObject::SetAngleZ(float z) {
 //****************************************************************************
 DxScriptPrimitiveObject2D::DxScriptPrimitiveObject2D() {
 	typeObject_ = TypeObject::Primitive2D;
-	objRender_ = std::make_shared<RenderObjectTLX>();
+	objRender_ = make_shared<RenderObjectTLX>();
 	objRender_->SetDxObjectReference(this);
 
 	bZWrite_ = false;
@@ -264,7 +264,7 @@ void DxScriptPrimitiveObject2D::SetPermitCamera(bool bPermit) {
 //****************************************************************************
 DxScriptSpriteObject2D::DxScriptSpriteObject2D() {
 	typeObject_ = TypeObject::Sprite2D;
-	objRender_ = std::make_shared<Sprite2D>();
+	objRender_ = make_shared<Sprite2D>();
 	objRender_->SetDxObjectReference(this);
 }
 
@@ -273,7 +273,7 @@ DxScriptSpriteObject2D::DxScriptSpriteObject2D() {
 //****************************************************************************
 DxScriptSpriteListObject2D::DxScriptSpriteListObject2D() {
 	typeObject_ = TypeObject::SpriteList2D;
-	objRender_ = std::make_shared<SpriteList2D>();
+	objRender_ = make_shared<SpriteList2D>();
 	objRender_->SetDxObjectReference(this);
 }
 
@@ -322,7 +322,7 @@ void DxScriptSpriteListObject2D::CloseVertex() {
 //****************************************************************************
 DxScriptPrimitiveObject3D::DxScriptPrimitiveObject3D() {
 	typeObject_ = TypeObject::Primitive3D;
-	objRender_ = std::make_shared<RenderObjectLX>();
+	objRender_ = make_shared<RenderObjectLX>();
 	objRender_->SetDxObjectReference(this);
 	bZWrite_ = false;
 	bZTest_ = true;
@@ -348,7 +348,7 @@ void DxScriptPrimitiveObject3D::SetRenderState() {
 		int frameAnime = objMesh->GetAnimeFrame();
 		const std::wstring& nameAnime = objMesh->GetAnimeName();
 		shared_ptr<DxMesh> mesh = objMesh->GetMesh();
-		shared_ptr<D3DXMATRIX> mat = std::make_shared<D3DXMATRIX>();
+		shared_ptr<D3DXMATRIX> mat = make_shared<D3DXMATRIX>();
 		*mat = mesh->GetAnimationMatrix(nameAnime, frameAnime);
 		objRender_->SetRelativeMatrix(mat);
 	}
@@ -430,7 +430,7 @@ D3DXVECTOR3 DxScriptPrimitiveObject3D::GetVertexPosition(size_t index) {
 //****************************************************************************
 DxScriptSpriteObject3D::DxScriptSpriteObject3D() {
 	typeObject_ = TypeObject::Sprite3D;
-	objRender_ = std::make_shared<Sprite3D>();
+	objRender_ = make_shared<Sprite3D>();
 	objRender_->SetDxObjectReference(this);
 }
 
@@ -439,7 +439,7 @@ DxScriptSpriteObject3D::DxScriptSpriteObject3D() {
 //****************************************************************************
 DxScriptTrajectoryObject3D::DxScriptTrajectoryObject3D() {
 	typeObject_ = TypeObject::Trajectory3D;
-	objRender_ = std::make_shared<TrajectoryObject3D>();
+	objRender_ = make_shared<TrajectoryObject3D>();
 	color_ = 0xffffffff;
 }
 
@@ -494,7 +494,7 @@ void DxScriptTrajectoryObject3D::SetColor(int r, int g, int b) {
 //****************************************************************************
 DxScriptParticleListObject2D::DxScriptParticleListObject2D() {
 	typeObject_ = TypeObject::ParticleList2D;
-	objRender_ = std::make_shared<ParticleRenderer2D>();
+	objRender_ = make_shared<ParticleRenderer2D>();
 	objRender_->SetDxObjectReference(this);
 }
 
@@ -536,7 +536,7 @@ void DxScriptParticleListObject2D::CleanUp() {
 //****************************************************************************
 DxScriptParticleListObject3D::DxScriptParticleListObject3D() {
 	typeObject_ = TypeObject::ParticleList3D;
-	objRender_ = std::make_shared<ParticleRenderer3D>();
+	objRender_ = make_shared<ParticleRenderer3D>();
 	objRender_->SetDxObjectReference(this);
 }
 

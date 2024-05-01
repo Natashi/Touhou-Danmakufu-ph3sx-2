@@ -697,7 +697,7 @@ void ArchiverThread::_Run() {
 	FileArchiver archiver;
 
 	for (FileEntryInfo* iFile : listFile_) {
-		auto entry = std::make_unique<ArchiveFileEntry>(iFile->path);
+		auto entry = make_unique<ArchiveFileEntry>(iFile->path);
 
 		std::wstring ext = PathProperty::GetFileExtension(entry->path);
 		bool bCompress = listCompressExclude_.find(ext) == listCompressExclude_.end();

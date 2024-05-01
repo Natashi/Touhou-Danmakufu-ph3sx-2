@@ -263,10 +263,10 @@ ScriptClientBase::ScriptClientBase() {
 	{
 		DWORD seed = SystemUtility::GetCpuTime2();
 
-		mt_ = std::make_shared<RandProvider>();
+		mt_ = make_shared<RandProvider>();
 		mt_->Initialize(seed ^ 0xc3c3c3c3);
 
-		mtEffect_ = std::make_shared<RandProvider>();
+		mtEffect_ = make_shared<RandProvider>();
 		mtEffect_->Initialize(((seed ^ 0xf27ea021) << 11) ^ ((seed ^ 0x8b56c1b5) >> 11));
 	}
 
@@ -370,7 +370,7 @@ bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 
 	// Script not found in cache, create a new entry
 
-	engineData_ = cache_->AddCache(path, std::make_unique<ScriptEngineData>());
+	engineData_ = cache_->AddCache(path, make_unique<ScriptEngineData>());
 	engineData_->SetPath(path);
 	
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);

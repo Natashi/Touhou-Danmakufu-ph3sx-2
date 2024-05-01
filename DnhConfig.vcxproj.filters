@@ -211,6 +211,9 @@
     <ClInclude Include="source\GcLib\gstd\CpuInformation.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
+    <ClInclude Include="source\GcLib\Types.hpp">
+      <Filter>source\GcLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="source\TouhouDanmakufu\DnhConfig\DnhConfig.rc">

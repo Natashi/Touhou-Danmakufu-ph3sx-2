@@ -586,7 +586,7 @@ shared_ptr<Texture> TextureManager::CreateFromFile(const std::wstring& path, boo
 			}
 			
 			if (data) {
-				res = std::make_shared<Texture>();
+				res = make_shared<Texture>();
 				res->data_ = data;
 			}
 		}
@@ -616,7 +616,7 @@ shared_ptr<Texture> TextureManager::CreateRenderTarget(const std::wstring& name,
 			}
 
 			if (data) {
-				res = std::make_shared<Texture>();
+				res = make_shared<Texture>();
 				res->data_ = data;
 			}
 		}
@@ -636,7 +636,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 			res = itr->second;
 		}
 		else {
-			res = std::make_shared<Texture>();
+			res = make_shared<Texture>();
 
 			if (!IsDataExists(path)) {
 				std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);

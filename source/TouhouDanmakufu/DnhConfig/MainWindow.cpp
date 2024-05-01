@@ -58,12 +58,14 @@ bool MainWindow::Initialize() {
 }
 
 void MainWindow::InitializePanels() {
-	listPanels_.push_back(std::make_unique<DevicePanel>());
-	listPanels_.push_back(std::make_unique<KeyPanel>());
+	listPanels_.push_back(make_unique<DevicePanel>());
+	listPanels_.push_back(make_unique<KeyPanel>());
 
-	auto panelOption = std::make_unique<OptionPanel>();
-	pPanelOption_ = panelOption.get();
-	listPanels_.push_back(std::move(panelOption));
+	{
+		auto panelOption = make_unique<OptionPanel>();
+		pPanelOption_ = panelOption.get();
+		listPanels_.push_back(MOVE(panelOption));
+	}
 
 	for (auto& iPanel : listPanels_)
 		iPanel->Initialize();

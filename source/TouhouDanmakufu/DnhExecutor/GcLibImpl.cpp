@@ -83,61 +83,56 @@ bool EApplication::_Initialize() {
 			logger->EAddPanelUpdateData(infoPanel, 50);
 		}
 
-		/*
 		{
-			shared_ptr<gstd::TaskInfoPanel> panelTask(new gstd::TaskInfoPanel());
-			panelTask->SetDisplayName("Thread");
-
-			// Updated in TaskManager
-			if (logger->EAddPanelNoUpdate(panelTask, L"Thread"))
-				taskManager->SetInfoPanel(panelTask);
-		}
-		*/
-		{
-			shared_ptr<directx::SystemInfoPanel> panelSys(new directx::SystemInfoPanel());
+			auto panelSys = make_shared<directx::SystemInfoPanel>();
 			panelSys->SetDisplayName("System");
+
 			if (logger->EAddPanel(panelSys, L"System", 100))
 				graphics->SetSystemPanel(panelSys);
 		}
 
 		{
-			shared_ptr<directx::TextureInfoPanel> panelTexture(new directx::TextureInfoPanel());
+			auto panelTexture = make_shared<directx::TextureInfoPanel>();
 			panelTexture->SetDisplayName("Texture");
+
 			if (logger->EAddPanel(panelTexture, L"Texture", 500))
 				textureManager->SetInfoPanel(panelTexture);
 		}
 
 		{
-			shared_ptr<directx::ShaderInfoPanel> panelShader(new directx::ShaderInfoPanel());
+			auto panelShader = make_shared<directx::ShaderInfoPanel>();
 			panelShader->SetDisplayName("Shader");
+
 			if (logger->EAddPanel(panelShader, L"Shader", 1000))
 				shaderManager->SetInfoPanel(panelShader);
 		}
 
 		{
-			shared_ptr<directx::DxMeshInfoPanel> panelMesh(new directx::DxMeshInfoPanel());
+			auto panelMesh = make_shared<directx::DxMeshInfoPanel>();
 			panelMesh->SetDisplayName("Mesh");
+
 			if (logger->EAddPanel(panelMesh, L"Mesh", 1000))
 				meshManager->SetInfoPanel(panelMesh);
 		}
 
 		{
-			shared_ptr<directx::SoundInfoPanel> panelSound(new directx::SoundInfoPanel());
+			auto panelSound = make_shared<directx::SoundInfoPanel>();
 			panelSound->SetDisplayName("Sound");
+
 			// Updated in DirectSoundManager
 			if (logger->EAddPanelNoUpdate(panelSound, L"Sound"))
 				soundManager->SetInfoPanel(panelSound);
 		}
 
 		{
-			auto panelCData = std::make_shared<ScriptCommonDataInfoPanel>();
+			auto panelCData = make_shared<ScriptCommonDataInfoPanel>();
 			panelCData->SetDisplayName("Common Data");
 
 			logger->EAddPanel(panelCData, L"Common Data", 100);
 		}
 
 		{
-			auto panelScript = std::make_shared<ScriptInfoPanel>();
+			auto panelScript = make_shared<ScriptInfoPanel>();
 			panelScript->SetDisplayName("Script");
 
 			logger->EAddPanel(panelScript, L"Script", 100);

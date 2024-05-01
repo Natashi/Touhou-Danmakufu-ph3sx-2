@@ -65,7 +65,7 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	}
 
 	{
-		auto slow = std::make_unique<PseudoSlowInformation>();
+		auto slow = make_unique<PseudoSlowInformation>();
 		infoSlow_ = slow.get();
 		EFpsController::GetInstance()->AddFpsControlObject(MOVE(slow));
 	}
@@ -456,7 +456,7 @@ StgStageInformation::StgStageInformation() {
 	priItemObject_ = 40;
 	priCameraFocusPermit_ = 69;
 
-	rand_ = std::make_shared<RandProvider>();
+	rand_ = make_shared<RandProvider>();
 	rand_->Initialize((uint32_t)SystemUtility::GetCpuTime2() ^ 0xf5682aebui32);
 	score_ = 0;
 	graze_ = 0;

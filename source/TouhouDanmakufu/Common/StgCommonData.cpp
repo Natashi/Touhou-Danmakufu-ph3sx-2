@@ -26,12 +26,12 @@ void ScriptCommonDataManager::Erase(const std::string& name) {
 }
 
 ScriptCommonDataManager::DataArea* ScriptCommonDataManager::CreateArea(const std::string& name) {
-	return CreateArea(name, std::make_unique<ScriptCommonDataArea>());
+	return CreateArea(name, make_unique<ScriptCommonDataArea>());
 }
 ScriptCommonDataManager::DataArea* ScriptCommonDataManager::CreateArea(
 	const std::string& name, const DataArea& source)
 {
-	return CreateArea(name, std::make_unique<ScriptCommonDataArea>(source));
+	return CreateArea(name, make_unique<ScriptCommonDataArea>(source));
 }
 ScriptCommonDataManager::DataArea* ScriptCommonDataManager::CreateArea(
 	const std::string& name, DataArea_UPtr&& area)
@@ -48,7 +48,7 @@ ScriptCommonDataManager::DataArea* ScriptCommonDataManager::CreateArea(
 }
 void ScriptCommonDataManager::CopyArea(const std::string& nameDest, const std::string& nameSrc) {
 	auto& dataSrc = mapData_[nameSrc];
-	auto dataDest = std::make_unique<ScriptCommonDataArea>();
+	auto dataDest = make_unique<ScriptCommonDataArea>();
 
 	dataDest->Copy(dataSrc.get());
 

@@ -82,13 +82,13 @@ shared_ptr<ManagedScript> StgUserExtendSceneScriptManager::Create(shared_ptr<Scr
 	shared_ptr<ManagedScript> res;
 	switch (type) {
 	case StgUserExtendSceneScript::TYPE_PAUSE_SCENE:
-		res = std::make_shared<StgPauseSceneScript>(systemController_);
+		res = make_shared<StgPauseSceneScript>(systemController_);
 		break;
 	case StgUserExtendSceneScript::TYPE_END_SCENE:
-		res = std::make_shared<StgEndSceneScript>(systemController_);
+		res = make_shared<StgEndSceneScript>(systemController_);
 		break;
 	case StgUserExtendSceneScript::TYPE_REPLAY_SCENE:
-		res = std::make_shared<StgReplaySaveScript>(systemController_);
+		res = make_shared<StgReplaySaveScript>(systemController_);
 		break;
 	}
 

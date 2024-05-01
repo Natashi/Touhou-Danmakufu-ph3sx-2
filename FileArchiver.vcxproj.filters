@@ -184,6 +184,9 @@
     <ClInclude Include="source\GcLib\gstd\CompressorStream.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
+    <ClInclude Include="source\GcLib\Types.hpp">
+      <Filter>source\GcLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="source\FileArchiver\FileArchiver.rc">

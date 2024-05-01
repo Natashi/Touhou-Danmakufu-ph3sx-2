@@ -225,7 +225,7 @@ bool DxCharGlyph::Create(gstd::CriticalSection& cs, const Font& winFont, const D
 			pTexture->UnlockRect(0);
 		}
 
-		texture_ = std::make_shared<Texture>();
+		texture_ = make_shared<Texture>();
 		texture_->SetTexture(pTexture);
 	}
 

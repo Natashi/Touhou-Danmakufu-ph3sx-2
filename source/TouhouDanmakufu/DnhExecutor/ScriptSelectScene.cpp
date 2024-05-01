@@ -18,11 +18,11 @@ ScriptSelectScene::ScriptSelectScene() {
 	DxRect<int> srcBack(0, 0, 640, 480);
 	DxRect<double> destBack(0, 0, screenWidth, screenHeight);
 
-	spriteBack_ = std::make_shared<Sprite2D>();
+	spriteBack_ = make_shared<Sprite2D>();
 	spriteBack_->SetTexture(textureBack);
 	spriteBack_->SetVertex(srcBack, destBack);
 
-	spriteImage_ = std::make_shared<Sprite2D>();
+	spriteImage_ = make_shared<Sprite2D>();
 
 	pageMaxY_ = 9;
 	objMenuText_.resize(COUNT_MENU_TEXT);
@@ -281,7 +281,7 @@ void ScriptSelectScene::Render() {
 			if (texture) pathImage1 = texture->GetName();
 			const std::wstring& pathImage2 = info->pathImage_;
 			if (pathImage1 != pathImage2) {
-				texture = std::make_shared<Texture>();
+				texture = make_shared<Texture>();
 				File file(pathImage2);
 				if (file.IsExists()) {
 					texture->CreateFromFileInLoadThread(pathImage2, false, true);
@@ -532,7 +532,8 @@ void ScriptSelectFileModel::_CreateMenuItem(const std::wstring& path) {
 		if (!_IsValidScriptInformation(info)) continue;
 
 		int typeItem = _ConvertTypeInfoToItem(info->type_);
-		listItem_.push_back(std::make_unique<ScriptSelectSceneMenuItem>(typeItem, info->pathScript_, info));
+		listItem_.push_back(make_unique<ScriptSelectSceneMenuItem>(
+			typeItem, info->pathScript_, info));
 	}
 
 }
@@ -591,7 +592,7 @@ PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) 
 	info_ = info;
 	int mx = 24;
 	int my = 256;
-	AddMenuItem(std::make_unique<PlayTypeSelectMenuItem>(L"Play", mx, my));
+	AddMenuItem(make_unique<PlayTypeSelectMenuItem>(L"Play", mx, my));
 
 	//リプレイ
 	if (info->type_ != ScriptInformation::TYPE_PACKAGE) {
@@ -615,7 +616,7 @@ PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) 
 				replay->GetAverageFps(),
 				replay->GetDateAsString().c_str()
 			);
-			AddMenuItem(std::make_unique<PlayTypeSelectMenuItem>(text, mx, itemY));
+			AddMenuItem(make_unique<PlayTypeSelectMenuItem>(text, mx, itemY));
 			itemCount++;
 		}
 	}
@@ -738,11 +739,11 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 	DxRect<int> srcBack(0, 0, 640, 480);
 	DxRect<double> destBack(0, 0, screenWidth, screenHeight);
 
-	spriteBack_ = std::make_shared<Sprite2D>();
+	spriteBack_ = make_shared<Sprite2D>();
 	spriteBack_->SetTexture(textureBack);
 	spriteBack_->SetVertex(srcBack, destBack);
 
-	spriteImage_ = std::make_shared<Sprite2D>();
+	spriteImage_ = make_shared<Sprite2D>();
 
 	SystemInformation* systemInfo = SystemController::GetInstance()->GetSystemInformation();
 
@@ -755,8 +756,8 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 	}
 
 	//メニュー作成
-	for (int iMenu = 0; iMenu < listPlayer_.size(); iMenu++) {
-		AddMenuItem(std::make_unique<PlayerSelectMenuItem>(listPlayer_[iMenu]));
+	for (auto& player : listPlayer_) {
+		AddMenuItem(make_unique<PlayerSelectMenuItem>(player));
 	}
 
 	std::vector<ref_count_ptr<ScriptInformation>> listLastPlayerSelect = systemInfo->GetLastPlayerSelectedList();
@@ -840,7 +841,7 @@ void PlayerSelectScene::Render() {
 		if (texture) pathImage1 = texture->GetName();
 		const std::wstring& pathImage2 = infoSelected->pathImage_;
 		if (pathImage1 != pathImage2) {
-			texture = std::make_shared<Texture>();
+			texture = make_shared<Texture>();
 			File file(pathImage2);
 			if (file.IsExists()) {
 				texture->CreateFromFileInLoadThread(pathImage2, false, true);

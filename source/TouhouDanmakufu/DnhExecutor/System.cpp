@@ -263,9 +263,9 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 
 		shared_ptr<StgSystemController> task = nullptr;
 		if (!bOnlyPackage)
-			task = std::make_shared<EStgSystemController>();
+			task = make_shared<EStgSystemController>();
 		else
-			task = std::make_shared<PStgSystemController>();
+			task = make_shared<PStgSystemController>();
 
 		//STGタスク初期化
 		task->Initialize(infoStgSystem);

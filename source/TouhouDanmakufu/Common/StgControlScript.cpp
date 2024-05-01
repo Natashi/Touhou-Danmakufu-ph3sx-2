@@ -536,7 +536,7 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA1(gstd::script_machine* ma
 		ScriptCommonDataArea::HEADER_SAVED_DATA, 
 		ScriptCommonDataArea::HEADER_SAVED_DATA_SIZE);
 	if (res) {
-		auto commonData = std::make_unique<ScriptCommonDataArea>();
+		auto commonData = make_unique<ScriptCommonDataArea>();
 		commonData->ReadRecord(record);
 
 		commonDataManager->SetArea(nameArea, MOVE(commonData));
@@ -585,7 +585,7 @@ gstd::value StgControlScript::Func_LoadCommonDataAreaA2(gstd::script_machine* ma
 		ScriptCommonDataArea::HEADER_SAVED_DATA, 
 		ScriptCommonDataArea::HEADER_SAVED_DATA_SIZE);
 	if (res) {
-		auto commonData = std::make_unique<ScriptCommonDataArea>();
+		auto commonData = make_unique<ScriptCommonDataArea>();
 		commonData->ReadRecord(record);
 
 		commonDataManager->SetArea(nameArea, MOVE(commonData));
@@ -987,7 +987,7 @@ shared_ptr<Texture> _RenderToTexture_LoadTexture(DxScriptResourceCache* rsrcCach
 			bool bExist = false;
 			auto itrData = textureManager->IsDataExistsItr(name, &bExist);
 			if (bExist) {	//Texture data exists, create a new texture object
-				texture = std::make_shared<Texture>();
+				texture = make_shared<Texture>();
 				texture->CreateFromData(itrData->second);
 				textureManager->Add(name, texture);
 			}

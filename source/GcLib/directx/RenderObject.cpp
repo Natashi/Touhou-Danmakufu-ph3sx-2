@@ -2015,14 +2015,14 @@ shared_ptr<DxMesh> DxMeshManager::CreateFromFileInLoadThread(const std::wstring&
 		else {
 			//if (type == MESH_ELFREINA) res = std::make_shared<ElfreinaMesh>();
 			//else if (type == MESH_METASEQUOIA) res = std::make_shared<MetasequoiaMesh>();
-			res = std::make_shared<MetasequoiaMesh>();
+			res = make_shared<MetasequoiaMesh>();
 
 			auto itrData = mapMeshData_.find(path);
 			if (itrData == mapMeshData_.end()) {
 				shared_ptr<DxMeshData> data = nullptr;
 				//if (type == MESH_ELFREINA) data = std::make_shared<ElfreinaMeshData>();
 				//else if (type == MESH_METASEQUOIA) data = std::make_shared<MetasequoiaMeshData>();
-				data = std::make_shared<MetasequoiaMeshData>();
+				data = make_shared<MetasequoiaMeshData>();
 
 				itrData = mapMeshData_.insert(std::pair<std::wstring, shared_ptr<DxMeshData>>(path, data)).first;
 

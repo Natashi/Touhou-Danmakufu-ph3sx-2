@@ -12,8 +12,8 @@
 StgShotManager::StgShotManager(StgStageController* stageController) {
 	stageController_ = stageController;
 
-	listPlayerShotData_ = std::make_unique<StgShotDataList>();
-	listEnemyShotData_ = std::make_unique<StgShotDataList>();
+	listPlayerShotData_ = make_unique<StgShotDataList>();
+	listEnemyShotData_ = make_unique<StgShotDataList>();
 
 	rcDeleteClip_ = DxRect<LONG>(-64, -64, 64, 64);
 
@@ -405,7 +405,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 			TextureManager* textureManager = TextureManager::GetBase();
 
 			if ((texture = textureManager->GetTexture(pathImage)) == nullptr) {
-				texture = std::make_shared<Texture>();
+				texture = make_shared<Texture>();
 				if (!texture->CreateFromFile(pathImage, false, false))
 					texture = nullptr;
 			}

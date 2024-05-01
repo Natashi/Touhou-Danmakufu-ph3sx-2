@@ -1716,7 +1716,7 @@ value DxScript::Func_LoadMesh(script_machine* machine, int argc, const value* ar
 
 	auto& mapMesh = script->pResouceCache_->mapMesh;
 	if (mapMesh.find(path) == mapMesh.end()) {
-		shared_ptr<DxMesh> mesh = std::make_shared<MetasequoiaMesh>();
+		auto mesh = make_shared<MetasequoiaMesh>();
 		res = mesh->CreateFromFile(path);
 		if (res) {
 			Lock lock(script->criticalSection_);
@@ -4443,12 +4443,12 @@ value DxScript::Func_ObjMesh_Load(script_machine* machine, int argc, const value
 		else {
 			std::wstring ext = PathProperty::GetFileExtension(path);
 			if (ext == L".mqo") {
-				mesh = std::make_shared<MetasequoiaMesh>();
+				mesh = make_shared<MetasequoiaMesh>();
 				res = mesh->CreateFromFile(path);
 			}
 			/*
 			else if (ext == L".elem") {
-				mesh = std::make_shared<ElfreinaMesh>();
+				mesh = make_shared<ElfreinaMesh>();
 				res = mesh->CreateFromFile(path);
 			}
 			*/

@@ -75,7 +75,7 @@ void StgSystemController::Start(ref_count_ptr<ScriptInformation> infoPlayer, ref
 
 	if (infoSystem_->IsPackageMode()) {
 		infoSystem_->SetScene(StgSystemInformation::SCENE_PACKAGE_CONTROL);
-		packageController_ = std::make_unique<StgPackageController>(this);
+		packageController_ = make_unique<StgPackageController>(this);
 		packageController_->Initialize();
 	}
 	else {
@@ -661,7 +661,7 @@ void StgSystemController::StartStgScene(ref_count_ptr<StgStageStartData> startDa
 
 	infoSystem_->SetScene(StgSystemInformation::SCENE_STG);
 
-	stageController_ = std::make_unique<StgStageController>(this);
+	stageController_ = make_unique<StgStageController>(this);
 	stageController_->Initialize(startData);
 }
 void StgSystemController::TransStgEndScene() {
@@ -674,7 +674,7 @@ void StgSystemController::TransStgEndScene() {
 	if (!bReplay) {
 		ref_count_ptr<ReplayInformation> infoReplay = CreateReplayInformation();
 		infoSystem_->SetActiveReplayInformation(infoReplay);
-		endScene_ = std::make_unique<StgEndScene>(this);
+		endScene_ = make_unique<StgEndScene>(this);
 		endScene_->Start();
 		infoSystem_->SetScene(StgSystemInformation::SCENE_END);
 	}
@@ -684,7 +684,7 @@ void StgSystemController::TransStgEndScene() {
 }
 
 void StgSystemController::TransReplaySaveScene() {
-	replaySaveScene_ = std::make_unique<StgReplaySaveScene>(this);
+	replaySaveScene_ = make_unique<StgReplaySaveScene>(this);
 	replaySaveScene_->Start();
 	infoSystem_->SetScene(StgSystemInformation::SCENE_REPLAY_SAVE);
 }

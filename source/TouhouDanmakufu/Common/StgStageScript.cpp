@@ -31,16 +31,16 @@ shared_ptr<ManagedScript> StgStageScriptManager::Create(shared_ptr<ScriptManager
 	shared_ptr<ManagedScript> res = nullptr;
 	switch (type) {
 	case StgStageScript::TYPE_STAGE:
-		res = std::make_shared<StgStageScript>(stageController_);
+		res = make_shared<StgStageScript>(stageController_);
 		break;
 	case StgStageScript::TYPE_SYSTEM:
-		res = std::make_shared<StgStageSystemScript>(stageController_);
+		res = make_shared<StgStageSystemScript>(stageController_);
 		break;
 	case StgStageScript::TYPE_ITEM:
-		res = std::make_shared<StgStageItemScript>(stageController_);
+		res = make_shared<StgStageItemScript>(stageController_);
 		break;
 	case StgStageScript::TYPE_PLAYER:
-		res = std::make_shared<StgStagePlayerScript>(stageController_);
+		res = make_shared<StgStagePlayerScript>(stageController_);
 		break;
 	}
 	if (res)
@@ -795,7 +795,7 @@ gstd::value StgStageScript::Func_SaveCommonDataAreaToReplayFile(gstd::script_mac
 
 	std::string nameArea = STR_MULTI(argv[0].as_string());
 	if (auto area = commonDataManager->GetArea(nameArea)) {
-		auto areaCopy = std::make_unique<ScriptCommonDataArea>();
+		auto areaCopy = make_unique<ScriptCommonDataArea>();
 		areaCopy->Copy(area);
 
 		replayStageData->SetCommonData(nameArea, areaCopy.get());
@@ -820,7 +820,7 @@ gstd::value StgStageScript::Func_LoadCommonDataAreaFromReplayFile(gstd::script_m
 
 	std::string nameArea = STR_MULTI(argv[0].as_string());
 	if (auto area = replayStageData->GetCommonData(nameArea)) {
-		auto areaCopy = std::make_unique<ScriptCommonDataArea>();
+		auto areaCopy = make_unique<ScriptCommonDataArea>();
 		areaCopy->Copy(area.get());
 
 		commonDataManager->SetArea(nameArea, MOVE(areaCopy));

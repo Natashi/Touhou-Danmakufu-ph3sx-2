@@ -61,8 +61,8 @@ namespace gstd {
 		_FnRead&& fnRead, _FnWrite&& fnWrite,
 		_FnAdvance&& fnAdvance, _FnCheck&& fnCheck)
 	{
-		auto in = std::make_unique<char[]>(CHUNK);
-		auto out = std::make_unique<char[]>(CHUNK);
+		auto in = make_unique<char[]>(CHUNK);
+		auto out = make_unique<char[]>(CHUNK);
 
 		z_stream stream{};
 		stream.zalloc = Z_NULL;
@@ -118,8 +118,8 @@ namespace gstd {
 		_FnRead&& fnRead, _FnWrite&& fnWrite,
 		_FnAdvance&& fnAdvance, _FnCheck&& fnCheck)
 	{
-		auto in = std::make_unique<char[]>(CHUNK);
-		auto out = std::make_unique<char[]>(CHUNK);
+		auto in = make_unique<char[]>(CHUNK);
+		auto out = make_unique<char[]>(CHUNK);
 
 		z_stream stream{};
 		stream.zalloc = Z_NULL;

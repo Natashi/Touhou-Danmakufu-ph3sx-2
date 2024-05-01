@@ -30,7 +30,7 @@ shared_ptr<ManagedScript> StgPackageScriptManager::Create(shared_ptr<ScriptManag
 	shared_ptr<ManagedScript> res;
 	switch (type) {
 	case StgPackageScript::TYPE_PACKAGE_MAIN:
-		res = std::make_shared<StgPackageScript>(systemController_->GetPackageController());
+		res = make_shared<StgPackageScript>(systemController_->GetPackageController());
 		break;
 	}
 

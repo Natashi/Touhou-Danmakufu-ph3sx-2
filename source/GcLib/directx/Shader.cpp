@@ -671,7 +671,7 @@ shared_ptr<Shader> ShaderManager::CreateFromFile(const std::wstring& path) {
 
 		shared_ptr<ShaderData> data(new ShaderData());
 		if (_CreateFromFile(path, data)) {
-			res = std::make_shared<Shader>();
+			res = make_shared<Shader>();
 			res->data_ = data;
 		}
 	}
@@ -684,7 +684,7 @@ shared_ptr<Shader> ShaderManager::CreateFromText(const std::wstring& name, const
 
 		shared_ptr<ShaderData> data(new ShaderData());
 		if (_CreateFromText(name, source, data)) {
-			res = std::make_shared<Shader>();
+			res = make_shared<Shader>();
 			res->data_ = data;
 		}
 	}
@@ -696,7 +696,7 @@ shared_ptr<Shader> ShaderManager::CreateFromData(shared_ptr<ShaderData> data) {
 		Lock lock(lock_);
 
 		if (data) {
-			res = std::make_shared<Shader>();
+			res = make_shared<Shader>();
 			res->data_ = data;
 		}
 	}
@@ -709,7 +709,7 @@ shared_ptr<Shader> ShaderManager::CreateCloneFromEffect(ID3DXEffect* effect) {
 
 		shared_ptr<ShaderData> data(new ShaderData());
 		if (_CreateCloneFromEffect(effect, data)) {
-			res = std::make_shared<Shader>();
+			res = make_shared<Shader>();
 			res->data_ = data;
 		}
 	}

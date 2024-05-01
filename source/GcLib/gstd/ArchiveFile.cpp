@@ -259,7 +259,7 @@ bool FileArchiver::EncryptArchive(std::fstream& inSrc, const std::wstring& pathO
 	dest.open(pathOut, std::ios::binary | std::ios::trunc);
 
 	constexpr size_t CHUNK = 16384U;
-	auto buf = std::make_unique<char[]>(CHUNK);
+	auto buf = make_unique<char[]>(CHUNK);
 	auto pBuf = buf.get();
 
 	size_t read = 0U;
