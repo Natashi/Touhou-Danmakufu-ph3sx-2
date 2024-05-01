@@ -35,7 +35,9 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 	infoStage_->SetReplay(replayStageData != nullptr);
 
 	{
-		int replayState = infoStage_->IsReplay() ? KeyReplayManager::STATE_REPLAY : KeyReplayManager::STATE_RECORD;
+		int replayState = infoStage_->IsReplay() ? 
+			KeyReplayManager::STATE_REPLAY : 
+			KeyReplayManager::STATE_RECORD;
 
 		keyReplayManager_.reset(new KeyReplayManager(EDirectInput::GetInstance()));
 		keyReplayManager_->SetManageState(replayState);
@@ -52,10 +54,9 @@ void StgStageController::Initialize(ref_count_ptr<StgStageStartData> startData) 
 		keyReplayManager_->AddTarget(EDirectInput::KEY_OK);
 		keyReplayManager_->AddTarget(EDirectInput::KEY_CANCEL);
 
-		std::set<int16_t> listReplayTargetKey = infoSystem_->GetReplayTargetKeyList();
-		for (auto itrKey = listReplayTargetKey.begin(); itrKey != listReplayTargetKey.end(); itrKey++) {
-			int16_t id = *itrKey;
-			keyReplayManager_->AddTarget(id);
+		auto& listReplayTargetKey = infoSystem_->GetReplayTargetKeyList();
+		for (auto& key : listReplayTargetKey) {
+			keyReplayManager_->AddTarget(key);
 		}
 
 		if (replayStageData == nullptr)

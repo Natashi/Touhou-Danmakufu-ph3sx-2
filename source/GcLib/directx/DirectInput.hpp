@@ -204,23 +204,25 @@ namespace directx {
 	protected:
 #pragma pack(push, 2)
 		struct ReplayData {
-			int16_t id_;
-			uint32_t frame_;
-			DIKeyState state_;
+			int16_t id;
+			uint32_t frame;
+			DIKeyState state;
 		};
 #pragma pack(pop)
 
 		int state_;
 		uint32_t frame_;
-
-		std::list<ReplayData>::iterator replayDataIterator_;
+		
 		std::map<int16_t, DIKeyState> mapKeyTarget_;
 
-		std::list<ReplayData> listReplayData_;
+		std::map<uint32_t, std::vector<ReplayData>> mapReplayData_;
+
 		VirtualKeyManager* input_;
+	private:
+		void _AddData(ReplayData&& data);
 	public:
 		KeyReplayManager(VirtualKeyManager* input);
-		virtual ~KeyReplayManager();
+		virtual ~KeyReplayManager() {}
 
 		void SetManageState(int state) { state_ = state; }
 		void AddTarget(int16_t key);
