@@ -735,6 +735,9 @@ void DxTextRenderObject::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY
 
 		D3DXMATRIX matWorld = RenderObject::CreateWorldMatrixText2D(center, scale_, angX, angY, angZ,
 			position, bias, bCamera ? &DirectGraphics::GetBase()->GetCamera2D()->GetMatrix() : nullptr);
+		
+		matWorld._41 -= DirectGraphics::g_dxBias_;
+		matWorld._42 -= DirectGraphics::g_dxBias_;
 
 		sprite->SetPermitCamera(false);
 		sprite->SetShader(shader_);
