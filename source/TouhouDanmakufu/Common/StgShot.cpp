@@ -1014,13 +1014,11 @@ StgShotData* StgShotObject::_GetShotData(int id) {
 }
 
 void StgShotObject::_SetVertexPosition(VERTEX_TLX* vertex, float x, float y, float z, float w) {
-	constexpr float bias = 0.0f;
-
 	x *= DirectGraphics::g_dxCoordsMul_;
 	y *= DirectGraphics::g_dxCoordsMul_;
 
-	vertex->position.x = x + bias;
-	vertex->position.y = y + bias;
+	vertex->position.x = x;
+	vertex->position.y = y;
 	vertex->position.z = z;
 	vertex->position.w = w;
 }
@@ -1609,6 +1607,8 @@ void StgNormalShotObject::Render(BlendMode targetBlend) {
 		sposx = roundf(sposx);
 		sposy = roundf(sposy);
 	}
+	sposx -= DirectGraphics::g_dxBias_;
+	sposy -= DirectGraphics::g_dxBias_;
 
 	float scaleX = 1.0f;
 	float scaleY = 1.0f;
