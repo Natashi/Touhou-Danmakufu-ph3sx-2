@@ -55,6 +55,7 @@ namespace directx {
 		static DirectGraphics* thisBase_;
 	public:
 		static float g_dxCoordsMul_;
+		static constexpr float g_dxBias_ = 0.5;
 	protected:
 		D3DPRESENT_PARAMETERS d3dppFull_;
 		D3DPRESENT_PARAMETERS d3dppWin_;

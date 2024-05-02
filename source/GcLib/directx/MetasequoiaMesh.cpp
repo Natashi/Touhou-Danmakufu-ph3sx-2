@@ -523,6 +523,9 @@ void MetasequoiaMesh::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 		D3DXMATRIX mat = RenderObject::CreateWorldMatrix(position_, scale_,
 			angX, angY, angZ, &camera->GetIdentity(), bCoordinate2D_);
 		device->SetTransform(D3DTS_WORLD, &mat);
+		
+		mat._41 -= DirectGraphics::g_dxBias_;
+		mat._42 -= DirectGraphics::g_dxBias_;
 
 		{
 			size_t i = 0;

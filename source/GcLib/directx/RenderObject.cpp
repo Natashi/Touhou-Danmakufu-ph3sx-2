@@ -418,6 +418,9 @@ void RenderObjectTLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 	else {
 		matWorld = camera->GetMatrix();
 	}
+	
+	matWorld._41 -= DirectGraphics::g_dxBias_;
+	matWorld._42 -= DirectGraphics::g_dxBias_;
 
 	RenderObjectTLX::Render(matWorld);
 }
@@ -551,9 +554,8 @@ void RenderObjectTLX::SetVertexPosition(size_t index, float x, float y, float z,
 	x *= DirectGraphics::g_dxCoordsMul_;
 	y *= DirectGraphics::g_dxCoordsMul_;
 
-	constexpr float bias = -0.5f;
-	vertex->position.x = x + bias;
-	vertex->position.y = y + bias;
+	vertex->position.x = x;
+	vertex->position.y = y;
 	vertex->position.z = z;
 	vertex->position.w = w;
 }
@@ -631,6 +633,9 @@ void RenderObjectLX::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, co
 			D3DXMatrixIdentity(&matWorld);
 		else matWorld = *matRelative_;
 	}
+	
+	matWorld._41 -= DirectGraphics::g_dxBias_;
+	matWorld._42 -= DirectGraphics::g_dxBias_;
 
 	RenderObjectLX::Render(matWorld);
 }
@@ -761,9 +766,8 @@ void RenderObjectLX::SetVertexPosition(size_t index, float x, float y, float z) 
 	x *= DirectGraphics::g_dxCoordsMul_;
 	y *= DirectGraphics::g_dxCoordsMul_;
 
-	constexpr float bias = -0.5f;
-	vertex->position.x = x + bias;
-	vertex->position.y = y + bias;
+	vertex->position.x = x;
+	vertex->position.y = y;
 	vertex->position.z = z;
 }
 void RenderObjectLX::SetVertexUV(size_t index, float u, float v) {
@@ -971,9 +975,8 @@ void RenderObjectNX::SetVertexPosition(size_t index, float x, float y, float z) 
 	x *= DirectGraphics::g_dxCoordsMul_;
 	y *= DirectGraphics::g_dxCoordsMul_;
 
-	constexpr float bias = -0.5f;
-	vertex->position.x = x + bias;
-	vertex->position.y = y + bias;
+	vertex->position.x = x;
+	vertex->position.y = y;
 	vertex->position.z = z;
 }
 void RenderObjectNX::SetVertexUV(size_t index, float u, float v) {
@@ -1029,13 +1032,11 @@ void Sprite2D::SetVertex(const DxRect<int>& rcSrc, const DxRect<double>& rcDest,
 	SetAlpha(ColorAccess::GetColorA(color));
 }
 DxRect<double> Sprite2D::GetDestinationRect() {
-	constexpr float bias = -0.5f;
-
 	VERTEX_TLX* vertexLeftTop = GetVertex(0);
 	VERTEX_TLX* vertexRightBottom = GetVertex(3);
 
-	DxRect<double> rect(vertexLeftTop->position.x - bias, vertexLeftTop->position.y - bias,
-		vertexRightBottom->position.x - bias, vertexRightBottom->position.y - bias);
+	DxRect<double> rect(vertexLeftTop->position.x, vertexLeftTop->position.y,
+		vertexRightBottom->position.x, vertexRightBottom->position.y);
 
 	return rect;
 }
@@ -1105,8 +1106,11 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 
 		D3DXMATRIX matWorld;
 		if (bCloseVertexList_)
-			matWorld = RenderObject::CreateWorldMatrix2D(position_, scale_,
-				angX, angY, angZ, bCamera ? &camera->GetMatrix() : nullptr);
+		{
+			matWorld = RenderObject::CreateWorldMatrix2D(position_, scale_, angX, angY, angZ, bCamera ? &camera->GetMatrix() : nullptr);
+			matWorld._41 -= DirectGraphics::g_dxBias_;
+			matWorld._42 -= DirectGraphics::g_dxBias_;
+		}
 
 		vertCopy_ = vertex_;
 		{
@@ -1235,6 +1239,8 @@ void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 
 	D3DXMATRIX matWorld = RenderObject::CreateWorldMatrix2D(position_, scale_,
 		angX, angY, angZ, nullptr);
+	matWorld._41 -= DirectGraphics::g_dxBias_;
+	matWorld._42 -= DirectGraphics::g_dxBias_;
 
 	int* ptrSrc = reinterpret_cast<int*>(&rcSrc_);
 	double* ptrDst = reinterpret_cast<double*>(&rcDest_);
@@ -1246,15 +1252,14 @@ void SpriteList2D::AddVertex(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, c
 		vt.texcoord.y = (float)ptrSrc[iVert | 0b1] / height;
 
 		D3DXVECTOR4 vPos;
-
-		constexpr float bias = -0.5f;
+		
 		vPos.x = (float)ptrDst[(iVert & 0b1) << 1];
 		vPos.y = (float)ptrDst[iVert | 0b1];
 		vPos.z = 1.0f;
 		vPos.w = 1.0f;
 
-		vPos.x = vPos.x * DirectGraphics::g_dxCoordsMul_ + bias;
-		vPos.y = vPos.y * DirectGraphics::g_dxCoordsMul_ + bias;
+		vPos.x = vPos.x * DirectGraphics::g_dxCoordsMul_;
+		vPos.y = vPos.y * DirectGraphics::g_dxCoordsMul_;
 
 		D3DXVec3TransformCoord((D3DXVECTOR3*)&vPos, (D3DXVECTOR3*)&vPos, &matWorld);
 		vt.position = vPos;
@@ -1531,7 +1536,7 @@ void ParticleRendererBase::AddInstance() {
 	}
 	VERTEX_INSTANCE instance;
 	instance.diffuse_color = instColor_;
-	instance.xyz_pos_x_scale = D3DXVECTOR4(instPosition_.x, instPosition_.y, instPosition_.z, instScale_.x);
+	instance.xyz_pos_x_scale = D3DXVECTOR4(instPosition_.x - DirectGraphics::g_dxBias_, instPosition_.y - DirectGraphics::g_dxBias_, instPosition_.z, instScale_.x);
 	instance.yz_scale_xy_ang = D3DXVECTOR4(instScale_.y, instScale_.z, -instAngle_.x, -instAngle_.y);
 	instance.z_ang_extra = D3DXVECTOR4(-instAngle_.z, instUserData_.x, instUserData_.y, instUserData_.z);
 	instanceData_[countInstance_++] = instance;

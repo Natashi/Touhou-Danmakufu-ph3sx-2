@@ -276,14 +276,13 @@ void EApplication::_RenderDisplay() {
 
 			std::array<VERTEX_TLX, 4> verts;
 			auto _Render = [](IDirect3DDevice9* device, VERTEX_TLX* verts, const D3DXMATRIX* mat) {
-				constexpr float bias = -0.5f;
 				for (size_t iVert = 0; iVert < 4; ++iVert) {
 					VERTEX_TLX* vertex = (VERTEX_TLX*)verts + iVert;
 					vertex->diffuse_color = 0xffffffff;
 
 					D3DXVECTOR4* vPos = &vertex->position;
-					vPos->x += bias;
-					vPos->y += bias;
+					vPos->x -= DirectGraphics::g_dxBias_;
+					vPos->y -= DirectGraphics::g_dxBias_;
 
 					D3DXVec3TransformCoord((D3DXVECTOR3*)vPos, (D3DXVECTOR3*)vPos, mat);
 				}
@@ -343,11 +342,10 @@ void EApplication::_RenderDisplay() {
 				verts[3] = VERTEX_TLX(D3DXVECTOR4(scW, scH, 0, 1), 0xffffffff,
 					D3DXVECTOR2(scW / texW, scH / texH));
 				{
-					constexpr float bias = -0.5f;
 					for (size_t iVert = 0; iVert < 4; ++iVert) {
 						D3DXVECTOR4* vPos = &verts[iVert].position;
-						vPos->x += bias;
-						vPos->y += bias;
+						vPos->x -= DirectGraphics::g_dxBias_;
+						vPos->y -= DirectGraphics::g_dxBias_;
 					}
 				}
 
