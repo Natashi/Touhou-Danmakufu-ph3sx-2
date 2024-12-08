@@ -585,8 +585,12 @@ namespace gstd {
 		else {
 			if (_type_check_two_any(argv[0].get_type(), argv[1].get_type(), type_data::tk_float))
 				return value(script_type_manager::get_float_type(), _fmod2(argv[0].as_float(), argv[1].as_float()));
-			else
-				return value(script_type_manager::get_int_type(), _mod2(argv[0].as_int(), argv[1].as_int()));
+			else {
+				int64_t deno = argv[1].as_int();
+				if (deno == 0)
+					throw std::string("Invalid operation: integer modulo by zero.\r\n");
+				return value(script_type_manager::get_int_type(), _mod2(argv[0].as_int(), deno));
+			}
 		}
 	}
 	SCRIPT_DECLARE_OP(remainder_);
