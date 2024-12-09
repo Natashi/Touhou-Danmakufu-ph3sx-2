@@ -737,7 +737,7 @@ SoundPlayer::SoundPlayer() {
 	playStyle_.bLoop_ = false;
 	playStyle_.timeLoopStart_ = 0;
 	playStyle_.timeLoopEnd_ = 0;
-	playStyle_.timeStart_ = 0;
+	playStyle_.timeStart_ = -1;
 	playStyle_.bResume_ = false;
 
 	bDelete_ = false;
@@ -1141,11 +1141,11 @@ bool SoundStreamingPlayer::Play() {
 		SetFade(0);
 
 		bStreamOver_ = false;
-		if (!bPause_ || !playStyle_.bResume_) {
-			this->Seek(playStyle_.timeStart_);
+		if (!bPause_ || !playStyle_.bResume_ || playStyle_.timeStart_ >= 0) {
+			this->Seek(playStyle_.timeStart_ >= 0 ? playStyle_.timeStart_ : 0);
 			pDirectSoundBuffer_->SetCurrentPosition(0);
 		}
-		playStyle_.timeStart_ = 0;
+		playStyle_.timeStart_ = -1;
 
 		for (size_t iEvent = 0; iEvent < 3; ++iEvent)
 			::ResetEvent(hEvent_[iEvent]);
@@ -1370,10 +1370,10 @@ bool SoundPlayerWave::Play() {
 		if (playStyle_.bLoop_)
 			dwFlags = DSBPLAY_LOOPING;
 
-		if (!bPause_ || !playStyle_.bResume_) {
-			this->Seek(playStyle_.timeStart_);
+		if (!bPause_ || !playStyle_.bResume_ || playStyle_.timeStart_ >= 0) {
+			this->Seek(playStyle_.timeStart_ >= 0 ? playStyle_.timeStart_ : 0);
 		}
-		playStyle_.timeStart_ = 0;
+		playStyle_.timeStart_ = -1;
 
 		HRESULT hr = pDirectSoundBuffer_->Play(0, 0, dwFlags);
 		if (hr == DSERR_BUFFERLOST) {
