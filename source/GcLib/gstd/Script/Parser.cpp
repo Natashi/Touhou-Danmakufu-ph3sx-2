@@ -187,17 +187,15 @@ parser::symbol* parser::scope_t::singular_insert(const std::string& name, const 
 	if (exists) {
 		symbol* sPrev = &(itrStart->second);
 
-		//Check if the symbol can be overloaded
-		if (!sPrev->bAllowOverload && sPrev->level > 0) {
-			std::string error = "";
-			if (!sPrev->bVariable) {	//Scripter attempted to overload a default function
-				error = StringUtility::Format("\"%s\": Function cannot be overloaded.",
-					name.c_str());
-			}
-			else {						//Scripter duplicated parameter/variable name
-				error = StringUtility::Format("\"%s\": Duplicated parameter name.",
-					name.c_str());
-			}
+		if (sPrev->bVariable) { //Scripter duplicated parameter/variable name
+			std::string error = StringUtility::Format("\"%s\": Duplicated parameter name.",
+				name.c_str());
+			parser_assert(false, error);
+		}
+		else if (!sPrev->bAllowOverload && sPrev->level > 0) {
+			//Scripter attempted to overload a default function
+			std::string error = StringUtility::Format("\"%s\": Function cannot be overloaded.",
+				name.c_str());
 			parser_assert(false, error);
 		}
 		else {
@@ -632,23 +630,28 @@ int parser::scan_current_scope(parser_state_t* state, int level, int initVar, co
 						if (dup) {
 							//Woohoo for detailed error messages.
 							std::string typeSub;
-							switch (dup->sub->kind) {
-							case block_kind::bk_function:
-								typeSub = "function";
-								break;
-							case block_kind::bk_microthread:
-								typeSub = "task";
-								break;
-							case block_kind::bk_sub:
-								typeSub = "sub or an \'@\' block";
-								break;
-							default:
-								typeSub = "block";
-								break;
+							if (dup->bVariable) {
+								typeSub = "variable";
+							}
+							else {
+								switch (dup->sub->kind) {
+								case block_kind::bk_function:
+									typeSub = "function";
+									break;
+								case block_kind::bk_microthread:
+									typeSub = "task";
+									break;
+								case block_kind::bk_sub:
+									typeSub = "sub or an \'@\' block";
+									break;
+								default:
+									typeSub = "block";
+									break;
+								}
 							}
 
 							std::string error;
-							if (dup->bAllowOverload && countArgs >= 0) {
+							if (dup->bVariable || (dup->bAllowOverload && countArgs >= 0)) {
 								error = "A " + typeSub;
 								error += StringUtility::Format(" of the same name was already defined "
 									"in the current scope: \'%s\'\r\n", name.c_str());
