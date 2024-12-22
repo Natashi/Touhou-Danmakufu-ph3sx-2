@@ -248,7 +248,8 @@ value StgControlScript::Func_GetCommonData(script_machine* machine, int argc, co
 
 	if (auto pValue = area->GetValueRef(key))
 		res = *pValue;
-	else if (argc == 2)
+
+	if (!res.has_data() && argc == 2)
 		res = argv[1];
 
 	return res;
@@ -298,9 +299,10 @@ value StgControlScript::Func_GetAreaCommonData(script_machine* machine, int argc
 	if (auto pArea = commonDataManager->GetArea(area)) {
 		if (auto pValue = pArea->GetValueRef(key))
 			res = *pValue;
-		else if (argc == 3)
-			res = argv[2];
 	}
+
+	if (!res.has_data() && argc == 3)
+			res = argv[2];
 
 	return res;
 }
