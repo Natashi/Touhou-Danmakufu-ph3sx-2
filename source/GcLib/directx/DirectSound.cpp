@@ -1007,19 +1007,21 @@ void SoundPlayer::SetFrequency(DWORD freq) {
 	}
 }
 
-void SoundPlayer::_LoadSamples(byte* pWaveData, size_t nSamples, double* pRes) {
+void SoundPlayer::_LoadSamples(byte* pWaveData, size_t dataSize, size_t nSamples, double* pRes) {
 	DWORD sampleRate = soundSource_->formatWave_.nSamplesPerSec;
 	DWORD bytePerSample = soundSource_->formatWave_.wBitsPerSample / 8U;
 	DWORD nBlockAlign = soundSource_->formatWave_.nBlockAlign;
 	DWORD nChannels = soundSource_->formatWave_.nChannels;
 	DWORD bytePerPCM = bytePerSample / nChannels;
 
-	//I totally didn't copy these from LuaSTG!! what are you even talking about?!
+	// I totally didn't copy these from LuaSTG!! what are you even talking about?!
 
 	const DWORD STHRESHOLD = 1U << (nBlockAlign / nChannels * 8 - 1);
 
+	size_t maxSamples = dataSize / nBlockAlign;
+
 	if (nChannels == 1) {
-		for (size_t i = 0; i < nSamples; ++i) {
+		for (size_t i = 0; i < nSamples && i < maxSamples; ++i) {
 			byte* pData = (byte*)pWaveData + (i * nBlockAlign);
 
 			int64_t val = 0;
@@ -1034,7 +1036,7 @@ void SoundPlayer::_LoadSamples(byte* pWaveData, size_t nSamples, double* pRes) {
 		}
 	}
 	else if (nChannels == 2) {
-		for (size_t i = 0; i < nSamples; ++i) {
+		for (size_t i = 0; i < nSamples && i < maxSamples; ++i) {
 			byte* pData = (byte*)pWaveData + (i * nBlockAlign);
 
 			int64_t val = 0;
@@ -1132,7 +1134,7 @@ bool SoundPlayer::GetSamplesFFT(DWORD durationMs, size_t resolution, bool bAutoL
 		if (SUCCEEDED(hr)) {
 			samples.resize(samplesNeeded);
 
-			_LoadSamples((byte*)pMem, samplesNeeded, samples.data());
+			_LoadSamples((byte*)pMem, dwSize, samplesNeeded, samples.data());
 
 			pDirectSoundBuffer_->Unlock(pMem, dwSize, nullptr, 0);
 		}
@@ -1351,10 +1353,14 @@ bool SoundStreamingPlayer::GetSamplesFFT(DWORD durationMs, size_t resolution, bo
 		if (SUCCEEDED(hr)) {
 			samples.resize(samplesNeeded);
 
-			DWORD sampSize1 = dwSize1 / bytePerSample;
-			_LoadSamples((byte*)pMem1, sampSize1, samples.data());
-			if (dwSize2 > 0)
-				_LoadSamples((byte*)pMem2, dwSize2 / bytePerSample, samples.data() + sampSize1);
+			// TODO: Switch to iterator concatenation instead of a temporary array
+
+			std::vector<byte> tempData;
+			tempData.reserve(dwSize1 + dwSize2);
+			tempData.insert(tempData.end(), (byte*)pMem1, (byte*)pMem1 + dwSize1);
+			tempData.insert(tempData.end(), (byte*)pMem2, (byte*)pMem2 + dwSize2);
+
+			_LoadSamples(tempData.data(), tempData.size(), samplesNeeded, samples.data());
 
 			pDirectSoundBuffer_->Unlock(pMem1, dwSize1, pMem2, dwSize2);
 		}

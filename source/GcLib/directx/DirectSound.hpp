@@ -261,7 +261,7 @@ namespace directx {
 		virtual bool _CreateBuffer(shared_ptr<SoundSourceData> source) = 0;
 		static LONG _GetVolumeAsDirectSoundDecibel(float rate);
 
-		void _LoadSamples(byte* pWaveData, size_t pSize, double* pRes);
+		void _LoadSamples(byte* pWaveData, size_t dataSize, size_t nSamples, double* pRes);
 		void _DoFFT(const std::vector<double>& bufIn, std::vector<double>& bufOut, double multiplier, bool bAutoLog);
 	public:
 		SoundPlayer();
