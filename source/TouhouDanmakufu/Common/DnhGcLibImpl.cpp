@@ -278,12 +278,12 @@ bool ETextureManager::Initialize() {
 		size_t rW = Math::GetNextPow2(graphics->GetScreenWidth());
 		size_t rH = Math::GetNextPow2(graphics->GetScreenHeight());
 
-		shared_ptr<TextureData> data;
-		if (!_CreateRenderTarget_Unmanaged(data, L"__PRIMARY_BACKSURFACE__", rW, rH)) {
+		shared_ptr<Texture> texture(new Texture());
+		if (!texture->CreateRenderTarget(L"__PRIMARY_BACKSURFACE__", rW, rH)) {
 			throw gstd::wexception("ETextureManager: Failed to create back surface render target.");
 		}
 
-		graphics->SetDefaultBackBufferRenderTarget(data);
+		graphics->SetDefaultBackBufferRenderTarget(texture->GetTextureData());
 	}
 	{
 		size_t rW = Math::GetNextPow2(graphics->GetRenderScreenWidth() * 2);

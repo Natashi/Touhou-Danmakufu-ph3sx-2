@@ -59,7 +59,6 @@ namespace directx {
 		friend TextureInfoPanel;
 	protected:
 		shared_ptr<TextureData> data_;
-		TextureData* _GetTextureData() { return data_.get(); }
 	public:
 		Texture();
 		Texture(Texture* texture);
@@ -74,7 +73,9 @@ namespace directx {
 		bool CreateRenderTarget(const std::wstring& name, size_t width = 0U, size_t height = 0U);
 		bool CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo = false);
 
+		auto GetTextureData() { return data_; }
 		void SetTexture(IDirect3DTexture9 *pTexture);
+
 		IDirect3DTexture9* GetD3DTexture();
 		IDirect3DSurface9* GetD3DSurface();
 		IDirect3DSurface9* GetD3DZBuffer();
@@ -112,12 +113,7 @@ namespace directx {
 		void __CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
 		bool _CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
 		bool _CreateRenderTarget(shared_ptr<TextureData>& dst, const std::wstring& name, 
-			size_t width = 0U, size_t height = 0U, bool bManaged = true);
-		bool _CreateRenderTarget_Unmanaged(shared_ptr<TextureData>& dst, const std::wstring& name, 
-			size_t width, size_t height)
-		{
-			return _CreateRenderTarget(dst, name, width, height, false);
-		}
+			size_t width = 0U, size_t height = 0U);
 	public:
 		TextureManager();
 		virtual ~TextureManager();

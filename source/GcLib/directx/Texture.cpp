@@ -484,7 +484,7 @@ bool TextureManager::_CreateFromFile(shared_ptr<TextureData>& dst, const std::ws
 	return res;
 }
 bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std::wstring& name, 
-	size_t width, size_t height, bool bManaged)
+	size_t width, size_t height)
 {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
@@ -558,7 +558,8 @@ bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std
 		res = false;
 	}
 
-	if (res && bManaged) mapTextureData_[name] = data;
+	if (res)
+		mapTextureData_[name] = data;
 	dst = data;
 
 	return res;
