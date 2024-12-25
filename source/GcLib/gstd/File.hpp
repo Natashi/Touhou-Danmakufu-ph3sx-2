@@ -114,6 +114,8 @@ namespace gstd {
 		std::fstream hFile_;
 		std::wstring path_;
 		DWORD perms_;
+
+		optional<size_t> fileSize_;
 	public:
 		File();
 		File(const std::wstring& path);

@@ -282,23 +282,28 @@ bool File::IsDirectory() {
 	return IsDirectory(path_);
 }
 size_t File::GetSize() {
-	size_t res = 0;
+	if (fileSize_)
+		return *fileSize_;
+
 	if (IsOpen()) {
 		size_t prev = GetFilePointer();
 		SetFilePointerEnd();
+
 		size_t size = GetFilePointer();
 		Seek(prev, std::ios::beg);
+
+		fileSize_ = size;
 		return size;
 	}
-
-	//File not opened
+	else {
+		// File not opened
 	try {
-		res = stdfs::file_size(path_);
+			return stdfs::file_size(path_);
 	}
 	catch (stdfs::filesystem_error&) {
-		res = 0;
+			return 0;
+		}
 	}
-	return res;
 }
 
 bool File::Open() {
@@ -350,6 +355,8 @@ bool File::Open(DWORD typeAccess) {
 		else
 			mapFileUseCount_.insert(std::make_pair(path_, 1));
 #endif
+		fileSize_ = GetSize();
+
 		return true;
 	}
 	return false;
