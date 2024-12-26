@@ -6,6 +6,8 @@
 #include "StgEnemy.hpp"
 #include "StgSystem.hpp"
 
+#define ENABLE_VISUALIZER
+
 //*******************************************************************
 //StgIntersectionManager
 //*******************************************************************
@@ -22,6 +24,7 @@ StgIntersectionManager::StgIntersectionManager() {
 		listSpace_[iSpace] = space;
 	}
 
+#ifdef ENABLE_VISUALIZER
 	{
 		{
 			ShaderManager* shaderManager = ShaderManager::GetBase();
@@ -102,6 +105,7 @@ StgIntersectionManager::StgIntersectionManager() {
 			}
 		}
 	}
+#endif
 }
 StgIntersectionManager::~StgIntersectionManager() {
 	for (auto& itr : listSpace_) {
@@ -109,7 +113,9 @@ StgIntersectionManager::~StgIntersectionManager() {
 	}
 	listSpace_.clear();
 }
+
 void StgIntersectionManager::Work() {
+#ifdef ENABLE_VISUALIZER
 	objIntersectionVisualizerCircle_->CleanUp();
 	objIntersectionVisualizerLine_->CleanUp();
 	{
@@ -119,12 +125,14 @@ void StgIntersectionManager::Work() {
 	}
 	countCircleInstance_ = 0U;
 	countLineVertex_ = 0U;
+#endif
 
 	listEnemyTargetPoint_ = listEnemyTargetPointNext_;
 	listEnemyTargetPointNext_.clear();
 
 	size_t totalCheck = 0;
 	size_t totalTarget = 0;
+
 	for (auto& space : listSpace_) {
 		size_t currentCheck = 0;
 		auto listCheck = space->CreateIntersectionCheckList(this, currentCheck);
@@ -175,12 +183,14 @@ void StgIntersectionManager::Work() {
 	}
 }
 void StgIntersectionManager::RenderVisualizer() {
+#ifdef ENABLE_VISUALIZER
 	if (!bRenderIntersection_) return;
 
 	if (countCircleInstance_ > 0U)
 		objIntersectionVisualizerCircle_->Render();
 	if (countLineVertex_ > 0U)
 		objIntersectionVisualizerLine_->Render();
+#endif
 }
 void StgIntersectionManager::AddTarget(ref_unsync_ptr<StgIntersectionTarget> target) {
 	if (target == nullptr) return;
@@ -289,6 +299,7 @@ bool StgIntersectionManager::IsIntersected(StgIntersectionTarget* p1, StgInterse
 	if (p1 != nullptr && p2 != nullptr) {
 		StgIntersectionTarget::Shape shape1 = p1->GetShape();
 		StgIntersectionTarget::Shape shape2 = p2->GetShape();
+
 		if (shape1 == StgIntersectionTarget::SHAPE_CIRCLE && shape2 == StgIntersectionTarget::SHAPE_CIRCLE) {
 			StgIntersectionTarget_Circle* c1 = dynamic_cast<StgIntersectionTarget_Circle*>(p1);
 			StgIntersectionTarget_Circle* c2 = dynamic_cast<StgIntersectionTarget_Circle*>(p2);
@@ -323,6 +334,7 @@ lab_fail:
 }
 
 void StgIntersectionManager::AddVisualization(ref_unsync_ptr<StgIntersectionTarget>& target) {
+#ifdef ENABLE_VISUALIZER
 	if (!bRenderIntersection_ || target == nullptr) return;
 
 	ParticleRenderer2D* objParticleCircle = objIntersectionVisualizerCircle_->GetParticlePointer();
@@ -403,6 +415,7 @@ void StgIntersectionManager::AddVisualization(ref_unsync_ptr<StgIntersectionTarg
 		break;
 	}
 	}
+#endif
 }
 
 //*******************************************************************
@@ -475,6 +488,7 @@ std::vector<StgIntersectionSpace::TargetCheckListPair>* StgIntersectionSpace::Cr
 	CriticalSection& criticalSection = manager->GetLock();
 	std::atomic_uint count = 0;
 
+#ifdef ENABLE_VISUALIZER
 	if (manager->IsEnableVisualizer()) {
 		/*
 		ParallelFor(pListTargetA->size(), [&](size_t i) {
@@ -489,6 +503,7 @@ std::vector<StgIntersectionSpace::TargetCheckListPair>* StgIntersectionSpace::Cr
 		for (auto& pTarget : *pListTargetB)
 			manager->AddVisualization(pTarget);
 	}
+#endif
 
 	if (pListTargetA->size() > 0 && pListTargetB->size() > 0) {
 		auto CheckSpaceRect = [&](StgIntersectionTarget* targetA, StgIntersectionTarget* targetB) {
