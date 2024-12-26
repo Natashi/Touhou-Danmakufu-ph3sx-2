@@ -162,13 +162,11 @@ void Shader::Release() {
 	{
 		Lock lock(ShaderManager::GetBase()->GetLock());
 		if (data_) {
-			ShaderManager* manager = data_->manager_;
-			if (manager) {
-				auto itrData = manager->IsDataExistsItr(data_->name_);
-
-				//No other references other than the one here and the one in ShaderManager
-				if (data_.use_count() == 2) {
-					manager->_ReleaseShaderData(itrData);
+			if (auto manager = data_->manager_) {
+				// If no other uses than in data_ and in manager, dispose data
+				// TODO: Switch to automatic deletion with smart pointers
+				if (data_.use_count() <= 2) {
+					manager->_ReleaseShaderData(data_->GetName());
 				}
 			}
 			data_ = nullptr;
@@ -433,20 +431,19 @@ void ShaderManager::Clear() {
 	}
 }
 void ShaderManager::_ReleaseShaderData(const std::wstring& name) {
+	Lock lock(lock_);
+
 	auto itr = mapShaderData_.find(name);
-	_ReleaseShaderData(itr);
-}
-void ShaderManager::_ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderData>>::iterator itr) {
-	{
-		Lock lock(lock_);
-		if (itr != mapShaderData_.end()) {
-			const std::wstring& name = itr->second->name_;
-			itr->second->bLoad_ = false;
-			mapShaderData_.erase(itr);
-			Logger::WriteTop(StringUtility::Format(L"ShaderManager: Shader released [%s]", 
-				PathProperty::ReduceModuleDirectory(name).c_str()));
-		}
-	}
+	if (itr == mapShaderData_.end())
+		return;
+
+	auto& data = itr->second;
+	data->bLoad_ = false;
+
+	mapShaderData_.erase(itr);
+
+	Logger::WriteTop(StringUtility::Format(L"ShaderManager: Shader released [%s]",
+		PathProperty::ReduceModuleDirectory(name).c_str()));
 }
 
 bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderData>& dest) {
@@ -469,7 +466,7 @@ bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderD
 			throw wexception(err);
 		}
 
-		std::string source = reader->ReadAllString();
+		std::string source = reader->ReadToString();
 
 		dest->pIncludeCallback_.reset(new ShaderIncludeCallback(PathProperty::GetFileDirectory(path)));
 
@@ -630,22 +627,6 @@ void ShaderManager::RestoreDxResource() {
 	}
 }
 
-bool ShaderManager::IsDataExists(const std::wstring& name) {
-	bool res = false;
-	{
-		Lock lock(lock_);
-		res = mapShaderData_.find(name) != mapShaderData_.end();
-	}
-	return res;
-}
-std::map<std::wstring, shared_ptr<ShaderData>>::iterator ShaderManager::IsDataExistsItr(std::wstring& name) {
-	auto res = mapShaderData_.end();
-	{
-		Lock lock(lock_);
-		res = mapShaderData_.find(name);
-	}
-	return res;
-}
 shared_ptr<ShaderData> ShaderManager::GetShaderData(const std::wstring& name) {
 	shared_ptr<ShaderData> res;
 	{
@@ -877,7 +858,7 @@ const char* ShaderParamTypeToString(D3DXPARAMETER_TYPE type) {
 void ShaderInfoPanel::ProcessGui() {
 	Logger* parent = Logger::GetTop();
 
-	auto orgTextColor = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+	auto& orgTextColor = ImGui::GetStyleColorVec4(ImGuiCol_Text);
 
 	auto _Tooltip = [&orgTextColor](std::function<void()> gui) {
 		ImGui::BeginTooltipEx(ImGuiTooltipFlags_OverridePreviousTooltip, ImGuiWindowFlags_None);
