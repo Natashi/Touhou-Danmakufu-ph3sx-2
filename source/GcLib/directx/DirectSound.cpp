@@ -133,7 +133,7 @@ shared_ptr<SoundSourceData> DirectSoundManager::_CreateSoundSource(std::wstring 
 		if (reader == nullptr || !reader->Open())
 			throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
-		size_t sizeFile = reader->GetFileSize();
+		size_t sizeFile = reader->GetSize();
 		if (sizeFile <= 64)
 			throw gstd::wexception(L"Audio file invalid.");
 

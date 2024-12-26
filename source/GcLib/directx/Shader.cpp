@@ -751,9 +751,9 @@ HRESULT __stdcall ShaderIncludeCallback::Open(D3DXINCLUDE_TYPE type, LPCSTR pFil
 		return E_FAIL;
 	}
 
-	buffer_.resize(reader->GetFileSize());
+	buffer_.resize(reader->GetSize());
 	if (buffer_.size() > 0) {
-		reader->Read(buffer_.data(), reader->GetFileSize());
+		reader->Read(buffer_.data(), reader->GetSize());
 
 		*ppData = buffer_.data();
 		*pBytes = buffer_.size();

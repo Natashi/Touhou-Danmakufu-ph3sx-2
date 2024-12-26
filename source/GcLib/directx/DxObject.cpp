@@ -1040,7 +1040,7 @@ bool DxTextFileObject::OpenR(shared_ptr<gstd::FileReader> reader) {
 	listLine_.clear();
 	reader_ = reader;
 
-	size_t size = reader->GetFileSize();
+	size_t size = reader->GetSize();
 	if (size == 0) return true;
 
 	std::vector<char> text;
@@ -1376,7 +1376,7 @@ bool DxBinaryFileObject::OpenR(shared_ptr<gstd::FileReader> reader) {
 
 	auto srcBuffer = dynamic_cast<ManagedFileReader*>(reader.get())->GetBuffer();
 
-	size_t size = reader->GetFileSize();
+	size_t size = reader->GetSize();
 
 	buffer_ = ByteBuffer(*srcBuffer);
 	
