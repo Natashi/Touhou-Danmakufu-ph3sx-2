@@ -498,10 +498,10 @@ bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std
 			height = Math::GetNextPow2(screenHeight);
 		}
 		{
-			size_t maxWidth = std::min<DWORD>(graphics->GetDeviceCaps()->MaxTextureWidth, 4096);
-			size_t maxHeight = std::min<DWORD>(graphics->GetDeviceCaps()->MaxTextureHeight, 4096);
-			if (width > maxWidth) width = maxWidth;
-			if (height > maxHeight) height = maxHeight;
+			size_t maxWidth = std::min<DWORD>(graphics->GetDeviceCaps()->MaxTextureWidth, 10000);
+			size_t maxHeight = std::min<DWORD>(graphics->GetDeviceCaps()->MaxTextureHeight, 10000);
+			width = std::min(width, maxWidth);
+			height = std::min(height, maxHeight);
 		}
 
 		data.reset(new TextureData());
