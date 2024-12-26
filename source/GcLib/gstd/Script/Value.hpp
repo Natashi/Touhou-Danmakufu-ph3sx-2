@@ -38,14 +38,13 @@ namespace gstd {
 		type_data::type_kind kind = type_data::tk_null;
 		type_data* type = nullptr;
 
+		// TODO: Switch to std::variant
 		union {
-			struct {
-				double float_value;
-				wchar_t char_value;
-				bool boolean_value;
-				int64_t int_value;
-				value* ptr_value;
-			};
+			double float_value;
+			wchar_t char_value;
+			bool boolean_value;
+			int64_t int_value;
+			value* ptr_value;
 			ref_unsync_ptr<std::vector<value>> p_array_value;
 		};
 	public:
