@@ -405,8 +405,8 @@ void ScriptSelectScene::AddMenuItem(std::list<shared_ptr<ScriptSelectSceneMenuIt
 	{
 		Lock lock(cs_);
 
-		for (auto itr = listItem.begin(); itr != listItem.end(); itr++) {
-			MenuTask::AddMenuItem(*itr);
+		for (auto& item : listItem) {
+			MenuTask::AddMenuItem(item);
 		}
 
 		//現在選択中のアイテム
@@ -492,7 +492,7 @@ void ScriptSelectFileModel::_Run() {
 }
 void ScriptSelectFileModel::_SearchScript(const std::wstring& dir) {
 	if (stdfs::exists(dir) && stdfs::is_directory(dir)) {
-		for (auto itr : stdfs::directory_iterator(dir)) {
+		for (auto& itr : stdfs::directory_iterator(dir)) {
 			if (GetStatus() != RUN) return;
 
 			uint64_t time = SystemUtility::GetCpuTime2();

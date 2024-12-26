@@ -684,7 +684,7 @@ gstd::value StgControlScript::Func_GetArchiveFilePathList(gstd::script_machine* 
 	std::wstring name = argv[0].as_string();
 	bool bExtendPath = argv[1].as_boolean();
 
-	ArchiveFile* archive = fileManager->GetArchiveFile(name);
+	auto archive = fileManager->GetArchiveFile(name);
 	if (archive) {
 		std::wstring archiveBaseDir = PathProperty::GetFileDirectory(archive->GetPath());
 
@@ -825,10 +825,9 @@ gstd::value StgControlScript::Func_GetScriptPathList(gstd::script_machine* machi
 	dir = PathProperty::GetFileDirectory(dir);
 
 	int typeScript = argv[1].as_int();
-	std::vector<std::wstring> listFile = File::GetFilePathList(dir);
-	for (auto itr = listFile.begin(); itr != listFile.end(); ++itr) {
-		std::wstring path = *itr;
 
+	std::vector<std::wstring> listFile = File::GetFilePathList(dir);
+	for (auto& path : listFile) {
 		std::wstring ext = PathProperty::GetFileExtension(path);
 		if (ScriptInformation::IsExcludeExtension(ext)) continue;
 

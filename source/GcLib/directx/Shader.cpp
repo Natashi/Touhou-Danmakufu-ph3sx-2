@@ -252,11 +252,8 @@ bool Shader::LoadParameter() {
 
 	HRESULT hr = S_OK;
 
-	for (auto itrParam = mapParam_.begin(); itrParam != mapParam_.end(); ++itrParam) {
-		D3DXHANDLE name = itrParam->first;
-		ShaderParameter* param = &itrParam->second;
-
-		param->SubmitData(effect);
+	for (auto& [name, param] : mapParam_) {
+		param.SubmitData(effect);
 	}
 
 	return true;
@@ -451,6 +448,7 @@ void ShaderManager::_ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderD
 		}
 	}
 }
+
 bool ShaderManager::_CreateFromFile(const std::wstring& path, shared_ptr<ShaderData>& dest) {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	lastError_ = L"";
@@ -612,24 +610,20 @@ bool ShaderManager::_CreateCloneFromEffect(ID3DXEffect* effect, shared_ptr<Shade
 }
 
 void ShaderManager::ReleaseDxResource() {
-	std::map<std::wstring, shared_ptr<ShaderData>>::iterator itrMap;
 	{
 		Lock lock(lock_);
 
-		for (itrMap = mapShaderData_.begin(); itrMap != mapShaderData_.end(); ++itrMap) {
-			shared_ptr<ShaderData> data = itrMap->second;
+		for (auto& [_, data] : mapShaderData_) {
 			data->ReleaseDxResource();
 		}
 		renderManager_->OnLostDevice();
 	}
 }
 void ShaderManager::RestoreDxResource() {
-	std::map<std::wstring, shared_ptr<ShaderData>>::iterator itrMap;
 	{
 		Lock lock(lock_);
 
-		for (itrMap = mapShaderData_.begin(); itrMap != mapShaderData_.end(); ++itrMap) {
-			shared_ptr<ShaderData> data = itrMap->second;
+		for (auto& [_, data] : mapShaderData_) {
 			data->RestoreDxResource();
 		}
 		renderManager_->OnResetDevice();

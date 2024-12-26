@@ -13,11 +13,11 @@ ReplayInformation::ReplayInformation() {
 	userData_ = make_unique<ScriptCommonDataArea>();
 }
 ReplayInformation::~ReplayInformation() {}
+
 std::vector<int> ReplayInformation::GetStageIndexList() {
 	std::vector<int> res;
 
-	for (auto itr = mapStageData_.begin(); itr != mapStageData_.end(); itr++) {
-		int stage = itr->first;
+	for (auto& [stage, _] : mapStageData_) {
 		res.push_back(stage);
 	}
 
@@ -76,7 +76,7 @@ bool ReplayInformation::SaveToFile(const std::wstring& scriptPath, int index) {
 	std::vector<int> listStage = GetStageIndexList();
 	rec.SetRecord<uint32_t>("stageCount", listStage.size());
 	rec.SetRecord("stageIndexList", &listStage[0], sizeof(int) * listStage.size());
-	for (const int iStage : listStage) {
+	for (int iStage : listStage) {
 		std::string key = StringUtility::Format("stage%d", iStage);
 
 		auto& data = mapStageData_[iStage];
@@ -270,7 +270,7 @@ void ReplayInformation::StageData::ReadRecord(gstd::RecordBuffer& record) {
 	{
 		gstd::RecordBuffer recComMap = *record.GetRecordAsRecordBuffer("mapCommonData");
 		for (auto& iCommonData : recComMap.GetKeyList()) {
-			auto record = *recComMap.GetRecordAsRecordBuffer(iCommonData);
+			auto& record = *recComMap.GetRecordAsRecordBuffer(iCommonData);
 			mapCommonData_[iCommonData] = MOVE(record);
 		}
 	}
@@ -336,12 +336,11 @@ void ReplayInformationManager::UpdateInformationList(std::wstring pathScript) {
 	std::wstring scriptName = PathProperty::GetFileNameWithoutExtension(pathScript);
 	std::wstring fileNameHead = scriptName + L"_replay";
 	std::wstring dir = EPathProperty::GetReplaySaveDirectory(pathScript);
-	std::vector<std::wstring> listPath = File::GetFilePathList(dir);
 
 	int indexFree = ReplayInformation::INDEX_USER;
-	std::vector<std::wstring>::iterator itr;
-	for (itr = listPath.begin(); itr != listPath.end(); itr++) {
-		const std::wstring& path = *itr;
+
+	std::vector<std::wstring> listPath = File::GetFilePathList(dir);
+	for (auto& path : listPath) {
 		std::wstring fileName = PathProperty::GetFileName(path);
 
 		if (fileName.find(fileNameHead) == std::wstring::npos) continue;
@@ -369,8 +368,8 @@ void ReplayInformationManager::UpdateInformationList(std::wstring pathScript) {
 }
 std::vector<int> ReplayInformationManager::GetIndexList() {
 	std::vector<int> res;
-	for (auto itr = mapInfo_.begin(); itr != mapInfo_.end(); ++itr) {
-		res.push_back(itr->first);
+	for (auto& [index, info] : mapInfo_) {
+		res.push_back(index);
 	}
 	return res;
 }

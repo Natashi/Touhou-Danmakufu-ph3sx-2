@@ -39,16 +39,16 @@ void DirectGraphicsBase::_ReleaseDxResource() {
 	ptr_release(pZBuffer_);
 	ptr_release(pBackSurf_);
 
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		(*itr)->ReleaseDxResource();
+	for (auto& listener : listListener_) {
+		listener->ReleaseDxResource();
 	}
 }
 void DirectGraphicsBase::_RestoreDxResource() {
 	pDevice_->GetRenderTarget(0, &pBackSurf_);
 	pDevice_->GetDepthStencilSurface(&pZBuffer_);
 
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		(*itr)->RestoreDxResource();
+	for (auto& listener : listListener_) {
+		listener->RestoreDxResource();
 	}
 }
 
@@ -111,10 +111,9 @@ void DirectGraphicsBase::_LoadModules() {
 	}
 }
 void DirectGraphicsBase::_FreeModules() {
-	for (auto itr = mapDxModules_.begin(); itr != mapDxModules_.end(); ++itr) {
-		HMODULE pModule = itr->second;
-		if (pModule)
-			::FreeLibrary(pModule);
+	for (auto& [name, module] : mapDxModules_) {
+		if (module)
+			::FreeLibrary(module);
 	}
 	mapDxModules_.clear();
 }
@@ -128,8 +127,8 @@ void DirectGraphicsBase::Release() {
 }
 
 void DirectGraphicsBase::AddDirectGraphicsListener(DirectGraphicsListener* listener) {
-	for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-		if ((*itr) == listener)
+	for (auto& iListener : listListener_) {
+		if (iListener == listener)
 			return;
 	}
 	listListener_.push_back(listener);

@@ -27,10 +27,6 @@ DirectSoundManager::~DirectSoundManager() {
 
 	threadManage_->Stop();
 	threadManage_->Join();
-	threadManage_ = nullptr;
-
-	for (auto itr = mapDivision_.begin(); itr != mapDivision_.end(); ++itr)
-		ptr_delete(itr->second);
 
 	ptr_release(pDirectSoundPrimaryBuffer_);
 	ptr_release(pDirectSound_);
@@ -96,9 +92,9 @@ void DirectSoundManager::Clear() {
 	try {
 		Lock lock(lock_);
 
-		for (auto itrPlayer = listManagedPlayer_.begin(); itrPlayer != listManagedPlayer_.end(); ++itrPlayer) {
-			shared_ptr<SoundPlayer> player = *itrPlayer;
-			if (player == nullptr) continue;
+		for (auto& player : listManagedPlayer_) {
+			if (player == nullptr) 
+				continue;
 			player->Stop();
 		}
 
@@ -277,8 +273,7 @@ shared_ptr<SoundPlayer> DirectSoundManager::GetPlayer(const std::wstring& path) 
 
 		size_t hash = std::hash<std::wstring>{}(path);
 
-		for (auto itrPlayer = listManagedPlayer_.begin(); itrPlayer != listManagedPlayer_.end(); ++itrPlayer) {
-			shared_ptr<SoundPlayer> player = *itrPlayer;
+		for (auto& player : listManagedPlayer_) {
 			if (hash == player->GetPathHash()) {
 				res = player;
 				break;
@@ -290,24 +285,24 @@ shared_ptr<SoundPlayer> DirectSoundManager::GetPlayer(const std::wstring& path) 
 SoundDivision* DirectSoundManager::CreateSoundDivision(int index) {
 	auto itrDiv = mapDivision_.find(index);
 	if (itrDiv != mapDivision_.end())
-		return itrDiv->second;
+		return itrDiv->second.get();
 
-	SoundDivision* division = new SoundDivision();
-	mapDivision_[index] = division;
-	return division;
+	auto itr = mapDivision_.insert({ index, make_unique<SoundDivision>() });
+	return itr.first->second.get();
 }
 SoundDivision* DirectSoundManager::GetSoundDivision(int index) {
 	auto itrDiv = mapDivision_.find(index);
-	if (itrDiv == mapDivision_.end()) return nullptr;
-	return itrDiv->second;
+	if (itrDiv == mapDivision_.end()) 
+		return nullptr;
+	return itrDiv->second.get();
 }
 void DirectSoundManager::SetFadeDeleteAll() {
 	try {
 		Lock lock(lock_);
 
-		for (auto itrPlayer = listManagedPlayer_.begin(); itrPlayer != listManagedPlayer_.end(); ++itrPlayer) {
-			SoundPlayer* player = itrPlayer->get();
-			if (player == nullptr) continue;
+		for (auto& player : listManagedPlayer_) {
+			if (player == nullptr) 
+				continue;
 			player->SetFadeDelete(SoundPlayer::FADE_DEFAULT);
 		}
 	}
@@ -433,18 +428,15 @@ void SoundInfoPanel::Update(DirectSoundManager* manager) {
 		listDisplay_.resize(mapData.size());
 
 		int iTex = 0;
-		for (auto itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap, ++iTex) {
-			const std::wstring& path = itrMap->first;
-			SoundSourceData* data = (itrMap->second).get();
-
-			int countRef = (itrMap->second).use_count();
+		for (auto& [path, data] : mapData) {
+			int countRef = data.use_count();
 
 			std::wstring fileName = PathProperty::GetFileName(path);
 			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
 			SoundDisplay displayData = {
-				(uintptr_t)data,
-				StringUtility::FromAddress((uintptr_t)data),
+				(uintptr_t)data.get(),
+				StringUtility::FromAddress((uintptr_t)data.get()),
 				STR_MULTI(fileName),
 				STR_MULTI(pathReduce),
 				countRef,
@@ -453,7 +445,7 @@ void SoundInfoPanel::Update(DirectSoundManager* manager) {
 				data->formatWave_
 			};
 
-			listDisplay_[iTex] = displayData;
+			listDisplay_[iTex++] = displayData;
 		}
 
 		// Sort new data as well
@@ -904,13 +896,9 @@ bool SoundPlayer::SetVolumeRate(double rateVolume) {
 		rateVolume_ = rateVolume;
 
 		if (pDirectSoundBuffer_) {
-			double rateDiv = 100.0;
-			if (division_)
-				rateDiv = division_->GetVolumeRate();
-			double rate = rateVolume_ / 100.0 * rateDiv / 100.0;
+			double rateDiv = division_ ? division_->GetVolumeRate() / 100 : 1;
+			double rate = rateVolume_ / 100.0 * rateDiv;
 
-			//int volume = (int)((double)(DirectSoundManager::SD_VOLUME_MAX - DirectSoundManager::SD_VOLUME_MIN) * rate);
-			//pDirectSoundBuffer_->SetVolume(DirectSoundManager::SD_VOLUME_MIN+volume);
 			int volume = _GetVolumeAsDirectSoundDecibel(rate);
 			pDirectSoundBuffer_->SetVolume(volume);
 		}
@@ -926,16 +914,14 @@ bool SoundPlayer::SetPanRate(double ratePan) {
 		else if (ratePan > 100) ratePan = 100.0;
 
 		if (pDirectSoundBuffer_) {
-			double rateDiv = 100.0;
-			if (division_)
-				rateDiv = division_->GetVolumeRate();
+			double rateDiv = division_ ? division_->GetVolumeRate() : 100.0;
 			double rate = rateVolume_ / 100.0 * rateDiv / 100.0;
 
-			LONG volume = (LONG)((DirectSoundManager::SD_VOLUME_MAX - DirectSoundManager::SD_VOLUME_MIN) * rate);
-			//int volume = _GetValumeAsDirectSoundDecibel(rate);
+			auto volume = (DirectSoundManager::SD_VOLUME_MAX - DirectSoundManager::SD_VOLUME_MIN) * rate;
 
-			double span = (DSBPAN_RIGHT - DSBPAN_LEFT) / 2;
-			span = volume / 2;
+			//double span = (DSBPAN_RIGHT - DSBPAN_LEFT) / 2.0;
+			double span = volume / 2.0;
+
 			double pan = span * ratePan / 100;
 			HRESULT hr = pDirectSoundBuffer_->SetPan((LONG)pan);
 		}
@@ -1153,30 +1139,28 @@ bool SoundPlayer::GetSamplesFFT(DWORD durationMs, size_t resolution, bool bAutoL
 //*******************************************************************
 SoundStreamingPlayer::SoundStreamingPlayer() {
 	pDirectSoundNotify_ = nullptr;
-	ZeroMemory(hEvent_, sizeof(HANDLE) * 3);
 	thread_.reset(new StreamingThread(this));
 
 	bStreaming_ = true;
 	bStreamOver_ = false;
 	streamOverIndex_ = -1;
 
-	ZeroMemory(lastStreamCopyPos_, sizeof(DWORD) * 2);
-	ZeroMemory(bufferPositionAtCopy_, sizeof(DWORD) * 2);
-
 	lastReadPointer_ = 0;
 }
 SoundStreamingPlayer::~SoundStreamingPlayer() {
 	this->Stop();
 
-	for (size_t iEvent = 0; iEvent < 3; ++iEvent)
-		::CloseHandle(hEvent_[iEvent]);
-	ptr_release(pDirectSoundNotify_);
+	for (auto& e : hEvent_) {
+		::CloseHandle(e);
+	}
 }
 void SoundStreamingPlayer::_CreateSoundEvent(WAVEFORMATEX& formatWave) {
 	sizeCopy_ = formatWave.nAvgBytesPerSec;
 
 	HRESULT hrNotify = pDirectSoundBuffer_->QueryInterface(IID_IDirectSoundNotify, (LPVOID*)&pDirectSoundNotify_);
-	DSBPOSITIONNOTIFY pn[3];
+
+	DSBPOSITIONNOTIFY pn[3]{};
+
 	for (size_t iEvent = 0; iEvent < 3; ++iEvent) {
 		hEvent_[iEvent] = CreateEventW(nullptr, FALSE, FALSE, nullptr);
 		pn[iEvent].hEventNotify = hEvent_[iEvent];
@@ -1388,7 +1372,7 @@ void SoundStreamingPlayer::StreamingThread::_Run() {
 		player->_CopyStream(0);
 
 	while (this->GetStatus() == RUN) {
-		DWORD num = WaitForMultipleObjects(3, player->hEvent_, FALSE, INFINITE);
+		DWORD num = WaitForMultipleObjects(3, player->hEvent_.data(), FALSE, INFINITE);
 		
 		player->pDirectSoundBuffer_->GetCurrentPosition(&point, 0);
 		if (num == WAIT_OBJECT_0) {
@@ -1598,7 +1582,7 @@ DWORD SoundStreamingPlayerWave::_CopyBuffer(LPVOID pMem, DWORD dwSize) {
 	DWORD resStreamPos = lastReadPointer_;
 
 	memset(pMem, 0, dwSize);
-	if (auto reader = source->reader_) {
+	if (auto& reader = source->reader_) {
 		double loopStart = playStyle_.timeLoopStart_;
 		double loopEnd = playStyle_.timeLoopEnd_;
 		DWORD byteLoopStart = Math::FloorBase<DWORD>(loopStart * bytePerSec, bytePerSample);

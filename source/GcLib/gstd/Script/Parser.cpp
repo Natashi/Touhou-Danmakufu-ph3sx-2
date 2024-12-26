@@ -2481,8 +2481,8 @@ size_t parser::parse_block_inlined(script_block* block, parser_state_t* state, b
 void parser::optimize_expression(script_block* block, parser_state_t* state) {
 	std::vector<code> newCodes;
 
-	for (auto iSrcCode = block->codes.begin(); iSrcCode != block->codes.end(); ++iSrcCode) {
-		switch (iSrcCode->GetOp()) {
+	for (auto& srcCode : block->codes) {
+		switch (srcCode.GetOp()) {
 		case command_kind::pc_inline_neg:
 		case command_kind::pc_inline_not:
 		case command_kind::pc_inline_abs:
@@ -2491,7 +2491,7 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 			if (ptrBack->GetOp() == command_kind::pc_push_value) {
 				value* arg = &(ptrBack->data);
 				value res;
-				switch (iSrcCode->GetOp()) {
+				switch (srcCode.GetOp()) {
 				case command_kind::pc_inline_neg:
 					res = BaseFunction::_script_negative(1, arg);
 					break;
@@ -2503,11 +2503,11 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 					break;
 				}
 				newCodes.pop_back();
-				newCodes.push_back(code(iSrcCode->GetLine(), command_kind::pc_push_value, res));
+				newCodes.push_back(code(srcCode.GetLine(), command_kind::pc_push_value, res));
 				--(state->ip);
 			}
 			else {
-				newCodes.push_back(*iSrcCode);
+				newCodes.push_back(srcCode);
 			}
 			break;
 		}
@@ -2522,7 +2522,7 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 			if (ptrBack[-1].GetOp() == command_kind::pc_push_value && ptrBack->GetOp() == command_kind::pc_push_value) {
 				value arg[] = { ptrBack[-1].data, ptrBack->data };
 				value res;
-				switch (iSrcCode->GetOp()) {
+				switch (srcCode.GetOp()) {
 				case command_kind::pc_inline_add:
 					res = BaseFunction::_script_add(2, arg);
 					break;
@@ -2544,11 +2544,11 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 				}
 				newCodes.pop_back();
 				newCodes.pop_back();
-				newCodes.push_back(code(iSrcCode->GetLine(), command_kind::pc_push_value, res));
+				newCodes.push_back(code(srcCode.GetLine(), command_kind::pc_push_value, res));
 				state->ip -= 2;
 			}
 			else {
-				newCodes.push_back(*iSrcCode);
+				newCodes.push_back(srcCode);
 			}
 			break;
 		}
@@ -2564,7 +2564,7 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 		case command_kind::pc_construct_array:
 		{
 			code* ptrBack = &newCodes.back();
-			size_t sizeArray = iSrcCode->arg0;
+			size_t sizeArray = srcCode.arg0;
 			if (newCodes.size() >= sizeArray) {
 				type_data* arrayType = nullptr;
 				value arrayVal;
@@ -2608,25 +2608,25 @@ void parser::optimize_expression(script_block* block, parser_state_t* state) {
 				for (size_t i = 0; i < sizeArray; ++i)
 					newCodes.pop_back();
 				arrayVal.make_unique();
-				newCodes.push_back(code(iSrcCode->GetLine(), command_kind::pc_push_value, arrayVal));
+				newCodes.push_back(code(srcCode.GetLine(), command_kind::pc_push_value, arrayVal));
 				state->ip -= sizeArray;
 			}
 			else {
 lab_opt_construct_array_cancel:
-				newCodes.push_back(*iSrcCode);
+				newCodes.push_back(srcCode);
 			}
 			break;
 		}
 		case command_kind::pc_load_ptr:
 		{
 			code* ptrBack = &newCodes.back();
-			if (ptrBack->GetOp() == command_kind::pc_push_variable && (iSrcCode->arg0 == 0)) {
-				ptrBack->SetLine(iSrcCode->GetLine());
+			if (ptrBack->GetOp() == command_kind::pc_push_variable && (srcCode.arg0 == 0)) {
+				ptrBack->SetLine(srcCode.GetLine());
 				ptrBack->SetOp(command_kind::pc_push_variable2);
 				--(state->ip);
 			}
 			else {
-				newCodes.push_back(*iSrcCode);
+				newCodes.push_back(srcCode);
 			}
 			break;
 		}
@@ -2634,7 +2634,7 @@ lab_opt_construct_array_cancel:
 			--(state->ip);
 			break;
 		default:
-			newCodes.push_back(*iSrcCode);
+			newCodes.push_back(srcCode);
 			break;
 		}
 	}
@@ -2649,19 +2649,22 @@ void parser::link_jump(script_block* block, parser_state_t* state, size_t ip_off
 	{
 		size_t ip = 0;
 		size_t removing = 0;
-		for (auto itr = block->codes.begin(); itr != block->codes.end(); ++itr, ++ip) {
-			switch (itr->GetOp()) {
+
+		for (auto& iCode : block->codes) {
+			switch (iCode.GetOp()) {
 			case command_kind::pc_jump_target:
-				mapLabelCode.insert(std::make_pair(itr->arg0, ip - removing));
+				mapLabelCode.insert(std::make_pair(iCode.arg0, ip - removing));
 				++removing;
 				break;
 			}
+
+			++ip;
 		}
 	}
 	if (mapLabelCode.size() == 0U) return;
 
-	for (auto itr = block->codes.begin(); itr != block->codes.end(); ++itr) {
-		switch (itr->GetOp()) {
+	for (auto& iCode : block->codes) {
+		switch (iCode.GetOp()) {
 		case command_kind::pc_jump_target:
 			//--(state->ip);
 			break;
@@ -2671,13 +2674,13 @@ void parser::link_jump(script_block* block, parser_state_t* state, size_t ip_off
 		case command_kind::_pc_jump_if_nopop:
 		case command_kind::_pc_jump_if_not_nopop:
 		{
-			auto itrFind = mapLabelCode.find(itr->arg0);
+			auto itrFind = mapLabelCode.find(iCode.arg0);
 			if (itrFind != mapLabelCode.end())
-				newCodes.push_back(code(itr->GetLine(), get_replacing_jump(itr->GetOp()), itrFind->second + ip_off));
+				newCodes.push_back(code(iCode.GetLine(), get_replacing_jump(iCode.GetOp()), itrFind->second + ip_off));
 			break;
 		}
 		default:
-			newCodes.push_back(*itr);
+			newCodes.push_back(iCode);
 			break;
 		}
 	}
@@ -2706,10 +2709,10 @@ void parser::link_break_continue(script_block* block, parser_state_t* state,
 }
 
 void parser::scan_final(script_block* block, parser_state_t* state) {
-	for (auto itr = block->codes.begin(); itr != block->codes.end(); ++itr) {
-		parser_assert(itr->GetLine(), itr->GetOp() != command_kind::pc_loop_break,
+	for (auto& iCode : block->codes) {
+		parser_assert(iCode.GetLine(), iCode.GetOp() != command_kind::pc_loop_break,
 			"\"break\" may only be used inside a loop.");
-		parser_assert(itr->GetLine(), itr->GetOp() != command_kind::pc_loop_continue,
+		parser_assert(iCode.GetLine(), iCode.GetOp() != command_kind::pc_loop_continue,
 			"\"continue\" may only be used inside a loop.");
 	}
 }

@@ -1561,12 +1561,8 @@ void ScriptLoader::_DumpRes() {
 			file.Write(&strNewLine[0], strNewLine.size());
 		}
 
-		std::list<ScriptFileLineMap::Entry>& listEntry = mapLine_->GetEntryList();
-		std::list<ScriptFileLineMap::Entry>::iterator itr = listEntry.begin();
-
-		for (; itr != listEntry.end(); itr++) {
+		for (auto& entry : mapLine_->GetEntryList()) {
 			if (encoding_ == Encoding::UTF16LE) {
-				ScriptFileLineMap::Entry entry = (*itr);
 				std::wstring strPath = entry.path_ + L"\r\n";
 				std::wstring strLineStart = StringUtility::Format(L"  lineStart   :%4d\r\n", entry.lineStart_);
 				std::wstring strLineEnd = StringUtility::Format(L"  lineEnd     :%4d\r\n", entry.lineEnd_);
@@ -1581,7 +1577,6 @@ void ScriptLoader::_DumpRes() {
 				file.Write(&strNewLineW[0], strNewLineW.size() * sizeof(wchar_t));
 			}
 			else {
-				ScriptFileLineMap::Entry entry = (*itr);
 				std::string strPath = StringUtility::ConvertWideToMulti(entry.path_) + "\r\n";
 				std::string strLineStart = StringUtility::Format("  lineStart   :%4d\r\n", entry.lineStart_);
 				std::string strLineEnd = StringUtility::Format("  lineEnd     :%4d\r\n", entry.lineEnd_);
@@ -2097,8 +2092,8 @@ void ScriptFileLineMap::AddEntry(const std::wstring& path, int lineAdd, int line
 }
 ScriptFileLineMap::Entry* ScriptFileLineMap::GetEntry(int line) {
 	Entry* res = nullptr;
-	for (auto itrInsert = listEntry_.begin(); itrInsert != listEntry_.end(); itrInsert++) {
-		res = &*itrInsert;
+	for (auto& entry : listEntry_) {
+		res = &entry;
 		if (line >= res->lineStart_ && line <= res->lineEnd_) break;
 	}
 	return res;

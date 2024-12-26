@@ -424,8 +424,8 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 					stageController_->GetShotManager()->Render(iPri);
 				}
 				if (pRenderListStage != nullptr && iPri < pRenderListStage->size()) {
-					for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
-						if (DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(itr->get())) {
+					for (auto& objBase : renderList) {
+						if (DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(objBase.get())) {
 							if (!bClearZBufferFor2DCoordinate)
 								bClearZBufferFor2DCoordinate = CheckMeshAndClearZBuffer(obj);
 							obj->Render();
@@ -466,8 +466,8 @@ void StgSystemController::RenderScriptObject(int priMin, int priMax) {
 				if (effect) effect->BeginPass(iPass);
 
 				if (pRenderListPackage != nullptr && iPri < pRenderListPackage->size()) {
-					for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
-						if (DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(itr->get())) {
+					for (auto& objBase : renderList) {
+						if (DxScriptRenderObject* obj = dynamic_cast<DxScriptRenderObject*>(objBase.get())) {
 							if (!bClearZBufferFor2DCoordinate)
 								bClearZBufferFor2DCoordinate = CheckMeshAndClearZBuffer(obj);
 							obj->Render();
@@ -713,15 +713,16 @@ ref_count_ptr<ReplayInformation> StgSystemController::CreateReplayInformation() 
 	//ステージ
 	if (infoSystem_->IsPackageMode()) {
 		ref_count_ptr<StgPackageInformation> infoPackage = packageController_->GetPackageInformation();
-		std::vector<ref_count_ptr<StgStageStartData>>& listStageData = infoPackage->GetStageDataList();
-		for (size_t iStage = 0; iStage < listStageData.size(); iStage++) {
-			auto stageData = listStageData[iStage];
-			auto infoStage = stageData->infoStage_;
+
+		auto& listStageData = infoPackage->GetStageDataList();
+		for (auto& stageData : listStageData) {
+			auto& infoStage = stageData->infoStage_;
 			auto replayStageData = infoStage->GetReplayData();
 			res->SetStageData(infoStage->GetStageIndex(), replayStageData);
 
 			fpsAverage += replayStageData->GetFramePerSecondAverage();
 		}
+
 		if (listStageData.size() > 0)
 			fpsAverage = fpsAverage / listStageData.size();
 	}
@@ -812,8 +813,7 @@ StgSystemInformation::StgSystemInformation() {
 StgSystemInformation::~StgSystemInformation() {}
 std::wstring StgSystemInformation::GetErrorMessage() {
 	std::wstring res = L"";
-	for (auto itr = listError_.begin(); itr != listError_.end(); itr++) {
-		const std::wstring& str = *itr;
+	for (auto& str : listError_) {
 		if (str == L"Retry") continue;
 		res += str + L"\r\n" + L"\r\n";
 	}

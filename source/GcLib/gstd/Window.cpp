@@ -22,12 +22,12 @@ WindowBase::WindowBase() {
 		listWndId_.sort();
 
 		int idFree = 0;
-		for (auto itr = listWndId_.begin(); itr != listWndId_.end(); ++itr) {
-			if (*itr != idFree) break;
+		for (auto& winId : listWndId_) {
+			if (winId != idFree) break;
 			idFree++;
 		}
-
 		idWindow_ = idFree;
+
 		listWndId_.push_back(idFree);
 	}
 }
@@ -35,11 +35,9 @@ WindowBase::WindowBase() {
 WindowBase::~WindowBase() {
 	this->Detach();
 
-	//WindowID解放
-	for (auto itr = listWndId_.begin(); itr != listWndId_.end(); ++itr) {
-		if (*itr != idWindow_) continue;
-		listWndId_.erase(itr);
-		break;
+	auto find = std::find(listWndId_.begin(), listWndId_.end(), idWindow_);
+	if (find != listWndId_.end()) {
+		listWndId_.erase(find);
 	}
 }
 
