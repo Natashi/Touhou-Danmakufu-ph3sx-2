@@ -60,13 +60,33 @@ namespace gstd {
 		double ReadDouble() { double num; Read(num); return num; }
 
 		template<typename T> T ReadValue() {
-			T tmp; Read(tmp); return tmp;
+			T tmp{};
+			Read(tmp);
+			return tmp;
 		}
 
-		std::string ReadString(size_t size) {
-			std::string res = "";
+		_NODISCARD virtual std::string ReadToString() {
+			size_t size = GetSize();
+
+			std::string res;
+			res.reserve(size);
 			res.resize(size);
-			Read(&res[0], size);
+
+			Read(res.data(), size);
+
+			return res;
+		}
+	protected:
+		template<typename T> _NODISCARD std::vector<T> ReadToVec() {
+			size_t size = GetSize();
+			size_t elems = size / sizeof(T);
+
+			std::vector<T> res;
+			res.reserve(elems);
+			res.resize(elems);
+
+			Read(res.data(), size);
+
 			return res;
 		}
 	};
@@ -98,6 +118,10 @@ namespace gstd {
 
 		_NODISCARD char* GetPointer(size_t offset = 0);
 		_NODISCARD const char* GetPointer(size_t offset = 0) const;
+
+		_NODISCARD std::vector<char> ReadToCharVec();
+		_NODISCARD std::vector<byte> ReadToByteVec();
+		_NODISCARD std::string ReadToString() override;
 	};
 
 	//*******************************************************************
@@ -158,6 +182,10 @@ namespace gstd {
 		bool File::SetFilePointerEnd(AccessType type = READ) { return this->Seek(0, std::ios::end, type); }
 		bool Seek(size_t offset, DWORD way, AccessType type = READ);
 		size_t GetFilePointer(AccessType type = READ);
+
+		_NODISCARD std::vector<char> ReadToCharVec();
+		_NODISCARD std::vector<byte> ReadToByteVec();
+		_NODISCARD std::string ReadToString() override;
 	};
 
 	//*******************************************************************
@@ -182,10 +210,10 @@ namespace gstd {
 		virtual bool IsCompressed() const { return false; }
 
 		std::wstring& GetOriginalPath() { return pathOriginal_; }
-		std::string ReadAllString() {
-			SetFilePointerBegin(File::READ);
-			return ReadString(GetFileSize());
-		}
+
+		_NODISCARD std::vector<char> ReadToCharVec();
+		_NODISCARD std::vector<byte> ReadToByteVec();
+		_NODISCARD std::string ReadToString() override;
 	};
 
 	class ArchiveFileEntry;

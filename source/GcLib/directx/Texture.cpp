@@ -428,7 +428,7 @@ void TextureManager::__CreateFromFile(shared_ptr<TextureData>& dst, const std::w
 	if (reader == nullptr || !reader->Open())
 		throw wexception(ErrorUtility::GetFileNotFoundErrorMessage(PathProperty::ReduceModuleDirectory(path), true));
 
-	std::string source = reader->ReadAllString();
+	std::string source = reader->ReadToString();
 
 	dst->useMipMap_ = genMipmap;
 	dst->useNonPowerOfTwo_ = flgNonPowerOfTwo;
@@ -653,7 +653,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 						if (reader == nullptr || !reader->Open())
 							throw wexception(ErrorUtility::GetFileNotFoundErrorMessage(pathReduce, true));
 
-						std::string source = reader->ReadAllString();
+						std::string source = reader->ReadToString();
 
 						D3DXIMAGE_INFO info;
 						HRESULT hr = D3DXGetImageInfoFromFileInMemory(source.c_str(), source.size(), &info);

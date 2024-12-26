@@ -1043,10 +1043,7 @@ bool DxTextFileObject::OpenR(shared_ptr<gstd::FileReader> reader) {
 	size_t size = reader->GetSize();
 	if (size == 0) return true;
 
-	std::vector<char> text;
-	text.resize(size);
-	reader_->SetFilePointerBegin();
-	reader_->Read(&text[0], size);
+	auto text = reader_->ReadToCharVec();
 
 	return _ParseLines(text);
 }
@@ -1057,10 +1054,7 @@ bool DxTextFileObject::OpenRW(const std::wstring& path) {
 	size_t size = file_->GetSize();
 	if (size == 0) return true;
 
-	std::vector<char> text;
-	text.resize(size);
-	file_->SetFilePointerBegin();
-	file_->Read(&text[0], size);
+	auto text = reader_->ReadToCharVec();
 
 	return _ParseLines(text);
 }

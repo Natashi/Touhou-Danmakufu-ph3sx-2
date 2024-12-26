@@ -240,7 +240,7 @@ gstd::value StgPackageScript::Func_SetStageMainScript(gstd::script_machine* mach
 		script->RaiseError(L"SetStageMainScript: " + error);
 	}
 
-	std::string source = reader->ReadAllString();
+	std::string source = reader->ReadToString();
 
 	ref_count_ptr<ScriptInformation> infoScript =
 		ScriptInformation::CreateScriptInformation(path, L"", source, false);
@@ -267,7 +267,7 @@ gstd::value StgPackageScript::Func_SetStagePlayerScript(gstd::script_machine* ma
 		script->RaiseError(L"SetStagePlayerScript: " + error);
 	}
 
-	std::string source = reader->ReadAllString();
+	std::string source = reader->ReadToString();
 
 	ref_count_ptr<ScriptInformation> infoScript =
 		ScriptInformation::CreateScriptInformation(path, L"", source);

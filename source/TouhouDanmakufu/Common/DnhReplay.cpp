@@ -131,7 +131,7 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 			if (reader == nullptr || !reader->Open())
 				throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, false));
 
-			std::string source = reader->ReadAllString();
+			std::string source = reader->ReadToString();
 			data.str(source);
 
 			dataSize = source.size();

@@ -16,7 +16,7 @@ ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(cons
 		return nullptr;
 	}
 
-	std::string source = reader->ReadAllString();
+	std::string source = reader->ReadToString();
 
 	return CreateScriptInformation(pathScript, L"", source, bNeedHeader);
 }
@@ -199,14 +199,14 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScr
 	for (const std::wstring& pathPlayer : listPlayer_) {
 		std::wstring path = EPathProperty::ExtendRelativeToFull(dirInfo, pathPlayer);
 
-		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+		auto reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader == nullptr || !reader->Open()) {
 			Logger::WriteTop(L"CreatePlayerScriptInformationList: " 
 				+ ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 			continue;
 		}
 
-		std::string source = reader->ReadAllString();
+		auto source = reader->ReadToString();
 
 		auto info = ScriptInformation::CreateScriptInformation(path, L"", source);
 		if (info != nullptr && info->type_ == ScriptInformation::TYPE_PLAYER) {
@@ -251,12 +251,8 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 
 			std::wstring tPath = PathProperty::GetModuleDirectory() + entry.fullPath;
 
-			shared_ptr<ByteBuffer> buffer = archive.CreateEntryBuffer(&entry);
-
-			std::string source = "";
-			size_t size = buffer->GetSize();
-			source.resize(size);
-			buffer->Read(&source[0], size);
+			auto buffer = archive.CreateEntryBuffer(&entry);
+			auto source = buffer->ReadToString();
 
 			auto info = CreateScriptInformation(tPath, path, source, bNeedHeader);
 			if (info) res.push_back(info);
@@ -268,11 +264,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreateScriptInf
 			return res;
 
 		file.SetFilePointerBegin();
-
-		std::string source = "";
-		size_t size = file.GetSize();
-		source.resize(size);
-		file.Read(&source[0], size);
+		auto source = file.ReadToString();
 
 		auto info = CreateScriptInformation(path, L"", source, bNeedHeader);
 		if (info)

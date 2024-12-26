@@ -353,7 +353,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 	if (reader == nullptr || !reader->Open())
 		throw gstd::wexception(L"AddShotDataList: " + ErrorUtility::GetFileNotFoundErrorMessage(pathReduce, true));
 
-	std::string source = reader->ReadAllString();
+	std::string source = reader->ReadToString();
 
 	bool res = false;
 	Scanner scanner(source);
