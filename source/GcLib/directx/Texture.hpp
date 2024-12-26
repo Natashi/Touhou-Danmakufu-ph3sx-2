@@ -43,13 +43,16 @@ namespace directx {
 		virtual ~TextureData();
 
 		std::wstring& GetName() { return name_; }
+		const std::wstring& GetName() const { return name_; }
+
 		D3DXIMAGE_INFO* GetImageInfo() { return &infoImage_; }
+		const D3DXIMAGE_INFO* GetImageInfo() const { return &infoImage_; }
 
 		IDirect3DTexture9* GetD3DTexture() { return pTexture_; }
 		IDirect3DSurface9* GetD3DSurface() { return lpRenderSurface_; }
 		IDirect3DSurface9* GetD3DZBuffer() { return lpRenderZ_; }
 
-		size_t GetResourceSize() { return resourceSize_; }
+		size_t GetResourceSize() const { return resourceSize_; }
 		void CalculateResourceSize();
 	};
 
@@ -66,7 +69,8 @@ namespace directx {
 
 		void Release();
 
-		std::wstring GetName();
+		std::wstring GetName() const;
+
 		bool CreateFromData(const std::wstring& name);
 		bool CreateFromData(shared_ptr<TextureData> data);
 		bool CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
@@ -84,7 +88,7 @@ namespace directx {
 
 		UINT GetWidth();
 		UINT GetHeight();
-		bool IsLoad() { return data_ != nullptr && data_->bReady_; }
+		bool IsLoad() const { return data_ != nullptr && data_->bReady_; }
 
 		static size_t GetFormatBPP(D3DFORMAT format);
 	};

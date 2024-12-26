@@ -275,7 +275,7 @@ namespace directx {
 		void SetSoundDivision(int index);
 
 		std::wstring& GetPath() { return path_; }
-		size_t GetPathHash() { return pathHash_; }
+		size_t GetPathHash() const { return pathHash_; }
 
 		shared_ptr<SoundSourceData> GetSoundSource() { return soundSource_; }
 

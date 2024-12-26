@@ -274,11 +274,12 @@ void File::Delete() {
 	Close();
 	::DeleteFile(path_.c_str());
 }
-bool File::IsExists() {
-	if (IsOpen()) return true;
+bool File::IsExists() const {
+	if (IsOpen()) 
+		return true;
 	return IsExists(path_);
 }
-bool File::IsDirectory() {
+bool File::IsDirectory() const {
 	return IsDirectory(path_);
 }
 size_t File::GetSize() {
@@ -297,10 +298,10 @@ size_t File::GetSize() {
 	}
 	else {
 		// File not opened
-	try {
+		try {
 			return stdfs::file_size(path_);
-	}
-	catch (stdfs::filesystem_error&) {
+		}
+		catch (stdfs::filesystem_error&) {
 			return 0;
 		}
 	}
@@ -395,8 +396,10 @@ bool File::Seek(size_t offset, DWORD way, AccessType type) {
 	return hFile_.good();
 }
 size_t File::GetFilePointer(AccessType type) {
-	if (!IsOpen()) return 0;
-	if (type == READ) return hFile_.tellg();
+	if (!IsOpen()) 
+		return 0;
+	if (type == READ) 
+		return hFile_.tellg();
 	else return hFile_.tellp();
 }
 
@@ -499,13 +502,14 @@ bool FileManager::RemoveArchiveFile(const std::wstring& archivePath) {
 	}
 	return false;
 }
-ArchiveFile* FileManager::GetArchiveFile(const std::wstring& archivePath) {
+
+const ArchiveFile* FileManager::GetArchiveFile(const std::wstring& archivePath) const {
 	auto itrFind = mapArchiveFile_.find(archivePath);
 	if (itrFind != mapArchiveFile_.end())
 		return itrFind->second.get();
 	return nullptr;
 }
-FileManager::ArchiveEntryStore* FileManager::GetArchiveFileEntry(const std::wstring& path) {
+const FileManager::ArchiveEntryStore* FileManager::GetArchiveFileEntry(const std::wstring& path) const {
 	std::wstring pathNoModule = PathProperty::GetPathWithoutModuleDirectory(path);
 
 	auto itrFind = mapArchiveEntries_.find(pathNoModule);
@@ -514,7 +518,7 @@ FileManager::ArchiveEntryStore* FileManager::GetArchiveFileEntry(const std::wstr
 	return nullptr;
 }
 
-std::vector<ArchiveFileEntry*> FileManager::GetArchiveFilesInDirectory(const std::wstring& dir, bool bSubDirectory) {
+std::vector<ArchiveFileEntry*> FileManager::GetArchiveFilesInDirectory(const std::wstring& dir, bool bSubDirectory) const {
 	std::vector<ArchiveFileEntry*> res;
 
 	std::wstring dirNoModule = PathProperty::GetPathWithoutModuleDirectory(dir);
@@ -538,7 +542,7 @@ std::vector<ArchiveFileEntry*> FileManager::GetArchiveFilesInDirectory(const std
 
 	return res;
 }
-std::set<std::wstring> FileManager::GetArchiveSubDirectoriesInDirectory(const std::wstring& dir) {
+std::set<std::wstring> FileManager::GetArchiveSubDirectoriesInDirectory(const std::wstring& dir) const {
 	std::set<std::wstring> res;
 
 	std::wstring dirNoModule = PathProperty::GetPathWithoutModuleDirectory(dir);
@@ -562,17 +566,11 @@ std::set<std::wstring> FileManager::GetArchiveSubDirectoriesInDirectory(const st
 	return res;
 }
 
-bool FileManager::IsArchiveFileExists(const std::wstring& path) {
-	/*
-	std::wstring moduleDir = PathProperty::GetModuleDirectory();
-	if (path.find(moduleDir) == std::wstring::npos)
-		return false;
-	*/
-
+bool FileManager::IsArchiveFileExists(const std::wstring& path) const {
 	auto pEntry = GetArchiveFileEntry(path);
 	return pEntry != nullptr && pEntry->entry != nullptr;
 }
-bool FileManager::IsArchiveDirectoryExists(const std::wstring& _dir) {
+bool FileManager::IsArchiveDirectoryExists(const std::wstring& _dir) const {
 	std::wstring moduleDir = PathProperty::GetModuleDirectory();
 	if (_dir.find(moduleDir) != std::wstring::npos) {
 		std::wstring dir = PathProperty::AppendSlash(_dir.substr(moduleDir.size()));

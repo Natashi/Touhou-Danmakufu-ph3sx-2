@@ -53,7 +53,7 @@ namespace gstd {
 
 		std::wstring fullPath;	// Without module dir
 
-		const size_t GetRecordSize() {
+		size_t GetRecordSize() const {
 			return (path.size() * sizeof(wchar_t) + sizeof(uint32_t)	//string + length
 				+ sizeof(TypeCompression) + sizeof(uint32_t) * 3 + sizeof(byte) * 2);
 		}
@@ -76,7 +76,9 @@ namespace gstd {
 		FileArchiver();
 		virtual ~FileArchiver();
 
-		void AddEntry(unique_ptr<ArchiveFileEntry>&& entry) { listEntry_.push_back(MOVE(entry)); }
+		void AddEntry(unique_ptr<ArchiveFileEntry>&& entry) { 
+			listEntry_.push_back(MOVE(entry));
+		}
 		bool CreateArchiveFile(const std::wstring& baseDir, const std::wstring& pathArchive, 
 			CbSetStatus cbStatus, CbSetProgress cbProgress);
 
@@ -107,13 +109,14 @@ namespace gstd {
 		void Close();
 
 		shared_ptr<File> GetFile() { return file_; }
-		const std::wstring& GetPath() { return basePath_; }
-		const std::wstring& GetBaseDirectory() { return baseDir_; }
+		const std::wstring& GetPath() const { return basePath_; }
+		const std::wstring& GetBaseDirectory() const { return baseDir_; }
 
 		auto& GetEntryMap() { return mapEntry_; }
+		const auto& GetEntryMap() const { return mapEntry_; }
 
-		std::set<std::wstring> GetFileList();
-		optional<ArchiveFileEntry*> GetEntryByPath(const std::wstring& name);
+		std::set<std::wstring> GetFileList() const;
+		const ArchiveFileEntry* GetEntryByPath(const std::wstring& name) const;
 		
 		unique_ptr<ByteBuffer> CreateEntryBuffer(ArchiveFileEntry* entry);
 	};

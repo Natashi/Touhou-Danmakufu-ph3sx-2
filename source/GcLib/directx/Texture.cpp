@@ -78,10 +78,9 @@ void Texture::Release() {
 		}
 	}
 }
-std::wstring Texture::GetName() {
-	std::wstring res = L"";
-	if (data_) res = data_->GetName();
-	return res;
+
+std::wstring Texture::GetName() const {
+	return data_ ? data_->GetName() : L"";
 }
 
 bool Texture::CreateFromData(const std::wstring& name) {
