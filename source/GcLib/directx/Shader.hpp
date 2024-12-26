@@ -31,7 +31,7 @@ namespace directx {
 		ShaderData();
 		virtual ~ShaderData();
 
-		std::wstring& GetName() { return name_; }
+		const std::wstring& GetName() const { return name_; }
 
 		void ReleaseDxResource();
 		void RestoreDxResource();
@@ -86,7 +86,7 @@ namespace directx {
 		shared_ptr<Shader> CreateFromFileInLoadThread(const std::wstring& path);
 		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
 
-		std::wstring& GetLastError() { return lastError_; }
+		const std::wstring& GetLastError() const { return lastError_; }
 
 		void SetInfoPanel(shared_ptr<ShaderInfoPanel> panel) { panelInfo_ = panel; }
 	};
@@ -106,8 +106,8 @@ namespace directx {
 
 		void SubmitData(ID3DXEffect* effect);
 
-		D3DXHANDLE GetHandle() { return handle_; }
-		ShaderParameterType GetType() { return type_; }
+		D3DXHANDLE GetHandle() const { return handle_; }
+		ShaderParameterType GetType() const { return type_; }
 
 		void SetInt(const int32_t value);
 		void SetIntArray(const std::vector<int32_t>& values);
@@ -118,12 +118,12 @@ namespace directx {
 		void SetMatrixArray(const std::vector<D3DXMATRIX>& matrix);
 		void SetTexture(shared_ptr<Texture> texture);
 
-		inline int32_t* GetInt();
+		inline int32_t GetInt();
 		std::vector<int32_t> GetIntArray();
-		inline float* GetFloat();
+		inline float GetFloat();
 		std::vector<float> GetFloatArray();
-		inline D3DXVECTOR4* GetVector();
-		inline D3DXMATRIX* GetMatrix();
+		inline D3DXVECTOR4 GetVector();
+		inline D3DXMATRIX GetMatrix();
 		std::vector<D3DXMATRIX> GetMatrixArray();
 		inline shared_ptr<Texture> GetTexture();
 
@@ -142,7 +142,7 @@ namespace directx {
 		std::map<D3DXHANDLE, ShaderParameter> mapParam_;
 
 		ShaderData* _GetShaderData() { return data_.get(); }
-		ShaderParameter* _GetParameter(const std::string& name, bool bCreate);
+		ShaderParameter* _GetParameter(const std::string& name, bool bCreate = false);
 	public:
 		Shader();
 		Shader(Shader* shader);
@@ -160,7 +160,7 @@ namespace directx {
 		bool CreateFromText(const std::wstring& name, const std::string& source);
 		bool CreateFromData(shared_ptr<ShaderData> data);
 
-		bool IsLoad() { return data_ != nullptr && data_->bLoad_; }
+		bool IsLoad() const { return data_ != nullptr && data_->bLoad_; }
 
 		bool SetTechnique(const std::string& name);
 		bool ValidateTechnique(const std::string& name);
@@ -173,17 +173,15 @@ namespace directx {
 		bool SetMatrix(const std::string& name, const D3DXMATRIX& value);
 		bool SetMatrixArray(const std::string& name, const std::vector<D3DXMATRIX>& value);
 		bool SetTexture(const std::string& name, shared_ptr<Texture> value);
-	protected:
-		ShaderParameter* __GetParam(const std::string& name, void* pData);
 	public:
-		bool GetInt(const std::string& name, int32_t* value);
-		bool GetIntArray(const std::string& name, std::vector<int32_t>* value);
-		bool GetFloat(const std::string& name, float* value);
-		bool GetFloatArray(const std::string& name, std::vector<float>* value);
-		bool GetVector(const std::string& name, D3DXVECTOR4* value);
-		bool GetMatrix(const std::string& name, D3DXMATRIX* value);
-		bool GetMatrixArray(const std::string& name, std::vector<D3DXMATRIX>* value);
-		bool GetTexture(const std::string& name, shared_ptr<Texture>* value);
+		optional<int32_t> GetInt(const std::string& name);
+		optional<std::vector<int32_t>> GetIntArray(const std::string& name);
+		optional<float> GetFloat(const std::string& name);
+		optional<std::vector<float>> GetFloatArray(const std::string& name);
+		optional<D3DXVECTOR4> GetVector(const std::string& name);
+		optional<D3DXMATRIX> GetMatrix(const std::string& name);
+		optional<std::vector<D3DXMATRIX>> GetMatrixArray(const std::string& name);
+		optional<shared_ptr<Texture>> GetTexture(const std::string& name);
 	};
 
 	//*******************************************************************

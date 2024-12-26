@@ -3633,7 +3633,10 @@ gstd::value DxScript::Func_ObjShader_GetInt(gstd::script_machine* machine, int a
 	if (obj) {
 		if (shared_ptr<Shader> shader = obj->GetShader()) {
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
-			shader->GetInt(name, &res);
+
+			if (auto val = shader->GetInt(name)) {
+				res = *val;
+			}
 		}
 	}
 
@@ -3649,7 +3652,10 @@ gstd::value DxScript::Func_ObjShader_GetIntArray(gstd::script_machine* machine, 
 	if (obj) {
 		if (shared_ptr<Shader> shader = obj->GetShader()) {
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
-			shader->GetIntArray(name, &res);
+
+			if (auto val = shader->GetIntArray(name)) {
+				res = *val;
+			}
 		}
 	}
 
@@ -3665,7 +3671,10 @@ gstd::value DxScript::Func_ObjShader_GetFloat(gstd::script_machine* machine, int
 	if (obj) {
 		if (shared_ptr<Shader> shader = obj->GetShader()) {
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
-			shader->GetFloat(name, &res);
+			
+			if (auto val = shader->GetFloat(name)) {
+				res = *val;
+			}
 		}
 	}
 
@@ -3681,7 +3690,10 @@ gstd::value DxScript::Func_ObjShader_GetFloatArray(gstd::script_machine* machine
 	if (obj) {
 		if (shared_ptr<Shader> shader = obj->GetShader()) {
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
-			shader->GetFloatArray(name, &res);
+			
+			if (auto val = shader->GetFloatArray(name)) {
+				res = *val;
+			}
 		}
 	}
 
@@ -3697,7 +3709,10 @@ gstd::value DxScript::Func_ObjShader_GetVector(gstd::script_machine* machine, in
 	if (obj) {
 		if (shared_ptr<Shader> shader = obj->GetShader()) {
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
-			shader->GetVector(name, &res);
+			
+			if (auto val = shader->GetVector(name)) {
+				res = *val;
+			}
 		}
 	}
 
@@ -3714,7 +3729,10 @@ gstd::value DxScript::Func_ObjShader_GetMatrix(gstd::script_machine* machine, in
 	if (obj) {
 		if (shared_ptr<Shader> shader = obj->GetShader()) {
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
-			shader->GetMatrix(name, &res);
+			
+			if (auto val = shader->GetMatrix(name)) {
+				res = *val;
+			}
 		}
 	}
 
@@ -3731,19 +3749,10 @@ gstd::value DxScript::Func_ObjShader_GetMatrixArray(gstd::script_machine* machin
 		if (shared_ptr<Shader> shader = obj->GetShader()) {
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
 
-			std::vector<D3DXMATRIX> listMat;
-			FLOAT mat[16];
-			D3DXMatrixIdentity((D3DXMATRIX*)mat);
-
-			if (shader->GetMatrixArray(name, &listMat)) {
-				res.resize(listMat.size());
-
-				for (int iMat = 0; iMat < listMat.size(); ++iMat) {
-					FLOAT* pMat = (FLOAT*)&listMat[iMat];
-					for (int i = 0; i < 16; ++i)
-						mat[i] = pMat[i];
-
-					res[iMat] = script->CreateFloatArrayValue(mat, 16);
+			if (auto _val = shader->GetMatrixArray(name)) {
+				for (auto& mat : *_val) {
+					FLOAT* pMat = reinterpret_cast<FLOAT*>(&mat);
+					res.push_back(script->CreateFloatArrayValue(pMat, 16));
 				}
 			}
 		}
@@ -3762,9 +3771,8 @@ gstd::value DxScript::Func_ObjShader_GetTexture(gstd::script_machine* machine, i
 		if (shared_ptr<Shader> shader = obj->GetShader()) {
 			std::string name = StringUtility::ConvertWideToMulti(argv[1].as_string());
 
-			shared_ptr<Texture> texture;
-			if (shader->GetTexture(name, &texture)) {
-				res = texture ? texture->GetName() : L"";
+			if (auto val = shader->GetTexture(name)) {
+				res = (*val)->GetName();
 			}
 		}
 	}
