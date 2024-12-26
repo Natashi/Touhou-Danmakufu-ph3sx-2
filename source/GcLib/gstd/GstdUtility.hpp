@@ -625,26 +625,33 @@ namespace gstd {
 	template<class T> class Singleton {
 	protected:
 		Singleton() {};
-		inline static T*& _This() {
-			static T* s = nullptr;
+
+		inline static unique_ptr<T>& _This() {
+			static unique_ptr<T> s = nullptr;
 			return s;
 		}
 	public:
 		virtual ~Singleton() {};
 
 		static T* CreateInstance() {
-			T*& p = _This();
-			if (p == nullptr) p = new T();
-			return p;
+			auto& p = _This();
+			if (p == nullptr) {
+				p = std::make_unique<T>();
+			}
+			else {
+				//throw gstd::wexception("Instance already exists");
+			}
+			return p.get();
 		}
 		static T* GetInstance() {
-			T*& p = _This();
-			//if (p == nullptr) throw gstd::wexception("Instance uninitialized.");
-			return p;
+			auto& p = _This();
+			if (p == nullptr)
+				CreateInstance();
+			return p.get();
 		}
 		static void DeleteInstance() {
-			T*& p = _This();
-			ptr_delete(p);
+			auto& p = _This();
+			p.reset();
 		}
 	};
 
