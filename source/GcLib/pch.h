@@ -79,6 +79,9 @@
 
 #define D3D_OVERLOADS
 
+// Set warning level to W1
+#pragma warning(push, 1)
+
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <DxErr.h>
@@ -110,6 +113,9 @@
 	#pragma comment(lib, "dsound.lib")
 
 #endif	// defined(DNH_PROJ_EXECUTOR)
+
+// Restore original warnings
+#pragma warning(pop)
 
 //------------------------------------------------------------------------------
 
