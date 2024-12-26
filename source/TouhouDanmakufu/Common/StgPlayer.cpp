@@ -261,18 +261,18 @@ void StgPlayerObject::SendGrazeEvent() {
 	stageController_->GetStageInformation()->AddGraze(listGrazedShot_.size());
 
 	size_t iValidGraze = 0;
-	for (auto iObj = listGrazedShot_.begin(); iObj != listGrazedShot_.end(); ++iObj) {
-		if (auto& wObj = *iObj) {
-			//No need to check for a nullptr, listGrazedShot_ only contains StgShotObject* anyway
-			StgShotObject* objShot = dynamic_cast<StgShotObject*>(wObj.get());
-			if (!objShot->IsDeleted()) {
-				double listShotPos[2] = { objShot->GetPositionX(), objShot->GetPositionY() };
-				listValPos.push_back(script_->CreateFloatArrayValue(listShotPos, 2U));
+	for (auto& wObj : listGrazedShot_) {
+		if (wObj.expired()) continue;
 
-				listShotID.push_back(objShot->GetObjectID());
+		//No need to check for a nullptr, listGrazedShot_ only contains StgShotObject* anyway
+		StgShotObject* objShot = dynamic_cast<StgShotObject*>(wObj.get());
+		if (!objShot->IsDeleted()) {
+			double listShotPos[2] = { objShot->GetPositionX(), objShot->GetPositionY() };
+			listValPos.push_back(script_->CreateFloatArrayValue(listShotPos, 2U));
 
-				++iValidGraze;
-			}
+			listShotID.push_back(objShot->GetObjectID());
+
+			++iValidGraze;
 		}
 	}
 	listGrazedShot_.clear();

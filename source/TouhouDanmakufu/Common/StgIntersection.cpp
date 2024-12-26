@@ -125,9 +125,7 @@ void StgIntersectionManager::Work() {
 
 	size_t totalCheck = 0;
 	size_t totalTarget = 0;
-	for (auto itr = listSpace_.begin(); itr != listSpace_.end(); itr++) {
-		StgIntersectionSpace* space = *itr;
-
+	for (auto& space : listSpace_) {
 		size_t currentCheck = 0;
 		auto listCheck = space->CreateIntersectionCheckList(this, currentCheck);
 

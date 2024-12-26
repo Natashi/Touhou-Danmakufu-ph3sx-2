@@ -92,7 +92,8 @@ namespace directx {
 
 		//-----------------------------------------------------------
 
-		VertexBufferManager* bufferManager_;
+		unique_ptr<VertexBufferManager> bufferManager_;
+
 		VertexFogState stateFog_;
 
 		//-----------------------------------------------------------

@@ -251,7 +251,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 	pDevice_->GetRenderTarget(0, &pBackSurf_);
 	pDevice_->GetDepthStencilSurface(&pZBuffer_);
 
-	bufferManager_ = new VertexBufferManager();
+	bufferManager_.reset(new VertexBufferManager());
 	bufferManager_->Initialize(this);
 
 	thisBase_ = this;

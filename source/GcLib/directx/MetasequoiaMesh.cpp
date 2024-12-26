@@ -225,12 +225,8 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 	if (!obj.bVisible_) return;
 
 	//Faces are sorted per-material
-	size_t iMapFace = 0U;
-	for (auto itrMap = mapFace.begin(); itrMap != mapFace.end(); itrMap++, iMapFace++) {
-		int indexMaterial = itrMap->first;
+	for (auto& [indexMaterial, listFace] : mapFace) {
 		//if (indexMaterial < 0) continue;
-
-		std::list<MetasequoiaMeshData::Object::Face*>& listFace = itrMap->second;
 
 		MetasequoiaMeshData::RenderObject* render = new MetasequoiaMeshData::RenderObject();
 		renderList_.push_back(render);
@@ -240,8 +236,7 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 		render->objectColor_ = obj.color_;
 
 		size_t countVert = 0;
-		for (auto itrFace = listFace.begin(); itrFace != listFace.end(); ++itrFace) {
-			MetasequoiaMeshData::Object::Face* face = *itrFace;
+		for (auto& face : listFace) {
 			size_t vc = face->vertices_.size();
 			switch (vc) {
 			case 3:		//Triangle
@@ -259,8 +254,7 @@ void MetasequoiaMeshData::_ReadObject(gstd::Scanner& scanner) {
 		render->SetVertexCount(countVert);
 
 		size_t posVert = 0;
-		for (auto itrFace = listFace.begin(); itrFace != listFace.end(); itrFace++) {
-			MetasequoiaMeshData::Object::Face* face = *itrFace;
+		for (auto& face : listFace) {
 			if (face->vertices_.size() == 3) {			//Triangle
 				size_t indexVert[3] = {
 					face->vertices_[0].indexVertex_,

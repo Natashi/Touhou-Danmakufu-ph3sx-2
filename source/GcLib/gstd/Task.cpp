@@ -40,18 +40,19 @@ void TaskManager::_CheckInvalidFunctionDivision(int divFunc) {
 		throw gstd::wexception("TaskManager: Invalid function division");
 }
 void TaskManager::ArrangeTask() {
-	//Erase dead tasks
+	// Erase dead tasks
 	for (auto itrTask = listTask_.begin(); itrTask != listTask_.end();) {
 		if (*itrTask == nullptr)
 			itrTask = listTask_.erase(itrTask);
 		else ++itrTask;
 	}
 
-	//Erase finished functions
-	for (auto itrDiv = mapFunc_.begin(); itrDiv != mapFunc_.end(); ++itrDiv) {
-		for (auto& iListFunc : itrDiv->second) {
+	// Erase finished functions
+	for (auto& [division, funcs] : mapFunc_) {
+		for (auto& iListFunc : funcs) {
 			for (auto itrFunc = iListFunc.begin(); itrFunc != iListFunc.end();) {
-				if (*itrFunc == nullptr) itrFunc = iListFunc.erase(itrFunc);
+				if (*itrFunc == nullptr)
+					itrFunc = iListFunc.erase(itrFunc);
 				else ++itrFunc;
 			}
 		}
@@ -65,8 +66,8 @@ void TaskManager::Clear() {
 }
 void TaskManager::ClearTask() {
 	listTask_.clear();
-	for (auto itrDiv = mapFunc_.begin(); itrDiv != mapFunc_.end(); ++itrDiv)
-		itrDiv->second.clear();
+	for (auto& [_, funcs] : mapFunc_)
+		funcs.clear();
 }
 void TaskManager::AddTask(shared_ptr<TaskBase> task) {
 	for (auto& iTask : listTask_) {
@@ -176,9 +177,9 @@ void TaskManager::AddFunction(int divFunc, shared_ptr<TaskFunction> func, int pr
 	vectPri[pri].push_back(func);
 }
 void TaskManager::RemoveFunction(TaskBase* task) {
-	for (auto itrDiv = mapFunc_.begin(); itrDiv != mapFunc_.end(); ++itrDiv) {
-		for (auto& iListFunc : itrDiv->second) {
-			for (auto& iFunc : iListFunc) {
+	for (auto& [name, div] : mapFunc_) {
+		for (auto& listFunc : div) {
+			for (auto& iFunc : listFunc) {
 				if (iFunc == nullptr) continue;
 				if (iFunc->task_.get() != task) continue;
 				if (iFunc->task_->idTask_ != task->idTask_) continue;
@@ -203,9 +204,9 @@ void TaskManager::RemoveFunction(TaskBase* task, int divFunc, int idFunc) {
 	}
 }
 void TaskManager::RemoveFunction(const std::type_info& info) {
-	for (auto itrDiv = mapFunc_.begin(); itrDiv != mapFunc_.end(); ++itrDiv) {
-		for (auto& iListFunc : itrDiv->second) {
-			for (auto& iFunc : iListFunc) {
+	for (auto& [name, div] : mapFunc_) {
+		for (auto& listFunc : div) {
+			for (auto& iFunc : listFunc) {
 				if (iFunc == nullptr) continue;
 				const std::type_info& tInfo = typeid(*(iFunc->task_));
 				if (info != tInfo) continue;
@@ -215,9 +216,9 @@ void TaskManager::RemoveFunction(const std::type_info& info) {
 	}
 }
 void TaskManager::SetFunctionEnable(bool bEnable) {
-	for (auto itrDiv = mapFunc_.begin(); itrDiv != mapFunc_.end(); ++itrDiv) {
-		for (auto& iListFunc : itrDiv->second) {
-			for (auto& iFunc : iListFunc) {
+	for (auto& [name, div] : mapFunc_) {
+		for (auto& listFunc : div) {
+			for (auto& iFunc : listFunc) {
 				if (iFunc)
 					iFunc->bEnable_ = bEnable;
 			}
@@ -313,172 +314,6 @@ void TaskInfoPanel::Update() {
 void TaskInfoPanel::ProcessGui() {
 
 }
-
-/*
-bool TaskInfoPanel::_AddedLogger(HWND hTab) {
-	Create(hTab);
-
-	gstd::WTreeView::Style styleTreeView;
-	styleTreeView.SetStyle(WS_CHILD | WS_VISIBLE |
-		TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT);
-	styleTreeView.SetStyleEx(WS_EX_CLIENTEDGE);
-	wndTreeView_.Create(hWnd_, styleTreeView);
-
-	WTreeView::ItemStyle treeIteSmtyle;
-	treeIteSmtyle.SetMask(TVIF_TEXT | TVIF_PARAM);
-	wndTreeView_.CreateRootItem(treeIteSmtyle);
-
-	gstd::WListView::Style styleListView;
-	styleListView.SetStyle(WS_CHILD | WS_VISIBLE |
-		LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER);
-	styleListView.SetStyleEx(WS_EX_CLIENTEDGE);
-	styleListView.SetListViewStyleEx(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	wndListView_.Create(hWnd_, styleListView);
-	wndListView_.AddColumn(64, ROW_FUNC_ADDRESS, L"Address");
-	wndListView_.AddColumn(280, ROW_FUNC_CLASS, L"Class");
-	wndListView_.AddColumn(32, ROW_FUNC_ID, L"ID");
-	wndListView_.AddColumn(52, ROW_FUNC_DIVISION, L"Division");
-	wndListView_.AddColumn(48, ROW_FUNC_PRIORITY, L"Priority");
-	wndListView_.AddColumn(48, ROW_FUNC_ENABLE, L"Enable");
-	wndListView_.AddColumn(256, ROW_FUNC_INFO, L"Info");
-
-	wndSplitter_.Create(hWnd_, WSplitter::TYPE_HORIZONTAL);
-	wndSplitter_.SetRatioY(0.25f);
-
-	SetWindowVisible(false);
-
-	return true;
-}
-void TaskInfoPanel::LocateParts() {
-	int wx = GetClientX();
-	int wy = GetClientY();
-	int wWidth = GetClientWidth();
-	int wHeight = GetClientHeight();
-
-	int ySplitter = (int)((float)wHeight * wndSplitter_.GetRatioY());
-	int heightSplitter = 6;
-
-	wndSplitter_.SetBounds(wx, ySplitter, wWidth, heightSplitter);
-	wndTreeView_.SetBounds(wx, wy, wWidth, ySplitter);
-	wndListView_.SetBounds(wx, ySplitter + heightSplitter, wWidth, wHeight - ySplitter - heightSplitter);
-}
-void TaskInfoPanel::Update(TaskManager* taskManager) {
-	if (!IsWindowVisible()) return;
-
-	uint64_t time = SystemUtility::GetCpuTime2();
-	if ((time - timeLastUpdate_) < timeUpdateInterval_) return;
-	timeLastUpdate_ = time;
-
-	shared_ptr<WTreeView::Item> itemRoot = wndTreeView_.GetRootItem();
-	itemRoot->SetText(taskManager->GetInfoAsString());
-	itemRoot->SetParam((LPARAM)taskManager);
-	_UpdateTreeView(taskManager, itemRoot);
-
-	int addressManager = 0;
-	shared_ptr<WTreeView::Item> itemSelected = wndTreeView_.GetSelectedItem();
-	if (itemSelected) {
-		addressManager = itemSelected->GetParam();
-	}
-	_UpdateListView((TaskManager*)addressManager);
-}
-void TaskInfoPanel::_UpdateTreeView(TaskManager* taskManager, shared_ptr<WTreeView::Item> item) {
-	std::set<int> setAddress;
-	{
-		std::list<shared_ptr<TaskBase>> listTask = taskManager->GetTaskList();
-		
-		for (auto itrTask = listTask.begin(); itrTask != listTask.end(); ++itrTask) {
-			if (*itrTask == nullptr) continue;
-			TaskManager* task = dynamic_cast<TaskManager*>(itrTask->get());
-			if (task == nullptr) continue;
-
-			int address = (int)task;
-			shared_ptr<WTreeView::Item> itemChild = nullptr;
-			std::list<shared_ptr<WTreeView::Item>> listChild = item->GetChildList();
-			for (auto itrChild = listChild.begin(); itrChild != listChild.end(); ++itrChild) {
-				shared_ptr<WTreeView::Item>& iItem = *itrChild;
-				LPARAM param = iItem->GetParam();
-				if (param != address) continue;
-				itemChild = iItem;
-			}
-
-			if (itemChild == nullptr) {
-				WTreeView::ItemStyle treeIteSmtyle;
-				treeIteSmtyle.SetMask(TVIF_TEXT | TVIF_PARAM);
-				itemChild = item->CreateChild(treeIteSmtyle);
-			}
-			itemChild->SetText(task->GetInfoAsString());
-			itemChild->SetParam(address);
-			_UpdateTreeView(task, itemChild);
-			setAddress.insert(address);
-		}
-	}
-
-	{
-		std::list<shared_ptr<WTreeView::Item>> listChild = item->GetChildList();
-		for (auto itrChild = listChild.begin(); itrChild != listChild.end(); ++itrChild) {
-			shared_ptr<WTreeView::Item>& iItem = *itrChild;
-			LPARAM param = iItem->GetParam();
-			if (setAddress.find(param) == setAddress.end()) iItem->Delete();
-		}
-	}
-}
-void TaskInfoPanel::_UpdateListView(TaskManager* taskManager) {
-	if (addressLastFindManager_ != (int)taskManager) {
-		wndListView_.Clear();
-	}
-
-	if (taskManager == 0) {
-		wndListView_.Clear();
-		return;
-	}
-
-	std::set<std::wstring> setKey;
-	TaskManager::function_map mapFunc = taskManager->GetFunctionMap();
-	
-	for (auto itrType = mapFunc.begin(); itrType != mapFunc.end(); ++itrType) {
-		int division = itrType->first;
-		int priority = 0;
-		std::vector<std::list<shared_ptr<TaskFunction>>>* vectPri = &itrType->second;
-
-		for (auto itrPri = vectPri->begin(); itrPri != vectPri->end(); ++itrPri) {
-			std::list<shared_ptr<TaskFunction>>& listFunc = *itrPri;
-
-			for (auto itrFunc = listFunc.begin(); itrFunc != listFunc.end(); ++itrFunc) {
-				if (*itrFunc == nullptr) continue;
-				std::string keyList;
-
-				TaskFunction* func = itrFunc->get();
-				int address = (int)func;
-				std::wstring key = StringUtility::Format(L"%08x", address);
-				int index = wndListView_.GetIndexInColumn(key, ROW_FUNC_ADDRESS);
-				if (index == -1) {
-					index = wndListView_.GetRowCount();
-					wndListView_.SetText(index, ROW_FUNC_ADDRESS, key);
-				}
-
-				std::wstring className = StringUtility::ConvertMultiToWide(typeid(*func).name());
-				wndListView_.SetText(index, ROW_FUNC_CLASS, className);
-				wndListView_.SetText(index, ROW_FUNC_ID, StringUtility::Format(L"%d", func->GetID()));
-				wndListView_.SetText(index, ROW_FUNC_DIVISION, StringUtility::Format(L"%d", division));
-				wndListView_.SetText(index, ROW_FUNC_PRIORITY, StringUtility::Format(L"%d", priority));
-				wndListView_.SetText(index, ROW_FUNC_ENABLE, func->IsEnable() ? L"Yes" : L"No");
-				wndListView_.SetText(index, ROW_FUNC_INFO, func->GetInfoAsString());
-
-				setKey.insert(key);
-			}
-			++priority;
-		}
-	}
-
-	for (int iRow = 0; iRow < wndListView_.GetRowCount();) {
-		std::wstring key = wndListView_.GetText(iRow, ROW_FUNC_ADDRESS);
-		if (setKey.find(key) != setKey.end()) ++iRow;
-		else wndListView_.DeleteRow(iRow);
-	}
-
-	addressLastFindManager_ = (int)taskManager;
-}
-*/
 
 //****************************************************************************
 //WorkRenderTaskManager

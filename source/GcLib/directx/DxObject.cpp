@@ -1602,8 +1602,8 @@ shared_ptr<Shader> DxScriptObjectManager::GetShader(int index) {
 void DxScriptObjectManager::WorkObject() {
 	// Play cached sounds
 	DirectSoundManager* soundManager = DirectSoundManager::GetBase();
-	for (auto itrSound = mapReservedSound_.begin(); itrSound != mapReservedSound_.end(); ++itrSound) {
-		shared_ptr<SoundPlayer> player = itrSound->second;
+
+	for (auto& [_, player] : mapReservedSound_) {
 		player->Play();
 	}
 	mapReservedSound_.clear();
@@ -1640,11 +1640,15 @@ void DxScriptObjectManager::RenderObject() {
 		RenderList& renderList = listObjRender_[iPri];
 
 		for (UINT iPass = 0; iPass < cPass; ++iPass) {
-			if (effect) effect->BeginPass(iPass);
-			for (auto itr = renderList.begin(); itr != renderList.end(); ++itr) {
-				(*itr)->Render();
+			if (effect) 
+				effect->BeginPass(iPass);
+
+			for (auto& obj : renderList) {
+				obj->Render();
 			}
-			if (effect) effect->EndPass();
+
+			if (effect) 
+				effect->EndPass();
 		}
 		renderList.Clear();
 

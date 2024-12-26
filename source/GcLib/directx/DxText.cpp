@@ -243,11 +243,13 @@ DxCharCache::~DxCharCache() {
 }
 void DxCharCache::_arrange() {
 	countPri_ = 0;
+
 	std::map<int, DxCharCacheKey> mapPriKeyLast = mapPriKey_;
+
 	mapPriKey_.clear();
 	mapKeyPri_.clear();
-	for (auto itr = mapPriKeyLast.begin(); itr != mapPriKeyLast.end(); itr++) {
-		DxCharCacheKey& key = itr->second;
+
+	for (auto& [code, key] : mapPriKeyLast) {
 		int pri = countPri_;
 
 		mapPriKey_[pri] = key;
@@ -709,9 +711,9 @@ void DxTextRenderObject::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY
 	if (bAutoCenter_) {
 		DxRect<int> rect;
 
-		for (auto itr = listData_.begin(); itr != listData_.end(); ++itr) {
-			ObjectData& obj = *itr;
+		for (auto& obj : listData_) {
 			DxRect<double> rcDest = obj.sprite->GetDestinationRect();
+
 			rect.left = std::min(rect.left, (int)rcDest.left);
 			rect.top = std::min(rect.top, (int)rcDest.top);
 			rect.right = std::max(rect.right, (int)rcDest.right);
@@ -724,9 +726,7 @@ void DxTextRenderObject::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY
 		};
 	}
 
-	for (auto itr = listData_.begin(); itr != listData_.end(); ++itr) {
-		ObjectData& obj = *itr;
-
+	for (auto& obj : listData_) {
 		D3DXVECTOR2 bias = D3DXVECTOR2(obj.bias.x, obj.bias.y);
 		shared_ptr<Sprite2D> sprite = obj.sprite;
 
@@ -751,9 +751,9 @@ void DxTextRenderObject::AddRenderObject(shared_ptr<Sprite2D> obj) {
 	listData_.push_back(data);
 }
 void DxTextRenderObject::AddRenderObject(shared_ptr<DxTextRenderObject> obj, const POINT& bias) {
-	for (auto itr = obj->listData_.begin(); itr != obj->listData_.end(); ++itr) {
-		itr->bias = bias;
-		listData_.push_back(*itr);
+	for (auto& data : obj->listData_) {
+		data.bias = bias;
+		listData_.push_back(data);
 	}
 }
 

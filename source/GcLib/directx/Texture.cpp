@@ -31,6 +31,7 @@ TextureData::~TextureData() {
 	ptr_release(lpRenderSurface_);
 	ptr_release(lpRenderZ_);
 }
+
 void TextureData::CalculateResourceSize() {
 	size_t size = infoImage_.Width * infoImage_.Height;
 	if (useMipMap_) {
@@ -320,9 +321,7 @@ void TextureManager::ReleaseDxResource() {
 	if (deviceHr != D3DERR_DEVICELOST) {
 		Lock lock(GetLock());
 
-		for (auto itrMap = mapTextureData_.begin(); itrMap != mapTextureData_.end(); ++itrMap) {
-			TextureData* data = (itrMap->second).get();
-
+		for (auto& [name, data] : mapTextureData_) {
 			if (data->type_ == TextureData::Type::TYPE_RENDER_TARGET) {
 				D3DXIMAGE_INFO* infoImage = data->GetImageInfo();
 
@@ -339,7 +338,7 @@ void TextureManager::ReleaseDxResource() {
 					else {
 						std::wstring err = StringUtility::Format(L"TextureManager::ReleaseDxResource: "
 							"Failed to create temporary surface [%s]\r\n    %s: %s",
-							PathProperty::ReduceModuleDirectory(itrMap->first).c_str(), 
+							PathProperty::ReduceModuleDirectory(name).c_str(),
 							DXGetErrorString(hr), DXGetErrorDescription(hr));
 						Logger::WriteTop(err);
 
@@ -362,13 +361,11 @@ void TextureManager::ReleaseDxResource() {
 }
 void TextureManager::RestoreDxResource() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	std::map<std::wstring, shared_ptr<TextureData>>::iterator itrMap;
+
 	{
 		Lock lock(GetLock());
 
-		for (itrMap = mapTextureData_.begin(); itrMap != mapTextureData_.end(); ++itrMap) {
-			TextureData* data = (itrMap->second).get();
-
+		for (auto& [name, data] : mapTextureData_) {
 			if (data->type_ == TextureData::Type::TYPE_RENDER_TARGET) {
 				UINT width = data->infoImage_.Width;
 				UINT height = data->infoImage_.Height;
@@ -797,19 +794,16 @@ void TextureInfoPanel::Update() {
 		listDisplay_.resize(mapData.size());
 
 		int iTex = 0;
-		for (auto itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap, ++iTex) {
-			const std::wstring& path = itrMap->first;
-			TextureData* data = (itrMap->second).get();
-
-			int countRef = (itrMap->second).use_count();
+		for (auto& [path, data] : mapData) {
+			int countRef = data.use_count();
 			D3DXIMAGE_INFO* infoImage = &data->infoImage_;
 
 			std::wstring fileName = PathProperty::GetFileName(path);
 			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
 			TextureDisplay displayData = {
-				(uintptr_t)data,
-				StringUtility::FromAddress((uintptr_t)data),
+				(uintptr_t)data.get(),
+				StringUtility::FromAddress((uintptr_t)data.get()),
 				STR_MULTI(fileName),
 				STR_MULTI(pathReduce),
 				countRef,
@@ -818,7 +812,7 @@ void TextureInfoPanel::Update() {
 				data->GetResourceSize()
 			};
 
-			listDisplay_[iTex] = displayData;
+			listDisplay_[iTex++] = displayData;
 		}
 
 		// Sort new data as well

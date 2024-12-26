@@ -259,8 +259,7 @@ namespace directx {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		IDirect3DDevice9* device = graphics->GetDevice();
 
-		unique_ptr<BufferBase<IDirect3DVertexBuffer9>> pBufferOwned;
-		pBufferOwned.reset(new FixedVertexBuffer(device));
+		auto pBufferOwned = make_unique<FixedVertexBuffer>(device);
 
 		size_t addr = (size_t)pBufferOwned.get();
 

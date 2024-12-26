@@ -1414,9 +1414,9 @@ void TrajectoryObject3D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY
 	if (texture_) width = texture_->GetWidth();
 
 	float dWidth = 1.0 / width / listData_.size();
+
 	size_t iData = 0;
-	for (auto itr = listData_.begin(); itr != listData_.end(); ++itr, ++iData) {
-		Data data = (*itr);
+	for (auto& data : listData_) {
 		int alpha = data.alpha;
 		for (size_t iPos = 0; iPos < 2; ++iPos) {
 			size_t index = iData * 2 + iPos;
@@ -1432,7 +1432,10 @@ void TrajectoryObject3D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY
 			ColorAccess::SetColorA(newColor, alpha);
 			SetVertexColor(index, newColor);
 		}
+
+		++iData;
 	}
+
 	RenderObjectLX::Render(angX, angY, angZ);
 }
 void TrajectoryObject3D::AddPoint(const D3DXMATRIX& mat) {
@@ -2088,24 +2091,21 @@ void DxMeshInfoPanel::Update() {
 		listDisplay_.resize(mapData.size());
 
 		int iMesh = 0;
-		for (auto itrMap = mapData.begin(); itrMap != mapData.end(); ++itrMap, ++iMesh) {
-			const std::wstring& path = itrMap->first;
-			DxMeshData* data = (itrMap->second).get();
-
-			int countRef = (itrMap->second).use_count();
+		for (auto& [path, data] : mapData) {
+			int countRef = data.use_count();
 
 			std::wstring fileName = PathProperty::GetFileName(path);
 			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
 			MeshDisplay displayData = {
-				(uintptr_t)data,
-				StringUtility::FromAddress((uintptr_t)data),
+				(uintptr_t)data.get(),
+				StringUtility::FromAddress((uintptr_t)data.get()),
 				STR_MULTI(fileName),
 				STR_MULTI(pathReduce),
 				countRef
 			};
 
-			listDisplay_[iMesh] = displayData;
+			listDisplay_[iMesh++] = displayData;
 		}
 
 		// Sort new data as well

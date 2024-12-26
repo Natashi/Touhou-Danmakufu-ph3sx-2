@@ -1373,12 +1373,12 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA1(gstd::script
 		StgIntersectionManager* interSectionManager = stageController->GetIntersectionManager();
 
 		std::vector<StgIntersectionTargetPoint>* listPoint = interSectionManager->GetAllEnemyTargetPoint();
-		for (auto itr = listPoint->begin(); itr != listPoint->end(); ++itr) {
-			if (auto ptrObj = itr->GetObjectRef()) {
+		for (auto& point : *listPoint) {
+			if (auto ptrObj = point.GetObjectRef()) {
 				if (!ptrObj->GetEnableGetIntersectionPosition()) continue;
 				if (ptrObj->GetObjectID() != id) continue;
 
-				POINT& pos = itr->GetPoint();
+				POINT& pos = point.GetPoint();
 				LONG dx = pos.x - enemyX;
 				LONG dy = pos.y - enemyY;
 
@@ -1387,8 +1387,7 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA1(gstd::script
 			}
 		}
 
-		for (auto itr = mapPos.begin(); itr != mapPos.end(); ++itr) {
-			POINT& pos = itr->second;
+		for (auto& [_, pos] : mapPos) {
 			LONG listPos[2] = { pos.x, pos.y };
 			gstd::value v = script->CreateFloatArrayValue(listPos, 2U);
 			listV.push_back(v);
@@ -1416,12 +1415,12 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA2(gstd::script
 		StgIntersectionManager* interSectionManager = stageController->GetIntersectionManager();
 
 		std::vector<StgIntersectionTargetPoint>* listPoint = interSectionManager->GetAllEnemyTargetPoint();
-		for (auto itr = listPoint->begin(); itr != listPoint->end(); ++itr) {
-			if (auto ptrObj = itr->GetObjectRef()) {
+		for (auto& point : *listPoint) {
+			if (auto ptrObj = point.GetObjectRef()) {
 				if (!ptrObj->GetEnableGetIntersectionPosition()) continue;
 				if (ptrObj->GetObjectID() != id) continue;
 
-				POINT& pos = itr->GetPoint();
+				POINT& pos = point.GetPoint();
 				LONG dx = pos.x - tX;
 				LONG dy = pos.y - tY;
 
@@ -1430,8 +1429,7 @@ gstd::value StgStageScript::Func_GetEnemyIntersectionPositionByIdA2(gstd::script
 			}
 		}
 
-		for (auto itr = mapPos.begin(); itr != mapPos.end(); ++itr) {
-			POINT& pos = itr->second;
+		for (auto& [_, pos] : mapPos) {
 			LONG listPos[2] = { pos.x, pos.y };
 			gstd::value v = script->CreateFloatArrayValue(listPos, 2U);
 			listV.push_back(v);

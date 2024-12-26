@@ -702,8 +702,7 @@ void FileManager::LoadThread::_Run() {
 			if (event) {
 				Lock lock(lockListener_);
 
-				for (auto itr = listListener_.begin(); itr != listListener_.end(); itr++) {
-					FileManager::LoadThreadListener* listener = (*itr);
+				for (auto& listener : listListener_) {
 					if (event->GetListener() == listener)
 						listener->CallFromLoadThread(event);
 				}
@@ -752,9 +751,10 @@ void FileManager::LoadThread::AddListener(FileManager::LoadThreadListener* liste
 	{
 		Lock lock(lockListener_);
 
-		for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-			if (*itr == listener) return;
-		}
+		auto find = std::find(listListener_.begin(), listListener_.end(), listener);
+		if (find != listListener_.end())
+			return;
+
 		listListener_.push_back(listener);
 	}
 }
@@ -762,10 +762,9 @@ void FileManager::LoadThread::RemoveListener(FileManager::LoadThreadListener* li
 	{
 		Lock lock(lockListener_);
 
-		for (auto itr = listListener_.begin(); itr != listListener_.end(); ++itr) {
-			if (*itr != listener) continue;
-			listListener_.erase(itr);
-			break;
+		auto find = std::find(listListener_.begin(), listListener_.end(), listener);
+		if (find != listListener_.end()) {
+			listListener_.erase(find);
 		}
 	}
 }

@@ -419,9 +419,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 		size_t countFrame = 0;
 		{
 			size_t i = 0;
-			for (auto itr = mapData.begin(); itr != mapData.end(); ++itr, ++i) {
-				int id = itr->first;
-				unique_ptr<StgShotData>& data = itr->second;
+			for (auto& [id, data] : mapData) {
 				if (data == nullptr) continue;
 
 				for (auto& iFrame : data->listFrame_)
@@ -432,6 +430,8 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 				if (listData_.size() <= id)
 					listData_.resize(id + 1);
 				listData_[id] = std::move(data);		//Moves unique_ptr object, do not use mapData after this point
+
+				++i;
 			}
 		}
 
@@ -692,10 +692,10 @@ StgShotDataFrame* StgShotData::GetFrame(size_t frame) {
 	frame = frame % totalFrame_;
 	size_t total = 0;
 
-	for (auto itr = listFrame_.begin(); itr != listFrame_.end(); ++itr) {
-		total += itr->frame_;
+	for (auto& iFrame : listFrame_) {
+		total += iFrame.frame_;
 		if (total >= frame)
-			return &(*itr);
+			return &iFrame;
 	}
 	return &listFrame_[0];
 }
@@ -935,7 +935,7 @@ void StgShotObject::_CommonWorkTask() {
 
 	//----------------------------------------------------------
 
-	for (auto itr = mapEnemyHitCooldown_.begin(); itr != mapEnemyHitCooldown_.end();) {
+	for (auto itr = mapEnemyHitCooldown_.begin(); itr != mapEnemyHitCooldown_.end(); ) {
 		if (itr->first.expired() || itr->first->IsDeleted() || (--(itr->second) == 0))
 			itr = mapEnemyHitCooldown_.erase(itr);
 		else ++itr;
@@ -2472,8 +2472,7 @@ void StgCurveLaserObject::_DeleteInAutoClip() {
 	auto PredicateNodeInRect = [&](LaserNode& node) {
 		return rcDeleteClip.IsPointIntersected((float*)&node.pos);
 	};
-	std::list<LaserNode>::iterator itrFind = std::find_if(listPosition_.begin(), listPosition_.end(),
-		PredicateNodeInRect);
+	auto itrFind = std::find_if(listPosition_.begin(), listPosition_.end(), PredicateNodeInRect);
 
 	//Can't find any node within the bounding rect
 	if (itrFind == listPosition_.end()) {
@@ -2503,7 +2502,7 @@ bool StgCurveLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 	int posInvalidE = (int)(countPos * iLengthE);
 	float iWidth = widthIntersection_ * hitboxScale_.x;
 
-	std::list<LaserNode>::iterator itr = listPosition_.begin();
+	auto itr = listPosition_.begin();
 	for (size_t iPos = 0; iPos < countIntersection; ++iPos, ++itr) {
 		IntersectionPairType* pPair = &listIntersectionTarget_[iPos];
 
@@ -2519,7 +2518,7 @@ bool StgCurveLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 		}
 		pPair->first = true;
 
-		std::list<LaserNode>::iterator itrNext = std::next(itr);
+		auto itrNext = std::next(itr);
 		D3DXVECTOR2* nodeS = &itr->pos;
 		D3DXVECTOR2* nodeE = &itrNext->pos;
 
@@ -2653,13 +2652,13 @@ void StgCurveLaserObject::Render(BlendMode targetBlend) {
 					auto itrTailEnd = listPosition_.end();
 
 					bCappable = true;
-					for (auto itr = itrHead; bCappable && remLen > 0 && itr != itrTailEnd; ++itr, ++i, ++iPos)
+					for (auto& itr = itrHead; bCappable && remLen > 0 && itr != itrTailEnd; ++itr, ++i, ++iPos)
 						bCappable = tryCap(itr);
 
 					i = 0;
 					iPos = countPos - 2; // Ends straight up do not work otherwise?
 					remLen = rcMidPt;
-					for (auto itr = itrTail; bCappable && remLen > 0 && itr != itrHeadEnd; ++itr, ++i, --iPos)
+					for (auto& itr = itrTail; bCappable && remLen > 0 && itr != itrHeadEnd; ++itr, ++i, --iPos)
 						bCappable = tryCap(itr);
 				}
 				if (!bCappable) // If capping fails (or is disabled), just use the regular increment
@@ -2672,7 +2671,8 @@ void StgCurveLaserObject::Render(BlendMode targetBlend) {
 			float halfWidthRender = widthRender_ / 2.0f;
 
 			size_t iPos = 0U;
-			for (auto itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
+			//for (auto itr = listPosition_.begin(); itr != listPosition_.end(); ++itr, ++iPos) {
+			for (auto& node : listPosition_) {
 				float nodeAlpha = baseAlpha;
 				if (iPos > halfPos)
 					nodeAlpha = Math::Lerp::Linear(baseAlpha, tipAlpha, (iPos - halfPos + 1) * inv_halfPos);
@@ -2680,25 +2680,27 @@ void StgCurveLaserObject::Render(BlendMode targetBlend) {
 					nodeAlpha = Math::Lerp::Linear(tipAlpha, baseAlpha, iPos * inv_halfPosDec);
 				nodeAlpha = std::max(0.0f, nodeAlpha);
 
-				float renderWd = std::max(halfWidthRender * itr->widthMul, 1.0f) * scale_.x;
+				float renderWd = std::max(halfWidthRender * node.widthMul, 1.0f) * scale_.x;
 
 				D3DCOLOR thisColor = 0xffffffff;
 				{
 					byte alpha = ColorAccess::ClampColorRet(nodeAlpha * alphaRateShot);
 					thisColor = (thisColor & 0x00ffffff) | (alpha << 24);
 				}
-				if (itr->color != 0xffffffff) ColorAccess::MultiplyColor(thisColor, itr->color);
+				if (node.color != 0xffffffff) 
+					ColorAccess::MultiplyColor(thisColor, node.color);
 
 				for (size_t iVert = 0U; iVert < 2U; ++iVert) {
 					VERTEX_TLX* pv = &vertexData_[iPos * 2 + iVert];
 
 					_SetVertexUV(pv, ptrSrc[(iVert & 1) << 1] * texSizeInv.x, rectV);
-					_SetVertexPosition(pv, itr->pos.x + itr->vertOff[iVert].x * renderWd,
-						itr->pos.y + itr->vertOff[iVert].y * renderWd, position_.z);
+					_SetVertexPosition(pv, node.pos.x + node.vertOff[iVert].x * renderWd,
+						node.pos.y + node.vertOff[iVert].y * renderWd, position_.z);
 					_SetVertexColorARGB(pv, thisColor);
 				}
 
 				rectV += listRectIncrement_[iPos];
+				++iPos;
 			}
 
 			{
@@ -2818,8 +2820,8 @@ void StgCurveLaserObject::_SendDeleteEvent(TypeDelete type) {
 		};
 
 		float lengthAcc = 0.0;
-		for (std::list<LaserNode>::iterator itr = listPosition_.begin(); itr != listPosition_.end(); itr++) {
-			std::list<LaserNode>::iterator itrNext = std::next(itr);
+		for (auto itr = listPosition_.begin(); itr != listPosition_.end(); itr++) {
+			auto itrNext = std::next(itr);
 			if (itrNext == listPosition_.end()) break;
 
 			D3DXVECTOR2* pos = &itr->pos;

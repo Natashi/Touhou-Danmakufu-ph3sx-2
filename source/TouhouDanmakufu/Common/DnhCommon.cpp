@@ -290,17 +290,16 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::FindPlayerScrip
 				std::wstring tDir = PathProperty::ReplaceYenToSlash(itr.path());
 				tDir = PathProperty::AppendSlash(tDir);
 
-				std::vector<ref_count_ptr<ScriptInformation>> list = FindPlayerScriptInformationList(tDir);
-				for (auto itr = list.begin(); itr != list.end(); itr++) {
-					res.push_back(*itr);
+				auto infoList = FindPlayerScriptInformationList(tDir);
+				for (auto& info : infoList) {
+					res.push_back(info);
 				}
 			}
 			else {
 				std::wstring tPath = PathProperty::ReplaceYenToSlash(itr.path());
 
-				std::vector<ref_count_ptr<ScriptInformation>> listInfo = CreateScriptInformationList(tPath, true);
-				for (size_t iInfo = 0; iInfo < listInfo.size(); iInfo++) {
-					ref_count_ptr<ScriptInformation> info = listInfo[iInfo];
+				auto infoList = CreateScriptInformationList(tPath, true);
+				for (auto& info : infoList) {
 					if (info != nullptr && info->type_ == ScriptInformation::TYPE_PLAYER)
 						res.push_back(info);
 				}

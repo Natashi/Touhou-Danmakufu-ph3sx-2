@@ -446,15 +446,15 @@ void StgEnemyBossSceneObject::Work() {
 		std::vector<ref_unsync_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
 		bool bReadyNext = true;
 		if (activeData_->IsRequireAllDown()) {
-			for (auto itr = listEnemy.begin(); itr != listEnemy.end(); ++itr) {
-				if ((*itr)->GetLife() > 0)
+			for (auto& enemy : listEnemy) {
+				if (enemy->GetLife() > 0)
 					bReadyNext = false;
 			}
 		}
 		else {
 			bReadyNext = false;
-			for (auto itr = listEnemy.begin(); itr != listEnemy.end(); ++itr) {
-				if ((*itr)->GetLife() <= 0) {
+			for (auto& enemy : listEnemy) {
+				if (enemy->GetLife() <= 0) {
 					bReadyNext = true;
 					break;
 				}

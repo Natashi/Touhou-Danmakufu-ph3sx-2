@@ -452,9 +452,7 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 		size_t countFrame = 0;
 		{
 			size_t i = 0;
-			for (auto itr = mapData.begin(); itr != mapData.end(); ++itr, ++i) {
-				int id = itr->first;
-				unique_ptr<StgItemData>& data = itr->second;
+			for (auto& [id, data] : mapData) {
 				if (data == nullptr) continue;
 
 				for (auto& iFrame : data->listFrame_)
@@ -466,7 +464,7 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 					listData_.resize(id + 1);
 				listData_[id] = std::move(data);		//Moves unique_ptr object, do not use mapData after this point
 
-				if (unique_ptr<StgItemData>& dataOut = listData_[id]->dataOut_) {
+				if (auto& dataOut = listData_[id]->dataOut_) {
 					//Item data has an out frame
 					
 					dataOut->listFrame_[0].listItemData_ = this;
@@ -474,6 +472,8 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 
 					listAddData.push_back(dataOut.get());
 				}
+
+				++i;
 			}
 		}
 
@@ -694,10 +694,10 @@ StgItemDataFrame* StgItemData::GetFrame(size_t frame) {
 	frame = frame % totalFrame_;
 	size_t total = 0;
 
-	for (auto itr = listFrame_.begin(); itr != listFrame_.end(); ++itr) {
-		total += itr->frame_;
+	for (auto& iFrame : listFrame_) {
+		total += iFrame.frame_;
 		if (total >= frame)
-			return &(*itr);
+			return &iFrame;
 	}
 	return &listFrame_[0];
 }

@@ -45,11 +45,11 @@ namespace directx {
 		IDirectSoundBuffer8* pDirectSoundPrimaryBuffer_;
 
 		gstd::CriticalSection lock_;
-		std::unique_ptr<SoundManageThread> threadManage_;
+		unique_ptr<SoundManageThread> threadManage_;
 
 		std::list<shared_ptr<SoundPlayer>> listManagedPlayer_;
 		std::map<std::wstring, shared_ptr<SoundSourceData>> mapSoundSource_;
-		std::map<int, SoundDivision*> mapDivision_;
+		std::map<int, unique_ptr<SoundDivision>> mapDivision_;
 
 		shared_ptr<SoundInfoPanel> panelInfo_;
 
@@ -315,9 +315,10 @@ namespace directx {
 		class StreamingThread;
 		friend StreamingThread;
 	protected:
-		HANDLE hEvent_[3];
-		IDirectSoundNotify* pDirectSoundNotify_;
+		unique_ptr<IDirectSoundNotify> pDirectSoundNotify_;
 		unique_ptr<StreamingThread> thread_;
+
+		std::array<HANDLE, 3> hEvent_;
 
 		bool bStreaming_;
 		bool bStreamOver_;
@@ -325,8 +326,8 @@ namespace directx {
 
 		DWORD sizeCopy_;
 
-		DWORD lastStreamCopyPos_[2];
-		DWORD bufferPositionAtCopy_[2];
+		std::array<DWORD, 2> lastStreamCopyPos_;
+		std::array<DWORD, 2> bufferPositionAtCopy_;
 
 		DWORD lastReadPointer_;
 	protected:
@@ -347,7 +348,7 @@ namespace directx {
 		virtual bool IsPlaying();
 
 		virtual DWORD GetCurrentPosition();
-		DWORD* DbgGetStreamCopyPos() { return lastStreamCopyPos_; }
+		auto DbgGetStreamCopyPos() const { return lastStreamCopyPos_; }
 
 		virtual bool GetSamplesFFT(DWORD durationMs, size_t resolution, bool bAutoLog, std::vector<double>& res);
 	};
