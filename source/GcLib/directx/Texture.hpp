@@ -100,6 +100,7 @@ namespace directx {
 		friend Texture;
 		friend TextureData;
 		friend TextureInfoPanel;
+	private:
 		static TextureManager* thisBase_;
 	public:
 		static const std::wstring TARGET_TRANSITION;
@@ -112,7 +113,6 @@ namespace directx {
 		shared_ptr<TextureInfoPanel> panelInfo_;
 
 		void _ReleaseTextureData(const std::wstring& name);
-		void _ReleaseTextureData(std::map<std::wstring, shared_ptr<TextureData>>::iterator itr);
 
 		void __CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
 		bool _CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
@@ -128,11 +128,10 @@ namespace directx {
 		gstd::CriticalSection& GetLock() { return lock_; }
 
 		virtual void Clear();
+
 		virtual void Add(const std::wstring& name, shared_ptr<Texture> texture);
 		virtual void Release(const std::wstring& name);
-		virtual void Release(std::map<std::wstring, shared_ptr<Texture>>::iterator itr);
-		virtual bool IsDataExists(const std::wstring& name);
-		virtual std::map<std::wstring, shared_ptr<TextureData>>::iterator IsDataExistsItr(const std::wstring& name, bool* res = nullptr);
+		virtual shared_ptr<TextureData> GetData(const std::wstring& name);
 
 		virtual void ReleaseDxResource();
 		virtual void RestoreDxResource();

@@ -66,13 +66,12 @@ void Texture::Release() {
 		Lock lock(TextureManager::GetBase()->GetLock());
 
 		if (data_) {
-			TextureManager* manager = data_->manager_;
-			if (manager) {
-				auto itrData = manager->IsDataExistsItr(data_->name_);
-
-				//No other references other than the one here and the one in TextureManager
-				if (data_.use_count() <= 2)
-					manager->_ReleaseTextureData(itrData);
+			if (auto manager = data_->manager_) {
+				// If no other uses than in data_ and in manager, dispose data
+				// TODO: Switch to automatic deletion with smart pointers
+				if (data_.use_count() <= 2) {
+					manager->_ReleaseTextureData(data_->GetName());
+				}
 			}
 			data_ = nullptr;
 		}
@@ -84,23 +83,28 @@ std::wstring Texture::GetName() const {
 }
 
 bool Texture::CreateFromData(const std::wstring& name) {
-	if (data_) Release();
+	if (data_)
+		Release();
 
 	TextureManager* manager = TextureManager::GetBase();
-	auto itrData = manager->IsDataExistsItr(name);
 
-	if (itrData != manager->mapTextureData_.end())
-		data_ = itrData->second;
+	auto data = manager->GetData(name);
+	if (data)
+		data_ = data;
+
 	return data_ != nullptr;
 }
 bool Texture::CreateFromData(shared_ptr<TextureData> data) {
-	if (data_) Release();
-	if (data) data_ = data;
+	if (data_)
+		Release();
+	if (data)
+		data_ = data;
 	return data_ != nullptr;
 }
 bool Texture::CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo) {
 	//path = PathProperty::GetUnique(path);
-	if (data_) Release();
+	if (data_)
+		Release();
 
 	TextureManager* manager = TextureManager::GetBase();
 	shared_ptr<Texture> texture = manager->CreateFromFile(path, genMipmap, flgNonPowerOfTwo);
@@ -108,7 +112,8 @@ bool Texture::CreateFromFile(const std::wstring& path, bool genMipmap, bool flgN
 	return data_ != nullptr;
 }
 bool Texture::CreateRenderTarget(const std::wstring& name, size_t width, size_t height) {
-	if (data_) Release();
+	if (data_)
+		Release();
 
 	TextureManager* manager = TextureManager::GetBase();
 	shared_ptr<Texture> texture = manager->CreateRenderTarget(name, width, height);
@@ -118,7 +123,8 @@ bool Texture::CreateRenderTarget(const std::wstring& name, size_t width, size_t 
 bool Texture::CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo) {
 	//path = PathProperty::GetUnique(path);
 
-	if (data_) Release();
+	if (data_)
+		Release();
 
 	TextureManager* manager = TextureManager::GetBase();
 	shared_ptr<Texture> texture = manager->CreateFromFileInLoadThread(path, bLoadImageInfo, genMipmap, flgNonPowerOfTwo);
@@ -127,21 +133,23 @@ bool Texture::CreateFromFileInLoadThread(const std::wstring& path, bool genMipma
 	return data_ != nullptr;
 }
 void Texture::SetTexture(IDirect3DTexture9* pTexture) {
-	if (data_) Release();
+	if (data_)
+		Release();
 
-	TextureData* textureData = new TextureData();
+	auto textureData = make_shared<TextureData>();
 	textureData->pTexture_ = pTexture;
+
 	D3DSURFACE_DESC desc;
 	pTexture->GetLevelDesc(0, &desc);
 
-	D3DXIMAGE_INFO* infoImage = &textureData->infoImage_;
-	infoImage->Width = desc.Width;
-	infoImage->Height = desc.Height;
-	infoImage->Format = desc.Format;
-	infoImage->ImageFileFormat = D3DXIFF_BMP;
-	infoImage->ResourceType = D3DRTYPE_TEXTURE;
+	auto& infoImage = textureData->infoImage_;
+	infoImage.Width = desc.Width;
+	infoImage.Height = desc.Height;
+	infoImage.Format = desc.Format;
+	infoImage.ImageFileFormat = D3DXIFF_BMP;
+	infoImage.ResourceType = D3DRTYPE_TEXTURE;
 
-	data_ = shared_ptr<TextureData>(textureData);
+	data_ = textureData;
 }
 
 IDirect3DTexture9* Texture::GetD3DTexture() {
@@ -172,7 +180,8 @@ IDirect3DSurface9* Texture::GetD3DSurface() {
 #ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
 #endif
-		if (data_) res = data_->GetD3DSurface();
+		if (data_) 
+			res = data_->GetD3DSurface();
 	}
 	return res;
 }
@@ -182,7 +191,8 @@ IDirect3DSurface9* Texture::GetD3DZBuffer() {
 #ifdef __L_TEXTURE_THREADSAFE
 		Lock lock(TextureManager::GetBase()->GetLock());
 #endif
-		if (data_) res = data_->GetD3DZBuffer();
+		if (data_)
+			res = data_->GetD3DZBuffer();
 	}
 	return res;
 }
@@ -279,6 +289,7 @@ bool TextureManager::Initialize() {
 
 	return res;
 }
+
 void TextureManager::Clear() {
 	{
 		Lock lock(lock_);
@@ -288,34 +299,25 @@ void TextureManager::Clear() {
 	}
 }
 void TextureManager::_ReleaseTextureData(const std::wstring& name) {
-	{
-		Lock lock(lock_);
+	Lock lock(lock_);
 
-		auto itr = mapTextureData_.find(name);
-		if (itr != mapTextureData_.end()) {
-			itr->second->bReady_ = true;
-			mapTextureData_.erase(itr);
-			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", 
-				PathProperty::ReduceModuleDirectory(name).c_str()));
-		}
-	}
-}
-void TextureManager::_ReleaseTextureData(std::map<std::wstring, shared_ptr<TextureData>>::iterator itr) {
-	{
-		Lock lock(lock_);
+	auto itr = mapTextureData_.find(name);
+	if (itr == mapTextureData_.end())
+		return;
 
-		if (itr != mapTextureData_.end()) {
-			const std::wstring& name = itr->second->name_;
-			itr->second->bReady_ = true;
-			mapTextureData_.erase(itr);
-			Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", 
-				PathProperty::ReduceModuleDirectory(name).c_str()));
-		}
-	}
+	auto& data = itr->second;
+	data->bReady_ = true;
+
+	mapTextureData_.erase(itr);
+
+	Logger::WriteTop(StringUtility::Format(L"TextureManager: Texture released. [%s]", 
+		PathProperty::ReduceModuleDirectory(name).c_str()));
 }
+
 void TextureManager::ReleaseDxResource() {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
+
 	HRESULT deviceHr = graphics->GetDeviceStatus();
 	if (deviceHr != D3DERR_DEVICELOST) {
 		Lock lock(GetLock());
@@ -371,12 +373,10 @@ void TextureManager::RestoreDxResource() {
 
 				D3DMULTISAMPLE_TYPE typeSample = graphics->GetMultiSampleType();
 
-				HRESULT hr;
-				hr = graphics->GetDevice()->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
+				HRESULT hr = graphics->GetDevice()->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
 					0, FALSE, &data->lpRenderZ_, nullptr);
 				if (FAILED(hr)) {
-					if (width > height) height = width;
-					else width = height;
+					width = height = std::min(width, height);
 
 					hr = graphics->GetDevice()->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
 						0, FALSE, &data->lpRenderZ_, nullptr);
@@ -520,8 +520,7 @@ bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std
 		hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT,
 			&data->pTexture_, nullptr);
 		if (FAILED(hr)) {
-			if (width > height) height = width;
-			else if (height > width) width = height;
+			width = height = std::min(width, height);
 
 			hr = device->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
 				0, FALSE, &data->lpRenderZ_, nullptr);
@@ -635,7 +634,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 		else {
 			res = make_shared<Texture>();
 
-			if (!IsDataExists(path)) {
+			if (GetData(path) == nullptr) {
 				std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
 				shared_ptr<TextureData> data(new TextureData());
@@ -753,20 +752,11 @@ void TextureManager::Release(const std::wstring& name) {
 		mapTexture_.erase(name);
 	}
 }
-void TextureManager::Release(std::map<std::wstring, shared_ptr<Texture>>::iterator itr) {
-	{
-		Lock lock(lock_);
-
-		mapTexture_.erase(itr);
-	}
-}
-bool TextureManager::IsDataExists(const std::wstring& name) {
-	return mapTextureData_.find(name) != mapTextureData_.end();
-}
-std::map<std::wstring, shared_ptr<TextureData>>::iterator TextureManager::IsDataExistsItr(const std::wstring& name, bool* bRes) {
+shared_ptr<TextureData> TextureManager::GetData(const std::wstring& name) {
 	auto res = mapTextureData_.find(name);
-	if (bRes) *bRes = res != mapTextureData_.end();
-	return res;
+	if (res != mapTextureData_.end())
+		return res->second;
+	return nullptr;
 }
 
 //****************************************************************************

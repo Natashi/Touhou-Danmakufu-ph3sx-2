@@ -985,11 +985,10 @@ shared_ptr<Texture> _RenderToTexture_LoadTexture(DxScriptResourceCache* rsrcCach
 	if (texture == nullptr) {
 		texture = textureManager->GetTexture(name);
 		if (texture == nullptr) {
-			bool bExist = false;
-			auto itrData = textureManager->IsDataExistsItr(name, &bExist);
-			if (bExist) {	//Texture data exists, create a new texture object
+			auto data = textureManager->GetData(name);
+			if (data) {		// Texture data exists, create a new texture object
 				texture = make_shared<Texture>();
-				texture->CreateFromData(itrData->second);
+				texture->CreateFromData(data);
 				textureManager->Add(name, texture);
 			}
 		}

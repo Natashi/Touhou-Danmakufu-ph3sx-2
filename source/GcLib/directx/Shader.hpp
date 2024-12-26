@@ -58,7 +58,6 @@ namespace directx {
 		unique_ptr<RenderShaderLibrary> renderManager_;
 
 		void _ReleaseShaderData(const std::wstring& name);
-		void _ReleaseShaderData(std::map<std::wstring, shared_ptr<ShaderData>>::iterator itr);
 
 		bool _CreateFromFile(const std::wstring& path, shared_ptr<ShaderData>& dest);
 		bool _CreateFromText(const std::wstring& name, const std::string& source, shared_ptr<ShaderData>& dest);
@@ -78,8 +77,6 @@ namespace directx {
 		virtual void ReleaseDxResource();
 		virtual void RestoreDxResource();
 
-		virtual bool IsDataExists(const std::wstring& name);
-		virtual std::map<std::wstring, shared_ptr<ShaderData>>::iterator IsDataExistsItr(std::wstring& name);
 		shared_ptr<ShaderData> GetShaderData(const std::wstring& name);
 
 		shared_ptr<Shader> CreateFromFile(const std::wstring& path);
