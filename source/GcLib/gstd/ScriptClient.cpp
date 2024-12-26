@@ -379,10 +379,7 @@ bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 
 	size_t size = reader->GetSize();
 
-	std::vector<char> source;
-	source.resize(size);
-	reader->Read(&source[0], size);
-
+	auto source = reader->ReadToCharVec();
 	SetSource(source);
 
 	return true;

@@ -68,19 +68,32 @@ DWORD ByteBuffer::Read(LPVOID buf, DWORD size) {
 	return size;
 }
 
-_NODISCARD char* ByteBuffer::GetPointer(size_t offset) {
+char* ByteBuffer::GetPointer(size_t offset) {
 #if _DEBUG
 	if (offset > GetSize())
 		throw gstd::wexception("ByteBuffer: Index out of bounds.");
 #endif
 	return reinterpret_cast<char*>(&data_[offset]);
 }
-_NODISCARD const char* ByteBuffer::GetPointer(size_t offset) const {
+const char* ByteBuffer::GetPointer(size_t offset) const {
 #if _DEBUG
 	if (offset > GetSize())
 		throw gstd::wexception("ByteBuffer: Index out of bounds.");
 #endif
 	return reinterpret_cast<const char*>(&data_[offset]);
+}
+
+std::vector<char> ByteBuffer::ReadToCharVec() {
+	Seek(0);
+	return ReadToVec<char>();
+}
+std::vector<byte> ByteBuffer::ReadToByteVec() {
+	Seek(0);
+	return ReadToVec<byte>();
+}
+std::string ByteBuffer::ReadToString() {
+	Seek(0);
+	return Reader::ReadToString();
 }
 
 //*******************************************************************
@@ -400,6 +413,36 @@ size_t File::GetFilePointer(AccessType type) {
 	if (type == READ) 
 		return hFile_.tellg();
 	else return hFile_.tellp();
+}
+
+std::vector<char> File::ReadToCharVec() {
+	SetFilePointerBegin();
+	return ReadToVec<char>();
+}
+std::vector<byte> File::ReadToByteVec() {
+	SetFilePointerBegin();
+	return ReadToVec<byte>();
+}
+std::string File::ReadToString() {
+	SetFilePointerBegin();
+	return Reader::ReadToString();
+}
+
+//*******************************************************************
+//FileReader
+//*******************************************************************
+
+std::vector<char> FileReader::ReadToCharVec() {
+	SetFilePointerBegin();
+	return ReadToVec<char>();
+}
+std::vector<byte> FileReader::ReadToByteVec() {
+	SetFilePointerBegin();
+	return ReadToVec<byte>();
+}
+std::string FileReader::ReadToString() {
+	SetFilePointerBegin();
+	return Reader::ReadToString();
 }
 
 //*******************************************************************
@@ -915,7 +958,7 @@ size_t RecordEntry::_GetEntryRecordSize() {
 void RecordEntry::_WriteEntryRecord(Writer& writer) {
 	writer.WriteValue<uint32_t>(key_.size());
 	if (key_.size() > 0)
-	writer.Write(&key_[0], key_.size());
+		writer.Write(&key_[0], key_.size());
 
 	uint32_t size = buffer_.GetSize();
 	writer.WriteValue<uint32_t>(size);
@@ -925,12 +968,12 @@ void RecordEntry::_WriteEntryRecord(Writer& writer) {
 void RecordEntry::_ReadEntryRecord(Reader& reader) {
 	key_.resize(reader.ReadValue<uint32_t>());
 	if (key_.size() > 0)
-	reader.Read(&key_[0], key_.size());
+		reader.Read(&key_[0], key_.size());
 
 	uint32_t size = reader.ReadValue<uint32_t>();
 	buffer_ = ByteBuffer(size);
 	if (size > 0)
-	reader.Read(buffer_.GetPointer(), size);
+		reader.Read(buffer_.GetPointer(), size);
 }
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
@@ -1064,7 +1107,7 @@ optional<std::string> RecordBuffer::GetRecordAsStringA(const std::string& key) {
 
 	res.resize(buffer.GetSize());
 	if (res.size() > 0) {
-	buffer.Read(&res[0], buffer.GetSize());
+		buffer.Read(&res[0], buffer.GetSize());
 	}
 
 	return MOVE(res);
@@ -1140,20 +1183,16 @@ bool PropertyFile::Load(const std::wstring& path) {
 			return false;
 		}
 
-		size_t size = reader->GetFileSize();
-		text.resize(size + 1);
-		reader->Read(&text[0], size);
-		text[size] = '\0';
+		text = reader->ReadToCharVec();
+		text.push_back('\0');
 	}
 	else {
 #endif
 		File file(path);
 		if (!file.Open()) return false;
 
-		size_t size = file.GetSize();
-		text.resize(size + 1);
-		file.Read(&text[0], size);
-		text[size] = '\0';
+		text = file.ReadToCharVec();
+		text.push_back('\0');
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
 	}
 #endif

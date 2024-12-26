@@ -1555,7 +1555,7 @@ bool DxTextRenderer::AddFontFromFile(const std::wstring& path) {
 	if (reader == nullptr || !reader->Open())
 		throw gstd::wexception(L"AddFontFromFile: " + ErrorUtility::GetFileNotFoundErrorMessage(pathReduce, true));
 
-	std::string source = reader->ReadAllString();
+	std::string source = reader->ReadToString();
 
 	DWORD count = 0;
 	HANDLE hFont = ::AddFontMemResourceEx((LPVOID)source.c_str(), source.size(), nullptr, &count);

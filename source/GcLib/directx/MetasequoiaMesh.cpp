@@ -21,10 +21,7 @@ bool MetasequoiaMeshData::CreateFromFileReader(shared_ptr<gstd::FileReader> read
 	bool res = false;
 	path_ = reader->GetOriginalPath();
 
-	std::string text;
-	size_t size = reader->GetSize();
-	text.resize(size);
-	reader->Read(&text[0], size);
+	std::string text = reader->ReadToString();
 
 	gstd::Scanner scanner(text);
 	try {
