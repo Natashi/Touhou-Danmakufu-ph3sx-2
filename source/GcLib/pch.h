@@ -84,8 +84,13 @@
 #include <DxErr.h>
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "d3d9.lib")
-#pragma comment(lib, "d3dx9.lib")
 #pragma comment(lib, "dxerr.lib")
+
+#ifdef _DEBUG
+	#pragma comment(lib, "d3dx9d.lib")
+#else
+	#pragma comment(lib, "d3dx9.lib")
+#endif
 
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 

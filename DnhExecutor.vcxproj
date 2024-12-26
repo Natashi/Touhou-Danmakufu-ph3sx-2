@@ -212,7 +212,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
       <WarningLevel>Level2</WarningLevel>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <PreprocessorDefinitions>DNH_PROJ_EXECUTOR;WIN32;_DEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DNH_PROJ_EXECUTOR;WIN32;_DEBUG;_WINDOWS;UNICODE;D3D_DEBUG_INFO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>DnhExecutor/Debug/</AssemblerListingLocation>
       <PrecompiledHeaderOutputFile>DnhExecutor\Debug\DnhExecutor.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>DnhExecutor/Debug/</ObjectFileName>
