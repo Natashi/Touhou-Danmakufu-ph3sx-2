@@ -445,17 +445,17 @@ void ArchiveFile::Close() {
 	mapEntry_.clear();
 }
 
-std::set<std::wstring> ArchiveFile::GetFileList() {
+std::set<std::wstring> ArchiveFile::GetFileList() const {
 	std::set<std::wstring> res;
 	for (auto& [path, entry] : mapEntry_)
 		res.insert(entry.path);
 	return res;
 }
-optional<ArchiveFileEntry*> ArchiveFile::GetEntryByPath(const std::wstring& name) {
+const ArchiveFileEntry* ArchiveFile::GetEntryByPath(const std::wstring& name) const {
 	auto itr = mapEntry_.find(name);
 	if (itr != mapEntry_.end())
 		return &itr->second;
-	return {};
+	return nullptr;
 }
 
 unique_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry* entry) {

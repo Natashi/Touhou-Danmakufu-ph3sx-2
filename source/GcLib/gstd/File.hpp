@@ -132,10 +132,10 @@ namespace gstd {
 		static std::vector<std::wstring> GetDirectoryPathList(const std::wstring& dir, bool bSearchArchive = false);
 
 		void Delete();
-		bool IsExists();
-		bool IsDirectory();
+		bool IsExists() const;
+		bool IsDirectory() const;
 
-		bool IsOpen() { return hFile_.is_open(); }
+		bool IsOpen() const { return hFile_.is_open(); }
 
 		size_t GetSize();
 		std::wstring& GetPath() { return path_; }
@@ -176,8 +176,8 @@ namespace gstd {
 		virtual bool Seek(size_t offset, File::AccessType type = File::READ) = 0;
 		virtual size_t GetFilePointer(File::AccessType type = File::READ) = 0;
 
-		virtual bool IsArchived() { return false; }
-		virtual bool IsCompressed() { return false; }
+		virtual bool IsArchived() const { return false; }
+		virtual bool IsCompressed() const { return false; }
 
 		std::wstring& GetOriginalPath() { return pathOriginal_; }
 		std::string ReadAllString() {
@@ -247,14 +247,14 @@ namespace gstd {
 		bool AddArchiveFile(const std::wstring& archivePath, size_t readOff);
 		bool RemoveArchiveFile(const std::wstring& archivePath);
 
-		ArchiveFile* GetArchiveFile(const std::wstring& archivePath);
-		ArchiveEntryStore* GetArchiveFileEntry(const std::wstring& path);
+		const ArchiveFile* GetArchiveFile(const std::wstring& archivePath) const;
+		const ArchiveEntryStore* GetArchiveFileEntry(const std::wstring& path) const;
 
-		std::vector<ArchiveFileEntry*> GetArchiveFilesInDirectory(const std::wstring& dir, bool bSubDirectory);
-		std::set<std::wstring> GetArchiveSubDirectoriesInDirectory(const std::wstring& dir);
+		std::vector<ArchiveFileEntry*> GetArchiveFilesInDirectory(const std::wstring& dir, bool bSubDirectory) const;
+		std::set<std::wstring> GetArchiveSubDirectoriesInDirectory(const std::wstring& dir) const;
 
-		bool IsArchiveFileExists(const std::wstring& path);
-		bool IsArchiveDirectoryExists(const std::wstring& dir);
+		bool IsArchiveFileExists(const std::wstring& path) const;
+		bool IsArchiveDirectoryExists(const std::wstring& dir) const;
 
 		bool ClearArchiveFileCache();
 #endif
