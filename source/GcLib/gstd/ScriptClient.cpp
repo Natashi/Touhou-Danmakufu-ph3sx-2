@@ -377,7 +377,7 @@ bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 	if (reader == nullptr || !reader->Open())
 		throw gstd::wexception(L"SetScriptFileSource: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 
-	size_t size = reader->GetFileSize();
+	size_t size = reader->GetSize();
 
 	std::vector<char> source;
 	source.resize(size);
@@ -1717,22 +1717,24 @@ void ScriptLoader::_ParseInclude() {
 								_RaiseError(directiveLine, error);
 							}
 
+							size_t fileSize = reader->GetSize();
+
 							//Detect target encoding
 							size_t targetBomSize = 0;
 							Encoding::Type includeEncoding = Encoding::UTF8;
-							if (reader->GetFileSize() >= 2) {
+							if (fileSize >= 2) {
 								byte data[3]{};
 								reader->Read(data, 3);
 
-								includeEncoding = Encoding::Detect((char*)data, reader->GetFileSize());
+								includeEncoding = Encoding::Detect((char*)data, fileSize);
 								targetBomSize = Encoding::GetBomSize(includeEncoding);
 
 								reader->SetFilePointerBegin();
 							}
 
-							if (reader->GetFileSize() >= targetBomSize) {
+							if (fileSize >= targetBomSize) {
 								reader->Seek(targetBomSize);
-								bufIncluding.resize(reader->GetFileSize() - targetBomSize); //- BOM size
+								bufIncluding.resize(fileSize - targetBomSize); //- BOM size
 								reader->Read(&bufIncluding[0], bufIncluding.size());
 							}
 

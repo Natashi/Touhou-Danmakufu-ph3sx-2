@@ -20,8 +20,9 @@ MetasequoiaMeshData::~MetasequoiaMeshData() {
 bool MetasequoiaMeshData::CreateFromFileReader(shared_ptr<gstd::FileReader> reader) {
 	bool res = false;
 	path_ = reader->GetOriginalPath();
+
 	std::string text;
-	size_t size = reader->GetFileSize();
+	size_t size = reader->GetSize();
 	text.resize(size);
 	reader->Read(&text[0], size);
 

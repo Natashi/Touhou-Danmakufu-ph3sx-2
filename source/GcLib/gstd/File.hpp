@@ -45,6 +45,8 @@ namespace gstd {
 	public:
 		virtual ~Reader() {};
 
+		virtual size_t GetSize() const = 0;
+
 		virtual DWORD Read(LPVOID buf, DWORD size) = 0;
 		template <typename T> DWORD Read(T& data) {
 			return Read(&data, sizeof(T));
@@ -87,7 +89,7 @@ namespace gstd {
 		void SetSize(size_t size);
 		void Reserve(size_t newReserve);
 
-		_NODISCARD size_t GetSize() const { return data_.size(); }
+		size_t GetSize() const override { return data_.size(); }
 		_NODISCARD size_t GetOffset() const { return offset_; }
 
 		void Seek(size_t pos);
@@ -116,6 +118,8 @@ namespace gstd {
 		DWORD perms_;
 
 		optional<size_t> fileSize_;
+	protected:
+		size_t _GetSize();
 	public:
 		File();
 		File(const std::wstring& path);
@@ -137,7 +141,7 @@ namespace gstd {
 
 		bool IsOpen() const { return hFile_.is_open(); }
 
-		size_t GetSize();
+		size_t GetSize() const override;
 		std::wstring& GetPath() { return path_; }
 
 		const std::fstream& GetFileHandle() const { return hFile_; }
@@ -168,8 +172,6 @@ namespace gstd {
 	public:
 		virtual bool Open() = 0;
 		virtual void Close() = 0;
-
-		virtual size_t GetFileSize() = 0;
 
 		virtual bool SetFilePointerBegin(File::AccessType type = File::READ) = 0;
 		virtual bool SetFilePointerEnd(File::AccessType type = File::READ) = 0;
@@ -353,7 +355,8 @@ namespace gstd {
 
 		virtual bool Open();
 		virtual void Close();
-		virtual size_t GetFileSize();
+		
+		size_t GetSize() const override;
 		virtual DWORD Read(LPVOID buf, DWORD size);
 
 		virtual bool SetFilePointerBegin(File::AccessType type = File::READ);

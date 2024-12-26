@@ -282,28 +282,27 @@ bool File::IsExists() const {
 bool File::IsDirectory() const {
 	return IsDirectory(path_);
 }
-size_t File::GetSize() {
+
+size_t File::_GetSize() {
+	size_t prev = GetFilePointer();
+
+	SetFilePointerEnd();
+	size_t size = GetFilePointer();
+
+	Seek(prev, std::ios::beg);
+
+	return size;
+}
+size_t File::GetSize() const {
 	if (fileSize_)
 		return *fileSize_;
-
-	if (IsOpen()) {
-		size_t prev = GetFilePointer();
-		SetFilePointerEnd();
-
-		size_t size = GetFilePointer();
-		Seek(prev, std::ios::beg);
-
-		fileSize_ = size;
-		return size;
+	
+	// File not opened
+	try {
+		return stdfs::file_size(path_);
 	}
-	else {
-		// File not opened
-		try {
-			return stdfs::file_size(path_);
-		}
-		catch (stdfs::filesystem_error&) {
-			return 0;
-		}
+	catch (stdfs::filesystem_error&) {
+		return 0;
 	}
 }
 
@@ -356,7 +355,7 @@ bool File::Open(DWORD typeAccess) {
 		else
 			mapFileUseCount_.insert(std::make_pair(path_, 1));
 #endif
-		fileSize_ = GetSize();
+		fileSize_ = _GetSize();
 
 		return true;
 	}
@@ -812,7 +811,8 @@ void ManagedFileReader::Close() {
 		//FileManager::GetBase()->_ReleaseByteBuffer(entry_);
 	}
 }
-size_t ManagedFileReader::GetFileSize() {
+
+size_t ManagedFileReader::GetSize() const {
 	switch (type_) {
 	case TYPE_NORMAL:
 		return file_->GetSize();
@@ -822,6 +822,7 @@ size_t ManagedFileReader::GetFileSize() {
 	}
 	return 0;
 }
+
 DWORD ManagedFileReader::Read(LPVOID buf, DWORD size) {
 	DWORD res = 0;
 	if (type_ == TYPE_NORMAL) {
