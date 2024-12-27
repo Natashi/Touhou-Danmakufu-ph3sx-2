@@ -30,10 +30,14 @@ StgIntersectionManager::StgIntersectionManager() {
 			ShaderManager* shaderManager = ShaderManager::GetBase();
 			RenderShaderLibrary* shaderLib = shaderManager->GetRenderLib();
 
-			shaderVisualizerCircle_ = shaderManager->CreateCloneFromEffect(shaderLib->GetIntersectVisualShader1());
+			// Create unmanaged shaders
+			// ShaderManager is not in charge of releasing/restoring these effects, 
+			//    because that is done in RenderShaderLibrary
+
+			shaderVisualizerCircle_ = shaderManager->CreateUnmanagedFromEffect(shaderLib->GetIntersectVisualShader1());
 			shaderVisualizerCircle_->SetTechnique("Render");
 
-			shaderVisualizerLine_ = shaderManager->CreateCloneFromEffect(shaderLib->GetIntersectVisualShader2());
+			shaderVisualizerLine_ = shaderManager->CreateUnmanagedFromEffect(shaderLib->GetIntersectVisualShader2());
 			shaderVisualizerLine_->SetTechnique("Render");
 		}
 
@@ -71,29 +75,13 @@ StgIntersectionManager::StgIntersectionManager() {
 				vert.position = D3DXVECTOR4(0, 0, 1, 1);
 				vert.texcoord = D3DXVECTOR2(0, 0);
 				vert.diffuse_color = 0x80ffffff;
+
 				objParticleCircle->RenderObjectTLX::SetVertex(0, vert);
 				for (size_t i = 0; i < numEdge; ++i) {
 					float angle = i / (float)numEdge * (float)GM_PI_X2;
 					vert.position = D3DXVECTOR4(cosf(angle), sinf(angle), 1, 1);
 					objParticleCircle->RenderObjectTLX::SetVertex(i + 1, vert);
 				}
-
-				/*
-				objIntersectionVisualizerCircle_->SetVertexCount(4U);
-				objParticleCircle->SetVertexIndices({ 0, 1, 2, 3 });
-
-				VERTEX_TLX vert;
-				vert.position = D3DXVECTOR4(-8, -8, 1, 1);
-				vert.texcoord = D3DXVECTOR2(0, 0);
-				vert.diffuse_color = 0xffffffff;
-				objParticleCircle->RenderObjectTLX::SetVertex(0, vert);
-				vert.position = D3DXVECTOR4(8, -8, 1, 1);
-				objParticleCircle->RenderObjectTLX::SetVertex(1, vert);
-				vert.position = D3DXVECTOR4(-8, 8, 1, 1);
-				objParticleCircle->RenderObjectTLX::SetVertex(2, vert);
-				vert.position = D3DXVECTOR4(8, 8, 1, 1);
-				objParticleCircle->RenderObjectTLX::SetVertex(3, vert);
-				*/
 			}
 
 			{

@@ -23,7 +23,6 @@ namespace directx {
 	private:
 		ShaderManager* manager_;
 		ID3DXEffect* effect_;
-		std::unique_ptr<ShaderIncludeCallback> pIncludeCallback_;
 		std::wstring name_;
 		bool bLoad_;
 		bool bText_;
@@ -41,7 +40,7 @@ namespace directx {
 	//ShaderManager
 	//*******************************************************************
 	class RenderShaderLibrary;
-	class ShaderManager : public DirectGraphicsListener {
+	class ShaderManager : public DirectGraphicsListener, public gstd::FileManager::LoadThreadListener {
 		friend Shader;
 		friend ShaderData;
 		friend ShaderInfoPanel;
@@ -55,24 +54,23 @@ namespace directx {
 		std::map<std::wstring, shared_ptr<ShaderData>> mapShaderData_;
 		std::wstring lastError_;
 
-		unique_ptr<RenderShaderLibrary> renderManager_;
+		unique_ptr<RenderShaderLibrary> renderShaderManager_;
 
 		void _ReleaseShaderData(const std::wstring& name);
+	public:
+		static ShaderManager* GetBase() { return thisBase_; }
 
-		bool _CreateFromFile(const std::wstring& path, shared_ptr<ShaderData>& dest);
-		bool _CreateFromText(const std::wstring& name, const std::string& source, shared_ptr<ShaderData>& dest);
-		bool _CreateCloneFromEffect(ID3DXEffect* effect, shared_ptr<ShaderData>& dest);
+		gstd::CriticalSection& GetLock() { return lock_; }
+
+		RenderShaderLibrary* GetRenderLib() { return renderShaderManager_.get(); }
 	public:
 		ShaderManager();
 		virtual ~ShaderManager();
-
-		static ShaderManager* GetBase() { return thisBase_; }
 		
 		virtual bool Initialize();
-		gstd::CriticalSection& GetLock() { return lock_; }
 		void Clear();
 
-		RenderShaderLibrary* GetRenderLib() { return renderManager_.get(); }
+		const std::wstring& GetLastError() const { return lastError_; }
 
 		virtual void ReleaseDxResource();
 		virtual void RestoreDxResource();
@@ -82,11 +80,10 @@ namespace directx {
 		shared_ptr<Shader> CreateFromFile(const std::wstring& path);
 		shared_ptr<Shader> CreateFromText(const std::wstring& name, const std::string& source);
 		shared_ptr<Shader> CreateFromData(shared_ptr<ShaderData> data);
-		shared_ptr<Shader> CreateCloneFromEffect(ID3DXEffect* effect);
-		shared_ptr<Shader> CreateFromFileInLoadThread(const std::wstring& path);
-		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
+		shared_ptr<Shader> CreateUnmanagedFromEffect(ID3DXEffect* effect);
 
-		const std::wstring& GetLastError() const { return lastError_; }
+		shared_ptr<Shader> CreateFromFileInLoadThread(const std::wstring& path);
+		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event) override;
 
 		void SetInfoPanel(shared_ptr<ShaderInfoPanel> panel) { panelInfo_ = panel; }
 	};
@@ -145,7 +142,7 @@ namespace directx {
 		ShaderParameter* _GetParameter(const std::string& name, bool bCreate = false);
 	public:
 		Shader();
-		Shader(Shader* shader);
+		Shader(shared_ptr<ShaderData> data);
 		virtual ~Shader();
 
 		void Release();
