@@ -103,7 +103,7 @@ void StgEnemyManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent
 						pData->bLoad_ = true;
 					}
 					catch (gstd::wexception& e) {
-						Logger::WriteTop(e.what());
+						Logger::WriteError(e.what());
 						pManager->SetError(e.what());
 
 						pData->SetScriptPointer(weak_ptr<ManagedScript>());
@@ -331,7 +331,7 @@ void StgEnemyBossSceneObject::_WaitForStepLoad(int iStep) {
 			DWORD count = 0;
 			while (!pData->IsLoad()) {
 				if (count % 100 == 0) {
-					Logger::WriteTop(StringUtility::Format(L"_NextScript: Script is still loading... [%s]",
+					Logger::WriteWarn(StringUtility::Format(L"_NextScript: Script is still loading... [%s]",
 						PathProperty::GetFileName(pData->GetPath()).c_str()));
 				}
 				::Sleep(10);

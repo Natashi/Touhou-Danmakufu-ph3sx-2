@@ -499,13 +499,13 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 	catch (gstd::wexception& e) {
 		std::wstring log = StringUtility::Format(L"Failed to load item data: %s\r\n\t[Line=%d] (%s)",
 			pathReduce.c_str(), scanner.GetCurrentLine(), e.what());
-		Logger::WriteTop(log);
+		Logger::WriteError(log);
 		res = false;
 	}
 	catch (...) {
 		std::wstring log = StringUtility::Format(L"Failed to load item data: %s\r\n\t[Line=%d] (Unknown error.)",
 			pathReduce.c_str(), scanner.GetCurrentLine());
-		Logger::WriteTop(log);
+		Logger::WriteError(log);
 		res = false;
 	}
 

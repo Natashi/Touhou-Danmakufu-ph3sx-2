@@ -95,7 +95,7 @@ void StgSystemController::Work() {
 		_ControlScene();
 	}
 	catch (gstd::wexception& e) {
-		Logger::WriteTop(e.what());
+		Logger::WriteError(e.what());
 		infoSystem_->SetError(e.what());
 	}
 
@@ -193,7 +193,7 @@ void StgSystemController::Render() {
 		camera2D->SetEnable(false);
 		camera2D->Reset();
 
-		Logger::WriteTop(e.what());
+		Logger::WriteError(e.what());
 		infoSystem_->SetError(e.what());
 	}
 }

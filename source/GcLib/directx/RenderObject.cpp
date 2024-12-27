@@ -1907,7 +1907,7 @@ bool DxMesh::CreateFromFile(const std::wstring& path) {
 	catch (gstd::wexception& e) {
 		std::wstring str = StringUtility::Format(L"DxMesh: Mesh load failed. [%s]\r\n\t%s", 
 			PathProperty::ReduceModuleDirectory(path).c_str(), e.what());
-		Logger::WriteTop(str);
+		Logger::WriteError(str);
 	}
 	return false;
 }
@@ -2064,7 +2064,7 @@ void DxMeshManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent> 
 			Logger::WriteTop(StringUtility::Format(L"DxMeshManager(LT): Mesh loaded. [%s]", pathReduce.c_str()));
 		}
 		else {
-			Logger::WriteTop(StringUtility::Format(L"DxMeshManager(LT): Failed to load mesh \"%s\"", pathReduce.c_str()));
+			Logger::WriteError(StringUtility::Format(L"DxMeshManager(LT): Failed to load mesh \"%s\"", pathReduce.c_str()));
 		}
 		data->bLoad_ = true;
 	}

@@ -38,7 +38,7 @@ bool MetasequoiaMeshData::CreateFromFileReader(shared_ptr<gstd::FileReader> read
 		res = true;
 	}
 	catch (gstd::wexception& e) {
-		Logger::WriteTop(StringUtility::Format(L"MetasequoiaMeshData parsing error. [line %d-> %s]", 
+		Logger::WriteError(StringUtility::Format(L"MetasequoiaMeshData parsing error. [line %d-> %s]",
 			scanner.GetCurrentLine(), e.what()));
 		res = false;
 	}

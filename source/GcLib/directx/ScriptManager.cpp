@@ -122,7 +122,7 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) 
 		DWORD count = 0;
 		while (!script->IsLoad()) {
 			if (count % 100 == 0) {
-				Logger::WriteTop(StringUtility::Format(L"ScriptManager: Script is still loading... [%s]",
+				Logger::WriteWarn(StringUtility::Format(L"ScriptManager: Script is still loading... [%s]",
 					PathProperty::ReduceModuleDirectory(script->GetPath()).c_str()));
 			}
 			::Sleep(10);
@@ -135,7 +135,7 @@ void ScriptManager::StartScript(shared_ptr<ManagedScript> script, bool bUnload) 
 
 		for (auto& iScript : listScriptRun_) {
 			if (iScript->GetScriptID() == script->GetScriptID()) {
-				Logger::WriteTop(StringUtility::Format(
+				Logger::WriteError(StringUtility::Format(
 					L"ScriptManager: Cannot run multiple instances of the same loaded script simultaneously. [%s]\r\n",
 					PathProperty::ReduceModuleDirectory(script->GetPath()).c_str()));
 				return;
@@ -299,7 +299,7 @@ void ScriptManager::CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadE
 		_LoadScript(path, script);
 	}
 	catch (gstd::wexception& e) {
-		Logger::WriteTop(e.what());
+		Logger::WriteError(e.what());
 		script->bLoad_ = true;
 		SetError(e.what());
 	}

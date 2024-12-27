@@ -233,6 +233,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 					std::wstring err = StringUtility::Format(
 						L"Cannot create Direct3D device with HAL. [%s]\r\n  %s",
 						DXGetErrorString(hrDevice), DXGetErrorDescription(hrDevice));
+					Logger::WriteError(err);
 					throw wexception(err);
 				}
 			}
@@ -242,8 +243,7 @@ bool DirectGraphics::Initialize(HWND hWnd, const DirectGraphicsConfig& config) {
 			//deviceStatus_ = D3DERR_NOTAVAILABLE;
 			std::wstring err = StringUtility::Format(L"Cannot create Direct3D device. [%s]\r\n  %s",
 				DXGetErrorString(hrDevice), DXGetErrorDescription(hrDevice));
-			if (deviceType == D3DDEVTYPE_HAL)
-				err += L"\r\nRestart in reference rasterizer mode.";
+			Logger::WriteError(err);
 			throw wexception(err);
 		}
 	}
@@ -450,7 +450,8 @@ bool DirectGraphics::_Restore() {
 				throw gstd::wexception(err);
 			}
 			else {
-				std::wstring err = StringUtility::Format(L"_Restore: Attempt failed; %s\r\n\t%s",
+				std::wstring err = StringUtility::Format(L"_Restore: Attempt failed (%d): %s\r\n\t%s",
+					g_restoreFailCount,
 					DXGetErrorString(deviceStatus_), DXGetErrorDescription(deviceStatus_));
 				Logger::WriteWarn(err);
 			}

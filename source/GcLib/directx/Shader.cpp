@@ -235,7 +235,7 @@ bool Shader::LoadTechnique() {
 			const char* desc = DXGetErrorDescriptionA(hr);
 			std::string log = StringUtility::Format("Shader: Invalid technique [%s]\r\n\t%s",
 				err, desc);
-			Logger::WriteTop(log);
+			Logger::WriteError(log);
 		}
 		return false;
 	}
@@ -515,7 +515,7 @@ shared_ptr<Shader> ShaderManager::CreateFromFile(const std::wstring& path) {
 				L"ShaderManager: Shader compile failed [%s]\r\n\t%s",
 				pathReduce.c_str(), e.what());
 
-			Logger::WriteTop(err);
+			Logger::WriteError(err);
 			lastError_ = err;
 
 			return nullptr;
@@ -567,7 +567,7 @@ shared_ptr<Shader> ShaderManager::CreateFromText(const std::wstring& name, const
 				L"ShaderManager: Shader compile failed [%s]\r\n\t%s",
 				name.c_str(), e.what());
 
-			Logger::WriteTop(err);
+			Logger::WriteError(err);
 			lastError_ = err;
 
 			return nullptr;
@@ -644,7 +644,7 @@ HRESULT __stdcall ShaderIncludeCallback::Open(D3DXINCLUDE_TYPE type, LPCSTR pFil
 	if (reader == nullptr || !reader->Open()) {
 		std::wstring error = StringUtility::Format(
 			L"Shader Compiler: Include file is not found [%s]\r\n", sPath.c_str());
-		Logger::WriteTop(error);
+		Logger::WriteError(error);
 		return E_FAIL;
 	}
 

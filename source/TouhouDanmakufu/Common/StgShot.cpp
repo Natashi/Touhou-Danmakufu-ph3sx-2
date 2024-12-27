@@ -457,13 +457,13 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 	catch (gstd::wexception& e) {
 		std::wstring log = StringUtility::Format(L"Failed to load shot data: %s\r\n\t[Line=%d] (%s)",
 			pathReduce.c_str(), scanner.GetCurrentLine(), e.what());
-		Logger::WriteTop(log);
+		Logger::WriteError(log);
 		res = false;
 	}
 	catch (...) {
 		std::string log = StringUtility::Format("Failed to load shot data: %s\r\n\t[Line=%d] (Unknown error.)",
 			pathReduce.c_str(), scanner.GetCurrentLine());
-		Logger::WriteTop(log);
+		Logger::WriteError(log);
 		res = false;
 	}
 

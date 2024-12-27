@@ -181,7 +181,7 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain,
 			&StgSystemController::Render), StgSystemController::TASK_PRI_RENDER);
 	}
 	catch (gstd::wexception& e) {
-		Logger::WriteTop(e.what());
+		Logger::WriteError(e.what());
 
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		graphics->GetCamera2D()->ResetAll();
@@ -231,7 +231,7 @@ void SceneManager::TransStgScene(ref_count_ptr<ScriptInformation> infoMain,
 		TransStgScene(infoMain, infoPlayer, infoReplay);
 	}
 	catch (gstd::wexception& e) {
-		Logger::WriteTop(e.what());
+		Logger::WriteError(e.what());
 
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		graphics->GetCamera2D()->ResetAll();
@@ -284,7 +284,7 @@ void SceneManager::TransPackageScene(ref_count_ptr<ScriptInformation> infoMain, 
 			&StgSystemController::Render), StgSystemController::TASK_PRI_RENDER);
 	}
 	catch (gstd::wexception& e) {
-		Logger::WriteTop(e.what());
+		Logger::WriteError(e.what());
 
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		graphics->GetCamera2D()->ResetAll();

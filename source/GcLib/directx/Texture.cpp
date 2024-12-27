@@ -165,7 +165,7 @@ IDirect3DTexture9* Texture::GetD3DTexture() {
 			}
 			else if (SystemUtility::GetCpuTime2() - timeOrg > 200) {		//0.2 second timer
 				const std::wstring& path = data_->GetName();
-				Logger::WriteTop(StringUtility::Format(L"GetTexture timed out. (%s)", 
+				Logger::WriteError(StringUtility::Format(L"GetTexture timed out. (%s)",
 					PathProperty::ReduceModuleDirectory(path).c_str()));
 				break;
 			}
@@ -341,7 +341,7 @@ void TextureManager::ReleaseDxResource() {
 							"Failed to create temporary surface [%s]\r\n    %s: %s",
 							PathProperty::ReduceModuleDirectory(name).c_str(),
 							DXGetErrorString(hr), DXGetErrorDescription(hr));
-						Logger::WriteTop(err);
+						Logger::WriteError(err);
 
 						pSurfaceCopy->Release();
 					}
@@ -357,7 +357,7 @@ void TextureManager::ReleaseDxResource() {
 		std::wstring err = StringUtility::Format(L"TextureManager::ReleaseDxResource: "
 			"D3D device abnormal. Render target surfaces cannot be saved.\r\n    %s: %s",
 			DXGetErrorString(deviceHr), DXGetErrorDescription(deviceHr));
-		Logger::WriteTop(err);
+		Logger::WriteError(err);
 	}
 }
 void TextureManager::RestoreDxResource() {
@@ -412,7 +412,7 @@ void TextureManager::RestoreDxResource() {
 					"Render target restoration failed [%s]\r\n    %s: %s",
 					PathProperty::ReduceModuleDirectory(data->name_).c_str(), 
 					DXGetErrorString(hr), DXGetErrorDescription(hr));
-				Logger::WriteTop(err);
+				Logger::WriteError(err);
 			}
 
 			ptr_release(surfaceSrc);
@@ -469,7 +469,7 @@ bool TextureManager::_CreateFromFile(shared_ptr<TextureData>& dst, const std::ws
 	catch (wexception& e) {
 		std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture \"%s\"\r\n    %s", 
 			pathReduce.c_str(), e.what());
-		Logger::WriteTop(str);
+		Logger::WriteError(str);
 
 		res = false;
 	}
@@ -548,7 +548,7 @@ bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std
 		Logger::WriteTop(StringUtility::Format(L"TextureManager: Render target created. [%s]", name.c_str()));
 	}
 	catch (wexception& e) {
-		Logger::WriteTop(StringUtility::Format(L"TextureManager: Failed to create render target \"%s\"\r\n    %s", 
+		Logger::WriteError(StringUtility::Format(L"TextureManager: Failed to create render target \"%s\"\r\n    %s",
 			name.c_str(), e.what()));
 		res = false;
 	}
@@ -666,7 +666,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 						std::wstring str = StringUtility::Format(
 							L"TextureManager(LT): Failed to load texture \"%s\"\r\n    %s", 
 							pathReduce.c_str(), e.what());
-						Logger::WriteTop(str);
+						Logger::WriteError(str);
 						data->bReady_ = true;
 
 						return nullptr;
@@ -713,7 +713,7 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 		catch (wexception& e) {
 			std::wstring str = StringUtility::Format(L"TextureManager(LT): Failed to load texture \"%s\"\r\n    %s",
 				pathReduce.c_str(), e.what());
-			Logger::WriteTop(str);
+			Logger::WriteError(str);
 			data->bReady_ = true;
 			texture->data_ = nullptr;
 			mapTextureData_.erase(path);

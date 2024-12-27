@@ -485,7 +485,7 @@ bool FileManager::AddArchiveFile(const std::wstring& archivePath, size_t readOff
 		std::wstring log = StringUtility::Format(
 			L"Archive already loaded [%s]",
 			PathProperty::ReduceModuleDirectory(archivePath).c_str());
-		Logger::WriteTop(log);
+		Logger::WriteWarn(log);
 		return true;
 	}
 
@@ -496,7 +496,7 @@ bool FileManager::AddArchiveFile(const std::wstring& archivePath, size_t readOff
 		std::wstring log = StringUtility::Format(
 			L"Cannot load an archive file at [%s]",
 			archiveDir.c_str());
-		Logger::WriteTop(log);
+		Logger::WriteError(log);
 		return false;
 	}
 
@@ -517,7 +517,7 @@ bool FileManager::AddArchiveFile(const std::wstring& archivePath, size_t readOff
 			std::wstring log = StringUtility::Format(
 				L"Archive file entry already exists [%s]",
 				path.c_str());
-			Logger::WriteTop(log);
+			Logger::WriteWarn(log);
 			throw wexception(log);
 		}
 		else {
@@ -1179,7 +1179,7 @@ bool PropertyFile::Load(const std::wstring& path) {
 		shared_ptr<FileReader> reader = fileManager->GetFileReader(path);
 
 		if (reader == nullptr || !reader->Open()) {
-			Logger::WriteTop(L"PropertyFile::Load: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
+			Logger::WriteError(L"PropertyFile::Load: " + ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 			return false;
 		}
 
@@ -1242,7 +1242,7 @@ bool PropertyFile::Load(const std::wstring& path) {
 	catch (gstd::wexception& e) {
 		mapEntry_.clear();
 #if defined(DNH_PROJ_EXECUTOR)
-		Logger::WriteTop(
+		Logger::WriteError(
 			ErrorUtility::GetParseErrorMessage(path, scanner.GetCurrentLine(), e.what()));
 #endif
 		res = false;

@@ -49,15 +49,15 @@ bool Application::Run() {
 			}
 			catch (std::exception& e) {
 #if defined(DNH_PROJ_EXECUTOR)
-				Logger::WriteTop(e.what());
-				Logger::WriteTop("Runtime failure.");
+				Logger::WriteError(e.what());
+				Logger::WriteError("Runtime failure.");
 #endif
 				throw e;
 			}
 			catch (gstd::wexception& e) {
 #if defined(DNH_PROJ_EXECUTOR)
-				Logger::WriteTop(e.what());
-				Logger::WriteTop("Runtime failure.");
+				Logger::WriteError(e.what());
+				Logger::WriteError("Runtime failure.");
 #endif
 				throw e;
 			}
