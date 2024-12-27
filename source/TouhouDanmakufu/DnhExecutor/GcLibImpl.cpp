@@ -309,7 +309,7 @@ void EApplication::_RenderDisplay() {
 				DisplaySettings* pDispSettings = graphics->GetDisplaySettings();
 
 				VertexBufferManager* vbManager = VertexBufferManager::GetBase();
-				FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
+				auto vertexBuffer = vbManager->GetVertexBufferTLX();
 
 				UINT scW = graphics->GetScreenWidth(), scH = graphics->GetScreenHeight();
 				UINT vpW = graphics->GetRenderScreenWidth(), vpH = graphics->GetRenderScreenHeight();

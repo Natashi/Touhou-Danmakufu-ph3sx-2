@@ -315,8 +315,9 @@ StgItemDataList::StgItemDataList() {
 }
 StgItemDataList::~StgItemDataList() {
 }
-void StgItemDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>::iterator placement,
-	shared_ptr<Texture> texture, std::vector<StgItemData*>& listAddData)
+
+void StgItemDataList::_LoadVertexBuffers(const std::wstring& name,
+	shared_ptr<Texture> texture, const std::vector<StgItemData*>& listAddData)
 {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
@@ -328,27 +329,32 @@ void StgItemDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>
 	for (StgItemData* iData : listAddData)
 		countFrame += iData->GetFrameCount();
 
+	auto& containerList = mapVertexBuffer_[name];
+
 	size_t iBuffer = 0;
 	while (countFrame > 0) {
-		size_t thisCountFrame = std::min<size_t>(countFrame, StgShotVertexBufferContainer::MAX_DATA);
+		{
+			size_t nameId = std::hash<std::wstring>{}(name);
+			std::string vbName = STR_FMT("item_vb_%x_%d", nameId, iBuffer);
 
-		placement->second.push_back(unique_ptr<StgShotVertexBufferContainer>(
-			new StgShotVertexBufferContainer()));
-		StgShotVertexBufferContainer* pVertexBufferContainer = placement->second.back().get();
+			containerList.emplace_back(new StgShotVertexBufferContainer(vbName));
+		}
+
+		auto pVertexBufferContainer = containerList.back().get();
 		pVertexBufferContainer->SetTexture(texture);
+
+		size_t thisCountFrame = std::min<size_t>(countFrame, StgShotVertexBufferContainer::MAX_DATA);
 
 		std::vector<VERTEX_TLX> bufferVertex(4 * thisCountFrame);
 		size_t iVertex = 0;
 
 		VERTEX_TLX verts[4];
-		for (size_t iData = 0; iData < listAddData.size(); ++iData) {
-			StgItemData* data = listAddData[iData];
-			for (size_t iAnim = 0; iAnim < data->GetFrameCount(); ++iAnim) {
-				StgItemDataFrame* pFrame = &data->listFrame_[iAnim];
-				pFrame->listItemData_ = this;
+		for (auto& data : listAddData) {
+			for (auto& frame : data->listFrame_) {
+				frame.listItemData_ = this;
 
-				LONG* ptrSrc = reinterpret_cast<LONG*>(&pFrame->rcSrc_);
-				float* ptrDst = reinterpret_cast<float*>(&pFrame->rcDst_);
+				LONG* ptrSrc = reinterpret_cast<LONG*>(&frame.rcSrc_);
+				float* ptrDst = reinterpret_cast<float*>(&frame.rcDst_);
 
 				for (size_t iVert = 0; iVert < 4; ++iVert) {
 					VERTEX_TLX* pv = &verts[iVert];
@@ -370,8 +376,8 @@ void StgItemDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>
 					StgShotObject::_SetVertexColorARGB(pv, 0xffffffff);
 				}
 
-				pFrame->pVertexBuffer_ = pVertexBufferContainer;
-				pFrame->vertexOffset_ = iVertex;
+				frame.pVertexBuffer_ = pVertexBufferContainer;
+				frame.vertexOffset_ = iVertex;
 
 				for (size_t j = 0; j < 4; ++j)
 					bufferVertex[iVertex + j] = verts[j];
@@ -381,9 +387,10 @@ void StgItemDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>
 
 		HRESULT hr = pVertexBufferContainer->LoadData(bufferVertex, thisCountFrame);
 		if (FAILED(hr)) {
-			std::wstring err = StringUtility::Format(L"AddItemDataList::Failed to load shot data buffer: "
-				"\t\r\n%s: %s",
+			std::wstring err = StringUtility::Format(
+				L"AddItemDataList::Failed to load item data buffer:\n\t%s: %s",
 				DXGetErrorString(hr), DXGetErrorDescription(hr));
+			Logger::WriteError(err);
 			throw gstd::wexception(err);
 		}
 
@@ -392,8 +399,15 @@ void StgItemDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>
 	}
 }
 bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
-	auto itrVB = mapVertexBuffer_.find(path);
-	if (!bReload && itrVB != mapVertexBuffer_.end()) return true;
+	auto find = mapVertexBuffer_.find(path);
+	if (find != mapVertexBuffer_.end()) {
+		if (!bReload) {
+			return true;
+		}
+		else {
+			find->second.clear();
+		}
+	}
 
 	std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
@@ -477,14 +491,7 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 			}
 		}
 
-		if (itrVB != mapVertexBuffer_.end()) {
-			itrVB->second.clear();
-			_LoadVertexBuffers(itrVB, texture, listAddData);
-		}
-		else {
-			itrVB = mapVertexBuffer_.insert({ path, VBContainerList() }).first;
-			_LoadVertexBuffers(itrVB, texture, listAddData);
-		}
+		_LoadVertexBuffers(path, texture, listAddData);
 
 		Logger::WriteTop(StringUtility::Format(L"Loaded item data: %s", pathReduce.c_str()));
 		res = true;

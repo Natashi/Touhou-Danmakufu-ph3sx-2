@@ -455,11 +455,11 @@ void RenderObjectTLX::Render(const D3DXMATRIX& matTransform) {
 		RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 
 		VertexBufferManager* vbManager = VertexBufferManager::GetBase();
-		FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
-		FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
+		auto vertexBuffer = vbManager->GetVertexBufferTLX();
+		auto indexBuffer = vbManager->GetIndexBuffer();
 
 		if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
-			BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
+			BufferLockParameter lockParam(D3DLOCK_DISCARD);
 
 			lockParam.SetSource(bVertexShaderMode_ ? vertex_ : vertCopy_, countVertex, sizeof(VERTEX_TLX));
 			vertexBuffer->UpdateBuffer(&lockParam);
@@ -658,8 +658,8 @@ void RenderObjectLX::Render(const D3DXMATRIX& matTransform) {
 		RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 
 		VertexBufferManager* vbManager = VertexBufferManager::GetBase();
-		FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferLX();
-		FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
+		auto vertexBuffer = vbManager->GetVertexBufferLX();
+		auto indexBuffer = vbManager->GetIndexBuffer();
 
 		if (flgUseVertexBufferMode_ || bVertexShaderMode_) {
 			BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
@@ -858,7 +858,7 @@ void RenderObjectNX::Render(D3DXMATRIX* matTransform) {
 		RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 
 		VertexBufferManager* vbManager = VertexBufferManager::GetBase();
-		FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
+		auto indexBuffer = vbManager->GetIndexBuffer();
 
 		{
 			if (bUseIndex) {
@@ -1139,8 +1139,8 @@ void SpriteList2D::Render(const D3DXVECTOR2& angX, const D3DXVECTOR2& angY, cons
 			RenderShaderLibrary* shaderLib = ShaderManager::GetBase()->GetRenderLib();
 
 			VertexBufferManager* vbManager = VertexBufferManager::GetBase();
-			FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
-			FixedIndexBuffer* indexBuffer = vbManager->GetIndexBuffer();
+			auto vertexBuffer = vbManager->GetVertexBufferTLX();
+			auto indexBuffer = vbManager->GetIndexBuffer();
 
 			{
 				BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
@@ -1608,9 +1608,9 @@ void ParticleRenderer2D::Render() {
 		VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 		RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
-		FixedVertexBuffer* vertexBuffer = bufferManager->GetVertexBufferTLX();
-		GrowableVertexBuffer* instanceBuffer = bufferManager->GetInstancingVertexBuffer();
-		FixedIndexBuffer* indexBuffer = bufferManager->GetIndexBuffer();
+		VertexBuffer* vertexBuffer = bufferManager->GetVertexBufferTLX();
+		auto instanceBuffer = bufferManager->GetInstancingVertexBuffer();
+		auto indexBuffer = bufferManager->GetIndexBuffer();
 
 		instanceBuffer->Expand(countRenderInstance);
 
@@ -1734,9 +1734,9 @@ void ParticleRenderer3D::Render() {
 		VertexBufferManager* bufferManager = VertexBufferManager::GetBase();
 		RenderShaderLibrary* shaderManager = ShaderManager::GetBase()->GetRenderLib();
 
-		FixedVertexBuffer* vertexBuffer = bufferManager->GetVertexBufferLX();
-		GrowableVertexBuffer* instanceBuffer = bufferManager->GetInstancingVertexBuffer();
-		FixedIndexBuffer* indexBuffer = bufferManager->GetIndexBuffer();
+		auto vertexBuffer = bufferManager->GetVertexBufferLX();
+		auto instanceBuffer = bufferManager->GetInstancingVertexBuffer();
+		auto indexBuffer = bufferManager->GetIndexBuffer();
 
 		instanceBuffer->Expand(countRenderInstance);
 

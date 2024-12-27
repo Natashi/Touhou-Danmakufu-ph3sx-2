@@ -267,8 +267,9 @@ StgShotDataList::StgShotDataList() {
 }
 StgShotDataList::~StgShotDataList() {
 }
-void StgShotDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>::iterator placement, 
-	shared_ptr<Texture> texture, std::vector<StgShotData*>& listAddData)
+
+void StgShotDataList::_LoadVertexBuffers(const std::wstring& name, 
+	shared_ptr<Texture> texture, const std::vector<StgShotData*>& listAddData)
 {
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
@@ -280,27 +281,32 @@ void StgShotDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>
 	for (StgShotData* iData : listAddData)
 		countFrame += iData->GetFrameCount();
 
+	auto& containerList = mapVertexBuffer_[name];
+
 	size_t iBuffer = 0;
 	while (countFrame > 0) {
-		size_t thisCountFrame = std::min<size_t>(countFrame, StgShotVertexBufferContainer::MAX_DATA);
+		{
+			size_t nameId = std::hash<std::wstring>{}(name);
+			std::string vbName = STR_FMT("shot_vb_%x_%d", nameId, iBuffer);
 
-		placement->second.push_back(unique_ptr<StgShotVertexBufferContainer>(
-			new StgShotVertexBufferContainer()));
-		StgShotVertexBufferContainer* pVertexBufferContainer = placement->second.back().get();
+			containerList.emplace_back(new StgShotVertexBufferContainer(vbName));
+		}
+
+		auto pVertexBufferContainer = containerList.back().get();
 		pVertexBufferContainer->SetTexture(texture);
+
+		size_t thisCountFrame = std::min<size_t>(countFrame, StgShotVertexBufferContainer::MAX_DATA);
 
 		std::vector<VERTEX_TLX> bufferVertex(4 * thisCountFrame);
 		size_t iVertex = 0;
 
 		VERTEX_TLX verts[4];
-		for (size_t iData = 0; iData < listAddData.size(); ++iData) {
-			StgShotData* data = listAddData[iData];
-			for (size_t iAnim = 0; iAnim < data->GetFrameCount(); ++iAnim) {
-				StgShotDataFrame* pFrame = &data->listFrame_[iAnim];
-				pFrame->listShotData_ = this;
+		for (auto& data : listAddData) {
+			for (auto& frame : data->listFrame_) {
+				frame.listShotData_ = this;
 
-				LONG* ptrSrc = reinterpret_cast<LONG*>(&pFrame->rcSrc_);
-				float* ptrDst = reinterpret_cast<float*>(&pFrame->rcDst_);
+				LONG* ptrSrc = reinterpret_cast<LONG*>(&frame.rcSrc_);
+				float* ptrDst = reinterpret_cast<float*>(&frame.rcDst_);
 
 				for (size_t iVert = 0; iVert < 4; ++iVert) {
 					VERTEX_TLX* pv = &verts[iVert];
@@ -322,8 +328,8 @@ void StgShotDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>
 					StgShotObject::_SetVertexColorARGB(pv, 0xffffffff);
 				}
 
-				pFrame->pVertexBuffer_ = pVertexBufferContainer;
-				pFrame->vertexOffset_ = iVertex;
+				frame.pVertexBuffer_ = pVertexBufferContainer;
+				frame.vertexOffset_ = iVertex;
 
 				for (size_t j = 0; j < 4; ++j)
 					bufferVertex[iVertex + j] = verts[j];
@@ -333,9 +339,10 @@ void StgShotDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>
 
 		HRESULT hr = pVertexBufferContainer->LoadData(bufferVertex, thisCountFrame);
 		if (FAILED(hr)) {
-			std::wstring err = StringUtility::Format(L"AddShotDataList::Failed to load shot data buffer: "
-				"\t\r\n%s: %s",
+			std::wstring err = StringUtility::Format(
+				L"AddShotDataList::Failed to load shot data buffer:\n\t%s: %s",
 				DXGetErrorString(hr), DXGetErrorDescription(hr));
+			Logger::WriteError(err);
 			throw gstd::wexception(err);
 		}
 
@@ -344,8 +351,15 @@ void StgShotDataList::_LoadVertexBuffers(std::map<std::wstring, VBContainerList>
 	}
 }
 bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
-	auto itrVB = mapVertexBuffer_.find(path);
-	if (!bReload && itrVB != mapVertexBuffer_.end()) return true;
+	auto find = mapVertexBuffer_.find(path);
+	if (find != mapVertexBuffer_.end()) {
+		if (!bReload) {
+			return true;
+		}
+		else {
+			find->second.clear();
+		}
+	}
 
 	std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
 
@@ -435,14 +449,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 			}
 		}
 
-		if (itrVB != mapVertexBuffer_.end()) {
-			itrVB->second.clear();
-			_LoadVertexBuffers(itrVB, texture, listAddData);
-		}
-		else {
-			itrVB = mapVertexBuffer_.insert({ path, VBContainerList() }).first;
-			_LoadVertexBuffers(itrVB, texture, listAddData);
-		}
+		_LoadVertexBuffers(path, texture, listAddData);
 
 		Logger::WriteTop(StringUtility::Format(L"Loaded shot data: %s", pathReduce.c_str()));
 		res = true;
@@ -703,32 +710,34 @@ StgShotDataFrame* StgShotData::GetFrame(size_t frame) {
 //****************************************************************************
 //StgShotVertexBufferContainer
 //****************************************************************************
-StgShotVertexBufferContainer::StgShotVertexBufferContainer() {
-	DirectGraphics* graphics = DirectGraphics::GetBase();
-	VertexBufferManager* vbManager = VertexBufferManager::GetBase();
 
-	pVertexBuffer_ = (FixedVertexBuffer*)vbManager->CreateExtraVertexBuffer();
+StgShotVertexBufferContainer::StgShotVertexBufferContainer(const std::string& name) : 
+	name_(name), pVertexBuffer_(nullptr), countData_(0) {}
 
-	countData_ = 0;
-}
 StgShotVertexBufferContainer::~StgShotVertexBufferContainer() {
 	VertexBufferManager* vbManager = VertexBufferManager::GetBase();
-	vbManager->ReleaseExtraVertexBuffer((size_t)pVertexBuffer_);
+	vbManager->RemoveBuffer(name_);
 }
 
 HRESULT StgShotVertexBufferContainer::LoadData(const std::vector<VERTEX_TLX>& data, size_t countFrame) {
-	pVertexBuffer_->Setup(data.size(), StgShotVertexBufferContainer::STRIDE, VERTEX_TLX::fvf);
+	DirectGraphics* graphics = DirectGraphics::GetBase();
+	VertexBufferManager* vbManager = VertexBufferManager::GetBase();
 
-	HRESULT hr = pVertexBuffer_->Create(0, D3DPOOL_MANAGED);
-	if (FAILED(hr)) {
-		return hr;
-	}
+	countData_ = countFrame;
+
+	auto buffer = make_unique<VertexBuffer>(graphics->GetDevice(), name_,
+		0, D3DPOOL_MANAGED, 
+		data.size(), StgShotVertexBufferContainer::STRIDE, VERTEX_TLX::fvf);
+	
+	buffer->Create();
 
 	BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
-	lockParam.SetSource(const_cast<std::vector<VERTEX_TLX>&>(data), pVertexBuffer_->GetSize(), sizeof(VERTEX_TLX));
+	lockParam.SetSource(data, buffer->GetSize(), sizeof(VERTEX_TLX));
 
-	hr = pVertexBuffer_->UpdateBuffer(&lockParam);
-	countData_ = countFrame;
+	HRESULT hr = buffer->UpdateBuffer(&lockParam);
+
+	vbManager->SetBuffer(MOVE(buffer));
+	pVertexBuffer_ = vbManager->GetBuffer<VertexBuffer>(name_);
 
 	return hr;
 }
@@ -2708,7 +2717,7 @@ void StgCurveLaserObject::Render(BlendMode targetBlend) {
 				IDirect3DDevice9* device = graphics->GetDevice();
 
 				VertexBufferManager* vbManager = VertexBufferManager::GetBase();
-				FixedVertexBuffer* vertexBuffer = vbManager->GetVertexBufferTLX();
+				auto vertexBuffer = vbManager->GetVertexBufferTLX();
 
 				if (graphics->IsAllowRenderTargetChange()) {
 					if (auto pRT = renderTarget_.lock())

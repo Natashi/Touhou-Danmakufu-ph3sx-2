@@ -101,18 +101,14 @@ public:
 //StgItemDataList
 //*******************************************************************
 class StgItemDataList {
-public:
-	//Repurpose StgShotVertexBufferContainer for this, since it'd have been the same code anyway
-	using VBContainerList = std::list<unique_ptr<StgShotVertexBufferContainer>>;
 private:
-	std::map<std::wstring, VBContainerList> mapVertexBuffer_;	//<shot data file, vb list>
+	std::map<std::wstring, std::list<unique_ptr<StgShotVertexBufferContainer>>> mapVertexBuffer_;
 	std::vector<unique_ptr<StgItemData>> listData_;
 
 	void _ScanItem(std::map<int, unique_ptr<StgItemData>>& mapData, Scanner& scanner);
 	static void _ScanAnimation(StgItemData* itemData, Scanner& scanner);
 
-	void _LoadVertexBuffers(std::map<std::wstring, VBContainerList>::iterator placement,
-		shared_ptr<Texture> texture, std::vector<StgItemData*>& listAddData);
+	void _LoadVertexBuffers(const std::wstring& name, shared_ptr<Texture> texture, const std::vector<StgItemData*>& listAddData);
 public:
 	StgItemDataList();
 	virtual ~StgItemDataList();
