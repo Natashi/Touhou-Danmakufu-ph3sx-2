@@ -178,8 +178,8 @@ namespace gstd {
 		virtual DWORD Write(LPVOID buf, DWORD size);
 		virtual DWORD Read(LPVOID buf, DWORD size);
 
-		bool File::SetFilePointerBegin(AccessType type = READ) { return this->Seek(0, std::ios::beg, type); }
-		bool File::SetFilePointerEnd(AccessType type = READ) { return this->Seek(0, std::ios::end, type); }
+		bool SetFilePointerBegin(AccessType type = READ) { return this->Seek(0, std::ios::beg, type); }
+		bool SetFilePointerEnd(AccessType type = READ) { return this->Seek(0, std::ios::end, type); }
 		bool Seek(size_t offset, DWORD way, AccessType type = READ);
 		size_t GetFilePointer(AccessType type = READ);
 
