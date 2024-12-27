@@ -430,58 +430,59 @@ namespace directx {
 		DirectGraphics* graphics = DirectGraphics::GetBase();
 		IDirect3DDevice9* device = graphics->GetDevice();
 
-		HRESULT hr = S_OK;
-
 		{
 			//<source, name>
-			std::vector<std::pair<const std::string*, const std::string*>> listCreate = {
-				std::make_pair(&ShaderSource::sourceRender2D_, &ShaderSource::nameRender2D_),
-				std::make_pair(&ShaderSource::sourceHwInstance2D_, &ShaderSource::nameHwInstance2D_),
-				std::make_pair(&ShaderSource::sourceHwInstance3D_, &ShaderSource::nameHwInstance3D_),
-				std::make_pair(&ShaderSource::sourceIntersectVisual1_, &ShaderSource::nameIntersectVisual1_),
-				std::make_pair(&ShaderSource::sourceIntersectVisual2_, &ShaderSource::nameIntersectVisual2_)
+			std::vector<std::pair<const std::string&, const std::string&>> listCreate = {
+				{ ShaderSource::sourceRender2D_, ShaderSource::nameRender2D_ },
+				{ ShaderSource::sourceHwInstance2D_, ShaderSource::nameHwInstance2D_ },
+				{ ShaderSource::sourceHwInstance3D_, ShaderSource::nameHwInstance3D_ },
+				{ ShaderSource::sourceIntersectVisual1_, ShaderSource::nameIntersectVisual1_ },
+				{ ShaderSource::sourceIntersectVisual2_, ShaderSource::nameIntersectVisual2_ },
 			};
-			listEffect_.resize(listCreate.size(), nullptr);
-			for (size_t iEff = 0U; iEff < listCreate.size(); ++iEff) {
-				const std::string* source = listCreate[iEff].first;
-				const std::string* name = listCreate[iEff].second;
 
-				hr = D3DXCreateEffect(device, source->c_str(), source->size(), nullptr, nullptr, 0,
-					nullptr, &listEffect_[iEff], &error);
+			for (auto& [source, name] : listCreate) {
+				ID3DXEffect* effect;
+
+				HRESULT hr = D3DXCreateEffect(device, source.c_str(), source.size(), nullptr, nullptr, 0,
+					nullptr, &effect, &error);
+
 				if (FAILED(hr)) {
 					const char* strCompileError = "unknown error";
 					if (error)
 						strCompileError = reinterpret_cast<const char*>(error->GetBufferPointer());
+
 					std::string err = StringUtility::Format(
 						"RenderShaderLibrary: Shader compile failed. [%s]\r\n\t%s\r\n\t%s",
-						name->c_str(), DXGetErrorStringA(hr), strCompileError);
+						name.c_str(), DXGetErrorStringA(hr), strCompileError);
+
 					throw gstd::wexception(err);
 				}
+
+				listEffect_.push_back(effect);
 			}
 		}
-		if (listEffect_[0])
-			listEffect_[0]->SetTechnique("Render");
 
 		{
 			std::vector<std::pair<const D3DVERTEXELEMENT9*, std::string>> listCreate = {
-				std::make_pair(ELEMENTS_TLX, "ELEMENTS_TLX"),
-				std::make_pair(ELEMENTS_LX, "ELEMENTS_LX"),
-				std::make_pair(ELEMENTS_NX, "ELEMENTS_NX"),
-				std::make_pair(ELEMENTS_TLX_INSTANCED, "ELEMENTS_TLX_INSTANCED"),
-				std::make_pair(ELEMENTS_LX_INSTANCED, "ELEMENTS_LX_INSTANCED")
+				{ ELEMENTS_TLX, "ELEMENTS_TLX" },
+				{ ELEMENTS_LX, "ELEMENTS_LX" },
+				{ ELEMENTS_NX, "ELEMENTS_NX" },
+				{ ELEMENTS_TLX_INSTANCED, "ELEMENTS_TLX_INSTANCED" },
+				{ ELEMENTS_LX_INSTANCED, "ELEMENTS_LX_INSTANCED" },
 			};
-			listDeclaration_.resize(listCreate.size(), nullptr);
-			for (size_t iDecl = 0U; iDecl < listCreate.size(); ++iDecl) {
-				const D3DVERTEXELEMENT9* elem = listCreate[iDecl].first;
-				const std::string& name = listCreate[iDecl].second;
 
-				hr = device->CreateVertexDeclaration(elem, &listDeclaration_[iDecl]);
+			for (auto& [layout, name] : listCreate) {
+				IDirect3DVertexDeclaration9* decl;
+
+				HRESULT hr = device->CreateVertexDeclaration(layout, &decl);
 				if (FAILED(hr)) {
 					std::string err = StringUtility::Format(
 						"RenderShaderLibrary: CreateVertexDeclaration failed. [%s]\r\n\t%s",
 						name.c_str(), DXGetErrorStringA(hr));
 					throw gstd::wexception(err);
 				}
+
+				listDeclaration_.push_back(decl);
 			}
 		}
 	}
@@ -494,14 +495,12 @@ namespace directx {
 
 	void RenderShaderLibrary::OnLostDevice() {
 		for (auto iEffect : listEffect_) {
-			if (iEffect)
-				iEffect->OnLostDevice();
+			iEffect->OnLostDevice();
 		}
 	}
 	void RenderShaderLibrary::OnResetDevice() {
 		for (auto iEffect : listEffect_) {
-			if (iEffect)
-				iEffect->OnResetDevice();
+			iEffect->OnResetDevice();
 		}
 	}
 }
