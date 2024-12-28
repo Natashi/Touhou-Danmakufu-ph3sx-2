@@ -380,28 +380,35 @@ void TextureManager::RestoreDxResource() {
 
 				D3DMULTISAMPLE_TYPE typeSample = graphics->GetMultiSampleType();
 
-				HRESULT hr = graphics->GetDevice()->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-					0, FALSE, &data->lpRenderZ_, nullptr);
-				if (FAILED(hr)) {
-					width = height = std::min(width, height);
+				HRESULT hr;
 
-					hr = graphics->GetDevice()->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-						0, FALSE, &data->lpRenderZ_, nullptr);
-					if (FAILED(hr)) {
-						std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: (Depth)\n%s\n  %s",
-							DXGetErrorString(hr), DXGetErrorDescription(hr));
-						throw wexception(err);
-					}
-				}
-
-				hr = graphics->GetDevice()->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, 
+				hr = graphics->GetDevice()->CreateTexture(
+					width, height, 1, D3DUSAGE_RENDERTARGET, 
 					data->GetImageInfo()->Format, D3DPOOL_DEFAULT, &data->pTexture_, nullptr);
 				if (FAILED(hr)) {
-					std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: (Texture)\n%s\n  %s",
-						DXGetErrorString(hr), DXGetErrorDescription(hr));
+					auto err = STR_FMT(
+						L"TextureManager::RestoreDxResource: Failed to restore texture for \"%s\" [%s]\n\t%s",
+						name.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
 					throw wexception(err);
 				}
-				data->pTexture_->GetSurfaceLevel(0, &data->lpRenderSurface_);
+
+				hr = data->pTexture_->GetSurfaceLevel(0, &data->lpRenderSurface_);
+				if (FAILED(hr)) {
+					auto err = STR_FMT(
+						L"TextureManager::RestoreDxResource: Failed to restore surface for \"%s\" [%s]\n\t%s",
+						name.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
+					throw wexception(err);
+				}
+
+				hr = graphics->GetDevice()->CreateDepthStencilSurface(
+					width, height, D3DFMT_D16, typeSample,
+					0, FALSE, &data->lpRenderZ_, nullptr);
+				if (FAILED(hr)) {
+					auto err = STR_FMT(
+						L"TextureManager::RestoreDxResource: Failed to restore depth stencil for \"%s\" [%s]\n\t%s",
+						name.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
+					throw wexception(err);
+				}
 			}
 		}
 
@@ -518,34 +525,27 @@ bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std
 
 		D3DMULTISAMPLE_TYPE typeSample = graphics->GetMultiSampleType();
 
-		HRESULT hr;
-		hr = device->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-			0, FALSE, &data->lpRenderZ_, nullptr);
-		if (FAILED(hr)) throw false;
-
 		ColorMode colorMode = graphics->GetGraphicsConfig().colorMode;
+
 		D3DFORMAT fmt = colorMode == ColorMode::COLOR_MODE_32BIT ?
 			D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
 
+		HRESULT hr;
+
 		hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT,
 			&data->pTexture_, nullptr);
-		if (FAILED(hr)) {
-			width = height = std::min(width, height);
-
-			hr = device->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-				0, FALSE, &data->lpRenderZ_, nullptr);
-			if (FAILED(hr))
-				throw wexception("CreateDepthStencilSurface failure.");
-
-			hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT,
-				&data->pTexture_, nullptr);
-			if (FAILED(hr))
-				throw wexception("CreateTexture failure.");
-		}
+		if (FAILED(hr))
+			throw wexception("CreateTexture failure.");
 
 		hr = data->pTexture_->GetSurfaceLevel(0, &data->lpRenderSurface_);
 		if (FAILED(hr))
 			throw wexception("GetSurfaceLevel failure.");
+
+		hr = device->CreateDepthStencilSurface(
+			width, height, D3DFMT_D16, typeSample,
+			0, FALSE, &data->lpRenderZ_, nullptr);
+		if (FAILED(hr))
+			throw wexception("CreateDepthStencilSurface failure.");
 
 		data->manager_ = this;
 		data->name_ = name;
