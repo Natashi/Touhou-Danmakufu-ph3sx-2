@@ -109,7 +109,9 @@ namespace directx {
 
 		std::map<std::wstring, shared_ptr<Texture>> mapTexture_;
 		std::map<std::wstring, shared_ptr<TextureData>> mapTextureData_;
-		std::list<std::pair<std::map<std::wstring, shared_ptr<TextureData>>::iterator, IDirect3DSurface9*>> listRefreshSurface_;
+
+		//std::map<std::wstring, std::pair<shared_ptr<TextureData>, IDirect3DSurface9*>> listRefreshSurface_;
+
 		shared_ptr<TextureInfoPanel> panelInfo_;
 
 		void _ReleaseTextureData(const std::wstring& name);

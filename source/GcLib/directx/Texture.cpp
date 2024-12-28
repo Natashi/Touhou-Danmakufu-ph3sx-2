@@ -326,15 +326,21 @@ void TextureManager::ReleaseDxResource() {
 			if (data->type_ == TextureData::Type::TYPE_RENDER_TARGET) {
 				D3DXIMAGE_INFO* infoImage = data->GetImageInfo();
 
-				//Because IDirect3DDevice9::Reset requires me to delete all render targets, 
-				//	this is used to copy back lost data when the render targets are recreated.
+				// TODO: Figure out a way to actually restore lost render target data
+				//       GetRenderTargetData just returns failure as the device is already lost at this point
+
+				/*
+				// IDirect3DDevice9::Reset requires all D3DPOOL_DEFAULT resources to be released
+				// Releasing render targets causes the surface data to be lost
+				//    so this is used to restore original texture data when they are restored
+
 				IDirect3DSurface9* pSurfaceCopy = nullptr;
 				HRESULT hr = device->CreateOffscreenPlainSurface(infoImage->Width, infoImage->Height, infoImage->Format,
 					D3DPOOL_SYSTEMMEM, &pSurfaceCopy, nullptr);
 				if (SUCCEEDED(hr)) {
 					hr = device->GetRenderTargetData(data->lpRenderSurface_, pSurfaceCopy);
 					if (SUCCEEDED(hr)) {
-						listRefreshSurface_.push_back(std::make_pair(itrMap, pSurfaceCopy));
+						listRefreshSurface_[name] = { data, pSurfaceCopy };
 					}
 					else {
 						std::wstring err = StringUtility::Format(L"TextureManager::ReleaseDxResource: "
@@ -346,6 +352,7 @@ void TextureManager::ReleaseDxResource() {
 						pSurfaceCopy->Release();
 					}
 				}
+				*/
 
 				ptr_release(data->pTexture_);
 				ptr_release(data->lpRenderSurface_);
@@ -398,26 +405,29 @@ void TextureManager::RestoreDxResource() {
 			}
 		}
 
-		for (auto itrSurface = listRefreshSurface_.begin(); itrSurface != listRefreshSurface_.end(); ++itrSurface) {
-			shared_ptr<TextureData> data = itrSurface->first->second;
-			D3DXIMAGE_INFO* info = data->GetImageInfo();
+		/*
+		for (auto& [name, data] : listRefreshSurface_) {
+			auto& [textureData, surfaceData] = data;
 
-			IDirect3DSurface9* surfaceDst = data->lpRenderSurface_;
-			IDirect3DSurface9*& surfaceSrc = itrSurface->second;
-			if (surfaceSrc == nullptr) continue;
+			D3DXIMAGE_INFO* info = textureData->GetImageInfo();
 
-			HRESULT hr = graphics->GetDevice()->UpdateSurface(surfaceSrc, nullptr, surfaceDst, nullptr);
+			IDirect3DSurface9* surfaceDst = textureData->lpRenderSurface_;
+			if (surfaceData == nullptr)
+				continue;
+
+			HRESULT hr = graphics->GetDevice()->UpdateSurface(surfaceData, nullptr, surfaceDst, nullptr);
 			if (FAILED(hr)) {
 				std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: "
 					"Render target restoration failed [%s]\r\n    %s: %s",
-					PathProperty::ReduceModuleDirectory(data->name_).c_str(), 
+					PathProperty::ReduceModuleDirectory(name).c_str(),
 					DXGetErrorString(hr), DXGetErrorDescription(hr));
 				Logger::WriteError(err);
 			}
 
-			ptr_release(surfaceSrc);
+			ptr_release(surfaceData);
 		}
 		listRefreshSurface_.clear();
+		*/
 	}
 }
 
