@@ -99,42 +99,42 @@ script_block* script_engine::new_block(int level, block_kind kind) {
 //script_machine::environment
 //****************************************************************************
 script_machine::env_allocator::env_allocator(script_machine* machine) : machine(machine) {
-	_alloc_more(1024);
+	_alloc_block();
 }
 script_machine::env_allocator::~env_allocator() {
 	// Must release all owned environment before destroying the allocator
 	environments.clear();
 }
 
-void script_machine::env_allocator::_alloc_more(size_t n) {
+void script_machine::env_allocator::_alloc_block() {
 	constexpr size_t MAX_N = std::numeric_limits<size_t>::max() / sizeof(value_type);
 
-	size_t before_size = environments.size();
+	size_t before_size = environments.size() * block_size;
 
-	if (before_size + n > MAX_N)
+	if (before_size + block_size > MAX_N)
 		throw std::bad_array_new_length();
 
-	for (size_t i = 0; i < n; ++i) {
+	std::vector<script_machine::environment> block(block_size, machine);
+	for (size_t i = 0; i < block_size; ++i) {
 		size_t index = before_size + i;
+		
+		block[i]._index = index;
 
-		environment env(machine);
-		env._index = index;
-
-		environments.push_back(std::move(env));
 		free_environments.push_back(index);
 	}
+	environments.push_back(std::move(block));
 }
 
 script_machine::env_allocator::value_type* 
 script_machine::env_allocator::allocate(size_t n) {
 	if (free_environments.size() == 0) {
-		_alloc_more(1024);
+		_alloc_block();
 	}
 
 	size_t free_index = free_environments.front();
 	free_environments.pop_front();
 
-	return &environments[free_index];
+	return &environments[free_index / block_size][free_index % block_size];
 }
 void script_machine::env_allocator::deallocate(value_type* p, size_t n) noexcept {
 	for (size_t i = 0; i < n; ++i) {

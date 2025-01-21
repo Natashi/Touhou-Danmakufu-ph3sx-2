@@ -27,19 +27,18 @@ ScriptEngineCache::ScriptEngineCache() {
 void ScriptEngineCache::Clear() {
 	cache_.clear();
 }
-ScriptEngineData* ScriptEngineCache::AddCache(const std::wstring& name, uptr<ScriptEngineData>&& data) {
+void ScriptEngineCache::AddCache(const std::wstring& name, shared_ptr<ScriptEngineData> data) {
 	auto& res = (cache_[name] = MOVE(data));
-	return res.get();
 }
 void ScriptEngineCache::RemoveCache(const std::wstring& name) {
 	auto itrFind = cache_.find(name);
 	if (cache_.find(name) != cache_.end())
 		cache_.erase(itrFind);
 }
-ScriptEngineData* ScriptEngineCache::GetCache(const std::wstring& name) {
+shared_ptr<ScriptEngineData> ScriptEngineCache::GetCache(const std::wstring& name) {
 	auto itrFind = cache_.find(name);
 	if (cache_.find(name) == cache_.end()) return nullptr;
-	return itrFind->second.get();
+	return itrFind->second;
 }
 bool ScriptEngineCache::IsExists(const std::wstring& name) {
 	return cache_.find(name) != cache_.end();
@@ -252,7 +251,7 @@ uint64_t ScriptClientBase::prandCalls_ = 0;
 ScriptClientBase::ScriptClientBase() {
 	bError_ = false;
 
-	engineData_ = nullptr;
+	engineData_.reset(new ScriptEngineData());
 	machine_ = nullptr;
 
 	mainThreadID_ = -1;
@@ -370,7 +369,7 @@ bool ScriptClientBase::SetSourceFromFile(std::wstring path) {
 
 	// Script not found in cache, create a new entry
 
-	engineData_ = cache_->AddCache(path, make_unique<ScriptEngineData>());
+	cache_->AddCache(path, engineData_);
 	engineData_->SetPath(path);
 	
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);

@@ -428,6 +428,7 @@ void SoundInfoPanel::Update(DirectSoundManager* manager) {
 
 	{
 		Lock lock(Logger::GetTop()->GetLock());
+		Lock lock2(manager->GetLock());
 
 		auto& mapData = manager->mapSoundSource_;
 		listDisplay_.resize(mapData.size());

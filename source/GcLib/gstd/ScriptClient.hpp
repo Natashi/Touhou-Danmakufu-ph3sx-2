@@ -70,17 +70,17 @@ namespace gstd {
 	//*******************************************************************
 	class ScriptEngineCache {
 	protected:
-		std::map<std::wstring, uptr<ScriptEngineData>> cache_;
+		std::map<std::wstring, shared_ptr<ScriptEngineData>> cache_;
 	public:
 		ScriptEngineCache();
 
 		void Clear();
 
-		ScriptEngineData* AddCache(const std::wstring& name, uptr<ScriptEngineData>&& data);
+		void AddCache(const std::wstring& name, shared_ptr<ScriptEngineData> data);
 		void RemoveCache(const std::wstring& name);
-		ScriptEngineData* GetCache(const std::wstring& name);
+		shared_ptr<ScriptEngineData> GetCache(const std::wstring& name);
 
-		const std::map<std::wstring, uptr<ScriptEngineData>>& GetMap() { return cache_; }
+		const std::map<std::wstring, shared_ptr<ScriptEngineData>>& GetMap() { return cache_; }
 
 		bool IsExists(const std::wstring& name);
 	};
@@ -103,7 +103,7 @@ namespace gstd {
 
 		ScriptEngineCache* cache_;
 
-		ScriptEngineData* engineData_;
+		shared_ptr<ScriptEngineData> engineData_;
 		unique_ptr<script_machine> machine_;
 
 		std::vector<gstd::function> func_;
@@ -143,7 +143,7 @@ namespace gstd {
 		void SetScriptEngineCache(ScriptEngineCache* cache) { cache_ = cache; }
 		ScriptEngineCache* GetScriptEngineCache() { return cache_; }
 
-		ScriptEngineData* GetEngineData() { return engineData_; }
+		shared_ptr<ScriptEngineData> GetEngineData() { return engineData_; }
 
 		shared_ptr<RandProvider> GetRand() { return mt_; }
 

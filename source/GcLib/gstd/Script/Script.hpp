@@ -112,10 +112,10 @@ namespace gstd {
 		private:
 			script_machine* machine;
 
-			std::vector<environment> environments;
+			std::vector< std::vector<environment>> environments;
 			std::list<size_t> free_environments;
 		private:
-			void _alloc_more(size_t n);
+			void _alloc_block();
 		public:
 			using value_type = environment;
 			using pointer = value_type*;
@@ -125,6 +125,8 @@ namespace gstd {
 
 			_NODISCARD value_type* allocate(size_t n);
 			void deallocate(value_type* p, size_t n) noexcept;
+
+			static const size_t block_size = 1024;
 		};
 	public:
 		void* data;		// Pointer to client script class
