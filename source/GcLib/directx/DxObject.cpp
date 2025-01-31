@@ -246,9 +246,8 @@ D3DXVECTOR3 DxScriptPrimitiveObject2D::GetVertexPosition(size_t index) {
 	RenderObjectTLX* obj = GetRenderObject();
 	VERTEX_TLX* vert = obj->GetVertex(index);
 
-	constexpr float bias = 0.5f;
-	res.x = vert->position.x + bias;
-	res.y = vert->position.y + bias;
+	res.x = vert->position.x;
+	res.y = vert->position.y;
 	res.z = 0;
 
 	return res;
