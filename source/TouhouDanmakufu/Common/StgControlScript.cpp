@@ -1522,7 +1522,6 @@ void ScriptInfoPanel::ProcessGui() {
 				}
 				ImGui::SameLine();
 
-				weak_ptr<ManagedScript> selectedScript = {};
 				ManagerDisplay* selectedManager = nullptr;
 
 				{
@@ -1538,16 +1537,16 @@ void ScriptInfoPanel::ProcessGui() {
 								auto itrFindScr = std::find_if(scripts.cbegin(), scripts.cend(),
 									[&](const ScriptDisplay& x) { return x.address == selectedScriptAddr_; });
 								if (itrFindScr != scripts.cend()) {
-									selectedScript = itrFindScr->script;
+									selectedScript_ = itrFindScr->script;
 								}
 							}
 						}
 					}
 
-					directx::imgui::ImGuiExt::Disabled(selectedScript.expired(), [&]() {
+					directx::imgui::ImGuiExt::Disabled(selectedScript_.expired(), [&]() {
 						if (ImGui::Button("Terminate Selected Script", ImVec2(200, 28))) {
 							selectedScriptAddr_ = 0;
-							_TerminateScript(selectedScript);
+							_TerminateScript(selectedScript_);
 						}
 					});
 				}

@@ -262,6 +262,7 @@ protected:
 
 	uintptr_t selectedManagerAddr_;
 	uintptr_t selectedScriptAddr_;
+	weak_ptr<ManagedScript> selectedScript_;
 private:
 	static const char* GetScriptTypeName(ManagedScript* script);
 	static const char* GetScriptStatusStr(ScriptDisplay::ScriptStatus status);
