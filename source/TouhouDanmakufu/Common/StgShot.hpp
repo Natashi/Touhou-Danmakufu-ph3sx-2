@@ -109,10 +109,8 @@ public:
 //StgShotDataList
 //*******************************************************************
 class StgShotDataList {
-public:
-	using VBContainerList = std::list<unique_ptr<StgShotVertexBufferContainer>>;
 protected:
-	std::map<std::wstring, VBContainerList> mapVertexBuffer_;	//<shot data file, vb list>
+	std::map<std::wstring, std::list<unique_ptr<StgShotVertexBufferContainer>>> mapVertexBuffer_;
 	std::vector<unique_ptr<StgShotData>> listData_;
 
 	int defaultDelayData_;
@@ -121,8 +119,7 @@ protected:
 	void _ScanShot(std::map<int, unique_ptr<StgShotData>>& mapData, Scanner& scanner);
 	static void _ScanAnimation(StgShotData* shotData, Scanner& scanner);
 
-	void _LoadVertexBuffers(std::map<std::wstring, VBContainerList>::iterator placement, 
-		shared_ptr<Texture> texture, std::vector<StgShotData*>& listAddData);
+	void _LoadVertexBuffers(const std::wstring& name, shared_ptr<Texture> texture, const std::vector<StgShotData*>& listAddData);
 public:
 	StgShotDataList();
 	virtual ~StgShotDataList();
@@ -212,22 +209,25 @@ public:
 		STRIDE = 4 * sizeof(VERTEX_TLX),	//Approx 230kB per buffer object max
 	};
 private:
-	FixedVertexBuffer* pVertexBuffer_;
+	std::string name_;
+	VertexBuffer* pVertexBuffer_;
 	size_t countData_;
 
 	shared_ptr<Texture> texture_;
 public:
-	StgShotVertexBufferContainer();
+	StgShotVertexBufferContainer(const std::string& name);
 	~StgShotVertexBufferContainer();
 
 	HRESULT LoadData(const std::vector<VERTEX_TLX>& data, size_t countFrame);
 
-	FixedVertexBuffer* GetBufferObject() { return pVertexBuffer_; }
+	VertexBuffer* GetBufferObject() { return pVertexBuffer_; }
 	IDirect3DVertexBuffer9* GetD3DBuffer() { return pVertexBuffer_ ? pVertexBuffer_->GetBuffer() : nullptr; }
-	size_t GetDataCount() { return countData_; }
+
+	size_t GetDataCount() const { return countData_; }
 
 	void SetTexture(shared_ptr<Texture> texture) { texture_ = texture; }
 	shared_ptr<Texture> GetTexture() { return texture_; }
+
 	IDirect3DTexture9* GetD3DTexture() { return texture_ ? texture_->GetD3DTexture() : nullptr; }
 };
 

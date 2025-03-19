@@ -76,7 +76,7 @@ ControllerMap::ControllerMap(const char* name, const std::initializer_list<uint3
 					? itrRename->second : itrName->second;
 			}
 			else {
-				Logger::WriteTop(StringUtility::Format("Unknown button -> %d:%s", 
+				Logger::WriteWarn(StringUtility::Format("Unknown button -> %d:%s", 
 					buttonID, buttonName.c_str()));
 			}
 		}

@@ -1038,7 +1038,7 @@ gstd::value DxScript::Func_InstallFont(gstd::script_machine* machine, int argc, 
 		res = renderer->AddFontFromFile(path);
 	}
 	catch (gstd::wexception& e) {
-		Logger::WriteTop(e.what());
+		Logger::WriteError(e.what());
 	}
 
 	return script->CreateBooleanValue(res);

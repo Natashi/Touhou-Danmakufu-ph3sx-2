@@ -12,7 +12,7 @@ const std::wstring ScriptInformation::DEFAULT = L"DEFAULT";
 ref_count_ptr<ScriptInformation> ScriptInformation::CreateScriptInformation(const std::wstring& pathScript, bool bNeedHeader) {
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(pathScript);
 	if (reader == nullptr || !reader->Open()) {
-		Logger::WriteTop(L"CreateScriptInformation: " + ErrorUtility::GetFileNotFoundErrorMessage(pathScript, true));
+		Logger::WriteError(L"CreateScriptInformation: " + ErrorUtility::GetFileNotFoundErrorMessage(pathScript, true));
 		return nullptr;
 	}
 
@@ -201,7 +201,7 @@ std::vector<ref_count_ptr<ScriptInformation>> ScriptInformation::CreatePlayerScr
 
 		auto reader = FileManager::GetBase()->GetFileReader(path);
 		if (reader == nullptr || !reader->Open()) {
-			Logger::WriteTop(L"CreatePlayerScriptInformationList: " 
+			Logger::WriteError(L"CreatePlayerScriptInformationList: "
 				+ ErrorUtility::GetFileNotFoundErrorMessage(path, true));
 			continue;
 		}

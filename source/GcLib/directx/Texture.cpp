@@ -165,7 +165,7 @@ IDirect3DTexture9* Texture::GetD3DTexture() {
 			}
 			else if (SystemUtility::GetCpuTime2() - timeOrg > 200) {		//0.2 second timer
 				const std::wstring& path = data_->GetName();
-				Logger::WriteTop(StringUtility::Format(L"GetTexture timed out. (%s)", 
+				Logger::WriteError(StringUtility::Format(L"GetTexture timed out. (%s)",
 					PathProperty::ReduceModuleDirectory(path).c_str()));
 				break;
 			}
@@ -326,26 +326,33 @@ void TextureManager::ReleaseDxResource() {
 			if (data->type_ == TextureData::Type::TYPE_RENDER_TARGET) {
 				D3DXIMAGE_INFO* infoImage = data->GetImageInfo();
 
-				//Because IDirect3DDevice9::Reset requires me to delete all render targets, 
-				//	this is used to copy back lost data when the render targets are recreated.
+				// TODO: Figure out a way to actually restore lost render target data
+				//       GetRenderTargetData just returns failure as the device is already lost at this point
+
+				/*
+				// IDirect3DDevice9::Reset requires all D3DPOOL_DEFAULT resources to be released
+				// Releasing render targets causes the surface data to be lost
+				//    so this is used to restore original texture data when they are restored
+
 				IDirect3DSurface9* pSurfaceCopy = nullptr;
 				HRESULT hr = device->CreateOffscreenPlainSurface(infoImage->Width, infoImage->Height, infoImage->Format,
 					D3DPOOL_SYSTEMMEM, &pSurfaceCopy, nullptr);
 				if (SUCCEEDED(hr)) {
 					hr = device->GetRenderTargetData(data->lpRenderSurface_, pSurfaceCopy);
 					if (SUCCEEDED(hr)) {
-						listRefreshSurface_.push_back(std::make_pair(itrMap, pSurfaceCopy));
+						listRefreshSurface_[name] = { data, pSurfaceCopy };
 					}
 					else {
 						std::wstring err = StringUtility::Format(L"TextureManager::ReleaseDxResource: "
 							"Failed to create temporary surface [%s]\r\n    %s: %s",
 							PathProperty::ReduceModuleDirectory(name).c_str(),
 							DXGetErrorString(hr), DXGetErrorDescription(hr));
-						Logger::WriteTop(err);
+						Logger::WriteError(err);
 
 						pSurfaceCopy->Release();
 					}
 				}
+				*/
 
 				ptr_release(data->pTexture_);
 				ptr_release(data->lpRenderSurface_);
@@ -357,7 +364,7 @@ void TextureManager::ReleaseDxResource() {
 		std::wstring err = StringUtility::Format(L"TextureManager::ReleaseDxResource: "
 			"D3D device abnormal. Render target surfaces cannot be saved.\r\n    %s: %s",
 			DXGetErrorString(deviceHr), DXGetErrorDescription(deviceHr));
-		Logger::WriteTop(err);
+		Logger::WriteError(err);
 	}
 }
 void TextureManager::RestoreDxResource() {
@@ -373,51 +380,61 @@ void TextureManager::RestoreDxResource() {
 
 				D3DMULTISAMPLE_TYPE typeSample = graphics->GetMultiSampleType();
 
-				HRESULT hr = graphics->GetDevice()->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-					0, FALSE, &data->lpRenderZ_, nullptr);
-				if (FAILED(hr)) {
-					width = height = std::min(width, height);
+				HRESULT hr;
 
-					hr = graphics->GetDevice()->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-						0, FALSE, &data->lpRenderZ_, nullptr);
-					if (FAILED(hr)) {
-						std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: (Depth)\n%s\n  %s",
-							DXGetErrorString(hr), DXGetErrorDescription(hr));
-						throw wexception(err);
-					}
-				}
-
-				hr = graphics->GetDevice()->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, 
+				hr = graphics->GetDevice()->CreateTexture(
+					width, height, 1, D3DUSAGE_RENDERTARGET, 
 					data->GetImageInfo()->Format, D3DPOOL_DEFAULT, &data->pTexture_, nullptr);
 				if (FAILED(hr)) {
-					std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: (Texture)\n%s\n  %s",
-						DXGetErrorString(hr), DXGetErrorDescription(hr));
+					auto err = STR_FMT(
+						L"TextureManager::RestoreDxResource: Failed to restore texture for \"%s\" [%s]\n\t%s",
+						name.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
 					throw wexception(err);
 				}
-				data->pTexture_->GetSurfaceLevel(0, &data->lpRenderSurface_);
+
+				hr = data->pTexture_->GetSurfaceLevel(0, &data->lpRenderSurface_);
+				if (FAILED(hr)) {
+					auto err = STR_FMT(
+						L"TextureManager::RestoreDxResource: Failed to restore surface for \"%s\" [%s]\n\t%s",
+						name.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
+					throw wexception(err);
+				}
+
+				hr = graphics->GetDevice()->CreateDepthStencilSurface(
+					width, height, D3DFMT_D16, typeSample,
+					0, FALSE, &data->lpRenderZ_, nullptr);
+				if (FAILED(hr)) {
+					auto err = STR_FMT(
+						L"TextureManager::RestoreDxResource: Failed to restore depth stencil for \"%s\" [%s]\n\t%s",
+						name.c_str(), DXGetErrorString(hr), DXGetErrorDescription(hr));
+					throw wexception(err);
+				}
 			}
 		}
 
-		for (auto itrSurface = listRefreshSurface_.begin(); itrSurface != listRefreshSurface_.end(); ++itrSurface) {
-			shared_ptr<TextureData> data = itrSurface->first->second;
-			D3DXIMAGE_INFO* info = data->GetImageInfo();
+		/*
+		for (auto& [name, data] : listRefreshSurface_) {
+			auto& [textureData, surfaceData] = data;
 
-			IDirect3DSurface9* surfaceDst = data->lpRenderSurface_;
-			IDirect3DSurface9*& surfaceSrc = itrSurface->second;
-			if (surfaceSrc == nullptr) continue;
+			D3DXIMAGE_INFO* info = textureData->GetImageInfo();
 
-			HRESULT hr = graphics->GetDevice()->UpdateSurface(surfaceSrc, nullptr, surfaceDst, nullptr);
+			IDirect3DSurface9* surfaceDst = textureData->lpRenderSurface_;
+			if (surfaceData == nullptr)
+				continue;
+
+			HRESULT hr = graphics->GetDevice()->UpdateSurface(surfaceData, nullptr, surfaceDst, nullptr);
 			if (FAILED(hr)) {
 				std::wstring err = StringUtility::Format(L"TextureManager::RestoreDxResource: "
 					"Render target restoration failed [%s]\r\n    %s: %s",
-					PathProperty::ReduceModuleDirectory(data->name_).c_str(), 
+					PathProperty::ReduceModuleDirectory(name).c_str(),
 					DXGetErrorString(hr), DXGetErrorDescription(hr));
-				Logger::WriteTop(err);
+				Logger::WriteError(err);
 			}
 
-			ptr_release(surfaceSrc);
+			ptr_release(surfaceData);
 		}
 		listRefreshSurface_.clear();
+		*/
 	}
 }
 
@@ -469,7 +486,7 @@ bool TextureManager::_CreateFromFile(shared_ptr<TextureData>& dst, const std::ws
 	catch (wexception& e) {
 		std::wstring str = StringUtility::Format(L"TextureManager: Failed to load texture \"%s\"\r\n    %s", 
 			pathReduce.c_str(), e.what());
-		Logger::WriteTop(str);
+		Logger::WriteError(str);
 
 		res = false;
 	}
@@ -508,34 +525,27 @@ bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std
 
 		D3DMULTISAMPLE_TYPE typeSample = graphics->GetMultiSampleType();
 
-		HRESULT hr;
-		hr = device->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-			0, FALSE, &data->lpRenderZ_, nullptr);
-		if (FAILED(hr)) throw false;
-
 		ColorMode colorMode = graphics->GetGraphicsConfig().colorMode;
+
 		D3DFORMAT fmt = colorMode == ColorMode::COLOR_MODE_32BIT ?
 			D3DFMT_A8R8G8B8 : D3DFMT_A4R4G4B4;
 
+		HRESULT hr;
+
 		hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT,
 			&data->pTexture_, nullptr);
-		if (FAILED(hr)) {
-			width = height = std::min(width, height);
-
-			hr = device->CreateDepthStencilSurface(width, height, D3DFMT_D16, typeSample,
-				0, FALSE, &data->lpRenderZ_, nullptr);
-			if (FAILED(hr))
-				throw wexception("CreateDepthStencilSurface failure.");
-
-			hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT,
-				&data->pTexture_, nullptr);
-			if (FAILED(hr))
-				throw wexception("CreateTexture failure.");
-		}
+		if (FAILED(hr))
+			throw wexception("CreateTexture failure.");
 
 		hr = data->pTexture_->GetSurfaceLevel(0, &data->lpRenderSurface_);
 		if (FAILED(hr))
 			throw wexception("GetSurfaceLevel failure.");
+
+		hr = device->CreateDepthStencilSurface(
+			width, height, D3DFMT_D16, typeSample,
+			0, FALSE, &data->lpRenderZ_, nullptr);
+		if (FAILED(hr))
+			throw wexception("CreateDepthStencilSurface failure.");
 
 		data->manager_ = this;
 		data->name_ = name;
@@ -548,7 +558,7 @@ bool TextureManager::_CreateRenderTarget(shared_ptr<TextureData>& dst, const std
 		Logger::WriteTop(StringUtility::Format(L"TextureManager: Render target created. [%s]", name.c_str()));
 	}
 	catch (wexception& e) {
-		Logger::WriteTop(StringUtility::Format(L"TextureManager: Failed to create render target \"%s\"\r\n    %s", 
+		Logger::WriteError(StringUtility::Format(L"TextureManager: Failed to create render target \"%s\"\r\n    %s",
 			name.c_str(), e.what()));
 		res = false;
 	}
@@ -666,7 +676,7 @@ shared_ptr<Texture> TextureManager::CreateFromFileInLoadThread(const std::wstrin
 						std::wstring str = StringUtility::Format(
 							L"TextureManager(LT): Failed to load texture \"%s\"\r\n    %s", 
 							pathReduce.c_str(), e.what());
-						Logger::WriteTop(str);
+						Logger::WriteError(str);
 						data->bReady_ = true;
 
 						return nullptr;
@@ -713,7 +723,7 @@ void TextureManager::CallFromLoadThread(shared_ptr<FileManager::LoadThreadEvent>
 		catch (wexception& e) {
 			std::wstring str = StringUtility::Format(L"TextureManager(LT): Failed to load texture \"%s\"\r\n    %s",
 				pathReduce.c_str(), e.what());
-			Logger::WriteTop(str);
+			Logger::WriteError(str);
 			data->bReady_ = true;
 			texture->data_ = nullptr;
 			mapTextureData_.erase(path);
@@ -762,7 +772,7 @@ shared_ptr<TextureData> TextureManager::GetData(const std::wstring& name) {
 //****************************************************************************
 //TextureInfoPanel
 //****************************************************************************
-TextureInfoPanel::TextureInfoPanel() {
+TextureInfoPanel::TextureInfoPanel() : videoMem_(0) {
 }
 
 void TextureInfoPanel::Initialize(const std::string& name) {
@@ -779,29 +789,9 @@ void TextureInfoPanel::Update() {
 	{
 		Lock lock(Logger::GetTop()->GetLock());
 
-		auto& mapData = manager->mapTextureData_;
-		listDisplay_.resize(mapData.size());
-
-		int iTex = 0;
-		for (auto& [path, data] : mapData) {
-			int countRef = data.use_count();
-			D3DXIMAGE_INFO* infoImage = &data->infoImage_;
-
-			std::wstring fileName = PathProperty::GetFileName(path);
-			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
-
-			TextureDisplay displayData = {
-				(uintptr_t)data.get(),
-				StringUtility::FromAddress((uintptr_t)data.get()),
-				STR_MULTI(fileName),
-				STR_MULTI(pathReduce),
-				countRef,
-				infoImage->Width,
-				infoImage->Height,
-				data->GetResourceSize()
-			};
-
-			listDisplay_[iTex++] = displayData;
+		listDisplay_.clear();
+		for (auto& [path, data] : manager->mapTextureData_) {
+			listDisplay_.push_back(TextureDisplay(data, path, &data->infoImage_));
 		}
 
 		// Sort new data as well
@@ -815,8 +805,8 @@ void TextureInfoPanel::Update() {
 	{
 		IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
 
-		UINT texMem = device->GetAvailableTextureMem() / (1024U * 1024U);
-		videoMem_ = texMem;
+		UINT texMem = device->GetAvailableTextureMem();
+		videoMem_ = texMem / (1024U * 1024U);
 	}
 }
 void TextureInfoPanel::ProcessGui() {
@@ -906,7 +896,29 @@ void TextureInfoPanel::ProcessGui() {
 	}
 }
 
+// --------------------------------------------------------------------------------------------
+
 const ImGuiTableSortSpecs* TextureInfoPanel::TextureDisplay::imguiSortSpecs = nullptr;
+
+TextureInfoPanel::TextureDisplay::TextureDisplay(
+	const shared_ptr<TextureData>& data, const std::wstring& path, D3DXIMAGE_INFO* infoImage)
+{
+	address = (uintptr_t)data.get();
+	strAddress = StringUtility::FromAddress(address);
+
+	fileName = STR_MULTI(PathProperty::GetFileName(path));
+	fullPath = STR_MULTI(PathProperty::ReduceModuleDirectory(path));
+
+	countRef = data.use_count();
+
+	wd = infoImage->Width;
+	ht = infoImage->Height;
+	size = data->GetResourceSize();
+
+	dataRef = data;
+	textureType = data->type_;
+}
+
 bool TextureInfoPanel::TextureDisplay::Compare(const TextureDisplay& a, const TextureDisplay& b) {
 	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
 		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];

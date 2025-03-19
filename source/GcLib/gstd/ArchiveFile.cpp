@@ -505,7 +505,7 @@ unique_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry* entry) {
 				}
 
 				if (sizeVerif != entry->sizeFull) {
-					Logger::WriteTop(StringUtility::Format(
+					Logger::WriteError(StringUtility::Format(
 						L"CreateEntryBuffer: Archive entry not properly read; entry might be corrupted\r\n"
 						L"\t[%s] -> expected %d bytes, read %d bytes",
 						entry->path.c_str(), entry->sizeFull, sizeVerif));
@@ -529,7 +529,7 @@ unique_ptr<ByteBuffer> ArchiveFile::CreateEntryBuffer(ArchiveFileEntry* entry) {
 		}
 	}
 	else {
-		Logger::WriteTop(StringUtility::Format(
+		Logger::WriteError(StringUtility::Format(
 			L"CreateEntryBuffer: Cannot open archive file for reading.\r\n"
 			L"\t[%s] in [%s]", entry->fullPath.c_str(), 
 			PathProperty::ReduceModuleDirectory(GetPath()).c_str()));

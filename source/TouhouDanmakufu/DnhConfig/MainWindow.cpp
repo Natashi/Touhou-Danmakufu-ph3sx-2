@@ -263,7 +263,7 @@ bool MainWindow::_StartGame() {
 		/*
 		if (res == 0) {
 			std::wstring log = StringUtility::Format(L"Could not start the game. [%s]\r\n", ErrorUtility::GetLastErrorMessage().c_str());
-			Logger::WriteTop(log);
+			Logger::WriteError(log);
 			return;
 		}
 		*/
