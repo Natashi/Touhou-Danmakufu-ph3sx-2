@@ -772,7 +772,7 @@ shared_ptr<TextureData> TextureManager::GetData(const std::wstring& name) {
 //****************************************************************************
 //TextureInfoPanel
 //****************************************************************************
-TextureInfoPanel::TextureInfoPanel() {
+TextureInfoPanel::TextureInfoPanel() : videoMem_(0) {
 }
 
 void TextureInfoPanel::Initialize(const std::string& name) {
@@ -789,29 +789,9 @@ void TextureInfoPanel::Update() {
 	{
 		Lock lock(Logger::GetTop()->GetLock());
 
-		auto& mapData = manager->mapTextureData_;
-		listDisplay_.resize(mapData.size());
-
-		int iTex = 0;
-		for (auto& [path, data] : mapData) {
-			int countRef = data.use_count();
-			D3DXIMAGE_INFO* infoImage = &data->infoImage_;
-
-			std::wstring fileName = PathProperty::GetFileName(path);
-			std::wstring pathReduce = PathProperty::ReduceModuleDirectory(path);
-
-			TextureDisplay displayData = {
-				(uintptr_t)data.get(),
-				StringUtility::FromAddress((uintptr_t)data.get()),
-				STR_MULTI(fileName),
-				STR_MULTI(pathReduce),
-				countRef,
-				infoImage->Width,
-				infoImage->Height,
-				data->GetResourceSize()
-			};
-
-			listDisplay_[iTex++] = displayData;
+		listDisplay_.clear();
+		for (auto& [path, data] : manager->mapTextureData_) {
+			listDisplay_.push_back(TextureDisplay(data, path, &data->infoImage_));
 		}
 
 		// Sort new data as well
@@ -825,8 +805,8 @@ void TextureInfoPanel::Update() {
 	{
 		IDirect3DDevice9* device = DirectGraphics::GetBase()->GetDevice();
 
-		UINT texMem = device->GetAvailableTextureMem() / (1024U * 1024U);
-		videoMem_ = texMem;
+		UINT texMem = device->GetAvailableTextureMem();
+		videoMem_ = texMem / (1024U * 1024U);
 	}
 }
 void TextureInfoPanel::ProcessGui() {
@@ -916,7 +896,29 @@ void TextureInfoPanel::ProcessGui() {
 	}
 }
 
+// --------------------------------------------------------------------------------------------
+
 const ImGuiTableSortSpecs* TextureInfoPanel::TextureDisplay::imguiSortSpecs = nullptr;
+
+TextureInfoPanel::TextureDisplay::TextureDisplay(
+	const shared_ptr<TextureData>& data, const std::wstring& path, D3DXIMAGE_INFO* infoImage)
+{
+	address = (uintptr_t)data.get();
+	strAddress = StringUtility::FromAddress(address);
+
+	fileName = STR_MULTI(PathProperty::GetFileName(path));
+	fullPath = STR_MULTI(PathProperty::ReduceModuleDirectory(path));
+
+	countRef = data.use_count();
+
+	wd = infoImage->Width;
+	ht = infoImage->Height;
+	size = data->GetResourceSize();
+
+	dataRef = data;
+	textureType = data->type_;
+}
+
 bool TextureInfoPanel::TextureDisplay::Compare(const TextureDisplay& a, const TextureDisplay& b) {
 	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
 		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];

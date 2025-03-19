@@ -171,6 +171,11 @@ namespace directx {
 			uint32_t ht;
 			uint32_t size;
 
+			weak_ptr<TextureData> dataRef;
+			TextureData::Type textureType;
+		public:
+			TextureDisplay(const shared_ptr<TextureData>& data, const std::wstring& path, D3DXIMAGE_INFO* infoImage);
+		public:
 			static const ImGuiTableSortSpecs* imguiSortSpecs;
 			static bool IMGUI_CDECL Compare(const TextureDisplay& a, const TextureDisplay& b);
 		};
