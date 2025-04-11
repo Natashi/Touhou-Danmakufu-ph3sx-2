@@ -326,8 +326,28 @@ namespace gstd {
 	class Math {
 	public:
 		template<size_t S> using DVec = std::array<double, S>;
-		using DVec2 = DVec<2>;
-		using DVec3 = DVec<3>;
+		//using DVec2 = DVec<2>;
+		//using DVec3 = DVec<3>;
+
+		class DVec2 : public DVec<2> {
+		public:
+			double x() const { return this->at(0); }
+			double y() const { return this->at(1); }
+
+			double& x() { return this->at(0); }
+			double& y() { return this->at(1); }
+		};
+
+		class DVec3 : public DVec<3> {
+		public:
+			double x() const { return this->at(0); }
+			double y() const { return this->at(1); }
+			double z() const { return this->at(2); }
+
+			double& x() { return this->at(0); }
+			double& y() { return this->at(1); }
+			double& z() { return this->at(2); }
+		};
 	public:
 		static void InitializeFPU() {
 			_asm { 
