@@ -161,66 +161,51 @@ namespace directx {
 	template<typename T>
 	class DxRect {
 	public:
-		DxRect() {
-			left = (T)0;
-			top = (T)0;
-			right = (T)0;
-			bottom = (T)0;
-		}
+		T left, top, right, bottom;
+	public:
+		DxRect() : left(0), top(0), right(0), bottom(0) {}
 		DxRect(T l, T t, T r, T b) : left(l), top(t), right(r), bottom(b) {}
-		DxRect(const DxRect<T>& src) {
-			left = src.left;
-			top = src.top;
-			right = src.right;
-			bottom = src.bottom;
-		}
-		DxRect(const RECT& src) {
-			left = (T)src.left;
-			top = (T)src.top;
-			right = (T)src.right;
-			bottom = (T)src.bottom;
-		}
+		
+		DxRect(const DxRect& src) :
+			left(src.left), top(src.top),
+			right(src.right), bottom(src.bottom) {}
+		
+		DxRect(const RECT& src) :
+			left(src.left), top(src.top),
+			right(src.right), bottom(src.bottom) {}
+		
 		template<typename L>
-		DxRect(const DxRect<L>& src) {
-			left = (T)src.left;
-			top = (T)src.top;
-			right = (T)src.right;
-			bottom = (T)src.bottom;
-		}
+		DxRect(const DxRect<L>& src) :
+			left(src.left), top(src.top),
+			right(src.right), bottom(src.bottom) {}
 
 		template<typename L>
-		inline DxRect<L> NewAs() {
-			DxRect<L> res = DxRect<L>((L)left, (L)top,
-				(L)right, (L)bottom);
-			return res;
+		DxRect<L> NewAs() {
+			return DxRect<L>(left, top,
+				right, bottom);
 		}
-		inline void Set(T l, T t, T r, T b) {
-			left = l;
-			top = t;
-			right = r;
-			bottom = b;
+		void Set(T l, T t, T r, T b) {
+			*this = DxRect(l, t, r, b);
 		}
 
 		RECT AsRect() const { return RECT{ left, top, right, bottom }; }
 		T GetWidth() const { return right - left; }
 		T GetHeight() const { return bottom - top; }
 
-		inline bool IsIntersected(const DxRect<T>& other) const {
+		bool IsIntersected(const DxRect<T>& other) const {
 			return !(other.left > right || other.right < left
 				|| other.top > bottom || other.bottom < top);
 		}
 
 #if defined(DNH_PROJ_EXECUTOR)
-		inline bool IsPointIntersected(const DxPoint* point) const;
-		inline bool IsPointIntersected(const gstd::Math::DVec2& point) const { return IsPointIntersected(point[0], point[1]); }
+		bool IsPointIntersected(const DxPoint* point) const;
+		bool IsPointIntersected(const gstd::Math::DVec2& point) const { return IsPointIntersected(point[0], point[1]); }
 #endif
-		inline bool IsPointIntersected(const float* point) const { return IsPointIntersected(point[0], point[1]); }
-		inline bool IsPointIntersected(const double* point) const { return IsPointIntersected(point[0], point[1]); }
-		inline bool IsPointIntersected(double x, double y) const {
+		bool IsPointIntersected(const float* point) const { return IsPointIntersected(point[0], point[1]); }
+		bool IsPointIntersected(const double* point) const { return IsPointIntersected(point[0], point[1]); }
+		bool IsPointIntersected(double x, double y) const {
 			return (x >= left && y >= top) && (x <= right && y <= bottom);
 		}
-	public:
-		T left, top, right, bottom;
 	};
 
 #if defined(DNH_PROJ_EXECUTOR)
@@ -229,25 +214,24 @@ namespace directx {
 	//*******************************************************************
 	class DxShapeBase {
 	public:
-		DxShapeBase() {};
-		virtual ~DxShapeBase() {};
+		DxShapeBase() = default;
+		virtual ~DxShapeBase() = default;
 
 		virtual DxRect<float> GetBounds() const = 0;
 	};
 
 	class DxPoint : public DxShapeBase {
-	private:
-		D3DXVECTOR2 pos;
+		D3DXVECTOR2 pos_;
 	public:
-		DxPoint() {};
-		DxPoint(float x, float y) { pos = D3DXVECTOR2(x, y); }
+		DxPoint() = default;
+		DxPoint(float x, float y) : pos_(x, y) {}
 		
-		float GetX() const { return pos.x; }
-		void SetX(float x) { pos.x = x; }
-		float GetY() const { return pos.y; }
-		void SetY(float y) { pos.y = y; }
+		float GetX() const { return pos_.x; }
+		void SetX(float x) { pos_.x = x; }
+		float GetY() const { return pos_.y; }
+		void SetY(float y) { pos_.y = y; }
 
-		virtual DxRect<float> GetBounds() const {
+		DxRect<float> GetBounds() const override {
 			return DxRect<float>(GetX(), GetY(), GetX(), GetY());
 		}
 	};
@@ -256,61 +240,57 @@ namespace directx {
 	}
 
 	class DxCircle : public DxPoint {
-	private:
-		float r;
+		float r_;
 	public:
-		DxCircle() { r = 0; }
-		DxCircle(float x, float y, float _r) : DxPoint(x, y) { r = _r; }
+		DxCircle() = default;
+		DxCircle(float x, float y, float r) :
+			DxPoint(x, y), r_(r) {}
 		
-		float GetR() const { return r; }
-		void SetR(float _r) { r = _r; }
+		float GetR() const { return r_; }
+		void SetR(float r) { r_ = r; }
 
-		virtual DxRect<float> GetBounds() const {
+		DxRect<float> GetBounds() const override {
 			float x = GetX();
 			float y = GetY();
-			return DxRect<float>(x - r, y - r, x + r, y + r);
+			return DxRect(x - r_, y - r_, x + r_, y + r_);
 		}
 	};
 	class DxEllipse : public DxPoint {
-	private:
-		float a;
-		float b;
+		float a_, b_;
 	public:
-		DxEllipse() { a = 0; b = 0; }
-		DxEllipse(float x, float y, float _a, float _b) : DxPoint(x, y) { a = _a; b = _b; }
+		DxEllipse() = default;
+		DxEllipse(float x, float y, float a, float b) :
+			DxPoint(x, y), a_(a), b_(b) {}
 
-		float GetA() const { return a; }
-		void SetA(float _a) { a = _a; }
-		float GetB() const { return b; }
-		void SetB(float _b) { b = _b; }
+		float GetA() const { return a_; }
+		void SetA(float a) { a_ = a; }
+		float GetB() const { return b_; }
+		void SetB(float b) { b_ = b; }
 
-		virtual DxRect<float> GetBounds() const {
+		DxRect<float> GetBounds() const override {
 			float x = GetX();
 			float y = GetY();
-			return DxRect<float>(x - a, y - b, x + a, y + b);
+			return DxRect<float>(x - a_, y - b_, x + a_, y + b_);
 		}
 	};
 
 	class DxLine : public DxShapeBase {
-	private:
-		DxPoint p1;
-		DxPoint p2;
+		DxPoint p1_, p2_;
 	public:
-		DxLine() {};
-		DxLine(float x1, float y1, float x2, float y2) {
-			p1 = DxPoint(x1, y1); p2 = DxPoint(x2, y2);
-		}
+		DxLine() = default;
+		DxLine(float x1, float y1, float x2, float y2)
+			: p1_(x1, y1), p2_(x2, y2) {}
 
-		void SetX1(float x) { p1.SetX(x); }
-		float GetX1() const { return p1.GetX(); }
-		void SetY1(float y) { p1.SetY(y); }
-		float GetY1() const { return p1.GetY(); }
-		void SetX2(float x) { p2.SetX(x); }
-		float GetX2() const { return p2.GetX(); }
-		void SetY2(float y) { p2.SetY(y); }
-		float GetY2() const { return p2.GetY(); }
+		void SetX1(float x) { p1_.SetX(x); }
+		float GetX1() const { return p1_.GetX(); }
+		void SetY1(float y) { p1_.SetY(y); }
+		float GetY1() const { return p1_.GetY(); }
+		void SetX2(float x) { p2_.SetX(x); }
+		float GetX2() const { return p2_.GetX(); }
+		void SetY2(float y) { p2_.SetY(y); }
+		float GetY2() const { return p2_.GetY(); }
 
-		virtual DxRect<float> GetBounds() const {
+		DxRect<float> GetBounds() const override {
 			DxRect<float> bound(GetX1(), GetY1(), GetX2(), GetY2());
 			if (bound.left > bound.right) std::swap(bound.left, bound.right);
 			if (bound.top > bound.bottom) std::swap(bound.top, bound.bottom);
@@ -318,86 +298,79 @@ namespace directx {
 		}
 	};
 	class DxWidthLine : public DxLine {
-	private:
-		float w;
+		float w_;
 	public:
-		DxWidthLine() { w = 0; }
-		DxWidthLine(float x1, float y1, float x2, float y2, float w_) : DxLine(x1, y1, x2, y2) {
-			w = w_;
-		}
+		DxWidthLine() = default;
+		DxWidthLine(float x1, float y1, float x2, float y2, float w) :
+			DxLine(x1, y1, x2, y2), w_(w) {}
 
-		void SetWidth(float w_) { w = w_; }
-		float GetWidth() const { return w; }
+		void SetWidth(float w) { w_ = w; }
+		float GetWidth() const { return w_; }
 
-		virtual DxRect<float> GetBounds() const {
+		DxRect<float> GetBounds() const override {
 			float l = GetX1(); float t = GetY1();
 			float r = GetX2(); float b = GetY2();
 			if (l > r) std::swap(l, r);
 			if (t > b) std::swap(t, b);
-			float w2 = w * 0.5f;
+			float w2 = w_ * 0.5f;
 			return DxRect<float>(l - w2, t - w2, r + w2, b + w2);
 		}
 	};
 
 	class DxRegularPolygon : public DxCircle {
-	private:
-		size_t side;
-		float ang;
+		size_t side_;
+		float ang_;
 	public:
-		DxRegularPolygon() { side = 1; ang = 0; }
-		DxRegularPolygon(float x, float y, float r, size_t s, float a) : DxCircle(x, y, r) {
-			side = s; ang = a;
-		}
+		DxRegularPolygon() : side_(1), ang_(0) {}
+		DxRegularPolygon(float x, float y, float r, size_t s, float a) :
+			DxCircle(x, y, r), side_(s), ang_(a) {}
 
-		void SetSide(size_t s) { side = s; }
-		size_t GetSide() const { return side; }
-		void SetAngle(float a) { ang = a; }
-		float GetAngle() const { return ang; }
+		void SetSide(size_t s) { side_ = s; }
+		size_t GetSide() const { return side_; }
+		void SetAngle(float a) { ang_ = a; }
+		float GetAngle() const { return ang_; }
 	};
 
 	class DxLine3D : public DxShapeBase {
-	private:
-		D3DXVECTOR3 vertex_[2];
+		std::array<D3DXVECTOR3, 2> vertex_;
 	public:
-		DxLine3D() {};
-		DxLine3D(const D3DXVECTOR3& p1, const D3DXVECTOR3& p2) {
-			vertex_[0] = p1;
-			vertex_[1] = p2;
-		}
+		DxLine3D() = default;
+		DxLine3D(const D3DXVECTOR3& p1, const D3DXVECTOR3& p2)
+			: vertex_({ p1, p2 }) {}
 
 		D3DXVECTOR3& GetPosition(size_t index) { return vertex_[index]; }
 		D3DXVECTOR3& GetPosition1() { return vertex_[0]; }
 		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
 
-		virtual DxRect<float> GetBounds() const { return DxRect<float>(); }
+		DxRect<float> GetBounds() const override { return DxRect<float>(); }
 	};
 
 	class DxTriangle3D : public DxShapeBase {
-	private:
-		D3DXVECTOR3 vertex_[3];
+		std::array<D3DXVECTOR3, 3> vertex_;
 		D3DXVECTOR3 normal_;
 
-		void _Compute() {
+		void Compute() {
 			D3DXVECTOR3 lv[3];
 			lv[0] = vertex_[1] - vertex_[0];
-			lv[0] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[0]);
+			D3DXVec3Normalize(&lv[0], &lv[0]);
 
 			lv[1] = vertex_[2] - vertex_[1];
-			lv[1] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[1]);
+			D3DXVec3Normalize(&lv[1], &lv[1]);
 
 			lv[2] = vertex_[0] - vertex_[2];
-			lv[2] = *D3DXVec3Normalize(&D3DXVECTOR3(), &lv[2]);
+			D3DXVec3Normalize(&lv[2], &lv[2]);
 
-			D3DXVECTOR3 cross = *D3DXVec3Cross(&D3DXVECTOR3(), &lv[0], &lv[1]);
-			normal_ = *D3DXVec3Normalize(&D3DXVECTOR3(), &cross);
+			D3DXVECTOR3 cross;
+			D3DXVec3Cross(&cross, &lv[0], &lv[1]);
+			
+			D3DXVec3Normalize(&normal_, &cross);
 		}
 	public:
-		DxTriangle3D() {}
-		DxTriangle3D(const D3DXVECTOR3& p1, const D3DXVECTOR3& p2, const D3DXVECTOR3& p3) {
-			vertex_[0] = p1;
-			vertex_[1] = p2;
-			vertex_[2] = p3;
-			_Compute();
+		DxTriangle3D() = default;
+		DxTriangle3D(const D3DXVECTOR3& p1, const D3DXVECTOR3& p2, const D3DXVECTOR3& p3)
+			: vertex_({ p1, p2, p3 })
+		{
+			Compute();
 		}
 
 		D3DXVECTOR3& GetPosition(size_t index) { return vertex_[index]; }
@@ -405,15 +378,18 @@ namespace directx {
 		D3DXVECTOR3& GetPosition2() { return vertex_[1]; }
 		D3DXVECTOR3& GetPosition3() { return vertex_[2]; }
 		D3DXVECTOR3& GetNormal() { return normal_; }
+		
 		FLOAT GetArea() {
-			D3DXVECTOR3 v_ab = vertex_[0] - vertex_[1];
-			D3DXVECTOR3 v_ac = vertex_[0] - vertex_[2];
-			D3DXVECTOR3 vCross;
-			D3DXVec3Cross(&vCross, &v_ab, &v_ac);
-			return abs(0.5f * D3DXVec3Length(&vCross));
+			D3DXVECTOR3 ab = vertex_[0] - vertex_[1];
+			D3DXVECTOR3 ac = vertex_[0] - vertex_[2];
+			
+			D3DXVECTOR3 cross;
+			D3DXVec3Cross(&cross, &ab, &ac);
+			
+			return abs(0.5f * D3DXVec3Length(&cross));
 		}
 
-		virtual DxRect<float> GetBounds() const { return DxRect<float>(); }
+		DxRect<float> GetBounds() const override { return DxRect<float>(); }
 	};
 #endif
 }
