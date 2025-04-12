@@ -12,6 +12,23 @@ class StgItemDataList;
 class StgItemData;
 struct StgItemDataFrame;
 class StgItemObject;
+
+enum class ItemType {
+	OneUp = -256 * 256,
+	OneUpSmall,
+	Spell,
+	SpellSmall,
+	Power,
+	PowerSmall,
+	Point,
+	PointSmall,
+
+	ScoreText,	// Default score text objects
+	Bonus,		// Default bullet cancel items
+
+	User = 0,
+};
+
 //*******************************************************************
 //StgItemManager
 //*******************************************************************
@@ -48,36 +65,36 @@ protected:
 
 	bool bAllItemToPlayer_;
 	bool bCancelToPlayer_;
-	bool bDefaultBonusItemEnable_;
 
 	ID3DXEffect* effectItem_;
 	D3DXMATRIX matProj_;
 public:
+	bool bDefaultBonusItemEnable_;
+
 	IDirect3DTexture9* pLastTexture_;
 public:
 	StgItemManager(StgStageController* stageController);
-	virtual ~StgItemManager();
 
 	void Work();
 	void Render(int targetPriority);
 	void LoadRenderQueue();
 
-	void AddItem(ref_unsync_ptr<StgItemObject> obj) {
+	void AddItem(const ref_unsync_ptr<StgItemObject>& obj) {
 		listObj_.push_back(obj); 
 	}
-	size_t GetItemCount() { return listObj_.size(); }
+	_NODISCARD size_t GetItemCount() const { return listObj_.size(); }
 
-	ID3DXEffect* GetEffect() { return effectItem_; }
-	D3DXMATRIX* GetProjectionMatrix() { return &matProj_; }
+	_NODISCARD ID3DXEffect* GetEffect() const { return effectItem_; }
+	_NODISCARD D3DXMATRIX* GetProjectionMatrix() { return &matProj_; }
 
-	SpriteList2D* GetItemRenderer() { return listSpriteItem_.get(); }
-	SpriteList2D* GetDigitRenderer() { return listSpriteDigit_.get(); }
+	_NODISCARD SpriteList2D* GetItemRenderer() const { return listSpriteItem_.get(); }
+	_NODISCARD SpriteList2D* GetDigitRenderer() const { return listSpriteDigit_.get(); }
 
-	StgItemDataList* GetItemDataList() { return listItemData_.get(); }
+	_NODISCARD StgItemDataList* GetItemDataList() const { return listItemData_.get(); }
 
 	bool LoadItemData(const std::wstring& path, bool bReload = false);
 
-	ref_unsync_ptr<StgItemObject> CreateItem(int type);
+	ref_unsync_ptr<StgItemObject> CreateItem(ItemType type);
 
 	void SetItemDeleteClip(const DxRect<LONG>& clip) { rcDeleteClip_ = clip; }
 	DxRect<LONG>* GetItemDeleteClip() { return &rcDeleteClip_; }
@@ -91,10 +108,8 @@ public:
 	void CollectItemsInCircle(const DxCircle& circle);
 	void CancelCollectItems();
 
-	std::vector<int> GetItemIdInCircle(int cx, int cy, optional<int> radius, optional<int> itemType);
-
-	bool IsDefaultBonusItemEnable() { return bDefaultBonusItemEnable_; }
-	void SetDefaultBonusItemEnable(bool bEnable) { bDefaultBonusItemEnable_ = bEnable; }
+	std::vector<int> GetItemIdInCircle(int cx, int cy,
+		optional<int> radius, optional<ItemType> itemType);
 };
 
 //*******************************************************************
@@ -108,12 +123,14 @@ private:
 	void _ScanItem(std::map<int, unique_ptr<StgItemData>>& mapData, Scanner& scanner);
 	static void _ScanAnimation(StgItemData* itemData, Scanner& scanner);
 
-	void _LoadVertexBuffers(const std::wstring& name, shared_ptr<Texture> texture, const std::vector<StgItemData*>& listAddData);
+	void _LoadVertexBuffers(const std::wstring& name, shared_ptr<Texture> texture,
+		const std::vector<StgItemData*>& listAddData);
 public:
-	StgItemDataList();
-	virtual ~StgItemDataList();
-
-	StgItemData* GetData(int id) { return (id >= 0 && id < listData_.size()) ? listData_[id].get() : nullptr; }
+	StgItemData* GetData(int id) {
+		return id >= 0 && id < listData_.size()
+			? listData_[id].get()
+			: nullptr;
+	}
 
 	bool AddItemDataList(const std::wstring& path, bool bReload);
 };
@@ -126,7 +143,7 @@ class StgItemData {
 private:
 	StgItemDataList* listItemData_;
 
-	int typeItem_;
+	//int typeItem_;
 	BlendMode typeRender_;
 
 	int alpha_;
@@ -137,17 +154,16 @@ private:
 	size_t totalFrame_;
 public:
 	StgItemData(StgItemDataList* listItemData);
-	virtual ~StgItemData();
 
-	int GetItemType() { return typeItem_; }
-	BlendMode GetRenderType() { return typeRender_; }
+	//int GetItemType() { return typeItem_; }
+	BlendMode GetRenderType() const { return typeRender_; }
 
-	int GetAlpha() { return alpha_; }
+	int GetAlpha() const { return alpha_; }
 	
 	StgItemData* GetOutData() { return dataOut_.get(); }
 
 	StgItemDataFrame* GetFrame(size_t frame);
-	size_t GetFrameCount() { return listFrame_.size(); }
+	size_t GetFrameCount() const { return listFrame_.size(); }
 };
 struct StgItemDataFrame {
 	StgItemDataList* listItemData_;
@@ -216,62 +232,47 @@ public:
 class StgItemObject : public DxScriptShaderObject, public StgMoveObject, public StgIntersectionObject {
 	friend StgItemManager;
 public:
-	enum {
-		//Default item IDs
-		ITEM_1UP = -256 * 256,
-		ITEM_1UP_S,
-		ITEM_SPELL,
-		ITEM_SPELL_S,
-		ITEM_POWER,
-		ITEM_POWER_S,
-		ITEM_POINT,
-		ITEM_POINT_S,
-
-		ITEM_SCORE_TEXT,	//Default score text objects
-		ITEM_BONUS,			//Default bullet cancel items
-
-		ITEM_USER = 0,
-
-		//Collection types
-		COLLECT_PLAYER_SCOPE = 0,
-		COLLECT_PLAYER_LINE,
-		COLLECT_IN_CIRCLE,
-		COLLECT_ALL,
-		COLLECT_SINGLE,
-
-		//Collection cancel types
-		CANCEL_PLAYER_DOWN = 0,
-		CANCEL_ALL,
-		CANCEL_SINGLE,
+	enum class CollectType {
+		PlayerScope,
+		PlayerPoc,
+		InCircle,
+		Single,
+		CollectAll,
 	};
-	enum {
-		FLAG_MOVETOPL_NONE				= 0x0,
-		FLAG_MOVETOPL_PLAYER_SCOPE		= 0x1,
-		FLAG_MOVETOPL_COLLECT_ALL		= 0x2,
-		FLAG_MOVETOPL_POC_LINE			= 0x4,
-		FLAG_MOVETOPL_COLLECT_CIRCLE	= 0x8,
-		FLAG_MOVETOPL_ALL				= 0x1 | 0x2 | 0x4 | 0x8,
+	enum class CancelType {
+		PlayerDead,
+		Single,
+		CancelAll,
 	};
+
+	static constexpr int MoveToPlayerFlag_None = 0;
+	static constexpr int MoveToPlayerFlag_CollectAllItems = 1 << 0;
+	static constexpr int MoveToPlayerFlag_PlayerScope = 1 << 1;
+	static constexpr int MoveToPlayerFlag_PlayerPoc = 1 << 2;
+	static constexpr int MoveToPlayerFlag_Circle = 1 << 3;
+	static constexpr int MoveToPlayerFlag_All =
+		MoveToPlayerFlag_CollectAllItems |
+		MoveToPlayerFlag_PlayerScope |
+		MoveToPlayerFlag_PlayerPoc |
+		MoveToPlayerFlag_Circle;
+	
 protected:
-	StgStageController* stageController_;
-	int typeItem_;
-	//D3DCOLOR color_;
-
 	int frameWork_;
+public:
+	ItemType itemType;
+	
+	int64_t score;
+	bool useDefaultScoreText;
 
-	int64_t score_;
+	bool isMovingToPlayer;		// Is the item supposed to be homing in on the player right now?
+	int moveToPlayerFlags;		// MoveToPlayer permissions
 
-	bool bMoveToPlayer_;		//Is the item supposed to be homing in on the player right now?
-	int moveToPlayerFlags_;		//MoveToPlayer permissions
+	bool canAutoDelete;
+	bool isIntersectEnable;
+	uint32_t itemIntersectRadius;
 
-	bool bDefaultScoreText_;
-
-	bool bAutoDelete_;
-	bool bIntersectEnable_;
-	uint32_t itemIntersectRadius_;
-
-	bool bDefaultCollectionMove_;
-	bool bRoundingPosition_;
+	bool isDefaultCollectionMove;
+	bool isRoundingPosition;
 protected:
 	void _DeleteInAutoClip();
 	void _CreateScoreItem();
@@ -280,96 +281,68 @@ protected:
 public:
 	StgItemObject(StgStageController* stageController);
 
-	virtual void Clone(DxScriptObjectBase* src);
+	void Clone(DxScriptObjectBase* src) override;
 
-	virtual bool HasNormalRendering() { return false; }
+	bool HasNormalRendering() override { return false; }
 
-	virtual void Work();
-	virtual void Activate() {}
+	void Work() override;
 	
-	virtual void SetRenderState() {}
-	virtual void Render() {};
+	void SetRenderState() override {}
+	void Render() override {};
+	
 	virtual void Render(BlendMode targetBlend) {};
 	virtual void RenderOnItemManager();
 
-	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) = 0;
-
-	virtual void SetX(float x) { position[0] = x; DxScriptRenderObject::SetX(x); }
-	virtual void SetY(float y) { position[1] = y; DxScriptRenderObject::SetY(y); }
-	virtual void SetColor(int r, int g, int b);
-	virtual void SetAlpha(int alpha);
+	void SetX(float x) override { position[0] = x; DxScriptRenderObject::SetX(x); }
+	void SetY(float y) override { position[1] = y; DxScriptRenderObject::SetY(y); }
+	void SetColor(int r, int g, int b) override;
+	void SetAlpha(int alpha) override;
 	
 	void SetToPosition(const Math::DVec2& pos);
 
-	int GetFrameWork() { return frameWork_; }
-
-	int GetItemType() { return typeItem_; }
-	void SetItemType(int type) { typeItem_ = type; }
-
-	int64_t GetScore() { return score_; }
-	void SetScore(int64_t score) { score_ = score; }
-
-	bool IsMoveToPlayer() { return bMoveToPlayer_; }
-	void SetMoveToPlayer(bool b) { bMoveToPlayer_ = b; }
-	int GetMoveToPlayerEnableFlags() { return moveToPlayerFlags_; }
-	void SetMoveToPlayerEnableFlags(int moveFlags) { moveToPlayerFlags_ = moveFlags; }
-
-	void SetDefaultScoreText(bool b) { bDefaultScoreText_ = b; }
-
-	void SetAutoDelete(bool b) { bAutoDelete_ = b; }
-	void SetIntersectionEnable(bool b) { bIntersectEnable_ = b; }
-	void SetIntersectionRadius(int r) { itemIntersectRadius_ = r * r; }
-
-	bool IsIntersectionEnable() { return bIntersectEnable_;  }
-
-	bool IsDefaultCollectionMovement() { return bDefaultCollectionMove_; }
-	void SetDefaultCollectionMovement(bool b) { bDefaultCollectionMove_ = b; }
-
-	void SetPositionRounding(bool b) { bRoundingPosition_ = b; }
+	int GetFrameWork() const { return frameWork_; }
 
 	StgMovePattern_Item::ItemMoveType GetMoveType();
 	void SetMoveType(StgMovePattern_Item::ItemMoveType type);
 
-	void NotifyItemCollectEvent(int type, uint64_t eventParam);
-	void NotifyItemCancelEvent(int type);
-
-	StgStageController* GetStageController() { return stageController_; }
+	void NotifyItemCollectEvent(CollectType type, uint64_t eventParam);
+	void NotifyItemCancelEvent(CancelType type);
 };
 
 class StgItemObject_1UP : public StgItemObject {
 public:
 	StgItemObject_1UP(StgStageController* stageController);
 	
-	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
+	void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) override;
 };
 
 class StgItemObject_Bomb : public StgItemObject {
 public:
 	StgItemObject_Bomb(StgStageController* stageController);
 	
-	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
+	void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) override;
 };
 
 class StgItemObject_Power : public StgItemObject {
 public:
 	StgItemObject_Power(StgStageController* stageController);
 	
-	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
+	void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) override;
 };
 
 class StgItemObject_Point : public StgItemObject {
 public:
 	StgItemObject_Point(StgStageController* stageController);
 	
-	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
+	void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) override;
 };
 
 class StgItemObject_Bonus : public StgItemObject {
 public:
 	StgItemObject_Bonus(StgStageController* stageController);
 	
-	virtual void Work();
-	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
+	void Work() override;
+	void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) override;
 };
 
 class StgItemObject_ScoreText : public StgItemObject {
@@ -377,8 +350,8 @@ class StgItemObject_ScoreText : public StgItemObject {
 public:
 	StgItemObject_ScoreText(StgStageController* stageController);
 	
-	virtual void Work();
-	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
+	void Work() override;
+	void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) override;
 };
 
 class StgItemObject_User : public StgItemObject {
@@ -390,16 +363,16 @@ protected:
 public:
 	StgItemObject_User(StgStageController* stageController);
 
-	virtual void Clone(DxScriptObjectBase* src);
+	void Clone(DxScriptObjectBase* src) override;
 
-	virtual void Work();
+	void Work() override;
 
-	virtual void Render(BlendMode targetBlend);
-	virtual void RenderOnItemManager() {};
+	void Render(BlendMode targetBlend) override;
+	void RenderOnItemManager() override {};
 
-	virtual void SetRenderTarget(shared_ptr<Texture> texture) { renderTarget_ = texture; }
+	void SetRenderTarget(shared_ptr<Texture> texture) override { renderTarget_ = texture; }
 
-	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
+	void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) override;
 
 	void SetImageID(int id);
 };

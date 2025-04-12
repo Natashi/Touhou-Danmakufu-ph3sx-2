@@ -630,22 +630,22 @@ static const std::vector<constant> stgStageConstant = {
 	constant("STATE_END", StgPlayerObject::STATE_END),
 
 	//Item types
-	constant("ITEM_1UP", StgItemObject::ITEM_1UP),
-	constant("ITEM_1UP_S", StgItemObject::ITEM_1UP_S),
-	constant("ITEM_SPELL", StgItemObject::ITEM_SPELL),
-	constant("ITEM_SPELL_S", StgItemObject::ITEM_SPELL_S),
-	constant("ITEM_POWER", StgItemObject::ITEM_POWER),
-	constant("ITEM_POWER_S", StgItemObject::ITEM_POWER_S),
-	constant("ITEM_POINT", StgItemObject::ITEM_POINT),
-	constant("ITEM_POINT_S", StgItemObject::ITEM_POINT_S),
-	constant("ITEM_USER", StgItemObject::ITEM_USER),
+	constant("ITEM_1UP", (int)ItemType::OneUp),
+	constant("ITEM_1UP_S", (int)ItemType::OneUpSmall),
+	constant("ITEM_SPELL", (int)ItemType::Spell),
+	constant("ITEM_SPELL_S", (int)ItemType::SpellSmall),
+	constant("ITEM_POWER", (int)ItemType::Power),
+	constant("ITEM_POWER_S", (int)ItemType::PowerSmall),
+	constant("ITEM_POINT", (int)ItemType::Point),
+	constant("ITEM_POINT_S", (int)ItemType::PointSmall),
+	constant("ITEM_USER", (int)ItemType::User),
 
 	//Item autocollect flags
-	constant("ITEM_AUTOCOLLECT_PLAYER_SCOPE", StgItemObject::FLAG_MOVETOPL_PLAYER_SCOPE),
-	constant("ITEM_AUTOCOLLECT_COLLECT_ALL", StgItemObject::FLAG_MOVETOPL_COLLECT_ALL),
-	constant("ITEM_AUTOCOLLECT_POC_LINE", StgItemObject::FLAG_MOVETOPL_POC_LINE),
-	constant("ITEM_AUTOCOLLECT_COLLECT_CIRCLE", StgItemObject::FLAG_MOVETOPL_COLLECT_CIRCLE),
-	constant("ITEM_AUTOCOLLECT_ALL", StgItemObject::FLAG_MOVETOPL_ALL),
+	constant("ITEM_AUTOCOLLECT_PLAYER_SCOPE", StgItemObject::MoveToPlayerFlag_PlayerScope),
+	constant("ITEM_AUTOCOLLECT_COLLECT_ALL", StgItemObject::MoveToPlayerFlag_CollectAllItems),
+	constant("ITEM_AUTOCOLLECT_POC_LINE", StgItemObject::MoveToPlayerFlag_PlayerPoc),
+	constant("ITEM_AUTOCOLLECT_COLLECT_CIRCLE", StgItemObject::MoveToPlayerFlag_Circle),
+	constant("ITEM_AUTOCOLLECT_ALL", StgItemObject::MoveToPlayerFlag_All),
 
 	//Item move types
 	constant("ITEM_MOVE_DOWN", (int)StgMovePattern_Item::ItemMoveType::Down),
@@ -2257,7 +2257,7 @@ gstd::value StgStageScript::Func_CreateItemA1(gstd::script_machine* machine, int
 		return script->CreateIntValue(StgControlScript::ID_INVALID);
 
 	int type = argv[0].as_int();
-	ref_unsync_ptr<StgItemObject> obj = itemManager->CreateItem(type);
+	ref_unsync_ptr<StgItemObject> obj = itemManager->CreateItem((ItemType)type);
 
 	int id = script->AddObject(obj);
 	if (id != ID_INVALID) {
@@ -2273,7 +2273,7 @@ gstd::value StgStageScript::Func_CreateItemA1(gstd::script_machine* machine, int
 
 		obj->SetX(posX);
 		obj->SetY(posY);
-		obj->SetScore(score);
+		obj->score = score;
 		obj->SetToPosition(to);
 	}
 	return script->CreateIntValue(id);
@@ -2287,7 +2287,7 @@ gstd::value StgStageScript::Func_CreateItemA2(gstd::script_machine* machine, int
 		return script->CreateIntValue(StgControlScript::ID_INVALID);
 
 	int type = argv[0].as_int();
-	ref_unsync_ptr<StgItemObject> obj = itemManager->CreateItem(type);
+	auto obj = itemManager->CreateItem((ItemType)type);
 
 	int id = script->AddObject(obj);
 	if (id != ID_INVALID) {
@@ -2303,7 +2303,7 @@ gstd::value StgStageScript::Func_CreateItemA2(gstd::script_machine* machine, int
 
 		obj->SetX(posX);
 		obj->SetY(posY);
-		obj->SetScore(score);
+		obj->score = score;
 		obj->SetToPosition(to);
 	}
 	return script->CreateIntValue(id);
@@ -2316,8 +2316,8 @@ gstd::value StgStageScript::Func_CreateItemU1(gstd::script_machine* machine, int
 	if (stageController->GetItemManager()->GetItemCount() >= StgItemManager::ITEM_MAX)
 		return script->CreateIntValue(StgControlScript::ID_INVALID);
 
-	int type = StgItemObject::ITEM_USER;
-	ref_unsync_ptr<StgItemObject_User> obj = ref_unsync_ptr<StgItemObject_User>::Cast(itemManager->CreateItem(type));
+	auto type = ItemType::User;
+	auto obj = ref_unsync_ptr<StgItemObject_User>::Cast(itemManager->CreateItem(type));
 	
 	int id = script->AddObject(obj);
 	if (id != ID_INVALID) {
@@ -2334,7 +2334,7 @@ gstd::value StgStageScript::Func_CreateItemU1(gstd::script_machine* machine, int
 
 		obj->SetX(posX);
 		obj->SetY(posY);
-		obj->SetScore(score);
+		obj->score = score;
 		obj->SetToPosition(to);
 		obj->SetImageID(itemID);
 		obj->SetMoveType(StgMovePattern_Item::ItemMoveType::ToPosition);
@@ -2349,8 +2349,8 @@ gstd::value StgStageScript::Func_CreateItemU2(gstd::script_machine* machine, int
 	if (stageController->GetItemManager()->GetItemCount() >= StgItemManager::ITEM_MAX)
 		return script->CreateIntValue(StgControlScript::ID_INVALID);
 
-	int type = StgItemObject::ITEM_USER;
-	ref_unsync_ptr<StgItemObject_User> obj = ref_unsync_ptr<StgItemObject_User>::Cast(itemManager->CreateItem(type));
+	auto type = ItemType::User;
+	auto obj = ref_unsync_ptr<StgItemObject_User>::Cast(itemManager->CreateItem(type));
 	
 	int id = script->AddObject(obj);
 	if (id != ID_INVALID) {
@@ -2367,7 +2367,7 @@ gstd::value StgStageScript::Func_CreateItemU2(gstd::script_machine* machine, int
 
 		obj->SetX(posX);
 		obj->SetY(posY);
-		obj->SetScore(score);
+		obj->score = score;
 		obj->SetToPosition(to);
 		obj->SetImageID(itemID);
 		obj->SetMoveType(StgMovePattern_Item::ItemMoveType::ToPosition);
@@ -2392,7 +2392,7 @@ gstd::value StgStageScript::Func_CreateItemScore(gstd::script_machine* machine, 
 		itemManager->AddItem(obj);
 		obj->SetX(posX);
 		obj->SetY(posY);
-		obj->SetScore(score);
+		obj->score = score;
 	}
 
 	return script->CreateIntValue(id);
@@ -2444,7 +2444,8 @@ gstd::value StgStageScript::Func_SetDefaultBonusItemEnable(gstd::script_machine*
 	StgItemManager* itemManager = script->stageController_->GetItemManager();
 
 	bool bEnable = argv[0].as_boolean();
-	itemManager->SetDefaultBonusItemEnable(bEnable);
+	itemManager->bDefaultBonusItemEnable_ = bEnable;
+
 	return value();
 }
 gstd::value StgStageScript::Func_LoadItemData(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -2494,7 +2495,7 @@ gstd::value StgStageScript::Func_GetItemIdInCircleA2(gstd::script_machine* machi
 	int radius = argv[2].as_float();
 	int type = argv[3].as_int();
 
-	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, radius, type);
+	std::vector<int> listID = itemManager->GetItemIdInCircle(px, py, radius, (ItemType)type);
 	return script->CreateIntArrayValue(listID);
 }
 gstd::value StgStageScript::Func_SetItemAutoDeleteClip(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -5332,7 +5333,7 @@ gstd::value StgStageScript::Func_ObjItem_Create(gstd::script_machine* machine, i
 
 	int type = argv[0].as_int();
 	ref_unsync_ptr<StgItemObject> obj;
-	if (type == StgItemObject::ITEM_USER) {
+	if (type == (int)ItemType::User) {
 		obj.reset(new StgItemObject_User(stageController));
 	}
 
@@ -5352,7 +5353,6 @@ gstd::value StgStageScript::Func_ObjItem_Regist(gstd::script_machine* machine, i
 	if (objItem) {
 		StgItemManager* itemManager = stageController->GetItemManager();
 		itemManager->AddItem(objItem);
-		objItem->Activate();
 
 		script->ActivateObject(objItem->GetObjectID(), true);
 	}
@@ -5375,7 +5375,7 @@ gstd::value StgStageScript::Func_ObjItem_SetRenderScoreEnable(gstd::script_machi
 	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
 	if (obj) {
 		bool bEnable = argv[1].as_boolean();
-		obj->SetDefaultScoreText(bEnable);
+		obj->useDefaultScoreText = bEnable;
 	}
 	return value();
 }
@@ -5422,11 +5422,11 @@ gstd::value StgStageScript::Func_ObjItem_GetInfo(gstd::script_machine* machine, 
 	else {
 		switch (type) {
 		case INFO_ITEM_SCORE:
-			return script->CreateIntValue(obj->GetScore());
+			return script->CreateIntValue(obj->score);
 		case INFO_ITEM_MOVE_TYPE:
 			return script->CreateIntValue((int)obj->GetMoveType());
 		case INFO_ITEM_TYPE:
-			return script->CreateIntValue(obj->GetItemType());
+			return script->CreateIntValue((int)obj->itemType);
 		}
 	}
 
@@ -5438,11 +5438,11 @@ gstd::value StgStageScript::Func_ObjItem_SetMoveToPlayer(gstd::script_machine* m
 	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
 	if (obj) {
 		bool bCollect = argv[1].as_boolean();
-		obj->SetMoveToPlayer(bCollect);
+		obj->isMovingToPlayer = bCollect;
 		if (bCollect)
-			obj->NotifyItemCollectEvent(StgItemObject::COLLECT_SINGLE, 0);
+			obj->NotifyItemCollectEvent(StgItemObject::CollectType::Single, 0);
 		else
-			obj->NotifyItemCancelEvent(StgItemObject::CANCEL_SINGLE);
+			obj->NotifyItemCancelEvent(StgItemObject::CancelType::Single);
 	}
 	return value();
 }
@@ -5452,7 +5452,7 @@ gstd::value StgStageScript::Func_ObjItem_IsMoveToPlayer(gstd::script_machine* ma
 	bool res = false;
 	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
 	if (obj)
-		res = obj->IsMoveToPlayer();
+		res = obj->isMovingToPlayer;
 	return script->CreateBooleanValue(res);
 }
 gstd::value StgStageScript::Func_ObjItem_Collect(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -5471,7 +5471,7 @@ gstd::value StgStageScript::Func_ObjItem_SetAutoDelete(gstd::script_machine* mac
 	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
 	if (obj) {
 		bool bEnable = argv[1].as_boolean();
-		obj->SetAutoDelete(bEnable);
+		obj->canAutoDelete = bEnable;
 	}
 	return value();
 }
@@ -5481,7 +5481,7 @@ gstd::value StgStageScript::Func_ObjItem_SetIntersectionRadius(gstd::script_mach
 	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
 	if (obj) {
 		int radius = std::round(argv[1].as_float());
-		obj->SetIntersectionRadius(radius);
+		obj->itemIntersectRadius = radius;
 	}
 	return value();
 }
@@ -5491,7 +5491,7 @@ gstd::value StgStageScript::Func_ObjItem_SetIntersectionEnable(gstd::script_mach
 	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
 	if (obj) {
 		bool bEnable = argv[1].as_boolean();
-		obj->SetIntersectionEnable(bEnable);
+		obj->isIntersectEnable = bEnable;
 	}
 	return value();
 }
@@ -5501,7 +5501,7 @@ gstd::value StgStageScript::Func_ObjItem_GetIntersectionEnable(gstd::script_mach
 	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
 	bool res = false;
 	if (obj)
-		res = obj->IsIntersectionEnable();
+		res = obj->isIntersectEnable;
 	return script->CreateBooleanValue(res);
 }
 gstd::value StgStageScript::Func_ObjItem_SetDefaultCollectMovement(gstd::script_machine* machine, int argc, const gstd::value* argv) {
@@ -5510,7 +5510,7 @@ gstd::value StgStageScript::Func_ObjItem_SetDefaultCollectMovement(gstd::script_
 	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
 	if (obj) {
 		bool bEnable = argv[1].as_boolean();
-		obj->SetDefaultCollectionMovement(bEnable);
+		obj->isDefaultCollectionMove = bEnable;
 	}
 	return value();
 }
@@ -5520,7 +5520,7 @@ gstd::value StgStageScript::Func_ObjItem_SetPositionRounding(gstd::script_machin
 	int id = argv[0].as_int();
 	StgItemObject* obj = script->GetObjectPointerAs<StgItemObject>(id);
 	if (obj)
-		obj->SetPositionRounding(argv[1].as_boolean());
+		obj->isRoundingPosition = argv[1].as_boolean();
 	return value();
 }
 

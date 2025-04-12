@@ -55,96 +55,108 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 	}
 	pLastTexture_ = nullptr;
 }
-StgItemManager::~StgItemManager() {
-}
+
 void StgItemManager::Work() {
-	ref_unsync_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
+	auto objPlayer = stageController_->GetPlayerObject();
 	if (objPlayer == nullptr) return;
 
 	float px = objPlayer->GetX();
 	float py = objPlayer->GetY();
-	int pr = objPlayer->GetItemIntersectionRadius() * objPlayer->GetItemIntersectionRadius();
-	int pAutoItemCollectY = objPlayer->GetAutoItemCollectY();
+	int playerRadiusSq = objPlayer->GetItemIntersectionRadius() * objPlayer->GetItemIntersectionRadius();
+	int playerPOC = objPlayer->GetAutoItemCollectY();
 
 	for (auto itr = listObj_.begin(); itr != listObj_.end();) {
-		ref_unsync_ptr<StgItemObject>& obj = *itr;
+		auto& obj = *itr;
 
 		if (obj->IsDeleted()) {
 			//obj->Clear();
 			itr = listObj_.erase(itr);
 		}
 		else {
-			float ix = obj->position[0];
-			float iy = obj->position[1];
-
 			if (objPlayer->GetState() != StgPlayerObject::STATE_NORMAL) {
-				if (obj->IsMoveToPlayer()) {
-					obj->SetMoveToPlayer(false);
-					obj->NotifyItemCancelEvent(StgItemObject::CANCEL_PLAYER_DOWN);
+				// If player is dead, cancel existing move-to-player movement
+				if (obj->isMovingToPlayer) {
+					obj->isMovingToPlayer = false;
+					obj->NotifyItemCancelEvent(StgItemObject::CancelType::PlayerDead);
 				}
 			}
 			else {
-				float dx = px - ix;
-				float dy = py - iy;
+				float dx = px - obj->position[0];
+				float dy = py - obj->position[1];
 				int radius = dx * dx + dy * dy;
 
-				int typeCollect = StgItemObject::COLLECT_PLAYER_SCOPE;
-				uint64_t collectParam = 0;
-
-				if (obj->bIntersectEnable_ && radius <= obj->itemIntersectRadius_) {
+				if (obj->isIntersectEnable && radius <= obj->itemIntersectRadius) {
 					obj->Intersect(nullptr, nullptr);
-					goto lab_next_item;
 				}
+				else {
+					int flags = obj->moveToPlayerFlags;
 
-				int moveToPlayerFlags = obj->GetMoveToPlayerEnableFlags();
+					if (bCancelToPlayer_ && obj->isMovingToPlayer) {
+						// If receiving cancel event, set value to false and emit event
 
-				if (bCancelToPlayer_ && obj->IsMoveToPlayer()) {
-					obj->SetMoveToPlayer(false);
-					obj->NotifyItemCancelEvent(StgItemObject::CANCEL_ALL);
-				}
-				else if (moveToPlayerFlags != 0 && !obj->IsMoveToPlayer()) {
-					//Player item scope collection
-					if ((radius <= pr) && (moveToPlayerFlags & StgItemObject::FLAG_MOVETOPL_PLAYER_SCOPE)) {
-						typeCollect = StgItemObject::COLLECT_PLAYER_SCOPE;
-						collectParam = (uint64_t)objPlayer->GetItemIntersectionRadius();
-						goto lab_move_to_player;
+						obj->isMovingToPlayer = false;
+						obj->NotifyItemCancelEvent(StgItemObject::CancelType::CancelAll);
 					}
+					else if (flags != 0 && !obj->isMovingToPlayer) {
+						struct Param {
+							StgItemObject::CollectType typeCollect;
+							uint64_t eventParam;
+						};
+						optional<Param> moveToPlayer;
 
-					//CollectAllItems collection
-					if (bAllItemToPlayer_ && (moveToPlayerFlags & StgItemObject::FLAG_MOVETOPL_COLLECT_ALL)) {
-						typeCollect = StgItemObject::COLLECT_ALL;
-						goto lab_move_to_player;
-					}
-
-					//POC collection
-					if ((pAutoItemCollectY >= 0) && (moveToPlayerFlags & StgItemObject::FLAG_MOVETOPL_POC_LINE)) {
-						if (!obj->IsMoveToPlayer() && py <= pAutoItemCollectY) {
-							typeCollect = StgItemObject::COLLECT_PLAYER_LINE;
-							collectParam = (uint64_t)pAutoItemCollectY;
-							goto lab_move_to_player;
+						if ((flags & StgItemObject::MoveToPlayerFlag_PlayerScope) && radius <= playerRadiusSq) {
+							// Player item scope collection
+							
+							moveToPlayer = {
+								StgItemObject::CollectType::PlayerScope,
+								(uint64_t)objPlayer->GetItemIntersectionRadius(),
+							};
 						}
-					}
+						else if ((flags & StgItemObject::MoveToPlayerFlag_CollectAllItems) && bAllItemToPlayer_) {
+							// CollectAllItems collection
+							
+							moveToPlayer = {
+								StgItemObject::CollectType::CollectAll,
+								0,
+							};
+						}
+						else if ((flags & StgItemObject::MoveToPlayerFlag_PlayerPoc) && py <= playerPOC) {
+							// POC collection
+							
+							moveToPlayer = {
+								StgItemObject::CollectType::PlayerPoc,
+								(uint64_t)playerPOC,
+							};
+						}
+						else if (flags & StgItemObject::MoveToPlayerFlag_Circle) {
+							// CollectItemsInCircle collection
+							
+							for (DxCircle& circle : listCircleToPlayer_) {
+								float rr = circle.GetR() * circle.GetR();
 
-					//CollectItemsInCircle collection
-					if (moveToPlayerFlags & StgItemObject::FLAG_MOVETOPL_COLLECT_CIRCLE) {
-						for (DxCircle& circle : listCircleToPlayer_) {
-							float rr = circle.GetR() * circle.GetR();
-							if (Math::HypotSq(ix - circle.GetX(), iy - circle.GetY()) <= rr) {
-								typeCollect = StgItemObject::COLLECT_IN_CIRCLE;
-								collectParam = (uint64_t)circle.GetR();
-								goto lab_move_to_player;
+								double distSq = Math::HypotSq(
+									obj->position[0] - circle.GetX(), 
+									obj->position[1] - circle.GetY());
+
+								if (distSq <= rr) {
+									moveToPlayer = {
+										StgItemObject::CollectType::InCircle,
+										(uint64_t)circle.GetR(),
+									};
+								}
 							}
 						}
-					}
 
-					goto lab_next_item;
-lab_move_to_player:
-					obj->SetMoveToPlayer(true);
-					obj->NotifyItemCollectEvent(typeCollect, collectParam);
+						if (moveToPlayer) {
+							obj->isMovingToPlayer = true;
+							obj->NotifyItemCollectEvent(
+								moveToPlayer->typeCollect,
+								moveToPlayer->eventParam);
+						}
+					}
 				}
 			}
 
-lab_next_item:
 			++itr;
 		}
 	}
@@ -168,8 +180,9 @@ std::array<BlendMode, StgItemManager::BLEND_COUNT> StgItemManager::blendTypeRend
 void StgItemManager::Render(int targetPriority) {
 	if (targetPriority < 0 || targetPriority >= listRenderQueue_.size()) return;
 
-	const RenderQueue& renderQueue = listRenderQueue_[targetPriority];
-	if (renderQueue.count == 0) return;
+	const auto& [count, renderItems] = listRenderQueue_[targetPriority];
+	if (count == 0)
+		return;
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	IDirect3DDevice9* device = graphics->GetDevice();
@@ -193,8 +206,8 @@ void StgItemManager::Render(int targetPriority) {
 
 	//Render default items and score texts
 	{
-		for (size_t i = 0; i < renderQueue.count; ++i) {
-			StgItemObject* pItem = renderQueue.listItem[i];
+		for (size_t i = 0; i < count; ++i) {
+			auto pItem = renderItems[i];
 			pItem->RenderOnItemManager();
 		}
 
@@ -215,14 +228,12 @@ void StgItemManager::Render(int targetPriority) {
 		effectItem_->SetMatrix(handle, &matProj_);
 	}
 
-	for (size_t iBlend = 0; iBlend < blendTypeRenderOrder.size(); ++iBlend) {
-		BlendMode blend = blendTypeRenderOrder[iBlend];
-
+	for (auto blend : blendTypeRenderOrder) {
 		graphics->SetBlendMode(blend);
 		effectItem_->SetTechnique(blend == MODE_BLEND_ALPHA_INV ? "RenderInv" : "Render");
 
-		for (size_t i = 0; i < renderQueue.count; ++i) {
-			StgItemObject* pItem = renderQueue.listItem[i];
+		for (size_t i = 0; i < count; ++i) {
+			StgItemObject* pItem = renderItems[i];
 			pItem->Render(blend);	//Render custom items
 		}
 	}
@@ -240,7 +251,7 @@ void StgItemManager::LoadRenderQueue() {
 		listRenderQueue_[i].count = 0;
 	}
 
-	for (ref_unsync_ptr<StgItemObject>& obj : listObj_) {
+	for (auto& obj : listObj_) {
 		if (obj->IsDeleted() || !obj->IsActive() || !obj->IsVisible()) continue;
 
 		auto& [count, listItem] = listRenderQueue_[obj->GetRenderPriorityI()];
@@ -254,30 +265,30 @@ void StgItemManager::LoadRenderQueue() {
 bool StgItemManager::LoadItemData(const std::wstring& path, bool bReload) {
 	return listItemData_->AddItemDataList(path, bReload);
 }
-ref_unsync_ptr<StgItemObject> StgItemManager::CreateItem(int type) {
+ref_unsync_ptr<StgItemObject> StgItemManager::CreateItem(ItemType type) {
 	ref_unsync_ptr<StgItemObject> res;
 	switch (type) {
-	case StgItemObject::ITEM_1UP:
-	case StgItemObject::ITEM_1UP_S:
-		res.reset(new StgItemObject_1UP(stageController_));
-		break;
-	case StgItemObject::ITEM_SPELL:
-	case StgItemObject::ITEM_SPELL_S:
-		res.reset(new StgItemObject_Bomb(stageController_));
-		break;
-	case StgItemObject::ITEM_POWER:
-	case StgItemObject::ITEM_POWER_S:
-		res.reset(new StgItemObject_Power(stageController_));
-		break;
-	case StgItemObject::ITEM_POINT:
-	case StgItemObject::ITEM_POINT_S:
-		res.reset(new StgItemObject_Point(stageController_));
-		break;
-	case StgItemObject::ITEM_USER:
-		res.reset(new StgItemObject_User(stageController_));
-		break;
+		case ItemType::OneUp:
+		case ItemType::OneUpSmall:
+			res.reset(new StgItemObject_1UP(stageController_));
+			break;
+		case ItemType::Spell:
+		case ItemType::SpellSmall:
+			res.reset(new StgItemObject_Bomb(stageController_));
+			break;
+		case ItemType::Power:
+		case ItemType::PowerSmall:
+			res.reset(new StgItemObject_Power(stageController_));
+			break;
+		case ItemType::Point:
+		case ItemType::PointSmall:
+			res.reset(new StgItemObject_Point(stageController_));
+			break;
+		default:
+			res.reset(new StgItemObject_User(stageController_));
+			break;
 	}
-	res->SetItemType(type);
+	res->itemType = type;
 
 	return res;
 }
@@ -291,17 +302,19 @@ void StgItemManager::CancelCollectItems() {
 	bCancelToPlayer_ = true;
 }
 
-std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, optional<int> radius, optional<int> itemType) {
+std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy,
+	optional<int> radius, optional<ItemType> itemType)
+{
 	int r = radius.has_value() ? *radius : 0;
 	int rr = r * r;
 
 	std::vector<int> res;
 	for (ref_unsync_ptr<StgItemObject>& obj : listObj_) {
 		if (obj->IsDeleted()) continue;
-		if (itemType.has_value() && (*itemType != obj->GetItemType())) continue;
+		if (itemType.has_value() && (*itemType != obj->itemType)) continue;
 
-		bool bInRadius = Math::HypotSq<int>(cx - obj->position[0], cy - obj->position[1]) <= rr;
-		if (!radius.has_value() || bInRadius)
+		bool inRadius = Math::HypotSq<int>(cx - obj->position[0], cy - obj->position[1]) <= rr;
+		if (!radius.has_value() || inRadius)
 			res.push_back(obj->GetObjectID());
 	}
 
@@ -311,11 +324,6 @@ std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, optional<int>
 //*******************************************************************
 //StgItemDataList
 //*******************************************************************
-StgItemDataList::StgItemDataList() {
-}
-StgItemDataList::~StgItemDataList() {
-}
-
 void StgItemDataList::_LoadVertexBuffers(const std::wstring& name,
 	shared_ptr<Texture> texture, const std::vector<StgItemData*>& listAddData)
 {
@@ -520,7 +528,7 @@ void StgItemDataList::_ScanItem(std::map<int, unique_ptr<StgItemData>>& mapData,
 	struct Data {
 		StgItemData* itemData;
 		int id = -1;
-		int typeItem = -1;
+		//int typeItem = -1;
 	} data;
 	data.itemData = new StgItemData(this);
 
@@ -593,7 +601,7 @@ void StgItemDataList::_ScanItem(std::map<int, unique_ptr<StgItemData>>& mapData,
 	//Do NOT use [&] lambdas
 	static const std::unordered_map<std::wstring, std::function<void(Data*, Scanner&)>> mapFunc = {
 		{ L"id", LAMBDA_SETI(id) },
-		{ L"type", LAMBDA_SETI(typeItem) },
+		//{ L"type", LAMBDA_SETI(typeItem) },
 		{ L"alpha", LAMBDA_SETI(itemData->alpha_) },
 		{ L"rect", funcSetRect },
 		{ L"out", funcSetOut },
@@ -621,9 +629,10 @@ void StgItemDataList::_ScanItem(std::map<int, unique_ptr<StgItemData>>& mapData,
 	}
 
 	if (data.id >= 0) {
-		if (data.typeItem < 0)
+		// TODO: WTF did this do??
+		/*if (data.typeItem < 0)
 			data.typeItem = data.id;
-		data.itemData->typeItem_ = data.typeItem;
+		data.itemData->typeItem_ = data.typeItem;*/
 
 		mapData[data.id] = unique_ptr<StgItemData>(data.itemData);
 	}
@@ -666,12 +675,12 @@ void StgItemDataList::_ScanAnimation(StgItemData* itemData, Scanner& scanner) {
 //*******************************************************************
 //StgItemDataFrame
 //*******************************************************************
-StgItemDataFrame::StgItemDataFrame() {
-	listItemData_ = nullptr;
-	pVertexBuffer_ = nullptr;
-	vertexOffset_ = 0;
-	frame_ = 0;
-}
+StgItemDataFrame::StgItemDataFrame() :
+	listItemData_(nullptr),
+	pVertexBuffer_(nullptr),
+	vertexOffset_(0),
+	frame_(0) {}
+
 DxRect<float> StgItemDataFrame::LoadDestRect(DxRect<LONG>* src) {
 	float width = src->GetWidth() / 2.0f;
 	float height = src->GetHeight() / 2.0f;
@@ -681,18 +690,12 @@ DxRect<float> StgItemDataFrame::LoadDestRect(DxRect<LONG>* src) {
 //*******************************************************************
 //StgItemData
 //*******************************************************************
-StgItemData::StgItemData(StgItemDataList* listItemData) {
-	listItemData_ = listItemData;
-
-	typeItem_ = -1;
-	typeRender_ = MODE_BLEND_ALPHA;
-
-	alpha_ = 255;
-
-	totalFrame_ = 0;
-}
-StgItemData::~StgItemData() {
-}
+StgItemData::StgItemData(StgItemDataList* listItemData) :
+	listItemData_(listItemData),
+	//typeItem_(-1),
+	typeRender_(MODE_BLEND_ALPHA),
+	alpha_(255),
+	totalFrame_(0) {}
 
 StgItemDataFrame* StgItemData::GetFrame(size_t frame) {
 	if (totalFrame_ <= 1U)
@@ -712,30 +715,20 @@ StgItemDataFrame* StgItemData::GetFrame(size_t frame) {
 //*******************************************************************
 //StgItemObject
 //*******************************************************************
-StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObject(stageController) {
-	stageController_ = stageController;
+StgItemObject::StgItemObject(StgStageController* stageController) :
+	StgMoveObject(stageController),
+	frameWork_(0), itemType(ItemType::User),
+	score(0), useDefaultScoreText(true),
+	isMovingToPlayer(false), moveToPlayerFlags(MoveToPlayerFlag_All),
+	canAutoDelete(true),
+	isIntersectEnable(true), itemIntersectRadius(16 * 16),
+	isDefaultCollectionMove(true),
+	isRoundingPosition(false)
+{
 	typeObject_ = TypeObject::Item;
 
 	pattern_.reset(new StgMovePattern_Item(this));
 	color_ = D3DCOLOR_ARGB(255, 255, 255, 255);
-
-	typeItem_ = INT_MIN;
-
-	frameWork_ = 0;
-
-	score_ = 0;
-
-	bMoveToPlayer_ = false;
-	moveToPlayerFlags_ = FLAG_MOVETOPL_ALL;
-
-	bDefaultScoreText_ = true;
-
-	bAutoDelete_ = true;
-	bIntersectEnable_ = true;
-	itemIntersectRadius_ = 16 * 16;
-
-	bDefaultCollectionMove_ = true;
-	bRoundingPosition_ = false;
 
 	int priItemI = stageController_->GetStageInformation()->GetItemObjectPriority();
 	SetRenderPriorityI(priItemI);
@@ -744,7 +737,7 @@ StgItemObject::StgItemObject(StgStageController* stageController) : StgMoveObjec
 void StgItemObject::Clone(DxScriptObjectBase* _src) {
 	DxScriptShaderObject::Clone(_src);
 
-	auto src = (StgItemObject*)_src;
+	//auto src = (StgItemObject*)_src;
 
 	throw new wexception("Object cannot be cloned: ObjItem (non-user-defined)");
 }
@@ -756,7 +749,7 @@ void StgItemObject::Work() {
 
 		bool noMovePattern = GetPattern() == nullptr || GetPattern()->GetType() != MovePatternType::Item;
 
-		if (noMovePattern && bDefaultCollectionMove_ && IsMoveToPlayer()) {
+		if (noMovePattern && isDefaultCollectionMove && isMovingToPlayer) {
 			auto pattern = new StgMovePattern_Item(this);
 			pattern->itemMoveType = StgMovePattern_Item::ItemMoveType::ToPlayer;
 
@@ -764,8 +757,7 @@ void StgItemObject::Work() {
 		}
 	}
 
-	
-	_Move();
+	StgMoveObject::_Move();
 	SetX(position[0]);
 	SetY(position[1]);
 
@@ -775,80 +767,84 @@ void StgItemObject::Work() {
 }
 void StgItemObject::RenderOnItemManager() {
 	StgItemManager* itemManager = stageController_->GetItemManager();
-	SpriteList2D* renderer = typeItem_ == ITEM_SCORE_TEXT ?
-		itemManager->GetDigitRenderer() : itemManager->GetItemRenderer();
+	SpriteList2D* renderer = itemType == ItemType::ScoreText
+		? itemManager->GetDigitRenderer()
+		: itemManager->GetItemRenderer();
 
 	auto spos = position;
-	if (bRoundingPosition_) {
+	if (isRoundingPosition) {
 		spos = {
 			round(spos[0]),
 			round(spos[1]),
 		};
 	}
 
-	if (typeItem_ != ITEM_SCORE_TEXT) {
-		float scale = 1.0f;
-		switch (typeItem_) {
-		case ITEM_1UP:
-		case ITEM_SPELL:
-		case ITEM_POWER:
-		case ITEM_POINT:
-			scale = 1.0f;
-			break;
-		case ITEM_1UP_S:
-		case ITEM_SPELL_S:
-		case ITEM_POWER_S:
-		case ITEM_POINT_S:
-		case ITEM_BONUS:
-			scale = 0.75f;
-			break;
+	if (itemType != ItemType::ScoreText) {
+		float scale;
+		switch (itemType) {
+			case ItemType::OneUp:
+			case ItemType::Spell:
+			case ItemType::Power:
+			case ItemType::Point:
+				scale = 1.0f;
+				break;
+			case ItemType::OneUpSmall:
+			case ItemType::SpellSmall:
+			case ItemType::PowerSmall:
+			case ItemType::PointSmall:
+			case ItemType::Bonus:
+				scale = 0.75f;
+				break;
+			default:
+				scale = 0.75f;
 		}
 
 		DxRect<int> rcSrc;
-		switch (typeItem_) {
-		case ITEM_1UP:
-		case ITEM_1UP_S:
-			rcSrc.Set(1, 1, 16, 16);
-			break;
-		case ITEM_SPELL:
-		case ITEM_SPELL_S:
-			rcSrc.Set(20, 1, 35, 16);
-			break;
-		case ITEM_POWER:
-		case ITEM_POWER_S:
-			rcSrc.Set(40, 1, 55, 16);
-			break;
-		case ITEM_POINT:
-		case ITEM_POINT_S:
-			rcSrc.Set(1, 20, 16, 35);
-			break;
-		case ITEM_BONUS:
-			rcSrc.Set(20, 20, 35, 35);
-			break;
+		switch (itemType) {
+			case ItemType::OneUp:
+			case ItemType::OneUpSmall:
+				rcSrc.Set(1, 1, 16, 16);
+				break;
+			case ItemType::Spell:
+			case ItemType::SpellSmall:
+				rcSrc.Set(20, 1, 35, 16);
+				break;
+			case ItemType::Power:
+			case ItemType::PowerSmall:
+				rcSrc.Set(40, 1, 55, 16);
+				break;
+			case ItemType::Point:
+			case ItemType::PointSmall:
+				rcSrc.Set(1, 20, 16, 35);
+				break;
+			default:
+				rcSrc.Set(20, 20, 35, 35);
 		}
-
-		//上にはみ出している
+		
 		D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255);
 		if (spos[1] <= 0) {
-			D3DCOLOR colorOver = D3DCOLOR_ARGB(255, 255, 255, 255);
-			switch (typeItem_) {
-			case ITEM_1UP:
-			case ITEM_1UP_S:
-				colorOver = D3DCOLOR_ARGB(255, 236, 0, 236);
-				break;
-			case ITEM_SPELL:
-			case ITEM_SPELL_S:
-				colorOver = D3DCOLOR_ARGB(255, 0, 160, 0);
-				break;
-			case ITEM_POWER:
-			case ITEM_POWER_S:
-				colorOver = D3DCOLOR_ARGB(255, 209, 0, 0);
-				break;
-			case ITEM_POINT:
-			case ITEM_POINT_S:
-				colorOver = D3DCOLOR_ARGB(255, 0, 0, 160);
-				break;
+			D3DCOLOR colorOver;
+			switch (itemType) {
+				case ItemType::OneUp:
+				case ItemType::OneUpSmall:
+					colorOver = D3DCOLOR_ARGB(255, 236, 0, 236);
+					break;
+				case ItemType::Spell:
+				case ItemType::SpellSmall:
+					colorOver = D3DCOLOR_ARGB(255, 0, 160, 0);
+					break;
+				case ItemType::Power:
+				case ItemType::PowerSmall:
+					colorOver = D3DCOLOR_ARGB(255, 209, 0, 0);
+					break;
+				case ItemType::Point:
+				case ItemType::PointSmall:
+					colorOver = D3DCOLOR_ARGB(255, 0, 0, 160);
+					break;
+				default:
+					colorOver = D3DCOLOR_ARGB(255, 255, 255, 255);
 			}
+			
 			if (color != colorOver) {
 				rcSrc.Set(113, 1, 126, 10);
 				spos[1] = 6;
@@ -868,20 +864,28 @@ void StgItemObject::RenderOnItemManager() {
 		renderer->SetColor(color_);
 		renderer->SetPosition(0, 0, 0);
 
-		int fontSize = 14;
-		int64_t score = score_;
+		auto score2 = score;
+
 		std::vector<int> listNum;
 		while (true) {
-			int tnum = score % 10;
-			score /= 10;
-			listNum.push_back(tnum);
-			if (score == 0) break;
+			listNum.push_back(score2 % 10);
+			
+			score2 /= 10;
+			if (score2 == 0)
+				break;
 		}
+		
 		for (int iNum = listNum.size() - 1; iNum >= 0; iNum--) {
+			constexpr int fontSize = 14;
+			
 			DxRect<double> rcSrc(listNum[iNum] * 36, 0, 
 				(listNum[iNum] + 1) * 36 - 1, 31);
-			DxRect<double> rcDest(spos[0] + (listNum.size() - 1 - iNum) * fontSize / 2, spos[1],
-				spos[0] + (listNum.size() - iNum)*fontSize / 2, spos[1] + fontSize);
+			DxRect<double> rcDest(
+				spos[0] + (listNum.size() - 1 - iNum) * fontSize / 2,
+				spos[1],
+				spos[0] + (listNum.size() - iNum) * fontSize / 2,
+				spos[1] + fontSize);
+
 			renderer->SetSourceRect(rcSrc);
 			renderer->SetDestinationRect(rcDest);
 			renderer->AddVertex();
@@ -889,7 +893,8 @@ void StgItemObject::RenderOnItemManager() {
 	}
 }
 void StgItemObject::_DeleteInAutoClip() {
-	if (!bAutoDelete_) return;
+	if (!canAutoDelete)
+		return;
 	
 	DxRect<LONG>* const rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
 	DxRect<LONG>* const rcClipBase = stageController_->GetEnemyManager()->GetEnemyDeleteClip();
@@ -910,14 +915,14 @@ void StgItemObject::_CreateScoreItem() {
 
 		obj->SetX(position[0]);
 		obj->SetY(position[1]);
-		obj->SetScore(score_);
+		obj->score = score;
 
 		objectManager->AddObject(obj);
 		itemManager->AddItem(obj);
 	}
 }
 void StgItemObject::_NotifyEventToPlayerScript(gstd::value* listValue, size_t count) {
-	ref_unsync_ptr<StgPlayerObject> player = stageController_->GetPlayerObject();
+	auto player = stageController_->GetPlayerObject();
 	if (player == nullptr) return;
 
 	if (StgStagePlayerScript* scriptPlayer = player->GetPlayerScript()) {
@@ -939,7 +944,6 @@ void StgItemObject::SetColor(int r, int g, int b) {
 	__m128i c = Vectorize::Set(color_ >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 }
-
 void StgItemObject::SetToPosition(const Math::DVec2& pos) {
 	if (auto pattern = dcast(StgMovePattern_Item*, pattern_.get()))
 		pattern->SetToPosition(pos);
@@ -955,25 +959,25 @@ void StgItemObject::SetMoveType(StgMovePattern_Item::ItemMoveType type) {
 		pattern->itemMoveType = type;
 }
 
-void StgItemObject::NotifyItemCollectEvent(int type, uint64_t eventParam) {
+void StgItemObject::NotifyItemCollectEvent(CollectType type, uint64_t eventParam) {
 	auto stageScriptManager = stageController_->GetScriptManager();
 	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
 		gstd::value eventArg[4];
 		eventArg[0] = DxScript::CreateIntValue(idObject_);
-		eventArg[1] = DxScript::CreateIntValue(typeItem_);
-		eventArg[2] = DxScript::CreateIntValue(type);
+		eventArg[1] = DxScript::CreateIntValue((int)itemType);
+		eventArg[2] = DxScript::CreateIntValue((int)type);
 		eventArg[3] = DxScript::CreateFloatValue(eventParam);
 
 		itemScript->RequestEvent(StgStageItemScript::EV_COLLECT_ITEM, eventArg, 4U);
 	}
 }
-void StgItemObject::NotifyItemCancelEvent(int type) {
+void StgItemObject::NotifyItemCancelEvent(CancelType type) {
 	auto stageScriptManager = stageController_->GetScriptManager();
 	LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
 		gstd::value eventArg[4];
 		eventArg[0] = DxScript::CreateIntValue(idObject_);
-		eventArg[1] = DxScript::CreateIntValue(typeItem_);
-		eventArg[2] = DxScript::CreateIntValue(type);
+		eventArg[1] = DxScript::CreateIntValue((int)itemType);
+		eventArg[2] = DxScript::CreateIntValue((int)type);
 
 		itemScript->RequestEvent(StgStageItemScript::EV_CANCEL_ITEM, eventArg, 3U);
 	}
@@ -981,12 +985,12 @@ void StgItemObject::NotifyItemCancelEvent(int type) {
 
 //StgItemObject_1UP
 StgItemObject_1UP::StgItemObject_1UP(StgStageController* stageController) : StgItemObject(stageController) {
-	typeItem_ = ITEM_1UP;
+	itemType = ItemType::OneUp;
 	SetMoveType(StgMovePattern_Item::ItemMoveType::ToPosition);
 }
 void StgItemObject_1UP::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	gstd::value listValue[2] = { 
-		DxScript::CreateIntValue(typeItem_), 
+		DxScript::CreateIntValue((int)itemType), 
 		DxScript::CreateIntValue(idObject_)
 	};
 	_NotifyEventToPlayerScript(listValue, 2);
@@ -998,12 +1002,12 @@ void StgItemObject_1UP::Intersect(StgIntersectionTarget* ownTarget, StgIntersect
 
 //StgItemObject_Bomb
 StgItemObject_Bomb::StgItemObject_Bomb(StgStageController* stageController) : StgItemObject(stageController) {
-	typeItem_ = ITEM_SPELL;
+	itemType = ItemType::Spell;
 	SetMoveType(StgMovePattern_Item::ItemMoveType::ToPosition);
 }
 void StgItemObject_Bomb::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	gstd::value listValue[2] = {
-		DxScript::CreateIntValue(typeItem_),
+		DxScript::CreateIntValue((int)itemType),
 		DxScript::CreateIntValue(idObject_)
 	};
 	_NotifyEventToPlayerScript(listValue, 2);
@@ -1015,18 +1019,18 @@ void StgItemObject_Bomb::Intersect(StgIntersectionTarget* ownTarget, StgIntersec
 
 //StgItemObject_Power
 StgItemObject_Power::StgItemObject_Power(StgStageController* stageController) : StgItemObject(stageController) {
-	typeItem_ = ITEM_POWER;
+	itemType = ItemType::Power;
 	SetMoveType(StgMovePattern_Item::ItemMoveType::ToPosition);
 
-	score_ = 10;
+	score = 10;
 }
 void StgItemObject_Power::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
-	if (bDefaultScoreText_)
+	if (useDefaultScoreText)
 		_CreateScoreItem();
-	stageController_->GetStageInformation()->AddScore(score_);
+	stageController_->GetStageInformation()->AddScore(score);
 
 	gstd::value listValue[2] = {
-		DxScript::CreateIntValue(typeItem_),
+		DxScript::CreateIntValue((int)itemType),
 		DxScript::CreateIntValue(idObject_)
 	};
 	_NotifyEventToPlayerScript(listValue, 2);
@@ -1038,16 +1042,16 @@ void StgItemObject_Power::Intersect(StgIntersectionTarget* ownTarget, StgInterse
 
 //StgItemObject_Point
 StgItemObject_Point::StgItemObject_Point(StgStageController* stageController) : StgItemObject(stageController) {
-	typeItem_ = ITEM_POINT;
+	itemType = ItemType::Point;
 	SetMoveType(StgMovePattern_Item::ItemMoveType::ToPosition);
 }
 void StgItemObject_Point::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
-	if (bDefaultScoreText_)
+	if (useDefaultScoreText)
 		_CreateScoreItem();
-	stageController_->GetStageInformation()->AddScore(score_);
+	stageController_->GetStageInformation()->AddScore(score);
 
 	gstd::value listValue[2] = {
-		DxScript::CreateIntValue(typeItem_),
+		DxScript::CreateIntValue((int)itemType),
 		DxScript::CreateIntValue(idObject_)
 	};
 	_NotifyEventToPlayerScript(listValue, 2);
@@ -1059,11 +1063,11 @@ void StgItemObject_Point::Intersect(StgIntersectionTarget* ownTarget, StgInterse
 
 //StgItemObject_Bonus
 StgItemObject_Bonus::StgItemObject_Bonus(StgStageController* stageController) : StgItemObject(stageController) {
-	typeItem_ = ITEM_BONUS;
+	itemType = ItemType::Bonus;
 	SetMoveType(StgMovePattern_Item::ItemMoveType::ToPlayer);
 
 	int graze = stageController->GetStageInformation()->GetGraze();
-	score_ = (int)(graze / 40) * 10 + 300;
+	score = graze / 40.0 * 10 + 300;
 }
 void StgItemObject_Bonus::Work() {
 	StgItemObject::Work();
@@ -1071,7 +1075,7 @@ void StgItemObject_Bonus::Work() {
 	ref_unsync_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
 	if (objPlayer != nullptr && objPlayer->GetState() != StgPlayerObject::STATE_NORMAL) {
 		_CreateScoreItem();
-		stageController_->GetStageInformation()->AddScore(score_);
+		stageController_->GetStageInformation()->AddScore(score);
 
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
@@ -1079,7 +1083,7 @@ void StgItemObject_Bonus::Work() {
 }
 void StgItemObject_Bonus::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	_CreateScoreItem();
-	stageController_->GetStageInformation()->AddScore(score_);
+	stageController_->GetStageInformation()->AddScore(score);
 
 	auto objectManager = stageController_->GetMainObjectManager();
 	objectManager->DeleteObject(this);
@@ -1087,12 +1091,12 @@ void StgItemObject_Bonus::Intersect(StgIntersectionTarget* ownTarget, StgInterse
 
 //StgItemObject_ScoreText
 StgItemObject_ScoreText::StgItemObject_ScoreText(StgStageController* stageController) : StgItemObject(stageController) {
-	typeItem_ = ITEM_SCORE_TEXT;
+	itemType = ItemType::ScoreText;
 
 	SetMoveType(StgMovePattern_Item::ItemMoveType::ScoreText);
 
-	//Disable the text obj from being autocollected by any means
-	moveToPlayerFlags_ = FLAG_MOVETOPL_NONE;
+	// Disable the score text from being autocollected, since it's technically an item object
+	moveToPlayerFlags = MoveToPlayerFlag_None;
 
 	frameDelete_ = 0;
 }
@@ -1111,11 +1115,11 @@ void StgItemObject_ScoreText::Intersect(StgIntersectionTarget* ownTarget, StgInt
 
 //StgItemObject_User
 StgItemObject_User::StgItemObject_User(StgStageController* stageController) : StgItemObject(stageController) {
-	typeItem_ = ITEM_USER;
+	itemType = ItemType::User;
 	SetMoveType(StgMovePattern_Item::ItemMoveType::Down);
 
 	idImage_ = -1;
-	bDefaultScoreText_ = true;
+	useDefaultScoreText = true;
 }
 
 void StgItemObject_User::Clone(DxScriptObjectBase* _src) {
@@ -1125,19 +1129,19 @@ void StgItemObject_User::Clone(DxScriptObjectBase* _src) {
 	StgMoveObject::Copy((StgMoveObject*)src);
 	StgIntersectionObject::Copy((StgIntersectionObject*)src);
 
-	typeItem_ = src->typeItem_;
+	itemType = src->itemType;
 	frameWork_ = src->frameWork_;
-	score_ = src->score_;
+	score = src->score;
 
-	bMoveToPlayer_ = src->bMoveToPlayer_;
-	moveToPlayerFlags_ = src->moveToPlayerFlags_;
+	isMovingToPlayer = src->isMovingToPlayer;
+	moveToPlayerFlags = src->moveToPlayerFlags;
 
-	bDefaultScoreText_ = src->bDefaultScoreText_;
-	bAutoDelete_ = src->bAutoDelete_;
-	bIntersectEnable_ = src->bIntersectEnable_;
-	itemIntersectRadius_ = src->itemIntersectRadius_;
-	bDefaultCollectionMove_ = src->bDefaultCollectionMove_;
-	bRoundingPosition_ = src->bRoundingPosition_;
+	useDefaultScoreText = src->useDefaultScoreText;
+	canAutoDelete = src->canAutoDelete;
+	isIntersectEnable = src->isIntersectEnable;
+	itemIntersectRadius = src->itemIntersectRadius;
+	isDefaultCollectionMove = src->isDefaultCollectionMove;
+	isRoundingPosition = src->isRoundingPosition;
 
 	idImage_ = src->idImage_;
 	renderTarget_ = src->renderTarget_;
@@ -1145,15 +1149,19 @@ void StgItemObject_User::Clone(DxScriptObjectBase* _src) {
 
 void StgItemObject_User::SetImageID(int id) {
 	idImage_ = id;
-	StgItemData* data = _GetItemData();
-	if (data) {
-		typeItem_ = data->GetItemType();
-	}
+
+	// TODO: WTF did this do??
+	/*if (auto data = _GetItemData()) {
+		itemType = data->GetItemType();
+	}*/
 }
 StgItemData* StgItemObject_User::_GetItemData() {
 	StgItemManager* itemManager = stageController_->GetItemManager();
-	StgItemDataList* dataList = itemManager->GetItemDataList();
-	return dataList ? dataList->GetData(idImage_) : nullptr;
+
+	if (auto dataList = itemManager->GetItemDataList()) {
+		return dataList->GetData(idImage_);
+	}
+	return nullptr;
 }
 
 void StgItemObject_User::Work() {
@@ -1194,7 +1202,7 @@ void StgItemObject_User::Render(BlendMode targetBlend) {
 			rAngle = D3DXVECTOR2(1, 0);
 		}
 
-		if (bRoundingPosition_) {
+		if (isRoundingPosition) {
 			rPos.x = roundf(rPos.x);
 			rPos.y = roundf(rPos.y);
 		}
@@ -1274,12 +1282,12 @@ void StgItemObject_User::Render(BlendMode targetBlend) {
 	}
 }
 void StgItemObject_User::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
-	if (bDefaultScoreText_)
+	if (useDefaultScoreText) 
 		_CreateScoreItem();
-	stageController_->GetStageInformation()->AddScore(score_);
+	stageController_->GetStageInformation()->AddScore(score);
 
 	gstd::value listValue[2] = {
-		DxScript::CreateIntValue(typeItem_),
+		DxScript::CreateIntValue((int)itemType),
 		DxScript::CreateIntValue(idObject_)
 	};
 	_NotifyEventToPlayerScript(listValue, 2);
@@ -1307,7 +1315,7 @@ void StgMovePattern_Item::Move() {
 	double px = target_->position[0];
 	double py = target_->position[1];
 
-	if (itemMoveType == ItemMoveType::ToPlayer || (itemObject->IsDefaultCollectionMovement() && itemObject->IsMoveToPlayer())) {
+	if (itemMoveType == ItemMoveType::ToPlayer || (itemObject->isDefaultCollectionMove && itemObject->isMovingToPlayer)) {
 		speed_ = (frame_ == 0) 
 			? 6 
 			: speed_ + 0.075;
