@@ -172,6 +172,45 @@ public:
 };
 
 //*******************************************************************
+//StgMovePattern_Item
+//*******************************************************************
+class StgMovePattern_Item : public StgMovePattern {
+public:
+	enum class ItemMoveType {
+		None,
+		ToPosition,				// Move to the specified target position
+		Down,					// Downwards, default
+		ToPlayer,				// Yeet to player
+		ScoreText,				// Yeet to player but score
+	};
+
+	ItemMoveType itemMoveType;
+protected:
+	int frame_;
+	
+	double speed_;
+	double angDirection_;
+
+	Math::DVec2 posTo_;
+public:
+	StgMovePattern_Item(StgMoveObject* target);
+
+	StgMovePattern* Clone() const override {
+		return new StgMovePattern_Item(*this);
+	}
+
+	void Activate(StgMovePattern* src) override {}
+	void Move() override;
+
+	double GetSpeed() const override { return speed_; }
+	double GetDirectionAngle() const override { return angDirection_; }
+	
+	MovePatternType GetType() const override { return MovePatternType::Item; }
+	
+	void SetToPosition(const Math::DVec2& pos) { posTo_ = pos; }
+};
+
+//*******************************************************************
 //StgItemObject
 //*******************************************************************
 class StgItemObject : public DxScriptShaderObject, public StgMoveObject, public StgIntersectionObject {
@@ -255,11 +294,12 @@ public:
 
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) = 0;
 
-	virtual void SetX(float x) { posX_ = x; DxScriptRenderObject::SetX(x); }
-	virtual void SetY(float y) { posY_ = y; DxScriptRenderObject::SetY(y); }
+	virtual void SetX(float x) { position[0] = x; DxScriptRenderObject::SetX(x); }
+	virtual void SetY(float y) { position[1] = y; DxScriptRenderObject::SetY(y); }
 	virtual void SetColor(int r, int g, int b);
 	virtual void SetAlpha(int alpha);
-	void SetToPosition(D3DXVECTOR2& pos);
+	
+	void SetToPosition(const Math::DVec2& pos);
 
 	int GetFrameWork() { return frameWork_; }
 
@@ -287,8 +327,8 @@ public:
 
 	void SetPositionRounding(bool b) { bRoundingPosition_ = b; }
 
-	int GetMoveType();
-	void SetMoveType(int type);
+	StgMovePattern_Item::ItemMoveType GetMoveType();
+	void SetMoveType(StgMovePattern_Item::ItemMoveType type);
 
 	void NotifyItemCollectEvent(int type, uint64_t eventParam);
 	void NotifyItemCancelEvent(int type);
@@ -362,43 +402,4 @@ public:
 	virtual void Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget);
 
 	void SetImageID(int id);
-};
-
-//*******************************************************************
-//StgMovePattern_Item
-//*******************************************************************
-class StgMovePattern_Item : public StgMovePattern {
-public:
-	enum {
-		MOVE_NONE,
-		MOVE_TOPOSITION_A,	//Move to the specified target position
-		MOVE_DOWN,			//Downwards, default
-		MOVE_TOPLAYER,		//Yeet to player
-		MOVE_SCORE,			//Yeet to player but score
-	};
-
-protected:
-	int frame_;
-	int typeMove_;
-	double speed_;
-	double angDirection_;
-
-	D3DXVECTOR2 posTo_;
-public:
-	StgMovePattern_Item(StgMoveObject* target);
-
-	virtual void CopyFrom(StgMovePattern* src);
-	virtual StgMovePattern* CreateCopy(StgMoveObject* target) {
-		return new StgMovePattern_Item(target);
-	}
-
-	virtual void Move();
-
-	int GetType() { return TYPE_OTHER; }
-	virtual double GetSpeed() { return speed_; }
-	virtual double GetDirectionAngle() { return angDirection_; }
-	void SetToPosition(D3DXVECTOR2& pos) { posTo_ = pos; }
-
-	int GetItemMoveType() { return typeMove_; }
-	void SetItemMoveType(int type) { typeMove_ = type; }
 };

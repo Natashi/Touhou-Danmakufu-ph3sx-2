@@ -391,8 +391,8 @@ public:
 	virtual void ClearShotObject() { ClearIntersectionRelativeTarget(); }
 	virtual void RegistIntersectionTarget() = 0;
 
-	virtual void SetX(float x) { posX_ = x; DxScriptRenderObject::SetX(x); }
-	virtual void SetY(float y) { posY_ = y; DxScriptRenderObject::SetY(y); }
+	virtual void SetX(float x) { position[0] = x; DxScriptRenderObject::SetX(x); }
+	virtual void SetY(float y) { position[1] = y; DxScriptRenderObject::SetY(y); }
 	virtual void SetColor(int r, int g, int b);
 	virtual void SetAlpha(int alpha);
 	virtual void SetRenderState() {}
@@ -804,5 +804,5 @@ struct StgShotPatternTransform {
 		//TRANSFORM_,
 	};
 	uint8_t act = 0xff;
-	double param[8];
+	double param[8]{};
 };

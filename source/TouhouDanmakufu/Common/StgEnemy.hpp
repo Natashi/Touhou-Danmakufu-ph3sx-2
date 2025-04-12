@@ -92,8 +92,8 @@ public:
 	virtual void ClearEnemyObject() { ClearIntersectionRelativeTarget(); }
 	virtual void RegistIntersectionTarget();
 
-	virtual void SetX(double x) { posX_ = x; DxScriptRenderObject::SetX(x); }
-	virtual void SetY(double y) { posY_ = y; DxScriptRenderObject::SetY(y); }
+	virtual void SetX(double x) { position[0] = x; DxScriptRenderObject::SetX(x); }
+	virtual void SetY(double y) { position[1] = y; DxScriptRenderObject::SetY(y); }
 
 	ref_unsync_ptr<StgEnemyObject> GetOwnObject();
 

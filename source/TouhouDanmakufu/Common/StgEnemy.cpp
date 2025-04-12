@@ -206,7 +206,7 @@ void StgEnemyObject::_DeleteInAutoClip() {
 		rcStgFrame->GetWidth() + rcClipBase->right,
 		rcStgFrame->GetHeight() + rcClipBase->bottom);
 
-	if (!rcDeleteClip.IsPointIntersected(posX_, posY_)) {
+	if (!rcDeleteClip.IsPointIntersected(position[0], position[1])) {
 		stageController_->GetMainObjectManager()->DeleteObject(this);
 	}
 }
@@ -219,13 +219,13 @@ void StgEnemyObject::_DeleteInAutoDeleteFrame() {
 }
 void StgEnemyObject::_Move() {
 	StgMoveObject::_Move();
-	SetX(posX_);
-	SetY(posY_);
+	SetX(position[0]);
+	SetY(position[1]);
 }
 void StgEnemyObject::_AddRelativeIntersection() {
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 
-	UpdateIntersectionRelativeTarget(posX_, posY_, 0);
+	UpdateIntersectionRelativeTarget(position[0], position[1], 0);
 	RegistIntersectionRelativeTarget(intersectionManager);
 }
 void StgEnemyObject::Activate() {}

@@ -175,8 +175,8 @@ void StgShotManager::DeleteInCircle(int typeDelete, int typeTo, int typeOwner, i
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 		if (typeDelete == DEL_TYPE_SHOT && obj->IsSpellResist()) continue;
 
-		int sx = obj->GetPositionX();
-		int sy = obj->GetPositionY();
+		int sx = obj->position[0];
+		int sy = obj->position[1];
 
 		bool bInRadius = rcBox.IsPointIntersected(sx, sy) && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr;
 		if (!radius.has_value() || bInRadius) {
@@ -201,8 +201,8 @@ std::vector<int> StgShotManager::GetShotIdInCircle(int typeOwner, int cx, int cy
 		if (obj->IsDeleted()) continue;
 		if ((typeOwner != StgShotObject::OWNER_NULL) && (obj->GetOwnerType() != typeOwner)) continue;
 
-		int sx = obj->GetPositionX();
-		int sy = obj->GetPositionY();
+		int sx = obj->position[0];
+		int sy = obj->position[1];
 
 		bool bInRadius = rcBox.IsPointIntersected(sx, sy) && Math::HypotSq<int64_t>(cx - sx, cy - sy) <= rr;
 		if (!radius.has_value() || bInRadius) {
@@ -747,8 +747,7 @@ HRESULT StgShotVertexBufferContainer::LoadData(const std::vector<VERTEX_TLX>& da
 //****************************************************************************
 StgShotObject::StgShotObject(StgStageController* stageController) : StgMoveObject(stageController) {
 	frameWork_ = 0;
-	posX_ = 0;
-	posY_ = 0;
+	position = {};
 	idShotData_ = 0;
 	SetBlendType(MODE_BLEND_NONE);
 
@@ -855,8 +854,9 @@ void StgShotObject::Work() {
 void StgShotObject::_Move() {
 	if (delay_.time == 0 || bEnableMotionDelay_)
 		StgMoveObject::_Move();
-	SetX(posX_);
-	SetY(posY_);
+	
+	SetX(position[0]);
+	SetY(position[1]);
 }
 void StgShotObject::_DeleteInLife() {
 	if (IsDeleted() || life_ > 0) return;
@@ -875,8 +875,8 @@ void StgShotObject::_RequestPlayerDeleteEvent(int hitObjectID) {	//A super ugly 
 	auto scriptManager = stageController_->GetScriptManager();
 
 	if (scriptManager != nullptr && typeOwner_ == StgShotObject::OWNER_PLAYER) {
-		float posX = GetPositionX();
-		float posY = GetPositionY();
+		float posX = position[0];
+		float posY = position[1];
 		LOCK_WEAK(scriptPlayer, scriptManager->GetPlayerScript()) {
 			float listPos[2] = { posX, posY };
 
@@ -899,7 +899,7 @@ void StgShotObject::_DeleteInAutoClip() {
 		rcStgFrame->GetWidth() + rcClipBase->right,
 		rcStgFrame->GetHeight() + rcClipBase->bottom);
 
-	if (!rcDeleteClip.IsPointIntersected(posX_, posY_)) {
+	if (!rcDeleteClip.IsPointIntersected(position[0], position[1])) {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
@@ -932,7 +932,7 @@ void StgShotObject::_DeleteInAutoDeleteFrame() {
 	else --frameAutoDelete_;
 }
 void StgShotObject::_CommonWorkTask() {
-	if (bEnableMovement_) {
+	if (enableMovement) {
 		++frameWork_;
 		if (frameFadeDelete_ >= 0) --frameFadeDelete_;
 		_DeleteInLife();
@@ -1067,69 +1067,79 @@ void StgShotObject::DeleteImmediate() {
 }
 
 void StgShotObject::_ProcessTransformAct() {
-	if (listTransformationShotAct_.size() == 0) return;
+	if (listTransformationShotAct_.size() == 0)
+		return;
 
-	if (timerTransform_ == 0) timerTransform_ = delay_.time;
+	if (timerTransform_ == 0) {
+		timerTransform_ = delay_.time;
+	}
+	
 	while (timerTransform_ == frameWork_ && listTransformationShotAct_.size() > 0) {
-		StgShotPatternTransform& transform = listTransformationShotAct_.front();
+		auto& [act, param] = listTransformationShotAct_.front();
 
-		switch (transform.act) {
+		switch (act) {
 		case StgShotPatternTransform::TRANSFORM_WAIT:
-			timerTransform_ += std::max((int)transform.param[0], 0);
+			timerTransform_ += std::max((int)param[0], 0);
 			break;
 		case StgShotPatternTransform::TRANSFORM_ADD_SPEED_ANGLE:
 		{
-			int duration = transform.param[0];
-			int delay = transform.param[1];
-			double accel = transform.param[2];
-			double agvel = transform.param[3];
+			int duration = param[0];
+			int delay = param[1];
+			double accel = param[2];
+			double agvel = param[3];
 
 			{
-				ref_unsync_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ACCEL, accel));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL,
-					Math::DegreeToRadian(agvel)));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_SPMAX2, accel * duration));
-				AddPattern(delay, pattern, true);
+				auto pattern = make_unique<StgMovePattern_Angle>(this);
+				
+				pattern->AddCommand(StgMovePattern_Angle::SET_ACCEL, accel);
+				pattern->AddCommand(StgMovePattern_Angle::SET_AGVEL, Math::DegreeToRadian(agvel));
+				pattern->AddCommand(StgMovePattern_Angle::SET_SPMAX2, accel * duration);
+				
+				AddPattern(delay, MOVE(pattern), true);
 			}
 			{
-				ref_unsync_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ACCEL, 0));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL, 0));
-				AddPattern(delay + duration, pattern, true);
+				auto pattern = make_unique<StgMovePattern_Angle>(this);
+				
+				pattern->AddCommand(StgMovePattern_Angle::SET_ACCEL, 0);
+				pattern->AddCommand(StgMovePattern_Angle::SET_AGVEL, 0);
+				
+				AddPattern(delay + duration, MOVE(pattern), true);
 			}
 			break;
 		}
 		case StgShotPatternTransform::TRANSFORM_ANGULAR_MOVE:
 		{
-			int duration = transform.param[0];
-			double agvel = transform.param[1];
-			double spin = transform.param[2];
+			int duration = param[0];
+			double agvel = param[1];
+			double spin = param[2];
 
-			if (StgNormalShotObject* shot = dynamic_cast<StgNormalShotObject*>(this))
+			if (auto shot = dynamic_cast<StgNormalShotObject*>(this))
 				shot->angularVelocity_ = Math::DegreeToRadian(spin);
 
 			{
-				ref_unsync_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL,
-					Math::DegreeToRadian(agvel)));
-				AddPattern(0, pattern, true);
+				auto pattern = make_unique<StgMovePattern_Angle>(this);
+				
+				pattern->AddCommand(StgMovePattern_Angle::SET_AGVEL, Math::DegreeToRadian(agvel));
+				
+				AddPattern(0, MOVE(pattern), true);
 			}
 			{
-				ref_unsync_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL, 0));
-				AddPattern(duration, pattern, true);
+				auto pattern = make_unique<StgMovePattern_Angle>(this);
+				
+				pattern->AddCommand(StgMovePattern_Angle::SET_AGVEL, 0);
+				
+				AddPattern(duration, MOVE(pattern), true);
 			}
 
 			break;
 		}
 		case StgShotPatternTransform::TRANSFORM_N_DECEL_CHANGE:
 		{
-			int timer = transform.param[0];
-			int countRep = transform.param[1];
-			int typeChange = transform.param[2];
-			double changeSpeed = transform.param[3];
-			double changeAngle = transform.param[4];
+			int timer = param[0];
+			int countRep = param[1];
+			int typeChange = param[2];
+			double changeSpeed = param[3];
+			double changeAngle = param[4];
 
 			timerTransform_ += timer * countRep;
 
@@ -1137,59 +1147,66 @@ void StgShotObject::_ProcessTransformAct() {
 				double nowSpeed = GetSpeed();
 
 				{
-					ref_unsync_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
-					pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_SPEED, nowSpeed));
-					pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ACCEL, -nowSpeed / timer));
-					pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_SPMAX, 0));
-					AddPattern(framePattern, pattern, true);
+					auto pattern = make_unique<StgMovePattern_Angle>(this);
+					
+					pattern->AddCommand(StgMovePattern_Angle::SET_SPEED, nowSpeed);
+					pattern->AddCommand(StgMovePattern_Angle::SET_ACCEL, -nowSpeed / timer);
+					pattern->AddCommand(StgMovePattern_Angle::SET_SPMAX, 0);
+					
+					AddPattern(framePattern, MOVE(pattern), true);
 				}
 
 				{
-					ref_unsync_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
-					pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_SPEED, changeSpeed));
-					pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ACCEL, 0));
-					pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_SPMAX, 0));
+					unique_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
+					
+					pattern->AddCommand(StgMovePattern_Angle::SET_SPEED, changeSpeed);
+					pattern->AddCommand(StgMovePattern_Angle::SET_ACCEL, 0);
+					pattern->AddCommand(StgMovePattern_Angle::SET_SPMAX, 0);
 
 					double angleArgument = Math::NormalizeAngleRad(Math::DegreeToRadian(changeAngle));
 					switch (typeChange) {
 					case 0:
-						pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ANGLE, angleArgument));
+						pattern->AddCommand(StgMovePattern_Angle::SET_ANGLE, angleArgument);
 						break;
 					case 1:
-						pattern->AddCommand(std::make_pair(StgMovePattern_Angle::ADD_ANGLE, angleArgument));
+						pattern->AddCommand(StgMovePattern_Angle::ADD_ANGLE, angleArgument);
 						break;
 					case 2:
 					{
-						auto objPlayer = stageController_->GetPlayerObject();
-						if (objPlayer)
+						if (auto objPlayer = stageController_->GetPlayerObject())
 							pattern->SetRelativeObject(objPlayer);
-						shared_ptr<RandProvider> rand = stageController_->GetStageInformation()->GetRandProvider();
-						pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ANGLE,
-							rand->GetReal(-angleArgument, angleArgument)));
+						
+						auto rand = stageController_->GetStageInformation()->GetRandProvider();
+						
+						pattern->AddCommand(StgMovePattern_Angle::SET_ANGLE,
+							rand->GetReal(-angleArgument, angleArgument));
+						
 						break;
 					}
 					case 3:
 					{
-						auto objPlayer = stageController_->GetPlayerObject();
-						if (objPlayer)
+						if (auto objPlayer = stageController_->GetPlayerObject())
 							pattern->SetRelativeObject(objPlayer);
-						pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ANGLE, angleArgument));
+						
+						pattern->AddCommand(StgMovePattern_Angle::SET_ANGLE, angleArgument);
+						
 						break;
 					}
 					case 4:
 					{
-						shared_ptr<RandProvider> rand = stageController_->GetStageInformation()->GetRandProvider();
-						pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ANGLE,
-							rand->GetReal(0, GM_PI_X2)));
+						auto rand = stageController_->GetStageInformation()->GetRandProvider();
+						
+						pattern->AddCommand(StgMovePattern_Angle::SET_ANGLE,
+							rand->GetReal(0, GM_PI_X2));
+						
 						break;
 					}
-					case 5:
 					default:
 						//pattern->SetDirectionAngle(StgMovePattern::NO_CHANGE);
 						break;
 					}
 
-					AddPattern(framePattern + timer, pattern, true);
+					AddPattern(framePattern + timer, MOVE(pattern), true);
 				}
 			}
 
@@ -1197,197 +1214,207 @@ void StgShotObject::_ProcessTransformAct() {
 		}
 		case StgShotPatternTransform::TRANSFORM_GRAPHIC_CHANGE:
 		{
-			idShotData_ = transform.param[0];
+			idShotData_ = param[0];
 			break;
 		}
 		case StgShotPatternTransform::TRANSFORM_BLEND_CHANGE:
 		{
-			SetBlendType((BlendMode)transform.param[0]);
+			SetBlendType((BlendMode)param[0]);
 			break;
 		}
 		case StgShotPatternTransform::TRANSFORM_TO_SPEED_ANGLE:
 		{
-			int duration = transform.param[0];
-			double targetSpeed = transform.param[1];
-			double targetAngle = transform.param[2];
+			int duration = param[0];
+			double targetSpeed = param[1];
+			double targetAngle = param[2];
 
 			double nowSpeed = GetSpeed();
 			double nowAngle = GetDirectionAngle();
 
 			if (targetAngle == StgMovePattern::TOPLAYER_CHANGE) {
-				ref_unsync_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
-				if (objPlayer)
-					targetAngle = atan2(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());
+				if (auto objPlayer = stageController_->GetPlayerObject()) {
+					targetAngle = atan2(
+						objPlayer->GetY() - position[1],
+						objPlayer->GetX() - position[0]);
+				}
 			}
 			else if (targetAngle == StgMovePattern::NO_CHANGE) {
 				targetAngle = nowAngle;
 			}
-			else
+			else {
 				targetAngle = Math::DegreeToRadian(targetAngle);
+			}
 
 			{
-				ref_unsync_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
+				auto pattern = make_unique<StgMovePattern_Angle>(this);
+				
 				if (targetSpeed != StgMovePattern::NO_CHANGE) {
-					pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ACCEL,
-						(targetSpeed - nowSpeed) / duration));
-					pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_SPMAX, targetSpeed));
+					pattern->AddCommand(StgMovePattern_Angle::SET_ACCEL,
+						(targetSpeed - nowSpeed) / duration);
+					pattern->AddCommand(StgMovePattern_Angle::SET_SPMAX, targetSpeed);
 				}
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL,
-					Math::AngleDifferenceRad(nowAngle, targetAngle) / duration));
-				AddPattern(0, pattern, true);
+				pattern->AddCommand(StgMovePattern_Angle::SET_AGVEL,
+					Math::AngleDifferenceRad(nowAngle, targetAngle) / duration);
+				
+				AddPattern(0, MOVE(pattern), true);
 			}
 			{
-				ref_unsync_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ACCEL, 0));
-				pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_AGVEL, 0));
-				AddPattern(duration, pattern, true);
+				auto pattern = make_unique<StgMovePattern_Angle>(this);
+				
+				pattern->AddCommand(StgMovePattern_Angle::SET_ACCEL, 0);
+				pattern->AddCommand(StgMovePattern_Angle::SET_AGVEL, 0);
+				
+				AddPattern(duration, MOVE(pattern), true);
 			}
 
 			break;
 		}
-
-#define ADD_CMD(__cmd, __arg) if (__arg != StgMovePattern::NO_CHANGE) \
-								pattern->AddCommand(std::make_pair(__cmd, __arg));
-#define ADD_CMD2(__cmd, __target, __arg) if (__target != StgMovePattern::NO_CHANGE) \
-								pattern->AddCommand(std::make_pair(__cmd, __arg));
 		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_A1:
 		{
-			int time = transform.param[0];
+			int time = param[0];
 
-			double speed = transform.param[1];
-			double angle = transform.param[2];
+			double speed = param[1];
+			double angle = param[2];
 
-			ref_unsync_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
-			pattern->AddCommand(std::make_pair(StgMovePattern_Angle::SET_ZERO, 0));
+			auto pattern = make_unique<StgMovePattern_Angle>(this);
+			pattern->AddCommand(StgMovePattern_Angle::SET_ZERO, 0);
 
-			ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
-			ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
+			pattern->AddCommandChecked(StgMovePattern_Angle::SET_SPEED, speed);
+			pattern->AddCommandChecked(StgMovePattern_Angle::SET_ANGLE,
+				angle, Math::DegreeToRadian(angle));
 
-			AddPattern(time, pattern, true);
+			AddPattern(time, MOVE(pattern), true);
 			break;
 		}
 		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_A2:
 		{
-			int time = transform.param[0];
+			int time = param[0];
 
-			double speed = transform.param[1];
-			double angle = transform.param[2];
+			double speed = param[1];
+			double angle = param[2];
 
-			double accel = transform.param[3];
-			double maxsp = transform.param[4];
-			double agvel = transform.param[5];
+			double accel = param[3];
+			double maxsp = param[4];
+			double agvel = param[5];
 
-			int shotID = transform.param[6];
-			int relativeObj = transform.param[7];
+			int shotID = param[6];
+			int relativeObj = param[7];
 
-			ref_unsync_ptr<StgMovePattern_Angle> pattern(new StgMovePattern_Angle(this));
+			auto pattern = make_unique<StgMovePattern_Angle>(this);
 
-			ADD_CMD(StgMovePattern_Angle::SET_SPEED, speed);
-			ADD_CMD2(StgMovePattern_Angle::SET_ANGLE, angle, Math::DegreeToRadian(angle));
-			ADD_CMD(StgMovePattern_Angle::SET_ACCEL, accel);
-			ADD_CMD(StgMovePattern_Angle::SET_SPMAX, maxsp);
-			ADD_CMD2(StgMovePattern_Angle::SET_AGVEL, agvel, Math::DegreeToRadian(agvel));
+			pattern->AddCommandChecked(StgMovePattern_Angle::SET_SPEED, speed);
+			pattern->AddCommandChecked(StgMovePattern_Angle::SET_ANGLE,
+				angle, Math::DegreeToRadian(angle));
+			pattern->AddCommandChecked(StgMovePattern_Angle::SET_ACCEL, accel);
+			pattern->AddCommandChecked(StgMovePattern_Angle::SET_SPMAX, maxsp);
+			pattern->AddCommandChecked(StgMovePattern_Angle::SET_AGVEL,
+				agvel, Math::DegreeToRadian(agvel));
 
-			pattern->SetShotDataID(shotID);
-			pattern->SetRelativeObject(relativeObj);
+			pattern->shotDataId = shotID;
 
-			AddPattern(time, pattern, true);
+			if (auto patternAng = dynamic_cast<StgMovePattern_Angle*>(pattern.get()))
+				patternAng->SetRelativeObject(relativeObj);
+
+			AddPattern(time, MOVE(pattern), true);
 			break;
 		}
 		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_B1:
 		{
-			int time = transform.param[0];
+			int time = param[0];
 
-			double speedX = transform.param[1];
-			double speedY = transform.param[2];
+			double speedX = param[1];
+			double speedY = param[2];
 
-			ref_unsync_ptr<StgMovePattern_XY> pattern(new StgMovePattern_XY(this));
-			pattern->AddCommand(std::make_pair(StgMovePattern_XY::SET_ZERO, 0));
+			auto pattern = make_unique<StgMovePattern_XY>(this);
+			
+			pattern->AddCommand(StgMovePattern_XY::SET_ZERO, 0);
 
-			ADD_CMD(StgMovePattern_XY::SET_S_X, speedX);
-			ADD_CMD(StgMovePattern_XY::SET_S_Y, speedY);
+			pattern->AddCommandChecked(StgMovePattern_XY::SET_S_X, speedX);
+			pattern->AddCommandChecked(StgMovePattern_XY::SET_S_Y, speedY);
 
-			AddPattern(time, pattern, true);
+			AddPattern(time, MOVE(pattern), true);
 			break;
 		}
 		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_B2:
 		{
-			int time = transform.param[0];
+			int time = param[0];
 
-			double speedX = transform.param[1];
-			double speedY = transform.param[2];
-			double accelX = transform.param[3];
-			double accelY = transform.param[4];
-			double maxspX = transform.param[5];
-			double maxspY = transform.param[6];
+			double speedX = param[1];
+			double speedY = param[2];
+			double accelX = param[3];
+			double accelY = param[4];
+			double maxspX = param[5];
+			double maxspY = param[6];
 
-			int shotID = transform.param[7];
+			int shotID = param[7];
 
-			ref_unsync_ptr<StgMovePattern_XY> pattern(new StgMovePattern_XY(this));
+			auto pattern = make_unique<StgMovePattern_XY>(this);
 
-			ADD_CMD(StgMovePattern_XY::SET_S_X, speedX);
-			ADD_CMD(StgMovePattern_XY::SET_S_Y, speedY);
-			ADD_CMD(StgMovePattern_XY::SET_A_X, accelX);
-			ADD_CMD(StgMovePattern_XY::SET_A_Y, accelY);
-			ADD_CMD(StgMovePattern_XY::SET_M_X, maxspX);
-			ADD_CMD(StgMovePattern_XY::SET_M_Y, maxspY);
+			pattern->AddCommandChecked(StgMovePattern_XY::SET_S_X, speedX);
+			pattern->AddCommandChecked(StgMovePattern_XY::SET_S_Y, speedY);
+			pattern->AddCommandChecked(StgMovePattern_XY::SET_A_X, accelX);
+			pattern->AddCommandChecked(StgMovePattern_XY::SET_A_Y, accelY);
+			pattern->AddCommandChecked(StgMovePattern_XY::SET_M_X, maxspX);
+			pattern->AddCommandChecked(StgMovePattern_XY::SET_M_Y, maxspY);
 
-			pattern->SetShotDataID(shotID);
+			pattern->shotDataId = shotID;
 
-			AddPattern(time, pattern, true);
+			AddPattern(time, MOVE(pattern), true);
 			break;
 		}
 		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_C1:
 		{
-			int time = transform.param[0];
+			int time = param[0];
 
-			double speedX = transform.param[1];
-			double speedY = transform.param[2];
-			double angOff = transform.param[3];
+			double speedX = param[1];
+			double speedY = param[2];
+			double angOff = param[3];
 
-			ref_unsync_ptr<StgMovePattern_XY_Angle> pattern(new StgMovePattern_XY_Angle(this));
-			pattern->AddCommand(std::make_pair(StgMovePattern_XY_Angle::SET_ZERO, 0));
+			auto pattern = make_unique<StgMovePattern_XY_Angle>(this);
+			
+			pattern->AddCommand(StgMovePattern_XY_Angle::SET_ZERO, 0);
 
-			ADD_CMD(StgMovePattern_XY_Angle::SET_S_X, speedX);
-			ADD_CMD(StgMovePattern_XY_Angle::SET_S_Y, speedY);
-			ADD_CMD2(StgMovePattern_XY_Angle::SET_ANGLE, angOff, Math::DegreeToRadian(angOff));
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_S_X, speedX);
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_S_Y, speedY);
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_ANGLE,
+				angOff, Math::DegreeToRadian(angOff));
 
-			AddPattern(time, pattern, true);
+			AddPattern(time, MOVE(pattern), true);
 			break;
 		}
 		case StgShotPatternTransform::TRANSFORM_ADDPATTERN_C2:
 		{
-			int time = transform.param[0];
+			int time = param[0];
 
-			double speedX = transform.param[1];
-			double speedY = transform.param[2];
-			double accelX = transform.param[3];
-			double accelY = transform.param[4];
-			double maxspX = transform.param[5];
-			double maxspY = transform.param[6];
-			double angOff = transform.param[7];
-			double angVel = transform.param[8];
+			double speedX = param[1];
+			double speedY = param[2];
+			double accelX = param[3];
+			double accelY = param[4];
+			double maxspX = param[5];
+			double maxspY = param[6];
+			double angOff = param[7];
+			double angVel = param[8];
 
-			int shotID = transform.param[9];
+			int shotID = param[9];
 
-			ref_unsync_ptr<StgMovePattern_XY_Angle> pattern(new StgMovePattern_XY_Angle(this));
+			auto pattern = make_unique<StgMovePattern_XY_Angle>(this);
 
-			ADD_CMD(StgMovePattern_XY_Angle::SET_S_X, speedX);
-			ADD_CMD(StgMovePattern_XY_Angle::SET_S_Y, speedY);
-			ADD_CMD(StgMovePattern_XY_Angle::SET_A_X, accelX);
-			ADD_CMD(StgMovePattern_XY_Angle::SET_A_Y, accelY);
-			ADD_CMD(StgMovePattern_XY_Angle::SET_M_X, maxspX);
-			ADD_CMD(StgMovePattern_XY_Angle::SET_M_Y, maxspY);
-			ADD_CMD2(StgMovePattern_XY_Angle::SET_ANGLE, angOff, Math::DegreeToRadian(angOff));
-			ADD_CMD2(StgMovePattern_XY_Angle::SET_AGVEL, angVel, Math::DegreeToRadian(angVel));
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_S_X, speedX);
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_S_Y, speedY);
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_A_X, accelX);
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_A_Y, accelY);
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_M_X, maxspX);
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_M_Y, maxspY);
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_ANGLE,
+				angOff, Math::DegreeToRadian(angOff));
+			pattern->AddCommandChecked(StgMovePattern_XY_Angle::SET_AGVEL,
+				angVel, Math::DegreeToRadian(angVel));
 
-			pattern->SetShotDataID(shotID);
+			pattern->shotDataId = shotID;
 
-			AddPattern(time, pattern, true);
+			AddPattern(time, MOVE(pattern), true);
 			break;
 		}
-#undef ADD_CMD
-#undef ADD_CMD2
 		default:
 			break;
 		}
@@ -1431,7 +1458,7 @@ void StgNormalShotObject::Clone(DxScriptObjectBase* _src) {
 }
 
 void StgNormalShotObject::Work() {
-	if (bEnableMovement_) {
+	if (enableMovement) {
 		_ProcessTransformAct();
 		_Move();
 
@@ -1525,12 +1552,12 @@ bool StgNormalShotObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 		if (pSrcCircle->GetX() != 0 || pSrcCircle->GetY() != 0) {
 			float px = pSrcCircle->GetX() * move_.x + pSrcCircle->GetY() * move_.y;
 			float py = pSrcCircle->GetX() * move_.y - pSrcCircle->GetY() * move_.x;
-			pDstCircle->SetX(posX_ + px * intersectionScale);
-			pDstCircle->SetY(posY_ + py * intersectionScale);
+			pDstCircle->SetX(position[0] + px * intersectionScale);
+			pDstCircle->SetY(position[1] + py * intersectionScale);
 		}
 		else {
-			pDstCircle->SetX(posX_);
-			pDstCircle->SetY(posY_);
+			pDstCircle->SetX(position[0]);
+			pDstCircle->SetY(position[1]);
 		}
 		pDstCircle->SetR(pSrcCircle->GetR() * intersectionScale);
 
@@ -1699,7 +1726,7 @@ void StgNormalShotObject::_SendDeleteEvent(TypeDelete type) {
 		int typeEvent = StgShotManager::_TypeDeleteToEventType(type);
 
 		{
-			Math::DVec2 pos{ GetPositionX(), GetPositionY() };
+			Math::DVec2 pos{ position[0], position[1] };
 
 			LOCK_WEAK(itemScript, stageScriptManager->GetItemScript()) {
 				gstd::value listScriptValue[3];
@@ -1710,15 +1737,14 @@ void StgNormalShotObject::_SendDeleteEvent(TypeDelete type) {
 			}
 
 			//Create default delete item
-			if (type == TypeDelete::Item && itemManager->IsDefaultBonusItemEnable()) {
+			if (type == TypeDelete::Item && itemManager->bDefaultBonusItemEnable_) {
 				if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 					ref_unsync_ptr<StgItemObject> obj(new StgItemObject_Bonus(stageController_));
 
 					int id = objectManager->AddObject(obj);
 					if (id != DxScript::ID_INVALID) {
 						itemManager->AddItem(obj);
-						obj->SetPositionX(pos[0]);
-						obj->SetPositionY(pos[1]);
+						obj->position = pos;
 					}
 				}
 			}
@@ -1853,14 +1879,16 @@ void StgLooseLaserObject::Clone(DxScriptObjectBase* _src) {
 
 void StgLooseLaserObject::Work() {
 	if (frameWork_ == 0) {
-		posTail_[0] = posOrigin_.x = posX_;
-		posTail_[1] = posOrigin_.y = posY_;
+		posTail_ = position;
+		posOrigin_ = {
+			(float)posTail_[0],
+			(float)posTail_[1],
+		};
 	}
 
-	if (bEnableMovement_) {
+	if (enableMovement) {
 		_ProcessTransformAct();
 		_Move();
-
 
 		if (delay_.time > 0) {
 			--(delay_.time);
@@ -1874,17 +1902,17 @@ void StgLooseLaserObject::Work() {
 void StgLooseLaserObject::_Move() {
 	if (delay_.time == 0 || bEnableMotionDelay_)
 		StgMoveObject::_Move();
-	DxScriptRenderObject::SetX(posX_);
-	DxScriptRenderObject::SetY(posY_);
+	DxScriptRenderObject::SetX(position[0]);
+	DxScriptRenderObject::SetY(position[1]);
 
 	double angleZ = GetDirectionAngle();
 
 	if (delay_.time <= 0 || bEnableMotionDelay_) {
-		currentLength_ = hypot(posTail_[0] - posX_, posTail_[1] - posY_);
+		currentLength_ = hypot(posTail_[0] - position[0], posTail_[1] - position[1]);
 		if (currentLength_ >= length_) {
 			//float speed = GetSpeed();
-			posTail_[0] = posX_ - length_ * move_.x;
-			posTail_[1] = posY_ - length_ * move_.y;
+			posTail_[0] = position[0] - length_ * move_.x;
+			posTail_[1] = position[1] - length_ * move_.y;
 		}
 	}
 	if (lastAngle_ != angleZ) {
@@ -1901,7 +1929,7 @@ void StgLooseLaserObject::_DeleteInAutoClip() {
 		rcStgFrame->GetWidth() + rcClipBase->right,
 		rcStgFrame->GetHeight() + rcClipBase->bottom);
 
-	if (!rcDeleteClip.IsPointIntersected(posX_, posY_) && !rcDeleteClip.IsPointIntersected(posTail_)) {
+	if (!rcDeleteClip.IsPointIntersected(position[0], position[1]) && !rcDeleteClip.IsPointIntersected(posTail_)) {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
@@ -1914,10 +1942,10 @@ bool StgLooseLaserObject::GetIntersectionTargetList_NoVector(StgShotData* shotDa
 	float invLengthS = (1.0f - (1.0f - invalidLengthStart_) * hitboxScale_.y) * 0.5f;
 	float invLengthE = (1.0f - (1.0f - invalidLengthEnd_) * hitboxScale_.y) * 0.5f;
 
-	float lineXS = Math::Lerp::Linear(posX_, posTail_[0], invLengthS);
-	float lineYS = Math::Lerp::Linear(posY_, posTail_[1], invLengthS);
-	float lineXE = Math::Lerp::Linear(posTail_[0], posX_, invLengthE);
-	float lineYE = Math::Lerp::Linear(posTail_[1], posY_, invLengthE);
+	float lineXS = Math::Lerp::Linear(position[0], posTail_[0], invLengthS);
+	float lineYS = Math::Lerp::Linear(position[1], posTail_[1], invLengthS);
+	float lineXE = Math::Lerp::Linear(posTail_[0], position[0], invLengthE);
+	float lineYE = Math::Lerp::Linear(posTail_[1], position[1], invLengthE);
 
 	{
 		IntersectionPairType* pPair = &listIntersectionTarget_[0];
@@ -1997,11 +2025,15 @@ void StgLooseLaserObject::Render(BlendMode targetBlend) {
 		if (objBlendType == targetBlend) {
 			StgShotDataFrame* shotFrame = shotData->GetFrame(frameWork_);
 
-			float dx = posTail_[0] - posX_;
-			float dy = posTail_[1] - posY_;
+			float dx = posTail_[0] - position[0];
+			float dy = posTail_[1] - position[1];
 
 			if (currentLength_ > 0 && widthRender_ != 0) {
-				rPos = D3DXVECTOR2(posX_ + posTail_[0], posY_ + posTail_[1]) / 2;	//Render from the laser center
+				rPos = D3DXVECTOR2(
+					position[0] + posTail_[0],
+					position[1] + posTail_[1]
+				);	
+				rPos /= 2;	// Render from the laser center
 				if (bRoundingPosition_) {
 					rPos.x = roundf(rPos.x);
 					rPos.y = roundf(rPos.y);
@@ -2051,8 +2083,8 @@ void StgLooseLaserObject::_SendDeleteEvent(TypeDelete type) {
 	{
 		int typeEvent = StgShotManager::_TypeDeleteToEventType(type);
 
-		double ex = GetPositionX();
-		double ey = GetPositionY();
+		double ex = position[0];
+		double ey = position[1];
 
 		Math::DVec2 pos;
 		gstd::value listScriptValue[3];
@@ -2069,7 +2101,7 @@ void StgLooseLaserObject::_SendDeleteEvent(TypeDelete type) {
 			}
 
 			//Create default delete item
-			if (type == TypeDelete::Item && itemManager->IsDefaultBonusItemEnable()) {
+			if (type == TypeDelete::Item && itemManager->bDefaultBonusItemEnable_) {
 				if (delay_.time == 0 || bEnableMotionDelay_) {
 					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 						ref_unsync_ptr<StgItemObject> obj(new StgItemObject_Bonus(stageController_));
@@ -2077,8 +2109,7 @@ void StgLooseLaserObject::_SendDeleteEvent(TypeDelete type) {
 						int id = objectManager->AddObject(obj);
 						if (id != DxScript::ID_INVALID) {
 							itemManager->AddItem(obj);
-							obj->SetPositionX(pos[0]);
-							obj->SetPositionY(pos[1]);
+							obj->position = pos;
 						}
 					}
 				}
@@ -2131,7 +2162,7 @@ void StgStraightLaserObject::Work() {
 	if (frameWork_ == 0 && delay_.time == 0) 
 		scaleX_ = 1.0f;
 
-	if (bEnableMovement_) {
+	if (enableMovement) {
 		_ProcessTransformAct();
 		_Move();
 
@@ -2162,10 +2193,10 @@ void StgStraightLaserObject::_DeleteInAutoClip() {
 		rcStgFrame->GetWidth() + rcClipBase->right,
 		rcStgFrame->GetHeight() + rcClipBase->bottom);
 
-	double posXE = posX_ + length_ * move_.x;
-	double posYE = posY_ + length_ * move_.y;
+	double posXE = position[0] + length_ * move_.x;
+	double posYE = position[1] + length_ * move_.y;
 
-	if (!rcDeleteClip.IsPointIntersected(posX_, posY_) && !rcDeleteClip.IsPointIntersected(posXE, posYE)) {
+	if (!rcDeleteClip.IsPointIntersected(position[0], position[1]) && !rcDeleteClip.IsPointIntersected(posXE, posYE)) {
 		auto objectManager = stageController_->GetMainObjectManager();
 		objectManager->DeleteObject(this);
 	}
@@ -2178,15 +2209,15 @@ bool StgStraightLaserObject::GetIntersectionTargetList_NoVector(StgShotData* sho
 	if (abs(hitboxScale_.x) < 0.01f || abs(length) < 0.01f)
 		return false;
 
-	double posXE = posX_ + length * move_.x;
-	double posYE = posY_ + length * move_.y;
+	double posXE = position[0] + length * move_.x;
+	double posYE = position[1] + length * move_.y;
 	float invLenHalfS = invalidLengthStart_ * 0.5f;
 	float invLenHalfE = invalidLengthEnd_ * 0.5f;
 
-	float lineXS = Math::Lerp::Linear(posX_, posXE, invLenHalfS);
-	float lineYS = Math::Lerp::Linear(posY_, posYE, invLenHalfS);
-	float lineXE = Math::Lerp::Linear(posXE, posX_, invLenHalfE);
-	float lineYE = Math::Lerp::Linear(posYE, posY_, invLenHalfE);
+	float lineXS = Math::Lerp::Linear(position[0], posXE, invLenHalfS);
+	float lineYS = Math::Lerp::Linear(position[1], posYE, invLenHalfS);
+	float lineXE = Math::Lerp::Linear(posXE, position[0], invLenHalfE);
+	float lineYE = Math::Lerp::Linear(posYE, position[1], invLenHalfE);
 
 	{
 		IntersectionPairType* pPair = &listIntersectionTarget_[0];
@@ -2233,7 +2264,9 @@ void StgStraightLaserObject::Render(BlendMode targetBlend) {
 			float _renderLn = length_ * scale_.y;
 
 			//Render from the laser center
-			D3DXVECTOR2 rPos = D3DXVECTOR2(posX_ * 2 + move_.x * _renderLn, posY_ * 2 + move_.y * _renderLn) / 2;
+			D3DXVECTOR2 rPos = D3DXVECTOR2(
+				position[0] * 2 + move_.x * _renderLn,
+				position[1] * 2 + move_.y * _renderLn) / 2;
 			if (bRoundingPosition_) {
 				rPos.x = roundf(rPos.x);
 				rPos.y = roundf(rPos.y);
@@ -2330,7 +2363,10 @@ void StgStraightLaserObject::_SendDeleteEvent(TypeDelete type) {
 		gstd::value listScriptValue[3];
 
 		for (double itemPos = 0; itemPos < length_; itemPos += itemDistance_) {
-			pos = { posX_ + itemPos * move_.x, posY_ + itemPos * move_.y };
+			pos = {
+				position[0] + itemPos * move_.x,
+				position[1] + itemPos * move_.y
+			};
 
 			if (itemScript) {
 				gstd::value listScriptValue[3];
@@ -2341,7 +2377,7 @@ void StgStraightLaserObject::_SendDeleteEvent(TypeDelete type) {
 			}
 
 			//Create default delete item
-			if (type == TypeDelete::Item && itemManager->IsDefaultBonusItemEnable()) {
+			if (type == TypeDelete::Item && itemManager->bDefaultBonusItemEnable_) {
 				if (delay_.time == 0) {
 					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 						ref_unsync_ptr<StgItemObject> obj(new StgItemObject_Bonus(stageController_));
@@ -2349,8 +2385,7 @@ void StgStraightLaserObject::_SendDeleteEvent(TypeDelete type) {
 						int id = objectManager->AddObject(obj);
 						if (id != DxScript::ID_INVALID) {
 							itemManager->AddItem(obj);
-							obj->SetPositionX(pos[0]);
-							obj->SetPositionY(pos[1]);
+							obj->position = pos;
 						}
 					}
 				}
@@ -2393,11 +2428,11 @@ void StgCurveLaserObject::Clone(DxScriptObjectBase* _src) {
 
 void StgCurveLaserObject::Work() {
 	if (frameWork_ == 0) {
-		posOrigin_.x = posX_;
-		posOrigin_.y = posY_;
+		posOrigin_.x = position[0];
+		posOrigin_.y = position[1];
 	}
 
-	if (bEnableMovement_) {
+	if (enableMovement) {
 		_ProcessTransformAct();
 		_Move();
 
@@ -2413,8 +2448,8 @@ void StgCurveLaserObject::Work() {
 void StgCurveLaserObject::_Move() {
 	if (delay_.time == 0 || bEnableMotionDelay_)
 		StgMoveObject::_Move();
-	DxScriptRenderObject::SetX(posX_);
-	DxScriptRenderObject::SetY(posY_);
+	DxScriptRenderObject::SetX(position[0]);
+	DxScriptRenderObject::SetY(position[1]);
 
 	{
 		double angleZ = GetDirectionAngle();
@@ -2423,7 +2458,7 @@ void StgCurveLaserObject::_Move() {
 			move_ = D3DXVECTOR2(cosf(lastAngle_), sinf(lastAngle_));
 		}
 
-		D3DXVECTOR2 newNodePos(posX_, posY_);
+		D3DXVECTOR2 newNodePos(position[0], position[1]);
 		D3DXVECTOR2 newNodeVertF(-move_.y, move_.x);	//90 degrees rotation
 		PushNode(CreateNode(newNodePos, newNodeVertF, 1.0f));
 	}
@@ -2811,7 +2846,7 @@ void StgCurveLaserObject::_SendDeleteEvent(TypeDelete type) {
 			}
 
 			//Create default delete item
-			if (type == TypeDelete::Item && itemManager->IsDefaultBonusItemEnable()) {
+			if (type == TypeDelete::Item && itemManager->bDefaultBonusItemEnable_) {
 				if (delay_.time == 0 || bEnableMotionDelay_) {
 					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 						ref_unsync_ptr<StgItemObject> obj(new StgItemObject_Bonus(stageController_));
@@ -2819,8 +2854,7 @@ void StgCurveLaserObject::_SendDeleteEvent(TypeDelete type) {
 						int id = objectManager->AddObject(obj);
 						if (id != DxScript::ID_INVALID) {
 							itemManager->AddItem(obj);
-							obj->SetPositionX(ix);
-							obj->SetPositionY(iy);
+							obj->position = { ix, iy };
 						}
 					}
 				}
@@ -2942,9 +2976,9 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 	float basePosY = basePointY_;
 	if (!parent_.expired()) {
 		if (basePointX_ == BASEPOINT_RESET)
-			basePosX = parent_->GetPositionX();
+			basePosX = parent_->position[0];
 		if (basePointY_ == BASEPOINT_RESET)
-			basePosY = parent_->GetPositionY();
+			basePosY = parent_->position[1];
 	}
 	basePosX += basePointOffsetX_;
 	basePosY += basePointOffsetY_;
@@ -2953,41 +2987,39 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 	for (StgShotPatternTransform& iTransform : listTransformation_)
 		transformAsList.push_back(iTransform);
 
-	auto __CreateShot = [&](float _x, float _y, double _ss, double _sa) -> bool {
+	auto CreateShot = [&](float _x, float _y, double _ss, double _sa) -> bool {
 		if (shotManager->GetShotCountAll() >= StgShotManager::SHOT_MAX) return false;
 
 		ref_unsync_ptr<StgShotObject> objShot;
 		switch (typeShot_) {
-		case TypeObject::Shot:
-		{
-			ref_unsync_ptr<StgNormalShotObject> ptrShot(new StgNormalShotObject(controller));
-			objShot = ptrShot;
-			break;
-		}
-		case TypeObject::LooseLaser:
-		{
-			ref_unsync_ptr<StgLooseLaserObject> ptrShot(new StgLooseLaserObject(controller));
-			ptrShot->SetLength(laserLength_);
-			ptrShot->SetRenderWidth(laserWidth_);
-			objShot = ptrShot;
-			break;
-		}
-		case TypeObject::StraightLaser:
-		{
-			ref_unsync_ptr<StgStraightLaserObject> ptrShot(new StgStraightLaserObject(controller));
-			ptrShot->SetLength(laserLength_);
-			ptrShot->SetRenderWidth(laserWidth_);
-			objShot = ptrShot;
-			break;
-		}
-		case TypeObject::CurveLaser:
-		{
-			ref_unsync_ptr<StgCurveLaserObject> ptrShot(new StgCurveLaserObject(controller));
-			ptrShot->SetLength(laserLength_);
-			ptrShot->SetRenderWidth(laserWidth_);
-			objShot = ptrShot;
-			break;
-		}
+			case TypeObject::Shot: {
+				ref_unsync_ptr<StgNormalShotObject> ptrShot(new StgNormalShotObject(controller));
+				objShot = ptrShot;
+				break;
+			}
+			case TypeObject::LooseLaser: {
+				ref_unsync_ptr<StgLooseLaserObject> ptrShot(new StgLooseLaserObject(controller));
+				ptrShot->SetLength(laserLength_);
+				ptrShot->SetRenderWidth(laserWidth_);
+				objShot = ptrShot;
+				break;
+			}
+			case TypeObject::StraightLaser: {
+				ref_unsync_ptr<StgStraightLaserObject> ptrShot(new StgStraightLaserObject(controller));
+				ptrShot->SetLength(laserLength_);
+				ptrShot->SetRenderWidth(laserWidth_);
+				objShot = ptrShot;
+				break;
+			}
+			case TypeObject::CurveLaser: {
+				ref_unsync_ptr<StgCurveLaserObject> ptrShot(new StgCurveLaserObject(controller));
+				ptrShot->SetLength(laserLength_);
+				ptrShot->SetRenderWidth(laserWidth_);
+				objShot = ptrShot;
+				break;
+			}
+			default:
+				break;
 		}
 
 		if (objShot == nullptr) return false;
@@ -3035,7 +3067,7 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 					float sx = basePosX + fireRadiusOffset_ * r_fac[0];
 					float sy = basePosY + fireRadiusOffset_ * r_fac[1];
 
-					__CreateShot(sx, sy, ss, sa);
+					CreateShot(sx, sy, ss, sa);
 				}
 			}
 			break;
@@ -3058,7 +3090,7 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 					float sx = basePosX + fireRadiusOffset_ * cos(sa);
 					float sy = basePosY + fireRadiusOffset_ * sin(sa);
 
-					__CreateShot(sx, sy, ss, sa);
+					CreateShot(sx, sy, ss, sa);
 				}
 			}
 			break;
@@ -3096,7 +3128,7 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 					float sx = basePosX + fireRadiusOffset_ * cos(sa);
 					float sy = basePosY + fireRadiusOffset_ * sin(sa);
 
-					__CreateShot(sx, sy, ss, sa);
+					CreateShot(sx, sy, ss, sa);
 				}
 			}
 			break;
@@ -3134,7 +3166,7 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 					double sa = atan2(_sy, _sx);
 					double ss = hypot(_sx, _sy) * speedBase_;
 
-					__CreateShot(sx, sy, ss, sa);
+					CreateShot(sx, sy, ss, sa);
 				}
 			}
 			break;
@@ -3159,7 +3191,7 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 				float sx = basePosX + fireRadiusOffset_ * rpos[0];
 				float sy = basePosY + fireRadiusOffset_ * rpos[1];
 
-				__CreateShot(sx, sy, ss, sa);
+				CreateShot(sx, sy, ss, sa);
 			}
 			break;
 		}
@@ -3182,7 +3214,7 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 					float sx = basePosX + fireRadiusOffset_ * cos(sa);
 					float sy = basePosY + fireRadiusOffset_ * sin(sa);
 
-					__CreateShot(sx, sy, ss, sa);
+					CreateShot(sx, sy, ss, sa);
 				}
 			}
 			break;
@@ -3217,7 +3249,7 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 					double ss = speedBase_;
 					if (shotStack_ > 1) ss += (speedArgument_ - speedBase_) * (iStack / ((double)shotStack_ - 1));
 
-					__CreateShot(sx, sy, ss * _ss, sa);
+					CreateShot(sx, sy, ss * _ss, sa);
 				}
 			}
 			break;
@@ -3244,7 +3276,7 @@ void StgShotPatternGeneratorObject::FireSet(void* scriptData, StgStageController
 					float sx = basePosX + fireRadiusOffset_ * cos(sa);
 					float sy = basePosY + fireRadiusOffset_ * sin(sa);
 
-					__CreateShot(sx, sy, ss, sa);
+					CreateShot(sx, sy, ss, sa);
 				}
 			}
 			break;

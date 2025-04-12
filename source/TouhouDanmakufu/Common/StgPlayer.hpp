@@ -100,8 +100,8 @@ public:
 
 	void SendGrazeEvent();
 
-	virtual void SetX(double x) { posX_ = x; DxScriptRenderObject::SetX(x); }
-	virtual void SetY(double y) { posY_ = y; DxScriptRenderObject::SetY(y); }
+	virtual void SetX(double x) { position[0] = x; DxScriptRenderObject::SetX(x); }
+	virtual void SetY(double y) { position[1] = y; DxScriptRenderObject::SetY(y); }
 
 	ref_count_ptr<StgPlayerInformation> GetPlayerInformation() { return infoPlayer_; }
 	void SetPlayerInformation(ref_count_ptr<StgPlayerInformation> info) { infoPlayer_ = info; }
@@ -109,8 +109,8 @@ public:
 
 	StgStagePlayerScript* GetPlayerScript() { return script_; }
 	ref_unsync_ptr<StgPlayerObject> GetOwnObject();
-	double GetX() { return posX_; }
-	double GetY() { return posY_; }
+	double GetX() { return position[0]; }
+	double GetY() { return position[1]; }
 	double GetFastSpeed() { return speedFast_; }
 	void SetFastSpeed(double speed) { speedFast_ = speed; }
 	double GetSlowSpeed() { return speedSlow_; }

@@ -23,32 +23,24 @@ class StgMovePattern;
 class StgMoveObject : public StgObjectBase {
 	friend StgMovePattern;
 protected:
-	double posX_;
-	double posY_;
-
-	ref_unsync_ptr<StgMovePattern> pattern_;
-
-	bool bEnableMovement_;
+	unique_ptr<StgMovePattern> pattern_;
+	
 	int frameMove_;
 
 	uint32_t framePattern_;
-	std::map<uint32_t, std::list<ref_unsync_ptr<StgMovePattern>>> mapPattern_;
+	std::map<uint32_t, std::list<unique_ptr<StgMovePattern>>> scheduledPatterns_;
 
-	virtual void _Move();
-	void _AttachReservedPattern(ref_unsync_ptr<StgMovePattern> pattern);
+	void _Move();
+	void AttachPattern(unique_ptr<StgMovePattern> pattern);
+public:
+	Math::DVec2 position;
+
+	bool enableMovement;
 public:
 	StgMoveObject(StgStageController* stageController);
-	virtual ~StgMoveObject();
+	virtual ~StgMoveObject() = default;
 
 	virtual void Copy(StgMoveObject* src);
-
-	void SetEnableMovement(bool b) { bEnableMovement_ = b; }
-	bool IsEnableMovement() { return bEnableMovement_; }
-
-	double GetPositionX() { return posX_; }
-	void SetPositionX(double pos) { posX_ = pos; }
-	double GetPositionY() { return posY_; }
-	void SetPositionY(double pos) { posY_ = pos; }
 
 	double GetSpeed();
 	void SetSpeed(double speed);
@@ -58,44 +50,50 @@ public:
 	void SetSpeedX(double speedX);
 	void SetSpeedY(double speedY);
 
-	ref_unsync_ptr<StgMovePattern> GetPattern() { return pattern_; }
-	void SetPattern(ref_unsync_ptr<StgMovePattern> pattern) {
-		pattern_ = pattern;
+	StgMovePattern* GetPattern() { return pattern_.get(); }
+	void SetPattern(unique_ptr<StgMovePattern> pattern) {
+		pattern_ = MOVE(pattern);
 	}
-	void AddPattern(uint32_t frameDelay, ref_unsync_ptr<StgMovePattern> pattern, bool bForceMap = false);
-
-	int GetMoveFrame() { return frameMove_; }
+	
+	void AddPattern(uint32_t frameDelay,
+		unique_ptr<StgMovePattern> pattern,
+		bool mustSchedule = false);
+	
+	int GetMoveFrame() const { return frameMove_; }
 };
 
 //*******************************************************************
 //StgMovePattern
 //*******************************************************************
+enum class MovePatternType {
+	None,
+
+	Angle,
+	XY,
+	XY_WithAngle,
+	Line,
+	Item,
+
+	Other = -1,
+};
+
 class StgMovePattern {
 	friend StgMoveObject;
 public:
 	enum {
-		TYPE_OTHER = -1,
-		TYPE_NONE,
-		TYPE_ANGLE,
-		TYPE_XY,
-		TYPE_XY_ANG,
-		TYPE_LINE,
-
 		NO_CHANGE = -0x1000000,
 		TOPLAYER_CHANGE = 0x1000000,
 		UNCAPPED = TOPLAYER_CHANGE,
 		SET_ZERO = -1,
 	};
 protected:
-	int typeMove_;
 	StgMoveObject* target_;
 
 	uint32_t frameWork_;
-	int idShotData_;
 
 	double c_;
 	double s_;
-	double angDirection_;
+	double direction_;
 
 	std::list<std::pair<int8_t, double>> listCommand_;
 
@@ -103,29 +101,42 @@ protected:
 	ref_unsync_ptr<StgMoveObject> _GetMoveObject(int id);
 	void _RegisterShotDataID();
 public:
+	int shotDataId;
+public:
 	StgMovePattern(StgMoveObject* target);
-	virtual ~StgMovePattern() {}
+	virtual ~StgMovePattern() = default;
+	
+	virtual StgMovePattern* Clone() const = 0;
 
-	virtual void CopyFrom(StgMovePattern* src);
-	virtual StgMovePattern* CreateCopy(StgMoveObject* target) = 0;
-
-	virtual void Activate(StgMovePattern* src) {}
+	virtual void Activate(StgMovePattern* src) = 0;
 	virtual void Move() = 0;
 
-	void AddCommand(std::pair<uint8_t, double> cmd) { listCommand_.push_back(cmd); }
-	int GetType() { return typeMove_; }
+	virtual MovePatternType GetType() const { return MovePatternType::None; }
 
-	virtual inline double GetSpeed() = 0;
-	virtual inline double GetDirectionAngle() { return angDirection_; }
-	int GetShotDataID() { return idShotData_; }
-	void SetShotDataID(int id) { idShotData_ = id; }
+	void AddCommand(uint8_t command, double arg) {
+		listCommand_.push_back({ command, arg });
+	}
+	void AddCommandChecked(uint8_t command, double arg) {
+		if (arg != NO_CHANGE)
+			listCommand_.push_back({ command, arg });
+	}
+	void AddCommandChecked(uint8_t command, double argCheck, double arg) {
+		if (argCheck != NO_CHANGE)
+			listCommand_.push_back({ command, arg });
+	}
 
-	virtual double GetSpeedX() { return c_; }
-	virtual double GetSpeedY() { return s_; }
+	virtual double GetSpeed() const = 0;
+	virtual double GetDirectionAngle() const { return direction_; }
+
+	virtual double GetSpeedX() const { return c_; }
+	virtual double GetSpeedY() const { return s_; }
 };
 
+class StgMovePattern_Angle;
 class StgMovePattern_XY;
 class StgMovePattern_XY_Angle;
+class StgMovePattern_Line;
+
 class StgMovePattern_Angle : public StgMovePattern {
 	friend StgMoveObject;
 	friend StgMovePattern_XY;
@@ -148,46 +159,36 @@ public:
 		ADD_AGACC,
 		ADD_AGMAX
 	};
+public:
+	double speed;
+	double acceleration;
+	double maxSpeed;
+	double angularVelocity;
+	double angularAcceleration;
+	double angularMaxVelocity;
 protected:
-	double speed_;
-	double acceleration_;
-	double maxSpeed_;
-	double angularVelocity_;
-	double angularAcceleration_;
-	double angularMaxVelocity_;
-
 	ref_unsync_weak_ptr<StgMoveObject> objRelative_;
 public:
 	StgMovePattern_Angle(StgMoveObject* target);
 
-	virtual void CopyFrom(StgMovePattern* src);
-	virtual StgMovePattern* CreateCopy(StgMoveObject* target) {
-		return new StgMovePattern_Angle(target);
+	StgMovePattern* Clone() const override {
+		return new StgMovePattern_Angle(*this);
 	}
 
-	virtual void Activate(StgMovePattern* src);
-	virtual void Move();
+	void Activate(StgMovePattern* src) override;
+	void Move() override;
 
-	virtual inline double GetSpeed() { return speed_; }
-	// virtual inline double GetDirectionAngle() { return angDirection_; }
+	MovePatternType GetType() const override { return MovePatternType::Angle; }
 
-	void SetSpeed(double speed) { speed_ = speed; }
+	double GetSpeed() const override { return speed; }
+	
 	void SetDirectionAngle(double angle);
-	void SetAcceleration(double accel) { acceleration_ = accel; }
-	void SetMaxSpeed(double max) { maxSpeed_ = max; }
-	void SetAngularVelocity(double av) { angularVelocity_ = av; }
-	void SetAngularAcceleration(double aa) { angularAcceleration_ = aa; }
-	void SetAngularMaxVelocity(double am) { angularMaxVelocity_ = am; }
 
 	void SetRelativeObject(ref_unsync_weak_ptr<StgMoveObject> obj) { objRelative_ = obj; }
 	void SetRelativeObject(int id) { objRelative_ = _GetMoveObject(id); }
 
-	virtual inline double GetSpeedX() {
-		return (speed_ * c_);
-	}
-	virtual inline double GetSpeedY() {
-		return (speed_ * s_);
-	}
+	double GetSpeedX() const override { return speed * c_; }
+	double GetSpeedY() const override { return speed * s_; }
 };
 
 class StgMovePattern_XY : public StgMovePattern {
@@ -203,49 +204,48 @@ public:
 		SET_M_X,
 		SET_M_Y,
 	};
-protected:
-	double accelerationX_;
-	double accelerationY_;
-	double maxSpeedX_;
-	double maxSpeedY_;
+public:
+	double accelerationX;
+	double accelerationY;
+	double maxSpeedX;
+	double maxSpeedY;
 public:
 	StgMovePattern_XY(StgMoveObject* target);
 
-	virtual void CopyFrom(StgMovePattern* src);
-	virtual StgMovePattern* CreateCopy(StgMoveObject* target) {
-		return new StgMovePattern_XY(target);
+	StgMovePattern* Clone() const override {
+		return new StgMovePattern_XY(*this);
 	}
 
-	virtual void Activate(StgMovePattern* src);
-	virtual void Move();
+	void Activate(StgMovePattern* src) override;
+	void Move() override;
 
-	virtual inline double GetSpeed() { return hypot(c_, s_); }
-	virtual inline double GetDirectionAngle() {
-		if ((c_ != 0 || s_ != 0)) angDirection_ = atan2(s_, c_);
-		return angDirection_;
+	MovePatternType GetType() const override { return MovePatternType::XY; }
+
+	double GetSpeed() const override { 
+		return hypot(c_, s_);
+	}
+	double GetDirectionAngle() const override {
+		return c_ != 0 || s_ != 0
+			? atan2(s_, c_)
+			: direction_;
 	}
 
-	virtual double GetSpeedX() { return c_; }
-	virtual double GetSpeedY() { return s_; }
-	void SetSpeedX(double value) { c_ = value; }
-	void SetSpeedY(double value) { s_ = value; }
-	void SetAccelerationX(double value) { accelerationX_ = value; }
-	void SetAccelerationY(double value) { accelerationY_ = value; }
-	void SetMaxSpeedX(double value) { maxSpeedX_ = value; }
-	void SetMaxSpeedY(double value) { maxSpeedY_ = value; }
-
-	double GetAccelerationX() { return accelerationX_; }
-	double GetAccelerationY() { return accelerationY_; }
-	double GetMaxSpeedX() { return maxSpeedX_; }
-	double GetMaxSpeedY() { return maxSpeedY_; }
+	double GetSpeedX() const override { return c_; }
+	double GetSpeedY() const override { return s_; }
+	
+	void SetSpeedX(double x) { c_ = x; }
+	void SetSpeedY(double y) { s_ = y; }
+	virtual void SetSpeedXY(double x, double y) {
+		SetSpeedX(x);
+		SetSpeedY(x);
+	}
 
 	static double GetDirectionSignRelative(double baseAngle, double sx, double sy);
 };
 
-class StgMovePattern_XY_Angle : public StgMovePattern {
+class StgMovePattern_XY_Angle : public StgMovePattern_XY {
 	friend StgMoveObject;
 	friend StgMovePattern_Angle;
-	friend StgMovePattern_XY;
 public:
 	enum : int8_t {
 		SET_S_X,
@@ -259,56 +259,41 @@ public:
 		SET_AGACC,
 		SET_AGMAX,
 	};
-protected:
-	double accelerationX_;
-	double accelerationY_;
-	double maxSpeedX_;
-	double maxSpeedY_;
-	double angOff_;
-	double angOffVelocity_;
-	double angOffAcceleration_;
-	double angOffMaxVelocity_;
+public:
+	double angOffset;
+	double angOffsetVelocity;
+	double angOffsetAcceleration;
+	double angOffsetMaxVelocity;
 public:
 	StgMovePattern_XY_Angle(StgMoveObject* target);
 
-	virtual void CopyFrom(StgMovePattern* src);
-	virtual StgMovePattern* CreateCopy(StgMoveObject* target) {
-		return new StgMovePattern_XY_Angle(target);
+	StgMovePattern* Clone() const override {
+		return new StgMovePattern_XY_Angle(*this);
 	}
 
-	virtual void Activate(StgMovePattern* src);
-	virtual void Move();
-
-	virtual inline double GetSpeed() { return hypot(c_, s_); }
+	void Activate(StgMovePattern* src) override;
+	void Move() override;
 	
-	virtual inline double GetDirectionAngle() {
-		if ((c_ != 0 || s_ != 0)) angDirection_ = atan2(s_, c_) + angOff_;
-		return angDirection_;
+	MovePatternType GetType() const override { return MovePatternType::XY_WithAngle; }
+
+	double GetDirectionAngle() const override {
+		return c_ != 0 || s_ != 0
+			? atan2(s_, c_) + angOffset
+			: direction_;
 	}
 
-	virtual double GetSpeedX() { return c_ * cos(angOff_) - s_ * sin(angOff_); }
-	virtual double GetSpeedY() { return c_ * sin(angOff_) + s_ * cos(angOff_); }
-	void SetSpeedX(double value) { c_ = value; }
-	void SetSpeedY(double value) { s_ = value; }
-	void SetSpeedXY(double x, double y) { // For proper de-rotation
-		double c = cos(-angOff_), s = sin(-angOff_);
+	double GetSpeedX() const override { 
+		return c_ * cos(angOffset) - s_ * sin(angOffset);
+	}
+	double GetSpeedY() const override { 
+		return c_ * sin(angOffset) + s_ * cos(angOffset);
+	}
+
+	void SetSpeedXY(double x, double y) override {	// For proper de-rotation
+		double c = cos(-angOffset), s = sin(-angOffset);
 		c_ = x * c - y * s;
 		s_ = x * s + y * c;
 	}
-	void SetAccelerationX(double value) { accelerationX_ = value; }
-	void SetAccelerationY(double value) { accelerationY_ = value; }
-	void SetMaxSpeedX(double value) { maxSpeedX_ = value; }
-	void SetMaxSpeedY(double value) { maxSpeedY_ = value; }
-
-	double GetAccelerationX() { return accelerationX_; }
-	double GetAccelerationY() { return accelerationY_; }
-	double GetMaxSpeedX() { return maxSpeedX_; }
-	double GetMaxSpeedY() { return maxSpeedY_; }
-
-	void SetAngleOffset(double ao) { angOff_ = ao;  }
-	void SetAngularVelocity(double av) { angOffVelocity_ = av; }
-	void SetAngularAcceleration(double aa) { angOffAcceleration_ = aa; }
-	void SetAngularMaxVelocity(double am) { angOffMaxVelocity_ = am; }
 };
 
 class StgMovePattern_Line : public StgMovePattern {
@@ -323,15 +308,14 @@ public:
 		SET_MS,
 		SET_LP,
 	};
-protected:
-	enum {
-		TYPE_SPEED,
-		TYPE_FRAME,
-		TYPE_WEIGHT,
-		TYPE_NONE,
-	};
 
-	int typeLine_;
+	enum class LineType {
+		Speed,
+		Frame,
+		Weight,
+		Other,
+	};
+protected:
 	uint32_t maxFrame_;
 	double speed_;
 	
@@ -340,31 +324,33 @@ protected:
 public:
 	StgMovePattern_Line(StgMoveObject* target);
 
-	virtual void CopyFrom(StgMovePattern* src);
-	virtual StgMovePattern* CreateCopy(StgMoveObject* target) {
-		return new StgMovePattern_Line(target);
-	}
+	void Activate(StgMovePattern* src) override;
+	void Move() override;
 
-	virtual void Activate(StgMovePattern* src);
-	virtual void Move();
+	MovePatternType GetType() const override { return MovePatternType::Line; }
+	virtual LineType GetLineType() const = 0;
 
-	virtual inline double GetSpeed() { return speed_; }
+	double GetSpeed() const override { return speed_; }
 	// virtual inline double GetDirectionAngle() { return angDirection_; }
 
-	virtual double GetSpeedX() { return (speed_ * c_); }
-	virtual double GetSpeedY() { return (speed_ * s_); }
+	double GetSpeedX() const override { return speed_ * c_; }
+	double GetSpeedY() const override { return speed_ * s_; }
 };
+
 class StgMovePattern_Line_Speed : public StgMovePattern_Line {
 	friend StgMoveObject;
 public:
 	StgMovePattern_Line_Speed(StgMoveObject* target);
 
-	virtual StgMovePattern* CreateCopy(StgMoveObject* target) {
-		return new StgMovePattern_Line_Speed(target);
+	StgMovePattern* Clone() const override {
+		return new StgMovePattern_Line_Speed(*this);
 	}
+
+	LineType GetLineType() const override { return LineType::Speed; }
 
 	void SetAtSpeed(double tx, double ty, double speed);
 };
+
 class StgMovePattern_Line_Frame : public StgMovePattern_Line {
 	friend StgMoveObject;
 public:
@@ -377,15 +363,17 @@ protected:
 public:
 	StgMovePattern_Line_Frame(StgMoveObject* target);
 
-	virtual void CopyFrom(StgMovePattern* src);
-	virtual StgMovePattern* CreateCopy(StgMoveObject* target) {
-		return new StgMovePattern_Line_Frame(target);
+	StgMovePattern* Clone() const override {
+		return new StgMovePattern_Line_Frame(*this);
 	}
 
-	virtual void Move();
+	void Move() override;
+	
+	LineType GetLineType() const override { return LineType::Frame; }
 
 	void SetAtFrame(double tx, double ty, uint32_t frame, lerp_func lerpFunc, lerp_diff_func diffFunc);
 };
+
 class StgMovePattern_Line_Weight : public StgMovePattern_Line {
 	friend StgMoveObject;
 protected:
@@ -395,12 +383,13 @@ protected:
 public:
 	StgMovePattern_Line_Weight(StgMoveObject* target);
 
-	virtual void CopyFrom(StgMovePattern* src);
-	virtual StgMovePattern* CreateCopy(StgMoveObject* target) {
-		return new StgMovePattern_Line_Weight(target);
+	StgMovePattern* Clone() const override {
+		return new StgMovePattern_Line_Weight(*this);
 	}
 
-	virtual void Move();
+	void Move() override;
+
+	LineType GetLineType() const override { return LineType::Weight; }
 
 	void SetAtWeight(double tx, double ty, double weight, double maxSpeed);
 };

@@ -147,7 +147,7 @@ void StgPlayerObject::Work() {
 	hitObjectID_ = DxScript::ID_INVALID;
 }
 void StgPlayerObject::Move() {
-	if (state_ == STATE_NORMAL && bEnableMovement_) {
+	if (state_ == STATE_NORMAL && enableMovement) {
 		++frameMove_;
 		_Move();
 	}
@@ -194,8 +194,8 @@ void StgPlayerObject::_Move() {
 
 	//Add and clip player position
 	{
-		double px = posX_ + sx;
-		double py = posY_ + sy;
+		double px = position[0] + sx;
+		double py = position[1] + sy;
 		SetX(std::clamp<double>(px, rcClip_.left, rcClip_.right));
 		SetY(std::clamp<double>(py, rcClip_.top, rcClip_.bottom));
 	}
@@ -203,7 +203,7 @@ void StgPlayerObject::_Move() {
 void StgPlayerObject::_AddIntersection() {
 	StgIntersectionManager* intersectionManager = stageController_->GetIntersectionManager();
 
-	UpdateIntersectionRelativeTarget(posX_, posY_, 0);
+	UpdateIntersectionRelativeTarget(position[0], position[1], 0);
 	RegistIntersectionRelativeTarget(intersectionManager);
 }
 bool StgPlayerObject::_IsValidSpell() {
@@ -267,7 +267,8 @@ void StgPlayerObject::SendGrazeEvent() {
 		//No need to check for a nullptr, listGrazedShot_ only contains StgShotObject* anyway
 		StgShotObject* objShot = dynamic_cast<StgShotObject*>(wObj.get());
 		if (!objShot->IsDeleted()) {
-			double listShotPos[2] = { objShot->GetPositionX(), objShot->GetPositionY() };
+			auto listShotPos = objShot->position.data();
+			
 			listValPos.push_back(script_->CreateFloatArrayValue(listShotPos, 2U));
 
 			listShotID.push_back(objShot->GetObjectID());

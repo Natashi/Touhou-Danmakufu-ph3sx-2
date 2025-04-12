@@ -74,8 +74,8 @@ void StgItemManager::Work() {
 			itr = listObj_.erase(itr);
 		}
 		else {
-			float ix = obj->GetPositionX();
-			float iy = obj->GetPositionY();
+			float ix = obj->position[0];
+			float iy = obj->position[1];
 
 			if (objPlayer->GetState() != StgPlayerObject::STATE_NORMAL) {
 				if (obj->IsMoveToPlayer()) {
@@ -300,7 +300,7 @@ std::vector<int> StgItemManager::GetItemIdInCircle(int cx, int cy, optional<int>
 		if (obj->IsDeleted()) continue;
 		if (itemType.has_value() && (*itemType != obj->GetItemType())) continue;
 
-		bool bInRadius = Math::HypotSq<int>(cx - obj->GetPositionX(), cy - obj->GetPositionY()) <= rr;
+		bool bInRadius = Math::HypotSq<int>(cx - obj->position[0], cy - obj->position[1]) <= rr;
 		if (!radius.has_value() || bInRadius)
 			res.push_back(obj->GetObjectID());
 	}
@@ -750,22 +750,24 @@ void StgItemObject::Clone(DxScriptObjectBase* _src) {
 }
 
 void StgItemObject::Work() {
-	if (bEnableMovement_) {
-		bool bNullMovePattern = dynamic_cast<StgMovePattern_Item*>(GetPattern().get()) == nullptr;
-		if (bNullMovePattern && bDefaultCollectionMove_ && IsMoveToPlayer()) {
-			float speed = 8;
-			ref_unsync_ptr<StgPlayerObject> objPlayer = stageController_->GetPlayerObject();
-			if (objPlayer) {
-				float angle = atan2f(objPlayer->GetY() - GetPositionY(), objPlayer->GetX() - GetPositionX());
-				float angDirection = angle;
-				SetSpeed(speed);
-				SetDirectionAngle(angDirection);
-			}
+	if (enableMovement) {
+		// If the item is supposed to be moving towards the player but there's no attached item move pattern,
+		//    initialize a new one
+
+		bool noMovePattern = GetPattern() == nullptr || GetPattern()->GetType() != MovePatternType::Item;
+
+		if (noMovePattern && bDefaultCollectionMove_ && IsMoveToPlayer()) {
+			auto pattern = new StgMovePattern_Item(this);
+			pattern->itemMoveType = StgMovePattern_Item::ItemMoveType::ToPlayer;
+
+			pattern_.reset(pattern);
 		}
 	}
-	StgMoveObject::_Move();
-	SetX(posX_);
-	SetY(posY_);
+
+	
+	_Move();
+	SetX(position[0]);
+	SetY(position[1]);
 
 	_DeleteInAutoClip();
 
@@ -776,11 +778,12 @@ void StgItemObject::RenderOnItemManager() {
 	SpriteList2D* renderer = typeItem_ == ITEM_SCORE_TEXT ?
 		itemManager->GetDigitRenderer() : itemManager->GetItemRenderer();
 
-	FLOAT sposx = posX_;
-	FLOAT sposy = posY_;
+	auto spos = position;
 	if (bRoundingPosition_) {
-		sposx = roundf(sposx);
-		sposy = roundf(sposy);
+		spos = {
+			round(spos[0]),
+			round(spos[1]),
+		};
 	}
 
 	if (typeItem_ != ITEM_SCORE_TEXT) {
@@ -826,7 +829,7 @@ void StgItemObject::RenderOnItemManager() {
 
 		//上にはみ出している
 		D3DCOLOR color = D3DCOLOR_ARGB(255, 255, 255, 255);
-		if (sposy <= 0) {
+		if (spos[1] <= 0) {
 			D3DCOLOR colorOver = D3DCOLOR_ARGB(255, 255, 255, 255);
 			switch (typeItem_) {
 			case ITEM_1UP:
@@ -848,13 +851,13 @@ void StgItemObject::RenderOnItemManager() {
 			}
 			if (color != colorOver) {
 				rcSrc.Set(113, 1, 126, 10);
-				sposy = 6;
+				spos[1] = 6;
 			}
 			color = colorOver;
 		}
 
 		renderer->SetColor(color);
-		renderer->SetPosition(sposx, sposy, 0);
+		renderer->SetPosition(spos[0], spos[1], 0);
 		renderer->SetScaleXYZ(scale, scale, scale);
 		renderer->SetSourceRect(rcSrc);
 		renderer->SetDestinationCenter();
@@ -877,8 +880,8 @@ void StgItemObject::RenderOnItemManager() {
 		for (int iNum = listNum.size() - 1; iNum >= 0; iNum--) {
 			DxRect<double> rcSrc(listNum[iNum] * 36, 0, 
 				(listNum[iNum] + 1) * 36 - 1, 31);
-			DxRect<double> rcDest(sposx + (listNum.size() - 1 - iNum) * fontSize / 2, sposy,
-				sposx + (listNum.size() - iNum)*fontSize / 2, sposy + fontSize);
+			DxRect<double> rcDest(spos[0] + (listNum.size() - 1 - iNum) * fontSize / 2, spos[1],
+				spos[0] + (listNum.size() - iNum)*fontSize / 2, spos[1] + fontSize);
 			renderer->SetSourceRect(rcSrc);
 			renderer->SetDestinationRect(rcDest);
 			renderer->AddVertex();
@@ -894,7 +897,7 @@ void StgItemObject::_DeleteInAutoClip() {
 		rcStgFrame->GetWidth() + rcClipBase->right,
 		rcStgFrame->GetHeight() + rcClipBase->bottom);
 
-	if (!rcDeleteClip.IsPointIntersected(posX_, posY_)) {
+	if (!rcDeleteClip.IsPointIntersected(position[0], position[1])) {
 		stageController_->GetMainObjectManager()->DeleteObject(this);
 	}
 }
@@ -905,8 +908,8 @@ void StgItemObject::_CreateScoreItem() {
 	if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 		ref_unsync_ptr<StgItemObject_ScoreText> obj(new StgItemObject_ScoreText(stageController_));
 
-		obj->SetX(posX_);
-		obj->SetY(posY_);
+		obj->SetX(position[0]);
+		obj->SetY(position[1]);
 		obj->SetScore(score_);
 
 		objectManager->AddObject(obj);
@@ -936,19 +939,20 @@ void StgItemObject::SetColor(int r, int g, int b) {
 	__m128i c = Vectorize::Set(color_ >> 24, r, g, b);
 	color_ = ColorAccess::ToD3DCOLOR(ColorAccess::ClampColorPacked(c));
 }
-void StgItemObject::SetToPosition(D3DXVECTOR2& pos) {
-	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
-		move->SetToPosition(pos);
+
+void StgItemObject::SetToPosition(const Math::DVec2& pos) {
+	if (auto pattern = dcast(StgMovePattern_Item*, pattern_.get()))
+		pattern->SetToPosition(pos);
 }
-int StgItemObject::GetMoveType() {
-	int res = StgMovePattern_Item::MOVE_NONE;
-	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
-		res = move->GetItemMoveType();
-	return res;
+
+StgMovePattern_Item::ItemMoveType StgItemObject::GetMoveType() {
+	if (auto pattern = dcast(StgMovePattern_Item*, pattern_.get()))
+		return pattern->itemMoveType;
+	return StgMovePattern_Item::ItemMoveType::None;
 }
-void StgItemObject::SetMoveType(int type) {
-	if (auto move = ref_unsync_ptr<StgMovePattern_Item>::Cast(pattern_))
-		move->SetItemMoveType(type);
+void StgItemObject::SetMoveType(StgMovePattern_Item::ItemMoveType type) {
+	if (auto pattern = dcast(StgMovePattern_Item*, pattern_.get()))
+		pattern->itemMoveType = type;
 }
 
 void StgItemObject::NotifyItemCollectEvent(int type, uint64_t eventParam) {
@@ -978,7 +982,7 @@ void StgItemObject::NotifyItemCancelEvent(int type) {
 //StgItemObject_1UP
 StgItemObject_1UP::StgItemObject_1UP(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_1UP;
-	SetMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
+	SetMoveType(StgMovePattern_Item::ItemMoveType::ToPosition);
 }
 void StgItemObject_1UP::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	gstd::value listValue[2] = { 
@@ -995,7 +999,7 @@ void StgItemObject_1UP::Intersect(StgIntersectionTarget* ownTarget, StgIntersect
 //StgItemObject_Bomb
 StgItemObject_Bomb::StgItemObject_Bomb(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_SPELL;
-	SetMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
+	SetMoveType(StgMovePattern_Item::ItemMoveType::ToPosition);
 }
 void StgItemObject_Bomb::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	gstd::value listValue[2] = {
@@ -1012,7 +1016,7 @@ void StgItemObject_Bomb::Intersect(StgIntersectionTarget* ownTarget, StgIntersec
 //StgItemObject_Power
 StgItemObject_Power::StgItemObject_Power(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_POWER;
-	SetMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
+	SetMoveType(StgMovePattern_Item::ItemMoveType::ToPosition);
 
 	score_ = 10;
 }
@@ -1035,7 +1039,7 @@ void StgItemObject_Power::Intersect(StgIntersectionTarget* ownTarget, StgInterse
 //StgItemObject_Point
 StgItemObject_Point::StgItemObject_Point(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_POINT;
-	SetMoveType(StgMovePattern_Item::MOVE_TOPOSITION_A);
+	SetMoveType(StgMovePattern_Item::ItemMoveType::ToPosition);
 }
 void StgItemObject_Point::Intersect(StgIntersectionTarget* ownTarget, StgIntersectionTarget* otherTarget) {
 	if (bDefaultScoreText_)
@@ -1056,7 +1060,7 @@ void StgItemObject_Point::Intersect(StgIntersectionTarget* ownTarget, StgInterse
 //StgItemObject_Bonus
 StgItemObject_Bonus::StgItemObject_Bonus(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_BONUS;
-	SetMoveType(StgMovePattern_Item::MOVE_TOPLAYER);
+	SetMoveType(StgMovePattern_Item::ItemMoveType::ToPlayer);
 
 	int graze = stageController->GetStageInformation()->GetGraze();
 	score_ = (int)(graze / 40) * 10 + 300;
@@ -1085,7 +1089,7 @@ void StgItemObject_Bonus::Intersect(StgIntersectionTarget* ownTarget, StgInterse
 StgItemObject_ScoreText::StgItemObject_ScoreText(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_SCORE_TEXT;
 
-	SetMoveType(StgMovePattern_Item::MOVE_SCORE);
+	SetMoveType(StgMovePattern_Item::ItemMoveType::ScoreText);
 
 	//Disable the text obj from being autocollected by any means
 	moveToPlayerFlags_ = FLAG_MOVETOPL_NONE;
@@ -1108,7 +1112,7 @@ void StgItemObject_ScoreText::Intersect(StgIntersectionTarget* ownTarget, StgInt
 //StgItemObject_User
 StgItemObject_User::StgItemObject_User(StgStageController* stageController) : StgItemObject(stageController) {
 	typeItem_ = ITEM_USER;
-	SetMoveType(StgMovePattern_Item::MOVE_DOWN);
+	SetMoveType(StgMovePattern_Item::ItemMoveType::Down);
 
 	idImage_ = -1;
 	bDefaultScoreText_ = true;
@@ -1288,78 +1292,77 @@ void StgItemObject_User::Intersect(StgIntersectionTarget* ownTarget, StgIntersec
 //*******************************************************************
 //StgMovePattern_Item
 //*******************************************************************
-StgMovePattern_Item::StgMovePattern_Item(StgMoveObject* target) : StgMovePattern(target) {
-	frame_ = 0;
-	typeMove_ = MOVE_DOWN;
-	speed_ = 0;
-	angDirection_ = Math::DegreeToRadian(270);
-	posTo_ = D3DXVECTOR2(0, 0);
-}
-
-void StgMovePattern_Item::CopyFrom(StgMovePattern* _src) {
-	StgMovePattern::CopyFrom(_src);
-	auto src = (StgMovePattern_Item*)_src;
-
-	frame_ = src->frame_;
-	typeMove_ = src->typeMove_;
-	speed_ = src->speed_;
-	angDirection_ = src->angDirection_;
-	posTo_ = src->posTo_;
-}
+StgMovePattern_Item::StgMovePattern_Item(StgMoveObject* target) :
+	StgMovePattern(target),
+	itemMoveType(ItemMoveType::None),
+	frame_(0),
+	speed_(0),
+	angDirection_(Math::DegreeToRadian(270)),
+	posTo_({}) {}
 
 void StgMovePattern_Item::Move() {
 	StgItemObject* itemObject = (StgItemObject*)target_;
 	StgStageController* stageController = itemObject->GetStageController();
 
-	double px = target_->GetPositionX();
-	double py = target_->GetPositionY();
-	if (typeMove_ == MOVE_TOPLAYER || (itemObject->IsDefaultCollectionMovement() && itemObject->IsMoveToPlayer())) {
-		if (frame_ == 0) speed_ = 6;
-		speed_ += 0.075;
-		ref_unsync_ptr<StgPlayerObject> objPlayer = stageController->GetPlayerObject();
-		if (objPlayer) {
+	double px = target_->position[0];
+	double py = target_->position[1];
+
+	if (itemMoveType == ItemMoveType::ToPlayer || (itemObject->IsDefaultCollectionMovement() && itemObject->IsMoveToPlayer())) {
+		speed_ = (frame_ == 0) 
+			? 6 
+			: speed_ + 0.075;
+		
+		if (auto objPlayer = stageController->GetPlayerObject()) {
 			double angle = atan2(objPlayer->GetY() - py, objPlayer->GetX() - px);
+
 			angDirection_ = angle;
 			c_ = cos(angDirection_);
 			s_ = sin(angDirection_);
 		}
 	}
-	else if (typeMove_ == MOVE_TOPOSITION_A) {
-		double dx = posTo_.x - px;
-		double dy = posTo_.y - py;
+	else if (itemMoveType == ItemMoveType::ToPosition) {
+		double dx = posTo_[0] - px;
+		double dy = posTo_[1] - py;
 		speed_ = hypot(dx, dy) / 16.0;
 
 		double angle = atan2(dy, dx);
 		angDirection_ = angle;
+
 		if (frame_ == 0) {
 			c_ = cos(angDirection_);
 			s_ = sin(angDirection_);
 		}
 		else if (frame_ == 60) {
+			// Then transition to float down
+			itemMoveType = ItemMoveType::Down;
+
 			speed_ = 0;
+
 			angDirection_ = Math::DegreeToRadian(90);
-			typeMove_ = MOVE_DOWN;
 			c_ = 0;
 			s_ = 1;
 		}
 	}
-	else if (typeMove_ == MOVE_DOWN) {
-		speed_ += 3.0 / 60.0;
-		if (speed_ > 2.5) speed_ = 2.5;
+	else if (itemMoveType == ItemMoveType::Down) {
+		speed_ = std::min(speed_ + 3 / 60.0, 2.5);
+
 		angDirection_ = Math::DegreeToRadian(90);
 		c_ = 0;
 		s_ = 1;
 	}
-	else if (typeMove_ == MOVE_SCORE) {
+	else if (itemMoveType == ItemMoveType::ScoreText) {
 		speed_ = 1;
+
 		angDirection_ = Math::DegreeToRadian(270);
 		c_ = 0;
 		s_ = -1;
 	}
 
-	if (typeMove_ != MOVE_NONE) {
-		target_->SetPositionX(px + speed_ * c_);
-		target_->SetPositionY(py + speed_ * s_);
+	if (itemMoveType != ItemMoveType::None) {
+		target_->position = {
+			px + speed_ * c_,
+			py + speed_ * s_,
+		};
 	}
 
 	++frame_;
