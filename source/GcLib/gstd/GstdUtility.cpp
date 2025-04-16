@@ -437,20 +437,29 @@ std::vector<std::string> StringUtility::SplitPattern(const std::string& str, con
 std::string StringUtility::Format(const char* str, ...) {
 	va_list	vl;
 	va_start(vl, str);
-	std::string res = StringUtility::Format(str, vl);
+	std::string res = FormatV(str, vl);
 	va_end(vl);
 	return res;
 }
-std::string StringUtility::Format(const char* str, va_list va) {
-	//The size returned by _vsnprintf does NOT include null terminator
-	int size = _vsnprintf(nullptr, 0U, str, va);
-	std::string res;
-	if (size > 0) {
-		res.resize(size + 1);
-		_vsnprintf((char*)res.c_str(), res.size(), str, va);
-		res.pop_back();	//Don't include the null terminator
+std::string StringUtility::FormatV(const char* str, va_list va) {
+	std::vector<char> buf;
+	buf.resize(256);
+
+	while (true) {
+		va_list va2;
+		va_copy(va2, va);
+
+		int res = vsnprintf_s(buf.data(), buf.size(), _TRUNCATE, str, va2);
+		va_end(va2);
+
+		if (res >= 0) {
+			return std::string(buf.data());
+		}
+
+		// Buffer size wasn't large enough, double and retry
+
+		buf.resize(buf.size() * 2);
 	}
-	return res;
 }
 
 size_t StringUtility::CountCharacter(const std::string& str, char c) {
@@ -597,27 +606,36 @@ std::vector<std::wstring> StringUtility::SplitPattern(const std::wstring& str, c
 std::wstring StringUtility::Format(const wchar_t* str, ...) {
 	va_list	vl;
 	va_start(vl, str);
-	std::wstring res = StringUtility::Format(str, vl);
+	std::wstring res = FormatV(str, vl);
 	va_end(vl);
 	return res;
 }
-std::wstring StringUtility::Format(const wchar_t* str, va_list va) {
-	//The size returned by _vsnwprintf does NOT include null terminator
-	int size = _vsnwprintf(nullptr, 0U, str, va);
-	std::wstring res;
-	if (size > 0) {
-		res.resize(size + 1);
-		_vsnwprintf((wchar_t*)res.c_str(), res.size(), str, va);
-		res.pop_back();
+std::wstring StringUtility::FormatV(const wchar_t* str, va_list va) {
+	std::vector<wchar_t> buf;
+	buf.resize(256);
+
+	while (true) {
+		va_list va2;
+		va_copy(va2, va);
+
+		int res = _vsnwprintf_s(buf.data(), buf.size(), _TRUNCATE, str, va2);
+		va_end(va2);
+
+		if (res >= 0) {
+			return std::wstring(buf.data());
+		}
+
+		// Buffer size wasn't large enough, double and retry
+
+		buf.resize(buf.size() * 2);
 	}
-	return res;
 }
 std::wstring StringUtility::FormatToWide(const char* str, ...) {
 	va_list	vl;
 	va_start(vl, str);
-	std::string res = StringUtility::Format(str, vl);
+	std::string res = FormatV(str, vl);
 	va_end(vl);
-	return StringUtility::ConvertMultiToWide(res);
+	return ConvertMultiToWide(res);
 }
 
 size_t StringUtility::CountCharacter(const std::wstring& str, wchar_t c) {
