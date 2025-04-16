@@ -112,7 +112,9 @@ bool ReplayInformation::SaveToFile(const std::wstring& scriptPath, int index) {
 
 	return true;
 }
-ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring scriptPath, std::wstring fileName) {
+ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(
+	const std::wstring& scriptPath, const std::wstring& fileName)
+{
 	std::wstring dir = EPathProperty::GetReplaySaveDirectory(scriptPath);
 	//	std::string scriptName = PathProperty::GetFileNameWithoutExtension(scriptPath);
 	//	std::string path = dir + scriptName + StringUtility::Format("_replay%02d.dat", index);
@@ -120,28 +122,22 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 
 	return CreateFromFile(path);
 }
-ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring path) {
+ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(const std::wstring& path) {
 	RecordBuffer rec;
 	try {
-		std::stringstream data;
-		size_t dataSize = 0;
+		shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
+		if (reader == nullptr || !reader->Open())
+			throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, false));
 
-		{
-			shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(path);
-			if (reader == nullptr || !reader->Open())
-				throw gstd::wexception(ErrorUtility::GetFileNotFoundErrorMessage(path, false));
+		std::string source = reader->ReadToString();
+		std::stringstream data(source);
 
-			std::string source = reader->ReadToString();
-			data.str(source);
-
-			dataSize = source.size();
-		}
-		data.seekg(0);
-
-		//Let's be honest, there's no bloody way a replay can be that small.
-		if (dataSize < sizeof(HeaderReplay) + 0x40)
+		// Let's be honest, there's no bloody way a replay can be that small.
+		if (source.size() < sizeof(HeaderReplay) + 0x40)
 			return nullptr;
 
+		data.seekg(0);
+		
 		{
 			HeaderReplay header{};
 			data.read((char*)&header, sizeof(HeaderReplay));
@@ -154,19 +150,19 @@ ref_count_ptr<ReplayInformation> ReplayInformation::CreateFromFile(std::wstring 
 			}
 		}
 
-		size_t sizeFull = 0U;
-		ByteBuffer bufDecomp;
+		ByteBuffer bufDest;
+		size_t dataCount = source.size() - sizeof(HeaderReplay);
 
-		if (auto oSize = CompressorStream::Inflate(data, bufDecomp, dataSize - sizeof(HeaderReplay))) {
-			sizeFull = *oSize;
+		if (auto oSize = CompressorStream::Inflate(data, bufDest, dataCount)) {
+			bufDest.Seek(0);
+			rec.Read(bufDest);
 		}
-		else return nullptr;
-
-		bufDecomp.Seek(0);
-		rec.Read(bufDecomp);
+		else {
+			return nullptr;
+		}
 	}
 	catch (gstd::wexception& e) {
-		std::wstring str = StringUtility::Format(
+		auto str = STR_FMT(
 			L"LoadReplay: Failed to load replay file \"%s\"\r\n    %s", 
 			path.c_str(), e.what());
 		Logger::WriteError(str);
@@ -326,11 +322,7 @@ void ReplayInformation::StageData::WriteRecord(gstd::RecordBuffer& record) {
 //*******************************************************************
 //ReplayInformationManager
 //*******************************************************************
-ReplayInformationManager::ReplayInformationManager() {
-
-}
-ReplayInformationManager::~ReplayInformationManager() {}
-void ReplayInformationManager::UpdateInformationList(std::wstring pathScript) {
+void ReplayInformationManager::UpdateInformationList(const std::wstring& pathScript) {
 	mapInfo_.clear();
 
 	std::wstring scriptName = PathProperty::GetFileNameWithoutExtension(pathScript);

@@ -65,8 +65,8 @@ public:
 	std::vector<int> GetStageIndexList();
 
 	bool SaveToFile(const std::wstring& scriptPath, int index);
-	static ref_count_ptr<ReplayInformation> CreateFromFile(std::wstring scriptPath, std::wstring fileName);
-	static ref_count_ptr<ReplayInformation> CreateFromFile(std::wstring path);
+	static ref_count_ptr<ReplayInformation> CreateFromFile(const std::wstring& scriptPath, const std::wstring& fileName);
+	static ref_count_ptr<ReplayInformation> CreateFromFile(const std::wstring& path);
 };
 
 class ReplayInformation::StageData {
@@ -97,7 +97,7 @@ private:
 	int playerRebirthFrame_;	//Current deathbomb frame
 public:
 	StageData() = default;
-	virtual ~StageData() {}
+	virtual ~StageData() = default;
 
 	std::wstring& GetMainScriptID() { return mainScriptID_; }
 	void SetMainScriptID(const std::wstring& id) { mainScriptID_ = id; }
@@ -156,10 +156,9 @@ class ReplayInformationManager {
 protected:
 	std::map<int, ref_count_ptr<ReplayInformation>> mapInfo_;
 public:
-	ReplayInformationManager();
-	virtual ~ReplayInformationManager();
+	virtual ~ReplayInformationManager() = default;
 
-	void UpdateInformationList(std::wstring pathScript);
+	void UpdateInformationList(const std::wstring& pathScript);
 	std::vector<int> GetIndexList();
 	ref_count_ptr<ReplayInformation> GetInformation(int index);
 };
