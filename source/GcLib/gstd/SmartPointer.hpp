@@ -212,6 +212,7 @@ namespace gstd {
 
 		//----------------------------------------------------------------------
 
+		// Dynamic casts ref_count_ptr<T> to ref_count_ptr<U>
 		template<class U> static _MyType Cast(ref_count_ptr<U, ATOMIC>& src) {
 			_MyType res;
 			if (T* castPtr = dynamic_cast<T*>(src.get())) {

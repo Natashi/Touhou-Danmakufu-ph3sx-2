@@ -54,7 +54,7 @@ namespace gstd {
 	//Xoroshiro256**
 	class RandProvider {
 	private:
-		uint64_t states_[4];
+		std::array<uint64_t, 4> states_;
 
 		uint32_t seed_;
 		uint64_t _GenrandInt64();

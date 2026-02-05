@@ -1,15 +1,15 @@
 #pragma once
 
 // Pointer utilities
-template<typename T> static constexpr inline void ptr_delete(T*& ptr) {
+template<typename T> static constexpr void ptr_delete(T*& ptr) {
 	delete ptr;
 	ptr = nullptr;
 }
-template<typename T> static constexpr inline void ptr_delete_scalar(T*& ptr) {
+template<typename T> static constexpr void ptr_delete_scalar(T*& ptr) {
 	delete[] ptr;
 	ptr = nullptr;
 }
-template<typename T> static constexpr inline void ptr_release(T*& ptr) {
+template<typename T> static constexpr void ptr_release(T*& ptr) {
 	if (ptr)
 		ptr->Release();
 	ptr = nullptr;
@@ -41,7 +41,7 @@ using std::optional;
 template<class T>
 using optional_ref = std::optional<std::reference_wrapper<T>>;
 
-template <typename T>
+template<typename T>
 using unique_ptr_fd = std::unique_ptr<T, std::function<void(T*)>>;
 
 //------------------------------------------------------------------------------

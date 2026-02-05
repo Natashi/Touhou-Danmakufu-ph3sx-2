@@ -661,7 +661,7 @@ bool SoundSourceDataWave::Load(shared_ptr<gstd::FileReader> reader) {
 	reader->SetFilePointerBegin();
 
 	try {
-		byte chunk[4];
+		byte chunk[4]{};
 		uint32_t sizeChunk = 0;
 		uint32_t sizeRiff = 0;
 

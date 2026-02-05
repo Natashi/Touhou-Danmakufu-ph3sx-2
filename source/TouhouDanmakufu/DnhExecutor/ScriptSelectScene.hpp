@@ -48,7 +48,7 @@ public:
 	int GetType();
 	void SetModel(shared_ptr<ScriptSelectModel> model);
 	void ClearModel();
-	void AddMenuItem(std::list<shared_ptr<ScriptSelectSceneMenuItem>>& listItem);
+	void AddMenuItem(const std::list<shared_ptr<ScriptSelectSceneMenuItem>>& listItem);
 };
 
 class ScriptSelectSceneMenuItem : public MenuItem {

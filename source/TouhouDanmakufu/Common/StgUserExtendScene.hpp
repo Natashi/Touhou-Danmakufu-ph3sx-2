@@ -45,8 +45,8 @@ public:
 	StgUserExtendSceneScriptManager(StgSystemController* controller);
 	virtual ~StgUserExtendSceneScriptManager();
 
-	virtual void Work();
-	virtual void Render();
+	virtual void Work() override;
+	virtual void Render() override;
 	virtual shared_ptr<ManagedScript> Create(shared_ptr<ScriptManager> manager, int type) override;
 
 	void CallScriptFinalizeAll();

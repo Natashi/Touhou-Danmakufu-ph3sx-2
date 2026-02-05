@@ -92,7 +92,6 @@ namespace directx {
 	//ShaderParameter
 	//*******************************************************************
 	class ShaderParameter {
-	private:
 		D3DXHANDLE handle_;
 		ShaderParameterType type_;
 		std::vector<byte> value_;
@@ -192,8 +191,8 @@ namespace directx {
 		ShaderIncludeCallback(const std::wstring& localDir);
 		virtual ~ShaderIncludeCallback();
 
-		HRESULT __stdcall Open(D3DXINCLUDE_TYPE type, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes);
-		HRESULT __stdcall Close(LPCVOID pData);
+		HRESULT __stdcall Open(D3DXINCLUDE_TYPE type, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes) override;
+		HRESULT __stdcall Close(LPCVOID pData) override;
 	};
 
 	//****************************************************************************

@@ -355,7 +355,6 @@ void SystemTransitionEffectTask::Work() {
 	if (effect_ != nullptr && effect_->IsEnd()) {
 		WorkRenderTaskManager* taskManager = ETaskManager::GetInstance();
 		taskManager->RemoveTask(this);
-		return;
 	}
 }
 void SystemTransitionEffectTask::Render() {

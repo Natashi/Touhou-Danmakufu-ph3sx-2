@@ -399,7 +399,7 @@ void ScriptSelectScene::ClearModel() {
 	model_ = nullptr;
 }
 
-void ScriptSelectScene::AddMenuItem(std::list<shared_ptr<ScriptSelectSceneMenuItem>>& listItem) {
+void ScriptSelectScene::AddMenuItem(const std::list<shared_ptr<ScriptSelectSceneMenuItem>>& listItem) {
 	if (listItem.size() == 0) return;
 
 	{

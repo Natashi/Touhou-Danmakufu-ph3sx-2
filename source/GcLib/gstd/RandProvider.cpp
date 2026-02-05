@@ -53,9 +53,9 @@ void RandProvider::Initialize(unsigned long s) {
 }
 */
 void RandProvider::Initialize(uint32_t s) {
-	memset(states_, 0x00, sizeof(uint64_t) * 4U);
+	states_ = {};
 
-	static const uint64_t JUMP[] = 
+	static constexpr uint64_t JUMP[] = 
 		{ 0x180ec6d33cfd0abaui64, 0xd5a61266f0c9392cui64, 0xa9582618e03fc9aaui64, 0x39abdc4529b1661cui64 };
 
 	seed_ = s;
