@@ -1737,7 +1737,7 @@ void StgNormalShotObject::_SendDeleteEvent(TypeDelete type) {
 			}
 
 			//Create default delete item
-			if (type == TypeDelete::Item && itemManager->bDefaultBonusItemEnable_) {
+			if (type == TypeDelete::Item && itemManager->useDefaultBonusItem) {
 				if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 					ref_unsync_ptr<StgItemObject> obj(new StgItemObject_Bonus(stageController_));
 
@@ -2101,7 +2101,7 @@ void StgLooseLaserObject::_SendDeleteEvent(TypeDelete type) {
 			}
 
 			//Create default delete item
-			if (type == TypeDelete::Item && itemManager->bDefaultBonusItemEnable_) {
+			if (type == TypeDelete::Item && itemManager->useDefaultBonusItem) {
 				if (delay_.time == 0 || bEnableMotionDelay_) {
 					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 						ref_unsync_ptr<StgItemObject> obj(new StgItemObject_Bonus(stageController_));
@@ -2377,7 +2377,7 @@ void StgStraightLaserObject::_SendDeleteEvent(TypeDelete type) {
 			}
 
 			//Create default delete item
-			if (type == TypeDelete::Item && itemManager->bDefaultBonusItemEnable_) {
+			if (type == TypeDelete::Item && itemManager->useDefaultBonusItem) {
 				if (delay_.time == 0) {
 					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 						ref_unsync_ptr<StgItemObject> obj(new StgItemObject_Bonus(stageController_));
@@ -2846,7 +2846,7 @@ void StgCurveLaserObject::_SendDeleteEvent(TypeDelete type) {
 			}
 
 			//Create default delete item
-			if (type == TypeDelete::Item && itemManager->bDefaultBonusItemEnable_) {
+			if (type == TypeDelete::Item && itemManager->useDefaultBonusItem) {
 				if (delay_.time == 0 || bEnableMotionDelay_) {
 					if (itemManager->GetItemCount() < StgItemManager::ITEM_MAX) {
 						ref_unsync_ptr<StgItemObject> obj(new StgItemObject_Bonus(stageController_));

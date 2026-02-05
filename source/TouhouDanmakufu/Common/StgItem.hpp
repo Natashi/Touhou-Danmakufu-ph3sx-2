@@ -69,7 +69,8 @@ protected:
 	ID3DXEffect* effectItem_;
 	D3DXMATRIX matProj_;
 public:
-	bool bDefaultBonusItemEnable_;
+	bool useDefaultBonusItem;
+	double defaultItemSpeedMultiplier;
 
 	IDirect3DTexture9* pLastTexture_;
 public:

@@ -39,7 +39,9 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 
 	bCancelToPlayer_ = false;
 	bAllItemToPlayer_ = false;
-	bDefaultBonusItemEnable_ = true;
+	
+	useDefaultBonusItem = true;
+	defaultItemSpeedMultiplier = 1;
 
 	{
 		RenderShaderLibrary* shaderManager_ = ShaderManager::GetBase()->GetRenderLib();
@@ -1312,6 +1314,8 @@ void StgMovePattern_Item::Move() {
 	StgItemObject* itemObject = (StgItemObject*)target_;
 	StgStageController* stageController = itemObject->GetStageController();
 
+	double speedMultiplier = stageController->GetItemManager()->defaultItemSpeedMultiplier;
+	
 	double px = target_->position[0];
 	double py = target_->position[1];
 
@@ -1368,8 +1372,8 @@ void StgMovePattern_Item::Move() {
 
 	if (itemMoveType != ItemMoveType::None) {
 		target_->position = {
-			px + speed_ * c_,
-			py + speed_ * s_,
+			px + speed_ * speedMultiplier * c_,
+			py + speed_ * speedMultiplier * s_,
 		};
 	}
 

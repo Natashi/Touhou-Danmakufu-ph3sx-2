@@ -2444,7 +2444,7 @@ gstd::value StgStageScript::Func_SetDefaultBonusItemEnable(gstd::script_machine*
 	StgItemManager* itemManager = script->stageController_->GetItemManager();
 
 	bool bEnable = argv[0].as_boolean();
-	itemManager->bDefaultBonusItemEnable_ = bEnable;
+	itemManager->useDefaultBonusItem = bEnable;
 
 	return value();
 }
