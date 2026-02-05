@@ -364,8 +364,8 @@ void StgStageController::Work() {
 				//Add FPS entry to the replay data
 				DWORD stageFrame = infoStage_->GetCurrentFrame();
 				if (stageFrame % 60 == 0) {
-					ref_count_ptr<ReplayInformation::StageData> replayStageData = infoStage_->GetReplayData();
-					float framePerSecond = EFpsController::GetInstance()->GetCurrentFps();
+					auto replayStageData = infoStage_->GetReplayData();
+					float framePerSecond = EFpsController::GetInstance()->GetCurrentUpdateFps();
 					replayStageData->AddFramePerSecond(framePerSecond);
 				}
 			}
@@ -380,10 +380,10 @@ void StgStageController::Work() {
 	ELogger* logger = ELogger::GetInstance();
 	auto infoLog = logger->GetInfoPanel();
 
-	infoLog->SetInfo(6, "Shot count", std::to_string(shotManager_->GetShotCountAll()));
-	infoLog->SetInfo(7, "Enemy count", std::to_string(enemyManager_->GetEnemyCount()));
-	infoLog->SetInfo(8, "Item count", std::to_string(itemManager_->GetItemCount()));
-}
+		infoLog->SetInfo(6, "Shot count", std::to_string(shotManager_->GetShotCountAll()));
+		infoLog->SetInfo(7, "Enemy count", std::to_string(enemyManager_->GetEnemyCount()));
+		infoLog->SetInfo(8, "Item count", std::to_string(itemManager_->GetItemCount()));
+	}
 void StgStageController::Render() {
 	bool bPause = infoStage_->IsPause();
 	if (!bPause) {
@@ -489,19 +489,19 @@ void StgStageInformation::SetStgFrameRect(const DxRect<LONG>& rect, bool bUpdate
 //*******************************************************************
 //PseudoSlowInformation
 //*******************************************************************
-DWORD PseudoSlowInformation::GetFps() {
+uint32_t PseudoSlowInformation::GetFps() {
 	const uint32_t STANDARD_FPS = DnhConfiguration::GetInstance()->fpsStandard_;
 
-	DWORD fps = STANDARD_FPS;
+	uint32_t fps = STANDARD_FPS;
 	int target = TARGET_ALL;
 
 	auto itrPlayer = mapDataPlayer_.find(target);
 	if (itrPlayer != mapDataPlayer_.end())
-		fps = std::min(fps, itrPlayer->second.GetFps());
+		fps = std::min(fps, itrPlayer->second.fps);
 
 	auto itrEnemy = mapDataEnemy_.find(target);
 	if (itrEnemy != mapDataEnemy_.end())
-		fps = std::min(fps, itrEnemy->second.GetFps());
+		fps = std::min(fps, itrEnemy->second.fps);
 
 	return fps;
 }
@@ -513,16 +513,16 @@ bool PseudoSlowInformation::IsValidFrame(int target) {
 void PseudoSlowInformation::Next() {
 	const uint32_t STANDARD_FPS = DnhConfiguration::GetInstance()->fpsStandard_;
 
-	DWORD fps = STANDARD_FPS;
+	uint32_t fps = STANDARD_FPS;
 	int target = TARGET_ALL;
 
 	auto itrPlayer = mapDataPlayer_.find(target);
 	if (itrPlayer != mapDataPlayer_.end())
-		fps = std::min(fps, itrPlayer->second.GetFps());
+		fps = std::min(fps, itrPlayer->second.fps);
 
 	auto itrEnemy = mapDataEnemy_.find(target);
 	if (itrEnemy != mapDataEnemy_.end())
-		fps = std::min(fps, itrEnemy->second.GetFps());
+		fps = std::min(fps, itrEnemy->second.fps);
 
 	bool bValid = false;
 	if (fps == STANDARD_FPS) {
@@ -538,13 +538,11 @@ void PseudoSlowInformation::Next() {
 
 	mapValid_[target] = bValid;
 }
-void PseudoSlowInformation::AddSlow(DWORD fps, int owner, int target) {
+void PseudoSlowInformation::AddSlow(uint32_t fps, int owner, int target) {
 	const uint32_t STANDARD_FPS = DnhConfiguration::GetInstance()->fpsStandard_;
 
 	fps = std::clamp<DWORD>(fps, 1, STANDARD_FPS);
-
-	SlowData data;
-	data.SetFps(fps);
+	SlowData data = { fps };
 
 	switch (owner) {
 	case OWNER_PLAYER:

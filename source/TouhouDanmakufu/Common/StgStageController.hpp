@@ -179,15 +179,8 @@ struct StgStageStartData {
 //*******************************************************************
 class PseudoSlowInformation : public gstd::FpsControlObject {
 public:
-	class SlowData {
-	private:
-		DWORD fps_;
-	public:
-		SlowData() { fps_ = 60; }
-		virtual ~SlowData() {}
-
-		DWORD GetFps() { return fps_; }
-		void SetFps(DWORD fps) { fps_ = fps; }
+	struct SlowData {
+		uint32_t fps = 60;
 	};
 
 	enum {
@@ -204,11 +197,11 @@ public:
 	PseudoSlowInformation() { current_ = 0; }
 	virtual ~PseudoSlowInformation() {}
 
-	virtual DWORD GetFps();
+	virtual uint32_t GetFps() override;
 
 	bool IsValidFrame(int target);
 	void Next();
 
-	void AddSlow(DWORD fps, int owner, int target);
+	void AddSlow(uint32_t fps, int owner, int target);
 	void RemoveSlow(int owner, int target);
 };
