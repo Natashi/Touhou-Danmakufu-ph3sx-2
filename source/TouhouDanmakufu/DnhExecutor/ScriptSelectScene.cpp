@@ -603,9 +603,8 @@ PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) 
 		replayInfoManager_->UpdateInformationList(pathScript);
 
 		std::vector<int> listReplayIndex = replayInfoManager_->GetIndexList();
-		for (int iList = 0; iList < listReplayIndex.size(); iList++) {
-			int index = listReplayIndex[iList];
-			ref_count_ptr<ReplayInformation> replay = replayInfoManager_->GetInformation(index);
+		for (auto index : listReplayIndex) {
+			auto replay = replayInfoManager_->GetInformation(index);
 			int itemY = 256 + (itemCount % pageMaxY_) * 20;
 
 			std::wstring text = StringUtility::Format(L"No.%02d %-8s %012I64d %-8s (%2.2ffps) <%s>",
@@ -748,12 +747,9 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 	SystemInformation* systemInfo = SystemController::GetInstance()->GetSystemInformation();
 
 	//自機一覧を作成
-	if (info_->listPlayer_.size() == 0) {
-		listPlayer_ = systemInfo->GetFreePlayerScriptInformationList();
-	}
-	else {
-		listPlayer_ = info_->CreatePlayerScriptInformationList();
-	}
+	listPlayer_ = info_->listPlayer_.size() == 0
+		? systemInfo->GetFreePlayerScriptInformationList()
+		: info_->CreatePlayerScriptInformationList();
 
 	//メニュー作成
 	for (auto& player : listPlayer_) {

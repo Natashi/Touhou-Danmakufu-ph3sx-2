@@ -108,9 +108,7 @@ void StgShotManager::Render(int targetPriority) {
 	auto _RenderQueue = [&](const RenderQueue& renderQueue) {
 		if (renderQueue.count == 0) return;
 
-		for (size_t iBlend = 0; iBlend < blendTypeRenderOrder.size(); ++iBlend) {
-			BlendMode blend = blendTypeRenderOrder[iBlend];
-
+		for (auto& blend : blendTypeRenderOrder) {
 			graphics->SetBlendMode(blend);
 			effectShot_->SetTechnique(blend == MODE_BLEND_ALPHA_INV ? "RenderInv" : "Render");
 

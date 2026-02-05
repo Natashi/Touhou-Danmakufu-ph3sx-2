@@ -124,10 +124,11 @@ gstd::value StgPackageScript::Func_FinalizeStageScene(gstd::script_machine* mach
 	if (infoPackage->GetNextStageData() != nullptr && infoPackage->GetNextStageData()->prevStageInfo_ == nullptr)
 		script->RaiseError("Stage not yet finished.");
 
-	std::vector<ref_count_ptr<StgStageStartData>> listStage = infoPackage->GetStageDataList();
-	if (listStage.size() > 0) {
-		auto stageData = listStage[listStage.size() - 1];
-		auto infoStage = stageData->infoStage_;
+	auto& listStage = infoPackage->GetStageDataList();
+	if (!listStage.empty()) {
+		auto& stageData = listStage.back();
+		auto& infoStage = stageData->infoStage_;
+
 		bool bReplay = infoStage->IsReplay();
 		if (bReplay) return value();
 	}
@@ -184,13 +185,15 @@ gstd::value StgPackageScript::Func_StartStageScene(gstd::script_machine* machine
 		listPlayer = infoMain->CreatePlayerScriptInformationList();
 	}
 
-	for (size_t iPlayer = 0; iPlayer < listPlayer.size(); iPlayer++) {
-		ref_count_ptr<ScriptInformation> tInfo = listPlayer[iPlayer];
-		if (tInfo->id_ != replayPlayerID) continue;
-		std::wstring tPlayerScriptFileName = PathProperty::GetFileName(tInfo->pathScript_);
-		if (tPlayerScriptFileName != replayPlayerScriptFileName) continue;
+	for (auto& player : listPlayer) {
+		if (player->id_ != replayPlayerID)
+			continue;
 
-		infoStage->SetPlayerScriptInformation(tInfo);
+		auto playerScriptFileName = PathProperty::GetFileName(player->pathScript_);
+		if (playerScriptFileName != replayPlayerScriptFileName)
+			continue;
+
+		infoStage->SetPlayerScriptInformation(player);
 		break;
 	}
 

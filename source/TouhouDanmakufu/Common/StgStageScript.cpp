@@ -2587,13 +2587,13 @@ gstd::value StgStageScript::Func_IsIntersected_Obj_Obj(gstd::script_machine* mac
 
 		std::vector<std::pair<bool, ref_unsync_ptr<StgIntersectionTarget>>> intersectObj1, intersectObj2;
 		
-		for (size_t i = 0; i < listTarget1.size(); ++i) {
-			if (listTarget1[i].first)
-				intersectObj1.push_back(std::make_pair(false, listTarget1[i].second));
+		for (auto& [intersected, target] : listTarget1) {
+			if (intersected)
+				intersectObj1.push_back( { false, target });
 		}
-		for (size_t i = 0; i < listTarget2.size(); ++i) {
-			if (listTarget2[i].first)
-				intersectObj2.push_back(std::make_pair(false, listTarget2[i].second));
+		for (auto& [intersected, target] : listTarget2) {
+			if (intersected)
+				intersectObj2.push_back( { false, target });
 		}
 
 		for (auto& target1 : intersectObj1) {

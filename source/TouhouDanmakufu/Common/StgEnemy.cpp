@@ -373,19 +373,22 @@ bool StgEnemyBossSceneObject::_NextScript() {
 	activeData_ = listData_[dataStep_][dataIndex_];
 
 	LOCK_WEAK(pScript, activeData_->GetScriptPointer()) {
-		std::vector<ref_unsync_ptr<StgEnemyBossObject>>& listEnemy = activeData_->GetEnemyObjectList();
-		std::vector<double>& listLife = activeData_->GetLifeList();
+		auto& listEnemy = activeData_->GetEnemyObjectList();
+		auto& listLife = activeData_->GetLifeList();
+		
 		for (size_t iEnemy = 0; iEnemy < listEnemy.size(); ++iEnemy) {
-			ref_unsync_ptr<StgEnemyBossObject> obj = listEnemy[iEnemy];
+			auto& obj = listEnemy[iEnemy];
+			
 			obj->SetLife(listLife[iEnemy]);
+			
 			if (oldActiveData) {
-				std::vector<ref_unsync_ptr<StgEnemyBossObject>>& listOldEnemyObject = oldActiveData->GetEnemyObjectList();
+				auto& listOldEnemyObject = oldActiveData->GetEnemyObjectList();
 				if (iEnemy < listOldEnemyObject.size()) {
-					ref_unsync_ptr<StgEnemyBossObject>& objOld = listOldEnemyObject[iEnemy];
-					obj->SetPositionX(objOld->GetPositionX());
-					obj->SetPositionY(objOld->GetPositionY());
+					auto& objOld = listOldEnemyObject[iEnemy];
+					obj->position = objOld->position;
 				}
 			}
+			
 			objectManager->ActivateObject(obj->GetObjectID(), true);
 		}
 

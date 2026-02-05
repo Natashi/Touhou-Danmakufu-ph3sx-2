@@ -1504,10 +1504,13 @@ void DxScriptObjectManager::ActivateObject(ref_unsync_ptr<DxScriptObjectBase> ob
 
 std::vector<int> DxScriptObjectManager::GetValidObjectIdentifier() {
 	std::vector<int> res;
-	for (size_t iObj = 0; iObj < obj_.size(); ++iObj) {
-		if (obj_[iObj] == nullptr) continue;
-		res.push_back(obj_[iObj]->idObject_);
+	
+	for (auto& obj : obj_) {
+		if (obj == nullptr)
+			continue;
+		res.push_back(obj->idObject_);
 	}
+	
 	return res;
 }
 DxScriptObjectBase* DxScriptObjectManager::GetObjectPointer(int id) {
@@ -1554,36 +1557,40 @@ void DxScriptObjectManager::ClearObject() {
 	}
 }
 void DxScriptObjectManager::DeleteObjectByScriptID(int64_t idScript) {
-	if (idScript == ScriptClientBase::ID_SCRIPT_FREE) return;
+	if (idScript == ScriptClientBase::ID_SCRIPT_FREE)
+		return;
 
-	for (size_t iObj = 0; iObj < obj_.size(); ++iObj) {
-		auto& pObj = obj_[iObj];
-		if (pObj == nullptr) continue;
-		if (pObj->GetScriptID() != idScript) continue;
-		DeleteObject(pObj);
+	for (auto& obj : obj_) {
+		if (obj == nullptr || obj->GetScriptID() != idScript)
+			continue;
+		
+		DeleteObject(obj);
 	}
 }
 void DxScriptObjectManager::OrphanObjectByScriptID(int64_t idScript) {
-	if (idScript == ScriptClientBase::ID_SCRIPT_FREE) return;
+	if (idScript == ScriptClientBase::ID_SCRIPT_FREE)
+		return;
 
-	for (size_t iObj = 0; iObj < obj_.size(); ++iObj) {
-		auto& pObj = obj_[iObj];
-		if (pObj == nullptr) continue;
-		if (pObj->GetScriptID() != idScript) continue;
-		pObj->idScript_ = ScriptClientBase::ID_SCRIPT_FREE;
+	for (auto& obj : obj_) {
+		if (obj == nullptr || obj->GetScriptID() != idScript)
+			continue;
+		
+		obj->idScript_ = ScriptClientBase::ID_SCRIPT_FREE;
 	}
 }
 std::vector<int> DxScriptObjectManager::GetObjectByScriptID(int64_t idScript) {
 	std::vector<int> res;
 
-	if (idScript != ScriptClientBase::ID_SCRIPT_FREE) {
-		for (size_t iObj = 0; iObj < obj_.size(); ++iObj) {
-			auto& pObj = obj_[iObj];
-			if (pObj == nullptr) continue;
-			if (pObj->GetScriptID() != idScript) continue;
-			res.push_back(pObj->idObject_);
-		}
+	if (idScript == ScriptClientBase::ID_SCRIPT_FREE)
+		return res;
+
+	for (auto& obj : obj_) {
+		if (obj == nullptr || obj->GetScriptID() != idScript)
+			continue;
+		
+		res.push_back(obj->idObject_);
 	}
+	
 	return res;
 }
 
