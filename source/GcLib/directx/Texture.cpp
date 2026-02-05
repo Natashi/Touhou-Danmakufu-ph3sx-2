@@ -861,26 +861,24 @@ void TextureInfoPanel::ProcessGui() {
 
 						ImGui::TableNextRow();
 
-						_SETCOL(0, item.strAddress);
+						SetCol(0, item.strAddress);
 
-						_SETCOL(1, item.fileName);
+						SetCol(1, item.fileName);
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(item.fileName.c_str());
 
-						_SETCOL(2, item.fullPath);
+						SetCol(2, item.fullPath);
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(item.fullPath.c_str());
 
-						_SETCOL(3, std::to_string(item.countRef));
-						_SETCOL(4, std::to_string(item.wd));
-						_SETCOL(5, std::to_string(item.ht));
-						_SETCOL(6, std::to_string(item.size));
+						SetCol(3, std::to_string(item.countRef));
+						SetCol(4, std::to_string(item.wd));
+						SetCol(5, std::to_string(item.ht));
+						SetCol(6, std::to_string(item.size));
 					}
 				}
 
 				ImGui::PopFont();
-
-#undef _SETCOL
 			}
 
 			ImGui::EndTable();
@@ -926,21 +924,19 @@ bool TextureInfoPanel::TextureDisplay::Compare(const TextureDisplay& a, const Te
 		int rcmp = 0;
 
 #define CASE_SORT(_id, _l, _r) \
-		case _id: { \
-			if (_l != _r) rcmp = (_l < _r) ? 1 : -1; \
-			break; \
-		}
+		case _id: \
+			if ((_l) != (_r)) { rcmp = ((_l) < (_r)) ? 1 : -1; } break; \
 
 		switch ((Column)spec->ColumnUserID) {
 		CASE_SORT(Column::Address, a.address, b.address);
+		CASE_SORT(Column::Uses, a.countRef, b.countRef);
+		CASE_SORT(Column::Size, a.size, b.size);
 		case Column::Name:
 			rcmp = a.fileName.compare(b.fileName);
 			break;
 		case Column::FullPath:
 			rcmp = a.fullPath.compare(b.fullPath);
 			break;
-		CASE_SORT(Column::Uses, a.countRef, b.countRef);
-		CASE_SORT(Column::Size, a.size, b.size);
 		default: break;
 		}
 
