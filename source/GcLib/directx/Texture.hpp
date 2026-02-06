@@ -48,11 +48,11 @@ namespace directx {
 		D3DXIMAGE_INFO* GetImageInfo() { return &infoImage_; }
 		const D3DXIMAGE_INFO* GetImageInfo() const { return &infoImage_; }
 
-		IDirect3DTexture9* GetD3DTexture() { return pTexture_; }
-		IDirect3DSurface9* GetD3DSurface() { return lpRenderSurface_; }
-		IDirect3DSurface9* GetD3DZBuffer() { return lpRenderZ_; }
+		_NODISCARD IDirect3DTexture9* GetD3DTexture() { return pTexture_; }
+		_NODISCARD IDirect3DSurface9* GetD3DSurface() { return lpRenderSurface_; }
+		_NODISCARD IDirect3DSurface9* GetD3DZBuffer() { return lpRenderZ_; }
 
-		size_t GetResourceSize() const { return resourceSize_; }
+		_NODISCARD size_t GetResourceSize() const { return resourceSize_; }
 		void CalculateResourceSize();
 	};
 
