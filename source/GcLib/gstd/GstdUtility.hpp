@@ -675,6 +675,28 @@ namespace gstd {
 		}
 	};
 
+	//================================================================
+	// NonCopyable
+	class NonCopyable {
+	protected:
+		NonCopyable() = default;
+		~NonCopyable() = default;
+		
+		NonCopyable(const NonCopyable&) = delete;
+		NonCopyable& operator=(const NonCopyable&) = delete;
+	};
+
+	//================================================================
+	// NonMovable
+	class NonMovable {
+	protected:
+		NonMovable() = default;
+		~NonMovable() = default;
+		
+		NonMovable(NonMovable&&) = delete;
+		NonMovable& operator=(NonMovable&&) = delete;
+	};
+
 #if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
 	//================================================================
 	//Scanner
