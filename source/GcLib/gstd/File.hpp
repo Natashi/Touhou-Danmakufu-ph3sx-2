@@ -265,6 +265,8 @@ namespace gstd {
 
 		static FileManager* GetBase() { return thisBase_; }
 
+		CriticalSection& GetLock() { return lock_; }
+
 		virtual bool Initialize();
 
 #if defined(DNH_PROJ_EXECUTOR)
