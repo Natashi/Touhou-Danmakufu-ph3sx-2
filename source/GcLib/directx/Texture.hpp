@@ -25,7 +25,7 @@ namespace directx {
 		};
 	protected:
 		TextureManager* manager_;
-		volatile bool bReady_;
+		volatile std::atomic_bool ready_;
 		
 		Type type_;
 		std::wstring name_;

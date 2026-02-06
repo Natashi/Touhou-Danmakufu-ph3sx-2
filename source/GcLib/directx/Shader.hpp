@@ -22,10 +22,13 @@ namespace directx {
 		friend ShaderInfoPanel;
 	private:
 		ShaderManager* manager_;
+		
 		ID3DXEffect* effect_;
+		
 		std::wstring name_;
-		bool bLoad_;
 		bool bText_;
+
+		volatile std::atomic_bool bLoad_;
 	public:
 		ShaderData();
 		virtual ~ShaderData();
