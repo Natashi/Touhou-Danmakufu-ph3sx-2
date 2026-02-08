@@ -15,37 +15,33 @@ namespace directx {
 			BIT_GREEN = 8,
 			BIT_BLUE = 0,
 		};
-		static inline byte GetColorA(const D3DCOLOR& color) {
-			//return gstd::BitAccess::GetByte(color, BIT_ALPHA);
-			return (color >> 24) & 0xff;
+		static byte GetColorA(const D3DCOLOR& color) {
+			return gstd::ByteUtility::GetByte(color, BIT_ALPHA);
 		}
-		static inline byte GetColorR(const D3DCOLOR& color) {
-			//return gstd::BitAccess::GetByte(color, BIT_RED);
-			return (color >> 16) & 0xff;
+		static byte GetColorR(const D3DCOLOR& color) {
+			return gstd::ByteUtility::GetByte(color, BIT_RED);
 		}
-		static inline byte GetColorG(const D3DCOLOR& color) {
-			//return gstd::BitAccess::GetByte(color, BIT_GREEN);
-			return (color >> 8) & 0xff;
+		static byte GetColorG(const D3DCOLOR& color) {
+			return gstd::ByteUtility::GetByte(color, BIT_GREEN);
 		}
-		static inline byte GetColorB(const D3DCOLOR& color) {
-			//return gstd::BitAccess::GetByte(color, BIT_BLUE);
-			return color & 0xff;
+		static byte GetColorB(const D3DCOLOR& color) {
+			return gstd::ByteUtility::GetByte(color, BIT_BLUE);
 		}
-		static inline D3DCOLOR& SetColorA(D3DCOLOR& color, int alpha) {
+		static D3DCOLOR& SetColorA(D3DCOLOR& color, int alpha) {
 			ClampColor(alpha);
-			return gstd::BitAccess::SetByte(color, BIT_ALPHA, (byte)alpha);
+			return gstd::ByteUtility::SetByte(color, BIT_ALPHA, (byte)alpha);
 		}		
-		static inline D3DCOLOR& SetColorR(D3DCOLOR& color, int red) {
+		static D3DCOLOR& SetColorR(D3DCOLOR& color, int red) {
 			ClampColor(red);
-			return gstd::BitAccess::SetByte(color, BIT_RED, (byte)red);
+			return gstd::ByteUtility::SetByte(color, BIT_RED, (byte)red);
 		}
-		static inline D3DCOLOR& SetColorG(D3DCOLOR& color, int green) {
+		static D3DCOLOR& SetColorG(D3DCOLOR& color, int green) {
 			ClampColor(green);
-			return gstd::BitAccess::SetByte(color, BIT_GREEN, (byte)green);
+			return gstd::ByteUtility::SetByte(color, BIT_GREEN, (byte)green);
 		}
-		static inline D3DCOLOR& SetColorB(D3DCOLOR& color, int blue) {
+		static D3DCOLOR& SetColorB(D3DCOLOR& color, int blue) {
 			ClampColor(blue);
-			return gstd::BitAccess::SetByte(color, BIT_BLUE, (byte)blue);
+			return gstd::ByteUtility::SetByte(color, BIT_BLUE, (byte)blue);
 		}
 
 		static D3DCOLORVALUE MultiplyColor(D3DCOLORVALUE& value, D3DCOLOR color);

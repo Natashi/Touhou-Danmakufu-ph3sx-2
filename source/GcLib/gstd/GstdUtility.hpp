@@ -587,8 +587,8 @@ namespace gstd {
 	};
 
 	//================================================================
-	//BitAccess
-	class BitAccess {
+	//ByteUtility
+	class ByteUtility {
 	public:
 		template <typename T> static bool GetBit(T value, size_t bit) {
 			T mask = (T)1 << bit;
@@ -602,7 +602,7 @@ namespace gstd {
 			return value;
 		}
 		template <typename T> static byte GetByte(T value, size_t bit) {
-			return (byte)(value >> bit);
+			return (byte)(value >> bit) & 0xff;
 		}
 		template <typename T> static T& SetByte(T& value, size_t bit, byte c) {
 			T mask = (T)0xff << bit;
