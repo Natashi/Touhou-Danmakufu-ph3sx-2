@@ -590,17 +590,6 @@ namespace gstd {
 	//ByteUtility
 	class ByteUtility {
 	public:
-		template <typename T> static bool GetBit(T value, size_t bit) {
-			T mask = (T)1 << bit;
-			return (value & mask) != 0;
-		}
-		template <typename T> static T& SetBit(T& value, size_t bit, bool b) {
-			T mask = (T)1 << bit;
-			T write = (T)b << bit;
-			value &= ~mask;
-			value |= write;
-			return value;
-		}
 		template <typename T> static byte GetByte(T value, size_t bit) {
 			return (byte)(value >> bit) & 0xff;
 		}
