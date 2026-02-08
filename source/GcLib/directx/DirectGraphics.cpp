@@ -916,8 +916,8 @@ bool DirectGraphicsPrimaryWindow::Initialize(DirectGraphicsConfig& config) {
 		wcex.hIconSm = nullptr;
 		::RegisterClassEx(&wcex);
 
-		LONG screenWidth = config_.sizeScreenDisplay[0];
-		LONG screenHeight = config_.sizeScreenDisplay[1];
+		LONG screenWidth = config.sizeScreenDisplay[0];
+		LONG screenHeight = config.sizeScreenDisplay[1];
 
 		DxRect<LONG> wr = ClientSizeToWindowSize({ 0, 0, screenWidth, screenHeight }, SCREENMODE_WINDOW);
 		hWnd_ = ::CreateWindowW(wcex.lpszClassName, L"", wndStyleWin_,
