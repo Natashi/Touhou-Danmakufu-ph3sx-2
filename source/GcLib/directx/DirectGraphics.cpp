@@ -840,11 +840,14 @@ DxRect<LONG> DirectGraphics::ClientSizeToWindowSize(const DxRect<LONG>& rc, Scre
 
 void DirectGraphics::SaveBackSurfaceToFile(const std::wstring& path) {
 	DxRect<LONG> rect(0, 0, GetScreenWidth(), GetScreenHeight());
+	
 	LPDIRECT3DSURFACE9 pBackSurface = nullptr;
+	
 	pDevice_->GetRenderTarget(0, &pBackSurface);
 	D3DXSaveSurfaceToFile(path.c_str(), D3DXIFF_BMP,
 		pBackSurface, nullptr, (RECT*)&rect);
-	pBackSurface->Release();
+
+	ptr_release(pBackSurface);
 }
 
 void DirectGraphics::UpdateDefaultRenderTargetSize() {
