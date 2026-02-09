@@ -679,50 +679,33 @@ void ShaderInfoPanel::Initialize(const std::string& name) {
 
 void ShaderInfoPanel::Update() {
 	ShaderManager* manager = ShaderManager::GetBase();
+
+	listDisplay_.clear();
+	
 	if (manager == nullptr) {
-		listDisplay_.clear();
 		return;
 	}
-
-	RenderShaderLibrary* renderLib = manager->GetRenderLib();
 
 	{
 		Lock lock(Logger::GetTop()->GetLock());
 
-		auto& mapData = manager->mapShaderData_;
-
-		size_t iDataAdd = 0;
-		{
-			size_t size = mapData.size();
-			if (renderLib)
-				size += renderLib->GetShaderCount();
-			listDisplay_.resize(size);
-		}
-
-		auto _AddData = [&](ID3DXEffect* pEffect, const std::string& name, size_t dataAddress, shared_ptr<ShaderData> ref) {
-			ShaderDisplay displayData(pEffect, name, dataAddress, ref);
-			listDisplay_[iDataAdd++] = displayData;
+		auto AddData = [&](ID3DXEffect* pEffect, const std::string& name, const shared_ptr<ShaderData>& ref) {
+			listDisplay_.push_back(ShaderDisplay(pEffect, name, (uintptr_t)pEffect, ref));
 		};
 
 		// Add built-in shaders
-		if (renderLib) {
-#define _ADD_BUILTIN(_eff, _name) _AddData(_eff, _name, (size_t)(_eff), nullptr);
-
-			_ADD_BUILTIN(renderLib->GetRender2DShader(), ShaderSource::nameRender2D_);
-			_ADD_BUILTIN(renderLib->GetInstancing2DShader(), ShaderSource::nameHwInstance2D_);
-			_ADD_BUILTIN(renderLib->GetInstancing3DShader(), ShaderSource::nameHwInstance3D_);
-			_ADD_BUILTIN(renderLib->GetIntersectVisualShader1(), ShaderSource::nameIntersectVisual1_);
-			_ADD_BUILTIN(renderLib->GetIntersectVisualShader2(), ShaderSource::nameIntersectVisual2_);
-
-#undef _ADD_BUILTIN
+		if (auto renderLib = manager->GetRenderLib()) {
+			AddData(renderLib->GetRender2DShader(), ShaderSource::nameRender2D_, nullptr);
+			AddData(renderLib->GetInstancing2DShader(), ShaderSource::nameHwInstance2D_, nullptr);
+			AddData(renderLib->GetInstancing3DShader(), ShaderSource::nameHwInstance3D_, nullptr);
+			AddData(renderLib->GetIntersectVisualShader1(), ShaderSource::nameIntersectVisual1_, nullptr);
+			AddData(renderLib->GetIntersectVisualShader2(), ShaderSource::nameIntersectVisual2_, nullptr);
 		}
 
 		// Add user shaders
-		{
-			for (auto& [name, data] : mapData) {
-				std::string nameReduce = STR_MULTI(PathProperty::ReduceModuleDirectory(name));
-				_AddData(data->effect_, nameReduce, (size_t)data.get(), data);
-			}
+		for (auto& [name, data] : manager->mapShaderData_) {
+			auto nameReduce = STR_MULTI(PathProperty::ReduceModuleDirectory(name));
+			AddData(data->effect_, nameReduce, data);
 		}
 
 		// Sort new data as well
