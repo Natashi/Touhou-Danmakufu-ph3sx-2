@@ -696,8 +696,8 @@ void DirectGraphics::SetVertexFog(bool bEnable, D3DCOLOR color, float start, flo
 
 	pDevice_->SetRenderState(D3DRS_FOGCOLOR, color);
 	pDevice_->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-	pDevice_->SetRenderState(D3DRS_FOGSTART, *(DWORD*)(&start));
-	pDevice_->SetRenderState(D3DRS_FOGEND, *(DWORD*)(&end));
+	pDevice_->SetRenderState(D3DRS_FOGSTART, ByteUtility::Cast<DWORD>(start));
+	pDevice_->SetRenderState(D3DRS_FOGEND, ByteUtility::Cast<DWORD>(end));
 
 	stateFog_.bEnable = bEnable;
 	stateFog_.color = ColorAccess::ToVec4Normalized(color, ColorAccess::PERMUTE_RGBA);
