@@ -111,7 +111,7 @@ void ShaderParameter::SetTexture(shared_ptr<Texture> texture) {
 }
 
 int32_t ShaderParameter::GetInt() {
-	return *(int32_t*)(value_.data());
+	return *reinterpret_cast<const int32_t*>(value_.data());
 }
 std::vector<int32_t> ShaderParameter::GetIntArray() {
 	std::vector<int32_t> res;
@@ -120,7 +120,7 @@ std::vector<int32_t> ShaderParameter::GetIntArray() {
 	return res;
 }
 float ShaderParameter::GetFloat() {
-	return *(float*)(value_.data());
+	return *reinterpret_cast<const float*>(value_.data());
 }
 std::vector<float> ShaderParameter::GetFloatArray() {
 	std::vector<float> res;
@@ -129,10 +129,10 @@ std::vector<float> ShaderParameter::GetFloatArray() {
 	return res;
 }
 D3DXVECTOR4 ShaderParameter::GetVector() {
-	return *(D3DXVECTOR4*)(value_.data());
+	return *reinterpret_cast<const D3DXVECTOR4*>(value_.data());
 }
 D3DXMATRIX ShaderParameter::GetMatrix() {
-	return *(D3DXMATRIX*)(value_.data());
+	return *reinterpret_cast<const D3DXMATRIX*>(value_.data());
 }
 std::vector<D3DXMATRIX> ShaderParameter::GetMatrixArray() {
 	std::vector<D3DXMATRIX> res;

@@ -215,7 +215,7 @@ size_t Encoding::GetMultibyteSize(const char* data) {
 }
 wchar_t Encoding::BytesToWChar(const char* data, Type encoding) {
 	if (encoding == Encoding::UTF16LE || encoding == Encoding::UTF16BE) {
-		wchar_t res = *(wchar_t*)data;
+		wchar_t res = *reinterpret_cast<const wchar_t*>(data);
 		if (encoding == Encoding::UTF16BE)
 			res = (res >> 8) | (res << 8);
 		return res;
