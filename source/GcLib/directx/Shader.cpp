@@ -9,46 +9,44 @@ using namespace directx;
 //*******************************************************************
 //ShaderData
 //*******************************************************************
-ShaderData::ShaderData() {
-	manager_ = nullptr;
-	effect_ = nullptr;
-	bLoad_ = false;
-	bText_ = false;
-}
+ShaderData::ShaderData() : manager_(nullptr), effect_(nullptr), bText_(false), bLoad_(false) {}
+
 ShaderData::~ShaderData() {
 	if (manager_) {
 		ptr_release(effect_);
 	}
 	bLoad_ = false;
 }
+
 void ShaderData::ReleaseDxResource() {
-	if (effect_ == nullptr) return;
+	if (effect_ == nullptr)
+		return;
 	effect_->OnLostDevice();
 }
 void ShaderData::RestoreDxResource() {
-	if (effect_ == nullptr) return;
+	if (effect_ == nullptr)
+		return;
 	effect_->OnResetDevice();
 }
 
 //*******************************************************************
 //ShaderParameter
 //*******************************************************************
-ShaderParameter::ShaderParameter(D3DXHANDLE handle) {
-	handle_ = handle;
-	type_ = ShaderParameterType::Unknown;
-	texture_ = nullptr;
-}
-ShaderParameter::~ShaderParameter() {
-}
+ShaderParameter::ShaderParameter(D3DXHANDLE handle) :
+	handle_(handle), type_(ShaderParameterType::Unknown), texture_(nullptr) {}
 
 void ShaderParameter::SubmitData(ID3DXEffect* effect) {
-	if (effect == nullptr) return;
+	if (effect == nullptr)
+		return;
+	
 	switch (type_) {
 	case ShaderParameterType::Texture:
-		if (texture_)
+		if (texture_) {
 			effect->SetTexture(handle_, texture_->GetD3DTexture());
-		else
+		}
+		else {
 			effect->SetTexture(handle_, nullptr);
+		}
 		break;
 	case ShaderParameterType::Int:
 	case ShaderParameterType::IntArray:
@@ -58,6 +56,8 @@ void ShaderParameter::SubmitData(ID3DXEffect* effect) {
 	case ShaderParameterType::Matrix:
 	case ShaderParameterType::MatrixArray:
 		effect->SetRawValue(handle_, value_.data(), 0, value_.size());
+		break;
+	default: 
 		break;
 	}
 }
@@ -147,9 +147,6 @@ shared_ptr<Texture> ShaderParameter::GetTexture() {
 //*******************************************************************
 //Shader
 //*******************************************************************
-Shader::Shader() {
-	data_ = nullptr;
-}
 Shader::Shader(shared_ptr<ShaderData> data) : data_(data) {}
 
 Shader::~Shader() {
@@ -233,9 +230,10 @@ bool Shader::LoadTechnique() {
 		if (FAILED(hr)) {
 			const char* err = DXGetErrorStringA(hr);
 			const char* desc = DXGetErrorDescriptionA(hr);
-			std::string log = StringUtility::Format("Shader: Invalid technique [%s]\r\n\t%s",
-				err, desc);
-			Logger::WriteError(log);
+			
+			Logger::WriteError(STR_FMT(
+				"Shader: Invalid technique [%s]\r\n\t%s",
+				err, desc));
 		}
 		return false;
 	}
@@ -426,7 +424,8 @@ void ShaderManager::_ReleaseShaderData(const std::wstring& name) {
 
 	mapShaderData_.erase(itr);
 
-	Logger::WriteTop(StringUtility::Format(L"ShaderManager: Shader released [%s]",
+	Logger::WriteTop(STR_FMT(
+		L"ShaderManager: Shader released [%s]",
 		PathProperty::ReduceModuleDirectory(name).c_str()));
 }
 
@@ -498,20 +497,20 @@ shared_ptr<Shader> ShaderManager::CreateFromFile(const std::wstring& path) {
 					mapShaderData_[path] = data;
 				}
 
-				std::wstring log = StringUtility::Format(L"ShaderManager: Shader loaded [%s]", pathReduce.c_str());
-				Logger::WriteTop(log);
+				Logger::WriteTop(STR_FMT(
+					L"ShaderManager: Shader loaded [%s]",
+					pathReduce.c_str()));
 			}
 			else {
-				std::wstring errStr = err ? BufferToString(err) : L"unknown error";
+				auto errStr = err ? BufferToString(err) : L"unknown error";
 
-				std::wstring err = StringUtility::Format(
+				throw wexception(STR_FMT(
 					L"%s\r\n\t%s",
-					DXGetErrorStringW(hr), errStr.c_str());
-				throw wexception(err);
+					DXGetErrorStringW(hr), errStr.c_str()));
 			}
 		}
 		catch (wexception& e) {
-			std::wstring err = StringUtility::Format(
+			auto err = STR_FMT(
 				L"ShaderManager: Shader compile failed [%s]\r\n\t%s",
 				pathReduce.c_str(), e.what());
 
@@ -550,20 +549,20 @@ shared_ptr<Shader> ShaderManager::CreateFromText(const std::wstring& name, const
 					mapShaderData_[name] = data;
 				}
 
-				std::wstring log = StringUtility::Format(L"ShaderManager: Shader loaded [%s]", name.c_str());
-				Logger::WriteTop(log);
+				Logger::WriteTop(STR_FMT(
+					L"ShaderManager: Shader loaded [%s]",
+					name.c_str()));
 			}
 			else {
-				std::wstring errStr = err ? BufferToString(err) : L"unknown error";
+				auto errStr = err ? BufferToString(err) : L"unknown error";
 
-				std::wstring err = StringUtility::Format(
+				throw wexception(STR_FMT(
 					L"%s\r\n\t%s",
-					DXGetErrorStringW(hr), errStr.c_str());
-				throw wexception(err);
+					DXGetErrorStringW(hr), errStr.c_str()));
 			}
 		}
 		catch (wexception& e) {
-			std::wstring err = StringUtility::Format(
+			auto err = STR_FMT(
 				L"ShaderManager: Shader compile failed [%s]\r\n\t%s",
 				name.c_str(), e.what());
 
@@ -592,15 +591,16 @@ shared_ptr<Shader> ShaderManager::CreateUnmanagedFromEffect(ID3DXEffect* effect)
 
 	auto data = make_shared<ShaderData>();
 	{
-		std::wstring name = StringUtility::Format(L"[%08x]", (uintptr_t)effect);
+		auto name = STR_FMT(L"[%08x]", (uintptr_t)effect);
 
 		data->manager_ = nullptr;
 		data->name_ = name;
 		data->effect_ = effect;
 		data->bLoad_ = true;
 
-		std::wstring log = StringUtility::Format(L"ShaderManager: Unmanaged shader created [%s]", name.c_str());
-		Logger::WriteTop(log);
+		Logger::WriteTop(STR_FMT(
+			L"ShaderManager: Unmanaged shader created [%s]",
+			name.c_str()));
 	}
 
 	return data ? make_shared<Shader>(data) : nullptr;
@@ -619,8 +619,6 @@ ShaderIncludeCallback::ShaderIncludeCallback(const std::wstring& localDir) {
 	includeLocalDir_ = PathProperty::ReplaceYenToSlash(localDir);
 	if (includeLocalDir_.back() != '/')
 		includeLocalDir_ += '/';
-}
-ShaderIncludeCallback::~ShaderIncludeCallback() {
 }
 
 HRESULT __stdcall ShaderIncludeCallback::Open(D3DXINCLUDE_TYPE type, LPCSTR pFileName, LPCVOID pParentData,
@@ -642,9 +640,10 @@ HRESULT __stdcall ShaderIncludeCallback::Open(D3DXINCLUDE_TYPE type, LPCSTR pFil
 
 	shared_ptr<FileReader> reader = FileManager::GetBase()->GetFileReader(sPath);
 	if (reader == nullptr || !reader->Open()) {
-		std::wstring error = StringUtility::Format(
-			L"Shader Compiler: Include file is not found [%s]\r\n", sPath.c_str());
-		Logger::WriteError(error);
+		Logger::WriteError(STR_FMT(
+			L"Shader Compiler: Include file is not found [%s]\r\n",
+			sPath.c_str()));
+		
 		return E_FAIL;
 	}
 

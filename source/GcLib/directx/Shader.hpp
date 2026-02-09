@@ -104,7 +104,6 @@ namespace directx {
 		shared_ptr<Texture> texture_;
 	public:
 		ShaderParameter(D3DXHANDLE handle);
-		virtual ~ShaderParameter();
 
 		void SubmitData(ID3DXEffect* effect);
 
@@ -129,7 +128,7 @@ namespace directx {
 		std::vector<D3DXMATRIX> GetMatrixArray();
 		inline shared_ptr<Texture> GetTexture();
 
-		inline std::vector<byte>* GetRaw() { return &value_; }
+		std::vector<byte>* GetRaw() { return &value_; }
 	};
 
 	//*******************************************************************
@@ -146,8 +145,8 @@ namespace directx {
 		ShaderData* _GetShaderData() { return data_.get(); }
 		ShaderParameter* _GetParameter(const std::string& name, bool bCreate = false);
 	public:
-		Shader();
-		Shader(shared_ptr<ShaderData> data);
+		Shader() = default;
+		explicit Shader(shared_ptr<ShaderData> data);
 		virtual ~Shader();
 
 		void Release();
@@ -195,7 +194,6 @@ namespace directx {
 		std::vector<char> buffer_;
 	public:
 		ShaderIncludeCallback(const std::wstring& localDir);
-		virtual ~ShaderIncludeCallback();
 
 		HRESULT __stdcall Open(D3DXINCLUDE_TYPE type, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes) override;
 		HRESULT __stdcall Close(LPCVOID pData) override;
@@ -228,7 +226,6 @@ namespace directx {
 
 			optional<weak_ptr<ShaderData>> refData;
 
-			ShaderDisplay() {};
 			ShaderDisplay(ID3DXEffect* pEffect, const std::string& name, uintptr_t dataAddress, shared_ptr<ShaderData> ref);
 		public:
 			// Lazy-loaded as they're only visible on hover
