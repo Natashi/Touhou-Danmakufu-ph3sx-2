@@ -149,6 +149,7 @@ bool EApplication::_Initialize() {
 
 	return true;
 }
+
 bool EApplication::_Loop() {
 	ELogger* logger = ELogger::GetInstance();
 	ETaskManager* taskManager = ETaskManager::GetInstance();
@@ -162,101 +163,126 @@ bool EApplication::_Loop() {
 	HWND hWndLogger = logger->GetWindowHandle();
 
 	bWindowFocused_ = hWndFocused == hWndGraphics || hWndFocused == hWndLogger;
-	bool bInputEnable = false;
+	
+	bool enableInput = false;
 	if (!config->bEnableUnfocusedProcessing_) {
 		if (!bWindowFocused_) {
 			//Pause main thread when the window isn't focused
 			::Sleep(10);
 			return true;
 		}
-		bInputEnable = true;
+		enableInput = true;
 	}
 	else {
-		bInputEnable = bWindowFocused_;
+		enableInput = bWindowFocused_;
 	}
 
 	{
-		static uint32_t count = 0;
+		auto fnUpdate = [&] {
+			// run update and process script tasks
+			_UpdateFrame(enableInput);
+		};
 
-		auto& [bRenderFrame, bUpdateFrame] = fpsController->Advance();
+		auto fnRender = [&] {
+			// render D3D scene
+			_RenderFrame();
+			
+			_RenderSceneToMainSurface();
+		};
 
-		if (bUpdateFrame) {
-			{
-				if (bInputEnable)
-					input->Update();
-				else input->ClearKeyState();
+		fpsController->GetController()->SetUpdateCallback(fnUpdate);
+		fpsController->GetController()->SetRenderCallback(fnRender);
 
-				if (input->GetKeyState(DIK_LCONTROL) == KEY_HOLD &&
-					input->GetKeyState(DIK_LSHIFT) == KEY_HOLD &&
-					input->GetKeyState(DIK_R) == KEY_PUSH)
-				{
-					SystemController* systemController = SystemController::CreateInstance();
-					systemController->Reset();
-				}
-			}
-
-			taskManager->CallWorkFunction();
-			taskManager->SetWorkTime(taskManager->GetTimeSpentOnLastFuncCall());
-
-			if (logger->IsWindowVisible()) {
-				if (auto infoLog = logger->GetInfoPanel()) {
-					std::string fps = StringUtility::Format("Logic: %.2ffps, Render: %.2ffps",
-						fpsController->GetCurrentWorkFps(),
-						fpsController->GetCurrentRenderFps());
-					infoLog->SetInfo(0, "Fps", fps);
-
-					{
-						const DirectGraphicsConfig& config = graphics->GetGraphicsConfig();
-
-						//int widthScreen = widthConfig * graphics->GetScreenWidthRatio();
-						//int heightScreen = heightConfig * graphics->GetScreenHeightRatio();
-						std::string screenInfo = StringUtility::Format("Width: %d/%d, Height: %d/%d",
-							graphics->GetRenderScreenWidth(), graphics->GetScreenWidth(),
-							graphics->GetRenderScreenHeight(), graphics->GetScreenHeight());
-						infoLog->SetInfo(1, "Screen", screenInfo);
-					}
-
-					infoLog->SetInfo(2, "Font cache",
-						std::to_string(EDxTextRenderer::GetInstance()->GetCacheCount()));
-				}
-			}
-
-			if (count % 120 == 0) {
-				taskManager->ArrangeTask();
-			}
-			if (count % 10 == 0 && config->fpsType_ == DnhConfiguration::FPS_VARIABLE) {
-				fpsController->SetCriticalFrame();
-			}
-			++count;
-		}
-
-		if (bRenderFrame) {
-			//graphics->SetAllowRenderTargetChange(false);
-			graphics->SetRenderTarget(nullptr);
-			graphics->ResetDeviceState();
-
-			graphics->BeginScene(true, true);
-
-			taskManager->CallRenderFunction();
-			taskManager->SetRenderTime(taskManager->GetTimeSpentOnLastFuncCall());
-
-			graphics->EndScene(false);
-
-			_RenderDisplay();
-		}
+		fpsController->Advance();
 	}
 
 	{
 		int16_t fastModeKey = fpsController->GetFastModeKey();
-		if (input->GetKeyState(fastModeKey) == KEY_HOLD)
+		
+		if (input->GetKeyState(fastModeKey) == KEY_HOLD) {
 			fpsController->SetFastMode(true);
-		else if (input->GetKeyState(fastModeKey) == KEY_PULL || input->GetKeyState(fastModeKey) == KEY_FREE)
+		}
+		else if (input->GetKeyState(fastModeKey) == KEY_PULL || input->GetKeyState(fastModeKey) == KEY_FREE) {
 			fpsController->SetFastMode(false);
+		}
 	}
 
 	return true;
 }
-void EApplication::_RenderDisplay() {
+
+
+void EApplication::_UpdateFrame(bool enableInput) {
+	ELogger* logger = ELogger::GetInstance();
+	ETaskManager* taskManager = ETaskManager::GetInstance();
+	EFpsController* fpsController = EFpsController::GetInstance();
+	EDirectInput* input = EDirectInput::GetInstance();
+	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
+	DnhConfiguration* config = DnhConfiguration::GetInstance();
+	
+	static uint32_t count = 0;
+
+	if (enableInput) {
+		input->Update();
+	}
+	else {
+		input->ClearKeyState();
+	}
+
+	if (input->GetKeyState(DIK_LCONTROL) == KEY_HOLD &&
+		input->GetKeyState(DIK_LSHIFT) == KEY_HOLD &&
+		input->GetKeyState(DIK_R) == KEY_PUSH)
+	{
+		SystemController* systemController = SystemController::CreateInstance();
+		systemController->Reset();
+	}
+
+	taskManager->CallWorkFunction();
+	taskManager->SetWorkTime(taskManager->GetTimeSpentOnLastFuncCall());
+
+	if (logger->IsWindowVisible()) {
+		if (auto infoLog = logger->GetInfoPanel()) {
+			std::string fps = StringUtility::Format(
+				"Logic: %.2ffps, Render: %.2ffps",
+				fpsController->GetCurrentUpdateFps(),
+				fpsController->GetCurrentRenderFps());
+			infoLog->SetInfo(0, "Fps", fps);
+
+			{
+				//const DirectGraphicsConfig& config = graphics->GetGraphicsConfig();
+
+				std::string screenInfo = StringUtility::Format("Width: %d/%d, Height: %d/%d",
+					graphics->GetRenderScreenWidth(), graphics->GetScreenWidth(),
+					graphics->GetRenderScreenHeight(), graphics->GetScreenHeight());
+				infoLog->SetInfo(1, "Screen", screenInfo);
+			}
+
+			infoLog->SetInfo(2, "Font cache",
+				std::to_string(EDxTextRenderer::GetInstance()->GetCacheCount()));
+		}
+	}
+
+	if (count % 120 == 0) {
+		taskManager->ArrangeTask();
+	}
+	++count;
+}
+void EApplication::_RenderFrame() {
+	ETaskManager* taskManager = ETaskManager::GetInstance();
+	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
+	
+	//graphics->SetAllowRenderTargetChange(false);
+	graphics->SetRenderTarget(nullptr);
+	graphics->ResetDeviceState();
+
+	graphics->BeginScene(true, true);
+
+	taskManager->CallRenderFunction();
+	taskManager->SetRenderTime(taskManager->GetTimeSpentOnLastFuncCall());
+
+	graphics->EndScene(false);
+}
+
+void EApplication::_RenderSceneToMainSurface() {
 	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
 	IDirect3DDevice9* device = graphics->GetDevice();
 

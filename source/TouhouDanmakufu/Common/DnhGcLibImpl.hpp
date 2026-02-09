@@ -93,30 +93,30 @@ public:
 //EFpsController
 //*******************************************************************
 class EFpsController : public Singleton<EFpsController> {
-private:
 	int16_t fastModeKey_;
-	ref_count_ptr<FpsController> controller_;
+	unique_ptr<FpsController> controller_;
 public:
 	EFpsController();
 
 	void SetFps(int fps) { controller_->SetFps(fps); }
 	int GetFps() { return controller_->GetFps(); }
 
-	std::array<bool, 2> Advance() { return controller_->Advance(); }
+	void Advance() { return controller_->Advance(); }
 
 	void SetCriticalFrame() { controller_->SetCriticalFrame(); }
 
-	float GetCurrentFps() { return controller_->GetCurrentFps(); }
-	float GetCurrentWorkFps() { return controller_->GetCurrentWorkFps(); }
+	float GetCurrentUpdateFps() { return controller_->GetCurrentUpdateFps(); }
 	float GetCurrentRenderFps() { return controller_->GetCurrentRenderFps(); }
 
 	bool IsFastMode() { return controller_->IsFastMode(); }
 	void SetFastMode(bool b) { controller_->SetFastMode(b); }
 	void SetFastModeRate(size_t rate) { controller_->SetFastModeRate(rate); }
 
-	void AddFpsControlObject(unique_ptr<FpsControlObject>&& obj) { controller_->AddFpsControlObject(MOVE(obj)); }
+	void AddFpsControlObject(unique_ptr<FpsControlObject> obj) { controller_->AddFpsControlObject(MOVE(obj)); }
 	void RemoveFpsControlObject(FpsControlObject* obj) { controller_->RemoveFpsControlObject(obj); }
 
+	_NODISCARD FpsController* GetController() { return controller_.get(); }
+	
 	int16_t GetFastModeKey() { return fastModeKey_; }
 	void SetFastModeKey(int16_t key) { fastModeKey_ = key; }
 };

@@ -20,7 +20,10 @@ protected:
 
 	shared_ptr<Texture> secondaryBackBuffer_;
 protected:
-	void _RenderDisplay();
+	void _UpdateFrame(bool enableInput);
+	void _RenderFrame();
+	
+	void _RenderSceneToMainSurface();
 public:
 	EApplication();
 	~EApplication();

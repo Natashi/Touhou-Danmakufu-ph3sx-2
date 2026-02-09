@@ -2,118 +2,123 @@
 
 #include "../pch.h"
 
-#include "SmartPointer.hpp"
+#include "GstdUtility.hpp"
 
 namespace gstd {
 	class FpsControlObject;
+	
 	//*******************************************************************
 	//FpsController
 	//*******************************************************************
 	class FpsController {
 	protected:
-		DWORD fps_;
+		static constexpr uint32_t MAX_FPS = 3000;
+	protected:
+		struct TimeCounter {
+			stdch::steady_clock::time_point prev;
+			stdch::nanoseconds accum;
+		};
+		struct TimeList {
+			std::vector<double> listTime;
+			double fps;
+
+			void AddTime(stdch::nanoseconds ns) { listTime.push_back(ns.count()); }
+			double CalculateFps() const;
+
+			TimeList() : fps(0) {}
+		};
+	protected:
+		uint32_t fps_;
+		uint32_t fastModeFps_;
 
 		bool bCriticalFrame_;
 		bool bFastMode_;
 
-		size_t fastModeFpsRate_;
+		std::function<void()> callbackFrameUpdate_;
+		std::function<void()> callbackFrameRender_;
 
 		std::list<unique_ptr<FpsControlObject>> listFpsControlObject_;
 	public:
 		FpsController();
-		virtual ~FpsController();
+		virtual ~FpsController() = default;
 
-		virtual void SetFps(DWORD fps) { fps_ = fps; }
-		virtual DWORD GetFps() { return fps_; }
-
-		virtual std::array<bool, 2> Advance() = 0;
-
-		virtual bool IsRenderFrame() { return false; }
-		virtual bool IsUpdateFrame() { return false; }
+		void SetFps(uint32_t fps) { fps_ = fps; }
+		uint32_t GetFps() { return fps_; }
 
 		virtual void SetCriticalFrame() { bCriticalFrame_ = true; }
 
-		virtual float GetCurrentFps() = 0;
-		virtual float GetCurrentWorkFps() { return GetCurrentFps(); }
-		virtual float GetCurrentRenderFps() { return GetCurrentFps(); }
+		virtual void Advance() = 0;
+
+		virtual float GetCurrentUpdateFps() = 0;
+		virtual float GetCurrentRenderFps() = 0;
 
 		bool IsFastMode() { return bFastMode_; }
 		void SetFastMode(bool b) { bFastMode_ = b; }
 
-		void SetFastModeRate(size_t fpsRate) { fastModeFpsRate_ = fpsRate; }
+		void SetFastModeRate(size_t fpsRate) { fastModeFps_ = fpsRate; }
 
-		void AddFpsControlObject(unique_ptr<FpsControlObject>&& obj) {
+		void AddFpsControlObject(unique_ptr<FpsControlObject> obj) {
 			listFpsControlObject_.push_back(MOVE(obj));
 		}
 		void RemoveFpsControlObject(FpsControlObject* obj);
-		DWORD GetControlObjectFps();
+		uint32_t GetControlObjectFps();
+
+		stdch::duration<double, std::nano> GetTargetFrameDurationNs();
+
+		void SetUpdateCallback(const std::function<void()>& fn) { callbackFrameUpdate_ = fn; }
+		void SetRenderCallback(const std::function<void()>& fn) { callbackFrameRender_ = fn; }
 	};
 
 	//*******************************************************************
 	//StaticFpsController
 	//*******************************************************************
-	class StaticFpsController : public FpsController {
-	protected:
-		float fpsCurrent_;
-
+	class StaticFpsController : public FpsController, NonCopyable, NonMovable {
 		size_t rateSkip_;
 		size_t countSkip_;
 
-		stdch::steady_clock::time_point timePrevious_;
-		stdch::steady_clock::time_point timePreviousRender_;
-		stdch::nanoseconds timeAccum_;
-
 		stdch::steady_clock::time_point timePreviousFpsUpdate_;
-		std::list<double> listFps_;
+		
+		stdch::steady_clock::time_point timePreviousUpdate_;
+
+		TimeCounter tc_;
+		TimeList tlUpdate_, tlRender_;
 	public:
 		StaticFpsController();
-		virtual ~StaticFpsController();
-
-		virtual std::array<bool, 2> Advance();
-
-		virtual void SetCriticalFrame();
 
 		void SetSkipRate(size_t value) {
 			rateSkip_ = value;
 			countSkip_ = 0;
 		}
-		virtual float GetCurrentFps() { return fpsCurrent_; }
-		virtual float GetCurrentWorkFps() { return fpsCurrent_; }
-		virtual float GetCurrentRenderFps() { return GetCurrentFps(); }
+
+		void SetCriticalFrame() override;
+
+		void Advance() override;
+
+		float GetCurrentUpdateFps() override { return tlUpdate_.fps; }
+		float GetCurrentRenderFps() override { return tlRender_.fps; }
 	};
 
 	//*******************************************************************
 	//VariableFpsController
 	//*******************************************************************
-	class VariableFpsController : public FpsController {
+	class VariableFpsController : public FpsController, NonCopyable, NonMovable {
 	protected:
-		float fpsCurrentUpdate_;
-		float fpsCurrentRender_;
-		bool bFrameRendered_;
+		stdch::steady_clock::time_point timePreviousFpsUpdate_;
 
-		size_t countSkip_;
-
-		stdch::steady_clock::time_point timePrevious_;
 		stdch::steady_clock::time_point timePreviousUpdate_;
 		stdch::steady_clock::time_point timePreviousRender_;
 
-		stdch::nanoseconds timeAccumUpdate_;
-		stdch::nanoseconds timeAccumRender_;
-
-		stdch::steady_clock::time_point timePreviousFpsUpdate_;
-		std::list<double> listFpsUpdate_;
-		std::list<double> listFpsRender_;
+		TimeCounter tc_;
+		TimeList tlUpdate_, tlRender_;
 	public:
 		VariableFpsController();
-		virtual ~VariableFpsController();
 
-		virtual std::array<bool, 2> Advance();
+		void SetCriticalFrame() override;
 
-		virtual void SetCriticalFrame();
+		void Advance() override;
 
-		virtual float GetCurrentFps() { return GetCurrentWorkFps(); }
-		float GetCurrentWorkFps() { return fpsCurrentUpdate_; };
-		float GetCurrentRenderFps() { return fpsCurrentRender_; };
+		float GetCurrentUpdateFps() override { return tlUpdate_.fps; }
+		float GetCurrentRenderFps() override { return tlRender_.fps; }
 	};
 
 	//*******************************************************************
@@ -121,9 +126,8 @@ namespace gstd {
 	//*******************************************************************
 	class FpsControlObject {
 	public:
-		FpsControlObject() {}
-		virtual ~FpsControlObject() {}
+		virtual ~FpsControlObject() = default;
 
-		virtual DWORD GetFps() = 0;
+		virtual uint32_t GetFps() = 0;
 	};
 }

@@ -9,259 +9,184 @@ using namespace stdch;
 //*******************************************************************
 //FpsController
 //*******************************************************************
-FpsController::FpsController() {
-	fps_ = 60;
+FpsController::FpsController() : 
+	fps_(60), fastModeFps_(1000),
+	bCriticalFrame_(true), bFastMode_(false) { }
 
-	bCriticalFrame_ = true;
-
-	bFastMode_ = false;
-	fastModeFpsRate_ = 1200;
-}
-FpsController::~FpsController() {
-}
 void FpsController::RemoveFpsControlObject(FpsControlObject* obj) {
 	listFpsControlObject_.remove_if([&](const auto& x) { return x.get() == obj; });
 }
-DWORD FpsController::GetControlObjectFps() {
-	DWORD res = fps_;
+uint32_t FpsController::GetControlObjectFps() {
+	uint32_t res = fps_;
 	for (auto& pControl : listFpsControlObject_) {
 		res = std::min(res, pControl->GetFps());
 	}
 	return res;
 }
 
+constexpr duration<double, std::nano> FpsToNs(uint32_t fps) {
+	return duration<double, std::nano>(std::nano::den / (double)fps);
+}
+
+duration<double, std::nano> FpsController::GetTargetFrameDurationNs() {
+	auto targetFps = std::min<uint32_t>(
+		bFastMode_ ? fastModeFps_ :
+		std::min(fps_, GetControlObjectFps()),
+		MAX_FPS);
+	return FpsToNs(targetFps);
+}
+
+double FpsController::TimeList::CalculateFps() const {
+	if (listTime.size() > 0) {
+		// in seconds
+		double fpsAccum = std::reduce(listTime.begin(), listTime.end(),
+			0.0, [](double s, double x) { return s + x / 1e9; });
+		fpsAccum /= listTime.size();
+
+		return 1 / fpsAccum;
+	}
+	return 0;
+}
+
 //*******************************************************************
 //StaticFpsController
 //*******************************************************************
-StaticFpsController::StaticFpsController() {
-	fpsCurrent_ = 60;
 
-	rateSkip_ = 0;
+constexpr auto FPS_CALC_INTERVAL = 500ms;
 
-	timePrevious_ = SystemUtility::GetCpuTime();
-	timeAccum_ = 0ns;
-
-	timePreviousFpsUpdate_ = time_point<steady_clock, nanoseconds>{ 0ns };
+StaticFpsController::StaticFpsController() : 
+	rateSkip_(0), countSkip_(0),
+	timePreviousFpsUpdate_(0ns),
+	timePreviousUpdate_(SystemUtility::GetCpuTime())
+{
+	StaticFpsController::SetCriticalFrame();
+	SetSkipRate(0);
 }
-StaticFpsController::~StaticFpsController() {
-}
+
 void StaticFpsController::SetCriticalFrame() {
 	bCriticalFrame_ = true;
-	timeAccum_ = 0ns;
 	countSkip_ = 0;
+
+	tc_.accum = 0ns;
 }
-std::array<bool, 2> StaticFpsController::Advance() {
-	std::array<bool, 2> res{ false, false };
-	bool renderFrame = false, updateFrame = false;
 
-	DWORD fpsTarget = std::min<DWORD>(bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps()), 1000);
-	const auto targetNs = duration<double, std::nano>(std::nano::den / (double)fpsTarget);
+void StaticFpsController::Advance() {
+	// get current target frame timing
+	const auto targetNs = GetTargetFrameDurationNs();
+	const auto targetNsDuration = duration_cast<nanoseconds>(targetNs);
+	
+	const auto timeCurrent = SystemUtility::GetCpuTime();
+	const auto timeDelta = timeCurrent - tc_.prev;
+	tc_.prev = timeCurrent;
 
-	auto timeCurrent = SystemUtility::GetCpuTime();
-	auto timeDelta = timeCurrent - timePrevious_;
-	timePrevious_ = timeCurrent;
+	tc_.accum += timeDelta;
 
-	timeAccum_ += timeDelta;
-	if (timeAccum_ >= targetNs) {
-		if (bCriticalFrame_ || (rateSkip_ <= 1 || countSkip_ % rateSkip_ == 0)) {
-			listFps_.push_back(timeAccum_.count());
-			renderFrame = true;
+	if (tc_.accum >= targetNs) {
+		// do update frame
+		{
+			auto now = SystemUtility::GetCpuTime();
+			auto delta = now - timePreviousUpdate_;
+
+			tlUpdate_.AddTime(delta);
+			timePreviousUpdate_ = now;
+			
+			callbackFrameUpdate_();
 		}
-		updateFrame = true;
 
+		// do render frame (unless skipping)
+		if (bCriticalFrame_ || countSkip_ >= rateSkip_) {
+			callbackFrameRender_();
+
+			bCriticalFrame_ = false;
+			countSkip_ = 0;
+		}
 		++countSkip_;
 
-		const nanoseconds dCast = duration_cast<nanoseconds>(targetNs);
-		timeAccum_ -= dCast;
-		if (timeAccum_ > targetNs)
-			timeAccum_ = dCast;
+		tc_.accum = std::min(tc_.accum - targetNsDuration, targetNsDuration);
 	}
 
-	if (timeCurrent - timePreviousFpsUpdate_ >= 500ms) {
-		if (listFps_.size() > 0) {
-			double fpsAccum = 0;		// us
-			for (double iFps : listFps_)
-				fpsAccum += iFps / 1e3;
-			fpsAccum /= listFps_.size();
+	// periodically update FPS stats
+	if (timeCurrent - timePreviousFpsUpdate_ >= FPS_CALC_INTERVAL) {
+		tlUpdate_.fps = tlUpdate_.CalculateFps();
+		tlUpdate_.listTime.clear();
 
-			fpsCurrent_ = 1e6 / fpsAccum;
+		// same as update fps
+		tlRender_.fps = tlUpdate_.fps;
 
-			listFps_.clear();
-		}
-		else fpsCurrent_ = 0;
-
-		timePreviousFpsUpdate_ = timePrevious_;
+		timePreviousFpsUpdate_ = timeCurrent;
 	}
-
-	bCriticalFrame_ = false;
-	return { renderFrame, updateFrame };
 }
 
 //*******************************************************************
 //VariableFpsController
 //*******************************************************************
-static constexpr size_t MAX_SKIP = 5;	// Can only skip 5 frames consecutively
-VariableFpsController::VariableFpsController() {
-	fpsCurrentUpdate_ = 0;
-	fpsCurrentRender_ = 0;
-	bFrameRendered_ = false;
-
-	countSkip_ = 0;
-
-	timePrevious_ = SystemUtility::GetCpuTime();
-	timePreviousUpdate_ = timePrevious_;
-	timePreviousRender_ = timePrevious_;
-
-	timeAccumUpdate_ = 0ns;
-	timeAccumRender_ = 0ns;
-
-	timePreviousFpsUpdate_ = time_point<steady_clock, nanoseconds>{ 0ns };
+VariableFpsController::VariableFpsController() :
+timePreviousFpsUpdate_(0ns),
+	timePreviousUpdate_(SystemUtility::GetCpuTime()),
+	timePreviousRender_(SystemUtility::GetCpuTime())
+{
+	VariableFpsController::SetCriticalFrame();
 }
-VariableFpsController::~VariableFpsController() {
-}
+
 void VariableFpsController::SetCriticalFrame() {
 	bCriticalFrame_ = true;
-	countSkip_ = 0;
-	timeAccumUpdate_ = 0ns;
-	timeAccumRender_ = 0ns;
+
+	tc_.accum = 0ns;
 }
-std::array<bool, 2> VariableFpsController::Advance() {
-	bool renderFrame = false, updateFrame = false;
 
-	DWORD fpsTarget = std::min<DWORD>(bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps()), 1000);
-	const auto targetNs = duration<double, std::nano>(std::nano::den / (double)fpsTarget);
+void VariableFpsController::Advance() {
+	// get current target frame timing
+	const auto targetNs = GetTargetFrameDurationNs();
+	const auto targetNsDuration = duration_cast<nanoseconds>(targetNs);
 
+	// can only frameskip for 0.1s consecutively
+	constexpr auto MAX_SKIP = 0.1s;
+	
 	auto timeCurrent = SystemUtility::GetCpuTime();
-	auto timeDelta = timeCurrent - timePrevious_;
-	timePrevious_ = timeCurrent;
+	auto timeDelta = timeCurrent - tc_.prev;
+	tc_.prev = timeCurrent;
 
-	timeAccumUpdate_ += timeDelta;
-	timeAccumRender_ += timeDelta;
+	tc_.accum += timeDelta;
 
-	if (timeAccumUpdate_ >= targetNs) {
-		listFpsUpdate_.push_back(timeAccumUpdate_.count());
-		updateFrame = true;
-
-		const nanoseconds dCast = duration_cast<nanoseconds>(targetNs);
-		timeAccumUpdate_ -= dCast;
-		if (timeAccumUpdate_ > targetNs)
-			timeAccumUpdate_ = dCast;
-
-		timeAccumRender_ += timeAccumUpdate_;
-		bFrameRendered_ = false;
-	}
-
-	if (bCriticalFrame_ || (!bFrameRendered_ && (countSkip_ >= MAX_SKIP || timeAccumRender_ < targetNs))) {
-		auto timeDeltaRender = timeCurrent - timePreviousRender_;
-
-		listFpsRender_.push_back(timeDeltaRender.count());
-		renderFrame = true;
-
-		timePreviousRender_ = timeCurrent;
-		bFrameRendered_ = true;
-		countSkip_ = 0;
-	}
-	else if (!bFrameRendered_) {
-		++countSkip_;
-	}
-	timeAccumRender_ = 0ns;
-
-	if (timeCurrent - timePreviousFpsUpdate_ >= 500ms) {
-		if (listFpsUpdate_.size() > 0) {
-			double fpsAccum = 0;		//ms
-			for (double iFps : listFpsUpdate_)
-				fpsAccum += iFps / 1e6;
-			fpsAccum /= listFpsUpdate_.size();
-
-			fpsCurrentUpdate_ = 1000 / fpsAccum;
+	while (tc_.accum >= targetNs) {
+		// prevent spiral of death
+		if (SystemUtility::GetCpuTime() - timePreviousRender_ >= MAX_SKIP) {
+			tc_.accum = std::min(targetNsDuration, tc_.accum);
+			break;
 		}
-		else fpsCurrentUpdate_ = 0;
+		
+		// do update frame
+		{
+			auto now = SystemUtility::GetCpuTime();
+			auto delta = now - timePreviousUpdate_;
 
-		/*
-		if (listFpsRender_.size() > 0) {
-			double fpsAccum = 0;		//ms
-			for (double iFps : listFpsRender_)
-				fpsAccum += iFps / 1e6;
-			fpsAccum /= listFpsRender_.size();
-
-			fpsCurrentRender_ = std::max(1000 / fpsAccum - 2, 0.0);
+			tlUpdate_.AddTime(delta);
+			timePreviousUpdate_ = now;
+			
+			callbackFrameUpdate_();
 		}
-		else fpsCurrentRender_ = 0;
-		*/
-		fpsCurrentRender_ = listFpsUpdate_.size();	//TODO: Figure out how to calculate this
 
-		listFpsUpdate_.clear();
-		listFpsRender_.clear();
-		timePreviousFpsUpdate_ = timePrevious_;
+		tc_.accum -= targetNsDuration;
 	}
 
-	bCriticalFrame_ = false;
-	return { renderFrame, updateFrame };
-	/*
-	DWORD fpsTarget = bFastMode_ ? fastModeFpsRate_ : std::min(fps_, GetControlObjectFps());
-	const double targetMs = 1000.0 / fpsTarget;
-	const auto targetMsCh = duration<double, std::milli>(targetMs);
-
-	auto timeCurrent = GetCpuTime();
-	auto timeDelta = timeCurrent - timePrevious_;
-
-	int frameAs1Sec = timeDelta * fpsTarget;
-	int time1Sec = CLOCKS_PER_SEC + timeError_;
-	DWORD sleepTime = 0;
-	timeError_ = 0;
-
-	if (frameAs1Sec < time1Sec || bCriticalFrame_) {
-		sleepTime = (countSkip_ >= 1) ? 0 : std::max((time1Sec - frameAs1Sec) / (int)fpsTarget, 0);
-
-		if (bUseTimer_)
-			_Sleep(sleepTime);
-		timeError_ = (time1Sec - frameAs1Sec) % (int)fpsTarget;
-		//if(timeError_< 0 )timeError_ = 0;
-	}
-	else if (countSkip_ <= 0) {
-		countSkip_ += std::min((timeDelta * fpsTarget / 1000U) + 1, countSkipMax_);
-	}
-
-	--countSkip_;
-	bCriticalFrame_ = false;
-
+	// do render frame
 	{
-		DWORD timeCorrect = sleepTime;
-		if (timeDelta > 0)
-			listFpsWork_.push_back(timeDelta + timeCorrect);
-		timePrevious_ = GetCpuTime();
-	}
-	if (countSkip_ <= 0) {
-		timeCurrent = GetCpuTime();
-		timeDelta = timeCurrent - timePrevious_;
-		if (timeDelta > 0)
-			listFpsRender_.push_back(timeDelta);
-		timePreviousRender_ = GetCpuTime();
+		auto now = SystemUtility::GetCpuTime();
+		auto delta = now - timePreviousRender_;
+
+		tlRender_.AddTime(delta);
+		timePreviousRender_ = now;
+        
+		callbackFrameRender_();
 	}
 
-	timePrevious_ = GetCpuTime();
-	if (timePrevious_ - timeCurrentFpsUpdate_ >= 500) {
-		if (listFpsWork_.size() != 0) {
-			DWORD tFpsCurrent = 0;
-			for (DWORD iFps : listFpsWork_)
-				tFpsCurrent += iFps;
+	if (timeCurrent - timePreviousFpsUpdate_ >= FPS_CALC_INTERVAL) {
+		tlUpdate_.fps = tlUpdate_.CalculateFps();
+		tlUpdate_.listTime.clear();
 
-			fpsCurrentWork_ = 1000.0f / (tFpsCurrent / (float)listFpsWork_.size());
-			listFpsWork_.clear();
-		}
-		else fpsCurrentWork_ = 0;
+		tlRender_.fps = tlRender_.CalculateFps();
+		tlRender_.listTime.clear();
 
-		if (listFpsRender_.size() != 0) {
-			DWORD tFpsCurrent = 0;
-			for (DWORD iFps : listFpsRender_)
-				tFpsCurrent += iFps;
-
-			fpsCurrentRender_ = 1000.0f / (tFpsCurrent / (float)listFpsRender_.size());
-			listFpsRender_.clear();
-		}
-		else fpsCurrentRender_ = 0;
-
-		timeCurrentFpsUpdate_ = GetCpuTime();
+		timePreviousFpsUpdate_ = timeCurrent;
 	}
-	*/
 }

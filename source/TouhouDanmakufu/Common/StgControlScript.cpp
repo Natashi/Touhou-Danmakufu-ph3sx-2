@@ -700,7 +700,7 @@ gstd::value StgControlScript::Func_GetArchiveFilePathList(gstd::script_machine* 
 }
 gstd::value StgControlScript::Func_GetCurrentUpdateFps(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	EFpsController* fpsController = EFpsController::GetInstance();
-	return StgControlScript::CreateFloatValue(fpsController->GetCurrentWorkFps());
+	return StgControlScript::CreateFloatValue(fpsController->GetCurrentUpdateFps());
 }
 gstd::value StgControlScript::Func_GetCurrentRenderFps(gstd::script_machine* machine, int argc, const gstd::value* argv) {
 	EFpsController* fpsController = EFpsController::GetInstance();

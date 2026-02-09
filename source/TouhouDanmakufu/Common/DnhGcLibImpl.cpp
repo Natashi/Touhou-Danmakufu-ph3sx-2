@@ -223,31 +223,34 @@ void ELogger::WindowThread::_Run() {
 //*******************************************************************
 EFpsController::EFpsController() {
 	DnhConfiguration* config = DnhConfiguration::GetInstance();
+
 	int fpsType = config->fpsType_;
+	
 	switch (fpsType) {
 	case DnhConfiguration::FPS_NORMAL:
 	case DnhConfiguration::FPS_1_2:
 	case DnhConfiguration::FPS_1_3:
 	{
-		StaticFpsController* controller = new StaticFpsController();
+		auto controller = new StaticFpsController();
+		
 		if (fpsType == DnhConfiguration::FPS_1_2)
 			controller->SetSkipRate(2);
 		else if (fpsType == DnhConfiguration::FPS_1_3)
 			controller->SetSkipRate(3);
+		
 		controller_.reset(controller);
 		break;
 	}
 	case DnhConfiguration::FPS_VARIABLE:
 	{
-		VariableFpsController* controller = new VariableFpsController();
-		controller_.reset(controller);
+		controller_.reset(new VariableFpsController());
+		break;
 	}
-	}
-
-	if (controller_ == nullptr)
+	default:
 		throw gstd::wexception("Invalid refresh rate mode.");
+	}
 
-	SetFps(config->fpsStandard_);
+	controller_->SetFps(config->fpsStandard_);
 	fastModeKey_ = DIK_LCONTROL;
 }
 #endif
