@@ -16,7 +16,7 @@ namespace directx {
 	//*******************************************************************
 	//ShaderData
 	//*******************************************************************
-	class ShaderData {
+	class ShaderData : gstd::NonCopyable, gstd::NonMovable {
 		friend Shader;
 		friend ShaderManager;
 		friend ShaderInfoPanel;
@@ -43,7 +43,10 @@ namespace directx {
 	//ShaderManager
 	//*******************************************************************
 	class RenderShaderLibrary;
-	class ShaderManager : public DirectGraphicsListener, public gstd::FileManager::LoadThreadListener {
+	class ShaderManager :
+		public DirectGraphicsListener, public gstd::FileManager::LoadThreadListener,
+		gstd::NonCopyable, gstd::NonMovable
+	{
 		friend Shader;
 		friend ShaderData;
 		friend ShaderInfoPanel;
@@ -132,7 +135,7 @@ namespace directx {
 	//*******************************************************************
 	//Shader
 	//*******************************************************************
-	class Shader {
+	class Shader : gstd::NonCopyable, gstd::NonMovable {
 		friend ShaderManager;
 	protected:
 		shared_ptr<ShaderData> data_;
