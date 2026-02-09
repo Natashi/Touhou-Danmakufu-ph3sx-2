@@ -687,7 +687,7 @@ void ShaderInfoPanel::Update() {
 	}
 
 	{
-		Lock lock(Logger::GetTop()->GetLock());
+		Lock lock(manager->GetLock());
 
 		auto AddData = [&](ID3DXEffect* pEffect, const std::string& name, const shared_ptr<ShaderData>& ref) {
 			listDisplay_.push_back(ShaderDisplay(pEffect, name, (uintptr_t)pEffect, ref));
