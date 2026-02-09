@@ -44,19 +44,29 @@ const CpuInformation SystemUtility::_cpuInfo = CpuInformation();
 
 void SystemUtility::TestCpuSupportSIMD() {
 #ifdef __L_MATH_VECTORIZE
-	auto& cpuInfo = GetCpuInfo();
+	const auto& cpuInfo = GetCpuInfo();
 
-	bool hasSSE = cpuInfo.FlagSSE();
-	bool hasSSE2 = cpuInfo.FlagSSE2();
-	bool hasSSE3 = cpuInfo.FlagSSE3();
-	bool hasSSE41 = cpuInfo.FlagSSE41();
+	const std::vector<std::pair<std::string, bool>> checks = {
+		{ "SSE", cpuInfo.FlagSSE() },
+		{ "SSE2", cpuInfo.FlagSSE2() },
+		{ "SSE3", cpuInfo.FlagSSE3() },
+		{ "SSE4.1", cpuInfo.FlagSSE41() },
+		{ "FMA", cpuInfo.FlagFMA() },
+	};
 
-	if (!hasSSE || !hasSSE2 || !hasSSE3 || !hasSSE41) {
-		std::string err = "The game cannot start because your CPU lacks the required vector instruction sets(s):\r\n  ";
-		if (!hasSSE)	err += " SSE";
-		if (!hasSSE2)	err += " SSE2";
-		if (!hasSSE3)	err += " SSE3";
-		if (!hasSSE41)	err += " SSE4.1";
+	std::vector<std::string> unsupportedSets;
+	std::for_each(checks.begin(), checks.end(), [&](const auto& x) {
+		const auto& [name, hasFlag] = x;
+		if (!hasFlag) {
+			unsupportedSets.push_back(name);
+		}
+	});
+
+	if (!unsupportedSets.empty()) {
+		std::string err = "The engine cannot start because your CPU lacks the required instruction set(s):\r\n";
+		err += "    " + StringUtility::Join(unsupportedSets, ",") + "\r\n";
+		err += "    Please switch to the legacy build of the engine";
+		
 		throw wexception(err);
 	}
 #endif
