@@ -14,11 +14,11 @@ namespace gstd {
 		//Loads vector from D3DXVECTOR4, alignment ignored
 		static __forceinline __m128 Load(const D3DXVECTOR4& vec);
 		//Loads vector from float pointer, alignment ignored
-		static __forceinline __m128 Load(float* const ptr);
+		static __forceinline __m128 Load(const float* ptr);
 		//Loads double vector from double pointer, alignment ignored
-		static __forceinline __m128d Load(double* const ptr);
+		static __forceinline __m128d Load(const double* ptr);
 		//Stores the data of vector "dst" into float array "ptr" (size=4)
-		static __forceinline void Store(float* const ptr, const __m128& dst);
+		static __forceinline void Store(float* ptr, const __m128& dst);
 
 		//Creates vector (a, b, c, d)
 		static __forceinline __m128 Set(float a, float b, float c, float d);
@@ -110,9 +110,9 @@ namespace gstd {
 	//---------------------------------------------------------------------
 
 	__m128 Vectorize::Load(const D3DXVECTOR4& vec) {
-		return Load((float*)&vec);
+		return Load(reinterpret_cast<const float*>(&vec));
 	}
-	__m128 Vectorize::Load(float* const ptr) {
+	__m128 Vectorize::Load(const float* ptr) {
 		__m128 res;
 #ifndef __L_MATH_VECTORIZE
 		memcpy(res.m128_f32, ptr, sizeof(__m128));
@@ -122,7 +122,7 @@ namespace gstd {
 #endif
 		return res;
 	}
-	__m128d Vectorize::Load(double* const ptr) {
+	__m128d Vectorize::Load(const double* ptr) {
 		__m128d res;
 #ifndef __L_MATH_VECTORIZE
 		memcpy(res.m128d_f64, ptr, sizeof(__m128d));
@@ -132,7 +132,7 @@ namespace gstd {
 #endif
 		return res;
 	}
-	void Vectorize::Store(float* const ptr, const __m128& dst) {
+	void Vectorize::Store(float* ptr, const __m128& dst) {
 #ifndef __L_MATH_VECTORIZE
 		memcpy(ptr, &dst, sizeof(__m128));
 #else
@@ -181,12 +181,9 @@ namespace gstd {
 		return res;
 	}
 	__m128i Vectorize::Set(unsigned int a, unsigned int b, unsigned int c, unsigned int d) {
-		__m128i res;
-		res.m128i_u32[0] = a;
-		res.m128i_u32[1] = b;
-		res.m128i_u32[2] = c;
-		res.m128i_u32[3] = d;
-		return res;
+		return Set(
+			static_cast<int>(a), static_cast<int>(b),
+			static_cast<int>(c), static_cast<int>(d));
 	}
 
 	//---------------------------------------------------------------------
@@ -233,10 +230,12 @@ namespace gstd {
 	__m128 Vectorize::Shuffle(const __m128& a, const __m128& b) {
 #ifndef __L_MATH_VECTORIZE
 #define _SELECT(x, ctrl) (x).m128_f32[(ctrl) & 4];
-		res.m128_f32[0] = _SELECT(a, shuf);
-		res.m128_f32[1] = _SELECT(a, shuf >> 2);
-		res.m128_f32[2] = _SELECT(b, shuf >> 4);
-		res.m128_f32[3] = _SELECT(b, shuf >> 6);
+		__m128 res;
+		res.m128_f32[0] = _SELECT(a, SHUF);
+		res.m128_f32[1] = _SELECT(a, SHUF >> 2);
+		res.m128_f32[2] = _SELECT(b, SHUF >> 4);
+		res.m128_f32[3] = _SELECT(b, SHUF >> 6);
+		return res;
 #undef _SELECT
 #else
 		//SSE
@@ -314,8 +313,7 @@ namespace gstd {
 		__m128 res;
 #ifndef __L_MATH_VECTORIZE
 		for (int i = 0; i < 4; ++i) {
-			uint32_t s = (uint32_t&)a.m128_f32[i] ^ (uint32_t&)b.m128_f32[i];
-			res.m128_f32[i] = (float&)s;
+			res.m128_u32[i] = a.m128_u32[i] ^ b.m128_u32[i];
 		}
 #else
 		//SSE
@@ -453,9 +451,8 @@ namespace gstd {
 		for (int i = 0; i < 4; ++i)
 			res.m128_f32[i] = fma(a.m128_f32[i], b.m128_f32[i], c.m128_f32[i]);
 #else
-		//SSE
-		res = _mm_mul_ps(a, b);
-		res = _mm_add_ps(res, c);
+		//SSE, FMA
+		res = _mm_fmadd_ps(a, b, c);
 #endif
 		return res;
 	}
@@ -465,9 +462,8 @@ namespace gstd {
 		for (int i = 0; i < 2; ++i)
 			res.m128d_f64[i] = fma(a.m128d_f64[i], b.m128d_f64[i], c.m128d_f64[i]);
 #else
-		//SSE2
-		res = _mm_mul_pd(a, b);
-		res = _mm_add_pd(res, c);
+		//SSE2, FMA
+		res = _mm_fmadd_pd(a, b, c);
 #endif
 		return res;
 	}
@@ -481,7 +477,7 @@ namespace gstd {
 			res.m128d_f64[i] = std::max(a.m128d_f64[i], b.m128d_f64[i]);
 #else
 		//SSE2
-		res = _mm_min_pd(a, b);
+		res = _mm_max_pd(a, b);
 #endif
 		return res;
 	}
@@ -492,7 +488,7 @@ namespace gstd {
 			res.m128d_f64[i] = std::min(a.m128d_f64[i], b.m128d_f64[i]);
 #else
 		//SSE2
-		res = _mm_max_pd(a, b);
+		res = _mm_min_pd(a, b);
 #endif
 		return res;
 	}
@@ -518,7 +514,7 @@ namespace gstd {
 			res.m128i_i32[i] = std::max(a.m128i_i32[i], b.m128i_i32[i]);
 #else
 		//SSE4.1
-		res = _mm_min_epi32(a, b);
+		res = _mm_max_epi32(a, b);
 #endif
 		return res;
 	}
@@ -529,7 +525,7 @@ namespace gstd {
 			res.m128i_i32[i] = std::min(a.m128i_i32[i], b.m128i_i32[i]);
 #else
 		//SSE4.1
-		res = _mm_max_epi32(a, b);
+		res = _mm_min_epi32(a, b);
 #endif
 		return res;
 	}
