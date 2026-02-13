@@ -834,18 +834,18 @@ void TextureInfoPanel::Update() {
 	}
 
 	{
-		Lock lock(Logger::GetTop()->GetLock());
+		Lock lock(manager->GetLock());
 
 		listDisplay_.clear();
 		for (auto& [path, data] : manager->mapTextureData_) {
 			listDisplay_.push_back(TextureDisplay(data, path, &data->imageInfo));
 		}
-
-		// Sort new data as well
-		if (TextureDisplay::imguiSortSpecs) {
-			if (listDisplay_.size() > 1) {
-				std::sort(listDisplay_.begin(), listDisplay_.end(), TextureDisplay::Compare);
-			}
+	}
+	
+	// Sort new data as well
+	if (TextureDisplay::imguiSortSpecs) {
+		if (listDisplay_.size() > 1) {
+			std::sort(listDisplay_.begin(), listDisplay_.end(), TextureDisplay::Compare);
 		}
 	}
 
@@ -898,7 +898,10 @@ void TextureInfoPanel::ProcessGui() {
 			{
 				ImGui::PushFont(parent->GetFont("Arial15"));
 
-#define _SETCOL(_i, _s) ImGui::TableSetColumnIndex(_i); ImGui::Text((_s).c_str());
+				auto SetCol = [](int i, const std::string& s) {
+					ImGui::TableSetColumnIndex(i);
+					ImGui::Text(s.c_str());
+				};
 
 				ImGuiListClipper clipper;
 				clipper.Begin(listDisplay_.size());
