@@ -117,11 +117,11 @@ public:
 		listCommand_.push_back({ command, arg });
 	}
 	void AddCommandChecked(uint8_t command, double arg) {
-		if (arg != NO_CHANGE)
+		if (static_cast<int>(arg) != NO_CHANGE)
 			listCommand_.push_back({ command, arg });
 	}
 	void AddCommandChecked(uint8_t command, double argCheck, double arg) {
-		if (argCheck != NO_CHANGE)
+		if (static_cast<int>(argCheck) != NO_CHANGE)
 			listCommand_.push_back({ command, arg });
 	}
 

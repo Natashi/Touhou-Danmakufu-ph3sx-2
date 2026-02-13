@@ -64,8 +64,12 @@ void StgPlayerObject::Clone(DxScriptObjectBase* _src) {
 void StgPlayerObject::_InitializeRebirth() {
 	DxRect<LONG>* rcStgFrame = stageController_->GetStageInformation()->GetStgFrameRect();
 
-	SetX((rebirthX_ == REBIRTH_DEFAULT) ? (rcStgFrame->right - rcStgFrame->left) / 2.0 : rebirthX_);
-	SetY((rebirthY_ == REBIRTH_DEFAULT) ? rcStgFrame->bottom - 48 : rebirthY_);
+	SetX(static_cast<int>(rebirthX_) == REBIRTH_DEFAULT
+		? (rcStgFrame->right - rcStgFrame->left) / 2.0
+		: rebirthX_);
+	SetY(static_cast<int>(rebirthY_) == REBIRTH_DEFAULT
+		? rcStgFrame->bottom - 48
+		: rebirthY_);
 }
 void StgPlayerObject::Work() {
 	EDirectInput* input = EDirectInput::GetInstance();
