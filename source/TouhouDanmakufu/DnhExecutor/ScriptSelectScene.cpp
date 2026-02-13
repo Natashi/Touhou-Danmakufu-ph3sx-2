@@ -565,26 +565,23 @@ bool ScriptSelectFileModel::_IsValidScriptInformation(ref_count_ptr<ScriptInform
 		return typeScript != ScriptInformation::TYPE_PLAYER;
 	case TYPE_ALL:
 		return typeScript != ScriptInformation::TYPE_PLAYER;
+	default:
+		return false;
 	}
-	return false;
 }
 int ScriptSelectFileModel::_ConvertTypeInfoToItem(int typeInfo) {
-	int typeItem = ScriptSelectSceneMenuItem::TYPE_SINGLE;
 	switch (typeInfo) {
 	case ScriptInformation::TYPE_SINGLE:
-		typeItem = ScriptSelectSceneMenuItem::TYPE_SINGLE;
-		break;
+		return ScriptSelectSceneMenuItem::TYPE_SINGLE;
 	case ScriptInformation::TYPE_PLURAL:
-		typeItem = ScriptSelectSceneMenuItem::TYPE_PLURAL;
-		break;
+		return ScriptSelectSceneMenuItem::TYPE_PLURAL;
 	case ScriptInformation::TYPE_STAGE:
-		typeItem = ScriptSelectSceneMenuItem::TYPE_STAGE;
-		break;
+		return ScriptSelectSceneMenuItem::TYPE_STAGE;
 	case ScriptInformation::TYPE_PACKAGE:
-		typeItem = ScriptSelectSceneMenuItem::TYPE_PACKAGE;
-		break;
+		return ScriptSelectSceneMenuItem::TYPE_PACKAGE;
+	default:
+		return ScriptSelectSceneMenuItem::TYPE_SINGLE;
 	}
-	return typeItem;
 }
 void ScriptSelectFileModel::CreateMenuItem() {
 	bCreated_ = false;
@@ -604,7 +601,7 @@ PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) 
 	info_ = info;
 	int mx = 24;
 	int my = 256;
-	AddMenuItem(make_unique<PlayTypeSelectMenuItem>(L"Play", mx, my));
+	MenuTask::AddMenuItem(make_unique<PlayTypeSelectMenuItem>(L"Play", mx, my));
 
 	//リプレイ
 	if (info->type_ != ScriptInformation::TYPE_PACKAGE) {
@@ -627,7 +624,7 @@ PlayTypeSelectScene::PlayTypeSelectScene(ref_count_ptr<ScriptInformation> info) 
 				replay->GetAverageFps(),
 				replay->GetDateAsString().c_str()
 			);
-			AddMenuItem(make_unique<PlayTypeSelectMenuItem>(text, mx, itemY));
+			MenuTask::AddMenuItem(make_unique<PlayTypeSelectMenuItem>(text, mx, itemY));
 			itemCount++;
 		}
 	}
@@ -771,7 +768,7 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 
 	//メニュー作成
 	for (auto& player : listPlayer_) {
-		AddMenuItem(make_unique<PlayerSelectMenuItem>(player));
+		MenuTask::AddMenuItem(make_unique<PlayerSelectMenuItem>(player));
 	}
 
 	std::vector<ref_count_ptr<ScriptInformation>> listLastPlayerSelect = systemInfo->GetLastPlayerSelectedList();
