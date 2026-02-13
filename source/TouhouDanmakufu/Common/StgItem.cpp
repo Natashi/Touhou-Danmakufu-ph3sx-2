@@ -463,7 +463,7 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 
 		auto texture = textureManager->CreateFromFile(pathImage);
 		if (texture == nullptr) {
-			throw gstd::wexception("Failed to load the specified shot texture.");
+			throw gstd::wexception("Failed to load the specified item texture.");
 		}
 
 		std::vector<StgItemData*> listAddData;
