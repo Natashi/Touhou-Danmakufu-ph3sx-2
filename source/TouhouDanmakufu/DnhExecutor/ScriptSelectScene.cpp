@@ -7,9 +7,15 @@
 //ScriptSelectScene
 //*******************************************************************
 ScriptSelectScene::ScriptSelectScene() {
+	auto textureManager = TextureManager::GetBase();
+	
 	std::wstring pathBack = EPathProperty::GetSystemImageDirectory() + L"System_ScriptSelect_Background.png";
-	shared_ptr<Texture> textureBack(new Texture());
-	textureBack->CreateFromFile(PathProperty::GetUnique(pathBack), false, true);
+	
+	CreateTextureData createParams;
+	createParams.sizeType = D3DX_DEFAULT_NONPOW2;
+	
+	auto textureBack = textureManager->CreateFromFile(
+		PathProperty::GetUnique(pathBack), createParams);
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	LONG screenWidth = graphics->GetScreenWidth();
@@ -185,6 +191,8 @@ void ScriptSelectScene::Render() {
 	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
 	graphics->SetRenderStateFor2D(MODE_BLEND_ALPHA);
 
+	auto textureManager = TextureManager::GetBase();
+
 	spriteBack_->Render();
 
 	std::wstring strType;
@@ -277,19 +285,23 @@ void ScriptSelectScene::Render() {
 
 			//イメージ
 			shared_ptr<Texture> texture = spriteImage_->GetTexture();
-			std::wstring pathImage1 = L"";
-			if (texture) pathImage1 = texture->GetName();
-			const std::wstring& pathImage2 = info->pathImage_;
+			
+			auto pathImage1 = texture ? texture->GetName() : L"";
+			auto& pathImage2 = info->pathImage_;
+			
 			if (pathImage1 != pathImage2) {
-				texture = make_shared<Texture>();
 				File file(pathImage2);
+				
 				if (file.IsExists()) {
-					texture->CreateFromFileInLoadThread(pathImage2, false, true);
+					CreateTextureData createParams;
+					createParams.sizeType = D3DX_DEFAULT_NONPOW2;
+	
+					texture = textureManager->CreateFromFile(pathImage2, createParams);
 					spriteImage_->SetTexture(texture);
 				}
-				else
+				else {
 					spriteImage_->SetTexture(nullptr);
-
+				}
 			}
 
 			texture = spriteImage_->GetTexture();
@@ -721,6 +733,8 @@ void PlayTypeSelectMenuItem::Render() {
 //PlayerSelectScene
 //*******************************************************************
 PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
+	auto textureManager = TextureManager::GetBase();
+	
 	pageMaxY_ = 4;
 	bPageChangeX_ = true;
 	frameSelect_ = 0;
@@ -728,8 +742,12 @@ PlayerSelectScene::PlayerSelectScene(ref_count_ptr<ScriptInformation> info) {
 	info_ = info;
 
 	std::wstring pathBack = EPathProperty::GetSystemImageDirectory() + L"System_ScriptSelect_Background.png";
-	shared_ptr<Texture> textureBack(new Texture());
-	textureBack->CreateFromFile(PathProperty::GetUnique(pathBack), false, true);
+	
+	CreateTextureData createParams;
+	createParams.sizeType = D3DX_DEFAULT_NONPOW2;
+	
+	auto textureBack = textureManager->CreateFromFile(
+		PathProperty::GetUnique(pathBack), createParams);
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	int screenWidth = graphics->GetScreenWidth();
@@ -806,6 +824,8 @@ void PlayerSelectScene::Render() {
 	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
 	graphics->SetRenderStateFor2D(MODE_BLEND_ALPHA);
 
+	auto textureManager = TextureManager::GetBase();
+
 	spriteBack_->Render();
 
 	int top = (pageCurrent_ - 1) * (pageMaxY_ + 1);
@@ -833,18 +853,23 @@ void PlayerSelectScene::Render() {
 
 		//イメージ
 		shared_ptr<Texture> texture = spriteImage_->GetTexture();
-		std::wstring pathImage1 = L"";
-		if (texture) pathImage1 = texture->GetName();
-		const std::wstring& pathImage2 = infoSelected->pathImage_;
+
+		auto pathImage1 = texture ? texture->GetName() : L"";
+		auto& pathImage2 = infoSelected->pathImage_;
+			
 		if (pathImage1 != pathImage2) {
-			texture = make_shared<Texture>();
 			File file(pathImage2);
+				
 			if (file.IsExists()) {
-				texture->CreateFromFileInLoadThread(pathImage2, false, true);
+				CreateTextureData createParams;
+				createParams.sizeType = D3DX_DEFAULT_NONPOW2;
+	
+				texture = textureManager->CreateFromFile(pathImage2, createParams);
 				spriteImage_->SetTexture(texture);
 			}
-			else
+			else {
 				spriteImage_->SetTexture(nullptr);
+			}
 		}
 
 		texture = spriteImage_->GetTexture();

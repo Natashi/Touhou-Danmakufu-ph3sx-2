@@ -349,6 +349,8 @@ void StgShotDataList::_LoadVertexBuffers(const std::wstring& name,
 	}
 }
 bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
+	auto textureManager = TextureManager::GetBase();
+	
 	auto find = mapVertexBuffer_.find(path);
 	if (find != mapVertexBuffer_.end()) {
 		if (!bReload) {
@@ -412,16 +414,7 @@ bool StgShotDataList::AddShotDataList(const std::wstring& path, bool bReload) {
 		pathImage = StringUtility::Replace(pathImage, L"./", dir);
 		pathImage = PathProperty::GetUnique(pathImage);
 
-		shared_ptr<Texture> texture;
-		{
-			TextureManager* textureManager = TextureManager::GetBase();
-
-			if ((texture = textureManager->GetTexture(pathImage)) == nullptr) {
-				texture = make_shared<Texture>();
-				if (!texture->CreateFromFile(pathImage, false, false))
-					texture = nullptr;
-			}
-		}
+		auto texture = textureManager->CreateFromFile(pathImage);
 		if (texture == nullptr) {
 			throw gstd::wexception("Failed to load the specified shot texture.");
 		}

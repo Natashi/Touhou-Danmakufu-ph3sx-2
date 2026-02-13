@@ -987,8 +987,7 @@ shared_ptr<Texture> _RenderToTexture_LoadTexture(DxScriptResourceCache* rsrcCach
 		if (texture == nullptr) {
 			auto data = textureManager->GetData(name);
 			if (data) {		// Texture data exists, create a new texture object
-				texture = make_shared<Texture>();
-				texture->CreateFromData(data);
+				texture = textureManager->CreateFromData(data);
 				textureManager->Add(name, texture);
 			}
 		}
@@ -1008,7 +1007,7 @@ gstd::value StgControlScript::Func_RenderToTextureA(gstd::script_machine* machin
 
 	shared_ptr<Texture> texture = _RenderToTexture_LoadTexture(script->pResouceCache_, name);
 
-	if (texture && texture->GetType() == TextureData::Type::TYPE_RENDER_TARGET) {
+	if (texture && texture->GetType() == TextureData::Type::RenderTarget) {
 		graphics->SetAllowRenderTargetChange(OVERRIDE_RT);
 		graphics->SetRenderTarget(texture);
 		graphics->ResetDeviceState();
@@ -1036,7 +1035,7 @@ gstd::value StgControlScript::Func_RenderToTextureB(gstd::script_machine* machin
 	if (obj) {
 		shared_ptr<Texture> texture = _RenderToTexture_LoadTexture(script->pResouceCache_, name);
 
-		if (texture && texture->GetType() == TextureData::Type::TYPE_RENDER_TARGET) {
+		if (texture && texture->GetType() == TextureData::Type::RenderTarget) {
 			graphics->SetAllowRenderTargetChange(OVERRIDE_RT);
 			graphics->SetRenderTarget(texture);
 			graphics->ResetDeviceState();

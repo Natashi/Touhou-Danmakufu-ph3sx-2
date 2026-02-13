@@ -45,6 +45,8 @@ bool MetasequoiaMeshData::CreateFromFileReader(shared_ptr<gstd::FileReader> read
 	return res;
 }
 void MetasequoiaMeshData::_ReadMaterial(gstd::Scanner& scanner) {
+	auto textureManager = TextureManager::GetBase();
+	
 	size_t countMaterial = scanner.Next().GetInteger();
 	materialList_.resize(countMaterial);
 	for (size_t iMat = 0; iMat < countMaterial; iMat++) {
@@ -112,8 +114,7 @@ void MetasequoiaMeshData::_ReadMaterial(gstd::Scanner& scanner) {
 			std::wstring wPathTexture = tok.GetString();
 			std::wstring path = PathProperty::GetFileDirectory(path_) + wPathTexture;
 
-			mat->texture_ = make_shared<Texture>();
-			mat->texture_->CreateFromFile(PathProperty::GetUnique(path), false, false);
+			mat->texture_ = textureManager->CreateFromFile(PathProperty::GetUnique(path));
 
 			scanner.CheckType(scanner.Next(), Token::Type::TK_CLOSEP);
 		}

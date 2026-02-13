@@ -9,6 +9,8 @@
 //StgItemManager
 //*******************************************************************
 StgItemManager::StgItemManager(StgStageController* stageController) {
+	auto textureManager = TextureManager::GetBase();
+	
 	stageController_ = stageController;
 
 	listItemData_ = make_unique<StgItemDataList>();
@@ -19,16 +21,16 @@ StgItemManager::StgItemManager(StgStageController* stageController) {
 		listSpriteItem_.reset(new SpriteList2D());
 
 		std::wstring pathItem = PathProperty::GetUnique(dir + L"System_Stg_Item.png");
-		shared_ptr<Texture> textureItem(new Texture());
-		textureItem->CreateFromFile(pathItem, false, false);
+		auto textureItem = textureManager->CreateFromFile(pathItem);
+
 		listSpriteItem_->SetTexture(textureItem);
 	}
 	{
 		listSpriteDigit_.reset(new SpriteList2D());
 
 		std::wstring pathDigit = PathProperty::GetUnique(dir + L"System_Stg_Digit.png");
-		shared_ptr<Texture> textureDigit(new Texture());
-		textureDigit->CreateFromFile(pathDigit, false, false);
+		auto textureDigit = textureManager->CreateFromFile(pathDigit);
+		
 		listSpriteDigit_->SetTexture(textureDigit);
 	}
 
@@ -409,6 +411,8 @@ void StgItemDataList::_LoadVertexBuffers(const std::wstring& name,
 	}
 }
 bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
+	auto textureManager = TextureManager::GetBase();
+	
 	auto find = mapVertexBuffer_.find(path);
 	if (find != mapVertexBuffer_.end()) {
 		if (!bReload) {
@@ -457,16 +461,7 @@ bool StgItemDataList::AddItemDataList(const std::wstring& path, bool bReload) {
 		pathImage = StringUtility::Replace(pathImage, L"./", dir);
 		pathImage = PathProperty::GetUnique(pathImage);
 
-		shared_ptr<Texture> texture;
-		{
-			TextureManager* textureManager = TextureManager::GetBase();
-
-			if ((texture = textureManager->GetTexture(pathImage)) == nullptr) {
-				texture = make_shared<Texture>();
-				if (!texture->CreateFromFile(pathImage, false, false))
-					texture = nullptr;
-			}
-		}
+		auto texture = textureManager->CreateFromFile(pathImage);
 		if (texture == nullptr) {
 			throw gstd::wexception("Failed to load the specified shot texture.");
 		}

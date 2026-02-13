@@ -281,8 +281,13 @@ bool ETextureManager::Initialize() {
 		size_t rW = Math::GetNextPow2(graphics->GetScreenWidth());
 		size_t rH = Math::GetNextPow2(graphics->GetScreenHeight());
 
-		shared_ptr<Texture> texture(new Texture());
-		if (!texture->CreateRenderTarget(L"__PRIMARY_BACKSURFACE__", rW, rH)) {
+		CreateTextureData params;
+		params.renderTargetWidth = rW;
+		params.renderTargetHeight = rH;
+
+		auto texture = CreateRenderTarget(L"__PRIMARY_BACKSURFACE__", params);
+		
+		if (!texture) {
 			throw gstd::wexception("ETextureManager: Failed to create back surface render target.");
 		}
 
@@ -294,8 +299,12 @@ bool ETextureManager::Initialize() {
 
 		std::wstring name = L"__SECONDARY_BACKSURFACE__";
 
-		shared_ptr<Texture> texture(new Texture());
-		if (!texture->CreateRenderTarget(name, rW, rH)) {
+		CreateTextureData params;
+		params.renderTargetWidth = rW;
+		params.renderTargetHeight = rH;
+
+		auto texture = CreateRenderTarget(name, params);
+		if (!texture) {
 			throw gstd::wexception("ETextureManager: Failed to create secondary backbuffer.");
 		}
 
@@ -303,20 +312,22 @@ bool ETextureManager::Initialize() {
 		EApplication::GetInstance()->SetSecondaryBackBuffer(texture);
 	}
 	{
-		int failedIndex = -1;
+		size_t failedIndex = UINT_MAX;
 		for (size_t iRender = 0; iRender < MAX_RESERVED_RENDERTARGET; iRender++) {
 			std::wstring name = GetReservedRenderTargetName(iRender);
-			shared_ptr<Texture> texture(new Texture());
-			if (!texture->CreateRenderTarget(name)) {
+
+			auto texture = CreateRenderTarget(name);
+			if (!texture) {
 				failedIndex = iRender;
 				break;
 			}
+			
 			Add(name, texture);
 		}
-		if (failedIndex >= 0) {
-			std::string err = StringUtility::Format("ETextureManager: Failed to create reserved render target %d.", failedIndex);
-			throw gstd::wexception(err);
-			res = false;
+		if (failedIndex != UINT_MAX) {
+			throw gstd::wexception(STR_FMT(
+				"ETextureManager: Failed to create reserved render target %d.",
+				failedIndex));
 		}
 	}
 

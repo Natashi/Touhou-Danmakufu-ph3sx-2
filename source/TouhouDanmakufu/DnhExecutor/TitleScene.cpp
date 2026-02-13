@@ -7,15 +7,21 @@
 //TitleScene
 //*******************************************************************
 TitleScene::TitleScene() {
+	auto textureManager = TextureManager::GetBase();
+	
 	pageMaxY_ = ITEM_COUNT - 1;
 
 	std::wstring pathBack = EPathProperty::GetSystemImageDirectory() + L"System_Title_Background.png";
-	shared_ptr<Texture> textureBack(new Texture());
-	textureBack->CreateFromFile(PathProperty::GetUnique(pathBack), false, true);
+	
+	CreateTextureData createParams;
+	createParams.sizeType = D3DX_DEFAULT_NONPOW2;
+	
+	auto textureBack = textureManager->CreateFromFile(
+		PathProperty::GetUnique(pathBack), createParams);
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
-	int screenWidth = graphics->GetScreenWidth();
-	int screenHeight = graphics->GetScreenHeight();
+	UINT screenWidth = graphics->GetScreenWidth();
+	UINT screenHeight = graphics->GetScreenHeight();
 
 	DxRect<int> srcBack(0, 0, 640, 480);
 	DxRect<double> destBack(0, 0, screenWidth, screenHeight);

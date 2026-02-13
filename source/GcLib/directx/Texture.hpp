@@ -11,42 +11,49 @@ namespace directx {
 	class TextureManager;
 	class TextureInfoPanel;
 
+	struct CreateTextureData {
+		UINT sizeType = D3DX_DEFAULT;
+		UINT textureFilter = D3DX_FILTER_BOX;
+			
+		UINT mipmaps = 1;
+		UINT mipmapFilter = D3DX_FILTER_BOX;
+			
+		DWORD colorKey = 0;
+
+		size_t renderTargetWidth = 0;
+		size_t renderTargetHeight = 0;
+	};
+
 	//****************************************************************************
 	//Texture
 	//****************************************************************************
-	class TextureData {
+	class TextureData : gstd::NonCopyable, gstd::NonMovable {
 		friend Texture;
 		friend TextureManager;
 		friend TextureInfoPanel;
 	public:
 		enum class Type : uint8_t {
-			TYPE_TEXTURE,
-			TYPE_RENDER_TARGET,
+			Texture,
+			RenderTarget,
 		};
 	protected:
 		TextureManager* manager_;
 		volatile std::atomic_bool ready_;
 		
 		Type type_;
-		std::wstring name_;
-		D3DXIMAGE_INFO infoImage_;
 		size_t resourceSize_;
-
-		bool useMipMap_;
-		bool useNonPowerOfTwo_;
 
 		IDirect3DTexture9* pTexture_;
 		IDirect3DSurface9* lpRenderSurface_;
 		IDirect3DSurface9* lpRenderZ_;
 	public:
-		TextureData();
-		virtual ~TextureData();
+		std::wstring name;
+		D3DXIMAGE_INFO imageInfo;
 
-		std::wstring& GetName() { return name_; }
-		const std::wstring& GetName() const { return name_; }
-
-		D3DXIMAGE_INFO* GetImageInfo() { return &infoImage_; }
-		const D3DXIMAGE_INFO* GetImageInfo() const { return &infoImage_; }
+		CreateTextureData createData;
+	public:
+		TextureData(TextureManager* manager, Type type);
+		~TextureData();
 
 		_NODISCARD IDirect3DTexture9* GetD3DTexture() { return pTexture_; }
 		_NODISCARD IDirect3DSurface9* GetD3DSurface() { return lpRenderSurface_; }
@@ -54,31 +61,30 @@ namespace directx {
 
 		_NODISCARD size_t GetResourceSize() const { return resourceSize_; }
 		void CalculateResourceSize();
+		
+		static size_t GetFormatBPP(D3DFORMAT format);
+		static size_t GetSurfaceSize(size_t width, size_t height, D3DFORMAT format);
 	};
 
-	class Texture : public gstd::FileManager::LoadObject {
+	class Texture :
+		public gstd::FileManager::LoadObject,
+		gstd::NonCopyable, gstd::NonMovable
+	{
 		friend TextureData;
 		friend TextureManager;
 		friend TextureInfoPanel;
 	protected:
 		shared_ptr<TextureData> data_;
 	public:
-		Texture();
-		Texture(Texture* texture);
-		virtual ~Texture();
-
+		Texture(const shared_ptr<TextureData>& data);
+		~Texture() override;
+		
 		void Release();
 
 		std::wstring GetName() const;
 
-		bool CreateFromData(const std::wstring& name);
-		bool CreateFromData(shared_ptr<TextureData> data);
-		bool CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
-		bool CreateRenderTarget(const std::wstring& name, size_t width = 0U, size_t height = 0U);
-		bool CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo = false);
-
-		auto GetTextureData() { return data_; }
-		void SetTexture(IDirect3DTexture9 *pTexture);
+		void SetTextureData(const shared_ptr<TextureData>& data);
+		shared_ptr<TextureData> GetTextureData() { return data_; }
 
 		IDirect3DTexture9* GetD3DTexture();
 		IDirect3DSurface9* GetD3DSurface();
@@ -88,22 +94,24 @@ namespace directx {
 
 		UINT GetWidth();
 		UINT GetHeight();
-		bool IsLoad() const { return data_ != nullptr && data_->bReady_; }
-
-		static size_t GetFormatBPP(D3DFORMAT format);
+		
+		bool IsLoad() const { return data_ != nullptr && data_->ready_; }
 	};
 
 	//****************************************************************************
 	//TextureManager
 	//****************************************************************************
-	class TextureManager : public DirectGraphicsListener, public gstd::FileManager::LoadThreadListener {
+	class TextureManager :
+		public DirectGraphicsListener, public gstd::FileManager::LoadThreadListener,
+		gstd::NonCopyable, gstd::NonMovable
+	{
 		friend Texture;
 		friend TextureData;
 		friend TextureInfoPanel;
 	private:
-		static TextureManager* thisBase_;
+		static inline TextureManager* thisBase_ = nullptr;
 	public:
-		static const std::wstring TARGET_TRANSITION;
+		static const inline std::wstring TARGET_TRANSITION = L"__RENDERTARGET_TRANSITION__";
 	protected:
 		gstd::CriticalSection lock_;
 
@@ -114,15 +122,13 @@ namespace directx {
 
 		shared_ptr<TextureInfoPanel> panelInfo_;
 
-		void _ReleaseTextureData(const std::wstring& name);
+		void ReleaseTextureData(const std::wstring& name);
 
-		void __CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
-		bool _CreateFromFile(shared_ptr<TextureData>& dst, const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
-		bool _CreateRenderTarget(shared_ptr<TextureData>& dst, const std::wstring& name, 
-			size_t width = 0U, size_t height = 0U);
+		shared_ptr<TextureData> CreateDataFromFile(const std::wstring& path, const CreateTextureData& params);
+		shared_ptr<TextureData> CreateDataRenderTarget(const std::wstring& name, const CreateTextureData& params);
 	public:
-		TextureManager();
-		virtual ~TextureManager();
+		TextureManager() = default;
+		~TextureManager() override;
 
 		static TextureManager* GetBase() { return thisBase_; }
 		
@@ -135,17 +141,20 @@ namespace directx {
 		virtual void Release(const std::wstring& name);
 		virtual shared_ptr<TextureData> GetData(const std::wstring& name);
 
-		virtual void ReleaseDxResource();
-		virtual void RestoreDxResource();
+		void ReleaseDxResource() override;
+		void RestoreDxResource() override;
 
 		shared_ptr<TextureData> GetTextureData(const std::wstring& name);
 		shared_ptr<Texture> GetTexture(const std::wstring& name);
 		
-		shared_ptr<Texture> CreateFromFile(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo);
-		shared_ptr<Texture> CreateRenderTarget(const std::wstring& name, size_t width = 0U, size_t height = 0U);
+		shared_ptr<Texture> CreateFromFile(const std::wstring& path, const CreateTextureData& params = {});
+		shared_ptr<Texture> CreateRenderTarget(const std::wstring& name, const CreateTextureData& params = {});
+		shared_ptr<Texture> CreateFromData(const shared_ptr<TextureData>& data);
+		shared_ptr<Texture> CreateFromD3DTexture(IDirect3DTexture9* pTexture, TextureData::Type type = TextureData::Type::Texture);
 		
-		shared_ptr<Texture> CreateFromFileInLoadThread(const std::wstring& path, bool genMipmap, bool flgNonPowerOfTwo, bool bLoadImageInfo = false);
-		virtual void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event);
+		shared_ptr<Texture> CreateFromFileInLoadThread(const std::wstring& path, const CreateTextureData& params = {},
+			bool loadImageInfoNow = false);
+		void CallFromLoadThread(shared_ptr<gstd::FileManager::LoadThreadEvent> event) override;
 
 		void SetInfoPanel(shared_ptr<TextureInfoPanel> panel) { panelInfo_ = panel; }
 	};
@@ -185,9 +194,9 @@ namespace directx {
 	public:
 		TextureInfoPanel();
 
-		virtual void Initialize(const std::string& name);
+		void Initialize(const std::string& name) override;
 
-		virtual void Update();
-		virtual void ProcessGui();
+		void Update() override;
+		void ProcessGui() override;
 	};
 }

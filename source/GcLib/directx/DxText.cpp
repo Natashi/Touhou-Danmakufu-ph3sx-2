@@ -28,6 +28,8 @@ DxFont::DxFont() {
 DxCharGlyph::DxCharGlyph(UINT code) : code_(code) {}
 
 bool DxCharGlyph::Create(gstd::CriticalSection& cs, const Font& winFont, const DxFont* dxFont) {
+	TextureManager* textureManager = TextureManager::GetBase();
+	
 	Lock lock(cs);
 	{
 		static short colorTop[4];
@@ -225,8 +227,7 @@ bool DxCharGlyph::Create(gstd::CriticalSection& cs, const Font& winFont, const D
 			pTexture->UnlockRect(0);
 		}
 
-		texture_ = make_shared<Texture>();
-		texture_->SetTexture(pTexture);
+		texture_ = textureManager->CreateFromD3DTexture(pTexture);
 	}
 
 	return true;
