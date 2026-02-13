@@ -180,14 +180,12 @@ bool EApplication::_Loop() {
 	{
 		auto fnUpdate = [&] {
 			// run update and process script tasks
-			_UpdateFrame(enableInput);
+			UpdateFrame(enableInput);
 		};
 
 		auto fnRender = [&] {
-			// render D3D scene
-			_RenderFrame();
-			
-			_RenderSceneToMainSurface();
+			// render game objects and present the D3D scene
+			RenderFrame();
 		};
 
 		fpsController->GetController()->SetUpdateCallback(fnUpdate);
@@ -210,8 +208,7 @@ bool EApplication::_Loop() {
 	return true;
 }
 
-
-void EApplication::_UpdateFrame(bool enableInput) {
+void EApplication::UpdateFrame(bool enableInput) {
 	ELogger* logger = ELogger::GetInstance();
 	ETaskManager* taskManager = ETaskManager::GetInstance();
 	EFpsController* fpsController = EFpsController::GetInstance();
@@ -266,164 +263,158 @@ void EApplication::_UpdateFrame(bool enableInput) {
 	}
 	++count;
 }
-void EApplication::_RenderFrame() {
-	ETaskManager* taskManager = ETaskManager::GetInstance();
-	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
+void EApplication::RenderFrame() {
+	auto graphics = EDirectGraphics::GetInstance();
+	auto device = graphics->GetDevice();
+
+	graphics->BeginScene(true, true);
 	
 	//graphics->SetAllowRenderTargetChange(false);
 	graphics->SetRenderTarget(nullptr);
 	graphics->ResetDeviceState();
+	RenderScene();
 
-	graphics->BeginScene(true, true);
+	graphics->SetRenderTargetNull();
+	graphics->ResetDeviceState();
+	PresentScene();
+
+	graphics->EndScene(true);
+
+	// I actually forgot what this was for
+	{
+		graphics->SetRenderTarget(secondaryBackBuffer_);
+		device->Clear(0, nullptr, D3DCLEAR_TARGET, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
+		graphics->SetRenderTarget(nullptr);
+	}
+}
+
+void EApplication::RenderScene() {
+	auto taskManager = ETaskManager::GetInstance();
 
 	taskManager->CallRenderFunction();
 	taskManager->SetRenderTime(taskManager->GetTimeSpentOnLastFuncCall());
-
-	graphics->EndScene(false);
 }
+void EApplication::PresentScene() {
+	auto graphics = EDirectGraphics::GetInstance();
+	auto device = graphics->GetDevice();
 
-void EApplication::_RenderSceneToMainSurface() {
-	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
-	IDirect3DDevice9* device = graphics->GetDevice();
+	auto BiasVerts = [](VERTEX_TLX* verts, float bias) {
+		for (size_t iVert = 0; iVert < 4; ++iVert) {
+			verts[iVert].position.x += bias;
+			verts[iVert].position.y += bias;
+		}
+	};
+
+	// render the secondary back buffer first
+
+	std::array<VERTEX_TLX, 4> verts;
 
 	{
-		graphics->SetRenderTargetNull();
-		graphics->ResetDeviceState();
+		float texW = secondaryBackBuffer_->GetWidth();
+		float texH = secondaryBackBuffer_->GetHeight();
 
-		graphics->BeginScene(true, true);
+		verts = {
+			VERTEX_TLX(D3DXVECTOR4(0, 0, 0, 1), 0xffffffff,
+				D3DXVECTOR2(0, 0)),
+			VERTEX_TLX(D3DXVECTOR4(texW, 0, 0, 1), 0xffffffff,
+				D3DXVECTOR2(1, 0)),
+			VERTEX_TLX(D3DXVECTOR4(0, texH, 0, 1), 0xffffffff,
+				D3DXVECTOR2(0, 1)),
+			VERTEX_TLX(D3DXVECTOR4(texW, texH, 0, 1), 0xffffffff,
+				D3DXVECTOR2(1, 1)),
+		};
+	}
 
-		{
-			device->SetFVF(VERTEX_TLX::fvf);
+	device->SetFVF(VERTEX_TLX::fvf);
+	device->SetTexture(0, secondaryBackBuffer_->GetD3DTexture());
+	device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2,
+		(void*)verts.data(), sizeof(VERTEX_TLX));
+		
+	// render the main scene
 
-			std::array<VERTEX_TLX, 4> verts;
-			auto _Render = [](IDirect3DDevice9* device, VERTEX_TLX* verts, const D3DXMATRIX* mat) {
-				constexpr float bias = -0.5f;
-				for (size_t iVert = 0; iVert < 4; ++iVert) {
-					VERTEX_TLX* vertex = (VERTEX_TLX*)verts + iVert;
-					vertex->diffuse_color = 0xffffffff;
+	auto pDisplaySettings = graphics->GetDisplaySettings();
 
-					D3DXVECTOR4* vPos = &vertex->position;
-					vPos->x += bias;
-					vPos->y += bias;
+	auto vbManager = VertexBufferManager::GetBase();
+	auto vertexBuffer = vbManager->GetVertexBufferTLX();
 
-					D3DXVec3TransformCoord((D3DXVECTOR3*)vPos, (D3DXVECTOR3*)vPos, mat);
+	UINT scW = graphics->GetScreenWidth(), scH = graphics->GetScreenHeight();
+	UINT vpW = graphics->GetRenderScreenWidth(), vpH = graphics->GetRenderScreenHeight();
+	/*
+	if (graphics->GetScreenMode() == ScreenMode::SCREENMODE_FULLSCREEN) {
+		DxRect<LONG> rcWindow = WindowBase::GetActiveMonitorRect(graphics->GetAttachedWindowHandle());
+		vpW = rcWindow.GetWidth();
+		vpH = rcWindow.GetHeight();
+	}
+	*/
+	//graphics->SetViewPort(0, 0, vpW, vpH);
+
+	auto mainSceneTexture = graphics->GetDefaultBackBufferRenderTarget();
+	auto& matDisplayTransform = pDisplaySettings->matDisplay;
+	auto& shader = pDisplaySettings->shader;
+
+	{
+		UINT texW = mainSceneTexture->imageInfo.Width;
+		UINT texH = mainSceneTexture->imageInfo.Height;
+
+		verts = {
+			VERTEX_TLX(D3DXVECTOR4(0, 0, 0, 1), 0xffffffff,
+				D3DXVECTOR2(0, 0)),
+			VERTEX_TLX(D3DXVECTOR4(scW, 0, 0, 1), 0xffffffff,
+				D3DXVECTOR2(scW / (float)texW, 0)),
+			VERTEX_TLX(D3DXVECTOR4(0, scH, 0, 1), 0xffffffff,
+				D3DXVECTOR2(0, scH / (float)texH)),
+			VERTEX_TLX(D3DXVECTOR4(scW, scH, 0, 1), 0xffffffff,
+				D3DXVECTOR2(scW / (float)texW, scH / (float)texH)),
+		};
+
+		BiasVerts(verts.data(), -0.5f);
+	}
+
+	device->SetTexture(0, mainSceneTexture->GetD3DTexture());
+	if (shader) {
+		auto lockParam = BufferLockParameter(D3DLOCK_DISCARD);
+
+		lockParam.SetSource(verts, 4, sizeof(VERTEX_TLX));
+		vertexBuffer->UpdateBuffer(&lockParam);
+
+		device->SetStreamSource(0, vertexBuffer->GetBuffer(),
+			0, sizeof(VERTEX_TLX));
+		device->SetVertexDeclaration(
+			ShaderManager::GetBase()->GetRenderLib()->GetVertexDeclarationTLX());
+
+		if (auto effect = shader->GetEffect()) {
+			if (shader->LoadTechnique()) {
+				shader->LoadParameter();
+
+				if (auto handle = effect->GetParameterBySemantic(nullptr, "WORLD")) {
+					effect->SetMatrix(handle, &matDisplayTransform);
 				}
-				device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, (void*)verts, sizeof(VERTEX_TLX));
-			};
-
-			{
-				//Render the secondary back buffer first
-
-				float texW = secondaryBackBuffer_->GetWidth();
-				float texH = secondaryBackBuffer_->GetHeight();
-
-				verts[0] = VERTEX_TLX(D3DXVECTOR4(0, 0, 0, 1), 0xffffffff,
-					D3DXVECTOR2(0, 0));
-				verts[1] = VERTEX_TLX(D3DXVECTOR4(texW, 0, 0, 1), 0xffffffff,
-					D3DXVECTOR2(1, 0));
-				verts[2] = VERTEX_TLX(D3DXVECTOR4(0, texH, 0, 1), 0xffffffff,
-					D3DXVECTOR2(0, 1));
-				verts[3] = VERTEX_TLX(D3DXVECTOR4(texW, texH, 0, 1), 0xffffffff,
-					D3DXVECTOR2(1, 1));
-
-				device->SetTexture(0, secondaryBackBuffer_->GetD3DTexture());
-				device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, (void*)verts.data(), sizeof(VERTEX_TLX));
-			}
-			{
-				//Render the main scene
-
-				DisplaySettings* pDispSettings = graphics->GetDisplaySettings();
-
-				VertexBufferManager* vbManager = VertexBufferManager::GetBase();
-				auto vertexBuffer = vbManager->GetVertexBufferTLX();
-
-				UINT scW = graphics->GetScreenWidth(), scH = graphics->GetScreenHeight();
-				UINT vpW = graphics->GetRenderScreenWidth(), vpH = graphics->GetRenderScreenHeight();
-				/*
-				if (graphics->GetScreenMode() == ScreenMode::SCREENMODE_FULLSCREEN) {
-					DxRect<LONG> rcWindow = WindowBase::GetActiveMonitorRect(graphics->GetAttachedWindowHandle());
-					vpW = rcWindow.GetWidth();
-					vpH = rcWindow.GetHeight();
+				if (auto handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION")) {
+					effect->SetMatrix(handle, &graphics->GetViewPortMatrix());
 				}
-				*/
-				//graphics->SetViewPort(0, 0, vpW, vpH);
-
-				shared_ptr<TextureData> mainSceneTexture = graphics->GetDefaultBackBufferRenderTarget();
-				D3DXMATRIX matDisplayTransform = pDispSettings->matDisplay;
-				shared_ptr<Shader> shader = pDispSettings->shader;
-
-				float texW = mainSceneTexture->GetImageInfo()->Width;
-				float texH = mainSceneTexture->GetImageInfo()->Height;
-
-				verts[0] = VERTEX_TLX(D3DXVECTOR4(0, 0, 0, 1), 0xffffffff,
-					D3DXVECTOR2(0, 0));
-				verts[1] = VERTEX_TLX(D3DXVECTOR4(scW, 0, 0, 1), 0xffffffff,
-					D3DXVECTOR2(scW / texW, 0));
-				verts[2] = VERTEX_TLX(D3DXVECTOR4(0, scH, 0, 1), 0xffffffff,
-					D3DXVECTOR2(0, scH / texH));
-				verts[3] = VERTEX_TLX(D3DXVECTOR4(scW, scH, 0, 1), 0xffffffff,
-					D3DXVECTOR2(scW / texW, scH / texH));
-				{
-					constexpr float bias = -0.5f;
-					for (size_t iVert = 0; iVert < 4; ++iVert) {
-						D3DXVECTOR4* vPos = &verts[iVert].position;
-						vPos->x += bias;
-						vPos->y += bias;
-					}
-				}
-
-				device->SetTexture(0, mainSceneTexture->GetD3DTexture());
-				if (shader) {
-					BufferLockParameter lockParam = BufferLockParameter(D3DLOCK_DISCARD);
-
-					lockParam.SetSource(verts, 4, sizeof(VERTEX_TLX));
-					vertexBuffer->UpdateBuffer(&lockParam);
-
-					device->SetStreamSource(0, vertexBuffer->GetBuffer(), 0, sizeof(VERTEX_TLX));
-					device->SetVertexDeclaration(
-						ShaderManager::GetBase()->GetRenderLib()->GetVertexDeclarationTLX());
-
-					ID3DXEffect* effect = shader->GetEffect();
-					if (effect) {
-						if (shader->LoadTechnique()) {
-							shader->LoadParameter();
-
-							D3DXHANDLE handle = nullptr;
-							if (handle = effect->GetParameterBySemantic(nullptr, "WORLD"))
-								effect->SetMatrix(handle, &matDisplayTransform);
-							if (handle = effect->GetParameterBySemantic(nullptr, "VIEWPROJECTION"))
-								effect->SetMatrix(handle, &graphics->GetViewPortMatrix());
-							if (handle = effect->GetParameterBySemantic(nullptr, "TEXTURE"))
-								effect->SetTexture(handle, mainSceneTexture->GetD3DTexture());
-						}
-
-						UINT countPass = 1;
-						effect->Begin(&countPass, 0);
-						for (UINT iPass = 0; iPass < countPass; ++iPass) {
-							effect->BeginPass(iPass);
-							device->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-							effect->EndPass();
-						}
-						effect->End();
-					}
-				}
-				else {
-					for (size_t iVert = 0; iVert < 4; ++iVert) {
-						D3DXVECTOR4* vPos = &verts[iVert].position;
-						D3DXVec3TransformCoord((D3DXVECTOR3*)vPos, (D3DXVECTOR3*)vPos, &matDisplayTransform);
-					}
-
-					device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, (void*)verts.data(), sizeof(VERTEX_TLX));
+				if (auto handle = effect->GetParameterBySemantic(nullptr, "TEXTURE")) {
+					effect->SetTexture(handle, mainSceneTexture->GetD3DTexture());
 				}
 			}
+
+			UINT countPass = 1;
+			effect->Begin(&countPass, 0);
+			for (UINT iPass = 0; iPass < countPass; ++iPass) {
+				effect->BeginPass(iPass);
+				device->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+				effect->EndPass();
+			}
+			effect->End();
+		}
+	}
+	else {
+		for (size_t iVert = 0; iVert < 4; ++iVert) {
+			D3DXVECTOR4* vPos = &verts[iVert].position;
+			D3DXVec3TransformCoord((D3DXVECTOR3*)vPos, (D3DXVECTOR3*)vPos, &matDisplayTransform);
 		}
 
-		graphics->EndScene(true);
-		{
-			graphics->SetRenderTarget(secondaryBackBuffer_);
-			device->Clear(0, nullptr, D3DCLEAR_TARGET, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
-			graphics->SetRenderTarget(nullptr);
-		}
+		device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2,
+			(void*)verts.data(), sizeof(VERTEX_TLX));
 	}
 }
 
