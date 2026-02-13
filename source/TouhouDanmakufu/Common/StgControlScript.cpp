@@ -96,7 +96,7 @@ static const std::vector<function> stgControlFunction = {
 	{ "AddArchiveFile", StgControlScript::Func_AddArchiveFile, 2 },		//Overloaded
 	{ "GetArchiveFilePathList", StgControlScript::Func_GetArchiveFilePathList, 2 },
 
-	{ "GetCurrentFps", StgControlScript::Func_GetCurrentRenderFps, 0 },
+	{ "GetCurrentFps", StgControlScript::Func_GetCurrentUpdateFps, 0 },
 	{ "GetCurrentUpdateFps", StgControlScript::Func_GetCurrentUpdateFps, 0 },
 	{ "GetCurrentRenderFps", StgControlScript::Func_GetCurrentRenderFps, 0 },
 	{ "GetLastFrameUpdateSpeed", StgControlScript::Func_GetLastFrameUpdateSpeed, 0 },
