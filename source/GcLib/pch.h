@@ -142,6 +142,7 @@
 #include <cwctype>
 #include <cstdio>
 #include <string>
+#include <memory>
 
 #include <array>
 #include <list>
@@ -153,11 +154,14 @@
 #include <bitset>
 #include <complex>
 #include <optional>
+#include <bit>
 
-#include <memory>
 #include <algorithm>
 #include <numeric>
+#include <numbers>
 #include <iterator>
+#include <ranges>
+
 #include <future>
 
 #include <fstream>
@@ -209,6 +213,8 @@
 #endif
 
 namespace stdch = std::chrono;
+
+namespace views = std::views;
 
 //------------------------------------------------------------------------------
 
