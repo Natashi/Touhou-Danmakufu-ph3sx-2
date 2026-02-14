@@ -5,8 +5,8 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release (Legacy)|Win32">
-      <Configuration>Release (Legacy)</Configuration>
+    <ProjectConfiguration Include="ReleaseLegacy|Win32">
+      <Configuration>ReleaseLegacy</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
@@ -34,7 +34,7 @@
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
@@ -51,7 +51,7 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
   </ImportGroup>
@@ -65,7 +65,7 @@
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>th_dnh_ph3sx</TargetName>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
     <OutDir>.\bin_th_dnh\</OutDir>
     <IntDir>DnhExecutor\Release_legacy\</IntDir>
     <LinkIncremental>
@@ -143,7 +143,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
     <ClCompile>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
@@ -270,42 +270,42 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
   <ItemGroup>
     <ClCompile Include="source\ext\imgui\backends\imgui_impl_dx9.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
     </ClCompile>
     <ClCompile Include="source\ext\imgui\backends\imgui_impl_win32.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
     </ClCompile>
     <ClCompile Include="source\ext\imgui\imgui.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
     </ClCompile>
     <ClCompile Include="source\ext\imgui\imgui_draw.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
     </ClCompile>
     <ClCompile Include="source\ext\imgui\imgui_tables.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
     </ClCompile>
     <ClCompile Include="source\ext\imgui\imgui_widgets.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
@@ -358,9 +358,9 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">DnhExecutor/Release/DnhExecutor.pch</PrecompiledHeaderOutputFile>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">DnhExecutor/Release_legacy/DnhExecutor.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">DnhExecutor/Release_legacy/DnhExecutor.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhCommon.cpp" />
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhConfiguration.cpp" />
@@ -484,7 +484,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ResourceCompile Include="source\TouhouDanmakufu\DnhExecutor\DnhExecuter.rc">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">source\TouhouDanmakufu\DnhExecutor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">source\TouhouDanmakufu\DnhExecutor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release (Legacy)|Win32'">source\TouhouDanmakufu\DnhExecutor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">source\TouhouDanmakufu\DnhExecutor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>

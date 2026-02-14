@@ -12,28 +12,28 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Win32 = Release|Win32
-		Release (Legacy)|Win32 = Release (Legacy)|Win32
 		Debug|Win32 = Debug|Win32
+		ReleaseLegacy|Win32 = ReleaseLegacy|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Release|Win32.ActiveCfg = Release|Win32
 		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Release|Win32.Build.0 = Release|Win32
-		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Release (Legacy)|Win32.ActiveCfg = Release (Legacy)|Win32
-		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Release (Legacy)|Win32.Build.0 = Release (Legacy)|Win32
 		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Debug|Win32.ActiveCfg = Debug|Win32
 		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.Debug|Win32.Build.0 = Debug|Win32
+		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.ReleaseLegacy|Win32.ActiveCfg = ReleaseLegacy|Win32
+		{52C156DB-FFEA-4DA5-BF38-4738986F3DFA}.ReleaseLegacy|Win32.Build.0 = ReleaseLegacy|Win32
 		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Release|Win32.ActiveCfg = Release|Win32
 		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Release|Win32.Build.0 = Release|Win32
-		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Release (Legacy)|Win32.ActiveCfg = Release (Legacy)|Win32
-		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Release (Legacy)|Win32.Build.0 = Release (Legacy)|Win32
 		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Debug|Win32.ActiveCfg = Debug|Win32
 		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.Debug|Win32.Build.0 = Debug|Win32
+		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.ReleaseLegacy|Win32.ActiveCfg = ReleaseLegacy|Win32
+		{D57B6B3A-0DAB-4239-8BD0-4628FDA7F081}.ReleaseLegacy|Win32.Build.0 = ReleaseLegacy|Win32
 		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Release|Win32.ActiveCfg = Release|Win32
 		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Release|Win32.Build.0 = Release|Win32
-		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Release (Legacy)|Win32.ActiveCfg = Release (Legacy)|Win32
-		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Release (Legacy)|Win32.Build.0 = Release (Legacy)|Win32
 		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Debug|Win32.ActiveCfg = Debug|Win32
 		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.Debug|Win32.Build.0 = Debug|Win32
+		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.ReleaseLegacy|Win32.ActiveCfg = ReleaseLegacy|Win32
+		{CF9FF9CB-3C8A-4243-9687-F9CF9AC92099}.ReleaseLegacy|Win32.Build.0 = ReleaseLegacy|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
