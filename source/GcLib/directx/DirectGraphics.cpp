@@ -866,8 +866,8 @@ void DirectGraphics::UpdateDefaultRenderTargetSize() {
 	baseW = GetScreenWidth();
 	baseH = GetScreenHeight();
 
-	defaultRenderTargetSize_[0] = Math::GetNextPow2(baseW);
-	defaultRenderTargetSize_[1] = Math::GetNextPow2(baseH);
+	defaultRenderTargetSize_[0] = std::bit_ceil(baseW);
+	defaultRenderTargetSize_[1] = std::bit_ceil(baseH);
 }
 
 //*******************************************************************

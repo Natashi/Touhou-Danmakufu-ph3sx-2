@@ -484,11 +484,11 @@ shared_ptr<TextureData> TextureManager::CreateDataRenderTarget(const std::wstrin
 		
 		if (width == 0U) {
 			size_t screenWidth = graphics->GetScreenWidth();
-			width = Math::GetNextPow2(screenWidth);
+			width = std::bit_ceil(screenWidth);
 		}
 		if (height == 0U) {
 			size_t screenHeight = graphics->GetScreenHeight();
-			height = Math::GetNextPow2(screenHeight);
+			height = std::bit_ceil(screenHeight);
 		}
 		{
 			size_t maxWidth = std::min<DWORD>(graphics->GetDeviceCaps()->MaxTextureWidth, 16384);

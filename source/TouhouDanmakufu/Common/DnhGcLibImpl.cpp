@@ -278,8 +278,8 @@ bool ETextureManager::Initialize() {
 
 	DirectGraphics* graphics = DirectGraphics::GetBase();
 	{
-		size_t rW = Math::GetNextPow2(graphics->GetScreenWidth());
-		size_t rH = Math::GetNextPow2(graphics->GetScreenHeight());
+		size_t rW = std::bit_ceil(graphics->GetScreenWidth());
+		size_t rH = std::bit_ceil(graphics->GetScreenHeight());
 
 		CreateTextureData params;
 		params.renderTargetWidth = rW;
@@ -294,8 +294,8 @@ bool ETextureManager::Initialize() {
 		graphics->SetDefaultBackBufferRenderTarget(texture->GetTextureData());
 	}
 	{
-		size_t rW = Math::GetNextPow2(graphics->GetRenderScreenWidth() * 2);
-		size_t rH = Math::GetNextPow2(graphics->GetRenderScreenHeight() * 2);
+		size_t rW = std::bit_ceil(graphics->GetRenderScreenWidth() * 2);
+		size_t rH = std::bit_ceil(graphics->GetRenderScreenHeight() * 2);
 
 		std::wstring name = L"__SECONDARY_BACKSURFACE__";
 

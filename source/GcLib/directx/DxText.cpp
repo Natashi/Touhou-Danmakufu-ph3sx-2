@@ -74,8 +74,8 @@ bool DxCharGlyph::Create(gstd::CriticalSection& cs, const Font& winFont, const D
 
 		if (sizeMax_.x >= 8192 || sizeMax_.y >= 8192)
 			return false;
-		UINT widthTexture = Math::GetNextPow2(sizeMax_.x);
-		UINT heightTexture = Math::GetNextPow2(sizeMax_.y);
+		UINT widthTexture = std::bit_ceil(sizeMax_[0]);
+		UINT heightTexture = std::bit_ceil(sizeMax_[1]);
 
 		//--------------------------------------------------------------
 
