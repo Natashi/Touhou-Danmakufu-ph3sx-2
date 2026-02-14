@@ -303,26 +303,26 @@ namespace gstd {
 
 	//================================================================
 	//Math
-	constexpr double GM_PI = 3.14159265358979323846;
-	constexpr double GM_PI_X2 = GM_PI * 2.0;
-	constexpr double GM_PI_X4 = GM_PI * 4.0;
-	constexpr double GM_PI_2 = GM_PI / 2.0;
-	constexpr double GM_PI_4 = GM_PI / 4.0;
-	constexpr double GM_1_PI = 1.0 / GM_PI;
-	constexpr double GM_2_PI = 2.0 / GM_PI;
-	constexpr double GM_SQRTP = 1.772453850905516027298;
-	constexpr double GM_1_SQRTP = 1.0 / GM_SQRTP;
-	constexpr double GM_2_SQRTP = 2.0 / GM_SQRTP;
-	constexpr double GM_SQRT2 = 1.41421356237309504880;
-	constexpr double GM_SQRT2_2 = GM_SQRT2 / 2.0;
-	constexpr double GM_SQRT2_X2 = GM_SQRT2 * 2.0;
-	constexpr double GM_E = 2.71828182845904523536;
-	constexpr double GM_LOG2E = 1.44269504088896340736;		//log2(e)
-	constexpr double GM_LOG10E = 0.434294481903251827651;	//log10(e)
-	constexpr double GM_LN2 = 0.693147180559945309417;		//ln(2)
-	constexpr double GM_LN10 = 2.30258509299404568402;		//ln(10)
-	constexpr double GM_PHI = 1.618033988749894848205;		//Golden ratio
-	constexpr double GM_1_PHI = 1.0 / GM_PHI;				//The other golden ratio
+	constexpr double GM_PI = std::numbers::pi;
+	constexpr double GM_PI_X2 = GM_PI * 2;
+	constexpr double GM_PI_X4 = GM_PI * 4;
+	constexpr double GM_PI_2 = GM_PI / 2;
+	constexpr double GM_PI_4 = GM_PI / 4;
+	constexpr double GM_INV_PI = std::numbers::inv_pi;
+	constexpr double GM_INV_PI_2 = GM_INV_PI * 2;
+	constexpr double GM_INV_SQRT_PI = std::numbers::inv_sqrtpi;
+	constexpr double GM_INV_SQRT_PI_X2 = GM_INV_SQRT_PI * 2;
+	constexpr double GM_SQRT_PI = 1 / GM_INV_SQRT_PI;
+	constexpr double GM_SQRT2 = std::numbers::sqrt2;
+	constexpr double GM_SQRT2_2 = GM_SQRT2 / 2;
+	constexpr double GM_SQRT2_X2 = GM_SQRT2 * 2;
+	constexpr double GM_E = std::numbers::e;
+	constexpr double GM_LOG2E = std::numbers::log2e;		// log2(e)
+	constexpr double GM_LOG10E = std::numbers::log10e;		// log10(e)
+	constexpr double GM_LN2 = std::numbers::ln2;			// ln(2)
+	constexpr double GM_LN10 = std::numbers::ln10;			// ln(10)
+	constexpr double GM_PHI = std::numbers::phi;			// Golden ratio
+	constexpr double GM_1_PHI = 1 / GM_PHI;					// The other golden ratio
 	class Math {
 	public:
 		template<size_t S> using DVec = std::array<double, S>;

@@ -229,11 +229,11 @@ static const std::vector<constant> commonConstant = {
 	constant("M_PI_4", GM_PI_4),
 	constant("M_PI_X2", GM_PI_X2),
 	constant("M_PI_X4", GM_PI_X4),
-	constant("M_1_PI", GM_1_PI),
-	constant("M_2_PI", GM_2_PI),
-	constant("M_SQRTPI", GM_SQRTP),
-	constant("M_1_SQRTPI", GM_1_SQRTP),
-	constant("M_2_SQRTPI", GM_2_SQRTP),
+	constant("M_1_PI", GM_INV_PI),
+	constant("M_2_PI", GM_INV_PI_2),
+	constant("M_SQRTPI", GM_SQRT_PI),
+	constant("M_1_SQRTPI", GM_INV_SQRT_PI),
+	constant("M_2_SQRTPI", GM_INV_SQRT_PI_X2),
 	constant("M_SQRT2", GM_SQRT2),
 	constant("M_SQRT2_2", GM_SQRT2_2),
 	constant("M_SQRT2_X2", GM_SQRT2_X2),
@@ -856,7 +856,7 @@ value ScriptClientBase::Func_Interpolate_Modulate(script_machine* machine, int a
 	double c = argv[2].as_float();
 	double x = argv[3].as_float();
 
-	double y = sin(GM_PI_X2 * x) * GM_1_PI * 0.5;
+	double y = sin(GM_PI_X2 * x) * GM_INV_PI_2;
 	double res = a + (x + y * c) * (b - a);
 
 	return CreateFloatValue(res);
@@ -867,7 +867,7 @@ value ScriptClientBase::Func_Interpolate_Overshoot(script_machine* machine, int 
 	double c = argv[2].as_float();
 	double x = argv[3].as_float();
 
-	double y = sin(GM_PI * x) * GM_1_PI;
+	double y = sin(GM_PI * x) * GM_INV_PI;
 	double res = a + (x + y * c) * (b - a);
 
 	return CreateFloatValue(res);
