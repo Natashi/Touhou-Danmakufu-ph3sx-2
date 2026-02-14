@@ -598,20 +598,6 @@ namespace gstd {
 			value = (value & (~mask)) | ((T)c << bit);
 			return value;
 		}
-
-		/**
-		 * Utility method for safe bit casting without reinterpret_cast
-		 */
-		template <class TRes, class TSrc>
-		static TRes Cast(TSrc t1) {
-			static_assert(sizeof(TSrc) == sizeof(TRes), "Types must match sizes");
-			static_assert(std::is_pod_v<TSrc>, "Requires POD input");
-			static_assert(std::is_pod_v<TRes>, "Requires POD output");
-
-			TRes t2;
-			std::memcpy(std::addressof(t2), std::addressof(t1), sizeof(TSrc));
-			return t2;
-		}
 	};
 
 #if defined(DNH_PROJ_EXECUTOR)
