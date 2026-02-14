@@ -501,7 +501,8 @@ void SystemInfoPanel::ProcessGui() {
 
 					ImGui::Text("Temperature:");
 					ImGui::SameLine(indent + gap);
-					ImGui::Text(u8"%d °C", (int)(valueThermalZone - 273));
+					ImGui::TextUnformatted(
+						std::format("{:.0f} °C", valueThermalZone - 273).c_str());
 				}
 
 				ImGui::Dummy(ImVec2(0, 2));
@@ -540,7 +541,8 @@ void SystemInfoPanel::ProcessGui() {
 							double rate = (1 - smoothing) * proc.prevRender + valueNow * smoothing;
 							proc.prevRender = rate;
 
-							ImGui::Text("%.2f", valueNow);
+							ImGui::TextUnformatted(
+								std::format("{:.2f}", valueNow).c_str());
 							ImGui::SameLine(45);
 							ImGui::TextUnformatted("%");
 
@@ -574,7 +576,6 @@ void SystemInfoPanel::ProcessGui() {
 								ImGui::EndDisabled();
 							}
 
-							
 							/*
 							if (ImGui::IsItemHovered()) {
 								size_t count = std::min<size_t>(64, history.size());
