@@ -91,15 +91,17 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>DNH_PROJ_CONFIG;WIN32;_DEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>DnhConfig\Debug\</AssemblerListingLocation>
-      <PrecompiledHeaderOutputFile>DnhConfig\Debug\DnhConfig.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>DnhConfig\Debug\</ObjectFileName>
       <ProgramDataBaseFileName>DnhConfig\Debug\DnhConfig.pdb</ProgramDataBaseFileName>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ConformanceMode>false</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -134,24 +136,25 @@
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <StringPooling>true</StringPooling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <Optimization>MinSpace</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level3</WarningLevel>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PreprocessorDefinitions>DNH_PROJ_CONFIG;WIN32;NDEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>DnhConfig\Release\</AssemblerListingLocation>
-      <PrecompiledHeaderOutputFile>DnhConfig\Release\DnhConfig.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>DnhConfig\Release\</ObjectFileName>
       <ProgramDataBaseFileName>DnhConfig\Release\DnhConfig.pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ConformanceMode>false</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -186,24 +189,24 @@
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <StringPooling>true</StringPooling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <Optimization>MinSpace</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level3</WarningLevel>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PreprocessorDefinitions>DNH_PROJ_CONFIG;WIN32;NDEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>DnhConfig\Release\</AssemblerListingLocation>
-      <PrecompiledHeaderOutputFile>DnhConfig\Release\DnhConfig.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>DnhConfig\Release\</ObjectFileName>
       <ProgramDataBaseFileName>DnhConfig\Release\DnhConfig.pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -294,13 +297,13 @@
     <ClCompile Include="source\GcLib\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">DnhConfig/Debug/DnhConfig.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">DnhConfig/Release/DnhConfig.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">DnhConfig/Release_legacy/DnhConfig.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhCommon.cpp" />
     <ClCompile Include="source\TouhouDanmakufu\Common\DnhConfiguration.cpp" />

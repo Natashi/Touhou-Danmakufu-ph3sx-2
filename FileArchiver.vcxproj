@@ -95,15 +95,18 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>DNH_PROJ_FILEARCHIVER;WIN32;_DEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>FileArchiver\Debug\</AssemblerListingLocation>
-      <PrecompiledHeaderOutputFile>FileArchiver\Debug\FileArchiver.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>FileArchiver\Debug\</ObjectFileName>
       <ProgramDataBaseFileName>FileArchiver\Debug\FileArchiver.pdb</ProgramDataBaseFileName>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ConformanceMode>false</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <StringPooling>true</StringPooling>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -140,13 +143,13 @@
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <Optimization>MinSpace</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level3</WarningLevel>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PreprocessorDefinitions>DNH_PROJ_FILEARCHIVER;WIN32;NDEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>FileArchiver\Release\</AssemblerListingLocation>
-      <PrecompiledHeaderOutputFile>FileArchiver\Release\FileArchiver.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>FileArchiver\Release\</ObjectFileName>
       <ProgramDataBaseFileName>FileArchiver\Release\FileArchiver.pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -156,6 +159,8 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ConformanceMode>false</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -192,13 +197,13 @@
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <Optimization>MinSpace</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level3</WarningLevel>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PreprocessorDefinitions>DNH_PROJ_FILEARCHIVER;WIN32;NDEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>FileArchiver\Release\</AssemblerListingLocation>
-      <PrecompiledHeaderOutputFile>FileArchiver\Release\FileArchiver.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>FileArchiver\Release\</ObjectFileName>
       <ProgramDataBaseFileName>FileArchiver\Release\FileArchiver.pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -208,6 +213,7 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -303,13 +309,13 @@
     <ClCompile Include="source\GcLib\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">FileArchiver/Debug/FileArchiver.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">FileArchiver/Release/FileArchiver.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">FileArchiver/Release_legacy/FileArchiver.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
