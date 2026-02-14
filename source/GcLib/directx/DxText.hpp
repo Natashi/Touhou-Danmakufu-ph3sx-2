@@ -59,8 +59,8 @@ namespace directx {
 		UINT code_;
 
 		GLYPHMETRICS glpMet_;
-		POINT size_;
-		POINT sizeMax_;
+		std::array<size_t, 2> size_;
+		std::array<size_t, 2> sizeMax_;
 	public:
 		DxCharGlyph(UINT code);
 
@@ -68,8 +68,8 @@ namespace directx {
 
 		shared_ptr<Texture> GetTexture() { return texture_; }
 
-		const POINT& GetSize() const { return size_; }
-		const POINT& GetMaxSize() const { return sizeMax_; }
+		const auto& GetSize() const { return size_; }
+		const auto& GetMaxSize() const { return sizeMax_; }
 		const GLYPHMETRICS* GetGM() const { return &glpMet_; }
 	};
 

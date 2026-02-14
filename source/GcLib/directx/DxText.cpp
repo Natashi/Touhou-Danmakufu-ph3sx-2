@@ -25,7 +25,7 @@ DxFont::DxFont() {
 //*******************************************************************
 //DxCharGlyph
 //*******************************************************************
-DxCharGlyph::DxCharGlyph(UINT code) : code_(code) {}
+DxCharGlyph::DxCharGlyph(UINT code) : code_(code), glpMet_({}), size_({}), sizeMax_({}) {}
 
 bool DxCharGlyph::Create(gstd::CriticalSection& cs, const Font& winFont, const DxFont* dxFont) {
 	TextureManager* textureManager = TextureManager::GetBase();
@@ -61,18 +61,18 @@ bool DxCharGlyph::Create(gstd::CriticalSection& cs, const Font& winFont, const D
 		UINT iBmp_w = Math::CeilBase<UINT>(glpMet_.gmBlackBoxX, 4);
 		UINT iBmp_h = glpMet_.gmBlackBoxY;
 
-		size_.x = glpMet_.gmCellIncX + widthBorder * 2;
-		size_.y = tm.tmHeight + widthBorder * 2;
+		size_[0] = glpMet_.gmCellIncX + widthBorder * 2;
+		size_[1] = tm.tmHeight + widthBorder * 2;
 
 		FLOAT iBmp_h_inv = 1.0f / iBmp_h;
 		LONG glyphOriginX = glpMet_.gmptGlyphOrigin.x;
 		LONG glyphOriginY = tm.tmAscent - glpMet_.gmptGlyphOrigin.y;
-		sizeMax_.x = iBmp_w + widthBorder * 2 + glyphOriginX + (tm.tmItalic ? tm.tmOverhang : 0);
-		sizeMax_.y = iBmp_h + widthBorder * 2 + glyphOriginY;
+		sizeMax_[0] = iBmp_w + widthBorder * 2 + glyphOriginX + (tm.tmItalic ? tm.tmOverhang : 0);
+		sizeMax_[1] = iBmp_h + widthBorder * 2 + glyphOriginY;
 
 		//--------------------------------------------------------------
 
-		if (sizeMax_.x >= 8192 || sizeMax_.y >= 8192)
+		if (sizeMax_[0] >= 8192 || sizeMax_[1] >= 8192)
 			return false;
 		UINT widthTexture = std::bit_ceil(sizeMax_[0]);
 		UINT heightTexture = std::bit_ceil(sizeMax_[1]);
@@ -85,8 +85,8 @@ bool DxCharGlyph::Create(gstd::CriticalSection& cs, const Font& winFont, const D
 			0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, nullptr);
 		if (FAILED(hr)) return false;
 
-		D3DLOCKED_RECT lock;
-		if (FAILED(pTexture->LockRect(0, &lock, nullptr, D3DLOCK_DISCARD))) {
+		D3DLOCKED_RECT d3dLock;
+		if (FAILED(pTexture->LockRect(0, &d3dLock, nullptr, D3DLOCK_DISCARD))) {
 			ptr_release(pTexture);
 			return false;
 		}
@@ -128,7 +128,7 @@ bool DxCharGlyph::Create(gstd::CriticalSection& cs, const Font& winFont, const D
 			}
 			*/
 
-			FillMemory(lock.pBits, lock.Pitch * sizeMax_.y, 0);
+			FillMemory(d3dLock.pBits, d3dLock.Pitch * sizeMax_[1], 0);
 
 			if (size > 0) {
 				auto _GenRow = [&](LONG iy) {
@@ -139,7 +139,7 @@ bool DxCharGlyph::Create(gstd::CriticalSection& cs, const Font& winFont, const D
 					short colorG = Math::Lerp::Linear(colorTop[2], colorBottom[2], yColorLerp);
 					short colorB = Math::Lerp::Linear(colorTop[3], colorBottom[3], yColorLerp);
 
-					for (LONG ix = 0; ix < sizeMax_.x; ++ix) {
+					for (LONG ix = 0; ix < sizeMax_[0]; ++ix) {
 						LONG xBmp = ix - glyphOriginX - widthBorder;
 						bool bInsideBmp = (xBmp >= 0 && xBmp < iBmp_w) && (yBmp >= 0 && yBmp < iBmp_h);
 
@@ -217,11 +217,11 @@ bool DxCharGlyph::Create(gstd::CriticalSection& cs, const Font& winFont, const D
 							color = (D3DCOLOR_XRGB(colorR, colorG, colorB) & 0x00ffffff) | (alpha << 24);
 						}
 
-						memcpy((BYTE*)lock.pBits + lock.Pitch * iy + 4 * ix, &color, sizeof(D3DCOLOR));
+						memcpy((BYTE*)d3dLock.pBits + d3dLock.Pitch * iy + 4 * ix, &color, sizeof(D3DCOLOR));
 					}
 				};
 
-				ParallelFor(sizeMax_.y, _GenRow);
+				ParallelFor(sizeMax_[1], _GenRow);
 			}
 
 			pTexture->UnlockRect(0);
@@ -1429,21 +1429,22 @@ void DxTextRenderer::_CreateRenderObject(shared_ptr<DxTextRenderObject> objRende
 
 			//		int objWidth = texture->GetWidth();//dxChar->GetWidth();
 			//		int objHeight = texture->GetHeight();//dxChar->GetHeight();
-			LONG charWidth = dxChar->GetMaxSize().x;
-			LONG charHeight = dxChar->GetMaxSize().y;
+			auto& charSize = dxChar->GetMaxSize();
 
 			DxRect<LONG> rcDest(xRender + xOffset, yRender + yOffset,
-				charWidth + xRender + xOffset, charHeight + yRender + yOffset);
-			DxRect<LONG> rcSrc(0, 0, charWidth, charHeight);
+				charSize[0] + xRender + xOffset, charSize[1] + yRender + yOffset);
+			DxRect<LONG> rcSrc(0, 0, charSize[0], charSize[1]);
 			spriteText->SetVertex(rcSrc, rcDest, colorVertex_);
 
 			objRender->AddRenderObject(shared_ptr<Sprite2D>(spriteText));
 
 			LONG chrWidth = 0;
-			if (pDxText->GetFixedWidth() > 0)
+			if (pDxText->GetFixedWidth() > 0) {
 				chrWidth = pDxText->GetFixedWidth();
-			else
-				chrWidth = dxChar->GetSize().x - dxFont.GetBorderWidth();
+			}
+			else {
+				chrWidth = dxChar->GetSize()[0] - dxFont.GetBorderWidth();
+			}
 			xRender += chrWidth + textLine.GetSidePitch();
 		}
 	}
