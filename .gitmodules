@@ -1,0 +1,6 @@
+[submodule "submodules/imgui"]
+	path = submodules/imgui
+	url = https://github.com/ocornut/imgui
+[submodule "submodules/kissfft"]
+	path = submodules/kissfft
+	url = https://github.com/mborgerding/kissfft
