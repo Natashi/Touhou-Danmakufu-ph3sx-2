@@ -592,6 +592,18 @@ namespace gstd {
 		}
 	};
 
+	//================================================================
+	//CompareUtility
+	class Compare {
+	public:
+		template<std::totally_ordered T>
+		static int Ord(const T& a, const T& b) {
+			if (a < b) return -1;
+			else if (a > b) return 1;
+			else return 0;
+		}
+	};
+
 #if defined(DNH_PROJ_EXECUTOR)
 	//================================================================
 	//IStringInfo

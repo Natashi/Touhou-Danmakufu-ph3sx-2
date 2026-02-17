@@ -987,24 +987,23 @@ bool ShaderInfoPanel::ShaderDisplay::Compare(const ShaderDisplay& a, const Shade
 	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
 		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
 
-		int rcmp = 0;
-
-#define CASE_SORT(_id, _l, _r) \
-		case _id: { \
-			if (_l != _r) rcmp = (_l < _r) ? 1 : -1; \
-			break; \
-		}
-
-		switch ((Column)spec->ColumnUserID) {
-		CASE_SORT(Column::Address, a.address, b.address);
+		int rcmp;
+		switch (spec->ColumnUserID) {
+		case Column::Address:
+			rcmp = Compare::Ord(a.address, b.address);
+			break;
 		case Column::Name:
 			rcmp = a.name.compare(b.name);
 			break;
-		CASE_SORT(Column::Uses, a.countRef, b.countRef);
-		CASE_SORT(Column::Effect, a.pEffect, b.pEffect);
+		case Column::Uses:
+			rcmp = Compare::Ord(a.countRef, b.countRef);
+			break;
+		case Column::Effect:
+			rcmp = Compare::Ord(a.pEffect, b.pEffect);
+			break;
+		default:
+			rcmp = 0;
 		}
-
-#undef CASE_SORT
 
 		if (rcmp != 0) {
 			return spec->SortDirection == ImGuiSortDirection_Ascending

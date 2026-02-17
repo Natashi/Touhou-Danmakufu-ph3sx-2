@@ -585,25 +585,28 @@ bool SoundInfoPanel::SoundDisplay::Compare(const SoundDisplay& a, const SoundDis
 	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
 		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
 
-		int rcmp = 0;
-
-#define CASE_SORT(_id, _l, _r) \
-		case _id: { \
-			if (_l != _r) rcmp = (_l < _r) ? 1 : -1; \
-			break; \
-		}
-
-		switch ((Column)spec->ColumnUserID) {
-		CASE_SORT(Column::Address, a.address, b.address);
+		int rcmp;
+		switch (spec->ColumnUserID) {
+		case Column::Address:
+			rcmp = Compare::Ord(a.address, b.address);
+			break;
 		case Column::Name:
 			rcmp = a.fileName.compare(b.fileName);
 			break;
 		case Column::FullPath:
 			rcmp = a.fullPath.compare(b.fullPath);
 			break;
-		CASE_SORT(Column::Uses, a.countRef, b.countRef);
-		CASE_SORT(Column::Format, (int)a.format, (int)b.format);
-		CASE_SORT(Column::Size, a.audioSize, b.audioSize);
+		case Column::Uses:
+			rcmp = Compare::Ord(a.countRef, b.countRef);
+			break;
+		case Column::Format:
+			rcmp = Compare::Ord(a.format, b.format);
+			break;
+		case Column::Size:
+			rcmp = Compare::Ord(a.audioSize, b.audioSize);
+			break;
+		default:
+			rcmp = 0;
 		}
 
 #undef CASE_SORT

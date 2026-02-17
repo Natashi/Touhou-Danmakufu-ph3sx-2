@@ -1868,29 +1868,32 @@ bool ScriptInfoPanel::ScriptDisplay::Compare(const ScriptDisplay& a, const Scrip
 	for (int i = 0; i < imguiSortSpecs->SpecsCount; ++i) {
 		const ImGuiTableColumnSortSpecs* spec = &imguiSortSpecs->Specs[i];
 
-		int rcmp = 0;
-
-#define CASE_SORT(_id, _l, _r) \
-		case _id: { \
-			if (_l != _r) rcmp = (_l < _r) ? 1 : -1; \
-			break; \
-		}
-
-		switch ((Column)spec->ColumnUserID) {
-		CASE_SORT(Column::Address, a.address, b.address);
-		CASE_SORT(Column::Id, a.id, b.id);
+		int rcmp;
+		switch (spec->ColumnUserID) {
+		case Column::Address:
+			rcmp = Compare::Ord(a.address, b.address);
+			break;
+		case Column::Id:
+			rcmp = Compare::Ord(a.id, b.id);
+			break;
 		case Column::Type:
 			rcmp = a.type.compare(b.type);
 			break;
 		case Column::Path:
 			rcmp = a.name.compare(b.name);
 			break;
-		CASE_SORT(Column::Status, (int)a.status, (int)b.status);
-		CASE_SORT(Column::Task, a.tasks, b.tasks);
-		CASE_SORT(Column::Time, a.time, b.time);
+		case Column::Status:
+			rcmp = Compare::Ord(a.status, b.status);
+			break;
+		case Column::Task:
+			rcmp = Compare::Ord(a.tasks, b.tasks);
+			break;
+		case Column::Time:
+			rcmp = Compare::Ord(a.time, b.time);
+			break;
+		default:
+			rcmp = 0;
 		}
-
-#undef CASE_SORT
 
 		if (rcmp != 0) {
 			return spec->SortDirection == ImGuiSortDirection_Ascending 
