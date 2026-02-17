@@ -3,7 +3,7 @@
 
 #include "Constant.hpp"
 
-#include "../../GcLib/directx/ImGuiWindow.hpp"
+#include "../GcLib/directx/ImGuiWindow.hpp"
 
 //*******************************************************************
 //FileEntryInfo

@@ -5,7 +5,7 @@
 #include "DirectGraphics.hpp"
 #include "ImGuiWindow.hpp"
 
-#include "../../TouhouDanmakufu/Common/DnhCommon.hpp"
+#include "../../TouhouDanmakufu/DnhCommon.hpp"
 
 using namespace gstd;
 using namespace directx;

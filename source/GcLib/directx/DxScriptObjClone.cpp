@@ -3,12 +3,12 @@
 #include "DxScript.hpp"
 #include "DxObject.hpp"
 
-#include "../../TouhouDanmakufu/Common/StgPlayer.hpp"
-#include "../../TouhouDanmakufu/Common/StgEnemy.hpp"
-#include "../../TouhouDanmakufu/Common/StgShot.hpp"
-#include "../../TouhouDanmakufu/Common/StgItem.hpp"
-#include "../../TouhouDanmakufu/Common/StgSystem.hpp"
-#include "../../TouhouDanmakufu/Common/StgStageScript.hpp"
+#include "../../TouhouDanmakufu/StgPlayer.hpp"
+#include "../../TouhouDanmakufu/StgEnemy.hpp"
+#include "../../TouhouDanmakufu/StgShot.hpp"
+#include "../../TouhouDanmakufu/StgItem.hpp"
+#include "../../TouhouDanmakufu/StgSystem.hpp"
+#include "../../TouhouDanmakufu/StgStageScript.hpp"
 
 value DxScript::Func_Obj_Clone(script_machine* machine, int argc, const value* argv) {
 	DxScript* script = (DxScript*)machine->data;

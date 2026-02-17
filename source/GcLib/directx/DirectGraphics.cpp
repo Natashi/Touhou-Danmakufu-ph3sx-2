@@ -9,7 +9,7 @@
 
 #include "SystemPanel.hpp"
 
-#include "../../TouhouDanmakufu/Common/DnhConfiguration.hpp"
+#include "../../TouhouDanmakufu/DnhConfiguration.hpp"
 
 #endif
 
