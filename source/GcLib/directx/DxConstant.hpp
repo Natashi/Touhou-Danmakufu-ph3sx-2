@@ -4,10 +4,8 @@
 #include "../gstd/GstdLib.hpp"
 
 #include "DxTypes.hpp"
-
-#if defined(DNH_PROJ_EXECUTOR)
+#include "DxShapes.hpp"
 #include "Vertex.hpp"
-#endif
 
 namespace directx {
 	//*******************************************************************
