@@ -171,6 +171,12 @@
 #pragma comment(lib, "vorbis_static.lib")
 #pragma comment(lib, "vorbisfile_static.lib")
 
+// imgui
+
+#include <imgui.h>
+#include <backends/imgui_impl_dx9.h>
+#include <backends/imgui_impl_win32.h>
+
 //------------------------------------------------------------------------------
 
 #ifndef __L_ENGINE_LEGACY

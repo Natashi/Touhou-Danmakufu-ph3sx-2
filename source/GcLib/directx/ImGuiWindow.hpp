@@ -5,10 +5,9 @@
 #pragma push_macro("new")
 #undef new
 
-#include "imgui.h"
-#include "backends/imgui_impl_dx9.h"
-#include "backends/imgui_impl_win32.h"
-#include "imgui_internal.h"
+#include <imgui_internal.h>
+#include <backends/imgui_impl_dx9.h>
+#include <backends/imgui_impl_win32.h>
 
 #pragma pop_macro("new")
 
