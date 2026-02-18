@@ -177,6 +177,10 @@
 #include <backends/imgui_impl_dx9.h>
 #include <backends/imgui_impl_win32.h>
 
+// kissfft
+
+#include <kissfft/kissfft.hh>
+
 //------------------------------------------------------------------------------
 
 #ifndef __L_ENGINE_LEGACY

@@ -2,8 +2,6 @@
 
 #include "DirectSound.hpp"
 
-#include <kissfft/kissfft.hh>
-
 using namespace gstd;
 using namespace directx;
 
