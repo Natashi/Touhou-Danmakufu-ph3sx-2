@@ -14,9 +14,6 @@
     <Filter Include="source\GcLib\directx">
       <UniqueIdentifier>{5608f270-c90f-4710-8764-b5ffbd632c6f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Common">
-      <UniqueIdentifier>{3e748dca-d55a-4a04-b935-e8522b93a5c0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{b70bfe74-68ff-4d27-822e-db3873027456}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
@@ -27,17 +24,20 @@
     <Filter Include="source\GcLib\directx\Mesh">
       <UniqueIdentifier>{e73259af-d068-459b-8c48-0927a38e30fc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\external">
-      <UniqueIdentifier>{d3c09ab9-3e41-4cfa-abcb-75b5ecaa4e84}</UniqueIdentifier>
+    <Filter Include="source\TouhouDanmakufu">
+      <UniqueIdentifier>{bc3fadc5-a7d2-4dda-91e4-0369926ce173}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\external\Steam">
-      <UniqueIdentifier>{a34dabe5-7a05-4b7b-a4a3-bb0790b325ae}</UniqueIdentifier>
+    <Filter Include="source\DnhExecutor">
+      <UniqueIdentifier>{0f452ba8-d165-4ec6-9d85-7f198fd05294}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\external\imgui">
-      <UniqueIdentifier>{5a411432-c3eb-4bfa-9d7e-821edd7f727f}</UniqueIdentifier>
+    <Filter Include="submodules">
+      <UniqueIdentifier>{bd996d1e-af0c-4aeb-98c3-103f1b24a548}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\external\imgui\backends">
-      <UniqueIdentifier>{c15439b1-e189-466d-8d02-e1d375363d28}</UniqueIdentifier>
+    <Filter Include="submodules\imgui">
+      <UniqueIdentifier>{d8185a8c-7056-41ba-8b49-9f4afeac5796}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="submodules\imgui\backends">
+      <UniqueIdentifier>{4ea9b9e7-e574-41f7-af2b-43c348ddf8b9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -98,78 +98,6 @@
     <ClCompile Include="source\GcLib\directx\TransitionEffect.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhCommon.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhReplay.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhScript.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgCommon.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgControlScript.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgEnemy.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgIntersection.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgItem.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgPackageController.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgPackageScript.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgPlayer.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgShot.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgStageController.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgStageScript.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgSystem.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgUserExtendScene.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\Common.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\GcLibImpl.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\ScriptSelectScene.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\StgScene.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\System.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\TitleScene.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\WinMain.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\gstd\RandProvider.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
@@ -221,32 +149,11 @@
     <ClCompile Include="source\GcLib\directx\DxScriptObjClone.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhConfiguration.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\directx\ImGuiWindow.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_draw.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_tables.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_widgets.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\directx\DirectGraphicsBase.cpp">
       <Filter>source\GcLib\directx</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\backends\imgui_impl_dx9.cpp">
-      <Filter>source\external\imgui\backends</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>source\external\imgui\backends</Filter>
     </ClCompile>
     <ClCompile Include="source\GcLib\directx\DxCamera.cpp">
       <Filter>source\GcLib\directx</Filter>
@@ -260,8 +167,101 @@
     <ClCompile Include="source\GcLib\gstd\CompressorStream.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgCommonData.cpp">
-      <Filter>source\Common</Filter>
+    <ClCompile Include="source\DnhExecutor\Common.cpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhExecutor\GcLibImpl.cpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhExecutor\ScriptSelectScene.cpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhExecutor\System.cpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhExecutor\TitleScene.cpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhExecutor\WinMain.cpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_draw.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_tables.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_widgets.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\backends\imgui_impl_dx9.cpp">
+      <Filter>submodules\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>submodules\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhCommon.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhConfiguration.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhGcLibImpl.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhReplay.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhScript.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgCommon.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgCommonData.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgControlScript.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgEnemy.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgIntersection.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgItem.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgPackageController.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgPackageScript.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgPlayer.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgShot.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgStageController.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgStageScript.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgSystem.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\StgUserExtendScene.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhExecutor\StgScene.cpp">
+      <Filter>source\DnhExecutor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -340,81 +340,6 @@
     <ClInclude Include="source\GcLib\GcLib.hpp">
       <Filter>source\GcLib</Filter>
     </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhCommon.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConstant.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhReplay.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhScript.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgCommon.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgControlScript.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgEnemy.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgIntersection.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgItem.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgPackageController.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgPackageScript.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgPlayer.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgShot.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgStageController.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgStageScript.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgSystem.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgUserExtendScene.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\Common.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\Constant.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\GcLibImpl.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\ScriptSelectScene.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\StgScene.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\System.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\TitleScene.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
     <ClInclude Include="source\GcLib\gstd\RandProvider.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
@@ -438,12 +363,6 @@
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\Script\ScriptLexer.hpp">
       <Filter>source\GcLib\gstd\Script</Filter>
-    </ClInclude>
-    <ClInclude Include="source\Steam\SteamBase.hpp">
-      <Filter>source\external\Steam</Filter>
-    </ClInclude>
-    <ClInclude Include="source\Steam\Achievement.hpp">
-      <Filter>source\external\Steam</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\ArchiveEncryption.hpp">
       <Filter>source\GcLib\gstd</Filter>
@@ -478,41 +397,11 @@
     <ClInclude Include="source\GcLib\gstd\GstdConstant.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgObjectBase.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConfiguration.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
     <ClInclude Include="source\GcLib\directx\ImGuiWindow.hpp">
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
-    <ClInclude Include="source\ext\imgui\imconfig.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imgui.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imgui_internal.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imstb_rectpack.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imstb_textedit.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imstb_truetype.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
     <ClInclude Include="source\GcLib\directx\DirectGraphicsBase.hpp">
       <Filter>source\GcLib\directx</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\backends\imgui_impl_dx9.h">
-      <Filter>source\external\imgui\backends</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\backends\imgui_impl_win32.h">
-      <Filter>source\external\imgui\backends</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\DxCamera.hpp">
       <Filter>source\GcLib\directx</Filter>
@@ -526,24 +415,103 @@
     <ClInclude Include="source\GcLib\gstd\CompressorStream.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgCommonData.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
     <ClInclude Include="source\GcLib\Types.hpp">
       <Filter>source\GcLib</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="source\TouhouDanmakufu\DnhExecutor\DnhExecuter.rc">
-      <Filter>source</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="source\TouhouDanmakufu\DnhExecutor\th_dnh.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
+    <ClInclude Include="source\GcLib\directx\DxShapes.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhExecutor\Common.hpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhExecutor\Constant.hpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhExecutor\GcLibImpl.hpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhExecutor\ScriptSelectScene.hpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhExecutor\System.hpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhExecutor\TitleScene.hpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhCommon.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhConfiguration.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhConstant.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhGcLibImpl.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhReplay.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhScript.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgCommon.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgCommonData.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgControlScript.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgEnemy.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgIntersection.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgItem.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgObjectBase.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgPackageController.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgPackageScript.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgPlayer.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgShot.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgStageController.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgStageScript.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgSystem.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\StgUserExtendScene.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhExecutor\StgScene.hpp">
+      <Filter>source\DnhExecutor</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="gstd.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="source\DnhExecutor\DnhExecuter.rc">
+      <Filter>source\DnhExecutor</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

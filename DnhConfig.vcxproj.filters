@@ -14,21 +14,24 @@
     <Filter Include="source\GcLib\directx">
       <UniqueIdentifier>{6c4c0adb-8310-4472-abbb-3f83d6acac74}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Common">
-      <UniqueIdentifier>{7bade9b8-f61d-4004-91c4-7ead5262ac93}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{5729d24a-873a-4c5e-978c-e72543cec9d5}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
-    <Filter Include="source\external">
-      <UniqueIdentifier>{d05e6834-306a-46e4-bdef-fb70ec377849}</UniqueIdentifier>
+    <Filter Include="source\TouhouDanmakufu">
+      <UniqueIdentifier>{3dae7227-f732-4ea1-bc86-51913aa36a91}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\external\imgui">
-      <UniqueIdentifier>{22e2dd30-542e-4d56-9025-ab1bd2a91ac3}</UniqueIdentifier>
+    <Filter Include="source\DnhConfig">
+      <UniqueIdentifier>{dab9d5cc-ff30-46a7-86ec-0d4dda78796e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\external\imgui\backends">
-      <UniqueIdentifier>{9c339da4-8f04-46e3-a172-9610a645517e}</UniqueIdentifier>
+    <Filter Include="submodules">
+      <UniqueIdentifier>{025b7458-d639-4fcb-a3e0-9b69e4795ed9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="submodules\imgui">
+      <UniqueIdentifier>{66a0d3ff-9d3b-4caa-b9df-d75b9e8f86b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="submodules\imgui\backends">
+      <UniqueIdentifier>{055bff95-bbda-4cf0-af35-b751bf640638}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -50,53 +53,11 @@
     <ClCompile Include="source\GcLib\directx\DirectInput.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhCommon.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhConfig\Common.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhConfig\GcLibImpl.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhConfig\MainWindow.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhConfig\WinMain.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\pch.cpp">
       <Filter>source\GcLib</Filter>
     </ClCompile>
     <ClCompile Include="source\GcLib\gstd\Logger.cpp">
       <Filter>source\GcLib\gstd</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhConfiguration.cpp">
-      <Filter>source\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\backends\imgui_impl_dx9.cpp">
-      <Filter>source\external\imgui\backends</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>source\external\imgui\backends</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_draw.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_tables.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_widgets.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\DnhConfig\ControllerMap.cpp">
-      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\GcLib\directx\ImGuiWindow.cpp">
       <Filter>source\GcLib\directx</Filter>
@@ -106,6 +67,48 @@
     </ClCompile>
     <ClCompile Include="source\GcLib\gstd\CpuInformation.cpp">
       <Filter>source\GcLib\gstd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhCommon.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhConfiguration.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TouhouDanmakufu\DnhGcLibImpl.cpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhConfig\Common.cpp">
+      <Filter>source\DnhConfig</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhConfig\ControllerMap.cpp">
+      <Filter>source\DnhConfig</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhConfig\GcLibImpl.cpp">
+      <Filter>source\DnhConfig</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhConfig\MainWindow.cpp">
+      <Filter>source\DnhConfig</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DnhConfig\WinMain.cpp">
+      <Filter>source\DnhConfig</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_draw.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_tables.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_widgets.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\backends\imgui_impl_dx9.cpp">
+      <Filter>submodules\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>submodules\imgui\backends</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -142,62 +145,11 @@
     <ClInclude Include="source\GcLib\GcLib.hpp">
       <Filter>source\GcLib</Filter>
     </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhCommon.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConstant.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhConfig\Common.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhConfig\Constant.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhConfig\GcLibImpl.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhConfig\MainWindow.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
     <ClInclude Include="source\GcLib\pch.h">
       <Filter>source\GcLib</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\gstd\Logger.hpp">
       <Filter>source\GcLib\gstd</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConfiguration.hpp">
-      <Filter>source\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\backends\imgui_impl_dx9.h">
-      <Filter>source\external\imgui\backends</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\backends\imgui_impl_win32.h">
-      <Filter>source\external\imgui\backends</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imconfig.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imgui.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imgui_internal.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imstb_rectpack.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imstb_textedit.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imstb_truetype.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\TouhouDanmakufu\DnhConfig\ControllerMap.hpp">
-      <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\GcLib\directx\ImGuiWindow.hpp">
       <Filter>source\GcLib\directx</Filter>
@@ -214,10 +166,40 @@
     <ClInclude Include="source\GcLib\Types.hpp">
       <Filter>source\GcLib</Filter>
     </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhCommon.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhConfiguration.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhConstant.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TouhouDanmakufu\DnhGcLibImpl.hpp">
+      <Filter>source\TouhouDanmakufu</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhConfig\Common.hpp">
+      <Filter>source\DnhConfig</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhConfig\Constant.hpp">
+      <Filter>source\DnhConfig</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhConfig\ControllerMap.hpp">
+      <Filter>source\DnhConfig</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhConfig\GcLibImpl.hpp">
+      <Filter>source\DnhConfig</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DnhConfig\MainWindow.hpp">
+      <Filter>source\DnhConfig</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxShapes.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="source\TouhouDanmakufu\DnhConfig\DnhConfig.rc">
-      <Filter>source</Filter>
+    <ResourceCompile Include="source\DnhConfig\DnhConfig.rc">
+      <Filter>source\DnhConfig</Filter>
     </ResourceCompile>
   </ItemGroup>
 </Project>

@@ -272,48 +272,13 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="source\ext\imgui\backends\imgui_impl_dx9.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
-      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\backends\imgui_impl_win32.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
-      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
-      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_draw.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
-      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_tables.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
-      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_widgets.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
-      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WholeProgramOptimization>
-    </ClCompile>
+    <ClCompile Include="source\DnhExecutor\Common.cpp" />
+    <ClCompile Include="source\DnhExecutor\GcLibImpl.cpp" />
+    <ClCompile Include="source\DnhExecutor\ScriptSelectScene.cpp" />
+    <ClCompile Include="source\DnhExecutor\StgScene.cpp" />
+    <ClCompile Include="source\DnhExecutor\System.cpp" />
+    <ClCompile Include="source\DnhExecutor\TitleScene.cpp" />
+    <ClCompile Include="source\DnhExecutor\WinMain.cpp" />
     <ClCompile Include="source\GcLib\directx\DirectGraphics.cpp" />
     <ClCompile Include="source\GcLib\directx\DirectGraphicsBase.cpp" />
     <ClCompile Include="source\GcLib\directx\DirectInput.cpp" />
@@ -366,42 +331,136 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
     </ClCompile>
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhCommon.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhConfiguration.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhReplay.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\DnhScript.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgCommon.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgControlScript.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgEnemy.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgIntersection.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgItem.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgPackageController.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgPackageScript.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgPlayer.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgCommonData.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgShot.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgStageController.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgStageScript.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgSystem.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\Common\StgUserExtendScene.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\Common.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\GcLibImpl.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\ScriptSelectScene.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\StgScene.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\System.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\TitleScene.cpp" />
-    <ClCompile Include="source\TouhouDanmakufu\DnhExecutor\WinMain.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhCommon.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhConfiguration.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhGcLibImpl.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhReplay.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\DnhScript.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgCommon.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgCommonData.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgControlScript.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgEnemy.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgIntersection.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgItem.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgPackageController.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgPackageScript.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgPlayer.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgShot.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgStageController.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgStageScript.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgSystem.cpp" />
+    <ClCompile Include="source\TouhouDanmakufu\StgUserExtendScene.cpp" />
+    <ClCompile Include="submodules\imgui\backends\imgui_impl_dx9.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\backends\imgui_impl_win32.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_draw.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_tables.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_widgets.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeaderOutputFile>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\ext\imgui\backends\imgui_impl_dx9.h" />
-    <ClInclude Include="source\ext\imgui\backends\imgui_impl_win32.h" />
-    <ClInclude Include="source\ext\imgui\imconfig.h" />
-    <ClInclude Include="source\ext\imgui\imgui.h" />
-    <ClInclude Include="source\ext\imgui\imgui_internal.h" />
-    <ClInclude Include="source\ext\imgui\imstb_rectpack.h" />
-    <ClInclude Include="source\ext\imgui\imstb_textedit.h" />
-    <ClInclude Include="source\ext\imgui\imstb_truetype.h" />
+    <ClInclude Include="source\DnhExecutor\Common.hpp" />
+    <ClInclude Include="source\DnhExecutor\Constant.hpp" />
+    <ClInclude Include="source\DnhExecutor\GcLibImpl.hpp" />
+    <ClInclude Include="source\DnhExecutor\ScriptSelectScene.hpp" />
+    <ClInclude Include="source\DnhExecutor\StgScene.hpp" />
+    <ClInclude Include="source\DnhExecutor\System.hpp" />
+    <ClInclude Include="source\DnhExecutor\TitleScene.hpp" />
     <ClInclude Include="source\GcLib\directx\DirectGraphics.hpp" />
     <ClInclude Include="source\GcLib\directx\DirectGraphicsBase.hpp" />
     <ClInclude Include="source\GcLib\directx\DirectInput.hpp" />
@@ -411,6 +470,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClInclude Include="source\GcLib\directx\DxLib.hpp" />
     <ClInclude Include="source\GcLib\directx\DxObject.hpp" />
     <ClInclude Include="source\GcLib\directx\DxScript.hpp" />
+    <ClInclude Include="source\GcLib\directx\DxShapes.hpp" />
     <ClInclude Include="source\GcLib\directx\DxText.hpp" />
     <ClInclude Include="source\GcLib\directx\DxTypes.hpp" />
     <ClInclude Include="source\GcLib\directx\DxUtility.hpp" />
@@ -453,49 +513,37 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
     <ClInclude Include="source\GcLib\gstd\Window.hpp" />
     <ClInclude Include="source\GcLib\pch.h" />
     <ClInclude Include="source\GcLib\Types.hpp" />
-    <ClInclude Include="source\Steam\Achievement.hpp" />
-    <ClInclude Include="source\Steam\SteamBase.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhCommon.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConfiguration.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhConstant.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhGcLibImpl.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhReplay.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\DnhScript.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgCommon.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgControlScript.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgEnemy.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgIntersection.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgItem.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgObjectBase.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgPackageController.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgPackageScript.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgPlayer.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgCommonData.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgShot.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgStageController.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgStageScript.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgSystem.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\Common\StgUserExtendScene.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\Common.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\Constant.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\GcLibImpl.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\ScriptSelectScene.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\StgScene.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\System.hpp" />
-    <ClInclude Include="source\TouhouDanmakufu\DnhExecutor\TitleScene.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="source\TouhouDanmakufu\DnhExecutor\DnhExecuter.rc">
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">source\TouhouDanmakufu\DnhExecutor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">source\TouhouDanmakufu\DnhExecutor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='ReleaseLegacy|Win32'">source\TouhouDanmakufu\DnhExecutor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="source\TouhouDanmakufu\DnhExecutor\th_dnh.ico" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhCommon.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhConfiguration.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhConstant.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhGcLibImpl.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhReplay.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\DnhScript.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgCommon.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgCommonData.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgControlScript.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgEnemy.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgIntersection.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgItem.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgObjectBase.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgPackageController.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgPackageScript.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgPlayer.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgShot.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgStageController.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgStageScript.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgSystem.hpp" />
+    <ClInclude Include="source\TouhouDanmakufu\StgUserExtendScene.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="gstd.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="source\DnhExecutor\DnhExecuter.rc" />
+    <Content Include="source\DnhExecutor\th_dnh_sx.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="source\DnhExecutor\DnhExecuter.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

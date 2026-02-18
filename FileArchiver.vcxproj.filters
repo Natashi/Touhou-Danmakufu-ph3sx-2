@@ -18,26 +18,20 @@
     <Filter Include="source\GcLib\directx">
       <UniqueIdentifier>{20876abb-0bc6-48b8-9419-2e2d6e410c5d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\external">
-      <UniqueIdentifier>{5bc0fa8b-305e-47c6-b57e-56be3d611636}</UniqueIdentifier>
+    <Filter Include="source\FileArchiver">
+      <UniqueIdentifier>{6e37b084-6687-463f-b8f4-50a7387ec3f9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\external\imgui">
-      <UniqueIdentifier>{f4ba19d6-8287-4ea2-bd17-6e2eab402429}</UniqueIdentifier>
+    <Filter Include="submodules">
+      <UniqueIdentifier>{06693359-33b6-4513-a4d1-e4d515cddd49}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\external\imgui\backends">
-      <UniqueIdentifier>{08a44d96-2bef-486a-ad0e-6b6ec769dcbc}</UniqueIdentifier>
+    <Filter Include="submodules\imgui">
+      <UniqueIdentifier>{0f678a87-64b7-4b7e-bd81-464097e1ad04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="submodules\imgui\backends">
+      <UniqueIdentifier>{3105f23d-9108-4662-9570-748a2dce47bd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\FileArchiver\LibImpl.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FileArchiver\MainWindow.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FileArchiver\WinMain.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\gstd\Application.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
@@ -65,24 +59,6 @@
     <ClCompile Include="source\GcLib\directx\DxUtility.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_draw.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_tables.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\imgui_widgets.cpp">
-      <Filter>source\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\backends\imgui_impl_dx9.cpp">
-      <Filter>source\external\imgui\backends</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ext\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>source\external\imgui\backends</Filter>
-    </ClCompile>
     <ClCompile Include="source\GcLib\directx\ImGuiWindow.cpp">
       <Filter>source\GcLib\directx</Filter>
     </ClCompile>
@@ -95,17 +71,35 @@
     <ClCompile Include="source\GcLib\gstd\CompressorStream.cpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClCompile>
+    <ClCompile Include="source\FileArchiver\LibImpl.cpp">
+      <Filter>source\FileArchiver</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FileArchiver\MainWindow.cpp">
+      <Filter>source\FileArchiver</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FileArchiver\WinMain.cpp">
+      <Filter>source\FileArchiver</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_draw.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_tables.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\imgui_widgets.cpp">
+      <Filter>submodules\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\backends\imgui_impl_dx9.cpp">
+      <Filter>submodules\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="submodules\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>submodules\imgui\backends</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\FileArchiver\Constant.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\FileArchiver\LibImpl.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\FileArchiver\MainWindow.hpp">
-      <Filter>source</Filter>
-    </ClInclude>
     <ClInclude Include="source\GcLib\gstd\Application.hpp">
       <Filter>source\GcLib\gstd</Filter>
     </ClInclude>
@@ -148,30 +142,6 @@
     <ClInclude Include="source\GcLib\directx\DxUtility.hpp">
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
-    <ClInclude Include="source\ext\imgui\imconfig.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imgui.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imgui_internal.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imstb_rectpack.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imstb_textedit.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\imstb_truetype.h">
-      <Filter>source\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\backends\imgui_impl_dx9.h">
-      <Filter>source\external\imgui\backends</Filter>
-    </ClInclude>
-    <ClInclude Include="source\ext\imgui\backends\imgui_impl_win32.h">
-      <Filter>source\external\imgui\backends</Filter>
-    </ClInclude>
     <ClInclude Include="source\GcLib\directx\ImGuiWindow.hpp">
       <Filter>source\GcLib\directx</Filter>
     </ClInclude>
@@ -187,10 +157,22 @@
     <ClInclude Include="source\GcLib\Types.hpp">
       <Filter>source\GcLib</Filter>
     </ClInclude>
+    <ClInclude Include="source\GcLib\directx\DxShapes.hpp">
+      <Filter>source\GcLib\directx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\FileArchiver\Constant.hpp">
+      <Filter>source\FileArchiver</Filter>
+    </ClInclude>
+    <ClInclude Include="source\FileArchiver\LibImpl.hpp">
+      <Filter>source\FileArchiver</Filter>
+    </ClInclude>
+    <ClInclude Include="source\FileArchiver\MainWindow.hpp">
+      <Filter>source\FileArchiver</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="source\FileArchiver\FileArchiver.rc">
-      <Filter>source</Filter>
+      <Filter>source\FileArchiver</Filter>
     </ResourceCompile>
   </ItemGroup>
 </Project>
