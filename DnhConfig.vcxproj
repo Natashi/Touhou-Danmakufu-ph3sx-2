@@ -90,10 +90,10 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>DNH_PROJ_CONFIG;WIN32;_DEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AssemblerListingLocation>DnhConfig\Debug\</AssemblerListingLocation>
+      <AssemblerListingLocation>$(ProjectName)/$(Configuration)/</AssemblerListingLocation>
       <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
-      <ObjectFileName>DnhConfig\Debug\</ObjectFileName>
-      <ProgramDataBaseFileName>DnhConfig\Debug\DnhConfig.pdb</ProgramDataBaseFileName>
+      <ObjectFileName>$(ProjectName)/$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(ProjectName)/$(Configuration)/$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -142,10 +142,10 @@
       <WarningLevel>Level3</WarningLevel>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PreprocessorDefinitions>DNH_PROJ_CONFIG;WIN32;NDEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AssemblerListingLocation>DnhConfig\Release\</AssemblerListingLocation>
+      <AssemblerListingLocation>$(ProjectName)/$(Configuration)/</AssemblerListingLocation>
       <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
-      <ObjectFileName>DnhConfig\Release\</ObjectFileName>
-      <ProgramDataBaseFileName>DnhConfig\Release\DnhConfig.pdb</ProgramDataBaseFileName>
+      <ObjectFileName>$(ProjectName)/$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(ProjectName)/$(Configuration)/$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -195,10 +195,10 @@
       <WarningLevel>Level3</WarningLevel>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PreprocessorDefinitions>DNH_PROJ_CONFIG;WIN32;NDEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AssemblerListingLocation>DnhConfig\Release\</AssemblerListingLocation>
+      <AssemblerListingLocation>$(ProjectName)/$(Configuration)/</AssemblerListingLocation>
       <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
-      <ObjectFileName>DnhConfig\Release\</ObjectFileName>
-      <ProgramDataBaseFileName>DnhConfig\Release\DnhConfig.pdb</ProgramDataBaseFileName>
+      <ObjectFileName>$(ProjectName)/$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(ProjectName)/$(Configuration)/$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>

@@ -94,10 +94,10 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessorDefinitions>DNH_PROJ_FILEARCHIVER;WIN32;_DEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AssemblerListingLocation>FileArchiver\Debug\</AssemblerListingLocation>
+      <AssemblerListingLocation>$(ProjectName)/$(Configuration)/</AssemblerListingLocation>
       <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
-      <ObjectFileName>FileArchiver\Debug\</ObjectFileName>
-      <ProgramDataBaseFileName>FileArchiver\Debug\FileArchiver.pdb</ProgramDataBaseFileName>
+      <ObjectFileName>$(ProjectName)/$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(ProjectName)/$(Configuration)/$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -148,10 +148,10 @@
       <WarningLevel>Level3</WarningLevel>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PreprocessorDefinitions>DNH_PROJ_FILEARCHIVER;WIN32;NDEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AssemblerListingLocation>FileArchiver\Release\</AssemblerListingLocation>
+      <AssemblerListingLocation>$(ProjectName)/$(Configuration)/</AssemblerListingLocation>
       <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
-      <ObjectFileName>FileArchiver\Release\</ObjectFileName>
-      <ProgramDataBaseFileName>FileArchiver\Release\FileArchiver.pdb</ProgramDataBaseFileName>
+      <ObjectFileName>$(ProjectName)/$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(ProjectName)/$(Configuration)/$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -202,10 +202,10 @@
       <WarningLevel>Level3</WarningLevel>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PreprocessorDefinitions>DNH_PROJ_FILEARCHIVER;WIN32;NDEBUG;_WINDOWS;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AssemblerListingLocation>FileArchiver\Release\</AssemblerListingLocation>
+      <AssemblerListingLocation>$(ProjectName)/$(Configuration)/</AssemblerListingLocation>
       <PrecompiledHeaderOutputFile>$(ProjectName)/$(Configuration)/$(ProjectName).pch</PrecompiledHeaderOutputFile>
-      <ObjectFileName>FileArchiver\Release\</ObjectFileName>
-      <ProgramDataBaseFileName>FileArchiver\Release\FileArchiver.pdb</ProgramDataBaseFileName>
+      <ObjectFileName>$(ProjectName)/$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(ProjectName)/$(Configuration)/$(ProjectName).pdb</ProgramDataBaseFileName>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>source/GcLib/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
