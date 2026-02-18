@@ -57,8 +57,6 @@
 #include <windows.h>	// Obviously
 #include <commctrl.h>	// For a lot of stuff in Window.cpp
 
-#pragma comment (lib, "comctl32.lib")
-
 #undef GetObject
 
 #define _WIN32_DCOM
@@ -66,10 +64,6 @@
 #include <wingdi.h>		// For font generation in DxText.cpp
 #include <pdh.h>		// For performance queries in Logger.cpp
 #include <wbemidl.h>
-
-#pragma comment (lib, "gdi32.lib")
-#pragma comment (lib, "pdh.lib")
-#pragma comment (lib, "wbemuuid.lib")
 
 //-----------------------------------DirectX------------------------------------
 
@@ -81,26 +75,13 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <DxErr.h>
-#pragma comment(lib, "dxguid.lib")
-#pragma comment(lib, "d3d9.lib")
-#pragma comment(lib, "dxerr.lib")
-
-#ifdef _DEBUG
-	#pragma comment(lib, "d3dx9d.lib")
-#else
-	#pragma comment(lib, "d3dx9.lib")
-#endif
 
 #define DIRECTINPUT_VERSION 0x0800
 
 #include <dinput.h>
-#pragma comment(lib, "dinput8.lib")
 
 #include <mmreg.h>		// For some wave format constants
 #include <dsound.h>
-
-#pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "dsound.lib")
 
 // Restore original warnings
 #pragma warning(pop)
@@ -158,18 +139,10 @@
 #define ZLIB_WINAPI
 #include <zlib.h>
 
-	//#pragma comment(lib, "zlibdynamic.lib")
-#pragma comment(lib, "zlibstatic.lib")
-//#pragma comment(lib, "zlibdynamic.lib")
-
 // libogg + libvorbis
 
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
-
-#pragma comment(lib, "ogg_static.lib")
-#pragma comment(lib, "vorbis_static.lib")
-#pragma comment(lib, "vorbisfile_static.lib")
 
 // imgui
 
