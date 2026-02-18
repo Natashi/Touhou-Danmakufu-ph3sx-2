@@ -61,19 +61,15 @@
 
 #undef GetObject
 
-#if defined(DNH_PROJ_EXECUTOR)
+#define _WIN32_DCOM
 
-	#define _WIN32_DCOM
+#include <wingdi.h>		// For font generation in DxText.cpp
+#include <pdh.h>		// For performance queries in Logger.cpp
+#include <wbemidl.h>
 
-	#include <wingdi.h>		// For font generation in DxText.cpp
-	#include <pdh.h>		// For performance queries in Logger.cpp
-	#include <wbemidl.h>
-
-	#pragma comment (lib, "gdi32.lib")
-	#pragma comment (lib, "pdh.lib")
-	#pragma comment (lib, "wbemuuid.lib")
-
-#endif	// defined(DNH_PROJ_EXECUTOR)
+#pragma comment (lib, "gdi32.lib")
+#pragma comment (lib, "pdh.lib")
+#pragma comment (lib, "wbemuuid.lib")
 
 //-----------------------------------DirectX------------------------------------
 
@@ -95,24 +91,16 @@
 	#pragma comment(lib, "d3dx9.lib")
 #endif
 
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
+#define DIRECTINPUT_VERSION 0x0800
 
-	#define DIRECTINPUT_VERSION 0x0800
+#include <dinput.h>
+#pragma comment(lib, "dinput8.lib")
 
-	#include <dinput.h>
-	#pragma comment(lib, "dinput8.lib")
+#include <mmreg.h>		// For some wave format constants
+#include <dsound.h>
 
-#endif	// defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_CONFIG)
-
-#if defined(DNH_PROJ_EXECUTOR)
-
-	#include <mmreg.h>		// For some wave format constants
-	#include <dsound.h>
-
-	#pragma comment(lib, "d3dcompiler.lib")
-	#pragma comment(lib, "dsound.lib")
-
-#endif	// defined(DNH_PROJ_EXECUTOR)
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "dsound.lib")
 
 // Restore original warnings
 #pragma warning(pop)
@@ -121,16 +109,10 @@
 
 #include <cstdlib>
 
-//debug
 #ifdef _DEBUG
 	#define _CRTDBG_MAP_ALLOC
 
 	#include <crtdbg.h>
-#endif
-
-#ifdef _DEBUG
-	#define __L_DBG_NEW__  ::new(_NORMAL_BLOCK, __FILE__, __LINE__)
-	#define new __L_DBG_NEW__
 #endif
 
 #include <cwchar>
@@ -169,43 +151,38 @@
 
 #include <regex>
 
-//-------------------------------External stuffs--------------------------------
+//-------------------------------External dependencies--------------------------------
 
 // zlib
 
-#if defined(DNH_PROJ_EXECUTOR) || defined(DNH_PROJ_FILEARCHIVER)
-	//#define ZLIB_WINAPI
-	#include <zlib/zlib.h>
+#define ZLIB_WINAPI
+#include <zlib.h>
 
-	#pragma comment(lib, "zlibstatic.lib")
 	//#pragma comment(lib, "zlibdynamic.lib")
-#endif
+#pragma comment(lib, "zlibstatic.lib")
+//#pragma comment(lib, "zlibdynamic.lib")
 
 // libogg + libvorbis
 
-#if defined(DNH_PROJ_EXECUTOR)
-	#include <vorbis/codec.h>
-	#include <vorbis/vorbisfile.h>
+#include <vorbis/codec.h>
+#include <vorbis/vorbisfile.h>
 
-	#pragma comment(lib, "ogg_static.lib")
-	#pragma comment(lib, "vorbis_static.lib")
-	//#pragma comment(lib, "vorbis_dynamic.lib")
-	#pragma comment(lib, "vorbisfile_static.lib")
-#endif
+#pragma comment(lib, "ogg_static.lib")
+#pragma comment(lib, "vorbis_static.lib")
+#pragma comment(lib, "vorbisfile_static.lib")
 
 //------------------------------------------------------------------------------
 
-#if (!defined(__L_ENGINE_LEGACY))
-
+#ifndef __L_ENGINE_LEGACY
 	#define __L_MATH_VECTORIZE
 	#define __L_USE_HWINSTANCING
-
 #endif
 
 //-----------------------------------Extras-------------------------------------
 
 // Use std::filesystem for file management
 #define __L_STD_FILESYSTEM
+
 #ifdef __L_STD_FILESYSTEM
 	#include <filesystem>
 	namespace stdfs = std::filesystem;
@@ -217,5 +194,10 @@ namespace stdch = std::chrono;
 namespace views = std::views;
 
 //------------------------------------------------------------------------------
+
+#ifdef _DEBUG
+	#define __L_DBG_NEW__  ::new(_NORMAL_BLOCK, __FILE__, __LINE__)
+	#define new __L_DBG_NEW__
+#endif
 
 #include "Types.hpp"
