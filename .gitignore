@@ -261,6 +261,9 @@ paket-files/
 __pycache__/
 *.pyc
 
+# vcpkg packages
+/vcpkg_installed
+
 # Other files
 
 # Code Backups

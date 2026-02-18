@@ -61,7 +61,7 @@
     <IntDir>DnhExecutor\Release\</IntDir>
     <LinkIncremental>
     </LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext;.\source\ext\imgui</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\submodules;.\submodules\imgui</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>th_dnh_ph3sx</TargetName>
   </PropertyGroup>
@@ -70,7 +70,7 @@
     <IntDir>DnhExecutor\Release_legacy\</IntDir>
     <LinkIncremental>
     </LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext;.\source\ext\imgui</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\submodules;.\submodules\imgui</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>th_dnh_ph3sx_legacy</TargetName>
   </PropertyGroup>
@@ -79,9 +79,13 @@
     <IntDir>DnhExecutor/Debug/</IntDir>
     <LinkIncremental>
     </LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\source\ext;.\source\ext\imgui</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include;.\submodules;.\submodules\imgui</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)Lib\x86;.\library</LibraryPath>
     <TargetName>th_dnh_d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+    <VcpkgUseStatic>true</VcpkgUseStatic>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -130,7 +134,7 @@
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libc.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <OutputFile>bin_th_dnh/th_dnh_ph3sx.exe</OutputFile>
-      <AdditionalDependencies>legacy_stdio_definitions.lib;comctl32.lib;gdi32.lib;pdh.lib;wbemuuid.lib;d3d9.lib;d3dx9.lib;d3dcompiler.lib;dxguid.lib;dxerr.lib;dinput8.lib;dsound.lib;zlib.lib;ogg.lib;vorbis.lib;vorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;comctl32.lib;gdi32.lib;pdh.lib;wbemuuid.lib;d3d9.lib;d3dx9.lib;d3dcompiler.lib;dxguid.lib;dxerr.lib;dinput8.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalOptions>/NODEFAULTLIB:"libcmt.lib" %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -190,7 +194,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libc.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <OutputFile>bin_th_dnh/th_dnh_ph3sx_legacy.exe</OutputFile>
-      <AdditionalDependencies>legacy_stdio_definitions.lib;comctl32.lib;gdi32.lib;pdh.lib;wbemuuid.lib;d3d9.lib;d3dx9.lib;d3dcompiler.lib;dxguid.lib;dxerr.lib;dinput8.lib;dsound.lib;zlib.lib;ogg.lib;vorbis.lib;vorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;comctl32.lib;gdi32.lib;pdh.lib;wbemuuid.lib;d3d9.lib;d3dx9.lib;d3dcompiler.lib;dxguid.lib;dxerr.lib;dinput8.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalOptions>/NODEFAULTLIB:"libcmt.lib" %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -256,7 +260,7 @@ xcopy /e/h/y/i "$(ProjectDir)source/TouhouDanmakufu" "$(ProjectDir).bk/TouhouDan
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libc.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <OutputFile>bin_th_dnh/th_dnh_d.exe</OutputFile>
-      <AdditionalDependencies>legacy_stdio_definitions.lib;comctl32.lib;gdi32.lib;pdh.lib;wbemuuid.lib;d3d9.lib;d3dx9d.lib;d3dcompiler.lib;dxguid.lib;dxerr.lib;dinput8.lib;dsound.lib;zlib.lib;ogg.lib;vorbis.lib;vorbisfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;comctl32.lib;gdi32.lib;pdh.lib;wbemuuid.lib;d3d9.lib;d3dx9d.lib;d3dcompiler.lib;dxguid.lib;dxerr.lib;dinput8.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalOptions>/NODEFAULTLIB:libcmt.lib  /NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
