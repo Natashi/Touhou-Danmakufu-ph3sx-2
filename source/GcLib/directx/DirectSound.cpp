@@ -544,15 +544,13 @@ void SoundInfoPanel::ProcessGui() {
 						ImGui::TableSetColumnIndex(5);
 						ImGui::Text(SoundFormatToString(item.format));
 						if (ImGui::IsItemHovered()) {
-							ImGui::BeginTooltipEx(ImGuiTooltipFlags_OverridePreviousTooltip, ImGuiWindowFlags_None);
+							ImGui::BeginTooltipEx(ImGuiTooltipFlags_OverridePrevious, ImGuiWindowFlags_None);
 
 							ImGui::Text("Format Tag: %d", item.waveFmt.wFormatTag);
 							ImGui::Text("%u Hz, %u channels", item.waveFmt.nSamplesPerSec, item.waveFmt.nChannels);
 
 							ImGui::EndTooltip();
 						}
-
-						
 					}
 				}
 

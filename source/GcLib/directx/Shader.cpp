@@ -759,7 +759,7 @@ void ShaderInfoPanel::ProcessGui() {
 	auto& orgTextColor = ImGui::GetStyleColorVec4(ImGuiCol_Text);
 
 	auto _Tooltip = [&orgTextColor](std::function<void()> gui) {
-		ImGui::BeginTooltipEx(ImGuiTooltipFlags_OverridePreviousTooltip, ImGuiWindowFlags_None);
+		ImGui::BeginTooltipEx(ImGuiTooltipFlags_OverridePrevious, ImGuiWindowFlags_None);
 
 		ImGui::PushStyleColor(ImGuiCol_Text, orgTextColor);
 		gui();

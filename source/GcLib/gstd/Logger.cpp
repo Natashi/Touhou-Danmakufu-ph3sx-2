@@ -509,20 +509,10 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 
 			size_t count = eventsCopy_.size();
 
-			// Clip display to only visible items
-			// TODO: CalcListClipping doesn't work properly due to some entries spanning multiple lines
+			// TODO: implement clip display
+			// ! ImGui 1.90.1: CalcListClipping has been removed and replaced with ImGuiListClipper
 
 			int dispStart = 0, dispEnd = count;
-			constexpr bool bClipping = false;
-
-			if constexpr (bClipping) {
-				ImGui::CalcListClipping(count, htItem, &dispStart, &dispEnd);
-
-				dispStart = std::max(0, dispStart - 3);
-				dispEnd = std::min<int>(count, dispEnd + 1);
-
-				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + dispStart * htItem);
-			}
 
 			for (size_t i = dispStart; i < dispEnd; ++i) {
 				const LogEntry& entry = eventsCopy_[i];
@@ -559,10 +549,6 @@ void WindowLogger::PanelEventLog::ProcessGui() {
 				ImGui::TextUnformatted(entry.text.c_str());
 
 				ImGui::PopStyleColor();
-			}
-
-			if constexpr (bClipping) {
-				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (count - dispEnd) * htItem);
 			}
 		};
 

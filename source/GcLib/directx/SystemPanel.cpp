@@ -580,7 +580,7 @@ void SystemInfoPanel::ProcessGui() {
 							if (ImGui::IsItemHovered()) {
 								size_t count = std::min<size_t>(64, history.size());
 								if (count > 0) {
-									ImGui::BeginTooltipEx(ImGuiTooltipFlags_OverridePreviousTooltip, ImGuiWindowFlags_None);
+									ImGui::BeginTooltipEx(ImGuiTooltipFlags_OverridePrevious, ImGuiWindowFlags_None);
 
 									auto itrStart = history.end() - count;
 
