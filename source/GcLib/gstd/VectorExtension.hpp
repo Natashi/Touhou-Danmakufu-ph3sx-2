@@ -2,7 +2,6 @@
 
 #include "../pch.h"
 
-#if defined(DNH_PROJ_EXECUTOR)
 
 namespace gstd {
 #define _MM_SHUFFLE_R(fp0, fp1, fp2, fp3) _MM_SHUFFLE(fp3, fp2, fp1, fp0)
@@ -542,5 +541,3 @@ namespace gstd {
 		return res;
 	}
 }
-
-#endif
