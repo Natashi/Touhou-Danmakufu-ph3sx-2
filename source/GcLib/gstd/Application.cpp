@@ -2,10 +2,6 @@
 
 #include "Application.hpp"
 
-#if defined(DNH_PROJ_EXECUTOR)
-#include "Logger.hpp"
-#endif
-
 using namespace gstd;
 
 //*******************************************************************
@@ -44,27 +40,11 @@ bool Application::Run() {
 				continue;
 			}
 
-			try {
-				if (!_Loop()) break;
-			}
-			catch (std::exception& e) {
-#if defined(DNH_PROJ_EXECUTOR)
-				Logger::WriteError(e.what());
-				Logger::WriteError("Runtime failure.");
-#endif
-				throw e;
-			}
-			catch (gstd::wexception& e) {
-#if defined(DNH_PROJ_EXECUTOR)
-				Logger::WriteError(e.what());
-				Logger::WriteError("Runtime failure.");
-#endif
-				throw e;
-			}
+			if (!_Loop())
+				break;
 		}
 	}
 
 	bAppRun_ = false;
 	return true;
 }
-

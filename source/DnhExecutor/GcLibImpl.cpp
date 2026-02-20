@@ -151,61 +151,75 @@ bool EApplication::_Initialize() {
 }
 
 bool EApplication::_Loop() {
-	ELogger* logger = ELogger::GetInstance();
-	ETaskManager* taskManager = ETaskManager::GetInstance();
-	EFpsController* fpsController = EFpsController::GetInstance();
-	EDirectInput* input = EDirectInput::GetInstance();
-	EDirectGraphics* graphics = EDirectGraphics::GetInstance();
-	DnhConfiguration* config = DnhConfiguration::GetInstance();
+	try {
+		ELogger* logger = ELogger::GetInstance();
+		ETaskManager* taskManager = ETaskManager::GetInstance();
+		EFpsController* fpsController = EFpsController::GetInstance();
+		EDirectInput* input = EDirectInput::GetInstance();
+		EDirectGraphics* graphics = EDirectGraphics::GetInstance();
+		DnhConfiguration* config = DnhConfiguration::GetInstance();
 
-	HWND hWndFocused = ::GetForegroundWindow();
-	HWND hWndGraphics = graphics->GetWindowHandle();
-	HWND hWndLogger = logger->GetWindowHandle();
+		HWND hWndFocused = ::GetForegroundWindow();
+		HWND hWndGraphics = graphics->GetWindowHandle();
+		HWND hWndLogger = logger->GetWindowHandle();
 
-	bWindowFocused_ = hWndFocused == hWndGraphics || hWndFocused == hWndLogger;
+		bWindowFocused_ = hWndFocused == hWndGraphics || hWndFocused == hWndLogger;
 	
-	bool enableInput = false;
-	if (!config->bEnableUnfocusedProcessing_) {
-		if (!bWindowFocused_) {
-			//Pause main thread when the window isn't focused
-			::Sleep(10);
-			return true;
+		bool enableInput = false;
+		if (!config->bEnableUnfocusedProcessing_) {
+			if (!bWindowFocused_) {
+				//Pause main thread when the window isn't focused
+				::Sleep(10);
+				return true;
+			}
+			enableInput = true;
 		}
-		enableInput = true;
-	}
-	else {
-		enableInput = bWindowFocused_;
-	}
+		else {
+			enableInput = bWindowFocused_;
+		}
 
-	{
-		auto fnUpdate = [&] {
-			// run update and process script tasks
-			UpdateFrame(enableInput);
-		};
+		{
+			auto fnUpdate = [&] {
+				// run update and process script tasks
+				UpdateFrame(enableInput);
+			};
 
-		auto fnRender = [&] {
-			// render game objects and present the D3D scene
-			RenderFrame();
-		};
+			auto fnRender = [&] {
+				// render game objects and present the D3D scene
+				RenderFrame();
+			};
 
-		fpsController->GetController()->SetUpdateCallback(fnUpdate);
-		fpsController->GetController()->SetRenderCallback(fnRender);
+			fpsController->GetController()->SetUpdateCallback(fnUpdate);
+			fpsController->GetController()->SetRenderCallback(fnRender);
 
-		fpsController->Advance();
-	}
+			fpsController->Advance();
+		}
 
-	{
-		int16_t fastModeKey = fpsController->GetFastModeKey();
+		{
+			int16_t fastModeKey = fpsController->GetFastModeKey();
 		
-		if (input->GetKeyState(fastModeKey) == KEY_HOLD) {
-			fpsController->SetFastMode(true);
+			if (input->GetKeyState(fastModeKey) == KEY_HOLD) {
+				fpsController->SetFastMode(true);
+			}
+			else if (input->GetKeyState(fastModeKey) == KEY_PULL || input->GetKeyState(fastModeKey) == KEY_FREE) {
+				fpsController->SetFastMode(false);
+			}
 		}
-		else if (input->GetKeyState(fastModeKey) == KEY_PULL || input->GetKeyState(fastModeKey) == KEY_FREE) {
-			fpsController->SetFastMode(false);
-		}
-	}
 
-	return true;
+		return true;
+	}
+	catch (std::exception& e) {
+		Logger::WriteError(e.what());
+		Logger::WriteError("Runtime failure.");
+
+		throw e;
+	}
+	catch (gstd::wexception& e) {
+		Logger::WriteError(e.what());
+		Logger::WriteError("Runtime failure.");
+
+		throw e;
+	}
 }
 
 void EApplication::UpdateFrame(bool enableInput) {
