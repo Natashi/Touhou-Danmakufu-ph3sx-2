@@ -136,7 +136,7 @@
 
 // zlib
 
-#define ZLIB_WINAPI
+//#define ZLIB_WINAPI
 #include <zlib.h>
 
 // libogg + libvorbis
