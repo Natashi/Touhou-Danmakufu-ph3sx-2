@@ -606,20 +606,6 @@ namespace gstd {
 
 #if defined(DNH_PROJ_EXECUTOR)
 	//================================================================
-	//IStringInfo
-	class IStringInfo {
-	public:
-		virtual ~IStringInfo() {}
-		virtual std::wstring GetInfoAsString() {
-			int address = (int)this;
-			char* name = (char*)typeid(*this).name();
-			std::string str = StringUtility::Format("%s[%08x]", name, address);
-			std::wstring res = StringUtility::ConvertMultiToWide(str);
-			return res;
-		}
-	};
-
-	//================================================================
 	//InnerClass
 	//C++には内部クラスがないので、外部クラスアクセス用
 	template <class T>

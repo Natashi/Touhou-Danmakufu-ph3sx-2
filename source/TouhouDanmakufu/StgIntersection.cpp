@@ -576,7 +576,8 @@ int StgIntersectionObject::GetDxScriptObjectID() {
 //*******************************************************************
 StgIntersectionTarget::StgIntersectionTarget() {
 }
-std::wstring StgIntersectionTarget::GetInfoAsString() {
+
+std::wstring StgIntersectionTarget::ToString() {
 	std::wstring res;
 	res += L"type[";
 	switch (typeTarget_) {

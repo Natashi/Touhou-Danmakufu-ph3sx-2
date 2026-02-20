@@ -18,7 +18,7 @@ namespace gstd {
 	//****************************************************************************
 	//TaskFunction
 	//****************************************************************************
-	class TaskFunction : public IStringInfo {
+	class TaskFunction {
 		friend TaskManager;
 	protected:
 		shared_ptr<TaskBase> task_;
@@ -38,8 +38,6 @@ namespace gstd {
 		int GetDelay() { return delay_; }
 		void SetDelay(int delay) { delay_ = delay; }
 		bool IsDelay() { return delay_ > 0; }
-
-		virtual std::wstring GetInfoAsString();
 	};
 
 	template <class T>
@@ -67,7 +65,7 @@ namespace gstd {
 	//****************************************************************************
 	//TaskBase
 	//****************************************************************************
-	class TaskBase : public IStringInfo {
+	class TaskBase {
 		friend TaskManager;
 	protected:
 		int64_t indexTask_;

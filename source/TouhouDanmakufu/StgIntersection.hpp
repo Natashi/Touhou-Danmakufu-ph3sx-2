@@ -13,7 +13,7 @@ class StgIntersectionObject;
 //*******************************************************************
 //StgIntersectionTarget
 //*******************************************************************
-class StgIntersectionTarget : public IStringInfo {
+class StgIntersectionTarget {
 	friend StgIntersectionManager;
 public:
 	typedef enum : uint8_t {
@@ -56,7 +56,7 @@ public:
 	//void SetMortonNumber(int no) { mortonNo_ = no; }
 	void ClearObjectIntersectedIdList();
 
-	virtual std::wstring GetInfoAsString();
+	std::wstring ToString();
 };
 
 class StgIntersectionTarget_Circle : public StgIntersectionTarget {
